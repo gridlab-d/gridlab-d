@@ -23,8 +23,10 @@
 #define COMPARE_NEB(T) int compare_tc_##T##_ne(void* x,void* a,void* b) { return *(T*)x!=*(T*)a; }
 
 #define COMPAREOPO(T) COMPARE_EQO(T) COMPARE_NEO(T)
-#define COMPARE_EQO(T) int compare_tc_##T##_eq(void* x,void* a,void* b) { return strcmp((*(OBJECT**)x)->name,(*(OBJECT**)a)->name)==0; }
-#define COMPARE_NEO(T) int compare_tc_##T##_ne(void* x,void* a,void* b) { return strcmp((*(OBJECT**)x)->name,(*(OBJECT**)a)->name)!=0; }
+//#define COMPARE_EQO(T) int compare_tc_##T##_eq(void* x,void* a,void* b) { return strcmp((*(OBJECT**)x)->name,(*(OBJECT**)a)->name)==0; }
+//#define COMPARE_NEO(T) int compare_tc_##T##_ne(void* x,void* a,void* b) { return strcmp((*(OBJECT**)x)->name,(*(OBJECT**)a)->name)!=0; }
+#define COMPARE_EQO(T) int compare_tc_##T##_eq(void* x,void* a,void* b) { return (*(OBJECT**)x)==(*(OBJECT**)a); }
+#define COMPARE_NEO(T) int compare_tc_##T##_ne(void* x,void* a,void* b) { return (*(OBJECT**)x)!=(*(OBJECT**)a); }
 
 #define COMPAREOPF(T) COMPARE_EQF(T) COMPARE_LEF(T) COMPARE_GEF(T) COMPARE_NEF(T) COMPARE_LTF(T) COMPARE_GTF(T) COMPARE_INF(T) COMPARE_NIF(T)
 #define COMPARE_EQF(T) int compare_tc_##T##_eq(void* x,void* a,void* b) { if (b==NULL) return *(T*)x==*(T*)a; else return fabs((*(T*)x)-(*(T*)a))<=(*(T*)b); }

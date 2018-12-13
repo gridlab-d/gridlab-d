@@ -475,6 +475,13 @@ CLASS *class_register(MODULE *module,        /**< the module that implements the
 	oclass->profiler.numobjs=0;
 	oclass->profiler.count=0;
 	oclass->profiler.clocks=0;
+	oclass->defaults = malloc(size);
+	if ( oclass->defaults == NULL )
+	{
+		errno = ENOMEM;
+		return 0;
+	}
+	memset(oclass->defaults,0,size);
 	if (first_class==NULL)
 		first_class = oclass;
 	else
@@ -1095,19 +1102,22 @@ int class_saveall(FILE *fp) /**< a pointer to the stream FILE structure */
 			PROPERTY *prop;
 			FUNCTION *func;
 			count += fprintf(fp,"class %s {\n",oclass->name);
-			if (oclass->parent)
-				count += fprintf(fp,"#ifdef INCLUDE_PARENT_CLASS\n\tparent %s;\n#endif\n", oclass->parent->name);
-			for (func=oclass->fmap; func!=NULL && func->oclass==oclass; func=func->next)
-				count += fprintf(fp, "#ifdef INCLUDE_FUNCTIONS\n\tfunction %s();\n#endif\n", func->name);
-			for (prop=oclass->pmap; prop!=NULL && prop->oclass==oclass; prop=prop->next)
+			if ( (global_glm_save_options&GSO_NOMACROS)==GSO_NOMACROS )
 			{
-				char *ptype = class_get_property_typename(prop->ptype);
-				if ( ptype != NULL )
+				if (oclass->parent)
+					count += fprintf(fp,"#ifdef INCLUDE_PARENT_CLASS\n\tparent %s;\n#endif\n", oclass->parent->name);
+				for (func=oclass->fmap; func!=NULL && func->oclass==oclass; func=func->next)
+					count += fprintf(fp, "#ifdef INCLUDE_FUNCTIONS\n\tfunction %s();\n#endif\n", func->name);
+				for (prop=oclass->pmap; prop!=NULL && prop->oclass==oclass; prop=prop->next)
 				{
-					if ( strchr(prop->name,'.') == NULL )
-						count += fprintf(fp,"\t%s %s;\n", ptype, prop->name);
-					else
-						count += fprintf(fp,"#ifdef INCLUDE_DOTTED_PROPERTIES\n\t%s %s;\n#endif\n", ptype, prop->name);
+					char *ptype = class_get_property_typename(prop->ptype);
+					if ( ptype != NULL )
+					{
+						if ( strchr(prop->name,'.') == NULL )
+							count += fprintf(fp,"\t%s %s;\n", ptype, prop->name);
+						else
+							count += fprintf(fp,"#ifdef INCLUDE_DOTTED_PROPERTIES\n\t%s %s;\n#endif\n", ptype, prop->name);
+					}
 				}
 			}
 			count += fprintf(fp,"}\n");

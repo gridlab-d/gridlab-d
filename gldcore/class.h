@@ -119,6 +119,7 @@ struct s_class_list {
 	TECHNOLOGYREADINESSLEVEL trl; // technology readiness level (1-9, 0=unknown)
 	bool has_runtime;	///< flag indicating that a runtime dll, so, or dylib is in use
 	char runtime[1024]; ///< name of file containing runtime dll, so, or dylib
+	void *defaults; ///< pointer to template object with default values
 	struct s_class_list *next;
 }; /* CLASS */
 
