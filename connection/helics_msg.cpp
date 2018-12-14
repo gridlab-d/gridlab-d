@@ -570,10 +570,6 @@ TIMESTAMP helics_msg::clk_update(TIMESTAMP t1)
 	}
 	if(t1 > last_approved_helics_time){
 		int result = 0;
-		result = publishVariables();
-		if(result == 0){
-			return TS_INVALID;
-		}
 		if(gl_globalclock == gl_globalstoptime){
 #if HAVE_HELICS
 			gl_verbose("helics_msg: Calling finalize");
@@ -582,6 +578,10 @@ TIMESTAMP helics_msg::clk_update(TIMESTAMP t1)
 			return t1;
 		} else if (t1 > gl_globalstoptime && gl_globalclock < gl_globalstoptime){
 			t1 == gl_globalstoptime;
+		}
+		result = publishVariables();
+		if(result == 0){
+			return TS_INVALID;
 		}
 #if HAVE_HELICS
 		helics::Time t((double)((t1 - initial_sim_time)));
