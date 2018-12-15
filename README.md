@@ -1,6 +1,6 @@
 ## Important Note
 
-This repository is SLAC National Accelerator's develop fork of GridLAB-D (see https://github.com/gridlab-d/gridlab-d).  Only SLAC projects may contribute to this fork.  Changes made in this fork will be migrated back to PNNL's official repository as PNNL's discretion.
+This repository is SLAC National Accelerator's develop fork of GridLAB-D (see https://github.com/gridlab-d/gridlab-d).  Only SLAC projects may contribute to this fork.  Changes made in this fork will be migrated back to PNNL's official repository at PNNL's discretion.
 
 # SLAC Workflow
 
