@@ -67,7 +67,7 @@ All documentation changes arising from new features and capabilities should be m
 
 # Coding Conventions
 
-TODO
+The general GridLAB-D coding conventions are described at http://gridlab-d.shoutwiki.com/wiki/Programming_conventions.
 
 # Copyrights and Licensing
 
