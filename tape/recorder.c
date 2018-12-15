@@ -624,54 +624,67 @@ int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buff
 	PROPERTY *p;
 	PROPERTY *p2 = 0;
 	PROPERTY fake;
-	int offset=0;
-	int count=0;
-	double value;
-	void *addr = prop->oclass ? GETADDR(obj,prop) : prop->addr;
+	char tmp[1024];
+	int count = 0;
+	int sz;
 	memset(&fake, 0, sizeof(PROPERTY));
 	fake.ptype = PT_double;
 	fake.unit = 0;
-	for (p=prop; p!=NULL && offset<size-33; p=p->next)
+	for ( p = prop ;  p != NULL ; p = p->next )
 	{
-		if (offset>0) strcpy(buffer+offset++,",");
-		if(p->ptype == PT_double){
-			switch(my->line_units){
+		if(p->ptype == PT_double)
+		{
+			double value;
+			switch(my->line_units)
+			{
 				case LU_ALL:
 					// cascade into 'default', as prop->unit should've been set, if there's a unit available.
 				case LU_DEFAULT:
-					offset+=gl_get_value(obj,addr,buffer+offset,size-offset-1,p); /* pointer => int64 */
+					sz = gl_get_value(obj,GETADDR(obj,p),tmp,sizeof(tmp)-1,p); /* pointer => int64 */
 					break;
 				case LU_NONE:
 					// copy value into local value, use fake PROP, feed into gl_get_vaule
 					value = *gl_get_double(obj, p);
 					p2 = gl_get_property(obj, p->name,NULL);
-					if(p2 == 0){
+					if ( p2 == 0 ) 
+					{
 						gl_error("unable to locate %s.%s for LU_NONE", obj, p->name);
 						return 0;
 					}
-					if(p->unit != 0 && p2->unit != 0){
-						if(0 == gl_convert_ex(p2->unit, p->unit, &value)){
+					if ( p->unit != 0 && p2->unit != 0 )
+					{
+						if ( gl_convert_ex(p2->unit, p->unit, &value) == 0 )
+						{
 							gl_error("unable to convert %s to %s for LU_NONE", p->unit, p2->unit);
-						} else { // converted
-							offset+=gl_get_value(obj,&value,buffer+offset,size-offset-1,&fake); /* pointer => int64 */;
+							return 0;
+						} 
+						else 
+						{ // converted
+							sz = gl_get_value(obj,&value,tmp,sizeof(tmp)-1,&fake); /* pointer => int64 */;
 						}
-					} else {
-						offset+=gl_get_value(obj,addr,buffer+offset,size-offset-1,p); /* pointer => int64 */;
+					} 
+					else 
+					{
+						sz = gl_get_value(obj,GETADDR(obj,p),tmp,sizeof(tmp)-1,p); /* pointer => int64 */;
 					}
 					break;
 				default:
 					break;
 			}
 		} else {
-			offset+=gl_get_value(obj,addr,buffer+offset,size-offset-1,p); /* pointer => int64 */
+			sz = gl_get_value(obj,GETADDR(obj,p),tmp,sizeof(tmp)-1,p); /* pointer => int64 */
 		}
-		buffer[offset]='\0';
-		count++;
-		if ( count > size )
+		if ( count + sz >= size )
 		{
-			gl_error("tape/recorder.c:read_properties(): buffer too small to handle output size");
+			gl_error("tape/recorder.c:read_aggregates(): buffer too small to handle output size");
 			return 0;
 		}
+		if ( count > 0 ) 
+		{
+			strcpy(buffer+count++,",");
+		}
+		strcpy(buffer+count,tmp);
+		count += sz;
 	}
 	return count;
 }
