@@ -5,6 +5,21 @@ This repository is a fork of the official version of GridLAB-D.  To make contrib
 Authorized github users may contribute to this repository. You must be a Stanford faculty, staff, student, affiliate, or subcontractor to be a contributor.  Please contact the repository owner to be authorized as a contributor.
 
 # SLAC Workflow
+The following diagram provide an overview of the SLAC Workflow for this repository
+~~~
+[SLAC creates a project] --> [Issue created] --> [Issue assigned] --> [Branch created] 
+                                                                             |
+     +-----------------------------------------------------------------------+
+     |
+     V
+[PR created] --> [Work done] --> [PR Review] --> [PR ok?] (y) --> [PR Merged] --> [Issue ok?] (y) --+
+     ^                ^                            (n)                               (n)            |
+     |                |                             |                                 |             |
+     |                +-----------------------------+                                 |             |
+     +--------------------------------------------------------------------------------+             |
+                                                                                                    V
+                                                                                             [Issue closed]
+~~~
 
 ## Projects
 
