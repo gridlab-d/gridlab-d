@@ -20,6 +20,7 @@ The following diagram provides an overview of the SLAC Workflow for this reposit
                                                                                                     V
                                                                                              [Issue closed]
 ~~~
+When a PR is merged, a new docker build and push must be run to incorporate the changes into the latest docker hub image.
 
 ## Projects
 
