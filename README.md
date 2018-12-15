@@ -2,45 +2,43 @@
 
 This repository is SLAC National Accelerator's develop fork of GridLAB-D (see https://github.com/gridlab-d/gridlab-d).  Only SLAC projects may contribute to this fork.  Changes made in this fork will be migrated back to PNNL's official repository at PNNL's discretion.
 
-# SLAC Workflow
+# User quick start
 
-## Projects
+The preferred method of using SLAC releases of GridLAB-D is to download the SLAC master image from docker hub (see https://cloud.docker.com/u/gridlabd/repository/docker/gridlabd/slac-master).  You must install the docker daemon to use docker images.  See https://www.docker.com/get-started for details.
 
-SLAC has a number of active projects making contributions to the SLAC development fork.  Project are encouraged to use the `master` branch. Project may use a sub-master branch named `project-master`, which can be used to consolidate PRs from multiple project-specific branches.
-
-## Issues
-
-Issues may be contributed by project team members at any time.  The author of the issues should specify the label, originating project, milestone, and an initial assignment if possible. Please provide any detail and supporting data necessary to reproduce the issue.
-
-## Branches
-
-Branches are created to address a single issue.  A comment should be added to the issue to indicate which branch is being used to address it.  If the branch is addressing multiple issues, pick one issue to use as the primary issue, and have all the other issues refer to the primary issue as well.
-
-Branches are named using the lead developer and topic, e.g., `username/topic`. Commits and pushes of the branch should be made as soon as work is initiated in order to facilitate review and discussion. Once the branch is started, discussion should take on the PR page and the issue should only be used to add new information relating to the issue not captured in the PR record.
-
-## Pull Request
-
-A pull request should be opened as soon as work on the branch is pushed.  Initially the PR should have a the same title as the primary issue it is intended to address. The title should include a prefix tag `[WORKING]` indicating the initial working status.  
-
-When the PR is initially created, the first comment must include the following information:
+Once you have installed docker, you may issue the following commands to run GridLAB-D at the command line:
 ~~~
-This PR addresses issue #XYZ.
-
-The current status of the PR is:
-1. list of open questions/problems
-
-The affected wiki page(s) are:
-- [[link to page]]
+  host% docker run -it -v $PWD:/model gridlabd/slac-master gridlabd -W /model [load-options] [filename.glm] [run-options] 
+~~~ 
+On many systems, an alias can be used to make this a simple command that resemble the command you would normally issue to run a host-based installation:
 ~~~
-All discussion regarding the branch must be recorded on the PR, rather than on the issue.  
+  host% alias gridlabd='docker run -it -v $PWD:/model gridlabd/slac-master gridlabd -W /model'
+~~~
+Note that this alias will interfere with the host-based installation.
 
-The following prefix tags are the recognized:
+# Developer quick start
 
-1. `[WORKING]` -- The PR is current work in progress.  A reviewer may be assigned as a courtesy to offer the opportunity to consider the changes while work is still in progress. The PR may be merged, but the PR and the branch must not be deleted while work is in progress. While work is in progress the PR is assigned to the lead.  When the lead determines that the work is complete, the tag is changed to `[REVIEW]` and makes the file reviewer selection(s).  The PR remains assigned to the lead until the review is completed. _NOTE_: the changes must include wiki updates, if any, and the opening PR comment must cite the wiki pages added or changed.
+Assuming your development system is ready (see https://github.com/dchassin/gridlabd/wiki/Install#mac-osx-and-linux for details), you can "quickly" download and build a host-based installation from a branch using the following commands:
+~~~
+  host% git clone https://github.com/dchassin/gridlabd -b _branch-name_ _work-folder_
+  host% cd _work-folder_
+  host% autoreconf -isf
+  host% ./configure --enable-silent-rules --prefix=$PWD/install [_options_]
+  host% make -j install
+  host% export PATH=$PWD/install/bin:$PATH
+  host% gridlabd --version
+  host% gridlabd --validate
+~~~
+## Useful configure options
+ - `--with-mysql=/usr/local` to enable support for mysql (assuming you install mysql-dev on your system)
+ - `CXXFLAGS='-w -O0 -g'` to enable debugging of C++ source code (e.g., module code)
+ - `CFLAGS='-w -O0 -g'` to enable debugging of C source code (e.g., core code)
 
-1. `[REVIEW]` -- The PR is ready for final review.  The reviewer is charged with ensuring that the proposed changes address the issue(s) satisfactorily.  If the review is successful, the reviewer makes a comment to that affect and changes the assignment to a developer other than the lead to perform the merge.  If the review is unsuccessful, the review makes any necessary comments, and changes the tag back to `[WORKING]` to indicate that the lead must address the questions. _NOTE_: the review must include review of the wiki pages added or changed, if any.
+## Notes
+- The version number should contain the _branch-name_.  If not, use to `which gridlabd` command to check that the path is correct.
+- You can control whether your local version run the docker image instead of the local install using the `--docker` command-line option.
+- In theory all validate tests of the master should pass. However, sometimes issues arise that aren't caught until after a merge into master.  If you encounter a validation error, please check the issues to see if it has not already been reported.  When reporting such a problem, please include the `--origin` command line option output, the `validate.txt` output, and the output from `uname -a` to assist in reproducing and diagnosing the problem.
 
-1. `[HOLD]` -- The PR is on hold pending future resolution by the lead developer.  No further work is expected and the PR should not be merged at this time.
+## Contributions
 
-
-
+Please see https://github.com/dchassin/gridlabd/blob/master/CONTRIBUTING.md for information on making contributions to this repository.
