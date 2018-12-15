@@ -627,7 +627,7 @@ int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buff
 	int offset=0;
 	int count=0;
 	double value;
-	void *addr = prop->oclass ? GETADDR(obj,p) : prop->addr;
+	void *addr = prop->oclass ? GETADDR(obj,prop) : prop->addr;
 	memset(&fake, 0, sizeof(PROPERTY));
 	fake.ptype = PT_double;
 	fake.unit = 0;
