@@ -409,7 +409,7 @@ int convert_from_enduse(char *string,int size,void *data, PROPERTY *prop)
 	enduse *e = (enduse*)data;
 	int len = 0;
 #define OUTPUT_NZ(X) if (e->X!=0) len+=sprintf(string+len,"%s" #X ": %f", len>0?"; ":"", e->X)
-#define OUTPUT(X) len+=sprintf(string+len,"%s"#X": %f", len>0?"; ":"", e->X);
+#define OUTPUT(X) len+=sprintf(string+len,"%s"#X": %g", len>0?"; ":"", e->X);
 	OUTPUT_NZ(impedance_fraction);
 	OUTPUT_NZ(current_fraction);
 	OUTPUT_NZ(power_fraction);
@@ -613,8 +613,10 @@ int convert_to_enduse(char *string, void *data, PROPERTY *prop)
 
 	/* reinitialize the loadshape */
 	if (enduse_init((enduse*)data))
+	{
+		output_error("convert_to_enduse(string='%-.64s...', ...): enduse_init failed ",string);
 		return 0;
-
+	}	
 	/* everything converted ok */
 	return 1;
 }

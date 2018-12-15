@@ -233,7 +233,7 @@ bool property_compare_basic(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void *x, v
 {
 	if ( part==NULL && property_type[ptype].compare[op].fn!=NULL )
 		return property_type[ptype].compare[op].fn(x,a,b);
-	else if ( property_type[ptype].get_part!=NULL )
+	else if ( property_type[ptype].get_part!=NULL && part != NULL )
 	{
 		double d = property_type[ptype].get_part ? property_type[ptype].get_part(x,part) : QNAN ;
 		if ( isfinite(d) )
@@ -247,7 +247,7 @@ bool property_compare_basic(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void *x, v
 	}
 	else // no comparison possible
 	{
-		output_error("property type '%s' does not support comparison operations or parts", property_type[ptype].name);
+		output_debug("property type '%s' does not support comparison operations or parts", property_type[ptype].name);
 		return 0;
 	}
 }
@@ -272,6 +272,29 @@ double property_get_part(OBJECT *obj, PROPERTY *prop, char *part)
 	}
 	else
 		return QNAN;
+}
+
+bool property_is_default(OBJECT *obj, PROPERTY *prop)
+{
+	if ( prop->ptype > PT_void && prop->ptype < PT_object && obj->oclass->defaults != NULL )
+	{
+		void *a = (char*)obj + (int)prop->addr;
+		void *b = (char*)(obj->oclass->defaults) + (int)prop->addr;
+		bool result = property_compare_basic(prop->ptype,TCOP_EQ,a,b,NULL,NULL);
+		if ( !result && global_debug_output )
+		{
+			char buf1[1024] = "<???>", buf2[1024] = "<???>";
+			class_property_to_string(prop,a,buf1,sizeof(buf1));
+			class_property_to_string(prop,b,buf2,sizeof(buf2));
+			output_debug("comparing %s:%d.%s [%s] == %s:default.%s [%s] --> %s",
+				obj->name?obj->name:obj->oclass->name, obj->id, prop->name, buf1,
+				obj->oclass->name, prop->name, buf2,
+				result ? "true" : "false");
+		}	
+		return result;
+	}
+	else
+		return false;
 }
 
 /*********************************************************

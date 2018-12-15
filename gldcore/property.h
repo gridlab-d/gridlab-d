@@ -972,6 +972,7 @@ bool property_compare_basic(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void *x, v
 PROPERTYCOMPAREOP property_compare_op(PROPERTYTYPE ptype, char *opstr);
 PROPERTYTYPE property_get_type(char *name);
 double property_get_part(struct s_object_list *obj, PROPERTY *prop, char *part);
+bool property_is_default(struct s_object_list *obj, PROPERTY *prop);
 
 /* double array */
 int double_array_create(double_array*a);

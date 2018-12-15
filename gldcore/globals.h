@@ -71,6 +71,7 @@ void global_dump(void);
 size_t global_getcount(void);
 void global_restore(GLOBALVAR *pos);
 void global_push(char *name, char *value);
+size_t global_saveall(FILE *fp);
 
 /* MAJOR and MINOR version */
 GLOBAL unsigned global_version_major INIT(REV_MAJOR); /**< The software's major version */
@@ -395,6 +396,15 @@ typedef enum {
 GLOBAL bool global_validto_context INIT(VTC_SYNC); /**< events for which valid_to applies, rather than just sync passes */
 
 GLOBAL char1024 global_timezone_locale INIT("UTC"); /**< timezone specification */
+typedef enum {
+	GSO_LEGACY 		= 0x0000,
+	GSO_NOINTERNALS = 0x0001,
+	GSO_NOMACROS 	= 0x0002,
+	GSO_NOGLOBALS	= 0x0004,
+	GSO_NODEFAULTS	= 0x0008,
+	GSO_MINIMAL 	= 0x000f,
+} GLMSAVEOPTIONS;
+GLOBAL GLMSAVEOPTIONS global_glm_save_options INIT(GSO_LEGACY);	/**< multirun mode connection */
 
 #ifdef __cplusplus
 }

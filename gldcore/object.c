@@ -327,7 +327,8 @@ OBJECT *object_create_single(CLASS *oclass){ /**< the class of the object */
 		 */
 	}
 
-	memset(obj, 0, sz + oclass->size);
+	memset(obj, 0, sz);
+	memcpy(obj+1, oclass->defaults, oclass->size);
 
 	tp_next %= tp_count;
 
@@ -1958,34 +1959,45 @@ int object_saveall(FILE *fp) /**< the stream to write to */
 			if ( obj->parent != NULL )
 			{
 				if ( obj->parent->name != NULL )
-					count += fprintf(fp, "\tparent %s;\n", obj->parent->name);
+					count += fprintf(fp, "\tparent \"%s\";\n", obj->parent->name);
 				else
-					count += fprintf(fp, "\tparent %s:%d;\n", obj->parent->oclass->name, obj->parent->id);
+					count += fprintf(fp, "\tparent \"%s:%d\";\n", obj->parent->oclass->name, obj->parent->id);
 			}
-			else
+			else if ( (global_glm_save_options&GSO_NOMACROS)==0 )
 			{
 				count += fprintf(fp,"#ifdef INCLUDE_ROOT\n\troot;\n#endif\n");
 			}
-			count += fprintf(fp, "\trank %d;\n", obj->rank);
+			if ( (global_glm_save_options&GSO_NOINTERNALS)==0 )
+			{
+				count += fprintf(fp, "\trank \"%d\";\n", obj->rank);
+			}
 			if ( obj->name != NULL )
-				count += fprintf(fp, "\tname %s;\n", obj->name);
-			if ( convert_from_timestamp(obj->clock, buffer, sizeof(buffer)) )
-				count += fprintf(fp,"\tclock %s;\n",  buffer);
+				count += fprintf(fp, "\tname \"%s\";\n", obj->name);
+			if ( (global_glm_save_options&GSO_NOINTERNALS)==0 && convert_from_timestamp(obj->clock, buffer, sizeof(buffer)) )
+				count += fprintf(fp,"\tclock '%s';\n",  buffer);
 			if ( !isnan(obj->latitude) )
-				count += fprintf(fp, "\tlatitude %s;\n", convert_from_latitude(obj->latitude, buffer, sizeof(buffer)) ? buffer : "(invalid)");
+				count += fprintf(fp, "\tlatitude \"%s\";\n", convert_from_latitude(obj->latitude, buffer, sizeof(buffer)) ? buffer : "(invalid)");
 			if ( !isnan(obj->longitude) )
-				count += fprintf(fp, "\tlongitude %s;\n", convert_from_longitude(obj->longitude, buffer, sizeof(buffer)) ? buffer : "(invalid)");
-			if ( convert_from_set(buffer, sizeof(buffer), &(obj->flags), object_flag_property()) > 0 )
-				count += fprintf(fp, "\tflags %s;\n",  buffer);
-			else
-				count += fprintf(fp, "\tflags %lld;\n", obj->flags);
+				count += fprintf(fp, "\tlongitude \"%s\";\n", convert_from_longitude(obj->longitude, buffer, sizeof(buffer)) ? buffer : "(invalid)");
+			if ( (global_glm_save_options&GSO_NOINTERNALS)==0 )
+			{
+				if ( convert_from_set(buffer, sizeof(buffer), &(obj->flags), object_flag_property()) > 0 )
+					count += fprintf(fp, "\tflags \"%s\";\n",  buffer);
+				else
+					count += fprintf(fp, "\tflags \"%lld\";\n", obj->flags);
+			}
 
 			/* dump properties */
 			for ( prop=obj->oclass->pmap; prop!=NULL; prop=(prop->next?prop->next:(prop->oclass->parent?prop->oclass->parent->pmap:NULL)) )
 			{
+				if ( (global_glm_save_options&GSO_NODEFAULTS)==GSO_NODEFAULTS && property_is_default(obj,prop) )
+					continue;
+				if ( (global_glm_save_options&GSO_NOINTERNALS)==GSO_NOINTERNALS && prop->access!=PA_PUBLIC )
+					continue;
+				buffer[0]='\0';
 				if ( object_property_to_string(obj, prop->name, buffer, sizeof(buffer)) != NULL )
 				{
-					if ( prop->access != access )
+					if ( prop->access != access && (global_glm_save_options&GSO_NOMACROS)==0 )
 					{
 						if ( access != PA_PUBLIC )
 							count += fprintf(fp, "#endif\n");
@@ -1999,10 +2011,15 @@ int object_saveall(FILE *fp) /**< the stream to write to */
 							count += fprintf(fp, "#ifdef INCLUDE_HIDDEN\n");
 						access = prop->access;
 					}
-					count += fprintf(fp, "\t%s %s;\n", prop->name, buffer);
+					if ( prop->ptype==PT_object && strcmp(buffer,"")==0 )
+						continue; // never output empty object names -- they have special meaning to the loader
+					if ( buffer[0]=='"' )
+						count += fprintf(fp, "\t%s %s;\n", prop->name, buffer);
+					else
+						count += fprintf(fp, "\t%s \"%s\";\n", prop->name, buffer);
 				}
 			}
-			if ( access != PA_PUBLIC )
+			if ( access != PA_PUBLIC && (global_glm_save_options&GSO_NOMACROS)==0 )
 				count += fprintf(fp, "#endif\n");
 			count += fprintf(fp,"}\n");
 		}

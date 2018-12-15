@@ -127,16 +127,23 @@ int saveglm(char *filename,FILE *fp)
 	count += fprintf(fp,"// modules.... %d\n", module_getcount());
 	count += fprintf(fp,"// classes.... %d\n", class_get_count());
 	count += fprintf(fp,"// objects.... %d\n", object_get_count());
+	if ( global_getvar("glm_save_options",buffer,sizeof(buffer)-1) )
+	{
+		count += fprintf(fp,"// options.... %s\n", buffer);
+	}
 
 	// loader flags
-	count += fprintf(fp,"\n// flags to enable GLM definitions not supported by standard GLM loader");
-	count += fprintf(fp,"//#define INCLUDE_PARENT_CLASS=TRUE // class inheritance definitions\n");
-	count += fprintf(fp,"//#define INCLUDE_FUNCTIONS=TRUE // class function definitions\n");
-	count += fprintf(fp,"//#define INCLUDE_ROOT=TRUE // object root definitions\n");
-	count += fprintf(fp,"//#define INCLUDE_REFERENCE=TRUE // reference property definitions\n");
-	count += fprintf(fp,"//#define INCLUDE_PROTECTED=TRUE // protected property definitions\n");
-	count += fprintf(fp,"//#define INCLUDE_PRIVATE=TRUE // private property definitions\n");
-	count += fprintf(fp,"//#define INCLUDE_HIDDEN=TRUE // hidden property definitions\n");
+	if ( (global_glm_save_options&GSO_NOMACROS)==0 )
+	{
+		count += fprintf(fp,"\n// flags to enable GLM definitions not supported by standard GLM loader");
+		count += fprintf(fp,"//#define INCLUDE_PARENT_CLASS=TRUE // class inheritance definitions\n");
+		count += fprintf(fp,"//#define INCLUDE_FUNCTIONS=TRUE // class function definitions\n");
+		count += fprintf(fp,"//#define INCLUDE_ROOT=TRUE // object root definitions\n");
+		count += fprintf(fp,"//#define INCLUDE_REFERENCE=TRUE // reference property definitions\n");
+		count += fprintf(fp,"//#define INCLUDE_PROTECTED=TRUE // protected property definitions\n");
+		count += fprintf(fp,"//#define INCLUDE_PRIVATE=TRUE // private property definitions\n");
+		count += fprintf(fp,"//#define INCLUDE_HIDDEN=TRUE // hidden property definitions\n");
+	}
 
 	/* save gui, if any */
 	if (gui_get_root()!=NULL)
@@ -152,19 +159,26 @@ int saveglm(char *filename,FILE *fp)
 		count += fprintf(fp,"\n// CLOCK\n");
 	count += fprintf(fp,"clock {\n");
 //	count += fprintf(fp,"\ttick 1e%+d;\n",TS_SCALE);
-	count += fprintf(fp,"\ttimezone %s;\n", timestamp_current_timezone());
+	count += fprintf(fp,"\ttimezone \"%s\";\n", timestamp_current_timezone());
 	if ( convert_from_timestamp(global_starttime,buffer,sizeof(buffer))>0 )
-		count += fprintf(fp,"\tstarttime '%s';\n", buffer);
+		count += fprintf(fp,"\tstarttime \"%s\";\n", buffer);
 	if ( convert_from_timestamp(global_stoptime,buffer,sizeof(buffer))>0 )
-		count += fprintf(fp,"\tstoptime '%s';\n", buffer);
+		count += fprintf(fp,"\tstoptime \"%s\";\n", buffer);
 //	if (getenv("TZ"))
 //		count += fprintf(fp,"\ttimezone %s;\n", getenv("TZ"));
 	count += fprintf(fp,"}\n");
 
 	/* save parts */
+	if ( (global_glm_save_options&GSO_NOGLOBALS)==0 )
+	{
+		count += global_saveall(fp);
+	}
 	count += module_saveall(fp);
-	count += class_saveall(fp);
-	count += schedule_saveall(fp);
+	if ( (global_glm_save_options&GSO_NOINTERNALS)==0 )
+	{
+		count += class_saveall(fp);
+		count += schedule_saveall(fp);
+	}
 	count += transform_saveall(fp);
 	count += object_saveall(fp);
 

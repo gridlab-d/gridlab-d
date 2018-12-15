@@ -757,27 +757,37 @@ int module_saveall(FILE *fp)
 	MODULE *mod;
 	int count=0;
 	CLASS *oclass = NULL;
-	char varname[1024];
 	char buffer[1024];
 	count += fprintf(fp,"\n////////////////////////////////////////////////////////\n");
 	count += fprintf(fp,"// modules\n");
 	for (mod=first_module; mod!=NULL; mod=mod->next)
 	{
-		varname[0] = '\0';
+		GLOBALVAR *var=NULL;
 		oclass = NULL;
 
 		count += fprintf(fp,"module %s {\n",mod->name);
-		if (mod->major>0 || mod->minor>0)
-			count += fprintf(fp,"\tmajor %d;\n\tminor %d;\n",mod->major,mod->minor);
-		for (oclass=mod->oclass; oclass!=NULL ; oclass=oclass->next)
+		if ( (global_glm_save_options&GSO_NOINTERNALS)==0 )
 		{
-			if (oclass->module==mod)
-				count += fprintf(fp,"\tclass %s;\n",oclass->name);
-		}
-
-		while (module_getvar(mod,varname,buffer,sizeof(buffer)))
+			if (mod->major>0 || mod->minor>0)
+				count += fprintf(fp,"\tmajor %d;\n\tminor %d;\n",mod->major,mod->minor);
+			for (oclass=mod->oclass; oclass!=NULL ; oclass=oclass->next)
+			{
+				if (oclass->module==mod)
+					count += fprintf(fp,"\tclass %s;\n",oclass->name);
+			}
+		}		
+		while ( (var=global_getnext(var)) != NULL )
 		{
-			count += fprintf(fp,"\t%s %s;\n",varname,buffer);
+			char modname[256]="", varname[256]="";
+			if ( sscanf(var->prop->name,"%[^:]::%[^\n]",modname,varname) == 2
+				&& strcmp(modname,mod->name) == 0 
+				&& global_getvar(var->prop->name,buffer,sizeof(buffer)-1) != NULL )
+			{
+				if ( buffer[0] == '"' )
+					count += fprintf(fp,"\t%s %s;\n",varname,buffer);
+				else
+					count += fprintf(fp,"\t%s \"%s\";\n",varname,buffer);
+			}
 		}
 		count += fprintf(fp,"}\n");
 	}
