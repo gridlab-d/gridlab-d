@@ -502,7 +502,8 @@ EXPORT int method_recorder_property(OBJECT *obj, char *value, size_t size)
 	gl_verbose("adding property '%s' to recorder:%d",value,obj->id);
 	if ( my->property_len < len || my->property == NULL )
 	{
-		my->property_len = ((my->property_len+len)/BLOCKSIZE+1)*BLOCKSIZE;
+		size_t need = len + (my->property==NULL ? 0 : strlen(my->property)) + 1;
+		my->property_len = ((need/BLOCKSIZE)+1)*BLOCKSIZE;
 		my->property = (char*)realloc(my->property,my->property_len);
 		if ( my->property == NULL )
 		{
