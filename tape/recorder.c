@@ -667,6 +667,11 @@ int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buff
 		}
 		buffer[offset]='\0';
 		count++;
+		if ( count > size )
+		{
+			gl_error("tape/recorder.c:read_properties(): buffer too small to handle output size");
+			return 0;
+		}
 	}
 	return count;
 }
