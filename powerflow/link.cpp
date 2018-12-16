@@ -316,7 +316,7 @@ int link_object::init(OBJECT *parent)
 			if (gl_object_isa(from,"node")) 
 			{
 				if(gl_set_parent(obj, from) < 0)
-					throw "error when setting parent";
+					throw "error when setting 'from' parent";
 					/*  TROUBLESHOOT
 					An error has occurred while setting the parent field of a link.  Please
 					submit a bug report and your code so this error can be diagnosed further.
@@ -339,7 +339,7 @@ int link_object::init(OBJECT *parent)
 			if (gl_object_isa(to,"node"))
 			{
 				if(gl_set_parent(to, obj) < 0)
-					throw "error when setting parent";
+					throw "error when setting 'to' parent";
 					//Defined above
 			} 
 			else 
