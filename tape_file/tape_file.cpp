@@ -521,7 +521,7 @@ EXPORT int write_collector(struct collector *my, char *timestamp, char *value)
 	return count;
 }
 
-EXPORT void flush_collector(struct recorder *my)
+EXPORT void flush_collector(struct collector *my)
 {
 	fflush(my->fp);
 }
