@@ -328,8 +328,10 @@ OBJECT *object_create_single(CLASS *oclass){ /**< the class of the object */
 	}
 
 	memset(obj, 0, sz);
-	memcpy(obj+1, oclass->defaults, oclass->size);
-
+	if ( oclass->defaults != NULL )
+		memcpy(obj+1, oclass->defaults, oclass->size);
+	else
+		memset(obj+1, 0, oclass->size);
 	tp_next %= tp_count;
 
 	obj->id = next_object_id++;
