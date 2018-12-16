@@ -633,6 +633,7 @@ int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buff
 	fake.unit = 0;
 	for ( p = prop ;  p != NULL ; p = p->next )
 	{
+		void *addr = ( p->oclass == NULL ? p->addr : GETADDR(obj,p) );
 		if(p->ptype == PT_double)
 		{
 			double value;
@@ -641,7 +642,7 @@ int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buff
 				case LU_ALL:
 					// cascade into 'default', as prop->unit should've been set, if there's a unit available.
 				case LU_DEFAULT:
-					sz = gl_get_value(obj,GETADDR(obj,p),tmp,sizeof(tmp)-1,p); /* pointer => int64 */
+					sz = gl_get_value(obj,addr,tmp,sizeof(tmp)-1,p); /* pointer => int64 */
 					break;
 				case LU_NONE:
 					// copy value into local value, use fake PROP, feed into gl_get_vaule
@@ -666,14 +667,14 @@ int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buff
 					} 
 					else 
 					{
-						sz = gl_get_value(obj,GETADDR(obj,p),tmp,sizeof(tmp)-1,p); /* pointer => int64 */;
+						sz = gl_get_value(obj,addr,tmp,sizeof(tmp)-1,p); /* pointer => int64 */;
 					}
 					break;
 				default:
 					break;
 			}
 		} else {
-			sz = gl_get_value(obj,GETADDR(obj,p),tmp,sizeof(tmp)-1,p); /* pointer => int64 */
+			sz = gl_get_value(obj,addr,tmp,sizeof(tmp)-1,p); /* pointer => int64 */
 		}
 		if ( count + sz >= size )
 		{
