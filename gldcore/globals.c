@@ -171,6 +171,7 @@ static KEYWORD gso_keys[] = {
 	{"LEGACY",		GSO_LEGACY,		gso_keys+1},
 	{"MINIMAL",		GSO_MINIMAL,	gso_keys+2},
 	{"NOGLOBALS",	GSO_NOGLOBALS,	gso_keys+3},
+	{"NODEFAULTS",	GSO_NODEFAULTS, gso_keys+4},
 	{"NOMACROS",	GSO_NOMACROS,	NULL},
 };
 
