@@ -858,6 +858,7 @@ typedef enum {_PT_FIRST=-1,
 	PT_DEPRECATED, /* used to flag a property that is deprecated */
 	PT_HAS_NOTIFY, /* used to indicate that a notify function exists for the specified property */
 	PT_HAS_NOTIFY_OVERRIDE, /* as PT_HAS_NOTIFY, but instructs the core not to set the property to the value being set */
+	PT_DEFAULT, /* identifies the default value to use when creating the object property */
 } PROPERTYTYPE; /**< property types */
 typedef char CLASSNAME[64]; /**< the name a GridLAB class */
 typedef void* PROPERTYADDR; /**< the offset of a property from the end of the OBJECT header */
@@ -911,6 +912,7 @@ typedef struct s_property_map {
 	FUNCTIONADDR notify;
 	METHODCALL method; /**< method call, addr must be 0 */
 	bool notify_override;
+	void *default_value; /**< default value to use when creating objects; NULL is memset(0) is desired (default default) */
 } PROPERTY; /**< property definition item */
 
 typedef struct s_property_struct {

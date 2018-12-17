@@ -137,6 +137,7 @@ PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void
 	prop->unit = NULL;
 	prop->notify = 0;
 	prop->notify_override = false;
+	prop->default_value = NULL;
 	if (sscanf(name,"%[^[][%[^]]]",prop->name,unitspec)==2)
 	{
 		/* detect when a unit is associated with non-double/complex property */
@@ -199,7 +200,12 @@ int property_create(PROPERTY *prop, void *addr)
 		if (property_type[prop->ptype].create)
 			return property_type[prop->ptype].create(addr);
 		if ( (int)property_type[prop->ptype].size>0 )
-			memset(addr,0,property_type[prop->ptype].size);
+		{
+			if ( prop->default_value != NULL )
+				memcpy(addr,prop->default_value,property_type[prop->ptype].size);
+			else
+				memset(addr,0,property_type[prop->ptype].size);
+		}
 		return 1;
 	}
 	else
@@ -281,7 +287,7 @@ bool property_is_default(OBJECT *obj, PROPERTY *prop)
 		void *a = (char*)obj + (int)prop->addr;
 		void *b = (char*)(obj->oclass->defaults) + (int)prop->addr;
 		bool result = property_compare_basic(prop->ptype,TCOP_EQ,a,b,NULL,NULL);
-		if ( !result && global_debug_output )
+		if ( global_debug_output )
 		{
 			char buf1[1024] = "<???>", buf2[1024] = "<???>";
 			class_property_to_string(prop,a,buf1,sizeof(buf1));

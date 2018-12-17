@@ -804,6 +804,10 @@ int class_define_map(CLASS *oclass, /**< the object class */
 					break;
 				}
 			}
+			else if (proptype==PT_DEFAULT)
+			{
+				prop->default_value = va_arg(arg,void*);
+			}
 			else if (proptype==PT_SIZE)
 			{
 				prop->size = va_arg(arg,uint32);
