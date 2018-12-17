@@ -121,10 +121,10 @@ static int json_classes(FILE *fp)
 				else
 					len += json_write(",");
 			}
-			if ( prop->defaults != NULL )
-			{
-				json_write("\n\t\t\t\t\"default\": \"%s\"","TODO");
-			}
+			//if ( prop->defaults != NULL )
+			//{
+			//	json_write("\n\t\t\t\t\"default\": \"%s\"","TODO");
+			//}
 			len += json_write("\n\t\t\t}");
 		}
 		len += json_write("\n\t\t}");
