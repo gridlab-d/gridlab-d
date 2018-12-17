@@ -194,17 +194,16 @@ TRANSFERFUNCTION *find_filter(char *name)
 int get_source_type(PROPERTY *prop)
 {
 	/* TODO extend this to support multiple sources */
-	int source_type = 0;
 	switch ( prop->ptype ) {
-	case PT_double: source_type = XS_DOUBLE; break;
-	case PT_complex: source_type = XS_COMPLEX; break;
-	case PT_loadshape: source_type = XS_LOADSHAPE; break;
-	case PT_enduse: source_type = XS_ENDUSE; break;
-	case PT_random: source_type = XS_RANDOMVAR; break;
+	case PT_double: return XS_DOUBLE;
+	case PT_complex: return XS_COMPLEX;
+	case PT_loadshape: return XS_LOADSHAPE;
+	case PT_enduse: return XS_ENDUSE;
+	case PT_random: return XS_RANDOMVAR;
 	default:
 		output_error("tranform/get_source_type(PROPERTY *prop='%s'): unsupported source property type '%s'",
 			prop->name,property_getspec(prop->ptype)->name);
-		break;
+		return 0;
 	}
 }
 int transform_add_filter(OBJECT *target_obj,		/* pointer to the target object (lhs) */
