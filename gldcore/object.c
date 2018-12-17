@@ -1951,11 +1951,13 @@ int object_saveall(FILE *fp) /**< the stream to write to */
 		{
 			PROPERTYACCESS access=PA_PUBLIC;
 			PROPERTY *prop = NULL;
+			CLASS *oclass = obj->oclass;
+			MODULE *mod = oclass->module;
 			char32 oname = "(unidentified)";
-			if ( obj->oclass->name && (global_glm_save_options&GSO_NOINTERNALS)==0 )
-				count += fprintf(fp, "object %s:%d {\n", obj->oclass->name, obj->id);
+			if ( oclass->name && (global_glm_save_options&GSO_NOINTERNALS)==0 )
+				count += fprintf(fp, "object %s.%s:%d {\n", mod->name, oclass->name, obj->id);
 			else
-				count += fprintf(fp, "object %s {\n", obj->oclass->name);
+				count += fprintf(fp, "object %s.%s {\n", mod->name, oclass->name);
 
 			/* dump internal properties */
 			if ( obj->parent != NULL )
@@ -1976,7 +1978,7 @@ int object_saveall(FILE *fp) /**< the stream to write to */
 			if ( obj->name != NULL )
 				count += fprintf(fp, "\tname \"%s\";\n", obj->name);
 			else if ( (global_glm_save_options&GSO_NOINTERNALS)==GSO_NOINTERNALS )
-				count += fprintf(fp, "\tname \"%s:%d\";\n", obj->oclass->name, obj->id);
+				count += fprintf(fp, "\tname \"%s:%d\";\n", oclass->name, obj->id);
 			if ( (global_glm_save_options&GSO_NOINTERNALS)==0 && convert_from_timestamp(obj->clock, buffer, sizeof(buffer)) )
 				count += fprintf(fp,"\tclock '%s';\n",  buffer);
 			if ( !isnan(obj->latitude) )
@@ -1992,7 +1994,7 @@ int object_saveall(FILE *fp) /**< the stream to write to */
 			}
 
 			/* dump properties */
-			for ( prop=obj->oclass->pmap; prop!=NULL; prop=(prop->next?prop->next:(prop->oclass->parent?prop->oclass->parent->pmap:NULL)) )
+			for ( prop=oclass->pmap; prop!=NULL; prop=(prop->next?prop->next:(prop->oclass->parent?prop->oclass->parent->pmap:NULL)) )
 			{
 				if ( (global_glm_save_options&GSO_NODEFAULTS)==GSO_NODEFAULTS && property_is_default(obj,prop) )
 					continue;
