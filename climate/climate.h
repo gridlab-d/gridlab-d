@@ -174,7 +174,8 @@ typedef	enum {
 		RT_CSV,
 };
 
-class climate : public gld_object {
+class climate : public gld_object 
+{
 	
 	// get_/set_ accessors for classes in this module only (non-atomic data need locks on access)
 	GL_STRING(char32,city); ///< the city
@@ -231,6 +232,7 @@ public:
 	enumeration reader_type;
 	static CLASS *oclass;
 	static climate *defaults;
+	void set_defaults(bool is_template = false);
 public:
 	void update_forecasts(TIMESTAMP t0);
 	void init_cloud_pattern(void);
@@ -248,6 +250,7 @@ private:
 	int get_binary_cloud_value_for_location(double latitude, double longitude, int *cloud);
 	double convert_to_binary_cloud();
 	void convert_to_fuzzy_cloud( double cut_elevation, int num_fuzzy_layers, double alpha);
+private:
 	TIMESTAMP prev_NTime;
 	int MIN_LAT_INDEX;
 	int MAX_LAT_INDEX;
