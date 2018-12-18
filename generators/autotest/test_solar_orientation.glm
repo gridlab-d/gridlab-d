@@ -22,13 +22,13 @@ module powerflow {
 };
 
 object climate {
-     name "WA-Yakima";
-     tmyfile "../WA-Yakima.tmy2";
+     name "CA-Chino";
+     tmyfile "../CA-Chino_Airport.tmy3";
 	 interpolate NONE;
 };
 
 // object recorder {
-	// parent "WA-Yakima";
+	// parent "CA-Chino";
 	// property "solar_direct,solar_diffuse,solar_global,ground_reflectivity,temperature,wind_speed";
 	// interval 3600;
 	// file test_solar_raw.csv;
@@ -72,7 +72,7 @@ object solar {
 	name trip_shad_solarS;
 	phases AS;
 	parent trip_shad_inv;
-	weather "WA-Yakima";
+	weather "CA-Chino";
 	Rated_kVA 4.0 kVA;
 	area 29.6296 m^2;
 	tilt_angle 45.0;
@@ -109,7 +109,7 @@ object solar {
 	name trip_shad_solarW;
 	phases AS;
 	parent trip_shad_inv;
-	weather "WA-Yakima";
+	weather "CA-Chino";
 	Rated_kVA 4.0 kVA;
 	area 29.6296 m^2;
 	tilt_angle 45.0;
@@ -133,7 +133,7 @@ object solar {
 	name trip_shad_solarN;
 	phases AS;
 	parent trip_shad_inv;
-	weather "WA-Yakima";
+	weather "CA-Chino";
 	Rated_kVA 4.0 kVA;
 	area 29.6296 m^2;
 	tilt_angle 45.0;
@@ -157,7 +157,7 @@ object solar {
 	name trip_shad_solarE;
 	phases AS;
 	parent trip_shad_inv;
-	weather "WA-Yakima";
+	weather "CA-Chino";
 	Rated_kVA 4.0 kVA;
 	area 29.6296 m^2;
 	tilt_angle 45.0;

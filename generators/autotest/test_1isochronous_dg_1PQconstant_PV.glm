@@ -3378,24 +3378,15 @@ object inverter {
 	Tvol_delay 0.01; 
 	R_vq 0.005;
 
-	// object recorder {
-		// property V_In,I_In,VA_In, Pref, Qref, VA_Out, VA_Out.real, VA_Out.imag;
-		 // file PV1_pq_output.csv;
-		 // flags DELTAMODE;
-		 // interval 1;
-	// };
+	 object recorder {
+		 property V_In,I_In,VA_In, Pref, Qref, VA_Out, VA_Out.real, VA_Out.imag;
+		 file PV1_pq_output.csv;
+		 flags DELTAMODE;
+		 interval 1;
+	 };
 	
 		
-	object complex_assert {
-		flags DELTAMODE;
-		target VA_Out;
-		object player {
-			flags DELTAMODE;
-			property value;
-			file "../constantPQ_PV_VA.csv";
-		};
-		within "0.1";
-	};	
+		
 };	
 
 

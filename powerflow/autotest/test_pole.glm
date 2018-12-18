@@ -10,7 +10,7 @@ clock {
 
 object climate {
 	name weather;
-	tmyfile CA-Chino_Airport.tmy3;
+	tmyfile "../CA-Chino_Airport.tmy3";
 }
 
 object pole_configuration {
@@ -21,6 +21,7 @@ object pole_configuration {
 	ground_diameter (32.5/3.14);
 	top_diameter (19/3.14);
 	fiber_strength 8000 psi;
+	repair_time 1 h;
 }
 
 object pole {
