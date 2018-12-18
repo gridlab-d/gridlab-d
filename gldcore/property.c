@@ -198,6 +198,15 @@ uint32 property_size(PROPERTY *prop)
 		return 0;
 }
 
+/** Get the physical address of a property
+    If obj==NULL, the property address is assume to be for a global
+    @return the physical location in memory of the property
+ **/
+void *property_addr(OBJECT *obj, PROPERTY *prop) 
+{
+	return (void*)((char *)(obj!=NULL?(obj+1):NULL)+(int64)(prop->addr));
+}
+
 uint32 property_size_by_type(PROPERTYTYPE type)
 {
 	return property_type[type].size;

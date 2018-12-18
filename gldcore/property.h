@@ -979,6 +979,7 @@ PROPERTYCOMPAREOP property_compare_op(PROPERTYTYPE ptype, char *opstr);
 PROPERTYTYPE property_get_type(char *name);
 double property_get_part(struct s_object_list *obj, PROPERTY *prop, char *part);
 bool property_is_default(struct s_object_list *obj, PROPERTY *prop);
+void *property_addr(struct s_object_list *obj, PROPERTY *prop);
 int property_read(PROPERTY *prop, void *addr, char *string);
 int property_write(PROPERTY *prop, void *addr, char *string, size_t size);
 

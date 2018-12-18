@@ -290,19 +290,14 @@ char *object_get_unit(OBJECT *obj, char *name)
 	- \p EINVAL type is not valid
 	- \p ENOMEM memory allocation failed
  **/
-OBJECT *object_create_single(CLASS *oclass){ /**< the class of the object */
-	/* @todo support threadpool during object creation by calling this malloc from the appropriate thread */
+OBJECT *object_create_single(CLASS *oclass) /**< the class of the object */
+{
 	OBJECT *obj = 0;
-	static int tp_next = 0;
-	static int tp_count = 0;
 	PROPERTY *prop;
 	int sz = sizeof(OBJECT);
 
-	if(tp_count == 0){
-		tp_count = processor_count();
-	}
-
-	if(oclass == NULL){
+	if ( oclass == NULL )
+	{
 		throw_exception("object_create_single(CLASS *oclass=NULL): class is NULL");
 		/* TROUBLESHOOT
 			An attempt to create an object was given a NULL pointer for the class.  
@@ -319,18 +314,14 @@ OBJECT *object_create_single(CLASS *oclass){ /**< the class of the object */
 	}
 
 	obj = (OBJECT*)malloc(sz + oclass->size);
-
-	if(obj == NULL){
+	if ( obj == NULL )
+	{
 		throw_exception("object_create_single(CLASS *oclass='%s'): memory allocation failed", oclass->name);
 		/* TROUBLESHOOT
 			The system has run out of memory and is unable to create the object requested.  Try freeing up system memory and try again.
 		 */
 	}
-
-	memset(obj, 0, sz);
-	memcpy(obj+1, oclass->defaults, oclass->size);
-
-	tp_next %= tp_count;
+	memset(obj, 0, sz+oclass->size);
 
 	obj->id = next_object_id++;
 	obj->oclass = oclass;
@@ -355,11 +346,14 @@ OBJECT *object_create_single(CLASS *oclass){ /**< the class of the object */
 	random_key(obj->guid,sizeof(obj->guid)/sizeof(obj->guid[0]));
 
 	for ( prop=obj->oclass->pmap; prop!=NULL; prop=(prop->next?prop->next:(prop->oclass->parent?prop->oclass->parent->pmap:NULL)))
-		property_create(prop,(void*)((char *)(obj+1)+(int64)(prop->addr)));
+		property_create(prop,property_addr(obj,prop));
 	
-	if(first_object == NULL){
+	if ( first_object == NULL )
+	{
 		first_object = obj;
-	} else {
+	} 
+	else 
+	{
 		last_object->next = obj;
 	}
 	
@@ -1994,8 +1988,16 @@ int object_saveall(FILE *fp) /**< the stream to write to */
 			}
 
 			/* dump properties */
-			for ( prop=oclass->pmap; prop!=NULL; prop=(prop->next?prop->next:(prop->oclass->parent?prop->oclass->parent->pmap:NULL)) )
+			CLASS *last = oclass;
+			output_debug("dumping properties of '%s' (pmap=%p)", oclass->name, oclass->pmap);
+			for ( prop = class_get_first_property_inherit(oclass) ; prop != NULL ; prop = class_get_next_property_inherit(prop) )
 			{
+				output_debug("dumping property '%s' of '%s'",prop->name, prop->oclass->name);
+				if ( last != prop->oclass )
+				{
+					count += fprintf(fp,"\t// class.parent = %s.%s\n", prop->oclass->module->name, prop->oclass->name);
+					last = prop->oclass;
+				}
 				if ( (global_glm_save_options&GSO_NODEFAULTS)==GSO_NODEFAULTS && property_is_default(obj,prop) )
 					continue;
 				if ( (global_glm_save_options&GSO_NOINTERNALS)==GSO_NOINTERNALS && prop->access!=PA_PUBLIC )

@@ -81,6 +81,30 @@ PROPERTY *class_get_first_property(CLASS *oclass) /**< the object class */
 	return oclass->pmap;
 }
 
+PROPERTY *class_get_first_property_inherit(CLASS *oclass) /**< the object class */
+{
+	while ( oclass->pmap == NULL )
+	{
+		oclass = oclass->parent;
+		if ( oclass == NULL )
+			return NULL;
+	}
+	return oclass->pmap;
+}
+PROPERTY *class_get_next_property_inherit(PROPERTY *prop)
+{
+	PROPERTY *next = prop->next;
+	CLASS *oclass = prop->oclass;	
+	if ( next == NULL || oclass != next->oclass )
+	{
+		return oclass->parent ? oclass->parent->pmap : NULL;
+	}
+	else
+	{
+		return next;
+	}
+}
+
 /** Get the next property of within the current class
 	@return a pointer to the PROPERTY, or \p NULL if there are no properties left
  **/
@@ -475,13 +499,6 @@ CLASS *class_register(MODULE *module,        /**< the module that implements the
 	oclass->profiler.numobjs=0;
 	oclass->profiler.count=0;
 	oclass->profiler.clocks=0;
-	oclass->defaults = malloc(size);
-	if ( oclass->defaults == NULL )
-	{
-		errno = ENOMEM;
-		return 0;
-	}
-	memset(oclass->defaults,0,size);
 	if (first_class==NULL)
 		first_class = oclass;
 	else

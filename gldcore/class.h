@@ -119,7 +119,6 @@ struct s_class_list {
 	TECHNOLOGYREADINESSLEVEL trl; // technology readiness level (1-9, 0=unknown)
 	bool has_runtime;	///< flag indicating that a runtime dll, so, or dylib is in use
 	char runtime[1024]; ///< name of file containing runtime dll, so, or dylib
-	void *defaults; ///< pointer to template object with default values
 	struct s_class_list *next;
 }; /* CLASS */
 
@@ -129,6 +128,8 @@ extern "C" {
 
 PROPERTY *class_get_first_property(CLASS *oclass);
 PROPERTY *class_get_next_property(PROPERTY *prop);
+PROPERTY *class_get_first_property_inherit(CLASS *oclass);
+PROPERTY *class_get_next_property_inherit(PROPERTY *prop);
 PROPERTY *class_prop_in_class(CLASS *oclass, PROPERTY *prop);
 PROPERTY *class_find_property(CLASS *oclass, PROPERTYNAME name);
 void class_add_property(CLASS *oclass, PROPERTY *prop);
