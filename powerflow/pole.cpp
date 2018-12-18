@@ -229,9 +229,9 @@ TIMESTAMP pole::presync(TIMESTAMP t0)
 		equipment_moment_nowind = equipment_area * equipment_height * config->overload_factor_transverse_general;
 		double wind_pressure_failure = (resisting_moment - wire_tension) / (pole_moment_nowind + equipment_moment_nowind + wire_moment_nowind);
 		critical_wind_speed = sqrt(wind_pressure_failure / (0.00256 * 2.24));
-		double pole_stress_polynomial_a = pole_moment_nowind+equipment_moment_nowind;
-		double pole_stress_polynomial_b = 0.0;
-		double pole_stress_polynomial_c = wire_tension;
+		pole_stress_polynomial_a = pole_moment_nowind+equipment_moment_nowind;
+		pole_stress_polynomial_b = 0.0;
+		pole_stress_polynomial_c = wire_tension;
 
 	}
 	TIMESTAMP t1 = node::presync(t0);
