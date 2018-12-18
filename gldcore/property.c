@@ -298,7 +298,7 @@ double property_get_part(OBJECT *obj, PROPERTY *prop, char *part)
 
 bool property_is_default(OBJECT *obj, PROPERTY *prop)
 {
-	void *a = (char*)obj + (int)prop->addr;
+	void *a = (char*)(obj+1) + (int)prop->addr;
 	char b[4096];
 	bool result = false;
 	if ( prop->ptype > PT_void && prop->ptype < PT_object )
