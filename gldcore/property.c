@@ -193,6 +193,16 @@ uint32 property_size_by_type(PROPERTYTYPE type)
 	return property_type[type].size;
 }
 
+int property_read(PROPERTY *prop, void *addr, char *string)
+{
+	return property_type[prop->ptype].string_to_data ? property_type[prop->ptype].string_to_data(string,addr,prop) : 0;
+}
+
+int property_write(PROPERTY *prop, void *addr, char *string, size_t size)
+{
+	return property_type[prop->ptype].data_to_string ? property_type[prop->ptype].data_to_string(string,size,addr,prop) : 0;
+}
+
 int property_create(PROPERTY *prop, void *addr)
 {
 	if (prop && prop->ptype>_PT_FIRST && prop->ptype<_PT_LAST)
@@ -202,7 +212,13 @@ int property_create(PROPERTY *prop, void *addr)
 		if ( (int)property_type[prop->ptype].size>0 )
 		{
 			if ( prop->default_value != NULL )
-				memcpy(addr,prop->default_value,property_type[prop->ptype].size);
+			{
+				if ( property_read(prop,addr,prop->default_value) == 0 )
+				{
+					output_error("property '%s' default value '%s is invalid", prop->name, prop->default_value);
+					memset(addr,0,property_type[prop->ptype].size);
+				}
+			}	
 			else
 				memset(addr,0,property_type[prop->ptype].size);
 		}
@@ -282,25 +298,51 @@ double property_get_part(OBJECT *obj, PROPERTY *prop, char *part)
 
 bool property_is_default(OBJECT *obj, PROPERTY *prop)
 {
-	if ( prop->ptype > PT_void && prop->ptype < PT_object && obj->oclass->defaults != NULL )
+	void *a = (char*)obj + (int)prop->addr;
+	char b[4096];
+	bool result = false;
+	if ( prop->ptype > PT_void && prop->ptype < PT_object )
 	{
-		void *a = (char*)obj + (int)prop->addr;
-		void *b = (char*)(obj->oclass->defaults) + (int)prop->addr;
-		bool result = property_compare_basic(prop->ptype,TCOP_EQ,a,b,NULL,NULL);
+		if ( prop->default_value == NULL )
+		{
+			if ( prop->size > sizeof(b) )
+			{
+				result = false;
+			}
+			else
+			{
+				memset(b,0,prop->size);
+				result = (memcmp(a,b,prop->size)==0);
+			}	
+		}
+		else 
+		{
+			property_read(prop,b,prop->default_value);
+			result = property_compare_basic(prop->ptype,TCOP_EQ,a,b,NULL,NULL);
+		}
+
 		if ( global_debug_output )
 		{
 			char buf1[1024] = "<???>", buf2[1024] = "<???>";
-			class_property_to_string(prop,a,buf1,sizeof(buf1));
-			class_property_to_string(prop,b,buf2,sizeof(buf2));
-			output_debug("comparing %s:%d.%s [%s] == %s:default.%s [%s] --> %s",
-				obj->name?obj->name:obj->oclass->name, obj->id, prop->name, buf1,
-				obj->oclass->name, prop->name, buf2,
-				result ? "true" : "false");
-		}	
-		return result;
-	}
-	else
-		return false;
+			property_write(prop,a,buf1,sizeof(buf1));
+			property_write(prop,b,buf2,sizeof(buf2));
+			if ( obj->name == NULL )
+			{
+				output_debug("comparing %s:%d.%s [%s] == %s:default.%s [%s] --> %s",
+					obj->oclass->name, obj->id, prop->name, buf1,
+					obj->oclass->name, prop->name, buf2,
+					result ? "true" : "false");
+			}
+			else
+			{
+				output_debug("comparing %s.%s [%s] == %s:default.%s [%s] --> %s",
+					obj->name, prop->name, buf1,
+					obj->oclass->name, prop->name, buf2,
+					result ? "true" : "false");
+			}
+		}
+	}	
+	return result;
 }
 
 /*********************************************************
