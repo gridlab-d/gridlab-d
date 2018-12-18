@@ -164,11 +164,6 @@ int pole::init(OBJECT *parent)
 	}
 	is_deadend = ( n_lines < 2 );
 
-	return node::init(parent);
-}
-
-TIMESTAMP pole::presync(TIMESTAMP t0)
-{
 	if ( pole_status == PS_FAILED && down_time+config->repair_time > gl_globalclock )
 	{
 		warning("pole repaired");
@@ -226,6 +221,14 @@ TIMESTAMP pole::presync(TIMESTAMP t0)
 		critical_wind_speed = sqrt(wind_pressure_failure / (0.00256 * 2.24));
 
 	}
+
+	return node::init(parent);
+}
+
+TIMESTAMP pole::presync(TIMESTAMP t0)
+{
+	
+	
 	TIMESTAMP t1 = node::presync(t0);
 	TIMESTAMP t2 = ( pole_status == PS_FAILED ? down_time + config->repair_time : TS_NEVER );
 	return ( t1 > t0 && t2 < t1 ) ? t1 : t2;
