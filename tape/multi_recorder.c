@@ -563,26 +563,38 @@ static TIMESTAMP multi_recorder_write(OBJECT *obj)
 EXPORT int method_multi_recorder_property(OBJECT *obj, char *value, size_t size)
 {
 	struct recorder *my = OBJECTDATA(obj,struct recorder);
-	size_t len = strlen(value);
-	gl_verbose("adding property '%s' to multi_recorder:%d",value,obj->id);
-	if ( my->property_len < len || my->property == NULL )
+	if ( size == 0 ) // incoming value
 	{
-		my->property_len = ((my->property_len+len)/BLOCKSIZE+1)*BLOCKSIZE;
-		my->property = (char*)realloc(my->property,my->property_len);
-		if ( my->property == NULL )
+		size_t len = strlen(value) + (my->property==NULL ? 0 : strlen(my->property));
+		gl_verbose("adding property '%s' to multi_recorder:%d",value,obj->id);
+		if ( my->property_len < len )
 		{
-			gl_error("memory allocation failed");
-			my->property_len = 0;
-			return 0;
+			my->property_len = ((my->property_len+len+1)/BLOCKSIZE+1)*BLOCKSIZE;
+			my->property = (char*)realloc(my->property,my->property_len);
+			if ( my->property == NULL )
+			{
+				gl_error("memory allocation failed");
+				my->property_len = 0;
+				return 0;
+			}
+			strcpy(my->property,value);
+		}	
+		else
+		{
+			strcat(my->property,",");
+			strcat(my->property,value);
 		}
-		strcpy(my->property,value);
-	}	
-	else
-	{
-		strcat(my->property,",");
-		strcat(my->property,value);
+		return 1;
 	}
-	return 1;
+	else { // outgoing value
+		size_t len = strlen(my->property);
+		if ( size < len+1 ) // not enough room for the full contents
+		{
+			return -1;
+		}
+		strcpy(value,my->property);
+		return len;
+	}
 }
 
 RECORDER_MAP *link_multi_properties(OBJECT *obj, char *property_list)

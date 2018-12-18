@@ -1,10 +1,15 @@
 // In this 123-bus feeder, 
 // 1 diesel generator of isochronous mode is placed at the swing bus,
-// 1 inverter of constant_P mode and constant_Q mode is placed at node 54.
+// 1 inverter of p/f droop and constant_Q mode is placed at node 54.
+
+// Note:
+// Currently, inverter/battery delta mode is working when "PI" dynamic_model_mode and "CONSTANT_PQ" four_quadrant_control_mode are both selected
+
 // Test case:
-// At 2001-08-01 12:00:30.001 PST, three-phase load 49 increases based on the given players
+// At 2001-08-01 12:00:10.001 PST, three-phase load 49 increases based on the given players
 // Gen 1 thereforely increases its power to maintain the feeder frequency
-// With the f/p and v/q droops disabled in the inverter, inverter real and reactive power outputs are kept the same as the reference values
+// Although there is f/p droop enabled in the inverter, since no speed change is sensed, inverter real power outputs are kept the same as the reference value
+// With the v/q droop disabled in the inverter, inverter reactive power outputs are kept the same as the reference value
 
 clock {
 	timezone "PST+8PDT";
@@ -46,7 +51,6 @@ module generators {
 	deltamode_timestep 10 ms;
 }
 
-
 //Fault check option
 object fault_check {
 	name base_fault_check_object;
@@ -54,7 +58,7 @@ object fault_check {
 	strictly_radial false;
 	eventgen_object testgendev;
 	grid_association true;	//Flag to ensure non-monolithic islands
-//	output_filename test_connect.txt;
+	// output_filename test_connect.txt;
 	full_output_file true;
 }
 
@@ -70,7 +74,7 @@ object eventgen {
 
 // object metrics {
 	// name testmetrics;
-// //	report_file delete_me.txt;
+	// report_file delete_me.txt;
 	// module_metrics_object pwrmetrics;
 	// metrics_of_interest "SAIFI";
 	// customer_group "class=meter";
@@ -2377,17 +2381,17 @@ object load:49 {
      //constant_power_C 35000+25000j;
 	 
 	 object player {
-		file "../diesel_deltamode_load_player_A_1Gen_2.player";
+		file "../diesel_deltamode_load_player_A_1Gen_3.player";
 		property constant_power_A;
 		flags DELTAMODE;
 	};
 	object player {
-		file "../diesel_deltamode_load_player_B_1Gen_2.player";
+		file "../diesel_deltamode_load_player_B_1Gen_3.player";
 		property constant_power_B;
 		flags DELTAMODE;
 	};
 	object player {
-		file "../diesel_deltamode_load_player_C_1Gen_2.player";
+		file "../diesel_deltamode_load_player_C_1Gen_3.player";
 		property constant_power_C;
 		flags DELTAMODE;
 	};
@@ -3258,7 +3262,81 @@ object player {
 	parent 50;
 	flags DELTAMODE;
 }
+//////////////////////////////////// Inverter #1 M1/////////////////////////////////////////
 
+object meter:1370 {
+     phases "ABCN";
+	 parent 54;
+     name 1370;
+     flags DELTAMODE;
+     nominal_voltage 2401.7771;
+}
+
+// object recorder {
+	// parent 1370;
+	// property measured_real_power,measured_reactive_power,measured_current_A.real,measured_current_A.imag,measured_current_B.real,measured_current_B.imag,measured_current_C.real,measured_current_C.imag,voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag;
+	// interval 1;
+	// flags DELTAMODE;
+	// file Inverter_#1_MG1.csv;
+// };
+
+object inverter {
+	name const_pq_inv1;
+	parent 1370;
+	inverter_type FOUR_QUADRANT;
+	use_multipoint_efficiency FALSE;
+	four_quadrant_control_mode CONSTANT_PQ;
+	generator_status ONLINE;
+	inverter_efficiency 0.99;	
+	enable_ramp_rates_real false;
+	max_ramp_down_real 3.0 kW/s;
+	max_ramp_up_real 3.0 kW/s;
+	enable_ramp_rates_reactive false;
+	max_ramp_down_reactive 1000;
+	max_ramp_up_reactive 1000;
+
+	rated_power 300 kVA;
+	P_Out 200000;
+	Q_Out 100000;
+	V_In 1000+0j;
+	I_In 1000+0j;
+
+	flags DELTAMODE;
+	dynamic_model_mode PI;
+	inverter_convergence_criterion 0.001;
+	// PI controller parameters
+	kpd 0.001;
+	kid 0.09;
+	kpq 0.001;
+	kiq 0.09;
+	
+	// Droop curve parameters
+	inverter_droop_fp true;
+	Tfreq_delay 0.01; 
+	R_fp 0.04;
+	
+	inverter_droop_vq false;
+	Tvol_delay 0.01; 
+	R_vq 0.005;
+
+	// object recorder {
+		// property VA_Out.real, VA_Out.imag;
+		 // file PV1_pq_output.csv;
+		 // flags DELTAMODE;
+		 // interval 1;
+	// };
+	
+	object complex_assert {
+		flags DELTAMODE;
+		target VA_Out;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file "../constantQ_PV_VA.csv";
+		};
+		within "0.1";
+	};	
+};	
 // DG #1 
 object diesel_dg {
     flags DELTAMODE;
@@ -3326,68 +3404,5 @@ object diesel_dg {
 		// file "Gen_1_Speed.csv";
 	// };
 }
-
-//////////////////////////////////// Inverter #1 M1/////////////////////////////////////////
-
-object meter:1370 {
-     phases "ABCN";
-	 parent 54;
-     name 1370;
-     flags DELTAMODE;
-     nominal_voltage 2401.7771;
-}
-
-// object recorder {
-	// parent 1370;
-	// property measured_real_power,measured_reactive_power,measured_current_A.real,measured_current_A.imag,measured_current_B.real,measured_current_B.imag,measured_current_C.real,measured_current_C.imag,voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag;
-	// interval 1;
-	// flags DELTAMODE;
-	// file Inverter_#1_MG1.csv;
-// };
-
-object inverter {
-	name const_pq_inv1;
-	parent 1370;
-	inverter_type FOUR_QUADRANT;
-	use_multipoint_efficiency FALSE;
-	four_quadrant_control_mode CONSTANT_PQ;
-	generator_status ONLINE;
-	inverter_efficiency 0.99;	
-
-	rated_power 300 kVA;
-	P_Out 200000;
-	Q_Out 100000;
-	V_In 1000+0j;
-	I_In 1000+0j;
-
-	flags DELTAMODE;
-	dynamic_model_mode PI;
-	inverter_convergence_criterion 0.001;
-	// PI controller parameters
-	kpd 0.001;
-	kid 0.09;
-	kpq 0.001;
-	kiq 0.09;
-	
-	// Droop curve parameters
-	inverter_droop_fp false;
-	Tfreq_delay 0.01; 
-	R_fp 0.000001;
-	
-	inverter_droop_vq false;
-	Tvol_delay 0.01; 
-	R_vq 0.005;
-
-	 object recorder {
-		 property V_In,I_In,VA_In, Pref, Qref, VA_Out, VA_Out.real, VA_Out.imag;
-		 file PV1_pq_output.csv;
-		 flags DELTAMODE;
-		 interval 1;
-	 };
-	
-		
-		
-};	
-
 
 

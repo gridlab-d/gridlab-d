@@ -1,10 +1,12 @@
-// In this 123-bus feeder, 
-// 1 diesel generator of isochronous mode is placed at the swing bus,
-// 1 inverter of constant_P mode and constant_Q mode is placed at node 54.
+// In the 123-bus feeder,
+// 1 DGs is of isochronous mode, and placed at the Swing bus
+// 1 battery is of f/p droop and Q dispatch mode, and placed at node 151
+// The battery is working through the inverter object, soc is updated in the battery object, power outputs are calculated from the inverter object.
+// Currently, inverter/battery delta mode is working when "PI" dynamic_model_mode and "CONSTANT_PQ" four_quadrant_control_mode are both selected.
 // Test case:
-// At 2001-08-01 12:00:30.001 PST, three-phase load 49 increases based on the given players
-// Gen 1 thereforely increases its power to maintain the feeder frequency
-// With the f/p and v/q droops disabled in the inverter, inverter real and reactive power outputs are kept the same as the reference values
+// Battery is defined with droop, soc = 0.5 at the beginning. 
+// Part of the feeder is disconnected at 12:00:05.0001 PST. 
+// Battery enters the delta mode, real power outputs decrease from the reference values to 0 then to negative values, based on the droop settings.
 
 clock {
 	timezone "PST+8PDT";
@@ -54,23 +56,26 @@ object fault_check {
 	strictly_radial false;
 	eventgen_object testgendev;
 	grid_association true;	//Flag to ensure non-monolithic islands
-//	output_filename test_connect.txt;
+	// output_filename test_connect.txt;
 	full_output_file true;
 }
 
-// Junk event
+//Manual object - needed to get fault_check to behave properly -- arbitrary item added
+
+
+// Open switch to reduce the loads
 object eventgen {
 	flags DELTAMODE;
 	name testgendev;
 	// parent testmetrics;
 	fault_type "SW-ABC";     //Type of fault for the object to induce
-	manual_outages "microgrid_switch3,2001-08-01 12:01:30.00 PST,2001-08-01 12:01:31 PST";
+	manual_outages "microgrid_switch3,2001-08-01 12:00:05.0001 PST,2001-08-01 12:00:30 PST";
 }   // First time is when the switch will open, the second time is when it will close
 
 
 // object metrics {
 	// name testmetrics;
-// //	report_file delete_me.txt;
+	// report_file delete_me.txt;
 	// module_metrics_object pwrmetrics;
 	// metrics_of_interest "SAIFI";
 	// customer_group "class=meter";
@@ -79,7 +84,6 @@ object eventgen {
 // object power_metrics {
 	// name pwrmetrics;
 // }
-
 
 ///////////////////////////////////////////////////////////////////////////
 // Start of individual objects/////////////////////////////////////////////
@@ -1411,11 +1415,12 @@ object meter:8 {
      phases "ABCN";
      name 8;
      flags DELTAMODE;
+	 bustype SWING_PQ;
 	 voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
      nominal_voltage 2401.7771;
-	 
+
 }
  
 
@@ -1576,7 +1581,6 @@ object node:54 {
      phases "ABCN";
      name 54;
      flags DELTAMODE;
-	 bustype SWING_PQ;
 	 voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
@@ -1590,6 +1594,7 @@ object meter:57 {
      phases "ABCN";
      name 57;
      flags DELTAMODE;
+	 bustype SWING_PQ;
 	 voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
@@ -1619,7 +1624,7 @@ object meter:67 {
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
      nominal_voltage 2401.7771;
-	 
+
 }
 
 object node:6701 {
@@ -1818,6 +1823,8 @@ object node:1491 {
 object meter:150 {
      phases "ABCN";
      name 150;
+     //bustype SWING;
+	 //bustype SWING_PQ;
      flags DELTAMODE;
 	 voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
@@ -1853,7 +1860,6 @@ object node:160 {
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
      nominal_voltage 2401.7771;
-	 
 }
  
 object node:195 {
@@ -2372,29 +2378,10 @@ object load:49 {
 	 voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
-     //constant_power_A 35000+25000j;
-     //constant_power_B 70000+50000j;
-     //constant_power_C 35000+25000j;
-	 
-	 object player {
-		file "../diesel_deltamode_load_player_A_1Gen_2.player";
-		property constant_power_A;
-		flags DELTAMODE;
-	};
-	object player {
-		file "../diesel_deltamode_load_player_B_1Gen_2.player";
-		property constant_power_B;
-		flags DELTAMODE;
-	};
-	object player {
-		file "../diesel_deltamode_load_player_C_1Gen_2.player";
-		property constant_power_C;
-		flags DELTAMODE;
-	};
-	
-	
+     constant_power_A 35000+25000j;
+     constant_power_B 70000+50000j;
+     constant_power_C 35000+25000j;
      nominal_voltage 2401.7771;
-	 
 }
  
 object meter:50 {
@@ -2402,11 +2389,12 @@ object meter:50 {
 	 bustype SWING;
      phases "ABCN";
      flags DELTAMODE;
+	 //bustype SWING_PQ;
 	 voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
+     //constant_power_C 40000+20000j;
      nominal_voltage 2401.7771;
-
 }
  
 object load:51 {
@@ -2491,6 +2479,7 @@ object load:60 {
      name 60;
      phases "ABCN";
      flags DELTAMODE;
+	 // bustype SWING_PQ;
 	 voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
@@ -2983,7 +2972,8 @@ object switch:60160 {
      name microgrid_switch3;
      from load:60;
      to node:160;
-     status CLOSED; 
+     status CLOSED;
+	 
 	 
 }
 
@@ -3251,19 +3241,12 @@ object regulator:1606701 {
 	 configuration regulator_configuration:16067010;
 }
 
-// This player kicks the system into delta mode early so that all transition transients can settle before the scenario transients are triggered
-object player {
-	file ../trigger.player;
-	property nominal_voltage;
-	parent 50;
-	flags DELTAMODE;
-}
-
 // DG #1 
 object diesel_dg {
     flags DELTAMODE;
 	parent 50;
 	name Gen1;
+	groupid "dg_controlled";
 	
 	Rated_V 4156; //Line-to-Line value
 	Rated_VA 5000000; // Defaults to 10 MVA
@@ -3285,7 +3268,6 @@ object diesel_dg {
 	// //Default properties:
 	GGOV1_R 0.04; // Permanent droop, p.u.
 	GGOV1_Rselect 0; // Feedback signal for droop, = 1 selected electrical power, = 0 none (isochronous governor), = -1 fuel valve stroke ( true stroke),= -2 governor output ( requested stroke)
-	
 	GGOV1_Tpelec 1.0; // Electrical power transducer time constant, sec. (>0.)
 	GGOV1_maxerr 0.05;//0.05; // Maximum value for speed error signal
 	GGOV1_minerr -0.05;//-0.05; // Minimum value for speed error signal
@@ -3310,7 +3292,7 @@ object diesel_dg {
 	GGOV1_ropen 050; // Maximum valve opening rate, p.u./sec.
 	GGOV1_rclose -050; // Minimum valve closing rate, p.u./sec.
 	GGOV1_Kimw 0.0;//0.002; // Power controller (reset) gain
-	GGOV1_Pmwset 3000000; // Power controller setpoint, MW
+	GGOV1_Pmwset 3.0; // Power controller setpoint, MW
 	GGOV1_aset 0.01; // Acceleration limiter setpoint, p.u./sec.
 	GGOV1_Ka 10.0; // Acceleration limiter Gain
 	GGOV1_Ta 0.1; // Acceleration limiter time constant, sec. (>0.)
@@ -3325,20 +3307,20 @@ object diesel_dg {
 		// //interval 1;
 		// file "Gen_1_Speed.csv";
 	// };
+	
 }
 
-//////////////////////////////////// Inverter #1 M1/////////////////////////////////////////
-
-object meter:1370 {
+//////////////////////////////////// Battery #1 M1/////////////////////////////////////////
+object meter:1369 {
      phases "ABCN";
-	 parent 54;
-     name 1370;
+	 parent 151;
+     name 1369;
      flags DELTAMODE;
      nominal_voltage 2401.7771;
 }
 
 // object recorder {
-	// parent 1370;
+	// parent 1369;
 	// property measured_real_power,measured_reactive_power,measured_current_A.real,measured_current_A.imag,measured_current_B.real,measured_current_B.imag,measured_current_C.real,measured_current_C.imag,voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag;
 	// interval 1;
 	// flags DELTAMODE;
@@ -3346,48 +3328,87 @@ object meter:1370 {
 // };
 
 object inverter {
-	name const_pq_inv1;
-	parent 1370;
+	name const_pq_inv;
+	parent 1369;
 	inverter_type FOUR_QUADRANT;
 	use_multipoint_efficiency FALSE;
 	four_quadrant_control_mode CONSTANT_PQ;
 	generator_status ONLINE;
 	inverter_efficiency 0.99;	
 
-	rated_power 300 kVA;
-	P_Out 200000;
-	Q_Out 100000;
-	V_In 1000+0j;
-	I_In 1000+0j;
+	rated_power 200 kVA;
+	P_Out 80000;  // constant real power reference. In steady state, it will be the real power output; in delta mode, the real power output is trying to reach this value, if no droop is defined
+	Q_Out 10000;
+	V_In 1000+0j; // dc voltage
+	I_In 1000+0j; // dc current
 
 	flags DELTAMODE;
 	dynamic_model_mode PI;
 	inverter_convergence_criterion 0.001;
+	
 	// PI controller parameters
-	kpd 0.001;
-	kid 0.09;
-	kpq 0.001;
-	kiq 0.09;
+	kpd 0.001; 		// The d-axis proportionalgain for the current modulation PI controller.
+	kid 0.05;		// The d-axis integration gain for the current modulation PI controller.
+	kpq 0.001;		// The q-axis proportionalgain for the current modulation PI controller.
+	kiq 0.05;		// The q-axis integration gain for the current modulation PI controller.
 	
 	// Droop curve parameters
-	inverter_droop_fp false;
+	inverter_droop_fp true; 
 	Tfreq_delay 0.01; 
-	R_fp 0.000001;
+	R_fp 0.000003;
 	
-	inverter_droop_vq false;
+	inverter_droop_vq false; 
 	Tvol_delay 0.01; 
-	R_vq 0.005;
+	R_vq 0.001;
 
-	 object recorder {
-		 property V_In,I_In,VA_In, Pref, Qref, VA_Out, VA_Out.real, VA_Out.imag;
-		 file PV1_pq_output.csv;
-		 flags DELTAMODE;
-		 interval 1;
-	 };
+	// object recorder {
+		// property V_In,I_In,VA_In, Pref, Qref, VA_Out, VA_Out.real, VA_Out.imag;
+		 // file PV1_pq_output.csv;
+		 // flags DELTAMODE;
+		 // interval 1;
+	// };
 	
-		
-		
+	object complex_assert {
+		flags DELTAMODE;
+		target VA_Out;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file "../constantQ_battery_VA.csv";
+		};
+		within "0.1";
+	};	
 };	
+
+object battery {
+	name battery_1;
+	parent const_pq_inv;
+	use_internal_battery_model true;
+	battery_type LI_ION;
+	battery_capacity 500 kWh;
+	base_efficiency 1;
+	state_of_charge 0.5; 
+	generator_mode SUPPLY_DRIVEN;
+	
+	flags DELTAMODE;
+	
+	// object recorder {
+		// file "battery_pq_soc.csv";
+		// property state_of_charge;
+		// flags DELTAMODE;
+		// interval 1;
+	// };
+		
+	// object recorder {
+		// file "battery_pq_status.csv";
+		// property battery_state;
+		// flags DELTAMODE;
+		// interval 1;
+	// };
+
+}
+
+
 
 
 
