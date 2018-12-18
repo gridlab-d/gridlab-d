@@ -10,7 +10,7 @@ clock {
 
 object climate {
 	name weather;
-	tmyfile CA-Chino_Airport.tmy3;
+	tmyfile "../CA-Chino_Airport.tmy3";
 }
 
 object pole_configuration {
