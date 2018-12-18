@@ -1948,18 +1948,30 @@ int object_saveall(FILE *fp) /**< the stream to write to */
 			CLASS *oclass = obj->oclass;
 			MODULE *mod = oclass->module;
 			char32 oname = "(unidentified)";
+			OBJECT *parent = obj->parent;
+			OBJECT **topological_parent = object_get_object_by_name(obj,"topological_parent");
 			if ( oclass->name && (global_glm_save_options&GSO_NOINTERNALS)==0 )
 				count += fprintf(fp, "object %s.%s:%d {\n", mod->name, oclass->name, obj->id);
 			else
 				count += fprintf(fp, "object %s.%s {\n", mod->name, oclass->name);
 
-			/* dump internal properties */
-			if ( obj->parent != NULL )
+			/* this is an unfortunate special case arising from how the powerflow module is implemented */
+			if ( topological_parent != NULL )
 			{
-				if ( obj->parent->name != NULL )
-					count += fprintf(fp, "\tparent \"%s\";\n", obj->parent->name);
+				output_debug("<%s:%d> (name='%s') found topological parent",obj->oclass->name, obj->id, obj->name);
+				parent = *topological_parent;
+				if ( parent != NULL )
+					output_debug("<%s:%d> (name='%s') -- original parent is at %p", 
+						obj->oclass->name, obj->id, obj->name, parent);
+			}
+
+			/* dump internal properties */
+			if ( parent != NULL )
+			{
+				if ( parent->name != NULL )
+					count += fprintf(fp, "\tparent \"%s\";\n", parent->name);
 				else
-					count += fprintf(fp, "\tparent \"%s:%d\";\n", obj->parent->oclass->name, obj->parent->id);
+					count += fprintf(fp, "\tparent \"%s:%d\";\n", parent->oclass->name, parent->id);
 			}
 			else if ( (global_glm_save_options&GSO_NOMACROS)==0 )
 			{
@@ -2030,6 +2042,7 @@ int object_saveall(FILE *fp) /**< the stream to write to */
 			if ( access != PA_PUBLIC && (global_glm_save_options&GSO_NOMACROS)==0 )
 				count += fprintf(fp, "#endif\n");
 			count += fprintf(fp,"}\n");
+			if ( global_debug_output ) fflush(fp);
 		}
 	}
 	return count;	

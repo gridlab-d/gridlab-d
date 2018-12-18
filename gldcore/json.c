@@ -253,6 +253,12 @@ static int json_objects(FILE *fp)
 		FIRST("id","%d",obj->id);
 		if ( obj->oclass->name != NULL )
 			TUPLE("class","%s",obj->oclass->name);
+
+		/* handle special case for powerflow module handling of parent */
+		OBJECT **topological_parent = object_get_object_by_name(obj,"topological_parent");
+		if ( topological_parent != NULL )
+			obj->parent = *topological_parent;
+
 		if ( obj->parent != NULL )
 		{
 			if ( obj->parent->name == NULL )

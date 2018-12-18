@@ -219,7 +219,7 @@ PROPERTY *class_find_property(CLASS *oclass,     /**< the object class */
 	if(oclass == NULL)
 		return NULL;
 
-	for (prop=oclass->pmap; prop!=NULL && prop->oclass==oclass; prop=prop->next)
+	for ( prop = class_get_first_property_inherit(oclass) ; prop != NULL ; prop = class_get_next_property_inherit(prop) )
 	{
 		if (strcmp(name,prop->name)==0)
 		{

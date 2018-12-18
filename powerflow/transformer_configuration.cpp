@@ -87,9 +87,9 @@ transformer_configuration::transformer_configuration(MODULE *mod) : powerflow_li
 			PT_double, "resistance2[pu*Ohm]",PADDR(impedance2.Re()),PT_DESCRIPTION,"Secondary series impedance (only used when you want to define each individual winding seperately, pu, real",	
 			PT_double, "reactance2[pu*Ohm]",PADDR(impedance2.Im()),PT_DESCRIPTION,"Secondary series impedance (only used when you want to define each individual winding seperately, pu, imag",	
 			PT_complex, "impedance2[pu*Ohm]",PADDR(impedance2),PT_DESCRIPTION,"Secondary series impedance (only used when you want to define each individual winding seperately, pu",
-			PT_double, "shunt_resistance[pu*Ohm]",PADDR(shunt_impedance.Re()),PT_DESCRIPTION,"Shunt impedance on primary side, pu, real",
-			PT_double, "shunt_reactance[pu*Ohm]",PADDR(shunt_impedance.Im()),PT_DESCRIPTION,"Shunt impedance on primary side, pu, imag",
-			PT_complex, "shunt_impedance[pu*Ohm]",PADDR(shunt_impedance),PT_DESCRIPTION,"Shunt impedance on primary side, pu",
+			PT_double, "shunt_resistance[pu*Ohm]",PADDR(shunt_impedance.Re()),PT_DEFAULT,"+1e+09 pu*Ohm",PT_DESCRIPTION,"Shunt impedance on primary side, pu, real",
+			PT_double, "shunt_reactance[pu*Ohm]",PADDR(shunt_impedance.Im()),PT_DEFAULT,"+1e+09 pu*Ohm",PT_DESCRIPTION,"Shunt impedance on primary side, pu, imag",
+			PT_complex, "shunt_impedance[pu*Ohm]",PADDR(shunt_impedance),PT_DEFAULT,"+1e+09+1e+09j pu*Ohm",PT_DESCRIPTION,"Shunt impedance on primary side, pu",
 			//thermal aging model parameters
 			PT_double, "core_coil_weight[lb]", PADDR(core_coil_weight),PT_DESCRIPTION,"The weight of the core and coil assembly in pounds",
 			PT_double, "tank_fittings_weight[lb]", PADDR(tank_fittings_weight),PT_DESCRIPTION,"The weight of the tank and fittings in pounds",
@@ -109,11 +109,11 @@ transformer_configuration::transformer_configuration(MODULE *mod) : powerflow_li
 				PT_KEYWORD,"SECONDARY",(enumeration)SEC_MAG,
 				PT_KEYWORD,"BOTH",(enumeration)BOTH_MAG,
 			PT_bool, "inrush_saturation_enabled", PADDR(model_inrush_saturation), PT_DESCRIPTION,"flag to include saturation effects during inrush calculations",
-			PT_double, "L_A[pu]", PADDR(LA_pu), PT_DESCRIPTION,"Air core inductance of transformer",
-			PT_double, "phi_K[pu]", PADDR(phiK_pu), PT_DESCRIPTION,"Knee flux value where the air core inductance interstes the flux axis of the saturation curve",
-			PT_double, "phi_M[pu]", PADDR(phiM_pu), PT_DESCRIPTION,"Peak magnetization flux at rated voltage of the saturation curve",
-			PT_double, "I_M[pu]", PADDR(IM_pu), PT_DESCRIPTION,"Peak magnetization current at rated voltage of the saturation curve",
-			PT_double, "T_D", PADDR(TD_val), PT_DESCRIPTION, "Inrush decay time constant for inrush current",
+			PT_double, "L_A[pu]", PADDR(LA_pu), PT_DEFAULT,"+0.2 pu",PT_DESCRIPTION,"Air core inductance of transformer",
+			PT_double, "phi_K[pu]", PADDR(phiK_pu), PT_DEFAULT,"+1.17 pu",PT_DESCRIPTION,"Knee flux value where the air core inductance interstes the flux axis of the saturation curve",
+			PT_double, "phi_M[pu]", PADDR(phiM_pu), PT_DEFAULT,"+1 pu",PT_DESCRIPTION,"Peak magnetization flux at rated voltage of the saturation curve",
+			PT_double, "I_M[pu]", PADDR(IM_pu), PT_DEFAULT,"+0.01 pu",PT_DESCRIPTION,"Peak magnetization current at rated voltage of the saturation curve",
+			PT_double, "T_D", PADDR(TD_val), PT_DEFAULT,"+0.5",PT_DESCRIPTION, "Inrush decay time constant for inrush current",
 
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
@@ -136,19 +136,11 @@ int transformer_configuration::create(void)
 	phaseC_kVA_rating = 0.0;
 	kVA_rating = 0;
 	impedance = impedance1 = impedance2 = complex(0.0,0.0);	//Lossless transformer by default
-	shunt_impedance = complex(999999999,999999999);			//Very large number for infinity to approximate lossless
 	no_load_loss = full_load_loss = 0.0;
 	RX = 4.5;
 
 	magnetization_location = NO_MAG;
-	IM_pu = 0.01;
 	model_inrush_saturation = false;	//Off, by default
-
-	//Default saturation parameters from paper
-	LA_pu = 0.2;
-	phiK_pu = 1.17;
-	phiM_pu = 1.0;
-	TD_val = 0.5;
 
 	return result;
 }
