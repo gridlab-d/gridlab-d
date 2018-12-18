@@ -32,7 +32,7 @@ SET(PACKAGE "${PROJECT_NAME}")
 SET(PACKAGE_BUGREPORT "gridlabd@pnnl.gov")
 SET(PACKAGE_NAME "GridLAB-D")
 SET(REV_MAJOR 4)
-SET(REV_MINOR 0)
+SET(REV_MINOR 1)
 SET(REV_PATCH 0)
 SET(PACKAGE_STRING "GridLAB-D ${REV_MAJOR}.${REV_MINOR}.${REV_PATCH} (Branch:${GIT_BRANCH} - ${GIT_COMMIT_HASH})")
 SET(PACKAGE_TARNAME "${PROJECT_NAME}")
@@ -56,39 +56,13 @@ SET(GLDCORE_LOC gldcore)
 
 OPTION(BUILD_SHARED_LIBS "Sets Gridlab-d libraries to be built as shared. *DANGER - will currently break build if changed.*" ON)
 
-# Sets default compile scheme to Release (Maximum optimization, no debugger data)
-# To compile as Debug outside of IDE, run cmake with "-DCMAKE_BUILD_TYPE=Debug" flag.
-IF (NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
-    SET(CMAKE_BUILD_TYPE Release)
-ENDIF (NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
-
 # Allows specific compiler optimizations to be disabled for all build types.
-#set(DISABLED_OPTIMIZATIONS "")
 set(DISABLED_OPTIMIZATIONS "${DISABLED_OPTIMIZATIONS} -fno-inline-functions")
 
-# Sets optimization flags.
-IF (CMAKE_BUILD_TYPE STREQUAL Release)
-    SET(COMPILER_OPTIMIZATION_FLAG "-O3")
-ELSE ()
-    SET(COMPILER_OPTIMIZATION_FLAG "-O0")
-ENDIF ()
-
-message("-- Compiler set to optimization level ${COMPILER_OPTIMIZATION_FLAG}")
-
 # Compiler/Linker flags for all build types
-set(CMAKE_CXX_FLAGS "-w")
-set(CMAKE_C_FLAGS "-w")
-set(CMAKE_LD_FLAGS "-w")
-
-# Compiler/Linker flags for debug specific build types
-set(CMAKE_CXX_FLAGS_DEBUG "-g ${COMPILER_OPTIMIZATION_FLAG} ${DISABLED_OPTIMIZATIONS}")
-set(CMAKE_C_FLAGS_DEBUG "-g ${COMPILER_OPTIMIZATION_FLAG} ${DISABLED_OPTIMIZATIONS}")
-set(CMAKE_LD_FLAGS_DEBUG "-g ${COMPILER_OPTIMIZATION_FLAG} ${DISABLED_OPTIMIZATIONS}")
-
-# Compiler/Linker flags for release specific build types (default)
-set(CMAKE_CXX_FLAGS_RELEASE "${COMPILER_OPTIMIZATION_FLAG} ${DISABLED_OPTIMIZATIONS}")
-set(CMAKE_C_FLAGS_RELEASE "${COMPILER_OPTIMIZATION_FLAG} ${DISABLED_OPTIMIZATIONS}")
-set(CMAKE_LD_FLAGS_RELEASE "${COMPILER_OPTIMIZATION_FLAG} ${DISABLED_OPTIMIZATIONS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w ${DISABLED_OPTIMIZATIONS}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -w ${DISABLED_OPTIMIZATIONS}")
+set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} -w ${DISABLED_OPTIMIZATIONS}")
 
 # Set up platform specific library linking
 IF (WIN32 OR MSYS OR MINGW OR CYGWIN)
@@ -110,7 +84,7 @@ OPTION(USE_OPENMP "Enable building with OpenMP" OFF)
 
 # Configure MySQL to be configured and linked if available.
 IF (USE_MYSQL)
-    INCLUDE(CMake/FindMySQL.cmake)
+    INCLUDE(CMakeScripts/FindMySQL.cmake)
     SET(HAVE_MYSQL ON)
 ENDIF ()
 
@@ -413,6 +387,7 @@ TRY_COMPILE(HAVE_ISFINITE ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR
 TRY_COMPILE(HAVE_PTHREAD_PRIO_INHERIT ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/HAVE_PTHREAD_PRIO_INHERIT.cc)
 
 # Generate the config.h header file.
+INCLUDE(CMakeScripts/Build_number.cmake)
 configure_file(gldcore/cmake_config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/gldcore/config.h @ONLY)
 configure_file(gldcore/version.h.in ${CMAKE_CURRENT_SOURCE_DIR}/gldcore/version.h @ONLY)
 add_definitions(-DHAVE_CONFIG_H)
