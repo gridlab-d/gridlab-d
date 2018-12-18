@@ -922,8 +922,9 @@ typedef struct s_property_struct {
 
 /** Property comparison operators
  **/
-typedef enum { 
-	TCOP_EQ=0, /**< property are equal to a **/
+typedef enum {
+	_TCOP_FIRST = 0,
+	TCOP_EQ=_TCOP_FIRST, /**< property are equal to a **/
 	TCOP_LE=1, /**< property is less than or equal to a **/
 	TCOP_GE=2, /**< property is greater than or equal a **/
 	TCOP_NE=3, /**< property is not equal to a **/
@@ -943,6 +944,7 @@ typedef struct s_property_specs { /**<	the property type conversion specificatio
 						  **/
 	char *name; /**< the property type name */
 	char *xsdname;
+	char *default_value;
 	unsigned int size; /**< the size of 1 instance */
 	unsigned int csize; /**< the minimum size of a converted instance (not including '\0' or unit, 0 means a call to property_minimum_buffersize() is necessary) */ 
 	int (*data_to_string)(char *,int,void*,PROPERTY*); /**< the function to convert from data to a string */
@@ -965,6 +967,8 @@ extern "C" {
 
 int property_check(void);
 PROPERTYSPEC *property_getspec(PROPERTYTYPE ptype);
+PROPERTYTYPE property_getfirst_type(void);
+PROPERTYTYPE property_getnext_type(PROPERTYTYPE ptype);
 PROPERTY *property_malloc(PROPERTYTYPE, CLASS *, char *, void *, DELEGATEDTYPE *);
 uint32 property_size(PROPERTY *);
 uint32 property_size_by_type(PROPERTYTYPE);

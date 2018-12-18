@@ -31,31 +31,41 @@ SET_MYCONTEXT(DMC_PROPERTY)
 
 /* IMPORTANT: this list must match PROPERTYTYPE enum in property.h */
 PROPERTYSPEC property_type[_PT_LAST] = {
-	{"void", "string", 0, 0, convert_from_void,convert_to_void},
-	{"double", "decimal", sizeof(double), 24, convert_from_double,convert_to_double,NULL,stream_double,{TCOPS(double)},},
-	{"complex", "string", sizeof(complex), 48, convert_from_complex,convert_to_complex,NULL,NULL,{TCOPS(double)},complex_get_part},
-	{"enumeration", "string", sizeof(enumeration), 1024, convert_from_enumeration,convert_to_enumeration,NULL,NULL,{TCOPS(uint64)},},
-	{"set", "string", sizeof(set), 1024, convert_from_set,convert_to_set,NULL,NULL,{TCOPS(uint64)},},
-	{"int16", "integer", sizeof(int16), 6, convert_from_int16,convert_to_int16,NULL,NULL,{TCOPS(uint16)},},
-	{"int32", "integer", sizeof(int32), 12, convert_from_int32,convert_to_int32,NULL,NULL,{TCOPS(uint32)},},
-	{"int64", "integer", sizeof(int64), 24, convert_from_int64,convert_to_int64,NULL,NULL,{TCOPS(uint64)},},
-	{"char8", "string", sizeof(char8), 8, convert_from_char8,convert_to_char8,NULL,NULL,{TCOPS(string)},},
-	{"char32", "string", sizeof(char32), 32, convert_from_char32,convert_to_char32,NULL,NULL,{TCOPS(string)},},
-	{"char256", "string", sizeof(char256), 256, convert_from_char256,convert_to_char256,NULL,NULL,{TCOPS(string)},},
-	{"char1024", "string", sizeof(char1024), 1024, convert_from_char1024,convert_to_char1024,NULL,NULL,{TCOPS(string)},},
-	{"object", "string", sizeof(OBJECT*), sizeof(OBJECTNAME), convert_from_object,convert_to_object,NULL,NULL,{TCOPB(object)},object_get_part},
-	{"delegated", "string", (unsigned int)-1, 0, convert_from_delegated, convert_to_delegated},
-	{"bool", "string", sizeof(bool), 6, convert_from_boolean, convert_to_boolean,NULL,NULL,{TCOPB(bool)},},
-	{"timestamp", "string", sizeof(int64), 32, convert_from_timestamp_stub, convert_to_timestamp_stub,NULL,NULL,{TCOPS(uint64)},timestamp_get_part},
-	{"double_array", "string", sizeof(double_array), 1024, convert_from_double_array, convert_to_double_array,double_array_create,NULL,{TCNONE},double_array_get_part},
-	{"complex_array", "string", sizeof(complex_array), 1024, convert_from_complex_array, convert_to_complex_array,complex_array_create,NULL,{TCNONE},complex_array_get_part},
-	{"real", "decimal", sizeof(real), 24, convert_from_real, convert_to_real},
-	{"float", "decimal", sizeof(float), 24, convert_from_float, convert_to_float},
-	{"loadshape", "string", sizeof(loadshape), 1024, convert_from_loadshape, convert_to_loadshape, loadshape_create,NULL,{TCOPS(double)},},
-	{"enduse", "string", sizeof(enduse), 1024, convert_from_enduse, convert_to_enduse, enduse_create,NULL,{TCOPS(double)},enduse_get_part},
-	{"randomvar", "string", sizeof(randomvar), 24, convert_from_randomvar, convert_to_randomvar, randomvar_create,NULL,{TCOPS(double)},random_get_part},
-	{"method","string", -1, 0, convert_from_method,convert_to_method},
+	{"void", "string", NULL, 0, 0, convert_from_void,convert_to_void},
+	{"double", "decimal", "0.0", sizeof(double), 24, convert_from_double,convert_to_double,NULL,stream_double,{TCOPS(double)},},
+	{"complex", "string", "0+0i", sizeof(complex), 48, convert_from_complex,convert_to_complex,NULL,NULL,{TCOPS(double)},complex_get_part},
+	{"enumeration", "string", "0", sizeof(enumeration), 1024, convert_from_enumeration,convert_to_enumeration,NULL,NULL,{TCOPS(uint64)},},
+	{"set", "string", "0", sizeof(set), 1024, convert_from_set,convert_to_set,NULL,NULL,{TCOPS(uint64)},},
+	{"int16", "integer", "0", sizeof(int16), 6, convert_from_int16,convert_to_int16,NULL,NULL,{TCOPS(uint16)},},
+	{"int32", "integer", "0", sizeof(int32), 12, convert_from_int32,convert_to_int32,NULL,NULL,{TCOPS(uint32)},},
+	{"int64", "integer", "0", sizeof(int64), 24, convert_from_int64,convert_to_int64,NULL,NULL,{TCOPS(uint64)},},
+	{"char8", "string", "", sizeof(char8), 8, convert_from_char8,convert_to_char8,NULL,NULL,{TCOPS(string)},},
+	{"char32", "string", "", sizeof(char32), 32, convert_from_char32,convert_to_char32,NULL,NULL,{TCOPS(string)},},
+	{"char256", "string", "", sizeof(char256), 256, convert_from_char256,convert_to_char256,NULL,NULL,{TCOPS(string)},},
+	{"char1024", "string", "", sizeof(char1024), 1024, convert_from_char1024,convert_to_char1024,NULL,NULL,{TCOPS(string)},},
+	{"object", "string", NULL, sizeof(OBJECT*), 64, convert_from_object,convert_to_object,NULL,NULL,{TCOPB(object)},object_get_part},
+	{"delegated", "string", NULL, (unsigned int)-1, 0, convert_from_delegated, convert_to_delegated},
+	{"bool", "string", "FALSE", sizeof(bool), 6, convert_from_boolean, convert_to_boolean,NULL,NULL,{TCOPB(bool)},},
+	{"timestamp", "string", "TS_ZERO", sizeof(int64), 32, convert_from_timestamp_stub, convert_to_timestamp_stub,NULL,NULL,{TCOPS(uint64)},timestamp_get_part},
+	{"double_array", "string", "", sizeof(double_array), 1024, convert_from_double_array, convert_to_double_array,double_array_create,NULL,{TCNONE},double_array_get_part},
+	{"complex_array", "string", "", sizeof(complex_array), 1024, convert_from_complex_array, convert_to_complex_array,complex_array_create,NULL,{TCNONE},complex_array_get_part},
+	{"real", "decimal", "0.0", sizeof(real), 24, convert_from_real, convert_to_real},
+	{"float", "decimal", "0.0", sizeof(float), 24, convert_from_float, convert_to_float},
+	{"loadshape", "string", NULL, sizeof(loadshape), 1024, convert_from_loadshape, convert_to_loadshape, loadshape_create,NULL,{TCOPS(double)},},
+	{"enduse", "string", NULL, sizeof(enduse), 1024, convert_from_enduse, convert_to_enduse, enduse_create,NULL,{TCOPS(double)},enduse_get_part},
+	{"randomvar", "string", NULL, sizeof(randomvar), 24, convert_from_randomvar, convert_to_randomvar, randomvar_create,NULL,{TCOPS(double)},random_get_part},
+	{"method","string", NULL, 0, 0, convert_from_method,convert_to_method},
 };
+
+PROPERTYTYPE property_getfirst_type(void)
+{
+	return (PROPERTYTYPE)((int)PT_void+1);
+}
+
+PROPERTYTYPE property_getnext_type(PROPERTYTYPE ptype)
+{
+	return ptype > _PT_FIRST && ptype < _PT_LAST-1 ? (PROPERTYTYPE)((int)ptype+1) : PT_void;
+}
 
 PROPERTYSPEC *property_getspec(PROPERTYTYPE ptype)
 {
@@ -298,50 +308,36 @@ double property_get_part(OBJECT *obj, PROPERTY *prop, char *part)
 
 bool property_is_default(OBJECT *obj, PROPERTY *prop)
 {
-	void *a = (char*)(obj+1) + (int)prop->addr;
-	char b[4096];
+	void *a = (char*)(obj ? (obj+1) : 0) + (size_t)prop->addr;
+	char b[4096]="";
 	bool result = false;
-	if ( prop->ptype > PT_void && prop->ptype < PT_object )
+	if ( prop->default_value != NULL )
 	{
-		if ( prop->default_value == NULL )
+		property_read(prop,b,prop->default_value);
+		result = property_compare_basic(prop->ptype,TCOP_EQ,a,b,NULL,NULL);
+	}
+#ifdef DEBUG
+	if ( global_debug_output )
+	{
+		char buf1[1024] = "<???>", buf2[1024] = "<???>";
+		property_write(prop,a,buf1,sizeof(buf1));
+		property_write(prop,b,buf2,sizeof(buf2));
+		if ( obj->name == NULL )
 		{
-			if ( prop->size > sizeof(b) )
-			{
-				result = false;
-			}
-			else
-			{
-				memset(b,0,prop->size);
-				result = (memcmp(a,b,prop->size)==0);
-			}	
+			output_debug("comparing %s:%d.%s [%s] == %s:default.%s [%s] --> %s",
+				obj->oclass->name, obj->id, prop->name, buf1,
+				obj->oclass->name, prop->name, buf2,
+				result ? "true" : "false");
 		}
-		else 
+		else
 		{
-			property_read(prop,b,prop->default_value);
-			result = property_compare_basic(prop->ptype,TCOP_EQ,a,b,NULL,NULL);
+			output_debug("comparing %s.%s [%s] == %s:default.%s [%s] --> %s",
+				obj->name, prop->name, buf1,
+				obj->oclass->name, prop->name, buf2,
+				result ? "true" : "false");
 		}
-
-		if ( global_debug_output )
-		{
-			char buf1[1024] = "<???>", buf2[1024] = "<???>";
-			property_write(prop,a,buf1,sizeof(buf1));
-			property_write(prop,b,buf2,sizeof(buf2));
-			if ( obj->name == NULL )
-			{
-				output_debug("comparing %s:%d.%s [%s] == %s:default.%s [%s] --> %s",
-					obj->oclass->name, obj->id, prop->name, buf1,
-					obj->oclass->name, prop->name, buf2,
-					result ? "true" : "false");
-			}
-			else
-			{
-				output_debug("comparing %s.%s [%s] == %s:default.%s [%s] --> %s",
-					obj->name, prop->name, buf1,
-					obj->oclass->name, prop->name, buf2,
-					result ? "true" : "false");
-			}
-		}
-	}	
+	}
+#endif
 	return result;
 }
 
