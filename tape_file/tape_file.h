@@ -17,9 +17,11 @@ EXPORT void close_shaper(struct shaper *my);
 EXPORT int open_recorder(struct recorder *my, char *fname, char *flags);
 EXPORT int write_recorder(struct recorder *my, char *timestamp, char *value);
 EXPORT void close_recorder(struct recorder *my);
+EXPORT void flush_recorder(struct recorder *my);
 
 EXPORT int open_collector(struct collector *my, char *fname, char *flags);
 EXPORT int write_collector(struct collector *my, char *timestamp, char *value);
 EXPORT void close_collector(struct collector *my);
+EXPORT void flush_collector(struct collector *my);
 
 #endif

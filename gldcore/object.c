@@ -328,8 +328,10 @@ OBJECT *object_create_single(CLASS *oclass){ /**< the class of the object */
 	}
 
 	memset(obj, 0, sz);
-	memcpy(obj+1, oclass->defaults, oclass->size);
-
+	if ( oclass->defaults != NULL )
+		memcpy(obj+1, oclass->defaults, oclass->size);
+	else
+		memset(obj+1, 0, oclass->size);
 	tp_next %= tp_count;
 
 	obj->id = next_object_id++;
@@ -1243,97 +1245,35 @@ OBJECT *object_get_next(OBJECT *obj){ /**< the object from which to start */
 	the request to prevent looping.  This will prevent
 	an object_set_parent call from creating a parent loop.
  */
-static int _set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
-{
-	OBJECTRANK parent_rank = -1;
-	if(obj == NULL){
-		output_error("set_rank called for a null object");
-		return -1;
-	}
-	if(rank >= object_get_count()){
-		char b[74];
-		output_error("%s: set_rank internal error, rank > object count", object_name(first, b, 64));
-		/*	TROUBLESHOOT
-			As a sanity check, the rank of an object should not exceed the number of objects in the model.  If the model
-			is deliberately playing with the ranks, please either reduce the manual rank adjustment, or add a number of
-			"harmless" objects to inflate the number of objects in the model.
-		 */
-		return -1;
-	}
-	if(obj==first)
-	{
-		char b[64];
-		output_error("%s: set_rank failed, parent loopback has occurred", object_name(first, b, 63));
-		return -1;
-	}
-	if(obj->flags & OF_RERANK){
-		char b[64];
-		output_error("%s: object flagged as already re-ranked", object_name(obj, b, 63));
-		return -1;
-	} else {
-		obj->flags |= OF_RERANK;
-	}
-	if(rank >= obj->rank)
-		obj->rank = rank+1;
-	if(obj->parent != NULL)
-	{
-		parent_rank = _set_rank(obj->parent,obj->rank,first?first:obj);
-		if(parent_rank == -1)
-			return -1;
-	}
-	obj->flags &= ~OF_RERANK;
-	return obj->rank;
-}
-/* this version is fast, blind to errors, and not recursive -- it's only used when global_fastrank is TRUE */
-static int _set_rankx(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
-{
-	int n = object_get_count();
-	if ( obj == NULL )
-	{
-		output_error("set_rank called for a null object");
-		return -1;
-	}
-	while ( obj!=NULL )
-	{
-		if ( n--<0 )
-		{
-			char tmp[64];
-			output_error("%s: set_rank internal error, rank > object count", object_name(first, tmp, sizeof(tmp)));
-			/*	TROUBLESHOOT
-				As a sanity check, the rank of an object should not exceed the number of objects in the model.  If the model
-				is deliberately playing with the ranks, please either reduce the manual rank adjustment, or add a number of
-				"harmless" objects to inflate the number of objects in the model.
-			 */
-			return -1;
-		}
-		if ( first==NULL )
-			first = obj;
-		else if ( first==obj )
-		{
-			char tmp[64];
-			output_error("%s: set_rank failed, parent loopback has occurred", object_name(first, tmp, sizeof(tmp)));
-			return -1;
-		}
-		if ( rank >= obj->rank )
-		{
-			if ( obj->flags & OF_RERANK )
-			{
-				char b[64];
-				output_error("%s: object flagged as already re-ranked", object_name(obj, b, 63));
-				return -1;
-			}
-			else
-				obj->flags |= OF_RERANK;
-			obj->rank = ++rank;
-		}
-		obj = obj->parent;
-	}
-	for ( obj=first ; obj!=NULL ; obj=obj->parent )
-		obj->flags &= ~OF_RERANK;
-}
 static int set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 {
-	global_bigranks==TRUE ? _set_rankx(obj,rank,NULL) : _set_rank(obj,rank,NULL);
+	// check for loopback
+	if ( obj == first )
+	{
+		char tmp1[1024], tmp2[1024];
+		object_name(obj,tmp1,sizeof(tmp1));
+		object_name(first,tmp2,sizeof(tmp2));
+		output_error("gldcore/object.c:set_rank(obj='%s', rank=%d, first='%s'): loopback error", tmp1, rank, tmp2);
+		return -1;
+	}
+	else if ( first == NULL )
+	{
+		first = obj;
+	}
+
+	// promote the parent 
+	if ( obj->parent != NULL && set_rank(obj->parent, rank+1, first) <= rank )
+	{
+		char tmp1[1024], tmp2[1024], tmp3[1024];
+		object_name(obj,tmp1,sizeof(tmp1));
+		object_name(first,tmp2,sizeof(tmp2));
+		object_name(obj->parent,tmp3,sizeof(tmp3));
+		output_error("gldcore/object.c:set_rank(obj='%s', rank=%d, first='%s'): unable to set rank of parent '%s'", tmp1, rank, tmp2, tmp3);
+		return -1;
+	}
+	if ( rank > obj->rank )
+		obj->rank = rank;
+	return obj->rank;
 }
 
 /** Set the rank of an object but forcing it's parent
@@ -1343,11 +1283,8 @@ static int set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 int object_set_rank(OBJECT *obj, /**< the object to set */
 					OBJECTRANK rank) /**< the object */
 {
-	/* prevent rank from decreasing */
-	if(obj == NULL)
-		return 0;
-	if(rank<=obj->rank)
-		return obj->rank;
+	if ( obj == NULL )
+		return -1;
 	return set_rank(obj,rank,NULL);
 }
 
@@ -1359,19 +1296,26 @@ int object_set_rank(OBJECT *obj, /**< the object to set */
 int object_set_parent(OBJECT *obj, /**< the object to set */
 					  OBJECT *parent) /**< the new parent of the object */
 {
-	if(obj == NULL){
-		output_error("object_set_parent was called with a null pointer");
-		return -1;
-	}
-	if(obj == parent){
-		char b[64];
-		output_error("object %s tried to set itself as its parent", object_name(obj, b, 63));
+	int prank = -1;
+	if(obj == NULL)
+		return obj->rank;
+	if(obj == parent)
+	{
+		char tmp[64];
+		object_name(obj,tmp,sizeof(tmp));
+		output_error("gldcore/object.c:object_set_parent(obj='%s',parent='%s'): attempt to set self as a parent", tmp,tmp);
 		return -1;
 	}
 	obj->parent = parent;
 	obj->child_count++;
-	if(parent!=NULL)
-		return set_rank(parent,obj->rank,NULL);
+	if ( object_set_rank(parent,obj->rank+1) < obj->rank )
+	{
+		char tmp1[64], tmp2[64];
+		object_name(obj,tmp1,sizeof(tmp1));
+		object_name(parent,tmp2,sizeof(tmp2));
+		output_error("gldcore/object.c:object_set_parent(obj='%s',parent='%s'): parent rank not valid (%s.rank=%d < %s.rank=%d)", tmp1,tmp2, tmp2, parent->rank, tmp1, obj->rank);
+		return -1;
+	}
 	return obj->rank;
 }
 
