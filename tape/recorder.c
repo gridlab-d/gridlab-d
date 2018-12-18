@@ -502,7 +502,8 @@ EXPORT int method_recorder_property(OBJECT *obj, char *value, size_t size)
 	gl_verbose("adding property '%s' to recorder:%d",value,obj->id);
 	if ( my->property_len < len || my->property == NULL )
 	{
-		my->property_len = ((my->property_len+len)/BLOCKSIZE+1)*BLOCKSIZE;
+		size_t need = len + (my->property==NULL ? 0 : strlen(my->property)) + 1;
+		my->property_len = ((need/BLOCKSIZE)+1)*BLOCKSIZE;
 		my->property = (char*)realloc(my->property,my->property_len);
 		if ( my->property == NULL )
 		{
@@ -556,6 +557,11 @@ PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list
 			item = pstr;
 		}
 		prop = (PROPERTY*)malloc(sizeof(PROPERTY));
+		if ( prop == NULL )
+		{
+			gl_error("recorder:%d: memory allocation failure", obj->id);
+			return NULL;
+		}
 		
 		/* branch: test to see if we're trying to split up a complex property */
 		/* must occur w/ *cpart=0 before gl_get_property in order to properly reformat the property name string */
@@ -572,32 +578,40 @@ PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list
 			}
 		}
 
-		target = gl_get_property(obj,item,NULL);
-
-		if (prop!=NULL && target!=NULL)
+		if ( strstr(item,"::") != NULL )
 		{
-			if(unit != NULL && target->unit == NULL){
-				gl_error("recorder:%d: property '%s' is unitless, ignoring unit conversion", obj->id, item);
-			}
-			else if(unit != NULL && 0 == gl_convert_ex(target->unit, unit, &scale))
-			{
-				gl_error("recorder:%d: unable to convert property '%s' units to '%s'", obj->id, item, ustr);
-				return NULL;
-			}
-			if (first==NULL) first=prop; else last->next=prop;
-			last=prop;
-			memcpy(prop,target,sizeof(PROPERTY));
-			prop->unit = unit;
-			if(unit == NULL && rec->line_units == LU_ALL){
-				prop->unit = target->unit;
-			}
-			prop->next = NULL;
+			char *name = strncmp(item,"::",2)==0 ? item+2 : item;
+			gl_debug("recorder searching for global '%s'",name);
+			GLOBALVAR *var = gl_global_find(name);
+			if ( var ) target = var->prop;
 		}
 		else
 		{
-			gl_error("recorder: property '%s' not found", item);
+			target = gl_get_property(obj,item,NULL);
+		}
+
+		if ( target == NULL )
+		{
+			gl_error("recorder: property or global '%s' not found", item);
 			return NULL;
 		}
+
+		if(unit != NULL && target->unit == NULL){
+			gl_error("recorder:%d: property '%s' is unitless, ignoring unit conversion", obj->id, item);
+		}
+		else if(unit != NULL && 0 == gl_convert_ex(target->unit, unit, &scale))
+		{
+			gl_error("recorder:%d: unable to convert property '%s' units to '%s'", obj->id, item, ustr);
+			return NULL;
+		}
+		if (first==NULL) first=prop; else last->next=prop;
+		last=prop;
+		memcpy(prop,target,sizeof(PROPERTY));
+		prop->unit = unit;
+		if(unit == NULL && rec->line_units == LU_ALL){
+			prop->unit = target->unit;
+		}
+		prop->next = NULL;
 		if(cid >= 0){ /* doing the complex part thing */
 			prop->ptype = PT_double;
 			(prop->addr) = (PROPERTYADDR)((int64)(prop->addr) + cid);
@@ -611,48 +625,68 @@ int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buff
 	PROPERTY *p;
 	PROPERTY *p2 = 0;
 	PROPERTY fake;
-	int offset=0;
-	int count=0;
-	double value;
+	char tmp[1024];
+	int count = 0;
+	int sz;
 	memset(&fake, 0, sizeof(PROPERTY));
 	fake.ptype = PT_double;
 	fake.unit = 0;
-	for (p=prop; p!=NULL && offset<size-33; p=p->next)
+	for ( p = prop ;  p != NULL ; p = p->next )
 	{
-		if (offset>0) strcpy(buffer+offset++,",");
-		if(p->ptype == PT_double){
-			switch(my->line_units){
+		void *addr = ( p->oclass == NULL ? p->addr : GETADDR(obj,p) );
+		if(p->ptype == PT_double)
+		{
+			double value;
+			switch(my->line_units)
+			{
 				case LU_ALL:
 					// cascade into 'default', as prop->unit should've been set, if there's a unit available.
 				case LU_DEFAULT:
-					offset+=gl_get_value(obj,GETADDR(obj,p),buffer+offset,size-offset-1,p); /* pointer => int64 */
+					sz = gl_get_value(obj,addr,tmp,sizeof(tmp)-1,p); /* pointer => int64 */
 					break;
 				case LU_NONE:
 					// copy value into local value, use fake PROP, feed into gl_get_vaule
 					value = *gl_get_double(obj, p);
 					p2 = gl_get_property(obj, p->name,NULL);
-					if(p2 == 0){
+					if ( p2 == 0 ) 
+					{
 						gl_error("unable to locate %s.%s for LU_NONE", obj, p->name);
 						return 0;
 					}
-					if(p->unit != 0 && p2->unit != 0){
-						if(0 == gl_convert_ex(p2->unit, p->unit, &value)){
+					if ( p->unit != 0 && p2->unit != 0 )
+					{
+						if ( gl_convert_ex(p2->unit, p->unit, &value) == 0 )
+						{
 							gl_error("unable to convert %s to %s for LU_NONE", p->unit, p2->unit);
-						} else { // converted
-							offset+=gl_get_value(obj,&value,buffer+offset,size-offset-1,&fake); /* pointer => int64 */;
+							return 0;
+						} 
+						else 
+						{ // converted
+							sz = gl_get_value(obj,&value,tmp,sizeof(tmp)-1,&fake); /* pointer => int64 */;
 						}
-					} else {
-						offset+=gl_get_value(obj,GETADDR(obj,p),buffer+offset,size-offset-1,p); /* pointer => int64 */;
+					} 
+					else 
+					{
+						sz = gl_get_value(obj,addr,tmp,sizeof(tmp)-1,p); /* pointer => int64 */;
 					}
 					break;
 				default:
 					break;
 			}
 		} else {
-			offset+=gl_get_value(obj,GETADDR(obj,p),buffer+offset,size-offset-1,p); /* pointer => int64 */
+			sz = gl_get_value(obj,addr,tmp,sizeof(tmp)-1,p); /* pointer => int64 */
 		}
-		buffer[offset]='\0';
-		count++;
+		if ( count + sz >= size )
+		{
+			gl_error("tape/recorder.c:read_aggregates(): buffer too small to handle output size");
+			return 0;
+		}
+		if ( count > 0 ) 
+		{
+			strcpy(buffer+count++,",");
+		}
+		strcpy(buffer+count,tmp);
+		count += sz;
 	}
 	return count;
 }

@@ -1,10 +1,15 @@
 
-#### What's this Pull Request do?
-#### Where should the reviewer start?
-#### How should this be tested?
-#### Any background context you want to provide?
-#### What are the relevant issues?
-#### Screenshots (if appropriate)
-#### Questions:
-- [ ] Does this add new dependencies?
-- [ ] Is there appropriate logging included?
+This PR addresses issue(s) #NUMBER1, #NUMBER2, etc. (Optional: This PR is a continuation of PR #NUMBER2.)
+
+## Current status
+1. list all open problems and questions related to this PR.
+1. the PR status should not be changed to `[REVIEW]` until this entire list is resolved.
+
+## Code changes
+1. list all significant code changes
+
+## Documentation changes
+- (name)[url]
+
+## Test and Validation Notes
+1. Enumerate any testing and validation considerations.

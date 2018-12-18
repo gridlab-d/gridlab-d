@@ -44,8 +44,13 @@
 	#ifndef isfinite
 		#define isfinite finite
 	#endif
-	#define min(A,B) ((A)<(B)?(A):(B)) /**< min macro */
-	#define max(A,B) ((A)>(B)?(A):(B))  /**< max macro */
+	#ifdef __cplusplus
+		template <class T> inline T min(T a, T b) { return a < b ? a : b; };
+		template <class T> inline T max(T a, T b) { return a > b ? a : b; };
+	#else __cplusplus
+		#define min(A,B) ((A)<(B)?(A):(B)) /**< min macro */
+		#define max(A,B) ((A)>(B)?(A):(B))  /**< max macro */
+	#endif ! __cplusplus
 	#ifdef X64
 		#define NATIVE int64	/**< native integer size */
 	#else

@@ -167,8 +167,9 @@ EXPORT int method_collector_property(OBJECT *obj, char *value, size_t size)
 	gl_verbose("adding property '%s' to collector:%d",value,obj->id);
 	if ( my->property_len < len || my->property == NULL )
 	{
-		my->property_len = ((my->property_len+len)/BLOCKSIZE+1)*BLOCKSIZE;
-		my->property = (char*)realloc(my->property,my->property_len);
+		size_t need = len + (my->property==NULL ? 0 : strlen(my->property)) + 1;
+                my->property_len = ((need/BLOCKSIZE)+1)*BLOCKSIZE;
+                my->property = (char*)realloc(my->property,my->property_len);
 		if ( my->property == NULL )
 		{
 			gl_error("memory allocation failed");
@@ -210,17 +211,25 @@ AGGREGATION *link_aggregates(char *aggregate_list, char *group)
 int read_aggregates(AGGREGATION *aggr, char *buffer, int size)
 {
 	AGGREGATION *p;
-	int offset=0;
 	int count=0;
+	char tmp[1024];
 	char32 fmt;
 
 	gl_global_getvar("double_format", fmt, 32);
-	for (p=aggr; p!=NULL && offset<size-33; p=p->next)
+	for ( p = aggr; p != NULL ; p = p->next )
 	{
-		if (offset>0) strcpy(buffer+offset++,",");
-		offset+=sprintf(buffer+offset,fmt,gl_run_aggregate(p));
-		buffer[offset]='\0';
-		count++;
+		int sz = snprintf(tmp,sizeof(tmp)-1,fmt,gl_run_aggregate(p));
+		if ( count + sz >= size )
+		{
+			gl_error("tape/collector.c:read_aggregates(): buffer too small to handle output size");
+			return 0;
+		}
+		if ( count > 0 ) 
+		{
+			strcpy(buffer+count++,",");
+		}
+		strcpy(buffer+count,tmp);
+		count += sz;
 	}
 	return count;
 }

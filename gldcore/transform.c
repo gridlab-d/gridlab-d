@@ -368,11 +368,18 @@ TIMESTAMP apply_filter(TRANSFERFUNCTION *f,	///< transfer function
 	unsigned int m = f->m;
 	double *a = f->a;
 	double *b = f->b;
-	double dx[64];
+	static double *dx = NULL;
+	static unsigned int len = 0;
 	unsigned int i;
 
+	// memory check
+	if ( n > len )
+	{
+		len = (n/4+1)*4;
+		dx = (double*)realloc(dx,len);
+	}
+
 	// observable form
-	if ( n>sizeof(dx)/sizeof(double) ) throw_exception("transfer function %s order too high", f->name);
 	for ( i=0 ; i<n ; i++ )
 	{
 		if ( i==0 )
