@@ -166,8 +166,8 @@ void send_die(void)
 		//TODO find equivalent helics die message
 #if HAVE_HELICS
 		gl_verbose("helics_msg: Calling error");
-		const helics::Federate::states fed_state = pHelicsFederate->getCurrentState();
-		if(fed_state != helics::Federate::states::finalize) {
+		const helics::Federate::modes fed_state = pHelicsFederate->getCurrentMode();
+		if(fed_state != helics::Federate::modes::finalize) {
 			pHelicsFederate->error((int)(exitCode.get_int16()));
 			pHelicsFederate->finalize();
 		}
@@ -177,8 +177,8 @@ void send_die(void)
 		//TODO find equivalent helics clean exit message
 #if HAVE_HELICS
 		gl_verbose("helics_msg: Calling finalize\n");
-		const helics::Federate::states fed_state = pHelicsFederate->getCurrentState();
-		if(fed_state != helics::Federate::states::finalize) {
+		const helics::Federate::modes fed_state = pHelicsFederate->getCurrentMode();
+		if(fed_state != helics::Federate::modes::finalize) {
 			pHelicsFederate->finalize();
 		}
 		helics::cleanupHelicsLibrary();
@@ -387,27 +387,23 @@ int helics_msg::init(OBJECT *parent){
 		if((*sub)->HelicsSubscription.isValid()) {
 			if((*sub)->pObjectProperty->is_complex()) {
 				if(string("complex").compare(helics_federate->getInputType((*sub)->HelicsSubscription)) != 0 ) {
-					// JH change error to warning and removing return. Currently the type is not set by the configuration reader in HELICS. When this bug is fixed we should remove to temporary "fix" 
-					gl_warning("helics_msg::init: The registered subscription %s is intended to subscribe to a complex type but the subscription has a type = %s", (pub_sub_name.c_str()), (helics_federate->getInputType((*sub)->HelicsSubscription)).c_str());
-					//return 0;
+					gl_error("helics_msg::init: The registered subscription %s is intended to subscribe to a complex type but the subscription has a type = %s", (pub_sub_name.c_str()), (helics_federate->getInputType((*sub)->HelicsSubscription)).c_str());
+					return 0;
 				}
 			} else if((*sub)->pObjectProperty->is_integer()) {
 				if(helics_federate->getInputType((*sub)->HelicsSubscription).find("int") == string::npos ) {
-					// JH change error to warning and removing return. Currently the type is not set by the configuration reader in HELICS. When this bug is fixed we should remove to temporary "fix"
-					gl_warning("helics_msg::init: The registered subscription %s is intended to subscribe to an integer type but the subscription has a type = %s", (pub_sub_name.c_str()), (helics_federate->getInputType((*sub)->HelicsSubscription)).c_str());
-					//return 0;
+					gl_error("helics_msg::init: The registered subscription %s is intended to subscribe to an integer type but the subscription has a type = %s", (pub_sub_name.c_str()), (helics_federate->getInputType((*sub)->HelicsSubscription)).c_str());
+					return 0;
 				}
 			} else if((*sub)->pObjectProperty->is_double()) {
 				if(string("double").compare(helics_federate->getInputType((*sub)->HelicsSubscription)) != 0 ) {
-					// JH change error to warning and removing return. Currently the type is not set by the configuration reader in HELICS. When this bug is fixed we should remove to temporary "fix"
-					gl_warning("helics_msg::init: The registered subscription %s is intended to subscribe to double type but the subscription has a type = %s", (pub_sub_name.c_str()), (helics_federate->getInputType((*sub)->HelicsSubscription)).c_str());
-					//return 0;
+					gl_error("helics_msg::init: The registered subscription %s is intended to subscribe to double type but the subscription has a type = %s", (pub_sub_name.c_str()), (helics_federate->getInputType((*sub)->HelicsSubscription)).c_str());
+					return 0;
 				}
 			} else {
 				if(string("string").compare(helics_federate->getInputType((*sub)->HelicsSubscription)) != 0 ) {
-					// JH change error to warning and removing return. Currently the type is not set by the configuration reader in HELICS. When this bug is fixed we should remove to temporary "fix"
-					gl_warning("helics_msg::init: The registered subscription %s is intended to subscribe to string type but the subscription has a type = %s", (pub_sub_name.c_str()), (helics_federate->getInputType((*sub)->HelicsSubscription)).c_str());
-					//return 0;
+					gl_error("helics_msg::init: The registered subscription %s is intended to subscribe to string type but the subscription has a type = %s", (pub_sub_name.c_str()), (helics_federate->getInputType((*sub)->HelicsSubscription)).c_str());
+					return 0;
 				}
 			}
 		} else {
@@ -806,7 +802,7 @@ int helics_msg::publishVariables(){
 		string message_buffer = message_buffer_stream.str();
 #if HAVE_HELICS
         try {
-			if(helics_federate->getCurrentState() == helics::ValueFederate::states::execution){
+			if(helics_federate->getCurrentMode() == helics::Federate::modes::executing){
 				gl_verbose("calling helics sendMessage");
 				helics::data_view message_data(message_buffer);
 				(*pub)->HelicsPublicationEndpoint.send(message_data);
