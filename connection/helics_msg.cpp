@@ -96,9 +96,7 @@ int helics_msg::configure(char *value)
 			string json_config_line;
 			string json_config_string;
 			Json::Reader json_reader;
-			while (ifile >> json_config_line) { //Place the entire contents of the file into a stringstream
-				json_config_stream << json_config_line;
-			}
+			json_config_stream << ifile.rdbuf();
 			json_config_string = json_config_stream.str();
 			federate_configuration = new string(json_config_string);
 			gl_verbose("helics_msg::configure(): json string read from configure file: %s .\n", json_config_string.c_str()); //renke debug
