@@ -393,10 +393,7 @@ int class_string_to_property(PROPERTY *prop, /**< the type of the property at th
                              void *addr,     /**< the address of the property's data */
                              char *value)    /**< the string from which the data is read */
 {
-	if (prop->ptype > _PT_FIRST && prop->ptype < _PT_LAST)
-		return (*property_type[prop->ptype].string_to_data)(value,addr,prop);
-	else
-		return 0;
+	return property_read(prop, addr, value);
 }
 
 /** Convert a property value to a string.
@@ -418,10 +415,10 @@ int class_property_to_string(PROPERTY *prop, /**< the property type */
 		 */
 		return 0;
 	}
-	else if (prop->ptype>_PT_FIRST && prop->ptype<_PT_LAST){
-		// note, need to append unit type
-		rv = (*property_type[prop->ptype].data_to_string)(value,size,addr,prop);
-		if(rv > 0 && prop->unit != 0)
+	else if ( prop->ptype > _PT_FIRST && prop->ptype < _PT_LAST )
+	{
+		rv = property_write(prop,addr,value,size);
+		if ( rv > 0 && prop->unit != 0 )
 		{
 			strcat(value+rv," ");
 			strcat(value+rv+1,prop->unit->name);

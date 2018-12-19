@@ -65,8 +65,7 @@ char *gldvar_getstring(GLDVAR *var, unsigned int n, char *buffer, int size)
 {
 	if ( gldvar_isset(var,n) )
 	{
-		PROPERTYSPEC *pspec  = property_getspec(var[n].prop->ptype);
-		(*pspec->data_to_string)(buffer,size,var[n].addr,var[n].prop);
+		property_write(var[n].prop, var[n].addr, buffer,size);
 		return buffer;
 	}
 	else

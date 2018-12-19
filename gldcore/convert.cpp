@@ -1208,9 +1208,8 @@ int convert_from_struct(char *buffer, size_t len, void *data, PROPERTY *prop)
 	while ( prop!=NULL )
 	{
 		void *addr = (char*)data + (size_t)prop->addr;
-		PROPERTYSPEC *spec = property_getspec(prop->ptype);
 		char temp[1025];
-		size_t n = spec->data_to_string(temp,sizeof(temp),addr,prop);
+		size_t n = property_write(prop, addr, temp, sizeof(temp));
 		if ( pos+n >= len-2 )
 			return -pos;
 		pos += sprintf(buffer+pos,"%s %s; ",prop->name,temp);
@@ -1259,6 +1258,7 @@ int convert_from_struct(char *buffer, size_t len, void *data, PROPERTY *prop)
 		method_call(obj,NULL,size) --> returns 1 if size is larger than buffer size needed
 		method_call(obj,buffer,0) --> returns 1 if the buffer can be read into the obj
 		method_call(obj,buffer,size) --> returns 1 if the buffer can be written by the obj
+		method_call(obj,MC_EXTRACT,...)
  **/
 int convert_from_method (	char *buffer, /**< a pointer to the string buffer */
 							int size, /**< the size of the string buffer */

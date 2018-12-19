@@ -1892,8 +1892,7 @@ public: // iterators
 	inline int set_##X(char *buffer) { return X(buffer,0); }
 #define IMPL_METHOD(C,X) int C::X(char *buffer, size_t len)  // use this to implement a method
 
-
-/// Set bits of a bitflag property
+;/// Set bits of a bitflag property
 inline void setbits(unsigned long &flags, unsigned int bits) { flags|=bits; }; 
 /// Clear bits of a bitflag property
 inline void clearbits(unsigned long &flags, unsigned int bits) { flags&=~bits; }; 
@@ -2558,6 +2557,22 @@ public:
 };
 
 #endif // __cplusplus
+
+static int method_extract(char *value, va_list args)
+{
+	char *buffer = va_arg(args,char*);
+	size_t size = va_arg(args,size_t);
+	int offset = va_arg(args,int);
+	char *delims = va_arg(args,char*);
+	int len = strcspn(value+offset,delims);
+	if ( len < size ) // result will fit in buffer
+	{
+		strncpy(buffer,value+offset,len);
+		buffer[len] = '\0';
+		return value[offset+len] == '\0' ? 0 : offset+len+1;
+	}
+	return -1;
+}
 
 /** @} **/
 #endif

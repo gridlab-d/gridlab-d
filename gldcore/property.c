@@ -214,11 +214,27 @@ uint32 property_size_by_type(PROPERTYTYPE type)
 
 int property_read(PROPERTY *prop, void *addr, char *string)
 {
-	return property_type[prop->ptype].string_to_data ? property_type[prop->ptype].string_to_data(string,addr,prop) : 0;
+	if (prop->ptype > _PT_FIRST && prop->ptype < _PT_LAST)
+		return property_type[prop->ptype].string_to_data ? property_type[prop->ptype].string_to_data(string,addr,prop) : 0;
+	else
+		return 0;
+
 }
 
 int property_write(PROPERTY *prop, void *addr, char *string, size_t size)
 {
+	if ( prop->ptype == PT_method )
+	{
+		OBJECT *obj = (OBJECT*)addr;
+		output_error("gldcore/property.c:property_write(prop='%s', obj=<%s:%d>(name='%s'), string=%p, size=%u): unable to convert method data to string without iterator",
+			prop->name, obj->oclass->name, obj->id, obj->name?obj->name:"(none)", string, size);
+		/*	TROUBLESHOOT
+			Method properties require iterators to extract data. The request to extract data cannot
+			be fulfilled because using this function call. This is most likely an internal error due
+			to improper or legacy implementation.
+		 */
+		return 0;
+	}
 	return property_type[prop->ptype].data_to_string ? property_type[prop->ptype].data_to_string(string,size,addr,prop) : 0;
 }
 

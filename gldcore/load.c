@@ -7291,7 +7291,7 @@ TECHNOLOGYREADINESSLEVEL calculate_trl(void)
 
 			// downgrade trl
 			technology_readiness_level = oclass->trl;
-			IN_MYCONTEXT output_verbose("class '%s' TRL is %s", oclass->name, global_getvar("technology_readiness_level",buffer,sizeof(buffer)));
+			IN_MYCONTEXT output_verbose("class '%s' TRL is %d", oclass->name, oclass->trl);
 		}
 	}
 	IN_MYCONTEXT output_verbose("model TRL is %s", global_getvar("technology_readiness_level",buffer,sizeof(buffer)));

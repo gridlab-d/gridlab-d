@@ -905,7 +905,7 @@ typedef struct s_keyword {
 	Example iterator
 		char buffer[1024];
 		int last_offset = 0, next_offset = 0;
-		while ( (next_offset = method_call(obj,MC_EXTRACT,buffer,sizeof(buffer),last_offset,",")) > last_offset )
+		while ( (next_offset = method_call(obj,MC_EXTRACT,(char*)buffer,(size_t)sizeof(buffer),(int)last_offset,(const char*)",")) > last_offset )
 		{
 			// content of buffer is everything between last_offset (included) and delimiter (if found) or end-of-string (if delimiter not found)
 			last_offset = next_offset;
