@@ -20,8 +20,8 @@ module powerflow {
 };
 
 object climate {
-     name "WA-Yakima";
-     tmyfile "../WA-Yakima.tmy2";
+     name "CA-Chino";
+     tmyfile "../CA-Chino_Airport.tmy3";
 	 interpolate NONE;
 };
 
@@ -83,7 +83,6 @@ object solar {
 		};
 		within 0.01;
 	};
-
 }
 
 object inverter {
@@ -122,7 +121,7 @@ object solar {
 	name trip_solar2;
 	phases AS;
 	parent trip_inv2;
-	weather "WA-Yakima";
+	weather "CA-Chino";
 	Rated_kVA 4.0 kVA;
 	area 29.6296 m^2;
 	tilt_angle 45.0;
