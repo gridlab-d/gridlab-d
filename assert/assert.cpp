@@ -58,17 +58,17 @@ g_assert::g_assert(MODULE *module)
 				sprintf(msg, "unable to publish properties in %s",__FILE__);
 				throw msg;
 		}
-
-		memset(this,0,sizeof(g_assert));
-		status = AS_INIT;
-		relation=TCOP_EQ;
 	}
+	init_status();
+	init_target();
+	init_part();
+	init_relation();
+	init_value();
+	init_value2();
 }
 
 int g_assert::create(void) 
 {
-	memcpy(this,defaults,sizeof(*this));
-
 	return 1; /* return 1 on success, 0 on failure */
 }
 

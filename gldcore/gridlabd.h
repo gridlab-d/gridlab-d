@@ -1828,6 +1828,7 @@ public: // iterators
 	inline void set_##X(T p, gld_wlock&) { X=p; }; \
 	inline gld_string get_##X##_string(void) { return get_##X##_property().get_string(); }; \
 	inline void set_##X(char *str) { get_##X##_property().from_string(str); }; \
+	inline void init_##X(int value=0) { memset((void*)&X,value,sizeof(X));};
 
 /// Define a structured property
 #define GL_STRUCT(T,X) protected: T X; public: \
@@ -1840,6 +1841,7 @@ public: // iterators
 	inline void set_##X(T p, gld_wlock&) { X=p; }; \
 	inline gld_string get_##X##_string(void) { return get_##X##_property().get_string(); }; \
 	inline void set_##X(char *str) { get_##X##_property().from_string(str); }; \
+	inline void init_##X(int value=0) { memset((void*)&X,value,sizeof(X));};
 
 /// Define a string property
 #define GL_STRING(T,X) 	protected: T X; public: \
@@ -1855,6 +1857,7 @@ public: // iterators
 	inline void set_##X(char *p, gld_wlock&) { strncpy(X,p,sizeof(X)); }; \
 	inline void set_##X(size_t n, char c) { gld_wlock _lock(my()); X[n]=c; }; \
 	inline void set_##X(size_t n, char c, gld_wlock&) { X[n]=c; };  \
+	inline void init_##X(int value=0) { memset((void*)X,value,sizeof(X));};
 
 /// Define an array property
 #define GL_ARRAY(T,X,S) protected: T X[S]; public: \
@@ -1870,6 +1873,7 @@ public: // iterators
 	inline void set_##X(T* p, gld_wlock&) { memcpy(X,p,sizeof(X)); }; \
 	inline void set_##X(size_t n, T m) { gld_wlock _lock(my()); X[n]=m; }; \
 	inline void set_##X(size_t n, T m, gld_wlock&) { X[n]=m; };  \
+	inline void init_##X(int value=0) { memset((void*)X,value,sizeof(X));};
 
 /// Define a bitflag property
 #define GL_BITFLAGS(T,X) protected: T X; public: \
@@ -1884,6 +1888,7 @@ public: // iterators
 	inline void set_##X(T p, gld_wlock&) { X=p; }; \
 	inline gld_string get_##X##_string(void) { return get_##X##_property().get_string(); }; \
 	inline void set_##X(char *str) { get_##X##_property().from_string(str); }; \
+	inline void init_##X(int value=0) { memset((void*)&X,value,sizeof(X));};
 
 /// Define a method property
 #define GL_METHOD(C,X) public: int X(char *buffer, size_t len=0); \
