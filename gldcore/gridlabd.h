@@ -2160,8 +2160,8 @@ public: // special operations
 	{ 
 		return callback->properties.compare_basic(pstruct.prop->ptype,(PROPERTYCOMPAREOP)op,get_addr(),a,b,NULL);
 	};
-	inline int call(char *buffer, size_t len) { return (*(pstruct.prop->method))(obj+1,buffer,len); };
-	inline int call(const char *buffer) { return (*(pstruct.prop->method))(obj+1,(char*)buffer,0); };
+	inline int call(char *buffer, size_t len) { return (*(pstruct.prop->method))(obj,buffer,len); };
+	inline int call(const char *buffer) { return (*(pstruct.prop->method))(obj,(char*)buffer,0); };
 	inline int callf(const char *format,...) {
 		va_list ptr;
 		va_start(ptr,format);

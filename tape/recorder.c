@@ -498,27 +498,49 @@ static TIMESTAMP recorder_write(OBJECT *obj)
 EXPORT int method_recorder_property(OBJECT *obj, char *value, size_t size)
 {
 	struct recorder *my = OBJECTDATA(obj,struct recorder);
-	size_t len = strlen(value);
-	gl_verbose("adding property '%s' to recorder:%d",value,obj->id);
-	if ( my->property_len < len || my->property == NULL )
+	if ( value == NULL ) // check size needed to hold result
 	{
-		size_t need = len + (my->property==NULL ? 0 : strlen(my->property)) + 1;
-		my->property_len = ((need/BLOCKSIZE)+1)*BLOCKSIZE;
-		my->property = (char*)realloc(my->property,my->property_len);
-		if ( my->property == NULL )
+		if ( size == 0 )
+			return strlen(my->property)+1; // return size require
+		else
+			return strlen(my->property) < size ? 1 : 0; // return 1 if size given is enough
+	}
+	else if ( size == 0 ) // copy from data
+	{
+		size_t len = strlen(value);
+		gl_verbose("adding property '%s' to recorder:%d",value,obj->id);
+		if ( my->property_len < len || my->property == NULL )
 		{
-			gl_error("memory allocation failed");
-			my->property_len = 0;
+			size_t need = len + (my->property==NULL ? 0 : strlen(my->property)) + 1;
+			my->property_len = ((need/BLOCKSIZE)+1)*BLOCKSIZE;
+			my->property = (char*)realloc(my->property,my->property_len);
+			if ( my->property == NULL )
+			{
+				gl_error("memory allocation failed");
+				my->property_len = 0;
+				return 0;
+			}
+			strcpy(my->property,value);
+		}
+		else
+		{
+			strcat(my->property,",");
+			strcat(my->property,value);
+		}
+		return 1;
+	}
+	else // copy to data
+	{
+		if ( size > strlen(my->property) )
+		{
+			strcpy(value,my->property);
+			return strlen(my->property);
+		}
+		else
+		{
 			return 0;
 		}
-		strcpy(my->property,value);
-	}	
-	else
-	{
-		strcat(my->property,",");
-		strcat(my->property,value);
 	}
-	return 1;
 }
 
 PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list)
