@@ -45,36 +45,20 @@ bin_PROGRAMS =
 bin_SCRIPTS =
 dist_doc_DATA =
 
-# we're using non-recursive Make
-# include Makefile fragments instead of using SUBDIRS
-include assert/Makefile.mk
-include climate/Makefile.mk
-include commercial/Makefile.mk
-include connection/Makefile.mk
+# required modules
+include third_party/superLU_MT/Makefile_combined.mk
+include third_party/jsonCpp/Makefile.mk
 include gldcore/link/engine/Makefile.mk
 include gldcore/link/matlab/Makefile.mk
 include gldcore/Makefile.mk
 include gldcore/rt/Makefile.mk
 include gldcore/solvers/Makefile.mk
-include generators/Makefile.mk
-include market/Makefile.mk
-include mysql/Makefile.mk
-include optimize/Makefile.mk
-include powerflow/Makefile.mk
-include reliability/Makefile.mk
-include residential/Makefile.mk
-include tape_file/Makefile.mk
-include tape/Makefile.mk
-include tape_plot/Makefile.mk
 
-# we combine the sources in CBLAS and superLU_MT in a single Makefile fragment
-include third_party/superLU_MT/Makefile_combined.mk
+# approved modules
+include modules.mk
 
 # custom modules (see ./customize)
 include custom.mk
-include third_party/jsonCpp/Makefile.mk
-#include third_party/CBLAS/Makefile.mk
-#include third_party/superLU_MT/Makefile.mk
 
 # for doxygen commands
 include aminclude.mk
