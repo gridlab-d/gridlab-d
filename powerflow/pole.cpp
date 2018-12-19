@@ -167,6 +167,34 @@ int pole::init(OBJECT *parent)
 	}
 	is_deadend = ( n_lines < 2 );
 
+	WIREDATA *wire;
+	wire_load = 0.0;
+	wire_moment = 0.0;
+	wire_tension = 0.0;
+	wire_load_nowind = 0.0;
+	wire_moment_nowind = 0.0;
+	double pole_height = config->pole_length - config->pole_depth;
+	for ( wire = get_first_wire() ; wire != NULL ; wire = get_next_wire(wire) )
+		{
+			double load_nowind = (wire->diameter+2*ice_thickness)/12;
+			wire_load_nowind += load_nowind;
+			wire_moment_nowind += wire->span * load_nowind * wire->height * config->overload_factor_transverse_wire;
+
+		}
+
+	pole_moment_nowind = pole_height * pole_height * (config->ground_diameter+2*config->top_diameter)/72 * config->overload_factor_transverse_general;
+	equipment_moment_nowind = equipment_area * equipment_height * config->overload_factor_transverse_general;
+	pole_stress_polynomial_a = pole_moment_nowind+equipment_moment_nowind+wire_moment_nowind;
+	pole_stress_polynomial_b = 0.0;
+	pole_stress_polynomial_c = wire_tension;
+
+	double wind_pressure_failure = (resisting_moment - wire_tension) / (pole_moment_nowind + equipment_moment_nowind + wire_moment_nowind);
+	critical_wind_speed = sqrt(wind_pressure_failure / (0.00256 * 2.24));
+	return node::init(parent);
+}
+
+TIMESTAMP pole::presync(TIMESTAMP t0)
+{
 	if ( pole_status == PS_FAILED && down_time+config->repair_time > gl_globalclock )
 	{
 		warning("pole repaired");
@@ -177,6 +205,7 @@ int pole::init(OBJECT *parent)
 	}
 	if ( pole_status == PS_OK && last_wind_speed != *wind_speed )
 	{
+
 		gld_clock dt;
 		wind_pressure = 0.00256*2.24 * (*wind_speed)*(*wind_speed); //2.24 account for m/s to mph conversion
 		critical_wind_speed = 0.0;
@@ -187,20 +216,13 @@ int pole::init(OBJECT *parent)
 		WIREDATA *wire;
 		wire_load = 0.0;
 		wire_moment = 0.0;
-		wire_tension = 0.0;
-		wire_load_nowind = 0.0;
-		wire_moment_nowind = 0.0;
+		wire_tension = 0.0;	
 		for ( wire = get_first_wire() ; wire != NULL ; wire = get_next_wire(wire) )
 		{
 			double load = wind_pressure * (wire->diameter+2*ice_thickness)/12;
 			wire_load += load;
 			wire_moment += wire->span * load * wire->height * config->overload_factor_transverse_wire;
 			wire_tension += wire->tension * config->overload_factor_transverse_wire * sin(tilt_angle/2) * wire->height;
-
-
-			double load_nowind = (wire->diameter+2*ice_thickness)/12;
-			wire_load_nowind += load_nowind;
-			wire_moment_nowind += wire->span * load_nowind * wire->height * config->overload_factor_transverse_wire;
 
 		}
 
@@ -220,22 +242,7 @@ int pole::init(OBJECT *parent)
 		}
 		last_wind_speed = *wind_speed;
 
-		pole_moment_nowind = pole_height * pole_height * (config->ground_diameter+2*config->top_diameter)/72 * config->overload_factor_transverse_general;
-		equipment_moment_nowind = equipment_area * equipment_height * config->overload_factor_transverse_general;
-		double wind_pressure_failure = (resisting_moment - wire_tension) / (pole_moment_nowind + equipment_moment_nowind + wire_moment_nowind);
-		critical_wind_speed = sqrt(wind_pressure_failure / (0.00256 * 2.24));
-		pole_stress_polynomial_a = pole_moment_nowind+equipment_moment_nowind;
-		pole_stress_polynomial_b = 0.0;
-		pole_stress_polynomial_c = wire_tension;
-
 	}
-
-	return node::init(parent);
-}
-
-TIMESTAMP pole::presync(TIMESTAMP t0)
-{
-	
 	
 	TIMESTAMP t1 = node::presync(t0);
 	TIMESTAMP t2 = ( pole_status == PS_FAILED ? down_time + config->repair_time : TS_NEVER );
