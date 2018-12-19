@@ -3,7 +3,7 @@ To create a docker image run the command
 localhost% docker build -f DockerFile -t gridlabd .
 ~~~
    
-If the build succeeds and passes validation, the container will be created.
+If the build succeeds, the container will be created. If the build is from the master branch it must also pass validation.
 
 To save the docker image use the following command
 ~~~
