@@ -641,16 +641,26 @@ AC_MSG_RESULT([
     __sync_bool_compare_and_swap: $HAVE_SYNC_BOOL_COMPARE_AND_SWAP
     __sync_add_and_fetch: ....... $HAVE_SYNC_ADD_AND_FETCH
 
+  Build flags:
+    CFLAGS: ..................... ${CFLAGS:-(none)}
+    CXXFLAGS: ................... ${CXXFLAGS:-(none)}
+    CPPFLAGS: ................... ${CPPFLAGS:-(none)}
+    LDFLAGS: .................... ${LDFLAGS:-(none)}
+
   Installation paths:
 
-    Scripts: .................... $BINDIR
-    Libraries: .................. $LIBDIR/$PACKAGE
-    Documentation: .............. $DOCDIR
+    Scripts: .................... ${BINDIR/$PWD/.}
+    Libraries: .................. ${LIBDIR/$PWD/.}/$PACKAGE
+    Documentation: .............. ${DOCDIR/$PWD/.}
 
   Building:
 
     type 'make' to compile $PACKAGE.
-    type 'make install' to install $PACKAGE in $prefix.
+    type 'make install' to install $PACKAGE in ${prefix/$PWD/.}.
+
+  Running:
+    type 'export PATH=${prefix/$PWD/\$PWD}/bin:\$PATH' to include $PACKAGE in your current path
+    type '$PACKAGE --version' to check that you are running the correct version of $PACKAGE
 
 -----------------------------------------------------------------------
 ])
