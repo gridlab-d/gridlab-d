@@ -1356,6 +1356,17 @@ char *object_property_to_string(OBJECT *obj, char *name, char *buffer, int sz)
 	{
 		return prop->delegation->to_string(addr,buffer,sz) ? buffer : NULL;
 	}
+	else if ( prop->ptype == PT_method )
+	{
+		if ( class_property_to_string(prop,obj,buffer,sz) )
+			return buffer;
+		else
+		{
+			output_error("gldcore/object.c:object_property_to_string(obj=<%s:%d>('%s'), name='%s', buffer=%p, sz=%u): unable to extract property into buffer",
+				obj->oclass->name, obj->id, obj->name?obj->name:"(none)", prop->name, buffer, sz);
+			return "";
+		}
+	}
 	else if ( class_property_to_string(prop,addr,buffer,sz) )
 	{
 		return buffer;

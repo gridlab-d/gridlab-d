@@ -217,8 +217,16 @@ int property_read(PROPERTY *prop, void *addr, char *string)
 	if (prop->ptype > _PT_FIRST && prop->ptype < _PT_LAST)
 		return property_type[prop->ptype].string_to_data ? property_type[prop->ptype].string_to_data(string,addr,prop) : 0;
 	else
+	{
+		output_error("gldcore/property.c:property_read(prop='%s', addr=%p, string=%p): read operation not supported",
+			prop->name, addr, string);
+		/*	TROUBLESHOOT
+			The property in question cannot be converted from a string. Either the property does not have
+			an underlying XSD type that can be represented as a string, or the property does not support
+			the required operation(s).
+		 */
 		return 0;
-
+	}
 }
 
 int property_write(PROPERTY *prop, void *addr, char *string, size_t size)
@@ -226,7 +234,8 @@ int property_write(PROPERTY *prop, void *addr, char *string, size_t size)
 	if ( prop->ptype == PT_method )
 	{
 		OBJECT *obj = (OBJECT*)addr;
-		output_error("gldcore/property.c:property_write(prop='%s', obj=<%s:%d>(name='%s'), string=%p, size=%u): unable to convert method data to string without iterator",
+		/* TODO: implement iterator */
+		output_error("gldcore/property.c:property_write(prop='%s', addr=<%s:%d>(name='%s'), string=%p, size=%u): no iterator available",
 			prop->name, obj->oclass->name, obj->id, obj->name?obj->name:"(none)", string, size);
 		/*	TROUBLESHOOT
 			Method properties require iterators to extract data. The request to extract data cannot
@@ -235,7 +244,22 @@ int property_write(PROPERTY *prop, void *addr, char *string, size_t size)
 		 */
 		return 0;
 	}
-	return property_type[prop->ptype].data_to_string ? property_type[prop->ptype].data_to_string(string,size,addr,prop) : 0;
+	else if ( prop->ptype > _PT_FIRST && prop->ptype < _PT_LAST && property_type[prop->ptype].data_to_string != NULL )
+	{
+		return property_type[prop->ptype].data_to_string(string,size,addr,prop);
+	}
+	else
+	{
+		output_error("gldcore/property.c:property_write(prop='%s', addr=%p, string=%p, size=%u): write operation not supported",
+			prop->name, addr, string, size);
+		/*	TROUBLESHOOT
+			The property in question cannot be converted to a string. Either the property does not have
+			an underlying XSD type that can be represented as a string, or the property does not support
+			the required operation(s).
+		 */
+		return 0;
+	}
+
 }
 
 int property_create(PROPERTY *prop, void *addr)
