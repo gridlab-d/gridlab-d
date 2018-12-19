@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <ctype.h>
+#include <stdarg.h>
 #include "gridlabd.h"
 #include "object.h"
 #include "aggregate.h"
@@ -495,9 +496,22 @@ static TIMESTAMP recorder_write(OBJECT *obj)
 }
 
 #define BLOCKSIZE 1024
-EXPORT int method_recorder_property(OBJECT *obj, char *value, size_t size)
+EXPORT int method_recorder_property(OBJECT *obj, ...)
 {
 	struct recorder *my = OBJECTDATA(obj,struct recorder);
+	va_list args;
+	va_start(args,obj);
+	void *arg0 = va_arg(args,void*);
+
+	// extended syntax
+	if ( arg0 == MC_EXTRACT ) // iterator
+	{
+		return method_extract(my->property,args);
+	}
+
+	// legacy calls
+	char *value = (char*)arg0;
+	size_t size = va_arg(args,size_t);
 	if ( value == NULL ) // check size needed to hold result
 	{
 		if ( size == 0 )
@@ -541,6 +555,8 @@ EXPORT int method_recorder_property(OBJECT *obj, char *value, size_t size)
 			return 0;
 		}
 	}
+
+	va_end(args);
 }
 
 PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list)
