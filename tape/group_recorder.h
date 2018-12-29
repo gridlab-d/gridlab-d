@@ -9,12 +9,23 @@ EXPORT void new_group_recorder(MODULE *);
 EXPORT int group_recorder_postroutine(OBJECT *obj, double timedbl);
 
 #ifdef __cplusplus
-
+//FIXME take a look at quickobjlist. May be incorrect.
 class quickobjlist{
 public:
-	quickobjlist(){obj = 0; next = 0; memset(&prop, 0, sizeof(PROPERTY));}
-	quickobjlist(OBJECT *o, PROPERTY *p){obj = o; next = 0; memcpy(&prop, p, sizeof(PROPERTY));}
-	~quickobjlist(){if(next != 0) delete next;}
+	quickobjlist(){
+		obj = 0;
+		next = 0;
+		memset(&prop, 0, sizeof(PROPERTY));
+	}
+	quickobjlist(OBJECT *o, PROPERTY *p){
+		obj = o;
+		next = 0;
+		memcpy(&prop, p, sizeof(PROPERTY));
+	}
+	~quickobjlist(){
+		if(next != 0)
+			delete next;
+	}
 	void tack(OBJECT *o, PROPERTY *p){if(next){next->tack(o, p);} else {next = new quickobjlist(o, p);}}
 	OBJECT *obj;
 	PROPERTY prop;
@@ -26,7 +37,7 @@ public:
 	static group_recorder *defaults;
 	static CLASS *oclass, *pclass;
 
-	group_recorder(MODULE *);
+	explicit group_recorder(MODULE *);
 	int create();
 	int init(OBJECT *);
 	int isa(char *);

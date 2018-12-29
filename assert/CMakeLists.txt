@@ -2,7 +2,7 @@ project(assert)
 
 include_directories(../${GLDCORE_LOC})
 
-add_library(${PROJECT_NAME} SHARED
+add_library(${PROJECT_NAME}
         assert/assert.cpp
         assert/assert.h
         assert/complex_assert.cpp

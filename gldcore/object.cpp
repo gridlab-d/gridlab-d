@@ -24,8 +24,8 @@
 	@endcode
  @{
  **/
-#pragma GCC push_options
-#pragma GCC optimize ("O0")
+//#pragma GCC push_options
+//#pragma GCC optimize ("O0")
 
 #include <float.h>
 #include <math.h>
@@ -2780,6 +2780,6 @@ int object_loadmethod(OBJECT *obj, char *name, char *value)
 	return method ? method->call(obj,value) : 0;
 }
 
-#pragma GCC pop_options
+//#pragma GCC pop_options
 
 /** @} **/

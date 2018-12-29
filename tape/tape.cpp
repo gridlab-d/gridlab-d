@@ -24,14 +24,18 @@
 #include "histogram.h"
 #include "group_recorder.h"
 
-#define _TAPE_C
-
 #include "tape.h"
 #include "file.h"
 #include "odbc.h"
 #include "violation_recorder.h"
 #include "metrics_collector.h"
 #include "metrics_collector_writer.h"
+
+
+#include "shaper.h"
+#include "collector.h"
+#include "player.h"
+#include "recorder.h"
 
 #define MAP_DOUBLE(X,LO,HI) {#X,VT_DOUBLE,&X,LO,HI}
 #define MAP_INTEGER(X,LO,HI) {#X,VT_INTEGER,&X,LO,HI}
@@ -98,8 +102,9 @@ typedef char *(*READFUNC)(void *, char *, unsigned int);
 typedef int (*WRITEFUNC)(void *, char *, char *);
 typedef int (*REWINDFUNC)(void *);
 typedef void (*CLOSEFUNC)(void *);
+//TODO verify not a typo
 typedef void (*VOIDCALL)(void);
-typedef void (*FLUSHFUNC)(void*);
+typedef void (*FLUSHFUNC)(void *);
 
 TAPEFUNCS *get_ftable(char *mode){
 	/* check what we've already loaded */
@@ -162,7 +167,7 @@ TAPEFUNCS *get_ftable(char *mode){
 	ops->write = (WRITEFUNC)DLSYM(lib, "write_recorder");
 	ops->rewind = NULL;
 	ops->close = (CLOSEFUNC)DLSYM(lib, "close_recorder");
-	ops->flush = (FLUSHFUNC)DLSYM(lib, "flush_collector");
+	ops->flush = (FLUSHFUNC)DLSYM(lib, "flush_recorder");
 
 	ops = fptr->histogram = static_cast<TAPEOPS *>(malloc(sizeof(TAPEOPS)));
 	memset(ops,0,sizeof(TAPEOPS));
@@ -171,7 +176,7 @@ TAPEFUNCS *get_ftable(char *mode){
 	ops->write = (WRITEFUNC)DLSYM(lib, "write_histogram");
 	ops->rewind = NULL;
 	ops->close = (CLOSEFUNC)DLSYM(lib, "close_histogram");
-	ops->flush = (FLUSHFUNC)DLSYM(lib, "flush_collector");
+	ops->flush = (FLUSHFUNC)DLSYM(lib, "flush_histogram");
 
 	ops = fptr->shaper = static_cast<TAPEOPS *>(malloc(sizeof(TAPEOPS)));
 	memset(ops,0,sizeof(TAPEOPS));
@@ -206,16 +211,16 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 #else
 	sprintf(tape_gnuplot_path,"/usr/bin/gnuplot");
 #endif
-	gl_global_create("tape::gnuplot_path",PT_char1024,&tape_gnuplot_path,NULL);
-	gl_global_create("tape::flush_interval",PT_int32,&flush_interval,NULL);
-	gl_global_create("tape::csv_data_only",PT_int32,&csv_data_only,NULL);
-	gl_global_create("tape::csv_keep_clean",PT_int32,&csv_keep_clean,NULL);
+	gl_global_create(const_cast<char *>("tape::gnuplot_path"), PT_char1024, &tape_gnuplot_path, NULL);
+	gl_global_create(const_cast<char *>("tape::flush_interval"), PT_int32, &flush_interval, NULL);
+	gl_global_create(const_cast<char *>("tape::csv_data_only"), PT_int32, &csv_data_only, NULL);
+	gl_global_create(const_cast<char *>("tape::csv_keep_clean"), PT_int32, &csv_keep_clean, NULL);
 
 	/* control delta mode */
-	gl_global_create("tape::delta_mode_needed", PT_timestamp, &delta_mode_needed,NULL);
+	gl_global_create(const_cast<char *>("tape::delta_mode_needed"), PT_timestamp, &delta_mode_needed, NULL);
 
 	/* register the first class implemented, use SHARE to reveal variables */
-	player_class = gl_register_class(module,"player",sizeof(struct player),PC_PRETOPDOWN);
+	player_class = gl_register_class(module, const_cast<char *>("player"), sizeof(struct player), PC_PRETOPDOWN);
 	player_class->trl = TRL_PROVEN;
 	PUBLISH_STRUCT(player,char256,property);
 	PUBLISH_STRUCT(player,char1024,file);
@@ -224,7 +229,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	PUBLISH_STRUCT(player,int32,loop);
 
 	/* register the first class implemented, use SHARE to reveal variables */
-	shaper_class = gl_register_class(module,"shaper",sizeof(struct shaper),PC_PRETOPDOWN);
+	shaper_class = gl_register_class(module, const_cast<char *>("shaper"), sizeof(struct shaper), PC_PRETOPDOWN);
 	shaper_class->trl = TRL_QUALIFIED;
 	PUBLISH_STRUCT(shaper,char1024,file);
 	PUBLISH_STRUCT(shaper,char8,filetype);
@@ -235,7 +240,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	PUBLISH_STRUCT(shaper,double,events);
 
 	/* register the other classes as needed, */
-	recorder_class = gl_register_class(module,"recorder",sizeof(struct recorder),PC_POSTTOPDOWN|PC_OBSERVER);
+	recorder_class = gl_register_class(module, const_cast<char *>("recorder"), sizeof(struct recorder), PC_POSTTOPDOWN | PC_OBSERVER);
 	recorder_class->trl = TRL_PROVEN;
 	PUBLISH_STRUCT(recorder,char1024,property);
 	PUBLISH_STRUCT(recorder,char32,trigger);
@@ -270,10 +275,10 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 			PT_KEYWORD, "ALL", LU_ALL,
 			PT_KEYWORD, "NONE", LU_NONE,
 			NULL) < 1)
-		GL_THROW("Could not publish property output for recorder");
+		GL_THROW(const_cast<char *>("Could not publish property output for recorder"));
 
 		/* register the other classes as needed, */
-	multi_recorder_class = gl_register_class(module,"multi_recorder",sizeof(struct recorder),PC_POSTTOPDOWN|PC_OBSERVER);
+	multi_recorder_class = gl_register_class(module, const_cast<char *>("multi_recorder"), sizeof(struct recorder), PC_POSTTOPDOWN | PC_OBSERVER);
 	multi_recorder_class->trl = TRL_QUALIFIED;
 	if(gl_publish_variable(multi_recorder_class,
 		PT_double, "interval[s]", ((char*)&(my.dInterval) - (char *)&my),
@@ -305,10 +310,10 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 			PT_KEYWORD, "ALL", LU_ALL,
 			PT_KEYWORD, "NONE", LU_NONE,
 			NULL) < 1)
-		GL_THROW("Could not publish property output for multi_recorder");
+		GL_THROW(const_cast<char *>("Could not publish property output for multi_recorder"));
 
 	/* register the other classes as needed, */
-	collector_class = gl_register_class(module,"collector",sizeof(struct collector),PC_POSTTOPDOWN|PC_OBSERVER);
+	collector_class = gl_register_class(module, const_cast<char *>("collector"), sizeof(struct collector), PC_POSTTOPDOWN | PC_OBSERVER);
 	collector_class->trl = TRL_PROVEN;
 	PUBLISH_STRUCT(collector,char1024,property);
 	PUBLISH_STRUCT(collector,char32,trigger);
@@ -320,7 +325,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	if(gl_publish_variable(collector_class,
 		PT_double, "interval[s]", ((char*)&(my2.dInterval) - (char *)&my2),
 			NULL) < 1)
-		GL_THROW("Could not publish property output for collector");
+		GL_THROW(const_cast<char *>("Could not publish property output for collector"));
 
 	/* new histogram() */
 	new_histogram(module);
@@ -478,7 +483,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 	/* prepare the timestamp */
 	static char global_dateformat[8]="";
 
-	TIMESTAMP integer_clock = (TIMESTAMP)clock_val;	/* Whole seconds - update from global clock because we could be in delta for over 1 second */
+	auto integer_clock = (TIMESTAMP)clock_val;	/* Whole seconds - update from global clock because we could be in delta for over 1 second */
 	int microseconds = (int)((clock_val-(int)(clock_val))*1000000+0.5);	/* microseconds roll-over - biased upward (by 0.5) */
 
 	/* Recorders should only "fire" on the 0th iteration - may need to adjust if "0" is implemented in deltamode */
@@ -488,12 +493,12 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 		if ((integer_clock != t0) || (microseconds != 0))
 		{
 			DATETIME rec_date_time;
-			TIMESTAMP rec_integer_clock = (TIMESTAMP)recorder_delta_clock;	/* Whole seconds - update from global clock because we could be in delta for over 1 second */
+			auto rec_integer_clock = (TIMESTAMP)recorder_delta_clock;	/* Whole seconds - update from global clock because we could be in delta for over 1 second */
 			int rec_microseconds = (int)((recorder_delta_clock-(int)(recorder_delta_clock))*1000000+0.5);	/* microseconds roll-over - biased upward (by 0.5) */
 			if ( gl_localtime(rec_integer_clock,&rec_date_time)!=0 )
 			{
 				if ( global_dateformat[0]=='\0')
-					gl_global_getvar("dateformat",global_dateformat,sizeof(global_dateformat));
+					gl_global_getvar(const_cast<char *>("dateformat"), global_dateformat, sizeof(global_dateformat));
 				if ( strcmp(global_dateformat,"ISO")==0)
 					sprintf(recorder_timestamp,"%04d-%02d-%02d %02d:%02d:%02d.%.06d %s",rec_date_time.year,rec_date_time.month,rec_date_time.day,rec_date_time.hour,rec_date_time.minute,rec_date_time.second,rec_microseconds,rec_date_time.tz);
 				else if ( strcmp(global_dateformat,"US")==0)
@@ -515,9 +520,9 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 				if (index_item->obj_type == RECORDER)
 				{
 					OBJECT *obj = index_item->obj;
-					struct recorder *my = (struct recorder *)OBJECTDATA(obj,struct recorder);
+					struct recorder *my = OBJECTDATA(obj,struct recorder);
 					char value[1024];
-					extern int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buffer, int size);
+					//extern int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buffer, int size);
 
 					/* See if we're in service */
 					if ((obj->in_svc_double <= gl_globaldeltaclock) && (obj->out_svc_double >= gl_globaldeltaclock))
@@ -555,9 +560,9 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 		if (index_item->obj_type == PLAYER)
 		{
 			OBJECT *obj = index_item->obj;
-			struct player *my = (struct player *)OBJECTDATA(obj,struct player);
+			struct player *my = OBJECTDATA(obj,struct player);
 			int y=0,m=0,d=0,H=0,M=0,S=0,ms=0, n=0;
-			char *fmt = "%d/%d/%d %d:%d:%d.%d,%*s";
+			char *fmt = const_cast<char *>("%d/%d/%d %d:%d:%d.%d,%*s");
 			double t = (double)my->next.ts + (double)my->next.ns/1e9;
 			char256 curr_value;
 
@@ -569,7 +574,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 				/* post the current value */
 				if ( t<=clock_val )
 				{
-					extern TIMESTAMP player_read(OBJECT *obj);
+					//extern TIMESTAMP player_read(OBJECT *obj);
 
 					/* Check to make sure we've be initialized -- if a deltamode timestep is first, it may be before this was initialized */
 					if (my->target == NULL)	/* Not set yet */
@@ -578,7 +583,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 						Will be investigated further for 4.1 release.
 						*/
 
-						gl_error("deltamode player: player \"%s\" has a deltamode timestep starting it - please avoid this",(obj->name ? obj->name : "(anon)"));
+						gl_error("deltamode player: player '%s' has a deltamode timestep starting it - please avoid this",(obj->name ? obj->name : "(anon)"));
 						/*  TROUBLESHOOT
 						Starting a player with a deltamode timestep causes segmentation faults.  A fix was developed, but still has issues with
 						certain platforms and must be investigated further.  For now, start all player files with non-deltamode timesteps.  This
@@ -591,7 +596,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 						*** Make sure we actually opened the file (this part is new - paranoia check ***
 						if (my->status != TS_OPEN)
 						{
-							gl_error("deltamode player: player \"%s\" has not been opened yet!",obj->name?obj->name:"(anon)");
+							gl_error("deltamode player: player '%s' has not been opened yet!",obj->name?obj->name:"(anon)");
 							***  TROUBLESHOOT
 							While attempting to start a player with a deltamode timestep, it was found the player hasn't been opened yet.
 							Please submit your code and a bug report via the issue system.  To work around this, put a non-deltamode timestep
@@ -609,7 +614,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 
 						*** Make sure it worked ***
 						if (my->target==NULL){
-							gl_error("deltamode player: Unable to find property \"%s\" in object %s", my->property, obj->name?obj->name:"(anon)");
+							gl_error("deltamode player: Unable to find property '%s' in object %s", my->property, obj->name?obj->name:"(anon)");
 							***  TROUBLESHOOT
 							While attempting to link up the property of a player in deltamode, the property could not be found.  Make sure the object
 							exists and has the specified property and try again.
@@ -689,14 +694,13 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 	struct player *myplayer = NULL;
 	FUNCTIONADDR temp_fxn;
 	char value[1024];
-	extern int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buffer, int size);
 
 	/* Perform one final update of recorder - otherwise it misses the last "value" */
 	/* Code copied out of interupdate above */
 	/* determine the timestamp */
 	char recorder_timestamp[64];
 	DATETIME rec_date_time;
-	TIMESTAMP rec_integer_clock;
+	TIMESTAMP rec_integer_clock = TS_INVALID; // FIXME: make sure this makes sense.
 	int rec_microseconds;
 	bool recorder_init_items = false;
 	char global_dateformat[8]="";
@@ -711,7 +715,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 	{
 		if (index_item->obj_type == RECORDER)
 		{
-			if (recorder_init_items == false)
+			if (!recorder_init_items)
 			{
 				/* Set up recorder clock */
 				rec_integer_clock = (TIMESTAMP)recorder_delta_clock;	/* Whole seconds - update from global clock because we could be in delta for over 1 second */
@@ -719,7 +723,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 				if ( gl_localtime(rec_integer_clock,&rec_date_time)!=0 )
 				{
 					if ( global_dateformat[0]=='\0')
-						gl_global_getvar("dateformat",global_dateformat,sizeof(global_dateformat));
+						gl_global_getvar(const_cast<char *>("dateformat"), global_dateformat, sizeof(global_dateformat));
 					if ( strcmp(global_dateformat,"ISO")==0)
 						sprintf(recorder_timestamp,"%04d-%02d-%02d %02d:%02d:%02d.%.06d %s",rec_date_time.year,rec_date_time.month,rec_date_time.day,rec_date_time.hour,rec_date_time.minute,rec_date_time.second,rec_microseconds,rec_date_time.tz);
 					else if ( strcmp(global_dateformat,"US")==0)
@@ -737,7 +741,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 			}/*End recorder time init */
 
 			obj = index_item->obj;
-			myrec = (struct recorder *)OBJECTDATA(obj,struct recorder);
+			myrec = OBJECTDATA(obj,struct recorder);
 
 			/* See if we're in service */
 			if ((obj->in_svc_double <= gl_globaldeltaclock) && (obj->out_svc_double >= gl_globaldeltaclock))
@@ -805,7 +809,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 	}/* End while loop for recorders */
 
 	/* If any existed, do a flush */
-	if (recorder_init_items == true)
+	if (recorder_init_items)
 	{
 		/* flush the output streams */
 		fflush(NULL);
@@ -823,7 +827,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 		if (index_item->obj_type == PLAYER)
 		{
 			obj = index_item->obj;
-			myplayer = (struct player *)OBJECTDATA(obj,struct player);
+			myplayer = OBJECTDATA(obj,struct player);
 
 			/* See if we're in service */
 			if ((obj->in_svc_double <= gl_globaldeltaclock) && (obj->out_svc_double >= gl_globaldeltaclock))

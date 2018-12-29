@@ -2,7 +2,7 @@ project(market)
 
 include_directories(../${GLDCORE_LOC})
 
-add_library(${PROJECT_NAME} SHARED
+add_library(${PROJECT_NAME}
         market/auction.cpp
         market/auction.h
         market/bid.cpp

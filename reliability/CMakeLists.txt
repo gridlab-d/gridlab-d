@@ -2,7 +2,7 @@ project(reliability)
 
 include_directories(../${GLDCORE_LOC})
 
-add_library(${PROJECT_NAME} SHARED
+add_library(${PROJECT_NAME}
         reliability/eventgen.cpp
         reliability/eventgen.h
         reliability/init.cpp

@@ -3,62 +3,66 @@ project(gridlabd)
 
 if (CMAKE_VERSION VERSION_LESS "3.1")
     if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
     endif ()
 else ()
-SET(CMAKE_CXX_STANDARD 11)
-SET(CMAKE_CXX_STANDARD_REQUIRED ON)
+    SET(CMAKE_CXX_STANDARD 11)
+    SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif ()
 
+# Get the current working branch
+execute_process(
+        COMMAND git rev-parse --abbrev-ref HEAD
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_BRANCH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+
+# Get the latest abbreviated commit hash of the working branch
+execute_process(
+        COMMAND git log -1 --format=%h
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_COMMIT_HASH
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+)
 
 # Package information for Gridlab-d
 SET(DLEXT ${CMAKE_SHARED_LIBRARY_SUFFIX})
 SET(PACKAGE "${PROJECT_NAME}")
 SET(PACKAGE_BUGREPORT "gridlabd@pnnl.gov")
 SET(PACKAGE_NAME "GridLAB-D")
-SET(PACKAGE_STRING "GridLAB-D 4.0.0")
+SET(REV_MAJOR 4)
+SET(REV_MINOR 1)
+SET(REV_PATCH 0)
+SET(PACKAGE_STRING "GridLAB-D ${REV_MAJOR}.${REV_MINOR}.${REV_PATCH} (Branch:${GIT_BRANCH} - ${GIT_COMMIT_HASH})")
 SET(PACKAGE_TARNAME "${PROJECT_NAME}")
 SET(PACKAGE_URL "")
-SET(PACKAGE_VERSION "4.0.0")
+SET(PACKAGE_VERSION ${REV_MAJOR}.${REV_MINOR}.${REV_PATCH})
+
+# use, i.e. don't skip the full RPATH for the build tree
+SET(CMAKE_SKIP_BUILD_RPATH FALSE)
+
+# when building, don't use the install RPATH already
+# (but later on when installing)
+SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+
+SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib/gridlabd")
+
+# add the automatically determined parts of the RPATH
+# which point to directories outside the build tree to the install RPATH
+SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 SET(GLDCORE_LOC gldcore)
 
-#cmake_policy(SET CMP0045 OLD)
-
-
-# Sets default compile scheme to Release (Maximum optimization, no debugger data)
-# To compile as Debug outside of IDE, run cmake with "-DCMAKE_BUILD_TYPE=Debug" flag.
-IF (NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
-    SET(CMAKE_BUILD_TYPE Release)
-ENDIF (NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
+OPTION(BUILD_SHARED_LIBS "Sets Gridlab-d libraries to be built as shared. *DANGER - will currently break build if changed.*" ON)
 
 # Allows specific compiler optimizations to be disabled for all build types.
-set(DISABLED_OPTIMIZATIONS "")
-#set(DISABLED_OPTIMIZATIONS "${DISABLED_OPTIMIZATIONS} -fno-inline-functions")
-
-# Sets optimization flags.
-IF (CMAKE_BUILD_TYPE STREQUAL Release)
-    SET(COMPILER_OPTIMIZATION_FLAG "-O3")
-ELSE ()
-    SET(COMPILER_OPTIMIZATION_FLAG "-O0")
-ENDIF ()
-
-message("Compiler set to optimization level ${COMPILER_OPTIMIZATION_FLAG}")
+set(DISABLED_OPTIMIZATIONS "${DISABLED_OPTIMIZATIONS} -fno-inline-functions")
 
 # Compiler/Linker flags for all build types
-set(CMAKE_CXX_FLAGS "-w")
-set(CMAKE_C_FLAGS "-w")
-set(CMAKE_LD_FLAGS "-w")
-
-# Compiler/Linker flags for debug specific build types
-set(CMAKE_CXX_FLAGS_DEBUG "-g ${COMPILER_OPTIMIZATION_FLAG} ${DISABLED_OPTIMIZATIONS}")
-set(CMAKE_C_FLAGS_DEBUG "-g ${COMPILER_OPTIMIZATION_FLAG} ${DISABLED_OPTIMIZATIONS}")
-set(CMAKE_LD_FLAGS_DEBUG "-g ${COMPILER_OPTIMIZATION_FLAG} ${DISABLED_OPTIMIZATIONS}")
-
-# Compiler/Linker flags for release specific build types (default)
-set(CMAKE_CXX_FLAGS_RELEASE "${COMPILER_OPTIMIZATION_FLAG} ${DISABLED_OPTIMIZATIONS}")
-set(CMAKE_C_FLAGS_RELEASE "${COMPILER_OPTIMIZATION_FLAG} ${DISABLED_OPTIMIZATIONS}")
-set(CMAKE_LD_FLAGS_RELEASE "${COMPILER_OPTIMIZATION_FLAG} ${DISABLED_OPTIMIZATIONS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w ${DISABLED_OPTIMIZATIONS}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -w ${DISABLED_OPTIMIZATIONS}")
+set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} -w ${DISABLED_OPTIMIZATIONS}")
 
 # Set up platform specific library linking
 IF (WIN32 OR MSYS OR MINGW OR CYGWIN)
@@ -72,13 +76,31 @@ ELSE ()
 ENDIF ()
 LIST(APPEND CMAKE_REQUIRED_LIBRARIES ${OS_SPECIFIC_LIBRARIES})
 
+# Set configurable flags for runtime.
+OPTION(USE_MYSQL "Enable building with MySQL" OFF)
+OPTION(USE_HELIC "Enable building with HELICS" OFF)
+OPTION(USE_FNCS "Enable building with FNCS" OFF)
+OPTION(USE_OPENMP "Enable building with OpenMP" OFF)
+
+# Configure MySQL to be configured and linked if available.
+IF (USE_MYSQL)
+    INCLUDE(CMakeScripts/FindMySQL.cmake)
+    IF (FOUND_MYSQL)
+        SET(HAVE_MYSQL ON)
+    ENDIF ()
+ENDIF ()
+
+#message("Have mysql? -> ${HAVE_MYSQL}")
+
 # Configure OpenMP to be compiled and linked if available.
-include(FindOpenMP)
-if (OPENMP_FOUND)
-    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} ${OpenMP_LD_FLAGS}")
-endif ()
+if (WITH_OPENMP)
+    include(FindOpenMP)
+    if (OPENMP_FOUND)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+        set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} ${OpenMP_LD_FLAGS}")
+    endif ()
+ENDIF () # WITH_OPENMP
 
 # Set the list of modules and files which should be copied into the install directory.
 SET(GL_MODULES
@@ -100,70 +122,70 @@ SET(GL_MODULES
         glxengine
         )
 SET(HEADER_FILE_NAMES
-        gldcore/build.h
-        gldcore/class.h
-        gldcore/complex.h
-        gldcore/debug.h
-        gldcore/enduse.h
-        gldcore/exception.h
-        gldcore/loadshape.h
-        gldcore/lock.h
-        gldcore/module.h
-        gldcore/object.h
-        gldcore/property.h
-        gldcore/schedule.h
-        gldcore/test.h
-        gldcore/version.h
+        ${GLDCORE_LOC}/build.h
+        ${GLDCORE_LOC}/class.h
+        ${GLDCORE_LOC}/complex.h
+        ${GLDCORE_LOC}/debug.h
+        ${GLDCORE_LOC}/enduse.h
+        ${GLDCORE_LOC}/exception.h
+        ${GLDCORE_LOC}/loadshape.h
+        ${GLDCORE_LOC}/lock.h
+        ${GLDCORE_LOC}/module.h
+        ${GLDCORE_LOC}/object.h
+        ${GLDCORE_LOC}/property.h
+        ${GLDCORE_LOC}/schedule.h
+        ${GLDCORE_LOC}/test.h
+        ${GLDCORE_LOC}/version.h
         )
 SET(GLD_SHARE
-        gldcore/tzinfo.txt
-        gldcore/unitfile.txt
-        gldcore/rt/about.htm
-        gldcore/rt/COPYRIGHT
-        gldcore/rt/debugger.conf
-        gldcore/rt/eula.htm
-        gldcore/rt/favicon.ico
-        gldcore/rt/gnuplot.conf
-        gldcore/rt/gridlabd.conf
-        gldcore/rt/gridlabd.css
-        gldcore/rt/gridlabd.h
-        gldcore/rt/gridlabd.htm
-        gldcore/rt/gridlabd.jpg
-        gldcore/rt/gridlabd.js
-        gldcore/rt/gridlabd.syn
-        gldcore/rt/LICENSE
-        gldcore/rt/mingw.conf
-        gldcore/rt/STATUS
-        gldcore/rt/capacitor_b.png
-        gldcore/rt/capacitor_g.png
-        gldcore/rt/capacitor_k.png
-        gldcore/rt/capacitor_r.png
-        gldcore/rt/load_b.png
-        gldcore/rt/load_g.png
-        gldcore/rt/load_k.png
-        gldcore/rt/load_r.png
-        gldcore/rt/meter_g.png
-        gldcore/rt/node_b.png
-        gldcore/rt/node_g.png
-        gldcore/rt/node_k.png
-        gldcore/rt/node_r.png
-        gldcore/rt/regulator_b.png
-        gldcore/rt/regulator_g.png
-        gldcore/rt/regulator_k.png
-        gldcore/rt/regulator_r.png
-        gldcore/rt/switch_b.png
-        gldcore/rt/switch_g.png
-        gldcore/rt/switch_k.png
-        gldcore/rt/switch_r.png
-        gldcore/rt/transformer_b.png
+        ${GLDCORE_LOC}/tzinfo.txt
+        ${GLDCORE_LOC}/unitfile.txt
+        ${GLDCORE_LOC}/rt/about.htm
+        ${GLDCORE_LOC}/rt/COPYRIGHT
+        ${GLDCORE_LOC}/rt/debugger.conf
+        ${GLDCORE_LOC}/rt/eula.htm
+        ${GLDCORE_LOC}/rt/favicon.ico
+        ${GLDCORE_LOC}/rt/gnuplot.conf
+        ${GLDCORE_LOC}/rt/gridlabd.conf
+        ${GLDCORE_LOC}/rt/gridlabd.css
+        ${GLDCORE_LOC}/rt/gridlabd.h
+        ${GLDCORE_LOC}/rt/gridlabd.htm
+        ${GLDCORE_LOC}/rt/gridlabd.jpg
+        ${GLDCORE_LOC}/rt/gridlabd.js
+        ${GLDCORE_LOC}/rt/gridlabd.syn
+        ${GLDCORE_LOC}/rt/LICENSE
+        ${GLDCORE_LOC}/rt/mingw.conf
+        ${GLDCORE_LOC}/rt/STATUS
+        ${GLDCORE_LOC}/rt/capacitor_b.png
+        ${GLDCORE_LOC}/rt/capacitor_g.png
+        ${GLDCORE_LOC}/rt/capacitor_k.png
+        ${GLDCORE_LOC}/rt/capacitor_r.png
+        ${GLDCORE_LOC}/rt/load_b.png
+        ${GLDCORE_LOC}/rt/load_g.png
+        ${GLDCORE_LOC}/rt/load_k.png
+        ${GLDCORE_LOC}/rt/load_r.png
+        ${GLDCORE_LOC}/rt/meter_g.png
+        ${GLDCORE_LOC}/rt/node_b.png
+        ${GLDCORE_LOC}/rt/node_g.png
+        ${GLDCORE_LOC}/rt/node_k.png
+        ${GLDCORE_LOC}/rt/node_r.png
+        ${GLDCORE_LOC}/rt/regulator_b.png
+        ${GLDCORE_LOC}/rt/regulator_g.png
+        ${GLDCORE_LOC}/rt/regulator_k.png
+        ${GLDCORE_LOC}/rt/regulator_r.png
+        ${GLDCORE_LOC}/rt/switch_b.png
+        ${GLDCORE_LOC}/rt/switch_g.png
+        ${GLDCORE_LOC}/rt/switch_k.png
+        ${GLDCORE_LOC}/rt/switch_r.png
+        ${GLDCORE_LOC}/rt/transformer_b.png
 
-        gldcore/rt/transformer_g.png
-        gldcore/rt/transformer_k.png
-        gldcore/rt/transformer_r.png
-        gldcore/rt/triplex_meter_b.png
-        gldcore/rt/triplex_meter_g.png
-        gldcore/rt/triplex_meter_k.png
-        gldcore/rt/triplex_meter_r.png
+        ${GLDCORE_LOC}/rt/transformer_g.png
+        ${GLDCORE_LOC}/rt/transformer_k.png
+        ${GLDCORE_LOC}/rt/transformer_r.png
+        ${GLDCORE_LOC}/rt/triplex_meter_b.png
+        ${GLDCORE_LOC}/rt/triplex_meter_g.png
+        ${GLDCORE_LOC}/rt/triplex_meter_k.png
+        ${GLDCORE_LOC}/rt/triplex_meter_r.png
 
         models/climate_csvreader_example.glm
         models/collector_example.glm
@@ -186,8 +208,8 @@ SET(GLD_SHARE
         models/weather.csv
         models/wind_turbine_example.glm
 
-        #        gldcore/gridlabd.htm
-        gldcore/gridlabd.htm
+        #        ${GLDCORE_LOC}/gridlabd.htm
+        ${GLDCORE_LOC}/gridlabd.htm
         )
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
@@ -199,11 +221,13 @@ endif ()
 
 find_package(Curses)
 
-SET(HAVE_CURSES CURSES_FOUND)
+IF (CURSES_FOUND)
+    SET(HAVE_CURSES 1)
+ENDIF ()
 
 # Link required libraries for symbol checks
 list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
-list(APPEND CMAKE_REQUIRED_LIBRARIES m dl)
+#list(APPEND CMAKE_REQUIRED_LIBRARIES m dl)
 # CMake Module includes
 INCLUDE(CheckIncludeFiles)
 INCLUDE(CheckFunctionExists)
@@ -365,12 +389,12 @@ TRY_COMPILE(HAVE_ISFINITE ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR
 TRY_COMPILE(HAVE_PTHREAD_PRIO_INHERIT ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_BINARY_DIR}/HAVE_PTHREAD_PRIO_INHERIT.cc)
 
 # Generate the config.h header file.
-#configure_file(gldcore/cmake_config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/gldcore/config.h @ONLY)
+INCLUDE(CMakeScripts/Build_number.cmake)
 configure_file(gldcore/cmake_config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/gldcore/config.h @ONLY)
+configure_file(gldcore/version.h.in ${CMAKE_CURRENT_SOURCE_DIR}/gldcore/version.h @ONLY)
 add_definitions(-DHAVE_CONFIG_H)
 
 # Load module directories. When adding new module, add it here.
-#include_directories(gldcore)
 include_directories(gldcore)
 include_directories(third_party/superLU_MT)
 include_directories(third_party/jsonCpp)
@@ -392,139 +416,139 @@ include(residential/CMakeLists.txt)
 include(tape/CMakeLists.txt)
 include(tape_file/CMakeLists.txt)
 include(tape_plot/CMakeLists.txt)
-include(gldcore/solvers/CMakeLists.txt)
-include(gldcore/link/engine/CMakeLists.txt)
+include(${GLDCORE_LOC}/solvers/CMakeLists.txt)
+include(${GLDCORE_LOC}/link/engine/CMakeLists.txt)
 
 # Load and link C/C++ files for the executeable
 add_executable(gridlabd
-        gldcore/gridlabd.h
-        gldcore/globals.cpp
-        gldcore/globals.h
-        gldcore/object.cpp
-        gldcore/object.h
-        gldcore/schedule.cpp
-        gldcore/schedule.h
-        gldcore/aggregate.cpp
-        gldcore/aggregate.h
-        gldcore/build.h
-        gldcore/class.cpp
-        gldcore/class.h
-        gldcore/cmdarg.cpp
-        gldcore/cmdarg.h
-        #gldcore/cmex.c
-        #gldcore/cmex.h
-        gldcore/compare.cpp
-        gldcore/compare.h
-        gldcore/complex.h
-        gldcore/config.h
-        gldcore/console.h
-        gldcore/convert.cpp
-        gldcore/convert.h
-        gldcore/cpp_threadpool.cpp
-        gldcore/cpp_threadpool.h
-        gldcore/debug.cpp
-        gldcore/debug.h
-        gldcore/deltamode.cpp
-        gldcore/deltamode.h
-        gldcore/enduse.cpp
-        gldcore/enduse.h
-        gldcore/environment.cpp
-        gldcore/environment.h
-        gldcore/exception.cpp
-        gldcore/exception.h
-        gldcore/exec.cpp
-        gldcore/exec.h
-        gldcore/find.cpp
-        gldcore/find.h
-        gldcore/gld_sock.h
-        gldcore/gui.cpp
-        gldcore/gui.h
-        gldcore/http_client.cpp
-        gldcore/http_client.h
-        gldcore/index.cpp
-        gldcore/index.h
-        gldcore/instance.cpp
-        gldcore/instance.h
-        gldcore/instance_cnx.cpp
-        gldcore/instance_cnx.h
-        gldcore/instance_slave.cpp
-        gldcore/instance_slave.h
-        gldcore/interpolate.cpp
-        gldcore/interpolate.h
-        gldcore/job.cpp
-        gldcore/job.h
-        gldcore/kill.cpp
-        gldcore/kill.h
-        gldcore/kml.cpp
-        gldcore/kml.h
-        gldcore/legal.cpp
-        gldcore/legal.h
-        gldcore/link.cpp
-        gldcore/link.h
-        gldcore/linkage.cpp
-        gldcore/linkage.h
-        gldcore/list.cpp
-        gldcore/list.h
-        gldcore/load.cpp
-        gldcore/load.h
-        gldcore/load_xml.cpp
-        gldcore/load_xml.h
-        gldcore/load_xml_handle.cpp
-        gldcore/load_xml_handle.h
-        gldcore/loadshape.cpp
-        gldcore/loadshape.h
-        gldcore/local.cpp
-        gldcore/local.h
-        gldcore/lock.cpp
-        gldcore/lock.h
-        gldcore/main.cpp
-        gldcore/match.cpp
-        gldcore/match.h
-        gldcore/matlab.cpp
-        gldcore/matlab.h
-        gldcore/module.cpp
-        gldcore/module.h
-        gldcore/output.cpp
-        gldcore/output.h
-        gldcore/platform.h
-        gldcore/property.cpp
-        gldcore/property.h
-        gldcore/random.cpp
-        gldcore/gldrandom.h
-        gldcore/realtime.cpp
-        gldcore/realtime.h
-        gldcore/sanitize.cpp
-        gldcore/sanitize.h
-        gldcore/save.cpp
-        gldcore/save.h
-        gldcore/server.cpp
-        gldcore/server.h
-        gldcore/setup.cpp
-        gldcore/setup.h
-        gldcore/stream.cpp
-        gldcore/stream.h
-        gldcore/stream_type.h
-        gldcore/test.cpp
-        gldcore/test.h
-        gldcore/test_callbacks.h
-        gldcore/test_framework.cpp
-        gldcore/test_framework.h
-        gldcore/threadpool.cpp
-        gldcore/threadpool.h
-        gldcore/timestamp.cpp
-        gldcore/timestamp.h
-        gldcore/transform.cpp
-        gldcore/transform.h
-        gldcore/ufile.cpp
-        gldcore/ufile.h
-        gldcore/unit.cpp
-        gldcore/unit.h
-        gldcore/validate.cpp
-        gldcore/validate.h
-        gldcore/version.cpp
-        gldcore/version.h
-        #        gldcore/xcore.cpp
-        #        gldcore/xcore.h
+        ${GLDCORE_LOC}/gridlabd.h
+        ${GLDCORE_LOC}/globals.cpp
+        ${GLDCORE_LOC}/globals.h
+        ${GLDCORE_LOC}/object.cpp
+        ${GLDCORE_LOC}/object.h
+        ${GLDCORE_LOC}/schedule.cpp
+        ${GLDCORE_LOC}/schedule.h
+        ${GLDCORE_LOC}/aggregate.cpp
+        ${GLDCORE_LOC}/aggregate.h
+        ${GLDCORE_LOC}/build.h
+        ${GLDCORE_LOC}/class.cpp
+        ${GLDCORE_LOC}/class.h
+        ${GLDCORE_LOC}/cmdarg.cpp
+        ${GLDCORE_LOC}/cmdarg.h
+        #${GLDCORE_LOC}/cmex.c
+        #${GLDCORE_LOC}/cmex.h
+        ${GLDCORE_LOC}/compare.cpp
+        ${GLDCORE_LOC}/compare.h
+        ${GLDCORE_LOC}/complex.h
+        ${GLDCORE_LOC}/config.h
+        ${GLDCORE_LOC}/console.h
+        ${GLDCORE_LOC}/convert.cpp
+        ${GLDCORE_LOC}/convert.h
+        ${GLDCORE_LOC}/cpp_threadpool.cpp
+        ${GLDCORE_LOC}/cpp_threadpool.h
+        ${GLDCORE_LOC}/debug.cpp
+        ${GLDCORE_LOC}/debug.h
+        ${GLDCORE_LOC}/deltamode.cpp
+        ${GLDCORE_LOC}/deltamode.h
+        ${GLDCORE_LOC}/enduse.cpp
+        ${GLDCORE_LOC}/enduse.h
+        ${GLDCORE_LOC}/environment.cpp
+        ${GLDCORE_LOC}/environment.h
+        ${GLDCORE_LOC}/exception.cpp
+        ${GLDCORE_LOC}/exception.h
+        ${GLDCORE_LOC}/exec.cpp
+        ${GLDCORE_LOC}/exec.h
+        ${GLDCORE_LOC}/find.cpp
+        ${GLDCORE_LOC}/find.h
+        ${GLDCORE_LOC}/gld_sock.h
+        ${GLDCORE_LOC}/gui.cpp
+        ${GLDCORE_LOC}/gui.h
+        ${GLDCORE_LOC}/http_client.cpp
+        ${GLDCORE_LOC}/http_client.h
+        ${GLDCORE_LOC}/index.cpp
+        ${GLDCORE_LOC}/index.h
+        ${GLDCORE_LOC}/instance.cpp
+        ${GLDCORE_LOC}/instance.h
+        ${GLDCORE_LOC}/instance_cnx.cpp
+        ${GLDCORE_LOC}/instance_cnx.h
+        ${GLDCORE_LOC}/instance_slave.cpp
+        ${GLDCORE_LOC}/instance_slave.h
+        ${GLDCORE_LOC}/interpolate.cpp
+        ${GLDCORE_LOC}/interpolate.h
+        ${GLDCORE_LOC}/job.cpp
+        ${GLDCORE_LOC}/job.h
+        ${GLDCORE_LOC}/kill.cpp
+        ${GLDCORE_LOC}/kill.h
+        ${GLDCORE_LOC}/kml.cpp
+        ${GLDCORE_LOC}/kml.h
+        ${GLDCORE_LOC}/legal.cpp
+        ${GLDCORE_LOC}/legal.h
+        ${GLDCORE_LOC}/link.cpp
+        ${GLDCORE_LOC}/link.h
+        ${GLDCORE_LOC}/linkage.cpp
+        ${GLDCORE_LOC}/linkage.h
+        ${GLDCORE_LOC}/list.cpp
+        ${GLDCORE_LOC}/list.h
+        ${GLDCORE_LOC}/load.cpp
+        ${GLDCORE_LOC}/load.h
+        ${GLDCORE_LOC}/load_xml.cpp
+        ${GLDCORE_LOC}/load_xml.h
+        ${GLDCORE_LOC}/load_xml_handle.cpp
+        ${GLDCORE_LOC}/load_xml_handle.h
+        ${GLDCORE_LOC}/loadshape.cpp
+        ${GLDCORE_LOC}/loadshape.h
+        ${GLDCORE_LOC}/local.cpp
+        ${GLDCORE_LOC}/local.h
+        ${GLDCORE_LOC}/lock.cpp
+        ${GLDCORE_LOC}/lock.h
+        ${GLDCORE_LOC}/main.cpp
+        ${GLDCORE_LOC}/match.cpp
+        ${GLDCORE_LOC}/match.h
+        ${GLDCORE_LOC}/matlab.cpp
+        ${GLDCORE_LOC}/matlab.h
+        ${GLDCORE_LOC}/module.cpp
+        ${GLDCORE_LOC}/module.h
+        ${GLDCORE_LOC}/output.cpp
+        ${GLDCORE_LOC}/output.h
+        ${GLDCORE_LOC}/platform.h
+        ${GLDCORE_LOC}/property.cpp
+        ${GLDCORE_LOC}/property.h
+        ${GLDCORE_LOC}/random.cpp
+        ${GLDCORE_LOC}/gldrandom.h
+        ${GLDCORE_LOC}/realtime.cpp
+        ${GLDCORE_LOC}/realtime.h
+        ${GLDCORE_LOC}/sanitize.cpp
+        ${GLDCORE_LOC}/sanitize.h
+        ${GLDCORE_LOC}/save.cpp
+        ${GLDCORE_LOC}/save.h
+        ${GLDCORE_LOC}/server.cpp
+        ${GLDCORE_LOC}/server.h
+        ${GLDCORE_LOC}/setup.cpp
+        ${GLDCORE_LOC}/setup.h
+        ${GLDCORE_LOC}/stream.cpp
+        ${GLDCORE_LOC}/stream.h
+        ${GLDCORE_LOC}/stream_type.h
+        ${GLDCORE_LOC}/test.cpp
+        ${GLDCORE_LOC}/test.h
+        ${GLDCORE_LOC}/test_callbacks.h
+        ${GLDCORE_LOC}/test_framework.cpp
+        ${GLDCORE_LOC}/test_framework.h
+        ${GLDCORE_LOC}/threadpool.cpp
+        ${GLDCORE_LOC}/threadpool.h
+        ${GLDCORE_LOC}/timestamp.cpp
+        ${GLDCORE_LOC}/timestamp.h
+        ${GLDCORE_LOC}/transform.cpp
+        ${GLDCORE_LOC}/transform.h
+        ${GLDCORE_LOC}/ufile.cpp
+        ${GLDCORE_LOC}/ufile.h
+        ${GLDCORE_LOC}/unit.cpp
+        ${GLDCORE_LOC}/unit.h
+        ${GLDCORE_LOC}/validate.cpp
+        ${GLDCORE_LOC}/validate.h
+        ${GLDCORE_LOC}/version.cpp
+        ${GLDCORE_LOC}/version.h
+        #        ${GLDCORE_LOC}/xcore.cpp
+        #        ${GLDCORE_LOC}/xcore.h
         )
 
 #MESSAGE(${CMAKE_CURRENT_SOURCE_DIR}/third_party/mysql-connector-c++)
@@ -535,6 +559,10 @@ add_executable(gridlabd
 #        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/third_party/mysql-connector-c++
 #)
 #add_dependencies(gridlabd mysql_connector)
+if (HAVE_MYSQL)
+    include_directories(${MYSQL_INCLUDE_DIRECTORIES} ${MYSQL_INCLUDE_DIRECTORIES}/include)
+    target_link_libraries(gridlabd ${MYSQL_LIBRARY})
+ENDIF ()
 
 add_dependencies(gridlabd libjsoncpp libsuperlu)
 
@@ -543,7 +571,7 @@ if (CURSES_FOUND)
     target_link_libraries(gridlabd ${CURSES_LIBRARIES})
 endif ()
 
-#target_link_libraries(gridlabd ${GL_MODULES})
+target_link_libraries(gridlabd ${GL_MODULES})
 target_link_libraries(gridlabd libjsoncpp libsuperlu)
 
 IF (WIN32 OR MSYS OR MINGW OR CYGWIN)
@@ -559,29 +587,23 @@ SET(FILE_PERMISSIONS PERMISSIONS
 
 install(TARGETS gridlabd
         ${FILE_PERMISSIONS}
-        RUNTIME DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/bin
+        RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
         )
 install(TARGETS ${GL_MODULES}
         ${FILE_PERMISSIONS}
-        RUNTIME DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/lib/gridlabd
-        LIBRARY DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/lib/gridlabd
-        ARCHIVE DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/lib/gridlabd
+        RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/gridlabd
+        LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/gridlabd
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/gridlabd
         COMPONENT library)
 
 install(FILES ${HEADER_FILE_NAMES}
         ${FILE_PERMISSIONS}
-        DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/include/gridlabd
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/gridlabd
         )
 
 install(FILES ${GLD_SHARE}
         ${FILE_PERMISSIONS}
-        DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/share/gridlabd)
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/share/gridlabd)
 install(FILES COPYRIGHT LICENSE
         ${FILE_PERMISSIONS}
-        DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/share/doc/gridlabd)
-
-
-#install(FILES ${MYLIB}
-#        ${FILE_PERMISSIONS}
-#        DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}/install64/bin
-#        )
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/share/doc/gridlabd)

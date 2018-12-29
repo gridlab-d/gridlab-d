@@ -6924,7 +6924,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 	{
 		char tmp[1024], *p;
 		strncpy(tmp,line,sizeof(tmp)-1);
-		for ( p=tmp ; p!='\0' ; p++ )
+		for ( p=tmp ; *p!='\0' ; p++ )
 		{
 			if ( isspace(*p) )
 			{

@@ -13,6 +13,7 @@
 #include <queue>
 #include <atomic>
 #include <chrono>
+#include <functional>
 
 using namespace std;
 

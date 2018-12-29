@@ -3192,69 +3192,135 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 				//Compute desired output - sign convention appears to be backwards
 				temp_VA = complex(P_Out,Q_Out);
-
-				//Ensuring battery has capacity to charge or discharge as needed.
-				if ((b_soc >= 1.0) && (temp_VA.Re() < 0) && (b_soc != -1))	//Battery full and positive influx of real power
-				{
-					gl_warning("inverter:%s - battery full - no charging allowed",obj->name);
-					temp_VA.SetReal(0.0);	//Set to zero - reactive considerations may change this
-				}
-				else if ((b_soc <= soc_reserve) && (temp_VA.Re() > 0) && (b_soc != -1))	//Battery "empty" and attempting to extract real power
-				{
-					gl_warning("inverter:%s - battery at or below the SOC reserve - no discharging allowed",obj->name);
-					temp_VA.SetReal(0.0);	//Set output to zero - again, reactive considerations may change this
-				}
-
-				//Ensuring power rating of inverter is not exceeded.
-				if (fabs(temp_VA.Mag()) > p_max){ //Requested power output (P_Out, Q_Out) is greater than inverter rating
-					if (p_max > fabs(temp_VA.Re())) //Can we reduce the reactive power output and stay within the inverter rating?
+				// to see if we have a battery as a power source
+				if (b_soc != -1) {
+					//Ensuring battery has capacity to charge or discharge as needed.
+					if ((b_soc >= 1.0) && (temp_VA.Re() < 0))	//Battery full and positive influx of real power
 					{
-						//Determine the Q we can provide
-						temp_QVal = sqrt((p_max*p_max) - (temp_VA.Re()*temp_VA.Re()));
+						gl_warning("inverter:%s - battery full - no charging allowed",obj->name);
+						temp_VA.SetReal(0.0);	//Set to zero - reactive considerations may change this
+					}
+					else if ((b_soc <= soc_reserve) && (temp_VA.Re() > 0))	//Battery "empty" and attempting to extract real power
+					{
+						gl_warning("inverter:%s - battery at or below the SOC reserve - no discharging allowed",obj->name);
+						temp_VA.SetReal(0.0);	//Set output to zero - again, reactive considerations may change this
+					}
 
-						//Assign to output, negating signs as necessary (temp_VA already negated)
-						if (temp_VA.Im() < 0.0)	//Negative Q dispatch
+					//Ensuring power rating of inverter is not exceeded.
+					if (fabs(temp_VA.Mag()) > p_max){ //Requested power output (P_Out, Q_Out) is greater than inverter rating
+						if (p_max > fabs(temp_VA.Re())) //Can we reduce the reactive power output and stay within the inverter rating?
 						{
-							VA_Out = complex(temp_VA.Re(),-temp_QVal);
+							//Determine the Q we can provide
+							temp_QVal = sqrt((p_max*p_max) - (temp_VA.Re()*temp_VA.Re()));
+
+							//Assign to output, negating signs as necessary (temp_VA already negated)
+							if (temp_VA.Im() < 0.0)	//Negative Q dispatch
+							{
+								VA_Out = complex(temp_VA.Re(),-temp_QVal);
+							}
+							else	//Positive Q dispatch
+							{
+								VA_Out = complex(temp_VA.Re(),temp_QVal);
+							}
 						}
-						else	//Positive Q dispatch
+						else	//Inverter rated power is equal to or smaller than real power desired, give it all we can
 						{
-							VA_Out = complex(temp_VA.Re(),temp_QVal);
+							//Maintain desired sign convention
+							if (temp_VA.Re() < 0.0)
+							{
+								VA_Out = complex(-p_max,0.0);
+							}
+							else	//Positive
+							{
+								VA_Out = complex(p_max,0.0);
+							}
 						}
 					}
-					else	//Inverter rated power is equal to or smaller than real power desired, give it all we can
+					else	//Doesn't exceed, assign it
 					{
-						//Maintain desired sign convention
-						if (temp_VA.Re() < 0.0)
+						VA_Out = temp_VA;
+					}
+					//Update values to represent what is being pulled (battery uses for SOC updates) - assumes only storage
+					//p_in used by battery - appears reversed to VA_Out
+					if (VA_Out.Re() > 0.0)	//Discharging
+					{
+						p_in = VA_Out.Re()/inv_eta;
+					}
+					else if (VA_Out.Re() == 0.0)	//Idle
+					{
+						p_in = 0.0;
+					}
+					else	//Must be positive, so charging
+					{
+						p_in = VA_Out.Re()*inv_eta;
+					}
+				} else {// no battery is attached we are attached to a solar panel
+					//Ensuring power rating of inverter is not exceeded.
+					if (fabs(temp_VA.Mag()) > p_max){ //Requested power output (P_Out, Q_Out) is greater than inverter rating
+						if (p_max > fabs(temp_VA.Re())) //Can we reduce the reactive power output and stay within the inverter rating?
 						{
-							VA_Out = complex(-p_max,0.0);
+							//Determine the Q we can provide
+							temp_QVal = sqrt((p_max*p_max) - (temp_VA.Re()*temp_VA.Re()));
+
+							//Assign to output, negating signs as necessary (temp_VA already negated)
+							if (temp_VA.Im() < 0.0)	//Negative Q dispatch
+							{
+								temp_VA.SetImag(-temp_QVal);
+							}
+							else	//Positive Q dispatch
+							{
+								temp_VA.SetImag(temp_QVal);
+							}
 						}
-						else	//Positive
+						else	//Inverter rated power is equal to or smaller than real power desired, give it all we can
 						{
-							VA_Out = complex(p_max,0.0);
+							//Maintain desired sign convention
+							if (temp_VA.Re() < 0.0)
+							{
+								temp_VA = complex(-p_max,0.0);
+							}
+							else	//Positive
+							{
+								temp_VA = complex(p_max,0.0);
+							}
 						}
 					}
-				}
-				else	//Doesn't exceed, assign it
-				{
-					VA_Out = temp_VA;
+					//Determine how much we can supply from the solar panel output.
+					if (fabs(temp_VA.Mag()) > VA_Efficiency){ //Requested power output (P_Out, Q_Out) is greater than solar input
+						if (VA_Efficiency > fabs(temp_VA.Re())) //Can we reduce the reactive power output and stay within the solar input?
+						{
+							//Determine the Q we can provide
+							temp_QVal = sqrt((VA_Efficiency*VA_Efficiency) - (temp_VA.Re()*temp_VA.Re()));
+
+							//Assign to output, negating signs as necessary (temp_VA already negated)
+							if (temp_VA.Im() < 0.0)	//Negative Q dispatch
+							{
+								VA_Out = complex(temp_VA.Re(),-temp_QVal);
+							}
+							else	//Positive Q dispatch
+							{
+								VA_Out = complex(temp_VA.Re(),temp_QVal);
+							}
+						}
+						else	//solar panel output is equal to or smaller than real power desired, give it all we can
+						{
+							//Maintain desired sign convention
+							if (temp_VA.Re() < 0.0)
+							{
+								VA_Out = complex(-VA_Efficiency,0.0);
+							}
+							else	//Positive
+							{
+								VA_Out = complex(VA_Efficiency,0.0);
+							}
+						}
+					} else {
+						VA_Out = temp_VA;
+					}
 				}
 
 
-				//Update values to represent what is being pulled (battery uses for SOC updates) - assumes only storage
-				//p_in used by battery - appears reversed to VA_Out
-				if (VA_Out.Re() > 0.0)	//Discharging
-				{
-					p_in = VA_Out.Re()/inv_eta;
-				}
-				else if (VA_Out.Re() == 0.0)	//Idle
-				{
-					p_in = 0.0;
-				}
-				else	//Must be positive, so charging
-				{
-					p_in = VA_Out.Re()*inv_eta;
-				}
+
 				//}
 			}
 			else if (four_quadrant_control_mode == FQM_VSI)

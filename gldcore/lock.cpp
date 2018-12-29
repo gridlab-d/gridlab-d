@@ -13,6 +13,7 @@
 
 #include "lock.h"
 #include "exception.h"
+#include "config.h"
 #include <stdio.h>
 
 //#define LOCKTRACE // enable this to trace locking events back to variables
