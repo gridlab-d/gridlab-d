@@ -85,7 +85,9 @@ OPTION(USE_OPENMP "Enable building with OpenMP" OFF)
 # Configure MySQL to be configured and linked if available.
 IF (USE_MYSQL)
     INCLUDE(CMakeScripts/FindMySQL.cmake)
-    SET(HAVE_MYSQL ON)
+    IF (FOUND_MYSQL)
+        SET(HAVE_MYSQL ON)
+    ENDIF ()
 ENDIF ()
 
 #message("Have mysql? -> ${HAVE_MYSQL}")

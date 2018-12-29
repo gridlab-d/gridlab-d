@@ -10,11 +10,6 @@
 # also defined, but not for general use are
 # MYSQL_LIBRARY, where to find the MySQL library.
 
-#
-# XXX NOTE: This is not yet for general use.  I'm pretty sure there
-# are other libraries I have to link against at the same time.
-#
-
 SET( MYSQL_FOUND 0 )
 
 FIND_PATH(MYSQL_INCLUDE_DIRECTORIES mysql.h
