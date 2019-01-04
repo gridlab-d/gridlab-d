@@ -106,3 +106,17 @@ if (WITH_OPENMP)
         set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} ${OpenMP_LD_FLAGS}")
     endif ()
 ENDIF () # WITH_OPENMP
+
+mark_as_advanced(FORCE
+        HAVE_MYSQL
+        HAVE_HELICS
+        HAVE_FNCS
+        GL_HELICS_LIBRARIES
+        GL_HELICS_LIBRARY
+        GL_ZMQ_LIBRARY
+        GL_Boost_LIBRARIES
+        GL_FNCS_LIBRARIES
+        GL_FNCS_LIBRARY
+        GL_CZMQ_LIBRARY
+        GL_ZMQ_LIBRARY
+        )

@@ -328,25 +328,12 @@ add_executable(gridlabd
 
 mark_as_advanced(FORCE
         OS_SPECIFIC_LIBRARIES
-        GL_EXTERNAL_LIBS
-        HAVE_MYSQL
-
-        HAVE_HELICS
-        HELICS_LIBRARIES
-        HELICS_INCLUDE_DIRECTORIES
-
-        HAVE_FNCS
-        FNCS_LIBRARIES
-        FNCS_INCLUDE_DIRECTORIES
-
         DISABLED_OPTIMIZATIONS
         BUILD_SHARED_LIBS
-        GLDCORE_LOC
         GL_MODULES
         HEADER_FILE_NAMES
         GLD_SHARE
         )
-
 
 #MESSAGE(${CMAKE_CURRENT_SOURCE_DIR}/third_party/mysql-connector-c++)
 #
