@@ -73,7 +73,7 @@ public:
 	}
 	string objectName;
 	string propertyName;
-	string subscription_topic;
+	string key;
 	gld_property *pObjectProperty;
 	helics::Input HelicsSubscription;
 };
@@ -124,7 +124,7 @@ private:
 	TIMESTAMP initial_sim_time;
 	double last_delta_helics_time;
 	bool exitDeltamode;
-	string *federate_configuration;
+	string *federate_configuration_file;
 	// TODO add other properties here as needed.
 
 public:
