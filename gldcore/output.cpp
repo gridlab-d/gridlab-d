@@ -46,6 +46,8 @@ static char buffer[65536];
 #define CHECK 0xcdcd
 int overflow=CHECK;
 int flush = 0;
+enum output_type {none, error, standard};
+output_type last_out {none};
 
 static char prefix[16]="";
 void output_prefix_enable(void)
@@ -219,9 +221,14 @@ static int default_printstd(char *format,...)
 	int count;
 	va_list ptr;
 	prep_stream();
+	if( last_out != standard ) {
+		fprintf(curr_stream[FS_STD], "\n");
+		last_out = standard;
+	}
 	va_start(ptr,format);
 	count = vfprintf(curr_stream[FS_STD],format,ptr);
-	if ( flush ) fflush(curr_stream[FS_STD]);
+	if ( flush )
+	    fflush(curr_stream[FS_STD]);
 	va_end(ptr);
 	return count;
 }
@@ -231,6 +238,10 @@ static int default_printerr(char *format,...)
 	int count;
 	va_list ptr;
 	prep_stream();
+	if( last_out != error ) {
+		fprintf(curr_stream[FS_ERR], "\n");
+		last_out = error;
+	}
 	va_start(ptr,format);
 	count = vfprintf(curr_stream[FS_ERR],format,ptr);
 	va_end(ptr);

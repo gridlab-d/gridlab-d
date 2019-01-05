@@ -92,7 +92,8 @@ struct s_class_list {
 	int id;
 	CLASSNAME name;
 	unsigned int size;
-	MODULE *module; 
+	bool threadsafe;
+	MODULE *module;
 	PROPERTY *pmap;
 	FUNCTION *fmap;
 	FUNCTIONADDR create;

@@ -1503,8 +1503,14 @@ TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
 	TIMESTAMP t2=TS_NEVER;
 	do {
 		/* don't call sync beyond valid horizon */
-		t2 = _object_sync(obj,(ts<(obj->valid_to>0?obj->valid_to:TS_NEVER)?ts:obj->valid_to),pass);
-	} while (t2>0 && ts>(t2<0?-t2:t2) && t2<TS_NEVER);
+		t2 = _object_sync(obj,
+				((ts < (
+				obj->valid_to > 0 ?
+				obj->valid_to :
+				TS_NEVER)) ?
+				ts :
+		obj->valid_to), pass);
+	} while (t2 > 0 && ts > (t2 < 0 ? -t2 : t2) && t2 < TS_NEVER);
 
 	/* do profiling, if needed */
 	if ( global_profiler==1 )

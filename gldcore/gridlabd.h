@@ -1252,15 +1252,20 @@ inline void gl_write(void *local, /** local memory for data */
 
 // locking functions 
 #ifdef __cplusplus
-#define READLOCK(X) ::rlock(X); /**< Locks an item for reading (allows other reads but blocks write) */
-#define WRITELOCK(X) ::wlock(X); /**< Locks an item for writing (blocks all operations) */
-#define READUNLOCK(X) ::runlock(X); /**< Unlocks an read lock */
-#define WRITEUNLOCK(X) ::wunlock(X); /**< Unlocks a write lock */
-
+#define READLOCK(X) gld_core::rlock(X); /**< Locks an item for reading (allows other reads but blocks write) */
+#define WRITELOCK(X) gld_core::wlock(X); /**< Locks an item for writing (blocks all operations) */
+#define READUNLOCK(X) gld_core::runlock(X); /**< Unlocks an read lock */
+#define WRITEUNLOCK(X) gld_core::wunlock(X); /**< Unlocks a write lock */
+namespace gld_core {
 inline void rlock(unsigned int* lock) { callback->lock.read(lock); }
 inline void wlock(unsigned int* lock) { callback->lock.write(lock); }
 inline void runlock(unsigned int* lock) { callback->unlock.read(lock); }
 inline void wunlock(unsigned int* lock) { callback->unlock.write(lock); }
+}
+// TODO: locking templates
+//template <class T>
+//void rlock(T object) {gld_core::rlock(&object.lock);}
+
 
 #else
 #define READLOCK(X) rlock(X); /**< Locks an item for reading (allows other reads but blocks write) */
@@ -1268,8 +1273,6 @@ inline void wunlock(unsigned int* lock) { callback->unlock.write(lock); }
 #define READUNLOCK(X) runlock(X); /**< Unlocks an read lock */
 #define WRITEUNLOCK(X) wunlock(X); /**< Unlocks a write lock */
 #endif
-#define LOCK(X) WRITELOCK(X); /**< @todo this is deprecated and should not be used anymore */
-#define UNLOCK(X) WRITEUNLOCK(X); /**< @todo this is deprecated and should not be used anymore */
 
 #define READLOCK_OBJECT(X) READLOCK(&((X)->lock)) /**< Locks an object for reading */
 #define WRITELOCK_OBJECT(X) WRITELOCK(&((X)->lock)) /**< Locks an object for writing */
@@ -1337,8 +1340,8 @@ public: // casts
 	inline operator STRBUF *(void) { return buf; };
 private: // internals
 	inline void init(void) { buf=(STRBUF*)malloc(sizeof(STRBUF)); memset(buf,0,sizeof(STRBUF)); }; 
-	inline void lock(void) { if ( buf ) ::wlock(&buf->lock); };
-	inline void unlock(void) { if ( buf ) ::wunlock(&buf->lock); };
+	inline void lock(void) { if ( buf ) gld_core::wlock(&buf->lock); };
+	inline void unlock(void) { if ( buf ) gld_core::wunlock(&buf->lock); };
 	inline void fit(size_t n) { if ( buf==NULL || n>buf->len) alloc(n); };
 	inline void alloc(size_t n) 
 	{
@@ -1551,17 +1554,17 @@ public: // special functions
 class gld_rlock {
 private: OBJECT *my;
 	/// Constructor
-public: inline gld_rlock(OBJECT *obj) : my(obj) {::rlock(&my->lock);}; 
+public: inline gld_rlock(OBJECT *obj) : my(obj) {gld_core::rlock(&my->lock);};
 	/// Destructor
-public: inline ~gld_rlock(void) {::runlock(&my->lock);};
+public: inline ~gld_rlock(void) {gld_core::runlock(&my->lock);};
 };
 /// Write lock container
 class gld_wlock {
 private: OBJECT *my;
 		 /// Constructor
-public: inline gld_wlock(OBJECT *obj) : my(obj) {::wlock(&my->lock);}; 
+public: inline gld_wlock(OBJECT *obj) : my(obj) {gld_core::wlock(&my->lock);};
 		/// Destructor
-public: inline ~gld_wlock(void) {::wunlock(&my->lock);};
+public: inline ~gld_wlock(void) {gld_core::wunlock(&my->lock);};
 };
 
 class gld_class;
@@ -1940,15 +1943,15 @@ protected: // header write accessors (no locking)
 	inline void unset_flags_bits(unsigned long bits) { my()->flags&=~bits; };
 
 protected: // locking (self)
-	inline void rlock(void) { ::rlock(&my()->lock); };
-	inline void runlock(void) { ::runlock(&my()->lock); };
-	inline void wlock(void) { ::wlock(&my()->lock); };
-	inline void wunlock(void) { ::wunlock(&my()->lock); };
+	inline void rlock(void) { gld_core::rlock(&my()->lock); };
+	inline void runlock(void) { gld_core::runlock(&my()->lock); };
+	inline void wlock(void) { gld_core::wlock(&my()->lock); };
+	inline void wunlock(void) { gld_core::wunlock(&my()->lock); };
 protected: // locking (others)
-	inline void rlock(OBJECT *obj) { ::rlock(&obj->lock); };
-	inline void runlock(OBJECT *obj) { ::runlock(&obj->lock); };
-	inline void wlock(OBJECT *obj) { ::wlock(&obj->lock); };
-	inline void wunlock(OBJECT *obj) { ::wunlock(&obj->lock); };
+	inline void rlock(OBJECT *obj) { gld_core::rlock(&obj->lock); };
+	inline void runlock(OBJECT *obj) { gld_core::runlock(&obj->lock); };
+	inline void wlock(OBJECT *obj) { gld_core::wlock(&obj->lock); };
+	inline void wunlock(OBJECT *obj) { gld_core::wunlock(&obj->lock); };
 
 protected: // special functions
 	inline bool operator == (gld_object *o) { return o!=NULL && my()==o->my(); };
@@ -1982,6 +1985,10 @@ public: // exceptions
 	inline void error(const char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_error("%s",buf);};
 	inline void warning(const char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_warning("%s",buf);};
 	inline void debug(const char *msg, ...) { static char buf[1024]; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_debug("%s",buf);};
+
+public:
+	bool threadsafe {false};
+	inline bool is_threadsafe(){return threadsafe;}
 };
 /// Create a gld_object from an OBJECT
 static inline gld_object* get_object(OBJECT*obj)
@@ -2132,13 +2139,13 @@ public: // special operations
 	inline enumeration get_enumeration(void) { if ( pstruct.prop->ptype == PT_enumeration ) return *(enumeration*)get_addr(); exception("get_enumeration() called on a property that is not an enumeration"); };
 	inline set get_set(void) { if ( pstruct.prop->ptype == PT_set ) return *(set*)get_addr(); exception("get_set() called on a property that is not a set"); };
 	inline gld_object* get_objectref(void) { if ( is_objectref() ) return ::get_object(*(OBJECT**)get_addr()); else return NULL; };
-	template <class T> inline void getp(T &value) { ::rlock(&obj->lock); value = *(T*)get_addr(); ::runlock(&obj->lock); };
-	template <class T> inline void setp(T &value) { ::wlock(&obj->lock); *(T*)get_addr()=value; ::wunlock(&obj->lock); };
+	template <class T> inline void getp(T &value) { gld_core::rlock(&obj->lock); value = *(T*)get_addr(); gld_core::runlock(&obj->lock); };
+	template <class T> inline void setp(T &value) { gld_core::wlock(&obj->lock); *(T*)get_addr()=value; gld_core::wunlock(&obj->lock); };
 	template <class T> inline void getp(T &value, gld_rlock&) { value = *(T*)get_addr(); };
 	template <class T> inline void getp(T &value, gld_wlock&) { value = *(T*)get_addr(); };
 	template <class T> inline void setp(T &value, gld_wlock&) { *(T*)get_addr()=value; };
-	inline void setp(enumeration value) { ::wlock(&obj->lock); *(enumeration*)get_addr()=value; ::wunlock(&obj->lock); };
-	inline void setp(set value) { ::wlock(&obj->lock); *(set*)get_addr()=value; ::wunlock(&obj->lock); };
+	inline void setp(enumeration value) { gld_core::wlock(&obj->lock); *(enumeration*)get_addr()=value; gld_core::wunlock(&obj->lock); };
+	inline void setp(set value) { gld_core::wlock(&obj->lock); *(set*)get_addr()=value; gld_core::wunlock(&obj->lock); };
 	inline gld_keyword* find_keyword(unsigned long value) { return get_first_keyword()->find(value); };
 	inline gld_keyword* find_keyword(const char *name) { return get_first_keyword()->find(name); };
 	inline bool compare(char *op, char *a, char *b=NULL, char *p=NULL) 

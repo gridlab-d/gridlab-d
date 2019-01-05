@@ -1,6 +1,11 @@
-//
-// Created by meberlein on 8/20/18.
-//
+/*
+ * cpp_threadpool.cpp
+ *
+ *  Created on: Aug 20, 2018
+ *      Author: mark.eberlein@pnnl.gov
+ *
+ *      Provides standardized and safe C++ threadpool interface.
+ */
 
 #include "cpp_threadpool.h"
 
@@ -20,12 +25,14 @@ cpp_threadpool::cpp_threadpool(int num_threads) {
 }
 
 cpp_threadpool::~cpp_threadpool() {
-    exiting = true;
+    exiting.store(true); // = true;
+
+    for (auto &Thread : Threads) {
+        this->add_job([]() {}); // wake each thread and have it run to exit.
+    }
 
     for (auto &Thread : Threads) {
         if (Thread.joinable()) {
-            join_thread = Thread.get_id();
-            condition.notify_all();
             Thread.join();
         }
     }
@@ -35,15 +42,14 @@ void cpp_threadpool::wait_on_queue() {
 
     function<void()> Job;
     unique_lock<mutex> lock(queue_lock);
-    while (true) {
+
+    while (!exiting.load()) {
         if (!lock.owns_lock()) lock.lock();
         condition.wait(lock,
-                       [=] { return !job_queue.empty() || (exiting.load() && join_thread == this_thread::get_id()); });
+                       [=] { return !job_queue.empty(); });
 
-        if (exiting.load()) {
-            this_thread::sleep_for(chrono::milliseconds(5));
-            return;
-        } else if (job_queue.empty()) {
+        unique_lock<mutex> parallel_lock(sync_mode_lock);
+        if (job_queue.empty()) {
             continue;
         } else {
             Job = job_queue.front();
@@ -52,22 +58,20 @@ void cpp_threadpool::wait_on_queue() {
         lock.unlock();
 
         if (sync_mode.load()) {
-            unique_lock<mutex> parallel_lock(sync_mode_lock);
             Job();// function<void()> type
-            parallel_lock.unlock();
+//            parallel_lock.unlock();
         } else {
             Job(); // function<void()> type
         }
+        parallel_lock.unlock();
         running_threads--;
         wait_condition.notify_all();
     }
-
 }
 
 bool cpp_threadpool::add_job(function<void()> job) {
     unique_lock<mutex> lock(queue_lock);
     try {
-
         running_threads++;
         job_queue.push(job);
 
@@ -79,13 +83,12 @@ bool cpp_threadpool::add_job(function<void()> job) {
             condition.notify_one();
         }
         return true;
-    } catch (exception) {
+    } catch (exception &) {
         return false;
     }
 }
+
 void cpp_threadpool::await() {
-//    while (running_threads.load() > 0) {
     unique_lock<mutex> lock(wait_lock);
     wait_condition.wait_for(lock, chrono::milliseconds(50), [=] { return running_threads.load() <= 0; });
-//    }
 }

@@ -56,6 +56,7 @@ typedef struct s_forecast {
 	TIMESTAMP (*external)(void *obj, void *fc); /**< external forecast update call */
 	struct s_forecast *next; /**< next forecast data block (NULL for last) */
 } FORECAST; /**< Forecast data block */
+
 typedef enum {
 	OPI_PRESYNC,
 	OPI_SYNC,
@@ -68,6 +69,7 @@ typedef enum {
 	/* add profile items here */
 	_OPI_NUMITEMS,
 } OBJECTPROFILEITEM;
+
 typedef struct s_object_list {
 	OBJECTNUM id; /**< object id number; globally unique */
 	CLASS *oclass; /**< object class; determine structure of object data */
