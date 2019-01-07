@@ -2296,13 +2296,13 @@ STATUS exec_start()
 						}
 
 					}
-				/*  Add/Remove first slash to toggle commented area
+//				/*  Add/Remove first slash to toggle commented area
 					else {
                         for (ptr = ranks[pass]->ordinal[i]->first; ptr != NULL; ptr = ptr->next) {
                             auto *obj = static_cast<OBJECT *>(ptr->data);
 
                             if (obj->oclass->threadsafe) {
-                                threadpool->add_job([obj, ptr]() {
+                                threadpool->add_job([=]() {
 //                                    ss_do_object_sync(0, ptr->data);
                                     tp_do_object_sync(obj);
                                 });
@@ -2321,8 +2321,7 @@ STATUS exec_start()
                             OBJECT *obj = static_cast<OBJECT *>(ptr->data);
 
                             if (!obj->oclass->threadsafe) {
-                                threadpool->add_job([obj, ptr]() {
-//                                    tp_do_object_sync(obj);
+                                threadpool->add_job([=]() {
 //                                    ss_do_object_sync(0, ptr->data);
                                     tp_do_object_sync(obj);
                                 });

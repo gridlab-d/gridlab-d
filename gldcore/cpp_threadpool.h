@@ -29,11 +29,13 @@ private:
     mutex queue_lock, wait_lock, sync_mode_lock;
     atomic_int running_threads{0};
     atomic_bool exiting{false};
-    condition_variable condition, wait_condition;
+    condition_variable condition, sync_condition, wait_condition;
     queue<function<void()>> job_queue;
+    thread::id sync_id;
 
     atomic_bool sync_mode; // false for parallel mode, true for synchronous mode
 
+    void sync_wait_on_queue();
     void wait_on_queue();
 
 public:
