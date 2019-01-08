@@ -127,17 +127,17 @@ load::load(MODULE *mod) : node(mod)
 			PT_double, "constant_impedance_BC_reac[Ohm]", PADDR(constant_impedance_dy[1].Im()),PT_DESCRIPTION,"constant impedance delta-connected load on phase B, imaginary only, specified as Ohms",
 			PT_double, "constant_impedance_CA_reac[Ohm]", PADDR(constant_impedance_dy[2].Im()),PT_DESCRIPTION,"constant impedance delta-connected load on phase C, imaginary only, specified as Ohms",
 
-			PT_complex,	"measured_voltage_A",PADDR(measured_voltage_A),PT_DESCRIPTION,"current measured voltage on phase A",
-			PT_complex,	"measured_voltage_B",PADDR(measured_voltage_B),PT_DESCRIPTION,"current measured voltage on phase B",
-			PT_complex,	"measured_voltage_C",PADDR(measured_voltage_C),PT_DESCRIPTION,"current measured voltage on phase C",
-			PT_complex,	"measured_voltage_AB",PADDR(measured_voltage_AB),PT_DESCRIPTION,"current measured voltage on phases AB",
-			PT_complex,	"measured_voltage_BC",PADDR(measured_voltage_BC),PT_DESCRIPTION,"current measured voltage on phases BC",
-			PT_complex,	"measured_voltage_CA",PADDR(measured_voltage_CA),PT_DESCRIPTION,"current measured voltage on phases CA",
+			PT_complex,	"measured_voltage_A[V]",PADDR(measured_voltage_A),PT_DESCRIPTION,"current measured voltage on phase A",
+			PT_complex,	"measured_voltage_B[V]",PADDR(measured_voltage_B),PT_DESCRIPTION,"current measured voltage on phase B",
+			PT_complex,	"measured_voltage_C[V]",PADDR(measured_voltage_C),PT_DESCRIPTION,"current measured voltage on phase C",
+			PT_complex,	"measured_voltage_AB[V]",PADDR(measured_voltage_AB),PT_DESCRIPTION,"current measured voltage on phases AB",
+			PT_complex,	"measured_voltage_BC[V]",PADDR(measured_voltage_BC),PT_DESCRIPTION,"current measured voltage on phases BC",
+			PT_complex,	"measured_voltage_CA[V]",PADDR(measured_voltage_CA),PT_DESCRIPTION,"current measured voltage on phases CA",
 			PT_bool, "phase_loss_protection", PADDR(three_phase_protect), PT_DESCRIPTION, "Trip all three phases of the load if a fault occurs",
-			PT_complex, "measured_power_A",PADDR(measured_power[0]),PT_DESCRIPTION,"current measured power on phase A",
-			PT_complex, "measured_power_B",PADDR(measured_power[1]),PT_DESCRIPTION,"current measured power on phase B",
-			PT_complex, "measured_power_C",PADDR(measured_power[2]),PT_DESCRIPTION,"current measured power on phase C",
-			PT_complex, "measured_power",PADDR(measured_total_power),PT_DESCRIPTION,"current total power",
+			PT_complex, "measured_power_A[VA]",PADDR(measured_power[0]),PT_DESCRIPTION,"current measured power on phase A",
+			PT_complex, "measured_power_B[VA]",PADDR(measured_power[1]),PT_DESCRIPTION,"current measured power on phase B",
+			PT_complex, "measured_power_C[VA]",PADDR(measured_power[2]),PT_DESCRIPTION,"current measured power on phase C",
+			PT_complex, "measured_power[VA]",PADDR(measured_total_power),PT_DESCRIPTION,"current total power",
 
 			// This allows the user to set a base power on each phase, and specify the power as a function
 			// of ZIP and pf for each phase (similar to zipload).  This will override the constant values

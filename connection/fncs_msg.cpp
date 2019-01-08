@@ -1235,7 +1235,7 @@ int fncs_msg::publishJsonVariables( )  //Renke add
 					} else {
 						complex_val << fixed << imag_part << "j";
 					}
-					if(val_unit->is_valid()){
+					if(val_unit != NULL && val_unit->is_valid()){
 						string unit_name = string(val_unit->get_name());
 						complex_val << " " << unit_name;
 					}
