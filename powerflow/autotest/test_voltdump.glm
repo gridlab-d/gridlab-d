@@ -123,4 +123,3 @@ object voltdump {
   filename test_volt.csv;
   mode POLAR;
 }
-

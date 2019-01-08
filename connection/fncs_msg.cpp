@@ -1231,7 +1231,7 @@ int fncs_msg::publishJsonVariables( )  //Renke add
 					complex_val.str(string());
 					complex_val << fixed << real_part;
 					if(imag_part >= 0){
-						complex_val << fixed << "+" << imag_part << "j";
+						complex_val << fixed << "+" << fabs(imag_part) << "j";
 					} else {
 						complex_val << fixed << imag_part << "j";
 					}

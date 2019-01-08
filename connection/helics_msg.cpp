@@ -159,9 +159,9 @@ int helics_msg::configure(char *value)
 				}
 			}
 			if(publish_json_config.isMember("core_init_string")) {
-				core_init_string = publish_json_config["core_init_string"].asString();
+				core_init_string = new string(publish_json_config["core_init_string"].asString());
 			} else {
-				core_init_string = "1";
+				core_init_string = new string("1");
 			}
 			if (rv == 0) {
 				return 0;
@@ -352,7 +352,7 @@ int helics_msg::init(OBJECT *parent){
 	//helics_config.lookAhead = 1.0;
 	//:helics_config.impactWindow = 1.0;
 	helics_config.coreType = helics::core_type::ZMQ;
-	helics_config.coreInitString = core_init_string;
+	helics_config.coreInitString = *core_init_string;
 	gl_verbose("helics_msg: Calling ValueFederate Constructor");
 	helics_federate = new helics::CombinationFederate(helics_config);
 	pHelicsFederate = helics_federate;

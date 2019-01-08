@@ -746,7 +746,7 @@ Retry:
 		{
 			char bptype[256]="";
 			char bpval[256]="";
-			if (sscanf(buffer,"%*s %s %[^\0]", bptype, bpval)==0)
+			if (sscanf(buffer,"%*s %s %[^\0\n]", bptype, bpval)==0)
 			{
 				/* display all breakpoints */
 				BREAKPOINT *bp;
