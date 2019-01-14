@@ -612,7 +612,7 @@ static STATUS init_by_creation()
 				}
 			}
 		}
-	} CATCH (char *msg) {
+	} CATCH (const char *msg) {
 		output_error("init failure: %s", msg);
 		/* TROUBLESHOOT
 			The initialization procedure failed.  This is usually preceded
@@ -2410,7 +2410,7 @@ STATUS exec_start()
 		/* terminate main loop state control */
 		exec_mls_done();
 	}
-	CATCH(char *msg)
+	CATCH (const char *msg)
 	{
 		output_error("exec halted: %s", msg);
 		exec_sync_set(NULL,TS_INVALID,false);
