@@ -15,6 +15,9 @@ INCLUDE(CheckIncludeFiles)
 INCLUDE(CheckFunctionExists)
 INCLUDE(CheckSymbolExists)
 
+# Locate Git
+find_package (Git)
+
 # Setup Gridlab-d Version information.
 include(CMakeScripts/SetVersion.cmake)
 INCLUDE(CMakeScripts/CheckDependancies.cmake)
@@ -49,7 +52,7 @@ set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} -w ${DISABLED_OPTIMIZATIONS}")
 
 # Set up platform specific library linking
 IF (WIN32 OR MSYS OR MINGW OR CYGWIN)
-    SET(OS_SPECIFIC_LIBRARIES "ws2_32 wsock32 dl m" CACHE INTERNAL "")
+    SET(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 dl m CACHE INTERNAL "")
 ELSEIF (LINUX)
     SET(OS_SPECIFIC_LIBRARIES "" CACHE INTERNAL "")
 ELSEIF (APPLE)
@@ -58,6 +61,7 @@ ELSE ()
     SET(OS_SPECIFIC_LIBRARIES "" CACHE INTERNAL "")
 ENDIF ()
 LIST(APPEND CMAKE_REQUIRED_LIBRARIES ${OS_SPECIFIC_LIBRARIES})
+LIST(REMOVE_DUPLICATES CMAKE_REQUIRED_LIBRARIES)
 
 # Set the list of modules and files which should be copied into the install directory.
 SET(GL_MODULES
