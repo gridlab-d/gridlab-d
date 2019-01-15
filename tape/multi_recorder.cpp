@@ -41,45 +41,6 @@
 
 #include "recorder.h"
 
-#ifndef WIN32
-#define strtok_s strtok_r
-#else
-#ifdef __MINGW32__
-char* strtok_t(char *str, const char *delim, char **nextp)
-{
-    char *ret;
-
-    if (str == NULL)
-    {
-        str = *nextp;
-    }
-
-    str += strspn(str, delim);
-
-    if (*str == '\0')
-    {
-        return NULL;
-    }
-
-    ret = str;
-
-    str += strcspn(str, delim);
-
-    if (*str)
-    {
-        *str++ = '\0';
-    }
-
-    *nextp = str;
-
-    return ret;
-} 
-
-#define strtok_s strtok_t
-#endif
-
-#endif
-
 CLASS *multi_recorder_class = NULL;
 static OBJECT *last_recorder = NULL;
 
