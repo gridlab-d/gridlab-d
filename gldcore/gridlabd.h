@@ -1828,7 +1828,8 @@ public: // iterators
 	inline void set_##X(T p, gld_wlock&) { X=p; }; \
 	inline gld_string get_##X##_string(void) { return get_##X##_property().get_string(); }; \
 	inline void set_##X(char *str) { get_##X##_property().from_string(str); }; \
-	inline void init_##X(int value=0) { memset((void*)&X,value,sizeof(X));};
+	inline void init_##X(void) { memset((void*)&X,0,sizeof(X));}; \
+	inline void init_##X(T value) { X=value;}; \
 
 /// Define a structured property
 #define GL_STRUCT(T,X) protected: T X; public: \
@@ -1841,7 +1842,8 @@ public: // iterators
 	inline void set_##X(T p, gld_wlock&) { X=p; }; \
 	inline gld_string get_##X##_string(void) { return get_##X##_property().get_string(); }; \
 	inline void set_##X(char *str) { get_##X##_property().from_string(str); }; \
-	inline void init_##X(int value=0) { memset((void*)&X,value,sizeof(X));};
+	inline void init_##X(void) { memset((void*)&X,0,sizeof(X));}; \
+	inline void init_##X(T &value) { X=value;}; \
 
 /// Define a string property
 #define GL_STRING(T,X) 	protected: T X; public: \
@@ -1857,7 +1859,8 @@ public: // iterators
 	inline void set_##X(char *p, gld_wlock&) { strncpy(X,p,sizeof(X)); }; \
 	inline void set_##X(size_t n, char c) { gld_wlock _lock(my()); X[n]=c; }; \
 	inline void set_##X(size_t n, char c, gld_wlock&) { X[n]=c; };  \
-	inline void init_##X(int value=0) { memset((void*)X,value,sizeof(X));};
+	inline void init_##X(void) { memset((void*)X,0,sizeof(X));}; \
+	inline void init_##X(T value) { strncpy(X,value,sizeof(X)-1); }; \
 
 /// Define an array property
 #define GL_ARRAY(T,X,S) protected: T X[S]; public: \
@@ -1873,7 +1876,12 @@ public: // iterators
 	inline void set_##X(T* p, gld_wlock&) { memcpy(X,p,sizeof(X)); }; \
 	inline void set_##X(size_t n, T m) { gld_wlock _lock(my()); X[n]=m; }; \
 	inline void set_##X(size_t n, T m, gld_wlock&) { X[n]=m; };  \
-	inline void init_##X(int value=0) { memset((void*)X,value,sizeof(X));};
+	inline void init_##X(T value=0) { switch(sizeof(X[0])) { \
+			case 4: memset_pattern4((void*)X,(void*)&value,sizeof(X)); break; \
+			case 8: memset_pattern8((void*)X,(void*)&value,sizeof(X)); break; \
+			case 16: memset_pattern16((void*)X,(void*)&value,sizeof(X)); break; \
+			default: throw "GL_ARRAY("#T","#X","#S"): init pattern is not a valid size (e.g., 4, 8, or 16 bytes)"; \
+		}}; \
 
 /// Define a bitflag property
 #define GL_BITFLAGS(T,X) protected: T X; public: \
@@ -1888,7 +1896,7 @@ public: // iterators
 	inline void set_##X(T p, gld_wlock&) { X=p; }; \
 	inline gld_string get_##X##_string(void) { return get_##X##_property().get_string(); }; \
 	inline void set_##X(char *str) { get_##X##_property().from_string(str); }; \
-	inline void init_##X(int value=0) { memset((void*)&X,value,sizeof(X));};
+	inline void init_##X(T value=0) { X=value; }; \
 
 /// Define a method property
 #define GL_METHOD(C,X) public: int X(char *buffer, size_t len=0); \
