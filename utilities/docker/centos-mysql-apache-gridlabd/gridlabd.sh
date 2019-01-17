@@ -87,4 +87,8 @@ fi
 autoreconf -isf
 ./configure --enable-silent-rules --prefix=/usr/local --with-mysql=$MYSQLOPT 'CXXFLAGS=-w -O3' 'CFLAGS=-w -O3'
 make install
+if [ "$BRANCH" = "master" ]
+then 
+	make validate 
+fi
 
