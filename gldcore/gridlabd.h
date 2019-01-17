@@ -1876,12 +1876,12 @@ public: // iterators
 	inline void set_##X(T* p, gld_wlock&) { memcpy(X,p,sizeof(X)); }; \
 	inline void set_##X(size_t n, T m) { gld_wlock _lock(my()); X[n]=m; }; \
 	inline void set_##X(size_t n, T m, gld_wlock&) { X[n]=m; };  \
-	inline void init_##X(T value=0) { switch(sizeof(X[0])) { \
-			case 4: memset_pattern4((void*)X,(void*)&value,sizeof(X)); break; \
-			case 8: memset_pattern8((void*)X,(void*)&value,sizeof(X)); break; \
-			case 16: memset_pattern16((void*)X,(void*)&value,sizeof(X)); break; \
-			default: throw "GL_ARRAY("#T","#X","#S"): init pattern is not a valid size (e.g., 4, 8, or 16 bytes)"; \
-		}}; \
+	inline void init_##X(T value=0) { \
+		size_t n; \
+		for ( n = 0 ; n < (size_t)(sizeof(X)/sizeof(X[0])) ; n++ ) { \
+			X[n] = value; \
+		} \
+	}; \
 
 /// Define a bitflag property
 #define GL_BITFLAGS(T,X) protected: T X; public: \
