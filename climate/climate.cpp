@@ -523,42 +523,42 @@ void tmy2_reader::close(){
 CLASS *climate::oclass = NULL;
 climate *climate::defaults = NULL;
 
-climate::climate(MODULE *module)
+climate::climate(MODULE *module) : gld_object()
 {
-	memset(this, 0, sizeof(climate));
+	set_defaults(true);
 	if (oclass==NULL)
 	{
 		oclass = gld_class::create(module,"climate",sizeof(climate),PC_PRETOPDOWN|PC_AUTOLOCK);
 		if (gl_publish_variable(oclass,
-			PT_double,"solar_elevation",PADDR(solar_elevation), //sjin: publish solar elevation variable
-			PT_double,"solar_azimuth",PADDR(solar_azimuth), //sjin: publish solar azimuth variable
-      PT_double,"solar_zenith",PADDR(solar_zenith),
-			PT_char32, "city", PADDR(city),
-			PT_char1024,"tmyfile",PADDR(tmyfile),
-			PT_double,"temperature[degF]",PADDR(temperature),
-			PT_double,"humidity[pu]",PADDR(humidity),
-			PT_double,"solar_flux[W/sf]",PADDR(solar_flux),	PT_SIZE, 9,
-			PT_double,"solar_direct[W/sf]",PADDR(solar_direct),
-			PT_double,"solar_diffuse[W/sf]",PADDR(solar_diffuse),
-			PT_double,"solar_global[W/sf]",PADDR(solar_global),
-			PT_double,"extraterrestrial_global_horizontal[W/sf]",PADDR(global_horizontal_extra),
-			PT_double,"extraterrestrial_direct_normal[W/sf]",PADDR(direct_normal_extra),
-			PT_double,"pressure[mbar]",PADDR(pressure),
-			PT_double,"wind_speed[m/s]", PADDR(wind_speed),
-			PT_double,"wind_dir[deg]", PADDR(wind_dir),
-			PT_double,"wind_gust[mph]", PADDR(wind_gust),
-			PT_double,"record.low[degF]", PADDR(record.low),
-			PT_int32,"record.low_day",PADDR(record.low_day),
-			PT_double,"record.high[degF]", PADDR(record.high),
-			PT_int32,"record.high_day",PADDR(record.high_day),
-			PT_double,"record.solar[W/sf]", PADDR(record.solar),
-			PT_double,"rainfall[in/h]",PADDR(rainfall),
-			PT_double,"snowdepth[in]",PADDR(snowdepth),
-			PT_enumeration,"interpolate",PADDR(interpolate),PT_DESCRIPTION,"the interpolation mode used on the climate data",
+			PT_double,"solar_elevation[rad]",PADDR(solar_elevation), PT_DESCRIPTION,"solar elevation angle in radians",
+			PT_double,"solar_azimuth[rad]",PADDR(solar_azimuth), PT_DESCRIPTION,"solar azimuth angle in radians",
+      		PT_double,"solar_zenith[rad]",PADDR(solar_zenith), PT_DESCRIPTION,"solar zenith angle in radians",
+			PT_char32, "city", PADDR(city), PT_DESCRIPTION,"weather data city name",
+			PT_char1024,"tmyfile",PADDR(tmyfile), PT_DESCRIPTION,"weather data file name",
+			PT_double,"temperature[degF]",PADDR(temperature),PT_DEFAULT,"59.0 degF", PT_DESCRIPTION,"current temperature",
+			PT_double,"humidity[pu]",PADDR(humidity), PT_DEFAULT,"75%", PT_DESCRIPTION,"current humidity",
+			PT_double,"solar_flux[W/sf]",PADDR(solar_flux),	PT_SIZE,9,  PT_DESCRIPTION,"current solar irradiance (9 orientiations)",
+			PT_double,"solar_direct[W/sf]",PADDR(solar_direct),  PT_DESCRIPTION,"solar direct irradiance",
+			PT_double,"solar_diffuse[W/sf]",PADDR(solar_diffuse),  PT_DESCRIPTION,"solar diffuse irradiance",
+			PT_double,"solar_global[W/sf]",PADDR(solar_global), PT_DESCRIPTION,"solar global flux irradiance",
+			PT_double,"extraterrestrial_global_horizontal[W/sf]",PADDR(global_horizontal_extra), PT_DESCRIPTION,"solar global extraterrestrial irradiance",
+			PT_double,"extraterrestrial_direct_normal[W/sf]",PADDR(direct_normal_extra), PT_DEFAULT,"1367 W/m^2", PT_DESCRIPTION,"solar direct normal extraterrestrial irradiance",
+			PT_double,"pressure[mbar]",PADDR(pressure),PT_DEFAULT,"1013.25 mbar",  PT_DESCRIPTION,"current air pressure",
+			PT_double,"wind_speed[m/s]", PADDR(wind_speed),  PT_DESCRIPTION,"current wind speed",
+			PT_double,"wind_dir[rad]", PADDR(wind_dir),  PT_DESCRIPTION,"current direction in radians",
+			PT_double,"wind_gust[m/s]", PADDR(wind_gust), PT_DESCRIPTION,"current wind gusts",
+			PT_double,"record.low[degF]", PADDR(record.low),  PT_DESCRIPTION,"record low temperature observed",
+			PT_int32,"record.low_day",PADDR(record.low_day), PT_DESCRIPTION,"day of year for record low observation",
+			PT_double,"record.high[degF]", PADDR(record.high), PT_DESCRIPTION,"record high temperature observed",
+			PT_int32,"record.high_day",PADDR(record.high_day), PT_DESCRIPTION,"day of year for record high observation",
+			PT_double,"record.solar[W/sf]", PADDR(record.solar),  PT_DESCRIPTION,"record high solar irradiance observed",
+			PT_double,"rainfall[in/h]",PADDR(rainfall), PT_DESCRIPTION,"rainfall observed",
+			PT_double,"snowdepth[in]",PADDR(snowdepth), PT_DESCRIPTION,"snow depth observed",
+			PT_enumeration,"interpolate",PADDR(interpolate),PT_DEFAULT,"NONE", PT_DESCRIPTION,"the interpolation mode used on the climate data",
 				PT_KEYWORD,"NONE",(enumeration)CI_NONE,
 				PT_KEYWORD,"LINEAR",(enumeration)CI_LINEAR,
 				PT_KEYWORD,"QUADRATIC",(enumeration)CI_QUADRATIC,
-			PT_double,"solar_horiz",PADDR(solar_flux[CP_H]),
+			PT_double,"solar_horiz",PADDR(solar_flux[CP_H]), 
 			PT_double,"solar_north",PADDR(solar_flux[CP_N]),
 			PT_double,"solar_northeast",PADDR(solar_flux[CP_NE]),
 			PT_double,"solar_east",PADDR(solar_flux[CP_E]),
@@ -568,26 +568,22 @@ climate::climate(MODULE *module)
 			PT_double,"solar_west",PADDR(solar_flux[CP_W]),
 			PT_double,"solar_northwest",PADDR(solar_flux[CP_NW]),
 			PT_double,"solar_raw[W/sf]",PADDR(solar_raw),
-			PT_double,"ground_reflectivity[pu]",PADDR(ground_reflectivity),
-			PT_object,"reader",PADDR(reader),
-			PT_char1024,"forecast",PADDR(forecast_spec),PT_DESCRIPTION,"forecasting specifications",
-			PT_enumeration,"cloud_model",PADDR(cloud_model),PT_DESCRIPTION,"the cloud model to use",
+			PT_double,"ground_reflectivity[pu]",PADDR(ground_reflectivity),PT_DEFAULT,"0.3 pu", PT_DESCRIPTION,"ground reflectivity observed",
+			PT_object,"reader",PADDR(reader),  PT_DESCRIPTION,"weather reader object",
+			PT_char1024,"forecast",PADDR(forecast_spec), PT_DESCRIPTION,"forecasting specifications", 
+			PT_enumeration,"cloud_model",PADDR(cloud_model), PT_DEFAULT, "NONE", PT_DESCRIPTION,"the cloud model to use",
 				PT_KEYWORD,"NONE",(enumeration)CM_NONE,
 				PT_KEYWORD,"CUMULUS",(enumeration)CM_CUMULUS,
-			PT_double,"cloud_opacity[pu]",PADDR(cloud_opacity),
-			PT_double,"opq_sky_cov[pu]",PADDR(opq_sky_cov),
-			//PT_double,"cloud_reflectivity[pu]",PADDR(cloud_reflectivity), //Unused in the cloud model at this time.
-			PT_double,"cloud_speed_factor[pu]",PADDR(cloud_speed_factor),
-			PT_double,"solar_cloud_direct[W/sf]",PADDR(solar_cloud_direct),
-			PT_double,"solar_cloud_diffuse[W/sf]",PADDR(solar_cloud_diffuse),
-			PT_double,"solar_cloud_global[W/sf]",PADDR(solar_cloud_global),
-			PT_double,"cloud_alpha[pu]",PADDR(cloud_alpha),
-			PT_double,"cloud_num_layers[pu]",PADDR(cloud_num_layers),
-			PT_double,"cloud_aerosol_transmissivity[pu]",PADDR(cloud_aerosol_transmissivity),
+			PT_double,"cloud_opacity[pu]",PADDR(cloud_opacity), PT_DEFAULT, "1.0 pu",  PT_DESCRIPTION,"cloud opacity factor",
+			PT_double,"opq_sky_cov[pu]",PADDR(opq_sky_cov), PT_DESCRIPTION,"cloud sky coverage factor",
+			PT_double,"cloud_speed_factor[pu]",PADDR(cloud_speed_factor), PT_DEFAULT, "1.0 pu",  PT_DESCRIPTION,"cloud speed factor",
+			PT_double,"solar_cloud_direct[W/sf]",PADDR(solar_cloud_direct), PT_DESCRIPTION,"cloud direct irradiance",
+			PT_double,"solar_cloud_diffuse[W/sf]",PADDR(solar_cloud_diffuse), PT_DESCRIPTION,"cloud diffuse irradiance",
+			PT_double,"solar_cloud_global[W/sf]",PADDR(solar_cloud_global), PT_DESCRIPTION,"cloud global irradiance",
+			PT_double,"cloud_alpha[pu]",PADDR(cloud_alpha),PT_DEFAULT,"400 pu", PT_DESCRIPTION,"cloud alpha",
+			PT_double,"cloud_num_layers[pu]",PADDR(cloud_num_layers),PT_DEFAULT,"40 pu", PT_DESCRIPTION,"number of cloud layers",
+			PT_double,"cloud_aerosol_transmissivity[pu]",PADDR(cloud_aerosol_transmissivity),PT_DEFAULT,"0.95 pu", PT_DESCRIPTION,"cloud aerosal transmissivity",
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
-		memset(this,0,sizeof(climate));
-		sa = new SolarAngles();
-		defaults = this;
 		gl_publish_function(oclass,	"calculate_solar_radiation_degrees", (FUNCTIONADDR)calculate_solar_radiation_degrees);
 		gl_publish_function(oclass,	"calculate_solar_radiation_radians", (FUNCTIONADDR)calculate_solar_radiation_radians);
 		gl_publish_function(oclass,	"calculate_solar_radiation_shading_degrees", (FUNCTIONADDR)calculate_solar_radiation_shading_degrees);
@@ -601,30 +597,44 @@ climate::climate(MODULE *module)
 
 int climate::create(void)
 {
-	memcpy(this,defaults,sizeof(climate));
-	strcpy(city,"");
-	strcpy(tmyfile,"");
-	temperature = 59.0;
-	temperature_raw = 15.0;
-	humidity = 0.75;
-	rainfall = 0.0;
-	snowdepth = 0.0;
-	ground_reflectivity = 0.3;
-	direct_normal_extra = 126.998456;	//1367 W/m^2 constant in W/ft^2
-	pressure = 1000;	//Sea level assumption
-	//solar_flux = malloc(8 * sizeof(double));
-	solar_flux[0] = solar_flux[1] = solar_flux[2] = solar_flux[3] = solar_flux[4] = solar_flux[5] = solar_flux[6] = solar_flux[7] = solar_flux[8] = 0.0; // W/sf normal
-	//solar_flux_S = solar_flux_SE = solar_flux_SW = solar_flux_E = solar_flux_W = solar_flux_NE = solar_flux_NW = solar_flux_N = 0.0; // W/sf normal
-	cloud_opacity = 1.0;
-	cloud_speed_factor = 1;
-	//cloud_reflectivity = 1.0; // very reflective!
-	tmy = NULL;
-	cloud_model = CM_NONE;
-	cloud_num_layers = 40;
-	cloud_alpha = 400;
-	cloud_aerosol_transmissivity = 0.95;
-	file = new tmy2_reader;
+	set_defaults();
+	file = new tmy2_reader;	
+	if ( file == NULL )
+	{
+		error("memory allocation failed for tmy reader");
+		return 0;
+	}
+	reader_type = RT_TMY2;
+	sa = new SolarAngles();
+	if ( sa == NULL )
+	{
+		error("memory allocation failed for solar angle");
+		return 0;
+	}
 	return 1;
+}
+
+void climate::set_defaults(bool is_template)
+{
+	temperature_raw = 15.0;
+	reader = NULL;
+	memset(solar_flux,0,sizeof(solar_flux));
+	sa = NULL;
+	reader_hndl = NULL;
+	tmy = NULL;
+	reader_type = RT_NONE;
+	prev_NTime = TS_NEVER;
+	MIN_LAT_INDEX = 0;
+	MAX_LAT_INDEX = 0;
+	MIN_LAT = 0.0;
+	MAX_LAT = 0.0;
+	MIN_LON_INDEX = 0;
+	MAX_LON_INDEX = 0;
+	MIN_LON = 0;
+	MAX_LON = 0;
+	global_transmissivity = 1.0;
+	if ( is_template )
+		defaults = this;
 }
 
 int climate::isa(char *classname)

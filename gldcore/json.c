@@ -59,6 +59,53 @@ static int json_modules(FILE *fp)
 	return len;
 }
 
+static int json_properties(FILE *fp)
+{
+	int len = 0;
+	PROPERTYTYPE ptype;
+	len += json_write(",\n\t\"types\" : {");
+	for ( ptype = property_getfirst_type() ; ptype != PT_void ; ptype = property_getnext_type(ptype) )
+	{
+		PROPERTYSPEC *spec = property_getspec(ptype);
+		PROPERTYCOMPAREOP op;
+		bool first = true;
+		if ( ptype != property_getfirst_type() )
+			len += json_write(",");
+		len += json_write("\n\t\t\"%s\" : {",spec->name);
+		len += json_write("\n\t\t\t\"xsdtype\" : \"%s\"",spec->xsdname);
+		if ( spec->default_value != NULL )
+			len += json_write(",\n\t\t\t\"default\" : \"%s\"",spec->default_value);
+		if ( spec->size > 0 )
+			len += json_write(",\n\t\t\t\"memsize\" : \"%d\"",spec->size);
+		if ( spec->csize > 0 )
+		{
+			len += json_write(",\n\t\t\t\"strsize\" : \"%d\"",spec->csize);
+			len += json_write(",\n\t\t\t\"has_tostr\" : \"%s\"",spec->data_to_string?"True":"False");
+			len += json_write(",\n\t\t\t\"has_fromstr\" : \"%s\"",spec->string_to_data?"True":"False");
+		}
+		len += json_write(",\n\t\t\t\"has_create\" : \"%s\"",spec->create?"True":"False");
+		len += json_write(",\n\t\t\t\"has_stream\" : \"%s\"",spec->stream?"True":"False");
+		len += json_write(",\n\t\t\t\"compareops\" : {");
+		for ( op = _TCOP_FIRST ; op < _TCOP_LAST ; op++ )
+		{
+			if ( spec->compare[op].fn != NULL )
+			{
+				if ( ! first )
+					len += json_write(",");
+				else
+					first = false;
+				len += json_write("\n\t\t\t\t\"%s\" : {\"nargs\": \"%d\"}",spec->compare[op].str, spec->compare[op].trinary ? 3 : 2);
+			}
+		}
+		len += json_write("\n\t\t\t}");
+		len += json_write("\n\t\t}");
+	}
+	len += json_write("\n\t}");
+	output_debug("json_properties() wrote %d bytes",len);
+	return len;
+}
+
+
 static int json_classes(FILE *fp)
 {
 	int len = 0;
@@ -120,6 +167,18 @@ static int json_classes(FILE *fp)
 					len += json_write("\n\t\t\t\t}");
 				else
 					len += json_write(",");
+			}
+			if ( prop->unit != NULL )
+			{
+				json_write(",\n\t\t\t\t\"unit\" : \"%s\"",prop->unit->name);
+			}
+			if ( prop->default_value != NULL )
+			{
+				PROPERTYSPEC *spec = property_getspec(prop->ptype);
+				if ( spec != NULL && prop->default_value != spec->default_value )
+				{	
+					json_write(",\n\t\t\t\t\"default\" : \"%s\"",prop->default_value);
+				}
 			}
 			len += json_write("\n\t\t\t}");
 		}
@@ -194,6 +253,12 @@ static int json_objects(FILE *fp)
 		FIRST("id","%d",obj->id);
 		if ( obj->oclass->name != NULL )
 			TUPLE("class","%s",obj->oclass->name);
+
+		/* handle special case for powerflow module handling of parent */
+		OBJECT **topological_parent = object_get_object_by_name(obj,"topological_parent");
+		if ( topological_parent != NULL )
+			obj->parent = *topological_parent;
+
 		if ( obj->parent != NULL )
 		{
 			if ( obj->parent->name == NULL )
@@ -252,6 +317,7 @@ int json_output(FILE *fp)
 	len += json_write("{\t\"application\": \"gridlabd\",\n");
 	len += json_write("\t\"version\" : \"%u.%u.%u\"",global_version_major,global_version_minor,json_version);
 	len += json_modules(fp);
+	len += json_properties(fp);
 	len += json_classes(fp);
 	len += json_globals(fp);
 	len += json_objects(fp);

@@ -83,9 +83,28 @@ public:
 	unsigned int get_naccess(void) { return n_access; };
 	void inc_files(const char *name) 
 	{
+		char pname[1024];
+		char cwd[1024];
+		getcwd(cwd,sizeof(cwd));
+		strcpy(pname,name);
+		char *pwd = cwd;
+		char *ptr = pname;
+		char *sep = pname;
+		while ( *ptr != '\0' && *pwd != '\0' && *pwd == *ptr )
+		{
+			if ( *ptr == '/' )
+				sep = ptr;
+			pwd++;
+			ptr++;
+		}
+		if ( sep > pname )
+		{
+			ptr = sep-1;
+			*ptr = '.';
+		}
 		if ( global_debug_mode || global_verbose_mode )
 		{
-			IN_MYCONTEXT output_debug("processing %s", name);
+			IN_MYCONTEXT output_debug("processing %s", ptr);
 		}
 		else
 		{
@@ -93,7 +112,7 @@ public:
 			char blank[1024];
 			memset(blank,32,len);
 			blank[len]='\0';
-			len = output_raw("%s\rProcessing %s...\r",blank,name)-len; 
+			len = output_raw("%s\rProcessing %s...\r",blank,ptr)-len; 
 		}
 		wlock(); 
 		n_files++;

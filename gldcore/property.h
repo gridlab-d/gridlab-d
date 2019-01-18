@@ -858,6 +858,7 @@ typedef enum {_PT_FIRST=-1,
 	PT_DEPRECATED, /* used to flag a property that is deprecated */
 	PT_HAS_NOTIFY, /* used to indicate that a notify function exists for the specified property */
 	PT_HAS_NOTIFY_OVERRIDE, /* as PT_HAS_NOTIFY, but instructs the core not to set the property to the value being set */
+	PT_DEFAULT, /* identifies the default value to use when creating the object property */
 } PROPERTYTYPE; /**< property types */
 typedef char CLASSNAME[64]; /**< the name a GridLAB class */
 typedef void* PROPERTYADDR; /**< the offset of a property from the end of the OBJECT header */
@@ -885,7 +886,34 @@ typedef struct s_keyword {
 	struct s_keyword *next;
 } KEYWORD;
 
-typedef int (*METHODCALL)(void *obj, char *string, int size); /**< the function that read and writes a string */
+/** Method requests can have the following syntax
+
+	Legacy syntax:
+		method_call(obj,NULL,0) --> returns the size of buffer needed to hold result
+		method_call(obj,NULL,size) --> returns 1 if size is larger than buffer size needed
+		method_call(obj,buffer,0) --> returns 1 if the buffer can be read into the obj
+		method_call(obj,buffer,size) --> returns 1 if the buffer can be written by the obj
+	Extended syntax:
+		method_call(obj,token,...)
+	Data extraction syntax:
+		method_call(obj,MC_EXTRACT,(char*)buffer,(size_t)size,(size_t)offset,(const char*)delimiter_chars) 
+		Returns value > offset if data extracted (value should be given as offset to next call)
+		Returns value <= offset if buffer is too small to hold resulting string
+		Returns value == 0 if no further data is available
+		Returns value == -1 if extract failed
+		Note: the delimeter found is not included in the data copied to the buffer
+	Example iterator
+		char buffer[1024];
+		int last_offset = 0, next_offset = 0;
+		while ( (next_offset = method_call(obj,MC_EXTRACT,(char*)buffer,(size_t)sizeof(buffer),(int)last_offset,(const char*)",")) > last_offset )
+		{
+			// content of buffer is everything between last_offset (included) and delimiter (if found) or end-of-string (if delimiter not found)
+			last_offset = next_offset;
+		}
+		// content of buffer is no longer valid
+ **/
+#define MC_EXTRACT (void*)0x0001 	/**< reads the first method record and returns the index of the next record (0 for last) */
+typedef int (*METHODCALL)(void *obj, ...); /**< the function that handles method requests */
 
 typedef uint32 PROPERTYFLAGS;
 #define PF_RECALC	0x0001 /**< property has a recalc trigger (only works if recalc_<class> is exported) */
@@ -911,6 +939,7 @@ typedef struct s_property_map {
 	FUNCTIONADDR notify;
 	METHODCALL method; /**< method call, addr must be 0 */
 	bool notify_override;
+	void *default_value; /**< default value to use when creating objects; NULL is memset(0) is desired (default default) */
 } PROPERTY; /**< property definition item */
 
 typedef struct s_property_struct {
@@ -920,8 +949,9 @@ typedef struct s_property_struct {
 
 /** Property comparison operators
  **/
-typedef enum { 
-	TCOP_EQ=0, /**< property are equal to a **/
+typedef enum {
+	_TCOP_FIRST = 0,
+	TCOP_EQ=_TCOP_FIRST, /**< property are equal to a **/
 	TCOP_LE=1, /**< property is less than or equal to a **/
 	TCOP_GE=2, /**< property is greater than or equal a **/
 	TCOP_NE=3, /**< property is not equal to a **/
@@ -941,6 +971,7 @@ typedef struct s_property_specs { /**<	the property type conversion specificatio
 						  **/
 	char *name; /**< the property type name */
 	char *xsdname;
+	char *default_value;
 	unsigned int size; /**< the size of 1 instance */
 	unsigned int csize; /**< the minimum size of a converted instance (not including '\0' or unit, 0 means a call to property_minimum_buffersize() is necessary) */ 
 	int (*data_to_string)(char *,int,void*,PROPERTY*); /**< the function to convert from data to a string */
@@ -963,6 +994,8 @@ extern "C" {
 
 int property_check(void);
 PROPERTYSPEC *property_getspec(PROPERTYTYPE ptype);
+PROPERTYTYPE property_getfirst_type(void);
+PROPERTYTYPE property_getnext_type(PROPERTYTYPE ptype);
 PROPERTY *property_malloc(PROPERTYTYPE, CLASS *, char *, void *, DELEGATEDTYPE *);
 uint32 property_size(PROPERTY *);
 uint32 property_size_by_type(PROPERTYTYPE);
@@ -973,6 +1006,9 @@ PROPERTYCOMPAREOP property_compare_op(PROPERTYTYPE ptype, char *opstr);
 PROPERTYTYPE property_get_type(char *name);
 double property_get_part(struct s_object_list *obj, PROPERTY *prop, char *part);
 bool property_is_default(struct s_object_list *obj, PROPERTY *prop);
+void *property_addr(struct s_object_list *obj, PROPERTY *prop);
+int property_read(PROPERTY *prop, void *addr, char *string);
+int property_write(PROPERTY *prop, void *addr, char *string, size_t size);
 
 /* double array */
 int double_array_create(double_array*a);

@@ -31,31 +31,41 @@ SET_MYCONTEXT(DMC_PROPERTY)
 
 /* IMPORTANT: this list must match PROPERTYTYPE enum in property.h */
 PROPERTYSPEC property_type[_PT_LAST] = {
-	{"void", "string", 0, 0, convert_from_void,convert_to_void},
-	{"double", "decimal", sizeof(double), 24, convert_from_double,convert_to_double,NULL,stream_double,{TCOPS(double)},},
-	{"complex", "string", sizeof(complex), 48, convert_from_complex,convert_to_complex,NULL,NULL,{TCOPS(double)},complex_get_part},
-	{"enumeration", "string", sizeof(enumeration), 1024, convert_from_enumeration,convert_to_enumeration,NULL,NULL,{TCOPS(uint64)},},
-	{"set", "string", sizeof(set), 1024, convert_from_set,convert_to_set,NULL,NULL,{TCOPS(uint64)},},
-	{"int16", "integer", sizeof(int16), 6, convert_from_int16,convert_to_int16,NULL,NULL,{TCOPS(uint16)},},
-	{"int32", "integer", sizeof(int32), 12, convert_from_int32,convert_to_int32,NULL,NULL,{TCOPS(uint32)},},
-	{"int64", "integer", sizeof(int64), 24, convert_from_int64,convert_to_int64,NULL,NULL,{TCOPS(uint64)},},
-	{"char8", "string", sizeof(char8), 8, convert_from_char8,convert_to_char8,NULL,NULL,{TCOPS(string)},},
-	{"char32", "string", sizeof(char32), 32, convert_from_char32,convert_to_char32,NULL,NULL,{TCOPS(string)},},
-	{"char256", "string", sizeof(char256), 256, convert_from_char256,convert_to_char256,NULL,NULL,{TCOPS(string)},},
-	{"char1024", "string", sizeof(char1024), 1024, convert_from_char1024,convert_to_char1024,NULL,NULL,{TCOPS(string)},},
-	{"object", "string", sizeof(OBJECT*), sizeof(OBJECTNAME), convert_from_object,convert_to_object,NULL,NULL,{TCOPB(object)},object_get_part},
-	{"delegated", "string", (unsigned int)-1, 0, convert_from_delegated, convert_to_delegated},
-	{"bool", "string", sizeof(bool), 6, convert_from_boolean, convert_to_boolean,NULL,NULL,{TCOPB(bool)},},
-	{"timestamp", "string", sizeof(int64), 32, convert_from_timestamp_stub, convert_to_timestamp_stub,NULL,NULL,{TCOPS(uint64)},timestamp_get_part},
-	{"double_array", "string", sizeof(double_array), 1024, convert_from_double_array, convert_to_double_array,double_array_create,NULL,{TCNONE},double_array_get_part},
-	{"complex_array", "string", sizeof(complex_array), 1024, convert_from_complex_array, convert_to_complex_array,complex_array_create,NULL,{TCNONE},complex_array_get_part},
-	{"real", "decimal", sizeof(real), 24, convert_from_real, convert_to_real},
-	{"float", "decimal", sizeof(float), 24, convert_from_float, convert_to_float},
-	{"loadshape", "string", sizeof(loadshape), 1024, convert_from_loadshape, convert_to_loadshape, loadshape_create,NULL,{TCOPS(double)},},
-	{"enduse", "string", sizeof(enduse), 1024, convert_from_enduse, convert_to_enduse, enduse_create,NULL,{TCOPS(double)},enduse_get_part},
-	{"randomvar", "string", sizeof(randomvar), 24, convert_from_randomvar, convert_to_randomvar, randomvar_create,NULL,{TCOPS(double)},random_get_part},
-	{"method","string", -1, 0, convert_from_method,convert_to_method},
+	{"void", "string", NULL, 0, 0, convert_from_void,convert_to_void},
+	{"double", "decimal", "0.0", sizeof(double), 24, convert_from_double,convert_to_double,NULL,stream_double,{TCOPS(double)},},
+	{"complex", "string", "0+0i", sizeof(complex), 48, convert_from_complex,convert_to_complex,NULL,NULL,{TCOPS(double)},complex_get_part},
+	{"enumeration", "string", "0", sizeof(enumeration), 1024, convert_from_enumeration,convert_to_enumeration,NULL,NULL,{TCOPS(uint64)},},
+	{"set", "string", "0", sizeof(set), 1024, convert_from_set,convert_to_set,NULL,NULL,{TCOPS(uint64)},},
+	{"int16", "integer", "0", sizeof(int16), 6, convert_from_int16,convert_to_int16,NULL,NULL,{TCOPS(uint16)},},
+	{"int32", "integer", "0", sizeof(int32), 12, convert_from_int32,convert_to_int32,NULL,NULL,{TCOPS(uint32)},},
+	{"int64", "integer", "0", sizeof(int64), 24, convert_from_int64,convert_to_int64,NULL,NULL,{TCOPS(uint64)},},
+	{"char8", "string", "", sizeof(char8), 8, convert_from_char8,convert_to_char8,NULL,NULL,{TCOPS(string)},},
+	{"char32", "string", "", sizeof(char32), 32, convert_from_char32,convert_to_char32,NULL,NULL,{TCOPS(string)},},
+	{"char256", "string", "", sizeof(char256), 256, convert_from_char256,convert_to_char256,NULL,NULL,{TCOPS(string)},},
+	{"char1024", "string", "", sizeof(char1024), 1024, convert_from_char1024,convert_to_char1024,NULL,NULL,{TCOPS(string)},},
+	{"object", "string", NULL, sizeof(OBJECT*), 64, convert_from_object,convert_to_object,NULL,NULL,{TCOPB(object)},object_get_part},
+	{"delegated", "string", NULL, (unsigned int)-1, 0, convert_from_delegated, convert_to_delegated},
+	{"bool", "string", "FALSE", sizeof(bool), 6, convert_from_boolean, convert_to_boolean,NULL,NULL,{TCOPB(bool)},},
+	{"timestamp", "string", "TS_ZERO", sizeof(int64), 32, convert_from_timestamp_stub, convert_to_timestamp_stub,NULL,NULL,{TCOPS(uint64)},timestamp_get_part},
+	{"double_array", "string", "", sizeof(double_array), 1024, convert_from_double_array, convert_to_double_array,double_array_create,NULL,{TCNONE},double_array_get_part},
+	{"complex_array", "string", "", sizeof(complex_array), 1024, convert_from_complex_array, convert_to_complex_array,complex_array_create,NULL,{TCNONE},complex_array_get_part},
+	{"real", "decimal", "0.0", sizeof(real), 24, convert_from_real, convert_to_real},
+	{"float", "decimal", "0.0", sizeof(float), 24, convert_from_float, convert_to_float},
+	{"loadshape", "string", NULL, sizeof(loadshape), 1024, convert_from_loadshape, convert_to_loadshape, loadshape_create,NULL,{TCOPS(double)},},
+	{"enduse", "string", NULL, sizeof(enduse), 1024, convert_from_enduse, convert_to_enduse, enduse_create,NULL,{TCOPS(double)},enduse_get_part},
+	{"randomvar", "string", NULL, sizeof(randomvar), 24, convert_from_randomvar, convert_to_randomvar, randomvar_create,NULL,{TCOPS(double)},random_get_part},
+	{"method","string", NULL, 0, 0, convert_from_method,convert_to_method},
 };
+
+PROPERTYTYPE property_getfirst_type(void)
+{
+	return (PROPERTYTYPE)((int)PT_void+1);
+}
+
+PROPERTYTYPE property_getnext_type(PROPERTYTYPE ptype)
+{
+	return ptype > _PT_FIRST && ptype < _PT_LAST-1 ? (PROPERTYTYPE)((int)ptype+1) : PT_void;
+}
 
 PROPERTYSPEC *property_getspec(PROPERTYTYPE ptype)
 {
@@ -137,6 +147,7 @@ PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void
 	prop->unit = NULL;
 	prop->notify = 0;
 	prop->notify_override = false;
+	prop->default_value = NULL;
 	if (sscanf(name,"%[^[][%[^]]]",prop->name,unitspec)==2)
 	{
 		/* detect when a unit is associated with non-double/complex property */
@@ -187,9 +198,68 @@ uint32 property_size(PROPERTY *prop)
 		return 0;
 }
 
+/** Get the physical address of a property
+    If obj==NULL, the property address is assume to be for a global
+    @return the physical location in memory of the property
+ **/
+void *property_addr(OBJECT *obj, PROPERTY *prop) 
+{
+	return (void*)((char *)(obj!=NULL?(obj+1):NULL)+(int64)(prop->addr));
+}
+
 uint32 property_size_by_type(PROPERTYTYPE type)
 {
 	return property_type[type].size;
+}
+
+int property_read(PROPERTY *prop, void *addr, char *string)
+{
+	if (prop->ptype > _PT_FIRST && prop->ptype < _PT_LAST)
+		return property_type[prop->ptype].string_to_data ? property_type[prop->ptype].string_to_data(string,addr,prop) : 0;
+	else
+	{
+		output_error("gldcore/property.c:property_read(prop='%s', addr=%p, string=%p): read operation not supported",
+			prop->name, addr, string);
+		/*	TROUBLESHOOT
+			The property in question cannot be converted from a string. Either the property does not have
+			an underlying XSD type that can be represented as a string, or the property does not support
+			the required operation(s).
+		 */
+		return 0;
+	}
+}
+
+int property_write(PROPERTY *prop, void *addr, char *string, size_t size)
+{
+	if ( prop->ptype == PT_method )
+	{
+		OBJECT *obj = (OBJECT*)addr;
+		/* TODO: implement iterator */
+		output_error("gldcore/property.c:property_write(prop='%s', addr=<%s:%d>(name='%s'), string=%p, size=%u): no iterator available",
+			prop->name, obj->oclass->name, obj->id, obj->name?obj->name:"(none)", string, size);
+		/*	TROUBLESHOOT
+			Method properties require iterators to extract data. The request to extract data cannot
+			be fulfilled because using this function call. This is most likely an internal error due
+			to improper or legacy implementation.
+		 */
+		return 0;
+	}
+	else if ( prop->ptype > _PT_FIRST && prop->ptype < _PT_LAST && property_type[prop->ptype].data_to_string != NULL )
+	{
+		return property_type[prop->ptype].data_to_string(string,size,addr,prop);
+	}
+	else
+	{
+		output_error("gldcore/property.c:property_write(prop='%s', addr=%p, string=%p, size=%u): write operation not supported",
+			prop->name, addr, string, size);
+		/*	TROUBLESHOOT
+			The property in question cannot be converted to a string. Either the property does not have
+			an underlying XSD type that can be represented as a string, or the property does not support
+			the required operation(s).
+		 */
+		return 0;
+	}
+
 }
 
 int property_create(PROPERTY *prop, void *addr)
@@ -199,7 +269,18 @@ int property_create(PROPERTY *prop, void *addr)
 		if (property_type[prop->ptype].create)
 			return property_type[prop->ptype].create(addr);
 		if ( (int)property_type[prop->ptype].size>0 )
-			memset(addr,0,property_type[prop->ptype].size);
+		{
+			if ( prop->default_value != NULL )
+			{
+				if ( property_read(prop,addr,prop->default_value) == 0 )
+				{
+					output_error("property '%s' default value '%s is invalid", prop->name, prop->default_value);
+					memset(addr,0,property_type[prop->ptype].size);
+				}
+			}	
+			else
+				memset(addr,0,property_type[prop->ptype].size);
+		}
 		return 1;
 	}
 	else
@@ -276,25 +357,37 @@ double property_get_part(OBJECT *obj, PROPERTY *prop, char *part)
 
 bool property_is_default(OBJECT *obj, PROPERTY *prop)
 {
-	if ( prop->ptype > PT_void && prop->ptype < PT_object && obj->oclass->defaults != NULL )
+	void *a = (char*)(obj ? (obj+1) : 0) + (size_t)prop->addr;
+	char b[4096]="";
+	bool result = false;
+	if ( prop->default_value != NULL )
 	{
-		void *a = (char*)obj + (int)prop->addr;
-		void *b = (char*)(obj->oclass->defaults) + (int)prop->addr;
-		bool result = property_compare_basic(prop->ptype,TCOP_EQ,a,b,NULL,NULL);
-		if ( !result && global_debug_output )
+		property_read(prop,b,prop->default_value);
+		result = property_compare_basic(prop->ptype,TCOP_EQ,a,b,NULL,NULL);
+	}
+#ifdef DEBUG
+	if ( global_debug_output )
+	{
+		char buf1[1024] = "<???>", buf2[1024] = "<???>";
+		property_write(prop,a,buf1,sizeof(buf1));
+		property_write(prop,b,buf2,sizeof(buf2));
+		if ( obj->name == NULL )
 		{
-			char buf1[1024] = "<???>", buf2[1024] = "<???>";
-			class_property_to_string(prop,a,buf1,sizeof(buf1));
-			class_property_to_string(prop,b,buf2,sizeof(buf2));
 			output_debug("comparing %s:%d.%s [%s] == %s:default.%s [%s] --> %s",
-				obj->name?obj->name:obj->oclass->name, obj->id, prop->name, buf1,
+				obj->oclass->name, obj->id, prop->name, buf1,
 				obj->oclass->name, prop->name, buf2,
 				result ? "true" : "false");
-		}	
-		return result;
+		}
+		else
+		{
+			output_debug("comparing %s.%s [%s] == %s:default.%s [%s] --> %s",
+				obj->name, prop->name, buf1,
+				obj->oclass->name, prop->name, buf2,
+				result ? "true" : "false");
+		}
 	}
-	else
-		return false;
+#endif
+	return result;
 }
 
 /*********************************************************

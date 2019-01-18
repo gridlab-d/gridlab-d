@@ -65,8 +65,7 @@ char *gldvar_getstring(GLDVAR *var, unsigned int n, char *buffer, int size)
 {
 	if ( gldvar_isset(var,n) )
 	{
-		PROPERTYSPEC *pspec  = property_getspec(var[n].prop->ptype);
-		(*pspec->data_to_string)(buffer,size,var[n].addr,var[n].prop);
+		property_write(var[n].prop, var[n].addr, buffer,size);
 		return buffer;
 	}
 	else
@@ -195,11 +194,11 @@ int get_source_type(PROPERTY *prop)
 {
 	/* TODO extend this to support multiple sources */
 	switch ( prop->ptype ) {
-	case PT_double: return XS_DOUBLE; 
-	case PT_complex: return XS_COMPLEX; 
-	case PT_loadshape: return XS_LOADSHAPE; 
-	case PT_enduse: return XS_ENDUSE; 
-	case PT_random: return XS_RANDOMVAR; 
+	case PT_double: return XS_DOUBLE;
+	case PT_complex: return XS_COMPLEX;
+	case PT_loadshape: return XS_LOADSHAPE;
+	case PT_enduse: return XS_ENDUSE;
+	case PT_random: return XS_RANDOMVAR;
 	default:
 		output_error("tranform/get_source_type(PROPERTY *prop='%s'): unsupported source property type '%s'",
 			prop->name,property_getspec(prop->ptype)->name);

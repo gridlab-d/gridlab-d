@@ -81,6 +81,30 @@ PROPERTY *class_get_first_property(CLASS *oclass) /**< the object class */
 	return oclass->pmap;
 }
 
+PROPERTY *class_get_first_property_inherit(CLASS *oclass) /**< the object class */
+{
+	while ( oclass->pmap == NULL )
+	{
+		oclass = oclass->parent;
+		if ( oclass == NULL )
+			return NULL;
+	}
+	return oclass->pmap;
+}
+PROPERTY *class_get_next_property_inherit(PROPERTY *prop)
+{
+	PROPERTY *next = prop->next;
+	CLASS *oclass = prop->oclass;	
+	if ( next == NULL || oclass != next->oclass )
+	{
+		return oclass->parent ? oclass->parent->pmap : NULL;
+	}
+	else
+	{
+		return next;
+	}
+}
+
 /** Get the next property of within the current class
 	@return a pointer to the PROPERTY, or \p NULL if there are no properties left
  **/
@@ -195,7 +219,7 @@ PROPERTY *class_find_property(CLASS *oclass,     /**< the object class */
 	if(oclass == NULL)
 		return NULL;
 
-	for (prop=oclass->pmap; prop!=NULL && prop->oclass==oclass; prop=prop->next)
+	for ( prop = class_get_first_property_inherit(oclass) ; prop != NULL ; prop = class_get_next_property_inherit(prop) )
 	{
 		if (strcmp(name,prop->name)==0)
 		{
@@ -369,10 +393,7 @@ int class_string_to_property(PROPERTY *prop, /**< the type of the property at th
                              void *addr,     /**< the address of the property's data */
                              char *value)    /**< the string from which the data is read */
 {
-	if (prop->ptype > _PT_FIRST && prop->ptype < _PT_LAST)
-		return (*property_type[prop->ptype].string_to_data)(value,addr,prop);
-	else
-		return 0;
+	return property_read(prop, addr, value);
 }
 
 /** Convert a property value to a string.
@@ -394,10 +415,10 @@ int class_property_to_string(PROPERTY *prop, /**< the property type */
 		 */
 		return 0;
 	}
-	else if (prop->ptype>_PT_FIRST && prop->ptype<_PT_LAST){
-		// note, need to append unit type
-		rv = (*property_type[prop->ptype].data_to_string)(value,size,addr,prop);
-		if(rv > 0 && prop->unit != 0)
+	else if ( prop->ptype > _PT_FIRST && prop->ptype < _PT_LAST )
+	{
+		rv = property_write(prop,addr,value,size);
+		if ( rv > 0 && prop->unit != 0 )
 		{
 			strcat(value+rv," ");
 			strcat(value+rv+1,prop->unit->name);
@@ -475,13 +496,6 @@ CLASS *class_register(MODULE *module,        /**< the module that implements the
 	oclass->profiler.numobjs=0;
 	oclass->profiler.count=0;
 	oclass->profiler.clocks=0;
-	oclass->defaults = malloc(size);
-	if ( oclass->defaults == NULL )
-	{
-		errno = ENOMEM;
-		return 0;
-	}
-	memset(oclass->defaults,0,size);
 	if (first_class==NULL)
 		first_class = oclass;
 	else
@@ -804,6 +818,10 @@ int class_define_map(CLASS *oclass, /**< the object class */
 					break;
 				}
 			}
+			else if (proptype==PT_DEFAULT)
+			{
+				prop->default_value = va_arg(arg,char*);
+			}
 			else if (proptype==PT_SIZE)
 			{
 				prop->size = va_arg(arg,uint32);
@@ -971,6 +989,7 @@ int class_define_map(CLASS *oclass, /**< the object class */
 				prop->addr = 0;
 				prop->method = (METHODCALL*)addr;
 			}
+			prop->default_value = property_getspec(proptype)->default_value;
 
 			/* attach to property list */
 			class_add_property(oclass,prop);

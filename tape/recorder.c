@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <ctype.h>
+#include <stdarg.h>
 #include "gridlabd.h"
 #include "object.h"
 #include "aggregate.h"
@@ -495,30 +496,67 @@ static TIMESTAMP recorder_write(OBJECT *obj)
 }
 
 #define BLOCKSIZE 1024
-EXPORT int method_recorder_property(OBJECT *obj, char *value, size_t size)
+EXPORT int method_recorder_property(OBJECT *obj, ...)
 {
 	struct recorder *my = OBJECTDATA(obj,struct recorder);
-	size_t len = strlen(value);
-	gl_verbose("adding property '%s' to recorder:%d",value,obj->id);
-	if ( my->property_len < len || my->property == NULL )
+	va_list args;
+	va_start(args,obj);
+	void *arg0 = va_arg(args,void*);
+
+	// extended syntax
+	if ( arg0 == MC_EXTRACT ) // iterator
 	{
-		size_t need = len + (my->property==NULL ? 0 : strlen(my->property)) + 1;
-		my->property_len = ((need/BLOCKSIZE)+1)*BLOCKSIZE;
-		my->property = (char*)realloc(my->property,my->property_len);
-		if ( my->property == NULL )
+		return method_extract(my->property,args);
+	}
+
+	// legacy calls
+	char *value = (char*)arg0;
+	size_t size = va_arg(args,size_t);
+	if ( value == NULL ) // check size needed to hold result
+	{
+		if ( size == 0 )
+			return strlen(my->property)+1; // return size require
+		else
+			return strlen(my->property) < size ? 1 : 0; // return 1 if size given is enough
+	}
+	else if ( size == 0 ) // copy from data
+	{
+		size_t len = strlen(value);
+		gl_verbose("adding property '%s' to recorder:%d",value,obj->id);
+		if ( my->property_len < len || my->property == NULL )
 		{
-			gl_error("memory allocation failed");
-			my->property_len = 0;
+			size_t need = len + (my->property==NULL ? 0 : strlen(my->property)) + 1;
+			my->property_len = ((need/BLOCKSIZE)+1)*BLOCKSIZE;
+			my->property = (char*)realloc(my->property,my->property_len);
+			if ( my->property == NULL )
+			{
+				gl_error("memory allocation failed");
+				my->property_len = 0;
+				return 0;
+			}
+			strcpy(my->property,value);
+		}
+		else
+		{
+			strcat(my->property,",");
+			strcat(my->property,value);
+		}
+		return 1;
+	}
+	else // copy to data
+	{
+		if ( size > strlen(my->property) )
+		{
+			strcpy(value,my->property);
+			return strlen(my->property);
+		}
+		else
+		{
 			return 0;
 		}
-		strcpy(my->property,value);
-	}	
-	else
-	{
-		strcat(my->property,",");
-		strcat(my->property,value);
 	}
-	return 1;
+
+	va_end(args);
 }
 
 PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list)

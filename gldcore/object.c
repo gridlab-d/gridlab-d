@@ -290,19 +290,14 @@ char *object_get_unit(OBJECT *obj, char *name)
 	- \p EINVAL type is not valid
 	- \p ENOMEM memory allocation failed
  **/
-OBJECT *object_create_single(CLASS *oclass){ /**< the class of the object */
-	/* @todo support threadpool during object creation by calling this malloc from the appropriate thread */
+OBJECT *object_create_single(CLASS *oclass) /**< the class of the object */
+{
 	OBJECT *obj = 0;
-	static int tp_next = 0;
-	static int tp_count = 0;
 	PROPERTY *prop;
 	int sz = sizeof(OBJECT);
 
-	if(tp_count == 0){
-		tp_count = processor_count();
-	}
-
-	if(oclass == NULL){
+	if ( oclass == NULL )
+	{
 		throw_exception("object_create_single(CLASS *oclass=NULL): class is NULL");
 		/* TROUBLESHOOT
 			An attempt to create an object was given a NULL pointer for the class.  
@@ -319,20 +314,14 @@ OBJECT *object_create_single(CLASS *oclass){ /**< the class of the object */
 	}
 
 	obj = (OBJECT*)malloc(sz + oclass->size);
-
-	if(obj == NULL){
+	if ( obj == NULL )
+	{
 		throw_exception("object_create_single(CLASS *oclass='%s'): memory allocation failed", oclass->name);
 		/* TROUBLESHOOT
 			The system has run out of memory and is unable to create the object requested.  Try freeing up system memory and try again.
 		 */
 	}
-
-	memset(obj, 0, sz);
-	if ( oclass->defaults != NULL )
-		memcpy(obj+1, oclass->defaults, oclass->size);
-	else
-		memset(obj+1, 0, oclass->size);
-	tp_next %= tp_count;
+	memset(obj, 0, sz+oclass->size);
 
 	obj->id = next_object_id++;
 	obj->oclass = oclass;
@@ -357,11 +346,14 @@ OBJECT *object_create_single(CLASS *oclass){ /**< the class of the object */
 	random_key(obj->guid,sizeof(obj->guid)/sizeof(obj->guid[0]));
 
 	for ( prop=obj->oclass->pmap; prop!=NULL; prop=(prop->next?prop->next:(prop->oclass->parent?prop->oclass->parent->pmap:NULL)))
-		property_create(prop,(void*)((char *)(obj+1)+(int64)(prop->addr)));
+		property_create(prop,property_addr(obj,prop));
 	
-	if(first_object == NULL){
+	if ( first_object == NULL )
+	{
 		first_object = obj;
-	} else {
+	} 
+	else 
+	{
 		last_object->next = obj;
 	}
 	
@@ -1364,6 +1356,17 @@ char *object_property_to_string(OBJECT *obj, char *name, char *buffer, int sz)
 	{
 		return prop->delegation->to_string(addr,buffer,sz) ? buffer : NULL;
 	}
+	else if ( prop->ptype == PT_method )
+	{
+		if ( class_property_to_string(prop,obj,buffer,sz) )
+			return buffer;
+		else
+		{
+			output_error("gldcore/object.c:object_property_to_string(obj=<%s:%d>('%s'), name='%s', buffer=%p, sz=%u): unable to extract property into buffer",
+				obj->oclass->name, obj->id, obj->name?obj->name:"(none)", prop->name, buffer, sz);
+			return "";
+		}
+	}
 	else if ( class_property_to_string(prop,addr,buffer,sz) )
 	{
 		return buffer;
@@ -1892,19 +1895,33 @@ int object_saveall(FILE *fp) /**< the stream to write to */
 		{
 			PROPERTYACCESS access=PA_PUBLIC;
 			PROPERTY *prop = NULL;
+			CLASS *oclass = obj->oclass;
+			MODULE *mod = oclass->module;
 			char32 oname = "(unidentified)";
-			if ( obj->oclass->name && (global_glm_save_options&GSO_NOINTERNALS)==0 )
-				count += fprintf(fp, "object %s:%d {\n", obj->oclass->name, obj->id);
+			OBJECT *parent = obj->parent;
+			OBJECT **topological_parent = object_get_object_by_name(obj,"topological_parent");
+			if ( oclass->name && (global_glm_save_options&GSO_NOINTERNALS)==0 )
+				count += fprintf(fp, "object %s.%s:%d {\n", mod->name, oclass->name, obj->id);
 			else
-				count += fprintf(fp, "object %s {\n", obj->oclass->name);
+				count += fprintf(fp, "object %s.%s {\n", mod->name, oclass->name);
+
+			/* this is an unfortunate special case arising from how the powerflow module is implemented */
+			if ( topological_parent != NULL )
+			{
+				output_debug("<%s:%d> (name='%s') found topological parent",obj->oclass->name, obj->id, obj->name);
+				parent = *topological_parent;
+				if ( parent != NULL )
+					output_debug("<%s:%d> (name='%s') -- original parent is at %p", 
+						obj->oclass->name, obj->id, obj->name, parent);
+			}
 
 			/* dump internal properties */
-			if ( obj->parent != NULL )
+			if ( parent != NULL )
 			{
-				if ( obj->parent->name != NULL )
-					count += fprintf(fp, "\tparent \"%s\";\n", obj->parent->name);
+				if ( parent->name != NULL )
+					count += fprintf(fp, "\tparent \"%s\";\n", parent->name);
 				else
-					count += fprintf(fp, "\tparent \"%s:%d\";\n", obj->parent->oclass->name, obj->parent->id);
+					count += fprintf(fp, "\tparent \"%s:%d\";\n", parent->oclass->name, parent->id);
 			}
 			else if ( (global_glm_save_options&GSO_NOMACROS)==0 )
 			{
@@ -1917,7 +1934,7 @@ int object_saveall(FILE *fp) /**< the stream to write to */
 			if ( obj->name != NULL )
 				count += fprintf(fp, "\tname \"%s\";\n", obj->name);
 			else if ( (global_glm_save_options&GSO_NOINTERNALS)==GSO_NOINTERNALS )
-				count += fprintf(fp, "\tname \"%s:%d\";\n", obj->oclass->name, obj->id);
+				count += fprintf(fp, "\tname \"%s:%d\";\n", oclass->name, obj->id);
 			if ( (global_glm_save_options&GSO_NOINTERNALS)==0 && convert_from_timestamp(obj->clock, buffer, sizeof(buffer)) )
 				count += fprintf(fp,"\tclock '%s';\n",  buffer);
 			if ( !isnan(obj->latitude) )
@@ -1933,8 +1950,16 @@ int object_saveall(FILE *fp) /**< the stream to write to */
 			}
 
 			/* dump properties */
-			for ( prop=obj->oclass->pmap; prop!=NULL; prop=(prop->next?prop->next:(prop->oclass->parent?prop->oclass->parent->pmap:NULL)) )
+			CLASS *last = oclass;
+			output_debug("dumping properties of '%s' (pmap=%p)", oclass->name, oclass->pmap);
+			for ( prop = class_get_first_property_inherit(oclass) ; prop != NULL ; prop = class_get_next_property_inherit(prop) )
 			{
+				output_debug("dumping property '%s' of '%s'",prop->name, prop->oclass->name);
+				if ( last != prop->oclass )
+				{
+					count += fprintf(fp,"\t// class.parent = %s.%s\n", prop->oclass->module->name, prop->oclass->name);
+					last = prop->oclass;
+				}
 				if ( (global_glm_save_options&GSO_NODEFAULTS)==GSO_NODEFAULTS && property_is_default(obj,prop) )
 					continue;
 				if ( (global_glm_save_options&GSO_NOINTERNALS)==GSO_NOINTERNALS && prop->access!=PA_PUBLIC )
@@ -1967,6 +1992,7 @@ int object_saveall(FILE *fp) /**< the stream to write to */
 			if ( access != PA_PUBLIC && (global_glm_save_options&GSO_NOMACROS)==0 )
 				count += fprintf(fp, "#endif\n");
 			count += fprintf(fp,"}\n");
+			if ( global_debug_output ) fflush(fp);
 		}
 	}
 	return count;	

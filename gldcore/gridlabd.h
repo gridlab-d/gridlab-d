@@ -1828,6 +1828,8 @@ public: // iterators
 	inline void set_##X(T p, gld_wlock&) { X=p; }; \
 	inline gld_string get_##X##_string(void) { return get_##X##_property().get_string(); }; \
 	inline void set_##X(char *str) { get_##X##_property().from_string(str); }; \
+	inline void init_##X(void) { memset((void*)&X,0,sizeof(X));}; \
+	inline void init_##X(T value) { X=value;}; \
 
 /// Define a structured property
 #define GL_STRUCT(T,X) protected: T X; public: \
@@ -1840,6 +1842,8 @@ public: // iterators
 	inline void set_##X(T p, gld_wlock&) { X=p; }; \
 	inline gld_string get_##X##_string(void) { return get_##X##_property().get_string(); }; \
 	inline void set_##X(char *str) { get_##X##_property().from_string(str); }; \
+	inline void init_##X(void) { memset((void*)&X,0,sizeof(X));}; \
+	inline void init_##X(T &value) { X=value;}; \
 
 /// Define a string property
 #define GL_STRING(T,X) 	protected: T X; public: \
@@ -1855,6 +1859,8 @@ public: // iterators
 	inline void set_##X(char *p, gld_wlock&) { strncpy(X,p,sizeof(X)); }; \
 	inline void set_##X(size_t n, char c) { gld_wlock _lock(my()); X[n]=c; }; \
 	inline void set_##X(size_t n, char c, gld_wlock&) { X[n]=c; };  \
+	inline void init_##X(void) { memset((void*)X,0,sizeof(X));}; \
+	inline void init_##X(T value) { strncpy(X,value,sizeof(X)-1); }; \
 
 /// Define an array property
 #define GL_ARRAY(T,X,S) protected: T X[S]; public: \
@@ -1870,6 +1876,12 @@ public: // iterators
 	inline void set_##X(T* p, gld_wlock&) { memcpy(X,p,sizeof(X)); }; \
 	inline void set_##X(size_t n, T m) { gld_wlock _lock(my()); X[n]=m; }; \
 	inline void set_##X(size_t n, T m, gld_wlock&) { X[n]=m; };  \
+	inline void init_##X(T value=0) { \
+		size_t n; \
+		for ( n = 0 ; n < (size_t)(sizeof(X)/sizeof(X[0])) ; n++ ) { \
+			X[n] = value; \
+		} \
+	}; \
 
 /// Define a bitflag property
 #define GL_BITFLAGS(T,X) protected: T X; public: \
@@ -1884,6 +1896,7 @@ public: // iterators
 	inline void set_##X(T p, gld_wlock&) { X=p; }; \
 	inline gld_string get_##X##_string(void) { return get_##X##_property().get_string(); }; \
 	inline void set_##X(char *str) { get_##X##_property().from_string(str); }; \
+	inline void init_##X(T value=0) { X=value; }; \
 
 /// Define a method property
 #define GL_METHOD(C,X) public: int X(char *buffer, size_t len=0); \
@@ -1892,8 +1905,7 @@ public: // iterators
 	inline int set_##X(char *buffer) { return X(buffer,0); }
 #define IMPL_METHOD(C,X) int C::X(char *buffer, size_t len)  // use this to implement a method
 
-
-/// Set bits of a bitflag property
+;/// Set bits of a bitflag property
 inline void setbits(unsigned long &flags, unsigned int bits) { flags|=bits; }; 
 /// Clear bits of a bitflag property
 inline void clearbits(unsigned long &flags, unsigned int bits) { flags&=~bits; }; 
@@ -1986,7 +1998,10 @@ public: // exceptions
 	inline void error(const char *msg, ...) { static char buf[1024]; if ( get_flags(OF_QUIET) ) return; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_error("%s",buf);};
 	inline void warning(const char *msg, ...) { static char buf[1024]; if ( get_flags(OF_WARNING) ) return; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_warning("%s",buf);};
 	inline void verbose(const char *msg, ...) { static char buf[1024]; if ( get_flags(OF_VERBOSE) ) return; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_verbose("%s",buf);};
-	inline void debug(const char *msg, ...) { static char buf[1024]; if ( get_flags(OF_DEBUG) ) return; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_debug("%s",buf);};};
+	inline void debug(const char *msg, ...) { static char buf[1024]; if ( get_flags(OF_DEBUG) ) return; va_list ptr; va_start(ptr,msg); vsprintf(buf+sprintf(buf,"%s: ",get_name()),msg,ptr); va_end(ptr); gl_debug("%s",buf);};
+//public:
+//	virtual void set_defaults(bool is_template = false); /* this force proper V4 initialization of objects (legacy defaults copy is no longer permitted) */
+};
 /// Create a gld_object from an OBJECT
 static inline gld_object* get_object(OBJECT*obj)
 {
@@ -2157,8 +2172,8 @@ public: // special operations
 	{ 
 		return callback->properties.compare_basic(pstruct.prop->ptype,(PROPERTYCOMPAREOP)op,get_addr(),a,b,NULL);
 	};
-	inline int call(char *buffer, size_t len) { return (*(pstruct.prop->method))(obj+1,buffer,len); };
-	inline int call(const char *buffer) { return (*(pstruct.prop->method))(obj+1,(char*)buffer,0); };
+	inline int call(char *buffer, size_t len) { return (*(pstruct.prop->method))(obj,buffer,len); };
+	inline int call(const char *buffer) { return (*(pstruct.prop->method))(obj,(char*)buffer,0); };
 	inline int callf(const char *format,...) {
 		va_list ptr;
 		va_start(ptr,format);
@@ -2555,6 +2570,22 @@ public:
 };
 
 #endif // __cplusplus
+
+static int method_extract(char *value, va_list args)
+{
+	char *buffer = va_arg(args,char*);
+	size_t size = va_arg(args,size_t);
+	int offset = va_arg(args,int);
+	char *delims = va_arg(args,char*);
+	int len = strcspn(value+offset,delims);
+	if ( len < size ) // result will fit in buffer
+	{
+		strncpy(buffer,value+offset,len);
+		buffer[len] = '\0';
+		return value[offset+len] == '\0' ? 0 : offset+len+1;
+	}
+	return -1;
+}
 
 /** @} **/
 #endif
