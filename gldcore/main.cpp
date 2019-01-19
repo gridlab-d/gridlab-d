@@ -34,33 +34,33 @@
 #include "kill.h"
 #include "threadpool.h"
 
+#include "main.h"
+
 SET_MYCONTEXT(DMC_MAIN)
 
 #if defined WIN32 && _DEBUG 
 /** Implements a pause on exit capability for Windows consoles
  **/
-void pause_at_exit(void) 
+void GldMain::ause_at_exit(void) 
 {
 	if (global_pauseatexit)
 		system("pause");
 }
 #endif
 
-void delete_pidfile(void)
-{
-	unlink(global_pidfile);
-}
-
 /** The main entry point of GridLAB-D
     @returns Exit codes XC_SUCCESS, etc. (see gridlabd.h)
  **/
-int main(int argc, /**< the number entries on command-line argument list \p argv */
+extern "C" int main(int argc, /**< the number entries on command-line argument list \p argv */
 		 char *argv[]) /**< a list of pointers to the command-line arguments */
 {
-	char *pd1, *pd2;
-	int i, pos=0;
+	GldMain instance(argc,argv);
+	instance.mainloop(argc,argv);
+}
 
-	char *browser = getenv("GLBROWSER");
+GldMain::GldMain(int argc,char *argv[])
+{
+	set_global_browser();
 
 	/* set the default timezone */
 	timestamp_set_tz(NULL);
@@ -70,10 +70,6 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	
 	/* set the process info */
 	global_process_id = getpid();
-
-	/* specify the default browser */
-	if ( browser!= NULL )
-		strncpy(global_browser,browser,sizeof(global_browser)-1);
 
 #if defined WIN32 && _DEBUG 
 	atexit(pause_at_exit);
@@ -85,22 +81,14 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 #endif
 
 	/* capture the execdir */
-	strcpy(global_execname,argv[0]);
-	strcpy(global_execdir,argv[0]);
-	pd1 = strrchr(global_execdir,'/');
-	pd2 = strrchr(global_execdir,'\\');
-	if (pd1>pd2) *pd1='\0';
-	else if (pd2>pd1) *pd2='\0';
+	set_global_execname(argv[0]);
+	set_global_execdir(argv[0]);
 
 	/* determine current working directory */
-	getcwd(global_workdir,1024);
+	set_global_workdir();
 
 	/* capture the command line */
-	for (i=0; i<argc; i++)
-	{
-		if (pos < (int)(sizeof(global_command_line)-strlen(argv[i])))
-			pos += sprintf(global_command_line+pos,"%s%s",pos>0?" ":"",argv[i]);
-	}
+	set_global_command_line(argc,argv);
 
 	/* main initialization */
 	if (!output_init(argc,argv) || !exec_init())
@@ -145,27 +133,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	random_init();
 
 	/* pidfile */
-	if (strcmp(global_pidfile,"")!=0)
-	{
-		FILE *fp = fopen(global_pidfile,"w");
-		if (fp==NULL)
-		{
-			output_fatal("unable to create pidfile '%s'", global_pidfile);
-			/*	TROUBLESHOOT
-				The system must allow creation of the process id file at
-				the location indicated in the message.  Create and/or
-				modify access rights to the path for that file and try again.
-			 */
-			exit(XC_PRCERR);
-		}
-#ifdef WIN32
-#define getpid _getpid
-#endif
-		fprintf(fp,"%d\n",getpid());
-		IN_MYCONTEXT output_verbose("process id %d written to %s", getpid(), global_pidfile);
-		fclose(fp);
-		atexit(delete_pidfile);
-	}
+	create_pidfile();
 
 	/* do legal stuff */
 #ifdef LEGAL_NOTICE
@@ -173,21 +141,11 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 		exit(XC_USRERR);
 #endif
 	
-	/* start the processing environment */
-	IN_MYCONTEXT output_verbose("load time: %d sec", realtime_runtime());
-	IN_MYCONTEXT output_verbose("starting up %s environment", global_environment);
-	if (environment_start(argc,argv)==FAILED)
-	{
-		output_fatal("environment startup failed: %s", strerror(errno));
-		/*	TROUBLESHOOT
-			The requested environment could not be started.  This usually
-			follows a more specific message regarding the startup problem.
-			Follow the recommendation for the indicated problem.
-		 */
-		if ( exec_getexitcode()==XC_SUCCESS )
-			exec_setexitcode(XC_ENVERR);
-	}
+	return;
+}
 
+GldMain::~GldMain(void)
+{
 	/* save the model */
 	if (strcmp(global_savefile,"")!=0)
 	{
@@ -242,6 +200,104 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	IN_MYCONTEXT output_verbose("elapsed runtime %d seconds", realtime_runtime());
 	IN_MYCONTEXT output_verbose("exit code %d", exec_getexitcode());
 	exit(exec_getexitcode());
+	return;
 }
+
+void GldMain::mainloop(int argc, char *argv[])
+{
+	/* start the processing environment */
+	IN_MYCONTEXT output_verbose("load time: %d sec", realtime_runtime());
+	IN_MYCONTEXT output_verbose("starting up %s environment", global_environment);
+	if (environment_start(argc,argv)==FAILED)
+	{
+		output_fatal("environment startup failed: %s", strerror(errno));
+		/*	TROUBLESHOOT
+			The requested environment could not be started.  This usually
+			follows a more specific message regarding the startup problem.
+			Follow the recommendation for the indicated problem.
+		 */
+		if ( exec_getexitcode()==XC_SUCCESS )
+			exec_setexitcode(XC_ENVERR);
+	}
+	return;
+}
+
+void GldMain::set_global_browser(const char *path)
+{
+	const char *browser = path ? path : getenv("BROWSER");
+
+	/* specify the default browser */
+	if ( browser != NULL )
+		strncpy(global_browser,browser,sizeof(global_browser)-1);
+
+}
+
+void GldMain::set_global_execname(const char *path)
+{
+	strcpy(global_execname,path);
+}
+
+void GldMain::set_global_execdir(const char *path)
+{
+	char *pd1, *pd2;
+	strcpy(global_execdir,path);
+	pd1 = strrchr(global_execdir,'/');
+	pd2 = strrchr(global_execdir,'\\');
+	if (pd1>pd2) *pd1='\0';
+	else if (pd2>pd1) *pd2='\0';
+	return;
+}
+
+void GldMain::set_global_command_line(int argc,char *argv[])
+{
+	int i, pos=0;
+	for (i=0; i<argc; i++)
+	{
+		if (pos < (int)(sizeof(global_command_line)-strlen(argv[i])))
+			pos += sprintf(global_command_line+pos,"%s%s",pos>0?" ":"",argv[i]);
+	}
+	return;
+}
+
+void GldMain::set_global_workdir(const char *path)
+{
+	if ( path )
+		strncpy(global_workdir,path,sizeof(global_workdir)-1);
+	else
+		getcwd(global_workdir,sizeof(global_workdir-1));
+	return;
+}
+
+void GldMain::create_pidfile()
+{
+	if (strcmp(global_pidfile,"")!=0)
+	{
+		FILE *fp = fopen(global_pidfile,"w");
+		if (fp==NULL)
+		{
+			output_fatal("unable to create pidfile '%s'", global_pidfile);
+			/*	TROUBLESHOOT
+				The system must allow creation of the process id file at
+				the location indicated in the message.  Create and/or
+				modify access rights to the path for that file and try again.
+			 */
+			exit(XC_PRCERR);
+		}
+#ifdef WIN32
+#define getpid _getpid
+#endif
+		fprintf(fp,"%d\n",getpid());
+		IN_MYCONTEXT output_verbose("process id %d written to %s", getpid(), global_pidfile);
+		fclose(fp);
+		atexit(delete_pidfile);
+	}
+	return;
+}
+
+void GldMain::delete_pidfile(void)
+{
+	unlink(global_pidfile);
+}
+
 
 /** @} **/

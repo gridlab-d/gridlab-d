@@ -9,6 +9,14 @@
 STATUS legal_notice(void);
 STATUS legal_license(void);
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void check_version(int mt);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

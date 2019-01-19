@@ -12,8 +12,16 @@ typedef struct s_locale {
 	struct s_locale *next;
 } LOCALE;
 
+#ifdef __cplusplus 
+extern "C" {
+#endif
+
 void locale_push(void);
 void locale_pop(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* _LOCAL_H */
 

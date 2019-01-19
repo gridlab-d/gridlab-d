@@ -12,7 +12,15 @@
 #include "globals.h"
 #include "output.h"
 
+#ifdef __cplusplus {
+extern "C" {
+#endif
+
 STATUS environment_start(int argc,char *argv[]);
+
+#ifdef __cplusplus 
+}
+#endif
 
 #endif
 

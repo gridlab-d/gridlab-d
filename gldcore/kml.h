@@ -8,6 +8,14 @@
 #ifndef KML_H
 #define KML_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+	
 int kml_dump(char *filename);
 
+#ifdef __cplusplus
+}
+#endif
+	
 #endif
