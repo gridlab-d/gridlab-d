@@ -265,6 +265,7 @@ int helics_msg::init(OBJECT *parent){
 						gld_ep_pub->propertyName = config_info["property"].asString();
 						gld_ep_pub->HelicsPublicationEndpoint = ep;
 						helics_endpoint_publications.push_back(gld_ep_pub);
+                        gl_verbose("helics_msg::init(): registering publishing endpoint: %s", gld_ep_pub->name);
 					} else {
 						gld_ep_sub = new helics_endpoint_subscription();
 						gld_ep_sub->name = ep.getName();
@@ -274,6 +275,7 @@ int helics_msg::init(OBJECT *parent){
 						gld_ep_sub->propertyName = config_info["property"].asString();
 						gld_ep_sub->HelicsSubscriptionEndpoint = ep;
 						helics_endpoint_subscriptions.push_back(gld_ep_sub);
+                        gl_verbose("helics_msg::init(): registering subscribing endpoint: %s", gld_ep_sub->name.c_str());
 					}
 				}
 			}
@@ -921,11 +923,12 @@ int helics_msg::subscribeVariables(){
 	}
 
 	for(vector<helics_endpoint_subscription*>::iterator sub = helics_endpoint_subscriptions.begin(); sub != helics_endpoint_subscriptions.end(); sub++){
-		if(helics_federate->hasMessage((*sub)->HelicsSubscriptionEndpoint)){
+        gl_verbose("Message status for endpoint %s:  %d", (*sub)->name.c_str(), helics_federate->hasMessage((*sub)->HelicsSubscriptionEndpoint));
+        if(helics_federate->hasMessage((*sub)->HelicsSubscriptionEndpoint)){
 			std::unique_ptr<helics::Message> mesg;
 			int pendingMessages = (int) (*sub)->HelicsSubscriptionEndpoint.pendingMessages();
 			for(int i = 0; i < pendingMessages; i++) {
-				gl_verbose("calling getMessage()");
+				gl_verbose("calling getMessage() for endpoint %s", (*sub)->name.c_str());
 				mesg = (*sub)->HelicsSubscriptionEndpoint.getMessage();
 			}
 			const string message_buffer = mesg->to_string();
