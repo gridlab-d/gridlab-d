@@ -237,19 +237,6 @@ int exec_init()
 	return 1;
 }
 
-//sjin: GetMachineCycleCount
-/*int mc_start_time;
-int mc_end_time;
-int GetMachineCycleCount()
-{
-   __int64 cycles;
-   _asm rdtsc; // won't work on 486 or below - only pentium or above
-
-   _asm lea ebx,cycles;
-   _asm mov [ebx],eax;
-   _asm mov [ebx+4],edx;
-   return cycles;
-}*/
 clock_t cstart, cend;
 
 #ifndef _MAX_PATH

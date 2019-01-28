@@ -21,7 +21,7 @@
 //#ifndef __cplusplus
 //#define TRY { EXCEPTIONHANDLER *_handler = create_exception_handler(); if (_handler==NULL) output_error("%s(%d): core exception handler creation failed",__FILE__,__LINE__); else if (setjmp(_handler->buf)==0) {
 ///* TROUBLESHOOT
-//	This error is caused when the system is unable to implement an exception handler for the core. 
+//	This error is caused when the system is unable to implement an exception handler for the core.
 //	This is an internal error and should be reported to the core development team.
 // */
 //#define THROW(...) throw_exception(__VA_ARGS__);

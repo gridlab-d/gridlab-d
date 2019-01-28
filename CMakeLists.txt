@@ -18,7 +18,7 @@ INCLUDE(CheckFunctionExists)
 INCLUDE(CheckSymbolExists)
 
 # Locate Git
-find_package (Git)
+find_package(Git)
 
 # Setup Gridlab-d Version information.
 include(CMakeScripts/SetVersion.cmake)
@@ -64,7 +64,9 @@ ELSE ()
     SET(OS_SPECIFIC_LIBRARIES "")
 ENDIF ()
 LIST(APPEND CMAKE_REQUIRED_LIBRARIES ${OS_SPECIFIC_LIBRARIES})
-LIST(REMOVE_DUPLICATES CMAKE_REQUIRED_LIBRARIES)
+IF (CMAKE_REQUIRED_LIBRARIES)
+    LIST(REMOVE_DUPLICATES CMAKE_REQUIRED_LIBRARIES)
+ENDIF ()
 
 # Set the list of modules and files which should be copied into the install directory.
 SET(GL_MODULES

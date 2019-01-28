@@ -6,7 +6,7 @@ endif (GIT_FOUND)
 
 SET(BUILD_FILE "/gldcore/build.h")
 SET(COMMAND_SCRIPT "./BuildInfo.sh")
-SET(GIT_OUTPUT git_out.tmp)
+SET(GIT_OUTPUT git_out_${CMAKE_BUILD_TYPE}.tmp)
 
 #EXECUTE_PROCESS(COMMAND bash "-c" "'${GIT_EXECUTABLE}' remote -v | grep \"(fetch)\" | sed -n 's/^.*\\t//; \$s/ .*\$//p'"
 EXECUTE_PROCESS(
