@@ -441,7 +441,7 @@ struct sync_data *threadpool_thread_data::get_data(int index) {
 	return &data[index];};
 
 static void tp_do_object_sync(OBJECT* obj){
-    thread::id thread_id = std::this_thread::get_id();
+    std::thread::id thread_id = std::this_thread::get_id();
     struct sync_data *data = threadpool_data->get_thread_data(thread_id);
     TIMESTAMP this_t;
     char b[64];
@@ -1260,7 +1260,7 @@ static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2)
 /* single threaded version of commit_all */
 static TIMESTAMP tp_commit_all(TIMESTAMP t0, TIMESTAMP t2, cpp_threadpool *threadpool) {
 //    TIMESTAMP result = TS_NEVER;
-	atomic_long result{TS_NEVER};
+	std::atomic_long result{static_cast<long>(TS_NEVER)};
 	SIMPLELINKLIST *item;
 	unsigned int pc;
 	static int n_commits = -1;
@@ -1501,8 +1501,8 @@ typedef struct s_objsyncdata {
 //static pthread_cond_t *start;
 //static pthread_cond_t *done;
 
-static vector<unique_ptr<mutex>> startlock, donelock;
-static vector<unique_ptr<condition_variable>> start, done;
+static std::vector<std::unique_ptr<std::mutex>> startlock, donelock;
+static std::vector<std::unique_ptr<std::condition_variable>> start, done;
 
 static unsigned int *next_t1;
 static unsigned int *donecount;
@@ -2084,10 +2084,10 @@ STATUS exec_start()
 //		pthread_mutex_init(&donelock[k], NULL);
 //		pthread_cond_init(&start[k], NULL);
 //		pthread_cond_init(&done[k], NULL);
-        startlock.push_back(unique_ptr<mutex>(new mutex));
-        donelock.push_back(unique_ptr<mutex>(new mutex));
-        start.push_back(unique_ptr<condition_variable>(new condition_variable));
-        done.push_back(unique_ptr<condition_variable>(new condition_variable));
+        startlock.push_back(std::unique_ptr<std::mutex>(new std::mutex));
+        donelock.push_back(std::unique_ptr<std::mutex>(new std::mutex));
+        start.push_back(std::unique_ptr<std::condition_variable>(new std::condition_variable));
+        done.push_back(std::unique_ptr<std::condition_variable>(new std::condition_variable));
 	}
 
 	// global test mode
@@ -2418,7 +2418,7 @@ STATUS exec_start()
                             donecount[iObjRankList] = n_threads[iObjRankList];
 
                             // lock access to start condition
-                            unique_lock<mutex> lock_start(*startlock[iObjRankList]);
+                            std::unique_lock<std::mutex> lock_start(*startlock[iObjRankList]);
 //							pthread_mutex_lock(&startlock[iObjRankList]);
 
                             // update start condition
@@ -2434,7 +2434,7 @@ STATUS exec_start()
 
                             // begin wait
                             while (donecount[iObjRankList] > 0)
-                                done[iObjRankList]->wait_for(lock_done, chrono::milliseconds(100));
+                                done[iObjRankList]->wait_for(lock_done, std::chrono::milliseconds(100));
 //								pthread_cond_wait(&done[iObjRankList],&donelock[iObjRankList]);
 
                             // unlock done count
@@ -2500,8 +2500,8 @@ STATUS exec_start()
 				if(exec_sync_get(NULL) > global_clock) {
 					global_federation_reiteration = false;
 				TIMESTAMP commit_time = TS_NEVER;
-//				commit_time = commit_all(global_clock, exec_sync_get(NULL));
-				commit_time = tp_commit_all(global_clock, exec_sync_get(NULL), threadpool);
+				commit_time = commit_all(global_clock, exec_sync_get(NULL));
+//				commit_time = tp_commit_all(global_clock, exec_sync_get(NULL), threadpool);
 				if ( absolute_timestamp(commit_time) <= global_clock)
 				{
 					// commit cannot force reiterations, and any event where the time is less than the global clock
@@ -2712,7 +2712,7 @@ STATUS exec_start()
 			output_profile("===========================\n");
 			output_profile("Active modules          %s", dp->module_list);
 			output_profile("Initialization time     %8.1lf seconds", (double)(dp->t_init)/(double)CLOCKS_PER_SEC);
-			output_profile("Number of updates       %8"FMT_INT64"u", dp->t_count);
+			output_profile("Number of updates       %8" FMT_INT64 "u", dp->t_count);
 			output_profile("Average update timestep %8.4lf ms", (double)dp->t_delta/(double)dp->t_count/1e6);
 			output_profile("Minumum update timestep %8.4lf ms", dp->t_min/1e6);
 			output_profile("Maximum update timestep %8.4lf ms", dp->t_max/1e6);
@@ -3022,7 +3022,7 @@ void *slave_node_proc(void *args)
 	id = strtoll(token_to+offset, &token_to, 10);
 	if (id < 0)
 	{
-		output_error("slave_node_proc(): id %"FMT_INT64" specified, may cause system conflicts", id);
+		output_error("slave_node_proc(): id %" FMT_INT64 " specified, may cause system conflicts", id);
 		closesocket(masterfd);
 		free(addrin);
 		return 0;
@@ -3062,7 +3062,7 @@ void *slave_node_proc(void *args)
 	output_debug("filepath = %s", filepath);
 	sprintf(ippath, "--slave %s:%d", addrstr, mtr_port);
 	output_debug("ippath = %s", ippath);
-	sprintf(cmd, "%s%sgridlabd.exe %s --id %"FMT_INT64"d %s %s",
+	sprintf(cmd, "%s%sgridlabd.exe %s --id %" FMT_INT64 "d %s %s",
 		(global_execdir[0] ? global_execdir : ""), (global_execdir[0] ? "\\" : ""), params, id, ippath, filepath);//addrstr, mtr_port, filepath);//,
 	output_debug("system(\"%s\")", cmd);
 

@@ -772,7 +772,7 @@ Retry:
 						output_debug("breakpoint %2d rank %d %s", bp->num, (int)bp->rank, bp->enabled?"":"(disabled)");
 						break;
 					case BP_TIME:
-						output_debug("breakpoint %2d time %s (%"FMT_INT64"d) %s", bp->num, convert_from_timestamp(bp->ts,tmp,sizeof(tmp))?tmp:"(invalid)", bp->ts, bp->enabled?"":"(disabled)");
+						output_debug("breakpoint %2d time %s (%" FMT_INT64 "d) %s", bp->num, convert_from_timestamp(bp->ts,tmp,sizeof(tmp))?tmp:"(invalid)", bp->ts, bp->enabled?"":"(disabled)");
 						break;
 					case BP_CLOCK:
 						output_debug("breakpoint %2d clock %s", bp->num, bp->enabled?"":"(disabled)");
@@ -1300,7 +1300,7 @@ int exec_debug(struct sync_data *data, /**< the current sync status of the mail 
 		/* only output time update if it differs from last one */
 		if (convert_from_timestamp(global_clock,buffer,sizeof(buffer)) && strcmp(buffer,timebuf)!=0)
 		{
-			output_raw("DEBUG: global_clock = '%s' (%"FMT_INT64"d)\r", buffer,global_clock);
+			output_raw("DEBUG: global_clock = '%s' (%" FMT_INT64 "d)\r", buffer,global_clock);
 			strcpy(timebuf,buffer);
 		}
 

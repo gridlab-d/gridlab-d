@@ -20,7 +20,7 @@ STATUS instance_cnx_mmap(instance *inst){
 		}
 
 		/* setup cache */
-		sprintf(cachename,"GLD-%"FMT_INT64"x",inst->cacheid);
+		sprintf(cachename,"GLD-%" FMT_INT64 "x",inst->cacheid);
 		inst->hMap = OpenFileMapping(FILE_MAP_ALL_ACCESS,FALSE,cachename);
 		if ( !inst->hMap )
 		{
@@ -63,7 +63,7 @@ STATUS instance_cnx_mmap(instance *inst){
 		memcpy(inst->buffer, inst->cache, inst->cachesize);
 
 		/* setup master signalling event */
-		sprintf(eventname,"GLD-%"FMT_INT64"x-M", inst->cacheid);
+		sprintf(eventname,"GLD-%" FMT_INT64 "x-M", inst->cacheid);
 		inst->hMaster = CreateEvent(&secAttr,FALSE,FALSE,eventname); /* initially unsignalled */
 		if ( !(inst->hMaster) )
 		{
@@ -76,7 +76,7 @@ STATUS instance_cnx_mmap(instance *inst){
 		}
 
 		/* setup slave signalling event */
-		sprintf(eventname,"GLD-%"FMT_INT64"x-S", inst->cacheid);
+		sprintf(eventname,"GLD-%" FMT_INT64 "x-S", inst->cacheid);
 		inst->hSlave = CreateEvent(&secAttr,FALSE,FALSE,eventname); /* initially unsignalled */
 		if ( !(inst->hSlave) )
 		{
@@ -239,7 +239,7 @@ STATUS instance_cnx_socket(instance *inst){
 
 	// build command
 	// HS_CMD dir file r_port cacheid profile relax debug verbose warn quiet avlbalance
-	sprintf(sendcmd, HS_CMD	"dir=\"%s\" file=\"%s\" port=%d id=%"FMT_INT64"d %s %s %s %s %s %s %s",
+	sprintf(sendcmd, HS_CMD	"dir=\"%s\" file=\"%s\" port=%d id=%" FMT_INT64 "d %s %s %s %s %s %s %s",
 		inst->execdir,
 		inst->model,
 		inst->return_port,
@@ -365,8 +365,8 @@ STATUS instance_cnx_socket(instance *inst){
 	}
 	if(check_id != inst->cacheid){
 		output_error("instance_cnx_socket(): callback id mismatch");
-		output_debug(" local: "FMT_INT64"d", inst->cacheid);
-		output_debug(" input: "FMT_INT64"d", check_id);
+		output_debug(" local: " FMT_INT64 "d", inst->cacheid);
+		output_debug(" input: " FMT_INT64 "d", check_id);
 		send(inst->sockfd, rsp, (int)strlen(rsp), 0);
 		closesocket(inst->sockfd);
 		return FAILED;
@@ -393,7 +393,7 @@ STATUS instance_cnx_socket(instance *inst){
 	pickle.prop_size = (int16)(inst->prop_size);
 	pickle.id = inst->id;
 	pickle.ts = global_clock;
-	output_debug("pickle: %"FMT_INT64"d %d %d %d %d %"FMT_INT64, pickle.cacheid, pickle.cachesize, pickle.name_size, pickle.prop_size, pickle.id, pickle.ts);
+	output_debug("pickle: %" FMT_INT64 "d %d %d %d %d %" FMT_INT64, pickle.cacheid, pickle.cachesize, pickle.name_size, pickle.prop_size, pickle.id, pickle.ts);
 	// send instance struct
 	memset(cmd, 0, sizeof(cmd));
 	memcpy(cmd, MSG_INST, strlen(MSG_INST));

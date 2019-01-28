@@ -1299,8 +1299,8 @@ static int _set_rankx(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 		}
 		obj = obj->parent;
 	}
-	for ( obj=first ; obj!=NULL ; obj=obj->parent )
-		obj->flags &= ~OF_RERANK;
+	for (obj = first; obj != nullptr; obj = obj->parent)
+			obj->flags &= ~OF_RERANK;
 	return 0;
 }
 static int set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)

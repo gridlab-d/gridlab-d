@@ -774,7 +774,7 @@ int convert_from_object(char *buffer, /**< pointer to the string buffer */
 	}
 
 	/* construct the object's name */
-	if (sprintf(temp,global_object_format,obj->oclass->name,obj->id)<size)
+	if (obj->oclass!=nullptr && (sprintf(temp,global_object_format,obj->oclass->name,obj->id)<size))
 		strcat(buffer,temp);
 	else
 		return 0;
