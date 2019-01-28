@@ -10,16 +10,22 @@ else ()
     SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif ()
 
+#SET(CMAKE_VERBOSE_MAKEFILE ON)
+
 # CMake Module includes
 INCLUDE(CheckIncludeFiles)
 INCLUDE(CheckFunctionExists)
 INCLUDE(CheckSymbolExists)
+
+# Locate Git
+find_package(Git)
 
 # Setup Gridlab-d Version information.
 include(CMakeScripts/SetVersion.cmake)
 INCLUDE(CMakeScripts/CheckDependancies.cmake)
 INCLUDE(CMakeScripts/ExternalLibraries.cmake)
 INCLUDE(CMakeScripts/Build_number.cmake)
+
 configure_file(gldcore/cmake_config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/gldcore/config.h @ONLY)
 configure_file(gldcore/version.h.in ${CMAKE_CURRENT_SOURCE_DIR}/gldcore/version.h @ONLY)
 add_definitions(-DHAVE_CONFIG_H)
@@ -36,11 +42,11 @@ SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib/gridlabd")
 # add the automatically determined parts of the RPATH
 # which point to directories outside the build tree to the install RPATH
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-SET(GLDCORE_LOC gldcore CACHE INTERNAL "")
+SET(GLDCORE_LOC gldcore)
 OPTION(BUILD_SHARED_LIBS "Sets Gridlab-d libraries to be built as shared. *DANGER - will currently break build if changed.*" ON)
 
 # Allows specific compiler optimizations to be disabled for all build types.
-set(DISABLED_OPTIMIZATIONS "${DISABLED_OPTIMIZATIONS} -fno-inline-functions" CACHE INTERNAL "")
+set(DISABLED_OPTIMIZATIONS "-fno-inline-functions")
 
 # Compiler/Linker flags for all build types
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w ${DISABLED_OPTIMIZATIONS}")
@@ -49,15 +55,18 @@ set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} -w ${DISABLED_OPTIMIZATIONS}")
 
 # Set up platform specific library linking
 IF (WIN32 OR MSYS OR MINGW OR CYGWIN)
-    SET(OS_SPECIFIC_LIBRARIES "ws2_32 wsock32 dl m" CACHE INTERNAL "")
+    SET(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 dl m)
 ELSEIF (LINUX)
-    SET(OS_SPECIFIC_LIBRARIES "" CACHE INTERNAL "")
+    SET(OS_SPECIFIC_LIBRARIES "")
 ELSEIF (APPLE)
-    SET(OS_SPECIFIC_LIBRARIES "" CACHE INTERNAL "")
+    SET(OS_SPECIFIC_LIBRARIES "")
 ELSE ()
-    SET(OS_SPECIFIC_LIBRARIES "" CACHE INTERNAL "")
+    SET(OS_SPECIFIC_LIBRARIES "")
 ENDIF ()
 LIST(APPEND CMAKE_REQUIRED_LIBRARIES ${OS_SPECIFIC_LIBRARIES})
+IF (CMAKE_REQUIRED_LIBRARIES)
+    LIST(REMOVE_DUPLICATES CMAKE_REQUIRED_LIBRARIES)
+ENDIF ()
 
 # Set the list of modules and files which should be copied into the install directory.
 SET(GL_MODULES

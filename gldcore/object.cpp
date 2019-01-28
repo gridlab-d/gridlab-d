@@ -1301,10 +1301,11 @@ static int _set_rankx(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 	}
 	for ( obj=first ; obj!=NULL ; obj=obj->parent )
 		obj->flags &= ~OF_RERANK;
+	return 0;
 }
 static int set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 {
-	global_bigranks==TRUE ? _set_rankx(obj,rank,NULL) : _set_rank(obj,rank,NULL);
+	return global_bigranks==TRUE ? _set_rankx(obj,rank,NULL) : _set_rank(obj,rank,NULL);
 }
 
 /** Set the rank of an object but forcing it's parent

@@ -386,7 +386,7 @@ int schedule_compile_block(SCHEDULE *sch, unsigned char block, char *blockname, 
 			unsigned int is_leapyear = (calendar>=7?1:0);
 			unsigned int calendar = weekday*2+is_leapyear;
 			unsigned int month;
-			unsigned int days[] = {31,(is_leapyear?29:28),31,30,31,30,31,31,30,31,30,31};
+			unsigned int days[] = {31,static_cast<unsigned int>(is_leapyear?29:28),31,30,31,30,31,31,30,31,30,31};
 			unsigned int n = block*MAXVALUES + ndx;
 			if (ndx == -2) {
 				output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) internal index error", sch->name);
@@ -568,7 +568,7 @@ int schedule_recompile_block(SCHEDULE *sch, unsigned char calendar, unsigned cha
 			unsigned int is_leapyear = calendar%2;
 			unsigned int weekday = calendar/2;
 			unsigned int month;
-			unsigned int days[] = {31,(is_leapyear?29:28),31,30,31,30,31,31,30,31,30,31};
+			unsigned int days[] = {31,static_cast<unsigned int>(is_leapyear?29:28),31,30,31,30,31,31,30,31,30,31};
 			unsigned int n = block*MAXVALUES + ndx;
 			if (ndx == -2) {
 				output_error("schedule_recompile(SCHEDULE *sch={name='%s', ...}) internal index error", sch->name);
@@ -1251,7 +1251,7 @@ SCHEDULEINDEX schedule_index(SCHEDULE *sch, TIMESTAMP ts)
 	/* determine the local time */
 	if (!local_datetime(ts,&dt))
 	{
-		throw_exception("schedule_read(SCHEDULE *schedule={name='%s',...}, TIMESTAMP ts=%"FMT_INT64"d) unable to determine local time", sch->name, ts);
+		throw_exception("schedule_read(SCHEDULE *schedule={name='%s',...}, TIMESTAMP ts=%" FMT_INT64 "d) unable to determine local time", sch->name, ts);
 		/* TROUBLESHOOT
 			The schedule could not be read because the local time could not be determined.  
 			Fix the problem causing the local time system failure and try again.
@@ -1699,7 +1699,7 @@ void schedule_dump(SCHEDULE *sch, char *file, char *mode)
 	fprintf(fp,"sizeof(SCHEDULE) = %.3f MB\n", (double)sizeof(SCHEDULE)/1024/1024);
 	for (calendar=0; calendar<MAXCALENDARS; calendar++)
 	{
-		int year=0, month, y;
+		short year=0, month, y;
 		int daysinmonth[] = {31,((calendar&1)?29:28),31,30,31,30,31,31,30,31,30,31};
 		char *monthname[] = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 		fprintf(fp,"\nYears:");
@@ -1718,7 +1718,7 @@ void schedule_dump(SCHEDULE *sch, char *file, char *mode)
 
 		for (month=0; month<12; month++)
 		{
-			int day, hour;
+			short day, hour;
 			fprintf(fp,"     %s  ", monthname[month]);
 			for (hour=0; hour<24; hour++)
 			{
@@ -1727,7 +1727,7 @@ void schedule_dump(SCHEDULE *sch, char *file, char *mode)
 			fprintf(fp,"\n");
 			for (day=0; day<daysinmonth[month]; day++)
 			{
-				int hour;
+				short hour;
 				char wd[] = "SMTWTFSH";
 				DATETIME dt = {year,month,day,0,0,0,0,0,""};
 				TIMESTAMP ts = mkdatetime(&dt);
@@ -1736,7 +1736,7 @@ void schedule_dump(SCHEDULE *sch, char *file, char *mode)
 				for (hour=0; hour<24; hour++)
 				{
 					int minute=0;
-					DATETIME dt = {year,month+1,day+1,hour,0,0};
+					DATETIME dt = {year,static_cast<short>(month+1),static_cast<short>(day+1),hour,0,0};
 					TIMESTAMP ts = mkdatetime(&dt);
 					SCHEDULEINDEX ndx = schedule_index(sch,ts);
 					unsigned int dtn = schedule_dtnext(sch,ndx);

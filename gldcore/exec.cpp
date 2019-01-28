@@ -684,7 +684,7 @@ static STATUS init_by_creation()
 				}
 			}
 		}
-	} CATCH (char *msg) {
+	} CATCH (const char *msg) {
 		output_error("init failure: %s", msg);
 		/* TROUBLESHOOT
 			The initialization procedure failed.  This is usually preceded
@@ -2296,7 +2296,7 @@ STATUS exec_start()
 						}
 
 					}
-//				/*  Add/Remove first slash to toggle commented area
+				/*  Add/Remove first slash to toggle commented area
 					else {
                         for (ptr = ranks[pass]->ordinal[i]->first; ptr != NULL; ptr = ptr->next) {
                             auto *obj = static_cast<OBJECT *>(ptr->data);
@@ -2411,7 +2411,7 @@ STATUS exec_start()
 //                            }
 
                             // lock access to done count
-                            unique_lock<mutex> lock_done(*donelock[iObjRankList]);
+                            std::unique_lock<std::mutex> lock_done(*donelock[iObjRankList]);
 //							pthread_mutex_lock(&donelock[iObjRankList]);
 
                             // initialize wait count
@@ -2593,7 +2593,7 @@ STATUS exec_start()
 		/* terminate main loop state control */
 		exec_mls_done();
 	}
-	CATCH(char *msg)
+	CATCH (const char *msg)
 	{
 		output_error("exec halted: %s", msg);
 		exec_sync_set(NULL,TS_INVALID,false);
