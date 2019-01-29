@@ -141,6 +141,8 @@ public:
 	SIMULATIONMODE deltaInterUpdate(unsigned int delta_iteration_counter, TIMESTAMP t0, unsigned int64 dt);
 	SIMULATIONMODE deltaClockUpdate(double t1, unsigned long timestep, SIMULATIONMODE sysmode);
 	int32 real_time_gridappsd_publish_period;
+	bool aggregate_pub;
+	bool aggregate_sub;
 	// TODO add other event handlers here
 
 public:

@@ -64,6 +64,8 @@ fncs_msg::fncs_msg(MODULE *module)
 			PT_KEYWORD, "JSON", enumeration(MT_JSON), PT_DESCRIPTION, "use this for wanting to send a bundled json formatted message in a single topic",
 		PT_int32, "gridappd_publish_period", PADDR(real_time_gridappsd_publish_period), PT_DESCRIPTION, "use this with json bundling to set the period [s] at which data is published.",
 			// PT_KEYWORD, "JSON_SB", enumeration(MT_JSON_SB), PT_DESCRIPTION, "use this for wanting to subsribe a bundled json formatted message in a single topic",
+		PT_bool, "aggregate_publications", PADDR(aggregate_pub), PT_DESCRIPTION, "enable FNCS flag to aggregate publications",
+		PT_bool, "aggregate_subscriptions", PADDR(aggregate_sub), PT_DESCRIPTION, "enable FNCS flag to aggregate subscriptions",
 		// TODO add published properties here
 		NULL)<1)
 			throw "connection/fncs_msg::fncs_msg(MODULE*): unable to publish properties of connection:fncs_msg";
@@ -93,6 +95,10 @@ int fncs_msg::create(){
 	hostname = new string("");
 	inFunctionTopics = new vector<string>();
 	real_time_gridappsd_publish_period = 3;
+
+	// default FNCS message aggregation flags to false
+	aggregate_pub = false;
+	aggregate_sub = false;
 
 	return 1;
 }
@@ -457,6 +463,12 @@ int fncs_msg::init(OBJECT *parent){
 		zplfile << "name = " << simName << endl;
 		zplfile << "time_delta = " << fncs_step << "ns" << endl; //TODO: minimum timestep needs to take into account deltamode steps eventually.
 		zplfile << "broker = tcp://" << *hostname << ":" << *port << endl;
+		if (aggregate_sub) {
+			zplfile << "aggregate_sub = true" << endl;
+		}
+		if (aggregate_pub) {
+			zplfile << "aggregate_pub = true" << endl;
+		}
 		zplfile << "values" << endl;
 		for(n = 1; n < 14; n++){
 			if( n >= 1 && n <= 13){
