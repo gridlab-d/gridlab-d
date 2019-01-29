@@ -28,6 +28,15 @@ add_library(${PROJECT_NAME}
         market/stubauction.h
         market/supervisory_control.cpp
         market/supervisory_control.h
+
+        market/auction_ccsi.cpp
+        market/auction_ccsi.h
+        market/bid_ccsi.cpp
+        market/bid_ccsi.h
+        market/curve_ccsi.cpp
+        market/curve_ccsi.h
+        market/controller_ccsi.cpp
+        market/controller_ccsi.h
         )
 
 set_target_properties(${PROJECT_NAME}
