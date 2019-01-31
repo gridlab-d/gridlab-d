@@ -514,7 +514,7 @@ AC_LINK_IFELSE(
 #include <helics/application_api/helicsTypes.hpp>
 ]],
 [[
-helics::named_point t;
+helics::NamedPoint t;
 ]])],
     [have_helics=yes; have_helics_int=1],
     [have_helics=no; have_helics_int=0])
