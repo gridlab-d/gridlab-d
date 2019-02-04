@@ -210,6 +210,8 @@ EXPORT SIMULATIONMODE deltaClockUpdate(MODULE *module, double t1, unsigned long 
 		result = item->dclkupdate(item->data, t1, timestep, systemmode);
 		return result;
 	}
+	// This whole loop is dangerous and possibly wrong, but I'm making sure it always returns something.
+	return SM_ERROR;
 }
 
 EXPORT int postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)

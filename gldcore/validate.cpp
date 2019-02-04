@@ -82,14 +82,15 @@ public:
 	void inc_files(const char *name) 
 	{
 		if ( global_debug_mode || global_verbose_mode )
-			output_debug("processing %s", name); 
+			output_debug("processing %s", name);
 		else
 		{
 			static size_t len = 0;
 			char blank[1024];
+			len = (len < 1024 ? len : 1023);
 			memset(blank,32,len);
 			blank[len]='\0';
-			len = output_raw("%s\rProcessing %s...\r",blank,name)-len; 
+			len = static_cast<size_t>(output_raw("\r%s\rProcessing %s...", blank, name) - len);
 		}
 		wlock(); 
 		n_files++;

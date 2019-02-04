@@ -1894,7 +1894,7 @@ class gld_object {
 public:
 	inline OBJECT *my() { return this?(((OBJECT*)this)-1):NULL; }
 public:
-	inline gld_object &operator=(gld_object&o) { exception("copy constructor is forbidden on gld_object"); };
+	inline gld_object &operator=(gld_object&o) = delete;
 
 public: // constructors
 	inline static gld_object *find_object(char *n) { OBJECT *obj = callback->get_object(n); if (obj) return (gld_object*)(obj+1); else return NULL; };
@@ -2135,9 +2135,9 @@ public: // special operations
 	inline double get_double(char*to) { double rv = get_double(); return get_unit()->convert(to,rv) ? rv : QNAN; };
 	inline complex get_complex(void) { errno=0; if ( pstruct.prop->ptype==PT_complex ) return *(complex*)get_addr(); else return complex(QNAN,QNAN); };
 	inline int64 get_integer(void) { errno=0; switch(pstruct.prop->ptype) { case PT_int16: return (int64)*(int16*)get_addr(); case PT_int32: return (int64)*(int32*)get_addr(); case PT_int64: return *(int64*)get_addr(); default: errno=EINVAL; return 0;} };
-	inline TIMESTAMP get_timestamp(void) { if (pstruct.prop->ptype == PT_timestamp) return *(TIMESTAMP*)get_addr(); exception("get_timestamp() called on a property that is not a timestamp"); };
-	inline enumeration get_enumeration(void) { if ( pstruct.prop->ptype == PT_enumeration ) return *(enumeration*)get_addr(); exception("get_enumeration() called on a property that is not an enumeration"); };
-	inline set get_set(void) { if ( pstruct.prop->ptype == PT_set ) return *(set*)get_addr(); exception("get_set() called on a property that is not a set"); };
+	inline TIMESTAMP get_timestamp(void) { if (pstruct.prop->ptype == PT_timestamp) return *(TIMESTAMP*)get_addr(); exception("get_timestamp() called on a property that is not a timestamp"); throw; };
+	inline enumeration get_enumeration(void) { if ( pstruct.prop->ptype == PT_enumeration ) return *(enumeration*)get_addr(); exception("get_enumeration() called on a property that is not an enumeration"); throw; };
+	inline set get_set(void) { if ( pstruct.prop->ptype == PT_set ) return *(set*)get_addr(); exception("get_set() called on a property that is not a set"); throw; };
 	inline gld_object* get_objectref(void) { if ( is_objectref() ) return ::get_object(*(OBJECT**)get_addr()); else return NULL; };
 	template <class T> inline void getp(T &value) { gld_core::rlock(&obj->lock); value = *(T*)get_addr(); gld_core::runlock(&obj->lock); };
 	template <class T> inline void setp(T &value) { gld_core::wlock(&obj->lock); *(T*)get_addr()=value; gld_core::wunlock(&obj->lock); };

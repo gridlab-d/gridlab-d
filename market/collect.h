@@ -27,6 +27,7 @@ public:
 			}
 			else {
 				gl_error("sort method is not defined!");
+				throw;
 			}
 		}
 	} SUPERVISORBID;

@@ -1600,6 +1600,7 @@ int auction::submit_nolock(char *from, double quantity, double real_price, KEY k
 		}
 		return 1;
 	}
+	return 0;
 }
 
 TIMESTAMP auction::nextclear(void) const

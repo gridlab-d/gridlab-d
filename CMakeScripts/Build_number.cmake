@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 2.8.12)
 
-if (GIT_FOUND)
-    message("git found: ${GIT_EXECUTABLE} in version     ${GIT_VERSION_STRING}")
-endif (GIT_FOUND)
+#if (GIT_FOUND)
+#    message("git found: ${GIT_EXECUTABLE} in version     ${GIT_VERSION_STRING}")
+#endif (GIT_FOUND)
 
 SET(BUILD_FILE "/gldcore/build.h")
 SET(COMMAND_SCRIPT "./BuildInfo.sh")
@@ -21,7 +21,7 @@ EXECUTE_PROCESS(
         OUTPUT_VARIABLE BUILD_DIR
         OUTPUT_STRIP_TRAILING_WHITESPACE
 )
-message("BUILD_DIR: ${BUILD_DIR}")
+#message("BUILD_DIR: ${BUILD_DIR}")
 
 #EXECUTE_PROCESS(COMMAND bash "-c" "\"${GIT_EXECUTABLE}\" status -s | cut -c1-3 | sort -u | sed 's/ //g' | sed ':a;N;$!ba;s/\\n/ /g'"
 EXECUTE_PROCESS(
@@ -35,7 +35,7 @@ EXECUTE_PROCESS(COMMAND bash "-c" "${COMMAND_SCRIPT} ${GIT_OUTPUT} --status"
         OUTPUT_VARIABLE MODIFY_STATUS
         OUTPUT_STRIP_TRAILING_WHITESPACE
         )
-message("MODIFY_STATUS: ${MODIFY_STATUS}")
+#message("MODIFY_STATUS: ${MODIFY_STATUS}")
 
 #EXECUTE_PROCESS(COMMAND bash "-c" "git log --max-count=1 --pretty=format:\"%ad\" --date=raw | sed -ne 's/ [\\+\\-][0-9]\\{4\\}$//p'"
 EXECUTE_PROCESS(COMMAND ${GIT_EXECUTABLE} log --max-count=1 --format=%ad --date=raw
@@ -49,7 +49,7 @@ EXECUTE_PROCESS(COMMAND bash "-c" "${COMMAND_SCRIPT} ${GIT_OUTPUT} --build"
         OUTPUT_STRIP_TRAILING_WHITESPACE
         )
 MATH(EXPR BUILD_NUM "(${BUILD_NUM}/86400)")
-message("BUILD_NUM: ${BUILD_NUM}")
+#message("BUILD_NUM: ${BUILD_NUM}")
 
 FILE(REMOVE ${CMAKE_SOURCE_DIR}/CMakeScripts/${GIT_OUTPUT})
 

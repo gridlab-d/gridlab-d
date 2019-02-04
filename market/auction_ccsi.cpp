@@ -1516,6 +1516,7 @@ int auction_ccsi::submit_nolock(char *from, double quantity, double real_price, 
 		/* TROUBLESHOOT
 			Tracking bids input markets other than the immediately open one will be supported in the future.
 			*/
+		throw; // TODO: resolve this to be desired value.
 	}
 	else if (mkt_id == market_id && rebid == true) // resubmit
 	{

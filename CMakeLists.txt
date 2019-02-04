@@ -46,15 +46,15 @@ SET(GLDCORE_LOC gldcore)
 OPTION(BUILD_SHARED_LIBS "Sets Gridlab-d libraries to be built as shared. *DANGER - will currently break build if changed.*" ON)
 
 # Forces certain warnings to trigger errors.
-SET(FORCE_ERROR "-Werror=return-type")
+SET(FORCE_ERROR "-Werror=return-type -Wno-write-strings")
 
 # Allows specific compiler optimizations to be disabled for all build types.
 set(DISABLED_OPTIMIZATIONS "-fno-inline-functions")
 
 # Compiler/Linker flags for all build types
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${FORCE_ERROR} -w ${DISABLED_OPTIMIZATIONS}")
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${FORCE_ERROR} -w ${DISABLED_OPTIMIZATIONS}")
-set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} ${FORCE_ERROR} -w ${DISABLED_OPTIMIZATIONS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${FORCE_ERROR} ${DISABLED_OPTIMIZATIONS}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${FORCE_ERROR} ${DISABLED_OPTIMIZATIONS}")
+set(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} ${FORCE_ERROR} ${DISABLED_OPTIMIZATIONS}")
 
 # Set up platform specific library linking
 IF (WIN32 OR MSYS OR MINGW OR CYGWIN)
