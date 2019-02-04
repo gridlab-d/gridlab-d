@@ -4,6 +4,7 @@
  *  Created on: Nov 21, 2017
  *      Author: mark.eberlein@pnnl.gov
  */
+#ifdef HAVE_MYSQL
 
 #ifndef MYSQL_QUERY_ENGINE_H_
 #define MYSQL_QUERY_ENGINE_H_
@@ -112,3 +113,5 @@ class table_manager : public gld_object, public query_engine {
 };
 
 #endif /* MYSQL_QUERY_ENGINE_H_ */
+
+#endif

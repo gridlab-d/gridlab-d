@@ -32,7 +32,7 @@ public:
 	quickobjlist *next;
 };
 
-class group_recorder{
+class group_recorder : public gld_object {
 public:
 	static group_recorder *defaults;
 	static CLASS *oclass, *pclass;
@@ -41,20 +41,22 @@ public:
 	int create();
 	int init(OBJECT *);
 	int isa(char *);
-	TIMESTAMP postsync(TIMESTAMP, TIMESTAMP);
+	TIMESTAMP commit(TIMESTAMP);
 
 	int commit(TIMESTAMP t1, double t1dbl, bool deltacall);
-public:
-	char1024 group_def;
-	double dInterval;
-	double dFlush_interval;
-	char256 property_name;
-	int32 limit;
-	char256 filename;
-	bool strict;
-	bool print_units;
-    bool format;
-	CPLPT complex_part;
+
+    GL_STRING(char256, filename)
+    GL_STRING(char1024, group_def)
+    GL_ATOMIC(bool, strict)
+    GL_ATOMIC(bool, print_units)
+    GL_STRING(char256, property_name)
+    GL_ATOMIC(int32, limit)
+    GL_ATOMIC(bool, format)
+    GL_STRING(char32,mode)
+    GL_STRING(char256, complex_part)
+    GL_ATOMIC(double, dInterval)
+    GL_ATOMIC(double, dFlush_interval)
+
 private:
 	int write_header();
 	int read_line();

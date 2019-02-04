@@ -12,21 +12,23 @@
   @addtogroup player
 	@{
  **/
-struct player {
-    /* public */
-    char1024 file; /**< the name of the player source */
-    char8 filetype; /**< the type of the player source */
+class player : public gld_object {
+  public:
+    char1024 file; //< the name of the player source
+    char8 filetype; // the type of the player source
     char256 mode;
-    char256 property; /**< the target property */
-    int32 loop; /**< the number of time to replay the tape */
-    /* private */
-    FILETYPE type;
+    char256 property; //< the target property
+    int32 loop; //< the number of time to replay the tape
+
+  public: // Should these be private class members?
     union {
         FILE *fp;
         MEMORY *memory;
         void *tsp;
-        /** add handles for other type of sources as needed */
+        // add handles for other type of sources as needed
     };
+    char lasterr[1024];
+    FILETYPE type;
     TAPESTATUS status;
     int32 loopnum;
     struct {
@@ -38,13 +40,20 @@ struct player {
         TIMESTAMP ts;
         TIMESTAMP ns;
         char1024 value;
-    } delta_track;	/* Added for deltamode fixes */
+    } delta_track;	// Added for deltamode fixes
     PROPERTY *target;
-
     TAPEOPS *ops;
-    char lasterr[1024];
-}; /**< a player item */
+
+    player(MODULE *module);
+    int create(void);
+    int init(OBJECT *parent);
+    int precommit(TIMESTAMP t0);
+    TIMESTAMP commit(TIMESTAMP t0, TIMESTAMP t1);
+
+    static CLASS *oclass;
+    static player *defaults;
+};
 
 extern TIMESTAMP player_read(OBJECT *obj);
 
-#endif //_PLAYER_H
+#endif _PLAYER_H

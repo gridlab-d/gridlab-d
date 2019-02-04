@@ -208,8 +208,9 @@ int group_recorder::init(OBJECT *obj){
 	return 1;
 }
 
-TIMESTAMP group_recorder::postsync(TIMESTAMP t0, TIMESTAMP t1){
-	// if we are strict and an error has occured, stop the simulation
+//TIMESTAMP group_recorder::postsync(TIMESTAMP t0, TIMESTAMP t1){
+TIMESTAMP group_recorder::commit(TIMESTAMP t1){
+	// if we are strict and an error has occurred, stop the simulation
 
 	// if eventful interval, read
 	if(0 == write_interval){//
@@ -231,7 +232,8 @@ TIMESTAMP group_recorder::postsync(TIMESTAMP t0, TIMESTAMP t1){
 		if (deltamode_gr)
 		{
 			//See if we stagnated
-			if ((t0 == t1) && (t1 == next_write))
+//			if ((t0 == t1) && (t1 == next_write))
+			if (t1 == next_write)
 			{
 				//We did, just bump us forward one
 				next_write = next_write + TS_SECOND;
@@ -730,7 +732,7 @@ EXPORT TIMESTAMP sync_group_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 				rv = TS_NEVER;
 				break;
 			case PC_POSTTOPDOWN:
-				rv = my->postsync(obj->clock, t0);
+				rv = my->commit(obj->clock);
 				obj->clock = t0;
 				break;
 			default:
