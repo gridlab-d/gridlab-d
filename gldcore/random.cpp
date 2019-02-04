@@ -100,7 +100,7 @@ static struct {
 	char *name;
 	RANDOMTYPE type;
 	int nargs;
-} *p, map[] = {
+} *p, random_map[] = {
 	/* tested */
 	{"degenerate", RT_DEGENERATE,1},
 	{"uniform",RT_UNIFORM,2},
@@ -122,7 +122,7 @@ static struct {
  **/
 RANDOMTYPE random_type(char *name) /**< the name of the distribution */
 {
-	for (p=map; p<map+sizeof(map)/sizeof(map[0]); p++)
+	for (p=random_map; p<random_map+sizeof(random_map)/sizeof(random_map[0]); p++)
 	{
 		if (strcmp(p->name,name)==0)
 			return p->type;
@@ -133,7 +133,7 @@ RANDOMTYPE random_type(char *name) /**< the name of the distribution */
  **/
 int random_nargs(char *name)
 {
-	for (p=map; p<map+sizeof(map)/sizeof(map[0]); p++)
+	for (p=random_map; p<random_map+sizeof(random_map)/sizeof(random_map[0]); p++)
 	{
 		if (strcmp(p->name,name)==0)
 			return p->nargs;

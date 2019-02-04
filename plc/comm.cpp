@@ -60,7 +60,7 @@ void Queue::add(Message *msg)
 		last->set_next(msg);
 	}
 	msg->set_next(NULL);
-	gl_verbose("message %"FMT_INT64"d '%-8.8s%s' added to queue %x", msg->get_id(), msg->get_data(), msg->get_size()>8?"...":"", this);
+	gl_verbose("message %" FMT_INT64 "d '%-8.8s%s' added to queue %x", msg->get_id(), msg->get_data(), msg->get_size()>8?"...":"", this);
 }
 Message *Queue::peek(void)
 {
@@ -115,7 +115,7 @@ void comm::route(Message *msg)
 	char ts[64]="unknown time";
 	gl_localtime(msg->get_deliverytime(),&dt);
 	gl_strtime(&dt,ts,sizeof(ts));
-	gl_verbose("message %"FMT_INT64"d from %x to %x will be delivered at %s", msg->get_id(), msg->get_src(), msg->get_dst(), ts);
+	gl_verbose("message %" FMT_INT64 "d from %x to %x will be delivered at %s", msg->get_id(), msg->get_src(), msg->get_dst(), ts);
 	queue.add(msg);
 }
 
@@ -199,7 +199,7 @@ TIMESTAMP comm::sync(TIMESTAMP t0)
 			char ts[64]="unknown time";
 			gl_localtime(t0,&dt);
 			gl_strtime(&dt,ts,sizeof(ts));
-			gl_verbose("message %"FMT_INT64"d delivered at %s", msg->get_id(), ts);
+			gl_verbose("message %" FMT_INT64 "d delivered at %s", msg->get_id(), ts);
 			queue.take(msg)->get_dst()->deliver(msg);
 		}
 		else if (msg->get_deliverytime()<=t0+timeout*TS_SECOND)
@@ -208,7 +208,7 @@ TIMESTAMP comm::sync(TIMESTAMP t0)
 			char ts[64];
 			gl_localtime(t0,&dt);
 			gl_strtime(&dt,ts,sizeof(ts));
-			gl_warning("message %"FMT_INT64"d delivery timeout at %s", msg->get_id(), ts);
+			gl_warning("message %" FMT_INT64 "d delivery timeout at %s", msg->get_id(), ts);
 			msg = queue.drop(msg,true);
 		}
 	}

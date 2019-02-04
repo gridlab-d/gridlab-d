@@ -235,6 +235,8 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			GL_THROW("Unable to publish node VFD attachment function");
 		if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
 			GL_THROW("Unable to publish node island-status-reset function");
+
+		oclass->threadsafe = false;
 	}
 }
 

@@ -13,6 +13,9 @@
 #include <setjmp.h>
 #include "globals.h"
 #include "index.h"
+#include "cpp_threadpool.h"
+#include <map>
+#include <thread>
 
 struct sync_data {
 	TIMESTAMP step_to; /**< time to advance to */
@@ -23,6 +26,18 @@ struct sync_data {
 struct thread_data {
 	int count; /**< the thread count */
 	struct sync_data *data; /**< pointer to the sync state structure */
+};
+
+class threadpool_thread_data {
+	int count;
+	struct sync_data *data;
+//	std::vector<struct sync_data> data;
+	std::map<std::thread::id, int> thread_map;
+public:
+	inline int get_count() {return count;}
+	threadpool_thread_data(int size, cpp_threadpool* threadpool);
+	struct sync_data* get_thread_data(std::thread::id thread_id);
+	struct sync_data* get_data(int index);
 };
 
 //#ifdef __cplusplus

@@ -5,6 +5,7 @@
  *      Author: mark.eberlein@pnnl.gov
  */
 
+#include "config.h"
 #ifdef HAVE_MYSQL
 
 #include <sstream>

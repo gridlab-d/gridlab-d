@@ -237,19 +237,6 @@ int exec_init()
 	return 1;
 }
 
-//sjin: GetMachineCycleCount
-/*int mc_start_time;
-int mc_end_time;
-int GetMachineCycleCount()
-{
-   __int64 cycles;
-   _asm rdtsc; // won't work on 486 or below - only pentium or above
-
-   _asm lea ebx,cycles;
-   _asm mov [ebx],eax;
-   _asm mov [ebx+4],edx;
-   return cycles;
-}*/
 clock_t cstart, cend;
 
 #ifndef _MAX_PATH
@@ -261,6 +248,7 @@ clock_t cstart, cend;
 #define PASSINC(p) (p % 2 ? 1 : -1)
 
 static struct thread_data *thread_data = NULL;
+static threadpool_thread_data *threadpool_data = NULL;
 static INDEX **ranks = NULL;
 extern PASSCONFIG passtype[] = {PC_PRETOPDOWN, PC_BOTTOMUP, PC_POSTTOPDOWN};
 static unsigned int pass;
@@ -436,7 +424,91 @@ void do_checkpoint()
 }
 
 /***********************************************************************/
-//sjin: implement new ss_do_object_sync for pthreads
+
+threadpool_thread_data::threadpool_thread_data(int size, cpp_threadpool* threadpool){
+//	data = std::vector<struct sync_data>(size);
+	data = new struct sync_data[size];
+	count = size;
+	thread_map = threadpool->get_threadmap();
+	for(int index = 0; index < size; index++)
+	    data[index].status = SUCCESS;
+}
+
+struct sync_data* threadpool_thread_data::get_thread_data(std::thread::id thread_id){
+	return &data[thread_map.at(thread_id)];
+}
+struct sync_data *threadpool_thread_data::get_data(int index) {
+	return &data[index];};
+
+static void tp_do_object_sync(OBJECT* obj){
+    std::thread::id thread_id = std::this_thread::get_id();
+    struct sync_data *data = threadpool_data->get_thread_data(thread_id);
+    TIMESTAMP this_t;
+    char b[64];
+
+    /* check in and out-of-service dates */
+    if (global_clock<obj->in_svc)
+        this_t = obj->in_svc; /* yet to go in service */
+    else if ((global_clock==obj->in_svc) && (obj->in_svc_micro != 0))	/* If our in service is a little higher, delay to next time */
+        this_t = obj->in_svc + 1;	/* Technically yet to go into service -- deltamode handled separately */
+    else if (global_clock<=obj->out_svc)
+    {
+        this_t = object_sync(obj, global_clock, passtype[pass]);
+        if (this_t == global_clock)
+		{
+            output_verbose("%s: object %s calling for re-sync", simtime(), object_name(obj, b, 63));
+        }
+    }
+    else
+        this_t = TS_NEVER; /* already out of service */
+
+    /* check for "soft" event (events that are ignored when stopping) */
+    if (this_t < -1)
+        this_t = -this_t;
+    else if (this_t != TS_NEVER)
+        data->hard_event++;  /* this counts the number of hard events */
+
+    /* check for stopped clock */
+    if (this_t < global_clock) {
+        char b[64];
+        output_error("%s: object %s stopped its clock (exec)!", simtime(), object_name(obj, b, 63));
+        /* TROUBLESHOOT
+            This indicates that one of the objects in the simulator has encountered a
+            state where it cannot calculate the time to the next state.  This usually
+            is caused by a bug in the module that implements that object's class.
+         */
+        data->status = FAILED;
+    } else {
+        /* check for iteration limit approach */
+        if (iteration_counter == 2 && this_t == global_clock) {
+            char b[64];
+            output_verbose("%s: object %s iteration limit imminent",
+                           simtime(), object_name(obj, b, 63));
+        }
+        else if (iteration_counter == 1 && this_t == global_clock) {
+            output_error("convergence iteration limit reached for object %s:%d", obj->oclass->name, obj->id);
+            /* TROUBLESHOOT
+                This indicates that the core's solver was unable to determine
+                a steady state for all objects for any time horizon.  Identify
+                the object that is causing the convergence problem and contact
+                the developer of the module that implements that object's class.
+             */
+        }
+
+        /* manage minimum timestep */
+        if (global_minimum_timestep>1 && this_t>global_clock && this_t<TS_NEVER)
+            this_t = (((this_t-1)/global_minimum_timestep)+1)*global_minimum_timestep;
+
+        /* if this event precedes next step, next step is now this event */
+        if (data->step_to > this_t) {
+            //LOCK(data);
+            data->step_to = this_t;
+            //UNLOCK(data);
+        }
+        //printf("data->step_to=%d, this_t=%d\n", data->step_to, this_t);
+    }
+}
+
 static void ss_do_object_sync(int thread, void *item)
 {
 	struct sync_data *data = &thread_data->data[thread];
@@ -612,7 +684,7 @@ static STATUS init_by_creation()
 				}
 			}
 		}
-	} CATCH (char *msg) {
+	} CATCH (const char *msg) {
 		output_error("init failure: %s", msg);
 		/* TROUBLESHOOT
 			The initialization procedure failed.  This is usually preceded
@@ -922,7 +994,6 @@ static STATUS precommit_all(TIMESTAMP t0)
 {
 	STATUS rv=SUCCESS;
 	static int first=1;
-	/* TODO implement this multithreaded */
 	static SIMPLELINKLIST *precommit_list = NULL;
 	SIMPLELINKLIST *item;
 	if ( first )
@@ -952,7 +1023,8 @@ static STATUS precommit_all(TIMESTAMP t0)
 	}
 
 	TRY {
-		for ( item=precommit_list ; item!=NULL ; item=item->next )
+                /* TODO implement this multithreaded */
+                for ( item=precommit_list ; item!=NULL ; item=item->next )
 		{
 			OBJECT *obj = (OBJECT*)item->data;
 			if ((obj->in_svc <= t0 && obj->out_svc >= t0) && (obj->in_svc_micro >= obj->out_svc_micro))
@@ -1111,7 +1183,7 @@ static TIMESTAMP commit_all_st(TIMESTAMP t0, TIMESTAMP t2)
 					throw_exception("object %s commit failed", object_name(obj,name,sizeof(name)-1));
 					/* TROUBLESHOOT
 						The commit function of the named object has failed.  Make sure that the object's
-						requirements for committing are satisfied and try again.  (likely internal state aberations)
+						requirements for committing are satisfied and try again.  (likely internal state aberrations)
 					 */
 				}
 				if ( next<result ) result = next;
@@ -1185,6 +1257,65 @@ static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2)
 	return result;
 }
 
+/* single threaded version of commit_all */
+static TIMESTAMP tp_commit_all(TIMESTAMP t0, TIMESTAMP t2, cpp_threadpool *threadpool) {
+//    TIMESTAMP result = TS_NEVER;
+	std::atomic_long result{static_cast<long>(TS_NEVER)};
+	SIMPLELINKLIST *item;
+	unsigned int pc;
+	static int n_commits = -1;
+	TRY	{
+				/* build commit list */
+				if (n_commits == -1) n_commits = commit_init();
+
+				/* if no commits found, stop here */
+				if (n_commits == 0) {
+					result = TS_NEVER;
+				}
+
+				for (pc = 0; pc < 2; pc++) {
+					for (item = commit_list[pc]; item != NULL; item = item->next) {
+						OBJECT *obj = (OBJECT *) item->data;
+						threadpool->add_job([=, &result]() {
+							auto inner_result = result.load();
+
+							if (t0 < obj->in_svc) {
+								if (obj->in_svc < inner_result) result = obj->in_svc;
+							} else if ((t0 == obj->in_svc) && (obj->in_svc_micro != 0)) {
+								if (obj->in_svc == inner_result)
+									result.store(obj->in_svc + 1);
+							} else if (obj->out_svc >= t0) {
+								TIMESTAMP next = object_commit(obj, t0, t2);
+								if (next == TS_INVALID) {
+									char name[64];
+									throw_exception("object %s commit failed",
+													object_name(obj, name, sizeof(name) - 1));
+									/* TROUBLESHOOT
+                                        The commit function of the named object has failed.  Make sure that the object's
+                                        requirements for committing are satisfied and try again.  (likely internal state aberrations)
+                                     */
+								}
+								if (next < result.load()) result.store(next);
+							}
+						});
+					}
+					threadpool->await();
+				}
+			}
+		CATCH(const char *msg)
+			{
+				output_error("tp_commit_all() failure: %s", msg);
+				/* TROUBLESHOOT
+                    The commit'ing procedure failed.  This is usually preceded
+                    by a more detailed message that explains why it failed.  Follow
+                    the guidance for that message and try again.
+                 */
+				result = TS_INVALID;
+			}
+	ENDCATCH;
+    return result.load();
+}
+
 /**************************************************************************
  ** FINALIZE ITERATOR
  **************************************************************************/
@@ -1192,7 +1323,6 @@ static STATUS finalize_all()
 {
 	STATUS rv=SUCCESS;
 	static int first=1;
-	/* TODO implement this multithreaded */
 	static SIMPLELINKLIST *finalize_list = NULL;
 	SIMPLELINKLIST *item;
 	if ( first )
@@ -1222,7 +1352,8 @@ static STATUS finalize_all()
 	}
 
 	TRY {
-		for ( item=finalize_list ; item!=NULL ; item=item->next )
+                /* TODO implement this multithreaded */
+                for ( item=finalize_list ; item!=NULL ; item=item->next )
 		{
 			OBJECT *obj = (OBJECT*)item->data;
 			if ( object_finalize(obj)==FAILED )
@@ -1370,66 +1501,66 @@ typedef struct s_objsyncdata {
 //static pthread_cond_t *start;
 //static pthread_cond_t *done;
 
-static vector<unique_ptr<mutex>> startlock, donelock;
-static vector<unique_ptr<condition_variable>> start, done;
+static std::vector<std::unique_ptr<std::mutex>> startlock, donelock;
+static std::vector<std::unique_ptr<std::condition_variable>> start, done;
 
 static unsigned int *next_t1;
 static unsigned int *donecount;
 static unsigned int *n_threads; //number of thread used in the threadpool of an object rank list
 
-static void *obj_syncproc(void *ptr)
-{
-	OBJSYNCDATA *data = (OBJSYNCDATA*)ptr;
-	LISTITEM *s;
-	unsigned int n;
-	int i = data->i;
-
-	// begin processing loop
-	while (data->ok)
-	{
-        // lock access to start condition
-	    unique_lock<mutex> lock_start(*startlock[i]);
-//		pthread_mutex_lock(&startlock[i]);
-
-		// wait for thread start condition)
-		while (data->t0 == next_t1[i])
-        {
-		    start[i]->wait(lock_start);
-        }
-        lock_start.unlock();
-//			pthread_cond_wait(&start[i], &startlock[i]);
-		// unlock access to start count
-//		pthread_mutex_unlock(&startlock[i]);
-
-		// process the list for this thread
-		for (s=data->ls, n=0; s!=NULL, n<data->nObj; s=s->next,n++) {
-			OBJECT *obj = static_cast<OBJECT *>(s->data);
-			ss_do_object_sync(data->n, s->data);
-		}
-
-		// signal completed condition
-		data->t0 = next_t1[i];
-
-		// lock access to done condition
-        unique_lock<mutex> lock_done(*donelock[i]);
-
-//        pthread_mutex_lock(&donelock[i]);
-
-		// signal thread is done for now
-		donecount[i] --;
-
-		// signal change in done condition
-//		pthread_cond_broadcast(&done[i]);
-        done[i]->notify_all();
-
-		//unlock access to done count
-//		pthread_mutex_unlock(&donelock[i]);
-    return NULL;
-	}
-//	pthread_exit((void*)0);
-//	return (void*)0;
-    return NULL;
-}
+//static void *obj_syncproc(void *ptr)
+//{
+//	OBJSYNCDATA *data = (OBJSYNCDATA*)ptr;
+//	LISTITEM *s;
+//	unsigned int n;
+//	int i = data->i;
+//
+//	// begin processing loop
+//	while (data->ok)
+//	{
+//        // lock access to start condition
+//	    unique_lock<mutex> lock_start(*startlock[i]);
+////		pthread_mutex_lock(&startlock[i]);
+//
+//		// wait for thread start condition)
+//		while (data->t0 == next_t1[i])
+//        {
+//		    start[i]->wait(lock_start);
+//        }
+//        lock_start.unlock();
+////			pthread_cond_wait(&start[i], &startlock[i]);
+//		// unlock access to start count
+////		pthread_mutex_unlock(&startlock[i]);
+//
+//		// process the list for this thread
+//		for (s=data->ls, n=0; s!=NULL, n<data->nObj; s=s->next,n++) {
+//			OBJECT *obj = static_cast<OBJECT *>(s->data);
+//			ss_do_object_sync(data->n, s->data);
+//		}
+//
+//		// signal completed condition
+//		data->t0 = next_t1[i];
+//
+//		// lock access to done condition
+//        unique_lock<mutex> lock_done(*donelock[i]);
+//
+////        pthread_mutex_lock(&donelock[i]);
+//
+//		// signal thread is done for now
+//		donecount[i] --;
+//
+//		// signal change in done condition
+////		pthread_cond_broadcast(&done[i]);
+//        done[i]->notify_all();
+//
+//		//unlock access to done count
+////		pthread_mutex_unlock(&donelock[i]);
+//    return NULL;
+//	}
+////	pthread_exit((void*)0);
+////	return (void*)0;
+//    return NULL;
+//}
 
 /** MAIN LOOP CONTROL ******************************************************************/
 
@@ -1832,6 +1963,7 @@ STATUS exec_start()
 		/* allocate thread synchronization data */
 		thread_data = (struct thread_data *) malloc(sizeof(struct thread_data) +
 					  sizeof(struct sync_data) * global_threadcount);
+		threadpool_data = new threadpool_thread_data(global_threadcount, threadpool);
 		if (!thread_data) {
 			output_error("thread memory allocation failed");
 			/* TROUBLESHOOT
@@ -1952,10 +2084,10 @@ STATUS exec_start()
 //		pthread_mutex_init(&donelock[k], NULL);
 //		pthread_cond_init(&start[k], NULL);
 //		pthread_cond_init(&done[k], NULL);
-        startlock.push_back(unique_ptr<mutex>(new mutex));
-        donelock.push_back(unique_ptr<mutex>(new mutex));
-        start.push_back(unique_ptr<condition_variable>(new condition_variable));
-        done.push_back(unique_ptr<condition_variable>(new condition_variable));
+        startlock.push_back(std::unique_ptr<std::mutex>(new std::mutex));
+        donelock.push_back(std::unique_ptr<std::mutex>(new std::mutex));
+        start.push_back(std::unique_ptr<std::condition_variable>(new std::condition_variable));
+        done.push_back(std::unique_ptr<std::condition_variable>(new std::condition_variable));
 	}
 
 	// global test mode
@@ -2162,7 +2294,55 @@ STATUS exec_start()
 								THROW("debugger quit");
 							}
 						}
+
 					}
+				/*  Add/Remove first slash to toggle commented area
+					else {
+                        for (ptr = ranks[pass]->ordinal[i]->first; ptr != NULL; ptr = ptr->next) {
+                            auto *obj = static_cast<OBJECT *>(ptr->data);
+
+                            if (obj->oclass->threadsafe) {
+                                threadpool->add_job([=]() {
+//                                    ss_do_object_sync(0, ptr->data);
+                                    tp_do_object_sync(obj);
+                                });
+                            }
+//                            ss_do_object_sync(0, ptr->data);
+
+                            if (obj->valid_to == TS_INVALID) {
+                                //Get us out of the loop so others don't exec on bad status
+                                break;
+                            }
+                        }
+                        //printf("\n");
+                        threadpool->await();
+                        threadpool->set_sync_mode(true); // Force single thread mode for incompatible modules.
+                        for (ptr = ranks[pass]->ordinal[i]->first; ptr != NULL; ptr = ptr->next) {
+                            OBJECT *obj = static_cast<OBJECT *>(ptr->data);
+
+                            if (!obj->oclass->threadsafe) {
+                                threadpool->add_job([=]() {
+//                                    ss_do_object_sync(0, ptr->data);
+                                    tp_do_object_sync(obj);
+                                });
+                            }
+                            if (obj->valid_to == TS_INVALID) {
+                                //Get us out of the loop so others don't exec on bad status
+                                break;
+                            }
+                        }
+                        //printf("\n");
+                        threadpool->await();
+                        threadpool->set_sync_mode(false);
+
+                        for (j = 0; j < threadpool_data->get_count(); j++) {
+                            if (threadpool_data->get_data(j)->status == FAILED) {
+                                exec_sync_set(NULL, TS_INVALID, false);
+                                THROW("synchronization failed");
+                            }
+                        }
+                    }
+                    /*/
 					else
 					{
 						//sjin: if global_threadcount == 1, no pthread multhreading
@@ -2181,6 +2361,7 @@ STATUS exec_start()
 							}
 							//printf("\n");
 						}
+
 						else { //sjin: implement pthreads
                             unsigned int n_items, objn = 0, n;
                             unsigned int n_obj = ranks[pass]->ordinal[i]->size;
@@ -2217,27 +2398,27 @@ STATUS exec_start()
                                     thread[objn].nObj++;
                                 }
                                 // create threads
-                                for (n = 0; n < n_threads[iObjRankList]; n++) {
-                                    thread[n].ok = true;
-                                    thread[n].i = iObjRankList;
-                                    if(!threadpool->add_job([=] { obj_syncproc(&(thread[n])); })) {
-//									if (pthread_create(&(thread[n].pt),NULL,obj_syncproc,&(thread[n]))!=0) {
-										output_fatal("obj_sync thread creation failed");
-                                        thread[n].ok = false;
-									} else
-										thread[n].n = n;
-                                }
+//                                for (n = 0; n < n_threads[iObjRankList]; n++) {
+//                                    thread[n].ok = true;
+//                                    thread[n].i = iObjRankList;
+//                                    if(!threadpool->add_job([=] { obj_syncproc(&(thread[n])); })) {
+////									if (pthread_create(&(thread[n].pt),NULL,obj_syncproc,&(thread[n]))!=0) {
+//										output_fatal("obj_sync thread creation failed");
+//                                        thread[n].ok = false;
+//									} else
+//										thread[n].n = n;
+//                                }
 //                            }
 
                             // lock access to done count
-                            unique_lock<mutex> lock_done(*donelock[iObjRankList]);
+                            std::unique_lock<std::mutex> lock_done(*donelock[iObjRankList]);
 //							pthread_mutex_lock(&donelock[iObjRankList]);
 
                             // initialize wait count
                             donecount[iObjRankList] = n_threads[iObjRankList];
 
                             // lock access to start condition
-                            unique_lock<mutex> lock_start(*startlock[iObjRankList]);
+                            std::unique_lock<std::mutex> lock_start(*startlock[iObjRankList]);
 //							pthread_mutex_lock(&startlock[iObjRankList]);
 
                             // update start condition
@@ -2253,7 +2434,7 @@ STATUS exec_start()
 
                             // begin wait
                             while (donecount[iObjRankList] > 0)
-                                done[iObjRankList]->wait_for(lock_done, chrono::milliseconds(100));
+                                done[iObjRankList]->wait_for(lock_done, std::chrono::milliseconds(100));
 //								pthread_cond_wait(&done[iObjRankList],&donelock[iObjRankList]);
 
                             // unlock done count
@@ -2270,6 +2451,7 @@ STATUS exec_start()
 							}
 						}
 					}
+					//*/
 				}
 
 
@@ -2319,6 +2501,7 @@ STATUS exec_start()
 					global_federation_reiteration = false;
 				TIMESTAMP commit_time = TS_NEVER;
 				commit_time = commit_all(global_clock, exec_sync_get(NULL));
+//				commit_time = tp_commit_all(global_clock, exec_sync_get(NULL), threadpool);
 				if ( absolute_timestamp(commit_time) <= global_clock)
 				{
 					// commit cannot force reiterations, and any event where the time is less than the global clock
@@ -2410,7 +2593,7 @@ STATUS exec_start()
 		/* terminate main loop state control */
 		exec_mls_done();
 	}
-	CATCH(char *msg)
+	CATCH (const char *msg)
 	{
 		output_error("exec halted: %s", msg);
 		exec_sync_set(NULL,TS_INVALID,false);
@@ -2529,7 +2712,7 @@ STATUS exec_start()
 			output_profile("===========================\n");
 			output_profile("Active modules          %s", dp->module_list);
 			output_profile("Initialization time     %8.1lf seconds", (double)(dp->t_init)/(double)CLOCKS_PER_SEC);
-			output_profile("Number of updates       %8"FMT_INT64"u", dp->t_count);
+			output_profile("Number of updates       %8" FMT_INT64 "u", dp->t_count);
 			output_profile("Average update timestep %8.4lf ms", (double)dp->t_delta/(double)dp->t_count/1e6);
 			output_profile("Minumum update timestep %8.4lf ms", dp->t_min/1e6);
 			output_profile("Maximum update timestep %8.4lf ms", dp->t_max/1e6);
@@ -2839,7 +3022,7 @@ void *slave_node_proc(void *args)
 	id = strtoll(token_to+offset, &token_to, 10);
 	if (id < 0)
 	{
-		output_error("slave_node_proc(): id %"FMT_INT64" specified, may cause system conflicts", id);
+		output_error("slave_node_proc(): id %" FMT_INT64 " specified, may cause system conflicts", id);
 		closesocket(masterfd);
 		free(addrin);
 		return 0;
@@ -2879,7 +3062,7 @@ void *slave_node_proc(void *args)
 	output_debug("filepath = %s", filepath);
 	sprintf(ippath, "--slave %s:%d", addrstr, mtr_port);
 	output_debug("ippath = %s", ippath);
-	sprintf(cmd, "%s%sgridlabd.exe %s --id %"FMT_INT64"d %s %s",
+	sprintf(cmd, "%s%sgridlabd.exe %s --id %" FMT_INT64 "d %s %s",
 		(global_execdir[0] ? global_execdir : ""), (global_execdir[0] ? "\\" : ""), params, id, ippath, filepath);//addrstr, mtr_port, filepath);//,
 	output_debug("system(\"%s\")", cmd);
 

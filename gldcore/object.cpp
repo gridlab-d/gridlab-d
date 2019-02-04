@@ -1299,12 +1299,13 @@ static int _set_rankx(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 		}
 		obj = obj->parent;
 	}
-	for ( obj=first ; obj!=NULL ; obj=obj->parent )
-		obj->flags &= ~OF_RERANK;
+	for (obj = first; obj != nullptr; obj = obj->parent)
+			obj->flags &= ~OF_RERANK;
+	return 0;
 }
 static int set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 {
-	global_bigranks==TRUE ? _set_rankx(obj,rank,NULL) : _set_rank(obj,rank,NULL);
+	return global_bigranks==TRUE ? _set_rankx(obj,rank,NULL) : _set_rank(obj,rank,NULL);
 }
 
 /** Set the rank of an object but forcing it's parent
@@ -1503,8 +1504,11 @@ TIMESTAMP object_sync(OBJECT *obj, /**< the object to synchronize */
 	TIMESTAMP t2=TS_NEVER;
 	do {
 		/* don't call sync beyond valid horizon */
-		t2 = _object_sync(obj,(ts<(obj->valid_to>0?obj->valid_to:TS_NEVER)?ts:obj->valid_to),pass);
-	} while (t2>0 && ts>(t2<0?-t2:t2) && t2<TS_NEVER);
+		t2 = _object_sync(obj,
+				((ts < (obj->valid_to > 0 ?	obj->valid_to :	TS_NEVER))
+				? ts : obj->valid_to),
+				pass);
+	} while (t2 > 0 && ts > (t2 < 0 ? -t2 : t2) && t2 < TS_NEVER);
 
 	/* do profiling, if needed */
 	if ( global_profiler==1 )

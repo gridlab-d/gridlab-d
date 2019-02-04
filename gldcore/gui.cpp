@@ -753,7 +753,7 @@ static void gui_entity_html_content(GUIENTITY *entity)
 				strcpy(label,key->name);
 				for (p=label; *p!='\0'; p++) if (*p=='_') *p=' '; else if (p>label && *p>='A' && *p<='Z') *p+='a'-'A';
 				if (key->value!=0)
-					gui_html_output(fp,"<nobr><input class=\"%s\"type=\"checkbox\" name=\"%s\" value=\"%"FMT_INT64"d\" %s onchange=\"update_%s(this)\"/>%s</nobr>\n",
+					gui_html_output(fp,"<nobr><input class=\"%s\"type=\"checkbox\" name=\"%s\" value=\"%" FMT_INT64 "d\" %s onchange=\"update_%s(this)\"/>%s</nobr>\n",
 						ptype, gui_get_name(entity), key->value, checked, ptype, label);
 			}
 		}
@@ -770,7 +770,7 @@ static void gui_entity_html_content(GUIENTITY *entity)
 				char label[64], *p;
 				strcpy(label,key->name);
 				for (p=label; *p!='\0'; p++) if (*p=='_') *p=' '; else if (p>label && *p>='A' && *p<='Z') *p+='a'-'A';
-				gui_html_output(fp,"<nobr><input class=\"%s\" type=\"radio\" name=\"%s\" value=\"%"FMT_INT64"d\" %s onchange=\"update_%s(this)\" />%s</nobr>\n",
+				gui_html_output(fp,"<nobr><input class=\"%s\" type=\"radio\" name=\"%s\" value=\"%" FMT_INT64 "d\" %s onchange=\"update_%s(this)\" />%s</nobr>\n",
 					ptype, gui_get_name(entity), key->value, checked, ptype, label);
 			}
 		}
@@ -791,7 +791,7 @@ static void gui_entity_html_content(GUIENTITY *entity)
 				char label[64], *p;
 				strcpy(label,key->name);
 				for (p=label; *p!='\0'; p++) if (*p=='_') *p=' '; else if (p>label && *p>='A' && *p<='Z') *p+='a'-'A';
-				gui_html_output(fp,"<option value=\"%"FMT_INT64"d\" %s>%s</option>\n",
+				gui_html_output(fp,"<option value=\"%" FMT_INT64 "d\" %s>%s</option>\n",
 					key->value, checked, label);
 			}
 			gui_html_output(fp,"</select>\n");

@@ -185,7 +185,7 @@ Done:
 	@returns SUCCESS/FAILED status code
  **/
 #define DEFAULT_PORTNUM 6267
-static pthread_t thread;
+static pthread_t startup_thread;
 STATUS server_startup(int argc, char *argv[])
 {
 	static int started = 0;
@@ -270,11 +270,11 @@ Retry:
 
 	/* join the old thread and wait if it hasn't finished yet */
 	if ( started ) {
-		pthread_join(thread,&result);
+		pthread_join(startup_thread,&result);
 	}
 
 	/* start the new thread */
-	if (pthread_create(&thread,NULL,server_routine,(void*)sockfd))
+	if (pthread_create(&startup_thread,NULL,server_routine,(void*)sockfd))
 	{
 		output_error("server thread startup failed: %s",strerror(GetLastError()));
 		return FAILED;
@@ -286,7 +286,7 @@ Retry:
 STATUS server_join(void)
 {
 	void *result;
-	if (pthread_join(thread,&result)==0)
+	if (pthread_join(startup_thread,&result)==0)
 		return *static_cast<STATUS*>(result);
 	else
 	{

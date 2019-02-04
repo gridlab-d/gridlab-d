@@ -1,3 +1,4 @@
+#include "config.h"
 #ifdef HAVE_MYSQL
 
 #include "group_recorder.h"

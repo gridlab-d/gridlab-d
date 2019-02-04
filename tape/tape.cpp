@@ -81,6 +81,44 @@ TIMESTAMP delta_mode_needed = TS_NEVER; /* the time at which delta mode needs to
 #define DLSYM(H,S) dlsym(H,S)
 #endif
 
+#ifndef WIN32
+#define strtok_s strtok_r
+#else
+#ifdef __MINGW32__
+char* strtok_t(char *str, const char *delim, char **nextp)
+{
+	char *ret;
+
+	if (str == NULL)
+	{
+		str = *nextp;
+	}
+
+	str += strspn(str, delim);
+
+	if (*str == '\0')
+	{
+		return NULL;
+	}
+
+	ret = str;
+
+	str += strcspn(str, delim);
+
+	if (*str)
+	{
+		*str++ = '\0';
+	}
+
+	*nextp = str;
+
+	return ret;
+}
+
+#define strtok_s strtok_t
+#endif
+#endif
+
 static TAPEFUNCS *funcs = NULL;
 static char1024 tape_gnuplot_path;
 int32 flush_interval = 0;

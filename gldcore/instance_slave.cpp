@@ -237,7 +237,7 @@ STATUS instance_slave_link_properties(){
 			output_warning("instance_slave_link_properties(): pickle prop_size and calculated prop_size do not match!");
 		}
 	}
-	output_debug("instance_slave_link_properties(): exiting for slave %"FMT_INT64, local_inst.cacheid);
+	output_debug("instance_slave_link_properties(): exiting for slave %" FMT_INT64, local_inst.cacheid);
 	return SUCCESS;
 }
 
@@ -518,7 +518,7 @@ void *instance_slaveproc(void *ptr)
 
 		instance_slave_done();
 	} while (global_clock != TS_NEVER && rv == SUCCESS);
-	output_verbose("slave %"FMT_INT64" completion state reached", local_inst.cacheid);
+	output_verbose("slave %" FMT_INT64 " completion state reached", local_inst.cacheid);
 	pthread_exit(NULL);
 	return NULL;
 }
@@ -539,7 +539,7 @@ STATUS instance_slave_init_mem(){
 	output_debug("instance_slave_init_mem()");
 	/* @todo open cache */
 	local_inst.cacheid = global_master_port;
-	sprintf(cacheName,"GLD-%"FMT_INT64"x",global_master_port);
+	sprintf(cacheName,"GLD-%" FMT_INT64 "x",global_master_port);
 	local_inst.hMap = OpenFileMapping(FILE_MAP_ALL_ACCESS,FALSE,cacheName);
 	if ( 0 == local_inst.hMap )
 	{
@@ -583,7 +583,7 @@ STATUS instance_slave_init_mem(){
 	exec_sync_merge(NULL,reinterpret_cast<sync_data*>(&local_inst.cache));
 
 	/* open slave signalling event */
-	sprintf(eventName,"GLD-%"FMT_INT64"x-S", global_master_port);
+	sprintf(eventName,"GLD-%" FMT_INT64 "x-S", global_master_port);
 	local_inst.hSlave = OpenEvent(EVENT_ALL_ACCESS,FALSE,eventName);
 	if ( !local_inst.hSlave )
 	{
@@ -596,7 +596,7 @@ STATUS instance_slave_init_mem(){
 	}
 
 	/* open master signalling event */
-	sprintf(eventName,"GLD-%"FMT_INT64"x-M", global_master_port);
+	sprintf(eventName,"GLD-%" FMT_INT64 "x-M", global_master_port);
 	local_inst.hMaster = OpenEvent(EVENT_ALL_ACCESS,FALSE,eventName);
 	if ( !local_inst.hMaster )
 	{
@@ -664,7 +664,7 @@ STATUS instance_slave_init_socket(){
 		return FAILED;
 	}
 	// handshake?
-	sprintf(cmd, HS_CBK "%"FMT_INT64"d", global_slave_id);
+	sprintf(cmd, HS_CBK "%" FMT_INT64 "d", global_slave_id);
 	output_debug("cmd/cbk: %s", cmd);
 	rv = send(local_inst.sockfd, cmd, (int)strlen(cmd), 0);
 	if(0 == rv){
@@ -705,7 +705,7 @@ STATUS instance_slave_init_socket(){
 		;
 	}
 	memcpy(&pickle, cmd+strlen(MSG_INST), sizeof(pickle));
-	output_debug("pickle: %"FMT_INT64"d %d %d %d %d %"FMT_INT64"d", pickle.cacheid, pickle.cachesize, pickle.name_size, pickle.prop_size, pickle.id, pickle.ts);
+	output_debug("pickle: %" FMT_INT64 "d %d %d %d %d %" FMT_INT64 "d", pickle.cacheid, pickle.cachesize, pickle.name_size, pickle.prop_size, pickle.id, pickle.ts);
 	if(local_inst.cacheid != pickle.cacheid){
 		; // error
 	}
@@ -898,10 +898,10 @@ STATUS instance_slave_init(void)
 	}
 
 	output_debug("li: %llx %d %d %d %d", local_inst.cacheid, local_inst.cachesize, local_inst.name_size, local_inst.prop_size, local_inst.id);
-//	output_debug("slave %"FMT_INT64" entering init_pthreads()", local_inst.cacheid);
+//	output_debug("slave %" FMT_INT64 " entering init_pthreads()", local_inst.cacheid);
 	rv = instance_slave_init_pthreads(); // starts slaveproc() thread
-//	output_debug("slave %"FMT_INT64" exited init_pthreads()", local_inst.cacheid);
-//	output_debug("li: %"FMT_INT64" %d %d %d %d", local_inst.cacheid, local_inst.cachesize, local_inst.name_size, local_inst.prop_size, local_inst.id);
+//	output_debug("slave %" FMT_INT64 " exited init_pthreads()", local_inst.cacheid);
+//	output_debug("li: %" FMT_INT64 " %d %d %d %d", local_inst.cacheid, local_inst.cachesize, local_inst.name_size, local_inst.prop_size, local_inst.id);
 	
 	global_clock = exec_sync_get(NULL); // copy time signal to gc, legit since it's from msg
 	output_debug("inst_slave_init(): gc = %lli", global_clock);

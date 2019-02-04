@@ -23,7 +23,7 @@
 #undef MIN
 #endif
 #ifdef WIN32
-#define isnan _isnan
+//#define isnan _isnan
 #endif
 #include "climate.h"
 #include "timestamp.h"

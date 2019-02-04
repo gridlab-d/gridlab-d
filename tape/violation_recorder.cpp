@@ -854,19 +854,19 @@ int violation_recorder::check_reverse_flow_violation(TIMESTAMP t1, int violation
 		return 0;
 	directions = gl_get_set(link_monitor_obj, p_ptr);
 
-	if (has_phase(link_monitor_obj, PHASE_A) && ((*directions & AR) == AR)) {
+	if (has_phase(link_monitor_obj, PHASE_A) && ((*directions & _AR) == _AR)) {
 		if (fails_static_condition(link_monitor_obj, const_cast<char *>("current_out_A"), breaker_limit_A_upper, breaker_limit_A_lower, nominal, &retval)) {
 			increment_violation(violation_num);
 			write_to_stream(t1, echo, const_cast<char *>("VIOLATION%i, %f, %f, %f, %s, %s, A, %s"), (int)l2((double)violation_num) + 1, retval, breaker_limit_A_upper, breaker_limit_A_lower, gl_name(link_monitor_obj, objname, 127), link_monitor_obj->oclass->name, str);
 		}
 	}
-	if (has_phase(link_monitor_obj, PHASE_B) && ((*directions & BR) == BR)) {
+	if (has_phase(link_monitor_obj, PHASE_B) && ((*directions & _BR) == _BR)) {
 		if (fails_static_condition(link_monitor_obj, const_cast<char *>("current_out_B"), breaker_limit_B_upper, breaker_limit_B_lower, nominal, &retval)) {
 			increment_violation(violation_num);
 			write_to_stream(t1, echo, const_cast<char *>("VIOLATION%i, %f, %f, %f, %s, %s, B, %s"), (int)l2((double)violation_num) + 1, retval, breaker_limit_B_upper, breaker_limit_B_lower, gl_name(link_monitor_obj, objname, 127), link_monitor_obj->oclass->name, str);
 		}
 	}
-	if (has_phase(link_monitor_obj, PHASE_C) && ((*directions & CR) == CR)) {
+	if (has_phase(link_monitor_obj, PHASE_C) && ((*directions & _CR) == _CR)) {
 		if (fails_static_condition(link_monitor_obj, const_cast<char *>("current_out_C"), breaker_limit_C_upper, breaker_limit_C_lower, nominal, &retval)) {
 			increment_violation(violation_num);
 			write_to_stream(t1, echo, const_cast<char *>("VIOLATION%i, %f, %f, %f, %s, %s, C, %s"), (int)l2((double)violation_num) + 1, retval, breaker_limit_C_upper, breaker_limit_C_lower, gl_name(link_monitor_obj, objname, 127), link_monitor_obj->oclass->name, str);

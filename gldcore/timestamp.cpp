@@ -287,7 +287,7 @@ int local_datetime(TIMESTAMP ts, DATETIME *dt)
 		}
 		n = (daysinmonth[dt->month] + ((dt->month == 1 && ISLEAPYEAR(dt->year)) ? 1:0)) * 86400 * TS_SECOND;
 		if(n < 86400 * 28){ /**/
-			output_fatal("Breaking an infinite loop in local_datetime! (ts = %"FMT_INT64"ds", ts);
+			output_fatal("Breaking an infinite loop in local_datetime! (ts = %" FMT_INT64 "ds", ts);
 			/*	TROUBLESHOOT
 				An internal protection against infinite loops in the time calculation
 				module has encountered a critical problem.  This is often caused by
@@ -421,7 +421,7 @@ int local_datetime_delta(double tsdbl, DATETIME *dt)
 		}
 		n = (daysinmonth[dt->month] + ((dt->month == 1 && ISLEAPYEAR(dt->year)) ? 1:0)) * 86400 * TS_SECOND;
 		if(n < 86400 * 28){ /**/
-			output_fatal("Breaking an infinite loop in local_datetime_delta! (ts = %"FMT_INT64"ds", ts);
+			output_fatal("Breaking an infinite loop in local_datetime_delta! (ts = %" FMT_INT64 "ds", ts);
 			/*	TROUBLESHOOT
 				An internal protection against infinite loops in the time calculation
 				module has encountered a critical problem.  This is often caused by
@@ -1144,7 +1144,7 @@ int convert_from_deltatime_timestamp(double ts_v, char *buffer, int size)
 	else if (ts==0)
 		len=sprintf(temp,"%s","INIT");
 	else
-		len=sprintf(temp,"%"FMT_INT64"d",ts);
+		len=sprintf(temp,"%" FMT_INT64 "d",ts);
 	if (len<size)
 	{
 		if(ts == TS_NEVER){
@@ -1170,7 +1170,16 @@ TIMESTAMP convert_to_timestamp(const char *value)
 	if (sscanf(value,"%d-%d-%d %d:%d:%d %[-+:A-Za-z0-9]",&Y,&m,&d,&H,&M,&S,tz)>=3)
 	{
 		int isdst = (strcmp(tz,tzdst)==0) ? 1 : 0;
-		DATETIME dt = {Y,m,d,H,M,S,0,isdst}; /* use GMT if tz is omitted */
+		DATETIME dt = {
+				static_cast<short>(Y),
+				static_cast<short>(m),
+				static_cast<short>(d),
+				static_cast<short>(H),
+				static_cast<short>(M),
+				static_cast<short>(S),
+				0,
+				static_cast<short>(isdst)
+		}; /* use GMT if tz is omitted */
 		strncpy(dt.tz,tz,sizeof(dt.tz));
 		return mkdatetime(&dt);
 	}
@@ -1178,24 +1187,48 @@ TIMESTAMP convert_to_timestamp(const char *value)
 	else if (global_dateformat==DF_ISO && sscanf(value,"%d/%d/%d %d:%d:%d %[-+:A-Za-z0-9]",&Y,&m,&d,&H,&M,&S,tz)>=3)
 	{
 		int isdst = (strcmp(tz,tzdst)==0) ? 1 : 0;
-		DATETIME dt = {Y,m,d,H,M,S,0,isdst}; /* use locale TZ if tz is omitted */
-		strncpy(dt.tz,tz,sizeof(dt.tz));
+		DATETIME dt = {
+				static_cast<short>(Y),
+				static_cast<short>(m),
+				static_cast<short>(d),
+				static_cast<short>(H),
+				static_cast<short>(M),
+				static_cast<short>(S),
+				0,
+				static_cast<short>(isdst)
+		}; /* use GMT if tz is omitted */		strncpy(dt.tz,tz,sizeof(dt.tz));
 		return mkdatetime(&dt);
 	}
 	/* scan US format date/time */
 	else if (global_dateformat==DF_US && sscanf(value,"%d/%d/%d %d:%d:%d %[-+:A-Za-z0-9]",&m,&d,&Y,&H,&M,&S,tz)>=3)
 	{
 		int isdst = (strcmp(tz,tzdst)==0) ? 1 : 0;
-		DATETIME dt = {Y,m,d,H,M,S,0,isdst}; /* use locale TZ if tz is omitted */
-		strncpy(dt.tz,tz,sizeof(dt.tz));
+		DATETIME dt = {
+				static_cast<short>(Y),
+				static_cast<short>(m),
+				static_cast<short>(d),
+				static_cast<short>(H),
+				static_cast<short>(M),
+				static_cast<short>(S),
+				0,
+				static_cast<short>(isdst)
+		}; /* use GMT if tz is omitted */		strncpy(dt.tz,tz,sizeof(dt.tz));
 		return mkdatetime(&dt);
 	}
 	/* scan EURO format date/time */
 	else if (global_dateformat==DF_EURO && sscanf(value,"%d/%d/%d %d:%d:%d %[-+:A-Za-z0-9]",&d,&m,&Y,&H,&M,&S,tz)>=3)
 	{
 		int isdst = (strcmp(tz,tzdst)==0) ? 1 : 0;
-		DATETIME dt = {Y,m,d,H,M,S,0,isdst}; /* use locale TZ if tz is omitted */
-		strncpy(dt.tz,tz,sizeof(dt.tz));
+		DATETIME dt = {
+				static_cast<short>(Y),
+				static_cast<short>(m),
+				static_cast<short>(d),
+				static_cast<short>(H),
+				static_cast<short>(M),
+				static_cast<short>(S),
+				0,
+				static_cast<short>(isdst)
+		}; /* use GMT if tz is omitted */		strncpy(dt.tz,tz,sizeof(dt.tz));
 		return mkdatetime(&dt);
 	}
 	/* @todo support European format date/time using some kind of global flag */
@@ -1410,7 +1443,7 @@ int timestamp_test(void)
 				}
 				else
 				{
-					output_test("FAILED: unable to convert ts=%"FMT_INT64"d to local time", ts);
+					output_test("FAILED: unable to convert ts=%" FMT_INT64 "d to local time", ts);
 					failed++;
 				}
 			}
@@ -1450,7 +1483,7 @@ int timestamp_test(void)
 		}
 		else
 		{
-			output_test("FAILED: timestamp_test: unable to convert ts=%"FMT_INT64"d to local time", ts);
+			output_test("FAILED: timestamp_test: unable to convert ts=%" FMT_INT64 "d to local time", ts);
 			failed++;
 		}
 	}

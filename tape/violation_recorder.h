@@ -57,9 +57,9 @@ EXPORT void new_violation_recorder(MODULE *);
 #define PHASE_S		0x0070		/**< Split phase connection */
 #define GROUND		0x0080		/**< ground line connection */
 
-#define AR 0x002
-#define BR 0x020
-#define CR 0x200
+#define _AR 0x002
+#define _BR 0x020
+#define _CR 0x200
 
 #define POWER		0x01
 #define CURRENT		0x02
