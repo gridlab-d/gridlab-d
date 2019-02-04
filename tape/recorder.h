@@ -17,8 +17,9 @@ typedef enum {LU_DEFAULT, LU_ALL, LU_NONE} LINEUNITS;
 	@addtogroup recorder
 	@{
  **/
-struct recorder {
-    /* public */
+class recorder : public gld_object {
+public:
+    static recorder *defaults;
     char1024 file;
     char8 filetype;
     char32 mode;
@@ -39,7 +40,7 @@ struct recorder {
     char32 columns;
     char32 trigger;
     int32 flush;
-    /* private */
+public: //Does this need to be Private?
     RECORDER_MAP *rmap;
     TAPEOPS *ops;
     FILETYPE type;

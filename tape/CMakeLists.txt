@@ -26,8 +26,8 @@ add_library(${PROJECT_NAME}
         tape/memory.h
         tape/multi_recorder.cpp
         tape/multi_recorder.h
-        tape/odbc.cpp
-        tape/odbc.h
+#        tape/odbc.cpp
+#        tape/odbc.h
         tape/player.cpp
         tape/player.h
         tape/recorder.cpp
