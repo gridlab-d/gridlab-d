@@ -648,7 +648,7 @@ private:
 	inline bool tst_flag(const size_t r, size_t c, const unsigned char b) const {return (f[r*m+c]&b)==b;};
 	complex &my(const size_t r, const size_t c)
 	{
-		if ( x[r][c]==NULL ) x[r][c] = new complex;
+		if ( x[r][c]== nullptr) x[r][c] = new complex;
 		return (*x[r][c]);
 	};
 public:

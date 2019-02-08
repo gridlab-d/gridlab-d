@@ -20,6 +20,7 @@
 CLASS* capacitor::oclass = NULL;
 CLASS* capacitor::pclass = NULL;
 
+
 /**
 * constructor.  Class registration is only called once to 
 * register the class with the core. Include parent class constructor (node)
