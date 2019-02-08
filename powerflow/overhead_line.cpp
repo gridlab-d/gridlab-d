@@ -25,7 +25,7 @@ overhead_line::overhead_line(MODULE *mod) : line(mod)
 	{
 		pclass = line::oclass;
 		
-		oclass = gl_register_class(mod,"overhead_line",sizeof(overhead_line),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,const_cast<char*>("overhead_line"),sizeof(overhead_line),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class overhead_line";
 		else
@@ -33,24 +33,24 @@ overhead_line::overhead_line(MODULE *mod) : line(mod)
 
         if(gl_publish_variable(oclass,
 			PT_INHERIT, "line",
-			NULL) < 1) GL_THROW("unable to publish overhead_line properties in %s",__FILE__);
+			NULL) < 1) GL_THROW(const_cast<char*>("unable to publish overhead_line properties in %s"),__FILE__);
 
-		if (gl_publish_function(oclass,	"create_fault", (FUNCTIONADDR)create_fault_ohline)==NULL)
-			GL_THROW("Unable to publish fault creation function");
-		if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_ohline)==NULL)
-			GL_THROW("Unable to publish fault restoration function");
+		if (gl_publish_function(oclass,	const_cast<char*>("create_fault"), (FUNCTIONADDR)create_fault_ohline)==NULL)
+			GL_THROW(const_cast<char*>("Unable to publish fault creation function"));
+		if (gl_publish_function(oclass,	const_cast<char*>("fix_fault"), (FUNCTIONADDR)fix_fault_ohline)==NULL)
+			GL_THROW(const_cast<char*>("Unable to publish fault restoration function"));
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
-			GL_THROW("Unable to publish overhead line deltamode function");
-		if (gl_publish_function(oclass,	"recalc_distribution_line", (FUNCTIONADDR)recalc_overhead_line)==NULL)
-			GL_THROW("Unable to publish overhead line recalc function");
+		if (gl_publish_function(oclass,	const_cast<char*>("interupdate_pwr_object"), (FUNCTIONADDR)interupdate_link)==NULL)
+			GL_THROW(const_cast<char*>("Unable to publish overhead line deltamode function"));
+		if (gl_publish_function(oclass,	const_cast<char*>("recalc_distribution_line"), (FUNCTIONADDR)recalc_overhead_line)==NULL)
+			GL_THROW(const_cast<char*>("Unable to publish overhead line recalc function"));
 
 		//Publish restoration-related function (current update)
-		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
-			GL_THROW("Unable to publish overhead line external power calculation function");
-		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
-			GL_THROW("Unable to publish overhead line external power limit calculation function");
+		if (gl_publish_function(oclass,	const_cast<char*>("update_power_pwr_object"), (FUNCTIONADDR)updatepowercalc_link)==NULL)
+			GL_THROW(const_cast<char*>("Unable to publish overhead line external power calculation function"));
+		if (gl_publish_function(oclass,	const_cast<char*>("check_limits_pwr_object"), (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+			GL_THROW(const_cast<char*>("Unable to publish overhead line external power limit calculation function"));
 	}
 }
 
@@ -77,7 +77,7 @@ int overhead_line::init(OBJECT *parent)
 		with appropriate values to specify an overhead line configuration
 		*/
 
-	if (!gl_object_isa(configuration, "line_configuration"))
+	if (!gl_object_isa(configuration, const_cast<char*>("line_configuration")))
 		throw "invalid line configuration for overhead line";
 		/*  TROUBLESHOOT
 		The object specified as the configuration for the overhead line is not a valid
@@ -92,7 +92,7 @@ int overhead_line::init(OBJECT *parent)
 	test_phases(config,'C');
 	test_phases(config,'N');
 	
-	if ((!config->line_spacing || !gl_object_isa(config->line_spacing, "line_spacing")) && config->impedance11 == 0.0 && config->impedance22 == 0.0 && config->impedance33 == 0.0)
+	if ((!config->line_spacing || !gl_object_isa(config->line_spacing, const_cast<char*>("line_spacing"))) && config->impedance11 == 0.0 && config->impedance22 == 0.0 && config->impedance33 == 0.0)
 		throw "invalid or missing line spacing on overhead line";
 		/*  TROUBLESHOOT
 		The configuration object for the overhead line is missing the line_spacing configuration
@@ -122,7 +122,7 @@ int overhead_line::init(OBJECT *parent)
 			if (temp_obj != NULL)
 			{
 				//Get continuous - summer
-				temp_rating_value = get_double(temp_obj,"rating.summer.continuous");
+				temp_rating_value = get_double(temp_obj,const_cast<char*>("rating.summer.continuous"));
 
 				//Check if NULL
 				if (temp_rating_value != NULL)
@@ -135,7 +135,7 @@ int overhead_line::init(OBJECT *parent)
 				}
 
 				//Get continuous - winter
-				temp_rating_value = get_double(temp_obj,"rating.winter.continuous");
+				temp_rating_value = get_double(temp_obj,const_cast<char*>("rating.winter.continuous"));
 
 				//Check if NULL
 				if (temp_rating_value != NULL)
@@ -148,7 +148,7 @@ int overhead_line::init(OBJECT *parent)
 				}
 
 				//Now get emergency - summer
-				temp_rating_value = get_double(temp_obj,"rating.summer.emergency");
+				temp_rating_value = get_double(temp_obj,const_cast<char*>("rating.summer.emergency"));
 
 				//Check if NULL
 				if (temp_rating_value != NULL)
@@ -161,7 +161,7 @@ int overhead_line::init(OBJECT *parent)
 				}
 
 				//Now get emergency - winter
-				temp_rating_value = get_double(temp_obj,"rating.winter.emergency");
+				temp_rating_value = get_double(temp_obj,const_cast<char*>("rating.winter.emergency"));
 
 				//Check if NULL
 				if (temp_rating_value != NULL)
@@ -185,7 +185,7 @@ int overhead_line::init(OBJECT *parent)
 		if (temp_obj != NULL)
 		{
 			//Get continuous - summer
-			temp_rating_value = get_double(temp_obj,"rating.summer.continuous");
+			temp_rating_value = get_double(temp_obj,const_cast<char*>("rating.summer.continuous"));
 
 			//Check if NULL
 			if (temp_rating_value != NULL)
@@ -198,7 +198,7 @@ int overhead_line::init(OBJECT *parent)
 			}
 
 			//Get continuous - winter
-			temp_rating_value = get_double(temp_obj,"rating.winter.continuous");
+			temp_rating_value = get_double(temp_obj,const_cast<char*>("rating.winter.continuous"));
 
 			//Check if NULL
 			if (temp_rating_value != NULL)
@@ -211,7 +211,7 @@ int overhead_line::init(OBJECT *parent)
 			}
 
 			//Now get emergency - summer
-			temp_rating_value = get_double(temp_obj,"rating.summer.emergency");
+			temp_rating_value = get_double(temp_obj,const_cast<char*>("rating.summer.emergency"));
 
 			//Check if NULL
 			if (temp_rating_value != NULL)
@@ -224,7 +224,7 @@ int overhead_line::init(OBJECT *parent)
 			}
 
 			//Now get emergency - winter
-			temp_rating_value = get_double(temp_obj,"rating.winter.emergency");
+			temp_rating_value = get_double(temp_obj,const_cast<char*>("rating.winter.emergency"));
 
 			//Check if NULL
 			if (temp_rating_value != NULL)
@@ -388,7 +388,7 @@ void overhead_line::recalc(void)
 			//Make sure it worked
 			if (spacing_val == NULL)
 			{
-				GL_THROW("Line spacing not found, capacitance calculations failed!");
+				GL_THROW(const_cast<char*>("Line spacing not found, capacitance calculations failed!"));
 				/*  TROUBLESHOOT
 				The line spacing values could not be properly mapped.  Capacitance values
 				can not be calculated for this line (and other values may be in error).  Please
@@ -884,7 +884,7 @@ void overhead_line::test_phases(line_configuration *config, const char ph)
 	{
 		if (config->impedance11 == 0.0)
 		{
-			condCheck = (config->phaseA_conductor && !gl_object_isa(config->phaseA_conductor, "overhead_line_conductor","powerflow"));
+			condCheck = (config->phaseA_conductor && !gl_object_isa(config->phaseA_conductor, const_cast<char*>("overhead_line_conductor"),const_cast<char*>("powerflow")));
 			condNotPres = ((!config->phaseA_conductor) && has_phase(PHASE_A));
 		}
 		else
@@ -897,7 +897,7 @@ void overhead_line::test_phases(line_configuration *config, const char ph)
 	{
 		if (config->impedance22 == 0.0)
 		{
-			condCheck = (config->phaseB_conductor && !gl_object_isa(config->phaseB_conductor, "overhead_line_conductor","powerflow"));
+			condCheck = (config->phaseB_conductor && !gl_object_isa(config->phaseB_conductor, const_cast<char*>("overhead_line_conductor"),const_cast<char*>("powerflow")));
 			condNotPres = ((!config->phaseB_conductor) && has_phase(PHASE_B));
 		}
 		else
@@ -910,7 +910,7 @@ void overhead_line::test_phases(line_configuration *config, const char ph)
 	{
 		if (config->impedance33 == 0.0)
 		{
-			condCheck = (config->phaseC_conductor && !gl_object_isa(config->phaseC_conductor, "overhead_line_conductor","powerflow"));
+			condCheck = (config->phaseC_conductor && !gl_object_isa(config->phaseC_conductor, const_cast<char*>("overhead_line_conductor"),const_cast<char*>("powerflow")));
 			condNotPres = ((!config->phaseC_conductor) && has_phase(PHASE_C));
 		}
 		else
@@ -923,7 +923,7 @@ void overhead_line::test_phases(line_configuration *config, const char ph)
 	{
 		if (config->impedance11 == 0.0 && config->impedance22 == 0.0 && config->impedance33 == 0.0)
 		{
-			condCheck = (config->phaseN_conductor && !gl_object_isa(config->phaseN_conductor, "overhead_line_conductor","powerflow"));
+			condCheck = (config->phaseN_conductor && !gl_object_isa(config->phaseN_conductor, const_cast<char*>("overhead_line_conductor"),const_cast<char*>("powerflow")));
 			condNotPres = ((!config->phaseN_conductor) && has_phase(PHASE_N));
 		}
 		else
@@ -935,11 +935,11 @@ void overhead_line::test_phases(line_configuration *config, const char ph)
 	//Nothing else down here.  Should never get anything besides ABCN to check
 
 	if (condCheck==true)
-		GL_THROW("invalid conductor for phase %c of overhead line %s",ph,obj->name);
+		GL_THROW(const_cast<char*>("invalid conductor for phase %c of overhead line %s"),ph,obj->name);
 		/*	TROUBLESHOOT  The conductor specified for the indicated phase is not necessarily an overhead line conductor, it may be an underground or triplex-line only conductor */
 
 	if (condNotPres==true)
-		GL_THROW("missing conductor for phase %c of overhead line %s",ph,obj->name);
+		GL_THROW(const_cast<char*>("missing conductor for phase %c of overhead line %s"),ph,obj->name);
 		/*  TROUBLESHOOT
 		The conductor specified for the indicated phase for the overhead line is missing
 		or invalid.

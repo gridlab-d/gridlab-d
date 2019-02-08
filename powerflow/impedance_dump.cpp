@@ -24,9 +24,9 @@ impedance_dump::impedance_dump(MODULE *mod)
 	if (oclass==NULL)
 	{
 		// register the class definition
-		oclass = gl_register_class(mod,"impedance_dump",sizeof(impedance_dump),PC_AUTOLOCK);
+		oclass = gl_register_class(mod,const_cast<char*>("impedance_dump"),sizeof(impedance_dump),PC_AUTOLOCK);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
+			GL_THROW(const_cast<char*>("unable to register object class implemented by %s"),__FILE__);
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
@@ -34,7 +34,7 @@ impedance_dump::impedance_dump(MODULE *mod)
 			PT_char256,"filename",PADDR(filename),PT_DESCRIPTION,"the file to dump the current data into",
 			PT_timestamp,"runtime",PADDR(runtime),PT_DESCRIPTION,"the time to check voltage data",
 			PT_int32,"runcount",PADDR(runcount),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the number of times the file has been written to",
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			NULL)<1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
 	}
 }
 
@@ -181,11 +181,11 @@ int impedance_dump::dump(TIMESTAMP t)
 			
 			//write the from node's voltage
 			if(pFuse[index]->has_phase(PHASE_A)){
-				node_voltage = get_complex(pFuse[index]->from,"voltage_A");
+				node_voltage = get_complex(pFuse[index]->from,const_cast<char*>("voltage_A"));
 			} else if(pFuse[index]->has_phase(PHASE_B)){
-				node_voltage = get_complex(pFuse[index]->from,"voltage_B");
+				node_voltage = get_complex(pFuse[index]->from,const_cast<char*>("voltage_B"));
 			} else if(pFuse[index]->has_phase(PHASE_C)){
-				node_voltage = get_complex(pFuse[index]->from,"voltage_C");
+				node_voltage = get_complex(pFuse[index]->from,const_cast<char*>("voltage_C"));
 			}
 
 			if(node_voltage == NULL){
@@ -197,11 +197,11 @@ int impedance_dump::dump(TIMESTAMP t)
 
 			//write the to node's voltage
 			if(pFuse[index]->has_phase(PHASE_A)){
-				node_voltage = get_complex(pFuse[index]->to,"voltage_A");
+				node_voltage = get_complex(pFuse[index]->to,const_cast<char*>("voltage_A"));
 			} else if(pFuse[index]->has_phase(PHASE_B)){
-				node_voltage = get_complex(pFuse[index]->to,"voltage_B");
+				node_voltage = get_complex(pFuse[index]->to,const_cast<char*>("voltage_B"));
 			} else if(pFuse[index]->has_phase(PHASE_C)){
-				node_voltage = get_complex(pFuse[index]->to,"voltage_C");
+				node_voltage = get_complex(pFuse[index]->to,const_cast<char*>("voltage_C"));
 			}
 
 			if(node_voltage == NULL){
@@ -374,11 +374,11 @@ int impedance_dump::dump(TIMESTAMP t)
 
 			//write the from node's voltage
 			if(pOhLine[index]->has_phase(PHASE_A)){
-				node_voltage = get_complex(pOhLine[index]->from,"voltage_A");
+				node_voltage = get_complex(pOhLine[index]->from,const_cast<char*>("voltage_A"));
 			} else if(pOhLine[index]->has_phase(PHASE_B)){
-				node_voltage = get_complex(pOhLine[index]->from,"voltage_B");
+				node_voltage = get_complex(pOhLine[index]->from,const_cast<char*>("voltage_B"));
 			} else if(pOhLine[index]->has_phase(PHASE_C)){
-				node_voltage = get_complex(pOhLine[index]->from,"voltage_C");
+				node_voltage = get_complex(pOhLine[index]->from,const_cast<char*>("voltage_C"));
 			}
 
 			if(node_voltage == NULL){
@@ -390,11 +390,11 @@ int impedance_dump::dump(TIMESTAMP t)
 
 			//write the to node's voltage
 			if(pOhLine[index]->has_phase(PHASE_A)){
-				node_voltage = get_complex(pOhLine[index]->to,"voltage_A");
+				node_voltage = get_complex(pOhLine[index]->to,const_cast<char*>("voltage_A"));
 			} else if(pOhLine[index]->has_phase(PHASE_B)){
-				node_voltage = get_complex(pOhLine[index]->to,"voltage_B");
+				node_voltage = get_complex(pOhLine[index]->to,const_cast<char*>("voltage_B"));
 			} else if(pOhLine[index]->has_phase(PHASE_C)){
-				node_voltage = get_complex(pOhLine[index]->to,"voltage_C");
+				node_voltage = get_complex(pOhLine[index]->to,const_cast<char*>("voltage_C"));
 			}
 
 			if(node_voltage == NULL){
@@ -570,11 +570,11 @@ int impedance_dump::dump(TIMESTAMP t)
 
 			//write the from node's voltage
 			if(pRecloser[index]->has_phase(PHASE_A)){
-				node_voltage = get_complex(pRecloser[index]->from,"voltage_A");
+				node_voltage = get_complex(pRecloser[index]->from,const_cast<char*>("voltage_A"));
 			} else if(pRecloser[index]->has_phase(PHASE_B)){
-				node_voltage = get_complex(pRecloser[index]->from,"voltage_B");
+				node_voltage = get_complex(pRecloser[index]->from,const_cast<char*>("voltage_B"));
 			} else if(pRecloser[index]->has_phase(PHASE_C)){
-				node_voltage = get_complex(pRecloser[index]->from,"voltage_C");
+				node_voltage = get_complex(pRecloser[index]->from,const_cast<char*>("voltage_C"));
 			}
 
 			if(node_voltage == NULL){
@@ -586,11 +586,11 @@ int impedance_dump::dump(TIMESTAMP t)
 
 			//write the to node's voltage
 			if(pRecloser[index]->has_phase(PHASE_A)){
-				node_voltage = get_complex(pRecloser[index]->to,"voltage_A");
+				node_voltage = get_complex(pRecloser[index]->to,const_cast<char*>("voltage_A"));
 			} else if(pRecloser[index]->has_phase(PHASE_B)){
-				node_voltage = get_complex(pRecloser[index]->to,"voltage_B");
+				node_voltage = get_complex(pRecloser[index]->to,const_cast<char*>("voltage_B"));
 			} else if(pRecloser[index]->has_phase(PHASE_C)){
-				node_voltage = get_complex(pRecloser[index]->to,"voltage_C");
+				node_voltage = get_complex(pRecloser[index]->to,const_cast<char*>("voltage_C"));
 			}
 
 			if(node_voltage == NULL){
@@ -763,11 +763,11 @@ int impedance_dump::dump(TIMESTAMP t)
 
 			//write the from node's voltage
 			if(pRegulator[index]->has_phase(PHASE_A)){
-				node_voltage = get_complex(pRegulator[index]->from,"voltage_A");
+				node_voltage = get_complex(pRegulator[index]->from,const_cast<char*>("voltage_A"));
 			} else if(pRegulator[index]->has_phase(PHASE_B)){
-				node_voltage = get_complex(pRegulator[index]->from,"voltage_B");
+				node_voltage = get_complex(pRegulator[index]->from,const_cast<char*>("voltage_B"));
 			} else if(pRegulator[index]->has_phase(PHASE_C)){
-				node_voltage = get_complex(pRegulator[index]->from,"voltage_C");
+				node_voltage = get_complex(pRegulator[index]->from,const_cast<char*>("voltage_C"));
 			}
 
 			if(node_voltage == NULL){
@@ -779,11 +779,11 @@ int impedance_dump::dump(TIMESTAMP t)
 
 			//write the to node's voltage
 			if(pRegulator[index]->has_phase(PHASE_A)){
-				node_voltage = get_complex(pRegulator[index]->to,"voltage_A");
+				node_voltage = get_complex(pRegulator[index]->to,const_cast<char*>("voltage_A"));
 			} else if(pRegulator[index]->has_phase(PHASE_B)){
-				node_voltage = get_complex(pRegulator[index]->to,"voltage_B");
+				node_voltage = get_complex(pRegulator[index]->to,const_cast<char*>("voltage_B"));
 			} else if(pRegulator[index]->has_phase(PHASE_C)){
-				node_voltage = get_complex(pRegulator[index]->to,"voltage_C");
+				node_voltage = get_complex(pRegulator[index]->to,const_cast<char*>("voltage_C"));
 			}
 
 			if(node_voltage == NULL){
@@ -960,11 +960,11 @@ int impedance_dump::dump(TIMESTAMP t)
 
 			//write the from node's voltage
 			if(pRelay[index]->has_phase(PHASE_A)){
-				node_voltage = get_complex(pRelay[index]->from,"voltage_A");
+				node_voltage = get_complex(pRelay[index]->from,const_cast<char*>("voltage_A"));
 			} else if(pRelay[index]->has_phase(PHASE_B)){
-				node_voltage = get_complex(pRelay[index]->from,"voltage_B");
+				node_voltage = get_complex(pRelay[index]->from,const_cast<char*>("voltage_B"));
 			} else if(pRelay[index]->has_phase(PHASE_C)){
-				node_voltage = get_complex(pRelay[index]->from,"voltage_C");
+				node_voltage = get_complex(pRelay[index]->from,const_cast<char*>("voltage_C"));
 			}
 
 			if(node_voltage == NULL){
@@ -976,11 +976,11 @@ int impedance_dump::dump(TIMESTAMP t)
 
 			//write the to node's voltage
 			if(pRelay[index]->has_phase(PHASE_A)){
-				node_voltage = get_complex(pRelay[index]->to,"voltage_A");
+				node_voltage = get_complex(pRelay[index]->to,const_cast<char*>("voltage_A"));
 			} else if(pRelay[index]->has_phase(PHASE_B)){
-				node_voltage = get_complex(pRelay[index]->to,"voltage_B");
+				node_voltage = get_complex(pRelay[index]->to,const_cast<char*>("voltage_B"));
 			} else if(pRelay[index]->has_phase(PHASE_C)){
-				node_voltage = get_complex(pRelay[index]->to,"voltage_C");
+				node_voltage = get_complex(pRelay[index]->to,const_cast<char*>("voltage_C"));
 			}
 
 			if(node_voltage == NULL){
@@ -1153,11 +1153,11 @@ int impedance_dump::dump(TIMESTAMP t)
 
 			//write the from node's voltage
 			if(pSectionalizer[index]->has_phase(PHASE_A)){
-				node_voltage = get_complex(pSectionalizer[index]->from,"voltage_A");
+				node_voltage = get_complex(pSectionalizer[index]->from,const_cast<char*>("voltage_A"));
 			} else if(pSectionalizer[index]->has_phase(PHASE_B)){
-				node_voltage = get_complex(pSectionalizer[index]->from,"voltage_B");
+				node_voltage = get_complex(pSectionalizer[index]->from,const_cast<char*>("voltage_B"));
 			} else if(pSectionalizer[index]->has_phase(PHASE_C)){
-				node_voltage = get_complex(pSectionalizer[index]->from,"voltage_C");
+				node_voltage = get_complex(pSectionalizer[index]->from,const_cast<char*>("voltage_C"));
 			}
 
 			if(node_voltage == NULL){
@@ -1169,11 +1169,11 @@ int impedance_dump::dump(TIMESTAMP t)
 
 			//write the to node's voltage
 			if(pSectionalizer[index]->has_phase(PHASE_A)){
-				node_voltage = get_complex(pSectionalizer[index]->to,"voltage_A");
+				node_voltage = get_complex(pSectionalizer[index]->to,const_cast<char*>("voltage_A"));
 			} else if(pSectionalizer[index]->has_phase(PHASE_B)){
-				node_voltage = get_complex(pSectionalizer[index]->to,"voltage_B");
+				node_voltage = get_complex(pSectionalizer[index]->to,const_cast<char*>("voltage_B"));
 			} else if(pSectionalizer[index]->has_phase(PHASE_C)){
-				node_voltage = get_complex(pSectionalizer[index]->to,"voltage_C");
+				node_voltage = get_complex(pSectionalizer[index]->to,const_cast<char*>("voltage_C"));
 			}
 
 			if(node_voltage == NULL){
@@ -1346,11 +1346,11 @@ int impedance_dump::dump(TIMESTAMP t)
 
 			//write the from node's voltage
 			if(pSeriesReactor[index]->has_phase(PHASE_A)){
-				node_voltage = get_complex(pSeriesReactor[index]->from,"voltage_A");
+				node_voltage = get_complex(pSeriesReactor[index]->from,const_cast<char*>("voltage_A"));
 			} else if(pSeriesReactor[index]->has_phase(PHASE_B)){
-				node_voltage = get_complex(pSeriesReactor[index]->from,"voltage_B");
+				node_voltage = get_complex(pSeriesReactor[index]->from,const_cast<char*>("voltage_B"));
 			} else if(pSeriesReactor[index]->has_phase(PHASE_C)){
-				node_voltage = get_complex(pSeriesReactor[index]->from,"voltage_C");
+				node_voltage = get_complex(pSeriesReactor[index]->from,const_cast<char*>("voltage_C"));
 			}
 
 			if(node_voltage == NULL){
@@ -1362,11 +1362,11 @@ int impedance_dump::dump(TIMESTAMP t)
 
 			//write the to node's voltage
 			if(pSeriesReactor[index]->has_phase(PHASE_A)){
-				node_voltage = get_complex(pSeriesReactor[index]->to,"voltage_A");
+				node_voltage = get_complex(pSeriesReactor[index]->to,const_cast<char*>("voltage_A"));
 			} else if(pSeriesReactor[index]->has_phase(PHASE_B)){
-				node_voltage = get_complex(pSeriesReactor[index]->to,"voltage_B");
+				node_voltage = get_complex(pSeriesReactor[index]->to,const_cast<char*>("voltage_B"));
 			} else if(pSeriesReactor[index]->has_phase(PHASE_C)){
-				node_voltage = get_complex(pSeriesReactor[index]->to,"voltage_C");
+				node_voltage = get_complex(pSeriesReactor[index]->to,const_cast<char*>("voltage_C"));
 			}
 
 			if(node_voltage == NULL){
@@ -1540,11 +1540,11 @@ int impedance_dump::dump(TIMESTAMP t)
 
 			//write the from node's voltage
 			if(pSwitch[index]->has_phase(PHASE_A)){
-				node_voltage = get_complex(pSwitch[index]->from,"voltage_A");
+				node_voltage = get_complex(pSwitch[index]->from,const_cast<char*>("voltage_A"));
 			} else if(pSwitch[index]->has_phase(PHASE_B)){
-				node_voltage = get_complex(pSwitch[index]->from,"voltage_B");
+				node_voltage = get_complex(pSwitch[index]->from,const_cast<char*>("voltage_B"));
 			} else if(pSwitch[index]->has_phase(PHASE_C)){
-				node_voltage = get_complex(pSwitch[index]->from,"voltage_C");
+				node_voltage = get_complex(pSwitch[index]->from,const_cast<char*>("voltage_C"));
 			}
 
 			if(node_voltage == NULL){
@@ -1556,11 +1556,11 @@ int impedance_dump::dump(TIMESTAMP t)
 
 			//write the to node's voltage
 			if(pSwitch[index]->has_phase(PHASE_A)){
-				node_voltage = get_complex(pSwitch[index]->to,"voltage_A");
+				node_voltage = get_complex(pSwitch[index]->to,const_cast<char*>("voltage_A"));
 			} else if(pSwitch[index]->has_phase(PHASE_B)){
-				node_voltage = get_complex(pSwitch[index]->to,"voltage_B");
+				node_voltage = get_complex(pSwitch[index]->to,const_cast<char*>("voltage_B"));
 			} else if(pSwitch[index]->has_phase(PHASE_C)){
-				node_voltage = get_complex(pSwitch[index]->to,"voltage_C");
+				node_voltage = get_complex(pSwitch[index]->to,const_cast<char*>("voltage_C"));
 			}
 
 			if(node_voltage == NULL){
@@ -1736,11 +1736,11 @@ int impedance_dump::dump(TIMESTAMP t)
 			//write the from node's voltage
 			
 				if(pTransformer[index]->has_phase(PHASE_A)){
-					node_voltage = get_complex(pTransformer[index]->from,"voltage_A");
+					node_voltage = get_complex(pTransformer[index]->from,const_cast<char*>("voltage_A"));
 				} else if(pTransformer[index]->has_phase(PHASE_B)){
-					node_voltage = get_complex(pTransformer[index]->from,"voltage_B");
+					node_voltage = get_complex(pTransformer[index]->from,const_cast<char*>("voltage_B"));
 				} else if(pTransformer[index]->has_phase(PHASE_C)){
-					node_voltage = get_complex(pTransformer[index]->from,"voltage_C");
+					node_voltage = get_complex(pTransformer[index]->from,const_cast<char*>("voltage_C"));
 				}
 			
 
@@ -1753,14 +1753,14 @@ int impedance_dump::dump(TIMESTAMP t)
 
 			//write the to node's 
 			if(pTransformer[index]->SpecialLnk == SPLITPHASE) {
-				node_voltage = get_complex(pTransformer[index]->to,"voltage_12");
+				node_voltage = get_complex(pTransformer[index]->to,const_cast<char*>("voltage_12"));
 			} else {
 				if(pTransformer[index]->has_phase(PHASE_A)){
-					node_voltage = get_complex(pTransformer[index]->to,"voltage_A");
+					node_voltage = get_complex(pTransformer[index]->to,const_cast<char*>("voltage_A"));
 				} else if(pTransformer[index]->has_phase(PHASE_B)){
-					node_voltage = get_complex(pTransformer[index]->to,"voltage_B");
+					node_voltage = get_complex(pTransformer[index]->to,const_cast<char*>("voltage_B"));
 				} else if(pTransformer[index]->has_phase(PHASE_C)){
-					node_voltage = get_complex(pTransformer[index]->to,"voltage_C");
+					node_voltage = get_complex(pTransformer[index]->to,const_cast<char*>("voltage_C"));
 				}
 			}
 
@@ -1774,7 +1774,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			//write the transformer configuration
 			//xfmrconfig=gl_get_property(pTransformer[index]->config,"connect_type");
 			fprintf(fn,"\t\t<xfmr_config>%u</xfmr_config>\n",pTransformer[index]->config->connect_type);
-			
+
 			//write the phases
 			if(pTransformer[index]->phases == 0x0001){//A
 				fprintf(fn,"\t\t<phases>A</phases>\n");
@@ -1831,17 +1831,17 @@ int impedance_dump::dump(TIMESTAMP t)
 				fprintf(fn,"\t\t<phases>ABCD</phases>\n");
 			}
 
-			//write power rating
-			if(pTransformer[index]->config->kVA_rating!=NULL){
+			//write power rating TODO: Review comparison to 0, changed from NULL
+			if(pTransformer[index]->config->kVA_rating!= 0){
 				fprintf(fn,"\t\t<power_rating>%.6f</power_rating>\n",pTransformer[index]->config->kVA_rating);
 			}
 
 
-			//write impedance
-			if(pTransformer[index]->config->impedance.Re()!=NULL){
+			//write impedance TODO: Review comparison to 0, changed from NULL
+			if(pTransformer[index]->config->impedance.Re()!=0){
 				fprintf(fn,"\t\t<resistance>%.6f</resistance>\n",pTransformer[index]->config->impedance.Re());
 			}
-			if(pTransformer[index]->config->impedance.Im()!=NULL){
+			if(pTransformer[index]->config->impedance.Im()!=0){
 				fprintf(fn,"\t\t<reactance>%.6f</reactance>\n",pTransformer[index]->config->impedance.Im());
 			}
 			//write a_mat
@@ -1949,11 +1949,11 @@ int impedance_dump::dump(TIMESTAMP t)
 				fprintf(fn,"\t\t<to_node>%s:%d</to_node>\n",pTpLine[index]->to->oclass->name,pTpLine[index]->to->id);
 			}
 
-			//write the from node's voltage
-			fprintf(fn,"\t\t<from_voltage>%f</from_voltage>\n",120);
+			//write the from %ide's voltage
+			fprintf(fn,"\t\t<from_voltage>%i</from_voltage>\n",120);
 
 			//write the to node's voltage
-			fprintf(fn,"\t\t<to_voltage>%f</to_voltage>\n",120);
+			fprintf(fn,"\t\t<to_voltage>%i</to_voltage>\n",120);
 
 			//write the phases
 			if(pTpLine[index]->phases == 0x0001){//A
@@ -2121,11 +2121,11 @@ int impedance_dump::dump(TIMESTAMP t)
 
 			//write the from node's voltage
 			if(pUgLine[index]->has_phase(PHASE_A)){
-				node_voltage = get_complex(pUgLine[index]->from,"voltage_A");
+				node_voltage = get_complex(pUgLine[index]->from, const_cast<char*>("voltage_A"));
 			} else if(pUgLine[index]->has_phase(PHASE_B)){
-				node_voltage = get_complex(pUgLine[index]->from,"voltage_B");
+				node_voltage = get_complex(pUgLine[index]->from,const_cast<char*>("voltage_B"));
 			} else if(pUgLine[index]->has_phase(PHASE_C)){
-				node_voltage = get_complex(pUgLine[index]->from,"voltage_C");
+				node_voltage = get_complex(pUgLine[index]->from,const_cast<char*>("voltage_C"));
 			}
 
 			if(node_voltage == NULL){
@@ -2137,11 +2137,11 @@ int impedance_dump::dump(TIMESTAMP t)
 
 			//write the to node's voltage
 			if(pUgLine[index]->has_phase(PHASE_A)){
-				node_voltage = get_complex(pUgLine[index]->to,"voltage_A");
+				node_voltage = get_complex(pUgLine[index]->to,const_cast<char*>("voltage_A"));
 			} else if(pUgLine[index]->has_phase(PHASE_B)){
-				node_voltage = get_complex(pUgLine[index]->to,"voltage_B");
+				node_voltage = get_complex(pUgLine[index]->to,const_cast<char*>("voltage_B"));
 			} else if(pUgLine[index]->has_phase(PHASE_C)){
-				node_voltage = get_complex(pUgLine[index]->to,"voltage_C");
+				node_voltage = get_complex(pUgLine[index]->to,const_cast<char*>("voltage_C"));
 			}
 
 			if(node_voltage == NULL){

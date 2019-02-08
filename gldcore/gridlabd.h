@@ -245,7 +245,7 @@ inline void GL_THROW(char *format, ...)
 	va_start(ptr,format);
 	vsprintf(buffer,format,ptr);
 	va_end(ptr);
-	throw (const char*) buffer;
+	throw std::runtime_error(buffer);
 }
 #else
 #define GL_THROW (*callback->exception.throw_exception)
@@ -2342,7 +2342,7 @@ CDECL int gld_major=MAJOR, gld_minor=MINOR;
 CDECL int dllinit() __attribute__((constructor));
 CDECL int dllkill() __attribute__((destructor));
 CDECL int dllinit() { return 0; }
-CDECL int dllkill() { do_kill(NULL); }
+CDECL int dllkill() { do_kill(NULL); return 0;}
 #endif // !WIN32
 #elif defined CONSOLE
 #ifdef WIN32

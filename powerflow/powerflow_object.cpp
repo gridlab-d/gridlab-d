@@ -99,7 +99,7 @@ powerflow_object::powerflow_object(MODULE *mod)
 #ifdef SUPPORT_OUTAGES
 		oclass = gl_register_class(mod,"powerflow_object",sizeof(powerflow_object),PC_ABSTRACTONLY|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 #else
-		oclass = gl_register_class(mod,"powerflow_object",sizeof(powerflow_object),PC_ABSTRACTONLY|PC_NOSYNC|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,const_cast<char*>("powerflow_object"),sizeof(powerflow_object),PC_ABSTRACTONLY|PC_NOSYNC|PC_AUTOLOCK);
 #endif
 		if (oclass==NULL)
 			throw "unable to register class powerflow_object";
@@ -137,7 +137,7 @@ powerflow_object::powerflow_object(MODULE *mod)
 				PT_KEYWORD, "NORMAL", PS_NORMAL,
 				PT_KEYWORD, "OUTAGE", PS_OUTAGE,
 #endif
-         	NULL) < 1) GL_THROW("unable to publish powerflow_object properties in %s",__FILE__);
+         	NULL) < 1) GL_THROW(const_cast<char*>("unable to publish powerflow_object properties in %s"),__FILE__);
 
 		// set defaults
 	}
@@ -176,7 +176,7 @@ int powerflow_object::create(void)
 int powerflow_object::init(OBJECT *parent)
 {
 	/* unspecified phase inherits from parent, if any */
-	if (parent && gl_object_isa(parent,"powerflow_object"))
+	if (parent && gl_object_isa(parent,const_cast<char*>("powerflow_object")))
 	{
 		powerflow_object *pParent = OBJECTDATA(parent,powerflow_object);
 		if (phases==NO_PHASE)

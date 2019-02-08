@@ -29,7 +29,7 @@ regulator_configuration::regulator_configuration(MODULE *mod) : powerflow_librar
 	if (oclass==NULL)
 	{
 		// register the class definition
-		oclass = gl_register_class(mod,"regulator_configuration",sizeof(regulator_configuration),0x00);
+		oclass = gl_register_class(mod,const_cast<char*>("regulator_configuration"),sizeof(regulator_configuration),0x00);
 		if (oclass==NULL)
 			throw "unable to register class regulator_configuration";
 		else
@@ -85,7 +85,7 @@ regulator_configuration::regulator_configuration(MODULE *mod) : powerflow_librar
 			PT_int16, "tap_pos_A",PADDR(tap_posA),PT_DESCRIPTION,"initial tap position of phase A",
 			PT_int16, "tap_pos_B",PADDR(tap_posB),PT_DESCRIPTION,"initial tap position of phase B",
 			PT_int16, "tap_pos_C",PADDR(tap_posC),PT_DESCRIPTION,"initial tap position of phase C",
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			NULL)<1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
 	}
 }
 
@@ -126,7 +126,7 @@ int regulator_configuration::init(OBJECT *parent)
 	if (Control == LINE_DROP_COMP) 
 	{
 		if (PT_ratio == 0)
-			GL_THROW("power_transducer_ratio must be set as a non-zero value when operating in LINE_DROP_COMP mode");
+			GL_THROW(const_cast<char*>("power_transducer_ratio must be set as a non-zero value when operating in LINE_DROP_COMP mode"));
 			/* TROUBLESHOOT
 			PT_ratio must be set as a positive, non-zero value when LINE_DROP_COMP is selected to properly scale the 
 			voltage drop along the line being compensated.
@@ -139,15 +139,15 @@ int regulator_configuration::init(OBJECT *parent)
 		{	// It's okay 
 		}
 		else 
-			GL_THROW("There are too many CT_phases specified for a BANK control_level (or it wasn't specified).  Should only be one phase monitored.");
+			GL_THROW(const_cast<char*>("There are too many CT_phases specified for a BANK control_level (or it wasn't specified).  Should only be one phase monitored."));
 		if (PT_phase == 1 || PT_phase == 2 || PT_phase == 4)
 		{	// It's okay 
 		}
 		else 
-			GL_THROW("There are too many PT_phases specified for a BANK control_level (or it wasn't specified).  Should only be one phase monitored.");
+			GL_THROW(const_cast<char*>("There are too many PT_phases specified for a BANK control_level (or it wasn't specified).  Should only be one phase monitored."));
 	}
 	if (raise_taps <= 0 || lower_taps <= 0)
-		GL_THROW("raise and lower taps must be specified to non-zero numbers");
+		GL_THROW(const_cast<char*>("raise and lower taps must be specified to non-zero numbers"));
 		/* TROUBLESHOOT
 		The number of tap positions available in the regulator must be known to determine the limits of the regulator.
 		Typically, these are specified as equal values (amount up is the same as amount down), and a common value is 16.
@@ -159,14 +159,14 @@ int regulator_configuration::init(OBJECT *parent)
 		if (band_width == 0)
 			gl_warning("band_width is set to zero in automatic control. May cause oscillations.");
 		if (regulation == 0)
-			GL_THROW("regulation must be set to a non-zero number when operating in an automatic controlled mode.");
+			GL_THROW(const_cast<char*>("regulation must be set to a non-zero number when operating in an automatic controlled mode."));
 			/* TROUBLESHOOT
 			When specifying an automatic regulator control method, a positive, non-zero regulation value must be specified
 			to indicate the value of each tap change.  A typical configuration would include a regulation of 0.1, which
 			leads to a tap change of 0.625% of the band_center voltage. 
 			*/
 		if (connect_type != WYE_WYE)
-			GL_THROW("At this time, only WYE_WYE regulators are supported in automatic control modes.");
+			GL_THROW(const_cast<char*>("At this time, only WYE_WYE regulators are supported in automatic control modes."));
 			/* TROUBLESHOOT
 			Unfortunately, at this time, only Wye-Wye connect type transformers are supported in the automatic control
 			mode (LINE_DROP_COMP, OUTPUT_VOLTAGE, or REMOTE_NODE). Future versions should support these objects, but
@@ -175,10 +175,10 @@ int regulator_configuration::init(OBJECT *parent)
 	}
 
 	if (connect_type != WYE_WYE && solver_method != SM_FBS)
-		GL_THROW("Only WYE_WYE regulator connections are fully supported in FBS & NR solvers at this time.");
+		GL_THROW(const_cast<char*>("Only WYE_WYE regulator connections are fully supported in FBS & NR solvers at this time."));
 
 	if (solver_method == SM_GS)
-		GL_THROW("Regulators are not supported in the Gauss-Seidel solver method.");
+		GL_THROW(const_cast<char*>("Regulators are not supported in the Gauss-Seidel solver method."));
 
 	return 1;
 }

@@ -32,7 +32,7 @@ capacitor::capacitor(MODULE *mod):node(mod)
 	{
 		pclass = node::oclass;
 		
-		oclass = gl_register_class(mod,"capacitor",sizeof(capacitor),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
+		oclass = gl_register_class(mod, const_cast<char*>("capacitor"),sizeof(capacitor),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class capacitor";
 		else
@@ -94,13 +94,13 @@ capacitor::capacitor(MODULE *mod):node(mod)
 			PT_enumeration, "control_level", PADDR(control_level),PT_DESCRIPTION,"define bank or individual control",
 				PT_KEYWORD, "BANK", (enumeration)BANK,
 				PT_KEYWORD, "INDIVIDUAL", (enumeration)INDIVIDUAL, 
-         	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+         	NULL) < 1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_capacitor)==NULL)
-			GL_THROW("Unable to publish capacitor deltamode function");
-		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
-			GL_THROW("Unable to publish capacitor swing-swapping function");
+		if (gl_publish_function(oclass,	const_cast<char*>("interupdate_pwr_object"), (FUNCTIONADDR)interupdate_capacitor)==NULL)
+			GL_THROW(const_cast<char*>("Unable to publish capacitor deltamode function"));
+		if (gl_publish_function(oclass,	const_cast<char*>("pwr_object_swing_swapper"), (FUNCTIONADDR)swap_node_swing_status)==NULL)
+			GL_THROW(const_cast<char*>("Unable to publish capacitor swing-swapping function"));
     }
 }
 
@@ -182,7 +182,7 @@ int capacitor::init(OBJECT *parent)
 	{
 		if (RemoteSensor==NULL)	//But nothing in the first
 		{
-			GL_THROW("Please set the remote sensing location on capacitor:%d under \"remote_sense\"",obj->id);
+			GL_THROW(const_cast<char*>("Please set the remote sensing location on capacitor:%d under \"remote_sense\""),obj->id);
 			/*  TROUBLESHOOT
 			Capacitor objects have two "remote sensor" fields that can be set.  The secondary sensor is only used in VAR-VOLT schemes
 			and requires that the primary sensor is used first.
@@ -190,17 +190,17 @@ int capacitor::init(OBJECT *parent)
 		}
 		else	//It has something too - let's make sure they are right
 		{
-			if ((gl_object_isa(RemoteSensor,"node","powerflow")) && (gl_object_isa(SecondaryRemote,"link","powerflow")))	//Node in 1, link in 2
+			if ((gl_object_isa(RemoteSensor,const_cast<char*>("node"),const_cast<char*>("powerflow"))) && (gl_object_isa(SecondaryRemote,const_cast<char*>("link"),const_cast<char*>("powerflow"))))	//Node in 1, link in 2
 			{
 				RNode = RemoteSensor;
 				RLink = SecondaryRemote;
 			}
-			else if ((gl_object_isa(RemoteSensor,"link","powerflow")) && (gl_object_isa(SecondaryRemote,"node","powerflow")))	//link in 1, node in 2
+			else if ((gl_object_isa(RemoteSensor,const_cast<char*>("link"),const_cast<char*>("powerflow"))) && (gl_object_isa(SecondaryRemote,const_cast<char*>("node"),const_cast<char*>("powerflow"))))	//link in 1, node in 2
 			{
 				RNode = SecondaryRemote;
 				RLink = RemoteSensor;
 			}
-			else if ((gl_object_isa(RemoteSensor,"network_interface")) && (gl_object_isa(SecondaryRemote,"network_interface")))
+			else if ((gl_object_isa(RemoteSensor,const_cast<char*>("network_interface"))) && (gl_object_isa(SecondaryRemote,const_cast<char*>("network_interface"))))
 			{
 				//Just copy in
 				RNode = RemoteSensor;
@@ -208,7 +208,7 @@ int capacitor::init(OBJECT *parent)
 			}
 			else
 			{
-				GL_THROW("For two remote sensors, Capacitor:%d requires one link and one node object specified.",obj->id);
+				GL_THROW(const_cast<char*>("For two remote sensors, Capacitor:%d requires one link and one node object specified."),obj->id);
 				/*  TROUBLESHOOT
 				To use both remote sensor fields, the capacitor must in VAR-VOLT control mode.  Furthermore, these two sensors are used
 				to determine voltage and power measurements elsewhere on the system, so a remote node and a remote link must be specified.
@@ -216,7 +216,7 @@ int capacitor::init(OBJECT *parent)
 			}
 		}
 	}
-	else if (((control==VARVOLT) || (control==CURRENT)) && (SecondaryRemote==NULL) && (RemoteSensor != NULL) && (gl_object_isa(RemoteSensor,"link","powerflow") || gl_object_isa(RemoteSensor,"network_interface")))	//VAR-VOLT scheme, one sensor defined
+	else if (((control==VARVOLT) || (control==CURRENT)) && (SecondaryRemote==NULL) && (RemoteSensor != NULL) && (gl_object_isa(RemoteSensor,const_cast<char*>("link"),const_cast<char*>("powerflow")) || gl_object_isa(RemoteSensor,const_cast<char*>("network_interface"))))	//VAR-VOLT scheme, one sensor defined
 	{
 		RLink = RemoteSensor;
 	}
@@ -231,15 +231,15 @@ int capacitor::init(OBJECT *parent)
 
 	if ((RemoteSensor != NULL) && (control != VARVOLT))	//Something is specified
 	{
-		if (gl_object_isa(RemoteSensor,"node","powerflow"))
+		if (gl_object_isa(RemoteSensor,const_cast<char*>("node"),const_cast<char*>("powerflow")))
 		{
 			RNode = RemoteSensor;	//Get remote node information
 		}
-		else if (gl_object_isa(RemoteSensor,"link","powerflow"))
+		else if (gl_object_isa(RemoteSensor,const_cast<char*>("link"),const_cast<char*>("powerflow")))
 		{
 			RLink = RemoteSensor;	//Get remote link information
 		}
-		else if (gl_object_isa(RemoteSensor,"network_interface"))
+		else if (gl_object_isa(RemoteSensor,const_cast<char*>("network_interface")))
 		{
 			gl_warning("Capacitor:%d - %s - the remote_sense object is a network_interface, node/link connections both enabled",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
@@ -267,7 +267,7 @@ int capacitor::init(OBJECT *parent)
 	}
 
 	if ((cap_nominal_voltage==0.0) && (nominal_voltage==0.0))	//Check both just in csae, but if cap_nominal is 0 at this point, both probably are
-		GL_THROW("Capcitor:%d does not have a node nominal or capacitor nominal voltage specified.",obj->id);
+		GL_THROW(const_cast<char*>("Capcitor:%d does not have a node nominal or capacitor nominal voltage specified."),obj->id);
 		/*  TROUBLESHOOT
 		The capacitor needs the cap_nominal_voltage or nominal_voltage property set to calculate the resultant
 		capacitance value from the power rating.  Please specify one or both of these values.
@@ -307,26 +307,26 @@ int capacitor::init(OBJECT *parent)
 		*/
 
 	if (((control == VAR) || (control == VARVOLT) || (control==CURRENT)) && (RLink == NULL))
-		GL_THROW("VAR, VARVOLT, or CURRENT control on capacitor:%d requires a remote link to monitor.",obj->id);
+		GL_THROW(const_cast<char*>("VAR, VARVOLT, or CURRENT control on capacitor:%d requires a remote link to monitor."),obj->id);
 		/*  TROUBLESHOOT
 		For VAR, VARVOLT, or CURRENT control to work on the capacitor, a remote line must be specified to monitor reactive power flow.  Without this, no operations will
 		occur within the capacitor.
 		*/
 
 	if (((control==VAR) || (control==VARVOLT)) && (VAr_set_low > VAr_set_high))	//Check limits
-		GL_THROW("The lower VAr limit of capacitor:%d is larger than the high limit setpoint!",obj->id);
+		GL_THROW(const_cast<char*>("The lower VAr limit of capacitor:%d is larger than the high limit setpoint!"),obj->id);
 		/*  TROUBLESHOOT
 		Under VAr controls, the lower VAr set point must be less than the upper VAr set point.  Please set these accordingly.
 		*/
 
 	if (((control==VOLT) || (control==VARVOLT)) && (voltage_set_low > voltage_set_high))	//Check limits
-		GL_THROW("The lower voltage limit of capacitor:%d is larger than the high limit setpoint!",obj->id);
+		GL_THROW(const_cast<char*>("The lower voltage limit of capacitor:%d is larger than the high limit setpoint!"),obj->id);
 		/*  TROUBLESHOOT
 		Under voltage controls, the lower voltage set point must be less than the upper voltage set point.  Please set these accordingly.
 		*/
 
 	if ((control==CURRENT) && (current_set_low > current_set_high))	//Check limits
-		GL_THROW("The lower current limit of capacitor:%d is larger than the high limit setpoint!",obj->id);
+		GL_THROW(const_cast<char*>("The lower current limit of capacitor:%d is larger than the high limit setpoint!"),obj->id);
 		/*  TROUBLESHOOT
 		Under CURRENT controls, the lower current set point must be less than the upper current set point.  Please set these accordingly.
 		*/
@@ -345,7 +345,7 @@ int capacitor::init(OBJECT *parent)
 		*/
 
 	if ((control != MANUAL) && ((pt_phase & (PHASE_A | PHASE_B | PHASE_C)) == 0))	//Nothing specified in pt_phases
-		GL_THROW("Capacitor:%d is set to an automatic scheme, but is not monitoring any phases.",obj->id);
+		GL_THROW(const_cast<char*>("Capacitor:%d is set to an automatic scheme, but is not monitoring any phases."),obj->id);
 		/*  TROUBLESHOOT
 		A capacitor is setup to use one of the automatic control schemes (VAR, VOLT, VARVOLT), but does not have a phase
 		specified in pt_phase to monitor.  As such, the capacitor will not do anything.  Please specify phase(s) to monitor
@@ -379,12 +379,12 @@ int capacitor::init(OBJECT *parent)
 	if ((control!=MANUAL) && (control!=VOLT))	//VAR, VOLTVAR, CURRENT
 	{
 		//Pull the RLink phases to check
-		pSetPhases = new gld_property(RLink,"phases");
+		pSetPhases = new gld_property(RLink,const_cast<char*>("phases"));
 
 		//Make sure it worked
 		if ((pSetPhases->is_valid() != true) || (pSetPhases->is_set() != true))
 		{
-			GL_THROW("Capacitor:%d - %s - Unable to map phases for remote link object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("Capacitor:%d - %s - Unable to map phases for remote link object"),obj->id,(obj->name ? obj->name : "Unnamed"));
 			/* TROUBLESHOOT
 			While trying to obtain the phases for the remote link of interest, an error occurred.  Please try again.  If the
 			error persists, please submit an issue.
@@ -400,7 +400,7 @@ int capacitor::init(OBJECT *parent)
 		//Check them
 		if ((temp_phases & pt_phase) != pt_phase)
 		{
-			GL_THROW("One of the monitored remote link phases for capacitor:%d does not exist",obj->id);
+			GL_THROW(const_cast<char*>("One of the monitored remote link phases for capacitor:%d does not exist"),obj->id);
 			/*  TROUBLESHOOT
 			One of the phases specified in pt_phase does not exist on the link being monitored by the capacitor.
 			This will cause either no results or erroneous results.  Ensure pt_phase and the phases property of the
@@ -411,12 +411,12 @@ int capacitor::init(OBJECT *parent)
 	else if (((control==VOLT) || (control==VARVOLT)) && (RNode != NULL))	//RNode check
 	{
 		//Pull the RNode phases to check
-		pSetPhases = new gld_property(RNode,"phases");
+		pSetPhases = new gld_property(RNode,const_cast<char*>("phases"));
 
 		//Make sure it worked
-		if ((pSetPhases->is_valid() != true) || (pSetPhases->is_set() != true))
+		if (!pSetPhases->is_valid() || !pSetPhases->is_set())
 		{
-			GL_THROW("Capacitor:%d - %s - Unable to map phases for remote node object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("Capacitor:%d - %s - Unable to map phases for remote node object"),obj->id,(obj->name ? obj->name : "Unnamed"));
 			/* TROUBLESHOOT
 			While trying to obtain the phases for the remote node of interest, an error occurred.  Please try again.  If the
 			error persists, please submit an issue.
@@ -432,7 +432,7 @@ int capacitor::init(OBJECT *parent)
 		//Check to see if the phases are right
 		if ((temp_phases & pt_phase) != pt_phase)
 		{
-			GL_THROW("One of the monitored remote node phases for capacitor:%d does not exist",obj->id);
+			GL_THROW(const_cast<char*>("One of the monitored remote node phases for capacitor:%d does not exist"),obj->id);
 			/*  TROUBLESHOOT
 			One of the phases specified in pt_phase does not exist on the node being monitored by the capacitor.
 			This will cause either no results or erroneous results.  Ensure pt_phase and the phases property of the
@@ -442,7 +442,7 @@ int capacitor::init(OBJECT *parent)
 	}
 	else if (((control==VOLT) || (control==VARVOLT)) && (RNode == NULL) && ((phases & pt_phase) != pt_phase))	//Self node check
 	{
-		GL_THROW("One of the monitored node phases for capacitor:%d does not exist",obj->id);
+		GL_THROW(const_cast<char*>("One of the monitored node phases for capacitor:%d does not exist"),obj->id);
 		/*  TROUBLESHOOT
 		One of the phases specified in pt_phase does not exist on the capacitor node.
 		This will cause either no results or erroneous results.  Ensure pt_phase and the phases property of the
@@ -459,7 +459,7 @@ int capacitor::init(OBJECT *parent)
 		//Check it
 		if (RLink_calculate_power_fxn == NULL)
 		{
-			GL_THROW("Capacitor:%d - %s - Unable to map link power calculation function",obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("Capacitor:%d - %s - Unable to map link power calculation function"),obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
 			While attempting to map the power update function for the link of interest in the capacitor, an error occurred.
 			Please try again.  If the error persists, please submit your code and a bug report via the ticketing system.
@@ -472,12 +472,12 @@ int capacitor::init(OBJECT *parent)
 	if (RLink != NULL)
 	{
 		//Map to the property of interest - power_in_A
-		RLink_indiv_power_in[0] = new gld_property(RLink,"power_in_A");
+		RLink_indiv_power_in[0] = new gld_property(RLink,const_cast<char*>("power_in_A"));
 
 		//Make sure it worked
-		if ((RLink_indiv_power_in[0]->is_valid() != true) || (RLink_indiv_power_in[0]->is_complex() != true))
+		if (!RLink_indiv_power_in[0]->is_valid() || !RLink_indiv_power_in[0]->is_complex())
 		{
-			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("Capacitor:%d - %s - Unable to map property for remote object"),obj->id,(obj->name ? obj->name : "Unnamed"));
 			/* TROUBLESHOOT
 			While attempting to map a property for the remote node or remote link, a property could not be properly mapped.
 			Please try again.  If the error persists, please submit an issue in the ticketing system.
@@ -485,52 +485,52 @@ int capacitor::init(OBJECT *parent)
 		}
 
 		//Map to the property of interest - power_in_B
-		RLink_indiv_power_in[1] = new gld_property(RLink,"power_in_B");
+		RLink_indiv_power_in[1] = new gld_property(RLink,const_cast<char*>("power_in_B"));
 
 		//Make sure it worked
-		if ((RLink_indiv_power_in[1]->is_valid() != true) || (RLink_indiv_power_in[1]->is_complex() != true))
+		if (!RLink_indiv_power_in[1]->is_valid() || !RLink_indiv_power_in[1]->is_complex())
 		{
-			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("Capacitor:%d - %s - Unable to map property for remote object"),obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
 		}
 
 		//Map to the property of interest - power_in_C
-		RLink_indiv_power_in[2] = new gld_property(RLink,"power_in_C");
+		RLink_indiv_power_in[2] = new gld_property(RLink,const_cast<char*>("power_in_C"));
 
 		//Make sure it worked
-		if ((RLink_indiv_power_in[2]->is_valid() != true) || (RLink_indiv_power_in[2]->is_complex() != true))
+		if (!RLink_indiv_power_in[2]->is_valid() || !RLink_indiv_power_in[2]->is_complex())
 		{
-			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("Capacitor:%d - %s - Unable to map property for remote object"),obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
 		}
 
 		//Map to the property of interest - current_in_A
-		RLink_current_in[0] = new gld_property(RLink,"current_in_A");
+		RLink_current_in[0] = new gld_property(RLink,const_cast<char*>("current_in_A"));
 
 		//Make sure it worked
-		if ((RLink_current_in[0]->is_valid() != true) || (RLink_current_in[0]->is_complex() != true))
+		if (!RLink_current_in[0]->is_valid() || !RLink_current_in[0]->is_complex())
 		{
-			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("Capacitor:%d - %s - Unable to map property for remote object"),obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
 		}
 
 		//Map to the property of interest - current_in_B
-		RLink_current_in[1] = new gld_property(RLink,"current_in_B");
+		RLink_current_in[1] = new gld_property(RLink,const_cast<char*>("current_in_B"));
 
 		//Make sure it worked
-		if ((RLink_current_in[1]->is_valid() != true) || (RLink_current_in[1]->is_complex() != true))
+		if (!RLink_current_in[1]->is_valid() || !RLink_current_in[1]->is_complex())
 		{
-			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("Capacitor:%d - %s - Unable to map property for remote object"),obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
 		}
 
 		//Map to the property of interest - current_in_C
-		RLink_current_in[2] = new gld_property(RLink,"current_in_C");
+		RLink_current_in[2] = new gld_property(RLink,const_cast<char*>("current_in_C"));
 
 		//Make sure it worked
-		if ((RLink_current_in[2]->is_valid() != true) || (RLink_current_in[2]->is_complex() != true))
+		if (!RLink_current_in[2]->is_valid() || !RLink_current_in[2]->is_complex())
 		{
-			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("Capacitor:%d - %s - Unable to map property for remote object"),obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
 		}
 	}
@@ -540,62 +540,62 @@ int capacitor::init(OBJECT *parent)
 	if (RNode != NULL)
 	{
 		//Map to the property of interest - voltage_A
-		RNode_voltage[0] = new gld_property(RNode,"voltage_A");
+		RNode_voltage[0] = new gld_property(RNode,const_cast<char*>("voltage_A"));
 
 		//Make sure it worked
-		if ((RNode_voltage[0]->is_valid() != true) || (RNode_voltage[0]->is_complex() != true))
+		if (!RNode_voltage[0]->is_valid() || !RNode_voltage[0]->is_complex())
 		{
-			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("Capacitor:%d - %s - Unable to map property for remote object"),obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
 		}
 
 		//Map to the property of interest - voltage_B
-		RNode_voltage[1] = new gld_property(RNode,"voltage_B");
+		RNode_voltage[1] = new gld_property(RNode,const_cast<char*>("voltage_B"));
 
 		//Make sure it worked
-		if ((RNode_voltage[1]->is_valid() != true) || (RNode_voltage[1]->is_complex() != true))
+		if (!RNode_voltage[1]->is_valid() || !RNode_voltage[1]->is_complex())
 		{
-			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("Capacitor:%d - %s - Unable to map property for remote object"),obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
 		}
 
 		//Map to the property of interest - voltage_C
-		RNode_voltage[2] = new gld_property(RNode,"voltage_C");
+		RNode_voltage[2] = new gld_property(RNode,const_cast<char*>("voltage_C"));
 
 		//Make sure it worked
-		if ((RNode_voltage[2]->is_valid() != true) || (RNode_voltage[2]->is_complex() != true))
+		if (!RNode_voltage[2]->is_valid() || !RNode_voltage[2]->is_complex())
 		{
-			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("Capacitor:%d - %s - Unable to map property for remote object"),obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
 		}
 
 		//Map to the property of interest - voltage_AB
-		RNode_voltaged[0] = new gld_property(RNode,"voltage_AB");
+		RNode_voltaged[0] = new gld_property(RNode,const_cast<char*>("voltage_AB"));
 
 		//Make sure it worked
-		if ((RNode_voltaged[0]->is_valid() != true) || (RNode_voltaged[0]->is_complex() != true))
+		if (!RNode_voltaged[0]->is_valid() || !RNode_voltaged[0]->is_complex())
 		{
-			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("Capacitor:%d - %s - Unable to map property for remote object"),obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
 		}
 
 		//Map to the property of interest - voltage_BC
-		RNode_voltaged[1] = new gld_property(RNode,"voltage_BC");
+		RNode_voltaged[1] = new gld_property(RNode,const_cast<char*>("voltage_BC"));
 
 		//Make sure it worked
-		if ((RNode_voltaged[1]->is_valid() != true) || (RNode_voltaged[1]->is_complex() != true))
+		if (!RNode_voltaged[1]->is_valid() || !RNode_voltaged[1]->is_complex())
 		{
-			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("Capacitor:%d - %s - Unable to map property for remote object"),obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
 		}
 
 		//Map to the property of interest - voltage_CA
-		RNode_voltaged[2] = new gld_property(RNode,"voltage_CA");
+		RNode_voltaged[2] = new gld_property(RNode,const_cast<char*>("voltage_CA"));
 
 		//Make sure it worked
-		if ((RNode_voltaged[2]->is_valid() != true) || (RNode_voltaged[2]->is_complex() != true))
+		if (!RNode_voltaged[2]->is_valid() || !RNode_voltaged[2]->is_complex())
 		{
-			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW(const_cast<char*>(const_cast<char*>("Capacitor:%d - %s - Unable to map property for remote object")),obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
 		}
 	}
@@ -1139,7 +1139,7 @@ bool capacitor::cap_sync_fxn(double time_value)
 		}
 		else if (((phases_connected & PHASE_D) != PHASE_D) && ((phases & PHASE_D) == PHASE_D))	//Delta connected node, but Wye connected Cap
 		{
-			GL_THROW("Capacitor:%d is Wye-connected on a Delta-connected node.  This is not supported at this time.",OBJECTHDR(this)->id);
+			GL_THROW(const_cast<char*>("Capacitor:%d is Wye-connected on a Delta-connected node.  This is not supported at this time."),OBJECTHDR(this)->id);
 			/*  TROUBLESHOOT
 			Wye-connected capacitors on a delta-connected node are not supported at this time.  They may be added in a future release when
 			the functionality is needed.
@@ -1170,7 +1170,7 @@ bool capacitor::cap_sync_fxn(double time_value)
 			Phase_Mismatch = true;	//Flag us as an exception.  Otherwise values are wrong.
 		}
 		else	//No case should exist here, so if it does, scream about it.
-			GL_THROW("Unable to determine connection for capacitor:%d",OBJECTHDR(this)->id);
+			GL_THROW(const_cast<char*>("Unable to determine connection for capacitor:%d"),OBJECTHDR(this)->id);
 			/*  TROUBLESHOOT
 			The capacitor object encountered a connection it was unable to decipher.  Please submit this as
 			a bug report with your code.
@@ -1394,7 +1394,7 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 		//Make sure it worked
 		if (return_status != 1)
 		{
-			GL_THROW("Capacitor:%d - %s - Link power calculation failed",obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("Capacitor:%d - %s - Link power calculation failed"),obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
 			While updated the power flowing through a link for the VAR or VOLTVAR control approach, an error occurred.
 			Please check the console output for additional indications as to why this occurred.
@@ -2063,7 +2063,11 @@ int capacitor::kmldata(int (*stream)(const char*,...))
 {
 	int phase[3] = {has_phase(PHASE_A),has_phase(PHASE_B),has_phase(PHASE_C)};
 	enumeration state[3] = {switchA_state, switchB_state, switchC_state};
-	char *control_desc[] = {"MANUAL","VAR","VOLT","VARVOLT","CURRENT"};
+	char *control_desc[] = {const_cast<char*>("MANUAL"),
+                         const_cast<char*>("VAR"),
+                         const_cast<char*>("VOLT"),
+                         const_cast<char*>("VARVOLT"),
+                         const_cast<char*>("CURRENT")};
 
 	// switch state
 	stream("<TR><TH ALIGN=LEFT>Status</TH>");
@@ -2087,17 +2091,17 @@ int capacitor::kmldata(int (*stream)(const char*,...))
 		for ( int i = 0 ; i<sizeof(phase)/sizeof(phase[0]) ; i++ )
 		{
 			if ( phase[i] )
-				stream("<TD ALIGN=CENTER COLSPAN=2 STYLE=\"font-family:courier;\"><NOBR>%s</NOBR></TD>", control_desc[control]);
+				stream(const_cast<char*>("<TD ALIGN=CENTER COLSPAN=2 STYLE=\"font-family:courier;\"><NOBR>%s</NOBR></TD>"), control_desc[control]);
 			else
-				stream("<TD ALIGN=CENTER COLSPAN=2 STYLE=\"font-family:courier;\">&mdash;</TD>");
+				stream(const_cast<char*>("<TD ALIGN=CENTER COLSPAN=2 STYLE=\"font-family:courier;\">&mdash;</TD>"));
 		}
 	}
-	stream("</TR>\n");
+	stream(const_cast<char*>("</TR>\n"));
 
 	// control input
-	gld_global run_realtime("run_realtime");
-	gld_global server("hostname");
-	gld_global port("server_portnum");
+	gld_global run_realtime(const_cast<char*>("run_realtime"));
+	gld_global server(const_cast<char*>("hostname"));
+	gld_global port(const_cast<char*>("server_portnum"));
 	if ( run_realtime.get_bool() )
 	{
 		stream("<TR><TH ALIGN=LEFT>&nbsp;</TH>");

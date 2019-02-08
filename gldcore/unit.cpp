@@ -90,6 +90,7 @@
 #include "find.h"
 #include "lock.h"
 
+
 /* fundamental physical/economic constants */
 static double c = 2.997925e8;		/**< m/s */
 static double e = 1.602189246e-19;	/**< C */
@@ -388,7 +389,7 @@ int unit_derived(char *name,char *derivation)
 				m += pUnit->m;
 				s += pUnit->s;
 				a *= pUnit->a;
-				prec = MIN(prec,pUnit->prec);
+				prec = std::min(prec,pUnit->prec);
 				break;
 			case '/':
 				c -= pUnit->c;
@@ -398,7 +399,7 @@ int unit_derived(char *name,char *derivation)
 				m -= pUnit->m;
 				s -= pUnit->s;
 				a /= pUnit->a;
-				prec = MIN(prec, pUnit->prec);
+				prec = std::min(prec, pUnit->prec);
 				break;
 			case '+':
 				b += pUnit->b;
@@ -426,7 +427,7 @@ int unit_derived(char *name,char *derivation)
 							m += lastUnit->m * repeat;
 							s += lastUnit->s * repeat;
 							a *= pow(lastUnit->a, repeat);
-							prec = MIN(prec, lastUnit->prec);
+							prec = std::min(prec, lastUnit->prec);
 							break;
 						case '/':
 							c -= lastUnit->c * repeat;
@@ -436,7 +437,7 @@ int unit_derived(char *name,char *derivation)
 							m -= lastUnit->m * repeat;
 							s -= lastUnit->s * repeat;
 							a /= pow(lastUnit->a, repeat);
-							prec = MIN(prec, lastUnit->prec);
+							prec = std::min(prec, lastUnit->prec);
 							break;
 						default:
 							throw_exception("%s(%d): ^ not allowed after '%c' at '%s'", filepath, linenum, lastOp, term);

@@ -36,8 +36,8 @@ transformer::transformer(MODULE *mod) : link_object(mod)
 	{
 		pclass = link_object::oclass;
 		
-		oclass = gl_register_class(mod,"transformer",sizeof(transformer),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
+		oclass = gl_register_class(mod,const_cast<char*>("transformer"),sizeof(transformer),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
+		if (oclass== nullptr)
 			throw "unable to register class transformer";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -61,26 +61,26 @@ transformer::transformer(MODULE *mod) : link_object(mod)
 			PT_double, "phase_A_secondary_flux_value[Wb]", PADDR(flux_vals_inst[3]), PT_DESCRIPTION, "instantaneous magnetic flux in phase A on the secondary side of the transformer during saturation calculations",
 			PT_double, "phase_B_secondary_flux_value[Wb]", PADDR(flux_vals_inst[4]), PT_DESCRIPTION, "instantaneous magnetic flux in phase B on the secondary side of the transformer during saturation calculations",
 			PT_double, "phase_C_secondary_flux_value[Wb]", PADDR(flux_vals_inst[5]), PT_DESCRIPTION, "instantaneous magnetic flux in phase C on the secondary side of the transformer during saturation calculations",
-			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+			NULL) < 1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
 
-			if (gl_publish_function(oclass,"power_calculation",(FUNCTIONADDR)power_calculation)==NULL)
-					GL_THROW("Unable to publish fuse state change function");
+			if (gl_publish_function(oclass,const_cast<char*>("power_calculation"),(FUNCTIONADDR)power_calculation)==NULL)
+					GL_THROW(const_cast<char*>("Unable to publish fuse state change function"));
 
 			//Publish deltamode functions
-			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
-				GL_THROW("Unable to publish transformer deltamode function");
+			if (gl_publish_function(oclass,	const_cast<char*>("interupdate_pwr_object"), (FUNCTIONADDR)interupdate_link)==NULL)
+				GL_THROW(const_cast<char*>("Unable to publish transformer deltamode function"));
 
 			//Publish in-rush functions
-			if (gl_publish_function(oclass,	"recalc_transformer_matrices", (FUNCTIONADDR)recalc_transformer_mat)==NULL)
-				GL_THROW("Unable to publish transformer in-rush update function");
-			if (gl_publish_function(oclass,	"recalc_deltamode_saturation", (FUNCTIONADDR)recalc_deltamode_saturation)==NULL)
-				GL_THROW("Unable to publish transformer in-rush powerflow update function");
+			if (gl_publish_function(oclass,	const_cast<char*>("recalc_transformer_matrices"), (FUNCTIONADDR)recalc_transformer_mat)==NULL)
+				GL_THROW(const_cast<char*>("Unable to publish transformer in-rush update function"));
+			if (gl_publish_function(oclass,	const_cast<char*>("recalc_deltamode_saturation"), (FUNCTIONADDR)recalc_deltamode_saturation)==NULL)
+				GL_THROW(const_cast<char*>("Unable to publish transformer in-rush powerflow update function"));
 
 			//Publish restoration-related function (current update)
-			if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
-				GL_THROW("Unable to publish transformer external power calculation function");
-			if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
-				GL_THROW("Unable to publish transformer external power limit calculation function");
+			if (gl_publish_function(oclass,	const_cast<char*>("update_power_pwr_object"), (FUNCTIONADDR)updatepowercalc_link)==NULL)
+				GL_THROW(const_cast<char*>("Unable to publish transformer external power calculation function"));
+			if (gl_publish_function(oclass,	const_cast<char*>("check_limits_pwr_object"), (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+				GL_THROW(const_cast<char*>("Unable to publish transformer external power limit calculation function"));
     }
 }
 
@@ -119,8 +119,8 @@ void transformer::fetch_double(double **prop, char *name, OBJECT *parent){
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "transformer:%i", hdr->id);
-		if(*name == NULL)
-			sprintf(msg, "%s: transformer unable to find property: name is NULL", namestr);
+		if(name == nullptr || name[0] == '\0')
+			sprintf(msg, "%s: transformer unable to find property: name is not defined", namestr);
 		else
 			sprintf(msg, "%s: transformer unable to find %s", namestr, name);
 		throw(msg);
@@ -132,13 +132,13 @@ int transformer::init(OBJECT *parent)
 	int idex;
 
 	if (!configuration)
-		GL_THROW("no transformer configuration specified.");
+		GL_THROW(const_cast<char*>("no transformer configuration specified."));
 		/*  TROUBLESHOOT
 		A transformer configuration was not provided.  Please use object transformer_configuration
 		and define the necessary parameters of your transformer to continue.
 		*/
-	if (!gl_object_isa(configuration, "transformer_configuration","powerflow"))
-		GL_THROW("invalid transformer configuration");
+	if (!gl_object_isa(configuration, const_cast<char*>("transformer_configuration"),const_cast<char*>("powerflow")))
+		GL_THROW(const_cast<char*>("invalid transformer configuration"));
 		/*  TROUBLESHOOT
 		An invalid transformer configuration was provided.  Ensure you have proper values in each field
 		of the transformer_configuration object and that you haven't inadvertantly used a line configuration
@@ -284,7 +284,7 @@ int transformer::init(OBJECT *parent)
 					//Check it
 					if (YBase_Full == NULL)
 					{
-						GL_THROW("Transformer:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
+						GL_THROW(const_cast<char*>("Transformer:%s failed to allocate space for deltamode inrush history term"),obj->name?obj->name:"unnamed");
 						/*  TROUBLESHOOT
 						While attempting to allocate memory for a transformer object to dynamics-required in-rush calculation
 						terms, an error occurred.  Please try again.  If the error persists, please submit your code and
@@ -307,7 +307,7 @@ int transformer::init(OBJECT *parent)
 						//Check it
 						if (LinkHistTermCf == NULL)
 						{
-							GL_THROW("Transformer:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
+							GL_THROW(const_cast<char*>("Transformer:%s failed to allocate space for deltamode inrush history term"),obj->name?obj->name:"unnamed");
 							//Defined above
 						}
 
@@ -325,7 +325,7 @@ int transformer::init(OBJECT *parent)
 						//Check it
 						if (YBase_Pri == NULL)
 						{
-							GL_THROW("Transformer:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
+							GL_THROW(const_cast<char*>("Transformer:%s failed to allocate space for deltamode inrush history term"),obj->name?obj->name:"unnamed");
 							//Defined above
 						}
 
@@ -350,7 +350,7 @@ int transformer::init(OBJECT *parent)
 						//Check it
 						if (LinkHistTermCt == NULL)
 						{
-							GL_THROW("Transformer:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
+							GL_THROW(const_cast<char*>("Transformer:%s failed to allocate space for deltamode inrush history term"),obj->name?obj->name:"unnamed");
 							//Defined above
 						}
 
@@ -368,7 +368,7 @@ int transformer::init(OBJECT *parent)
 						//Check it
 						if (YBase_Sec == NULL)
 						{
-							GL_THROW("Transformer:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
+							GL_THROW(const_cast<char*>("Transformer:%s failed to allocate space for deltamode inrush history term"),obj->name?obj->name:"unnamed");
 							//Defined above
 						}
 
@@ -394,7 +394,7 @@ int transformer::init(OBJECT *parent)
 						//Make sure it worked
 						if (hphi == NULL)
 						{
-							GL_THROW("Transformer:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
+							GL_THROW(const_cast<char*>("Transformer:%s failed to allocate space for deltamode inrush history term"),obj->name?obj->name:"unnamed");
 							//Defined above
 						}
 
@@ -462,7 +462,7 @@ int transformer::init(OBJECT *parent)
 			}
 			else 
 			{
-				GL_THROW("Unsupported solver method");
+				GL_THROW(const_cast<char*>("Unsupported solver method"));
 				/*  TROUBLESHOOT
 				An unsupported solver type was detected.  Valid solver types are FBS
 				(forward-back sweep), GS (Gauss-Seidel), and NR (Newton-Raphson).  Please use
@@ -519,7 +519,7 @@ int transformer::init(OBJECT *parent)
 			}
 			else 
 			{
-				GL_THROW("Unsupported solver method");
+				GL_THROW(const_cast<char*>("Unsupported solver method"));
 				/*  TROUBLESHOOT
 				Only FBS and NR are currently supported.
 				*/
@@ -628,7 +628,7 @@ int transformer::init(OBJECT *parent)
 			}
 			else 
 			{
-				GL_THROW("Unsupported solver method");
+				GL_THROW(const_cast<char*>("Unsupported solver method"));
 				/*  TROUBLESHOOT
 				Only FBS and NR are currently supported.
 				*/
@@ -641,21 +641,21 @@ int transformer::init(OBJECT *parent)
 			{
 				if (has_phase(PHASE_A|PHASE_B)) // delta AB
 				{
-					GL_THROW("delta split tap is not supported yet");
+					GL_THROW(const_cast<char*>("delta split tap is not supported yet"));
 					/*  TROUBLESHOOT
 					This type of transformer configuration is not supported yet.
 					*/
 				}
 				else if (has_phase(PHASE_B|PHASE_C)) // delta AB
 				{
-					GL_THROW("delta split tap is not supported yet");
+					GL_THROW(const_cast<char*>("delta split tap is not supported yet"));
 					/*  TROUBLESHOOT
 					This type of transformer configuration is not supported yet.
 					*/
 				}
 				else if (has_phase(PHASE_A|PHASE_C)) // delta AB
 				{
-					GL_THROW("delta split tap is not supported yet");
+					GL_THROW(const_cast<char*>("delta split tap is not supported yet"));
 					/*  TROUBLESHOOT
 					This type of transformer configuration is not supported yet.
 					*/
@@ -665,7 +665,7 @@ int transformer::init(OBJECT *parent)
 					V_basehi = config->V_primary;
 					sa_base = config->phaseA_kVA_rating;
 					if (sa_base==0)	
-						GL_THROW("Split-phase tranformer:%d trying to attach to phase A not defined in the configuration",obj->id);
+						GL_THROW(const_cast<char*>("Split-phase tranformer:%d trying to attach to phase A not defined in the configuration"),obj->id);
 						/*  TROUBLESHOOT
 						A single-phase, center-tapped transformer is attempting to attach to a system with phase A, while
 						its phase A is undefined.  Fix the appropriate link or define a new transformer configuration with
@@ -707,7 +707,7 @@ int transformer::init(OBJECT *parent)
 					V_basehi = config->V_primary;
 					sa_base = config->phaseB_kVA_rating;
 					if (sa_base==0)	
-						GL_THROW("Split-phase tranformer:%d trying to attach to phase B not defined in the configuration",obj->id);
+						GL_THROW(const_cast<char*>("Split-phase tranformer:%d trying to attach to phase B not defined in the configuration"),obj->id);
 						/*  TROUBLESHOOT
 						A single-phase, center-tapped transformer is attempting to attach to a system with phase B, while
 						its phase B is undefined.  Fix the appropriate link or define a new transformer configuration with
@@ -748,7 +748,7 @@ int transformer::init(OBJECT *parent)
 					V_basehi = config->V_primary;
 					sa_base = config->phaseC_kVA_rating;
 					if (sa_base==0)	
-						GL_THROW("Split-phase tranformer:%d trying to attach to phase C not defined in the configuration",obj->id);
+						GL_THROW(const_cast<char*>("Split-phase tranformer:%d trying to attach to phase C not defined in the configuration"),obj->id);
 						/*  TROUBLESHOOT
 						A single-phase, center-tapped transformer is attempting to attach to a system with phase C, while
 						its phase C is undefined.  Fix the appropriate link or define a new transformer configuration with
@@ -807,7 +807,7 @@ int transformer::init(OBJECT *parent)
 			}
 			else if (solver_method==SM_GS)	// This doesn't work yet
 			{
-				GL_THROW("Gauss-Seidel Implementation of Split-Phase is not complete");
+				GL_THROW(const_cast<char*>("Gauss-Seidel Implementation of Split-Phase is not complete"));
 				/*  TROUBLESHOOT
 				At this time, the Gauss-Seidel method does not support split-phase transformers.
 				This will hopefully be a feature in future releases.
@@ -821,7 +821,7 @@ int transformer::init(OBJECT *parent)
 				{
 					sa_base = config->phaseA_kVA_rating;
 					if (sa_base==0)	
-						GL_THROW("Split-phase tranformer:%d trying to attach to phase A not defined in the configuration",obj->id);
+						GL_THROW(const_cast<char*>("Split-phase tranformer:%d trying to attach to phase A not defined in the configuration"),obj->id);
 						/*  TROUBLESHOOT
 						A single-phase, center-tapped transformer is attempting to attach to a system with phase A, while
 						its phase A is undefined.  Fix the appropriate link or define a new transformer configuration with
@@ -832,7 +832,7 @@ int transformer::init(OBJECT *parent)
 				{
 					sa_base = config->phaseB_kVA_rating;
 					if (sa_base==0)	
-						GL_THROW("Split-phase tranformer:%d trying to attach to phase B not defined in the configuration",obj->id);
+						GL_THROW(const_cast<char*>("Split-phase tranformer:%d trying to attach to phase B not defined in the configuration"),obj->id);
 						/*  TROUBLESHOOT
 						A single-phase, center-tapped transformer is attempting to attach to a system with phase B, while
 						its phase B is undefined.  Fix the appropriate link or define a new transformer configuration with
@@ -843,7 +843,7 @@ int transformer::init(OBJECT *parent)
 				{
 					sa_base = config->phaseC_kVA_rating;
 					if (sa_base==0)	
-						GL_THROW("Split-phase tranformer:%d trying to attach to phase C not defined in the configuration",obj->id);
+						GL_THROW(const_cast<char*>("Split-phase tranformer:%d trying to attach to phase C not defined in the configuration"),obj->id);
 						/*  TROUBLESHOOT
 						A single-phase, center-tapped transformer is attempting to attach to a system with phase C, while
 						its phase C is undefined.  Fix the appropriate link or define a new transformer configuration with
@@ -916,7 +916,7 @@ int transformer::init(OBJECT *parent)
 			}	
 			else 
 			{
-				GL_THROW("Unsupported solver method");
+				GL_THROW(const_cast<char*>("Unsupported solver method"));
 				/*  TROUBLESHOOT
 				Only FBS and NR are currently supported.
 				*/
@@ -952,7 +952,7 @@ int transformer::init(OBJECT *parent)
 
 	//retrieve all the thermal model inputs from transformer_config
 	if(use_thermal_model && config->coolant_type!=1){
-		GL_THROW("transformer:%d (%s) coolant_type specified is not handled",obj->id,obj->name);
+		GL_THROW(const_cast<char*>("transformer:%d (%s) coolant_type specified is not handled"),obj->id,obj->name);
 		/*  TROUBLESHOOT
 		When using the thermal aging model, the coolant type must be specifed.  Please select a supported
 		coolant type and add it to your transformer configuration.  Currently, only MINERAL_OIL is supported.
@@ -961,21 +961,21 @@ int transformer::init(OBJECT *parent)
 	if(use_thermal_model) {
 		if (config->coolant_type==1){
 			if(config->core_coil_weight<=0){
-				GL_THROW("weight of the core and coil assembly for transformer configuration %s must be greater than zero",configuration->name);
+				GL_THROW(const_cast<char*>("weight of the core and coil assembly for transformer configuration %s must be greater than zero"),configuration->name);
 				/*  TROUBLESHOOT
 				When using the thermal aging model, the core weight must be specified.  Please specify core_coil_weight
 				in your transformer configuration.
 				*/
 			}
 			if(config->tank_fittings_weight<=0){
-				GL_THROW("weight of the tank fittings for transformer configuration %s must be greater than zero",configuration->name);
+				GL_THROW(const_cast<char*>("weight of the tank fittings for transformer configuration %s must be greater than zero"),configuration->name);
 				/*  TROUBLESHOOT
 				When using the thermal aging model, the core weight must be specified.  Please specify tank_fittings_weight
 				in your transformer configuration.
 				*/
 			}
 			if(config->oil_vol<=0){
-				GL_THROW("the oil volume for transformer configuration %s must be greater than zero",configuration->name);
+				GL_THROW(const_cast<char*>("the oil volume for transformer configuration %s must be greater than zero"),configuration->name);
 				/*  TROUBLESHOOT
 				When using the thermal aging model, the oil volume must be specified as a value of zero or greater.
 				Please specify oil_volume in your transformer configuration.
@@ -990,7 +990,7 @@ int transformer::init(OBJECT *parent)
 					m = 0.8;
 					n = 0.9;
 				} else {
-					GL_THROW("cooling_type not specified for transformer configuration %s",configuration->name);
+					GL_THROW(const_cast<char*>("cooling_type not specified for transformer configuration %s"),configuration->name);
 					/*  TROUBLESHOOT
 					When using the thermal aging model, the a cooling_type must be specified.
 					Please specify cooling_type in your transformer configuration.
@@ -1004,21 +1004,21 @@ int transformer::init(OBJECT *parent)
 				} else if(config->cooling_type==5 || config->cooling_type==6){
 					m = n = 1.0;
 				} else {
-					GL_THROW("cooling_type not specified for transformer configuration %s",configuration->name);
+					GL_THROW(const_cast<char*>("cooling_type not specified for transformer configuration %s"),configuration->name);
 					/*  TROUBLESHOOT
 					When using the thermal aging model, the a cooling_type must be specified.
 					Please specify cooling_type in your transformer configuration.
 					*/
 				}
 			} else {
-				GL_THROW("cooling_type not specified for transformer configuration %s",configuration->name);
+				GL_THROW(const_cast<char*>("cooling_type not specified for transformer configuration %s"),configuration->name);
 				/*  TROUBLESHOOT
 				When using the thermal aging model, the a cooling_type must be specified.
 				Please specify cooling_type in your transformer configuration.
 				*/
 			}
 			if(config->full_load_loss==0 && config->no_load_loss==0 && config->impedance.Re()==0 && config->shunt_impedance.Re()==0){
-				GL_THROW("full-load and no-load losses for transformer configuration %s must be nonzero",configuration->name);
+				GL_THROW(const_cast<char*>("full-load and no-load losses for transformer configuration %s must be nonzero"),configuration->name);
 				/*  TROUBLESHOOT
 				When using the thermal aging model, full_load_losses and no_load_losses must be specified.
 				*/
@@ -1026,15 +1026,16 @@ int transformer::init(OBJECT *parent)
 				R = config->full_load_loss/config->no_load_loss;
 			} else if(config->impedance.Re()!=0 && config->shunt_impedance.Re()!=0)
 				R = config->impedance.Re()*config->shunt_impedance.Re();
-			if(config->t_W==NULL || config->dtheta_TO_R==NULL){
-				GL_THROW("winding time constant or rated top-oil hotspot rise for transformer configuration %s must be nonzero",configuration->name);
+			//TODO: Review use of 0 here in lieu of NULL
+			if(config->t_W==0 || config->dtheta_TO_R==0){
+				GL_THROW(const_cast<char*>("winding time constant or rated top-oil hotspot rise for transformer configuration %s must be nonzero"),configuration->name);
 				/*  TROUBLESHOOT
 				When using the thermal aging model, the rated_winding_time_constant or the rated_top_oil_rise must be given as a non-zero value.
 				Please specify one or the other in your transformer configuration.
 				*/
 			}
 			if(config->t_W<=0){
-				GL_THROW("%s: transformer_configuration winding time constant must be greater than zero",configuration->name);
+				GL_THROW(const_cast<char*>("%s: transformer_configuration winding time constant must be greater than zero"),configuration->name);
 				/*  TROUBLESHOOT
 				When using the thermal aging model, the rated_winding_time_constant must be given as a greater-than-zero value.
 				Please specify as a positive value in your transformer configuration.
@@ -1081,7 +1082,7 @@ int transformer::init(OBJECT *parent)
 					else	//Found one, map the property
 					{
 						//Link it up
-						fetch_double(&ptheta_A, "temperature", climate);
+						fetch_double(&ptheta_A, const_cast<char*>("temperature"), climate);
 
 						//Make sure it worked
 						if (ptheta_A == NULL)
@@ -1114,7 +1115,7 @@ int transformer::init(OBJECT *parent)
 				}
 
 			} else {
-				fetch_double(&ptheta_A, "temperature", climate);
+				fetch_double(&ptheta_A, const_cast<char*>("temperature"), climate);
 
 				//Make sure it worked
 				if (ptheta_A == NULL)
@@ -1151,7 +1152,7 @@ int transformer::init(OBJECT *parent)
 		}
 		else {
 			// shouldn't have gotten here, but for completeness
-			GL_THROW("transformer:%d (%s) coolant_type specified is not handled",obj->id,obj->name);
+			GL_THROW(const_cast<char*>("transformer:%d (%s) coolant_type specified is not handled"),obj->id,obj->name);
 			/*  TROUBLESHOOT
 			When using the thermal aging model, the coolant type must be specifed.  Please select a supported
 			coolant type and add it to your transformer configuration.  Currently, only MINERAL_OIL is supported.
@@ -1724,7 +1725,7 @@ int transformer::transformer_saturation_update(bool *deltaIsat)
 			//Make sure it worked
 			if (saturation_calculated_vals == NULL)
 			{
-				GL_THROW("Transformer:%d %s failed to allocate memory for inrush saturation tracking",obj->id,obj->name ? obj->name : "Unnamed");
+				GL_THROW(const_cast<char*>("Transformer:%d %s failed to allocate memory for inrush saturation tracking"),obj->id,obj->name ? obj->name : "Unnamed");
 				/*  TROUBLESHOOT
 				While attempting to allocate the tracking and calculation matrices for the inrush
 				saturation terms, an error was encountered.  Please try again.  If the error persists,

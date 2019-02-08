@@ -44,7 +44,7 @@ pqload::pqload(MODULE *mod) : load(mod)
 	if(oclass == NULL){
 		pclass = load::oclass;
 
-		oclass = gl_register_class(mod, "pqload", sizeof(pqload), PC_PRETOPDOWN | PC_BOTTOMUP | PC_POSTTOPDOWN | PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
+		oclass = gl_register_class(mod, const_cast<char*>("pqload"), sizeof(pqload), PC_PRETOPDOWN | PC_BOTTOMUP | PC_POSTTOPDOWN | PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class pqload";
 		else
@@ -105,7 +105,7 @@ pqload::pqload(MODULE *mod) : load(mod)
 			PT_complex, "output_current[A]", PADDR(kI), PT_ACCESS, PA_REFERENCE,
 			PT_complex, "output_power[VA]", PADDR(kP), PT_ACCESS, PA_REFERENCE,
 			NULL) < 1){
-				GL_THROW("unable to publish properties in %s",__FILE__);
+				GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
 		}
 	defaults = this;
 	memset(this,0,sizeof(pqload));
@@ -213,31 +213,31 @@ int pqload::init(OBJECT *parent){
 
 	// old check
 	if(weather != NULL){
-		temperature = gl_get_property(weather, "temperature");
+		temperature = gl_get_property(weather, const_cast<char*>("temperature"));
 		if(temperature == NULL){
 			gl_error("Unable to find temperature property in weather object!");
 			++w_rv;
 		}
 		
-		humidity = gl_get_property(weather, "humidity");
+		humidity = gl_get_property(weather, const_cast<char*>("humidity"));
 		if(humidity == NULL){
 			gl_error("Unable to find humidity property in weather object!");
 			++w_rv;
 		}
 
-		solar = gl_get_property(weather, "solar_flux");
+		solar = gl_get_property(weather, const_cast<char*>("solar_flux"));
 		if(solar == NULL){
 			gl_error("Unable to find solar_flux property in weather object!");
 			++w_rv;
 		}
 
-		wind = gl_get_property(weather, "wind_speed");
+		wind = gl_get_property(weather, const_cast<char*>("wind_speed"));
 		if(wind == NULL){
 			gl_error("Unable to find wind_speed property in weather object!");
 			++w_rv;
 		}
 
-		rain = gl_get_property(weather, "rainfall"); /* not yet implemented in climate */
+		rain = gl_get_property(weather, const_cast<char*>("rainfall")); /* not yet implemented in climate */
 		if(rain == NULL){
 			gl_error("Unable to find rainfall property in weather object!");
 			//++w_rv;

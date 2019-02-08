@@ -25,7 +25,7 @@ triplex_line::triplex_line(MODULE *mod) : line(mod)
 	{
 		pclass = line::oclass;
 		
-		oclass = gl_register_class(mod,"triplex_line",sizeof(triplex_line),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,const_cast<char*>("triplex_line"),sizeof(triplex_line),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class triplex_line";
 		else
@@ -33,19 +33,19 @@ triplex_line::triplex_line(MODULE *mod) : line(mod)
 
         if(gl_publish_variable(oclass,
 			PT_INHERIT, "line",
-            NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+            NULL) < 1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
-			GL_THROW("Unable to publish triplex line deltamode function");
-		if (gl_publish_function(oclass,	"recalc_distribution_line", (FUNCTIONADDR)recalc_triplex_line)==NULL)
-			GL_THROW("Unable to publish triplex line recalc function");
+		if (gl_publish_function(oclass,	const_cast<char*>("interupdate_pwr_object"), (FUNCTIONADDR)interupdate_link)==NULL)
+			GL_THROW(const_cast<char*>("Unable to publish triplex line deltamode function"));
+		if (gl_publish_function(oclass,	const_cast<char*>("recalc_distribution_line"), (FUNCTIONADDR)recalc_triplex_line)==NULL)
+			GL_THROW(const_cast<char*>("Unable to publish triplex line recalc function"));
 
 		//Publish restoration-related function (current update)
-		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
-			GL_THROW("Unable to publish triplex line external power calculation function");
-		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
-			GL_THROW("Unable to publish triplex line external power limit calculation function");
+		if (gl_publish_function(oclass,	const_cast<char*>("update_power_pwr_object"), (FUNCTIONADDR)updatepowercalc_link)==NULL)
+			GL_THROW(const_cast<char*>("Unable to publish triplex line external power calculation function"));
+		if (gl_publish_function(oclass,	const_cast<char*>("check_limits_pwr_object"), (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+			GL_THROW(const_cast<char*>("Unable to publish triplex line external power limit calculation function"));
     }
 }
 
@@ -104,7 +104,7 @@ int triplex_line::init(OBJECT *parent)
 			if (temp_obj != NULL)
 			{
 				//Get continuous - summer
-				temp_rating_value = get_double(temp_obj,"rating.summer.continuous");
+				temp_rating_value = get_double(temp_obj,const_cast<char*>("rating.summer.continuous"));
 
 				//Check if NULL
 				if (temp_rating_value != NULL)
@@ -117,7 +117,7 @@ int triplex_line::init(OBJECT *parent)
 				}
 
 				//Get continuous - winter
-				temp_rating_value = get_double(temp_obj,"rating.winter.continuous");
+				temp_rating_value = get_double(temp_obj,const_cast<char*>("rating.winter.continuous"));
 
 				//Check if NULL
 				if (temp_rating_value != NULL)
@@ -130,7 +130,7 @@ int triplex_line::init(OBJECT *parent)
 				}
 
 				//Now get emergency - summer
-				temp_rating_value = get_double(temp_obj,"rating.summer.emergency");
+				temp_rating_value = get_double(temp_obj,const_cast<char*>("rating.summer.emergency"));
 
 				//Check if NULL
 				if (temp_rating_value != NULL)
@@ -143,7 +143,7 @@ int triplex_line::init(OBJECT *parent)
 				}
 
 				//Now get emergency - winter
-				temp_rating_value = get_double(temp_obj,"rating.winter.emergency");
+				temp_rating_value = get_double(temp_obj,const_cast<char*>("rating.winter.emergency"));
 
 				//Check if NULL
 				if (temp_rating_value != NULL)
@@ -167,7 +167,7 @@ int triplex_line::init(OBJECT *parent)
 		if (temp_obj != NULL)
 		{
 			//Get continuous - summer
-			temp_rating_value = get_double(temp_obj,"rating.summer.continuous");
+			temp_rating_value = get_double(temp_obj,const_cast<char*>("rating.summer.continuous"));
 
 			//Check if NULL
 			if (temp_rating_value != NULL)
@@ -180,7 +180,7 @@ int triplex_line::init(OBJECT *parent)
 			}
 
 			//Get continuous - winter
-			temp_rating_value = get_double(temp_obj,"rating.winter.continuous");
+			temp_rating_value = get_double(temp_obj,const_cast<char*>("rating.winter.continuous"));
 
 			//Check if NULL
 			if (temp_rating_value != NULL)
@@ -193,7 +193,7 @@ int triplex_line::init(OBJECT *parent)
 			}
 
 			//Now get emergency - summer
-			temp_rating_value = get_double(temp_obj,"rating.summer.emergency");
+			temp_rating_value = get_double(temp_obj,const_cast<char*>("rating.summer.emergency"));
 
 			//Check if NULL
 			if (temp_rating_value != NULL)
@@ -206,7 +206,7 @@ int triplex_line::init(OBJECT *parent)
 			}
 
 			//Now get emergency - winter
-			temp_rating_value = get_double(temp_obj,"rating.winter.emergency");
+			temp_rating_value = get_double(temp_obj,const_cast<char*>("rating.winter.emergency"));
 
 			//Check if NULL
 			if (temp_rating_value != NULL)
@@ -240,9 +240,9 @@ void triplex_line::phase_conductor_checks(void)
 		if (line_config->phaseA_conductor != NULL)	//1
 		{
 			//Make sure it is a valid conductor
-			if (gl_object_isa(line_config->phaseA_conductor,"triplex_line_conductor","powerflow") != true)
+			if (!gl_object_isa(line_config->phaseA_conductor, const_cast<char*>("triplex_line_conductor"), const_cast<char*>("powerflow")))
 			{
-				GL_THROW("triplex_line:%d - %s - configuration does not use a triplex_line_conductor for at least one phase!",obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW(const_cast<char*>("triplex_line:%d - %s - configuration does not use a triplex_line_conductor for at least one phase!"),obj->id,(obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				A triplex_line has an object specified for conductor_1, conductor_2, or conductor_N that is not a triplex_line_conductor object.
 				Fix this and try again.
@@ -252,7 +252,7 @@ void triplex_line::phase_conductor_checks(void)
 		}
 		else
 		{
-			GL_THROW("triplex_line:%d - %s - configuration doesn't have a valid phase conductor!",obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("triplex_line:%d - %s - configuration doesn't have a valid phase conductor!"),obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLSHOOT
 			A triplex_line's triplex_line_configuration does not have the proper phase specified for the conductor
 			 */
@@ -261,32 +261,32 @@ void triplex_line::phase_conductor_checks(void)
 		if (line_config->phaseB_conductor != NULL)	//2
 		{
 			//Make sure it is a valid conductor
-			if (gl_object_isa(line_config->phaseB_conductor,"triplex_line_conductor","powerflow") != true)
+			if (!gl_object_isa(line_config->phaseB_conductor, const_cast<char*>("triplex_line_conductor"), const_cast<char*>("powerflow")))
 			{
-				GL_THROW("triplex_line:%d - %s - configuration does not use a triplex_line_conductor for at least one phase!",obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW(const_cast<char*>("triplex_line:%d - %s - configuration does not use a triplex_line_conductor for at least one phase!"),obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
 			}
 			//Default else -- it's a valid conductor
 		}
 		else
 		{
-			GL_THROW("triplex_line:%d - %s - configuration doesn't have a valid phase conductor!",obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("triplex_line:%d - %s - configuration doesn't have a valid phase conductor!"),obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
 		}
 
 		if (line_config->phaseC_conductor != NULL)	//N
 		{
 			//Make sure it is a valid conductor
-			if (gl_object_isa(line_config->phaseC_conductor,"triplex_line_conductor","powerflow") != true)
+			if (!gl_object_isa(line_config->phaseC_conductor, const_cast<char*>("triplex_line_conductor"), const_cast<char*>("powerflow")))
 			{
-				GL_THROW("triplex_line:%d - %s - configuration does not use a triplex_line_conductor for at least one phase!",obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW(const_cast<char*>("triplex_line:%d - %s - configuration does not use a triplex_line_conductor for at least one phase!"),obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
 			}
 			//Default else -- it's a valid conductor
 		}
 		else
 		{
-			GL_THROW("triplex_line:%d - %s - configuration doesn't have a valid phase conductor!",obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("triplex_line:%d - %s - configuration doesn't have a valid phase conductor!"),obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
 		}
 	}//End not specified as impedance directly
@@ -321,7 +321,7 @@ void triplex_line::recalc(void)
 			tn[2] = 0;
 		}
 		else
-			GL_THROW("Only NR and FBS support z-matrix components.");
+			GL_THROW(const_cast<char*>("Only NR and FBS support z-matrix components."));
 
 	}
 	else
@@ -358,7 +358,7 @@ void triplex_line::recalc(void)
 
 		if (l1 == NULL || l2 == NULL || lN == NULL)
 		{
-			GL_THROW("triplex_line_configuration:%d (%s) is missing a conductor specification.",line_config->get_id(),line_config->get_name());
+			GL_THROW(const_cast<char*>("triplex_line_configuration:%d (%s) is missing a conductor specification."),line_config->get_id(),line_config->get_name());
 			/* TROUBLESHOOT
 			At this point, triplex lines are assumed to have three conductor values: conductor_1, conductor_2,
 			and conductor_N.  If any of these are missing, the triplex line cannot be specified.  Please
@@ -380,7 +380,7 @@ void triplex_line::recalc(void)
 
 		if (D12 <= 0.0 || D13 <= 0.0)
 		{
-			GL_THROW("triplex_line_configuration diameter and/or insulation_thickness are incorrectly set. Please set both of these values to a positive value.");
+			GL_THROW(const_cast<char*>("triplex_line_configuration diameter and/or insulation_thickness are incorrectly set. Please set both of these values to a positive value."));
 			/* TROUBLESHOOT
 			The triplex line configuration requires that the spacing between conductors (diameter + 2*insulation_thickness) &
 			(diameter + insulation_thickness) must be positive values.  Please look at your triplex_line_configuration to verify
@@ -410,7 +410,7 @@ void triplex_line::recalc(void)
 		}
 		else
 		{
-			GL_THROW("triplex_line:unsupported solver method");
+			GL_THROW(const_cast<char*>("triplex_line:unsupported solver method"));
 			/*  TROUBLESHOOT
 			While computing the impedance values for a triplex_line, an invalid solver method was used.
 			Please use only the supported solvers (FBS and NR), or adjust the triplex_line code to accommodate

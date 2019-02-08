@@ -11,6 +11,7 @@
 
 #include "platform.h"
 #include <time.h>
+#include <climits>
 
 #define NORMALRES /* use this to control default timestamp resolution */
 
@@ -39,7 +40,8 @@ typedef unsigned long DT; /**< stores incremental delta time values in ns */
 #define TS_ZERO ((int64)0)
 #define TS_MAX (32482080000LL) /* roughly 3000 CE, any date beyond this should be interpreted as TS_NEVER */
 #define TS_INVALID ((int64)-1)
-#define TS_NEVER ((int64)(((unsigned int64)-1)>>1))
+#define TS_NEVER (INT_MAX) //TODO: Review value to be used here.
+//#define TS_NEVER ((int64)(((unsigned int64)-1)>>1))
 #define MINYEAR 1970
 #define MAXYEAR 2969
 #define ISLEAPYEAR(Y) ((Y)%4==0 && ((Y)%100!=0 || (Y)%400==0))

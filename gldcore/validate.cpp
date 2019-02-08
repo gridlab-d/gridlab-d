@@ -817,7 +817,7 @@ int validate(int argc, char *argv[])
 	char mailto[1024]="";
 	report_data();
 	report_data("Mailto");
-	report_data("%s",global_getvar("mailto",mailto,sizeof(mailto))!=NULL?mailto:"(NA)");
+	report_data("%s",global_getvar("mailto",mailto,sizeof(mailto))!= nullptr ?mailto:"(NA)");
 	report_newrow();
 	
 	if ( global_validateoptions&VO_RPTDIR ) 
@@ -853,7 +853,7 @@ int validate(int argc, char *argv[])
 
 	report_newtable("OVERALL RESULTS");
 
-	char *flag="!!!";
+	const char *flag="!!!";
 	report_data();
 	report_data("Directory results");
 	report_newrow();
