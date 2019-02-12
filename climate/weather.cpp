@@ -17,7 +17,7 @@ weather::weather(MODULE *module){
 	memset(this, 0, sizeof(weather));
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"weather",sizeof(weather),NULL);
+		oclass = gl_register_class(module,const_cast<char*>("weather"),sizeof(weather), 0);
 		if (oclass==NULL)
 			throw "unable to register class weather";
 		else
@@ -44,7 +44,7 @@ weather::weather(MODULE *module){
 			PT_int16,"hour",PADDR(hour),
 			PT_int16,"minute",PADDR(minute),
 			PT_int16,"second",PADDR(second),
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			NULL)<1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
 		memset(this,0,sizeof(weather));
 	}
 }

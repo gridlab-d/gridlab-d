@@ -108,7 +108,7 @@ EXPORT int64 calculate_solar_radiation_shading_position_radians(OBJECT *obj, dou
 		return 0;
 	}
 	cli = OBJECTDATA(obj, climate);
-	if(gl_object_isa(obj, "climate", "climate") == 0){
+	if(gl_object_isa(obj, const_cast<char*>("climate"), const_cast<char*>("climate")) == 0){
 		//throw "climate/calc_solar: input object is not a climate object";
 		return 0;
 	}
@@ -152,7 +152,7 @@ EXPORT int64 calc_solar_solpos_shading_position_rad(OBJECT *obj, double tilt, do
 		return 0;
 	}
 	cli = OBJECTDATA(obj, climate);
-	if(gl_object_isa(obj, "climate", "climate") == 0){
+	if(gl_object_isa(obj, const_cast<char*>("climate"), const_cast<char*>("climate")) == 0){
 		return 0;
 	}
 
@@ -231,7 +231,7 @@ EXPORT int64 calc_solar_ideal_shading_position_radians(OBJECT *obj, double tilt,
 		return 0;
 	}
 	cli = OBJECTDATA(obj, climate);
-	if(gl_object_isa(obj, "climate", "climate") == 0){
+	if(gl_object_isa(obj, const_cast<char*>("climate"), const_cast<char*>("climate")) == 0){
 		return 0;
 	}
 
@@ -531,7 +531,7 @@ climate::climate(MODULE *module)
 	memset(this, 0, sizeof(climate));
 	if (oclass==NULL)
 	{
-		oclass = gld_class::create(module,"climate",sizeof(climate),PC_PRETOPDOWN|PC_AUTOLOCK);
+		oclass = gld_class::create(module,const_cast<char*>("climate"),sizeof(climate),PC_PRETOPDOWN|PC_AUTOLOCK);
 		if (gl_publish_variable(oclass,
 			PT_double,"solar_elevation",PADDR(solar_elevation), //sjin: publish solar elevation variable
 			PT_double,"solar_azimuth",PADDR(solar_azimuth), //sjin: publish solar azimuth variable
@@ -588,18 +588,18 @@ climate::climate(MODULE *module)
 			PT_double,"cloud_num_layers[pu]",PADDR(cloud_num_layers),
 			PT_double,"cloud_aerosol_transmissivity[pu]",PADDR(cloud_aerosol_transmissivity),
             PT_double,"update_time",PADDR(update_time),
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			NULL)<1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
 		memset(this,0,sizeof(climate));
 		sa = new SolarAngles();
 		defaults = this;
-		gl_publish_function(oclass,	"calculate_solar_radiation_degrees", (FUNCTIONADDR)calculate_solar_radiation_degrees);
-		gl_publish_function(oclass,	"calculate_solar_radiation_radians", (FUNCTIONADDR)calculate_solar_radiation_radians);
-		gl_publish_function(oclass,	"calculate_solar_radiation_shading_degrees", (FUNCTIONADDR)calculate_solar_radiation_shading_degrees);
-		gl_publish_function(oclass,	"calculate_solar_radiation_shading_radians", (FUNCTIONADDR)calculate_solar_radiation_shading_radians);
+		gl_publish_function(oclass,	const_cast<char*>("calculate_solar_radiation_degrees"), (FUNCTIONADDR)calculate_solar_radiation_degrees);
+		gl_publish_function(oclass,	const_cast<char*>("calculate_solar_radiation_radians"), (FUNCTIONADDR)calculate_solar_radiation_radians);
+		gl_publish_function(oclass,	const_cast<char*>("calculate_solar_radiation_shading_degrees"), (FUNCTIONADDR)calculate_solar_radiation_shading_degrees);
+		gl_publish_function(oclass,	const_cast<char*>("calculate_solar_radiation_shading_radians"), (FUNCTIONADDR)calculate_solar_radiation_shading_radians);
 		//New solar position algorithm stuff
-		gl_publish_function(oclass,	"calculate_solar_radiation_shading_position_radians", (FUNCTIONADDR)calculate_solar_radiation_shading_position_radians);
-		gl_publish_function(oclass,	"calculate_solpos_radiation_shading_position_radians", (FUNCTIONADDR)calc_solar_solpos_shading_position_rad);
-		gl_publish_function(oclass,	"calc_solar_ideal_shading_position_radians", (FUNCTIONADDR)calc_solar_ideal_shading_position_radians);
+		gl_publish_function(oclass,	const_cast<char*>("calculate_solar_radiation_shading_position_radians"), (FUNCTIONADDR)calculate_solar_radiation_shading_position_radians);
+		gl_publish_function(oclass,	const_cast<char*>("calculate_solpos_radiation_shading_position_radians"), (FUNCTIONADDR)calc_solar_solpos_shading_position_rad);
+		gl_publish_function(oclass,	const_cast<char*>("calc_solar_ideal_shading_position_radians"), (FUNCTIONADDR)calc_solar_ideal_shading_position_radians);
 	}
 }
 
@@ -847,7 +847,7 @@ int climate::init(OBJECT *parent)
 		//Defined above
 	}
 
-	if(0 == gl_convert("m", "ft", &meter_to_feet)){
+	if(0 == gl_convert(const_cast<char*>("m"), const_cast<char*>("ft"), &meter_to_feet)){
 		gl_error("climate::init unable to gl_convert() 'm' to 'ft'!");
 		return 0;
 	}
@@ -865,34 +865,34 @@ int climate::init(OBJECT *parent)
 		int hoy = (doy - 1) * 24 + (hour-1);
 		if (hoy>=0 && hoy<8760){
 			// pre-conversion of solar data from W/m^2 to W/sf
-			if(0 == gl_convert("W/m^2", "W/sf", &(dnr))){
+			if(0 == gl_convert(const_cast<char*>("W/m^2"), const_cast<char*>("W/sf"), &(dnr))){
 				gl_error("climate::init unable to gl_convert() 'W/m^2' to 'W/sf'!");
 				return 0;
 			}
-			if(0 == gl_convert("W/m^2", "W/sf", &(dhr))){
+			if(0 == gl_convert(const_cast<char*>("W/m^2"), const_cast<char*>("W/sf"), &(dhr))){
 				gl_error("climate::init unable to gl_convert() 'W/m^2' to 'W/sf'!");
 				return 0;
 			}
-			if(0 == gl_convert("W/m^2", "W/sf", &(ghr))){
+			if(0 == gl_convert(const_cast<char*>("W/m^2"), const_cast<char*>("W/sf"), &(ghr))){
 				gl_error("climate::init unable to gl_convert() 'W/m^2' to 'W/sf'!");
 				return 0;
 			}
-			if(0 == gl_convert("W/m^2", "W/sf", &(extra_dni))){
+			if(0 == gl_convert(const_cast<char*>("W/m^2"), const_cast<char*>("W/sf"), &(extra_dni))){
 				gl_error("climate::init unable to gl_convert() 'W/m^2' to 'W/sf'!");
 				return 0;
 			}
-			if(0 == gl_convert("W/m^2", "W/sf", &(extra_ghi))){
+			if(0 == gl_convert(const_cast<char*>("W/m^2"), const_cast<char*>("W/sf"), &(extra_ghi))){
 				gl_error("climate::init unable to gl_convert() 'W/m^2' to 'W/sf'!");
 				return 0;
 			}
-			if(0 == gl_convert("mps", "mph", &(wspeed))){
+			if(0 == gl_convert(const_cast<char*>("mps"), const_cast<char*>("mph"), &(wspeed))){
 				gl_error("climate::init unable to gl_convert() 'm/s' to 'miles/h'!");
 				return 0;
 			}
 			tmy[hoy].temp_raw = temperature;
 			tmy[hoy].temp = temperature;
 			// post-conversion of copy of temperature from C to F
-			if(0 == gl_convert("degC", "degF", &(tmy[hoy].temp))){
+			if(0 == gl_convert(const_cast<char*>("degC"), const_cast<char*>("degF"), &(tmy[hoy].temp))){
 				gl_error("climate::init unable to gl_convert() 'degC' to 'degF'!");
 				return 0;
 			}
@@ -1764,7 +1764,7 @@ void climate::write_out_cloud_pattern( char pattern){ //Used only for verificati
 	ofstream out_file;
 
 	char buffer [100];
-	sprintf (buffer, "cloud_pattern_%010ld.csv", prev_NTime);
+	sprintf (buffer, "cloud_pattern_%010ld.csv", static_cast<long int>(prev_NTime));
 	std::string file_string = buffer;
 	out_file.open(file_string.c_str(), ios::out);
 
@@ -2053,7 +2053,7 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 		int hoy;
 		double now, hoy0, hoy1, hoy2;
 		if(localres == 0){
-			GL_THROW("climate::sync -- unable to resolve localtime!");
+			GL_THROW(const_cast<char*>("climate::sync -- unable to resolve localtime!"));
 		}
 		int doy = sa->day_of_yr(ts.month,ts.day);
 		hoy = (doy - 1) * 24 + (ts.hour);
@@ -2221,7 +2221,7 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
 				}
 				break;
 			default:
-				GL_THROW("climate::sync -- unrecognized interpolation mode!");
+				GL_THROW(const_cast<char*>("climate::sync -- unrecognized interpolation mode!"));
 		}
 		update_forecasts(t0);
 		tmy_rv = -(t0+(3600*TS_SECOND-t0%(3600 *TS_SECOND))); /// negative means soft event
