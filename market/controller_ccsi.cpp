@@ -259,7 +259,7 @@ void controller_ccsi::cheat(){
 void controller_ccsi::fetch_double(double **prop, char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
 	*prop = gl_get_double_by_name(parent, name);
-	if(*prop == NULL){
+	if(*prop == nullptr){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
@@ -275,7 +275,7 @@ void controller_ccsi::fetch_double(double **prop, char *name, OBJECT *parent){
 void controller_ccsi::fetch_int64(int64 **prop, char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
 	*prop = gl_get_int64_by_name(parent, name);
-	if(*prop == NULL){
+	if(*prop == nullptr){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
@@ -284,26 +284,26 @@ void controller_ccsi::fetch_int64(int64 **prop, char *name, OBJECT *parent){
 			sprintf(msg, "%s: controller_ccsi unable to find property: name is NULL", namestr);
 		else
 			sprintf(msg, "%s: controller_ccsi unable to find %s", namestr, name);
-		throw(msg);
+		throw(std::runtime_error(msg));
 	}
 }
 
 void controller_ccsi::fetch_enum(enumeration **prop, char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
 	*prop = gl_get_enum_by_name(parent, name);
-	if(*prop == NULL){
+	if(*prop == nullptr){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "controller:%i", hdr->id);
 		if(*name == NULL){
-			sprintf(msg, "%: controller unable to find property: name is NULL", namestr);
+			sprintf(msg, "%s: controller unable to find property: name is NULL", namestr);
 		}
 		else
 		{
 			sprintf(msg, "%s: controller unable to find %s", namestr, name);
 		}
-		throw(msg);
+		throw(std::runtime_error(msg));
 	}
 }
 

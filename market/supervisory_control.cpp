@@ -57,7 +57,7 @@ supervisory_control::supervisory_control(MODULE *module) {
 void supervisory_control::fetch_double(double **prop, char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
 	*prop = gl_get_double_by_name(parent, name);
-	if(*prop == NULL){
+	if(*prop == nullptr){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
@@ -66,7 +66,7 @@ void supervisory_control::fetch_double(double **prop, char *name, OBJECT *parent
 			sprintf(msg, "%s: supervisory_control unable to find property: name is NULL", namestr);
 		else
 			sprintf(msg, "%s: supervisory_control unable to find %s", namestr, name);
-		throw(msg);
+		throw(std::runtime_error(msg));
 	}
 }
 

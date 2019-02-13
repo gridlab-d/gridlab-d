@@ -208,7 +208,7 @@ passive_controller::passive_controller(MODULE *mod)
 void passive_controller::fetch_double(double **prop, char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
 	*prop = gl_get_double_by_name(parent, name);
-	if(*prop == NULL){
+	if(*prop == nullptr){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
@@ -217,14 +217,14 @@ void passive_controller::fetch_double(double **prop, char *name, OBJECT *parent)
 			sprintf(msg, "%s: passive_controller unable to find property: name is NULL", namestr);
 		else
 			sprintf(msg, "%s: passive_controller unable to find %s", namestr, name);
-		throw(msg);
+		throw(std::runtime_error(msg));
 	}
 }
 
 void passive_controller::fetch_int(int **prop, char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
 	*prop = gl_get_int32_by_name(parent, name);
-	if(*prop == NULL){
+	if(*prop == nullptr){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
@@ -233,7 +233,7 @@ void passive_controller::fetch_int(int **prop, char *name, OBJECT *parent){
 			sprintf(msg, "%s: passive_controller unable to find property: name is NULL", namestr);
 		else
 			sprintf(msg, "%s: passive_controller unable to find %s", namestr, name);
-		throw(msg);
+		throw(std::runtime_error(msg));
 	}
 }
 
