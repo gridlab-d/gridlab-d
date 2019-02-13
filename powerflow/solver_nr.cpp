@@ -30,8 +30,7 @@ Initialization after returning to service?
 
 ***********************************************************************
 */
-//TODO: review removal of solver reference
-//#include "solver_nr.h"
+#include "solver_nr.h"
 
 #define MT // this enables multithreaded SuperLU
 

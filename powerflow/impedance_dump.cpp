@@ -1831,17 +1831,17 @@ int impedance_dump::dump(TIMESTAMP t)
 				fprintf(fn,"\t\t<phases>ABCD</phases>\n");
 			}
 
-			//write power rating TODO: Review comparison to 0, changed from NULL
-			if(pTransformer[index]->config->kVA_rating!= 0){
+			//write power rating
+			if(pTransformer[index]->config->kVA_rating!= 0.0){
 				fprintf(fn,"\t\t<power_rating>%.6f</power_rating>\n",pTransformer[index]->config->kVA_rating);
 			}
 
 
-			//write impedance TODO: Review comparison to 0, changed from NULL
-			if(pTransformer[index]->config->impedance.Re()!=0){
+			//write impedance
+			if(pTransformer[index]->config->impedance.Re()!=0.0){
 				fprintf(fn,"\t\t<resistance>%.6f</resistance>\n",pTransformer[index]->config->impedance.Re());
 			}
-			if(pTransformer[index]->config->impedance.Im()!=0){
+			if(pTransformer[index]->config->impedance.Im()!=0.0){
 				fprintf(fn,"\t\t<reactance>%.6f</reactance>\n",pTransformer[index]->config->impedance.Im());
 			}
 			//write a_mat

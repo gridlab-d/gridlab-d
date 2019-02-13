@@ -64,7 +64,7 @@ int currdump::isa(char *classname)
 
 void currdump::dump(TIMESTAMP t){
 	char namestr[128];
-	char timestr[128];
+	char timestr[64];
 	FINDLIST *links = NULL;
 	OBJECT *obj = NULL;
 	FILE *outfile = NULL;

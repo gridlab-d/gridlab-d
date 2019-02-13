@@ -205,13 +205,14 @@ int csv_reader::read_prop(char *line){ // already pulled the '$' off the front
 	if(prop->ptype == PT_double){
 	    //TODO: Review use of format specifier here
 		if(1 != sscanf(valstr, "%p", &addr)){
-			gl_error(const_cast<char*>(R"(csv_reader::read_prop ~ unable to set property '%s' to '%s')"), propstr, valstr);
+			gl_error(R"(csv_reader::read_prop ~ unable to set property '%s' to '%s')", propstr, valstr);
 			/* TROUBLESHOOT
 				The double parser was not able to convert the property value into a number.  Please
 				review the input line for non-numeric characters and re-run GridLAB-D.
 			*/
 			return 0;
 		}
+
 	} else if(prop->ptype == PT_char32){
 		strncpy((char *)addr, valstr, 32);
 //	} else if(prop->ptype == PT_char256){

@@ -1026,8 +1026,7 @@ int transformer::init(OBJECT *parent)
 				R = config->full_load_loss/config->no_load_loss;
 			} else if(config->impedance.Re()!=0 && config->shunt_impedance.Re()!=0)
 				R = config->impedance.Re()*config->shunt_impedance.Re();
-			//TODO: Review use of 0 here in lieu of NULL
-			if(config->t_W==0 || config->dtheta_TO_R==0){
+			if(config->t_W==0 || config->dtheta_TO_R==0.0){
 				GL_THROW(const_cast<char*>("winding time constant or rated top-oil hotspot rise for transformer configuration %s must be nonzero"),configuration->name);
 				/*  TROUBLESHOOT
 				When using the thermal aging model, the rated_winding_time_constant or the rated_top_oil_rise must be given as a non-zero value.
