@@ -31,7 +31,7 @@ energy_storage::energy_storage(MODULE *module)
 {
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"energy_storage",sizeof(energy_storage),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
+		oclass = gl_register_class(module,const_cast<char*>("energy_storage"),sizeof(energy_storage),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class energy_storage";
 		else
@@ -81,7 +81,7 @@ energy_storage::energy_storage(MODULE *module)
 				PT_KEYWORD, "C",(set)PHASE_C,
 				PT_KEYWORD, "N",(set)PHASE_N,
 				PT_KEYWORD, "S",(set)PHASE_S,
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			NULL)<1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
 		defaults = this;
 
 
@@ -193,7 +193,7 @@ EXPORT TIMESTAMP sync_energy_storage(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 			t2 = my->postsync(obj->clock,t1);
 			break;
 		default:
-			GL_THROW("invalid pass request (%d)", pass);
+			GL_THROW(const_cast<char*>("invalid pass request (%d)"), pass);
 			break;
 		}
 		if (pass==clockpass)

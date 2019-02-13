@@ -22,7 +22,7 @@ windturb_dg::windturb_dg(MODULE *module)
 	if (oclass==NULL)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
-		oclass = gl_register_class(module,"windturb_dg",sizeof(windturb_dg),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
+		oclass = gl_register_class(module,const_cast<char*>("windturb_dg"),sizeof(windturb_dg),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class windturb_dg";
 		else
@@ -128,7 +128,7 @@ windturb_dg::windturb_dg(MODULE *module)
 			PT_KEYWORD, "C",(set)PHASE_C,
 			PT_KEYWORD, "N",(set)PHASE_N,
 			PT_KEYWORD, "S",(set)PHASE_S,
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);		
+			NULL)<1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
 	}
 }
 
@@ -234,9 +234,9 @@ int windturb_dg::init_climate()
 			if (obj->rank<=hdr->rank)
 				gl_set_dependent(obj,hdr);
 
-			pWS = map_double_value(obj,"wind_speed");  
-			pPress = map_double_value(obj,"pressure");
-			pTemp = map_double_value(obj,"temperature");
+			pWS = map_double_value(obj,const_cast<char*>("wind_speed"));
+			pPress = map_double_value(obj,const_cast<char*>("pressure"));
+			pTemp = map_double_value(obj,const_cast<char*>("temperature"));
 
 			//Flag properly
 			climate_is_valid = true;
@@ -432,38 +432,38 @@ int windturb_dg::init(OBJECT *parent)
 			Xg = 0;
 
 			if (turbine_height <=0)
-				GL_THROW ("turbine height cannot have a negative or zero value.");
+				GL_THROW (const_cast<char*>("turbine height cannot have a negative or zero value."));
 			/*  TROUBLESHOOT
 			Turbine height must be specified as a value greater than or equal to zero.
 			*/
 			if (blade_diam <=0)
-				GL_THROW ("blade diameter cannot have a negative or zero value.");
+				GL_THROW (const_cast<char*>("blade diameter cannot have a negative or zero value."));
 			/*  TROUBLESHOOT
 			Blade diameter must be specified as a value greater than or equal to zero.
 			*/
 			if (cut_in_ws <=0)
-				GL_THROW ("cut in wind speed cannot have a negative or zero value.");
+				GL_THROW (const_cast<char*>("cut in wind speed cannot have a negative or zero value."));
 			/*  TROUBLESHOOT
 			Cut in wind speed must be specified as a value greater than or equal to zero.
 			*/
 			if (cut_out_ws <=0)
-				GL_THROW ("cut out wind speed cannot have a negative or zero value.");
+				GL_THROW (const_cast<char*>("cut out wind speed cannot have a negative or zero value."));
 			/*  TROUBLESHOOT
 			Cut out wind speed must be specified as a value greater than or equal to zero.
 			*/
 			if (ws_rated <=0)
-				GL_THROW ("rated wind speed cannot have a negative or zero value.");
+				GL_THROW (const_cast<char*>("rated wind speed cannot have a negative or zero value."));
 			/*  TROUBLESHOOT
 			Rated wind speed must be specified as a value greater than or equal to zero.
 			*/
 			if (ws_maxcp <=0)
-				GL_THROW ("max cp cannot have a negative or zero value.");
+				GL_THROW (const_cast<char*>("max cp cannot have a negative or zero value."));
 			/*  TROUBLESHOOT
 			Maximum coefficient of performance must be specified as a value greater than or equal to zero.
 			*/
 			break;
 		default:
-			GL_THROW("Unknown turbine model was specified");
+			GL_THROW(const_cast<char*>("Unknown turbine model was specified"));
 			/*  TROUBLESHOOT
 			An unknown wind turbine model was selected.  Please select a Turbine_Model from the available list.
 			*/
@@ -477,14 +477,14 @@ int windturb_dg::init(OBJECT *parent)
 			gl_verbose("windturb_dg::init(): deferring initialization on %s", gl_name(parent, objname, 255));
 			return 2; // defer
 		}
-		if (gl_object_isa(parent,"meter","powerflow"))	//Attach to meter
+		if (gl_object_isa(parent,const_cast<char*>("meter"),const_cast<char*>("powerflow")))	//Attach to meter
 		{
 			//Flag properly
 			parent_is_valid = true;
 
 			//Map phases
 			//Map and pull the phases
-			temp_property_pointer = new gld_property(parent,"phases");
+			temp_property_pointer = new gld_property(parent,const_cast<char*>("phases"));
 
 			//Make sure ti worked
 			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_set() != true))
@@ -518,9 +518,9 @@ int windturb_dg::init(OBJECT *parent)
 			*/
 
 			//Map the voltages
-			temp_property_pointer = new gld_property(parent,"nominal_voltage");
+			temp_property_pointer = new gld_property(parent,const_cast<char*>("nominal_voltage"));
 
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_double())
 			{
 				GL_THROW("Unable to map nominal_voltage property - ensure the parent is a powerflow:meter");
 				/*  TROUBLESHOOT
@@ -547,30 +547,30 @@ int windturb_dg::init(OBJECT *parent)
 			*/
 
 			//Map the values of the parent
-			pCircuit_V[0] = map_complex_value(parent,"voltage_A");
-			pCircuit_V[1] = map_complex_value(parent,"voltage_B");
-			pCircuit_V[2] = map_complex_value(parent,"voltage_C");
+			pCircuit_V[0] = map_complex_value(parent,const_cast<char*>("voltage_A"));
+			pCircuit_V[1] = map_complex_value(parent,const_cast<char*>("voltage_B"));
+			pCircuit_V[2] = map_complex_value(parent,const_cast<char*>("voltage_C"));
 
-			pLine_I[0] = map_complex_value(parent,"current_A");
-			pLine_I[1] = map_complex_value(parent,"current_B");
-			pLine_I[2] = map_complex_value(parent,"current_C");
+			pLine_I[0] = map_complex_value(parent,const_cast<char*>("current_A"));
+			pLine_I[1] = map_complex_value(parent,const_cast<char*>("current_B"));
+			pLine_I[2] = map_complex_value(parent,const_cast<char*>("current_C"));
 		}
-		else if (gl_object_isa(parent,"triplex_meter","powerflow"))
+		else if (gl_object_isa(parent,const_cast<char*>("triplex_meter"),const_cast<char*>("powerflow")))
 		{
 			GL_THROW("The wind turbine model does currently support direct connection to single phase or triplex meters. Connect through a rectifier-inverter combination.");
 			/*  TROUBLESHOOT
 			This model does not currently support connection to a triplex system.  Please connect to a 3-phase meter.
 			*/
 		}
-		else if (gl_object_isa(parent,"rectifier","generators"))
+		else if (gl_object_isa(parent,const_cast<char*>("rectifier"),const_cast<char*>("generators")))
 		{
 			//Set the "pull flag"
 			parent_is_valid = true;
 
 			//Map the voltages
-			temp_property_pointer = new gld_property(parent,"V_Rated");
+			temp_property_pointer = new gld_property(parent,const_cast<char*>("V_Rated"));
 
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_double())
 			{
 				GL_THROW("Unable to map V_Rated property - ensure the parent is a powerflow:meter");
 				/*  TROUBLESHOOT
@@ -597,13 +597,13 @@ int windturb_dg::init(OBJECT *parent)
 			*/
 
 			//Map the values of the parent
-			pCircuit_V[0] = map_complex_value(parent,"voltage_A");
-			pCircuit_V[1] = map_complex_value(parent,"voltage_B");
-			pCircuit_V[2] = map_complex_value(parent,"voltage_C");
+			pCircuit_V[0] = map_complex_value(parent,const_cast<char*>("voltage_A"));
+			pCircuit_V[1] = map_complex_value(parent,const_cast<char*>("voltage_B"));
+			pCircuit_V[2] = map_complex_value(parent,const_cast<char*>("voltage_C"));
 
-			pLine_I[0] = map_complex_value(parent,"current_A");
-			pLine_I[1] = map_complex_value(parent,"current_B");
-			pLine_I[2] = map_complex_value(parent,"current_C");
+			pLine_I[0] = map_complex_value(parent,const_cast<char*>("current_A"));
+			pLine_I[1] = map_complex_value(parent,const_cast<char*>("current_B"));
+			pLine_I[2] = map_complex_value(parent,const_cast<char*>("current_C"));
 		}
 		else
 		{
@@ -1140,7 +1140,7 @@ TIMESTAMP windturb_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	value_Line_I[2] = -current_C;
 
 	//Push up the powerflow interface
-	if (parent_is_valid == true)
+	if (parent_is_valid)
 	{
 		push_complex_powerflow_values();
 	}
@@ -1158,7 +1158,7 @@ gld_property *windturb_dg::map_complex_value(OBJECT *obj, char *name)
 	pQuantity = new gld_property(obj,name);
 
 	//Make sure it worked
-	if ((pQuantity->is_valid() != true) || (pQuantity->is_complex() != true))
+	if (!pQuantity->is_valid() || !pQuantity->is_complex())
 	{
 		GL_THROW("windturb_dg:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT

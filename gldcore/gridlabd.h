@@ -247,6 +247,16 @@ inline void GL_THROW(char *format, ...)
 	va_end(ptr);
 	throw std::runtime_error(buffer);
 }
+
+inline void GL_THROW(const char *format, ...)
+{
+	static char buffer[1024];
+	va_list ptr;
+	va_start(ptr,format);
+	vsprintf(buffer,format,ptr);
+	va_end(ptr);
+	throw std::runtime_error(buffer);
+}
 #else
 #define GL_THROW (*callback->exception.throw_exception)
 /** The argument \p msg provides access to the exception message thrown.
@@ -2012,7 +2022,7 @@ private: // data
 
 public: // constructors/casts
 	inline gld_property(void) : obj(NULL), pstruct(nullpstruct) {};
-	inline gld_property(gld_object *o, char *n) : obj(o->my()), pstruct(nullpstruct)  
+	inline gld_property(gld_object *o, char *n) : obj(o->my()), pstruct(nullpstruct)
 	{ 
 		if (o) 
 			callback->properties.get_property(o->my(),n,&pstruct); 
@@ -2151,7 +2161,7 @@ public: // special operations
 	inline bool compare(char *op, char *a, char *b=NULL, char *p=NULL) 
 	{ 
 		PROPERTYCOMPAREOP n = callback->properties.get_compare_op(pstruct.prop->ptype,op); 
-		if (n==TCOP_ERR) throw "invalid property compare operation"; 
+		if (n==TCOP_ERR) throw "invalid property compare operation";
 		return compare((enumeration)n,a,b,p); 
 	};
 	inline bool compare(enumeration op, char *a, char *b=NULL) 
