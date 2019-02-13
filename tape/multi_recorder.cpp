@@ -209,7 +209,6 @@ static int multi_recorder_open(OBJECT *obj)
 					rep = atoi(inbuffer.get_string() + replen + 1); // skip intermediate space
 					++rep;
 					fprintf(my->multifp, "# repetition %i\n", rep);
-					fgets(inbuffer, 1024, my->inputfp);
 					trim = strchr(inbuffer, '\n');
 					if(trim) *trim = 0;
 				} else { // invalid input file or somesuch, we could error ... or we can trample onwards with our output file.
