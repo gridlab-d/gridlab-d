@@ -14,7 +14,7 @@
 
 class lights : public residential_enduse {
 public:
-	typedef enum { // make certain this matchers the power_factor table
+	enum { // make certain this matchers the power_factor table
 		INCANDESCENT=0,	///< incandescent lights
 		FLUORESCENT,	///< fluorescent lights
 		CFL,			///< compact fluorescent lights
@@ -25,7 +25,7 @@ public:
 	enumeration type;				///< lighting type
 	static double power_factor[_MAXTYPES]; ///< Lighting power factors (the ordinals must match the \p type enumeration)
 	static double power_fraction[_MAXTYPES][3];
-	typedef enum {
+	enum {
 		INDOOR=0,		///< indoor lighting (100% indoor heat gain)
 		OUTDOOR=1,		///< outdoor lighting (0% indoor heat gain)
 	};

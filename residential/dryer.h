@@ -16,7 +16,7 @@
 class dryer : public residential_enduse
 {
 public:
-	typedef enum {	DRYER_STOPPED=0,		///< motor is stopped
+	enum {	DRYER_STOPPED=0,		///< motor is stopped
 			DRYER_STALLED=1,						///< motor is stalled
 			DRYER_TRIPPED=2,						///< motor is tripped
 			DRYER_MOTOR_COIL_ONLY=3,				///<only the coil and motor are operating

@@ -31,7 +31,7 @@ public:
 	double heat_fraction;				///< internal gain fraction of installed power
 	TIMESTAMP time_state;				///< time in current state
 	bool starttime;
-	typedef enum {
+	enum {
 		STOPPED=0,						///< motor is stopped
 		RUNNING=1,						///< motor is running
 		STALLED=2,						///< motor is stalled
