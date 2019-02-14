@@ -1828,7 +1828,7 @@ public: // iterators
 #define GL_ATOMIC(T,X) protected: T X; public: \
 	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
 	inline T get_##X(void) { return X; }; \
-	inline gld_property get_##X##_property(void) { return gld_property(my(),#X); }; \
+	inline gld_property get_##X##_property(void) { return gld_property(my(),strdup(#X)); }; \
 	inline T get_##X(gld_rlock&) { return X; }; \
 	inline T get_##X(gld_wlock&) { return X; }; \
 	inline void set_##X(T p) { X=p; }; \
@@ -1840,7 +1840,7 @@ public: // iterators
 #define GL_STRUCT(T,X) protected: T X; public: \
 	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
 	inline T get_##X(void) { gld_rlock _lock(my()); return X; }; \
-	inline gld_property get_##X##_property(void) { return gld_property(my(),#X); }; \
+	inline gld_property get_##X##_property(void) { return gld_property(my(),strdup(#X)); }; \
 	inline T get_##X(gld_rlock&) { return X; }; \
 	inline T get_##X(gld_wlock&) { return X; }; \
 	inline void set_##X(T p) { gld_wlock _lock(my()); X=p; }; \
@@ -1852,7 +1852,7 @@ public: // iterators
 #define GL_STRING(T,X) 	protected: T X; public: \
 	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
 	inline char* get_##X(void) { gld_rlock _lock(my()); return X.get_string(); }; \
-	inline gld_property get_##X##_property(void) { return gld_property(my(),#X); }; \
+	inline gld_property get_##X##_property(void) { return gld_property(my(),strdup(#X)); }; \
 	inline char* get_##X(gld_rlock&) { return X.get_string(); }; \
 	inline char* get_##X(gld_wlock&) { return X.get_string(); }; \
 	inline char get_##X(size_t n) { gld_rlock _lock(my()); return (char)X; }; \

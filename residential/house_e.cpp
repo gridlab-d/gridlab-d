@@ -108,7 +108,7 @@ static double aux_cutin_temperature = 10;
 // implicit loadshapes - these are enabled by using implicit_enduses global
 //////////////////////////////////////////////////////////////////////////
 typedef struct s_implicit_enduse_list {
-	char *implicit_name;
+	const char *implicit_name;
 	struct {
 		double breaker_amps; 
 		int circuit_is220;
@@ -118,9 +118,9 @@ typedef struct s_implicit_enduse_list {
 		double power_factor;
 		double heat_fraction;
 	} load;
-	char *shape;
-	char *schedule_name;
-	char *schedule_definition;
+	const char *shape;
+	const char *schedule_name;
+	const char *schedule_definition;
 } IMPLICITENDUSEDATA;
 #include "elcap1990.h"
 #include "elcap2010.h"
@@ -604,7 +604,7 @@ int house_e::create()
 				{
 					SCHEDULE *sched = gl_schedule_find(name);
 					if (sched==NULL){
-						sched = gl_schedule_create(eu->schedule_name,eu->schedule_definition);
+						sched = gl_schedule_create(strdup(eu->schedule_name),strdup(eu->schedule_definition));
 					}
 					if(sched == NULL){
 						gl_error("error creating schedule for enduse \'%s\'", eu->schedule_name);
@@ -614,12 +614,12 @@ int house_e::create()
 					memset(item,0,sizeof(IMPLICITENDUSE));
 					gl_enduse_create(&(item->load));
 					item->load.shape = gl_loadshape_create(sched);
-					if (gl_set_value_by_type(PT_loadshape,item->load.shape,eu->shape)==0)
+					if (gl_set_value_by_type(PT_loadshape,item->load.shape, strdup(eu->shape))==0)
 					{
 						gl_error("loadshape '%s' could not be created", name);
 						result = FAILED;
 					}
-					item->load.name = eu->implicit_name;
+					item->load.name = strdup(eu->implicit_name);
 					item->next = implicit_enduse_list;
 					item->amps = eu->load.breaker_amps;
 					item->is220 = eu->load.circuit_is220;

@@ -3324,7 +3324,7 @@ int link_object::kmldump(int (*stream)(const char*,...))
 			"<TH WIDTH=\"25%\" COLSPAN=2 ALIGN=CENTER><NOBR>Phase C</NOBR><HR></TH></TR>\n", get_oclass()->get_name(), get_id());
 
 	int status = 2; // green
-#define HANDLE_EX(X,Y)if ( gl_object_isa(my(),Y) ) status = ((X*)this)->kmldata(stream); else
+#define HANDLE_EX(X, Y)if ( gl_object_isa(my(),strdup(Y)) ) status = ((X*)this)->kmldata(stream); else
 #define HANDLE(X) HANDLE_EX(X,#X)
 	HANDLE_EX(switch_object,"switch")
 	HANDLE(regulator)

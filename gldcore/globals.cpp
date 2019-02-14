@@ -113,7 +113,7 @@ static struct s_varmap {
 	PROPERTYACCESS access;
 	char *description;
 	KEYWORD *keys;
-	void (*callback)(char *name);
+	void (*callback)(const char *name);
 } map[] = {
 	/** @todo make this list the authorative list and retire the global_* list (ticket #25) */
 	{"version.major", PT_int32, &global_version_major, PA_REFERENCE, "major version"},
@@ -156,7 +156,7 @@ static struct s_varmap {
 	{"strictnames", PT_bool, &global_strictnames, PA_PUBLIC, "strict global name enable flag"},
 	{"website", PT_char1024, &global_urlbase, PA_PUBLIC, "url base string (deprecated)"}, /** @todo deprecate use of 'website' */
 	{"urlbase", PT_char1024, &global_urlbase, PA_PUBLIC, "url base string"},
-	{"randomseed", PT_int32, &global_randomseed, PA_PUBLIC, "random number generator seed value", NULL,(void(*)(char*))random_init},
+	{"randomseed", PT_int32, &global_randomseed, PA_PUBLIC, "random number generator seed value", NULL,(void(*)(const char*))random_init},
 	{"include", PT_char1024, &global_include, PA_REFERENCE, "include folder path"},
 	{"trace", PT_char1024, &global_trace, PA_PUBLIC, "trace function list"},
 	{"gdb_window", PT_bool, &global_gdb_window, PA_PUBLIC, "gdb window enable flag"},
@@ -293,7 +293,7 @@ STATUS global_init(void)
 
 	for (i = 0; i < sizeof(map) / sizeof(map[0]); i++){
 		struct s_varmap *p = &(map[i]);
-		GLOBALVAR *var = global_create(p->name, p->type, p->addr, PT_ACCESS, p->access, p->description?PT_DESCRIPTION:0, p->description, NULL);
+		GLOBALVAR *var = global_create(const_cast<char*>(p->name), p->type, p->addr, PT_ACCESS, p->access, p->description?PT_DESCRIPTION:0, p->description, NULL);
 		if(var == NULL){
 			output_error("global_init(): global variable '%s' registration failed", p->name);
 			/* TROUBLESHOOT
@@ -359,9 +359,10 @@ GLOBALVAR *global_create(char *name, ...){
 	PROPERTY *prop = NULL, *lastprop = NULL;
 	PROPERTYTYPE proptype;
 	GLOBALVAR *var = NULL;
+	name = const_cast<char*>(name);
 
 	/* don't create duplicate entries */
-	if(global_find(name) != NULL){
+	if(global_find(strdup(name)) != NULL){
 		errno = EINVAL;
 		output_error("tried to create global variable '%s' a second time", name);
 		/* TROUBLESHOOT
@@ -499,7 +500,7 @@ GLOBALVAR *global_create(char *name, ...){
                     Use a shorter name and try again.
                  */
             }
-            prop = property_malloc(proptype, NULL, name, addr, NULL);
+            prop = property_malloc(proptype, NULL, strdup(name), addr, NULL);
 
             if (prop == NULL)
                 throw_exception("global_create(char *name='%s',...): property '%s' could not be stored", name, name);
@@ -581,7 +582,7 @@ STATUS global_setvar(char *def, ...) /**< the definition */
 			}
 
 			/** @todo autotype global variables when creating them (ticket #26) */
-			var = global_create(name,PT_char1024,NULL,PT_SIZE,1,PT_ACCESS,PA_PUBLIC,NULL);
+			var = global_create(const_cast<char*>(name),PT_char1024,NULL,PT_SIZE,1,PT_ACCESS,PA_PUBLIC,NULL);
 			if ( var==NULL )
 			{
 				output_error("unable to implicitly create the global variable '%s'", name);
@@ -694,7 +695,7 @@ char *global_seq(char *buffer, int size, char *name)
 			else
 			{
 				int32 *addr = (int32*)malloc(sizeof(int32));
-				GLOBALVAR *var = global_create(seq,PT_int32,addr,PT_ACCESS,PA_PUBLIC,NULL);
+				GLOBALVAR *var = global_create(const_cast<char*>(seq),PT_int32,addr,PT_ACCESS,PA_PUBLIC,NULL);
 				*addr = 0;
 				return global_getvar(seq,buffer,size);
 			}
@@ -917,7 +918,7 @@ int parameter_expansion(char *buffer, int size, char *spec)
 		if ( var==NULL )
 		{
 				addr = (int32*)malloc(sizeof(int32));
-				var = global_create(name,PT_int32,addr,PT_ACCESS,PA_PUBLIC,NULL);
+				var = global_create(const_cast<char*>(name),PT_int32,addr,PT_ACCESS,PA_PUBLIC,NULL);
 		}
 		else
 			addr = (int32*) &(var->prop->addr);
