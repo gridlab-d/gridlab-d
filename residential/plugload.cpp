@@ -29,7 +29,7 @@ plugload::plugload(MODULE *module) : residential_enduse(module)
 	if (oclass==NULL)
 	{
 		// register the class definition
-		oclass = gl_register_class(module,"plugload",sizeof(plugload),PC_BOTTOMUP|PC_AUTOLOCK);
+		oclass = gl_register_class(module,const_cast<char*>("plugload"),sizeof(plugload),PC_BOTTOMUP|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class plugload";
 		else

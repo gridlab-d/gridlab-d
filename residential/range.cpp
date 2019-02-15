@@ -33,7 +33,7 @@ range::range(MODULE *module) : residential_enduse(module){
 	{
 		pclass = residential_enduse::oclass;
 		// register the class definition
-		oclass = gl_register_class(module,"range",sizeof(range),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
+		oclass = gl_register_class(module,const_cast<char*>("range"),sizeof(range),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
 		if (oclass==NULL)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 

@@ -492,7 +492,7 @@ EXPORT void close_recorder(struct recorder *my)
 #ifdef WIN32
 	char *plotcmd = "start wgnuplot";
 #else
-	char *plotcmd = "gnuplot";
+	const char *plotcmd = "gnuplot";
 #endif
 	if(my->output == SCREEN)
 		sprintf(gnuplot,"%s -persist", plotcmd);

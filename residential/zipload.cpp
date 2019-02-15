@@ -37,7 +37,7 @@ ZIPload::ZIPload(MODULE *module) : residential_enduse(module)
 	if (oclass==NULL)
 	{
 		// register the class definition
-		oclass = gl_register_class(module,"ZIPload",sizeof(ZIPload),PC_BOTTOMUP|PC_AUTOLOCK);
+		oclass = gl_register_class(module,const_cast<char*>("ZIPload"),sizeof(ZIPload),PC_BOTTOMUP|PC_AUTOLOCK);
 		if (oclass==NULL)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 

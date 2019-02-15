@@ -166,7 +166,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 	if (oclass==NULL)  
 	{
 		// register the class definition
-		oclass = gl_register_class(mod,"house",sizeof(house_e),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,const_cast<char*>("house"),sizeof(house_e),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class house";
 		else
