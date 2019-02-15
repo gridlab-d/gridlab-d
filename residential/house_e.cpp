@@ -3272,7 +3272,7 @@ gld_property *house_e::map_complex_value(OBJECT *obj, const char *name)
 }
 
 //Map double value
-gld_property *house_e::map_double_value(OBJECT *obj, char *name)
+gld_property *house_e::map_double_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	OBJECT *objhdr = OBJECTHDR(this);
