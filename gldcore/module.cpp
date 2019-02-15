@@ -1112,7 +1112,7 @@ int module_saveall_xml_old(FILE *fp)
 	return count;
 }
 
-MODULE *module_find(char *modname)
+MODULE *module_find(const char *modname)
 {
 	MODULE *mod = NULL;
 	for (mod=first_module; mod!=NULL; mod=mod->next)

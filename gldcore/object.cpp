@@ -1632,7 +1632,7 @@ STATUS object_finalize(OBJECT *obj)
 /** Tests the type of an object
  **/
 int object_isa(OBJECT *obj, /**< the object to test */
-			   char *type){ /**< the type of test */
+			   const char *type){ /**< the type of test */
 	if(obj == 0){
 		return 0;
 	}

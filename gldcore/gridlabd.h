@@ -432,8 +432,8 @@ inline int gl_module_depends(char *name, /**< module name */
  **/
 #ifdef __cplusplus
 inline bool gl_object_isa(OBJECT *obj, /**< object to test */
-						  char *type,
-						  char *modname=NULL) /**< type to test */
+						  const char *type,
+						  const char *modname=NULL) /**< type to test */
 {	bool rv = (*callback->object_isa)(obj,type)!=0;
 	bool mv = modname ? obj->oclass->module == (*callback->module_find)(modname) : true;
 	return (rv && mv);}
