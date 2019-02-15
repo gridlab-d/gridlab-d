@@ -1018,13 +1018,13 @@ inline char* gl_name(OBJECT *my, char *buffer, size_t size)
 
 /** Find a schedule 
  **/
-inline SCHEDULE *gl_schedule_find(char *name)
+inline SCHEDULE *gl_schedule_find(const char *name)
 {
 	return callback->schedule.find(name);
 }
 /** Create a schedule
  **/
-inline SCHEDULE *gl_schedule_create(char *name, char *definition)
+inline SCHEDULE *gl_schedule_create(const char *name, const char *definition)
 {
 	return callback->schedule.create(name,definition);
 }
