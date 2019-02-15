@@ -219,10 +219,10 @@ public:
 		char *(*exception_msg)(void);
 	} exception;
 	struct {
-		GLOBALVAR *(*create)(char *name, ...);
-		STATUS (*setvar)(char *def,...);
-		char *(*getvar)(char *name, char *buffer, int size);
-		GLOBALVAR *(*find)(char *name);
+		GLOBALVAR *(*create)(const char *name, ...);
+		STATUS (*setvar)(const char *def,...);
+		char *(*getvar)(const char *name, char *buffer, int size);
+		GLOBALVAR *(*find)(const char *name);
 	} global;
 	struct {
 		void (*read)(unsigned int *);

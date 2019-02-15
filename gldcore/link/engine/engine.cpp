@@ -459,7 +459,7 @@ EXPORT bool glx_init(glxlink *mod)
 	}
 
 	// send done message
-	if ( !engine_send(engine,"DONE",5) )
+	if ( !engine_send(engine, const_cast<char*>("DONE"),5) )
 	{
 		gl_error("unable to send exports DONE message");
 		return false;

@@ -313,7 +313,7 @@ STATUS global_init(void)
 /** Find a global variable
 	@return a pointer to the GLOBALVAR struct if found, NULL if not found
  **/
-GLOBALVAR *global_find(char *name) /**< name of global variable to find */
+GLOBALVAR *global_find(const char *name) /**< name of global variable to find */
 {
 	GLOBALVAR *var = NULL;
 	if ( name==NULL ) /* get first global in list */
@@ -354,7 +354,7 @@ GLOBALVAR *global_getnext(GLOBALVAR *previous){ /**< a pointer to the previous v
 	@todo this does not support module globals but needs to (no ticket)
 
  **/
-GLOBALVAR *global_create(char *name, ...){
+GLOBALVAR *global_create(const char *name, ...){
 	va_list arg;
 	PROPERTY *prop = NULL, *lastprop = NULL;
 	PROPERTYTYPE proptype;
@@ -541,7 +541,7 @@ GLOBALVAR *global_create(char *name, ...){
 	and the second argument is read as a pointer to a string the contains
 	the new value.
  **/
-STATUS global_setvar(char *def, ...) /**< the definition */
+STATUS global_setvar(const char *def, ...) /**< the definition */
 {
 	char name[65]="", value[1024]="";
 	if (sscanf(def,"%[^=]=%[^\r\n]",name,value)<2)
@@ -680,7 +680,7 @@ char *global_true(char *buffer, int size)
 	}
 }
 
-char *global_seq(char *buffer, int size, char *name)
+char *global_seq(char *buffer, int size, const char *name)
 {
 	char seq[64], opt[64]="";
 	if ( sscanf(name,"%63[^:]:%63s",seq,opt)==2 )
@@ -732,7 +732,7 @@ int global_isdefined(char *name)
 	return global_find(name)!=NULL;
 }
 
-int parameter_expansion(char *buffer, int size, char *spec)
+int parameter_expansion(char *buffer, int size, const char *spec)
 {
 	char name[64], value[1023], pattern[64], op[64], string[64]="", yes[1024]="1", no[1024]="0";
 	int offset, length;
@@ -944,7 +944,7 @@ int parameter_expansion(char *buffer, int size, char *spec)
 
 	This function searches global, user-defined, and module variables for a match.
 **/
-char *global_getvar(char *name, char *buffer, int size)
+char *global_getvar(const char *name, char *buffer, int size)
 {
 	char temp[1024];
 	int len = 0;
