@@ -379,14 +379,14 @@ static void http_reset(HTTPCNX *http)
 #define HTTP_VERSIONNOTSUPPORTED "505 HTTPCNX Version not supported"
 
 /** Set the HTTPCNX response status code **/
-static void http_status(HTTPCNX *http, char *status)
+static void http_status(HTTPCNX *http, const char *status)
 {
-	http->status = status;
+	http->status = const_cast<char*>(status);
 }
 /** Set the HTTPCNX response message type **/
-static void http_type(HTTPCNX *http, char *type)
+static void http_type(HTTPCNX *http, const char *type)
 {
-	http->type = type;
+	http->type = const_cast<char*>(type);
 }
 /** Send the HTTPCNX response **/
 static void http_send(HTTPCNX *http)
@@ -458,14 +458,14 @@ static size_t http_rewrite(char *out, char *in, size_t len, size_t limit)
 }
 
 /** Write the contents of the HTTPCNX message buffer **/
-static void http_write(HTTPCNX *http, char *data, size_t len)
+static void http_write(HTTPCNX *http, const char *data, size_t len)
 {
 	char *tmp = NULL;
 	if ( http->cooked )
 	{
-		size_t need = http_rewrite(tmp,data,len,0);
+		size_t need = http_rewrite(tmp, const_cast<char*>(data),len,0);
 		tmp = (char*)malloc(need*2+1);
-		len = http_rewrite(tmp,data,len,need*2);
+		len = http_rewrite(tmp, const_cast<char*>(data),len,need*2);
 	}
 	if (http->len+len>=http->max_size)
 	{
@@ -506,8 +506,8 @@ static void http_mime(HTTPCNX *http, char *path)
 {
 	size_t len = strlen(path);
 	static struct s_map {
-		char *ext;
-		char *mime;
+		const char *ext;
+		const char *mime;
 	} map[] = {
 		{".png","image/png"},
 		{".js","text/javascript"},
@@ -524,7 +524,7 @@ static void http_mime(HTTPCNX *http, char *path)
 	{
 		if (strcmp(path+len-strlen(map[n].ext),map[n].ext)==0)
 		{
-			http->type = map[n].mime;
+			http->type = const_cast<char*>(map[n].mime);
 			return;
 		}
 	}
@@ -534,7 +534,7 @@ static void http_mime(HTTPCNX *http, char *path)
 }
 
 /** Format HTTPCNX message content **/
-static int http_format(HTTPCNX *http, char *format, ...)
+static int http_format(HTTPCNX *http, const char *format, ...)
 {
 	int len;
 	char data[65536];
@@ -1241,7 +1241,7 @@ int filelength(int fd)
 /** Copy the content of a file to the client
 	@returns the number of bytes sent
  **/
-int http_copy(HTTPCNX *http, char *context, char *source, int cook, size_t pos)
+int http_copy(HTTPCNX *http, const char *context, char *source, int cook, size_t pos)
 {
 	char *buffer;
 	size_t len;
@@ -1902,7 +1902,7 @@ void *http_response(void *ptr)
 	char *accept = NULL;
 	typedef enum {INTEGER,STRING} response_type;
 	struct s_map {
-		char *name;
+		const char *name;
 		response_type type;
 		void *value;
 		size_t sz;
@@ -1974,10 +1974,10 @@ void *http_response(void *ptr)
 		}
 		else {
 			static struct s_path_map {
-				char *path;
+				const char *path;
 				int (*request)(HTTPCNX*,char*);
-				char *success;
-				char *failure;
+				const char *success;
+				const char *failure;
 			} map[] = {
 				/* this is the map of recognize request types */
 				{"/control/",	http_control_request,	HTTP_ACCEPTED, HTTP_NOTFOUND},
