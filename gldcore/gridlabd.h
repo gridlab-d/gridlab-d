@@ -2022,20 +2022,20 @@ private: // data
 
 public: // constructors/casts
 	inline gld_property(void) : obj(NULL), pstruct(nullpstruct) {};
-	inline gld_property(gld_object *o, char *n) : obj(o->my()), pstruct(nullpstruct)
+	inline gld_property(gld_object *o, const char *n) : obj(o->my()), pstruct(nullpstruct)
 	{ 
 		if (o) 
-			callback->properties.get_property(o->my(),n,&pstruct); 
+			callback->properties.get_property(o->my(), const_cast<char*>(n),&pstruct);
 		else 
 		{
 			GLOBALVAR *v=callback->global.find(n); 
 			pstruct.prop= (v?v->prop:NULL);
 		} 
 	};
-	inline gld_property(OBJECT *o, char *n) : obj(o), pstruct(nullpstruct)  
+	inline gld_property(OBJECT *o, const char *n) : obj(o), pstruct(nullpstruct)
 	{ 
 		if (o) 
-			callback->properties.get_property(o,n,&pstruct); 
+			callback->properties.get_property(o,const_cast<char*>(n),&pstruct);
 		else 
 		{
 			GLOBALVAR *v=callback->global.find(n); 

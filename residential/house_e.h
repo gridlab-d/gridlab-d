@@ -479,7 +479,7 @@ public:
 // access methods
 public:
 	//Map function
-	gld_property *map_complex_value(OBJECT *obj, char *name);
+	gld_property *map_complex_value(OBJECT *obj, const char *name);
 	gld_property *map_double_value(OBJECT *obj, char *name);
 	void pull_complex_powerflow_values(void);
 	void pull_climate_values(void);
