@@ -54,7 +54,7 @@ lights::lights(MODULE *mod)
 		pclass = residential_enduse::oclass;
 
 		// register the class definition
-		oclass = gl_register_class(mod,"lights",sizeof(lights),PC_BOTTOMUP|PC_AUTOLOCK);
+		oclass = gl_register_class(mod, const_cast<char*>("lights"),sizeof(lights),PC_BOTTOMUP|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class lights";
 			/* TROUBLESHOOT

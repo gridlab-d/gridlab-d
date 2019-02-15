@@ -1197,7 +1197,7 @@ extern "C" int convert_unit_double(char *buffer,char *unit, double *data)
 	/* skip white space in from of unit */
 	while (isspace(*from)) from++;
 
-	return unit_convert(from,unit,data);
+	return unit_convert((const char *)from,(const char *)unit,data);
 }
 
 /** Convert a struct object to a string

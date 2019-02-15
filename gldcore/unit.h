@@ -22,10 +22,10 @@ typedef struct s_unit {
 using gld::complex;
 extern "C" {
 #endif
-	int unit_convert(char *from, char *to, double *pValue);
+	int unit_convert(const char *from, const char *to, double *pValue);
 	int unit_convert_ex(UNIT *from, UNIT *to, double *pValue);
 	int unit_convert_complex(UNIT *from, UNIT *to, complex *pValue);
-	UNIT *unit_find(char *);
+	UNIT *unit_find(const char *);
 #ifdef __cplusplus
 }
 #endif

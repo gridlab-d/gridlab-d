@@ -1194,7 +1194,7 @@ typedef struct s_callbacks {
 		int (*convert_from_timestamp)(TIMESTAMP ts, char *buffer, int size);
 		int (*convert_from_deltatime_timestamp)(double ts_v, char *buffer, int size);
 	} time;
-	int (*unit_convert)(char *from, char *to, double *value);
+	int (*unit_convert)(const char *from, const char *to, double *value);
 	int (*unit_convert_ex)(UNIT *pFrom, UNIT *pTo, double *pValue);
 	UNIT *(*unit_find)(char *unit_name);
 	struct {
