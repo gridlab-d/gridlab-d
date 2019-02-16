@@ -1243,8 +1243,8 @@ typedef struct s_property_specs { /**<	the property type conversion specificatio
 								It is critical that the order of entries in this list must match 
 								the order of entries in the enumeration #PROPERTYTYPE 
 						  **/
-	char *name; /**< the property type name */
-	char *xsdname;
+	const char *name; /**< the property type name */
+	const char *xsdname;
 	unsigned int size; /**< the size of 1 instance */
 	unsigned int csize; /**< the minimum size of a converted instance (not including '\0' or unit, 0 means a call to property_minimum_buffersize() is necessary) */ 
 	int (*data_to_string)(char *,int,void*,PROPERTY*); /**< the function to convert from data to a string */

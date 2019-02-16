@@ -26,7 +26,7 @@ int saveall(char *filename)
 	FILE *fp;
 	char *ext = strrchr(filename,'.');
 	struct {
-		char *format;
+		const char *format;
 		int (*save)(char*,FILE*);
 	} map[] = {
 		{"glm", saveglm},
@@ -202,7 +202,7 @@ int savexml_strict(char *filename,FILE *fp)
 			PASSCONFIG pass;
 			for (pass=0; ranks!=NULL && ranks[pass]!=NULL; pass++)
 			{
-				char *passname[]={"pretopdown","bottomup","posttopdown"};
+				const char *passname[]={"pretopdown","bottomup","posttopdown"};
 				int lastrank=-1;
 				fprintf(fp,"\t\t<pass>\n\t\t\t<name>%s</name>\n",passname[pass]);
 				for (i = PASSINIT(pass); PASSCMP(i, pass); i += PASSINC(pass))

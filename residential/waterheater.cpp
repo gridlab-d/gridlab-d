@@ -90,7 +90,7 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 	{
 		pclass = residential_enduse::oclass;
 		// register the class definition
-		oclass = gl_register_class(module,"waterheater",sizeof(waterheater),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
+		oclass = gl_register_class(module, const_cast<char*>("waterheater"),sizeof(waterheater),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 
@@ -1502,7 +1502,7 @@ double waterheater::get_Tambient(enumeration loc)
 
 void waterheater::wrong_model(WRONGMODEL msg)
 {
-	char *errtxt[] = {"model is not one-zone","model is not two-zone"};
+	const char *errtxt[] = {"model is not one-zone","model is not two-zone"};
 	OBJECT *obj = OBJECTHDR(this);
 	gl_warning("%s (waterheater:%d): %s", obj->name?obj->name:"(anonymous object)", obj->id, errtxt[msg]);
 	throw msg; // this must be caught by the waterheater code, not by the core

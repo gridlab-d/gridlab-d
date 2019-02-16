@@ -245,7 +245,7 @@ public:
 	} objvar;
 	struct s_objvar_name_struct {
 		bool *(*bool_var)(OBJECT *obj, char *name);
-		complex *(*complex_var)(OBJECT *obj, char *name);
+		complex *(*complex_var)(OBJECT *obj, const char *name);
 		enumeration *(*enum_var)(OBJECT *obj, char *name);
 		set *(*set_var)(OBJECT *obj, char *name);
 		int16 *(*int16_var)(OBJECT *obj, char *name);
@@ -392,7 +392,7 @@ int64 *object_get_int64_by_name(OBJECT *obj, char *name);
 double *object_get_double(OBJECT *pObj, PROPERTY *prop);
 double *object_get_double_by_name(OBJECT *pObj, char *name);
 complex *object_get_complex(OBJECT *pObj, PROPERTY *prop);
-complex *object_get_complex_by_name(OBJECT *pObj, char *name);
+complex *object_get_complex_by_name(OBJECT *pObj, const char *name);
 double *object_get_double_quick(OBJECT *pObj, PROPERTY *prop);
 complex *object_get_complex_quick(OBJECT *pObj, PROPERTY *prop);
 char *object_get_string(OBJECT *pObj, PROPERTY *prop);

@@ -320,7 +320,7 @@ unsigned int class_get_count(void)
 /** Get the name of a property from its type
 	@return a pointer to a string containing the name of the property type
  **/
-char *class_get_property_typename(PROPERTYTYPE type) /**< the property type */
+const char *class_get_property_typename(PROPERTYTYPE type) /**< the property type */
 {
 	if (type<=_PT_FIRST || type>=_PT_LAST)
 		return "//UNDEF//";
@@ -331,7 +331,7 @@ char *class_get_property_typename(PROPERTYTYPE type) /**< the property type */
 /** Get the name of a property from its type
 	@return a pointer to a string containing the name of the property type
  **/
-char *class_get_property_typexsdname(PROPERTYTYPE type) /**< the property type */
+const char *class_get_property_typexsdname(PROPERTYTYPE type) /**< the property type */
 {
 	if (type<=_PT_FIRST || type>=_PT_LAST)
 		return "//UNDEF//";
@@ -887,7 +887,7 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			else
 			{
 				char tcode[32];
-				char *ptypestr=class_get_property_typename(proptype);
+				const char *ptypestr=class_get_property_typename(proptype);
 				sprintf(tcode,"%d",proptype);
 				if (strcmp(ptypestr,"//UNDEF//")==0)
 					ptypestr = tcode;
@@ -1117,7 +1117,7 @@ int class_saveall(FILE *fp) /**< a pointer to the stream FILE structure */
 				count += fprintf(fp, "#ifdef INCLUDE_FUNCTIONS\n\tfunction %s();\n#endif\n", func->name);
 			for (prop=oclass->pmap; prop!=NULL && prop->oclass==oclass; prop=prop->next)
 			{
-				char *ptype = class_get_property_typename(prop->ptype);
+				const char *ptype = class_get_property_typename(prop->ptype);
 				if ( ptype != NULL )
 				{
 					if ( strchr(prop->name,'.') == NULL )
@@ -1151,7 +1151,7 @@ int class_saveall_xml(FILE *fp) /**< a pointer to the stream FILE structure */
 				count += fprintf(fp, "\t\t<function>%s</function>\n", func->name);
 			for (prop=oclass->pmap; prop!=NULL && prop->oclass==oclass; prop=prop->next)
 			{
-				char *propname = class_get_property_typename(prop->ptype);
+				const char *propname = class_get_property_typename(prop->ptype);
 				if (propname!=NULL)
 					count += fprintf(fp,"\t\t\t<property type=\"%s\">%s</property>\n", propname, prop->name);
 			}
@@ -1376,7 +1376,7 @@ int class_get_xsd(CLASS *oclass, /**< a pointer to the class to convert to XSD *
 	for(; oc != 0; oc = oc->parent){
 		for (prop=oc->pmap; prop!=NULL && prop->oclass==oc; prop=prop->next)
 		{
-			char *proptype=class_get_property_typexsdname(prop->ptype);
+			const char *proptype=class_get_property_typexsdname(prop->ptype);
 			if (prop->unit!=NULL){
 				n += buffer_write(buffer+n, len-n, "\t\t\t\t<xs:element name=\"%s\" type=\"xs:string\"/>\n", prop->name);
 			} else {

@@ -706,9 +706,9 @@ complex *object_get_complex(OBJECT *obj, PROPERTY *prop)
 	return NULL;
 }
 
-complex *object_get_complex_by_name(OBJECT *obj, char *name)
+complex *object_get_complex_by_name(OBJECT *obj, const char *name)
 {
-	PROPERTY *prop = class_find_property(obj->oclass,name);
+	PROPERTY *prop = class_find_property(obj->oclass,const_cast<char*>(name));
 	if(prop!=NULL && prop->access != PA_PRIVATE)
 		return (complex *)((char*)obj+sizeof(OBJECT)+(int64)(prop->addr)); /* warning: cast from pointer to integer of different size */
 	errno = ENOENT;
@@ -2761,7 +2761,7 @@ double object_get_part(void *x, char *name)
 	if ( sscanf(name,"%[^. ].%s",root,part)==2 ) // has part
 	{
 		struct {
-			char *name;
+			const char *name;
 			TIMESTAMP *addr;
 		} *p, map[]={
 			{"clock",&(obj->clock)},

@@ -97,7 +97,7 @@ int random_init(void)
 /** Converts a distribution name to a #RANDOMTYPE
  **/
 static struct {
-	char *name;
+	const char *name;
 	RANDOMTYPE type;
 	int nargs;
 } *p, random_map[] = {
@@ -831,7 +831,7 @@ static double samp_stdev(double sample[], unsigned int count)
 static void sort(double sample[], unsigned int count)
 {
 }
-static int report(char *parameter, double actual, double expected, double error)
+static int report(const char *parameter, double actual, double expected, double error)
 {
 	if (parameter==NULL)
 	{
