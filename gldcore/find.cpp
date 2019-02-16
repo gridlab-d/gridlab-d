@@ -1303,7 +1303,7 @@ FINDPGM *find_mkpgm(char *search)
 	@return the first occurance of the file
 	having the desired access mode
  **/
-char *find_file(char *name, /**< the name of the file to find */
+char *find_file(const char *name, /**< the name of the file to find */
 				char *path, /**< the path to search (or NULL to search the GLPATH environment) */
 				int mode, /**< the file access mode to use, see access() for valid modes */
 				char *buffer, /**< the buffer into which the full path is written */

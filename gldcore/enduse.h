@@ -74,7 +74,7 @@ typedef struct s_enduse {
 	double heatgain_fraction;	/* fraction of power that goes to internal heat (pu Btu/h) */
 
 	/* misc info */
-	char *name;
+	const char *name;
 	loadshape *shape;
 	TIMESTAMP t_last;			/* last time of update */
 

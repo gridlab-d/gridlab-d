@@ -92,9 +92,9 @@ static struct s_redirection {
 FILE* output_redirect_stream(char *name, FILE *fp)
 {
 	struct {
-		char *name;
+		const char *name;
 		FILE **file;
-		char *defaultfile;
+		const char *defaultfile;
 	} map[] = {
 		{"output",&redirect.output,"gridlabd.out"},
 		{"error",&redirect.error,"gridlabd.err"},
@@ -132,9 +132,9 @@ int output_notify_error(void (*notify)(void))
 FILE* output_redirect(char *name, char *path)
 {
 	struct {
-		char *name;
+		const char *name;
 		FILE **file;
-		char *defaultfile;
+		const char *defaultfile;
 	} map[] = {
 		{"output",&redirect.output,"gridlabd.out"},
 		{"error",&redirect.error,"gridlabd.err"},

@@ -453,9 +453,9 @@ inline bool gl_object_isa(OBJECT *obj, /**< object to test */
  **/
 #ifdef __cplusplus
 inline FUNCTION *gl_publish_function(CLASS *oclass, /**< class to which function belongs */
-									 FUNCTIONNAME functionname, /**< name of function */
+									 const FUNCTIONNAME functionname, /**< name of function */
 									 FUNCTIONADDR call) /**< address of function entry */
-{ return (*callback->function.define)(oclass, functionname, call);}
+{ return (*callback->function.define)(oclass, const_cast<char*>(functionname), call);}
 inline FUNCTIONADDR gl_get_function(OBJECT *obj, const char *name)
 { return obj ? (*callback->function.get)(obj->oclass->name, const_cast<char *>(name)) : NULL;}
 #else
@@ -540,9 +540,9 @@ inline int gl_set_rank(OBJECT *obj, /**< object to change rank */
  **/
 #ifdef __cplusplus
 inline PROPERTY *gl_get_property(OBJECT *obj, /**< a pointer to the object */
-								 PROPERTYNAME name, /**< the name of the property */
+								 const PROPERTYNAME name, /**< the name of the property */
 								 PROPERTYSTRUCT *part=NULL) /**< part info */
-{ return (*callback->properties.get_property)(obj,name,part); }
+{ return (*callback->properties.get_property)(obj, const_cast<char*>(name),part); }
 #else
 #define gl_get_property (*callback->properties.get_property)
 #endif
