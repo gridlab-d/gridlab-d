@@ -2484,8 +2484,8 @@ class glsolver {
 public:
 	int (*init)(void*);
 	int (*solve)(void*);
-	int (*set)(char*,...);
-	int (*get)(char*,...);
+	int (*set)(const char*,...);
+	int (*get)(const char*,...);
 private:
 	inline void exception(const char *fmt,...)
 	{

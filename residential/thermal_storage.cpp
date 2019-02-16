@@ -59,7 +59,7 @@ thermal_storage::thermal_storage(MODULE *mod)
 		pclass = residential_enduse::oclass;
 
 		// register the class definition
-		oclass = gl_register_class(mod,"thermal_storage",sizeof(thermal_storage),PC_BOTTOMUP|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,const_cast<char*>("thermal_storage"),sizeof(thermal_storage),PC_BOTTOMUP|PC_AUTOLOCK);
 		if (oclass==NULL)
 			GL_THROW("unable to register class thermal_storage");
 			/* TROUBLESHOOT

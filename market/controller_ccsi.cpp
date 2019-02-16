@@ -14,7 +14,7 @@ controller_ccsi *controller_ccsi::defaults = NULL;
 controller_ccsi::controller_ccsi(MODULE *module){
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"controller_ccsi",sizeof(controller_ccsi),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
+		oclass = gl_register_class(module,const_cast<char*>("controller_ccsi"),sizeof(controller_ccsi),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class controller_ccsi";
 		else

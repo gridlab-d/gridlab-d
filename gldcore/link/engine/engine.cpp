@@ -258,7 +258,7 @@ bool recv_sync(ENGINELINK *engine,TIMESTAMP *t)
 			*t = ts.get_timestamp();
 			return true;
 		}
-		else if ( sscanf(buffer,"SYNC %ld",(int64*)t)==1 )
+		else if ( sscanf(buffer,"SYNC %lld",(int64*)t)==1 )
 			return true;
 		else
 		{
@@ -272,7 +272,7 @@ bool recv_sync(ENGINELINK *engine,TIMESTAMP *t)
 bool send_time(ENGINELINK *engine,TIMESTAMP t0){
 
   char buffer[1500];
-  int len=sprintf(buffer,"SYNC %ld", t0);
+  int len=sprintf(buffer,"SYNC %lld", t0);
   if(engine_send(engine,buffer,len+1) <=0)
     return false;
   return true;
@@ -342,7 +342,7 @@ bool add_global(ENGINELINK *engine, unsigned int index, GLOBALVAR *var)
 	if(gl_name(prop->get_object(),buffname,255)==NULL){
 		strcpy(buffname,"NULL");
 	}
-	int len = sprintf(buffer,"GLOBAL %d %d %d %s %s %s", index,
+	int len = sprintf(buffer,"GLOBAL %d %d %ld %s %s %s", index,
 		(PROPERTYTYPE)prop->get_type(), // TODO convert this to text
 		prop->get_size(),buffname, prop->get_name(), prop->get_string().get_buffer());
 	return engine_send(engine,buffer,len+1) > 0;
@@ -356,7 +356,7 @@ bool add_import(ENGINELINK *engine, unsigned int index, OBJECTPROPERTY *objprop)
 	if(gl_name(prop->get_object(),buffname,255)==NULL){
 		strcpy(buffname,"NULL");
 	}
-	int len = sprintf(buffer,"IMPORT %d %d %d %s %s %s", index,
+	int len = sprintf(buffer,"IMPORT %d %d %ld %s %s %s", index,
 		(PROPERTYTYPE)prop->get_type(), // TODO convert this to text
 		prop->get_size(),buffname, prop->get_name(), prop->get_string().get_buffer());
 	return engine_send(engine,buffer,len+1) > 0;
@@ -370,7 +370,7 @@ bool add_export(ENGINELINK *engine, unsigned int index, OBJECTPROPERTY *objprop)
 	if(gl_name(prop->get_object(),buffname,255)==NULL){
 		strcpy(buffname,"NULL");
 	}
-	int len = sprintf(buffer,"EXPORT %d %d %d %s %s %s", index,
+	int len = sprintf(buffer,"EXPORT %d %d %ld %s %s %s", index,
 		(PROPERTYTYPE)prop->get_type(), // TODO convert this to text
 		prop->get_size(),buffname, prop->get_name(), prop->get_string().get_buffer());
 	return engine_send(engine,buffer,len+1) > 0;
