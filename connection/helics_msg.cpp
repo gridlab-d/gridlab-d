@@ -67,8 +67,8 @@ helics_msg::helics_msg(MODULE *module)
 
 int helics_msg::create(){
 	add_clock_update((void *)this,clocks_update);
-	//register_object_interupdate((void *)this, dInterupdate);
-	//register_object_deltaclockupdate((void *)this, dClockupdate);
+	register_object_interupdate((void *)this, dInterupdate);
+	register_object_deltaclockupdate((void *)this, dClockupdate);
 
 
 	return 1;
@@ -577,9 +577,8 @@ SIMULATIONMODE helics_msg::deltaClockUpdate(double t1, unsigned long timestep, S
 //		helics::time t = 0;
 		helics::Time t = 0;
 		double dt = 0;
-		dt = (t1 - (double)initial_sim_time);
-//		t = (helics::time)((dt + ((double)(timestep) / 2.0)) - fmod((dt + ((double)(timestep) / 2.0)), (double)timestep));
-		t = (helics::Time)(dt);
+		dt = (t1 - (double)initial_sim_time)*1000000000.0;
+		t = (helics::Time)(((dt + ((double)(timestep) / 2.0)) - fmod((dt + ((double)(timestep) / 2.0)), (double)timestep))/1000000000.0);
 		helics_federate->setProperty(helics_properties::helics_property_time_period, (helics::Time)(((double)timestep)/DT_SECOND));
 		helics_time = helics_federate->requestTime(t);
 		//TODO call helics time update function
