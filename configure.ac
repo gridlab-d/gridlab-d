@@ -504,9 +504,9 @@ AS_CASE([$host],
 				AS_CASE([$LIBS],
 					[*lhelics*], [], [LIBS="$LIBS -lhelics-static -lrt -lzmq -lboost_filesystem -lboost_program_options -lboost_system -lboost_unit_test_framework"])],
 	[*mingw*], [AS_CASE([$HELICS_LIBS],
-					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-static -lrt -lzmq -lboost_filesystem-mt -lboost_program_options-mt -lboost_system-mt -lboost_unit_test_framework-mt"])
+					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lzmq -lboost_filesystem-mt -lboost_program_options-mt -lboost_system-mt -lboost_unit_test_framework-mt"])
 				AS_CASE([$LIBS],
-					[*lhelics*], [], [LIBS="$LIBS -lhelics-static -lrt -lzmq -lboost_filesystem-mt -lboost_program_options-mt -lboost_system-mt -lboost_unit_test_framework-mt"])])
+					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lzmq -lboost_filesystem-mt -lboost_program_options-mt -lboost_system-mt -lboost_unit_test_framework-mt"])])
 have_helics=yes
 AC_MSG_CHECKING([for HELICS])
 AC_LINK_IFELSE(
