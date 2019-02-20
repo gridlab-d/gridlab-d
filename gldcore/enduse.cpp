@@ -424,9 +424,9 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 	int result = 0;
 	struct s_map_enduse{
 		PROPERTYTYPE type;
-		char *name;
+		const char *name;
 		char *addr;
-		char *description;
+		const char *description;
 		int flags;
 	}*p, prop_list[]={
 		{PT_complex, "energy[kVAh]", (char *)PADDR_C(energy), "the total energy consumed since the last meter reading"},
@@ -474,7 +474,7 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 		if (p->type<_PT_LAST)
 		{
 			prop = property_malloc(p->type,oclass,name,p->addr+(int64)struct_address,NULL);
-			prop->description = p->description;
+			prop->description = const_cast<char*>(p->description);
 			prop->flags = p->flags;
 			class_add_property(oclass,prop);
 			result++;

@@ -181,7 +181,7 @@ int refrigerator::init(OBJECT *parent)
 	if (Tout==0)				Tout = 59.0;
 	if (load.power_factor==0)		load.power_factor = 0.95;
 
-	pTout = (double*)gl_get_addr(parent, "air_temperature");
+	pTout = (double*)gl_get_addr(parent, const_cast<char*>("air_temperature"));
 	if (pTout==NULL)
 	{
 		static double default_air_temperature = 72;

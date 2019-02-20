@@ -26,7 +26,7 @@ residential_enduse::residential_enduse(MODULE *mod)
 	if (oclass==NULL)
 	{
 		// register the class definition
-		oclass = gld_class::create(mod,"residential_enduse",sizeof(residential_enduse),PC_BOTTOMUP|PC_AUTOLOCK);
+		oclass = gld_class::create(mod,const_cast<char*>("residential_enduse"),sizeof(residential_enduse),PC_BOTTOMUP|PC_AUTOLOCK);
 		if (oclass==NULL)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 			/* TROUBLESHOOT

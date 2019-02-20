@@ -1796,7 +1796,7 @@ CIRCUIT *house_e::attach(OBJECT *obj, ///< object to attach
 		c->pLoad = pLoad;
 	else if (obj)
 	{
-		c->pLoad = (enduse*)gl_get_addr(obj,"enduse_load");
+		c->pLoad = (enduse*)gl_get_addr(obj,const_cast<char*>("enduse_load"));
 		if (c->pLoad==NULL)
 			GL_THROW("end-use load %s couldn't be connected because it does not publish 'enduse_load' property", c->pLoad->name);
 	}

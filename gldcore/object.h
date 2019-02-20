@@ -129,10 +129,10 @@ public:
 	PROPERTY *(*class_add_extended_property)(CLASS *,char *,PROPERTYTYPE,char *);
 	struct {
 		FUNCTION *(*define)(CLASS*,FUNCTIONNAME,FUNCTIONADDR);
-		FUNCTIONADDR (*get)(char*,char*);
+		FUNCTIONADDR (*get)(char*,const char*);
 	} function;
-	int (*define_enumeration_member)(CLASS*,char*,char*,enumeration);
-	int (*define_set_member)(CLASS*,char*,char*,unsigned int64);
+	int (*define_enumeration_member)(CLASS*,const char*,const char*,enumeration);
+	int (*define_set_member)(CLASS*,const char*,const char*,unsigned int64);
 	struct {
 		OBJECT *(*get_first)(void);
 		int (*set_dependent)(OBJECT*,OBJECT*);

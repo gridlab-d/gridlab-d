@@ -42,7 +42,7 @@ eventgen::eventgen(MODULE *module)
 {
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"eventgen",sizeof(eventgen),PC_PRETOPDOWN|PC_POSTTOPDOWN|PC_AUTOLOCK);
+		oclass = gl_register_class(module, const_cast<char*>("eventgen"),sizeof(eventgen),PC_PRETOPDOWN|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class eventgen";
 		else
@@ -1242,7 +1242,7 @@ char *eventgen::obj_token(char *start_token, OBJECT **obj_val)
 }
 
 //Function to add new event into structure - since externally called, presumes calling object will handle mean_repair_time calls
-int eventgen::add_unhandled_event(OBJECT *obj_to_fault, char *event_type, TIMESTAMP fail_time, TIMESTAMP rest_length, int implemented_fault, bool fault_state)
+int eventgen::add_unhandled_event(OBJECT *obj_to_fault, const char *event_type, TIMESTAMP fail_time, TIMESTAMP rest_length, int implemented_fault, bool fault_state)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	RELEVANTSTRUCT *new_struct;

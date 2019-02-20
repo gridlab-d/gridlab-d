@@ -683,7 +683,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 		char fname[1024];
 		struct {
 			FUNCTIONADDR *func;
-			char *name;
+			const char *name;
 			int optional;
 		} map[] = {
 			{&c->create,"create",FALSE},
@@ -871,14 +871,14 @@ void module_list(void)
 }
 int module_setvar(MODULE *mod, const char *varname, char *value)
 {
-	char modvarname[1024];
+	char modvarname[2048];
 	sprintf(modvarname,"%s::%s",mod->name,varname);
 	return global_setvar(modvarname,value)==SUCCESS;
 }
 
 void* module_getvar(MODULE *mod, const char *varname, char *value, unsigned int size)
 {
-	char modvarname[1024];
+	char modvarname[2048];
 	sprintf(modvarname,"%s::%s",mod->name,varname);
 	return global_getvar(modvarname,value,size);
 }
@@ -906,7 +906,7 @@ void* module_getvar_old(MODULE *mod, const char *varname, char *value, unsigned 
 
 double* module_getvar_addr(MODULE *mod, const char *varname)
 {
-	char modvarname[1024];
+	char modvarname[2048];
 	GLOBALVAR *var;
 	sprintf(modvarname,"%s::%s",mod->name,varname);
 	var = global_find(modvarname);
@@ -957,7 +957,7 @@ int module_saveall_xml(FILE *fp){
 	char1024 buffer;
 
 	for (mod = first_module; mod != NULL; mod = mod->next){
-		char tname[67];
+		char tname[2048];
 		size_t tlen;
 		gvptr = global_getnext(NULL);
 		sprintf(tname, "%s::", mod->name);
@@ -995,7 +995,7 @@ int module_saveobj_xml(FILE *fp, MODULE *mod){ /**< the stream to write to */
 	CLASS *pclass = NULL;
 
 	for(obj = object_get_first(); obj != NULL; obj = obj->next){
-		char32 oname = "(unidentified)";
+		char64 oname = "(unidentified)";
 		if(obj->oclass->module != mod){
 			continue;
 		}
@@ -1357,7 +1357,7 @@ int module_compile(char *name,	/**< name of library */
 	FILE *fp;
 	char srcfile[1024];
 	char mopt[8] = "";
-	char *libs = "-lstdc++";
+	const char *libs = "-lstdc++";
 #ifdef WIN32
 	snprintf(mopt,sizeof(mopt),"-m%d",sizeof(void*)*8);
 	libs = "";

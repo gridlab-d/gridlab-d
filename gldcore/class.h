@@ -155,10 +155,10 @@ size_t class_get_extendedcount(CLASS *oclass);
 
 CLASS *class_register(MODULE *module,CLASSNAME classname,unsigned int datasize,PASSCONFIG passconfig);
 int class_define_map(CLASS *oclass, ...);
-int class_define_enumeration_member(CLASS *oclass,char *property_name,char *member,enumeration value);
-int class_define_set_member(CLASS *oclass,char *property_name,char *member,unsigned int64 value);
+int class_define_enumeration_member(CLASS *oclass,const char *property_name,const char *member,enumeration value);
+int class_define_set_member(CLASS *oclass,const char *property_name,const char *member,unsigned int64 value);
 FUNCTION *class_define_function(CLASS *oclass, FUNCTIONNAME functionname, FUNCTIONADDR call);
-FUNCTIONADDR class_get_function(char *classname, char *functionname);
+FUNCTIONADDR class_get_function(char *classname, const char *functionname);
 DELEGATEDTYPE *class_register_type(CLASS *oclass, char *type,int (*from_string)(void*,char*),int (*to_string)(void*,char*,int));
 int class_define_type(CLASS *oclass, DELEGATEDTYPE *delegation, ...);
 
