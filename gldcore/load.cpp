@@ -403,7 +403,7 @@ static int append_init(char* format,...)
 	strcat(init_block,code);
 	return ++code_used;
 }
-static int append_code(char* format,...)
+static int append_code(const char* format,...)
 {
 	static char code[65536];
 	va_list ptr;
@@ -459,7 +459,7 @@ static void mark_line()
 {
 	mark_linex(filename,linenum);
 }
-static STATUS exec_cmd(char *format,...)
+static STATUS exec_cmd(const char *format,...)
 {
 	char cmd[1024];
 	va_list ptr;
@@ -517,7 +517,7 @@ static char *setup_class(CLASS *oclass)
 
 static int outlinenum = 0;
 static char *outfilename = NULL;
-static int write_file(FILE *fp, char *data, ...)
+static int write_file(FILE *fp, const char *data, ...)
 {
 	char buffer[65536];
 	char var_buf[64];
@@ -778,7 +778,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 				char execstr[1024];
 				char ldstr[1024];
 				char mopt[8]="";
-				char *libs = "-lstdc++";
+				const char *libs = "-lstdc++";
 #ifdef WIN32
 				snprintf(mopt,sizeof(mopt),"-m%d",sizeof(void*)*8);
 				libs = "";
@@ -1245,7 +1245,7 @@ static int resolve_list(UNRESOLVED *item)
 #define REJECT { linenum=_l; return 0; }
 //#define WHITE (_m+=white(HERE))
 #define WHITE (TERM(white(HERE)))
-#define LITERAL(X) (_mm=literal(HERE,(X)),_m+=_mm,_mm>0)
+#define LITERAL(X) (_mm=literal(HERE,(const_cast<char*>(X))),_m+=_mm,_mm>0)
 #define TERM(X) (_mm=(X),_m+=_mm,_mm>0)
 #define COPY(X) {size--; (X)[_n++]=*_p++;}
 #define DONE return _n;
@@ -1289,7 +1289,7 @@ static int comment(PARSER)
 	return _n;
 }
 
-static int pattern(PARSER, char *pattern, char *result, int size)
+static int pattern(PARSER, const char *pattern, char *result, int size)
 {
 	char format[64];
 	START;
@@ -1831,7 +1831,7 @@ struct s_rpn {
 };
 
 struct s_rpn_func {
-	char *name;
+	const char *name;
 	int args; /* use a mode instead? else assume only doubles */
 	int index;
 	double (*fptr)(double);
@@ -2949,9 +2949,10 @@ static int property_type(PARSER, PROPERTYTYPE *ptype, KEYWORD **keys)
 	DONE;
 }
 
-static int class_intrinsic_function_name(PARSER, CLASS *oclass, int64 *function, char **ftype, char **fname)
+static int class_intrinsic_function_name(PARSER, CLASS *oclass, int64 *function, const char **ftype, const char **fname)
 {
 	char buffer[1024];
+
 	START;
 	if WHITE ACCEPT;
 	if LITERAL("create")
@@ -3177,8 +3178,8 @@ static int source_code(PARSER, char *code, int size)
 
 static int class_intrinsic_function(PARSER, CLASS *oclass, int64 *functions, char *code, int size)
 {
-	char *fname = NULL;
-	char *ftype = NULL;
+	const char *fname = NULL;
+	const char *ftype = NULL;
 	char arglist[1024];
 	char source[65536];
 	int startline;

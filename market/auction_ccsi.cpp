@@ -77,7 +77,7 @@ auction_ccsi::auction_ccsi(MODULE *module)
 {
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"auction_ccsi",sizeof(auction_ccsi),passconfig|PC_AUTOLOCK);
+		oclass = gl_register_class(module,const_cast<char*>("auction_ccsi"),sizeof(auction_ccsi),passconfig|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class auction_ccsi";
 		else
@@ -1430,14 +1430,14 @@ void auction_ccsi::clear_market(void)
 
 void auction_ccsi::record_bid(char *from, double quantity, double real_price, BIDDERSTATE state){
 	char name_buffer[256];
-	char *unkState = "unknown";
-	char *offState = "off";
-	char *onState = "on";
-	char *unk = "unknown time";
+	const char *unkState = "unknown";
+	const char *offState = "off";
+	const char *onState = "on";
+	const char *unk = "unknown time";
 	char buffer[256];
 	char bigbuffer[1024];
-	char *pState;
-	char *tStr;
+	const char *pState;
+	const char *tStr;
 	DATETIME dt;
 	TIMESTAMP submit_time = gl_globalclock;
 	if(trans_file){ // copied from version below

@@ -15,7 +15,7 @@ double_controller::double_controller(MODULE *module)
 {
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"double_controller",sizeof(double_controller),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
+		oclass = gl_register_class(module, const_cast<char*>("double_controller"),sizeof(double_controller),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class double_controller";
 		else
@@ -114,7 +114,7 @@ void double_controller::cheat(){
 	}
 }
 
-void double_controller::fetch(double **value, char *name, OBJECT *parent, PROPERTY **prop, char *goal){
+void double_controller::fetch(double **value, char *name, OBJECT *parent, PROPERTY **prop, const char *goal){
 	OBJECT *hdr = OBJECTHDR(this);
 	*prop = gl_get_property(parent, name);
 	if(*name == 0){
@@ -156,9 +156,9 @@ int double_controller::init(OBJECT *parent){
 	}
 
 	//market = OBJECTDATA(pMarket, auction);
-	pPeriod =	gl_get_double_by_name(pMarket, "period");
-	pNextP = 	gl_get_double_by_name(pMarket, "next.P");
-	pMarketID = gl_get_int64_by_name(pMarket, "market_id");
+	pPeriod =	gl_get_double_by_name(pMarket, const_cast<char*>("period"));
+	pNextP = 	gl_get_double_by_name(pMarket, const_cast<char*>("next.P"));
+	pMarketID = gl_get_int64_by_name(pMarket, const_cast<char*>("market_id"));
 	pAvg =		gl_get_double_by_name(pMarket, avg_target);
 	pStd =		gl_get_double_by_name(pMarket, std_target);
 
@@ -412,10 +412,10 @@ TIMESTAMP double_controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				} else {
 					controller_bid.state = BS_OFF;
 				}
-				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)gl_name(pMarket, mktname, 1024), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+				((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)gl_name(pMarket, mktname, 1024), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 			} else {
 				controller_bid.state = BS_UNKNOWN;
-				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)gl_name(pMarket, mktname, 1024), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+				((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)gl_name(pMarket, mktname, 1024), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 			}
 			if(controller_bid.bid_accepted == false){
 				return TS_INVALID;

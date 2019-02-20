@@ -80,7 +80,7 @@ static double tc_erf(double x)
 passive_controller::passive_controller(MODULE *mod)
 {
 	if(oclass == NULL){
-		oclass = gl_register_class(mod,"passive_controller",sizeof(passive_controller),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,const_cast<char*>("passive_controller"),sizeof(passive_controller),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class passive_controller";
 		else
@@ -205,9 +205,9 @@ passive_controller::passive_controller(MODULE *mod)
 	}
 }
 
-void passive_controller::fetch_double(double **prop, char *name, OBJECT *parent){
+void passive_controller::fetch_double(double **prop, const char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
-	*prop = gl_get_double_by_name(parent, name);
+	*prop = gl_get_double_by_name(parent, const_cast<char*>(name));
 	if(*prop == nullptr){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);
@@ -221,9 +221,9 @@ void passive_controller::fetch_double(double **prop, char *name, OBJECT *parent)
 	}
 }
 
-void passive_controller::fetch_int(int **prop, char *name, OBJECT *parent){
+void passive_controller::fetch_int(int **prop, const char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
-	*prop = gl_get_int32_by_name(parent, name);
+	*prop = gl_get_int32_by_name(parent, const_cast<char*>(name));
 	if(*prop == nullptr){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);
@@ -795,7 +795,7 @@ TIMESTAMP passive_controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 			} else {
 				controller_bid.state = BS_OFF;
 			}
-			submit_bid_state((char *)gl_name(hdr, ctrname, 1024),(char *)gl_name(observation_object, spvrname, 1024), "submit_bid_state", "supervisor", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+			submit_bid_state((char *)gl_name(hdr, ctrname, 1024),(char *)gl_name(observation_object, spvrname, 1024), const_cast<char*>("submit_bid_state"), const_cast<char*>("supervisor"), (void *)&controller_bid, (size_t)sizeof(controller_bid));
 			controller_bid.rebid = true;
 			if(!controller_bid.bid_accepted) {
 				return TS_INVALID;
