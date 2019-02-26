@@ -2500,7 +2500,7 @@ private:
 		throw (const char*)buffer;
 	};
 public:
-	inline glsolver(char *name, char *lib="glsolvers" DLEXT)
+	inline glsolver(char *name, const char *lib="glsolvers" DLEXT)
 	{
 		char path[1024];
 		errno = 0;

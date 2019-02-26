@@ -280,7 +280,7 @@ int schedule_compile_block(SCHEDULE *sch, unsigned char block, char *blockname, 
 	while ( (token=strtok(token==NULL?blockdef:NULL,";\r\n"))!=NULL )
 	{
 		struct {
-			char *name;
+			const char *name;
 			int base;
 			int max;
 			char pattern[256];
@@ -425,7 +425,7 @@ int schedule_compile_block(SCHEDULE *sch, unsigned char block, char *blockname, 
 							{
 								if (sch->index[calendar] != NULL && sch->index[calendar][minute]>0)
 								{
-									char *dayofweek[] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat","Sun","Hol"};
+									const char *dayofweek[] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat","Sun","Hol"};
 									output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) '%s' in block '%s' has a conflict with value %g on %s %d/%d %02d:%02d", sch->name, token, blockname, sch->data[sch->index[calendar][minute]], dayofweek[weekday], month+1, day+1, hour, minute%60);
 									/* TROUBLESHOOT
 									   The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
@@ -481,7 +481,7 @@ int schedule_recompile_block(SCHEDULE *sch, unsigned char calendar, unsigned cha
 	while ( (token=strtok(token==NULL?blockdef:NULL,";\r\n"))!=NULL )
 	{
 		struct {
-			char *name;
+			const char *name;
 			int base;
 			int max;
 			char pattern[256];
@@ -607,7 +607,7 @@ int schedule_recompile_block(SCHEDULE *sch, unsigned char calendar, unsigned cha
 							{
 								if (sch->index[calendar][minute]>0)
 								{
-									char *dayofweek[] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat","Sun","Hol"};
+									const char *dayofweek[] = {"Sun","Mon","Tue","Wed","Thu","Fri","Sat","Sun","Hol"};
 									output_error("schedule_recompile(SCHEDULE *sch={name='%s', ...}) '%s' in block '%s' has a conflict with value %g on %s %d/%d %02d:%02d", sch->name, token, blockname, sch->data[sch->index[calendar][minute]], dayofweek[weekday], month+1, day+1, hour, minute%60);
 									/* TROUBLESHOOT
 									   The schedule definition is not valid and has been ignored.  Check the syntax of your schedule and try again.
@@ -687,7 +687,7 @@ int schedule_compile(SCHEDULE *sch)
 			output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) insufficient memory for block definition", sch->name);
 			return 0;
 		}
-		if (schedule_compile_block(sch,sch->block,"*",blockdef))
+		if (schedule_compile_block(sch,sch->block,const_cast<char*>("*"),blockdef))
 		{
 			sch->block++;
 			return 1;
@@ -1609,8 +1609,8 @@ int schedule_test(void)
 
 	/* tests */
 	struct s_test {
-		char *name, *def;
-		char *t1, *t2;
+		const char *name, *def;
+		const char *t1, *t2;
 		int normalize;
 		double value;
 	} *p, test[] = {
@@ -1701,7 +1701,7 @@ void schedule_dump(SCHEDULE *sch, char *file, char *mode)
 	{
 		short year=0, month, y;
 		int daysinmonth[] = {31,((calendar&1)?29:28),31,30,31,30,31,31,30,31,30,31};
-		char *monthname[] = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
+		const char *monthname[] = {"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 		fprintf(fp,"\nYears:");
 		for (y=1970; y<2039; y++)
 		{

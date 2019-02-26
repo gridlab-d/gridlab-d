@@ -107,11 +107,11 @@ static KEYWORD sm_keys[] = {
 };
 
 static struct s_varmap {
-	char *name;
+	const char *name;
 	PROPERTYTYPE type;
 	void *addr;
 	PROPERTYACCESS access;
-	char *description;
+	const char *description;
 	KEYWORD *keys;
 	void (*callback)(const char *name);
 } map[] = {
@@ -251,7 +251,7 @@ static struct s_varmap {
 
 static void buildtmp(void)
 {
-	char *tmp, *home, *user;
+	const char *tmp, *home, *user;
 
 	if ((tmp = getenv("GLTEMP"))) {
 		snprintf(global_tmp, sizeof(global_tmp), "%s", tmp);
@@ -950,7 +950,7 @@ char *global_getvar(const char *name, char *buffer, int size)
 	int len = 0;
 	GLOBALVAR *var = NULL;
 	struct {
-		char *name;
+		const char *name;
 		char *(*call)(char *buffer,int size);
 	} map[] = {
 		{"GUID",global_guid},

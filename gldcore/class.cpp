@@ -1333,8 +1333,8 @@ int class_get_xsd(CLASS *oclass, /**< a pointer to the class to convert to XSD *
 	CLASS *oc = oclass;
 	extern KEYWORD oflags[];
 	struct {
-		char *name;
-		char *type;
+		const char *name;
+		const char *type;
 		KEYWORD *keys;
 	} attribute[]={
 		{"id", "integer",NULL},
