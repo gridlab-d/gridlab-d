@@ -88,7 +88,7 @@ public:
     friend std::ostream& operator<< <>(std::ostream& out, const charbuf& buffer);
 };
 
-
+typedef charbuf<2049> char2048;
 typedef charbuf<1025> char1024;
 typedef charbuf<257> char256;
 typedef charbuf<65> char64;

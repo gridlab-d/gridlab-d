@@ -327,7 +327,9 @@ static int multi_recorder_open(OBJECT *obj)
 						strcpy(propstr, bigpropstr);
 					} else {
 						// has explicit unit
-						if(2 == sscanf(bigpropstr, "%[A-Za-z0-9_.][%[^]\n,\0]", propstr, unitstr)){
+						//TODO: Review format specifiers
+//						if(2 == sscanf(bigpropstr, "%[A-Za-z0-9_.][%[^]\n,\0]", propstr, unitstr)){
+						if(2 == sscanf(bigpropstr, "%[A-Za-z0-9_.][%[^]\n,]", propstr, unitstr)){
 							unit = gl_find_unit(unitstr);
 							if(unit == 0){
 								gl_error("multi_recorder:%d: unable to find unit '%s' for property '%s'", obj->id, unitstr, propstr);
@@ -385,7 +387,7 @@ static int multi_recorder_open(OBJECT *obj)
 			case HU_NONE:
 				strcpy(unit_buffer, my->property);
 				for(token = strtok(unit_buffer, ","); token != NULL; token = strtok(NULL, ",")){
-					if(2 == sscanf(token, "%[A-Za-z0-9_:.][%[^]\n,\0]", propstr, unitstr)){
+					if(2 == sscanf(token, "%[A-Za-z0-9_:.][%[^]\n,]", propstr, unitstr)){
 						; // no logic change
 					}
 					// print just the property, regardless of type or explicitly declared property
@@ -465,7 +467,7 @@ static TIMESTAMP multi_recorder_write(OBJECT *obj)
 	// if file based
 	if(my->multifp != NULL){
 		char1024 inbuffer;
-		char1024 outbuffer;
+		char2048 outbuffer;
 		char *lasts = 0;
 		char *in_ts = 0;
 		char *in_tok = 0;
@@ -564,7 +566,7 @@ RECORDER_MAP *link_multi_properties(OBJECT *obj, char *property_list)
 
 		// everything that looks like a property name, then read units up to ]
 		while (isspace(*item)) item++;
-		if(2 == sscanf(item,"%[A-Za-z0-9_.][%[^]\n,\0]", pstr.get_string(), ustr.get_string())){
+		if(2 == sscanf(item,"%[A-Za-z0-9_.][%[^]\n,]", pstr.get_string(), ustr.get_string())){
 			unit = gl_find_unit(ustr);
 			if(unit == NULL){
 				gl_error("multirecorder: unable to find unit '%s' for property '%s' in object '%s %i'", ustr.get_string(),pstr.get_string(),target_obj->oclass->name, target_obj->id);
@@ -687,7 +689,7 @@ TIMESTAMP sync_multi_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
 		NONE = '\0', LT = '<', EQ = '=', GT = '>'
 	} COMPAREOP;
 	COMPAREOP comparison;
-	char1024 buffer = "";
+	char2048 buffer = "";
 
 	if (my->status == TS_DONE) {
 		close_multi_recorder(
@@ -794,7 +796,7 @@ TIMESTAMP sync_multi_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
 	}
     return sync_multi_recorder_error(&obj, &my, buffer);
 }
-TIMESTAMP sync_multi_recorder_error(OBJECT **obj, struct recorder **my, char1024 buffer) {
+TIMESTAMP sync_multi_recorder_error(OBJECT **obj, struct recorder **my, char2048 buffer) {
 	if ((*my)->status==TS_ERROR)
 	{
 		gl_error("recorder %d %s\n",(*obj)->id, buffer.get_string());

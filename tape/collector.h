@@ -48,6 +48,6 @@ struct collector {
 };
 
 EXPORT TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass);
-EXPORT TIMESTAMP sync_collector_error(OBJECT **obj, struct collector **my, char1024 buffer);
+EXPORT TIMESTAMP sync_collector_error(OBJECT **obj, struct collector **my, char2048 buffer);
 
 #endif //_COLLECTOR_H

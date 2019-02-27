@@ -43,7 +43,7 @@ typedef struct s_tape_funcs {
 CDECL TAPEFUNCS *get_ftable(char *mode);
 
 typedef struct {
-	char *name;
+	const char *name;
 	VARIABLETYPE type;
 	void *addr;
 	double min, max;

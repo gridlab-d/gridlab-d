@@ -289,7 +289,7 @@ EXPORT void write_default_plot_commands_rec(struct recorder *my, char32 extensio
 
 	int i, j, k;	
 	i = j = k = 0;
-	sscanf(my->file,"%32[^:]:%32[^.].[^\n;:]",type,fname,ext);
+	sscanf(my->file,"%32[^:]:%32[^.].%32[^\n;:]",type,fname,ext);
 
 	/////////////////////////////////////////////////////////////////////////////
 	// Default behavior for directive plotcommands
@@ -385,7 +385,7 @@ EXPORT int open_recorder(struct recorder *my, char *fname, char *flags)
 #endif
 	fprintf(my->fp,"# target.... %s %d\n", obj->parent->oclass->name, obj->parent->id);
 	fprintf(my->fp,"# trigger... %s\n", my->trigger[0]=='\0'?"(none)":my->trigger.get_string());
-	fprintf(my->fp,"# interval.. %d\n", my->interval);
+	fprintf(my->fp,"# interval.. %lld\n", my->interval);
 	fprintf(my->fp,"# limit..... %d\n", my->limit);
 	fprintf(my->fp,"# timestamp,%s\n", my->property.get_string());
 
@@ -441,7 +441,7 @@ EXPORT int open_recorder(struct recorder *my, char *fname, char *flags)
 
 	write_default_plot_commands_rec(my, extension);
 	if (my->columns[0]){
-		sscanf(my->columns,"%s %s", columnlist);
+		sscanf(my->columns,"%s", columnlist);
 		fprintf(my->fp, "plot \'-\' using %s with lines;\n", columnlist);
 	}
 	
@@ -501,7 +501,7 @@ EXPORT void close_recorder(struct recorder *my)
 	char fname[sizeof(char32)];
 	char type[sizeof(char32)];
 	char command[sizeof(char1024)];
-
+	int result;
 	my->status = TS_DONE;
 
 	if (my->fp == NULL)
@@ -513,7 +513,7 @@ EXPORT void close_recorder(struct recorder *my)
 		fclose(my->fp);
 		sscanf(my->file,"%32[^:]:%32[^:]",type,fname);
 		sprintf(command,"%s %s", gnuplot, fname);
-		system( command );
+		result = system( command );
 	}
  	my->fp = NULL;
 }
@@ -597,7 +597,7 @@ EXPORT int open_collector(struct collector *my, char *fname, char *flags)
 #endif
 	count += fprintf(my->fp,"# group..... %s\n", my->group.get_string());
 	count += fprintf(my->fp,"# trigger... %s\n", my->trigger[0]=='\0'?"(none)":my->trigger.get_string());
-	count += fprintf(my->fp,"# interval.. %d\n", my->interval);
+	count += fprintf(my->fp,"# interval.. %lld\n", my->interval);
 	count += fprintf(my->fp,"# limit..... %d\n", my->limit);
 	count += fprintf(my->fp,"# property.. timestamp,%s\n", my->property.get_string());
 
@@ -646,7 +646,7 @@ EXPORT int open_collector(struct collector *my, char *fname, char *flags)
 
 	write_default_plot_commands_col(my, extension);
 	if (my->columns){
-		sscanf(my->columns,"%s %s", columnlist);
+		sscanf(my->columns,"%s", columnlist);
 		fprintf(my->fp, "plot \'-\' using %s with lines;\n", columnlist);
 	}
 
@@ -667,12 +667,12 @@ EXPORT void close_collector(struct collector *my)
 	strcpy(gnuplot,"wgnuplot ");
 	_putenv("PATH=%PATH%;C:\\wgnuplot");
 #else
-	char *gnuplot = "gnuplot ";
+	const char *gnuplot = "gnuplot ";
 #endif
 	char fname[sizeof(char32)];
 	char type[sizeof(char32)];
 	char command[sizeof(char1024)];
-
+	int result;
 	my->status = TS_DONE;
 
 	if (my->fp == NULL)
@@ -684,7 +684,7 @@ EXPORT void close_collector(struct collector *my)
 		fclose(my->fp);
 		sscanf(my->file,"%32[^:]:%32[^:]",type,fname);
 		sprintf(command,"%s %s", gnuplot, fname);
-		system( command );
+		result = system( command );
 	}
  	my->fp = NULL;
 }

@@ -65,6 +65,6 @@ public: //Does this need to be Private?
 
 extern int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buffer, int size);
 EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass);
-EXPORT TIMESTAMP sync_recorder_error(OBJECT **obj, struct recorder **my, char1024 buffer);
+EXPORT TIMESTAMP sync_recorder_error(OBJECT **obj, struct recorder **my, char2048 buffer);
 
 #endif //_RECORDER_H

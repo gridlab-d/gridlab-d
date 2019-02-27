@@ -185,10 +185,11 @@ static int recorder_open(OBJECT *obj)
 				gl_verbose("read last buffer");
 				if(strncmp(inbuffer, "# repetition", static_cast<size_t>(replen)) == 0){
 					char *trim;
+					char *result;
 					rep = atoi(inbuffer.get_string() + replen + 1); // skip intermediate space
 					++rep;
 					fprintf(my->multifp, "# repetition %i\n", rep);
-					fgets(inbuffer, 1024, my->inputfp);
+					result = fgets(inbuffer, 1024, my->inputfp);
 					trim = strchr(inbuffer, '\n');
 					if(trim) *trim = 0;
 				} else { // invalid input file or somesuch, we could error ... or we can trample onwards with our output file.
@@ -265,7 +266,7 @@ static int recorder_open(OBJECT *obj)
 					prop = 0;
 					unitstr[0] = 0;
 					propstr[0] = 0;
-					if(2 == sscanf(token, "%[A-Za-z0-9_.][%[^]\n,\0]", propstr, unitstr)){
+					if(2 == sscanf(token, "%[A-Za-z0-9_.][%[^]\n,]", propstr, unitstr)){
 						unit = gl_find_unit(unitstr);
 						if(unit == 0){
 							gl_error("recorder:%d: unable to find unit '%s' for property '%s'", obj->id, unitstr, propstr);
@@ -290,7 +291,7 @@ static int recorder_open(OBJECT *obj)
 			case HU_NONE:
 				strcpy(unit_buffer, my->property);
 				for(token = strtok(unit_buffer, ","); token != NULL; token = strtok(NULL, ",")){
-					if(2 == sscanf(token, "%[A-Za-z0-9_.][%[^]\n,\0]", propstr, unitstr)){
+					if(2 == sscanf(token, "%[A-Za-z0-9_.][%[^]\n,]", propstr, unitstr)){
 						; // no logic change
 					}
 					// print just the property, regardless of type or explicitly declared property
@@ -387,8 +388,8 @@ static TIMESTAMP recorder_write(OBJECT *obj)
 
 	// if file based
 	if(my->multifp != NULL){
-		char1024 inbuffer;
-		char1024 outbuffer;
+		char2048 inbuffer;
+		char2048 outbuffer;
 		char *lasts = 0;
 		char *in_ts = 0;
 		char *in_tok = 0;
@@ -464,7 +465,7 @@ PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list
 
 		// everything that looks like a property name, then read units up to ]
 		while (isspace(*item)) item++;
-		if(2 == sscanf(item,"%[A-Za-z0-9_.][%[^]\n,\0]", pstr.get_string(), ustr.get_string())){
+		if(2 == sscanf(item,"%[A-Za-z0-9_.][%[^]\n,]", pstr.get_string(), ustr.get_string())){
 			unit = gl_find_unit(ustr);
 			if(unit == NULL){
 				gl_error("recorder:%d: unable to find unit '%s' for property '%s'",obj->id, ustr.get_string(),pstr.get_string());
@@ -580,7 +581,7 @@ TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
         NONE = '\0', LT = '<', EQ = '=', GT = '>'
     } COMPAREOP;
     COMPAREOP comparison;
-    char1024 buffer = "";
+    char2048 buffer = "";
 
     if (my->status == TS_DONE) {
         close_recorder(
@@ -691,7 +692,7 @@ TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
     return sync_recorder_error(&obj, &my, buffer);
 }
 
-TIMESTAMP sync_recorder_error(OBJECT **obj, struct recorder **my, char1024 buffer) {
+TIMESTAMP sync_recorder_error(OBJECT **obj, struct recorder **my, char2048 buffer) {
     if ((*my)->status==TS_ERROR)
     {
         gl_error("recorder %d %s\n",(*obj)->id, buffer.get_string());

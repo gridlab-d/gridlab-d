@@ -2500,7 +2500,7 @@ private:
 		throw (const char*)buffer;
 	};
 public:
-	inline glsolver(char *name, const char *lib="glsolvers" DLEXT)
+	inline glsolver(const char *name, const char *lib="glsolvers" DLEXT)
 	{
 		char path[1024];
 		errno = 0;
@@ -2511,10 +2511,9 @@ public:
 			if ( handle==NULL )
 				exception("glsolver(char *name='%s'): load of '%s' failed",name,path);
 			else
-			{
-				char fname[64];
+			{char fname[64];
 				struct {
-					char *part;
+					const char *part;
 					void **func;
 				} map[] = {
 					{"init", (void**)&init},
