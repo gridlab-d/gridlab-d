@@ -1213,7 +1213,7 @@ typedef struct s_property_map {
 	PROPERTYADDR addr; /**< property location, offset from OBJECT header */
 	DELEGATEDTYPE *delegation; /**< property delegation, if any; \p NULL if none */
 	KEYWORD *keywords; /**< keyword list, if any; \p NULL if none (only for set and enumeration types)*/
-	char *description; /**< description of property */
+	const char *description; /**< description of property */
 	struct s_property_map *next; /**< next property in property list */
 	PROPERTYFLAGS flags; /**< property flags (e.g., PF_RECALC) */
 	FUNCTIONADDR notify;

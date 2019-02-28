@@ -508,7 +508,7 @@ STATUS instance_init(instance *inst)
 	int i;
 	int cnxtypecnt = 3;
 	struct {
-		char *word;
+		const char *word;
 		CNXTYPE type;
 	} cnxtype[] = {
 		{"mmap", CI_MMAP},

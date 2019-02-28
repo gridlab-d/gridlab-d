@@ -2098,7 +2098,7 @@ public: // read accessors
 	inline gld_unit* get_unit(void) { return (gld_unit*)pstruct.prop->unit; };
 	inline void* get_addr(void) { return obj?((void*)((char*)(obj+1)+(unsigned int64)(pstruct.prop->addr))):pstruct.prop->addr; };
 	inline gld_keyword* get_first_keyword(void) { return (gld_keyword*)pstruct.prop->keywords; };
-	inline char* get_description(void) { return pstruct.prop->description; };
+	inline const char* get_description(void) { return pstruct.prop->description; };
 	inline PROPERTYFLAGS get_flags(void) { return pstruct.prop->flags; };
 	inline int to_string(char *buffer, int size) { return callback->convert.property_to_string(pstruct.prop,get_addr(),buffer,size); };
 	inline gld_string get_string(const size_t sz=1024)

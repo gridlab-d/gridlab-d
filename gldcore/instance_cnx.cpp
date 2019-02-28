@@ -99,8 +99,8 @@ STATUS instance_cnx_shmem(instance *inst){
 }
 
 STATUS instance_cnx_socket(instance *inst){
-	char cmd[1024];
-	char sendcmd[1024];
+	char cmd[4096];
+	char sendcmd[4096];
 	INSTANCE_PICKLE pickle;
 	char *colon;
 	int rv;
@@ -115,7 +115,7 @@ STATUS instance_cnx_socket(instance *inst){
 	struct timeval timer;
 	struct sockaddr_storage ss;
 	char blank[8];
-	char *args[7] = {"--profile", "--relax", "--debug", "--verbose",
+	const char *args[7] = {"--profile", "--relax", "--debug", "--verbose",
 		"--warn", "--quiet", "--avlbalance"};
 #ifdef WIN32
 	int slt, return_addr_sz;

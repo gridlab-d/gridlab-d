@@ -964,5 +964,5 @@ char *gld_loadHndl::build_object_vect(int start, int end){
 
 #undef _CRT_SECURE_NO_DEPRECATE
 
-#endif HAVE_XERCES
+#endif //HAVE_XERCES
 /* EOF */

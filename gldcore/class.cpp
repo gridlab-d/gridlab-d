@@ -870,7 +870,7 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			}
 			else if(proptype == PT_HAS_NOTIFY || proptype == PT_HAS_NOTIFY_OVERRIDE)
 			{
-				char notify_fname[128];
+				char notify_fname[256];
 				sprintf(notify_fname, "notify_%s_%s", prop->oclass->name, prop->name);
 				prop->notify = (FUNCTIONADDR)DLSYM(prop->oclass->module->hLib, notify_fname);
 				if(prop->notify == 0){

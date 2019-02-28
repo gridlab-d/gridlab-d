@@ -575,7 +575,7 @@ int convert_to_enduse(char *string, void *data, PROPERTY *prop)
 		/* isolate param and token and eliminte leading whitespaces */
 		while (isspace(*param) || iscntrl(*param)) param++;
 		if (value==NULL)
-			value="1";
+			value= const_cast<char*>("1");
 		else
 			*value++ = '\0'; /* separate value from param */
 		while (isspace(*value) || iscntrl(*value)) value++;
@@ -626,7 +626,7 @@ int enduse_test(void)
 
 	/* tests */
 	struct s_test {
-		char *name;
+		const char *name;
 	} *p, test[] = {
 		"TODO",
 	};

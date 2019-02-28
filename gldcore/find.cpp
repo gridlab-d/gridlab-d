@@ -482,12 +482,12 @@ FINDLIST *find_objects(FINDLIST * volatile start, ...)
 				/* match */
 				if (compare(target,ftype,op,value,propname)!=invert)
 				{
-					if (conj==OR) 
+					if (static_cast<int>(conj)==static_cast<int>(OR))
 						ADDOBJ(*result,obj->id);
 				}
 				else
 				{
-					if (conj==AND) 
+					if (static_cast<int>(conj)==static_cast<int>(AND))
 						DELOBJ(*result,obj->id);
 				}
 			}
@@ -789,7 +789,7 @@ FINDLIST *find_runpgm(FINDLIST *list, FINDPGM *pgm)
 #define OR {_m=0;}
 #define REJECT { return 0; }
 #define WHITE (_m+=white(HERE))
-#define LITERAL(X) ((_m+=literal(HERE,(X)))>0)
+#define LITERAL(X) ((_m+=literal(HERE,(const_cast<char*>(X))))>0)
 #define TERM(X) ((_m+=(X))>0)
 #define COPY(X) {size--; (X)[_n++]=*_p++;}
 #define DONE return _n;
@@ -1225,7 +1225,7 @@ static int expression(PARSER, FINDPGM **pgm)
 		{
 			FINDVALUE v;
 			v.integer = convert_to_timestamp(pvalue);
-			printf("find insvc=%i\n", v.integer);
+			printf("find insvc=%lli\n", v.integer);
 			if(v.integer == TS_NEVER)
 				REJECT;
 			add_pgm(pgm, comparemap[op].integer, OFFSET(in_svc), v, NULL, findlist_del);

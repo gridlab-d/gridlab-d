@@ -314,7 +314,7 @@ public:
 		} latitude, longitude;
 	} geography;
 	struct {
-		void* (*read)(char *url, int maxlen);
+		void* (*read)(const char *url, int maxlen);
 		void (*free)(void *result);
 	} http;
 	struct {
