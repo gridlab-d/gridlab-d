@@ -472,7 +472,7 @@ OBJECT *object_remove_by_id(OBJECTNUM id){
 	OBJECT *next = NULL;
 
 	if(target != NULL){
-		char name[64] = "";
+		char name[128] = "";
 
 		if(first_object == target){
 			first_object = target->next;
@@ -1396,7 +1396,7 @@ char *object_property_to_string(OBJECT *obj, char *name, char *buffer, int sz)
 		return buffer;
 	}
 	else
-		return "";
+		return const_cast<char*>("");
 }
 
 void object_profile(OBJECT *obj, OBJECTPROFILEITEM pass, clock_t t)
@@ -1842,7 +1842,7 @@ int object_saveall(FILE *fp) /**< the stream to write to */
 			if ( convert_from_set(buffer, sizeof(buffer), &(obj->flags), object_flag_property()) > 0 )
 				count += fprintf(fp, "\tflags %s;\n",  buffer);
 			else
-				count += fprintf(fp, "\tflags %lld;\n", obj->flags);
+				count += fprintf(fp, "\tflags %d;\n", obj->flags);
 
 			/* dump properties */
 			for ( prop=obj->oclass->pmap; prop!=NULL; prop=(prop->next?prop->next:(prop->oclass->parent?prop->oclass->parent->pmap:NULL)) )
@@ -1902,7 +1902,7 @@ int object_saveall_xml(FILE *fp){ /**< the stream to write to */
 			count += fprintf(fp,"\t\t\t<parent>root</parent>\n");
 		}
 		count += fprintf(fp,"\t\t\t<rank>%d</rank>\n", obj->rank);
-		count += fprintf(fp,"\t\t\t<clock>\n", obj->clock);
+		count += fprintf(fp,"\t\t\t<clock>\n");
 		count += fprintf(fp,"\t\t\t\t <timestamp>%s</timestamp>\n", convert_from_timestamp(obj->clock,buffer, sizeof(buffer)) > 0 ? buffer : "(invalid)");
 		count += fprintf(fp,"\t\t\t</clock>\n");
 		/* why do latitude/longitude have 2 values?  I currently only store as float in the schema... */
@@ -1974,7 +1974,8 @@ int object_saveall_xml_old(FILE *fp){ /**< the stream to write to */
 				count += fprintf(fp,"\t\t\t<parent>root</parent>\n");
 			}
 			count += fprintf(fp, "\t\t\t<rank>%d</rank>\n", obj->rank);
-			count += fprintf(fp, "\t\t\t<clock>\n", obj->clock);
+//			count += fprintf(fp, "\t\t\t<clock>\n", obj->clock);
+			count += fprintf(fp, "\t\t\t<clock>\n");
 			count += fprintf(fp, "\t\t\t\t <timestamp>%s</timestamp>\n", (convert_from_timestamp(obj->clock, buffer, sizeof(buffer)) > 0) ? buffer : "(invalid)");
 			count += fprintf(fp, "\t\t\t</clock>\n");
 				/* why do latitude/longitude have 2 values?  I currently only store as float in the schema... */

@@ -1293,7 +1293,7 @@ static int check = 0;  /* there must be a better way to do this, but this works.
  **/
 static int buffer_write(char *buffer, /**< buffer into which string is written */
                         size_t len,   /**< size of the buffer into which the string is written */
-                        char *format, /**< format of string to write into buffer, followed by the variable arguments */
+                        const char *format, /**< format of string to write into buffer, followed by the variable arguments */
                         ...)
 {
 	char temp[1025];

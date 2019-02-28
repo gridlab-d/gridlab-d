@@ -129,7 +129,7 @@ int output_notify_error(void (*notify)(void))
 	return 0;
 }
 
-FILE* output_redirect(char *name, char *path)
+FILE* output_redirect(const char *name, char *path)
 {
 	struct {
 		const char *name;

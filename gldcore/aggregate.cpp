@@ -86,11 +86,11 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 					if (aggrpart!=NULL)
 						*aggrpart++ = '\0';	// split the value and the part
 					else
-						aggrpart=""; // no part given
+						aggrpart= const_cast<char*>(""); // no part given
 				}
 					else
 				{
-					aggrpart=""; // no part given
+					aggrpart= const_cast<char*>(""); // no part given
 				}
 			}
 		}
