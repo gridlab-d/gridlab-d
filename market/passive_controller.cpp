@@ -213,7 +213,7 @@ void passive_controller::fetch_double(double **prop, const char *name, OBJECT *p
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "passive_controller:%i", hdr->id);
-		if(*name == NULL)
+		if(*name == static_cast<char>(0))
 			sprintf(msg, "%s: passive_controller unable to find property: name is NULL", namestr);
 		else
 			sprintf(msg, "%s: passive_controller unable to find %s", namestr, name);
@@ -229,7 +229,7 @@ void passive_controller::fetch_int(int **prop, const char *name, OBJECT *parent)
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "passive_controller:%i", hdr->id);
-		if(*name == NULL)
+		if(*name == static_cast<char>(0))
 			sprintf(msg, "%s: passive_controller unable to find property: name is NULL", namestr);
 		else
 			sprintf(msg, "%s: passive_controller unable to find %s", namestr, name);

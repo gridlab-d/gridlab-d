@@ -264,7 +264,7 @@ void controller_ccsi::fetch_double(double **prop, const char *name, OBJECT *pare
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "controller_ccsi:%i", hdr->id);
-		if(*name == NULL)
+		if(*name == static_cast<char>(0))
 			sprintf(msg, "%s: controller_ccsi unable to find property: name is NULL", namestr);
 		else
 			sprintf(msg, "%s: controller_ccsi unable to find %s", namestr, name);
@@ -280,7 +280,7 @@ void controller_ccsi::fetch_int64(int64 **prop, const char *name, OBJECT *parent
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "controller_ccsi:%i", hdr->id);
-		if(*name == NULL)
+		if(*name == static_cast<char>(0))
 			sprintf(msg, "%s: controller_ccsi unable to find property: name is NULL", namestr);
 		else
 			sprintf(msg, "%s: controller_ccsi unable to find %s", namestr, name);
@@ -296,7 +296,7 @@ void controller_ccsi::fetch_enum(enumeration **prop, const char *name, OBJECT *p
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "controller:%i", hdr->id);
-		if(*name == NULL){
+		if(*name == static_cast<char>(0)){
 			sprintf(msg, "%s: controller unable to find property: name is NULL", namestr);
 		}
 		else

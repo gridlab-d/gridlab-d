@@ -3173,7 +3173,7 @@ void exec_slave_node()
 			args[3] = (SOCKET *)inaddr;
 			//output_debug("esn(): got client");
 			memset(inaddr, 0, inaddrsz);
-			args[2] = (SOCKET *)accept(sockfd, (struct sockaddr *)inaddr, &inaddrsz);
+			args[2] = (SOCKET *)reinterpret_cast<int*>(accept(sockfd, (struct sockaddr *)inaddr, &inaddrsz));
 			output_debug("esn(): accepted client");
 			if (-1 == (int64)(args[2]))
 			{
