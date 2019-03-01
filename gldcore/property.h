@@ -91,6 +91,7 @@ public:
 typedef charbuf<2049> char2048;
 typedef charbuf<1025> char1024;
 typedef charbuf<257> char256;
+typedef charbuf<129> char128;
 typedef charbuf<65> char64;
 typedef charbuf<33> char32;
 typedef charbuf<9> char8;

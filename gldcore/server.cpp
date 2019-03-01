@@ -166,7 +166,7 @@ static void *server_routine(void *arg)
 			IN_MYCONTEXT output_verbose("accepting connection from %s on port %d",saddr, cli_addr.sin_port);
 			if ( active )
 				pthread_join(thread_id,&result);
-			if ( pthread_create(&thread_id,NULL, http_response,(void*)newsockfd)!=0 )
+			if ( pthread_create(&thread_id,NULL, http_response,reinterpret_cast<int*>(newsockfd))!=0 )
 				output_error("unable to start http response thread");
 			if (global_server_quit_on_close)
 				shutdown_now();
@@ -274,7 +274,7 @@ Retry:
 	}
 
 	/* start the new thread */
-	if (pthread_create(&startup_thread,NULL,server_routine,(void*)sockfd))
+	if (pthread_create(&startup_thread,NULL,server_routine, reinterpret_cast<int*>(sockfd)))
 	{
 		output_error("server thread startup failed: %s",strerror(GetLastError()));
 		return FAILED;
@@ -395,7 +395,7 @@ static void http_send(HTTPCNX *http)
 	int len=0;
 	len += sprintf(header+len, "HTTP/1.1 %s", http->status?http->status:HTTP_INTERNALSERVERERROR);
 	IN_MYCONTEXT output_verbose("%s (len=%d, mime=%s)",header,http->len,http->type?http->type:"none");
-	len += sprintf(header+len, "\nContent-Length: %d\n", http->len);
+	len += sprintf(header+len, "\nContent-Length: %ld\n", http->len);
 	if (http->type && http->type[0]!='\0')
 		len += sprintf(header+len, "Content-Type: %s\n", http->type);
 	len += sprintf(header+len, "Cache-Control: no-cache\n");
@@ -640,7 +640,7 @@ int get_value_with_unit(OBJECT *obj, char *arg1, char *arg2, char *buffer, size_
 		if ( spec!=NULL )
 			*spec++ = '\0';
 		else
-			spec = "4g";
+			spec = const_cast<char*>("4g");
 
 		/* check spec for conformance */
 		if ( strchr("0123456789",spec[0])==NULL || strchr("aAfFgGeE",spec[1])==NULL )
@@ -1277,7 +1277,8 @@ int http_copy(HTTPCNX *http, const char *context, char *source, int cook, size_t
 		fclose(fp);
 		return 0;
 	}
-	if (fread(buffer,1,len,fp)<0)
+	size_t result = fread(buffer,1,len,fp);
+	if (result<0)
 	{
 		output_error("%s output '%s' read failed", context, source);
 		free(buffer);
@@ -1723,7 +1724,7 @@ int http_get_rt(HTTPCNX *http,char *uri)
 	char fullpath[1024];
 	char filename[1024];
 	size_t pos = 0;
-	if ( sscanf(uri,"%1023[^:]:%d",filename,&pos)==0 )
+	if ( sscanf(uri,"%1023[^:]:%ld",filename,&pos)==0 )
 		strncpy(filename,uri,sizeof(filename)-1);
 	if (!find_file(filename,NULL,R_OK,fullpath,sizeof(fullpath)))
 	{

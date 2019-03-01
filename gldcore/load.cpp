@@ -380,7 +380,7 @@ static void filename_parts(char *fullname, char *path, char *name, char *ext)
 }
 
 
-static int append_init(char* format,...)
+static int append_init(const char* format,...)
 {
 	static char code[1024];
 	va_list ptr;
@@ -426,7 +426,7 @@ static int append_code(const char* format,...)
 	strcat(code_block,code);
 	return ++code_used;
 }
-static int append_global(char* format,...)
+static int append_global(const char* format,...)
 {
 	static char code[1024];
 	va_list ptr;
@@ -1021,7 +1021,7 @@ static int resolve_object(UNRESOLVED *item, char *filename)
 		for ( obj = object_get_first() ; obj != NULL ; obj = object_get_next(obj) )
 		{
 			char value[1024];
-			if ( object_get_child_count(obj)==0 && object_get_value_by_name(obj,propname,value,sizeof(value))!=NULL && strcmp(value,target)==0 )
+			if ( object_get_child_count(obj)==0 && object_get_value_by_name(obj,propname,value,sizeof(value))!=NAN && strcmp(value,target)==0 )
 			{
 				object_set_parent(*(OBJECT**)(item->ref),obj);
 				break;
@@ -2606,7 +2606,7 @@ static int alternate_value(PARSER, char *value, int size)
 	if (WHITE) ACCEPT;
 	if (TERM(expression(HERE,&test,NULL,current_object)) && (WHITE,LITERAL("?")))
 	{
-		if ((WHITE,TERM(expanded_value(HERE,value1,sizeof(value1)," \t\n:"))) && (WHITE,LITERAL(":")) && (WHITE,TERM(expanded_value(HERE,value2,sizeof(value2)," \n\t;"))))
+		if ((WHITE,TERM(expanded_value(HERE,value1,sizeof(value1), const_cast<char*>(" \t\n:")))) && (WHITE,LITERAL(":")) && (WHITE,TERM(expanded_value(HERE,value2,sizeof(value2), const_cast<char*>(" \n\t;")))))
 		{
 			ACCEPT;
 			if (test>0)
@@ -3228,9 +3228,9 @@ static int class_export_function(PARSER, CLASS *oclass, char *fname, int fsize, 
 			append_code("\tstatic int64 %s (%s) %s;\n/*RESETLINE*/\n",fname,arglist,code);
 
 			if (global_getvar("noglmrefs",buffer,63)==NULL)
-				append_init("#line %d \"%s\"\n"
+				append_init(const_cast<char*>("#line %d \"%s\"\n"
 					"\tif ((*(callback->function.define))(oclass,\"%s\",(FUNCTIONADDR)&%s::%s)==NULL) return 0;\n"
-					"/*RESETLINE*/\n", startline, forward_slashes(filename),
+					"/*RESETLINE*/\n"), startline, forward_slashes(filename),
 					fname,oclass->name,fname);
 
 			ACCEPT;
@@ -4011,7 +4011,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 			char targetvalue[1024];
 			if (prop!=NULL && prop->ptype==PT_object && TERM(object_block(HERE,NULL,&subobj)))
 			{
-				char objname[64];
+				char objname[128];
 				if (subobj->name) strcpy(objname,subobj->name); else sprintf(objname,"%s:%d", subobj->oclass->name,subobj->id);
 				if (object_set_value_by_name(obj,propname,objname))
 					ACCEPT
@@ -4031,7 +4031,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				for ( target = object_get_first() ; target != NULL ; target = object_get_next(target) )
 				{
 					char value[1024];
-					if ( object_get_child_count(target)==0 && object_get_value_by_name(target,targetprop,value,sizeof(value))!=NULL && strcmp(value,targetvalue)==0 )
+					if ( object_get_child_count(target)==0 && object_get_value_by_name(target,targetprop,value,sizeof(value))!=NAN && strcmp(value,targetvalue)==0 )
 					{
 						object_set_parent(obj,target);
 						break;
@@ -4055,7 +4055,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 					output_error_raw("%s(%d): cannot inherit from an parent that hasn't been resolved yet or isn't specified", filename, linenum);
 					REJECT;
 				}
-				else if ( object_get_value_by_name(obj->parent,propname,value,sizeof(value))==NULL )
+				else if ( object_get_value_by_name(obj->parent,propname,value,sizeof(value))==NAN )
 				{
 					output_error_raw("%s(%d): unable to get value of inherit property '%s'", filename, linenum, propname);
 					REJECT;

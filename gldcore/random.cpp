@@ -1157,7 +1157,7 @@ int convert_to_randomvar(char *string, void *data, PROPERTY *prop)
 		/* isolate param and token and eliminate leading whitespaces */
 		while (*param!='\0' && (isspace(*param) || iscntrl(*param))) param++;		
 		if (value==NULL)
-			value="1";
+			value=const_cast<char*>("1");
 		else
 			*value++ = '\0'; /* separate value from param */
 		while (isspace(*value) || iscntrl(*value)) value++;

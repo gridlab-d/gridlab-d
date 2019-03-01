@@ -436,6 +436,7 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 	strcpy(dir,file);
 	char *ext = strrchr(dir,'.');
 	char *name = strrchr(dir,'/')+1;
+	char * char_result;
 	if ( ext==NULL || strcmp(ext,".glm")!=0 ) 
 	{
 		output_error("run_test(char *file='%s'): file is not a GLM", file);
@@ -443,7 +444,7 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 	}
 	*ext = '\0'; // remove extension from dir
 	char cwd[1024];
-	getcwd(cwd,sizeof(cwd));	
+	char_result = getcwd(cwd,sizeof(cwd));
 	if ( clean && !destroy_dir(dir) )
 	{
 		output_error("run_test(char *file='%s'): unable to destroy test folder", dir);
@@ -626,7 +627,7 @@ void *(run_test_proc)(void *arg)
 			if ( result.get_nsuccess() ) code=2;
 			if ( result.get_nexceptions() ) code=3;
 			result_code[item->id] = code;
-			char buffer[1024];
+			char buffer[2048];
 			sprintf(buffer,"%s%s%6.1f%s%s",flags[code],report_col,dt,report_col,item->name);
 			report_data("%s",buffer);
 			report_newrow();

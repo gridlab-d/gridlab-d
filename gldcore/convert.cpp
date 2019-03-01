@@ -1186,7 +1186,7 @@ int convert_to_complex_array(const char *buffer, void *data, PROPERTY *prop)
 /** Convert a string to a double with a given unit
    @return 1 on success, 0 on failure
  **/
-extern "C" int convert_unit_double(char *buffer,char *unit, double *data)
+extern "C" int convert_unit_double(char *buffer,const char *unit, double *data)
 {
 	char *from = strchr(buffer,' ');
 	*data = atof(buffer);

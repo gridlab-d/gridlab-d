@@ -511,7 +511,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 			return last_module;
 		} else {
 			struct {
-				char *name;
+				const char *name;
 				LOADER loader;
 			} fmap[] = {
 				{"matlab",NULL},
@@ -842,7 +842,7 @@ void module_list(void)
 #ifdef WIN32
 	char *pathDelim = ";";
 #else
-	char *pathDelim = ":";
+	const char *pathDelim = ":";
 #endif
 
 	_module_list(global_workdir);
@@ -995,7 +995,7 @@ int module_saveobj_xml(FILE *fp, MODULE *mod){ /**< the stream to write to */
 	CLASS *pclass = NULL;
 
 	for(obj = object_get_first(); obj != NULL; obj = obj->next){
-		char64 oname = "(unidentified)";
+		char128 oname = "(unidentified)";
 		if(obj->oclass->module != mod){
 			continue;
 		}
@@ -1021,7 +1021,7 @@ int module_saveobj_xml(FILE *fp, MODULE *mod){ /**< the stream to write to */
 			count += fprintf(fp,"\t\t\t<parent>root</parent>\n");
 		}
 		count += fprintf(fp,"\t\t\t<rank>%d</rank>\n", obj->rank);
-		count += fprintf(fp,"\t\t\t<clock>\n", obj->clock);
+		count += fprintf(fp,"\t\t\t<clock>%lld\n", obj->clock); //TODO: Review if obj->clock is needed to be printed?
 		count += fprintf(fp,"\t\t\t\t <timestamp>%s</timestamp>\n", convert_from_timestamp(obj->clock,buffer,sizeof(buffer))>0?buffer:"(invalid)");
 		count += fprintf(fp,"\t\t\t</clock>\n");
 		/* why do latitude/longitude have 2 values?  I currently only store as float in the schema... -dc */
@@ -1100,7 +1100,7 @@ int module_saveall_xml_old(FILE *fp)
 			if (module_getvar(mod,varname,value,sizeof(value)))
 			{	/* TODO: support other types (ticket #46) */
 				count += fprintf(fp,"\t\t\t\t<property> \n");
-				count += fprintf(fp,"\t\t\t\t\t <type>double</type>\n", varname.get_string());
+				count += fprintf(fp,"\t\t\t\t\t <type>double</type>\n");//TODO: Is varname.get_string() to be printed? Currently hardcoded as double.
 				count += fprintf(fp,"\t\t\t\t\t <name>%s</name>\n", value.get_string());
 				count += fprintf(fp,"\t\t\t\t</property> \n");
 			}
@@ -1320,7 +1320,7 @@ static time_t file_modtime(char *file) /**< file name to query */
 /** Execute a command using formatted strings
     @return command return code
  **/
-static int execf(char *format, /**< format string  */
+static int execf(const char *format, /**< format string  */
 				 ...) /**< parameters  */
 {
 	char command[4096];
@@ -1339,11 +1339,11 @@ static int execf(char *format, /**< format string  */
 /** Compile C source code into a dynamic link library 
     @return 0 on success
  **/
-int module_compile(char *name,	/**< name of library */
-				   char *code,	/**< listing of source code */
+int module_compile(const char *name,	/**< name of library */
+				   const char *code,	/**< listing of source code */
 				   int flags,	/**< compile options (see MC_?) */
-				   char *prefix, /**< file prefix */
-				   char *source,/**< source file (for context) */
+				   const char *prefix, /**< file prefix */
+				   const char *source,/**< source file (for context) */
 				   int line)	/**< source line (for context) */
 {
 	char cfile[1024];
@@ -1833,7 +1833,7 @@ static char HEADING_R[] = "PROC PID   RUNTIME    STATE   CLOCK                  
 static char HEADING_P[] = "PROC PID   PROGRESS   STATE   CLOCK                   MODEL" ;
 int sched_getinfo(int n,char *buf, size_t sz)
 {
-	char *status;
+	const char *status;
 	char ts[64];
 	struct tm *tm;
 	time_t ptime;
@@ -2187,7 +2187,7 @@ void sched_init(int readonly)
 void sched_init(int readonly)
 {
 	static int has_run = 0;
-	char *mfile = "/tmp/" MAPNAME;
+	const char *mfile = "/tmp/" MAPNAME;
 	unsigned long mapsize;
 	int fd = open(mfile,O_CREAT,0666);
 	key_t shmkey = ftok(mfile,sizeof(GLDPROCINFO));

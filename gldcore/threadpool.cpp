@@ -32,7 +32,7 @@
 
 
 static int mti_debug_mode = 0;
-int mti_debug(MTI *mti, char *fmt, ...)
+int mti_debug(MTI *mti, const char *fmt, ...)
 {
 	if ( mti_debug_mode )
 	{

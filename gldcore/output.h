@@ -14,7 +14,7 @@
 
 #include "timestamp.h"
 
-typedef int (*PRINTFUNCTION)(char *,...);
+typedef int (*PRINTFUNCTION)(const char *,...);
 
 typedef enum {FS_IN = 0, FS_STD = 1, FS_ERR = 2} FILESTREAM;
 

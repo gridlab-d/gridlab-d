@@ -727,7 +727,7 @@ char *global_seq(char *buffer, int size, const char *name)
 	}
 }
 
-int global_isdefined(char *name)
+int global_isdefined(const char *name)
 {
 	return global_find(name)!=NULL;
 }
