@@ -138,7 +138,7 @@ void dlload_error(const char *filename)
 	char *error = dlerror();
 #endif
 #else
-	char *error = "unknown error";
+	const char *error = "unknown error";
 #endif
 	output_debug("%s: %s (LD_LIBRARY_PATH=%s)", filename, error,getenv("LD_LIBRARY_PATH"));
 #if defined WIN32 && ! defined __MINGW32__
@@ -841,7 +841,7 @@ void module_list(void)
 	char *tokPath = NULL;
 	char *tokPathPtr = NULL;
 #ifdef WIN32
-	char *pathDelim = ";";
+	const char *pathDelim = ";";
 #else
 	const char *pathDelim = ":";
 #endif
@@ -1482,7 +1482,7 @@ static int add_external_function(char *fctname, char *libname, void *lib)
 		if ( sscanf(fctname,"%[^@]@%d",function,&ordinal)==2)
 		{
 #ifdef WIN32
-			item->call = DLSYM(lib,(LPCSTR)(short)ordinal);
+			item->call = DLSYM(lib,(LPCSTR)(long long)ordinal);
 #else
 			item->call = DLSYM(lib,function);
 #endif
@@ -1537,7 +1537,7 @@ int module_load_function_list(char *libname, char *fnclist)
 				NULL, GetLastError(), 0,
 				(LPTSTR) &error, 0, NULL);
 		if (!result)
-			error = TEXT("[FormatMessage failed]");
+			error = TEXT(const_cast<char*>("[FormatMessage failed]"));
 		else for (end = error + strlen(error) - 1; end >= error && isspace(*end); end--)
 			*end = 0;
 #else

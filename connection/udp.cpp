@@ -401,7 +401,7 @@ void udp::set_uri(char *fmt, ...)
 	vsprintf(uri,fmt,ptr);
 	va_end(ptr);
 }
-void udp::set_errormsg(char *fmt, ...)
+void udp::set_errormsg(const char *fmt, ...)
 {
 	va_list ptr;
 	va_start(ptr,fmt);

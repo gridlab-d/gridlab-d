@@ -69,7 +69,7 @@ char* strtok_t(char *str, const char *delim, char **nextp)
 
     return ret;
 } 
-
+#undef strtok_s
 #define strtok_s strtok_t
 #endif
 

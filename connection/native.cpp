@@ -386,6 +386,7 @@ static char unhex(char h)
 		return h-'A'+10;
 	else if ( h>='a' && h<='f' )
 		return h-'a'+10;
+	return h-' ';
 }
 static size_t convert_to_hex(char *out, size_t max, const char *in, size_t len)
 {

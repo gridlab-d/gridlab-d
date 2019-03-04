@@ -23,7 +23,7 @@ typedef struct s_class_list CLASS;
 #ifndef FADDR
 #define FADDR
 #ifdef __MINGW32__
-#warning Temporary hard coded __int64
+//#warning Temporary hard coded __int64
 typedef __int64 (*FUNCTIONADDR)(void*,...); /** the entry point of a module function */
 #else 
 typedef int64 (*FUNCTIONADDR)(void*,...); /** the entry point of a module function */

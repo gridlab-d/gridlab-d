@@ -490,7 +490,7 @@ EXPORT void close_recorder(struct recorder *my)
 {
 	char gnuplot[1024];
 #ifdef WIN32
-	char *plotcmd = "start wgnuplot";
+	const char *plotcmd = "start wgnuplot";
 #else
 	const char *plotcmd = "gnuplot";
 #endif

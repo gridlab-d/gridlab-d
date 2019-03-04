@@ -332,7 +332,7 @@ void exec_sighandler(int sig) /**< the signal number, see \p <signal.h> */
 }
 
 #ifdef WIN32
-char *strsignal(int sig)
+const char *strsignal(int sig)
 {
 	switch(sig) {
 	case SIGABRT: return "SIGABRT";

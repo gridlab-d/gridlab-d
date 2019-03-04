@@ -246,6 +246,7 @@ static int compare_property_alt(OBJECT *obj, char *propname, FINDOP op, void *va
 			 */
 			return 0;
 	}
+	return -1;
 }
 
 static int compare(OBJECT *obj, FINDTYPE ftype, FINDOP op, void *value, char *propname)

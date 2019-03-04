@@ -12,7 +12,7 @@
 
 void exec_sighandler(int sig);
 int exec_debug(struct sync_data *data, int pass, int index, OBJECT *obj);
-char *strsignal(int sig);
+const char *strsignal(int sig);
 
 #endif
 /**@}*/

@@ -59,6 +59,7 @@ TIMESTAMP delta_mode_needed = TS_NEVER; /* the time at which delta mode needs to
 
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
+#undef _WIN32_WINNT
 #define _WIN32_WINNT 0x0400
 #include <windows.h>
 #ifndef DLEXT
@@ -114,7 +115,7 @@ char* strtok_t(char *str, const char *delim, char **nextp)
 
 	return ret;
 }
-
+#undef strtok_s
 #define strtok_s strtok_t
 #endif
 #endif

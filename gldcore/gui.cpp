@@ -414,7 +414,9 @@ Retry:
 	{
 		char env[1024];
 #ifdef WIN32
-		sprintf("%s=%s",entity->env,buffer);
+		const char* const_env = entity->env;
+		const char* const_buffer = buffer;
+		sprintf(const_cast<char*>("%s=%s"),const_env, const_buffer);
 		putenv(env);
 #else
 		setenv(entity->env,buffer,1);

@@ -259,7 +259,7 @@ static void buildtmp(void)
 	}
 	if (home = getenv(HOMEVAR)) {
 #ifdef WIN32
-		char *drive;
+		const char *drive;
 		if (!(drive = getenv("HOMEDRIVE")))
 			drive = "";
 		snprintf(global_tmp, sizeof(global_tmp),
