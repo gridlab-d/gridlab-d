@@ -205,7 +205,7 @@ int curve::remove_bid(KEY bid_id)
 				newbids[i] = bids[i];
 				newbid_ids[i] = bid_ids[i];
 			} else if(i>bid_index){
-				newkeys[i-1] = keys[i];
+				newkeys[i-1] = keys[i]-1;
 				newbids[i-1] = bids[i];
 				newbid_ids[i-1] = bid_ids[i];
 			}
