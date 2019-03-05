@@ -1,9 +1,9 @@
 project(libjsoncpp)
 
 add_library(${PROJECT_NAME} STATIC #SHARED
-        third_party/jsonCpp/jsoncpp.cpp
-        third_party/jsonCpp/json/json.h
-        third_party/jsonCpp/json/json-forwards.h
+        ../jsonCpp/jsoncpp.cpp
+        ../jsonCpp/json/json.h
+        ../jsonCpp/json/json-forwards.h
         )
 
 set_target_properties(${PROJECT_NAME}
@@ -11,6 +11,13 @@ set_target_properties(${PROJECT_NAME}
         PREFIX ""
         POSITION_INDEPENDENT_CODE ON
         )
+
+if ( CMAKE_COMPILER_IS_GNUCC )
+    target_compile_options(libjsoncpp PRIVATE "-w")
+endif()
+if ( MSVC )
+    target_compile_options(libjsoncpp PRIVATE "/w")
+endif()
 
 install(TARGETS ${PROJECT_NAME}
         PERMISSIONS
