@@ -1214,7 +1214,7 @@ typedef struct s_callbacks {
 		void (*write)(unsigned int *);
 	} lock, unlock;
 	struct {
-		char *(*find_file)(char *name, char *path, int mode);
+		char *(*find_file)(const char *name, char *path, int mode);
 	} file;
 	struct s_objvar_struct {
 		bool *(*bool_var)(OBJECT *obj, PROPERTY *prop);
