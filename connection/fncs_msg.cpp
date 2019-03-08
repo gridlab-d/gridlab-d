@@ -186,7 +186,13 @@ int fncs_msg::option(char *value){
 			char *comma = strchr(cmd,',');
 			char *semic = strchr(cmd,';');
 			if ( comma && semic )
-				cmd = min(comma,semic);
+				if ((comma - cmd) > (semic - cmd)) {
+					cmd = semic;
+				} else {
+					cmd = comma;
+				}
+				// original intent was:
+				// cmd = min(comma, semic);
 			else if ( comma )
 				cmd = comma;
 			else if ( semic )
