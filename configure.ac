@@ -500,9 +500,9 @@ AS_CASE([$host],
 				AS_CASE([$LIBS],
 					[*lhelics*], [], [LIBS="$LIBS -lhelics-static -lrt -lzmq -lboost_filesystem -lboost_program_options -lboost_system -lboost_unit_test_framework"])],
 	[*darwin*], [AS_CASE([$HELICS_LIBS],
-					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-static -lrt -lzmq -lboost_filesystem -lboost_program_options -lboost_system -lboost_unit_test_framework"])
+					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-static -lzmq -lboost_filesystem -lboost_program_options -lboost_system -lboost_unit_test_framework"])
 				AS_CASE([$LIBS],
-					[*lhelics*], [], [LIBS="$LIBS -lhelics-static -lrt -lzmq -lboost_filesystem -lboost_program_options -lboost_system -lboost_unit_test_framework"])],
+					[*lhelics*], [], [LIBS="$LIBS -lhelics-static -lzmq -lboost_filesystem -lboost_program_options -lboost_system -lboost_unit_test_framework"])],
 	[*mingw*], [AS_CASE([$HELICS_LIBS],
 					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lzmq -lboost_filesystem-mt -lboost_program_options-mt -lboost_system-mt -lboost_unit_test_framework-mt"])
 				AS_CASE([$LIBS],
@@ -723,6 +723,8 @@ AC_MSG_RESULT([
     matlab: ..................... $HAVE_MATLAB
     mysql-connector-c: .......... $HAVE_MYSQL
     curses: ..................... $HAVE_CURSES
+    FNCS: ....................... $have_fncs
+    HELICS: ..................... $have_helics
 
   Atomic Builtins:
 
