@@ -108,6 +108,7 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 				PT_KEYWORD,"ONEZNODE",(enumeration)ONENODE,
 				PT_KEYWORD,"TWONODE",(enumeration)TWONODE,
 				PT_KEYWORD,"FORTRAN",(enumeration)FORTRAN,
+				PT_KEYWORD,"MULTILAYER",(enumeration)MULTILAYER,
 				PT_KEYWORD,"NONE",(enumeration)NONE,
 			PT_enumeration,"heat_mode",PADDR(heat_mode), PT_DESCRIPTION, "the energy source for heating the water heater",
 				PT_KEYWORD,"ELECTRIC",(enumeration)ELECTRIC,
@@ -149,6 +150,17 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 				PT_KEYWORD,"OV_ON",(enumeration)OV_ON,
 				PT_KEYWORD,"OV_NORMAL",(enumeration)OV_NORMAL,
 				PT_KEYWORD,"OV_OFF",(enumeration)OV_OFF,
+			//published variables for the multi layer waterheater model
+			PT_double,"lower_tank_setpoint", PADDR(tank_setpoint_1), PT_DESCRIPTION, "MULTILAYER_MODEL: The setpoint for the lower heating element thermostat in the tank",
+			PT_double,"upper_tank_setpoint", PADDR(tank_setpoint_2), PT_DESCRIPTION, "MULTILAYER_MODEL: The setpoint for the upper heating element thermostat in the tank",
+			PT_double,"lower_tank deadband", PADDR(deadband_1), PT_DESCRIPTION, "MULTILAYER_MODEL: The deadband for the lower heating element thermostat in the tank",
+			PT_double,"upper_tank deadband", PADDR(deadband_2), PT_DESCRIPTION, "MULTILAYER_MODEL: The deadband for the upper heating element thermostat in the tank",
+			PT_enumeration,"lower_heating_element_state", PADDR(control_switch_1), "MULTILAYER MODEL: The state of the lower heating element in the tank.",
+				PT_KEYWORD,"OFF",(enumeration)OFF,
+				PT_KEYWORD,"ON",(enumeration)ON,
+			PT_enumeration,"upper_heating_element_state", PADDR(control_switch_2), "MULTILAYER MODEL: The state of the upper heating element in the tank.",
+				PT_KEYWORD,"OFF",(enumeration)OFF,
+				PT_KEYWORD,"ON",(enumeration)ON,
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}
@@ -191,11 +203,15 @@ int waterheater::create()
 	tank_setpoint = gl_random_normal(RNGSTATE,125,5);
 	if (tank_setpoint<90) tank_setpoint = 90;
 	if (tank_setpoint>160) tank_setpoint = 160;
+	tank_setpoint_1 = tank_setpoint;
+	tank_setpoint_2 = tank_setpoint;
 
 	/* initialize water tank deadband */
 	thermostat_deadband = fabs(gl_random_normal(RNGSTATE,2,1))+1;
 	if (thermostat_deadband>10)
 		thermostat_deadband = 10;
+	deadband_1 = thermostat_deadband;
+	deadband_2 = thermostat_deadband;
 
 	tank_UA = clip(gl_random_normal(RNGSTATE,2.0, 0.20),0.1,10) * tank_volume/50;  
 	if(tank_UA <= 1.0)
@@ -214,6 +230,7 @@ int waterheater::create()
 	gas_standby_power = -1.0;
 
 	dr_signal = 1;
+	Thot = 120;
 	return res;
 
 }
@@ -606,6 +623,38 @@ int waterheater::init(OBJECT *parent)
 			GL_THROW("Invalide tank volume for the fortran water heater_model. Valid volumes are 40 or 80 gallons.");
 		}
 	}
+	if( current_model == MULTILAYER) {
+		double tank_surface_area = 2*area + (tank_height*pi*tank_diameter);
+		U_val = tank_UA/tank_surface_area;
+		thermal_conductivity = 0.5918/1.728;
+		Tmax_lower = tank_setpoint_1 + (deadband_1/2.0);
+		Tmin_lower = tank_setpoint_1 - (deadband_1/2.0);
+		Tmax_upper = tank_setpoint_2 + (deadband_2/2.0);
+		Tmin_upper = tank_setpoint_2 - (deadband_2/2.0);
+		number_of_mixing_zone_disks = 2;
+		total_mixing_zones = 2;
+		number_of_regular_disks = 2;
+		total_regular_zones = 2;
+		bottom_layer_disk = 1;
+		top_layer_disk = 1;
+		number_of_layers = (number_of_mixing_zone_disks*total_mixing_zones) + (number_of_regular_disks*total_regular_zones) + bottom_layer_disk + top_layer_disk;
+		number_of_states = 2 + number_of_layers;
+		number_of_inputs = 2;
+		number_of_outputs = 2;
+		H_layer = tank_height/number_of_layers;
+		A_layer = H_layer*pi*tank_diameter;
+		A_bottom = area;
+		A_top = area;
+		V_layer = tank_volume/(number_of_layers * GALPCF);
+		Vdot_circ = 6;
+		a_diffusion_coefficient = thermal_conductivity/(RHOWATER*Cp*H_layer*H_layer);
+		a_plug_coefficient = 60.0/(GALPCF*V_layer);
+		a_loss_layer_coefficient = A_layer*U_val/(RHOWATER*Cp*V_layer);
+		a_loss_bottom_coefficient = ((A_layer + A_bottom)*U_val/(RHOWATER*Cp*V_layer));
+		a_loss_top_coefficient = ((A_bottom + A_top)*U_val/(RHOWATER*Cp*V_layer));
+		a_circular_const = Vdot_circ*a_plug_coefficient;
+		b_matrix_coefficient = heating_element_capacity*BTUPHPKW/(RHOWATER*Cp*V_layer*number_of_mixing_zone_disks);
+	}
 	return residential_enduse::init(parent);
 }
 
@@ -773,6 +822,7 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	if(Tw > 212.0 - thermostat_deadband){ // if it's trying boil, turn it off!
 		heat_needed = FALSE;
 		is_waterheater_on = 0;
+
 	}
 
 

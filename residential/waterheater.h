@@ -21,6 +21,7 @@ public:
 		ONENODE,	///< tank model uses a single zone
 		TWONODE,	///< tank model uses two zones
 		FORTRAN, ///< uses the fortran tank model.
+		MULTILAYER, ///< tank model uses the multi-layer model
 		NONE,		///< tank model zoning isn't defined
 	} WHMODEL;	///< tank model currently in use
 	typedef enum {
@@ -152,7 +153,49 @@ public:
 
 	TIMESTAMP fwh_sim_time;
 
+//Multi Layer Waterheater parameters.
+private:
+	int number_of_mixing_zone_disks;
+	int total_mixing_zones;
+	int number_of_regular_disks;
+	int total_regular_zones;
+	int bottom_layer_disk;
+	int top_layer_disk;
+	int number_of_layers;
+	int number_of_states;
+	int number_of_inputs;
+	int number_of_outputs;
+	double H_layer;
+	double A_layer;
+	double A_bottom;
+	double A_top;
+	double V_layer;
+	int Vdot_circ;
+	double U_val;
+	double Thot;
+	double Tmax_lower;
+	double Tmin_lower;
+	double Tmax_upper;
+	double Tmin_upper;
+	double a_diffusion_coefficient;
+	double a_plug_coefficient;
+	double a_loss_layer_coefficient;
+	double a_loss_bottom_coefficient;
+	double a_loss_top_coefficient;
+	double a_circular_const;
+	double b_matrix_coefficient;
 public:
+	double tank_setpoint_1;
+	double tank_setpoint_2;
+	double deadband_1;
+	double deadband_2;
+	typedef enum {
+		OFF = 0,
+		ON = 1
+	} HEATELEMENTSTATE;
+	enumeration control_switch_1;
+	enumeration control_switch_2;
+	public:
 	static CLASS *oclass, *pclass;
 	static waterheater *defaults;
 	
