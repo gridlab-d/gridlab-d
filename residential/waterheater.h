@@ -12,6 +12,160 @@
 
 #include "residential.h"
 #include "residential_enduse.h"
+#include <limits>
+#include <vector>
+using std::vector;
+
+class w_vector;
+class w_matrix;
+
+//custom vector class
+class w_vector {
+public:
+	int dimension;
+	double *data;
+
+public:
+	w_vector() {
+		dimension = 0;
+		data = NULL;
+	};
+	w_vector(int dim) {
+		dimension = dim;
+		data = new double[dimension];
+		for(int i=0; i<dimension; i++) {
+			data[i] = 0.0;
+		}
+	};
+	w_vector(const w_vector& v) {
+		dimension = v.Dimension();
+		data = new double[dimension];
+		for(int i=0; i<dimension; i++) {
+			data[i] = v.data[i];
+		}
+	};
+	w_vector(int col, const w_matrix &A){
+		dimension = A.Rows();
+		data = new double[dimension];
+		for(int i=0; i<A.Rows(); i++) {
+			data[i] = A(i,col);
+		}
+	};
+	~w_vector() {
+		dimension = 0;
+		delete[] data;
+		data = NULL;
+	};
+
+	void Initialize(int dim) {
+		if(dimension!=0)
+			delete[] data;
+		dimension = dim;
+		data = new double[dimension];
+		for(int i=0;i<dimension;i++)
+			data[i] = 0.0;
+	};
+	int Dimension() const { return dimension; };
+
+	void Initialize(double a) {
+		for(int i=0; i<dimension; i++) {
+			data[i] = a;
+		}
+	};
+	void Initialize(double *v) {
+		for(int i=0; i<dimension; i++) {
+			data[i] = v[i];
+		}
+	};
+};
+
+//custom matrix class
+class w_matrix {
+public:
+	int rows, columns;
+	double **data;
+
+public:
+	w_matrix(int dim) {
+		rows = dim;
+		columns = dim;
+		data = new double* [rows];
+		for(int i=0; i<rows; i++) {
+			data[i] = new double[columns];
+			for(int j=0; i<columns; j++) {
+				data[i][j] = 0.0;
+			}
+		}
+	};
+	w_matrix(int rows1, int columns1) {
+		rows = rows1;
+		columns = columns1;
+		data = new double* [rows];
+		for(int i=0; i<rows; i++) {
+			data[i] = new double[columns];
+			for(int j=0; i<columns; j++) {
+				data[i][j] = 0.0;
+			}
+		}
+	};
+	w_matrix(const w_matrix& m) {
+		rows = m.rows;
+		columns = m.columns;
+		data = new double* [rows];
+		for(int i=0; i<rows; i++) {
+			data[i] = new double[columns];
+			for(int j=0; i<columns; j++) {
+				data[i][j] = m.data[i][j];
+			}
+		}
+	};
+	w_matrix(int num_vectors, const w_vector *q) {
+		rows = q[0].Dimension();
+		columns = num_vectors;
+		data = new double* [rows];
+		for(int i=0; i<rows; i++) {
+			data[i] = new double[columns];
+			for(int j=0; i<columns; j++) {
+				data[i][j] = q->data[i][j];
+			}
+		}
+	};
+	w_matrix(int rows1, int columns1, double **rowptrs){
+		rows = rows1;
+		columns = columns1;
+		data = new double*[rows];
+		for(int i=0;i<rows;i++)
+			data[i] = rowptrs[i];
+	};
+	~w_matrix() {
+		for(int i=0;i<rows;i++)
+			delete[] data[i];
+		rows = 0;
+		columns = 0;
+		delete[] data;
+	};
+	int Rows() const{ return rows; };
+	int Columns() const{ return columns; };
+	double **GetPointer() { return data; };
+	void GetColumn(int col, w_vector &x) {
+		x.Initialize(0.0);
+		for(int i=0; i<rows; i++) {
+			x[i] = data[i][col];
+		}
+	};
+	void GetColumn(int col, w_vector &x, int rowoffset) {
+		x.Initialize(0.0);
+		for(int i=0;i<rows-rowoffset;i++) {
+			x[i] = data[i+rowoffset][col];
+		}
+	};
+	void PutColumn(int col, const w_vector &x) {
+		for(int i=0;i<rows;i++) {
+			data[i][col] = x[i];
+		}
+	}
+};
+
 
 class waterheater : public residential_enduse {
 private:
@@ -184,6 +338,15 @@ private:
 	double a_loss_top_coefficient;
 	double a_circular_const;
 	double b_matrix_coefficient;
+	vector<vector<double>> A_diffusion;
+	vector<vector<double>> A_loss;
+	vector<vector<double>> A_plug;
+	vector<vector<double>> A_circular;
+	vector<vector<double>> A_matrix;
+	vector<vector<double>> B_control;
+	vector<double> control_upper;
+	vector<double> control_lower;
+	vector<vector<double>> T_layers;
 public:
 	double tank_setpoint_1;
 	double tank_setpoint_2;

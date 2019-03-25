@@ -654,6 +654,9 @@ int waterheater::init(OBJECT *parent)
 		a_loss_top_coefficient = ((A_bottom + A_top)*U_val/(RHOWATER*Cp*V_layer));
 		a_circular_const = Vdot_circ*a_plug_coefficient;
 		b_matrix_coefficient = heating_element_capacity*BTUPHPKW/(RHOWATER*Cp*V_layer*number_of_mixing_zone_disks);
+		for(int i=0; i<number_of_states; i++) {
+			T_layers.push(new vector<double>());
+		}
 	}
 	return residential_enduse::init(parent);
 }
