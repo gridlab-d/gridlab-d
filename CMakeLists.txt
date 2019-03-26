@@ -179,6 +179,9 @@ SET(GLD_SHARE
 # Load module directories. When adding new module, add it here.
 include_directories(gldcore)
 
+include_directories(third_party/superLU_MT)
+include_directories(third_party/jsonCpp)
+
 add_subdirectory(third_party/superLU_MT)
 add_subdirectory(third_party/jsonCpp)
 
