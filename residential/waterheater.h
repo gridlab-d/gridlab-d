@@ -15,7 +15,7 @@
 #include <limits>
 #include <vector>
 using std::vector;
-
+/*
 class w_vector;
 class w_matrix;
 
@@ -165,7 +165,7 @@ public:
 		}
 	}
 };
-
+*/
 
 class waterheater : public residential_enduse {
 private:
@@ -332,7 +332,6 @@ private:
 	double Tmax_upper;
 	double Tmin_upper;
 	double a_diffusion_coefficient;
-	double a_plug_coefficient;
 	double a_loss_layer_coefficient;
 	double a_loss_bottom_coefficient;
 	double a_loss_top_coefficient;
@@ -340,18 +339,20 @@ private:
 	double b_matrix_coefficient;
 	vector<vector<double>> A_diffusion;
 	vector<vector<double>> A_loss;
-	vector<vector<double>> A_plug;
-	vector<vector<double>> A_circular;
-	vector<vector<double>> A_matrix;
-	vector<vector<double>> B_control;
 	vector<double> control_upper;
 	vector<double> control_lower;
 	vector<vector<double>> T_layers;
+	TIMESTAMP start_time;
+	TIMESTAMP next_transition_time;
+	vector<vector<double>> A_matrix;
+	vector<vector<double>> B_control;
 public:
 	double tank_setpoint_1;
 	double tank_setpoint_2;
 	double deadband_1;
 	double deadband_2;
+	double Tw_1;
+	double Tw_2;
 	typedef enum {
 		OFF = 0,
 		ON = 1
@@ -389,6 +390,10 @@ public:
 	double new_temp_1node(double T0, double delta_t);	// Calcs temp after transition...
 	double new_time_2zone(double h0, double h1);		// Calcs time to transition...
 	double new_h_2zone(double h0, double delta_t);      // Calcs h after transition...
+	int multilayer_time_to_transition(void);
+	void calculate_waterheater_matrices(int time_now);
+	vector<double> multiply_waterheater_matrices(vector<vector<double>> a, vector<double> b);
+	void reinitialize_internals(int dt);
 
 	double get_Tambient(enumeration water_heater_location);		// ambient T [F] -- either an indoor house temperature or a garage temperature, probably...
 	typedef enum {MODEL_NOT_1ZONE=0, MODEL_NOT_2ZONE=1} WRONGMODEL;
