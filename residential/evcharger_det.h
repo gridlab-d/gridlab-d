@@ -9,36 +9,36 @@
 #include "residential.h"
 #include "residential_enduse.h"
 
-typedef enum {
-		VL_UNKNOWN=0,					///< defines vehicle state unknown
-		VL_HOME=1,						///< Vehicle is at home
-		VL_WORK=2,						///< Vehicle is at work
-		VL_WORK_TO_HOME=3,				///< Vehicle is commuting from work to home
-		VL_HOME_TO_WORK=4				///< Vehicle is commuting from home to work
-} VEHICLELOCATION;
-
-typedef struct  {
-	double travel_distance;			///< Distance the vehicle travels on any trip from home - assumed work dist = travel_distance/2
-	double WorkArrive;				///< Time when vehicle arrives at work HHMM
-	double WorkDuration;			///< Seconds a vehicle remains at work
-	double WorkHomeDuration;		///< Seconds a vehicle is traveling between work and home
-	double HomeArrive;				///< Time when vehicle arrives at home HHMM
-	double HomeDuration;			///< Seconds a vehicle remains at home
-	double HomeWorkDuration;		///< Seconds a vehicle is traveling between home and work
-	enumeration Location;			///< Vehicle current locational state
-	double battery_capacity;		///< Current capacity of the battery (kW-hours)
-	double battery_SOC;				///< Battery state of charge
-	double battery_size;			///< Maximum battery size
-	double MaxChargeRate;			///< Maximum current rate for the charger (Watts)
-	double ChargeEfficiency;		///< Efficiency of the charger (power in to battery power)
-	double mileage_efficiency;		///< Powertrain battery use - miles/kWh
-	TIMESTAMP next_state_change;	///< Timestamp of next transition (home->work, work->home)
-} VEHICLEDATA;
-
 class evcharger_det : public residential_enduse
 {
 public:
-	
+
+	typedef enum {
+			VL_UNKNOWN=0,					///< defines vehicle state unknown
+			VL_HOME=1,						///< Vehicle is at home
+			VL_WORK=2,						///< Vehicle is at work
+			VL_WORK_TO_HOME=3,				///< Vehicle is commuting from work to home
+			VL_HOME_TO_WORK=4				///< Vehicle is commuting from home to work
+	} VEHICLELOCATION;
+
+	typedef struct  {
+		double travel_distance;			///< Distance the vehicle travels on any trip from home - assumed work dist = travel_distance/2
+		double WorkArrive;				///< Time when vehicle arrives at work HHMM
+		double WorkDuration;			///< Seconds a vehicle remains at work
+		double WorkHomeDuration;		///< Seconds a vehicle is traveling between work and home
+		double HomeArrive;				///< Time when vehicle arrives at home HHMM
+		double HomeDuration;			///< Seconds a vehicle remains at home
+		double HomeWorkDuration;		///< Seconds a vehicle is traveling between home and work
+		enumeration Location;			///< Vehicle current locational state
+		double battery_capacity;		///< Current capacity of the battery (kW-hours)
+		double battery_SOC;				///< Battery state of charge
+		double battery_size;			///< Maximum battery size
+		double MaxChargeRate;			///< Maximum current rate for the charger (Watts)
+		double ChargeEfficiency;		///< Efficiency of the charger (power in to battery power)
+		double mileage_efficiency;		///< Powertrain battery use - miles/kWh
+		TIMESTAMP next_state_change;	///< Timestamp of next transition (home->work, work->home)
+	} VEHICLEDATA;
+
 	double ChargeRate;				///< Current commanded charge rate of the vehicle
 
 	double variation_mean;			///< Mean of normal variation of schedule variation

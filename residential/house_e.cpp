@@ -1708,7 +1708,7 @@ int house_e::init(OBJECT *parent)
 	}
 
 	//"Cheating" function for compatibility with older models -- enables all houses to be deltamode-ready
-	if ((all_house_delta == true) && (enable_subsecond_models==true))
+	if ((all_residential_delta == true) && (enable_subsecond_models==true))
 	{
 		obj->flags |= OF_DELTAMODE;
 	}
@@ -1821,7 +1821,7 @@ CIRCUIT *house_e::attach(OBJECT *obj, ///< object to attach
 	c->pV = pCircuit_V[(int)c->type];
 
 	// get frequency
-	c->pfrequency;
+	c->pfrequency = pFrequency;
 
 	// close breaker
 	c->status = BRK_CLOSED;
@@ -2444,18 +2444,7 @@ TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	/* update all voltage factors */
-	for (c=panel.circuits; c!=NULL; c=c->next)
-	{
-		// get circuit type
-		int n = (int)c->type;
-		if (n<0 || n>2)
-			GL_THROW("%s:%d circuit %d has an invalid circuit type (%d)", obj->oclass->name, obj->id, c->id, (int)c->type);
-
-		//Pull the factor -- reference from the "local value" (default or pulled by before for)		
-		c->pLoad->voltage_factor = value_Circuit_V[(int)c->type].Mag() / ((c->pLoad->config&EUC_IS220) ? (2.0* default_line_voltage) : default_line_voltage);
-		if ((c->pLoad->voltage_factor > 1.06 || c->pLoad->voltage_factor < 0.88) && (ANSI_voltage_check==true))
-			gl_warning("%s - %s:%d is outside of ANSI standards (voltage = %.0f percent of nominal 120/240)", obj->name, obj->oclass->name,obj->id,c->pLoad->voltage_factor*100);
-	}
+	circuit_voltage_factor_update();
 
 	//First run allocation - handles overall residential allocation as well
 	if (deltamode_inclusive == true)	//Only call if deltamode is even enabled
@@ -3364,6 +3353,26 @@ void house_e::pull_climate_values(void)
 	}
 }
 
+//Function to update the voltage factors
+void house_e::circuit_voltage_factor_update(void)
+{
+	OBJECT *obj = OBJECTHDR(this);
+	CIRCUIT *c;
+
+	for (c=panel.circuits; c!=NULL; c=c->next)
+	{
+		// get circuit type
+		int n = (int)c->type;
+		if (n<0 || n>2)
+			GL_THROW("%s:%d circuit %d has an invalid circuit type (%d)", obj->oclass->name, obj->id, c->id, (int)c->type);
+
+		//Pull the factor -- reference from the "local value" (default or pulled by before for)		
+		c->pLoad->voltage_factor = value_Circuit_V[(int)c->type].Mag() / ((c->pLoad->config&EUC_IS220) ? (2.0* default_line_voltage) : default_line_voltage);
+		if ((c->pLoad->voltage_factor > 1.06 || c->pLoad->voltage_factor < 0.88) && (ANSI_voltage_check==true))
+			gl_warning("%s - %s:%d is outside of ANSI standards (voltage = %.0f percent of nominal 120/240)", obj->name, obj->oclass->name,obj->id,c->pLoad->voltage_factor*100);
+	}
+}
+
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF DELTA MODE
 //////////////////////////////////////////////////////////////////////////
@@ -3371,9 +3380,6 @@ void house_e::pull_climate_values(void)
 SIMULATIONMODE house_e::inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
 	OBJECT *obj = OBJECTHDR(this);
-
-	//Right now, houses don't really support deltamode.  This is a half-kludge to get them to play
-	//nice with powerflow.  When they did support it, that code would go here.
 
 	//On the very first run -- re-accumulate everything
 	if ((iteration_count_val == 0) && (delta_time == 0))
@@ -3386,6 +3392,23 @@ SIMULATIONMODE house_e::inter_deltaupdate(unsigned int64 delta_time, unsigned lo
 		}
 	}
 	//Default else -- just proceed
+
+	//On the first iteration of each timestep, pull powerflow values
+	if (iteration_count_val == 0)
+	{
+		if (proper_meter_parent == true)
+		{
+			//Pull the values down
+			pull_complex_powerflow_values();
+		}
+
+		//Update the voltage factors
+		circuit_voltage_factor_update();
+	}
+	//Other iterations, just use previous values
+
+	//Right now, houses don't really support deltamode.  This is a half-kludge to get them to play
+	//nice with powerflow.  When they did support it, that code would go here.
 
 	//Always ready to go back to event mode
 	return SM_EVENT;

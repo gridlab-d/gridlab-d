@@ -447,6 +447,8 @@ private:
 	double value_Rhout;			//< Value holder for relative humidity
 	double value_Solar[9];		//< Value holder for solar irradiance
 
+	void circuit_voltage_factor_update(void);	///<Functionalized version of the voltage_factor update, so can be called in deltamode
+
 public:
 	int error_flag;
 	static CLASS *oclass, *pclass;
