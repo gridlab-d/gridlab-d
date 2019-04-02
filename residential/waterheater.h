@@ -15,6 +15,8 @@
 #include <limits>
 #include <vector>
 using std::vector;
+
+
 /*
 class w_vector;
 class w_matrix;
@@ -346,6 +348,13 @@ private:
 	TIMESTAMP next_transition_time;
 	vector<vector<double>> A_matrix;
 	vector<vector<double>> B_control;
+	double last_water_demand;
+	double last_ambient_temperature;
+	double last_inlet_temperature;
+	double last_upper_thermostat_setpoint;
+	double last_lower_thermostat_setpoint;
+	enumeration last_override_value;
+	int last_transition_time;
 public:
 	double tank_setpoint_1;
 	double tank_setpoint_2;
