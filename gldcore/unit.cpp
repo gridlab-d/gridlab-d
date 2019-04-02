@@ -90,6 +90,7 @@
 #include "find.h"
 #include "lock.h"
 
+
 /* fundamental physical/economic constants */
 static double c = 2.997925e8;		/**< m/s */
 static double e = 1.602189246e-19;	/**< C */
@@ -114,7 +115,7 @@ UNITSCALAR *scalar_list = NULL;
 /* unit_find_raw is both used to detect the presence and absence of units in the list.
 	not finding a given unit is normal behavior, and this function should run silently.
 */
-UNIT *unit_find_raw(char *unit){
+UNIT *unit_find_raw(const char *unit){
 	UNIT *p;
 	/* scan list for existing entry */
 	for (p = unit_list; p != NULL; p = p->next){
@@ -124,10 +125,10 @@ UNIT *unit_find_raw(char *unit){
 	}
 	return NULL;
 }
-UNIT *unit_primary(char *name,double c,double e,double h,double k,double m,double s,double a,double b,int prec);
+UNIT *unit_primary(const char *name,double c,double e,double h,double k,double m,double s,double a,double b,int prec);
 
 /* locate an underived unit */
-UNIT *unit_find_underived(char *unit)
+UNIT *unit_find_underived(const char *unit)
 {
 	UNIT *p;
 	UNITSCALAR *s;
@@ -224,7 +225,7 @@ int unit_constant(char name, double value)
 }
 
 /* define a primary unit */
-UNIT *unit_primary(char *name, double c, double e, double h, double k, double m, double s, double a, double b, int prec){
+UNIT *unit_primary(const char *name, double c, double e, double h, double k, double m, double s, double a, double b, int prec){
 	UNIT *p = unit_find_raw(name);
 #if 0
 	){
@@ -288,7 +289,7 @@ int unit_precision(char *term)
 }
 
 /* define a derived unit */
-int unit_derived(char *name,char *derivation)
+int unit_derived(const char *name,const char *derivation)
 {
 	double c = 0, e = 0, h = 0, k = 0, m = 0, s = 0, a = 0, b = 0;
 	int prec = 0;
@@ -296,7 +297,7 @@ int unit_derived(char *name,char *derivation)
 	char lastOp = '\0', nextOp = '\0';
 	UNIT *lastUnit = NULL;
 	UNIT local;
-	char *p = derivation;
+	const char *p = derivation;
 	
 	if (unit_find_raw(name) != NULL){
 		throw_exception("%s(%d): derived definition of '%s' failed; unit already defined", filepath, linenum, name);
@@ -388,7 +389,7 @@ int unit_derived(char *name,char *derivation)
 				m += pUnit->m;
 				s += pUnit->s;
 				a *= pUnit->a;
-				prec = MIN(prec,pUnit->prec);
+				prec = std::min(prec,pUnit->prec);
 				break;
 			case '/':
 				c -= pUnit->c;
@@ -398,7 +399,7 @@ int unit_derived(char *name,char *derivation)
 				m -= pUnit->m;
 				s -= pUnit->s;
 				a /= pUnit->a;
-				prec = MIN(prec, pUnit->prec);
+				prec = std::min(prec, pUnit->prec);
 				break;
 			case '+':
 				b += pUnit->b;
@@ -426,7 +427,7 @@ int unit_derived(char *name,char *derivation)
 							m += lastUnit->m * repeat;
 							s += lastUnit->s * repeat;
 							a *= pow(lastUnit->a, repeat);
-							prec = MIN(prec, lastUnit->prec);
+							prec = std::min(prec, lastUnit->prec);
 							break;
 						case '/':
 							c -= lastUnit->c * repeat;
@@ -436,7 +437,7 @@ int unit_derived(char *name,char *derivation)
 							m -= lastUnit->m * repeat;
 							s -= lastUnit->s * repeat;
 							a /= pow(lastUnit->a, repeat);
-							prec = MIN(prec, lastUnit->prec);
+							prec = std::min(prec, lastUnit->prec);
 							break;
 						default:
 							throw_exception("%s(%d): ^ not allowed after '%c' at '%s'", filepath, linenum, lastOp, term);
@@ -583,7 +584,7 @@ void unit_init(void)
 			char name[256];
 			char derivation[256];
 			if (sscanf(buffer, "%[^=]=%[-+/*^0-9. %A-Za-z]", name, derivation) == 2){
-				unit_derived(name, derivation);
+				unit_derived((const char *)name, (const char *)derivation);
 				continue;
 			}
 		}
@@ -615,7 +616,7 @@ void unit_init(void)
 /** Convert a value from one unit to another
 	@return 1 if successful, 0 if failed
  **/
-int unit_convert(char *from, char *to, double *pValue)
+int unit_convert(const char *from, const char *to, double *pValue)
 {
 	if (strcmp(from,to)==0)
 		return 1;
@@ -694,7 +695,7 @@ int unit_convert_complex(UNIT *pFrom, UNIT *pTo, complex *pValue)
 /** Find a unit
 	@return a pointer to the UNIT structure
  **/
-UNIT *unit_find(char *unit) /**< the name of the unit */
+UNIT *unit_find(const char *unit) /**< the name of the unit */
 {
 	UNIT *p;
 	int rv = 0;
@@ -733,7 +734,7 @@ UNIT *unit_find(char *unit) /**< the name of the unit */
  **/
 int unit_test(void)
 {
-	typedef struct {double value; char *unit;} VALUE;
+	typedef struct {double value; const char *unit;} VALUE;
 	typedef struct {VALUE from; VALUE to; double precision;} TEST;
 #ifndef PI
 #define PI 3.141592635

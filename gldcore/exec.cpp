@@ -2808,7 +2808,7 @@ void *slave_node_proc(void *args)
 	char cmd[1024], dirname[256], filename[256], filepath[256], ippath[256];
 	unsigned int64 mtr_port, id;
 //	char *tok_to;
-	char *token[5]={
+	const char *token[5]={
 		HS_CMD,
 		"dir=\"", // CMD absorbs dir's leading whitespace
 		" file=\"",
@@ -2955,7 +2955,7 @@ void *slave_node_proc(void *args)
 	if (tok_len > 0)
 	{
 		char temp[256];
-		sprintf(temp, "%%d offset and %%d len for \'%%%ds\'", tok_len);
+		sprintf(temp, "%%d offset and %%d len for \'%%%lds\'", tok_len);
 		output_debug(temp, offset, tok_len, buffer+offset);
 		memcpy(dirname, buffer+offset, (tok_len > sizeof(dirname) ? sizeof(dirname) : tok_len));
 	} else {
@@ -2979,7 +2979,7 @@ void *slave_node_proc(void *args)
 		char temp[256];
 		memcpy(filename, buffer+offset, (tok_len > sizeof(filename) ? sizeof(filename) : tok_len));
 		filename[tok_len]=0;
-		sprintf(temp, "%%d offset and %%d len for \'%%%ds\'", tok_len);
+		sprintf(temp, "%%d offset and %%d len for \'%%%lds\'", tok_len);
 		output_debug(temp, offset, tok_len, buffer+offset);
 	}
 	else
@@ -3173,7 +3173,7 @@ void exec_slave_node()
 			args[3] = (SOCKET *)inaddr;
 			//output_debug("esn(): got client");
 			memset(inaddr, 0, inaddrsz);
-			args[2] = (SOCKET *)accept(sockfd, (struct sockaddr *)inaddr, &inaddrsz);
+			args[2] = (SOCKET *)reinterpret_cast<int*>(accept(sockfd, (struct sockaddr *)inaddr, &inaddrsz));
 			output_debug("esn(): accepted client");
 			if (-1 == (int64)(args[2]))
 			{

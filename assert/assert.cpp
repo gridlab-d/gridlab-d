@@ -22,10 +22,11 @@ g_assert *g_assert::defaults = NULL;
 
 g_assert::g_assert(MODULE *module)
 {
+
 	if (oclass==NULL)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
-		oclass = gld_class::create(module,"assert",sizeof(g_assert),PC_AUTOLOCK|PC_OBSERVER);
+		oclass = gld_class::create(module,const_cast<char*>("assert"),sizeof(g_assert),PC_AUTOLOCK|PC_OBSERVER);
 		if (oclass==NULL)
 			throw "unable to register class assert";
 		else
@@ -108,7 +109,7 @@ TIMESTAMP g_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 	{
 		if ( evaluate_status() != get_status() )
 		{
-			gld_property relation_prop(my(),"relation");
+			gld_property relation_prop(my(),const_cast<char*>("relation"));
 			gld_keyword *pKeyword = relation_prop.find_keyword(relation);
 			char buf[1024];
 			char *p = get_part();

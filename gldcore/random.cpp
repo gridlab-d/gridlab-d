@@ -69,7 +69,7 @@ char* strtok_t(char *str, const char *delim, char **nextp)
 
     return ret;
 } 
-
+#undef strtok_s
 #define strtok_s strtok_t
 #endif
 
@@ -97,7 +97,7 @@ int random_init(void)
 /** Converts a distribution name to a #RANDOMTYPE
  **/
 static struct {
-	char *name;
+	const char *name;
 	RANDOMTYPE type;
 	int nargs;
 } *p, random_map[] = {
@@ -831,7 +831,7 @@ static double samp_stdev(double sample[], unsigned int count)
 static void sort(double sample[], unsigned int count)
 {
 }
-static int report(char *parameter, double actual, double expected, double error)
+static int report(const char *parameter, double actual, double expected, double error)
 {
 	if (parameter==NULL)
 	{
@@ -1157,7 +1157,7 @@ int convert_to_randomvar(char *string, void *data, PROPERTY *prop)
 		/* isolate param and token and eliminate leading whitespaces */
 		while (*param!='\0' && (isspace(*param) || iscntrl(*param))) param++;		
 		if (value==NULL)
-			value="1";
+			value=const_cast<char*>("1");
 		else
 			*value++ = '\0'; /* separate value from param */
 		while (isspace(*value) || iscntrl(*value)) value++;

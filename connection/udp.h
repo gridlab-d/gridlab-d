@@ -27,7 +27,7 @@
 	#include <unistd.h>
 	#include <sys/errno.h>
 	#include <netdb.h>
-	#define INVALID_SOCKET (-1)
+//	#define INVALID_SOCKET (-1)
 	#define SOCKET_ERROR (-1)
 	#define int64 long long
 #endif
@@ -64,7 +64,7 @@ public:
 	void set_hostname(char *s);
 	void set_portnum(unsigned int n);
 	void set_uri(char *fmt, ...);
-	void set_errormsg(char *fmt, ...);
+	void set_errormsg(const char *fmt, ...);
 	void set_debug_level(unsigned int n);
 	void set_sockdata(struct sockaddr_in *p, size_t n=sizeof(struct sockaddr_in));
 	void set_output(char *fmt, ...);

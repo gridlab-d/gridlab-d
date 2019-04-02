@@ -358,7 +358,7 @@ public:
 	double over_voltage_low_viol_time;				//Lowest high voltage threshold violation accumulator
 	double over_voltage_high_viol_time;				//Highest high voltage threshold violation accumulator
 
-	typedef enum {
+	enum {
 		IEEE_1547_NONE=0,		/**< No trip reason */
 		IEEE_1547_HIGH_OF=1,	/**< High over-frequency level trip */
 		IEEE_1547_LOW_OF=2,		/**< Low over-frequency level trip */

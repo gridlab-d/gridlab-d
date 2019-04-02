@@ -472,7 +472,7 @@ OBJECT *object_remove_by_id(OBJECTNUM id){
 	OBJECT *next = NULL;
 
 	if(target != NULL){
-		char name[64] = "";
+		char name[128] = "";
 
 		if(first_object == target){
 			first_object = target->next;
@@ -706,9 +706,9 @@ complex *object_get_complex(OBJECT *obj, PROPERTY *prop)
 	return NULL;
 }
 
-complex *object_get_complex_by_name(OBJECT *obj, char *name)
+complex *object_get_complex_by_name(OBJECT *obj, const char *name)
 {
-	PROPERTY *prop = class_find_property(obj->oclass,name);
+	PROPERTY *prop = class_find_property(obj->oclass,const_cast<char*>(name));
 	if(prop!=NULL && prop->access != PA_PRIVATE)
 		return (complex *)((char*)obj+sizeof(OBJECT)+(int64)(prop->addr)); /* warning: cast from pointer to integer of different size */
 	errno = ENOENT;
@@ -1396,7 +1396,7 @@ char *object_property_to_string(OBJECT *obj, char *name, char *buffer, int sz)
 		return buffer;
 	}
 	else
-		return "";
+		return const_cast<char*>("");
 }
 
 void object_profile(OBJECT *obj, OBJECTPROFILEITEM pass, clock_t t)
@@ -1418,7 +1418,7 @@ TIMESTAMP _object_sync(OBJECT *obj, /**< the object to synchronize */
 {
 	CLASS *oclass = obj->oclass;
 	register TIMESTAMP plc_time=TS_NEVER, sync_time;
-	TIMESTAMP effective_valid_to = MIN(obj->clock+global_skipsafe,obj->valid_to);
+	TIMESTAMP effective_valid_to = std::min(obj->clock+global_skipsafe,obj->valid_to);
 	int autolock = obj->oclass->passconfig&PC_AUTOLOCK;
 
 	/* check skipsafe */
@@ -1632,7 +1632,7 @@ STATUS object_finalize(OBJECT *obj)
 /** Tests the type of an object
  **/
 int object_isa(OBJECT *obj, /**< the object to test */
-			   char *type){ /**< the type of test */
+			   const char *type){ /**< the type of test */
 	if(obj == 0){
 		return 0;
 	}
@@ -1842,7 +1842,7 @@ int object_saveall(FILE *fp) /**< the stream to write to */
 			if ( convert_from_set(buffer, sizeof(buffer), &(obj->flags), object_flag_property()) > 0 )
 				count += fprintf(fp, "\tflags %s;\n",  buffer);
 			else
-				count += fprintf(fp, "\tflags %lld;\n", obj->flags);
+				count += fprintf(fp, "\tflags %d;\n", obj->flags);
 
 			/* dump properties */
 			for ( prop=obj->oclass->pmap; prop!=NULL; prop=(prop->next?prop->next:(prop->oclass->parent?prop->oclass->parent->pmap:NULL)) )
@@ -1902,7 +1902,7 @@ int object_saveall_xml(FILE *fp){ /**< the stream to write to */
 			count += fprintf(fp,"\t\t\t<parent>root</parent>\n");
 		}
 		count += fprintf(fp,"\t\t\t<rank>%d</rank>\n", obj->rank);
-		count += fprintf(fp,"\t\t\t<clock>\n", obj->clock);
+		count += fprintf(fp,"\t\t\t<clock>\n");
 		count += fprintf(fp,"\t\t\t\t <timestamp>%s</timestamp>\n", convert_from_timestamp(obj->clock,buffer, sizeof(buffer)) > 0 ? buffer : "(invalid)");
 		count += fprintf(fp,"\t\t\t</clock>\n");
 		/* why do latitude/longitude have 2 values?  I currently only store as float in the schema... */
@@ -1974,7 +1974,8 @@ int object_saveall_xml_old(FILE *fp){ /**< the stream to write to */
 				count += fprintf(fp,"\t\t\t<parent>root</parent>\n");
 			}
 			count += fprintf(fp, "\t\t\t<rank>%d</rank>\n", obj->rank);
-			count += fprintf(fp, "\t\t\t<clock>\n", obj->clock);
+//			count += fprintf(fp, "\t\t\t<clock>\n", obj->clock);
+			count += fprintf(fp, "\t\t\t<clock>\n");
 			count += fprintf(fp, "\t\t\t\t <timestamp>%s</timestamp>\n", (convert_from_timestamp(obj->clock, buffer, sizeof(buffer)) > 0) ? buffer : "(invalid)");
 			count += fprintf(fp, "\t\t\t</clock>\n");
 				/* why do latitude/longitude have 2 values?  I currently only store as float in the schema... */
@@ -2761,7 +2762,7 @@ double object_get_part(void *x, char *name)
 	if ( sscanf(name,"%[^. ].%s",root,part)==2 ) // has part
 	{
 		struct {
-			char *name;
+			const char *name;
 			TIMESTAMP *addr;
 		} *p, map[]={
 			{"clock",&(obj->clock)},

@@ -28,7 +28,7 @@ regulator::regulator(MODULE *mod) : link_object(mod)
 		pclass = link_object::oclass;
 
 		// register the class definition
-		oclass = gl_register_class(mod,"regulator",sizeof(regulator),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,const_cast<char*>("regulator"),sizeof(regulator),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class regulator";
 		else
@@ -52,17 +52,17 @@ regulator::regulator(MODULE *mod) : link_object(mod)
 			PT_double, "tap_C_change_count",PADDR(tap_C_change_count),PT_DESCRIPTION,"count of all physical tap changes on phase C since beginning of simulation (plus initial value)",
 			PT_object,"sense_node",PADDR(RemoteNode),PT_DESCRIPTION,"Node to be monitored for voltage control in remote sense mode",
 			PT_double,"regulator_resistance[Ohm]",PADDR(regulator_resistance), PT_DESCRIPTION,"The resistance value of the regulator when it is not blown.",
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			NULL)<1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_regulator)==NULL)
-			GL_THROW("Unable to publish regulator deltamode function");
+		if (gl_publish_function(oclass,	const_cast<char*>("interupdate_pwr_object"), (FUNCTIONADDR)interupdate_regulator)==NULL)
+			GL_THROW(const_cast<char*>("Unable to publish regulator deltamode function"));
 
 		//Publish restoration-related function (current update)
-		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
-			GL_THROW("Unable to publish regulator external power calculation function");
-		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
-			GL_THROW("Unable to publish regulator external power limit calculation function");
+		if (gl_publish_function(oclass,	const_cast<char*>("update_power_pwr_object"), (FUNCTIONADDR)updatepowercalc_link)==NULL)
+			GL_THROW(const_cast<char*>("Unable to publish regulator external power calculation function"));
+		if (gl_publish_function(oclass,	const_cast<char*>("check_limits_pwr_object"), (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+			GL_THROW(const_cast<char*>("Unable to publish regulator external power limit calculation function"));
 	}
 }
 
@@ -108,7 +108,7 @@ int regulator::init(OBJECT *parent)
 		an example: http://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Power_Flow_Guide
 		*/
 
-	if (!gl_object_isa(configuration, "regulator_configuration","powerflow"))
+	if (!gl_object_isa(configuration, const_cast<char*>("regulator_configuration"),const_cast<char*>("powerflow")))
 		throw "invalid regulator configuration";
 		/*  TROUBLESHOOT
 		An invalid regulator configuration was provided.  Ensure you have proper values in each field
@@ -137,15 +137,15 @@ int regulator::init(OBJECT *parent)
 	{
 		if (RemoteNode == NULL)
 		{
-			GL_THROW("Remote sensing node not found on regulator:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("Remote sensing node not found on regulator:%d - %s"),obj->id,(obj->name ? obj->name : "Unnamed"));
 			/* TROUBLESHOOT
 			If you are trying to use REMOTE_NODE, then please specify a sense_node within the regulator
 			object.  Otherwise, change your Control method.
 			*/
 		}
-		else if ((gl_object_isa(RemoteNode,"node","powerflow") != true) && (gl_object_isa(RemoteNode,"network_interface") != true))
+		else if ((gl_object_isa(RemoteNode,const_cast<char*>("node"),const_cast<char*>("powerflow")) != true) && (gl_object_isa(RemoteNode,const_cast<char*>("network_interface")) != true))
 		{
-			GL_THROW("Remote sensing node is not a valid object in regulator:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("Remote sensing node is not a valid object in regulator:%d - %s"),obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
 			The object specified in the sense_node property is not a node-type or network_interface object, so it will not work for the REMOTE_NODE.
 			*/
@@ -154,26 +154,26 @@ int regulator::init(OBJECT *parent)
 		//Map to the property of interest - voltage_A
 	   if (msgmode == msg_INTERNAL)
 	   {
-			RNode_voltage[0] = new gld_property(RemoteNode,"voltage_A");
+			RNode_voltage[0] = new gld_property(RemoteNode,const_cast<char*>("voltage_A"));
 			//Make sure it worked
 			if ((RNode_voltage[0]->is_valid() != true) || (RNode_voltage[0]->is_complex() != true))
 			{
-				GL_THROW("Regulator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW(const_cast<char*>("Regulator:%d - %s - Unable to map property for remote object"),obj->id,(obj->name ? obj->name : "Unnamed"));
 				/* TROUBLESHOOT
 				While attempting to map a property for the sense_node, a property could not be properly mapped.
 				Please try again.  If the error persists, please submit an issue in the ticketing system.
 				*/
 
 			}
-			RNode_voltage[1] = new gld_property(RemoteNode,"voltage_B");
+			RNode_voltage[1] = new gld_property(RemoteNode,const_cast<char*>("voltage_B"));
 			//Make sure it worked
 			if ((RNode_voltage[1]->is_valid() != true) || (RNode_voltage[1]->is_complex() != true))
 			{
-				GL_THROW("Regulator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW(const_cast<char*>("Regulator:%d - %s - Unable to map property for remote object"),obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
 			}
 				
-			RNode_voltage[2] = new gld_property(RemoteNode,"voltage_C");			
+			RNode_voltage[2] = new gld_property(RemoteNode,const_cast<char*>("voltage_C"));
 
 
 
@@ -189,7 +189,7 @@ int regulator::init(OBJECT *parent)
 			if ((RNode_voltage[2]->is_valid() != true) || (RNode_voltage[2]->is_complex() != true))
 			{
 
-				GL_THROW("Regulator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW(const_cast<char*>("Regulator:%d - %s - Unable to map property for remote object"),obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
 			}
 			
@@ -198,32 +198,32 @@ int regulator::init(OBJECT *parent)
 }
 	//Map the to-node connections
 	//Map to the property of interest - voltage_A
-	ToNode_voltage[0] = new gld_property(to,"voltage_A");
+	ToNode_voltage[0] = new gld_property(to,const_cast<char*>("voltage_A"));
 
 	//Make sure it worked
 	if ((ToNode_voltage[0]->is_valid() != true) || (ToNode_voltage[0]->is_complex() != true))
 	{
-		GL_THROW("Regulator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW(const_cast<char*>("Regulator:%d - %s - Unable to map property for remote object"),obj->id,(obj->name ? obj->name : "Unnamed"));
 		//Defined above
 	}
 
 	//Map to the property of interest - voltage_B
-	ToNode_voltage[1] = new gld_property(to,"voltage_B");
+	ToNode_voltage[1] = new gld_property(to,const_cast<char*>("voltage_B"));
 
 	//Make sure it worked
 	if ((ToNode_voltage[1]->is_valid() != true) || (ToNode_voltage[1]->is_complex() != true))
 	{
-		GL_THROW("Regulator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW(const_cast<char*>("Regulator:%d - %s - Unable to map property for remote object"),obj->id,(obj->name ? obj->name : "Unnamed"));
 		//Defined above
 	}
 
 	//Map to the property of interest - voltage_C
-	ToNode_voltage[2] = new gld_property(to,"voltage_C");
+	ToNode_voltage[2] = new gld_property(to,const_cast<char*>("voltage_C"));
 
 	//Make sure it worked
 	if ((ToNode_voltage[2]->is_valid() != true) || (ToNode_voltage[2]->is_complex() != true))
 	{
-		GL_THROW("Regulator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW(const_cast<char*>("Regulator:%d - %s - Unable to map property for remote object"),obj->id,(obj->name ? obj->name : "Unnamed"));
 		//Defined above
 	}
 
@@ -391,7 +391,7 @@ int regulator::init(OBJECT *parent)
 	int indexval;
 
 	//Retrieve the global value, only does so as a text string for some reason
-	gl_global_getvar("minimum_timestep",temp_buff,sizeof(temp_buff));
+	gl_global_getvar(const_cast<char*>("minimum_timestep"),temp_buff,sizeof(temp_buff));
 
 	//Initialize our parsing variables
 	indexval = 0;
@@ -510,7 +510,7 @@ void regulator::reg_prePre_fxn(double curr_time_value)
 			{	a_mat[i][i] = 1.0 - tap[i] * tapChangePer;}
 			else
 			{
-				GL_THROW("invalid regulator type");
+				GL_THROW(const_cast<char*>("invalid regulator type"));
 				/*  TROUBLESHOOT
 				Check the Type specification in your regulator_configuration object.  It can an only be type A or B.
 				*/
@@ -674,7 +674,7 @@ void regulator::reg_prePre_fxn(double curr_time_value)
 					{	a_mat[i][i] = 1.0 - tap[i] * tapChangePer;}
 					else
 					{	
-						GL_THROW("invalid regulator type");
+						GL_THROW(const_cast<char*>("invalid regulator type"));
 						/*  TROUBLESHOOT
 						Check the Type of regulator specified.  Type can only be A or B at this time.
 						*/
@@ -701,7 +701,7 @@ void regulator::reg_prePre_fxn(double curr_time_value)
 					next_time = TSNVRDBL;
 			}
 			else
-				GL_THROW("Specified connect type is not supported in automatic modes at this time.");
+				GL_THROW(const_cast<char*>("Specified connect type is not supported in automatic modes at this time."));
 				/* TROUBLESHOOT
 				At this time only WYE-WYE regulators are supported in automatic control modes. 
 				OPEN_DELTA_ABBC will only work in MANUAL control mode and in FBS at this time.
@@ -858,7 +858,7 @@ void regulator::reg_prePre_fxn(double curr_time_value)
 					{	a_mat[i][i] = 1.0 - tap[i] * tapChangePer;}
 					else
 					{
-						GL_THROW("invalid regulator type");
+						GL_THROW(const_cast<char*>("invalid regulator type"));
 						/*  TROUBLESHOOT
 						Check the Type of regulator specified.  Type can only be A or B at this time.
 						*/
@@ -880,7 +880,7 @@ void regulator::reg_prePre_fxn(double curr_time_value)
 					next_time = TSNVRDBL;
 			}
 			else
-				GL_THROW("Specified connect type is not supported in automatic modes at this time.");
+				GL_THROW(const_cast<char*>("Specified connect type is not supported in automatic modes at this time."));
 				/* TROUBLESHOOT
 				At this time only WYE-WYE regulators are supported in automatic control modes. 
 				OPEN_DELTA_ABBC will only work in MANUAL control mode and in FBS at this time.
@@ -921,7 +921,7 @@ void regulator::reg_prePre_fxn(double curr_time_value)
 		case regulator_configuration::CLOSED_DELTA:
 			break;
 		default:
-			GL_THROW("unknown regulator connect type");
+			GL_THROW(const_cast<char*>("unknown regulator connect type"));
 			/*  TROUBLESHOOT
 			Check the connection type specified.  Only a few are available at this time.  Ones available can be
 			found on the wiki website ( http://sourceforge.net/apps/mediawiki/gridlab-d/index.php?title=Power_Flow_Guide )
@@ -1429,9 +1429,9 @@ int regulator::kmldata(int (*stream)(const char*,...))
 	stream("</TR>\n");
 
 	// control input
-	gld_global run_realtime("run_realtime");
-	gld_global server("hostname");
-	gld_global port("server_portnum");
+	gld_global run_realtime(const_cast<char*>("run_realtime"));
+	gld_global server(const_cast<char*>("hostname"));
+	gld_global port(const_cast<char*>("server_portnum"));
 	if ( run_realtime.get_bool() )
 	{
 		stream("<TR><TH ALIGN=LEFT>Raise to</TH>");

@@ -16,7 +16,7 @@ CLASS* generator_controller::oclass = NULL;
 generator_controller::generator_controller(MODULE *module){
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"generator_controller",sizeof(generator_controller),PC_BOTTOMUP|PC_AUTOLOCK);
+		oclass = gl_register_class(module,const_cast<char*>("generator_controller"),sizeof(generator_controller),PC_BOTTOMUP|PC_AUTOLOCK);
 		if (oclass==NULL)
 			GL_THROW("unable to register object class implemented by %s", __FILE__);
 
@@ -1047,7 +1047,7 @@ TIMESTAMP generator_controller::sync(TIMESTAMP t0, TIMESTAMP t1)
 					} else {
 						controller_bid.state = BS_OFF;
 					}
-					((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(obj, ctrname, 1024), (char *)gl_name(market_object, mktname, 1024), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+					((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(obj, ctrname, 1024), (char *)gl_name(market_object, mktname, 1024), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 					if(controller_bid.bid_accepted == false){
 						return TS_INVALID;
 					}
@@ -1087,7 +1087,7 @@ TIMESTAMP generator_controller::sync(TIMESTAMP t0, TIMESTAMP t1)
 					} else {
 						controller_bid.state = BS_OFF;
 					}
-					((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(obj, ctrname, 1024), (char *)gl_name(market_object, mktname, 1024), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+					((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(obj, ctrname, 1024), (char *)gl_name(market_object, mktname, 1024), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 					if(controller_bid.bid_accepted == false){
 						return TS_INVALID;
 					}

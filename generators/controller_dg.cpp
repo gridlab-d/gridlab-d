@@ -23,7 +23,7 @@ controller_dg::controller_dg(MODULE *mod)
 {
 	if(oclass == NULL)
 	{
-		oclass = gl_register_class(mod,"controller_dg",sizeof(controller_dg),passconfig|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,const_cast<char*>("controller_dg"),sizeof(controller_dg),passconfig|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class controller_dg";
 		else
@@ -38,16 +38,16 @@ controller_dg::controller_dg(MODULE *mod)
 			PT_double,"ki_QV", PADDR(ki_QV), PT_DESCRIPTION, "parameter of the propotional control for secondary voltage control",
 			PT_double,"kp_QV", PADDR(kp_QV), PT_DESCRIPTION, "parameter of the integral control for secondary voltage control",
 			PT_double,"gain_QV", PADDR(gain_QV), PT_DESCRIPTION, "Gain of the controller for secondary voltage control",
-			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+			NULL) < 1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
 
 		defaults = this;
 
 		memset(this,0,sizeof(controller_dg));
 
-		if (gl_publish_function(oclass,	"interupdate_controller_object", (FUNCTIONADDR)interupdate_controller_dg)==NULL)
-			GL_THROW("Unable to publish controller_dg deltamode function");
-		if (gl_publish_function(oclass,	"postupdate_controller_object", (FUNCTIONADDR)postupdate_controller_dg)==NULL)
-			GL_THROW("Unable to publish controller_dg deltamode function");
+		if (gl_publish_function(oclass,	const_cast<char*>("interupdate_controller_object"), (FUNCTIONADDR)interupdate_controller_dg)==NULL)
+			GL_THROW(const_cast<char*>("Unable to publish controller_dg deltamode function"));
+		if (gl_publish_function(oclass,	const_cast<char*>("postupdate_controller_object"), (FUNCTIONADDR)postupdate_controller_dg)==NULL)
+			GL_THROW(const_cast<char*>("Unable to publish controller_dg deltamode function"));
 
     }
 }
@@ -167,7 +167,7 @@ int controller_dg::init(OBJECT *parent)
 		//See if it worked
 		if (ctrlGen == NULL || prev_Pref_val == NULL)
 		{
-			GL_THROW("Restoration:Failed to allocate new chain");
+			GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 			//Defined above
 		}
 
@@ -177,7 +177,7 @@ int controller_dg::init(OBJECT *parent)
 			//See if it worked
 			if (ctrlGen[i] == NULL)
 			{
-				GL_THROW("Restoration:Failed to allocate new chain");
+				GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 				//Defined above
 			}
 			ctrlGen[i]->curr_state = (CTRL_VARS*)gl_malloc(sizeof(CTRL_VARS));
@@ -261,12 +261,12 @@ int controller_dg::init(OBJECT *parent)
 		else
 		{
 			//Map the powerflow frequency
-			mapped_freq_variable = (double *)gl_get_module_var(gl_find_module("powerflow"),"current_frequency");
+			mapped_freq_variable = (double *)gl_get_module_var(gl_find_module(const_cast<char*>("powerflow")),"current_frequency");
 
 			//Make sure it isn't empty
 			if (mapped_freq_variable == NULL)
 			{
-				GL_THROW("controller_dg:%s - Failed to map frequency checking variable from powerflow for deltamode",obj->name?obj->name:"unnamed");
+				GL_THROW(const_cast<char*>("controller_dg:%s - Failed to map frequency checking variable from powerflow for deltamode"),obj->name?obj->name:"unnamed");
 				//Defined above
 			}
 
@@ -324,7 +324,7 @@ TIMESTAMP controller_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//Check limits of the array
 			if (gen_object_current>=gen_object_count)
 			{
-				GL_THROW("Too many objects tried to populate deltamode objects array in the generators module!");
+				GL_THROW(const_cast<char*>("Too many objects tried to populate deltamode objects array in the generators module!"));
 				/*  TROUBLESHOOT
 				While attempting to populate a reference array of deltamode-enabled objects for the generator
 				module, an attempt was made to write beyond the allocated array space.  Please try again.  If the
@@ -341,7 +341,7 @@ TIMESTAMP controller_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//Make sure it worked
 			if (delta_functions[gen_object_current] == NULL)
 			{
-				GL_THROW("Failure to map deltamode function for device:%s",obj->name);
+				GL_THROW(const_cast<char*>("Failure to map deltamode function for device:%s"),obj->name);
 				/*  TROUBLESHOOT
 				Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
 				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
@@ -355,7 +355,7 @@ TIMESTAMP controller_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//Make sure it worked
 			if (post_delta_functions[gen_object_current] == NULL)
 			{
-				GL_THROW("Failure to map post-deltamode function for device:%s",obj->name);
+				GL_THROW(const_cast<char*>(const_cast<char*>("Failure to map post-deltamode function for device:%s")),obj->name);
 				/*  TROUBLESHOOT
 				Attempts to map up the postupdate function of a specific device failed.  Please try again and ensure
 				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
@@ -401,7 +401,7 @@ TIMESTAMP controller_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 				if (ret_state == FAILED)
 				{
-					GL_THROW("diesel_dg:%s - unsuccessful call to dynamics initialization",(obj->name?obj->name:"unnamed"));
+					GL_THROW(const_cast<char*>("diesel_dg:%s - unsuccessful call to dynamics initialization"),(obj->name?obj->name:"unnamed"));
 					/*  TROUBLESHOOT
 					While attempting to call the dynamics initialization function of the diesel_dg object, a failure
 					state was encountered.  See other error messages for further details.
@@ -502,7 +502,7 @@ SIMULATIONMODE controller_dg::inter_deltaupdate(unsigned int64 delta_time, unsig
 				//make sure it worked
 				if (funadd==NULL)
 				{
-					GL_THROW("Failed to find reliability manipulation method on object %s",obj->name);
+					GL_THROW(const_cast<char*>("Failed to find reliability manipulation method on object %s"),obj->name);
 					/*  TROUBLESHOOT
 					While attempting to handle special reliability actions on a "special" device (switch, recloser, etc.), the function required
 					was not located.  Ensure this object type supports special actions and try again.  If the problem persists, please submit a bug
@@ -515,7 +515,7 @@ SIMULATIONMODE controller_dg::inter_deltaupdate(unsigned int64 delta_time, unsig
 					return_val = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(obj,openPhases[i],false);
 					if (return_val == 0)	//Failed :(
 					{
-						GL_THROW("Failed to handle reliability manipulation on %s",obj->name);
+						GL_THROW(const_cast<char*>("Failed to handle reliability manipulation on %s"),obj->name);
 						/*  TROUBLESHOOT
 						While attempting to handle special reliability actions on a "special" device (switch, recloser, etc.), the function required
 						failed to execute properly.  If the problem persists, please submit a bug report and your code to the trac website.
@@ -737,7 +737,7 @@ EXPORT TIMESTAMP sync_controller_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			t1 = my->postsync(obj->clock,t0);
 			break;
 		default:
-			GL_THROW("invalid pass request (%d)", pass);
+			GL_THROW(const_cast<char*>("invalid pass request (%d)"), pass);
 			break;
 		}
 		if (pass==clockpass)

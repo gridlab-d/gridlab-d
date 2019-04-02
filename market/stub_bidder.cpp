@@ -6,7 +6,7 @@ stub_bidder::stub_bidder(MODULE *module)
 {
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"stub_bidder",sizeof(stub_bidder),PC_BOTTOMUP|PC_AUTOLOCK);
+		oclass = gl_register_class(module,const_cast<char*>("stub_bidder"),sizeof(stub_bidder),PC_BOTTOMUP|PC_AUTOLOCK);
 		if (oclass==NULL)
 			GL_THROW("unable to register object class implemented by %s", __FILE__);
 
@@ -45,7 +45,7 @@ int stub_bidder::init(OBJECT *parent)
 	OBJECT *hdr = OBJECTHDR(this);
 	if (market==NULL)			
 		throw "market is not defined";
-	thismkt_id = (int64*)gl_get_addr(market,"market_id");
+	thismkt_id = (int64*)gl_get_addr(market,const_cast<char*>("market_id"));
 	if (thismkt_id==NULL)
 		throw "market does not define market_id";
 	char mktname[1024];
@@ -89,7 +89,7 @@ TIMESTAMP stub_bidder::sync(TIMESTAMP t0, TIMESTAMP t1)
 			controller_bid.quantity = quantity;
 		}
 		controller_bid.state = BS_UNKNOWN;
-		((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1023), (char *)gl_name(market, mktname, 1023), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+		((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1023), (char *)gl_name(market, mktname, 1023), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 		if(controller_bid.bid_accepted == false){
 			return TS_INVALID;
 		}

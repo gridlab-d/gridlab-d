@@ -103,13 +103,13 @@ public:
 	
 	// additional reverse etp parameters
 	set include_solar_quadrant;
-	typedef enum {HC_DEFAULT=0, HC_FLAT=1, HC_LINEAR=2, HC_CURVED=3};
+	enum {HC_DEFAULT=0, HC_FLAT=1, HC_LINEAR=2, HC_CURVED=3};
 	enumeration heating_cop_curve;
-	typedef enum {HP_DEFAULT=0, HP_FLAT=1, HP_LINEAR=2, HP_CURVED=3};
+	enum {HP_DEFAULT=0, HP_FLAT=1, HP_LINEAR=2, HP_CURVED=3};
 	enumeration heating_cap_curve;
-	typedef enum {CC_DEFAULT=0, CC_FLAT=1, CC_LINEAR=2, CC_CURVED=3};
+	enum {CC_DEFAULT=0, CC_FLAT=1, CC_LINEAR=2, CC_CURVED=3};
 	enumeration cooling_cop_curve;
-	typedef enum {CP_DEFAULT=0, CP_FLAT=1, CP_LINEAR=2, CP_CURVED=3};
+	enum {CP_DEFAULT=0, CP_FLAT=1, CP_LINEAR=2, CP_CURVED=3};
 	enumeration cooling_cap_curve;
 	bool use_latent_heat;
 	bool include_fan_heatgain;
@@ -158,7 +158,7 @@ public:
 	double dlc_offset;
 
 	// hvac control variable
-	typedef enum {TC_FULL=0, TC_BAND=1, TC_NONE=2};
+	enum {TC_FULL=0, TC_BAND=1, TC_NONE=2};
 	enumeration thermostat_control;	///< method of HVAC control
 	double TcoolOn;		///< temperature above which cooling turns on
 	double TcoolOff;	///< temperature below which cooling turns off
@@ -479,8 +479,8 @@ public:
 // access methods
 public:
 	//Map function
-	gld_property *map_complex_value(OBJECT *obj, char *name);
-	gld_property *map_double_value(OBJECT *obj, char *name);
+	gld_property *map_complex_value(OBJECT *obj, const char *name);
+	gld_property *map_double_value(OBJECT *obj, const char *name);
 	void pull_complex_powerflow_values(void);
 	void pull_climate_values(void);
 	void push_complex_powerflow_values(void);

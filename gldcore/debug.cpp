@@ -254,7 +254,7 @@ static int list_unnamed = 1; /**< flag indicating that listing includes unnamed 
 static int list_inactive = 1; /**< flag indicating that listing includes inactive objects */
 static int list_sync = 1; /**< flag indicating that listing includes objects that have syncs */
 
-static STATUS exec_cmd(char *format,...)
+static STATUS exec_cmd(const char *format,...)
 {
 	char cmd[1024];
 	va_list ptr;
@@ -332,7 +332,7 @@ void exec_sighandler(int sig) /**< the signal number, see \p <signal.h> */
 }
 
 #ifdef WIN32
-char *strsignal(int sig)
+const char *strsignal(int sig)
 {
 	switch(sig) {
 	case SIGABRT: return "SIGABRT";
@@ -444,7 +444,7 @@ static int exec_add_watchpoint(OBJECT *obj, /**< the object being watched */
 
 static void list_object(OBJECT *obj, PASSCONFIG pass)
 {
-	char details[132] = "";
+	char details[2048] = "";
 	char buf1[64],buf2[64],buf3[64];
 	if (list_unnamed==0 && obj->name==NULL)
 		return;
@@ -502,6 +502,7 @@ DEBUGCMD exec_debug_cmd(struct sync_data *data, /**< the current sync status of 
 	{
 		char cmd[32]=""; 
 		char buffer[1024]="";
+		char * result;
 		int i;
 Retry:
 		/* add signals to signal handler */
@@ -513,7 +514,7 @@ Retry:
 			sigint_caught=0;
 			fflush(stdout);
 		
-			fgets(buffer, 1023, stdin);	/* "gets() is dangerous and should not be used" -gcc */
+			result = fgets(buffer, 1023, stdin);	/* "gets() is dangerous and should not be used" -gcc */
 			output_verbose("debug command '%s'", buffer);
 		}
 		else{ /* Load from file */
@@ -598,7 +599,8 @@ Retry:
 		else if (strncmp(cmd,"details",MAX(1,strlen(cmd)))==0)
 		{
 			char cmd[1024];
-			int n = sscanf(buffer,"%*s %[^\0]", cmd);
+//			int n = sscanf(buffer,"%*s %[^\0]", cmd);
+			int n = sscanf(buffer,"%*s %s", cmd);
 			if (n==1)
 			{
 				if (strcmp(cmd,"on")==0)
@@ -625,7 +627,7 @@ Retry:
 		else if (strncmp(cmd,"inactive",MAX(1,strlen(cmd)))==0)
 		{
 			char cmd[1024];
-			int n = sscanf(buffer,"%*s %[^\0]", cmd);
+			int n = sscanf(buffer,"%*s %s", cmd);
 			if (n==1)
 			{
 				if (strcmp(cmd,"on")==0)
@@ -652,7 +654,7 @@ Retry:
 		else if (strncmp(cmd,"unnamed",MAX(1,strlen(cmd)))==0)
 		{
 			char cmd[1024];
-			int n = sscanf(buffer,"%*s %[^\0]", cmd);
+			int n = sscanf(buffer,"%*s %s", cmd);
 			if (n==1)
 			{
 				if (strcmp(cmd,"on")==0)
@@ -679,7 +681,7 @@ Retry:
 		else if (strncmp(cmd,"nsync",MAX(2,strlen(cmd)))==0)
 		{
 			char cmd[1024];
-			int n = sscanf(buffer,"%*s %[^\0]", cmd);
+			int n = sscanf(buffer,"%*s %s", cmd);
 			if (n==1)
 			{
 				if (strcmp(cmd,"on")==0)
@@ -728,8 +730,8 @@ Retry:
 		else if (strncmp(cmd,"system",MAX(2,strlen(cmd)))==0)
 		{
 			char cmd[1024];
-			if (sscanf(buffer,"%*s %[^\0]", cmd)==1)
-				system(cmd);
+			if (sscanf(buffer,"%*s %s", cmd)==1)
+				int result = system(cmd);
 #ifdef WIN32
 			else if (getenv("COMSPEC")!=NULL)
 				system(getenv("COMSPEC"));
@@ -737,16 +739,16 @@ Retry:
 				system("cmd");
 #else
 			else if (getenv("SHELL")!=NULL)
-				system(getenv("SHELL"));
+				int result = system(getenv("SHELL"));
 			else
-				system("/bin/sh");
+				int result = system("/bin/sh");
 #endif
 		}
 		else if (strncmp(cmd,"break",MAX(1,strlen(cmd)))==0)
 		{
 			char bptype[256]="";
 			char bpval[256]="";
-			if (sscanf(buffer,"%*s %s %[^\0\n]", bptype, bpval)==0)
+			if (sscanf(buffer,"%*s %s %[^\n]", bptype, bpval)==0)
 			{
 				/* display all breakpoints */
 				BREAKPOINT *bp;
@@ -977,7 +979,7 @@ Retry:
 			char wptype[256]="";
 			char wpval[256]="";
 			OBJECT *obj;
-			if (sscanf(buffer,"%*s %s %[^\0]", wptype, wpval)==0)
+			if (sscanf(buffer,"%*s %s %s", wptype, wpval)==0)
 			{
 				/* display all watchpoints */
 				WATCHPOINT *wp;

@@ -177,12 +177,12 @@ void connection_mode::debug(int level, const char *fmt, ...)
 void connection_mode::exception(const char *fmt, ...)
 {
 	static char msg[1024];
-	size_t len = sprintf("connection/%s: ", get_mode_name());
+	int len = printf(const_cast<char*>("connection/%s: "), get_mode_name());
 	va_list ptr;
 	va_start(ptr,fmt);
 	vsprintf(msg+len,fmt,ptr);
 	va_end(ptr);
-	throw msg;
+	throw std::runtime_error(msg);
 }
 
 int connection_mode::init(void)
@@ -191,7 +191,7 @@ int connection_mode::init(void)
 }
 int connection_mode::option(char *target, char *command)
 {
-	// specifically targetted to server or client
+	// specifically targeted to server or client
 	if ( strcmp(target,get_mode_name())==0 ) 
 	{
 		switch ( get_mode() ) {
@@ -321,7 +321,7 @@ int connection_mode::exchange(EXCHANGETRANSLATOR *xlate, bool critical)
 {
 	if ( !transport->message_open() )
 	{
-		error("new message queue opened with unsent messages pending");
+		error(const_cast<char*>("new message queue opened with unsent messages pending"));
 		return -1;
 	}
 	else
@@ -335,7 +335,7 @@ int connection_mode::exchange(EXCHANGETRANSLATOR *xlate)
 {
 	if ( !transport->message_continue() )
 	{
-		error("message queue continued with none open");
+		error(const_cast<char*>("message queue continued with none open"));
 		return -1;
 	}
 	else
@@ -350,7 +350,7 @@ int connection_mode::exchange(EXCHANGETRANSLATOR *xlate, int64 *id)
 	xlate(transport,NULL,NULL,ET_GROUPCLOSE,ETO_NONE);
 	if ( !transport->message_close() )
 	{
-		error("message queue closed with none open");
+		error(const_cast<char*>("message queue closed with none open"));
 		return -1;
 	}
 	else
@@ -455,30 +455,30 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 				switch ( flag ) {
 				case MSG_CRITICAL:
 					critical = true;
-					debug(9,"connection_mode::exchange() message is critical");
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					debug(9,const_cast<char*>("connection_mode::exchange() message is critical"));
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
 				case MSG_INITIATE:
 					if ( exchange(xlate_in,critical)<0 )
 					{
-						error("connection_mode::exchange(): transport status control error");
+						error(const_cast<char*>("connection_mode::exchange(): transport status control error"));
 						count = -msgcount;
 						stop = true;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
 				case MSG_CONTINUE:
 					if ( exchange(xlate_in)<0 )
 					{
-						error("connection_mode::exchange(): transport status control error");
+						error(const_cast<char*>("connection_mode::exchange(): transport status control error"));
 						count = -msgcount;
 						stop = true;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -486,7 +486,7 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 					id = va_arg(flg,int64*);
 					if ( exchange(xlate_in,id)<0 )
 					{
-						error("connection_mode::exchange(): transport status control error");
+						error(const_cast<char*>("connection_mode::exchange(): transport status control error"));
 						count = -msgcount;
 						stop = true;
 
@@ -502,23 +502,23 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 					if( dir==DXD_READ){
 						if ( exchange_schema(xlate_out,&read_cache)<0 )
 						{
-							error("exchange(): schema exchange failed");
+							error(const_cast<char*>("exchange(): schema exchange failed"));
 							count = -msgcount;
 							stop = true;
 						}
 					} else if( dir == DXD_WRITE){
 						if ( exchange_schema(xlate_out,&write_cache)<0 )
 						{
-							error("exchange(): schema exchange failed");
+							error(const_cast<char*>("exchange(): schema exchange failed"));
 							count = -msgcount;
 							stop = true;
 						}
 					} else {
-						error("exchange(): schema exchange failed, invalid data direction supplied");
+						error(const_cast<char*>("exchange(): schema exchange failed, invalid data direction supplied"));
 						count = -msgcount;
 						stop = true;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -530,11 +530,11 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 					debug(9,"connection_mode::exchange(...) MSG_TAG('%s','%s')", tag,value);
 					if ( exchange(xlate_in,tag,value)<0 )
 					{
-						error("connection_mode::exchange(): tagged value exchange failed for ('%s','%s')",tag,value);
+						error(const_cast<char*>("connection_mode::exchange(): tagged value exchange failed for ('%s','%s')"),tag,value);
 						count = -msgcount;
 						stop = true;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -547,12 +547,12 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 					debug(9,"client_initiated(...) MSG_STRING('%s',%d,'%s')", tag,len,buf);
 					if ( exchange(xlate_in,tag,len,buf)<0 )
 					{
-						error("connection_mode::exchange(): string value exchange failed for ('%s',%d,'%s')",tag,len,buf);
+						error(const_cast<char*>("connection_mode::exchange(): string value exchange failed for ('%s',%d,'%s')"),tag,len,buf);
 						count = -msgcount;
 						stop = true;
 						break;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -564,12 +564,12 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 					debug(9,"exchange(...) MSG_REAL('%s',0x%p=%lf)",tag,data,*data);
 					if ( exchange(xlate_in,tag,*data)<0 )
 					{
-						error("connection_mode::exchange(): double value exchange failed for ('%s',0x%p=%lf)",tag,data,*data);
+						error(const_cast<char*>("connection_mode::exchange(): double value exchange failed for ('%s',0x%p=%lf)"),tag,data,*data);
 						count = -msgcount;
 						stop = true;
 						break;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -581,12 +581,12 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 					debug(9,"connection_mode::exchange(...) MSG_INTEGER('%s',0x%p=%ll)",tag,data,*data);
 					if ( exchange(xlate_in,tag,*data)<0 )
 					{
-						error("connection_mode::exchange(): double value exchange failed for ('%s',0x%p=%lf)",tag,data,*data);
+						error(const_cast<char*>("connection_mode::exchange(): double value exchange failed for ('%s',0x%p=%lf)"),tag,data,*data);
 						count = -msgcount;
 						stop = true;
 						break;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -597,12 +597,12 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 					debug(9,"connection_mode::exchange(...) MSG_DATA(cache=0x%p)",list);
 					if ( exchange_data(xlate_in,list)<0 )
 					{
-						error("connection_mode::exchange(): data exchange failed");
+						error(const_cast<char*>("connection_mode::exchange(): data exchange failed"));
 						count = -msgcount;
 						stop = true;
 						break;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -613,12 +613,12 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 					debug(9,"connection_mode::exchange(...) MSG_OPEN('%s')",tag);
 					if ( exchange_open(xlate_in,tag)<0 )
 					{
-						error("connection_mode::exchange(): start group '%s' exchange failed",tag);
+						error(const_cast<char*>("connection_mode::exchange(): start group '%s' exchange failed"),tag);
 						count = -msgcount;
 						stop = true;
 						break;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -627,18 +627,18 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 					debug(9,"connection_mode::exchange(...) MSG_CLOSE");
 					if ( exchange_close(xlate_in)<0 )
 					{
-						error("connection_mode::exchange(): end group exchange failed");
+						error(const_cast<char*>("connection_mode::exchange(): end group exchange failed"));
 						count = -msgcount;
 						stop = true;
 						break;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
 				default:
-					warning("connection_mode::exchange(...) unrecognized message control flag %d was ignored", flag);
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					warning(const_cast<char*>("connection_mode::exchange(...) unrecognized message control flag %d was ignored"), flag);
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -659,7 +659,7 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 			case MSG_CRITICAL:
 				critical = true;
 				debug(9,"connection_mode::exchange() message is critical");
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -667,22 +667,22 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 				seqnum++;
 				if ( exchange(xlate_out,critical)<0 )
 				{
-					error("connection_mode::exchange(): transport status control error");
+					error(const_cast<char*>("connection_mode::exchange(): transport status control error"));
 					count = -msgcount;
 					stop = true;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
 			case MSG_CONTINUE:
 				if ( exchange(xlate_out)<0 )
 				{
-					error("connection_mode::exchange(): transport status control error");
+					error(const_cast<char*>("connection_mode::exchange(): transport status control error"));
 					count = -msgcount;
 					stop = true;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -690,7 +690,7 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 				id = va_arg(flg,int64*);
 				if ( exchange(xlate_out,id)<0 )
 				{
-					error("connection_mode::exchange(): transport status control error");
+					error(const_cast<char*>("connection_mode::exchange(): transport status control error"));
 					count = -msgcount;
 					stop = true;
 
@@ -706,23 +706,23 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 				if( dir==DXD_READ){
 					if ( exchange_schema(xlate_out,&read_cache)<0 )
 					{
-						error("exchange(): schema exchange failed");
+						error(const_cast<char*>("exchange(): schema exchange failed"));
 						count = -msgcount;
 						stop = true;
 					}
 				} else if( dir == DXD_WRITE){
 					if ( exchange_schema(xlate_out,&write_cache)<0 )
 					{
-						error("exchange(): schema exchange failed");
+						error(const_cast<char*>("exchange(): schema exchange failed"));
 						count = -msgcount;
 						stop = true;
 					}
 				} else {
-					error("exchange(): schema exchange failed, invalid data direction supplied");
+					error(const_cast<char*>("exchange(): schema exchange failed, invalid data direction supplied"));
 					count = -msgcount;
 					stop = true;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -734,11 +734,11 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 				debug(9,"connection_mode::exchange(...) MSG_TAG('%s','%s')", tag,value);
 				if ( exchange(xlate_out,tag,value)<0 )
 				{
-					error("connection_mode::exchange(): tagged value exchange failed for ('%s','%s')",tag,value);
+					error(const_cast<char*>("connection_mode::exchange(): tagged value exchange failed for ('%s','%s')"),tag,value);
 					count = -msgcount;
 					stop = true;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -751,12 +751,12 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 				debug(9,"client_initiated(...) MSG_STRING('%s',%d,'%s')", tag,len,buf);
 				if ( exchange(xlate_out,tag,len,buf)<0 )
 				{
-					error("connection_mode::exchange(): string value exchange failed for ('%s',%d,'%s')",tag,len,buf);
+					error(const_cast<char*>("connection_mode::exchange(): string value exchange failed for ('%s',%d,'%s')"),tag,len,buf);
 					count = -msgcount;
 					stop = true;
 					break;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -768,12 +768,12 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 				debug(9,"exchange(...) MSG_REAL('%s',0x%p=%lf)",tag,data,*data);
 				if ( exchange(xlate_out,tag,*data)<0 )
 				{
-					error("connection_mode::exchange(): double value exchange failed for ('%s',0x%p=%lf)",tag,data,*data);
+					error(const_cast<char*>("connection_mode::exchange(): double value exchange failed for ('%s',0x%p=%lf)"),tag,data,*data);
 					count = -msgcount;
 					stop = true;
 					break;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -785,12 +785,12 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 				debug(9,"connection_mode::exchange(...) MSG_INTEGER('%s',0x%p=%ll)",tag,data,*data);
 				if ( exchange(xlate_out,tag,*data)<0 )
 				{
-					error("connection_mode::exchange(): double value exchange failed for ('%s',0x%p=%lf)",tag,data,*data);
+					error(const_cast<char*>("connection_mode::exchange(): double value exchange failed for ('%s',0x%p=%lf)"),tag,data,*data);
 					count = -msgcount;
 					stop = true;
 					break;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -801,12 +801,12 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 				debug(9,"connection_mode::exchange(...) MSG_DATA(cache=0x%p)",list);
 				if ( exchange_data(xlate_out,list)<0 )
 				{
-					error("connection_mode::exchange(): data exchange failed");
+					error(const_cast<char*>("connection_mode::exchange(): data exchange failed"));
 					count = -msgcount;
 					stop = true;
 					break;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -817,12 +817,12 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 				debug(9,"connection_mode::exchange(...) MSG_OPEN('%s')",tag);
 				if ( exchange_open(xlate_out,tag)<0 )
 				{
-					error("connection_mode::exchange(): start group '%s' exchange failed",tag);
+					error(const_cast<char*>("connection_mode::exchange(): start group '%s' exchange failed"),tag);
 					count = -msgcount;
 					stop = true;
 					break;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -831,18 +831,18 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 				debug(9,"connection_mode::exchange(...) MSG_CLOSE");
 				if ( exchange_close(xlate_out)<0 )
 				{
-					error("connection_mode::exchange(): end group exchange failed");
+					error(const_cast<char*>("connection_mode::exchange(): end group exchange failed"));
 					count = -msgcount;
 					stop = true;
 					break;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
 			default:
-				warning("connection_mode::exchange(...) unrecognized message control flag %d was ignored", flag);
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				warning(const_cast<char*>("connection_mode::exchange(...) unrecognized message control flag %d was ignored"), flag);
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -856,7 +856,7 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 		}
 		return count<0?(critical?-1:0):0;
 	default:
-		error("server_response(...): connection mode not valid");
+		error(const_cast<char*>("server_response(...): connection mode not valid"));
 		return critical?-1:0;
 	}
 }
@@ -878,7 +878,7 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 			case MSG_CRITICAL:
 				critical = true;
 				debug(9,"connection_mode::exchange() message is critical");
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -886,22 +886,22 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 				seqnum++;
 				if ( exchange(xlate_out,critical)<0 )
 				{
-					error("connection_mode::exchange(): transport status control error");
+					error(const_cast<char*>("connection_mode::exchange(): transport status control error"));
 					count = -msgcount;
 					stop = true;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
 			case MSG_CONTINUE:
 				if ( exchange(xlate_out)<0 )
 				{
-					error("connection_mode::exchange(): transport status control error");
+					error(const_cast<char*>("connection_mode::exchange(): transport status control error"));
 					count = -msgcount;
 					stop = true;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -909,7 +909,7 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 				id = va_arg(flg,int64*);
 				if ( exchange(xlate_out,id)<0 )
 				{
-					error("connection_mode::exchange(): transport status control error");
+					error(const_cast<char*>("connection_mode::exchange(): transport status control error"));
 					count = -msgcount;
 					stop = true;
 
@@ -925,23 +925,23 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 				if( dir==DXD_READ){
 					if ( exchange_schema(xlate_out,&read_cache)<0 )
 					{
-						error("exchange(): schema exchange failed");
+						error(const_cast<char*>("exchange(): schema exchange failed"));
 						count = -msgcount;
 						stop = true;
 					}
 				} else if( dir == DXD_WRITE){
 					if ( exchange_schema(xlate_out,&write_cache)<0 )
 					{
-						error("exchange(): schema exchange failed");
+						error(const_cast<char*>("exchange(): schema exchange failed"));
 						count = -msgcount;
 						stop = true;
 					}
 				} else {
-					error("exchange(): schema exchange failed, invalid data direction supplied");
+					error(const_cast<char*>("exchange(): schema exchange failed, invalid data direction supplied"));
 					count = -msgcount;
 					stop = true;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -953,11 +953,11 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 				debug(9,"connection_mode::exchange(...) MSG_TAG('%s','%s')", tag,value);
 				if ( exchange(xlate_out,tag,value)<0 )
 				{
-					error("connection_mode::exchange(): tagged value exchange failed for ('%s','%s')",tag,value);
+					error(const_cast<char*>("connection_mode::exchange(): tagged value exchange failed for ('%s','%s')"),tag,value);
 					count = -msgcount;
 					stop = true;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -970,12 +970,12 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 				debug(9,"client_initiated(...) MSG_STRING('%s',%d,'%s')", tag,len,buf);
 				if ( exchange(xlate_out,tag,len,buf)<0 )
 				{
-					error("connection_mode::exchange(): string value exchange failed for ('%s',%d,'%s')",tag,len,buf);
+					error(const_cast<char*>("connection_mode::exchange(): string value exchange failed for ('%s',%d,'%s')"),tag,len,buf);
 					count = -msgcount;
 					stop = true;
 					break;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -987,12 +987,12 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 				debug(9,"exchange(...) MSG_REAL('%s',0x%p=%lf)",tag,data,*data);
 				if ( exchange(xlate_out,tag,*data)<0 )
 				{
-					error("connection_mode::exchange(): double value exchange failed for ('%s',0x%p=%lf)",tag,data,*data);
+					error(const_cast<char*>("connection_mode::exchange(): double value exchange failed for ('%s',0x%p=%lf)"),tag,data,*data);
 					count = -msgcount;
 					stop = true;
 					break;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -1004,12 +1004,12 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 				debug(9,"connection_mode::exchange(...) MSG_INTEGER('%s',0x%p=%ll)",tag,data,*data);
 				if ( exchange(xlate_out,tag,*data)<0 )
 				{
-					error("connection_mode::exchange(): double value exchange failed for ('%s',0x%p=%lf)",tag,data,*data);
+					error(const_cast<char*>("connection_mode::exchange(): double value exchange failed for ('%s',0x%p=%lf)"),tag,data,*data);
 					count = -msgcount;
 					stop = true;
 					break;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -1020,12 +1020,12 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 				debug(9,"connection_mode::exchange(...) MSG_DATA(cache=0x%p)",list);
 				if ( exchange_data(xlate_out,list)<0 )
 				{
-					error("connection_mode::exchange(): data exchange failed");
+					error(const_cast<char*>("connection_mode::exchange(): data exchange failed"));
 					count = -msgcount;
 					stop = true;
 					break;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -1036,12 +1036,12 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 				debug(9,"connection_mode::exchange(...) MSG_OPEN('%s')",tag);
 				if ( exchange_open(xlate_out,tag)<0 )
 				{
-					error("connection_mode::exchange(): start group '%s' exchange failed",tag);
+					error(const_cast<char*>("connection_mode::exchange(): start group '%s' exchange failed"),tag);
 					count = -msgcount;
 					stop = true;
 					break;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -1050,18 +1050,18 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 				debug(9,"connection_mode::exchange(...) MSG_CLOSE");
 				if ( exchange_close(xlate_out)<0 )
 				{
-					error("connection_mode::exchange(): end group exchange failed");
+					error(const_cast<char*>("connection_mode::exchange(): end group exchange failed"));
 					count = -msgcount;
 					stop = true;
 					break;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
 			default:
-				warning("connection_mode::exchange(...) unrecognized message control flag %d was ignored", flag);
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				warning(const_cast<char*>("connection_mode::exchange(...) unrecognized message control flag %d was ignored"), flag);
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -1088,29 +1088,29 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 				case MSG_CRITICAL:
 					critical = true;
 					debug(9,"connection_mode::exchange() message is critical");
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
 				case MSG_INITIATE:
 					if ( exchange(xlate_in,critical)<0 )
 					{
-						error("connection_mode::exchange(): transport status control error");
+						error(const_cast<char*>("connection_mode::exchange(): transport status control error"));
 						count = -msgcount;
 						stop = true;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
 				case MSG_CONTINUE:
 					if ( exchange(xlate_in)<0 )
 					{
-						error("connection_mode::exchange(): transport status control error");
+						error(const_cast<char*>("connection_mode::exchange(): transport status control error"));
 						count = -msgcount;
 						stop = true;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -1118,7 +1118,7 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 					id = va_arg(flg,int64*);
 					if ( exchange(xlate_in,id)<0 )
 					{
-						error("connection_mode::exchange(): transport status control error");
+						error(const_cast<char*>("connection_mode::exchange(): transport status control error"));
 						count = -msgcount;
 						stop = true;
 
@@ -1134,23 +1134,23 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 					if( dir==DXD_READ){
 						if ( exchange_schema(xlate_out,&read_cache)<0 )
 						{
-							error("exchange(): schema exchange failed");
+							error(const_cast<char*>("exchange(): schema exchange failed"));
 							count = -msgcount;
 							stop = true;
 						}
 					} else if( dir == DXD_WRITE){
 						if ( exchange_schema(xlate_out,&write_cache)<0 )
 						{
-							error("exchange(): schema exchange failed");
+							error(const_cast<char*>("exchange(): schema exchange failed"));
 							count = -msgcount;
 							stop = true;
 						}
 					} else {
-						error("exchange(): schema exchange failed, invalid data direction supplied");
+						error(const_cast<char*>("exchange(): schema exchange failed, invalid data direction supplied"));
 						count = -msgcount;
 						stop = true;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -1162,11 +1162,11 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 					debug(9,"connection_mode::exchange(...) MSG_TAG('%s','%s')", tag,value);
 					if ( exchange(xlate_in,tag,value)<0 )
 					{
-						error("connection_mode::exchange(): tagged value exchange failed for ('%s','%s')",tag,value);
+						error(const_cast<char*>("connection_mode::exchange(): tagged value exchange failed for ('%s','%s')"),tag,value);
 						count = -msgcount;
 						stop = true;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -1179,12 +1179,12 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 					debug(9,"client_initiated(...) MSG_STRING('%s',%d,'%s')", tag,len,buf);
 					if ( exchange(xlate_in,tag,len,buf)<0 )
 					{
-						error("connection_mode::exchange(): string value exchange failed for ('%s',%d,'%s')",tag,len,buf);
+						error(const_cast<char*>("connection_mode::exchange(): string value exchange failed for ('%s',%d,'%s')"),tag,len,buf);
 						count = -msgcount;
 						stop = true;
 						break;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -1196,12 +1196,12 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 					debug(9,"exchange(...) MSG_REAL('%s',0x%p=%lf)",tag,data,*data);
 					if ( exchange(xlate_in,tag,*data)<0 )
 					{
-						error("connection_mode::exchange(): double value exchange failed for ('%s',0x%p=%lf)",tag,data,*data);
+						error(const_cast<char*>("connection_mode::exchange(): double value exchange failed for ('%s',0x%p=%lf)"),tag,data,*data);
 						count = -msgcount;
 						stop = true;
 						break;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -1213,12 +1213,12 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 					debug(9,"connection_mode::exchange(...) MSG_INTEGER('%s',0x%p=%ll)",tag,data,*data);
 					if ( exchange(xlate_in,tag,*data)<0 )
 					{
-						error("connection_mode::exchange(): double value exchange failed for ('%s',0x%p=%lf)",tag,data,*data);
+						error(const_cast<char*>("connection_mode::exchange(): double value exchange failed for ('%s',0x%p=%lf)"),tag,data,*data);
 						count = -msgcount;
 						stop = true;
 						break;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -1229,12 +1229,12 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 					debug(9,"connection_mode::exchange(...) MSG_DATA(cache=0x%p)",list);
 					if ( exchange_data(xlate_in,list)<0 )
 					{
-						error("connection_mode::exchange(): data exchange failed");
+						error(const_cast<char*>("connection_mode::exchange(): data exchange failed"));
 						count = -msgcount;
 						stop = true;
 						break;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -1245,12 +1245,12 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 					debug(9,"connection_mode::exchange(...) MSG_OPEN('%s')",tag);
 					if ( exchange_open(xlate_in,tag)<0 )
 					{
-						error("connection_mode::exchange(): start group '%s' exchange failed",tag);
+						error(const_cast<char*>("connection_mode::exchange(): start group '%s' exchange failed"),tag);
 						count = -msgcount;
 						stop = true;
 						break;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -1259,18 +1259,18 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 					debug(9,"connection_mode::exchange(...) MSG_CLOSE");
 					if ( exchange_close(xlate_in)<0 )
 					{
-						error("connection_mode::exchange(): end group exchange failed");
+						error(const_cast<char*>("connection_mode::exchange(): end group exchange failed"));
 						count = -msgcount;
 						stop = true;
 						break;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
 				default:
-					warning("connection_mode::exchange(...) unrecognized message control flag %d was ignored", flag);
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					warning(const_cast<char*>("connection_mode::exchange(...) unrecognized message control flag %d was ignored"), flag);
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -1284,7 +1284,7 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 		}
 		return critical?-1:0;
 	default:
-		error("client_initiated(...): connection mode not valid");
+		error(const_cast<char*>("client_initiated(...): connection mode not valid"));
 		return critical?-1:0;
 	}
 }

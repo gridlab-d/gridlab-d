@@ -30,9 +30,6 @@ Initialization after returning to service?
 
 ***********************************************************************
 */
-
-
-
 #include "solver_nr.h"
 
 #define MT // this enables multithreaded SuperLU
@@ -66,7 +63,7 @@ void sparse_init(SPARSE* sm, int nels, int ncols)
 	//Check it
 	if (sm->cols == NULL)
 	{
-		GL_THROW("NR: Sparse matrix allocation failed");
+		GL_THROW(const_cast<char*>("NR: Sparse matrix allocation failed"));
 		/*  TROUBLESHOOT
 		While attempting to allocate space for one of the sparse matrix variables, an error was encountered.
 		Please try again.  If the error persists, please submit your code and a bug report via the ticketing system.
@@ -86,7 +83,7 @@ void sparse_init(SPARSE* sm, int nels, int ncols)
 	//Check it
 	if (sm->llheap == NULL)
 	{
-		GL_THROW("NR: Sparse matrix allocation failed");
+		GL_THROW(const_cast<char*>("NR: Sparse matrix allocation failed"));
 		//Defined above
 	}
 	else	//Zero it, for giggles
@@ -189,7 +186,7 @@ inline void sparse_add(SPARSE* sm, int row, int col, double value, BUSDATA *bus_
 								//See if it is actually named -- it should be available
 								if (bus_values[bus_index_val].name != NULL)
 								{
-									GL_THROW("NR: duplicate admittance entry found - attaches to node %s - check for parallel circuits between common nodes!",bus_values[bus_index_val].name);
+									GL_THROW(const_cast<char*>("NR: duplicate admittance entry found - attaches to node %s - check for parallel circuits between common nodes!"),bus_values[bus_index_val].name);
 									/*  TROUBLESHOOT
 									While building up the admittance matrix for the Newton-Raphson solver, a duplicate entry was found.
 									This is often caused by having multiple lines on the same phases in parallel between two nodes.  A reference node
@@ -198,7 +195,7 @@ inline void sparse_add(SPARSE* sm, int row, int col, double value, BUSDATA *bus_
 								}
 								else
 								{
-									GL_THROW("NR: duplicate admittance entry found - no name available - check for parallel circuits between common nodes!");
+									GL_THROW(const_cast<char*>("NR: duplicate admittance entry found - no name available - check for parallel circuits between common nodes!"));
 									/*  TROUBLESHOOT
 									While building up the admittance matrix for the Newton-Raphson solver, a duplicate entry was found.
 									This is often caused by having multiple lines on the same phases in parallel between two nodes.  A reference node
@@ -235,12 +232,12 @@ inline void sparse_add(SPARSE* sm, int row, int col, double value, BUSDATA *bus_
 								//See if it is actually named -- it should be available
 								if (bus_values[bus_index_val].name != NULL)
 								{
-									GL_THROW("NR: duplicate admittance entry found - attaches to node %s - check for parallel circuits between common nodes!",bus_values[bus_index_val].name);
+									GL_THROW(const_cast<char*>("NR: duplicate admittance entry found - attaches to node %s - check for parallel circuits between common nodes!"),bus_values[bus_index_val].name);
 									//Defined above
 								}
 								else
 								{
-									GL_THROW("NR: duplicate admittance entry found - no name available - check for parallel circuits between common nodes!");
+									GL_THROW(const_cast<char*>("NR: duplicate admittance entry found - no name available - check for parallel circuits between common nodes!"));
 									//Defined above
 								}//End unnamed bus
 							}//End found a bus
@@ -464,7 +461,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			//Make sure it worked (allocation check)
 			if (powerflow_values->island_matrix_values[island_loop_index].LU_solver_vars==NULL)
 			{
-				GL_THROW("External LU matrix solver failed to allocate memory properly!");
+				GL_THROW(const_cast<char*>("External LU matrix solver failed to allocate memory properly!"));
 				/*  TROUBLESHOOT
 				While attempting to allocate memory for the external LU solver, an error occurred.
 				Please try again.  If the error persists, ensure your external LU solver is behaving correctly
@@ -487,7 +484,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				//Make sure it worked
 				if (curr_island_superLU_vars == NULL)
 				{
-					GL_THROW("NR: Failed to allocate memory for one of the necessary matrices");
+					GL_THROW(const_cast<char*>("NR: Failed to allocate memory for one of the necessary matrices"));
 					//Defined elsewhere
 				}
 
@@ -534,7 +531,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			//Make sure it worked
 			if (powerflow_values->BA_diag == NULL)
 			{
-				GL_THROW("NR: Failed to allocate memory for one of the necessary matrices");
+				GL_THROW(const_cast<char*>("NR: Failed to allocate memory for one of the necessary matrices"));
 				/*  TROUBLESHOOT
 				During the allocation stage of the NR algorithm, one of the matrices failed to be allocated.
 				Please try again and if this bug persists, submit your code and a bug report using the trac
@@ -866,7 +863,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								}
 							default:	//How'd we get here?
 								{
-									GL_THROW("Unknown phase connection in NR self admittance diagonal");
+									GL_THROW(const_cast<char*>("Unknown phase connection in NR self admittance diagonal"));
 									/*  TROUBLESHOOT
 									An unknown phase condition was encountered in the NR solver when constructing
 									the self admittance diagonal.  Please report this bug and submit your code to 
@@ -947,7 +944,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			//Preliminary check to make sure we weren't missed in the initialization
 			if ((bus[tempa].Matrix_Loc == -1) || (bus[tempb].Matrix_Loc == -1))
 			{
-				GL_THROW("An element in NR line:%d was not properly localized");
+				GL_THROW(const_cast<char*>("An element in NR line:%d was not properly localized"));
 				/*  TROUBLESHOOT
 				When parsing the bus list, the Newton-Raphson solver found a bus that did not
 				appear to have a location within the overall admittance/Jacobian matrix.  Please
@@ -1053,7 +1050,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 				//Make sure it worked
 				if (powerflow_values->island_matrix_values[island_loop_index].Y_offdiag_PQ == NULL)
-					GL_THROW("NR: Failed to allocate memory for one of the necessary matrices");
+					GL_THROW(const_cast<char*>("NR: Failed to allocate memory for one of the necessary matrices"));
 
 				//Save our size
 				powerflow_values->island_matrix_values[island_loop_index].max_size_offdiag_PQ = powerflow_values->island_matrix_values[island_loop_index].size_offdiag_PQ;	//Don't care about the 2x, since we'll be comparing it against itself
@@ -1068,7 +1065,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 				//Make sure it worked
 				if (powerflow_values->island_matrix_values[island_loop_index].Y_offdiag_PQ == NULL)
-					GL_THROW("NR: Failed to allocate memory for one of the necessary matrices");
+					GL_THROW(const_cast<char*>("NR: Failed to allocate memory for one of the necessary matrices"));
 
 				//Store the new size
 				powerflow_values->island_matrix_values[island_loop_index].max_size_offdiag_PQ = powerflow_values->island_matrix_values[island_loop_index].size_offdiag_PQ;
@@ -1184,7 +1181,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							//Make sure one end of us isn't a SPCT transformer To node (they are different)
 							if (((bus[tempa].phases & 0x20) & (bus[tempb].phases & 0x20)) == 0x20)	//Both ends are SPCT tos
 							{
-								GL_THROW("NR: SPCT to SPCT via triplex connections are unsupported at this time.");
+								GL_THROW(const_cast<char*>("NR: SPCT to SPCT via triplex connections are unsupported at this time."));
 								/*  TROUBLESHOOT
 								The Newton-Raphson solve does not currently support running a triplex line between the low-voltage
 								side of two different split-phase center tapped transformers.  This functionality may be added if needed
@@ -1424,7 +1421,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				}//end both triplexy
 				else if ((bus[tempa].phases & 0x80) == 0x80)	//From is the triplex - this implies transformer with or something, we don't support this
 				{
-					GL_THROW("NR does not support triplex to 3-phase connections.");
+					GL_THROW(const_cast<char*>("NR does not support triplex to 3-phase connections."));
 					/*  TROUBLESHOOT
 					The Newton-Raphson solver does not have any implementation elements
 					to support the connection of a split-phase or triplex node to a three-phase
@@ -1455,7 +1452,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								}
 								else if (phase_workc==0x02)	//Line is phase B
 								{
-									GL_THROW("NR: A center-tapped transformer has an invalid phase matching");
+									GL_THROW(const_cast<char*>("NR: A center-tapped transformer has an invalid phase matching"));
 									/*  TROUBLESHOOT
 									A split-phase, center-tapped transformer in the Newton-Raphson solver is somehow attached
 									to a node that is missing the required phase of the transformer.  This should have been caught.
@@ -1463,7 +1460,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 									*/
 								}
 								else					//Has to be phase A
-									GL_THROW("NR: A center-tapped transformer has an invalid phase matching");
+									GL_THROW(const_cast<char*>("NR: A center-tapped transformer has an invalid phase matching"));
 
 								break;
 							}
@@ -1472,14 +1469,14 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								temp_size = 1;	//Single phase matrix
 
 								if (phase_workc==0x01)	//Line is phase C
-									GL_THROW("NR: A center-tapped transformer has an invalid phase matching");
+									GL_THROW(const_cast<char*>("NR: A center-tapped transformer has an invalid phase matching"));
 								else if (phase_workc==0x02)	//Line is phase B
 								{
 									//Only B in the node, so no offset
 									temp_index = 0;
 								}
 								else					//Has to be phase A
-									GL_THROW("NR: A center-tapped transformer has an invalid phase matching");
+									GL_THROW(const_cast<char*>("NR: A center-tapped transformer has an invalid phase matching"));
 
 								break;
 							}
@@ -1498,7 +1495,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 									temp_index = 0;
 								}
 								else					//Has to be phase A
-									GL_THROW("NR: A center-tapped transformer has an invalid phase matching");
+									GL_THROW(const_cast<char*>("NR: A center-tapped transformer has an invalid phase matching"));
 
 								break;
 							}
@@ -1507,9 +1504,9 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								temp_size = 1;	//Single phase matrix
 
 								if (phase_workc==0x01)	//Line is phase C
-									GL_THROW("NR: A center-tapped transformer has an invalid phase matching");
+									GL_THROW(const_cast<char*>("NR: A center-tapped transformer has an invalid phase matching"));
 								else if (phase_workc==0x02)	//Line is phase B
-									GL_THROW("NR: A center-tapped transformer has an invalid phase matching");
+									GL_THROW(const_cast<char*>("NR: A center-tapped transformer has an invalid phase matching"));
 								else					//Has to be phase A
 								{
 									//Only A in the node, so no offset
@@ -1528,7 +1525,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 									temp_index = 1;
 								}
 								else if (phase_workc==0x02)	//Line is phase B
-									GL_THROW("NR: A center-tapped transformer has an invalid phase matching");
+									GL_THROW(const_cast<char*>("NR: A center-tapped transformer has an invalid phase matching"));
 								else					//Has to be phase A
 								{
 									//AC in the node, so offset by 0
@@ -1542,7 +1539,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								temp_size = 2;	//Two phase matrix
 
 								if (phase_workc==0x01)	//Line is phase C
-									GL_THROW("NR: A center-tapped transformer has an invalid phase matching");
+									GL_THROW(const_cast<char*>("NR: A center-tapped transformer has an invalid phase matching"));
 								else if (phase_workc==0x02)	//Line is phase B
 								{
 									//BC in the node, so offset by 1
@@ -1579,11 +1576,11 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								break;
 							}
 						default:
-							GL_THROW("NR: A center-tapped transformer has an invalid phase matching");
+							GL_THROW(const_cast<char*>("NR: A center-tapped transformer has an invalid phase matching"));
 							break;
 					}//end switch
 					if ((temp_index==-1) || (temp_size==-1))	//Should never get here
-						GL_THROW("NR: A center-tapped transformer has an invalid phase matching");
+						GL_THROW(const_cast<char*>("NR: A center-tapped transformer has an invalid phase matching"));
 
 					//Determine first index
 					if (phase_workc==0x01)	//Line is phase C
@@ -1752,7 +1749,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 				if (temp_size_c==-1)	//Make sure it is right
 				{
-					GL_THROW("NR: A line's phase was flagged as not full three-phase, but wasn't: (%s) %u %u", 
+					GL_THROW(const_cast<char*>("NR: A line's phase was flagged as not full three-phase, but wasn't: (%s) %u %u"),
 									 branch[jindexer].name, branch[jindexer].phases, branch[jindexer].origphases);
 					/*  TROUBLESHOOT
 					A line inside the powerflow model was flagged as not being full three-phase or
@@ -1772,7 +1769,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							}
 							else
 							{
-								GL_THROW("NR: One of the lines has invalid phase parameters");
+								GL_THROW(const_cast<char*>("NR: One of the lines has invalid phase parameters"));
 								/*  TROUBLESHOOT
 								One of the lines in the powerflow model has an invalid phase in
 								reference to its to and from ends.  This should have been caught
@@ -1790,7 +1787,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							}
 							else
 							{
-								GL_THROW("NR: One of the lines has invalid phase parameters");
+								GL_THROW(const_cast<char*>("NR: One of the lines has invalid phase parameters"));
 							}
 							break;
 						}//end 0x02
@@ -1811,7 +1808,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							}
 							else
 							{
-								GL_THROW("NR: One of the lines has invalid phase parameters");
+								GL_THROW(const_cast<char*>("NR: One of the lines has invalid phase parameters"));
 							}
 							break;
 						}//end 0x03
@@ -1824,7 +1821,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							}
 							else
 							{
-								GL_THROW("NR: One of the lines has invalid phase parameters");
+								GL_THROW(const_cast<char*>("NR: One of the lines has invalid phase parameters"));
 							}
 							break;
 						}//end 0x04
@@ -1845,7 +1842,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							}
 							else
 							{
-								GL_THROW("NR: One of the lines has invalid phase parameters");
+								GL_THROW(const_cast<char*>("NR: One of the lines has invalid phase parameters"));
 							}
 							break;
 						}//end 0x05
@@ -1866,7 +1863,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							}
 							else
 							{
-								GL_THROW("NR: One of the lines has invalid phase parameters");
+								GL_THROW(const_cast<char*>("NR: One of the lines has invalid phase parameters"));
 							}
 							break;
 						}//end 0x06
@@ -1900,7 +1897,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							}
 							else
 							{
-								GL_THROW("NR: One of the lines has invalid phase parameters");
+								GL_THROW(const_cast<char*>("NR: One of the lines has invalid phase parameters"));
 							}
 							break;
 						}//end 0x07
@@ -1921,7 +1918,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							}
 							else
 							{
-								GL_THROW("NR: One of the lines has invalid phase parameters");
+								GL_THROW(const_cast<char*>("NR: One of the lines has invalid phase parameters"));
 								/*  TROUBLESHOOT
 								One of the lines in the powerflow model has an invalid phase in
 								reference to its to and from ends.  This should have been caught
@@ -1939,7 +1936,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							}
 							else
 							{
-								GL_THROW("NR: One of the lines has invalid phase parameters");
+								GL_THROW(const_cast<char*>("NR: One of the lines has invalid phase parameters"));
 							}
 							break;
 						}//end 0x02
@@ -1960,7 +1957,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							}
 							else
 							{
-								GL_THROW("NR: One of the lines has invalid phase parameters");
+								GL_THROW(const_cast<char*>("NR: One of the lines has invalid phase parameters"));
 							}
 							break;
 						}//end 0x03
@@ -1973,7 +1970,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							}
 							else
 							{
-								GL_THROW("NR: One of the lines has invalid phase parameters");
+								GL_THROW(const_cast<char*>("NR: One of the lines has invalid phase parameters"));
 							}
 							break;
 						}//end 0x04
@@ -1994,7 +1991,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							}
 							else
 							{
-								GL_THROW("NR: One of the lines has invalid phase parameters");
+								GL_THROW(const_cast<char*>("NR: One of the lines has invalid phase parameters"));
 							}
 							break;
 						}//end 0x05
@@ -2015,7 +2012,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							}
 							else
 							{
-								GL_THROW("NR: One of the lines has invalid phase parameters");
+								GL_THROW(const_cast<char*>("NR: One of the lines has invalid phase parameters"));
 							}
 							break;
 						}//end 0x06
@@ -2049,7 +2046,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							}
 							else
 							{
-								GL_THROW("NR: One of the lines has invalid phase parameters");
+								GL_THROW(const_cast<char*>("NR: One of the lines has invalid phase parameters"));
 							}
 							break;
 						}//end 0x07
@@ -2062,7 +2059,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				//Make sure everything was set before proceeding
 				if ((temp_index==-1) || (temp_index_b==-1) || (temp_size==-1) || (temp_size_b==-1) || (temp_size_c==-1))
 				{
-					GL_THROW("NR: Failure to construct single/double phase line indices");
+					GL_THROW(const_cast<char*>("NR: Failure to construct single/double phase line indices"));
 					/*  TROUBLESHOOT
 					A single or double phase line (e.g., just A or AB) has failed to properly initialize all of the indices
 					necessary to form the admittance matrix.  Please submit a bug report, with your code, to the trac site.
@@ -2295,7 +2292,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 				//Make sure it worked
 				if (powerflow_values->island_matrix_values[island_loop_index].Y_diag_fixed == NULL)
-					GL_THROW("NR: Failed to allocate memory for one of the necessary matrices");
+					GL_THROW(const_cast<char*>("NR: Failed to allocate memory for one of the necessary matrices"));
 
 				//Update the max size
 				powerflow_values->island_matrix_values[island_loop_index].max_size_diag_fixed = powerflow_values->island_matrix_values[island_loop_index].size_diag_fixed;
@@ -2310,7 +2307,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 				//Make sure it worked
 				if (powerflow_values->island_matrix_values[island_loop_index].Y_diag_fixed == NULL)
-					GL_THROW("NR: Failed to allocate memory for one of the necessary matrices");
+					GL_THROW(const_cast<char*>("NR: Failed to allocate memory for one of the necessary matrices"));
 
 				//Store the new size
 				powerflow_values->island_matrix_values[island_loop_index].max_size_diag_fixed = powerflow_values->island_matrix_values[island_loop_index].size_diag_fixed;
@@ -2406,7 +2403,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 			//Make sure it worked
 			if (powerflow_values->island_matrix_values[island_loop_index].deltaI_NR == NULL)
-				GL_THROW("NR: Failed to allocate memory for one of the necessary matrices");
+				GL_THROW(const_cast<char*>("NR: Failed to allocate memory for one of the necessary matrices"));
 
 			//Update the max size
 			powerflow_values->island_matrix_values[island_loop_index].max_total_variables = powerflow_values->island_matrix_values[island_loop_index].total_variables;
@@ -2421,7 +2418,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 			//Make sure it worked
 			if (powerflow_values->island_matrix_values[island_loop_index].deltaI_NR == NULL)
-				GL_THROW("NR: Failed to allocate memory for one of the necessary matrices");
+				GL_THROW(const_cast<char*>("NR: Failed to allocate memory for one of the necessary matrices"));
 
 			//Store the updated value
 			powerflow_values->island_matrix_values[island_loop_index].max_total_variables = powerflow_values->island_matrix_values[island_loop_index].total_variables;
@@ -2585,7 +2582,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 									}
 									else	//How'd we get here!?!
 									{
-										GL_THROW("NR: A split-phase transformer appears to have an invalid phase");
+										GL_THROW(const_cast<char*>("NR: A split-phase transformer appears to have an invalid phase"));
 									}
 
 									work_vals_char_0 = jindex*3+temp_index;
@@ -2717,7 +2714,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 							if (temp_index==-1)	//Error check
 							{
-								GL_THROW("NR: A voltage index failed to be found.");
+								GL_THROW(const_cast<char*>("NR: A voltage index failed to be found."));
 								/*  TROUBLESHOOT
 								While attempting to compute the calculated power current, a voltage index failed to be
 								resolved.  Please submit your code and a bug report via the trac website.
@@ -2787,7 +2784,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 							if (temp_index_b==-1)	//Error check
 							{
-								GL_THROW("NR: A voltage index failed to be found.");
+								GL_THROW(const_cast<char*>("NR: A voltage index failed to be found."));
 							}
 
 							for (kindexer=0; kindexer<(bus[indexer].Link_Table_Size); kindexer++)	//Parse through the branch list
@@ -3099,7 +3096,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								}
 								else	//Never was, just fail out
 								{
-									GL_THROW("NR_solver: bus:%s has tried updating deltamode dynamics, but is not three-phase!",bus[indexer].name);
+									GL_THROW(const_cast<char*>("NR_solver: bus:%s has tried updating deltamode dynamics, but is not three-phase!"),bus[indexer].name);
 									/*  TROUBLESHOOT
 									The NR_solver routine tried update a three-phase current value for a bus that is not
 									three phase.  At this time, the deltamode system only supports three-phase buses for
@@ -3158,7 +3155,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 			//Make sure it worked
 			if (powerflow_values->island_matrix_values[island_loop_index].Y_diag_update == NULL)
-				GL_THROW("NR: Failed to allocate memory for one of the necessary matrices");
+				GL_THROW(const_cast<char*>("NR: Failed to allocate memory for one of the necessary matrices"));
 
 			//Update maximum size
 			powerflow_values->island_matrix_values[island_loop_index].max_size_diag_update = powerflow_values->island_matrix_values[island_loop_index].size_diag_update;
@@ -3173,7 +3170,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 			//Make sure it worked
 			if (powerflow_values->island_matrix_values[island_loop_index].Y_diag_update == NULL)
-				GL_THROW("NR: Failed to allocate memory for one of the necessary matrices");
+				GL_THROW(const_cast<char*>("NR: Failed to allocate memory for one of the necessary matrices"));
 
 			//Update the size
 			powerflow_values->island_matrix_values[island_loop_index].max_size_diag_update = powerflow_values->island_matrix_values[island_loop_index].size_diag_update;
@@ -3299,7 +3296,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 			//Make sure it worked
 			if (powerflow_values->island_matrix_values[island_loop_index].Y_Amatrix == NULL)
-				GL_THROW("NR: Failed to allocate memory for one of the necessary matrices");
+				GL_THROW(const_cast<char*>("NR: Failed to allocate memory for one of the necessary matrices"));
 
 			//Initiliaze it
 			sparse_init(powerflow_values->island_matrix_values[island_loop_index].Y_Amatrix, powerflow_values->island_matrix_values[island_loop_index].size_Amatrix, 6*powerflow_values->island_matrix_values[island_loop_index].bus_count);
@@ -3479,7 +3476,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			powerflow_values->island_matrix_values[island_loop_index].matrices_LU.a_LU = (double *) gl_malloc(nnz *sizeof(double));
 			if (powerflow_values->island_matrix_values[island_loop_index].matrices_LU.a_LU==NULL)
 			{
-				GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
+				GL_THROW(const_cast<char*>("NR: One of the SuperLU solver matrices failed to allocate"));
 				/*  TROUBLESHOOT
 				While attempting to allocate the memory for one of the SuperLU working matrices,
 				an error was encountered and it was not allocated.  Please try again.  If it fails
@@ -3489,36 +3486,36 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			
 			powerflow_values->island_matrix_values[island_loop_index].matrices_LU.rows_LU = (int *) gl_malloc(nnz *sizeof(int));
 			if (powerflow_values->island_matrix_values[island_loop_index].matrices_LU.rows_LU == NULL)
-				GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
+				GL_THROW(const_cast<char*>("NR: One of the SuperLU solver matrices failed to allocate"));
 
 			powerflow_values->island_matrix_values[island_loop_index].matrices_LU.cols_LU = (int *) gl_malloc((n+1) *sizeof(int));
 			if (powerflow_values->island_matrix_values[island_loop_index].matrices_LU.cols_LU == NULL)
-				GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
+				GL_THROW(const_cast<char*>("NR: One of the SuperLU solver matrices failed to allocate"));
 
 			/* Create the right-hand side matrix B. */
 			powerflow_values->island_matrix_values[island_loop_index].matrices_LU.rhs_LU = (double *) gl_malloc(m *sizeof(double));
 			if (powerflow_values->island_matrix_values[island_loop_index].matrices_LU.rhs_LU == NULL)
-				GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
+				GL_THROW(const_cast<char*>("NR: One of the SuperLU solver matrices failed to allocate"));
 
 			if (matrix_solver_method==MM_SUPERLU)
 			{
 				///* Set up the arrays for the permutations. */
 				curr_island_superLU_vars->perm_r = (int *) gl_malloc(m *sizeof(int));
 				if (curr_island_superLU_vars->perm_r == NULL)
-					GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
+					GL_THROW(const_cast<char*>("NR: One of the SuperLU solver matrices failed to allocate"));
 
 				curr_island_superLU_vars->perm_c = (int *) gl_malloc(n *sizeof(int));
 				if (curr_island_superLU_vars->perm_c == NULL)
-					GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
+					GL_THROW(const_cast<char*>("NR: One of the SuperLU solver matrices failed to allocate"));
 
 				//Set up storage pointers - single element, but need to be malloced for some reason
 				curr_island_superLU_vars->A_LU.Store = (void *)gl_malloc(sizeof(NCformat));
 				if (curr_island_superLU_vars->A_LU.Store == NULL)
-					GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
+					GL_THROW(const_cast<char*>("NR: One of the SuperLU solver matrices failed to allocate"));
 
 				curr_island_superLU_vars->B_LU.Store = (void *)gl_malloc(sizeof(DNformat));
 				if (curr_island_superLU_vars->B_LU.Store == NULL)
-					GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
+					GL_THROW(const_cast<char*>("NR: One of the SuperLU solver matrices failed to allocate"));
 
 				//Populate these structures - A_LU matrix
 				curr_island_superLU_vars->A_LU.Stype = SLU_NC;
@@ -3541,7 +3538,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			}
 			else
 			{
-				GL_THROW("Invalid matrix solution method specified for NR solver!");
+				GL_THROW(const_cast<char*>("Invalid matrix solution method specified for NR solver!"));
 				//Defined elsewhere
 			}
 
@@ -3567,31 +3564,31 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			/* Set aside space for the arrays. - Copied from above */
 			powerflow_values->island_matrix_values[island_loop_index].matrices_LU.a_LU = (double *) gl_malloc(nnz *sizeof(double));
 			if (powerflow_values->island_matrix_values[island_loop_index].matrices_LU.a_LU==NULL)
-				GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
+				GL_THROW(const_cast<char*>("NR: One of the SuperLU solver matrices failed to allocate"));
 			
 			powerflow_values->island_matrix_values[island_loop_index].matrices_LU.rows_LU = (int *) gl_malloc(nnz *sizeof(int));
 			if (powerflow_values->island_matrix_values[island_loop_index].matrices_LU.rows_LU == NULL)
-				GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
+				GL_THROW(const_cast<char*>("NR: One of the SuperLU solver matrices failed to allocate"));
 
 			powerflow_values->island_matrix_values[island_loop_index].matrices_LU.cols_LU = (int *) gl_malloc((n+1) *sizeof(int));
 			if (powerflow_values->island_matrix_values[island_loop_index].matrices_LU.cols_LU == NULL)
-				GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
+				GL_THROW(const_cast<char*>("NR: One of the SuperLU solver matrices failed to allocate"));
 
 			/* Create the right-hand side matrix B. */
 			powerflow_values->island_matrix_values[island_loop_index].matrices_LU.rhs_LU = (double *) gl_malloc(m *sizeof(double));
 			if (powerflow_values->island_matrix_values[island_loop_index].matrices_LU.rhs_LU == NULL)
-				GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
+				GL_THROW(const_cast<char*>("NR: One of the SuperLU solver matrices failed to allocate"));
 
 			if (matrix_solver_method==MM_SUPERLU)
 			{
 				///* Set up the arrays for the permutations. */
 				curr_island_superLU_vars->perm_r = (int *) gl_malloc(m *sizeof(int));
 				if (curr_island_superLU_vars->perm_r == NULL)
-					GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
+					GL_THROW(const_cast<char*>("NR: One of the SuperLU solver matrices failed to allocate"));
 
 				curr_island_superLU_vars->perm_c = (int *) gl_malloc(n *sizeof(int));
 				if (curr_island_superLU_vars->perm_c == NULL)
-					GL_THROW("NR: One of the SuperLU solver matrices failed to allocate");
+					GL_THROW(const_cast<char*>("NR: One of the SuperLU solver matrices failed to allocate"));
 
 				//Update structures - A_LU matrix
 				curr_island_superLU_vars->A_LU.Stype = SLU_NC;
@@ -3614,7 +3611,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			}
 			else
 			{
-				GL_THROW("Invalid matrix solution method specified for NR solver!");
+				GL_THROW(const_cast<char*>("Invalid matrix solution method specified for NR solver!"));
 				//Defined elsewhere
 			}
 
@@ -3638,7 +3635,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			}
 			else
 			{
-				GL_THROW("Invalid matrix solution method specified for NR solver!");
+				GL_THROW(const_cast<char*>("Invalid matrix solution method specified for NR solver!"));
 				//Defined elsewhere
 			}
 
@@ -3981,7 +3978,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		}
 		else
 		{
-			GL_THROW("Invalid matrix solution method specified for NR solver!");
+			GL_THROW(const_cast<char*>("Invalid matrix solution method specified for NR solver!"));
 			/*  TROUBLESHOOT
 			An invalid matrix solution method was selected for the Newton-Raphson solver method.
 			Valid options are the superLU solver or an external solver.  Please select one of these methods.
@@ -4090,7 +4087,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 							if ((temp_index==-1) || (temp_index_b==-1))
 							{
-								GL_THROW("NR: An error occurred indexing voltage updates");
+								GL_THROW(const_cast<char*>("NR: An error occurred indexing voltage updates"));
 								/*  TROUBLESHOOT
 								While attempting to create the voltage update indices for the
 								Newton-Raphson solver, an error was encountered.  Please submit
@@ -4123,7 +4120,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					//Make sure it worked
 					if (call_return_status == FAILED)
 					{
-						GL_THROW("External current injection update failed for device %s",bus[indexer].ExtraCurrentInjFuncObject->name ? bus[indexer].ExtraCurrentInjFuncObject->name : "Unnamed");
+						GL_THROW(const_cast<char*>("External current injection update failed for device %s"),bus[indexer].ExtraCurrentInjFuncObject->name ? bus[indexer].ExtraCurrentInjFuncObject->name : "Unnamed");
 						/*  TROUBLESHOOT
 						While attempting to perform the external current injection update function call, something failed.  Please try again.
 						If the error persists, please submit your code and a bug report via the ticketing system.
@@ -4157,7 +4154,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						//Make sure it worked
 						if (func_result_val != 1)
 						{
-							GL_THROW("Extra delta update failed for device %s",branch[indexer].name ? branch[indexer].name : "Unnamed");
+							GL_THROW(const_cast<char*>("Extra delta update failed for device %s"),branch[indexer].name ? branch[indexer].name : "Unnamed");
 							/*  TROUBLESHOOT
 							While attempting to perform the extra deltamode update, something failed.  Please try again.
 							If the error persists, please submit your code and a bug report via the ticketing system.
@@ -4260,7 +4257,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		}
 		else	//Not sure how we get here
 		{
-			GL_THROW("Invalid matrix solution method specified for NR solver!");
+			GL_THROW(const_cast<char*>("Invalid matrix solution method specified for NR solver!"));
 			//Defined above
 		}
 
@@ -4418,7 +4415,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				//Make sure it was found
 				if (temp_fxn_val == NULL)
 				{
-					GL_THROW("NR: Unable to map island removal function");
+					GL_THROW(const_cast<char*>("NR: Unable to map island removal function"));
 					/*  TROUBLESHOOT
 					While attempting to map the island removal function, an error was encountered.  Please
 					try again.  If the error persists, please submit your code and a report via the issues
@@ -4432,7 +4429,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				//Make sure it worked
 				if (call_return_status != SUCCESS)
 				{
-					GL_THROW("NR: Failed to remove island %d from the powerflow",(island_loop_index+1));
+					GL_THROW(const_cast<char*>("NR: Failed to remove island %d from the powerflow"),(island_loop_index+1));
 					/*  TROUBLESHOOT
 					While attempting to remove an island from the powerflow, an error occurred.  Please try again.
 					If the error persists, please submit your code and a report via the issues system.
@@ -4459,7 +4456,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				//Make sure it was found
 				if (temp_fxn_val == NULL)
 				{
-					GL_THROW("NR: Unable to map island removal function");
+					GL_THROW(const_cast<char*>("NR: Unable to map island removal function"));
 					//Defined above
 				}
 
@@ -4469,7 +4466,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				//Make sure it worked
 				if (call_return_status != SUCCESS)
 				{
-					GL_THROW("NR: Failed to remove island %d from the powerflow",(island_loop_index+1));
+					GL_THROW(const_cast<char*>("NR: Failed to remove island %d from the powerflow"),(island_loop_index+1));
 					//Defined above
 				}
 				//If we succeeded, good to go!
@@ -4853,7 +4850,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					{
 						if ((temp_index==-1) || (temp_index_b==-1))
 						{
-							GL_THROW("NR: A scheduled power update element failed.");
+							GL_THROW(const_cast<char*>("NR: A scheduled power update element failed."));
 							//Defined below
 						}
 
@@ -4869,7 +4866,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					{
 						if ((temp_index==-1) || (temp_index_b==-1))
 						{
-							GL_THROW("NR: A Jacobian update element failed.");
+							GL_THROW(const_cast<char*>("NR: A Jacobian update element failed."));
 							//Defined below
 						}
 
@@ -5260,7 +5257,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					{
 						if ((temp_index==-1) || (temp_index_b==-1))
 						{
-							GL_THROW("NR: A scheduled power update element failed.");
+							GL_THROW(const_cast<char*>("NR: A scheduled power update element failed."));
 							/*  TROUBLESHOOT
 							While attempting to calculate the scheduled portions of the
 							attached loads, an update failed to process correctly.
@@ -5286,7 +5283,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					{
 						if ((temp_index==-1) || (temp_index_b==-1))
 						{
-							GL_THROW("NR: A Jacobian update element failed.");
+							GL_THROW(const_cast<char*>("NR: A Jacobian update element failed."));
 							/*  TROUBLESHOOT
 							While attempting to calculate the "dynamic" portions of the
 							Jacobian matrix that encompass attached loads, an update failed to process correctly.
@@ -5625,7 +5622,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					{
 						if ((temp_index==-1) || (temp_index_b==-1))
 						{
-							GL_THROW("NR: A scheduled power update element failed.");
+							GL_THROW(const_cast<char*>("NR: A scheduled power update element failed."));
 							//Defined below
 						}
 
@@ -5641,7 +5638,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					{
 						if ((temp_index==-1) || (temp_index_b==-1))
 						{
-							GL_THROW("NR: A Jacobian update element failed.");
+							GL_THROW(const_cast<char*>("NR: A Jacobian update element failed."));
 							//Defined below
 						}
 
@@ -5737,7 +5734,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 
 						if ((temp_index==-1) || (temp_index_b==-1))
 						{
-							GL_THROW("NR: A Jacobian update element failed.");
+							GL_THROW(const_cast<char*>("NR: A Jacobian update element failed."));
 							//Defined below
 						}
 

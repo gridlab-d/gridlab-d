@@ -34,7 +34,8 @@
 	#if __WORDSIZE__ == 64
 		#define X64
 		#define int64 long long /**< standard 64-bit integers on 64-bit machines */
-	#else
+    #else
+    	#undef int64
 		#define int64 long long /**< standard 64-bit integers on 32-bit machines */
 	#endif
 	#define FMT_INT64 "ll" /**< standard version of 64-bit integer printf format string */
@@ -45,8 +46,8 @@
 	#ifndef isfinite
 		#define isfinite finite
 	#endif
-	#define MIN fmin /**< min macro */
-	#define MAX fmax /**< max macro */
+//	#define MIN fmin /**< min macro */
+//	#define MAX fmax /**< max macro */
 	#ifdef X64
 		#define NATIVE int64	/**< native integer size */
 	#else

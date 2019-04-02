@@ -33,7 +33,7 @@ motor::motor(MODULE *mod):node(mod)
 	{
 		pclass = node::oclass;
 		
-		oclass = gl_register_class(mod,"motor",sizeof(motor),passconfig|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,const_cast<char*>("motor"),sizeof(motor),passconfig|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class motor";
 		else
@@ -142,15 +142,15 @@ motor::motor(MODULE *mod):node(mod)
 			PT_double, "sigma1", PADDR(sigma1),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"intermediate variable 1 associated with synch. react.",
 			PT_double, "sigma2", PADDR(sigma2),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"intermediate variable 2 associated with synch. react.",
 
-			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+			NULL) < 1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_motor)==NULL)
-			GL_THROW("Unable to publish motor deltamode function");
-		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
-			GL_THROW("Unable to publish motor swing-swapping function");
-		if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
-			GL_THROW("Unable to publish motor VFD attachment function");
+		if (gl_publish_function(oclass,	const_cast<char*>("interupdate_pwr_object"), (FUNCTIONADDR)interupdate_motor)==NULL)
+			GL_THROW(const_cast<char*>("Unable to publish motor deltamode function"));
+		if (gl_publish_function(oclass,	const_cast<char*>("pwr_object_swing_swapper"), (FUNCTIONADDR)swap_node_swing_status)==NULL)
+			GL_THROW(const_cast<char*>("Unable to publish motor swing-swapping function"));
+		if (gl_publish_function(oclass,	const_cast<char*>("attach_vfd_to_pwr_object"), (FUNCTIONADDR)attach_vfd_to_node)==NULL)
+			GL_THROW(const_cast<char*>("Unable to publish motor VFD attachment function"));
     }
 }
 
@@ -293,7 +293,7 @@ int motor::init(OBJECT *parent)
 	}
 	else
 	{
-		GL_THROW("motor:%s -- only single-phase or three-phase motors are supported",(obj->name ? obj->name : "Unnamed"));
+		GL_THROW(const_cast<char*>("motor:%s -- only single-phase or three-phase motors are supported"),(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		The motor only supports single-phase and three-phase motors at this time.  Please use one of these connection types.
 		*/
@@ -490,16 +490,16 @@ int motor::init(OBJECT *parent)
     
     // Checking contactor open and close min and max voltages
     if (contactor_open_Vmin > contactor_close_Vmax){
-        GL_THROW("motor:%s -- contactor_open_Vmin must be less or equal to than contactor_close_Vmax",(obj->name ? obj->name : "Unnamed"));
+        GL_THROW(const_cast<char*>("motor:%s -- contactor_open_Vmin must be less or equal to than contactor_close_Vmax"),(obj->name ? obj->name : "Unnamed"));
     }
 
     
     // Checking under-voltage relay input parameters
     if (uv_relay_trip_time < 0 ){
-        GL_THROW("motor:%s -- uv_relay_trip_time must be greater than or equal to 0",(obj->name ? obj->name : "Unnamed"));
+        GL_THROW(const_cast<char*>("motor:%s -- uv_relay_trip_time must be greater than or equal to 0"),(obj->name ? obj->name : "Unnamed"));
     }
     if (uv_relay_trip_V < 0 || uv_relay_trip_V > 1){
-        GL_THROW("motor:%s -- uv_relay_trip_V must be greater than or equal to 0 and less than or equal to 1",(obj->name ? obj->name : "Unnamed"));
+        GL_THROW(const_cast<char*>("motor:%s -- uv_relay_trip_V must be greater than or equal to 0 and less than or equal to 1"),(obj->name ? obj->name : "Unnamed"));
     }
 
 	return result;
@@ -1906,7 +1906,7 @@ EXPORT TIMESTAMP sync_motor(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			t1 = my->postsync(obj->clock,t0);
 			break;
 		default:
-			GL_THROW("invalid pass request (%d)", pass);
+			GL_THROW(const_cast<char*>("invalid pass request (%d)"), pass);
 			break;
 		}
 		if (pass == clockpass)

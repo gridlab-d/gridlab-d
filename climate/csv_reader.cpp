@@ -37,7 +37,7 @@ csv_reader::csv_reader(MODULE *module){
 	memset(this, 0, sizeof(csv_reader));
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"csv_reader",sizeof(csv_reader),NULL);
+		oclass = gl_register_class(module,const_cast<char*>("csv_reader"),sizeof(csv_reader), 0);
 		if (gl_publish_variable(oclass,
 			PT_int32,"index",PADDR(index),PT_ACCESS,PA_REFERENCE,
 			PT_char32,"city_name",PADDR(city_name),
@@ -59,7 +59,7 @@ csv_reader::csv_reader(MODULE *module){
 			PT_double,"timezone_offset",PADDR(tz_numval),
 			PT_char256,"columns",PADDR(columns_str),
 			PT_char256,"filename",PADDR(filename),
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			NULL)<1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
 		memset(this,0,sizeof(csv_reader));
 	}
 }
@@ -143,7 +143,6 @@ int csv_reader::open(const char *file){
 			}
 		}
 	}
-
 	/* move list into double pointer */
 	samples = (weather**)malloc(sizeof(weather *) * (size_t) sample_ct);
 	for(i = 0, wtr = weather_root; i < sample_ct && wtr != NULL; ++i, wtr=wtr->next){
@@ -201,17 +200,19 @@ int csv_reader::read_prop(char *line){ // already pulled the '$' off the front
 //	if(0 == gl_set_value(my, (void *)((unsigned long long int)this + (unsigned long long int)prop->addr), valstr, prop)){
 //		gl_error("csv_reader::read_prop ~ unable to set property \'%s\' to \'%s\'", propstr, valstr);
 //		return 0;
-//	}	
+//	}
 	void *addr = (void *)((uint64)this + (uint64)prop->addr);
 	if(prop->ptype == PT_double){
-		if(1 != sscanf(valstr, "%lg", addr)){
-			gl_error("csv_reader::read_prop ~ unable to set property \'%s\' to \'%s\'", propstr, valstr);
+	    //TODO: Review use of format specifier here
+		if(1 != sscanf(valstr, "%p", &addr)){
+			gl_error(R"(csv_reader::read_prop ~ unable to set property '%s' to '%s')", propstr, valstr);
 			/* TROUBLESHOOT
 				The double parser was not able to convert the property value into a number.  Please
 				review the input line for non-numeric characters and re-run GridLAB-D.
 			*/
 			return 0;
 		}
+
 	} else if(prop->ptype == PT_char32){
 		strncpy((char *)addr, valstr, 32);
 //	} else if(prop->ptype == PT_char256){
@@ -303,7 +304,7 @@ int csv_reader::read_header(char *line){
 int csv_reader::read_line(char *line, int linenum){
 	int done = 0;
 	int col = 0;
-	char buffer[1024];
+	char buffer[2048];
 	char *token = 0;
 	weather *sample = 0;
 	int64 t1, t2;
@@ -322,6 +323,7 @@ int csv_reader::read_line(char *line, int linenum){
 		TIMESTAMP ts = callback->time.convert_to_timestamp(token);
 		DATETIME dt;
 		dt.nanosecond = 0;
+
 		if ( ts!=TS_INVALID && ts!=TS_NEVER && callback->time.local_datetime(ts,&dt) )
 		{
 			 sample->month = dt.month;
@@ -332,7 +334,7 @@ int csv_reader::read_line(char *line, int linenum){
 			 // IMPORTANT NOTE: if DST is not handled properly by sample, don't try to fix
 			 // the problem here.  The weather class may need to be fixed so it uses UTC internally.
 		}
-		else if(sscanf(token, "%d:%d:%d:%d:%d", &sample->month, &sample->day, &sample->hour, &sample->minute, &sample->second) < 1){
+		else if(sscanf(token, "%hi:%hi:%hi:%hi:%hi", &sample->month, &sample->day, &sample->hour, &sample->minute, &sample->second) < 1){
 			gl_error("csv_reader::read_line ~ unable to read time string \'%s\' with default format", token);
 			/* TROUBLESHOOT
 				The input timestamp could not be parsed.  Verify that all time strings are formatted
@@ -343,7 +345,7 @@ int csv_reader::read_line(char *line, int linenum){
 		}
 	} else {
 		if(sscanf(token, timefmt.get_string(), &sample->month, &sample->day, &sample->hour, &sample->minute, &sample->second) < 1){
-			gl_error("csv_reader::read_line ~ unable to read time string \'%s\' with format \'%s\'", token, timefmt.get_string());
+			gl_error(R"(csv_reader::read_line ~ unable to read time string '%s' with format '%s')", token, timefmt.get_string());
 			/* TROUBLESHOOT
 				The input timestamp could not be parsed using the specified time format.  Please
 				review the specified file's time format and input time strings.
@@ -375,7 +377,7 @@ int csv_reader::read_line(char *line, int linenum){
 		if(columns[col]->ptype == PT_double){
 			double *dptr = (double *)((uint64)(columns[col]->addr) + (uint64)(sample));
 			if(sscanf(token, "%lg", dptr) != 1){
-				gl_error("csv_reader::read_line ~ unable to set value \'%s\' to double property \'%s\'", token, columns[col]->name);
+				gl_error(R"(csv_reader::read_line ~ unable to set value '%s' to double property '%s')", token, columns[col]->name);
 				/* TROUBLESHOOT
 					The specified property value could not be parsed as a number.  Please check
 					the CSV file for non-numeric characters in the data fields on that line.
@@ -563,7 +565,7 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 
 	// having found the index, update the data
 	if(index == start){
-		GL_THROW("something strange happened with the schedule in csv_reader");
+		GL_THROW(const_cast<char*>("something strange happened with the schedule in csv_reader"));
 		/*	TROUBLESHOOT
 			An unidentified error occured while reading data and constructing the weather
 			data schedule.  Please post a ticket detailing this event on the GridLAB-D

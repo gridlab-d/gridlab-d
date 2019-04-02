@@ -27,7 +27,7 @@ complex_assert::complex_assert(MODULE *module)
 	if (oclass==NULL)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
-		oclass = gl_register_class(module,"complex_assert",sizeof(complex_assert),PC_AUTOLOCK|PC_OBSERVER);
+		oclass = gl_register_class(module,const_cast<char*>("complex_assert"),sizeof(complex_assert),PC_AUTOLOCK|PC_OBSERVER);
 		if (oclass==NULL)
 			throw "unable to register class complex_assert";
 		else
@@ -236,10 +236,10 @@ int complex_assert::postnotify(PROPERTY *prop, char *value)
 
 EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	char buff[64];
-	char dateformat[8]="";
-	char error_output_buff[1024];
-	char datebuff[64];
+	char buff[128];
+	char dateformat[16]="";
+	char error_output_buff[2048];
+	char datebuff[128];
 	complex_assert *da = OBJECTDATA(obj,complex_assert);
 	DATETIME delta_dt_val;
 	double del_clock;
@@ -303,7 +303,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 						gl_localtime(del_clock_int,&delta_dt_val);
 
 						//Determine output format
-						gl_global_getvar("dateformat",dateformat,sizeof(dateformat));
+						gl_global_getvar(const_cast<char*>("dateformat"),dateformat,sizeof(dateformat));
 
 						//Output date appropriately
 						if ( strcmp(dateformat,"ISO")==0)
@@ -313,7 +313,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 						else if ( strcmp(dateformat,"EURO")==0)
 							sprintf(datebuff,"ERROR    [%02d-%02d-%04d %02d:%02d:%02d.%.06d %s] : ",delta_dt_val.day,delta_dt_val.month,delta_dt_val.year,delta_dt_val.hour,delta_dt_val.minute,delta_dt_val.second,del_microseconds,delta_dt_val.tz);
 						else
-							sprintf(datebuff,"ERROR    .09f : ",del_clock);
+							sprintf(datebuff,"ERROR    %09f : ",del_clock);
 
 						//Actual error part
 						sprintf(error_output_buff,"Assert failed on %s - real part of %s (%g) not within %f of given value %g",gl_name(obj->parent, buff, 64),da->get_target(), (*x).Re(), da->get_within(), da->get_value().Re());
@@ -340,7 +340,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 						gl_localtime(del_clock_int,&delta_dt_val);
 
 						//Determine output format
-						gl_global_getvar("dateformat",dateformat,sizeof(dateformat));
+						gl_global_getvar(const_cast<char*>("dateformat"),dateformat,sizeof(dateformat));
 
 						//Output date appropriately
 						if ( strcmp(dateformat,"ISO")==0)
@@ -350,7 +350,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 						else if ( strcmp(dateformat,"EURO")==0)
 							sprintf(datebuff,"ERROR    [%02d-%02d-%04d %02d:%02d:%02d.%.06d %s] : ",delta_dt_val.day,delta_dt_val.month,delta_dt_val.year,delta_dt_val.hour,delta_dt_val.minute,delta_dt_val.second,del_microseconds,delta_dt_val.tz);
 						else
-							sprintf(datebuff,"ERROR    .09f : ",del_clock);
+							sprintf(datebuff,"ERROR    %09f : ",del_clock);
 
 						//Actual error part
 						sprintf(error_output_buff,"Assert failed on %s - imaginary part of %s (%g) not within %f of given value %g",gl_name(obj->parent, buff, 64),da->get_target(), (*x).Im(), da->get_within(), da->get_value().Im());
@@ -379,7 +379,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 						gl_localtime(del_clock_int,&delta_dt_val);
 
 						//Determine output format
-						gl_global_getvar("dateformat",dateformat,sizeof(dateformat));
+						gl_global_getvar(const_cast<char*>("dateformat"),dateformat,sizeof(dateformat));
 
 						//Output date appropriately
 						if ( strcmp(dateformat,"ISO")==0)
@@ -389,7 +389,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 						else if ( strcmp(dateformat,"EURO")==0)
 							sprintf(datebuff,"ERROR    [%02d-%02d-%04d %02d:%02d:%02d.%.06d %s] : ",delta_dt_val.day,delta_dt_val.month,delta_dt_val.year,delta_dt_val.hour,delta_dt_val.minute,delta_dt_val.second,del_microseconds,delta_dt_val.tz);
 						else
-							sprintf(datebuff,"ERROR    .09f : ",del_clock);
+							sprintf(datebuff,"ERROR    %09f : ",del_clock);
 
 						//Actual error part
 						sprintf(error_output_buff,"Assert failed on %s - Magnitude of %s (%g) not within %f of given value %g",gl_name(obj->parent, buff, 64),da->get_target(), (*x).Mag(), da->get_within(), da->get_value().Mag());
@@ -418,7 +418,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 						gl_localtime(del_clock_int,&delta_dt_val);
 
 						//Determine output format
-						gl_global_getvar("dateformat",dateformat,sizeof(dateformat));
+						gl_global_getvar(const_cast<char*>("dateformat"),dateformat,sizeof(dateformat));
 
 						//Output date appropriately
 						if ( strcmp(dateformat,"ISO")==0)
@@ -428,7 +428,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 						else if ( strcmp(dateformat,"EURO")==0)
 							sprintf(datebuff,"ERROR    [%02d-%02d-%04d %02d:%02d:%02d.%.06d %s] : ",delta_dt_val.day,delta_dt_val.month,delta_dt_val.year,delta_dt_val.hour,delta_dt_val.minute,delta_dt_val.second,del_microseconds,delta_dt_val.tz);
 						else
-							sprintf(datebuff,"ERROR    .09f : ",del_clock);
+							sprintf(datebuff,"ERROR    %09f : ",del_clock);
 
 						//Actual error part
 						sprintf(error_output_buff,"Assert failed on %s - Angle of %s (%g) not within %f of given value %g",gl_name(obj->parent, buff, 64),da->get_target(), (*x).Arg(), da->get_within(), da->get_value().Arg());
@@ -466,7 +466,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 						gl_localtime(del_clock_int,&delta_dt_val);
 
 						//Determine output format
-						gl_global_getvar("dateformat",dateformat,sizeof(dateformat));
+						gl_global_getvar(const_cast<char*>("dateformat"),dateformat,sizeof(dateformat));
 
 						//Output date appropriately
 						if ( strcmp(dateformat,"ISO")==0)
@@ -476,7 +476,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 						else if ( strcmp(dateformat,"EURO")==0)
 							sprintf(datebuff,"ERROR    [%02d-%02d-%04d %02d:%02d:%02d.%.06d %s] : ",delta_dt_val.day,delta_dt_val.month,delta_dt_val.year,delta_dt_val.hour,delta_dt_val.minute,delta_dt_val.second,del_microseconds,delta_dt_val.tz);
 						else
-							sprintf(datebuff,"ERROR    .09f : ",del_clock);
+							sprintf(datebuff,"ERROR    %09f : ",del_clock);
 
 						//Actual error part
 						sprintf(error_output_buff,"Assert failed on %s - real part of %s (%g) not within %f of given value %g",gl_name(obj->parent, buff, 64),da->get_target(), (*x).Re(), da->get_within(), da->get_value().Re());
@@ -503,7 +503,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 						gl_localtime(del_clock_int,&delta_dt_val);
 
 						//Determine output format
-						gl_global_getvar("dateformat",dateformat,sizeof(dateformat));
+						gl_global_getvar(const_cast<char*>("dateformat"),dateformat,sizeof(dateformat));
 
 						//Output date appropriately
 						if ( strcmp(dateformat,"ISO")==0)
@@ -513,7 +513,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 						else if ( strcmp(dateformat,"EURO")==0)
 							sprintf(datebuff,"ERROR    [%02d-%02d-%04d %02d:%02d:%02d.%.06d %s] : ",delta_dt_val.day,delta_dt_val.month,delta_dt_val.year,delta_dt_val.hour,delta_dt_val.minute,delta_dt_val.second,del_microseconds,delta_dt_val.tz);
 						else
-							sprintf(datebuff,"ERROR    .09f : ",del_clock);
+							sprintf(datebuff,"ERROR    %09f : ",del_clock);
 
 						//Actual error part
 						sprintf(error_output_buff,"Assert failed on %s - imaginary part of %s (%g) not within %f of given value %g",gl_name(obj->parent, buff, 64),da->get_target(), (*x).Im(), da->get_within(), da->get_value().Im());
@@ -542,7 +542,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 						gl_localtime(del_clock_int,&delta_dt_val);
 
 						//Determine output format
-						gl_global_getvar("dateformat",dateformat,sizeof(dateformat));
+						gl_global_getvar(const_cast<char*>("dateformat"),dateformat,sizeof(dateformat));
 
 						//Output date appropriately
 						if ( strcmp(dateformat,"ISO")==0)
@@ -552,7 +552,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 						else if ( strcmp(dateformat,"EURO")==0)
 							sprintf(datebuff,"ERROR    [%02d-%02d-%04d %02d:%02d:%02d.%.06d %s] : ",delta_dt_val.day,delta_dt_val.month,delta_dt_val.year,delta_dt_val.hour,delta_dt_val.minute,delta_dt_val.second,del_microseconds,delta_dt_val.tz);
 						else
-							sprintf(datebuff,"ERROR    .09f : ",del_clock);
+							sprintf(datebuff,"ERROR    %09f : ",del_clock);
 
 						//Actual error part
 						sprintf(error_output_buff,"Assert failed on %s - Magnitude of %s (%g) not within %f of given value %g",gl_name(obj->parent, buff, 64),da->get_target(), (*x).Mag(), da->get_within(), da->get_value().Mag());
@@ -581,7 +581,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 						gl_localtime(del_clock_int,&delta_dt_val);
 
 						//Determine output format
-						gl_global_getvar("dateformat",dateformat,sizeof(dateformat));
+						gl_global_getvar(const_cast<char*>("dateformat"),dateformat,sizeof(dateformat));
 
 						//Output date appropriately
 						if ( strcmp(dateformat,"ISO")==0)
@@ -591,7 +591,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 						else if ( strcmp(dateformat,"EURO")==0)
 							sprintf(datebuff,"ERROR    [%02d-%02d-%04d %02d:%02d:%02d.%.06d %s] : ",delta_dt_val.day,delta_dt_val.month,delta_dt_val.year,delta_dt_val.hour,delta_dt_val.minute,delta_dt_val.second,del_microseconds,delta_dt_val.tz);
 						else
-							sprintf(datebuff,"ERROR    .09f : ",del_clock);
+							sprintf(datebuff,"ERROR    %09f : ",del_clock);
 
 						//Actual error part
 						sprintf(error_output_buff,"Assert failed on %s - Angle of %s (%g) not within %f of given value %g",gl_name(obj->parent, buff, 64),da->get_target(), (*x).Arg(), da->get_within(), da->get_value().Arg());

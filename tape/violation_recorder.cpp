@@ -177,7 +177,7 @@ int violation_recorder::init(OBJECT *obj){
 	return 1;
 }
 
-int violation_recorder::make_object_list(int type, char * s_grp, vobjlist *q_obj_list){
+int violation_recorder::make_object_list(int type, const char * s_grp, vobjlist *q_obj_list){
 	OBJECT *gr_obj = 0;
 	//FINDLIST *items = gl_find_objects(FL_GROUP, s_grp);
 	FINDLIST *items = gl_find_objects(FL_NEW, type, SAME, s_grp, FT_END);

@@ -23,8 +23,8 @@
 // Default schedules - enacted if not driven externall
 //////////////////////////////////////////////////////////////////////////
 struct s_thermal_default_schedule_list {
-	char *schedule_name;
-	char *schedule_definition;
+	const char *schedule_name;
+	const char *schedule_definition;
 } thermal_default_schedule_list[] =
 {
 	{	"thermal_storage_discharge_default", 
@@ -59,7 +59,7 @@ thermal_storage::thermal_storage(MODULE *mod)
 		pclass = residential_enduse::oclass;
 
 		// register the class definition
-		oclass = gl_register_class(mod,"thermal_storage",sizeof(thermal_storage),PC_BOTTOMUP|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,const_cast<char*>("thermal_storage"),sizeof(thermal_storage),PC_BOTTOMUP|PC_AUTOLOCK);
 		if (oclass==NULL)
 			GL_THROW("unable to register class thermal_storage");
 			/* TROUBLESHOOT

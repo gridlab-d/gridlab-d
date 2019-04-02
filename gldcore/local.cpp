@@ -50,7 +50,7 @@ void locale_pop(void)
 	else
 	{
 		LOCALE *next = stack;
-		char tz[32];
+		char tz[64];
 		stack = stack->next;
 		sprintf(tz,"TZ=%s",next->tz);
 		if (putenv(tz)!=0)

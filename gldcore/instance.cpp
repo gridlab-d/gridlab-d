@@ -9,6 +9,7 @@
 #include "config.h"
 #endif
 #ifdef WIN32
+#undef _WIN32_WINNT
 #define _WIN32_WINNT 0x0400
 #include <winsock2.h>
 #include <windows.h>
@@ -508,7 +509,7 @@ STATUS instance_init(instance *inst)
 	int i;
 	int cnxtypecnt = 3;
 	struct {
-		char *word;
+		const char *word;
 		CNXTYPE type;
 	} cnxtype[] = {
 		{"mmap", CI_MMAP},

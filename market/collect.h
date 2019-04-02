@@ -45,8 +45,8 @@ private:
 	int number_of_bids_off;
 	SUPERVISORBID *supervisor_bid_on;
 	SUPERVISORBID *supervisor_bid_off;
-	void fetch_double(double **prop, char *name, OBJECT *parent);
-	void fetch_int(int **prop, char *name, OBJECT *parent);
+	void fetch_double(double **prop, const char *name, OBJECT *parent);
+	void fetch_int(int **prop, const char *name, OBJECT *parent);
 };
 
 #endif

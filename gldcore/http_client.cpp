@@ -10,7 +10,7 @@
 #include "server.h"
 
 
-HTTP* hopen(char *url, int maxlen)
+HTTP* hopen(const char *url, int maxlen)
 {
 	struct sockaddr_in serv_addr;
 	struct hostent *server;
@@ -180,7 +180,7 @@ void http_delete_result(void *result_in)
 	free(result);
 }
 
-void *http_read(char *url, int maxlen)
+void *http_read(const char *url, int maxlen)
 {
 	HTTPRESULT *result = http_new_result();
 	
@@ -229,7 +229,7 @@ void *http_read(char *url, int maxlen)
 				}
 				else
 				{
-					result->body.data = "";
+					result->body.data = const_cast<char*>("");
 					result->body.size = 0;
 				}
 				result->header.size = (int)hlen;
@@ -303,7 +303,7 @@ void http_get_options(void)
 				if ( n>1 )
 				{
 					char unit[1024]="";
-					int m = sscanf(value,"%lu%[A-Za-z]",&wget_maxsize,unit);
+					int m = sscanf(value,"%llu%[A-Za-z]",&wget_maxsize,unit);
 					if ( m==2 )
 					{
 						if ( strcmp(unit,"kB")==0 ) wget_maxsize*=1000;
@@ -360,7 +360,7 @@ time_t http_read_datetime(const char *timestamp)
 	/* WWW, dd mmm yyyy HH:MM:SS GMT */
 	struct tm dt;
 	char month[4], tzone[16];
-	char *months[]={"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
+	const char *months[]={"Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"};
 	if ( timestamp==NULL ) return 0;
 	if ( sscanf(timestamp,"%*[A-Za-z], %d %3s %d %d:%d:%d %15s", &dt.tm_mday, month, &dt.tm_year, &dt.tm_hour, &dt.tm_min, &dt.tm_sec, tzone)!=7 )
 	{

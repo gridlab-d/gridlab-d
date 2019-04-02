@@ -166,7 +166,7 @@ static void *server_routine(void *arg)
 			IN_MYCONTEXT output_verbose("accepting connection from %s on port %d",saddr, cli_addr.sin_port);
 			if ( active )
 				pthread_join(thread_id,&result);
-			if ( pthread_create(&thread_id,NULL, http_response,(void*)newsockfd)!=0 )
+			if ( pthread_create(&thread_id,NULL, http_response,reinterpret_cast<int*>(newsockfd))!=0 )
 				output_error("unable to start http response thread");
 			if (global_server_quit_on_close)
 				shutdown_now();
@@ -274,7 +274,7 @@ Retry:
 	}
 
 	/* start the new thread */
-	if (pthread_create(&startup_thread,NULL,server_routine,(void*)sockfd))
+	if (pthread_create(&startup_thread,NULL,server_routine, reinterpret_cast<int*>(sockfd)))
 	{
 		output_error("server thread startup failed: %s",strerror(GetLastError()));
 		return FAILED;
@@ -379,14 +379,14 @@ static void http_reset(HTTPCNX *http)
 #define HTTP_VERSIONNOTSUPPORTED "505 HTTPCNX Version not supported"
 
 /** Set the HTTPCNX response status code **/
-static void http_status(HTTPCNX *http, char *status)
+static void http_status(HTTPCNX *http, const char *status)
 {
-	http->status = status;
+	http->status = const_cast<char*>(status);
 }
 /** Set the HTTPCNX response message type **/
-static void http_type(HTTPCNX *http, char *type)
+static void http_type(HTTPCNX *http, const char *type)
 {
-	http->type = type;
+	http->type = const_cast<char*>(type);
 }
 /** Send the HTTPCNX response **/
 static void http_send(HTTPCNX *http)
@@ -395,7 +395,7 @@ static void http_send(HTTPCNX *http)
 	int len=0;
 	len += sprintf(header+len, "HTTP/1.1 %s", http->status?http->status:HTTP_INTERNALSERVERERROR);
 	IN_MYCONTEXT output_verbose("%s (len=%d, mime=%s)",header,http->len,http->type?http->type:"none");
-	len += sprintf(header+len, "\nContent-Length: %d\n", http->len);
+	len += sprintf(header+len, "\nContent-Length: %ld\n", http->len);
 	if (http->type && http->type[0]!='\0')
 		len += sprintf(header+len, "Content-Type: %s\n", http->type);
 	len += sprintf(header+len, "Cache-Control: no-cache\n");
@@ -458,14 +458,14 @@ static size_t http_rewrite(char *out, char *in, size_t len, size_t limit)
 }
 
 /** Write the contents of the HTTPCNX message buffer **/
-static void http_write(HTTPCNX *http, char *data, size_t len)
+static void http_write(HTTPCNX *http, const char *data, size_t len)
 {
 	char *tmp = NULL;
 	if ( http->cooked )
 	{
-		size_t need = http_rewrite(tmp,data,len,0);
+		size_t need = http_rewrite(tmp, const_cast<char*>(data),len,0);
 		tmp = (char*)malloc(need*2+1);
-		len = http_rewrite(tmp,data,len,need*2);
+		len = http_rewrite(tmp, const_cast<char*>(data),len,need*2);
 	}
 	if (http->len+len>=http->max_size)
 	{
@@ -506,8 +506,8 @@ static void http_mime(HTTPCNX *http, char *path)
 {
 	size_t len = strlen(path);
 	static struct s_map {
-		char *ext;
-		char *mime;
+		const char *ext;
+		const char *mime;
 	} map[] = {
 		{".png","image/png"},
 		{".js","text/javascript"},
@@ -524,7 +524,7 @@ static void http_mime(HTTPCNX *http, char *path)
 	{
 		if (strcmp(path+len-strlen(map[n].ext),map[n].ext)==0)
 		{
-			http->type = map[n].mime;
+			http->type = const_cast<char*>(map[n].mime);
 			return;
 		}
 	}
@@ -534,7 +534,7 @@ static void http_mime(HTTPCNX *http, char *path)
 }
 
 /** Format HTTPCNX message content **/
-static int http_format(HTTPCNX *http, char *format, ...)
+static int http_format(HTTPCNX *http, const char *format, ...)
 {
 	int len;
 	char data[65536];
@@ -640,7 +640,7 @@ int get_value_with_unit(OBJECT *obj, char *arg1, char *arg2, char *buffer, size_
 		if ( spec!=NULL )
 			*spec++ = '\0';
 		else
-			spec = "4g";
+			spec = const_cast<char*>("4g");
 
 		/* check spec for conformance */
 		if ( strchr("0123456789",spec[0])==NULL || strchr("aAfFgGeE",spec[1])==NULL )
@@ -1241,7 +1241,7 @@ int filelength(int fd)
 /** Copy the content of a file to the client
 	@returns the number of bytes sent
  **/
-int http_copy(HTTPCNX *http, char *context, char *source, int cook, size_t pos)
+int http_copy(HTTPCNX *http, const char *context, char *source, int cook, size_t pos)
 {
 	char *buffer;
 	size_t len;
@@ -1277,7 +1277,8 @@ int http_copy(HTTPCNX *http, char *context, char *source, int cook, size_t pos)
 		fclose(fp);
 		return 0;
 	}
-	if (fread(buffer,1,len,fp)<0)
+	size_t result = fread(buffer,1,len,fp);
+	if (result<0)
 	{
 		output_error("%s output '%s' read failed", context, source);
 		free(buffer);
@@ -1723,7 +1724,7 @@ int http_get_rt(HTTPCNX *http,char *uri)
 	char fullpath[1024];
 	char filename[1024];
 	size_t pos = 0;
-	if ( sscanf(uri,"%1023[^:]:%d",filename,&pos)==0 )
+	if ( sscanf(uri,"%1023[^:]:%ld",filename,&pos)==0 )
 		strncpy(filename,uri,sizeof(filename)-1);
 	if (!find_file(filename,NULL,R_OK,fullpath,sizeof(fullpath)))
 	{
@@ -1902,7 +1903,7 @@ void *http_response(void *ptr)
 	char *accept = NULL;
 	typedef enum {INTEGER,STRING} response_type;
 	struct s_map {
-		char *name;
+		const char *name;
 		response_type type;
 		void *value;
 		size_t sz;
@@ -1974,10 +1975,10 @@ void *http_response(void *ptr)
 		}
 		else {
 			static struct s_path_map {
-				char *path;
+				const char *path;
 				int (*request)(HTTPCNX*,char*);
-				char *success;
-				char *failure;
+				const char *success;
+				const char *failure;
 			} map[] = {
 				/* this is the map of recognize request types */
 				{"/control/",	http_control_request,	HTTP_ACCEPTED, HTTP_NOTFOUND},

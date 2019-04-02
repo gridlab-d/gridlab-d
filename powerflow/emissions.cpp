@@ -33,9 +33,9 @@ emissions::emissions(MODULE *mod) : powerflow_object(mod)
 	if(oclass == NULL)
 	{
 		pclass = powerflow_object::oclass;
-		oclass = gl_register_class(mod,"emissions",sizeof(emissions),PC_POSTTOPDOWN|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,const_cast<char*>("emissions"),sizeof(emissions),PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if(oclass == NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
+			GL_THROW(const_cast<char*>("unable to register object class implemented by %s"),__FILE__);
 		
 		if(gl_publish_variable(oclass,
 
@@ -154,7 +154,7 @@ emissions::emissions(MODULE *mod) : powerflow_object(mod)
 			PT_double, "Region", PADDR(Region),
 
 			PT_double,"cycle_interval[s]", PADDR(cycle_interval),
-			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+			NULL) < 1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
     }
 }
 
@@ -308,15 +308,15 @@ int emissions::init(OBJECT *parent)
 	if (parent!=NULL)
 	{
 		//Make sure our parent is a meter
-		if (gl_object_isa(parent,"meter","powerflow"))
+		if (gl_object_isa(parent,const_cast<char*>("meter"),const_cast<char*>("powerflow")))
 		{
 			//Map the parent property
-			parent_meter_total_power = new gld_property(parent,"measured_power");
+			parent_meter_total_power = new gld_property(parent,const_cast<char*>("measured_power"));
 
 			//Make sure it worked
-			if ((parent_meter_total_power->is_valid() != true) || (parent_meter_total_power->is_complex() != true))
+			if (!parent_meter_total_power->is_valid() || !parent_meter_total_power->is_complex())
 			{
-				GL_THROW("emissions:%d - %s - Unable to map parent object's power value",obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW(const_cast<char*>("emissions:%d - %s - Unable to map parent object's power value"),obj->id,(obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				While attempting to map the parent meter's measured_power field, the emissions object encountered an error.  Please
 				try again.  If the error persists, please submit your code and a bug report via the issues tracker.
@@ -325,7 +325,7 @@ int emissions::init(OBJECT *parent)
 		}
 		else
 		{
-			GL_THROW("emissions:%s must be parented to a three-phase meter to work!",obj->name);
+			GL_THROW(const_cast<char*>("emissions:%s must be parented to a three-phase meter to work!"),obj->name);
 			/*  TROUBLESHOOT
 			The emissions object requires a three-phase meter object to properly work.  Please parent
 			the emissions object to such a meter and try again.
@@ -334,7 +334,7 @@ int emissions::init(OBJECT *parent)
 	}
 	else
 	{
-		GL_THROW("emissions:%s must be parented to a three-phase meter to work!",obj->name);
+		GL_THROW(const_cast<char*>("emissions:%s must be parented to a three-phase meter to work!"),obj->name);
 		//Use same error as above, still relevant
 	}
 
@@ -345,7 +345,7 @@ int emissions::init(OBJECT *parent)
 	//Make sure it is valid
 	if (cycle_interval <= 0)
 	{
-		GL_THROW("emissions:%s must have a positive cycle_interval time",obj->name);
+		GL_THROW(const_cast<char*>("emissions:%s must have a positive cycle_interval time"),obj->name);
 		/*  TROUBLESHOOT
 		The calculation cycle interval for the emissions object must be a non-zero, positive
 		value.  Please specify one and try again.

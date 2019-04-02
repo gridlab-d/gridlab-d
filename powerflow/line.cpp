@@ -58,7 +58,7 @@ line::line(MODULE *mod) : link_object(mod) {
 	{
 		pclass = link_object::oclass;
 		
-		line_class = oclass = gl_register_class(mod,"line",sizeof(line),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
+		line_class = oclass = gl_register_class(mod,const_cast<char*>("line"),sizeof(line),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class line";
 		else
@@ -68,17 +68,17 @@ line::line(MODULE *mod) : link_object(mod) {
 			PT_INHERIT, "link",
 			PT_object, "configuration",PADDR(configuration),
 			PT_double, "length[ft]",PADDR(length),
-			NULL) < 1) GL_THROW("unable to publish line properties in %s",__FILE__);
+			NULL) < 1) GL_THROW(const_cast<char*>("unable to publish line properties in %s"),__FILE__);
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
-			GL_THROW("Unable to publish line deltamode function");
+		if (gl_publish_function(oclass,	const_cast<char*>("interupdate_pwr_object"), (FUNCTIONADDR)interupdate_link)==NULL)
+			GL_THROW(const_cast<char*>("Unable to publish line deltamode function"));
 
 		//Publish restoration-related function (current update)
-		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
-			GL_THROW("Unable to publish line external power calculation function");
-		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
-			GL_THROW("Unable to publish line external power limit calculation function");
+		if (gl_publish_function(oclass,	const_cast<char*>("update_power_pwr_object"), (FUNCTIONADDR)updatepowercalc_link)==NULL)
+			GL_THROW(const_cast<char*>("Unable to publish line external power calculation function"));
+		if (gl_publish_function(oclass,	const_cast<char*>("check_limits_pwr_object"), (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+			GL_THROW(const_cast<char*>("Unable to publish line external power limit calculation function"));
 	}
 }
 
@@ -101,12 +101,12 @@ int line::init(OBJECT *parent)
 	int result = link_object::init(parent);
 
 	//Map the nodes nominal_voltage values
-	fNode_nominal = new gld_property(from,"nominal_voltage");
+	fNode_nominal = new gld_property(from,const_cast<char*>("nominal_voltage"));
 
 	//Check it
-	if ((fNode_nominal->is_valid() != true) || (fNode_nominal->is_double() != true))
+	if (!fNode_nominal->is_valid() || !fNode_nominal->is_double())
 	{
-		GL_THROW("line:%d - %s - Unable to map nominal_voltage from connected node!",obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW(const_cast<char*>("line:%d - %s - Unable to map nominal_voltage from connected node!"),obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBESHOOT
 		While attempting to map the nominal_voltage property of the from or to node on a line, an error occurred.
 		Please try again.  If the error persists, please submit your code and a bug report via the issue tracking system.
@@ -114,12 +114,12 @@ int line::init(OBJECT *parent)
 	}
 
 	//Get the other one
-	tNode_nominal = new gld_property(to,"nominal_voltage");
+	tNode_nominal = new gld_property(to,const_cast<char*>("nominal_voltage"));
 
 	//Check it
-	if ((tNode_nominal->is_valid() != true) || (tNode_nominal->is_double() != true))
+	if (!tNode_nominal->is_valid() || !tNode_nominal->is_double())
 	{
-		GL_THROW("line:%d - %s - Unable to map nominal_voltage from connected node!",obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW(const_cast<char*>("line:%d - %s - Unable to map nominal_voltage from connected node!"),obj->id,(obj->name ? obj->name : "Unnamed"));
 		//Defined above
 	}
 
@@ -204,7 +204,7 @@ void line::load_matrix_based_configuration(complex Zabc_mat[3][3], complex Yabc_
 	// the user and zero out Yabc_mat as otherwise the powerflow engine will give quirky results.
 	if (config->capacitance11 != 0 || config->capacitance22 != 0 || config->capacitance33 != 0)
 	{
-		if (use_line_cap == false)
+		if (!use_line_cap)
 		{
 			gl_warning("Shunt capacitance of line:%s specified without setting powerflow::line_capacitance = TRUE. Shunt capacitance will be ignored.",OBJECTHDR(this)->name);
 

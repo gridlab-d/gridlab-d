@@ -1194,7 +1194,7 @@ typedef struct s_callbacks {
 		int (*convert_from_timestamp)(TIMESTAMP ts, char *buffer, int size);
 		int (*convert_from_deltatime_timestamp)(double ts_v, char *buffer, int size);
 	} time;
-	int (*unit_convert)(char *from, char *to, double *value);
+	int (*unit_convert)(const char *from, const char *to, double *value);
 	int (*unit_convert_ex)(UNIT *pFrom, UNIT *pTo, double *pValue);
 	UNIT *(*unit_find)(char *unit_name);
 	struct {
@@ -1214,7 +1214,7 @@ typedef struct s_callbacks {
 		void (*write)(unsigned int *);
 	} lock, unlock;
 	struct {
-		char *(*find_file)(char *name, char *path, int mode);
+		char *(*find_file)(const char *name, char *path, int mode);
 	} file;
 	struct s_objvar_struct {
 		bool *(*bool_var)(OBJECT *obj, PROPERTY *prop);
@@ -1475,7 +1475,7 @@ inline TIMESTAMP gl_mkdatetime(short year, short month, short day, short hour=0,
 inline int gl_unit_convert(char *from, char *to, double &value) { return callback->unit_convert(from, to, &value);};
 inline int gl_unit_convert(UNIT *from, UNIT *to, double &value) { return callback->unit_convert_ex(from, to, &value);};
 inline UNIT *gl_unit_find(char *name) { return callback->unit_find(name);};
-inline char *gl_find_file(char *name, char *path, int mode) { return callback->file.find_file(name,path,mode); };
+inline char *gl_find_file(const char *name, char *path, int mode) { return callback->file.find_file(name,path,mode); };
 
 #define gl_printtime (*callback->time.convert_from_timestamp)
 #define gl_printtimedelta (*callback->time.convert_from_deltatime_timestamp)

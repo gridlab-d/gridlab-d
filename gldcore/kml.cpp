@@ -145,7 +145,7 @@ int kml_dump(char *filename)
 
 	/* handle default filename */
 	if (filename==NULL)
-		filename="gridlabd.kml";
+		filename=const_cast<char*>("gridlabd.kml");
 
 	/* find basename */
 	b = strcspn(filename,"/\\:");

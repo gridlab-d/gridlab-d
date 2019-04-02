@@ -22,7 +22,20 @@ native *native::defaults = NULL;
 
 native::VARMAPINDEX native::get_varmapindex(const char *name)
 {
-	static char *varmapname[] = {"","allow","forbid","init","precommit","presync","sync","postsync","commit","prenotify","postnotify","finalize","plc","term"};
+	static char *varmapname[] = {const_cast<char*>(""),
+							  const_cast<char*>("allow"),
+							  const_cast<char*>("forbid"),
+							  const_cast<char*>("init"),
+							  const_cast<char*>("precommit"),
+							  const_cast<char*>("presync"),
+							  const_cast<char*>("sync"),
+							  const_cast<char*>("postsync"),
+							  const_cast<char*>("commit"),
+							  const_cast<char*>("prenotify"),
+							  const_cast<char*>("postnotify"),
+							  const_cast<char*>("finalize"),
+							  const_cast<char*>("plc"),
+							  const_cast<char*>("term")};
 	VARMAPINDEX n;
 	for ( n=ALLOW ; n<_NUMVMI ; n=(VARMAPINDEX)((int)n+1) )
 	{
@@ -92,7 +105,7 @@ native::native(MODULE *module)
 	if (oclass==NULL)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
-		oclass = gld_class::create(module,"native",sizeof(native),PC_AUTOLOCK|PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_OBSERVER);
+		oclass = gld_class::create(module,const_cast<char*>("native"),sizeof(native),PC_AUTOLOCK|PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_OBSERVER);
 		if (oclass==NULL)
 			throw "connection/native::native(MODULE*): unable to register class connection:native";
 		else
@@ -117,13 +130,13 @@ native::native(MODULE *module)
 			NULL)<1)
 				throw "connection/native::native(MODULE*): unable to publish properties of connection:native";
 
-		if ( !gl_publish_loadmethod(oclass, "link", reinterpret_cast<int (*)(void *, char *)>(loadmethod_native_link)) )
+		if ( !gl_publish_loadmethod(oclass, const_cast<char*>("link"), reinterpret_cast<int (*)(void *, char *)>(loadmethod_native_link)) )
 			throw "connection/native::native(MODULE*): unable to publish link method of connection:native";
-		if ( !gl_publish_loadmethod(oclass, "option",
+		if ( !gl_publish_loadmethod(oclass, const_cast<char*>("option"),
 									reinterpret_cast<int (*)(void *, char *)>(loadmethod_native_option)) )
-			throw "connection/native::native(MODULE*): unable to publish option method of connection:native";
-		mode = NULL;
-		transport = NULL;
+			throw std::runtime_error("connection/native::native(MODULE*): unable to publish option method of connection:native");
+		mode = 0;
+		transport = 0;
 		memset(map,0,sizeof(map));
 	}
 }
@@ -242,7 +255,7 @@ int native::option(char *target, char *command)
 
 int native::precommit(TIMESTAMP t, TRANSLATOR *xlate)
 {
-	if ( get_connection()->update(map[PRECOMMIT],"precommit",xlate)<0 )
+	if ( get_connection()->update(map[PRECOMMIT],const_cast<char*>("precommit"),xlate)<0 )
 	{
 		gl_error("connection/native::precommit(TIMESTAMP t=%lld, TRANSLATOR *xltr=%p): update failed", t,xlate);
 		return 0;
@@ -253,7 +266,7 @@ int native::precommit(TIMESTAMP t, TRANSLATOR *xlate)
 
 TIMESTAMP native::presync(TIMESTAMP t, TRANSLATOR *xlate)
 {
-	if ( get_connection()->update(map[PRESYNC],"presync",xlate)<0 ) 
+	if ( get_connection()->update(map[PRESYNC],const_cast<char*>("presync"),xlate)<0 )
 	{
 		gl_error("connection/native::presync(TIMESTAMP t=%lld, TRANSLATOR *xltr=%p): update failed", t,xlate);
 		return TS_ZERO;
@@ -264,7 +277,7 @@ TIMESTAMP native::presync(TIMESTAMP t, TRANSLATOR *xlate)
 
 TIMESTAMP native::sync(TIMESTAMP t, TRANSLATOR *xlate)
 {
-	if ( get_connection()->update(map[SYNC],"sync",xlate)<0 ) 
+	if ( get_connection()->update(map[SYNC],const_cast<char*>("sync"),xlate)<0 )
 	{
 		gl_error("connection/native::sync(TIMESTAMP t=%lld, TRANSLATOR *xltr=%p): update failed", t,xlate);
 		return TS_ZERO;
@@ -275,7 +288,7 @@ TIMESTAMP native::sync(TIMESTAMP t, TRANSLATOR *xlate)
 
 TIMESTAMP native::postsync(TIMESTAMP t, TRANSLATOR *xlate)
 {
-	if ( get_connection()->update(map[POSTSYNC],"postsync",xlate)<0 )
+	if ( get_connection()->update(map[POSTSYNC],const_cast<char*>("postsync"),xlate)<0 )
 	{
 		gl_error("connection/native::postsync(TIMESTAMP t=%lld, TRANSLATOR *xltr=%p): update failed", t,xlate);
 		return TS_ZERO;
@@ -286,7 +299,7 @@ TIMESTAMP native::postsync(TIMESTAMP t, TRANSLATOR *xlate)
 
 TIMESTAMP native::commit(TIMESTAMP t0, TIMESTAMP t1, TRANSLATOR *xlate)
 {
-	if ( get_connection()->update(map[COMMIT],"commit",xlate)<0 )
+	if ( get_connection()->update(map[COMMIT],const_cast<char*>("commit"),xlate)<0 )
 	{
 		gl_error("connection/native::commit(TIMESTAMP t0=%lld, TIMESTAMP t1=%lld, TRANSLATOR *xltr=%p): update failed", t0,t1,xlate);
 		return TS_ZERO;
@@ -297,7 +310,7 @@ TIMESTAMP native::commit(TIMESTAMP t0, TIMESTAMP t1, TRANSLATOR *xlate)
 
 int native::prenotify(PROPERTY *p,char *v, TRANSLATOR *xlate)
 {
-	if ( get_connection()->update(map[PRENOTIFY],"prenotify",xlate)<0 )
+	if ( get_connection()->update(map[PRENOTIFY],const_cast<char*>("prenotify"),xlate)<0 )
 	{
 		gl_error("connection/native::prenotify(PROPERTY *p={name='%s'}, char *v='%s', TRANSLATOR *xltr=%p): update failed", p->name,v,xlate);
 		return 0;
@@ -308,7 +321,7 @@ int native::prenotify(PROPERTY *p,char *v, TRANSLATOR *xlate)
 
 int native::postnotify(PROPERTY *p,char *v, TRANSLATOR *xlate)
 {
-	if ( get_connection()->update(map[POSTNOTIFY],"postnotify",xlate)<0 )
+	if ( get_connection()->update(map[POSTNOTIFY],const_cast<char*>("postnotify"),xlate)<0 )
 	{
 		gl_error("connection/native::postnotify(PROPERTY *p={name='%s'}, char *v='%s', TRANSLATOR *xltr=%p): update failed", p->name,v,xlate);
 		return 0;
@@ -319,7 +332,7 @@ int native::postnotify(PROPERTY *p,char *v, TRANSLATOR *xlate)
 
 int native::finalize(TRANSLATOR *xlate)
 {
-	if ( get_connection()->update(map[FINALIZE],"finalize",xlate)<0 )
+	if ( get_connection()->update(map[FINALIZE],const_cast<char*>("finalize"),xlate)<0 )
 	{
 		gl_error("connection/native::finalize(TRANSLATOR *xltr=%p): update failed", xlate);
 		return 0;
@@ -330,7 +343,7 @@ int native::finalize(TRANSLATOR *xlate)
 
 TIMESTAMP native::plc(TIMESTAMP t, TRANSLATOR *xlate)
 {
-	if ( get_connection()->update(map[PLC],"plc",xlate)<0 )
+	if ( get_connection()->update(map[PLC],const_cast<char*>("plc"),xlate)<0 )
 	{
 		gl_error("connection/native::plc(TIMESTAMP t=%lld, TRANSLATOR *xltr=%p): update failed", t,xlate);
 		return 0;
@@ -341,7 +354,7 @@ TIMESTAMP native::plc(TIMESTAMP t, TRANSLATOR *xlate)
 
 void native::term(TIMESTAMP t, TRANSLATOR *xlate)
 {
-	if ( get_connection()->update(map[TERM],"term",xlate)<0 )
+	if ( get_connection()->update(map[TERM],const_cast<char*>("term"),xlate)<0 )
 		gl_error("connection/native::sync(TIMESTAMP t=%lld, TRANSLATOR *xltr=%p): update failed", t,xlate);
 }
 //TODO declare this function.
@@ -373,6 +386,7 @@ static char unhex(char h)
 		return h-'A'+10;
 	else if ( h>='a' && h<='f' )
 		return h-'a'+10;
+	return h-' ';
 }
 static size_t convert_to_hex(char *out, size_t max, const char *in, size_t len)
 {
@@ -392,9 +406,9 @@ static size_t convert_to_hex(char *out, size_t max, const char *in, size_t len)
 static size_t convert_from_hex(void *buf, size_t len, const char *hex, size_t hexlen)
 {
 	char *p = (char*)buf;
-	char lo = NULL;
-	char hi = NULL;
-	char c = NULL;
+	char lo = 0;
+	char hi = 0;
+	char c = 0;
 	size_t n = 0;
 	for(n = 0; n < hexlen && *hex != '\0'; n += 2)
 	{

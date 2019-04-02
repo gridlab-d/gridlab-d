@@ -13,6 +13,7 @@
 /* simulate needed curses functions in Windows */
 #ifdef WIN32
 #include <windows.h>
+#undef HAVE_CURSES
 #define HAVE_CURSES
 static HANDLE console = NULL;
 static HANDLE keyboard = NULL;

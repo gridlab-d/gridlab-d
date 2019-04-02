@@ -245,7 +245,17 @@ inline void GL_THROW(char *format, ...)
 	va_start(ptr,format);
 	vsprintf(buffer,format,ptr);
 	va_end(ptr);
-	throw (const char*) buffer;
+	throw std::runtime_error(buffer);
+}
+
+inline void GL_THROW(const char *format, ...)
+{
+	static char buffer[1024];
+	va_list ptr;
+	va_start(ptr,format);
+	vsprintf(buffer,format,ptr);
+	va_end(ptr);
+	throw std::runtime_error(buffer);
 }
 #else
 #define GL_THROW (*callback->exception.throw_exception)
@@ -422,8 +432,8 @@ inline int gl_module_depends(char *name, /**< module name */
  **/
 #ifdef __cplusplus
 inline bool gl_object_isa(OBJECT *obj, /**< object to test */
-						  char *type,
-						  char *modname=NULL) /**< type to test */
+						  const char *type,
+						  const char *modname=NULL) /**< type to test */
 {	bool rv = (*callback->object_isa)(obj,type)!=0;
 	bool mv = modname ? obj->oclass->module == (*callback->module_find)(modname) : true;
 	return (rv && mv);}
@@ -443,9 +453,9 @@ inline bool gl_object_isa(OBJECT *obj, /**< object to test */
  **/
 #ifdef __cplusplus
 inline FUNCTION *gl_publish_function(CLASS *oclass, /**< class to which function belongs */
-									 FUNCTIONNAME functionname, /**< name of function */
+									 const FUNCTIONNAME functionname, /**< name of function */
 									 FUNCTIONADDR call) /**< address of function entry */
-{ return (*callback->function.define)(oclass, functionname, call);}
+{ return (*callback->function.define)(oclass, const_cast<char*>(functionname), call);}
 inline FUNCTIONADDR gl_get_function(OBJECT *obj, const char *name)
 { return obj ? (*callback->function.get)(obj->oclass->name, const_cast<char *>(name)) : NULL;}
 #else
@@ -530,9 +540,9 @@ inline int gl_set_rank(OBJECT *obj, /**< object to change rank */
  **/
 #ifdef __cplusplus
 inline PROPERTY *gl_get_property(OBJECT *obj, /**< a pointer to the object */
-								 PROPERTYNAME name, /**< the name of the property */
+								 const PROPERTYNAME name, /**< the name of the property */
 								 PROPERTYSTRUCT *part=NULL) /**< part info */
-{ return (*callback->properties.get_property)(obj,name,part); }
+{ return (*callback->properties.get_property)(obj, const_cast<char*>(name),part); }
 #else
 #define gl_get_property (*callback->properties.get_property)
 #endif
@@ -1008,13 +1018,13 @@ inline char* gl_name(OBJECT *my, char *buffer, size_t size)
 
 /** Find a schedule 
  **/
-inline SCHEDULE *gl_schedule_find(char *name)
+inline SCHEDULE *gl_schedule_find(const char *name)
 {
 	return callback->schedule.find(name);
 }
 /** Create a schedule
  **/
-inline SCHEDULE *gl_schedule_create(char *name, char *definition)
+inline SCHEDULE *gl_schedule_create(const char *name, const char *definition)
 {
 	return callback->schedule.create(name,definition);
 }
@@ -1818,7 +1828,7 @@ public: // iterators
 #define GL_ATOMIC(T,X) protected: T X; public: \
 	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
 	inline T get_##X(void) { return X; }; \
-	inline gld_property get_##X##_property(void) { return gld_property(my(),#X); }; \
+	inline gld_property get_##X##_property(void) { return gld_property(my(),strdup(#X)); }; \
 	inline T get_##X(gld_rlock&) { return X; }; \
 	inline T get_##X(gld_wlock&) { return X; }; \
 	inline void set_##X(T p) { X=p; }; \
@@ -1830,7 +1840,7 @@ public: // iterators
 #define GL_STRUCT(T,X) protected: T X; public: \
 	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
 	inline T get_##X(void) { gld_rlock _lock(my()); return X; }; \
-	inline gld_property get_##X##_property(void) { return gld_property(my(),#X); }; \
+	inline gld_property get_##X##_property(void) { return gld_property(my(),strdup(#X)); }; \
 	inline T get_##X(gld_rlock&) { return X; }; \
 	inline T get_##X(gld_wlock&) { return X; }; \
 	inline void set_##X(T p) { gld_wlock _lock(my()); X=p; }; \
@@ -1842,7 +1852,7 @@ public: // iterators
 #define GL_STRING(T,X) 	protected: T X; public: \
 	static inline size_t get_##X##_offset(void) { return (char*)&(defaults->X)-(char*)defaults; }; \
 	inline char* get_##X(void) { gld_rlock _lock(my()); return X.get_string(); }; \
-	inline gld_property get_##X##_property(void) { return gld_property(my(),#X); }; \
+	inline gld_property get_##X##_property(void) { return gld_property(my(),strdup(#X)); }; \
 	inline char* get_##X(gld_rlock&) { return X.get_string(); }; \
 	inline char* get_##X(gld_wlock&) { return X.get_string(); }; \
 	inline char get_##X(size_t n) { gld_rlock _lock(my()); return (char)X; }; \
@@ -1959,7 +1969,7 @@ protected: // special functions
 
 public: // member lookup functions
 	inline PROPERTY* get_property(char *name, PROPERTYSTRUCT *pstruct=NULL) { return callback->properties.get_property(my(),name,pstruct); };
-	inline FUNCTIONADDR get_function(char *name) { return (*callback->function.get)(my()->oclass->name,name); };
+	inline FUNCTIONADDR get_function(const char *name) { return (*callback->function.get)(my()->oclass->name,name); };
 
 public: // external accessors
 	template <class T> inline void getp(PROPERTY &prop, T &value) { rlock(); value=*(T*)(GETADDR(my(),&prop)); wunlock(); };
@@ -2012,20 +2022,20 @@ private: // data
 
 public: // constructors/casts
 	inline gld_property(void) : obj(NULL), pstruct(nullpstruct) {};
-	inline gld_property(gld_object *o, char *n) : obj(o->my()), pstruct(nullpstruct)  
+	inline gld_property(gld_object *o, const char *n) : obj(o->my()), pstruct(nullpstruct)
 	{ 
 		if (o) 
-			callback->properties.get_property(o->my(),n,&pstruct); 
+			callback->properties.get_property(o->my(), const_cast<char*>(n),&pstruct);
 		else 
 		{
 			GLOBALVAR *v=callback->global.find(n); 
 			pstruct.prop= (v?v->prop:NULL);
 		} 
 	};
-	inline gld_property(OBJECT *o, char *n) : obj(o), pstruct(nullpstruct)  
+	inline gld_property(OBJECT *o, const char *n) : obj(o), pstruct(nullpstruct)
 	{ 
 		if (o) 
-			callback->properties.get_property(o,n,&pstruct); 
+			callback->properties.get_property(o,const_cast<char*>(n),&pstruct);
 		else 
 		{
 			GLOBALVAR *v=callback->global.find(n); 
@@ -2088,7 +2098,7 @@ public: // read accessors
 	inline gld_unit* get_unit(void) { return (gld_unit*)pstruct.prop->unit; };
 	inline void* get_addr(void) { return obj?((void*)((char*)(obj+1)+(unsigned int64)(pstruct.prop->addr))):pstruct.prop->addr; };
 	inline gld_keyword* get_first_keyword(void) { return (gld_keyword*)pstruct.prop->keywords; };
-	inline char* get_description(void) { return pstruct.prop->description; };
+	inline const char* get_description(void) { return pstruct.prop->description; };
 	inline PROPERTYFLAGS get_flags(void) { return pstruct.prop->flags; };
 	inline int to_string(char *buffer, int size) { return callback->convert.property_to_string(pstruct.prop,get_addr(),buffer,size); };
 	inline gld_string get_string(const size_t sz=1024)
@@ -2151,7 +2161,7 @@ public: // special operations
 	inline bool compare(char *op, char *a, char *b=NULL, char *p=NULL) 
 	{ 
 		PROPERTYCOMPAREOP n = callback->properties.get_compare_op(pstruct.prop->ptype,op); 
-		if (n==TCOP_ERR) throw "invalid property compare operation"; 
+		if (n==TCOP_ERR) throw "invalid property compare operation";
 		return compare((enumeration)n,a,b,p); 
 	};
 	inline bool compare(enumeration op, char *a, char *b=NULL) 
@@ -2338,11 +2348,12 @@ EXPORT int do_kill(void*);
 EXPORT int gld_major=MAJOR, gld_minor=MINOR; 
 BOOL APIENTRY DllMain(HANDLE h, DWORD r) { if (r==DLL_PROCESS_DETACH) do_kill(h); return TRUE; }
 #else // !WIN32
-CDECL int gld_major=MAJOR, gld_minor=MINOR; 
+//TODO: Review removal of CDECL for these variables
+int gld_major=MAJOR, gld_minor=MINOR;
 CDECL int dllinit() __attribute__((constructor));
 CDECL int dllkill() __attribute__((destructor));
 CDECL int dllinit() { return 0; }
-CDECL int dllkill() { do_kill(NULL); }
+CDECL int dllkill() { do_kill(NULL); return 0;}
 #endif // !WIN32
 #elif defined CONSOLE
 #ifdef WIN32
@@ -2474,8 +2485,8 @@ class glsolver {
 public:
 	int (*init)(void*);
 	int (*solve)(void*);
-	int (*set)(char*,...);
-	int (*get)(char*,...);
+	int (*set)(const char*,...);
+	int (*get)(const char*,...);
 private:
 	inline void exception(const char *fmt,...)
 	{
@@ -2489,7 +2500,7 @@ private:
 		throw (const char*)buffer;
 	};
 public:
-	inline glsolver(char *name, char *lib="glsolvers" DLEXT)
+	inline glsolver(const char *name, const char *lib="glsolvers" DLEXT)
 	{
 		char path[1024];
 		errno = 0;
@@ -2500,10 +2511,9 @@ public:
 			if ( handle==NULL )
 				exception("glsolver(char *name='%s'): load of '%s' failed",name,path);
 			else
-			{
-				char fname[64];
+			{char fname[64];
 				struct {
-					char *part;
+					const char *part;
 					void **func;
 				} map[] = {
 					{"init", (void**)&init},

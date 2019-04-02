@@ -9,9 +9,9 @@ load_tracker::load_tracker(MODULE *mod)
 	if (oclass==NULL)
 	{
 		// register the class definition
-		oclass = gl_register_class(mod,"load_tracker",sizeof(load_tracker),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,const_cast<char*>("load_tracker"),sizeof(load_tracker),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
+			GL_THROW(const_cast<char*>("unable to register object class implemented by %s"),__FILE__);
 		else
 			oclass->trl = TRL_PROVEN;
 
@@ -30,7 +30,7 @@ load_tracker::load_tracker(MODULE *mod)
 			PT_double, "damping",PADDR(damping),PT_DESCRIPTION,"load setpoint to track to",
 			PT_double, "output", PADDR(output),PT_DESCRIPTION,"output scaling value",
 			PT_double, "feedback", PADDR(feedback),PT_DESCRIPTION,"the feedback signal, for reference purposes",
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			NULL)<1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
 	}
 }
 
@@ -52,7 +52,7 @@ int load_tracker::init(OBJECT *parent)
 	// Make sure we have a target object
 	if (target==NULL)
 	{
-		GL_THROW("Target object not set");
+		GL_THROW(const_cast<char*>("Target object not set"));
 		/* TROUBLESHOOT
 		Please specify the name of the target object to be monitored.
 		*/
@@ -62,7 +62,7 @@ int load_tracker::init(OBJECT *parent)
 	PROPERTY* target_property = gl_get_property(target,target_prop.get_string());
 	if (target_property==NULL)
 	{
-		GL_THROW("Unable to find property \"%s\" in object %s", target_prop.get_string(), target->name);
+		GL_THROW(const_cast<char*>("Unable to find property \"%s\" in object %s"), target_prop.get_string(), target->name);
 		/* TROUBLESHOOT
 		Please specify an existing property of the target object to be monitored.
 		*/
@@ -78,7 +78,7 @@ int load_tracker::init(OBJECT *parent)
 	case PT_int64:
 		break;
 	default:
-		GL_THROW("Unsupported property type.  Supported types are complex, double and integer");
+		GL_THROW(const_cast<char*>("Unsupported property type.  Supported types are complex, double and integer"));
 		/* TROUBLESHOOT
 		Please specify a property whose type is either a double, complex, int16, int32, or an int64.
 		*/
@@ -108,7 +108,7 @@ int load_tracker::init(OBJECT *parent)
 	// The VALUEPOINTER is a union of pointers so we only need to check one of them....
 	if (pointer.d == NULL)
 	{
-		GL_THROW("Unable to bind to property \"%s\" in object %s", target_prop.get_string(), target->name);
+		GL_THROW(const_cast<char*>("Unable to bind to property \"%s\" in object %s"), target_prop.get_string(), target->name);
 		/* TROUBLESHOOT
 		The property given does not exist for the given property object. Please specify an existing property of the target object.
 		*/
@@ -117,7 +117,7 @@ int load_tracker::init(OBJECT *parent)
 	// Make sure we have a full_scale value
 	if (full_scale == 0.0)
 	{
-		GL_THROW("The full_scale property must be non-zero");
+		GL_THROW(const_cast<char*>("The full_scale property must be non-zero"));
 		/* TROUBLESHOOT
 		Please specify full_scale as a non-zero value.
 		*/
@@ -126,7 +126,7 @@ int load_tracker::init(OBJECT *parent)
 	// Check deadbank is OK
 	if (deadband < 1.0 || deadband > 50.0)
 	{
-		GL_THROW("Deadband must be in the range 1% to 50%");
+		GL_THROW(const_cast<char*>("Deadband must be in the range 1% to 50%"));
 		/* TROUBLESHOOT
 		Please specify deadband as a value between 1 and 50.
 		*/
@@ -135,7 +135,7 @@ int load_tracker::init(OBJECT *parent)
 	// Check damping is OK
 	if (damping < 0.0)
 	{
-		GL_THROW("Damping must greater than or equal to 0.0");
+		GL_THROW(const_cast<char*>("Damping must greater than or equal to 0.0"));
 		/* TROUBLESHOOT
 		Please specify damping as a value of 0 or greater.
 		*/

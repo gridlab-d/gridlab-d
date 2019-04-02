@@ -16,6 +16,7 @@
 #include <string.h>
 
 #ifdef WIN32
+#undef _WIN32_WINNT
 #define _WIN32_WINNT 0x0400
 #include <windows.h>
 #endif
@@ -32,7 +33,7 @@
 
 
 static int mti_debug_mode = 0;
-int mti_debug(MTI *mti, char *fmt, ...)
+int mti_debug(MTI *mti, const char *fmt, ...)
 {
 	if ( mti_debug_mode )
 	{

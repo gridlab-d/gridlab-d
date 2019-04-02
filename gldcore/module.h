@@ -59,7 +59,7 @@ extern "C" {
 #endif
 	int module_get_exe_path(char *buf, int len);
 	int module_get_path(char *buf, int len, MODULE *mod);
-	MODULE *module_find(char *module_name);
+	MODULE *module_find(const char *module_name);
 	MODULE *module_load(const char *file, int argc, char *argv[]);
 	void module_list(void);
 	size_t module_getcount(void);
@@ -100,7 +100,7 @@ extern "C" {
 	int module_load_function_list(char *libname, char *fnclist);
 	TRANSFORMFUNCTION module_get_transform_function(const char *function);
 
-	int module_compile(char *name, char *code, int flags, char *prefix, char *file, int line);
+	int module_compile(const char *name, const char *code, int flags, const char *prefix, const char *file, int line);
 	void module_profiles(void);
 	CALLBACKS *module_callbacks(void);
 	void module_termall(void);

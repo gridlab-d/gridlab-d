@@ -23,8 +23,8 @@ typedef struct s_class_list CLASS;
 #ifndef FADDR
 #define FADDR
 #ifdef __MINGW32__
-#warning Temporary hard coded __int64
-typedef __int64 (*FUNCTIONADDR)(void*,...); /** the entry point of a module function */
+//#warning Temporary hard coded __int64
+typedef int64 (*FUNCTIONADDR)(void*,...); /** the entry point of a module function */
 #else 
 typedef int64 (*FUNCTIONADDR)(void*,...); /** the entry point of a module function */
 #endif
@@ -88,9 +88,11 @@ public:
     friend std::ostream& operator<< <>(std::ostream& out, const charbuf& buffer);
 };
 
-
+typedef charbuf<2049> char2048;
 typedef charbuf<1025> char1024;
 typedef charbuf<257> char256;
+typedef charbuf<129> char128;
+typedef charbuf<65> char64;
 typedef charbuf<33> char32;
 typedef charbuf<9> char8;
 #else
@@ -648,7 +650,7 @@ private:
 	inline bool tst_flag(const size_t r, size_t c, const unsigned char b) const {return (f[r*m+c]&b)==b;};
 	complex &my(const size_t r, const size_t c)
 	{
-		if ( x[r][c]==NULL ) x[r][c] = new complex;
+		if ( x[r][c]== nullptr) x[r][c] = new complex;
 		return (*x[r][c]);
 	};
 public:
@@ -906,7 +908,9 @@ public:
 		for ( r=r1 ; r<=n ; r++ )
 		{
 			for ( c=c1 ; c<=m ; c++ )
-				fprintf(stderr," %8g", my(r,c));
+				//TODO: Review this, what information is this supposed so print to stderr?
+				fprintf(stderr,"Error at complex item [%zd][%zd]", r, c); //this is a replacement for the below
+				//fprintf(stderr," %8g", my(r,c));
 			fprintf(stderr,"\n");
 		}
 		fprintf(stderr," }\n");
@@ -1210,7 +1214,7 @@ typedef struct s_property_map {
 	PROPERTYADDR addr; /**< property location, offset from OBJECT header */
 	DELEGATEDTYPE *delegation; /**< property delegation, if any; \p NULL if none */
 	KEYWORD *keywords; /**< keyword list, if any; \p NULL if none (only for set and enumeration types)*/
-	char *description; /**< description of property */
+	const char *description; /**< description of property */
 	struct s_property_map *next; /**< next property in property list */
 	PROPERTYFLAGS flags; /**< property flags (e.g., PF_RECALC) */
 	FUNCTIONADDR notify;
@@ -1243,8 +1247,8 @@ typedef struct s_property_specs { /**<	the property type conversion specificatio
 								It is critical that the order of entries in this list must match 
 								the order of entries in the enumeration #PROPERTYTYPE 
 						  **/
-	char *name; /**< the property type name */
-	char *xsdname;
+	const char *name; /**< the property type name */
+	const char *xsdname;
 	unsigned int size; /**< the size of 1 instance */
 	unsigned int csize; /**< the minimum size of a converted instance (not including '\0' or unit, 0 means a call to property_minimum_buffersize() is necessary) */ 
 	int (*data_to_string)(char *,int,void*,PROPERTY*); /**< the function to convert from data to a string */

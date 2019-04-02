@@ -52,7 +52,7 @@ bool Socket::set_addr(char *s)
 		return false;
 }
 
-char *Socket::strerror()
+const char *Socket::strerror()
 {
 #ifdef WIN32
 	int err = WSAGetLastError();

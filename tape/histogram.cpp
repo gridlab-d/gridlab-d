@@ -35,7 +35,7 @@ histogram::histogram(MODULE *mod)
 #ifdef _DEBUG
 		gl_debug("construction histogram class");
 #endif
-		oclass = gl_register_class(mod,"histogram",sizeof(histogram), PC_PRETOPDOWN);
+		oclass = gl_register_class(mod,const_cast<char*>("histogram"),sizeof(histogram), PC_PRETOPDOWN);
 		if (oclass==NULL)
 			throw "unable to register class histogram";
 		else
@@ -226,7 +226,7 @@ int histogram::init(OBJECT *parent)
 	{
 		OBJECT *group_obj = NULL;
 		CLASS *oclass = NULL;
-		if(group[0] == NULL){
+		if(group[0] == static_cast<char>(0)){
 			gl_error("Histogram has no parent and no group");
 			return 0;
 		}

@@ -23,10 +23,10 @@ static PASSCONFIG clockpass = PC_BOTTOMUP;
 
 /* Class registration is only called once to register the class with the core */
 inverter::inverter(MODULE *module)
-{	
+{
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"inverter",sizeof(inverter),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
+		oclass = gl_register_class(module,const_cast<char*>("inverter"),sizeof(inverter),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class inverter";
 		else
@@ -317,20 +317,20 @@ inverter::inverter(MODULE *module)
 			PT_double,"VW_V2[pu]", PADDR(VW_V2), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Voltage at which power limiting ends. (e.g. 1.1000). Used in VOLT_WATT control mode.",
 			PT_double,"VW_P1[pu]", PADDR(VW_P1), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Power limit at VW_P1 (e.g. 1). Used in VOLT_WATT control mode.",
 			PT_double,"VW_P2[pu]", PADDR(VW_P2), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Power limit at VW_P2 (e.g. 0). Used in VOLT_WATT control mode.",
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			NULL)<1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
 
 			defaults = this;
 
 			memset(this,0,sizeof(inverter));
 
-			if (gl_publish_function(oclass,	"preupdate_gen_object", (FUNCTIONADDR)preupdate_inverter)==NULL)
-				GL_THROW("Unable to publish inverter deltamode function");
-			if (gl_publish_function(oclass,	"interupdate_gen_object", (FUNCTIONADDR)interupdate_inverter)==NULL)
-				GL_THROW("Unable to publish inverter deltamode function");
-			if (gl_publish_function(oclass,	"postupdate_gen_object", (FUNCTIONADDR)postupdate_inverter)==NULL)
-				GL_THROW("Unable to publish inverter deltamode function");
-			if (gl_publish_function(oclass, "current_injection_update", (FUNCTIONADDR)inverter_NR_current_injection_update)==NULL)
-				GL_THROW("Unable to publish inverter current injection update function");
+			if (gl_publish_function(oclass,	const_cast<char*>("preupdate_gen_object"), (FUNCTIONADDR)preupdate_inverter)==NULL)
+				GL_THROW(const_cast<char*>("Unable to publish inverter deltamode function"));
+			if (gl_publish_function(oclass,	const_cast<char*>("interupdate_gen_object"), (FUNCTIONADDR)interupdate_inverter)==NULL)
+				GL_THROW(const_cast<char*>("Unable to publish inverter deltamode function"));
+			if (gl_publish_function(oclass,	const_cast<char*>("postupdate_gen_object"), (FUNCTIONADDR)postupdate_inverter)==NULL)
+				GL_THROW(const_cast<char*>("Unable to publish inverter deltamode function"));
+			if (gl_publish_function(oclass, const_cast<char*>("current_injection_update"), (FUNCTIONADDR)inverter_NR_current_injection_update)==NULL)
+				GL_THROW(const_cast<char*>("Unable to publish inverter current injection update function"));
 	}
 }
 /* Object creation is called once for each object that is created by the core */
@@ -636,12 +636,12 @@ int inverter::init(OBJECT *parent)
 	if (parent!=NULL)
 	{
 		//See what kind of parent we are
-		if (gl_object_isa(parent,"meter","powerflow") || gl_object_isa(parent,"node","powerflow") || gl_object_isa(parent,"load","powerflow") ||
-			gl_object_isa(parent,"triplex_meter","powerflow") || gl_object_isa(parent,"triplex_node","powerflow") || gl_object_isa(parent,"triplex_load","powerflow"))
+		if (gl_object_isa(parent,const_cast<char*>("meter"),const_cast<char*>("powerflow")) || gl_object_isa(parent,const_cast<char*>("node"),const_cast<char*>("powerflow")) || gl_object_isa(parent,const_cast<char*>("load"),const_cast<char*>("powerflow")) ||
+			gl_object_isa(parent,const_cast<char*>("triplex_meter"),const_cast<char*>("powerflow")) || gl_object_isa(parent,const_cast<char*>("triplex_node"),const_cast<char*>("powerflow")) || gl_object_isa(parent,const_cast<char*>("triplex_load"),const_cast<char*>("powerflow")))
 		{
 			//See if we're in deltamode and VSI - if not, we don't care about the "parent-ception" mapping
 			//Normal deltamode just goes through current interfaces, so don't need this craziness
-			if ((deltamode_inclusive == true) && (four_quadrant_control_mode == FQM_VSI))
+			if (deltamode_inclusive && (four_quadrant_control_mode == FQM_VSI))
 			{
 				//See if this attached node is a child or not
 				if (parent->parent != NULL)
@@ -650,8 +650,12 @@ int inverter::init(OBJECT *parent)
 					tmp_obj = parent->parent;
 
 					//See what it is
-					if ((gl_object_isa(tmp_obj,"meter","powerflow") == false) && (gl_object_isa(tmp_obj,"node","powerflow")==false) && (gl_object_isa(tmp_obj,"load","powerflow")==false) &&
-						(gl_object_isa(tmp_obj,"triplex_meter","powerflow") == false) && (gl_object_isa(tmp_obj,"triplex_node","powerflow")==false) && (gl_object_isa(tmp_obj,"triplex_load","powerflow")==false))
+					if (!gl_object_isa(tmp_obj, const_cast<char*>("meter"), const_cast<char*>("powerflow")) &&
+						!gl_object_isa(tmp_obj, const_cast<char*>("node"), const_cast<char*>("powerflow")) &&
+						!gl_object_isa(tmp_obj, const_cast<char*>("load"), const_cast<char*>("powerflow")) &&
+						!gl_object_isa(tmp_obj, const_cast<char*>("triplex_meter"), const_cast<char*>("powerflow")) &&
+						!gl_object_isa(tmp_obj, const_cast<char*>("triplex_node"), const_cast<char*>("powerflow")) &&
+						!gl_object_isa(tmp_obj, const_cast<char*>("triplex_load"), const_cast<char*>("powerflow")))
 					{
 						//Not a wierd map, just use normal parent
 						tmp_obj = parent;
@@ -660,12 +664,12 @@ int inverter::init(OBJECT *parent)
 					{
 						//See if we are deltamode-enabled -- if so, flag our parent while we're here
 						//Map our deltamode flag and set it (parent will be done below)
-						temp_property_pointer = new gld_property(parent,"Norton_dynamic");
+						temp_property_pointer = new gld_property(parent,const_cast<char*>("Norton_dynamic"));
 
 						//Make sure it worked
 						if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_bool() != true))
 						{
-							GL_THROW("inverter:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
+							GL_THROW(const_cast<char*>("inverter:%s failed to map Norton-equivalence deltamode variable from %s"),obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
 							/*  TROUBLESHOOT
 							While attempting to set up the deltamode interfaces and calculations with powerflow, the required interface could not be mapped.
 							Please check your GLM and try again.  If the error persists, please submit a trac ticket with your code.
@@ -694,16 +698,18 @@ int inverter::init(OBJECT *parent)
 
 			//Determine parent type
 			//Triplex first, otherwise it tries to map to three-phase (since all triplex are nodes)
-			if ((gl_object_isa(tmp_obj,"triplex_meter","powerflow") == true) || (gl_object_isa(tmp_obj,"triplex_node","powerflow")==true) || (gl_object_isa(tmp_obj,"triplex_load","powerflow")==true))
+			if (gl_object_isa(tmp_obj, const_cast<char*>("triplex_meter"), const_cast<char*>("powerflow")) ||
+				gl_object_isa(tmp_obj, const_cast<char*>("triplex_node"), const_cast<char*>("powerflow")) ||
+				gl_object_isa(tmp_obj, const_cast<char*>("triplex_load"), const_cast<char*>("powerflow")))
 			{
 				//Indicate this is a meter, but is triplex too
 				parent_is_a_meter = true;
 				parent_is_triplex = true;
 
 				//Map the various powerflow variables
-				pCircuit_V[0] = map_complex_value(tmp_obj,"voltage_12");
-				pCircuit_V[1] = map_complex_value(tmp_obj,"voltage_1N");
-				pCircuit_V[2] = map_complex_value(tmp_obj,"voltage_2N");
+				pCircuit_V[0] = map_complex_value(tmp_obj,const_cast<char*>("voltage_12"));
+				pCircuit_V[1] = map_complex_value(tmp_obj,const_cast<char*>("voltage_1N"));
+				pCircuit_V[2] = map_complex_value(tmp_obj,const_cast<char*>("voltage_2N"));
 
 				//Null these -- not used
 				pLine_I[0] = NULL;
@@ -711,66 +717,68 @@ int inverter::init(OBJECT *parent)
 				pLine_I[2] = NULL;
 
 				//Get 12
-				pLine12 = map_complex_value(tmp_obj,"current_12");
+				pLine12 = map_complex_value(tmp_obj,const_cast<char*>("current_12"));
 
-				pPower12 = map_complex_value(tmp_obj,"power_12");
-				
+				pPower12 = map_complex_value(tmp_obj,const_cast<char*>("power_12"));
+
 				//Individual ones not used
 				pPower[0] = NULL;	//Not used
 				pPower[1] = NULL;	//Not used
 				pPower[2] = NULL;	//Not used
-				
-				pLine_unrotI[0] = map_complex_value(tmp_obj,"prerotated_current_12");
+
+				pLine_unrotI[0] = map_complex_value(tmp_obj,const_cast<char*>("prerotated_current_12"));
 				pLine_unrotI[1] = NULL;	//Not used
 				pLine_unrotI[2] = NULL;	//Not used
 
 				//Map IGenerated, even though triplex can't really use this yet (just for the sake of doing so)
-				pIGenerated[0] = map_complex_value(tmp_obj,"deltamode_generator_current_12");
+				pIGenerated[0] = map_complex_value(tmp_obj,const_cast<char*>("deltamode_generator_current_12"));
 				pIGenerated[1] = NULL;
 				pIGenerated[2] = NULL;
 			}//End triplex parent
-			else if ((gl_object_isa(tmp_obj,"meter","powerflow") == true) || (gl_object_isa(tmp_obj,"node","powerflow")==true) || (gl_object_isa(tmp_obj,"load","powerflow")==true))
+			else if (gl_object_isa(tmp_obj, const_cast<char*>("meter"), const_cast<char*>("powerflow")) ||
+					 gl_object_isa(tmp_obj, const_cast<char*>("node"), const_cast<char*>("powerflow")) ||
+					 gl_object_isa(tmp_obj, const_cast<char*>("load"), const_cast<char*>("powerflow")))
 			{
 				//Indicate this is a meter, but not triplex
 				parent_is_a_meter = true;
 				parent_is_triplex = false;
 
 				//Map the various powerflow variables
-				pCircuit_V[0] = map_complex_value(tmp_obj,"voltage_A");
-				pCircuit_V[1] = map_complex_value(tmp_obj,"voltage_B");
-				pCircuit_V[2] = map_complex_value(tmp_obj,"voltage_C");
+				pCircuit_V[0] = map_complex_value(tmp_obj,const_cast<char*>("voltage_A"));
+				pCircuit_V[1] = map_complex_value(tmp_obj,const_cast<char*>("voltage_B"));
+				pCircuit_V[2] = map_complex_value(tmp_obj,const_cast<char*>("voltage_C"));
 
-				pLine_I[0] = map_complex_value(tmp_obj,"current_A");
-				pLine_I[1] = map_complex_value(tmp_obj,"current_B");
-				pLine_I[2] = map_complex_value(tmp_obj,"current_C");
+				pLine_I[0] = map_complex_value(tmp_obj,const_cast<char*>("current_A"));
+				pLine_I[1] = map_complex_value(tmp_obj,const_cast<char*>("current_B"));
+				pLine_I[2] = map_complex_value(tmp_obj,const_cast<char*>("current_C"));
 
-				pPower[0] = map_complex_value(tmp_obj,"power_A");
-				pPower[1] = map_complex_value(tmp_obj,"power_B");
-				pPower[2] = map_complex_value(tmp_obj,"power_C");
-				
-				pLine_unrotI[0] = map_complex_value(tmp_obj,"prerotated_current_A");
-				pLine_unrotI[1] = map_complex_value(tmp_obj,"prerotated_current_B");
-				pLine_unrotI[2] = map_complex_value(tmp_obj,"prerotated_current_C");
+				pPower[0] = map_complex_value(tmp_obj,const_cast<char*>("power_A"));
+				pPower[1] = map_complex_value(tmp_obj,const_cast<char*>("power_B"));
+				pPower[2] = map_complex_value(tmp_obj,const_cast<char*>("power_C"));
+
+				pLine_unrotI[0] = map_complex_value(tmp_obj,const_cast<char*>("prerotated_current_A"));
+				pLine_unrotI[1] = map_complex_value(tmp_obj,const_cast<char*>("prerotated_current_B"));
+				pLine_unrotI[2] = map_complex_value(tmp_obj,const_cast<char*>("prerotated_current_C"));
 
 				//Map the current injection variables
-				pIGenerated[0] = map_complex_value(tmp_obj,"deltamode_generator_current_A");
-				pIGenerated[1] = map_complex_value(tmp_obj,"deltamode_generator_current_B");
-				pIGenerated[2] = map_complex_value(tmp_obj,"deltamode_generator_current_C");
+				pIGenerated[0] = map_complex_value(tmp_obj,const_cast<char*>("deltamode_generator_current_A"));
+				pIGenerated[1] = map_complex_value(tmp_obj,const_cast<char*>("deltamode_generator_current_B"));
+				pIGenerated[2] = map_complex_value(tmp_obj,const_cast<char*>("deltamode_generator_current_C"));
 			}//End non-triplex parent
 
 			//*** Common items ****//
 			// Many of these go to the "true parent", not the "powerflow parent"
 
 			//See if we are deltamode-enabled -- powerflow parent version
-			if ((deltamode_inclusive == true) && (four_quadrant_control_mode == FQM_VSI))
+			if (deltamode_inclusive && (four_quadrant_control_mode == FQM_VSI))
 			{
 				//Map our deltamode flag and set it (parent will be done below)
-				temp_property_pointer = new gld_property(tmp_obj,"Norton_dynamic");
+				temp_property_pointer = new gld_property(tmp_obj,const_cast<char*>("Norton_dynamic"));
 
 				//Make sure it worked
-				if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_bool() != true))
+				if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_bool())
 				{
-					GL_THROW("inverter:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",tmp_obj->name?tmp_obj->name:"unnamed");
+					GL_THROW(const_cast<char*>("inverter:%s failed to map Norton-equivalence deltamode variable from %s"),obj->name?obj->name:"unnamed",tmp_obj->name?tmp_obj->name:"unnamed");
 					//Defined elsewhere
 				}
 
@@ -787,12 +795,12 @@ int inverter::init(OBJECT *parent)
 				Frequency_mapped = NULL;
 
 				//Get linking to checker variable
-				Frequency_mapped = new gld_property("powerflow::master_frequency_update");
+				Frequency_mapped = new gld_property(const_cast<char*>("powerflow::master_frequency_update"));
 
 				//See if it worked
-				if ((Frequency_mapped->is_valid() != true) || (Frequency_mapped->is_bool() != true))
+				if (!Frequency_mapped->is_valid() || !Frequency_mapped->is_bool())
 				{
-					GL_THROW("inverter:%s - Failed to map frequency checking variable from powerflow for deltamode",obj->name?obj->name:"unnamed");
+					GL_THROW(const_cast<char*>("inverter:%s - Failed to map frequency checking variable from powerflow for deltamode"),obj->name?obj->name:"unnamed");
 					/*  TROUBLESHOOT
 					While attempting to map one of the electrical frequency update variables from the powerflow module, an error
 					was encountered.  Please try again, insuring the inverter is parented to a deltamode powerflow object.  If
@@ -804,15 +812,15 @@ int inverter::init(OBJECT *parent)
 				Frequency_mapped->getp<bool>(temp_bool_value,*test_rlock);
 				
 				//Check the value
-				if (temp_bool_value == false)	//No one has mapped yet, we are volunteered
+				if (!temp_bool_value)	//No one has mapped yet, we are volunteered
 				{
 					//Update powerflow frequency
-					mapped_freq_variable = new gld_property("powerflow::current_frequency");
+					mapped_freq_variable = new gld_property(const_cast<char*>("powerflow::current_frequency"));
 
 					//Make sure it worked
-					if ((mapped_freq_variable->is_valid() != true) || (mapped_freq_variable->is_double() != true))
+					if (!mapped_freq_variable->is_valid() || !mapped_freq_variable->is_double())
 					{
-						GL_THROW("diesel_dg:%s - Failed to map frequency checking variable from powerflow for deltamode",obj->name?obj->name:"unnamed");
+						GL_THROW(const_cast<char*>("diesel_dg:%s - Failed to map frequency checking variable from powerflow for deltamode"),obj->name?obj->name:"unnamed");
 						//Defined above
 					}
 
@@ -827,10 +835,10 @@ int inverter::init(OBJECT *parent)
 
 				// Obtain the Zbase of the system for calculating filter impedance
 				//Link to nominal voltage
-				temp_property_pointer = new gld_property(parent,"nominal_voltage");
+				temp_property_pointer = new gld_property(parent,const_cast<char*>("nominal_voltage"));
 
 				//Make sure it worked
-				if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+				if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_double())
 				{
 					gl_error("Inverter:%d %s failed to map the nominal_voltage property",obj->id, (obj->name ? obj->name : "Unnamed"));
 					/*  TROUBLESHOOT
@@ -867,12 +875,12 @@ int inverter::init(OBJECT *parent)
 				}
 
 				//Map the full_Y parameter to inject the admittance portion into it
-				pbus_full_Y_mat = new gld_property(tmp_obj,"deltamode_full_Y_matrix");
+				pbus_full_Y_mat = new gld_property(tmp_obj,const_cast<char*>("deltamode_full_Y_matrix"));
 
 				//Check it
-				if ((pbus_full_Y_mat->is_valid() != true) || (pbus_full_Y_mat->is_complex_array() != true))
+				if (!pbus_full_Y_mat->is_valid() || !pbus_full_Y_mat->is_complex_array())
 				{
-					GL_THROW("inverter:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",tmp_obj->name?tmp_obj->name:"unnamed");
+					GL_THROW(const_cast<char*>("inverter:%s failed to map Norton-equivalence deltamode variable from %s"),obj->name?obj->name:"unnamed",tmp_obj->name?tmp_obj->name:"unnamed");
 					/*  TROUBLESHOOT
 					While attempting to set up the deltamode interfaces and calculations with powerflow, the required interface could not be mapped.
 					Please check your GLM and try again.  If the error persists, please submit a trac ticket with your code.
@@ -883,7 +891,7 @@ int inverter::init(OBJECT *parent)
 				pbus_full_Y_mat->getp<complex_array>(temp_complex_array,*test_rlock);
 
 				//See if it is valid
-				if (temp_complex_array.is_valid(0,0) != true)
+				if (!temp_complex_array.is_valid(0, 0))
 				{
 					//Create it
 					temp_complex_array.grow_to(3,3);
@@ -901,7 +909,7 @@ int inverter::init(OBJECT *parent)
 				{
 					if ((temp_complex_array.get_rows() != 3) && (temp_complex_array.get_cols() != 3))
 					{
-						GL_THROW("inverter:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
+						GL_THROW(const_cast<char*>("inverter:%s exposed Norton-equivalent matrix is the wrong size!"),obj->name?obj->name:"unnamed");
 						/*  TROUBLESHOOT
 						While mapping to an admittance matrix on the parent node device, it was found it is the wrong size.
 						Please try again.  If the error persists, please submit your code and model via the issue tracking system.
@@ -930,12 +938,12 @@ int inverter::init(OBJECT *parent)
 				pbus_full_Y_mat->setp<complex_array>(temp_complex_array,*test_rlock);
 
 				// Check the bustype if the inverter parent
-				temp_property_pointer = new gld_property(tmp_obj,"bustype"); // Obtain VSI parent meter bustype
+				temp_property_pointer = new gld_property(tmp_obj,const_cast<char*>("bustype")); // Obtain VSI parent meter bustype
 
 				//Check it
 				if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_enumeration() != true))
 				{
-					GL_THROW("inverter:%s failed to map bustype variable from %s",obj->name?obj->name:"unnamed",tmp_obj->name?tmp_obj->name:"unnamed");
+					GL_THROW(const_cast<char*>("inverter:%s failed to map bustype variable from %s"),obj->name?obj->name:"unnamed",tmp_obj->name?tmp_obj->name:"unnamed");
 					/*  TROUBLESHOOT
 					While attempting to set up the deltamode interfaces and calculations with powerflow, the required interface could not be mapped.
 					Please check your GLM and try again.  If the error persists, please submit a trac ticket with your code.
@@ -949,7 +957,7 @@ int inverter::init(OBJECT *parent)
 				delete temp_property_pointer;
 
 				//Map the power variable
-				pGenerated = map_complex_value(tmp_obj,"deltamode_PGenTotal");
+				pGenerated = map_complex_value(tmp_obj,const_cast<char*>("deltamode_PGenTotal"));
 
 				// Find if a battery is attached to VSI, if not, give warning
 				// Find all batteries
@@ -975,12 +983,12 @@ int inverter::init(OBJECT *parent)
 			}//End VSI common items
 
 			//Map status - true parent
-			pMeterStatus = new gld_property(parent,"service_status");
+			pMeterStatus = new gld_property(parent,const_cast<char*>("service_status"));
 
 			//Check it
-			if ((pMeterStatus->is_valid() != true) || (pMeterStatus->is_enumeration() != true))
+			if (!pMeterStatus->is_valid() || !pMeterStatus->is_enumeration())
 			{
-				GL_THROW("Inverter failed to map powerflow status variable");
+				GL_THROW(const_cast<char*>("Inverter failed to map powerflow status variable"));
 				/*  TROUBLESHOOT
 				While attempting to map the service_status variable of the parent
 				powerflow object, an error occurred.  Please try again.  If the error
@@ -989,12 +997,12 @@ int inverter::init(OBJECT *parent)
 			}
 
 			//Map and pull the phases - true parent
-			temp_property_pointer = new gld_property(parent,"phases");
+			temp_property_pointer = new gld_property(parent,const_cast<char*>("phases"));
 
 			//Make sure ti worked
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_set() != true))
+			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_set())
 			{
-				GL_THROW("Unable to map phases property - ensure the parent is a meter or triplex_meter");
+				GL_THROW(const_cast<char*>("Unable to map phases property - ensure the parent is a meter or triplex_meter"));
 				/*  TROUBLESHOOT
 				While attempting to map the phases property from the parent object, an error was encountered.
 				Please check and make sure your parent object is a meter or triplex_meter inside the powerflow module and try
@@ -1009,12 +1017,12 @@ int inverter::init(OBJECT *parent)
 			delete temp_property_pointer;
 
 			//Map the frequency measurement - powerflow parent
-			pFrequency = new gld_property(tmp_obj,"measured_frequency");
+			pFrequency = new gld_property(tmp_obj,const_cast<char*>("measured_frequency"));
 
 			//Make sure it worked
-			if ((pFrequency->is_valid() != true) || (pFrequency->is_double() != true))
+			if (!pFrequency->is_valid() || !pFrequency->is_double())
 			{
-				GL_THROW("Inverter:%d %s failed to map the measured_frequency property",obj->id, (obj->name ? obj->name : "Unnamed"));
+				GL_THROW(const_cast<char*>("Inverter:%d %s failed to map the measured_frequency property"),obj->id, (obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
 			While attempting to map the measured_frequency property, an error occurred.  Please try again.
 			If the error persists, please submit your GLM and a bug report to the ticketing system.
@@ -1028,7 +1036,7 @@ int inverter::init(OBJECT *parent)
 		}//End valid powerflow parent
 		else	//Not sure what it is
 		{
-			GL_THROW("Inverter must have a valid powerflow object as its parent, or no parent at all");
+			GL_THROW(const_cast<char*>("Inverter must have a valid powerflow object as its parent, or no parent at all"));
 			/*  TROUBLESHOOT
 			Check the parent object of the inverter.  The inverter is only able to be childed via to powerflow objects.
 			Alternatively, you can also choose to have no parent, in which case the inverter will be a stand-alone application
@@ -1073,7 +1081,7 @@ int inverter::init(OBJECT *parent)
 	//Check the phases with the "parent phases" - make sure it is a valid combination
 	if ((((phases & 0x10) == 0x10) && ((parent_phases & 0x10) != 0x10)) || (((parent_phases & 0x10) == 0x10) && ((phases & 0x10) != 0x10)))
 	{
-		GL_THROW("Inverter:%d %s - Inverter has a triplex-related phase mismatch!",obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW(const_cast<char*>("Inverter:%d %s - Inverter has a triplex-related phase mismatch!"),obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		An inverter is either expecting a triplex connection and is connected to anon-triplex node, or is expecting a non-triplex connection but is
 		connected to one.  Fix the model and try again.
@@ -1081,7 +1089,7 @@ int inverter::init(OBJECT *parent)
 	}
 	else if ((parent_phases & phases) != phases)
 	{
-		GL_THROW("Inverter:%d %s - Inverter phases are incompatible with the parent object phases!",obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW(const_cast<char*>("Inverter:%d %s - Inverter phases are incompatible with the parent object phases!"),obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		The phases implied by the inverter do not match the capabilites of the parent object.  Reconcile this difference.
 		*/
@@ -1099,7 +1107,7 @@ int inverter::init(OBJECT *parent)
 	else
 	{
 		//Never supposed to really get here
-		GL_THROW("Invalid phase configuration specified!");
+		GL_THROW(const_cast<char*>("Invalid phase configuration specified!"));
 		/*  TROUBLESHOOT
 		An invalid phase congifuration was specified when attaching to the "parent" object.  Please report this
 		error.
@@ -1319,19 +1327,20 @@ int inverter::init(OBJECT *parent)
 				}
 
 				//See what kind of sense_object we are linked at - note that the current implementation only takes overall power
-				if (gl_object_isa(sense_object,"node","powerflow"))
+				if (gl_object_isa(sense_object,const_cast<char*>("node"),const_cast<char*>("powerflow")))
 				{
 					//Make sure it's a meter of some sort
-					if (gl_object_isa(sense_object,"meter","powerflow") || gl_object_isa(sense_object,"triplex_meter","powerflow"))
+					if (gl_object_isa(sense_object,const_cast<char*>("meter"),const_cast<char*>("powerflow")) ||
+					gl_object_isa(sense_object,const_cast<char*>("triplex_meter"),const_cast<char*>("powerflow")))
 					{
 						//Set flag
 						sense_is_link = false;
 
 						//Map to measured_power - regardless of object
-						sense_power = new gld_property(sense_object,"measured_power");
+						sense_power = new gld_property(sense_object,const_cast<char*>("measured_power"));
 
 						//Make sure it worked
-						if ((sense_power->is_valid() != true) || (sense_power->is_complex() != true))
+						if (!sense_power->is_valid() || !sense_power->is_complex())
 						{
 							gl_error("inverter:%s - an error occurred while mapping the sense_object power measurement!",obj->name);
 							/*  TROUBLEHSHOOT
@@ -1361,10 +1370,10 @@ int inverter::init(OBJECT *parent)
 						return 0;
 					}
 				}
-				else if (gl_object_isa(sense_object,"link","powerflow"))
+				else if (gl_object_isa(sense_object,const_cast<char*>("link"),const_cast<char*>("powerflow")))
 				{
 					//Only transformers supported right now (functional link - just needs to be exported elsewhere)
-					if (gl_object_isa(sense_object,"transformer","powerflow"))
+					if (gl_object_isa(sense_object,const_cast<char*>("transformer"),const_cast<char*>("powerflow")))
 					{
 						//Set flag
 						sense_is_link = true;
@@ -1385,7 +1394,7 @@ int inverter::init(OBJECT *parent)
 						}
 
 						//Map to the property to compare - just use power_out for now (just as good as power_in)
-						sense_power = new gld_property(sense_object,"power_out");
+						sense_power = new gld_property(sense_object,const_cast<char*>("power_out"));
 
 						//Make sure it worked
 						if ((sense_power->is_valid() != true) || (sense_power->is_complex() != true))
@@ -1528,7 +1537,7 @@ int inverter::init(OBJECT *parent)
 			break;
 		default:
 			//Never supposed to really get here
-			GL_THROW("Invalid inverter type specified!");
+			GL_THROW(const_cast<char*>("Invalid inverter type specified!"));
 			/*  TROUBLESHOOT
 			An invalid inverter type was specified for the property inverter_type.  Please select one of
 			the acceptable types and try again.
@@ -1539,7 +1548,7 @@ int inverter::init(OBJECT *parent)
 	//Make sure efficiency is not an invalid value
 	if ((efficiency<=0) || (efficiency>1))
 	{
-		GL_THROW("The efficiency specified for inverter:%s is invalid",obj->name);
+		GL_THROW(const_cast<char*>("The efficiency specified for inverter:%s is invalid"),obj->name);
 		/*  TROUBLESHOOT
 		The efficiency value specified must be greater than zero and less than or equal to
 		1.0.  Please specify a value in that range.
@@ -1582,7 +1591,7 @@ int inverter::init(OBJECT *parent)
 							break;
 						default:
 							//Never supposed to really get here
-							GL_THROW("Invalid phase configuration specified!");
+							GL_THROW(const_cast<char*>("Invalid phase configuration specified!"));
 							/*  TROUBLESHOOT
 							An invalid phase congifuration was specified when attaching to the "parent" object.  Please report this
 							error.
@@ -1643,7 +1652,7 @@ int inverter::init(OBJECT *parent)
 							break;
 						default:
 							//Never supposed to really get here
-							GL_THROW("Invalid phase configuration specified!");
+							GL_THROW(const_cast<char*>("Invalid phase configuration specified!"));
 							/*  TROUBLESHOOT
 							An invalid phase congifuration was specified when attaching to the "parent" object.  Please report this
 							error.
@@ -1692,7 +1701,7 @@ int inverter::init(OBJECT *parent)
 							break;
 						default:
 							//Never supposed to really get here
-							GL_THROW("Invalid phase configuration specified!");
+							GL_THROW(const_cast<char*>("Invalid phase configuration specified!"));
 							/*  TROUBLESHOOT
 							An invalid phase congifuration was specified when attaching to the "parent" object.  Please report this
 							error.
@@ -1741,7 +1750,7 @@ int inverter::init(OBJECT *parent)
 							break;
 						default:
 							//Never supposed to really get here
-							GL_THROW("Invalid phase configuration specified!");
+							GL_THROW(const_cast<char*>("Invalid phase configuration specified!"));
 							/*  TROUBLESHOOT
 							An invalid phase congifuration was specified when attaching to the "parent" object.  Please report this
 							error.
@@ -1882,7 +1891,7 @@ int inverter::init(OBJECT *parent)
 			//Check
 			if (return_value_init == FAILED)
 			{
-				GL_THROW("inverter:%d-%s - initalizing the IEEE 1547 checks failed",obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW(const_cast<char*>("inverter:%d-%s - initalizing the IEEE 1547 checks failed"),obj->id,(obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				While attempting to initialize some of the variables for the inverter IEEE 1547 functionality, an error occurred.
 				Please try again.  If the error persists, please submit your code and a bug report via the issues tracker.
@@ -1910,7 +1919,7 @@ int inverter::init(OBJECT *parent)
 			//Check
 			if (return_value_init == FAILED)
 			{
-				GL_THROW("inverter:%d-%s - initalizing the IEEE 1547 checks failed",obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW(const_cast<char*>("inverter:%d-%s - initalizing the IEEE 1547 checks failed"),obj->id,(obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				While attempting to initialize some of the variables for the inverter IEEE 1547 functionality, an error occurred.
 				Please try again.  If the error persists, please submit your code and a bug report via the issues tracker.
@@ -1992,11 +2001,11 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 				if (pf_reg_activate > pf_reg_deactivate)
 				{
-					GL_THROW("inverter:%s - pf_reg_activate is greater than pf_reg_deactivate.",obj->name);
+					GL_THROW(const_cast<char*>("inverter:%s - pf_reg_activate is greater than pf_reg_deactivate."),obj->name);
 				}
 				if (pf_reg_activate < 0 || pf_reg_deactivate < 0)
 				{
-					GL_THROW("inverter:%s - pf_reg_activate and/or pf_reg_deactivate are negative.",obj->name);
+					GL_THROW(const_cast<char*>("inverter:%s - pf_reg_activate and/or pf_reg_deactivate are negative."),obj->name);
 				}
 				if (pf_reg_activate == pf_reg_deactivate)
 				{
@@ -2052,7 +2061,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 					//Make sure target is below the lower limit
 					if ((pf_reg_low < 0) && (pf_reg_low > pf_target_var))
 					{
-						GL_THROW("inverter:%s - pf_reg_low is below the pf_target_var value!",obj->name ? obj->name : "Unnamed");
+						GL_THROW(const_cast<char*>("inverter:%s - pf_reg_low is below the pf_target_var value!"),obj->name ? obj->name : "Unnamed");
 						/*  TROUBLESHOOT
 						For the alternative power factor correction mode, the pf_reg_low value must be a higher power factor than the desired value, in terms of relative power factor.
 						*/
@@ -2063,7 +2072,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 					//Make sure target is below the lower limit
 					if ((pf_reg_low > 0) && (pf_reg_low < pf_target_var))
 					{
-						GL_THROW("inverter:%s - pf_reg_low is below the pf_target_var value!",obj->name ? obj->name : "Unnamed");
+						GL_THROW(const_cast<char*>("inverter:%s - pf_reg_low is below the pf_target_var value!"),obj->name ? obj->name : "Unnamed");
 						//Defined above
 					}
 
@@ -2073,7 +2082,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 				//Make sure the upper is in a proper place too
 				if (((pf_reg_high > 0) && (pf_reg_low > 0) && (pf_reg_high <= pf_reg_low)) || ((pf_reg_low < 0) && (pf_reg_high < 0) && (pf_reg_high >= pf_reg_low)))
 				{
-					GL_THROW("inverter:%s - pf_reg_low is higher than pf_reg_high",obj->name ? obj->name : "Unnamed");
+					GL_THROW(const_cast<char*>("inverter:%s - pf_reg_low is higher than pf_reg_high"),obj->name ? obj->name : "Unnamed");
 					/*  TROUBLESHOOT
 					For the alternative power factor correction mode, the pf_reg_low value must be a "more inductive" power factor than the desired value, in terms of
 					relative power factor.
@@ -2096,7 +2105,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 				//Threshold checks
 				if (max_charge_rate <0)
 				{
-					GL_THROW("inverter:%s - max_charge_rate is negative!",obj->name);
+					GL_THROW(const_cast<char*>("inverter:%s - max_charge_rate is negative!"),obj->name);
 					/*  TROUBLESHOOT
 					The max_charge_rate for the inverter is negative.  Please specify
 					a valid charge rate for the object to continue.
@@ -2114,7 +2123,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 
 				if (max_discharge_rate <0)
 				{
-					GL_THROW("inverter:%s - max_discharge_rate is negative!",obj->name);
+					GL_THROW(const_cast<char*>("inverter:%s - max_discharge_rate is negative!"),obj->name);
 					/*  TROUBLESHOOT
 					The max_discharge_rate for the inverter is negative.  Please specify
 					a valid discharge rate for the object to continue.
@@ -2133,7 +2142,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 				//Charge thresholds
 				if (charge_on_threshold > charge_off_threshold)
 				{
-					GL_THROW("inverter:%s - charge_on_threshold is greater than charge_off_threshold!",obj->name);
+					GL_THROW(const_cast<char*>("inverter:%s - charge_on_threshold is greater than charge_off_threshold!"),obj->name);
 					/*  TROUBLESHOOT
 					For proper LOAD_FOLLOWING behavior, charge_on_threshold should be smaller than charge_off_threshold.
 					Please correct this and try again.
@@ -2151,7 +2160,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 				//Discharge thresholds
 				if (discharge_on_threshold < discharge_off_threshold)
 				{
-					GL_THROW("inverter:%s - discharge_on_threshold is less than discharge_off_threshold!",obj->name);
+					GL_THROW(const_cast<char*>("inverter:%s - discharge_on_threshold is less than discharge_off_threshold!"),obj->name);
 					/*  TROUBLESHOOT
 					For proper LOAD_FOLLOWING behavior, discharge_on_threshold should be larger than discharge_off_threshold.
 					Please correct this and try again.
@@ -2211,7 +2220,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 				//Threshold checks
 				if (group_max_charge_rate < 0)
 				{
-					GL_THROW("inverter:%s - group_max_charge_rate cannot be negative.",obj->name);
+					GL_THROW(const_cast<char*>("inverter:%s - group_max_charge_rate cannot be negative."),obj->name);
 				}
 				else if (max_charge_rate == 0)
 				{
@@ -2220,7 +2229,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 
 				if (group_max_discharge_rate < 0)
 				{
-					GL_THROW("inverter:%s - group_max_discharge_rate cannot be negative.",obj->name);
+					GL_THROW(const_cast<char*>("inverter:%s - group_max_discharge_rate cannot be negative."),obj->name);
 				}
 				else if (group_max_discharge_rate == 0)
 				{
@@ -2229,19 +2238,19 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 
 				if (group_rated_power <= 0)
 				{
-					GL_THROW("inverter:%s - group_rated_power must be positive.",obj->name);
+					GL_THROW(const_cast<char*>("inverter:%s - group_rated_power must be positive."),obj->name);
 				}
 
 
 				//Charge thresholds
 				if (charge_threshold == -1)
 				{
-					GL_THROW("inverter:%s - charge_threshold must be defined for GROUP_LOAD_FOLLOW mode.",obj->name);
+					GL_THROW(const_cast<char*>("inverter:%s - charge_threshold must be defined for GROUP_LOAD_FOLLOW mode."),obj->name);
 				}
 
 				if (discharge_threshold == -1)
 				{
-					GL_THROW("inverter:%s - discharge_threshold must be defined for GROUP_LOAD_FOLLOW mode.",obj->name);
+					GL_THROW(const_cast<char*>("inverter:%s - discharge_threshold must be defined for GROUP_LOAD_FOLLOW mode."),obj->name);
 				}
 
 				if (charge_threshold == discharge_threshold)
@@ -2357,7 +2366,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				//Check limits of the array
 				if (gen_object_current>=gen_object_count)
 				{
-					GL_THROW("Too many objects tried to populate deltamode objects array in the generators module!");
+					GL_THROW(const_cast<char*>("Too many objects tried to populate deltamode objects array in the generators module!"));
 					/*  TROUBLESHOOT
 					While attempting to populate a reference array of deltamode-enabled objects for the generator
 					module, an attempt was made to write beyond the allocated array space.  Please try again.  If the
@@ -2374,7 +2383,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				//Make sure it worked
 				if (delta_functions[gen_object_current] == NULL)
 				{
-					GL_THROW("Failure to map deltamode function for device:%s",obj->name);
+					GL_THROW(const_cast<char*>("Failure to map deltamode function for device:%s"),obj->name);
 					/*  TROUBLESHOOT
 					Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
 					the object supports deltamode.  If the error persists, please submit your code and a bug report via the
@@ -2388,7 +2397,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				//Make sure it worked
 				if (post_delta_functions[gen_object_current] == NULL)
 				{
-					GL_THROW("Failure to map post-deltamode function for device:%s",obj->name);
+					GL_THROW(const_cast<char*>("Failure to map post-deltamode function for device:%s"),obj->name);
 					/*  TROUBLESHOOT
 					Attempts to map up the postupdate function of a specific device failed.  Please try again and ensure
 					the object supports deltamode.  If the error persists, please submit your code and a bug report via the
@@ -2402,7 +2411,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				//Make sure it worked
 				if (delta_preupdate_functions[gen_object_current] == NULL)
 				{
-					GL_THROW("Failure to map pre-deltamode function for device:%s",obj->name);
+					GL_THROW(const_cast<char*>("Failure to map pre-deltamode function for device:%s"),obj->name);
 					/*  TROUBLESHOOT
 					Attempts to map up the preupdate function of a specific device failed.  Please try again and ensure
 					the object supports deltamode.  If the error persists, please submit your code and a bug report via the
@@ -2423,7 +2432,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					//See if it was located
 					if (test_fxn == NULL)
 					{
-						GL_THROW("PQ_CONSTANT inverter:%s - failed to map additional current injection mapping for node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
+						GL_THROW(const_cast<char*>("PQ_CONSTANT inverter:%s - failed to map additional current injection mapping for node:%s"),(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
 						/*  TROUBLESHOOT
 						While attempting to map the additional current injection function, an error was encountered.
 						Please try again.  If the error persists, please submit your code and a bug report via the trac website.
@@ -2436,7 +2445,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					//Make sure it worked
 					if (fxn_return_status != SUCCESS)
 					{
-						GL_THROW("PQ_CONSTANT inverter:%s - failed to map additional current injection mapping for node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
+						GL_THROW(const_cast<char*>("PQ_CONSTANT inverter:%s - failed to map additional current injection mapping for node:%s"),(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
 						//Defined above
 					}
 				}//End PQ_CONSTANT inverter special initialization items
@@ -2447,7 +2456,10 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					//See if we're attached to a node-esque object
 					if (obj->parent != NULL)
 					{
-						if (gl_object_isa(obj->parent,"meter","powerflow") || gl_object_isa(obj->parent,"load","powerflow") || gl_object_isa(obj->parent,"node","powerflow") || gl_object_isa(obj->parent,"elec_frequency","powerflow"))
+						if (gl_object_isa(obj->parent,const_cast<char*>("meter"),const_cast<char*>("powerflow")) ||
+						gl_object_isa(obj->parent,const_cast<char*>("load"),const_cast<char*>("powerflow")) ||
+						gl_object_isa(obj->parent,const_cast<char*>("node"),const_cast<char*>("powerflow")) ||
+						gl_object_isa(obj->parent,const_cast<char*>("elec_frequency"),const_cast<char*>("powerflow")))
 						{
 							//Accumulate the starting power
 							temp_complex_value = complex(P_Out, Q_Out);
@@ -2461,7 +2473,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 							//See if it was located
 							if (test_fxn == NULL)
 							{
-								GL_THROW("Voltage source inverter:%s - failed to map additional current injection mapping for node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
+								GL_THROW(const_cast<char*>("Voltage source inverter:%s - failed to map additional current injection mapping for node:%s"),(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
 								/*  TROUBLESHOOT
 								While attempting to map the additional current injection function, an error was encountered.
 								Please try again.  If the error persists, please submit your code and a bug report via the trac website.
@@ -2474,13 +2486,13 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 							//Make sure it worked
 							if (fxn_return_status != SUCCESS)
 							{
-								GL_THROW("Voltage source inverter:%s - failed to map additional current injection mapping for node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
+								GL_THROW(const_cast<char*>("Voltage source inverter:%s - failed to map additional current injection mapping for node:%s"),(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
 								//Defined above
 							}
 						}//End parent is a node object
 						else	//Nope, so who knows what is going on - better fail, just to be safe
 						{
-							GL_THROW("Voltage source inverter:%s - invalid parent object:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
+							GL_THROW(const_cast<char*>("Voltage source inverter:%s - invalid parent object:%s"),(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
 							/*  TROUBLESHOOT
 							At this time, for proper dynamic functionality a diesel_dg object must be parented to a three-phase powerflow node
 							object (node, load, meter).  The parent object is not one of those objects.
@@ -2709,7 +2721,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 					break;
 				case CONSTANT_PQ:
-					GL_THROW("Constant PQ mode not supported at this time");
+					GL_THROW(const_cast<char*>("Constant PQ mode not supported at this time"));
 					/* TROUBLESHOOT
 					This will be worked on at a later date and is not yet correctly implemented.
 					*/
@@ -2790,7 +2802,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					break;
 				case CONSTANT_V:
 				{
-					GL_THROW("Constant V mode not supported at this time");
+					GL_THROW(const_cast<char*>("Constant V mode not supported at this time"));
 					/* TROUBLESHOOT
 					This will be worked on at a later date and is not yet correctly implemented.
 					*/
@@ -2947,7 +2959,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					break;
 				}
 				case SUPPLY_DRIVEN: 
-					GL_THROW("SUPPLY_DRIVEN mode for inverters not supported at this time");
+					GL_THROW(const_cast<char*>("SUPPLY_DRIVEN mode for inverters not supported at this time"));
 					break;
 				default:
 					value_Line_I[0] = phaseA_I_Out;
@@ -7804,13 +7816,18 @@ STATUS inverter::initalize_IEEE_1547_checks(OBJECT *parent)
 
 	//Check parents and map the variables
 	//@TODO - Note this checks more than the parent requirement above - probably should reconcile this sometime
-	if (gl_object_isa(parent,"node","powerflow") || gl_object_isa(parent,"load","powerflow") || gl_object_isa(parent,"meter","powerflow") || gl_object_isa(parent,"triplex_node","powerflow") || gl_object_isa(parent,"triplex_load","powerflow") || gl_object_isa(parent,"triplex_load","powerflow"))
+	if (gl_object_isa(parent,const_cast<char*>("node"),const_cast<char*>("powerflow")) ||
+	gl_object_isa(parent,const_cast<char*>("load"),const_cast<char*>("powerflow")) ||
+	gl_object_isa(parent,const_cast<char*>("meter"),const_cast<char*>("powerflow")) ||
+	gl_object_isa(parent,const_cast<char*>("triplex_node"),const_cast<char*>("powerflow")) ||
+	gl_object_isa(parent,const_cast<char*>("triplex_load"),const_cast<char*>("powerflow")) ||
+	gl_object_isa(parent,const_cast<char*>("triplex_load"),const_cast<char*>("powerflow")))
 	{
 		//Link to nominal voltage
-		temp_nominal_pointer = new gld_property(parent,"nominal_voltage");
+		temp_nominal_pointer = new gld_property(parent,const_cast<char*>("nominal_voltage"));
 
 		//Make sure it worked
-		if ((temp_nominal_pointer->is_valid() != true) || (temp_nominal_pointer->is_double() != true))
+		if (!temp_nominal_pointer->is_valid() || !temp_nominal_pointer->is_double())
 		{
 			gl_error("Inverter:%d %s failed to map the nominal_voltage property",obj->id, (obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
@@ -8439,9 +8456,9 @@ gld_property *inverter::map_complex_value(OBJECT *obj, char *name)
 	pQuantity = new gld_property(obj,name);
 
 	//Make sure it worked
-	if ((pQuantity->is_valid() != true) || (pQuantity->is_complex() != true))
+	if (!pQuantity->is_valid() || !pQuantity->is_complex())
 	{
-		GL_THROW("inverter:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW(const_cast<char*>("inverter:%d %s - Unable to map property %s from object:%d %s"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		While attempting to map a quantity from another object, an error occurred in inverter.  Please try again.
 		If the error persists, please submit your system and a bug report via the ticketing system.
@@ -8462,9 +8479,9 @@ gld_property *inverter::map_double_value(OBJECT *obj, char *name)
 	pQuantity = new gld_property(obj,name);
 
 	//Make sure it worked
-	if ((pQuantity->is_valid() != true) || (pQuantity->is_double() != true))
+	if (!pQuantity->is_valid() || !pQuantity->is_double())
 	{
-		GL_THROW("inverter:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW(const_cast<char*>("inverter:%d %s - Unable to map property %s from object:%d %s"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		While attempting to map a quantity from another object, an error occurred in inverter.  Please try again.
 		If the error persists, please submit your system and a bug report via the ticketing system.
@@ -8724,7 +8741,7 @@ STATUS inverter::updateCurrInjection()
 		if ((phases & 0x10) == 0x10)	//Triplex
 		{
 			//Triplex isn't supported in VSI -- messes up the admittance formulation too much, so not allowed - error us
-			GL_THROW("inverter:%d - %s - VSI mode was attempted on a triplex-connected inverter! This is not permitted!",obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("inverter:%d - %s - VSI mode was attempted on a triplex-connected inverter! This is not permitted!"),obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
 			A voltage-source-inverter was connected to a triplex node.  This is currently unsupported.  Try connecting the inverter
 			to a three-phase portion of the system.
@@ -8866,7 +8883,7 @@ EXPORT TIMESTAMP sync_inverter(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 			t2 = my->postsync(obj->clock,t1);
 			break;
 		default:
-			GL_THROW("invalid pass request (%d)", pass);
+			GL_THROW(const_cast<char*>("invalid pass request (%d)"), pass);
 			break;
 		}
 		if (pass==clockpass)

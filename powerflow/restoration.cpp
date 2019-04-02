@@ -23,7 +23,7 @@ restoration::restoration(MODULE *mod) : powerflow_library(mod)
 {
 	if(oclass == NULL)
 	{
-		oclass = gl_register_class(mod,"restoration",sizeof(restoration),0x00);
+		oclass = gl_register_class(mod,const_cast<char*>("restoration"),sizeof(restoration),0x00);
 		if (oclass==NULL)
 			throw "unable to register class restoration";
 		else
@@ -44,10 +44,10 @@ restoration::restoration(MODULE *mod) : powerflow_library(mod)
 			PT_double,"upper_voltage_limit[pu]",PADDR(voltage_limit[1]),PT_DESCRIPTION,"Upper voltage limit for the reconfiguration validity checks - per unit",
 			PT_char1024,"output_filename",PADDR(logfile_name),PT_DESCRIPTION,"Output text file name to describe final or attempted switching operations",
 			PT_bool,"generate_all_scenarios",PADDR(stop_and_generate),PT_DESCRIPTION,"Flag to determine if restoration reconfiguration and continues, or explores the full space",
-			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+			NULL) < 1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
 
-		if (gl_publish_function(oclass,	"perform_restoration", (FUNCTIONADDR)perform_restoration)==NULL)
-			GL_THROW("Unable to publish restoration function");
+		if (gl_publish_function(oclass,	const_cast<char*>("perform_restoration"), (FUNCTIONADDR)perform_restoration)==NULL)
+			GL_THROW(const_cast<char*>("Unable to publish restoration function"));
     }
 }
 
@@ -237,7 +237,7 @@ int restoration::init(OBJECT *parent)
 			//Check limits - post warnings as necessary
 			if (reconfig_attempts==0)
 			{
-				GL_THROW("Infinite reconfigurations set.");
+				GL_THROW(const_cast<char*>("Infinite reconfigurations set."));
 				/*  TROUBLESHOOT
 				The restoration object can have the number of reconfiguration per timestep set via the
 				reconfig_attempts property.  If not set, or set to 0, the system will perform reconfigurations
@@ -258,7 +258,7 @@ int restoration::init(OBJECT *parent)
 		}
 		else
 		{
-			GL_THROW("Only one restoration object is permitted per model file");
+			GL_THROW(const_cast<char*>("Only one restoration object is permitted per model file"));
 			/*  TROUBLESHOOT
 			The restoration object manipulates the configuration of the system.  In order
 			to prevent possible conflicts, only one restoration object is permitted per
@@ -277,7 +277,7 @@ int restoration::init(OBJECT *parent)
 		//Make sure the counts match, or throw an error
 		if (numfVer != working_int_val)
 		{
-			GL_THROW("restoration: The number of feeder limits and feeder vertices must be the same!");
+			GL_THROW(const_cast<char*>("restoration: The number of feeder limits and feeder vertices must be the same!"));
 			/*  TROUBLESHOOT
 			While specifying the feeder_power_limit and feeder_vertex_list, the same number of feeders must be represented.
 			*/
@@ -289,7 +289,7 @@ int restoration::init(OBJECT *parent)
 		//Do another check to make sure counts match
 		if (numfVer != working_int_val)
 		{
-			GL_THROW("restoration: The number of feeder links and feeder vertices must be the same!");
+			GL_THROW(const_cast<char*>("restoration: The number of feeder links and feeder vertices must be the same!"));
 			/*  TROUBLESHOOT
 			While specifying the feeder_power_links and feeder_vertex_list, the same number of feeders must be represented.
 			*/
@@ -301,7 +301,7 @@ int restoration::init(OBJECT *parent)
 		//Check it
 		if (fLinkPowerFunc == NULL)
 		{
-			GL_THROW("Restoration: failed to allocate memory for link functions");
+			GL_THROW(const_cast<char*>("Restoration: failed to allocate memory for link functions"));
 			/*  TROUBLESHOOT
 			While attempting to allocate memory for the feeder/microgrid power link objects, an
 			error occurred.  Please try again.  If the error persists, please submit your code and a bug
@@ -315,7 +315,7 @@ int restoration::init(OBJECT *parent)
 		//Check it
 		if (feeder_power_link_value == NULL)
 		{
-			GL_THROW("Restoration: failed to allocate memory for calculated power values");
+			GL_THROW(const_cast<char*>("Restoration: failed to allocate memory for calculated power values"));
 			/*  TROUBLESHOOT
 			While attempting to allocate memory for pointers to the calculated power of links,
 			an error occurred.  Please try again, assuming proper inputs.  If the error persists,
@@ -332,7 +332,7 @@ int restoration::init(OBJECT *parent)
 			//Check to see if it worked -- would let it be NULL, but will cause problems later
 			if (fLinkPowerFunc[indexval] == NULL)
 			{
-				GL_THROW("Restoration: failed to find power calculation function for link:%s",fLinkObjList[indexval]->name ? fLinkObjList[indexval]->name : "Unnamed");
+				GL_THROW(const_cast<char*>("Restoration: failed to find power calculation function for link:%s"),fLinkObjList[indexval]->name ? fLinkObjList[indexval]->name : "Unnamed");
 				/*  TROUBLESHOOT
 				While attempting to map the update_power_pwr_object function for a link object, a failure occurred.
 				Make sure the object is a link object and try again.  If the error persists, please submit your
@@ -341,12 +341,12 @@ int restoration::init(OBJECT *parent)
 			}
 
 			//Link up the actual power value too, while we're here
-			feeder_power_link_value[indexval] = gl_get_complex_by_name(fLinkObjList[indexval],"power_out");
+			feeder_power_link_value[indexval] = gl_get_complex_by_name(fLinkObjList[indexval],const_cast<char*>("power_out"));
 
 			//Make sure it worked
 			if (feeder_power_link_value[indexval] == NULL)
 			{
-				GL_THROW("Restoration: failed to find calculated power value for link:s",fLinkObjList[indexval]->name ? fLinkObjList[indexval]->name : "Unnamed");
+				GL_THROW(const_cast<char*>("Restoration: failed to find calculated power value for link:s"),fLinkObjList[indexval]->name ? fLinkObjList[indexval]->name : "Unnamed");
 				/*  TROUBLESHOOT
 				While attempting to map up the location of the complex, calculated power of a link, an error occurred.
 				Please try again.  If the error persists, please submit your code and a bug report via the ticketing system.
@@ -363,7 +363,7 @@ int restoration::init(OBJECT *parent)
 		//Check to make sure these are proper too
 		if (numMG != working_int_val)
 		{
-			GL_THROW("restoration: The number of microgrid limits and microgrid vertices must be the same!");
+			GL_THROW(const_cast<char*>("restoration: The number of microgrid limits and microgrid vertices must be the same!"));
 			/*  TROUBLESHOOT
 			While specifying the microgrid_power_limit and microgrid_vertex_list, the same number of microgrids must
 			be represented.
@@ -376,7 +376,7 @@ int restoration::init(OBJECT *parent)
 		//Do another check to make sure counts match
 		if (numMG != working_int_val)
 		{
-			GL_THROW("restoration: The number of microgrid links and microgrid vertices must be the same!");
+			GL_THROW(const_cast<char*>("restoration: The number of microgrid links and microgrid vertices must be the same!"));
 			/*  TROUBLESHOOT
 			While specifying the microgrid_power_links and microgrid_vertex_list, the same number of microgrids must be represented.
 			*/
@@ -388,7 +388,7 @@ int restoration::init(OBJECT *parent)
 		//Check it
 		if (mLinkPowerFunc == NULL)
 		{
-			GL_THROW("Restoration: failed to allocate memory for link functions");
+			GL_THROW(const_cast<char*>("Restoration: failed to allocate memory for link functions"));
 			//Defined above
 		}
 
@@ -398,7 +398,7 @@ int restoration::init(OBJECT *parent)
 		//Check it
 		if (microgrid_power_link_value == NULL)
 		{
-			GL_THROW("Restoration: failed to allocate memory for calculated power values");
+			GL_THROW(const_cast<char*>("Restoration: failed to allocate memory for calculated power values"));
 			//Defined above
 		}
 
@@ -411,17 +411,17 @@ int restoration::init(OBJECT *parent)
 			//Check to see if it worked -- would let it be NULL, but will cause problems later
 			if (mLinkPowerFunc[indexval] == NULL)
 			{
-				GL_THROW("Restoration: failed to find power calculation function for link:%s",mLinkObjList[indexval]->name ? mLinkObjList[indexval]->name : "Unnamed");
+				GL_THROW(const_cast<char*>("Restoration: failed to find power calculation function for link:%s"),mLinkObjList[indexval]->name ? mLinkObjList[indexval]->name : "Unnamed");
 				//Defined above
 			}
 
 			//Link up the actual power value too, while we're here
-			microgrid_power_link_value[indexval] = gl_get_complex_by_name(mLinkObjList[indexval],"power_out");
+			microgrid_power_link_value[indexval] = gl_get_complex_by_name(mLinkObjList[indexval],const_cast<char*>("power_out"));
 
 			//Make sure it worked
 			if (microgrid_power_link_value[indexval] == NULL)
 			{
-				GL_THROW("Restoration: failed to find calculated power value for link:s",mLinkObjList[indexval]->name ? mLinkObjList[indexval]->name : "Unnamed");
+				GL_THROW(const_cast<char*>("Restoration: failed to find calculated power value for link:s"),mLinkObjList[indexval]->name ? mLinkObjList[indexval]->name : "Unnamed");
 				//Defined above
 			}
 		}
@@ -429,7 +429,7 @@ int restoration::init(OBJECT *parent)
 		//Make sure the voltage limits aren't reversed
 		if (voltage_limit[1] <= voltage_limit[0])
 		{
-			GL_THROW("restoration: the upper and lower voltage limits are either equal, or backwards");
+			GL_THROW(const_cast<char*>("restoration: the upper and lower voltage limits are either equal, or backwards"));
 			/*  TROUBLESHOOT
 			The lower_voltage_limit must be lower than the upper_voltage_limit for the restoration object to properly work.
 			*/
@@ -450,7 +450,7 @@ int restoration::init(OBJECT *parent)
 	}//End NR solver
 	else
 	{
-		GL_THROW("Restoration control is only valid for the Newton-Raphson solver at this time.");
+		GL_THROW(const_cast<char*>("Restoration control is only valid for the Newton-Raphson solver at this time."));
 		/*  TROUBLESHOOT
 		The restoration object only works with the Newton-Raphson powerflow solver at this time.
 		Other solvers may be integrated at a future date.
@@ -481,7 +481,7 @@ int restoration::PerformRestoration(int faulting_link)
 			//Make sure it was found
 			if (fault_check_fxn == NULL)
 			{
-				GL_THROW("Unable to update objects for reliability effects");
+				GL_THROW(const_cast<char*>("Unable to update objects for reliability effects"));
 				//Defined somewhere else
 			}
 		}
@@ -489,7 +489,7 @@ int restoration::PerformRestoration(int faulting_link)
 	}
 	else	//Throw an error
 	{
-		GL_THROW("Restoration: fault_check object not found.");
+		GL_THROW(const_cast<char*>("Restoration: fault_check object not found."));
 		/*  TROUBLESHOOT
 		While attemping to map a function for the fault_check object, no fault_check
 		object could be found.  Restoration requires one to function.  Please add one and try
@@ -517,7 +517,7 @@ int restoration::PerformRestoration(int faulting_link)
 	//Make sure it worked
 	if (top_ori == NULL)
 	{
-		GL_THROW("Restoration: failed to allocte graph theory object");
+		GL_THROW(const_cast<char*>("Restoration: failed to allocte graph theory object"));
 		/*  TROUBLESHOOT
 		While attempting to allocate memory for one of the graph theory objects inside the
 		restoration object, an error was encountered.  Please try again.  If the error persists,
@@ -567,7 +567,7 @@ int restoration::PerformRestoration(int faulting_link)
 	//Check it, for grins
 	if (s_ver == -1)
 	{
-		GL_THROW("Restoration: failed to find the source vertex!");
+		GL_THROW(const_cast<char*>("Restoration: failed to find the source vertex!"));
 		/*  TROUBLESHOOT
 		While attempting to map the source vertex of the graph, the node in question
 		could not be located.  Be sure it is part of the main system island and try again.
@@ -731,7 +731,7 @@ int restoration::PerformRestoration(int faulting_link)
 	//Do a check
 	if ((f_sec.from_vert == -1) || (f_sec.to_vert == -1))
 	{
-		GL_THROW("Restoration: failed to find the fault vertex");
+		GL_THROW(const_cast<char*>("Restoration: failed to find the fault vertex"));
 		/*  TROUBLESHOOT
 		While attempting to map the faulted line section to the graph, the edge in
 		question could not be located.  Please try again.  If the error persists,
@@ -797,7 +797,7 @@ int restoration::PerformRestoration(int faulting_link)
 	//Check them
 	if ((top_res == NULL) || (top_tmp == NULL))
 	{
-		GL_THROW("Restoration: failed to allocte graph theory object");
+		GL_THROW(const_cast<char*>("Restoration: failed to allocte graph theory object"));
 		//Defined elsewhere
 	}
 
@@ -1337,7 +1337,7 @@ void restoration::INTVECTalloc(INTVECT *inititem, int allocsizeval)
 	//Check it
 	if (inititem->data == NULL)
 	{
-		GL_THROW("Restoration: failed to allocte graph theory object");
+		GL_THROW(const_cast<char*>("Restoration: failed to allocte graph theory object"));
 		//Defined elsewhere
 	}
 
@@ -1401,7 +1401,7 @@ void restoration::CHORDSETalloc(CHORDSET *inititem, int allocsizeval)
 	//Check it
 	if ((inititem->data_1 == NULL) || (inititem->data_2 == NULL))
 	{
-		GL_THROW("Restoration: failed to allocte graph theory object");
+		GL_THROW(const_cast<char*>("Restoration: failed to allocte graph theory object"));
 		//Defined elsewhere
 	}
 
@@ -1490,7 +1490,7 @@ void restoration::LOCSETalloc(LOCSET *inititem, int allocsizeval)
 	//Check it
 	if ((inititem->data_1 == NULL) || (inititem->data_2 == NULL) || (inititem->data_3 == NULL) || (inititem->data_4 == NULL))
 	{
-		GL_THROW("Restoration: failed to allocte graph theory object");
+		GL_THROW(const_cast<char*>("Restoration: failed to allocte graph theory object"));
 		//Defined elsewhere
 	}
 
@@ -1623,14 +1623,14 @@ void restoration::CANDSWOPalloc(CANDSWOP *inititem, int allocsizeval)
 	//Check first 3 ints
 	if ((inititem->data_1 == NULL) || (inititem->data_2 == NULL) || (inititem->data_3 == NULL))
 	{
-		GL_THROW("Restoration: failed to allocte graph theory object");
+		GL_THROW(const_cast<char*>("Restoration: failed to allocte graph theory object"));
 		//Defined elsewhere
 	}
 
 	//Check second 3 ints
 	if ((inititem->data_4 == NULL) || (inititem->data_5 == NULL) || (inititem->data_7 == NULL))
 	{
-		GL_THROW("Restoration: failed to allocte graph theory object");
+		GL_THROW(const_cast<char*>("Restoration: failed to allocte graph theory object"));
 		//Defined elsewhere
 	}
 
@@ -1640,7 +1640,7 @@ void restoration::CANDSWOPalloc(CANDSWOP *inititem, int allocsizeval)
 	//Check double
 	if (inititem->data_6 == NULL)
 	{
-		GL_THROW("Restoration: failed to allocte graph theory object");
+		GL_THROW(const_cast<char*>("Restoration: failed to allocte graph theory object"));
 		//Defined elsewhere
 	}
 
@@ -1750,7 +1750,7 @@ void restoration::simplifyTop_1(void)
 		//Check it
 		if (top_sim_1 == NULL)
 		{
-			GL_THROW("Restoration: failed to allocte graph theory object");
+			GL_THROW(const_cast<char*>("Restoration: failed to allocte graph theory object"));
 			//Defined elsewhere
 		}
 
@@ -1856,7 +1856,7 @@ void restoration::simplifyTop_2(void)
 		//Check it
 		if (top_sim_2 == NULL)
 		{
-			GL_THROW("Restoration: failed to allocte graph theory object");
+			GL_THROW(const_cast<char*>("Restoration: failed to allocte graph theory object"));
 			//Defined elsewhere
 		}
 
@@ -1918,7 +1918,7 @@ void restoration::simplifyTop_2(void)
 					}
 					else	//Must be greater, we're already broken
 					{
-						GL_THROW("restoration: allocated array size exceeded!");
+						GL_THROW(const_cast<char*>("restoration: allocated array size exceeded!"));
 						/*  TROUBLESHOOT
 						While performing an operation, the maximum size of the array allocated was exceeded.  Please submit your
 						code and a bug report via the ticketing system.
@@ -2219,7 +2219,7 @@ void restoration::mapSecSwi(BRANCHVERTICES *sSW_2, BRANCHVERTICES *sSW, BRANCHVE
 		//Check for failure
 		if (uIdx == -1)
 		{
-			GL_THROW("Restoration: failed to find desired vertex in mapping list");
+			GL_THROW(const_cast<char*>("Restoration: failed to find desired vertex in mapping list"));
 			/*  TROUBLESHOOT
 			While parsing a mapping list of vertices for the graph theory analysis, a desired
 			vertex could not be found.  Please try again.  If the error persists, please submit your
@@ -2240,7 +2240,7 @@ void restoration::mapSecSwi(BRANCHVERTICES *sSW_2, BRANCHVERTICES *sSW, BRANCHVE
 		//Check for failure
 		if (vIdx == -1)
 		{
-			GL_THROW("Restoration: failed to find desired vertex in mapping list");
+			GL_THROW(const_cast<char*>("Restoration: failed to find desired vertex in mapping list"));
 			//Defined above
 		}
 
@@ -2649,7 +2649,7 @@ int restoration::spanningTreeSearch(void)
 					//General error check
 					if ((tvi+k) >= candidateSwOpe.maxSize)
 					{
-						GL_THROW("Maximum size exceeded!");
+						GL_THROW(const_cast<char*>("Maximum size exceeded!"));
 						//Add later
 					}
 
@@ -2901,7 +2901,7 @@ int restoration::spanningTreeSearch(void)
 					//General error check
 					if ((tvi+k) >= candidateSwOpe.maxSize)
 					{
-						GL_THROW("Maximum size exceeded!");
+						GL_THROW(const_cast<char*>("Maximum size exceeded!"));
 						//Add later
 					}
 
@@ -3175,7 +3175,7 @@ void restoration::modifyModel(int counter)
 		}
 		else	//How'd we get here!?
 		{
-			GL_THROW("Restoration: switch actions were attempted on a non-switch device!");
+			GL_THROW(const_cast<char*>("Restoration: switch actions were attempted on a non-switch device!"));
 			/*  TROUBLESHOOT
 			While attempting a reconfiguration action, an object that is not a switch, sectionalizer, or
 			recloser was attempted to be switched.  This should not occur.  Please try again.  If the error
@@ -3186,7 +3186,7 @@ void restoration::modifyModel(int counter)
 		//Check it
 		if (switching_fxn == NULL)
 		{
-			GL_THROW("Restoration: Unable to map switch change function");
+			GL_THROW(const_cast<char*>("Restoration: Unable to map switch change function"));
 			/*  TROUBLESHOOT
 			While attempting to map the switch adjustment function for the restoration code, an error occurred.  Please
 			try again.  If the error persists, please submit your code and a bug report via the ticketing system.
@@ -3231,7 +3231,7 @@ void restoration::modifyModel(int counter)
 		//Check it for errors, even though I think it always successed
 		if (return_val != 1)
 		{
-			GL_THROW("Restoration: Unable to perform switching action on %s!",swobj->name?swobj->name:"unnamed");
+			GL_THROW(const_cast<char*>("Restoration: Unable to perform switching action on %s!"),swobj->name?swobj->name:"unnamed");
 			/*  TROUBLESHOOT
 			While attempting to change the state on a switching device, an error occurred.  Please try again.  If the
 			error persists, please submit your code and a bug report via the ticketing system.
@@ -3252,7 +3252,7 @@ void restoration::modifyModel(int counter)
 		//Check it
 		if (return_val != 1)
 		{
-			GL_THROW("Restoration: problem occurred altering topology");
+			GL_THROW(const_cast<char*>("Restoration: problem occurred altering topology"));
 			/*  TROUBLESHOOT
 			While attempting to modify the system topology based on a switching action, an error occurred.
 			Please try again.  If the error persists, please submit your code and a bug report via the
@@ -3483,7 +3483,7 @@ void restoration::checkFeederPower(bool *fFlag, double *overLoad, int *feederID)
 		//Check the value -- make sure it worked
 		if (ret_value != 1)
 		{
-			GL_THROW("Restoration: failure to calculate power from link:%s", fLinkObjList[indexval]->name ? fLinkObjList[indexval]->name : "Unnamed");
+			GL_THROW(const_cast<char*>("Restoration: failure to calculate power from link:%s"), fLinkObjList[indexval]->name ? fLinkObjList[indexval]->name : "Unnamed");
 			/*  TROUBLESHOOT
 			While trying to calculate the power on a link in the system, an error occurred.  Please try again.  If the error
 			persists, please submit your code and a bug report via the ticketing system.
@@ -3535,7 +3535,7 @@ void restoration::checkMG(bool *mFlag, double *overLoad, int *microgridID)
 		//Check the value -- make sure it worked
 		if (ret_value != 1)
 		{
-			GL_THROW("Restoration: failure to calculate power from link:%s", mLinkObjList[indexval]->name ? mLinkObjList[indexval]->name : "Unnamed");
+			GL_THROW(const_cast<char*>("Restoration: failure to calculate power from link:%s"), mLinkObjList[indexval]->name ? mLinkObjList[indexval]->name : "Unnamed");
 			//Defined above
 		}
 
@@ -3587,7 +3587,7 @@ void restoration::checkLinePower(bool *lFlag, double *overLoad, int *lineID)
 			//Do a general success check
 			if (ret_value != 1)
 			{
-				GL_THROW("Restoration: failure to calculate limits from link:%s", NR_branchdata[indexval].name ? NR_branchdata[indexval].name : "Unnamed");
+				GL_THROW(const_cast<char*>("Restoration: failure to calculate limits from link:%s"), NR_branchdata[indexval].name ? NR_branchdata[indexval].name : "Unnamed");
 				/*  TROUBLESHOOT
 				While trying to calculate the amount over a limit on a link in the system, an error occurred.  Please try again.  If the error
 				persists, please submit your code and a bug report via the ticketing system.
@@ -3933,7 +3933,7 @@ void restoration::PowerflowSave(void)
 	//Make sure it worked
 	if (voltage_storage == NULL)
 	{
-		GL_THROW("Restoration: failed to allocate memory for base voltage values!");
+		GL_THROW(const_cast<char*>("Restoration: failed to allocate memory for base voltage values!"));
 		/*  TROUBLESHOOT
 		While attempting to allocate memory for storing the fallback voltage values,
 		an error occurred.  Please try again, assuming proper inputs.  If the error persists,
@@ -3950,7 +3950,7 @@ void restoration::PowerflowSave(void)
 		//Check it
 		if (voltage_storage[indexval] == NULL)
 		{
-			GL_THROW("Restoration: failed to allocate memory for base voltage values!");
+			GL_THROW(const_cast<char*>("Restoration: failed to allocate memory for base voltage values!"));
 			//Defined above
 		}
 
@@ -4113,7 +4113,7 @@ void Chain::addNode(int kIndex, int newData)
 	//check bounds
 	if (kIndex < 0)
 	{
-		GL_THROW("The index is out of bounds.");
+		GL_THROW(const_cast<char*>("The index is out of bounds."));
 	}
 
 	//find kth node
@@ -4128,7 +4128,7 @@ void Chain::addNode(int kIndex, int newData)
 	//out of bounds
 	if ((kIndex > 0) && (currentNode==NULL))
 	{
-		GL_THROW("The index is out of bounds.");
+		GL_THROW(const_cast<char*>("The index is out of bounds."));
 	}
 
 	//insert new node
@@ -4138,7 +4138,7 @@ void Chain::addNode(int kIndex, int newData)
 	//See if it worked
 	if (newNode == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new node in chain");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new node in chain"));
 		/*  TROUBLESHOOT
 		While attempting to allocate a new node in one of the restoration program's graph theory chains,
 		an error was encountered.  Please try again.  If the error persists, please submit your code and a
@@ -4190,7 +4190,7 @@ void Chain::deleteNode(int dData)
 
 	if (currentNode == NULL)
 	{
-		GL_THROW("The data cannot be found.");
+		GL_THROW(const_cast<char*>("The data cannot be found."));
 	}
 
 	//if node with dData is found, delete that node
@@ -4247,7 +4247,7 @@ void Chain::append(int newData)
 	//Make sure it worked
 	if (newNode == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new node in chain");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new node in chain"));
 		//Defined above
 	}
 
@@ -4281,7 +4281,7 @@ void LinkedQueue::enQueue(int newData)
 	//Make sure it worked
 	if (newNode == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new node in chain");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new node in chain"));
 		//Defined above
 	}
 
@@ -4308,7 +4308,7 @@ int LinkedQueue::deQueue(void)
 
 	if (isempty() == true)
 	{
-		GL_THROW("Restoration: The queue is empty!");
+		GL_THROW(const_cast<char*>("Restoration: The queue is empty!"));
 	}
 
 	fData = first->data;
@@ -4404,7 +4404,7 @@ LinkedBase::LinkedBase(int nVer)
 		//See if it worked
 		if (adjList == NULL)
 		{
-			GL_THROW("Restoration:Failed to allocate new chain");
+			GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 			/*  TROUBLESHOOT
 			While attempting to allocate a new chain in one of the restoration program's graph theory chains,
 			an error was encountered.  Please try again.  If the error persists, please submit your code and a
@@ -4421,7 +4421,7 @@ LinkedBase::LinkedBase(int nVer)
 		//Check it
 		if (status_value == NULL)
 		{
-			GL_THROW("Restoration:Failed to allocate new chain");
+			GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 			//Defined above
 		}
 
@@ -4429,7 +4429,7 @@ LinkedBase::LinkedBase(int nVer)
 
 		if (parent_value == NULL)
 		{
-			GL_THROW("Restoration:Failed to allocate new chain");
+			GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 			//Defined above
 		}
 
@@ -4437,7 +4437,7 @@ LinkedBase::LinkedBase(int nVer)
 
 		if (dist == NULL)
 		{
-			GL_THROW("Restoration:Failed to allocate new chain");
+			GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 			//Defined above
 		}
 
@@ -4445,7 +4445,7 @@ LinkedBase::LinkedBase(int nVer)
 
 		if (dTime == NULL)
 		{
-			GL_THROW("Restoration:Failed to allocate new chain");
+			GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 			//Defined above
 		}
 
@@ -4453,7 +4453,7 @@ LinkedBase::LinkedBase(int nVer)
 
 		if (fTime == NULL)
 		{
-			GL_THROW("Restoration:Failed to allocate new chain");
+			GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 			//Defined above
 		}
 
@@ -4468,7 +4468,7 @@ LinkedBase::LinkedBase(int nVer)
 			//Make sure it worked
 			if (adjList[indexvar] == NULL)
 			{
-				GL_THROW("Restoration:Failed to allocate new chain");
+				GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 				//Defined above
 			}
 
@@ -4546,7 +4546,7 @@ int LinkedBase::getOutDeg(int index)
 {
 	if ((index <0) || (index >= numVertices))
 	{
-		GL_THROW("Restoration: The vertex number is out of bounds!");
+		GL_THROW(const_cast<char*>("Restoration: The vertex number is out of bounds!"));
 	}
 
 	return adjList[index]->getLength();
@@ -4563,7 +4563,7 @@ void LinkedBase::initializePos(void)
 	//See if it worked
 	if (iterPos == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new chain");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 		//Defined above
 	}
 
@@ -4578,7 +4578,7 @@ void LinkedBase::initializePos(void)
 		//Make sure it worked
 		if (iterPos[indexvar] == NULL)
 		{
-			GL_THROW("Restoration:Failed to allocate new chain");
+			GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 			//Defined above
 		}
 
@@ -4617,7 +4617,7 @@ int LinkedBase::beginVertex(int index)
 {
 	if ((index <0) || (index >= numVertices))
 	{
-		GL_THROW("Restoration: The vertex number is out of bounds!");
+		GL_THROW(const_cast<char*>("Restoration: The vertex number is out of bounds!"));
 	}
 	
 	return iterPos[index]->initialize(adjList[index]);
@@ -4628,7 +4628,7 @@ int LinkedBase::nextVertex(int index)
 {
 	if ((index <0) || (index >= numVertices))
 	{
-		GL_THROW("Restoration: The vertex number is out of bounds!");
+		GL_THROW(const_cast<char*>("Restoration: The vertex number is out of bounds!"));
 	}
 
 	return iterPos[index]->next();
@@ -4659,7 +4659,7 @@ void LinkedBase::BFS(int s)
 	//Make sure it worked
 	if (Q == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new LinkedQueue");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new LinkedQueue"));
 	}
 
 	//Call the constructor, just in case
@@ -4821,7 +4821,7 @@ void LinkedBase::addAIsoVer(int n)
 	//See if it worked
 	if (adjList == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new chain");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 		//Defined elsewhere
 	}
 
@@ -4873,7 +4873,7 @@ void LinkedBase::addAIsoVer(int n)
 	//Check it
 	if (status_value == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new chain");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 		//Defined above
 	}
 
@@ -4881,7 +4881,7 @@ void LinkedBase::addAIsoVer(int n)
 
 	if (parent_value == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new chain");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 		//Defined above
 	}
 
@@ -4889,7 +4889,7 @@ void LinkedBase::addAIsoVer(int n)
 
 	if (dist == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new chain");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 		//Defined above
 	}
 
@@ -4897,7 +4897,7 @@ void LinkedBase::addAIsoVer(int n)
 
 	if (dTime == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new chain");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 		//Defined above
 	}
 
@@ -4905,7 +4905,7 @@ void LinkedBase::addAIsoVer(int n)
 
 	if (fTime == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new chain");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 		//Defined above
 	}
 
@@ -4920,7 +4920,7 @@ void LinkedBase::addAIsoVer(int n)
 		//Make sure it worked
 		if (adjList[indexvar] == NULL)
 		{
-			GL_THROW("Restoration:Failed to allocate new chain");
+			GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 			//Defined above
 		}
 
@@ -4953,7 +4953,7 @@ bool LinkedDigraph::isEdgeExisting(int iIndex, int jIndex)
 
     if ((iIndex < 0) || (jIndex < 0) || (iIndex >= numVertices) || (jIndex >= numVertices))
 	{
-		GL_THROW("Restoration: The vertex Number(s) is(are) out of bounds!");
+		GL_THROW(const_cast<char*>("Restoration: The vertex Number(s) is(are) out of bounds!"));
 	}
     else
 	{
@@ -4975,15 +4975,15 @@ void LinkedDigraph::addEdge(int iIndex, int jIndex)
 {
     if ((iIndex < 0) || (jIndex < 0) || (iIndex >= numVertices) || (jIndex >= numVertices))
 	{
-		GL_THROW("Restoration: The vertex Number(s) is(are) out of bounds!");
+		GL_THROW(const_cast<char*>("Restoration: The vertex Number(s) is(are) out of bounds!"));
 	}
     if (iIndex == jIndex)
 	{
-        GL_THROW("Restoration: Error: Two vertexs of an edge can not be the same!");
+        GL_THROW(const_cast<char*>("Restoration: Error: Two vertexs of an edge can not be the same!"));
 	}
     if (isEdgeExisting(iIndex, jIndex) == true)
 	{
-        GL_THROW("Restoration: Error: Can not add an edge that is already existing!");
+        GL_THROW(const_cast<char*>("Restoration: Error: Can not add an edge that is already existing!"));
 	}
 	adjList[iIndex]->addNode(0, jIndex);
 	numEdges = numEdges + 1;
@@ -4994,7 +4994,7 @@ void LinkedDigraph::deleteEdge(int iIndex, int jIndex)
 {
     if ((iIndex < 0) || (jIndex < 0) || (iIndex >= numVertices) || (jIndex >= numVertices))
 	{
-		GL_THROW("Restoration: The vertex Number(s) is(are) out of bounds!");
+		GL_THROW(const_cast<char*>("Restoration: The vertex Number(s) is(are) out of bounds!"));
 	}
 	
 	adjList[iIndex]->deleteNode(jIndex);
@@ -5009,7 +5009,7 @@ int LinkedDigraph::getInDeg(int index)
 
     if ((index < 0) || (index >= numVertices))
 	{
-        GL_THROW("Restoration: The vertex Number is out of bounds!");
+        GL_THROW(const_cast<char*>("Restoration: The vertex Number is out of bounds!"));
 	}
 
 	inDeg = 0;
@@ -5039,11 +5039,11 @@ void LinkedUndigraph::addEdge(int iIndex, int jIndex)
 {
     if ((iIndex < 0) || (jIndex < 0) || (iIndex >= numVertices) || (jIndex >= numVertices))
 	{
-        GL_THROW("Restoration: The node Number(s) is(are) out of bounds!");
+        GL_THROW(const_cast<char*>("Restoration: The node Number(s) is(are) out of bounds!"));
 	}
     if (iIndex == jIndex)
 	{
-        GL_THROW("Restoration: Two nodes of an edge can not be the same!");
+        GL_THROW(const_cast<char*>("Restoration: Two nodes of an edge can not be the same!"));
 	}
 	if (isEdgeExisting(iIndex,jIndex) == true)
 	{
@@ -5204,7 +5204,7 @@ void LinkedUndigraph::findFunCutSet(CHORDSET *chordSet, BRANCHVERTICES *tBranch,
 				}
 				else	//Must be greater, we're already broken
 				{
-					GL_THROW("restoration: allocated array size exceeded!");
+					GL_THROW(const_cast<char*>("restoration: allocated array size exceeded!"));
 					//Defined elsewhere
 				}
 			}
@@ -5251,7 +5251,7 @@ void LinkedUndigraph::simplify(CHORDSET *chordset, BRANCHVERTICES *fBranch, int 
 	//Make sure it worked
 	if (tempvect.data == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new temp variable");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new temp variable"));
 		//Defined elsewhere
 	}
 
@@ -5293,7 +5293,7 @@ void LinkedUndigraph::simplify(CHORDSET *chordset, BRANCHVERTICES *fBranch, int 
 	//Make sure it worked
 	if (iVer.data == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new temp variable");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new temp variable"));
 		//Defined elsewhere
 	}
 
@@ -5403,7 +5403,7 @@ int LinkedUndigraph::isolateDeg12Ver(INTVECT *iVer)
 	//Make sure it worked
 	if (iMark == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new temp variable");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new temp variable"));
 		/*  TROUBLESHOOT
 		While attempting to allocate space for a new temporary variable, an error was encountered.
 		Please try again.  If the error persists, please submit your code via the ticketing system.
@@ -5510,7 +5510,7 @@ void LinkedUndigraph::deleteIsoVer(INTVECT *vMap)
 		//Make sure it worked
 		if (vMap->data == NULL)
 		{
-			GL_THROW("Restoration:Failed to allocate new temp variable");
+			GL_THROW(const_cast<char*>("Restoration:Failed to allocate new temp variable"));
 			/*  TROUBLESHOOT
 			While attempting to allocate space for a new temporary variable, an error was encountered.
 			Please try again.  If the error persists, please submit your code via the ticketing system.
@@ -5538,7 +5538,7 @@ void LinkedUndigraph::deleteIsoVer(INTVECT *vMap)
 	//Make sure it worked
 	if (isoVerArray.data == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new temp variable");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new temp variable"));
 		//Defined above
 	}
 
@@ -5614,7 +5614,7 @@ void LinkedUndigraph::deleteIsoVer(INTVECT *vMap)
 	//See if it worked
 	if (adjList == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new chain");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 		//Defined elsewhere
 	}
 
@@ -5660,7 +5660,7 @@ void LinkedUndigraph::deleteIsoVer(INTVECT *vMap)
 	//Check it
 	if (status_value == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new chain");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 		//Defined above
 	}
 
@@ -5668,7 +5668,7 @@ void LinkedUndigraph::deleteIsoVer(INTVECT *vMap)
 
 	if (parent_value == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new chain");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 		//Defined above
 	}
 
@@ -5676,7 +5676,7 @@ void LinkedUndigraph::deleteIsoVer(INTVECT *vMap)
 
 	if (dist == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new chain");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 		//Defined above
 	}
 
@@ -5684,7 +5684,7 @@ void LinkedUndigraph::deleteIsoVer(INTVECT *vMap)
 
 	if (dTime == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new chain");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 		//Defined above
 	}
 
@@ -5692,7 +5692,7 @@ void LinkedUndigraph::deleteIsoVer(INTVECT *vMap)
 
 	if (fTime == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new chain");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 		//Defined above
 	}
 
@@ -5735,7 +5735,7 @@ void LinkedUndigraph::mergeVer_2(INTVECT *vMap)
 	//Check it
 	if (V_new.data == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new temp variable");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new temp variable"));
 		//Defined above
 	}
 
@@ -5763,25 +5763,25 @@ void LinkedUndigraph::mergeVer_2(INTVECT *vMap)
 	//Make sure they worked
 	if (isoVerArray.data == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new temp variable");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new temp variable"));
 		//Defined above
 	}
 
 	if (resVerArray.data == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new temp variable");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new temp variable"));
 		//Defined above
 	}
 
 	if (merge_V.data == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new temp variable");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new temp variable"));
 		//Defined above
 	}
 
 	if (tempoutVect.data == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new temp variable");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new temp variable"));
 		//Defined above
 	}
 
@@ -5929,7 +5929,7 @@ void LinkedUndigraph::mergeVer_2(INTVECT *vMap)
 	//See if it worked
 	if (adjList == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new chain");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 		//Defined elsewhere
 	}
 
@@ -5975,7 +5975,7 @@ void LinkedUndigraph::mergeVer_2(INTVECT *vMap)
 	//Check it
 	if (status_value == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new chain");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 		//Defined above
 	}
 
@@ -5983,7 +5983,7 @@ void LinkedUndigraph::mergeVer_2(INTVECT *vMap)
 
 	if (parent_value == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new chain");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 		//Defined above
 	}
 
@@ -5991,7 +5991,7 @@ void LinkedUndigraph::mergeVer_2(INTVECT *vMap)
 
 	if (dist == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new chain");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 		//Defined above
 	}
 
@@ -5999,7 +5999,7 @@ void LinkedUndigraph::mergeVer_2(INTVECT *vMap)
 
 	if (dTime == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new chain");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 		//Defined above
 	}
 
@@ -6007,7 +6007,7 @@ void LinkedUndigraph::mergeVer_2(INTVECT *vMap)
 
 	if (fTime == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new chain");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new chain"));
 		//Defined above
 	}
 
@@ -6051,7 +6051,7 @@ void unique_int(INTVECT *inputvect, INTVECT *outputvect)
 	//Make sure it worked
 	if (workmatrix.data == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new temp variable");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new temp variable"));
 		//Defined elsewhere
 	}
 
@@ -6063,7 +6063,7 @@ void unique_int(INTVECT *inputvect, INTVECT *outputvect)
 	//Make sure it worked
 	if (workmatrix_input.data == NULL)
 	{
-		GL_THROW("Restoration:Failed to allocate new temp variable");
+		GL_THROW(const_cast<char*>("Restoration:Failed to allocate new temp variable"));
 		//Defined elsewhere
 	}
 
@@ -6090,7 +6090,7 @@ void unique_int(INTVECT *inputvect, INTVECT *outputvect)
 			//Do a check, for good measure
 			if (rightidx>outputvect->maxSize)
 			{
-				GL_THROW("Restoration: Larger number of unique entries than expected found!");
+				GL_THROW(const_cast<char*>("Restoration: Larger number of unique entries than expected found!"));
 				/*  TROUBLESHOOT
 				While looking for unique vertices in the restoration algorithm, more unique values than expected
 				were found and the vector is mis-sized.  Please submit your code and a bug report via the ticketing system.

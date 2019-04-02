@@ -70,7 +70,7 @@ refrigerator::refrigerator(MODULE *module) : residential_enduse(module)
 		pclass = residential_enduse::oclass;
 
 		// register the class definition
-		oclass = gl_register_class(module,"refrigerator",sizeof(refrigerator),PC_PRETOPDOWN | PC_BOTTOMUP|PC_AUTOLOCK);
+		oclass = gl_register_class(module,const_cast<char*>("refrigerator"),sizeof(refrigerator),PC_PRETOPDOWN | PC_BOTTOMUP|PC_AUTOLOCK);
 		if (oclass==NULL)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 			/* TROUBLESHOOT
@@ -181,7 +181,7 @@ int refrigerator::init(OBJECT *parent)
 	if (Tout==0)				Tout = 59.0;
 	if (load.power_factor==0)		load.power_factor = 0.95;
 
-	pTout = (double*)gl_get_addr(parent, "air_temperature");
+	pTout = (double*)gl_get_addr(parent, const_cast<char*>("air_temperature"));
 	if (pTout==NULL)
 	{
 		static double default_air_temperature = 72;

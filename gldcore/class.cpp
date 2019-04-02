@@ -320,7 +320,7 @@ unsigned int class_get_count(void)
 /** Get the name of a property from its type
 	@return a pointer to a string containing the name of the property type
  **/
-char *class_get_property_typename(PROPERTYTYPE type) /**< the property type */
+const char *class_get_property_typename(PROPERTYTYPE type) /**< the property type */
 {
 	if (type<=_PT_FIRST || type>=_PT_LAST)
 		return "//UNDEF//";
@@ -331,7 +331,7 @@ char *class_get_property_typename(PROPERTYTYPE type) /**< the property type */
 /** Get the name of a property from its type
 	@return a pointer to a string containing the name of the property type
  **/
-char *class_get_property_typexsdname(PROPERTYTYPE type) /**< the property type */
+const char *class_get_property_typexsdname(PROPERTYTYPE type) /**< the property type */
 {
 	if (type<=_PT_FIRST || type>=_PT_LAST)
 		return "//UNDEF//";
@@ -870,7 +870,7 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			}
 			else if(proptype == PT_HAS_NOTIFY || proptype == PT_HAS_NOTIFY_OVERRIDE)
 			{
-				char notify_fname[128];
+				char notify_fname[256];
 				sprintf(notify_fname, "notify_%s_%s", prop->oclass->name, prop->name);
 				prop->notify = (FUNCTIONADDR)DLSYM(prop->oclass->module->hLib, notify_fname);
 				if(prop->notify == 0){
@@ -887,7 +887,7 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			else
 			{
 				char tcode[32];
-				char *ptypestr=class_get_property_typename(proptype);
+				const char *ptypestr=class_get_property_typename(proptype);
 				sprintf(tcode,"%d",proptype);
 				if (strcmp(ptypestr,"//UNDEF//")==0)
 					ptypestr = tcode;
@@ -1002,11 +1002,11 @@ Error:
 	@return 0 on failure, 1 on success
  **/
 int class_define_enumeration_member(CLASS *oclass, /**< pointer to the class which implements the enumeration */
-                                    char *property_name, /**< property name of the enumeration */
-                                    char *member, /**< member name to define */
+                                    const char *property_name, /**< property name of the enumeration */
+                                    const char *member, /**< member name to define */
                                     enumeration value) /**< enum value to associate with the name */
 {
-	PROPERTY *prop = class_find_property(oclass,property_name);
+	PROPERTY *prop = class_find_property(oclass, const_cast<char*>(property_name));
 	KEYWORD *key = (KEYWORD*)malloc(sizeof(KEYWORD));
 	if (prop==NULL || key==NULL) return 0;
 	key->next = prop->keywords;
@@ -1019,11 +1019,11 @@ int class_define_enumeration_member(CLASS *oclass, /**< pointer to the class whi
 /** Define a set member
  **/
 int class_define_set_member(CLASS *oclass, /**< pointer to the class which implements the set */
-                            char *property_name, /**< property name of the set */
-                            char *member, /**< member name to define */
+                            const char *property_name, /**< property name of the set */
+                            const char *member, /**< member name to define */
                             unsigned int64 value) /**< set value to associate with the name */
 {
-	PROPERTY *prop = class_find_property(oclass,property_name);
+	PROPERTY *prop = class_find_property(oclass, const_cast<char*>(property_name));
 	KEYWORD *key = (KEYWORD*)malloc(sizeof(KEYWORD));
 	if (prop==NULL || key==NULL) return 0;
 	if (prop->keywords==NULL)
@@ -1084,7 +1084,7 @@ FUNCTION *class_define_function(CLASS *oclass, FUNCTIONNAME functionname, FUNCTI
 
 /* Get the entry point of a class function
  */
-FUNCTIONADDR class_get_function(char *classname, char *functionname)
+FUNCTIONADDR class_get_function(char *classname, const char *functionname)
 {
 	CLASS *oclass = class_get_class_from_classname(classname);
 	FUNCTION *func;
@@ -1117,7 +1117,7 @@ int class_saveall(FILE *fp) /**< a pointer to the stream FILE structure */
 				count += fprintf(fp, "#ifdef INCLUDE_FUNCTIONS\n\tfunction %s();\n#endif\n", func->name);
 			for (prop=oclass->pmap; prop!=NULL && prop->oclass==oclass; prop=prop->next)
 			{
-				char *ptype = class_get_property_typename(prop->ptype);
+				const char *ptype = class_get_property_typename(prop->ptype);
 				if ( ptype != NULL )
 				{
 					if ( strchr(prop->name,'.') == NULL )
@@ -1151,7 +1151,7 @@ int class_saveall_xml(FILE *fp) /**< a pointer to the stream FILE structure */
 				count += fprintf(fp, "\t\t<function>%s</function>\n", func->name);
 			for (prop=oclass->pmap; prop!=NULL && prop->oclass==oclass; prop=prop->next)
 			{
-				char *propname = class_get_property_typename(prop->ptype);
+				const char *propname = class_get_property_typename(prop->ptype);
 				if (propname!=NULL)
 					count += fprintf(fp,"\t\t\t<property type=\"%s\">%s</property>\n", propname, prop->name);
 			}
@@ -1293,7 +1293,7 @@ static int check = 0;  /* there must be a better way to do this, but this works.
  **/
 static int buffer_write(char *buffer, /**< buffer into which string is written */
                         size_t len,   /**< size of the buffer into which the string is written */
-                        char *format, /**< format of string to write into buffer, followed by the variable arguments */
+                        const char *format, /**< format of string to write into buffer, followed by the variable arguments */
                         ...)
 {
 	char temp[1025];
@@ -1333,8 +1333,8 @@ int class_get_xsd(CLASS *oclass, /**< a pointer to the class to convert to XSD *
 	CLASS *oc = oclass;
 	extern KEYWORD oflags[];
 	struct {
-		char *name;
-		char *type;
+		const char *name;
+		const char *type;
 		KEYWORD *keys;
 	} attribute[]={
 		{"id", "integer",NULL},
@@ -1376,7 +1376,7 @@ int class_get_xsd(CLASS *oclass, /**< a pointer to the class to convert to XSD *
 	for(; oc != 0; oc = oc->parent){
 		for (prop=oc->pmap; prop!=NULL && prop->oclass==oc; prop=prop->next)
 		{
-			char *proptype=class_get_property_typexsdname(prop->ptype);
+			const char *proptype=class_get_property_typexsdname(prop->ptype);
 			if (prop->unit!=NULL){
 				n += buffer_write(buffer+n, len-n, "\t\t\t\t<xs:element name=\"%s\" type=\"xs:string\"/>\n", prop->name);
 			} else {

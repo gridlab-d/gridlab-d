@@ -14,7 +14,7 @@ controller_ccsi *controller_ccsi::defaults = NULL;
 controller_ccsi::controller_ccsi(MODULE *module){
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"controller_ccsi",sizeof(controller_ccsi),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
+		oclass = gl_register_class(module,const_cast<char*>("controller_ccsi"),sizeof(controller_ccsi),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class controller_ccsi";
 		else
@@ -256,15 +256,15 @@ void controller_ccsi::cheat(){
 
 /** convenience shorthand
  **/
-void controller_ccsi::fetch_double(double **prop, char *name, OBJECT *parent){
+void controller_ccsi::fetch_double(double **prop, const char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
-	*prop = gl_get_double_by_name(parent, name);
-	if(*prop == NULL){
+	*prop = gl_get_double_by_name(parent, const_cast<char*>(name));
+	if(*prop == nullptr){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "controller_ccsi:%i", hdr->id);
-		if(*name == NULL)
+		if(*name == static_cast<char>(0))
 			sprintf(msg, "%s: controller_ccsi unable to find property: name is NULL", namestr);
 		else
 			sprintf(msg, "%s: controller_ccsi unable to find %s", namestr, name);
@@ -272,38 +272,38 @@ void controller_ccsi::fetch_double(double **prop, char *name, OBJECT *parent){
 	}
 }
 
-void controller_ccsi::fetch_int64(int64 **prop, char *name, OBJECT *parent){
+void controller_ccsi::fetch_int64(int64 **prop, const char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
-	*prop = gl_get_int64_by_name(parent, name);
-	if(*prop == NULL){
+	*prop = gl_get_int64_by_name(parent, const_cast<char*>(name));
+	if(*prop == nullptr){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "controller_ccsi:%i", hdr->id);
-		if(*name == NULL)
+		if(*name == static_cast<char>(0))
 			sprintf(msg, "%s: controller_ccsi unable to find property: name is NULL", namestr);
 		else
 			sprintf(msg, "%s: controller_ccsi unable to find %s", namestr, name);
-		throw(msg);
+		throw(std::runtime_error(msg));
 	}
 }
 
-void controller_ccsi::fetch_enum(enumeration **prop, char *name, OBJECT *parent){
+void controller_ccsi::fetch_enum(enumeration **prop, const char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
-	*prop = gl_get_enum_by_name(parent, name);
-	if(*prop == NULL){
+	*prop = gl_get_enum_by_name(parent, const_cast<char*>(name));
+	if(*prop == nullptr){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "controller:%i", hdr->id);
-		if(*name == NULL){
-			sprintf(msg, "%: controller unable to find property: name is NULL", namestr);
+		if(*name == static_cast<char>(0)){
+			sprintf(msg, "%s: controller unable to find property: name is NULL", namestr);
 		}
 		else
 		{
 			sprintf(msg, "%s: controller unable to find %s", namestr, name);
 		}
-		throw(msg);
+		throw(std::runtime_error(msg));
 	}
 }
 
@@ -1379,11 +1379,11 @@ TIMESTAMP controller_ccsi::sync(TIMESTAMP t0, TIMESTAMP t1){
 				} else {
 					controller_bid.state = BS_OFF;
 				}
-				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), pMkt, "submit_bid_state_ccsi", "auction_ccsi", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+				((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), pMkt, "submit_bid_state_ccsi", "auction_ccsi", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 				controller_bid.rebid = true;
 			} else {
 				controller_bid.state = BS_UNKNOWN;
-				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), pMkt, "submit_bid_state_ccsi", "auction_ccsi", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+				((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), pMkt, "submit_bid_state_ccsi", "auction_ccsi", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 				controller_bid.rebid = true;
 			}
 			if(controller_bid.bid_accepted == false){
@@ -1403,7 +1403,7 @@ TIMESTAMP controller_ccsi::sync(TIMESTAMP t0, TIMESTAMP t1){
 				} else {
 					controller_bid.state = BS_OFF;
 				}
-				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), pMkt, "submit_bid_state_ccsi", "auction_ccsi", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+				((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), pMkt, "submit_bid_state_ccsi", "auction_ccsi", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 				if(controller_bid.bid_accepted == false){
 					return TS_INVALID;
 				}
@@ -1587,11 +1587,11 @@ TIMESTAMP controller_ccsi::postsync(TIMESTAMP t0, TIMESTAMP t1){
 				} else {
 					controller_bid.state = BS_OFF;
 				}
-				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), pMkt, "submit_bid_state_ccsi", "auction_ccsi", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+				((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), pMkt, "submit_bid_state_ccsi", "auction_ccsi", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 				controller_bid.rebid = true;
 			} else {
 				controller_bid.state = BS_UNKNOWN;
-				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), pMkt, "submit_bid_state_ccsi", "auction_ccsi", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+				((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), pMkt, "submit_bid_state_ccsi", "auction_ccsi", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 				controller_bid.rebid = true;
 			}
 			if(controller_bid.bid_accepted == false){
@@ -1734,11 +1734,11 @@ TIMESTAMP controller_ccsi::postsync(TIMESTAMP t0, TIMESTAMP t1){
 					} else {
 						controller_bid.state = BS_OFF;
 					}
-					((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), pMkt, "submit_bid_state_ccsi", "auction_ccsi", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+					((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), pMkt, "submit_bid_state_ccsi", "auction_ccsi", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 					controller_bid.rebid = true;
 				} else {
 					controller_bid.state = BS_UNKNOWN;
-					((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), pMkt, "submit_bid_state_ccsi", "auction_ccsi", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+					((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), pMkt, "submit_bid_state_ccsi", "auction_ccsi", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 					controller_bid.rebid = true;
 				}
 				if(controller_bid.bid_accepted == false){

@@ -15,7 +15,7 @@ protected:
 	TIMESTAMP last_t;
 public:
 	complex positive_sequence_voltage;				///< The positive sequence voltage of the substation object
-	typedef enum {
+	enum {
 		R_PHASE_A,
 		R_PHASE_B,
 		R_PHASE_C

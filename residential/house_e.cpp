@@ -108,7 +108,7 @@ static double aux_cutin_temperature = 10;
 // implicit loadshapes - these are enabled by using implicit_enduses global
 //////////////////////////////////////////////////////////////////////////
 typedef struct s_implicit_enduse_list {
-	char *implicit_name;
+	const char *implicit_name;
 	struct {
 		double breaker_amps; 
 		int circuit_is220;
@@ -118,9 +118,9 @@ typedef struct s_implicit_enduse_list {
 		double power_factor;
 		double heat_fraction;
 	} load;
-	char *shape;
-	char *schedule_name;
-	char *schedule_definition;
+	const char *shape;
+	const char *schedule_name;
+	const char *schedule_definition;
 } IMPLICITENDUSEDATA;
 #include "elcap1990.h"
 #include "elcap2010.h"
@@ -166,7 +166,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 	if (oclass==NULL)  
 	{
 		// register the class definition
-		oclass = gl_register_class(mod,"house",sizeof(house_e),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,const_cast<char*>("house"),sizeof(house_e),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class house";
 		else
@@ -604,7 +604,7 @@ int house_e::create()
 				{
 					SCHEDULE *sched = gl_schedule_find(name);
 					if (sched==NULL){
-						sched = gl_schedule_create(eu->schedule_name,eu->schedule_definition);
+						sched = gl_schedule_create(strdup(eu->schedule_name),strdup(eu->schedule_definition));
 					}
 					if(sched == NULL){
 						gl_error("error creating schedule for enduse \'%s\'", eu->schedule_name);
@@ -614,12 +614,12 @@ int house_e::create()
 					memset(item,0,sizeof(IMPLICITENDUSE));
 					gl_enduse_create(&(item->load));
 					item->load.shape = gl_loadshape_create(sched);
-					if (gl_set_value_by_type(PT_loadshape,item->load.shape,eu->shape)==0)
+					if (gl_set_value_by_type(PT_loadshape,item->load.shape, strdup(eu->shape))==0)
 					{
 						gl_error("loadshape '%s' could not be created", name);
 						result = FAILED;
 					}
-					item->load.name = eu->implicit_name;
+					item->load.name = strdup(eu->implicit_name);
 					item->next = implicit_enduse_list;
 					item->amps = eu->load.breaker_amps;
 					item->is220 = eu->load.circuit_is220;
@@ -1796,7 +1796,7 @@ CIRCUIT *house_e::attach(OBJECT *obj, ///< object to attach
 		c->pLoad = pLoad;
 	else if (obj)
 	{
-		c->pLoad = (enduse*)gl_get_addr(obj,"enduse_load");
+		c->pLoad = (enduse*)gl_get_addr(obj,const_cast<char*>("enduse_load"));
 		if (c->pLoad==NULL)
 			GL_THROW("end-use load %s couldn't be connected because it does not publish 'enduse_load' property", c->pLoad->name);
 	}
@@ -3243,13 +3243,13 @@ void house_e::check_controls(void)
 		{
 			char mode_buffer[1024];
 			gl_warning("house_e:%d (%s) possible control problem (system_mode %s) -- Tevent-Tair mismatch with dTair (Tevent=%.1f, Tair=%.1f, dTair=%.1f) at %s", 
-				obj->id, obj->name?obj->name:"anonymous", gl_getvalue(obj,"system_mode", mode_buffer, 1023)==NULL?"ERR":mode_buffer, Tevent, Tair, dTair, gl_strftime(obj->clock, buffer, 255));
+				obj->id, obj->name?obj->name:"anonymous", gl_getvalue(obj,const_cast<char*>("system_mode"), mode_buffer, 1023)==NULL?"ERR":mode_buffer, Tevent, Tair, dTair, gl_strftime(obj->clock, buffer, 255));
 		}
 	}
 }
 
 //Map Complex value
-gld_property *house_e::map_complex_value(OBJECT *obj, char *name)
+gld_property *house_e::map_complex_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	OBJECT *objhdr = OBJECTHDR(this);
@@ -3272,7 +3272,7 @@ gld_property *house_e::map_complex_value(OBJECT *obj, char *name)
 }
 
 //Map double value
-gld_property *house_e::map_double_value(OBJECT *obj, char *name)
+gld_property *house_e::map_double_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	OBJECT *objhdr = OBJECTHDR(this);

@@ -33,12 +33,12 @@ central_dg_control::central_dg_control(MODULE *module)
 {	
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"central_dg_control",sizeof(central_dg_control),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
+		oclass = gl_register_class(module,const_cast<char*>("central_dg_control"),sizeof(central_dg_control),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class central_dg_control";
 		else
 			oclass->trl = TRL_PROOF;
-		
+
 		if (gl_publish_variable(oclass,
 			PT_char32,"controlled_dgs", PADDR(controlled_objects), PT_DESCRIPTION, "the group ID of the dg objects the controller controls.",
 			PT_object,"feederhead_meter", PADDR(feederhead_meter), PT_DESCRIPTION, "the name of the meter.",
@@ -266,13 +266,13 @@ int central_dg_control::init(OBJECT *parent)
 	if (feederhead_meter != NULL)
 	{
 		//Make sure it is a meter
-		if (gl_object_isa(feederhead_meter,"meter","powerflow") == true)
+		if (gl_object_isa(feederhead_meter, const_cast<char*>("meter"), const_cast<char*>("powerflow")))
 		{
 			//Map up the values
-			pPower_Meas[0] = new gld_property(feederhead_meter,"measured_power_A");
+			pPower_Meas[0] = new gld_property(feederhead_meter,const_cast<char*>("measured_power_A"));
 
 			//Check it
-			if ((pPower_Meas[0]->is_valid() != true) || (pPower_Meas[0]->is_complex() != true))
+			if (!pPower_Meas[0]->is_valid() || !pPower_Meas[0]->is_complex())
 			{
 				GL_THROW("central_dg_control:%d - %s - failed to map feaderhead_meter power property!",thisobj->id,(thisobj->name ? thisobj->name : "Unnamed"));
 				/*  TROUBLESHOOT
@@ -282,20 +282,20 @@ int central_dg_control::init(OBJECT *parent)
 			}
 
 			//Get the next one
-			pPower_Meas[1] = new gld_property(feederhead_meter,"measured_power_B");
+			pPower_Meas[1] = new gld_property(feederhead_meter,const_cast<char*>("measured_power_B"));
 
 			//Check it
-			if ((pPower_Meas[1]->is_valid() != true) || (pPower_Meas[1]->is_complex() != true))
+			if (!pPower_Meas[1]->is_valid() || !pPower_Meas[1]->is_complex())
 			{
 				GL_THROW("central_dg_control:%d - %s - failed to map feaderhead_meter power property!",thisobj->id,(thisobj->name ? thisobj->name : "Unnamed"));
 				//Defined above
 			}
 
 			//Get the next one
-			pPower_Meas[2] = new gld_property(feederhead_meter,"measured_power_C");
+			pPower_Meas[2] = new gld_property(feederhead_meter,const_cast<char*>("measured_power_C"));
 
 			//Check it
-			if ((pPower_Meas[2]->is_valid() != true) || (pPower_Meas[2]->is_complex() != true))
+			if (!pPower_Meas[2]->is_valid() || !pPower_Meas[2]->is_complex())
 			{
 				GL_THROW("central_dg_control:%d - %s - failed to map feaderhead_meter power property!",thisobj->id,(thisobj->name ? thisobj->name : "Unnamed"));
 				//Defined above
@@ -437,7 +437,7 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 	i=3;
 	while (i>-1)
 	{
-		if (control_mode_setting[i]!=NULL)
+		if (control_mode_setting[i]!=0)
 		{
 			switch(control_mode_setting[i])
 			{

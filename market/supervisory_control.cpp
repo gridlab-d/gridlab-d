@@ -25,7 +25,7 @@ static PASSCONFIG clockpass = PC_POSTTOPDOWN;
 supervisory_control::supervisory_control(MODULE *module) {
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"supervisory_control",sizeof(supervisory_control),passconfig|PC_AUTOLOCK);
+		oclass = gl_register_class(module,const_cast<char*>("supervisory_control"),sizeof(supervisory_control),passconfig|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class supervisory_control";
 		else
@@ -57,16 +57,16 @@ supervisory_control::supervisory_control(MODULE *module) {
 void supervisory_control::fetch_double(double **prop, char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
 	*prop = gl_get_double_by_name(parent, name);
-	if(*prop == NULL){
+	if(*prop == nullptr){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "supervisory_control:%i", hdr->id);
-		if(*name == NULL)
+		if(*name == static_cast<char>(0))
 			sprintf(msg, "%s: supervisory_control unable to find property: name is NULL", namestr);
 		else
 			sprintf(msg, "%s: supervisory_control unable to find %s", namestr, name);
-		throw(msg);
+		throw(std::runtime_error(msg));
 	}
 }
 

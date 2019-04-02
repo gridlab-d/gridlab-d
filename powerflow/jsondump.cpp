@@ -12,6 +12,8 @@
 #include <fstream>
 #include <cstring>
 #include <json/json.h> //jsoncpp library
+#include <string>
+#include <sstream>
 using namespace std;
 
 #include "jsondump.h"
@@ -28,9 +30,10 @@ jsondump::jsondump(MODULE *mod)
 	if (oclass==NULL)
 	{
 		// register the class definition
-		oclass = gl_register_class(mod,"jsondump",sizeof(jsondump),PC_AUTOLOCK);
-		if (oclass==NULL)
-			GL_THROW("unable to register object class implemented by %s",__FILE__);
+		oclass = gl_register_class(mod,const_cast<char*>("jsondump"),sizeof(jsondump),PC_AUTOLOCK);
+
+		if (oclass == nullptr)
+			GL_THROW(const_cast<char*>("unable to register object class implemented by %s"),__FILE__);
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
@@ -46,7 +49,7 @@ jsondump::jsondump(MODULE *mod)
 			PT_double,"min_node_voltage[pu]",PADDR(min_volt_value),PT_DESCRIPTION,"Per-unit minimum voltage level allowed for nodes",
 			PT_double,"max_node_voltage[pu]",PADDR(max_volt_value),PT_DESCRIPTION,"Per-unit maximum voltage level allowed for nodes",
 
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			NULL)<1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
 	}
 }
 
@@ -219,9 +222,9 @@ STATUS jsondump::dump_system(void)
 		pLineConf = (OBJECT **)gl_malloc((lineConfs->hit_count)*sizeof(OBJECT*));
 
 		//Check it
-		if (pLineConf == NULL)
+		if (pLineConf == nullptr)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("jsdondump:%d %s - Unable to allocate memory"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			/*  TROUBLESHOOT
 			While attempting to allocate memory for one of the search and output arrays, an error was
 			encountered.  Please try again.  If the error persists, please submit your code and a bug
@@ -229,13 +232,14 @@ STATUS jsondump::dump_system(void)
 			*/
 		}
 
+
 		//Define b_mat_pu
 		b_mat_pu = (complex *)gl_malloc((lineConfs->hit_count)*9*sizeof(complex));
 
 		//Check it
-		if (b_mat_pu == NULL)
+		if (b_mat_pu == nullptr)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("jsdondump:%d %s - Unable to allocate memory"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
 		}
 
@@ -243,16 +247,16 @@ STATUS jsondump::dump_system(void)
 		b_mat_defined = (bool *)gl_malloc((lineConfs->hit_count)*sizeof(bool));
 
 		//Check it
-		if (b_mat_defined == NULL)
+		if (b_mat_defined == nullptr)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("jsdondump:%d %s - Unable to allocate memory"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
 		}
 
 		//Loop through and zero everything, just because
 		for (indexA=0; indexA < (lineConfs->hit_count); indexA++)
 		{
-			pLineConf[indexA] = NULL;
+			pLineConf[indexA] = nullptr;
 			b_mat_defined[indexA] = false;
 
 			for (indexB=0; indexB<9; indexB++)
@@ -268,7 +272,7 @@ STATUS jsondump::dump_system(void)
 		index = 0;
 		
 		//Loop
-		while (obj_lineConf != NULL)
+		while (obj_lineConf != nullptr)
 		{
 			pLineConf[index] = obj_lineConf;
 
@@ -294,7 +298,7 @@ STATUS jsondump::dump_system(void)
 		//Check it
 		if (pTpLineConf == NULL)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("jsdondump:%d %s - Unable to allocate memory"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
 		}
 
@@ -304,7 +308,7 @@ STATUS jsondump::dump_system(void)
 		//Check it
 		if (b_mat_tp_pu == NULL)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("jsdondump:%d %s - Unable to allocate memory"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
 		}
 
@@ -314,7 +318,7 @@ STATUS jsondump::dump_system(void)
 		//Check it
 		if (b_mat_tp_defined == NULL)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("jsdondump:%d %s - Unable to allocate memory"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
 		}
 
@@ -366,7 +370,7 @@ STATUS jsondump::dump_system(void)
 		//Check it
 		if (pTransConf == NULL)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("jsdondump:%d %s - Unable to allocate memory"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
 		}
 
@@ -376,7 +380,7 @@ STATUS jsondump::dump_system(void)
 		//Check it
 		if (b_mat_trans_pu == NULL)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("jsdondump:%d %s - Unable to allocate memory"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
 		}
 
@@ -392,7 +396,7 @@ STATUS jsondump::dump_system(void)
 		//Check it
 		if (b_mat_trans_defined == NULL)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("jsdondump:%d %s - Unable to allocate memory"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
 		}
 
@@ -408,7 +412,7 @@ STATUS jsondump::dump_system(void)
 		//Make sure it worked
 		if (trans_phase_count == NULL)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("jsdondump:%d %s - Unable to allocate memory"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
 		}
 
@@ -449,7 +453,7 @@ STATUS jsondump::dump_system(void)
 		//Check it
 		if (pRegConf == NULL)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("jsdondump:%d %s - Unable to allocate memory"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
 		}
 
@@ -459,7 +463,7 @@ STATUS jsondump::dump_system(void)
 		//Check it
 		if (b_mat_reg_pu == NULL)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("jsdondump:%d %s - Unable to allocate memory"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
 		}
 
@@ -475,7 +479,7 @@ STATUS jsondump::dump_system(void)
 		//Check it
 		if (b_mat_reg_defined == NULL)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("jsdondump:%d %s - Unable to allocate memory"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
 		}
 
@@ -491,7 +495,7 @@ STATUS jsondump::dump_system(void)
 		//Make sure it worked
 		if (reg_phase_count == NULL)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("jsdondump:%d %s - Unable to allocate memory"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
 		}
 
@@ -562,7 +566,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//Pull the phases and figure out those
-			temp_set_value = get_set_value(obj,"phases");
+			temp_set_value = get_set_value(obj,const_cast<char*>("phases"));
 			
 			//Clear the output array
 			jsonArray2.clear();
@@ -603,12 +607,12 @@ STATUS jsondump::dump_system(void)
 			jsonArray2.clear();
 
 			//Extract the power values
-			temp_complex_power_value[0] = get_complex_value(obj,"power_A");
-			temp_complex_power_value[1] = get_complex_value(obj,"power_B");
-			temp_complex_power_value[2] = get_complex_value(obj,"power_C");
+			temp_complex_power_value[0] = get_complex_value(obj,const_cast<char*>("power_A"));
+			temp_complex_power_value[1] = get_complex_value(obj,const_cast<char*>("power_B"));
+			temp_complex_power_value[2] = get_complex_value(obj,const_cast<char*>("power_C"));
 
 			//See if we need to be per-unitized
-			if (write_per_unit == true)
+			if (write_per_unit)
 			{
 				temp_complex_power_value[0] /= (system_VA_base / 3.0);
 				temp_complex_power_value[1] /= (system_VA_base / 3.0);
@@ -689,7 +693,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//Pull the phases and figure out those
-			temp_set_value = get_set_value(obj,"phases");
+			temp_set_value = get_set_value(obj,const_cast<char*>("phases"));
 			
 			//Clear the output array
 			jsonArray2.clear();
@@ -730,12 +734,12 @@ STATUS jsondump::dump_system(void)
 			jsonArray2.clear();
 
 			//Extract the power values
-			temp_complex_power_value[0] = get_complex_value(obj,"power_out_A");
-			temp_complex_power_value[1] = get_complex_value(obj,"power_out_B");
-			temp_complex_power_value[2] = get_complex_value(obj,"power_out_C");
+			temp_complex_power_value[0] = get_complex_value(obj,const_cast<char*>("power_out_A"));
+			temp_complex_power_value[1] = get_complex_value(obj,const_cast<char*>("power_out_B"));
+			temp_complex_power_value[2] = get_complex_value(obj,const_cast<char*>("power_out_C"));
 
 			//See if we need to be per-unitized
-			if (write_per_unit == true)
+			if (write_per_unit)
 			{
 				temp_complex_power_value[0] /= (system_VA_base / 3.0);
 				temp_complex_power_value[1] /= (system_VA_base / 3.0);
@@ -799,15 +803,15 @@ STATUS jsondump::dump_system(void)
 		while (obj != NULL)
 		{
 			//If per-unit - adjust the values
-			if (write_per_unit == true)
+			if (write_per_unit)
 			{
-				temp_voltage_base = get_double_value(obj,"nominal_voltage");
+				temp_voltage_base = get_double_value(obj,const_cast<char*>("nominal_voltage"));
 				temp_de_pu_base = 1.0;	//Don't need to "de-per-unit it"
 			}//End per-unit
 			else	//No per-unit desired
 			{
 				temp_voltage_base = 1.0;	//Divide by unity - does nothing really, but easier to code this way
-				temp_de_pu_base = get_double_value(obj,"nominal_voltage");	//But we do need to get the "real value"
+				temp_de_pu_base = get_double_value(obj,const_cast<char*>("nominal_voltage"));	//But we do need to get the "real value"
 			}
 
 			//Write out the name
@@ -827,9 +831,9 @@ STATUS jsondump::dump_system(void)
 			node_object["max_voltage"] = max_volt_value * temp_de_pu_base;
 
 			//Obtain current voltage - assume that's the reference - per-unitize, if necessary
-			temp_complex_voltage_value[0] = get_complex_value(obj,"voltage_A");
-			temp_complex_voltage_value[1] = get_complex_value(obj,"voltage_B");
-			temp_complex_voltage_value[2] = get_complex_value(obj,"voltage_C");
+			temp_complex_voltage_value[0] = get_complex_value(obj,const_cast<char*>("voltage_A"));
+			temp_complex_voltage_value[1] = get_complex_value(obj,const_cast<char*>("voltage_B"));
+			temp_complex_voltage_value[2] = get_complex_value(obj,const_cast<char*>("voltage_C"));
 
 			//Now write it
 			jsonArray2.clear();
@@ -848,7 +852,7 @@ STATUS jsondump::dump_system(void)
 			jsonArray2.clear();
 
 			//Check phases
-			temp_set_value = get_set_value(obj,"phases");
+			temp_set_value = get_set_value(obj,const_cast<char*>("phases"));
 			
 			//Clear the output array
 			jsonArray2.clear();
@@ -912,13 +916,13 @@ STATUS jsondump::dump_system(void)
 			//If per-unit - adjust the values
 			if (write_per_unit == true)
 			{
-				temp_voltage_base = get_double_value(obj,"nominal_voltage");
+				temp_voltage_base = get_double_value(obj,const_cast<char*>("nominal_voltage"));
 				temp_de_pu_base = 1.0;	//Don't need to "de-per-unit it"
 			}//End per-unit
 			else	//No per-unit desired
 			{
 				temp_voltage_base = 1.0;	//Divide by unity - does nothing really, but easier to code this way
-				temp_de_pu_base = get_double_value(obj,"nominal_voltage");	//But we do need to get the "real value"
+				temp_de_pu_base = get_double_value(obj,const_cast<char*>("nominal_voltage"));	//But we do need to get the "real value"
 			}
 
 			//Write out the name
@@ -938,9 +942,9 @@ STATUS jsondump::dump_system(void)
 			node_object["max_voltage"] = max_volt_value * temp_de_pu_base;
 
 			//Obtain current voltage - assume that's the reference - per-unitize, if necessary
-			temp_complex_voltage_value[0] = get_complex_value(obj,"voltage_A");
-			temp_complex_voltage_value[1] = get_complex_value(obj,"voltage_B");
-			temp_complex_voltage_value[2] = get_complex_value(obj,"voltage_C");
+			temp_complex_voltage_value[0] = get_complex_value(obj,const_cast<char*>("voltage_A"));
+			temp_complex_voltage_value[1] = get_complex_value(obj,const_cast<char*>("voltage_B"));
+			temp_complex_voltage_value[2] = get_complex_value(obj,const_cast<char*>("voltage_C"));
 
 			//Now write it
 			jsonArray2.clear();
@@ -959,7 +963,7 @@ STATUS jsondump::dump_system(void)
 			jsonArray2.clear();
 
 			//Check phases
-			temp_set_value = get_set_value(obj,"phases");
+			temp_set_value = get_set_value(obj,const_cast<char*>("phases"));
 			
 			//Clear the output array
 			jsonArray2.clear();
@@ -1025,15 +1029,15 @@ STATUS jsondump::dump_system(void)
 		while (obj != NULL)
 		{
 			//If per-unit - adjust the values
-			if (write_per_unit == true)
+			if (write_per_unit)
 			{
-				temp_voltage_base = get_double_value(obj,"nominal_voltage");
+				temp_voltage_base = get_double_value(obj,const_cast<char*>("nominal_voltage"));
 				temp_de_pu_base = 1.0;	//Don't need to "de-per-unit it"
 			}//End per-unit
 			else	//No per-unit desired
 			{
 				temp_voltage_base = 1.0;	//Divide by unity - does nothing really, but easier to code this way
-				temp_de_pu_base = get_double_value(obj,"nominal_voltage");	//But we do need to get the "real value"
+				temp_de_pu_base = get_double_value(obj,const_cast<char*>("nominal_voltage"));	//But we do need to get the "real value"
 			}
 
 			//Write out the name
@@ -1061,7 +1065,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//Pull the enumeration value for the load - see if we're critical or not
-			temp_enum_value = get_enum_value(obj,"load_priority");
+			temp_enum_value = get_enum_value(obj,const_cast<char*>("load_priority"));
 
 			//See if we're "appropriately critical"
 			if (temp_enum_value == 2)
@@ -1078,9 +1082,9 @@ STATUS jsondump::dump_system(void)
 			node_object["max_voltage"] = max_volt_value * temp_de_pu_base;
 
 			//Obtain current voltage - assume that's the reference - per-unitize, if necessary
-			temp_complex_voltage_value[0] = get_complex_value(obj,"voltage_A");
-			temp_complex_voltage_value[1] = get_complex_value(obj,"voltage_B");
-			temp_complex_voltage_value[2] = get_complex_value(obj,"voltage_C");
+			temp_complex_voltage_value[0] = get_complex_value(obj,const_cast<char*>("voltage_A"));
+			temp_complex_voltage_value[1] = get_complex_value(obj,const_cast<char*>("voltage_B"));
+			temp_complex_voltage_value[2] = get_complex_value(obj,const_cast<char*>("voltage_C"));
 
 			//Now write it
 			jsonArray2.clear();
@@ -1099,7 +1103,7 @@ STATUS jsondump::dump_system(void)
 			jsonArray2.clear();
 
 			//Check phases
-			temp_set_value = get_set_value(obj,"phases");
+			temp_set_value = get_set_value(obj,const_cast<char*>("phases"));
 			
 			//Clear the output array
 			jsonArray2.clear();
@@ -1141,12 +1145,12 @@ STATUS jsondump::dump_system(void)
 			jsonArray2.clear();
 			
 			//Now pull the load values - only constant power for now
-			temp_complex_power_value[0] = get_complex_value(obj,"constant_power_A");
-			temp_complex_power_value[1] = get_complex_value(obj,"constant_power_B");
-			temp_complex_power_value[2] = get_complex_value(obj,"constant_power_C");
+			temp_complex_power_value[0] = get_complex_value(obj,const_cast<char*>("constant_power_A"));
+			temp_complex_power_value[1] = get_complex_value(obj,const_cast<char*>("constant_power_B"));
+			temp_complex_power_value[2] = get_complex_value(obj,const_cast<char*>("constant_power_C"));
 
 			//See if we need to be per-unitized
-			if (write_per_unit == true)
+			if (write_per_unit)
 			{
 				temp_complex_power_value[0] /= (system_VA_base / 3.0);
 				temp_complex_power_value[1] /= (system_VA_base / 3.0);
@@ -1220,7 +1224,7 @@ STATUS jsondump::dump_system(void)
 		//Check it
 		if (pTransformer == NULL)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("jsdondump:%d %s - Unable to allocate memory"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
 		}
 
@@ -1280,7 +1284,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//Pull the phases and figure out those
-			temp_set_value = get_set_value(obj,"phases");
+			temp_set_value = get_set_value(obj,const_cast<char*>("phases"));
 			
 			//Clear the output array
 			jsonArray2.clear();
@@ -1338,10 +1342,10 @@ STATUS jsondump::dump_system(void)
 			line_object["is_transformer"] = true;
 
 			//If per-unit - adjust the values
-			if (write_per_unit == true)
+			if (write_per_unit)
 			{
 				//Compute the per-unit base - use the nominal value off of the secondary
-				per_unit_base = get_double_value(pTransformer[index]->to,"nominal_voltage");
+				per_unit_base = get_double_value(pTransformer[index]->to,const_cast<char*>("nominal_voltage"));
 
 				//Calculate the base impedance
 				temp_impedance_base = (per_unit_base * per_unit_base) / (system_VA_base / 3.0);
@@ -1364,9 +1368,9 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//See if it worked - if so, store us
-			if (found_match_config == true)
+			if (found_match_config)
 			{
-				if (b_mat_trans_defined[indexA] != true)
+				if (!b_mat_trans_defined[indexA])
 				{
 					for (indexB = 0; indexB < 3; indexB++)
 					{
@@ -1429,7 +1433,7 @@ STATUS jsondump::dump_system(void)
 		//Check it
 		if (pRegulator == NULL)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("jsdondump:%d %s - Unable to allocate memory"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
 		}
 
@@ -1489,7 +1493,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//Pull the phases and figure out those
-			temp_set_value = get_set_value(obj,"phases");
+			temp_set_value = get_set_value(obj,const_cast<char*>("phases"));
 			
 			//Clear the output array
 			jsonArray2.clear();
@@ -1550,7 +1554,7 @@ STATUS jsondump::dump_system(void)
 			if (write_per_unit == true)
 			{
 				//Compute the per-unit base - use the nominal value off of the secondary
-				per_unit_base = get_double_value(pRegulator[index]->to,"nominal_voltage");
+				per_unit_base = get_double_value(pRegulator[index]->to,const_cast<char*>("nominal_voltage"));
 
 				//Calculate the base impedance
 				temp_impedance_base = (per_unit_base * per_unit_base) / (system_VA_base / 3.0);
@@ -1637,7 +1641,7 @@ STATUS jsondump::dump_system(void)
 		//Check it
 		if (pOhLine == NULL)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("jsdondump:%d %s - Unable to allocate memory"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
 		}
 
@@ -1697,7 +1701,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//Pull the phases and figure out those
-			temp_set_value = get_set_value(obj,"phases");
+			temp_set_value = get_set_value(obj,const_cast<char*>("phases"));
 			
 			//Clear the output array
 			jsonArray2.clear();
@@ -1755,10 +1759,10 @@ STATUS jsondump::dump_system(void)
 			line_object["is_transformer"] = false;
 
 			//If per-unit - adjust the values
-			if (write_per_unit == true)
+			if (write_per_unit)
 			{
 				//Compute the per-unit base - use the nominal value off of the secondary
-				per_unit_base = get_double_value(pOhLine[index]->to,"nominal_voltage");
+				per_unit_base = get_double_value(pOhLine[index]->to,const_cast<char*>("nominal_voltage"));
 
 				//Calculate the base impedance
 				temp_impedance_base = (per_unit_base * per_unit_base) / (system_VA_base / 3.0);
@@ -1781,9 +1785,9 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//See if it worked - if so, store us
-			if (found_match_config == true)
+			if (found_match_config)
 			{
-				if (b_mat_defined[indexA] != true)
+				if (!b_mat_defined[indexA])
 				{
 					for (indexB = 0; indexB < 3; indexB++)
 					{
@@ -1844,7 +1848,7 @@ STATUS jsondump::dump_system(void)
 		//Check it
 		if (pUgLine == NULL)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("jsdondump:%d %s - Unable to allocate memory"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
 		}
 
@@ -1904,7 +1908,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//Pull the phases and figure out those
-			temp_set_value = get_set_value(obj,"phases");
+			temp_set_value = get_set_value(obj,const_cast<char*>("phases"));
 			
 			//Clear the output array
 			jsonArray2.clear();
@@ -1965,7 +1969,7 @@ STATUS jsondump::dump_system(void)
 			if (write_per_unit == true)
 			{
 				//Compute the per-unit base - use the nominal value off of the secondary
-				per_unit_base = get_double_value(pUgLine[index]->to,"nominal_voltage");
+				per_unit_base = get_double_value(pUgLine[index]->to,const_cast<char*>("nominal_voltage"));
 
 				//Calculate the base impedance
 				temp_impedance_base = (per_unit_base * per_unit_base) / (system_VA_base / 3.0);
@@ -2051,7 +2055,7 @@ STATUS jsondump::dump_system(void)
 		//Check it
 		if (pTpLine == NULL)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("jsdondump:%d %s - Unable to allocate memory"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
 		}
 
@@ -2111,7 +2115,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//Pull the phases and figure out those
-			temp_set_value = get_set_value(obj,"phases");
+			temp_set_value = get_set_value(obj,const_cast<char*>("phases"));
 			
 			//Clear the output array
 			jsonArray2.clear();
@@ -2172,7 +2176,7 @@ STATUS jsondump::dump_system(void)
 			if (write_per_unit == true)
 			{
 				//Compute the per-unit base - use the nominal value off of the secondary
-				per_unit_base = get_double_value(pTpLine[index]->to,"nominal_voltage");
+				per_unit_base = get_double_value(pTpLine[index]->to,const_cast<char*>("nominal_voltage"));
 
 				//Calculate the base impedance
 				temp_impedance_base = (per_unit_base * per_unit_base) / (system_VA_base / 3.0);
@@ -2263,7 +2267,7 @@ STATUS jsondump::dump_system(void)
 		//Check it
 		if (pSwitch == NULL)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("jsdondump:%d %s - Unable to allocate memory"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
 		}
 
@@ -2323,7 +2327,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//Pull the phases and figure out those
-			temp_set_value = get_set_value(obj,"phases");
+			temp_set_value = get_set_value(obj, const_cast<char*>("phases"));
 			
 			//Clear the output array
 			jsonArray2.clear();
@@ -2384,7 +2388,7 @@ STATUS jsondump::dump_system(void)
 			if (write_per_unit == true)
 			{
 				//Compute the per-unit base - use the nominal value off of the secondary
-				per_unit_base = get_double_value(pSwitch[index]->to,"nominal_voltage");
+				per_unit_base = get_double_value(pSwitch[index]->to,const_cast<char*>("nominal_voltage"));
 
 				//Calculate the base impedance
 				temp_impedance_base = (per_unit_base * per_unit_base) / (system_VA_base / 3.0);
@@ -2449,7 +2453,7 @@ STATUS jsondump::dump_system(void)
 		//Check it
 		if (pSectionalizer == NULL)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("jsdondump:%d %s - Unable to allocate memory"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
 		}
 
@@ -2509,7 +2513,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//Pull the phases and figure out those
-			temp_set_value = get_set_value(obj,"phases");
+			temp_set_value = get_set_value(obj,const_cast<char*>("phases"));
 			
 			//Clear the output array
 			jsonArray2.clear();
@@ -2570,7 +2574,7 @@ STATUS jsondump::dump_system(void)
 			if (write_per_unit == true)
 			{
 				//Compute the per-unit base - use the nominal value off of the secondary
-				per_unit_base = get_double_value(pSectionalizer[index]->to,"nominal_voltage");
+				per_unit_base = get_double_value(pSectionalizer[index]->to,const_cast<char*>("nominal_voltage"));
 
 				//Calculate the base impedance
 				temp_impedance_base = (per_unit_base * per_unit_base) / (system_VA_base / 3.0);
@@ -2636,7 +2640,7 @@ STATUS jsondump::dump_system(void)
 		//Check it
 		if (pRecloser == NULL)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("jsdondump:%d %s - Unable to allocate memory"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
 		}
 
@@ -2696,7 +2700,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//Pull the phases and figure out those
-			temp_set_value = get_set_value(obj,"phases");
+			temp_set_value = get_set_value(obj,const_cast<char*>("phases"));
 			
 			//Clear the output array
 			jsonArray2.clear();
@@ -2757,7 +2761,7 @@ STATUS jsondump::dump_system(void)
 			if (write_per_unit == true)
 			{
 				//Compute the per-unit base - use the nominal value off of the secondary
-				per_unit_base = get_double_value(pRecloser[index]->to,"nominal_voltage");
+				per_unit_base = get_double_value(pRecloser[index]->to,const_cast<char*>("nominal_voltage"));
 
 				//Calculate the base impedance
 				temp_impedance_base = (per_unit_base * per_unit_base) / (system_VA_base / 3.0);
@@ -2826,7 +2830,7 @@ STATUS jsondump::dump_system(void)
 		//Check it
 		if (pFuse == NULL)
 		{
-			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("jsdondump:%d %s - Unable to allocate memory"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
 		}
 
@@ -2886,7 +2890,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//Pull the phases and figure out those
-			temp_set_value = get_set_value(obj,"phases");
+			temp_set_value = get_set_value(obj,const_cast<char*>("phases"));
 			
 			//Clear the output array
 			jsonArray2.clear();
@@ -2947,7 +2951,7 @@ STATUS jsondump::dump_system(void)
 			if (write_per_unit == true)
 			{
 				//Compute the per-unit base - use the nominal value off of the secondary
-				per_unit_base = get_double_value(pFuse[index]->to,"nominal_voltage");
+				per_unit_base = get_double_value(pFuse[index]->to,const_cast<char*>("nominal_voltage"));
 
 				//Calculate the base impedance
 				temp_impedance_base = (per_unit_base * per_unit_base) / (system_VA_base / 3.0);
@@ -3126,21 +3130,21 @@ STATUS jsondump::dump_system(void)
 				//write num_phases
 				phaseCount = 0;
 
-				obj = get_object_value(pLineConf[index],"conductor_A");
+				obj = get_object_value(pLineConf[index],const_cast<char*>("conductor_A"));
 
 				if (obj != NULL)
 				{
 					phaseCount++;
 				}
 
-				obj = get_object_value(pLineConf[index],"conductor_B");
+				obj = get_object_value(pLineConf[index],const_cast<char*>("conductor_B"));
 
 				if (obj != NULL)
 				{
 					phaseCount++;
 				}
 
-				obj = get_object_value(pLineConf[index],"conductor_C");
+				obj = get_object_value(pLineConf[index],const_cast<char*>("conductor_C"));
 
 				if (obj != NULL)
 				{
@@ -3213,14 +3217,14 @@ STATUS jsondump::dump_system(void)
 				//write num_phases - should always be two, but we'll let it count
 				phaseCount = 0;
 
-				obj = get_object_value(pTpLineConf[index],"conductor_1");
+				obj = get_object_value(pTpLineConf[index],const_cast<char*>("conductor_1"));
 
 				if (obj != NULL)
 				{
 					phaseCount++;
 				}
 
-				obj = get_object_value(pTpLineConf[index],"conductor_2");
+				obj = get_object_value(pTpLineConf[index],const_cast<char*>("conductor_2"));
 
 				if (obj != NULL)
 				{
@@ -3466,7 +3470,11 @@ STATUS jsondump::dump_reliability(void)
 	sectionalizer *secData;
 	capacitor *capData;
 	regulator *regData;
-	char* indices1366[] = {"SAIFI", "SAIDI", "CAIDI", "ASAI", "MAIFI", NULL};
+	char* indices1366[] = {const_cast<char*>("SAIFI"),
+						const_cast<char*>("SAIDI"),
+						const_cast<char*>("CAIDI"),
+						const_cast<char*>("ASAI"),
+						const_cast<char*>("MAIFI"), NULL};
 	int index1366;
 	double *temp_double;
 	enumeration *temp_emu;
@@ -3552,15 +3560,15 @@ STATUS jsondump::dump_reliability(void)
 			// Write device opening status
 			// Append opening status to array
 			if ((fuseData->phases & 0x04) == 0x04) {
-				sprintf(buffer, "%s", ((fuseData->phase_A_state == 1)? true:false));
+				sprintf(buffer, "%d", (fuseData->phase_A_state == 1)? true:false);
 				jsonArray.append(buffer);
 			}
 			if ((fuseData->phases & 0x02) == 0x02) {
-				sprintf(buffer, "%s", ((fuseData->phase_B_state == 1)? true:false));
+				sprintf(buffer, "%d", ((fuseData->phase_B_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
 			if ((fuseData->phases & 0x01) == 0x01) {
-				sprintf(buffer, "%s", ((fuseData->phase_C_state == 1)? true:false));
+				sprintf(buffer, "%d", ((fuseData->phase_C_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
 
@@ -3598,15 +3606,15 @@ STATUS jsondump::dump_reliability(void)
 			// Write device opening status
 			// Append opening status to array
 			if ((reclData->phases & 0x04) == 0x04) {
-				sprintf(buffer, "%s", ((reclData->phase_A_state == 1)? true:false));
+				sprintf(buffer, "%d", ((reclData->phase_A_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
 			if ((reclData->phases & 0x02) == 0x02) {
-				sprintf(buffer, "%s", ((reclData->phase_B_state == 1)? true:false));
+				sprintf(buffer, "%d", ((reclData->phase_B_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
 			if ((reclData->phases & 0x01) == 0x01) {
-				sprintf(buffer, "%s", ((reclData->phase_C_state == 1)? true:false));
+				sprintf(buffer, "%d", ((reclData->phase_C_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
 
@@ -3644,15 +3652,15 @@ STATUS jsondump::dump_reliability(void)
 			// Write device opening status
 			// Append opening status to array
 			if ((secData->phases & 0x04) == 0x04) {
-				sprintf(buffer, "%s", ((secData->phase_A_state == 1)? true:false));
+				sprintf(buffer, "%d", ((secData->phase_A_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
 			if ((secData->phases & 0x02) == 0x02) {
-				sprintf(buffer, "%s", ((secData->phase_B_state == 1)? true:false));
+				sprintf(buffer, "%d", ((secData->phase_B_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
 			if ((secData->phases & 0x01) == 0x01) {
-				sprintf(buffer, "%s", ((secData->phase_C_state == 1)? true:false));
+				sprintf(buffer, "%d", ((secData->phase_C_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
 
@@ -3697,15 +3705,15 @@ STATUS jsondump::dump_reliability(void)
 			// Write device opening status
 			// Append opening status to array
 			if ((capData->pt_phase & 0x04) == 0x04) {
-				sprintf(buffer, "%s", ((capData->switchA_state == 1)? true:false));
+				sprintf(buffer, "%d", ((capData->switchA_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
 			if ((capData->pt_phase & 0x02) == 0x02) {
-				sprintf(buffer, "%s", ((capData->switchB_state == 1)? true:false));
+				sprintf(buffer, "%d", ((capData->switchB_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
 			if ((capData->pt_phase & 0x01) == 0x01) {
-				sprintf(buffer, "%s", ((capData->switchC_state == 1)? true:false));
+				sprintf(buffer, "%d", ((capData->switchC_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
 
@@ -3798,7 +3806,7 @@ TIMESTAMP jsondump::commit(TIMESTAMP t){
 	if(runtime == 0){
 		runtime = t;
 	}
-	if((write_system == true) && ((t == runtime) || (runtime == TS_NEVER)) && (runcount < 1)){
+	if(write_system && ((t == runtime) || (runtime == TS_NEVER)) && (runcount < 1)){
 		/* dump */
 		rv = dump_system();
 		++runcount;
@@ -3818,7 +3826,7 @@ TIMESTAMP jsondump::commit(TIMESTAMP t){
 STATUS jsondump::finalize(){
 	STATUS rv;
 
-	if (write_reliability == true) {
+	if (write_reliability) {
 
 		rv = dump_reliability();
 
@@ -3849,9 +3857,9 @@ double jsondump::get_double_value(OBJECT *obj, char *name)
 	pQuantity = new gld_property(obj,name);
 
 	//Make sure it worked
-	if ((pQuantity->is_valid() != true) || (pQuantity->is_double() != true))
+	if (!pQuantity->is_valid() || !pQuantity->is_double())
 	{
-		GL_THROW("jsdondump:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW(const_cast<char*>("jsdondump:%d %s - Unable to map property %s from object:%d %s"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		While attempting to map a quantity from another object, an error occurred.  Please try again.
 		If the error persists, please submit your system and a bug report via the ticketing system.
@@ -3879,9 +3887,9 @@ complex jsondump::get_complex_value(OBJECT *obj, char *name)
 	pQuantity = new gld_property(obj,name);
 
 	//Make sure it worked
-	if ((pQuantity->is_valid() != true) || (pQuantity->is_complex() != true))
+	if (!pQuantity->is_valid() || !pQuantity->is_complex())
 	{
-		GL_THROW("jsdondump:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW(const_cast<char*>("jsdondump:%d %s - Unable to map property %s from object:%d %s"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
 		//Defined above
 	}
 
@@ -3906,9 +3914,9 @@ set jsondump::get_set_value(OBJECT *obj, char *name)
 	pQuantity = new gld_property(obj,name);
 
 	//Make sure it worked
-	if ((pQuantity->is_valid() != true) || (pQuantity->is_set() != true))
+	if (!pQuantity->is_valid() || !pQuantity->is_set())
 	{
-		GL_THROW("jsdondump:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW(const_cast<char*>("jsdondump:%d %s - Unable to map property %s from object:%d %s"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
 		//Defined above
 	}
 
@@ -3933,9 +3941,9 @@ enumeration jsondump::get_enum_value(OBJECT *obj, char *name)
 	pQuantity = new gld_property(obj,name);
 
 	//Make sure it worked
-	if ((pQuantity->is_valid() != true) || (pQuantity->is_enumeration() != true))
+	if (!pQuantity->is_valid() || !pQuantity->is_enumeration())
 	{
-		GL_THROW("jsdondump:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW(const_cast<char*>("jsdondump:%d %s - Unable to map property %s from object:%d %s"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
 		//Defined above
 	}
 
@@ -3961,9 +3969,9 @@ OBJECT *jsondump::get_object_value(OBJECT *obj,char *name)
 	pQuantity = new gld_property(obj,name);
 
 	//Make sure it worked
-	if ((pQuantity->is_valid() != true) || (pQuantity->is_objectref() != true))
+	if (!pQuantity->is_valid() || !pQuantity->is_objectref())
 	{
-		GL_THROW("jsdondump:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW(const_cast<char*>("jsdondump:%d %s - Unable to map property %s from object:%d %s"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
 		//Defined above
 	}
 

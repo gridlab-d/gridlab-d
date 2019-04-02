@@ -101,9 +101,9 @@ node::node(MODULE *mod) : powerflow_object(mod)
 	if(oclass == NULL)
 	{
 		pclass = powerflow_object::oclass;
-		oclass = gl_register_class(mod,"node",sizeof(node),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
-			throw "unable to register class node";
+		oclass = gl_register_class(mod, const_cast<char*>("node"),sizeof(node),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
+		if (oclass== nullptr)
+			throw std::runtime_error("unable to register class node");
 		else
 			oclass->trl = TRL_PROVEN;
 
@@ -223,18 +223,18 @@ node::node(MODULE *mod) : powerflow_object(mod)
 				PT_KEYWORD, "OVER_VOLTAGE", (enumeration)GFA_OV, PT_DESCRIPTION, "GFA trip for over-voltage",
 
 			PT_object, "topological_parent", PADDR(TopologicalParent),PT_DESCRIPTION,"topological parent as per GLM configuration",
-			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+			NULL) < 1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
 
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_node)==NULL)
-			GL_THROW("Unable to publish node deltamode function");
-		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
-			GL_THROW("Unable to publish node swing-swapping function");
-		if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==NULL)
-			GL_THROW("Unable to publish node current injection update mapping function");
-		if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
-			GL_THROW("Unable to publish node VFD attachment function");
-		if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
-			GL_THROW("Unable to publish node island-status-reset function");
+		if (gl_publish_function(oclass,	const_cast<char*>("interupdate_pwr_object"), (FUNCTIONADDR)interupdate_node)==nullptr)
+			GL_THROW(const_cast<char*>("Unable to publish node deltamode function"));
+		if (gl_publish_function(oclass,	const_cast<char*>("pwr_object_swing_swapper"), (FUNCTIONADDR)swap_node_swing_status)==nullptr)
+			GL_THROW(const_cast<char*>("Unable to publish node swing-swapping function"));
+		if (gl_publish_function(oclass,	const_cast<char*>("pwr_current_injection_update_map"), (FUNCTIONADDR)node_map_current_update_function)==nullptr)
+			GL_THROW(const_cast<char*>("Unable to publish node current injection update mapping function"));
+		if (gl_publish_function(oclass,	const_cast<char*>("attach_vfd_to_pwr_object"), (FUNCTIONADDR)attach_vfd_to_node)== nullptr)
+			GL_THROW(const_cast<char*>("Unable to publish node VFD attachment function"));
+		if (gl_publish_function(oclass, const_cast<char*>("pwr_object_reset_disabled_status"), (FUNCTIONADDR)node_reset_disabled_status) == nullptr)
+			GL_THROW(const_cast<char*>("Unable to publish node island-status-reset function"));
 
 		oclass->threadsafe = false;
 	}
@@ -388,9 +388,9 @@ int node::init(OBJECT *parent)
 	if (has_phase(PHASE_S))
 	{
 		//Make sure we're a valid class
-		if (!(gl_object_isa(obj,"triplex_node","powerflow") || gl_object_isa(obj,"triplex_meter","powerflow") || gl_object_isa(obj,"triplex_load","powerflow") || gl_object_isa(obj,"motor","powerflow")))
+		if (!(gl_object_isa(obj,const_cast<char*>("triplex_node"),const_cast<char*>("powerflow")) || gl_object_isa(obj,const_cast<char*>("triplex_meter"),const_cast<char*>("powerflow")) || gl_object_isa(obj,const_cast<char*>("triplex_load"),const_cast<char*>("powerflow")) || gl_object_isa(obj,const_cast<char*>("motor"),const_cast<char*>("powerflow"))))
 		{
-			GL_THROW("Object:%d - %s -- has a phase S, but is not triplex!",obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW(const_cast<char*>("Object:%d - %s -- has a phase S, but is not triplex!"),obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
 			A node-based object has an "S" in the phases, but is not a triplex_node, triplex_load, nor triplex_meter.  These are the only
 			objects that support this phase.  Please check your phases and try again.
@@ -403,7 +403,7 @@ int node::init(OBJECT *parent)
 	{
 		char ext_lib_file_name[1025];
 		char extpath[1024];
-		CALLBACKS **cbackval = NULL;
+		CALLBACKS **cbackval = nullptr;
 		bool ExtLinkFailure;
 		STATUS status_ret_value;
 
@@ -411,128 +411,128 @@ int node::init(OBJECT *parent)
 		TopologicalParent = obj->parent;
 
 		//Check for a swing bus if we haven't found one already
-		if (NR_swing_bus == NULL)
+		if (NR_swing_bus == nullptr)
 		{
 			//See if a node is a master swing
-			NR_swing_bus = NR_master_swing_search("node",true);
+			NR_swing_bus = NR_master_swing_search(const_cast<char*>("node"),true);
 
 			//If one hasn't been found, see if there's a substation one
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
-				NR_swing_bus = NR_master_swing_search("substation",true);
+				NR_swing_bus = NR_master_swing_search(const_cast<char*>("substation"),true);
 			}
 			//Default else -- one already found, progress through this
 
 			//If one hasn't been found, see if there's a meter one
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
-				NR_swing_bus = NR_master_swing_search("meter",true);
+				NR_swing_bus = NR_master_swing_search(const_cast<char*>("meter"),true);
 			}
 			//Default else -- one already found, progress through this
 
 			//If one hasn't been found, see if there's an elec_frequency one
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
-				NR_swing_bus = NR_master_swing_search("elec_frequency",true);
+				NR_swing_bus = NR_master_swing_search(const_cast<char*>("elec_frequency"),true);
 			}
 			//Default else -- one already found, progress through this
 
 			//If one hasn't been found, see if there's a load one
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
 				//Do the same for loads
-				NR_swing_bus = NR_master_swing_search("load",true);
+				NR_swing_bus = NR_master_swing_search(const_cast<char*>("load"),true);
 			}
 			//Default else -- one already found, progress through this
 
 			//If one hasn't been found, see if there's a triplex_node one
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
 				//Do the same for triplex nodes
-				NR_swing_bus = NR_master_swing_search("triplex_node",true);
+				NR_swing_bus = NR_master_swing_search(const_cast<char*>("triplex_node"),true);
 			}
 			//Default else -- one already found, progress through this
 
 			//If one hasn't been found, see if there's a triplex_meter one
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
 				//And one more time for triplex meters
-				NR_swing_bus = NR_master_swing_search("triplex_meter",true);
+				NR_swing_bus = NR_master_swing_search(const_cast<char*>("triplex_meter"),true);
 			}
 			//Default else -- one already found, progress through this
 
 			//If one hasn't been found, see if there's a triplex_load one
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
 				//And one more time for triplex loads
-				NR_swing_bus = NR_master_swing_search("triplex_load",true);
+				NR_swing_bus = NR_master_swing_search(const_cast<char*>("triplex_load"),true);
 			}
 			//Default else -- one already found, progress through this
 
 			//Now repeat this process for SWING_PQ designations
 			//Check nodes
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
-				NR_swing_bus = NR_master_swing_search("node",false);
+				NR_swing_bus = NR_master_swing_search(const_cast<char*>("node"),false);
 			}
 
 			//If one hasn't been found, see if there's a substation one
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
-				NR_swing_bus = NR_master_swing_search("substation",false);
+				NR_swing_bus = NR_master_swing_search(const_cast<char*>("substation"),false);
 			}
 			//Default else -- one already found, progress through this
 
 			//If one hasn't been found, see if there's a meter one
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
-				NR_swing_bus = NR_master_swing_search("meter",false);
+				NR_swing_bus = NR_master_swing_search(const_cast<char*>("meter"),false);
 			}
 			//Default else -- one already found, progress through this
 
 			//If one hasn't been found, see if there's an elec_frequency one
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
-				NR_swing_bus = NR_master_swing_search("elec_frequency",false);
+				NR_swing_bus = NR_master_swing_search(const_cast<char*>("elec_frequency"),false);
 			}
 			//Default else -- one already found, progress through this
 
 			//If one hasn't been found, see if there's a load one
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
 				//Do the same for loads
-				NR_swing_bus = NR_master_swing_search("load",false);
+				NR_swing_bus = NR_master_swing_search(const_cast<char*>("load"),false);
 			}
 			//Default else -- one already found, progress through this
 
 			//If one hasn't been found, see if there's a triplex_node one
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
 				//Do the same for triplex nodes
-				NR_swing_bus = NR_master_swing_search("triplex_node",false);
+				NR_swing_bus = NR_master_swing_search(const_cast<char*>("triplex_node"),false);
 			}
 			//Default else -- one already found, progress through this
 
 			//If one hasn't been found, see if there's a triplex_meter one
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
 				//And one more time for triplex meters
-				NR_swing_bus = NR_master_swing_search("triplex_meter",false);
+				NR_swing_bus = NR_master_swing_search(const_cast<char*>("triplex_meter"),false);
 			}
 			//Default else -- one already found, progress through this
 
 			//If one hasn't been found, see if there's a triplex_load one
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
 				//And one more time for triplex loads
-				NR_swing_bus = NR_master_swing_search("triplex_load",false);
+				NR_swing_bus = NR_master_swing_search(const_cast<char*>("triplex_load"),false);
 			}
 			//Default else -- one already found, progress through this
 
 			//Make sure there is one bus to rule them all, even if it actually has rivals
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
-				GL_THROW("NR: no swing bus found");
+				GL_THROW(const_cast<char*>("NR: no swing bus found"));
 				/*	TROUBLESHOOT
 				No swing bus was located in the test system.  Newton-Raphson requires at least one node
 				be designated "bustype SWING".
@@ -546,7 +546,7 @@ int node::init(OBJECT *parent)
 			//Make sure it worked
 			if (status_ret_value == FAILED)
 			{
-				GL_THROW("NR: Failed to allocate monolithic grid solver arrays");
+				GL_THROW(const_cast<char*>("NR: Failed to allocate monolithic grid solver arrays"));
 				/*  TROUBLESHOOT
 				While attempting to allocate the initial, single-island/monolithic array,
 				an error occurred.  Please try again.  If the error persists, please submit your
@@ -570,8 +570,8 @@ int node::init(OBJECT *parent)
 
 
 
-			if (!(gl_object_isa(obj->parent,"load","powerflow") | gl_object_isa(obj->parent,"node","powerflow") | gl_object_isa(obj->parent,"meter","powerflow") | gl_object_isa(obj->parent,"substation","powerflow")))
-				GL_THROW("NR: Parent is not a node, load or meter!");
+			if (!(gl_object_isa(obj->parent,const_cast<char*>("load"),const_cast<char*>("powerflow")) | gl_object_isa(obj->parent,const_cast<char*>("node"),const_cast<char*>("powerflow")) | gl_object_isa(obj->parent,const_cast<char*>("meter"),const_cast<char*>("powerflow")) | gl_object_isa(obj->parent,const_cast<char*>("substation"),const_cast<char*>("powerflow"))))
+				GL_THROW(const_cast<char*>("NR: Parent is not a node, load or meter!"));
 				/*  TROUBLESHOOT
 				A Newton-Raphson parent-child connection was attempted on a non-node.  The parent object must be a node, load, or meter object in the 
 				powerflow module for this connection to be successful.
@@ -607,14 +607,14 @@ int node::init(OBJECT *parent)
 				//May not necessarily be a failure, let's investiage
 				if ((p_phase_to_check & c_phase_to_check) != c_phase_to_check)	//Our parent is lacking, fail
 				{
-					GL_THROW("NR: Parent and child node phases for nodes %s and %s do not match!",obj->parent->name,obj->name);
+					GL_THROW(const_cast<char*>("NR: Parent and child node phases for nodes %s and %s do not match!"),obj->parent->name,obj->name);
 					//Defined above
 				}
 				else					//We should be successful, but let's flag ourselves appropriately
 				{	//Essentially a replication of the no-phase section with more check
 					if ((parNode->SubNode==CHILD) | (parNode->SubNode==DIFF_CHILD) | ((obj->parent->parent!=NR_swing_bus) && (obj->parent->parent!=NULL)))	//Our parent is another child
 					{
-						GL_THROW("NR: Grandchildren are not supported at this time!");
+						GL_THROW(const_cast<char*>("NR: Grandchildren are not supported at this time!"));
 						/*  TROUBLESHOOT
 						Parent-child connections in Newton-Raphson may not go more than one level deep.  Grandchildren
 						(a node parented to a node parented to a node) are unsupported at this time.  Please rearrange your
@@ -644,7 +644,7 @@ int node::init(OBJECT *parent)
 								parNode->Extra_Data = (complex *)gl_malloc(9*sizeof(complex));
 								if (parNode->Extra_Data == NULL)
 								{
-									GL_THROW("NR: Memory allocation failure for differently connected load.");
+									GL_THROW(const_cast<char*>("NR: Memory allocation failure for differently connected load."));
 									/*  TROUBLESHOOT
 									This is a bug.  Newton-Raphson tried to allocate memory for other necessary
 									information to handle a parent-child relationship with differently connected loads.
@@ -700,7 +700,7 @@ int node::init(OBJECT *parent)
 			{
 				if ((parNode->SubNode==CHILD) | (parNode->SubNode==DIFF_CHILD) | (obj->parent->parent!=NULL))	//Our parent is another child
 				{
-					GL_THROW("NR: Grandchildren are not supported at this time!");
+					GL_THROW(const_cast<char*>("NR: Grandchildren are not supported at this time!"));
 					//Defined above
 				}
 				else	//Our parent is unchilded (or has the swing bus as a parent)
@@ -947,7 +947,7 @@ int node::init(OBJECT *parent)
 	}
 	else if (solver_method==SM_GS)
 	{
-		GL_THROW("Gauss_Seidel is a deprecated solver and has been removed");
+		GL_THROW(const_cast<char*>("Gauss_Seidel is a deprecated solver and has been removed"));
 		/*  TROUBLESHOOT 
 		The Gauss-Seidel solver implementation has been removed as of version 3.0.
 		It was never fully functional and has not been updated in a couple versions.  The source
@@ -962,7 +962,7 @@ int node::init(OBJECT *parent)
 
 		if (obj->parent != NULL)
 		{
-			if((gl_object_isa(obj->parent,"load","powerflow") | gl_object_isa(obj->parent,"node","powerflow") | gl_object_isa(obj->parent,"meter","powerflow") | gl_object_isa(obj->parent,"substation","powerflow")))	//Parent is another node
+			if((gl_object_isa(obj->parent,const_cast<char*>("load"),const_cast<char*>("powerflow")) | gl_object_isa(obj->parent,const_cast<char*>("node"),const_cast<char*>("powerflow")) | gl_object_isa(obj->parent,const_cast<char*>("meter"),const_cast<char*>("powerflow")) | gl_object_isa(obj->parent,const_cast<char*>("substation"),const_cast<char*>("powerflow"))))	//Parent is another node
 			{
 				node *parNode = OBJECTDATA(obj->parent,node);
 
@@ -976,7 +976,7 @@ int node::init(OBJECT *parent)
 				//Make sure our phases align, otherwise become angry
 				if ((p_phase_to_check & c_phase_to_check) != c_phase_to_check)	//Our parent is lacking, fail
 				{
-					GL_THROW("Parent and child node phases are incompatible for nodes %s and %s.",obj->parent->name,obj->name);
+					GL_THROW(const_cast<char*>("Parent and child node phases are incompatible for nodes %s and %s."),obj->parent->name,obj->name);
 					/*  TROUBLESHOOT
 					A child object does not have compatible phases with its parent.  The parent needs to at least have the phases of
 					the child object.  Please check your connections and try again.
@@ -995,7 +995,7 @@ int node::init(OBJECT *parent)
 		}
 	}
 	else
-		GL_THROW("unsupported solver method");
+		GL_THROW(const_cast<char*>("unsupported solver method"));
 		/*Defined below*/
 
 	/* initialize the powerflow base object */
@@ -1004,7 +1004,7 @@ int node::init(OBJECT *parent)
 	/* Ranking stuff for GS parent/child relationship - needs to be rethought - premise of loads/nodes above links MUST remain true */
 	if (solver_method==SM_GS)
 	{
-		GL_THROW("Gauss_Seidel is a deprecated solver and has been removed");
+		GL_THROW(const_cast<char*>("Gauss_Seidel is a deprecated solver and has been removed"));
 		/*  TROUBLESHOOT 
 		The Gauss-Seidel solver implementation has been removed as of version 3.0.
 		It was never fully functional and has not been updated in a couple versions.  The source
@@ -1017,7 +1017,7 @@ int node::init(OBJECT *parent)
 	if (nominal_voltage==0 && parent)
 	{
 		powerflow_object *pParent = OBJECTDATA(parent,powerflow_object);
-		if (gl_object_isa(parent,"transformer"))
+		if (gl_object_isa(parent,const_cast<char*>("transformer")))
 		{
 			PROPERTY *transformer_config,*transformer_secondary_voltage;
 			OBJECT *trans_config_obj;
@@ -1026,12 +1026,12 @@ int node::init(OBJECT *parent)
 			char buffer[128];
 
 			//Get configuration link
-			transformer_config = gl_get_property(parent,"configuration");
+			transformer_config = gl_get_property(parent,const_cast<char*>("configuration"));
 
 			//Check it
 			if (transformer_config == NULL)
 			{
-				GL_THROW("Error mapping secondary voltage property from transformer:%d %s",parent->id,parent->name?parent->name:"unnamed");
+				GL_THROW(const_cast<char*>("Error mapping secondary voltage property from transformer:%d %s"),parent->id,parent->name?parent->name:"unnamed");
 				/*  TROUBLESHOOT
 				While attempting to map to the secondary voltage of a transformer to get a value for nominal voltage, an error
 				occurred.  Please try again.  If the problem persists, please submit your code and a bug report via the ticketing
@@ -1045,7 +1045,7 @@ int node::init(OBJECT *parent)
 			//Make sure it worked
 			if (offset_val == 0)
 			{
-				GL_THROW("Error mapping secondary voltage property from transformer:%d %s",parent->id,parent->name?parent->name:"unnamed");
+				GL_THROW(const_cast<char*>("Error mapping secondary voltage property from transformer:%d %s"),parent->id,parent->name?parent->name:"unnamed");
 				//Defined above
 			}
 
@@ -1054,17 +1054,17 @@ int node::init(OBJECT *parent)
 
 			if (trans_config_obj == 0)
 			{
-				GL_THROW("Error mapping secondary voltage property from transformer:%d %s",parent->id,parent->name?parent->name:"unnamed");
+				GL_THROW(const_cast<char*>("Error mapping secondary voltage property from transformer:%d %s"),parent->id,parent->name?parent->name:"unnamed");
 				//Defined above
 			}
 
 			//Now get secondary voltage
-			transformer_secondary_voltage = gl_get_property(trans_config_obj,"secondary_voltage");
+			transformer_secondary_voltage = gl_get_property(trans_config_obj,const_cast<char*>("secondary_voltage"));
 
 			//Make sure it worked
 			if (transformer_secondary_voltage == NULL)
 			{
-				GL_THROW("Error mapping secondary voltage property from transformer:%d %s",parent->id,parent->name?parent->name:"unnamed");
+				GL_THROW(const_cast<char*>("Error mapping secondary voltage property from transformer:%d %s"),parent->id,parent->name?parent->name:"unnamed");
 				//Defined above
 			}
 
@@ -1074,7 +1074,7 @@ int node::init(OBJECT *parent)
 			//Make sure it worked
 			if (trans_secondary_voltage_value == NULL)
 			{
-				GL_THROW("Error mapping secondary voltage property from transformer:%d %s",parent->id,parent->name?parent->name:"unnamed");
+				GL_THROW(const_cast<char*>("Error mapping secondary voltage property from transformer:%d %s"),parent->id,parent->name?parent->name:"unnamed");
 				//Defined above
 			}
 
@@ -1396,7 +1396,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 		}
 		else	//Unknown, toss an error to stop meddling kids
 		{
-			GL_THROW("Invalid value for service_status_double");
+			GL_THROW(const_cast<char*>("Invalid value for service_status_double"));
 			/*  TROUBLESHOOT
 			service_status_double was set to a value other than 0 or 1.  This variable
 			is meant as a convenience for schedules to drive the service_status variable, so
@@ -1444,7 +1444,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 		//See if everything has a source
 		if (((phase_to_check & busphasesIn) != phase_to_check) && (busphasesIn != 0) && (solver_method != SM_NR))	//Phase mismatch (and not top level node)
 		{
-			GL_THROW("node:%d (%s) has more phases leaving than entering",obj->id,obj->name);
+			GL_THROW(const_cast<char*>("node:%d (%s) has more phases leaving than entering"),obj->id,obj->name);
 			/* TROUBLESHOOT
 			A node has more phases present than it has sources coming in.  Under the Forward-Back sweep algorithm,
 			the system should be strictly radial.  This scenario implies either a meshed system or unconnected
@@ -1477,7 +1477,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 		{
 			if (solver_method != SM_NR)
 			{
-				GL_THROW("deltamode simulations only support powerflow in Newton-Raphson (NR) mode at this time");
+				GL_THROW(const_cast<char*>("deltamode simulations only support powerflow in Newton-Raphson (NR) mode at this time"));
 				/*  TROUBLESHOOT
 				deltamode and dynamics simulations will only work with the powerflow module in Newton-Raphson mode.
 				Please swap to that solver and try again.
@@ -1503,7 +1503,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			//Make sure an overall SWING bus exists
 			if (NR_swing_bus==NULL)
 			{
-				GL_THROW("NR: no swing bus found or specified");
+				GL_THROW(const_cast<char*>("NR: no swing bus found or specified"));
 				/*	TROUBLESHOOT
 				Newton-Raphson failed to automatically assign a swing bus to the node (unchilded nodes are referenced
 				to the swing bus).  This should have been detected by this point and represents a bug in the solver.
@@ -1533,7 +1533,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 				//Make sure it worked
 				if (NR_child_nodes == NULL)
 				{
-					GL_THROW("NR: Failed to allocate child node pointing space");
+					GL_THROW(const_cast<char*>("NR: Failed to allocate child node pointing space"));
 					/*  TROUBLESHOOT
 					While attempting to allocate memory for child node connections, something failed.
 					Please try again.  If the error persists, please submit your code and a bug report
@@ -1641,7 +1641,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 					//Make sure it worked
 					if (delta_objects == NULL)
 					{
-						GL_THROW("Failed to allocate deltamode objects array for powerflow module!");
+						GL_THROW(const_cast<char*>("Failed to allocate deltamode objects array for powerflow module!"));
 						/*  TROUBLESHOOT
 						While attempting to create a reference array for powerflow module deltamode-enabled
 						objects, an error was encountered.  Please try again.  If the error persists, please
@@ -1655,7 +1655,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 					//Make sure it worked
 					if (delta_functions == NULL)
 					{
-						GL_THROW("Failed to allocate deltamode objects function array for powerflow module!");
+						GL_THROW(const_cast<char*>("Failed to allocate deltamode objects function array for powerflow module!"));
 						/*  TROUBLESHOOT
 						While attempting to create a reference array for powerflow module deltamode-enabled
 						objects, an error was encountered.  Please try again.  If the error persists, please
@@ -1669,7 +1669,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 					//Make sure it worked
 					if (post_delta_functions == NULL)
 					{
-						GL_THROW("Failed to allocate deltamode objects function array for powerflow module!");
+						GL_THROW(const_cast<char*>("Failed to allocate deltamode objects function array for powerflow module!"));
 						//Defined above
 					}
 
@@ -1730,7 +1730,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			}
 			else
 			{
-				GL_THROW("NR: An order requirement has been violated");
+				GL_THROW(const_cast<char*>("NR: An order requirement has been violated"));
 				/*  TROUBLESHOOT
 				When initializing the solver, the swing bus should be initialized first for
 				Newton-Raphson.  If this does not happen, unexpected results can occur.  Try moving
@@ -1755,7 +1755,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			//Check limits first
 			if (pwr_object_current>=pwr_object_count)
 			{
-				GL_THROW("Too many objects tried to populate deltamode objects array in the powerflow module!");
+				GL_THROW(const_cast<char*>("Too many objects tried to populate deltamode objects array in the powerflow module!"));
 				/*  TROUBLESHOOT
 				While attempting to populate a reference array of deltamode-enabled objects for the powerflow
 				module, an attempt was made to write beyond the allocated array space.  Please try again.  If the
@@ -1807,7 +1807,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 				//Make sure it worked, for giggles
 				if (temp_par_node == NULL)
 				{
-					GL_THROW("node:%s - failed to map parent object for childed node",obj->name);
+					GL_THROW(const_cast<char*>("node:%s - failed to map parent object for childed node"),obj->name);
 					/*  TROUBLESHOOT
 					While attempting to link to the parent node, an error occurred.  Please try again.
 					If the error persists, please submit your code and a bug report via the trac website.
@@ -1835,7 +1835,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 							//Check it
 							if (full_Y==NULL)
 							{
-								GL_THROW("Node:%s failed to allocate space for the a deltamode variable",(obj->name?obj->name:"Unnamed"));
+								GL_THROW(const_cast<char*>("Node:%s failed to allocate space for the a deltamode variable"),(obj->name?obj->name:"Unnamed"));
 								/*  TROUBLESHOOT
 								While attempting to allocate memory for a dynamics-required (deltamode) variable, an error
 								occurred. Please try again.  If the error persists, please submit your code and a bug
@@ -1844,12 +1844,12 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 							}
 
 							//Map to the parent property
-							temp_complex_property = new gld_property(SubNodeParent,"deltamode_full_Y_matrix");
+							temp_complex_property = new gld_property(SubNodeParent,const_cast<char*>("deltamode_full_Y_matrix"));
 
 							//Check it
 							if ((temp_complex_property->is_valid() != true) || (temp_complex_property->is_complex_array() != true))
 							{
-								GL_THROW("Node:%d - %s - parent deltamode matrix property is not valid!",obj->id,(obj->name ? obj->name : "Unnamed"));
+								GL_THROW(const_cast<char*>("Node:%d - %s - parent deltamode matrix property is not valid!"),obj->id,(obj->name ? obj->name : "Unnamed"));
 								/*  TROUBLESHOOT
 								While attempting to map to the exposed deltamode matrix property of a powerflow parent, an error occurred.
 								Please try again.  If the error persists, please submit your model and an issue via the ticketing system.
@@ -1878,7 +1878,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 							{
 								if ((temp_complex_array.get_rows() != 3) && (temp_complex_array.get_cols() != 3))
 								{
-									GL_THROW("node:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
+									GL_THROW(const_cast<char*>("node:%s exposed Norton-equivalent matrix is the wrong size!"),obj->name?obj->name:"unnamed");
 									/*  TROUBLESHOOT
 									While mapping to an admittance matrix on the parent node device, it was found it is the wrong size.
 									Please try again.  If the error persists, please submit your code and model via the issue tracking system.
@@ -1908,7 +1908,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 						}//End size is 3x3
 						else
 						{
-							GL_THROW("Node:%d - %s - Invalid deltamode matrix size!",obj->id,(obj->name ? obj->name : "Unnamed"));
+							GL_THROW(const_cast<char*>("Node:%d - %s - Invalid deltamode matrix size!"),obj->id,(obj->name ? obj->name : "Unnamed"));
 							/*  TROUBLESHOOT
 							While attempting to link up to one of the deltamode dynamic matrices, an unexpected size was encountered.
 							Please try again.  If the error persists, please submit your code and a bug report via the issue tracker.
@@ -1925,7 +1925,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 						//See if we're the right size already
 						if ((full_Y_all_matrix.get_rows() != 3) && (full_Y_all_matrix.get_cols() != 3))
 						{
-							GL_THROW("node:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
+							GL_THROW(const_cast<char*>("node:%s exposed Norton-equivalent matrix is the wrong size!"),obj->name?obj->name:"unnamed");
 							//Defined above
 						}
 					}
@@ -2199,7 +2199,7 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			//Post our loads up to our parent
 			node *ParToLoad = OBJECTDATA(SubNodeParent,node);
 
-			if (gl_object_isa(SubNodeParent,"load","powerflow"))	//Load gets cleared at every presync, so reaggregate :(
+			if (gl_object_isa(SubNodeParent,const_cast<char*>("load"),const_cast<char*>("powerflow")))	//Load gets cleared at every presync, so reaggregate :(
 			{
 				//Lock the parent for accumulation
 				LOCK_OBJECT(SubNodeParent);
@@ -2243,7 +2243,7 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 				//All done, unlock
 				UNLOCK_OBJECT(SubNodeParent);
 			}
-			else if (gl_object_isa(SubNodeParent,"node","powerflow"))	//"parented" node - update values - This has to go to the bottom
+			else if (gl_object_isa(SubNodeParent,const_cast<char*>("node"),const_cast<char*>("powerflow")))	//"parented" node - update values - This has to go to the bottom
 			{												//since load/meter share with node (and load handles power in presync)
 				//Lock the parent for accumulation
 				LOCK_OBJECT(SubNodeParent);
@@ -2301,7 +2301,7 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			}
 			else
 			{
-				GL_THROW("NR: Object %d is a child of something that it shouldn't be!",obj->id);
+				GL_THROW(const_cast<char*>("NR: Object %d is a child of something that it shouldn't be!"),obj->id);
 				/*  TROUBLESHOOT
 				A Newton-Raphson object is childed to something it should not be (not a load, node, or meter).
 				This should have been caught earlier and is likely a bug.  Submit your code and a bug report using the trac website.
@@ -2409,7 +2409,7 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			//Check the return value
 			if (fxn_ret_value == FAILED)
 			{
-				GL_THROW("node:%d - %s -- Failed VFD updating function",obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW(const_cast<char*>("node:%d - %s -- Failed VFD updating function"),obj->id,(obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				While attempting to call the VFD current injection function, an error occurred.  Please try again.
 				If the error persists, please submit an issue.
@@ -2506,7 +2506,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			}
 #endif
 
-			if (obj->parent!=NULL && gl_object_isa(obj->parent,"triplex_line","powerflow")) {
+			if (obj->parent!= nullptr && gl_object_isa(obj->parent,const_cast<char*>("triplex_line"),const_cast<char*>("powerflow"))) {
 				link_object *plink = OBJECTDATA(obj->parent,link_object);
 				complex d = plink->tn[0]*current_inj[0] + plink->tn[1]*current_inj[1];
 				current_inj[2] += d;
@@ -2672,7 +2672,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 #endif
 
 		// if the parent object is another node
-		if (obj->parent!=NULL && gl_object_isa(obj->parent,"node","powerflow"))
+		if (obj->parent!=NULL && gl_object_isa(obj->parent,const_cast<char*>("node"),const_cast<char*>("powerflow")))
 		{
 			node *pNode = OBJECTDATA(obj->parent,node);
 
@@ -2687,7 +2687,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				WRITEUNLOCK_OBJECT(obj->parent);
 			}
 			else
-				GL_THROW("Node:%d's parent does not have the proper phase connection to be a parent.",obj->id);
+				GL_THROW(const_cast<char*>("Node:%d's parent does not have the proper phase connection to be a parent."),obj->id);
 				/*  TROUBLESHOOT
 				A parent-child relationship was attempted when the parent node does not contain the phases
 				of the child node.  Ensure parent nodes have at least the phases of the child object.
@@ -2738,7 +2738,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 
 				if (bad_computation==true)
 				{
-					GL_THROW("Newton-Raphson method is unable to converge to a solution at this operation point");
+					GL_THROW(const_cast<char*>("Newton-Raphson method is unable to converge to a solution at this operation point"));
 					/*  TROUBLESHOOT
 					Newton-Raphson has failed to complete even a single iteration on the powerflow.  This is an indication
 					that the method will not solve the system and may have a singularity or other ill-favored condition in the
@@ -2766,7 +2766,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			{
 				if (obj == NR_swing_bus)	//Only error on MASTER swing - if errors with others, seems to be upset.  Too lazy to track down why.
 				{
-					GL_THROW("All nodes were not properly populated");
+					GL_THROW(const_cast<char*>("All nodes were not properly populated"));
 					/*  TROUBLESHOOT
 					The NR solver is still waiting to initialize an object on the second pass.  Everything should have
 					initialized on the first pass.  Look for orphaned node objects that do not have a line attached and
@@ -2793,7 +2793,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			break;
 		}
 	default:
-		GL_THROW("unsupported solver method");
+		GL_THROW(const_cast<char*>("unsupported solver method"));
 		/*	TROUBLESHOOT
 		An invalid powerflow solver was specified.  Currently acceptable values are FBS for forward-back
 		sweep (Kersting's method) and NR for Newton-Raphson.
@@ -2820,12 +2820,12 @@ void node::BOTH_node_postsync_fxn(OBJECT *obj)
 		if ((SubNode==CHILD) || (SubNode==DIFF_CHILD))
 		{
 			//Map to our parent
-			temp_property = new gld_property(SubNodeParent,"deltamode_full_Y_all_matrix");
+			temp_property = new gld_property(SubNodeParent,const_cast<char*>("deltamode_full_Y_all_matrix"));
 
 			//Make sure it worked
 			if ((temp_property->is_valid() != true) || (temp_property->is_complex_array() != true))
 			{
-				GL_THROW("Node:%d - %s - Failed to map deltamode matrix to parent",obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW(const_cast<char*>("Node:%d - %s - Failed to map deltamode matrix to parent"),obj->id,(obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				While attempting to map to a parent's deltamode-related matrix, a node device encountered an issue.  Please try again.
 				If the error persists, please submit a ticket with your code/model to the issue tracker.
@@ -2877,7 +2877,7 @@ void node::BOTH_node_postsync_fxn(OBJECT *obj)
 			}
 			else	//If we got here, yell
 			{
-				GL_THROW("Node:%d - %s - Node tried to update a deltamode matrix that does not exist!",obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW(const_cast<char*>("Node:%d - %s - Node tried to update a deltamode matrix that does not exist!"),obj->id,(obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				While attempting to update an exposed deltamode matrix, the underlying data was found to not exist!  Please submit your code
 				and a bug report via the issue tracker system.
@@ -2932,7 +2932,7 @@ void node::BOTH_node_postsync_fxn(OBJECT *obj)
 		//Make sure it worked, just to be thorough
 		if (result != 1)
 		{
-			GL_THROW("Attempt to update current/power on node:%s failed!",obj->name);
+			GL_THROW(const_cast<char*>("Attempt to update current/power on node:%s failed!"),obj->name);
 			//Defined elsewhere
 		}
 	}
@@ -2988,7 +2988,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 	if (solver_method==SM_FBS)
 	{
 		// if the parent object is a node
-		if (obj->parent!=NULL && (gl_object_isa(obj->parent,"node","powerflow")))
+		if (obj->parent!=NULL && (gl_object_isa(obj->parent,const_cast<char*>("node"),const_cast<char*>("powerflow"))))
 		{
 			// copy the voltage from the parent - check for mismatch handled earlier
 			node *pNode = OBJECTDATA(obj->parent,node);
@@ -3058,8 +3058,8 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 
 int node::kmlinit(int (*stream)(const char*,...))
 {
-	gld_global host("hostname");
-	gld_global port("server_portnum");
+	gld_global host(const_cast<char*>("hostname"));
+	gld_global port(const_cast<char*>("server_portnum"));
 #define STYLE(X) stream("<Style id=\"" #X "_g\"><IconStyle><Icon><href>http://%s:%u/rt/" #X "_g.png</href></Icon></IconStyle></Style>\n", (const char*)host.get_string(), port.get_int32());\
 		stream("<Style id=\"" #X "_r\"><IconStyle><Icon><href>http://%s:%u/rt/" #X "_r.png</href></Icon></IconStyle></Style>\n", (const char*)host.get_string(), port.get_int32());\
 		stream("<Style id=\"" #X "_b\"><IconStyle><Icon><href>http://%s:%u/rt/" #X "_b.png</href></Icon></IconStyle></Style>\n", (const char*)host.get_string(), port.get_int32());\
@@ -3084,7 +3084,7 @@ int node::kmldump(int (*stream)(const char*,...))
 
 	char status_code[]="kbgr";
 	int status = 2; // green
-	if ( gl_object_isa(my(),"triplex_meter") )
+	if ( gl_object_isa(my(),const_cast<char*>("triplex_meter")) )
 	{
 		// TODO use triplex_node to get to triplex_meter
 		status = ((triplex_meter*)this)->kmldata(stream);
@@ -3417,7 +3417,7 @@ int node::NR_populate(void)
 	//Quick check to see if there problems
 	if (NR_node_reference == -1)
 	{
-		GL_THROW("NR: bus:%s failed to grab a unique bus index value!",me->name);
+		GL_THROW(const_cast<char*>("NR: bus:%s failed to grab a unique bus index value!"),me->name);
 		/*  TROUBLESHOOT
 		While attempting to gain a unique bus id for the Newton-Raphson solver, an error
 		was encountered.  This may be related to a parallelization effort.  Please try again.
@@ -3434,7 +3434,7 @@ int node::NR_populate(void)
 	//Interim check to make sure it isn't a PV bus, since those aren't supported yet - this will get removed when that functionality is put in place
 	if (NR_busdata[NR_node_reference].type==1)
 	{
-		GL_THROW("NR: bus:%s is a PV bus - these are not yet supported.",me->name);
+		GL_THROW(const_cast<char*>("NR: bus:%s is a PV bus - these are not yet supported."),me->name);
 		/*  TROUBLESHOOT
 		The Newton-Raphson solver implemented does not currently support the PV bus type.
 		*/
@@ -3494,7 +3494,7 @@ int node::NR_populate(void)
 	
 	if (NR_busdata[NR_node_reference].Link_Table == NULL)
 	{
-		GL_THROW("NR: Failed to allocate link table for node:%d",me->id);
+		GL_THROW(const_cast<char*>("NR: Failed to allocate link table for node:%d"),me->id);
 		/*  TROUBLESHOOT
 		While attempting to allocate memory for the linking table for NR, memory failed to be
 		allocated.  Make sure you have enough memory and try again.  If this problem happens a second
@@ -3580,7 +3580,7 @@ int node::NR_populate(void)
 					//Check it
 					if (full_Y==NULL)
 					{
-						GL_THROW("Node:%s failed to allocate space for the a deltamode variable",me->name);
+						GL_THROW(const_cast<char*>("Node:%s failed to allocate space for the a deltamode variable"),me->name);
 						/*  TROUBLESHOOT
 						While attempting to allocate memory for a dynamics-required (deltamode) variable, an error
 						occurred. Please try again.  If the error persists, please submit your code and a bug
@@ -3617,7 +3617,7 @@ int node::NR_populate(void)
 					//Check it
 					if (full_Y_all==NULL)
 					{
-						GL_THROW("Node:%s failed to allocate space for the a deltamode variable",me->name);
+						GL_THROW(const_cast<char*>("Node:%s failed to allocate space for the a deltamode variable"),me->name);
 						//Defined above
 					}
 
@@ -3858,7 +3858,7 @@ int node::NR_current_update(bool parentcall)
 				//Make sure it worked, just to be thorough
 				if (temp_result != 1)
 				{
-					GL_THROW("Attempt to update current on child of node:%s failed!",obj->name);
+					GL_THROW(const_cast<char*>("Attempt to update current on child of node:%s failed!"),obj->name);
 					/*  TROUBLESHOOT
 					While attempting to update the current on a childed node object, an error was encountered.  Please try again.  If the error persists,
 					please submit your code and a bug report via the trac website.
@@ -4240,7 +4240,7 @@ int node::NR_current_update(bool parentcall)
 				//Make sure it worked
 				if (temp_link == NULL)
 				{
-					GL_THROW("Attemped to update current for object:%s, which is not a link!",NR_branchdata[NR_busdata[NR_node_reference].Link_Table[table_index]].name);
+					GL_THROW(const_cast<char*>("Attemped to update current for object:%s, which is not a link!"),NR_branchdata[NR_busdata[NR_node_reference].Link_Table[table_index]].name);
 					/*  TROUBLESHOOT
 					The current node object tried to update the current injections for what it thought was a link object.  This does
 					not appear to be true.  Try your code again.  If the error persists, please submit your code and a bug report to the
@@ -4260,7 +4260,7 @@ int node::NR_current_update(bool parentcall)
 				//See if it worked, just in case this gets added in the future
 				if (temp_result != 1)
 				{
-					GL_THROW("Attempt to update current on link:%s failed!",NR_branchdata[NR_busdata[NR_node_reference].Link_Table[table_index]].name);
+					GL_THROW(const_cast<char*>("Attempt to update current on link:%s failed!"),NR_branchdata[NR_busdata[NR_node_reference].Link_Table[table_index]].name);
 					/*  TROUBLESHOOT
 					While attempting to update the current on link object, an error was encountered.  Please try again.  If the error persists,
 					please submit your code and a bug report via the trac website.
@@ -5101,7 +5101,7 @@ STATUS node::reset_node_island_condition(void)
 	if (fault_check_object == NULL)	//Make sure we actually have a fault check object
 	{
 		//Hard throw this one -- this can't be ignored
-		GL_THROW("node:%d - %s -- Island condition reset failed - no fault_check object mapped!",obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW(const_cast<char*>("node:%d - %s -- Island condition reset failed - no fault_check object mapped!"),obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		A node attempted to reset its "disabled from powerflow/islands" status, but there is no fault_check object in the system.  It's unclear
 		how this call was made.  Please check your system and try again.  If this message was encountered in error, please submit your code, models, and
@@ -5116,7 +5116,7 @@ STATUS node::reset_node_island_condition(void)
 	if (temp_fxn_val == NULL)
 	{
 		//Another hard failure
-		GL_THROW("node:%d - %s -- Island condition reset failed - reset function mapping failed!",obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW(const_cast<char*>("node:%d - %s -- Island condition reset failed - reset function mapping failed!"),obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		While attempting to call the topology rescan functionality, an error occurred.  Please check your model and try again.  If the error persists,
 		please submit your code, models, and a bug report via the issue tracking system.

@@ -107,13 +107,13 @@ static KEYWORD sm_keys[] = {
 };
 
 static struct s_varmap {
-	char *name;
+	const char *name;
 	PROPERTYTYPE type;
 	void *addr;
 	PROPERTYACCESS access;
-	char *description;
+	const char *description;
 	KEYWORD *keys;
-	void (*callback)(char *name);
+	void (*callback)(const char *name);
 } map[] = {
 	/** @todo make this list the authorative list and retire the global_* list (ticket #25) */
 	{"version.major", PT_int32, &global_version_major, PA_REFERENCE, "major version"},
@@ -156,7 +156,7 @@ static struct s_varmap {
 	{"strictnames", PT_bool, &global_strictnames, PA_PUBLIC, "strict global name enable flag"},
 	{"website", PT_char1024, &global_urlbase, PA_PUBLIC, "url base string (deprecated)"}, /** @todo deprecate use of 'website' */
 	{"urlbase", PT_char1024, &global_urlbase, PA_PUBLIC, "url base string"},
-	{"randomseed", PT_int32, &global_randomseed, PA_PUBLIC, "random number generator seed value", NULL,(void(*)(char*))random_init},
+	{"randomseed", PT_int32, &global_randomseed, PA_PUBLIC, "random number generator seed value", NULL,(void(*)(const char*))random_init},
 	{"include", PT_char1024, &global_include, PA_REFERENCE, "include folder path"},
 	{"trace", PT_char1024, &global_trace, PA_PUBLIC, "trace function list"},
 	{"gdb_window", PT_bool, &global_gdb_window, PA_PUBLIC, "gdb window enable flag"},
@@ -251,7 +251,7 @@ static struct s_varmap {
 
 static void buildtmp(void)
 {
-	char *tmp, *home, *user;
+	const char *tmp, *home, *user;
 
 	if ((tmp = getenv("GLTEMP"))) {
 		snprintf(global_tmp, sizeof(global_tmp), "%s", tmp);
@@ -259,7 +259,7 @@ static void buildtmp(void)
 	}
 	if (home = getenv(HOMEVAR)) {
 #ifdef WIN32
-		char *drive;
+		const char *drive;
 		if (!(drive = getenv("HOMEDRIVE")))
 			drive = "";
 		snprintf(global_tmp, sizeof(global_tmp),
@@ -293,7 +293,7 @@ STATUS global_init(void)
 
 	for (i = 0; i < sizeof(map) / sizeof(map[0]); i++){
 		struct s_varmap *p = &(map[i]);
-		GLOBALVAR *var = global_create(p->name, p->type, p->addr, PT_ACCESS, p->access, p->description?PT_DESCRIPTION:0, p->description, NULL);
+		GLOBALVAR *var = global_create(const_cast<char*>(p->name), p->type, p->addr, PT_ACCESS, p->access, p->description?PT_DESCRIPTION:0, p->description, NULL);
 		if(var == NULL){
 			output_error("global_init(): global variable '%s' registration failed", p->name);
 			/* TROUBLESHOOT
@@ -313,7 +313,7 @@ STATUS global_init(void)
 /** Find a global variable
 	@return a pointer to the GLOBALVAR struct if found, NULL if not found
  **/
-GLOBALVAR *global_find(char *name) /**< name of global variable to find */
+GLOBALVAR *global_find(const char *name) /**< name of global variable to find */
 {
 	GLOBALVAR *var = NULL;
 	if ( name==NULL ) /* get first global in list */
@@ -354,14 +354,15 @@ GLOBALVAR *global_getnext(GLOBALVAR *previous){ /**< a pointer to the previous v
 	@todo this does not support module globals but needs to (no ticket)
 
  **/
-GLOBALVAR *global_create(char *name, ...){
+GLOBALVAR *global_create(const char *name, ...){
 	va_list arg;
 	PROPERTY *prop = NULL, *lastprop = NULL;
 	PROPERTYTYPE proptype;
 	GLOBALVAR *var = NULL;
+	name = const_cast<char*>(name);
 
 	/* don't create duplicate entries */
-	if(global_find(name) != NULL){
+	if(global_find(strdup(name)) != NULL){
 		errno = EINVAL;
 		output_error("tried to create global variable '%s' a second time", name);
 		/* TROUBLESHOOT
@@ -499,7 +500,7 @@ GLOBALVAR *global_create(char *name, ...){
                     Use a shorter name and try again.
                  */
             }
-            prop = property_malloc(proptype, NULL, name, addr, NULL);
+            prop = property_malloc(proptype, NULL, strdup(name), addr, NULL);
 
             if (prop == NULL)
                 throw_exception("global_create(char *name='%s',...): property '%s' could not be stored", name, name);
@@ -540,7 +541,7 @@ GLOBALVAR *global_create(char *name, ...){
 	and the second argument is read as a pointer to a string the contains
 	the new value.
  **/
-STATUS global_setvar(char *def, ...) /**< the definition */
+STATUS global_setvar(const char *def, ...) /**< the definition */
 {
 	char name[65]="", value[1024]="";
 	if (sscanf(def,"%[^=]=%[^\r\n]",name,value)<2)
@@ -581,7 +582,7 @@ STATUS global_setvar(char *def, ...) /**< the definition */
 			}
 
 			/** @todo autotype global variables when creating them (ticket #26) */
-			var = global_create(name,PT_char1024,NULL,PT_SIZE,1,PT_ACCESS,PA_PUBLIC,NULL);
+			var = global_create(const_cast<char*>(name),PT_char1024,NULL,PT_SIZE,1,PT_ACCESS,PA_PUBLIC,NULL);
 			if ( var==NULL )
 			{
 				output_error("unable to implicitly create the global variable '%s'", name);
@@ -679,7 +680,7 @@ char *global_true(char *buffer, int size)
 	}
 }
 
-char *global_seq(char *buffer, int size, char *name)
+char *global_seq(char *buffer, int size, const char *name)
 {
 	char seq[64], opt[64]="";
 	if ( sscanf(name,"%63[^:]:%63s",seq,opt)==2 )
@@ -694,7 +695,7 @@ char *global_seq(char *buffer, int size, char *name)
 			else
 			{
 				int32 *addr = (int32*)malloc(sizeof(int32));
-				GLOBALVAR *var = global_create(seq,PT_int32,addr,PT_ACCESS,PA_PUBLIC,NULL);
+				GLOBALVAR *var = global_create(const_cast<char*>(seq),PT_int32,addr,PT_ACCESS,PA_PUBLIC,NULL);
 				*addr = 0;
 				return global_getvar(seq,buffer,size);
 			}
@@ -726,12 +727,12 @@ char *global_seq(char *buffer, int size, char *name)
 	}
 }
 
-int global_isdefined(char *name)
+int global_isdefined(const char *name)
 {
 	return global_find(name)!=NULL;
 }
 
-int parameter_expansion(char *buffer, int size, char *spec)
+int parameter_expansion(char *buffer, int size, const char *spec)
 {
 	char name[64], value[1023], pattern[64], op[64], string[64]="", yes[1024]="1", no[1024]="0";
 	int offset, length;
@@ -917,7 +918,7 @@ int parameter_expansion(char *buffer, int size, char *spec)
 		if ( var==NULL )
 		{
 				addr = (int32*)malloc(sizeof(int32));
-				var = global_create(name,PT_int32,addr,PT_ACCESS,PA_PUBLIC,NULL);
+				var = global_create(const_cast<char*>(name),PT_int32,addr,PT_ACCESS,PA_PUBLIC,NULL);
 		}
 		else
 			addr = (int32*) &(var->prop->addr);
@@ -943,13 +944,13 @@ int parameter_expansion(char *buffer, int size, char *spec)
 
 	This function searches global, user-defined, and module variables for a match.
 **/
-char *global_getvar(char *name, char *buffer, int size)
+char *global_getvar(const char *name, char *buffer, int size)
 {
 	char temp[1024];
 	int len = 0;
 	GLOBALVAR *var = NULL;
 	struct {
-		char *name;
+		const char *name;
 		char *(*call)(char *buffer,int size);
 	} map[] = {
 		{"GUID",global_guid},

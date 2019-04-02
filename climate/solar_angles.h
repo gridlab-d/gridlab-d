@@ -64,7 +64,7 @@ public:
 	//Most additions below here are from the NREL Solar Position algorithm 2.0
 	//http://rredc.nrel.gov/solar/codesandalgorithms/solpos/aboutsolpos.html
 	//Perez model function at the end (perez_tilt) extracted from referenced paper
-	typedef struct SOLPOS_TRIGDATA //used to pass calculated values locally
+	struct SOLPOS_TRIGDATA //used to pass calculated values locally
 		{
 			double cd;       // cosine of the declination
 			double ch;       // cosine of the hour angle
@@ -73,7 +73,7 @@ public:
 			double sl;       // sine of the latitude
 		};
 
-	typedef struct SOLPOS_POSDATA
+	struct SOLPOS_POSDATA
 	{
 		/***** ALPHABETICAL LIST OF COMMON VARIABLES *****/
 			   /* Each comment begins with a 1-column letter code:

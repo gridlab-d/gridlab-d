@@ -30,7 +30,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 
 	Socket::init();
 
-	gl_global_create("connection::security",PT_enumeration,&connection_security,
+	gl_global_create(const_cast<char*>("connection::security"),PT_enumeration,&connection_security,
 		PT_DESCRIPTION, "default connection security level",
 		PT_KEYWORD, "NONE", (enumeration)CS_NONE,
 		PT_KEYWORD, "LOW", (enumeration)CS_LOW,
@@ -39,11 +39,11 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		PT_KEYWORD, "EXTREME", (enumeration)CS_EXTREME,
 		PT_KEYWORD, "PARANOID", (enumeration)CS_PARANOID,
 		NULL);
-	gl_global_create("connection::lockout",PT_double,&connection_lockout,
+	gl_global_create(const_cast<char*>("connection::lockout"),PT_double,&connection_lockout,
 		PT_UNITS, "s",
 		PT_DESCRIPTION, "default connection security lockout time",
 		NULL);
-	gl_global_create("connection::enable_subsecond_models", PT_bool, &enable_subsecond_models,PT_DESCRIPTION,"Enable deltamode capabilities within the connection module",NULL);
+	gl_global_create(const_cast<char*>("connection::enable_subsecond_models"), PT_bool, &enable_subsecond_models,PT_DESCRIPTION,const_cast<char*>("Enable deltamode capabilities within the connection module"),NULL);
 
 	new native(module);
 //	new xml(module); // TODO finish XML implementation
@@ -121,7 +121,7 @@ EXPORT unsigned long preupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 {
 	if (enable_subsecond_models == true)
 	{
-		gld_global dtimestep("deltamode_timestep");
+		gld_global dtimestep(const_cast<char*>("deltamode_timestep"));
 		if (!dtimestep.is_valid()){
 			gl_error("connection::preupdate: unable to find delamode_timestep!");
 			return DT_INVALID;

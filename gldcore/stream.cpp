@@ -60,7 +60,7 @@ char *stream_context()
 	//sprintf(buffer,"block %d, token %d",b,t);
 	return buffer;
 }
-int stream_error(char *format, ...)
+int stream_error(const char *format, ...)
 {
 	char buffer[1024];
 	va_list ptr;

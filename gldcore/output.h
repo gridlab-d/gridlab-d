@@ -14,7 +14,7 @@
 
 #include "timestamp.h"
 
-typedef int (*PRINTFUNCTION)(char *,...);
+typedef int (*PRINTFUNCTION)(const char *,...);
 
 typedef enum {FS_IN = 0, FS_STD = 1, FS_ERR = 2} FILESTREAM;
 
@@ -31,7 +31,7 @@ void output_cleanup(void);
 void output_prefix_enable(void);
 void output_both_stdout();
 FILE *output_set_stream(FILESTREAM fs, FILE *newfp);
-FILE* output_redirect(char *name, char *path);
+FILE* output_redirect(const char *name, char *path);
 FILE* output_redirect_stream(char *name, FILE *fp);
 int output_fatal(const char *format,...);
 int output_error(const char *format,...);

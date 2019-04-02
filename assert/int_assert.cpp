@@ -26,7 +26,7 @@ int_assert::int_assert(MODULE *module)
 	if (oclass==NULL)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
-		oclass = gl_register_class(module,"int_assert",sizeof(int_assert),PC_AUTOLOCK|PC_OBSERVER);
+		oclass = gl_register_class(module,const_cast<char*>("int_assert"),sizeof(int_assert),PC_AUTOLOCK|PC_OBSERVER);
 		if (oclass==NULL)
 			throw "unable to register class int_assert";
 		else
@@ -74,7 +74,7 @@ int int_assert::create(void)
 
 int int_assert::init(OBJECT *parent)
 {
-	char *msg = "A negative value has been specified for within.";
+	const char *msg = "A negative value has been specified for within.";
 	if (within < 0)
 		throw msg;
     /*  TROUBLESHOOT

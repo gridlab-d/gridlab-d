@@ -17,7 +17,7 @@ private:
 public:
 	static CLASS *oclass;
 public:
-	typedef enum {REAL=0,IMAGINARY=1,MAGNITUDE=2,ANGLE=3};
+	enum {REAL=0,IMAGINARY=1,MAGNITUDE=2,ANGLE=3};
 	enumeration operation;	///< operation to perform on complex property types
 public:
 	OBJECT*			target;		///< object to track a property of

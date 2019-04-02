@@ -107,7 +107,7 @@ public:
 	char256 controlled_switch; /**< Name of a switch to manually fault/un-fault */
 	int switch_state; /**< Current state (1=closed, 0=open) for the controlled switch */
 	void gen_random_time(enumeration rand_dist_type, double param_1, double param_2, TIMESTAMP *event_time, unsigned int *event_nanoseconds, double *event_double);	//Random time function - easier to call this way
-	int add_unhandled_event(OBJECT *obj_to_fault, char *event_type, TIMESTAMP fail_time, TIMESTAMP rest_length, int implemented_fault, bool fault_state);	/**< Function to add unhandled event into the structure */
+	int add_unhandled_event(OBJECT *obj_to_fault, const char *event_type, TIMESTAMP fail_time, TIMESTAMP rest_length, int implemented_fault, bool fault_state);	/**< Function to add unhandled event into the structure */
 	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 public:
 	/* required implementations */

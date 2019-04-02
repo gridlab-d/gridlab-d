@@ -31,7 +31,7 @@ GUIACTIONSTATUS wait_status = GUIACT_NONE;
 #define TABLEOPTIONS 
 #endif
 
-static int gui_default_stream(void *ref,char *format,...)
+static int gui_default_stream(void *ref, const char *format,...)
 {
 	int len;
 	va_list ptr;
@@ -82,7 +82,7 @@ GUIENTITYTYPE gui_get_type(GUIENTITY *entity)
 	return entity->type;
 }
 
-char *gui_get_typename(GUIENTITY *entity)
+const char *gui_get_typename(GUIENTITY *entity)
 {
 	switch (entity->type) {
 #define CASE(X) case X: return #X;
@@ -192,7 +192,7 @@ void gui_set_wait(GUIENTITY *entity, char *wait)
 /* GET OPERATIONS */
 char *gui_get_dump(GUIENTITY *entity)
 {
-	static char buffer[1024];
+	static char buffer[4096];
 	sprintf(buffer,"{type=%s,srcref='%s',value='%s',globalname='%s',object='%s',property='%s',action='%s',span=%d}",
 		gui_get_typename(entity), entity->srcref, entity->value, entity->globalname, entity->objectname, entity->propertyname, entity->action, entity->span);
 	return buffer;
@@ -270,7 +270,7 @@ char *gui_get_name(GUIENTITY *entity)
 	else if (gui_get_variable(entity))
 		return entity->var->prop->name;
 	else
-		return "";
+		return const_cast<char*>("");
 }
 void *gui_get_data(GUIENTITY *entity)
 {
@@ -396,7 +396,7 @@ void gui_cmd_prompt(GUIENTITY *parent)
 Retry:
 	fprintf(stdout,"\n%s> [%s] ",label, gui_get_value(entity));
 	fflush(stdout);
-	fgets(buffer,sizeof(buffer),stdin);
+	char * result = fgets(buffer,sizeof(buffer),stdin);
 	buffer[strlen(buffer)-1]='\0';
 	if (strcmp(buffer,"")==0)
 		return;
@@ -414,7 +414,9 @@ Retry:
 	{
 		char env[1024];
 #ifdef WIN32
-		sprintf("%s=%s",entity->env,buffer);
+		const char* const_env = entity->env;
+		const char* const_buffer = buffer;
+		sprintf(const_cast<char*>("%s=%s"),const_env, const_buffer);
 		putenv(env);
 #else
 		setenv(entity->env,buffer,1);
@@ -462,7 +464,7 @@ void gui_cmd_menu(GUIENTITY *parent)
 Retry:
 		fprintf(stdout,"\nGLM> [%d] ",ans<item?ans+1:0);
 		fflush(stdout);
-		fgets(buffer,sizeof(buffer),stdin);
+		char* result = fgets(buffer,sizeof(buffer),stdin);
 		buffer[strlen(buffer)-1]='\0';
 		ans = atoi(buffer);
 		if (ans<0 || ans>item)
@@ -633,9 +635,9 @@ Done:
 
 static void gui_output_html_graph(GUIENTITY *entity)
 {
-	char script[1024];
-	char command[1024];
-	char image[1024];
+	char script[2048];
+	char command[2048];
+	char image[2048];
 	char height[32]="";
 	char width[32]="";
 	FILE *plot=NULL;
@@ -873,7 +875,7 @@ void gui_html_output_children(GUIENTITY *entity)
 	if (entity!=NULL) gui_entity_html_close(entity);
 }
 
-void gui_include_element(char *tag, char *options, char *file)
+void gui_include_element(const char *tag, const char *options, const char *file)
 {
 	char path[1024];
 	if (!find_file(file,NULL,R_OK,path,sizeof(path)))
@@ -960,9 +962,9 @@ STATUS gui_html_output_all(void)
 /**************************************************************************/
 /* GLM OPERATIONS */
 /**************************************************************************/
-char *gui_glm_typename(GUIENTITYTYPE type)
+const char *gui_glm_typename(GUIENTITYTYPE type)
 {
-	char *type_name[] = {
+	const char *type_name[] = {
 		NULL, 
 		"row", "tab", "page", "group", "span", NULL,
 		"title", "status", "text", NULL,
@@ -979,7 +981,7 @@ size_t gui_glm_write(FILE *fp, GUIENTITY *entity, int indent)
 {
 	size_t count=0;
 	GUIENTITY *parent = entity;
-	char *type_name = gui_glm_typename(parent->type);
+	const char *type_name = gui_glm_typename(parent->type);
 	char tabs[] = "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t"; // but why? surely there's a better way.
 	if (indent<0) tabs[0]='\0'; else if (indent<sizeof(tabs)) tabs[indent]='\0';
 	if (type_name==NULL)
@@ -1000,7 +1002,7 @@ size_t gui_glm_write(FILE *fp, GUIENTITY *entity, int indent)
 		else if (entity->value[0]!='\0')
 			count += fprintf(fp,"%s\tvalue \"%s\";\n", tabs,entity->value);
 		if (entity->unit)
-			count += fprintf(fp,"%s\tunit \"%s\";\n", tabs,entity->unit);
+			count += fprintf(fp,"%s\tunit \"%s\";\n", tabs,entity->unit->name);//TODO: Is unit->name needed here? was only entity->unit
 		if (entity->size>0)
 			count += fprintf(fp,"%s\tsize %d;\n", tabs,entity->size);
 		if (entity->action[0]!='\0')

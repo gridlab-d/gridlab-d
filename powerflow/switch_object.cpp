@@ -28,8 +28,8 @@ switch_object::switch_object(MODULE *mod) : link_object(mod)
 	{
 		pclass = link_object::oclass;
 
-		oclass = gl_register_class(mod,"switch",sizeof(switch_object),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
+		oclass = gl_register_class(mod,const_cast<char*>("switch"),sizeof(switch_object),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
+		if (oclass== nullptr)
 			throw "unable to register class switch_object";
 		else
 			oclass->trl = TRL_QUALIFIED;
@@ -49,30 +49,30 @@ switch_object::switch_object(MODULE *mod) : link_object(mod)
 				PT_KEYWORD, "INDIVIDUAL", (enumeration)INDIVIDUAL_SW,
 				PT_KEYWORD, "BANKED", (enumeration)BANKED_SW,
 			PT_double, "switch_resistance[Ohm]",PADDR(switch_resistance), PT_DESCRIPTION,"The resistance value of the switch when it is not blown.",
-			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+			NULL) < 1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
 
-			if (gl_publish_function(oclass,"change_switch_state",(FUNCTIONADDR)change_switch_state)==NULL)
-				GL_THROW("Unable to publish switch state change function");
-			if (gl_publish_function(oclass,"reliability_operation",(FUNCTIONADDR)reliability_operation)==NULL)
-				GL_THROW("Unable to publish switch reliability operation function");
-			if (gl_publish_function(oclass,	"create_fault", (FUNCTIONADDR)create_fault_switch)==NULL)
-				GL_THROW("Unable to publish fault creation function");
-			if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_switch)==NULL)
-				GL_THROW("Unable to publish fault restoration function");
-			if (gl_publish_function(oclass,	"change_switch_faults", (FUNCTIONADDR)switch_fault_updates)==NULL)
-				GL_THROW("Unable to publish switch fault correction function");
-			if (gl_publish_function(oclass,	"change_switch_state_toggle", (FUNCTIONADDR)change_switch_state_toggle)==NULL)
-				GL_THROW("Unable to publish switch toggle function");
+			if (gl_publish_function(oclass,const_cast<char*>("change_switch_state"),(FUNCTIONADDR)change_switch_state)==NULL)
+				GL_THROW(const_cast<char*>("Unable to publish switch state change function"));
+			if (gl_publish_function(oclass,const_cast<char*>("reliability_operation"),(FUNCTIONADDR)reliability_operation)==NULL)
+				GL_THROW(const_cast<char*>("Unable to publish switch reliability operation function"));
+			if (gl_publish_function(oclass,	const_cast<char*>("create_fault"), (FUNCTIONADDR)create_fault_switch)==NULL)
+				GL_THROW(const_cast<char*>("Unable to publish fault creation function"));
+			if (gl_publish_function(oclass,	const_cast<char*>("fix_fault"), (FUNCTIONADDR)fix_fault_switch)==NULL)
+				GL_THROW(const_cast<char*>("Unable to publish fault restoration function"));
+			if (gl_publish_function(oclass,	const_cast<char*>("change_switch_faults"), (FUNCTIONADDR)switch_fault_updates)==NULL)
+				GL_THROW(const_cast<char*>("Unable to publish switch fault correction function"));
+			if (gl_publish_function(oclass,	const_cast<char*>("change_switch_state_toggle"), (FUNCTIONADDR)change_switch_state_toggle)==NULL)
+				GL_THROW(const_cast<char*>("Unable to publish switch toggle function"));
 
 			//Publish deltamode functions
-			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_switch)==NULL)
-				GL_THROW("Unable to publish switch deltamode function");
+			if (gl_publish_function(oclass,	const_cast<char*>("interupdate_pwr_object"), (FUNCTIONADDR)interupdate_switch)==NULL)
+				GL_THROW(const_cast<char*>("Unable to publish switch deltamode function"));
 
 			//Publish restoration-related function (current update)
-			if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
-				GL_THROW("Unable to publish switch external power calculation function");
-			if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
-				GL_THROW("Unable to publish switch external power limit calculation function");
+			if (gl_publish_function(oclass,	const_cast<char*>("update_power_pwr_object"), (FUNCTIONADDR)updatepowercalc_link)==NULL)
+				GL_THROW(const_cast<char*>("Unable to publish switch external power calculation function"));
+			if (gl_publish_function(oclass,	const_cast<char*>("check_limits_pwr_object"), (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+				GL_THROW(const_cast<char*>("Unable to publish switch external power limit calculation function"));
     }
 }
 
@@ -562,7 +562,7 @@ void switch_object::NR_switch_sync_post(unsigned char *work_phases_pre, unsigned
 			switch (work_phases)
 			{
 			case 0x00:	//No switches opened !??
-				GL_THROW("switch:%s supposedly opened, but doesn't register the right phases",obj->name);
+				GL_THROW(const_cast<char*>("switch:%s supposedly opened, but doesn't register the right phases"),obj->name);
 				/*  TROUBLESHOOT
 				A switch reported changing to an open status.  However, it did not appear to fully propogate this
 				condition.  Please try again.  If the error persists, please submit your code and a bug report
@@ -622,7 +622,7 @@ void switch_object::NR_switch_sync_post(unsigned char *work_phases_pre, unsigned
 				working_protect_phases[2] = 1;
 				break;
 			default:
-				GL_THROW("switch:%s supposedly opened, but doesn't register the right phases",obj->name);
+				GL_THROW(const_cast<char*>("switch:%s supposedly opened, but doesn't register the right phases"),obj->name);
 				//Defined above
 			}//End switch
 
@@ -662,7 +662,7 @@ void switch_object::NR_switch_sync_post(unsigned char *work_phases_pre, unsigned
 				//Make sure it worked
 				if (result_val != 1)
 				{
-					GL_THROW("Attempt to change switch:%s failed in a reliability manner",obj->name);
+					GL_THROW(const_cast<char*>("Attempt to change switch:%s failed in a reliability manner"),obj->name);
 					/*  TROUBLESHOOT
 					While attempting to propagate a changed switch's impacts, an error was encountered.  Please
 					try again.  If the error persists, please submit your code and a bug report via the trac website.
@@ -700,7 +700,7 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 		if (fault_check_object != NULL)
 		{
 			//It exists, good start! - now see if the proper variable is populated!
-			eventgen_obj = get_object(fault_check_object, "eventgen_object");
+			eventgen_obj = get_object(fault_check_object, const_cast<char*>("eventgen_object"));
 
 			//See if it worked - if not, assume it doesn't exist
 			if (*eventgen_obj != NULL)
@@ -1105,7 +1105,7 @@ void switch_object::switch_sync_function(void)
 					//Make sure it worked
 					if (fault_handle_call == NULL)
 					{
-						GL_THROW("switch:%d - %s - Failed to map the topology update function!",obj->id,(obj->name ? obj->name : "Unnamed"));
+						GL_THROW(const_cast<char*>("switch:%d - %s - Failed to map the topology update function!"),obj->id,(obj->name ? obj->name : "Unnamed"));
 						/*  TROUBLESHOOT
 						While attempting to map up the topology reconfigure function, an error was encountered.  Please try again.
 						If the error persists, please submit your file and an issue report.
@@ -1157,7 +1157,7 @@ void switch_object::switch_sync_function(void)
 					//Make sure it worked
 					if (result_val != 1)
 					{
-						GL_THROW("switch:%d - %s - Topology update fail!",obj->id,(obj->name ? obj->name : "Unnamed"));
+						GL_THROW(const_cast<char*>("switch:%d - %s - Topology update fail!"),obj->id,(obj->name ? obj->name : "Unnamed"));
 						/*  TROUBLESHOOT
 						While attempting to update the topology of the system after a switch action, an error occurred.
 						Please try again.  If the error persists, please submit your file and an issue report.
@@ -1198,7 +1198,7 @@ void switch_object::switch_sync_function(void)
 					//Make sure it worked
 					if (result_val != 1)
 					{
-						GL_THROW("switch:%d - %s - Topology update fail!",obj->id,(obj->name ? obj->name : "Unnamed"));
+						GL_THROW(const_cast<char*>("switch:%d - %s - Topology update fail!"),obj->id,(obj->name ? obj->name : "Unnamed"));
 						//Defined above
 					}
 				}
@@ -1966,9 +1966,9 @@ int switch_object::kmldata(int (*stream)(const char*,...))
 	stream("</TR>\n");
 
 	// control input
-	gld_global run_realtime("run_realtime");
-	gld_global server("hostname");
-	gld_global port("server_portnum");
+	gld_global run_realtime(const_cast<char*>("run_realtime"));
+	gld_global server(const_cast<char*>("hostname"));
+	gld_global port(const_cast<char*>("server_portnum"));
 	if ( run_realtime.get_bool() )
 	{
 		stream("<TR><TH ALIGN=LEFT>Control</TH>");

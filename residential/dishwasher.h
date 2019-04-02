@@ -16,7 +16,7 @@
 class dishwasher : public residential_enduse
 {
 public:
-	typedef enum {	dishwasher_STOPPED=0,		///< motor is stopped
+	enum {	dishwasher_STOPPED=0,		///< motor is stopped
 			dishwasher_STALLED=1,						///< motor is stalled
 			dishwasher_TRIPPED=2,						///< motor is tripped
 			dishwasher_COIL_ONLY=3,				//<only the coil and motor are operating

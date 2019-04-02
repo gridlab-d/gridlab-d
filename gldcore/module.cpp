@@ -9,6 +9,7 @@
 /* absolutely nothing must be placed before this per feature_test_macros(7) man page */
 #ifndef WIN32
 #ifndef __APPLE__
+#undef _GNU_SOURCE
 #define _GNU_SOURCE
 #include <features.h>
 #endif
@@ -137,7 +138,7 @@ void dlload_error(const char *filename)
 	char *error = dlerror();
 #endif
 #else
-	char *error = "unknown error";
+	const char *error = "unknown error";
 #endif
 	output_debug("%s: %s (LD_LIBRARY_PATH=%s)", filename, error,getenv("LD_LIBRARY_PATH"));
 #if defined WIN32 && ! defined __MINGW32__
@@ -511,7 +512,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 			return last_module;
 		} else {
 			struct {
-				char *name;
+				const char *name;
 				LOADER loader;
 			} fmap[] = {
 				{"matlab",NULL},
@@ -683,7 +684,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 		char fname[1024];
 		struct {
 			FUNCTIONADDR *func;
-			char *name;
+			const char *name;
 			int optional;
 		} map[] = {
 			{&c->create,"create",FALSE},
@@ -840,9 +841,9 @@ void module_list(void)
 	char *tokPath = NULL;
 	char *tokPathPtr = NULL;
 #ifdef WIN32
-	char *pathDelim = ";";
+	const char *pathDelim = ";";
 #else
-	char *pathDelim = ":";
+	const char *pathDelim = ":";
 #endif
 
 	_module_list(global_workdir);
@@ -871,14 +872,14 @@ void module_list(void)
 }
 int module_setvar(MODULE *mod, const char *varname, char *value)
 {
-	char modvarname[1024];
+	char modvarname[2048];
 	sprintf(modvarname,"%s::%s",mod->name,varname);
 	return global_setvar(modvarname,value)==SUCCESS;
 }
 
 void* module_getvar(MODULE *mod, const char *varname, char *value, unsigned int size)
 {
-	char modvarname[1024];
+	char modvarname[2048];
 	sprintf(modvarname,"%s::%s",mod->name,varname);
 	return global_getvar(modvarname,value,size);
 }
@@ -906,7 +907,7 @@ void* module_getvar_old(MODULE *mod, const char *varname, char *value, unsigned 
 
 double* module_getvar_addr(MODULE *mod, const char *varname)
 {
-	char modvarname[1024];
+	char modvarname[2048];
 	GLOBALVAR *var;
 	sprintf(modvarname,"%s::%s",mod->name,varname);
 	var = global_find(modvarname);
@@ -957,7 +958,7 @@ int module_saveall_xml(FILE *fp){
 	char1024 buffer;
 
 	for (mod = first_module; mod != NULL; mod = mod->next){
-		char tname[67];
+		char tname[2048];
 		size_t tlen;
 		gvptr = global_getnext(NULL);
 		sprintf(tname, "%s::", mod->name);
@@ -995,7 +996,7 @@ int module_saveobj_xml(FILE *fp, MODULE *mod){ /**< the stream to write to */
 	CLASS *pclass = NULL;
 
 	for(obj = object_get_first(); obj != NULL; obj = obj->next){
-		char32 oname = "(unidentified)";
+		char128 oname = "(unidentified)";
 		if(obj->oclass->module != mod){
 			continue;
 		}
@@ -1021,7 +1022,7 @@ int module_saveobj_xml(FILE *fp, MODULE *mod){ /**< the stream to write to */
 			count += fprintf(fp,"\t\t\t<parent>root</parent>\n");
 		}
 		count += fprintf(fp,"\t\t\t<rank>%d</rank>\n", obj->rank);
-		count += fprintf(fp,"\t\t\t<clock>\n", obj->clock);
+		count += fprintf(fp,"\t\t\t<clock>%lld\n", obj->clock); //TODO: Review if obj->clock is needed to be printed?
 		count += fprintf(fp,"\t\t\t\t <timestamp>%s</timestamp>\n", convert_from_timestamp(obj->clock,buffer,sizeof(buffer))>0?buffer:"(invalid)");
 		count += fprintf(fp,"\t\t\t</clock>\n");
 		/* why do latitude/longitude have 2 values?  I currently only store as float in the schema... -dc */
@@ -1100,7 +1101,7 @@ int module_saveall_xml_old(FILE *fp)
 			if (module_getvar(mod,varname,value,sizeof(value)))
 			{	/* TODO: support other types (ticket #46) */
 				count += fprintf(fp,"\t\t\t\t<property> \n");
-				count += fprintf(fp,"\t\t\t\t\t <type>double</type>\n", varname.get_string());
+				count += fprintf(fp,"\t\t\t\t\t <type>double</type>\n");//TODO: Is varname.get_string() to be printed? Currently hardcoded as double.
 				count += fprintf(fp,"\t\t\t\t\t <name>%s</name>\n", value.get_string());
 				count += fprintf(fp,"\t\t\t\t</property> \n");
 			}
@@ -1112,7 +1113,7 @@ int module_saveall_xml_old(FILE *fp)
 	return count;
 }
 
-MODULE *module_find(char *modname)
+MODULE *module_find(const char *modname)
 {
 	MODULE *mod = NULL;
 	for (mod=first_module; mod!=NULL; mod=mod->next)
@@ -1320,7 +1321,7 @@ static time_t file_modtime(char *file) /**< file name to query */
 /** Execute a command using formatted strings
     @return command return code
  **/
-static int execf(char *format, /**< format string  */
+static int execf(const char *format, /**< format string  */
 				 ...) /**< parameters  */
 {
 	char command[4096];
@@ -1339,11 +1340,11 @@ static int execf(char *format, /**< format string  */
 /** Compile C source code into a dynamic link library 
     @return 0 on success
  **/
-int module_compile(char *name,	/**< name of library */
-				   char *code,	/**< listing of source code */
+int module_compile(const char *name,	/**< name of library */
+				   const char *code,	/**< listing of source code */
 				   int flags,	/**< compile options (see MC_?) */
-				   char *prefix, /**< file prefix */
-				   char *source,/**< source file (for context) */
+				   const char *prefix, /**< file prefix */
+				   const char *source,/**< source file (for context) */
 				   int line)	/**< source line (for context) */
 {
 	char cfile[1024];
@@ -1357,7 +1358,7 @@ int module_compile(char *name,	/**< name of library */
 	FILE *fp;
 	char srcfile[1024];
 	char mopt[8] = "";
-	char *libs = "-lstdc++";
+	const char *libs = "-lstdc++";
 #ifdef WIN32
 	snprintf(mopt,sizeof(mopt),"-m%d",sizeof(void*)*8);
 	libs = "";
@@ -1481,7 +1482,7 @@ static int add_external_function(char *fctname, char *libname, void *lib)
 		if ( sscanf(fctname,"%[^@]@%d",function,&ordinal)==2)
 		{
 #ifdef WIN32
-			item->call = DLSYM(lib,(LPCSTR)(short)ordinal);
+			item->call = DLSYM(lib,(LPCSTR)(long long)ordinal);
 #else
 			item->call = DLSYM(lib,function);
 #endif
@@ -1536,7 +1537,7 @@ int module_load_function_list(char *libname, char *fnclist)
 				NULL, GetLastError(), 0,
 				(LPTSTR) &error, 0, NULL);
 		if (!result)
-			error = TEXT("[FormatMessage failed]");
+			error = TEXT(const_cast<char*>("[FormatMessage failed]"));
 		else for (end = error + strlen(error) - 1; end >= error && isspace(*end); end--)
 			*end = 0;
 #else
@@ -1833,7 +1834,7 @@ static char HEADING_R[] = "PROC PID   RUNTIME    STATE   CLOCK                  
 static char HEADING_P[] = "PROC PID   PROGRESS   STATE   CLOCK                   MODEL" ;
 int sched_getinfo(int n,char *buf, size_t sz)
 {
-	char *status;
+	const char *status;
 	char ts[64];
 	struct tm *tm;
 	time_t ptime;
@@ -2187,7 +2188,7 @@ void sched_init(int readonly)
 void sched_init(int readonly)
 {
 	static int has_run = 0;
-	char *mfile = "/tmp/" MAPNAME;
+	const char *mfile = "/tmp/" MAPNAME;
 	unsigned long mapsize;
 	int fd = open(mfile,O_CREAT,0666);
 	key_t shmkey = ftok(mfile,sizeof(GLDPROCINFO));

@@ -56,4 +56,4 @@ class player : public gld_object {
 
 extern TIMESTAMP player_read(OBJECT *obj);
 
-#endif _PLAYER_H
+#endif

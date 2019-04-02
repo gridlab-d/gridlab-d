@@ -15,7 +15,7 @@
 #include "schedule.h"
 #include "transform.h"
 
-#define DEFAULT_FORMAT "gld"
+#define DEFAULT_FORMAT const_cast<char*>("gld")
 
 static int saveglm(char *filename, FILE *fp);
 static int savexml(char *filename, FILE *fp);
@@ -26,7 +26,7 @@ int saveall(char *filename)
 	FILE *fp;
 	char *ext = strrchr(filename,'.');
 	struct {
-		char *format;
+		const char *format;
 		int (*save)(char*,FILE*);
 	} map[] = {
 		{"glm", saveglm},
@@ -109,7 +109,7 @@ int saveglm(char *filename,FILE *fp)
 		getenv("HOSTNAME")
 #endif
 		);
-	count += fprintf(fp,"// modules.... %d\n", module_getcount());
+	count += fprintf(fp,"// modules.... %ld\n", module_getcount());
 	count += fprintf(fp,"// classes.... %d\n", class_get_count());
 	count += fprintf(fp,"// objects.... %d\n", object_get_count());
 
@@ -176,7 +176,7 @@ int savexml_strict(char *filename,FILE *fp)
 	if (stylesheet==NULL || stylesheet->prop->ptype!=PT_char1024) /* only char1024 is allowed */
 		count += fprintf(fp,"<?xml-stylesheet href=\"%sgridlabd-%d_%d.xsl\" type=\"text/xsl\"?>\n",global_urlbase,global_version_major,global_version_minor);
 	else 
-		count += fprintf(fp,"<?xml-stylesheet href=\"%s.xsl\" type=\"text/xsl\"?>\n",stylesheet->prop->addr);
+		count += fprintf(fp,"<?xml-stylesheet href=\"%s.xsl\" type=\"text/xsl\"?>\n",static_cast<char*>(stylesheet->prop->addr));
 	count += fprintf(fp,"<gridlabd>\n");
 	
 		/* globals */
@@ -202,7 +202,7 @@ int savexml_strict(char *filename,FILE *fp)
 			PASSCONFIG pass;
 			for (pass=0; ranks!=NULL && ranks[pass]!=NULL; pass++)
 			{
-				char *passname[]={"pretopdown","bottomup","posttopdown"};
+				const char *passname[]={"pretopdown","bottomup","posttopdown"};
 				int lastrank=-1;
 				fprintf(fp,"\t\t<pass>\n\t\t\t<name>%s</name>\n",passname[pass]);
 				for (i = PASSINIT(pass); PASSCMP(i, pass); i += PASSINC(pass))

@@ -211,8 +211,8 @@ public:
 	int time_in_voltage_lockout;
 	BIDINFO controller_bid;
 private:
-	void fetch_double(double **prop, char *name, OBJECT *parent);
-	void fetch_int(int **prop, char *name, OBJECT *parent);
+	void fetch_double(double **prop, const char *name, OBJECT *parent);
+	void fetch_int(int **prop, const char *name, OBJECT *parent);
 	int calc_ramp(TIMESTAMP t0, TIMESTAMP t1);
 	int calc_dutycycle(TIMESTAMP t0, TIMESTAMP t1);
 	int calc_proboff(TIMESTAMP t0, TIMESTAMP t1);

@@ -41,7 +41,7 @@ substation::substation(MODULE *mod) : node(mod)
 		pclass = node::oclass;
 
 		// register the class definition
-		oclass = gl_register_class(mod,"substation",sizeof(substation),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,const_cast<char*>("substation"),sizeof(substation),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class substation";
 		else
@@ -78,16 +78,16 @@ substation::substation(MODULE *mod) : node(mod)
 			PT_complex, "distribution_current_C[A]", PADDR(current_inj[2]),
 			PT_double, "distribution_real_energy[Wh]", PADDR(distribution_real_energy),
 			//PT_double, "measured_reactive[kVar]", PADDR(measured_reactive), has not implemented yet
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			NULL)<1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_substation)==NULL)
-			GL_THROW("Unable to publish substation deltamode function");
-		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
-			GL_THROW("Unable to publish substation swing-swapping function");
-		if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==NULL)
-			GL_THROW("Unable to publish substation current injection update mapping function");
-		if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
-			GL_THROW("Unable to publish substation island-status-reset function");
+		if (gl_publish_function(oclass,	const_cast<char*>("interupdate_pwr_object"), (FUNCTIONADDR)interupdate_substation)==NULL)
+			GL_THROW(const_cast<char*>("Unable to publish substation deltamode function"));
+		if (gl_publish_function(oclass,	const_cast<char*>("pwr_object_swing_swapper"), (FUNCTIONADDR)swap_node_swing_status)==NULL)
+			GL_THROW(const_cast<char*>("Unable to publish substation swing-swapping function"));
+		if (gl_publish_function(oclass,	const_cast<char*>("pwr_current_injection_update_map"), (FUNCTIONADDR)node_map_current_update_function)==NULL)
+			GL_THROW(const_cast<char*>("Unable to publish substation current injection update mapping function"));
+		if (gl_publish_function(oclass, const_cast<char*>("pwr_object_reset_disabled_status"), (FUNCTIONADDR)node_reset_disabled_status) == NULL)
+			GL_THROW(const_cast<char*>("Unable to publish substation island-status-reset function"));
 	}
 }
 
@@ -122,7 +122,7 @@ void substation::fetch_complex(complex **prop, char *name, OBJECT *parent){
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "substation:%i", hdr->id);
-		if(*name == NULL)
+		if(name == nullptr || name[0] == '\0')
 			sprintf(msg, "%s: substation unable to find property: name is NULL", namestr);
 		else
 			sprintf(msg, "%s: substation unable to find %s", namestr, name);
@@ -138,11 +138,11 @@ void substation::fetch_double(double **prop, char *name, OBJECT *parent){
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "substation:%i", hdr->id);
-		if(*name == NULL)
-			sprintf(msg, "%s: substation unable to find property: name is NULL", namestr);
+		if(name == nullptr || name[0] == '\0')
+			sprintf(msg, "%s: substation unable to find property: name is not defined", namestr);
 		else
 			sprintf(msg, "%s: substation unable to find %s", namestr, name);
-		throw(msg);
+		throw std::runtime_error(msg);
 	}
 }
 
@@ -172,9 +172,9 @@ int substation::init(OBJECT *parent)
 	}//End convergence value check
 
 	//Check to see if it has a parent (no sense to ISAs if it is empty)
-	if (parent != NULL)
+	if (parent != nullptr)
 	{
-		if (gl_object_isa(parent,"pw_load","network"))
+		if (gl_object_isa(parent, const_cast<char*>("pw_load"),const_cast<char*>("network")))
 		{
 			//Make sure it is done, otherwise defer
 			if((parent->flags & OF_INIT) != OF_INIT){
@@ -185,11 +185,11 @@ int substation::init(OBJECT *parent)
 			}
 
 			//Map up the appropriate variables- error checks mostly inside
-			fetch_complex(&pPositiveSequenceVoltage,"load_voltage",parent);
-			fetch_complex(&pConstantPowerLoad,"load_power",parent);
-			fetch_complex(&pConstantCurrentLoad,"load_current",parent);
-			fetch_complex(&pConstantImpedanceLoad,"load_impedance",parent);
-			fetch_double(&pTransNominalVoltage,"bus_nom_volt",parent);
+			fetch_complex(&pPositiveSequenceVoltage,const_cast<char*>("load_voltage"),parent);
+			fetch_complex(&pConstantPowerLoad,const_cast<char*>("load_power"),parent);
+			fetch_complex(&pConstantCurrentLoad,const_cast<char*>("load_current"),parent);
+			fetch_complex(&pConstantImpedanceLoad,const_cast<char*>("load_impedance"),parent);
+			fetch_double(&pTransNominalVoltage,const_cast<char*>("bus_nom_volt"),parent);
 
 			//Do a general check for nominal voltages - make sure they match
 			if (fabs(*pTransNominalVoltage-nominal_voltage)>0.001)
@@ -342,7 +342,7 @@ TIMESTAMP substation::sync(TIMESTAMP t0, TIMESTAMP t1)
 		int result = node::NR_current_update(false);
 
 		if(result != 1){
-			GL_THROW("Attempt to update current/power on substation:%s failed!",obj->name);
+			GL_THROW(const_cast<char*>("Attempt to update current/power on substation:%s failed!"),obj->name);
 			//Defined elsewhere
 		}
 	}

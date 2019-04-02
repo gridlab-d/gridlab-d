@@ -26,7 +26,7 @@ connection_transport::connection_transport(void)
 connection_transport::~connection_transport(void)
 {
 	if ( position>0 )
-		warning("transport closed before pending message could be sent");
+		warning(const_cast<char*>("transport closed before pending message could be sent"));
 }
 
 CONNECTIONTRANSPORT connection_transport::get_transport(const char *s)
@@ -98,7 +98,7 @@ void connection_transport::debug(int level, const char *fmt, ...)
 void connection_transport::exception(const char *fmt, ...)
 {
 	static char msg[1024];
-	size_t len = sprintf(msg,"connection/%s: ", get_transport_name());
+	int len = sprintf(msg,"connection/%s: ", get_transport_name());
 	va_list ptr;
 	va_start(ptr,fmt);
 	vsprintf(msg+len,fmt,ptr);
@@ -146,20 +146,20 @@ int connection_transport::message_append(char *fmt,...)
 	va_start(ptr,fmt);
 	if ( get_position()<0 )
 	{
-		error("message append received with no pending message");
+		error(const_cast<char*>("message append received with no pending message"));
 		return -1;
 	}
 	int len = vsprintf(temp,fmt,ptr);
 	if ( len>get_size() )
 	{
-		error("message exceeds protocol size limit");
+		error(const_cast<char*>("message exceeds protocol size limit"));
 		return -1;
 	}
 	if ( delimiter!=NULL && field_count>0 )
 	{
 		if ( get_size()<strlen(delimiter) )
 		{
-			error("message exceeds protocol size limit");
+			error(const_cast<char*>("message exceeds protocol size limit"));
 			return -1;
 		}
 		position += sprintf(output+position,"%s",delimiter);

@@ -193,13 +193,12 @@ int read_aggregates(AGGREGATION *aggr, char *buffer, int size)
 }
 
 
-
 TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
 	struct collector *my = OBJECTDATA(obj,struct collector);
 	typedef enum {NONE='\0', LT='<', EQ='=', GT='>'} COMPAREOP;
 	COMPAREOP comparison;
-	char1024 buffer = "";
+	char2048 buffer = "";
 
 	if(my->status == TS_DONE){
 		return TS_NEVER;
@@ -283,7 +282,7 @@ TIMESTAMP sync_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	}
 	return sync_collector_error(&obj, &my, buffer);
 }
-TIMESTAMP sync_collector_error(OBJECT **obj, struct collector **my, char1024 buffer) {
+TIMESTAMP sync_collector_error(OBJECT **obj, struct collector **my, char2048 buffer) {
 	if ((*my)->status==TS_ERROR)
 	{
 		gl_error("collector %d %s\n",(*obj)->id, buffer.get_string());

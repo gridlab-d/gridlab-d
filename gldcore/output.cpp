@@ -92,9 +92,9 @@ static struct s_redirection {
 FILE* output_redirect_stream(char *name, FILE *fp)
 {
 	struct {
-		char *name;
+		const char *name;
 		FILE **file;
-		char *defaultfile;
+		const char *defaultfile;
 	} map[] = {
 		{"output",&redirect.output,"gridlabd.out"},
 		{"error",&redirect.error,"gridlabd.err"},
@@ -109,7 +109,7 @@ FILE* output_redirect_stream(char *name, FILE *fp)
 	{
 		if (strcmp(name,map[i].name)==0)
 		{
-			char *mode = "w";
+			char *mode = const_cast<char*>("w");
 			FILE *oldfp = *(map[i].file);
 			*(map[i].file) = fp;
 #ifndef WIN32
@@ -129,12 +129,12 @@ int output_notify_error(void (*notify)(void))
 	return 0;
 }
 
-FILE* output_redirect(char *name, char *path)
+FILE* output_redirect(const char *name, char *path)
 {
 	struct {
-		char *name;
+		const char *name;
 		FILE **file;
-		char *defaultfile;
+		const char *defaultfile;
 	} map[] = {
 		{"output",&redirect.output,"gridlabd.out"},
 		{"error",&redirect.error,"gridlabd.err"},
@@ -149,13 +149,13 @@ FILE* output_redirect(char *name, char *path)
 	{
 		if (strcmp(name,map[i].name)==0)
 		{
-			char *mode = "w";
+			char *mode = const_cast<char*>("w");
 			if (*(map[i].file)!=NULL)
 				fclose(*(map[i].file));
 			
 			/* test for append mode, path led with + */
 			if (path != NULL && path[0]=='+')
-			{	mode = "a";
+			{	mode = const_cast<char*>("a");
 				path++;
 			}
 			*(map[i].file) = fopen(path?path:map[i].defaultfile,"w");
@@ -216,7 +216,7 @@ void output_cleanup(void)
 	output_debug(NULL);
 }
 
-static int default_printstd(char *format,...)
+static int default_printstd(const char *format,...)
 {
 	int count;
 	va_list ptr;
@@ -233,7 +233,7 @@ static int default_printstd(char *format,...)
 	return count;
 }
 
-static int default_printerr(char *format,...)
+static int default_printerr(const char *format,...)
 {
 	int count;
 	va_list ptr;
@@ -897,7 +897,7 @@ int output_xsl(char *fname, int n_mods, char *p_mods[])
 				if (stylesheet==NULL || stylesheet->prop->ptype!=PT_char1024) /* only char1024 is allowed */
 					fprintf(fp,"<link rel=\"stylesheet\" href=\"%sgridlabd-%d_%d.css\" type=\"text/css\"/>\n",global_urlbase,global_version_major,global_version_minor);
 				else
-					fprintf(fp,"<link rel=\"stylesheet\" href=\"%s.css\" type=\"text/css\"/>\n",stylesheet->prop->addr);
+					fprintf(fp,"<link rel=\"stylesheet\" href=\"%s.css\" type=\"text/css\"/>\n",static_cast<char*>(stylesheet->prop->addr));
 			}
 			fprintf(fp,"</head>\n");
 			fprintf(fp,"<body>\n");

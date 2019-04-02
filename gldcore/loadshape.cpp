@@ -407,7 +407,7 @@ static void sync_scheduled(loadshape *ls, TIMESTAMP t1)
 /** Convert a scheduled loadshape weekday parameter to string representing the weekdays (UMTWRFSH)
 	@return A string containing bits found in the bitfield (U=0, M=1, T=2, W=3, R=4, F=5, S=6, H=7)
  **/
-static char *weekdays="UMTWRFSH";
+static const char *weekdays="UMTWRFSH";
 char *schedule_weekday_to_string(unsigned char days, char *result, int len)
 {
 	int i;
@@ -607,7 +607,7 @@ int loadshape_init(loadshape *ls) /**< load shape */
 			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) modulated energy must be a positive number",ls->schedule->name);
 			return 1;
 		}
-		if (ls->params.modulated.pulsetype==MT_UNKNOWN)
+		if (static_cast<int>(ls->params.modulated.pulsetype)== static_cast<int>(MT_UNKNOWN))
 		{
 			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) modulated pulse type could not be inferred because either duration or power is missing",ls->schedule->name);
 			return 1;
@@ -644,7 +644,7 @@ int loadshape_init(loadshape *ls) /**< load shape */
 		}
 		if (ls->params.modulated.modulation<=MMT_UNKNOWN || ls->params.modulated.modulation>MMT_FREQUENCY)
 		{
-			char *modulation[] = {"unknown","amplitude","pulsewidth","frequency"};
+			const char *modulation[] = {"unknown","amplitude","pulsewidth","frequency"};
 			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) modulation type %s is invalid",ls->schedule->name,modulation[ls->params.modulated.modulation]);
 			return 1;
 		}
@@ -655,7 +655,7 @@ int loadshape_init(loadshape *ls) /**< load shape */
 			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) queue energy must be a positive number",ls->schedule->name);
 			return 1;
 		}
-		if (ls->params.queued.pulsetype==MT_UNKNOWN)
+		if (static_cast<int>(ls->params.queued.pulsetype)== static_cast<int>(MT_UNKNOWN))
 		{
 			output_error("loadshape_init(loadshape *ls={schedule->name='%s',...}) queue pulse type could not be inferred because either duration or power is missing",ls->schedule->name);
 			return 1;
@@ -1062,7 +1062,7 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 
 int convert_from_loadshape(char *string,int size,void *data, PROPERTY *prop)
 {
-	char *modulation[] = {"unknown","amplitude","pulsewidth","frequency"};
+	const char *modulation[] = {"unknown","amplitude","pulsewidth","frequency"};
 	char buffer[9];
 	loadshape *ls = (loadshape*)data;
 	switch (ls->type) {
@@ -1078,10 +1078,10 @@ int convert_from_loadshape(char *string,int size,void *data, PROPERTY *prop)
 		break;
 	case MT_PULSED:
 		if (ls->params.pulsed.pulsetype==MPT_TIME)
-			return sprintf(string,"type: pulsed; schedule: %s; energy: %g kWh; count: %d; duration: %g s",
+			return sprintf(string,"type: pulsed; schedule: %s; energy: %g kWh; count: %f; duration: %g s",
 			ls->schedule->name, ls->params.pulsed.energy, ls->params.pulsed.scalar, ls->params.pulsed.pulsevalue);
 		else if (ls->params.pulsed.pulsetype==MPT_POWER)
-			return sprintf(string,"type: pulsed; schedule: %s; energy: %g kWh; count: %d; power: %g kW",
+			return sprintf(string,"type: pulsed; schedule: %s; energy: %g kWh; count: %f; power: %g kW",
 			ls->schedule->name, ls->params.pulsed.energy, ls->params.pulsed.scalar, ls->params.pulsed.pulsevalue);
 		else
 		{
@@ -1091,10 +1091,10 @@ int convert_from_loadshape(char *string,int size,void *data, PROPERTY *prop)
 		break;
 	case MT_MODULATED:
 		if (ls->params.pulsed.pulsetype==MPT_TIME)
-			return sprintf(string,"type: modulated; schedule: %s; energy: %g kWh; count: %d; duration: %g s; pulse: %g kWh; modulation: %s",
+			return sprintf(string,"type: modulated; schedule: %s; energy: %g kWh; count: %f; duration: %g s; pulse: %g kWh; modulation: %s",
 			ls->schedule->name, ls->params.modulated.energy, ls->params.modulated.scalar, ls->params.modulated.pulsevalue, ls->params.modulated.pulseenergy, modulation[ls->params.modulated.modulation]);
 		else if (ls->params.pulsed.pulsetype==MPT_POWER)
-			return sprintf(string,"type: modulated; schedule: %s; energy: %g kWh; count: %d; power: %g kW; pulse: %g kWh; modulation: %s",
+			return sprintf(string,"type: modulated; schedule: %s; energy: %g kWh; count: %f; power: %g kW; pulse: %g kWh; modulation: %s",
 			ls->schedule->name, ls->params.modulated.energy, ls->params.modulated.scalar, ls->params.modulated.pulsevalue, ls->params.modulated.pulseenergy, modulation[ls->params.modulated.modulation]);
 		else
 		{
@@ -1104,10 +1104,10 @@ int convert_from_loadshape(char *string,int size,void *data, PROPERTY *prop)
 		break;
 	case MT_QUEUED:
 		if (ls->params.pulsed.pulsetype==MPT_TIME)
-			return sprintf(string,"type: queue; schedule: %s; energy: %g kWh; count: %d; duration: %g s; q_on: %g; q_off: %g",
+			return sprintf(string,"type: queue; schedule: %s; energy: %g kWh; count: %f; duration: %g s; q_on: %g; q_off: %g",
 			ls->schedule->name, ls->params.queued.energy, ls->params.queued.scalar, ls->params.queued.pulsevalue, ls->params.queued.q_on, ls->params.queued.q_off);
 		else if (ls->params.pulsed.pulsetype==MPT_POWER)
-			return sprintf(string,"type: queued; schedule: %s; energy: %g kWh; count: %d; power: %g kW; q_on: %g; q_off: %g",
+			return sprintf(string,"type: queued; schedule: %s; energy: %g kWh; count: %f; power: %g kW; q_on: %g; q_off: %g",
 			ls->schedule->name, ls->params.queued.energy, ls->params.queued.scalar, ls->params.queued.pulsevalue, ls->params.queued.q_on, ls->params.queued.q_off);
 		else
 		{
@@ -1116,7 +1116,7 @@ int convert_from_loadshape(char *string,int size,void *data, PROPERTY *prop)
 		}
 		break;
 	case MT_SCHEDULED:
-		return sprintf(string,"type: scheduled; weekdays: %s; on-time: %.3g; off-time: %.3g; on-ramp: %.3g; off-ramp: %.3g; low: %.3g; high: %.3g; dt: %.3g m",
+		return sprintf(string,"type: scheduled; weekdays: %s; on-time: %.3g; off-time: %.3g; on-ramp: %.3g; off-ramp: %.3g; low: %.3g; high: %.3g; dt: %.3d m",
 			schedule_weekday_to_string(ls->params.scheduled.weekdays, buffer,sizeof(buffer)), ls->params.scheduled.on_time, ls->params.scheduled.off_time, 
 			ls->params.scheduled.on_ramp, ls->params.scheduled.off_ramp, ls->params.scheduled.low, ls->params.scheduled.high, ls->params.scheduled.dt/60);
 	}
@@ -1149,7 +1149,7 @@ int convert_to_loadshape(char *string, void *data, PROPERTY *prop)
 		/* isolate param and token and eliminte leading whitespaces */
 		while (*param!='\0' && (isspace(*param) || iscntrl(*param))) param++;		
 		if (value==NULL)
-			value="1";
+			value= const_cast<char*>("1");
 		else
 			*value++ = '\0'; /* separate value from param */
 		while (isspace(*value) || iscntrl(*value)) value++;
@@ -1608,7 +1608,7 @@ int loadshape_test(void)
 
 	/* tests */
 	struct s_test {
-		char *name;
+		const char *name;
 	} *p, test[] = {
 		"TODO",
 	};

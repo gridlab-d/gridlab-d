@@ -40,7 +40,8 @@ transformer_configuration::transformer_configuration(MODULE *mod) : powerflow_li
 {
 	if(oclass == NULL)
 	{
-		oclass = gl_register_class(mod,"transformer_configuration",sizeof(transformer_configuration),NULL);
+		//TODO: Review use of 0 as initialization value, previously NULL
+		oclass = gl_register_class(mod,const_cast<char*>("transformer_configuration"),sizeof(transformer_configuration), 0);
 		if (oclass==NULL)
 			throw "unable to register class transformer_configuration";
 		else
@@ -115,7 +116,7 @@ transformer_configuration::transformer_configuration(MODULE *mod) : powerflow_li
 			PT_double, "I_M[pu]", PADDR(IM_pu), PT_DESCRIPTION,"Peak magnetization current at rated voltage of the saturation curve",
 			PT_double, "T_D", PADDR(TD_val), PT_DESCRIPTION, "Inrush decay time constant for inrush current",
 
-			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+			NULL) < 1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
     }
 }
 
@@ -170,7 +171,7 @@ int transformer_configuration::init(OBJECT *parent)
 
 	// check connection type
 	if (connect_type==UNKNOWN)
-		GL_THROW("connection type not specified");
+		GL_THROW(const_cast<char*>("connection type not specified"));
 		/*  TROUBLESHOOT
 		You must specify what type of transformer this is (i.e., WYE_WYE, DELTA_GWYE, etc.).  Please choose
 		a supported connect_type.
@@ -187,13 +188,13 @@ int transformer_configuration::init(OBJECT *parent)
 	
 	// check primary and second voltages
 	if (V_primary==0)
-		GL_THROW("V_primary must be positive");
+		GL_THROW(const_cast<char*>("V_primary must be positive"));
 		/*  TROUBLESHOOT
 		For the purposes of specifying the equipment, V can only be a positive number. This helps define the turns ratio. 
 		Please specify V_primary as a positive number.
 		*/
 	if (V_secondary==0)
-		GL_THROW("V_secondary must be positive");
+		GL_THROW(const_cast<char*>("V_secondary must be positive"));
 		/*  TROUBLESHOOT
 		For the purposes of specifying the equipment, V can only be a positive number. This helps define the turns ratio. 
 		Please specify V_secondary as a positive number.
@@ -201,13 +202,13 @@ int transformer_configuration::init(OBJECT *parent)
 
 	// check kVA rating
 	if (kVA_rating<=0)
-		GL_THROW("kVA_rating(s) must be positive");
+		GL_THROW(const_cast<char*>("kVA_rating(s) must be positive"));
 		/*  TROUBLESHOOT
 		By definition, kVA can only be a positive (or zero) number. But, for the sake of actual equipment,
 		we'll assume this can only be a positive number.  Please specify kVA_rating as a positive number.
 		*/
 	if (fabs((kVA_rating-phaseA_kVA_rating-phaseB_kVA_rating-phaseC_kVA_rating)/kVA_rating)>0.01)
-		GL_THROW("kVA rating mismatch across phases exceeds 1%");
+		GL_THROW(const_cast<char*>("kVA rating mismatch across phases exceeds 1%"));
 		/*  TROUBLESHOOT
 		Both the total kVA rating and the individual kVA phase ratings were set.  However, they differed by
 		more than 1%, leaving the model in a state of confusion.  Please check your kVA ratings and either
@@ -278,22 +279,22 @@ int transformer_configuration::init(OBJECT *parent)
 	}
 	// check impedance
 	if (impedance.Re()<=0 || impedance1.Re()<0 || impedance2.Re()<0)
-		GL_THROW("resistance must be non-negative");
+		GL_THROW(const_cast<char*>("resistance must be non-negative"));
 		/* TROUBLESHOOT
 		Please specify either impedance (real portion) or resistance as a positive value.
 		*/
 	if (impedance.Im()<=0 || impedance1.Im()<0 || impedance2.Im()<0)
-		GL_THROW("reactance must be non-negative");
+		GL_THROW(const_cast<char*>("reactance must be non-negative"));
 		/* TROUBLESHOOT
 		Please specify either impedance (imaginary portion)	or reactance as a positive value.
 		*/
 	if (shunt_impedance.Re()<0)
-		GL_THROW("shunt_resistance must be non-negative");
+		GL_THROW(const_cast<char*>("shunt_resistance must be non-negative"));
 		/* TROUBLESHOOT
 		Please specify either shunt impedance (imaginary portion) or shunt resistance as a positive value.
 		*/
 	if (shunt_impedance.Im()<0)
-		GL_THROW("shunt_reactance must be non-negative");
+		GL_THROW(const_cast<char*>("shunt_reactance must be non-negative"));
 		/* TROUBLESHOOT
 		Please specify either shunt impedance (imaginary portion) or shunt reactance as a positive value.
 		*/

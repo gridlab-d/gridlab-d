@@ -33,7 +33,7 @@ range::range(MODULE *module) : residential_enduse(module){
 	{
 		pclass = residential_enduse::oclass;
 		// register the class definition
-		oclass = gl_register_class(module,"range",sizeof(range),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
+		oclass = gl_register_class(module,const_cast<char*>("range"),sizeof(range),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
 		if (oclass==NULL)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 
@@ -242,8 +242,8 @@ int range::init(OBJECT *parent)
 	if (heat_fraction==0) heat_fraction = 0.2;
 
 	if(parent){
-		pTair = gl_get_double_by_name(parent, "air_temperature");
-		pTout = gl_get_double_by_name(parent, "outdoor_temperature");
+		pTair = gl_get_double_by_name(parent, const_cast<char*>("air_temperature"));
+		pTout = gl_get_double_by_name(parent, const_cast<char*>("outdoor_temperature"));
 	}
 
 	if(pTair == 0){
@@ -1226,14 +1226,14 @@ double range::get_Tambient(enumeration loc)
 	//return pHouse->get_Tair()*ratio + pHouse->get_Tout()*(1-ratio);
 	return *pTair * ratio + *pTout *(1-ratio);
 }
-
-void range::wrong_model(enumeration msg)
-{
-	char *errtxt[] = {"model is not one-zone","model is not two-zone"};
-	OBJECT *obj = OBJECTHDR(this);
-	gl_warning("%s (range:%d): %s", obj->name?obj->name:"(anonymous object)", obj->id, errtxt[msg]);
-	throw msg; // this must be caught by the range code, not by the core
-}
+//TODO: Take a look at this to see if it's needed.
+//void range::wrong_model(enumeration msg)
+//{
+//	char *errtxt[] = {"model is not one-zone","model is not two-zone"};
+//	OBJECT *obj = OBJECTHDR(this);
+//	gl_warning("%s (range:%d): %s", obj->name?obj->name:"(anonymous object)", obj->id, errtxt[msg]);
+//	throw msg; // this must be caught by the range code, not by the core
+//}
 
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
