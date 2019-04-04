@@ -346,6 +346,7 @@ private:
 	vector<vector<double>> T_layers;
 	TIMESTAMP start_time;
 	TIMESTAMP next_transition_time;
+	TIMESTAMP last_time_calculate_state_change_called;
 	vector<vector<double>> A_matrix;
 	vector<vector<double>> B_control;
 	double last_water_demand;
@@ -355,6 +356,7 @@ private:
 	double last_lower_thermostat_setpoint;
 	enumeration last_override_value;
 	int last_transition_time;
+	bool conditions_changed;
 public:
 	double tank_setpoint_1;
 	double tank_setpoint_2;

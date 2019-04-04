@@ -708,6 +708,7 @@ int waterheater::init(OBJECT *parent)
 		}
 		start_time = gl_globalclock;
 		next_transition_time = gl_globalclock;
+		last_time_calculate_state_change_called = gl_globalclock;
 		vector<double> control_states {0.0, 1.0};
 		if(Tw < Tmin_upper) {
 			control_upper.push_back(1.0);
@@ -726,7 +727,7 @@ int waterheater::init(OBJECT *parent)
 	}
 	auto stop = std::chrono::high_resolution_clock::now();
 	auto dt = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << "waterheater init took: " << dt.count() << " ms" << std::endl;
+	std::cout << "waterheater init took: " << dt.count() << " microseconds" << std::endl;
 	return residential_enduse::init(parent);
 }
 
@@ -779,8 +780,10 @@ void waterheater::thermostat(TIMESTAMP t0, TIMESTAMP t1){
  **/
 TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 	/* time has passed ~ calculate internal gains, height change, temperature change */
+	auto start = std::chrono::high_resolution_clock::now();
 	double nHours = (gl_tohours(t1) - gl_tohours(t0))/TS_SECOND;
 	OBJECT *my = OBJECTHDR(this);
+	double Tamb = get_Tambient(location);
 
 	DATETIME t_next;
 	gl_localtime(t1,&t_next);
@@ -791,19 +794,33 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 		}
 	}
 	if(current_model == MULTILAYER) {
-		int dt = (int)(t1-t0);
+		int dt = (int)(t1-last_time_calculate_state_change_called);
+		conditions_changed = false;
+		if(water_demand != last_water_demand || (Tamb - last_ambient_temperature) > 1.0 || Tinlet != last_inlet_temperature || tank_setpoint_1 != last_lower_thermostat_setpoint || tank_setpoint_2 != last_upper_thermostat_setpoint || re_override != last_override_value || control_upper[dt] != control_upper[dt-1] || control_lower[dt] != control_lower[dt-1]) {
+			conditions_changed = true;
+			last_water_demand = water_demand;
+			last_ambient_temperature = Tamb;
+			last_inlet_temperature = Tinlet;
+			last_lower_thermostat_setpoint = tank_setpoint_1;
+			last_upper_thermostat_setpoint = tank_setpoint_2;
+			last_override_value = re_override;
+
+		}
 		if(t0 == start_time && t0 == t1) {
 			T_layers[0].push_back(Tinlet);
 			for(int i=1; i<number_of_states - 1; i++) {
 				T_layers[i].push_back(Tw);
 			}
 			T_layers[number_of_states - 1].push_back(get_Tambient(location));
-		} else if(t0 < t1){
+		} else if(t0 < t1 && conditions_changed == true){
 			reinitialize_internals(dt);
+			dt = 0;
 		}
-		Tw_1 = T_layers[1][0];
-		Tw_2 = T_layers[10][0];
-		if(control_upper[0] == 1.0 || control_lower[0] == 1.0) {
+		Tw_1 = T_layers[1][dt];
+		Tw_2 = T_layers[10][dt];
+		control_switch_1 = control_lower[dt];
+		control_switch_2 = control_upper[dt];
+		if(control_upper[dt] == 1.0 || control_lower[dt] == 1.0) {
 			heat_needed = TRUE;
 		}
 	}
@@ -884,7 +901,9 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 			GL_THROW("waterheater load shape has an unknown state!");
 			break;
 	}
-
+	auto stop = std::chrono::high_resolution_clock::now();
+	auto dt = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+	std::cout << "waterheater presync took: " << dt.count() << " microseconds" << std::endl;
 	return TS_NEVER;
 	//return residential_enduse::sync(t0,t1);
 }
@@ -894,6 +913,7 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
  **/
 TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
+	auto start = std::chrono::high_resolution_clock::now();
 	double internal_gain = 0.0;
 	double nHours = (gl_tohours(t1) - gl_tohours(t0))/TS_SECOND;
 	double Tamb = get_Tambient(location);
@@ -936,20 +956,10 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 		set_time_to_transition();
 	}
 	if(current_model == MULTILAYER) {
-		control_switch_1 = control_lower[0];
-		control_switch_2 = control_upper[0];
-		bool conditions_changed = false;
-		if(water_demand != last_water_demand || Tamb != last_ambient_temperature || Tinlet != last_inlet_temperature || tank_setpoint_1 != last_lower_thermostat_setpoint || tank_setpoint_2 != last_upper_thermostat_setpoint || re_override != last_override_value) {
-			conditions_changed = true;
-			last_water_demand = water_demand;
-			last_ambient_temperature = Tamb;
-			last_inlet_temperature = Tinlet;
-			last_lower_thermostat_setpoint = tank_setpoint_1;
-			last_upper_thermostat_setpoint = tank_setpoint_2;
-			last_override_value = re_override;
-		}
+
 		if(dt == last_transition_time || conditions_changed){
 			multilayer_transition_time = multilayer_time_to_transition();
+			last_time_calculate_state_change_called = t1;
 		} else {
 			multilayer_transition_time = last_transition_time - dt;
 		}
@@ -1088,7 +1098,9 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	// update the previous load property before returning from sync
 	prev_load = actual_load;
-
+	auto stop = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+	std::cout << "waterheater sync took: " << duration.count() << " microseconds" << std::endl;
 //	gl_enduse_sync(&(residential_enduse::load),t1);
 	if(current_model != FORTRAN){
 		if(current_model != MULTILAYER) {
@@ -1717,6 +1729,7 @@ int waterheater::multilayer_time_to_transition(void) {
 			time_cap = 300;
 		}
 	}
+	auto start = std::chrono::high_resolution_clock::now();
 	while(!state_changed) {
 		product1.clear();
 		product2.clear();
@@ -1728,14 +1741,14 @@ int waterheater::multilayer_time_to_transition(void) {
 		control_temp[1] = control_upper[time_now];
 		calculate_waterheater_matrices(time_now);
 		for(int i=0; i<number_of_states; i++) {
-			T_now.push_back(T_layers[i][time_now]);
+			T_now[i] = T_layers[i][time_now];
 		}
 		product1 = multiply_waterheater_matrices(A_matrix, T_now);
 		product2 = multiply_waterheater_matrices(B_control, control_temp);
 		dT_dt.clear();
 		for(int i=0; i<number_of_states; i++) {
 			dT_dt.push_back(product1[i] + product2[i]);//should be deg F/hr
-			T_new.push_back(T_now[i] + (dT_dt[i]/3600.0));
+			T_new[i] = (T_now[i] + (dT_dt[i]/3600.0));
 			T_layers[i].push_back(T_new[i]);
 		}
 		// control logic for upper layer
@@ -1767,6 +1780,10 @@ int waterheater::multilayer_time_to_transition(void) {
 		time_now += 1;
 	}
 	t_return = time_new;
+	auto stop = std::chrono::high_resolution_clock::now();
+	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+	std::cout << "waterheater while loop took: " << duration.count() << " microseconds" << std::endl;
+	std::cout << "waterheater calculates " << time_new << " seconds to next state changes." << std::endl;
 	return t_return;
 }
 
