@@ -29,6 +29,7 @@ ev_charger::ev_charger(MODULE *module) : residential_enduse(module)
 			PT_INHERIT, "residential_enduse",
 			PT_double,"desired_charge_rate[W]", PADDR(DesiredChargeRate),PT_DESCRIPTION, "Current desired charge rate of the vehicle",
 			PT_double,"actual_charge_rate[W]", PADDR(ActualChargeRate), PT_DESCRIPTION, "Actual charge rate of the vehicle - may be ramp limited",
+			PT_double,"realized_charge_rate[kW]", PADDR(RealizedChargeRate), PT_DESCRIPTION, "Implemented charge rate of the vehicle - grid-influence result of actual_charge_rate",
 
 			PT_double,"variation_mean[s]", PADDR(variation_mean),PT_DESCRIPTION, "Mean of normal variation of schedule variation",
 			PT_double,"variation_std_dev[s]", PADDR(variation_std_dev),PT_DESCRIPTION, "Standard deviation of normal variation of schedule times",
@@ -102,6 +103,7 @@ int ev_charger::create()
 
 	DesiredChargeRate = 0.0;			//Starts off
 	ActualChargeRate = 0.0;				//Starts off
+	RealizedChargeRate = 0.0;			//Starts off
 	load.power_factor = 0.99;	//Based on Brusa NLG5 specifications
 	load.heatgain_fraction = 0.0;	//Assumed to be "in the garage" or outside - so not contributing to internal heat gains
 	
@@ -1290,6 +1292,7 @@ double ev_charger::sync_ev_function(double curr_time_dbl)
 	OBJECT *obj = OBJECTHDR(this);
 	double temp_double, charge_out_percent, ramp_temp, ramp_time, temp_voltage;
 	complex temp_complex;
+	complex actual_power_value;
 	double tdiff;
 	bool in_deltamode;
 
@@ -1311,8 +1314,7 @@ double ev_charger::sync_ev_function(double curr_time_dbl)
 		//Get time difference
 		tdiff = curr_time_dbl - prev_time_dbl;
 
-		//Zero enduse parameter, just to be safe (will set in the 1 spot they need to be)
-		load.power = 0.0;
+		//Zero charge output value
 		charge_out_percent = 0.0;
 
 		//Reset ramp constraint flag, just in case
@@ -1334,8 +1336,21 @@ double ev_charger::sync_ev_function(double curr_time_dbl)
 					//Update "accumulator" time
 					tdiff = CarInformation.next_state_change - prev_time_dbl;
 
+					//Compute the realized charge rate
+					if (load.voltage_factor > 0.0)
+					{
+						actual_power_value = load.power + (load.current + load.admittance * load.voltage_factor)* load.voltage_factor;
+					}
+					else
+					{
+						actual_power_value = complex(0.0,0.0);
+					}
+
+					//Push the update in
+					RealizedChargeRate = actual_power_value.Re();
+
 					//Update battery information first - just in case the transition occurred in the middle of a timestep
-					temp_double = tdiff / 3600.0 * ActualChargeRate / 1000.0 * CarInformation.ChargeEfficiency;	//Convert to kWh
+					temp_double = tdiff / 3600.0 * RealizedChargeRate / 1000.0 * CarInformation.ChargeEfficiency;	//Convert to kWh
 					
 					//Accumulate it
 					CarInformation.battery_capacity += temp_double;
@@ -1412,6 +1427,7 @@ double ev_charger::sync_ev_function(double curr_time_dbl)
 					//Zero our output - power already should be
 					DesiredChargeRate = 0.0;
 					ActualChargeRate = 0.0;
+					RealizedChargeRate = 0.0;
 
 					//Zero all tracking accumulators and make sure we're enabled, just in case
 					J2894_off_accumulator = 0.0;
@@ -1426,8 +1442,21 @@ double ev_charger::sync_ev_function(double curr_time_dbl)
 					//Reaffirm where we are
 					CarInformation.Location = VL_HOME;
 
+					//Compute the realized charge rate
+					if (load.voltage_factor > 0.0)
+					{
+						actual_power_value = load.power + (load.current + load.admittance * load.voltage_factor)* load.voltage_factor;
+					}
+					else
+					{
+						actual_power_value = complex(0.0,0.0);
+					}
+
+					//Push the update in
+					RealizedChargeRate = actual_power_value.Re();
+
 					//Update battery capacity with "last time's worth" of charge
-					temp_double = tdiff / 3600.0 * ActualChargeRate / 1000.0 * CarInformation.ChargeEfficiency;	//Convert to kWh 
+					temp_double = tdiff / 3600.0 * RealizedChargeRate * CarInformation.ChargeEfficiency;	//Convert to kWh 
 
 					//Accumulate it
 					CarInformation.battery_capacity += temp_double;
@@ -1517,6 +1546,7 @@ double ev_charger::sync_ev_function(double curr_time_dbl)
 				//Zero our output - power already should be
 				DesiredChargeRate = 0.0;
 				ActualChargeRate = 0.0;
+				RealizedChargeRate = 0.0;
 
 				//See if we're still driving to work
 				if (curr_time_dbl >= CarInformation.next_state_change)	//Nope
@@ -1580,6 +1610,7 @@ double ev_charger::sync_ev_function(double curr_time_dbl)
 				//Zero our output - power already should be
 				DesiredChargeRate = 0.0;
 				ActualChargeRate = 0.0;
+				RealizedChargeRate = 0.0;
 
 				//See if we are still at work
 				if (curr_time_dbl >= CarInformation.next_state_change)	//Nope
@@ -1667,8 +1698,21 @@ double ev_charger::sync_ev_function(double curr_time_dbl)
 					//Begin by calculating our "apparent charge time"
 					tdiff = curr_time_dbl - CarInformation.next_state_change;
 
+					//Compute the realized charge rate
+					if (load.voltage_factor > 0.0)
+					{
+						actual_power_value = load.power + (load.current + load.admittance * load.voltage_factor)* load.voltage_factor;
+					}
+					else
+					{
+						actual_power_value = complex(0.0,0.0);
+					}
+
+					//Push the update in
+					RealizedChargeRate = actual_power_value.Re();
+
 					//Update battery capacity with "last time's worth" of charge
-					temp_double = tdiff / 3600.0 * ActualChargeRate / 1000.0 * CarInformation.ChargeEfficiency;	//Convert to kWh
+					temp_double = tdiff / 3600.0 * RealizedChargeRate * CarInformation.ChargeEfficiency;	//Convert to kWh
 
 					//Accumulate it
 					CarInformation.battery_capacity += temp_double;
@@ -2125,6 +2169,7 @@ double ev_charger::check_J2894_values(double diff_time, double tstep_value, bool
 
 		//Keep our output off too - keeps ramps from trying to go
 		ActualChargeRate = 0.0;
+		RealizedChargeRate = 0.0;
 
 		//See if we've been off long enough
 		if ((J2894_off_accumulator >= J2894_off_threshold) || (J2894_off_time_to_change < tstep_value))

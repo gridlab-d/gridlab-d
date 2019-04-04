@@ -58,7 +58,7 @@ typedef struct s_circuit {
 	double max_amps; ///< maximum breaker amps
 	int id; ///< circuit id
 	BREAKERSTATUS status; ///< breaker status
-	TIMESTAMP reclose; ///< time at which breaker is reclosed
+	double reclose; ///< time at which breaker is reclosed
 	unsigned short tripsleft; ///< the number of trips left before breaker faults
 	struct s_circuit *next; ///< next circuit in list
 	// DPC: commented this out until the rest of house_e is updated

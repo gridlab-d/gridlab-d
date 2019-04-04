@@ -1376,6 +1376,7 @@ int house_e::init(OBJECT *parent)
 
 	//grab the start time of the simulation
 	simulation_beginning_time = gl_globalclock;
+	simulation_beginning_time_dbl = (double)simulation_beginning_time;
 
 	// set defaults for panel/meter variables
 	if (panel.max_amps==0) panel.max_amps = 200; 
@@ -2314,15 +2315,6 @@ TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	const double dt = (double)((t1-t0)*TS_SECOND)/3600;
-	CIRCUIT *c;
-
-	extern bool enable_subsecond_models;
-	extern OBJECT **delta_objects;
-	extern FUNCTIONADDR *delta_functions;
-	extern FUNCTIONADDR *post_delta_functions;
-	extern int res_object_count;
-	extern int res_object_current;
-	extern void allocate_deltamode_arrays(void);
 
 	//Zero the accumulator
 	value_Power[0] = value_Power[1] = value_Power[2] = complex(0.0,0.0);
@@ -2519,6 +2511,7 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP t2 = TS_NEVER, t;
+	double tpan_ret, t0_dbl, t1_dbl;
 	const double dt1 = (double)(t1-t0)*TS_SECOND;
 
 	//Pull climate values, if properly linked
@@ -2553,7 +2546,20 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 //	gl_enduse_sync(&(residential_enduse::load),t1);
 
 	// sync circuit panel
-	t = sync_panel(t0,t1); 
+	t0_dbl = (double)t0;
+	t1_dbl = (double)t1;
+	tpan_ret = sync_panel(t0_dbl,t1_dbl); 
+
+	//Cast to a timestamp
+	if (tpan_ret != TSNVRDBL)
+	{
+		t = TIMESTAMP(ceil(tpan_ret));
+	}
+	else
+	{
+		t = TS_NEVER;
+	}
+
 	if (t < t2) {
 		t2 = t;
 #ifdef _DEBUG
@@ -3027,13 +3033,13 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 	return TS_NEVER;
 }
 
-TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
+double house_e::sync_panel(double t0_dbl, double t1_dbl)
 {
-	TIMESTAMP t2 = TS_NEVER;
+	double t2_dbl = TSNVRDBL;
 	OBJECT *obj = OBJECTHDR(this);
 
 	// clear accumulator
-	if((t0 >= simulation_beginning_time && t1 > t0) || (!heat_start)){
+	if(((t0_dbl >= simulation_beginning_time_dbl) && (t1_dbl > t0_dbl)) || (!heat_start)){
 		total.heatgain = 0;
 	}
 	total.total = total.power = total.current = total.admittance = complex(0,0);
@@ -3054,11 +3060,11 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 			GL_THROW("%s:%d circuit %d has an invalid circuit type (%d)", obj->oclass->name, obj->id, c->id, (int)c->type);
 
 		// if breaker is open and reclose time has arrived
-		if (c->status==BRK_OPEN && t1>=c->reclose)
+		if (c->status==BRK_OPEN && t1_dbl>=c->reclose)
 		{
 			c->status = BRK_CLOSED;
-			c->reclose = TS_NEVER;
-			t2 = t1; // must immediately reevaluate devices affected
+			c->reclose = TSNVRDBL;
+			t2_dbl = t1_dbl; // must immediately reevaluate devices affected
 			gl_debug("house_e:%d panel breaker %d closed", obj->id, c->id);
 		}
 
@@ -3072,7 +3078,7 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 
 				if (value_MeterStatus==0)	//If we've been disconnected, still apply latent load heat
 				{
-					if((t0 >= simulation_beginning_time && t1 > t0) || (!heat_start)){
+					if(((t0_dbl >= simulation_beginning_time_dbl) && (t1_dbl > t0_dbl)) || (!heat_start)){
 						total.heatgain += c->pLoad->heatgain;
 					}
 				}
@@ -3093,7 +3099,7 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 					c->status = BRK_OPEN;
 
 					// average five minutes before reclosing, exponentially distributed
-					c->reclose = t1 + (TIMESTAMP)(gl_random_exponential(RNGSTATE,1/300.0)*TS_SECOND); 
+					c->reclose = t1_dbl + (gl_random_exponential(RNGSTATE,1/300.0)*(double)TS_SECOND); 
 					gl_debug("house_e:%d circuit breaker %d tripped - enduse %s overload at %.0f A", obj->id, c->id,
 						c->pLoad->name, current.Mag());
 				}
@@ -3102,12 +3108,12 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 				else
 				{
 					c->status = BRK_FAULT;
-					c->reclose = TS_NEVER;
+					c->reclose = TSNVRDBL;
 					gl_warning("house_e:%d, %s circuit breaker %d failed - enduse %s is no longer running", obj->id, obj->name, c->id, c->pLoad->name);
 				}
 
 				// must immediately reevaluate everything
-				t2 = t1; 
+				t2_dbl = t1_dbl; 
 			}
 
 			// add to panel current
@@ -3139,16 +3145,16 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 				total.power += c->pLoad->power;
 				total.current += c->pLoad->current;
 				total.admittance += c->pLoad->admittance;
-				if((t0 != 0 && t1 > t0) || (!heat_start)){
+				if(((t0_dbl != 0) && (t1_dbl > t0_dbl)) || (!heat_start)){
 					total.heatgain += c->pLoad->heatgain;
 				}
-				c->reclose = TS_NEVER;
+				c->reclose = TSNVRDBL;
 			}
 		}
 
 		// sync time
-		if (t2 > c->reclose)
-			t2 = c->reclose;
+		if (t2_dbl > c->reclose)
+			t2_dbl = c->reclose;
 	}
 	/* using an enduse structure for the total is more a matter of having all the values add up for the house,
 	 * and it should not sync the struct! ~MH */
@@ -3163,7 +3169,7 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 		push_complex_powerflow_values();
 	}
 
-	return t2;
+	return t2_dbl;
 }
 
 TIMESTAMP house_e::sync_enduses(TIMESTAMP t0, TIMESTAMP t1)
@@ -3366,60 +3372,24 @@ void house_e::circuit_voltage_factor_update(void)
 		if (n<0 || n>2)
 			GL_THROW("%s:%d circuit %d has an invalid circuit type (%d)", obj->oclass->name, obj->id, c->id, (int)c->type);
 
-		//Pull the factor -- reference from the "local value" (default or pulled by before for)		
-		c->pLoad->voltage_factor = value_Circuit_V[(int)c->type].Mag() / ((c->pLoad->config&EUC_IS220) ? (2.0* default_line_voltage) : default_line_voltage);
-		if ((c->pLoad->voltage_factor > 1.06 || c->pLoad->voltage_factor < 0.88) && (ANSI_voltage_check==true))
-			gl_warning("%s - %s:%d is outside of ANSI standards (voltage = %.0f percent of nominal 120/240)", obj->name, obj->oclass->name,obj->id,c->pLoad->voltage_factor*100);
+		//See if it is tripped - if it is, set voltage factor to zero
+		if (c->status == BRK_CLOSED)	//Closed
+		{
+			//Pull the factor -- reference from the "local value" (default or pulled by before for)		
+			c->pLoad->voltage_factor = value_Circuit_V[(int)c->type].Mag() / ((c->pLoad->config&EUC_IS220) ? (2.0* default_line_voltage) : default_line_voltage);
+			if ((c->pLoad->voltage_factor > 1.06 || c->pLoad->voltage_factor < 0.88) && (ANSI_voltage_check==true))
+				gl_warning("%s - %s:%d is outside of ANSI standards (voltage = %.0f percent of nominal 120/240)", obj->name, obj->oclass->name,obj->id,c->pLoad->voltage_factor*100);
+		}
+		else	//Must be open or unknown
+		{
+			c->pLoad->voltage_factor = 0.0;
+		}
 	}
 }
 
-//////////////////////////////////////////////////////////////////////////
-// IMPLEMENTATION OF DELTA MODE
-//////////////////////////////////////////////////////////////////////////
-//Module-level call
-SIMULATIONMODE house_e::inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
+//Function to remove accumulator values
+void house_e::powerflow_accumulator_remover(void)
 {
-	OBJECT *obj = OBJECTHDR(this);
-
-	//On the very first run -- re-accumulate everything
-	if ((iteration_count_val == 0) && (delta_time == 0))
-	{
-		//If we're a proper meter, zero the accumulators, then remove the values
-		if (proper_meter_parent == true)
-		{
-			//Push up the "negative" values now - mostly so XMLs look right
-			push_complex_powerflow_values();
-		}
-	}
-	//Default else -- just proceed
-
-	//On the first iteration of each timestep, pull powerflow values
-	if (iteration_count_val == 0)
-	{
-		if (proper_meter_parent == true)
-		{
-			//Pull the values down
-			pull_complex_powerflow_values();
-		}
-
-		//Update the voltage factors
-		circuit_voltage_factor_update();
-	}
-	//Other iterations, just use previous values
-
-	//Right now, houses don't really support deltamode.  This is a half-kludge to get them to play
-	//nice with powerflow.  When they did support it, that code would go here.
-
-	//Always ready to go back to event mode
-	return SM_EVENT;
-}
-
-//Module-level post update call
-STATUS house_e::post_deltaupdate(void)
-{
-	//Right now, basically undo what was done in interupdate.  When houses properly support
-	//dynamics, we'll revisit how this interaction occurs (get node to zero accumulators or something)
-
 	//If we're a proper meter, zero the accumulators, then remove the values
 	if (proper_meter_parent == true)
 	{
@@ -3443,6 +3413,64 @@ STATUS house_e::post_deltaupdate(void)
 		//Push up the "negative" values now - mostly so XMLs look right
 		push_complex_powerflow_values();
 	}
+}
+
+//////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION OF DELTA MODE
+//////////////////////////////////////////////////////////////////////////
+//Module-level call
+SIMULATIONMODE house_e::inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
+{
+	OBJECT *obj = OBJECTHDR(this);
+	double t0_dbl, t1_dbl, tret_dbl;
+
+	//Not on the very first run -- remove our prior contributions
+	if ((iteration_count_val == 0) && (delta_time != 0))
+	{
+		//Remove accumulator values
+		powerflow_accumulator_remover();
+	}
+	//Default else -- just proceed
+
+	//On the first iteration of each timestep, pull powerflow values
+	if (iteration_count_val == 0)
+	{
+		//Create the time variables
+		t0_dbl = gl_globaldeltaclock;
+		t1_dbl = t0_dbl + (double)(dt)/(double)(DT_SECOND);
+
+		//Zero the accumulator
+		value_Power[0] = value_Power[1] = value_Power[2] = complex(0.0,0.0);
+		value_Line_I[0] = value_Line_I[1] = value_Line_I[2] = complex(0.0,0.0);
+		value_Shunt[0] = value_Shunt[1] = value_Shunt[2] = complex(0.0,0.0);
+
+		if (proper_meter_parent == true)
+		{
+			//Pull the values down
+			pull_complex_powerflow_values();
+		}
+
+		//Update the voltage factors
+		circuit_voltage_factor_update();
+
+		tret_dbl = sync_panel(t0_dbl, t1_dbl);
+	}
+	//Other iterations, just use previous values
+
+	//Right now, houses don't really support deltamode.  This is a half-kludge to get them to play
+	//nice with powerflow.  When they did support it, that code would go here.
+
+	//Always ready to go back to event mode
+	return SM_EVENT;
+}
+
+//Module-level post update call
+STATUS house_e::post_deltaupdate(void)
+{
+	//Right now, basically undo what was done in interupdate.  When houses properly support
+	//dynamics, we'll revisit how this interaction occurs (get node to zero accumulators or something)
+
+	powerflow_accumulator_remover();
 
 	return SUCCESS;	//Always succeeds right now
 }

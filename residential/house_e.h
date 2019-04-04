@@ -402,6 +402,7 @@ public:
 
 private:
 	TIMESTAMP simulation_beginning_time;
+	double simulation_beginning_time_dbl;
 	void set_thermal_integrity();
 	void set_window_shgc();
 	void set_window_Rvalue();
@@ -448,6 +449,7 @@ private:
 	double value_Solar[9];		//< Value holder for solar irradiance
 
 	void circuit_voltage_factor_update(void);	///<Functionalized version of the voltage_factor update, so can be called in deltamode
+	void powerflow_accumulator_remover(void);	///<Functioanlized item that removes current accumulator values from powerflow (mostly for XML stuff)
 
 public:
 	int error_flag;
@@ -461,7 +463,7 @@ public:
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync_billing(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync_thermostat(TIMESTAMP t0, TIMESTAMP t1);
-	TIMESTAMP sync_panel(TIMESTAMP t0, TIMESTAMP t1);
+	double sync_panel(double t0_dbl, double t1_dbl);
 	TIMESTAMP sync_enduses(TIMESTAMP t0, TIMESTAMP t1);
 	void update_system(double dt=0);
 	void update_model(double dt=0);

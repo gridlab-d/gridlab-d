@@ -42,6 +42,7 @@ public:
 
 	double DesiredChargeRate;				///< Current commanded charge rate of the vehicle
 	double ActualChargeRate;				///< Implemented charge rate (possibly ramp-limited)
+	double RealizedChargeRate;				///< Actual charge rate implmented, based on grid conditions
 
 	double variation_mean;			///< Mean of normal variation of schedule variation
 	double variation_std_dev;		///< Standard deviation of normal variation of schedule times
