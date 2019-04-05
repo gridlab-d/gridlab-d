@@ -1311,12 +1311,11 @@ TIMESTAMP node::NR_node_presync_fxn(TIMESTAMP t0_val)
 		Extra_Data[6] = Extra_Data[7] = Extra_Data[8] = 0.0;
 	}
 
-	//Uncomment us eventually, like when houses work in deltamode
-	////If we're a parent and "have house", zero our accumulator
-	//if ((SubNode==PARENT) && (house_present==true))
-	//{
-	//	nom_res_curr[0] = nom_res_curr[1] = nom_res_curr[2] = 0.0;
-	//}
+	//If we're a parent and "have house", zero our accumulator
+	if ((SubNode==PARENT) && (house_present==true))
+	{
+		nom_res_curr[0] = nom_res_curr[1] = nom_res_curr[2] = 0.0;
+	}
 
 	//Base GFA Functionality
 	//Call the GFA-type functionality, if appropriate
@@ -1737,13 +1736,6 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 				*/
 			}
 		}//End busdata and branchdata null (first in)
-
-		//Comment us out eventually, when houses work in deltamode
-		//If we're a parent and "have house", zero our accumulator
-		if ((SubNode==PARENT) && (house_present==true))
-		{
-			nom_res_curr[0] = nom_res_curr[1] = nom_res_curr[2] = 0.0;
-		}
 
 		//Populate individual object references into deltamode, if needed
 		if ((deltamode_inclusive==true) && (enable_subsecond_models == true) && (prev_NTime==0))
