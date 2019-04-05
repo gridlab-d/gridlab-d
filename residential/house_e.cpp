@@ -133,13 +133,13 @@ EXPORT CIRCUIT *attach_enduse_house_e(OBJECT *obj, enduse *target, double breake
 	CIRCUIT *c = 0;
 
 	if(obj == NULL){
-		GL_THROW("attach_house_a: null object reference");
+		GL_THROW("attach_house_e: null object reference");
 	}
 	if(target == NULL){
-		GL_THROW("attach_house_a: null enduse target data");
+		GL_THROW("attach_house_e: null enduse target data");
 	}
 	if(breaker_amps < 0 || breaker_amps > 1000){ /* at 3kA, we're looking into substation power levels, not enduses */
-		GL_THROW("attach_house_a: breaker amps of %i unrealistic", breaker_amps);
+		GL_THROW("attach_house_e: breaker amps of %f unrealistic", breaker_amps);
 	}
 
 	pHouse = OBJECTDATA(obj,house_e);
