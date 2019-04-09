@@ -328,7 +328,6 @@ private:
 	double V_layer;
 //	int Vdot_circ;
 	double U_val;
-	double Thot;
 	double Tmax_lower;
 	double Tmin_lower;
 	double Tmax_upper;
@@ -373,6 +372,7 @@ public:
 	enumeration control_switch_2;
 	int discrete_step_size;
 	double Vdot_circ;
+	double T_mixing_valve;
 public:
 	static CLASS *oclass, *pclass;
 	static waterheater *defaults;

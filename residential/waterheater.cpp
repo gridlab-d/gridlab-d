@@ -161,7 +161,7 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 			PT_double,"upper_tank_temperature[degF]", PADDR(Tw_2), PT_DESCRIPTION, "MULTILAYER_MODEL: The water temperature for the upper heating element thermostat in the tank",
 			PT_int16,"discrete_step_size[s]", PADDR(discrete_step_size), PT_DESCRIPTION, "MULTILAYER MODEL: The step size in seconds to use in the discrete tank temperature dynamics loop.",
 			PT_double,"circular_flow_rate[gpm]", PADDR(Vdot_circ), PT_DESCRIPTION, "MULTILAYER MODEL: Heuristic flow activated once the heating elements turn on.",
-
+			PT_double,"T_mixing_valve[degF]", PADDR(T_mixing_valve), PT_DESCRIPTION, "MULTILAYER MODEL: Reference temperature to which mixing valve operate.",
 			PT_enumeration,"lower_heating_element_state", PADDR(control_switch_1), PT_DESCRIPTION, "MULTILAYER MODEL: The state of the lower heating element in the tank.",
 				PT_KEYWORD,"OFF",(enumeration)OFF,
 				PT_KEYWORD,"ON",(enumeration)ON,
@@ -237,7 +237,6 @@ int waterheater::create()
 	gas_standby_power = -1.0;
 
 	dr_signal = 1;
-	Thot = 120;
 	return res;
 	last_water_demand = -1.0;
 	last_ambient_temperature = -200.0;
@@ -247,6 +246,7 @@ int waterheater::create()
 	last_override_value = OV_NORMAL;
 	discrete_step_size = -1;
 	Vdot_circ = -1;
+	T_mixing_valve = -1;
 }
 
 /** Initialize water heater model properties - randomized defaults for all published variables
@@ -645,9 +645,18 @@ int waterheater::init(OBJECT *parent)
 		if(discrete_step_size < 1) {
 			discrete_step_size = 1;
 		}
+		else if(discrete_step_size > 60){
+			gl_warning("waterheater::init() : The discretization step size is chosen too large. To reduce error setting it to 60 seconds.");
+			discrete_step_size = 60;
+		}
 		if (Vdot_circ < 1.0) {
 			Vdot_circ = 1.0; // default value
 		}
+		else if(Vdot_circ > 6.0) {
+			gl_warning("waterheater::init() : The Heuristic flow rate is defined as very large. For 10 layers this can cause computational issues. Setting it to maximum 6 gpm .");
+			Vdot_circ = 6.0;
+		}
+
 		double tank_surface_area = 2*area + (tank_height*pi*tank_diameter);
 		U_val = tank_UA/tank_surface_area;
 		thermal_conductivity = 0.5918/1.728;
@@ -655,6 +664,14 @@ int waterheater::init(OBJECT *parent)
 		Tmin_lower = tank_setpoint_1 - (deadband_1/2.0);
 		Tmax_upper = tank_setpoint_2 + (deadband_2/2.0);
 		Tmin_upper = tank_setpoint_2 - (deadband_2/2.0);
+
+		if (T_mixing_valve < 1.0){
+			gl_warning("waterheater::init() : Mixing valve temperature was not set, setting it to minimum upper element setpoint.");
+			T_mixing_valve = Tmin_upper; // if mixing valve temperature is not set by the user then just try to provide small mixing so consumer get a bit less temperature in their home than the upper heating layer
+		}
+		else if (T_mixing_valve > T_max_upper) {
+			gl_warning("waterheater::init() : Mixing valve temperature is set very high, it will not be very efficient. Try choosing a value less than upper element setpoint.");
+		}
 		number_of_mixing_zone_disks = 2;
 		total_mixing_zones = 2;
 		number_of_regular_disks = 2;
@@ -1796,11 +1813,11 @@ void waterheater::calculate_waterheater_matrices(int time_now) {
 
 	// mixing valve operation
 	double mixing_fraction;
-	if(Thot > T_layers[10][time_now]) {
+	if(T_mixing_valve > T_layers[10][time_now]) {
 			mixing_fraction = 1.0;
 	}
 	else{
-		mixing_fraction = (Thot - Tinlet)/(T_layers[10][time_now] - Tinlet);
+		mixing_fraction = (T_mixing_valve - Tinlet)/(T_layers[10][time_now] - Tinlet);
 	}
 
 	A_matrix.clear();
