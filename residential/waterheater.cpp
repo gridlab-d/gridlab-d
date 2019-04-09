@@ -160,6 +160,8 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 			PT_double,"lower_tank_temperature[degF]", PADDR(Tw_1), PT_DESCRIPTION, "MULTILAYER_MODEL: The water temperature at the lower heating element thermostat in the tank",
 			PT_double,"upper_tank_temperature[degF]", PADDR(Tw_2), PT_DESCRIPTION, "MULTILAYER_MODEL: The water temperature for the upper heating element thermostat in the tank",
 			PT_int16,"discrete_step_size[s]", PADDR(discrete_step_size), PT_DESCRIPTION, "MULTILAYER MODEL: The step size in seconds to use in the discrete tank temperature dynamics loop.",
+			PT_double,"circular_flow_rate[gpm]", PADDR(Vdot_circ), PT_DESCRIPTION, "MULTILAYER MODEL: Heuristic flow activated once the heating elements turn on.",
+
 			PT_enumeration,"lower_heating_element_state", PADDR(control_switch_1), PT_DESCRIPTION, "MULTILAYER MODEL: The state of the lower heating element in the tank.",
 				PT_KEYWORD,"OFF",(enumeration)OFF,
 				PT_KEYWORD,"ON",(enumeration)ON,
@@ -244,6 +246,7 @@ int waterheater::create()
 	last_lower_thermostat_setpoint = 0.0;
 	last_override_value = OV_NORMAL;
 	discrete_step_size = -1;
+	Vdot_circ = -1;
 }
 
 /** Initialize water heater model properties - randomized defaults for all published variables
@@ -642,6 +645,9 @@ int waterheater::init(OBJECT *parent)
 		if(discrete_step_size < 1) {
 			discrete_step_size = 1;
 		}
+		if (Vdot_circ < 1.0) {
+			Vdot_circ = 1.0; // default value
+		}
 		double tank_surface_area = 2*area + (tank_height*pi*tank_diameter);
 		U_val = tank_UA/tank_surface_area;
 		thermal_conductivity = 0.5918/1.728;
@@ -664,7 +670,7 @@ int waterheater::init(OBJECT *parent)
 		A_bottom = area;
 		A_top = area;
 		V_layer = tank_volume/(number_of_layers * GALPCF);
-		Vdot_circ = 6;
+//		Vdot_circ = 2;
 		a_diffusion_coefficient = thermal_conductivity/(RHOWATER*Cp*H_layer*H_layer);
 		a_loss_layer_coefficient = A_layer*U_val/(RHOWATER*Cp*V_layer);
 		a_loss_bottom_coefficient = ((A_layer + A_bottom)*U_val/(RHOWATER*Cp*V_layer));
@@ -1787,12 +1793,23 @@ int waterheater::multilayer_time_to_transition(void) {
 void waterheater::calculate_waterheater_matrices(int time_now) {
 	vector<vector<double>> A_plug(number_of_states, vector<double>(number_of_states, 0.0));
 	vector<vector<double>> A_circular_flow(number_of_states, vector<double>(number_of_states, 0.0));
+
+	// mixing valve operation
+	double mixing_fraction;
+	if(Thot > T_layers[10][time_now]) {
+			mixing_fraction = 1.0;
+	}
+	else{
+		mixing_fraction = (Thot - Tinlet)/(T_layers[10][time_now] - Tinlet);
+	}
+
 	A_matrix.clear();
 	for(int i=0; i<number_of_states; i++) {
 		A_matrix.push_back(vector<double>(number_of_states, 0.0));
 	}
 	int i;
 	int rows = number_of_states - 1;
+	water_demand = water_demand*mixing_fraction;
 	double a_plug_coefficient = (water_demand*60.0)/(GALPCF*V_layer);
 	for(i=1; i<=rows-1; i++) {
 		A_plug[i][i-1] = a_plug_coefficient;
