@@ -619,6 +619,9 @@ TIMESTAMP metrics_collector::postsync(TIMESTAMP t0, TIMESTAMP t1) {
 	if (next_write <= t1) {
 		write_now = true;
 	}
+	if (t1 < next_write) {
+		return next_write;
+	}
 	return t1 + interval_length;
 }
 
