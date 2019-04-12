@@ -334,7 +334,7 @@ int csv_reader::read_line(char *line, int linenum){
 			 // IMPORTANT NOTE: if DST is not handled properly by sample, don't try to fix
 			 // the problem here.  The weather class may need to be fixed so it uses UTC internally.
 		}
-		else if(sscanf(token, "%hi:%hi:%hi:%hi:%hi", &sample->month, &sample->day, &sample->hour, &sample->minute, &sample->second) < 1){
+		else if(sscanf(token, "%hd:%hd:%hd:%hd:%hd", &sample->month, &sample->day, &sample->hour, &sample->minute, &sample->second) < 1){
 			gl_error("csv_reader::read_line ~ unable to read time string \'%s\' with default format", token);
 			/* TROUBLESHOOT
 				The input timestamp could not be parsed.  Verify that all time strings are formatted
