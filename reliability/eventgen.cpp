@@ -690,6 +690,7 @@ int eventgen::init(OBJECT *parent)
 		}
 	}
 
+
 	return 1; /* return 1 on success, 0 on failure */
 }
 

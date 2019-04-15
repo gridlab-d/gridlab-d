@@ -9,6 +9,9 @@
 #define _eventgen_H
 
 #include <stdarg.h>
+#include <string.h>
+#include <vector>
+#include <json/json.h>
 #include "gridlabd.h"
 #include "reliability.h"
 
@@ -60,8 +63,17 @@ typedef struct s_relevantstruct {
 	struct s_relevantstruct *next;	//Link to next item
 } RELEVANTSTRUCT;	//"off-key" event structure
 
+class external_events {
+public:
+	external_events() {
+		events = std::vector<Json::Value>();
+	}
+	std::vector<Json::Value> events;
+};
+
 class eventgen : public gld_object {
 private:
+	std::vector<Json::Value> external_events;
 	double curr_fail_dist_params[2];	/**< Current parameters of failure_dist - used to track changes */
 	double curr_rest_dist_params[2];	/**< Current parameters of restore_dist - used to track changes */
 	enumeration curr_fail_dist;			/**< Current failure distribution type - used to track changes */
