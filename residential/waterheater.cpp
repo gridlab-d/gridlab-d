@@ -159,7 +159,7 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 			PT_double,"upper_tank deadband[degF]", PADDR(deadband_2), PT_DESCRIPTION, "MULTILAYER_MODEL: The deadband for the upper heating element thermostat in the tank",
 			PT_double,"lower_tank_temperature[degF]", PADDR(Tw_1), PT_DESCRIPTION, "MULTILAYER_MODEL: The water temperature at the lower heating element thermostat in the tank",
 			PT_double,"upper_tank_temperature[degF]", PADDR(Tw_2), PT_DESCRIPTION, "MULTILAYER_MODEL: The water temperature for the upper heating element thermostat in the tank",
-			PT_int16,"discrete_step_size[s]", PADDR(discrete_step_size), PT_DESCRIPTION, "MULTILAYER MODEL: The step size in seconds to use in the discrete tank temperature dynamics loop.",
+			PT_double,"discrete_step_size[s]", PADDR(discrete_step_size), PT_DESCRIPTION, "MULTILAYER MODEL: The step size in seconds to use in the discrete tank temperature dynamics loop.",
 			PT_double,"circular_flow_rate[gpm]", PADDR(Vdot_circ), PT_DESCRIPTION, "MULTILAYER MODEL: Heuristic flow activated once the heating elements turn on.",
 			PT_double,"T_mixing_valve[degF]", PADDR(T_mixing_valve), PT_DESCRIPTION, "MULTILAYER MODEL: Reference temperature to which mixing valve operate.",
 			PT_enumeration,"lower_heating_element_state", PADDR(control_switch_1), PT_DESCRIPTION, "MULTILAYER MODEL: The state of the lower heating element in the tank.",
@@ -669,7 +669,7 @@ int waterheater::init(OBJECT *parent)
 			gl_warning("waterheater::init() : Mixing valve temperature was not set, setting it to minimum upper element setpoint.");
 			T_mixing_valve = Tmin_upper; // if mixing valve temperature is not set by the user then just try to provide small mixing so consumer get a bit less temperature in their home than the upper heating layer
 		}
-		else if (T_mixing_valve > T_max_upper) {
+		else if (T_mixing_valve > Tmax_upper) {
 			gl_warning("waterheater::init() : Mixing valve temperature is set very high, it will not be very efficient. Try choosing a value less than upper element setpoint.");
 		}
 		number_of_mixing_zone_disks = 2;
@@ -818,25 +818,23 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 	}
 	if(current_model == MULTILAYER) {
 		int dt = (int)(t1-last_time_calculate_state_change_called);
-		int idx = (dt - (dt % discrete_step_size))/discrete_step_size;
+		int idx = (dt - (dt % (int)discrete_step_size))/(int)discrete_step_size;
 		int idx2 = (idx>0?idx-1:idx);
 		conditions_changed = false;
-		if(water_demand != last_water_demand || (Tamb - last_ambient_temperature) > 1.0 || Tinlet != last_inlet_temperature || tank_setpoint_1 != last_lower_thermostat_setpoint || tank_setpoint_2 != last_upper_thermostat_setpoint || re_override != last_override_value || control_upper[idx] != control_upper[idx2] || control_lower[idx] != control_lower[idx2]) {
+		if(water_demand != last_water_demand || Tinlet != last_inlet_temperature || tank_setpoint_1 != last_lower_thermostat_setpoint || tank_setpoint_2 != last_upper_thermostat_setpoint || re_override != last_override_value || control_upper[idx] != control_upper[idx2] || control_lower[idx] != control_lower[idx2]) {
 			conditions_changed = true;
 			last_water_demand = water_demand;
-			last_ambient_temperature = Tamb;
 			last_inlet_temperature = Tinlet;
 			last_lower_thermostat_setpoint = tank_setpoint_1;
 			last_upper_thermostat_setpoint = tank_setpoint_2;
 			last_override_value = re_override;
-
 		}
 		if(t0 == start_time && t0 == t1) {
 			T_layers[0].push_back(Tinlet);
 			for(int i=1; i<number_of_states - 1; i++) {
 				T_layers[i].push_back(Tw);
 			}
-			T_layers[number_of_states - 1].push_back(get_Tambient(location));
+			T_layers[number_of_states - 1].push_back(Tamb);
 		} else if(t0 < t1 && conditions_changed == true){
 			reinitialize_internals(idx);
 			idx = 0;
@@ -1749,7 +1747,7 @@ int waterheater::multilayer_time_to_transition(void) {
 			time_cap = 300;
 		}
 	}
-	auto start = std::chrono::high_resolution_clock::now();
+	//auto start = std::chrono::high_resolution_clock::now();
 	while(!state_changed) {
 		product1.clear();
 		product2.clear();
@@ -1768,7 +1766,7 @@ int waterheater::multilayer_time_to_transition(void) {
 		dT_dt.clear();
 		for(int i=0; i<number_of_states; i++) {
 			dT_dt.push_back(product1[i] + product2[i]);//should be deg F/hr
-			T_new[i] = (T_now[i] + (dT_dt[i]*discrete_step_size/3600.0));
+			T_new[i] = (T_now[i] + (dT_dt[i]*(int)discrete_step_size/3600.0));
 			T_layers[i].push_back(T_new[i]);
 		}
 		// control logic for upper layer
@@ -1799,11 +1797,11 @@ int waterheater::multilayer_time_to_transition(void) {
 		}
 		time_now += 1;
 	}
-	t_return = time_new*discrete_step_size;
-	auto stop = std::chrono::high_resolution_clock::now();
-	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-	std::cout << "waterheater while loop took: " << duration.count() << " microseconds" << std::endl;
-	std::cout << "waterheater calculates " << time_new << " seconds to next state changes." << std::endl;
+	t_return = time_new*(int)discrete_step_size;
+//	auto stop = std::chrono::high_resolution_clock::now();
+//	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+//	std::cout << "waterheater while loop took: " << duration.count() << " microseconds" << std::endl;
+//	std::cout << "waterheater calculates " << time_new << " seconds to next state changes." << std::endl;
 	return t_return;
 }
 
@@ -1996,8 +1994,10 @@ EXPORT TIMESTAMP plc_waterheater(OBJECT *obj, TIMESTAMP t0)
 		obj->clock = t0;  //set the clock if it has not been set yet
 
 	waterheater *my = OBJECTDATA(obj,waterheater);
-	my->thermostat(obj->clock, t0);
-	
+	if(my->current_model != 4) {
+		my->thermostat(obj->clock, t0);
+	}
+
 	// no changes to timestamp will be made by the internal water heater thermostat
 	/// @todo If external plc codes return a timestamp, it will allow sync sooner but not later than water heater time to transition (ticket #147)
 	return TS_NEVER;  

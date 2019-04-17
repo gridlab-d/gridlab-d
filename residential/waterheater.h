@@ -13,9 +13,14 @@
 #include "residential.h"
 #include "residential_enduse.h"
 #include <limits>
+#include <sstream>
+#include <string>
+#include <fstream>
 #include <vector>
 using std::vector;
-
+using std::stringstream;
+using std::ofstream;
+using std::string;
 
 /*
 class w_vector;
@@ -174,11 +179,11 @@ private:
 	double standby_load;	///< typical power loss through thermal jacket losses (UA 2, 60 to 140 degF, 160 BTU/hr, 47W, 411kWh/year, ~10% energy star guesstimate)
 public:
 	typedef enum {
-		ONENODE,	///< tank model uses a single zone
-		TWONODE,	///< tank model uses two zones
-		FORTRAN, ///< uses the fortran tank model.
-		MULTILAYER, ///< tank model uses the multi-layer model
-		NONE,		///< tank model zoning isn't defined
+		ONENODE=1,	///< tank model uses a single zone
+		TWONODE=2,	///< tank model uses two zones
+		FORTRAN=3, ///< uses the fortran tank model.
+		MULTILAYER=4, ///< tank model uses the multi-layer model
+		NONE=0,		///< tank model zoning isn't defined
 	} WHMODEL;	///< tank model currently in use
 	typedef enum {
 		DEPLETING,	///< tank heat is dropping fast
@@ -370,7 +375,7 @@ public:
 	} HEATELEMENTSTATE;
 	enumeration control_switch_1;
 	enumeration control_switch_2;
-	int discrete_step_size;
+	double discrete_step_size;
 	double Vdot_circ;
 	double T_mixing_valve;
 public:
