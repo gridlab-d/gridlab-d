@@ -939,7 +939,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			island_index_val = bus[tempa].island_number;
 
 			//Check and see if we should just skip this branch -- if it's an unassociated node, probably don't need this branch
-			if (island_index_val == -1)
+			if (branch[jindexer].island_number == -1)
 			{
 				continue;
 			}
@@ -1091,7 +1091,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			island_index_val = bus[tempa].island_number;
 
 			//Make sure it isn't invalid -- if it is, just skip this, since that means these lines do nothing anyways
-			if (island_index_val == -1)
+			if (branch[jindexer].island_number == -1)
 			{
 				continue;
 			}
