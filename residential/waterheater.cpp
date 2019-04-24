@@ -155,8 +155,8 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 			//published variables for the multi layer waterheater model
 			PT_double,"lower_tank_setpoint[degF]", PADDR(tank_setpoint_1), PT_DESCRIPTION, "MULTILAYER_MODEL: The setpoint for the lower heating element thermostat in the tank",
 			PT_double,"upper_tank_setpoint[degF]", PADDR(tank_setpoint_2), PT_DESCRIPTION, "MULTILAYER_MODEL: The setpoint for the upper heating element thermostat in the tank",
-			PT_double,"lower_tank deadband[degF]", PADDR(deadband_1), PT_DESCRIPTION, "MULTILAYER_MODEL: The deadband for the lower heating element thermostat in the tank",
-			PT_double,"upper_tank deadband[degF]", PADDR(deadband_2), PT_DESCRIPTION, "MULTILAYER_MODEL: The deadband for the upper heating element thermostat in the tank",
+			PT_double,"lower_tank_deadband[degF]", PADDR(deadband_1), PT_DESCRIPTION, "MULTILAYER_MODEL: The deadband for the lower heating element thermostat in the tank",
+			PT_double,"upper_tank_deadband[degF]", PADDR(deadband_2), PT_DESCRIPTION, "MULTILAYER_MODEL: The deadband for the upper heating element thermostat in the tank",
 			PT_double,"lower_tank_temperature[degF]", PADDR(Tw_1), PT_DESCRIPTION, "MULTILAYER_MODEL: The water temperature at the lower heating element thermostat in the tank",
 			PT_double,"upper_tank_temperature[degF]", PADDR(Tw_2), PT_DESCRIPTION, "MULTILAYER_MODEL: The water temperature for the upper heating element thermostat in the tank",
 			PT_double,"discrete_step_size[s]", PADDR(discrete_step_size), PT_DESCRIPTION, "MULTILAYER MODEL: The step size in seconds to use in the discrete tank temperature dynamics loop.",
@@ -634,7 +634,7 @@ int waterheater::init(OBJECT *parent)
 				tank_water_temp[i] = init_tank_temp[i];
 			}
 		} else {
-			GL_THROW("Invalide tank volume for the fortran water heater_model. Valid volumes are 40 or 80 gallons.");
+			GL_THROW("Invalid tank volume for the fortran water heater_model. Valid volumes are 40 or 80 gallons.");
 		}
 	}
 	if(current_model == MULTILAYER) {
@@ -649,12 +649,14 @@ int waterheater::init(OBJECT *parent)
 			gl_warning("waterheater::init() : The discretization step size is chosen too large. To reduce error setting it to 60 seconds.");
 			discrete_step_size = 60;
 		}
-		if (Vdot_circ < 1.0) {
-			Vdot_circ = 1.0; // default value
-		}
-		else if(Vdot_circ > 6.0) {
-			gl_warning("waterheater::init() : The Heuristic flow rate is defined as very large. For 10 layers this can cause computational issues. Setting it to maximum 6 gpm .");
-			Vdot_circ = 6.0;
+		if (Vdot_circ < 0.0) { // if no user input, set a default value
+			Vdot_circ = 2.0;
+		} else if (Vdot_circ < 1.0) {
+			gl_warning("waterheater::init() : The Heuristic flow rate is too small for 10 layers. Setting it to minimum 1 gpm.");
+			Vdot_circ = 1.0;
+		} else if (Vdot_circ > 3.0) {
+			gl_warning("waterheater::init() : The Heuristic flow rate is too large for 10 layers. Setting it to maximum 3 gpm.");
+			Vdot_circ = 3.0;
 		}
 
 		double tank_surface_area = 2*area + (tank_height*pi*tank_diameter);
