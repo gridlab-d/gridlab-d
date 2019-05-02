@@ -25,12 +25,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
-#include "gridlabd.h"
 #include "eventgen.h"
 
 #include <string.h>
 #include <iostream>
 using namespace::std;
+
+EXPORT_PRECOMMIT(eventgen);
+
 
 #define TSNVRDBL 9223372036854775808.0
 
@@ -84,6 +86,7 @@ eventgen::eventgen(MODULE *module)
 			PT_int32, "max_simultaneous_faults", PADDR(max_simult_faults),
 			PT_char256, "controlled_switch", PADDR(controlled_switch),PT_DESCRIPTION,"Name of a switch to manually fault/un-fault",
 			PT_int32, "switch_state", PADDR(switch_state),PT_DESCRIPTION,"Current state (1=closed, 0=open) for the controlled switch",
+			PT_char1024, "external_fault_event", PADDR(external_fault_event),PT_DESCRIPTION,"This variable is populated from external programs with a fault they would like to add/remove to the system.",
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 			if (gl_publish_function(oclass,	"add_event", (FUNCTIONADDR)add_event)==NULL)
 				GL_THROW("Unable to publish reliability event adding function");
@@ -99,6 +102,7 @@ int eventgen::create(void)
 	fault_type[0] = '\0';
 	manual_fault_list[0] = '\0';
 	controlled_switch[0] = '\0';
+	external_fault_event[0] = '\0';
 	switch_state = 1;
 	last_switch_state = 1;
 
@@ -692,6 +696,12 @@ int eventgen::init(OBJECT *parent)
 
 
 	return 1; /* return 1 on success, 0 on failure */
+}
+int eventgen::precommit(TIMESTAMP t1)
+{
+	Json::Value events;
+
+	return 1;
 }
 
 /* Presync is called when the clock needs to advance on the first top-down pass */
