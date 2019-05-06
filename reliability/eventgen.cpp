@@ -699,7 +699,18 @@ int eventgen::init(OBJECT *parent)
 }
 int eventgen::precommit(TIMESTAMP t1)
 {
+	Json::Value j_message;
 	Json::Value events;
+	Json::Value event;
+	Json::Reader j_reader;
+	if(external_fault_event[0] != '\0') {
+		string s_message(external_fault_event);
+		j_reader.parse(s_message, j_message);
+		events = j_message["events"];
+		for(int i=0; i < events.size(); i++) {
+			event = events[i];
+		}
+	}
 
 	return 1;
 }
