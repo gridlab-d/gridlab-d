@@ -466,8 +466,8 @@ int link_object::init(OBJECT *parent)
 		{
 			phase_f_test &= ~(PHASE_S);	//Pull off the single phase portion of from node
 
-			if ((phase_f_test != (phases_test & ~(PHASE_S))) || (phase_t_test != phases_test) || ((phase_t_test & PHASE_S) != PHASE_S))	//Phase mismatch on the line
-				GL_THROW("transformer:%d (split phase) - %s has a phase mismatch at one or both ends",obj->id,obj->name);
+			//if ((phase_f_test != (phases_test & ~(PHASE_S))) || (phase_t_test != phases_test) || ((phase_t_test & PHASE_S) != PHASE_S))	//Phase mismatch on the line
+				//GL_THROW("transformer:%d (split phase) - %s has a phase mismatch at one or both ends",obj->id,obj->name);
 				/*  TROUBLESHOOT
 				A line has been configured to carry a certain set of phases.  Either the input node or output
 				node is not providing a source/sink for these different conductors.  The To and From nodes must
