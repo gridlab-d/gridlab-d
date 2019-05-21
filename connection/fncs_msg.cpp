@@ -312,8 +312,8 @@ void fncs_send_die(void)
 	gld_global exitCode("exit_code");
 	if(exitCode.get_int16() != 0){
 		fncs::die();
-	} else {
-		fncs::finalize();
+//	} else {
+	//	fncs::finalize();
 	}
 }
 
@@ -853,6 +853,9 @@ TIMESTAMP fncs_msg::clk_update(TIMESTAMP t1)
 	}
 	if(t1 > last_approved_fncs_time){
 		if(gl_globalclock == gl_globalstoptime){
+#if HAVE_FNCS
+			fncs::finalize();
+#endif
 			return t1;
 		} else if (t1 > gl_globalstoptime && gl_globalclock < gl_globalstoptime){
 			t1 == gl_globalstoptime;
