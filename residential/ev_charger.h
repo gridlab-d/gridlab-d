@@ -43,6 +43,7 @@ public:
 	double DesiredChargeRate;				///< Current commanded charge rate of the vehicle
 	double ActualChargeRate;				///< Implemented charge rate (possibly ramp-limited)
 	double RealizedChargeRate;				///< Actual charge rate implmented, based on grid conditions
+	double max_overload_currentPU;			///< Maximum charger current allowed for the EV
 
 	double variation_mean;			///< Mean of normal variation of schedule variation
 	double variation_std_dev;		///< Standard deviation of normal variation of schedule times
@@ -97,6 +98,8 @@ private:
 	double J2894_off_accumulator;				//Timing tracking variable for J2894/ANSI C84.1-induced outage
 	bool J2894_is_ramp_constrained;				//Variable to indicate if a ramping limit is being hit
 	double expected_voltage_base;	///< Basis variable for ramping information
+
+	double max_overload_charge_current;	///< Maximum "electronics" charge rate - converted from PU - in amps
 
 	typedef enum {
 		J2894_NONE=0,

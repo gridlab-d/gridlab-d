@@ -61,6 +61,8 @@ ev_charger::ev_charger(MODULE *module) : residential_enduse(module)
 			PT_double,"maximum_charge_rate[W]",PADDR(CarInformation.MaxChargeRate), PT_DESCRIPTION, "Maximum output rate of charger in kW",
 			PT_double,"charging_efficiency[unit]",PADDR(CarInformation.ChargeEfficiency), PT_DESCRIPTION, "Efficiency of charger (ratio) when charging",
 
+			PT_double,"maximum_overload_current[unit]",PADDR(max_overload_currentPU), PT_DESCRIPTION, "Maximum overload current, in per-unit",
+
 			PT_bool,"enable_J2894", PADDR(enable_J2894_checks), PT_DESCRIPTION, "Enable SAE J2894-suggested voltage and ramping suggestions",
 			PT_bool,"charger_enabled",PADDR(ev_charger_enabled_state), PT_DESCRIPTION, "Flag to indicate if the charger is working, or disconnected due to SAE J2894/ANSI C84.1",
 
@@ -145,6 +147,9 @@ int ev_charger::create()
 	CarInformation.WorkHomeDuration = 1800.0;	//Half hour commute home
 
 	prev_time_dbl = 0.0;
+
+	max_overload_currentPU = 1.2;	//By default, assume can only do 1.2 pu current output
+	max_overload_charge_current = max_overload_currentPU * CarInformation.MaxChargeRate / 120.0 / 1000.0;	//Arbitrarily based off 120 - gets fixed below.
 
 	off_nominal_time = false;	//Assumes minimum timesteps aren't screwing things up, by default
 
@@ -286,6 +291,18 @@ int ev_charger::init(OBJECT *parent)
 		This may cause the breaker to trip and affect simulation results.  If this is undesired, set the breaker_amps property to a higher value.
 		*/
 	}
+
+	//Make sure the "max current overload" multiplier is valid
+	if (max_overload_currentPU <= 0.0)	//can't be negative or zero
+	{
+		GL_THROW("ev_charger:%d %s - maximum_overload_current must be positive and non-zero!",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		The value for maximum_overload_current must be positive - it cannot be negative or zero.
+		*/
+	}
+
+	//Populate the "max current" value, based on the "amps" above - eventual rates are in kW, so reflect here
+	max_overload_charge_current = max_overload_currentPU * CarInformation.MaxChargeRate / expected_voltage_base / 1000.0;
 
 	//Initialize enduse structure
 	init_res = residential_enduse::init(parent);
@@ -1291,6 +1308,7 @@ double ev_charger::sync_ev_function(double curr_time_dbl)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	double temp_double, charge_out_percent, ramp_temp, ramp_time, temp_voltage;
+	complex temp_current_value, temp_current_calc;
 	complex temp_complex;
 	complex actual_power_value;
 	double tdiff;
@@ -1848,6 +1866,19 @@ double ev_charger::sync_ev_function(double curr_time_dbl)
 	{
 		temp_complex.SetImag(temp_complex.Re() / load.power_factor * sin( acos(fabs(load.power_factor))));
 	}
+
+	//See if it will exceed the maximum pu
+	temp_current_value = ~(temp_complex / complex((expected_voltage_base * load.voltage_factor),0.0));
+
+	//Basing it off the power, since close enough
+	if (temp_current_value.Mag() > max_overload_charge_current)
+	{
+		temp_current_calc.SetPolar(max_overload_charge_current,temp_current_value.Arg());
+
+		//Limit it
+		temp_complex = complex(expected_voltage_base * load.voltage_factor,0.0) * ~temp_current_calc;
+	}
+	//Default else - smaller, so okay
 
 	//Set the total power
 	load.total = temp_complex;
