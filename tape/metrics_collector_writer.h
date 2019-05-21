@@ -38,6 +38,7 @@ public:
 public:
 	char256 filename;
 	double interval_length_dbl;			//Metrics output interval length
+	double interim_length_dbl;			//Metrics output interim length
 
 private:
 
@@ -77,6 +78,8 @@ private:
 	FINDLIST *metrics_collectors;
 
 	int interval_length;			//integer averaging length (seconds)
+	int interim_length;			    //integer interim length (seconds to write out intervals and then clear)
+	int interim_cnt;
 };
 
 #endif // C++
