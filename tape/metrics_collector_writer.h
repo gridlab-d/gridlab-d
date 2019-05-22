@@ -46,9 +46,9 @@ private:
 
 private:
 
-	Json::Value metrics_writer_billing_meters;	// Final output dictionary for triplex_meters and non-swing meters
-	Json::Value metrics_writer_houses;	// Final output dictionary for houses
-	Json::Value metrics_writer_inverters;	// Final output dictionary for inverters
+	Json::Value metrics_writer_billing_meters;	    // Final output dictionary for triplex_meters and non-swing meters
+	Json::Value metrics_writer_houses;	            // Final output dictionary for houses
+	Json::Value metrics_writer_inverters;	        // Final output dictionary for inverters
 	Json::Value metrics_writer_feeder_information;	// Final output dictionary for feeder_information
 	Json::Value metrics_writer_capacitors;
 	Json::Value metrics_writer_regulators;
