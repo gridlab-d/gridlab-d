@@ -723,6 +723,8 @@ AC_MSG_RESULT([
     matlab: ..................... $HAVE_MATLAB
     mysql-connector-c: .......... $HAVE_MYSQL
     curses: ..................... $HAVE_CURSES
+    FNCS: ....................... $have_fncs
+    HELICS: ..................... $have_helics
 
   Atomic Builtins:
 

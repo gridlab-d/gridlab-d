@@ -111,7 +111,13 @@ int udp::option(char *command)
 		char *comma = strchr(command,',');
 		char *semic = strchr(command,';');
 		if ( comma && semic )
-			command = min(comma,semic);
+			if ((comma - command) > (semic - command)) {
+				command = semic;
+			} else {
+				command = comma;
+			}
+			// original intent was:
+			// command = min(comma, semic);
 		else if ( comma )
 			command = comma;
 		else if ( semic )
