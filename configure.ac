@@ -496,25 +496,25 @@ gld_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $HELICS_CPPFLAGS"
 # add libhelics to HELICS_LIBS if missing
 AS_CASE([$host],
 	[*linux*], [AS_CASE([$HELICS_LIBS],
-					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lzmq -lboost_chrono -lboost_date_time -lboost_filesystem -lboost_program_options -lboost_system -lboost_timer -lboost_unit_test_framework"])
+					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lrt -lzmq -lboost_filesystem -lboost_program_options -lboost_system -lboost_unit_test_framework"])
 				AS_CASE([$LIBS],
-					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lzmq -lboost_chrono -lboost_date_time -lboost_filesystem -lboost_program_options -lboost_system -lboost_timer -lboost_unit_test_framework"])],
+					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lrt -lzmq -lboost_filesystem -lboost_program_options -lboost_system -lboost_unit_test_framework"])],
 	[*darwin*], [AS_CASE([$HELICS_LIBS],
-					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lzmq -lboost_chrono -lboost_date_time -lboost_filesystem -lboost_program_options -lboost_system -lboost_timer -lboost_unit_test_framework"])
+					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lrt -lzmq -lboost_filesystem -lboost_program_options -lboost_system -lboost_unit_test_framework"])
 				AS_CASE([$LIBS],
-					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lzmq -lboost_chrono -lboost_date_time -lboost_filesystem -lboost_program_options -lboost_system -lboost_timer -lboost_unit_test_framework"])],
+					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lrt -lzmq -lboost_filesystem -lboost_program_options -lboost_system -lboost_unit_test_framework"])],
 	[*mingw*], [AS_CASE([$HELICS_LIBS],
-					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lzmq -lboost_chrono-mt -lboost_date_time-mt -lboost_filesystem-mt -lboost_program_options-mt -lboost_system-mt -lboost_timer-mt -lboost_unit_test_framework-mt"])
+					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lzmq -lboost_filesystem-mt -lboost_program_options-mt -lboost_system-mt -lboost_unit_test_framework-mt"])
 				AS_CASE([$LIBS],
-					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lzmq -lboost_chrono-mt -lboost_date_time-mt -lboost_filesystem-mt -lboost_program_options-mt -lboost_system-mt -lboost_timer-mt -lboost_unit_test_framework-mt"])])
+					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lzmq -lboost_filesystem-mt -lboost_program_options-mt -lboost_system-mt -lboost_unit_test_framework-mt"])])
 have_helics=yes
 AC_MSG_CHECKING([for HELICS])
 AC_LINK_IFELSE(
     [AC_LANG_PROGRAM([[
-#include<helics/application_api/helicsTypes.hpp>
+#include <helics/application_api/helicsTypes.hpp>
 ]],
 [[
-helics::publication_id_t t;
+helics::NamedPoint t;
 ]])],
     [have_helics=yes; have_helics_int=1],
     [have_helics=no; have_helics_int=0])
