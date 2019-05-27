@@ -33,8 +33,38 @@
 	and energy consumption.  Solving the ETP model simultaneously for T_{air} and T_{mass},
 	the heating/cooling loads can be obtained as a function of time.
 
-	In the current implementation, the HVAC equipment is defined as part of the house_e and
-	attached to the electrical panel with a 50 amp/220-240V circuit.
+ *  In the current implementation, the HVAC equipment is defined
+ *  as part of the house_e and attached to the electrical panel
+ *  with a 50 amp/220-240V circuit.  
+   
+ *  @par Commercial building connections
+ *  
+ *  House_e is also used to represent commercial building zones.
+ *  Most commercial buildings are connected to three-phase
+ *  transformers at either 208 or 480 volts. In such cases, the
+ *  largest building loads are inherently balanced three-phase
+ *  motors or motor drives, while the single-phase building
+ *  loads are internally distributed among the phases. The
+ *  larger buildings take service at 480 volts, and have
+ *  internal transformers that step down to the single-phase
+ *  120-volt loads as needed. Single-phase loads can be served
+ *  at 120 volts line-to-neutral (as in residential buildings)
+ *  or 208 volts line-to-line, i.e., less than the 240 V in
+ *  residential buildings. Only the smaller commercial buildings
+ *  are connected directly to single-phase, split secondary
+ *  transformes as assumed in house_e, and those smaller
+ *  commercial buildings can have single-phase loads at 120 or
+ *  240 volts.
+ *  
+ *  In order to accurately represent the voltage drop and load
+ *  balancing in commercial three-phase service, the house_e can
+ *  be connected to a regular meter instead of just a
+ *  triplex_meter. In such cases, ideal voltage and current
+ *  transformations occur to present average phase voltage to
+ *  the internal house_e loads, and balanced three-phase or
+ *  single-phase power to the external power flow.
+ *  commercial_meter_parent is the flag indicating such
+ *  connections.
 
 	@par Implicit enduses
 
@@ -748,6 +778,9 @@ int house_e::create()
 	value_Frequency = 60.0;
 
 	proper_meter_parent = false;	//By default, assume we have no proper parent
+	commercial_meter_parent = false;
+	internalTurnsRatio = 1.0;
+	externalPhases = 1;
 	proper_climate_found = false;	//By default, assume we don't know what climate is doing
 
 	//Weather defaults
@@ -1349,6 +1382,12 @@ int house_e::init(OBJECT *parent)
 
 		//Set flag
 		proper_meter_parent = true;
+		commercial_meter_parent = false;
+	}
+	else if (parent!=NULL && (gl_object_isa(parent,"meter","powerflow") || gl_object_isa(obj->parent,"node","powerflow")))
+	{
+		proper_meter_parent = true;
+		commercial_meter_parent = true;
 	}
 	else
 	{
@@ -1366,6 +1405,7 @@ int house_e::init(OBJECT *parent)
 
 		//Set flag
 		proper_meter_parent = false;
+		commercial_meter_parent = false;
 
 		//Set frequency
 		value_Frequency = default_grid_frequency;
@@ -2438,7 +2478,7 @@ TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	//Pull voltage and status values in, if appropriate
-	if (proper_meter_parent == true)
+	if (proper_meter_parent == true && commercial_meter_parent == false)
 	{
 		pull_complex_powerflow_values();
 	}
@@ -2673,8 +2713,8 @@ TIMESTAMP house_e::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	OBJECT *obj = OBJECTHDR(this);
 
-	//If we're a proper meter, zero the accumulators, then remove the values
-	if (proper_meter_parent == true)
+	//If we're a proper triplex_meter, zero the accumulators, then remove the values
+	if (proper_meter_parent == true && commercial_meter_parent == false)
 	{
 		//Put negative values in 
 		//Update power
@@ -3049,8 +3089,8 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 	}
 	total.total = total.power = total.current = total.admittance = complex(0,0);
 
-	//Pull in the current powerflow values, if relevant
-	if (proper_meter_parent == true)
+	//Pull in the current powerflow values, if connected to a triplex_meter
+	if (proper_meter_parent == true && commercial_meter_parent == false)
 	{
 		pull_complex_powerflow_values();
 	}
@@ -3169,7 +3209,7 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 
 	//Push up the values, if need to do so
 	//Pull in the current powerflow values, if relevant
-	if (proper_meter_parent == true)
+	if (proper_meter_parent == true && commercial_meter_parent == false)
 	{
 		push_complex_powerflow_values();
 	}
@@ -3305,6 +3345,10 @@ void house_e::pull_complex_powerflow_values(void)
 	value_Frequency = pFrequency->get_double();
 }
 
+void house_e::pull_complex_commercial_powerflow_values(void)
+{
+}
+
 //Function to push up all changes of complex properties to powerflow from local variables
 void house_e::push_complex_powerflow_values(void)
 {
@@ -3346,6 +3390,10 @@ void house_e::push_complex_powerflow_values(void)
 	}
 }
 
+void house_e::push_complex_commercial_powerflow_values(void)
+{
+}
+
 //Function to pull the climate data from gld_property links into local variables
 void house_e::pull_climate_values(void)
 {
@@ -3379,7 +3427,7 @@ SIMULATIONMODE house_e::inter_deltaupdate(unsigned int64 delta_time, unsigned lo
 	if ((iteration_count_val == 0) && (delta_time == 0))
 	{
 		//If we're a proper meter, zero the accumulators, then remove the values
-		if (proper_meter_parent == true)
+		if (proper_meter_parent == true && commercial_meter_parent == false)
 		{
 			//Push up the "negative" values now - mostly so XMLs look right
 			push_complex_powerflow_values();
@@ -3398,7 +3446,7 @@ STATUS house_e::post_deltaupdate(void)
 	//dynamics, we'll revisit how this interaction occurs (get node to zero accumulators or something)
 
 	//If we're a proper meter, zero the accumulators, then remove the values
-	if (proper_meter_parent == true)
+	if (proper_meter_parent == true && commercial_meter_parent == false)
 	{
 		//Put negative values in 
 		//Update power
