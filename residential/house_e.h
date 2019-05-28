@@ -420,7 +420,7 @@ private:
 	bool deltamode_registered;	//Boolean for deltamode registration -- basically a "first run" flag
 	bool proper_meter_parent;		//Flag to see if powerflow interactions should occur
 	bool proper_climate_found;		//Flag to see if climate interactions should occur
-    bool commercial_meter_parent;  // proper_meter_parent is true, but the parent is not a triplex_meter
+    bool commercial_load_parent;    // proper_meter_parent is true, but the parent is actually a load
 
 	//Pointers for powerflow properties
 	gld_property *pCircuit_V[3];					///< pointer to the three voltages on three lines
@@ -443,10 +443,10 @@ private:
 	void push_complex_powerflow_values(void);
 
 	// for commercial meter connections
-	void pull_complex_commercial_powerflow_values(void);
-	void push_complex_commercial_powerflow_values(void);
+	gld_property *pNominalVoltage;
+	gld_property *pPhases;
 	double internalTurnsRatio;  // ratio of meter VLN / 120
-	int externalPhases;         // should be 1 or 3
+	set externalPhases;         // for A, B and C present
 
 	//Pointers for climate properties
 	gld_property *pTout;		// pointer to outdoor temperature (see climate)

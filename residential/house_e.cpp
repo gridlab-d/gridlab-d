@@ -58,12 +58,12 @@
  *  
  *  In order to accurately represent the voltage drop and load
  *  balancing in commercial three-phase service, the house_e can
- *  be connected to a regular meter instead of just a
- *  triplex_meter. In such cases, ideal voltage and current
- *  transformations occur to present average phase voltage to
- *  the internal house_e loads, and balanced three-phase or
- *  single-phase power to the external power flow.
- *  commercial_meter_parent is the flag indicating such
+ *  be connected to a regular load (up to 3 phases) instead of
+ *  just a triplex_meter. In such cases, ideal voltage and
+ *  current transformations occur to present average phase
+ *  voltage to the internal house_e loads, and balanced
+ *  three-phase or single-phase power to the external power
+ *  flow. commercial_load_parent is the flag indicating such
  *  connections.
 
 	@par Implicit enduses
@@ -766,6 +766,9 @@ int house_e::create()
 	pPower[0] = pPower[1] = pPower[2] = NULL;
 	pMeterStatus = NULL;
 	pFrequency = NULL;
+	pNominalVoltage = NULL;
+	pPhases = NULL;
+	externalPhases = 0;
 	
 	//Powerflow values -- set defaults here
 	value_Circuit_V[0] = complex(2.0*default_line_voltage,0.0);	//Duplicates old method
@@ -778,9 +781,8 @@ int house_e::create()
 	value_Frequency = 60.0;
 
 	proper_meter_parent = false;	//By default, assume we have no proper parent
-	commercial_meter_parent = false;
+	commercial_load_parent = false;
 	internalTurnsRatio = 1.0;
-	externalPhases = 1;
 	proper_climate_found = false;	//By default, assume we don't know what climate is doing
 
 	//Weather defaults
@@ -1372,7 +1374,7 @@ int house_e::init(OBJECT *parent)
 		{
 			GL_THROW("house:%d - %s - Failed to map meter status variable from parent",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
-			While attempting to map the service_status variable from the parent meter, house encountered an error.  Please
+			While attempting to map the service_status variable from the parent triplex_meter, house encountered an error.  Please
 			try again.  If the error persists, please submit your model and a bug report via the issue tracking system.
 			*/
 		}
@@ -1382,12 +1384,52 @@ int house_e::init(OBJECT *parent)
 
 		//Set flag
 		proper_meter_parent = true;
-		commercial_meter_parent = false;
+		commercial_load_parent = false;
 	}
-	else if (parent!=NULL && (gl_object_isa(parent,"meter","powerflow") || gl_object_isa(obj->parent,"node","powerflow")))
+	else if (parent!=NULL && (gl_object_isa(parent,"load","powerflow")))
 	{
+		// map the meter variables
+		pMeterStatus = new gld_property(parent,"service_status");
+		if ((pMeterStatus->is_valid() != true) || (pMeterStatus->is_enumeration() != true))
+		{
+			GL_THROW("house:%d - %s - Failed to map meter status variable from parent",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			While attempting to map the service_status variable from the parent meter, house encountered an error.  Please
+			try again.  If the error persists, please submit your model and a bug report via the issue tracking system.
+			*/
+		}
+		pFrequency = map_double_value(parent,"measured_frequency");
+		pCircuit_V[0] = map_complex_value(parent,"voltage_A");
+		pCircuit_V[1] = map_complex_value(parent,"voltage_B");
+		pCircuit_V[2] = map_complex_value(parent,"voltage_C");
+		pLine_I[0] = map_complex_value(parent,"constant_current_A");
+		pLine_I[1] = map_complex_value(parent,"constant_current_B");
+		pLine_I[2] = map_complex_value(parent,"constant_current_C");
+		pShunt[0] = map_complex_value(parent,"constant_impedance_A");
+		pShunt[1] = map_complex_value(parent,"constant_impedance_B");
+		pShunt[2] = map_complex_value(parent,"constant_impedance_C");
+		pPower[0] = map_complex_value(parent,"constant_power_A");
+		pPower[1] = map_complex_value(parent,"constant_power_B");
+		pPower[2] = map_complex_value(parent,"constant_power_C");
+
+		pNominalVoltage = map_double_value(parent,"nominal_voltage");
+		internalTurnsRatio = pNominalVoltage->get_double() / 120.0;
+		pPhases = new gld_property(parent,"phases");
+		if ((pPhases->is_valid() != true) || (pPhases->is_set() != true))
+		{
+			GL_THROW("house:%d - %s - Failed to map load phases from parent",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			While attempting to map the phases variable from the parent load, house encountered an error.  Please
+			try again.  If the error persists, please submit your model and a bug report via the issue tracking system.
+			*/
+		}
+		externalPhases = pPhases->get_set();
+		gl_output ("house: %s is commercial with turns ratio %g and phases %d", 
+				   obj->name, internalTurnsRatio, externalPhases);
+
+		// set flags for the powerflow interface
 		proper_meter_parent = true;
-		commercial_meter_parent = true;
+		commercial_load_parent = true;
 	}
 	else
 	{
@@ -1405,7 +1447,7 @@ int house_e::init(OBJECT *parent)
 
 		//Set flag
 		proper_meter_parent = false;
-		commercial_meter_parent = false;
+		commercial_load_parent = false;
 
 		//Set frequency
 		value_Frequency = default_grid_frequency;
@@ -2478,7 +2520,7 @@ TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	//Pull voltage and status values in, if appropriate
-	if (proper_meter_parent == true && commercial_meter_parent == false)
+	if (proper_meter_parent == true)
 	{
 		pull_complex_powerflow_values();
 	}
@@ -2714,7 +2756,7 @@ TIMESTAMP house_e::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	OBJECT *obj = OBJECTHDR(this);
 
 	//If we're a proper triplex_meter, zero the accumulators, then remove the values
-	if (proper_meter_parent == true && commercial_meter_parent == false)
+	if (proper_meter_parent == true)
 	{
 		//Put negative values in 
 		//Update power
@@ -3090,7 +3132,7 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 	total.total = total.power = total.current = total.admittance = complex(0,0);
 
 	//Pull in the current powerflow values, if connected to a triplex_meter
-	if (proper_meter_parent == true && commercial_meter_parent == false)
+	if (proper_meter_parent == true)
 	{
 		pull_complex_powerflow_values();
 	}
@@ -3209,7 +3251,7 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 
 	//Push up the values, if need to do so
 	//Pull in the current powerflow values, if relevant
-	if (proper_meter_parent == true && commercial_meter_parent == false)
+	if (proper_meter_parent == true)
 	{
 		push_complex_powerflow_values();
 	}
@@ -3338,15 +3380,35 @@ gld_property *house_e::map_double_value(OBJECT *obj, char *name)
 void house_e::pull_complex_powerflow_values(void)
 {
 	//Pull in the various values from powerflow - straight reads
-	value_Circuit_V[0] = pCircuit_V[0]->get_complex();
-	value_Circuit_V[1] = pCircuit_V[1]->get_complex();
-	value_Circuit_V[2] = pCircuit_V[2]->get_complex();
+	if (commercial_load_parent == true) {
+		double denom = 0.0;
+		double vavg = 0.0;
+		if (externalPhases & 1) {
+			denom += 1.0;
+			vavg += pCircuit_V[0]->get_complex().Mag();
+		}
+		if (externalPhases & 2) {
+			denom += 1.0;
+			vavg += pCircuit_V[1]->get_complex().Mag();
+		}
+		if (externalPhases & 4) {
+			denom += 1.0;
+			vavg += pCircuit_V[2]->get_complex().Mag();
+		}
+		vavg /= denom;
+		vavg /= internalTurnsRatio;
+		value_Circuit_V[1] = value_Circuit_V[2] = vavg;
+		value_Circuit_V[0] = value_Circuit_V[1] + value_Circuit_V[2];
+//		OBJECT *obj = OBJECTHDR(this);
+//		gl_output ("house: %s is commercial with %g phases and equivalent panel voltages [%g, %g, %g]", 
+//				   obj->name, denom, value_Circuit_V[1].Mag(), value_Circuit_V[2].Mag(), value_Circuit_V[0].Mag());
+	} else {
+		value_Circuit_V[0] = pCircuit_V[0]->get_complex();
+		value_Circuit_V[1] = pCircuit_V[1]->get_complex();
+		value_Circuit_V[2] = pCircuit_V[2]->get_complex();
+	}
 	value_MeterStatus = pMeterStatus->get_enumeration();
 	value_Frequency = pFrequency->get_double();
-}
-
-void house_e::pull_complex_commercial_powerflow_values(void)
-{
 }
 
 //Function to push up all changes of complex properties to powerflow from local variables
@@ -3356,42 +3418,106 @@ void house_e::push_complex_powerflow_values(void)
 	gld_wlock *test_rlock;
 	int indexval;
 
-	for (indexval=0; indexval<3; indexval++)
-	{
-		//**** Current value ***/
-		//Pull current value again, just in case
-		temp_complex_val = pLine_I[indexval]->get_complex();
+	if (commercial_load_parent == true) {
+        OBJECT *obj = OBJECTHDR(this);                                   
+/*
+        gl_output ("house: %s commercial 1/Z=[%g, %g] [%g, %g] [%g, %g]",
+                   obj->name,                                            
+                   value_Shunt[0].Re(), value_Shunt[0].Im(),             
+                   value_Shunt[1].Re(), value_Shunt[1].Im(),             
+                   value_Shunt[2].Re(), value_Shunt[2].Im());            
+        gl_output ("                     I=[%g, %g] [%g, %g] [%g, %g]",  
+                   obj->name,                                            
+                   value_Line_I[0].Re(), value_Line_I[0].Im(),           
+                   value_Line_I[1].Re(), value_Line_I[1].Im(),           
+                   value_Line_I[2].Re(), value_Line_I[2].Im());          
+        gl_output ("                     P=[%g, %g] [%g, %g] [%g, %g]",  
+                   obj->name,                                            
+                   value_Power[0].Re(), value_Power[0].Im(),             
+                   value_Power[1].Re(), value_Power[1].Im(),             
+                   value_Power[2].Re(), value_Power[2].Im());            
+*/
+		double denom = 0.0;
+		if (externalPhases & 1) denom += 1.0;
+		if (externalPhases & 2) denom += 1.0;
+		if (externalPhases & 4) denom += 1.0;
+		// split the total power equally among the phases
+		complex balPower = (value_Power[0] + value_Power[1] + value_Power[2]) / denom;
+		// adjust the constant shunt for voltages and internal turns, then balance among phases, convert to Z in loop below
+		complex balShunt = (complex(4.0,0.0) * value_Shunt[0] + value_Shunt[1] + value_Shunt[2]) 
+			/ (internalTurnsRatio * internalTurnsRatio) / denom;
+		int insertZ = 0;
+		if (balShunt.Mag() > 0.0) {
+			insertZ = 1;
+			gl_output ("house: %s commercial 1/Z=[%g, %g]", obj->name, balShunt.Re(), balShunt.Im());             
+		}
+		// adjust the constant current for voltages and internal turns, then balance among phases
+		complex balCurrent = (complex(2.0,0.0) + value_Line_I[0] + value_Line_I[1] + value_Line_I[2])
+			/ internalTurnsRatio / denom;
+		int insertI = 0;
+		if (balCurrent.Mag() > 0.0) {
+			insertI = 1;
+			gl_output ("house: %s commercial I=[%g, %g]", obj->name, balCurrent.Re(), balCurrent.Im());             
+		}
+		// now push this building's power onto the parent load phases that are actually present
+		int mask = 1;
+		complex cOne = complex(1.0,0.0);
+		for (indexval = 0; indexval < 3; indexval++) {
+			if (externalPhases & mask) {
+				temp_complex_val = pPower[indexval]->get_complex();
+				temp_complex_val += balPower;
+				pPower[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+				if (insertZ > 0) {
+					temp_complex_val = pShunt[indexval]->get_complex();
+					if (temp_complex_val.Mag() > 0.0) {
+						temp_complex_val = cOne / (cOne / temp_complex_val + balShunt);
+					} else {
+						temp_complex_val = cOne / balShunt;
+					}
+					pShunt[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+				}
+				if (insertI > 0) {
+					temp_complex_val = pLine_I[indexval]->get_complex();
+					temp_complex_val += balCurrent;
+					pLine_I[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+				}
+			}
+			mask *= 2;
+		}
+	} else {
+		for (indexval=0; indexval<3; indexval++)
+		{
+			//**** Current value ***/
+			//Pull current value again, just in case
+			temp_complex_val = pLine_I[indexval]->get_complex();
 
-		//Add the difference
-		temp_complex_val += value_Line_I[indexval];
+			//Add the difference
+			temp_complex_val += value_Line_I[indexval];
 
-		//Push it back up
-		pLine_I[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+			//Push it back up
+			pLine_I[indexval]->setp<complex>(temp_complex_val,*test_rlock);
 
-		//**** shunt value ***/
-		//Pull current value again, just in case
-		temp_complex_val = pShunt[indexval]->get_complex();
+			//**** shunt value ***/
+			//Pull current value again, just in case
+			temp_complex_val = pShunt[indexval]->get_complex();
 
-		//Add the difference
-		temp_complex_val += value_Shunt[indexval];
+			//Add the difference
+			temp_complex_val += value_Shunt[indexval];
 
-		//Push it back up
-		pShunt[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+			//Push it back up
+			pShunt[indexval]->setp<complex>(temp_complex_val,*test_rlock);
 
-		//**** Power value ***/
-		//Pull current value again, just in case
-		temp_complex_val = pPower[indexval]->get_complex();
+			//**** Power value ***/
+			//Pull current value again, just in case
+			temp_complex_val = pPower[indexval]->get_complex();
 
-		//Add the difference
-		temp_complex_val += value_Power[indexval];
+			//Add the difference
+			temp_complex_val += value_Power[indexval];
 
-		//Push it back up
-		pPower[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+			//Push it back up
+			pPower[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+		}
 	}
-}
-
-void house_e::push_complex_commercial_powerflow_values(void)
-{
 }
 
 //Function to pull the climate data from gld_property links into local variables
@@ -3427,7 +3553,7 @@ SIMULATIONMODE house_e::inter_deltaupdate(unsigned int64 delta_time, unsigned lo
 	if ((iteration_count_val == 0) && (delta_time == 0))
 	{
 		//If we're a proper meter, zero the accumulators, then remove the values
-		if (proper_meter_parent == true && commercial_meter_parent == false)
+		if (proper_meter_parent == true)
 		{
 			//Push up the "negative" values now - mostly so XMLs look right
 			push_complex_powerflow_values();
@@ -3446,7 +3572,7 @@ STATUS house_e::post_deltaupdate(void)
 	//dynamics, we'll revisit how this interaction occurs (get node to zero accumulators or something)
 
 	//If we're a proper meter, zero the accumulators, then remove the values
-	if (proper_meter_parent == true && commercial_meter_parent == false)
+	if (proper_meter_parent == true)
 	{
 		//Put negative values in 
 		//Update power

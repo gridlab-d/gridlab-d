@@ -97,8 +97,8 @@ object substation {
   phases ABCN;
 }
 
-object meter {
-  name meter_480;
+object load {
+  name load_480;
   phases ABCN;
   nominal_voltage 277.0;
   voltage_A 277.0+0.0j;
@@ -106,8 +106,8 @@ object meter {
   voltage_C -138.50+239.89j;
 }
 
-object meter {
-  name meter_208;
+object load {
+  name load_208;
   phases ABCN;
   nominal_voltage 120.0;
   voltage_A 120.0+0.0j;
@@ -115,8 +115,8 @@ object meter {
   voltage_C -60.00+103.92j;
 }
 
-object meter {
-  name meter_120;
+object load {
+  name load_120;
   phases BN;
   nominal_voltage 120.0;
   voltage_B -60.00-103.92j;
@@ -125,28 +125,28 @@ object meter {
 object transformer {
   name xf_480;
   from network_node;
-  to meter_480;
+  to load_480;
   phases ABCN;
   configuration COMMERCIAL_480_225;
 }
 object transformer {
   name xf_208;
   from network_node;
-  to meter_208;
+  to load_208;
   phases ABCN;
   configuration COMMERCIAL_208_75;
 }
 object transformer {
   name xf_120;
   from network_node;
-  to meter_120;
+  to load_120;
   phases BN;
   configuration BPHASE_15;
 }
 
 object house{
-  name house_120;
-//	parent meter_120;
+  name house_480;
+	parent load_120;
 	window_wall_ratio 0.07;
 	cooling_COP 3.0;
 	system_mode OFF;
@@ -168,12 +168,23 @@ object house{
 		impedance_fraction 0;
 	};
 };
-//	object recorder{
-//		property measured_real_energy;
-//		file "test_HVAC_common_cool_energy.csv";
-//		interval 1;
-//		limit 86425;
-//	};
+// without houses connected, the no-load transformer losses are:
+//   550.353 + j2857.52 VA on phases A and C
+//   640.439 + j3236.76 VA on phase B
+object recorder{
+	parent network_node;
+	property distribution_power_A.real,distribution_power_A.imag,distribution_power_B.real,distribution_power_B.imag,distribution_power_C.real,distribution_power_C.imag;
+	file "test_commercial_meters_load.csv";
+	interval 1;
+	limit 86425;
+};
+object recorder{
+	parent load_480;
+	property voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag;
+	file "voltages_480.csv";
+	interval 3600;
+	limit 86425;
+};
 //	object double_assert{
 //		target "measured_real_energy";
 //		in '2001-07-25 1:00:19';
