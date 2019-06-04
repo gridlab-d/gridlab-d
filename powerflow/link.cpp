@@ -466,8 +466,8 @@ int link_object::init(OBJECT *parent)
 		{
 			phase_f_test &= ~(PHASE_S);	//Pull off the single phase portion of from node
 
-			if ((phase_f_test != (phases_test & ~(PHASE_S))) || (phase_t_test != phases_test) || ((phase_t_test & PHASE_S) != PHASE_S))	//Phase mismatch on the line
-				GL_THROW(const_cast<char*>("transformer:%d (split phase) - %s has a phase mismatch at one or both ends"),obj->id,obj->name);
+			//if ((phase_f_test != (phases_test & ~(PHASE_S))) || (phase_t_test != phases_test) || ((phase_t_test & PHASE_S) != PHASE_S))	//Phase mismatch on the line
+				//GL_THROW(const_cast<char*>("transformer:%d (split phase) - %s has a phase mismatch at one or both ends"),obj->id,obj->name);
 				/*  TROUBLESHOOT
 				A line has been configured to carry a certain set of phases.  Either the input node or output
 				node is not providing a source/sink for these different conductors.  The To and From nodes must
@@ -2842,7 +2842,7 @@ TIMESTAMP link_object::sync(TIMESTAMP t0)
 			/* compute currents */
 			READLOCK_OBJECT(to);
 			complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
-			UNLOCK_OBJECT(to);
+			READUNLOCK_OBJECT(to);
 
 			complex i0, i1, i2;
 
@@ -7889,6 +7889,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				gl_verbose("Event %d induced on %s by using %s",*implemented_fault,objhdr->name,NR_branchdata[temp_branch].name);
 		}//End a change has been flagged
 
+		gl_verbose ("link_fault_on (normal mode) returns:%s:%d:%ld", fault_type, *implemented_fault, *repair_time);
 		return 1;	//Successful
 	}//End "normal" fault operations mode
 	else	//Meshed checking -- handle differently
@@ -10694,6 +10695,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				gl_verbose("Event %d induced on %s by using %s",*implemented_fault,objhdr->name,NR_branchdata[temp_branch].name);
 		}//End a change has been flagged
 
+		gl_verbose ("link_fault_on (meshed mode) returns:%s:%d:%ld", fault_type, *implemented_fault, *repair_time);
 		return 1;	//Successful
 	}//End "Msehed mode" checks
 }
@@ -11718,6 +11720,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				gl_verbose("Event %s removed from %s by restoring %s",imp_fault_name,objhdr->name,NR_branchdata[temp_node].name);
 		}//End actual change
 
+		gl_verbose ("link_fault_off (normal mode) returns:%s:%d", imp_fault_name, *implemented_fault);
 		return 1;
 	}//End "normal" operations mode
 	else	//Must be crazy mesh checking mode
@@ -12646,6 +12649,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				gl_verbose("Event %s removed from %s by restoring %s",imp_fault_name,objhdr->name,NR_branchdata[temp_node].name);
 		}//End actual change
 
+		gl_verbose ("link_fault_off (meshed mode) returns:%s:%d", imp_fault_name, *implemented_fault);
 		return 1;
 	}//End meshed checking mode
 }

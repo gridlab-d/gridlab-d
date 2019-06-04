@@ -32,6 +32,7 @@ fault_check::fault_check(MODULE *mod) : powerflow_object(mod)
 				PT_KEYWORD, "ONCHANGE", (enumeration)ONCHANGE,
 				PT_KEYWORD, "ALL", (enumeration)ALLT,
 				PT_KEYWORD, "SINGLE_DEBUG", (enumeration)SINGLE_DEBUG,
+				PT_KEYWORD, "SWITCHING", (enumeration)SWITCHING,
 			PT_char1024,"output_filename",PADDR(output_filename),PT_DESCRIPTION,"Output filename for list of unsupported nodes",
 			PT_bool,"reliability_mode",PADDR(reliability_mode),PT_DESCRIPTION,"General flag indicating if fault_check is operating under faulting or restoration mode -- reliability set this",
 			PT_bool,"strictly_radial",PADDR(reliability_search_mode),PT_DESCRIPTION,"Flag to indicate if a system is known to be strictly radial -- uses radial assumptions for reliability alterations",
@@ -176,6 +177,9 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 	int return_val;
 	bool perform_check, override_output;
 
+	gl_strftime (t0, time_buf, TIME_BUF_SIZE);
+	gl_verbose ("*** fault_check::sync:%s:%ld", time_buf, t0);
+
 	if (prev_time == 0)	//First run - see if restoration exists (we need it for now)
 	{
 		allocate_alterations_values(reliability_mode);
@@ -193,6 +197,10 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 	{
 		perform_check = true;	//Flag the check
 	}//end onchange check
+	else if ((fcheck_state == SWITCHING) && (NR_admit_change == true))	//Admittance change has been flagged
+	{
+		perform_check = true;
+	}
 	else if (fcheck_state == ALLT)	//Must be every iteration then
 	{
 		perform_check = true;	//Flag the check
@@ -263,34 +271,36 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 			//Call the connectivity check
 			support_check(0);
 
-			//Parse the list - see if anything is broken
-			for (index=0; index<NR_bus_count; index++)
+			if (fcheck_state != SWITCHING)  //Parse the list - see if anything is broken
 			{
-				if ((Supported_Nodes[index][0] == 0) || (Supported_Nodes[index][1] == 0) || (Supported_Nodes[index][2] == 0))
+				for (index=0; index<NR_bus_count; index++)
 				{
-					if (output_filename[0] != '\0')	//See if there's an output
+					if ((Supported_Nodes[index][0] == 0) || (Supported_Nodes[index][1] == 0) || (Supported_Nodes[index][2] == 0))
 					{
-						write_output_file(t0,0);	//Write it
-					}
+						if (output_filename[0] != '\0')	//See if there's an output
+						{
+							write_output_file(t0,0);	//Write it
+						}
 
-					//See what mode we are in
-					if ((reliability_mode == false) && (fault_check_override_mode == false))
-					{
-						GL_THROW(const_cast<char*>("Unsupported phase on node %s"),NR_busdata[index].name);
-						/*  TROUBLESHOOT
-						An unsupported connection was found on the indicated bus in the system.  Since reconfiguration
-						is not enabled, the solver will fail here on the next iteration, so the system is broken early.
-						*/
+						//See what mode we are in
+						if ((reliability_mode == false) && (fault_check_override_mode == false))
+						{
+							GL_THROW(const_cast<char*>("Unsupported phase on node %s"),NR_busdata[index].name);
+							/*  TROUBLESHOOT
+							An unsupported connection was found on the indicated bus in the system.  Since reconfiguration
+							is not enabled, the solver will fail here on the next iteration, so the system is broken early.
+							*/
+						}
+						else	//Must be in reliability mode
+						{
+							gl_warning("Unsupported phase on node %s",NR_busdata[index].name);
+							/*  TROUBLESHOOT
+							An unsupported connection was found on the indicated bus in the system.  Since reliability
+							is enabled, the solver will simply ignore the unsupported components for now.
+							*/
+						}
+						break;	//Only need to do this once
 					}
-					else	//Must be in reliability mode
-					{
-						gl_warning("Unsupported phase on node %s",NR_busdata[index].name);
-						/*  TROUBLESHOOT
-						An unsupported connection was found on the indicated bus in the system.  Since reliability
-						is enabled, the solver will simply ignore the unsupported components for now.
-						*/
-					}
-					break;	//Only need to do this once
 				}
 			}
 		}
@@ -336,7 +346,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 			override_output = output_check_supported_mesh();	//See if anything changed
 
 			//See if anything broke
-			if (override_output == true)
+			if (override_output == true && fcheck_state != SWITCHING)
 			{
 				if (output_filename[0] != '\0')	//See if there's an output
 				{
@@ -393,6 +403,7 @@ void fault_check::search_links(int node_int)
 	BRANCHDATA temp_branch;
 	unsigned char work_phases;
 
+	gl_verbose ("  fault_check::search_links:%s", NR_busdata[node_int].name);
 	//Loop through the connectivity and populate appropriately
 	for (index=0; index<NR_busdata[node_int].Link_Table_Size; index++)	//parse through our connected link
 	{
@@ -481,6 +492,7 @@ void fault_check::search_links_mesh(int node_int)
 	unsigned int index, device_value, node_value;
 	unsigned char temp_phases, temp_compare_phases, result_phases;
 
+	gl_verbose ("  fault_check::search_links_mesh:%s", NR_busdata[node_int].name);
 	//Check our entry mode -- if grid association mode, do this as a recursion
 	if (grid_association_mode == false)	//Nope, do "normally"
 	{
@@ -620,6 +632,7 @@ void fault_check::support_check(int swing_node_int)
 	unsigned int index;
 	unsigned char phase_vals;
 
+	gl_verbose ("  fault_check::support_check:%s", NR_busdata[swing_node_int].name);
 	//Reset the node status list
 	reset_support_check();
 
@@ -641,6 +654,7 @@ void fault_check::support_check_mesh(void)
 {
 	unsigned int indexa, indexb;
 
+	gl_verbose ("  fault_check::support_check_mesh");
 	//Reset the node status list
 	reset_support_check();
 
@@ -688,6 +702,7 @@ void fault_check::reset_support_check(void)
 {
 	unsigned int index;
 
+	gl_verbose ("  fault_check::reset_support_check");
 	//Reset the node - 0 = unsupported, 1 = supported (not populated here), 2 = N/A (no phase there)
 	for (index=0; index<NR_bus_count; index++)
 	{
@@ -1114,6 +1129,7 @@ void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 			base_bus_val = 0;	//Swing is always 0th position
 		else	//Not swing, see what our to side is
 		{
+			gl_verbose ("  fault_check::support_check_alterations:%s:%d", NR_branchdata[baselink_int].name, rest_mode);
 			//Get to side
 			base_bus_val = NR_branchdata[baselink_int].to;
 
@@ -1133,7 +1149,8 @@ void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 		//See if the FROM side of our newly restored greatness is supported.  If it isn't, there's no point in proceeding
 		if (rest_mode == true)	//Restoration
 		{
-			gl_verbose("Alterations support check called restoration on bus %s",NR_busdata[base_bus_val].name);
+			gl_verbose("  alterations support check called restoration on bus %s with phases %d",
+								 NR_busdata[base_bus_val].name, int(NR_busdata[base_bus_val].phases));
 
 			if ((NR_busdata[base_bus_val].phases & 0x07) != 0x00)	//We have phase, means OK above us
 			{
@@ -1145,7 +1162,8 @@ void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 		}
 		else	//Destructive!
 		{
-			gl_verbose("Alterations support check called removal on bus %s",NR_busdata[base_bus_val].name);
+			gl_verbose("  alterations support check called removal on bus %s with phases %d",
+								 NR_busdata[base_bus_val].name, int(NR_busdata[base_bus_val].phases));
 
 			//Recurse our way in - adjusted version of original search_links function above (but no storage, because we don't care now)
 			support_search_links(base_bus_val, base_bus_val, rest_mode);
@@ -1241,7 +1259,8 @@ void fault_check::support_search_links_mesh(int baselink_int, bool impact_mode)
 	{
 		if ((baselink_int != -99) && (baselink_int != -77))	//Not a SWING-related fault, so actually do something (SWING just proceeds in)
 		{
-			//Figure out which phases mismatch the FROM/TO ends of this link - 
+			gl_verbose ("  fault_check::support_search_links_mesh:%s:%d", NR_branchdata[baselink_int].name, impact_mode);
+			//Figure out which phases mismatch the FROM/TO ends of this link -
 			temp_phases = ((valid_phases[NR_branchdata[baselink_int].from] ^ valid_phases[NR_branchdata[baselink_int].to]) & 0x07);
 
 			//Cast by our original phases, in case something else broke us first
@@ -1438,6 +1457,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 	OBJECT *temp_obj;
 	FUNCTIONADDR funadd = NULL;
 
+	gl_verbose ("  fault_check::special_object_alteration_handle:%s", NR_branchdata[branch_idx].name);
 	//See which mode we're in -- bypass if needed (might be always)
 	if (meshed_fault_checking_enabled == false)
 	{
@@ -1609,6 +1629,7 @@ void fault_check::support_search_links(int node_int, int node_start, bool impact
 	BRANCHDATA temp_branch;
 	unsigned char work_phases, phase_restrictions;
 
+	gl_verbose ("  fault_check::support_search_links:%s:%s:%d", NR_busdata[node_int].name, NR_busdata[node_start].name, impact_mode);
 	//Loop through the connectivity and populate appropriately
 	for (index=0; index<NR_busdata[node_int].Link_Table_Size; index++)	//parse through our connected link
 	{
@@ -1854,6 +1875,7 @@ void fault_check::reset_alterations_check(void)
 {
 	unsigned int index;
 
+	gl_verbose ("  fault_check::reset_alterations_check");
 	//Do a check for initialization
 	if (Alteration_Nodes == NULL)
 	{
@@ -1882,10 +1904,11 @@ void fault_check::allocate_alterations_values(bool reliability_mode_bool)
 {
 	unsigned int index;
 	
+	gl_verbose ("  fault_check::allocate_alterations_values:%d", reliability_mode_bool);
 	//Make sure we haven't been allocated before
 	if (Supported_Nodes == NULL)
 	{
-		if (restoration_object==NULL)
+		if (restoration_object==NULL && fcheck_state != SWITCHING)
 		{
 			gl_warning("Restoration object not detected!");	//Put down here because the variable may not be populated in time for init
 			/*  TROUBLESHOOT

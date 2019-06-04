@@ -910,7 +910,7 @@ public:
 			for ( c=c1 ; c<=m ; c++ )
 				//TODO: Review this, what information is this supposed so print to stderr?
 				fprintf(stderr,"Error at complex item [%zd][%zd]", r, c); //this is a replacement for the below
-				//fprintf(stderr," %8g", my(r,c));
+				//fprintf(stderr," %8g", my(r,c).Mag());
 			fprintf(stderr,"\n");
 		}
 		fprintf(stderr," }\n");

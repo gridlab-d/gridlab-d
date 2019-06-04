@@ -9,6 +9,9 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
+#ifdef __APPLE__
+#include <cmath>
+#endif
 #include <vector>
 #include <algorithm>
 #include <iostream>

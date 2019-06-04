@@ -188,8 +188,8 @@ int powerflow_object::init(OBJECT *parent)
 		throw "phases not specified";
 
 	/* split connection must connect to a phase */
-	if (has_phase(PHASE_S) && !(has_phase(PHASE_A) || has_phase(PHASE_B) || has_phase(PHASE_C)))
-		throw "split connection is missing A,B, or C phase connection";
+	//if (has_phase(PHASE_S) && !(has_phase(PHASE_A) || has_phase(PHASE_B) || has_phase(PHASE_C)))
+		//throw "split connection is missing A,B, or C phase connection";
 
 	/* split connection must connect to only one phase */
 	if (has_phase(PHASE_S) && (

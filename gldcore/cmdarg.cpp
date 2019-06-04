@@ -1189,7 +1189,10 @@ static int locktest(int argc, char *argv[])
 	test_lock();
 	return CMDOK;
 }
-
+static int lock(int argc, char *argv[]){
+	global_lock_enabled = !global_lock_enabled;
+	return 0;
+}
 static int workdir(int argc, char *argv[])
 {
 	if ( argc<2 )
@@ -1232,6 +1235,7 @@ static CMDARG main_cmd[] = {
 	{"verbose",		"v",	verbose,		NULL, "Toggles output of verbose messages" },
 	{"warn",		"w",	warn,			NULL, "Toggles display of warning messages" },
 	{"workdir",		"W",	workdir,		NULL, "Sets the working directory" },
+	{"lock",        "l",    lock,           NULL, "Toggles read and write locks"},
 	
 	{NULL,NULL,NULL,NULL, "Global and module control"},
 	{"define",		"D",	define,			"<name>=[<module>:]<value>", "Defines or sets a global (or module) variable" },

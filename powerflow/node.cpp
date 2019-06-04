@@ -1164,7 +1164,17 @@ int node::init(OBJECT *parent)
 			}
 		}
 		else
-			throw("Please specify which phase (A,B,or C) the triplex node is attached to.");
+		{
+			//throw("Please specify which phase (A,B,or C) the triplex node is attached to.");
+			if (voltage[0] == 0)
+			{
+				voltage[0].SetPolar(nominal_voltage,0.0);
+			}
+			if (voltage[1] == 0)
+			{
+				voltage[1].SetPolar(nominal_voltage,0.0);
+			}
+		}
 
 		voltage[2] = complex(0,0);	//Ground always assumed it seems
 	}
