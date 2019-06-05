@@ -21,7 +21,7 @@ EXPORT_PRECOMMIT(helics_msg);
 EXPORT_SYNC(helics_msg);
 EXPORT_COMMIT(helics_msg);
 EXPORT_LOADMETHOD(helics_msg,configure);
-static helics::CombinationFederate *pHelicsFederate;
+static helicscpp::CombinationFederate *pHelicsFederate;
 EXPORT TIMESTAMP clocks_update(void *ptr, TIMESTAMP t1)
 {
 	helics_msg*my = (helics_msg*)ptr;
@@ -165,12 +165,12 @@ void send_die(void)
 		//TODO find equivalent helics die message
 #if HAVE_HELICS
 		gl_verbose("helics_msg: Calling error");
-		const helics::Federate::modes fed_state = pHelicsFederate->getCurrentMode();
-		if(fed_state != helics::Federate::modes::finalize) {
-			pHelicsFederate->error((int)(exitCode.get_int16()));
+		const helics::helics_federate_state fed_state = pHelicsFederate->getState();
+		if(fed_state != helics::helics_federate_state::finalize) {
+			//pHelicsFederate->error((int)(exitCode.get_int16()));
 			pHelicsFederate->finalize();
 		}
-		helics::cleanupHelicsLibrary();
+		//helics::cleanupHelicsLibrary();
 #endif
 	} else {
 		//TODO find equivalent helics clean exit message
