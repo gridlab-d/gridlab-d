@@ -6,6 +6,8 @@
 
 #include "powerflow.h"
 
+#define TIME_BUF_SIZE 64 // TODO: this ought to be in gridlabd.h, which has hard-coded value of 15 that is apparently too small
+
 class fault_check : public powerflow_object
 {
 public:
@@ -17,7 +19,8 @@ public:
 			SINGLE=0,		//Runs one fault_check, right at the beginning of powerflow
 			ONCHANGE=1,		//Runs fault_check everytime a Jacobian reconfiguration is requested
 			ALLT=2,			//Runs fault_check on every iteration
-			SINGLE_DEBUG=3	//Runs one fault_check, but will terminate the simulation -- bypasses some phase check errors
+			SINGLE_DEBUG=3,	//Runs one fault_check, but will terminate the simulation -- bypasses some phase check errors
+			SWITCHING=4 // Runs every time a new Jacobian is requested, does not require supported nodes
 			} FCSTATE;
 
 	unsigned int **Supported_Nodes;			//Nodes with source support (connected to swing somehow)
@@ -68,6 +71,7 @@ private:
 	TIMESTAMP prev_time;	//Previous timestamp - mainly for intialization
 	FUNCTIONADDR restoration_fxn;	// Function address for restoration object reconfiguration call
 	bool force_reassociation;	//Flag to force the island reassociation -- used if an island was removed to renumber them
+	char time_buf[TIME_BUF_SIZE];  // to format verbose time stamp output (note: fault_check is a singleton object)
 };
 
 EXPORT int powerflow_alterations(OBJECT *thisobj, int baselink,bool rest_mode);

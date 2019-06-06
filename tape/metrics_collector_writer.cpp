@@ -22,6 +22,7 @@ metrics_collector_writer::metrics_collector_writer(MODULE *mod){
 
 		if(gl_publish_variable(oclass,
 			PT_char256,"filename",PADDR(filename),PT_DESCRIPTION,"the JSON formatted output file name",
+			PT_double, "interim[s]", PADDR(interim_length_dbl), PT_DESCRIPTION, "Interim at which metrics_collector_writer output is written",
 			PT_double, "interval[s]", PADDR(interval_length_dbl), PT_DESCRIPTION, "Interval at which the metrics_collector_writer output is stored in JSON format",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
@@ -39,7 +40,7 @@ int metrics_collector_writer::init(OBJECT *parent){
 
 	OBJECT *obj = OBJECTHDR(this);
 	FILE *fn = NULL;
-	int index = 0;
+	int index = 0;	
 	char time_str[64];
 	DATETIME dt;
 
@@ -78,6 +79,14 @@ int metrics_collector_writer::init(OBJECT *parent){
 		return 0;
 	}
 
+	// Check valid metrics_collector output interim interval write out and clear
+	interim_cnt = 1;
+	interim_length = (int64)(interim_length_dbl);
+	if(interim_length <= 0){
+		interim_length = 86400;
+		gl_warning("metrics_collector_writer::init(): no interim length defined, setting to %i seconds", interim_length);
+	}
+
 	// Find the metrics_collector objects
 	metrics_collectors = gl_find_objects(FL_NEW,FT_CLASS,SAME,"metrics_collector",FT_END); //find all metrics_collector objects
 	if(metrics_collectors == NULL){
@@ -88,7 +97,7 @@ int metrics_collector_writer::init(OBJECT *parent){
 		*/
 	}
 
-	// Go through each metrics_coolector object, and check its time interval given
+	// Go through each metrics_collector object, and check its time interval given
 	obj = NULL;
 	while(obj = gl_find_next(metrics_collectors,obj)){
 		if(index >= metrics_collectors->hit_count){
@@ -129,17 +138,16 @@ int metrics_collector_writer::init(OBJECT *parent){
 		return 0;
 	}
 
-	// Write start time for each metrics
-	metrics_writer_billing_meters["StartTime"] = time_str;
-	metrics_writer_houses["StartTime"] = time_str;
-	metrics_writer_inverters["StartTime"] = time_str;
-	metrics_writer_capacitors["StartTime"] = time_str;
-	metrics_writer_regulators["StartTime"] = time_str;
-	metrics_writer_feeder_information["StartTime"] = time_str;
-
 	// Write metadata for each file; these indices MUST match assignments below
 	Json::Value jsn;
 	Json::Value meta;
+
+	Json::Value metadata;
+	// Start write to file
+	Json::StyledWriter writer;
+	// Open file for writing
+	ofstream out_file;
+
 	int idx = 0;
 	jsn["index"] = idx++; jsn["units"] = "W"; meta["real_power_min"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "W"; meta["real_power_max"] = jsn;
@@ -153,24 +161,32 @@ int metrics_collector_writer::init(OBJECT *parent){
 	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage12_min"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage12_max"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage12_avg"] = jsn;
+	jsn["index"] = idx++; jsn["units"] = "s"; meta["above_RangeA_Duration"] = jsn;
+	jsn["index"] = idx++; jsn["units"] = "s"; meta["below_RangeA_Duration"] = jsn;
+	jsn["index"] = idx++; jsn["units"] = "s"; meta["above_RangeB_Duration"] = jsn;
+	jsn["index"] = idx++; jsn["units"] = "s"; meta["below_RangeB_Duration"] = jsn;
+#ifdef ALL_MTR_METRICS
 	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage_min"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage_max"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage_avg"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage_unbalance_min"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage_unbalance_max"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "V"; meta["voltage_unbalance_avg"] = jsn;
-	jsn["index"] = idx++; jsn["units"] = "s"; meta["above_RangeA_Duration"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "";  meta["above_RangeA_Count"] = jsn;
-	jsn["index"] = idx++; jsn["units"] = "s"; meta["below_RangeA_Duration"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "";  meta["below_RangeA_Count"] = jsn;
-	jsn["index"] = idx++; jsn["units"] = "s"; meta["above_RangeB_Duration"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "";  meta["above_RangeB_Count"] = jsn;
-	jsn["index"] = idx++; jsn["units"] = "s"; meta["below_RangeB_Duration"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "";  meta["below_RangeB_Count"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "s"; meta["below_10_percent_NormVol_Duration"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "";  meta["below_10_percent_NormVol_Count"] = jsn;
-	metrics_writer_billing_meters["Metadata"] = meta;
+#endif
 	ary_billing_meters.resize(idx);
+
+	metadata["StartTime"] = time_str;
+	metadata["Metadata"] = meta;
+    out_file.open (filename_billing_meter);
+	out_file << writer.write(metadata) <<  endl;
+	out_file.close();
+	metadata.clear();
 
 	meta.clear();
 	idx = 0;
@@ -188,8 +204,14 @@ int metrics_collector_writer::init(OBJECT *parent){
 	jsn["index"] = idx++; jsn["units"] = "kW"; meta["waterheater_load_min"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "kW"; meta["waterheater_load_max"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "kW"; meta["waterheater_load_avg"] = jsn;
-	metrics_writer_houses["Metadata"] = meta;
 	ary_houses.resize(idx);
+
+	metadata["StartTime"] = time_str;
+	metadata["Metadata"] = meta;
+    out_file.open (filename_house);
+	out_file << writer.write(metadata) <<  endl;
+	out_file.close();
+	metadata.clear();
 
 	meta.clear();
 	idx = 0;
@@ -199,20 +221,38 @@ int metrics_collector_writer::init(OBJECT *parent){
 	jsn["index"] = idx++; jsn["units"] = "VAR"; meta["reactive_power_min"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "VAR"; meta["reactive_power_max"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "VAR"; meta["reactive_power_avg"] = jsn;
-	metrics_writer_inverters["Metadata"] = meta;
 	ary_inverters.resize(idx);
 
-	meta.clear();
-	idx = 0;
-	jsn["index"] = idx++; jsn["units"] = ""; meta["operation_count"] = jsn;
-	metrics_writer_capacitors["Metadata"] = meta;
-	ary_capacitors.resize(idx);
+	metadata["StartTime"] = time_str;
+	metadata["Metadata"] = meta;
+    out_file.open (filename_inverter);
+	out_file << writer.write(metadata) <<  endl;
+	out_file.close();
+	metadata.clear();
 
 	meta.clear();
 	idx = 0;
 	jsn["index"] = idx++; jsn["units"] = ""; meta["operation_count"] = jsn;
-	metrics_writer_regulators["Metadata"] = meta;
+	ary_capacitors.resize(idx);
+
+	metadata["StartTime"] = time_str;
+	metadata["Metadata"] = meta;
+    out_file.open (filename_capacitor);
+	out_file << writer.write(metadata) <<  endl;
+	out_file.close();
+	metadata.clear();
+
+	meta.clear();
+	idx = 0;
+	jsn["index"] = idx++; jsn["units"] = ""; meta["operation_count"] = jsn;
 	ary_regulators.resize(idx);
+
+	metadata["StartTime"] = time_str;
+	metadata["Metadata"] = meta;
+    out_file.open (filename_regulator);
+	out_file << writer.write(metadata) <<  endl;
+	out_file.close();
+	metadata.clear();
 
 	meta.clear();
 	idx = 0;
@@ -234,8 +274,15 @@ int metrics_collector_writer::init(OBJECT *parent){
 	jsn["index"] = idx++; jsn["units"] = "VAR"; meta["reactive_power_losses_max"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "VAR"; meta["reactive_power_losses_avg"] = jsn;
 	jsn["index"] = idx++; jsn["units"] = "VAR"; meta["reactive_power_losses_median"] = jsn;
-	metrics_writer_feeder_information["Metadata"] = meta;
 	ary_feeders.resize(idx);
+
+	metadata["StartTime"] = time_str;
+	metadata["Metadata"] = meta;
+    out_file.open (filename_substation);
+	out_file << writer.write(metadata) << endl;
+	out_file.close();
+	metadata.clear();
+	meta.clear();
 
 	return 1;
 }
@@ -272,6 +319,8 @@ int metrics_collector_writer::commit(TIMESTAMP t1){
 	@return 1 on successful write, 0 on unsuccessful write, error, or when not ready
  **/
 int metrics_collector_writer::write_line(TIMESTAMP t1){
+    long pos = 0;
+    long offset = 4;
 	char time_str[64];
 	time_t now = time(NULL);
 	int index = 0;
@@ -326,22 +375,24 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 			ary_billing_meters[idx++] = metrics[MTR_MIN_VLL];
 			ary_billing_meters[idx++] = metrics[MTR_MAX_VLL];
 			ary_billing_meters[idx++] = metrics[MTR_AVG_VLL];
+			ary_billing_meters[idx++] = metrics[MTR_ABOVE_A_DUR];
+			ary_billing_meters[idx++] = metrics[MTR_BELOW_A_DUR];
+			ary_billing_meters[idx++] = metrics[MTR_ABOVE_B_DUR];
+			ary_billing_meters[idx++] = metrics[MTR_BELOW_B_DUR];
+#ifdef ALL_MTR_METRICS
 			ary_billing_meters[idx++] = metrics[MTR_MIN_VLN];
 			ary_billing_meters[idx++] = metrics[MTR_MAX_VLN];
 			ary_billing_meters[idx++] = metrics[MTR_AVG_VLN];
 			ary_billing_meters[idx++] = metrics[MTR_MIN_VUNB];
 			ary_billing_meters[idx++] = metrics[MTR_MAX_VUNB];
 			ary_billing_meters[idx++] = metrics[MTR_AVG_VUNB];
-			ary_billing_meters[idx++] = metrics[MTR_ABOVE_A_DUR];
 			ary_billing_meters[idx++] = metrics[MTR_ABOVE_A_CNT];
-			ary_billing_meters[idx++] = metrics[MTR_BELOW_A_DUR];
 			ary_billing_meters[idx++] = metrics[MTR_BELOW_A_CNT];
-			ary_billing_meters[idx++] = metrics[MTR_ABOVE_B_DUR];
 			ary_billing_meters[idx++] = metrics[MTR_ABOVE_B_CNT];
-			ary_billing_meters[idx++] = metrics[MTR_BELOW_B_DUR];
 			ary_billing_meters[idx++] = metrics[MTR_BELOW_B_CNT];
 			ary_billing_meters[idx++] = metrics[MTR_BELOW_10_DUR];
 			ary_billing_meters[idx++] = metrics[MTR_BELOW_10_CNT];
+#endif
 			string key = temp_metrics_collector->parent_name;
 			billing_meter_objects[key] = ary_billing_meters;
 		} // End of recording metrics_collector data attached to one triplex_meter or primary meter
@@ -454,7 +505,6 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 		index++;
 	}
 
-
 	// Rewrite the metrics to be separate 2-d ones
 	metrics_writer_billing_meters[time_str] = billing_meter_objects;
 	metrics_writer_houses[time_str] = house_objects;
@@ -463,7 +513,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 	metrics_writer_regulators[time_str] = regulator_objects;
 	metrics_writer_feeder_information[time_str] = feeder_information;
 
-	if (final_write <= t1) {
+	if (final_write <= t1 || (writeTime >= (interim_length * interim_cnt))) {
 		// Start write to file
 		Json::StyledWriter writer;
 
@@ -471,34 +521,59 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 		ofstream out_file;
 
 		// Write seperate JSON files for each object
-		out_file.open (filename_billing_meter);
-		out_file << writer.write(metrics_writer_billing_meters) <<  endl;
+		out_file.open (filename_billing_meter, std::ofstream::in | std::ofstream::ate);
+        pos = out_file.tellp();
+		out_file << writer.write(metrics_writer_billing_meters) << endl;
+        out_file.seekp (pos-offset);
+		out_file << "," << endl << "   ";
 		out_file.close();
+		metrics_writer_billing_meters.clear();
 
-		out_file.open (filename_house);
-		out_file << writer.write(metrics_writer_houses) <<  endl;
+		out_file.open (filename_house, std::ofstream::in | std::ofstream::ate);
+        pos = out_file.tellp();
+		out_file << writer.write(metrics_writer_houses) << endl;
+        out_file.seekp (pos-offset);
+		out_file << "," << endl << "   ";
 		out_file.close();
+		metrics_writer_houses.clear();
 
-		out_file.open (filename_inverter);
-		out_file << writer.write(metrics_writer_inverters) <<  endl;
+		out_file.open (filename_inverter, std::ofstream::in | std::ofstream::ate);
+        pos = out_file.tellp();
+		out_file << writer.write(metrics_writer_inverters) << endl;
+        out_file.seekp (pos-offset);
+		out_file << "," << endl << "   ";
 		out_file.close();
+		metrics_writer_inverters.clear();
+		
+		out_file.open (filename_capacitor, std::ofstream::in | std::ofstream::ate);
+        pos = out_file.tellp();
+		out_file << writer.write(metrics_writer_capacitors) << endl;
+        out_file.seekp (pos-offset);
+		out_file << "," << endl << "   ";
+		out_file.close();
+		metrics_writer_capacitors.clear();
 
-		out_file.open (filename_capacitor);
-		out_file << writer.write(metrics_writer_capacitors) <<  endl;
+		out_file.open (filename_regulator, std::ofstream::in | std::ofstream::ate);
+        pos = out_file.tellp();
+		out_file << writer.write(metrics_writer_regulators) << endl;
+        out_file.seekp (pos-offset);
+		out_file << "," << endl << "   ";
 		out_file.close();
-
-		out_file.open (filename_regulator);
-		out_file << writer.write(metrics_writer_regulators) <<  endl;
+		metrics_writer_regulators.clear();
+		
+		out_file.open (filename_substation, std::ofstream::in | std::ofstream::ate);
+        pos = out_file.tellp();
+		out_file << writer.write(metrics_writer_feeder_information) << endl;
+        out_file.seekp (pos-offset);
+		out_file << "," << endl << "   ";
 		out_file.close();
-
-		out_file.open (filename_substation);
-		out_file << writer.write(metrics_writer_feeder_information) <<  endl;
-		out_file.close();
+		metrics_writer_feeder_information.clear();
+		interim_cnt++;
 	}
+
 
 	return 1;
 }
-
 
 EXPORT int create_metrics_collector_writer(OBJECT **obj, OBJECT *parent){
 	int rv = 0;
@@ -580,8 +655,7 @@ EXPORT int commit_metrics_collector_writer(OBJECT *obj){
 	return rv;
 }
 
-EXPORT int isa_metrics_collector_writer(OBJECT *obj, char *classname)
-{
+EXPORT int isa_metrics_collector_writer(OBJECT *obj, char *classname){
 	return OBJECTDATA(obj, metrics_collector_writer)->isa(classname);
 }
 

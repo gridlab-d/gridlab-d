@@ -126,61 +126,67 @@ static void *test_lock_proc(void *ptr)
 
 int test_lock(void)
 {
-	int n, sum=0;
-
-	count = (unsigned int*)malloc(sizeof(unsigned int*)*global_threadcount);
-	if ( !count )
-	{
-		output_test("memory allocation failed");
-		return FAILED;
-	}
+	if(global_lock_enabled){
+		int n, sum=0;
 	
-	output_test("*** Begin memory locking test for %d threads", global_threadcount);
-	wlock(&key);
-	for ( n=0 ; n<global_threadcount ; n++ )
-	{
-		pthread_t pt;
-		count[n] = 0;
-		if ( pthread_create(&pt,NULL,test_lock_proc,(void*)&n)!=0 )
+		count = (unsigned int*)malloc(sizeof(unsigned int*)*global_threadcount);
+		if ( !count )
 		{
-			output_test("thread creation failed");
+			output_test("memory allocation failed");
 			return FAILED;
 		}
-	}
-	wunlock(&key);
-	global_suppress_repeat_messages = 0;
-	for ( n=0 ; n<global_threadcount ; n++ )
-		output_raw("THREAD %2d  ", n);
-	output_message("  TOTAL     ERRORS");
-	for ( n=0 ; n<global_threadcount ; n++ )
-		output_raw("---------- ", n);
-	output_message("---------- --------");
-	while ( done<global_threadcount )
-	{
-		int c[256], t, s=0;
-		exec_sleep(100000);
-		output_raw("\r");
-		rlock(&key);
+
+		output_test("*** Begin memory locking test for %d threads", global_threadcount);
+		wlock(&key);
 		for ( n=0 ; n<global_threadcount ; n++ )
-			s += (c[n]=count[n]);
-		t = total;
-		runlock(&key);
+		{
+			pthread_t pt;
+			count[n] = 0;
+			if ( pthread_create(&pt,NULL,test_lock_proc,(void*)&n)!=0 )
+			{
+				output_test("thread creation failed");
+				return FAILED;
+			}
+		}
+		wunlock(&key);
+		global_suppress_repeat_messages = 0;
 		for ( n=0 ; n<global_threadcount ; n++ )
-			output_raw("%10d ",c[n]);
-		output_raw("%10d %8d",t,t-s);
+			output_raw("THREAD %2d  ", n);
+		output_message("  TOTAL     ERRORS");
+		for ( n=0 ; n<global_threadcount ; n++ )
+			output_raw("---------- ", n);
+		output_message("---------- --------");
+		while ( done<global_threadcount )
+		{
+			int c[256], t, s=0;
+			exec_sleep(100000);
+			output_raw("\r");
+			rlock(&key);
+			for ( n=0 ; n<global_threadcount ; n++ )
+				s += (c[n]=count[n]);
+			t = total;
+			runlock(&key);
+			for ( n=0 ; n<global_threadcount ; n++ )
+				output_raw("%10d ",c[n]);
+			output_raw("%10d %8d",t,t-s);
+		}
+		output_message("");
+		for ( n=0 ; n<global_threadcount ; n++ )
+		{
+			output_test("thread %d count = %d", n, count[n]);
+			sum+=count[n];
+		}
+		output_test("total count = %d", total);
+		if ( sum!=total )
+			output_test("TEST FAILED");
+		else
+			output_test("Last key = %d", key);
+		output_test("*** End memory locking test", global_threadcount);
+		return SUCCESS;
+	}else{
+		output_test("Locks disabled.");
+		output_message("Locks disabled.");
+		return SUCCESS;
 	}
-	output_message("");
-	for ( n=0 ; n<global_threadcount ; n++ )
-	{
-		output_test("thread %d count = %d", n, count[n]);
-		sum+=count[n];
-	}
-	output_test("total count = %d", total);
-	if ( sum!=total )
-		output_test("TEST FAILED");
-	else
-		output_test("Last key = %d", key);
-	output_test("*** End memory locking test", global_threadcount);
-	return SUCCESS;
 }
 
