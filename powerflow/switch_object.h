@@ -30,6 +30,7 @@ public:
 	int create(void);
 	int init(OBJECT *parent);
 	TIMESTAMP sync(TIMESTAMP t0);
+	TIMESTAMP presync(TIMESTAMP t0);  // implements local switching; TODO: this should have two TIMESTAMP arguments
 	switch_object(MODULE *mod);
 	inline switch_object(CLASS *cl=oclass):link_object(cl){};
 	int isa(char *classname);
@@ -57,6 +58,8 @@ public:
 	enumeration phase_A_state;				///< Defines the current state of the phase A switch
 	enumeration phase_B_state;				///< Defines the current state of the phase B switch
 	enumeration phase_C_state;				///< Defines the current state of the phase C switch
+
+	bool local_switching;             // for switching and fault checking without reliability module; uses phased_switch_status and prev_full_status in presync
 
 	double switch_resistance;
 	int kmldata(int (*stream)(const char*,...));

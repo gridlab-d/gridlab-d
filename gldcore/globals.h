@@ -88,6 +88,7 @@ GLOBAL bool global_federation_reiteration INIT(false); /**< enforce a hard reite
 GLOBAL char global_workdir[1024] INIT("."); /**< The current working directory */
 GLOBAL char global_dumpfile[1024] INIT("gridlabd.xml"); /**< The dump file name */
 GLOBAL char global_savefile[1024] INIT(""); /**< The save file name */
+GLOBAL int global_lock_enabled INIT(TRUE); /**Disable locks*/
 GLOBAL int global_dumpall INIT(FALSE);	/**< Flags all modules to dump data after run complete */
 GLOBAL int global_runchecks INIT(FALSE); /**< Flags module check code to be called after initialization */
 /** @todo Set the threadcount to zero to automatically use the maximum system resources (tickets 180) */

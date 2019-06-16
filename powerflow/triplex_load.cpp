@@ -73,6 +73,10 @@ triplex_load::triplex_load(MODULE *mod) : triplex_node(mod)
 			PT_complex,	"measured_voltage_1[V]",PADDR(measured_voltage_1),PT_DESCRIPTION,"measured voltage on phase 1",
 			PT_complex,	"measured_voltage_2[V]",PADDR(measured_voltage_2),PT_DESCRIPTION,"measured voltage on phase 2",
 			PT_complex,	"measured_voltage_12[V]",PADDR(measured_voltage_12),PT_DESCRIPTION,"measured voltage on phase 12",
+			PT_complex, "measured_power_1[VA]",PADDR(measured_power[0]),PT_DESCRIPTION,"current measured power on phase 1",
+			PT_complex, "measured_power_2[VA]",PADDR(measured_power[1]),PT_DESCRIPTION,"current measured power on phase 2",
+			PT_complex, "measured_power_12[VA]",PADDR(measured_power[2]),PT_DESCRIPTION,"current measured power on phase 12",
+			PT_complex, "measured_power[VA]",PADDR(measured_total_power),PT_DESCRIPTION,"current total measured power",
 
 			// This allows the user to set a base power on each phase, and specify the power as a function
 			// of ZIP and pf for each phase (similar to zipload).  This will override the constant values
@@ -217,6 +221,11 @@ TIMESTAMP triplex_load::postsync(TIMESTAMP t0)
 	measured_voltage_1.SetPolar(voltage1.Mag(),voltage1.Arg());  //Used for testing and xml output
 	measured_voltage_2.SetPolar(voltage2.Mag(),voltage2.Arg());
 	measured_voltage_12.SetPolar(voltage12.Mag(),voltage12.Arg());
+
+	measured_power[0] = voltage1*(~current_inj[0]);
+	measured_power[1] = -(voltage2*(~current_inj[1]));
+	measured_power[2] = voltage12*(~(-(current_inj[1]+current_inj[0])));
+	measured_total_power = measured_power[0] + measured_power[1] + measured_power[2];
 
 	return t1;
 }
@@ -741,9 +750,14 @@ SIMULATIONMODE triplex_load::inter_deltaupdate_triplex_load(unsigned int64 delta
 		BOTH_node_postsync_fxn(hdr);
 
 		//Triplex_load-specific postsync items
-			measured_voltage_1.SetPolar(voltage1.Mag(),voltage1.Arg());  //Used for testing and xml output
-			measured_voltage_2.SetPolar(voltage2.Mag(),voltage2.Arg());
-			measured_voltage_12.SetPolar(voltage12.Mag(),voltage12.Arg());
+		measured_voltage_1.SetPolar(voltage1.Mag(),voltage1.Arg());  //Used for testing and xml output
+		measured_voltage_2.SetPolar(voltage2.Mag(),voltage2.Arg());
+		measured_voltage_12.SetPolar(voltage12.Mag(),voltage12.Arg());
+
+		measured_power[0] = voltage1*(~current_inj[0]);
+		measured_power[1] = -(voltage2*(~current_inj[1]));
+		measured_power[2] = voltage12*(~(-(current_inj[1]+current_inj[0])));
+		measured_total_power = measured_power[0] + measured_power[1] + measured_power[2];
 
 		//Frequency measurement stuff
 		if (fmeas_type != FM_NONE)

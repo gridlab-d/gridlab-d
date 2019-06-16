@@ -1752,8 +1752,8 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 				if (temp_size_c==-1)	//Make sure it is right
 				{
-					GL_THROW("NR: A line's phase was flagged as not full three-phase, but wasn't: (%s) %u %u", 
-									 branch[jindexer].name, branch[jindexer].phases, branch[jindexer].origphases);
+					GL_THROW("NR: A line's phase was flagged as not full three-phase, but wasn't: (%s) %u %u %u %u", 
+									 branch[jindexer].name, branch[jindexer].phases, branch[jindexer].origphases, phase_worka, phase_workb);
 					/*  TROUBLESHOOT
 					A line inside the powerflow model was flagged as not being full three-phase or
 					triplex in any form.  It failed the other cases though, so it must have been.
