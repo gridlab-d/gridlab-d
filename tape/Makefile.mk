@@ -9,7 +9,7 @@ tape_tape_la_LDFLAGS += $(AM_LDFLAGS)
 
 tape_tape_la_LIBADD =
 tape_tape_la_LIBADD += third_party/jsonCpp/libjsoncpp.la
-tape_tape_la_LIBADD += -ldl
+tape_tape_la_LIBADD += -ldl    
 
 tape_tape_la_SOURCES =
 tape_tape_la_SOURCES += tape/collector.c
