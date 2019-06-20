@@ -1571,7 +1571,7 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 		value_prev_Power[0] = power_val[0];
 		value_prev_Power[1] = power_val[1];
 		value_prev_Power[2] = power_val[2];
-		complex total_power = power_val[0] + power_val[1] - power_val[2];
+		complex total_power = power_val[0] + power_val[1] + power_val[2];
 		real_power_gen = total_power.Re();
 		imag_power_gen = total_power.Im();
 	}
