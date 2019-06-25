@@ -693,6 +693,58 @@ void metrics_collector_writer::hdfFeeder () {
 	mtype_feeders->insertMember(m_reactive_power_losses_median, HOFFSET(Feeder, reactive_power_losses_median), H5::PredType::NATIVE_DOUBLE);
 }
 
+void metrics_collector_writer::hdfWrite(char256 filename, H5::CompType* mtype, void* ptr, int structKind, int idx, int size) {
+	H5::Exception::dontPrint();
+	try {
+		// preparation of a dataset and a file.
+		hsize_t dim[1] = { size };
+		int rank = sizeof(dim) / sizeof(hsize_t);
+		H5::DataSpace space(rank, dim);
+
+		// Modify dataset creation property to enable chunking
+		hsize_t chunk_dims[1] = { idx };
+		H5::DSetCreatPropList  *plist = new  H5::DSetCreatPropList;
+		plist->setChunk(1, chunk_dims);
+		// Set ZLIB (DEFLATE) Compression using level.
+		// To use SZIP compression comment out this line.
+		plist->setDeflate(9);
+		// Uncomment these lines to set SZIP Compression
+		// unsigned szip_options_mask = H5_SZIP_NN_OPTION_MASK;
+		// unsigned szip_pixels_per_block = 16;
+		// plist->setSzip(szip_options_mask, szip_pixels_per_block);
+
+		string FileName(filename);
+		FileName.append("." + m_h5);
+		H5::H5File *file;
+		file = new H5::H5File(FileName, H5F_ACC_RDWR);
+		string DatasetName(m_index);
+		DatasetName.append(to_string(interim_cnt));
+		H5::DataSet *dataset = new H5::DataSet(file->createDataSet(DatasetName, *mtype, space, *plist));
+
+		switch (structKind) {
+			case 1:	dataset->write((BillingMeter *)ptr, *mtype);		break;
+			case 2:	dataset->write((House *)ptr, *mtype);		break;
+			case 3:	dataset->write((Inverter *)ptr, *mtype);	break;
+			case 4:	dataset->write((Capacitor *)ptr, *mtype);	break;
+			case 5:	dataset->write((Regulator *)ptr, *mtype);	break;
+			case 6:	dataset->write((Feeder *)ptr, *mtype);		break;
+		}
+
+		delete plist;
+		delete dataset;
+		delete file;
+	}
+	// catch failure caused by the H5 operations
+	catch( H5::PropListIException error)
+	{	error.printErrorStack();	}
+	catch( H5::FileIException error )
+	{	error.printErrorStack();	}
+	catch( H5::DataSetIException error )
+	{	error.printErrorStack();	}
+	catch( H5::DataSpaceIException error )
+	{	error.printErrorStack();	}
+}
+
 void metrics_collector_writer::hdfMetadataWrite(Json::Value& meta, char* time_str, char256 filename) {
 	H5::Exception::dontPrint();
 	try {
@@ -706,24 +758,39 @@ void metrics_collector_writer::hdfMetadataWrite(Json::Value& meta, char* time_st
 			string value = meta[id][m_units].asString();
 			strncpy(tbl[idx].value, value.c_str(), MAX_METRIC_VALUE_LENGTH);
 		}
-		hsize_t dim[1];
-		dim[0] = sizeof(tbl) / sizeof(hMetadata);
-		int rank = sizeof(dim) / sizeof(hsize_t);
 
 		// preparation of a dataset and a file.
+		hsize_t dim[1] = { sizeof(tbl) / sizeof(hMetadata) };
+		int rank = sizeof(dim) / sizeof(hsize_t);
 		H5::DataSpace space(rank, dim);
+
+		// Modify dataset creation property to enable chunking
+		hsize_t chunk_dims[1] = { idx };
+		H5::DSetCreatPropList  *plist = new  H5::DSetCreatPropList;
+		plist->setChunk(1, chunk_dims);
+		// Set ZLIB (DEFLATE) Compression using level.
+		// To use SZIP compression comment out this line.
+		plist->setDeflate(9);
+		// Uncomment these lines to set SZIP Compression
+		// unsigned szip_options_mask = H5_SZIP_NN_OPTION_MASK;
+		// unsigned szip_pixels_per_block = 16;
+		// plist->setSzip(szip_options_mask, szip_pixels_per_block);
+
 		string FileName(filename);
 		FileName.append("." + m_h5);
 		H5::H5File *file;
 		file = new H5::H5File(FileName, H5F_ACC_TRUNC);
 		string DatasetName(m_metadata);
-		H5::DataSet *dataset = new H5::DataSet(file->createDataSet(DatasetName, *mtype_metadata, space));
+		H5::DataSet *dataset = new H5::DataSet(file->createDataSet(DatasetName, *mtype_metadata, space, *plist));
 		dataset->write(tbl, *mtype_metadata);
 
+		delete plist;
 		delete dataset;
 		delete file;
 	}
 	// catch failure caused by the H5 operations
+	catch( H5::PropListIException error)
+	{	error.printErrorStack();	}
 	catch( H5::FileIException error )
 	{	error.printErrorStack();	}
 	catch( H5::DataSetIException error )
@@ -733,8 +800,6 @@ void metrics_collector_writer::hdfMetadataWrite(Json::Value& meta, char* time_st
 }
 
 void metrics_collector_writer::hdfBillingMeterWrite (int objs, Json::Value& metrics) {
-	H5::Exception::dontPrint();
-	try {
 		BillingMeter tbl[line_cnt*objs];
 		int idx = 0;
 		for (auto const& id : metrics.getMemberNames())  {
@@ -776,37 +841,11 @@ void metrics_collector_writer::hdfBillingMeterWrite (int objs, Json::Value& metr
 				idx++;
 			}
 		}
-		hsize_t dim[1];
-		dim[0] = sizeof(tbl) / sizeof(BillingMeter);
-		int rank = sizeof(dim) / sizeof(hsize_t);
-
-		// preparation of a dataset and a file.
-		H5::DataSpace space(rank, dim);
-		string FileName(filename_billing_meter);
-		FileName.append("." + m_h5);
-		H5::H5File *file;
-		file = new H5::H5File(FileName, H5F_ACC_RDWR);
-		string DatasetName(m_index);
-		DatasetName.append(to_string(interim_cnt));
-		H5::DataSet *dataset = new H5::DataSet(file->createDataSet(DatasetName, *mtype_billing_meters, space));
-		dataset->write(tbl, *mtype_billing_meters);
-
-		delete dataset;
-		delete file;
+		hdfWrite(filename_billing_meter, mtype_billing_meters, &tbl, 1, idx, (sizeof(tbl) / sizeof(BillingMeter)));
 		metrics.clear();
-	}
-	// catch failure caused by the H5 operations
-	catch( H5::FileIException error )
-	{	error.printErrorStack();	}
-	catch( H5::DataSetIException error )
-	{	error.printErrorStack();	}
-	catch( H5::DataSpaceIException error )
-	{	error.printErrorStack();	}
 }
 
 void metrics_collector_writer::hdfHouseWrite (int objs, Json::Value& metrics) {
-	H5::Exception::dontPrint();
-	try {
 		House tbl[line_cnt*objs];
 		int idx = 0;
 		for (auto const& id : metrics.getMemberNames())  {
@@ -832,37 +871,11 @@ void metrics_collector_writer::hdfHouseWrite (int objs, Json::Value& metrics) {
 				idx++;
 			}
 		}
-		hsize_t dim[1];
-		dim[0] = sizeof(tbl) / sizeof(House);
-		int rank = sizeof(dim) / sizeof(hsize_t);
-
-		// preparation of a dataset and a file.
-		H5::DataSpace space(rank, dim);
-		string FileName(filename_house);
-		FileName.append("." + m_h5);
-		H5::H5File *file;
-		file = new H5::H5File(FileName, H5F_ACC_RDWR);
-		string DatasetName(m_index);
-		DatasetName.append(to_string(interim_cnt));
-		H5::DataSet *dataset = new H5::DataSet(file->createDataSet(DatasetName, *mtype_houses, space));
-		dataset->write(tbl, *mtype_houses);
-
-		delete dataset;
-		delete file;
+		hdfWrite(filename_house, mtype_houses, &tbl, 2, idx, (sizeof(tbl) / sizeof(House)));
 		metrics.clear();
-	}
-	// catch failure caused by the H5 operations
-	catch( H5::FileIException error )
-	{	error.printErrorStack();	}
-	catch( H5::DataSetIException error )
-	{	error.printErrorStack();	}
-	catch( H5::DataSpaceIException error )
-	{	error.printErrorStack();	}
 }
 
 void metrics_collector_writer::hdfInverterWrite (int objs, Json::Value& metrics) {
-	H5::Exception::dontPrint();
-	try {
 		Inverter tbl[line_cnt*objs];
 		int idx = 0;
 		for (auto const& id : metrics.getMemberNames())  {
@@ -880,37 +893,11 @@ void metrics_collector_writer::hdfInverterWrite (int objs, Json::Value& metrics)
 				idx++;
 			}
 		}
-		hsize_t dim[1];
-		dim[0] = sizeof(tbl) / sizeof(Inverter);
-		int rank = sizeof(dim) / sizeof(hsize_t);
-
-		// preparation of a dataset and a file.
-		H5::DataSpace space(rank, dim);
-		string FileName(filename_inverter);
-		FileName.append("." + m_h5);
-		H5::H5File *file;
-		file = new H5::H5File(FileName, H5F_ACC_RDWR);
-		string DatasetName(m_index);
-		DatasetName.append(to_string(interim_cnt));
-		H5::DataSet *dataset = new H5::DataSet(file->createDataSet(DatasetName, *mtype_inverters, space));
-		dataset->write(tbl, *mtype_inverters);
-
-		delete dataset;
-		delete file;
+		hdfWrite(filename_inverter, mtype_inverters, &tbl, 3, idx, (sizeof(tbl) / sizeof(Inverter)));
 		metrics.clear();
-	}
-	// catch failure caused by the H5 operations
-	catch( H5::FileIException error )
-	{	error.printErrorStack();	}
-	catch( H5::DataSetIException error )
-	{	error.printErrorStack();	}
-	catch( H5::DataSpaceIException error )
-	{	error.printErrorStack();	}
 }
 
 void metrics_collector_writer::hdfCapacitorWrite (int objs, Json::Value& metrics) {
-	H5::Exception::dontPrint();
-	try {
 		Capacitor tbl[line_cnt*objs];
 		int idx = 0;
 		for (auto const& id : metrics.getMemberNames())  {
@@ -923,37 +910,11 @@ void metrics_collector_writer::hdfCapacitorWrite (int objs, Json::Value& metrics
 				idx++;
 			}
 		}
-		hsize_t dim[1];
-		dim[0] = sizeof(tbl) / sizeof(Capacitor);
-		int rank = sizeof(dim) / sizeof(hsize_t);
-
-		// preparation of a dataset and a file.
-		H5::DataSpace space(rank, dim);
-		string FileName(filename_capacitor);
-		FileName.append("." + m_h5);
-		H5::H5File *file;
-		file = new H5::H5File(FileName, H5F_ACC_RDWR);
-		string DatasetName(m_index);
-		DatasetName.append(to_string(interim_cnt));
-		H5::DataSet *dataset = new H5::DataSet(file->createDataSet(DatasetName, *mtype_capacitors, space));
-		dataset->write(tbl, *mtype_capacitors);
-
-		delete dataset;
-		delete file;
+		hdfWrite(filename_capacitor, mtype_capacitors, &tbl, 4, idx, (sizeof(tbl) / sizeof(Capacitor)));
 		metrics.clear();
-	}
-	// catch failure caused by the H5 operations
-	catch( H5::FileIException error )
-	{	error.printErrorStack();	}
-	catch( H5::DataSetIException error )
-	{	error.printErrorStack();	}
-	catch( H5::DataSpaceIException error )
-	{	error.printErrorStack();	}
 }
 
 void metrics_collector_writer::hdfRegulatorWrite (int objs, Json::Value& metrics) {
-	H5::Exception::dontPrint();
-	try {
 		Regulator tbl[line_cnt*objs];
 		int idx = 0;
 		for (auto const& id : metrics.getMemberNames())  {
@@ -966,37 +927,11 @@ void metrics_collector_writer::hdfRegulatorWrite (int objs, Json::Value& metrics
 				idx++;
 			}
 		}
-		hsize_t dim[1];
-		dim[0] = sizeof(tbl) / sizeof(Regulator);
-		int rank = sizeof(dim) / sizeof(hsize_t);
-
-		// preparation of a dataset and a file.
-		H5::DataSpace space(rank, dim);
-		string FileName(filename_regulator);
-		FileName.append("." + m_h5);
-		H5::H5File *file;
-		file = new H5::H5File(FileName, H5F_ACC_RDWR);
-		string DatasetName(m_index);
-		DatasetName.append(to_string(interim_cnt));
-		H5::DataSet *dataset = new H5::DataSet(file->createDataSet(DatasetName, *mtype_regulators, space));
-		dataset->write(tbl, *mtype_regulators);
-
-		delete dataset;
-		delete file;
+		hdfWrite(filename_regulator, mtype_regulators, &tbl, 5, idx, (sizeof(tbl) / sizeof(Regulator)));
 		metrics.clear();
-	}
-	// catch failure caused by the H5 operations
-	catch( H5::FileIException error )
-	{	error.printErrorStack();	}
-	catch( H5::DataSetIException error )
-	{	error.printErrorStack();	}
-	catch( H5::DataSpaceIException error )
-	{	error.printErrorStack();	}
 }
 
 void metrics_collector_writer::hdfFeederWrite (int objs, Json::Value& metrics) {
-	H5::Exception::dontPrint();
-	try {
 		Feeder tbl[line_cnt*objs];
 		int idx = 0;
 		for (auto const& id : metrics.getMemberNames())  {
@@ -1026,32 +961,8 @@ void metrics_collector_writer::hdfFeederWrite (int objs, Json::Value& metrics) {
 				idx++;
 			}
 		}
-		hsize_t dim[1];
-		dim[0] = sizeof(tbl) / sizeof(Feeder);
-		int rank = sizeof(dim) / sizeof(hsize_t);
-
-		// preparation of a dataset and a file.
-		H5::DataSpace space(rank, dim);
-		string FileName(filename_feeder);
-		FileName.append("." + m_h5);
-		H5::H5File *file;
-		file = new H5::H5File(FileName, H5F_ACC_RDWR);
-		string DatasetName(m_index);
-		DatasetName.append(to_string(interim_cnt));
-		H5::DataSet *dataset = new H5::DataSet(file->createDataSet(DatasetName, *mtype_feeders, space));
-		dataset->write(tbl, *mtype_feeders);
-
-		delete dataset;
-		delete file;
+		hdfWrite(filename_feeder, mtype_feeders, &tbl, 6, idx, (sizeof(tbl) / sizeof(Feeder)));
 		metrics.clear();
-	}
-	// catch failure caused by the H5 operations
-	catch( H5::FileIException error )
-	{	error.printErrorStack();	}
-	catch( H5::DataSetIException error )
-	{	error.printErrorStack();	}
-	catch( H5::DataSpaceIException error )
-	{	error.printErrorStack();	}
 }
 #endif HAVE_HDF5
 

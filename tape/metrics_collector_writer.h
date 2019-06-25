@@ -112,7 +112,7 @@ typedef struct {
 	char value[MAX_METRIC_VALUE_LENGTH]; 
 } hMetadata;
 
-typedef struct {
+typedef struct _BillingMeter{
     int time; 
     char name[MAX_METRIC_NAME_LENGTH]; 
 	double real_power_min;
@@ -147,7 +147,7 @@ typedef struct {
 #endif
 } BillingMeter;
 
-typedef struct {
+typedef struct _House {
     int time; 
     char name[MAX_METRIC_NAME_LENGTH]; 
 	double total_load_min;
@@ -166,7 +166,7 @@ typedef struct {
 	double waterheater_load_avg;
 } House;
 
-typedef struct {
+typedef struct _Inverter {
     int time; 
     char name[MAX_METRIC_NAME_LENGTH]; 
 	double real_power_min;
@@ -177,19 +177,19 @@ typedef struct {
 	double reactive_power_avg;
 } Inverter;
 
-typedef struct {
+typedef struct _Capaitor {
     int time; 
     char name[MAX_METRIC_NAME_LENGTH]; 
 	double operation_count;
 } Capacitor;
 
-typedef struct {
+typedef struct _Regulator {
     int time; 
     char name[MAX_METRIC_NAME_LENGTH]; 
 	double operation_count;
 } Regulator;
 
-typedef struct {
+typedef struct _Freeder {
     int time; 
     char name[MAX_METRIC_NAME_LENGTH]; 
 	double real_power_min;
@@ -253,7 +253,8 @@ private:
 	void hdfFeeder ();
 
 	// Functions to write dataset to a file
-    void hdfMetadataWrite(Json::Value& meta, char* time_str, char256 filename);
+	void hdfWrite(char256 filename, H5::CompType* mtype, void *ptr, int structKind, int idx, int size);
+	void hdfMetadataWrite(Json::Value& meta, char* time_str, char256 filename);
 	void hdfBillingMeterWrite (int objs, Json::Value& metrics);
 	void hdfHouseWrite (int objs, Json::Value& metrics);
 	void hdfInverterWrite (int objs, Json::Value& metrics);
