@@ -151,6 +151,8 @@ motor::motor(MODULE *mod):node(mod)
 			GL_THROW("Unable to publish motor swing-swapping function");
 		if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
 			GL_THROW("Unable to publish motor VFD attachment function");
+		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
+			GL_THROW("Unable to publish motor swing-status check function");
     }
 }
 

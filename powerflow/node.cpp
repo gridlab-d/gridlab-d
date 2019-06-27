@@ -235,6 +235,8 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			GL_THROW("Unable to publish node VFD attachment function");
 		if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
 			GL_THROW("Unable to publish node island-status-reset function");
+		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
+			GL_THROW("Unable to publish node swing-status check function");
 	}
 }
 
@@ -290,7 +292,7 @@ int node::create(void)
 
 	full_Y = NULL;		//Not used by default
 	full_Y_load = NULL;	//Not used by default
-	full_Y_all = NULL;	//Not used by default
+	full_Y_all = NULL;	//Not used by default   **** NOTE -- full_Y_all only appears to be used by diesel QSTS exciter code - it can probably be removed when that is fixed *****
 	BusHistTerm[0] = complex(0.0,0.0);
 	BusHistTerm[1] = complex(0.0,0.0);
 	BusHistTerm[2] = complex(0.0,0.0);
@@ -5040,6 +5042,39 @@ STATUS node::NR_swap_swing_status(bool desired_status)
 	return SUCCESS;
 }
 
+//Function to check if a node object is "behaving in a SWING manner"
+bool node::NR_swing_status_check(void)
+{
+	bool swing_status_check_value;
+
+	//By default, assume we aren't a SWING
+	swing_status_check_value = false;
+
+	//See if we're a child or not
+	if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+	{
+		//Make sure we're a SWING or SWING_PQ first
+		if (NR_busdata[NR_node_reference].type > 1)
+		{
+			//Pull it out of our NR structure
+			swing_status_check_value = NR_busdata[NR_node_reference].swing_functions_enabled;
+		}
+		//Default else - we're a PQ, and by definition, not a SWING
+	}
+	else	//It is a child - look at parent
+	{
+		//Make sure we're a SWING or SWING_PQ first
+		if (NR_busdata[*NR_subnode_reference].type > 1)
+		{
+			//Pull the value out
+			swing_status_check_value = NR_busdata[*NR_subnode_reference].swing_functions_enabled;
+		}
+		//Default else - we're a PQ and not a SWING of any type
+	}
+
+	return swing_status_check_value;
+}
+
 //Function to reset the "disabled state" of the node, if called (re-enable an island, basically)
 STATUS node::reset_node_island_condition(void)
 {
@@ -5339,6 +5374,16 @@ EXPORT STATUS swap_node_swing_status(OBJECT *obj, bool desired_status)
 
 	//Return what the sub function said we were
 	return temp_status;
+}
+
+//Function to query a current node's status as a SWING node -- basically lets generators see how "swing_functions_enabled" is behaving
+EXPORT bool node_swing_status(OBJECT *this_obj)
+{
+	//Map ourselves
+	node *my = OBJECTDATA(this_obj,node);
+
+	//Run the query
+	return my->NR_swing_status_check();
 }
 
 //Exposed function to map a "current injection update" routine from another object

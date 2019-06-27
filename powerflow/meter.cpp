@@ -179,6 +179,8 @@ meter::meter(MODULE *mod) : node(mod)
 			GL_THROW("Unable to publish meter VFD attachment function");
 		if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
 			GL_THROW("Unable to publish meter island-status-reset function");
+		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
+			GL_THROW("Unable to publish meter swing-status check function");
 		}
 }
 

@@ -159,6 +159,8 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 				GL_THROW("Unable to publish triplex_meter VFD attachment function");
 			if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
 				GL_THROW("Unable to publish triplex_meter island-status-reset function");
+			if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
+				GL_THROW("Unable to publish triplex_meter swing-status check function");
 		}
 }
 

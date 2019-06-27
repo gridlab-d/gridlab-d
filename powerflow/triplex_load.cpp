@@ -112,6 +112,8 @@ triplex_load::triplex_load(MODULE *mod) : triplex_node(mod)
 				GL_THROW("Unable to publish triplex_load VFD attachment function");
 			if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
 				GL_THROW("Unable to publish triplex_load island-status-reset function");
+			if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
+				GL_THROW("Unable to publish triplex_load swing-status check function");
     }
 }
 

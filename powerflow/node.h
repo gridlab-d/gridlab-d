@@ -12,6 +12,7 @@
 //Deltamode functions
 EXPORT SIMULATIONMODE interupdate_node(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 EXPORT STATUS swap_node_swing_status(OBJECT *obj, bool desired_status);
+EXPORT bool node_swing_status(OBJECT *this_obj);
 EXPORT STATUS node_reset_disabled_status(OBJECT *nodeObj);
 EXPORT STATUS node_map_current_update_function(OBJECT *nodeObj, OBJECT *callObj);
 EXPORT STATUS attach_vfd_to_node(OBJECT *obj,OBJECT *calledVFD);
@@ -272,6 +273,9 @@ public:
 
 	//NR bus status toggle function
 	STATUS NR_swap_swing_status(bool desired_status);
+
+	//NR bus swing-status check
+	bool NR_swing_status_check(void);
 
 	//Island-condition reset function
 	STATUS reset_node_island_condition(void);

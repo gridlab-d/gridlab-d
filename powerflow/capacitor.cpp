@@ -101,6 +101,8 @@ capacitor::capacitor(MODULE *mod):node(mod)
 			GL_THROW("Unable to publish capacitor deltamode function");
 		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
 			GL_THROW("Unable to publish capacitor swing-swapping function");
+		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
+			GL_THROW("Unable to publish capacitor swing-status check function");
     }
 }
 
