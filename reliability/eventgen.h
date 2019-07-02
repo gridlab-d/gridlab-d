@@ -63,17 +63,21 @@ typedef struct s_relevantstruct {
 	struct s_relevantstruct *next;	//Link to next item
 } RELEVANTSTRUCT;	//"off-key" event structure
 
-class external_events {
+class external_event {
 public:
-	external_events() {
-		events = std::vector<Json::Value>();
-	}
-	std::vector<Json::Value> events;
+	std::string name;
+	char * type;
+	OBJECT *fault_object;
+	OBJECT *effected_safety_device;
+	bool enable_event;
+	bool event_enabled;
+	bool disable_event;
+	int implemented_fault;
 };
 
 class eventgen : public gld_object {
 private:
-	std::vector<Json::Value> external_events;
+	std::vector<external_event *> external_events;
 	double curr_fail_dist_params[2];	/**< Current parameters of failure_dist - used to track changes */
 	double curr_rest_dist_params[2];	/**< Current parameters of restore_dist - used to track changes */
 	enumeration curr_fail_dist;			/**< Current failure distribution type - used to track changes */
@@ -101,6 +105,7 @@ private:
 	FUNCTIONADDR metrics_object_event_ended_sec;	/**< Function pointer for the metrics object and "event_ended_sec" function */
 	FUNCTIONADDR metrics_get_interrupted_count;		/**< Function pointer for the metrics object and "get_interrupted" function */
 	FUNCTIONADDR metrics_get_interrupted_count_sec;	/**< Function pointer for the metrics object and "get_interrupted_secondary" function */
+	void parse_external_fault_events(char *event_char);
 
 public:
 	RELEVANTSTRUCT Unhandled_Events;	/**< unhandled event linked list */
@@ -122,6 +127,7 @@ public:
 	void gen_random_time(enumeration rand_dist_type, double param_1, double param_2, TIMESTAMP *event_time, unsigned int *event_nanoseconds, double *event_double);	//Random time function - easier to call this way
 	int add_unhandled_event(OBJECT *obj_to_fault, char *event_type, TIMESTAMP fail_time, TIMESTAMP rest_length, int implemented_fault, bool fault_state);	/**< Function to add unhandled event into the structure */
 	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
+	bool use_external_faults;
 public:
 	/* required implementations */
 	eventgen(MODULE *module);
