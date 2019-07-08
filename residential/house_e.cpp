@@ -129,6 +129,13 @@ char *_strlwr(char *s)
 }
 #endif
 
+// for commercial house-zone sequence transforms
+static complex A_OPERATOR =  complex (-0.5,  0.8660254);
+static complex A2_OPERATOR = complex (-0.5, -0.8660254);
+static double MIN_YSHUNT = 1.0e-12;
+static complex CUNITY = complex (1.0, 0.0);
+static complex CZERO = complex (0.0, 0.0);
+
 // list of enduses that are implicitly active
 set house_e::implicit_enduses_active = IEU_ALL;
 enumeration house_e::implicit_enduse_source = IES_ELCAP1990;
@@ -769,6 +776,7 @@ int house_e::create()
 	pNominalVoltage = NULL;
 	pPhases = NULL;
 	externalPhases = 0;
+	numPhases = 0;
 	
 	//Powerflow values -- set defaults here
 	value_Circuit_V[0] = complex(2.0*default_line_voltage,0.0);	//Duplicates old method
@@ -1322,6 +1330,7 @@ int house_e::init(OBJECT *parent)
 
 	// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
 	OBJECT *obj = OBJECTHDR(this);
+	// for single-phase houses
 	if (parent!=NULL && (gl_object_isa(parent,"triplex_meter","powerflow") || gl_object_isa(obj->parent,"triplex_node","powerflow")))
 	{
 		//Map to the triplex variable for houses
@@ -1386,7 +1395,7 @@ int house_e::init(OBJECT *parent)
 		proper_meter_parent = true;
 		commercial_load_parent = false;
 	}
-	else if (parent!=NULL && (gl_object_isa(parent,"load","powerflow")))
+	else if (parent!=NULL && (gl_object_isa(parent,"load","powerflow"))) // for three-phase commercial zone-houses
 	{
 		// map the meter variables
 		pMeterStatus = new gld_property(parent,"service_status");
@@ -1424,8 +1433,12 @@ int house_e::init(OBJECT *parent)
 			*/
 		}
 		externalPhases = pPhases->get_set();
-		gl_output ("house: %s is commercial with turns ratio %g and phases %d", 
-				   obj->name, internalTurnsRatio, externalPhases);
+		numPhases = 0;
+		if (externalPhases & 1) numPhases += 1;
+		if (externalPhases & 2) numPhases += 1;
+		if (externalPhases & 4) numPhases += 1;
+//		gl_output ("house: %s is commercial with turns ratio %g and %d phases, set = %d", 
+//				   obj->name, internalTurnsRatio, numPhases, externalPhases);
 
 		// set flags for the powerflow interface
 		proper_meter_parent = true;
@@ -3381,27 +3394,47 @@ void house_e::pull_complex_powerflow_values(void)
 {
 	//Pull in the various values from powerflow - straight reads
 	if (commercial_load_parent == true) {
-		double denom = 0.0;
-		double vavg = 0.0;
-		if (externalPhases & 1) {
-			denom += 1.0;
-			vavg += pCircuit_V[0]->get_complex().Mag();
+		if (numPhases == 3) { // V1n = positive-sequence voltage
+			complex Va = pCircuit_V[0]->get_complex();
+			complex Vb = pCircuit_V[1]->get_complex();
+			complex Vc = pCircuit_V[2]->get_complex();
+			value_Circuit_V[1] = Va + A_OPERATOR * Vb + A2_OPERATOR * Vc;
+			value_Circuit_V[1] /= 3.0;
+		} else if (numPhases == 2) {
+			complex v1;
+			complex v2;
+			if (!(externalPhases & 1)) { // phases B and C
+				v1 = pCircuit_V[1]->get_complex();
+				v2 = pCircuit_V[2]->get_complex();
+			} else if (!(externalPhases & 2)) { // phases A and C
+				v1 = pCircuit_V[0]->get_complex();
+				v2 = pCircuit_V[2]->get_complex();
+			} else if (!(externalPhases & 4)) { // phases A and B
+				v1 = pCircuit_V[0]->get_complex();
+				v2 = pCircuit_V[1]->get_complex();
+			}
+			double vavg = 0.5 * (v1.Mag() + v2.Mag());
+			v1.Mag(vavg);
+			value_Circuit_V[1] = v1;
+		} else if (numPhases == 1) { // V1n = positive-sequence voltage
+			if (externalPhases & 1) {
+				value_Circuit_V[1] = pCircuit_V[0]->get_complex();
+			} else if (externalPhases & 2) {
+				value_Circuit_V[1] = pCircuit_V[1]->get_complex();
+			} else if (externalPhases & 4) {
+				value_Circuit_V[1] = pCircuit_V[2]->get_complex();
+			}
 		}
-		if (externalPhases & 2) {
-			denom += 1.0;
-			vavg += pCircuit_V[1]->get_complex().Mag();
-		}
-		if (externalPhases & 4) {
-			denom += 1.0;
-			vavg += pCircuit_V[2]->get_complex().Mag();
-		}
-		vavg /= denom;
-		vavg /= internalTurnsRatio;
-		value_Circuit_V[1] = value_Circuit_V[2] = vavg;
-		value_Circuit_V[0] = value_Circuit_V[1] + value_Circuit_V[2];
-//		OBJECT *obj = OBJECTHDR(this);
-//		gl_output ("house: %s is commercial with %g phases and equivalent panel voltages [%g, %g, %g]", 
-//				   obj->name, denom, value_Circuit_V[1].Mag(), value_Circuit_V[2].Mag(), value_Circuit_V[0].Mag());
+		value_Circuit_V[1] /= internalTurnsRatio;
+		value_Circuit_V[2] = -value_Circuit_V[1]; // equal and opposite hot voltages, i.e., V2n = -V1n
+		value_Circuit_V[0] = value_Circuit_V[1] * 2.0; // line-to-line is V1n - V2n, or just 2V1n as assumed above
+		OBJECT *obj = OBJECTHDR(this);
+/*
+    gl_output ("house: %s is commercial with %d phases and equivalent panel voltages [%g, %g, %g] angle %g",
+               obj->name, numPhases,                                                                        
+               value_Circuit_V[1].Mag(), value_Circuit_V[2].Mag(), value_Circuit_V[0].Mag(),                
+               value_Circuit_V[1].Arg());                                                                   
+*/
 	} else {
 		value_Circuit_V[0] = pCircuit_V[0]->get_complex();
 		value_Circuit_V[1] = pCircuit_V[1]->get_complex();
@@ -3419,66 +3452,90 @@ void house_e::push_complex_powerflow_values(void)
 	int indexval;
 
 	if (commercial_load_parent == true) {
-        OBJECT *obj = OBJECTHDR(this);                                   
+    OBJECT *obj = OBJECTHDR(this);                                   
+
+		// for value_Shunt, value_Line_I and value_Power the circuit indices are:
+		//  0 = 1-N, 1 = 2-N, 2 = 1-2s
+		// Unlike for triplex meters, pShunt on loads is Z
 /*
-        gl_output ("house: %s commercial 1/Z=[%g, %g] [%g, %g] [%g, %g]",
-                   obj->name,                                            
-                   value_Shunt[0].Re(), value_Shunt[0].Im(),             
-                   value_Shunt[1].Re(), value_Shunt[1].Im(),             
-                   value_Shunt[2].Re(), value_Shunt[2].Im());            
-        gl_output ("                     I=[%g, %g] [%g, %g] [%g, %g]",  
-                   obj->name,                                            
-                   value_Line_I[0].Re(), value_Line_I[0].Im(),           
-                   value_Line_I[1].Re(), value_Line_I[1].Im(),           
-                   value_Line_I[2].Re(), value_Line_I[2].Im());          
-        gl_output ("                     P=[%g, %g] [%g, %g] [%g, %g]",  
-                   obj->name,                                            
-                   value_Power[0].Re(), value_Power[0].Im(),             
-                   value_Power[1].Re(), value_Power[1].Im(),             
-                   value_Power[2].Re(), value_Power[2].Im());            
+		gl_output ("                     I=[%g @ %g] [%g @ %g] [%g @ %g]",  
+							 obj->name,                                            
+							 value_Line_I[0].Mag(), value_Line_I[0].Arg(),           
+							 value_Line_I[1].Mag(), value_Line_I[1].Arg(),           
+							 value_Line_I[2].Mag(), value_Line_I[2].Arg());          
+    gl_output ("house: %s commercial Y=[%g +j%g] [%g +j%g] [%g +j%g]",
+               obj->name,                                            
+               value_Shunt[0].Re(), value_Shunt[0].Im(),             
+               value_Shunt[1].Re(), value_Shunt[1].Im(),             
+               value_Shunt[2].Re(), value_Shunt[2].Im());            
+    gl_output ("                     P=[%g +j%g] [%g +j%g] [%g +j%g]",  
+               obj->name,                                            
+               value_Power[0].Re(), value_Power[0].Im(),             
+               value_Power[1].Re(), value_Power[1].Im(),             
+               value_Power[2].Re(), value_Power[2].Im());            
 */
-		double denom = 0.0;
-		if (externalPhases & 1) denom += 1.0;
-		if (externalPhases & 2) denom += 1.0;
-		if (externalPhases & 4) denom += 1.0;
+
+		double denom = numPhases;
 		// split the total power equally among the phases
 		complex balPower = (value_Power[0] + value_Power[1] + value_Power[2]) / denom;
+		int insertP = 0;
+		if (balPower.Mag() > 0.0) {
+			insertP = 1;
+//			gl_output ("house: %s commercial per-phase P=[%g +j%g]", obj->name, balPower.Re(), balPower.Im());             
+		}
 		// adjust the constant shunt for voltages and internal turns, then balance among phases, convert to Z in loop below
-		complex balShunt = (complex(4.0,0.0) * value_Shunt[0] + value_Shunt[1] + value_Shunt[2]) 
+		complex balShunt = (value_Shunt[0] + value_Shunt[1] + value_Shunt[2] * 4.0) 
 			/ (internalTurnsRatio * internalTurnsRatio) / denom;
 		int insertZ = 0;
 		if (balShunt.Mag() > 0.0) {
 			insertZ = 1;
-			gl_output ("house: %s commercial 1/Z=[%g, %g]", obj->name, balShunt.Re(), balShunt.Im());             
+//			gl_output ("house: %s commercial per-phase Y=[%g +j%g]", obj->name, balShunt.Re(), balShunt.Im());
 		}
 		// adjust the constant current for voltages and internal turns, then balance among phases
-		complex balCurrent = (complex(2.0,0.0) + value_Line_I[0] + value_Line_I[1] + value_Line_I[2])
+		complex balCurrent = (value_Line_I[0] + value_Line_I[1] + value_Line_I[2] * 2.0)
 			/ internalTurnsRatio / denom;
 		int insertI = 0;
 		if (balCurrent.Mag() > 0.0) {
 			insertI = 1;
-			gl_output ("house: %s commercial I=[%g, %g]", obj->name, balCurrent.Re(), balCurrent.Im());             
+//			gl_output ("house: %s commercial per-phase I=[%g @ %g]", obj->name, balCurrent.Mag(), balCurrent.Arg());             
 		}
 		// now push this building's power onto the parent load phases that are actually present
 		int mask = 1;
-		complex cOne = complex(1.0,0.0);
 		for (indexval = 0; indexval < 3; indexval++) {
 			if (externalPhases & mask) {
-				temp_complex_val = pPower[indexval]->get_complex();
-				temp_complex_val += balPower;
-				pPower[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+				if (insertP > 0) {
+					temp_complex_val = pPower[indexval]->get_complex();
+//					gl_output ("  adding P to [%g +j%g] on phase mask %d", 
+//										 temp_complex_val.Re(), temp_complex_val.Im(), mask);
+					temp_complex_val += balPower;
+					pPower[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+				}
 				if (insertZ > 0) {
-					temp_complex_val = pShunt[indexval]->get_complex();
+					temp_complex_val = pShunt[indexval]->get_complex();  // this is Z, not Y
 					if (temp_complex_val.Mag() > 0.0) {
-						temp_complex_val = cOne / (cOne / temp_complex_val + balShunt);
+						complex new_y = CUNITY / temp_complex_val + balShunt;
+						if (new_y.Mag() > 1.0e-12) {
+							temp_complex_val = CUNITY / new_y;
+						} else {
+							temp_complex_val = CZERO;
+						}
 					} else {
-						temp_complex_val = cOne / balShunt;
+						temp_complex_val = CUNITY / balShunt;
 					}
+//					gl_output ("  setting Z = [%g +j%g] on phase mask %d", 
+//										 temp_complex_val.Re(), temp_complex_val.Im(), mask);
 					pShunt[indexval]->setp<complex>(temp_complex_val,*test_rlock);
 				}
 				if (insertI > 0) {
 					temp_complex_val = pLine_I[indexval]->get_complex();
-					temp_complex_val += balCurrent;
+					// rotate this current according to its phase connection
+					complex injCurrent = balCurrent;
+					injCurrent.Arg(value_Circuit_V[indexval].Arg() + balCurrent.Arg());
+//					gl_output ("  adding I [%g @ %g] to [%g @ %g] on phase mask %d for Vangle %g", 
+//										 injCurrent.Mag(), injCurrent.Arg(), 
+//										 temp_complex_val.Mag(), temp_complex_val.Arg(), 
+//										 mask, value_Circuit_V[indexval].Arg());
+					temp_complex_val += injCurrent;
 					pLine_I[indexval]->setp<complex>(temp_complex_val,*test_rlock);
 				}
 			}

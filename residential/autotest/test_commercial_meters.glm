@@ -1,4 +1,8 @@
 // patterned after test_HVAC_common_cool, but not with triplex_meter
+// we have 3 identical houses connected to:
+//    1) a 480-volt, 225-kVA 3-phase transformer
+//    2) a 208-volt,  75-kVA 3-phase transformer
+//    3) a 120-volt,  15-kVA transformer on phase B
 
 #set minimum_timestep=1;
 
@@ -13,7 +17,7 @@ module powerflow;
 clock{
 	timezone PST+0PDT;
 	starttime '2001-07-24 01:00:00';
-	stoptime '2001-07-25 01:00:21';
+	stoptime '2001-07-25 01:00:10';
 }
 
 schedule zippwr {
@@ -95,6 +99,27 @@ object substation {
   base_power 12000000.00;
   power_convergence_value 100.0;
   phases ABCN;
+  object complex_assert{
+    target distribution_power_A;
+    in '2001-07-24 13:31:40';
+    once ONCE_TRUE;
+    value 3309.02+3451.25j;
+    within 1.0;
+  };
+  object complex_assert{
+    target distribution_power_B;
+    in '2001-07-24 13:31:40';
+    once ONCE_TRUE;
+    value 6958.75+4394.38j;
+    within 1.0;
+  };
+  object complex_assert{
+    target distribution_power_C;
+    in '2001-07-24 13:31:40';
+    once ONCE_TRUE;
+    value 3114.49+3112.89j;
+    within 1.0;
+  };
 }
 
 object load {
@@ -145,7 +170,7 @@ object transformer {
 }
 
 object house{
-  name house_480;
+  name house_120;
 	parent load_120;
 	window_wall_ratio 0.07;
 	cooling_COP 3.0;
@@ -161,34 +186,80 @@ object house{
 		heat_fraction 1;
 		base_power zippwr*1;		
 		power_pf 1;
-		power_fraction 1;
-		current_pf 0;
-		current_fraction 0;
-		impedance_pf 0;
+		power_fraction 0;
+		current_pf 1;
+		current_fraction 1;
+		impedance_pf 1;
 		impedance_fraction 0;
 	};
 };
+
+object house{
+  name house_208;
+	parent load_208;
+	window_wall_ratio 0.07;
+	cooling_COP 3.0;
+	system_mode OFF;
+	auxiliary_strategy DEADBAND;
+	heating_system_type HEAT_PUMP;
+	cooling_system_type ELECTRIC;
+	air_temperature 63.3;
+	mass_temperature 63.3;
+	heating_setpoint heatspt*1;
+	cooling_setpoint coolspt*1;
+	object ZIPload {
+		heat_fraction 1;
+		base_power zippwr*1;		
+		power_pf 1;
+		power_fraction 0;
+		current_pf 1;
+		current_fraction 1;
+		impedance_pf 1;
+		impedance_fraction 0;
+	};
+};
+
+object house{
+  name house_480;
+	parent load_480;
+	window_wall_ratio 0.07;
+	cooling_COP 3.0;
+	system_mode OFF;
+	auxiliary_strategy DEADBAND;
+	heating_system_type HEAT_PUMP;
+	cooling_system_type ELECTRIC;
+	air_temperature 63.3;
+	mass_temperature 63.3;
+	heating_setpoint heatspt*1;
+	cooling_setpoint coolspt*1;
+	object ZIPload {
+		heat_fraction 1;
+		base_power zippwr*1;		
+		power_pf 1;
+		power_fraction 0;
+		current_pf 1;
+		current_fraction 1;
+		impedance_pf 1;
+		impedance_fraction 0;
+	};
+};
+
 // without houses connected, the no-load transformer losses are:
 //   550.353 + j2857.52 VA on phases A and C
 //   640.439 + j3236.76 VA on phase B
+// each house draws a peak of about 2 kW
 object recorder{
 	parent network_node;
 	property distribution_power_A.real,distribution_power_A.imag,distribution_power_B.real,distribution_power_B.imag,distribution_power_C.real,distribution_power_C.imag;
 	file "test_commercial_meters_load.csv";
-	interval 1;
+	interval 10;
 	limit 86425;
 };
 object recorder{
 	parent load_480;
 	property voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag;
 	file "voltages_480.csv";
-	interval 3600;
+	interval 10;
 	limit 86425;
 };
-//	object double_assert{
-//		target "measured_real_energy";
-//		in '2001-07-25 1:00:19';
-//		once ONCE_TRUE;
-//		value 27543;
-//		within 137.71;//asserting house_e within 0.5 percent of Rob's ETP result
-//	};
+
