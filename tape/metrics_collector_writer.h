@@ -253,14 +253,14 @@ private:
 	void hdfFeeder ();
 
 	// Functions to write dataset to a file
-	void hdfWrite(char256 filename, H5::CompType* mtype, void *ptr, int structKind, int idx, int size);
+	void hdfWrite(char256 filename, H5::CompType* mtype, void *ptr, int structKind, int size);
 	void hdfMetadataWrite(Json::Value& meta, char* time_str, char256 filename);
-	void hdfBillingMeterWrite (int objs, Json::Value& metrics);
-	void hdfHouseWrite (int objs, Json::Value& metrics);
-	void hdfInverterWrite (int objs, Json::Value& metrics);
-	void hdfCapacitorWrite (int objs, Json::Value& metrics);
-	void hdfRegulatorWrite (int objs, Json::Value& metrics);
-	void hdfFeederWrite (int objs, Json::Value& metrics);
+	void hdfBillingMeterWrite (size_t objs, Json::Value& metrics);
+	void hdfHouseWrite (size_t objs, Json::Value& metrics);
+	void hdfInverterWrite (size_t objs, Json::Value& metrics);
+	void hdfCapacitorWrite (size_t objs, Json::Value& metrics);
+	void hdfRegulatorWrite (size_t objs, Json::Value& metrics);
+	void hdfFeederWrite (size_t objs, Json::Value& metrics);
 #endif
 
 private:

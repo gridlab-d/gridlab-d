@@ -1,8 +1,8 @@
 /*
  * metrics_collector_writer.cpp
  *
- *  Created on: Jan 30, 2017
- *      Author: tang526
+ *  Created on: Jan 30, 2017,  Author: tang526
+ *  Modified on: June, 2019,   Author: Mitch Pelton
  */
 
 #include "metrics_collector_writer.h"
@@ -126,7 +126,6 @@ int metrics_collector_writer::init(OBJECT *parent){
 
 	// Update time variables
 	startTime = gl_globalclock;
-	last_write = gl_globalclock;
 	next_write = gl_globalclock + interval_length;
 	final_write = gl_globalstoptime;
 
@@ -316,21 +315,26 @@ void metrics_collector_writer::writeMetadata(Json::Value& meta, Json::Value& met
 }
 
 TIMESTAMP metrics_collector_writer::postsync(TIMESTAMP t0, TIMESTAMP t1){
+//	cout << "postsync t0-" << t0 << " t1-" << t1 << endl;
 	// recalculate next_time, since we know commit() will fire
-	if(next_write <= t1){
-		interval_write = true;
-		last_write = t1;
-		next_write = min(t1 + interval_length, final_write);
+	if (!interval_write) {
+		if (next_write == t1) {
+			interval_write = true;
+//			cout << "postsync write " << next_write << endl;
+		}
+		return next_write;
 	}
 	// the interval recorders have already returned t1+interval_length, earlier in the sequence.
 	return TS_NEVER;
 }
 
 int metrics_collector_writer::commit(TIMESTAMP t1){
+//	cout << "commit t1 " << t1 << endl;
 	// if periodic interval, check for write
-	if(interval_write){
-		if(0 == write_line(t1)){
-			gl_error("metrics_collector_writer::commit(): error when writing the values to JSON format");
+	if (interval_write) {
+//		cout << "commit write " << t1 << endl;
+		if (0 == write_line(t1)) {
+			gl_error("metrics_collector_writer::commit(): error when writing the values");
 			return 0;
 		}
 		interval_write = false;
@@ -347,8 +351,6 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 	int index = 0;
 
 	double *metrics;
-	Json::Value metrics_writer_Output_time;
-	Json::Value metrics_writer_Output_data;
 	// metrics JSON value
 	Json::Value billing_meter_objects;
 	Json::Value house_objects;
@@ -358,11 +360,10 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 	Json::Value feeder_objects;
 
 	// Write Time -> represents the time from the StartTime
-	metrics_writer_Output_time["Time"] = (Json::Int64)(t1 - startTime); // in seconds
 	int writeTime = t1 - startTime; // in seconds
 	sprintf(time_str, "%d", writeTime);
 
-//	printf("write_line at %d seconds, final %ld, now %ld\n", writeTime, final_write, t1);
+//	cout << "write_line at " << writeTime << " seconds, final " << final_write << ", now " << t1 << endl;
 
 	// Go through each metrics_collector object, and check its time interval given
 	OBJECT *obj = NULL;
@@ -517,6 +518,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 	metrics_writer_capacitors[time_str] = capacitor_objects;
 	metrics_writer_regulators[time_str] = regulator_objects;
 	metrics_writer_feeders[time_str] = feeder_objects;
+
 /*
 	cout << "total size -> " << index << endl;
 	cout << m_billing_meter << "size ->" << billing_meter_objects.size() << endl;
@@ -526,8 +528,8 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 	cout << m_regulator << "size -> " << regulator_objects.size() << endl;
 	cout << m_feeder << "size -> " << feeder_objects.size() << endl;
 */
-	if (final_write <= t1 || (writeTime >= (interim_length * interim_cnt))) {
 
+	if (writeTime == (interim_length * interim_cnt)) {
 		if (strcmp(extension, m_json.c_str()) == 0) {
 			writeJsonFile(filename_billing_meter, metrics_writer_billing_meters);
 			writeJsonFile(filename_house, metrics_writer_houses);
@@ -546,10 +548,11 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 			hdfFeederWrite(feeder_objects.size(), metrics_writer_feeders);
 		}
 #endif
-//		cout << "finish interim write time -> " << (interim_length * interim_cnt) << endl;
+//		cout << "write_line interim write " << (interim_length * interim_cnt) << endl;
 		interim_cnt++;
 		line_cnt = 0;
 	}
+	next_write = t1 + interval_length;
 	line_cnt++;
 	return 1;
 }
@@ -693,7 +696,9 @@ void metrics_collector_writer::hdfFeeder () {
 	mtype_feeders->insertMember(m_reactive_power_losses_median, HOFFSET(Feeder, reactive_power_losses_median), H5::PredType::NATIVE_DOUBLE);
 }
 
-void metrics_collector_writer::hdfWrite(char256 filename, H5::CompType* mtype, void* ptr, int structKind, int idx, int size) {
+void metrics_collector_writer::hdfWrite(char256 filename, H5::CompType* mtype, void* ptr, int structKind, int size) {
+	cout << "hdfWrite size " << size << endl;
+
 	H5::Exception::dontPrint();
 	try {
 		// preparation of a dataset and a file.
@@ -702,7 +707,7 @@ void metrics_collector_writer::hdfWrite(char256 filename, H5::CompType* mtype, v
 		H5::DataSpace space(rank, dim);
 
 		// Modify dataset creation property to enable chunking
-		hsize_t chunk_dims[1] = { idx };
+		hsize_t chunk_dims[1] = { size };
 		H5::DSetCreatPropList  *plist = new  H5::DSetCreatPropList;
 		plist->setChunk(1, chunk_dims);
 		// Set ZLIB (DEFLATE) Compression using level.
@@ -722,12 +727,12 @@ void metrics_collector_writer::hdfWrite(char256 filename, H5::CompType* mtype, v
 		H5::DataSet *dataset = new H5::DataSet(file->createDataSet(DatasetName, *mtype, space, *plist));
 
 		switch (structKind) {
-			case 1:	dataset->write((BillingMeter *)ptr, *mtype);		break;
-			case 2:	dataset->write((House *)ptr, *mtype);		break;
-			case 3:	dataset->write((Inverter *)ptr, *mtype);	break;
-			case 4:	dataset->write((Capacitor *)ptr, *mtype);	break;
-			case 5:	dataset->write((Regulator *)ptr, *mtype);	break;
-			case 6:	dataset->write((Feeder *)ptr, *mtype);		break;
+			case 1:	dataset->write(((std::vector <BillingMeter> *)ptr)->data(), *mtype);		break;
+			case 2:	dataset->write(((std::vector <House> *)ptr)->data(), *mtype);		break;
+			case 3:	dataset->write(((std::vector <Inverter> *)ptr)->data(), *mtype);	break;
+			case 4:	dataset->write(((std::vector <Capacitor> *)ptr)->data(), *mtype);	break;
+			case 5:	dataset->write(((std::vector <Regulator> *)ptr)->data(), *mtype);	break;
+			case 6:	dataset->write(((std::vector <Feeder> *)ptr)->data(), *mtype);		break;
 		}
 
 		delete plist;
@@ -799,12 +804,14 @@ void metrics_collector_writer::hdfMetadataWrite(Json::Value& meta, char* time_st
 	{	error.printErrorStack();	}
 }
 
-void metrics_collector_writer::hdfBillingMeterWrite (int objs, Json::Value& metrics) {
-		BillingMeter tbl[line_cnt*objs];
+void metrics_collector_writer::hdfBillingMeterWrite (size_t objs, Json::Value& metrics) {
+		std::vector <BillingMeter> tbl;
+		tbl.reserve(line_cnt*objs);
 		int idx = 0;
 		for (auto const& id : metrics.getMemberNames())  {
 			Json::Value name = metrics[id];
 			for (auto const& uid : name.getMemberNames())  {
+				tbl.push_back(BillingMeter());
 				Json::Value mtr = name[uid];
 				tbl[idx].time = stoi(id);
 				strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
@@ -841,16 +848,18 @@ void metrics_collector_writer::hdfBillingMeterWrite (int objs, Json::Value& metr
 				idx++;
 			}
 		}
-		hdfWrite(filename_billing_meter, mtype_billing_meters, &tbl, 1, idx, (sizeof(tbl) / sizeof(BillingMeter)));
+		hdfWrite(filename_billing_meter, mtype_billing_meters, &tbl, 1, idx);
 		metrics.clear();
 }
 
-void metrics_collector_writer::hdfHouseWrite (int objs, Json::Value& metrics) {
-		House tbl[line_cnt*objs];
+void metrics_collector_writer::hdfHouseWrite (size_t objs, Json::Value& metrics) {
+		std::vector <House> tbl;
+		tbl.reserve(line_cnt*objs);
 		int idx = 0;
 		for (auto const& id : metrics.getMemberNames())  {
 			Json::Value name = metrics[id];
 			for (auto const& uid : name.getMemberNames())  {
+				tbl.push_back(House());
 				Json::Value mtr = name[uid];
 				tbl[idx].time = stoi(id);
 				strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
@@ -871,16 +880,18 @@ void metrics_collector_writer::hdfHouseWrite (int objs, Json::Value& metrics) {
 				idx++;
 			}
 		}
-		hdfWrite(filename_house, mtype_houses, &tbl, 2, idx, (sizeof(tbl) / sizeof(House)));
+		hdfWrite(filename_house, mtype_houses, &tbl, 2, idx);
 		metrics.clear();
 }
 
-void metrics_collector_writer::hdfInverterWrite (int objs, Json::Value& metrics) {
-		Inverter tbl[line_cnt*objs];
+void metrics_collector_writer::hdfInverterWrite (size_t objs, Json::Value& metrics) {
+		std::vector <Inverter> tbl;
+		tbl.reserve(line_cnt*objs);
 		int idx = 0;
 		for (auto const& id : metrics.getMemberNames())  {
 			Json::Value name = metrics[id];
 			for (auto const& uid : name.getMemberNames())  {
+				tbl.push_back(Inverter());
 				Json::Value mtr = name[uid];
 				tbl[idx].time = stoi(id);
 				strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
@@ -893,16 +904,18 @@ void metrics_collector_writer::hdfInverterWrite (int objs, Json::Value& metrics)
 				idx++;
 			}
 		}
-		hdfWrite(filename_inverter, mtype_inverters, &tbl, 3, idx, (sizeof(tbl) / sizeof(Inverter)));
+		hdfWrite(filename_inverter, mtype_inverters, &tbl, 3, idx);
 		metrics.clear();
 }
 
-void metrics_collector_writer::hdfCapacitorWrite (int objs, Json::Value& metrics) {
-		Capacitor tbl[line_cnt*objs];
+void metrics_collector_writer::hdfCapacitorWrite (size_t objs, Json::Value& metrics) {
+		std::vector <Capacitor> tbl;
+		tbl.reserve(line_cnt*objs);
 		int idx = 0;
 		for (auto const& id : metrics.getMemberNames())  {
 			Json::Value name = metrics[id];
 			for (auto const& uid : name.getMemberNames())  {
+				tbl.push_back(Capacitor());
 				Json::Value mtr = name[uid];
 				tbl[idx].time = stoi(id);
 				strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
@@ -910,16 +923,18 @@ void metrics_collector_writer::hdfCapacitorWrite (int objs, Json::Value& metrics
 				idx++;
 			}
 		}
-		hdfWrite(filename_capacitor, mtype_capacitors, &tbl, 4, idx, (sizeof(tbl) / sizeof(Capacitor)));
+		hdfWrite(filename_capacitor, mtype_capacitors, &tbl, 4, idx);
 		metrics.clear();
 }
 
-void metrics_collector_writer::hdfRegulatorWrite (int objs, Json::Value& metrics) {
-		Regulator tbl[line_cnt*objs];
+void metrics_collector_writer::hdfRegulatorWrite (size_t objs, Json::Value& metrics) {
+		std::vector <Regulator> tbl;
+		tbl.reserve(line_cnt*objs);
 		int idx = 0;
 		for (auto const& id : metrics.getMemberNames())  {
 			Json::Value name = metrics[id];
 			for (auto const& uid : name.getMemberNames())  {
+				tbl.push_back(Regulator());
 				Json::Value mtr = name[uid];
 				tbl[idx].time = stoi(id);
 				strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
@@ -927,16 +942,18 @@ void metrics_collector_writer::hdfRegulatorWrite (int objs, Json::Value& metrics
 				idx++;
 			}
 		}
-		hdfWrite(filename_regulator, mtype_regulators, &tbl, 5, idx, (sizeof(tbl) / sizeof(Regulator)));
+		hdfWrite(filename_regulator, mtype_regulators, &tbl, 5, idx);
 		metrics.clear();
 }
 
-void metrics_collector_writer::hdfFeederWrite (int objs, Json::Value& metrics) {
-		Feeder tbl[line_cnt*objs];
+void metrics_collector_writer::hdfFeederWrite (size_t objs, Json::Value& metrics) {
+		std::vector <Feeder> tbl;
+		tbl.reserve(line_cnt*objs);
 		int idx = 0;
 		for (auto const& id : metrics.getMemberNames())  {
 			Json::Value name = metrics[id];
 			for (auto const& uid : name.getMemberNames())  {
+				tbl.push_back(Feeder());
 				Json::Value mtr = name[uid];
 				tbl[idx].time = stoi(id);
 				strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
@@ -961,7 +978,7 @@ void metrics_collector_writer::hdfFeederWrite (int objs, Json::Value& metrics) {
 				idx++;
 			}
 		}
-		hdfWrite(filename_feeder, mtype_feeders, &tbl, 6, idx, (sizeof(tbl) / sizeof(Feeder)));
+		hdfWrite(filename_feeder, mtype_feeders, &tbl, 6, idx);
 		metrics.clear();
 }
 #endif HAVE_HDF5
