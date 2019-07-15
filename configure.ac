@@ -496,17 +496,17 @@ gld_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $HELICS_CPPFLAGS"
 # add libhelics to HELICS_LIBS if missing
 AS_CASE([$host],
 	[*linux*], [AS_CASE([$HELICS_LIBS],
-					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lrt -lzmq -lboost_filesystem -lboost_program_options -lboost_system -lboost_unit_test_framework"])
+					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared"])
 				AS_CASE([$LIBS],
-					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lrt -lzmq -lboost_filesystem -lboost_program_options -lboost_system -lboost_unit_test_framework"])],
+					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared"])],
 	[*darwin*], [AS_CASE([$HELICS_LIBS],
-					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lrt -lzmq -lboost_filesystem -lboost_program_options -lboost_system -lboost_unit_test_framework"])
+					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared"])
 				AS_CASE([$LIBS],
-					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lrt -lzmq -lboost_filesystem -lboost_program_options -lboost_system -lboost_unit_test_framework"])],
+					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared"])],
 	[*mingw*], [AS_CASE([$HELICS_LIBS],
-					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lzmq -lboost_filesystem-mt -lboost_program_options-mt -lboost_system-mt -lboost_unit_test_framework-mt"])
+					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared"])
 				AS_CASE([$LIBS],
-					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lzmq -lboost_filesystem-mt -lboost_program_options-mt -lboost_system-mt -lboost_unit_test_framework-mt"])])
+					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared"])])
 have_helics=yes
 AC_MSG_CHECKING([for HELICS])
 AC_LINK_IFELSE(
