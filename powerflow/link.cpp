@@ -7367,7 +7367,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				safety_hit = true;
 
 			}//End recloser
-			else if ((NR_branchdata[NR_branch_reference].lnk_type == 2) && (switch_val == true))	//Switch induced fault - handle it
+			else if (NR_branchdata[NR_branch_reference].lnk_type == 2)	//Switch induced fault - handle it
 			{
 				//Follows convention of safety devices above
 				//Extra coding - basically what would have happened below when it was classified as a safety device
@@ -7597,6 +7597,82 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Break out of this pesky loop
 								break;
 							}//end recloser
+							else if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 2)	//Switch induced fault - handle it
+							{
+								//Follows convention of safety devices above
+								//Extra coding - basically what would have happened below when it was classified as a safety device
+								//Get the switch
+								tmpobj = NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].obj;
+
+								if (tmpobj == NULL)
+								{
+									GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									/*  TROUBLESHOOT
+									While attempting to set the state of a switch, an error occurred.  Please try again.  If the error persists,
+									please submit a bug report and your code via the trac website.
+									*/
+								}
+
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_state"));
+
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change switch state on %s",tmpobj->name);
+									/*  TROUBLESHOOT
+									While attempting to alter a switch state, the proper switch function was not found.
+									If the problem persists, please submit a bug report and your code to the trac website.
+									*/
+								}
+
+								//Update the switch statii
+								ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+
+								//Make sure it worked
+								if (ext_result != 1)
+								{
+									GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									//defined above
+								}
+
+								//Retrieve the mean_repair_time
+								temp_double_val = get_double(tmpobj,"mean_repair_time");
+
+								//See if it worked
+								if (temp_double_val == NULL)
+								{
+									gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
+									//Defined above
+									*repair_time = 0;
+								}
+								else	//It did map - get the value
+								{
+									*repair_time = (TIMESTAMP)(*temp_double_val);
+								}
+
+								//Store ourselves as our protective device
+								for (phaseidx=0; phaseidx < 3; phaseidx++)
+								{
+									temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+									if ((phase_remove & temp_phases) == temp_phases)
+									{
+										protect_locations[phaseidx] = NR_busdata[temp_node].Link_Table[temp_table_loc];	//Store ourselves
+									}
+								}
+
+								//Flag our fault phases
+								NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].faultphases |= phase_remove;
+
+								//Update our fault phases so we aren't restored
+								NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
+
+								//Store the object handle
+								*protect_obj=tmpobj;
+
+								safety_hit = true;	//We hit a protective device
+								break;
+							}
 							else if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 5)	//Sectionalizer
 							{
 								//Get the sectionalizer
@@ -10173,7 +10249,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				safety_hit = true;
 
 			}//End recloser
-			else if ((NR_branchdata[NR_branch_reference].lnk_type == 2) && (switch_val == true))	//Switch induced fault - handle it
+			else if (NR_branchdata[NR_branch_reference].lnk_type == 2)	//Switch induced fault - handle it
 			{
 				//Follows convention of safety devices above
 				//Extra coding - basically what would have happened below when it was classified as a safety device
@@ -10403,6 +10479,82 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Break out of this pesky loop
 								break;
 							}//end recloser
+							else if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 2)	//Switch induced fault - handle it
+							{
+								//Follows convention of safety devices above
+								//Extra coding - basically what would have happened below when it was classified as a safety device
+								//Get the switch
+								tmpobj = NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].obj;
+
+								if (tmpobj == NULL)
+								{
+									GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									/*  TROUBLESHOOT
+									While attempting to set the state of a switch, an error occurred.  Please try again.  If the error persists,
+									please submit a bug report and your code via the trac website.
+									*/
+								}
+
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_state"));
+
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change switch state on %s",tmpobj->name);
+									/*  TROUBLESHOOT
+									While attempting to alter a switch state, the proper switch function was not found.
+									If the problem persists, please submit a bug report and your code to the trac website.
+									*/
+								}
+
+								//Update the switch statii
+								ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+
+								//Make sure it worked
+								if (ext_result != 1)
+								{
+									GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									//defined above
+								}
+
+								//Retrieve the mean_repair_time
+								temp_double_val = get_double(tmpobj,"mean_repair_time");
+
+								//See if it worked
+								if (temp_double_val == NULL)
+								{
+									gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
+									//Defined above
+									*repair_time = 0;
+								}
+								else	//It did map - get the value
+								{
+									*repair_time = (TIMESTAMP)(*temp_double_val);
+								}
+
+								//Store ourselves as our protective device
+								for (phaseidx=0; phaseidx < 3; phaseidx++)
+								{
+									temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+									if ((phase_remove & temp_phases) == temp_phases)
+									{
+										protect_locations[phaseidx] = NR_busdata[temp_node].Link_Table[temp_table_loc];	//Store ourselves
+									}
+								}
+
+								//Flag our fault phases
+								NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].faultphases |= phase_remove;
+
+								//Update our fault phases so we aren't restored
+								NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
+
+								//Store the object handle
+								*protect_obj=tmpobj;
+
+								safety_hit = true;	//We hit a protective device
+								break;
+							}
 							else if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 5)	//Sectionalizer
 							{
 								//Get the sectionalizer
@@ -11078,7 +11230,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 					else	//Not the SWING Bus
 					{
 						//See if we are of a "protective" device implementation
-						if ((NR_branchdata[protect_locations[phaseidx]].lnk_type == 2) && (switch_val == true))	//Switch
+						if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 2)	//Switch
 						{
 							//Get the switch
 							tmpobj = NR_branchdata[protect_locations[phaseidx]].obj;
@@ -12087,7 +12239,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 					else	//Not the SWING Bus
 					{
 						//See if we are of a "protective" device implementation
-						if ((NR_branchdata[protect_locations[phaseidx]].lnk_type == 2) && (switch_val == true))	//Switch
+						if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 2)	//Switch
 						{
 							//Get the switch
 							tmpobj = NR_branchdata[protect_locations[phaseidx]].obj;
@@ -13030,7 +13182,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 					else	//Not the SWING Bus
 					{
 						//See if we are of a "protective" device implementation
-						if ((NR_branchdata[protect_locations[phaseidx]].lnk_type == 2) && (switch_val == true))	//Switch
+						if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 2)	//Switch
 						{
 							//Get the switch
 							tmpobj = NR_branchdata[protect_locations[phaseidx]].obj;
@@ -13571,7 +13723,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 					else	//Not the SWING Bus
 					{
 						//See if we are of a "protective" device implementation
-						if ((NR_branchdata[protect_locations[phaseidx]].lnk_type == 2) && (switch_val == true))	//Switch
+						if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 2)	//Switch
 						{
 							//Flag the remote object's appropriate phases
 							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
