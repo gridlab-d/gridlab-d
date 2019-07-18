@@ -951,6 +951,23 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 			}
 		}
+
+		//Do standard events, just in case
+		if(t1 >= next_event_time) //Time for an event in supersecond
+		{
+			//Parse event list and execute any that are occurring
+			do_event(t1,t1_dbl,false);
+		}
+
+			//See where we're going
+		if (next_event_time == TS_NEVER)
+		{
+			return TS_NEVER;
+		}
+		else	//Must be valid-ish
+		{
+			return -next_event_time;	//Negative return, we'd like to go there if we're going that way
+		}
 	}
 	return TS_NEVER;
 }
