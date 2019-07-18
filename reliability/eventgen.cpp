@@ -703,9 +703,6 @@ int eventgen::init(OBJECT *parent)
 }
 int eventgen::precommit(TIMESTAMP t1)
 {
-	if(use_external_faults && external_fault_event[0] != '\0') {
-		parse_external_fault_events((char *)external_fault_event);
-	}
 	return 1;
 }
 
@@ -894,11 +891,16 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 		char impl_fault[257];
 		FUNCTIONADDR funadd = NULL;
 		int returnval;
+		if(use_external_faults && external_fault_event[0] != '\0') {
+			std::cout << "external_fault_event: " << external_fault_event << endl;
+			parse_external_fault_events((char *)external_fault_event);
+			memset(external_fault_event, '\0', 1024);
+		}
 		//loop through external events
 		if(!external_events.empty()){
 			vector<external_event *>::iterator i;
 			for(i = external_events.begin(); i != external_events.end(); ) {
-				if((*i)->enable_event && (*i)->event_enabled) {
+				if((*i)->enable_event && !(*i)->event_enabled) {
 					//TODO: enable the fault on the system.
 					//Put a fault on the system
 					funadd = (FUNCTIONADDR)(gl_get_function((*i)->fault_object,"create_fault"));
@@ -915,6 +917,7 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 					mean_repair_time = TS_NEVER;
 					//Unlock it
 					wunlock((*i)->fault_object);
+					(*i)->event_enabled = true;
 				} else if((*i)->disable_event && (*i)->event_enabled) {
 					//TODO: disable the fault on the system.
 					//Call the object back into service
@@ -934,7 +937,7 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 
 					//Unlock it
 					wunlock((*i)->fault_object);
-
+					(*i)->event_enabled = false;
 					if (returnval == 0)	//Restoration is no go :(
 					{
 						GL_THROW("Failed to induce repair on %s",(*i)->fault_object->name);
@@ -949,6 +952,7 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 		}
 	}
+	return TS_NEVER;
 }
 
 TIMESTAMP eventgen::postsync(TIMESTAMP t0, TIMESTAMP t1)
@@ -2296,9 +2300,16 @@ void eventgen::parse_external_fault_events(char *events_char)
 	if(parse_successful) {
 		for(Json::ValueIterator i = json_events.begin(); i != json_events.end(); i++) {
 			Json::Value json_event = *i;
-			std::string event_name = json_event["name"].asString();
+			std::string event_name = "";
+			if(json_event.isMember("name")){
+				event_name = json_event["name"].asString();
+				std::cout << std::endl;
+				std::cout << "Name: " << json_event["name"].asString() << std::endl;
+			}
+
 			bool event_exists = false;
 			int j = 0;
+			std::cout << "external_events.size = " << external_events.size() << std::endl;
 			for(j = 0; j < external_events.size(); j++) {
 				if(event_name.compare(external_events[j]->name) == 0) {
 					event_exists = true;
@@ -2309,8 +2320,9 @@ void eventgen::parse_external_fault_events(char *events_char)
 			if(!event_exists) {
 				external_event *new_event = new external_event;
 				new_event->name = event_name;
-				const char *type_cc = json_event["type"].asCString();
-				strcpy(new_event->type, type_cc);
+				std::string type_cc = json_event["type"].asCString();
+				new_event->type = new char[type_cc.size()];
+				strcpy(new_event->type, type_cc.c_str());
 				new_event->enable_event = true;
 				new_event->disable_event = false;
 				new_event->event_enabled = false;

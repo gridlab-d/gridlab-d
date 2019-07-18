@@ -66,9 +66,9 @@ typedef struct s_relevantstruct {
 class external_event {
 public:
 	std::string name;
-	char * type;
-	OBJECT *fault_object;
-	OBJECT *effected_safety_device;
+	char * type = NULL;
+	OBJECT *fault_object = NULL;
+	OBJECT *effected_safety_device = NULL;
 	bool enable_event;
 	bool event_enabled;
 	bool disable_event;
