@@ -13,6 +13,7 @@
 #if HAVE_FNCS
 #include <fncs.hpp>
 #endif
+#include <algorithm>
 #include<sstream>
 #include<vector>
 #include <string>

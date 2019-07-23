@@ -64,6 +64,8 @@ fuse::fuse(MODULE *mod) : link_object(mod)
 			GL_THROW("Unable to publish fault creation function");
 		if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_fuse)==NULL)
 			GL_THROW("Unable to publish fault restoration function");
+		if (gl_publish_function(oclass,	"clear_fault", (FUNCTIONADDR)clear_fault_fuse)==NULL)
+			GL_THROW("Unable to publish fault clearing function");
 		if (gl_publish_function(oclass,	"change_fuse_faults", (FUNCTIONADDR)fuse_fault_updates)==NULL)
 			GL_THROW("Unable to publish fuse fault correction function");
 
@@ -1436,6 +1438,22 @@ EXPORT int fix_fault_fuse(OBJECT *thisobj, int *implemented_fault, char *imp_fau
 
 	//Clear the fault
 	retval = thisfuse->link_fault_off(implemented_fault, imp_fault_name);
+
+	//Clear the fault type
+	*implemented_fault = -1;
+
+	return retval;
+}
+
+EXPORT int clear_fault_fuse(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name)
+{
+	int retval;
+
+	//Link to ourselves
+	fuse *thisfuse = OBJECTDATA(thisobj,fuse);
+
+	//Clear the fault
+	retval = thisfuse->clear_fault_only(implemented_fault, imp_fault_name);
 
 	//Clear the fault type
 	*implemented_fault = -1;

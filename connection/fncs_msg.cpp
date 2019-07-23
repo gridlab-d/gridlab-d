@@ -1201,11 +1201,18 @@ int fncs_msg::subscribeVariables(varmap *rmap){
 	string value = "";
 	char valueBuf[1024] = "";
 	VARMAP *mp = NULL;
+#if HAVE_FNCS
+	vector<string> updated_events = fncs::get_events();
+#endif
 	for(mp = rmap->getfirst(); mp != NULL; mp = mp->next){
 		if(mp->dir == DXD_READ){
 			if(mp->ctype == CT_PUBSUB){
 #if HAVE_FNCS
-				value = fncs::get_value(string(mp->remote_name));
+				if(std::find(updated_events.begin(), updated_events.end(), string(mp->remote_name)) != updated_events.end()) {
+					value = fncs::get_value(string(mp->remote_name));
+				} else {
+					value = "";
+				}
 #endif
 				if(value.empty() == false){
 					strncpy(valueBuf, value.c_str(), 1023);
