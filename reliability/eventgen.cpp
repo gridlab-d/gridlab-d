@@ -892,7 +892,6 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 		FUNCTIONADDR funadd = NULL;
 		int returnval;
 		if(use_external_faults && external_fault_event[0] != '\0') {
-			std::cout << "external_fault_event: " << external_fault_event << endl;
 			parse_external_fault_events((char *)external_fault_event);
 			memset(external_fault_event, '\0', 1024);
 		}
@@ -2320,13 +2319,10 @@ void eventgen::parse_external_fault_events(char *events_char)
 			std::string event_name = "";
 			if(json_event.isMember("name")){
 				event_name = json_event["name"].asString();
-				std::cout << std::endl;
-				std::cout << "Name: " << json_event["name"].asString() << std::endl;
 			}
 
 			bool event_exists = false;
 			int j = 0;
-			std::cout << "external_events.size = " << external_events.size() << std::endl;
 			for(j = 0; j < external_events.size(); j++) {
 				if(event_name.compare(external_events[j]->name) == 0) {
 					event_exists = true;
