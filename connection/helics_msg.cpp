@@ -271,9 +271,14 @@ int helics_msg::init(OBJECT *parent){
 						gld_ep_sub->name = ep.getName();
 						config_info_temp = ep.getInfo();
 						json_reader.parse(config_info_temp, config_info);
-						for(Json::Value::ArrayIndex i = 0; i !=config_info["object"].size(); i++) {
-							gld_ep_sub->objectName.push_back(config_info["object"][i].asString());
-							gld_ep_sub->propertyName.push_back(config_info["property"][i].asString());
+						if(config_info["object"].isArray()){
+							for(Json::Value::ArrayIndex i = 0; i !=config_info["object"].size(); i++) {
+								gld_ep_sub->objectName.push_back(config_info["object"][i].asString());
+								gld_ep_sub->propertyName.push_back(config_info["property"][i].asString());
+							}
+						} else {
+							gld_ep_sub->objectName.push_back(config_info["object"].asString());
+							gld_ep_sub->propertyName.push_back(config_info["property"].asString());
 						}
 						gld_ep_sub->HelicsSubscriptionEndpoint = ep;
 						helics_endpoint_subscriptions.push_back(gld_ep_sub);
