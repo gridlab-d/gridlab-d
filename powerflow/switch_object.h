@@ -74,6 +74,7 @@ EXPORT int change_switch_state(OBJECT *thisobj, unsigned char phase_change, bool
 EXPORT int reliability_operation(OBJECT *thisobj, unsigned char desired_phases);
 EXPORT int create_fault_switch(OBJECT *thisobj, OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time);
 EXPORT int fix_fault_switch(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name);
+EXPORT int clear_fault_switch(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name);
 EXPORT int switch_fault_updates(OBJECT *thisobj, unsigned char restoration_phases);
 EXPORT int change_switch_state_toggle(OBJECT *thisobj);
 
