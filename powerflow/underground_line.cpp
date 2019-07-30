@@ -38,6 +38,8 @@ underground_line::underground_line(MODULE *mod) : line(mod)
 			GL_THROW("Unable to publish fault creation function");
 		if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_ugline)==NULL)
 			GL_THROW("Unable to publish fault restoration function");
+		if (gl_publish_function(oclass,	"clear_fault", (FUNCTIONADDR)clear_fault_ugline)==NULL)
+			GL_THROW("Unable to publish fault clearing function");
 
 		//Publish deltamode functions
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
@@ -1485,6 +1487,21 @@ EXPORT int fix_fault_ugline(OBJECT *thisobj, int *implemented_fault, char *imp_f
 
 	//Clear the fault
 	retval = thisline->link_fault_off(implemented_fault, imp_fault_name);
+
+	//Clear the fault type
+	*implemented_fault = -1;
+
+	return retval;
+}
+EXPORT int clear_fault_ugline(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name)
+{
+	int retval;
+
+	//Link to ourselves
+	underground_line *thisline = OBJECTDATA(thisobj,underground_line);
+
+	//Clear the fault
+	retval = thisline->clear_fault_only(implemented_fault, imp_fault_name);
 
 	//Clear the fault type
 	*implemented_fault = -1;

@@ -60,6 +60,8 @@ switch_object::switch_object(MODULE *mod) : link_object(mod)
 				GL_THROW("Unable to publish fault creation function");
 			if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_switch)==NULL)
 				GL_THROW("Unable to publish fault restoration function");
+			if (gl_publish_function(oclass,	"clear_fault", (FUNCTIONADDR)clear_fault_switch)==NULL)
+				GL_THROW("Unable to publish fault clearing function");
 			if (gl_publish_function(oclass,	"change_switch_faults", (FUNCTIONADDR)switch_fault_updates)==NULL)
 				GL_THROW("Unable to publish switch fault correction function");
 			if (gl_publish_function(oclass,	"change_switch_state_toggle", (FUNCTIONADDR)change_switch_state_toggle)==NULL)
@@ -1999,6 +2001,22 @@ EXPORT int fix_fault_switch(OBJECT *thisobj, int *implemented_fault, char *imp_f
 
 	//Clear the fault
 	retval = thisswitch->link_fault_off(implemented_fault, imp_fault_name);
+
+	//Clear the fault type
+	*implemented_fault = -1;
+
+	return retval;
+}
+
+EXPORT int clear_fault_switch(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name)
+{
+	int retval;
+
+	//Link to ourselves
+	switch_object *thisswitch = OBJECTDATA(thisobj,switch_object);
+
+	//Clear the fault
+	retval = thisswitch->clear_fault_only(implemented_fault, imp_fault_name);
 
 	//Clear the fault type
 	*implemented_fault = -1;
