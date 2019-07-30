@@ -18,10 +18,10 @@
 #ifdef OPTIONAL
 #undef OPTIONAL
 #endif
-#include <helics/cpp98/CombinationFederate.hpp>
-#include <helics/cpp98/Endpoint.hpp>
-#include <helics/cpp98/Input.hpp>
-#include <helics/cpp98/Publication.hpp>
+#include <helics/application_api/CombinationFederate.hpp>
+#include <helics/application_api/Endpoints.hpp>
+#include <helics/application_api/Inputs.hpp>
+#include <helics/application_api/Publications.hpp>
 #include <helics/helics_enums.h>
 #endif
 #include<sstream>
@@ -63,7 +63,7 @@ public:
 	string propertyName;
 	string key;
 	gld_property *pObjectProperty;
-	helicscpp::Publication HelicsPublication;
+	helics::Publication HelicsPublication;
 };
 
 class helics_value_subscription {
@@ -75,7 +75,7 @@ public:
 	string propertyName;
 	string key;
 	gld_property *pObjectProperty;
-	helicscpp::Input HelicsSubscription;
+	helics::Input HelicsSubscription;
 };
 
 class helics_endpoint_publication {
@@ -88,19 +88,18 @@ public:
 	string name;
 	gld_property *pObjectProperty;
 	string destination;
-	helicscpp::Endpoint HelicsPublicationEndpoint;
+	helics::Endpoint HelicsPublicationEndpoint;
 };
 
 class helics_endpoint_subscription {
 public:
 	helics_endpoint_subscription(){
-		pObjectProperty = NULL;
 	}
-	string objectName;
-	string propertyName;
+	vector<string> objectName;
+	vector<string> propertyName;
 	string name;
-	gld_property *pObjectProperty;
-	helicscpp::Endpoint HelicsSubscriptionEndpoint;
+	vector<gld_property *> pObjectProperty;
+	helics::Endpoint HelicsSubscriptionEndpoint;
 };
 #endif
 class helics_msg : public gld_object {
@@ -118,7 +117,7 @@ private:
 	vector<string> *inFunctionTopics;
 	varmap *vmap[14];
 #if HAVE_HELICS
-	helicscpp::CombinationFederate *helics_federate;
+	helics::CombinationFederate *helics_federate;
 #endif
 	TIMESTAMP last_approved_helics_time;
 	TIMESTAMP initial_sim_time;
