@@ -107,12 +107,12 @@ EXTRA_DIST += $(top_srcdir)/README-MACOSX
 EXTRA_DIST += $(top_srcdir)/Resources/Background.png
 EXTRA_DIST += $(top_srcdir)/Resources/GridLAB-D.pmdoc/01gldcore-contents.xml
 EXTRA_DIST += $(top_srcdir)/Resources/GridLAB-D.pmdoc/01gldcore.xml
-EXTRA_DIST += $(top_srcdir)/Resources/GridLAB-D.pmdoc/02climate-contents.xml
-EXTRA_DIST += $(top_srcdir)/Resources/GridLAB-D.pmdoc/02climate.xml
+EXTRA_DIST += $(top_srcdir)/Resources/GridLAB-D.pmdoc/02devel-contents.xml
+EXTRA_DIST += $(top_srcdir)/Resources/GridLAB-D.pmdoc/02devel.xml
 EXTRA_DIST += $(top_srcdir)/Resources/GridLAB-D.pmdoc/03libxerces-contents.xml
 EXTRA_DIST += $(top_srcdir)/Resources/GridLAB-D.pmdoc/03libxerces.xml
-EXTRA_DIST += $(top_srcdir)/Resources/GridLAB-D.pmdoc/04devel-contents.xml
-EXTRA_DIST += $(top_srcdir)/Resources/GridLAB-D.pmdoc/04devel.xml
+EXTRA_DIST += $(top_srcdir)/Resources/GridLAB-D.pmdoc/04fncs-contents.xml
+EXTRA_DIST += $(top_srcdir)/Resources/GridLAB-D.pmdoc/04fncs.xml
 EXTRA_DIST += $(top_srcdir)/Resources/GridLAB-D.pmdoc/index.xml
 EXTRA_DIST += $(top_srcdir)/Resources/License.rtf
 EXTRA_DIST += $(top_srcdir)/Resources/Readme.rtf
@@ -305,7 +305,7 @@ dist-deb-src:
 
 # Build RPM binary package
 dist-rpm: dist-gzip
-	rpmbuild -tb $(dist_dir).tar.gz
+	rpmbuild -tb $(distdir).tar.gz
 
 RPMBUILDDIR = $(HOME)/rpmbuild
 
