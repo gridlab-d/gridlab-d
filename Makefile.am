@@ -233,7 +233,7 @@ check-local validate:
 
 dist_dir = $(PACKAGE)_$(VERSION)
 scratchdir = scratch
-XERCES_TARNAME = xerces-c-3.1.1
+XERCES_TARNAME = xerces-c-3.2.0
 XERCESCROOT = $(CURDIR)/$(scratchdir)/$(XERCES_TARNAME)
 
 $(scratchdir)/.xerces.stamp: third_party/$(XERCES_TARNAME).tar.gz
@@ -243,18 +243,22 @@ $(scratchdir)/.xerces.stamp: third_party/$(XERCES_TARNAME).tar.gz
 	tar -xzf $< -C $(@D)
 	export XERCESCROOT=$(CURDIR)/$(@D)/$(XERCES_TARNAME) && \
 		cd $(@D)/$(XERCES_TARNAME) && \
-		autoreconf -isf && ./configure && make
+		autoreconf -isf && ./configure --prefix $(CURDIR)/$(@D)/xerces-c && make && make install
 	touch $@
 
-$(scratchdir)/pkg: $(scratchdir)/.xerces.stamp dist_dir
+$(scratchdir)/pkg: $(scratchdir)/.xerces.stamp $(dist_dir)
 	test ! -e $@ || rm -rf $@
 	test -d $@/gldcore || mkdir -p $@/gldcore
-	cd $(dist_dir) && ./configure --with-xerces=$(CURDIR)/$(scratchdir)/$(XERCES_TARNAME) && make install DESTDIR=$(CURDIR)/$@/gldcore
-	cd $@ && mkdir -p climate-data/usr/local/lib/gridlabd devel/usr/local/lib/gridlabd libxerces-c/usr/lib
+	cd $(dist_dir) && ./configure --with-xerces=$(CURDIR)/$(scratchdir)/xerces-c --enable-silent-rules CFLAGS="-g -O0 -w" CXXFLAGS="-g -O0 -w -std=c++14" LDFLAGS="-g -O0 -w" 'CPP=gcc-8 -E' 'CXXPP=g++-8 -E' 'CC=gcc-8' 'CXX=g++-8'  --with-helics=/Users/natet/projects/helix_install --with-fncs=/Users/natet/projects/fncs_install  && make install DESTDIR=$(CURDIR)/$@/gldcore
+#	cd $@ && mkdir -p climate-data/usr/local/lib/gridlabd devel/usr/local/lib/gridlabd libxerces-c/usr/lib
+	cd $@ && mkdir -p climate-data/usr/local/lib/gridlabd devel/usr/local/lib/gridlabd fncs_helix/usr/local/lib/gridlabd libxerces-c/usr/local/lib/gridlabd
 #	mv $@/gldcore/usr/lib/gridlabd/*.zip $@/climate-data/usr/lib/gridlabd/
 	mv $@/gldcore/usr/local/include $@/devel/usr/local/include
 	mv $@/gldcore/usr/local/lib/gridlabd/*.la $@/devel/usr/local/lib/gridlabd/
-	cp $(scratchdir)/$(XERCES_TARNAME)/src/.libs/libxerces-c.* $@/libxerces-c/usr/lib/
+	cp ../fncs_install/lib/*.* $@/fncs_helix/usr/local/lib/gridlabd
+	cp ../helix_install/lib/*.* $@/fncs_helix/usr/local/lib/gridlabd
+	cp /usr/local/opt/gcc/lib/gcc/8/libstdc++.6.dylib $@/gldcore/usr/local/lib/gridlabd
+	cp $(scratchdir)/$(XERCES_TARNAME)/src/.libs/libxerces-c.* $@/libxerces-c/usr/local/lib/gridlabd
 	$(am__remove_dist_dir)
 
 $(scratchdir)/$(PACKAGE_TARNAME).mpkg: $(scratchdir)/pkg
@@ -272,7 +276,7 @@ $(dist_dir).dmg: $(scratchdir)/$(PACKAGE_TARNAME).dmg
 	test ! -e $@ || rm -rf $@
 	hdiutil convert -format UDZO -o $@ $<
 	rm -f $<
-	-rmdir $<D
+	-rmdir $<
 
 clean-dist-osx:
 	-test ! -d $(scratchdir)/mnt || hdiutil detach $(scratchdir)/mnt
