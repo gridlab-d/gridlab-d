@@ -1,14 +1,24 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 #include <stdlib.h>
-#include "pdsp_defs.h"
+#include "slu_mt_ddefs.h"
 
 #define EMPTY    (-1)
 #define ROOT     (neqns)   /* dummy root of the e-tree */
 
 
-int
-qrnzcnt(int neqns, int adjlen, int *xadj, int *adjncy, int *zfdperm,
-	int *perm, int *invp, int *etpar, int *colcnt_h,
-	int *nlnz, int *part_super_ata, int *part_super_h)
+int_t
+qrnzcnt(int_t neqns, int_t adjlen, int_t *xadj, int_t *adjncy, int_t *zfdperm,
+	int_t *perm, int_t *invp, int_t *etpar, int_t *colcnt_h,
+	int_t *nlnz, int_t *part_super_ata, int_t *part_super_h)
 {
 /*
      o 5/20/95 Xiaoye S. Li:
@@ -112,16 +122,16 @@ qrnzcnt(int neqns, int adjlen, int *xadj, int *adjncy, int *zfdperm,
 */
 
     /* Local variables */
-    int  temp, last1, last2, i, j, k, lflag, pleaf, hinbr, jstop,
+    int_t  temp, last1, last2, i, j, k, lflag, pleaf, hinbr, jstop,
 	 jstrt, ifdesc, oldnbr, parent, lownbr, lca;
-    int  xsup;        /* the ongoing supernode */
-    int  *set, *prvlf, *level, *weight, *fdesc, *nchild, *prvnbr;
-    int  *fnz;        /* first nonzero column subscript in each row */
-    int  *marker;     /* used to remove duplicate indices */
-    int  *fnz_hadj;   /* higher-numbered neighbors of the first nonzero
+    int_t  xsup;        /* the ongoing supernode */
+    int_t  *set, *prvlf, *level, *weight, *fdesc, *nchild, *prvnbr;
+    int_t  *fnz;        /* first nonzero column subscript in each row */
+    int_t  *marker;     /* used to remove duplicate indices */
+    int_t  *fnz_hadj;   /* higher-numbered neighbors of the first nonzero
 			 (higher adjacency set of A'A) */
-    int  *hadj_begin; /* pointers to the fnz_hadj[] structure */
-    int  *hadj_end;   /* pointers to the fnz_hadj[] structure */
+    int_t  *hadj_begin; /* pointers to the fnz_hadj[] structure */
+    int_t  *hadj_end;   /* pointers to the fnz_hadj[] structure */
 
     /* Locally malloc'd room for QR purpose */
 
@@ -130,14 +140,14 @@ qrnzcnt(int neqns, int adjlen, int *xadj, int *adjncy, int *zfdperm,
        which is a collection of disjoint sets of integers between
        0 and n-1.
        ---------------------------------------------------------- */    
-    int  *first;    /* header pointing to FIRST set */
-    int  *firstset; /* linked list to describe FIRST set */
-    int  *weight_h; /* weights for H */
-    int  *rowcnt;   /* row colunts for Lc */ 
-    int  *colcnt;   /* column colunts for Lc */ 
-    int  *rowcnt_h; /* row colunts for H */ 
-    int  nsuper;    /* total number of fundamental supernodes in Lc */
-    int  nhnz;
+    int_t  *first;    /* header pointing to FIRST set */
+    int_t  *firstset; /* linked list to describe FIRST set */
+    int_t  *weight_h; /* weights for H */
+    int_t  *rowcnt;   /* row colunts for Lc */ 
+    int_t  *colcnt;   /* column colunts for Lc */ 
+    int_t  *rowcnt_h; /* row colunts for H */ 
+    int_t  nsuper;    /* total number of fundamental supernodes in Lc */
+    int_t  nhnz;
     
     set    = intMalloc(neqns);
     prvlf  = intMalloc(neqns);

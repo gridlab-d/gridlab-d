@@ -15,8 +15,7 @@
 #include <iostream>
 using namespace std;
 
-#include "regulator.h"
-#include "node.h"
+#include "regulator_configuration.h"
 
 //////////////////////////////////////////////////////////////////////////
 // regulator_configuration CLASS FUNCTIONS
@@ -132,12 +131,6 @@ int regulator_configuration::init(OBJECT *parent)
 			PT_ratio must be set as a positive, non-zero value when LINE_DROP_COMP is selected to properly scale the 
 			voltage drop along the line being compensated.
 			*/
-//		if (solver_method != SM_FBS)
-//			GL_THROW("Line drop compensation is only supported for regulators in FBS at this time.");
-//			/* TROUBLESHOOT
-//			At this time, line drop compensation is not supported by NR or GS solver methods, only FBS.  Future
-//			releases should support this in NR.  Please change either your solver method or your control method.
-//			*/
 	}
 
 	if (control_level == BANK)

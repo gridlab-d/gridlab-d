@@ -12,12 +12,7 @@
 #include <errno.h>
 #include <math.h>
 
-#include "generators.h"
-
 #include "energy_storage.h"
-#include "gridlabd.h"
-
-
 
 #define HOUR 3600 * TS_SECOND
 
@@ -106,15 +101,6 @@ int energy_storage::create(void)
 }
 
 
-
-/*
-double energy_storage::timestamp_to_hours(TIMESTAMP t)
-{
-	return (double)t/HOUR;
-}
-*/
-
-
 /* Object initialization is called once after all object have been created */
 int energy_storage::init(OBJECT *parent)
 {
@@ -132,18 +118,6 @@ double energy_storage::calculate_efficiency(complex voltage, complex current){
 complex energy_storage::calculate_v_terminal(complex v, complex i){
 	return v - (i * Rinternal);
 }
-
-
-complex *energy_storage::get_complex(OBJECT *obj, char *name)
-{
-	PROPERTY *p = gl_get_property(obj,name);
-	if (p==NULL || p->ptype!=PT_complex)
-		return NULL;
-	return (complex*)GETADDR(obj,p);
-}
-
-
-
 
 /* Presync is called when the clock needs to advance on the first top-down pass */
 TIMESTAMP energy_storage::presync(TIMESTAMP t0, TIMESTAMP t1)

@@ -25,8 +25,13 @@ object database {
 	on_init "../test_mysql_recorder_init.sql";
 	on_sync "../test_mysql_recorder_sync.sql";
 	on_term "../test_mysql_recorder_term.sql";
-	sync_interval 1 day;
-	options NEWDB;
+	sync_interval 1 day; 
+   hostname "localhost";
+   username "gridlabd";
+   password "";
+   schema "gridlabd";
+   port 3306;
+   tz_offset 0;
 }
 
 class test {

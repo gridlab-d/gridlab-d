@@ -1459,9 +1459,9 @@ int violation_recorder::write_summary() {
 	return 1;
 }
 
-int violation_recorder::finalize(OBJECT *obj) {
+STATUS violation_recorder::finalize(OBJECT *obj) {
 	write_summary();
-	return 1;
+	return SUCCESS;
 }
 
 int violation_recorder::write_footer(){
@@ -1629,24 +1629,24 @@ EXPORT int isa_violation_recorder(OBJECT *obj, char *classname)
 	return OBJECTDATA(obj, violation_recorder)->isa(classname);
 }
 
-EXPORT int finalize_violation_recorder(OBJECT *obj)
+EXPORT STATUS finalize_violation_recorder(OBJECT *obj)
 {
 	violation_recorder *my = OBJECTDATA(obj,violation_recorder);
 	try {
-		return obj!=NULL ? my->finalize(obj) : 0;
+		return obj!=NULL ? my->finalize(obj) : FAILED;
 	}
 	//T_CATCHALL(pw_model,finalize);
 	catch (char *msg) {
 		gl_error("finalize_violation_recorder" "(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-		return TS_INVALID;
+		return FAILED;
 	}
 	catch (const char *msg) {
 		gl_error("finalize_violation_recorder" "(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
-		return TS_INVALID;
+		return FAILED;
 	}
 	catch (...) {
 		gl_error("finalize_violation_recorder" "(obj=%d;%s): unhandled exception", obj->id, obj->name?obj->name:"unnamed");
-		return TS_INVALID;
+		return FAILED;
 	}
 }
 

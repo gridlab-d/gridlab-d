@@ -740,7 +740,7 @@ int volt_var_control::init(OBJECT *parent)
 					}//end defaults
 
 					//Check to make sure max_vdrop isn't negative
-					if (max_vdrop <= 0)
+					if (max_vdrop[index] <= 0)
 					{
 						GL_THROW("volt_var_control %s: Maximum expected voltage drop specified for regulator %d should be a positive non-zero number.",obj->name,(index+1));
 						/*  TROUBLESHOOT
@@ -2805,26 +2805,19 @@ EXPORT int create_volt_var_control(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s %s (id=%d): %s", (*obj)->name?(*obj)->name:"unnamed", (*obj)->oclass->name, (*obj)->id, msg);
-		return 0;
-	}
-	return 1;
+	CREATE_CATCHALL(volt_var_control);
 }
 
-EXPORT int init_volt_var_control(OBJECT *obj, OBJECT *parent)
+EXPORT int init_volt_var_control(OBJECT *obj)
 {
 	try {
-			return OBJECTDATA(obj,volt_var_control)->init(parent);
+		volt_var_control *my = OBJECTDATA(obj,volt_var_control);
+		return my->init(obj->parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s %s (id=%d): %s", obj->name?obj->name:"unnamed", obj->oclass->name, obj->id, msg);
-		return 0;
-	}
-	return 1;
+	INIT_CATCHALL(volt_var_control);
 }
 
 /**
@@ -2837,8 +2830,8 @@ EXPORT int init_volt_var_control(OBJECT *obj, OBJECT *parent)
 */
 EXPORT TIMESTAMP sync_volt_var_control(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	volt_var_control *pObj = OBJECTDATA(obj,volt_var_control);
 	try {
+		volt_var_control *pObj = OBJECTDATA(obj,volt_var_control);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -2853,15 +2846,7 @@ EXPORT TIMESTAMP sync_volt_var_control(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pas
 			throw "invalid pass request";
 		}
 	}
-	catch (const char *msg)
-	{
-		gl_error("volt_var_control %s (%s:%d): %s", obj->name, obj->oclass->name, obj->id, msg);
-	}
-	catch (...)
-	{
-		gl_error("volt_var_control %s (%s:%d): unknown exception", obj->name, obj->oclass->name, obj->id);
-	}
-	return TS_INVALID; /* stop the clock */
+	SYNC_CATCHALL(volt_var_control);
 }
 
 EXPORT int isa_volt_var_control(OBJECT *obj, char *classname)

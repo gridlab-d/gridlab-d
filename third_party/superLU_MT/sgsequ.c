@@ -1,6 +1,16 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 
 /*
- * -- SuperLU MT routine (version 2.0) --
+ * -- SuperLU MT routine (version 3.0) --
  * Lawrence Berkeley National Lab, Univ. of California Berkeley,
  * and Xerox Palo Alto Research Center.
  * September 10, 2007
@@ -8,11 +18,11 @@
  * History:     Modified from LAPACK routine SGEEQU
  */
 #include <math.h>
-#include "pssp_defs.h"
+#include "slu_mt_sdefs.h"
 
 void
 sgsequ(SuperMatrix *A, float *r, float *c, float *rowcnd,
-        float *colcnd, float *amax, int *info)
+        float *colcnd, float *amax, int_t *info)
 {
 /*    
     Purpose   
@@ -62,7 +72,7 @@ sgsequ(SuperMatrix *A, float *r, float *c, float *rowcnd,
             close to overflow or very close to underflow, the matrix   
             should be scaled.
 	    
-    INFO    (output) int*
+    INFO    (output) int_t*
             = 0:  successful exit   
             < 0:  if INFO = -i, the i-th argument had an illegal value   
             > 0:  if INFO = i,  and i is   
@@ -75,7 +85,8 @@ sgsequ(SuperMatrix *A, float *r, float *c, float *rowcnd,
     /* Local variables */
     NCformat *Astore;
     float   *Aval;
-    int i, j, irow;
+    int_t j, irow;
+    int   i;
     float rcmin, rcmax;
     float bignum, smlnum;
     extern double slamch_(char *);

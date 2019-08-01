@@ -6,7 +6,6 @@
 
 #include "powerflow.h"
 #include "node.h"
-#include "link.h"
 
 #define TSNVRDBL 9223372036854775808.0
 EXPORT SIMULATIONMODE interupdate_capacitor(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
@@ -22,10 +21,16 @@ public:
 	set phases_connected;		// phases capacitors connected to
 	double voltage_set_high;    // high voltage set point for voltage control (turn off)
 	double voltage_set_low;     // low voltage set point for voltage control (turn on)
+	double voltage_center;		// CIM support for setting voltage_set_high and voltage_set_low
+	double voltage_deadband;
 	double VAr_set_high;		// high VAR set point for VAR control (turn off)
 	double VAr_set_low;			// low VAR set point for VAR control (turn on)
+	double VAr_center;
+	double VAr_deadband;
 	double current_set_high;	// high current set point for current control mode (turn on)
 	double current_set_low;		// low current set point for current control mode (turn off)
+	double current_center;
+	double current_deadband;
 	double capacitor_A;			// Capacitance value for phase A or phase AB
 	double capacitor_B;			// Capacitance value for phase B or phase BC
 	double capacitor_C;			// Capacitance value for phase C or phase CA
@@ -92,10 +97,16 @@ private:
 	double VArVals[3];				// VAr values recorded (due to nature of how it's recorded, it has to be in here)
 	double CurrentVals[3];			// Current magnitude values recorded (due to nature of how it's recorded, it has to be in here)
 	bool NotFirstIteration;			// Checks to see if this is the first iteration of the system.
-	node *RNode;					// Remote node to sense voltage measurements (if desired) for VOLT controls
-	link_object *RLink;					// Remote link to sense power measurements for VAR controls
+	OBJECT *RNode;					// Remote node to sense voltage measurements (if desired) for VOLT controls
+	OBJECT *RLink;					// Remote link to sense power measurements for VAR controls
 	bool Iteration_Toggle;			// "Off" iteration tracker
 	bool NR_cycle_cap;				// First run of "off" iteration tracker - used to reiterate delta-configured, wye-connected capacitors
+	bool deltamode_reiter_request;	// Flag to replicate a reiteration request from sync, since that is handled different in deltamode - used to match QSTS
+	gld_property *RNode_voltage[3];	// Pointer for API to map to RNode voltage values
+	gld_property *RNode_voltaged[3];	//Pointer for API to map to RNode voltaged values
+	gld_property *RLink_indiv_power_in[3];	//Pointer for API to map to RLink indiv_power_in values
+	gld_property *RLink_current_in[3];	//Pointer for API to map to RLink current_in values
+	FUNCTIONADDR RLink_calculate_power_fxn;	//Pointer to RLink calculate_power function;
 
 public:
 	static CLASS *pclass;

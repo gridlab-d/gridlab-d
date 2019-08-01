@@ -7257,7 +7257,7 @@ object overhead_line:3317 {
 	// };
 	 object complex_assert{
 		target power_in_A;
-		value +542957+289980j;
+		value +542953+289974j;
 		within 2;
 	};
 	object complex_assert{
@@ -7267,12 +7267,12 @@ object overhead_line:3317 {
 	};
 	object complex_assert{
 		target power_in_C;
-		value +794700+420121j;
+		value +794700+420119j;
 		within 2;
 	};
 	object complex_assert{
 		target power_out_A;
-		value +542880+289684j;
+		value +542875+289678j;
 		within 2;
 	};
 	object complex_assert{

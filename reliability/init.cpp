@@ -127,20 +127,40 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 			//See if we're in service or not
 			if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
 			{
-				//Call the actual function
-				function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val);
+				//Pop into try/catch structure, since some things get a little picky
+				try
+				{
+					//Call the actual function
+					function_status = ((SIMULATIONMODE (*)(OBJECT *, unsigned int64, unsigned long, unsigned int))(*delta_functions[curr_object_number]))(delta_objects[curr_object_number],delta_time,dt,iteration_count_val);
+				}
+				catch (const char *msg)
+				{
+					gl_error("reliability:interupdate: %s", msg);
+					function_status = SM_ERROR;
+				}
+				catch (...)
+				{
+					gl_error("reliability:interupdate: unknown exception");
+					function_status = SM_ERROR;
+				}
 				
 				//Determine what our return is
 				if (function_status == SM_DELTA)
+				{
+					gl_verbose("Reliability object:%d - %s - requested deltamode to continue",delta_objects[curr_object_number]->id,(delta_objects[curr_object_number]->name ? delta_objects[curr_object_number]->name : "Unnamed"));
+
 					event_driven = false;
+				}
 				else if (function_status == SM_DELTA_ITER)
 				{
+					gl_verbose("Reliability object:%d - %s - requested a deltamode reiteration",delta_objects[curr_object_number]->id,(delta_objects[curr_object_number]->name ? delta_objects[curr_object_number]->name : "Unnamed"));
+
 					event_driven = false;
 					delta_iter = true;
 				}
 				else if (function_status == SM_ERROR)
 				{
-					gl_error("Reliability object:%s - deltamode function returned an error!",delta_objects[curr_object_number]->name);
+					gl_error("Reliability object:%d - %s - deltamode function returned an error!",delta_objects[curr_object_number]->id,(delta_objects[curr_object_number]->name ? delta_objects[curr_object_number]->name : "Unnamed"));
 					/*  TROUBLESHOOT
 					While performing a deltamode update, one object returned an error code.  Check to see if the object itself provided
 					more details and try again.  If the error persists, please submit your code and a bug report via the trac website.

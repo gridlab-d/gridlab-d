@@ -1,6 +1,16 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 
 /*
- * -- SuperLU routine (version 2.0) --
+ * -- SuperLU routine (version 3.0) --
  * Lawrence Berkeley National Lab, Univ. of California Berkeley,
  * and Xerox Palo Alto Research Center.
  * September 10, 2007
@@ -13,19 +23,20 @@
  * Note:
  *     This is only used when the system lacks an efficient BLAS library.
  */
+#include "slu_mt_sdefs.h"
 
 /*
  * Solves a dense UNIT lower triangular system. The unit lower 
  * triangular matrix is stored in a 2D array M(1:nrow,1:ncol). 
  * The solution will be returned in the rhs vector.
  */
-void slsolve ( int ldm, int ncol, float *M, float *rhs )
+void slsolve ( int_t ldm, int_t ncol, float *M, float *rhs )
 {
-    int k;
+    int_t k;
     float x0, x1, x2, x3, x4, x5, x6, x7;
     float *M0;
     register float *Mki0, *Mki1, *Mki2, *Mki3, *Mki4, *Mki5, *Mki6, *Mki7;
-    register int firstcol = 0;
+    register int_t firstcol = 0;
 
     M0 = &M[0];
 
@@ -117,14 +128,15 @@ void slsolve ( int ldm, int ncol, float *M, float *rhs )
  * in the rhs vector.
  */
 void
-susolve ( ldm, ncol, M, rhs )
-int ldm;	/* in */
-int ncol;	/* in */
-float *M;	/* in */
-float *rhs;	/* modified */
+susolve (
+int_t ldm,     /* in */
+int_t ncol,    /* in */
+float *M,  /* in */
+float *rhs /* modified */
+)
 {
     float xj;
-    int jcol, j, irow;
+    int_t jcol, j, irow;
 
     jcol = ncol - 1;
 
@@ -146,21 +158,20 @@ float *rhs;	/* modified */
  * Performs a dense matrix-vector multiply: Mxvec = Mxvec + M * vec.
  * The input matrix is M(1:nrow,1:ncol); The product is returned in Mxvec[].
  */
-void smatvec ( ldm, nrow, ncol, M, vec, Mxvec )
-
-int ldm;	/* in -- leading dimension of M */
-int nrow;	/* in */ 
-int ncol;	/* in */
-float *M;	/* in */
-float *vec;	/* in */
-float *Mxvec;	/* in/out */
-
+void smatvec (
+int_t ldm,	/* in -- leading dimension of M */
+int_t nrow,	/* in */ 
+int_t ncol,	/* in */
+float *M,	/* in */
+float *vec,	/* in */
+float *Mxvec	/* in/out */
+)
 {
     float vi0, vi1, vi2, vi3, vi4, vi5, vi6, vi7;
     float *M0;
     register float *Mki0, *Mki1, *Mki2, *Mki3, *Mki4, *Mki5, *Mki6, *Mki7;
-    register int firstcol = 0;
-    int k;
+    register int_t firstcol = 0;
+    int_t k;
 
     M0 = &M[0];
     while ( firstcol < ncol - 7 ) {	/* Do 8 columns */
@@ -228,9 +239,9 @@ float *Mxvec;	/* in/out */
  *        y1 = y1 + A * x1
  */
 void smatvec2 (
-               int lda,     /* leading dimension of A */
-               int m,
-               int n,
+               int_t lda,     /* leading dimension of A */
+               int_t m,
+               int_t n,
                float *A,   /* in - size m-by-n */
                float *x0,  /* in - size n-by-1 */
                float *x1,  /* in - size n-by-1 */
@@ -244,9 +255,9 @@ void smatvec2 (
     register float t0, t1, t2, t3, t4, t5, t6, t7;
     register float f0, f1;
     float *Mki0, *Mki1, *Mki2, *Mki3, *Mki4, *Mki5, *Mki6, *Mki7;
-    register int firstcol = 0;
+    register int_t firstcol = 0;
     float *M0;
-    int k;
+    int_t k;
 
     M0 = &A[0];
 

@@ -11,6 +11,7 @@
 
 #ifndef _PLATFORM_H
 	#define _PLATFORM_H
+	#define __STDC_FORMAT_MACROS
 	#include <inttypes.h>
 	#ifdef HAVE_CONFIG_H
 		#include "config.h"

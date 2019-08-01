@@ -1,15 +1,25 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
 
-#include "pcsp_defs.h"
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
+
+#include "slu_mt_cdefs.h"
 
 void
 pcgstrf_thread_finalize(pcgstrf_threadarg_t *pcgstrf_threadarg, 
 			pxgstrf_shared_t *pxgstrf_shared,
-			SuperMatrix *A, int *perm_r,
+			SuperMatrix *A, int_t *perm_r,
 			SuperMatrix *L, SuperMatrix *U
 			)
 {
 /*
- * -- SuperLU MT routine (version 2.0) --
+ * -- SuperLU MT routine (version 3.0) --
  * Lawrence Berkeley National Lab, Univ. of California Berkeley,
  * and Xerox Palo Alto Research Center.
  * September 10, 2007
@@ -22,6 +32,8 @@ pcgstrf_thread_finalize(pcgstrf_threadarg_t *pcgstrf_threadarg,
  * factorization pcgstrf_thread(). It sets up the L and U data
  * structures, and deallocats the storage associated with the structures
  * pxgstrf_shared and pcgstrf_threadarg.
+ *
+ * Only Master thread calls this routine.
  *
  * Arguments
  * =========
@@ -38,7 +50,7 @@ pcgstrf_thread_finalize(pcgstrf_threadarg_t *pcgstrf_threadarg,
  *          (A->nrow, A->ncol). The type of A can be:
  *          Stype = NCP; Dtype = _D; Mtype = GE.
  *
- * perm_r   (input) int*, dimension A->nrow
+ * perm_r   (input) int_t*, dimension A->nrow
  *          Row permutation vector which defines the permutation matrix Pr,
  *          perm_r[i] = j means row i of A is in position j in Pr*A.
  *
@@ -54,8 +66,8 @@ pcgstrf_thread_finalize(pcgstrf_threadarg_t *pcgstrf_threadarg,
  *
  *
  */
-    register int nprocs, n, i, iinfo;
-    int       nnzL, nnzU;
+    register int_t nprocs, n, i, iinfo;
+    int_t       nnzL, nnzU;
     superlumt_options_t *superlumt_options;
     GlobalLU_t *Glu;
     extern ExpHeader *cexpanders;

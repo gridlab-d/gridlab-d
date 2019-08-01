@@ -23,7 +23,6 @@
 #include <errno.h>
 #include <math.h>
 
-#include "house_a.h"
 #include "clotheswasher.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -193,7 +192,7 @@ int clotheswasher::init(OBJECT *parent)
 	if(NORMAL_SMALLWASH_ENERGY == 0) NORMAL_SMALLWASH_ENERGY = 2*25*60;
 	if(NORMAL_SPIN_LOW_ENERGY == 0) NORMAL_SPIN_LOW_ENERGY = 2*60*60;
 	if(NORMAL_SPIN_MEDIUM_ENERGY == 0) NORMAL_SPIN_MEDIUM_ENERGY = 2*150*60;
-	if(NORMAL_SPIN_HIGH_ENERGY == 0) NORMAL_SPIN_HIGH_ENERGY = 2*220*60;
+	if(NORMAL_SPIN_HIGH_ENERGY == 0) NORMAL_SPIN_HIGH_ENERGY = 2*220*60;	//Not sure what these values represent, so unclear if the 220 is a voltage or not (for global substitution)
 
 	if(NORMAL_PREWASH_POWER == 0) NORMAL_PREWASH_POWER = 20;
 	if(NORMAL_WASH_POWER == 0) NORMAL_WASH_POWER = 40;
@@ -247,12 +246,20 @@ TIMESTAMP clotheswasher::presync(TIMESTAMP t0, TIMESTAMP t1){
 
 TIMESTAMP clotheswasher::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
+	complex temp_complex_value;
+
 	// compute the seconds in this time step
 	double dt = 0.0;
 	TIMESTAMP t2 = residential_enduse::sync(t0, t1);
 
 	if (pCircuit!=NULL)
-		load.voltage_factor = pCircuit->pV->Mag() / 120; // update voltage factor
+	{
+		//Pull the current value
+		temp_complex_value = pCircuit->pV->get_complex();
+
+		//Update the voltage factor
+		load.voltage_factor = temp_complex_value.Mag() / default_line_voltage; // update voltage factor
+	}
 	
 	dt = gl_toseconds(t0>0?t1-t0:0);
 

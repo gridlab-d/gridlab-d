@@ -8,6 +8,7 @@
 #define _DATABASE_H
 
 #include "gridlabd.h"
+#include "property.h"
 
 #ifdef WIN32
 #undef int64
@@ -26,6 +27,11 @@
 #endif
 
 #include <mysql.h>
+#ifdef MYSQL_VERSION_ID
+#if MYSQL_VERSION_ID > 80000
+typedef bool my_bool;
+#endif
+#endif
 
 #ifdef DLMAIN
 #define EXTERN
@@ -35,12 +41,15 @@
 #define INIT(A)
 #endif
 
+typedef enum {VT_INTEGER, VT_DOUBLE, VT_STRING} VARIABLETYPE;
+typedef enum e_complex_part {NONE = 0x00, REAL=0x01, IMAG=0x02, MAG=0x04, ANG=0x08, ANG_RAD=0x10} CPLPT;
+
 EXTERN char default_hostname[256] INIT("127.0.0.1");
 EXTERN char default_username[32] INIT("gridlabd");
 EXTERN char default_password[32] INIT("");
 EXTERN char default_schema[256] INIT("gridlabd");
 EXTERN int32 default_port INIT(3306);
-EXTERN char default_socketname[1024] INIT("/tmp/mysql.sock");
+EXTERN char default_socketname[1024] INIT("/var/run/mysqld/mysqld.sock");
 EXTERN int64 default_clientflags INIT(CLIENT_LOCAL_FILES);
 EXTERN MYSQL *mysql_client INIT(NULL); ///< connection handle
 EXTERN char default_table_prefix[256] INIT(""); ///< table prefix
@@ -66,6 +75,9 @@ public:
 	GL_ATOMIC(double,sync_interval);
 	GL_ATOMIC(int32,tz_offset);
 	GL_ATOMIC(bool,uses_dst);
+//	GL_ATOMIC(bool, initialized);
+
+	bool db_initialized {false};
 
 	// mysql handle
 private:
@@ -100,6 +112,7 @@ public:
 	const char *get_last_error(void);
 	bool table_exists(char *table);
 	bool query(char *query,...);
+	bool query(const char *query);
 	unsigned int64 get_last_index(void);
 	MYSQL_RES *select(char *query,...);
 	MYSQL_RES get_next(MYSQL_RES*res);
@@ -109,7 +122,8 @@ public:
 #define TD_BACKUP 0x0002 ///< table dump is formatted as SQL backup dump
 	size_t dump(char *table, char *file=NULL, unsigned long options=0x0000);
 
-	char *get_sqltype(gld_property &p);
+	const char *get_sqltype(gld_property &p);
+	const char *get_sqltype(gld_property &P, bool minified);
 	char *get_sqldata(char *buffer, size_t size, gld_property &p, double scale=1.0);
 	char *get_sqldata(char *buffer, size_t size, gld_property &p, gld_unit *unit=NULL);
 	bool get_sqlbind(MYSQL_BIND &value,gld_property &target, my_bool *error=NULL);
@@ -121,6 +135,7 @@ public:
 
 EXTERN database *last_database INIT(NULL);
 
+#include "group_recorder.h"
 #include "recorder.h"
 #include "player.h"
 #include "collector.h"

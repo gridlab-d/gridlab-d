@@ -1,21 +1,31 @@
-#include "pdsp_defs.h"
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
+#include "slu_mt_ddefs.h"
 
 
 void
 pxgstrf_super_bnd_dfs(
-		      const int  pnum, /* process number */
-		      const int  m,    /* number of rows in the matrix */
-		      const int  n,    /* number of columns in the matrix */
-		      const int  jcol, /* first column of the H-supernode */
-		      const int  w,    /* size of the H-supernode */
+		      const int_t  pnum, /* process number */
+		      const int_t  m,    /* number of rows in the matrix */
+		      const int_t  n,    /* number of columns in the matrix */
+		      const int_t  jcol, /* first column of the H-supernode */
+		      const int_t  w,    /* size of the H-supernode */
 		      SuperMatrix *A,  /* original matrix */
-		      int        *perm_r,   /* in */
-		      int        *iperm_r,  /* in; inverse of perm_r */
-		      int        *xprune,   /* in */
-		      int        *ispruned, /* in */
-		      int        *marker,   /* modified */
-		      int        *parent,   /* working array */
-		      int        *xplore,   /* working array */
+		      int_t        *perm_r,   /* in */
+		      int_t        *iperm_r,  /* in; inverse of perm_r */
+		      int_t        *xprune,   /* in */
+		      int_t        *ispruned, /* in */
+		      int_t        *marker,   /* modified */
+		      int_t        *parent,   /* working array */
+		      int_t        *xplore,   /* working array */
 		      pxgstrf_shared_t *pxgstrf_shared /* modified */	      
 		      )
 {
@@ -33,14 +43,14 @@ pxgstrf_super_bnd_dfs(
  *
  */
     GlobalLU_t *Glu = pxgstrf_shared->Glu; /* modified */	      
-    register int krep, chperm, chrep, kchild;
-    register int invp_rep; /* "krep" numbered in the original A */
-    register int krow, kperm, xdfs, maxdfs, kpar;
-    register int fsupc, k, jj, found;
-    register int nrow;  /* union of the nonzero rows in a supernode */
+    register int_t krep, chperm, chrep, kchild;
+    register int_t invp_rep; /* "krep" numbered in the original A */
+    register int_t krow, kperm, xdfs, maxdfs, kpar;
+    register int_t fsupc, k, jj, found;
+    register int_t nrow;  /* union of the nonzero rows in a supernode */
     NCPformat    *Astore;
-    int          *asub, *xa_begin, *xa_end;
-    int          *xsup, *xsup_end, *supno, *lsub, *xlsub, *xlsub_end;
+    int_t          *asub, *xa_begin, *xa_end;
+    int_t          *xsup, *xsup_end, *supno, *lsub, *xlsub, *xlsub_end;
 
     /* Initialize pointers */
     xsup       = Glu->xsup;

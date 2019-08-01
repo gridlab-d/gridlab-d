@@ -10,12 +10,15 @@
 #define _solar_H
 
 #include <stdarg.h>
-#include "gridlabd.h"
+#include "generators.h"
+
+EXPORT SIMULATIONMODE interupdate_solar(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 
 class solar : public gld_object
 {
 private:
-
+	bool deltamode_inclusive; 	//Boolean for deltamode calls - pulled from object flags
+	bool first_sync_delta_enabled;
 protected:
 
 public:
@@ -74,9 +77,6 @@ public:
 	double soiling_factor;			//Soiling factor to be applied - makes user specifiable
 	double derating_factor;			//Inverter derating factor - makes user specifiable
 
-	// location of the array
-	double latitude;
-	double longitude;
 	enum ORIENTATION {DEFAULT=0, FIXED_AXIS=1, ONE_AXIS=2, TWO_AXIS=3, AZIMUTH_AXIS=4};
 	enumeration orientation_type;	//Describes orientation features of PV
 
@@ -84,27 +84,28 @@ public:
 		
 	OBJECT *weather;
 	double efficiency;
-	double *pTout;
 	double prevTemp, currTemp;
 	TIMESTAMP prevTime;
-	double *pRhout;
-	double *pSolarD;		//Direct solar radiation
-	double *pSolarH;		//Horizontal solar radiation
-	double *pSolarG;		//Global horizontal
-	double *pAlbedo;		//Ground reflectance
-	double *pWindSpeed;
 
 	double Max_P;//< maximum real power capacity in kW
     double Min_P;//< minimus real power capacity in kW
-	//double Max_Q;//< maximum reactive power capacity in kVar
-    //double Min_Q;//< minimus reactive power capacity in kVar
 	double Rated_kVA; //< nominal capacity in kVA
 	
-	complex *pCircuit_V;		//< pointer to the three voltages on three lines
-	complex *pLine_I;			//< pointer to the three current on three lines
 
 private:
 	double orientation_azimuth_corrected;	//Corrected azimuth, for crazy "0=equator" referenced models
+
+	//Pointers to properties
+	gld_property *pTout;
+	gld_property *pWindSpeed;
+
+	//Inverter connections
+	gld_property *inverter_voltage_property;
+	gld_property *inverter_current_property;
+
+	//Default voltage and current values, if ran "headless"
+	complex default_voltage_array;
+	complex default_current_array;
 
 public:
 	/* required implementations */
@@ -119,7 +120,8 @@ public:
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 
-	complex *get_complex(OBJECT *obj, char *name);
+	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
+
 public:
 	static CLASS *oclass;
 	static solar *defaults;
