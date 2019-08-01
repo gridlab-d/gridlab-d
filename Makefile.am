@@ -249,7 +249,7 @@ $(scratchdir)/.xerces.stamp: third_party/$(XERCES_TARNAME).tar.gz
 $(scratchdir)/pkg: $(scratchdir)/.xerces.stamp dist_dir
 	test ! -e $@ || rm -rf $@
 	test -d $@/gldcore || mkdir -p $@/gldcore
-	cd $(dist_dir) && ./configure --with-xerces=$(CURDIR)/$(scratchdir)/$(XERCES_TARNAME) && make install DESTDIR=$(CURDIR)/$@/gldcore
+	cd $(dist_dir) && ./configure --enable-silent-rules CFLAGS="-g -O0 -w" CXXFLAGS="-g -O0 -w -std=c++14" LDFLAGS="-g -O0 -w" 'CPP=gcc-8 -E' 'CXXPP=g++-8 -E' 'CC=gcc-8' 'CXX=g++-8'  --with-helics=/Users/natet/projects/helix_install --with-fncs=/Users/natet/projects/fncs_install  && make install DESTDIR=$(CURDIR)/$@/gldcore
 	cd $@ && mkdir -p climate-data/usr/local/lib/gridlabd devel/usr/local/lib/gridlabd libxerces-c/usr/lib
 #	mv $@/gldcore/usr/lib/gridlabd/*.zip $@/climate-data/usr/lib/gridlabd/
 	mv $@/gldcore/usr/local/include $@/devel/usr/local/include
