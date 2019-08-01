@@ -76,6 +76,7 @@ third_party_superLU_MT_libsuperlu_la_SOURCES += third_party/superLU_MT/pdgstrf_t
 third_party_superLU_MT_libsuperlu_la_SOURCES += third_party/superLU_MT/pdgstrf_thread_init.c
 third_party_superLU_MT_libsuperlu_la_SOURCES += third_party/superLU_MT/pdmemory.c
 #third_party_superLU_MT_libsuperlu_la_SOURCES += third_party/superLU_MT/pdsp_defs.h
+third_party_superLU_MT_libsuperlu_la_SOURCES += third_party/superLU_MT/slu_mt_ddefs.h
 third_party_superLU_MT_libsuperlu_la_SOURCES += third_party/superLU_MT/pdutil.c
 third_party_superLU_MT_libsuperlu_la_SOURCES += third_party/superLU_MT/pmemory.c
 third_party_superLU_MT_libsuperlu_la_SOURCES += third_party/superLU_MT/pxgstrf_finalize.c
