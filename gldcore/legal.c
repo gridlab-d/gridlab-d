@@ -53,7 +53,7 @@
 	Jojoba			Version 3.2 originated at PNNL 2014
 	Keeler			Version 4.0 originated at PNNL 2017
 	Lugo			Version 4.1 originated at PNNL 2018
-	McNary
+	McNary                  Version 4.2 originated at PNNL 2019
 	Navajo
 	Ostrander
 	Palo Verde
