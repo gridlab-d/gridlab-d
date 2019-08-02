@@ -4,9 +4,9 @@ OutputDir=.
 
 ; ++RELEASE++
 SourceDir=.\install
-OutputBaseFilename=gridlabd-4.1-x64
+OutputBaseFilename=gridlabd-rc4.2-x64
 AppName=GridLAB-D
-AppVerName=GridLAB-D 4.1
+AppVerName=GridLAB-D 4.2
 ; --RELEASE--
 
 ; ++DEBUG++
@@ -18,7 +18,7 @@ AppVerName=GridLAB-D 4.1
 
 AppVersion=3.0
 AppPublisher=Pacific Northwest National Laboratory, operated by Battelle
-AppCopyright=Copyright © 2004-2013 Battelle Memorial Institute
+AppCopyright=Copyright Â© 2004-2013 Battelle Memorial Institute
 AppPublisherURL=http://www.pnl.gov
 ;AppReadmeFile={app}\README.TXT
 ;AppSupportURL=http://gridlab.pnl.gov/support
@@ -166,12 +166,12 @@ Source: "lib\gridlabd\tape_plot.dll"; DestDir: "{app}\lib"; Flags: ignoreversion
 Source: "..\third_party\dlfcn-win32-read-only\libdl.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
 Source: "lib\gridlabd\glsolvers.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
 
-Source: "..\\third_party\\helics_install\\Windows_64bit\\lib\\libboost_chrono-mt.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
-Source: "..\\third_party\\helics_install\\Windows_64bit\\lib\\libboost_date_time-mt.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
+;;Source: "..\\third_party\\helics_install\\Windows_64bit\\lib\\libboost_chrono-mt.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
+;;Source: "..\\third_party\\helics_install\\Windows_64bit\\lib\\libboost_date_time-mt.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
 Source: "..\\third_party\\helics_install\\Windows_64bit\\lib\\libboost_filesystem-mt.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
 Source: "..\\third_party\\helics_install\\Windows_64bit\\lib\\libboost_program_options-mt.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
 Source: "..\\third_party\\helics_install\\Windows_64bit\\lib\\libboost_system-mt.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
-Source: "..\\third_party\\helics_install\\Windows_64bit\\lib\\libboost_timer-mt.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
+;;Source: "..\\third_party\\helics_install\\Windows_64bit\\lib\\libboost_timer-mt.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
 Source: "..\\third_party\\helics_install\\Windows_64bit\\lib\\libboost_unit_test_framework-mt.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
 Source: "..\\third_party\\helics_install\\Windows_64bit\\lib\\libhelics-shared.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
 Source: "..\\third_party\\helics_install\\Windows_64bit\\lib\\libzmq.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
