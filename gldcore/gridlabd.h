@@ -59,7 +59,7 @@
 
 // module version info (must match core version info)
 #define MAJOR 4
-#define MINOR 1
+#define MINOR 2
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
