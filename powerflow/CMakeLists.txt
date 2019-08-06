@@ -5,6 +5,8 @@ include_directories(../third_party/SuperLU_MT)
 include_directories(../third_party/jsonCpp)
 SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I../third_party/SuperLU_MT -I../third_party/jsonCpp" )
 
+add_subdirectory(powerflow/eigen_solver)
+
 add_library(${PROJECT_NAME}
         powerflow/billdump.cpp
         powerflow/billdump.h
@@ -114,6 +116,10 @@ set_target_properties(${PROJECT_NAME}
         PROPERTIES PREFIX ""
         )
 
-target_link_libraries(${PROJECT_NAME} libjsoncpp libsuperlu)
-
-target_link_libraries(${PROJECT_NAME} ${OS_SPECIFIC_LIBRARIES})
+target_link_libraries(${PROJECT_NAME}
+        PUBLIC
+        libjsoncpp libsuperlu
+        ${OS_SPECIFIC_LIBRARIES}
+        PRIVATE
+        solver_eigen::solver_eigen
+        )

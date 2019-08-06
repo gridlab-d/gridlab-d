@@ -3,10 +3,10 @@ project(gridlabd)
 
 if (CMAKE_VERSION VERSION_LESS "3.1")
     if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++14")
     endif ()
 else ()
-    SET(CMAKE_CXX_STANDARD 11)
+    SET(CMAKE_CXX_STANDARD 14)
     SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif ()
 
@@ -181,9 +181,12 @@ include_directories(gldcore)
 
 include_directories(third_party/superLU_MT)
 include_directories(third_party/jsonCpp)
+include_directories(third_party/eigen)
 
 add_subdirectory(third_party/superLU_MT)
 add_subdirectory(third_party/jsonCpp)
+find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+
 
 include(assert/CMakeLists.txt)
 include(climate/CMakeLists.txt)

@@ -60,8 +60,10 @@
 
 #include <Eigen/SparseLU>
 #include <Eigen/Eigen>
+#include <Eigen/Sparse>
 #include "solver_EIGEN.h"
 #include <iostream>
+#include <math.h>
 
 using namespace Eigen;
 
@@ -71,26 +73,32 @@ typedef struct NR_SOLVER_VARS NR_SOLVER_VARS;
 // Sets Common property (options)
 void *LU_init(void *ext_array)
 {
-	EIGEN_STRUCT *EigenValues;
-	EigenValues = (EIGEN_STRUCT*)malloc(sizeof(EIGEN_STRUCT));
-	EigenValues->col_count = 0;
-	EigenValues->row_count = 0;
-	EigenValues->initialSetup = true;
-	ext_array = (void *)(EigenValues);
-	return ext_array;
+    EIGEN_STRUCT *EigenValues;
+    if (ext_array == NULL){
+        EigenValues = (EIGEN_STRUCT*)malloc(sizeof(EIGEN_STRUCT));
+        EigenValues->col_count = 0;
+        EigenValues->row_count = 0;
+        EigenValues->initialSetup = true;
+        EigenValues->tracker = 1;
+        ext_array = (void *)(EigenValues);
+    }else{
+        EigenValues = static_cast<EIGEN_STRUCT*>(ext_array);
+    }
+
+    return ext_array;
 }
 
 // Allocation function
 void LU_alloc(void *ext_array, unsigned int rowcount, unsigned int colcount, bool admittance_change)
 {
-    if (admittance_change){
-        static_cast<EIGEN_STRUCT*>(ext_array)->col_count = rowcount;
-        static_cast<EIGEN_STRUCT*>(ext_array)->row_count = colcount;
-//        std::cout << "rows: " << rowcount << std::endl;
-//        std::cout << "cols: " << colcount << std::endl;
-        static_cast<EIGEN_STRUCT*>(ext_array)->mat = SparseMatrix<double> (rowcount, colcount);
-    }
-    static_cast<EIGEN_STRUCT*>(ext_array)->admittance_change = admittance_change;
+    EIGEN_STRUCT *EigenValues;
+    EigenValues = static_cast<EIGEN_STRUCT*>(ext_array);
+    EigenValues->col_count = rowcount;
+    EigenValues->row_count = colcount;
+    EigenValues->admittance_change = admittance_change;
+//    EigenValues->solver = new SimplicialLDLT<SparseMatrix<double>>;
+    EigenValues->solver = new SparseLU<SparseMatrix<double, ColMajor>>;
+//    EigenValues->solver = new BiCGSTAB<SparseMatrix<double, ColMajor>>;
 }
 
 // Solution function
@@ -102,77 +110,95 @@ int LU_solve(void *ext_array, NR_SOLVER_VARS *system_info_vars, unsigned int row
 {
     typedef SparseMatrix<double> SpMat;
     typedef Triplet<double> T;
-    const int rows = static_cast<EIGEN_STRUCT*>(ext_array)->row_count;
-    const int cols = static_cast<EIGEN_STRUCT*>(ext_array)->col_count;
+    EIGEN_STRUCT *EigenValues;
+    EigenValues = static_cast<EIGEN_STRUCT*>(ext_array);
+    const int rows = rowcount;
+    const int cols = rowcount;
+    SpMat mat;
+    mat = SparseMatrix<double>(rows, cols);
+    std::vector<T> tripletList;
+    tripletList.reserve(cols * rows);
 
-//    std::cout << "rows: " << rows << std::endl;
-//    std::cout << "cols: " << cols << std::endl;
+    // announce tracker
+    std::cout << "Iteration#: " << EigenValues->tracker << std::endl;
 
-    // catch garbage being thrown in here.
-    // TODO: Review if there is ever a reason to have 0 rows or 0 columns
-    if (rows == 0 || cols == 0){
-        std::cout << "0 rows or columns matrix detected" << std::endl;
-        return -1;
-    }
-
-    if ( static_cast<EIGEN_STRUCT*>(ext_array)->admittance_change ){ //TODO: check if matrix changes throughout tests
-        std::vector<T> tripletList;
-        tripletList.reserve(cols * rows);
-
-        // populate the matrix
-        double *values = system_info_vars->a_LU;
-        int *rows_index = system_info_vars->rows_LU;
-        int *cols_index = system_info_vars->cols_LU;
-        int col_ref = 0;
-
-        for (int row_ref = 0; row_ref <= rows; row_ref++){
-            while(col_ref < cols_index[row_ref + 1]){
-                tripletList.push_back(T(row_ref, rows_index[col_ref], values[col_ref]));
-                col_ref++;
+    // populate the list of triplets
+    double *values = system_info_vars->a_LU;
+    double value;
+    int *rows_index = system_info_vars->rows_LU;
+    int *cols_index = system_info_vars->cols_LU;
+    int col_ref = 0;
+    for (int row_ref = 0; row_ref <= rows; row_ref++){
+        while(col_ref < cols_index[row_ref + 1]){
+            value = values[col_ref];
+            // check for NaN's
+            if (isnan(value)) {
+                std::cout << "NaN detected in matrix A value, returning with -1" << std::endl;
+                return -1;
             }
+            tripletList.push_back(T(row_ref, rows_index[col_ref], value));
+            col_ref++;
         }
-
-//        std::cout << "COLS: " << cols << std::endl;
-//        std::cout << "ROWS: " << rows << std::endl;
-//        for (int i = 0; i < (144); i ++){
-//            std::cout << "row: " << tripletList[i].row() << " col: " << tripletList[i].col() << " val: " << tripletList[i].value() <<  std::endl;
-//        }
-        static_cast<EIGEN_STRUCT*>(ext_array)->mat.setFromTriplets(tripletList.begin(), tripletList.end());
-        static_cast<EIGEN_STRUCT*>(ext_array)->initialSetup = false;
     }
-    SpMat mat = static_cast<EIGEN_STRUCT*>(ext_array)->mat;
 
-    // set b
-    VectorXd b (cols);
+    // populate matrix with triplets
+    mat.setFromTriplets(tripletList.begin(), tripletList.end());
+
+    // save tripleList in ext_array for reference
+    EigenValues->tripletList = &tripletList;
+
+    // do things here you only want done the first time, after mat is populated
+    if(EigenValues->initialSetup){
+        EigenValues->solver->analyzePattern(mat);
+        EigenValues->initialSetup = false;
+    }
+
+    // factorize the matrix
+    EigenValues->solver->factorize(mat);
+
+    // set b matrix values
+    VectorXd b (rows);
     for (int i = 0; i < cols; i++){
+        // check for NaN's
+        if (isnan(system_info_vars->rhs_LU[i])){
+            std::cout << "NaN detected in matrix b value, returning with -1" << std::endl;
+//            return -1;
+        }
         b[i] = system_info_vars->rhs_LU[i];
-//        std::cout << "b " << i << ": " << b[i] << std::endl;
     }
 
-//    SimplicialCholesky<SpMat> chol(mat);
-//    VectorXd solution = chol.solve(b);
+    // initialize solution
+    VectorXd solution (rows);
 
-    VectorXd solution;
+    // run the solver
+    solution = EigenValues->solver->solve(b);
 
-    SparseLU<SparseMatrix<double> > solver;
-//    Eigen::SuperLU<SparseMatrix<double> > solver;
-    if (static_cast<EIGEN_STRUCT*>(ext_array)->admittance_change){
-        solver.analyzePattern(mat);
-    }
+    // iterative solver stuff
+//    BiCGSTAB<SparseMatrix<double>> solver;
 //    solver.compute(mat);
-    solver.factorize(mat);
-    if(solver.info()!=0){
-        return solver.info();
-    }
-    solution = solver.solve(b);
+//    solver.setMaxIterations(20);
+//    solution = solver.solve(b);
 
-    //set the solution
+
+    // catch errors with solver -> solve
+    if(EigenValues->solver->info()!=0){
+        std::cout << "issue with solver: " << EigenValues->solver->info() << std::endl;
+//        return -1;
+    }
+
+    //set the solution in system_info_vars
     for (int i = 0; i < rows; i++){
-//        std::cout << "solution " << i << ": " << solution[i] << std::endl;
+        // check for NaN's
+        if (isnan(solution[i] || (EigenValues->tracker > 1))){
+            std::cout << "NaN detected in matrix x value, returning with -1" << std::endl;
+//            return -1;
+        }
         system_info_vars->rhs_LU[i] = solution[i];
     }
 
-	return solver.info();
+    // increment iteration tracker and return!
+    EigenValues->tracker += 1;
+    return 0;
 }
 
 // Destruction function
@@ -180,8 +206,10 @@ int LU_solve(void *ext_array, NR_SOLVER_VARS *system_info_vars, unsigned int row
 // New iteration isn't needed here - numeric gets redone EVERY iteration, so we don't care if we were successful or not
 void LU_destroy(void *ext_array, bool new_iteration)
 {
-//    free(static_cast<EIGEN_STRUCT*>(ext_array)->mat);
+    EIGEN_STRUCT *EigenValues;
+    EigenValues = static_cast<EIGEN_STRUCT*>(ext_array);
 
+//    free(EigenValues->solver);
     /*
     // Recasting variable
     KLU_STRUCT *KLUValues;

@@ -60,7 +60,6 @@
 #include "capacitor.h"
 #include "load.h"
 #include "triplex_meter.h"
-
 //Library imports items - for external LU solver - stolen from somewhere else in GridLAB-D (tape, I believe)
 #if defined(WIN32) && !defined(__MINGW32__)
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
@@ -795,7 +794,6 @@ int node::init(OBJECT *parent)
 #else
 				snprintf(ext_lib_file_name, 1024, "lib_solver_%s" DLEXT,LUSolverName.get_string());
 #endif
-
 				if (gl_findfile(ext_lib_file_name, NULL, 0|4, extpath,sizeof(extpath))!=NULL)	//Link up
 				{
 					//Link to the library
@@ -845,11 +843,10 @@ int node::init(OBJECT *parent)
 
 						//Now link functions - alloc
 						LUSolverFcns.ext_alloc = DLSYM(LUSolverFcns.dllLink,"LU_alloc");
-
 						//Make sure it worked
 						if (LUSolverFcns.ext_alloc == NULL)
 						{
-							gl_warning("LU_init of external solver solver_%s not found, defaulting to superLU",LUSolverName.get_string());
+							gl_warning("LU_alloc of external solver solver_%s not found, defaulting to superLU",LUSolverName.get_string());
 							/*  TROUBLESHOOT
 							While attempting to link the LU_init routine of an external LU matrix solver library, the routine
 							failed to be found.  Check the external library and try again.  At this failure, powerflow will revert
@@ -866,7 +863,7 @@ int node::init(OBJECT *parent)
 						//Make sure it worked
 						if (LUSolverFcns.ext_solve == NULL)
 						{
-							gl_warning("LU_init of external solver solver_%s not found, defaulting to superLU",LUSolverName.get_string());
+							gl_warning("LU_solve of external solver solver_%s not found, defaulting to superLU",LUSolverName.get_string());
 							/*  TROUBLESHOOT
 							While attempting to link the LU_init routine of an external LU matrix solver library, the routine
 							failed to be found.  Check the external library and try again.  At this failure, powerflow will revert
@@ -883,7 +880,7 @@ int node::init(OBJECT *parent)
 						//Make sure it worked
 						if (LUSolverFcns.ext_destroy == NULL)
 						{
-							gl_warning("LU_init of external solver solver_%s not found, defaulting to superLU",LUSolverName.get_string());
+							gl_warning("LU_destroy of external solver solver_%s not found, defaulting to superLU",LUSolverName.get_string());
 							/*  TROUBLESHOOT
 							While attempting to link the LU_init routine of an external LU matrix solver library, the routine
 							failed to be found.  Check the external library and try again.  At this failure, powerflow will revert

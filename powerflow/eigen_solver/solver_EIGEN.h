@@ -28,9 +28,14 @@ typedef struct NR_SOLVER_VARS {
 typedef struct EIGEN_STRUCT{
 	int col_count;
 	int row_count;
-    Eigen::SparseMatrix<double> mat;
+    Eigen::SparseLU<Eigen::SparseMatrix<double, Eigen::ColMajor>> *solver;
+//    Eigen::BiCGSTAB<Eigen::SparseMatrix<double>, Eigen::DiagonalPreconditioner<double>> *solver;
+//    Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> * solver;
     bool initialSetup;
     bool admittance_change;
+    int tracker;
+    std::vector<int> cols_index;
+	std::vector<Eigen::Triplet<double>> *tripletList;
 } EIGEN_STRUCT;
 
 

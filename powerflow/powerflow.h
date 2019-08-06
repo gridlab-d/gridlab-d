@@ -28,7 +28,7 @@ void print_matrix(complex mat[3][3]);
 #endif
 
 #define GETOBJECT(obj) ((OBJECT *) obj - 1)
-#define IMPORT_CLASS(name) extern CLASS *name##_class
+//#define IMPORT_CLASS(name) extern CLASS *name##_class
 
 //Deltamode use
 #define TSNVRDBL 9223372036854775808.0
