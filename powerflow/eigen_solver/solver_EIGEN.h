@@ -16,6 +16,7 @@
 #endif
 #include <Eigen/Eigen>
 #include <Eigen/SparseLU>
+#include <Eigen/SuperLUSupport>
 
 typedef struct NR_SOLVER_VARS {
     double *a_LU;
@@ -28,7 +29,8 @@ typedef struct NR_SOLVER_VARS {
 typedef struct EIGEN_STRUCT{
 	int col_count;
 	int row_count;
-    Eigen::SparseLU<Eigen::SparseMatrix<double, Eigen::ColMajor>> *solver;
+    Eigen::SuperLU<Eigen::SparseMatrix<double, Eigen::ColMajor>> *solver;
+//    Eigen::SparseLU<Eigen::SparseMatrix<double, Eigen::ColMajor>> *solver;
 //    Eigen::BiCGSTAB<Eigen::SparseMatrix<double>, Eigen::DiagonalPreconditioner<double>> *solver;
 //    Eigen::SimplicialLDLT<Eigen::SparseMatrix<double>> * solver;
     bool initialSetup;

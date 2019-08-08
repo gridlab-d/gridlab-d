@@ -62,6 +62,7 @@
 #include <Eigen/Eigen>
 #include <Eigen/Sparse>
 #include "solver_EIGEN.h"
+#include <Eigen/SuperLUSupport>
 #include <iostream>
 #include <math.h>
 
@@ -97,7 +98,8 @@ void LU_alloc(void *ext_array, unsigned int rowcount, unsigned int colcount, boo
     EigenValues->row_count = colcount;
     EigenValues->admittance_change = admittance_change;
 //    EigenValues->solver = new SimplicialLDLT<SparseMatrix<double>>;
-    EigenValues->solver = new SparseLU<SparseMatrix<double, ColMajor>>;
+//    EigenValues->solver = new SparseLU<SparseMatrix<double, ColMajor>>;
+    EigenValues->solver = new SuperLU<SparseMatrix<double, ColMajor>>;
 //    EigenValues->solver = new BiCGSTAB<SparseMatrix<double, ColMajor>>;
 }
 
