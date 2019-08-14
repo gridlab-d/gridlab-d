@@ -167,10 +167,10 @@ void send_die(void)
 		gl_verbose("helics_msg: Calling error");
 		const helics::Federate::modes fed_state = pHelicsFederate->getCurrentMode();
 		if(fed_state != helics::Federate::modes::finalize) {
-			pHelicsFederate->error((int)(exitCode.get_int16()));
+			//pHelicsFederate->error((int)(exitCode.get_int16()));
 			pHelicsFederate->finalize();
 		}
-		helics::cleanupHelicsLibrary();
+		//helics::cleanupHelicsLibrary();
 #endif
 	} else {
 		//TODO find equivalent helics clean exit message
@@ -271,8 +271,15 @@ int helics_msg::init(OBJECT *parent){
 						gld_ep_sub->name = ep.getName();
 						config_info_temp = ep.getInfo();
 						json_reader.parse(config_info_temp, config_info);
-						gld_ep_sub->objectName = config_info["object"].asString();
-						gld_ep_sub->propertyName = config_info["property"].asString();
+						if(config_info["object"].isArray()){
+							for(Json::Value::ArrayIndex i = 0; i !=config_info["object"].size(); i++) {
+								gld_ep_sub->objectName.push_back(config_info["object"][i].asString());
+								gld_ep_sub->propertyName.push_back(config_info["property"][i].asString());
+							}
+						} else {
+							gld_ep_sub->objectName.push_back(config_info["object"].asString());
+							gld_ep_sub->propertyName.push_back(config_info["property"].asString());
+						}
 						gld_ep_sub->HelicsSubscriptionEndpoint = ep;
 						helics_endpoint_subscriptions.push_back(gld_ep_sub);
                         gl_verbose("helics_msg::init(): registering subscribing endpoint: %s", gld_ep_sub->name.c_str());
@@ -343,18 +350,20 @@ int helics_msg::init(OBJECT *parent){
 		return rv;
 	}
 	for(vector<helics_endpoint_subscription*>::iterator sub = helics_endpoint_subscriptions.begin(); sub != helics_endpoint_subscriptions.end(); sub++) {
-		if((*sub)->pObjectProperty == NULL) {
-			const char *pObjName = (*sub)->objectName.c_str();
-			const char *pPropName = (*sub)->propertyName.c_str();
-			char *pObjBuf = new char[strlen(pObjName)+1];
-			char *pPropBuf = new char[strlen(pPropName)+1];
-			strcpy(pObjBuf, pObjName);
-			strcpy(pPropBuf, pPropName);
-			(*sub)->pObjectProperty = new gld_property(pObjBuf, pPropBuf);
-			if(!(*sub)->pObjectProperty->is_valid()) {
-				rv = 0;
-				gl_error("helics_msg::init(): There is not object %s with property %s",(char *)(*sub)->objectName.c_str(), (char *)(*sub)->propertyName.c_str());
-				break;
+		if((*sub)->pObjectProperty.empty()) {
+			for(int i=0; i < (*sub)->objectName.size(); i++) {
+				const char *pObjName = (*sub)->objectName[i].c_str();
+				const char *pPropName = (*sub)->propertyName[i].c_str();
+				char *pObjBuf = new char[strlen(pObjName)+1];
+				char *pPropBuf = new char[strlen(pPropName)+1];
+				strcpy(pObjBuf, pObjName);
+				strcpy(pPropBuf, pPropName);
+				(*sub)->pObjectProperty.push_back(new gld_property(pObjBuf, pPropBuf));
+				if(!(*sub)->pObjectProperty[i]->is_valid()) {
+					rv = 0;
+					gl_error("helics_msg::init(): There is not object %s with property %s",(char *)(*sub)->objectName[i].c_str(), (char *)(*sub)->propertyName[i].c_str());
+					break;
+				}
 			}
 		}
 	}
@@ -380,10 +389,13 @@ int helics_msg::init(OBJECT *parent){
 		}
 	}
 	for(vector<helics_endpoint_subscription*>::iterator sub = helics_endpoint_subscriptions.begin(); sub != helics_endpoint_subscriptions.end(); sub++) {
-		vObj = (*sub)->pObjectProperty->get_object();
-		if((vObj->flags & OF_INIT) != OF_INIT){
-			defer = true;
+		for(int i=0; i < (*sub)->pObjectProperty.size(); i++) {
+			vObj = (*sub)->pObjectProperty[i]->get_object();
+			if((vObj->flags & OF_INIT) != OF_INIT){
+				defer = true;
+			}
 		}
+
 	}
 	if(defer == true){
 		gl_verbose("helics_msg::init(): %s is defering initialization.", obj->name);
@@ -933,7 +945,9 @@ int helics_msg::subscribeVariables(){
 			const string message_buffer = mesg->to_string();
 			if(!message_buffer.empty()){
 				strncpy(valueBuf, message_buffer.c_str(), 1023);
-				(*sub)->pObjectProperty->from_string(valueBuf);
+				for(int i = 0; i < (*sub)->pObjectProperty.size(); i++) {
+					(*sub)->pObjectProperty[i]->from_string(valueBuf);
+				}
 				memset(&valueBuf[0], '\0', 1023);
 			}
 		}
