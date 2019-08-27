@@ -2218,7 +2218,7 @@ void link_object::NR_link_presync_fxn(void)
 		}
 		
 		//Update status variable
-		prev_status = status;
+		//prev_status = status;
 	}
 }
 
