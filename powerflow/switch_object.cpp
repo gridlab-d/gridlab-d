@@ -696,6 +696,7 @@ void switch_object::NR_switch_sync_post(unsigned char *work_phases_pre, unsigned
 		}//End NR call
 	}//end not meshed checking mode
 	//defaulted else -- meshed checking, but we don't do anything for that (link handles all)
+
 }
 
 TIMESTAMP switch_object::presync(TIMESTAMP t0)
@@ -758,7 +759,17 @@ TIMESTAMP switch_object::presync(TIMESTAMP t0)
 			}
 		}
 	}
-	
+	if(status != prev_status) {
+		if(has_phase(PHASE_A)) {
+			phase_A_state = status;
+		}
+		if(has_phase(PHASE_B)) {
+			phase_B_state = status;
+		}
+		if(has_phase(PHASE_C)) {
+			phase_C_state = status;
+		}
+	}
 	// Call the ancestor's presync
 	TIMESTAMP result = link_object::presync(t0);
 	return result;
