@@ -19,7 +19,7 @@
 EXPORT STATUS preupdate_inverter(OBJECT *obj,TIMESTAMP t0, unsigned int64 delta_time);
 EXPORT SIMULATIONMODE interupdate_inverter(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 EXPORT STATUS postupdate_inverter(OBJECT *obj, complex *useful_value, unsigned int mode_pass);
-EXPORT STATUS inverter_NR_current_injection_update(OBJECT *obj);
+EXPORT STATUS inverter_NR_current_injection_update(OBJECT *obj, int64 iteration_count);
 
 //Alternative PI version Dynamic control Inverter state variable structure
 typedef struct {
@@ -129,6 +129,8 @@ public:
 	complex I_In; // I_in (DC)
 	complex VA_In; //power in (DC)
 
+	complex temp_current_val[3];
+
 	double efficiency;
 
 	enum PF_REG {INCLUDED=1, EXCLUDED=2, INCLUDED_ALT=3} pf_reg;
@@ -188,6 +190,7 @@ public:
 	double kipmax;  // Pmax controller integral gain
 	double Pmax;  //Pmax value
 	double Pmin; //Pmin value
+	double Pmax_Low_Limit; //lower output limit of Pmax controller
 
 	double Tvol_delay;    // Time delay for inverter terminal voltage seen by inverter
 	double V_ref[3]; 	   // Voltage reference values for three phases
@@ -290,6 +293,10 @@ public:
 	double group_rated_power;		//Sum of the inverter power ratings of the inverters involved in the group power-factor regulation.
 	
 	double inverter_convergence_criterion; //The convergence criteria for the dynamic inverter to exit deltamode
+
+	TIMESTAMP inverter_start_time;
+	bool inverter_first_step;
+	int64 first_iteration_current_injection;	//Initialization variable - mostly so SWING_PQ buses initalize properly for deltamode
 
 	//VoltVar Control Parameters
 	double V_base;
@@ -482,7 +489,7 @@ public:
 	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 	STATUS post_deltaupdate(complex *useful_value, unsigned int mode_pass);
 	double perform_1547_checks(double timestepvalue);
-	STATUS updateCurrInjection();
+	STATUS updateCurrInjection(int64 iteration_count);
 	complex check_VA_Out(complex temp_VA, double p_max);
 	double getEff(double val);
 public:

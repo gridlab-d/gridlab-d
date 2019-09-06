@@ -353,6 +353,8 @@ diesel_dg::diesel_dg(MODULE *module)
 			GL_THROW("Unable to publish diesel_dg deltamode function");
 		if (gl_publish_function(oclass,	"postupdate_gen_object", (FUNCTIONADDR)postupdate_diesel_dg)==NULL)
 			GL_THROW("Unable to publish diesel_dg deltamode function");
+		if (gl_publish_function(oclass, "current_injection_update", (FUNCTIONADDR)diesel_dg_NR_current_injection_update)==NULL)
+			GL_THROW("Unable to publish diesel_dg current injection update function");
 	}
 }
 
@@ -552,6 +554,10 @@ int diesel_dg::create(void)
 
 	first_run = true;				//First time we run, we are the first run (by definition)
 
+	diesel_start_time = TS_INVALID;			//Gets initialized
+	diesel_first_step = true;
+	first_iteration_current_injection = -1;	//Just initailize it
+
 	prev_time = 0;
 	prev_time_dbl = 0.0;
 
@@ -635,6 +641,9 @@ int diesel_dg::init(OBJECT *parent)
 	{
 		deltamode_inclusive = true;	//Set the flag and off we go
 	}
+
+	//Initialize the time tracking flag
+	diesel_start_time = gl_globalclock;
 
 	// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
 	if (parent!=NULL)
@@ -1061,6 +1070,7 @@ int diesel_dg::init(OBJECT *parent)
 
 			//Map the full version needed later
 			//Map up the admittance matrix to apply our contributions
+			/* **************** NOTE - This appears to only be used by the QSTS exciter implementation - can probably be removed in the future **************** */
 			pbus_full_Y_all_mat = new gld_property(parent,"deltamode_full_Y_all_matrix");
 
 			//Check it
@@ -1424,12 +1434,20 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	complex temp_power_val[3];
 	complex temp_complex_value_power;
 	gld_wlock *test_rlock;
+	FUNCTIONADDR test_fxn;
+	STATUS fxn_return_status;
 
 	//Assume always want TS_NEVER
 	tret_value = TS_NEVER;
 
 	//Reset the poweflow interfaces
 	reset_powerflow_accumulators();
+
+	//Check the flagging variable
+	if (diesel_start_time != t1)
+	{
+		diesel_first_step = false;
+	}
 
 	//First run allocation - in diesel_dg for now, but may need to move elsewhere
 	if (first_run == true)	//First run
@@ -1499,6 +1517,29 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 					//Push it up
 					pPGenerated->setp<complex>(temp_complex_value_power,*test_rlock);
 
+					//Map the current injection function
+					test_fxn = (FUNCTIONADDR)(gl_get_function(obj->parent,"pwr_current_injection_update_map"));
+
+					//See if it was located
+					if (test_fxn == NULL)
+					{
+						GL_THROW("diesel_dg:%s - failed to map additional current injection mapping for node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
+						/*  TROUBLESHOOT
+						While attempting to map the additional current injection function, an error was encountered.
+						Please try again.  If the error persists, please submit your code and a bug report via the trac website.
+						*/
+					}
+
+					//Call the mapping function
+					fxn_return_status = ((STATUS (*)(OBJECT *, OBJECT *))(*test_fxn))(obj->parent,obj);
+
+					//Make sure it worked
+					if (fxn_return_status != SUCCESS)
+					{
+						GL_THROW("diesel_dg:%s - failed to map additional current injection mapping for node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
+						//Defined above
+					}
+
 				}//End parent is a node object
 				else	//Nope, so who knows what is going on - better fail, just to be safe
 				{
@@ -1531,6 +1572,7 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 			//Force us to reiterate one
 			tret_value = t1;
+
 		}//End deltamode specials - first pass
 		//Default else - no deltamode stuff
 	}//End first timestep
@@ -4336,6 +4378,217 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 	return SUCCESS;	//Always succeeds for now, but could have error checks later
 }
 
+//Function to do current-injection updates and symmetry constraint checking
+STATUS diesel_dg::updateCurrInjection(int64 iteration_count)
+{
+	complex aval, avalsq;
+	complex temp_p_setpoint;
+	complex temp_total_power_val[3];
+	complex temp_total_power_internal;
+	complex temp_pos_voltage, temp_pos_current;
+	bool bus_is_a_swing;
+	enumeration attached_bus_type;
+	FUNCTIONADDR test_fxn;
+	gld_property *temp_property_pointer;
+	OBJECT *obj = OBJECTHDR(this);
+
+	//Only do during initialization
+	if (diesel_first_step == true)
+	{
+		//Conversion variables - 1@120-deg
+		aval = complex(-0.5,(sqrt(3.0)/2.0));
+		avalsq = aval*aval;	//squared value is used a couple places too
+
+		//Initialize the SWING variable
+		bus_is_a_swing = false;
+
+		//Pull our "bus status" - see if we're a SWING (or SWING_PQ that is a SWING) or not, otherwise, let us update
+		if (parent_is_powerflow == true)
+		{
+			//See what kind of bus we are purported to be
+			temp_property_pointer = new gld_property(obj->parent,"bustype");
+
+			//Make sure it worked
+			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_enumeration() != true))
+			{
+				GL_THROW("diesel_dg:%s failed to map bustype variable from %s",obj->name?obj->name:"unnamed",obj->parent->name?obj->parent->name:"unnamed");
+				/*  TROUBLESHOOT
+				While attempting to map the bustype variable from the parent node, an error was encountered.  Please try again.  If the error
+				persists, please report it with your GLM via the issues tracking system.
+				*/
+			}
+
+			//Pull the value of the bus
+			attached_bus_type = temp_property_pointer->get_enumeration();
+
+			//Remove it
+			delete temp_property_pointer;
+
+			//Determine our status
+			if (attached_bus_type > 1)	//SWING or SWING_PQ
+			{
+				//Map the swing status check function
+				test_fxn = (FUNCTIONADDR)(gl_get_function(obj->parent,"pwr_object_swing_status_check"));
+
+				//See if it was located
+				if (test_fxn == NULL)
+				{
+					GL_THROW("diesel_dg:%s - failed to map swing-checking for node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
+					/*  TROUBLESHOOT
+					While attempting to map the swing-checking function, an error was encountered.
+					Please try again.  If the error persists, please submit your code and a bug report via the trac website.
+					*/
+				}
+
+				//Call the test function
+				bus_is_a_swing = ((bool (*)(OBJECT *))(*test_fxn))(obj->parent);
+
+				//Now see how we've gotten here
+				if (first_iteration_current_injection == -1)	//Haven't entered before
+				{
+					//See if we are truely the first iteration
+					if (iteration_count != 0)
+					{
+						//We're not, which means we were a SWING or a SWING_PQ "demoted" after balancing was completed - override the indication
+						//If it was already true, well, we just set it again
+						bus_is_a_swing = true;
+					}
+					//Default else - we are zero, so we can just leave the "SWING status" correct
+
+					//Update the iteration counter
+					first_iteration_current_injection = iteration_count;
+				}
+				else if (first_iteration_current_injection != 0)	//We didn't enter on the first iteration
+				{
+					//Just override the indication - this only happens if we were a SWING or a SWING_PQ that was "demoted"
+					bus_is_a_swing = true;
+				}
+				//Default else is zero - we entered on the first iteration, which implies we are either a PQ bus,
+				//or were a SWING_PQ that was behaving as a PQ from the start
+			}
+			//Default else - keep bus_is_a_swing as false
+		}
+		//Default else -- the parent isn't a powerflow, so just assume we "aren't a swing"
+
+		//See if we're a "standard bus"
+		if (bus_is_a_swing == false)	//Not a SWING or SWING_PQ - otherwise causes issues with internal solver_nr attempts
+		{
+			if (Governor_type == DEGOV1)
+			{
+				//Reset the powerflow interface variables
+				reset_powerflow_accumulators();
+
+				//Pull the present powerflow values
+				pull_powerflow_values();
+
+				//Form up the "goal" variable
+				temp_p_setpoint = power_val[0] + power_val[1] + power_val[2];
+
+				//Calculate the Norton-shunted power
+				temp_total_power_val[0] = value_Circuit_V[0] * ~(generator_admittance[0][0]*value_Circuit_V[0] + generator_admittance[0][1]*value_Circuit_V[1] + generator_admittance[0][2]*value_Circuit_V[2]);
+				temp_total_power_val[1] = value_Circuit_V[1] * ~(generator_admittance[1][0]*value_Circuit_V[0] + generator_admittance[1][1]*value_Circuit_V[1] + generator_admittance[1][2]*value_Circuit_V[2]);
+				temp_total_power_val[2] = value_Circuit_V[2] * ~(generator_admittance[2][0]*value_Circuit_V[0] + generator_admittance[2][1]*value_Circuit_V[1] + generator_admittance[2][2]*value_Circuit_V[2]);
+
+				//Figure out what we should be generating internally
+				temp_total_power_internal = temp_p_setpoint + temp_total_power_val[0] + temp_total_power_val[1] + temp_total_power_val[2];
+
+				//Compute the positive sequence voltage (*3)
+				temp_pos_voltage = value_Circuit_V[0] + value_Circuit_V[1]*aval + value_Circuit_V[2]*avalsq;
+
+				//Compute the positive sequence current
+				temp_pos_current = ~(temp_total_power_internal/temp_pos_voltage);
+
+				//Now populate this into the output
+				value_IGenerated[0] = temp_pos_current;
+				value_IGenerated[1] = temp_pos_current*avalsq;
+				value_IGenerated[2] = temp_pos_current*aval;
+
+				//Put the values back
+				push_powerflow_values(false);
+
+			}
+			else if (Governor_type == GAST)
+			{
+
+			}
+			else if (Governor_type == GGOV1_OLD)
+			{
+
+			}
+			else if (Governor_type == GGOV1)
+			{
+				//Reset the powerflow interface variables
+				reset_powerflow_accumulators();
+
+				//Pull the present powerflow values
+				pull_powerflow_values();
+
+				//Form up the "goal" variable
+				temp_p_setpoint = power_val[0] + power_val[1] + power_val[2];
+
+				//Calculate the Norton-shunted power
+				temp_total_power_val[0] = value_Circuit_V[0] * ~(generator_admittance[0][0]*value_Circuit_V[0] + generator_admittance[0][1]*value_Circuit_V[1] + generator_admittance[0][2]*value_Circuit_V[2]);
+				temp_total_power_val[1] = value_Circuit_V[1] * ~(generator_admittance[1][0]*value_Circuit_V[0] + generator_admittance[1][1]*value_Circuit_V[1] + generator_admittance[1][2]*value_Circuit_V[2]);
+				temp_total_power_val[2] = value_Circuit_V[2] * ~(generator_admittance[2][0]*value_Circuit_V[0] + generator_admittance[2][1]*value_Circuit_V[1] + generator_admittance[2][2]*value_Circuit_V[2]);
+
+				//Figure out what we should be generating internally
+				temp_total_power_internal = temp_p_setpoint + temp_total_power_val[0] + temp_total_power_val[1] + temp_total_power_val[2];
+
+				//Compute the positive sequence voltage (*3)
+				temp_pos_voltage = value_Circuit_V[0] + value_Circuit_V[1]*aval + value_Circuit_V[2]*avalsq;
+
+				//Compute the positive sequence current
+				temp_pos_current = ~(temp_total_power_internal/temp_pos_voltage);
+
+				//Now populate this into the output
+				value_IGenerated[0] = temp_pos_current;
+				value_IGenerated[1] = temp_pos_current*avalsq;
+				value_IGenerated[2] = temp_pos_current*aval;
+
+				//Put the values back
+				push_powerflow_values(false);
+			}
+			else if (Governor_type == P_CONSTANT)
+			{
+				//Reset the powerflow interface variables
+				reset_powerflow_accumulators();
+
+				//Pull the present powerflow values
+				pull_powerflow_values();
+
+				//Form up the "goal" variable
+				temp_p_setpoint = complex(gen_base_set_vals.Pref,gen_base_set_vals.Qref)*Rated_VA;	
+				
+				//Calculate the Norton-shunted power
+				temp_total_power_val[0] = value_Circuit_V[0] * ~(generator_admittance[0][0]*value_Circuit_V[0] + generator_admittance[0][1]*value_Circuit_V[1] + generator_admittance[0][2]*value_Circuit_V[2]);
+				temp_total_power_val[1] = value_Circuit_V[1] * ~(generator_admittance[1][0]*value_Circuit_V[0] + generator_admittance[1][1]*value_Circuit_V[1] + generator_admittance[1][2]*value_Circuit_V[2]);
+				temp_total_power_val[2] = value_Circuit_V[2] * ~(generator_admittance[2][0]*value_Circuit_V[0] + generator_admittance[2][1]*value_Circuit_V[1] + generator_admittance[2][2]*value_Circuit_V[2]);
+
+				//Figure out what we should be generating internally
+				temp_total_power_internal = temp_p_setpoint + temp_total_power_val[0] + temp_total_power_val[1] + temp_total_power_val[2];
+
+				//Compute the positive sequence voltage (*3)
+				temp_pos_voltage = value_Circuit_V[0] + value_Circuit_V[1]*aval + value_Circuit_V[2]*avalsq;
+
+				//Compute the positive sequence current
+				temp_pos_current = ~(temp_total_power_internal/temp_pos_voltage);
+
+				//Now populate this into the output
+				value_IGenerated[0] = temp_pos_current;
+				value_IGenerated[1] = temp_pos_current*avalsq;
+				value_IGenerated[2] = temp_pos_current*aval;
+
+				//Put the values back
+				push_powerflow_values(false);
+			}
+			//Default else - do nothing (likely NOGOV)
+		}//End not a SWING bus
+		//Default else -- it is a SWING bus, so just skip over
+	}//End first timestep
+
+	return SUCCESS;
+}
+
 //Function to perform exp(j*val)
 //Basically a complex rotation
 complex diesel_dg::complex_exp(double angle)
@@ -4346,15 +4599,6 @@ complex diesel_dg::complex_exp(double angle)
 	output_val = complex(cos(angle),sin(angle));
 
 	return output_val;
-}
-
-// Function to calculate absolute values of complex
-double diesel_dg::abs_complex(complex val)
-{
-	double res;
-	res = sqrt(val.Re() * val.Re() + val.Im() * val.Im());
-
-	return res;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -4466,4 +4710,20 @@ EXPORT STATUS postupdate_diesel_dg(OBJECT *obj, complex *useful_value, unsigned 
 		gl_error("postupdate_diesel_dg(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
 		return status;
 	}
+}
+
+//// Define export function that update the current injection IGenerated to the grid
+EXPORT STATUS diesel_dg_NR_current_injection_update(OBJECT *obj,int64 iteration_count)
+{
+	STATUS temp_status;
+
+	//Map the node
+	diesel_dg *my = OBJECTDATA(obj,diesel_dg);
+
+	//Call the function, where we can update the IGenerated injection
+	temp_status = my->updateCurrInjection(iteration_count);
+
+	//Return what the sub function said we were
+	return temp_status;
+
 }

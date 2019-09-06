@@ -31,9 +31,10 @@ Initialization after returning to service?
 ***********************************************************************
 */
 
-
-
 #include "solver_nr.h"
+
+/* access to module global variables */
+#include "powerflow.h"
 
 #define MT // this enables multithreaded SuperLU
 
@@ -51,9 +52,6 @@ typedef struct {
 	SuperMatrix A_LU;
 	SuperMatrix B_LU;
 } SUPERLU_NR_vars;
-
-/* access to module global variables */
-#include "powerflow.h"
 
 //Initialize the sparse notation
 void sparse_init(SPARSE* sm, int nels, int ncols)
@@ -338,7 +336,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	bool Full_Mat_A, Full_Mat_B, proceed_flag;
 
 	//Deltamode intermediate variables
-	complex temp_complex_0, temp_complex_1, temp_complex_2, temp_complex_3, temp_complex_4, temp_complex_5;
+	complex temp_complex_0, temp_complex_1, temp_complex_2, temp_complex_3, temp_complex_4;
 	complex aval, avalsq;
 
 	//Temporary size variable
@@ -583,12 +581,94 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			//If we're in any deltamode, store out self-admittance as well, if it exists
 			if ((powerflow_type!=PF_NORMAL) && (bus[indexer].full_Y != NULL))
 			{
-				//Loop and add
-				for (jindex=0; jindex<3; jindex++)
+				//Not triplex
+				if ((bus[indexer].phases & 0x80) != 0x80)
 				{
-					for (kindex=0; kindex<3; kindex++)
+					//Figure out what our casing looks like - populate based on this (in case some were children)
+					switch(bus[indexer].phases & 0x07) {
+						case 0x00:	//No phases
+						{
+							break;	//Just get us out
+						}
+						case 0x01:	//Phase C
+						{
+							tempY[0][0] = bus[indexer].full_Y[8];
+							break;
+						}
+						case 0x02:	//Phase B
+						{
+							tempY[0][0] = bus[indexer].full_Y[4];
+							break;
+						}
+						case 0x03:	//Phase BC
+						{
+							tempY[0][0] = bus[indexer].full_Y[4];
+							tempY[0][1] = bus[indexer].full_Y[5];
+							tempY[1][0] = bus[indexer].full_Y[7];
+							tempY[1][1] = bus[indexer].full_Y[8];
+							break;
+						}
+						case 0x04:	//Phase A
+						{
+							tempY[0][0] = bus[indexer].full_Y[0];
+							break;
+						}
+						case 0x05:	//Phase AC
+						{
+							tempY[0][0] = bus[indexer].full_Y[0];
+							tempY[0][1] = bus[indexer].full_Y[2];
+							tempY[1][0] = bus[indexer].full_Y[6];
+							tempY[1][1] = bus[indexer].full_Y[8];
+							break;
+						}
+						case 0x06:	//Phase AB
+						{
+							tempY[0][0] = bus[indexer].full_Y[0];
+							tempY[0][1] = bus[indexer].full_Y[1];
+							tempY[1][0] = bus[indexer].full_Y[3];
+							tempY[1][1] = bus[indexer].full_Y[4];
+							break;
+						}
+						case 0x07:	//Phase ABC
+						{
+							//Loop and add all in
+							for (jindex=0; jindex<3; jindex++)
+							{
+								for (kindex=0; kindex<3; kindex++)
+								{
+									tempY[jindex][kindex] = bus[indexer].full_Y[jindex*3+kindex];	//Adds in any self-admittance terms (generators)
+								}
+							}
+							break;
+						}
+						default:
+						{
+							GL_THROW("NR: Improper Norton equivalent admittance found");
+							/*  TROUBLESHOOT
+							While mapping Norton equivalent impedances into the system, an unexpected
+							phase condition was encountered with the admittance.  Please try again.  If the error
+							persists, please submit a bug report via the issue tracker.
+							*/
+						}
+					}//End case
+				}
+				else  //Must be Triplex - add the "12" combination for the shunt
+				{
+					//See if we're the stupid "backwards notation" bus or not
+					if ((bus[indexer].phases & 0x20) == 0x20)	//Special case
 					{
-						tempY[jindex][kindex] = bus[indexer].full_Y[jindex*3+kindex];	//Adds in any self-admittance terms (generators)
+						//Need to be negated, due to crazy conventions
+						tempY[0][0] = -bus[indexer].full_Y[0];
+						tempY[0][1] = -bus[indexer].full_Y[0];
+						tempY[1][0] = bus[indexer].full_Y[0];
+						tempY[1][1] = bus[indexer].full_Y[0];
+					}
+					else	//Standard triplex
+					{
+						tempY[0][0] = bus[indexer].full_Y[0];
+						tempY[0][1] = bus[indexer].full_Y[0];
+						tempY[1][0] = -bus[indexer].full_Y[0];
+						tempY[1][1] = -bus[indexer].full_Y[0];
 					}
 				}
 			}
@@ -2446,50 +2526,68 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					//Initializes the Norton equivalent item -- normal generators shoudln't need this
 					if ((*bus[indexer].dynamics_enabled==true) && (bus[indexer].full_Y != NULL) && (bus[indexer].DynCurrent != NULL))
 					{
-						//Form denominator term of Ii, since it won't change
-						temp_complex_1 = (~bus[indexer].V[0]) + (~bus[indexer].V[1])*avalsq + (~bus[indexer].V[2])*aval;
-						
-						//Form up numerator portion that doesn't change (Q and admittance)
-						//Do in parts, just for readability
-						temp_complex_2 = ~bus[indexer].V[0];	//conj(Va)
-						
-						//Row 1 of admittance mult
-						temp_complex_0 = temp_complex_2*(bus[indexer].full_Y[0]*bus[indexer].V[0] + bus[indexer].full_Y[1]*bus[indexer].V[1] + bus[indexer].full_Y[2]*bus[indexer].V[2]);
-
-						// Row 1 also calculate Sysource ( = v * conj(ysource * v)) to substract from PTsource and obtain Pgen at generator bus 
-						temp_complex_5 = bus[indexer].full_Y[0]*bus[indexer].V[0] + bus[indexer].full_Y[1]*bus[indexer].V[1] + bus[indexer].full_Y[2]*bus[indexer].V[2];
-						temp_complex_4 = ~temp_complex_5;
-						temp_complex_3 = bus[indexer].V[0]*temp_complex_4;
-
-						//conj(Vb)
-						temp_complex_2 = ~bus[indexer].V[1];
-
-						//Row 2 of admittance
-						temp_complex_0 += temp_complex_2*(bus[indexer].full_Y[3]*bus[indexer].V[0] + bus[indexer].full_Y[4]*bus[indexer].V[1] + bus[indexer].full_Y[5]*bus[indexer].V[2]);
-						
-						// Row 2 also calculate Sysource ( = v * conj(ysource * v)) to substract from PTsource and obtain Pgen at generator bus
-						temp_complex_5 = bus[indexer].full_Y[3]*bus[indexer].V[0] + bus[indexer].full_Y[4]*bus[indexer].V[1] + bus[indexer].full_Y[5]*bus[indexer].V[2];
-						temp_complex_4 = ~temp_complex_5;
-						temp_complex_3 += bus[indexer].V[1]*temp_complex_4;
-
-						//conj(Vc)
-						temp_complex_2 = ~bus[indexer].V[2];
-
-						//Row 3 of admittance
-						temp_complex_0 += temp_complex_2*(bus[indexer].full_Y[6]*bus[indexer].V[0] + bus[indexer].full_Y[7]*bus[indexer].V[1] + bus[indexer].full_Y[8]*bus[indexer].V[2]);
-
-						// Row 3 also calculate Sysource ( = v * conj(ysource * v)) to substract from PTsource and obtain Pgen at generator bus
-						temp_complex_5 = bus[indexer].full_Y[6]*bus[indexer].V[0] + bus[indexer].full_Y[7]*bus[indexer].V[1] + bus[indexer].full_Y[8]*bus[indexer].V[2];
-						temp_complex_4 = ~temp_complex_5;
-						temp_complex_3 += bus[indexer].V[2]*temp_complex_4;					
-
-						//numerator done, except PT portion (add in below - SWING bus is different
-
-						//On that note, if we are a SWING, zero our PT portion and QT for accumulation
-						if ((bus[indexer].type == 2) && (powerflow_values->island_matrix_values[island_loop_index].iteration_count>0))
+						//See if we're three phase or triplex
+						if ((bus[indexer].phases & 0x07) == 0x07)
 						{
-							*bus[indexer].PGenTotal = complex(0.0,0.0);
+							//Form denominator term of Ii, since it won't change
+							temp_complex_1 = (~bus[indexer].V[0]) + (~bus[indexer].V[1])*avalsq + (~bus[indexer].V[2])*aval;
+							
+							//Form up numerator portion that doesn't change (Q and admittance)
+							//Do in parts, just for readability
+							//Row 1 of admittance mult
+							temp_complex_0 = ~bus[indexer].V[0]*(bus[indexer].full_Y[0]*bus[indexer].V[0] + bus[indexer].full_Y[1]*bus[indexer].V[1] + bus[indexer].full_Y[2]*bus[indexer].V[2]);
+
+							//Row 2 of admittance
+							temp_complex_0 += ~bus[indexer].V[1]*(bus[indexer].full_Y[3]*bus[indexer].V[0] + bus[indexer].full_Y[4]*bus[indexer].V[1] + bus[indexer].full_Y[5]*bus[indexer].V[2]);
+
+							//Row 3 of admittance
+							temp_complex_0 += ~bus[indexer].V[2]*(bus[indexer].full_Y[6]*bus[indexer].V[0] + bus[indexer].full_Y[7]*bus[indexer].V[1] + bus[indexer].full_Y[8]*bus[indexer].V[2]);
+
+							//Make the conjugate - used for individual phase accumulation later
+							temp_complex_3 = ~temp_complex_0;
+
+							//If we are a SWING, zero our PT portion and QT for accumulation
+							if (((bus[indexer].type > 1) && (bus[indexer].swing_functions_enabled == true)) && (powerflow_values->island_matrix_values[island_loop_index].iteration_count>0))
+							{
+								*bus[indexer].PGenTotal = complex(0.0,0.0);
+							}
 						}
+						else if ((bus[indexer].phases & 0x80) == 0x80)	//Triplex
+						{
+							//Get the "delta voltage" for use here
+							temp_complex_4 = bus[indexer].V[0] + bus[indexer].V[1];
+
+							//Form denominator term of Ii, since it won't change
+							temp_complex_1 = ~temp_complex_4;
+							
+							//Form up numerator portion that doesn't change (Q and admittance)
+							//Should just be a single entry, for "reasons/asssumptions"
+							temp_complex_0 = ~temp_complex_4*(bus[indexer].full_Y[0]*temp_complex_4);
+
+							//Make the conjugate - used for individual phase accumulation later
+							temp_complex_3 = ~temp_complex_0;
+
+							//If we are a SWING, zero our PT portion and QT for accumulation
+							if (((bus[indexer].type > 1) && (bus[indexer].swing_functions_enabled == true)) && (powerflow_values->island_matrix_values[island_loop_index].iteration_count>0))
+							{
+								*bus[indexer].PGenTotal = -temp_complex_3;	//Gets piecemeal removed from three-phase, just all at once here!
+							}
+						}
+						else if ((bus[indexer].phases & 0x07) == 0x00)	//No phases
+						{
+							temp_complex_1 = complex(0.0,0.0);
+							temp_complex_0 = complex(0.0,0.0);
+							temp_complex_3 = complex(0.0,0.0);
+
+							//If we are a SWING, zero our PT portion and QT for accumulation
+							if (((bus[indexer].type > 1) && (bus[indexer].swing_functions_enabled == true)) && (powerflow_values->island_matrix_values[island_loop_index].iteration_count>0))
+							{
+								*bus[indexer].PGenTotal = complex(0.0,0.0);
+							}
+						}
+						//Default else - some other permutation, but not really supported (single-phase swing, or partial swing
+						
+						//numerator done, except PT portion (add in below - SWING bus is different
 					}
 					else	//Not enabled or not "full-Y-ed" - set to zero
 					{
@@ -2634,30 +2732,98 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						{
 							if ((powerflow_type == PF_DYNINIT) && (bus[indexer].DynCurrent != NULL))	//We're a generator-type bus
 							{
-								//Compute the delta_I, just like below - but don't post it (still zero in calcs)
-								work_vals_double_3 = tempPbus - tempIcalcReal;
-								work_vals_double_4 = tempQbus - tempIcalcImag;
-
-								//Form a magnitude vector
-								work_vals_double_0 = sqrt((work_vals_double_3*work_vals_double_3+work_vals_double_4*work_vals_double_4));
-								
-								if (work_vals_double_0 > bus[indexer].max_volt_error)	//Failure check (defaults to voltage convergence for now)
+								//See if we're a Norton-equivalent-based generator
+								if (bus[indexer].full_Y != NULL)
 								{
-									powerflow_values->island_matrix_values[island_loop_index].swing_converged=false;
-								}
+									//Compute our "power generated" value for this phase - conjugated in formation
+									temp_complex_2 = bus[indexer].V[jindex] * complex(tempIcalcReal,-tempIcalcImag);
+
+									if (powerflow_values->island_matrix_values[island_loop_index].iteration_count>0)	//Only update SWING on subsequent passes
+									{
+										//Now add it into the "generation total" for the SWING
+										//Accumulate our power from the bus injections
+										(*bus[indexer].PGenTotal) += temp_complex_2; // both PT and QT = Ssource-Sysource = v conj(I) - v conj(ysource v) - overall gen handled above
+									}
+
+									//Compute the delta_I, just like below - but don't post it (still zero in calcs)
+									work_vals_double_0 = (bus[indexer].V[jindex]).Mag()*(bus[indexer].V[jindex]).Mag();
+
+									if (work_vals_double_0!=0)	//Only normal one (not square), but a zero is still a zero even after that
+									{
+										work_vals_double_1 = (bus[indexer].V[jindex]).Re();
+										work_vals_double_2 = (bus[indexer].V[jindex]).Im();
+										work_vals_double_3 = (tempPbus * work_vals_double_1 + tempQbus * work_vals_double_2)/ (work_vals_double_0) - tempIcalcReal; // equation(7), Real part of deltaI, left hand side of equation (11)
+										work_vals_double_4 = (tempPbus * work_vals_double_2 - tempQbus * work_vals_double_1)/ (work_vals_double_0) - tempIcalcImag; // Imaginary part of deltaI, left hand side of equation (11)
+
+										//Form a magnitude value - put in work_vals_double_0, since we're done with it
+										work_vals_double_0 = sqrt((work_vals_double_3*work_vals_double_3+work_vals_double_4*work_vals_double_4));
+									}
+									else	//Would give us a NAN, so it must be out of service or something (case from below - really shouldn't apply to SWING)
+									{
+										work_vals_double_0 = 0.0;	//Assumes "converged"
+									}
+									
+									if (work_vals_double_0 > bus[indexer].max_volt_error)	//Failure check (defaults to voltage convergence for now)
+									{
+										powerflow_values->island_matrix_values[island_loop_index].swing_converged=false;
+									}
+								}//End Norton-equivalent SWING
+								else	//Other generator types
+								{
+									//Compute the delta_I, just like below - but don't post it (still zero in calcs)
+									work_vals_double_0 = (bus[indexer].V[jindex]).Mag()*(bus[indexer].V[jindex]).Mag();
+
+									if (work_vals_double_0!=0)	//Only normal one (not square), but a zero is still a zero even after that
+									{
+										work_vals_double_1 = (bus[indexer].V[jindex]).Re();
+										work_vals_double_2 = (bus[indexer].V[jindex]).Im();
+										work_vals_double_3 = (tempPbus * work_vals_double_1 + tempQbus * work_vals_double_2)/ (work_vals_double_0) - tempIcalcReal; // equation(7), Real part of deltaI, left hand side of equation (11)
+										work_vals_double_4 = (tempPbus * work_vals_double_2 - tempQbus * work_vals_double_1)/ (work_vals_double_0) - tempIcalcImag; // Imaginary part of deltaI, left hand side of equation (11)
+
+										//Form a magnitude value - put in work_vals_double_0, since we're done with it
+										work_vals_double_0 = sqrt((work_vals_double_3*work_vals_double_3+work_vals_double_4*work_vals_double_4));
+									}
+									else	//Would give us a NAN, so it must be out of service or something (case from below - really shouldn't apply to SWING)
+									{
+										work_vals_double_0 = 0.0;	//Assumes "converged"
+									}
+
+									if (work_vals_double_0 > bus[indexer].max_volt_error)	//Failure check (defaults to voltage convergence for now)
+									{
+										powerflow_values->island_matrix_values[island_loop_index].swing_converged=false;
+									}
+
+									//Put this into DynCurrent for storage
+									/*** NOTE - This is untested and it's not clear if it is even needed (triplex swing bus?) ******/
+									bus[indexer].DynCurrent[jindex] = complex(tempIcalcReal,tempIcalcImag);
+								}//End other generator types
 							}//End PF_DYNINIT SWING traversion
 
-							//Must be normal run, since DYNRUN should have swing capabilities deflagged
-							//Normal run - zero it - should already be zerod, but let's be paranoid for now
+							//Effectively Zero out the components, regardless of normal run or not
+							//Should already be zerod, but do it again for paranoia sake
 							powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + jindex] = 0.0;
 							powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc + jindex] = 0.0;
+
+							//Saturation skipped for "swing is a swing" case, since it doesn't affect the admittance (no need to offset)
 						}//End SWING bus cases
 						else	//PQ bus or SWING masquerading as a PQ
 						{
-							//It's I.  Just a direct conversion (P changed above to I as well)
-							powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+ powerflow_values->BA_diag[indexer].size + jindex] = tempPbus - tempIcalcReal;
-							powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc + jindex] = tempQbus - tempIcalcImag;
-						}//End Normal PQ bus
+							work_vals_double_0 = (bus[indexer].V[jindex]).Mag()*(bus[indexer].V[jindex]).Mag();
+
+							if (work_vals_double_0!=0)	//Only normal one (not square), but a zero is still a zero even after that
+							{
+								work_vals_double_1 = (bus[indexer].V[jindex]).Re();
+								work_vals_double_2 = (bus[indexer].V[jindex]).Im();
+
+								powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+ powerflow_values->BA_diag[indexer].size + jindex] = (tempPbus * work_vals_double_1 + tempQbus * work_vals_double_2)/ (work_vals_double_0) - tempIcalcReal ; // equation(7), Real part of deltaI, left hand side of equation (11)
+								powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc + jindex] = (tempPbus * work_vals_double_2 - tempQbus * work_vals_double_1)/ (work_vals_double_0) - tempIcalcImag; // Imaginary part of deltaI, left hand side of equation (11)
+							}
+							else
+							{
+								powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + jindex] = 0.0;
+								powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc + jindex] = 0.0;
+							}
+						}//End normal bus handling
 					}//End split-phase present
 					else	//Three phase or some variant thereof
 					{
@@ -2915,6 +3081,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 									if (powerflow_values->island_matrix_values[island_loop_index].iteration_count>0)	//Only update SWING on subsequent passes
 									{
 										//Now add it into the "generation total" for the SWING
+										//Accumulate our power from the bus injections
 										(*bus[indexer].PGenTotal) += temp_complex_2 - temp_complex_3/3.0; // both PT and QT = Ssource-Sysource = v conj(I) - v conj(ysource v)
 									}
 
@@ -3038,6 +3205,25 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					}//End three-phase or variant thereof
 				}//End delta_I for each phase row
 
+				//Call the overall current injection update for compatible objects (mostly deltamode Norton-equivalent generators)
+				//See if this particular bus has any "current injection update" requirements - semi-silly to do this for SWING-enabled buses, but makes the code more consistent
+				if ((bus[indexer].ExtraCurrentInjFunc != NULL) && ((bus[indexer].type == 0) || ((bus[indexer].type > 1) && (bus[indexer].swing_functions_enabled == false))))
+				{
+					//Call the function
+					call_return_status = ((STATUS (*)(OBJECT *,int64))(*bus[indexer].ExtraCurrentInjFunc))(bus[indexer].ExtraCurrentInjFuncObject,powerflow_values->island_matrix_values[island_loop_index].iteration_count);
+
+					//Make sure it worked
+					if (call_return_status == FAILED)
+					{
+						GL_THROW("External current injection update failed for device %s",bus[indexer].ExtraCurrentInjFuncObject->name ? bus[indexer].ExtraCurrentInjFuncObject->name : "Unnamed");
+						/*  TROUBLESHOOT
+						While attempting to perform the external current injection update function call, something failed.  Please try again.
+						If the error persists, please submit your code and a bug report via the ticketing system.
+						*/
+					}
+					//Default else - it worked
+				}
+
 				//Add in generator current amounts, if relevant
 				if (powerflow_type != PF_NORMAL)
 				{
@@ -3050,10 +3236,10 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							if ((bus[indexer].phases & 0x07) == 0x07)	//Make sure is three-phase
 							{
 								//Only update in particular mode - SWING bus values should still be treated as such
-								if ((powerflow_values->island_matrix_values[island_loop_index].swing_is_a_swing == true) && (powerflow_type == PF_DYNINIT))	//Really only true for PF_DYNINIT anyways
+								if ((powerflow_values->island_matrix_values[island_loop_index].swing_is_a_swing == true) && (powerflow_type == PF_DYNINIT) && (bus[indexer].type > 1) && (bus[indexer].swing_functions_enabled == true))	//Really only true for PF_DYNINIT anyways
 								{
 									//Power should be all updated, now update current values
-									temp_complex_0 += complex((*bus[indexer].PGenTotal).Re(),-(*bus[indexer].PGenTotal).Im()); // total generated power injected congugated
+									temp_complex_0 += complex((*bus[indexer].PGenTotal).Re(),-(*bus[indexer].PGenTotal).Im()); // total generated power injected conjugated
 
 									//Compute Ii
 									if (temp_complex_1.Mag() > 0.0)	//Non zero
@@ -3087,10 +3273,138 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								}
 								//Defaulted else - leave as they were
 							}//End three-phase
-							else	//Not three-phase at the moment
+							else if ((bus[indexer].phases & 0x80) == 0x80)	//Triplex
+							{
+								//Duplicate of the three-phase code, just tweaked for triplex implementaiton
+
+								//Only update in particular mode - SWING bus values should still be treated as such
+								if ((powerflow_values->island_matrix_values[island_loop_index].swing_is_a_swing == true) && (powerflow_type == PF_DYNINIT) && (bus[indexer].type > 1) && (bus[indexer].swing_functions_enabled == true))	//Really only true for PF_DYNINIT anyways
+								{
+									//Power should be all updated, now update current values
+									temp_complex_0 += complex((*bus[indexer].PGenTotal).Re(),-(*bus[indexer].PGenTotal).Im()); // total generated power injected conjugated
+
+									//Compute Ii
+									if (temp_complex_1.Mag() > 0.0)	//Non zero
+									{
+										temp_complex_2 = temp_complex_0/temp_complex_1;	//Forms Ii
+
+										//Just store Ii - no need to convert what is a single-phase representation!
+										bus[indexer].DynCurrent[0] = temp_complex_2;
+									}
+									else	//Must make zero
+									{
+										bus[indexer].DynCurrent[0] = complex(0.0,0.0);
+									}
+								}//End SWING is still swing, otherwise should just accumulate what it had
+
+								//Don't get added in as part of "normal swing" routine
+								if ((bus[indexer].type == 0) || ((bus[indexer].type>1) && (bus[indexer].swing_functions_enabled == false)))
+								{
+									//See what kind of triplex we are
+									if ((bus[indexer].phases & 0x20) == 0x20)	//SPCT "exception"
+									{
+										//Add these into the system - added because "generation" - assumption is it is a flow between 1 and 2
+										powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] -= bus[indexer].DynCurrent[0].Re();		//Phase 1
+										powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + 1] += bus[indexer].DynCurrent[0].Re();	//Phase 2
+
+										powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc] -= bus[indexer].DynCurrent[0].Im();		//Phase 1
+										powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc + 1] += bus[indexer].DynCurrent[0].Im();	//Phase 2
+									}
+									else	//Standard triplex
+									{
+										//Add these into the system - added because "generation" - assumption is it is a flow between 1 and 2
+										powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[0].Re();		//Phase 1
+										powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + 1] -= bus[indexer].DynCurrent[0].Re();	//Phase 2
+
+										powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc] += bus[indexer].DynCurrent[0].Im();		//Phase 1
+										powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc + 1] -= bus[indexer].DynCurrent[0].Im();	//Phase 2
+									}
+								}
+								//Defaulted else - leave as they were
+							}
+							else if ((bus[indexer].phases & 0x07) != 0x00)	//Some type of phasing
+							{
+								//SWING update functionality is not in here, just "normal"
+								//Don't get added in as part of "normal swing" routine
+								if (bus[indexer].type == 0)	//"SWING not a SWING" was here, but given the exception to being a SWING, it isn't needed here
+								{
+									//Figure out "where/what" to add
+									//Case it out by phases
+									switch (bus[indexer].phases & 0x07)	{
+										case 0x01:	//C
+											{
+												//Add these into the system - added because "generation"
+												powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[2].Re();		//Phase C
+												powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc] += bus[indexer].DynCurrent[2].Im();		//Phase C
+												break;
+											}//end 0x01
+										case 0x02:	//B
+											{
+												//Add these into the system - added because "generation"
+												powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[1].Re();		//Phase B
+												powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc] += bus[indexer].DynCurrent[1].Im();		//Phase B
+												break;
+											}
+										case 0x03:	//BC
+											{
+												//Add these into the system - added because "generation"
+												powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[1].Re();		//Phase C
+												powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + 1] += bus[indexer].DynCurrent[2].Re();	//Phase C
+
+												powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc] += bus[indexer].DynCurrent[1].Im();		//Phase B
+												powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc + 1] += bus[indexer].DynCurrent[2].Im();	//Phase C
+												break;
+											}
+										case 0x04:	//A
+											{
+												//Add these into the system - added because "generation"
+												powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[0].Re();		//Phase A
+												powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc] += bus[indexer].DynCurrent[0].Im();		//Phase A
+												break;
+											}
+										case 0x05:	//AC
+											{
+												//Add these into the system - added because "generation"
+												powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[0].Re();		//Phase A
+												powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + 1] += bus[indexer].DynCurrent[2].Re();	//Phase C
+
+												powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc] += bus[indexer].DynCurrent[0].Im();		//Phase A
+												powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc + 1] += bus[indexer].DynCurrent[2].Im();	//Phase C
+												break;
+											}
+										case 0x06:	//AB
+											{
+												//Add these into the system - added because "generation"
+												powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[0].Re();		//Phase A
+												powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + 1] += bus[indexer].DynCurrent[1].Re();	//Phase B
+
+												powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc] += bus[indexer].DynCurrent[0].Im();		//Phase A
+												powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc + 1] += bus[indexer].DynCurrent[1].Im();	//Phase B
+
+												break;
+											}
+										default:	//Don't need an ABC or anything - how would we get here!?!
+											{
+												//Error for good measure
+												GL_THROW("NR: A Norton-equivalent generator had an odd phase combination");
+												/*  TROUBLESHOOT
+												A Norton-equivalent generator attempted to interface via an unknow phase configuration.  Please try again.  If the error
+												persists, please submit your code and a bug report via the ticking/issues system.
+												*/
+											}
+									}//End switch/case
+								}
+								//Defaulted else - leave as they were - some other bustype
+							}
+							else	//Not any of the above
 							{
 								//See if we ever were (reliability call)
-								if ((bus[indexer].origphases & 0x07) == 0x07)
+								if ((bus[indexer].origphases & 0x80) == 0x80)
+								{
+									//Zero the only one that should be being used
+									bus[indexer].DynCurrent[0] = complex(0.0,0.0);
+								}
+								else if ((bus[indexer].origphases & 0x07) != 0x00)	//Non-zero original phases, s just zero all
 								{
 									//Just zero it
 									bus[indexer].DynCurrent[0] = complex(0.0,0.0);
@@ -3099,11 +3413,12 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								}
 								else	//Never was, just fail out
 								{
-									GL_THROW("NR_solver: bus:%s has tried updating deltamode dynamics, but is not three-phase!",bus[indexer].name);
+									//Not sure how we ever reach this error check now - leaving for posterity
+									GL_THROW("NR_solver: bus:%s has tried updating deltamode dynamics, but is not three-phase, single-phase, or triplex!",bus[indexer].name);
 									/*  TROUBLESHOOT
 									The NR_solver routine tried update a three-phase current value for a bus that is not
-									three phase.  At this time, the deltamode system only supports three-phase buses for
-									generator attachment.
+									a supported phase configuration.  At this time, the deltamode system only supports three-phase,
+									single-phase, and triplex-conected buses for Norton-equivalent generator attachment.
 									*/
 								}
 							}
@@ -3114,14 +3429,114 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							//Don't get added in as part of "normal swing" routine
 							if ((bus[indexer].type == 0) || ((bus[indexer].type>1) && (bus[indexer].swing_functions_enabled == false)))
 							{
-								//Add these into the system - added because "generation"
-								powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[0].Re();		//Phase A
-								powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + 1] += bus[indexer].DynCurrent[1].Re();	//Phase B
-								powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + 2] += bus[indexer].DynCurrent[2].Re();	//Phase C
+								//Check for three-phase
+								if ((bus[indexer].phases & 0x07) == 0x07)
+								{
+									//Add these into the system - added because "generation"
+									powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[0].Re();		//Phase A
+									powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + 1] += bus[indexer].DynCurrent[1].Re();	//Phase B
+									powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + 2] += bus[indexer].DynCurrent[2].Re();	//Phase C
 
-								powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc] += bus[indexer].DynCurrent[0].Im();		//Phase A
-								powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc + 1] += bus[indexer].DynCurrent[1].Im();	//Phase B
-								powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc + 2] += bus[indexer].DynCurrent[2].Im();	//Phase C
+									powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc] += bus[indexer].DynCurrent[0].Im();		//Phase A
+									powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc + 1] += bus[indexer].DynCurrent[1].Im();	//Phase B
+									powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc + 2] += bus[indexer].DynCurrent[2].Im();	//Phase C
+								}
+								else if ((bus[indexer].phases & 0x80) == 0x80)
+								{
+									//Add these into the system - added because "generation"
+									//Assume is a 1-2 connection (1 flowing into 2)
+
+									//See what kind of triplex we are
+									if ((bus[indexer].phases & 0x20) == 0x20) //SPCT "special"
+									{
+										powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] -= bus[indexer].DynCurrent[0].Re();		//Phase 1
+										powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + 1] += bus[indexer].DynCurrent[0].Re();	//Phase 2
+
+										powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc] -= bus[indexer].DynCurrent[0].Im();		//Phase 1
+										powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc + 1] += bus[indexer].DynCurrent[0].Im();	//Phase 2
+									}
+									else	//"Standard"
+									{
+										powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[0].Re();		//Phase 1
+										powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + 1] -= bus[indexer].DynCurrent[0].Re();	//Phase 2
+
+										powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc] += bus[indexer].DynCurrent[0].Im();		//Phase 1
+										powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc + 1] -= bus[indexer].DynCurrent[0].Im();	//Phase 2
+									}
+								}
+								else if ((bus[indexer].phases & 0x07) != 0x00)	//It has something on it
+									{
+									//SWING update functionality is not in here, just "normal"
+									//Don't get added in as part of "normal swing" routine
+									if (bus[indexer].type == 0)	//"SWING not a SWING" was here, but given the exception to being a SWING, it isn't needed here
+									{
+										//Figure out "where/what" to add
+										//Case it out by phases
+										switch (bus[indexer].phases & 0x07)	{
+											case 0x01:	//C
+												{
+													//Add these into the system - added because "generation"
+													powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[2].Re();		//Phase C
+													powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc] += bus[indexer].DynCurrent[2].Im();		//Phase C
+													break;
+												}//end 0x01
+											case 0x02:	//B
+												{
+													//Add these into the system - added because "generation"
+													powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[1].Re();		//Phase B
+													powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc] += bus[indexer].DynCurrent[1].Im();		//Phase B
+													break;
+												}
+											case 0x03:	//BC
+												{
+													//Add these into the system - added because "generation"
+													powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[1].Re();		//Phase C
+													powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + 1] += bus[indexer].DynCurrent[2].Re();	//Phase C
+
+													powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc] += bus[indexer].DynCurrent[1].Im();		//Phase B
+													powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc + 1] += bus[indexer].DynCurrent[2].Im();	//Phase C
+													break;
+												}
+											case 0x04:	//A
+												{
+													//Add these into the system - added because "generation"
+													powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[0].Re();		//Phase A
+													powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc] += bus[indexer].DynCurrent[0].Im();		//Phase A
+													break;
+												}
+											case 0x05:	//AC
+												{
+													//Add these into the system - added because "generation"
+													powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[0].Re();		//Phase A
+													powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + 1] += bus[indexer].DynCurrent[2].Re();	//Phase C
+
+													powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc] += bus[indexer].DynCurrent[0].Im();		//Phase A
+													powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc + 1] += bus[indexer].DynCurrent[2].Im();	//Phase C
+													break;
+												}
+											case 0x06:	//AB
+												{
+													//Add these into the system - added because "generation"
+													powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[0].Re();		//Phase A
+													powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + 1] += bus[indexer].DynCurrent[1].Re();	//Phase B
+
+													powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc] += bus[indexer].DynCurrent[0].Im();		//Phase A
+													powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[2*bus[indexer].Matrix_Loc + 1] += bus[indexer].DynCurrent[1].Im();	//Phase B
+
+													break;
+												}
+											default:	//Don't need an ABC or anything - how would we get here!?!
+												{
+													//Error for good measure
+													GL_THROW("NR: A Norton-equivalent generator had an odd phase combination");
+													//Defined above
+												}
+										}//End switch/case
+									}
+									//Defaulted else - leave as they were - some other bustype
+
+								}
+								//Default else - should probably just be zero anyways
 							}
 							//Defaulted else - leave as they were - if it is still a swing, this is all moot anyways
 						}//End other generator delta call
@@ -4113,24 +4528,6 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					}//End not split phase update
 				}//end if not swing
 				//Default else -- this must be the swing and in a valid interval
-
-				//See if this particular bus has any "current injection update" requirements - semi-silly to do this for SWING-enabled buses, but makes the code more consistent
-				if ((bus[indexer].ExtraCurrentInjFunc != NULL) && ((bus[indexer].type == 0) || ((bus[indexer].type > 1) && (bus[indexer].swing_functions_enabled == false))))
-				{
-					//Call the function
-					call_return_status = ((STATUS (*)(OBJECT *))(*bus[indexer].ExtraCurrentInjFunc))(bus[indexer].ExtraCurrentInjFuncObject);
-
-					//Make sure it worked
-					if (call_return_status == FAILED)
-					{
-						GL_THROW("External current injection update failed for device %s",bus[indexer].ExtraCurrentInjFuncObject->name ? bus[indexer].ExtraCurrentInjFuncObject->name : "Unnamed");
-						/*  TROUBLESHOOT
-						While attempting to perform the external current injection update function call, something failed.  Please try again.
-						If the error persists, please submit your code and a bug report via the ticketing system.
-						*/
-					}
-					//Default else - it worked
-				}
 			}//End "in the island"
 			//Default else - not in the island, skip it
 		}//End bus traversion
@@ -4937,9 +5334,9 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 
 				if (jacobian_pass == false)	//Current injection update
 				{
-					//Convert 'em to line currents
-					temp_store[0] = temp_current[0] + temp_current[2];
-					temp_store[1] = -temp_current[1] - temp_current[2];
+					//Convert 'em to line currents, then make power (to be consistent with others)
+					temp_store[0] = bus[indexer].V[0]*~(temp_current[0] + temp_current[2]);
+					temp_store[1] = bus[indexer].V[1]*~(-temp_current[1] - temp_current[2]);
 
 					//Update the stored values
 					bus[indexer].PL[0] = temp_store[0].Re();

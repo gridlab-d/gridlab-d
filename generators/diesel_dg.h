@@ -14,6 +14,7 @@
 
 EXPORT SIMULATIONMODE interupdate_diesel_dg(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 EXPORT STATUS postupdate_diesel_dg(OBJECT *obj, complex *useful_value, unsigned int mode_pass);
+EXPORT STATUS diesel_dg_NR_current_injection_update(OBJECT *obj,int64 iteration_count);
 
 //AVR state variable structure
 typedef struct {
@@ -159,6 +160,9 @@ private:
 	bool first_run;		///< Flag for first run of the diesel_dg object - eliminates t0==0 dependence
 	bool is_isochronous_gen;	///< Flag to indicate if we're isochronous, mostly to help keep us in deltamode
 
+	TIMESTAMP diesel_start_time;
+	bool diesel_first_step;
+
 	//Internal synchronous machine variables
 	gld_property *pbus_full_Y_mat;		//Link to the full_Y bus variable -- used for Norton equivalents
 	gld_property *pbus_full_Y_all_mat;	//Link to the full_Y_all bus variable -- used for Norton equivalents
@@ -197,6 +201,7 @@ private:
 
 	bool deltamode_inclusive;	//Boolean for deltamode calls - pulled from object flags
 	gld_property *mapped_freq_variable;	//Mapping to frequency variable in powerflow module - deltamode updates
+	int64 first_iteration_current_injection;	//Initialization variable - mostly so SWING_PQ buses initalize properly for deltamode
 
 	double Overload_Limit_Value;	//The computed maximum output power, based on the Rated_VA and the Overload_Limit_Value
 
@@ -413,6 +418,7 @@ public:
 	//STATUS deltaupdate(unsigned int64 dt, unsigned int iteration_count_val);
 	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 	STATUS post_deltaupdate(complex *useful_value, unsigned int mode_pass);
+	STATUS updateCurrInjection(int64 iteration_count);
 public:
 	static CLASS *oclass;
 	static diesel_dg *defaults;
@@ -422,7 +428,6 @@ public:
 	STATUS apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, double deltaT);
 	STATUS init_dynamics(MAC_STATES *curr_time);
 	complex complex_exp(double angle);
-	double abs_complex(complex val);
 
 	friend class controller_dg;
 

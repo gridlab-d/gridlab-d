@@ -6,7 +6,7 @@
 clock {
 	timezone "PST+8PDT";
 	starttime '2001-08-01 12:00:08 PST';
-	stoptime '2001-08-01 12:00:10 PST';
+	stoptime '2001-08-01 12:00:12 PST';
 }
 
 #set suppress_repeat_messages=1
@@ -3552,12 +3552,12 @@ object inverter {
 	VSI_mode VSI_DROOP;
 	generator_status ONLINE;
 	inverter_efficiency 1;	
-	enable_ramp_rates_real true;
-	max_ramp_down_real 15.0 MW/s;
-	max_ramp_up_real 15.0 MW/s;
+	enable_ramp_rates_real false;
+	//max_ramp_down_real 15.0 MW/s;
+	//max_ramp_up_real 15.0 MW/s;
 	enable_ramp_rates_reactive false;
-	max_ramp_down_reactive 100 MVAr/s;
-	max_ramp_up_reactive 100 MVAr/s;
+	//max_ramp_down_reactive 100 MVAr/s;
+	//max_ramp_up_reactive 100 MVAr/s;
 
 	rated_power 1000 kVA; // Per phase rating
 	P_Out 1000000;
@@ -3569,14 +3569,14 @@ object inverter {
 	dynamic_model_mode PI;
 	inverter_convergence_criterion 10;
 
-	VSI_Rfilter 0.25;
-	VSI_Xfilter 1;
+	VSI_Rfilter 0.01;
+	VSI_Xfilter 0.1;
 
 	// Droop curve parameters
-	Tp_delay 0.001;
-	R_fp 0.00000001;
-	Tq_delay 0.001;
-	R_vq 0.0000005;
+	Tp_delay 0.01;
+	R_fp 3.77;
+	Tq_delay 0.01;
+	R_vq 0.05;
 	
 	// object recorder {
 		// property V_In,I_In,VA_In, Pref, Qref, VA_Out, VA_Out.real, VA_Out.imag, VSI_freq;
@@ -3593,7 +3593,7 @@ object inverter {
 			property value;
 			file "../VSI_isochronous_droop_VA.csv";
 		};
-		within "0.3";
+		within "0.5";
 	};
 }
 

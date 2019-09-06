@@ -37,11 +37,61 @@ series_compensator::series_compensator(MODULE *mod) : link_object(mod)
 			PT_double, "vset_B[pu]", PADDR(vset_value[1]), PT_DESCRIPTION, "Voltage magnitude set point for phase B",
 			PT_double, "vset_C[pu]", PADDR(vset_value[2]), PT_DESCRIPTION, "Voltage magnitude set point for phase C",
 
+			PT_double, "vset_1[pu]", PADDR(vset_value[0]), PT_DESCRIPTION, "Voltage magnitude set point for phase 1 of a triplex system",
+			PT_double, "vset_2[pu]", PADDR(vset_value[1]), PT_DESCRIPTION, "Voltage magnitude set point for phase 2 of a tryplex system",
+
+			PT_bool, "frequency_regulation", PADDR(frequency_regulation),  PT_DESCRIPTION, "DELTAMODE: Boolean value indicating whether the frequency regulation of the series compensator is enabled or not",
+
 			PT_double, "voltage_update_tolerance[pu]", PADDR(voltage_iter_tolerance), PT_DESCRIPTION, "Largest absolute between vset_X and measured voltage that won't force a reiteration",
 
 			PT_double, "turns_ratio_A", PADDR(turns_ratio[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Debug variable - Turns ratio for phase A series compensator equivalent",
 			PT_double, "turns_ratio_B", PADDR(turns_ratio[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Debug variable - Turns ratio for phase B series compensator equivalent",
 			PT_double, "turns_ratio_C", PADDR(turns_ratio[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Debug variable - Turns ratio for phase C series compensator equivalent",
+
+			PT_double, "turns_ratio_1", PADDR(turns_ratio[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Debug variable - Turns ratio for phase 1 (triplex) series compensator equivalent",
+			PT_double, "turns_ratio_2", PADDR(turns_ratio[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Debug variable - Turns ratio for phase 2 (triplex) series compensator equivalent",
+
+			PT_double, "n_max_ext_A", PADDR(n_max_ext[0]), PT_DESCRIPTION, "maximum Turn ratio for phase A",
+			PT_double, "n_max_ext_B", PADDR(n_max_ext[1]), PT_DESCRIPTION, "maximum Turn ratio for phase B",
+			PT_double, "n_max_ext_C", PADDR(n_max_ext[2]), PT_DESCRIPTION, "maximum Turn ratio for phase C",
+			PT_double, "n_min_ext_A", PADDR(n_min_ext[0]), PT_DESCRIPTION, "minimum Turn ratio for phase A",
+			PT_double, "n_min_ext_B", PADDR(n_min_ext[1]), PT_DESCRIPTION, "minimum Turn ratio for phase B",
+			PT_double, "n_min_ext_C", PADDR(n_min_ext[2]), PT_DESCRIPTION, "minimum Turn ratio for phase C",
+
+			PT_double, "n_max_ext_1", PADDR(n_max_ext[0]), PT_DESCRIPTION, "maximum Turn ratio for phase 1 (triplex)",
+			PT_double, "n_max_ext_2", PADDR(n_max_ext[1]), PT_DESCRIPTION, "maximum Turn ratio for phase 2 (triplex)",
+			PT_double, "n_min_ext_1", PADDR(n_min_ext[0]), PT_DESCRIPTION, "minimum Turn ratio for phase 1 (triplex)",
+			PT_double, "n_min_ext_2", PADDR(n_min_ext[1]), PT_DESCRIPTION, "minimum Turn ratio for phase 2 (triplex)",
+
+			PT_double, "kp", PADDR(kp), PT_DESCRIPTION,  "proportional gain",
+			PT_double, "ki", PADDR(ki), PT_DESCRIPTION,  "integrator gain",
+			PT_double, "kpf", PADDR(kpf), PT_DESCRIPTION,  "proportional gain of frequency regulation",
+			PT_double, "f_db_max", PADDR(f_db_max), PT_DESCRIPTION,  "frequency dead band max",
+			PT_double, "f_db_min", PADDR(f_db_min), PT_DESCRIPTION,  "frequency dead band max",
+			PT_double, "delta_Vmax", PADDR(delta_Vmax), PT_DESCRIPTION,  "upper limit of the frequency regulation output",
+			PT_double, "delta_Vmin", PADDR(delta_Vmin), PT_DESCRIPTION,  "lower limit of the frequency regulation output",
+			PT_double, "delta_V", PADDR(delta_V), PT_DESCRIPTION,  "frequency regulation output",
+
+
+			PT_double, "V_bypass_max_pu", PADDR(V_bypass_max_pu), PT_DESCRIPTION,  "the upper limit voltage to bypass compensator",
+			PT_double, "V_bypass_min_pu", PADDR(V_bypass_min_pu), PT_DESCRIPTION,  "the lower limit voltage to bypass compensator",
+
+			PT_enumeration, "phase_A_state", PADDR(phase_states[0]),PT_DESCRIPTION,"Defines if phase A is in bypass or not",
+				PT_KEYWORD, "NORMAL", (enumeration)ST_NORMAL,
+				PT_KEYWORD, "BYPASS", (enumeration)ST_BYPASS,
+			PT_enumeration, "phase_B_state", PADDR(phase_states[1]),PT_DESCRIPTION,"Defines if phase B is in bypass or not",
+				PT_KEYWORD, "NORMAL", (enumeration)ST_NORMAL,
+				PT_KEYWORD, "BYPASS", (enumeration)ST_BYPASS,
+			PT_enumeration, "phase_C_state", PADDR(phase_states[2]),PT_DESCRIPTION,"Defines if phase C is in bypass or not",
+				PT_KEYWORD, "NORMAL", (enumeration)ST_NORMAL,
+				PT_KEYWORD, "BYPASS", (enumeration)ST_BYPASS,
+			PT_enumeration, "phase_1_state", PADDR(phase_states[0]),PT_DESCRIPTION,"Defines if phase 1 is in bypass or not",
+				PT_KEYWORD, "NORMAL", (enumeration)ST_NORMAL,
+				PT_KEYWORD, "BYPASS", (enumeration)ST_BYPASS,
+			PT_enumeration, "phase_2_state", PADDR(phase_states[1]),PT_DESCRIPTION,"Defines if phase 2 is in bypass or not",
+				PT_KEYWORD, "NORMAL", (enumeration)ST_NORMAL,
+				PT_KEYWORD, "BYPASS", (enumeration)ST_BYPASS,
+
 			PT_double, "series_compensator_resistance[Ohm]", PADDR(series_compensator_resistance), PT_DESCRIPTION, "Baseline resistance for the series compensator device - needed for NR",
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
@@ -66,20 +116,60 @@ int series_compensator::create()
 {
 	int result = link_object::create();
 	
+	series_compensator_start_time = TS_INVALID;
+	series_compensator_first_step = true;
+
+	voltage_deadband = 1e-5;
+
+	kp = 0;
+	ki = 10;
+    n_max[0] = n_max[1] = n_max[2] = 1.13;
+    n_min[0] = n_min[1] = n_min[2] = 0.87;
+    n_max_ext[0] = n_max_ext[1] = n_max_ext[2] = 1.13;
+    n_min_ext[0] = n_min_ext[1] = n_min_ext[2] = 0.87;
+    V_bypass_max_pu = 1.25;
+    V_bypass_min_pu = 0.667;
+
+    kpf = 0.01;
+    f_db_max = 0.3;
+    f_db_min = -0.3;
+    delta_Vmax = 0.05;
+    delta_Vmin = -0.05;
+
+	pred_state.dn_ini_StateVal[0] = pred_state.dn_ini_StateVal[1]=pred_state.dn_ini_StateVal[2] = 0;
+	pred_state.n_ini_StateVal[0] = pred_state.n_ini_StateVal[1] = pred_state.n_ini_StateVal[2] = 1;
+	pred_state.n_StateVal[0] = pred_state.n_StateVal[1] = pred_state.n_StateVal[2]= 1;
+
+	next_state.dn_ini_StateVal[0] = next_state.dn_ini_StateVal[1]=next_state.dn_ini_StateVal[2] = 0;
+	next_state.n_ini_StateVal[0] = next_state.n_ini_StateVal[1] = next_state.n_ini_StateVal[2] = 1;
+	next_state.n_StateVal[0] = next_state.n_StateVal[1] = next_state.n_StateVal[2]= 1;
+
+	curr_state.dn_ini_StateVal[0] = curr_state.dn_ini_StateVal[1]=curr_state.dn_ini_StateVal[2] = 0;
+	curr_state.n_ini_StateVal[0] = curr_state.n_ini_StateVal[1] = curr_state.n_ini_StateVal[2] = 1;
+	curr_state.n_StateVal[0] = curr_state.n_StateVal[1] = curr_state.n_StateVal[2]= 1;
+
 	//Working variables - set initial ratio to unity
 	turns_ratio[0] = turns_ratio[1] = turns_ratio[2] = 1.0;
 	prev_turns_ratio[0] = prev_turns_ratio[1] = prev_turns_ratio[2] = 0.0;	//Set different, so it forces an update
 
 	//Null the voltage pointers
 	ToNode_voltage[0] = ToNode_voltage[1] = ToNode_voltage[2] = NULL;
+	FromNode_voltage[0]=FromNode_voltage[1]=FromNode_voltage[2]=NULL;
+	FromNode_frequency = NULL;
 
 	//Zero the values
 	val_ToNode_voltage[0] = val_ToNode_voltage[1] = val_ToNode_voltage[2] = complex(0.0,0.0);
 	val_ToNode_voltage_pu[0] = val_ToNode_voltage_pu[1] = val_ToNode_voltage_pu[2] = 0.0;
+	val_FromNode_voltage[0] = val_FromNode_voltage[1] = val_FromNode_voltage[2] = complex(0.0,0.0);
+	val_FromNode_voltage_pu[0] = val_FromNode_voltage_pu[1] = val_FromNode_voltage_pu[2] = 0.0;
+
 	vset_value[0] = vset_value[1] = vset_value[2] = 1.0;	//Start out set to unity voltage
 	val_FromNode_nominal_voltage = 0.0;
-
+	val_FromNode_frequency = nominal_frequency;
 	voltage_iter_tolerance = 0.01;	//1% PU default
+
+	//Operating in normal, by default
+	phase_states[0] = phase_states[1] = phase_states[2] = ST_NORMAL;
 
 	return result;
 }
@@ -106,86 +196,184 @@ int series_compensator::init(OBJECT *parent)
 		}
 	}
 
-	//Map the to-node connections
-	if (has_phase(PHASE_A))
+	FromNode_frequency = new gld_property(from,"measured_frequency");
+
+	series_compensator_start_time = gl_globalclock;
+
+	//Make sure it worked
+	if ((FromNode_frequency->is_valid() != true) || (FromNode_frequency->is_double() != true))
 	{
-		//Map to the property of interest - voltage_A
-		ToNode_voltage[0] = new gld_property(to,"voltage_A");
+		GL_THROW("series_compensator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+		//Defined elsewhere
+	}
+
+	val_FromNode_frequency = FromNode_frequency->get_double(); //get the frequency
+
+	//See what kind of connection we are
+	if (has_phase(PHASE_S))	//Triplex-enabled
+	{
+		//Do phase 1
+		//Map to the property of interest - voltage_1
+		ToNode_voltage[0] = new gld_property(to,"voltage_1");
+		FromNode_voltage[0] = new gld_property(from,"voltage_1");
+
+
 
 		//Make sure it worked
 		if ((ToNode_voltage[0]->is_valid() != true) || (ToNode_voltage[0]->is_complex() != true))
 		{
 			GL_THROW("series_compensator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
-			/* TROUBLESHOOT
-			While attempting to map the voltage for the to node, a property could not be properly mapped.
-			Please try again.  If the error persists, please submit an issue in the ticketing system.
-			*/
+			//Defined elsewhere
+		}
+
+		//Make sure it worked
+		if ((FromNode_voltage[0]->is_valid() != true) || (FromNode_voltage[0]->is_complex() != true))
+		{
+			GL_THROW("series_compensator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined elsewhere
 		}
 
 		//Set the appropriate turns ratio matrices
 		d_mat[0][0] = complex(turns_ratio[0],0.0);
 		a_mat[0][0] = complex(1.0/turns_ratio[0],0.0);
 		A_mat[0][0] = complex(turns_ratio[0],0.0);
-	}
-	else	//Nope
-	{
-		ToNode_voltage[0] = NULL;	//Null it -- should already be done, but be paranoid
 
-		//Set the per-unit setpoint too -- otherwise we'll have issues later
-		vset_value[0] = 0.0;
-	}
-
-	//Check for B
-	if (has_phase(PHASE_B))
-	{
-		//Map to the property of interest - voltage_B
-		ToNode_voltage[1] = new gld_property(to,"voltage_B");
+		//Now phase 2
+		//Map to the property of interest - voltage_2
+		ToNode_voltage[1] = new gld_property(to,"voltage_2");
+		FromNode_voltage[1] = new gld_property(from,"voltage_2");
 
 		//Make sure it worked
 		if ((ToNode_voltage[1]->is_valid() != true) || (ToNode_voltage[1]->is_complex() != true))
 		{
-			GL_THROW("series_compensator:%d - %s - Unable to map property for TO node",obj->id,(obj->name ? obj->name : "Unnamed"));
-			//Defined above
+			GL_THROW("series_compensator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined elsewhere
+		}
+
+		//Make sure it worked
+		if ((FromNode_voltage[1]->is_valid() != true) || (FromNode_voltage[1]->is_complex() != true))
+		{
+			GL_THROW("series_compensator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined elsewhere
 		}
 
 		//Set the appropriate turns ratio matrices
 		d_mat[1][1] = complex(turns_ratio[1],0.0);
 		a_mat[1][1] = complex(1.0/turns_ratio[1],0.0);
 		A_mat[1][1] = complex(turns_ratio[1],0.0);
-	}
-	else	//Not here
+
+	}//End triplex
+	else	//Must be some variant of three-phase
 	{
-		ToNode_voltage[1] = NULL;	//Null for paranoia
-
-		//Set the per-unit setpoint too -- otherwise we'll have issues later
-		vset_value[1] = 0.0;
-	}
-
-	//Check for C
-	if (has_phase(PHASE_C))
-	{
-		//Map to the property of interest - voltage_C
-		ToNode_voltage[2] = new gld_property(to,"voltage_C");
-
-		//Make sure it worked
-		if ((ToNode_voltage[2]->is_valid() != true) || (ToNode_voltage[2]->is_complex() != true))
+		//Map the to-node connections
+		if (has_phase(PHASE_A))
 		{
-			GL_THROW("series_compensator:%d - %s - Unable to map property for TO node",obj->id,(obj->name ? obj->name : "Unnamed"));
-			//Defined above
+			//Map to the property of interest - voltage_A
+			ToNode_voltage[0] = new gld_property(to,"voltage_A");
+			FromNode_voltage[0] = new gld_property(from,"voltage_A");
+
+			//Make sure it worked
+			if ((ToNode_voltage[0]->is_valid() != true) || (ToNode_voltage[0]->is_complex() != true))
+			{
+				GL_THROW("series_compensator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+				/* TROUBLESHOOT
+				While attempting to map the voltage for the to node, a property could not be properly mapped.
+				Please try again.  If the error persists, please submit an issue in the ticketing system.
+				*/
+			}
+
+			//Make sure it worked
+			if ((FromNode_voltage[0]->is_valid() != true) || (FromNode_voltage[0]->is_complex() != true))
+			{
+				GL_THROW("series_compensator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+				/* TROUBLESHOOT
+				While attempting to map the voltage for the to node, a property could not be properly mapped.
+				Please try again.  If the error persists, please submit an issue in the ticketing system.
+				*/
+			}
+
+
+			//Set the appropriate turns ratio matrices
+			d_mat[0][0] = complex(turns_ratio[0],0.0);
+			a_mat[0][0] = complex(1.0/turns_ratio[0],0.0);
+			A_mat[0][0] = complex(turns_ratio[0],0.0);
+		}
+		else	//Nope
+		{
+			ToNode_voltage[0] = NULL;	//Null it -- should already be done, but be paranoid
+
+			//Set the per-unit setpoint too -- otherwise we'll have issues later
+			vset_value[0] = 0.0;
 		}
 
-		//Set the appropriate turns ratio matrices
-		d_mat[2][2] = complex(turns_ratio[2],0.0);
-		a_mat[2][2] = complex(1.0/turns_ratio[2],0.0);
-		A_mat[2][2] = complex(turns_ratio[2],0.0);
-	}
-	else	//Nope
-	{
-		ToNode_voltage[2] = NULL;
+		//Check for B
+		if (has_phase(PHASE_B))
+		{
+			//Map to the property of interest - voltage_B
+			ToNode_voltage[1] = new gld_property(to,"voltage_B");
+			FromNode_voltage[1] = new gld_property(from,"voltage_B");
 
-		//Set the per-unit setpoint too -- otherwise we'll have issues later
-		vset_value[2] = 0.0;
-	}
+			//Make sure it worked
+			if ((ToNode_voltage[1]->is_valid() != true) || (ToNode_voltage[1]->is_complex() != true))
+			{
+				GL_THROW("series_compensator:%d - %s - Unable to map property for TO node",obj->id,(obj->name ? obj->name : "Unnamed"));
+				//Defined above
+			}
+
+			//Make sure it worked
+			if ((FromNode_voltage[1]->is_valid() != true) || (FromNode_voltage[1]->is_complex() != true))
+			{
+				GL_THROW("series_compensator:%d - %s - Unable to map property for TO node",obj->id,(obj->name ? obj->name : "Unnamed"));
+				//Defined above
+			}
+
+			//Set the appropriate turns ratio matrices
+			d_mat[1][1] = complex(turns_ratio[1],0.0);
+			a_mat[1][1] = complex(1.0/turns_ratio[1],0.0);
+			A_mat[1][1] = complex(turns_ratio[1],0.0);
+		}
+		else	//Not here
+		{
+			ToNode_voltage[1] = NULL;	//Null for paranoia
+
+			//Set the per-unit setpoint too -- otherwise we'll have issues later
+			vset_value[1] = 0.0;
+		}
+
+		//Check for C
+		if (has_phase(PHASE_C))
+		{
+			//Map to the property of interest - voltage_C
+			ToNode_voltage[2] = new gld_property(to,"voltage_C");
+			FromNode_voltage[2] = new gld_property(from,"voltage_C");
+
+			//Make sure it worked
+			if ((ToNode_voltage[2]->is_valid() != true) || (ToNode_voltage[2]->is_complex() != true))
+			{
+				GL_THROW("series_compensator:%d - %s - Unable to map property for TO node",obj->id,(obj->name ? obj->name : "Unnamed"));
+				//Defined above
+			}
+
+			//Make sure it worked
+			if ((FromNode_voltage[2]->is_valid() != true) || (FromNode_voltage[2]->is_complex() != true))
+			{
+				GL_THROW("series_compensator:%d - %s - Unable to map property for TO node",obj->id,(obj->name ? obj->name : "Unnamed"));
+				//Defined above
+			}
+
+			//Set the appropriate turns ratio matrices
+			d_mat[2][2] = complex(turns_ratio[2],0.0);
+			a_mat[2][2] = complex(1.0/turns_ratio[2],0.0);
+			A_mat[2][2] = complex(turns_ratio[2],0.0);
+		}
+		else	//Nope
+		{
+			ToNode_voltage[2] = NULL;
+
+			//Set the per-unit setpoint too -- otherwise we'll have issues later
+			vset_value[2] = 0.0;
+		}
+	}//End three-phase variants
 
 	//Pull the nominal voltage from our from node
 	temp_volt_prop = new gld_property(from,"nominal_voltage");
@@ -222,22 +410,36 @@ int series_compensator::init(OBJECT *parent)
 		//Flag the special link as a rgulator, since right now, we work the same way
 		SpecialLnk = REGULATOR;
 
-		//Set the baseline impedance values
-		if (has_phase(PHASE_A))
+		//See if we're triplex or not
+		if (has_phase(PHASE_S))
 		{
+			//Phase 1 parts
 			base_admittance_mat[0][0] = complex(1.0/series_compensator_resistance,0.0);
 			b_mat[0][0] = series_compensator_resistance;
-		}
-		if (has_phase(PHASE_B))
-		{
+
+			//Phase 2 parts
 			base_admittance_mat[1][1] = complex(1.0/series_compensator_resistance,0.0);
 			b_mat[1][1] = series_compensator_resistance;
-		}
-		if (has_phase(PHASE_C))
+		}//end triplex
+		else	//Three-phase of some sort
 		{
-			base_admittance_mat[2][2] = complex(1.0/series_compensator_resistance,0.0);
-			b_mat[2][2] = series_compensator_resistance;
-		}
+			//Set the baseline impedance values
+			if (has_phase(PHASE_A))
+			{
+				base_admittance_mat[0][0] = complex(1.0/series_compensator_resistance,0.0);
+				b_mat[0][0] = series_compensator_resistance;
+			}
+			if (has_phase(PHASE_B))
+			{
+				base_admittance_mat[1][1] = complex(1.0/series_compensator_resistance,0.0);
+				b_mat[1][1] = series_compensator_resistance;
+			}
+			if (has_phase(PHASE_C))
+			{
+				base_admittance_mat[2][2] = complex(1.0/series_compensator_resistance,0.0);
+				b_mat[2][2] = series_compensator_resistance;
+			}
+		}//End three-phase
 	}
 
 	return result;
@@ -267,9 +469,154 @@ TIMESTAMP series_compensator::postsync(TIMESTAMP t0)
 {
 	int function_return_val;
 
+	double voltage_difference[3];
+
+	bool iterate = false;
+
+
 	TIMESTAMP t1 = link_object::postsync(t0);
 
-	function_return_val = sercom_postPost_fxn(0);	//Just give it an arbitary value -- used mostly for delta flagging
+
+	if (series_compensator_start_time != t0)
+	{
+		series_compensator_first_step = false;
+	}
+
+	if (series_compensator_first_step == true)
+	{
+
+		if (has_phase(PHASE_S))
+		{
+			//Get raw value
+			val_ToNode_voltage[0] = ToNode_voltage[0]->get_complex();
+			val_FromNode_voltage[0] = FromNode_voltage[0]->get_complex();
+			val_ToNode_voltage[1] = ToNode_voltage[1]->get_complex();
+			val_FromNode_voltage[1] = FromNode_voltage[1]->get_complex();
+
+			//Do the per-unit conversion
+			val_ToNode_voltage_pu[0] = val_ToNode_voltage[0].Mag() / val_FromNode_nominal_voltage;
+			val_FromNode_voltage_pu[0] = val_FromNode_voltage[0].Mag() / val_FromNode_nominal_voltage;
+			val_ToNode_voltage_pu[1] = val_ToNode_voltage[1].Mag() / val_FromNode_nominal_voltage;
+			val_FromNode_voltage_pu[1] = val_FromNode_voltage[1].Mag() / val_FromNode_nominal_voltage;
+
+			voltage_difference[0] = val_ToNode_voltage_pu[0] - vset_value[0];
+			voltage_difference[1] = val_ToNode_voltage_pu[1] - vset_value[1];
+
+			if ( abs(voltage_difference[0]) > voltage_deadband)
+			{
+				iterate = true;
+				curr_state.n_ini_StateVal[0] = turns_ratio[0] = vset_value[0]/val_FromNode_voltage_pu[0];
+			}
+
+			if ( abs(voltage_difference[1]) > voltage_deadband)
+			{
+				iterate = true;
+				curr_state.n_ini_StateVal[1] = turns_ratio[1] = vset_value[1]/val_FromNode_voltage_pu[1];
+			}
+
+		}//end triplex
+		else	//Three-phase variant
+		{
+			//Pull the voltages
+			if (has_phase(PHASE_A))
+			{
+				//Get raw value
+				val_ToNode_voltage[0] = ToNode_voltage[0]->get_complex();
+				val_FromNode_voltage[0] = FromNode_voltage[0]->get_complex();
+
+				//Do the per-unit conversion
+				val_ToNode_voltage_pu[0] = val_ToNode_voltage[0].Mag() / val_FromNode_nominal_voltage;
+				val_FromNode_voltage_pu[0] = val_FromNode_voltage[0].Mag() / val_FromNode_nominal_voltage;
+
+				voltage_difference[0] = val_ToNode_voltage_pu[0] - vset_value[0];
+
+				if ( abs(voltage_difference[0]) > voltage_deadband)
+				{
+					iterate = true;
+					curr_state.n_ini_StateVal[0] = turns_ratio[0] = vset_value[0]/val_FromNode_voltage_pu[0];
+				}
+
+			}
+			else
+			{
+				//Zero everything
+				val_ToNode_voltage[0] = complex(0.0,0.0);
+				val_ToNode_voltage_pu[0] = 0.0;
+				val_FromNode_voltage[0] = complex(0.0,0.0);
+				val_FromNode_voltage_pu[0] = 0.0;
+			}
+
+			//Pull the voltages
+			if (has_phase(PHASE_B))
+			{
+				//Get raw value
+				val_ToNode_voltage[1] = ToNode_voltage[1]->get_complex();
+				val_FromNode_voltage[1] = FromNode_voltage[1]->get_complex();
+
+				//Do the per-unit conversion
+				val_ToNode_voltage_pu[1] = val_ToNode_voltage[1].Mag() / val_FromNode_nominal_voltage;
+				val_FromNode_voltage_pu[1] = val_FromNode_voltage[1].Mag() / val_FromNode_nominal_voltage;
+
+				voltage_difference[1] = val_ToNode_voltage_pu[1] - vset_value[1];
+
+				if ( abs(voltage_difference[1]) > voltage_deadband)
+				{
+					iterate = true;
+					curr_state.n_ini_StateVal[1] = turns_ratio[1] = vset_value[1]/val_FromNode_voltage_pu[1];
+				}
+
+			}
+			else
+			{
+				//Zero everything
+				val_ToNode_voltage[1] = complex(0.0,0.0);
+				val_ToNode_voltage_pu[1] = 0.0;
+				val_FromNode_voltage[1] = complex(0.0,0.0);
+				val_FromNode_voltage_pu[1] = 0.0;
+
+			}
+
+			//Pull the voltages
+			if (has_phase(PHASE_C))
+			{
+				//Get raw value
+				val_ToNode_voltage[2] = ToNode_voltage[2]->get_complex();
+				val_FromNode_voltage[2] = FromNode_voltage[2]->get_complex();
+
+				//Do the per-unit conversion
+				val_ToNode_voltage_pu[2] = val_ToNode_voltage[2].Mag() / val_FromNode_nominal_voltage;
+				val_FromNode_voltage_pu[2] = val_FromNode_voltage[2].Mag() / val_FromNode_nominal_voltage;
+
+				voltage_difference[2] = val_ToNode_voltage_pu[2] - vset_value[2];
+
+				if ( abs(voltage_difference[2]) > voltage_deadband)
+				{
+					iterate = true;
+					curr_state.n_ini_StateVal[2] = turns_ratio[2] = vset_value[2]/val_FromNode_voltage_pu[2];
+				}
+			}
+			else
+			{
+				//Zero everything
+				val_ToNode_voltage[2] = complex(0.0,0.0);
+				val_ToNode_voltage_pu[2] = 0.0;
+				val_FromNode_voltage[2] = complex(0.0,0.0);
+				val_FromNode_voltage_pu[2] = 0.0;
+
+			}
+		}//End three-phase
+
+
+
+	}
+
+	function_return_val = sercom_postPost_fxn(0,0);	//Just give it an arbitary value -- used mostly for delta flagging
+
+	if (iterate == true)
+	{
+		//If this changes, re-evaluate this code
+		return t0;
+	}
 
 	//See if it was an error or not
 	if (function_return_val == -1)
@@ -284,31 +631,50 @@ TIMESTAMP series_compensator::postsync(TIMESTAMP t0)
 	//Default else -- no returns were hit, so just do t1
 
 	return t1;
+
+
 }
 
 //Functionalized "presync before link::presync" portions, mostly for deltamode functionality
 void series_compensator::sercom_prePre_fxn(void)
 {
-	//Update turns ratio for various phases
-	if (has_phase(PHASE_A))
+	//See if we're triplex or not
+	if (has_phase(PHASE_S))
 	{
+		//Update turns ratio for various phases
+		//Phase 1
 		d_mat[0][0] = complex(turns_ratio[0],0.0);
 		a_mat[0][0] = complex(1.0/turns_ratio[0],0.0);
 		A_mat[0][0] = complex(turns_ratio[0],0.0);
-	}
 
-	if (has_phase(PHASE_B))
-	{
+		//Phase 2
 		d_mat[1][1] = complex(turns_ratio[1],0.0);
 		a_mat[1][1] = complex(1.0/turns_ratio[1],0.0);
 		A_mat[1][1] = complex(turns_ratio[1],0.0);
 	}
-
-	if (has_phase(PHASE_C))
+	else	//Nope, normal three-phase
 	{
-		d_mat[2][2] = complex(turns_ratio[2],0.0);
-		a_mat[2][2] = complex(1.0/turns_ratio[2],0.0);
-		A_mat[2][2] = complex(turns_ratio[2],0.0);
+		//Update turns ratio for various phases
+		if (has_phase(PHASE_A))
+		{
+			d_mat[0][0] = complex(turns_ratio[0],0.0);
+			a_mat[0][0] = complex(1.0/turns_ratio[0],0.0);
+			A_mat[0][0] = complex(turns_ratio[0],0.0);
+		}
+
+		if (has_phase(PHASE_B))
+		{
+			d_mat[1][1] = complex(turns_ratio[1],0.0);
+			a_mat[1][1] = complex(1.0/turns_ratio[1],0.0);
+			A_mat[1][1] = complex(turns_ratio[1],0.0);
+		}
+
+		if (has_phase(PHASE_C))
+		{
+			d_mat[2][2] = complex(turns_ratio[2],0.0);
+			a_mat[2][2] = complex(1.0/turns_ratio[2],0.0);
+			A_mat[2][2] = complex(turns_ratio[2],0.0);
+		}
 	}
 }
 
@@ -329,37 +695,58 @@ void series_compensator::sercom_postPre_fxn(void)
 		//accesses the NR memory space, this won't cause any issues.
 		if ((prev_turns_ratio[0] != turns_ratio[0]) || (prev_turns_ratio[1] != turns_ratio[1]) || (prev_turns_ratio[2] != turns_ratio[2]))	//Change has occurred
 		{
-			//Compute the inverse ratio - A
-			if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)
+			//See if we're triplex or not
+			if ((NR_branchdata[NR_branch_reference].origphases & 0x80) == 0x80)
 			{
-				invratio[0] = complex(1.0,0.0) / a_mat[0][0];
-			}
-			else
-			{
-				invratio[0] = complex(0.0,0.0);
-			}
+				//Now see if we're active
+				if ((NR_branchdata[NR_branch_reference].phases & 0x80) == 0x80)
+				{
+					invratio[0] = complex(1.0,0.0) / a_mat[0][0];
+					invratio[1] = complex(1.0,0.0) / a_mat[1][1];
+				}
+				else
+				{
+					invratio[0] = complex(0.0,0.0);
+					invratio[1] = complex(0.0,0.0);
+				}
 
-			//Compute the inverse ratio - B
-			if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)
-			{
-				invratio[1] = complex(1.0,0.0) / a_mat[1][1];
-			}
-			else
-			{
-				invratio[1] = complex(0.0,0.0);
-			}
-
-			//Compute the inverse ratio - C
-			if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)
-			{
-				invratio[2] = complex(1.0,0.0) / a_mat[2][2];
-			}
-			else
-			{
+				//Zero the third one, just because
 				invratio[2] = complex(0.0,0.0);
 			}
+			else	//Do a three-phase check, though it may be disconnected completely
+			{
+				//Compute the inverse ratio - A
+				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)
+				{
+					invratio[0] = complex(1.0,0.0) / a_mat[0][0];
+				}
+				else
+				{
+					invratio[0] = complex(0.0,0.0);
+				}
 
-			//Get matrices for NR
+				//Compute the inverse ratio - B
+				if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)
+				{
+					invratio[1] = complex(1.0,0.0) / a_mat[1][1];
+				}
+				else
+				{
+					invratio[1] = complex(0.0,0.0);
+				}
+
+				//Compute the inverse ratio - C
+				if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)
+				{
+					invratio[2] = complex(1.0,0.0) / a_mat[2][2];
+				}
+				else
+				{
+					invratio[2] = complex(0.0,0.0);
+				}
+			}//End three-phase
+
+			//Get matrices for NR (should be the same for triplex vs normal, with this implementation)
 
 			//Pre-admittancized matrix
 			equalm(base_admittance_mat,Yto);
@@ -411,79 +798,538 @@ void series_compensator::sercom_postPre_fxn(void)
 //Functionalized "postsyc after link::postsync" items -- mostly for deltamode compatibility
 //Return values -- 0 = no iteration, 1 = reiterate (deltamode or otherwise), 2 = proceed (deltamode)
 //Pass value is for deltamode pass information (currently in modified Euler flagging)
-int series_compensator::sercom_postPost_fxn(unsigned char pass_value)
+int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double deltat)
 {
 	char index_val;
-	double temp_diff_val;
+	unsigned char phase_mask;
+	double temp_diff_val[3];
 	int return_val;
+	bool bypass_initiated;
 
 	//By default, assume we want to exit normal
 	return_val = 0;
 
-	//Pull the voltages
-	if (has_phase(PHASE_A))
+	val_FromNode_frequency = FromNode_frequency->get_double(); //get the frequency
+
+	//See if we're triplex
+	if (has_phase(PHASE_S))
 	{
 		//Get raw value
 		val_ToNode_voltage[0] = ToNode_voltage[0]->get_complex();
+		val_FromNode_voltage[0] = FromNode_voltage[0]->get_complex();
+		val_ToNode_voltage[1] = ToNode_voltage[1]->get_complex();
+		val_FromNode_voltage[1] = FromNode_voltage[1]->get_complex();
 
 		//Do the per-unit conversion
 		val_ToNode_voltage_pu[0] = val_ToNode_voltage[0].Mag() / val_FromNode_nominal_voltage;
-	}
-	else
-	{
-		//Zero everything
-		val_ToNode_voltage[0] = complex(0.0,0.0);
-		val_ToNode_voltage_pu[0] = 0.0;
-	}
-
-	//Pull the voltages
-	if (has_phase(PHASE_B))
-	{
-		//Get raw value
-		val_ToNode_voltage[1] = ToNode_voltage[1]->get_complex();
-
-		//Do the per-unit conversion
+		val_FromNode_voltage_pu[0] = val_FromNode_voltage[0].Mag() / val_FromNode_nominal_voltage;
 		val_ToNode_voltage_pu[1] = val_ToNode_voltage[1].Mag() / val_FromNode_nominal_voltage;
-	}
-	else
-	{
-		//Zero everything
-		val_ToNode_voltage[1] = complex(0.0,0.0);
-		val_ToNode_voltage_pu[1] = 0.0;
-	}
+		val_FromNode_voltage_pu[1] = val_FromNode_voltage[1].Mag() / val_FromNode_nominal_voltage;
 
-	//Pull the voltages
-	if (has_phase(PHASE_C))
-	{
-		//Get raw value
-		val_ToNode_voltage[2] = ToNode_voltage[2]->get_complex();
-
-		//Do the per-unit conversion
-		val_ToNode_voltage_pu[2] = val_ToNode_voltage[2].Mag() / val_FromNode_nominal_voltage;
-	}
-	else
-	{
-		//Zero everything
+		//Just set the third to zero, for paranoia sake
 		val_ToNode_voltage[2] = complex(0.0,0.0);
 		val_ToNode_voltage_pu[2] = 0.0;
-	}
+		val_FromNode_voltage[2] = complex(0.0,0.0);
+		val_FromNode_voltage_pu[2] = 0.0;
 
-	//Check and see what we should return
-	for (index_val=0; index_val<3; index_val++)
+	}//end triplex
+	else	//Three-phase variant
 	{
-		temp_diff_val = fabs(vset_value[index_val] - val_ToNode_voltage_pu[index_val]);
-
-		//Check it
-		if (temp_diff_val > voltage_iter_tolerance)
+		//Pull the voltages
+		if (has_phase(PHASE_A))
 		{
-			return_val = 1;	//Arbitrary flag - could be used for other things in the future
+			//Get raw value
+			val_ToNode_voltage[0] = ToNode_voltage[0]->get_complex();
+			val_FromNode_voltage[0] = FromNode_voltage[0]->get_complex();
+
+			//Do the per-unit conversion
+			val_ToNode_voltage_pu[0] = val_ToNode_voltage[0].Mag() / val_FromNode_nominal_voltage;
+			val_FromNode_voltage_pu[0] = val_FromNode_voltage[0].Mag() / val_FromNode_nominal_voltage;
+		}
+		else
+		{
+			//Zero everything
+			val_ToNode_voltage[0] = complex(0.0,0.0);
+			val_ToNode_voltage_pu[0] = 0.0;
+			val_FromNode_voltage[0] = complex(0.0,0.0);
+			val_FromNode_voltage_pu[0] = 0.0;
+		}
+
+		//Pull the voltages
+		if (has_phase(PHASE_B))
+		{
+			//Get raw value
+			val_ToNode_voltage[1] = ToNode_voltage[1]->get_complex();
+			val_FromNode_voltage[1] = FromNode_voltage[1]->get_complex();
+
+			//Do the per-unit conversion
+			val_ToNode_voltage_pu[1] = val_ToNode_voltage[1].Mag() / val_FromNode_nominal_voltage;
+			val_FromNode_voltage_pu[1] = val_FromNode_voltage[1].Mag() / val_FromNode_nominal_voltage;
+		}
+		else
+		{
+			//Zero everything
+			val_ToNode_voltage[1] = complex(0.0,0.0);
+			val_ToNode_voltage_pu[1] = 0.0;
+			val_FromNode_voltage[1] = complex(0.0,0.0);
+			val_FromNode_voltage_pu[1] = 0.0;
+
+		}
+
+		//Pull the voltages
+		if (has_phase(PHASE_C))
+		{
+			//Get raw value
+			val_ToNode_voltage[2] = ToNode_voltage[2]->get_complex();
+			val_FromNode_voltage[2] = FromNode_voltage[2]->get_complex();
+
+			//Do the per-unit conversion
+			val_ToNode_voltage_pu[2] = val_ToNode_voltage[2].Mag() / val_FromNode_nominal_voltage;
+			val_FromNode_voltage_pu[2] = val_FromNode_voltage[2].Mag() / val_FromNode_nominal_voltage;
+		}
+		else
+		{
+			//Zero everything
+			val_ToNode_voltage[2] = complex(0.0,0.0);
+			val_ToNode_voltage_pu[2] = 0.0;
+			val_FromNode_voltage[2] = complex(0.0,0.0);
+			val_FromNode_voltage_pu[2] = 0.0;
+
+		}
+	}//End three-phase
+
+	if (deltatimestep_running > 0)
+	{
+		//******************* Code injection point ******************//
+		//This may be a place to do the turns ratio update, or in the above logic (with the return value)
+		//Probably where the integration-method code would go
+		//Need to flag if deltamode or not -- use "" to do that (possibly inside the function)
+
+		// predictor pass
+
+		if (pass_value==0)
+		{
+
+			if(frequency_regulation)
+			{
+				delta_f = val_FromNode_frequency - nominal_frequency;
+
+				if(delta_f > f_db_max)
+				{
+					delta_V = delta_f * kpf;
+
+					if(delta_V > delta_Vmax)
+					{
+						delta_V = delta_Vmax;
+					}
+
+				}
+				else if(delta_f < f_db_min)
+				{
+					delta_V = delta_f * kpf;
+
+					if(delta_V < delta_Vmin)
+					{
+						delta_V = delta_Vmin;
+					}
+
+				}
+				else
+				{
+					delta_V = 0;
+				}
+			}
+			else
+			{
+				delta_V = 0;
+			}
+
+
+			//See if we should be triplex
+			if ((NR_branchdata[NR_branch_reference].origphases & 0x80) == 0x80)
+			{
+				//Now see if we're actually active
+				if ((NR_branchdata[NR_branch_reference].phases & 0x80) == 0x80)
+				{
+
+					//Loop it
+					for (index_val=0; index_val<2; index_val++)
+					{
+						vset_value[index_val] = delta_V + 1.0; //get the voltage set point according to the frequency regulation requirement
+
+						if (val_FromNode_voltage_pu[index_val] > V_bypass_max_pu)
+						{
+							n_min[index_val] = 1;  //bypass the compensator
+						}
+						else
+						{
+							n_min[index_val] = n_min_ext[index_val];
+						}
+
+						if (val_FromNode_voltage_pu[index_val] < V_bypass_min_pu)
+						{
+							n_max[index_val] = 1; //bypass the compensator
+						}
+						else
+						{
+							n_max[index_val] = n_max_ext[index_val];
+						}
+
+						//integrator
+						pred_state.dn_ini_StateVal[index_val] = (vset_value[index_val] - val_ToNode_voltage_pu[index_val])*ki;
+						pred_state.n_ini_StateVal[index_val] = curr_state.n_ini_StateVal[index_val] + pred_state.dn_ini_StateVal[index_val] * deltat;
+
+						//n_max and n_min for integrator output
+						if (pred_state.n_ini_StateVal[index_val] > n_max[index_val])
+						{
+							pred_state.n_ini_StateVal[index_val] = n_max[index_val];
+						}
+
+						if (pred_state.n_ini_StateVal[index_val] < n_min[index_val])
+						{
+							pred_state.n_ini_StateVal[index_val] = n_min[index_val];
+						}
+
+						// PI controller output
+						pred_state.n_StateVal[index_val] = pred_state.n_ini_StateVal[index_val] + pred_state.dn_ini_StateVal[index_val]/ki*kp;
+
+						//n_max and n_min for PI controller output
+						if (pred_state.n_StateVal[index_val] > n_max[index_val])
+						{
+							pred_state.n_StateVal[index_val] = n_max[index_val];
+						}
+
+						if (pred_state.n_StateVal[index_val] < n_min[index_val])
+						{
+							pred_state.n_StateVal[index_val] = n_min[index_val];
+						}
+
+						turns_ratio[index_val] = pred_state.n_StateVal[index_val];
+					}
+
+				}//End valid triplex
+				//Default else - don't do anything -- does this maybe need to be zeroed?
+
+			}//End triplex
+			else	//Some form of three-phase
+			{
+				//Do it in a loop, because I got sick of copy pasting
+				for (index_val=0; index_val<3; index_val++)
+				{
+					//Get the phase mask
+					phase_mask = (1 << (2 - index_val));
+
+					//Check if it is valid
+					if ((NR_branchdata[NR_branch_reference].phases & phase_mask) == phase_mask)
+					{
+
+						vset_value[index_val] = delta_V + 1.0; //get the voltage set point according to the frequency regulation requirement
+
+						if (val_FromNode_voltage_pu[index_val] > V_bypass_max_pu)
+						{
+							n_min[index_val] = 1;  //bypass the compensator
+						}
+						else
+						{
+							n_min[index_val] = n_min_ext[index_val];
+						}
+
+						if (val_FromNode_voltage_pu[index_val] < V_bypass_min_pu)
+						{
+							n_max[index_val] = 1; //bypass the compensator
+						}
+						else
+						{
+							n_max[index_val] = n_max_ext[index_val];
+						}
+
+						//integrator
+						pred_state.dn_ini_StateVal[index_val] = (vset_value[index_val] - val_ToNode_voltage_pu[index_val])*ki;
+						pred_state.n_ini_StateVal[index_val] = curr_state.n_ini_StateVal[index_val] + pred_state.dn_ini_StateVal[index_val] * deltat;
+
+
+						//n_max and n_min for integrator output
+						if (pred_state.n_ini_StateVal[index_val] > n_max[index_val])
+						{
+							pred_state.n_ini_StateVal[index_val] = n_max[index_val];
+						}
+
+						if (pred_state.n_ini_StateVal[index_val] < n_min[index_val])
+						{
+							pred_state.n_ini_StateVal[index_val] = n_min[index_val];
+						}
+
+						// PI controller output
+						pred_state.n_StateVal[index_val] = pred_state.n_ini_StateVal[index_val] + pred_state.dn_ini_StateVal[index_val]/ki*kp;
+
+						//n_max and n_min for PI controller output
+						if (pred_state.n_StateVal[index_val] > n_max[index_val])
+						{
+							pred_state.n_StateVal[index_val] = n_max[index_val];
+						}
+
+						if (pred_state.n_StateVal[index_val] < n_min[index_val])
+						{
+							pred_state.n_StateVal[index_val] = n_min[index_val];
+						}
+
+						turns_ratio[index_val] = pred_state.n_StateVal[index_val];
+					}//End valid phase
+				}//End three-phase loop
+			}//End three-phase
+
+			return_val = 1;	//Reiterate - to get us to corrector pass
+
+		}
+		else //corrector pass
+		{
+
+			if(frequency_regulation)
+			{
+				delta_f = val_FromNode_frequency - nominal_frequency;
+
+				if(delta_f > f_db_max)
+				{
+					delta_V = delta_f * kpf;
+
+					if(delta_V > delta_Vmax)
+					{
+						delta_V = delta_Vmax;
+					}
+
+				}
+				else if(delta_f < f_db_min)
+				{
+					delta_V = delta_f * kpf;
+
+					if(delta_V < delta_Vmin)
+					{
+						delta_V = delta_Vmin;
+					}
+
+				}
+				else
+				{
+					delta_V = 0;
+				}
+			}
+			else
+			{
+				delta_V = 0;
+			}
+
+			//Check and see if we're triplex
+			if ((NR_branchdata[NR_branch_reference].origphases & 0x80) == 0x80)
+			{
+				//See if we're actually valid
+				if ((NR_branchdata[NR_branch_reference].phases & 0x80) == 0x80)
+				{
+					//Loop the phases
+					for (index_val=0; index_val<2; index_val++)
+					{
+
+						vset_value[index_val] = delta_V + 1.0; //get the voltage set point according to the frequency regulation requirement
+
+						//Reset the flag
+						bypass_initiated = false;
+
+						if (val_FromNode_voltage_pu[index_val] > V_bypass_max_pu)
+						{
+							n_min[index_val] = 1;  //bypass the compensator
+							bypass_initiated = true;
+						}
+						else
+						{
+							n_min[index_val] = n_min_ext[index_val];
+						}
+
+						if (val_FromNode_voltage_pu[index_val] < V_bypass_min_pu)
+						{
+							n_max[index_val] = 1; //bypass the compensator
+							bypass_initiated = true;
+						}
+						else
+						{
+							n_max[index_val] = n_max_ext[0];
+						}
+
+						//Update the state
+						if (bypass_initiated == true)
+						{
+							phase_states[index_val] = ST_BYPASS;
+						}
+						else
+						{
+							phase_states[index_val] = ST_NORMAL;
+						}
+
+						next_state.dn_ini_StateVal[index_val] = (vset_value[index_val] - val_ToNode_voltage_pu[index_val])*ki;
+						next_state.n_ini_StateVal[index_val] = curr_state.n_ini_StateVal[index_val] + (pred_state.dn_ini_StateVal[index_val] + next_state.dn_ini_StateVal[index_val]) * deltat/2;
+
+
+						//n_max and n_min for integrator output
+						if (next_state.n_ini_StateVal[index_val] > n_max[index_val])
+						{
+							next_state.n_ini_StateVal[index_val] = n_max[index_val];
+						}
+
+						if (next_state.n_ini_StateVal[index_val] < n_min[index_val])
+						{
+							next_state.n_ini_StateVal[index_val] = n_min[index_val];
+						}
+
+
+						// PI controller output
+						next_state.n_StateVal[index_val] = next_state.n_ini_StateVal[index_val] + next_state.dn_ini_StateVal[index_val]/ki*kp;
+
+						//n_max and n_min for PI controller output
+						if (next_state.n_StateVal[index_val] > n_max[index_val])
+						{
+							next_state.n_StateVal[index_val] = n_max[index_val];
+						}
+
+						if (next_state.n_StateVal[index_val] < n_min[index_val])
+						{
+							next_state.n_StateVal[index_val] = n_min[index_val];
+						}
+
+						turns_ratio[index_val] = next_state.n_StateVal[index_val];
+
+					}
+
+				}//End valid triplex
+				//Default else - disconnected - should we update something?
+			}
+			else	//Three-phase, of some sort
+			{
+				//Loop it again, due to laziness/portability
+				for (index_val=0; index_val<3; index_val++)
+				{
+					//Get the phase mask
+					phase_mask = (1 << (2 - index_val));
+
+					//Reset the tracking flag
+					bypass_initiated = false;
+
+					if ((NR_branchdata[NR_branch_reference].phases & phase_mask) == phase_mask)
+					{
+						vset_value[index_val] = delta_V + 1.0; //get the voltage set point according to the frequency regulation requirement
+
+						if (val_FromNode_voltage_pu[index_val] > V_bypass_max_pu)
+						{
+							n_min[index_val] = 1;  //bypass the compensator
+							bypass_initiated = true;
+						}
+						else
+						{
+							n_min[index_val] = n_min_ext[0];
+						}
+
+						if (val_FromNode_voltage_pu[index_val] < V_bypass_min_pu)
+						{
+							n_max[index_val] = 1; //bypass the compensator
+							bypass_initiated = true;
+						}
+						else
+						{
+							n_max[index_val] = n_max_ext[index_val];
+						}
+
+						next_state.dn_ini_StateVal[index_val] = (vset_value[index_val] - val_ToNode_voltage_pu[index_val])*ki;
+						next_state.n_ini_StateVal[index_val] = curr_state.n_ini_StateVal[index_val] + (pred_state.dn_ini_StateVal[index_val] + next_state.dn_ini_StateVal[index_val]) * deltat/2;
+
+						//Update the state
+						if (bypass_initiated == true)
+						{
+							phase_states[index_val] = ST_BYPASS;
+						}
+						else
+						{
+							phase_states[index_val] = ST_NORMAL;
+						}
+
+						//n_max and n_min for integrator output
+						if (next_state.n_ini_StateVal[index_val] > n_max[index_val])
+						{
+							next_state.n_ini_StateVal[index_val] = n_max[index_val];
+						}
+
+						if (next_state.n_ini_StateVal[index_val] < n_min[index_val])
+						{
+							next_state.n_ini_StateVal[index_val] = n_min[index_val];
+						}
+
+
+						// PI controller output
+						next_state.n_StateVal[index_val] = next_state.n_ini_StateVal[index_val] + next_state.dn_ini_StateVal[index_val]/ki*kp;
+
+						//n_max and n_min for PI controller output
+						if (next_state.n_StateVal[index_val] > n_max[index_val])
+						{
+							next_state.n_StateVal[index_val] = n_max[index_val];
+						}
+
+						if (next_state.n_StateVal[index_val] < n_min[index_val])
+						{
+							next_state.n_StateVal[index_val] = n_min[index_val];
+						}
+
+						turns_ratio[index_val] = next_state.n_StateVal[index_val];
+
+					}//End valid phase
+				}//End loop
+			}//End three-phase
+
+			return_val =  2;
+
+			memcpy(&curr_state,&next_state,sizeof(SERIES_STATE));
+
+		}
+	}
+	else
+	{
+		//See if we're triplex
+		if ((NR_branchdata[NR_branch_reference].origphases & 0x80) == 0x80)
+		{
+			//See if we're valid triplex
+			if ((NR_branchdata[NR_branch_reference].phases & 0x80) == 0x80)
+			{
+				//Loop it, just because
+				for (index_val=0; index_val<2; index_val++)
+				{
+					temp_diff_val[index_val] = fabs(vset_value[index_val] - val_ToNode_voltage_pu[index_val]);
+
+					//Check it
+					if (temp_diff_val[index_val] > voltage_iter_tolerance)
+					{
+						return_val = 1;	//Arbitrary flag - could be used for other things in the future
+					}
+				}
+			}
+			//Default else -- should we do anything?
+		}
+		else	//Some type of three-phase
+		{
+			//Loop the phases, for convenience
+			for (index_val=0; index_val<3; index_val++)
+			{
+				//Get the phase mask
+				phase_mask = (1 << (2 - index_val));
+
+				if ((NR_branchdata[NR_branch_reference].phases & phase_mask) == phase_mask)
+				{
+					temp_diff_val[index_val] = fabs(vset_value[index_val] - val_ToNode_voltage_pu[index_val]);
+
+					//Check it
+					if (temp_diff_val[index_val] > voltage_iter_tolerance)
+					{
+						return_val = 1;	//Arbitrary flag - could be used for other things in the future
+					}
+				}
+			}//End loop
 		}
 	}
 
-	//******************* Code injection point ******************//
-	//This may be a place to do the turns ratio update, or in the above logic (with the return value)
-	//Probably where the integration-method code would go 
-	//Need to flag if deltamode or not -- use "" to do that (possibly inside the function)
 
 	//Return
 	return return_val;
@@ -496,6 +1342,9 @@ SIMULATIONMODE series_compensator::inter_deltaupdate_series_compensator(unsigned
 	double curr_time_value;	//Current time of simulation
 	int temp_return_val;
 	unsigned char pass_mod;
+	double deltat;
+
+	deltat = (double)dt/(double)DT_SECOND;
 
 	//Get the current time
 	curr_time_value = gl_globaldeltaclock;
@@ -525,7 +1374,7 @@ SIMULATIONMODE series_compensator::inter_deltaupdate_series_compensator(unsigned
 
 		//Call the regulator-specific post-postsync function
 		//******************* Implementation -- Inside this function will probably be where the logic and/or pred/corr needs to go ******//
-		temp_return_val = sercom_postPost_fxn(pass_mod);
+		temp_return_val = sercom_postPost_fxn(pass_mod,deltat);
 
 		//Make sure it wasn't an error
 		if (temp_return_val == -1)
