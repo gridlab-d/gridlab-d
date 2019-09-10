@@ -1664,10 +1664,19 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 					reactive_diff = (gen_base_set_vals.Qref - (power_val[0].Im() + power_val[1].Im() + power_val[2].Im()) / Rated_VA) / 3.0;
 					reactive_diff = reactive_diff * Rated_VA;
 
-					//Copy in value
-					temp_power_val[0] = power_val[0] + complex(real_diff,reactive_diff);
-					temp_power_val[1] = power_val[1] + complex(real_diff,reactive_diff);
-					temp_power_val[2] = power_val[2] + complex(real_diff,reactive_diff);
+					//Copy in value - pull the governor value too, if it was P_CONSTANT
+					if (Governor_type == P_CONSTANT)
+					{
+						temp_power_val[0] = power_val[0] + complex(real_diff,reactive_diff);
+						temp_power_val[1] = power_val[1] + complex(real_diff,reactive_diff);
+						temp_power_val[2] = power_val[2] + complex(real_diff,reactive_diff);
+					}
+					else
+					{
+						temp_power_val[0] = power_val[0] + complex(0.0,reactive_diff);
+						temp_power_val[1] = power_val[1] + complex(0.0,reactive_diff);
+						temp_power_val[2] = power_val[2] + complex(0.0,reactive_diff);
+					}
 
 					//Back out the current injection
 					temp_current_val[0] = ~(temp_power_val[0]/value_Circuit_V[0]) + generator_admittance[0][0]*value_Circuit_V[0] + generator_admittance[0][1]*value_Circuit_V[1] + generator_admittance[0][2]*value_Circuit_V[2];
@@ -4473,7 +4482,9 @@ STATUS diesel_dg::updateCurrInjection(int64 iteration_count)
 		//See if we're a "standard bus"
 		if (bus_is_a_swing == false)	//Not a SWING or SWING_PQ - otherwise causes issues with internal solver_nr attempts
 		{
-			if (Governor_type == DEGOV1)
+			//Most of the "base governors" initialize the same - check them here
+			//Includes the "no governor" scenario (assuming output is specified)
+			if ((Governor_type == DEGOV1) || (Governor_type == GAST) || (Governor_type == GGOV1_OLD) || (Governor_type == GGOV1) || (Governor_type == NO_GOV))
 			{
 				//Reset the powerflow interface variables
 				reset_powerflow_accumulators();
@@ -4506,47 +4517,6 @@ STATUS diesel_dg::updateCurrInjection(int64 iteration_count)
 				//Put the values back
 				push_powerflow_values(false);
 
-			}
-			else if (Governor_type == GAST)
-			{
-
-			}
-			else if (Governor_type == GGOV1_OLD)
-			{
-
-			}
-			else if (Governor_type == GGOV1)
-			{
-				//Reset the powerflow interface variables
-				reset_powerflow_accumulators();
-
-				//Pull the present powerflow values
-				pull_powerflow_values();
-
-				//Form up the "goal" variable
-				temp_p_setpoint = power_val[0] + power_val[1] + power_val[2];
-
-				//Calculate the Norton-shunted power
-				temp_total_power_val[0] = value_Circuit_V[0] * ~(generator_admittance[0][0]*value_Circuit_V[0] + generator_admittance[0][1]*value_Circuit_V[1] + generator_admittance[0][2]*value_Circuit_V[2]);
-				temp_total_power_val[1] = value_Circuit_V[1] * ~(generator_admittance[1][0]*value_Circuit_V[0] + generator_admittance[1][1]*value_Circuit_V[1] + generator_admittance[1][2]*value_Circuit_V[2]);
-				temp_total_power_val[2] = value_Circuit_V[2] * ~(generator_admittance[2][0]*value_Circuit_V[0] + generator_admittance[2][1]*value_Circuit_V[1] + generator_admittance[2][2]*value_Circuit_V[2]);
-
-				//Figure out what we should be generating internally
-				temp_total_power_internal = temp_p_setpoint + temp_total_power_val[0] + temp_total_power_val[1] + temp_total_power_val[2];
-
-				//Compute the positive sequence voltage (*3)
-				temp_pos_voltage = value_Circuit_V[0] + value_Circuit_V[1]*aval + value_Circuit_V[2]*avalsq;
-
-				//Compute the positive sequence current
-				temp_pos_current = ~(temp_total_power_internal/temp_pos_voltage);
-
-				//Now populate this into the output
-				value_IGenerated[0] = temp_pos_current;
-				value_IGenerated[1] = temp_pos_current*avalsq;
-				value_IGenerated[2] = temp_pos_current*aval;
-
-				//Put the values back
-				push_powerflow_values(false);
 			}
 			else if (Governor_type == P_CONSTANT)
 			{
@@ -4556,8 +4526,20 @@ STATUS diesel_dg::updateCurrInjection(int64 iteration_count)
 				//Pull the present powerflow values
 				pull_powerflow_values();
 
-				//Form up the "goal" variable
-				temp_p_setpoint = complex(gen_base_set_vals.Pref,gen_base_set_vals.Qref)*Rated_VA;	
+				//Figure out which "Q goal" to use
+				if ((Exciter_type == SEXS) && (Q_constant_mode == true))
+				{
+					//Form up the "goal" variable
+					temp_p_setpoint = complex(gen_base_set_vals.Pref,gen_base_set_vals.Qref)*Rated_VA;	
+				}
+				else	//Just constant P it
+				{
+					//Add up the output first - but do this just to get current Q
+					temp_p_setpoint = power_val[0] + power_val[1] + power_val[2];
+
+					//Now set the real portion
+					temp_p_setpoint.SetReal(gen_base_set_vals.Pref*Rated_VA);
+				}
 				
 				//Calculate the Norton-shunted power
 				temp_total_power_val[0] = value_Circuit_V[0] * ~(generator_admittance[0][0]*value_Circuit_V[0] + generator_admittance[0][1]*value_Circuit_V[1] + generator_admittance[0][2]*value_Circuit_V[2]);
@@ -4581,7 +4563,7 @@ STATUS diesel_dg::updateCurrInjection(int64 iteration_count)
 				//Put the values back
 				push_powerflow_values(false);
 			}
-			//Default else - do nothing (likely NOGOV)
+			//Default else - do nothing (not sure what this would be)
 		}//End not a SWING bus
 		//Default else -- it is a SWING bus, so just skip over
 	}//End first timestep
