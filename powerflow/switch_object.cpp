@@ -759,17 +759,6 @@ TIMESTAMP switch_object::presync(TIMESTAMP t0)
 			}
 		}
 	}
-	if(status != prev_status) {
-		if(has_phase(PHASE_A)) {
-			phase_A_state = status;
-		}
-		if(has_phase(PHASE_B)) {
-			phase_B_state = status;
-		}
-		if(has_phase(PHASE_C)) {
-			phase_C_state = status;
-		}
-	}
 	// Call the ancestor's presync
 	TIMESTAMP result = link_object::presync(t0);
 	return result;
@@ -779,7 +768,6 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	unsigned char work_phases_pre, work_phases_post;
-
 	gl_verbose ("switch_object::sync:%s:%ld:%d:%d:%d", get_name(), t0, phase_A_state, phase_B_state, phase_C_state);
 	//Try to map the event_schedule function address, if we haven't tried yet
 	if (event_schedule_map_attempt == false)
@@ -831,7 +819,6 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 		//Call functionalized "post-link" sync items
 		NR_switch_sync_post(&work_phases_pre, &work_phases_post, obj, &t0, &t2);
 	}
-
 	if (t2==TS_NEVER)
 		return(t2);
 	else
