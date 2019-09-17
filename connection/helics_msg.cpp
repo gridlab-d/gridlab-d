@@ -415,7 +415,7 @@ int helics_msg::init(OBJECT *parent){
 		if((*pub)->HelicsPublication.isValid()) {
 			if((*pub)->pObjectProperty->is_complex()) {
 				if(string("complex").compare((*pub)->HelicsPublication.getType()) != 0 ) {
-					gl_warning("helics_msg::init: The registered publication %s is intended to publish a complex type but the publication has a type = %s", ((*pub)->key).c_str(), ((*pub)->HelicsPublication.getType()).c_str());
+					gl_error("helics_msg::init: The registered publication %s is intended to publish a complex type but the publication has a type = %s", ((*pub)->key).c_str(), ((*pub)->HelicsPublication.getType()).c_str());
 					return 0;
 				}
 			} else if((*pub)->pObjectProperty->is_integer()) {
