@@ -1,38 +1,49 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 
 /*
- * -- SuperLU MT routine (version 2.0) --
+ * -- SuperLU MT routine (version 3.0) --
  * Lawrence Berkeley National Lab, Univ. of California Berkeley,
  * and Xerox Palo Alto Research Center.
  * September 10, 2007
  *
  */
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "pzsp_defs.h"
+#include "slu_mt_zdefs.h"
 
 
 /* Eat up the rest of the current line */
-int zDumpLine(FILE *fp)
+int_t zDumpLine(FILE *fp)
 {
-    register int c;
+    register int_t c;
     while ((c = fgetc(fp)) != '\n') ;
     return 0;
 }
 
-int zParseIntFormat(char *buf, int *num, int *size)
+int_t zParseIntFormat(char *buf, int_t *num, int_t *size)
 {
     char *tmp;
 
     tmp = buf;
     while (*tmp++ != '(') ;
-    sscanf(tmp, "%d", num);
+    *num = atoi(tmp);
     while (*tmp != 'I' && *tmp != 'i') ++tmp;
     ++tmp;
-    sscanf(tmp, "%d", size);
+    *size = atoi(tmp);
     return 0;
 }
 
-int zParseFloatFormat(char *buf, int *num, int *size)
+int_t zParseFloatFormat(char *buf, int_t *num, int_t *size)
 {
     char *tmp, *period;
     
@@ -59,9 +70,9 @@ int zParseFloatFormat(char *buf, int *num, int *size)
     return 0;
 }
 
-int zReadVector(FILE *fp, int n, int *where, int perline, int persize)
+int_t zReadVector(FILE *fp, int_t n, int_t *where, int_t perline, int_t persize)
 {
-    register int i, j, item;
+    register int_t i, j, item;
     char tmp, buf[100];
     
     i = 0;
@@ -80,9 +91,9 @@ int zReadVector(FILE *fp, int n, int *where, int perline, int persize)
 }
 
 /* Read complex numbers as pairs of (real, imaginary) */
-int zReadValues(FILE *fp, int n, doublecomplex *destination, int perline, int persize)
+int_t zReadValues(FILE *fp, int_t n, doublecomplex *destination, int_t perline, int_t persize)
 {
-    register int i, j, k, s, pair;
+    register int_t i, j, k, s, pair;
     register double realpart;
     char tmp, buf[100];
     
@@ -114,8 +125,8 @@ int zReadValues(FILE *fp, int n, doublecomplex *destination, int perline, int pe
 
 
 void
-zreadhb(int *nrow, int *ncol, int *nonz,
-	doublecomplex **nzval, int **rowind, int **colptr)
+zreadhb(int_t *nrow, int_t *ncol, int_t *nonz,
+	doublecomplex **nzval, int_t **rowind, int_t **colptr)
 {
 /* 
  * Purpose
@@ -184,13 +195,12 @@ zreadhb(int *nrow, int *ncol, int *nonz,
  *
  */
 
-    register int i, numer_lines, rhscrd = 0;
-    int tmp, colnum, colsize, rownum, rowsize, valnum, valsize;
+    register int_t i, numer_lines, rhscrd = 0;
+    int_t tmp, colnum, colsize, rownum, rowsize, valnum, valsize;
     char buf[100], type[4], key[10];
     FILE *fp;
 
-    //fp = stdin;
-	fp = fopen("C:\\Projects\\SuperLU\\MT_Nov17\\Need\\cmat", "r"); //sj
+    fp = stdin;
 
     /* Line 1 */
     fscanf(fp, "%72c", buf); buf[72] = 0;
@@ -202,7 +212,7 @@ zreadhb(int *nrow, int *ncol, int *nonz,
     /* Line 2 */
     for (i=0; i<5; i++) {
 	fscanf(fp, "%14c", buf); buf[14] = 0;
-	sscanf(buf, "%d", &tmp);
+	tmp = atoi(buf); /*sscanf(buf, "%d", &tmp);*/
 	if (i == 3) numer_lines = tmp;
 	if (i == 4 && tmp) rhscrd = tmp;
     }
@@ -212,23 +222,20 @@ zreadhb(int *nrow, int *ncol, int *nonz,
     fscanf(fp, "%3c", type);
     fscanf(fp, "%11c", buf); /* pad */
     type[3] = 0;
-#ifdef DEBUG
+#if ( DEBUGlevel>=1 )
     printf("Matrix type %s\n", type);
 #endif
     
-    fscanf(fp, "%14c", buf); sscanf(buf, "%d", nrow);
-    fscanf(fp, "%14c", buf); sscanf(buf, "%d", ncol);
-    fscanf(fp, "%14c", buf); sscanf(buf, "%d", nonz);
-    fscanf(fp, "%14c", buf); sscanf(buf, "%d", &tmp);
+    fscanf(fp, "%14c", buf); *nrow = atoi(buf); 
+    fscanf(fp, "%14c", buf); *ncol = atoi(buf); 
+    fscanf(fp, "%14c", buf); *nonz = atoi(buf); 
+    fscanf(fp, "%14c", buf); tmp = atoi(buf);   
     
     if (tmp != 0)
 	  printf("This is not an assembled matrix!\n");
     if (*nrow != *ncol)
 	printf("Matrix is not square.\n");
     zDumpLine(fp);
-
-    /* Allocate storage for the three arrays ( nzval, rowind, colptr ) */
-    zallocateA(*ncol, *nonz, nzval, rowind, colptr);
 
     /* Line 4: format statement */
     fscanf(fp, "%16c", buf);
@@ -243,13 +250,16 @@ zreadhb(int *nrow, int *ncol, int *nonz,
     /* Line 5: right-hand side */    
     if ( rhscrd ) zDumpLine(fp); /* skip RHSFMT */
     
-#ifdef DEBUG
+#if ( DEBUGlevel>=1 )
     printf("%d rows, %d nonzeros\n", *nrow, *nonz);
     printf("colnum %d, colsize %d\n", colnum, colsize);
     printf("rownum %d, rowsize %d\n", rownum, rowsize);
     printf("valnum %d, valsize %d\n", valnum, valsize);
 #endif
     
+    /* Allocate storage for the three arrays ( nzval, rowind, colptr ) */
+    zallocateA(*ncol, *nonz, nzval, rowind, colptr);
+
     zReadVector(fp, *ncol+1, *colptr, colnum, colsize);
     zReadVector(fp, *nonz, *rowind, rownum, rowsize);
     if ( numer_lines ) {

@@ -1,15 +1,25 @@
-#include "pdsp_defs.h"
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
+#include "slu_mt_ddefs.h"
 
 void
 pxgstrf_pruneL(
-	       const int  jcol,      /* current column */
-	       const int  *perm_r,   /* row pivotings */
-	       const int  pivrow,    /* pivot row of column jcol */
-	       const int  nseg,      /* number of U-segments */
-	       const int  *segrep,   /* in */
-	       const int  *repfnz,   /* in */
-	       int        *xprune,   /* modified */
-	       int        *ispruned, /* modified */
+	       const int_t  jcol,      /* current column */
+	       const int_t  *perm_r,   /* row pivotings */
+	       const int_t  pivrow,    /* pivot row of column jcol */
+	       const int_t  nseg,      /* number of U-segments */
+	       const int_t  *segrep,   /* in */
+	       const int_t  *repfnz,   /* in */
+	       int_t        *xprune,   /* modified */
+	       int_t        *ispruned, /* modified */
 	       GlobalLU_t *Glu /* modified - global LU data structures */
 	       )
 {
@@ -25,11 +35,11 @@ pxgstrf_pruneL(
  *   contains the current pivot row "pivrow".
  *
  */
-    register int jsupno, irep, isupno, irep1, kmin, kmax, krow;
-    register int i, ktemp;
-    register int do_prune; /* logical variable */
-    int        *xsup, *xsup_end, *supno;
-    int        *lsub, *xlsub, *xlsub_end;
+    register int_t jsupno, irep, isupno, irep1, kmin, kmax, krow;
+    register int_t i, ktemp;
+    register int_t do_prune; /* logical variable */
+    int_t        *xsup, *xsup_end, *supno;
+    int_t        *lsub, *xlsub, *xlsub_end;
 
     xsup       = Glu->xsup;
     xsup_end   = Glu->xsup_end;

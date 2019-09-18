@@ -81,7 +81,6 @@
 
 #include <gridlabd.h>
 
-#include "house_a.h"
 #include "evcharger.h"
 
 /////////////////////////////////////////////////////////////////////
@@ -396,6 +395,8 @@ int evcharger::isa(char *classname)
 
 double evcharger::update_state(double dt /* seconds */) 
 {
+	double temp_voltage_magnitude;
+	
 	OBJECT *obj = OBJECTHDR(this);
 	if (obj->clock>TS_ZERO && dt>0)
 	{
@@ -473,7 +474,10 @@ double evcharger::update_state(double dt /* seconds */)
 			case CT_LOW:
 			case CT_MEDIUM:
 			case CT_HIGH:
-				charge_kw = amps[(int)charger_type] * pCircuit->pV->Mag() * charge_throttle /1000;
+				//Grab the voltage magnitude
+				temp_voltage_magnitude = (pCircuit->pV->get_complex()).Mag();
+
+				charge_kw = amps[(int)charger_type] * temp_voltage_magnitude * charge_throttle /1000;
 				break;
 			default:
 				GL_THROW( "invalid charger_type" );

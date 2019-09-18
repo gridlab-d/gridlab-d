@@ -6,6 +6,7 @@
 
 #include <stdarg.h>
 #include "gridlabd.h"
+using gld::complex;
 
 #ifndef _isnan
 #define _isnan isnan

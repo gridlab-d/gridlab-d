@@ -119,7 +119,7 @@ public:
 				}
 
 				//"Constructor"
-				new (next) vobjlist();
+				new (next) vobjlist(o);
 			}
 		} else {
 			obj = o;
@@ -182,7 +182,7 @@ public:
 				}
 
 				//"Constructor"
-				new (next) uniqueList();
+				new (next) uniqueList(n);
 			}
 		} else {
 			name = n;
@@ -209,7 +209,7 @@ public:
 	violation_recorder(MODULE *);
 	int create();
 	int init(OBJECT *);
-	int finalize(OBJECT *obj);
+	STATUS finalize(OBJECT *obj);
 	int isa(char *);
 	TIMESTAMP postsync(TIMESTAMP, TIMESTAMP);
 

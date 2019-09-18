@@ -183,11 +183,11 @@ int evcharger_det::init(OBJECT *parent)
 	//Get rough calculation
 	if (load.config == EUC_IS220)
 	{
-		temp_amps = floor(((CarInformation.MaxChargeRate * 1.1) / 220.0) + 0.5);
+		temp_amps = floor(((CarInformation.MaxChargeRate * 1.1) / (2.0 * default_line_voltage)) + 0.5);
 	}
 	else	//Assume 110/120 connected
 	{
-		temp_amps = floor(((CarInformation.MaxChargeRate * 1.1) / 110.0) + 0.5);
+		temp_amps = floor(((CarInformation.MaxChargeRate * 1.1) / default_line_voltage) + 0.5);
 	}
 
 	//See if it is bigger

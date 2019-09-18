@@ -190,6 +190,7 @@ static int player_open(OBJECT *obj)
 	char32 flags="r";
 	struct player *my = OBJECTDATA(obj,struct player);
 	TAPEFUNCS *tf = 0;
+	int retvalue;
 
 	/* if prefix is omitted (no colons found) */
 //	if (sscanf(my->file,"%32[^:]:%1024[^:]:%[^:]",type,fname,flags)==1)
@@ -219,8 +220,15 @@ static int player_open(OBJECT *obj)
 		/* set up the delta_mode recorder if enabled */
 		if ( (obj->flags)&OF_DELTAMODE )
 		{
-			extern void delta_add_player(OBJECT *);
-			delta_add_player(obj);
+			extern int delta_add_tape_device(OBJECT *obj, DELTATAPEOBJ tape_type);
+			retvalue = delta_add_tape_device(obj,PLAYER);
+
+			/* Make sure it worked */
+			if (retvalue == 0)
+			{
+				/* Error message is inside the delta_add_tape_device function, just fail us */
+				return 0;
+			}
 		}
 		return 1; /* success */
 	}

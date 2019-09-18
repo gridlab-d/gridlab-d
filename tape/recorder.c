@@ -32,7 +32,7 @@
 #define strtok_s strtok_r
 #else
 #ifdef __MINGW32__
-inline char* strtok_t(char *str, const char *delim, char **nextp)
+char* strtok_t(char *str, const char *delim, char **nextp)
 {
     char *ret;
 
@@ -111,6 +111,7 @@ static int recorder_open(OBJECT *obj)
 	char32 flags="w";
 	TAPEFUNCS *f = 0;
 	struct recorder *my = OBJECTDATA(obj,struct recorder);
+	int retvalue;
 	
 	my->interval = (int64)(my->dInterval/TS_SECOND);
 	/* if prefix is omitted (no colons found) */
@@ -348,8 +349,15 @@ static int recorder_open(OBJECT *obj)
 	/* set up the delta_mode recorder if enabled */
 	if ( (obj->flags)&OF_DELTAMODE )
 	{
-		extern void delta_add_recorder(OBJECT *);
-		delta_add_recorder(obj);
+		extern int delta_add_tape_device(OBJECT *obj, DELTATAPEOBJ tape_type);
+		retvalue = delta_add_tape_device(obj,RECORDER);
+
+		/* Make sure it worked */
+		if (retvalue == 0)
+		{
+			/* Error message is inside the delta_add_tape_device function, just fail us */
+			return 0;
+		}
 	}
 
 	return my->ops->open(my, fname, flags);
@@ -358,7 +366,7 @@ static int recorder_open(OBJECT *obj)
 static int write_recorder(struct recorder *my, char *ts, char *value)
 {
 	int rc=my->ops->write(my, ts, value);
-	if ( (my->flush==0 || (my->flush>0 && my->flush%gl_globalclock==0)) && my->ops->flush!=NULL ) 
+	if ( (my->flush==0 || (my->flush>0 && gl_globalclock%my->flush==0)) && my->ops->flush!=NULL ) 
 		my->ops->flush(my);
 	return rc;
 }

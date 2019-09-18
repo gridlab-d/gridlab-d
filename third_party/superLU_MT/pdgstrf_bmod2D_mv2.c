@@ -1,29 +1,39 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "pdsp_defs.h"
+#include "slu_mt_ddefs.h"
 
-void dlsolve(int, int, double *, double *);
-void dmatvec(int, int, int, double *, double *, double *);
-void dmatvec2(int, int, int, double*, double*, double*, double*, double*);
+void dlsolve(int_t, int_t, double *, double *);
+void dmatvec(int_t, int_t, int_t, double *, double *, double *);
+void dmatvec2(int_t, int_t, int_t, double*, double*, double*, double*, double*);
 
 
 void
 pdgstrf_bmod2D_mv2(
-		   const int pnum, /* process number */
-		   const int n,    /* number of rows in the matrix */
-		   const int w,    /* current panel width */
-		   const int jcol, /* leading column of the current panel */
-		   const int fsupc,/* leading column of the updating supernode */
-		   const int krep, /* last column of the updating s-node */
-		   const int nsupc,/* number of columns in the updating s-node */
-		   int nsupr, /* number of rows in the updating s-node */
-		   int nrow,  /* number of rows below the diagonal block of
+		   const int_t pnum, /* process number */
+		   const int_t n,    /* number of rows in the matrix */
+		   const int_t w,    /* current panel width */
+		   const int_t jcol, /* leading column of the current panel */
+		   const int_t fsupc,/* leading column of the updating supernode */
+		   const int_t krep, /* last column of the updating s-node */
+		   const int_t nsupc,/* number of columns in the updating s-node */
+		   int_t nsupr, /* number of rows in the updating s-node */
+		   int_t nrow,  /* number of rows below the diagonal block of
 				 the updating supernode */
-		   int *repfnz,     /* in */
-		   int *panel_lsub, /* modified */
-		   int *w_lsub_end, /* modified */
-		   int *spa_marker, /* modified; size n-by-w */
+		   int_t *repfnz,     /* in */
+		   int_t *panel_lsub, /* modified */
+		   int_t *w_lsub_end, /* modified */
+		   int_t *spa_marker, /* modified; size n-by-w */
 		   double *dense,   /* modified */
 		   double *tempv,   /* working array - zeros on entry/exit */
 		   GlobalLU_t *Glu, /* modified */
@@ -31,7 +41,7 @@ pdgstrf_bmod2D_mv2(
 		   )
 {
 /*
- * -- SuperLU MT routine (version 2.0) --
+ * -- SuperLU MT routine (version 3.0) --
  * Lawrence Berkeley National Lab, Univ. of California Berkeley,
  * and Xerox Palo Alto Research Center.
  * September 10, 2007
@@ -58,28 +68,28 @@ pdgstrf_bmod2D_mv2(
 #endif
 
     double       ukj, ukj1, ukj2;
-    int          luptr, luptr1, luptr2;
-    int          segsze;
+    int_t          luptr, luptr1, luptr2;
+    int          segsze, nsupr32 = nsupr;
     int          block_nrow;  /* no of rows in a block row */
-    register int lptr; /* points to the row subscripts of a supernode */
-    int          kfnz, irow, no_zeros; 
-    register int isub, isub1, i, j;
-    register int jj;	      /* index through each column in the panel */
-    int          krep_ind;
-    int          *repfnz_col; /* repfnz[] for a column in the panel */
-    int          *col_marker; /* each column of the spa_marker[*,w] */
-    int          *col_lsub;   /* each column of the panel_lsub[*,w] */
+    register int_t lptr; /* points to the row subscripts of a supernode */
+    int_t          kfnz, irow, no_zeros; 
+    register int_t isub, isub1, i, j;
+    register int_t jj;	      /* index through each column in the panel */
+    int_t          krep_ind;
+    int_t          *repfnz_col; /* repfnz[] for a column in the panel */
+    int_t          *col_marker; /* each column of the spa_marker[*,w] */
+    int_t          *col_lsub;   /* each column of the panel_lsub[*,w] */
     double       *dense_col;  /* dense[] for a column in the panel */
     double       *TriTmp;
-    register int ldaTmp;
-    register int r_ind, r_hi;
-    static   int first = 1, maxsuper, rowblk;
-    register int twocols;
-    int          kfnz2[2], jj2[2]; /* detect two identical columns */
+    register int_t ldaTmp;
+    register int_t r_ind, r_hi;
+    static   int_t first = 1, maxsuper, rowblk;
+    register int_t twocols;
+    int_t          kfnz2[2], jj2[2]; /* detect two identical columns */
     double       *tri[2], *matvec[2];
-    int          *lsub, *xlsub_end;
+    int_t          *lsub, *xlsub_end;
     double       *lusup;
-    int          *xlusup;
+    int_t          *xlusup;
     register float flopcnt;
     
 #ifdef TIMING    
@@ -217,13 +227,12 @@ pdgstrf_bmod2D_mv2(
 #ifdef USE_VENDOR_BLAS
 #if ( MACH==CRAY_PVP )
 	    STRSV( ftcs1, ftcs2, ftcs3, &segsze, &lusup[luptr], 
-		   &nsupr, TriTmp, &incx );
+		   &nsupr32, TriTmp, &incx );
 #else
-	    dtrsv_( "L", "N", "U", &segsze, &lusup[luptr], 
-		   &nsupr, TriTmp, &incx );
+	    dtrsv_( "L", "N", "U", &segsze, &lusup[luptr], &nsupr32, TriTmp, &incx );
 #endif
 #else		
-	    dlsolve ( nsupr, segsze, &lusup[luptr], TriTmp );
+	    dlsolve ( (int_t) nsupr, (int_t) segsze, &lusup[luptr], TriTmp );
 #endif		
 #ifdef TIMING	    
 	    utime[FLOAT] += SuperLU_timer_() - f_time;
@@ -272,13 +281,13 @@ pdgstrf_bmod2D_mv2(
 #ifdef USE_VENDOR_BLAS
 #if ( MACH==CRAY_PVP )
 		    SGEMV( ftcs2, &block_nrow, &segsze, &alpha, &lusup[luptr], 
-			   &nsupr, tri[0], &incx, &beta, matvec[0], &incy );
+			   &nsupr32, tri[0], &incx, &beta, matvec[0], &incy );
 #else
 		    dgemv_( "N", &block_nrow, &segsze, &alpha, &lusup[luptr], 
-			   &nsupr, tri[0], &incx, &beta, matvec[0], &incy );
+			   &nsupr32, tri[0], &incx, &beta, matvec[0], &incy );
 #endif
 #else
-		    dmatvec (nsupr, block_nrow, segsze, &lusup[luptr],
+		    dmatvec ((int_t) nsupr, (int_t) block_nrow, (int_t) segsze, &lusup[luptr],
 			     tri[0], matvec[0]);
 #endif
 		} else if ( kfnz2[0] > kfnz2[1] ) {
@@ -291,7 +300,7 @@ pdgstrf_bmod2D_mv2(
 			   &nsupr, tri[1], &incx, &beta, matvec[1], &incy );
 #else
 		    dgemv_( "N", &block_nrow, &segsze, &alpha, &lusup[luptr], 
-			   &nsupr, tri[1], &incx, &beta, matvec[1], &incy );
+			   &nsupr32, tri[1], &incx, &beta, matvec[1], &incy );
 #endif
 #else
 		    dmatvec (nsupr, block_nrow, segsze, &lusup[luptr],
@@ -344,7 +353,7 @@ pdgstrf_bmod2D_mv2(
 		   &nsupr, tri[0], &incx, &beta, matvec[0], &incy );
 #else
 	    dgemv_( "N", &block_nrow, &segsze, &alpha, &lusup[luptr], 
-		   &nsupr, tri[0], &incx, &beta, matvec[0], &incy );
+		   &nsupr32, tri[0], &incx, &beta, matvec[0], &incy );
 #endif
 #else
 	    dmatvec(nsupr, block_nrow, segsze, &lusup[luptr],

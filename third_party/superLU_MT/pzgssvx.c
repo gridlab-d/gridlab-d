@@ -1,14 +1,24 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
 
-#include "pzsp_defs.h"
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
+
+#include "slu_mt_zdefs.h"
 
 
 void
-pzgssvx(int nprocs, superlumt_options_t *superlumt_options, SuperMatrix *A, 
-	int *perm_c, int *perm_r, equed_t *equed, double *R, double *C,
+pzgssvx(int_t nprocs, superlumt_options_t *superlumt_options, SuperMatrix *A, 
+	int_t *perm_c, int_t *perm_r, equed_t *equed, double *R, double *C,
 	SuperMatrix *L, SuperMatrix *U,
 	SuperMatrix *B, SuperMatrix *X, double *recip_pivot_growth, 
 	double *rcond, double *ferr, double *berr, 
-	superlu_memusage_t *superlu_memusage, int *info)
+	superlu_memusage_t *superlu_memusage, int_t *info)
 {
 /*
  * -- SuperLU MT routine (version 2.0) --
@@ -112,7 +122,7 @@ pzgssvx(int nprocs, superlumt_options_t *superlumt_options, SuperMatrix *A,
  * Arguments
  * =========
  *
- * nprocs (input) int
+ * nprocs (input) int_t
  *         Number of processes (or threads) to be spawned and used to perform
  *         the LU factorization by pzgstrf(). There is a single thread of
  *         control to call pzgstrf(), and all threads spawned by pzgstrf() 
@@ -127,14 +137,14 @@ pzgssvx(int nprocs, superlumt_options_t *superlumt_options, SuperMatrix *A,
  *           Specifies whether or not the factored form of the matrix
  *           A is supplied on entry, and if not, whether the matrix A should
  *           be equilibrated before it is factored.
- *           = FACTORED: On entry, L, U, perm_r and perm_c contain the 
- *             factored form of A. If equed is not NOEQUIL, the matrix A has
- *             been equilibrated with scaling factors R and C.
- *             A, L, U, perm_r are not modified.
  *           = DOFACT: The matrix A will be factored, and the factors will be
  *             stored in L and U.
  *           = EQUILIBRATE: The matrix A will be equilibrated if necessary,
  *             then factored into L and U.
+ *           = FACTORED: On entry, L, U, perm_r and perm_c contain the 
+ *             factored form of A. If equed is not NOEQUIL, the matrix A has
+ *             been equilibrated with scaling factors R and C.
+ *             A, L, U, perm_r are not modified.
  *
  *         o trans (trans_t)
  *           Specifies the form of the system of equations:
@@ -151,10 +161,10 @@ pzgssvx(int nprocs, superlumt_options_t *superlumt_options, SuperMatrix *A,
  *               elimination tree, and the symbolic information of the
  *               Householder matrix.
  *
- *         o panel_size (int)
+ *         o panel_size (int_t)
  *           A panel consists of at most panel_size consecutive columns.
  *
- *         o relax (int)
+ *         o relax (int_t)
  *           To control degree of relaxing supernodes. If the number
  *           of nodes (columns) in a subtree of the elimination tree is less
  *           than relax, this subtree is considered as one supernode,
@@ -183,7 +193,7 @@ pzgssvx(int nprocs, superlumt_options_t *superlumt_options, SuperMatrix *A,
  *           User-supplied work space and space for the output data structures.
  *           Not referenced if lwork = 0;
  *
- *         o lwork (int)
+ *         o lwork (int_t)
  *           Specifies the length of work array.
  *           = 0:  allocate space internally by system malloc;
  *           > 0:  use user-supplied work array of length lwork in bytes,
@@ -191,6 +201,20 @@ pzgssvx(int nprocs, superlumt_options_t *superlumt_options, SuperMatrix *A,
  *           = -1: the routine guesses the amount of space needed without
  *                 performing the factorization, and returns it in
  *                 superlu_memusage->total_needed; no other side effects.
+ *
+ *    -------------------------------------------------------------------------
+ *    ** The following 3 arrays must be allocated before calling this routine.
+ *    -------------------------------------------------------------------------
+ *         o etree  (int*)
+ *           Elimination tree of A'*A, dimension A->ncol.
+ *
+ *         o colcnt_h (int*)
+ *           Column colunts of the Householder matrix.
+ *
+ *         o part_super_h (int*)
+ *           Partition of the supernodes in the Householder matrix.
+ *	     part_super_h[k] = size of the supernode beginning at column k;
+ * 	                     = 0, elsewhere.
  *
  * A       (input/output) SuperMatrix*
  *         Matrix A in A*X=B, of dimension (A->nrow, A->ncol), where
@@ -215,7 +239,7 @@ pzgssvx(int nprocs, superlumt_options_t *superlumt_options, SuperMatrix *A,
  *           equed = COL:  transpose(A) := transpose(A) * diag(C)
  *           equed = BOTH: transpose(A) := diag(R) * transpose(A) * diag(C).
  *
- * perm_c  (input/output) int*
+ * perm_c  (input/output) int_t*
  *	   If A->Stype = NC, Column permutation vector of size A->ncol,
  *         which defines the permutation matrix Pc; perm_c[i] = j means
  *         column i of A is in position j in A*Pc.
@@ -228,7 +252,7 @@ pzgssvx(int nprocs, superlumt_options_t *superlumt_options, SuperMatrix *A,
  *         which describes permutation of columns of tranpose(A) 
  *         (rows of A) as described above.
  * 
- * perm_r  (input/output) int*
+ * perm_r  (input/output) int_t*
  *         If A->Stype = NC, row permutation vector of size A->nrow, 
  *         which defines the permutation matrix Pr, and is determined
  *         by partial pivoting.  perm_r[i] = j means row i of A is in 
@@ -346,10 +370,10 @@ pzgssvx(int nprocs, superlumt_options_t *superlumt_options, SuperMatrix *A,
  *           The amount of space used in bytes for L\U data structures.
  *         - total_needed (float)
  *           The amount of space needed in bytes to perform factorization.
- *         - expansions (int)
+ *         - expansions (int_t)
  *           The number of memory expansions during the LU factorization.
  *
- * info    (output) int*
+ * info    (output) int_t*
  *         = 0: successful exit   
  *         < 0: if info = -i, the i-th argument had an illegal value   
  *         > 0: if info = i, and i is   
@@ -371,15 +395,16 @@ pzgssvx(int nprocs, superlumt_options_t *superlumt_options, SuperMatrix *A,
     NCformat  *Astore;
     DNformat  *Bstore, *Xstore;
     doublecomplex    *Bmat, *Xmat;
-    int       ldb, ldx, nrhs;
+    int_t       ldb, ldx, nrhs;
     SuperMatrix *AA; /* A in NC format used by the factorization routine.*/
     SuperMatrix AC; /* Matrix postmultiplied by Pc */
-    int       colequ, equil, dofact, notran, rowequ;
+    int_t       colequ, equil, dofact, notran, rowequ;
     char      norm[1];
     trans_t   trant;
-    int       i, j, info1;
+    int_t     j, info1;
+    int i;
     double amax, anorm, bignum, smlnum, colcnd, rowcnd, rcmax, rcmin;
-    int       n, relax, panel_size;
+    int_t       n, relax, panel_size;
     Gstat_t   Gstat;
     double    t0;      /* temporary time */
     double    *utime;
@@ -652,11 +677,6 @@ pzgssvx(int nprocs, superlumt_options_t *superlumt_options, SuperMatrix *A,
     /* ------------------------------------------------------------
        Deallocate storage after factorization.
        ------------------------------------------------------------*/
-    if ( superlumt_options->refact == NO ) {
-        SUPERLU_FREE(superlumt_options->etree);
-        SUPERLU_FREE(superlumt_options->colcnt_h);
-	SUPERLU_FREE(superlumt_options->part_super_h);
-    }
     if ( dofact || equil ) {
         Destroy_CompCol_Permuted(&AC);
     }

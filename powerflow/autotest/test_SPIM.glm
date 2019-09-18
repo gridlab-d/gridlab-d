@@ -1,0 +1,261 @@
+//This file tests the single phase induction motor model
+
+#set suppress_repeat_messages=1
+#set randomseed=10;
+
+#set double_format=%+.12lg
+#set complex_format=%+.12lg%+.12lg%c
+
+
+clock {
+	 timezone PST+8PDT;
+     starttime '2000-01-01 00:00:00';
+	 stoptime '2000-01-01 00:00:30';
+}
+
+module tape;
+module assert;
+module powerflow {
+	  enable_subsecond_models true; //Enables deltamode
+      deltamode_timestep 0.2 ms;      //Defines the expected timestep for deltamode
+      solver_method NR;             //Newton-Raphson is the only solver that supports deltamode
+      all_powerflow_delta true;     //Set all of the powerflow objects to deltamode – instead of having to do “flags DELTAMODE;” everywhere
+
+};
+
+object meter {
+	name rooty;
+	phases "ABCN";
+	bustype SWING;
+	nominal_voltage 240;
+	object complex_assert {
+		target measured_power_A;
+		within 0.1;
+		flags DELTAMODE;
+		object player {
+			property value;
+			file ../SPIM_power_assert.player;
+			loop 1;
+			flags DELTAMODE;
+		};
+	};
+}
+
+object motor {
+	parent rooty;
+	name induction_motor;
+	phases "AN";
+	nominal_voltage 240;
+	trip_time 5;
+	reconnect_time 10;
+	desired_motor_state ON;
+	object double_assert {
+		target rotor_speed;
+		within 0.1;
+		flags DELTAMODE;
+		object player {
+			property value;
+			file ../SPIM_wr_assert.player;
+			loop 1;
+			flags DELTAMODE;
+		};
+	};
+	object double_assert {
+		target trip;
+		within 0.0001;
+		flags DELTAMODE;
+		object player {
+			property value;
+			file ../SPIM_trip_assert.player;
+			loop 1;
+			flags DELTAMODE;
+		};
+	};
+	object double_assert {
+		target reconnect;
+		within 0.0001;
+		flags DELTAMODE;
+		object player {
+			property value;
+			file ../SPIM_reconnect_assert.player;
+			loop 1;
+			flags DELTAMODE;
+		};
+	};	
+	object enum_assert {
+		target motor_status;
+		flags DELTAMODE;
+		object player {
+			property value;
+			file ../SPIM_status_assert.player;
+			loop 1;
+			flags DELTAMODE;
+		};
+	};
+}
+
+object player {
+	parent rooty;
+	file ../SPIM_voltage.player;
+	property voltage_A;
+	flags DELTAMODE;
+}
+
+object player {
+	parent rooty;
+	file ../SPIM_frequency.player;
+	property measured_frequency_A;
+	flags DELTAMODE;
+};
+
+object player {
+	parent induction_motor;
+	file ../SPIM_override.player;
+	property desired_motor_state;
+	flags DELTAMODE;
+};
+
+// recoders to visualy verify the SPIM model
+// object recorder {
+     // parent induction_motor;
+     // file motor_override.csv;
+     // interval 1;
+     // property desired_motor_state;
+	 // flags DELTAMODE;
+// };
+
+// object recorder {
+     // parent induction_motor;
+     // file motor_protection.csv;
+     // interval 1;
+     // property trip,reconnect;
+	 // flags DELTAMODE;
+// };
+
+// object recorder {
+     // parent induction_motor;
+     // file motor_trip.csv;
+     // interval 1;
+     // property trip;
+	 // flags DELTAMODE;
+// };
+
+// object recorder {
+     // parent induction_motor;
+     // file motor_reconnect.csv;
+     // interval 1;
+     // property reconnect;
+	 // flags DELTAMODE;
+// };
+
+// object recorder {
+     // parent induction_motor;
+     // file motor_status.csv;
+     // interval 1;
+     // property motor_status;
+	 // flags DELTAMODE;
+// };
+
+// object recorder {
+     // parent induction_motor;
+     // file voltage.csv;
+     // interval 1;
+     // property voltage_A.real,voltage_A.imag;
+	 // flags DELTAMODE;
+// };
+
+// object recorder {
+     // parent induction_motor;
+     // file wr.csv;
+     // interval 1;
+     // property rotor_speed;
+	 // flags DELTAMODE;
+// };
+
+// object recorder {
+     // parent induction_motor;
+     // file Vs.csv;
+     // interval 1;
+     // property Vs.real,Vs.imag;
+	 // flags DELTAMODE;
+// };
+
+// object recorder {
+     // parent induction_motor;
+     // file Is.csv;
+     // interval 1;
+     // property Is.real,Is.imag;
+	 // flags DELTAMODE;
+// };
+
+// object recorder {
+     // parent induction_motor;
+     // file Ss.csv;
+     // interval 1;
+     // property Ss.real,Ss.imag;
+	 // flags DELTAMODE;
+// };
+
+// object recorder {
+     // parent induction_motor;
+     // file ws.csv;
+     // interval 1;
+     // property ws;
+	 // flags DELTAMODE;
+// };
+
+// object recorder {
+     // parent induction_motor;
+     // file Tmech.csv;
+     // interval 1;
+     // property mechanical_torque;
+	 // flags DELTAMODE;
+// };
+
+// object recorder {
+     // parent induction_motor;
+     // file Telec.csv;
+     // interval 1;
+     // property electrical_torque;
+	 // flags DELTAMODE;
+// };
+
+// object recorder {
+     // parent induction_motor;
+     // file Ids.csv;
+     // interval 1;
+     // property Ids.real,Ids.imag;
+	 // flags DELTAMODE;
+// };
+
+// object recorder {
+     // parent induction_motor;
+     // file Iqs.csv;
+     // interval 1;
+     // property Iqs.real,Iqs.imag;
+	 // flags DELTAMODE;
+// };
+
+// object recorder {
+     // parent induction_motor;
+     // file psi_dr.csv;
+     // interval 1;
+     // property psi_dr.real,psi_dr.imag;
+	 // flags DELTAMODE;
+// };
+
+// object recorder {
+     // parent induction_motor;
+     // file psi_qr.csv;
+     // interval 1;
+     // property psi_qr.real,psi_qr.imag;
+	 // flags DELTAMODE;
+// };
+
+// object recorder {
+     // parent rooty;
+     // file meaured_power.csv;
+     // interval 1;
+     // property measured_power_A;
+	 // flags DELTAMODE;
+// };

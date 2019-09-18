@@ -518,7 +518,9 @@ int convert_from_int32(char *buffer, /**< pointer to the string buffer */
 		return 0;
 	}
 }
-
+#ifdef WIN32
+#define SCNd32 "d"
+#endif
 /** Convert to an \e int32
 	Converts a string to an \e int32 property.  
 	@return 1 on success, 0 on failure, -1 if conversion was incomplete
@@ -527,7 +529,7 @@ int convert_to_int32(const char *buffer, /**< a pointer to the string buffer */
 					    void *data, /**< a pointer to the data */
 					    PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
-	return sscanf(buffer,"%ld",data);
+	return sscanf(buffer,"%" SCNd32,data);
 }
 
 /** Convert from an \e int64

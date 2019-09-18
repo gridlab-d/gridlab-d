@@ -477,6 +477,57 @@ AC_MSG_RESULT([$have_fncs])
 AC_DEFINE_UNQUOTED([HAVE_FNCS], [$have_fncs_int], [whether FNCS was found])
 AM_CONDITIONAL([HAVE_FNCS], [test "x$have_fncs" = xyes])
 
+# Check for HELICS
+AC_ARG_WITH([helics],
+    [AS_HELP_STRING([--with-helics],
+                    [Link to HELICS from the given prefix (=path)  @<:@default=no@:>@])],
+    [],
+    [with_helics=no])
+AS_CASE([$with_helics],
+        [yes],  [],
+        [no],   [],
+                [GLD_FLAG_PARSE([with_helics],
+                        [HELICS_LIBS],
+                        [HELICS_LDFLAGS],
+                        [HELICS_CPPFLAGS])])
+gld_save_LIBS="$LIBS"; LIBS="$LIBS $HELICS_LIBS"
+gld_save_LDFLAGS="$LDFLAGS"; LDFLAGS="$LDFLAGS $HELICS_LDFLAGS"
+gld_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $HELICS_CPPFLAGS"
+# add libhelics to HELICS_LIBS if missing
+AS_CASE([$host],
+	[*linux*], [AS_CASE([$HELICS_LIBS],
+					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lzmq -lboost_chrono -lboost_date_time -lboost_filesystem -lboost_program_options -lboost_system -lboost_timer -lboost_unit_test_framework"])
+				AS_CASE([$LIBS],
+					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lzmq -lboost_chrono -lboost_date_time -lboost_filesystem -lboost_program_options -lboost_system -lboost_timer -lboost_unit_test_framework"])],
+	[*darwin*], [AS_CASE([$HELICS_LIBS],
+					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lzmq -lboost_chrono -lboost_date_time -lboost_filesystem -lboost_program_options -lboost_system -lboost_timer -lboost_unit_test_framework"])
+				AS_CASE([$LIBS],
+					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lzmq -lboost_chrono -lboost_date_time -lboost_filesystem -lboost_program_options -lboost_system -lboost_timer -lboost_unit_test_framework"])],
+	[*mingw*], [AS_CASE([$HELICS_LIBS],
+					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lzmq -lboost_chrono-mt -lboost_date_time-mt -lboost_filesystem-mt -lboost_program_options-mt -lboost_system-mt -lboost_timer-mt -lboost_unit_test_framework-mt"])
+				AS_CASE([$LIBS],
+					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lzmq -lboost_chrono-mt -lboost_date_time-mt -lboost_filesystem-mt -lboost_program_options-mt -lboost_system-mt -lboost_timer-mt -lboost_unit_test_framework-mt"])])
+have_helics=yes
+AC_MSG_CHECKING([for HELICS])
+AC_LINK_IFELSE(
+    [AC_LANG_PROGRAM([[
+#include<helics/application_api/helicsTypes.hpp>
+]],
+[[
+helics::publication_id_t t;
+]])],
+    [have_helics=yes; have_helics_int=1],
+    [have_helics=no; have_helics_int=0])
+LIBS="$gld_save_LIBS"
+LDFLAGS="$gld_save_LDFLAGS"
+CPPFLAGS="$gld_save_CPPFLAGS"
+AC_SUBST([HELICS_LIBS])
+AC_SUBST([HELICS_LDFLAGS])
+AC_SUBST([HELICS_CPPFLAGS])
+AC_MSG_RESULT([$have_helics])
+AC_DEFINE_UNQUOTED([HAVE_HELICS], [$have_helics_int], [whether HELICS was found])
+AM_CONDITIONAL([HAVE_HELICS], [test "x$have_helics" = xyes])
+
 AC_SUBST([GLD_CPPFLAGS])
 
 AC_LANG_POP([C++])
@@ -596,6 +647,43 @@ AS_IF([test "x$MYSQL" != "xno"],
 		GLD_CPPFLAGS="$GLD_CPPFLAGS -DHAVE_MYSQL"
 		HAVE_MYSQL=yes],
 	[HAVE_MYSQL=no])
+	
+AC_MSG_RESULT([Is single-location MySQL configured: $HAVE_MYSQL])
+
+	
+AC_ARG_WITH([rhel-mysql-libs],
+	[AS_HELP_STRING[--with-rhel-mysql-libs],
+	[Link to MySQL libs on RHEL from a given prefix (=path)])],
+	[],
+	[with_rhel_mysql_libs=no])
+
+AC_ARG_WITH([rhel-mysql-headers],
+	[AS_HELP_STRING([--with-rhel-mysql-headers],
+		[Link to MySQL headers on RHEL from a given prefix (=path)])],
+	[],
+	[with_rhel_mysql_headers=no])
+	
+AC_MSG_RESULT([Is RHEL MySQL Libs configured: $with_rhel_mysql_libs])
+AC_MSG_RESULT([Is RHEL MySQL Headers configured: $with_rhel_mysql_headers])
+
+	
+AS_IF([test "x$HAVE_MYSQL" != "xyes" && 
+       test "x$with_rhel_mysql_libs" != "xno" && 
+	   test "x$with_rhel_mysql_headers" != "xno"],
+			[MYSQL_CPPFLAGS="'-I$with_rhel_mysql_headers'"
+	 		MYSQL_LDFLAGS="'-L$with_rhel_mysql_libs'"
+			MYSQL_LIBS="-lmysqlclient"
+			GLD_CPPFLAGS="$GLD_CPPFLAGS -DHAVE_MYSQL"
+			HAVE_MYSQL=yes]
+	,[HAVE_MYSQL=$HAVE_MYSQL]) 
+	
+AC_MSG_RESULT([Is MySQL configured: $HAVE_MYSQL])
+AC_MSG_RESULT([MySQL_CPPFLAGS: $MYSQL_CPPFLAGS])
+AC_MSG_RESULT([MYSQL_LDFLAGS: $MYSQL_LDFLAGS])
+AC_MSG_RESULT([MYSQL_LIBS: $MYSQL_LIBS])
+AC_MSG_RESULT([GLD_CPPFLAGS: $GLD_CPPFLAGS])
+
+
 AC_SUBST([MYSQL_CPPFLAGS])
 AC_SUBST([MYSQL_LDFLAGS])
 AC_SUBST([MYSQL_LIBS])
@@ -606,7 +694,7 @@ AC_SUBST([MYSQL_LIBS])
 
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([gridlabd.spec])
-AC_CONFIG_FILES([gldcore/gridlabd], [chmod +x gldcore/gridlabd])
+AC_CONFIG_FILES([gldcore/gridlabd.sh], [chmod +x gldcore/gridlabd.sh])
 AC_OUTPUT
 
 BINDIR=`eval echo $(eval echo $bindir)`

@@ -1,4 +1,4 @@
-/** $Id: timestamp.h 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: timestamp.h 1182 2008-12-22 22:08:36Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file timestamp.h
 	@addtogroup timestamp
@@ -82,6 +82,7 @@ double timestamp_to_seconds(TIMESTAMP t);
 TIMESTAMP convert_to_timestamp(const char *value);
 TIMESTAMP convert_to_timestamp_delta(const char *value, unsigned int *nanoseconds, double *dbl_time_value);
 int local_datetime(TIMESTAMP ts, DATETIME *dt);
+int local_datetime_delta(double tsdbl, DATETIME *dt);
 
 int timestamp_test(void);
 

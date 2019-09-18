@@ -36,10 +36,9 @@ public:
 	TIMESTAMP last_timestep;		///< Last time the simulation stopped to calculate [sec]
 	TIMESTAMP next_timestep;		///< Next time thermal_storage will need to run [delta sec]
 
-	//double *design_cooling_capacity;
-	double *outside_temperature;
-	double *thermal_storage_available;
-	double *thermal_storage_active;
+	gld_property *outside_temperature;
+	gld_property *thermal_storage_available;
+	gld_property *thermal_storage_active;
 
 	SCHEDULE *recharge_schedule_vals;
 	SCHEDULE *discharge_schedule_vals;

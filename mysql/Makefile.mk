@@ -22,3 +22,9 @@ mysql_mysql_la_SOURCES += mysql/player.cpp
 mysql_mysql_la_SOURCES += mysql/player.h
 mysql_mysql_la_SOURCES += mysql/recorder.cpp
 mysql_mysql_la_SOURCES += mysql/recorder.h
+mysql_mysql_la_SOURCES += mysql/query_engine.h
+mysql_mysql_la_SOURCES += mysql/table_manager.cpp
+mysql_mysql_la_SOURCES += mysql/query_engine.cpp
+mysql_mysql_la_SOURCES += mysql/group_recorder.cpp
+mysql_mysql_la_SOURCES += mysql/group_recorder.h
+

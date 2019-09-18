@@ -24,7 +24,6 @@
 #include <errno.h>
 #include <math.h>
 
-#include "house_a.h"
 #include "waterheater.h"
 
 #define TSTAT_PRECISION 0.01
@@ -123,7 +122,7 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 			PT_double,"height[ft]",PADDR(h), PT_DESCRIPTION, "the height of the hot water column within the water tank",
 			PT_complex,"demand[kVA]",PADDR(load.total), PT_DESCRIPTION, "the water heater power consumption",
 			PT_double,"actual_load[kW]",PADDR(actual_load),PT_DESCRIPTION, "the actual load based on the current voltage across the coils",
-			PT_double,"previous_load[kW]",PADDR(prev_load),PT_DESCRIPTION, "the actual load based on current voltage stored for use in controllers",
+			PT_double,"previous_load[kW]",PADDR(prev_load),PT_DESCRIPTION, "the previous load based on voltage across the coils at the last sync operation",
 			PT_complex,"actual_power[kVA]",PADDR(waterheater_actual_power), PT_DESCRIPTION, "the actual power based on the current voltage across the coils",
 			PT_double,"is_waterheater_on",PADDR(is_waterheater_on),PT_DESCRIPTION, "simple logic output to determine state of waterheater (1-on, 0-off)",
 			PT_double,"gas_fan_power[kW]",PADDR(gas_fan_power),PT_DESCRIPTION, "load of a running gas waterheater",
@@ -179,6 +178,7 @@ int waterheater::create()
 	is_waterheater_on = 0;
 //	power_kw = complex(0,0);
 	Tw = 0.0;
+	prev_load = 0.0;
 
 	// location...mostly in garage, a few inside...
 	location = gl_random_bernoulli(RNGSTATE,0.80) ? GARAGE : INSIDE;
@@ -224,7 +224,7 @@ int waterheater::init(OBJECT *parent)
 {
 	OBJECT *hdr = OBJECTHDR(this);
 
-	nominal_voltage = 240.0; //@TODO:  Determine if this should be published or how we want to obtain this from the equipment/network
+	nominal_voltage = (2.0 * default_line_voltage); //@TODO:  Determine if this should be published or how we want to obtain this from the equipment/network
 	actual_voltage = nominal_voltage;
 	
 	if(parent != NULL){
@@ -901,11 +901,14 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	if (actual_load != 0.0)
 	{
-		prev_load = actual_load;
 		power_state = PS_ON;
 	}
-	else
+	else{
 		power_state = PS_OFF;
+	}
+
+	// update the previous load property before returning from sync
+	prev_load = actual_load;
 
 //	gl_enduse_sync(&(residential_enduse::load),t1);
 	if(current_model != FORTRAN){
@@ -1340,7 +1343,16 @@ double waterheater::actual_kW(void)
 		if(heat_mode == GASHEAT){
 			return heating_element_capacity; /* gas heating is voltage independent. */
 		}
-		actual_voltage = pCircuit ? pCircuit->pV->Mag() : nominal_voltage;
+
+		if (pCircuit == NULL)
+		{
+			actual_voltage = nominal_voltage;
+		}
+		else
+		{
+			actual_voltage = (pCircuit->pV->get_complex()).Mag();
+		}
+
         if (actual_voltage > 2.0*nominal_voltage)
         {
             if (trip_counter++ > 10)

@@ -122,11 +122,10 @@ int power_metrics::create(void)
 	MAIFI_num_int = 0.0;
 
 	//Mapping variables
-	fault_check_object_lnk = NULL;
 	rel_metrics = NULL;
 
-	//Extra variable (recloser count)
-	Extra_PF_Data = 0.0;
+	//Checking variable
+	is_fault_check_tested = false;
 
 	return 1;
 }
@@ -226,8 +225,8 @@ void power_metrics::calc_MAIFI(void)
 {
 	if (num_cust_total != 0)
 	{
-		MAIFI_num += Extra_PF_Data*num_cust_momentary_interrupted;
-		MAIFI_num_int += Extra_PF_Data*num_cust_momentary_interrupted;
+		MAIFI_num += reliability_metrics_recloser_counts*num_cust_momentary_interrupted;
+		MAIFI_num_int += reliability_metrics_recloser_counts*num_cust_momentary_interrupted;
 
 		//See if it was a "momentary" outage - if so, add extra data
 		if (outage_length < 300)	//Less than 5 minutes - "normal" failures are considered momentary
@@ -294,8 +293,16 @@ void power_metrics::reset_metrics_variables(bool annual_metrics)
 //Function to check for fault_check object (needed) and to make sure it is in a proper mode
 void power_metrics::check_fault_check(void)
 {
-	if (fault_check_object_lnk == NULL)
+	//Check the fault check object to see if it was set up properly (and exists)
+	gld_property *temporary_property;
+	enumeration temp_enum_value;
+	bool temp_bool_value;
+	gld_object *temp_object_value;
+	gld_wlock *test_rlock;
+
+	if (is_fault_check_tested == false)
 	{
+		//See if a "master powerflow" object has been mapped
 		if (fault_check_object == NULL)
 		{
 			GL_THROW("power_metrics failed to map fault_check object!");
@@ -309,17 +316,27 @@ void power_metrics::check_fault_check(void)
 		}
 		else	//One is mapped, let's check it
 		{
-			fault_check_object_lnk = OBJECTDATA(fault_check_object,fault_check);
+			//**Grab the "checking state" property and make sure it is right **//
 
-			//Make sure it mapped
-			if (fault_check_object_lnk == NULL)
+			//Map that field
+			temporary_property = new gld_property(fault_check_object,"check_mode");
+
+			//Make sure it worked
+			if ((temporary_property->is_valid() != true) || (temporary_property->is_enumeration() != true))
 			{
-				GL_THROW("power_metrics failed to map fault_check object!");
-				//Defined above
+				GL_THROW("power_metrics failed to map a property of the fault_check object!");
+				/*  TROUBLESHOOT
+				While attempting to map to one of the fault_check object's properties to test it, an error
+				was encountered.  Be sure that property and a fault_check object exist and try again.  If the
+				error persists, please submit your code via the issues tracker.
+				*/
 			}
 
-			//Make sure it is in ONCHANGE or ALL mode
-			if ((fault_check_object_lnk->fcheck_state!=fault_check::ALLT) && (fault_check_object_lnk->fcheck_state!=fault_check::ONCHANGE))
+			//See what the value is
+			temp_enum_value = temporary_property->get_enumeration();
+
+			//Now check it to make sure it is in ONCHANGE or ALL mode
+			if ((temp_enum_value != 1) && (temp_enum_value != 2))
 			{
 				GL_THROW("fault_check must be in the proper mode for reliabilty to work!");
 				/*  TROUBLESHOOT
@@ -328,11 +345,43 @@ void power_metrics::check_fault_check(void)
 				*/
 			}
 
-			//Once we're sure it is in the proper mode, set the reliability flag so it doesn't stop us dead
-			fault_check_object_lnk->reliability_mode = true;
+			//Clear the property
+			delete temporary_property;
 
-			//While we're in here, see if we can do secondary events - otherwise warn us
-			if (fault_check_object_lnk->rel_eventgen == NULL)
+			//** Flag the reliability mode to indicate this is being operated **//
+			
+			//Map the property
+			temporary_property = new gld_property(fault_check_object,"reliability_mode");
+
+			//Make sure it worked
+			if ((temporary_property->is_valid() != true) || (temporary_property->is_bool() != true))
+			{
+				GL_THROW("power_metrics failed to map a property of the fault_check object!");
+				//Defined above
+			}
+
+			//Set the value to true
+			temp_bool_value = true;
+			temporary_property->setp<bool>(temp_bool_value,*test_rlock);
+
+			//And clear it
+			delete temporary_property;
+
+			//** See if it has an eventgen object, to know if unscheduled faults may work too **//
+			temporary_property = new gld_property(fault_check_object,"eventgen_object");
+
+			//Make sure it worked
+			if ((temporary_property->is_valid() != true) || (temporary_property->is_objectref() != true))
+			{
+				GL_THROW("power_metrics failed to map a property of the fault_check object!");
+				//Defined above
+			}
+
+			//Grab the value
+			temp_object_value = temporary_property->get_objectref();
+
+			//See if it is populated
+			if (temp_object_value == NULL)
 			{
 				gl_warning("No eventgen object mapped up to %s, unscheduled faults are not allowed",fault_check_object->name);
 				/*  TROUBLESHOOT
@@ -341,8 +390,14 @@ void power_metrics::check_fault_check(void)
 				operations.
 				*/
 			}
+
+			//Remove the termporary
+			delete temporary_property;
+
+			//Toggle the flag
+			is_fault_check_tested = true;
 		}//Mapping of fault_check object
-	}//end fault_check_object_lnk is NULL
+	}//end fault_check hasn't been checked
 	//Defaulted else - must already be populated
 }
 
@@ -388,11 +443,11 @@ EXPORT int reset_pfannual_metrics(OBJECT *callobj, OBJECT *calcobj)
 	return 1;	//Always successful - theoretically
 }
 
-//Exported function to initialize extra reliability variables - in this case, only a recloser reclose counter
-EXPORT void *init_pf_reliability_extra(OBJECT *myhdr, OBJECT *callhdr)
+//Exported function to initialize extra reliability variables
+//Used to do the recloser reclose counter, but turned that into a global for
+//API ease - reliability_metrics_recloser_counts
+EXPORT STATUS init_pf_reliability_extra(OBJECT *myhdr, OBJECT *callhdr)
 {
-	void *Data_Index;
-	
 	//Link to us
 	power_metrics *pmetrics_obj;
 	pmetrics_obj = OBJECTDATA(myhdr,power_metrics);
@@ -400,14 +455,8 @@ EXPORT void *init_pf_reliability_extra(OBJECT *myhdr, OBJECT *callhdr)
 	//Map calling object
 	pmetrics_obj->rel_metrics = callhdr;
 
-	//Map the proper data index
-	Data_Index = (void *)&(pmetrics_obj->Extra_PF_Data);
-
-	//Check success
-	if (Data_Index != NULL)
-		return Data_Index;	//Success
-	else
-		return 0;	//Failure
+	//Always succeed, because how would we fail?
+	return SUCCESS;
 }
 
 //Exposed function for extra reliability log file information

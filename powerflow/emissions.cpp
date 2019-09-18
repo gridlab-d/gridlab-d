@@ -171,6 +171,8 @@ int emissions::create(void)
 	
 	phases = PHASE_A;	//Populate a phase to make powerflow happy
 
+	parent_meter_total_power = NULL;
+
 	//Initialize tracking variables
 	cycle_interval_TS = 0;
 	time_cycle_interval = 0;
@@ -308,8 +310,18 @@ int emissions::init(OBJECT *parent)
 		//Make sure our parent is a meter
 		if (gl_object_isa(parent,"meter","powerflow"))
 		{
-			//Try to map it
-			ParMeterObj = OBJECTDATA(parent,meter);
+			//Map the parent property
+			parent_meter_total_power = new gld_property(parent,"measured_power");
+
+			//Make sure it worked
+			if ((parent_meter_total_power->is_valid() != true) || (parent_meter_total_power->is_complex() != true))
+			{
+				GL_THROW("emissions:%d - %s - Unable to map parent object's power value",obj->id,(obj->name ? obj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to map the parent meter's measured_power field, the emissions object encountered an error.  Please
+				try again.  If the error persists, please submit your code and a bug report via the issues tracker.
+				*/
+			}
 		}
 		else
 		{
@@ -474,7 +486,7 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 	if (curr_cycle_time == t0)	//Accumulation cycle
 	{
 		//Grab the current power value - put in kVA
-		temp_power = (ParMeterObj->indiv_measured_power[0] + ParMeterObj->indiv_measured_power[1] + ParMeterObj->indiv_measured_power[2]);
+		temp_power = parent_meter_total_power->get_complex();
 		cycle_power = (temp_power.Re()) / 1000.0;
 	}
 	

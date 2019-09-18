@@ -1248,13 +1248,13 @@ object house {
 
 object inverter {
 	name DHHL_3_inv;
-	phases CS;
+	phases AS;
 	parent tpm2_R1-12-47-1_tm_21;
 	rated_power 2500000;
 }
 object solar {
 	name DHHL_3_PV;
-	phases CS;
+	phases AS;
 	parent DHHL_3_inv;
 	area 141.76 ft^2;
 	tilt_angle 90.0;

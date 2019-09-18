@@ -12,7 +12,6 @@
 #include <math.h>
 
 #include "currdump.h"
-#include "node.h"
 
 //////////////////////////////////////////////////////////////////////////
 // currdump CLASS FUNCTIONS
@@ -36,8 +35,8 @@ currdump::currdump(MODULE *mod)
 			PT_char256,"filename",PADDR(filename),PT_DESCRIPTION,"the file to dump the current data into",
 			PT_int32,"runcount",PADDR(runcount),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the number of times the file has been written to",
 			PT_enumeration, "mode", PADDR(mode),
-				PT_KEYWORD, "rect", (enumeration)CDM_RECT,
-				PT_KEYWORD, "polar", (enumeration)CDM_POLAR,
+				PT_KEYWORD, "RECT", (enumeration)CDM_RECT,
+				PT_KEYWORD, "POLAR", (enumeration)CDM_POLAR,
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		
 	}
@@ -69,9 +68,9 @@ void currdump::dump(TIMESTAMP t){
 	FINDLIST *links = NULL;
 	OBJECT *obj = NULL;
 	FILE *outfile = NULL;
-	link_object *plink;
-//	CLASS *nodeclass = NULL;
-//	PROPERTY *vA, *vB, *vC;
+
+	gld_property *link_current_value_link[3];
+	complex link_current_values[3];
 
 	if(group[0] == 0){
 		links = gl_find_objects(FL_NEW,FT_MODULE,SAME,"powerflow",FT_END);
@@ -93,15 +92,9 @@ void currdump::dump(TIMESTAMP t){
 	//nodeclass = node::oclass;
 	//vA=gl_find_property(nodeclass, "
 
-	int link_count = 0;
-	while(obj = gl_find_next(links, obj)){
-		if(gl_object_isa(obj, "link", "powerflow")){
-			++link_count;
-		}
-	}
 	/* print column names */
 	gl_printtime(t, timestr, 64);
-	fprintf(outfile,"# %s run at %s on %i links\n", filename.get_string(), timestr, link_count);
+	fprintf(outfile,"# %s run at %s on %i links\n", filename.get_string(), timestr, links->hit_count);
 	if(mode == CDM_RECT){
 		fprintf(outfile,"link_name,currA_real,currA_imag,currB_real,currB_imag,currC_real,currC_imag\n");
 	}
@@ -111,18 +104,64 @@ void currdump::dump(TIMESTAMP t){
 	obj = 0;
 	while (obj=gl_find_next(links,obj)){
 		if(gl_object_isa(obj, "link", "powerflow")){
-			plink = OBJECTDATA(obj,link_object);
+
+			//Map the properties of interest - first current
+			link_current_value_link[0] = new gld_property(obj,"current_in_A");
+
+			//Check it
+			if ((link_current_value_link[0]->is_valid() != true) || (link_current_value_link[0]->is_complex() != true))
+			{
+				GL_THROW("currdump - Unable to map current property of link:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While the currdump object attempted to map the current_in_A, current_in_B, or current_in_C, an error
+				occurred.  Please try again.  If the error persists, please submit your code via the ticketing and issues system.
+				*/
+			}
+
+			//Map the properties of interest - second current
+			link_current_value_link[1] = new gld_property(obj,"current_in_B");
+
+			//Check it
+			if ((link_current_value_link[1]->is_valid() != true) || (link_current_value_link[1]->is_complex() != true))
+			{
+				GL_THROW("currdump - Unable to map current property of link:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
+				//Defined above
+			}
+
+			//Map the properties of interest - third current
+			link_current_value_link[2] = new gld_property(obj,"current_in_C");
+
+			//Check it
+			if ((link_current_value_link[2]->is_valid() != true) || (link_current_value_link[2]->is_complex() != true))
+			{
+				GL_THROW("currdump - Unable to map current property of link:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
+				//Defined above
+			}
+
+			//Pull the values
+			link_current_values[0] = link_current_value_link[0]->get_complex();
+			link_current_values[1] = link_current_value_link[1]->get_complex();
+			link_current_values[2] = link_current_value_link[2]->get_complex();
+
 			if(obj->name == NULL){
 				sprintf(namestr, "%s:%i", obj->oclass->name, obj->id);
 			}
 			if(mode == CDM_RECT){
-				fprintf(outfile,"%s,%f,%f,%f,%f,%f,%f\n",(obj->name ? obj->name : namestr),plink->read_I_in[0].Re(),plink->read_I_in[0].Im(),plink->read_I_in[1].Re(),plink->read_I_in[1].Im(),plink->read_I_in[2].Re(),plink->read_I_in[2].Im());
+				fprintf(outfile,"%s,%f,%f,%f,%f,%f,%f\n",(obj->name ? obj->name : namestr),link_current_values[0].Re(),link_current_values[0].Im(),link_current_values[1].Re(),link_current_values[1].Im(),link_current_values[2].Re(),link_current_values[2].Im());
 			} else if (mode == CDM_POLAR){
-				fprintf(outfile,"%s,%f,%f,%f,%f,%f,%f\n",(obj->name ? obj->name : namestr),plink->read_I_in[0].Mag(),plink->read_I_in[0].Arg(),plink->read_I_in[1].Mag(),plink->read_I_in[1].Arg(),plink->read_I_in[2].Mag(),plink->read_I_in[2].Arg());
+				fprintf(outfile,"%s,%f,%f,%f,%f,%f,%f\n",(obj->name ? obj->name : namestr),link_current_values[0].Mag(),link_current_values[0].Arg(),link_current_values[1].Mag(),link_current_values[1].Arg(),link_current_values[2].Mag(),link_current_values[2].Arg());
 			}
+
+			//Clear the properties found
+			delete link_current_value_link[0];
+			delete link_current_value_link[1];
+			delete link_current_value_link[2];
 		}
 	}
 	fclose(outfile);
+
+	//Free the list
+	gl_free(links);
 }
 
 TIMESTAMP currdump::commit(TIMESTAMP t){
