@@ -75,6 +75,7 @@ module powerflow {
 			interval 1;
 			limit 70272000;
 			file Dryer_output.csv;
+			//output Dryer_output
 		  };
      };
     };
