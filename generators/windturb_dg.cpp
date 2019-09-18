@@ -717,14 +717,13 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	//Pull the updates, if needed
 	if (climate_is_valid == true)
 	{
-		value_Press = pPress->get_double();
-		value_Temp = pTemp->get_double();
+		value_Press = pPress->get_double() * 100;		// in Pa; climate is in mbar
+		value_Temp = (pTemp->get_double() - 32) * 5/9;	// in degC; climate is in degF
 		value_WS = pWS->get_double();
 	}
 
-	// convert press to Pascals and temp to Kelvins
-	// TODO: convert this to using gl_convert
-	air_dens = (value_Press*100) * Molar / (Ridealgas * ( (value_Temp - 32)*5/9 + 273.15));
+	// press in Pascals and temp in Kelvins
+	air_dens = (value_Press) * Molar / (Ridealgas * ( value_Temp + 273.15) );
 
 	//wind speed at height of hub - uses European Wind Atlas method
 	if(ref_height == roughness_l){
