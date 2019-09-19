@@ -578,14 +578,18 @@ SIMULATIONMODE helics_msg::deltaClockUpdate(double t1, unsigned long timestep, S
 		helics::Time t = 0;
 		double dt = 0;
 		dt = (t1 - (double)initial_sim_time)*1000000000.0;
-		t = (helics::Time)(((dt + ((double)(timestep) / 2.0)) - fmod((dt + ((double)(timestep) / 2.0)), (double)timestep))/1000000000.0);
+		if(sysmode == SM_EVENT) {
+			t = (helics::Time)(((dt + (1000000000.0 / 2.0)) - fmod((dt + (1000000000.0 / 2.0)), 1000000000.0))/1000000000.0);
+		} else {
+			t = (helics::Time)(((dt + ((double)(timestep) / 2.0)) - fmod((dt + ((double)(timestep) / 2.0)), (double)timestep))/1000000000.0);
+		}
 		helics_federate->setProperty(helics_properties::helics_property_time_period, (helics::Time)(((double)timestep)/DT_SECOND));
 		helics_time = helics_federate->requestTime(t);
 		//TODO call helics time update function
 		if(sysmode == SM_EVENT)
 			exitDeltamode = true;
 		if(helics_time != t){
-			gl_error("helics_msg::deltaClockUpdate: Cannot return anything other than the time GridLAB-D requested in deltamode.");
+			gl_error("helics_msg::deltaClockUpdate: Cannot return anything other than the time GridLAB-D requested in deltamode. Time requested %f. Time returned %f.", (double)t, (double)helics_time);
 			return SM_ERROR;
 		} else {
 			last_delta_helics_time = (double)(helics_time) + (double)(initial_sim_time);
@@ -612,7 +616,6 @@ TIMESTAMP helics_msg::clk_update(TIMESTAMP t1)
 		helics_federate->setProperty(helics_properties::helics_property_time_period, 1.0);// 140 is the option for the period property.
 #endif
 		exitDeltamode = false;
-		return t1;
 	}
 	if(t1 > last_approved_helics_time){
 		int result = 0;
