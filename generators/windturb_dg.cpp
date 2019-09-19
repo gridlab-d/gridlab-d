@@ -717,9 +717,9 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	//Pull the updates, if needed
 	if (climate_is_valid == true)
 	{
-		value_Press = pPress->get_double() * 100;		// in Pa; climate is in mbar
-		value_Temp = (pTemp->get_double() - 32) * 5/9;	// in degC; climate is in degF
-		value_WS = pWS->get_double();
+		value_Press = pPress->get_double() * 100;       // in Pa; climate is in mbar
+		value_Temp = (pTemp->get_double() - 32) * 5/9;  // in degC; climate is in degF
+		value_WS = pWS->get_double() * 0.44704;         // in m/s; climate wind speed is in mph
 	}
 
 	// press in Pascals and temp in Kelvins
@@ -735,6 +735,8 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	and then pseudo-randomize the wind speed values beween 1st and 2nd
 	WSadj = gl_pseudorandomvalue(RT_RAYLEIGH,&c,(WS1/sqrt(PI/2)));*/
 
+	// It looks cleaner to switch to a density adjustment on an interpolated power curve
+	//    Pwind error is on the order of Cp error cubed
 	Pwind = 0.5 * (air_dens) * PI * pow(blade_diam/2,2) * pow(WSadj,3);
 
 	if (CP_Data == GENERAL_LARGE || CP_Data == GENERAL_MID || CP_Data == GENERAL_SMALL)	
