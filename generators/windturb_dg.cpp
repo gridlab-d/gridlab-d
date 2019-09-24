@@ -785,13 +785,13 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 				{	
 					Cp = 0;	
 				}
-				else  //TO DO:  possibly replace polynomial with spline library function interpolation
+				else
 				{	  
-					//Uses a centered, 10th-degree polynomial Matlab interpolation of original Manuf. data
-					double z = (WSadj - 10.5)/5.9161;
-
 					//Original data [0 0 0 0 0.135 0.356 0.442 0.461 .458 .431 .397 .349 .293 .232 .186 .151 .125 .104 .087 .074 .064] from 4-20 m/s
-					Cp = -0.08609*pow(z,10) + 0.078599*pow(z,9) + 0.50509*pow(z,8) - 0.45466*pow(z,7) - 0.94154*pow(z,6) + 0.77922*pow(z,5) + 0.59082*pow(z,4) - 0.23196*pow(z,3) - 0.25009*pow(z,2) - 0.24282*z + 0.37502;
+					double Cp_tab[21] = {0, 0, 0, 0, 0.135, 0.356, 0.442, 0.461, 0.458, 0.431, 0.397, 0.349, 0.293, 0.232, 0.186, 0.151, 0.125, 0.104, 0.087, 0.074, 0.064};
+					
+					// Linear interpolation on the table
+					Cp = Cp_tab[(int)WSadj] + (WSadj - (int)WSadj) * (Cp_tab[(int)WSadj+1] - Cp_tab[(int)WSadj]);
 				}
 				break;
 			default:
