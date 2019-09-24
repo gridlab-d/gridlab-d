@@ -1395,7 +1395,7 @@ int house_e::init(OBJECT *parent)
 		proper_meter_parent = true;
 		commercial_load_parent = false;
 	}
-	else if (parent!=NULL && (gl_object_isa(parent,"load","powerflow"))) // for three-phase commercial zone-houses
+	else if (parent!=NULL && (gl_object_isa(parent,"load","powerflow") || gl_object_isa(obj->parent,"meter","powerflow"))) // for three-phase commercial zone-houses
 	{
 		// map the meter variables
 		pMeterStatus = new gld_property(parent,"service_status");
