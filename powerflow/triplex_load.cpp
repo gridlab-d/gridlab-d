@@ -73,9 +73,9 @@ triplex_load::triplex_load(MODULE *mod) : triplex_node(mod)
 			PT_complex,	"measured_voltage_1[V]",PADDR(measured_voltage_1),PT_DESCRIPTION,"measured voltage on phase 1",
 			PT_complex,	"measured_voltage_2[V]",PADDR(measured_voltage_2),PT_DESCRIPTION,"measured voltage on phase 2",
 			PT_complex,	"measured_voltage_12[V]",PADDR(measured_voltage_12),PT_DESCRIPTION,"measured voltage on phase 12",
-			PT_complex, "measured_power_1[VA]",PADDR(measured_power[0]),PT_DESCRIPTION,"current measured power on phase 1",
-			PT_complex, "measured_power_2[VA]",PADDR(measured_power[1]),PT_DESCRIPTION,"current measured power on phase 2",
-			PT_complex, "measured_power_12[VA]",PADDR(measured_power[2]),PT_DESCRIPTION,"current measured power on phase 12",
+			PT_complex, "indiv_measured_power_1[VA]",PADDR(measured_power[0]),PT_DESCRIPTION,"current measured power on phase 1",
+			PT_complex, "indiv_measured_power_2[VA]",PADDR(measured_power[1]),PT_DESCRIPTION,"current measured power on phase 2",
+			PT_complex, "indiv_measured_power_12[VA]",PADDR(measured_power[2]),PT_DESCRIPTION,"current measured power on phase 12",
 			PT_complex, "measured_power[VA]",PADDR(measured_total_power),PT_DESCRIPTION,"current total measured power",
 
 			// This allows the user to set a base power on each phase, and specify the power as a function
