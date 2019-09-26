@@ -681,27 +681,49 @@ int metrics_collector::read_line(OBJECT *obj){
 		price_parent = *gl_get_double(obj->parent, propMeterPrice);
 		bill_parent = *gl_get_double(obj->parent, propMeterBill);
 
-		// assuming these are three-phase loads; this is the only difference with triplex meters 
+		// these can have one, two or three phases 
 		double va = (*gl_get_complex(obj->parent, propMeterVa)).Mag();   
 		double vb = (*gl_get_complex(obj->parent, propMeterVb)).Mag();   
 		double vc = (*gl_get_complex(obj->parent, propMeterVc)).Mag();
-		double vavg = (va + vb + vc) / 3.0;
-		double vmin = va;
-		double vmax = va;
-		if (vb < vmin) vmin = vb;
-		if (vb > vmax) vmax = vb;
-		if (vc < vmin) vmin = vc;
-		if (vc > vmax) vmax = vc;
+		double nph = 0.0;
+		if (va > 0.0) nph += 1.0;
+		if (vb > 0.0) nph += 1.0;
+		if (vc > 0.0) nph += 1.0;
+		if (nph < 1.0) nph = 1.0;
+		double vavg = (va + vb + vc) / nph;
+		double vmin = vavg;
+		double vmax = vavg;
+		if (va > 0.0) {
+			if (va < vmin) vmin = va;
+			if (va > vmax) vmax = va;
+		}
+		if (vb > 0.0) {
+			if (vb < vmin) vmin = vb;
+			if (vb > vmax) vmax = vb;
+		}
+		if (vc > 0.0) {
+			if (vc < vmin) vmin = vc;
+			if (vc > vmax) vmax = vc;
+		}
 		double vab = (*gl_get_complex(obj->parent, propMeterVab)).Mag();   
 		double vbc = (*gl_get_complex(obj->parent, propMeterVbc)).Mag();   
 		double vca = (*gl_get_complex(obj->parent, propMeterVca)).Mag();
-		double vll = (vab + vbc + vca) / 3.0;
+		double vll = (vab + vbc + vca) / nph;
 		// determine unbalance per C84.1
-		double vdev = fabs(vab - vll);
-		double vdev2 = fabs(vbc - vll);
-		double vdev3 = fabs(vca - vll);
-		if (vdev2 > vdev) vdev = vdev2;
-		if (vdev3 > vdev) vdev = vdev3;
+		double vdev = 0.0;
+		double vdevph;
+		if (vab > 0.0) {
+			vdevph = fabs(vab - vll);
+			if (vdevph > vdev) vdev = vdevph;
+		}
+		if (vbc > 0.0) {
+			vdevph = fabs(vbc - vll);
+			if (vdevph > vdev) vdev = vdevph;
+		}
+		if (vca > 0.0) {
+			vdevph = fabs(vca - vll);
+			if (vdevph > vdev) vdev = vdevph;
+		}
 
 		voltage_vll_array[curr_index] = vll;  // Vll
 		voltage_vln_array[curr_index] = vavg;  // Vln
