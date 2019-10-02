@@ -204,6 +204,7 @@ private:
 	int64 first_iteration_current_injection;	//Initialization variable - mostly so SWING_PQ buses initalize properly for deltamode
 
 	double Overload_Limit_Value;	//The computed maximum output power, based on the Rated_VA and the Overload_Limit_Value
+	SIMULATIONMODE desired_simulation_mode;	//deltamode desired simulation mode after corrector pass - prevents starting iterations again
 
 protected:
 	/* TODO: put unpublished but inherited variables */

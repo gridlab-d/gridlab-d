@@ -614,6 +614,9 @@ int diesel_dg::create(void)
 	//Overall, force the generator into "PQ mode" first
 	Gen_type = NON_DYN_CONSTANT_PQ;
 
+	//Set up the deltamode "next state" tracking variable
+	desired_simulation_mode = SM_EVENT;
+
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -2098,7 +2101,6 @@ void diesel_dg::convert_abc_to_pn0(complex *Xabc, complex *Xpn0)
 //Module-level call
 SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	unsigned char pass_mod;
 	unsigned int loop_index;
 	double temp_double, temp_mag_val, temp_mag_diff;
 	double temp_double_freq_val;
@@ -2262,11 +2264,8 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		}//End GGOV1 first pass handling
 	}//End first pass of new timestep
 
-	//See what we're on, for tracking
-	pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
-
 	//Check pass
-	if (pass_mod==0)	//Predictor pass
+	if (iteration_count_val==0)	//Predictor pass
 	{
 		//Compute the "present" electric power value before anything gets updated for the new timestep
 		temp_current_val[0] = (value_IGenerated[0] - generator_admittance[0][0]*value_Circuit_V[0] - generator_admittance[0][1]*value_Circuit_V[1] - generator_admittance[0][2]*value_Circuit_V[2]);
@@ -2769,9 +2768,12 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		//Resync power variables
 		push_powerflow_values(false);
 
+		//Set the mode tracking variable - silly here, but just do it anyways
+		desired_simulation_mode = SM_DELTA_ITER;
+
 		return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
 	}
-	else	//Corrector pass
+	else if (iteration_count_val==1)	//Corrector pass
 	{
 		//Call dynamics
 		apply_dynamics(&next_state,&corrector_vals,deltat);
@@ -3255,6 +3257,9 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 						//See if the voltage check needs to happen
 						if (apply_voltage_mag_convergence == false)
 						{
+							//Set the mode tracking variable for this exit
+							desired_simulation_mode = SM_EVENT;
+
 							//Ready to leave Delta mode
 							return SM_EVENT;
 						}
@@ -3262,6 +3267,9 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 					}
 					else	//Not converged - stay in deltamode
 					{
+						//Set the mode tracking variable for this exit
+						desired_simulation_mode = SM_DELTA;
+
 						return SM_DELTA;
 					}
 				}//End is an isochronous generator
@@ -3269,6 +3277,9 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 				{
 					if (apply_voltage_mag_convergence == false)
 					{
+						//Set the mode tracking variable for this exit
+						desired_simulation_mode = SM_EVENT;
+
 						//Ready to leave Delta mode
 						return SM_EVENT;
 					}
@@ -3277,6 +3288,9 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 			}
 			else	//Not "converged" -- I would like to do another update
 			{
+				//Set the mode tracking variable for this exit
+				desired_simulation_mode = SM_DELTA;
+
 				return SM_DELTA;	//Next delta update
 									//Could theoretically request a reiteration, but we're not allowing that right now
 			}
@@ -3307,19 +3321,32 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 			//See if we need to reiterate or not
 			if (temp_double<=voltage_convergence_criterion)
 			{
-			//Ready to leave Delta mode
-			return SM_EVENT;
-		}
-		else	//Not "converged" -- I would like to do another update
-		{
-			return SM_DELTA;	//Next delta update
-								//Could theoretically request a reiteration, but we're not allowing that right now
+				//Set the mode tracking variable for this exit
+				desired_simulation_mode = SM_EVENT;
+
+				//Ready to leave Delta mode
+				return SM_EVENT;
+			}
+			else	//Not "converged" -- I would like to do another update
+			{
+				//Set the mode tracking variable for this exit
+				desired_simulation_mode = SM_DELTA;
+
+				return SM_DELTA;	//Next delta update
+									//Could theoretically request a reiteration, but we're not allowing that right now
 			}
 		}
+
+		//Set the mode tracking variable for this exit
+		desired_simulation_mode = SM_EVENT;
 
 		//Default else - no checks asked for, just bounce back to event
 		return SM_EVENT;
 	}//End corrector pass
+	else	//Any subsequent iterations, just return our last desired value
+	{
+		return desired_simulation_mode;
+	}
 }
 
 //Module-level post update call
@@ -4383,6 +4410,9 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 		}
 	}//End SEXS initialization
 	//Default else - no AVR/Exciter init
+
+	//Re-initialize tracking variable to event-driven
+	desired_simulation_mode = SM_EVENT;
 
 	return SUCCESS;	//Always succeeds for now, but could have error checks later
 }
