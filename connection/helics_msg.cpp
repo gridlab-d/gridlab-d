@@ -637,8 +637,10 @@ TIMESTAMP helics_msg::clk_update(TIMESTAMP t1)
 //		helics_time = ((TIMESTAMP)helics::time_request(t))/1000000000 + initial_sim_time;
 		//TODO call appropriate helics time update function
 		gl_verbose("helics_msg: Calling requestime");
+		gl_verbose("helics_msg: Requesting %f", (double)t);
 		helics::Time rt;
 		rt = helics_federate->requestTime(t);
+		gl_verbose("helics_msg: Granted %f", (double)rt);
 		helics_time = (TIMESTAMP)rt + initial_sim_time;
 #endif
 		if(helics_time <= gl_globalclock){
