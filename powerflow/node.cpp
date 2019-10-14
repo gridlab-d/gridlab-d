@@ -1521,16 +1521,11 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 
 			if (((SubNode == CHILD) || (SubNode == DIFF_CHILD)) && (NR_connected_links[0] > 0))
 			{
-				node *parNode = OBJECTDATA(SubNodeParent,node);
-
-				WRITELOCK_OBJECT(SubNodeParent);	//Lock
-
-				parNode->NR_connected_links[0] += NR_connected_links[0];
-
-				//Zero our accumulator, just in case (used later)
-				NR_connected_links[0] = 0;
-
-				WRITEUNLOCK_OBJECT(SubNodeParent);	//Unlock
+				GL_THROW("NR: node:%d - %s - extra links acquired outside of init routine",obj->id,(obj->name?obj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to initialize a childed node for the NR solver, extra links that were not detected in the node::init
+				routine were discovered.  This should not have happen.  Please submit your GLM and a bug report to the issues tracker.
+				*/
 			}
 
 			//See if we need to alloc our child space

@@ -123,6 +123,10 @@ int switch_object::init(OBJECT *parent)
 
 	int result = link_object::init(parent);
 
+	//Check for deferred
+	if (result == 2)
+		return 2;	//Return the deferment - no sense doing everything else!
+
 	//secondary init stuff - should have been done, but we'll be safe
 	//Basically zero everything
 	if (solver_method==SM_FBS)

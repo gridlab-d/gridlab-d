@@ -287,6 +287,22 @@ int link_object::init(OBJECT *parent)
 {
 	OBJECT *obj = GETOBJECT(this);
 
+	//Make sure nodes have initialized in NR - otherwise some lines get missed (if connected to children)
+	if (solver_method == SM_NR)
+	{
+		//See if the from/to nodes have parents
+		if ((from->parent != NULL) || (to->parent != NULL))
+		{
+			if	(((from->flags & OF_INIT) != OF_INIT) || ((to->flags & OF_INIT) != OF_INIT))
+			{
+				gl_verbose("link::init(): link:%d - %s - deferring initialization on from/to node", obj->id,(obj->name?obj->name : "Unnamed"));
+				return 2; // defer
+			}
+			//Default else - both have initialized already
+		}
+		//Default else - neither parented, so they can't be children - will get handled like normal
+	}
+
 	powerflow_object::init(parent);
 
 	set phase_f_test, phase_t_test, phases_test;
