@@ -4483,11 +4483,18 @@ STATUS node::calc_freq_dynamics(double deltat)
 			{
 				if (is_triplex_node == true)
 				{
-					curr_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[indexval];
+					if (indexval < 2)
+					{
+						curr_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[indexval];
+					}
+					else	//Must be 2
+					{
+						curr_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[0] + NR_busdata[*NR_subnode_reference].V[1];
+					}
 				}
 				else
 				{
-					curr_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[0] + NR_busdata[*NR_subnode_reference].V[1];
+					curr_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[indexval];
 				}
 			}
 
@@ -4679,11 +4686,18 @@ void node::init_freq_dynamics(void)
 			{
 				if (is_triplex_node == true)
 				{
-					prev_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[indexval];
+					if (indexval < 2)
+					{
+						prev_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[indexval];
+					}
+					else	//Must be 2
+					{
+						prev_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[0] + NR_busdata[*NR_subnode_reference].V[1];
+					}
 				}
 				else
 				{
-					prev_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[0] + NR_busdata[*NR_subnode_reference].V[1];
+					prev_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[indexval];
 				}
 			}
 
