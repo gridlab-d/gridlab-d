@@ -75,6 +75,10 @@ int underground_line::init(OBJECT *parent)
 
 	int result = line::init(parent);
 
+	//Check for deferred
+	if (result == 2)
+		return 2;	//Return the deferment - no sense doing everything else!
+
 	if (!configuration)
 		throw "no underground line configuration specified.";
 		/*  TROUBLESHOOT
