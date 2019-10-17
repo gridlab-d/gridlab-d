@@ -117,6 +117,13 @@ triplex_node::triplex_node(MODULE *mod) : node(mod)
 			PT_double, "GFA_volt_disconnect_time[s]", PADDR(GFA_volt_disconnect_time), PT_DESCRIPTION, "Voltage violation disconnect time for Grid Friendly Appliance(TM)-type functionality",
 			PT_bool, "GFA_status", PADDR(GFA_status), PT_DESCRIPTION, "Low frequency trip point for Grid Friendly Appliance(TM)-type functionality",
 
+			PT_enumeration, "GFA_trip_method", PADDR(GFA_trip_method), PT_DESCRIPTION, "Reason for GFA trip - what caused the GFA to activate",
+				PT_KEYWORD, "NONE", (enumeration)GFA_NONE, PT_DESCRIPTION, "No GFA trip",
+				PT_KEYWORD, "UNDER_FREQUENCY", (enumeration)GFA_UF, PT_DESCRIPTION, "GFA trip for under-frequency",
+				PT_KEYWORD, "OVER_FREQUENCY", (enumeration)GFA_OF, PT_DESCRIPTION, "GFA trip for over-frequency",
+				PT_KEYWORD, "UNDER_VOLTAGE", (enumeration)GFA_UV, PT_DESCRIPTION, "GFA trip for under-voltage",
+				PT_KEYWORD, "OVER_VOLTAGE", (enumeration)GFA_OV, PT_DESCRIPTION, "GFA trip for over-voltage",
+
 			PT_enumeration, "service_status", PADDR(service_status),PT_DESCRIPTION,"In and out of service flag",
 				PT_KEYWORD, "IN_SERVICE", (enumeration)ND_IN_SERVICE,
 				PT_KEYWORD, "OUT_OF_SERVICE", (enumeration)ND_OUT_OF_SERVICE,
