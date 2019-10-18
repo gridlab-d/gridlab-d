@@ -1,0 +1,417 @@
+//Test GFA functionality for loads/triplex loads under direct values, frequency measurement, and parent/child
+//Test UF/OF, UV/OV functions
+//Deltamode-test
+
+clock {
+	timezone EST+5EDT;
+	starttime '2000-01-01 0:00:00';
+	stoptime '2000-01-01 0:00:25';
+}
+
+//#set profiler=1
+//#set pauseatexit=1
+// #set double_format=%+.12lg
+// #set complex_format=%+.12lg%+.12lg%c
+#set double_format=%+.6lg
+#set complex_format=%+.6lg%+.6lg%c
+#set dateformat=ISO
+
+//Deltamode declarations - global values
+#set deltamode_timestep=100000000		//100 ms
+#set deltamode_maximumtime=60000000000	//1 minute
+#set deltamode_iteration_limit=10		//Iteration limit
+
+module assert;
+module tape;
+module powerflow {
+	enable_subsecond_models true;
+	deltamode_timestep 10 ms;
+	solver_method NR;
+	all_powerflow_delta true;
+	enable_frequency_dependence true;
+}
+
+// Phase Conductor for 601: 556,500 26/7 ACSR
+object overhead_line_conductor {
+	name olc6010;
+	geometric_mean_radius 0.031300;
+	diameter 0.927 in;
+	resistance 0.185900;
+}
+
+// Phase Conductor for 602: 4/0 6/1 ACSR
+object overhead_line_conductor {
+	name olc6020;
+	geometric_mean_radius 0.00814;
+	diameter 0.56 in;
+	resistance 0.592000;
+}
+
+// Overhead line configurations
+object line_spacing {
+	name ls500601;
+	distance_AB 2.5;
+	distance_AC 4.5;
+	distance_BC 7.0;
+	distance_BN 5.656854;
+	distance_AN 4.272002;
+	distance_CN 5.0;
+	distance_AE 28.0;
+	distance_BE 28.0;
+	distance_CE 28.0;
+	distance_NE 24.0;
+}
+
+object line_configuration {
+	name lc601;
+	conductor_A olc6010;
+	conductor_B olc6010;
+	conductor_C olc6010;
+	conductor_N olc6020;
+	spacing ls500601;
+}
+
+object transformer_configuration {
+    name "spct_B_type";
+    connect_type SINGLE_PHASE_CENTER_TAPPED;
+    install_type POLETOP;
+    primary_voltage 7200.0V;
+    secondary_voltage 120.0V;
+    power_rating 150.0kVA;
+    powerB_rating 150.0kVA;
+    impedance 0.006000+0.013600j;
+    impedance1 0.012000+0.006800j;
+    impedance2 0.012000+0.006800j;
+    shunt_impedance 1728000+691200j;
+}
+
+//Triplex lines
+object triplex_line_conductor {
+	name tplx_1_0_AA;
+	resistance 0.97;
+	geometric_mean_radius 0.0111;
+}
+
+object triplex_line_configuration {
+	name TLCFG;
+	conductor_1 tplx_1_0_AA;
+	conductor_2 tplx_1_0_AA;
+	conductor_N tplx_1_0_AA;
+	insulation_thickness 0.08;
+	diameter 0.368;
+}
+
+//File
+object meter {
+	phases ABCN;
+	name source_node;
+	nominal_voltage 7200.0;
+	bustype SWING;
+	// object recorder {
+		// flags DELTAMODE;
+		// property "measured_power.real,measured_power.imag";
+		// interval 1;
+		// file data_GFA_system_power_overall.csv;
+	// };
+	object complex_assert {
+		flags DELTAMODE;
+		target measured_power;
+		within 0.1;
+		object player {
+			flags DELTAMODE;
+			property "value";
+			file "../data_GFA_system_power_overall.csv";
+		};
+	};
+	object player {
+		flags DELTAMODE;
+		property voltage_A;
+		file "../data_GFA_voltage_frequency_player_A.csv";
+	};
+	object player {
+		flags DELTAMODE;
+		property voltage_B;
+		file "../data_GFA_voltage_frequency_player_B.csv";
+	};
+	object player {
+		flags DELTAMODE;
+		property voltage_C;
+		file "../data_GFA_voltage_frequency_player_C.csv";
+	};
+}
+
+object meter {
+	phases ABCN;
+	name secondary_node;
+	nominal_voltage 7200.0;
+}
+
+object meter {
+	phases ABCN;
+	name tertiary_node;
+	nominal_voltage 7200.0;
+}
+
+object meter {
+	phases ABCN;
+	name tert_par_node;
+	nominal_voltage 7200.0;
+}
+	
+object load {
+	phases ABCN;
+	groupid GFA_loads;
+	name direct_freq_load;
+	nominal_voltage 7200.0;
+	constant_power_A 1000.0+500.0j;
+	constant_power_B 1000.0+500.0j;
+	constant_power_C 1000.0+500.0j;
+	GFA_enable true;
+	GFA_reconnect_time 1.0 s;
+	object player {
+		flags DELTAMODE;
+		property "measured_frequency";
+		file "../data_GFA_frequency_values_player.csv";
+	};
+	object enum_assert {
+		flags DELTAMODE;
+		target "GFA_trip_method";
+		object player {
+			flags DELTAMODE;
+			property "value";
+			file "../data_direct_freq_GFA_trip_method.csv";
+		};
+	};
+}	
+
+object load {
+	phases ABCN;
+	groupid GFA_loads;
+	name measure_freq_load;
+	nominal_voltage 7200.0;
+	constant_power_A 1000.0+500.0j;
+	constant_power_B 1000.0+500.0j;
+	constant_power_C 1000.0+500.0j;
+	GFA_enable true;
+	GFA_reconnect_time 1.0 s;
+	frequency_measure_type SIMPLE;
+}
+
+object load {
+	phases ABCN;
+	groupid GFA_loads;
+	name measure_freq_load_parent;
+	parent tert_par_node;
+	nominal_voltage 7200.0;
+	constant_power_A 1000.0+500.0j;
+	constant_power_B 1000.0+500.0j;
+	constant_power_C 1000.0+500.0j;
+	GFA_enable true;
+	GFA_reconnect_time 1.0 s;
+	frequency_measure_type SIMPLE;
+	object enum_assert {
+		flags DELTAMODE;
+		target "GFA_trip_method";
+		object player {
+			flags DELTAMODE;
+			property "value";
+			file "../data_measure_freq_GFA_trip_method.csv";
+		};
+	};
+}	
+
+object triplex_meter {
+	phases BS;
+	name tpm_B;
+	nominal_voltage 120.0;
+}
+
+object triplex_meter {
+	phases BS;
+	name tpm_B2;
+	nominal_voltage 120.0;
+}
+
+object triplex_load {
+	phases BS;
+	groupid GFA_loads;
+	name tpl_B;
+	nominal_voltage 120.0;
+	constant_power_1 500.0+200.0j;
+	constant_power_2 500.0+200.0j;
+	constant_power_12 1000.0+400.0j;
+	GFA_enable true;
+	GFA_reconnect_time 1.0 s;
+	object player {
+		flags DELTAMODE;
+		property "measured_frequency";
+		file "../data_GFA_frequency_values_player.csv";
+	};
+	object enum_assert {
+		flags DELTAMODE;
+		target "GFA_trip_method";
+		object player {
+			flags DELTAMODE;
+			property "value";
+			file "../data_direct_freq_GFA_trip_method.csv";
+		};
+	};
+	// object recorder {
+		// flags DELTAMODE;
+		// property GFA_trip_method;
+		// file "data_direct_freq_GFA_trip_method.csv";
+		// interval 1;
+	// };
+}
+
+object triplex_load {
+	phases BS;
+	groupid GFA_loads;
+	name tpl_B_freq;
+	nominal_voltage 120.0;
+	constant_power_1 500.0+200.0j;
+	constant_power_2 500.0+200.0j;
+	constant_power_12 1000.0+400.0j;
+	GFA_enable true;
+	GFA_reconnect_time 1.0 s;
+	frequency_measure_type SIMPLE;
+	object enum_assert {
+		flags DELTAMODE;
+		target "GFA_trip_method";
+		object player {
+			flags DELTAMODE;
+			property "value";
+			file "../data_measure_freq_GFA_trip_method.csv";
+		};
+	};
+	// object recorder {
+		// flags DELTAMODE;
+		// property GFA_trip_method;
+		// file "data_measure_freq_GFA_trip_method.csv";
+		// interval 1;
+	// };
+}
+
+object triplex_load {
+	phases BS;
+	groupid GFA_loads;
+	name tpl_B_freq_parent;
+	parent tpm_B2;
+	nominal_voltage 120.0;
+	constant_power_1 500.0+200.0j;
+	constant_power_2 500.0+200.0j;
+	constant_power_12 1000.0+400.0j;
+	GFA_enable true;
+	GFA_reconnect_time 1.0 s;
+	frequency_measure_type SIMPLE;
+	object enum_assert {
+		flags DELTAMODE;
+		target "GFA_trip_method";
+		object player {
+			flags DELTAMODE;
+			property "value";
+			file "../data_measure_freq_GFA_trip_method.csv";
+		};
+	};
+}
+
+//lines
+object overhead_line {
+	phases ABCN;
+	name ohl_1;
+	from source_node;
+	to secondary_node;
+	length 100.0 ft;
+	configuration lc601;
+}
+
+object overhead_line {
+	phases ABCN;
+	name ohl_2;
+	from source_node;
+	to tertiary_node;
+	length 100.0 ft;
+	configuration lc601;
+}
+
+object overhead_line {
+	phases ABCN;
+	name ohl_21;
+	from tertiary_node;
+	to direct_freq_load;
+	length 100.0 ft;
+	configuration lc601;
+}
+
+object overhead_line {
+	phases ABCN;
+	name ohl_22;
+	from tertiary_node;
+	to measure_freq_load;
+	length 100.0 ft;
+	configuration lc601;
+}
+
+object overhead_line {
+	phases ABCN;
+	name ohl_32;
+	from tertiary_node;
+	to tert_par_node;
+	length 100.0 ft;
+	configuration lc601;
+}
+
+object transformer {
+	phases BS;
+	from secondary_node;
+	to tpm_B;
+	configuration spct_B_type;
+}
+
+object triplex_line {
+	phases BS;
+	from tpm_B;
+	to tpl_B;
+	configuration TLCFG;
+	length 50.0 ft;
+}
+
+object triplex_line {
+	phases BS;
+	from tpm_B;
+	to tpl_B_freq;
+	configuration TLCFG;
+	length 50.0 ft;
+}
+
+object triplex_line {
+	phases BS;
+	from tpm_B;
+	to tpm_B2;
+	configuration TLCFG;
+	length 50.0 ft;
+}
+
+object group_recorder {
+	flags DELTAMODE;
+	group "groupid=GFA_loads";
+	property "GFA_status";
+	file "group_GFA_status.csv";
+	interval 1;
+}
+
+// object group_recorder {
+	// flags DELTAMODE;
+	// group "groupid=GFA_loads";
+	// property "GFA_trip_method";
+	// file "group_GFA_trip_method.csv";
+	// interval 1;
+// }
+
+// object group_recorder {
+	// flags DELTAMODE;
+	// group "groupid=GFA_loads";
+	// property "measured_frequency";
+	// file "group_measured_frequency.csv";
+	// interval 1;
+// }

@@ -4770,7 +4770,7 @@ double node::perform_GFA_checks(double timestepvalue)
 		//Check the times - split out
 		if (curr_freq_state.average_freq > GFA_freq_high_trip)
 		{
-			if (freq_violation_time_total >= GFA_freq_disconnect_time)
+			if (freq_violation_time_total > GFA_freq_disconnect_time)
 			{
 				trigger_disconnect = true;
 				return_time_freq = GFA_reconnect_time;
@@ -4786,7 +4786,7 @@ double node::perform_GFA_checks(double timestepvalue)
 		}
 		else if (curr_freq_state.average_freq < GFA_freq_low_trip)
 		{
-			if (freq_violation_time_total >= GFA_freq_disconnect_time)
+			if (freq_violation_time_total > GFA_freq_disconnect_time)
 			{
 				trigger_disconnect = true;
 				return_time_freq = GFA_reconnect_time;
@@ -4880,7 +4880,7 @@ double node::perform_GFA_checks(double timestepvalue)
 				//See which case we are
 				if (temp_pu_voltage < GFA_voltage_low_trip)
 				{
-					if (volt_violation_time_total >= GFA_volt_disconnect_time)
+					if (volt_violation_time_total > GFA_volt_disconnect_time)
 					{
 						trigger_disconnect = true;
 						return_time_volt = GFA_reconnect_time;
@@ -4896,7 +4896,7 @@ double node::perform_GFA_checks(double timestepvalue)
 				}
 				else if (temp_pu_voltage >= GFA_voltage_high_trip)
 				{
-					if (volt_violation_time_total >= GFA_volt_disconnect_time)
+					if (volt_violation_time_total > GFA_volt_disconnect_time)
 					{
 						trigger_disconnect = true;
 						return_time_volt = GFA_reconnect_time;
