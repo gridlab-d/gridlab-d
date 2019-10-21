@@ -23,5 +23,6 @@ private:
 };
 EXPORT int create_fault_ohline(OBJECT *thisobj, OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time);
 EXPORT int fix_fault_ohline(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name);
+EXPORT int clear_fault_ohline(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name);
 EXPORT int recalc_overhead_line(OBJECT *obj);
 #endif // _OVERHEADLINE_H

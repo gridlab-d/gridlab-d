@@ -287,6 +287,22 @@ int link_object::init(OBJECT *parent)
 {
 	OBJECT *obj = GETOBJECT(this);
 
+	//Make sure nodes have initialized in NR - otherwise some lines get missed (if connected to children)
+	if (solver_method == SM_NR)
+	{
+		//See if the from/to nodes have parents
+		if ((from->parent != NULL) || (to->parent != NULL))
+		{
+			if	(((from->flags & OF_INIT) != OF_INIT) || ((to->flags & OF_INIT) != OF_INIT))
+			{
+				gl_verbose("link::init(): link:%d - %s - deferring initialization on from/to node", obj->id,(obj->name?obj->name : "Unnamed"));
+				return 2; // defer
+			}
+			//Default else - both have initialized already
+		}
+		//Default else - neither parented, so they can't be children - will get handled like normal
+	}
+
 	powerflow_object::init(parent);
 
 	set phase_f_test, phase_t_test, phases_test;
@@ -466,14 +482,31 @@ int link_object::init(OBJECT *parent)
 		{
 			phase_f_test &= ~(PHASE_S);	//Pull off the single phase portion of from node
 
-			if ((phase_f_test != (phases_test & ~(PHASE_S))) || (phase_t_test != phases_test) || ((phase_t_test & PHASE_S) != PHASE_S))	//Phase mismatch on the line
-				GL_THROW("transformer:%d (split phase) - %s has a phase mismatch at one or both ends",obj->id,obj->name);
+			//Two stage check - make sure our "to" side is triplex, at the very least - this may be checked somewhere else too (transformer), do to be paranoid
+			if ((phase_t_test & PHASE_S) != PHASE_S)
+			{
+				GL_THROW("transformer:%d (split phase) - %s has a phase mismatch the \"to\" end",obj->id,(obj->name?obj->name:"Unnamed"));
 				/*  TROUBLESHOOT
-				A line has been configured to carry a certain set of phases.  Either the input node or output
-				node is not providing a source/sink for these different conductors.  The To and From nodes must
-				have at least the phases of the line connecting them. Center-tap transformers specifically require
-				at least a single phase (A, B, or C) on the primary side, and the same phase and phase S on the
-				secondary side.
+				A split phase transformer has a "to" object that is not flagged as triplex.  This configuration is not allowed - connect a triplex-based
+				node device to the "to" end and try again.
+				*/
+			}
+
+			if (phase_f_test != (phases_test & ~(PHASE_S)))
+			{
+				GL_THROW("transformer:%d (split phase) - %s has a phase mismatch the \"from\" end",obj->id,(obj->name?obj->name:"Unnamed"));
+				/*  TROUBLESHOOT
+				A split phase transformer has a three-phase basis specified that does not exist on the "from" node.  Specify a valid "from" phase
+				and try again.
+				*/
+			}
+
+			//General phase check - make it a warning, so the CIM-import stuff doesn't fail
+			if (phase_t_test != phases_test)	//Phase mismatch on the line
+				gl_warning("transformer:%d (split phase) - %s has a phase mismatch against the triplex end",obj->id,(obj->name?obj->name:"Unnamed"));
+				/*  TROUBLESHOOT
+				A split-phase (single-phase-center-tapped) transformer is connecting to a triplex-based node that does not have a specific phase associated.
+				This should still work, but if it is not intended, please explicitly specify the three-phase-basis phase on the triplex side.
 				*/
 		}
 		else if (SpecialLnk==DELTAGWYE)	//D-Gwye then
@@ -483,7 +516,11 @@ int link_object::init(OBJECT *parent)
 
 			if ((phase_f_test != (phases & ~(PHASE_N | PHASE_D))) || (phase_t_test != (phases & ~(PHASE_N | PHASE_D))))	//Phase mismatch on the line
 				GL_THROW("transformer:%d (delta-grounded wye) - %s has a phase mismatch at one or both ends",obj->id,obj->name);
-				//Defined above
+				/*  TROUBLESHOOT
+				A line has been configured to carry a certain set of phases.  Either the input node or output
+				node is not providing a source/sink for these different conductors.  The To and From nodes must
+				have at least the phases of the line connecting them. 
+				*/
 		}
 		else	//Must be a switch then
 		{
@@ -2218,7 +2255,7 @@ void link_object::NR_link_presync_fxn(void)
 		}
 		
 		//Update status variable
-		prev_status = status;
+		//prev_status = status;
 	}
 }
 
@@ -2440,17 +2477,17 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					{
 						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_A_status"));
 
-						if (*temp_phase == 0)
+						if (*temp_phase == 1)
 							working_phase |= 0x04;
 
 						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_B_status"));
 
-						if (*temp_phase == 0)
+						if (*temp_phase == 1)
 							working_phase |= 0x02;
 
 						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_C_status"));
 
-						if (*temp_phase == 0)
+						if (*temp_phase == 1)
 							working_phase |= 0x01;
 					}
 					else	//Not sure how we'll get here, just make normal phase
@@ -2604,6 +2641,16 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				made it this far, you should have a swing bus defined and it should be called before any other objects.
 				Please submit your code and a bug report for this problem.
 				*/
+			}
+
+			//See if we were flagged as a special type switch, and if we're in "strictly radial" mode
+			if ((SpecialLnk == SWITCH) && (meshed_fault_checking_enabled == false))
+			{
+				//See if any statii are open
+				working_phase = ~((NR_branchdata[NR_branch_reference].phases ^ NR_branchdata[NR_branch_reference].origphases) & 0x07);
+
+				//Mask it off
+				NR_busdata[NR_branchdata[NR_branch_reference].to].phases &= working_phase;
 			}
 
 			//Figure out what type of link we are and populate accordingly
@@ -2842,7 +2889,7 @@ TIMESTAMP link_object::sync(TIMESTAMP t0)
 			/* compute currents */
 			READLOCK_OBJECT(to);
 			complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
-			UNLOCK_OBJECT(to);
+			READUNLOCK_OBJECT(to);
 
 			complex i0, i1, i2;
 
@@ -7367,7 +7414,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				safety_hit = true;
 
 			}//End recloser
-			else if ((NR_branchdata[NR_branch_reference].lnk_type == 2) && (switch_val == true))	//Switch induced fault - handle it
+			else if (NR_branchdata[NR_branch_reference].lnk_type == 2)	//Switch induced fault - handle it
 			{
 				//Follows convention of safety devices above
 				//Extra coding - basically what would have happened below when it was classified as a safety device
@@ -7597,6 +7644,82 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Break out of this pesky loop
 								break;
 							}//end recloser
+							else if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 2)	//Switch induced fault - handle it
+							{
+								//Follows convention of safety devices above
+								//Extra coding - basically what would have happened below when it was classified as a safety device
+								//Get the switch
+								tmpobj = NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].obj;
+
+								if (tmpobj == NULL)
+								{
+									GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									/*  TROUBLESHOOT
+									While attempting to set the state of a switch, an error occurred.  Please try again.  If the error persists,
+									please submit a bug report and your code via the trac website.
+									*/
+								}
+
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_state"));
+
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change switch state on %s",tmpobj->name);
+									/*  TROUBLESHOOT
+									While attempting to alter a switch state, the proper switch function was not found.
+									If the problem persists, please submit a bug report and your code to the trac website.
+									*/
+								}
+
+								//Update the switch statii
+								ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+
+								//Make sure it worked
+								if (ext_result != 1)
+								{
+									GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									//defined above
+								}
+
+								//Retrieve the mean_repair_time
+								temp_double_val = get_double(tmpobj,"mean_repair_time");
+
+								//See if it worked
+								if (temp_double_val == NULL)
+								{
+									gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
+									//Defined above
+									*repair_time = 0;
+								}
+								else	//It did map - get the value
+								{
+									*repair_time = (TIMESTAMP)(*temp_double_val);
+								}
+
+								//Store ourselves as our protective device
+								for (phaseidx=0; phaseidx < 3; phaseidx++)
+								{
+									temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+									if ((phase_remove & temp_phases) == temp_phases)
+									{
+										protect_locations[phaseidx] = NR_busdata[temp_node].Link_Table[temp_table_loc];	//Store ourselves
+									}
+								}
+
+								//Flag our fault phases
+								NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].faultphases |= phase_remove;
+
+								//Update our fault phases so we aren't restored
+								NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
+
+								//Store the object handle
+								*protect_obj=tmpobj;
+
+								safety_hit = true;	//We hit a protective device
+								break;
+							}
 							else if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 5)	//Sectionalizer
 							{
 								//Get the sectionalizer
@@ -7889,6 +8012,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				gl_verbose("Event %d induced on %s by using %s",*implemented_fault,objhdr->name,NR_branchdata[temp_branch].name);
 		}//End a change has been flagged
 
+		gl_verbose ("link_fault_on (normal mode) returns:%s:%d:%ld", fault_type, *implemented_fault, *repair_time);
 		return 1;	//Successful
 	}//End "normal" fault operations mode
 	else	//Meshed checking -- handle differently
@@ -10172,7 +10296,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				safety_hit = true;
 
 			}//End recloser
-			else if ((NR_branchdata[NR_branch_reference].lnk_type == 2) && (switch_val == true))	//Switch induced fault - handle it
+			else if (NR_branchdata[NR_branch_reference].lnk_type == 2)	//Switch induced fault - handle it
 			{
 				//Follows convention of safety devices above
 				//Extra coding - basically what would have happened below when it was classified as a safety device
@@ -10402,6 +10526,82 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Break out of this pesky loop
 								break;
 							}//end recloser
+							else if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 2)	//Switch induced fault - handle it
+							{
+								//Follows convention of safety devices above
+								//Extra coding - basically what would have happened below when it was classified as a safety device
+								//Get the switch
+								tmpobj = NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].obj;
+
+								if (tmpobj == NULL)
+								{
+									GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									/*  TROUBLESHOOT
+									While attempting to set the state of a switch, an error occurred.  Please try again.  If the error persists,
+									please submit a bug report and your code via the trac website.
+									*/
+								}
+
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_state"));
+
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change switch state on %s",tmpobj->name);
+									/*  TROUBLESHOOT
+									While attempting to alter a switch state, the proper switch function was not found.
+									If the problem persists, please submit a bug report and your code to the trac website.
+									*/
+								}
+
+								//Update the switch statii
+								ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+
+								//Make sure it worked
+								if (ext_result != 1)
+								{
+									GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									//defined above
+								}
+
+								//Retrieve the mean_repair_time
+								temp_double_val = get_double(tmpobj,"mean_repair_time");
+
+								//See if it worked
+								if (temp_double_val == NULL)
+								{
+									gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
+									//Defined above
+									*repair_time = 0;
+								}
+								else	//It did map - get the value
+								{
+									*repair_time = (TIMESTAMP)(*temp_double_val);
+								}
+
+								//Store ourselves as our protective device
+								for (phaseidx=0; phaseidx < 3; phaseidx++)
+								{
+									temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+									if ((phase_remove & temp_phases) == temp_phases)
+									{
+										protect_locations[phaseidx] = NR_busdata[temp_node].Link_Table[temp_table_loc];	//Store ourselves
+									}
+								}
+
+								//Flag our fault phases
+								NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].faultphases |= phase_remove;
+
+								//Update our fault phases so we aren't restored
+								NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
+
+								//Store the object handle
+								*protect_obj=tmpobj;
+
+								safety_hit = true;	//We hit a protective device
+								break;
+							}
 							else if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 5)	//Sectionalizer
 							{
 								//Get the sectionalizer
@@ -10694,6 +10894,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				gl_verbose("Event %d induced on %s by using %s",*implemented_fault,objhdr->name,NR_branchdata[temp_branch].name);
 		}//End a change has been flagged
 
+		gl_verbose ("link_fault_on (meshed mode) returns:%s:%d:%ld", fault_type, *implemented_fault, *repair_time);
 		return 1;	//Successful
 	}//End "Msehed mode" checks
 }
@@ -11076,7 +11277,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 					else	//Not the SWING Bus
 					{
 						//See if we are of a "protective" device implementation
-						if ((NR_branchdata[protect_locations[phaseidx]].lnk_type == 2) && (switch_val == true))	//Switch
+						if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 2)	//Switch
 						{
 							//Get the switch
 							tmpobj = NR_branchdata[protect_locations[phaseidx]].obj;
@@ -11718,6 +11919,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				gl_verbose("Event %s removed from %s by restoring %s",imp_fault_name,objhdr->name,NR_branchdata[temp_node].name);
 		}//End actual change
 
+		gl_verbose ("link_fault_off (normal mode) returns:%s:%d", imp_fault_name, *implemented_fault);
 		return 1;
 	}//End "normal" operations mode
 	else	//Must be crazy mesh checking mode
@@ -12084,7 +12286,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 					else	//Not the SWING Bus
 					{
 						//See if we are of a "protective" device implementation
-						if ((NR_branchdata[protect_locations[phaseidx]].lnk_type == 2) && (switch_val == true))	//Switch
+						if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 2)	//Switch
 						{
 							//Get the switch
 							tmpobj = NR_branchdata[protect_locations[phaseidx]].obj;
@@ -12646,8 +12848,1093 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				gl_verbose("Event %s removed from %s by restoring %s",imp_fault_name,objhdr->name,NR_branchdata[temp_node].name);
 		}//End actual change
 
+		gl_verbose ("link_fault_off (meshed mode) returns:%s:%d", imp_fault_name, *implemented_fault);
 		return 1;
 	}//End meshed checking mode
+}
+//Function to remove enacted fault on link but not restore the system.
+int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) {
+	unsigned char phase_restore = 0x00;	//Default is no phases restored
+	unsigned char temp_phases, temp_phases_B, work_phases;			//Working variable
+	char phaseidx, indexval;
+	int temp_node, ext_result;
+	double ext_result_dbl;
+	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *tmpobj;
+	FUNCTIONADDR funadd = NULL;
+	bool switch_val;
+
+	//Check our operations mode
+	if (meshed_fault_checking_enabled == false)	//Normal mode
+	{
+		//Set up default switch variable - used to indicate special cases
+		switch_val = false;
+
+		//Less logic here - just undo what we did before - find the fault type and clear it out
+		switch (*implemented_fault)
+		{
+			case 0:	//No fault - do nothing
+				imp_fault_name[0] = 'N';
+				imp_fault_name[1] = 'o';
+				imp_fault_name[2] = 'n';
+				imp_fault_name[3] = 'e';
+				imp_fault_name[4] = '\0';
+				break;
+			case 1:	//SLG-A
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x04;	//Put A back in service
+				break;
+			case 2:	//SLG-B
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x02;	//Put B back in service
+				break;
+			case 3:	//SLG-C
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x01;	//Put C back in service
+				break;
+			case 4:	//DLG-AB
+				imp_fault_name[0] = 'D';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = 'B';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				break;
+			case 5:	//DLG-BC
+				imp_fault_name[0] = 'D';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = 'C';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				break;
+			case 6:	//DLG-CA
+				imp_fault_name[0] = 'D';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = 'A';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				break;
+			case 7:	//LL-AB
+				imp_fault_name[0] = 'L';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				break;
+			case 8:	//LL-BC
+				imp_fault_name[0] = 'L';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'B';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				break;
+			case 9:	//LL-CA
+				imp_fault_name[0] = 'L';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'C';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				break;
+			case 10:	//TLG
+				imp_fault_name[0] = 'T';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				break;
+			case 11:	//OC-A
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x04;	//Put A back in service
+				break;
+			case 12:	//OC-B
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'B';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x02;	//Put B back in service
+				break;
+			case 13:	//OC-C
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'C';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x01;	//Put C back in service
+				break;
+			case 14:	//OC2-AB
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '2';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = 'B';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				break;
+			case 15:	//OC2-BC
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '2';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = 'C';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				break;
+			case 16:	//OC2-CA
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '2';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = 'A';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				break;
+			case 17:	//OC3
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '3';
+				imp_fault_name[3] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				break;
+			case 18:	//SW-A
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x04;	//Put A back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 19:	//SW-B
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'B';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x02;	//Put B back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 20:	//SW-C
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'C';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x01;	//Put C back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 21:	//SW-AB
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 22:	//SW-BC
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'B';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 23:	//SW-CA
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'C';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 24:	//SW-ABC
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = 'C';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 25:	//FUS-A
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x04;	//Put A back in service
+				break;
+			case 26:	//FUS-B
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x02;	//Put B back in service
+				break;
+			case 27:	//FUS-C
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x01;	//Put C back in service
+				break;
+			case 28:	//FUS-AB
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = 'B';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				break;
+			case 29:	//FUS-BC
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = 'C';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				break;
+			case 30:	//FUS-CA
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = 'A';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				break;
+			case 31:	//FUS-ABC
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = 'B';
+				imp_fault_name[6] = 'C';
+				imp_fault_name[7] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				break;
+			case 32:	//TLL
+				imp_fault_name[0] = 'T';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'L';
+				imp_fault_name[3] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				break;
+			default:	//Should never get here
+				GL_THROW("%s - attempted to recover from unsupported fault!",objhdr->name);
+				/*  TROUBLESHOOT
+				The link object attempted to recover from an unknown fault type.  Please try again.  If the
+				error persists, please submit your code and a bug report to the trac website.
+				*/
+				break;
+		}//end switch
+
+		//Flag an update if something changed (not a 0 state)
+		if (*implemented_fault != 0)
+		{
+			temp_node = -1;	//Default value
+
+			//Remove our restrictions for these phases
+			for (phaseidx=0; phaseidx<3; phaseidx++)
+			{
+				work_phases = 0x04 >> phaseidx;	//Get check
+
+				if ((phase_restore & work_phases) == work_phases)	//Valid phase to restore
+				{
+					//Store the value of protect_locations for later
+					temp_node = protect_locations[phaseidx];
+
+					//See if our "protective device" was the swing bus
+					if (protect_locations[phaseidx] == -1)
+					{
+						GL_THROW("An attempt to restore something that was never faulted has occurred!");
+						/*  TROUBLESHOOT
+						While attempting to restore a device, an unknown state was encountered where it
+						had somehow started faulted and was not caught.  If you have any switches in your
+						system, consider starting them closed first.
+						*/
+					}
+					else if (protect_locations[phaseidx] == -99)
+					{
+						//Theoretically, this phase should exist on the SWING.  Let's check to make sure
+						if ((NR_busdata[0].origphases & work_phases) == work_phases)	//Valid phase
+						{
+							NR_busdata[0].phases |= work_phases;	//Just turn it back on - it's the SWING, it has to work
+						}
+						else
+						{
+							GL_THROW("A fault was induced on the SWING bus for an unsupported phase!");
+							/*  TROUBLESHOOT
+							Somehow, a fault was induced on a phase that should not exist on the system.  While
+							attemtping to restore this fault, the SWING bus did not have the proper original phases,
+							so this could not be restored.  Please submit your code and a bug report using the trac website.
+							*/
+						}
+					}//End SWING
+					else	//Not the SWING Bus
+					{
+						//See if we are of a "protective" device implementation
+						if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 2)	//Switch
+						{
+							//Get the switch
+							tmpobj = NR_branchdata[protect_locations[phaseidx]].obj;
+
+							if (tmpobj == NULL)
+							{
+								GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+								//Defined above
+							}
+
+							//Check and see what the supporting nodes are doing - if a switch is already in a fault, this causes issues
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+
+							//Flag the remote object's appropriate phases
+							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
+
+							//Remove the branch as an index in appropriate phases
+							for (phaseidx=0; phaseidx < 3; phaseidx++)
+							{
+								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+								if ((phase_restore & temp_phases) == temp_phases)
+								{
+									protect_locations[phaseidx] = -1;	//Clear our location
+								}
+							}
+
+							//Update our fault phases
+							NR_branchdata[NR_branch_reference].faultphases &= ~(phase_restore);
+
+							//Break out of this pesky loop
+							break;
+						}//end switch closure
+						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 6)	//recloser
+						{
+							//Check and see what the supporting nodes are doing - if a recloser is already in a fault, this causes issues
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+
+							//Flag the remote object's appropriate phases
+							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
+
+							//Remove the branch as an index in appropriate phases
+							for (phaseidx=0; phaseidx < 3; phaseidx++)
+							{
+								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+								if ((phase_restore & temp_phases) == temp_phases)
+								{
+									protect_locations[phaseidx] = -1;	//Clear our location
+								}
+							}
+
+							//Update our fault phases
+							NR_branchdata[NR_branch_reference].faultphases &= ~(phase_restore);
+
+							//Break out of this pesky loop
+							break;
+						}//end recloser closure
+						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 5)	//Sectionalizer
+						{
+							//Check and see what the supporting nodes are doing - if a sectionalizer is already in a fault, this causes issues
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+
+							//Flag the remote object's appropriate phases
+							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
+
+							//Remove the branch as an index in appropriate phases
+							for (phaseidx=0; phaseidx < 3; phaseidx++)
+							{
+								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+								if ((phase_restore & temp_phases) == temp_phases)
+								{
+									protect_locations[phaseidx] = -1;	//Clear our location
+								}
+							}
+
+							//Update our fault phases
+							NR_branchdata[NR_branch_reference].faultphases &= ~(phase_restore);
+
+							//Break out of this pesky loop
+							break;
+						}//end sectionalizer closure
+						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 3)	//fuse
+						{
+							//Check and see what the supporting nodes are doing - if a fuse is already in a fault, this causes issues
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+
+							//Flag the remote object's appropriate phases
+							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
+
+							//Remove the branch as an index in appropriate phases
+							for (phaseidx=0; phaseidx < 3; phaseidx++)
+							{
+								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+								if ((phase_restore & temp_phases) == temp_phases)
+								{
+									protect_locations[phaseidx] = -1;	//Clear our location
+								}
+							}
+
+							//Update our fault phases
+							NR_branchdata[NR_branch_reference].faultphases &= ~(phase_restore);
+
+							//Break out of this pesky loop
+							break;
+						}//End fuse closure
+						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 4)	//Transformer
+						{
+							//Transformers are special case - if the source is supported, all three phases are reinstated
+							temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & 0x07;
+
+							//Make sure we match
+							if ((temp_phases & NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases) == temp_phases)
+							{
+								//Support is there, restore all relevant phases
+								NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(temp_phases);
+
+								//Check for SPCT rating
+								if ((NR_branchdata[protect_locations[phaseidx]].origphases & 0x80) == 0x80)	//SPCT
+								{
+									temp_phases |= 0x80;	//Apply SPCT flag
+								}
+								//Defaulted else - normal xformer
+
+								//Pull the phases back into service
+								NR_branchdata[protect_locations[phaseidx]].phases = (NR_branchdata[protect_locations[phaseidx]].origphases & temp_phases);
+							}
+							else	//Support is not there - clear the flag, but don't restore
+							{
+								NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(temp_phases);
+							}
+
+							//Remove our fault for the appropriate phases
+							temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & 0x07;
+							NR_branchdata[NR_branch_reference].faultphases &= ~(temp_phases);
+
+							//Remove fault indices - loop through transformer phases
+							for (indexval=0; indexval<3; indexval++)
+							{
+								temp_phases = 0x04 >> indexval;
+
+								if ((temp_phases & NR_branchdata[NR_branch_reference].faultphases) == 0x00)	//No fault here
+									protect_locations[indexval] = -1;	//Clear flag
+							}
+
+							break;	//Get us out of phase loop - transformers handle all 3 phases at once
+						}//End transformer restoration
+						else
+						{
+							GL_THROW("Protective device %s invalid for restoration!",NR_branchdata[protect_locations[phaseidx]].name);
+							/*  TROUBLESHOOT
+							While attempting to restore a protective device, something besides a switch, fuse, or transformer was used.
+							This should not have happened.  Please try again.  If the error persists, please submit your code and a bug
+							report using the trac website.
+							*/
+						}
+
+						//Clear "far" device lockout
+						NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(work_phases);	//Remove the phase lock
+					}
+
+					//Clear faulted device lockout
+					protect_locations[phaseidx] = -1;
+
+					//Clear faulted device protect_locations
+					NR_branchdata[NR_branch_reference].faultphases &= ~(work_phases);	//Remove the phase lock from us as well
+				}//End valid phase
+				//Default else - not a phase we care about
+			}//End phase loop
+		}//End actual change
+
+		gl_verbose ("clear_fault_only (normal mode) returns:%s:%d", imp_fault_name, *implemented_fault);
+		return 1;
+	}//End "normal" operations mode
+	else	//Must be crazy mesh checking mode
+	{
+		//Set up default switch variable - used to indicate special cases
+		switch_val = false;
+
+		//Less logic here - just undo what we did before - find the fault type and clear it out
+		switch (*implemented_fault)
+		{
+			case 0:	//No fault - do nothing
+				imp_fault_name[0] = 'N';
+				imp_fault_name[1] = 'o';
+				imp_fault_name[2] = 'n';
+				imp_fault_name[3] = 'e';
+				imp_fault_name[4] = '\0';
+				break;
+			case 1:	//SLG-A
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x04;	//Put A back in service
+				break;
+			case 2:	//SLG-B
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x02;	//Put B back in service
+				break;
+			case 3:	//SLG-C
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x01;	//Put C back in service
+				break;
+			case 4:	//DLG-AB
+				imp_fault_name[0] = 'D';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = 'B';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				break;
+			case 5:	//DLG-BC
+				imp_fault_name[0] = 'D';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = 'C';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				break;
+			case 6:	//DLG-CA
+				imp_fault_name[0] = 'D';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = 'A';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				break;
+			case 7:	//LL-AB
+				imp_fault_name[0] = 'L';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				break;
+			case 8:	//LL-BC
+				imp_fault_name[0] = 'L';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'B';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				break;
+			case 9:	//LL-CA
+				imp_fault_name[0] = 'L';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'C';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				break;
+			case 10:	//TLG
+				imp_fault_name[0] = 'T';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				break;
+			case 11:	//OC-A
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x04;	//Put A back in service
+				break;
+			case 12:	//OC-B
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'B';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x02;	//Put B back in service
+				break;
+			case 13:	//OC-C
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'C';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x01;	//Put C back in service
+				break;
+			case 14:	//OC2-AB
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '2';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = 'B';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				break;
+			case 15:	//OC2-BC
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '2';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = 'C';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				break;
+			case 16:	//OC2-CA
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '2';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = 'A';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				break;
+			case 17:	//OC3
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '3';
+				imp_fault_name[3] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				break;
+			case 18:	//SW-A
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x04;	//Put A back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 19:	//SW-B
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'B';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x02;	//Put B back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 20:	//SW-C
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'C';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x01;	//Put C back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 21:	//SW-AB
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 22:	//SW-BC
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'B';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 23:	//SW-CA
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'C';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 24:	//SW-ABC
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = 'C';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 25:	//FUS-A
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x04;	//Put A back in service
+				break;
+			case 26:	//FUS-B
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x02;	//Put B back in service
+				break;
+			case 27:	//FUS-C
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x01;	//Put C back in service
+				break;
+			case 28:	//FUS-AB
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = 'B';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				break;
+			case 29:	//FUS-BC
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = 'C';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				break;
+			case 30:	//FUS-CA
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = 'A';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				break;
+			case 31:	//FUS-ABC
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = 'B';
+				imp_fault_name[6] = 'C';
+				imp_fault_name[7] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				break;
+			case 32:	//TLL
+				imp_fault_name[0] = 'T';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'L';
+				imp_fault_name[3] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				break;
+			default:	//Should never get here
+				GL_THROW("%s - attempted to recover from unsupported fault!",objhdr->name);
+				/*  TROUBLESHOOT
+				The link object attempted to recover from an unknown fault type.  Please try again.  If the
+				error persists, please submit your code and a bug report to the trac website.
+				*/
+				break;
+		}//end switch
+
+		//Flag an update if something changed (not a 0 state)
+		if (*implemented_fault != 0)
+		{
+			temp_node = -1;	//Default value
+
+			//Remove our restrictions for these phases
+			for (phaseidx=0; phaseidx<3; phaseidx++)
+			{
+				work_phases = 0x04 >> phaseidx;	//Get check
+
+				if ((phase_restore & work_phases) == work_phases)	//Valid phase to restore
+				{
+					//Store the value of protect_locations for later
+					temp_node = protect_locations[phaseidx];
+
+					//See if our "protective device" was the swing bus
+					if (protect_locations[phaseidx] == -1)
+					{
+						GL_THROW("An attempt to restore something that was never faulted has occurred!");
+						/*  TROUBLESHOOT
+						While attempting to restore a device, an unknown state was encountered where it
+						had somehow started faulted and was not caught.  If you have any switches in your
+						system, consider starting them closed first.
+						*/
+					}
+					else if (protect_locations[phaseidx] == -99)
+					{
+						//Theoretically, this phase should exist on the SWING.  Let's check to make sure
+						if ((NR_busdata[0].origphases & work_phases) == work_phases)	//Valid phase
+						{
+							NR_busdata[0].phases |= work_phases;	//Just turn it back on - it's the SWING, it has to work
+						}
+						else
+						{
+							GL_THROW("A fault was induced on the SWING bus for an unsupported phase!");
+							/*  TROUBLESHOOT
+							Somehow, a fault was induced on a phase that should not exist on the system.  While
+							attemtping to restore this fault, the SWING bus did not have the proper original phases,
+							so this could not be restored.  Please submit your code and a bug report using the trac website.
+							*/
+						}
+					}//End SWING
+					else	//Not the SWING Bus
+					{
+						//See if we are of a "protective" device implementation
+						if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 2)	//Switch
+						{
+							//Flag the remote object's appropriate phases
+							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
+
+							//Remove the branch as an index in appropriate phases
+							for (phaseidx=0; phaseidx < 3; phaseidx++)
+							{
+								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+								if ((phase_restore & temp_phases) == temp_phases)
+								{
+									protect_locations[phaseidx] = -1;	//Clear our location
+								}
+							}
+
+							//Update our fault phases
+							NR_branchdata[NR_branch_reference].faultphases &= ~(phase_restore);
+
+							//Break out of this pesky loop
+							break;
+						}//end switch closure
+						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 6)	//recloser
+						{
+							//Check and see what the supporting nodes are doing - if a recloser is already in a fault, this causes issues
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+
+							//Flag the remote object's appropriate phases
+							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
+
+							//Remove the branch as an index in appropriate phases
+							for (phaseidx=0; phaseidx < 3; phaseidx++)
+							{
+								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+								if ((phase_restore & temp_phases) == temp_phases)
+								{
+									protect_locations[phaseidx] = -1;	//Clear our location
+								}
+							}
+
+							//Update our fault phases
+							NR_branchdata[NR_branch_reference].faultphases &= ~(phase_restore);
+
+							//Break out of this pesky loop
+							break;
+						}//end recloser closure
+						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 5)	//Sectionalizer
+						{
+							//Check and see what the supporting nodes are doing - if a sectionalizer is already in a fault, this causes issues
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+
+							//Flag the remote object's appropriate phases
+							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
+
+							//Remove the branch as an index in appropriate phases
+							for (phaseidx=0; phaseidx < 3; phaseidx++)
+							{
+								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+								if ((phase_restore & temp_phases) == temp_phases)
+								{
+									protect_locations[phaseidx] = -1;	//Clear our location
+								}
+							}
+
+							//Update our fault phases
+							NR_branchdata[NR_branch_reference].faultphases &= ~(phase_restore);
+
+							//Break out of this pesky loop
+							break;
+						}//end sectionalizer closure
+						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 3)	//fuse
+						{
+							//Check and see what the supporting nodes are doing - if a fuse is already in a fault, this causes issues
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+
+							//Flag the remote object's appropriate phases
+							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
+
+							//Remove the branch as an index in appropriate phases
+							for (phaseidx=0; phaseidx < 3; phaseidx++)
+							{
+								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+								if ((phase_restore & temp_phases) == temp_phases)
+								{
+									protect_locations[phaseidx] = -1;	//Clear our location
+								}
+							}
+
+							//Update our fault phases
+							NR_branchdata[NR_branch_reference].faultphases &= ~(phase_restore);
+
+							//Break out of this pesky loop
+							break;
+						}//End fuse closure
+						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 4)	//Transformer
+						{
+							//Transformers are special case - if the source is supported, all three phases are reinstated
+							temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & 0x07;
+
+							//Make sure we match
+							if ((temp_phases & NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases) == temp_phases)
+							{
+								//Support is there, restore all relevant phases
+								NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(temp_phases);
+
+								//Check for SPCT rating
+								if ((NR_branchdata[protect_locations[phaseidx]].origphases & 0x80) == 0x80)	//SPCT
+								{
+									temp_phases |= 0x80;	//Apply SPCT flag
+								}
+								//Defaulted else - normal xformer
+
+								//Pull the phases back into service
+								NR_branchdata[protect_locations[phaseidx]].phases = (NR_branchdata[protect_locations[phaseidx]].origphases & temp_phases);
+							}
+							else	//Support is not there - clear the flag, but don't restore
+							{
+								NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(temp_phases);
+							}
+
+							//Remove our fault for the appropriate phases
+							temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & 0x07;
+							NR_branchdata[NR_branch_reference].faultphases &= ~(temp_phases);
+
+							//Remove fault indices - loop through transformer phases
+							for (indexval=0; indexval<3; indexval++)
+							{
+								temp_phases = 0x04 >> indexval;
+
+								if ((temp_phases & NR_branchdata[NR_branch_reference].faultphases) == 0x00)	//No fault here
+									protect_locations[indexval] = -1;	//Clear flag
+							}
+
+							break;	//Get us out of phase loop - transformers handle all 3 phases at once
+						}//End transformer restoration
+						else
+						{
+							GL_THROW("Protective device %s invalid for restoration!",NR_branchdata[protect_locations[phaseidx]].name);
+							/*  TROUBLESHOOT
+							While attempting to restore a protective device, something besides a switch, fuse, or transformer was used.
+							This should not have happened.  Please try again.  If the error persists, please submit your code and a bug
+							report using the trac website.
+							*/
+						}
+
+						//Clear "far" device lockout
+						NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(work_phases);	//Remove the phase lock
+					}
+
+					//Clear faulted device lockout
+					protect_locations[phaseidx] = -1;
+
+					//Clear faulted device protect_locations
+					NR_branchdata[NR_branch_reference].faultphases &= ~(work_phases);	//Remove the phase lock from us as well
+				}//End valid phase
+				//Default else - not a phase we care about
+			}//End phase loop
+		}//End actual change
+
+		gl_verbose ("clear_fault_only (meshed mode) returns:%s:%d", imp_fault_name, *implemented_fault);
+		return 1;
+	}
 }
 //adding function to calculate the fault current seen at the swing bus then distribute that current down to fault path to the faulted line
 //right now it is assumed that all faults occur at the to end of the faulted link object.

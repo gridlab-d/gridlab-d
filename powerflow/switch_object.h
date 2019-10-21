@@ -30,6 +30,7 @@ public:
 	int create(void);
 	int init(OBJECT *parent);
 	TIMESTAMP sync(TIMESTAMP t0);
+	TIMESTAMP presync(TIMESTAMP t0);  // implements local switching; TODO: this should have two TIMESTAMP arguments
 	switch_object(MODULE *mod);
 	inline switch_object(CLASS *cl=oclass):link_object(cl){};
 	int isa(char *classname);
@@ -58,6 +59,8 @@ public:
 	enumeration phase_B_state;				///< Defines the current state of the phase B switch
 	enumeration phase_C_state;				///< Defines the current state of the phase C switch
 
+	bool local_switching;             // for switching and fault checking without reliability module; uses phased_switch_status and prev_full_status in presync
+
 	double switch_resistance;
 	int kmldata(int (*stream)(const char*,...));
 private:
@@ -71,6 +74,7 @@ EXPORT int change_switch_state(OBJECT *thisobj, unsigned char phase_change, bool
 EXPORT int reliability_operation(OBJECT *thisobj, unsigned char desired_phases);
 EXPORT int create_fault_switch(OBJECT *thisobj, OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time);
 EXPORT int fix_fault_switch(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name);
+EXPORT int clear_fault_switch(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name);
 EXPORT int switch_fault_updates(OBJECT *thisobj, unsigned char restoration_phases);
 EXPORT int change_switch_state_toggle(OBJECT *thisobj);
 

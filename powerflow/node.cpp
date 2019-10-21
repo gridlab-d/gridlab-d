@@ -1164,7 +1164,22 @@ int node::init(OBJECT *parent)
 			}
 		}
 		else
-			throw("Please specify which phase (A,B,or C) the triplex node is attached to.");
+		{
+			//This could be a verbose - leaving it as a warning though for now
+			gl_warning("node:%d - %s - triplex-based node does not specify phase connection - assuming phase A basis",obj->id,(obj->name?obj->name:"Unnamed"));
+			/*  TROUBLESHOOT
+			A triplex-based node just has phase S specified.  Without a three-phase phase designation, it will assume this is phase A-based and set all
+			angles appropriately.  If this is not desired, set a proper phase basis.
+			*/
+			if (voltage[0] == 0)
+			{
+				voltage[0].SetPolar(nominal_voltage,0.0);
+			}
+			if (voltage[1] == 0)
+			{
+				voltage[1].SetPolar(nominal_voltage,0.0);
+			}
+		}
 
 		voltage[2] = complex(0,0);	//Ground always assumed it seems
 	}
@@ -1513,16 +1528,11 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 
 			if (((SubNode == CHILD) || (SubNode == DIFF_CHILD)) && (NR_connected_links[0] > 0))
 			{
-				node *parNode = OBJECTDATA(SubNodeParent,node);
-
-				WRITELOCK_OBJECT(SubNodeParent);	//Lock
-
-				parNode->NR_connected_links[0] += NR_connected_links[0];
-
-				//Zero our accumulator, just in case (used later)
-				NR_connected_links[0] = 0;
-
-				WRITEUNLOCK_OBJECT(SubNodeParent);	//Unlock
+				GL_THROW("NR: node:%d - %s - extra links acquired outside of init routine",obj->id,(obj->name?obj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to initialize a childed node for the NR solver, extra links that were not detected in the node::init
+				routine were discovered.  This should not have happen.  Please submit your GLM and a bug report to the issues tracker.
+				*/
 			}
 
 			//See if we need to alloc our child space

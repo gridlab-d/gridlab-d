@@ -25,6 +25,8 @@ public:
 	complex measured_voltage_AB;	
 	complex measured_voltage_BC;
 	complex measured_voltage_CA;
+	complex measured_total_power;
+	complex measured_power[3];
 	complex constant_power[3];		// power load
 	complex constant_current[3];	// current load
 	complex constant_impedance[3];	// impedance load

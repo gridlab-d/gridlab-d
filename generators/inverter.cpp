@@ -7230,7 +7230,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 						}
 					}
 				}
-				else
+				else	//Additional iterations - basically just checks convergence
 				{
 					//Check phases
 					if ((phases & 0x10) == 0x10)

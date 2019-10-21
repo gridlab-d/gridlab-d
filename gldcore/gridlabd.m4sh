@@ -1,4 +1,4 @@
-dnl run "autom4te -l m4sh gridlabd.m4sh > gridlabd.in"
+dnl run "autom4te -l m4sh gridlabd.m4sh > gridlabd.sh.in"
 AS_INIT
 
 prefix="@prefix@"
@@ -9,6 +9,7 @@ datadir="@datadir@"
 pkgdatadir="$datadir/@PACKAGE@"
 libdir="@libdir@"
 pkglibdir="$libdir/@PACKAGE@"
+export DYLD_LIBRARY_PATH="$pkglibdir"
 HAS_MINGW="@HAS_MINGW@"
 
 AS_IF([test "x$GLPATH" = x],
