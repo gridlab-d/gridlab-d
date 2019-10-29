@@ -116,6 +116,12 @@ private:
 	} MOTOR_OPERATION_MODE;
 	enumeration motor_op_mode;
 
+	typedef enum {
+		PROT_MODE_SIMPLE=0,		//Basic over-voltage and UV contactor protection
+		PROT_MODE_ADVANCED=1	//More complicated "4-type" protection
+	} TYPE_OF_PROTECTION_MODE;
+	enumeration motor_protection_type_mode;
+
 	double trip;
 	double reconnect;
 	bool motor_trip;

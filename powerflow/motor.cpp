@@ -156,6 +156,10 @@ motor::motor(MODULE *mod):node(mod)
 				PT_KEYWORD,"TPIM_A",(enumeration)TPIM_A,
 				PT_KEYWORD,"TPIM_B",(enumeration)TPIM_B,
 				PT_KEYWORD,"TPIM_C",(enumeration)TPIM_C,
+			
+			PT_enumeration,"Protection_model",PADDR(motor_protection_type_mode),PT_DESCRIPTION,"Determine the protection model to utilize",
+				PT_KEYWORD,"SIMPLE",(enumeration)PROT_MODE_SIMPLE,
+				PT_KEYWORD,"ADVANCED",(enumeration)PROT_MODE_ADVANCED,
 
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
@@ -297,6 +301,8 @@ int motor::create()
 	emsReconnect = false;
 
 	TPIM_type = TPIM_A; // default to motor A
+
+	motor_protection_type_mode = PROT_MODE_SIMPLE;	//By default, the simplified/original protection model is used
 
 	return result;
 }
@@ -818,9 +824,16 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 
 		// update protection
-		/******* TODO: This needs to be reconciled **************/
-		//SPIMUpdateProtection(delta_cycle);
-		UpdateProtection(delta_cycle);
+		if (motor_protection_type_mode == PROT_MODE_SIMPLE)
+		{
+			//Use older protection model
+			SPIMUpdateProtection(delta_cycle);
+		}
+		else
+		{
+			//Use udpated protection model
+			UpdateProtection(delta_cycle);
+		}
 
 		if (motor_override == overrideON && ws > 1 && Vs.Mag() > 0.1 && motor_trip == 0) { // motor is currently connected and grid conditions are not "collapsed"
 			// run the steady state solver
@@ -892,9 +905,16 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 
 		// update protection
-		/******* TODO: This needs to be reconciled **************/
-		//TPIMUpdateProtection(delta_cycle);
-		UpdateProtection(delta_cycle);
+		if (motor_protection_type_mode == PROT_MODE_SIMPLE)
+		{
+			//Use older protection model
+			TPIMUpdateProtection(delta_cycle);
+		}
+		else
+		{
+			//Use udpated protection model
+			UpdateProtection(delta_cycle);
+		}
 
 		if (motor_override == overrideON && ws_pu > 0.1 &&  Vas.Mag() > 0.1 && Vbs.Mag() > 0.1 && Vcs.Mag() > 0.1 &&
 			motor_trip == 0) { // motor is currently connected and grid conditions are not "collapsed"
@@ -1068,9 +1088,16 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 
 			// update protection
 			if (delta_time>0) {
-				/******* TODO: This needs to be reconciled **************/
-				//SPIMUpdateProtection(deltaTime);
-				UpdateProtection(deltaTime);
+				if (motor_protection_type_mode == PROT_MODE_SIMPLE)
+				{
+					//Use older protection model
+					SPIMUpdateProtection(deltaTime);
+				}
+				else
+				{
+					//Use udpated protection model
+					UpdateProtection(deltaTime);
+				}
 			}
 
 			if (motor_override == overrideON && ws > 1 && Vs.Mag() > 0.1 && motor_trip == 0) { // motor is currently connected and grid conditions are not "collapsed"
@@ -1148,9 +1175,16 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 
 			// update protection
 			if (delta_time>0) {
-				/******* TODO: This needs to be reconciled **************/
-				//TPIMUpdateProtection(deltaTime);
-				UpdateProtection(deltaTime);
+				if (motor_protection_type_mode == PROT_MODE_SIMPLE)
+				{
+					//Use older protection model
+					TPIMUpdateProtection(deltaTime);
+				}
+				else
+				{
+					//Use udpated protection model
+					UpdateProtection(deltaTime);
+				}
 			}
 
 			if (motor_override == overrideON && ws_pu > 0.1 && Vas.Mag() > 0.1 && Vbs.Mag() > 0.1 && Vcs.Mag() > 0.1 &&
@@ -1676,8 +1710,7 @@ void motor::TPIMUpdateMotorStatus() {
 }
 
 /******* TODO: The SPIMUpdateProtection, TPIMUpdateProtection, and UpdateProtection functions need to be merged/reconciled*/
-/******* Autotests fail right now, but may be due to parameters not being in array of updated implementation -- may just need defaults populated */
-
+/******* Probably some duplications in here, so we don't need two different protection setups */
 // function to update the protection of the motor
 void motor::SPIMUpdateProtection(double delta_time) {	
 	if (motor_override == overrideON) { 
@@ -1797,7 +1830,6 @@ void motor::TPIMUpdateProtection(double delta_time) {
         contactor_state = contactorCLOSED;
     }
 }
-
 
 // function to update the protection of the motor
 void motor::UpdateProtection(double delta_time) {
@@ -2350,12 +2382,11 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
     Vap = (Vas + alpha * Vbs + alpha * alpha * Vcs) / 3.0;
     Van = (Vas + alpha * alpha * Vbs + alpha * Vcs) / 3.0;
 
-//    TPIMupdateVars(); // repeated thus removed here
-
-//	if (wr_pu >= 1.0)
-//	{
-//		Tmech_eff = Tmech;
-//	}
+	//*** Prior code - why was Tmech_eff only engaged if the rotor speed was 1 or higher?  Seems odd */
+	// if (wr_pu >= 1.0)
+	// {
+	// 	Tmech_eff = Tmech;
+	// }
 
 	if (TPIM_type == TPIM_A) {
 		Tmech_eff = Tmech;
