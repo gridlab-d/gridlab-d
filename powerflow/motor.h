@@ -35,14 +35,21 @@ private:
 	} TPIM_TYPE;
 	enumeration TPIM_type;
 
+	typedef enum {
+			SPIM_C = 0, 	///< Single phase motor with constant torque
+			SPIM_S = 1, 	///< Single phase motor with speed dependent torque
+			SPIM_T = 2,     ///< Single phase motor with triangular torque
+	} SPIM_TYPE;
+	enumeration SPIM_type;
+
 	void SPIMupdateVars(); // function to update the previous values for the motor model
 	void updateFreqVolt(); // function to update frequency and voltage for the motor
 	void SPIMUpdateMotorStatus(); // function to update the status of the motor
-	void SPIMStateOFF(); // function to ensure that internal model states are zeros when the motor is OFF
+	void SPIMStateOFF(double dTime); // function to ensure that internal model states are zeros when the motor is OFF
 	void SPIMreinitializeVars(); // function to reinitialize values for the motor model
 	void SPIMUpdateProtection(double delta_time); // function to update the protection of the motor
 	void SPIMSteadyState(TIMESTAMP t1); // steady state model for the SPIM motor
-	void SPIMDynamic(double curr_delta_time, double dTime); // dynamic phasor model for the SPIM motor
+	void SPIMDynamic(double dTime); // dynamic phasor model for the SPIM motor
 	complex complex_exp(double angle);
 	int invertMatrix(complex TF[16], complex ITF[16]);
 
@@ -59,6 +66,7 @@ private:
 
 	// Protection functions
 	void motorCheckTrip(double delta_time, double_array* motorProtection, double* timerList, bool& tripStatus); // function to check the trip status under each protection
+	void SPIM_CheckThermalTrip(double delta_time, double_array* motorProtection, bool &tripStatus); // function to check thermal trip for SPIM
 	void motorCheckReconnect(double delta_time, double_array* motorProtection, double& reconnectTimer, bool& reconnectStatus); // function to check the reconnect status under each protection
 
 	double delta_cycle;
@@ -95,6 +103,16 @@ private:
 	double DM_volt_exit;
 	double DM_speed_exit;
 	double speed_error;
+
+	// Triangular torque items - Zhigang Chu
+	double t_DLD; // For triangular torque motors, indicate at what time it starts to have triangle torque
+	double theta; // Rotor angle for triangular torque motors [rad]
+	double T_av; // Angle dependent load coefficient for triangular torque motors
+	double avRatio; // Ratio between angle dependent load coefficient and speed dependent one
+					// T_av = avRatio * Tmech (aka T_speed)
+	double R_stall; // Stall resistance of SPIM
+	double temperature_SPIM;
+	double Tth; // Thermal time constant
 	
 	typedef enum {
 		statusRUNNING=0,		///< Motor is running

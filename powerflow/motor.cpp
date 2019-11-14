@@ -43,17 +43,17 @@ motor::motor(MODULE *mod):node(mod)
 			PT_INHERIT, "node",
 			PT_double, "base_power[W]", PADDR(Pbase),PT_DESCRIPTION,"base power",
 			PT_double, "n", PADDR(n),PT_DESCRIPTION,"ratio of stator auxiliary windings to stator main windings",
-			PT_double, "Rds[ohm]", PADDR(Rds),PT_DESCRIPTION,"d-axis resistance - single-phase model",
-			PT_double, "Rqs[ohm]", PADDR(Rqs),PT_DESCRIPTION,"q-asis resistance - single-phase model",
+			PT_double, "Rds[pu]", PADDR(Rds),PT_DESCRIPTION,"d-axis resistance - single-phase model",
+			PT_double, "Rqs[pu]", PADDR(Rqs),PT_DESCRIPTION,"q-asis resistance - single-phase model",
 			PT_double, "Rs[ohm]", PADDR(Rs),PT_DESCRIPTION,"stator resistance - three-phase model",
-			PT_double, "Rr[ohm]", PADDR(Rr),PT_DESCRIPTION,"rotor resistance",
-			PT_double, "Xm[ohm]", PADDR(Xm),PT_DESCRIPTION,"magnetizing reactance",
-			PT_double, "Xr[ohm]", PADDR(Xr),PT_DESCRIPTION,"rotor reactance",
+			PT_double, "Rr", PADDR(Rr),PT_DESCRIPTION,"rotor resistance - pu for SPIM, ohm for TPIM",
+			PT_double, "Xm", PADDR(Xm),PT_DESCRIPTION,"magnetizing reactance - pu for SPIM, ohm for TPIM",
+			PT_double, "Xr", PADDR(Xr),PT_DESCRIPTION,"rotor reactance - pu for SPIM, ohm for TPIM",
 			PT_double, "Xs[ohm]", PADDR(Xs),PT_DESCRIPTION,"stator leakage reactance - three-phase model",
-			PT_double, "Xc_run[ohm]", PADDR(Xc1),PT_DESCRIPTION,"running capacitor reactance - single-phase model",
-			PT_double, "Xc_start[ohm]", PADDR(Xc2),PT_DESCRIPTION,"starting capacitor reactance - single-phase model",
-			PT_double, "Xd_prime[ohm]", PADDR(Xd_prime),PT_DESCRIPTION,"d-axis reactance - single-phase model",
-			PT_double, "Xq_prime[ohm]", PADDR(Xq_prime),PT_DESCRIPTION,"q-axis reactance - single-phase model",
+			PT_double, "Xc_run[pu]", PADDR(Xc1),PT_DESCRIPTION,"running capacitor reactance - single-phase model",
+			PT_double, "Xc_start[pu]", PADDR(Xc2),PT_DESCRIPTION,"starting capacitor reactance - single-phase model",
+			PT_double, "Xd_prime[pu]", PADDR(Xd_prime),PT_DESCRIPTION,"d-axis reactance - single-phase model",
+			PT_double, "Xq_prime[pu]", PADDR(Xq_prime),PT_DESCRIPTION,"q-axis reactance - single-phase model",
 			PT_double, "A_sat", PADDR(Asat),PT_DESCRIPTION,"flux saturation parameter, A - single-phase model",
 			PT_double, "b_sat", PADDR(bsat),PT_DESCRIPTION,"flux saturation parameter, b - single-phase model",
 			PT_double, "H[s]", PADDR(H),PT_DESCRIPTION,"inertia constant",
@@ -76,7 +76,7 @@ motor::motor(MODULE *mod):node(mod)
 
 			//Reconcile torque and speed, primarily
 			PT_double, "mechanical_torque[pu]", PADDR(Tmech),PT_DESCRIPTION,"mechanical torque applied to the motor",
-			PT_double, "mechanical_torque_state_var[pu]", PADDR(Tmech_eff),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"Internal state variable torque - three-phase model",
+			PT_double, "mechanical_torque_state_var[pu]", PADDR(Tmech_eff),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"Internal state variable torque",
 			PT_int32, "iteration_count", PADDR(iteration_count),PT_DESCRIPTION,"maximum number of iterations for steady state model",
 			PT_double, "delta_mode_voltage_trigger[%]", PADDR(DM_volt_trig_per),PT_DESCRIPTION,"percentage voltage of nominal when delta mode is triggered",
 			PT_double, "delta_mode_rotor_speed_trigger[%]", PADDR(DM_speed_trig_per),PT_DESCRIPTION,"percentage speed of nominal when delta mode is triggered",
@@ -84,6 +84,14 @@ motor::motor(MODULE *mod):node(mod)
 			PT_double, "delta_mode_rotor_speed_exit[%]", PADDR(DM_speed_exit_per),PT_DESCRIPTION,"percentage speed of nominal to exit delta mode",
 			PT_double, "maximum_speed_error", PADDR(speed_error),PT_DESCRIPTION,"maximum speed error for transitioning modes",
 			PT_double, "rotor_speed[rad/s]", PADDR(wr),PT_DESCRIPTION,"rotor speed",
+			// Below added by Zhigang Chu
+			PT_double, "rotor_angle[rad]", PADDR(theta),PT_DESCRIPTION,"rotor angle",
+			PT_double, "avRatio", PADDR(avRatio),PT_DESCRIPTION,"Ratio between angle dependent load coefficient and speed dependent one",
+			PT_double, "time_delay_SPIM_T[s]", PADDR(t_DLD),PT_DESCRIPTION,"Time delay before triangular torque starts",
+			PT_double, "R_stall [pu]", PADDR(R_stall),PT_DESCRIPTION,"Stall resistance of SPIM",
+			PT_double, "temperature_SPIM", PADDR(temperature_SPIM),PT_DESCRIPTION, "temperature for SPIM",
+			PT_double, "Tth", PADDR(Tth),PT_DESCRIPTION,"SPIM thermal time constant",
+			// Above added by Zhigang Chu
 			PT_enumeration,"motor_status",PADDR(motor_status),PT_DESCRIPTION,"the current status of the motor",
 				PT_KEYWORD,"RUNNING",(enumeration)statusRUNNING,
 				PT_KEYWORD,"STALLED",(enumeration)statusSTALLED,
@@ -156,7 +164,12 @@ motor::motor(MODULE *mod):node(mod)
 				PT_KEYWORD,"TPIM_A",(enumeration)TPIM_A,
 				PT_KEYWORD,"TPIM_B",(enumeration)TPIM_B,
 				PT_KEYWORD,"TPIM_C",(enumeration)TPIM_C,
-			
+
+			PT_enumeration,"SPIM_type",PADDR(SPIM_type),PT_DESCRIPTION,"type of the single phase motors (C: constant torque, S: speed dependent torque)",
+				PT_KEYWORD,"SPIM_C",(enumeration)SPIM_C,
+				PT_KEYWORD,"SPIM_S",(enumeration)SPIM_S,
+				PT_KEYWORD,"SPIM_T",(enumeration)SPIM_T,
+
 			PT_enumeration,"Protection_model",PADDR(motor_protection_type_mode),PT_DESCRIPTION,"Determine the protection model to utilize",
 				PT_KEYWORD,"SIMPLE",(enumeration)PROT_MODE_SIMPLE,
 				PT_KEYWORD,"ADVANCED",(enumeration)PROT_MODE_ADVANCED,
@@ -189,7 +202,7 @@ int motor::create()
 	motor_trip = 0;  // share the variable with TPIM
 	Pbase = -999;
 	n = 1.22;              
-	Rds =0.0365;           
+	Rds = 0.0365;           
 	Rqs = 0.0729;          
 	Rr =-999;
 	Xm=-999;
@@ -202,7 +215,7 @@ int motor::create()
 	Asat = 5.6;
 	H=-999;
 	Jm=-999;
-	To_prime =0.1212;   
+	To_prime = 0.1212;
 	trip_time = 10;        
 	reconnect_time = 300;
 	iteration_count = 1000;  // share the variable with TPIM
@@ -227,6 +240,7 @@ int motor::create()
     If = complex(0.0,0.0);
     Ib = complex(0.0,0.0);
     Is = complex(0.0,0.0);
+    Is_prev = complex(-999.9,-999.9); // Initialize Is to avoid temperature initialization before current calculation
     motor_elec_power = complex(0.0,0.0);
     Telec = 0; 
     wr = 0;
@@ -301,8 +315,17 @@ int motor::create()
 	emsReconnect = false;
 
 	TPIM_type = TPIM_A; // default to motor A
+	SPIM_type = SPIM_C; // default to constant torque single phase motor
 
 	motor_protection_type_mode = PROT_MODE_SIMPLE;	//By default, the simplified/original protection model is used
+
+	// Additional parameters - Zhigang Chu
+	theta = -999;
+	t_DLD = -999;
+	avRatio = -999;
+	R_stall = -999;
+	temperature_SPIM = 0;
+	Tth = -999;
 
 	return result;
 }
@@ -508,8 +531,9 @@ int motor::init(OBJECT *parent)
 		Ibase = Pbase/nominal_voltage/3.0;
 	}
 
-
 	cap_run_speed = (cap_run_speed_percentage*wbase)/100;
+
+	//Deltamode trigger values and exit values
 	DM_volt_trig = (DM_volt_trig_per)/100;
 	DM_speed_trig = (DM_speed_trig_per*wbase)/100;
 	DM_volt_exit = (DM_volt_exit_per)/100;
@@ -531,7 +555,28 @@ int motor::init(OBJECT *parent)
 	}
 
 	wr_pu_prev = wr_pu;
-    
+
+	// See if any overrides were put in place - otherwise, use default values - Added by Zhigang Chu
+	if (theta == -999) {
+		theta = 0; // Starts from angle 0 by default
+	}
+
+	if (t_DLD == -999) {
+		t_DLD = 0.2; // Wait for some time, and then start triangular torque. 0.2s by default
+	}
+
+	if (avRatio == -999) {
+		avRatio = 1.333; // By default, Tmech = 6, Tav = 8 = Tmech*avRatio
+	}
+
+	if (R_stall == -999) {
+		R_stall = 0.124; // Default stalling resistance
+	}
+
+	if (Tth == -999) {
+		Tth = 10; // Default thermal time constant
+	}
+	
     // Checking contactor open and close min and max voltages
     if (contactor_open_Vmin > contactor_close_Vmax){
         GL_THROW("motor:%s -- contactor_open_Vmin must be less or equal to than contactor_close_Vmax",(obj->name ? obj->name : "Unnamed"));
@@ -604,7 +649,7 @@ int motor::init(OBJECT *parent)
 			//Check to see if it worked
 			if (overLoadTimerList == NULL || overLoadTimerList_prev == NULL)
 			{
-				GL_THROW("motor:%s: failed to allocate array for tracking relay trip timers", (obj->name ? obj->name : "Unnamed"));
+				GL_THROW("motor:%s: failed to allocate array for tracking overload trip timers", (obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				While attempting to allocate an array used to track relay trip timers,
 				an error occurred.  Please try again.  If the error persists, please submit your code and a bug
@@ -626,38 +671,81 @@ int motor::init(OBJECT *parent)
     // Thermal protection
 	rowNum = thermalProtectionTrip.get_rows();
 	colNum = thermalProtectionTrip.get_cols();
-    if (rowNum != 2 && rowNum != 0){
-        GL_THROW("motor:%s -- Volt-time curve of thermal protection must have 2 rows, one is for voltage, one is for time",(obj->name ? obj->name : "Unnamed"));
-    }
-    if (colNum > 0) {
-    	//Check to see if we're allocated first
-		if (thermalTimerList == NULL)
-		{
-			//Allocate it - one for each bus
-			thermalTimerList = (double *)gl_malloc(colNum*sizeof(double));
-			thermalTimerList_prev = (double *)gl_malloc(colNum*sizeof(double));
+	// Distinguish between SPIM and TPIM, using different protection scheme
+	if (motor_op_mode == modeTPIM) {
+		if (rowNum != 2 && rowNum != 0){
+		        GL_THROW("motor:%s -- Volt-time curve of thermal protection must have 2 rows, one is for voltage, one is for time",(obj->name ? obj->name : "Unnamed"));
+		    }
 
-			//Check to see if it worked
-			if (thermalTimerList == NULL || thermalTimerList_prev == NULL)
+		    if (colNum > 0) {
+		    	//Check to see if we're allocated first
+				if (thermalTimerList == NULL)
+				{
+					//Allocate it - one for each bus
+					thermalTimerList = (double *)gl_malloc(colNum*sizeof(double));
+					thermalTimerList_prev = (double *)gl_malloc(colNum*sizeof(double));
+
+					//Check to see if it worked
+					if (thermalTimerList == NULL || thermalTimerList_prev == NULL)
+					{
+						GL_THROW("motor:%s: failed to allocate array for tracking thermal trip timers", (obj->name ? obj->name : "Unnamed"));
+						/*  TROUBLESHOOT
+						While attempting to allocate an array used to track relay trip timers,
+						an error occurred.  Please try again.  If the error persists, please submit your code and a bug
+						report via the ticketing system.
+						*/
+					}
+				}
+
+				//Zero it
+				for (int i = 0; i < colNum; i++)
+				{
+					thermalTimerList[i] = 0.0;	// Starts with 0 timer
+					thermalTimerList_prev[i] = 0.0;
+				}
+
+		    	hasThermalProtection = true;
+		    }
+	}
+	else { // SPIM use temperature to determine thermal protection
+		if (rowNum != 1 && rowNum != 0){
+			GL_THROW("motor:%s -- SPIM thermal protection must have only one row",(obj->name ? obj->name : "Unnamed"));
+		}
+
+		if (colNum != 1 && colNum != 0){
+			GL_THROW("motor:%s -- SPIM thermal protection must have only one column",(obj->name ? obj->name : "Unnamed"));
+		}
+
+		if (colNum > 0) {
+			//Check to see if we're allocated first
+			if (thermalTimerList == NULL)
 			{
-				GL_THROW("motor:%s: failed to allocate array for tracking relay trip timers", (obj->name ? obj->name : "Unnamed"));
-				/*  TROUBLESHOOT
-				While attempting to allocate an array used to track relay trip timers,
-				an error occurred.  Please try again.  If the error persists, please submit your code and a bug
-				report via the ticketing system.
-				*/
+				//Allocate it - one for each bus
+				thermalTimerList = (double *)gl_malloc(colNum*sizeof(double));
+				thermalTimerList_prev = (double *)gl_malloc(colNum*sizeof(double));
+
+				//Check to see if it worked
+				if (thermalTimerList == NULL || thermalTimerList_prev == NULL)
+				{
+					GL_THROW("motor:%s: failed to allocate array for tracking thermal trip timers", (obj->name ? obj->name : "Unnamed"));
+					/*  TROUBLESHOOT
+					While attempting to allocate an array used to track relay trip timers,
+					an error occurred.  Please try again.  If the error persists, please submit your code and a bug
+					report via the ticketing system.
+					 */
+				}
 			}
-		}
 
-		//Zero it
-		for (int i = 0; i < colNum; i++)
-		{
-			thermalTimerList[i] = 0.0;	// Starts with 0 timer
-			thermalTimerList_prev[i] = 0.0;
-		}
+			//Zero it
+			for (int i = 0; i < colNum; i++)
+			{
+				thermalTimerList[i] = 0.0;	// Starts with 0 timer
+				thermalTimerList_prev[i] = 0.0;
+			}
 
-    	hasThermalProtection = true;
-    }
+			hasThermalProtection = true;
+		}
+	}
 
     // Contactor protection
 	rowNum = contactorProtectionTrip.get_rows();
@@ -665,10 +753,12 @@ int motor::init(OBJECT *parent)
     if (rowNum != 2 && rowNum != 0){
         GL_THROW("motor:%s -- Volt-time curve of contactor protection must have 2 rows, one is for voltage, one is for time",(obj->name ? obj->name : "Unnamed"));
     }
-    if (colNum > 1 ){
+    
+	if (colNum > 1 ){
         GL_THROW("motor:%s -- Volt-time curve of contactor protection must have only one volt-time point",(obj->name ? obj->name : "Unnamed"));
     }
-    if (colNum > 0) {
+    
+	if (colNum > 0) {
     	//Check to see if we're allocated first
 		if (contactorTimerList == NULL)
 		{
@@ -679,7 +769,7 @@ int motor::init(OBJECT *parent)
 			//Check to see if it worked
 			if (contactorTimerList == NULL || contactorTimerList_prev == NULL)
 			{
-				GL_THROW("motor:%s: failed to allocate array for tracking relay trip timers", (obj->name ? obj->name : "Unnamed"));
+				GL_THROW("motor:%s: failed to allocate array for tracking contactor trip timers", (obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				While attempting to allocate an array used to track relay trip timers,
 				an error occurred.  Please try again.  If the error persists, please submit your code and a bug
@@ -715,7 +805,7 @@ int motor::init(OBJECT *parent)
 			//Check to see if it worked
 			if (emsTimerList == NULL || emsTimerList_prev == NULL)
 			{
-				GL_THROW("motor:%s: failed to allocate array for tracking relay trip timers", (obj->name ? obj->name : "Unnamed"));
+				GL_THROW("motor:%s: failed to allocate array for tracking EMS trip timers", (obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				While attempting to allocate an array used to track relay trip timers,
 				an error occurred.  Please try again.  If the error persists, please submit your code and a bug
@@ -879,12 +969,12 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 
 				//Set off
-				SPIMStateOFF();
+				SPIMStateOFF(0.0);
 			}
 			else	//"Three-phase" connection
 			{
-				pre_rotated_current[connected_phase] = 0;
-				SPIMStateOFF();
+				pre_rotated_current[connected_phase] = complex(0.0,0.0);
+				SPIMStateOFF(0.0);
 			}
 		}
 
@@ -1025,6 +1115,9 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 		//Call presync-equivalent items
 		NR_node_presync_fxn(0);
 
+		//Update timing variable associated with triangle torque (needs to be here?)
+		t_DLD = curr_delta_time + t_DLD;
+		
 		if (fmeas_type != FM_NONE) {
 			//Initialize dynamics
 			init_freq_dynamics();
@@ -1087,7 +1180,7 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 			}
 
 			// update protection
-			if (delta_time>0) {
+			if (delta_time > 0) {
 				if (motor_protection_type_mode == PROT_MODE_SIMPLE)
 				{
 					//Use older protection model
@@ -1100,9 +1193,9 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 				}
 			}
 
-			if (motor_override == overrideON && ws > 1 && Vs.Mag() > 0.1 && motor_trip == 0) { // motor is currently connected and grid conditions are not "collapsed"
+			if (motor_override == overrideON && ws > 1  && motor_trip == 0) { // motor is currently connected and grid conditions are not "collapsed"
 				// run the dynamic solver
-				SPIMDynamic(curr_delta_time, deltaTime);
+				SPIMDynamic(deltaTime);
 
 				// update current draw
 				if (triplex_connected == true)
@@ -1144,12 +1237,12 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 					}
 
 					//Set off
-					SPIMStateOFF();
+					SPIMStateOFF(deltaTime);
 				}
 				else	//"Three-phase" connection
 				{
 					pre_rotated_current[connected_phase] = 0;
-					SPIMStateOFF();
+					SPIMStateOFF(deltaTime);
 				}
 			}
 
@@ -1238,7 +1331,8 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 		if (motor_op_mode == modeSPIM)
 		{
 			// figure out if we need to exit delta mode on the next pass
-			if ((Vs.Mag() > DM_volt_exit) && (wr > DM_speed_exit))
+			if ((Vs.Mag() > DM_volt_exit) && (wr > DM_speed_exit)
+					&& ((fabs(wr_pu-wr_pu_prev)*wbase) > speed_error))
 			{
 				// we return to steady state if the voltage and speed is good
 				return SM_EVENT;
@@ -1382,10 +1476,11 @@ void motor::SPIMupdateVars() {
 	Ib_prev = Ib;
 	Is_prev = Is;
 	motor_elec_power_prev = motor_elec_power;
+	psi_sat_prev = psi_sat;
+
 	reconnect_prev = reconnect;
 	motor_trip_prev = motor_trip;
 	trip_prev = trip;
-	psi_sat_prev = psi_sat;
 
 	// Update timer for protection
 	if (hasRelayProtection == true) {
@@ -1538,10 +1633,11 @@ void motor::SPIMreinitializeVars() {
 	Ib = Ib_prev;
 	Is = Is_prev;
 	motor_elec_power = motor_elec_power_prev;
+	psi_sat = psi_sat_prev;
+
 	reconnect = reconnect_prev;
 	motor_trip = motor_trip_prev;
 	trip = trip_prev;
-	psi_sat = psi_sat_prev;
 
 	// Update timer for protection
 	if (hasRelayProtection == true) {
@@ -1677,7 +1773,7 @@ void motor::TPIMreinitializeVars() {
 
 // function to update the status of the motor
 void motor::SPIMUpdateMotorStatus() {
-	if (motor_override == overrideOFF || ws <= 1 || Vs.Mag() <= 0.1)
+	if ((motor_override == overrideOFF) || (ws <= 1) || (Vs.Mag() <= 0.1))
 	{
 		motor_status = statusOFF;
 	}
@@ -1847,7 +1943,12 @@ void motor::UpdateProtection(double delta_time) {
 			motorCheckTrip(delta_time, &(overLoadProtectionTrip), overLoadTimerList, overLoadTrip);
 		}
 		if (hasThermalProtection == true) {
-			motorCheckTrip(delta_time, &(thermalProtectionTrip), thermalTimerList, thermalTrip);
+			if (motor_op_mode == modeSPIM) {
+				SPIM_CheckThermalTrip(delta_time, &thermalProtectionTrip,thermalTrip);
+			}
+			else {
+				motorCheckTrip(delta_time, &(thermalProtectionTrip), thermalTimerList, thermalTrip);
+			}
 		}
 		if (hasContactorProtection == true) {
 			motorCheckTrip(delta_time, &(contactorProtectionTrip), contactorTimerList, contactorTrip);
@@ -1969,7 +2070,11 @@ void motor::UpdateProtection(double delta_time) {
 }
 
 // function to ensure that internal model states are zeros when the motor is OFF
-void motor::SPIMStateOFF() {
+// Should let speed and mechanical torque change slowly -- Zhigang Chu, 07/24/2018
+void motor::SPIMStateOFF(double dTime) {
+	double Tmech_update_val;
+	double position_var;
+
 	psi_b = complex(0.0,0.0);
     psi_f = complex(0.0,0.0);
     psi_dr = complex(0.0,0.0); 
@@ -1981,8 +2086,52 @@ void motor::SPIMStateOFF() {
     Is = complex(0.0,0.0);
     motor_elec_power = complex(0.0,0.0);
     Telec = 0.0; 
-    wr = 0.0;
-	wr_pu = 0.0;
+
+    if (dTime != 0){ // Only update these values if delta time has proceeded
+        // Change torque according to SPIM_type
+        if (SPIM_type == SPIM_C) { // Constant torque
+    		Tmech_eff = Tmech;
+    	}
+    	else if (SPIM_type == SPIM_S) { // Speed dependent torque
+    		Tmech_eff = wr_pu * wr_pu *Tmech;
+    	}
+    	else { // Must be triangular torque
+    		Tmech_eff = wr_pu * wr_pu *Tmech;
+    		T_av = Tmech * avRatio;
+    		double PHAME = PI; // Initial phase angle
+    		double stroke = PI/2.0;
+    		double twostr = 2.0*stroke;
+    		position_var = fmod((theta + PHAME), stroke);
+    		if (curr_delta_time >= t_DLD) {
+    			if (fmod((theta + PHAME), twostr) < stroke) {
+    				Tmech_update_val = T_av + T_av*(position_var - stroke/2.0)*2.0/stroke;
+    			}
+    			else {
+    				Tmech_update_val = -T_av + T_av*(3.0*stroke/2.0 - position_var)*2.0/stroke;
+    			}
+    		}
+    		else {
+    			Tmech_update_val = 0;
+    		}
+
+    		Tmech_eff = Tmech_eff + Tmech_update_val;
+    	}
+
+        // speed equation
+    	wr = wr + (((Telec-Tmech_eff)*wbase)/(2*H))*dTime;
+
+    	// speeds below 0 should be avoided
+    	if (wr < 0) {
+    		wr = 0;
+    	}
+
+    	//Get the per-unit version
+    	wr_pu = wr / wbase;
+
+    	// Angle equation
+    	theta = theta + wr*dTime;
+    	theta = fmod(theta, (2.0*PI));
+    }
 }
 
 //TPIM "zero-stating" item
@@ -2004,6 +2153,8 @@ void motor::TPIMStateOFF() {
 
 // Function to calculate the solution to the steady state SPIM model
 void motor::SPIMSteadyState(TIMESTAMP t1) {
+	double Tmech_update_val;
+	double curr_pos_var;
 	double wr_delta = 1;
     psi_sat = 1;
 	double psi = -1;
@@ -2050,8 +2201,37 @@ void motor::SPIMSteadyState(TIMESTAMP t1) {
         //electrical torque 
 		Telec = (Xm/Xr)*2.0*(If.Im()*psi_f.Re() - If.Re()*psi_f.Im() - Ib.Im()*psi_b.Re() + Ib.Re()*psi_b.Im()); 
 
+		// Change torque according to SPIM_type
+			if (SPIM_type == SPIM_C) { // Constant torque
+				Tmech_eff = Tmech;
+			}
+			else if (SPIM_type == SPIM_S) { // Speed dependent torque
+				Tmech_eff = wr_pu * wr_pu *Tmech;
+			}
+			else { // Must be triangular torque
+				Tmech_eff = wr_pu * wr_pu *Tmech;
+				T_av = Tmech * avRatio;
+				double PHAME = PI; // Initial phase angle
+				double stroke = PI/2.0;
+				double twostr = 2.0*stroke;
+				curr_pos_var = fmod((theta + PHAME), stroke);
+				if (curr_delta_time >= t_DLD) {
+					if (fmod((theta + PHAME), twostr) < stroke) {
+						Tmech_update_val = T_av + T_av*(curr_pos_var - stroke/2.0)*2.0/stroke;
+					}
+					else {
+						Tmech_update_val = -T_av + T_av*(3.0*stroke/2.0 - curr_pos_var)*2.0/stroke;
+					}
+				}
+				else {
+					Tmech_update_val = 0;
+				}
+
+				Tmech_eff = Tmech_eff + Tmech_update_val;
+			}
+
         //calculate speed deviation 
-        wr_delta = Telec-Tmech;
+        wr_delta = Telec-Tmech_eff;
 
         //Calculate saturated flux
         psi = sqrt(pow(psi_f.Re(),2)+pow(psi_f.Im(),2)+pow(psi_b.Re(),2)+pow(psi_b.Im(),2));
@@ -2076,8 +2256,12 @@ void motor::SPIMSteadyState(TIMESTAMP t1) {
     psi_dr = psi_f + psi_b;
     psi_qr = complex(0.0,1.0)*psi_f + complex(0,-1)*psi_b;
     // system current and power equations
+    if (Is.Re() == -999.9 && Is.Im() == -999.9) {
+    	complex Is_init = (Ids + Iqs)*complex_exp(Vs.Arg());
+    	temperature_SPIM = Is_init.Mag() * Is_init.Mag() * R_stall;
+    }
     Is = (Ids + Iqs)*complex_exp(Vs.Arg());
-    motor_elec_power = (Vs*~Is) * Pbase;
+    motor_elec_power = (Vs * ~Is) * Pbase; // VA;
 }
 
 
@@ -2199,7 +2383,6 @@ void motor::TPIMSteadyState(TIMESTAMP t1) {
 				}
 
 			}  // End while
-
         } // End if TPIM is assumed running
         else // must be the TPIM stalled or otherwise not running
         {
@@ -2293,7 +2476,9 @@ void motor::TPIMSteadyState(TIMESTAMP t1) {
 }
 
 // Function to calculate the solution to the steady state SPIM model
-void motor::SPIMDynamic(double curr_delta_time, double dTime) {
+void motor::SPIMDynamic(double dTime) {
+	double Tmech_update_val;
+	double curr_pos_var;
 	double psi = -1;
 	double Xc = -1;
     
@@ -2332,21 +2517,60 @@ void motor::SPIMDynamic(double curr_delta_time, double dTime) {
 
 	// system current and power equations
 	Is = (Ids + Iqs)*complex_exp(Vs.Arg());
-	motor_elec_power = (Vs*~Is) * Pbase;
+	motor_elec_power = (Vs * ~Is) * Pbase; // VA;
+
+	// SPIM temperature integration
+	double dT_dt = (Is.Mag() * Is.Mag() * R_stall - temperature_SPIM) / Tth;
+	temperature_SPIM = temperature_SPIM + dT_dt * dTime;
 
     //electrical torque 
 	Telec = (Xm/Xr)*2*(If.Im()*psi_f.Re() - If.Re()*psi_f.Im() - Ib.Im()*psi_b.Re() + Ib.Re()*psi_b.Im()); 
 
-	// speed equation 
-	wr = wr + (((Telec-Tmech)*wbase)/(2*H))*dTime;
+	// Change torque according to SPIM_type
+	if (SPIM_type == SPIM_C) { // Constant torque
+		Tmech_eff = Tmech;
+	}
+	else if (SPIM_type == SPIM_S) { // Speed dependent torque
+		Tmech_eff = wr_pu * wr_pu *Tmech;
+	}
+	else { // Must be triangular torque
+		Tmech_eff = wr_pu * wr_pu *Tmech;
+		T_av = Tmech * avRatio;
+		double PHAME = PI; // Initial phase angle
+		double stroke = PI/2.0;
+		double twostr = 2.0*stroke;
+		curr_pos_var = fmod((theta + PHAME), stroke);
+		if (curr_delta_time >= t_DLD) {
+			if (fmod((theta + PHAME), twostr) < stroke) {
+				Tmech_update_val = T_av + T_av*(curr_pos_var - stroke/2.0)*2.0/stroke;
+			}
+			else {
+				Tmech_update_val = -T_av + T_av*(3.0*stroke/2.0 - curr_pos_var)*2.0/stroke;
+			}
+		}
+		else {
+			Tmech_update_val = 0;
+		}
 
-    // speeds below 0 should be avioded
-	if (wr < 0) {
-		wr = 0;
+		Tmech_eff = Tmech_eff + Tmech_update_val;
+	}
+
+	// speed equation 
+	wr = wr + (((Telec-Tmech_eff)*wbase)/(2*H))*dTime;
+
+    // speeds below 0 should be avoided
+	if (wr < 0.0) {
+		wr = 0.0;
 	}
 
 	//Get the per-unit version
 	wr_pu = wr / wbase;
+
+	//Update angle
+	theta = theta + wr*dTime;
+
+	//Make sure it is bound to a reasonable representation
+	theta = fmod(theta, (2.0*PI));
 }
 
 //Dynamic updates for TPIM
@@ -2381,12 +2605,6 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
 
     Vap = (Vas + alpha * Vbs + alpha * alpha * Vcs) / 3.0;
     Van = (Vas + alpha * alpha * Vbs + alpha * Vcs) / 3.0;
-
-	//*** Prior code - why was Tmech_eff only engaged if the rotor speed was 1 or higher?  Seems odd */
-	// if (wr_pu >= 1.0)
-	// {
-	// 	Tmech_eff = Tmech;
-	// }
 
 	if (TPIM_type == TPIM_A) {
 		Tmech_eff = Tmech;
@@ -2585,6 +2803,19 @@ void motor::motorCheckTrip(double delta_time, double_array* motorProtection, dou
 	return;
 }
 
+// Function to check thermal trip for SPIM
+void motor::SPIM_CheckThermalTrip(double delta_time, double_array* motorProtection, bool &tripStatus)
+{
+	double *threshT = motorProtection->get_addr(0,0); // Threshold temperature
+
+	// Check if the trip condition is met
+	if (temperature_SPIM >= *threshT) {
+		tripStatus = true;
+	}
+
+	return;
+}
+
 // Function to check whether reconnection is determined by each protection
 void motor::motorCheckReconnect(double delta_time, double_array* motorReconnection, double &reconnectTimer, bool &reconnectStatus)
 {
@@ -2619,6 +2850,9 @@ void motor::motorCheckReconnect(double delta_time, double_array* motorReconnecti
 		}
 	}
 
+	reconnect = reconnectTimer;
+	reconnect_time = *reconnectT;
+	
 	return;
 }
 
