@@ -11,6 +11,12 @@ ELSE ()
     SET(FNCS_CONNECTION "")
 ENDIF ()
 
+IF (HAVE_HELICS)
+    SET(HELICS_CONNECTION "helics_msg.cpp helics_msg.h")
+ELSE ()
+    SET(HELICS_CONNECTION "")
+ENDIF ()
+
 add_library(${PROJECT_NAME}
         connection/connection.cpp
         connection/connection.h
@@ -34,6 +40,7 @@ add_library(${PROJECT_NAME}
         connection/json.h
 
         ${FNCS_CONNECTION}
+		${HELICS_CONNECTION}
 
         connection/transport.cpp
         connection/transport.h

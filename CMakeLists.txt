@@ -361,7 +361,7 @@ if (HAVE_MYSQL)
 ENDIF ()
 
 if (HAVE_HELICS)
-    target_link_libraries(gridlabd ${GL_HELICS_LIBRARIES})
+    target_link_libraries(gridlabd HELICS::helics-shared)
 ENDIF ()
 
 if (HAVE_FNCS)
