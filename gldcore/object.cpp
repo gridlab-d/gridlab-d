@@ -34,6 +34,8 @@
 
 #ifdef WIN32
 #define isnan _isnan  /* map isnan to appropriate function under Windows */
+#else
+#include <unistd.h>
 #endif
 
 #include "object.h"
