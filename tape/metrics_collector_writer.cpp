@@ -146,18 +146,19 @@ int metrics_collector_writer::init(OBJECT *parent){
 	}
 
 	// Write seperate json files for meters, triplex_meters, inverters, capacitors, regulators, houses, feeders:
-	filename_billing_meter = m_billing_meter.c_str();
+
 	strcat(filename_billing_meter, filename);
-	filename_inverter = m_inverter.c_str();
+	strcat(filename_billing_meter, m_billing_meter.c_str());
 	strcat(filename_inverter, filename);
-	filename_capacitor = m_capacitor.c_str();
+	strcat(filename_inverter, m_inverter.c_str());
 	strcat(filename_capacitor, filename);
-	filename_regulator = m_regulator.c_str();
+	strcat(filename_capacitor, m_capacitor.c_str());
 	strcat(filename_regulator, filename);
-	filename_house = m_house.c_str();
+	strcat(filename_regulator, m_regulator.c_str());
 	strcat(filename_house, filename);
-	filename_feeder = m_feeder.c_str();
+	strcat(filename_house, m_house.c_str());
 	strcat(filename_feeder, filename);
+	strcat(filename_feeder, m_feeder.c_str());
 
 #ifdef HAVE_HDF5
 	//prepare dataset for HDF5 if needed

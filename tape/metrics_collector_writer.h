@@ -31,12 +31,12 @@ using namespace std;
 const string m_json("json");
 const string m_h5("h5");
 
-const string m_billing_meter("billing_meter_");
-const string m_inverter("inverter_");
-const string m_capacitor("capacitor_");
-const string m_regulator("regulator_");
-const string m_house("house_");
-const string m_feeder("substation_");
+const string m_billing_meter("billing_meter");
+const string m_inverter("inverter");
+const string m_capacitor("capacitor");
+const string m_regulator("regulator");
+const string m_house("house");
+const string m_feeder("substation");
 
 const string m_index("index");
 const string m_units("units");
