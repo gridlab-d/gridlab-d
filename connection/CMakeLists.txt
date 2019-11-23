@@ -6,15 +6,15 @@ include_directories(../third_party/jsonCpp)
 #SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I../third_party/jsonCpp -lwsock32 -lws2_32" )
 
 IF (HAVE_FNCS)
-    SET(FNCS_CONNECTION "connection/fncs_msg.cpp connection/fncs_msg.h")
+    SET(FNCS_CONNECTION connection/fncs_msg.cpp connection/fncs_msg.h)
 ELSE ()
-    SET(FNCS_CONNECTION "")
+    SET(FNCS_CONNECTION )
 ENDIF ()
 
 IF (HAVE_HELICS)
-    SET(HELICS_CONNECTION "helics_msg.cpp helics_msg.h")
+    SET(HELICS_CONNECTION connection/helics_msg.cpp connection/helics_msg.h)
 ELSE ()
-    SET(HELICS_CONNECTION "")
+    SET(HELICS_CONNECTION )
 ENDIF ()
 
 add_library(${PROJECT_NAME}
@@ -58,3 +58,8 @@ add_dependencies(${PROJECT_NAME} libjsoncpp)
 target_link_libraries(${PROJECT_NAME} libjsoncpp)
 
 target_link_libraries(${PROJECT_NAME} ${OS_SPECIFIC_LIBRARIES})
+
+if (HAVE_HELICS)
+target_link_libraries(${PROJECT_NAME} HELICS::helics-shared)
+target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_HELICS)
+endif()
