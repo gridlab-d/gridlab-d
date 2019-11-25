@@ -7,7 +7,6 @@ find_package(Git)
 #    message("git found: ${GIT_EXECUTABLE} in version     ${GIT_VERSION_STRING}")
 #endif (GIT_FOUND)
 
-SET(BUILD_FILE "/gldcore/build.h")
 SET(GIT_OUTPUT git_out_${CMAKE_BUILD_TYPE})
 
 EXECUTE_PROCESS(
@@ -96,6 +95,6 @@ ELSE ()
     SET(BRANCH "${GIT_COMMIT_HASH}:${GIT_BRANCH}:Modified")
 ENDIF ()
 
-MESSAGE("Updating ${CMAKE_CURRENT_SOURCE_DIR}${BUILD_FILE}: revision ${BUILD_NUM} (${BRANCH})")
+MESSAGE("Generating build.h: revision ${BUILD_NUM} (${BRANCH})")
 STRING(TIMESTAMP BUILD_YEAR "%Y")
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gldcore/build.h.in ${CMAKE_CURRENT_SOURCE_DIR}/gldcore/build.h @ONLY)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/gldcore/build.h.in ${CMAKE_CURRENT_BINARY_DIR}/headers/build.h @ONLY)

@@ -23,9 +23,10 @@ INCLUDE(CMakeScripts/CheckDependancies.cmake)
 INCLUDE(CMakeScripts/ExternalLibraries.cmake)
 INCLUDE(CMakeScripts/Build_number.cmake)
 
-configure_file(gldcore/cmake_config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/gldcore/config.h @ONLY)
-configure_file(gldcore/version.h.in ${CMAKE_CURRENT_SOURCE_DIR}/gldcore/version.h @ONLY)
+configure_file(gldcore/cmake_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/headers/config.h @ONLY)
+configure_file(gldcore/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/headers/version.h @ONLY)
 add_definitions(-DHAVE_CONFIG_H)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/headers)
 #include(CMakeScripts/ExternalLibraries.cmake)
 
 # use, i.e. don't skip the full RPATH for the build tree
@@ -86,7 +87,6 @@ SET(GL_MODULES
         glxengine
         )
 SET(HEADER_FILE_NAMES
-        ${GLDCORE_LOC}/build.h
         ${GLDCORE_LOC}/class.h
         ${GLDCORE_LOC}/complex.h
         ${GLDCORE_LOC}/debug.h
@@ -99,7 +99,9 @@ SET(HEADER_FILE_NAMES
         ${GLDCORE_LOC}/property.h
         ${GLDCORE_LOC}/schedule.h
         ${GLDCORE_LOC}/test.h
-        ${GLDCORE_LOC}/version.h
+
+        ${CMAKE_CURRENT_BINARY_DIR}/headers/build.h
+        ${CMAKE_CURRENT_BINARY_DIR}/headers/version.h
         )
 SET(GLD_SHARE
         ${GLDCORE_LOC}/tzinfo.txt
@@ -213,7 +215,6 @@ add_executable(gridlabd
         ${GLDCORE_LOC}/schedule.h
         ${GLDCORE_LOC}/aggregate.cpp
         ${GLDCORE_LOC}/aggregate.h
-        ${GLDCORE_LOC}/build.h
         ${GLDCORE_LOC}/class.cpp
         ${GLDCORE_LOC}/class.h
         ${GLDCORE_LOC}/cmdarg.cpp
@@ -223,7 +224,6 @@ add_executable(gridlabd
         ${GLDCORE_LOC}/compare.cpp
         ${GLDCORE_LOC}/compare.h
         ${GLDCORE_LOC}/complex.h
-        ${GLDCORE_LOC}/config.h
         ${GLDCORE_LOC}/console.h
         ${GLDCORE_LOC}/convert.cpp
         ${GLDCORE_LOC}/convert.h
@@ -329,9 +329,12 @@ add_executable(gridlabd
         ${GLDCORE_LOC}/validate.cpp
         ${GLDCORE_LOC}/validate.h
         ${GLDCORE_LOC}/version.cpp
-        ${GLDCORE_LOC}/version.h
         #        ${GLDCORE_LOC}/xcore.cpp
         #        ${GLDCORE_LOC}/xcore.h
+
+        ${CMAKE_CURRENT_BINARY_DIR}/headers/version.h
+        ${CMAKE_CURRENT_BINARY_DIR}/headers/build.h
+        ${CMAKE_CURRENT_BINARY_DIR}/headers/config.h
         )
 
 mark_as_advanced(FORCE
