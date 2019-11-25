@@ -37,6 +37,8 @@
 #define finite _finite
 #include <process.h>
 #define getpid _getpid
+#else
+#include <unistd.h>
 #endif
 
 #ifdef __MINGW32__

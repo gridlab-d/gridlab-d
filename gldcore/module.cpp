@@ -1701,6 +1701,8 @@ extern int kill(pid_t,int); /* defined in kill.c */
 #ifdef MACOSX
 #include <mach/mach_init.h>
 #include <mach/thread_policy.h>
+#include <mach/thread_act.h>
+
 struct thread_affinity_policy policy;
 #else /* linux */
 #include <sched.h>
@@ -2087,7 +2089,7 @@ MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 	if ( global_threadcount==1 )
 	{
 		policy.affinity_tag = cpu;
-		if ( thread_policy_set(mach_thread_self(), THREAD_AFFINITY_POLICY, &policy, THREAD_AFFINITY_POLICY_COUNT)!=KERN_SUCCESS )
+		if (thread_policy_set(mach_thread_self(), THREAD_AFFINITY_POLICY, reinterpret_cast<thread_policy_t>(&policy), THREAD_AFFINITY_POLICY_COUNT) != KERN_SUCCESS )
 			output_warning("unable to set thread policy: %s", strerror(errno));
 	}
 #elif defined DYN_PROC_AFFINITY

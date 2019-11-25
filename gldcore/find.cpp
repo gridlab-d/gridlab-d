@@ -14,6 +14,8 @@
 #if defined(WIN32) && !defined(__MINGW__)
 #include <io.h>
 #	define snprintf _snprintf
+#else
+#include <unistd.h>
 #endif
 #include "globals.h"
 #include "output.h"
