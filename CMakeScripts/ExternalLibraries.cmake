@@ -25,8 +25,6 @@ OPTION(USE_OPENMP "Enable building with OpenMP" OFF)
 
 SET(GL_ZeroMQ_DIR ${ZeroMQ_DIR} CACHE PATH "ZeroMQ library path used by Gridlab-d build process.")
 SET(GL_CZMQ_DIR ${CZMQ_DIR} CACHE PATH "CZMQ library path used by Gridlab-d build process.")
-SET(GL_Boost_DIR ${Boost_DIR} CACHE PATH "Boost library path used by Gridlab-d build process.")
-SET(GL_HELICS_DIR ${HELICS_DIR} CACHE PATH "HELICS library path used by Gridlab-d build process.")
 SET(GL_FNCS_DIR ${FNCS_DIR} CACHE PATH "FNCS library path used by Gridlab-d build process.")
 
 # Configure MySQL to be configured and linked if available.
@@ -38,7 +36,7 @@ IF (USE_MYSQL)
 ENDIF ()
 
 IF (USE_HELICS)
-   FIND_PACKAGE(HELICS 2.3 REQUIRED CONFIG)
+   FIND_PACKAGE(HELICS 2.3 REQUIRED CONFIG HINTS ${HELICS_DIR})
    SET(HAVE_HELICS TRUE)
 ENDIF (USE_HELICS)
 
@@ -77,7 +75,6 @@ mark_as_advanced(FORCE
         HAVE_HELICS
         HAVE_FNCS
         GL_ZMQ_LIBRARY
-        GL_Boost_LIBRARIES
         GL_FNCS_LIBRARIES
         GL_FNCS_LIBRARY
         GL_CZMQ_LIBRARY

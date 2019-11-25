@@ -45,22 +45,18 @@ CMAKE_INSTALL_PREFIX=/usr/local
 Empty defaults to 'Debug'
 CMAKE_BUILD_TYPE
 
-// Enable building with FNCS
-USE_FNCS=OFF
+### Enable building with FNCS
+set USE_FNCS=ON
     // To enable FNCS, the following path variables must be set to the install paths of their respective applications:
     GL_ZeroMQ_DIR
     GL_CZMQ_DIR
     GL_FNCS_DIR
     
-// Enable building with HELICS
-USE_HELIC=OFF
-    // To enable HELICS, the following path variables must be set to the install paths of their respective applications:
-    GL_ZeroMQ_DIR
-    GL_HELICS_DIR
-    // If a non-system standard version of Boost is desired, the following variable must also be set:
-    GL_Boost_DIR
+### Enable building with HELICS
+set `USE_HELIC=ON` (default is `OFF`)
+    if HELICS is in a custom path set `HELICS_DIR` to the install location
 
-// Enable building with MySQL
+### Enable building with MySQL
 USE_MYSQL=OFF
     // These fields will be automatically populated if MySQL is detected. They can be manually specified if MySQL is installed in a non-standard location.
     MYSQL_INCLUDE_DIRECTORIES
