@@ -504,6 +504,10 @@ int metrics_collector::init(OBJECT *parent){
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
 			*/
 		}
+		for (curr_index=0; curr_index<vector_length; curr_index++)
+		{
+			wh_load_array[curr_index] = 0.0;
+		}
 	}
 	// If parent is inverter
 	else if (strcmp(parent_string, "inverter") == 0) {

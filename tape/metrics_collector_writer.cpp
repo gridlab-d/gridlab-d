@@ -805,11 +805,19 @@ void metrics_collector_writer::hdfMetadataWrite(Json::Value& meta, char* time_st
 	{	error.printErrorStack();	}
 }
 
+std::vector<std::string> sortIds(std::vector<std::string> v)
+{
+	std::sort(v.begin(), v.end(), [](std::string a, std::string b) {
+			return std::stoi(a) < std::stoi(b);
+		});
+	return v;
+};
+
 void metrics_collector_writer::hdfBillingMeterWrite (size_t objs, Json::Value& metrics) {
 		std::vector <BillingMeter> tbl;
 		tbl.reserve(line_cnt*objs);
 		int idx = 0;
-		for (auto const& id : metrics.getMemberNames())  {
+		for (auto const& id : sortIds(metrics.getMemberNames()))  {
 			Json::Value name = metrics[id];
 			for (auto const& uid : name.getMemberNames())  {
 				tbl.push_back(BillingMeter());
@@ -857,7 +865,7 @@ void metrics_collector_writer::hdfHouseWrite (size_t objs, Json::Value& metrics)
 		std::vector <House> tbl;
 		tbl.reserve(line_cnt*objs);
 		int idx = 0;
-		for (auto const& id : metrics.getMemberNames())  {
+		for (auto const& id : sortIds(metrics.getMemberNames()))  {
 			Json::Value name = metrics[id];
 			for (auto const& uid : name.getMemberNames())  {
 				tbl.push_back(House());
@@ -875,9 +883,9 @@ void metrics_collector_writer::hdfHouseWrite (size_t objs, Json::Value& metrics)
 				tbl[idx].air_temperature_avg = mtr[HSE_AVG_AIR_TEMP].asDouble();
 				tbl[idx].air_temperature_deviation_cooling = mtr[HSE_AVG_DEV_COOLING].asDouble();
 				tbl[idx].air_temperature_deviation_heating = mtr[HSE_AVG_DEV_HEATING].asDouble();
-				tbl[idx].waterheater_load_min = mtr[WH_MIN_ACTUAL_LOAD].asDouble();
-				tbl[idx].waterheater_load_max = mtr[WH_MAX_ACTUAL_LOAD].asDouble();
-				tbl[idx].waterheater_load_avg = mtr[WH_AVG_ACTUAL_LOAD].asDouble();
+				tbl[idx].waterheater_load_min = mtr[HSE_AVG_DEV_HEATING + 1].asDouble();
+				tbl[idx].waterheater_load_max = mtr[HSE_AVG_DEV_HEATING + 2].asDouble();
+				tbl[idx].waterheater_load_avg = mtr[HSE_AVG_DEV_HEATING + 3].asDouble();
 				idx++;
 			}
 		}
@@ -889,7 +897,7 @@ void metrics_collector_writer::hdfInverterWrite (size_t objs, Json::Value& metri
 		std::vector <Inverter> tbl;
 		tbl.reserve(line_cnt*objs);
 		int idx = 0;
-		for (auto const& id : metrics.getMemberNames())  {
+		for (auto const& id : sortIds(metrics.getMemberNames()))  {
 			Json::Value name = metrics[id];
 			for (auto const& uid : name.getMemberNames())  {
 				tbl.push_back(Inverter());
@@ -913,7 +921,7 @@ void metrics_collector_writer::hdfCapacitorWrite (size_t objs, Json::Value& metr
 		std::vector <Capacitor> tbl;
 		tbl.reserve(line_cnt*objs);
 		int idx = 0;
-		for (auto const& id : metrics.getMemberNames())  {
+		for (auto const& id : sortIds(metrics.getMemberNames()))  {
 			Json::Value name = metrics[id];
 			for (auto const& uid : name.getMemberNames())  {
 				tbl.push_back(Capacitor());
@@ -932,7 +940,7 @@ void metrics_collector_writer::hdfRegulatorWrite (size_t objs, Json::Value& metr
 		std::vector <Regulator> tbl;
 		tbl.reserve(line_cnt*objs);
 		int idx = 0;
-		for (auto const& id : metrics.getMemberNames())  {
+		for (auto const& id : sortIds(metrics.getMemberNames()))  {
 			Json::Value name = metrics[id];
 			for (auto const& uid : name.getMemberNames())  {
 				tbl.push_back(Regulator());
@@ -951,7 +959,7 @@ void metrics_collector_writer::hdfFeederWrite (size_t objs, Json::Value& metrics
 		std::vector <Feeder> tbl;
 		tbl.reserve(line_cnt*objs);
 		int idx = 0;
-		for (auto const& id : metrics.getMemberNames())  {
+		for (auto const& id : sortIds(metrics.getMemberNames()))  {
 			Json::Value name = metrics[id];
 			for (auto const& uid : name.getMemberNames())  {
 				tbl.push_back(Feeder());

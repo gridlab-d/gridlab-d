@@ -17,6 +17,7 @@
 #include <fstream>
 #include <cstring>
 #include <string.h>
+#include <algorithm>
 
 #ifdef HAVE_HDF5
 #include <memory>
@@ -177,7 +178,7 @@ typedef struct _Inverter {
 	double reactive_power_avg;
 } Inverter;
 
-typedef struct _Capaitor {
+typedef struct _Capacitor {
     int time; 
     char name[MAX_METRIC_NAME_LENGTH]; 
 	double operation_count;
