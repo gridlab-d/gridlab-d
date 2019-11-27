@@ -2963,7 +2963,7 @@ void link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 				*/
 
 				//Add in the value
-				*over_limit_value = (temp_power_check - (power_out.Mag()/1000.0))*1000.0;
+				*over_limit_value = (temp_power_check - *link_limits[0][0])*1000.0;
 
 				//Flag as over
 				*over_limits = true;
