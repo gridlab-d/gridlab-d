@@ -560,23 +560,27 @@ int fncs_msg::precommit(TIMESTAMP t1){
 		//process external function calls
 		incoming_fncs_function();
 		//publish precommit variables
-		result = publishVariables(vmap[4]);
-		if(result == 0){
-			return result;
-		}
-		//read precommit variables from cache
-		result = subscribeVariables(vmap[4]);
-		if(result == 0){
-			return result;
+		if(t1<gl_globalstoptime){
+			result = publishVariables(vmap[4]);
+			if(result == 0){
+				return result;
+			}
+			//read precommit variables from cache
+			result = subscribeVariables(vmap[4]);
+			if(result == 0){
+				return result;
+			}
 		}
 	}
 	// read precommit json variables from GridAPPSD, renke
 	//TODO
 	else if (message_type == MT_JSON)
 	{
-		result = subscribeJsonVariables();
-		if(result == 0){
-			return result;
+		if(t1<gl_globalstoptime){
+			result = subscribeJsonVariables();
+			if(result == 0){
+				return result;
+			}
 		}
 	}
 
@@ -586,14 +590,16 @@ int fncs_msg::precommit(TIMESTAMP t1){
 TIMESTAMP fncs_msg::presync(TIMESTAMP t1){
 
 	int result = 0;
-	result = publishVariables(vmap[5]);
-	if(result == 0){
-		return TS_INVALID;
-	}
-	//read presync variables from cache
-	result = subscribeVariables(vmap[5]);
-	if(result == 0){
-		return TS_INVALID;
+	if(t1<gl_globalstoptime){
+		result = publishVariables(vmap[5]);
+		if(result == 0){
+			return TS_INVALID;
+		}
+		//read presync variables from cache
+		result = subscribeVariables(vmap[5]);
+		if(result == 0){
+			return TS_INVALID;
+		}
 	}
 	return TS_NEVER;
 }
@@ -601,14 +607,16 @@ TIMESTAMP fncs_msg::presync(TIMESTAMP t1){
 TIMESTAMP fncs_msg::plc(TIMESTAMP t1){
 
 	int result = 0;
-	result = publishVariables(vmap[12]);
-	if(result == 0){
-		return TS_INVALID;
-	}
-	//read plc variables from cache
-	result = subscribeVariables(vmap[12]);
-	if(result == 0){
-		return TS_INVALID;
+	if(t1<gl_globalstoptime){
+		result = publishVariables(vmap[12]);
+		if(result == 0){
+			return TS_INVALID;
+		}
+		//read plc variables from cache
+		result = subscribeVariables(vmap[12]);
+		if(result == 0){
+			return TS_INVALID;
+		}
 	}
 	return TS_NEVER;
 }
@@ -617,16 +625,17 @@ TIMESTAMP fncs_msg::sync(TIMESTAMP t1){
 
 	int result = 0;
 	TIMESTAMP t2;
-	result = publishVariables(vmap[6]);
-	if(result == 0){
-		return TS_INVALID;
+	if(t1<gl_globalstoptime){
+		result = publishVariables(vmap[6]);
+		if(result == 0){
+			return TS_INVALID;
+		}
+		//read sync variables from cache
+		result = subscribeVariables(vmap[6]);
+		if(result == 0){
+			return TS_INVALID;
+		}
 	}
-	//read sync variables from cache
-	result = subscribeVariables(vmap[6]);
-	if(result == 0){
-		return TS_INVALID;
-	}
-
 	if (message_type == MT_GENERAL)
 		return TS_NEVER;
 	else if (message_type == MT_JSON ){
@@ -638,14 +647,16 @@ TIMESTAMP fncs_msg::sync(TIMESTAMP t1){
 TIMESTAMP fncs_msg::postsync(TIMESTAMP t1){
 
 	int result = 0;
-	result = publishVariables(vmap[7]);
-	if(result == 0){
-		return TS_INVALID;
-	}
-	//read postsync variables from cache
-	result = subscribeVariables(vmap[7]);
-	if(result == 0){
-		return TS_INVALID;
+	if(t1<gl_globalstoptime){
+		result = publishVariables(vmap[7]);
+		if(result == 0){
+			return TS_INVALID;
+		}
+		//read postsync variables from cache
+		result = subscribeVariables(vmap[7]);
+		if(result == 0){
+			return TS_INVALID;
+		}
 	}
 	return TS_NEVER;
 }
@@ -653,11 +664,12 @@ TIMESTAMP fncs_msg::postsync(TIMESTAMP t1){
 TIMESTAMP fncs_msg::commit(TIMESTAMP t0, TIMESTAMP t1){
 
 	int result = 0;
-	result = publishVariables(vmap[8]);
-	if(result == 0){
-		return TS_INVALID;
+	if(t1<gl_globalstoptime){
+		result = publishVariables(vmap[8]);
+		if(result == 0){
+			return TS_INVALID;
+		}
 	}
-
 	// publish json_configure variables, renke
 	// TODO
 	if (message_type == MT_JSON)
@@ -666,18 +678,22 @@ TIMESTAMP fncs_msg::commit(TIMESTAMP t0, TIMESTAMP t1){
 			if(real_time_gridappsd_publish_period > 0){
 				gridappsd_publish_time = t1 + (TIMESTAMP)real_time_gridappsd_publish_period;
 			}
-			result = publishJsonVariables();
-			if(result == 0){
-				return TS_INVALID;
+			if(t1<gl_globalstoptime){
+				result = publishJsonVariables();
+				if(result == 0){
+					return TS_INVALID;
+				}
 			}
 		}
 	}
 
 	//read commit variables from cache
 	// put a if to check the message_type
-	result = subscribeVariables(vmap[8]);
-	if(result == 0){
-		return TS_INVALID;
+	if(t1<gl_globalstoptime){
+		result = subscribeVariables(vmap[8]);
+		if(result == 0){
+			return TS_INVALID;
+		}
 	}
 	return TS_NEVER;
 }
@@ -856,7 +872,8 @@ TIMESTAMP fncs_msg::clk_update(TIMESTAMP t1)
 #if HAVE_FNCS
 			fncs::finalize();
 #endif
-			return t1;
+			//t1 = gl_globalstoptime + 1;
+			return TS_NEVER;
 		} else if (t1 > gl_globalstoptime && gl_globalclock < gl_globalstoptime){
 			t1 == gl_globalstoptime;
 		}
