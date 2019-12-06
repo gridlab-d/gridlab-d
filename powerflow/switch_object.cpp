@@ -60,6 +60,8 @@ switch_object::switch_object(MODULE *mod) : link_object(mod)
 				GL_THROW("Unable to publish fault creation function");
 			if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_switch)==NULL)
 				GL_THROW("Unable to publish fault restoration function");
+			if (gl_publish_function(oclass,	"clear_fault", (FUNCTIONADDR)clear_fault_switch)==NULL)
+				GL_THROW("Unable to publish fault clearing function");
 			if (gl_publish_function(oclass,	"change_switch_faults", (FUNCTIONADDR)switch_fault_updates)==NULL)
 				GL_THROW("Unable to publish switch fault correction function");
 			if (gl_publish_function(oclass,	"change_switch_state_toggle", (FUNCTIONADDR)change_switch_state_toggle)==NULL)
@@ -120,6 +122,10 @@ int switch_object::init(OBJECT *parent)
 	SpecialLnk = SWITCH;
 
 	int result = link_object::init(parent);
+
+	//Check for deferred
+	if (result == 2)
+		return 2;	//Return the deferment - no sense doing everything else!
 
 	//secondary init stuff - should have been done, but we'll be safe
 	//Basically zero everything
@@ -694,6 +700,7 @@ void switch_object::NR_switch_sync_post(unsigned char *work_phases_pre, unsigned
 		}//End NR call
 	}//end not meshed checking mode
 	//defaulted else -- meshed checking, but we don't do anything for that (link handles all)
+
 }
 
 TIMESTAMP switch_object::presync(TIMESTAMP t0)
@@ -756,7 +763,6 @@ TIMESTAMP switch_object::presync(TIMESTAMP t0)
 			}
 		}
 	}
-	
 	// Call the ancestor's presync
 	TIMESTAMP result = link_object::presync(t0);
 	return result;
@@ -766,7 +772,6 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	unsigned char work_phases_pre, work_phases_post;
-
 	gl_verbose ("switch_object::sync:%s:%ld:%d:%d:%d", get_name(), t0, phase_A_state, phase_B_state, phase_C_state);
 	//Try to map the event_schedule function address, if we haven't tried yet
 	if (event_schedule_map_attempt == false)
@@ -818,7 +823,6 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 		//Call functionalized "post-link" sync items
 		NR_switch_sync_post(&work_phases_pre, &work_phases_post, obj, &t0, &t2);
 	}
-
 	if (t2==TS_NEVER)
 		return(t2);
 	else
@@ -1999,6 +2003,22 @@ EXPORT int fix_fault_switch(OBJECT *thisobj, int *implemented_fault, char *imp_f
 
 	//Clear the fault
 	retval = thisswitch->link_fault_off(implemented_fault, imp_fault_name);
+
+	//Clear the fault type
+	*implemented_fault = -1;
+
+	return retval;
+}
+
+EXPORT int clear_fault_switch(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name)
+{
+	int retval;
+
+	//Link to ourselves
+	switch_object *thisswitch = OBJECTDATA(thisobj,switch_object);
+
+	//Clear the fault
+	retval = thisswitch->clear_fault_only(implemented_fault, imp_fault_name);
 
 	//Clear the fault type
 	*implemented_fault = -1;

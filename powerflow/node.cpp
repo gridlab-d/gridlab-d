@@ -1521,16 +1521,11 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 
 			if (((SubNode == CHILD) || (SubNode == DIFF_CHILD)) && (NR_connected_links[0] > 0))
 			{
-				node *parNode = OBJECTDATA(SubNodeParent,node);
-
-				WRITELOCK_OBJECT(SubNodeParent);	//Lock
-
-				parNode->NR_connected_links[0] += NR_connected_links[0];
-
-				//Zero our accumulator, just in case (used later)
-				NR_connected_links[0] = 0;
-
-				WRITEUNLOCK_OBJECT(SubNodeParent);	//Unlock
+				GL_THROW("NR: node:%d - %s - extra links acquired outside of init routine",obj->id,(obj->name?obj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to initialize a childed node for the NR solver, extra links that were not detected in the node::init
+				routine were discovered.  This should not have happen.  Please submit your GLM and a bug report to the issues tracker.
+				*/
 			}
 
 			//See if we need to alloc our child space
@@ -5079,9 +5074,6 @@ STATUS node::reset_node_island_condition(void)
 		{
 			//Reset our phases (assume full-on reset)
 			NR_busdata[NR_node_reference].phases = NR_busdata[NR_node_reference].origphases;
-
-			//Store the value
-			node_calling_reference = NR_node_reference;
 		}
 	}
 	else	//We're a child, see if our parent is appropriately disabled
@@ -5098,9 +5090,6 @@ STATUS node::reset_node_island_condition(void)
 		{
 			//Reset our parent's phases
 			NR_busdata[*NR_subnode_reference].phases = NR_busdata[*NR_subnode_reference].origphases;
-
-			//Store our parent's value
-			node_calling_reference = *NR_subnode_reference;
 		}
 	}
 
@@ -5130,6 +5119,9 @@ STATUS node::reset_node_island_condition(void)
 		please submit your code, models, and a bug report via the issue tracking system.
 		*/
 	}
+
+	//Set it up as a "SWING-related call" - basically start over
+	node_calling_reference = -99;
 
 	//Then call the reset
 	temp_status = ((STATUS (*)(OBJECT *,int))(temp_fxn_val))(fault_check_object,node_calling_reference);

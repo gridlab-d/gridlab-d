@@ -67,6 +67,7 @@ EXPORT int change_fuse_state(OBJECT *thisobj, unsigned char phase_change, bool s
 EXPORT int fuse_reliability_operation(OBJECT *thisobj, unsigned char desired_phases);
 EXPORT int create_fault_fuse(OBJECT *thisobj, OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time);
 EXPORT int fix_fault_fuse(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name);
+EXPORT int clear_fault_fuse(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name);
 EXPORT int fuse_fault_updates(OBJECT *thisobj, unsigned char restoration_phases);
 
 #endif // FUSE_H

@@ -98,6 +98,10 @@ int regulator::init(OBJECT *parent)
 	char jindex;
 	int result = link_object::init(parent);
 
+	//Check for deferred
+	if (result == 2)
+		return 2;	//Return the deferment - no sense doing everything else!
+
 	OBJECT *obj = OBJECTHDR(this);
 
 	if (!configuration)
