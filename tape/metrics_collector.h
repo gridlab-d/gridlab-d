@@ -99,6 +99,9 @@
 #define REG_OPERATION_CNT   0
 #define REG_ARRAY_SIZE      1
 
+#define TRANS_OVERLOAD_PERC       0
+#define TRANS_OVERLOAD_ARRAY_SIZE 1
+
 EXPORT void new_metrics_collector(MODULE *);
 
 #ifdef __cplusplus
@@ -140,6 +143,9 @@ private:
 	double findMin(double array[], int size);
 	double findAverage(double array[], int size);
 	double findMedian(double array[], int size);
+
+	double countPerc(int array[], int size);
+	
 	vol_violation findOutLimit(bool firstCall, double array[], bool checkAbove, double limitVal, int size);
 
 	// saved class properties of my parent object
@@ -185,6 +191,8 @@ private:
 	static PROPERTY *propSwingSubLoad;
 	static PROPERTY *propSwingMeterS;
 
+	static PROPERTY *propTransformerOverloaded;
+
 	TIMESTAMP next_write; // on global clock, increments by interval_length
 	TIMESTAMP start_time; // start time of simulation
 	bool write_now;
@@ -223,6 +231,9 @@ private:
 
 	// Parameters related to capacitor and regulator objects
 	double *count_array;  // these _count member variables are doubles in capacitor.h and regulator.h
+
+  // Parameters related to transformer objects
+	int *trans_overload_status_array;
 
 	// Parameters related to Swing-bus meter object
 	FINDLIST *link_objects;

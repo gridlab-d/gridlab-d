@@ -39,6 +39,8 @@ const string m_regulator("regulator");
 const string m_house("house");
 const string m_feeder("substation");
 
+const string m_transformer("transformer");
+
 const string m_index("index");
 const string m_units("units");
 const string m_metadata("Metadata");
@@ -106,6 +108,8 @@ const string m_waterheater_load_max ("waterheater_load_max");
 const string m_waterheater_load_avg ("waterheater_load_avg");
 
 const string m_operation_count ("operation_count");
+
+const string m_trans_overload_perc ("trans_overload_perc");
 
 #ifdef HAVE_HDF5
 typedef struct {
@@ -190,7 +194,7 @@ typedef struct _Regulator {
 	double operation_count;
 } Regulator;
 
-typedef struct _Freeder {
+typedef struct _Feeder {
     int time; 
     char name[MAX_METRIC_NAME_LENGTH]; 
 	double real_power_min;
@@ -212,6 +216,12 @@ typedef struct _Freeder {
 	double reactive_power_losses_avg;
 	double reactive_power_losses_median;
 } Feeder;
+
+typedef struct _Transformer {
+  int time;
+	char name[MAX_METRIC_NAME_LENGTH];
+	double trans_overload_perc;
+} Transformer;
 #endif
 
 EXPORT void new_metrics_collector_writer(MODULE *);
@@ -252,6 +262,7 @@ private:
 	void hdfCapacitor ();
 	void hdfRegulator ();
 	void hdfFeeder ();
+	void hdfTransformer ();
 
 	// Functions to write dataset to a file
 	void hdfWrite(char256 filename, H5::CompType* mtype, void *ptr, int structKind, int size);
@@ -262,6 +273,7 @@ private:
 	void hdfCapacitorWrite (size_t objs, Json::Value& metrics);
 	void hdfRegulatorWrite (size_t objs, Json::Value& metrics);
 	void hdfFeederWrite (size_t objs, Json::Value& metrics);
+	void hdfTransformerWrite (size_t objs, Json::Value& metrics);
 #endif
 
 private:
@@ -273,12 +285,16 @@ private:
 	Json::Value metrics_writer_capacitors;          // Final output dictionary for capacitors
 	Json::Value metrics_writer_regulators;          // Final output dictionary for regulators
 
+	Json::Value metrics_writer_transformers;        // Final output dictionary for transformers
+
 	Json::Value ary_billing_meters;  // array storage for billing meter metrics
 	Json::Value ary_houses;          // array storage for house (and water heater) metrics
 	Json::Value ary_inverters;       // array storage for inverter metrics
 	Json::Value ary_feeders;         // array storage for feeder metrics
 	Json::Value ary_capacitors;      // array storage for capacitors metrics
 	Json::Value ary_regulators;      // array storage for regulators metrics
+
+	Json::Value ary_transformers;    // array storage for tranformers metrics
 
 #ifdef HAVE_HDF5
 	H5::CompType* mtype_metadata;
@@ -288,6 +304,7 @@ private:
 	H5::CompType* mtype_feeders;
 	H5::CompType* mtype_capacitors;
 	H5::CompType* mtype_regulators;
+	H5::CompType* mtype_transformers;
 #endif
 
 	char256 filename_billing_meter;
@@ -296,6 +313,7 @@ private:
 	char256 filename_feeder;
 	char256 filename_capacitor;
 	char256 filename_regulator;
+	char256 filename_transformer;
 
 	TIMESTAMP startTime;
 	TIMESTAMP final_write;

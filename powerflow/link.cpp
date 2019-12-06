@@ -155,6 +155,8 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
 			PT_complex, "fault_voltage_A[A]", PADDR(Vf_out[0]),PT_DESCRIPTION,"fault voltage, phase A",
 			PT_complex, "fault_voltage_B[A]", PADDR(Vf_out[1]),PT_DESCRIPTION,"fault voltage, phase B",
 			PT_complex, "fault_voltage_C[A]", PADDR(Vf_out[2]),PT_DESCRIPTION,"fault voltage, phase C",
+
+			PT_bool, "overloaded_status", PADDR(overloaded_status),PT_DESCRIPTION,"overloaded status (true/false)",
 				
 			PT_set, "flow_direction", PADDR(flow_direction),PT_DESCRIPTION,"flag used for describing direction of the flow of power",
 				PT_KEYWORD, "UNKNOWN", (set)FD_UNKNOWN,
@@ -2933,7 +2935,8 @@ void link_object::BOTH_link_postsync_fxn(void)
 }
 
 //Functionalized limit checking, mostly for restoration calls
-void link_object::perform_limit_checks(double *over_limit_value, bool *over_limits)
+//void link_object::perform_limit_checks(double *over_limit_value, bool *over_limits)
+bool link_object::perform_limit_checks(double *over_limit_value, bool *over_limits)
 {
 	double temp_power_check, temp_current_diff;
 	node *nTo;
@@ -3168,6 +3171,8 @@ void link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 			}//End "normal line" check
 		}//End must be a line check
 	}//End Limit checks
+	overloaded_status = *over_limits;
+	return overloaded_status;
 }
 
 TIMESTAMP link_object::postsync(TIMESTAMP t0)
