@@ -3605,9 +3605,6 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 			x0=gov_gast_AT+gov_gast_KT*(gov_gast_AT-curr_time->gov_gast.x3);
 		}
 
-//		x0 = min(,gov_gast_AT+gov_gast_KT*(gov_gast_AT-curr_time->gov_gast.x3)); 
-//		LL+K*(LL-G1.machine_parameters.curr.gov.x3
-
 		//Update variables
 		curr_delta->gov_gast.x1 = (x0 - curr_time->gov_gast.x1)/gov_gast_T1;
 		curr_delta->gov_gast.x2 = (curr_time->gov_gast.x1 - curr_time->gov_gast.x2)/gov_gast_T2;

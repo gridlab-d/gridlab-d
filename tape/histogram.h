@@ -44,8 +44,8 @@ public:
 	char256 property;
 	char1024 bins;
 	int32 bin_count;
-	double min;
-	double max;
+	double min_val;
+	double max_val;
 	double sampling_interval;	//	add values into bins
 	double counting_interval;	//	dump the bins into a row
 	int32 limit;			//	number of lines to write
