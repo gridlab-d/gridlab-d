@@ -253,6 +253,7 @@ public:
 public:
 	char256 filename;
 	char8 extension;
+	char8 alternate;
 	double interval_length_dbl;			//Metrics output interval length
 	double interim_length_dbl;			//Metrics output interim length
 
