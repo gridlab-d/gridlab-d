@@ -4,6 +4,7 @@
  *  Created on: Jan 30, 2017
  *      Author: tang526
  *      Modifed d3j331 - Mitch Pelton
+ *      Modified on: December, 2019, Author: Laurentiu Marinovici
  */
 
 #ifndef _METRICS_COLLECTOR_WRITER_H_
@@ -40,6 +41,7 @@ const string m_house("house");
 const string m_feeder("substation");
 
 const string m_transformer("transformer");
+const string m_line("line");
 
 const string m_index("index");
 const string m_units("units");
@@ -110,6 +112,7 @@ const string m_waterheater_load_avg ("waterheater_load_avg");
 const string m_operation_count ("operation_count");
 
 const string m_trans_overload_perc ("trans_overload_perc");
+const string m_line_overload_perc ("line_overload_perc");
 
 #ifdef HAVE_HDF5
 typedef struct {
@@ -118,8 +121,8 @@ typedef struct {
 } hMetadata;
 
 typedef struct _BillingMeter{
-    int time; 
-    char name[MAX_METRIC_NAME_LENGTH]; 
+  int time; 
+  char name[MAX_METRIC_NAME_LENGTH]; 
 	double real_power_min;
 	double real_power_max;
 	double real_power_avg;
@@ -153,8 +156,8 @@ typedef struct _BillingMeter{
 } BillingMeter;
 
 typedef struct _House {
-    int time; 
-    char name[MAX_METRIC_NAME_LENGTH]; 
+  int time; 
+  char name[MAX_METRIC_NAME_LENGTH]; 
 	double total_load_min;
 	double total_load_max;
 	double total_load_avg;
@@ -172,8 +175,8 @@ typedef struct _House {
 } House;
 
 typedef struct _Inverter {
-    int time; 
-    char name[MAX_METRIC_NAME_LENGTH]; 
+  int time; 
+  char name[MAX_METRIC_NAME_LENGTH]; 
 	double real_power_min;
 	double real_power_max;
 	double real_power_avg;
@@ -183,20 +186,20 @@ typedef struct _Inverter {
 } Inverter;
 
 typedef struct _Capacitor {
-    int time; 
-    char name[MAX_METRIC_NAME_LENGTH]; 
+  int time; 
+  char name[MAX_METRIC_NAME_LENGTH]; 
 	double operation_count;
 } Capacitor;
 
 typedef struct _Regulator {
-    int time; 
-    char name[MAX_METRIC_NAME_LENGTH]; 
+  int time; 
+  char name[MAX_METRIC_NAME_LENGTH]; 
 	double operation_count;
 } Regulator;
 
 typedef struct _Feeder {
-    int time; 
-    char name[MAX_METRIC_NAME_LENGTH]; 
+  int time; 
+  char name[MAX_METRIC_NAME_LENGTH]; 
 	double real_power_min;
 	double real_power_max;
 	double real_power_avg;
@@ -222,6 +225,12 @@ typedef struct _Transformer {
 	char name[MAX_METRIC_NAME_LENGTH];
 	double trans_overload_perc;
 } Transformer;
+
+typedef struct _Line {
+  int time;
+	char name[MAX_METRIC_NAME_LENGTH];
+	double line_overload_perc;
+} Line;
 #endif
 
 EXPORT void new_metrics_collector_writer(MODULE *);
@@ -263,6 +272,7 @@ private:
 	void hdfRegulator ();
 	void hdfFeeder ();
 	void hdfTransformer ();
+	void hdfLine();
 
 	// Functions to write dataset to a file
 	void hdfWrite(char256 filename, H5::CompType* mtype, void *ptr, int structKind, int size);
@@ -274,6 +284,7 @@ private:
 	void hdfRegulatorWrite (size_t objs, Json::Value& metrics);
 	void hdfFeederWrite (size_t objs, Json::Value& metrics);
 	void hdfTransformerWrite (size_t objs, Json::Value& metrics);
+	void hdfLineWrite (size_t objs, Json::Value& metrics);
 #endif
 
 private:
@@ -286,6 +297,7 @@ private:
 	Json::Value metrics_writer_regulators;          // Final output dictionary for regulators
 
 	Json::Value metrics_writer_transformers;        // Final output dictionary for transformers
+	Json::Value metrics_writer_lines;        // Final output dictionary for lines
 
 	Json::Value ary_billing_meters;  // array storage for billing meter metrics
 	Json::Value ary_houses;          // array storage for house (and water heater) metrics
@@ -295,6 +307,7 @@ private:
 	Json::Value ary_regulators;      // array storage for regulators metrics
 
 	Json::Value ary_transformers;    // array storage for tranformers metrics
+	Json::Value ary_lines;    // array storage for lines metrics
 
 #ifdef HAVE_HDF5
 	H5::CompType* mtype_metadata;
@@ -305,6 +318,7 @@ private:
 	H5::CompType* mtype_capacitors;
 	H5::CompType* mtype_regulators;
 	H5::CompType* mtype_transformers;
+	H5::CompType* mtype_lines;
 #endif
 
 	char256 filename_billing_meter;
@@ -314,6 +328,7 @@ private:
 	char256 filename_capacitor;
 	char256 filename_regulator;
 	char256 filename_transformer;
+	char256 filename_line;
 
 	TIMESTAMP startTime;
 	TIMESTAMP final_write;

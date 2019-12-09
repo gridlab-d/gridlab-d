@@ -3,6 +3,7 @@
  *
  *  Created on: Jan 30, 2017,  Author: tang526
  *  Modified on: June, 2019,   Author: Mitch Pelton
+ *  Modified on: December, 2019, Author: Laurentiu Marinovici
  */
 
 #include "metrics_collector_writer.h"
@@ -145,7 +146,7 @@ int metrics_collector_writer::init(OBJECT *parent){
 		return 0;
 	}
 
-	// Write seperate json files for meters, triplex_meters, inverters, capacitors, regulators, houses, feeders:
+	// Write seperate json files for meters, triplex_meters, inverters, capacitors, regulators, houses, feeders, transformers, lines:
 
 	strcat(filename_billing_meter, filename);
 	strcat(filename_billing_meter, m_billing_meter.c_str());
@@ -161,6 +162,8 @@ int metrics_collector_writer::init(OBJECT *parent){
 	strcat(filename_feeder, m_feeder.c_str());
 	strcat(filename_transformer, filename);
 	strcat(filename_transformer, m_transformer.c_str());
+	strcat(filename_line, filename);
+	strcat(filename_line, m_line.c_str());
 
 #ifdef HAVE_HDF5
 	//prepare dataset for HDF5 if needed
@@ -175,6 +178,7 @@ int metrics_collector_writer::init(OBJECT *parent){
 			hdfRegulator();
 			hdfFeeder();
 			hdfTransformer();
+			hdfLine();
 		}
 		// catch failure caused by the H5File operations
 		catch( H5::FileIException error ){
@@ -276,6 +280,11 @@ int metrics_collector_writer::init(OBJECT *parent){
 	ary_transformers.resize(idx);
 	writeMetadata(meta, metadata, time_str, filename_transformer);
 
+  idx = 0;
+	jsn[m_index] = idx++; jsn[m_units] = "%";    meta[m_line_overload_perc] = jsn;
+	ary_lines.resize(idx);
+	writeMetadata(meta, metadata, time_str, filename_line);
+
 	idx = 0;
 	jsn[m_index] = idx++; jsn[m_units] = "W";    meta[m_real_power_min] = jsn;
 	jsn[m_index] = idx++; jsn[m_units] = "W";    meta[m_real_power_max] = jsn;
@@ -369,6 +378,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 	Json::Value feeder_objects;
 
 	Json::Value transformer_objects;
+	Json::Value line_objects;
 
 	// Write Time -> represents the time from the StartTime
 	int writeTime = t1 - startTime; // in seconds
@@ -502,6 +512,13 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 			string key = temp_metrics_collector->parent_name;
 			transformer_objects[key] = ary_transformers;
 		} // End of recording metrics_collector data attached to one transformer
+		else if (strcmp(temp_metrics_collector->parent_string, "line") == 0) {
+			metrics = temp_metrics_collector->metrics;
+			int idx = 0;
+			ary_lines[idx++] = metrics[LINE_OVERLOAD_PERC];
+			string key = temp_metrics_collector->parent_name;
+			line_objects[key] = ary_lines;
+		} // End of recording metrics_collector data attached to one line
 		else if (strcmp(temp_metrics_collector->parent_string, "swingbus") == 0) {
 			metrics = temp_metrics_collector->metrics;
 			int idx = 0;
@@ -537,6 +554,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 	metrics_writer_regulators[time_str] = regulator_objects;
 	metrics_writer_feeders[time_str] = feeder_objects;
 	metrics_writer_transformers[time_str] = transformer_objects;
+	metrics_writer_lines[time_str] = line_objects;
 
 /*
 	cout << "total size -> " << index << endl;
@@ -557,6 +575,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 			writeJsonFile(filename_regulator, metrics_writer_regulators);
 			writeJsonFile(filename_feeder, metrics_writer_feeders);
 			writeJsonFile(filename_transformer, metrics_writer_transformers);
+			writeJsonFile(filename_line, metrics_writer_lines);
 		}
 #ifdef HAVE_HDF5
 		else {
@@ -567,6 +586,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 			hdfRegulatorWrite(regulator_objects.size(), metrics_writer_regulators);
 			hdfFeederWrite(feeder_objects.size(), metrics_writer_feeders);
 			hdfTransformerWrite(transformer_objects.size(), metrics_writer_transformers);
+			hdfLineWrite(line_objects.size(), metrics_writer_lines);
 		}
 #endif
 //		cout << "write_line interim write " << (interim_length * interim_cnt) << endl;
@@ -725,6 +745,14 @@ void metrics_collector_writer::hdfTransformer () {
 	mtype_transformers->insertMember(m_trans_overload_perc, HOFFSET(Transformer, trans_overload_perc), H5::PredType::NATIVE_DOUBLE);
 }
 
+void metrics_collector_writer::hdfLine () {
+	// defining the datatype to pass HDF55
+	mtype_lines = new H5::CompType(sizeof(Line));
+	mtype_lines->insertMember(m_time, HOFFSET(Line, time), H5::PredType::NATIVE_INT);
+	mtype_lines->insertMember(m_name, HOFFSET(Line, name), H5::StrType(H5::PredType::C_S1, MAX_METRIC_NAME_LENGTH));
+	mtype_lines->insertMember(m_line_overload_perc, HOFFSET(Line, line_overload_perc), H5::PredType::NATIVE_DOUBLE);
+}
+
 void metrics_collector_writer::hdfWrite(char256 filename, H5::CompType* mtype, void* ptr, int structKind, int size) {
 	cout << "hdfWrite size " << size << endl;
 
@@ -763,6 +791,7 @@ void metrics_collector_writer::hdfWrite(char256 filename, H5::CompType* mtype, v
 			case 5:	dataset->write(((std::vector <Regulator> *)ptr)->data(), *mtype);	break;
 			case 6:	dataset->write(((std::vector <Feeder> *)ptr)->data(), *mtype);		break;
 			case 7:	dataset->write(((std::vector <Transformer> *)ptr)->data(), *mtype);		break;
+			case 8:	dataset->write(((std::vector <Line> *)ptr)->data(), *mtype);		break;
 		}
 
 		delete plist;
@@ -1036,6 +1065,25 @@ void metrics_collector_writer::hdfTransformerWrite (size_t objs, Json::Value& me
 			}
 		}
 		hdfWrite(filename_transformer, mtype_transformers, &tbl, 5, idx);
+		metrics.clear();
+}
+
+void metrics_collector_writer::hdfLineWrite (size_t objs, Json::Value& metrics) {
+		std::vector <Line> tbl;
+		tbl.reserve(line_cnt*objs);
+		int idx = 0;
+		for (auto const& id : sortIds(metrics.getMemberNames()))  {
+			Json::Value name = metrics[id];
+			for (auto const& uid : name.getMemberNames())  {
+				tbl.push_back(Line());
+				Json::Value mtr = name[uid];
+				tbl[idx].time = stoi(id);
+				strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
+				tbl[idx].line_overload_perc = mtr[LINE_OVERLOAD_PERC].asDouble(); 
+				idx++;
+			}
+		}
+		hdfWrite(filename_line, mtype_lines, &tbl, 5, idx);
 		metrics.clear();
 }
 #endif HAVE_HDF5

@@ -102,6 +102,9 @@
 #define TRANS_OVERLOAD_PERC       0
 #define TRANS_OVERLOAD_ARRAY_SIZE 1
 
+#define LINE_OVERLOAD_PERC       0
+#define LINE_OVERLOAD_ARRAY_SIZE 1
+
 EXPORT void new_metrics_collector(MODULE *);
 
 #ifdef __cplusplus
@@ -192,6 +195,7 @@ private:
 	static PROPERTY *propSwingMeterS;
 
 	static PROPERTY *propTransformerOverloaded;
+	static PROPERTY *propLineOverloaded;
 
 	TIMESTAMP next_write; // on global clock, increments by interval_length
 	TIMESTAMP start_time; // start time of simulation
@@ -234,6 +238,7 @@ private:
 
   // Parameters related to transformer objects
 	int *trans_overload_status_array;
+	int *line_overload_status_array;
 
 	// Parameters related to Swing-bus meter object
 	FINDLIST *link_objects;

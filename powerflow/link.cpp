@@ -2970,6 +2970,7 @@ bool link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 	//Default values
 	*over_limit_value = 0.0;
 	*over_limits = false;
+	overloaded_status = *over_limits;
 
 	//Set it to zero
 	temp_power_check = 0.0;
@@ -2996,6 +2997,7 @@ bool link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 
 				//Flag as over
 				*over_limits = true;
+				overloaded_status = *over_limits;
 			}
 		}//End transformers
 		else	//Must be a line - that's the only other option right now
@@ -3036,6 +3038,7 @@ bool link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 
 					//Flag as over
 					*over_limits = true;
+					overloaded_status = overloaded_status || *over_limits;
 
 				}//End Phase 1 check
 
@@ -3072,6 +3075,7 @@ bool link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 
 					//Flag as over
 					*over_limits = true;
+					overloaded_status = overloaded_status || *over_limits;
 
 				}//End Phase 2 check
 			}//End triplex line check
@@ -3113,6 +3117,7 @@ bool link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 
 						//Flag as over
 						*over_limits = true;
+						overloaded_status = overloaded_status || *over_limits;
 
 					}//End Phase A check
 				}//End has Phase A
@@ -3152,6 +3157,7 @@ bool link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 
 						//Flag as over
 						*over_limits = true;
+						overloaded_status = overloaded_status || *over_limits;
 
 					}//End Phase B check
 				}//End has Phase B
@@ -3191,13 +3197,14 @@ bool link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 
 						//Flag as over
 						*over_limits = true;
+						overloaded_status = overloaded_status || *over_limits;
 
 					}//End Phase C check
 				}//End has Phase C
 			}//End "normal line" check
 		}//End must be a line check
 	}//End Limit checks
-	overloaded_status = *over_limits;
+	
 	return overloaded_status;
 }
 
