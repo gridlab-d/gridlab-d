@@ -177,13 +177,14 @@ if (0 == alternate[0]) {
 	filename_feeder = m_feeder.c_str();
 	strcat(filename_feeder, "_");
 	strcat(filename_feeder, filename);
-	filename_transformer = m_feeder.c_str();
+	filename_transformer = m_transformer.c_str();
 	strcat(filename_transformer, "_");
 	strcat(filename_transformer, filename);
+	filename_line = m_line.c_str();
+	strcat(filename_line, "_");
+	strcat(filename_line, filename);
 }
 else {
-	strcat(filename_transformer, "_");
-	strcat(filename_transformer, filename);
 	strcat(filename_billing_meter, filename);
 	strcat(filename_billing_meter, m_billing_meter.c_str());
 	strcat(filename_inverter, filename);
