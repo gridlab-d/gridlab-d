@@ -23,6 +23,7 @@ metrics_collector_writer::metrics_collector_writer(MODULE *mod){
 		if(gl_publish_variable(oclass,
 			PT_char256,"filename",PADDR(filename),PT_DESCRIPTION,"the JSON formatted output file name",
 			PT_char8,"extension",PADDR(extension),PT_DESCRIPTION,"the file formatted type (JSON, H5)",
+			PT_char8,"alternate",PADDR(alternate),PT_DESCRIPTION,"the alternate file name convention",
 			PT_double, "interim[s]", PADDR(interim_length_dbl), PT_DESCRIPTION, "Interim at which metrics_collector_writer output is written",
 			PT_double, "interval[s]", PADDR(interval_length_dbl), PT_DESCRIPTION, "Interval at which the metrics_collector_writer output is stored in JSON format",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
@@ -43,6 +44,7 @@ int metrics_collector_writer::init(OBJECT *parent){
 	int index = 0;	
 	char time_str[64];
 	DATETIME dt;
+	bool alternatePath = false;
 
 	// check for filename
 	if(0 == filename[0]){
@@ -75,6 +77,14 @@ int metrics_collector_writer::init(OBJECT *parent){
 			gl_warning("metrics_collector_writer::init(): bad extension defined, auto-generating '%s'", extension.get_string());
 		}
 #endif
+	}
+
+	// Check valid metrics_collector_writer output alternate path
+	if(0 == alternate[0]){
+		alternatePath = false;
+	}
+	else {
+		alternatePath = true;
 	}
 
 	// Check valid metrics_collector output interval
@@ -147,6 +157,32 @@ int metrics_collector_writer::init(OBJECT *parent){
 
 	// Write seperate json files for meters, triplex_meters, inverters, capacitors, regulators, houses, feeders:
 
+if (0 == alternate[0]) {
+	filename_billing_meter = m_billing_meter.c_str();
+	strcat(filename_billing_meter, "_");
+	strcat(filename_billing_meter, filename);
+	filename_inverter = m_inverter.c_str();
+	strcat(filename_inverter, "_");
+	strcat(filename_inverter, filename);
+	filename_capacitor = m_capacitor.c_str();
+	strcat(filename_capacitor, "_");
+	strcat(filename_capacitor, filename);
+	filename_regulator = m_regulator.c_str();
+	strcat(filename_regulator, "_");
+	strcat(filename_regulator, filename);
+	filename_house = m_house.c_str();
+	strcat(filename_house, "_");
+	strcat(filename_house, filename);
+	filename_feeder = m_feeder.c_str();
+	strcat(filename_feeder, "_");
+	strcat(filename_feeder, filename);
+	filename_transformer = m_feeder.c_str();
+	strcat(filename_transformer, "_");
+	strcat(filename_transformer, filename);
+}
+else {
+	strcat(filename_transformer, "_");
+	strcat(filename_transformer, filename);
 	strcat(filename_billing_meter, filename);
 	strcat(filename_billing_meter, m_billing_meter.c_str());
 	strcat(filename_inverter, filename);
@@ -161,6 +197,7 @@ int metrics_collector_writer::init(OBJECT *parent){
 	strcat(filename_feeder, m_feeder.c_str());
 	strcat(filename_transformer, filename);
 	strcat(filename_transformer, m_transformer.c_str());
+}
 
 #ifdef HAVE_HDF5
 	//prepare dataset for HDF5 if needed
@@ -309,7 +346,8 @@ void metrics_collector_writer::writeMetadata(Json::Value& meta, Json::Value& met
 		metadata[m_starttime] = time_str;
 		metadata[m_metadata] = meta;
 		string FileName(filename);
-		FileName.append("." + m_json);
+		if (0 != alternate[0]) 
+			FileName.append("." + m_json);
 		out_file.open (FileName);
 		out_file << writer.write(metadata) <<  endl;
 		out_file.close();
@@ -587,7 +625,8 @@ void metrics_collector_writer::writeJsonFile (char256 filename, Json::Value& met
 	// Open file for writing
 	ofstream out_file;
 	string FileName(filename);
-	FileName.append("." + m_json);
+	if (0 != alternate[0]) 
+		FileName.append("." + m_json);
 	out_file.open (FileName, ofstream::in | ofstream::ate);
 	pos = out_file.tellp();
 	out_file << writer.write(metrics) << endl;
@@ -748,7 +787,8 @@ void metrics_collector_writer::hdfWrite(char256 filename, H5::CompType* mtype, v
 		// plist->setSzip(szip_options_mask, szip_pixels_per_block);
 
 		string FileName(filename);
-		FileName.append("." + m_h5);
+		if (0 != alternate[0]) 
+			FileName.append("." + m_h5);
 		H5::H5File *file;
 		file = new H5::H5File(FileName, H5F_ACC_RDWR);
 		string DatasetName(m_index);
@@ -812,7 +852,8 @@ void metrics_collector_writer::hdfMetadataWrite(Json::Value& meta, char* time_st
 		// plist->setSzip(szip_options_mask, szip_pixels_per_block);
 
 		string FileName(filename);
-		FileName.append("." + m_h5);
+		if (0 != alternate[0]) 
+			FileName.append("." + m_h5);
 		H5::H5File *file;
 		file = new H5::H5File(FileName, H5F_ACC_TRUNC);
 		string DatasetName(m_metadata);
