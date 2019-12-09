@@ -156,7 +156,7 @@ int metrics_collector_writer::init(OBJECT *parent){
 		return 0;
 	}
 
-	// Write seperate json files for meters, triplex_meters, inverters, capacitors, regulators, houses, feeders, transformers, lines:
+	// Write separate json files for meters, triplex_meters, inverters, capacitors, regulators, houses, feeders, transformers, lines:
 
 if (0 == alternate[0]) {
 	filename_billing_meter = m_billing_meter.c_str();
