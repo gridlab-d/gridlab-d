@@ -19,12 +19,6 @@
 
 #include <string>
 #include "gridlabd.h"
-#ifdef max
-#undef max
-#endif
-#ifdef min
-#undef min
-#endif
 #include "climate.h"
 #include "timestamp.h"
 EXPORT_CREATE(climate)
@@ -1136,7 +1130,7 @@ void climate::update_cloud_pattern(TIMESTAMP delta_t) {
 	//double windspeed = windspeed_tmy2 * log(1000/roughness_length)/log(10/roughness_length);
 
 	//C. W. Hansen, J. S. Stein, and A. Ellis,
-	//“Simulation of One-Minute Power Output from Utility-Scale Photovoltaic Generation Systems,” SAND2011-5529, 2011.
+	//"Simulation of One-Minute Power Output from Utility-Scale Photovoltaic Generation Systems," SAND2011-5529, 2011.
 	// Shows distribution of wind speeds at cumulus cloud elevations based on weather balloon launches (pg. 18)
 	// A cursory inspection of the TMY3 measured wind speeds shows this is roughly consistent with histogram
 	// presented in the paper.
