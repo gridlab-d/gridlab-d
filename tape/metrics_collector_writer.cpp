@@ -45,7 +45,6 @@ int metrics_collector_writer::init(OBJECT *parent){
 	int index = 0;	
 	char time_str[64];
 	DATETIME dt;
-	bool alternatePath = false;
 
 	// check for filename
 	if(0 == filename[0]){
@@ -78,14 +77,6 @@ int metrics_collector_writer::init(OBJECT *parent){
 			gl_warning("metrics_collector_writer::init(): bad extension defined, auto-generating '%s'", extension.get_string());
 		}
 #endif
-	}
-
-	// Check valid metrics_collector_writer output alternate path
-	if(0 == alternate[0]){
-		alternatePath = false;
-	}
-	else {
-		alternatePath = true;
 	}
 
 	// Check valid metrics_collector output interval
@@ -602,6 +593,8 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 	cout << m_capacitor << "size -> " << capacitor_objects.size() << endl;
 	cout << m_regulator << "size -> " << regulator_objects.size() << endl;
 	cout << m_feeder << "size -> " << feeder_objects.size() << endl;
+	cout << m_transformer << "size -> " << transformer_objects.size() << endl;
+	cout << m_line << "size -> " << line_objects.size() << endl;
 */
 
 	if (writeTime == (interim_length * interim_cnt)) {

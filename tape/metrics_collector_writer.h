@@ -39,7 +39,6 @@ const string m_capacitor("capacitor");
 const string m_regulator("regulator");
 const string m_house("house");
 const string m_feeder("substation");
-
 const string m_transformer("transformer");
 const string m_line("line");
 
@@ -121,8 +120,8 @@ typedef struct {
 } hMetadata;
 
 typedef struct _BillingMeter{
-  int time; 
-  char name[MAX_METRIC_NAME_LENGTH]; 
+	int time; 
+	char name[MAX_METRIC_NAME_LENGTH]; 
 	double real_power_min;
 	double real_power_max;
 	double real_power_avg;
@@ -156,8 +155,8 @@ typedef struct _BillingMeter{
 } BillingMeter;
 
 typedef struct _House {
-  int time; 
-  char name[MAX_METRIC_NAME_LENGTH]; 
+	int time; 
+	char name[MAX_METRIC_NAME_LENGTH]; 
 	double total_load_min;
 	double total_load_max;
 	double total_load_avg;
@@ -175,8 +174,8 @@ typedef struct _House {
 } House;
 
 typedef struct _Inverter {
-  int time; 
-  char name[MAX_METRIC_NAME_LENGTH]; 
+	int time; 
+	char name[MAX_METRIC_NAME_LENGTH]; 
 	double real_power_min;
 	double real_power_max;
 	double real_power_avg;
@@ -186,20 +185,20 @@ typedef struct _Inverter {
 } Inverter;
 
 typedef struct _Capacitor {
-  int time; 
-  char name[MAX_METRIC_NAME_LENGTH]; 
+	int time; 
+	char name[MAX_METRIC_NAME_LENGTH]; 
 	double operation_count;
 } Capacitor;
 
 typedef struct _Regulator {
-  int time; 
-  char name[MAX_METRIC_NAME_LENGTH]; 
+	int time; 
+	char name[MAX_METRIC_NAME_LENGTH]; 
 	double operation_count;
 } Regulator;
 
 typedef struct _Feeder {
-  int time; 
-  char name[MAX_METRIC_NAME_LENGTH]; 
+	int time; 
+	char name[MAX_METRIC_NAME_LENGTH]; 
 	double real_power_min;
 	double real_power_max;
 	double real_power_avg;
@@ -221,7 +220,7 @@ typedef struct _Feeder {
 } Feeder;
 
 typedef struct _Transformer {
-  int time;
+	int time;
 	char name[MAX_METRIC_NAME_LENGTH];
 	double trans_overload_perc;
 } Transformer;
