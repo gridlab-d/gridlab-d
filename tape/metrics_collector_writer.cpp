@@ -79,8 +79,6 @@ int metrics_collector_writer::init(OBJECT *parent){
 #endif
 	}
 
-<<<<<<< HEAD
-=======
 	// Check valid metrics_collector_writer output alternate path
 	if(0 == alternate[0]){
 		// if no alternate file naming flag
@@ -94,7 +92,6 @@ int metrics_collector_writer::init(OBJECT *parent){
 	  }
 	}
 
->>>>>>> 0b55d410439dfe5373e82aa252f60ebca3227555
 	// Check valid metrics_collector output interval
 	interval_length = (int64)(interval_length_dbl);
 	if(interval_length <= 0){
