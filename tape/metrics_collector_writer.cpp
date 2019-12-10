@@ -65,7 +65,7 @@ int metrics_collector_writer::init(OBJECT *parent){
 		/*	requires a extension.  If none is provided, a .json will be used	*/
 	}
 	else {
-		if (!(strcmp(extension, m_json.c_str()) == 0) && !(strcmp(extension, m_h5.c_str())) == 0) {
+		if (!(strcmp(extension, m_json.c_str()) == 0) && !(strcmp(extension, m_h5.c_str()) == 0)) {
 			sprintf(extension, "json");
 			gl_warning("metrics_collector_writer::init(): bad extension defined, auto-generating '%s'", extension.get_string());
 		}
@@ -79,6 +79,22 @@ int metrics_collector_writer::init(OBJECT *parent){
 #endif
 	}
 
+<<<<<<< HEAD
+=======
+	// Check valid metrics_collector_writer output alternate path
+	if(0 == alternate[0]){
+		// if no alternate file naming flag
+		gl_warning("No option to set alternate metrics file name give, so going with default, as if alternate no");
+		sprintf(alternate, "no");
+	}
+	else {
+		if (!(strcmp(alternate, "no") == 0) && !(strcmp(alternate, "yes") == 0)) {
+		  gl_warning("Bad option given. Should be either no or yes. Default = no");
+		  sprintf(alternate, "no");
+	  }
+	}
+
+>>>>>>> 0b55d410439dfe5373e82aa252f60ebca3227555
 	// Check valid metrics_collector output interval
 	interval_length = (int64)(interval_length_dbl);
 	if(interval_length <= 0){
@@ -149,7 +165,7 @@ int metrics_collector_writer::init(OBJECT *parent){
 
 	// Write separate json files for meters, triplex_meters, inverters, capacitors, regulators, houses, feeders, transformers, lines:
 
-if (0 == alternate[0]) {
+if (strcmp(alternate, "no") == 0) {
 	filename_billing_meter = m_billing_meter.c_str();
 	strcat(filename_billing_meter, "_");
 	strcat(filename_billing_meter, filename);
@@ -346,7 +362,7 @@ void metrics_collector_writer::writeMetadata(Json::Value& meta, Json::Value& met
 		metadata[m_starttime] = time_str;
 		metadata[m_metadata] = meta;
 		string FileName(filename);
-		if (0 != alternate[0]) 
+		if (strcmp(alternate, "yes") == 0) 
 			FileName.append("." + m_json);
 		out_file.open (FileName);
 		out_file << writer.write(metadata) <<  endl;
@@ -638,7 +654,7 @@ void metrics_collector_writer::writeJsonFile (char256 filename, Json::Value& met
 	// Open file for writing
 	ofstream out_file;
 	string FileName(filename);
-	if (0 != alternate[0]) 
+	if (strcmp(alternate, "yes") == 0) 
 		FileName.append("." + m_json);
 	out_file.open (FileName, ofstream::in | ofstream::ate);
 	pos = out_file.tellp();
@@ -808,7 +824,7 @@ void metrics_collector_writer::hdfWrite(char256 filename, H5::CompType* mtype, v
 		// plist->setSzip(szip_options_mask, szip_pixels_per_block);
 
 		string FileName(filename);
-		if (0 != alternate[0]) 
+		if (strcmp(alternate, "yes") == 0) 
 			FileName.append("." + m_h5);
 		H5::H5File *file;
 		file = new H5::H5File(FileName, H5F_ACC_RDWR);
@@ -874,7 +890,7 @@ void metrics_collector_writer::hdfMetadataWrite(Json::Value& meta, char* time_st
 		// plist->setSzip(szip_options_mask, szip_pixels_per_block);
 
 		string FileName(filename);
-		if (0 != alternate[0]) 
+		if (strcmp(alternate, "yes") == 0) 
 			FileName.append("." + m_h5);
 		H5::H5File *file;
 		file = new H5::H5File(FileName, H5F_ACC_TRUNC);
