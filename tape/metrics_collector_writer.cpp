@@ -201,7 +201,7 @@ else {
 	strcat(filename_transformer, m_transformer.c_str());
 	strcat(filename_line, filename);
 	strcat(filename_line, m_line.c_str());
-
+}
 #ifdef HAVE_HDF5
 	//prepare dataset for HDF5 if needed
 	if (strcmp(extension, m_h5.c_str()) == 0) {
