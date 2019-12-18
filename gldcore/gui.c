@@ -413,7 +413,7 @@ Retry:
 	else if (entity->env)
 	{
 		char env[1024];
-#ifdef WIN32
+#ifdef _WIN32
 		sprintf("%s=%s",entity->env,buffer);
 		putenv(env);
 #else
@@ -642,7 +642,7 @@ static void gui_output_html_graph(GUIENTITY *entity)
 
 	/* setup gnuplot command */
 	sprintf(script,"%s.plt",entity->source);
-#ifdef WIN32
+#ifdef _WIN32
 	sprintf(command,"start wgnuplot %s",script);
 #else
 	sprintf(command,"gnuplot %s",script);
@@ -1040,7 +1040,7 @@ STATUS gui_startup(int argc, char *argv[])
 	char cmd[1024];
 	if (started)
 		return SUCCESS;
-#ifdef WIN32
+#ifdef _WIN32
 	sprintf(cmd,"start %s http://localhost:%d/gui/", global_browser, global_server_portnum);
 #else
 	sprintf(cmd,"%s http://localhost:%d/gui/ & ps -p $! >/dev/null", global_browser, global_server_portnum);

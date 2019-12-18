@@ -13,7 +13,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#ifdef WIN32 && !(__MINGW__)
+#ifdef _WIN32 && !(__MINGW__)
 #include <direct.h>
 #else
 #include <unistd.h>
@@ -220,7 +220,7 @@ static STATUS no_cmdargs()
 		char cmd[1024];
 
 		/* enter server mode and wait */
-#ifdef WIN32
+#ifdef _WIN32
 		if ( htmlfile[1]!=':' )
 			sprintf(htmlfile,"%s\\gridlabd.htm", global_workdir);
 		output_message("opening html page '%s'", htmlfile);
@@ -988,7 +988,7 @@ static int info(int argc, char *argv[])
 	if ( argc>1 )
 	{
 		char cmd[1024];
-#ifdef WIN32
+#ifdef _WIN32
 		sprintf(cmd,"start %s \"%s%s\"", global_browser, global_infourl, argv[1]);
 #elif defined(MACOSX)
 		sprintf(cmd,"open -a %s \"%s%s\"", global_browser, global_infourl, argv[1]);
