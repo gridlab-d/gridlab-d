@@ -62,7 +62,7 @@
 #include "triplex_meter.h"
 
 //Library imports items - for external LU solver - stolen from somewhere else in GridLAB-D (tape, I believe)
-#if defined(WIN32) && !defined(__MINGW32__)
+#if defined(_WIN32) && !defined(__MINGW32__)
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 #define _WIN32_WINNT 0x0400
 #include <windows.h>
@@ -788,7 +788,7 @@ int node::init(OBJECT *parent)
 				LUSolverFcns.ext_solve = NULL;
 				LUSolverFcns.ext_destroy = NULL;
 
-#ifdef WIN32
+#ifdef _WIN32
 				snprintf(ext_lib_file_name, 1024, "solver_%s" DLEXT,LUSolverName.get_string());
 #else
 				snprintf(ext_lib_file_name, 1024, "lib_solver_%s" DLEXT,LUSolverName.get_string());

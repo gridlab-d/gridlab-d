@@ -45,7 +45,7 @@ const string absconnection::getProtocolStr(){
 const char *absconnection::getErrorMessage()
 {
 	int errorCode=this->getErrorCode();
-#ifdef WIN32
+#ifdef _WIN32
 	switch (errorCode) {
 	case 6: return "invalid handle";
 	case 8: return "insufficient memory";

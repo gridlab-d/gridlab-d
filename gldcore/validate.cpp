@@ -2,7 +2,7 @@
 // Copyright (C) 2012 Battelle Memorial Institute
 //
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #include <direct.h>
 #include <io.h>
@@ -227,7 +227,7 @@ static int report_close(void)
 }
 
 /* Windows implementation of opendir/readdir/closedir */
-#ifdef WIN32
+#ifdef _WIN32
 struct dirent {
 	unsigned char  d_type;	/* file type, see below */
 	char *d_name;			/* name must be no longer than this */
@@ -452,7 +452,7 @@ static counters run_test(char *file, double *elapsed_time=NULL)
         //output_verbose("run_test(): deleted '%s'", dir);
         rmdir(dir);
 	}
-#ifdef WIN32
+#ifdef _WIN32
 	if ( (0 != mkdir(dir)) && clean )
 #else
 	if ( (0 != mkdir(dir,0750)) && clean )
@@ -475,7 +475,7 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 	int64 dt = exec_clock();
 	result.inc_files(file);
 	unsigned int code = vsystem("%s -W %s %s %s.glm ", 
-#ifdef WIN32
+#ifdef _WIN32
 		_pgmptr,
 #else
 		"gridlabd",
@@ -484,7 +484,7 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 	dt = exec_clock() - dt;
 	double t = (double)dt/(double)CLOCKS_PER_SEC;
 	if ( elapsed_time!=NULL ) *elapsed_time = t;
-//#ifdef WIN32
+//#ifdef _WIN32
 // 	if ( code>256 )
 // 		output_warning("%s exit code %x is outside normal exit code range and may be interpreted incorrectly", name, code);
 //#endif
@@ -756,7 +756,7 @@ int validate(int argc, char *argv[])
 	report_data("%s",strftime(tbuf,sizeof(tbuf),"%Y-%m-%d %H:%M:%S %z",ts)?tbuf:"???");
 	report_newrow();
 	
-#ifdef WIN32
+#ifdef _WIN32
 	char *user=getenv("USERNAME"); 
 #else
 	char *user=getenv("USER"); 
@@ -766,7 +766,7 @@ int validate(int argc, char *argv[])
 	report_data("%s",user?user:"(NA)");
 	report_newrow();
 
-#ifdef WIN32
+#ifdef _WIN32
 	char *host=getenv("COMPUTERNAME");
 #else
 	char *host=getenv("HOSTNAME");

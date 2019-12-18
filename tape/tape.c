@@ -50,7 +50,7 @@ extern CLASS *collector_class;
 /* delta mode control */
 TIMESTAMP delta_mode_needed = TS_NEVER; /* the time at which delta mode needs to start */
 
-#ifdef WIN32
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 #define _WIN32_WINNT 0x0400
 #include <windows.h>
@@ -194,7 +194,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	}
 
 	/* globals for the tape module*/
-#ifdef WIN32
+#ifdef _WIN32
 	sprintf(tape_gnuplot_path, "c:/Program Files/GnuPlot/bin/wgnuplot.exe");
 #else
 	sprintf(tape_gnuplot_path,"/usr/bin/gnuplot");
