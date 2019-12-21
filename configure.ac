@@ -510,9 +510,9 @@ AS_CASE([$host],
 				AS_CASE([$LIBS],
 					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lrt -lzmq"])],
 	[*darwin*], [AS_CASE([$HELICS_LIBS],
-					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelicsSharedLib -lrt -lzmq"])
+					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelicsSharedLib -lzmq"])
 				AS_CASE([$LIBS],
-					[*lhelics*], [], [LIBS="$LIBS -lhelicsSharedLib -lrt -lzmq"])],
+					[*lhelics*], [], [LIBS="$LIBS -lhelicsSharedLib -lzmq"])],
 	[*mingw*], [AS_CASE([$HELICS_LIBS],
 					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lzmq"])
 				AS_CASE([$LIBS],
