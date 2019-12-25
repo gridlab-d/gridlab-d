@@ -123,6 +123,10 @@ int switch_object::init(OBJECT *parent)
 
 	int result = link_object::init(parent);
 
+	//Check for deferred
+	if (result == 2)
+		return 2;	//Return the deferment - no sense doing everything else!
+
 	//secondary init stuff - should have been done, but we'll be safe
 	//Basically zero everything
 	if (solver_method==SM_FBS)
@@ -696,6 +700,7 @@ void switch_object::NR_switch_sync_post(unsigned char *work_phases_pre, unsigned
 		}//End NR call
 	}//end not meshed checking mode
 	//defaulted else -- meshed checking, but we don't do anything for that (link handles all)
+
 }
 
 TIMESTAMP switch_object::presync(TIMESTAMP t0)
@@ -758,7 +763,6 @@ TIMESTAMP switch_object::presync(TIMESTAMP t0)
 			}
 		}
 	}
-	
 	// Call the ancestor's presync
 	TIMESTAMP result = link_object::presync(t0);
 	return result;
@@ -768,7 +772,6 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	unsigned char work_phases_pre, work_phases_post;
-
 	gl_verbose ("switch_object::sync:%s:%ld:%d:%d:%d", get_name(), t0, phase_A_state, phase_B_state, phase_C_state);
 	//Try to map the event_schedule function address, if we haven't tried yet
 	if (event_schedule_map_attempt == false)
@@ -820,7 +823,6 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 		//Call functionalized "post-link" sync items
 		NR_switch_sync_post(&work_phases_pre, &work_phases_post, obj, &t0, &t2);
 	}
-
 	if (t2==TS_NEVER)
 		return(t2);
 	else

@@ -293,7 +293,7 @@ TIMESTAMP metrics_collector_writer::postsync(TIMESTAMP t0, TIMESTAMP t1){
 	if(next_write <= t1){
 		interval_write = true;
 		last_write = t1;
-		next_write = min(t1 + interval_length, final_write);
+		next_write = std::min(t1 + interval_length, final_write);
 	}
 
 	// the interval recorders have already returned t1+interval_length, earlier in the sequence.

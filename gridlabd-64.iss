@@ -3,10 +3,10 @@ Compression=lzma
 OutputDir=.
 
 ; ++RELEASE++
-SourceDir=.\install64
-OutputBaseFilename=gridlabd-4.0-x64
+SourceDir=.\install
+OutputBaseFilename=gridlabd-4.1-x64
 AppName=GridLAB-D
-AppVerName=GridLAB-D 4.0
+AppVerName=GridLAB-D 4.1
 ; --RELEASE--
 
 ; ++DEBUG++
@@ -26,7 +26,7 @@ AppPublisherURL=http://www.pnl.gov
 ;AppComments=<Include application comments here>
 ;AppContact=GridLAB-D Development Team <gridlabd@pnl.gov>
 VersionInfoDescription=Gridlab-D - Grid Simulator
-VersionInfoVersion=4.0.0.0
+VersionInfoVersion=4.1.0.0
 
 ;AppMutex=<Mutex string to prevent installation while application is running>
 DefaultDirName={pf}\GridLAB-D
@@ -48,6 +48,8 @@ Name: "modules\generators"; Description: "Generators Module"; Types: typical cus
 Name: "modules\market"; Description: "Market Module"; Types: typical custom
 ;Name: "modules\mysql"; Description: "MYSQL Module"; Types: typical custom
 Name: "modules\commercial"; Description: "Commercial Module"; Types: typical custom
+Name: "modules\connection"; Description: "Connection Module"; Types: typical custom
+Name: "modules\optimize"; Description: "Optimization Module"; Types: typical custom
 Name: "modules\powerflow"; Description: "Power Flow Module"; Types: typical custom
 Name: "modules\reliability"; Description: "Reliability Module"; Types: typical custom
 Name: "modules\residential"; Description: "Residential Module"; Types: typical custom
@@ -132,19 +134,16 @@ Name: {userdocs}\GridLAB-D
 Name: {app}\rt
 
 [Files]
-;; Microsoft CRT redist
-;;Source: "Microsoft.VC80.CRT.manifest"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: core
-;;Source: "msvcp80.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: core
-;;Source: "msvcr80.dll"; DestDir: "{app}\bin"; Flags: ignoreversion; Components: core
-;;Source: "msvcr80.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
-;;Source: "msvcp80.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
-;;Source: "Microsoft.VC80.CRT.manifest"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
+Source: "C:\msys64\mingw64\bin\libgcc_s_seh-1.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
+Source: "C:\msys64\mingw64\bin\libwinpthread-1.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
+Source: "C:\msys64\mingw64\bin\libstdc++-6.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
 
 ;; core files
 Source: "lib\gridlabd\assert.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
 Source: "bin\gridlabd.exe"; DestDir: "{app}\bin"; DestName: "gridlabd.exe"; Flags: ignoreversion; Components: core
 Source: "lib\gridlabd\glsolvers.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
 Source: "lib\gridlabd\glxmatlab.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
+Source: "lib\gridlabd\glxengine.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
 ;;Source: "lib\gridlabd\pthreadVC2.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
 ;;Source: "lib\gridlabd\test_extern_function.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
 Source: "share\gridlabd\tzinfo.txt"; DestDir: "{app}\etc"; Components: core
@@ -155,8 +154,9 @@ Source: "lib\gridlabd\climate.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; 
 Source: "lib\gridlabd\generators.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\generators
 Source: "lib\gridlabd\market.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\market
 ;Source: "mysql.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\mysql
-;;Source: "lib\gridlabd\network.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\network
+Source: "lib\gridlabd\optimize.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\optimize
 Source: "lib\gridlabd\powerflow.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\powerflow
+Source: "lib\gridlabd\connection.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\connection
 Source: "lib\gridlabd\reliability.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\reliability
 Source: "lib\gridlabd\residential.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\residential
 Source: "lib\gridlabd\tape.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\tape
@@ -164,15 +164,19 @@ Source: "lib\gridlabd\tape_file.dll"; DestDir: "{app}\lib"; Flags: ignoreversion
 ;;Source: "lib\gridlabd\tape_memory.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\tape
 Source: "lib\gridlabd\tape_plot.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\tape
 Source: "..\third_party\dlfcn-win32-read-only\libdl.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
-Source: "C:\MinGW\msys\1.0\opt\windows_64\bin\libwinpthread-1.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
-Source: "C:\MinGW\msys\1.0\opt\windows_64\bin\libgcc_s_seh-1.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
-Source: "C:\MinGW\msys\1.0\opt\windows_64\bin\libstdc++-6.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
-Source: "..\LICENSE"; DestDir: "{app}\etc"; Flags: ignoreversion; Components: core
-Source: "..\license_libdl.txt"; DestDir: "{app}\etc"; Flags: ignoreversion; Components: modules\third_party
-Source: "..\license_libgcc.txt"; DestDir: "{app}\etc"; Flags: ignoreversion; Components: modules\third_party
-Source: "..\license_libstdc.txt"; DestDir: "{app}\etc"; Flags: ignoreversion; Components: modules\third_party
-Source: "..\license_libwinpthread-1.txt"; DestDir: "{app}\etc"; Flags: ignoreversion; Components: modules\third_party
+Source: "lib\gridlabd\glsolvers.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
 
+Source: "..\\third_party\\helics_install\\Windows_64bit\\lib\\libboost_chrono-mt.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
+Source: "..\\third_party\\helics_install\\Windows_64bit\\lib\\libboost_date_time-mt.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
+Source: "..\\third_party\\helics_install\\Windows_64bit\\lib\\libboost_filesystem-mt.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
+Source: "..\\third_party\\helics_install\\Windows_64bit\\lib\\libboost_program_options-mt.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
+Source: "..\\third_party\\helics_install\\Windows_64bit\\lib\\libboost_system-mt.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
+Source: "..\\third_party\\helics_install\\Windows_64bit\\lib\\libboost_timer-mt.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
+Source: "..\\third_party\\helics_install\\Windows_64bit\\lib\\libboost_unit_test_framework-mt.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
+Source: "..\\third_party\\helics_install\\Windows_64bit\\lib\\libhelics-shared.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
+Source: "..\\third_party\\helics_install\\Windows_64bit\\lib\\libzmq.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\third_party
+Source: "..\\third_party\\fncs_install\\Windows_64bit\\lib\\libfncs.dll"; DestDir: "{app}\include"; Flags: ignoreversion; Components: modules\third_party
+Source: "..\third_party\helics_install\Windows_64bit\include\*"; DestDir: "{app}\include\"; Flags: ignoreversion recursesubdirs; Components: modules\third_party
 
 ;; sample files
 Source: "..\models\climate_csvreader_example.glm"; DestDir: "{app}\samples"
@@ -297,18 +301,18 @@ begin
   SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, 'Environment', SMTO_ABORTIFHUNG, 5000, SendResult);
   Log('Added ''' + Path + ''' to PATH environment variable.');
 
-  Path := 'C:\GnuPlot\bin';
-  if RegQueryStringValue(RootKey, SubKey, 'PATH', Value) then
-  begin
-    if Pos(Uppercase(Path + ';'), Uppercase(Value + ';')) <> 0 then
-      exit;
-    Value := Value + ';' + Path;
-  end
-  else
-    Value := Path;
-  RegWriteStringValue(RootKey, SubKey, 'PATH', Value);
-  SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, 'Environment', SMTO_ABORTIFHUNG, 5000, SendResult);
-  Log('Added ''' + Path + ''' to PATH environment variable.');
+//  Path := 'C:\GnuPlot\bin';
+//  if RegQueryStringValue(RootKey, SubKey, 'PATH', Value) then
+//  begin
+//    if Pos(Uppercase(Path + ';'), Uppercase(Value + ';')) <> 0 then
+//      exit;
+//    Value := Value + ';' + Path;
+//  end
+//  else
+//    Value := Path;
+//  RegWriteStringValue(RootKey, SubKey, 'PATH', Value);
+//  SendMessageTimeout(HWND_BROADCAST, WM_SETTINGCHANGE, 0, 'Environment', SMTO_ABORTIFHUNG, 5000, SendResult);
+//  Log('Added ''' + Path + ''' to PATH environment variable.');
 end;
 
 procedure UninstallEnvironment();
@@ -428,7 +432,7 @@ Filename: {app}\wget.exe; Parameters: http://downloads.sourceforge.net/sourcefor
 Filename: {app}\wget.exe; Parameters: http://downloads.sourceforge.net/sourceforge/gridlab-d/MinGW-5.1.4.exe?use_mirror=superb-west; WorkingDir: {app}; Components: Compilers
 Filename: {app}\wget.exe; Parameters: http://downloads.sourceforge.net/sourceforge/gridlab-d/gnuplot-win32-4_2_3.zip?use_mirror=superb-west; WorkingDir: {app}; Components: Plotting_Tools
 Filename: {app}\MinGW-5.1.4.exe; WorkingDir: {app}; Components: Compilers
-Filename: {app}\7za.exe; Parameters: x gnuplot-win32-4_2_3.zip; WorkingDir: c:\; Components: Climate_Data\US; Tasks: 
+Filename: {app}\7za.exe; Parameters: x gnuplot-win32-4_2_3.zip; WorkingDir: c:\; Components: Plotting_Tools; Tasks: 
 Filename: {app}\7za.exe; Parameters: e climate-US-2_0.zip AK.zip; WorkingDir: {app}\tmy; Components: Climate_Data\US\Other\AK; Tasks: 
 Filename: {app}\7za.exe; Parameters: e AK.zip; WorkingDir: {app}\tmy; Components: Climate_Data\US\Other\AK; Tasks: 
 Filename: {app}\7za.exe; Parameters: e climate-US-2_0.zip PA.zip; WorkingDir: {app}\tmy; Tasks: ; Components: Climate_Data\US\North\PA

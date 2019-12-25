@@ -144,6 +144,10 @@ int fuse::init(OBJECT *parent)
 
 	int result = link_object::init(parent);
 
+	//Check for deferred
+	if (result == 2)
+		return 2;	//Return the deferment - no sense doing everything else!
+
 	//Check current limit
 	if (current_limit < 0.0)
 	{
