@@ -608,9 +608,8 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 	cout << m_feeder << "size -> " << feeder_objects.size() << endl;
 	cout << m_transformer << "size -> " << transformer_objects.size() << endl;
 	cout << m_line << "size -> " << line_objects.size() << endl;
-*/
 	cout << "final_write -> " << final_write-startTime << "writeTime -> " << writeTime << endl;
-
+*/
 	if (writeTime == (interim_length * interim_cnt) || final_write-startTime <= writeTime) {
 		if (strcmp(extension, m_json.c_str()) == 0) {
 			writeJsonFile(filename_billing_meter, metrics_writer_billing_meters);
