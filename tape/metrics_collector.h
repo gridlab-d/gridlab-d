@@ -47,12 +47,12 @@
 #define MTR_ARRAY_SIZE    16
 #endif
 
-#define HSE_MIN_HVAC_LOAD    0
-#define HSE_MAX_HVAC_LOAD    1
-#define HSE_AVG_HVAC_LOAD    2
-#define HSE_MIN_TOTAL_LOAD   3
-#define HSE_MAX_TOTAL_LOAD   4
-#define HSE_AVG_TOTAL_LOAD   5
+#define HSE_MIN_TOTAL_LOAD   0
+#define HSE_MAX_TOTAL_LOAD   1
+#define HSE_AVG_TOTAL_LOAD   2
+#define HSE_MIN_HVAC_LOAD    3
+#define HSE_MAX_HVAC_LOAD    4
+#define HSE_AVG_HVAC_LOAD    5
 #define HSE_MIN_AIR_TEMP     6
 #define HSE_MAX_AIR_TEMP     7
 #define HSE_AVG_AIR_TEMP     8

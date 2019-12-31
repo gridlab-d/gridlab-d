@@ -353,7 +353,7 @@ else {
 
 void metrics_collector_writer::writeMetadata(Json::Value& meta, Json::Value& metadata, char* time_str, char256 filename) {
 	if (strcmp(extension, m_json.c_str()) == 0) {
-		Json::StyledWriter writer;
+		Json::FastWriter writer;
 		ofstream out_file;
 
 		metadata[m_starttime] = time_str;
@@ -362,7 +362,7 @@ void metrics_collector_writer::writeMetadata(Json::Value& meta, Json::Value& met
 		if (strcmp(alternate, "yes") == 0) 
 			FileName.append("." + m_json);
 		out_file.open (FileName);
-		out_file << writer.write(metadata) <<  endl;
+		out_file << writer.write(metadata);
 		out_file.close();
 	}
 #ifdef HAVE_HDF5
@@ -645,8 +645,8 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 // Write seperate JSON files for each object
 void metrics_collector_writer::writeJsonFile (char256 filename, Json::Value& metrics) {
 	long pos = 0;
-	long offset = 4;
-	Json::StyledWriter writer;
+	long offset = 2;
+	Json::FastWriter writer;
 
 	// Open file for writing
 	ofstream out_file;
@@ -655,9 +655,9 @@ void metrics_collector_writer::writeJsonFile (char256 filename, Json::Value& met
 		FileName.append("." + m_json);
 	out_file.open (FileName, ofstream::in | ofstream::ate);
 	pos = out_file.tellp();
-	out_file << writer.write(metrics) << endl;
-	out_file.seekp (pos-offset);
-	out_file << "," << endl << "   ";
+	out_file << writer.write(metrics);
+	out_file.seekp(pos-offset);
+	out_file << ",  ";
 	out_file.close();
 	metrics.clear();
 }
@@ -799,8 +799,6 @@ void metrics_collector_writer::hdfLine () {
 }
 
 void metrics_collector_writer::hdfWrite(char256 filename, H5::CompType* mtype, void* ptr, int structKind, int size) {
-	cout << "hdfWrite size " << size << endl;
-
 	H5::Exception::dontPrint();
 	try {
 		// preparation of a dataset and a file.
