@@ -354,8 +354,10 @@ else {
 void metrics_collector_writer::writeMetadata(Json::Value& meta, Json::Value& metadata, char* time_str, char256 filename) {
 	if (strcmp(extension, m_json.c_str()) == 0) {
 		Json::FastWriter writer;
+		// Open file for writing
 		ofstream out_file;
 
+		writer.omitEndingLineFeed();
 		metadata[m_starttime] = time_str;
 		metadata[m_metadata] = meta;
 		string FileName(filename);
@@ -645,11 +647,12 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 // Write seperate JSON files for each object
 void metrics_collector_writer::writeJsonFile (char256 filename, Json::Value& metrics) {
 	long pos = 0;
-	long offset = 2;
+	long offset = 1;
 	Json::FastWriter writer;
-
 	// Open file for writing
 	ofstream out_file;
+
+	writer.omitEndingLineFeed();
 	string FileName(filename);
 	if (strcmp(alternate, "yes") == 0) 
 		FileName.append("." + m_json);
@@ -657,7 +660,7 @@ void metrics_collector_writer::writeJsonFile (char256 filename, Json::Value& met
 	pos = out_file.tellp();
 	out_file << writer.write(metrics);
 	out_file.seekp(pos-offset);
-	out_file << ",  ";
+	out_file << ", ";
 	out_file.close();
 	metrics.clear();
 }
