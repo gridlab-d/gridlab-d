@@ -19,7 +19,7 @@ udp::udp()
 	set_hostname("127.0.0.1");
 	set_uri("");
 
-#ifdef WIN32
+#ifdef _WIN32
 	// initialize socket subsystem
 	WORD wsaVersion = MAKEWORD(2,2);
 	WSADATA wsaData;
@@ -306,7 +306,7 @@ Retry:
 }
 int udp::call_setsockopt(SOCKET s, int level, int optname, timeval *optval, int optlen)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	int time_out;
 	time_out = (int)optval->tv_usec + (int)(optval->tv_sec*1000);
 	return setsockopt(s, level, optname, (const char*)&time_out, sizeof(time_out));

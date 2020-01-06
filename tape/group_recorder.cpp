@@ -388,7 +388,7 @@ int group_recorder::write_header(){
 	// write model file name
 	if(0 > fprintf(rec_file,"# file...... %s\n", filename.get_string())){ return 0; }
 	if(0 > fprintf(rec_file,"# date...... %s", asctime(localtime(&now)))){ return 0; }
-#ifdef WIN32
+#ifdef _WIN32
 	if(0 > fprintf(rec_file,"# user...... %s\n", getenv("USERNAME"))){ return 0; }
 	if(0 > fprintf(rec_file,"# host...... %s\n", getenv("MACHINENAME"))){ return 0; }
 #else

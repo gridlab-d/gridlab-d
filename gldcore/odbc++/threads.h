@@ -26,7 +26,7 @@
 
 #if defined(ODBCXX_ENABLE_THREADS)
 
-#if !defined(WIN32)
+#if !defined(_WIN32)
 # include <pthread.h>
 #endif
 
@@ -34,7 +34,7 @@ namespace odbc {
   
   class ODBCXX_EXPORT Mutex {
   private:
-#if !defined(WIN32)
+#if !defined(_WIN32)
     pthread_mutex_t mutex_;
 #else
     CRITICAL_SECTION mutex_;

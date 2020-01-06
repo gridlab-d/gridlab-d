@@ -331,7 +331,7 @@ void exec_sighandler(int sig) /**< the signal number, see \p <signal.h> */
 		*/
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 char *strsignal(int sig)
 {
 	switch(sig) {
@@ -730,7 +730,7 @@ Retry:
 			char cmd[1024];
 			if (sscanf(buffer,"%*s %[^\0]", cmd)==1)
 				system(cmd);
-#ifdef WIN32
+#ifdef _WIN32
 			else if (getenv("COMSPEC")!=NULL)
 				system(getenv("COMSPEC"));
 			else
@@ -1276,7 +1276,7 @@ int exec_debug(struct sync_data *data, /**< the current sync status of the mail 
 			   OBJECT *obj) /**< the current object being processed */
 {
 	TIMESTAMP this_t;
-#ifdef WIN32
+#ifdef _WIN32
 	static int firstcall=1;
 	if (firstcall)
 	{

@@ -15,7 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 #define _WIN32_WINNT 0x0400
 #include <windows.h>
 #endif
@@ -64,7 +64,7 @@ int processor_count(void)
 #else
 int processor_count(void)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	SYSTEM_INFO sysinfo;
 	GetSystemInfo(&sysinfo);
 	return sysinfo.dwNumberOfProcessors;

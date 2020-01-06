@@ -8,7 +8,7 @@
 #include "output.h"
 #include "local.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 #define tzset _tzset
 #endif
 

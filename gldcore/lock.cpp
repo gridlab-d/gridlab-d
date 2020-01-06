@@ -36,7 +36,7 @@
 	#include <libkern/OSAtomic.h>
 	#define atomic_compare_and_swap(dest, comp, xchg) OSAtomicCompareAndSwap32Barrier(comp, xchg, (volatile int32_t *) dest)
 	#define atomic_increment(ptr) OSAtomicIncrement32Barrier((volatile int32_t *) ptr)
-#elif defined(WIN32) && !defined __MINGW32__
+#elif defined(_WIN32) && !defined __MINGW32__
 	#include <intrin.h>
 	#pragma intrinsic(_InterlockedCompareExchange)
 	#pragma intrinsic(_InterlockedIncrement)
