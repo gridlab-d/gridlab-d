@@ -184,7 +184,7 @@ int memory_open_shaper(struct shaper *my, char *fname, char *flags)
 	while (fgets(line,sizeof(line),my->fp)!=NULL)
 	{
 		unsigned char *hours, *days, *months, *weekdays;
-		char min[256],hour[256],day[256],month[256],weekday[256],value[32];
+		char minute[256],hour[256],day[256],month[256],weekday[256],value[32];
 		char *p=line;
 		linenum++;
 		while (isspace(*p)) p++;
@@ -192,13 +192,13 @@ int memory_open_shaper(struct shaper *my, char *fname, char *flags)
 		if (strcmp(group,"")!=0 && (isdigit(p[0]) || p[0]=='*'))
 		{	/* shape value */
 			int h, d, m, w;
-			if (sscanf(line,"%s %s %s %s %[^,],%[^,\n]",min,hour,day,month,weekday,value)<6)
+			if (sscanf(line,"%s %s %s %s %[^,],%[^,\n]",minute,hour,day,month,weekday,value)<6)
 			{
 				gl_error("%s(%d) : shape '%s' has specification '%s'", memory, linenum, group, line);
 				continue;
 			}
 			/* minutes are ignored right now */
-			if (min[0]!='*') gl_warning("%s(%d) : minutes are ignored in '%s'", memory, linenum, line);
+			if (minute[0]!='*') gl_warning("%s(%d) : minutes are ignored in '%s'", memory, linenum, line);
 			hours=hourmap(hour);
 			days=daymap(day);
 			months=monthmap(month);

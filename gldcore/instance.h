@@ -115,7 +115,7 @@ typedef struct s_instance {
 	char32 cnxtypestr;
 	CNXTYPE cnxtype;
 	union {
-#ifdef WIN32 // windows
+#ifdef _WIN32 // windows
 		struct {
 			void* hMap; ///<
 			void* hMaster; ///<

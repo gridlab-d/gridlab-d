@@ -926,7 +926,7 @@ typedef struct s_enduse {
  */
 
 #if defined(USE_RUNTIME_LOCKING)
-#if defined(WIN32) && !defined(__GNUC__)
+#if defined(_WIN32) && !defined(__GNUC__)
 	#include <intrin.h>
 	#pragma intrinsic(_InterlockedCompareExchange)
 	#pragma intrinsic(_InterlockedIncrement)

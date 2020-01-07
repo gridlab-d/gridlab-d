@@ -13,6 +13,7 @@
 EXPORT_CREATE(recorder);
 EXPORT_INIT(recorder);
 EXPORT_COMMIT(recorder);
+EXPORT_FINALIZE(recorder);
 
 CLASS *recorder::oclass = NULL;
 recorder *recorder::defaults = NULL;
@@ -566,6 +567,13 @@ template<class T> std::string recorder::to_string(T t) {
 	string_conversion_buffer << t;
 	returnBuffer = string_conversion_buffer.str();
 	return returnBuffer;
+}
+
+STATUS recorder::finalize() {
+	query_engine* rc = recorder_connection;
+	rc->get_table_path()->commit_state();
+	rc->set_tables_done();
+	return SUCCESS;
 }
 
 #endif // HAVE_MYSQL

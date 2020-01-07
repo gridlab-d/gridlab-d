@@ -110,7 +110,7 @@ EXPORT bool glx_settag(glxlink *mod, char *tag, char *data)
 
 void engine_sleep(unsigned int msec)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	Sleep(msec);
 #else
 	usleep(msec*1000);

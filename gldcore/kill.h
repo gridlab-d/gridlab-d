@@ -4,7 +4,7 @@
 #ifndef _KILL_H
 #define _KILL_H
 
-#ifdef WIN32
+#ifdef _WIN32
 #ifdef __MINGW32__
 #include <sys/types.h>
 #endif

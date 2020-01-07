@@ -376,7 +376,7 @@ EXPORT int open_recorder(struct recorder *my, char *fname, char *flags)
 	/* put useful header information in file first */
 	fprintf(my->fp,"# file...... %s\n", my->file.get_string());
 	fprintf(my->fp,"# date...... %s", asctime(localtime(&now)));
-#ifdef WIN32
+#ifdef _WIN32
 	fprintf(my->fp,"# user...... %s\n", getenv("USERNAME"));
 	fprintf(my->fp,"# host...... %s\n", getenv("MACHINENAME"));
 #else
@@ -403,7 +403,7 @@ EXPORT int open_recorder(struct recorder *my, char *fname, char *flags)
 	
 	switch (my->output) {
 		case SCREEN:
-#ifdef WIN32
+#ifdef _WIN32
 			fprintf(my->fp, "set terminal windows color;\n");
 #else
 			fprintf(my->fp, "set terminal x11;\n");
@@ -489,7 +489,7 @@ void close_recorder_wrapper(void)
 EXPORT void close_recorder(struct recorder *my)
 {
 	char gnuplot[1024];
-#ifdef WIN32
+#ifdef _WIN32
 	const char *plotcmd = "start wgnuplot";
 #else
 	const char *plotcmd = "gnuplot";
@@ -588,7 +588,7 @@ EXPORT int open_collector(struct collector *my, char *fname, char *flags)
 	/* put useful header information in file first */
 	count += fprintf(my->fp,"# file...... %s\n", my->file.get_string());
 	count += fprintf(my->fp,"# date...... %s", asctime(localtime(&now)));
-#ifdef WIN32
+#ifdef _WIN32
 	count += fprintf(my->fp,"# user...... %s\n", getenv("USERNAME"));
 	count += fprintf(my->fp,"# host...... %s\n", getenv("MACHINENAME"));
 #else
@@ -608,7 +608,7 @@ EXPORT int open_collector(struct collector *my, char *fname, char *flags)
 	
 	switch (my->output) {
 		case SCREEN:
-#ifdef WIN32
+#ifdef _WIN32
 			fprintf(my->fp, "set terminal windows color;\n");
 #else
 			fprintf(my->fp, "set terminal x11;\n");
@@ -662,7 +662,7 @@ EXPORT int write_collector(struct collector *my, char *timestamp, char *value)
 
 EXPORT void close_collector(struct collector *my)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	char gnuplot[sizeof(char32)];
 	strcpy(gnuplot,"wgnuplot ");
 	_putenv("PATH=%PATH%;C:\\wgnuplot");

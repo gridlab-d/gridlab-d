@@ -36,7 +36,7 @@
 
 #include "http_client.h"
 
-#if defined(WIN32) && !defined(__MINGW32__)
+#if defined(_WIN32) && !defined(__MINGW32__)
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 #define _WIN32_WINNT 0x0400
 #include <windows.h>
@@ -442,7 +442,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	bool isforeign = false;
 	char pathname[1024];
 	char tpath[1024];
-#ifdef WIN32
+#ifdef _WIN32
 	char from='/', to='\\';
 #else
 	char from='\\', to='/';
@@ -590,7 +590,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	hLib = DLLOAD(tpath);
 	if (hLib==NULL)
 	{
-#if defined(WIN32) && ! defined(__MINGW32__)
+#if defined(_WIN32) && ! defined(__MINGW32__)
 		if ( GetLastError()==193 ) /* invalid exe format -- happens when wrong version of MinGW is used */
 		{
 			output_error("module '%s' load failed - invalid DLL format",file);
@@ -740,7 +740,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	return last_module;
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <winnt.h>
 static bool _checkimg(const char *fname)
 {
@@ -760,7 +760,7 @@ static void _module_list (char *path)
 	struct stat info;
 	static int count = 0;
 	int gsrm = global_suppress_repeat_messages;
-#ifdef WIN32
+#ifdef _WIN32
 	char search[1024];
 	HANDLE hFind;
 	WIN32_FIND_DATA sFind;
@@ -783,7 +783,7 @@ static void _module_list (char *path)
 	}
 
 	/* open directory */
-#ifdef WIN32
+#ifdef _WIN32
 	sprintf(search,"%s\\*.dll",path);
 	hFind=FindFirstFile(search,&sFind);
 	if ( hFind==INVALID_HANDLE_VALUE )
@@ -802,7 +802,7 @@ static void _module_list (char *path)
 		int *pMajor = NULL, *pMinor = NULL;
 		LIBINIT init = NULL;
 		global_suppress_repeat_messages = 0;
-#ifdef WIN32
+#ifdef _WIN32
 		strcpy(fname,sFind.cFileName);
 		/* check image */
 		if ( !_checkimg(fname) ) continue;
@@ -824,7 +824,7 @@ static void _module_list (char *path)
 
 		/* TODO print info */
 		output_message("%-24.24s %5d.%d %s", fname, *pMajor, *pMinor, path);
-#ifdef WIN32
+#ifdef _WIN32
 		global_suppress_repeat_messages = gsrm;
 	} while ( FindNextFile(hFind,&sFind) );
 	FindClose(hFind);
@@ -840,7 +840,7 @@ void module_list(void)
 	char *gridlabd = getenv("GRIDLABD");
 	char *tokPath = NULL;
 	char *tokPathPtr = NULL;
-#ifdef WIN32
+#ifdef _WIN32
 	const char *pathDelim = ";";
 #else
 	const char *pathDelim = ":";
@@ -1275,7 +1275,7 @@ void module_termall(void)
 #include <sys/stat.h>
 #include <cctype>
 
-#ifdef WIN32
+#ifdef _WIN32
 #ifdef X64
 #define CC "gcc"
 #define CCFLAGS "-DWIN32 -DX64"
@@ -1359,7 +1359,7 @@ int module_compile(const char *name,	/**< name of library */
 	char srcfile[1024];
 	char mopt[8] = "";
 	const char *libs = "-lstdc++";
-#ifdef WIN32
+#ifdef _WIN32
 	snprintf(mopt,sizeof(mopt),"-m%d",sizeof(void*)*8);
 	libs = "";
 #endif
@@ -1481,7 +1481,7 @@ static int add_external_function(char *fctname, char *libname, void *lib)
 		/* this is to address a frequent MinGW/MSVC incompatibility with DLLs */
 		if ( sscanf(fctname,"%[^@]@%d",function,&ordinal)==2)
 		{
-#ifdef WIN32
+#ifdef _WIN32
 			item->call = DLSYM(lib,(LPCSTR)(long long)ordinal);
 #else
 			item->call = DLSYM(lib,function);
@@ -1529,7 +1529,7 @@ int module_load_function_list(char *libname, char *fnclist)
 #endif
 	if (lib==NULL)
 	{
-#ifdef WIN32
+#ifdef _WIN32
 		LPTSTR error;
 		LPTSTR end;
 		DWORD result = FormatMessage(
@@ -1692,7 +1692,7 @@ void module_profiles(void)
  *
  ***************************************************************************/
 
-#ifdef WIN32
+#ifdef _WIN32
 /* WIN32 requires use of the compatibility kill implementation */
 #include "signal.h"
 extern int kill(pid_t,int); /* defined in kill.c */
@@ -1844,7 +1844,7 @@ int sched_getinfo(int n,char *buf, size_t sz)
 	static char *name=NULL;
 	char *HEADING = show_progress ? HEADING_P : HEADING_R;
 	size_t HEADING_SZ = strlen(HEADING);
-#ifdef WIN32
+#ifdef _WIN32
 	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
 	if ( console )
 	{
@@ -1973,7 +1973,7 @@ void sched_print(int flags) /* flag=0 for single listing, flag=1 for continuous 
 	int width = 80, namesize;
 	static char *name=NULL;
 	char *HEADING = show_progress ? HEADING_P : HEADING_R;
-#ifdef WIN32
+#ifdef _WIN32
 	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
 	if ( console )
 	{
@@ -2064,7 +2064,7 @@ MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 		process_map[n].start = time(NULL);
 		sched_unlock(n);
 
-#ifdef WIN32
+#ifdef _WIN32
 		// TODO add this cpu to affinity
 		cpu = n;
 #elif defined MACOSX
@@ -2076,7 +2076,7 @@ MYPROCINFO *sched_allocate_procs(unsigned int n_threads, pid_t pid)
 		CPU_SET(n,cpuset);
 #endif
 	}
-#ifdef WIN32
+#ifdef _WIN32
 	// TODO set mp affinity
 	if ( global_threadcount==1 && SetProcessAffinityMask(hProc,(DWORD_PTR)(1<<cpu))==0 )
 	{
@@ -2106,7 +2106,7 @@ Error:
 		if ( my_proc->list!=NULL ) free(my_proc->list);
 		free(my_proc);
 	}
-#ifdef WIN32
+#ifdef _WIN32
 	CloseHandle(hProc);
 #endif
 	return NULL;
@@ -2118,7 +2118,7 @@ Error:
 	that is responsible to keep thread from migrating once
 	they are committed to a particular processor.
  **/
-#ifdef WIN32
+#ifdef _WIN32
 void sched_init(int readonly)
 {
 	static int has_run = 0;
@@ -2366,7 +2366,7 @@ void free_args(ARGS *args)
 }
 
 static int sched_stop = 0;
-#ifdef WIN32
+#ifdef _WIN32
 BOOL WINAPI sched_signal(DWORD type)
 {
 	if ( type==CTRL_C_EVENT )
@@ -2383,7 +2383,7 @@ void sched_signal(int sig)
 
 		/* stop processing */
 		sched_stop = 1;
-#ifdef WIN32
+#ifdef _WIN32
 		return TRUE;
 	}
 	return FALSE;
@@ -2498,7 +2498,7 @@ void sched_controller(void)
 	return;
 
 	global_suppress_repeat_messages = 0;
-#ifdef WIN32
+#ifdef _WIN32
 	if ( !SetConsoleCtrlHandler(sched_signal,TRUE) )
 		output_warning("unable to suppress console Ctrl-C handler");
 #else

@@ -11,7 +11,7 @@
 #include "gridlabd.h"
 #include "property.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 #undef int64
 #include <winsock2.h>
 #define int64 long long

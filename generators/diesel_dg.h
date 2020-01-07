@@ -199,6 +199,7 @@ private:
 	gld_property *mapped_freq_variable;	//Mapping to frequency variable in powerflow module - deltamode updates
 
 	double Overload_Limit_Value;	//The computed maximum output power, based on the Rated_VA and the Overload_Limit_Value
+	SIMULATIONMODE desired_simulation_mode;	//deltamode desired simulation mode after corrector pass - prevents starting iterations again
 
 protected:
 	/* TODO: put unpublished but inherited variables */
@@ -231,6 +232,8 @@ public:
     double Min_Ef;//< minimus induced voltage in p.u., e.g. 0.8
 	complex current_val[3];	//Present current output of the generator
 	complex power_val[3];	//Present power output of the generator
+	double real_power_val[3];
+	double imag_power_val[3];
 
 	//Convergence criteria (ion right now)
 	double rotor_speed_convergence_criterion;
@@ -402,9 +405,14 @@ public:
 	double ratio_f_p;
 	double pwr_electric_init;
 
+	//CONSTANT_PQ P and Q total oupput.
+	double real_power_gen;
+	double imag_power_gen;
+
 public:
 	/* required implementations */
 	diesel_dg(MODULE *module);
+	void check_power_output();
 	int create(void);
 	int init(OBJECT *parent);
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);

@@ -32,7 +32,7 @@
 #include <ctype.h>
 #include <errno.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 #define isnan _isnan  /* map isnan to appropriate function under Windows */
 #else
 #include <unistd.h>

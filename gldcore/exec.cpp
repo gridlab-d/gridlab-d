@@ -89,7 +89,7 @@
 #include <string.h>
 #include <sys/timeb.h>
 #include <thread>
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #include <winbase.h>
 #include <direct.h>
@@ -201,7 +201,7 @@ int64 exec_clock()
 int exec_init()
 {
 #if 0
-#ifdef WIN32
+#ifdef _WIN32
 	char glpathvar[1024];
 #endif
 #endif
@@ -225,7 +225,7 @@ int exec_init()
 	locale_push();
 
 #if 0 /* isn't cooperating for strange reasons -mh */
-#ifdef WIN32
+#ifdef _WIN32
 	glpathlen=strlen("GLPATH=");
 	sprintf(glpathvar, "GLPATH=");
 	ExpandEnvironmentStrings(getenv("GLPATH"), glpathvar+glpathlen, (DWORD)(1024-glpathlen));
@@ -1478,7 +1478,7 @@ TIMESTAMP syncall_internals(TIMESTAMP t1)
 
 void exec_sleep(unsigned int usec)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	Sleep(usec/1000);
 #else
 	usleep(usec);
@@ -2128,7 +2128,7 @@ STATUS exec_start()
 			if (global_run_realtime>0 && iteration_counter>0)
 			{
 				double metric=0;
-#ifdef WIN32
+#ifdef _WIN32
 				struct timeb tv;
 				ftime(&tv);
 				if (1000-tv.millitm >= 0)
@@ -3056,7 +3056,7 @@ void *slave_node_proc(void *args)
 		output_debug("snp(): connect to %s:%d", addrstr, mtr_port);
 	}
 
-#ifdef WIN32
+#ifdef _WIN32
 	// write, system() --slave command
 	sprintf(filepath, "%s%s%s", dirname, (dirname[0] ? "\\" : ""), filename);
 	output_debug("filepath = %s", filepath);
@@ -3093,7 +3093,7 @@ void exec_slave_node()
 	struct timeval timer;
 	pthread_t slave_thread;
 	int rct;
-#ifdef WIN32
+#ifdef _WIN32
 	static WSADATA wsaData;
 		int inaddrsz;
 #else
@@ -3101,7 +3101,7 @@ void exec_slave_node()
 #endif
 
 	inaddrsz = sizeof(struct sockaddr_in);
-#ifdef WIN32
+#ifdef _WIN32
 	// if we're on windows, we're using WinSock2, so we need WSAStartup.
 	output_debug("starting WS2");
 	if (WSAStartup(MAKEWORD(2,0),&wsaData)!=0)

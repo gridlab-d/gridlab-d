@@ -294,7 +294,10 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 				*/
 				return SM_ERROR;
 			}
-			//Default else, we're in SM_EVENT, so no flag change needed
+			else	//Must be SM_EVENT - just put this here for verbose messaging
+			{
+				gl_verbose("Generator object:%d - %s - requested exit to event-driven mode",delta_objects[curr_object_number]->id,(delta_objects[curr_object_number]->name ? delta_objects[curr_object_number]->name : "Unnamed"));
+			}
 		}
 				
 		//Determine how to exit - event or delta driven

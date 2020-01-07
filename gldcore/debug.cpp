@@ -210,7 +210,8 @@
 
 #include <signal.h>
 #include <ctype.h>
-#include <string.h>
+#include <cstring>
+#include <algorithm>
 
 #include "platform.h"
 #include "output.h"
@@ -331,7 +332,7 @@ void exec_sighandler(int sig) /**< the signal number, see \p <signal.h> */
 		*/
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 const char *strsignal(int sig)
 {
 	switch(sig) {
@@ -542,19 +543,19 @@ Retry:
 			fprintf(stdout,"<Ctrl-C>\n");
 			goto Retry;
 		}
-		if (strncmp(cmd,"quit",MAX(1,strlen(cmd)))==0)
+		if (strncmp(cmd,"quit",std::max<unsigned long>(1,strlen(cmd)))==0)
 			return DBG_QUIT;
-		else if (strncmp(cmd,"run",MAX(1,strlen(cmd)))==0 || (strlen(cmd)==0&&last==DBG_RUN))
+		else if (strncmp(cmd,"run",std::max<unsigned long>(1,strlen(cmd)))==0 || (strlen(cmd)==0&&last==DBG_RUN))
 		{
 			output_debug("resuming simulation, Ctrl-C interrupts");
 			debug_active=0;
 			return last = DBG_RUN;
 		}
-		else if (strncmp(cmd,"next",MAX(1,strlen(cmd)))==0 || (strlen(cmd)==0&&last==DBG_NEXT))
+		else if (strncmp(cmd,"next",std::max<unsigned long>(1,strlen(cmd)))==0 || (strlen(cmd)==0&&last==DBG_NEXT))
 		{
 			return last = DBG_NEXT;
 		}
-		else if (strncmp(cmd,"module",MAX(1,strlen(cmd)))==0)
+		else if (strncmp(cmd,"module",std::max<unsigned long>(1,strlen(cmd)))==0)
 		{
 			char modname[128];
 			
@@ -570,7 +571,7 @@ Retry:
 				}
 			}
 		}
-		else if (strncmp(cmd,"namespace",MAX(2,strlen(cmd)))==0)
+		else if (strncmp(cmd,"namespace",std::max<unsigned long>(2,strlen(cmd)))==0)
 		{
 			char space[1024];
 			if (sscanf(buffer,"%*s %s", space)==0)
@@ -581,7 +582,7 @@ Retry:
 			else if (!object_select_namespace(space))
 				output_debug("unable to select namespace '%s'", space);
 		}
-		else if (strncmp(cmd,"list",MAX(1,strlen(cmd)))==0)
+		else if (strncmp(cmd,"list",std::max<unsigned long>(1,strlen(cmd)))==0)
 		{
 			char lclass[256]="";
 			OBJECT *obj = object_get_first();
@@ -596,7 +597,7 @@ Retry:
 					list_object(obj,pass);
 			}
 		}
-		else if (strncmp(cmd,"details",MAX(1,strlen(cmd)))==0)
+		else if (strncmp(cmd,"details",std::max<unsigned long>(1,strlen(cmd)))==0)
 		{
 			char cmd[1024];
 //			int n = sscanf(buffer,"%*s %[^\0]", cmd);
@@ -624,7 +625,7 @@ Retry:
 					and try again.
 				 */
 		}
-		else if (strncmp(cmd,"inactive",MAX(1,strlen(cmd)))==0)
+		else if (strncmp(cmd,"inactive",std::max<unsigned long>(1,strlen(cmd)))==0)
 		{
 			char cmd[1024];
 			int n = sscanf(buffer,"%*s %s", cmd);
@@ -651,7 +652,7 @@ Retry:
 					and try again.
 				 */
 		}
-		else if (strncmp(cmd,"unnamed",MAX(1,strlen(cmd)))==0)
+		else if (strncmp(cmd,"unnamed",std::max<unsigned long>(1,strlen(cmd)))==0)
 		{
 			char cmd[1024];
 			int n = sscanf(buffer,"%*s %s", cmd);
@@ -678,7 +679,7 @@ Retry:
 					and try again.
 				 */
 		}
-		else if (strncmp(cmd,"nsync",MAX(2,strlen(cmd)))==0)
+		else if (strncmp(cmd,"nsync",std::max<unsigned long>(2,strlen(cmd)))==0)
 		{
 			char cmd[1024];
 			int n = sscanf(buffer,"%*s %s", cmd);
@@ -705,7 +706,7 @@ Retry:
 					and try again.
 				 */
 		}
-		else if (strncmp(cmd,"script",MAX(1,strlen(cmd)))==0)
+		else if (strncmp(cmd,"script",std::max<unsigned long>(1,strlen(cmd)))==0)
 		{
 			char load_filename[_MAX_PATH+32]; /* Made it a little longer than max_path to be safe */
 			if(sscanf(buffer,"%*s %[^\x20]",load_filename) <=0) /* use \n since we are using fgets to load buffer */
@@ -727,12 +728,12 @@ Retry:
 			}
 			load_from_file = 1;
 		}
-		else if (strncmp(cmd,"system",MAX(2,strlen(cmd)))==0)
+		else if (strncmp(cmd,"system",std::max<unsigned long>(2,strlen(cmd)))==0)
 		{
 			char cmd[1024];
-			if (sscanf(buffer,"%*s %s", cmd)==1)
+			if (sscanf(buffer,"%*s %[^\0]", cmd)==1)
 				int result = system(cmd);
-#ifdef WIN32
+#ifdef _WIN32
 			else if (getenv("COMSPEC")!=NULL)
 				system(getenv("COMSPEC"));
 			else
@@ -744,7 +745,7 @@ Retry:
 				int result = system("/bin/sh");
 #endif
 		}
-		else if (strncmp(cmd,"break",MAX(1,strlen(cmd)))==0)
+		else if (strncmp(cmd,"break",std::max<unsigned long>(1,strlen(cmd)))==0)
 		{
 			char bptype[256]="";
 			char bpval[256]="";
@@ -873,9 +874,9 @@ Retry:
 			else if (strncmp(bptype,"pass",strlen(bptype))==0)
 			{	/* create pass breakpoint */
 				int pass;
-				if (strnicmp(bpval,"pretopdown",MAX(2,strlen(bpval)))==0) pass=PC_PRETOPDOWN;
+				if (strnicmp(bpval,"pretopdown",std::max<unsigned long>(2,strlen(bpval)))==0) pass=PC_PRETOPDOWN;
 				else if (strnicmp(bpval,"bottomup",strlen(bpval))==0) pass=PC_BOTTOMUP;
-				else if (strnicmp(bpval,"posttopdown",MAX(2,strlen(bpval)))==0) pass=PC_POSTTOPDOWN;
+				else if (strnicmp(bpval,"posttopdown",std::max<unsigned long>(2,strlen(bpval)))==0) pass=PC_POSTTOPDOWN;
 				else
 				{
 					output_error("undefined pass type for add breakpoint");
@@ -974,7 +975,7 @@ Retry:
 					Check the command syntax and try again.
 				 */
 		}
-		else if (strncmp(cmd,"watch",MAX(2,strlen(cmd)))==0)
+		else if (strncmp(cmd,"watch",std::max<unsigned long>(2,strlen(cmd)))==0)
 		{
 			char wptype[256]="";
 			char wpval[256]="";
@@ -1085,7 +1086,7 @@ Retry:
 				Check the command syntax and try again.
 			 */
 		}
-		else if (strncmp(cmd,"where",MAX(1,strlen(cmd)))==0)
+		else if (strncmp(cmd,"where",std::max<unsigned long>(1,strlen(cmd)))==0)
 		{
 			char ts[64];
 			output_debug("Global clock... %s (%" FMT_INT64 "d)", convert_from_timestamp(global_clock,ts,sizeof(ts))?ts:"(invalid)",global_clock);
@@ -1096,7 +1097,7 @@ Retry:
 			output_debug("Rank........... %d", index);
 			output_debug("Object......... %s",get_objname(obj));
 		}
-		else if (strncmp(cmd,"print",MAX(1,strlen(cmd)))==0)
+		else if (strncmp(cmd,"print",std::max<unsigned long>(1,strlen(cmd)))==0)
 		{
 			char tmp[4096];
 			if (sscanf(buffer,"%*s %s",tmp)==0)
@@ -1130,7 +1131,7 @@ Retry:
 				 */
 			}
 		}
-		else if (strncmp(cmd,"globals",MAX(1,strlen(cmd)))==0)
+		else if (strncmp(cmd,"globals",std::max<unsigned long>(1,strlen(cmd)))==0)
 		{
 			GLOBALVAR *var;
 			for (var=global_getnext(NULL); var!=NULL; var=global_getnext(var))
@@ -1142,7 +1143,7 @@ Retry:
 				output_message("%-32.32s: \"%s\"", var->prop->name, val==NULL?"(error)":val);
 			}
 		}
-		else if (strncmp(cmd,"set",MAX(1,strlen(cmd)))==0)
+		else if (strncmp(cmd,"set",std::max<unsigned long>(1,strlen(cmd)))==0)
 		{
 			char256 objname;
 			char256 propname;
@@ -1196,7 +1197,7 @@ Retry:
 				 */
 			}
 		}
-		else if (strncmp(cmd,"find ",MAX(1,strlen(cmd)))==0)
+		else if (strncmp(cmd,"find ",std::max<unsigned long>(1,strlen(cmd)))==0)
 		{
 			FINDLIST *fl = NULL;
 			OBJECT *obj = NULL;
@@ -1214,7 +1215,7 @@ Retry:
 			if (exec_cmd("gdb --quiet %s --pid=%d",global_execname,global_process_id)<=0)
 				output_debug("unable to start gdb");
 		}
-		else if (strncmp(cmd,"help",MAX(1,strlen(cmd)))==0)
+		else if (strncmp(cmd,"help",std::max<unsigned long>(1,strlen(cmd)))==0)
 		{
 			output_debug("Summary of debug commands\n"
 				"   break             prints all breakpoints\n"
@@ -1278,7 +1279,7 @@ int exec_debug(struct sync_data *data, /**< the current sync status of the mail 
 			   OBJECT *obj) /**< the current object being processed */
 {
 	TIMESTAMP this_t;
-#ifdef WIN32
+#ifdef _WIN32
 	static int firstcall=1;
 	if (firstcall)
 	{

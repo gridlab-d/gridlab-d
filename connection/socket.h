@@ -6,7 +6,7 @@
 #ifndef _SOCKET_H
 #define _SOCKET_H
 
-#ifdef WIN32
+#ifdef _WIN32
 
 // conflict for use of int64 in winsock2.h
 #ifdef int64
@@ -43,7 +43,7 @@ public:
 	Socket(int pf, int type, int prot);
 	inline ~Socket() {
 		if ( sd!=0 )
-#ifdef WIN32
+#ifdef _WIN32
 			closesocket(sd);
 #else
 			close(sd);
@@ -51,7 +51,7 @@ public:
 	};
 public:
 	inline int get_lasterror(void) {
-#ifdef WIN32
+#ifdef _WIN32
 		return GetLastError();
 #else
 		return errno;

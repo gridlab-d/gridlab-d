@@ -105,6 +105,8 @@ private:
 	double Pref_prev;					//Previous Pref value in the same time step for non-VSI droop mode ramp-rate calculations
 	double Qref_prev[3];				//Previous Qref value in the same time step for non-VSI droop mode ramp-rate calculations
 
+	SIMULATIONMODE desired_simulation_mode;	//deltamode desired simulation mode after corrector pass - prevents starting iterations again
+
 protected:
 	/* TODO: put unpublished but inherited variables */
 public:

@@ -8,7 +8,7 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
-#ifdef WIN32
+#ifdef _WIN32
 #undef _WIN32_WINNT
 #define _WIN32_WINNT 0x0400
 #include <winsock2.h>
@@ -204,7 +204,7 @@ void *instance_runproc(void *ptr)
 	}
 	switch(inst->cnxtype){
 		case CI_MMAP:
-#ifdef WIN32
+#ifdef _WIN32
 			/* run new instance */
 			sprintf(cmd,"%s/gridlabd %s %s --slave %s:%" FMT_INT64 "x %s &", global_execdir, global_verbose_mode?"--verbose":"", global_debug_output?"--debug":"", global_hostname,inst->cacheid, inst->model);
 			output_verbose("starting new instance with command '%s'", cmd.get_string());
@@ -216,7 +216,7 @@ void *instance_runproc(void *ptr)
 			break;
 #endif
 		case CI_SHMEM:
-#ifdef WIN32
+#ifdef _WIN32
 			rc = -1;
 			break;
 #else
@@ -306,7 +306,7 @@ int instance_add_linkage(instance *inst, linkage *lnk)
 }
 
 int instance_master_wait_mmap(instance *inst){
-#ifdef WIN32
+#ifdef _WIN32
 	int status = 0;
 	DWORD rc;
 	
@@ -393,7 +393,7 @@ int instance_master_wait(void)
 	for ( inst=instance_list ; inst!=NULL ; inst=inst->next )
 	{
 		output_verbose("master waiting on slave %d", inst->id);
-#ifdef WIN32
+#ifdef _WIN32
 		if(inst->cnxtype == CI_MMAP){
 			status = instance_master_wait_mmap(inst);
 		}
@@ -420,7 +420,7 @@ void instance_master_done_mmap(instance *inst){
 	//output_verbose("master signaling slave %d with timestamp %lli", inst->id, inst->cache->ts);
 	
 	
-#ifdef WIN32
+#ifdef _WIN32
 	SetEvent(inst->hSlave);
 #else
 	// @todo linux/unix slave signalling
@@ -543,7 +543,7 @@ STATUS instance_init(instance *inst)
 		}
 	} else {
 		// default
-#ifdef WIN32
+#ifdef _WIN32
 		inst->cnxtype = CI_MMAP;
 #else
 		inst->cnxtype = CI_SHMEM;
