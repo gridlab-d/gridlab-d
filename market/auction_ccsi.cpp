@@ -1582,8 +1582,8 @@ int auction_ccsi::submit_nolock(char *from, double quantity, double real_price, 
 				gl_name(OBJECTHDR(this),myname,sizeof(myname)),quantity<0?"ask":"offer",
 				from);
 		}
-		return 1;
 	}
+	return 1;
 }
 
 TIMESTAMP auction_ccsi::nextclear(void) const
@@ -1659,5 +1659,6 @@ EXPORT TIMESTAMP sync_auction_ccsi(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 		return t2;
 	}
 	SYNC_CATCHALL(auction_ccsi);
+	return TS_INVALID;
 }
 
