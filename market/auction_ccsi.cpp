@@ -1583,7 +1583,7 @@ int auction_ccsi::submit_nolock(char *from, double quantity, double real_price, 
 				from);
 		}
 	}
-	return 1;
+	return 0;
 }
 
 TIMESTAMP auction_ccsi::nextclear(void) const
