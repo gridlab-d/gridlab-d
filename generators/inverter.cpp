@@ -710,11 +710,18 @@ int inverter::init(OBJECT *parent)
 				pLine_I[1] = NULL;
 				pLine_I[2] = NULL;
 
-				//Get 12
-				pLine12 = map_complex_value(tmp_obj,"current_12");
+				// NOTE - Commented code will replace the pLine12 and pPower12 once the triplex_node "deprecated properties" are removed
+				// //Get 12
+				// pLine12 = map_complex_value(tmp_obj,"current_12");
 
-				pPower12 = map_complex_value(tmp_obj,"power_12");
-				
+				// pPower12 = map_complex_value(tmp_obj,"power_12");
+
+				//Get 12
+				pLine12 = map_complex_value(tmp_obj,"acc_temp_current_12");
+
+				pPower12 = map_complex_value(tmp_obj,"acc_temp_power_12");
+
+
 				//Individual ones not used
 				pPower[0] = NULL;	//Not used
 				pPower[1] = NULL;	//Not used

@@ -835,9 +835,6 @@ SIMULATIONMODE triplex_meter::inter_deltaupdate_triplex_meter(unsigned int64 del
 			if (tpmeter_interrupted_secondary == true)
 				tpmeter_interrupted_secondary = false;
 
-		//Call triplex-specific call
-		BOTH_triplex_node_presync_fxn();
-
 		//Call node presync-equivalent items
 		NR_node_presync_fxn(0);
 

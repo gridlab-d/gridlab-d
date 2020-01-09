@@ -16,6 +16,8 @@ public:
 private:
 	bool base_load_val_was_nonzero[3];		///< Tracking variable to make ZIP-fraction loads check for zero conditions (but not already zeroed)
 
+	complex prev_load_values[3][3];			///< Tracking variable for accumulators - make loads behave more like nodes
+
 public:
 	complex measured_voltage_1;	///< measured voltage
 	complex measured_voltage_2;
