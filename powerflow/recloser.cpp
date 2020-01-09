@@ -42,6 +42,8 @@ recloser::recloser(MODULE *mod) : switch_object(mod)
 			GL_THROW("Unable to publish recloser reliability operation function");
 		if (gl_publish_function(oclass,	"change_recloser_faults", (FUNCTIONADDR)recloser_fault_updates)==NULL)
 			GL_THROW("Unable to publish recloser fault correction function");
+		if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_switch)==NULL)
+			GL_THROW("Unable to publish recloser fault restoration function");
 
 		//Publish deltamode functions -- replicate switch
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_switch)==NULL)
@@ -81,6 +83,10 @@ int recloser::create()
 int recloser::init(OBJECT *parent)
 {
 	int result = switch_object::init(parent);
+
+	//Check for deferred
+	if (result == 2)
+		return 2;	//Return the deferment - no sense doing everything else!
 
 	TIMESTAMP next_ret;
 	next_ret = gl_globalclock;

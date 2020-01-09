@@ -54,6 +54,9 @@ PROPERTY *metrics_collector::propRegCountC = NULL;
 PROPERTY *metrics_collector::propSwingSubLoad = NULL;
 PROPERTY *metrics_collector::propSwingMeterS = NULL;
 
+PROPERTY *metrics_collector::propTransformerOverloaded = NULL;
+PROPERTY *metrics_collector::propLineOverloaded = NULL;
+
 bool metrics_collector::log_set = true;  // if false, the first (some class) instance will print messages to console
 
 void new_metrics_collector(MODULE *mod){
@@ -102,6 +105,9 @@ int metrics_collector::create(){
 	count_array = NULL;
 	real_power_loss_array = NULL;
 	reactive_power_loss_array = NULL;
+
+	trans_overload_status_array = NULL;
+	line_overload_status_array = NULL;
 
 	metrics = NULL;
 
@@ -209,8 +215,15 @@ int metrics_collector::init(OBJECT *parent){
 				if (propSwingMeterS == NULL) propSwingMeterS = gl_get_property (parent, "measured_power");
 			}
 		}
-	} else {
-		gl_error("metrics_collector allows only these parents: triplex meter, house, waterheater, inverter, substation, meter, capacitor, regulator");
+	} else if (gl_object_isa(parent, "transformer")) {
+    parent_string = "transformer";
+		if (propTransformerOverloaded == NULL) propTransformerOverloaded = gl_get_property (parent, "overloaded_status");
+	} else if (gl_object_isa(parent, "line")) {
+    parent_string = "line";
+		if (propLineOverloaded == NULL) propLineOverloaded = gl_get_property (parent, "overloaded_status");
+	}
+	else {
+		gl_error("metrics_collector allows only these parents: triplex meter, house, waterheater, inverter, substation, meter, capacitor, regulator, transformer, line.");
 		/*  TROUBLESHOOT
 		Check the parent object of the metrics_collector.
 		*/
@@ -318,6 +331,28 @@ int metrics_collector::init(OBJECT *parent){
 			strcpy (parent_name, "Swing Bus Metrics");
 		}
 		metrics = (double *)gl_malloc(FDR_ARRAY_SIZE*sizeof(double));
+		if (metrics == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate JSON metrics array",obj->id);
+		}
+	}
+	else if (strcmp(parent_string, "transformer") == 0)
+	{
+		if (parent->name != NULL) {
+			strcpy (parent_name, parent->name);
+		}
+		metrics = (double *)gl_malloc(TRANS_OVERLOAD_ARRAY_SIZE*sizeof(double));
+		if (metrics == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate JSON metrics array",obj->id);
+		}
+	}
+	else if (strcmp(parent_string, "line") == 0)
+	{
+		if (parent->name != NULL) {
+			strcpy (parent_name, parent->name);
+		}
+		metrics = (double *)gl_malloc(LINE_OVERLOAD_ARRAY_SIZE*sizeof(double));
 		if (metrics == NULL)
 		{
 			GL_THROW("metrics_collector %d::init(): Failed to allocate JSON metrics array",obj->id);
@@ -504,6 +539,10 @@ int metrics_collector::init(OBJECT *parent){
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
 			*/
 		}
+		for (curr_index=0; curr_index<vector_length; curr_index++)
+		{
+			wh_load_array[curr_index] = 0.0;
+		}
 	}
 	// If parent is inverter
 	else if (strcmp(parent_string, "inverter") == 0) {
@@ -593,9 +632,35 @@ int metrics_collector::init(OBJECT *parent){
 		}
 		for (int i = 0; i < vector_length; i++) count_array[i] = 0.0;
 	}
+	else if (strcmp(parent_string, "transformer") == 0) {
+		trans_overload_status_array = (int *)gl_malloc(vector_length*sizeof(int));
+		// Check
+		if (trans_overload_status_array == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate overload status array",obj->id);
+			/*  TROUBLESHOOT
+			While attempting to allocate the array, an error was encountered.
+			Please try again.  If the error persists, please submit a bug report via the Trac system.
+			*/
+		}
+		for (int i = 0; i < vector_length; i++) trans_overload_status_array[i] = 0;
+	}
+	else if (strcmp(parent_string, "line") == 0) {
+		line_overload_status_array = (int *)gl_malloc(vector_length*sizeof(int));
+		// Check
+		if (line_overload_status_array == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate overload status array",obj->id);
+			/*  TROUBLESHOOT
+			While attempting to allocate the array, an error was encountered.
+			Please try again.  If the error persists, please submit a bug report via the Trac system.
+			*/
+		}
+		for (int i = 0; i < vector_length; i++) line_overload_status_array[i] = 0;
+	}
 	// else not possible come to this step
 	else {
-		gl_error("metrics_collector must have a triplex meter, meter, house, waterheater, inverter or swing-bus as its parent");
+		gl_error("metrics_collector must have a triplex meter, meter, house, waterheater, inverter, swing-bus, transformer or line as its parent");
 		/*  TROUBLESHOOT
 		Check the parent object of the metrics_collector. The metrics_collector is only able to be childed via a
 		triplex meter or a house or an inverter when connecting into powerflow systems.
@@ -796,9 +861,23 @@ int metrics_collector::read_line(OBJECT *obj){
 		real_power_loss_array[curr_index] = (double)lossesSum.Re();
 		reactive_power_loss_array[curr_index] = (double)lossesSum.Im();
 	}
+	else if (strcmp(parent_string, "transformer") == 0) {
+		if (*gl_get_bool(obj->parent, propTransformerOverloaded)) {
+		  trans_overload_status_array[curr_index] = 1;
+		} else {
+			trans_overload_status_array[curr_index] = 0;
+		}
+	}
+	else if (strcmp(parent_string, "line") == 0) {
+		if (*gl_get_bool(obj->parent, propLineOverloaded)) {
+		  line_overload_status_array[curr_index] = 1;
+		} else {
+			line_overload_status_array[curr_index] = 0;
+		}
+	}
 	// else not possible come to this step
 	else {
-		gl_error("metrics_collector must have a triplex meter, house, waterheater, inverter, swing-bus, capacitor or regulator as its parent");
+		gl_error("metrics_collector must have a triplex meter, house, waterheater, inverter, swing-bus, capacitor, regulator, transformer or line as its parent");
 		/*  TROUBLESHOOT
 		Check the parent object of the metrics_collector. The metrics_collector is only able to be childed via a
 		triplex meter or a house or a waterheater or an inverter or a swing-bus when connecting into powerflow systems.
@@ -966,6 +1045,14 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 	else if (strcmp(parent_string, "regulator") == 0) {
 		metrics[REG_OPERATION_CNT] = findMax(count_array, curr_index);
 	}
+	// If parent is transformer
+	else if (strcmp(parent_string, "transformer") == 0) {
+		metrics[TRANS_OVERLOAD_PERC] = countPerc(trans_overload_status_array, curr_index);
+	}
+	// If parent is line
+	else if (strcmp(parent_string, "line") == 0) {
+		metrics[LINE_OVERLOAD_PERC] = countPerc(line_overload_status_array, curr_index);
+	}
 	else if (strcmp(parent_string, "swingbus") == 0) {
 		// real power data
 		metrics[FDR_MIN_REAL_POWER] = findMin(real_power_array, curr_index);
@@ -1002,7 +1089,7 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		curr_index = 1;
 	}
 
-	next_write = min(next_write + interval_length, gl_globalstoptime);
+	next_write = std::min(next_write + interval_length, gl_globalstoptime);
 	first_write = false;
 
 	return 1;
@@ -1024,6 +1111,8 @@ void metrics_collector::copyHistories (int from, int to) {
 	if (reactive_power_array) reactive_power_array[to] = reactive_power_array[from];
 	if (real_power_loss_array) real_power_loss_array[to] = real_power_loss_array[from];
 	if (reactive_power_loss_array) reactive_power_loss_array[to] = reactive_power_loss_array[from];
+	if (trans_overload_status_array) trans_overload_status_array[to] = trans_overload_status_array[from];
+	if (line_overload_status_array) line_overload_status_array[to] = line_overload_status_array[from];
 }
 
 void metrics_collector::interpolate (double *a, int idx, double denom, double top) {
@@ -1048,6 +1137,16 @@ void metrics_collector::interpolateHistories (int idx, TIMESTAMP t) {
 	if (reactive_power_array) interpolate (reactive_power_array, idx, denom, top);
 	if (real_power_loss_array) interpolate (real_power_loss_array, idx, denom, top);
 	if (reactive_power_loss_array) interpolate (reactive_power_loss_array, idx, denom, top);
+}
+
+double metrics_collector::countPerc(int array[], int length) {
+	double perc;
+	double totalOnes = 0;
+	for (int i = 0; i < length; i++) {
+		if (array[i] == 1) totalOnes++;
+	}
+	perc = 100 * totalOnes/length;
+	return perc;
 }
 
 double metrics_collector::findMax(double array[], int length) {

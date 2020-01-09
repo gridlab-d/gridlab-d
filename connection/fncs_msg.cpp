@@ -560,23 +560,27 @@ int fncs_msg::precommit(TIMESTAMP t1){
 		//process external function calls
 		incoming_fncs_function();
 		//publish precommit variables
-		result = publishVariables(vmap[4]);
-		if(result == 0){
-			return result;
-		}
-		//read precommit variables from cache
-		result = subscribeVariables(vmap[4]);
-		if(result == 0){
-			return result;
+		if(t1<gl_globalstoptime){
+			result = publishVariables(vmap[4]);
+			if(result == 0){
+				return result;
+			}
+			//read precommit variables from cache
+			result = subscribeVariables(vmap[4]);
+			if(result == 0){
+				return result;
+			}
 		}
 	}
 	// read precommit json variables from GridAPPSD, renke
 	//TODO
 	else if (message_type == MT_JSON)
 	{
-		result = subscribeJsonVariables();
-		if(result == 0){
-			return result;
+		if(t1<gl_globalstoptime){
+			result = subscribeJsonVariables();
+			if(result == 0){
+				return result;
+			}
 		}
 	}
 
@@ -586,14 +590,16 @@ int fncs_msg::precommit(TIMESTAMP t1){
 TIMESTAMP fncs_msg::presync(TIMESTAMP t1){
 
 	int result = 0;
-	result = publishVariables(vmap[5]);
-	if(result == 0){
-		return TS_INVALID;
-	}
-	//read presync variables from cache
-	result = subscribeVariables(vmap[5]);
-	if(result == 0){
-		return TS_INVALID;
+	if(t1<gl_globalstoptime){
+		result = publishVariables(vmap[5]);
+		if(result == 0){
+			return TS_INVALID;
+		}
+		//read presync variables from cache
+		result = subscribeVariables(vmap[5]);
+		if(result == 0){
+			return TS_INVALID;
+		}
 	}
 	return TS_NEVER;
 }
@@ -601,14 +607,16 @@ TIMESTAMP fncs_msg::presync(TIMESTAMP t1){
 TIMESTAMP fncs_msg::plc(TIMESTAMP t1){
 
 	int result = 0;
-	result = publishVariables(vmap[12]);
-	if(result == 0){
-		return TS_INVALID;
-	}
-	//read plc variables from cache
-	result = subscribeVariables(vmap[12]);
-	if(result == 0){
-		return TS_INVALID;
+	if(t1<gl_globalstoptime){
+		result = publishVariables(vmap[12]);
+		if(result == 0){
+			return TS_INVALID;
+		}
+		//read plc variables from cache
+		result = subscribeVariables(vmap[12]);
+		if(result == 0){
+			return TS_INVALID;
+		}
 	}
 	return TS_NEVER;
 }
@@ -617,16 +625,17 @@ TIMESTAMP fncs_msg::sync(TIMESTAMP t1){
 
 	int result = 0;
 	TIMESTAMP t2;
-	result = publishVariables(vmap[6]);
-	if(result == 0){
-		return TS_INVALID;
+	if(t1<gl_globalstoptime){
+		result = publishVariables(vmap[6]);
+		if(result == 0){
+			return TS_INVALID;
+		}
+		//read sync variables from cache
+		result = subscribeVariables(vmap[6]);
+		if(result == 0){
+			return TS_INVALID;
+		}
 	}
-	//read sync variables from cache
-	result = subscribeVariables(vmap[6]);
-	if(result == 0){
-		return TS_INVALID;
-	}
-
 	if (message_type == MT_GENERAL)
 		return TS_NEVER;
 	else if (message_type == MT_JSON ){
@@ -638,14 +647,16 @@ TIMESTAMP fncs_msg::sync(TIMESTAMP t1){
 TIMESTAMP fncs_msg::postsync(TIMESTAMP t1){
 
 	int result = 0;
-	result = publishVariables(vmap[7]);
-	if(result == 0){
-		return TS_INVALID;
-	}
-	//read postsync variables from cache
-	result = subscribeVariables(vmap[7]);
-	if(result == 0){
-		return TS_INVALID;
+	if(t1<gl_globalstoptime){
+		result = publishVariables(vmap[7]);
+		if(result == 0){
+			return TS_INVALID;
+		}
+		//read postsync variables from cache
+		result = subscribeVariables(vmap[7]);
+		if(result == 0){
+			return TS_INVALID;
+		}
 	}
 	return TS_NEVER;
 }
@@ -653,11 +664,12 @@ TIMESTAMP fncs_msg::postsync(TIMESTAMP t1){
 TIMESTAMP fncs_msg::commit(TIMESTAMP t0, TIMESTAMP t1){
 
 	int result = 0;
-	result = publishVariables(vmap[8]);
-	if(result == 0){
-		return TS_INVALID;
+	if(t1<gl_globalstoptime){
+		result = publishVariables(vmap[8]);
+		if(result == 0){
+			return TS_INVALID;
+		}
 	}
-
 	// publish json_configure variables, renke
 	// TODO
 	if (message_type == MT_JSON)
@@ -666,18 +678,22 @@ TIMESTAMP fncs_msg::commit(TIMESTAMP t0, TIMESTAMP t1){
 			if(real_time_gridappsd_publish_period > 0){
 				gridappsd_publish_time = t1 + (TIMESTAMP)real_time_gridappsd_publish_period;
 			}
-			result = publishJsonVariables();
-			if(result == 0){
-				return TS_INVALID;
+			if(t1<gl_globalstoptime){
+				result = publishJsonVariables();
+				if(result == 0){
+					return TS_INVALID;
+				}
 			}
 		}
 	}
 
 	//read commit variables from cache
 	// put a if to check the message_type
-	result = subscribeVariables(vmap[8]);
-	if(result == 0){
-		return TS_INVALID;
+	if(t1<gl_globalstoptime){
+		result = subscribeVariables(vmap[8]);
+		if(result == 0){
+			return TS_INVALID;
+		}
 	}
 	return TS_NEVER;
 }
@@ -822,7 +838,11 @@ SIMULATIONMODE fncs_msg::deltaClockUpdate(double t1, unsigned long timestep, SIM
 		fncs::time t = 0;
 		double dt = 0;
 		dt = (t1 - (double)initial_sim_time) * 1000000000.0;
-		t = (fncs::time)((dt + ((double)(timestep) / 2.0)) - fmod((dt + ((double)(timestep) / 2.0)), (double)timestep));
+		if(sysmode == SM_EVENT) {
+			t = (fncs::time)((dt + (1000000000.0 / 2.0)) - fmod((dt + (1000000000.0 / 2.0)), 1000000000.0));
+		} else {
+			t = (fncs::time)((dt + ((double)(timestep) / 2.0)) - fmod((dt + ((double)(timestep) / 2.0)), (double)timestep));
+		}
 		fncs::update_time_delta((fncs::time)timestep);
 		fncs_time = fncs::time_request(t);
 		if(sysmode == SM_EVENT)
@@ -833,7 +853,6 @@ SIMULATIONMODE fncs_msg::deltaClockUpdate(double t1, unsigned long timestep, SIM
 			return SM_ERROR;
 		} else {
 			last_delta_fncs_time = (double)(fncs_time)/1000000000.0 + (double)(initial_sim_time);
-			t1 = fncs_time;
 		}
 	}
 #endif
@@ -849,14 +868,14 @@ TIMESTAMP fncs_msg::clk_update(TIMESTAMP t1)
 		fncs::update_time_delta(fncs_step);
 #endif
 		exitDeltamode = false;
-		return t1;
 	}
 	if(t1 > last_approved_fncs_time){
 		if(gl_globalclock == gl_globalstoptime){
 #if HAVE_FNCS
 			fncs::finalize();
 #endif
-			return t1;
+			//t1 = gl_globalstoptime + 1;
+			return TS_NEVER;
 		} else if (t1 > gl_globalstoptime && gl_globalclock < gl_globalstoptime){
 			t1 == gl_globalstoptime;
 		}
@@ -1201,11 +1220,18 @@ int fncs_msg::subscribeVariables(varmap *rmap){
 	string value = "";
 	char valueBuf[1024] = "";
 	VARMAP *mp = NULL;
+#if HAVE_FNCS
+	vector<string> updated_events = fncs::get_events();
+#endif
 	for(mp = rmap->getfirst(); mp != NULL; mp = mp->next){
 		if(mp->dir == DXD_READ){
 			if(mp->ctype == CT_PUBSUB){
 #if HAVE_FNCS
-				value = fncs::get_value(string(mp->remote_name));
+				if(std::find(updated_events.begin(), updated_events.end(), string(mp->remote_name)) != updated_events.end()) {
+					value = fncs::get_value(string(mp->remote_name));
+				} else {
+					value = "";
+				}
 #endif
 				if(value.empty() == false){
 					strncpy(valueBuf, value.c_str(), 1023);

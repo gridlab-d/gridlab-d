@@ -294,7 +294,7 @@ typedef struct s_httpcnx {
 	char query[1024];
 	char *buffer;
 	size_t len;
-	size_t max;
+	size_t max_size;
 	char *status;
 	char *type;
 	SOCKET s;
@@ -309,8 +309,8 @@ static HTTPCNX *http_create(SOCKET s)
 	HTTPCNX *http = (HTTPCNX*)malloc(sizeof(HTTPCNX));
 	memset(http,0,sizeof(HTTPCNX));
 	http->s = s;
-	http->max = 65536;
-	http->buffer = malloc(http->max);
+	http->max_size = 65536;
+	http->buffer = malloc(http->max_size);
 	return http;
 }
 
@@ -458,19 +458,19 @@ static void http_write(HTTPCNX *http, char *data, size_t len)
 		tmp = (char*)malloc(need*2+1);
 		len = http_rewrite(tmp,data,len,need*2);
 	}
-	if (http->len+len>=http->max)
+	if (http->len+len>=http->max_size)
 	{
 		/* extend buffer */
 		void *old = http->buffer;
-		if (http->len+len < http->max*2)
+		if (http->len+len < http->max_size*2)
 		{
-			http->max *= 2;
+			http->max_size *= 2;
 		}
 		else
 		{
-			http->max = http->len+len+1;
+			http->max_size = http->len+len+1;
 		}
-		http->buffer = malloc(http->max);
+		http->buffer = malloc(http->max_size);
 		memcpy(http->buffer,old,http->len);
 		free(old);
 	}

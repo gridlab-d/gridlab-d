@@ -376,7 +376,7 @@ AC_CACHE_CHECK([whether thread affinity macros defined],
             [[#include <mach/thread_policy.h>]],
 [[
 #if !defined(THREAD_AFFINITY_POLICY) || !defined(THREAD_AFFINITY_TAG_NULL)
-    :'thread macros not defined
+    :'thread macros not defined'
 #endif
 ]],
         [gld_cv_have_thread_affinity_policy=yes],
@@ -394,6 +394,16 @@ unset XERCES_VERSION
 AX_LIB_XERCES([2.7])
 AM_CONDITIONAL([MISSING_XERCES], [test x$HAVE_XERCES != xyes])
 AC_SUBST([HAVE_XERCES])
+
+# Check for hdf5
+unset HDF5_VERSION
+AX_LIB_HDF5([serial])
+if test "$with_hdf5" = "yes"; then
+      LDFLAGS="$LDFLAGS $HDF5_LDFLAGS  -lhdf5_cpp  $HDF5_LIBS"
+fi
+AC_MSG_CHECKING([for HDF5])
+AC_MSG_RESULT([$with_hdf5])
+
 
 # Check for CppUnit
 AM_PATH_CPPUNIT([1.12], [HAVE_CPPUNIT=yes], [HAVE_CPPUNIT=no])
@@ -413,7 +423,7 @@ AS_IF([test x"$HAVE_CPPUNIT" = xyes],
      LIBS="$SAVED_LIBS"
      AC_MSG_RESULT([$HAVE_CPPUNIT])])
 AS_IF([test x"$HAVE_CPPUNIT" = xyes],
-    [# CppUnit doesn't separate its flags appropriately
+    [# CppUnit does not separate its flags appropriately
      COMBINED_CPPUNIT_FLAGS="$CPPUNIT_CFLAGS $CPPUNIT_LIBS"
      CPPUNIT_CFLAGS=
      CPPUNIT_LIBS=
@@ -496,25 +506,25 @@ gld_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $HELICS_CPPFLAGS"
 # add libhelics to HELICS_LIBS if missing
 AS_CASE([$host],
 	[*linux*], [AS_CASE([$HELICS_LIBS],
-					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lrt -lzmq -lboost_filesystem -lboost_program_options -lboost_system -lboost_unit_test_framework"])
+					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lrt -lzmq"])
 				AS_CASE([$LIBS],
-					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lrt -lzmq -lboost_filesystem -lboost_program_options -lboost_system -lboost_unit_test_framework"])],
+					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lrt -lzmq"])],
 	[*darwin*], [AS_CASE([$HELICS_LIBS],
-					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lrt -lzmq -lboost_filesystem -lboost_program_options -lboost_system -lboost_unit_test_framework"])
+					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelicsSharedLib -lzmq"])
 				AS_CASE([$LIBS],
-					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lrt -lzmq -lboost_filesystem -lboost_program_options -lboost_system -lboost_unit_test_framework"])],
+					[*lhelics*], [], [LIBS="$LIBS -lhelicsSharedLib -lzmq"])],
 	[*mingw*], [AS_CASE([$HELICS_LIBS],
-					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lzmq -lboost_filesystem-mt -lboost_program_options-mt -lboost_system-mt -lboost_unit_test_framework-mt"])
+					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lzmq"])
 				AS_CASE([$LIBS],
-					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lzmq -lboost_filesystem-mt -lboost_program_options-mt -lboost_system-mt -lboost_unit_test_framework-mt"])])
+					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lzmq"])])
 have_helics=yes
 AC_MSG_CHECKING([for HELICS])
 AC_LINK_IFELSE(
-    [AC_LANG_PROGRAM([[
+	[AC_LANG_PROGRAM([[ 
 #include <helics/application_api/helicsTypes.hpp>
 ]],
-[[
-helics::NamedPoint t;
+[[ 
+helics::NamedPoint t; 
 ]])],
     [have_helics=yes; have_helics_int=1],
     [have_helics=no; have_helics_int=0])
@@ -718,6 +728,7 @@ AC_MSG_RESULT([
 
     MinGW: ...................... $HAS_MINGW
     Doxygen: .................... $HAVE_DOXYGEN
+    hdf5: ....................... $with_hdf5
     libcppunit: ................. $HAVE_CPPUNIT
     libxerces-c: ................ $HAVE_XERCES
     matlab: ..................... $HAVE_MATLAB

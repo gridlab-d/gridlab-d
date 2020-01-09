@@ -2390,7 +2390,7 @@ SIMULATIONMODE battery::inter_deltaupdate(unsigned int64 delta_time, unsigned lo
 			// Check the delta time step that the soc will be out of limit && update internal_battery_load
 			state_change_time_delta = check_state_change_time_delta(delta_time, dt);
 
-			simmode_return_value = SM_DELTA_ITER; // iterate since inverter is doing so
+			simmode_return_value = SM_EVENT; // Just return event-driven mode - inverter/other will drive it forward
 
 		}
 

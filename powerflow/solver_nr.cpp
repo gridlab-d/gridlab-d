@@ -939,7 +939,8 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			island_index_val = bus[tempa].island_number;
 
 			//Check and see if we should just skip this branch -- if it's an unassociated node, probably don't need this branch
-			if (island_index_val == -1)
+			//Explicitly check both ends (branch's island_number could probably work, but this is more thorough)
+			if ((bus[tempa].island_number == -1) || (bus[tempb].island_number == -1))
 			{
 				continue;
 			}
@@ -947,7 +948,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			//Preliminary check to make sure we weren't missed in the initialization
 			if ((bus[tempa].Matrix_Loc == -1) || (bus[tempb].Matrix_Loc == -1))
 			{
-				GL_THROW("An element in NR line:%d was not properly localized");
+				GL_THROW("An element in NR line:%d - %s was not properly localized",branch[jindexer].obj->id,(branch[jindexer].name ? branch[jindexer].name : "Unnamed"));
 				/*  TROUBLESHOOT
 				When parsing the bus list, the Newton-Raphson solver found a bus that did not
 				appear to have a location within the overall admittance/Jacobian matrix.  Please
