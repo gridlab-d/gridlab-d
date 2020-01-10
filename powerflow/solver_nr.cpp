@@ -3809,11 +3809,18 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					fprintf(FPoutVal,"\n");
 				}//End print the references
 
-				//Print the simulation time and iteration number
-				fprintf(FPoutVal,"Timestamp: %lld - Iteration %lld\n",gl_globalclock,powerflow_values->island_matrix_values[island_loop_index].iteration_count);
+				//Print the simulation time and iteration number - see how we're running
+				if (deltatimestep_running == -1)	//QSTS
+				{
+					fprintf(FPoutVal,"Timestamp: %lld - Iteration %lld\n",gl_globalclock,powerflow_values->island_matrix_values[island_loop_index].iteration_count);
+				}
+				else
+				{
+					fprintf(FPoutVal,"Timestamp: %f (deltamode) - Iteration %lld\n",gl_globaldeltaclock,powerflow_values->island_matrix_values[island_loop_index].iteration_count);
+				}
 
-				//See if anything wrote out
-				if (something_has_been_output == true)
+				//See if anything wrote out, or we're "all"
+				if ((something_has_been_output == true) || (NRMatDumpMethod == MD_ALL))
 				{
 					//Print size - for parsing ease
 					fprintf(FPoutVal,"Matrix Information - non-zero element count = %d\n",powerflow_values->island_matrix_values[island_loop_index].size_Amatrix);
