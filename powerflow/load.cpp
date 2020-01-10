@@ -326,14 +326,6 @@ int load::init(OBJECT *parent)
 		//See if we're going to be "in-rushy" or not
 		if (enable_inrush_calculations==true)
 		{
-			//Throw a general warning here for load modeling
-			gl_warning("Note: loads with in-rush enabled will apply in-rush to all accumulated load");
-			/*  TROUBLESHOOT
-			In-rush calculations will be applied to all shunt/impedance-based load on a load object.  This will
-			include any contributions from other objects to a specific load, such as attached houses or generation
-			devices.  If you don't want this behavior, separate the other object from the load.
-			*/
-
 			//Figure out if we need our integration method updated - inductance
 			if (inrush_int_method_inductance == IRM_UNDEFINED)
 			{
@@ -2669,7 +2661,8 @@ void load::load_update_fxn(bool fault_mode)
 					if (transf_from_stdy_state == true)
 					{
 						//Check and see what type of load this is -- Phase A
-						if (shunt[index_var].Im()>0.0)	//Capacitve
+						//Use intermediate variable to only get our load parts (not any underlying contributions)
+						if (prev_load_values[0][index_var].Im()>0.0)	//Capacitve
 						{
 							//Zero all inductive terms, just because
 							LoadHistTermL[index_var] = complex(0.0,0.0);
@@ -2686,7 +2679,7 @@ void load::load_update_fxn(bool fault_mode)
 							if (inrush_int_method_capacitance == IRM_TRAPEZOIDAL)
 							{
 								//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)*2/dt
-								workingvalue = shunt[index_var].Im() / (PI * current_frequency * deltatimestep_running);
+								workingvalue = prev_load_values[0][index_var].Im() / (PI * current_frequency * deltatimestep_running);
 
 								//Create chrcstore while we're in here
 								chrcloadstore[index_var] = 2.0 * workingvalue;
@@ -2705,7 +2698,7 @@ void load::load_update_fxn(bool fault_mode)
 							else if (inrush_int_method_capacitance == IRM_BACKEULER)
 							{
 								//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)/dt
-								workingvalue = shunt[index_var].Im() / (2.0 * PI * current_frequency * deltatimestep_running);
+								workingvalue = prev_load_values[0][index_var].Im() / (2.0 * PI * current_frequency * deltatimestep_running);
 
 								//Create chrcstore while we're in here
 								chrcloadstore[index_var] = workingvalue;
@@ -2726,7 +2719,7 @@ void load::load_update_fxn(bool fault_mode)
 							//End of copy from below
 
 						}
-						else if (shunt[index_var].Im()<0.0) //Inductive
+						else if (prev_load_values[0][index_var].Im()<0.0) //Inductive - again use tracking variable
 						{
 							//Zero all capacitive terms, just because
 							LoadHistTermC[index_var] = complex(0.0,0.0);
@@ -2740,7 +2733,7 @@ void load::load_update_fxn(bool fault_mode)
 
 							//Copied from below - update
 							//Form the equivalent impedance value
-							working_impedance_value = complex(1.0,0.0) / shunt[index_var];
+							working_impedance_value = complex(1.0,0.0) / prev_load_values[0][index_var];
 
 							if (inrush_int_method_inductance == IRM_TRAPEZOIDAL)
 							{
@@ -2823,7 +2816,7 @@ void load::load_update_fxn(bool fault_mode)
 					else	//Normal update
 					{
 						//Check and see what type of load this is -- Phase A
-						if (shunt[index_var].Im()>0.0)	//Capacitve
+						if (prev_load_values[0][index_var].Im()>0.0)	//Capacitve - use intermediate variable
 						{
 							//Zero all inductive terms, just because
 							LoadHistTermL[index_var] = complex(0.0,0.0);
@@ -2863,7 +2856,7 @@ void load::load_update_fxn(bool fault_mode)
 							}
 							//Default else -- some other method
 						}
-						else if (shunt[index_var].Im()<0.0) //Inductive
+						else if (prev_load_values[0][index_var].Im()<0.0) //Inductive - use intermediate variable
 						{
 							//Zero all capacitive terms, just because
 							LoadHistTermC[index_var] = complex(0.0,0.0);
@@ -2977,7 +2970,7 @@ void load::load_update_fxn(bool fault_mode)
 		for (index_var=0; index_var<3; index_var++)
 		{
 			//Figure out what type of load it is
-			if (shunt[index_var].Im()>0.0)	//Capacitve
+			if (prev_load_values[0][index_var].Im()>0.0)	//Capacitve - use intermediate variable
 			{
 				//Zero the two inductive terms
 				ahrlloadstore[index_var] = complex(0.0,0.0);
@@ -2986,7 +2979,7 @@ void load::load_update_fxn(bool fault_mode)
 				if (inrush_int_method_capacitance == IRM_TRAPEZOIDAL)
 				{
 					//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)*2/dt
-					workingvalue = shunt[index_var].Im() / (PI * current_frequency * deltatimestep_running);
+					workingvalue = prev_load_values[0][index_var].Im() / (PI * current_frequency * deltatimestep_running);
 
 					//Create chrcstore while we're in here
 					chrcloadstore[index_var] = 2.0 * workingvalue;
@@ -2994,7 +2987,7 @@ void load::load_update_fxn(bool fault_mode)
 				else if (inrush_int_method_capacitance == IRM_BACKEULER)
 				{
 					//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)/dt
-					workingvalue = shunt[index_var].Im() / (2.0 * PI * current_frequency * deltatimestep_running);
+					workingvalue = prev_load_values[0][index_var].Im() / (2.0 * PI * current_frequency * deltatimestep_running);
 
 					//Create chrcstore while we're in here
 					chrcloadstore[index_var] = workingvalue;
@@ -3004,14 +2997,16 @@ void load::load_update_fxn(bool fault_mode)
 				//Put into the "shunt" admittance value
 				shunt[index_var] += complex(workingvalue,0.0);
 
+				//Update the tracker
+				prev_load_values[0][index_var] += complex(workingvalue,0.0);
 			}//End capacitve term update
-			else if (shunt[index_var].Im()<0.0) //Inductive
+			else if (prev_load_values[0][index_var].Im()<0.0) //Inductive
 			{
 				//Zero the capacitive term
 				chrcloadstore[index_var] = complex(0.0,0.0);
 
 				//Form the equivalent impedance value
-				working_impedance_value = complex(1.0,0.0) / shunt[index_var];
+				working_impedance_value = complex(1.0,0.0) / prev_load_values[0][index_var];
 
 				if (inrush_int_method_inductance == IRM_TRAPEZOIDAL)
 				{
@@ -3059,8 +3054,11 @@ void load::load_update_fxn(bool fault_mode)
 				}
 				//Future else
 
-				//Make sure we store the "new Y" so things get updated right
-				shunt[index_var] = working_admittance_value;
+				//Make sure we store the "new Y" so things get updated right - remove partial contribution as well
+				shunt[index_var] += working_admittance_value - prev_load_values[0][index_var];
+
+				//Update the tracker - replacement value for above (was an equal before, so it overrides)
+				prev_load_values[0][index_var] = working_admittance_value;
 			}//end inductive term update
 			else	//Must be zero -- purely resistive, or something
 			{
@@ -3086,8 +3084,11 @@ void load::load_update_fxn(bool fault_mode)
 			//Update tracker
 			prev_shunt[index_var] = shunt[index_var];
 
-			//Zero it
-			shunt[index_var] = complex(0.0,0.0);
+			//Remove our "tracked" contribution
+			shunt[index_var] -= prev_load_values[0][index_var];
+			
+			//Zero the tracker
+			prev_load_values[0][index_var] = complex(0.0,0.0);
 		}//End phase looping for in-rush terms
 
 		//TODO:
