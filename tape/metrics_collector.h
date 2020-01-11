@@ -58,12 +58,22 @@
 #define HSE_AVG_AIR_TEMP     8
 #define HSE_AVG_DEV_COOLING  9
 #define HSE_AVG_DEV_HEATING 10
-#define HSE_ARRAY_SIZE      11
+#define HSE_SYSTEM_MODE     11
+#define HSE_ARRAY_SIZE      12
 
 #define WH_MIN_ACTUAL_LOAD  0
 #define WH_MAX_ACTUAL_LOAD  1
 #define WH_AVG_ACTUAL_LOAD  2
-#define WH_ARRAY_SIZE       3
+#define WH_MIN_SETPOINT     3
+#define WH_MAX_SETPOINT     4
+#define WH_AVG_SETPOINT     5
+#define WH_MIN_DEMAND       6
+#define WH_MAX_DEMAND       7
+#define WH_AVG_DEMAND       8
+#define WH_MIN_TEMP         9
+#define WH_MAX_TEMP        10
+#define WH_AVG_TEMP        11
+#define WH_ARRAY_SIZE      12
 
 #define INV_MIN_REAL_POWER 0
 #define INV_MAX_REAL_POWER 1
@@ -178,8 +188,11 @@ private:
 	static PROPERTY *propHouseAirTemp;
 	static PROPERTY *propHouseCoolSet;
 	static PROPERTY *propHouseHeatSet;
-
+	static PROPERTY *propHouseSystemMode;
 	static PROPERTY *propWaterLoad;
+	static PROPERTY *propWaterSetPoint;
+	static PROPERTY *propWaterDemand;
+	static PROPERTY *propWaterTemp;
 
 	static PROPERTY *propInverterS;
 
@@ -224,9 +237,13 @@ private:
 	double *air_temperature_array; 		//array storing air_temperature measured at the house
 	double *dev_cooling_array;	// array storing air_temperature deviation from the cooling setpoint
 	double *dev_heating_array;	// array storing air_temperature deviation from the heating setpoint
+	int system_mode;
 
 	// Parameters related to waterheater object
 	double *wh_load_array; 		//array storing actual_load measured at the house
+	double *wh_setpoint_array; 		//array storing actual_load measured at the house
+	double *wh_demand_array; 		//array storing actual_load measured at the house
+	double *wh_temp_array; 		//array storing actual_load measured at the house
 	char waterheaterName[256];				// char array storing names of the waterheater
 
 	// Parameters related to inverter object

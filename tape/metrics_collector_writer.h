@@ -26,7 +26,7 @@
 #endif
 
 #define MAX_METRIC_NAME_LENGTH 48
-#define MAX_METRIC_VALUE_LENGTH 24
+#define MAX_METRIC_VALUE_LENGTH 28
 
 using namespace std;
 
@@ -48,6 +48,7 @@ const string m_metadata("Metadata");
 const string m_starttime("StartTime");
 const string m_time("time");
 const string m_name("name");
+const string m_date("date");
 const string m_value("value");
 
 const string m_real_power_min ("real_power_min");
@@ -104,9 +105,19 @@ const string m_air_temperature_max ("air_temperature_max");
 const string m_air_temperature_avg ("air_temperature_avg");
 const string m_air_temperature_deviation_cooling ("air_temperature_deviation_cooling");
 const string m_air_temperature_deviation_heating ("air_temperature_deviation_heating");
+const string m_system_mode ("system_mode");
 const string m_waterheater_load_min ("waterheater_load_min");
 const string m_waterheater_load_max ("waterheater_load_max");
 const string m_waterheater_load_avg ("waterheater_load_avg");
+const string m_waterheater_setpoint_min ("waterheater_setpoint_min");
+const string m_waterheater_setpoint_max ("waterheater_setpoint_max");
+const string m_waterheater_setpoint_avg ("waterheater_setpoint_avg");
+const string m_waterheater_demand_min ("waterheater_demand_min");
+const string m_waterheater_demand_max ("waterheater_demand_max");
+const string m_waterheater_demand_avg ("waterheater_demand_avg");
+const string m_waterheater_temp_min ("waterheater_temp_min");
+const string m_waterheater_temp_max ("waterheater_temp_max");
+const string m_waterheater_temp_avg ("waterheater_temp_avg");
 
 const string m_operation_count ("operation_count");
 
@@ -121,6 +132,7 @@ typedef struct {
 
 typedef struct _BillingMeter{
 	int time; 
+	char date[MAX_METRIC_VALUE_LENGTH]; 
 	char name[MAX_METRIC_NAME_LENGTH]; 
 	double real_power_min;
 	double real_power_max;
@@ -156,6 +168,7 @@ typedef struct _BillingMeter{
 
 typedef struct _House {
 	int time; 
+	char date[MAX_METRIC_VALUE_LENGTH]; 
 	char name[MAX_METRIC_NAME_LENGTH]; 
 	double total_load_min;
 	double total_load_max;
@@ -168,13 +181,24 @@ typedef struct _House {
 	double air_temperature_avg;
 	double air_temperature_deviation_cooling;
 	double air_temperature_deviation_heating;
+	int system_mode;
 	double waterheater_load_min;
 	double waterheater_load_max;
 	double waterheater_load_avg;
+	double waterheater_setpoint_min;
+	double waterheater_setpoint_max;
+	double waterheater_setpoint_avg;
+	double waterheater_demand_min;
+	double waterheater_demand_max;
+	double waterheater_demand_avg;
+	double waterheater_temp_min;
+	double waterheater_temp_max;
+	double waterheater_temp_avg;
 } House;
 
 typedef struct _Inverter {
 	int time; 
+	char date[MAX_METRIC_VALUE_LENGTH]; 
 	char name[MAX_METRIC_NAME_LENGTH]; 
 	double real_power_min;
 	double real_power_max;
@@ -186,18 +210,21 @@ typedef struct _Inverter {
 
 typedef struct _Capacitor {
 	int time; 
+	char date[MAX_METRIC_VALUE_LENGTH]; 
 	char name[MAX_METRIC_NAME_LENGTH]; 
 	double operation_count;
 } Capacitor;
 
 typedef struct _Regulator {
 	int time; 
+	char date[MAX_METRIC_VALUE_LENGTH]; 
 	char name[MAX_METRIC_NAME_LENGTH]; 
 	double operation_count;
 } Regulator;
 
 typedef struct _Feeder {
 	int time; 
+	char date[MAX_METRIC_VALUE_LENGTH]; 
 	char name[MAX_METRIC_NAME_LENGTH]; 
 	double real_power_min;
 	double real_power_max;
@@ -221,12 +248,14 @@ typedef struct _Feeder {
 
 typedef struct _Transformer {
 	int time;
+	char date[MAX_METRIC_VALUE_LENGTH]; 
 	char name[MAX_METRIC_NAME_LENGTH];
 	double trans_overload_perc;
 } Transformer;
 
 typedef struct _Line {
-  int time;
+	int time;
+	char date[MAX_METRIC_VALUE_LENGTH]; 
 	char name[MAX_METRIC_NAME_LENGTH];
 	double line_overload_perc;
 } Line;
@@ -261,6 +290,7 @@ private:
 	int write_line(TIMESTAMP);
 	void writeMetadata(Json::Value& meta, Json::Value& metadata, char* time_str, char256 filename_house);
 	void writeJsonFile (char256 filename, Json::Value& metrics);
+	void maketime(double time, char *buffer, int size);
 
 #ifdef HAVE_HDF5
 	// Functions to setup dataset structures
@@ -330,6 +360,7 @@ private:
 	char256 filename_transformer;
 	char256 filename_line;
 
+	DATETIME dt;
 	TIMESTAMP startTime;
 	TIMESTAMP final_write;
 	TIMESTAMP next_write;

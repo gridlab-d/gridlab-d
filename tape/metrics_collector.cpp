@@ -43,7 +43,11 @@ PROPERTY *metrics_collector::propHouseHVAC = NULL;
 PROPERTY *metrics_collector::propHouseAirTemp = NULL;
 PROPERTY *metrics_collector::propHouseCoolSet = NULL;
 PROPERTY *metrics_collector::propHouseHeatSet = NULL;
+PROPERTY *metrics_collector::propHouseSystemMode = NULL;
 PROPERTY *metrics_collector::propWaterLoad = NULL;
+PROPERTY *metrics_collector::propWaterSetPoint = NULL;
+PROPERTY *metrics_collector::propWaterDemand = NULL;
+PROPERTY *metrics_collector::propWaterTemp = NULL;
 PROPERTY *metrics_collector::propInverterS = NULL;
 PROPERTY *metrics_collector::propCapCountA = NULL;
 PROPERTY *metrics_collector::propCapCountB = NULL;
@@ -105,6 +109,9 @@ int metrics_collector::create(){
 	count_array = NULL;
 	real_power_loss_array = NULL;
 	reactive_power_loss_array = NULL;
+	wh_setpoint_array = NULL;
+	wh_demand_array = NULL;
+	wh_temp_array = NULL;
 
 	trans_overload_status_array = NULL;
 	line_overload_status_array = NULL;
@@ -158,9 +165,13 @@ int metrics_collector::init(OBJECT *parent){
 		if (propHouseAirTemp == NULL) propHouseAirTemp = gl_get_property (parent, "air_temperature");
 		if (propHouseCoolSet == NULL) propHouseCoolSet = gl_get_property (parent, "cooling_setpoint");
 		if (propHouseHeatSet == NULL) propHouseHeatSet = gl_get_property (parent, "heating_setpoint");
+		if (propHouseSystemMode == NULL) propHouseSystemMode = gl_get_property (parent, "system_mode");
 	} else if (gl_object_isa(parent,"waterheater")) {
 		parent_string = "waterheater";
 		if (propWaterLoad == NULL) propWaterLoad = gl_get_property (parent, "actual_load");
+		if (propWaterSetPoint == NULL) propWaterSetPoint = gl_get_property (parent, "tank_setpoint");
+		if (propWaterDemand == NULL) propWaterDemand = gl_get_property (parent, "water_demand");
+		if (propWaterTemp == NULL) propWaterTemp = gl_get_property (parent, "temperature");
 	} else if (gl_object_isa(parent,"inverter")) {
 		parent_string = "inverter";
 		if (propInverterS == NULL) propInverterS = gl_get_property (parent, "VA_Out");
@@ -524,6 +535,7 @@ int metrics_collector::init(OBJECT *parent){
 			air_temperature_array[curr_index] = 0.0;
 			dev_cooling_array[curr_index] = 0.0;
 			dev_heating_array[curr_index] = 0.0;
+			system_mode = 0.0;
 		}
 	}
 	// If parent is waterheater
@@ -539,9 +551,49 @@ int metrics_collector::init(OBJECT *parent){
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
 			*/
 		}
+
+		// Allocate wh_setpoint array
+		wh_setpoint_array = (double *)gl_malloc(vector_length*sizeof(double));
+		// Check
+		if (wh_setpoint_array == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate wh_setpoint array",obj->id);
+			/*  TROUBLESHOOT
+			While attempting to allocate the array, an error was encountered.
+			Please try again.  If the error persists, please submit a bug report via the Trac system.
+			*/
+		}
+
+		// Allocate wh_demand array
+		wh_demand_array = (double *)gl_malloc(vector_length*sizeof(double));
+		// Check
+		if (wh_demand_array == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate wh_demand array",obj->id);
+			/*  TROUBLESHOOT
+			While attempting to allocate the array, an error was encountered.
+			Please try again.  If the error persists, please submit a bug report via the Trac system.
+			*/
+		}
+
+		// Allocate wh_temp array
+		wh_temp_array = (double *)gl_malloc(vector_length*sizeof(double));
+		// Check
+		if (wh_temp_array == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate wh_temp array",obj->id);
+			/*  TROUBLESHOOT
+			While attempting to allocate the array, an error was encountered.
+			Please try again.  If the error persists, please submit a bug report via the Trac system.
+			*/
+		}
+
 		for (curr_index=0; curr_index<vector_length; curr_index++)
 		{
 			wh_load_array[curr_index] = 0.0;
+			wh_setpoint_array[curr_index] = 0.0;
+			wh_demand_array[curr_index] = 0.0;
+			wh_temp_array[curr_index] = 0.0;
 		}
 	}
 	// If parent is inverter
@@ -801,9 +853,13 @@ int metrics_collector::read_line(OBJECT *obj){
 		air_temperature_array[curr_index] = *gl_get_double(obj->parent, propHouseAirTemp);
 		dev_cooling_array[curr_index] = *gl_get_double(obj->parent, propHouseCoolSet);
 		dev_heating_array[curr_index] = *gl_get_double(obj->parent, propHouseHeatSet);
+		system_mode = *gl_get_enum(obj->parent, propHouseSystemMode);
 	}
 	else if (strcmp(parent_string, "waterheater") == 0) {
 		wh_load_array[curr_index] = *gl_get_double(obj->parent, propWaterLoad);
+		wh_setpoint_array[curr_index] = *gl_get_double(obj->parent, propWaterSetPoint);
+		wh_demand_array[curr_index] = *gl_get_double(obj->parent, propWaterDemand);
+		wh_temp_array[curr_index] = *gl_get_double(obj->parent, propWaterTemp);
 	}
 	else if (strcmp(parent_string, "inverter") == 0) {
 		complex VAOut = *gl_get_complex(obj->parent, propInverterS);
@@ -1024,11 +1080,21 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics[HSE_AVG_AIR_TEMP] = findAverage(air_temperature_array, curr_index);
 		metrics[HSE_AVG_DEV_COOLING] = findAverage(dev_cooling_array, curr_index);
 		metrics[HSE_AVG_DEV_HEATING] = findAverage(dev_heating_array, curr_index);
+		metrics[HSE_SYSTEM_MODE] = system_mode;
 	}
 	else if (strcmp(parent_string, "waterheater") == 0) {
 		metrics[WH_MIN_ACTUAL_LOAD] = findMin(wh_load_array, curr_index);
 		metrics[WH_MAX_ACTUAL_LOAD] = findMax(wh_load_array, curr_index);
 		metrics[WH_AVG_ACTUAL_LOAD] = findAverage(wh_load_array, curr_index);
+		metrics[WH_MIN_SETPOINT] = findMin(wh_setpoint_array, curr_index);
+		metrics[WH_MAX_SETPOINT] = findMax(wh_setpoint_array, curr_index);
+		metrics[WH_AVG_SETPOINT] = findAverage(wh_setpoint_array, curr_index);
+		metrics[WH_MIN_DEMAND] = findMin(wh_demand_array, curr_index);
+		metrics[WH_MAX_DEMAND] = findMax(wh_demand_array, curr_index);
+		metrics[WH_AVG_DEMAND] = findAverage(wh_demand_array, curr_index);
+		metrics[WH_MIN_TEMP] = findMin(wh_temp_array, curr_index);
+		metrics[WH_MAX_TEMP] = findMax(wh_temp_array, curr_index);
+		metrics[WH_AVG_TEMP] = findAverage(wh_temp_array, curr_index);
 	}
 	else if (strcmp(parent_string, "inverter") == 0) {
 		metrics[INV_MIN_REAL_POWER] = findMin(real_power_array, curr_index);

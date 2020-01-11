@@ -44,7 +44,6 @@ int metrics_collector_writer::init(OBJECT *parent){
 	FILE *fn = NULL;
 	int index = 0;	
 	char time_str[64];
-	DATETIME dt;
 
 	// check for filename
 	if(0 == filename[0]){
@@ -162,50 +161,50 @@ int metrics_collector_writer::init(OBJECT *parent){
 
 	// Write separate json files for meters, triplex_meters, inverters, capacitors, regulators, houses, feeders, transformers, lines:
 
-if (strcmp(alternate, "no") == 0) {
-	filename_billing_meter = m_billing_meter.c_str();
-	strcat(filename_billing_meter, "_");
-	strcat(filename_billing_meter, filename);
-	filename_inverter = m_inverter.c_str();
-	strcat(filename_inverter, "_");
-	strcat(filename_inverter, filename);
-	filename_capacitor = m_capacitor.c_str();
-	strcat(filename_capacitor, "_");
-	strcat(filename_capacitor, filename);
-	filename_regulator = m_regulator.c_str();
-	strcat(filename_regulator, "_");
-	strcat(filename_regulator, filename);
-	filename_house = m_house.c_str();
-	strcat(filename_house, "_");
-	strcat(filename_house, filename);
-	filename_feeder = m_feeder.c_str();
-	strcat(filename_feeder, "_");
-	strcat(filename_feeder, filename);
-	filename_transformer = m_transformer.c_str();
-	strcat(filename_transformer, "_");
-	strcat(filename_transformer, filename);
-	filename_line = m_line.c_str();
-	strcat(filename_line, "_");
-	strcat(filename_line, filename);
-}
-else {
-	strcat(filename_billing_meter, filename);
-	strcat(filename_billing_meter, m_billing_meter.c_str());
-	strcat(filename_inverter, filename);
-	strcat(filename_inverter, m_inverter.c_str());
-	strcat(filename_capacitor, filename);
-	strcat(filename_capacitor, m_capacitor.c_str());
-	strcat(filename_regulator, filename);
-	strcat(filename_regulator, m_regulator.c_str());
-	strcat(filename_house, filename);
-	strcat(filename_house, m_house.c_str());
-	strcat(filename_feeder, filename);
-	strcat(filename_feeder, m_feeder.c_str());
-	strcat(filename_transformer, filename);
-	strcat(filename_transformer, m_transformer.c_str());
-	strcat(filename_line, filename);
-	strcat(filename_line, m_line.c_str());
-}
+	if (strcmp(alternate, "no") == 0) {
+		filename_billing_meter = m_billing_meter.c_str();
+		strcat(filename_billing_meter, "_");
+		strcat(filename_billing_meter, filename);
+		filename_inverter = m_inverter.c_str();
+		strcat(filename_inverter, "_");
+		strcat(filename_inverter, filename);
+		filename_capacitor = m_capacitor.c_str();
+		strcat(filename_capacitor, "_");
+		strcat(filename_capacitor, filename);
+		filename_regulator = m_regulator.c_str();
+		strcat(filename_regulator, "_");
+		strcat(filename_regulator, filename);
+		filename_house = m_house.c_str();
+		strcat(filename_house, "_");
+		strcat(filename_house, filename);
+		filename_feeder = m_feeder.c_str();
+		strcat(filename_feeder, "_");
+		strcat(filename_feeder, filename);
+		filename_transformer = m_transformer.c_str();
+		strcat(filename_transformer, "_");
+		strcat(filename_transformer, filename);
+		filename_line = m_line.c_str();
+		strcat(filename_line, "_");
+		strcat(filename_line, filename);
+	}
+	else {
+		strcat(filename_billing_meter, filename);
+		strcat(filename_billing_meter, m_billing_meter.c_str());
+		strcat(filename_inverter, filename);
+		strcat(filename_inverter, m_inverter.c_str());
+		strcat(filename_capacitor, filename);
+		strcat(filename_capacitor, m_capacitor.c_str());
+		strcat(filename_regulator, filename);
+		strcat(filename_regulator, m_regulator.c_str());
+		strcat(filename_house, filename);
+		strcat(filename_house, m_house.c_str());
+		strcat(filename_feeder, filename);
+		strcat(filename_feeder, m_feeder.c_str());
+		strcat(filename_transformer, filename);
+		strcat(filename_transformer, m_transformer.c_str());
+		strcat(filename_line, filename);
+		strcat(filename_line, m_line.c_str());
+	}
 #ifdef HAVE_HDF5
 	//prepare dataset for HDF5 if needed
 	if (strcmp(extension, m_h5.c_str()) == 0) {
@@ -290,9 +289,19 @@ else {
 	jsn[m_index] = idx++; jsn[m_units] = "degF"; meta[m_air_temperature_avg] = jsn;
 	jsn[m_index] = idx++; jsn[m_units] = "degF"; meta[m_air_temperature_deviation_cooling] = jsn;
 	jsn[m_index] = idx++; jsn[m_units] = "degF"; meta[m_air_temperature_deviation_heating] = jsn;
+	jsn[m_index] = idx++; jsn[m_units] = "";     meta[m_system_mode] = jsn;
 	jsn[m_index] = idx++; jsn[m_units] = "kW";   meta[m_waterheater_load_min] = jsn;
 	jsn[m_index] = idx++; jsn[m_units] = "kW";   meta[m_waterheater_load_max] = jsn;
 	jsn[m_index] = idx++; jsn[m_units] = "kW";   meta[m_waterheater_load_avg] = jsn;
+	jsn[m_index] = idx++; jsn[m_units] = "degF"; meta[m_waterheater_setpoint_min] = jsn;
+	jsn[m_index] = idx++; jsn[m_units] = "degF"; meta[m_waterheater_setpoint_max] = jsn;
+	jsn[m_index] = idx++; jsn[m_units] = "degF"; meta[m_waterheater_setpoint_avg] = jsn;
+	jsn[m_index] = idx++; jsn[m_units] = "gpm";  meta[m_waterheater_demand_min] = jsn;
+	jsn[m_index] = idx++; jsn[m_units] = "gpm";  meta[m_waterheater_demand_max] = jsn;
+	jsn[m_index] = idx++; jsn[m_units] = "gpm";  meta[m_waterheater_demand_avg] = jsn;
+	jsn[m_index] = idx++; jsn[m_units] = "degF"; meta[m_waterheater_temp_min] = jsn;
+	jsn[m_index] = idx++; jsn[m_units] = "degF"; meta[m_waterheater_temp_max] = jsn;
+	jsn[m_index] = idx++; jsn[m_units] = "degF"; meta[m_waterheater_temp_avg] = jsn;
 	ary_houses.resize(idx);
 	writeMetadata(meta, metadata, time_str, filename_house);
 
@@ -498,6 +507,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 			ary_houses[idx++] = metrics[HSE_AVG_AIR_TEMP];    
 			ary_houses[idx++] = metrics[HSE_AVG_DEV_COOLING]; 
 			ary_houses[idx++] = metrics[HSE_AVG_DEV_HEATING];
+			ary_houses[idx++] = metrics[HSE_SYSTEM_MODE];
 			if (!house_objects.isMember(key)) { // already made this house
 				for (int j = 0; j < WH_ARRAY_SIZE; j++) {
 					ary_houses[idx++] = 0.0;
@@ -520,6 +530,15 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 			ary_houses[idx++] = metrics[WH_MIN_ACTUAL_LOAD]; 
 			ary_houses[idx++] = metrics[WH_MAX_ACTUAL_LOAD]; 
 			ary_houses[idx++] = metrics[WH_AVG_ACTUAL_LOAD]; 
+			ary_houses[idx++] = metrics[WH_MIN_SETPOINT]; 
+			ary_houses[idx++] = metrics[WH_MAX_SETPOINT]; 
+			ary_houses[idx++] = metrics[WH_AVG_SETPOINT]; 
+			ary_houses[idx++] = metrics[WH_MIN_DEMAND]; 
+			ary_houses[idx++] = metrics[WH_MAX_DEMAND]; 
+			ary_houses[idx++] = metrics[WH_AVG_DEMAND]; 
+			ary_houses[idx++] = metrics[WH_MIN_TEMP]; 
+			ary_houses[idx++] = metrics[WH_MAX_TEMP]; 
+			ary_houses[idx++] = metrics[WH_AVG_TEMP]; 
 			house_objects[key] = ary_houses;
 			
 		} // End of recording metrics_collector data attached to one waterheater
@@ -677,6 +696,7 @@ void metrics_collector_writer::hdfBillingMeter () {
 	// defining the datatype to pass HDF55
 	mtype_billing_meters = new H5::CompType(sizeof(BillingMeter));    
 	mtype_billing_meters->insertMember(m_time, HOFFSET(BillingMeter, time), H5::PredType::NATIVE_INT);
+	mtype_billing_meters->insertMember(m_date, HOFFSET(BillingMeter, date), H5::StrType(H5::PredType::C_S1, MAX_METRIC_VALUE_LENGTH));
 	mtype_billing_meters->insertMember(m_name, HOFFSET(BillingMeter, name), H5::StrType(H5::PredType::C_S1, MAX_METRIC_NAME_LENGTH));
 	mtype_billing_meters->insertMember(m_real_power_min, HOFFSET(BillingMeter, real_power_min), H5::PredType::NATIVE_DOUBLE);
 	mtype_billing_meters->insertMember(m_real_power_max, HOFFSET(BillingMeter, real_power_max), H5::PredType::NATIVE_DOUBLE);
@@ -714,6 +734,7 @@ void metrics_collector_writer::hdfHouse () {
 	// defining the datatype to pass HDF55
 	mtype_houses = new H5::CompType(sizeof(House));
 	mtype_houses->insertMember(m_time, HOFFSET(House, time), H5::PredType::NATIVE_INT);
+	mtype_houses->insertMember(m_date, HOFFSET(House, date), H5::StrType(H5::PredType::C_S1, MAX_METRIC_VALUE_LENGTH));
 	mtype_houses->insertMember(m_name, HOFFSET(House, name), H5::StrType(H5::PredType::C_S1, MAX_METRIC_NAME_LENGTH));
 	mtype_houses->insertMember(m_total_load_min, HOFFSET(House, total_load_min), H5::PredType::NATIVE_DOUBLE);
 	mtype_houses->insertMember(m_total_load_max, HOFFSET(House, total_load_max), H5::PredType::NATIVE_DOUBLE);
@@ -726,15 +747,26 @@ void metrics_collector_writer::hdfHouse () {
 	mtype_houses->insertMember(m_air_temperature_avg, HOFFSET(House, air_temperature_avg), H5::PredType::NATIVE_DOUBLE);
 	mtype_houses->insertMember(m_air_temperature_deviation_cooling, HOFFSET(House, air_temperature_deviation_cooling), H5::PredType::NATIVE_DOUBLE);
 	mtype_houses->insertMember(m_air_temperature_deviation_heating, HOFFSET(House, air_temperature_deviation_heating), H5::PredType::NATIVE_DOUBLE);
+	mtype_houses->insertMember(m_system_mode, HOFFSET(House, system_mode), H5::PredType::NATIVE_INT);
 	mtype_houses->insertMember(m_waterheater_load_min, HOFFSET(House, waterheater_load_min), H5::PredType::NATIVE_DOUBLE);
 	mtype_houses->insertMember(m_waterheater_load_max, HOFFSET(House, waterheater_load_max), H5::PredType::NATIVE_DOUBLE);
 	mtype_houses->insertMember(m_waterheater_load_avg, HOFFSET(House, waterheater_load_avg), H5::PredType::NATIVE_DOUBLE);
+	mtype_houses->insertMember(m_waterheater_setpoint_min, HOFFSET(House, waterheater_setpoint_min), H5::PredType::NATIVE_DOUBLE);
+	mtype_houses->insertMember(m_waterheater_setpoint_max, HOFFSET(House, waterheater_setpoint_max), H5::PredType::NATIVE_DOUBLE);
+	mtype_houses->insertMember(m_waterheater_setpoint_avg, HOFFSET(House, waterheater_setpoint_avg), H5::PredType::NATIVE_DOUBLE);
+	mtype_houses->insertMember(m_waterheater_demand_min, HOFFSET(House, waterheater_demand_min), H5::PredType::NATIVE_DOUBLE);
+	mtype_houses->insertMember(m_waterheater_demand_max, HOFFSET(House, waterheater_demand_max), H5::PredType::NATIVE_DOUBLE);
+	mtype_houses->insertMember(m_waterheater_demand_avg, HOFFSET(House, waterheater_demand_avg), H5::PredType::NATIVE_DOUBLE);
+	mtype_houses->insertMember(m_waterheater_temp_min, HOFFSET(House, waterheater_temp_min), H5::PredType::NATIVE_DOUBLE);
+	mtype_houses->insertMember(m_waterheater_temp_max, HOFFSET(House, waterheater_temp_max), H5::PredType::NATIVE_DOUBLE);
+	mtype_houses->insertMember(m_waterheater_temp_avg, HOFFSET(House, waterheater_temp_avg), H5::PredType::NATIVE_DOUBLE);
 }
 
 void metrics_collector_writer::hdfInverter () {
 	// defining the datatype to pass HDF55
 	mtype_inverters = new H5::CompType(sizeof(Inverter));
 	mtype_inverters->insertMember(m_time, HOFFSET(Inverter, time), H5::PredType::NATIVE_INT);
+	mtype_inverters->insertMember(m_date, HOFFSET(Inverter, date), H5::StrType(H5::PredType::C_S1, MAX_METRIC_VALUE_LENGTH));
 	mtype_inverters->insertMember(m_name, HOFFSET(Inverter, name), H5::StrType(H5::PredType::C_S1, MAX_METRIC_NAME_LENGTH));
 	mtype_inverters->insertMember(m_real_power_min, HOFFSET(Inverter, real_power_min), H5::PredType::NATIVE_DOUBLE);
 	mtype_inverters->insertMember(m_real_power_max, HOFFSET(Inverter, real_power_max), H5::PredType::NATIVE_DOUBLE);
@@ -745,9 +777,10 @@ void metrics_collector_writer::hdfInverter () {
 }
 
 void metrics_collector_writer::hdfCapacitor () {
-	// defining the datatype to pass HDF55
+// defining the datatype to pass HDF55
 	mtype_capacitors = new H5::CompType(sizeof(Capacitor));
 	mtype_capacitors->insertMember(m_time, HOFFSET(Capacitor, time), H5::PredType::NATIVE_INT);
+	mtype_capacitors->insertMember(m_date, HOFFSET(Capacitor, date), H5::StrType(H5::PredType::C_S1, MAX_METRIC_VALUE_LENGTH));
 	mtype_capacitors->insertMember(m_name, HOFFSET(Capacitor, name), H5::StrType(H5::PredType::C_S1, MAX_METRIC_NAME_LENGTH));
 	mtype_capacitors->insertMember(m_operation_count, HOFFSET(Capacitor, operation_count), H5::PredType::NATIVE_DOUBLE);
 }
@@ -756,6 +789,7 @@ void metrics_collector_writer::hdfRegulator () {
 	// defining the datatype to pass HDF55
 	mtype_regulators = new H5::CompType(sizeof(Regulator));
 	mtype_regulators->insertMember(m_time, HOFFSET(Regulator, time), H5::PredType::NATIVE_INT);
+	mtype_regulators->insertMember(m_date, HOFFSET(Regulator, date), H5::StrType(H5::PredType::C_S1, MAX_METRIC_VALUE_LENGTH));
 	mtype_regulators->insertMember(m_name, HOFFSET(Regulator, name), H5::StrType(H5::PredType::C_S1, MAX_METRIC_NAME_LENGTH));
 	mtype_regulators->insertMember(m_operation_count, HOFFSET(Regulator, operation_count), H5::PredType::NATIVE_DOUBLE);
 }
@@ -764,6 +798,7 @@ void metrics_collector_writer::hdfFeeder () {
 	// defining the datatype to pass HDF55
 	mtype_feeders = new H5::CompType(sizeof(Feeder));    
 	mtype_feeders->insertMember(m_time, HOFFSET(Feeder, time), H5::PredType::NATIVE_INT);
+	mtype_feeders->insertMember(m_date, HOFFSET(Feeder, date), H5::StrType(H5::PredType::C_S1, MAX_METRIC_VALUE_LENGTH));
 	mtype_feeders->insertMember(m_name, HOFFSET(Feeder, name), H5::StrType(H5::PredType::C_S1, MAX_METRIC_NAME_LENGTH));
 	mtype_feeders->insertMember(m_real_power_min, HOFFSET(Feeder, real_power_min), H5::PredType::NATIVE_DOUBLE);
 	mtype_feeders->insertMember(m_real_power_max, HOFFSET(Feeder, real_power_max), H5::PredType::NATIVE_DOUBLE);
@@ -789,6 +824,7 @@ void metrics_collector_writer::hdfTransformer () {
 	// defining the datatype to pass HDF55
 	mtype_transformers = new H5::CompType(sizeof(Transformer));
 	mtype_transformers->insertMember(m_time, HOFFSET(Transformer, time), H5::PredType::NATIVE_INT);
+	mtype_transformers->insertMember(m_date, HOFFSET(Transformer, date), H5::StrType(H5::PredType::C_S1, MAX_METRIC_VALUE_LENGTH));
 	mtype_transformers->insertMember(m_name, HOFFSET(Transformer, name), H5::StrType(H5::PredType::C_S1, MAX_METRIC_NAME_LENGTH));
 	mtype_transformers->insertMember(m_trans_overload_perc, HOFFSET(Transformer, trans_overload_perc), H5::PredType::NATIVE_DOUBLE);
 }
@@ -797,6 +833,7 @@ void metrics_collector_writer::hdfLine () {
 	// defining the datatype to pass HDF55
 	mtype_lines = new H5::CompType(sizeof(Line));
 	mtype_lines->insertMember(m_time, HOFFSET(Line, time), H5::PredType::NATIVE_INT);
+	mtype_lines->insertMember(m_date, HOFFSET(Line, date), H5::StrType(H5::PredType::C_S1, MAX_METRIC_VALUE_LENGTH));
 	mtype_lines->insertMember(m_name, HOFFSET(Line, name), H5::StrType(H5::PredType::C_S1, MAX_METRIC_NAME_LENGTH));
 	mtype_lines->insertMember(m_line_overload_perc, HOFFSET(Line, line_overload_perc), H5::PredType::NATIVE_DOUBLE);
 }
@@ -886,7 +923,6 @@ void metrics_collector_writer::hdfMetadataWrite(Json::Value& meta, char* time_st
 		// unsigned szip_options_mask = H5_SZIP_NN_OPTION_MASK;
 		// unsigned szip_pixels_per_block = 16;
 		// plist->setSzip(szip_options_mask, szip_pixels_per_block);
-
 		string FileName(filename);
 		if (strcmp(alternate, "yes") == 0) 
 			FileName.append("." + m_h5);
@@ -919,6 +955,13 @@ std::vector<std::string> sortIds(std::vector<std::string> v)
 	return v;
 };
 
+void metrics_collector_writer::maketime(double time, char *buffer, int size) {
+	DATETIME new_dt;
+	memcpy(&new_dt, &dt, sizeof(DATETIME));
+	gl_localtime_delta(time+startTime, &new_dt);
+	gl_strtime(&new_dt, buffer, size);
+}
+
 void metrics_collector_writer::hdfBillingMeterWrite (size_t objs, Json::Value& metrics) {
 		std::vector <BillingMeter> tbl;
 		tbl.reserve(line_cnt*objs);
@@ -929,7 +972,8 @@ void metrics_collector_writer::hdfBillingMeterWrite (size_t objs, Json::Value& m
 				tbl.push_back(BillingMeter());
 				Json::Value mtr = name[uid];
 				tbl[idx].time = stoi(id);
-				strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
+				maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
+				strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);
 				tbl[idx].real_power_min = mtr[MTR_MIN_REAL_POWER].asDouble();
 				tbl[idx].real_power_max = mtr[MTR_MAX_REAL_POWER].asDouble();
 				tbl[idx].real_power_avg = mtr[MTR_AVG_REAL_POWER].asDouble();
@@ -977,6 +1021,7 @@ void metrics_collector_writer::hdfHouseWrite (size_t objs, Json::Value& metrics)
 				tbl.push_back(House());
 				Json::Value mtr = name[uid];
 				tbl[idx].time = stoi(id);
+				maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
 				strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
 				tbl[idx].total_load_min = mtr[HSE_MIN_TOTAL_LOAD].asDouble();
 				tbl[idx].total_load_max = mtr[HSE_MAX_TOTAL_LOAD].asDouble();
@@ -989,9 +1034,19 @@ void metrics_collector_writer::hdfHouseWrite (size_t objs, Json::Value& metrics)
 				tbl[idx].air_temperature_avg = mtr[HSE_AVG_AIR_TEMP].asDouble();
 				tbl[idx].air_temperature_deviation_cooling = mtr[HSE_AVG_DEV_COOLING].asDouble();
 				tbl[idx].air_temperature_deviation_heating = mtr[HSE_AVG_DEV_HEATING].asDouble();
-				tbl[idx].waterheater_load_min = mtr[HSE_AVG_DEV_HEATING + 1].asDouble();
-				tbl[idx].waterheater_load_max = mtr[HSE_AVG_DEV_HEATING + 2].asDouble();
-				tbl[idx].waterheater_load_avg = mtr[HSE_AVG_DEV_HEATING + 3].asDouble();
+				tbl[idx].system_mode = mtr[HSE_SYSTEM_MODE].asInt();
+				tbl[idx].waterheater_load_min = mtr[HSE_SYSTEM_MODE + 1].asDouble();
+				tbl[idx].waterheater_load_max = mtr[HSE_SYSTEM_MODE + 2].asDouble();
+				tbl[idx].waterheater_load_avg = mtr[HSE_SYSTEM_MODE + 3].asDouble();
+				tbl[idx].waterheater_setpoint_min = mtr[HSE_SYSTEM_MODE + 4].asDouble();
+				tbl[idx].waterheater_setpoint_max = mtr[HSE_SYSTEM_MODE + 5].asDouble();
+				tbl[idx].waterheater_setpoint_avg = mtr[HSE_SYSTEM_MODE + 6].asDouble();
+				tbl[idx].waterheater_demand_min = mtr[HSE_SYSTEM_MODE + 7].asDouble();
+				tbl[idx].waterheater_demand_max = mtr[HSE_SYSTEM_MODE + 8].asDouble();
+				tbl[idx].waterheater_demand_avg = mtr[HSE_SYSTEM_MODE + 9].asDouble();
+				tbl[idx].waterheater_temp_min = mtr[HSE_SYSTEM_MODE + 10].asDouble();
+				tbl[idx].waterheater_temp_max = mtr[HSE_SYSTEM_MODE + 11].asDouble();
+				tbl[idx].waterheater_temp_avg = mtr[HSE_SYSTEM_MODE + 12].asDouble();
 				idx++;
 			}
 		}
@@ -1009,6 +1064,7 @@ void metrics_collector_writer::hdfInverterWrite (size_t objs, Json::Value& metri
 				tbl.push_back(Inverter());
 				Json::Value mtr = name[uid];
 				tbl[idx].time = stoi(id);
+				maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
 				strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
 				tbl[idx].real_power_min = mtr[INV_MIN_REAL_POWER].asDouble(); 
 				tbl[idx].real_power_max = mtr[INV_MAX_REAL_POWER].asDouble(); 
@@ -1033,6 +1089,7 @@ void metrics_collector_writer::hdfCapacitorWrite (size_t objs, Json::Value& metr
 				tbl.push_back(Capacitor());
 				Json::Value mtr = name[uid];
 				tbl[idx].time = stoi(id);
+				maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
 				strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
 				tbl[idx].operation_count = mtr[CAP_OPERATION_CNT].asDouble(); 
 				idx++;
@@ -1052,6 +1109,7 @@ void metrics_collector_writer::hdfRegulatorWrite (size_t objs, Json::Value& metr
 				tbl.push_back(Regulator());
 				Json::Value mtr = name[uid];
 				tbl[idx].time = stoi(id);
+				maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
 				strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
 				tbl[idx].operation_count = mtr[REG_OPERATION_CNT].asDouble(); 
 				idx++;
@@ -1071,6 +1129,7 @@ void metrics_collector_writer::hdfFeederWrite (size_t objs, Json::Value& metrics
 				tbl.push_back(Feeder());
 				Json::Value mtr = name[uid];
 				tbl[idx].time = stoi(id);
+				maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
 				strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
 				tbl[idx].real_power_min = mtr[FDR_MIN_REAL_POWER].asDouble();
 				tbl[idx].real_power_max = mtr[FDR_MAX_REAL_POWER].asDouble();
@@ -1107,6 +1166,7 @@ void metrics_collector_writer::hdfTransformerWrite (size_t objs, Json::Value& me
 				tbl.push_back(Transformer());
 				Json::Value mtr = name[uid];
 				tbl[idx].time = stoi(id);
+				maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
 				strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
 				tbl[idx].trans_overload_perc = mtr[TRANS_OVERLOAD_PERC].asDouble(); 
 				idx++;
@@ -1126,6 +1186,7 @@ void metrics_collector_writer::hdfLineWrite (size_t objs, Json::Value& metrics) 
 				tbl.push_back(Line());
 				Json::Value mtr = name[uid];
 				tbl[idx].time = stoi(id);
+				maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
 				strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
 				tbl[idx].line_overload_perc = mtr[LINE_OVERLOAD_PERC].asDouble(); 
 				idx++;
