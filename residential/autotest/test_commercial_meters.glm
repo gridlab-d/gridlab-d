@@ -99,6 +99,7 @@ object substation {
   base_power 12000000.00;
   power_convergence_value 100.0;
   phases ABCN;
+	// phases A and C should be the same at each time point, because each house is the same
   object complex_assert{
     target distribution_power_A;
     in '2001-07-24 13:31:40';
@@ -110,14 +111,14 @@ object substation {
     target distribution_power_B;
     in '2001-07-24 13:31:40';
     once ONCE_TRUE;
-    value 6958.75+4394.38j;
+    value 7544.98+4733.1j;
     within 1.0;
   };
   object complex_assert{
     target distribution_power_C;
     in '2001-07-24 13:31:40';
     once ONCE_TRUE;
-    value 3114.49+3112.89j;
+    value 3309.02+3451.26j;
     within 1.0;
   };
 }
@@ -184,7 +185,7 @@ object house{
 	cooling_setpoint coolspt*1;
 	object ZIPload {
 		heat_fraction 1;
-		base_power zippwr*1;		
+		base_power zippwr*1;
 		power_pf 1;
 		power_fraction 0;
 		current_pf 1;
@@ -209,7 +210,7 @@ object house{
 	cooling_setpoint coolspt*1;
 	object ZIPload {
 		heat_fraction 1;
-		base_power zippwr*1;		
+		base_power zippwr*1;
 		power_pf 1;
 		power_fraction 0;
 		current_pf 1;
@@ -234,7 +235,7 @@ object house{
 	cooling_setpoint coolspt*1;
 	object ZIPload {
 		heat_fraction 1;
-		base_power zippwr*1;		
+		base_power zippwr*1;
 		power_pf 1;
 		power_fraction 0;
 		current_pf 1;

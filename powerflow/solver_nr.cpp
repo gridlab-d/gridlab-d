@@ -5508,6 +5508,16 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 
 					//Current values
 					undeltacurr[0] += adjusted_constant_current[3];
+
+					//Add any three-phase/non-triplex house contributions, if they exist
+					if ((bus[indexer].phases & 0x40) == 0x40)
+					{
+						//Update phase adjustments - use the temp array (not really needed)
+						temp_store[0].SetPolar(1.0,bus[indexer].V[0].Arg());
+
+						//Update these current contributions
+						undeltacurr[0] += bus[indexer].house_var[0]/(~temp_store[0]);		//Just denominator conjugated to keep math right (rest was conjugated in house)
+					}//End house-attached non-triplex
 				}
 				else
 				{
@@ -5529,6 +5539,16 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 
 					//Current values
 					undeltacurr[1] += adjusted_constant_current[4];
+
+					//Add any three-phase/non-triplex house contributions, if they exist
+					if ((bus[indexer].phases & 0x40) == 0x40)
+					{
+						//Update phase adjustments - use the temp array (not really needed)
+						temp_store[1].SetPolar(1.0,bus[indexer].V[1].Arg());
+
+						//Update these current contributions
+						undeltacurr[1] += bus[indexer].house_var[1]/(~temp_store[1]);		//Just denominator conjugated to keep math right (rest was conjugated in house)
+					}//End house-attached non-triplex
 				}
 				else
 				{
@@ -5550,6 +5570,16 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 
 					//Current values
 					undeltacurr[2] += adjusted_constant_current[5];
+
+					//Add any three-phase/non-triplex house contributions, if they exist
+					if ((bus[indexer].phases & 0x40) == 0x40)
+					{
+						//Update phase adjustments - use the temp array (not really needed)
+						temp_store[2].SetPolar(1.0,bus[indexer].V[2].Arg());
+
+						//Update these current contributions
+						undeltacurr[2] += bus[indexer].house_var[2]/(~temp_store[2]);		//Just denominator conjugated to keep math right (rest was conjugated in house)
+					}//End house-attached non-triplex
 				}
 				else
 				{
