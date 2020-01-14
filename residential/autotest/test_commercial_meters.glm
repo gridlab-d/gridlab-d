@@ -99,6 +99,7 @@ object substation {
   base_power 12000000.00;
   power_convergence_value 100.0;
   phases ABCN;
+	// phases A and C should be the same at each time point, because each house is the same
   object complex_assert{
     target distribution_power_A;
     in '2001-07-24 13:31:40';
@@ -110,9 +111,6 @@ object substation {
     target distribution_power_B;
     in '2001-07-24 13:31:40';
     once ONCE_TRUE;
-//    feature/1173 autotest gives the following:
-//    value 6958.75+4394.38j;
-//    feature/1202 autotest gives the following:
     value 7544.98+4733.1j;
     within 1.0;
   };
@@ -120,9 +118,6 @@ object substation {
     target distribution_power_C;
     in '2001-07-24 13:31:40';
     once ONCE_TRUE;
-//    feature/1173 autotest gives the following:
-//    value 3113.49+3112.89j;
-//    feature/1202 autotest gives the following:
     value 3309.02+3451.26j;
     within 1.0;
   };
@@ -251,7 +246,6 @@ object house{
 };
 
 // without houses connected, the no-load transformer losses are:
-// (same for both feature/1173 and feature/1202)
 //   550.353 + j2857.52 VA on phases A and C
 //   640.439 + j3236.76 VA on phase B
 // each house draws a peak of about 2 kW
