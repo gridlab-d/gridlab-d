@@ -10,7 +10,7 @@ module tape;
 module assert;
 module climate;
 module powerflow {
-	solver_method NR;
+	solver_method FBS;
 }
 
 clock{
