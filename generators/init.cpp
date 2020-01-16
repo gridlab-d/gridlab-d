@@ -20,6 +20,7 @@
 #include "solar.h"
 #include "central_dg_control.h"
 #include "controller_dg.h"
+#include "inverter_dyn.h"
 
 //Define defaults, since many use them and they aren't here yet
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
@@ -46,6 +47,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new solar(module);
 	new central_dg_control(module);
 	new controller_dg(module);
+	new inverter_dyn(module);
 
 	/* always return the first class registered */
 	return diesel_dg::oclass;

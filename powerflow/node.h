@@ -124,6 +124,8 @@ private:
 	double out_of_violation_time_total;		//Tracking variable to see how long we've been "outside of bad conditions"
 	double prev_time_dbl;					//Tracking variable for GFA functionality
 	double GFA_Update_time;
+
+	//Deltamode interfacing matrices
 	GL_STRUCT(complex_array,full_Y_matrix);
 	GL_STRUCT(complex_array,full_Y_all_matrix);
 

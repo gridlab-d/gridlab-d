@@ -1,0 +1,459 @@
+// Test functionality of the grid-forming and grid-following inverters,
+// both as voltage-source implementations.
+clock {
+	timezone "PST+8PDT";
+	starttime '2001-08-01 12:00:00 PST';
+	stoptime '2001-08-01 12:00:6 PST';
+}
+
+#set suppress_repeat_messages=1
+//#set profiler=1
+//#set pauseatexit=1
+#define rotor_convergence=0.00000000000001
+#set double_format=%+.12lg
+#set complex_format=%+.12lg%+.12lg%c
+
+//Deltamode declarations - global values
+#set deltamode_timestep=100000000		//100 ms
+#set deltamode_maximumtime=60000000000	//1 minute
+#set deltamode_iteration_limit=10		//Iteration limit
+//#set deltamode_forced_always=true
+
+module tape;
+module assert;
+
+module reliability {
+	enable_subsecond_models true;
+	maximum_event_length 1800000;	//Maximum length of events in seconds (manual events are excluded from this limit)
+	report_event_log true;
+}
+
+module powerflow {
+	enable_subsecond_models true;
+	deltamode_timestep 2 ms;	//10 ms
+	solver_method NR;
+	all_powerflow_delta true;
+}
+
+module generators {
+	enable_subsecond_models true;
+	deltamode_timestep 2 ms;
+}
+
+
+
+// inverter 1
+object inverter_dyn {
+	name A1;
+	parent Meter1;
+	control_mode GRID_FORMING;
+	GridForming_convergence_criterion 1e-6;
+
+	rated_power 200 kVA; 
+	Pref 60000; 
+	Qref 0;
+	
+	
+	flags DELTAMODE;
+
+    Rfilter 0.014;  // per unit value
+	Xfilter 0.1636;  // per unit value
+	
+	mp 3.77;  // 3.77 represents 1% droop.
+    kppmax 0;
+	kipmax 90.9;
+	Pmax 1;
+	Pmin 0;
+	
+	mq 0.05; // 0.05 represents 5% droop
+	
+
+	// object recorder {
+		// property mp, Pset, VA_Out.real, VA_Out.imag;
+		 // file PV1_pq_output.csv;
+		 // flags DELTAMODE;
+		 // interval 1;
+	// };
+	
+	 object recorder {
+		file Inverter_1_meter.csv;
+		flags DELTAMODE;
+		property "power_A.real,power_A.imag, power_B.real,power_B.imag, power_C.real,power_C.imag, VA_Out.real, VA_Out.imag, Pset";
+		interval 1;
+	};
+	
+		// object recorder {
+		// flags DELTAMODE;
+		// property "freq";
+		// interval 1;
+		// file Inverter_node_freq_1.csv;
+	// };
+
+		// object recorder {
+		// flags DELTAMODE;
+		// property "Vset";
+		// interval 1;
+		// file V_set_droop_1.csv;
+	// };
+
+	
+		// object recorder {
+		// file Inverter_1_esource.csv;
+		// flags DELTAMODE;
+		// property "e_source_A.real,e_source_A.imag,e_source_B.real,e_source_B.imag,e_source_C.real,e_source_C.imag,V_angle_A,V_angle_B,V_angle_C,pCircuit_V_Avg_pu";
+		// interval 1;
+	// };
+	
+	object complex_assert {
+		flags DELTAMODE;
+		target power_A;
+		operation REAL;
+		within 0.01;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_inverter_dyn_GFM_power.csv;
+		};
+    };	
+	
+	
+		
+};	
+
+// inverter 2
+object inverter_dyn {
+	name A2;
+	parent Load2;
+	control_mode GRID_FOLLOWING;
+	grid_following_mode POSITIVE_SEQUENCE;	
+	frequency_watt true;
+	volt_var true;
+
+	rated_power 200 kVA;  
+	Pref 60000; 
+	Qref 10000;
+			
+	flags DELTAMODE;
+
+    Rfilter 0.01;
+	Xfilter 0.10;
+	
+	kpPLL  50;
+	kiPLL  900;
+	
+
+	kpc  0.05;
+	kic  5;
+	F_current 0;
+	
+	Tpf 0.5;   // power response
+	Tff 0.05;  // frequency measurement filter
+	
+	Rp 0.01;  // frequency-watt droop  1%
+	
+	Rq 0.05; // volt-var droop 5%
+	
+	 // object recorder {
+		// file Inverter_2_meter.csv;
+		// flags DELTAMODE;
+		// property "power_A.real,power_A.imag, power_B.real,power_B.imag, power_C.real,power_C.imag, VA_Out.real, VA_Out.imag, Pref, Qref";
+		// interval 1;
+	// };
+	
+	 // object recorder {
+		// file Inverter_2_terminal.csv;
+		// flags DELTAMODE;
+		// property "ugd_pu_A,ugq_pu_A,ugd_pu_B,ugq_pu_B,ugd_pu_C,ugq_pu_C,igd_pu_A,igq_pu_A,igd_pu_B,igq_pu_B,igd_pu_C,igq_pu_C,igd_ref_A,igq_ref_A,igd_ref_B,igq_ref_B,igd_ref_C,igq_ref_C,";
+		// interval 1;
+	// };	
+	
+	 // object recorder {
+		// file Inverter_2_internal.csv;
+		// flags DELTAMODE;
+		// property "ed_pu_A,eq_pu_A,ed_pu_B,eq_pu_B,ed_pu_C,eq_pu_C,";
+		// interval 1;
+	// };		
+	
+	
+	 // object recorder {
+		// file Inverter_2_PLL.csv;
+		// flags DELTAMODE;
+		// property "Angle_PLL_A,Angle_PLL_B,Angle_PLL_C,f_PLL_A,f_PLL_B,f_PLL_C";
+		// interval 1;
+	// };		
+	
+	
+};	
+
+
+
+
+//Fault check option
+object fault_check {
+	name base_fault_check_object;
+	check_mode ONCHANGE;
+	strictly_radial false;
+	grid_association true;	//Flag to ensure non-monolithic islands
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////
+// Start of individual objects/////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////
+
+
+
+object line_configuration {	
+	name Line_Config_1;
+	z11 0.01+0.01j;
+	z12 0;
+	z13 0;
+	z21 0;
+	z22 0.0106+0.0103j;
+	z23 0;
+	z31 0;
+	z32 0;
+	z33 0.0106+0.0103j;
+}
+
+object line_configuration {	
+	name Line_Config_2;
+	z11 0.0035+0.0034j;
+	z12 0;
+	z13 0;
+	z21 0;
+	z22 0.0035+0.0034j;
+	z23 0;
+	z31 0;
+	z32 0;
+	z33 0.0035+0.0034j;
+}
+
+object line_configuration {	
+	name Line_Config_3;
+	z11 0.0279+0.0115j;
+	z12 0;
+	z13 0;
+	z21 0;
+	z22 0.0279+0.0115j;
+	z23 0;
+	z31 0;
+	z32 0;
+	z33 0.0279+0.0115j;
+}
+
+object line_configuration {	   // Transformer at Feeder B
+	name Line_Config_4;
+	z11 0.0189+0.0968j;
+	z12 0;
+	z13 0;
+	z21 0;
+	z22 0.0189+0.0968j;
+	z23 0;
+	z31 0;
+	z32 0;
+	z33 0.0189+0.0968j;
+}
+
+object line_configuration {	
+	name Line_Config_5;
+	z11 0.0350+0.0116j;
+	z12 0;
+	z13 0;
+	z21 0;
+	z22 0.0350+0.0116j;
+	z23 0;
+	z31 0;
+	z32 0;
+	z33 0.0350+0.0116j;
+}
+
+
+//
+object overhead_line  {
+     phases "ABCN";
+     name Line1;
+     from Meter1;
+     to Load1;
+     length 1 mile;
+     configuration Line_Config_1;
+ 
+    // object recorder {
+	// property current_in_A.real,current_in_A.imag,current_in_B.real,current_in_B.imag,current_in_C.real,current_in_C.imag;
+	// interval 1;
+	// flags DELTAMODE;
+	// file Line1_current.csv;
+     // };	  
+	 
+ }
+
+//
+object overhead_line  {
+     phases "ABCN";
+     name Line2;
+     from Load1;
+     to Load2;
+     length 1 mile;
+     configuration Line_Config_2;
+
+    // object recorder {
+	// property current_in_A.real,current_in_A.imag,current_in_B.real,current_in_B.imag,current_in_C.real,current_in_C.imag;
+	// interval 1;
+	// flags DELTAMODE;
+	// file Line2_current.csv;
+     // };		 
+ } 
+
+//
+object overhead_line  {
+     phases "ABCN";
+     name Line3;
+     from Load2;
+     to Load3;
+     length 1 mile;
+     configuration Line_Config_3;
+
+    // object recorder {
+	// property current_in_A.real,current_in_A.imag,current_in_B.real,current_in_B.imag,current_in_C.real,current_in_C.imag;
+	// interval 1;
+	// flags DELTAMODE;
+	// file Line3_current.csv;
+     // };		 
+ } 	 
+	 
+object overhead_line  {
+     phases "ABCN";
+     name Line4;
+     from Meter1;
+     to Meter3;
+     length 1 mile;
+     configuration Line_Config_4;
+
+    // object recorder {
+	// property current_in_A.real,current_in_A.imag,current_in_B.real,current_in_B.imag,current_in_C.real,current_in_C.imag;
+	// interval 1;
+	// flags DELTAMODE;
+	// file Line4_current.csv;
+     // };		 
+ } 	
+	 
+object overhead_line  {
+     phases "ABCN";
+     name Line5;
+     from Meter3;
+     to Load4;
+     length 1 mile;
+     configuration Line_Config_5;
+
+    // object recorder {
+	// property current_in_A.real,current_in_A.imag,current_in_B.real,current_in_B.imag,current_in_C.real,current_in_C.imag;
+	// interval 1;
+	// flags DELTAMODE;
+	// file Line5_current.csv;
+     // };		 
+ } 		 
+
+	 
+object meter {
+     name Meter1;  // A1 is installed here
+     phases "ABCN";
+	 bustype SWING;
+     flags DELTAMODE;
+     nominal_voltage 277.1363;	 
+	 
+	 voltage_A 277.1363;
+     voltage_B -138.5682-240.0000j;
+     voltage_C -138.5682+240.0000j;	 
+
+    // object recorder {
+	// property measured_real_power,measured_reactive_power,measured_current_A.real,measured_current_A.imag,measured_current_B.real,measured_current_B.imag,measured_current_C.real,measured_current_C.imag,voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag;
+	// interval 1;
+	// flags DELTAMODE;
+	// file Inverter_Voltage.csv;
+     // };		 
+  
+}
+
+object meter {
+     name Meter3;  // B1 is installed here
+     phases "ABCN";
+
+     flags DELTAMODE;
+     nominal_voltage 277.1363;	 
+	 
+	 voltage_A 277.1363;
+     voltage_B -138.5682-240.0000j;
+     voltage_C -138.5682+240.0000j;	 
+	 
+}
+
+
+
+object load {
+     name Load1;
+     phases "ABCN";
+     flags DELTAMODE;
+     constant_impedance_A 2.42;  // 95kW
+     constant_impedance_B 2.42;	
+     constant_impedance_C 2.42;		 
+     nominal_voltage 277.1363;
+
+	 
+}
+
+object meter {
+     name Load2;
+     phases "ABCN";
+     flags DELTAMODE;	 
+     nominal_voltage 277.1363;
+	 
+    // object recorder {
+	// property measured_current_A.real,measured_current_A.imag,measured_current_B.real,measured_current_B.imag,measured_current_C.real,measured_current_C.imag,voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag;
+	// interval 1;
+	// flags DELTAMODE;
+	// file Inverter_A2.csv;
+     // };		 
+	 
+	 
+}	 
+	 
+	 
+	 
+object load {
+     name Load3;
+     phases "ABCN";
+     flags DELTAMODE;		 
+     nominal_voltage 277.1363;
+
+}	
+	 
+
+object load {
+	 name Load4;
+	 phases "ABCN";
+	 flags DELTAMODE; 
+	 nominal_voltage 277.1363;
+
+	object player {
+		file ../data_inverter_GFM_GFL_Load4_A.player;
+		property constant_impedance_A;
+		flags DELTAMODE;
+	};
+
+	object player {
+		file ../data_inverter_GFM_GFL_Load4_B.player;
+		property constant_impedance_B;
+		flags DELTAMODE;
+	};
+
+	object player {
+		file ../data_inverter_GFM_GFL_Load4_C.player;
+		property constant_impedance_C;
+		flags DELTAMODE;
+	};
+	 
+}		 
+	 
+
+
