@@ -244,7 +244,7 @@ STATUS instance_slave_link_properties(){
 int instance_slave_wait_mmap(){
 	int status = 0;
 	MESSAGE *tc = 0;
-#ifdef WIN32
+#ifdef _WIN32
 	DWORD rc = 0;
 	tc = (MESSAGE *)(local_inst.filemap);
 	output_verbose("wait_mmap: started wait with with fmap ts = %lli", tc->ts);
@@ -340,7 +340,7 @@ int instance_slave_wait(void)
 	int status = 0;
 	output_verbose("instance_slave_wait(): slave %d entering wait state with t2=%lli (%x)", slave_id, local_inst.cache->ts, ((char*)&local_inst.cache->ts-(char*)local_inst.cache));
 	if(local_inst.cnxtype == CI_MMAP){
-#ifdef WIN32
+#ifdef _WIN32
 		status = instance_slave_wait_mmap();
 #else
 		// @todo linux/unix slave signalling
@@ -360,7 +360,7 @@ int instance_slave_done_mmap(){
 	memcpy(local_inst.filemap, local_inst.cache, local_inst.cachesize);
 //	printcontent(local_inst.filemap, (int)local_inst.cachesize);
 
-#ifdef WIN32
+#ifdef _WIN32
 	SetEvent(local_inst.hMaster);
 #else
 	// @todo linux/unix slave signalling
@@ -528,7 +528,7 @@ void *instance_slaveproc(void *ptr)
 /** do docx here
  **/
 STATUS instance_slave_init_mem(){
-#ifdef WIN32
+#ifdef _WIN32
 	MESSAGE tmsg;
 	char eventName[256];
 	char cacheName[256];
@@ -625,12 +625,12 @@ STATUS instance_slave_init_socket(){
 	char cmd[1024];
 	FILE *refile = 0;
 	INSTANCE_PICKLE pickle;
-#ifdef WIN32
+#ifdef _WIN32
 	static WSADATA wsaData;
 #endif
 
 	// start up WinSock, if on Windows
-#ifdef WIN32
+#ifdef _WIN32
 	output_debug("starting WS2");
 	if (WSAStartup(MAKEWORD(2,0),&wsaData)!=0)
 	{
@@ -656,7 +656,7 @@ STATUS instance_slave_init_socket(){
 	rv = connect(local_inst.sockfd, (struct sockaddr *)&connaddr, sizeof(connaddr));
 	if(0 != rv){
 		output_fatal("instance_slave_init_socket(): could not connect to %s:%d", global_master, global_master_port);
-		#ifdef WIN32
+		#ifdef _WIN32
 			output_error("WSA error: %d", WSAGetLastError());
 		#else
 			perror("getsockname():");
@@ -870,7 +870,7 @@ STATUS instance_slave_init(void)
 	// this is where we open a connection, snag the first header, and initialize everything from there
 	switch(global_multirun_connection){
 		case MRC_MEM:
-#ifdef WIN32
+#ifdef _WIN32
 			local_inst.cnxtype = CI_MMAP;
 #else
 			local_inst.cnxtype = CI_SHMEM;

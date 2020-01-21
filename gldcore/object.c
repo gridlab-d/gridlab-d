@@ -30,7 +30,7 @@
 #include <ctype.h>
 #include <errno.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 #define isnan _isnan  /* map isnan to appropriate function under Windows */
 #endif
 
@@ -1415,7 +1415,7 @@ TIMESTAMP _object_sync(OBJECT *obj, /**< the object to synchronize */
 {
 	CLASS *oclass = obj->oclass;
 	register TIMESTAMP plc_time=TS_NEVER, sync_time;
-	TIMESTAMP effective_valid_to = min(obj->clock+global_skipsafe,obj->valid_to);
+	TIMESTAMP effective_valid_to = fmin(obj->clock+global_skipsafe,obj->valid_to);
 	int autolock = obj->oclass->passconfig&PC_AUTOLOCK;
 
 	/* check skipsafe */

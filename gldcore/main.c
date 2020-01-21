@@ -11,7 +11,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#ifdef WIN32
+#ifdef _WIN32
 #include <direct.h>
 #include <process.h>
 #else
@@ -25,7 +25,7 @@
 #include "output.h"
 #include "environment.h"
 #include "test.h"
-#include "random.h"
+#include "gldrandom.h"
 #include "realtime.h"
 #include "save.h"
 #include "local.h"
@@ -77,7 +77,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	atexit(pause_at_exit);
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 	kill_starthandler();
 	atexit(kill_stophandler);
 #endif
@@ -156,7 +156,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 			 */
 			exit(XC_PRCERR);
 		}
-#ifdef WIN32
+#ifdef _WIN32
 #define getpid _getpid
 #endif
 		fprintf(fp,"%d\n",getpid());

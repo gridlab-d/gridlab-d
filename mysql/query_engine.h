@@ -48,7 +48,7 @@ class query_engine : public gld_object {
 		void set_tables_done();
 
 	protected:
-		int init(database*);
+		int init(database*&);
 		bool initialized;
 		database *db;
 		int threshold, query_count, column_limit;
@@ -90,6 +90,8 @@ class table_manager : public gld_object, public query_engine {
 		std::vector<std::string*>* get_table_headers();
 		std::vector<char*>* get_table_units();
 		int add_insert_values(query_engine*, std::string*, std::string);
+		void set_custom_sql(std::string sql);
+		std::string get_custom_sql_columns();
 
 	private:
 		int add_insert_values(query_engine*, std::string*, std::string, int);
@@ -104,6 +106,7 @@ class table_manager : public gld_object, public query_engine {
 		std::vector<std::string*> table_headers;
 		std::vector<char*> table_units;
 		std::vector<std::string> insert_values;
+		std::vector<std::string> custom_sql_headers, custom_sql_datatypes, custom_sql_values;
 		table_manager* next_table;
 		char32 recordid_fieldname, datetime_fieldname;
 };

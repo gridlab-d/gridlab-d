@@ -387,7 +387,7 @@ int unit_derived(char *name,char *derivation)
 				m += pUnit->m;
 				s += pUnit->s;
 				a *= pUnit->a;
-				prec = min(prec,pUnit->prec);
+				prec = fmin(prec,pUnit->prec);
 				break;
 			case '/':
 				c -= pUnit->c;
@@ -397,7 +397,7 @@ int unit_derived(char *name,char *derivation)
 				m -= pUnit->m;
 				s -= pUnit->s;
 				a /= pUnit->a;
-				prec = min(prec, pUnit->prec);
+				prec = fmin(prec, pUnit->prec);
 				break;
 			case '+':
 				b += pUnit->b;
@@ -425,7 +425,7 @@ int unit_derived(char *name,char *derivation)
 							m += lastUnit->m * repeat;
 							s += lastUnit->s * repeat;
 							a *= pow(lastUnit->a, repeat);
-							prec = min(prec, lastUnit->prec);
+							prec = fmin(prec, lastUnit->prec);
 							break;
 						case '/':
 							c -= lastUnit->c * repeat;
@@ -435,7 +435,7 @@ int unit_derived(char *name,char *derivation)
 							m -= lastUnit->m * repeat;
 							s -= lastUnit->s * repeat;
 							a /= pow(lastUnit->a, repeat);
-							prec = min(prec, lastUnit->prec);
+							prec = fmin(prec, lastUnit->prec);
 							break;
 						default:
 							throw_exception("%s(%d): ^ not allowed after '%c' at '%s'", filepath, linenum, lastOp, term);

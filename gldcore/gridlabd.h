@@ -59,13 +59,13 @@
 
 // module version info (must match core version info)
 #define MAJOR 4
-#define MINOR 0
+#define MINOR 1
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #define HAVE_LIBCPPUNIT
 #endif
 
@@ -78,7 +78,7 @@
 	#define CDECL
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #ifndef EXPORT
 /** Defines a function as exported to core **/
 #define EXPORT CDECL __declspec(dllexport)
@@ -93,7 +93,7 @@
 #include "transform.h"
 #include "object.h"
 #include "find.h"
-#include "random.h"
+#include "gldrandom.h"
 #define STREAM_MODULE
 #include "stream.h"
 
@@ -1279,7 +1279,7 @@ inline void wunlock(unsigned int* lock) { callback->unlock.write(lock); }
 #define LOCKED(X,C) {WRITELOCK_OBJECT(X);(C);WRITEUNLOCK_OBJECT(X);} /**< @todo this is deprecated and should not be used anymore */
 
 static unsigned long _nan[] = { 0xffffffff, 0x7fffffff, };
-#ifdef WIN32
+#ifdef _WIN32
 #define NaN (*(double*)&_nan)
 #else// UNIX/LINUX
 #include <math.h>
@@ -1908,7 +1908,19 @@ public: // header read accessors (no locking)
 	inline double get_longitude(void) { return my()->longitude; };
 	inline TIMESTAMP get_in_svc(void) { return my()->in_svc; };
 	inline TIMESTAMP get_out_svc(void) { return my()->out_svc; };
-	inline const char* get_name(void) { static char _name[sizeof(CLASS)+16]; return my()->name?my()->name:(sprintf(_name,"%s:%d",my()->oclass->name,my()->id),_name); };
+	inline const char* get_name(void) {
+		static char _name[sizeof(CLASS) + 16];
+		if(my()->name){
+				return my()->name;
+		} else if(my()->oclass){
+			snprintf(_name, sizeof(CLASS) + 16, "%s:%d",
+					my()->oclass->name, my()->id);
+		} else {
+			snprintf(_name, sizeof(CLASS) + 16, "Unknown");
+		}
+		return _name;
+	}
+	;
 	inline NAMESPACE* get_space(void) { return my()->space; };
 	inline unsigned int get_lock(void) { return my()->lock; };
 	inline unsigned int get_rng_state(void) { return my()->rng_state; };
@@ -2311,7 +2323,7 @@ public:
 
 #ifdef DLMAIN
 EXPORT int do_kill(void*);
-#ifdef WIN32
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 EXPORT int gld_major=MAJOR, gld_minor=MINOR; 
@@ -2324,7 +2336,7 @@ CDECL int dllinit() { return 0; }
 CDECL int dllkill() { do_kill(NULL); }
 #endif // !WIN32
 #elif defined CONSOLE
-#ifdef WIN32
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif

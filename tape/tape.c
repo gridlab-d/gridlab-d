@@ -50,7 +50,7 @@ extern CLASS *collector_class;
 /* delta mode control */
 TIMESTAMP delta_mode_needed = TS_NEVER; /* the time at which delta mode needs to start */
 
-#ifdef WIN32
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 #define _WIN32_WINNT 0x0400
 #include <windows.h>
@@ -155,7 +155,7 @@ TAPEFUNCS *get_ftable(char *mode){
 	ops->write = (WRITEFUNC)DLSYM(lib, "write_recorder");
 	ops->rewind = NULL;
 	ops->close = (CLOSEFUNC)DLSYM(lib, "close_recorder");
-	ops->flush = (FLUSHFUNC)DLSYM(lib, "flush_collector");
+	ops->flush = (FLUSHFUNC)DLSYM(lib, "flush_recorder");
 
 	ops = fptr->histogram = malloc(sizeof(TAPEOPS));
 	memset(ops,0,sizeof(TAPEOPS));
@@ -164,7 +164,7 @@ TAPEFUNCS *get_ftable(char *mode){
 	ops->write = (WRITEFUNC)DLSYM(lib, "write_histogram");
 	ops->rewind = NULL;
 	ops->close = (CLOSEFUNC)DLSYM(lib, "close_histogram");
-	ops->flush = (FLUSHFUNC)DLSYM(lib, "flush_collector");
+	ops->flush = (FLUSHFUNC)DLSYM(lib, "flush_histogram");
 
 	ops = fptr->shaper = malloc(sizeof(TAPEOPS));
 	memset(ops,0,sizeof(TAPEOPS));
@@ -194,7 +194,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, void *module, int argc, char *argv[])
 	}
 
 	/* globals for the tape module*/
-#ifdef WIN32
+#ifdef _WIN32
 	sprintf(tape_gnuplot_path, "c:/Program Files/GnuPlot/bin/wgnuplot.exe");
 #else
 	sprintf(tape_gnuplot_path,"/usr/bin/gnuplot");

@@ -156,7 +156,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t<fuse>\n");
 
 			//write the name
-			if(obj->name[0] != 0){
+			if(obj->name != NULL){
 				fprintf(fn,"\t\t<name>%s</name>\n",obj->name);
 			} else {
 				fprintf(fn,"\t\t<name>NA</name>\n");
@@ -166,14 +166,14 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<id>fuse:%d</id>\n",obj->id);
 
 			//write the from name
-			if(pFuse[index]->from->name[0] != 0){
+			if(pFuse[index]->from->name != NULL){
 				fprintf(fn,"\t\t<from_node>%s:%s</from_node>\n",pFuse[index]->from->oclass->name,pFuse[index]->from->name);
 			} else {
 				fprintf(fn,"\t\t<from_node>%s:%d</from_node>\n",pFuse[index]->from->oclass->name,pFuse[index]->from->id);
 			}
 
 			//write the to name
-			if(pFuse[index]->to->name[0] != 0){
+			if(pFuse[index]->to->name != NULL){
 				fprintf(fn,"\t\t<to_node>%s:%s</to_node>\n",pFuse[index]->to->oclass->name,pFuse[index]->to->name);
 			} else {
 				fprintf(fn,"\t\t<to_node>%s:%d</to_node>\n",pFuse[index]->to->oclass->name,pFuse[index]->to->id);
@@ -349,7 +349,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t<overhead_line>\n");
 
 			//write the name
-			if(obj->name[0] != 0){
+			if(obj->name != NULL){
 				fprintf(fn,"\t\t<name>%s</name>\n",obj->name);
 			} else {
 				fprintf(fn,"\t\t<name>NA</name>\n");
@@ -359,14 +359,14 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<id>overhead_line:%d</id>\n",obj->id);
 
 			//write the from name
-			if(pOhLine[index]->from->name[0] != 0){
+			if(pOhLine[index]->from->name != NULL){
 				fprintf(fn,"\t\t<from_node>%s:%s</from_node>\n",pOhLine[index]->from->oclass->name,pOhLine[index]->from->name);
 			} else {
 				fprintf(fn,"\t\t<from_node>%s:%d</from_node>\n",pOhLine[index]->from->oclass->name,pOhLine[index]->from->id);
 			}
 
 			//write the to name
-			if(pOhLine[index]->to->name[0] != 0){
+			if(pOhLine[index]->to->name != NULL){
 				fprintf(fn,"\t\t<to_node>%s:%s</to_node>\n",pOhLine[index]->to->oclass->name,pOhLine[index]->to->name);
 			} else {
 				fprintf(fn,"\t\t<to_node>%s:%d</to_node>\n",pOhLine[index]->to->oclass->name,pOhLine[index]->to->id);
@@ -545,7 +545,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t<recloser>\n");
 
 			//write the name
-			if(obj->name[0] != 0){
+			if(obj->name != NULL){
 				fprintf(fn,"\t\t<name>%s</name>\n",obj->name);
 			} else {
 				fprintf(fn,"\t\t<name>NA</name>\n");
@@ -555,14 +555,14 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<id>recloser:%d</id>\n",obj->id);
 
 			//write the from name
-			if(pRecloser[index]->from->name[0] != 0){
+			if(pRecloser[index]->from->name != NULL){
 				fprintf(fn,"\t\t<from_node>%s:%s</from_node>\n",pRecloser[index]->from->oclass->name,pRecloser[index]->from->name);
 			} else {
 				fprintf(fn,"\t\t<from_node>%s:%d</from_node>\n",pRecloser[index]->from->oclass->name,pRecloser[index]->from->id);
 			}
 
 			//write the to name
-			if(pRecloser[index]->to->name[0] != 0){
+			if(pRecloser[index]->to->name != NULL){
 				fprintf(fn,"\t\t<to_node>%s:%s</to_node>\n",pRecloser[index]->to->oclass->name,pRecloser[index]->to->name);
 			} else {
 				fprintf(fn,"\t\t<to_node>%s:%d</to_node>\n",pRecloser[index]->to->oclass->name,pRecloser[index]->to->id);
@@ -748,14 +748,14 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<id>regulator:%d</id>\n",obj->id);
 
 			//write the from name
-			if(pRegulator[index]->from->name[0] != 0){
+			if(pRegulator[index]->from->name != NULL){
 				fprintf(fn,"\t\t<from_node>%s:%s</from_node>\n",pRegulator[index]->from->oclass->name,pRegulator[index]->from->name);
 			} else {
 				fprintf(fn,"\t\t<from_node>%s:%d</from_node>\n",pRegulator[index]->from->oclass->name,pRegulator[index]->from->id);
 			}
 
 			//write the to name
-			if(pRegulator[index]->to->name[0] != 0){
+			if(pRegulator[index]->to->name != NULL){
 				fprintf(fn,"\t\t<to_node>%s:%s</to_node>\n",pRegulator[index]->to->oclass->name,pRegulator[index]->to->name);
 			} else {
 				fprintf(fn,"\t\t<to_node>%s:%d</to_node>\n",pRegulator[index]->to->oclass->name,pRegulator[index]->to->id);
@@ -935,7 +935,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t<relay>\n");
 
 			//write the name
-			if(obj->name[0] != 0){
+			if(obj->name != NULL){
 				fprintf(fn,"\t\t<name>%s</name>\n",obj->name);
 			} else {
 				fprintf(fn,"\t\t<name>NA</name>\n");
@@ -945,14 +945,14 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<id>relay:%d</id>\n",obj->id);
 
 			//write the from name
-			if(pRelay[index]->from->name[0] != 0){
+			if(pRelay[index]->from->name != NULL){
 				fprintf(fn,"\t\t<from_node>%s:%s</from_node>\n",pRelay[index]->from->oclass->name,pRelay[index]->from->name);
 			} else {
 				fprintf(fn,"\t\t<from_node>%s:%d</from_node>\n",pRelay[index]->from->oclass->name,pRelay[index]->from->id);
 			}
 
 			//write the to name
-			if(pRelay[index]->to->name[0] != 0){
+			if(pRelay[index]->to->name != NULL){
 				fprintf(fn,"\t\t<to_node>%s:%s</to_node>\n",pRelay[index]->to->oclass->name,pRelay[index]->to->name);
 			} else {
 				fprintf(fn,"\t\t<to_node>%s:%d</to_node>\n",pRelay[index]->to->oclass->name,pRelay[index]->to->id);
@@ -1128,7 +1128,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t<sectionalizer>\n");
 
 			//write the name
-			if(obj->name[0] != 0){
+			if(obj->name != NULL){
 				fprintf(fn,"\t\t<name>%s</name>\n",obj->name);
 			} else {
 				fprintf(fn,"\t\t<name>NA</name>\n");
@@ -1138,14 +1138,14 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<id>sectionalizer:%d</id>\n",obj->id);
 
 			//write the from name
-			if(pSectionalizer[index]->from->name[0] != 0){
+			if(pSectionalizer[index]->from->name != NULL){
 				fprintf(fn,"\t\t<from_node>%s:%s</from_node>\n",pSectionalizer[index]->from->oclass->name,pSectionalizer[index]->from->name);
 			} else {
 				fprintf(fn,"\t\t<from_node>%s:%d</from_node>\n",pSectionalizer[index]->from->oclass->name,pSectionalizer[index]->from->id);
 			}
 
 			//write the to name
-			if(pSectionalizer[index]->to->name[0] != 0){
+			if(pSectionalizer[index]->to->name != NULL){
 				fprintf(fn,"\t\t<to_node>%s:%s</to_node>\n",pSectionalizer[index]->to->oclass->name,pSectionalizer[index]->to->name);
 			} else {
 				fprintf(fn,"\t\t<to_node>%s:%d</to_node>\n",pSectionalizer[index]->to->oclass->name,pSectionalizer[index]->to->id);
@@ -1321,7 +1321,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t<series reactor>\n");
 
 			//write the name
-			if(obj->name[0] != 0){
+			if(obj->name != NULL){
 				fprintf(fn,"\t\t<name>%s</name>\n",obj->name);
 			} else {
 				fprintf(fn,"\t\t<name>NA</name>\n");
@@ -1331,14 +1331,14 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<id>series_reactor:%d</id>\n",obj->id);
 
 			//write the from name
-			if(pSeriesReactor[index]->from->name[0] != 0){
+			if(pSeriesReactor[index]->from->name != NULL){
 				fprintf(fn,"\t\t<from_node>%s:%s</from_node>\n",pSeriesReactor[index]->from->oclass->name,pSeriesReactor[index]->from->name);
 			} else {
 				fprintf(fn,"\t\t<from_node>%s:%d</from_node>\n",pSeriesReactor[index]->from->oclass->name,pSeriesReactor[index]->from->id);
 			}
 
 			//write the to name
-			if(pSeriesReactor[index]->to->name[0] != 0){
+			if(pSeriesReactor[index]->to->name != NULL){
 				fprintf(fn,"\t\t<to_node>%s:%s</to_node>\n",pSeriesReactor[index]->to->oclass->name,pSeriesReactor[index]->to->name);
 			} else {
 				fprintf(fn,"\t\t<to_node>%s:%d</to_node>\n",pSeriesReactor[index]->to->oclass->name,pSeriesReactor[index]->to->id);
@@ -1515,7 +1515,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t<switch>\n");
 
 			//write the name
-			if(obj->name[0] != 0){
+			if(obj->name != NULL){
 				fprintf(fn,"\t\t<name>%s</name>\n",obj->name);
 			} else {
 				fprintf(fn,"\t\t<name>NA</name>\n");
@@ -1525,14 +1525,14 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<id>switch:%d</id>\n",obj->id);
 
 			//write the from name
-			if(pSwitch[index]->from->name[0] != 0){
+			if(pSwitch[index]->from->name != NULL){
 				fprintf(fn,"\t\t<from_node>%s:%s</from_node>\n",pSwitch[index]->from->oclass->name,pSwitch[index]->from->name);
 			} else {
 				fprintf(fn,"\t\t<from_node>%s:%d</from_node>\n",pSwitch[index]->from->oclass->name,pSwitch[index]->from->id);
 			}
 
 			//write the to name
-			if(pSwitch[index]->to->name[0] != 0){
+			if(pSwitch[index]->to->name != NULL){
 				fprintf(fn,"\t\t<to_node>%s:%s</to_node>\n",pSwitch[index]->to->oclass->name,pSwitch[index]->to->name);
 			} else {
 				fprintf(fn,"\t\t<to_node>%s:%d</to_node>\n",pSwitch[index]->to->oclass->name,pSwitch[index]->to->id);
@@ -1709,7 +1709,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t<transformer>\n");
 
 			//write the name
-			if(obj->name[0] != 0){
+			if(obj->name != NULL){
 				fprintf(fn,"\t\t<name>%s</name>\n",obj->name);
 			} else {
 				fprintf(fn,"\t\t<name>NA</name>\n");
@@ -1719,7 +1719,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<id>transformer:%d</id>\n",obj->id);
 
 			//write the from name
-			if(pTransformer[index]->from->name[0] != 0){
+			if(pTransformer[index]->from->name != NULL){
 				fprintf(fn,"\t\t<from_node>%s:%s</from_node>\n",pTransformer[index]->from->oclass->name,pTransformer[index]->from->name);
 			} else {
 				fprintf(fn,"\t\t<from_node>%s:%d</from_node>\n",pTransformer[index]->from->oclass->name,pTransformer[index]->from->id);
@@ -1727,7 +1727,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			
 
 			//write the to name
-			if(pTransformer[index]->to->name[0] != 0){
+			if(pTransformer[index]->to->name != NULL){
 				fprintf(fn,"\t\t<to_node>%s:%s</to_node>\n",pTransformer[index]->to->oclass->name,pTransformer[index]->to->name);
 			} else {
 				fprintf(fn,"\t\t<to_node>%s:%d</to_node>\n",pTransformer[index]->to->oclass->name,pTransformer[index]->to->id);
@@ -1926,7 +1926,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t<triplex_line>\n");
 
 			//write the name
-			if(obj->name[0] != 0){
+			if(obj->name != NULL){
 				fprintf(fn,"\t\t<name>%s</name>\n",obj->name);
 			} else {
 				fprintf(fn,"\t\t<name>NA</name>\n");
@@ -1936,14 +1936,14 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<id>triplex_line:%d</id>\n",obj->id);
 
 			//write the from name
-			if(pTpLine[index]->from->name[0] != 0){
+			if(pTpLine[index]->from->name != NULL){
 				fprintf(fn,"\t\t<from_node>%s:%s</from_node>\n",pTpLine[index]->from->oclass->name,pTpLine[index]->from->name);
 			} else {
 				fprintf(fn,"\t\t<from_node>%s:%d</from_node>\n",pTpLine[index]->from->oclass->name,pTpLine[index]->from->id);
 			}
 
 			//write the to name
-			if(pTpLine[index]->to->name[0] != 0){
+			if(pTpLine[index]->to->name != NULL){
 				fprintf(fn,"\t\t<to_node>%s:%s</to_node>\n",pTpLine[index]->to->oclass->name,pTpLine[index]->to->name);
 			} else {
 				fprintf(fn,"\t\t<to_node>%s:%d</to_node>\n",pTpLine[index]->to->oclass->name,pTpLine[index]->to->id);
@@ -2096,7 +2096,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t<underground_line>\n");
 
 			//write the name
-			if(obj->name[0] != 0){
+			if(obj->name != NULL){
 				fprintf(fn,"\t\t<name>%s</name>\n",obj->name);
 			} else {
 				fprintf(fn,"\t\t<name>NA</name>\n");
@@ -2106,14 +2106,14 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<id>underground_line:%d</id>\n",obj->id);
 
 			//write the from name
-			if(pUgLine[index]->from->name[0] != 0){
+			if(pUgLine[index]->from->name != NULL){
 				fprintf(fn,"\t\t<from_node>%s:%s</from_node>\n",pUgLine[index]->from->oclass->name,pUgLine[index]->from->name);
 			} else {
 				fprintf(fn,"\t\t<from_node>%s:%d</from_node>\n",pUgLine[index]->from->oclass->name,pUgLine[index]->from->id);
 			}
 
 			//write the to name
-			if(pUgLine[index]->to->name[0] != 0){
+			if(pUgLine[index]->to->name != NULL){
 				fprintf(fn,"\t\t<to_node>%s:%s</to_node>\n",pUgLine[index]->to->oclass->name,pUgLine[index]->to->name);
 			} else {
 				fprintf(fn,"\t\t<to_node>%s:%d</to_node>\n",pUgLine[index]->to->oclass->name,pUgLine[index]->to->id);
@@ -2292,7 +2292,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t<capacitor>\n");
 
 			//write the name
-			if(obj->name[0] != 0){
+			if(obj->name != NULL){
 				fprintf(fn,"\t\t<name>%s</name>\n",obj->name);
 			} else {
 				fprintf(fn,"\t\t<name>NA</name>\n");
@@ -2303,7 +2303,7 @@ int impedance_dump::dump(TIMESTAMP t)
 
 
 			//write the bus name
-			if(obj->parent->name[0] != 0){
+			if(obj->parent->name != NULL){
 				fprintf(fn,"\t\t<node>%s:%s</node>\n",pCapacitor[index]->pclass->name,obj->parent->name);
 			} else {
 				fprintf(fn,"\t\t<node>%s:%d</node>\n",pCapacitor[index]->pclass->name,obj->parent->id);

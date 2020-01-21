@@ -159,7 +159,7 @@ object <class>[:<spec>] { // spec may be <id>, or <startid>..<endid>, or ..<coun
 #define MACRO "#"
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <io.h>
 #include <process.h>
 #include <direct.h>
@@ -178,7 +178,7 @@ typedef struct stat STAT;
 #include "object.h"
 #include "load.h"
 #include "output.h"
-#include "random.h"
+#include "gldrandom.h"
 #include "convert.h"
 #include "schedule.h"
 #include "transform.h"
@@ -565,7 +565,7 @@ static int mkdirs(char *path)
 	int rc;
 	//struct stat st;
 
-#ifdef WIN32
+#ifdef _WIN32
 #	define PATHSEP '\\'
 #	define mkdir(P,M) _mkdir((P)) // windows does not use mode info
 #	define access _access
@@ -779,7 +779,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 				char ldstr[1024];
 				char mopt[8]="";
 				char *libs = "-lstdc++";
-#ifdef WIN32
+#ifdef _WIN32
 				snprintf(mopt,sizeof(mopt),"-m%d",sizeof(void*)*8);
 				libs = "";
 #endif
@@ -6230,7 +6230,7 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 /** @return 1 if the variable is autodefined */
 int is_autodef(char *value)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	if ( strcmp(value,"WINDOWS")==0 ) return 1;
 #elif defined APPLE
 	if ( strcmp(value,"APPLE")==0 ) return 1;
@@ -6317,7 +6317,7 @@ void* start_process(const char *cmd)
 	return threadlist;
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 /* TODO: move this to a better place */
 char *strsep(char **from, const char *delim) {
     char *s, *dp, *ret;
@@ -6641,7 +6641,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		//if (sscanf(term+1,"%[^\n\r]",value)==1)
 		strcpy(value, strip_right_white(term+1));
 		if(1){
-#ifdef WIN32
+#ifdef _WIN32
 			putenv(value);
 #else
 			var = strtok_r(value, "=", &save);

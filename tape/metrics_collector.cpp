@@ -619,6 +619,9 @@ TIMESTAMP metrics_collector::postsync(TIMESTAMP t0, TIMESTAMP t1) {
 	if (next_write <= t1) {
 		write_now = true;
 	}
+	if (t1 < next_write) {
+		return next_write;
+	}
 	return t1 + interval_length;
 }
 
@@ -843,7 +846,7 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics[MTR_MIN_VLL] = findMin(voltage_vll_array, curr_index);
 		metrics[MTR_MAX_VLL] = findMax(voltage_vll_array, curr_index);
 		metrics[MTR_AVG_VLL] = findAverage(voltage_vll_array, curr_index);
-
+#ifdef ALL_MTR_METRICS
 		metrics[MTR_MIN_VLN] = findMin(voltage_vln_array, curr_index);
 		metrics[MTR_MAX_VLN] = findMax(voltage_vln_array, curr_index);
 		metrics[MTR_AVG_VLN] = findAverage(voltage_vln_array, curr_index);
@@ -851,7 +854,7 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics[MTR_MIN_VUNB] = findMin(voltage_unbalance_array, curr_index);
 		metrics[MTR_MAX_VUNB] = findMax(voltage_unbalance_array, curr_index);
 		metrics[MTR_AVG_VUNB] = findAverage(voltage_unbalance_array, curr_index);
-
+#endif
 		// Voltage above/below ANSI C84 A/B Range
 		double normVol = 1.0, aboveRangeA, belowRangeA, aboveRangeB, belowRangeB, belowOutage;
 		if (strcmp(parent_string, "triplex_meter") == 0) {
@@ -877,23 +880,33 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		// Voltage above Range A
 		struct vol_violation vol_Vio = findOutLimit(first_write, voltage_vll_array, true, aboveRangeA, curr_index);
 		metrics[MTR_ABOVE_A_DUR] = vol_Vio.durationViolation;
+#ifdef ALL_MTR_METRICS
 		metrics[MTR_ABOVE_A_CNT] = vol_Vio.countViolation;
+#endif
 		// Voltage below Range A
 		vol_Vio = findOutLimit(first_write, voltage_vll_array, false, belowRangeA, curr_index);
 		metrics[MTR_BELOW_A_DUR] = vol_Vio.durationViolation;
+#ifdef ALL_MTR_METRICS
 		metrics[MTR_BELOW_A_CNT] = vol_Vio.countViolation;
+#endif
 		// Voltage above Range B
 		vol_Vio = findOutLimit(first_write, voltage_vll_array, true, aboveRangeB, curr_index);
 		metrics[MTR_ABOVE_B_DUR] = vol_Vio.durationViolation;
+#ifdef ALL_MTR_METRICS
 		metrics[MTR_ABOVE_B_CNT] = vol_Vio.countViolation;
+#endif
 		// Voltage below Range B
 		vol_Vio = findOutLimit(first_write, voltage_vll_array, false, belowRangeB, curr_index);
 		metrics[MTR_BELOW_B_DUR] = vol_Vio.durationViolation;
+#ifdef ALL_MTR_METRICS
 		metrics[MTR_BELOW_B_CNT] = vol_Vio.countViolation;
+#endif
+#ifdef ALL_MTR_METRICS
 		// Voltage below 10% of the norminal voltage rating
 		vol_Vio = findOutLimit(first_write, voltage_vll_array, false, belowOutage, curr_index);
 		metrics[MTR_BELOW_10_DUR] = vol_Vio.durationViolation;
 		metrics[MTR_BELOW_10_CNT] = vol_Vio.countViolation;
+#endif
 	}
 	// If parent is house
 	else if (strcmp(parent_string, "house") == 0) {
@@ -967,7 +980,7 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		curr_index = 1;
 	}
 
-	next_write = min(next_write + interval_length, gl_globalstoptime);
+	next_write = std::min(next_write + interval_length, gl_globalstoptime);
 	first_write = false;
 
 	return 1;
