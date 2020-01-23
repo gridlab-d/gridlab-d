@@ -3437,6 +3437,28 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 					//Print an extra line, so it looks nice for ALL/PERCALL
 					fprintf(FPoutVal,"\n");
+
+					//Output the RHS information, if desired
+					if (NRMatRHSDump == true)
+					{
+						//Get the output size - double size, due to complex separation
+						m = 2*powerflow_values->island_matrix_values[island_loop_index].total_variables;
+
+						//Print the size - should be the matrix size, but put here for ease of use
+						fprintf(FPoutVal,"Matrix RHS Information - %lld elements\n",m);
+
+						//Print a header - row information isn't really needed, but include, just for ease of viewing
+						fprintf(FPoutVal,"RHS Information - row, value\n");
+
+						//Loop through and output the RHS values
+						for (jindexer=0; jindexer<m; jindexer++)
+						{
+							fprintf(FPoutVal,"%lld,%f\n",jindexer,powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[jindexer]);
+						}//End output RHS
+
+						//Print an extra line, just for spacing for ALL/PERCALL
+						fprintf(FPoutVal,"\n");
+					}//end RHS dump, if desired
 				}
 				else //Nothing written - indicate as much
 				{

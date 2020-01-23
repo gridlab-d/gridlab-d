@@ -77,6 +77,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		PT_KEYWORD,"ALL",MD_ALL,
 		NULL);
 	gl_global_create("powerflow::NR_matrix_output_references",PT_bool,&NRMatReferences,NULL);
+	gl_global_create("powerflow::NR_matrix_output_rhs",PT_bool,&NRMatRHSDump,PT_DESCRIPTION,"Flag to indicate if the RHS (delta-current-injections) should be output to the matrix dump",NULL);
 	gl_global_create("powerflow::NR_island_failure_handled",PT_bool,&NR_island_fail_method,PT_DESCRIPTION,"Indicates if an island fails if it should be removed from service",NULL);
 	gl_global_create("powerflow::line_capacitance",PT_bool,&use_line_cap,NULL);
 	gl_global_create("powerflow::line_limits",PT_bool,&use_link_limits,NULL);
