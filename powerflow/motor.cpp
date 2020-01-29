@@ -93,6 +93,7 @@ motor::motor(MODULE *mod):node(mod)
 			PT_enumeration,"desired_motor_state",PADDR(motor_override),PT_DESCRIPTION,"Should the motor be on or off",
 				PT_KEYWORD,"ON",(enumeration)overrideON,
 				PT_KEYWORD,"OFF",(enumeration)overrideOFF,
+			PT_object,"connected_house",PADDR(mtr_house_pointer),PT_DESCRIPTION,"house object to monitor the XXX property to determine if the motor is running",
 			PT_enumeration,"motor_operation_type",PADDR(motor_op_mode),PT_DESCRIPTION,"current operation type of the motor - deltamode related",
 				PT_KEYWORD,"SINGLE-PHASE",(enumeration)modeSPIM,
 				PT_KEYWORD,"THREE-PHASE",(enumeration)modeTPIM,
@@ -226,6 +227,10 @@ int motor::create()
     //Mode initialization
     motor_op_mode = modeSPIM; // share the variable with TPIM
 
+	//House connection capability
+	mtr_house_pointer = NULL;
+	mtr_house_state_pointer = NULL;
+
     //Three-phase induction motor parameters, 500 HP, 2.3kV
     pf = 4;
     Rs= 0.262;
@@ -270,6 +275,8 @@ int motor::init(OBJECT *parent)
 
 	OBJECT *obj = OBJECTHDR(this);
 	int result = node::init(parent);
+	bool temp_house_motor_state;
+	gld_wlock *test_rlock;
 
 	// Check what phases are connected on this motor
 	int num_phases = 0;
@@ -297,6 +304,81 @@ int motor::init(OBJECT *parent)
 		/*  TROUBLESHOOT
 		The motor only supports single-phase and three-phase motors at this time.  Please use one of these connection types.
 		*/
+	}
+
+	// determine the specific phase this motor is connected to
+	if (motor_op_mode == modeSPIM)
+	{
+		if (has_phase(PHASE_S))
+		{
+			connected_phase = -1;		//Arbitrary
+			triplex_connected = true;	//Flag us as triplex
+		}
+		else	//Three-phase
+		{
+			//Affirm the triplex flag is not set
+			triplex_connected = false;
+
+			if (has_phase(PHASE_A)) {
+				connected_phase = 0;
+			}
+			else if (has_phase(PHASE_B)) {
+				connected_phase = 1;
+			}
+			else {	//Phase C, by default
+				connected_phase = 2;
+			}
+		}
+	}
+	//Default else -- three-phase diagnostics (none needed right now)
+
+	//Map the connected house
+	if (mtr_house_pointer != NULL)
+	{
+		//Make sure it is a house first, just for giggles
+		if (gl_object_isa(mtr_house_pointer,"house","residential") != true)
+		{
+			GL_THROW("motor:%s -- connected_house must point toward a residential:house object",(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			The motor connected_house field only supports connections to a residential:house object at this time.
+			*/
+		}
+
+		//Make sure our mode is SPIM and triplexy - if not, failure
+		if (triplex_connected != true)
+		{
+			GL_THROW("motor:%s -- When using the house-connected mode, the motor must be a triplex device",(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			In the house-tied mode, the motor must be a triplex-connected motor.  Ideally, it should be connected to the same triplex device
+			as the house.  Three-phase implementations may be supported at a future date.
+			*/
+		}
+
+		//Map up the property
+		mtr_house_state_pointer = new gld_property(mtr_house_pointer,"compressor_on");
+
+		//Make sure it worked
+		if ((mtr_house_state_pointer->is_valid() != true) || (mtr_house_state_pointer->is_bool() != true))
+		{
+			GL_THROW("motor:%s -- Unable to map house compressor status property",(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			While attempting to map the compressor_on property of the house to determine motor state, an error occurred.  Please try again.
+			If the error persists, please submit your code and a bug report via the issues tracker.
+			*/
+		}
+
+		//Check the initial state - pull the value (not sure it is actually set yet)
+		mtr_house_state_pointer->getp<bool>(temp_house_motor_state,*test_rlock);
+
+		//Determine our state
+		if (temp_house_motor_state == true)
+		{
+			motor_override = overrideON;
+		}
+		else
+		{
+			motor_override = overrideOFF;
+		}
 	}
 
 	//Check the initial torque conditions
@@ -420,33 +502,6 @@ int motor::init(OBJECT *parent)
 	llr = Xr/Zbase;  // pu
 	lm = Xm/Zbase;  // pu
 
-
-	// determine the specific phase this motor is connected to
-	if (motor_op_mode == modeSPIM)
-	{
-		if (has_phase(PHASE_S))
-		{
-			connected_phase = -1;		//Arbitrary
-			triplex_connected = true;	//Flag us as triplex
-		}
-		else	//Three-phase
-		{
-			//Affirm the triplex flag is not set
-			triplex_connected = false;
-
-			if (has_phase(PHASE_A)) {
-				connected_phase = 0;
-			}
-			else if (has_phase(PHASE_B)) {
-				connected_phase = 1;
-			}
-			else {	//Phase C, by default
-				connected_phase = 2;
-			}
-		}
-	}
-	//Default else -- three-phase diagnostics (none needed right now)
-
 	//Parameters
 	if (motor_op_mode == modeSPIM)
 	{
@@ -527,11 +582,31 @@ TIMESTAMP motor::presync(TIMESTAMP t0, TIMESTAMP t1)
 
 TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
+	bool temp_house_motor_state;
+	gld_wlock *test_rlock;
+
 	// update voltage and frequency
 	updateFreqVolt();
 
 	if (motor_op_mode == modeSPIM)
 	{
+		//See if we're in "house-check mode"
+		if (mtr_house_state_pointer != NULL)
+		{
+			//Pull the updated state
+			mtr_house_state_pointer->getp<bool>(temp_house_motor_state,*test_rlock);
+
+			//Set the motor state
+			if (temp_house_motor_state == true)
+			{
+				motor_override = overrideON;
+			}
+			else
+			{
+				motor_override = overrideOFF;
+			}
+		}//End crude house coupling check
+
 		if((double)t1 == last_cycle) { // if time did not advance, load old values
 			SPIMreinitializeVars();
 		}
@@ -706,6 +781,8 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 {
 	OBJECT *hdr = OBJECTHDR(this);
 	STATUS return_status_val;
+	bool temp_house_motor_state;
+	gld_wlock *test_rlock;
 
 	// make sure to capture the current time
 	curr_delta_time = gl_globaldeltaclock;
@@ -733,6 +810,23 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 
 		if (motor_op_mode == modeSPIM)
 		{
+			//See if we're in "house-check mode"
+			if (mtr_house_state_pointer != NULL)
+			{
+				//Pull the updated state
+				mtr_house_state_pointer->getp<bool>(temp_house_motor_state,*test_rlock);
+
+				//Set the motor state
+				if (temp_house_motor_state == true)
+				{
+					motor_override = overrideON;
+				}
+				else
+				{
+					motor_override = overrideOFF;
+				}
+			}//End crude house coupling check
+
 			// update voltage and frequency
 			updateFreqVolt();
 
@@ -772,6 +866,23 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 
 		if (motor_op_mode == modeSPIM)
 		{
+			//See if we're in "house-check mode"
+			if (mtr_house_state_pointer != NULL)
+			{
+				//Pull the updated state
+				mtr_house_state_pointer->getp<bool>(temp_house_motor_state,*test_rlock);
+
+				//Set the motor state
+				if (temp_house_motor_state == true)
+				{
+					motor_override = overrideON;
+				}
+				else
+				{
+					motor_override = overrideOFF;
+				}
+			}//End crude house coupling check
+
 			// if deltaTime is not small enough we will run into problems
 			if (deltaTime > 0.0003) {
 				gl_warning("Delta time for the SPIM model needs to be lower than 0.0003 seconds");

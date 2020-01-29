@@ -97,6 +97,9 @@ private:
 	} MOTOR_OVERRIDE;		
 	enumeration motor_override;
 
+	OBJECT *mtr_house_pointer;				///< Pointer to house object to monitor
+	gld_property *mtr_house_state_pointer;	///< Property map for house to monitor
+
 	typedef enum {
 		modeSPIM=0,		///<Single-phase induction motor
 		modeTPIM=1		///<Three-phase induction motor
