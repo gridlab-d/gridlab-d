@@ -11,6 +11,9 @@ else ()
     SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif ()
 
+set(CMAKE_INSTALL_BINDIR "${CMAKE_INSTALL_PREFIX}/bin" CACHE PATH "" FORCE)
+set(CMAKE_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/lib/gridlabd" CACHE PATH "" FORCE)
+
 #SET(CMAKE_VERBOSE_MAKEFILE ON)
 
 # CMake Module includes
@@ -183,10 +186,12 @@ SET(GLD_SHARE
 include_directories(gldcore)
 
 include_directories(third_party/superLU_MT)
-include_directories(third_party/jsonCpp)
+include_directories(third_party/jsoncpp/include)
 
 add_subdirectory(third_party/superLU_MT)
-add_subdirectory(third_party/jsonCpp)
+
+option(JSON_CPP_WITH_TESTS "Build the JSON CPP test suite" OFF)
+add_subdirectory(third_party/jsoncpp)
 
 include(assert/CMakeLists.txt)
 include(climate/CMakeLists.txt)
@@ -368,7 +373,7 @@ if (HAVE_FNCS)
     target_link_libraries(gridlabd ${GL_FNCS_LIBRARIES})
 ENDIF ()
 
-add_dependencies(gridlabd libjsoncpp libsuperlu)
+add_dependencies(gridlabd jsoncpp_lib libsuperlu)
 
 target_link_libraries(gridlabd ${CMAKE_THREAD_LIBS_INIT})
 if (CURSES_FOUND)
@@ -376,7 +381,7 @@ if (CURSES_FOUND)
 endif ()
 
 target_link_libraries(gridlabd ${GL_MODULES})
-target_link_libraries(gridlabd libjsoncpp libsuperlu)
+target_link_libraries(gridlabd jsoncpp_lib libsuperlu)
 
 IF (WIN32 OR MSYS OR MINGW OR CYGWIN)
     target_link_libraries(gridlabd ${OS_SPECIFIC_LIBRARIES})
@@ -391,13 +396,13 @@ SET(FILE_PERMISSIONS PERMISSIONS
 
 install(TARGETS gridlabd
         ${FILE_PERMISSIONS}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         )
 install(TARGETS ${GL_MODULES}
         ${FILE_PERMISSIONS}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/gridlabd
-        LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/gridlabd
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/gridlabd
+        RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         COMPONENT library)
 
 install(FILES ${HEADER_FILE_NAMES}

@@ -1,8 +1,8 @@
 project(tape)
 
 include_directories(../${GLDCORE_LOC})
-include_directories(../third_party/jsonCpp)
-SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I../third_party/jsonCpp" )
+#include_directories(../third_party/jsonCpp)
+#SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I../third_party/jsonCpp" )
 
 add_library(${PROJECT_NAME}
         tape/collector.cpp
@@ -42,6 +42,6 @@ set_target_properties(${PROJECT_NAME}
         PROPERTIES PREFIX ""
         )
 
-target_link_libraries(${PROJECT_NAME} libjsoncpp)
+target_link_libraries(${PROJECT_NAME} jsoncpp_lib)
 
 target_link_libraries(${PROJECT_NAME} ${OS_SPECIFIC_LIBRARIES})
