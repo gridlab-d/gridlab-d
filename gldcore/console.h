@@ -161,7 +161,7 @@ inline void attroff(int n)
 #endif
 
 #ifdef _WIN32
-long getwidth(void)
+inline long getwidth(void)
 {
 	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
 	if ( console )
