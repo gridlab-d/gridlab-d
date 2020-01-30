@@ -21,7 +21,7 @@ EXPORT_PRECOMMIT(helics_msg);
 EXPORT_SYNC(helics_msg);
 EXPORT_COMMIT(helics_msg);
 EXPORT_LOADMETHOD(helics_msg,configure);
-static helics::CombinationFederate *pHelicsFederate;
+static helics::CombinationFederate *pHelicsFederate{nullptr};
 EXPORT TIMESTAMP clocks_update(void *ptr, TIMESTAMP t1)
 {
 	helics_msg*my = (helics_msg*)ptr;
@@ -57,11 +57,11 @@ helics_msg::helics_msg(MODULE *module)
 
 	defaults = this;
 	if (gl_publish_variable(oclass,
-		PT_double, "version", get_version_offset(), PT_DESCRIPTION, "fncs_msg version",
+		PT_double, "version", get_version_offset(), PT_DESCRIPTION, "helics_msg version",
 		// TODO add published properties here
 		NULL)<1)
 			throw "connection/helics_msg::helics_msg(MODULE*): unable to publish properties of connection:helics_msg";
-	if ( !gl_publish_loadmethod(oclass,"configure",loadmethod_helics_msg_configure) )
+	if ( !gl_publish_loadmethod(oclass,"configure",[]( void *val,char *str)->int{return loadmethod_helics_msg_configure(static_cast<OBJECT *>(val),str);}) )
 		throw "connection/helics_msg::helics_msg(MODULE*): unable to publish configure method of connection:helics_msg";
 }
 

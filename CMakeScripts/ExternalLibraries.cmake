@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.0)
 
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads REQUIRED)
@@ -25,8 +25,6 @@ OPTION(USE_OPENMP "Enable building with OpenMP" OFF)
 
 SET(GL_ZeroMQ_DIR ${ZeroMQ_DIR} CACHE PATH "ZeroMQ library path used by Gridlab-d build process.")
 SET(GL_CZMQ_DIR ${CZMQ_DIR} CACHE PATH "CZMQ library path used by Gridlab-d build process.")
-SET(GL_Boost_DIR ${Boost_DIR} CACHE PATH "Boost library path used by Gridlab-d build process.")
-SET(GL_HELICS_DIR ${HELICS_DIR} CACHE PATH "HELICS library path used by Gridlab-d build process.")
 SET(GL_FNCS_DIR ${FNCS_DIR} CACHE PATH "FNCS library path used by Gridlab-d build process.")
 
 # Configure MySQL to be configured and linked if available.
@@ -38,43 +36,8 @@ IF (USE_MYSQL)
 ENDIF ()
 
 IF (USE_HELICS)
-    IF (GL_Boost_DIR)
-        set(BOOST_ROOT ${Boost_DIR} CACHE PATH "Boost internal library root")
-        set(Boost_NO_SYSTEM_PATHS on CACHE BOOL "Do not search system for Boost")
-    ENDIF ()
-
-    find_package(Boost
-            REQUIRED
-            COMPONENTS
-            chrono
-            date_time
-            filesystem
-            program_options
-            system
-            timer
-            unit_test_framework
-            )
-
-    FIND_LIBRARY(GL_ZMQ_LIBRARY NAMES zmq PATHS ${GL_ZeroMQ_DIR})
-    FIND_LIBRARY(GL_HELICS_LIBRARY NAMES helics-shared PATHS ${GL_HELICS_DIR})
-    IF (Boost_FOUND)
-        SET(GL_HELICS_LIBRARIES
-                ${GL_HELICS_LIBRARY}
-                ${GL_ZMQ_LIBRARY}
-                ${GL_Boost_LIBRARIES}
-                )
-        IF (GL_ZMQ_LIBRARY AND GL_Boost_LIBRARIES AND GL_HELICS_LIBRARY)
-            SET(HAVE_HELICS TRUE)
-        ELSE ()
-            MESSAGE(FATAL_ERROR "One of the required HELICS libraries could not be located. Check your configuration for \
-            GL_ZeroMQ_DIR, \
-            GL_Boost_DIR, \
-            and GL_HELICS_DIR.")
-        ENDIF ()
-    ELSE ()
-        MESSAGE("A library required for HELICS could not be located. Please ensure HELICS_DIR and ZeroMQ_DIR are \
-defined, and that Boost_DIR is defined if a custom version of Boost is being used.")
-    ENDIF (Boost_FOUND)
+   FIND_PACKAGE(HELICS 2.3 REQUIRED CONFIG HINTS ${HELICS_DIR})
+   SET(HAVE_HELICS TRUE)
 ENDIF (USE_HELICS)
 
 IF (USE_FNCS)
@@ -111,10 +74,7 @@ mark_as_advanced(FORCE
         HAVE_MYSQL
         HAVE_HELICS
         HAVE_FNCS
-        GL_HELICS_LIBRARIES
-        GL_HELICS_LIBRARY
         GL_ZMQ_LIBRARY
-        GL_Boost_LIBRARIES
         GL_FNCS_LIBRARIES
         GL_FNCS_LIBRARY
         GL_CZMQ_LIBRARY
