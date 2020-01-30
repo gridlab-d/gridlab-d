@@ -3,7 +3,7 @@
 	@file property.c
 	@addtogroup property Properties of objects
 	@ingroup core
-	
+
 	GridLAB-D classes contain properties,
 	which are supported by the functions in this module
 
@@ -157,19 +157,19 @@ PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void
 		if (prop->ptype!=PT_double && prop->ptype!=PT_complex)
 			output_error("property_malloc(oclass='%s',...): property %s cannot have unit '%s' because it is not a double or complex value",oclass->name, prop->name,unitspec);
 			/*	TROUBLESHOOT
-				Only <b>double</b> and <b>complex</b> properties can have units.  
+				Only <b>double</b> and <b>complex</b> properties can have units.
 				Either change the type of the property or remove the unit specification from the property's declaration.
 			 */
 
 		/* verify that the requested unit exists or can be derived */
-		else 
+		else
 		{
 			if ((prop->unit = unit_find(unitspec))==NULL)
 				throw_exception("property_malloc(oclass='%s',...): property %s unit '%s' is not recognized",oclass->name, prop->name,unitspec);
 				/*	TROUBLESHOOT
-					A class is attempting to publish a variable using a unit that is not defined.  
+					A class is attempting to publish a variable using a unit that is not defined.
 					This is caused by an incorrect unit specification in a variable publication (in C++) or declaration (in GLM).
-					Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.  
+					Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.
 				 */
 		}
 	}
@@ -181,7 +181,7 @@ PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void
 	if (oclass!=NULL && class_find_property(oclass,prop->name))
 		output_warning("property_malloc(oclass='%s',...): property name '%s' is defined more than once", oclass->name, prop->name);
 		/*	TROUBLESHOOT
-			A class is attempting to publish a variable more than once.  
+			A class is attempting to publish a variable more than once.
 			This is caused by an repeated specification for a variable publication (in C++) or declaration (in GLM).
 		 */
 	return prop;
@@ -308,40 +308,10 @@ double complex_get_part(void *x, char *name)
 int double_array_create(double_array &a)
 {
 	a = double_array();
-//	a.set_max(1);
-//	a.set_rows(0);
-//	a.set_cols(0);
-//	a->x = (double***)malloc(sizeof(double**)*a->get_max());
-//	a->f = (unsigned char*)malloc(sizeof(unsigned char)*a->get_max());
-//	if ( a->x==NULL || a->f==NULL )
-//		return 0;
-//	memset(a->x,0,sizeof(double**)*a->get_max());
-//	memset(a->f,0,sizeof(unsigned char)*a->get_max());
+
 	return 1;
 }
 
-// NOTE: none of the following 3 functions were ever used, so we're seeing that removing them doesn't break anything.
-//double get_double_array_value(double_array*a,unsigned int n, unsigned int m)
-//{
-//	if ( a->get_rows()>n && a->get_cols()>m )
-//		return *(a->get_addr(n,m));
-//	else
-//		throw_exception("get_double_array_value(double_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
-//}
-//void set_double_array_value(double_array*a,unsigned int n, unsigned int m, double x)
-//{
-//	if ( a->get_rows()>n && a->get_cols()>m )
-//		*(a->get_addr(n,m))=x;
-//	else
-//		throw_exception("get_double_array_value(double_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
-//}
-//double *get_double_array_ref(double_array*a,unsigned int n, unsigned int m)
-//{
-//	if (  a->get_rows()>n && a->get_cols()>m  )
-//		return a->get_addr(n,m);
-//	else
-//		throw_exception("get_double_array_value(double_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
-//}
 double double_array_get_part(void *x, char *name)
 {
 	unsigned int n,m;
@@ -361,38 +331,9 @@ int complex_array_create(complex_array &a)
 {
     a = complex_array();
 
-//	a.set_max(1);
-//	a.set_rows(0);
-//	a.set_cols(0);
-//	a->x = (complex***)malloc(sizeof(complex**)*a->get_max());
-//	a->f = (unsigned char*)malloc(sizeof(unsigned char)*a->get_max());
-//	if ( a->x==NULL || a->f==NULL )
-//		return 0;
-//	memset(a->x,0,sizeof(complex**)*a->get_max());
-//	memset(a->f,0,sizeof(unsigned char)*a->get_max());
 	return 1;
 }
-//complex *get_complex_array_value(complex_array *a,unsigned int n, unsigned int m)
-//{
-//	if (  a->get_rows()>n && a->get_cols()>m  )
-//		return a->get_addr(n,m);
-//	else
-//		throw_exception("get_complex_array_value(complex_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
-//}
-//void set_complex_array_value(complex_array *a,unsigned int n, unsigned int m, complex *x)
-//{
-//	if (  a->get_rows()>n && a->get_cols()>m  )
-//		*(a->get_addr(n,m)) = *x;
-//	else
-//		throw_exception("get_complex_array_value(complex_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
-//}
-//complex *get_complex_array_ref(complex_array *a,unsigned int n, unsigned int m)
-//{
-//	if (  a->get_rows()>n && a->get_cols()>m  )
-//		return a->get_addr(n,m);
-//	else
-//		throw_exception("get_complex_array_value(complex_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
-//}
+
 double complex_array_get_part(void *x, char *name)
 {
 	int n,m;

@@ -11,7 +11,7 @@
 #define KEY_ESC 27
 
 /* simulate needed curses functions in Windows */
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #undef HAVE_CURSES
 #define HAVE_CURSES
@@ -160,7 +160,7 @@ inline void attroff(int n)
 #endif
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 inline long getwidth(void)
 {
 	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);

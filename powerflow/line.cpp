@@ -100,6 +100,10 @@ int line::init(OBJECT *parent)
 
 	int result = link_object::init(parent);
 
+	//Check for deferred
+	if (result == 2)
+		return 2;	//Return the deferment - no sense doing everything else!
+
 	//Map the nodes nominal_voltage values
 	fNode_nominal = new gld_property(from,const_cast<char*>("nominal_voltage"));
 

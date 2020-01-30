@@ -96,6 +96,7 @@ public:
 	int create(void);
 	int init(OBJECT *parent);
 	TIMESTAMP commit(TIMESTAMP t0, TIMESTAMP t1);
+	STATUS finalize();
 public:
 	static CLASS *oclass;
 	static recorder *defaults;

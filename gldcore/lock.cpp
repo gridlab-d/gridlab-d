@@ -12,6 +12,7 @@
  **/
 
 #include "lock.h"
+#include "globals.h"
 #include "exception.h"
 #include "config.h"
 #include <stdio.h>
@@ -36,7 +37,7 @@
 	#include <libkern/OSAtomic.h>
 	#define atomic_compare_and_swap(dest, comp, xchg) OSAtomicCompareAndSwap32Barrier(comp, xchg, (volatile int32_t *) dest)
 	#define atomic_increment(ptr) OSAtomicIncrement32Barrier((volatile int32_t *) ptr)
-#elif defined(WIN32) && !defined __MINGW32__
+#elif defined(_WIN32) && !defined __MINGW32__
 	#include <intrin.h>
 	#pragma intrinsic(_InterlockedCompareExchange)
 	#pragma intrinsic(_InterlockedIncrement)
@@ -154,49 +155,57 @@ void register_lock(unsigned int *lock)
  **/
 extern "C" void rlock(unsigned int *lock)
 {
-	unsigned int timeout = MAXSPIN;
-	unsigned int value;
-	extern unsigned int rlock_count, rlock_spin;
-	check_lock(lock,false,false);
-	atomic_increment(&rlock_count);
-	do {
-		value = (*lock);
-		atomic_increment(&rlock_spin);
-		if ( timeout--==0 ) 
-			throw_exception("read lock timeout");
-	} while ((value&1) || !atomic_compare_and_swap(lock, value, value + 1));
+	if(global_lock_enabled){
+		unsigned int timeout = MAXSPIN;
+		unsigned int value;
+		extern unsigned int rlock_count, rlock_spin;
+		check_lock(lock,false,false);
+		atomic_increment(&rlock_count);
+		do {
+			value = (*lock);
+			atomic_increment(&rlock_spin);
+			if ( timeout--==0 )
+				throw_exception("read lock timeout");
+		} while ((value&1) || !atomic_compare_and_swap(lock, value, value + 1));
+	}
 }
 /** Write lock 
  **/
 extern "C" void wlock(unsigned int *lock)
 {
-	unsigned int timeout = MAXSPIN;
-	unsigned int value;
-	extern unsigned int wlock_count, wlock_spin;
-	check_lock(lock,true,false);
-	atomic_increment(&wlock_count);
-	do {
-		value = (*lock);
-		atomic_increment(&wlock_spin);
-		if ( timeout--==0 ) 
-			throw_exception("write lock timeout");
-	} while ((value&1) || !atomic_compare_and_swap(lock, value, value + 1));
+	if(global_lock_enabled){
+		unsigned int timeout = MAXSPIN;
+		unsigned int value;
+		extern unsigned int wlock_count, wlock_spin;
+		check_lock(lock,true,false);
+		atomic_increment(&wlock_count);
+		do {
+			value = (*lock);
+			atomic_increment(&wlock_spin);
+			if ( timeout--==0 )
+				throw_exception("write lock timeout");
+		} while ((value&1) || !atomic_compare_and_swap(lock, value, value + 1));
+	}
 }
 /** Read unlock
  **/
 extern "C" void runlock(unsigned int *lock)
 {
-	unsigned int value = *lock;
-	check_lock(lock,false,true);
-	atomic_increment(lock);
+	if(global_lock_enabled){
+		unsigned int value = *lock;
+		check_lock(lock,false,true);
+		atomic_increment(lock);
+	}
 }
 /** Write unlock
  **/
 extern "C" void wunlock(unsigned int *lock)
 {
-	unsigned int value = *lock;
-	check_lock(lock,true,true);
-	atomic_increment(lock);
+	if(global_lock_enabled){
+		unsigned int value = *lock;
+		check_lock(lock,true,true);
+		atomic_increment(lock);
+	}
 }
 
 #elif defined METHOD1 

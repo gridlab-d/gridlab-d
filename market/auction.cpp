@@ -1598,7 +1598,6 @@ int auction::submit_nolock(char *from, double quantity, double real_price, KEY k
 				gl_name(OBJECTHDR(this),myname,sizeof(myname)),quantity<0?"ask":"offer",
 				from);
 		}
-		return 1;
 	}
 	return 0;
 }
@@ -1672,5 +1671,6 @@ EXPORT TIMESTAMP sync_auction(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 		return t2;
 	}
 	SYNC_CATCHALL(auction);
+	return TS_INVALID; // resolves compiler warning, but can not be reached.
 }
 

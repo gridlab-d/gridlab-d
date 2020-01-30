@@ -157,7 +157,7 @@ int glengine::set(const string name, const string value)
 void glengine::startGLD(const char *gldexecpath,const char **args){
 	
 	debug(1,"Starting GLD process");
-#ifdef WIN32
+#ifdef _WIN32
 	stringstream ss;
 	ss << gldexecpath << "\\" << "gridlabd.exe";
 	int i=0;
@@ -366,7 +366,7 @@ void glengine::connect(ENGINE_SOCK_TYPE socktype,const string &ip,const int &por
 
 void glengine::sleep(unsigned int msec)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	Sleep(msec);
 #else
 	usleep(msec*1000);
@@ -387,7 +387,7 @@ int glengine::shutdown(const int signum)
 		return 0;
 	shut=true;
 	debug(1,"shutdown of engine requested");
-#ifdef WIN32
+#ifdef _WIN32
 	
 	if(TerminateProcess(this->gldpid.hProcess,0))
 		WaitForSingleObject(this->gldpid.hProcess,INFINITE);

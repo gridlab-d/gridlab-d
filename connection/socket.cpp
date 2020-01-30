@@ -5,7 +5,7 @@
 #include "gridlabd.h"
 #include "socket.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 #define snprintf _snprintf
 #endif
 
@@ -17,7 +17,7 @@ Socket::Socket(int pf, int type, int prot)
 
 int Socket::init(void)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2,0),&wsaData)!=0)
 	{
@@ -54,7 +54,7 @@ bool Socket::set_addr(char *s)
 
 const char *Socket::strerror()
 {
-#ifdef WIN32
+#ifdef _WIN32
 	int err = WSAGetLastError();
 	switch (err) {
 	case WSAEINTR : return "interrupted function call";

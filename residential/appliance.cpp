@@ -24,12 +24,12 @@ appliance::appliance(MODULE *module) : residential_enduse(module)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 		if ( gl_publish_variable(oclass,
 			PT_INHERIT,"residential_enduse",
-			PT_complex_array, "powers",get_power_offset(),
-			PT_complex_array, "impedances",get_impedance_offset(),
-			PT_complex_array, "currents",get_current_offset(),
-			PT_double_array, "durations",get_duration_offset(),
-			PT_double_array, "transitions",get_transition_offset(),
-			PT_double_array, "heatgains", get_heatgain_offset(),
+			PT_complex_array, "powers",PADDR(power),
+			PT_complex_array, "impedances",PADDR(impedance),
+			PT_complex_array, "currents",PADDR(current),
+			PT_double_array, "durations",PADDR(duration),
+			PT_double_array, "transitions",PADDR(transition),
+			PT_double_array, "heatgains", PADDR(heatgain),
 			NULL)<1 )
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}

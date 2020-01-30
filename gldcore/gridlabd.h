@@ -65,7 +65,7 @@
 #include "config.h"
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #define HAVE_LIBCPPUNIT
 #endif
 
@@ -78,7 +78,7 @@
 	#define CDECL
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #ifndef EXPORT
 /** Defines a function as exported to core **/
 #define EXPORT CDECL __declspec(dllexport)
@@ -1294,7 +1294,7 @@ inline void wunlock(unsigned int* lock) { callback->unlock.write(lock); }
 #define LOCKED(X,C) {WRITELOCK_OBJECT(X);(C);WRITEUNLOCK_OBJECT(X);} /**< @todo this is deprecated and should not be used anymore */
 
 static unsigned long _nan[] = { 0xffffffff, 0x7fffffff, };
-#ifdef WIN32
+#ifdef _WIN32
 #define NaN (*(double*)&_nan)
 #else// UNIX/LINUX
 #include <math.h>
@@ -1903,8 +1903,9 @@ inline bool hasbits(unsigned long flags, unsigned int bits) { return (flags&bits
 class gld_object {
 public:
 	inline OBJECT *my() { return this?(((OBJECT*)this)-1):NULL; }
-public:
-	inline gld_object &operator=(gld_object&o) = delete;
+private:
+	// Make gld_object not copy-constructable.
+	gld_object& operator=(const gld_object&) = delete;
 
 public: // constructors
 	inline static gld_object *find_object(char *n) { OBJECT *obj = callback->get_object(n); if (obj) return (gld_object*)(obj+1); else return NULL; };
@@ -2145,9 +2146,9 @@ public: // special operations
 	inline double get_double(char*to) { double rv = get_double(); return get_unit()->convert(to,rv) ? rv : QNAN; };
 	inline complex get_complex(void) { errno=0; if ( pstruct.prop->ptype==PT_complex ) return *(complex*)get_addr(); else return complex(QNAN,QNAN); };
 	inline int64 get_integer(void) { errno=0; switch(pstruct.prop->ptype) { case PT_int16: return (int64)*(int16*)get_addr(); case PT_int32: return (int64)*(int32*)get_addr(); case PT_int64: return *(int64*)get_addr(); default: errno=EINVAL; return 0;} };
-	inline TIMESTAMP get_timestamp(void) { if (pstruct.prop->ptype == PT_timestamp) return *(TIMESTAMP*)get_addr(); exception("get_timestamp() called on a property that is not a timestamp"); throw; };
-	inline enumeration get_enumeration(void) { if ( pstruct.prop->ptype == PT_enumeration ) return *(enumeration*)get_addr(); exception("get_enumeration() called on a property that is not an enumeration"); throw; };
-	inline set get_set(void) { if ( pstruct.prop->ptype == PT_set ) return *(set*)get_addr(); exception("get_set() called on a property that is not a set"); throw; };
+	inline TIMESTAMP get_timestamp(void) { if (pstruct.prop->ptype != PT_timestamp) exception("get_timestamp() called on a property that is not a timestamp");return *(TIMESTAMP*) get_addr();};
+	inline enumeration get_enumeration(void) { if ( pstruct.prop->ptype != PT_enumeration ) exception("get_enumeration() called on a property that is not an enumeration"); return *(enumeration*)get_addr(); };
+	inline set get_set(void) { if ( pstruct.prop->ptype != PT_set ) exception("get_set() called on a property that is not a set"); return *(set*)get_addr(); };
 	inline gld_object* get_objectref(void) { if ( is_objectref() ) return ::get_object(*(OBJECT**)get_addr()); else return NULL; };
 	template <class T> inline void getp(T &value) { gld_core::rlock(&obj->lock); value = *(T*)get_addr(); gld_core::runlock(&obj->lock); };
 	template <class T> inline void setp(T &value) { gld_core::wlock(&obj->lock); *(T*)get_addr()=value; gld_core::wunlock(&obj->lock); };
@@ -2342,7 +2343,7 @@ public:
 
 #ifdef DLMAIN
 EXPORT int do_kill(void*);
-#ifdef WIN32
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 EXPORT int gld_major=MAJOR, gld_minor=MINOR; 
@@ -2353,10 +2354,10 @@ int gld_major=MAJOR, gld_minor=MINOR;
 CDECL int dllinit() __attribute__((constructor));
 CDECL int dllkill() __attribute__((destructor));
 CDECL int dllinit() { return 0; }
-CDECL int dllkill() { do_kill(NULL); return 0;}
+CDECL int dllkill() { return do_kill(NULL); }
 #endif // !WIN32
 #elif defined CONSOLE
-#ifdef WIN32
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif

@@ -38,6 +38,7 @@ public:
 public:
 	char256 filename;
 	double interval_length_dbl;			//Metrics output interval length
+	double interim_length_dbl;			//Metrics output interim length
 
 private:
 
@@ -45,9 +46,9 @@ private:
 
 private:
 
-	Json::Value metrics_writer_billing_meters;	// Final output dictionary for triplex_meters and non-swing meters
-	Json::Value metrics_writer_houses;	// Final output dictionary for houses
-	Json::Value metrics_writer_inverters;	// Final output dictionary for inverters
+	Json::Value metrics_writer_billing_meters;	    // Final output dictionary for triplex_meters and non-swing meters
+	Json::Value metrics_writer_houses;	            // Final output dictionary for houses
+	Json::Value metrics_writer_inverters;	        // Final output dictionary for inverters
 	Json::Value metrics_writer_feeder_information;	// Final output dictionary for feeder_information
 	Json::Value metrics_writer_capacitors;
 	Json::Value metrics_writer_regulators;
@@ -77,6 +78,8 @@ private:
 	FINDLIST *metrics_collectors;
 
 	int interval_length;			//integer averaging length (seconds)
+	int interim_length;			    //integer interim length (seconds to write out intervals and then clear)
+	int interim_cnt;
 };
 
 #endif // C++

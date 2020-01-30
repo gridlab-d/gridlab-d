@@ -584,6 +584,9 @@ int inverter::create(void)
 	VW_P1 = -2;
 	VW_P2 = -2;
 
+	//Set up the deltamode "next state" tracking variable
+	desired_simulation_mode = SM_EVENT;
+
 	/* TODO: set the context-free initial value of properties */
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -5152,7 +5155,6 @@ STATUS inverter::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
 	double deltat, deltath;
-	unsigned char pass_mod;
 	int indexval;
 	complex derror[3];
 	complex pid_out[3];
@@ -5181,9 +5183,6 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 	//Get timestep value
 	deltat = (double)dt/(double)DT_SECOND;
 	deltath = deltat/2.0;
-
-	// See what we're on, for tracking
-	pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
 
 	if (prev_time_dbl != gl_globaldeltaclock)	//Only update timestamp tracker when different - may happen elsewhere (VSI)
 	{
@@ -5219,7 +5218,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 				}
 
 				// Check pass
-				if (pass_mod==0)	// Predictor pass
+				if (iteration_count_val==0)	// Predictor pass
 				{
 					// Caluclate injection current based on voltage soruce magtinude and angle obtained
 					if((phases & 0x10) == 0x10) {
@@ -5650,7 +5649,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 					simmode_return_value = SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
 				}
-				else	// Corrector pass
+				else if (iteration_count_val == 1)	// Corrector pass
 				{
 					if((phases & 0x10) == 0x10) {
 
@@ -6086,6 +6085,11 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 					simmode_return_value =  SM_DELTA;
 				}
+				else	//Other iterations
+				{
+					//Just return whatever our "last desired" was
+					simmode_return_value = desired_simulation_mode;
+				}
 			}
 			else {
 				//Initializate the state of the inverter
@@ -6248,6 +6252,11 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 								}
 							}
 						}
+					}
+					else
+					{
+						//Just return what we were going to do for additional "steps"
+						simmode_return_value = desired_simulation_mode;
 					}
 				} else if(iteration_count_val == 0) {
 					// Check if P_Out and Q_Out changed during delta_mode
@@ -6845,7 +6854,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 						}
 					}
 				}
-				else
+				else	//Additional iterations - basically just checks convergence
 				{
 					//Duplicate the "next stage" check -- only here if something forces us onward
 					for(i = 0; i < 3; i++) {
@@ -7100,16 +7109,25 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 		//See if our return is value
 		if ((ieee_1547_double > 0.0) && (ieee_1547_double < 1.7) && (simmode_return_value == SM_EVENT))
 		{
+			//Set the mode tracking variable for this exit
+			desired_simulation_mode = SM_DELTA;
+
 			//Force us to stay
 			return SM_DELTA;
 		}
 		else	//Just return whatever we were going to do
 		{
+			//Set the mode tracking variable for this exit
+			desired_simulation_mode = simmode_return_value;
+
 			return simmode_return_value;
 		}
 	}
 	else	//Normal mode
 	{
+		//Set the mode tracking variable for this exit
+		desired_simulation_mode = simmode_return_value;
+
 		return simmode_return_value;
 	}
 }
@@ -7419,6 +7437,9 @@ STATUS inverter::init_PI_dynamics(INV_STATE *curr_time)
 		push_complex_powerflow_values();
 	}
 
+	//Set the mode tracking variable to a default - not really needed, but be paranoid
+	desired_simulation_mode = SM_EVENT;
+
 	return SUCCESS;	//Always succeeds for now, but could have error checks later
 }
 
@@ -7574,6 +7595,9 @@ STATUS inverter::init_PID_dynamics(void)
 	{
 		push_complex_powerflow_values();
 	}
+
+	//Set the mode tracking variable to a default - not really needed, but be paranoid
+	desired_simulation_mode = SM_EVENT;
 
 	return SUCCESS;	//Always succeeds for now, but could have error checks later
 }

@@ -2,7 +2,7 @@ project(connection)
 
 include_directories(../${GLDCORE_LOC})
 
-include_directories(../third_party/jsonCpp)
+#include_directories(../third_party/jsonCpp)
 #SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I../third_party/jsonCpp -lwsock32 -lws2_32" )
 
 IF (HAVE_FNCS)
@@ -47,7 +47,7 @@ add_library(${PROJECT_NAME}
 set_target_properties(${PROJECT_NAME}
         PROPERTIES PREFIX ""
         )
-add_dependencies(${PROJECT_NAME} libjsoncpp)
-target_link_libraries(${PROJECT_NAME} libjsoncpp)
+#add_dependencies(${PROJECT_NAME} jsoncpp_lib)
+target_link_libraries(${PROJECT_NAME} jsoncpp_lib)
 
 target_link_libraries(${PROJECT_NAME} ${OS_SPECIFIC_LIBRARIES})

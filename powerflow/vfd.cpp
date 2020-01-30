@@ -153,6 +153,10 @@ int vfd::init(OBJECT *parent)
 
 	int result = link_object::init(parent);
 
+	//Check for deferred
+	if (result == 2)
+		return 2;	//Return the deferment - no sense doing everything else!
+
 	if (stableTime <= 0.0)
 	{
 		GL_THROW(const_cast<char*>("VFD:%d - %s - the stableTime must be positive"),obj->id,(obj->name ? obj->name : "Unnamed"));

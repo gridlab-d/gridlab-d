@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 2.8.12)
+#cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.0)
 project(gridlabd)
 
 if (CMAKE_VERSION VERSION_LESS "3.1")
@@ -9,6 +10,9 @@ else ()
     SET(CMAKE_CXX_STANDARD 14)
     SET(CMAKE_CXX_STANDARD_REQUIRED ON)
 endif ()
+
+set(CMAKE_INSTALL_BINDIR "${CMAKE_INSTALL_PREFIX}/bin" CACHE PATH "" FORCE)
+set(CMAKE_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/lib/gridlabd" CACHE PATH "" FORCE)
 
 #SET(CMAKE_VERBOSE_MAKEFILE ON)
 
@@ -23,9 +27,10 @@ INCLUDE(CMakeScripts/CheckDependancies.cmake)
 INCLUDE(CMakeScripts/ExternalLibraries.cmake)
 INCLUDE(CMakeScripts/Build_number.cmake)
 
-configure_file(gldcore/cmake_config.h.in ${CMAKE_CURRENT_SOURCE_DIR}/gldcore/config.h @ONLY)
-configure_file(gldcore/version.h.in ${CMAKE_CURRENT_SOURCE_DIR}/gldcore/version.h @ONLY)
+configure_file(gldcore/cmake_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/headers/config.h @ONLY)
+configure_file(gldcore/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/headers/version.h @ONLY)
 add_definitions(-DHAVE_CONFIG_H)
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/headers)
 #include(CMakeScripts/ExternalLibraries.cmake)
 
 # use, i.e. don't skip the full RPATH for the build tree
@@ -86,7 +91,6 @@ SET(GL_MODULES
         glxengine
         )
 SET(HEADER_FILE_NAMES
-        ${GLDCORE_LOC}/build.h
         ${GLDCORE_LOC}/class.h
         ${GLDCORE_LOC}/complex.h
         ${GLDCORE_LOC}/debug.h
@@ -99,7 +103,9 @@ SET(HEADER_FILE_NAMES
         ${GLDCORE_LOC}/property.h
         ${GLDCORE_LOC}/schedule.h
         ${GLDCORE_LOC}/test.h
-        ${GLDCORE_LOC}/version.h
+
+        ${CMAKE_CURRENT_BINARY_DIR}/headers/build.h
+        ${CMAKE_CURRENT_BINARY_DIR}/headers/version.h
         )
 SET(GLD_SHARE
         ${GLDCORE_LOC}/tzinfo.txt
@@ -180,11 +186,13 @@ SET(GLD_SHARE
 include_directories(gldcore)
 
 include_directories(third_party/superLU_MT)
-include_directories(third_party/jsonCpp)
+include_directories(third_party/jsoncpp/include)
 include_directories(third_party/eigen)
 
 add_subdirectory(third_party/superLU_MT)
-add_subdirectory(third_party/jsonCpp)
+
+option(JSON_CPP_WITH_TESTS "Build the JSON CPP test suite" OFF)
+add_subdirectory(third_party/jsoncpp)
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 
 
@@ -216,7 +224,6 @@ add_executable(gridlabd
         ${GLDCORE_LOC}/schedule.h
         ${GLDCORE_LOC}/aggregate.cpp
         ${GLDCORE_LOC}/aggregate.h
-        ${GLDCORE_LOC}/build.h
         ${GLDCORE_LOC}/class.cpp
         ${GLDCORE_LOC}/class.h
         ${GLDCORE_LOC}/cmdarg.cpp
@@ -226,7 +233,6 @@ add_executable(gridlabd
         ${GLDCORE_LOC}/compare.cpp
         ${GLDCORE_LOC}/compare.h
         ${GLDCORE_LOC}/complex.h
-        ${GLDCORE_LOC}/config.h
         ${GLDCORE_LOC}/console.h
         ${GLDCORE_LOC}/convert.cpp
         ${GLDCORE_LOC}/convert.h
@@ -332,9 +338,12 @@ add_executable(gridlabd
         ${GLDCORE_LOC}/validate.cpp
         ${GLDCORE_LOC}/validate.h
         ${GLDCORE_LOC}/version.cpp
-        ${GLDCORE_LOC}/version.h
         #        ${GLDCORE_LOC}/xcore.cpp
         #        ${GLDCORE_LOC}/xcore.h
+
+        ${CMAKE_CURRENT_BINARY_DIR}/headers/version.h
+        ${CMAKE_CURRENT_BINARY_DIR}/headers/build.h
+        ${CMAKE_CURRENT_BINARY_DIR}/headers/config.h
         )
 
 mark_as_advanced(FORCE
@@ -367,7 +376,7 @@ if (HAVE_FNCS)
     target_link_libraries(gridlabd ${GL_FNCS_LIBRARIES})
 ENDIF ()
 
-add_dependencies(gridlabd libjsoncpp libsuperlu)
+add_dependencies(gridlabd jsoncpp_lib libsuperlu)
 
 target_link_libraries(gridlabd ${CMAKE_THREAD_LIBS_INIT})
 if (CURSES_FOUND)
@@ -375,7 +384,7 @@ if (CURSES_FOUND)
 endif ()
 
 target_link_libraries(gridlabd ${GL_MODULES})
-target_link_libraries(gridlabd libjsoncpp libsuperlu)
+target_link_libraries(gridlabd jsoncpp_lib libsuperlu)
 
 IF (WIN32 OR MSYS OR MINGW OR CYGWIN)
     target_link_libraries(gridlabd ${OS_SPECIFIC_LIBRARIES})
@@ -390,13 +399,13 @@ SET(FILE_PERMISSIONS PERMISSIONS
 
 install(TARGETS gridlabd
         ${FILE_PERMISSIONS}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         )
 install(TARGETS ${GL_MODULES}
         ${FILE_PERMISSIONS}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/gridlabd
-        LIBRARY DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/gridlabd
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/gridlabd
+        RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         COMPONENT library)
 
 install(FILES ${HEADER_FILE_NAMES}

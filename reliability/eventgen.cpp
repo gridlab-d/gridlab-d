@@ -25,12 +25,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
-#include "gridlabd.h"
 #include "eventgen.h"
 
 #include <string.h>
 #include <iostream>
 using namespace::std;
+
+EXPORT_PRECOMMIT(eventgen);
+
 
 #define TSNVRDBL 9223372036854775808.0
 
@@ -84,6 +86,8 @@ eventgen::eventgen(MODULE *module)
 			PT_int32, "max_simultaneous_faults", PADDR(max_simult_faults),
 			PT_char256, "controlled_switch", PADDR(controlled_switch),PT_DESCRIPTION,"Name of a switch to manually fault/un-fault",
 			PT_int32, "switch_state", PADDR(switch_state),PT_DESCRIPTION,"Current state (1=closed, 0=open) for the controlled switch",
+			PT_char1024, "external_fault_event", PADDR(external_fault_event),PT_DESCRIPTION,"This variable is populated from external programs with a fault they would like to add/remove to the system.",
+			PT_bool, "use_external_faults", PADDR(use_external_faults),PT_DESCRIPTION,"Boolean to let the object know to check for faults messages from an external source.",
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 			if (gl_publish_function(oclass,	"add_event", (FUNCTIONADDR)add_event)==NULL)
 				GL_THROW("Unable to publish reliability event adding function");
@@ -99,6 +103,8 @@ int eventgen::create(void)
 	fault_type[0] = '\0';
 	manual_fault_list[0] = '\0';
 	controlled_switch[0] = '\0';
+	external_fault_event[0] = '\0';
+	use_external_faults = false;
 	switch_state = 1;
 	last_switch_state = 1;
 
@@ -344,313 +350,315 @@ int eventgen::init(OBJECT *parent)
 
 	//And convert it back - maximum outage is being forced to whole seconds, just because
 	max_outage_length_dbl = (double)(max_outage_length);
-
-	//Determine how we should proceed - are we group-finding objects, or list-finding objects?
-	if (target_group[0] == '\0')	//Empty group list implies that manual list mode is desired (programmer defined. i.e., I say so)
+	if (!use_external_faults)
 	{
-		fault_implement_mode = true;	//Flag as manually populated list mode
-
-		//Count the number of commas in the list - use that as an initial basis for validity
-		index=0;
-		comma_count=1;
-		while ((manual_fault_list[index] != '\0') && (index < 1024))
+		//Determine how we should proceed - are we group-finding objects, or list-finding objects?
+		if (target_group[0] == '\0')	//Empty group list implies that manual list mode is desired (programmer defined. i.e., I say so)
 		{
-			if (manual_fault_list[index] == ',')	//Comma
-				comma_count++;						//increment the number of commas found
+			fault_implement_mode = true;	//Flag as manually populated list mode
 
-			index++;	//increment the pointer
-		}
-
-		//See if one is really there - if ends early
-		if ((comma_count == 1) && (manual_fault_list[0] == '\0'))	//Is empty :(
-		{
-			GL_THROW("Manual event generation specified, but no events listed in event_gen:%s",hdr->name);
-			/*  TROUBLESHOOT
-			An eventgen object was set to manual mode, but no list of objects and fault times was found.  If
-			target_group is left blank, specify objects and appropriate times using the manual_outages property.
-			*/
-		}
-
-		//Assuming it was more than one, make sure the count is in 3s (object, fault time, rest time) before proceeding
-		UnreliableObjCount = (int)(comma_count / 3);
-		temp_double = (double)(comma_count)/3.0 - (double)(UnreliableObjCount);
-		
-		if (temp_double != 0.0)	//odd amount, a comma error has occurred
-		{
-			GL_THROW("event_gen:%s has an invalid manual list",hdr->name);
-			/*  TROUBLESHOOT
-			The manual list (manual_outages) is improperly specified.  The list must occur in sets of three
-			comma separated values (object name, fault time, restoration time).  A comma is missing, or an extra
-			comma is in place somewhere.  Please fix this to proceed.
-			*/
-		}
-
-		//See how many we found and make a big ol' structural array!
-		UnreliableObjs = (OBJEVENTDETAILS*)gl_malloc(UnreliableObjCount * sizeof(OBJEVENTDETAILS));
-
-		//Make sure it worked
-		if (UnreliableObjs==NULL)
-		{
-			GL_THROW("Failed to allocate memory for object list in %s",hdr->name);
-			/*  TROUBLESHOOT
-			The event_gen object failed to allocate memory for the "unreliable" object list.
-			Please try again.  If the error persists, submit your code and a bug report using
-			the trac website.
-			*/
-		}
-		
-		//Loop through the count and try parsing out what everything is - do individual error checks
-		token_a = manual_fault_list;
-		for (index=0; index<UnreliableObjCount; index++)
-		{
-			//First item is the object, grab it
-			token_a1 = obj_token(token_a, &temp_obj);
-			
-			//Make sure it is valid
-			if (temp_obj == NULL)
+			//Count the number of commas in the list - use that as an initial basis for validity
+			index=0;
+			comma_count=1;
+			while ((manual_fault_list[index] != '\0') && (index < 1024))
 			{
-				if (token_a1 != NULL)
-				{
-					//Remove the comma from the list
-					*--token_a1 = '\0';
-				}
-				//Else is the end of list, so it should already be \0-ed
+				if (manual_fault_list[index] == ',')	//Comma
+					comma_count++;						//increment the number of commas found
 
-				GL_THROW("eventgen:%s: fault object %s was not found!",hdr->name,token_a);
-				/*  TROUBLESHOOT
-				While parsing the manual fault list for the evengen object, a fault point
-				was not found.  Please check the name and try again.  If the problem persists, please submit 
-				your code and a bug report via the trac website.
-				*/
+				index++;	//increment the pointer
 			}
-			
-			//Update the pointer
-			token_a = token_a1;
 
-			//Fault time
-			token_a1 = time_token(token_a,&temp_time_A,&temp_time_A_nano,&temp_time_A_dbl);	//Pull next - starts on obj, we want to do a count
-
-			token_a = token_a1;	//Update the pointer
-
-			//Restoration time
-			token_a1 = time_token(token_a,&temp_time_B,&temp_time_B_nano,&temp_time_B_dbl);	//Pull next - starts on obj, we want to do a count
-
-			token_a = token_a1;	//Update the pointer
-
-			//Store the object
-			UnreliableObjs[index].obj_of_int = temp_obj;
-
-			//Ensure the link to the protective device is NULLed
-			UnreliableObjs[index].obj_made_int = NULL;
-
-			//Check to make sure failures start AFTER the simulation has started
-			if (temp_time_A >= globStartTimeVal)
+			//See if one is really there - if ends early
+			if ((comma_count == 1) && (manual_fault_list[0] == '\0'))	//Is empty :(
 			{
-				//Store failure time
-				UnreliableObjs[index].fail_time = temp_time_A;
-				UnreliableObjs[index].fail_time_ns = temp_time_A_nano;
-				UnreliableObjs[index].fail_time_dbl = temp_time_A_dbl;
-			}
-			else	//Nope, give an error
-			{
-				GL_THROW("Manual event time in %s must be AFTER the simulation start time",hdr->name);
+				GL_THROW("Manual event generation specified, but no events listed in event_gen:%s",hdr->name);
 				/*  TROUBLESHOOT
-				A manual event specified into eventgen has a start time before the simulation has actually started.
-				Please fix this and try again.
+				An eventgen object was set to manual mode, but no list of objects and fault times was found.  If
+				target_group is left blank, specify objects and appropriate times using the manual_outages property.
 				*/
 			}
 
-			//Store restoration time
-			UnreliableObjs[index].rest_time = temp_time_B;
-			UnreliableObjs[index].rest_time_ns = temp_time_B_nano;
-			UnreliableObjs[index].rest_time_dbl = temp_time_B_dbl;
-
-			//Populate the initial lengths - set fault to zero
-			UnreliableObjs[index].fail_length = 0;
-
-			if (deltamode_inclusive == true)
+			//Assuming it was more than one, make sure the count is in 3s (object, fault time, rest time) before proceeding
+			UnreliableObjCount = (int)(comma_count / 3);
+			temp_double = (double)(comma_count)/3.0 - (double)(UnreliableObjCount);
+			
+			if (temp_double != 0.0)	//odd amount, a comma error has occurred
 			{
-				//Find restoration time
-				temp_time_double = temp_time_B_dbl - temp_time_A_dbl;
-
-				//If over max outage length, warn here (it's manual mode, so let user shoot themselves in the foot)
-				if (temp_time_double > max_outage_length_dbl)
-				{
-					gl_warning("outage length for object:%s in eventgen:%s exceeds the defined maximum outage.",temp_obj->name,hdr->name);
-					//Defined below
-				}
-
-				//Store the value - just for the sake of doing so
-				UnreliableObjs[index].rest_length_dbl = temp_time_double;
-				UnreliableObjs[index].rest_length = (TIMESTAMP)(temp_time_double);
-				UnreliableObjs[index].rest_length_ns = (unsigned int)(1.0e9*(temp_time_double - (double)(UnreliableObjs[index].rest_length))+0.5);
+				GL_THROW("event_gen:%s has an invalid manual list",hdr->name);
+				/*  TROUBLESHOOT
+				The manual list (manual_outages) is improperly specified.  The list must occur in sets of three
+				comma separated values (object name, fault time, restoration time).  A comma is missing, or an extra
+				comma is in place somewhere.  Please fix this to proceed.
+				*/
 			}
-			else	//"Traditional" operation
-			{
-				//Find restoration time
-				tempTime = temp_time_B - temp_time_A;
 
-				//If over max outage length, warn here (it's manual mode, so let user shoot themselves in the foot)
-				if (tempTime > max_outage_length)
+			//See how many we found and make a big ol' structural array!
+			UnreliableObjs = (OBJEVENTDETAILS*)gl_malloc(UnreliableObjCount * sizeof(OBJEVENTDETAILS));
+
+			//Make sure it worked
+			if (UnreliableObjs==NULL)
+			{
+				GL_THROW("Failed to allocate memory for object list in %s",hdr->name);
+				/*  TROUBLESHOOT
+				The event_gen object failed to allocate memory for the "unreliable" object list.
+				Please try again.  If the error persists, submit your code and a bug report using
+				the trac website.
+				*/
+			}
+
+			//Loop through the count and try parsing out what everything is - do individual error checks
+			token_a = manual_fault_list;
+			for (index=0; index<UnreliableObjCount; index++)
+			{
+				//First item is the object, grab it
+				token_a1 = obj_token(token_a, &temp_obj);
+
+				//Make sure it is valid
+				if (temp_obj == NULL)
 				{
-					gl_warning("outage length for object:%s in eventgen:%s exceeds the defined maximum outage.",temp_obj->name,hdr->name);
+					if (token_a1 != NULL)
+					{
+						//Remove the comma from the list
+						*--token_a1 = '\0';
+					}
+					//Else is the end of list, so it should already be \0-ed
+
+					GL_THROW("eventgen:%s: fault object %s was not found!",hdr->name,token_a);
 					/*  TROUBLESHOOT
-					An outage length specified for the manual event generation mode is longer than the value defined in max_outage_length.
-					If this is not desired, fix the input.  If it is acceptable, the simulation will run normally.
+					While parsing the manual fault list for the evengen object, a fault point
+					was not found.  Please check the name and try again.  If the problem persists, please submit
+					your code and a bug report via the trac website.
 					*/
 				}
 
-				//Make sure it is long enough - if not, force it to be
-				if ((off_nominal_time == true) && (((double)(tempTime)) < glob_min_timestep))
+				//Update the pointer
+				token_a = token_a1;
+
+				//Fault time
+				token_a1 = time_token(token_a,&temp_time_A,&temp_time_A_nano,&temp_time_A_dbl);	//Pull next - starts on obj, we want to do a count
+
+				token_a = token_a1;	//Update the pointer
+
+				//Restoration time
+				token_a1 = time_token(token_a,&temp_time_B,&temp_time_B_nano,&temp_time_B_dbl);	//Pull next - starts on obj, we want to do a count
+
+				token_a = token_a1;	//Update the pointer
+
+				//Store the object
+				UnreliableObjs[index].obj_of_int = temp_obj;
+
+				//Ensure the link to the protective device is NULLed
+				UnreliableObjs[index].obj_made_int = NULL;
+
+				//Check to make sure failures start AFTER the simulation has started
+				if (temp_time_A >= globStartTimeVal)
 				{
-					//Force to be at least one
-					tempTime = (TIMESTAMP)(glob_min_timestep);
-
-					//Update the restoration time appropriately
-					UnreliableObjs[index].rest_time = UnreliableObjs[index].fail_time + tempTime;
-
-					//Toss a warning, for giggles
-					gl_warning("Outage length for object:%s is less than the minimum timestep of %.0f seconds, rounded to minimum timestep",temp_obj->name,glob_min_timestep);
+					//Store failure time
+					UnreliableObjs[index].fail_time = temp_time_A;
+					UnreliableObjs[index].fail_time_ns = temp_time_A_nano;
+					UnreliableObjs[index].fail_time_dbl = temp_time_A_dbl;
+				}
+				else	//Nope, give an error
+				{
+					GL_THROW("Manual event time in %s must be AFTER the simulation start time",hdr->name);
 					/*  TROUBLESHOOT
-					The selected outage length is less than the mininum timestep set.  It has been forced to be at least one
-					minimum timestep long.
+					A manual event specified into eventgen has a start time before the simulation has actually started.
+					Please fix this and try again.
 					*/
 				}
 
-				//Store the value - just for the sake of doing so
-				UnreliableObjs[index].rest_length = tempTime;
+				//Store restoration time
+				UnreliableObjs[index].rest_time = temp_time_B;
+				UnreliableObjs[index].rest_time_ns = temp_time_B_nano;
+				UnreliableObjs[index].rest_time_dbl = temp_time_B_dbl;
+
+				//Populate the initial lengths - set fault to zero
+				UnreliableObjs[index].fail_length = 0;
+
+				if (deltamode_inclusive == true)
+				{
+					//Find restoration time
+					temp_time_double = temp_time_B_dbl - temp_time_A_dbl;
+
+					//If over max outage length, warn here (it's manual mode, so let user shoot themselves in the foot)
+					if (temp_time_double > max_outage_length_dbl)
+					{
+						gl_warning("outage length for object:%s in eventgen:%s exceeds the defined maximum outage.",temp_obj->name,hdr->name);
+						//Defined below
+					}
+
+					//Store the value - just for the sake of doing so
+					UnreliableObjs[index].rest_length_dbl = temp_time_double;
+					UnreliableObjs[index].rest_length = (TIMESTAMP)(temp_time_double);
+					UnreliableObjs[index].rest_length_ns = (unsigned int)(1.0e9*(temp_time_double - (double)(UnreliableObjs[index].rest_length))+0.5);
+				}
+				else	//"Traditional" operation
+				{
+					//Find restoration time
+					tempTime = temp_time_B - temp_time_A;
+
+					//If over max outage length, warn here (it's manual mode, so let user shoot themselves in the foot)
+					if (tempTime > max_outage_length)
+					{
+						gl_warning("outage length for object:%s in eventgen:%s exceeds the defined maximum outage.",temp_obj->name,hdr->name);
+						/*  TROUBLESHOOT
+						An outage length specified for the manual event generation mode is longer than the value defined in max_outage_length.
+						If this is not desired, fix the input.  If it is acceptable, the simulation will run normally.
+						*/
+					}
+
+					//Make sure it is long enough - if not, force it to be
+					if ((off_nominal_time == true) && (((double)(tempTime)) < glob_min_timestep))
+					{
+						//Force to be at least one
+						tempTime = (TIMESTAMP)(glob_min_timestep);
+
+						//Update the restoration time appropriately
+						UnreliableObjs[index].rest_time = UnreliableObjs[index].fail_time + tempTime;
+
+						//Toss a warning, for giggles
+						gl_warning("Outage length for object:%s is less than the minimum timestep of %.0f seconds, rounded to minimum timestep",temp_obj->name,glob_min_timestep);
+						/*  TROUBLESHOOT
+						The selected outage length is less than the mininum timestep set.  It has been forced to be at least one
+						minimum timestep long.
+						*/
+					}
+
+					//Store the value - just for the sake of doing so
+					UnreliableObjs[index].rest_length = tempTime;
+				}
+
+				//Assume all start not in the fault state
+				UnreliableObjs[index].in_fault = false;
+
+				//Flag as no initial fault condition
+				UnreliableObjs[index].implemented_fault = -1;
+
+				//Flag as no customers interrupted
+				UnreliableObjs[index].customers_affected = 0;
+
+				//Flag as no customers secondarily interrupted
+				UnreliableObjs[index].customers_affected_sec = 0;
+			}//end population loop
+
+			//Pass in parameters for statistics - for tracking - put as 0's and "none" to flag out
+			curr_fail_dist_params[0]=0;
+			curr_fail_dist_params[1]=0;
+			curr_rest_dist_params[0]=0;
+			curr_rest_dist_params[1]=0;
+			curr_fail_dist = NONE;
+			curr_rest_dist = NONE;
+
+		}
+		else	//Random mode, proceed with that assumption
+		{
+
+			ObjListVals = gl_find_objects(FL_GROUP,target_group.get_string());
+			if (ObjListVals==NULL)
+			{
+				GL_THROW("Failure to find devices for %s specified as: %s",hdr->name,target_group.get_string());
+				/*  TROUBLESHOOT
+				While attempting to populate the list of devices to test reliability on, the event_gen
+				object failed to find any desired objects.  Please make sure the objects exist and try again.
+				If the bug persists, please submit your code using the trac website.
+				*/
 			}
 
-			//Assume all start not in the fault state
-			UnreliableObjs[index].in_fault = false;
+			//Do a zero-find check as well
+			if (ObjListVals->hit_count == 0)
+			{
+				GL_THROW("Failure to find devices for %s specified as: %s",hdr->name,target_group.get_string());
+				//Defined above
+			}
 
-			//Flag as no initial fault condition
-			UnreliableObjs[index].implemented_fault = -1;
+			//Pull the count
+			UnreliableObjCount = ObjListVals->hit_count;
 
-			//Flag as no customers interrupted
-			UnreliableObjs[index].customers_affected = 0;
+			//See how many we found and make a big ol' structural array!
+			UnreliableObjs = (OBJEVENTDETAILS*)gl_malloc(UnreliableObjCount * sizeof(OBJEVENTDETAILS));
 
-			//Flag as no customers secondarily interrupted
-			UnreliableObjs[index].customers_affected_sec = 0;
-		}//end population loop
+			//Make sure it worked
+			if (UnreliableObjs==NULL)
+			{
+				GL_THROW("Failed to allocate memory for object list in %s",hdr->name);
+				//Defined above
+			}
 
-		//Pass in parameters for statistics - for tracking - put as 0's and "none" to flag out
-		curr_fail_dist_params[0]=0;
-		curr_fail_dist_params[1]=0;
-		curr_rest_dist_params[0]=0;
-		curr_rest_dist_params[1]=0;
-		curr_fail_dist = NONE;
-		curr_rest_dist = NONE;
+			//Loop through and init them - can't compute exact time, but can populate array
+			temp_obj = NULL;
+			for (index=0; index<UnreliableObjCount; index++)
+			{
+				//Find the object
+				temp_obj = gl_find_next(ObjListVals, temp_obj);
 
+				if (temp_obj == NULL)
+				{
+					GL_THROW("Failed to populate object list in eventgen: %s",hdr->name);
+					/*  TROUBLESHOOT
+					While populating the reliability object vector, an object failed to be
+					located.  Please try again.  If the error persists, please submit your
+					code and a bug report to the trac website.
+					*/
+				}
+
+				UnreliableObjs[index].obj_of_int = temp_obj;
+
+				//Just set object causing an action to NULL for now
+				UnreliableObjs[index].obj_made_int = NULL;
+
+				//Zero time for now - will get updated on next run
+				UnreliableObjs[index].fail_time = 0;
+
+				//Restoration gets TS_NEVERed for now
+				UnreliableObjs[index].rest_time = TS_NEVER;
+				UnreliableObjs[index].rest_time_ns = 0;
+				UnreliableObjs[index].rest_time_dbl = TSNVRDBL;
+
+				//Populate the initial lengths though - could do later, but meh
+				gen_random_time(failure_dist,fail_dist_params[0],fail_dist_params[1],&UnreliableObjs[index].fail_length,&UnreliableObjs[index].fail_length_ns,&UnreliableObjs[index].fail_length_dbl);
+
+				//Find restoration time
+				gen_random_time(restore_dist,rest_dist_params[0],rest_dist_params[1],&temp_time_A,&temp_time_A_nano,&temp_time_A_dbl);
+
+				//If over max outage length, cap it - side note - minimum timestep issues handled inside gen_random_time
+				if (temp_time_A_dbl > max_outage_length_dbl)
+				{
+					UnreliableObjs[index].rest_length = max_outage_length;
+					UnreliableObjs[index].rest_length_ns = 0;
+					UnreliableObjs[index].rest_length_dbl = max_outage_length_dbl;
+				}
+				else
+				{
+					UnreliableObjs[index].rest_length = temp_time_A;
+					UnreliableObjs[index].rest_length_ns = temp_time_A_nano;
+					UnreliableObjs[index].rest_length_dbl = temp_time_A_dbl;
+				}
+
+				//Assume all start not in the fault state
+				UnreliableObjs[index].in_fault = false;
+
+				//Flag as no initial fault condition
+				UnreliableObjs[index].implemented_fault = -1;
+
+				//Flag as no customers interrupted
+				UnreliableObjs[index].customers_affected = 0;
+
+				//Flag as no customers secondarily interrupted
+				UnreliableObjs[index].customers_affected_sec = 0;
+			}//end population loop
+
+			//Free up list
+			gl_free(ObjListVals);
+
+			//Pass in parameters for statistics - for tracking
+			curr_fail_dist_params[0]=fail_dist_params[0];
+			curr_fail_dist_params[1]=fail_dist_params[1];
+			curr_rest_dist_params[0]=rest_dist_params[0];
+			curr_rest_dist_params[1]=rest_dist_params[1];
+			curr_fail_dist = failure_dist;
+			curr_rest_dist = restore_dist;
+		}	//End randomized fault mode
 	}
-	else	//Random mode, proceed with that assumption
-	{
-
-		ObjListVals = gl_find_objects(FL_GROUP,target_group.get_string());
-		if (ObjListVals==NULL)
-		{
-			GL_THROW("Failure to find devices for %s specified as: %s",hdr->name,target_group.get_string());
-			/*  TROUBLESHOOT
-			While attempting to populate the list of devices to test reliability on, the event_gen
-			object failed to find any desired objects.  Please make sure the objects exist and try again.
-			If the bug persists, please submit your code using the trac website.
-			*/
-		}
-
-		//Do a zero-find check as well
-		if (ObjListVals->hit_count == 0)
-		{
-			GL_THROW("Failure to find devices for %s specified as: %s",hdr->name,target_group.get_string());
-			//Defined above
-		}
-
-		//Pull the count
-		UnreliableObjCount = ObjListVals->hit_count;
-
-		//See how many we found and make a big ol' structural array!
-		UnreliableObjs = (OBJEVENTDETAILS*)gl_malloc(UnreliableObjCount * sizeof(OBJEVENTDETAILS));
-
-		//Make sure it worked
-		if (UnreliableObjs==NULL)
-		{
-			GL_THROW("Failed to allocate memory for object list in %s",hdr->name);
-			//Defined above
-		}
-
-		//Loop through and init them - can't compute exact time, but can populate array
-		temp_obj = NULL;
-		for (index=0; index<UnreliableObjCount; index++)
-		{
-			//Find the object
-			temp_obj = gl_find_next(ObjListVals, temp_obj);
-
-			if (temp_obj == NULL)
-			{
-				GL_THROW("Failed to populate object list in eventgen: %s",hdr->name);
-				/*  TROUBLESHOOT
-				While populating the reliability object vector, an object failed to be
-				located.  Please try again.  If the error persists, please submit your
-				code and a bug report to the trac website.
-				*/
-			}
-
-			UnreliableObjs[index].obj_of_int = temp_obj;
-
-			//Just set object causing an action to NULL for now
-			UnreliableObjs[index].obj_made_int = NULL;
-
-			//Zero time for now - will get updated on next run
-			UnreliableObjs[index].fail_time = 0;
-
-			//Restoration gets TS_NEVERed for now
-			UnreliableObjs[index].rest_time = TS_NEVER;
-			UnreliableObjs[index].rest_time_ns = 0;
-			UnreliableObjs[index].rest_time_dbl = TSNVRDBL;
-
-			//Populate the initial lengths though - could do later, but meh
-			gen_random_time(failure_dist,fail_dist_params[0],fail_dist_params[1],&UnreliableObjs[index].fail_length,&UnreliableObjs[index].fail_length_ns,&UnreliableObjs[index].fail_length_dbl);
-
-			//Find restoration time
-			gen_random_time(restore_dist,rest_dist_params[0],rest_dist_params[1],&temp_time_A,&temp_time_A_nano,&temp_time_A_dbl);
-
-			//If over max outage length, cap it - side note - minimum timestep issues handled inside gen_random_time
-			if (temp_time_A_dbl > max_outage_length_dbl)
-			{
-				UnreliableObjs[index].rest_length = max_outage_length;
-				UnreliableObjs[index].rest_length_ns = 0;
-				UnreliableObjs[index].rest_length_dbl = max_outage_length_dbl;
-			}
-			else
-			{
-				UnreliableObjs[index].rest_length = temp_time_A;
-				UnreliableObjs[index].rest_length_ns = temp_time_A_nano;
-				UnreliableObjs[index].rest_length_dbl = temp_time_A_dbl;
-			}
-
-			//Assume all start not in the fault state
-			UnreliableObjs[index].in_fault = false;
-
-			//Flag as no initial fault condition
-			UnreliableObjs[index].implemented_fault = -1;
-
-			//Flag as no customers interrupted
-			UnreliableObjs[index].customers_affected = 0;
-
-			//Flag as no customers secondarily interrupted
-			UnreliableObjs[index].customers_affected_sec = 0;
-		}//end population loop
-
-		//Free up list
-		gl_free(ObjListVals);
-
-		//Pass in parameters for statistics - for tracking
-		curr_fail_dist_params[0]=fail_dist_params[0];
-		curr_fail_dist_params[1]=fail_dist_params[1];
-		curr_rest_dist_params[0]=rest_dist_params[0];
-		curr_rest_dist_params[1]=rest_dist_params[1];
-		curr_fail_dist = failure_dist;
-		curr_rest_dist = restore_dist;
-	}	//End randomized fault mode
 
 	//Check simultaneous fault value
 	if (((max_simult_faults == -1) || (max_simult_faults > 1)) && (metrics_obj_hdr != NULL))	//infinite or more than 1 - and metrics are on, so we care
@@ -690,7 +698,12 @@ int eventgen::init(OBJECT *parent)
 		}
 	}
 
+
 	return 1; /* return 1 on success, 0 on failure */
+}
+int eventgen::precommit(TIMESTAMP t1)
+{
+	return 1;
 }
 
 /* Presync is called when the clock needs to advance on the first top-down pass */
@@ -708,171 +721,254 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 	curr_time_interrupted = 0;
 	curr_time_interrupted_sec = 0;
 	diff_count_needed = false;
-
-	// look for events coming from FNCS
-	if (strlen(controlled_switch) > 0)	{
-		if (switch_state != last_switch_state) {
-			cout << "Switch " << controlled_switch << " changing status to " << switch_state << " at " << t0 << " going to " << t1 << endl;
-			OBJECT *swt = gl_get_object(controlled_switch);
-			if (switch_state == 1) { // closed
-				add_unhandled_event (swt, "SW-ABC", t0 - 50, 50, 24, true);
-			} else { // open
-				add_unhandled_event (swt, "SW-ABC", t0, TS_NEVER, -1, false);
-			}
-			last_switch_state = switch_state;
-		}
-	}
-
-	//Check if first run, if so, do some additional work
-	if (next_event_time==0)
-	{
-		//Make next_event_time REALLY big
-		next_event_time = TS_NEVER;
-		next_event_time_dbl = TSNVRDBL;
-		
-		//Loop through and update timevalues
-		for (index=0; index<UnreliableObjCount; index++)
-		{
-			//Failure time - only needs to be computed if "random" mode
-			if (fault_implement_mode == false)
-			{
-				//Deltamode check - handle times "traditionally" or not
-				if (deltamode_inclusive == true)
-				{
-					UnreliableObjs[index].fail_time_dbl = t1_dbl + UnreliableObjs[index].fail_length_dbl;
-					UnreliableObjs[index].fail_time = (TIMESTAMP)(floor(UnreliableObjs[index].fail_time_dbl));
-					UnreliableObjs[index].fail_time_ns = (unsigned int)((UnreliableObjs[index].fail_time_dbl - (double)(UnreliableObjs[index].fail_time))*1.0e9 + 0.5);
+	if(!use_external_faults) {
+		// look for events coming from FNCS
+		if (strlen(controlled_switch) > 0)	{
+			if (switch_state != last_switch_state) {
+				cout << "Switch " << controlled_switch << " changing status to " << switch_state << " at " << t0 << " going to " << t1 << endl;
+				OBJECT *swt = gl_get_object(controlled_switch);
+				if (switch_state == 1) { // closed
+					add_unhandled_event (swt, "SW-ABC", t0 - 50, 50, 24, true);
+				} else { // open
+					add_unhandled_event (swt, "SW-ABC", t0, TS_NEVER, -1, false);
 				}
-				else	//Nope
-				{
-					UnreliableObjs[index].fail_time = t1 + UnreliableObjs[index].fail_length;
-				}
-			}
-
-			//See if it is a new minimum - don't need to check fault state - first run assumes all are good
-			if (UnreliableObjs[index].fail_time < next_event_time)
-			{
-				next_event_time = UnreliableObjs[index].fail_time;
-				if (deltamode_inclusive == true)
-					next_event_time_dbl = UnreliableObjs[index].fail_time_dbl;
+				last_switch_state = switch_state;
 			}
 		}
 
-		//Linked list is ignored on this first run - it will get caught as part of the normal routine
-		if (deltamode_inclusive && enable_subsecond_models)	//We want deltamode - see if it's populated yet
+		//Check if first run, if so, do some additional work
+		if (next_event_time==0)
 		{
-			if ((eventgen_object_current == -1) || (delta_objects==NULL))
-			{
-				//Allocate the deltamode object array
-				delta_objects = (OBJECT**)gl_malloc(eventgen_object_count*sizeof(OBJECT*));
+			//Make next_event_time REALLY big
+			next_event_time = TS_NEVER;
+			next_event_time_dbl = TSNVRDBL;
 
-				//Make sure it worked
-				if (delta_objects == NULL)
+			//Loop through and update timevalues
+			for (index=0; index<UnreliableObjCount; index++)
+			{
+				//Failure time - only needs to be computed if "random" mode
+				if (fault_implement_mode == false)
 				{
-					GL_THROW("Failed to allocate deltamode objects array for reliability module!");
+					//Deltamode check - handle times "traditionally" or not
+					if (deltamode_inclusive == true)
+					{
+						UnreliableObjs[index].fail_time_dbl = t1_dbl + UnreliableObjs[index].fail_length_dbl;
+						UnreliableObjs[index].fail_time = (TIMESTAMP)(floor(UnreliableObjs[index].fail_time_dbl));
+						UnreliableObjs[index].fail_time_ns = (unsigned int)((UnreliableObjs[index].fail_time_dbl - (double)(UnreliableObjs[index].fail_time))*1.0e9 + 0.5);
+					}
+					else	//Nope
+					{
+						UnreliableObjs[index].fail_time = t1 + UnreliableObjs[index].fail_length;
+					}
+				}
+
+				//See if it is a new minimum - don't need to check fault state - first run assumes all are good
+				if (UnreliableObjs[index].fail_time < next_event_time)
+				{
+					next_event_time = UnreliableObjs[index].fail_time;
+					if (deltamode_inclusive == true)
+						next_event_time_dbl = UnreliableObjs[index].fail_time_dbl;
+				}
+			}
+
+			//Linked list is ignored on this first run - it will get caught as part of the normal routine
+			if (deltamode_inclusive && enable_subsecond_models)	//We want deltamode - see if it's populated yet
+			{
+				if ((eventgen_object_current == -1) || (delta_objects==NULL))
+				{
+					//Allocate the deltamode object array
+					delta_objects = (OBJECT**)gl_malloc(eventgen_object_count*sizeof(OBJECT*));
+
+					//Make sure it worked
+					if (delta_objects == NULL)
+					{
+						GL_THROW("Failed to allocate deltamode objects array for reliability module!");
+						/*  TROUBLESHOOT
+						While attempting to create a reference array for reliability module deltamode-enabled
+						objects, an error was encountered.  Please try again.  If the error persists, please
+						submit your code and a bug report via the trac website.
+						*/
+					}
+
+					//Allocate the function reference list as well
+					delta_functions = (FUNCTIONADDR*)gl_malloc(eventgen_object_count*sizeof(FUNCTIONADDR));
+
+					//Make sure it worked
+					if (delta_functions == NULL)
+					{
+						GL_THROW("Failed to allocate deltamode objects function array for reliability module!");
+						/*  TROUBLESHOOT
+						While attempting to create a reference array for reliability module deltamode-enabled
+						objects, an error was encountered.  Please try again.  If the error persists, please
+						submit your code and a bug report via the trac website.
+						*/
+					}
+
+					//Initialize index
+					eventgen_object_current = 0;
+				}
+
+				//Check limits of the array
+				if (eventgen_object_current>=eventgen_object_count)
+				{
+					GL_THROW("Too many objects tried to populate deltamode objects array in the reliability module!");
 					/*  TROUBLESHOOT
-					While attempting to create a reference array for reliability module deltamode-enabled
-					objects, an error was encountered.  Please try again.  If the error persists, please
-					submit your code and a bug report via the trac website.
+					While attempting to populate a reference array of deltamode-enabled objects for the reliability
+					module, an attempt was made to write beyond the allocated array space.  Please try again.  If the
+					error persists, please submit a bug report and your code via the trac website.
 					*/
 				}
 
-				//Allocate the function reference list as well
-				delta_functions = (FUNCTIONADDR*)gl_malloc(eventgen_object_count*sizeof(FUNCTIONADDR));
+				//Add us into the list
+				delta_objects[eventgen_object_current] = hdr;
+
+				//Map up the function for interupdate
+				delta_functions[eventgen_object_current] = (FUNCTIONADDR)(gl_get_function(hdr,"interupdate_event_object"));
 
 				//Make sure it worked
-				if (delta_functions == NULL)
+				if (delta_functions[eventgen_object_current] == NULL)
 				{
-					GL_THROW("Failed to allocate deltamode objects function array for reliability module!");
+					GL_THROW("Failure to map deltamode function for device:%s",hdr->name);
 					/*  TROUBLESHOOT
-					While attempting to create a reference array for reliability module deltamode-enabled
-					objects, an error was encountered.  Please try again.  If the error persists, please
-					submit your code and a bug report via the trac website.
+					Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
+					the object supports deltamode.  If the error persists, please submit your code and a bug report via the
+					trac website.
 					*/
 				}
 
-				//Initialize index
-				eventgen_object_current = 0;
+				//Update pointer
+				eventgen_object_current++;
+
 			}
-
-			//Check limits of the array
-			if (eventgen_object_current>=eventgen_object_count)
-			{
-				GL_THROW("Too many objects tried to populate deltamode objects array in the reliability module!");
-				/*  TROUBLESHOOT
-				While attempting to populate a reference array of deltamode-enabled objects for the reliability
-				module, an attempt was made to write beyond the allocated array space.  Please try again.  If the
-				error persists, please submit a bug report and your code via the trac website.
-				*/
-			}
-
-			//Add us into the list
-			delta_objects[eventgen_object_current] = hdr;
-
-			//Map up the function for interupdate
-			delta_functions[eventgen_object_current] = (FUNCTIONADDR)(gl_get_function(hdr,"interupdate_event_object"));
-
-			//Make sure it worked
-			if (delta_functions[eventgen_object_current] == NULL)
-			{
-				GL_THROW("Failure to map deltamode function for device:%s",hdr->name);
-				/*  TROUBLESHOOT
-				Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
-				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
-				trac website.
-				*/
-			}
-
-			//Update pointer
-			eventgen_object_current++;
-
 		}
-	}
 
-	//If the next time point is the whole second right before the time for a deltamode event, we need to schedule to enter deltamode.
-	if ((next_event_time == t1) && deltamode_inclusive) 
-	{
-		//Provide a check for if the event is beyond stop time -- if it is, we get stuck here and iterate forever
-		gld_stoptime = (double)gl_globalstoptime;
-
-		if (next_event_time_dbl <= gld_stoptime)
+		//If the next time point is the whole second right before the time for a deltamode event, we need to schedule to enter deltamode.
+		if ((next_event_time == t1) && deltamode_inclusive)
 		{
-			schedule_deltamode_start(next_event_time);
+			//Provide a check for if the event is beyond stop time -- if it is, we get stuck here and iterate forever
+			gld_stoptime = (double)gl_globalstoptime;
 
-			//Do the event too, just because
+			if (next_event_time_dbl <= gld_stoptime)
+			{
+				schedule_deltamode_start(next_event_time);
+
+				//Do the event too, just because
+				//Parse event list and execute any that are occurring
+				//do_event(t1,t1_dbl,false);
+				/*********************** May need to revisit this portion -- might still be needed ********************************************/
+
+				return -next_event_time; //Return here and we will do all the work in deltamode
+			}
+			else	//Arbitrarily return one more - it will trip the core
+			{
+				next_event_time++;
+
+				//Send this out
+				return -next_event_time;	//Theoretically 1 forward in time, which means core will quit us
+			}
+		}
+
+		//See if the event times need to be updated
+		regen_events(t1,t1_dbl);
+
+		if(t1 >= next_event_time) //Time for an event in supersecond
+		{
 			//Parse event list and execute any that are occurring
-			//do_event(t1,t1_dbl,false);
-			/*********************** May need to revisit this portion -- might still be needed ********************************************/
-
-			return -next_event_time; //Return here and we will do all the work in deltamode
+			do_event(t1,t1_dbl,false);
 		}
-		else	//Arbitrarily return one more - it will trip the core
+
+			//See where we're going
+		if (next_event_time == TS_NEVER)
 		{
-			next_event_time++;
+			return TS_NEVER;
+		}
+		else	//Must be valid-ish
+		{
+			return -next_event_time;	//Negative return, we'd like to go there if we're going that way
+		}
+	} else {
+		TIMESTAMP mean_repair_time;
+		char impl_fault[257];
+		FUNCTIONADDR funadd = NULL;
+		int returnval;
+		if(use_external_faults && external_fault_event[0] != '\0') {
+			parse_external_fault_events((char *)external_fault_event);
+			memset(external_fault_event, '\0', 1024);
+		}
+		//loop through external events
+		if(!external_events.empty()){
+			vector<external_event *>::iterator i;
+			for(i = external_events.begin(); i != external_events.end(); ) {
+				if((*i)->enable_event && !(*i)->event_enabled) {
+					//TODO: enable the fault on the system.
+					//Put a fault on the system
+					funadd = (FUNCTIONADDR)(gl_get_function((*i)->fault_object,"create_fault"));
 
-			//Send this out
-			return -next_event_time;	//Theoretically 1 forward in time, which means core will quit us
+					//Make sure it was found
+					if (funadd == NULL)
+					{
+						GL_THROW("Unable to induce event on %s",(*i)->fault_object->name);
+					}
+					//Lock the object of interest
+					wlock((*i)->fault_object);
+
+					returnval = ((int (*)(OBJECT *, OBJECT **, char *, int *, TIMESTAMP *))(*funadd))((*i)->fault_object,&(*i)->effected_safety_device,(*i)->type,&(*i)->implemented_fault,&mean_repair_time);
+					mean_repair_time = TS_NEVER;
+					//Unlock it
+					wunlock((*i)->fault_object);
+					(*i)->event_enabled = true;
+				} else if((*i)->disable_event && (*i)->event_enabled) {
+					//TODO: disable the fault on the system.
+					//Call the object back into service
+					funadd = (FUNCTIONADDR)(gl_get_function((*i)->fault_object,"clear_fault"));
+
+					//Make sure it was found
+					if (funadd == NULL)
+					{
+						GL_THROW("Unable to induce event on %s",(*i)->fault_object->name);
+						//Defined above
+					}
+
+					//Lock the object of interst
+					wlock((*i)->fault_object);
+
+					returnval = ((int (*)(OBJECT *, int *, char *))(*funadd))((*i)->fault_object,&(*i)->implemented_fault,impl_fault);
+
+					//Unlock it
+					wunlock((*i)->fault_object);
+					(*i)->event_enabled = false;
+					if (returnval == 0)	//Restoration is no go :(
+					{
+						GL_THROW("Failed to induce repair on %s",(*i)->fault_object->name);
+						//Defined above
+					}
+				}
+				if((*i)->disable_event && !(*i)->event_enabled) {
+					i = external_events.erase(i);
+				} else {
+					i++;
+				}
+			}
+		}
+
+		//Do standard events, just in case
+		if(t1 >= next_event_time) //Time for an event in supersecond
+		{
+			//Parse event list and execute any that are occurring
+			do_event(t1,t1_dbl,false);
+		}
+
+			//See where we're going
+		if (next_event_time == TS_NEVER)
+		{
+			return TS_NEVER;
+		}
+		else	//Must be valid-ish
+		{
+			return -next_event_time;	//Negative return, we'd like to go there if we're going that way
 		}
 	}
-
-	//See if the event times need to be updated
-	regen_events(t1,t1_dbl);
-
-	if(t1 >= next_event_time) //Time for an event in supersecond
-	{
-		//Parse event list and execute any that are occurring
-		do_event(t1,t1_dbl,false);
-	}
-
-		//See where we're going
-	if (next_event_time == TS_NEVER)
-	{
-		return TS_NEVER;
-	}
-	else	//Must be valid-ish
-	{
-		return -next_event_time;	//Negative return, we'd like to go there if we're going that way
-	}
+	return TS_NEVER;
 }
 
 TIMESTAMP eventgen::postsync(TIMESTAMP t0, TIMESTAMP t1)
@@ -2209,6 +2305,56 @@ SIMULATIONMODE eventgen::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 	}
 
 	return SM_EVENT;
+}
+
+void eventgen::parse_external_fault_events(char *events_char)
+{
+	std::string events_str((const char *)events_char);
+	Json::Reader json_rdr;
+	Json::Value json_events;
+	bool parse_successful = json_rdr.parse(events_str, json_events);
+	if(parse_successful) {
+		for(Json::ValueIterator i = json_events.begin(); i != json_events.end(); i++) {
+			Json::Value json_event = *i;
+			std::string event_name = "";
+			if(json_event.isMember("name")){
+				event_name = json_event["name"].asString();
+			}
+
+			bool event_exists = false;
+			int j = 0;
+			for(j = 0; j < external_events.size(); j++) {
+				if(event_name.compare(external_events[j]->name) == 0) {
+					event_exists = true;
+					external_events[j]->disable_event = true;
+					break;
+				}
+			}
+			if(!event_exists) {
+				external_event *new_event = new external_event;
+				new_event->name = event_name;
+				std::string type_cc = json_event["type"].asCString();
+				new_event->type = new char[type_cc.size()];
+				strcpy(new_event->type, type_cc.c_str());
+				new_event->enable_event = true;
+				new_event->disable_event = false;
+				new_event->event_enabled = false;
+				new_event->effected_safety_device = NULL;
+				new_event->implemented_fault = 0;
+				std::string obj_name_str = json_event["fault_object"].asString();
+				char *name_c = new char[obj_name_str.length() + 1];
+				strcpy(name_c, obj_name_str.c_str());
+				new_event->fault_object = gl_get_object(name_c);
+				if(new_event->fault_object != NULL) {
+					external_events.push_back(new_event);
+				} else {
+					gl_warning("eventgen::parse_external_fault_event: no object with name %s was found. Ignoring fault event.", obj_name_str.c_str());
+				}
+			}
+		}
+	} else {
+		GL_THROW("eventgent::parse_external_fault_events():Json parse failed to parse string = %s", events_char);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////

@@ -1,7 +1,7 @@
 #ifndef _GLD_SOCKETS_H_
 #define _GLD_SOCKETS_H_
 
-#ifdef WIN32
+#ifdef _WIN32
 
 #include <winsock2.h>
 //#include <Ws2def.h>

@@ -616,8 +616,10 @@ static SIMULATIONMODE delta_clockupdate(DT timestep, SIMULATIONMODE interupdate_
 	} else if(interupdate_result == SM_EVENT) {
 		rv = SM_EVENT;
 		// we are exiting deltamode so we need to determine the timestep to the next whole second.
+		DT nextTimeNano = (DT)(ceil(global_delta_curr_clock)*((double)DT_SECOND));
+		DT currTimeNano = (DT)(global_delta_curr_clock*((double)DT_SECOND));
 		nextTime = ceil(global_delta_curr_clock);
-		exitDeltaTimestep = (DT)((nextTime - global_delta_curr_clock)*DT_SECOND);
+		exitDeltaTimestep = nextTimeNano - currTimeNano;
 		for(module=delta_modulelist; module < (delta_modulelist + delta_modulecount); module++)
 		{
 			if((*module)->deltaClockUpdate != NULL)

@@ -51,7 +51,13 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_complex, "power_out_A[VA]", PADDR(power_val[0]),PT_DESCRIPTION,"Output power of phase A",
 			PT_complex, "power_out_B[VA]", PADDR(power_val[1]),PT_DESCRIPTION,"Output power of phase B",
 			PT_complex, "power_out_C[VA]", PADDR(power_val[2]),PT_DESCRIPTION,"Output power of phase C",
-			
+			PT_double, "real_power_out_A[W]", PADDR(real_power_val[0]),PT_DESCRIPTION,"Real power output of phase A",
+			PT_double, "real_power_out_B[W]", PADDR(real_power_val[1]),PT_DESCRIPTION,"Real power output of phase B",
+			PT_double, "real_power_out_C[W]", PADDR(real_power_val[2]),PT_DESCRIPTION,"Real power output of phase C",
+			PT_double, "reactive_power_out_A[VAr]", PADDR(imag_power_val[0]),PT_DESCRIPTION,"Reactive power output of phase A",
+			PT_double, "reactive_power_out_B[VAr]", PADDR(imag_power_val[1]),PT_DESCRIPTION,"Reactive power output of phase B",
+			PT_double, "reactive_power_out_C[VAr]", PADDR(imag_power_val[2]),PT_DESCRIPTION,"Reactive power output of phase C",
+
 			//Properties for dynamics capabilities (subtransient model)
 			PT_double,"omega_ref[rad/s]",PADDR(omega_ref),PT_DESCRIPTION,"Reference frequency of generator (rad/s)",
 			PT_double,"inertia",PADDR(inertia),PT_DESCRIPTION,"Inertial constant (H) of generator",
@@ -336,6 +342,10 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double,"realPowerChange",PADDR(realPowerChange),PT_DESCRIPTION,"Real power output change of diesel_dg",
 			PT_double,"ratio_f_p",PADDR(ratio_f_p),PT_DESCRIPTION,"Ratio of frequency deviation to real power output change of diesel_dg",
 
+			//CONSTANT_PQ steady state outputs
+			PT_double,"real_power_generation[W]",PADDR(real_power_gen),PT_DESCRIPTION,"The total real power generation",
+			PT_double,"reactive_power_generation[VAr]",PADDR(imag_power_gen),PT_DESCRIPTION,"The total reactive power generation",
+
 			PT_set, "phases", PADDR(phases), PT_DESCRIPTION, "Specifies which phases to connect to - currently not supported and assumes three-phase connection",
 				PT_KEYWORD, "A",(set)PHASE_A,
 				PT_KEYWORD, "B",(set)PHASE_B,
@@ -510,6 +520,8 @@ int diesel_dg::create(void)
 
 	power_val[0] = power_val[1] = power_val[2] = complex(0.0,0.0);
 	current_val[0] = current_val[1] = current_val[2] = complex(0.0,0.0);
+	real_power_val[0] = real_power_val[1] = real_power_val[2] = -1.0;
+	imag_power_val[0] = imag_power_val[1] = imag_power_val[2] = -1.0;
 
 	//Rotor convergence becomes 0.1 rad
 	rotor_speed_convergence_criterion = 0.1;
@@ -608,6 +620,9 @@ int diesel_dg::create(void)
 
 	//Overall, force the generator into "PQ mode" first
 	Gen_type = NON_DYN_CONSTANT_PQ;
+
+	//Set up the deltamode "next state" tracking variable
+	desired_simulation_mode = SM_EVENT;
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -872,6 +887,14 @@ int diesel_dg::init(OBJECT *parent)
 		power_base = Rated_VA/3.0;
 
 		//Check specified power against per-phase limit (power_base) - impose that for now
+		for(int i=0; i < 3; i++) {
+			if(real_power_val[i] != -1.0) {
+				power_val[i].SetReal(real_power_val[i]);
+			}
+			if(imag_power_val[i] != -1.0) {
+				power_val[i].SetImag(imag_power_val[i]);
+			}
+		}
 		if (power_val[0].Mag()>power_base)
 		{
 			gl_warning("diesel_dg:%s - power_out_A is above 1/3 the total rating, capping",obj->name?obj->name:"unnamed");
@@ -1540,8 +1563,11 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	//Existing code retained - kept as "not dynamic"
 	if (Gen_type == NON_DYN_CONSTANT_PQ)
 	{
+		//double check power output is not above rated generation
+		check_power_output();
 		// Assign the power output from diesel_dg to its parent node
 		// Note that value_prev_Power is the positive value of power_val (from prev) - so the -(-) = +
+
 		value_Power[0] = -power_val[0] + value_prev_Power[0];
 		value_Power[1] = -power_val[1] + value_prev_Power[1];
 		value_Power[2] = -power_val[2] + value_prev_Power[2];
@@ -1550,6 +1576,9 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 		value_prev_Power[0] = power_val[0];
 		value_prev_Power[1] = power_val[1];
 		value_prev_Power[2] = power_val[2];
+		complex total_power = power_val[0] + power_val[1] + power_val[2];
+		real_power_gen = total_power.Re();
+		imag_power_gen = total_power.Im();
 	}
 	else if (Gen_type == DYNAMIC)	//Synchronous dynamic machine
 	{
@@ -2049,7 +2078,6 @@ void diesel_dg::convert_abc_to_pn0(complex *Xabc, complex *Xpn0)
 //Module-level call
 SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	unsigned char pass_mod;
 	unsigned int loop_index;
 	double temp_double, temp_mag_val, temp_mag_diff;
 	double temp_double_freq_val;
@@ -2213,11 +2241,8 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		}//End GGOV1 first pass handling
 	}//End first pass of new timestep
 
-	//See what we're on, for tracking
-	pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
-
 	//Check pass
-	if (pass_mod==0)	//Predictor pass
+	if (iteration_count_val==0)	//Predictor pass
 	{
 		//Compute the "present" electric power value before anything gets updated for the new timestep
 		temp_current_val[0] = (value_IGenerated[0] - generator_admittance[0][0]*value_Circuit_V[0] - generator_admittance[0][1]*value_Circuit_V[1] - generator_admittance[0][2]*value_Circuit_V[2]);
@@ -2720,9 +2745,12 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		//Resync power variables
 		push_powerflow_values(false);
 
+		//Set the mode tracking variable - silly here, but just do it anyways
+		desired_simulation_mode = SM_DELTA_ITER;
+
 		return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
 	}
-	else	//Corrector pass
+	else if (iteration_count_val==1)	//Corrector pass
 	{
 		//Call dynamics
 		apply_dynamics(&next_state,&corrector_vals,deltat);
@@ -3206,6 +3234,9 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 						//See if the voltage check needs to happen
 						if (apply_voltage_mag_convergence == false)
 						{
+							//Set the mode tracking variable for this exit
+							desired_simulation_mode = SM_EVENT;
+
 							//Ready to leave Delta mode
 							return SM_EVENT;
 						}
@@ -3213,6 +3244,9 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 					}
 					else	//Not converged - stay in deltamode
 					{
+						//Set the mode tracking variable for this exit
+						desired_simulation_mode = SM_DELTA;
+
 						return SM_DELTA;
 					}
 				}//End is an isochronous generator
@@ -3220,6 +3254,9 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 				{
 					if (apply_voltage_mag_convergence == false)
 					{
+						//Set the mode tracking variable for this exit
+						desired_simulation_mode = SM_EVENT;
+
 						//Ready to leave Delta mode
 						return SM_EVENT;
 					}
@@ -3228,6 +3265,9 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 			}
 			else	//Not "converged" -- I would like to do another update
 			{
+				//Set the mode tracking variable for this exit
+				desired_simulation_mode = SM_DELTA;
+
 				return SM_DELTA;	//Next delta update
 									//Could theoretically request a reiteration, but we're not allowing that right now
 			}
@@ -3258,19 +3298,32 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 			//See if we need to reiterate or not
 			if (temp_double<=voltage_convergence_criterion)
 			{
-			//Ready to leave Delta mode
-			return SM_EVENT;
-		}
-		else	//Not "converged" -- I would like to do another update
-		{
-			return SM_DELTA;	//Next delta update
-								//Could theoretically request a reiteration, but we're not allowing that right now
+				//Set the mode tracking variable for this exit
+				desired_simulation_mode = SM_EVENT;
+
+				//Ready to leave Delta mode
+				return SM_EVENT;
+			}
+			else	//Not "converged" -- I would like to do another update
+			{
+				//Set the mode tracking variable for this exit
+				desired_simulation_mode = SM_DELTA;
+
+				return SM_DELTA;	//Next delta update
+									//Could theoretically request a reiteration, but we're not allowing that right now
 			}
 		}
+
+		//Set the mode tracking variable for this exit
+		desired_simulation_mode = SM_EVENT;
 
 		//Default else - no checks asked for, just bounce back to event
 		return SM_EVENT;
 	}//End corrector pass
+	else	//Any subsequent iterations, just return our last desired value
+	{
+		return desired_simulation_mode;
+	}
 }
 
 //Module-level post update call
@@ -3499,9 +3552,6 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 		{
 			x0=gov_gast_AT+gov_gast_KT*(gov_gast_AT-curr_time->gov_gast.x3);
 		}
-
-//		x0 = MIN(,gov_gast_AT+gov_gast_KT*(gov_gast_AT-curr_time->gov_gast.x3));
-//		LL+K*(LL-G1.machine_parameters.curr.gov.x3
 
 		//Update variables
 		curr_delta->gov_gast.x1 = (x0 - curr_time->gov_gast.x1)/gov_gast_T1;
@@ -4335,6 +4385,9 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 	}//End SEXS initialization
 	//Default else - no AVR/Exciter init
 
+	//Re-initialize tracking variable to event-driven
+	desired_simulation_mode = SM_EVENT;
+
 	return SUCCESS;	//Always succeeds for now, but could have error checks later
 }
 
@@ -4359,6 +4412,73 @@ double diesel_dg::abs_complex(complex val)
 	return res;
 }
 
+void diesel_dg::check_power_output()
+{
+	double test_pf = 0.0;
+	OBJECT *obj = OBJECTHDR(this);
+	//Check specified power against per-phase limit (power_base) - impose that for now
+	for(int i=0; i < 3; i++) {
+		if(real_power_val[i] != -1.0) {
+			power_val[i].SetReal(real_power_val[i]);
+		}
+		if(imag_power_val[i] != -1.0) {
+			power_val[i].SetImag(imag_power_val[i]);
+		}
+	}
+	if (power_val[0].Mag()>power_base)
+	{
+		gl_warning("diesel_dg:%s - power_out_A is above 1/3 the total rating, capping",obj->name?obj->name:"unnamed");
+		/*  TROUBLESHOOT
+		The diesel_dg object has a power_out_A value that is above 1/3 the total rating.  It will be thresholded to
+		that level.
+		*/
+
+		//Maintain power factor value
+		test_pf = power_val[0].Re()/power_val[0].Mag();
+
+		//Form up
+		if (power_val[0].Im()<0.0)
+			power_val[0] = complex((power_base*test_pf),(-1.0*sqrt(1-test_pf*test_pf)*power_base));
+		else
+			power_val[0] = complex((power_base*test_pf),(sqrt(1-test_pf*test_pf)*power_base));
+	}//End phase A power limit check
+
+	if (power_val[1].Mag()>power_base)
+	{
+		gl_warning("diesel_dg:%s - power_out_B is above 1/3 the total rating, capping",obj->name?obj->name:"unnamed");
+		/*  TROUBLESHOOT
+		The diesel_dg object has a power_out_B value that is above 1/3 the total rating.  It will be thresholded to
+		that level.
+		*/
+
+		//Maintain power factor value
+		test_pf = power_val[1].Re()/power_val[1].Mag();
+
+		//Form up
+		if (power_val[1].Im()<0.0)
+			power_val[1] = complex((power_base*test_pf),(-1.0*sqrt(1-test_pf*test_pf)*power_base));
+		else
+			power_val[1] = complex((power_base*test_pf),(sqrt(1-test_pf*test_pf)*power_base));
+	}//End phase B power limit check
+
+	if (power_val[2].Mag()>power_base)
+	{
+		gl_warning("diesel_dg:%s - power_out_C is above 1/3 the total rating, capping",obj->name?obj->name:"unnamed");
+		/*  TROUBLESHOOT
+		The diesel_dg object has a power_out_C value that is above 1/3 the total rating.  It will be thresholded to
+		that level.
+		*/
+
+		//Maintain power factor value
+		test_pf = power_val[2].Re()/power_val[2].Mag();
+
+		//Form up
+		if (power_val[2].Im()<0.0)
+			power_val[2] = complex((power_base*test_pf),(-1.0*sqrt(1-test_pf*test_pf)*power_base));
+		else
+			power_val[2] = complex((power_base*test_pf),(sqrt(1-test_pf*test_pf)*power_base));
+	}//End phase C power limit check
+}
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////

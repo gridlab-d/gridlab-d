@@ -33,10 +33,12 @@
 #include "platform.h"
 #include "exec.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 #define finite _finite
 #include <process.h>
 #define getpid _getpid
+#else
+#include <unistd.h>
 #endif
 
 #ifdef __MINGW32__

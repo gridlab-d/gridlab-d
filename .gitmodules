@@ -1,3 +1,7 @@
-[submodule "third_party/eigen"]
-	path = third_party/eigen
-	url = https://github.com/eigenteam/eigen-git-mirror.git
+[submodule "third_party/Eigen"]
+	path = third_party/Eigen
+	url = https://gitlab.com/libeigen/eigen.git
+
+[submodule "third_party/jsoncpp"]
+	path = third_party/jsoncpp
+	url = https://github.com/open-source-parsers/jsoncpp

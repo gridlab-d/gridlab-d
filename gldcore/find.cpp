@@ -11,9 +11,11 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <stdio.h>
-#if defined(WIN32) && !defined(__MINGW__)
+#if defined(_WIN32) && !defined(__MINGW__)
 #include <io.h>
 #	define snprintf _snprintf
+#else
+#include <unistd.h>
 #endif
 #include "globals.h"
 #include "output.h"
@@ -1316,7 +1318,7 @@ char *find_file(const char *name, /**< the name of the file to find */
 	char *glpath;
 	char *dir;
 
-#ifdef WIN32
+#ifdef _WIN32
 #	define delim ";"
 #	define pathsep "\\"
 #else
@@ -1360,7 +1362,7 @@ char *find_file(const char *name, /**< the name of the file to find */
 		}
 	}
 
-#ifdef WIN32
+#ifdef _WIN32
 	if(module_get_exe_path(filepath, 1024)){
 		snprintf(tempfp, sizeof(tempfp), "%s%s", filepath, name);
 		if(access(tempfp, mode) == 0)

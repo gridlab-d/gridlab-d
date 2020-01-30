@@ -5,7 +5,7 @@ extern pthread_cond_t inst_sock_signal;
 extern int sock_created;
 
 STATUS instance_cnx_mmap(instance *inst){
-#ifdef WIN32
+#ifdef _WIN32
 		char cachename[1024];
 		char eventname[64];
 		SECURITY_ATTRIBUTES secAttr = {sizeof(SECURITY_ATTRIBUTES),(LPSECURITY_ATTRIBUTES)NULL,TRUE}; 
@@ -117,7 +117,7 @@ STATUS instance_cnx_socket(instance *inst){
 	char blank[8];
 	const char *args[7] = {"--profile", "--relax", "--debug", "--verbose",
 		"--warn", "--quiet", "--avlbalance"};
-#ifdef WIN32
+#ifdef _WIN32
 	int slt, return_addr_sz;
 	static WSADATA wsaData;
 #else
@@ -143,7 +143,7 @@ STATUS instance_cnx_socket(instance *inst){
 		*colon = 0;
 	}
 	// create socket
-#ifdef WIN32
+#ifdef _WIN32
 	output_debug("starting WS2");
 	if (WSAStartup(MAKEWORD(2,0),&wsaData)!=0)
 	{
@@ -218,7 +218,7 @@ STATUS instance_cnx_socket(instance *inst){
 	slt = sizeof(ss);
 	if(-1 == getsockname(insockfd, (struct sockaddr *)&ss, &slt)){
 		output_error("instance_cnx_socket(): error getting insockfd name");
-#ifdef WIN32
+#ifdef _WIN32
 		WSAGetLastError();
 #else
 		perror("getsockname():");
