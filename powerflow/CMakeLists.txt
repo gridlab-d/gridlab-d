@@ -1,124 +1,145 @@
 project(powerflow)
 
-include_directories(../${GLDCORE_LOC})
-include_directories(../third_party/SuperLU_MT)
-#include_directories(../third_party/jsonCpp)
-SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I../third_party/SuperLU_MT") # -I../third_party/jsonCpp" )
+if (GLD_USE_EIGEN)
+    SET(NR_SOLVER solver_nr_eigen.cpp solver_nr_eigen.h)
+else ()
+    SET(NR_SOLVER solver_nr.cpp solver_nr.h)
+endif ()
+
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/third_party/Eigen/cmake) # Gives us FindKLU.cmake without replicating code
+find_package(KLU)
+if (KLU_FOUND)
+    add_definitions("-DGLD_USE_KLU")
+endif ()
 
 add_library(${PROJECT_NAME}
-        powerflow/billdump.cpp
-        powerflow/billdump.h
-        powerflow/capacitor.cpp
-        powerflow/capacitor.h
-        powerflow/currdump.cpp
-        powerflow/currdump.h
-        powerflow/emissions.cpp
-        powerflow/emissions.h
-        powerflow/fault_check.cpp
-        powerflow/fault_check.h
-        powerflow/fuse.cpp
-        powerflow/fuse.h
-        powerflow/impedance_dump.cpp
-        powerflow/impedance_dump.h
-        powerflow/jsondump.cpp
-        powerflow/jsondump.h
-        powerflow/init.cpp
-        powerflow/line_configuration.cpp
-        powerflow/line_configuration.h
-        powerflow/line.cpp
-        powerflow/line.h
-        powerflow/line_spacing.cpp
-        powerflow/line_spacing.h
-        powerflow/link.cpp
-        powerflow/link.h
-        powerflow/load.cpp
-        powerflow/load.h
-        powerflow/load_tracker.cpp
-        powerflow/load_tracker.h
-        powerflow/main.cpp
-        powerflow/meter.cpp
-        powerflow/meter.h
-        powerflow/meter_test.h
-        powerflow/motor.cpp
-        powerflow/motor.h
-        powerflow/node.cpp
-        powerflow/node.h
-        powerflow/overhead_line_conductor.cpp
-        powerflow/overhead_line_conductor.h
-        powerflow/overhead_line.cpp
-        powerflow/overhead_line.h
-        powerflow/overheadline_test.h
-        powerflow/powerflow.cpp
-        powerflow/powerflow.h
-        powerflow/powerflow_library.cpp
-        powerflow/powerflow_library.h
-        powerflow/powerflow_object.cpp
-        powerflow/powerflow_object.h
-        powerflow/power_metrics.cpp
-        powerflow/power_metrics.h
-        powerflow/pqload.cpp
-        powerflow/pqload.h
-        powerflow/recloser.cpp
-        powerflow/recloser.h
-        powerflow/regulator_configuration.cpp
-        powerflow/regulator_configuration.h
-        powerflow/regulator.cpp
-        powerflow/regulator.h
-        powerflow/regulator_test.h
-        powerflow/restoration.cpp
-        powerflow/restoration.h
-        powerflow/sectionalizer.cpp
-        powerflow/sectionalizer.h
-        powerflow/series_reactor.cpp
-        powerflow/series_reactor.h
-        powerflow/solver_nr.cpp
-        powerflow/solver_nr.h
-        powerflow/substation.cpp
-        powerflow/substation.h
-        powerflow/switch_object.cpp
-        powerflow/switch_object.h
-        powerflow/test.cpp
-        powerflow/test.h
-        powerflow/transformer_configuration.cpp
-        powerflow/transformer_configuration.h
-        powerflow/transformer.cpp
-        powerflow/transformer.h
-        powerflow/transformer_test.h
-        powerflow/triplex_line_conductor.cpp
-        powerflow/triplex_line_conductor.h
-        powerflow/triplex_line_configuration.cpp
-        powerflow/triplex_line_configuration.h
-        powerflow/triplex_line.cpp
-        powerflow/triplex_line.h
-        powerflow/triplexline_test.h
-        powerflow/triplex_load.h
-        powerflow/triplex_load.cpp
-        powerflow/triplex_meter.cpp
-        powerflow/triplex_meter.h
-        powerflow/triplex_node.cpp
-        powerflow/triplex_node.h
-        powerflow/underground_line_conductor.cpp
-        powerflow/underground_line_conductor.h
-        powerflow/underground_line.cpp
-        powerflow/underground_line.h
-        powerflow/undergroundline_test.h
-        powerflow/vfd.cpp
-        powerflow/vfd.h
-        powerflow/voltdump.cpp
-        powerflow/voltdump.h
-        powerflow/volt_var_control.cpp
-        powerflow/volt_var_control.h
+        billdump.cpp
+        billdump.h
+        capacitor.cpp
+        capacitor.h
+        currdump.cpp
+        currdump.h
+        emissions.cpp
+        emissions.h
+        fault_check.cpp
+        fault_check.h
+        fuse.cpp
+        fuse.h
+        impedance_dump.cpp
+        impedance_dump.h
+        jsondump.cpp
+        jsondump.h
+        init.cpp
+        line_configuration.cpp
+        line_configuration.h
+        line.cpp
+        line.h
+        line_spacing.cpp
+        line_spacing.h
+        link.cpp
+        link.h
+        load.cpp
+        load.h
+        load_tracker.cpp
+        load_tracker.h
+        main.cpp
+        meter.cpp
+        meter.h
+        meter_test.h
+        motor.cpp
+        motor.h
+        node.cpp
+        node.h
+        overhead_line_conductor.cpp
+        overhead_line_conductor.h
+        overhead_line.cpp
+        overhead_line.h
+        overheadline_test.h
+        powerflow.cpp
+        powerflow.h
+        powerflow_library.cpp
+        powerflow_library.h
+        powerflow_object.cpp
+        powerflow_object.h
+        power_metrics.cpp
+        power_metrics.h
+        pqload.cpp
+        pqload.h
+        recloser.cpp
+        recloser.h
+        regulator_configuration.cpp
+        regulator_configuration.h
+        regulator.cpp
+        regulator.h
+        regulator_test.h
+        restoration.cpp
+        restoration.h
+        sectionalizer.cpp
+        sectionalizer.h
+        series_reactor.cpp
+        series_reactor.h
+        substation.cpp
+        substation.h
+        switch_object.cpp
+        switch_object.h
+        test.cpp
+        test.h
+        transformer_configuration.cpp
+        transformer_configuration.h
+        transformer.cpp
+        transformer.h
+        transformer_test.h
+        triplex_line_conductor.cpp
+        triplex_line_conductor.h
+        triplex_line_configuration.cpp
+        triplex_line_configuration.h
+        triplex_line.cpp
+        triplex_line.h
+        triplexline_test.h
+        triplex_load.h
+        triplex_load.cpp
+        triplex_meter.cpp
+        triplex_meter.h
+        triplex_node.cpp
+        triplex_node.h
+        underground_line_conductor.cpp
+        underground_line_conductor.h
+        underground_line.cpp
+        underground_line.h
+        undergroundline_test.h
+        vfd.cpp
+        vfd.h
+        voltdump.cpp
+        voltdump.h
+        volt_var_control.cpp
+        volt_var_control.h
+
+        ${NR_SOLVER}
         )
 
 set_target_properties(${PROJECT_NAME}
         PROPERTIES PREFIX ""
         )
 
-target_link_libraries(${PROJECT_NAME}
-        PRIVATE
+target_include_directories(${PROJECT_NAME} PRIVATE
+        "${CMAKE_SOURCE_DIR}/third_party/SuperLU/SRC"
+        "${CMAKE_SOURCE_DIR}/third_party/jsoncpp/include"
+        "${CMAKE_SOURCE_DIR}/third_party/Eigen"
+        "${KLU_INCLUDES}"
+        )
+
+target_link_libraries(${PROJECT_NAME} PRIVATE
         superlu
         jsoncpp_lib
-        ${OS_SPECIFIC_LIBRARIES}
-        PRIVATE
         Eigen3::Eigen
+        ${KLU_LIBRARIES}
+        ${OS_SPECIFIC_LIBRARIES}
         )
+
+target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
+
+if (GLD_USE_CLANG_TIDY)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+            CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}"
+            )
+endif ()

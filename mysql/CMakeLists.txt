@@ -1,36 +1,52 @@
 project(mysql)
 
-include_directories(../${GLDCORE_LOC})
-IF (HAVE_MYSQL)
-    include_directories(${MYSQL_INCLUDE_DIRECTORIES} ${MYSQL_INCLUDE_DIRECTORIES}/include)
-ENDIF ()
-
-#TODO: MySQL imports
+if (GLD_USE_MYSQL)
+    find_package(MySQL REQUIRED)
+endif ()
 
 add_library(${PROJECT_NAME}
-        mysql/collector.cpp
-        mysql/collector.h
-        mysql/database.cpp
-        mysql/database.h
-        mysql/init.cpp
-        mysql/main.cpp
-        mysql/player.cpp
-        mysql/player.h
-        mysql/recorder.cpp
-        mysql/recorder.h
-        mysql/query_engine.h
-        mysql/table_manager.cpp
-        mysql/query_engine.cpp
-        mysql/group_recorder.cpp
-        mysql/group_recorder.h
+        collector.cpp
+        collector.h
+        database.cpp
+        database.h
+        init.cpp
+        main.cpp
+        player.cpp
+        player.h
+        recorder.cpp
+        recorder.h
+        query_engine.h
+        table_manager.cpp
+        query_engine.cpp
+        group_recorder.cpp
+        group_recorder.h
         )
 
 set_target_properties(${PROJECT_NAME}
         PROPERTIES PREFIX ""
         )
 
-target_link_libraries(${PROJECT_NAME} ${OS_SPECIFIC_LIBRARIES})
+target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
+target_link_libraries(${PROJECT_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
 
-IF (HAVE_MYSQL)
-    target_link_libraries(${PROJECT_NAME} ${MYSQL_LIBRARY})
-ENDIF ()
+if (GLD_USE_CLANG_TIDY)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+            CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}"
+            )
+endif ()
+
+if (HAVE_MYSQL)
+    include_directories(${MYSQL_INCLUDE_DIRECTORIES} ${MYSQL_INCLUDE_DIRECTORIES}/include)
+    target_link_libraries(${PROJECT_NAME} PRIVATE ${MYSQL_LIBRARY})
+endif ()
+
+if (HAVE_MYSQL)
+    target_include_directories(${PROJECT_NAME} PRIVATE
+            ${MYSQL_INCLUDE_DIRECTORIES}
+            ${MYSQL_INCLUDE_DIRECTORIES}/include
+            )
+    target_link_libraries(${PROJECT_NAME}
+            ${MYSQL_LIBRARY}
+            )
+    target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_HELICS)
+endif ()

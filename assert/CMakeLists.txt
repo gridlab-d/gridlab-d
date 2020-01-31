@@ -1,24 +1,30 @@
 project(assert)
 
-include_directories(../${GLDCORE_LOC})
-
 add_library(${PROJECT_NAME}
-        assert/assert.cpp
-        assert/assert.h
-        assert/complex_assert.cpp
-        assert/complex_assert.h
-        assert/double_assert.cpp
-        assert/double_assert.h
-        assert/enum_assert.cpp
-        assert/enum_assert.h
-        assert/int_assert.cpp
-        assert/int_assert.h
-        assert/init.cpp
-        assert/main.cpp
+        assert.cpp
+        assert.h
+        complex_assert.cpp
+        complex_assert.h
+        double_assert.cpp
+        double_assert.h
+        enum_assert.cpp
+        enum_assert.h
+        int_assert.cpp
+        int_assert.h
+        init.cpp
+        main.cpp
         )
 
 set_target_properties(${PROJECT_NAME}
         PROPERTIES PREFIX ""
         )
 
-target_link_libraries(${PROJECT_NAME} ${OS_SPECIFIC_LIBRARIES})
+target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
+target_link_libraries(${PROJECT_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
+
+if (GLD_USE_CLANG_TIDY)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+            CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}"
+            )
+endif ()
+

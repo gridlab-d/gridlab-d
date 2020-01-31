@@ -1,31 +1,45 @@
 project(generators)
 
-include_directories(../${GLDCORE_LOC})
-
 add_library(${PROJECT_NAME}
-        generators/battery.cpp
-        generators/battery.h
-        generators/central_dg_control.cpp
-        generators/central_dg_control.h
-        generators/diesel_dg.cpp
-        generators/diesel_dg.h
-        generators/energy_storage.cpp
-        generators/energy_storage.h
-        generators/generators.h
-        generators/init.cpp
-        generators/inverter.cpp
-        generators/inverter.h
-        generators/main.cpp
-        generators/rectifier.cpp
-        generators/rectifier.h
-        generators/solar.cpp
-        generators/solar.h
-        generators/windturb_dg.cpp
-        generators/windturb_dg.h
-        generators/controller_dg.cpp
-        generators/controller_dg.h
-)
+        battery.cpp
+        battery.h
+        central_dg_control.cpp
+        central_dg_control.h
+        diesel_dg.cpp
+        diesel_dg.h
+        energy_storage.cpp
+        energy_storage.h
+        generators.h
+        init.cpp
+        inverter.cpp
+        inverter.h
+        main.cpp
+        rectifier.cpp
+        rectifier.h
+        solar.cpp
+        solar.h
+        windturb_dg.cpp
+        windturb_dg.h
+        controller_dg.cpp
+        controller_dg.h
+        )
 
 set_target_properties(${PROJECT_NAME}
         PROPERTIES PREFIX ""
         )
+
+target_include_directories(${PROJECT_NAME} PRIVATE
+        "${CMAKE_SOURCE_DIR}/third_party/Eigen"
+        )
+target_link_libraries(${PROJECT_NAME} PRIVATE
+        Eigen3::Eigen
+        )
+
+target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
+target_link_libraries(${PROJECT_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
+
+if (GLD_USE_CLANG_TIDY)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+            CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}"
+            )
+endif ()

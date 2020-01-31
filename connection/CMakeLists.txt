@@ -1,65 +1,97 @@
 project(connection)
 
-include_directories(../${GLDCORE_LOC})
+if (GLD_USE_FNCS)
+    find_library(GLD_ZMQ_LIBRARY NAMES zmq REQUIRED PATHS ${GLD_ZeroMQ_DIR} $ENV{GLD_ZeroMQ_DIR})
+    find_library(GLD_CZMQ_LIBRARY NAMES czmq REQUIRED PATHS ${GLD_CZMQ_DIR} $ENV{GLD_CZMQ_DIR})
+    find_library(GLD_FNCS_LIBRARY NAMES fncs REQUIRED PATHS ${GLD_FNCS_DIR} $ENV{GLD_FNCS_DIR})
 
-#include_directories(../third_party/jsonCpp)
-#SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I../third_party/jsonCpp -lwsock32 -lws2_32" )
+    set(GLD_FNCS_LIBRARIES
+            ${GLD_FNCS_LIBRARY}
+            ${GLD_CZMQ_LIBRARY}
+            ${GLD_ZMQ_LIBRARY}
+            )
+    if (GLD_ZMQ_LIBRARY AND GLD_CZMQ_LIBRARY AND GLD_FNCS_LIBRARY)
+        option(HAVE_FNCS "FNCS library found" ON)
+        set(FNCS_CONNECTION fncs_msg.cpp fncs_msg.h)
+    else ()
+        option(HAVE_FNCS "FNCS library found" OFF)
+        set(FNCS_CONNECTION)
+        message(WARNING "One of the required FNCS libraries could not be located. Check your configuration for "
+                "GLD_ZeroMQ_DIR, "
+                "GLD_CZMQ_DIR, "
+                "and GLD_FNCS_DIR.")
+    endif ()
+else ()
+    set(FNCS_CONNECTION)
+endif ()
 
-IF (HAVE_FNCS)
-    SET(FNCS_CONNECTION connection/fncs_msg.cpp connection/fncs_msg.h)
-ELSE ()
-    SET(FNCS_CONNECTION )
-ENDIF ()
-
-IF (HAVE_HELICS)
-    SET(HELICS_CONNECTION connection/helics_msg.cpp connection/helics_msg.h)
-ELSE ()
-    SET(HELICS_CONNECTION )
-ENDIF ()
+if (GLD_USE_HELICS)
+    FIND_PACKAGE(HELICS 2.3 REQUIRED CONFIG HINTS ${HELICS_DIR} $ENV{FNCS_DIR})
+    set(HELICS_CONNECTION helics_msg.cpp helics_msg.h)
+else ()
+    set(HELICS_CONNECTION)
+endif ()
 
 add_library(${PROJECT_NAME}
-        connection/connection.cpp
-        connection/connection.h
-        connection/socket.cpp
-        connection/socket.h
-        connection/server.cpp
-        connection/server.h
-        connection/cache.cpp
-        connection/cache.h
-        connection/client.cpp
-        connection/client.h
-        connection/native.cpp
-        connection/native.h
-        connection/tcp.cpp
-        connection/tcp.h
-        connection/udp.cpp
-        connection/udp.h
-        connection/xml.cpp
-        connection/xml.h
-        connection/json.cpp
-        connection/json.h
-
+        connection.cpp
+        connection.h
+        socket.cpp
+        socket.h
+        server.cpp
+        server.h
+        cache.cpp
+        cache.h
+        client.cpp
+        client.h
+        native.cpp
+        native.h
+        tcp.cpp
+        tcp.h
+        udp.cpp
+        udp.h
+        xml.cpp
+        xml.h
+        json.cpp
+        json.h
+        transport.cpp
+        transport.h
+        message.h
+        varmap.cpp
+        varmap.h
+        init.cpp
+        main.cpp
         ${FNCS_CONNECTION}
-		${HELICS_CONNECTION}
-
-        connection/transport.cpp
-        connection/transport.h
-        connection/message.h
-        connection/varmap.cpp
-        connection/varmap.h
-        connection/init.cpp
-        connection/main.cpp
+        ${HELICS_CONNECTION}
         )
 
 set_target_properties(${PROJECT_NAME}
         PROPERTIES PREFIX ""
         )
-#add_dependencies(${PROJECT_NAME} jsoncpp_lib)
-target_link_libraries(${PROJECT_NAME} jsoncpp_lib)
 
-target_link_libraries(${PROJECT_NAME} ${OS_SPECIFIC_LIBRARIES})
+target_include_directories(${PROJECT_NAME} PRIVATE
+        "${CMAKE_SOURCE_DIR}/third_party/jsoncpp/include"
+        )
+
+target_link_libraries(${PROJECT_NAME} PRIVATE jsoncpp_lib)
+
+target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
+target_link_libraries(${PROJECT_NAME} PRIVATE ${OS_SPECifIC_LIBRARIES})
+
+if (GLD_USE_CLANG_TIDY)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+            CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}"
+            )
+endif ()
+
+if (HAVE_FNCS)
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+            fncs
+            ${GLD_FNCS_LIBRARIES}
+            )
+    target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_FNCS)
+endif ()
 
 if (HAVE_HELICS)
-target_link_libraries(${PROJECT_NAME} HELICS::helics-shared)
-target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_HELICS)
-endif()
+    target_link_libraries(${PROJECT_NAME} HELICS::helics-shared)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_HELICS)
+endif ()
