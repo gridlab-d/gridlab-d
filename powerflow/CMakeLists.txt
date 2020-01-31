@@ -6,12 +6,6 @@ else ()
     SET(NR_SOLVER solver_nr.cpp solver_nr.h)
 endif ()
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/third_party/Eigen/cmake) # Gives us FindKLU.cmake without replicating code
-find_package(KLU)
-if (KLU_FOUND)
-    add_definitions("-DGLD_USE_KLU")
-endif ()
-
 add_library(${PROJECT_NAME}
         billdump.cpp
         billdump.h
@@ -116,6 +110,12 @@ add_library(${PROJECT_NAME}
 
         ${NR_SOLVER}
         )
+
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/third_party/Eigen/cmake) # Gives us FindKLU.cmake without replicating code
+find_package(KLU)
+if (KLU_FOUND)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_KLU)
+endif ()
 
 set_target_properties(${PROJECT_NAME}
         PROPERTIES PREFIX ""

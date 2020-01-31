@@ -37,9 +37,9 @@ if (CMAKE_USE_PTHREADS_INIT)
 endif ()
 
 find_package(Curses)
-IF (CURSES_FOUND)
+if (CURSES_FOUND)
     option(HAVE_CURSES "Curses library is present on the platform" ON)
-ENDIF ()
+endif ()
 
 # Link required libraries for symbol checks
 list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
@@ -69,20 +69,20 @@ set(FORCE_ERROR "-Werror=return-type")
 # Compiler/Linker flags for all build types
 add_compile_options(${FORCE_ERROR} ${DISABLED_OPTIMIZATIONS})
 
-# Set up platform specific library linking
-IF (WIN32 OR MSYS OR MINGW OR CYGWIN)
-    set(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 dl m)
-ELSEIF (LINUX)
-    set(OS_SPECIFIC_LIBRARIES "")
-ELSEIF (APPLE)
-    set(OS_SPECIFIC_LIBRARIES "")
-ELSE ()
-    set(OS_SPECIFIC_LIBRARIES "")
-ENDIF ()
-LIST(APPEND CMAKE_REQUIRED_LIBRARIES ${OS_SPECIFIC_LIBRARIES})
-IF (CMAKE_REQUIRED_LIBRARIES)
-    LIST(REMOVE_DUPLICATES CMAKE_REQUIRED_LIBRARIES)
-ENDIF ()
+## Set up platform specific library linking
+#if (WIN32 OR MSYS OR MINGW OR CYGWIN)
+#    set(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 dl m)
+#elseif (LINUX)
+#    set(OS_SPECIFIC_LIBRARIES "")
+#elseif (APPLE)
+#    set(OS_SPECIFIC_LIBRARIES "")
+#else ()
+#    set(OS_SPECIFIC_LIBRARIES "")
+#endif ()
+#LIST(APPEND CMAKE_REQUIRED_LIBRARIES ${OS_SPECIFIC_LIBRARIES})
+#if (CMAKE_REQUIRED_LIBRARIES)
+#    LIST(REMOVE_DUPLICATES CMAKE_REQUIRED_LIBRARIES)
+#endif ()
 
 find_program(
         GLD_CLANG_TIDY_EXE
@@ -221,12 +221,18 @@ include_directories(gldcore)
 include_directories(third_party/superLU_MT)
 include_directories(third_party/jsoncpp/include)
 include_directories(third_party/eigen)
+include_directories(third_party/dlfcn-win32)
 
 add_subdirectory(third_party/superLU_MT)
 
 option(JSON_CPP_WITH_TESTS "Build the JSON CPP test suite" OFF)
 add_subdirectory(third_party/jsoncpp)
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+
+if (WIN32 OR MSYS OR MINGW OR CYGWIN)
+    find_package(dlfcn)
+    message(STATUS "dlfcn_FOUND: ${dlfcn_FOUND}")
+endif()
 
 # Configure module targets
 add_subdirectory(assert)
