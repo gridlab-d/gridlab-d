@@ -448,6 +448,8 @@ private:
 	double value_Rhout;			//< Value holder for relative humidity
 	double value_Solar[9];		//< Value holder for solar irradiance
 
+	bool external_motor_attached;	//< Flag for external powerflow motor being used - removes that panel contributions
+
 	void circuit_voltage_factor_update(void);	///<Functionalized version of the voltage_factor update, so can be called in deltamode
 	void powerflow_accumulator_remover(void);	///<Functioanlized item that removes current accumulator values from powerflow (mostly for XML stuff)
 

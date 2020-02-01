@@ -409,6 +409,9 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double, "Rdoors[degF*sf*h/Btu]", PADDR(Rdoors),PT_DESCRIPTION,"door R-value",
 			PT_double, "hvac_breaker_rating[A]", PADDR(hvac_breaker_rating), PT_DESCRIPTION,"determines the amount of current the HVAC circuit breaker can handle",
 			PT_double, "hvac_power_factor[unit]", PADDR(hvac_power_factor), PT_DESCRIPTION,"power factor of hvac",
+
+			//External motor flag
+			PT_bool, "external_motor_attached", PADDR(external_motor_attached), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Flag to indicate an external powerflow:motor is being used",
 			
 			PT_double,"hvac_load[kW]",PADDR(hvac_load),PT_DESCRIPTION,"heating/cooling system load",
 			PT_double,"last_heating_load[kW]",PADDR(last_heating_load),PT_DESCRIPTION,"stores the previous heating/cooling system load",
@@ -761,6 +764,9 @@ int house_e::create()
 	value_Rhout = 75.0;
 	value_Solar[0] = value_Solar[1] = value_Solar[2] = value_Solar[3] = value_Solar[4] = 0.0;
 	value_Solar[5] = value_Solar[6] = value_Solar[7] = value_Solar[8] = 0.0;
+
+	//External motor flag
+	external_motor_attached = false;
 
 	return result;
 }
@@ -2246,10 +2252,15 @@ void house_e::update_system(double dt)
 
 		if(	(cooling_system_type == CT_ELECTRIC		&& system_mode == SM_COOL) ||
 			(heating_system_type == HT_HEAT_PUMP	&& system_mode == SM_HEAT)) {
-				load.power.SetRect(load.power_fraction * load.total.Re() , load.power_fraction * load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) );
-				load.admittance.SetRect(load.impedance_fraction * load.total.Re() , load.impedance_fraction * load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) );
-				load.current.SetRect(load.current_fraction * load.total.Re(), load.current_fraction * load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) );
-				
+
+				//See if we're active, and don't have an attached motor
+				if (external_motor_attached == false)
+				{
+					load.power.SetRect(load.power_fraction * load.total.Re() , load.power_fraction * load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) );
+					load.admittance.SetRect(load.impedance_fraction * load.total.Re() , load.impedance_fraction * load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) );
+					load.current.SetRect(load.current_fraction * load.total.Re(), load.current_fraction * load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) );
+				}
+
 				// Motor losses that are related to the efficiency of the induction motor. These contribute to electric power
 				// consumed, but are not incorporated into the heat flow equations.
 				if (motor_model == MM_BASIC)
