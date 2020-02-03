@@ -186,12 +186,12 @@ SET(GLD_SHARE
 include_directories(gldcore)
 
 include_directories(third_party/superLU_MT)
-include_directories(third_party/jsoncpp/include)
+include_directories(third_party/jsoncpp_lib/include)
 
 add_subdirectory(third_party/superLU_MT)
 
 option(JSON_CPP_WITH_TESTS "Build the JSON CPP test suite" OFF)
-add_subdirectory(third_party/jsoncpp)
+add_subdirectory(third_party/jsoncpp_lib)
 
 include(assert/CMakeLists.txt)
 include(climate/CMakeLists.txt)
