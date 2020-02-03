@@ -1,3 +1,6 @@
 [submodule "third_party/jsoncpp_lib"]
 	path = third_party/jsoncpp_lib
 	url = https://github.com/open-source-parsers/jsoncpp.git
+[submodule "third_party/Eigen"]
+	path = third_party/Eigen
+	url = https://gitlab.com/libeigen/eigen.git
