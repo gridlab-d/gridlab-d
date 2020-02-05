@@ -12,8 +12,6 @@ build-aux/compile
 build-aux/config.guess
 build-aux/config.sub
 build-aux/depcomp
-gldcore/config.h.in~
-gldcore/config.h.in
 gldcore/config.h
 gldcore/build.h
 gldcore/version.h
