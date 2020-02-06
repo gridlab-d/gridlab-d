@@ -1,5 +1,6 @@
 #include "collect.h"
 #include <algorithm>
+#include <stdexcept>
 
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF BID collect for primary frequency control
@@ -107,6 +108,7 @@ int collect::calculate_freq_thresholds(double droop, double nom_freq, double fre
 }
 
 int collect::sort(int sort_mode) {
+	try {
 	for (int i = 0; i < number_of_bids_on; ++i){ //set mode for on bids
 		supervisor_bid_on[i].sort_by = sort_mode;
 	}
@@ -121,6 +123,10 @@ int collect::sort(int sort_mode) {
 		if (number_of_bids_off > 0) {
 			std::sort(supervisor_bid_off, supervisor_bid_off+number_of_bids_off);
 		}
+	}
+	}
+	catch (std::logic_error &ex){
+		gl_error(ex.what());
 	}
 	return 0;
 }

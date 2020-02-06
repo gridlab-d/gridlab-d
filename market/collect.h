@@ -1,4 +1,5 @@
 #include "gridlabd.h"
+#include <stdexcept>
 
 #ifndef _collect_h_
 #define _collect_h_
@@ -13,21 +14,23 @@ public:
 		double voltage_deviation;	/**< bid voltage deviation */
 		int state;	/**< bid state */
 		bool operator<(const supervisor_bid& rhs) const {
+			bool return_val = false;
 			if (sort_by == 1) {  // sort by power increasing
-				return power < rhs.power;
+				return_val = power < rhs.power;
 			}
 			else if (sort_by == 2) {  // sort by power decreasing
-				return power > rhs.power;
+				return_val = power > rhs.power;
 			}
 			else if (sort_by == 3) { // sort by deviation of voltage from nominal
-				return voltage_deviation < rhs.voltage_deviation; 
+				return_val = voltage_deviation < rhs.voltage_deviation;
 			}
 			else if (sort_by == 4) { // sort by furtherst away from nominal in each direction
-				return voltage_deviation < rhs.voltage_deviation; 
+				return_val = voltage_deviation < rhs.voltage_deviation;
 			}
 			else {
-				gl_error("sort method is not defined!");
+				throw std::logic_error("sort method is not defined!"); // This fixes no-return state.
 			}
+			return return_val;
 		}
 	} SUPERVISORBID;
 	collect(void);
