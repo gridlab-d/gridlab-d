@@ -2622,10 +2622,11 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				*/
 			}
 
-			//See if we were flagged as a special type switch, and if we're in "strictly radial" mode
-			if ((SpecialLnk == SWITCH) && (meshed_fault_checking_enabled == false))
+			//See if we were flagged as a special type switch, and if we're in "strictly radial" mode, and "the only one attached"
+			//Note that this may have issues with "multiple-single-phase-switches" connecting to something, but that's a very particular use case (just use mesh checking then)
+			if ((SpecialLnk == SWITCH) && (meshed_fault_checking_enabled == false) && NR_busdata[NR_branchdata[NR_branch_reference].to].Link_Table_Size == 1)
 			{
-				//See if any statii are open
+				//Update according to our "status"
 				working_phase = ~((NR_branchdata[NR_branch_reference].phases ^ NR_branchdata[NR_branch_reference].origphases) & 0x07);
 
 				//Mask it off
