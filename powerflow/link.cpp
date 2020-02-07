@@ -287,6 +287,22 @@ int link_object::init(OBJECT *parent)
 {
 	OBJECT *obj = GETOBJECT(this);
 
+	//Make sure nodes have initialized in NR - otherwise some lines get missed (if connected to children)
+	if (solver_method == SM_NR)
+	{
+		//See if the from/to nodes have parents
+		if ((from->parent != NULL) || (to->parent != NULL))
+		{
+			if	(((from->flags & OF_INIT) != OF_INIT) || ((to->flags & OF_INIT) != OF_INIT))
+			{
+				gl_verbose("link::init(): link:%d - %s - deferring initialization on from/to node", obj->id,(obj->name?obj->name : "Unnamed"));
+				return 2; // defer
+			}
+			//Default else - both have initialized already
+		}
+		//Default else - neither parented, so they can't be children - will get handled like normal
+	}
+
 	powerflow_object::init(parent);
 
 	set phase_f_test, phase_t_test, phases_test;
@@ -2218,7 +2234,7 @@ void link_object::NR_link_presync_fxn(void)
 		}
 		
 		//Update status variable
-		prev_status = status;
+		//prev_status = status;
 	}
 }
 
@@ -2440,17 +2456,17 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					{
 						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_A_status"));
 
-						if (*temp_phase == 0)
+						if (*temp_phase == 1)
 							working_phase |= 0x04;
 
 						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_B_status"));
 
-						if (*temp_phase == 0)
+						if (*temp_phase == 1)
 							working_phase |= 0x02;
 
 						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_C_status"));
 
-						if (*temp_phase == 0)
+						if (*temp_phase == 1)
 							working_phase |= 0x01;
 					}
 					else	//Not sure how we'll get here, just make normal phase
@@ -2604,6 +2620,16 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				made it this far, you should have a swing bus defined and it should be called before any other objects.
 				Please submit your code and a bug report for this problem.
 				*/
+			}
+
+			//See if we were flagged as a special type switch, and if we're in "strictly radial" mode
+			if ((SpecialLnk == SWITCH) && (meshed_fault_checking_enabled == false))
+			{
+				//See if any statii are open
+				working_phase = ~((NR_branchdata[NR_branch_reference].phases ^ NR_branchdata[NR_branch_reference].origphases) & 0x07);
+
+				//Mask it off
+				NR_busdata[NR_branchdata[NR_branch_reference].to].phases &= working_phase;
 			}
 
 			//Figure out what type of link we are and populate accordingly

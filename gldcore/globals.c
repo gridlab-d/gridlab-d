@@ -237,7 +237,7 @@ static struct s_varmap {
 	/* add new global variables here */
 };
 
-#ifdef WIN32
+#ifdef _WIN32
 #	define TMP "C:\\WINDOWS\\TEMP"
 #	define PATHSEP "\\"
 #	define HOMEVAR "HOMEPATH"
@@ -259,7 +259,7 @@ static void buildtmp(void)
 		return;
 	}
 	if (home = getenv(HOMEVAR)) {
-#ifdef WIN32
+#ifdef _WIN32
 		char *drive;
 		if (!(drive = getenv("HOMEDRIVE")))
 			drive = "";

@@ -822,7 +822,11 @@ SIMULATIONMODE fncs_msg::deltaClockUpdate(double t1, unsigned long timestep, SIM
 		fncs::time t = 0;
 		double dt = 0;
 		dt = (t1 - (double)initial_sim_time) * 1000000000.0;
-		t = (fncs::time)((dt + ((double)(timestep) / 2.0)) - fmod((dt + ((double)(timestep) / 2.0)), (double)timestep));
+		if(sysmode == SM_EVENT) {
+			t = (fncs::time)((dt + (1000000000.0 / 2.0)) - fmod((dt + (1000000000.0 / 2.0)), 1000000000.0));
+		} else {
+			t = (fncs::time)((dt + ((double)(timestep) / 2.0)) - fmod((dt + ((double)(timestep) / 2.0)), (double)timestep));
+		}
 		fncs::update_time_delta((fncs::time)timestep);
 		fncs_time = fncs::time_request(t);
 		if(sysmode == SM_EVENT)
@@ -833,7 +837,6 @@ SIMULATIONMODE fncs_msg::deltaClockUpdate(double t1, unsigned long timestep, SIM
 			return SM_ERROR;
 		} else {
 			last_delta_fncs_time = (double)(fncs_time)/1000000000.0 + (double)(initial_sim_time);
-			t1 = fncs_time;
 		}
 	}
 #endif
@@ -849,7 +852,6 @@ TIMESTAMP fncs_msg::clk_update(TIMESTAMP t1)
 		fncs::update_time_delta(fncs_step);
 #endif
 		exitDeltamode = false;
-		return t1;
 	}
 	if(t1 > last_approved_fncs_time){
 		if(gl_globalclock == gl_globalstoptime){

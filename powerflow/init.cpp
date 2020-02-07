@@ -445,7 +445,10 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 					error_state = true;
 					break;
 				}
-				//Default else, we're in SM_EVENT, so no flag change needed
+				else	//SM_EVENT - just put here for verbose messaging
+				{
+					gl_verbose("Powerflow object:%d - %s - requested exit to event-driven mode",delta_objects[curr_object_number]->id,(delta_objects[curr_object_number]->name ? delta_objects[curr_object_number]->name : "Unnamed"));						
+				}
 			}
 
 			//Check for error states -- blocks the reiteration if something was already angry

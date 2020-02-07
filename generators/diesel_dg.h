@@ -199,6 +199,7 @@ private:
 	gld_property *mapped_freq_variable;	//Mapping to frequency variable in powerflow module - deltamode updates
 
 	double Overload_Limit_Value;	//The computed maximum output power, based on the Rated_VA and the Overload_Limit_Value
+	SIMULATIONMODE desired_simulation_mode;	//deltamode desired simulation mode after corrector pass - prevents starting iterations again
 
 protected:
 	/* TODO: put unpublished but inherited variables */

@@ -96,14 +96,14 @@ int saveglm(char *filename,FILE *fp)
 	count += fprintf(fp,"// command.... %s\n", global_command_line);
 	count += fprintf(fp,"// created.... %s", asctime(localtime(&now)));
 	count += fprintf(fp,"// user....... %s\n",
-#ifdef WIN32
+#ifdef _WIN32
 		getenv("USERNAME")
 #else
 		getenv("USER")
 #endif
 		);
 	count += fprintf(fp,"// host....... %s\n",
-#ifdef WIN32
+#ifdef _WIN32
 		getenv("COMPUTERNAME")
 #else
 		getenv("HOSTNAME")

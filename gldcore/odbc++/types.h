@@ -113,7 +113,7 @@ namespace odbc {
 
   // We want Long to be at least 64 bits
 
-#if defined(WIN32)
+#if defined(_WIN32)
 
   typedef __int64 Long;
 

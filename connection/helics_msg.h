@@ -12,9 +12,6 @@
 #include "varmap.h"
 #include "connection.h"
 #if HAVE_HELICS
-//#ifdef min
-//#undef min
-//#endif
 #ifdef OPTIONAL
 #undef OPTIONAL
 #endif
