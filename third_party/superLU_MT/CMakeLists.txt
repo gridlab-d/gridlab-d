@@ -1,7 +1,7 @@
-project(libsuperlu)
+project(superlu_lib)
 
-SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_PTHREAD -DAdd_ -lm" )
-SET( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_PTHREAD -DAdd_ -lm" )
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_PTHREAD -DAdd_ -lm")
+SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_PTHREAD -DAdd_ -lm")
 
 add_library(${PROJECT_NAME} STATIC
         # from ../CBLAS
@@ -38,7 +38,7 @@ add_library(${PROJECT_NAME} STATIC
         ../superLU_MT/colamd.h
         ../superLU_MT/cpivotgrowth.c
         ../superLU_MT/creadhb.c
-#        ../superLU_MT/creadmt.c
+        #        ../superLU_MT/creadmt.c
         ../superLU_MT/creadrb.c
         ../superLU_MT/csp_blas2.c
         ../superLU_MT/csp_blas3.c
@@ -56,7 +56,7 @@ add_library(${PROJECT_NAME} STATIC
         ../superLU_MT/dmyblas2.c
         ../superLU_MT/dpivotgrowth.c
         ../superLU_MT/dreadhb.c
-#        ../superLU_MT/dreadmt.c
+        #        ../superLU_MT/dreadmt.c
         ../superLU_MT/dreadrb.c
         ../superLU_MT/dsp_blas2.c
         ../superLU_MT/dsp_blas3.c
@@ -191,7 +191,7 @@ add_library(${PROJECT_NAME} STATIC
         ../superLU_MT/sp_ienv.c
         ../superLU_MT/spivotgrowth.c
         ../superLU_MT/sreadhb.c
-#        ../superLU_MT/sreadmt.c
+        #        ../superLU_MT/sreadmt.c
         ../superLU_MT/sreadrb.c
         ../superLU_MT/ssp_blas2.c
         ../superLU_MT/ssp_blas3.c
@@ -210,7 +210,7 @@ add_library(${PROJECT_NAME} STATIC
         ../superLU_MT/zmyblas2.c
         ../superLU_MT/zpivotgrowth.c
         ../superLU_MT/zreadhb.c
-#        ../superLU_MT/zreadmt.c
+        #        ../superLU_MT/zreadmt.c
         ../superLU_MT/zreadrb.c
         ../superLU_MT/zsp_blas2.c
         ../superLU_MT/zsp_blas3.c
@@ -222,27 +222,25 @@ set_target_properties(${PROJECT_NAME}
         POSITION_INDEPENDENT_CODE ON
         )
 
-if ( CMAKE_COMPILER_IS_GNUCC )
+if (CMAKE_COMPILER_IS_GNUCC)
     target_compile_options(${PROJECT_NAME} PRIVATE "-w")
-endif()
-if ( MSVC )
+endif ()
+if (MSVC)
     target_compile_options(${PROJECT_NAME} PRIVATE "/w")
-endif()
+endif ()
 
 find_package(Threads REQUIRED)
-if(THREADS_HAVE_PTHREAD_ARG)
+if (THREADS_HAVE_PTHREAD_ARG)
     target_compile_options(${PROJECT_NAME} PUBLIC "-pthread")
-endif()
-if(CMAKE_THREAD_LIBS_INIT)
+endif ()
+if (CMAKE_THREAD_LIBS_INIT)
     target_link_libraries(${PROJECT_NAME} "${CMAKE_THREAD_LIBS_INIT}")
-endif()
+endif ()
 
 install(TARGETS ${PROJECT_NAME}
-        PERMISSIONS
-        OWNER_EXECUTE OWNER_READ OWNER_WRITE
-        GROUP_EXECUTE GROUP_READ
-        WORLD_EXECUTE WORLD_READ
-        LIBRARY DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}
-        ARCHIVE DESTINATION ${CMAKE_CURRENT_SOURCE_DIR}
-        )
+        ${FILE_PERMISSIONS}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        COMPONENT library)
 

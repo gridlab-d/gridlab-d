@@ -22,19 +22,6 @@ add_library(${PROJECT_NAME}
         group_recorder.h
         )
 
-set_target_properties(${PROJECT_NAME}
-        PROPERTIES PREFIX ""
-        )
-
-target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
-target_link_libraries(${PROJECT_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
-
-if (GLD_USE_CLANG_TIDY)
-    set_target_properties(${PROJECT_NAME} PROPERTIES
-            CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}"
-            )
-endif ()
-
 if (HAVE_MYSQL)
     include_directories(${MYSQL_INCLUDE_DIRECTORIES} ${MYSQL_INCLUDE_DIRECTORIES}/include)
     target_link_libraries(${PROJECT_NAME} PRIVATE ${MYSQL_LIBRARY})
@@ -49,4 +36,21 @@ if (HAVE_MYSQL)
             ${MYSQL_LIBRARY}
             )
     target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_HELICS)
+endif ()
+
+set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
+target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
+target_link_libraries(${PROJECT_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
+
+install(TARGETS ${PROJECT_NAME}
+        ${FILE_PERMISSIONS}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        COMPONENT library)
+
+if (GLD_USE_CLANG_TIDY)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+            CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}"
+            )
 endif ()

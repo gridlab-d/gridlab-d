@@ -73,11 +73,11 @@ add_compile_options(${FORCE_ERROR} ${DISABLED_OPTIMIZATIONS})
 if (WIN32 OR MSYS OR MINGW OR CYGWIN)
     set(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 dl m)
 elseif (LINUX)
-    set(OS_SPECIFIC_LIBRARIES "")
+    set(OS_SPECIFIC_LIBRARIES ${CMAKE_DL_LIBS})
 elseif (APPLE)
-    set(OS_SPECIFIC_LIBRARIES "")
+    set(OS_SPECIFIC_LIBRARIES ${CMAKE_DL_LIBS})
 else ()
-    set(OS_SPECIFIC_LIBRARIES "")
+    set(OS_SPECIFIC_LIBRARIES ${CMAKE_DL_LIBS})
 endif ()
 LIST(APPEND CMAKE_REQUIRED_LIBRARIES ${OS_SPECIFIC_LIBRARIES})
 if (CMAKE_REQUIRED_LIBRARIES)
@@ -127,7 +127,8 @@ set(GLD_MODULES
 
 set(HEADER_FILE_NAMES
         ${CMAKE_SOURCE_DIR}/gldcore/class.h
-        ${CMAKE_SOURCE_DIR}/gldcore/gld_complex.h
+#        ${CMAKE_SOURCE_DIR}/gldcore/gld_complex.h
+        ${CMAKE_SOURCE_DIR}/gldcore/complex.h
         ${CMAKE_SOURCE_DIR}/gldcore/debug.h
         ${CMAKE_SOURCE_DIR}/gldcore/enduse.h
         ${CMAKE_SOURCE_DIR}/gldcore/exception.h
@@ -215,18 +216,23 @@ set(GLD_SHARE
         ${CMAKE_SOURCE_DIR}/gldcore/gridlabd.htm
         )
 
+set(FILE_PERMISSIONS PERMISSIONS
+        OWNER_EXECUTE OWNER_READ OWNER_WRITE
+        GROUP_EXECUTE GROUP_READ
+        WORLD_EXECUTE WORLD_READ)
+
 # Load module directories. When adding new module, add it here.
 include_directories(gldcore)
 
-include_directories(third_party/superLU_MT)
-include_directories(third_party/jsoncpp/include)
+include_directories(third_party/SuperLU/SRC)
+include_directories(third_party/jsoncpp_lib/include)
 include_directories(third_party/Eigen)
-include_directories(third_party/dlfcn-win32)
+#include_directories(third_party/dlfcn-win32)
 
-add_subdirectory(third_party/superLU_MT)
+add_subdirectory(third_party/SuperLU)
 
 option(JSON_CPP_WITH_TESTS "Build the JSON CPP test suite" OFF)
-add_subdirectory(third_party/jsoncpp)
+add_subdirectory(third_party/jsoncpp_lib)
 find_package (Eigen3 3.3 REQUIRED NO_MODULE)
 
 # Configure module targets
@@ -257,21 +263,10 @@ mark_as_advanced(FORCE
         GLD_SHARE
         )
 
-set(FILE_PERMISSIONS PERMISSIONS
-        OWNER_EXECUTE OWNER_READ OWNER_WRITE
-        GROUP_EXECUTE GROUP_READ
-        WORLD_EXECUTE WORLD_READ)
-
 install(TARGETS gridlabd
         ${FILE_PERMISSIONS}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         )
-install(TARGETS ${GL_MODULES}
-        ${FILE_PERMISSIONS}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        COMPONENT library)
 
 install(FILES ${HEADER_FILE_NAMES}
         ${FILE_PERMISSIONS}

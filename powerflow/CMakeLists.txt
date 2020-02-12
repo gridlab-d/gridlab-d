@@ -113,13 +113,12 @@ add_library(${PROJECT_NAME}
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/third_party/Eigen/cmake) # Gives us FindKLU.cmake without replicating code
 find_package(KLU)
-if (KLU_FOUND)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_KLU)
-endif ()
-
-set_target_properties(${PROJECT_NAME}
-        PROPERTIES PREFIX ""
-        )
+if(GLD_USE_EIGEN)
+    target_compile_definitions(${PROJECT_NAME} PRIVATE GLD_USE_EIGEN)
+    if (KLU_FOUND)
+        target_compile_definitions(${PROJECT_NAME} PRIVATE GLD_USE_KLU)
+    endif ()
+endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE
         "${CMAKE_SOURCE_DIR}/third_party/SuperLU/SRC"
@@ -133,10 +132,18 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
         jsoncpp_lib
         Eigen3::Eigen
         ${KLU_LIBRARIES}
-        ${OS_SPECIFIC_LIBRARIES}
         )
 
+set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
 target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
+target_link_libraries(${PROJECT_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
+
+install(TARGETS ${PROJECT_NAME}
+        ${FILE_PERMISSIONS}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        COMPONENT library)
 
 if (GLD_USE_CLANG_TIDY)
     set_target_properties(${PROJECT_NAME} PROPERTIES

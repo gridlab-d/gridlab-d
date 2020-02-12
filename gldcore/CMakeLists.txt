@@ -130,19 +130,13 @@ add_executable(${PROJECT_NAME}
         #        xcore.h
         )
 
+target_link_libraries(${PROJECT_NAME} PRIVATE ${GL_MODULES})
 target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 if (CURSES_FOUND)
     target_link_libraries(${PROJECT_NAME} PRIVATE ${CURSES_LIBRARIES})
 endif ()
 
-target_link_libraries(${PROJECT_NAME} PRIVATE ${GL_MODULES})
-
-IF (WIN32 OR MSYS OR MINGW OR CYGWIN)
-    target_link_libraries(${PROJECT_NAME} ${OS_SPECIFIC_LIBRARIES})
-ELSE ()
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_DL_LIBS})
-ENDIF ()
-
+target_link_libraries(${PROJECT_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/headers)
 
 if (GLD_USE_CLANG_TIDY)

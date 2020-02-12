@@ -64,25 +64,6 @@ add_library(${PROJECT_NAME}
         ${HELICS_CONNECTION}
         )
 
-set_target_properties(${PROJECT_NAME}
-        PROPERTIES PREFIX ""
-        )
-
-target_include_directories(${PROJECT_NAME} PRIVATE
-        "${CMAKE_SOURCE_DIR}/third_party/jsoncpp/include"
-        )
-
-target_link_libraries(${PROJECT_NAME} PRIVATE jsoncpp_lib)
-
-target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
-target_link_libraries(${PROJECT_NAME} PRIVATE ${OS_SPECifIC_LIBRARIES})
-
-if (GLD_USE_CLANG_TIDY)
-    set_target_properties(${PROJECT_NAME} PROPERTIES
-            CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}"
-            )
-endif ()
-
 if (HAVE_FNCS)
     target_link_libraries(${PROJECT_NAME} PRIVATE
             fncs
@@ -94,4 +75,27 @@ endif ()
 if (HAVE_HELICS)
     target_link_libraries(${PROJECT_NAME} HELICS::helics-shared)
     target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_HELICS)
+endif ()
+
+target_include_directories(${PROJECT_NAME} PRIVATE
+        "${CMAKE_SOURCE_DIR}/third_party/jsoncpp/include"
+        )
+
+target_link_libraries(${PROJECT_NAME} PRIVATE jsoncpp_lib)
+
+set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
+target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
+target_link_libraries(${PROJECT_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
+
+install(TARGETS ${PROJECT_NAME}
+        ${FILE_PERMISSIONS}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        COMPONENT library)
+
+if (GLD_USE_CLANG_TIDY)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+            CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}"
+            )
 endif ()
