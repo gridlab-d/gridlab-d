@@ -17,27 +17,61 @@ EXPORT SIMULATIONMODE interupdate_solar(OBJECT *obj, unsigned int64 delta_time, 
 class solar : public gld_object
 {
 private:
-	bool deltamode_inclusive; 	//Boolean for deltamode calls - pulled from object flags
+	bool deltamode_inclusive; //Boolean for deltamode calls - pulled from object flags
 	bool first_sync_delta_enabled;
-protected:
 
+protected:
 public:
 	/* TODO: put published variables here */
-	set phases;	/**< device phases (see PHASE codes) */
-	enum GENERATOR_MODE {CONSTANT_V=1, CONSTANT_PQ=2, CONSTANT_PF=4, SUPPLY_DRIVEN=5};
-	enumeration gen_mode_v;  //operating mode of the generator 
+	set phases; /**< device phases (see PHASE codes) */
+	enum GENERATOR_MODE
+	{
+		CONSTANT_V = 1,
+		CONSTANT_PQ = 2,
+		CONSTANT_PF = 4,
+		SUPPLY_DRIVEN = 5
+	};
+	enumeration gen_mode_v; //operating mode of the generator
 	//note solar panel will always operate under the SUPPLY_DRIVEN generator mode
-	enum GENERATOR_STATUS {OFFLINE=1, ONLINE=2};
+	enum GENERATOR_STATUS
+	{
+		OFFLINE = 1,
+		ONLINE = 2
+	};
 	enumeration gen_status_v;
-	enum POWER_TYPE{DC=1, AC=2};
+	enum POWER_TYPE
+	{
+		DC = 1,
+		AC = 2
+	};
 	enumeration power_type_v;
-	enum PANEL_TYPE{SINGLE_CRYSTAL_SILICON=1, MULTI_CRYSTAL_SILICON=2, AMORPHOUS_SILICON=3, THIN_FILM_GA_AS=4, CONCENTRATOR=5};
+	enum PANEL_TYPE
+	{
+		SINGLE_CRYSTAL_SILICON = 1,
+		MULTI_CRYSTAL_SILICON = 2,
+		AMORPHOUS_SILICON = 3,
+		THIN_FILM_GA_AS = 4,
+		CONCENTRATOR = 5
+	};
 	enumeration panel_type_v;
-    enum INSTALLATION_TYPE {ROOF_MOUNTED=1, GROUND_MOUNTED=2};
+	enum INSTALLATION_TYPE
+	{
+		ROOF_MOUNTED = 1,
+		GROUND_MOUNTED = 2
+	};
 	enumeration installation_type_v;
-	enum SOLAR_TILT_MODEL {LIUJORDAN=0, SOLPOS=1, PLAYERVAL=2};
+	enum SOLAR_TILT_MODEL
+	{
+		LIUJORDAN = 0,
+		SOLPOS = 1,
+		PLAYERVAL = 2
+	};
 	enumeration solar_model_tilt;
-	enum SOLAR_POWER_MODEL {BASEEFFICIENT=0, FLATPLATE=1};
+	enum SOLAR_POWER_MODEL
+	{
+		BASEEFFICIENT = 0,
+		FLATPLATE = 1
+	};
 	enumeration solar_power_model;
 
 	double NOCT;
@@ -54,9 +88,9 @@ public:
 	double Tamb;
 	double wind_speed;
 	double Pmax_temp_coeff;
-    double Voc_temp_coeff;
-    double w1;
-    double w2;
+	double Voc_temp_coeff;
+	double w1;
+	double w2;
 	double w3;
 	double constant;
 	complex P_Out;
@@ -65,35 +99,41 @@ public:
 	complex VA_Out;
 
 	//Variables for temperature correction - obtained from Sandia database for module types
-	double module_acoeff;			//Temperature correction coefficient a
-	double module_bcoeff;			//Temperature correction coefficient b
-	double module_dTcoeff;			//Temperature difference coefficient associated with insolation heating
-	double module_Tcoeff;			//Maximum power temperature coefficient
+	double module_acoeff;  //Temperature correction coefficient a
+	double module_bcoeff;  //Temperature correction coefficient b
+	double module_dTcoeff; //Temperature difference coefficient associated with insolation heating
+	double module_Tcoeff;  //Maximum power temperature coefficient
 
-	double shading_factor;			//Shading factor
-	double tilt_angle;				//Installation tilt angle
-	double orientation_azimuth;		//published Orientation of the array
-	bool fix_angle_lat;				//Fix tilt angle to latitude (replicates NREL SAM function)
-	double soiling_factor;			//Soiling factor to be applied - makes user specifiable
-	double derating_factor;			//Inverter derating factor - makes user specifiable
+	double shading_factor;		//Shading factor
+	double tilt_angle;			//Installation tilt angle
+	double orientation_azimuth; //published Orientation of the array
+	bool fix_angle_lat;			//Fix tilt angle to latitude (replicates NREL SAM function)
+	double soiling_factor;		//Soiling factor to be applied - makes user specifiable
+	double derating_factor;		//Inverter derating factor - makes user specifiable
 
-	enum ORIENTATION {DEFAULT=0, FIXED_AXIS=1, ONE_AXIS=2, TWO_AXIS=3, AZIMUTH_AXIS=4};
-	enumeration orientation_type;	//Describes orientation features of PV
+	enum ORIENTATION
+	{
+		DEFAULT = 0,
+		FIXED_AXIS = 1,
+		ONE_AXIS = 2,
+		TWO_AXIS = 3,
+		AZIMUTH_AXIS = 4
+	};
+	enumeration orientation_type; //Describes orientation features of PV
 
-	FUNCTIONADDR calc_solar_radiation;	//Function pointer to climate's calculate solar radiation in degrees
-		
+	FUNCTIONADDR calc_solar_radiation; //Function pointer to climate's calculate solar radiation in degrees
+
 	OBJECT *weather;
 	double efficiency;
 	double prevTemp, currTemp;
 	TIMESTAMP prevTime;
 
-	double Max_P;//< maximum real power capacity in kW
-    double Min_P;//< minimus real power capacity in kW
+	double Max_P;	 //< maximum real power capacity in kW
+	double Min_P;	 //< minimus real power capacity in kW
 	double Rated_kVA; //< nominal capacity in kVA
-	
 
 private:
-	double orientation_azimuth_corrected;	//Corrected azimuth, for crazy "0=equator" referenced models
+	double orientation_azimuth_corrected; //Corrected azimuth, for crazy "0=equator" referenced models
 
 	//Pointers to properties
 	gld_property *pTout;
@@ -126,7 +166,7 @@ public:
 	static CLASS *oclass;
 	static solar *defaults;
 #ifdef OPTIONAL
-	static CLASS *pclass; /**< defines the parent class */
+	static CLASS *pclass;						/**< defines the parent class */
 	TIMESTAMPP plc(TIMESTAMP t0, TIMESTAMP t1); /**< defines the default PLC code */
 #endif
 };
