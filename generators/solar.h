@@ -6,8 +6,8 @@
  @{  
  **/
 
-#ifndef _solar_H
-#define _solar_H
+#ifndef GLD_GENERATORS_SOLAR_H_
+#define GLD_GENERATORS_SOLAR_H_
 
 #include <stdarg.h>
 #include "generators.h"
@@ -171,4 +171,4 @@ public:
 #endif
 };
 
-#endif
+#endif // GLD_GENERATORS_SOLAR_H_
