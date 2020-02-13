@@ -442,8 +442,8 @@ int emissions::init(OBJECT *parent)
 TIMESTAMP emissions::postsync(TIMESTAMP t0)
 {
 	double temp_energy, dispatch_order;;
-	complex temp_power;
-	complex energy_for_calc;
+	gld::complex temp_power;
+	gld::complex energy_for_calc;
 	bool energy_requirement;
 	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP tret = powerflow_object::postsync(t0);

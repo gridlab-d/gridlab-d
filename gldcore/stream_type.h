@@ -1,3 +1,5 @@
+using namespace gld;
+
 stream_type(double);
 stream_type(complex);
 stream_type(enumeration);

@@ -21,7 +21,7 @@
 #include "enduse.h"
 #include "gridlabd.h"
 #include "exec.h"
-#include "complex.h"
+#include "gld_complex.h"
 
 static enduse *enduse_list = NULL;
 static unsigned int n_enduses = 0;

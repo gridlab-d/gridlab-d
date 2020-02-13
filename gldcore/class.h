@@ -19,7 +19,7 @@
 #include "config.h"
 #endif
 #include "platform.h"
-#include "complex.h"
+#include "gld_complex.h"
 #include "unit.h"
 #include "property.h"
 

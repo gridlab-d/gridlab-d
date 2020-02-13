@@ -47,9 +47,9 @@ public:
 	double Insolation;
 	double Rinternal;
 	double Rated_Insolation;
-	complex V_Max;
-	complex Voc;
-	complex Voc_Max;
+	gld::complex V_Max;
+	gld::complex Voc;
+	gld::complex Voc_Max;
 	double area;
 	double Tamb;
 	double wind_speed;
@@ -59,10 +59,10 @@ public:
     double w2;
 	double w3;
 	double constant;
-	complex P_Out;
-	complex V_Out;
-	complex I_Out;
-	complex VA_Out;
+	gld::complex P_Out;
+	gld::complex V_Out;
+	gld::complex I_Out;
+	gld::complex VA_Out;
 
 	//Variables for temperature correction - obtained from Sandia database for module types
 	double module_acoeff;			//Temperature correction coefficient a
@@ -104,8 +104,8 @@ private:
 	gld_property *inverter_current_property;
 
 	//Default voltage and current values, if ran "headless"
-	complex default_voltage_array;
-	complex default_current_array;
+	gld::complex default_voltage_array;
+	gld::complex default_current_array;
 
 public:
 	/* required implementations */

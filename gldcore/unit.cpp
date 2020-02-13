@@ -670,7 +670,7 @@ int unit_convert_ex(UNIT *pFrom, UNIT *pTo, double *pValue)
 /** Convert a complex value from one unit to another
 	@return 1 if successful, 0 if failed
  **/
-int unit_convert_complex(UNIT *pFrom, UNIT *pTo, complex *pValue)
+int unit_convert_complex(UNIT *pFrom, UNIT *pTo, gld::complex *pValue)
 {
 	if(pFrom == NULL || pTo == NULL || pValue == NULL){
 		output_error("could not run unit_convert_complex due to null arguement");

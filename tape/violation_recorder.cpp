@@ -1106,7 +1106,7 @@ int violation_recorder::check_violation_8(TIMESTAMP t1) {
 	if (p_ptr == NULL)
 		return 0;
 
-	complex power_in = get_observed_complex_value(link_monitor_obj, p_ptr);
+	gld::complex power_in = get_observed_complex_value(link_monitor_obj, p_ptr);
 	double pf = power_in.Re()/power_in.Mag();
 
 	if (fails_static_condition (pf, 1.0, substation_pf_lower_limit, 1.0, &retval)) {
@@ -1121,7 +1121,7 @@ double violation_recorder::get_observed_double_value(OBJECT *curr, PROPERTY *pro
 	char objname[128];
 	double part_value = 0.0;
 	if(prop->ptype == PT_complex){
-		complex *cptr = 0;
+		gld::complex *cptr = 0;
 		// get value as a complex
 		cptr = gl_get_complex(curr, prop);
 		if(0 == cptr){
@@ -1138,9 +1138,9 @@ double violation_recorder::get_observed_double_value(OBJECT *curr, PROPERTY *pro
 	return part_value;
 }
 
-complex violation_recorder::get_observed_complex_value(OBJECT *curr, PROPERTY *prop) {
+gld::complex violation_recorder::get_observed_complex_value(OBJECT *curr, PROPERTY *prop) {
 	char objname[128];
-	complex *cptr = 0;
+	gld::complex *cptr = 0;
 	if(prop->ptype == PT_complex){
 		// get value as a complex
 		cptr = gl_get_complex(curr, prop);

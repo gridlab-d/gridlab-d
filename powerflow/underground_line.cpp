@@ -284,7 +284,7 @@ int underground_line::init(OBJECT *parent)
 void underground_line::recalc(void)
 {
 	line_configuration *config = OBJECTDATA(configuration, line_configuration);
-	complex Zabc_mat[3][3], Yabc_mat[3][3];
+	gld::complex Zabc_mat[3][3], Yabc_mat[3][3];
 	bool not_TS_CN = false;
 	bool is_CN_ug_line = false;
 	OBJECT *obj = OBJECTHDR(this);
@@ -345,12 +345,12 @@ void underground_line::recalc(void)
 				double dia[7], res[7], gmr[7], gmrcn[3], rcn[3], gmrs[3], ress[3], tap[8];
 		double d[7][7];
 		double perm_A, perm_B, perm_C, c_an, c_bn, c_cn, temp_denom;
-		complex cap_freq_coeff;
-		complex z[7][7],z_ts[3][3]; //, z_ij[3][3], z_in[3][3], z_nj[3][3], z_nn[3][3], z_abc[3][3];
+		gld::complex cap_freq_coeff;
+		gld::complex z[7][7],z_ts[3][3]; //, z_ij[3][3], z_in[3][3], z_nj[3][3], z_nn[3][3], z_abc[3][3];
 		double freq_coeff_real, freq_coeff_imag, freq_additive_term;
 		double miles = length / 5280.0;
 
-		complex test;///////////////
+		gld::complex test;///////////////
 
 		//Calculate coefficients for self and mutual impedance - incorporates frequency values
 		//Per Kersting (4.39) and (4.40) - coefficients end up same as OHLs
@@ -476,11 +476,11 @@ void underground_line::recalc(void)
 			//Define the scaling constant for frequency, distance, and microS
 			if (enable_frequency_dependence == true)	//See which frequency to use
 			{
-				cap_freq_coeff = complex(0,(2.0*PI*current_frequency*0.000001*miles));
+				cap_freq_coeff = gld::complex(0,(2.0*PI*current_frequency*0.000001*miles));
 			}
 			else
 			{
-				cap_freq_coeff = complex(0,(2.0*PI*nominal_frequency*0.000001*miles));
+				cap_freq_coeff = gld::complex(0,(2.0*PI*nominal_frequency*0.000001*miles));
 			}
 		}
 
@@ -541,10 +541,10 @@ void underground_line::recalc(void)
 		#undef UG_GET
 
 		 if (is_CN_ug_line == true) {
-			#define Z_GMR(i) (GMR(i) == 0.0 ? complex(0.0) : complex(freq_coeff_real + RES(i), freq_coeff_imag * (log(1.0 / GMR(i)) + freq_additive_term)))
-			#define Z_GMRCN(i) (GMRCN(i) == 0.0 ? complex(0.0) : complex(freq_coeff_real + RCN(i), freq_coeff_imag * (log(1.0 / GMRCN(i)) + freq_additive_term)))
-			#define Z_GMR_S(i) (GMR_S(i) == 0.0 ? complex(0.0) : complex(freq_coeff_real + RES_S(i), freq_coeff_imag*(log(1.0/GMR_S(i)) + freq_additive_term)))
-			#define Z_DIST(i, j) (D(i, j) == 0.0 ? complex(0.0) : complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / D(i, j)) + freq_additive_term)))
+			#define Z_GMR(i) (GMR(i) == 0.0 ? gld::complex(0.0) : gld::complex(freq_coeff_real + RES(i), freq_coeff_imag * (log(1.0 / GMR(i)) + freq_additive_term)))
+			#define Z_GMRCN(i) (GMRCN(i) == 0.0 ? gld::complex(0.0) : gld::complex(freq_coeff_real + RCN(i), freq_coeff_imag * (log(1.0 / GMRCN(i)) + freq_additive_term)))
+			#define Z_GMR_S(i) (GMR_S(i) == 0.0 ? gld::complex(0.0) : gld::complex(freq_coeff_real + RES_S(i), freq_coeff_imag*(log(1.0/GMR_S(i)) + freq_additive_term)))
+			#define Z_DIST(i, j) (D(i, j) == 0.0 ? gld::complex(0.0) : gld::complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / D(i, j)) + freq_additive_term)))
 
 			for (int i = 1; i < 8; i++) {
 				for (int j = 1; j < 8; j++) {
@@ -565,12 +565,12 @@ void underground_line::recalc(void)
 			#undef Z_GMR_S	//Make the compiler happy
 		 } else {
                 // see example: 4.4
-                #define Z_GMR(i) (GMR(i) == 0.0 ? complex(0.0) : complex(freq_coeff_real + RES(i), freq_coeff_imag * (log(1.0 / GMR(i)) + freq_additive_term))) 
+                #define Z_GMR(i) (GMR(i) == 0.0 ? gld::complex(0.0) : gld::complex(freq_coeff_real + RES(i), freq_coeff_imag * (log(1.0 / GMR(i)) + freq_additive_term)))
 		//Notes for above #define: z11, z22, z33 - self conductor; z77 - self neutral. RES(i=4,5,6) is neutral_resitance, GMR(i=4,5,6) is neutral GMR. For z77, neutral_resistance to be added in real term
                 //so pick RES(i) such that is is neutral_resistance. For imaginaray temrm, neutral_gmr to be used in ln(1/GMRn) so pick GMR(i) such that it is neutral GMR
-                #define Z_GMR_S_SELF(i) (GMR_S(i) == 0.0 ? complex(0.0) : complex(freq_coeff_real+RES_S(i), freq_coeff_imag*(log(1.0/GMR_S(i)) + freq_additive_term))) //z44, z55, z66 - self tape
-                #define Z_GMR_S(i) (GMR_S(i) == 0.0 ? complex(0.0) : complex(freq_coeff_real, freq_coeff_imag*(log(1.0/GMR_S(i)) + freq_additive_term))) //z14, z25, z36 - mutual - conductor-tape  
-                #define Z_DIST(i, j) (D(i, j) == 0.0 ? complex(0.0) : complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / D(i, j)) + freq_additive_term))) 
+                #define Z_GMR_S_SELF(i) (GMR_S(i) == 0.0 ? gld::complex(0.0) : gld::complex(freq_coeff_real+RES_S(i), freq_coeff_imag*(log(1.0/GMR_S(i)) + freq_additive_term))) //z44, z55, z66 - self tape
+                #define Z_GMR_S(i) (GMR_S(i) == 0.0 ? gld::complex(0.0) : gld::complex(freq_coeff_real, freq_coeff_imag*(log(1.0/GMR_S(i)) + freq_additive_term))) //z14, z25, z36 - mutual - conductor-tape
+                #define Z_DIST(i, j) (D(i, j) == 0.0 ? gld::complex(0.0) : gld::complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / D(i, j)) + freq_additive_term)))
                //Notes for above #define: z12,z13,z15,z16,z17,z21,z23,z24,z26,z27,z31,z32,z34,z35,z37,z41,z42,z43,z45,z46,z47,z51-z54,z36,z57,z61-z65,z67,z71-z76 mutual/coupling
 
 		for (int i = 1; i < 8; i++) {
@@ -628,32 +628,32 @@ void underground_line::recalc(void)
 		
 		if (not_TS_CN == false){			
 			if (is_CN_ug_line == true) {
-				complex z_ij_cn[3][3] = {{Z(1, 1), Z(1, 2), Z(1, 3)},
+				gld::complex z_ij_cn[3][3] = {{Z(1, 1), Z(1, 2), Z(1, 3)},
 									  {Z(2, 1), Z(2, 2), Z(2, 3)},
 									  {Z(3, 1), Z(3, 2), Z(3, 3)}};
-				complex z_in_cn[3][4] = {{Z(1, 4), Z(1, 5), Z(1, 6),Z(1, 7)},
+				gld::complex z_in_cn[3][4] = {{Z(1, 4), Z(1, 5), Z(1, 6),Z(1, 7)},
 									  {Z(2, 4), Z(2, 5), Z(2, 6),Z(2, 7)},
 									  {Z(3, 4), Z(3, 5), Z(3, 6),Z(3, 7)}};
-				complex z_nj_cn[4][3] = {{Z(4, 1), Z(4, 2), Z(4, 3)},
+				gld::complex z_nj_cn[4][3] = {{Z(4, 1), Z(4, 2), Z(4, 3)},
 									  {Z(5, 1), Z(5, 2), Z(5, 3)},
 									  {Z(6, 1), Z(6, 2), Z(6, 3)},
 				                      {Z(7, 1), Z(7, 2), Z(7, 3)}};
-				complex z_nn_cn[4][4] = {{Z(4, 4), Z(4, 5), Z(4, 6), Z(4, 7)},
+				gld::complex z_nn_cn[4][4] = {{Z(4, 4), Z(4, 5), Z(4, 6), Z(4, 7)},
 						               {Z(5, 4), Z(5, 5), Z(5, 6), Z(5, 7)},
 						               {Z(6, 4), Z(6, 5), Z(6, 6), Z(6, 7)},
 						               {Z(7, 4), Z(7, 5), Z(7, 6), Z(7, 7)}};
 				
 				if (!(has_phase(PHASE_A)&&has_phase(PHASE_B)&&has_phase(PHASE_C)&&has_phase(PHASE_N))){
 					if (!has_phase(PHASE_A))
-						z_nn_cn[0][0]=complex(1.0);
+						z_nn_cn[0][0]=gld::complex(1.0);
 					if (!has_phase(PHASE_B))
-						z_nn_cn[1][1]=complex(1.0);
+						z_nn_cn[1][1]=gld::complex(1.0);
 					if (!has_phase(PHASE_C))
-						z_nn_cn[2][2]=complex(1.0);
+						z_nn_cn[2][2]=gld::complex(1.0);
 					if (!has_phase(PHASE_N))
-						z_nn_cn[3][3]=complex(1.0);
+						z_nn_cn[3][3]=gld::complex(1.0);
 				} //add phase_N here
-				complex z_nn_inv_cn[4][4], z_p1_cn[3][4], z_p2_cn[3][3], z_abc_cn[3][3];
+				gld::complex z_nn_inv_cn[4][4], z_p1_cn[3][4], z_p2_cn[3][3], z_abc_cn[3][3];
 				lu_matrix_inverse(&z_nn_cn[0][0],&z_nn_inv_cn[0][0],4);
 
 
@@ -686,32 +686,32 @@ void underground_line::recalc(void)
 
 			}
 			else {
-			complex z_ij_ts[3][3] = {{Z(1, 1), Z(1, 2), Z(1, 3)},
+			gld::complex z_ij_ts[3][3] = {{Z(1, 1), Z(1, 2), Z(1, 3)},
 									  {Z(2, 1), Z(2, 2), Z(2, 3)},
 									  {Z(3, 1), Z(3, 2), Z(3, 3)}};
-				complex z_in_ts[3][4] = {{Z(1, 4), Z(1, 5), Z(1, 6), Z(1,7)},
+				gld::complex z_in_ts[3][4] = {{Z(1, 4), Z(1, 5), Z(1, 6), Z(1,7)},
 									  {Z(2, 4), Z(2, 5), Z(2, 6), Z(2,7)},
 									  {Z(3, 4), Z(3, 5), Z(3, 6), Z(3,7)}};
-				complex z_nj_ts[4][3] = {{Z(4, 1), Z(4, 2), Z(4, 3)},
+				gld::complex z_nj_ts[4][3] = {{Z(4, 1), Z(4, 2), Z(4, 3)},
 									  {Z(5, 1), Z(5, 2), Z(5, 3)},
 									  {Z(6, 1), Z(6, 2), Z(6, 3)},
 									  {Z(7, 1), Z(7, 2), Z(7, 3)}};
 
 
-				complex z_nn_ts[4][4] = {{Z(4, 4), Z(4, 5), Z(4, 6), Z(4, 7)},
+				gld::complex z_nn_ts[4][4] = {{Z(4, 4), Z(4, 5), Z(4, 6), Z(4, 7)},
 									  {Z(5, 4), Z(5, 5), Z(5, 6), Z(5, 7)},
 									  {Z(6, 4), Z(6, 5), Z(6, 6), Z(6, 7)},
 									  {Z(7, 4), Z(7, 5), Z(7, 6), Z(7, 7)}};
 			if (!(has_phase(PHASE_A)&&has_phase(PHASE_B)&&has_phase(PHASE_C)&&has_phase(PHASE_N))){
 					if (!has_phase(PHASE_A))
-						z_nn_ts[0][0]=complex(1.0);
+						z_nn_ts[0][0]=gld::complex(1.0);
 					if (!has_phase(PHASE_B))
-						z_nn_ts[1][1]=complex(1.0);
+						z_nn_ts[1][1]=gld::complex(1.0);
 					if (!has_phase(PHASE_C))
-						z_nn_ts[2][2]=complex(1.0);
+						z_nn_ts[2][2]=gld::complex(1.0);
 					if(!has_phase(PHASE_N))
 					{
-						z_nn_ts[3][3]=complex(1.0);
+						z_nn_ts[3][3]=gld::complex(1.0);
 					    gl_warning("Underground_line:%d - %s is a tape-shielded cable and may need an explicit phase N conductor",obj->id,(obj->name ? obj->name : "Unnamed"));
 						/*  TROUBLESHOOT
 						The underground cable is set up as a tape-shielded cable.  For neutral currents, it may require an explicit neutral to be connected, unless it represents a
@@ -719,7 +719,7 @@ void underground_line::recalc(void)
 						*/
 					}
 				}  //add phase_N here
-				complex z_nn_inv_ts[4][4], z_p1_ts[3][4], z_p2_ts[3][3], z_abc_ts[3][3];
+				gld::complex z_nn_inv_ts[4][4], z_p1_ts[3][4], z_p2_ts[3][3], z_abc_ts[3][3];
 				lu_matrix_inverse(&z_nn_ts[0][0],&z_nn_inv_ts[0][0],4);
 				
 				for (int row = 0; row < 3; row++) {
@@ -746,22 +746,22 @@ void underground_line::recalc(void)
 				multiply(miles, z_abc_ts, Zabc_mat);
 
 				/* //This is a test example based on example 4.4 in Kersting's
-				complex z_ij_ts[1][1] = {Z(1, 1)};
-				complex z_in_ts[1][2] = {Z(1, 2), Z(1, 3)};
-				complex z_nj_ts[2][1] = {{Z(1, 2)},
+				gld::complex z_ij_ts[1][1] = {Z(1, 1)};
+				gld::complex z_in_ts[1][2] = {Z(1, 2), Z(1, 3)};
+				gld::complex z_nj_ts[2][1] = {{Z(1, 2)},
 					                {Z(1, 3)}};
-				complex z_nn_ts[2][2] = {{Z(2, 2), Z(2, 3)},
+				gld::complex z_nn_ts[2][2] = {{Z(2, 2), Z(2, 3)},
 						         {Z(3, 2), Z(3, 3)}};
 
 				if (!(has_phase(PHASE_A)&&has_phase(PHASE_B)&&has_phase(PHASE_C))){
 					if (!has_phase(PHASE_A))
-						z_nn_ts[0][0]=complex(1.0);
+						z_nn_ts[0][0]=gld::complex(1.0);
 					if (!has_phase(PHASE_B))
-						z_nn_ts[1][1]=complex(1.0);
+						z_nn_ts[1][1]=gld::complex(1.0);
 					if (!has_phase(PHASE_C))
-						z_nn_ts[2][2]=complex(1.0);
+						z_nn_ts[2][2]=gld::complex(1.0);
 				}				
-				complex z_nn_inv_ts[2][2], z_p1_ts[1][2], z_p2_ts[1][1], z_abc_ts[1][1];
+				gld::complex z_nn_inv_ts[2][2], z_p1_ts[1][2], z_p2_ts[1][1], z_abc_ts[1][1];
 				//lu_matrix_inverse(&z_nn_ts[0][0],&z_nn_inv_ts[0][0],2);
 				
 				z_nn_inv_ts[0][0] = z_nn_ts[1][1]/((z_nn_ts[0][0] * z_nn_ts[1][1]) - (z_nn_ts[0][1] * z_nn_ts[1][0]));			
@@ -778,25 +778,25 @@ void underground_line::recalc(void)
                                 z_abc_ts[0][0]  = z_ij_ts[0][0] - z_p2_ts[0][0];
 
 				Zabc_mat[0][0] = (z_abc_ts[0][0]) * miles;
-				Zabc_mat[0][1] = complex(0,0);
-				Zabc_mat[0][2] = complex(0,0);
+				Zabc_mat[0][1] = gld::complex(0,0);
+				Zabc_mat[0][2] = gld::complex(0,0);
 
 
-				Zabc_mat[1][0] = complex(0,0);
-				Zabc_mat[1][1] = complex(0,0);
+				Zabc_mat[1][0] = gld::complex(0,0);
+				Zabc_mat[1][1] = gld::complex(0,0);
 
-				Zabc_mat[1][2] = complex(0,0);
-				Zabc_mat[2][0] = complex(0,0);
-				Zabc_mat[2][1] = complex(0,0);
+				Zabc_mat[1][2] = gld::complex(0,0);
+				Zabc_mat[2][0] = gld::complex(0,0);
+				Zabc_mat[2][1] = gld::complex(0,0);
 
-				Zabc_mat[2][2] = complex(0,0);
+				Zabc_mat[2][2] = gld::complex(0,0);
 				//multiply(miles, z_abc_ts, Zabc_mat);
 				*/
 			}
 
 	
 		} else {
-			complex z_nn_inv = 0;
+			gld::complex z_nn_inv = 0;
 			if(Z(7, 7) != 0.0){
 				z_nn_inv = Z(7, 7)^(-1.0);
 			}

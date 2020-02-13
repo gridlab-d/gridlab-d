@@ -141,7 +141,7 @@ int convert_from_complex(char *buffer, /**< pointer to the string buffer */
 {
 	int count = 0;
 	char temp[1025];
-	complex *v = (complex*)data;
+	gld::complex *v = (gld::complex*)data;
 
 	double scale = 1.0;
 	if ( prop->unit!=NULL )
@@ -198,7 +198,7 @@ int convert_to_complex(const char *buffer, /**< a pointer to the string buffer *
 					   void *data, /**< a pointer to the data */
 					   PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
-	complex *v = (complex*)data;
+	gld::complex *v = (gld::complex*)data;
 	char unit[256];
 	char notation[2]={'\0','\0'}; /* force detection invalid complex number */
 	int n;
@@ -1107,7 +1107,7 @@ int convert_to_complex_array(const char *buffer, void *data, PROPERTY *prop)
 	{
 		char value[256];
 		char objectname[64], propertyname[64];
-		complex c;
+		gld::complex c;
 		while ( *p!='\0' && isspace(*p) ) p++; /* skip spaces */
 		if ( *p!='\0' && sscanf(p,"%s",value)==1 )
 		{
@@ -1164,7 +1164,7 @@ int convert_to_complex_array(const char *buffer, void *data, PROPERTY *prop)
 					return 0;
 				}
 				a->grow_to(row,col);
-				a->set_at(row,col,(complex*)var->prop->addr);
+				a->set_at(row,col,(gld::complex*)var->prop->addr);
 				if ( a->is_nan(row,col) )
 				{
 					output_error("convert_to_double_array(const char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object '%s' is not accessible", buffer,row,col,propertyname,objectname);

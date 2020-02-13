@@ -127,8 +127,7 @@ set(GLD_MODULES
 
 set(HEADER_FILE_NAMES
         ${CMAKE_SOURCE_DIR}/gldcore/class.h
-#        ${CMAKE_SOURCE_DIR}/gldcore/gld_complex.h
-        ${CMAKE_SOURCE_DIR}/gldcore/complex.h
+        ${CMAKE_SOURCE_DIR}/gldcore/gld_complex.h
         ${CMAKE_SOURCE_DIR}/gldcore/debug.h
         ${CMAKE_SOURCE_DIR}/gldcore/enduse.h
         ${CMAKE_SOURCE_DIR}/gldcore/exception.h

@@ -20,7 +20,7 @@ add_executable(${PROJECT_NAME}
         #        cmex.h
         compare.cpp
         compare.h
-        complex.h
+        gld_complex.h
         console.h
         convert.cpp
         convert.h

@@ -13,7 +13,7 @@
 #include "generators.h"
 
 EXPORT SIMULATIONMODE interupdate_diesel_dg(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
-EXPORT STATUS postupdate_diesel_dg(OBJECT *obj, complex *useful_value, unsigned int mode_pass);
+EXPORT STATUS postupdate_diesel_dg(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass);
 
 //AVR state variable structure
 typedef struct {
@@ -113,11 +113,11 @@ typedef struct {
 	double Vfd;					//Field voltage of machine
 	double Flux1d;				//Transient flux on d-axis
 	double Flux2q;				//Sub-transient flux on q-axis
-	complex EpRotated;			//d-q rotated E' internal voltage
-	complex VintRotated;		//d-q rotated Vint voltage
-	complex EintVal[3];			//Unrotated, un-sequenced internal voltage
-	complex Irotated;			//d-q rotated current value
-	complex pwr_electric;		//Total electric power output of generator
+	gld::complex EpRotated;			//d-q rotated E' internal voltage
+	gld::complex VintRotated;		//d-q rotated Vint voltage
+	gld::complex EintVal[3];			//Unrotated, un-sequenced internal voltage
+	gld::complex Irotated;			//d-q rotated current value
+	gld::complex pwr_electric;		//Total electric power output of generator
 	double pwr_mech;			//Mechanical power output of generator
 	double torque_mech;			//Mechanical torque of generator
 	double torque_elec;			//electrical torque of generator
@@ -149,10 +149,10 @@ private:
 	gld_property *pLine_I[3]; ///< pointer to the three current on three lines
 	gld_property *pPower[3];	///< pointer to the three powers on three lines
 
-	complex value_Circuit_V[3];	///Storage variable for voltages
-	complex value_Line_I[3];	///Storage variable for currents
-	complex value_Power[3];		///Storage variable for power
-	complex value_prev_Power[3];	///Storage variable for previous power - mostly for accumulator handling
+	gld::complex value_Circuit_V[3];	///Storage variable for voltages
+	gld::complex value_Line_I[3];	///Storage variable for currents
+	gld::complex value_Power[3];		///Storage variable for power
+	gld::complex value_prev_Power[3];	///Storage variable for previous power - mostly for accumulator handling
 
 	bool parent_is_powerflow;
 
@@ -164,17 +164,17 @@ private:
 	gld_property *pbus_full_Y_all_mat;	//Link to the full_Y_all bus variable -- used for Norton equivalents
 	gld_property *pPGenerated;			//Link to bus PGenerated field - mainly used for SWING generator
 	gld_property *pIGenerated[3];		//Link to direct current injections to powerflow at bus-level (prerot current)
-	complex value_IGenerated[3];		//Accumulator/holding variable for direct current injections at bus-level (pre-rotated current)
-	complex generator_admittance[3][3];	//Generator admittance matrix converted from sequence values
-	complex full_bus_admittance_mat[3][3];	//Full self-admittance of Ybus form - pulled from node connection
+	gld::complex value_IGenerated[3];		//Accumulator/holding variable for direct current injections at bus-level (pre-rotated current)
+	gld::complex generator_admittance[3][3];	//Generator admittance matrix converted from sequence values
+	gld::complex full_bus_admittance_mat[3][3];	//Full self-admittance of Ybus form - pulled from node connection
 	double power_base;					//Per-phase basis (divide by 3)
 	double voltage_base;				//Voltage p.u. base for analysis (converted from delta)
 	double current_base;				//Current p.u. base for analysis
 	double impedance_base;				//Impedance p.u. base for analysis
-	complex YS0;						//Zero sequence admittance - scaled (not p.u.)
-	complex YS1;						//Positive sequence admittance - scaled (not p.u.)
-	complex YS2;						//Negative sequence admittance - scaled (not p.u.)
-	complex YS1_Full;					//Positive sequence admittance - full Ybus value
+	gld::complex YS0;						//Zero sequence admittance - scaled (not p.u.)
+	gld::complex YS1;						//Positive sequence admittance - scaled (not p.u.)
+	gld::complex YS2;						//Negative sequence admittance - scaled (not p.u.)
+	gld::complex YS1_Full;					//Positive sequence admittance - full Ybus value
 	double Rr;							//Rotor resistance term - derived
 	double *torque_delay;				//Buffer of delayed governor torques
 	double *x5a_delayed;					//Buffer of delayed x5a variables (ggov1)
@@ -186,7 +186,7 @@ private:
 	unsigned int x5a_delayed_read_pos;	//Indexing variable for reading torque_delay_buffer
 	double prev_rotor_speed_val;		//Previous value of rotor speed - used for delta-exiting convergence check
 	double prev_voltage_val[3];			//Previous value of voltage magnitude - used for delta-exiting convergence check
-	complex last_power_output[3];		//Tracking variable for previous power output - used to do super-second frequency adjustments
+	gld::complex last_power_output[3];		//Tracking variable for previous power output - used to do super-second frequency adjustments
 	TIMESTAMP prev_time;				//Tracking variable for previous "new time" run
 	double prev_time_dbl;				//Tracking variable for previous "new time" run -- deltamode capable
 
@@ -230,8 +230,8 @@ public:
 	
 	double Max_Ef;//< maximum induced voltage in p.u., e.g. 1.2
     double Min_Ef;//< minimus induced voltage in p.u., e.g. 0.8
-	complex current_val[3];	//Present current output of the generator
-	complex power_val[3];	//Present power output of the generator
+	gld::complex current_val[3];	//Present current output of the generator
+	gld::complex power_val[3];	//Present power output of the generator
 	double real_power_val[3];
 	double imag_power_val[3];
 
@@ -262,8 +262,8 @@ public:
 	double Tdopp;			//d-axis open circuit subtransient time constant (s)
 	double Tqopp;			//q-axis open circuit subtransient time constant (s)
 	double Ta;				//Armature short-circuit time constant (s)
-	complex X0;				//Zero sequence impedance (p.u.)
-	complex X2;				//Negative sequence impedance (p.u.)
+	gld::complex X0;				//Zero sequence impedance (p.u.)
+	gld::complex X2;				//Negative sequence impedance (p.u.)
 
 	MAC_INPUTS gen_base_set_vals;	//Base set points for the various control objects
 	bool Vset_defined;				// Flag indicating whether Vset has been defined in glm file or not
@@ -420,17 +420,17 @@ public:
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 	//STATUS deltaupdate(unsigned int64 dt, unsigned int iteration_count_val);
 	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
-	STATUS post_deltaupdate(complex *useful_value, unsigned int mode_pass);
+	STATUS post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass);
 public:
 	static CLASS *oclass;
 	static diesel_dg *defaults;
-	void convert_Ypn0_to_Yabc(complex Y0, complex Y1, complex Y2, complex *Yabcmat);
-	void convert_pn0_to_abc(complex *Xpn0, complex *Xabc);
-	void convert_abc_to_pn0(complex *Xabc, complex *Xpn0);
+	void convert_Ypn0_to_Yabc(gld::complex Y0, gld::complex Y1, gld::complex Y2, gld::complex *Yabcmat);
+	void convert_pn0_to_abc(gld::complex *Xpn0, gld::complex *Xabc);
+	void convert_abc_to_pn0(gld::complex *Xabc, gld::complex *Xpn0);
 	STATUS apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, double deltaT);
 	STATUS init_dynamics(MAC_STATES *curr_time);
-	complex complex_exp(double angle);
-	double abs_complex(complex val);
+	gld::complex complex_exp(double angle);
+	double abs_complex(gld::complex val);
 
 	friend class controller_dg;
 

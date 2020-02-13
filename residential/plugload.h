@@ -18,7 +18,7 @@ public:
 	double circuit_split;		///< -1=100% negative, 0=balanced, +1=100% positive
 	double demand;				///< fraction of time plugloads are ON (schedule driven)
 	double heat_fraction;		///< fraction of the plugload that is transferred as heat (default = 0.90)
-	complex plugs_actual_power;	///< actual power demand as a function of voltage
+	gld::complex plugs_actual_power;	///< actual power demand as a function of voltage
 
 public:
 	static CLASS *oclass, *pclass;

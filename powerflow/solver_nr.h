@@ -5,7 +5,7 @@
 #ifndef _SOLVER_NR
 #define _SOLVER_NR
 
-#include "complex.h"
+#include "gld_complex.h"
 #include "object.h"
 
 typedef struct  {
@@ -13,29 +13,29 @@ typedef struct  {
 	unsigned char phases;	///< Phases property - used for construction of matrices (skip bad entries) - [Split Phase | House present | To side of SPCT | Diff Phase Child | D | A | B | C]
 	unsigned char origphases;	///< Original phases property - follows same format - used to save what object's original capabilities
 	set *busflag;			///< Pointer to busflags property - mainly used for reliability checks
-	complex *V;				///< bus voltage
-	complex *S;				///< constant power
-	complex *Y;				///< constant admittance (impedance loads)
-	complex *I;				///< constant current
-	complex *prerot_I;		///< pre-rotated current (deltamode)
-	complex *S_dy;			///< constant power -- explicit delta/wye values
-	complex *Y_dy;			///< constant admittance -- explicit delta/wye values
-	complex *I_dy;			///< constant current -- explicit delta/wye values
-	complex *full_Y;		///< constant admittance - full 3x3 table (used by fixed dynamic devices) - set to NULL for devices that don't matter
-	complex *full_Y_all;	///< Admittance - self admittance value for "static" portions - used by dynamic loads
-	complex *full_Y_load;	///< Admittance - 3-element diagonal table (used by in-rush-capable loads, right now) - set to NULL for devices that don't matter
-	complex *extra_var;		///< Extra variable - used mainly for current12 in triplex and "differently-connected" children
-	complex *house_var;		///< Extra variable - used mainly for nominal house current 
+	gld::complex *V;				///< bus voltage
+	gld::complex *S;				///< constant power
+	gld::complex *Y;				///< constant admittance (impedance loads)
+	gld::complex *I;				///< constant current
+	gld::complex *prerot_I;		///< pre-rotated current (deltamode)
+	gld::complex *S_dy;			///< constant power -- explicit delta/wye values
+	gld::complex *Y_dy;			///< constant admittance -- explicit delta/wye values
+	gld::complex *I_dy;			///< constant current -- explicit delta/wye values
+	gld::complex *full_Y;		///< constant admittance - full 3x3 table (used by fixed dynamic devices) - set to NULL for devices that don't matter
+	gld::complex *full_Y_all;	///< Admittance - self admittance value for "static" portions - used by dynamic loads
+	gld::complex *full_Y_load;	///< Admittance - 3-element diagonal table (used by in-rush-capable loads, right now) - set to NULL for devices that don't matter
+	gld::complex *extra_var;		///< Extra variable - used mainly for current12 in triplex and "differently-connected" children
+	gld::complex *house_var;		///< Extra variable - used mainly for nominal house current
 	int *Link_Table;		///< table of links that connect to us (for population purposes)
 	unsigned int Link_Table_Size;	///< Number of entries in the link table (number of links connected to us)
 	double PL[3];			///< real power component of total bus load
 	double QL[3];			///< reactive power component of total bus load
 	bool *dynamics_enabled;	///< Flag indicating this particular node has a dynamics contribution function
 	bool swing_functions_enabled;	///< Flag indicating if this particular node is a swing node, and if so, if it is behaving "all swingy"
-	complex *PGenTotal;		///< Total output of any generation at this node - lumped for now for dynamics
-	complex *DynCurrent;	///< Dynamics current portions - used as storage/tracking for generator dynamics
-	complex *BusHistTerm;	///< History term pointer for in-rush-based calculations
-	complex *BusSatTerm;	///< Saturation term pointer for in-rush-based transformer calculations - separate for ease
+	gld::complex *PGenTotal;		///< Total output of any generation at this node - lumped for now for dynamics
+	gld::complex *DynCurrent;	///< Dynamics current portions - used as storage/tracking for generator dynamics
+	gld::complex *BusHistTerm;	///< History term pointer for in-rush-based calculations
+	gld::complex *BusSatTerm;	///< Saturation term pointer for in-rush-based transformer calculations - separate for ease
 	double volt_base;		///< voltage basis
     double mva_base;		/// MVA basis
 	double Jacob_A[3];		// Element a in equation (37), which is used to update the Jacobian matrix at each iteration
@@ -52,10 +52,10 @@ typedef struct  {
 } BUSDATA;
 
 typedef struct {
-	complex *Yfrom;			///< branch admittance of from side of link
-	complex *Yto;			///< branch admittance of to side of link
-	complex *YSfrom;		///< self admittance seen on from side
-	complex *YSto;			///< self admittance seen on to side
+	gld::complex *Yfrom;			///< branch admittance of from side of link
+	gld::complex *Yto;			///< branch admittance of to side of link
+	gld::complex *YSfrom;		///< self admittance seen on from side
+	gld::complex *YSto;			///< self admittance seen on to side
 	unsigned char phases;	///< Phases property - used for construction of matrices
 	unsigned char origphases;	///< Original phases property - follows same format - used to save what object's original capabilities
 	unsigned char faultphases;	///< Flags for induced faults - used to prevent restoration of objects that should otherwise still be broken
@@ -67,8 +67,8 @@ typedef struct {
 	double v_ratio;			///< voltage ratio (v_from/v_to)
 	char *name;				///< original name
 	OBJECT *obj;			///< Link to original object header
-	complex *If_from;		///< 3 phase fault currents on the from side
-	complex *If_to;			///< 3 phase fault currents on the to side 
+	gld::complex *If_from;		///< 3 phase fault currents on the from side
+	gld::complex *If_to;			///< 3 phase fault currents on the to side
 	FUNCTIONADDR limit_check;	////< Link to overload checking function (calculate_overlimit_link) -- restoration related
 	FUNCTIONADDR ExtraDeltaModeFunc;	///< Link to extra functions of deltamode -- notably, transformer saturation
 	int island_number;		///< Numerical designation for which island this branch belongs to
@@ -83,7 +83,7 @@ typedef struct Y_NR{
 typedef struct {
 	int row_ind;  ///< row location of the element in n*n bus admittance matrix in NR solver
 	int	col_ind;  ///< column location of the element in n*n bus admittance matrix in NR solver
-    complex Y[3][3]; ///< complex value of elements in bus admittance matrix in NR solver
+    gld::complex Y[3][3]; ///< complex value of elements in bus admittance matrix in NR solver
 	char size;		///< size of the admittance diagonal - assumed square, useful for smaller size
 } Bus_admit;
 
@@ -154,7 +154,7 @@ typedef struct {
 
 //Mesh-fault-related structure - passing information
 typedef struct {
-	complex *z_matrix;			/// Matrix for the impedance of that value
+	gld::complex *z_matrix;			/// Matrix for the impedance of that value
 	int NodeRefNum;				/// Reference node for the node to calculate the impedance at
 	int return_code;			/// Special return codes for impedance check -- 0 = non-descript failure, 1 = success, 2 = unsupported solver
 } NR_MESHFAULT_IMPEDANCE;

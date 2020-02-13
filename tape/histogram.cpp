@@ -385,7 +385,7 @@ int histogram::init(OBJECT *parent)
 
 int histogram::feed_bins(OBJECT *obj){
 	double value = 0.0;
-	complex cval = 0.0; //gl_get_complex(obj, ;
+	gld::complex cval = 0.0; //gl_get_complex(obj, ;
 	int64 ival = 0;
 	int i = 0;
 

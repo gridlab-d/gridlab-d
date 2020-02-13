@@ -310,7 +310,7 @@ int restoration::init(OBJECT *parent)
 		}
 
 		//Do the same for the value
-		feeder_power_link_value = (complex **)gl_malloc(numfVer*sizeof(complex *));
+		feeder_power_link_value = (gld::complex **)gl_malloc(numfVer*sizeof(gld::complex *));
 
 		//Check it
 		if (feeder_power_link_value == NULL)
@@ -393,7 +393,7 @@ int restoration::init(OBJECT *parent)
 		}
 
 		//Do the same for the value
-		microgrid_power_link_value = (complex **)gl_malloc(numMG*sizeof(complex *));
+		microgrid_power_link_value = (gld::complex **)gl_malloc(numMG*sizeof(gld::complex *));
 
 		//Check it
 		if (microgrid_power_link_value == NULL)
@@ -981,11 +981,11 @@ double *restoration::ParseDoubleString(char *input_string,int *num_items_found)
 //Utility functions - string parsing
 //Parse comma-separated list of complex values into array
 //Assumes 1024-character input array
-complex *restoration::ParseComplexString(char *input_string,int *num_items_found)
+gld::complex *restoration::ParseComplexString(char *input_string,int *num_items_found)
 {
 	int index, num_items, item_count;
 	char *working_token, *parsing_token, *complex_token, *offset_token;
-	complex *output_array;
+	gld::complex *output_array;
 	double temp_value;
 
 	//Init the pointer, for good measure
@@ -1020,7 +1020,7 @@ complex *restoration::ParseComplexString(char *input_string,int *num_items_found
 	if (num_items != 0)
 	{
 		//Allocate the array -- assume it's empty (otherwise, oops)
-		output_array = (complex *)gl_malloc(num_items*sizeof(complex));
+		output_array = (gld::complex *)gl_malloc(num_items*sizeof(gld::complex));
 
 		//Check it
 		if (output_array == NULL)
@@ -1040,7 +1040,7 @@ complex *restoration::ParseComplexString(char *input_string,int *num_items_found
 		//Zero it, for good measure
 		for (index=0; index<num_items; index++)
 		{
-			output_array[index] = complex(0.0,0.0);
+			output_array[index] = gld::complex(0.0,0.0);
 		}
 
 		//Now start the parsing
@@ -3280,6 +3280,9 @@ int restoration::runPowerFlow(void)
 	int overallresult;
 	bool bad_computation;
 	NRSOLVERMODE powerflow_type;
+#ifdef GLD_USE_EIGEN
+    static auto NR_Solver = std::make_unique<NR_Solver_Eigen>();
+#endif
 	
 	//Start out assuming that we're not a bad computation
 	bad_computation = false;
@@ -3299,7 +3302,11 @@ int restoration::runPowerFlow(void)
 
 		//Copied, more or less, from node.cpp call to solver_nr
 		//Call the powerflow routine
+#ifndef GLD_USE_EIGEN
 		PFresult = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, powerflow_type, NULL, &bad_computation);
+#else
+		PFresult = NR_Solver.solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, powerflow_type, NULL, &bad_computation);
+#endif
 
 		//De-flag the change - otherwise will cause un-neccesary reallocs
 		NR_admit_change = false;
@@ -3517,7 +3524,7 @@ void restoration::checkFeederPower(bool *fFlag, double *overLoad, int *feederID)
 void restoration::checkMG(bool *mFlag, double *overLoad, int *microgridID)
 {
 	int indexval, ret_value;
-	complex microgrid_power_over;
+	gld::complex microgrid_power_over;
 
 	//Assume we're okay, by default
 	*mFlag = true;
@@ -3928,7 +3935,7 @@ void restoration::PowerflowSave(void)
 	}
 
 	//Allocate us
-	voltage_storage = (complex **)gl_malloc(NR_bus_count*sizeof(complex *));
+	voltage_storage = (gld::complex **)gl_malloc(NR_bus_count*sizeof(gld::complex *));
 
 	//Make sure it worked
 	if (voltage_storage == NULL)
@@ -3945,7 +3952,7 @@ void restoration::PowerflowSave(void)
 	for (indexval=0; indexval<NR_bus_count; indexval++)
 	{
 		//Allocate this entry
-		voltage_storage[indexval] = (complex *)gl_malloc(3*sizeof(complex));
+		voltage_storage[indexval] = (gld::complex *)gl_malloc(3*sizeof(gld::complex));
 
 		//Check it
 		if (voltage_storage[indexval] == NULL)

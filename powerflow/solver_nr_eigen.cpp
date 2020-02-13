@@ -31,230 +31,44 @@ Initialization after returning to service?
 ***********************************************************************
 */
 #include "solver_nr_eigen.h"
+#include "powerflow.h"
 
 #include <Eigen/SparseLU>
-
-#ifdef HAVE_KLU
+#ifdef GLD_USE_KLU
 #include <Eigen/KLUSupport>
 #endif
 
-//SuperLU variable structure
-//These are the working variables, but structured for island implementation
-typedef struct {
-    int *perm_c;
-    int *perm_r;
-    SuperMatrix A_LU;
-    SuperMatrix B_LU;
-} SUPERLU_NR_vars;
+#include <memory>
 
-/* access to module global variables */
-#include "powerflow.h"
 
 //Initialize the sparse notation
-void sparse_init(SPARSE *sm, int nels, int ncols) {
-    int indexval;
-
-    //Allocate the column pointer GLD heap
-    sm->cols = (SP_E **) gl_malloc(ncols * sizeof(SP_E *));
-
-    //Check it
-    if (sm->cols == NULL) {
-        GL_THROW(const_cast<char *>("NR: Sparse matrix allocation failed"));
-        /*  TROUBLESHOOT
-		While attempting to allocate space for one of the sparse matrix variables, an error was encountered.
-		Please try again.  If the error persists, please submit your code and a bug report via the ticketing system.
-		*/
-    } else    //Zero it, for giggles
-    {
-        for (indexval = 0; indexval < ncols; indexval++) {
-            sm->cols[indexval] = NULL;
-        }
-    }
-
-    //Allocate the elements on the GLD heap
-    sm->llheap = (SP_E *) gl_malloc(nels * sizeof(SP_E));
-
-    //Check it
-    if (sm->llheap == NULL) {
-        GL_THROW(const_cast<char *>("NR: Sparse matrix allocation failed"));
-        //Defined above
-    } else    //Zero it, for giggles
-    {
-        for (indexval = 0; indexval < nels; indexval++) {
-            sm->llheap[indexval].next = NULL;
-            sm->llheap[indexval].row_ind = -1;    //Invalid, so it gets upset if we use this (intentional)
-            sm->llheap[indexval].value = 0.0;
-        }
-    }
-
-    //Init others
-    sm->llptr = 0;
-    sm->ncols = ncols;
+void NR_Solver_Eigen::sparse_init(Eigen::SparseMatrix<double> &A_LU, int nels, int ncols) {
+    A_LU.resize(nels, ncols);
 }
 
 //Free up/clear the sparse allocations
-void sparse_clear(SPARSE *sm) {
-    //Clear them up
-    gl_free(sm->llheap);
-    gl_free(sm->cols);
-
-    //Null them, because I'm paranoid
-    sm->llheap = NULL;
-    sm->cols = NULL;
-
-    //Zero the last one
-    sm->ncols = 0;
+void NR_Solver_Eigen::sparse_clear(Eigen::SparseMatrix<double> &A_LU) {
+    A_LU.setZero();
+    A_LU.data().squeeze();
 }
 
-void sparse_reset(SPARSE *sm, int ncols) {
-    int indexval;
-
-    //Set the size
-    sm->ncols = ncols;
-
-    //Do brute force way, for paranoia
-    for (indexval = 0; indexval < ncols; indexval++) {
-        sm->cols[indexval] = NULL;
-    }
-
-    //Set the location pointer
-    sm->llptr = 0;
+void NR_Solver_Eigen::sparse_reset(Eigen::SparseMatrix<double> &A_LU, int ncols) {
+    sparse_clear(A_LU);
+    A_LU.reserve(ncols);
 }
 
 //Add in new elements to the sparse notation
-inline void sparse_add(SPARSE *sm, int row, int col, double value, BUSDATA *bus_values, unsigned int bus_values_count,
-                       NR_SOLVER_STRUCT *powerflow_information, int island_number_curr) {
-    unsigned int bus_index_val, bus_start_val, bus_end_val;
-    bool found_proper_bus_val;
-
-    SP_E *insertion_point = sm->cols[col];
-    SP_E *new_list_element = &(sm->llheap[sm->llptr++]);
-
-    new_list_element->next = NULL;
-    new_list_element->row_ind = row;
-    new_list_element->value = value;
-
-    //if there's a non empty list, traverse to find our rightful insertion point
-    if (insertion_point != NULL) {
-        if (insertion_point->row_ind > new_list_element->row_ind) {
-            //insert the new list element at the first position
-            new_list_element->next = insertion_point;
-            sm->cols[col] = new_list_element;
-        } else {
-            while ((insertion_point->next != NULL) && (insertion_point->next->row_ind < new_list_element->row_ind)) {
-                insertion_point = insertion_point->next;
-            }
-
-            //Duplicate check -- see how we exited
-            if (insertion_point->next != NULL)    //We exited because the next element is GEQ to the new element
-            {
-                if (insertion_point->next->row_ind == new_list_element->row_ind)    //Same entry (by column), so bad
-                {
-                    //Reset the flag
-                    found_proper_bus_val = false;
-
-                    //Loop through and see if we can find the bus
-                    for (bus_index_val = 0; bus_index_val < bus_values_count; bus_index_val++) {
-                        //Island check
-                        if (bus_values[bus_index_val].island_number == island_number_curr) {
-                            //Extract the start/stop indices
-                            bus_start_val = 2 * bus_values[bus_index_val].Matrix_Loc;
-                            bus_end_val = bus_start_val + 2 * powerflow_information->BA_diag[bus_index_val].size - 1;
-
-                            //See if we're in this range
-                            if ((new_list_element->row_ind >= bus_start_val) &&
-                                (new_list_element->row_ind <= bus_end_val)) {
-                                //See if it is actually named -- it should be available
-                                if (bus_values[bus_index_val].name != NULL) {
-                                    GL_THROW(
-                                            const_cast<char *>("NR: duplicate admittance entry found - attaches to node %s - check for parallel circuits between common nodes!"),
-                                            bus_values[bus_index_val].name);
-                                    /*  TROUBLESHOOT
-									While building up the admittance matrix for the Newton-Raphson solver, a duplicate entry was found.
-									This is often caused by having multiple lines on the same phases in parallel between two nodes.  A reference node
-									does not have a name.  Please name your nodes and and try again.  Afterwards, please reconcile this model difference and try again.
-									*/
-                                } else {
-                                    GL_THROW(
-                                            const_cast<char *>("NR: duplicate admittance entry found - no name available - check for parallel circuits between common nodes!"));
-                                    /*  TROUBLESHOOT
-									While building up the admittance matrix for the Newton-Raphson solver, a duplicate entry was found.
-									This is often caused by having multiple lines on the same phases in parallel between two nodes.  A reference node
-									does not have a name.  Please name your nodes and and try again.  Afterwards, please reconcile this model difference and try again.
-									*/
-                                }//End unnamed bus
-                            }//End found a bus
-                            //Default else -- keep going
-                        }//End part of the island
-                        //Default else -- next bus
-                    }//End of the for loop to find the bus
-                }//End matches - error
-            } else    //No next item, so see if our value matches
-            {
-                if (insertion_point->row_ind == new_list_element->row_ind)    //Same entry (by column), so bad
-                {
-                    //Reset the flag
-                    found_proper_bus_val = false;
-
-                    //Loop through and see if we can find the bus
-                    for (bus_index_val = 0; bus_index_val < bus_values_count; bus_index_val++) {
-                        //Island check
-                        if (bus_values[bus_index_val].island_number == island_number_curr) {
-                            //Extract the start/stop indices
-                            bus_start_val = 2 * bus_values[bus_index_val].Matrix_Loc;
-                            bus_end_val = bus_start_val + 2 * powerflow_information->BA_diag[bus_index_val].size - 1;
-
-                            //See if we're in this range
-                            if ((new_list_element->row_ind >= bus_start_val) &&
-                                (new_list_element->row_ind <= bus_end_val)) {
-                                //See if it is actually named -- it should be available
-                                if (bus_values[bus_index_val].name != NULL) {
-                                    GL_THROW(
-                                            const_cast<char *>("NR: duplicate admittance entry found - attaches to node %s - check for parallel circuits between common nodes!"),
-                                            bus_values[bus_index_val].name);
-                                    //Defined above
-                                } else {
-                                    GL_THROW(
-                                            const_cast<char *>("NR: duplicate admittance entry found - no name available - check for parallel circuits between common nodes!"));
-                                    //Defined above
-                                }//End unnamed bus
-                            }//End found a bus
-                            //Default else -- keep going
-                        }//End part of the island
-                        //Default else -- next bus
-                    }//End of the for loop to find the bus
-                }
-            }
-
-            //insert the new list element at the next position
-            new_list_element->next = insertion_point->next;
-            insertion_point->next = new_list_element;
-        }
-    } else
-        sm->cols[col] = new_list_element;
+void NR_Solver_Eigen::sparse_add(SPARSE<double> &sm,
+                                        int row, int col, double value) {
+    sm.tripletList.push_back(Eigen::Triplet(row, col, value));
 }
 
-void sparse_tonr(SPARSE *sm, NR_SOLVER_VARS *matrices_LUin) {
-    //traverse each linked list, which are in order, and copy values into new array
-    unsigned int rowidx = 0;
-    unsigned int colidx = 0;
-    unsigned int i;
-    SP_E *LL_pointer;
-
-    matrices_LUin->cols_LU[0] = 0;
-    LL_pointer = NULL;
-    for (i = 0; i < sm->ncols; i++) {
-        LL_pointer = sm->cols[i];
-        if (LL_pointer != NULL) {
-            matrices_LUin->cols_LU[colidx++] = rowidx;
-        }
-        while (LL_pointer != NULL) {
-            matrices_LUin->rows_LU[rowidx] = LL_pointer->row_ind; // row pointers of non zero values
-            matrices_LUin->a_LU[rowidx] = LL_pointer->value;
-            ++rowidx;
-            LL_pointer = LL_pointer->next;
-        }
-    }
+void NR_Solver_Eigen::sparse_tonr(SPARSE &sm, Eigen::SparseMatrix<double> &A_LU){
+    A_LU.setFromTriplets(sm.tripletList.begin(), sm.tripletList.end(),
+                         [](const Scalar &, const Scalar &b) {
+                             throw new std::exception("Duplicate entries in %s", sm.name);
+                         }
+    );
 }
 
 /** Newton-Raphson solver
@@ -264,9 +78,9 @@ void sparse_tonr(SPARSE *sm, NR_SOLVER_VARS *matrices_LUin) {
 	n>0 to indicate success after n interations, or
 	n<0 to indicate failure after n iterations
  **/
-int64 solver_nr_eigen(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count, BRANCHDATA *branch,
-                NR_SOLVER_STRUCT *powerflow_values, NRSOLVERMODE powerflow_type,
-                NR_MESHFAULT_IMPEDANCE *mesh_imped_vals, bool *bad_computations) {
+int64 NR_Solver_Eigen::solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count, BRANCHDATA *branch,
+                                 NR_SOLVER_STRUCT *powerflow_values, NRSOLVERMODE powerflow_type,
+                                 NR_MESHFAULT_IMPEDANCE *mesh_imped_vals, bool *bad_computations) {
     //Index for "islanding operations", when needed
     int island_index_val;
 
@@ -300,7 +114,7 @@ int64 solver_nr_eigen(unsigned int bus_count, BUSDATA *bus, unsigned int branch_
     unsigned int temp_index_c;
 
     //Working matrix for admittance collapsing/determinations
-    complex tempY[3][3];
+    gld::complex tempY[3][3];
 
     //Working matrix for mesh fault impedance storage, prior to "reconstruction"
     double temp_z_store[6][6];
@@ -309,18 +123,18 @@ int64 solver_nr_eigen(unsigned int bus_count, BUSDATA *bus, unsigned int branch_
     bool Full_Mat_A, Full_Mat_B, proceed_flag;
 
     //Deltamode intermediate variables
-    complex temp_complex_0, temp_complex_1, temp_complex_2, temp_complex_3, temp_complex_4, temp_complex_5;
-    complex aval, avalsq;
+    gld::complex temp_complex_0, temp_complex_1, temp_complex_2, temp_complex_3, temp_complex_4, temp_complex_5;
+    gld::complex aval, avalsq;
 
     //Temporary size variable
     char temp_size, temp_size_b, temp_size_c;
 
     //Temporary admittance variables
-    complex Temp_Ad_A[3][3];
-    complex Temp_Ad_B[3][3];
+    gld::complex Temp_Ad_A[3][3];
+    gld::complex Temp_Ad_B[3][3];
 
     //DV checking array
-    complex DVConvCheck[3];
+    gld::complex DVConvCheck[3];
     double CurrConvVal;
 
     //Miscellaneous working variable
@@ -347,7 +161,7 @@ int64 solver_nr_eigen(unsigned int bus_count, BUSDATA *bus, unsigned int branch_
     int64 return_value_for_solver_NR;
 
     //Multi-island pointer to current superLU variables
-    SUPERLU_NR_vars *curr_island_superLU_vars;
+    EIGEN_NR_vars *curr_island_superLU_vars;
 
 #ifndef MT
     superlu_options_t options;    //Additional variables for sequential superLU
@@ -408,7 +222,7 @@ int64 solver_nr_eigen(unsigned int bus_count, BUSDATA *bus, unsigned int branch_
     //Populate aval, if necessary
     if (powerflow_type == PF_DYNINIT) {
         //Conversion variables - 1@120-deg
-        aval = complex(-0.5, (sqrt(3.0) / 2.0));
+        aval = gld::complex(-0.5, (sqrt(3.0) / 2.0));
         avalsq = aval * aval;    //squared value is used a couple places too
     } else    //Zero it, just in case something uses it (what would???)
     {
@@ -440,7 +254,7 @@ int64 solver_nr_eigen(unsigned int bus_count, BUSDATA *bus, unsigned int branch_
             //See if the superLU variables are populated
             if (powerflow_values->island_matrix_values[island_loop_index].LU_solver_vars == NULL) {
                 //Allocate one up
-                curr_island_superLU_vars = (SUPERLU_NR_vars *) gl_malloc(sizeof(SUPERLU_NR_vars));
+                curr_island_superLU_vars = (EIGEN_NR_vars *) gl_malloc(sizeof(EIGEN_NR_vars));
 
                 //Make sure it worked
                 if (curr_island_superLU_vars == NULL) {
@@ -2524,7 +2338,7 @@ int64 solver_nr_eigen(unsigned int bus_count, BUSDATA *bus, unsigned int branch_
         //Map the superLU variables each time -- just easier to do it always
         if (matrix_solver_method == MM_SUPERLU) {
             //Put the void pointer into a local context
-            curr_island_superLU_vars = (SUPERLU_NR_vars *) powerflow_values->island_matrix_values[island_loop_index].LU_solver_vars;
+            curr_island_superLU_vars = (EIGEN_NR_vars *) powerflow_values->island_matrix_values[island_loop_index].LU_solver_vars;
         }
 
         //Call the load subfunction
@@ -2632,7 +2446,7 @@ int64 solver_nr_eigen(unsigned int bus_count, BUSDATA *bus, unsigned int branch_
                         //On that note, if we are a SWING, zero our PT portion and QT for accumulation
                         if ((bus[indexer].type == 2) &&
                             (powerflow_values->island_matrix_values[island_loop_index].iteration_count > 0)) {
-                            *bus[indexer].PGenTotal = complex(0.0, 0.0);
+                            *bus[indexer].PGenTotal = gld::complex(0.0, 0.0);
                         }
                     } else    //Not enabled or not "full-Y-ed" - set to zero
                     {
@@ -3153,7 +2967,7 @@ int64 solver_nr_eigen(unsigned int bus_count, BUSDATA *bus, unsigned int branch_
                                 //See if we're a Norton-equivalent-based generator
                                 if (bus[indexer].full_Y != NULL) {
                                     //Compute our "power generated" value for this phase - conjugated in formation
-                                    temp_complex_2 = bus[indexer].V[jindex] * complex(tempIcalcReal, -tempIcalcImag);
+                                    temp_complex_2 = bus[indexer].V[jindex] * gld::complex(tempIcalcReal, -tempIcalcImag);
 
                                     if (powerflow_values->island_matrix_values[island_loop_index].iteration_count >
                                         0)    //Only update SWING on subsequent passes
@@ -3230,7 +3044,7 @@ int64 solver_nr_eigen(unsigned int bus_count, BUSDATA *bus, unsigned int branch_
                                     }
 
                                     //Put this into DynCurrent for storage
-                                    bus[indexer].DynCurrent[jindex] = complex(tempIcalcReal, tempIcalcImag);
+                                    bus[indexer].DynCurrent[jindex] = gld::complex(tempIcalcReal, tempIcalcImag);
                                 }//End other generator types
                             }//End PF_DYNINIT SWING traversion
 
@@ -3347,7 +3161,7 @@ int64 solver_nr_eigen(unsigned int bus_count, BUSDATA *bus, unsigned int branch_
                                     (powerflow_type == PF_DYNINIT))    //Really only true for PF_DYNINIT anyways
                                 {
                                     //Power should be all updated, now update current values
-                                    temp_complex_0 += complex((*bus[indexer].PGenTotal).Re(),
+                                    temp_complex_0 += gld::complex((*bus[indexer].PGenTotal).Re(),
                                                               -(*bus[indexer].PGenTotal).Im()); // total generated power injected congugated
 
                                     //Compute Ii
@@ -3361,9 +3175,9 @@ int64 solver_nr_eigen(unsigned int bus_count, BUSDATA *bus, unsigned int branch_
                                         bus[indexer].DynCurrent[2] = temp_complex_2 * aval;
                                     } else    //Must make zero
                                     {
-                                        bus[indexer].DynCurrent[0] = complex(0.0, 0.0);
-                                        bus[indexer].DynCurrent[1] = complex(0.0, 0.0);
-                                        bus[indexer].DynCurrent[2] = complex(0.0, 0.0);
+                                        bus[indexer].DynCurrent[0] = gld::complex(0.0, 0.0);
+                                        bus[indexer].DynCurrent[1] = gld::complex(0.0, 0.0);
+                                        bus[indexer].DynCurrent[2] = gld::complex(0.0, 0.0);
                                     }
                                 }//End SWING is still swing, otherwise should just accumulate what it had
 
@@ -3397,9 +3211,9 @@ int64 solver_nr_eigen(unsigned int bus_count, BUSDATA *bus, unsigned int branch_
                                 //See if we ever were (reliability call)
                                 if ((bus[indexer].origphases & 0x07) == 0x07) {
                                     //Just zero it
-                                    bus[indexer].DynCurrent[0] = complex(0.0, 0.0);
-                                    bus[indexer].DynCurrent[1] = complex(0.0, 0.0);
-                                    bus[indexer].DynCurrent[2] = complex(0.0, 0.0);
+                                    bus[indexer].DynCurrent[0] = gld::complex(0.0, 0.0);
+                                    bus[indexer].DynCurrent[1] = gld::complex(0.0, 0.0);
+                                    bus[indexer].DynCurrent[2] = gld::complex(0.0, 0.0);
                                 } else    //Never was, just fail out
                                 {
                                     GL_THROW(
@@ -4069,7 +3883,7 @@ int64 solver_nr_eigen(unsigned int bus_count, BUSDATA *bus, unsigned int branch_
 
                 //Clear out the output matrix first -- assumes it is 3x3, regardless
                 for (jindex = 0; jindex < 9; jindex++) {
-                    mesh_imped_vals->z_matrix[jindex] = complex(0.0, 0.0);
+                    mesh_imped_vals->z_matrix[jindex] = gld::complex(0.0, 0.0);
                 }
 
                 //Zero the double matrix - the big storage (6x6 - re & im split)
@@ -4155,68 +3969,68 @@ int64 solver_nr_eigen(unsigned int bus_count, BUSDATA *bus, unsigned int branch_
                 switch (bus[mesh_imped_vals->NodeRefNum].phases & 0x07) {
                     case 0x01:    //C
                     {
-                        mesh_imped_vals->z_matrix[8] = complex(temp_z_store[1][0], temp_z_store[1][1]);
+                        mesh_imped_vals->z_matrix[8] = gld::complex(temp_z_store[1][0], temp_z_store[1][1]);
                         break;
                     }
                     case 0x02:    //B
                     {
-                        mesh_imped_vals->z_matrix[4] = complex(temp_z_store[1][0], temp_z_store[1][1]);
+                        mesh_imped_vals->z_matrix[4] = gld::complex(temp_z_store[1][0], temp_z_store[1][1]);
                         break;
                     }
                     case 0x03:    //BC
                     {
                         //BB and BC portion
-                        mesh_imped_vals->z_matrix[4] = complex(temp_z_store[2][0], temp_z_store[2][2]);
-                        mesh_imped_vals->z_matrix[5] = complex(temp_z_store[2][1], temp_z_store[2][3]);
+                        mesh_imped_vals->z_matrix[4] = gld::complex(temp_z_store[2][0], temp_z_store[2][2]);
+                        mesh_imped_vals->z_matrix[5] = gld::complex(temp_z_store[2][1], temp_z_store[2][3]);
 
                         //CB and CC portion
-                        mesh_imped_vals->z_matrix[7] = complex(temp_z_store[3][0], temp_z_store[3][2]);
-                        mesh_imped_vals->z_matrix[8] = complex(temp_z_store[3][1], temp_z_store[3][3]);
+                        mesh_imped_vals->z_matrix[7] = gld::complex(temp_z_store[3][0], temp_z_store[3][2]);
+                        mesh_imped_vals->z_matrix[8] = gld::complex(temp_z_store[3][1], temp_z_store[3][3]);
                         break;
                     }
                     case 0x04:    //A
                     {
-                        mesh_imped_vals->z_matrix[0] = complex(temp_z_store[1][0], temp_z_store[1][1]);
+                        mesh_imped_vals->z_matrix[0] = gld::complex(temp_z_store[1][0], temp_z_store[1][1]);
                         break;
                     }
                     case 0x05:    //AC
                     {
                         //AA and AC portion
-                        mesh_imped_vals->z_matrix[0] = complex(temp_z_store[2][0], temp_z_store[2][2]);
-                        mesh_imped_vals->z_matrix[2] = complex(temp_z_store[2][1], temp_z_store[2][3]);
+                        mesh_imped_vals->z_matrix[0] = gld::complex(temp_z_store[2][0], temp_z_store[2][2]);
+                        mesh_imped_vals->z_matrix[2] = gld::complex(temp_z_store[2][1], temp_z_store[2][3]);
 
                         //CA and CC portion
-                        mesh_imped_vals->z_matrix[6] = complex(temp_z_store[3][0], temp_z_store[3][2]);
-                        mesh_imped_vals->z_matrix[8] = complex(temp_z_store[3][1], temp_z_store[3][3]);
+                        mesh_imped_vals->z_matrix[6] = gld::complex(temp_z_store[3][0], temp_z_store[3][2]);
+                        mesh_imped_vals->z_matrix[8] = gld::complex(temp_z_store[3][1], temp_z_store[3][3]);
                         break;
                     }
                     case 0x06:    //AB
                     {
                         //AA and AB portion
-                        mesh_imped_vals->z_matrix[0] = complex(temp_z_store[2][0], temp_z_store[2][2]);
-                        mesh_imped_vals->z_matrix[1] = complex(temp_z_store[2][1], temp_z_store[2][3]);
+                        mesh_imped_vals->z_matrix[0] = gld::complex(temp_z_store[2][0], temp_z_store[2][2]);
+                        mesh_imped_vals->z_matrix[1] = gld::complex(temp_z_store[2][1], temp_z_store[2][3]);
 
                         //BA and BB portion
-                        mesh_imped_vals->z_matrix[3] = complex(temp_z_store[3][0], temp_z_store[3][2]);
-                        mesh_imped_vals->z_matrix[4] = complex(temp_z_store[3][1], temp_z_store[3][3]);
+                        mesh_imped_vals->z_matrix[3] = gld::complex(temp_z_store[3][0], temp_z_store[3][2]);
+                        mesh_imped_vals->z_matrix[4] = gld::complex(temp_z_store[3][1], temp_z_store[3][3]);
                         break;
                     }
                     case 0x07:    //ABC
                     {
                         //A row
-                        mesh_imped_vals->z_matrix[0] = complex(temp_z_store[3][0], temp_z_store[3][3]);
-                        mesh_imped_vals->z_matrix[1] = complex(temp_z_store[3][1], temp_z_store[3][4]);
-                        mesh_imped_vals->z_matrix[2] = complex(temp_z_store[3][2], temp_z_store[3][5]);
+                        mesh_imped_vals->z_matrix[0] = gld::complex(temp_z_store[3][0], temp_z_store[3][3]);
+                        mesh_imped_vals->z_matrix[1] = gld::complex(temp_z_store[3][1], temp_z_store[3][4]);
+                        mesh_imped_vals->z_matrix[2] = gld::complex(temp_z_store[3][2], temp_z_store[3][5]);
 
                         //B row
-                        mesh_imped_vals->z_matrix[3] = complex(temp_z_store[4][0], temp_z_store[4][3]);
-                        mesh_imped_vals->z_matrix[4] = complex(temp_z_store[4][1], temp_z_store[4][4]);
-                        mesh_imped_vals->z_matrix[5] = complex(temp_z_store[4][2], temp_z_store[4][5]);
+                        mesh_imped_vals->z_matrix[3] = gld::complex(temp_z_store[4][0], temp_z_store[4][3]);
+                        mesh_imped_vals->z_matrix[4] = gld::complex(temp_z_store[4][1], temp_z_store[4][4]);
+                        mesh_imped_vals->z_matrix[5] = gld::complex(temp_z_store[4][2], temp_z_store[4][5]);
 
                         //C row
-                        mesh_imped_vals->z_matrix[6] = complex(temp_z_store[5][0], temp_z_store[5][3]);
-                        mesh_imped_vals->z_matrix[7] = complex(temp_z_store[5][1], temp_z_store[5][4]);
-                        mesh_imped_vals->z_matrix[8] = complex(temp_z_store[5][2], temp_z_store[5][5]);
+                        mesh_imped_vals->z_matrix[6] = gld::complex(temp_z_store[5][0], temp_z_store[5][3]);
+                        mesh_imped_vals->z_matrix[7] = gld::complex(temp_z_store[5][1], temp_z_store[5][4]);
+                        mesh_imped_vals->z_matrix[8] = gld::complex(temp_z_store[5][2], temp_z_store[5][5]);
                         break;
                     }
                     default:    //Not sure how we got here
@@ -4329,9 +4143,9 @@ int64 solver_nr_eigen(unsigned int bus_count, BUSDATA *bus, unsigned int branch_
                     if ((bus[indexer].phases & 0x80) == 0x80)    //Split phase
                     {
                         //Pull the two updates (assume split-phase is always 2)
-                        DVConvCheck[0] = complex(sol_LU[2 * bus[indexer].Matrix_Loc],
+                        DVConvCheck[0] = gld::complex(sol_LU[2 * bus[indexer].Matrix_Loc],
                                                  sol_LU[(2 * bus[indexer].Matrix_Loc + 2)]);
-                        DVConvCheck[1] = complex(sol_LU[(2 * bus[indexer].Matrix_Loc + 1)],
+                        DVConvCheck[1] = gld::complex(sol_LU[(2 * bus[indexer].Matrix_Loc + 1)],
                                                  sol_LU[(2 * bus[indexer].Matrix_Loc + 3)]);
                         bus[indexer].V[0] += DVConvCheck[0];
                         bus[indexer].V[1] += DVConvCheck[1];    //Negative due to convention
@@ -4422,7 +4236,7 @@ int64 solver_nr_eigen(unsigned int bus_count, BUSDATA *bus, unsigned int branch_
 								*/
                             }
 
-                            DVConvCheck[jindex] = complex(sol_LU[(2 * bus[indexer].Matrix_Loc + temp_index)],
+                            DVConvCheck[jindex] = gld::complex(sol_LU[(2 * bus[indexer].Matrix_Loc + temp_index)],
                                                           sol_LU[(2 * bus[indexer].Matrix_Loc +
                                                                   powerflow_values->BA_diag[indexer].size +
                                                                   temp_index)]);
@@ -4818,15 +4632,16 @@ int64 solver_nr_eigen(unsigned int bus_count, BUSDATA *bus, unsigned int branch_
 //jacobian_pass should be set to true for the a,b,c, and d updates
 // For first approach, working on system load at each bus for current injection
 // For the second approach, calculate the elements of a,b,c,d in equations(14),(15),(16),(17).
-void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT *powerflow_values, bool jacobian_pass,
-                         int island_number) {
+void NR_Solver_Eigen::compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT *powerflow_values,
+                                          bool jacobian_pass,
+                                          int island_number) {
     unsigned int indexer;
     double adjust_nominal_voltage_val, adjust_nominal_voltaged_val;
     double tempPbus, tempQbus;
     double adjust_temp_voltage_mag[6];
-    complex adjust_temp_nominal_voltage[6], adjusted_constant_current[6];
-    complex delta_current[3], voltageDel[3], undeltacurr[3];
-    complex temp_current[3], temp_store[3];
+    gld::complex adjust_temp_nominal_voltage[6], adjusted_constant_current[6];
+    gld::complex delta_current[3], voltageDel[3], undeltacurr[3];
+    gld::complex temp_current[3], temp_store[3];
     char jindex, temp_index, temp_index_b;
 
     //Loop through the buses
@@ -4862,7 +4677,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                                                          adjust_temp_voltage_mag[0] /
                                                          (voltageDel[0] * adjust_nominal_voltage_val));
                     } else {
-                        adjusted_constant_current[0] = complex(0.0, 0.0);
+                        adjusted_constant_current[0] = gld::complex(0.0, 0.0);
                     }
 
                     //Start adjustments - BC
@@ -4872,7 +4687,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                                                          adjust_temp_voltage_mag[1] /
                                                          (voltageDel[1] * adjust_nominal_voltage_val));
                     } else {
-                        adjusted_constant_current[1] = complex(0.0, 0.0);
+                        adjusted_constant_current[1] = gld::complex(0.0, 0.0);
                     }
 
                     //Start adjustments - CA
@@ -4882,7 +4697,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                                                          adjust_temp_voltage_mag[2] /
                                                          (voltageDel[2] * adjust_nominal_voltage_val));
                     } else {
-                        adjusted_constant_current[2] = complex(0.0, 0.0);
+                        adjusted_constant_current[2] = gld::complex(0.0, 0.0);
                     }
 
                     //See if we have any "different children"
@@ -4907,7 +4722,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                                                              ~bus[indexer].extra_var[6] * adjust_temp_voltage_mag[3] /
                                                              (bus[indexer].V[0] * adjust_nominal_voltage_val));
                         } else {
-                            adjusted_constant_current[3] = complex(0.0, 0.0);
+                            adjusted_constant_current[3] = gld::complex(0.0, 0.0);
                         }
 
                         //Start adjustments - B
@@ -4917,7 +4732,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                                                              ~bus[indexer].extra_var[7] * adjust_temp_voltage_mag[4] /
                                                              (bus[indexer].V[1] * adjust_nominal_voltage_val));
                         } else {
-                            adjusted_constant_current[4] = complex(0.0, 0.0);
+                            adjusted_constant_current[4] = gld::complex(0.0, 0.0);
                         }
 
                         //Start adjustments - C
@@ -4927,14 +4742,14 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                                                              ~bus[indexer].extra_var[8] * adjust_temp_voltage_mag[5] /
                                                              (bus[indexer].V[2] * adjust_nominal_voltage_val));
                         } else {
-                            adjusted_constant_current[5] = complex(0.0, 0.0);
+                            adjusted_constant_current[5] = gld::complex(0.0, 0.0);
                         }
                     } else    //Nope
                     {
                         //Set to zero, just cause
-                        adjusted_constant_current[3] = complex(0.0, 0.0);
-                        adjusted_constant_current[4] = complex(0.0, 0.0);
-                        adjusted_constant_current[5] = complex(0.0, 0.0);
+                        adjusted_constant_current[3] = gld::complex(0.0, 0.0);
+                        adjusted_constant_current[4] = gld::complex(0.0, 0.0);
+                        adjusted_constant_current[5] = gld::complex(0.0, 0.0);
                     }
                 } else    //"Normal" modes -- handle traditionally
                 {
@@ -4950,9 +4765,9 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                         adjusted_constant_current[5] = bus[indexer].extra_var[8];
                     } else    //Nope, just zero this for now
                     {
-                        adjusted_constant_current[3] = complex(0.0, 0.0);
-                        adjusted_constant_current[4] = complex(0.0, 0.0);
-                        adjusted_constant_current[5] = complex(0.0, 0.0);
+                        adjusted_constant_current[3] = gld::complex(0.0, 0.0);
+                        adjusted_constant_current[4] = gld::complex(0.0, 0.0);
+                        adjusted_constant_current[5] = gld::complex(0.0, 0.0);
                     }
                 }//End adjustment code
 
@@ -4969,8 +4784,8 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                     delta_current[0] += voltageDel[0] * (bus[indexer].Y[0]);
                 } else {
                     //Zero values - they shouldn't be used anyhow
-                    voltageDel[0] = complex(0.0, 0.0);
-                    delta_current[0] = complex(0.0, 0.0);
+                    voltageDel[0] = gld::complex(0.0, 0.0);
+                    delta_current[0] = gld::complex(0.0, 0.0);
                 }
 
                 if ((bus[indexer].phases & 0x03) == 0x03)    //Check for BC
@@ -4985,8 +4800,8 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                     delta_current[1] += voltageDel[1] * (bus[indexer].Y[1]);
                 } else {
                     //Zero unused
-                    voltageDel[1] = complex(0.0, 0.0);
-                    delta_current[1] = complex(0.0, 0.0);
+                    voltageDel[1] = gld::complex(0.0, 0.0);
+                    delta_current[1] = gld::complex(0.0, 0.0);
                 }
 
                 if ((bus[indexer].phases & 0x05) == 0x05)    //Check for CA
@@ -5001,8 +4816,8 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                     delta_current[2] += voltageDel[2] * (bus[indexer].Y[2]);
                 } else {
                     //Zero unused
-                    voltageDel[2] = complex(0.0, 0.0);
-                    delta_current[2] = complex(0.0, 0.0);
+                    voltageDel[2] = gld::complex(0.0, 0.0);
+                    delta_current[2] = gld::complex(0.0, 0.0);
                 }
 
                 //Convert delta-current into a phase current, where appropriate - reuse temp variable
@@ -5027,7 +4842,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                     }
                 } else {
                     //Zero it, just in case
-                    undeltacurr[0] = complex(0.0, 0.0);
+                    undeltacurr[0] = gld::complex(0.0, 0.0);
                 }
 
                 if ((bus[indexer].phases & 0x02) == 0x02)    //Has a phase B
@@ -5050,7 +4865,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                     }
                 } else {
                     //Zero it, just in case
-                    undeltacurr[1] = complex(0.0, 0.0);
+                    undeltacurr[1] = gld::complex(0.0, 0.0);
                 }
 
                 if ((bus[indexer].phases & 0x01) == 0x01)    //Has a phase C
@@ -5073,7 +4888,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                     }
                 } else {
                     //Zero it, just in case
-                    undeltacurr[2] = complex(0.0, 0.0);
+                    undeltacurr[2] = gld::complex(0.0, 0.0);
                 }
 
                 //Provide updates to relevant phases
@@ -5323,7 +5138,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                                                          adjust_temp_voltage_mag[3] /
                                                          (bus[indexer].V[0] * adjust_nominal_voltage_val));
                     } else {
-                        adjusted_constant_current[0] = complex(0.0, 0.0);
+                        adjusted_constant_current[0] = gld::complex(0.0, 0.0);
                     }
 
                     //Start adjustments - B
@@ -5333,7 +5148,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                                                          adjust_temp_voltage_mag[4] /
                                                          (bus[indexer].V[1] * adjust_nominal_voltage_val));
                     } else {
-                        adjusted_constant_current[1] = complex(0.0, 0.0);
+                        adjusted_constant_current[1] = gld::complex(0.0, 0.0);
                     }
 
                     //Start adjustments - C
@@ -5343,7 +5158,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                                                          adjust_temp_voltage_mag[5] /
                                                          (bus[indexer].V[2] * adjust_nominal_voltage_val));
                     } else {
-                        adjusted_constant_current[2] = complex(0.0, 0.0);
+                        adjusted_constant_current[2] = gld::complex(0.0, 0.0);
                     }
 
                     if (bus[indexer].prerot_I[0] != 0.0)
@@ -5382,7 +5197,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                                                              ~bus[indexer].extra_var[6] * adjust_temp_voltage_mag[0] /
                                                              (voltageDel[0] * adjust_nominal_voltage_val));
                         } else {
-                            adjusted_constant_current[3] = complex(0.0, 0.0);
+                            adjusted_constant_current[3] = gld::complex(0.0, 0.0);
                         }
 
                         //Start adjustments - BC
@@ -5392,7 +5207,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                                                              ~bus[indexer].extra_var[7] * adjust_temp_voltage_mag[1] /
                                                              (voltageDel[1] * adjust_nominal_voltage_val));
                         } else {
-                            adjusted_constant_current[4] = complex(0.0, 0.0);
+                            adjusted_constant_current[4] = gld::complex(0.0, 0.0);
                         }
 
                         //Start adjustments - CA
@@ -5402,14 +5217,14 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                                                              ~bus[indexer].extra_var[8] * adjust_temp_voltage_mag[2] /
                                                              (voltageDel[2] * adjust_nominal_voltage_val));
                         } else {
-                            adjusted_constant_current[5] = complex(0.0, 0.0);
+                            adjusted_constant_current[5] = gld::complex(0.0, 0.0);
                         }
                     } else    //Nope
                     {
                         //Set to zero, just cause
-                        adjusted_constant_current[3] = complex(0.0, 0.0);
-                        adjusted_constant_current[4] = complex(0.0, 0.0);
-                        adjusted_constant_current[5] = complex(0.0, 0.0);
+                        adjusted_constant_current[3] = gld::complex(0.0, 0.0);
+                        adjusted_constant_current[4] = gld::complex(0.0, 0.0);
+                        adjusted_constant_current[5] = gld::complex(0.0, 0.0);
                     }
                 } else    //"Normal" modes -- handle traditionally
                 {
@@ -5425,9 +5240,9 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                         adjusted_constant_current[5] = bus[indexer].extra_var[8];
                     } else    //Nope, just zero this for now
                     {
-                        adjusted_constant_current[3] = complex(0.0, 0.0);
-                        adjusted_constant_current[4] = complex(0.0, 0.0);
-                        adjusted_constant_current[5] = complex(0.0, 0.0);
+                        adjusted_constant_current[3] = gld::complex(0.0, 0.0);
+                        adjusted_constant_current[4] = gld::complex(0.0, 0.0);
+                        adjusted_constant_current[5] = gld::complex(0.0, 0.0);
                     }
                 }//End adjustment code
 
@@ -5451,8 +5266,8 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                         delta_current[0] += voltageDel[0] * (bus[indexer].extra_var[3]);
                     } else {
                         //Zero it, for good measure
-                        voltageDel[0] = complex(0.0, 0.0);
-                        delta_current[0] = complex(0.0, 0.0);
+                        voltageDel[0] = gld::complex(0.0, 0.0);
+                        delta_current[0] = gld::complex(0.0, 0.0);
                     }
 
                     //Check for BC
@@ -5468,8 +5283,8 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                         delta_current[1] += voltageDel[1] * (bus[indexer].extra_var[4]);
                     } else {
                         //Zero it, for good measure
-                        voltageDel[1] = complex(0.0, 0.0);
-                        delta_current[1] = complex(0.0, 0.0);
+                        voltageDel[1] = gld::complex(0.0, 0.0);
+                        delta_current[1] = gld::complex(0.0, 0.0);
                     }
 
                     //Check for CA
@@ -5485,8 +5300,8 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                         delta_current[2] += voltageDel[2] * (bus[indexer].extra_var[5]);
                     } else {
                         //Zero it, for good measure
-                        voltageDel[2] = complex(0.0, 0.0);
-                        delta_current[2] = complex(0.0, 0.0);
+                        voltageDel[2] = gld::complex(0.0, 0.0);
+                        delta_current[2] = gld::complex(0.0, 0.0);
                     }
 
                     //Convert delta-current into a phase current - reuse temp variable
@@ -5498,7 +5313,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                                      (adjusted_constant_current[4] + delta_current[1]);
                 } else    //zero the variable so we don't have excessive ifs
                 {
-                    undeltacurr[0] = undeltacurr[1] = undeltacurr[2] = complex(0.0, 0.0);    //Zero it
+                    undeltacurr[0] = undeltacurr[1] = undeltacurr[2] = gld::complex(0.0, 0.0);    //Zero it
                 }
 
                 for (jindex = 0; jindex < powerflow_values->BA_diag[indexer].size; jindex++) {
@@ -5726,8 +5541,8 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 
                 } else {
                     //Zero values - they shouldn't be used anyhow
-                    voltageDel[0] = complex(0.0, 0.0);
-                    delta_current[0] = complex(0.0, 0.0);
+                    voltageDel[0] = gld::complex(0.0, 0.0);
+                    delta_current[0] = gld::complex(0.0, 0.0);
                 }
 
                 if ((bus[indexer].phases & 0x03) == 0x03)    //Check for BC
@@ -5743,8 +5558,8 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 
                 } else {
                     //Zero unused
-                    voltageDel[1] = complex(0.0, 0.0);
-                    delta_current[1] = complex(0.0, 0.0);
+                    voltageDel[1] = gld::complex(0.0, 0.0);
+                    delta_current[1] = gld::complex(0.0, 0.0);
                 }
 
                 if ((bus[indexer].phases & 0x05) == 0x05)    //Check for CA
@@ -5760,8 +5575,8 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 
                 } else {
                     //Zero unused
-                    voltageDel[2] = complex(0.0, 0.0);
-                    delta_current[2] = complex(0.0, 0.0);
+                    voltageDel[2] = gld::complex(0.0, 0.0);
+                    delta_current[2] = gld::complex(0.0, 0.0);
                 }
 
                 //Populate the values for constant current -- deltamode different right now (all same in future?)
@@ -5798,7 +5613,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                                                          adjust_temp_voltage_mag[3] /
                                                          (bus[indexer].V[0] * adjust_nominal_voltage_val));
                     } else {
-                        adjusted_constant_current[3] = complex(0.0, 0.0);
+                        adjusted_constant_current[3] = gld::complex(0.0, 0.0);
                     }
 
                     //Start adjustments - B
@@ -5808,7 +5623,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                                                          adjust_temp_voltage_mag[4] /
                                                          (bus[indexer].V[1] * adjust_nominal_voltage_val));
                     } else {
-                        adjusted_constant_current[4] = complex(0.0, 0.0);
+                        adjusted_constant_current[4] = gld::complex(0.0, 0.0);
                     }
 
                     //Start adjustments - C
@@ -5818,7 +5633,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                                                          adjust_temp_voltage_mag[5] /
                                                          (bus[indexer].V[2] * adjust_nominal_voltage_val));
                     } else {
-                        adjusted_constant_current[5] = complex(0.0, 0.0);
+                        adjusted_constant_current[5] = gld::complex(0.0, 0.0);
                     }
 
                     //Start adjustments - AB
@@ -5828,7 +5643,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                                                          adjust_temp_voltage_mag[0] /
                                                          (voltageDel[0] * adjust_nominal_voltaged_val));
                     } else {
-                        adjusted_constant_current[0] = complex(0.0, 0.0);
+                        adjusted_constant_current[0] = gld::complex(0.0, 0.0);
                     }
 
                     //Start adjustments - BC
@@ -5838,7 +5653,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                                                          adjust_temp_voltage_mag[1] /
                                                          (voltageDel[1] * adjust_nominal_voltaged_val));
                     } else {
-                        adjusted_constant_current[1] = complex(0.0, 0.0);
+                        adjusted_constant_current[1] = gld::complex(0.0, 0.0);
                     }
 
                     //Start adjustments - CA
@@ -5848,7 +5663,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                                                          adjust_temp_voltage_mag[2] /
                                                          (voltageDel[2] * adjust_nominal_voltaged_val));
                     } else {
-                        adjusted_constant_current[2] = complex(0.0, 0.0);
+                        adjusted_constant_current[2] = gld::complex(0.0, 0.0);
                     }
                 }//End deltamode adjustment
                 else    //Normal mode
@@ -5882,7 +5697,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                     undeltacurr[0] += adjusted_constant_current[3];
                 } else {
                     //Zero it, just in case
-                    undeltacurr[0] = complex(0.0, 0.0);
+                    undeltacurr[0] = gld::complex(0.0, 0.0);
                 }
 
                 if ((bus[indexer].phases & 0x02) == 0x02)    //Has a phase B
@@ -5902,7 +5717,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                     undeltacurr[1] += adjusted_constant_current[4];
                 } else {
                     //Zero it, just in case
-                    undeltacurr[1] = complex(0.0, 0.0);
+                    undeltacurr[1] = gld::complex(0.0, 0.0);
                 }
 
                 if ((bus[indexer].phases & 0x01) == 0x01)    //Has a phase C
@@ -5922,7 +5737,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
                     undeltacurr[2] += adjusted_constant_current[5];
                 } else {
                     //Zero it, just in case
-                    undeltacurr[2] = complex(0.0, 0.0);
+                    undeltacurr[2] = gld::complex(0.0, 0.0);
                 }
 
                 //Provide updates to relevant phases
@@ -6133,169 +5948,169 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
     }//end bus traversion for Jacobian or current injection items
 }//End load update function
 
-//Function to free up array of NR_SOLVER_STRUCT variables
-STATUS NR_array_structure_free(NR_SOLVER_STRUCT *struct_of_interest, int number_of_islands) {
-    int index_val;
-    SUPERLU_NR_vars *curr_island_superLU_vars;
-
-    //Null the pointer, because
-    curr_island_superLU_vars = NULL;
-
-    //Loop through the individual entries, freeing them all
-    for (index_val = 0; index_val < number_of_islands; index_val++) {
-        //Free the arrays - check htem all - otherwise this could have issues
-        if (struct_of_interest->island_matrix_values[index_val].deltaI_NR != NULL)
-            gl_free(struct_of_interest->island_matrix_values[index_val].deltaI_NR);
-
-        if (struct_of_interest->island_matrix_values[index_val].Y_offdiag_PQ != NULL)
-            gl_free(struct_of_interest->island_matrix_values[index_val].Y_offdiag_PQ);
-
-        if (struct_of_interest->island_matrix_values[index_val].Y_diag_fixed != NULL)
-            gl_free(struct_of_interest->island_matrix_values[index_val].Y_diag_fixed);
-
-        if (struct_of_interest->island_matrix_values[index_val].Y_diag_update != NULL)
-            gl_free(struct_of_interest->island_matrix_values[index_val].Y_diag_update);
-
-        if (struct_of_interest->island_matrix_values[index_val].Y_Amatrix != NULL)
-            gl_free(struct_of_interest->island_matrix_values[index_val].Y_Amatrix);
-
-        //Do the sub-matrix elements too
-        if (struct_of_interest->island_matrix_values[index_val].matrices_LU.a_LU != NULL)
-            gl_free(struct_of_interest->island_matrix_values[index_val].matrices_LU.a_LU);
-
-        if (struct_of_interest->island_matrix_values[index_val].matrices_LU.cols_LU != NULL)
-            gl_free(struct_of_interest->island_matrix_values[index_val].matrices_LU.cols_LU);
-
-        if (struct_of_interest->island_matrix_values[index_val].matrices_LU.rhs_LU != NULL)
-            gl_free(struct_of_interest->island_matrix_values[index_val].matrices_LU.rhs_LU);
-
-        if (struct_of_interest->island_matrix_values[index_val].matrices_LU.rows_LU != NULL)
-            gl_free(struct_of_interest->island_matrix_values[index_val].matrices_LU.rows_LU);
-
-        if (struct_of_interest->island_matrix_values[index_val].LU_solver_vars != NULL) {
-            //If we're superLU - be sure to get rid of the submatrix sub-items
-            if (matrix_solver_method == MM_SUPERLU) {
-                //Map it
-                curr_island_superLU_vars = (SUPERLU_NR_vars *) struct_of_interest->island_matrix_values[index_val].LU_solver_vars;
-
-                //Free the others, if necessary
-                if (curr_island_superLU_vars->A_LU.Store != NULL)
-                    gl_free(curr_island_superLU_vars->A_LU.Store);
-
-                if (curr_island_superLU_vars->B_LU.Store != NULL)
-                    gl_free(curr_island_superLU_vars->B_LU.Store);
-
-                if (curr_island_superLU_vars->perm_c != NULL)
-                    gl_free(curr_island_superLU_vars->perm_c);
-
-                if (curr_island_superLU_vars->perm_r != NULL)
-                    gl_free(curr_island_superLU_vars->perm_r);
-
-                //Null the pointer again, just because
-                curr_island_superLU_vars = NULL;
-
-                //Free the value
-                gl_free(struct_of_interest->island_matrix_values[index_val].LU_solver_vars);
-            } else if (matrix_solver_method == MM_EXTERN) {
-                //Call destruction routine
-                ((void (*)(void *, bool)) (LUSolverFcns.ext_destroy))(
-                        struct_of_interest->island_matrix_values[index_val].LU_solver_vars, false);
-            }
-            //Default else -- ??? Not sure how we get here
-        }
-    }
-
-    //Free the overall array
-    gl_free(struct_of_interest->island_matrix_values);
-
-    //Null it out, so it gets detected
-    struct_of_interest->island_matrix_values = NULL;
-
-    //Free up the "common/base" item, as well
-    gl_free(struct_of_interest->BA_diag);
-
-    //Null the final indicator, just to be safe
-    struct_of_interest->BA_diag = NULL;
-
-    //If it made it this far, succeed
-    return SUCCESS;
-}
-
-//Function to perform the base allocation of NR_SOLVER_STRUCT variables (solver_NR will handle the lower-level details)
-STATUS NR_array_structure_allocate(NR_SOLVER_STRUCT *struct_of_interest, int number_of_islands) {
-    int index_val;
-
-    //Make sure the existing item is empty -- otherwise, error, because we have no idea how big it was!
-    if (struct_of_interest->island_matrix_values != NULL) {
-        gl_error("solver_NR: Attempted to allocate over an existing NR solver variable array!");
-        /*  TROUBLESHOOT
-		While attempting to allocate over a NR solver/island variable, the variable to allocate
-		to was not empty.  The base size is unknown, so this will fail (it may leave stranded memory locations).
-		Please try again, and adjust any code added.  If the error persists, post an issue under the ticketing system.
-		*/
-
-        return FAILED;
-    }
-
-    //Allocate the base array
-    struct_of_interest->island_matrix_values = (NR_MATRIX_CONSTRUCTION *) gl_malloc(
-            number_of_islands * sizeof(NR_MATRIX_CONSTRUCTION));
-
-    //Make sure it worked
-    if (struct_of_interest->island_matrix_values == NULL) {
-        gl_error("solver_NR: An attempt to allocate a variable array for the NR solver failed!");
-        /*  TROUBLESHOOT
-		While attempting to allocate an array for the NR solver, a memory allocation issue was encountered.
-		Please try again.  If the error persists, please submit an issue via the ticketing system.
-		*/
-
-        return FAILED;
-    }
-
-    //Now loop through and initialize the variables
-    for (index_val = 0; index_val < number_of_islands; index_val++) {
-        //Some of these are done in solver_NR as well, but let's be paranoid
-        struct_of_interest->island_matrix_values[index_val].deltaI_NR = NULL;
-        struct_of_interest->island_matrix_values[index_val].size_offdiag_PQ = 0;
-        struct_of_interest->island_matrix_values[index_val].size_diag_fixed = 0;
-        struct_of_interest->island_matrix_values[index_val].total_variables = 0;
-        struct_of_interest->island_matrix_values[index_val].size_diag_update = 0;
-        struct_of_interest->island_matrix_values[index_val].size_Amatrix = 0;
-        struct_of_interest->island_matrix_values[index_val].max_size_offdiag_PQ = 0;
-        struct_of_interest->island_matrix_values[index_val].max_size_diag_fixed = 0;
-        struct_of_interest->island_matrix_values[index_val].max_total_variables = 0;
-        struct_of_interest->island_matrix_values[index_val].max_size_diag_update = 0;
-        struct_of_interest->island_matrix_values[index_val].prev_m = 0;
-        struct_of_interest->island_matrix_values[index_val].index_count = 0;
-        struct_of_interest->island_matrix_values[index_val].bus_count = 0;
-        struct_of_interest->island_matrix_values[index_val].indexer = 0;
-        struct_of_interest->island_matrix_values[index_val].NR_realloc_needed = false;
-        struct_of_interest->island_matrix_values[index_val].Y_offdiag_PQ = NULL;
-        struct_of_interest->island_matrix_values[index_val].Y_diag_fixed = NULL;
-        struct_of_interest->island_matrix_values[index_val].Y_diag_update = NULL;
-        struct_of_interest->island_matrix_values[index_val].Y_Amatrix = NULL;
-
-        //Sub-structure of matrices
-        struct_of_interest->island_matrix_values[index_val].matrices_LU.a_LU = NULL;
-        struct_of_interest->island_matrix_values[index_val].matrices_LU.cols_LU = NULL;
-        struct_of_interest->island_matrix_values[index_val].matrices_LU.rhs_LU = NULL;
-        struct_of_interest->island_matrix_values[index_val].matrices_LU.rows_LU = NULL;
-
-        //Other values
-        struct_of_interest->island_matrix_values[index_val].LU_solver_vars = NULL;
-        struct_of_interest->island_matrix_values[index_val].iteration_count = 0;
-        struct_of_interest->island_matrix_values[index_val].new_iteration_required = false;
-        struct_of_interest->island_matrix_values[index_val].swing_converged = false;
-        struct_of_interest->island_matrix_values[index_val].swing_is_a_swing = false;
-        struct_of_interest->island_matrix_values[index_val].SaturationMismatchPresent = false;
-        struct_of_interest->island_matrix_values[index_val].solver_info = -1;    //"Bad", by default
-        struct_of_interest->island_matrix_values[index_val].return_code = -1;    //Still "bad" too
-        struct_of_interest->island_matrix_values[index_val].max_mismatch_converge = 0.0;
-    }
-
-    //Null out the main item too
-    struct_of_interest->BA_diag = NULL;
-
-    //If it made it this far, declare success
-    return SUCCESS;
-}
+////Function to free up array of NR_SOLVER_STRUCT variables
+//STATUS NR_array_structure_free(NR_SOLVER_STRUCT *struct_of_interest, int number_of_islands) {
+//    int index_val;
+//    EIGEN_NR_vars *curr_island_superLU_vars;
+//
+//    //Null the pointer, because
+//    curr_island_superLU_vars = NULL;
+//
+//    //Loop through the individual entries, freeing them all
+//    for (index_val = 0; index_val < number_of_islands; index_val++) {
+//        //Free the arrays - check htem all - otherwise this could have issues
+//        if (struct_of_interest->island_matrix_values[index_val].deltaI_NR != NULL)
+//            gl_free(struct_of_interest->island_matrix_values[index_val].deltaI_NR);
+//
+//        if (struct_of_interest->island_matrix_values[index_val].Y_offdiag_PQ != NULL)
+//            gl_free(struct_of_interest->island_matrix_values[index_val].Y_offdiag_PQ);
+//
+//        if (struct_of_interest->island_matrix_values[index_val].Y_diag_fixed != NULL)
+//            gl_free(struct_of_interest->island_matrix_values[index_val].Y_diag_fixed);
+//
+//        if (struct_of_interest->island_matrix_values[index_val].Y_diag_update != NULL)
+//            gl_free(struct_of_interest->island_matrix_values[index_val].Y_diag_update);
+//
+//        if (struct_of_interest->island_matrix_values[index_val].Y_Amatrix != NULL)
+//            gl_free(struct_of_interest->island_matrix_values[index_val].Y_Amatrix);
+//
+//        //Do the sub-matrix elements too
+//        if (struct_of_interest->island_matrix_values[index_val].matrices_LU.a_LU != NULL)
+//            gl_free(struct_of_interest->island_matrix_values[index_val].matrices_LU.a_LU);
+//
+//        if (struct_of_interest->island_matrix_values[index_val].matrices_LU.cols_LU != NULL)
+//            gl_free(struct_of_interest->island_matrix_values[index_val].matrices_LU.cols_LU);
+//
+//        if (struct_of_interest->island_matrix_values[index_val].matrices_LU.rhs_LU != NULL)
+//            gl_free(struct_of_interest->island_matrix_values[index_val].matrices_LU.rhs_LU);
+//
+//        if (struct_of_interest->island_matrix_values[index_val].matrices_LU.rows_LU != NULL)
+//            gl_free(struct_of_interest->island_matrix_values[index_val].matrices_LU.rows_LU);
+//
+//        if (struct_of_interest->island_matrix_values[index_val].LU_solver_vars != NULL) {
+//            //If we're superLU - be sure to get rid of the submatrix sub-items
+//            if (matrix_solver_method == MM_SUPERLU) {
+//                //Map it
+//                curr_island_superLU_vars = (EIGEN_NR_vars *) struct_of_interest->island_matrix_values[index_val].LU_solver_vars;
+//
+//                //Free the others, if necessary
+//                if (curr_island_superLU_vars->A_LU.Store != NULL)
+//                    gl_free(curr_island_superLU_vars->A_LU.Store);
+//
+//                if (curr_island_superLU_vars->B_LU.Store != NULL)
+//                    gl_free(curr_island_superLU_vars->B_LU.Store);
+//
+//                if (curr_island_superLU_vars->perm_c != NULL)
+//                    gl_free(curr_island_superLU_vars->perm_c);
+//
+//                if (curr_island_superLU_vars->perm_r != NULL)
+//                    gl_free(curr_island_superLU_vars->perm_r);
+//
+//                //Null the pointer again, just because
+//                curr_island_superLU_vars = NULL;
+//
+//                //Free the value
+//                gl_free(struct_of_interest->island_matrix_values[index_val].LU_solver_vars);
+//            } else if (matrix_solver_method == MM_EXTERN) {
+//                //Call destruction routine
+//                ((void (*)(void *, bool)) (LUSolverFcns.ext_destroy))(
+//                        struct_of_interest->island_matrix_values[index_val].LU_solver_vars, false);
+//            }
+//            //Default else -- ??? Not sure how we get here
+//        }
+//    }
+//
+//    //Free the overall array
+//    gl_free(struct_of_interest->island_matrix_values);
+//
+//    //Null it out, so it gets detected
+//    struct_of_interest->island_matrix_values = NULL;
+//
+//    //Free up the "common/base" item, as well
+//    gl_free(struct_of_interest->BA_diag);
+//
+//    //Null the final indicator, just to be safe
+//    struct_of_interest->BA_diag = NULL;
+//
+//    //If it made it this far, succeed
+//    return SUCCESS;
+//}
+//
+////Function to perform the base allocation of NR_SOLVER_STRUCT variables (solver_NR will handle the lower-level details)
+//STATUS NR_array_structure_allocate(NR_SOLVER_STRUCT *struct_of_interest, int number_of_islands) {
+//    int index_val;
+//
+//    //Make sure the existing item is empty -- otherwise, error, because we have no idea how big it was!
+//    if (struct_of_interest->island_matrix_values != NULL) {
+//        gl_error("solver_NR: Attempted to allocate over an existing NR solver variable array!");
+//        /*  TROUBLESHOOT
+//		While attempting to allocate over a NR solver/island variable, the variable to allocate
+//		to was not empty.  The base size is unknown, so this will fail (it may leave stranded memory locations).
+//		Please try again, and adjust any code added.  If the error persists, post an issue under the ticketing system.
+//		*/
+//
+//        return FAILED;
+//    }
+//
+//    //Allocate the base array
+//    struct_of_interest->island_matrix_values = (NR_MATRIX_CONSTRUCTION *) gl_malloc(
+//            number_of_islands * sizeof(NR_MATRIX_CONSTRUCTION));
+//
+//    //Make sure it worked
+//    if (struct_of_interest->island_matrix_values == NULL) {
+//        gl_error("solver_NR: An attempt to allocate a variable array for the NR solver failed!");
+//        /*  TROUBLESHOOT
+//		While attempting to allocate an array for the NR solver, a memory allocation issue was encountered.
+//		Please try again.  If the error persists, please submit an issue via the ticketing system.
+//		*/
+//
+//        return FAILED;
+//    }
+//
+//    //Now loop through and initialize the variables
+//    for (index_val = 0; index_val < number_of_islands; index_val++) {
+//        //Some of these are done in solver_NR as well, but let's be paranoid
+//        struct_of_interest->island_matrix_values[index_val].deltaI_NR = NULL;
+//        struct_of_interest->island_matrix_values[index_val].size_offdiag_PQ = 0;
+//        struct_of_interest->island_matrix_values[index_val].size_diag_fixed = 0;
+//        struct_of_interest->island_matrix_values[index_val].total_variables = 0;
+//        struct_of_interest->island_matrix_values[index_val].size_diag_update = 0;
+//        struct_of_interest->island_matrix_values[index_val].size_Amatrix = 0;
+//        struct_of_interest->island_matrix_values[index_val].max_size_offdiag_PQ = 0;
+//        struct_of_interest->island_matrix_values[index_val].max_size_diag_fixed = 0;
+//        struct_of_interest->island_matrix_values[index_val].max_total_variables = 0;
+//        struct_of_interest->island_matrix_values[index_val].max_size_diag_update = 0;
+//        struct_of_interest->island_matrix_values[index_val].prev_m = 0;
+//        struct_of_interest->island_matrix_values[index_val].index_count = 0;
+//        struct_of_interest->island_matrix_values[index_val].bus_count = 0;
+//        struct_of_interest->island_matrix_values[index_val].indexer = 0;
+//        struct_of_interest->island_matrix_values[index_val].NR_realloc_needed = false;
+//        struct_of_interest->island_matrix_values[index_val].Y_offdiag_PQ = NULL;
+//        struct_of_interest->island_matrix_values[index_val].Y_diag_fixed = NULL;
+//        struct_of_interest->island_matrix_values[index_val].Y_diag_update = NULL;
+//        struct_of_interest->island_matrix_values[index_val].Y_Amatrix = NULL;
+//
+//        //Sub-structure of matrices
+//        struct_of_interest->island_matrix_values[index_val].matrices_LU.a_LU = NULL;
+//        struct_of_interest->island_matrix_values[index_val].matrices_LU.cols_LU = NULL;
+//        struct_of_interest->island_matrix_values[index_val].matrices_LU.rhs_LU = NULL;
+//        struct_of_interest->island_matrix_values[index_val].matrices_LU.rows_LU = NULL;
+//
+//        //Other values
+//        struct_of_interest->island_matrix_values[index_val].LU_solver_vars = NULL;
+//        struct_of_interest->island_matrix_values[index_val].iteration_count = 0;
+//        struct_of_interest->island_matrix_values[index_val].new_iteration_required = false;
+//        struct_of_interest->island_matrix_values[index_val].swing_converged = false;
+//        struct_of_interest->island_matrix_values[index_val].swing_is_a_swing = false;
+//        struct_of_interest->island_matrix_values[index_val].SaturationMismatchPresent = false;
+//        struct_of_interest->island_matrix_values[index_val].solver_info = -1;    //"Bad", by default
+//        struct_of_interest->island_matrix_values[index_val].return_code = -1;    //Still "bad" too
+//        struct_of_interest->island_matrix_values[index_val].max_mismatch_converge = 0.0;
+//    }
+//
+//    //Null out the main item too
+//    struct_of_interest->BA_diag = NULL;
+//
+//    //If it made it this far, declare success
+//    return SUCCESS;
+//}

@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
-#include <complex.h>
+#include "gld_complex.h"
 
 #include "controller_dg.h"
 
@@ -431,7 +431,7 @@ SIMULATIONMODE controller_dg::inter_deltaupdate(unsigned int64 delta_time, unsig
 
 	OBJECT *switchFromNdObj = NULL;
 	node *switchFromNd = NULL;
-	complex vtemp[3];
+	gld::complex vtemp[3];
 	double nominal_voltage;
 	FUNCTIONADDR funadd = NULL;
 	int return_val;
@@ -639,7 +639,7 @@ SIMULATIONMODE controller_dg::inter_deltaupdate(unsigned int64 delta_time, unsig
 	}// End corrector pass
 }
 
-STATUS controller_dg::post_deltaupdate(complex *useful_value, unsigned int mode_pass)
+STATUS controller_dg::post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass)
 {
 	return SUCCESS;	//Allways succeeds right now
 }
@@ -763,7 +763,7 @@ EXPORT SIMULATIONMODE interupdate_controller_dg(OBJECT *obj, unsigned int64 delt
 	}
 }
 
-EXPORT STATUS postupdate_controller_dg(OBJECT *obj, complex *useful_value, unsigned int mode_pass)
+EXPORT STATUS postupdate_controller_dg(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass)
 {
 	controller_dg *my = OBJECTDATA(obj,controller_dg);
 	STATUS status = FAILED;

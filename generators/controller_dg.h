@@ -17,7 +17,7 @@
 #include "diesel_dg.h"
 
 EXPORT SIMULATIONMODE interupdate_controller_dg(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
-EXPORT STATUS postupdate_controller_dg(OBJECT *obj, complex *useful_value, unsigned int mode_pass);
+EXPORT STATUS postupdate_controller_dg(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass);
 
 //controller state variable structure
 typedef struct {
@@ -99,7 +99,7 @@ public:
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 	//STATUS deltaupdate(unsigned int64 dt, unsigned int iteration_count_val);
 	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
-	STATUS post_deltaupdate(complex *useful_value, unsigned int mode_pass);
+	STATUS post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass);
 
 };
 

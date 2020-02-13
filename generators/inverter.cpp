@@ -339,9 +339,9 @@ int inverter::create(void)
 	// Default values for Inverter object.
 	P_Out = 0;  // P_Out and Q_Out are set by the user as set values to output in CONSTANT_PQ mode
 	Q_Out = 0;
-	V_In_Set_A = complex(480,0);
-	V_In_Set_B = complex(-240, 415.69);
-	V_In_Set_C = complex(-240,-415.69);
+	V_In_Set_A = gld::complex(480,0);
+	V_In_Set_B = gld::complex(-240, 415.69);
+	V_In_Set_C = gld::complex(-240,-415.69);
 	V_Set_A = 240;
 	V_Set_B = 240;
 	V_Set_C = 240;
@@ -551,8 +551,8 @@ int inverter::create(void)
 	checkRampRate_reactive = false;
 	rampUpRate_reactive = 1.0e9;		//1 GVAr/s default because, why not
 	rampDownRate_reactive = 1.0e9;	//1 GVAr/s default because symmetry
-	prev_VA_out[0] = prev_VA_out[1] = prev_VA_out[2] = complex(0.0,0.0);
-	curr_VA_out[0] = curr_VA_out[1] = curr_VA_out[2] = complex(0.0,0.0);
+	prev_VA_out[0] = prev_VA_out[1] = prev_VA_out[2] = gld::complex(0.0,0.0);
+	curr_VA_out[0] = curr_VA_out[1] = curr_VA_out[2] = gld::complex(0.0,0.0);
 	event_deltat = 10000000.0;	//Make very large, so first step in doesn't have a divide by zero
 	parent_is_a_meter = false;		//By default, no parent meter
 	parent_is_triplex = false;		//By default, we're not triplex
@@ -569,13 +569,13 @@ int inverter::create(void)
 	pGenerated = NULL;
 
 	//Zero the accumulators
-	value_Circuit_V[0] = value_Circuit_V[1] = value_Circuit_V[2] = complex(0.0,0.0);
-	value_Line_I[0] = value_Line_I[1] = value_Line_I[2] = complex(0.0,0.0);
-	value_Line_unrotI[0] = value_Line_unrotI[1] = value_Line_unrotI[2] = complex(0.0,0.0);
-	value_Power[0] = value_Power[1] = value_Power[2] = complex(0.0,0.0);
-	value_IGenerated[0] = value_IGenerated[1] = value_IGenerated[2] = complex(0.0,0.0);
-	value_Line12 = complex(0.0,0.0);
-	value_Power12 = complex(0.0,0.0);
+	value_Circuit_V[0] = value_Circuit_V[1] = value_Circuit_V[2] = gld::complex(0.0,0.0);
+	value_Line_I[0] = value_Line_I[1] = value_Line_I[2] = gld::complex(0.0,0.0);
+	value_Line_unrotI[0] = value_Line_unrotI[1] = value_Line_unrotI[2] = gld::complex(0.0,0.0);
+	value_Power[0] = value_Power[1] = value_Power[2] = gld::complex(0.0,0.0);
+	value_IGenerated[0] = value_IGenerated[1] = value_IGenerated[2] = gld::complex(0.0,0.0);
+	value_Line12 = gld::complex(0.0,0.0);
+	value_Power12 = gld::complex(0.0,0.0);
 	value_MeterStatus = 1;	//Connected, by default
 	
 	// Volt-Watt parameters
@@ -598,7 +598,7 @@ int inverter::init(OBJECT *parent)
 	PROPERTY *pval;
 	bool *dyn_gen_posting;
 	unsigned iindex, jindex;
-	complex filter_impedance;
+	gld::complex filter_impedance;
 	double *nominal_voltage;
 	double *ptemp_double;
 	double temp_double_high, temp_double_low, tdiff, ang_diff;
@@ -612,7 +612,7 @@ int inverter::init(OBJECT *parent)
 	gld_wlock *test_rlock;
 	bool temp_bool_value;
 	int temp_idx_x, temp_idx_y;
-	complex temp_complex_value;
+	gld::complex temp_complex_value;
 	complex_array temp_complex_array;
 	set parent_phases;
 	OBJECT *tmp_obj = NULL;
@@ -860,7 +860,7 @@ int inverter::init(OBJECT *parent)
 				delete temp_property_pointer;
 
 				Zbase = (node_nominal_voltage * node_nominal_voltage)/p_rated;
-				filter_impedance = complex(1.0,0.0)/(complex(Rfilter,Xfilter) * Zbase);
+				filter_impedance = gld::complex(1.0,0.0)/(gld::complex(Rfilter,Xfilter) * Zbase);
 
 				for (iindex=0; iindex<3; iindex++)
 				{
@@ -872,7 +872,7 @@ int inverter::init(OBJECT *parent)
 						}
 						else
 						{
-							generator_admittance[iindex][jindex] = complex(0.0,0.0);
+							generator_admittance[iindex][jindex] = gld::complex(0.0,0.0);
 						}
 					}
 				}
@@ -904,7 +904,7 @@ int inverter::init(OBJECT *parent)
 					{
 						for (temp_idx_y=0; temp_idx_y<3; temp_idx_y++)
 						{
-							temp_complex_array.set_at(temp_idx_x,temp_idx_y,complex(0.0,0.0));
+							temp_complex_array.set_at(temp_idx_x,temp_idx_y,gld::complex(0.0,0.0));
 						}
 					}
 				}
@@ -1946,15 +1946,15 @@ int inverter::init(OBJECT *parent)
 	start_time = gl_globalclock;
 
 	// Initialize parameters
-	VA_Out = complex(P_Out,Q_Out);
+	VA_Out = gld::complex(P_Out,Q_Out);
 	VA_Out_past = VA_Out;
-	//I_In = complex((VA_Out.Mag())/V_In.Mag(),0.0);
+	//I_In = gld::complex((VA_Out.Mag())/V_In.Mag(),0.0);
 	P_Out_t0 = P_Out;
 	Q_Out_t0 = Q_Out;
 	power_factor_t0 = power_factor;
-	I_Out[0] = complex(0);
-	I_Out[1] = complex(0);
-	I_Out[2] = complex(0);
+	I_Out[0] = gld::complex(0);
+	I_Out[1] = gld::complex(0);
+	I_Out[2] = gld::complex(0);
 
 	return 1;
 	
@@ -2295,13 +2295,13 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 	bool *gen_dynamic_flag;
 	STATUS fxn_return_status;
 	
-	complex rotate_value;
-	complex calculated_iO[3];
+	gld::complex rotate_value;
+	gld::complex calculated_iO[3];
 
-	complex temp_current_val[3];
-	complex temp_power_val[3];
+	gld::complex temp_current_val[3];
+	gld::complex temp_power_val[3];
 
-	complex temp_complex_value;
+	gld::complex temp_complex_value;
 	gld_wlock *test_rlock;
 
 	//Assume always want TS_NEVER
@@ -2318,12 +2318,12 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	if(gen_status_v == OFFLINE){
-		power_val[0] = complex(0.0,0.0);
-		power_val[1] = complex(0.0,0.0);
-		power_val[2] = complex(0.0,0.0);
+		power_val[0] = gld::complex(0.0,0.0);
+		power_val[1] = gld::complex(0.0,0.0);
+		power_val[2] = gld::complex(0.0,0.0);
 		P_Out = 0;
 		Q_Out = 0;
-		VA_Out = complex(0);
+		VA_Out = gld::complex(0);
 		if ((phases & 0x10) == 0x10) {
 			last_power[3] = -power_val[0];
 			value_Power12 = last_power[3];
@@ -2465,10 +2465,10 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						gl_object_isa(obj->parent,const_cast<char*>("elec_frequency"),const_cast<char*>("powerflow")))
 						{
 							//Accumulate the starting power
-							temp_complex_value = complex(P_Out, Q_Out);
+							temp_complex_value = gld::complex(P_Out, Q_Out);
 
 							//Push it up
-							pGenerated->setp<complex>(temp_complex_value,*test_rlock);
+							pGenerated->setp<gld::complex>(temp_complex_value,*test_rlock);
 
 							//Map the current injection function
 							test_fxn = (FUNCTIONADDR)(gl_get_function(obj->parent,"pwr_current_injection_update_map"));
@@ -2606,11 +2606,11 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 					if ((phases & 0x10) == 0x10)  //Triplex-line -> Assume it's only across the 240 V for now.
 					{
-						power_val[0] = complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
+						power_val[0] = gld::complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
 						if (phaseA_V_Out.Mag() != 0.0)
 							phaseA_I_Out = ~(power_val[0] / phaseA_V_Out);
 						else
-							phaseA_I_Out = complex(0.0,0.0);
+							phaseA_I_Out = gld::complex(0.0,0.0);
 
 						value_Line12 = -phaseA_I_Out;
 
@@ -2618,24 +2618,24 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						last_current[3] = -phaseA_I_Out;
 						
 						//Get rid of these for now
-						//complex phaseA_V_Internal = filter_voltage_impact_source(phaseA_I_Out, phaseA_V_Out);
+						//gld::complex phaseA_V_Internal = filter_voltage_impact_source(phaseA_I_Out, phaseA_V_Out);
 						//phaseA_I_Out = filter_current_impact_out(phaseA_I_Out, phaseA_V_Internal);
 					}
 					else if (number_of_phases_out == 3) // All three phases
 					{
-						power_val[0] = power_val[1] = power_val[2] = complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/3;
+						power_val[0] = power_val[1] = power_val[2] = gld::complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/3;
 						if (phaseA_V_Out.Mag() != 0.0)
 							phaseA_I_Out = ~(power_val[0] / phaseA_V_Out); // /sqrt(2.0);
 						else
-							phaseA_I_Out = complex(0.0,0.0);
+							phaseA_I_Out = gld::complex(0.0,0.0);
 						if (phaseB_V_Out.Mag() != 0.0)
 							phaseB_I_Out = ~(power_val[1] / phaseB_V_Out); // /sqrt(2.0);
 						else
-							phaseB_I_Out = complex(0.0,0.0);
+							phaseB_I_Out = gld::complex(0.0,0.0);
 						if (phaseC_V_Out.Mag() != 0.0)
 							phaseC_I_Out = ~(power_val[2] / phaseC_V_Out); // /sqrt(2.0);
 						else
-							phaseC_I_Out = complex(0.0,0.0);
+							phaseC_I_Out = gld::complex(0.0,0.0);
 
 						value_Line_I[0] = -phaseA_I_Out;
 						value_Line_I[1] = -phaseB_I_Out;
@@ -2652,27 +2652,27 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 						if ( ((phases & 0x01) == 0x01) && phaseA_V_Out.Mag() != 0)
 						{
-							power_val[0] = complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;;
+							power_val[0] = gld::complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;;
 							phaseA_I_Out = ~(power_val[0] / phaseA_V_Out);
 						}
 						else 
-							phaseA_I_Out = complex(0,0);
+							phaseA_I_Out = gld::complex(0,0);
 
 						if ( ((phases & 0x02) == 0x02) && phaseB_V_Out.Mag() != 0)
 						{
-							power_val[1] = complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;;
+							power_val[1] = gld::complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;;
 							phaseB_I_Out = ~(power_val[1] / phaseB_V_Out);
 						}
 						else 
-							phaseB_I_Out = complex(0,0);
+							phaseB_I_Out = gld::complex(0,0);
 
 						if ( ((phases & 0x04) == 0x04) && phaseC_V_Out.Mag() != 0)
 						{
-							power_val[2] = complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;;
+							power_val[2] = gld::complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;;
 							phaseC_I_Out = ~(power_val[2] / phaseC_V_Out);
 						}
 						else 
-							phaseC_I_Out = complex(0,0);
+							phaseC_I_Out = gld::complex(0,0);
 
 						value_Line_I[0] = -phaseA_I_Out;
 						value_Line_I[1] = -phaseB_I_Out;
@@ -2688,29 +2688,29 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					{
 						if( ((phases & 0x01) == 0x01) && phaseA_V_Out.Mag() != 0)
 						{
-							power_val[0] = complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
+							power_val[0] = gld::complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
 							phaseA_I_Out = ~(power_val[0] / phaseA_V_Out); 
 							//complex phaseA_V_Internal = filter_voltage_impact_source(phaseA_I_Out, phaseA_V_Out);
 							//phaseA_I_Out = filter_current_impact_out(phaseA_I_Out, phaseA_V_Internal);
 						}
 						else if( ((phases & 0x02) == 0x02) && phaseB_V_Out.Mag() != 0)
 						{
-							power_val[1] = complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
+							power_val[1] = gld::complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
 							phaseB_I_Out = ~(power_val[1] / phaseB_V_Out); 
 							//complex phaseB_V_Internal = filter_voltage_impact_source(phaseB_I_Out, phaseB_V_Out);
 							//phaseB_I_Out = filter_current_impact_out(phaseB_I_Out, phaseB_V_Internal);
 						}
 						else if( ((phases & 0x04) == 0x04) && phaseC_V_Out.Mag() != 0)
 						{
-							power_val[2] = complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
+							power_val[2] = gld::complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
 							phaseC_I_Out = ~(power_val[2] / phaseC_V_Out); 
-							//complex phaseC_V_Internal = filter_voltage_impact_source(phaseC_I_Out, phaseC_V_Out);
+							//gld::complex phaseC_V_Internal = filter_voltage_impact_source(phaseC_I_Out, phaseC_V_Out);
 							//phaseC_I_Out = filter_current_impact_out(phaseC_I_Out, phaseC_V_Internal);
 						}
 						else
 						{
 							gl_warning("None of the phases specified have voltages!");
-							phaseA_I_Out = phaseB_I_Out = phaseC_I_Out = complex(0.0,0.0);
+							phaseA_I_Out = phaseB_I_Out = phaseC_I_Out = gld::complex(0.0,0.0);
 						}
 						value_Line_I[0] = -phaseA_I_Out;
 						value_Line_I[1] = -phaseB_I_Out;
@@ -2732,7 +2732,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 					if(parent_is_a_meter == true)
 					{
-						VA_Out = complex(P_Out,Q_Out);
+						VA_Out = gld::complex(P_Out,Q_Out);
 					}
 					else
 					{
@@ -2981,8 +2981,8 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 		{
 			//FOUR_QUADRANT model (originally written for NAS/CES, altered for PV)
 			double VA_Efficiency, temp_PF, temp_QVal, P_in, net_eff; //Ab added last two
-			complex temp_VA;
-			complex battery_power_out = complex(0,0);
+			gld::complex temp_VA;
+			gld::complex battery_power_out = gld::complex(0,0);
 			if ((four_quadrant_control_mode != FQM_VOLT_VAR) && (four_quadrant_control_mode != FQM_VOLT_WATT))
 			{
 				//Compute power in - supposedly DC, but since it's complex, we'll be proper (other models may need fixing)
@@ -3194,7 +3194,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 				else	//Purely imaginary value
 				{
-					VA_Out = complex(0.0,VA_Efficiency);
+					VA_Out = gld::complex(0.0,VA_Efficiency);
 				}
 			}
 
@@ -3206,7 +3206,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				Qref = Q_Out;
 
 				//Compute desired output - sign convention appears to be backwards
-				temp_VA = complex(P_Out,Q_Out);
+				temp_VA = gld::complex(P_Out,Q_Out);
 				// to see if we have a battery as a power source
 				if (b_soc != -1) {
 					//Ensuring battery has capacity to charge or discharge as needed.
@@ -3231,11 +3231,11 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 							//Assign to output, negating signs as necessary (temp_VA already negated)
 							if (temp_VA.Im() < 0.0)	//Negative Q dispatch
 							{
-								VA_Out = complex(temp_VA.Re(),-temp_QVal);
+								VA_Out = gld::complex(temp_VA.Re(),-temp_QVal);
 							}
 							else	//Positive Q dispatch
 							{
-								VA_Out = complex(temp_VA.Re(),temp_QVal);
+								VA_Out = gld::complex(temp_VA.Re(),temp_QVal);
 							}
 						}
 						else	//Inverter rated power is equal to or smaller than real power desired, give it all we can
@@ -3243,11 +3243,11 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 							//Maintain desired sign convention
 							if (temp_VA.Re() < 0.0)
 							{
-								VA_Out = complex(-p_max,0.0);
+								VA_Out = gld::complex(-p_max,0.0);
 							}
 							else	//Positive
 							{
-								VA_Out = complex(p_max,0.0);
+								VA_Out = gld::complex(p_max,0.0);
 							}
 						}
 					}
@@ -3292,11 +3292,11 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 							//Maintain desired sign convention
 							if (temp_VA.Re() < 0.0)
 							{
-								temp_VA = complex(-p_max,0.0);
+								temp_VA = gld::complex(-p_max,0.0);
 							}
 							else	//Positive
 							{
-								temp_VA = complex(p_max,0.0);
+								temp_VA = gld::complex(p_max,0.0);
 							}
 						}
 					}
@@ -3310,11 +3310,11 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 							//Assign to output, negating signs as necessary (temp_VA already negated)
 							if (temp_VA.Im() < 0.0)	//Negative Q dispatch
 							{
-								VA_Out = complex(temp_VA.Re(),-temp_QVal);
+								VA_Out = gld::complex(temp_VA.Re(),-temp_QVal);
 							}
 							else	//Positive Q dispatch
 							{
-								VA_Out = complex(temp_VA.Re(),temp_QVal);
+								VA_Out = gld::complex(temp_VA.Re(),temp_QVal);
 							}
 						}
 						else	//solar panel output is equal to or smaller than real power desired, give it all we can
@@ -3322,11 +3322,11 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 							//Maintain desired sign convention
 							if (temp_VA.Re() < 0.0)
 							{
-								VA_Out = complex(-VA_Efficiency,0.0);
+								VA_Out = gld::complex(-VA_Efficiency,0.0);
 							}
 							else	//Positive
 							{
-								VA_Out = complex(VA_Efficiency,0.0);
+								VA_Out = gld::complex(VA_Efficiency,0.0);
 							}
 						}
 					} else {
@@ -3401,11 +3401,11 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 							//Assign to output, negating signs as necessary (temp_VA already negated)
 							if (temp_VA.Im() < 0.0)	//Negative Q dispatch
 							{
-								VA_Out = complex(temp_VA.Re(),-temp_QVal);
+								VA_Out = gld::complex(temp_VA.Re(),-temp_QVal);
 							}
 							else	//Positive Q dispatch
 							{
-								VA_Out = complex(temp_VA.Re(),temp_QVal);
+								VA_Out = gld::complex(temp_VA.Re(),temp_QVal);
 							}
 						}
 						else	//Inverter rated power is equal to or smaller than real power desired, give it all we can
@@ -3413,11 +3413,11 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 							//Maintain desired sign convention
 							if (temp_VA.Re() < 0.0)
 							{
-								VA_Out = complex(-p_max,0.0);
+								VA_Out = gld::complex(-p_max,0.0);
 							}
 							else	//Positive
 							{
-								VA_Out = complex(p_max,0.0);
+								VA_Out = gld::complex(p_max,0.0);
 							}
 						}
 					}
@@ -3464,7 +3464,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				//TODO : add lookup for power for frequency regulation P_Out_fr
 
 				if((VA_In.Re() == 0.0) && (disable_volt_var_if_no_input_power == true))
-					VA_Out = complex(0,0);
+					VA_Out = gld::complex(0,0);
 				else
 				{
 					//currently only compares to the phase A inverter AC voltage,
@@ -3488,9 +3488,9 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					double Po = (P_in * net_eff) - fabs(Qo) * (1 - net_eff)/net_eff;
 
 					if(VA_In.Re() < 0.0)
-						VA_Out = complex(Po,-Qo);	//Qo sign convention backwards from what i was expecting
+						VA_Out = gld::complex(Po,-Qo);	//Qo sign convention backwards from what i was expecting
 					else
-						VA_Out = complex(-Po,-Qo);	//Qo sign convention backwards from what i was expecting
+						VA_Out = gld::complex(-Po,-Qo);	//Qo sign convention backwards from what i was expecting
 				}
 
 				//TODO: should VA_Out be checked against inverter power rating? if exceeds clip it? clip to preserve reactive power set point or to preserve real output power?
@@ -3528,7 +3528,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 
 					//Compute the "new" output - signs lost
-					temp_VA = complex(fabs(p_max*temp_PF),fabs(p_max*sqrt(1.0-(temp_PF*temp_PF))));
+					temp_VA = gld::complex(fabs(p_max*temp_PF),fabs(p_max*sqrt(1.0-(temp_PF*temp_PF))));
 
 					//"Sign" it appropriately
 					if ((VA_Out.Re()<0) && (VA_Out.Im()<0))	//-R, -I
@@ -3537,11 +3537,11 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 					else if ((VA_Out.Re()<0) && (VA_Out.Im()>=0))	//-R,I
 					{
-						VA_Out = complex(-temp_VA.Re(),temp_VA.Im());
+						VA_Out = gld::complex(-temp_VA.Re(),temp_VA.Im());
 					}
 					else if ((VA_Out.Re()>=0) && (VA_Out.Im()<0))	//R,-I
 					{
-						VA_Out = complex(temp_VA.Re(),-temp_VA.Im());
+						VA_Out = gld::complex(temp_VA.Re(),-temp_VA.Im());
 					}
 					else	//R,I
 					{
@@ -3609,13 +3609,13 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 							if (VSI_bustype != 2) {
 
 								//Compute desired output - sign convention appears to be backwards
-								complex temp_VA = complex(P_Out,Q_Out);
+								gld::complex temp_VA = gld::complex(P_Out,Q_Out);
 
 								//Force the output power the same as glm pre-defined values
 								value_IGenerated[0] = ~(temp_VA/value_Circuit_V[0]) + generator_admittance[0][0]*value_Circuit_V[0];
 
 								//Compute desired output - sign convention appears to be backwards
-								e_source[0] = value_IGenerated[0] * (complex(Rfilter,Xfilter) * Zbase);
+								e_source[0] = value_IGenerated[0] * (gld::complex(Rfilter,Xfilter) * Zbase);
 								V_angle[0] = (e_source[0]).Arg();  // Obtain the inverter source voltage phasor angle
 								V_mag[0] = e_source[0].Mag();
 							}
@@ -3625,7 +3625,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 							if (VSI_bustype != 2) {
 
 								//Compute desired output - sign convention appears to be backwards
-								complex temp_VA = complex(P_Out,Q_Out);
+								gld::complex temp_VA = gld::complex(P_Out,Q_Out);
 
 								//Update output power
 								//Get current injected
@@ -3658,7 +3658,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 								//Compute desired output - sign convention appears to be backwards
 								for (int i = 0; i < 3; i++) {
 									// Update e_source value for droop VSI based on updated current injection
-									e_source[i] = value_IGenerated[i] * (complex(Rfilter,Xfilter) * Zbase);
+									e_source[i] = value_IGenerated[i] * (gld::complex(Rfilter,Xfilter) * Zbase);
 									V_angle[i] = (e_source[i]).Arg();  // Obtain the inverter source voltage phasor angle
 									V_mag[i] = e_source[i].Mag();
 								}
@@ -3690,7 +3690,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						}
 						else
 						{
-							I_Out[0] = complex(0.0,0.0);
+							I_Out[0] = gld::complex(0.0,0.0);
 						}
 
 						if (four_quadrant_control_mode != FQM_VSI) {
@@ -3723,7 +3723,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 							}
 							else
 							{
-								I_Out[0] = complex(0.0,0.0);
+								I_Out[0] = gld::complex(0.0,0.0);
 							}
 
 							if (four_quadrant_control_mode != FQM_VSI) {
@@ -3750,7 +3750,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 							}
 							else
 							{
-								I_Out[1] = complex(0.0,0.0);
+								I_Out[1] = gld::complex(0.0,0.0);
 							}
 
 							if (four_quadrant_control_mode != FQM_VSI) {
@@ -3778,7 +3778,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 							}
 							else
 							{
-								I_Out[2] = complex(0.0,0.0);
+								I_Out[2] = gld::complex(0.0,0.0);
 							}
 
 							if (four_quadrant_control_mode != FQM_VSI) {
@@ -3874,7 +3874,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 					else
 					{
-						I_Out[0] = complex(0.0,0.0);
+						I_Out[0] = gld::complex(0.0,0.0);
 					}
 				} else {
 					p_in = 0;
@@ -3888,7 +3888,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						}
 						else
 						{
-							I_Out[0] = complex(0.0,0.0);
+							I_Out[0] = gld::complex(0.0,0.0);
 						}
 					}
 					if ((phases & 0x02) == 0x02) {
@@ -3901,7 +3901,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						}
 						else
 						{
-							I_Out[1] = complex(0.0,0.0);
+							I_Out[1] = gld::complex(0.0,0.0);
 						}
 					}
 					if ((phases & 0x04) == 0x04) {
@@ -3914,7 +3914,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						}
 						else
 						{
-							I_Out[2] = complex(0.0,0.0);
+							I_Out[2] = gld::complex(0.0,0.0);
 						}
 					}
 				}
@@ -4009,10 +4009,10 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	double new_lf_dispatch_power, curr_power_val, diff_power_val;				
 	double new_pf_reg_distpatch_VAR, curr_real_power_val, curr_reactive_power_val, curr_pf, available_VA, new_Q_out, Q_out, Q_required, Q_available, Q_load;
 	double scaling_factor, Q_target;
-	complex temp_current_val[3];
+	gld::complex temp_current_val[3];
 	TIMESTAMP dt;
 	double inputPower;
-	complex temp_complex_value;
+	gld::complex temp_complex_value;
 
 	//If we have a meter, reset the accumulators
 	if (parent_is_a_meter == true)
@@ -5040,7 +5040,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			if (first_run == true)	//Final init items - namely deltamode supersecond exciter
 			{
 				// Only update after the first iteration of the power flow (VA_Out != 0.0 + j0.0)
-				if (value_IGenerated[0] != complex(0.0,0.0)) {
+				if (value_IGenerated[0] != gld::complex(0.0,0.0)) {
 					if ((VSI_bustype == 2) && (VSI_mode == VSI_DROOP)) {
 						P_Out = VA_Out.Re();
 						Q_Out = VA_Out.Im();
@@ -5156,17 +5156,17 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 {
 	double deltat, deltath;
 	int indexval;
-	complex derror[3];
-	complex pid_out[3];
+	gld::complex derror[3];
+	gld::complex pid_out[3];
 	double temp_val_d, temp_val_q;
-	complex work_power_vals;
+	gld::complex work_power_vals;
 	double power_diff_val;
 	double prev_error_ed;
 	double prev_error_eq;
 	bool deltaConverged = false;
 	bool ramp_change;
 	int i;
-	complex temp_current_val[3];
+	gld::complex temp_current_val[3];
 	double inputPower;
 	gld_wlock *test_rlock;
 
@@ -5274,10 +5274,10 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 							pred_state.dV_StateVal[0] = (V_mag_ref[0] - value_Circuit_V[0].Mag()) * ki_Vterminal;
 							pred_state.V_StateVal[0] = curr_state.V_StateVal[0] + pred_state.dV_StateVal[0] * deltat;
 							pred_state.e_source_mag[0] = pred_state.V_StateVal[0] + pred_state.dV_StateVal[0] * kp_Vterminal / ki_Vterminal;
-							e_source[0] = complex(pred_state.e_source_mag[0] * cos(V_angle[0]), pred_state.e_source_mag[0] * sin(V_angle[0]));
+							e_source[0] = gld::complex(pred_state.e_source_mag[0] * cos(V_angle[0]), pred_state.e_source_mag[0] * sin(V_angle[0]));
 
 							// Thevenin voltage source to Norton current source conversion
-							value_IGenerated[0] = e_source[0]/(complex(Rfilter,Xfilter) * Zbase);
+							value_IGenerated[0] = e_source[0]/(gld::complex(Rfilter,Xfilter) * Zbase);
 						}
 
 						// VSI droop mode updates its e_source value based on PQ_Out and droop curve
@@ -5340,10 +5340,10 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 							pred_state.dV_StateVal[0] = (V_mag[0] - value_Circuit_V[0].Mag()) * ki_Vterminal;
 							pred_state.V_StateVal[0] = curr_state.V_StateVal[0] + pred_state.dV_StateVal[0] * deltat;
 							pred_state.e_source_mag[0] = pred_state.V_StateVal[0] + pred_state.dV_StateVal[0] * kp_Vterminal / ki_Vterminal;
-							e_source[0] = complex(pred_state.e_source_mag[0] * cos(V_angle[0]), pred_state.e_source_mag[0] * sin(V_angle[0]));
+							e_source[0] = gld::complex(pred_state.e_source_mag[0] * cos(V_angle[0]), pred_state.e_source_mag[0] * sin(V_angle[0]));
 
 							// Thevenin voltage source to Norton current source convertion
-							value_IGenerated[0] = e_source[0]/(complex(Rfilter,Xfilter) * Zbase);
+							value_IGenerated[0] = e_source[0]/(gld::complex(Rfilter,Xfilter) * Zbase);
 						}
 					}
 
@@ -5378,10 +5378,10 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 								pred_state.dV_StateVal[i] = (V_mag_ref[i] - value_Circuit_V[i].Mag()) * ki_Vterminal;
 								pred_state.V_StateVal[i] = curr_state.V_StateVal[i] + pred_state.dV_StateVal[i] * deltat;
 								pred_state.e_source_mag[i] = pred_state.V_StateVal[i] + pred_state.dV_StateVal[i] * kp_Vterminal / ki_Vterminal;
-								e_source[i] = complex(pred_state.e_source_mag[i] * cos(V_angle[i]), pred_state.e_source_mag[i] * sin(V_angle[i]));
+								e_source[i] = gld::complex(pred_state.e_source_mag[i] * cos(V_angle[i]), pred_state.e_source_mag[i] * sin(V_angle[i]));
 
 								// Thevenin voltage source to Norton current source conversion
-								value_IGenerated[i] = e_source[i]/(complex(Rfilter,Xfilter) * Zbase);
+								value_IGenerated[i] = e_source[i]/(gld::complex(Rfilter,Xfilter) * Zbase);
 
 								//See how this aligns with the real and reactive power ramp rate, if necessary
 								if (checkRampRate_real == true || checkRampRate_reactive == true)
@@ -5467,7 +5467,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 										value_IGenerated[i] = temp_current_val[i] + generator_admittance[i][0]*value_Circuit_V[0] + generator_admittance[i][1]*value_Circuit_V[1] + generator_admittance[i][2]*value_Circuit_V[2];
 
 										//And adjust the related "internal voltage" - this just broke the frequency too
-										e_source[i] = value_IGenerated[i] * (complex(Rfilter,Xfilter) * Zbase);
+										e_source[i] = value_IGenerated[i] * (gld::complex(Rfilter,Xfilter) * Zbase);
 
 										//Other state variables needed to be updated?
 									}
@@ -5542,10 +5542,10 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 								// Calculate voltage source angle based on the droop curve, it should be noted that phase angle will be calculated again in corrector pass, the value is accumulated
 								V_angle[i] = V_angle[i] - (delta_f - pred_state.fmax_StateVal - pred_state.fmin_StateVal)* 2.0 * PI * deltat;
 
-								e_source[i] = complex(pred_state.e_source_mag[0] * cos(V_angle[i]), pred_state.e_source_mag[0] * sin(V_angle[i])); // The voltage loop only regulates the magnitude of esrouceA, esourceB=esourceC=esourceA
+								e_source[i] = gld::complex(pred_state.e_source_mag[0] * cos(V_angle[i]), pred_state.e_source_mag[0] * sin(V_angle[i])); // The voltage loop only regulates the magnitude of esrouceA, esourceB=esourceC=esourceA
 
 								// Thevenin voltage source to Norton current source convertion
-								value_IGenerated[i] = e_source[i]/(complex(Rfilter,Xfilter) * Zbase);
+								value_IGenerated[i] = e_source[i]/(gld::complex(Rfilter,Xfilter) * Zbase);
 
 								//See how this aligns with the ramp rate, if necessary
 								if (checkRampRate_real == true || checkRampRate_reactive == true)
@@ -5634,7 +5634,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 										value_IGenerated[i] = temp_current_val[i] + generator_admittance[i][0]*value_Circuit_V[0] + generator_admittance[i][1]*value_Circuit_V[1] + generator_admittance[i][2]*value_Circuit_V[2];
 
 										//And adjust the related "internal voltage" - this just broke the frequency too
-										e_source[i] = value_IGenerated[i] * (complex(Rfilter,Xfilter) * Zbase);
+										e_source[i] = value_IGenerated[i] * (gld::complex(Rfilter,Xfilter) * Zbase);
 
 										//Other state variables needed to be updated?
 									}
@@ -5708,9 +5708,9 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 							next_state.dV_StateVal[0] = (V_mag_ref[0] - value_Circuit_V[0].Mag()) * ki_Vterminal;
 							next_state.V_StateVal[0] = curr_state.V_StateVal[0] + (pred_state.dV_StateVal[0] + next_state.dV_StateVal[0])* deltath;
 							next_state.e_source_mag[0] = next_state.V_StateVal[0] + (pred_state.dV_StateVal[0] + next_state.dV_StateVal[0]) * 0.5 * kp_Vterminal / ki_Vterminal;
-							e_source[0] = complex(next_state.e_source_mag[0] * cos(V_angle[0]), next_state.e_source_mag[0] * sin(V_angle[0]));
+							e_source[0] = gld::complex(next_state.e_source_mag[0] * cos(V_angle[0]), next_state.e_source_mag[0] * sin(V_angle[0]));
 							// Thevenin voltage source to Norton current source convertion
-							value_IGenerated[0] = e_source[0]/(complex(Rfilter,Xfilter) * Zbase);
+							value_IGenerated[0] = e_source[0]/(gld::complex(Rfilter,Xfilter) * Zbase);
 						}
 
 						// VSI droop mode updates its e_source value based on PQ_Out and droop curve
@@ -5772,10 +5772,10 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 							next_state.dV_StateVal[0] = (V_mag[0] - value_Circuit_V[0].Mag()) * ki_Vterminal;
 							next_state.V_StateVal[0] = curr_state.V_StateVal[0] + (pred_state.dV_StateVal[0] + next_state.dV_StateVal[0])* deltath;
 							next_state.e_source_mag[0] = next_state.V_StateVal[0] + (pred_state.dV_StateVal[0] + next_state.dV_StateVal[0]) * 0.5 * kp_Vterminal / ki_Vterminal;
-							e_source[0] = complex(next_state.e_source_mag[0] * cos(V_angle[0]), next_state.e_source_mag[0] * sin(V_angle[0]));
+							e_source[0] = gld::complex(next_state.e_source_mag[0] * cos(V_angle[0]), next_state.e_source_mag[0] * sin(V_angle[0]));
 
 							// Thevenin voltage source to Norton current source convertion
-							value_IGenerated[0] = e_source[0]/(complex(Rfilter,Xfilter) * Zbase);
+							value_IGenerated[0] = e_source[0]/(gld::complex(Rfilter,Xfilter) * Zbase);
 						}
 					}
 
@@ -5815,10 +5815,10 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 								next_state.dV_StateVal[i] = (V_mag_ref[i] - value_Circuit_V[i].Mag()) * ki_Vterminal;
 								next_state.V_StateVal[i] = curr_state.V_StateVal[i] + (pred_state.dV_StateVal[i] + next_state.dV_StateVal[i])* deltath;
 								next_state.e_source_mag[i] = next_state.V_StateVal[i] + (pred_state.dV_StateVal[i] + next_state.dV_StateVal[i]) * 0.5 * kp_Vterminal / ki_Vterminal;
-								e_source[i] = complex(next_state.e_source_mag[i] * cos(V_angle[i]), next_state.e_source_mag[i] * sin(V_angle[i]));
+								e_source[i] = gld::complex(next_state.e_source_mag[i] * cos(V_angle[i]), next_state.e_source_mag[i] * sin(V_angle[i]));
 
 								// Thevenin voltage source to Norton current source conversion
-								value_IGenerated[i] = e_source[i]/(complex(Rfilter,Xfilter) * Zbase);
+								value_IGenerated[i] = e_source[i]/(gld::complex(Rfilter,Xfilter) * Zbase);
 
 								//See how this aligns with the real and reactive ramp rate, if necessary
 								if (checkRampRate_real == true || checkRampRate_reactive == true)
@@ -5904,7 +5904,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 										value_IGenerated[i] = temp_current_val[i] + generator_admittance[i][0]*value_Circuit_V[0] + generator_admittance[i][1]*value_Circuit_V[1] + generator_admittance[i][2]*value_Circuit_V[2];
 
 										//And adjust the related "internal voltage" - this just broke the frequency too
-										e_source[i] = value_IGenerated[i] * (complex(Rfilter,Xfilter) * Zbase);
+										e_source[i] = value_IGenerated[i] * (gld::complex(Rfilter,Xfilter) * Zbase);
 
 										//Other state variables needed to be updated?
 									}
@@ -5977,10 +5977,10 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 								V_angle[i] = V_angle[i] + (delta_f1 - pred_state.fmax_StateVal - pred_state.fmin_StateVal) * 2.0 * PI * deltat * 0.5 - (delta_f - (next_state.fmax_StateVal + next_state.fmin_StateVal)) * 2.0 * PI * deltat * 0.5;
 
 								// Calculate voltage source magnitude based on the droop curve
-								e_source[i] = complex(next_state.e_source_mag[0] * cos(V_angle[i]), next_state.e_source_mag[0] * sin(V_angle[i]));  //we want esource is always 3 phase balanced. esourceB=esourceC=esourceA
+								e_source[i] = gld::complex(next_state.e_source_mag[0] * cos(V_angle[i]), next_state.e_source_mag[0] * sin(V_angle[i]));  //we want esource is always 3 phase balanced. esourceB=esourceC=esourceA
 
 								// Thevenin voltage source to Norton current source convertion
-								value_IGenerated[i] = e_source[i]/(complex(Rfilter,Xfilter) * Zbase);
+								value_IGenerated[i] = e_source[i]/(gld::complex(Rfilter,Xfilter) * Zbase);
 
 								//See how this aligns with the ramp rate, if necessary
 								if (checkRampRate_real == true || checkRampRate_reactive == true)
@@ -6067,7 +6067,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 										value_IGenerated[i] = temp_current_val[i] + generator_admittance[i][0]*value_Circuit_V[0] + generator_admittance[i][1]*value_Circuit_V[1] + generator_admittance[i][2]*value_Circuit_V[2];
 
 										//And adjust the related "internal voltage" - this just broke the frequency too
-										e_source[i] = value_IGenerated[i] * (complex(Rfilter,Xfilter) * Zbase);
+										e_source[i] = value_IGenerated[i] * (gld::complex(Rfilter,Xfilter) * Zbase);
 
 										//Other state variables needed to be updated?
 									}
@@ -6118,7 +6118,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 								if (value_Circuit_V[0].Mag() > 0.0)
 								{
 									value_Line_unrotI[i] += curr_state.Iac[0];	// remove the previous current injection to the circuit
-									curr_state.Iac[0] = (~(complex(curr_state.P_Out[0],curr_state.Q_Out[0])/value_Circuit_V[0]));
+									curr_state.Iac[0] = (~(gld::complex(curr_state.P_Out[0],curr_state.Q_Out[0])/value_Circuit_V[0]));
 									I_Out[0]= curr_state.Iac[0];
 									value_Line_unrotI[i] += -curr_state.Iac[0]; // update the current injection to the circuit
 								}
@@ -6134,7 +6134,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 									if (value_Circuit_V[i].Mag() > 0.0)
 									{
 										value_Line_unrotI[i] += curr_state.Iac[i];	// remove the previous current injection to the circuit
-										curr_state.Iac[i] = ~(complex(curr_state.P_Out[i],curr_state.Q_Out[i])/(value_Circuit_V[i]));
+										curr_state.Iac[i] = ~(gld::complex(curr_state.P_Out[i],curr_state.Q_Out[i])/(value_Circuit_V[i]));
 										I_Out[i]= curr_state.Iac[i];
 										value_Line_unrotI[i] += -curr_state.Iac[i]; // update the current injection to the circuit
 									}
@@ -6198,8 +6198,8 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 							curr_state.Q_Out[0] = VA_Out.Im();
 							if (value_Circuit_V[0].Mag() > 0.0)
 							{
-								curr_state.ed[0] = ((~(complex(Pref, Qref_PI[0])/(value_Circuit_V[0]))) - (~(complex(curr_state.P_Out[0],curr_state.Q_Out[0])/(value_Circuit_V[0])))).Re();
-								curr_state.eq[0] = ((~(complex(Pref, Qref_PI[0])/(value_Circuit_V[0]))) - (~(complex(curr_state.P_Out[0],curr_state.Q_Out[0])/(value_Circuit_V[0])))).Im();
+								curr_state.ed[0] = ((~(gld::complex(Pref, Qref_PI[0])/(value_Circuit_V[0]))) - (~(gld::complex(curr_state.P_Out[0],curr_state.Q_Out[0])/(value_Circuit_V[0])))).Re();
+								curr_state.eq[0] = ((~(gld::complex(Pref, Qref_PI[0])/(value_Circuit_V[0]))) - (~(gld::complex(curr_state.P_Out[0],curr_state.Q_Out[0])/(value_Circuit_V[0])))).Im();
 							}
 							else
 							{
@@ -6229,8 +6229,8 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 								if (value_Circuit_V[i].Mag() > 0.0)
 								{
-									curr_state.ed[i] = ((~(complex(Pref/3.0, Qref_PI[i])/(value_Circuit_V[i]))) - (~(complex(curr_state.P_Out[i],curr_state.Q_Out[i])/(value_Circuit_V[i])))).Re();
-									curr_state.eq[i] = ((~(complex(Pref/3.0, Qref_PI[i])/(value_Circuit_V[i]))) - (~(complex(curr_state.P_Out[i],curr_state.Q_Out[i])/(value_Circuit_V[i])))).Im();
+									curr_state.ed[i] = ((~(gld::complex(Pref/3.0, Qref_PI[i])/(value_Circuit_V[i]))) - (~(gld::complex(curr_state.P_Out[i],curr_state.Q_Out[i])/(value_Circuit_V[i])))).Re();
+									curr_state.eq[i] = ((~(gld::complex(Pref/3.0, Qref_PI[i])/(value_Circuit_V[i]))) - (~(gld::complex(curr_state.P_Out[i],curr_state.Q_Out[i])/(value_Circuit_V[i])))).Im();
 								}
 								else
 								{
@@ -6391,8 +6391,8 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 						curr_state.Q_Out[0] = VA_Out.Im();
 						if (value_Circuit_V[0].Mag() > 0.0)
 						{
-							curr_state.ed[0] = ((~(complex(Pref, Qref_PI[0])/value_Circuit_V[0])) - (~(complex(curr_state.P_Out[0],curr_state.Q_Out[0])/value_Circuit_V[0]))).Re();
-							curr_state.eq[0] = ((~(complex(Pref, Qref_PI[0])/value_Circuit_V[0])) - (~(complex(curr_state.P_Out[0],curr_state.Q_Out[0])/value_Circuit_V[0]))).Im();
+							curr_state.ed[0] = ((~(gld::complex(Pref, Qref_PI[0])/value_Circuit_V[0])) - (~(gld::complex(curr_state.P_Out[0],curr_state.Q_Out[0])/value_Circuit_V[0]))).Re();
+							curr_state.eq[0] = ((~(gld::complex(Pref, Qref_PI[0])/value_Circuit_V[0])) - (~(gld::complex(curr_state.P_Out[0],curr_state.Q_Out[0])/value_Circuit_V[0]))).Im();
 						}
 						else
 						{
@@ -6422,8 +6422,8 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 							if (value_Circuit_V[i].Mag() > 0.0)
 							{
-								curr_state.ed[i] = ((~(complex(Pref/3.0, Qref_PI[i])/(value_Circuit_V[i]))) - (~(complex(curr_state.P_Out[i],curr_state.Q_Out[i])/(value_Circuit_V[i])))).Re();
-								curr_state.eq[i] = ((~(complex(Pref/3.0, Qref_PI[i])/(value_Circuit_V[i]))) - (~(complex(curr_state.P_Out[i],curr_state.Q_Out[i])/(value_Circuit_V[i])))).Im();
+								curr_state.ed[i] = ((~(gld::complex(Pref/3.0, Qref_PI[i])/(value_Circuit_V[i]))) - (~(gld::complex(curr_state.P_Out[i],curr_state.Q_Out[i])/(value_Circuit_V[i])))).Re();
+								curr_state.eq[i] = ((~(gld::complex(Pref/3.0, Qref_PI[i])/(value_Circuit_V[i]))) - (~(gld::complex(curr_state.P_Out[i],curr_state.Q_Out[i])/(value_Circuit_V[i])))).Im();
 							}
 							else
 							{
@@ -6450,7 +6450,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 						// Before updating pLine_unrotI and Iout, need to check inverter real power output:
 						// If not attached to the battery, need to check if real power < 0 or > rating
-						complex VA_Out_temp = value_Circuit_V[0] * ~(pred_state.Iac[0]);
+						gld::complex VA_Out_temp = value_Circuit_V[0] * ~(pred_state.Iac[0]);
 						if ((b_soc == -1 && VA_Out_temp.Re() < 0) || Pref == 0) {
 							pred_state.Iac[0] =  0;
 						}
@@ -6562,7 +6562,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 						// Before updating pLine_unrotI and Iout, need to check inverter real power output:
 						// If not attached to the battery, need to check if real power < 0 or > rating
-						complex VA_Out_temp = (value_Circuit_V[0] * ~(pred_state.Iac[0])) + (value_Circuit_V[1] * ~(pred_state.Iac[1])) + (value_Circuit_V[2] * ~(pred_state.Iac[2]));
+						gld::complex VA_Out_temp = (value_Circuit_V[0] * ~(pred_state.Iac[0])) + (value_Circuit_V[1] * ~(pred_state.Iac[1])) + (value_Circuit_V[2] * ~(pred_state.Iac[2]));
 
 						for (int i = 0; i< 3; i++) {
 							if ((b_soc == -1 && VA_Out_temp.Re() < 0) || Pref == 0) {
@@ -6672,8 +6672,8 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 						if (value_Circuit_V[0].Mag() > 0.0)
 						{
-							pred_state.ed[0] = ((~(complex(Pref, Qref_PI[0])/value_Circuit_V[0])) - (~(complex(pred_state.P_Out[0],pred_state.Q_Out[0])/value_Circuit_V[0]))).Re();
-							pred_state.eq[0] = ((~(complex(Pref, Qref_PI[0])/value_Circuit_V[0])) - (~(complex(pred_state.P_Out[0],pred_state.Q_Out[0])/value_Circuit_V[0]))).Im();
+							pred_state.ed[0] = ((~(gld::complex(Pref, Qref_PI[0])/value_Circuit_V[0])) - (~(gld::complex(pred_state.P_Out[0],pred_state.Q_Out[0])/value_Circuit_V[0]))).Re();
+							pred_state.eq[0] = ((~(gld::complex(Pref, Qref_PI[0])/value_Circuit_V[0])) - (~(gld::complex(pred_state.P_Out[0],pred_state.Q_Out[0])/value_Circuit_V[0]))).Im();
 						}
 						else
 						{
@@ -6694,7 +6694,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 						// Before updating pLine_unrotI and Iout, need to check inverter real power output:
 						// If not attached to the battery, need to check if real power < 0 or > rating
-						complex VA_Out_temp = value_Circuit_V[0] * ~(curr_state.Iac[0]);
+						gld::complex VA_Out_temp = value_Circuit_V[0] * ~(curr_state.Iac[0]);
 						if ((b_soc == -1 && VA_Out_temp.Re() < 0) || Pref == 0) {
 							curr_state.Iac[0] =  0;
 						}
@@ -6715,8 +6715,8 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 							}
 							if (value_Circuit_V[i].Mag() > 0.0)
 							{
-								pred_state.ed[i] = ((~(complex(Pref/3.0, Qref_PI[i])/(value_Circuit_V[i]))) - (~(complex(pred_state.P_Out[i],pred_state.Q_Out[i])/(value_Circuit_V[i])))).Re();
-								pred_state.eq[i] = ((~(complex(Pref/3.0, Qref_PI[i])/(value_Circuit_V[i]))) - (~(complex(pred_state.P_Out[i],pred_state.Q_Out[i])/(value_Circuit_V[i])))).Im();
+								pred_state.ed[i] = ((~(gld::complex(Pref/3.0, Qref_PI[i])/(value_Circuit_V[i]))) - (~(gld::complex(pred_state.P_Out[i],pred_state.Q_Out[i])/(value_Circuit_V[i])))).Re();
+								pred_state.eq[i] = ((~(gld::complex(Pref/3.0, Qref_PI[i])/(value_Circuit_V[i]))) - (~(gld::complex(pred_state.P_Out[i],pred_state.Q_Out[i])/(value_Circuit_V[i])))).Im();
 							}
 							else
 							{
@@ -6829,7 +6829,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 						// Before updating pLine_unrotI and Iout, need to check inverter real power output:
 						// If not attached to the battery, need to check if real power < 0 or > rating
-						complex VA_Out_temp = (value_Circuit_V[0] * ~(curr_state.Iac[0])) + (value_Circuit_V[1] * ~(curr_state.Iac[1])) + (value_Circuit_V[2] * ~(curr_state.Iac[2]));
+						gld::complex VA_Out_temp = (value_Circuit_V[0] * ~(curr_state.Iac[0])) + (value_Circuit_V[1] * ~(curr_state.Iac[1])) + (value_Circuit_V[2] * ~(curr_state.Iac[2]));
 						for (int i = 0; i< 3; i++) {
 							if ((b_soc == -1 && VA_Out_temp.Re() < 0) || Pref == 0) {
 								curr_state.Iac[i] = 0;
@@ -6901,7 +6901,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 			curr_PID_state.max_error_val = 0.0;
 
 			//Construct the power variable
-			work_power_vals = complex(curr_PID_state.phase_Pref,curr_PID_state.phase_Qref);
+			work_power_vals = gld::complex(curr_PID_state.phase_Pref,curr_PID_state.phase_Qref);
 
 			//Determine our path to update
 			if ((phases & 0x10) == 0x10)	//Triplex
@@ -6913,7 +6913,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 				}
 				else //Only you can prevent #IND
 				{
-					curr_PID_state.current_set_raw[0] = complex(0.0,0.0);
+					curr_PID_state.current_set_raw[0] = gld::complex(0.0,0.0);
 				}
 
 				//Find the current angle
@@ -6936,7 +6936,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 				temp_val_q = kpq * curr_PID_state.error[0].Im() + kiq * curr_PID_state.integrator_vals[0].Im() + kdq * curr_PID_state.derror[0].Im();
 
 				//Form it up as complex
-				pid_out[0] = complex(temp_val_d,temp_val_q);
+				pid_out[0] = gld::complex(temp_val_d,temp_val_q);
 
 				//Adjust the modulation factor
 				curr_PID_state.mod_vals[0] = prev_PID_state.mod_vals[0] + pid_out[0];
@@ -6945,7 +6945,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 				curr_PID_state.current_vals_ref[0] = curr_PID_state.mod_vals[0] * curr_PID_state.I_in;
 				
 				//Now unrotate
-				curr_PID_state.current_vals[0] = complex(-1.0,0.0) * curr_PID_state.current_vals_ref[0] * complex_exp(curr_PID_state.reference_angle[0]);
+				curr_PID_state.current_vals[0] = gld::complex(-1.0,0.0) * curr_PID_state.current_vals_ref[0] * complex_exp(curr_PID_state.reference_angle[0]);
 
 				//Update the posting
 				value_Line_unrotI[0] += -last_current[3] + curr_PID_state.current_vals[0];
@@ -6969,7 +6969,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 					}
 					else //Only you can prevent #IND
 					{
-						curr_PID_state.current_set_raw[indexval] = complex(0.0,0.0);
+						curr_PID_state.current_set_raw[indexval] = gld::complex(0.0,0.0);
 					}
 
 					//Find the current angle
@@ -6992,7 +6992,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 					temp_val_q = kpq * curr_PID_state.error[indexval].Im() + kiq * curr_PID_state.integrator_vals[indexval].Im() + kdq * curr_PID_state.derror[indexval].Im();
 
 					//Form it up as complex
-					pid_out[indexval] = complex(temp_val_d,temp_val_q);
+					pid_out[indexval] = gld::complex(temp_val_d,temp_val_q);
 
 					//Adjust the modulation factor
 					curr_PID_state.mod_vals[indexval] = prev_PID_state.mod_vals[indexval] + pid_out[indexval];
@@ -7001,7 +7001,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 					curr_PID_state.current_vals_ref[indexval] = curr_PID_state.mod_vals[indexval] * curr_PID_state.I_in;
 					
 					//Now unrotate
-					curr_PID_state.current_vals[indexval] = complex(-1.0,0.0) * curr_PID_state.current_vals_ref[indexval] * complex_exp(curr_PID_state.reference_angle[indexval]);
+					curr_PID_state.current_vals[indexval] = gld::complex(-1.0,0.0) * curr_PID_state.current_vals_ref[indexval] * complex_exp(curr_PID_state.reference_angle[indexval]);
 
 					//Update the posting
 					value_Line_unrotI[indexval] += -last_current[indexval] + curr_PID_state.current_vals[indexval];
@@ -7040,19 +7040,19 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 			if (four_quadrant_control_mode == FQM_VSI)	//VSI mode
 			{
 				if((phases & 0x10) == 0x10){
-					value_IGenerated[0] = complex(0.0,0.0);
+					value_IGenerated[0] = gld::complex(0.0,0.0);
 
 					//Zero the output trackers
-					I_Out[0] = complex(0.0,0.0);
+					I_Out[0] = gld::complex(0.0,0.0);
 				}
 				else if((phases & 0x07) == 0x07)
 				{
-					value_IGenerated[0] = complex(0.0,0.0);
-					value_IGenerated[1] = complex(0.0,0.0);
-					value_IGenerated[2] = complex(0.0,0.0);
+					value_IGenerated[0] = gld::complex(0.0,0.0);
+					value_IGenerated[1] = gld::complex(0.0,0.0);
+					value_IGenerated[2] = gld::complex(0.0,0.0);
 
 					//Zero the output trackers
-					I_Out[0] = I_Out[1] = I_Out[2] = complex(0.0,0.0);
+					I_Out[0] = I_Out[1] = I_Out[2] = gld::complex(0.0,0.0);
 				}
 			}
 			else	//Other modes
@@ -7061,14 +7061,14 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 					value_Line_unrotI[0] += I_Out[0];
 					
 					//Zero the output trackers
-					I_Out[0] = complex(0.0,0.0);
+					I_Out[0] = gld::complex(0.0,0.0);
 				} else if((phases & 0x07) == 0x07) {
 					value_Line_unrotI[0] += I_Out[0];
 					value_Line_unrotI[1] += I_Out[1];
 					value_Line_unrotI[2] += I_Out[2];
 
 					//Zero the output trackers
-					I_Out[0] = I_Out[1] = I_Out[2] = complex(0.0,0.0);
+					I_Out[0] = I_Out[1] = I_Out[2] = gld::complex(0.0,0.0);
 				}
 			}
 		}
@@ -7079,7 +7079,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 				value_Line_unrotI[0] -= last_current[3];
 
 				//Zero the output tracker
-				last_current[3] = complex(0.0,0.0);
+				last_current[3] = gld::complex(0.0,0.0);
 			}
 			else if((phases & 0x07) == 0x07)
 			{
@@ -7088,7 +7088,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 				value_Line_unrotI[2] -= last_current[2];
 
 				//Zero the output trackers
-				last_current[0] = last_current[1] = last_current[2] = complex(0.0,0.0);
+				last_current[0] = last_current[1] = last_current[2] = gld::complex(0.0,0.0);
 			}
 		}
 		//Default else, who knows
@@ -7135,7 +7135,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 //Module-level post update call
 
-STATUS inverter::post_deltaupdate(complex *useful_value, unsigned int mode_pass)
+STATUS inverter::post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass)
 {
 	//If we have a meter, reset the accumulators
 	if (parent_is_a_meter == true)
@@ -7197,8 +7197,8 @@ STATUS inverter::post_deltaupdate(complex *useful_value, unsigned int mode_pass)
 //curr_time is the initial states/information
 STATUS inverter::init_PI_dynamics(INV_STATE *curr_time)
 {
-	complex prev_Idq[3];
-	complex temp_current_val[3];
+	gld::complex prev_Idq[3];
+	gld::complex temp_current_val[3];
 
 	//Pull the powerflow values
 	if (parent_is_a_meter == true)
@@ -7357,7 +7357,7 @@ STATUS inverter::init_PI_dynamics(INV_STATE *curr_time)
 				prev_VA_out[0] = curr_VA_out[0];
 			}
 
-			e_source[0] = (value_IGenerated[0] * complex(Rfilter,Xfilter) * Zbase);
+			e_source[0] = (value_IGenerated[0] * gld::complex(Rfilter,Xfilter) * Zbase);
 			V_angle[0] = (e_source[0]).Arg();  // Obtain the inverter terminal voltage phasor angle
 			V_angle_past[0] = V_angle[0];
 
@@ -7405,7 +7405,7 @@ STATUS inverter::init_PI_dynamics(INV_STATE *curr_time)
 			pCircuit_V_Avg = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0; //average value of 3 phase terminal voltage
 
 			for (int i = 0; i < 3; i++) {
-				e_source[i] = (value_IGenerated[i] * complex(Rfilter,Xfilter) * Zbase);
+				e_source[i] = (value_IGenerated[i] * gld::complex(Rfilter,Xfilter) * Zbase);
 				V_angle[i] = (e_source[i]).Arg();  // Obtain the inverter terminal voltage phasor angle
 				V_angle_past[i] = V_angle[i];
 				if (VSI_mode == VSI_DROOP) {
@@ -7486,14 +7486,14 @@ STATUS inverter::init_PID_dynamics(void)
 		{
 			//Zero everything, just because
 			curr_PID_state.reference_angle[indexx] = 0.0;
-			curr_PID_state.error[indexx] = complex(0.0,0.0);
-			curr_PID_state.integrator_vals[indexx] = complex(0.0,0.0);
-			curr_PID_state.derror[indexx] = complex(0.0,0.0);
-			curr_PID_state.current_set_raw[indexx] = complex(0.0,0.0);
-			curr_PID_state.current_set[indexx] = complex(0.0,0.0);
-			curr_PID_state.current_vals[indexx] = complex(0.0,0.0);
-			curr_PID_state.current_vals_ref[indexx] = complex(0.0,0.0);
-			curr_PID_state.mod_vals[indexx] = complex(0.0,0.0);
+			curr_PID_state.error[indexx] = gld::complex(0.0,0.0);
+			curr_PID_state.integrator_vals[indexx] = gld::complex(0.0,0.0);
+			curr_PID_state.derror[indexx] = gld::complex(0.0,0.0);
+			curr_PID_state.current_set_raw[indexx] = gld::complex(0.0,0.0);
+			curr_PID_state.current_set[indexx] = gld::complex(0.0,0.0);
+			curr_PID_state.current_vals[indexx] = gld::complex(0.0,0.0);
+			curr_PID_state.current_vals_ref[indexx] = gld::complex(0.0,0.0);
+			curr_PID_state.mod_vals[indexx] = gld::complex(0.0,0.0);
 		}
 			
 		//Populate the initial "reference angle"
@@ -7502,11 +7502,11 @@ STATUS inverter::init_PID_dynamics(void)
 		if (value_Circuit_V[0].Mag() > 0.0)
 		{
 			//Calculate the current set-point -- should be the same
-			curr_PID_state.current_set_raw[0] = ~(complex(curr_PID_state.phase_Pref,curr_PID_state.phase_Qref)/value_Circuit_V[0]);
+			curr_PID_state.current_set_raw[0] = ~(gld::complex(curr_PID_state.phase_Pref,curr_PID_state.phase_Qref)/value_Circuit_V[0]);
 		}
 		else //Only you can prevent #IND
 		{
-			curr_PID_state.current_set_raw[0] = complex(0.0,0.0);
+			curr_PID_state.current_set_raw[0] = gld::complex(0.0,0.0);
 		}
 
 		//Rotate it
@@ -7516,10 +7516,10 @@ STATUS inverter::init_PID_dynamics(void)
 		curr_PID_state.current_vals[0] = last_current[3];
 
 		//For completion, rotate this into this reference frame
-		curr_PID_state.current_vals_ref[0] = complex(-1.0,0.0) * curr_PID_state.current_vals[0] * complex_exp(-1.0 * curr_PID_state.reference_angle[0]);
+		curr_PID_state.current_vals_ref[0] = gld::complex(-1.0,0.0) * curr_PID_state.current_vals[0] * complex_exp(-1.0 * curr_PID_state.reference_angle[0]);
 
 		//Compute base modulation value - these are in the reference frame
-		curr_PID_state.mod_vals[0] = complex((curr_PID_state.current_vals_ref[0].Re() / curr_PID_state.I_in),(curr_PID_state.current_vals_ref[0].Im() / curr_PID_state.I_in));
+		curr_PID_state.mod_vals[0] = gld::complex((curr_PID_state.current_vals_ref[0].Re() / curr_PID_state.I_in),(curr_PID_state.current_vals_ref[0].Im() / curr_PID_state.I_in));
 
 		//Add in the last current too - PostSync removed it, so this will fix it for the logic in interupdate
 		value_Line_unrotI[0] = last_current[3];
@@ -7534,9 +7534,9 @@ STATUS inverter::init_PID_dynamics(void)
 		//If ramp tracking, save the value
 		if (checkRampRate_real == true)
 		{
-			curr_VA_out[0] = complex(curr_PID_state.phase_Pref,curr_PID_state.phase_Qref);
-			curr_VA_out[1] = complex(curr_PID_state.phase_Pref,curr_PID_state.phase_Qref);
-			curr_VA_out[2] = complex(curr_PID_state.phase_Pref,curr_PID_state.phase_Qref);
+			curr_VA_out[0] = gld::complex(curr_PID_state.phase_Pref,curr_PID_state.phase_Qref);
+			curr_VA_out[1] = gld::complex(curr_PID_state.phase_Pref,curr_PID_state.phase_Qref);
+			curr_VA_out[2] = gld::complex(curr_PID_state.phase_Pref,curr_PID_state.phase_Qref);
 
 			//Initialize the old ones too
 			prev_VA_out[0] = curr_VA_out[0];
@@ -7548,9 +7548,9 @@ STATUS inverter::init_PID_dynamics(void)
 		for (indexx=0; indexx<3; indexx++)
 		{
 			//Zero current - prev will get done by loop routine
-			curr_PID_state.error[indexx] = complex(0.0,0.0);
-			curr_PID_state.integrator_vals[indexx] = complex(0.0,0.0);
-			curr_PID_state.derror[indexx] = complex(0.0,0.0);
+			curr_PID_state.error[indexx] = gld::complex(0.0,0.0);
+			curr_PID_state.integrator_vals[indexx] = gld::complex(0.0,0.0);
+			curr_PID_state.derror[indexx] = gld::complex(0.0,0.0);
 			
 			//Populate the initial "reference angle"
 			curr_PID_state.reference_angle[indexx] = value_Circuit_V[indexx].Arg();
@@ -7559,11 +7559,11 @@ STATUS inverter::init_PID_dynamics(void)
 			if (value_Circuit_V[indexx].Mag() > 0.0)
 			{
 				//Calculate the current set-point -- should be the same
-				curr_PID_state.current_set_raw[indexx] = ~(complex(curr_PID_state.phase_Pref,curr_PID_state.phase_Qref)/value_Circuit_V[indexx]);
+				curr_PID_state.current_set_raw[indexx] = ~(gld::complex(curr_PID_state.phase_Pref,curr_PID_state.phase_Qref)/value_Circuit_V[indexx]);
 			}
 			else //Only you can prevent #IND
 			{
-				curr_PID_state.current_set_raw[indexx] = complex(0.0,0.0);
+				curr_PID_state.current_set_raw[indexx] = gld::complex(0.0,0.0);
 			}
 
 			//Rotate it
@@ -7573,16 +7573,16 @@ STATUS inverter::init_PID_dynamics(void)
 			curr_PID_state.current_vals[indexx] = last_current[indexx];
 
 			//For completion, rotate this into this reference frame
-			curr_PID_state.current_vals_ref[indexx] = complex(-1.0,0.0) * curr_PID_state.current_vals[indexx] * complex_exp(-1.0 * curr_PID_state.reference_angle[indexx]);
+			curr_PID_state.current_vals_ref[indexx] = gld::complex(-1.0,0.0) * curr_PID_state.current_vals[indexx] * complex_exp(-1.0 * curr_PID_state.reference_angle[indexx]);
 
 			//Compute base modulation value - these are in the reference frame
 			if (curr_PID_state.I_in != 0.0)
 			{
-				curr_PID_state.mod_vals[indexx] = complex((curr_PID_state.current_vals_ref[indexx].Re() / curr_PID_state.I_in),(curr_PID_state.current_vals_ref[indexx].Im() / curr_PID_state.I_in));
+				curr_PID_state.mod_vals[indexx] = gld::complex((curr_PID_state.current_vals_ref[indexx].Re() / curr_PID_state.I_in),(curr_PID_state.current_vals_ref[indexx].Im() / curr_PID_state.I_in));
 			}
 			else
 			{
-				curr_PID_state.mod_vals[indexx] = complex(0.0,0.0);
+				curr_PID_state.mod_vals[indexx] = gld::complex(0.0,0.0);
 			}
 
 			//Add in the last current too - PostSync removed it, so this will fix it for the logic in interupdate
@@ -7607,8 +7607,8 @@ void inverter::update_control_references(void)
 {
 	//FOUR_QUADRANT model (originally written for NAS/CES, altered for PV)
 	double VA_Efficiency, temp_PF, temp_QVal;
-	complex temp_VA, VA_Outref;
-	complex battery_power_out = complex(0,0);
+	gld::complex temp_VA, VA_Outref;
+	gld::complex battery_power_out = gld::complex(0,0);
 	OBJECT *obj = OBJECTHDR(this);
 	bool VA_changed = false; // A flag indicating whether VAref is changed due to limitations
 
@@ -7683,7 +7683,7 @@ void inverter::update_control_references(void)
 		}
 		else	//Purely imaginary value
 		{
-			VA_Outref = complex(0.0,VA_Efficiency);
+			VA_Outref = gld::complex(0.0,VA_Efficiency);
 		}
 	}
 	else if (four_quadrant_control_mode == FQM_CONSTANT_PQ)
@@ -7697,10 +7697,10 @@ void inverter::update_control_references(void)
 
 		//Compute desired output - sign convention appears to be backwards
 		if (inverter_dyn_mode == PI_CONTROLLER) {
-			temp_VA = complex(Pref,Qref_PI[0]+Qref_PI[1]+Qref_PI[2]); // For PI control mode, Qref is seperated for each phase
+			temp_VA = gld::complex(Pref,Qref_PI[0]+Qref_PI[1]+Qref_PI[2]); // For PI control mode, Qref is seperated for each phase
 		}
 		else {
-			temp_VA = complex(Pref, Qref); // previously was set as P_out + jQ_out. Since P_Out and Q_Out are constant, not reflecting change of output
+			temp_VA = gld::complex(Pref, Qref); // previously was set as P_out + jQ_out. Since P_Out and Q_Out are constant, not reflecting change of output
 		}
 
 
@@ -7729,11 +7729,11 @@ void inverter::update_control_references(void)
 				//Assign to output, negating signs as necessary (temp_VA already negated)
 				if (temp_VA.Im() < 0.0)	//Negative Q dispatch
 				{
-					VA_Outref = complex(temp_VA.Re(),-temp_QVal);
+					VA_Outref = gld::complex(temp_VA.Re(),-temp_QVal);
 				}
 				else	//Positive Q dispatch
 				{
-					VA_Outref = complex(temp_VA.Re(),temp_QVal);
+					VA_Outref = gld::complex(temp_VA.Re(),temp_QVal);
 				}
 			}
 			else	//Inverter rated power is equal to or smaller than real power desired, give it all we can
@@ -7741,11 +7741,11 @@ void inverter::update_control_references(void)
 				//Maintain desired sign convention
 				if (temp_VA.Re() < 0.0)
 				{
-					VA_Outref = complex(-p_max,0.0);
+					VA_Outref = gld::complex(-p_max,0.0);
 				}
 				else	//Positive
 				{
-					VA_Outref = complex(p_max,0.0);
+					VA_Outref = gld::complex(p_max,0.0);
 				}
 			}
 		}
@@ -7789,7 +7789,7 @@ void inverter::update_control_references(void)
 		}
 
 		//Compute the "new" output - signs lost
-		temp_VA = complex(fabs(p_max*temp_PF),fabs(p_max*sqrt(1.0-(temp_PF*temp_PF))));
+		temp_VA = gld::complex(fabs(p_max*temp_PF),fabs(p_max*sqrt(1.0-(temp_PF*temp_PF))));
 
 		//"Sign" it appropriately
 		if ((VA_Outref.Re()<0) && (VA_Outref.Im()<0))	//-R, -I
@@ -7798,11 +7798,11 @@ void inverter::update_control_references(void)
 		}
 		else if ((VA_Outref.Re()<0) && (VA_Outref.Im()>=0))	//-R,I
 		{
-			VA_Outref = complex(-temp_VA.Re(),temp_VA.Im());
+			VA_Outref = gld::complex(-temp_VA.Re(),temp_VA.Im());
 		}
 		else if ((VA_Outref.Re()>=0) && (VA_Outref.Im()<0))	//R,-I
 		{
-			VA_Outref = complex(temp_VA.Re(),-temp_VA.Im());
+			VA_Outref = gld::complex(temp_VA.Re(),-temp_VA.Im());
 		}
 		else	//R,I
 		{
@@ -8460,12 +8460,12 @@ double inverter::perform_1547_checks(double timestepvalue)
 
 //Function to perform exp(j*val)
 //Basically a complex rotation
-complex inverter::complex_exp(double angle)
+gld::complex inverter::complex_exp(double angle)
 {
-	complex output_val;
+	gld::complex output_val;
 
 	//exp(jx) = cos(x)+j*sin(x)
-	output_val = complex(cos(angle),sin(angle));
+	output_val = gld::complex(cos(angle),sin(angle));
 
 	return output_val;
 }
@@ -8558,13 +8558,13 @@ void inverter::reset_complex_powerflow_accumulators(void)
 		for (indexval=0; indexval<3; indexval++)
 		{
 			//**** Current value ***/
-			value_Line_I[indexval] = complex(0.0,0.0);
+			value_Line_I[indexval] = gld::complex(0.0,0.0);
 
 			//**** Power value ***/
-			value_Power[indexval] = complex(0.0,0.0);
+			value_Power[indexval] = gld::complex(0.0,0.0);
 
 			//**** pre-rotated Current value ***/
-			value_Line_unrotI[indexval] = complex(0.0,0.0);
+			value_Line_unrotI[indexval] = gld::complex(0.0,0.0);
 		}
 	}
 	else	//Assumes must be triplex - else how did it get here?
@@ -8572,20 +8572,20 @@ void inverter::reset_complex_powerflow_accumulators(void)
 		//Reset the relevant values -- all single pulls
 		
 		//**** Current12 value ***/
-		value_Line12 = complex(0.0,0.0);
+		value_Line12 = gld::complex(0.0,0.0);
 
 		//**** powert12 value ***/
-		value_Power12 = complex(0.0,0.0);
+		value_Power12 = gld::complex(0.0,0.0);
 
 		//**** prerotated_12 value ***/
-		value_Line_unrotI[0] = complex(0.0,0.0);
+		value_Line_unrotI[0] = gld::complex(0.0,0.0);
 	}
 }
 
 //Function to push up all changes of complex properties to powerflow from local variables
 void inverter::push_complex_powerflow_values(void)
 {
-	complex temp_complex_val;
+	gld::complex temp_complex_val;
 	gld_wlock *test_rlock;
 	int indexval;
 
@@ -8603,7 +8603,7 @@ void inverter::push_complex_powerflow_values(void)
 			temp_complex_val += value_Line_I[indexval];
 
 			//Push it back up
-			pLine_I[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+			pLine_I[indexval]->setp<gld::complex>(temp_complex_val,*test_rlock);
 
 			//**** Power value ***/
 			//Pull current value again, just in case
@@ -8613,7 +8613,7 @@ void inverter::push_complex_powerflow_values(void)
 			temp_complex_val += value_Power[indexval];
 
 			//Push it back up
-			pPower[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+			pPower[indexval]->setp<gld::complex>(temp_complex_val,*test_rlock);
 
 			//**** pre-rotated Current value ***/
 			//Pull current value again, just in case
@@ -8623,13 +8623,13 @@ void inverter::push_complex_powerflow_values(void)
 			temp_complex_val += value_Line_unrotI[indexval];
 
 			//Push it back up
-			pLine_unrotI[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+			pLine_unrotI[indexval]->setp<gld::complex>(temp_complex_val,*test_rlock);
 
 			if ((VSI_mode == VSI_ISOCHRONOUS) || (VSI_mode == VSI_DROOP))
 			{
 				//**** IGenerated Current value ***/
 				//Direct write, not an accumulator
-				pIGenerated[indexval]->setp<complex>(value_IGenerated[indexval],*test_rlock);
+				pIGenerated[indexval]->setp<gld::complex>(value_IGenerated[indexval],*test_rlock);
 			}
 		}
 	}
@@ -8645,7 +8645,7 @@ void inverter::push_complex_powerflow_values(void)
 		temp_complex_val += value_Line12;
 
 		//Push it back up
-		pLine12->setp<complex>(temp_complex_val,*test_rlock);
+		pLine12->setp<gld::complex>(temp_complex_val,*test_rlock);
 
 		//**** powert12 value ***/
 		//Pull current value again, just in case
@@ -8655,7 +8655,7 @@ void inverter::push_complex_powerflow_values(void)
 		temp_complex_val += value_Power12;
 
 		//Push it back up
-		pPower12->setp<complex>(temp_complex_val,*test_rlock);
+		pPower12->setp<gld::complex>(temp_complex_val,*test_rlock);
 
 		//**** prerotated_12 value ***/
 		//Pull current value again, just in case
@@ -8665,13 +8665,13 @@ void inverter::push_complex_powerflow_values(void)
 		temp_complex_val += value_Line_unrotI[0];
 
 		//Push it back up
-		pLine_unrotI[0]->setp<complex>(temp_complex_val,*test_rlock);
+		pLine_unrotI[0]->setp<gld::complex>(temp_complex_val,*test_rlock);
 
 		//**** IGenerated_12 ****/
 		if ((VSI_mode == VSI_ISOCHRONOUS) || (VSI_mode == VSI_DROOP))
 		{
 			//Direct write, not an accumulator
-			pIGenerated[0]->setp<complex>(value_IGenerated[0],*test_rlock);
+			pIGenerated[0]->setp<gld::complex>(value_IGenerated[0],*test_rlock);
 		}
 	}
 }
@@ -8688,7 +8688,7 @@ double inverter::lin_eq_volt(double volt, double m, double b)
 // Function to update current injection IGenerated for VSI
 STATUS inverter::updateCurrInjection()
 {
-	complex temp_current_val[3];
+	gld::complex temp_current_val[3];
 	double power_diff_val;
 	bool ramp_change;
 	double deltat, temp_time;
@@ -8833,7 +8833,7 @@ STATUS inverter::updateCurrInjection()
 						value_IGenerated[idx] = temp_current_val[idx] + generator_admittance[idx][0]*value_Circuit_V[0] + generator_admittance[idx][1]*value_Circuit_V[1] + generator_admittance[idx][2]*value_Circuit_V[2];
 
 						//And adjust the related "internal voltage" - this just broke the frequency too
-						e_source[idx] = value_IGenerated[idx] * (complex(Rfilter,Xfilter) * Zbase);
+						e_source[idx] = value_IGenerated[idx] * (gld::complex(Rfilter,Xfilter) * Zbase);
 
 						//Other state variables needed to be updated?
 					}
@@ -8950,7 +8950,7 @@ EXPORT SIMULATIONMODE interupdate_inverter(OBJECT *obj, unsigned int64 delta_tim
 	}
 }
 
-EXPORT STATUS postupdate_inverter(OBJECT *obj, complex *useful_value, unsigned int mode_pass)
+EXPORT STATUS postupdate_inverter(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass)
 {
 	inverter *my = OBJECTDATA(obj,inverter);
 	STATUS status = FAILED;

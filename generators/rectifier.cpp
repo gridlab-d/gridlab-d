@@ -185,21 +185,21 @@ TIMESTAMP rectifier::sync(TIMESTAMP t0, TIMESTAMP t1)
 {	
 	gld_wlock *test_rlock;
 
-	V_Out = complex(V_Rated, 0);
+	V_Out = gld::complex(V_Rated, 0);
 
 	//TODO: consider installing duty or on-ratio limits
 	//AC-DC voltage magnitude ratio rule
 	double VInMag = V_Out.Mag() * PI / (3 * sqrt(6.0));
-	voltage_out[0] = complex(VInMag,0);
-	voltage_out[1] = complex(-VInMag/2, VInMag * sqrt(3.0) / 2);
-	voltage_out[2] = complex(-VInMag/2, -VInMag * sqrt(3.0) / 2);
+	voltage_out[0] = gld::complex(VInMag,0);
+	voltage_out[1] = gld::complex(-VInMag/2, VInMag * sqrt(3.0) / 2);
+	voltage_out[2] = gld::complex(-VInMag/2, -VInMag * sqrt(3.0) / 2);
 
 
 	switch(gen_mode_v){
 		case SUPPLY_DRIVEN:
 			{
 
-				complex S_A_In, S_B_In, S_C_In;
+				gld::complex S_A_In, S_B_In, S_C_In;
 
 				//DC Voltage, controlled by parent object determines DC Voltage.
 				S_A_In = voltage_out[0]*(~(current_out[0]));
@@ -216,10 +216,10 @@ TIMESTAMP rectifier::sync(TIMESTAMP t0, TIMESTAMP t1)
 				I_Out = ~(VA_Out / V_Out); //These values are completely real, but since parent object uses complex, use here as well and follow rule for complex conjugate
 
 				//Write the current
-				pLine_I->setp<complex>(I_Out,*test_rlock);
+				pLine_I->setp<gld::complex>(I_Out,*test_rlock);
 
 				//Write the voltage
-				pCircuit_V->setp<complex>(V_Out,*test_rlock);
+				pCircuit_V->setp<gld::complex>(V_Out,*test_rlock);
 
 				return TS_NEVER;
 			}

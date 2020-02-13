@@ -174,7 +174,7 @@ typedef struct stat STAT;
 #endif
 
 #include "cmdarg.h"
-#include "complex.h"
+#include "gld_complex.h"
 #include "object.h"
 #include "load.h"
 #include "output.h"
@@ -1165,7 +1165,7 @@ static int resolve_double(UNRESOLVED *item, char *context)
 			if (xform) xform->source_type = XS_DOUBLE;
 			break;
 		case PT_complex:
-                *ref = &(((complex *) object_get_addr(obj, prop->name))->Re());
+                *ref = &(((gld::complex *) object_get_addr(obj, prop->name))->Re());
 			if (xform) xform->source_type = XS_COMPLEX;
 			break;
 		case PT_loadshape:
@@ -2166,7 +2166,7 @@ static int functional_unit(PARSER,double *pValue,UNIT **unit)
 	REJECT;
 }
 
-static int complex_value(PARSER, complex *pValue)
+static int complex_value(PARSER, gld::complex *pValue)
 {
 	double r, i, m, a;
 	START;
@@ -2208,7 +2208,7 @@ static int complex_value(PARSER, complex *pValue)
 	REJECT;
 }
 
-static int complex_unit(PARSER,complex *pValue,UNIT **unit)
+static int complex_unit(PARSER,gld::complex *pValue,UNIT **unit)
 {
 	START;
 	if TERM(complex_value(HERE,pValue))
@@ -3956,7 +3956,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 	PROPERTYNAME propname;
 	char1024 propval;
 	double dval;
-	complex cval;
+	gld::complex cval;
 	void *source=NULL;
 	TRANSFORMSOURCE xstype = XS_UNKNOWN;
 	char transformname[1024];

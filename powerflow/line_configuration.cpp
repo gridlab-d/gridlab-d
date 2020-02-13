@@ -74,7 +74,7 @@ int line_configuration::create(void)
 	phaseC_conductor = NULL;
 	phaseN_conductor = NULL;
 	line_spacing = NULL;
-	impedance11 = impedance12 = impedance13 = impedance21 = impedance22 = impedance23 = impedance31 = impedance32 = impedance33 = complex(0,0);
+	impedance11 = impedance12 = impedance13 = impedance21 = impedance22 = impedance23 = impedance31 = impedance32 = impedance33 = gld::complex(0,0);
 	capacitance11 = capacitance12 = capacitance13 = capacitance21 = capacitance22 = capacitance23 = capacitance31 = capacitance32 = capacitance33 = 0.0;
 	summer.continuous = winter.continuous = 1000;
 	summer.emergency = winter.emergency = 2000;

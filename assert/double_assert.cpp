@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
-#include <complex.h>
+#include <gld_complex.h>
 
 #include "double_assert.h"
 

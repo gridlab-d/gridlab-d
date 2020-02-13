@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
-#include <complex.h>
+#include <gld_complex.h>
 
 #include "complex_assert.h"
 

@@ -30,8 +30,12 @@ Initialization after returning to service?
 
 ***********************************************************************
 */
+#ifndef GLD_USE_EIGEN
 #include "solver_nr.h"
-#define MT // this enables multithreaded SuperLU
+#else
+#include "solver_nr_eigen.h"
+#endif
+//#define MT // this enables multithreaded SuperLU
 
 #ifdef MT
 #include <slu_mt_ddefs.h>	//superLU_MT
