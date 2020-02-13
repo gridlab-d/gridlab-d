@@ -572,13 +572,13 @@ int fncs_msg::precommit(TIMESTAMP t1){
 	}
 	// read precommit json variables from GridAPPSD, renke
 	//TODO
-	else if (message_type == MT_JSON)
-	{
-		result = subscribeJsonVariables();
-		if(result == 0){
-			return result;
-		}
-	}
+	//else if (message_type == MT_JSON)
+	//{
+	//	result = subscribeJsonVariables();
+	//	if(result == 0){
+	//		return result;
+	//	}
+	//}
 
 	return 1;
 }
@@ -586,14 +586,22 @@ int fncs_msg::precommit(TIMESTAMP t1){
 TIMESTAMP fncs_msg::presync(TIMESTAMP t1){
 
 	int result = 0;
-	result = publishVariables(vmap[5]);
-	if(result == 0){
-		return TS_INVALID;
-	}
-	//read presync variables from cache
-	result = subscribeVariables(vmap[5]);
-	if(result == 0){
-		return TS_INVALID;
+	if (message_type == MT_GENERAL) {
+		result = publishVariables(vmap[5]);
+		if(result == 0){
+			return TS_INVALID;
+		}
+		//read presync variables from cache
+		result = subscribeVariables(vmap[5]);
+		if(result == 0){
+			return TS_INVALID;
+		}
+	} else if (message_type == MT_JSON)
+	{
+		result = subscribeJsonVariables();
+		if(result == 0){
+			return TS_INVALID;
+		}
 	}
 	return TS_NEVER;
 }
