@@ -1,11 +1,3 @@
-/** $Id: solar.h,v 1.0 2008/07/18
-	Copyright (C) 2008 Battelle Memorial Institute
-	@file solar.h
-	@addtogroup solar
-
- @{  
- **/
-
 #ifndef GLD_GENERATORS_SOLAR_H_
 #define GLD_GENERATORS_SOLAR_H_
 

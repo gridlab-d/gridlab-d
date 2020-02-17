@@ -1,23 +1,17 @@
-/** $Id: solar.cpp,v 1.2 2008/02/12 00:28:08 d3g637 Exp $
-	Copyright (C) 2008 Battelle Memorial Institute
-	@file solar.cpp
-	@defgroup solar Diesel gensets
-	@ingroup generators
-// Assumptions :
+/**
+// Assumptions:
   1. All solar panels are tilted as per the site latitude to perform at their best efficiency
   2. All the solar cells are connected in series in a solar module
   3. 600Volts, 5/7.6 Amps, 200 Watts PV system is used for all residential , commercial and industrial applications. The number of modules will vary 
      based on the surface area
   4. A power derating of 10-15% is applied to take account of power losses and conversion in-efficiencies of the inverter.
 
-// References
+// References:
 1. Photovoltaic Module Thermal/Wind performance: Long-term monitoring and Model development for energy rating , Solar program review meeting 2003, Govindswamy Tamizhmani et al
 2. COMPARISON OF ENERGY PRODUCTION AND PERFORMANCE FROM FLAT-PLATE PHOTOVOLTAIC MODULE TECHNOLOGIES DEPLOYED AT FIXED TILT, J.A. del Cueto
 3. Solar Collectors and Photovoltaic in energyPRO
 4.Calculation of the polycrystalline PV module temperature using a simple method of energy balance 
-
- @{
- **/
+**/
 
 #include <stdlib.h>
 #include <stdio.h>
