@@ -518,7 +518,7 @@ int convert_from_int32(char *buffer, /**< pointer to the string buffer */
 		return 0;
 	}
 }
-#ifdef WIN32
+#ifdef _WIN32
 #define SCNd32 "d"
 #endif
 /** Convert to an \e int32

@@ -255,27 +255,46 @@ int helics_msg::init(OBJECT *parent){
 				helics::Endpoint ep = helics_federate->getEndpoint(idx);
 				if( ep.isValid() ) {
 					string dest = ep.getDefaultDestination();
-					if( !dest.empty() ){
+					config_info_temp = ep.getInfo();
+					json_reader.parse(config_info_temp, config_info);
+					if( config_info.isMember("object") && config_info.isMember("property") ){
+						if( !dest.empty() ){
+							gld_ep_pub = new helics_endpoint_publication();
+							gld_ep_pub->name = ep.getName();
+							gld_ep_pub->destination = dest;
+							gld_ep_pub->objectName = config_info["object"].asString();
+							gld_ep_pub->propertyName = config_info["property"].asString();
+							gld_ep_pub->HelicsPublicationEndpoint = ep;
+							helics_endpoint_publications.push_back(gld_ep_pub);
+							gl_verbose("helics_msg::init(): registering publishing endpoint: %s", gld_ep_pub->name);
+						} else {
+							gld_ep_sub = new helics_endpoint_subscription();
+							gld_ep_sub->name = ep.getName();
+							gld_ep_sub->objectName = config_info["object"].asString();
+							gld_ep_sub->propertyName = config_info["property"].asString();
+							gld_ep_sub->HelicsSubscriptionEndpoint = ep;
+							helics_endpoint_subscriptions.push_back(gld_ep_sub);
+							gl_verbose("helics_msg::init(): registering subscribing endpoint: %s", gld_ep_sub->name.c_str());
+						}
+					}
+					if( config_info.isMember("publication_info") ) {
 						gld_ep_pub = new helics_endpoint_publication();
 						gld_ep_pub->name = ep.getName();
 						gld_ep_pub->destination = dest;
-						config_info_temp = ep.getInfo();
-						json_reader.parse(config_info_temp, config_info);
-						gld_ep_pub->objectName = config_info["object"].asString();
-						gld_ep_pub->propertyName = config_info["property"].asString();
+						gld_ep_pub->objectName = config_info["publication_info"]["object"].asString();
+						gld_ep_pub->propertyName = config_info["publication_info"]["property"].asString();
 						gld_ep_pub->HelicsPublicationEndpoint = ep;
 						helics_endpoint_publications.push_back(gld_ep_pub);
-                        gl_verbose("helics_msg::init(): registering publishing endpoint: %s", gld_ep_pub->name);
-					} else {
+						gl_verbose("helics_msg::init(): registering publishing endpoint: %s", gld_ep_pub->name);
+					}
+					if( config_info.isMember("subscription_info") ) {
 						gld_ep_sub = new helics_endpoint_subscription();
 						gld_ep_sub->name = ep.getName();
-						config_info_temp = ep.getInfo();
-						json_reader.parse(config_info_temp, config_info);
-						gld_ep_sub->objectName = config_info["object"].asString();
-						gld_ep_sub->propertyName = config_info["property"].asString();
+						gld_ep_sub->objectName = config_info["subscription_info"]["object"].asString();
+						gld_ep_sub->propertyName = config_info["subscription_info"]["property"].asString();
 						gld_ep_sub->HelicsSubscriptionEndpoint = ep;
 						helics_endpoint_subscriptions.push_back(gld_ep_sub);
-                        gl_verbose("helics_msg::init(): registering subscribing endpoint: %s", gld_ep_sub->name.c_str());
+						gl_verbose("helics_msg::init(): registering subscribing endpoint: %s", gld_ep_sub->name.c_str());
 					}
 				}
 			}

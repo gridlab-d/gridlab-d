@@ -62,7 +62,7 @@
 #include "triplex_meter.h"
 
 //Library imports items - for external LU solver - stolen from somewhere else in GridLAB-D (tape, I believe)
-#if defined(WIN32) && !defined(__MINGW32__)
+#if defined(_WIN32) && !defined(__MINGW32__)
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 #define _WIN32_WINNT 0x0400
 #include <windows.h>
@@ -93,6 +93,7 @@
 
 CLASS *node::oclass = NULL;
 CLASS *node::pclass = NULL;
+
 
 unsigned int node::n = 0; 
 
@@ -146,8 +147,8 @@ node::node(MODULE *mod) : powerflow_object(mod)
 
 			PT_complex, "deltamode_PGenTotal",PADDR(deltamode_PGenTotal),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - power value for a diesel generator -- accumulator only, not an output or input",
 
-			PT_complex_array, "deltamode_full_Y_matrix",  get_full_Y_matrix_offset(),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality full_Y matrix exposes so generator objects can interact for Norton equivalents",
-			PT_complex_array, "deltamode_full_Y_all_matrix",  get_full_Y_all_matrix_offset(),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality full_Y_all matrix exposes so generator objects can interact for Norton equivalents",
+			PT_complex_array, "deltamode_full_Y_matrix",  PADDR(full_Y_matrix),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality full_Y matrix exposes so generator objects can interact for Norton equivalents",
+			PT_complex_array, "deltamode_full_Y_all_matrix",  PADDR(full_Y_all_matrix),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality full_Y_all matrix exposes so generator objects can interact for Norton equivalents",
 
 			PT_complex, "current_inj_A[A]", PADDR(current_inj[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
 			PT_complex, "current_inj_B[A]", PADDR(current_inj[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
@@ -801,7 +802,7 @@ int node::init(OBJECT *parent)
 				LUSolverFcns.ext_solve = NULL;
 				LUSolverFcns.ext_destroy = NULL;
 
-#ifdef WIN32
+#ifdef _WIN32
 				snprintf(ext_lib_file_name, 1024, "solver_%s" DLEXT,LUSolverName.get_string());
 #else
 				snprintf(ext_lib_file_name, 1024, "lib_solver_%s" DLEXT,LUSolverName.get_string());

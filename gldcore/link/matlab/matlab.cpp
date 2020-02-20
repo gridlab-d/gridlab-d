@@ -2,7 +2,7 @@
 // Copyright (C) 2012 Battelle Memorial Institute
 
 #include <stdlib.h>
-#ifdef WIN32
+#ifdef _WIN32
 #include <direct.h>
 #define getcwd _getcwd
 #else
@@ -430,7 +430,7 @@ EXPORT bool glx_init(glxlink *mod)
 	// initialize matlab engine
 	MATLABLINK *matlab = (MATLABLINK*)mod->get_data();
 	matlab->status = 0;
-#ifdef WIN32
+#ifdef _WIN32
 	if ( matlab->command )
 		matlab->engine = engOpen(matlab->command);
 	else
@@ -471,7 +471,7 @@ EXPORT bool glx_init(glxlink *mod)
 	// set the workdir
 	if ( strcmp(matlab->workdir,"")!=0 )
 	{
-#ifdef WIN32
+#ifdef _WIN32
 		_mkdir(matlab->workdir);
 #else
 		mkdir(matlab->workdir,0750);
