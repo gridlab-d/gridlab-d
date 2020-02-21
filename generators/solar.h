@@ -2,7 +2,10 @@
 #define GLD_GENERATORS_SOLAR_H_
 
 #include <stdarg.h>
+
 #include "generators.h"
+
+#define NR_EPSILON 1e-5
 
 EXPORT SIMULATIONMODE interupdate_solar(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 
@@ -13,6 +16,33 @@ private:
 	bool first_sync_delta_enabled;
 
 protected:
+private:
+	// N-R Sovler Part
+	double nr_ep_rt(double);
+	double nr_root_rt(double, double);
+
+	using tpd_hf_ptr = double (solar::*)(double, double);
+	double newton_raphson(double, tpd_hf_ptr, double = 0, double = NR_EPSILON);
+	double nr_root_search(double, double, double = NR_EPSILON);
+
+	double get_i_from_u(double);
+	double get_p_from_u(double);
+
+	void test_nr_solver(); // Test func
+
+	// Solar PV Panel Part
+	double hf_dU(double t);
+	double hf_dI(double t, double S);
+	double hf_I(double U, double t, double S);
+	double hf_P(double U, double t, double S);
+	double hf_f(double U, double t, double S, double P);
+	double hf_dIdU(double U, double t);
+	double hf_d2IdU2(double U, double t);
+	double hf_dfdU(double U, double t, double S);
+	double hf_d2fdU2(double U, double t);
+
+	void display_params(); // Test func
+
 public:
 	/* TODO: put published variables here */
 	set phases; /**< device phases (see PHASE codes) */

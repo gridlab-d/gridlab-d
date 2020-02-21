@@ -1,24 +1,28 @@
-/**
+/** [@@The following comments may be removed.]
 // Assumptions:
-  1. All solar panels are tilted as per the site latitude to perform at their best efficiency
-  2. All the solar cells are connected in series in a solar module
-  3. 600Volts, 5/7.6 Amps, 200 Watts PV system is used for all residential , commercial and industrial applications. The number of modules will vary 
-     based on the surface area
-  4. A power derating of 10-15% is applied to take account of power losses and conversion in-efficiencies of the inverter.
+1. All solar panels are tilted as per the site latitude to perform at their best efficiency
+2. All the solar cells are connected in series in a solar module
+3. 600Volts, 5/7.6 Amps, 200 Watts PV system is used for all residential , commercial and industrial applications. The number of modules will vary based on the surface area
+4. A power derating of 10-15% is applied to take account of power losses and conversion in-efficiencies of the inverter.
 
 // References:
 1. Photovoltaic Module Thermal/Wind performance: Long-term monitoring and Model development for energy rating , Solar program review meeting 2003, Govindswamy Tamizhmani et al
 2. COMPARISON OF ENERGY PRODUCTION AND PERFORMANCE FROM FLAT-PLATE PHOTOVOLTAIC MODULE TECHNOLOGIES DEPLOYED AT FIXED TILT, J.A. del Cueto
 3. Solar Collectors and Photovoltaic in energyPRO
-4.Calculation of the polycrystalline PV module temperature using a simple method of energy balance 
+4. Calculation of the polycrystalline PV module temperature using a simple method of energy balance 
 **/
+
+#include "solar.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
-#include <math.h>
 
-#include "solar.h"
+#include <cassert>
+#include <cmath>
+#include <iostream>
+
+using namespace std;
 
 #define RAD(x) (x * PI) / 180
 
@@ -27,6 +31,155 @@ solar *solar::defaults = NULL;
 
 static PASSCONFIG passconfig = PC_BOTTOMUP | PC_POSTTOPDOWN;
 static PASSCONFIG clockpass = PC_BOTTOMUP;
+
+/* N-R Solver as Nested Class */
+double cur_t = 25;  //Unit: Celsius
+double cur_S = 1e3; //Unit: w/m^2
+int max_nr_ite = 1e3;
+double x0_root_rt = 0.15; //Set the initial guess at 15% extra of the absolute value of the extreme point
+
+double solar::nr_ep_rt(double x)
+{
+	return hf_dfdU(x, cur_t, cur_S) / hf_d2fdU2(x, cur_t);
+}
+
+double solar::nr_root_rt(double x, double P)
+{
+	return hf_f(x, cur_t, cur_S, P) / hf_dfdU(x, cur_t, cur_S);
+}
+
+// Root Search
+double solar::nr_root_search(double x, double P, double doa)
+{
+	double xn_ep = newton_raphson(x, (tpd_hf_ptr)&nr_ep_rt);
+	double x0_root = xn_ep + x0_root_rt * fabs(xn_ep);
+	double xn_root = newton_raphson(x0_root, (tpd_hf_ptr)&nr_root_rt, P);
+	return xn_root;
+}
+
+// Newton-Raphson Method
+double solar::newton_raphson(double x, tpd_hf_ptr nr_rt, double P, double doa)
+{
+	int num_nr_ite = 0;
+	double h = (this->*nr_rt)(x, P);
+	while (fabs(h) >= doa)
+	{
+		x = x - h; // x(n+1) = x(n) - f{x(n)} / f'{x(n)}
+		h = (this->*nr_rt)(x, P);
+		num_nr_ite++;
+		assert(num_nr_ite < max_nr_ite);
+	}
+
+	cout << "The number of iterations is: " << num_nr_ite << "\n";
+	return x;
+}
+
+double solar::get_i_from_u(double u)
+{
+	double i = hf_I(u, cur_t, cur_S);
+	return i;
+}
+
+double solar::get_p_from_u(double u)
+{
+	double p = u * hf_I(u, cur_t, cur_S);
+	return p;
+}
+
+void solar::test_nr_solver()
+{
+	double x0 = 7e2; // Initial value given
+	double xn;
+	//xn = NR_Solver::newton_raphson(x0, (tpd_hf_ptr)&nr_ep_rt);
+
+	double target_P = 63e3; //Unit: w
+	xn = newton_raphson(x0, (tpd_hf_ptr)&nr_root_rt, target_P);
+	cout << "The root value (using 'newton_raphson') is: " << xn << "\n";
+
+	xn = nr_root_search(x0, target_P);
+	cout << "The root value (using 'nr_root_search') is: " << xn << "\n";
+
+	double in = get_i_from_u(xn);
+	cout << "The current is " << in << " (A), when the voltage = " << xn << " (V)\n";
+
+	double pn = get_p_from_u(xn);
+	cout << "The power is " << pn << " (w), when the voltage = " << xn << " (V)\n";
+	cout << "[Note that the target_P = " << target_P << " (w)]\n";
+}
+
+/* Solar PV Panel Part*/
+// Params added for the solar pv model
+const double U_oc = 1005; //Unit: V
+const double I_sc = 100;  //Unit: A
+const double U_m = 750;   //Unit: V
+const double I_m = 84;	//Unit: A
+
+const double a1 = 0;
+const double b1 = 0;
+
+const double t_ref = 25;   //Unit: Celsius
+const double S_ref = 1000; //Unit: w/m^2
+
+// Preparation
+const double C2 = (U_m / U_oc - 1) / log(1 - I_m / I_sc);
+const double C1 = (1 - I_m / I_sc) * exp(-U_m / C2 / U_oc);
+
+// Funcs added for the solar pv model
+double solar::hf_dU(double t)
+{
+	return -b1 * U_oc * (t - t_ref);
+}
+
+double solar::hf_dI(double t, double S)
+{
+	return I_sc * (a1 * S / S_ref * (t - t_ref) + S / S_ref - 1);
+}
+
+double solar::hf_I(double U, double t, double S)
+{
+	return I_sc * (1 - C1 * (exp((U - hf_dU(t)) / C2 / U_oc) - 1)) + hf_dI(t, S);
+}
+
+double solar::hf_P(double U, double t, double S)
+{
+	return U * hf_I(U, t, S);
+}
+
+double solar::hf_f(double U, double t, double S, double P)
+{
+	return hf_P(U, t, S) - P;
+}
+
+double solar::hf_dIdU(double U, double t)
+{
+	return I_sc * (-C1) / C2 / U_oc * (exp((U - hf_dU(t)) / C2 / U_oc) - 0);
+}
+
+double solar::hf_d2IdU2(double U, double t)
+{
+	return I_sc * (-C1) / C2 / U_oc / C2 / U_oc * exp((U - hf_dU(t)) / C2 / U_oc);
+}
+
+double solar::hf_dfdU(double U, double t, double S)
+{
+	return hf_I(U, t, S) + U * hf_dIdU(U, t);
+}
+
+double solar::hf_d2fdU2(double U, double t)
+{
+	return hf_dIdU(U, t) + hf_dIdU(U, t) + U * hf_d2IdU2(U, t);
+}
+
+void solar::display_params()
+{
+	cout << "C2 = " << C2 << "\n";
+	cout << "C1 = " << C1 << "\n";
+	cout << "dU (when t=25) = " << hf_dU(25) << "\n";
+	cout << "dI (when t=25, S=2e3) = " << hf_dI(25, 2e3) << "\n";
+	cout << "I (when U=200, t=25, S=2e3) = " << hf_I(200, 25, 2e3) << "\n";
+	cout << "P (when U=200, t=25, S=2e3) = " << hf_P(200, 25, 2e3) << "\n";
+	cout << "dfdU (when U=200, t=25, S=2e3) = " << hf_dfdU(200, 25, 2e3) << "\n";
+}
 
 /* Class registration is only called once to register the class with the core */
 solar::solar(MODULE *module)
@@ -1202,6 +1355,9 @@ TIMESTAMP solar::postsync(TIMESTAMP t0, TIMESTAMP t1)
 //Module-level call
 SIMULATIONMODE solar::inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
+	//display_params(); // Test PV Panel Params
+	//test_nr_solver(); // Test N-R Solver
+
 	double deltat, deltatimedbl, currentDBLtime;
 	TIMESTAMP time_passin_value, ret_value;
 
