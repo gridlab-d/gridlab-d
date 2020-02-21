@@ -761,6 +761,8 @@ int waterheater::init(OBJECT *parent)
             A_circular_flow[i].resize(number_of_states, 0.0);
             A_matrix[i].resize(number_of_states, 0.0);
         }
+
+        T_layers.resize(number_of_states, vector<double>());
 	}
 	return residential_enduse::init(parent);
 }
@@ -1875,9 +1877,9 @@ void waterheater::reinitialize_internals(int dt) {
 	}
 	control_upper.clear();
 	control_lower.clear();
-    T_layers.clear();
-	T_layers = vector<vector<double>>(number_of_states, vector<double>()); // FIXME: if possible
+
 	for(int i=0; i<number_of_states; i++) {
+	    T_layers[i].clear();
         T_layers[i].push_back(init_T_layers[i]);
 	}
 	T_layers[0][0] = Tinlet;
