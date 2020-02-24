@@ -47,13 +47,15 @@ void solar::test_init_pub_vars()
 		cout << "solar_power_model = " << solar_power_model << "\n";
 		cout << "max_nr_ite = " << max_nr_ite << "\n";
 		cout << "x0_root_rt = " << x0_root_rt << "\n";
-		cout << "SOLAR_NR_EPSILON 1e-5"
-			 << "\n";
+		cout << "SOLAR_NR_EPSILON = " << eps_nr_ite << "\n";
+
+		cout << "Referenced temperature = " << t_ref << " (Celsius)" << "\n";
 	}
 }
 
 void solar::init_pub_vars_pvcurve_mode()
 {
+	// N-R Solver
 	if (max_nr_ite <= 0)
 	{
 		max_nr_ite = SHRT_MAX;
@@ -71,16 +73,33 @@ void solar::init_pub_vars_pvcurve_mode()
 
 	if (x0_root_rt <= 0)
 	{
-		double x0_root_rt = 0.15; //Set the initial guess at 15% extra of the absolute value of the extreme point
+		x0_root_rt = 0.15; //Set the initial guess at 15% extra of the absolute value of the extreme point
 		gl_warning("x0_root_rt was either not specified, or specified as a negative value."
 				   " Now it is set as x0_root_rt = 0.15.");
+	}
+
+	if (eps_nr_ite <= 0)
+	{
+		eps_nr_ite = 1e-5;
+		gl_warning("eps_nr_ite was either not specified, or specified as a negative value."
+				   " Now it is set as eps_nr_ite = 1e-5.");
+	}
+
+	// Solar PV
+	if (t_ref <= 0)
+	{
+		t_ref = 25;   //Unit: Celsius
+		gl_warning("t_ref was either not specified, or specified as a negative value."
+				   " Now it is set as t_ref = 25 (Celsius).");
 	}
 }
 
 /* N-R Solver */
+// Params
 double cur_t = 25;  //Unit: Celsius
 double cur_S = 1e3; //Unit: w/m^2
 
+// Funcs added for the N-R solver
 double solar::nr_ep_rt(double x)
 {
 	return hf_dfdU(x, cur_t, cur_S) / hf_d2fdU2(x, cur_t);
@@ -92,16 +111,16 @@ double solar::nr_root_rt(double x, double P)
 }
 
 // Root Search
-double solar::nr_root_search(double x, double P, double doa)
+double solar::nr_root_search(double x, double doa, double P)
 {
-	double xn_ep = newton_raphson(x, (tpd_hf_ptr)&nr_ep_rt);
+	double xn_ep = newton_raphson(x, (tpd_hf_ptr)&nr_ep_rt, eps_nr_ite);
 	double x0_root = xn_ep + x0_root_rt * fabs(xn_ep);
-	double xn_root = newton_raphson(x0_root, (tpd_hf_ptr)&nr_root_rt, P);
+	double xn_root = newton_raphson(x0_root, (tpd_hf_ptr)&nr_root_rt, eps_nr_ite, P);
 	return xn_root;
 }
 
 // Newton-Raphson Method
-double solar::newton_raphson(double x, tpd_hf_ptr nr_rt, double P, double doa)
+double solar::newton_raphson(double x, tpd_hf_ptr nr_rt, double doa, double P)
 {
 	int num_nr_ite = 0;
 	double h = (this->*nr_rt)(x, P);
@@ -133,13 +152,14 @@ void solar::test_nr_solver()
 {
 	double x0 = 7e2; // Initial value given
 	double xn;
-	//xn = NR_Solver::newton_raphson(x0, (tpd_hf_ptr)&nr_ep_rt);
+	xn = newton_raphson(x0, (tpd_hf_ptr)&nr_ep_rt, eps_nr_ite);
+	cout << "The root value of extreme point (using 'newton_raphson') is: " << xn << "\n";
 
 	double target_P = 63e3; //Unit: w
-	xn = newton_raphson(x0, (tpd_hf_ptr)&nr_root_rt, target_P);
+	xn = newton_raphson(x0, (tpd_hf_ptr)&nr_root_rt, eps_nr_ite, target_P);
 	cout << "The root value (using 'newton_raphson') is: " << xn << "\n";
 
-	xn = nr_root_search(x0, target_P);
+	xn = nr_root_search(x0, eps_nr_ite, target_P);
 	cout << "The root value (using 'nr_root_search') is: " << xn << "\n";
 
 	double in = get_i_from_u(xn);
@@ -160,7 +180,7 @@ const double I_m = 84;	//Unit: A
 const double a1 = 0;
 const double b1 = 0;
 
-const double t_ref = 25;   //Unit: Celsius
+//const double t_ref = 25;   //Unit: Celsius
 const double S_ref = 1000; //Unit: w/m^2
 
 // Preparation
@@ -236,8 +256,13 @@ solar::solar(MODULE *module)
 			oclass->trl = TRL_PROOF;
 
 		if (gl_publish_variable(oclass,
+								// Solar PV Panel (under PV_CURVE Mode)
+								PT_double, "t_ref_cels", PADDR(t_ref), PT_DESCRIPTION, "The referenced temperature in Celsius",
+
+								// N-R Solver
 								PT_int16, "MAX_NR_ITERATIONS", PADDR(max_nr_ite), PT_DESCRIPTION, "The allowed maximum number of newton-raphson itrations",
 								PT_double, "x0_root_rt", PADDR(x0_root_rt), PT_DESCRIPTION, "Set the initial guess at this extra percentage of the absolute x value at the extreme point",
+								PT_double, "DOA_NR_ITERATIONS", PADDR(eps_nr_ite), PT_DESCRIPTION, "Set the degree of accuracy of newton-raphson method",
 
 								PT_enumeration, "generator_mode", PADDR(gen_mode_v),
 								PT_KEYWORD, "UNKNOWN", (enumeration)UNKNOWN,
@@ -688,7 +713,10 @@ int solar::init_climate()
 /* Object initialization is called once after all object have been created */
 int solar::init(OBJECT *parent)
 {
-	init_pub_vars_pvcurve_mode(); //@TODO
+	if (solar_power_model = PV_CURVE)
+	{
+		init_pub_vars_pvcurve_mode(); //@TODO
+	}
 
 	OBJECT *obj = OBJECTHDR(this);
 	int climate_result;
@@ -1397,8 +1425,7 @@ SIMULATIONMODE solar::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 {
 	/* For Testing */
 	//display_params(); // Test PV Panel Params
-	//test_nr_solver(); // Test N-R Solver
-	//cout << "PI = " << M_PI << "\n\n";
+	test_nr_solver(); // Test N-R Solver
 
 	double deltat, deltatimedbl, currentDBLtime;
 	TIMESTAMP time_passin_value, ret_value;

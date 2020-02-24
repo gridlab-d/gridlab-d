@@ -5,7 +5,7 @@
 
 #include "generators.h"
 
-#define SOLAR_NR_EPSILON 1e-5
+//#define SOLAR_NR_EPSILON 1e-5
 
 EXPORT SIMULATIONMODE interupdate_solar(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 
@@ -16,22 +16,27 @@ private:
 	bool first_sync_delta_enabled;
 
 protected:
-public:
-	// Published Variables for PV Panel
+public: /* Published Variables & Other Funcs For 'PV_CURVE' mode */
+	// Published Variables for N-R Solver (under the mode 'PV_CURVE')
 	int16 max_nr_ite;
 	double x0_root_rt;
+	double eps_nr_ite;
 
+	// Published Variables for Solar PV Panel (under the mode 'PV_CURVE')
+	double t_ref;
+
+	// Test & Init Funcs
 	void test_init_pub_vars();
 	void init_pub_vars_pvcurve_mode();
 
-private:
+private: /* For 'PV_CURVE' mode */
 	// N-R Sovler Part
 	double nr_ep_rt(double);
 	double nr_root_rt(double, double);
 
 	using tpd_hf_ptr = double (solar::*)(double, double);
-	double newton_raphson(double, tpd_hf_ptr, double = 0, double = SOLAR_NR_EPSILON);
-	double nr_root_search(double, double, double = SOLAR_NR_EPSILON);
+	double newton_raphson(double, tpd_hf_ptr, double, double = 0);
+	double nr_root_search(double, double, double);
 
 	double get_i_from_u(double);
 	double get_p_from_u(double);
