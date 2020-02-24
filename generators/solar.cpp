@@ -17,26 +17,69 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include <math.h>
+
+#define _USE_MATH_DEFINES
 
 #include <cassert>
 #include <cmath>
+#include <climits>
 #include <iostream>
 
 using namespace std;
 
-#define RAD(x) (x * PI) / 180
+#define DEG_TO_RAD(x) (x * M_PI) / 180
 
+/* Framework */
 CLASS *solar::oclass = NULL;
 solar *solar::defaults = NULL;
 
 static PASSCONFIG passconfig = PC_BOTTOMUP | PC_POSTTOPDOWN;
 static PASSCONFIG clockpass = PC_BOTTOMUP;
 
-/* N-R Solver as Nested Class */
+/* Utility Funcs */
+
+/* */
+void solar::test_init_pub_vars()
+{
+	if (solar_power_model == PV_CURVE)
+	{
+		cout << "solar_power_model = " << solar_power_model << "\n";
+		cout << "max_nr_ite = " << max_nr_ite << "\n";
+		cout << "x0_root_rt = " << x0_root_rt << "\n";
+		cout << "SOLAR_NR_EPSILON 1e-5"
+			 << "\n";
+	}
+}
+
+void solar::init_pub_vars_pvcurve_mode()
+{
+	if (max_nr_ite <= 0)
+	{
+		max_nr_ite = SHRT_MAX;
+
+		//@TODO: This has segmentation fault on calling gl_warning due to char*
+		//char gl_warn_buf[50];
+		//sprintf(gl_warn_buf, "max_nr_ite was either not specified, or specified as a negative value."
+		//					 " Now it is set as max_nr_ite = SHRT_MAX = %d.",
+		//		SHRT_MAX);
+		//gl_warning(gl_warn_buf);
+
+		gl_warning("max_nr_ite was either not specified, or specified as a negative value."
+				   " Now it is set as max_nr_ite = SHRT_MAX.");
+	}
+
+	if (x0_root_rt <= 0)
+	{
+		double x0_root_rt = 0.15; //Set the initial guess at 15% extra of the absolute value of the extreme point
+		gl_warning("x0_root_rt was either not specified, or specified as a negative value."
+				   " Now it is set as x0_root_rt = 0.15.");
+	}
+}
+
+/* N-R Solver */
 double cur_t = 25;  //Unit: Celsius
 double cur_S = 1e3; //Unit: w/m^2
-int max_nr_ite = 1e3;
-double x0_root_rt = 0.15; //Set the initial guess at 15% extra of the absolute value of the extreme point
 
 double solar::nr_ep_rt(double x)
 {
@@ -193,16 +236,15 @@ solar::solar(MODULE *module)
 			oclass->trl = TRL_PROOF;
 
 		if (gl_publish_variable(oclass,
+								PT_int16, "MAX_NR_ITERATIONS", PADDR(max_nr_ite), PT_DESCRIPTION, "The allowed maximum number of newton-raphson itrations",
+								PT_double, "x0_root_rt", PADDR(x0_root_rt), PT_DESCRIPTION, "Set the initial guess at this extra percentage of the absolute x value at the extreme point",
+
 								PT_enumeration, "generator_mode", PADDR(gen_mode_v),
 								PT_KEYWORD, "UNKNOWN", (enumeration)UNKNOWN,
 								PT_KEYWORD, "CONSTANT_V", (enumeration)CONSTANT_V,
 								PT_KEYWORD, "CONSTANT_PQ", (enumeration)CONSTANT_PQ,
 								PT_KEYWORD, "CONSTANT_PF", (enumeration)CONSTANT_PF,
 								PT_KEYWORD, "SUPPLY_DRIVEN", (enumeration)SUPPLY_DRIVEN, //PV must operate in this mode
-
-								PT_enumeration, "generator_status", PADDR(gen_status_v),
-								PT_KEYWORD, "OFFLINE", (enumeration)OFFLINE,
-								PT_KEYWORD, "ONLINE", (enumeration)ONLINE,
 
 								PT_enumeration, "panel_type", PADDR(panel_type_v),
 								PT_KEYWORD, "SINGLE_CRYSTAL_SILICON", (enumeration)SINGLE_CRYSTAL_SILICON, //Mono-crystalline in production and the most efficient, efficiency 0.15-0.17
@@ -227,6 +269,7 @@ solar::solar(MODULE *module)
 								PT_enumeration, "SOLAR_POWER_MODEL", PADDR(solar_power_model),
 								PT_KEYWORD, "DEFAULT", (enumeration)BASEEFFICIENT,
 								PT_KEYWORD, "FLATPLATE", (enumeration)FLATPLATE,
+								PT_KEYWORD, "PV_CURVE", (enumeration)PV_CURVE,
 
 								PT_double, "a_coeff", PADDR(module_acoeff), PT_DESCRIPTION, "a coefficient for module temperature correction formula",
 								PT_double, "b_coeff[s/m]", PADDR(module_bcoeff), PT_DESCRIPTION, "b coefficient for module temperature correction formula",
@@ -252,7 +295,6 @@ solar::solar(MODULE *module)
 								PT_double, "derating[pu]", PADDR(derating_factor), PT_DESCRIPTION, "Panel derating to account for manufacturing variances",
 								PT_double, "Tcell[degC]", PADDR(Tcell),
 
-								PT_double, "Rated_kVA[kVA]", PADDR(Rated_kVA), PT_DEPRECATED, PT_DESCRIPTION, "This variable has issues with inconsistent handling in the code, so we will deprecate this in the future (VA maps to kVA, for example).",
 								PT_double, "rated_power[W]", PADDR(Max_P), PT_DESCRIPTION, "Used to define the size of the solar panel in power rather than square footage.",
 								PT_complex, "P_Out[kW]", PADDR(P_Out),
 								PT_complex, "V_Out[V]", PADDR(V_Out),
@@ -646,6 +688,8 @@ int solar::init_climate()
 /* Object initialization is called once after all object have been created */
 int solar::init(OBJECT *parent)
 {
+	init_pub_vars_pvcurve_mode(); //@TODO
+
 	OBJECT *obj = OBJECTHDR(this);
 	int climate_result;
 	gld_property *temp_property_pointer;
@@ -686,11 +730,7 @@ int solar::init(OBJECT *parent)
 		gl_error("Generator control mode is CONSTANT_PF. The Solar object only operates in SUPPLY_DRIVEN generator control mode.");
 		return 0;
 	}
-	if (gen_status_v == UNKNOWN)
-	{
-		gl_warning("Solar panel status is unknown! Using default: ONLINE");
-		gen_status_v = ONLINE;
-	}
+
 	if (panel_type_v == UNKNOWN)
 	{
 		gl_warning("Solar panel type is unknown! Using default: SINGLE_CRYSTAL_SILICON");
@@ -743,17 +783,17 @@ int solar::init(OBJECT *parent)
 	if (Max_P == 0)
 	{
 		Max_P = Rated_Insolation * efficiency * area; // We are calculating the module efficiency which should be less than cell efficiency. What about the sun hours??
-		gl_verbose("init(): Rated_kVA was not specified.  Calculating from other defaults.");
+		gl_verbose("init(): Max_P was not specified.  Calculating from other defaults.");
 		/* TROUBLESHOOT
-		The relationship between power output and other physical variables is described by Rated_kVA = Rated_Insolation * efficiency * area. Since Rated_kVA 
+		The relationship between power output and other physical variables is described by Max_P = Rated_Insolation * efficiency * area. Since Max_P 
 		was not set, using this equation to calculate it.
 		*/
 
 		if (Max_P == 0)
 		{
-			gl_warning("init(): Rated_kVA or {area or rated insolation or effiency} were not specified or specified as zero.  Leads to maximum power output of 0.");
+			gl_warning("init(): Max_P and {area or Rated_Insolation or effiency} were not specified or specified as zero.  Leads to maximum power output of 0.");
 			/* TROUBLESHOOT
-			The relationship between power output and other physical variables is described by Rated_kVA = Rated_Insolation * efficiency * area. Since Rated_kVA
+			The relationship between power output and other physical variables is described by Max_P = Rated_Insolation * efficiency * area. Since Max_P
 			was not specified and this equation leads to a value of zero, the output of the model is likely to be no power at all times.
 			*/
 		}
@@ -767,11 +807,11 @@ int solar::init(OBJECT *parent)
 			if (temp < Max_P * .99 || temp > Max_P * 1.01)
 			{
 				Max_P = temp;
-				gl_warning("init(): Rated_kVA, efficiency, Rate_Insolation, and area did not calculated to the same value.  Ignoring Rated_kVA.");
+				gl_warning("init(): Max_P is not within 99% to 101% of Rated_Insolation * efficiency * area.  Ignoring Max_P.");
 				/* TROUBLESHOOT
-				The relationship between power output and other physical variables is described by Rated_kVA = Rated_Insolation * efficiency * area. However, the model
-				can be overspecified. In the case that it is, we have defaulted to old versions of GridLAB-D and ignored the Rated_kVA and re-calculated it using
-				the other values.  If you would like to use Rated_kVA, please only specify Rated_Insolation and Rated_kVA.
+				The relationship between power output and other physical variables is described by Max_P = Rated_Insolation * efficiency * area. However, the model
+				can be overspecified. In the case that it is, we have defaulted to old versions of GridLAB-D and ignored the Max_P and re-calculated it using
+				the other values.  If you would like to use Max_P, please only specify Rated_Insolation and Max_P.
 				*/
 			}
 		}
@@ -785,13 +825,11 @@ int solar::init(OBJECT *parent)
 		{
 			gl_error("init(): Rated Insolation was not specified (or zero).  Power outputs cannot be calculated without a rated insolation value.");
 			/* TROUBLESHOOT
-			The relationship between power output and other physical variables is described by Rated_kVA = Rated_Insolation * efficiency * area.  Rated_kVA
-			and Rated_Insolation are required values for the solar model.  Please specify both of these parameters or efficiency and area.
+			The relationship is described by Rated_Insolation = Max_P / area / efficiency.  Nonezero values of area
+			and efficiency are required for this calculation.  Please specify both.
 			*/
 		}
 	}
-
-	Rated_kVA = Max_P / 1000;
 
 	// find parent inverter, if not defined, use a default voltage
 	if (parent != NULL)
@@ -1126,6 +1164,8 @@ TIMESTAMP solar::presync(TIMESTAMP t0, TIMESTAMP t1)
 
 TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
+	test_init_pub_vars();
+
 	int64 ret_value;
 	OBJECT *obj = OBJECTHDR(this);
 	double insolwmsq, corrwindspeed, Tback, Ftempcorr;
@@ -1223,14 +1263,14 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 			else
 			{
-				ret_value = ((int64(*)(OBJECT *, double, double, double, double, double *))(*calc_solar_radiation))(weather, RAD(tilt_angle), obj->latitude, obj->longitude, shading_factor, &Insolation);
+				ret_value = ((int64(*)(OBJECT *, double, double, double, double, double *))(*calc_solar_radiation))(weather, DEG_TO_RAD(tilt_angle), obj->latitude, obj->longitude, shading_factor, &Insolation);
 			}
 			break;
 		}
 		case FIXED_AXIS: // NOTE that this means FIXED, stationary. There is no AXIS at all. FIXED_AXIS is known as Single Axis Tracking by some, so the term is misleading.
 		{
 			//Snag solar insolation - prorate by shading (direct axis) - uses model selected earlier
-			ret_value = ((int64(*)(OBJECT *, double, double, double, double, double, double *))(*calc_solar_radiation))(weather, RAD(tilt_angle), RAD(orientation_azimuth_corrected), obj->latitude, obj->longitude, shading_factor, &Insolation);
+			ret_value = ((int64(*)(OBJECT *, double, double, double, double, double, double *))(*calc_solar_radiation))(weather, DEG_TO_RAD(tilt_angle), DEG_TO_RAD(orientation_azimuth_corrected), obj->latitude, obj->longitude, shading_factor, &Insolation);
 			//ret_value = ((int64 (*)(OBJECT *, double, double, double, double *))(*calc_solar_radiation))(weather,tilt_angle,orientation_azimuth_corrected,shading_factor,&Insolation);
 
 			//Make sure it worked
@@ -1355,8 +1395,10 @@ TIMESTAMP solar::postsync(TIMESTAMP t0, TIMESTAMP t1)
 //Module-level call
 SIMULATIONMODE solar::inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
+	/* For Testing */
 	//display_params(); // Test PV Panel Params
 	//test_nr_solver(); // Test N-R Solver
+	//cout << "PI = " << M_PI << "\n\n";
 
 	double deltat, deltatimedbl, currentDBLtime;
 	TIMESTAMP time_passin_value, ret_value;

@@ -256,7 +256,8 @@ int central_dg_control::init(OBJECT *parent)
 			return 0;
 		}
 		//Aggregate (three-phase) solar inverter rated complex power
-		all_solar_S_rated += solar_set[index]->Rated_kVA*1000.0;
+		//all_solar_S_rated += solar_set[index]->Rated_kVA*1000.0; //@Frank, please take a look, I change it to Max_P just to avoid complie error (The comment in the previous line says "inverter rated complex power", but here it uses the PV Panel's value.)
+		all_solar_S_rated += solar_set[index]->Max_P*1000.0;
 		++index;
 	}
 

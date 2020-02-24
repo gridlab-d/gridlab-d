@@ -5,7 +5,7 @@
 
 #include "generators.h"
 
-#define NR_EPSILON 1e-5
+#define SOLAR_NR_EPSILON 1e-5
 
 EXPORT SIMULATIONMODE interupdate_solar(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 
@@ -16,14 +16,22 @@ private:
 	bool first_sync_delta_enabled;
 
 protected:
+public:
+	// Published Variables for PV Panel
+	int16 max_nr_ite;
+	double x0_root_rt;
+
+	void test_init_pub_vars();
+	void init_pub_vars_pvcurve_mode();
+
 private:
 	// N-R Sovler Part
 	double nr_ep_rt(double);
 	double nr_root_rt(double, double);
 
 	using tpd_hf_ptr = double (solar::*)(double, double);
-	double newton_raphson(double, tpd_hf_ptr, double = 0, double = NR_EPSILON);
-	double nr_root_search(double, double, double = NR_EPSILON);
+	double newton_raphson(double, tpd_hf_ptr, double = 0, double = SOLAR_NR_EPSILON);
+	double nr_root_search(double, double, double = SOLAR_NR_EPSILON);
 
 	double get_i_from_u(double);
 	double get_p_from_u(double);
@@ -55,12 +63,6 @@ public:
 	};
 	enumeration gen_mode_v; //operating mode of the generator
 	//note solar panel will always operate under the SUPPLY_DRIVEN generator mode
-	enum GENERATOR_STATUS
-	{
-		OFFLINE = 1,
-		ONLINE = 2
-	};
-	enumeration gen_status_v;
 	enum POWER_TYPE
 	{
 		DC = 1,
@@ -92,7 +94,8 @@ public:
 	enum SOLAR_POWER_MODEL
 	{
 		BASEEFFICIENT = 0,
-		FLATPLATE = 1
+		FLATPLATE = 1,
+		PV_CURVE = 2
 	};
 	enumeration solar_power_model;
 
@@ -150,9 +153,8 @@ public:
 	double prevTemp, currTemp;
 	TIMESTAMP prevTime;
 
-	double Max_P;	 //< maximum real power capacity in kW
-	double Min_P;	 //< minimus real power capacity in kW
-	double Rated_kVA; //< nominal capacity in kVA
+	double Max_P; //< maximum real power capacity in kW
+	double Min_P; //< minimus real power capacity in kW
 
 private:
 	double orientation_azimuth_corrected; //Corrected azimuth, for crazy "0=equator" referenced models
