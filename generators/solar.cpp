@@ -42,32 +42,31 @@ static PASSCONFIG clockpass = PC_BOTTOMUP;
 /* */
 void solar::test_init_pub_vars()
 {
-	if (solar_power_model == PV_CURVE)
-	{
-		cout << "solar_power_model = " << solar_power_model << "\n";
-		cout << "max_nr_ite = " << max_nr_ite << "\n";
-		cout << "x0_root_rt = " << x0_root_rt << "\n";
-		cout << "SOLAR_NR_EPSILON = " << eps_nr_ite << "\n";
+	cout << "solar_power_model = " << solar_power_model << "\n";
+	cout << "max_nr_ite = " << max_nr_ite << "\n";
+	cout << "x0_root_rt = " << x0_root_rt << "\n";
+	cout << "SOLAR_NR_EPSILON = " << eps_nr_ite << "\n";
 
-		cout << "Referenced temperature = " << t_ref << " (Celsius)"
-			 << "\n";
-		cout << "Referenced insolation = " << S_ref << " (w/m^2)"
-			 << "\n";
+	cout << "Referenced temperature = " << t_ref << " (Celsius)"
+		 << "\n";
+	cout << "Referenced insolation = " << S_ref << " (w/m^2)"
+		 << "\n";
 
-		cout << "Coefficient a1 = " << pvc_a1 << " (1/Celsius)"
-			 << "\n";
-		cout << "Coefficient b1 = " << pvc_b1 << " (1/Celsius)"
-			 << "\n";
+	cout << "Coefficient a1 = " << pvc_a1 << " (1/Celsius)"
+		 << "\n";
+	cout << "Coefficient b1 = " << pvc_b1 << " (1/Celsius)"
+		 << "\n";
 
-		cout << "Uoc = " << pvc_U_oc_V << " (V)"
-			 << "\n";
-		cout << "Isc = " << pvc_I_sc_A << " (A)"
-			 << "\n";
-		cout << "Um = " << pvc_U_m_V << " (V)"
-			 << "\n";
-		cout << "Im = " << pvc_I_m_A << " (A)"
-			 << "\n";
-	}
+	cout << "Uoc = " << pvc_U_oc_V << " (V)"
+		 << "\n";
+	cout << "Isc = " << pvc_I_sc_A << " (A)"
+		 << "\n";
+	cout << "Um = " << pvc_U_m_V << " (V)"
+		 << "\n";
+	cout << "Im = " << pvc_I_m_A << " (A)"
+		 << "\n";
+
+	cout << "\n\n";
 }
 
 void solar::init_pub_vars_pvcurve_mode()
@@ -236,6 +235,7 @@ void solar::test_nr_solver()
 	double pn = get_p_from_u(xn);
 	cout << "The power is " << pn << " (w), when the voltage = " << xn << " (V)\n";
 	cout << "[Note that the target_P = " << target_P << " (w)]\n";
+	cout << "\n\n";
 }
 
 /* Solar PV Panel Part*/
@@ -764,7 +764,7 @@ int solar::init_climate()
 /* Object initialization is called once after all object have been created */
 int solar::init(OBJECT *parent)
 {
-	if (solar_power_model = PV_CURVE)
+	if (solar_power_model == PV_CURVE)
 	{
 		init_pub_vars_pvcurve_mode();
 	}
@@ -1243,22 +1243,10 @@ TIMESTAMP solar::presync(TIMESTAMP t0, TIMESTAMP t1)
 
 TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	test_init_pub_vars();
-
 	int64 ret_value;
 	OBJECT *obj = OBJECTHDR(this);
 	double insolwmsq, corrwindspeed, Tback, Ftempcorr;
 	gld_wlock *test_rlock;
-
-	//Check the shading factor
-	if ((shading_factor < 0) || (shading_factor > 1))
-	{
-		GL_THROW("Shading factor outside [0 1] limits in %s", obj->name);
-		/*  TROUBLESHOOT
-		The shading factor for the solar device is set outside the limited range
-		of 0 to 1.  Please set it back within this range and try again.
-		*/
-	}
 
 	if (first_sync_delta_enabled == true) //Deltamode first pass
 	{
@@ -1317,6 +1305,25 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 	} //End first delta timestep
 	//default else - either not deltamode, or not the first timestep
+
+	if (solar_power_model == PV_CURVE)
+	{
+		/* For Testing */
+		//display_params(); // Test PV Panel Params
+		test_init_pub_vars();
+		test_nr_solver(); // Test N-R Solver
+		return TS_NEVER;
+	}
+
+	//Check the shading factor
+	if ((shading_factor < 0) || (shading_factor > 1))
+	{
+		GL_THROW("Shading factor outside [0 1] limits in %s", obj->name);
+		/*  TROUBLESHOOT
+		The shading factor for the solar device is set outside the limited range
+		of 0 to 1.  Please set it back within this range and try again.
+		*/
+	}
 
 	if (solar_model_tilt != PLAYERVAL)
 	{
@@ -1465,8 +1472,6 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 TIMESTAMP solar::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	TIMESTAMP t2 = TS_NEVER;
-	/* TODO: implement post-topdown behavior */
-
 	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
 
@@ -1474,17 +1479,13 @@ TIMESTAMP solar::postsync(TIMESTAMP t0, TIMESTAMP t1)
 //Module-level call
 SIMULATIONMODE solar::inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	/* For Testing */
-	//display_params(); // Test PV Panel Params
-	test_nr_solver(); // Test N-R Solver
-
 	double deltat, deltatimedbl, currentDBLtime;
 	TIMESTAMP time_passin_value, ret_value;
 
 	//Get timestep value
 	deltat = (double)dt / (double)DT_SECOND;
 
-	if (iteration_count_val == 0) //Only update timestamp tracker on first iteration
+	if ((iteration_count_val == 0) || (solar_power_model == PV_CURVE)) //Only update timestamp tracker on first iteration
 	{
 		//Get decimal timestamp value
 		deltatimedbl = (double)delta_time / (double)DT_SECOND;
