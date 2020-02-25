@@ -1306,15 +1306,6 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 	} //End first delta timestep
 	//default else - either not deltamode, or not the first timestep
 
-	if (solar_power_model == PV_CURVE)
-	{
-		/* For Testing */
-		//display_params(); // Test PV Panel Params
-		test_init_pub_vars();
-		test_nr_solver(); // Test N-R Solver
-		return TS_NEVER;
-	}
-
 	//Check the shading factor
 	if ((shading_factor < 0) || (shading_factor > 1))
 	{
@@ -1445,6 +1436,15 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 		//Populate VA, just because it seems to be used below
 		VA_Out = P_Out;
 	}
+	else if (solar_power_model == PV_CURVE)
+	{
+		/* For Testing */
+		//display_params(); // Test PV Panel Params
+		test_init_pub_vars();
+		test_nr_solver(); // Test N-R Solver
+
+		return TS_NEVER;
+	}
 	else
 	{
 		GL_THROW("Unknown solar power output model selected!");
@@ -1455,7 +1455,7 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 		*/
 	}
 
-	Voc = Voc_Max * (1 + (Voc_temp_coeff) * (Tmodule - 77));
+	Voc = Voc_Max * (1 + (Voc_temp_coeff) * (Tmodule - 77)); //@Frank, I think this Voc does not need to be published. Please take a look.
 
 	V_Out = V_Max * (Voc / Voc_Max);
 
