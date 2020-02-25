@@ -49,7 +49,24 @@ void solar::test_init_pub_vars()
 		cout << "x0_root_rt = " << x0_root_rt << "\n";
 		cout << "SOLAR_NR_EPSILON = " << eps_nr_ite << "\n";
 
-		cout << "Referenced temperature = " << t_ref << " (Celsius)" << "\n";
+		cout << "Referenced temperature = " << t_ref << " (Celsius)"
+			 << "\n";
+		cout << "Referenced insolation = " << S_ref << " (w/m^2)"
+			 << "\n";
+
+		cout << "Coefficient a1 = " << pvc_a1 << " (1/Celsius)"
+			 << "\n";
+		cout << "Coefficient b1 = " << pvc_b1 << " (1/Celsius)"
+			 << "\n";
+
+		cout << "Uoc = " << pvc_U_oc_V << " (V)"
+			 << "\n";
+		cout << "Isc = " << pvc_I_sc_A << " (A)"
+			 << "\n";
+		cout << "Um = " << pvc_U_m_V << " (V)"
+			 << "\n";
+		cout << "Im = " << pvc_I_m_A << " (A)"
+			 << "\n";
 	}
 }
 
@@ -67,31 +84,84 @@ void solar::init_pub_vars_pvcurve_mode()
 		//		SHRT_MAX);
 		//gl_warning(gl_warn_buf);
 
-		gl_warning("max_nr_ite was either not specified, or specified as a negative value."
+		gl_warning("max_nr_ite was either not specified, or specified as a nonpositive value."
 				   " Now it is set as max_nr_ite = SHRT_MAX.");
 	}
 
 	if (x0_root_rt <= 0)
 	{
 		x0_root_rt = 0.15; //Set the initial guess at 15% extra of the absolute value of the extreme point
-		gl_warning("x0_root_rt was either not specified, or specified as a negative value."
+		gl_warning("x0_root_rt was either not specified, or specified as a nonpositive value."
 				   " Now it is set as x0_root_rt = 0.15.");
 	}
 
 	if (eps_nr_ite <= 0)
 	{
 		eps_nr_ite = 1e-5;
-		gl_warning("eps_nr_ite was either not specified, or specified as a negative value."
+		gl_warning("eps_nr_ite was either not specified, or specified as a nonpositive value."
 				   " Now it is set as eps_nr_ite = 1e-5.");
 	}
 
 	// Solar PV
 	if (t_ref <= 0)
 	{
-		t_ref = 25;   //Unit: Celsius
-		gl_warning("t_ref was either not specified, or specified as a negative value."
+		t_ref = 25; //Unit: Celsius
+		gl_warning("t_ref was either not specified, or specified as a nonpositive value."
 				   " Now it is set as t_ref = 25 (Celsius).");
 	}
+
+	if (S_ref <= 0)
+	{
+		S_ref = 1e3; //Unit: w/m^2
+		gl_warning("S_ref was either not specified, or specified as a nonpositive value."
+				   " Now it is set as S_ref = 1e3 (w/m^2).");
+	}
+
+	if (pvc_a1 < 0)
+	{
+		pvc_a1 = 0;
+		gl_warning("pvc_a1 was specified as a negative value."
+				   " Now it is set as pvc_a1 = 0 (1/Celsius).");
+	}
+
+	if (pvc_b1 < 0)
+	{
+		pvc_b1 = 0;
+		gl_warning("pvc_b1 was specified as a negative value."
+				   " Now it is set as pvc_b1 = 0 (1/Celsius).");
+	}
+
+	if (pvc_U_oc_V <= 0)
+	{
+		pvc_U_oc_V = 1005;
+		gl_warning("pvc_U_oc_V was either not specified, or specified as a nonpositive value."
+				   " Now it is set as pvc_U_oc_V = 1005 (V).");
+	}
+
+	if (pvc_I_sc_A <= 0)
+	{
+		pvc_I_sc_A = 1e2;
+		gl_warning("pvc_I_sc_A was either not specified, or specified as a nonpositive value."
+				   " Now it is set as pvc_I_sc_A = 1e2 (A).");
+	}
+
+	if (pvc_U_m_V <= 0)
+	{
+		pvc_U_m_V = 750;
+		gl_warning("pvc_U_m_V was either not specified, or specified as a nonpositive value."
+				   " Now it is set as pvc_U_m_V = 750 (V).");
+	}
+
+	if (pvc_I_m_A <= 0)
+	{
+		pvc_I_m_A = 84;
+		gl_warning("pvc_I_m_A was either not specified, or specified as a nonpositive value."
+				   " Now it is set as pvc_I_m_A = 84 (V).");
+	}
+
+	// Calc C1 & C2 using other PVC params
+	pvc_C2 = (pvc_U_m_V / pvc_U_oc_V - 1) / log(1 - pvc_I_m_A / pvc_I_sc_A);
+	pvc_C1 = (1 - pvc_I_m_A / pvc_I_sc_A) * exp(-pvc_U_m_V / pvc_C2 / pvc_U_oc_V);
 }
 
 /* N-R Solver */
@@ -110,7 +180,6 @@ double solar::nr_root_rt(double x, double P)
 	return hf_f(x, cur_t, cur_S, P) / hf_dfdU(x, cur_t, cur_S);
 }
 
-// Root Search
 double solar::nr_root_search(double x, double doa, double P)
 {
 	double xn_ep = newton_raphson(x, (tpd_hf_ptr)&nr_ep_rt, eps_nr_ite);
@@ -119,7 +188,6 @@ double solar::nr_root_search(double x, double doa, double P)
 	return xn_root;
 }
 
-// Newton-Raphson Method
 double solar::newton_raphson(double x, tpd_hf_ptr nr_rt, double doa, double P)
 {
 	int num_nr_ite = 0;
@@ -171,36 +239,20 @@ void solar::test_nr_solver()
 }
 
 /* Solar PV Panel Part*/
-// Params added for the solar pv model
-const double U_oc = 1005; //Unit: V
-const double I_sc = 100;  //Unit: A
-const double U_m = 750;   //Unit: V
-const double I_m = 84;	//Unit: A
-
-const double a1 = 0;
-const double b1 = 0;
-
-//const double t_ref = 25;   //Unit: Celsius
-const double S_ref = 1000; //Unit: w/m^2
-
-// Preparation
-const double C2 = (U_m / U_oc - 1) / log(1 - I_m / I_sc);
-const double C1 = (1 - I_m / I_sc) * exp(-U_m / C2 / U_oc);
-
 // Funcs added for the solar pv model
 double solar::hf_dU(double t)
 {
-	return -b1 * U_oc * (t - t_ref);
+	return -pvc_b1 * pvc_U_oc_V * (t - t_ref);
 }
 
 double solar::hf_dI(double t, double S)
 {
-	return I_sc * (a1 * S / S_ref * (t - t_ref) + S / S_ref - 1);
+	return pvc_I_sc_A * (pvc_a1 * S / S_ref * (t - t_ref) + S / S_ref - 1);
 }
 
 double solar::hf_I(double U, double t, double S)
 {
-	return I_sc * (1 - C1 * (exp((U - hf_dU(t)) / C2 / U_oc) - 1)) + hf_dI(t, S);
+	return pvc_I_sc_A * (1 - pvc_C1 * (exp((U - hf_dU(t)) / pvc_C2 / pvc_U_oc_V) - 1)) + hf_dI(t, S);
 }
 
 double solar::hf_P(double U, double t, double S)
@@ -215,12 +267,12 @@ double solar::hf_f(double U, double t, double S, double P)
 
 double solar::hf_dIdU(double U, double t)
 {
-	return I_sc * (-C1) / C2 / U_oc * (exp((U - hf_dU(t)) / C2 / U_oc) - 0);
+	return pvc_I_sc_A * (-pvc_C1) / pvc_C2 / pvc_U_oc_V * (exp((U - hf_dU(t)) / pvc_C2 / pvc_U_oc_V) - 0);
 }
 
 double solar::hf_d2IdU2(double U, double t)
 {
-	return I_sc * (-C1) / C2 / U_oc / C2 / U_oc * exp((U - hf_dU(t)) / C2 / U_oc);
+	return pvc_I_sc_A * (-pvc_C1) / pvc_C2 / pvc_U_oc_V / pvc_C2 / pvc_U_oc_V * exp((U - hf_dU(t)) / pvc_C2 / pvc_U_oc_V);
 }
 
 double solar::hf_dfdU(double U, double t, double S)
@@ -235,8 +287,8 @@ double solar::hf_d2fdU2(double U, double t)
 
 void solar::display_params()
 {
-	cout << "C2 = " << C2 << "\n";
-	cout << "C1 = " << C1 << "\n";
+	cout << "C2 = " << pvc_C2 << "\n";
+	cout << "C1 = " << pvc_C1 << "\n";
 	cout << "dU (when t=25) = " << hf_dU(25) << "\n";
 	cout << "dI (when t=25, S=2e3) = " << hf_dI(25, 2e3) << "\n";
 	cout << "I (when U=200, t=25, S=2e3) = " << hf_I(200, 25, 2e3) << "\n";
@@ -258,12 +310,22 @@ solar::solar(MODULE *module)
 		if (gl_publish_variable(oclass,
 								// Solar PV Panel (under PV_CURVE Mode)
 								PT_double, "t_ref_cels", PADDR(t_ref), PT_DESCRIPTION, "The referenced temperature in Celsius",
+								PT_double, "S_ref_wpm2", PADDR(S_ref), PT_DESCRIPTION, "The referenced insolation in the unit of w/m^2",
+
+								PT_double, "pvc_a1_inv_cels", PADDR(pvc_a1), PT_DESCRIPTION, "In the calculation of dI, this is the coefficient that adjusts the difference between t (temperature) and t_ref (referenced temperature)",
+								PT_double, "pvc_b1_inv_cels", PADDR(pvc_b1), PT_DESCRIPTION, "In the calculation of dU, this is the coefficient that adjusts the difference between t (temperature) and t_ref (referenced temperature)",
+
+								PT_double, "pvc_U_oc_V", PADDR(pvc_U_oc_V), PT_DESCRIPTION, "The open circuit voltage in volts",
+								PT_double, "pvc_I_sc_A", PADDR(pvc_I_sc_A), PT_DESCRIPTION, "The short circuit current in amps",
+								PT_double, "pvc_U_m_V", PADDR(pvc_U_m_V), PT_DESCRIPTION, "The thermal votlage of the array in volts",
+								PT_double, "pvc_I_m_A", PADDR(pvc_I_m_A), PT_DESCRIPTION, "The thermal current of the array in amps",
 
 								// N-R Solver
 								PT_int16, "MAX_NR_ITERATIONS", PADDR(max_nr_ite), PT_DESCRIPTION, "The allowed maximum number of newton-raphson itrations",
 								PT_double, "x0_root_rt", PADDR(x0_root_rt), PT_DESCRIPTION, "Set the initial guess at this extra percentage of the absolute x value at the extreme point",
 								PT_double, "DOA_NR_ITERATIONS", PADDR(eps_nr_ite), PT_DESCRIPTION, "Set the degree of accuracy of newton-raphson method",
 
+								// Others
 								PT_enumeration, "generator_mode", PADDR(gen_mode_v),
 								PT_KEYWORD, "UNKNOWN", (enumeration)UNKNOWN,
 								PT_KEYWORD, "CONSTANT_V", (enumeration)CONSTANT_V,
@@ -341,15 +403,6 @@ solar::solar(MODULE *module)
 								//PT_KEYWORD, "ONE_AXIS", ONE_AXIS,			//To be implemented later
 								//PT_KEYWORD, "TWO_AXIS", TWO_AXIS,			//To be implemented later
 								//PT_KEYWORD, "AZIMUTH_AXIS", AZIMUTH_AXIS,	//To be implemented later
-
-								//resistances and max P, Q
-
-								PT_set, "phases", PADDR(phases), //Solar doesn't need phase information for anything.
-								PT_KEYWORD, "A", (set)PHASE_A,
-								PT_KEYWORD, "B", (set)PHASE_B,
-								PT_KEYWORD, "C", (set)PHASE_C,
-								PT_KEYWORD, "N", (set)PHASE_N,
-								PT_KEYWORD, "S", (set)PHASE_S,
 								NULL) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
 
@@ -365,8 +418,6 @@ solar::solar(MODULE *module)
 /* Object creation is called once for each object that is created by the core */
 int solar::create(void)
 {
-	//NOCT = 45; Tcell = 21; Tambient = 25;//degC ; Rated_Insolation = 1000;//rated insolation is 1000 W/m2 , taken from GE solar cell performance sheet
-	// 1 sq m  = 10.764 sq ft.
 	NOCT = 118.4;	//degF
 	Tcell = 21.0;	//degC
 	Tambient = 25.0; //degC
@@ -715,7 +766,7 @@ int solar::init(OBJECT *parent)
 {
 	if (solar_power_model = PV_CURVE)
 	{
-		init_pub_vars_pvcurve_mode(); //@TODO
+		init_pub_vars_pvcurve_mode();
 	}
 
 	OBJECT *obj = OBJECTHDR(this);

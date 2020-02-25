@@ -16,7 +16,7 @@ private:
 	bool first_sync_delta_enabled;
 
 protected:
-public: /* Published Variables & Other Funcs For 'PV_CURVE' mode */
+public: /* Published Variables & Other Funcs For 'PV_CURVE' Mode */
 	// Published Variables for N-R Solver (under the mode 'PV_CURVE')
 	int16 max_nr_ite;
 	double x0_root_rt;
@@ -24,12 +24,21 @@ public: /* Published Variables & Other Funcs For 'PV_CURVE' mode */
 
 	// Published Variables for Solar PV Panel (under the mode 'PV_CURVE')
 	double t_ref;
+	double S_ref;
+
+	double pvc_a1;
+	double pvc_b1;
+
+	double pvc_U_oc_V;
+	double pvc_I_sc_A;
+	double pvc_U_m_V;
+	double pvc_I_m_A;
 
 	// Test & Init Funcs
 	void test_init_pub_vars();
 	void init_pub_vars_pvcurve_mode();
 
-private: /* For 'PV_CURVE' mode */
+private: /* For N-R Solver & P-V Curve */
 	// N-R Sovler Part
 	double nr_ep_rt(double);
 	double nr_root_rt(double, double);
@@ -43,7 +52,10 @@ private: /* For 'PV_CURVE' mode */
 
 	void test_nr_solver(); // Test func
 
-	// Solar PV Panel Part
+	// Solar PV Panel Part (P-V Curve)
+	double pvc_C1;
+	double pvc_C2;
+
 	double hf_dU(double t);
 	double hf_dI(double t, double S);
 	double hf_I(double U, double t, double S);
@@ -57,8 +69,7 @@ private: /* For 'PV_CURVE' mode */
 	void display_params(); // Test func
 
 public:
-	/* TODO: put published variables here */
-	set phases; /**< device phases (see PHASE codes) */
+	/* Published Variables of Two Modes (BASEEFFICIENT = 0, FLATPLATE = 1) */
 	enum GENERATOR_MODE
 	{
 		CONSTANT_V = 1,
