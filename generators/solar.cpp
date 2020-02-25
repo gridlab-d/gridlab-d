@@ -29,6 +29,10 @@
 using namespace std;
 
 #define DEG_TO_RAD(x) (x * M_PI) / 180
+#define WPM2_TO_WPFT2(x) x / 10.7639
+#define WPFT2_TO_WPM2(x) x * 10.7639
+#define FAHR_TO_CELS(x) (x - 32) * 5 / 9
+#define CELS_TO_FAHR(x) x * 9 / 5 + 32
 
 /* Framework */
 CLASS *solar::oclass = NULL;
@@ -40,16 +44,16 @@ static PASSCONFIG clockpass = PC_BOTTOMUP;
 /* Utility Funcs */
 
 /* */
-void solar::test_init_pub_vars()
+void solar::print_init_pub_vars()
 {
 	cout << "solar_power_model = " << solar_power_model << "\n";
 	cout << "max_nr_ite = " << max_nr_ite << "\n";
 	cout << "x0_root_rt = " << x0_root_rt << "\n";
 	cout << "SOLAR_NR_EPSILON = " << eps_nr_ite << "\n";
 
-	cout << "Referenced temperature = " << t_ref << " (Celsius)"
+	cout << "Referenced temperature = " << pvc_t_ref_cels << " (Celsius)"
 		 << "\n";
-	cout << "Referenced insolation = " << S_ref << " (w/m^2)"
+	cout << "Referenced insolation = " << pvc_S_ref_wpm2 << " (w/m^2)"
 		 << "\n";
 
 	cout << "Coefficient a1 = " << pvc_a1 << " (1/Celsius)"
@@ -71,6 +75,10 @@ void solar::test_init_pub_vars()
 
 void solar::init_pub_vars_pvcurve_mode()
 {
+	// Init with Reference Temperature & Insolation
+	pvc_cur_S_wpm2 = pvc_S_ref_wpm2;
+	pvc_cur_t_cels = pvc_t_ref_cels;
+
 	// N-R Solver
 	if (max_nr_ite <= 0)
 	{
@@ -102,18 +110,18 @@ void solar::init_pub_vars_pvcurve_mode()
 	}
 
 	// Solar PV
-	if (t_ref <= 0)
+	if (pvc_t_ref_cels <= 0)
 	{
-		t_ref = 25; //Unit: Celsius
-		gl_warning("t_ref was either not specified, or specified as a nonpositive value."
-				   " Now it is set as t_ref = 25 (Celsius).");
+		pvc_t_ref_cels = 25; //Unit: Celsius
+		gl_warning("pvc_t_ref_cels was either not specified, or specified as a nonpositive value."
+				   " Now it is set as pvc_t_ref_cels = 25 (Celsius).");
 	}
 
-	if (S_ref <= 0)
+	if (pvc_S_ref_wpm2 <= 0)
 	{
-		S_ref = 1e3; //Unit: w/m^2
-		gl_warning("S_ref was either not specified, or specified as a nonpositive value."
-				   " Now it is set as S_ref = 1e3 (w/m^2).");
+		pvc_S_ref_wpm2 = 1e3; //Unit: w/m^2
+		gl_warning("pvc_S_ref_wpm2 was either not specified, or specified as a nonpositive value."
+				   " Now it is set as pvc_S_ref_wpm2 = 1e3 (w/m^2).");
 	}
 
 	if (pvc_a1 < 0)
@@ -165,18 +173,18 @@ void solar::init_pub_vars_pvcurve_mode()
 
 /* N-R Solver */
 // Params
-double cur_t = 25;  //Unit: Celsius
-double cur_S = 1e3; //Unit: w/m^2
+double pvc_cur_t_cels = 25;  //Unit: Celsius
+double pvc_cur_S_wpm2 = 1e3; //Unit: w/m^2
 
 // Funcs added for the N-R solver
 double solar::nr_ep_rt(double x)
 {
-	return hf_dfdU(x, cur_t, cur_S) / hf_d2fdU2(x, cur_t);
+	return hf_dfdU(x, pvc_cur_t_cels, pvc_cur_S_wpm2) / hf_d2fdU2(x, pvc_cur_t_cels);
 }
 
 double solar::nr_root_rt(double x, double P)
 {
-	return hf_f(x, cur_t, cur_S, P) / hf_dfdU(x, cur_t, cur_S);
+	return hf_f(x, pvc_cur_t_cels, pvc_cur_S_wpm2, P) / hf_dfdU(x, pvc_cur_t_cels, pvc_cur_S_wpm2);
 }
 
 double solar::nr_root_search(double x, double doa, double P)
@@ -205,14 +213,26 @@ double solar::newton_raphson(double x, tpd_hf_ptr nr_rt, double doa, double P)
 
 double solar::get_i_from_u(double u)
 {
-	double i = hf_I(u, cur_t, cur_S);
+	double i = hf_I(u, pvc_cur_t_cels, pvc_cur_S_wpm2);
 	return i;
 }
 
 double solar::get_p_from_u(double u)
 {
-	double p = u * hf_I(u, cur_t, cur_S);
+	double p = u * hf_I(u, pvc_cur_t_cels, pvc_cur_S_wpm2);
 	return p;
+}
+
+double solar::get_u_of_p_max(double x0)
+{
+	double temp_xn = newton_raphson(x0, (tpd_hf_ptr)&nr_ep_rt, eps_nr_ite);
+	return temp_xn;
+}
+
+double solar::get_p_max(double x0)
+{
+	double temp_xn = get_u_of_p_max(x0);
+	return get_p_from_u(temp_xn);
 }
 
 void solar::test_nr_solver()
@@ -221,8 +241,10 @@ void solar::test_nr_solver()
 	double xn;
 	xn = newton_raphson(x0, (tpd_hf_ptr)&nr_ep_rt, eps_nr_ite);
 	cout << "The root value of extreme point (using 'newton_raphson') is: " << xn << "\n";
+	cout << "The max P is: " << get_p_from_u(xn) << " (W)"
+		 << "\n";
 
-	double target_P = 63e3; //Unit: w
+	double target_P = 61e3; //Unit: w
 	xn = newton_raphson(x0, (tpd_hf_ptr)&nr_root_rt, eps_nr_ite, target_P);
 	cout << "The root value (using 'newton_raphson') is: " << xn << "\n";
 
@@ -242,12 +264,12 @@ void solar::test_nr_solver()
 // Funcs added for the solar pv model
 double solar::hf_dU(double t)
 {
-	return -pvc_b1 * pvc_U_oc_V * (t - t_ref);
+	return -pvc_b1 * pvc_U_oc_V * (t - pvc_t_ref_cels);
 }
 
 double solar::hf_dI(double t, double S)
 {
-	return pvc_I_sc_A * (pvc_a1 * S / S_ref * (t - t_ref) + S / S_ref - 1);
+	return pvc_I_sc_A * (pvc_a1 * S / pvc_S_ref_wpm2 * (t - pvc_t_ref_cels) + S / pvc_S_ref_wpm2 - 1);
 }
 
 double solar::hf_I(double U, double t, double S)
@@ -309,11 +331,11 @@ solar::solar(MODULE *module)
 
 		if (gl_publish_variable(oclass,
 								// Solar PV Panel (under PV_CURVE Mode)
-								PT_double, "t_ref_cels", PADDR(t_ref), PT_DESCRIPTION, "The referenced temperature in Celsius",
-								PT_double, "S_ref_wpm2", PADDR(S_ref), PT_DESCRIPTION, "The referenced insolation in the unit of w/m^2",
+								PT_double, "t_ref_cels", PADDR(pvc_t_ref_cels), PT_DESCRIPTION, "The referenced temperature in Celsius",
+								PT_double, "S_ref_wpm2", PADDR(pvc_S_ref_wpm2), PT_DESCRIPTION, "The referenced insolation in the unit of w/m^2",
 
-								PT_double, "pvc_a1_inv_cels", PADDR(pvc_a1), PT_DESCRIPTION, "In the calculation of dI, this is the coefficient that adjusts the difference between t (temperature) and t_ref (referenced temperature)",
-								PT_double, "pvc_b1_inv_cels", PADDR(pvc_b1), PT_DESCRIPTION, "In the calculation of dU, this is the coefficient that adjusts the difference between t (temperature) and t_ref (referenced temperature)",
+								PT_double, "pvc_a1_inv_cels", PADDR(pvc_a1), PT_DESCRIPTION, "In the calculation of dI, this is the coefficient that adjusts the difference between t (temperature) and pvc_t_ref_cels (referenced temperature)",
+								PT_double, "pvc_b1_inv_cels", PADDR(pvc_b1), PT_DESCRIPTION, "In the calculation of dU, this is the coefficient that adjusts the difference between t (temperature) and pvc_t_ref_cels (referenced temperature)",
 
 								PT_double, "pvc_U_oc_V", PADDR(pvc_U_oc_V), PT_DESCRIPTION, "The open circuit voltage in volts",
 								PT_double, "pvc_I_sc_A", PADDR(pvc_I_sc_A), PT_DESCRIPTION, "The short circuit current in amps",
@@ -820,7 +842,6 @@ int solar::init(OBJECT *parent)
 	case SINGLE_CRYSTAL_SILICON:
 		if (efficiency == 0.0)
 			efficiency = 0.2;
-		//  w1 = 0.942; // w1 is coeff for Tamb in deg C// convert to fahrenheit degF =degC+9/5+32
 		if (Pmax_temp_coeff == 0.0)
 			Pmax_temp_coeff = -0.00437 / 33.8; // average values from ref 2 in per degF
 		if (Voc_temp_coeff == 0.0)
@@ -1386,22 +1407,20 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	if (solar_power_model == BASEEFFICIENT)
 	{
-		Tambient = (Tamb - 32.0) * 5.0 / 9.0; //Read Tamb into the variable - convert to degC for consistency (with below - where the algorithm is more complex and I'm too lazy to convert it to degF in MANY places)
-
+		Tambient = FAHR_TO_CELS(Tamb);					   //Read Tamb into the variable - convert to degC for consistency (with below - where the algorithm is more complex and I'm too lazy to convert it to degF in MANY places)
 		Tmodule = Tamb + (NOCT - 68) / 74.32 * Insolation; //74.32 sf = 800 W/m2; 68 deg F = 20deg C
-
-		VA_Out = Max_P * Insolation / Rated_Insolation * (1 + (Pmax_temp_coeff) * (Tmodule - 77)) * derating_factor * soiling_factor; //derating due to manufacturing tolerance, derating sue to soiling both dimensionless
+		VA_Out = Max_P * Insolation / Rated_Insolation *
+				 (1 + (Pmax_temp_coeff) * (Tmodule - 77)) * derating_factor * soiling_factor; //derating due to manufacturing tolerance, derating sue to soiling both dimensionless
 	}
 	else if (solar_power_model == FLATPLATE) //Flat plate efficiency
 	{
 		//Approach taken from NREL SAM documentation for flat plate efficiency model - unclear on its origins
-
 		//Cycle temperature differences through if using flat efficiency model
 		if (prevTime != t0)
 		{
 			prevTemp = currTemp; //Current becomes previous
 
-			currTemp = (Tamb - 32.0) * 5.0 / 9.0; //Convert current temperature back to metric
+			currTemp = FAHR_TO_CELS(Tamb); //Convert current temperature back to metric
 
 			prevTime = t0; //Record current timestep
 		}
@@ -1412,7 +1431,7 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 		//Impose numerical error by converting things back into metric
 		//First put insolation back into W/m^2 - factor in soiling at this point
-		insolwmsq = Insolation * 10.7639104 * soiling_factor; //Convert to W/m^2
+		insolwmsq = WPFT2_TO_WPM2(Insolation) * soiling_factor;
 
 		//Convert wind speed from mph to m/s
 		corrwindspeed = wind_speed * 0.44704;
@@ -1424,10 +1443,10 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 		Tcell = Tback + insolwmsq / 1000.0 * module_dTcoeff;
 
 		//TCell is assumed to be Tmodule from old calculations (used in voltage below) - convert back to Fahrenheit
-		Tmodule = Tcell * 9.0 / 5.0 + 32.0;
+		Tmodule = CELS_TO_FAHR(Tcell);
 
 		//Calculate temperature correction value
-		Ftempcorr = 1.0 + module_Tcoeff * (Tcell - 25.0) / 100.0;
+		Ftempcorr = 1.0 + module_Tcoeff * (Tcell - 25.0) / 100.0; //@Frank, here the 25 and 100 may be the rated values. Not sure if they need to be replaced by those published variables.
 
 		//Place into the DC value - factor in area, derating, and all of the related items
 		//P_Out = Insolation*soiling_factor*derating_factor*area*efficiency*Ftempcorr;
@@ -1438,12 +1457,23 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 	else if (solar_power_model == PV_CURVE)
 	{
+		pvc_cur_t_cels = FAHR_TO_CELS(Tamb);
+		pvc_cur_S_wpm2 = WPFT2_TO_WPM2(Insolation);
+
+		//double temp_pvc_U_of_P_max = get_u_of_p_max();
+		//double temp_pvc_cur_P_max = get_p_max();
+		//double temp_pvc_I_of_P_max = get_i_from_u(temp_pvc_U_of_P_max);
+
+		V_Out.Re() = get_u_of_p_max();
+		VA_Out.Re() = get_p_from_u(V_Out.Re());
+		I_Out.Re() = get_i_from_u(V_Out.Re());
+
 		/* For Testing */
 		//display_params(); // Test PV Panel Params
-		test_init_pub_vars();
-		test_nr_solver(); // Test N-R Solver
+		//print_init_pub_vars();
+		//test_nr_solver(); // Test N-R Solver
 
-		return TS_NEVER;
+		return TS_NEVER; //@Frank, as you may modify the VA_Out for the other modes, I simply return here.
 	}
 	else
 	{
@@ -1456,9 +1486,7 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	Voc = Voc_Max * (1 + (Voc_temp_coeff) * (Tmodule - 77)); //@Frank, I think this Voc does not need to be published. Please take a look.
-
 	V_Out = V_Max * (Voc / Voc_Max);
-
 	I_Out = (VA_Out / V_Out);
 
 	//Export the values

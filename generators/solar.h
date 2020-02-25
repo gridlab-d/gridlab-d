@@ -23,8 +23,8 @@ public: /* Published Variables & Other Funcs For 'PV_CURVE' Mode */
 	double eps_nr_ite;
 
 	// Published Variables for Solar PV Panel (under the mode 'PV_CURVE')
-	double t_ref;
-	double S_ref;
+	double pvc_t_ref_cels;
+	double pvc_S_ref_wpm2;
 
 	double pvc_a1;
 	double pvc_b1;
@@ -35,10 +35,14 @@ public: /* Published Variables & Other Funcs For 'PV_CURVE' Mode */
 	double pvc_I_m_A;
 
 	// Test & Init Funcs
-	void test_init_pub_vars();
+	void print_init_pub_vars();
 	void init_pub_vars_pvcurve_mode();
 
 private: /* For N-R Solver & P-V Curve */
+	// For and From Weather
+	double pvc_cur_t_cels;
+	double pvc_cur_S_wpm2;
+
 	// N-R Sovler Part
 	double nr_ep_rt(double);
 	double nr_root_rt(double, double);
@@ -49,6 +53,8 @@ private: /* For N-R Solver & P-V Curve */
 
 	double get_i_from_u(double);
 	double get_p_from_u(double);
+	double get_p_max(double = 0);
+	double get_u_of_p_max(double = 0);
 
 	void test_nr_solver(); // Test func
 
