@@ -25,6 +25,7 @@ metrics_collector_writer::metrics_collector_writer(MODULE *mod){
 			PT_char256,"filename",PADDR(filename),PT_DESCRIPTION,"the JSON formatted output file name",
 			PT_char8,"extension",PADDR(extension),PT_DESCRIPTION,"the file formatted type (JSON, H5)",
 			PT_char8,"alternate",PADDR(alternate),PT_DESCRIPTION,"the alternate file name convention",
+			PT_char8,"allextensions",PADDR(allextensions),PT_DESCRIPTION,"write all file extensions",
 			PT_double, "interim[s]", PADDR(interim_length_dbl), PT_DESCRIPTION, "Interim at which metrics_collector_writer output is written",
 			PT_double, "interval[s]", PADDR(interval_length_dbl), PT_DESCRIPTION, "Interval at which the metrics_collector_writer output is stored in JSON format",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
@@ -46,7 +47,7 @@ int metrics_collector_writer::init(OBJECT *parent){
 	char time_str[64];
 
 	// check for filename
-	if(0 == filename[0]){
+	if(0 == filename[0]) {
 		// if no filename, auto-generate based on ID
 		sprintf(filename, "%256s-%256i-metrics_collector_output", oclass->name, obj->id);
 		gl_warning("metrics_collector_writer::init(): no filename defined, auto-generating '%s'", filename.get_string());
@@ -57,7 +58,7 @@ int metrics_collector_writer::init(OBJECT *parent){
 	}
 
 	// check for extension
-	if(0 == extension[0]){
+	if(0 == extension[0]) {
 		// if no filename, auto-generate based on ID
 		sprintf(extension, "json");
 		gl_warning("metrics_collector_writer::init(): no extension defined, auto-generating '%s'", extension.get_string());
@@ -78,17 +79,33 @@ int metrics_collector_writer::init(OBJECT *parent){
 #endif
 	}
 
+	both = false;
 	// Check valid metrics_collector_writer output alternate path
-	if(0 == alternate[0]){
+	if (0 == alternate[0]) {
 		// if no alternate file naming flag
-		gl_warning("No option to set alternate metrics file name give, so going with default, as if alternate no");
+		gl_warning("metrics_collector_writer::init(): no option to set alternate metrics file name give, so going with default, as if alternate no");
 		sprintf(alternate, "no");
 	}
 	else {
 		if (!(strcmp(alternate, "no") == 0) && !(strcmp(alternate, "yes") == 0)) {
-		  gl_warning("Bad option given. Should be either no or yes. Default = no");
+		  gl_warning("metrics_collector_writer::init(): bad alternate option given. Should be either no or yes. Default = no");
 		  sprintf(alternate, "no");
-	  }
+		}
+		else {
+			if (strcmp(alternate, "yes") == 0) {
+				if (!(0 == allextensions[0])) {
+					if (!(strcmp(allextensions, "no") == 0) && !(strcmp(allextensions, "yes") == 0)) {
+						gl_warning("metrics_collector_writer::init(): bad allextensions option given. Should be either no or yes. Default = no");
+					}
+					else {
+						if (strcmp(allextensions, "yes") == 0) {
+							both = true;
+							sprintf(extension, "json");
+						}
+					}
+				}
+			}
+		}
 	}
 
 	// Check valid metrics_collector output interval
@@ -207,7 +224,7 @@ int metrics_collector_writer::init(OBJECT *parent){
 	}
 #ifdef HAVE_HDF5
 	//prepare dataset for HDF5 if needed
-	if (strcmp(extension, m_h5.c_str()) == 0) {
+	if ((strcmp(extension, m_h5.c_str()) == 0) || both) {
 		H5::Exception::dontPrint();
 		try {
 			hdfMetadata();
@@ -375,6 +392,11 @@ void metrics_collector_writer::writeMetadata(Json::Value& meta, Json::Value& met
 		out_file.open (FileName);
 		out_file << writer.write(metadata);
 		out_file.close();
+#ifdef HAVE_HDF5
+		if (both) {
+			hdfMetadataWrite(meta, time_str, filename);
+		}
+#endif	
 	}
 #ifdef HAVE_HDF5
 	else {
@@ -434,7 +456,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 	Json::Value line_objects;
 
 	// Write Time -> represents the time from the StartTime
-	int writeTime = t1 - startTime; // in seconds
+	writeTime = t1 - startTime; // in seconds
 	sprintf(time_str, "%d", writeTime);
 
 //	cout << "write_line at " << writeTime << " seconds, final " << final_write << ", now " << t1 << endl;
@@ -641,6 +663,18 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 			writeJsonFile(filename_feeder, metrics_writer_feeders);
 			writeJsonFile(filename_transformer, metrics_writer_transformers);
 			writeJsonFile(filename_line, metrics_writer_lines);
+#ifdef HAVE_HDF5
+			if (both) {
+				hdfBillingMeterWrite(billing_meter_objects.size(), metrics_writer_billing_meters);
+				hdfHouseWrite(house_objects.size(), metrics_writer_houses);
+				hdfInverterWrite(inverter_objects.size() , metrics_writer_inverters);
+				hdfCapacitorWrite(capacitor_objects.size(), metrics_writer_capacitors);
+				hdfRegulatorWrite(regulator_objects.size(), metrics_writer_regulators);
+				hdfFeederWrite(feeder_objects.size(), metrics_writer_feeders);
+				hdfTransformerWrite(transformer_objects.size(), metrics_writer_transformers);
+				hdfLineWrite(line_objects.size(), metrics_writer_lines);
+			}
+#endif
 		}
 #ifdef HAVE_HDF5
 		else {
@@ -681,7 +715,9 @@ void metrics_collector_writer::writeJsonFile (char256 filename, Json::Value& met
 	out_file.seekp(pos-offset);
 	out_file << ", ";
 	out_file.close();
-	metrics.clear();
+	if (!both) {
+		metrics.clear();
+	}
 }
 
 #ifdef HAVE_HDF5
@@ -841,46 +877,130 @@ void metrics_collector_writer::hdfLine () {
 void metrics_collector_writer::hdfWrite(char256 filename, H5::CompType* mtype, void* ptr, int structKind, int size) {
 	H5::Exception::dontPrint();
 	try {
-		// preparation of a dataset and a file.
-		hsize_t dim[1] = { size };
-		int rank = sizeof(dim) / sizeof(hsize_t);
-		H5::DataSpace space(rank, dim);
+		if (interim_cnt == 1) {
+			// preparation of a dataset and a file.
+			hsize_t dim[1] = { size };
+			hsize_t maxdims[1] = {H5S_UNLIMITED};
+			int rank = sizeof(dim) / sizeof(hsize_t);
+			H5::DataSpace space(rank, dim, maxdims);
 
-		// Modify dataset creation property to enable chunking
-		hsize_t chunk_dims[1] = { size };
-		H5::DSetCreatPropList  *plist = new  H5::DSetCreatPropList;
-		plist->setChunk(1, chunk_dims);
-		// Set ZLIB (DEFLATE) Compression using level.
-		// To use SZIP compression comment out this line.
-		plist->setDeflate(9);
-		// Uncomment these lines to set SZIP Compression
-		// unsigned szip_options_mask = H5_SZIP_NN_OPTION_MASK;
-		// unsigned szip_pixels_per_block = 16;
-		// plist->setSzip(szip_options_mask, szip_pixels_per_block);
+			// Modify dataset creation property to enable chunking
+			hsize_t chunk_dims[1] = { size };
+			H5::DSetCreatPropList  *plist = new  H5::DSetCreatPropList;
+			plist->setChunk(1, chunk_dims);
+			// Set ZLIB (DEFLATE) Compression using level.
+			// To use SZIP compression comment out this line.
+			plist->setDeflate(9);
+			// Uncomment these lines to set SZIP Compression
+			// unsigned szip_options_mask = H5_SZIP_NN_OPTION_MASK;
+			// unsigned szip_pixels_per_block = 16;
+			// plist->setSzip(szip_options_mask, szip_pixels_per_block);
 
-		string FileName(filename);
-		if (strcmp(alternate, "yes") == 0) 
-			FileName.append("." + m_h5);
-		H5::H5File *file;
-		file = new H5::H5File(FileName, H5F_ACC_RDWR);
-		string DatasetName(m_index);
-		DatasetName.append(to_string(interim_cnt));
-		H5::DataSet *dataset = new H5::DataSet(file->createDataSet(DatasetName, *mtype, space, *plist));
+			string FileName(filename);
+			if (strcmp(alternate, "yes") == 0) 
+				FileName.append("." + m_h5);
+			H5::H5File *file;
+			file = new H5::H5File(FileName, H5F_ACC_RDWR);
+			string DatasetName(m_index);
+			DatasetName.append(to_string(interim_cnt));
+			H5::DataSet *dataset = new H5::DataSet(file->createDataSet(DatasetName, *mtype, space, *plist));
 
-		switch (structKind) {
-			case 1:	dataset->write(((std::vector <BillingMeter> *)ptr)->data(), *mtype);		break;
-			case 2:	dataset->write(((std::vector <House> *)ptr)->data(), *mtype);		break;
-			case 3:	dataset->write(((std::vector <Inverter> *)ptr)->data(), *mtype);	break;
-			case 4:	dataset->write(((std::vector <Capacitor> *)ptr)->data(), *mtype);	break;
-			case 5:	dataset->write(((std::vector <Regulator> *)ptr)->data(), *mtype);	break;
-			case 6:	dataset->write(((std::vector <Feeder> *)ptr)->data(), *mtype);		break;
-			case 7:	dataset->write(((std::vector <Transformer> *)ptr)->data(), *mtype);		break;
-			case 8:	dataset->write(((std::vector <Line> *)ptr)->data(), *mtype);		break;
+			switch (structKind) {
+				case 1:
+					len_billing_meters = size;	set_billing_meters = dataset;
+					dataset->write(((std::vector <BillingMeter> *)ptr)->data(), *mtype);	break;
+				case 2:
+					len_houses = size;	set_houses = dataset;
+					dataset->write(((std::vector <House> *)ptr)->data(), *mtype);		break;
+				case 3:
+					len_inverters = size;	set_inverters = dataset;
+					dataset->write(((std::vector <Inverter> *)ptr)->data(), *mtype);	break;
+				case 4:
+					len_capacitors = size;	set_capacitors = dataset;
+					dataset->write(((std::vector <Capacitor> *)ptr)->data(), *mtype);	break;
+				case 5:
+					len_regulators = size;	set_regulators = dataset;
+					dataset->write(((std::vector <Regulator> *)ptr)->data(), *mtype);	break;
+				case 6:
+					len_feeders = size;	set_feeders = dataset;
+					dataset->write(((std::vector <Feeder> *)ptr)->data(), *mtype);		break;
+				case 7:
+					len_transformers = size;	set_transformers = dataset;
+					dataset->write(((std::vector <Transformer> *)ptr)->data(), *mtype);	break;
+				case 8:
+					len_lines = size;	set_lines = dataset;
+					dataset->write(((std::vector <Line> *)ptr)->data(), *mtype);		break;
+			}
+			delete plist;
+			delete file;
+			if (final_write-startTime <= writeTime) {
+				delete dataset;
+			}
+		} else {
+			H5::DataSet* dataset;
+			hsize_t dim[1];
+			hsize_t dims[1] = { size };
+			hsize_t maxdims[1] = {H5S_UNLIMITED};
+			hsize_t	offset[1];
+			switch (structKind) {
+				case 1:
+					offset[0] = len_billing_meters;
+					dim[0] = len_billing_meters + size;
+					len_billing_meters += size;	dataset = set_billing_meters;	break;
+				case 2:
+					offset[0] = len_houses;
+					dim[0] = len_houses + size;
+					len_houses += size;			dataset = set_houses;			break;
+				case 3:
+					offset[0] = len_inverters;
+					dim[0] = len_inverters + size;
+					len_inverters += size;		dataset = set_inverters;		break;
+				case 4:
+					offset[0] = len_capacitors;
+					dim[0] = len_capacitors + size;
+					len_capacitors += size;		dataset = set_capacitors;		break;
+				case 5:
+					offset[0] = len_regulators;
+					dim[0] = len_regulators + size;
+					len_regulators += size;		dataset = set_regulators;		break;
+				case 6:
+					offset[0] = len_feeders;
+					dim[0] = len_feeders + size;
+					len_feeders += size;		dataset = set_feeders;			break;
+				case 7:
+					offset[0] = len_transformers;
+					dim[0] = len_transformers + size;
+					len_transformers += size;	dataset = set_transformers;		break;
+				case 8:
+					offset[0] = len_lines;
+					dim[0] = len_lines + size;
+					len_lines += size;			dataset = set_lines;			break;
+			}
+			// Extend the dataset.
+			if (size) {
+				dataset->extend(dim);
+				// Select a hyperslab in extended portion of the dataset.
+				H5::DataSpace *filespace = new H5::DataSpace(dataset->getSpace ());
+				filespace->selectHyperslab(H5S_SELECT_SET, dims, offset);
+				// Define memory space.
+				int rank = sizeof(dim) / sizeof(hsize_t);
+				H5::DataSpace memspace(rank, dims, maxdims);
+				switch (structKind) {
+					case 1:	dataset->write(((std::vector <BillingMeter> *)ptr)->data(), *mtype, memspace, *filespace);		break;
+					case 2:	dataset->write(((std::vector <House> *)ptr)->data(), *mtype, memspace, *filespace);		break;
+					case 3:	dataset->write(((std::vector <Inverter> *)ptr)->data(), *mtype, memspace, *filespace);	break;
+					case 4:	dataset->write(((std::vector <Capacitor> *)ptr)->data(), *mtype, memspace, *filespace);	break;
+					case 5:	dataset->write(((std::vector <Regulator> *)ptr)->data(), *mtype, memspace, *filespace);	break;
+					case 6:	dataset->write(((std::vector <Feeder> *)ptr)->data(), *mtype, memspace, *filespace);		break;
+					case 7:	dataset->write(((std::vector <Transformer> *)ptr)->data(), *mtype, memspace, *filespace);		break;
+					case 8:	dataset->write(((std::vector <Line> *)ptr)->data(), *mtype, memspace, *filespace);		break;
+				}
+				delete filespace;
+			}
+			if (final_write-startTime <= writeTime) {
+				delete dataset;
+			}
 		}
-
-		delete plist;
-		delete dataset;
-		delete file;
 	}
 	// catch failure caused by the H5 operations
 	catch( H5::PropListIException error)

@@ -279,9 +279,11 @@ public:
 	int commit(TIMESTAMP);
 
 public:
+	bool both;
 	char256 filename;
 	char8 extension;
 	char8 alternate;
+	char8 allextensions;
 	double interval_length_dbl;			//Metrics output interval length
 	double interim_length_dbl;			//Metrics output interim length
 
@@ -340,6 +342,24 @@ private:
 	Json::Value ary_lines;    // array storage for lines metrics
 
 #ifdef HAVE_HDF5
+	hsize_t len_billing_meters;
+	hsize_t len_houses;
+	hsize_t len_inverters;
+	hsize_t len_feeders;
+	hsize_t len_capacitors;
+	hsize_t len_regulators;
+	hsize_t len_transformers;
+	hsize_t len_lines;
+
+	H5::DataSet* set_billing_meters;
+	H5::DataSet* set_houses;
+	H5::DataSet* set_inverters;
+	H5::DataSet* set_feeders;
+	H5::DataSet* set_capacitors;
+	H5::DataSet* set_regulators;
+	H5::DataSet* set_transformers;
+	H5::DataSet* set_lines;
+
 	H5::CompType* mtype_metadata;
 	H5::CompType* mtype_billing_meters;
 	H5::CompType* mtype_houses;
@@ -375,6 +395,7 @@ private:
 	int interim_length;				//integer interim length (seconds to write out intervals and then clear)
 	int interim_cnt;				//integer interim count (count to write out intervals)
 	int line_cnt;					//integer write line count (count how many write_line in a interim write)
+	int writeTime;					//represents the time from the StartTime
 };
 
 #endif // C++
