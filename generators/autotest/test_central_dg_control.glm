@@ -702,10 +702,9 @@ object inverter {
 object solar { // player files are used instead of climate object
 	name sol5;
 	parent inv5;	
-	phases ABCN;
 
 	//weather "WA-Yakima";
-	Rated_kVA 40.0 kVA;
+	rated_power 40.0 kW;
 	area 29.6296 m^2;
 	tilt_angle 45.0;
 	efficiency 0.135;
@@ -749,9 +748,8 @@ object inverter {
 object solar { // player files are used instead of climate object
 	name sol8;
 	parent inv8;	
-	phases ABCN;
 	//weather "WA-Yakima";
-	Rated_kVA 50.0 kVA;
+	rated_power 50.0 kW;
 	area 29.6296 m^2;
 	tilt_angle 45.0;
 	efficiency 0.135;

@@ -8,6 +8,7 @@
 //#define SOLAR_NR_EPSILON 1e-5
 
 EXPORT SIMULATIONMODE interupdate_solar(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
+EXPORT STATUS dc_object_update_solar(OBJECT *calling_obj, OBJECT *us_obj, bool init_mode);
 
 class solar : public gld_object
 {
@@ -128,9 +129,9 @@ public:
 	double Insolation;
 	double Rinternal;
 	double Rated_Insolation;
-	complex V_Max;
-	complex Voc;
-	complex Voc_Max;
+	double V_Max;
+	double Voc;
+	double Voc_Max;
 	double area;
 	double Tamb;
 	double wind_speed;
@@ -140,10 +141,9 @@ public:
 	double w2;
 	double w3;
 	double constant;
-	complex P_Out;
-	complex V_Out;
-	complex I_Out;
-	complex VA_Out;
+	double P_Out;
+	double V_Out;
+	double I_Out;
 
 	//Variables for temperature correction - obtained from Sandia database for module types
 	double module_acoeff;  //Temperature correction coefficient a
@@ -188,10 +188,16 @@ private:
 	//Inverter connections
 	gld_property *inverter_voltage_property;
 	gld_property *inverter_current_property;
+	gld_property *inverter_power_property;
 
 	//Default voltage and current values, if ran "headless"
-	complex default_voltage_array;
-	complex default_current_array;
+	double default_voltage_array;
+	double default_current_array;
+	double default_power_array;
+
+	//Tracking variables
+	double last_DC_current;
+	double last_DC_power;
 
 public:
 	/* required implementations */
@@ -207,6 +213,7 @@ public:
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 
 	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
+	STATUS solar_dc_update(OBJECT *calling_obj, bool init_mode);
 
 public:
 	static CLASS *oclass;

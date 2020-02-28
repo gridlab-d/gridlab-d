@@ -126,10 +126,10 @@ public:
 	enumeration inverter_dyn_mode;
 	enumeration gen_status_v;
 	//INVERTER_TYPE inverter_type_choice;
-	complex V_In; // V_in (DC)
+	double V_In; // V_in (DC)
 	double Vdc;
-	complex I_In; // I_in (DC)
-	complex VA_In; //power in (DC)
+	double I_In; // I_in (DC)
+	double P_In; //power in (DC)
 
 	complex temp_current_val[3];
 

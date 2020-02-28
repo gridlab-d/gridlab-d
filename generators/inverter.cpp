@@ -70,9 +70,9 @@ inverter::inverter(MODULE *module)
 				PT_KEYWORD,"SUPPLY_DRIVEN",(enumeration)SUPPLY_DRIVEN,
 			
 			PT_double, "inverter_convergence_criterion",PADDR(inverter_convergence_criterion), PT_DESCRIPTION, "The maximum change in error threshold for exitting deltamode.",
-			PT_complex, "V_In[V]",PADDR(V_In), PT_DESCRIPTION, "DC voltage",
-			PT_complex, "I_In[A]",PADDR(I_In), PT_DESCRIPTION, "DC current",
-			PT_complex, "VA_In[VA]", PADDR(VA_In), PT_DESCRIPTION, "DC power",
+			PT_double, "V_In[V]",PADDR(V_In), PT_DESCRIPTION, "DC voltage",
+			PT_double, "I_In[A]",PADDR(I_In), PT_DESCRIPTION, "DC current",
+			PT_double, "P_In[W]", PADDR(P_In), PT_DESCRIPTION, "DC power",
 			PT_complex, "VA_Out[VA]", PADDR(VA_Out), PT_DESCRIPTION, "AC power",
 			PT_double, "Vdc[V]", PADDR(Vdc), PT_DESCRIPTION, "LEGACY MODEL: DC voltage",
 			PT_complex, "phaseA_V_Out[V]", PADDR(phaseA_V_Out), PT_DESCRIPTION, "AC voltage on A phase in three-phase system; 240-V connection on a triplex system",
@@ -2281,7 +2281,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 		if((deltamode_inclusive == true) && (enable_subsecond_models==true) && (inverter_dyn_mode == PI_CONTROLLER)) {
 			// Only execute at the first time step of simulation, or the first ieration of the next time steps
 			if ((t1 == start_time) || (t1 != t0)) {
-				last_I_In = I_In.Re();
+				last_I_In = I_In;
 
 				//Determine phasing to check
 				if ((phases & 0x10) == 0x10)	//Triplex
@@ -2605,22 +2605,22 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 			switch(gen_mode_v)
 			{
 				case CONSTANT_PF:
-					VA_In = V_In * ~ I_In; //DC
+					P_In = V_In * I_In; //DC
 
 					// need to differentiate between different pulses...
 					if(use_multipoint_efficiency == FALSE){
-						VA_Out = VA_In * efficiency;
+						VA_Out = P_In * efficiency;
 					} else {
-						if(VA_In <= p_so){
+						if(P_In <= p_so){
 							VA_Out = 0;
 						} else {
 							if(V_In > v_dco){
 								gl_warning("The dc voltage is greater than the specified maximum for the inverter. Efficiency model may be inaccurate.");
 							}
-							C1 = p_dco*(1+c_1*(V_In.Re()-v_dco));
-							C2 = p_so*(1+c_2*(V_In.Re()-v_dco));
-							C3 = c_o*(1+c_3*(V_In.Re()-v_dco));
-							VA_Out.SetReal((((p_max/(C1-C2))-C3*(C1-C2))*(VA_In.Re()-C2)+C3*(VA_In.Re()-C2)*(VA_In.Re()-C2)));
+							C1 = p_dco*(1+c_1*(V_In-v_dco));
+							C2 = p_so*(1+c_2*(V_In-v_dco));
+							C3 = c_o*(1+c_3*(V_In-v_dco));
+							VA_Out.SetReal((((p_max/(C1-C2))-C3*(C1-C2))*(P_In-C2)+C3*(P_In-C2)*(P_In-C2)));
 						}
 					}
 
@@ -2812,15 +2812,14 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						throw ("unsupported number of phases");
 					}
 
-					VA_In = VA_Out / efficiency;
+					P_In = VA_Out.Re() / efficiency;
 
-					V_In.Re() = Vdc;
+					V_In = Vdc;
 
-					I_In = VA_In / V_In;
-					I_In = ~I_In;
+					I_In = P_In / V_In;
 
-					gl_verbose("Inverter sync: V_In asked for by inverter is: (%f , %f)", V_In.Re(), V_In.Im());
-					gl_verbose("Inverter sync: I_In asked for by inverter is: (%f , %f)", I_In.Re(), I_In.Im());
+					gl_verbose("Inverter sync: V_In asked for by inverter is: %f", V_In);
+					gl_verbose("Inverter sync: I_In asked for by inverter is: %f", I_In);
 
 
 					value_Line_I[0] = phaseA_I_Out;
@@ -2981,13 +2980,13 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						throw("phaseC power is negative!");
 					}
 
-					VA_In = VA_Out / efficiency;
+					P_In = VA_Out.Re() / efficiency;
 
-					V_In.Re() = Vdc;
+					V_In = Vdc;
 
-					I_In = ~(VA_In / V_In);
+					I_In = (P_In / V_In);
 					
-					gl_verbose("Inverter sync: I_In asked for by inverter is: (%f , %f)", I_In.Re(), I_In.Im());
+					gl_verbose("Inverter sync: I_In asked for by inverter is: %f", I_In);
 
 					//TODO: check P and Q components to see if within bounds
 
@@ -3086,8 +3085,8 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 			complex battery_power_out = complex(0,0);
 			if ((four_quadrant_control_mode != FQM_VOLT_VAR) && (four_quadrant_control_mode != FQM_VOLT_WATT))
 			{
-				//Compute power in - supposedly DC, but since it's complex, we'll be proper (other models may need fixing)
-				VA_In = V_In * ~ I_In;
+				//Compute power in
+				P_In = V_In * I_In;
 
 				//Compute the power contribution of the battery object
 				if((phases & 0x10) == 0x10){ // split phase
@@ -3107,16 +3106,15 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				if(use_multipoint_efficiency == false)
 				{
 					//Normal scaling
-					VA_Efficiency = VA_In.Re() * efficiency;
+					VA_Efficiency = P_In * efficiency;
 					//Ab add
-					P_in = fabs(VA_In.Re());
 					net_eff = efficiency;
 					//end Ab add
 				}
 				else
 				{
 					//See if above minimum DC power input
-					if(VA_In.Mag() <= p_so)
+					if(P_In <= p_so)
 					{
 						VA_Efficiency = 0.0;	//Nope, no output
 						//Ab add
@@ -3127,7 +3125,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					else	//Yes, apply effiency change
 					{
 						//Make sure voltage isn't too low
-						if(V_In.Mag() > v_dco)
+						if(fabs(V_In) > v_dco)
 						{
 							gl_warning("The dc voltage is greater than the specified maximum for the inverter. Efficiency model may be inaccurate.");
 							/*  TROUBLESHOOT
@@ -3137,14 +3135,13 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						}
 
 						//Compute coefficients for multipoint efficiency
-						C1 = p_dco*(1+c_1*(V_In.Re()-v_dco));
-						C2 = p_so*(1+c_2*(V_In.Re()-v_dco));
-						C3 = c_o*(1+c_3*(V_In.Re()-v_dco));
+						C1 = p_dco*(1+c_1*(V_In-v_dco));
+						C2 = p_so*(1+c_2*(V_In-v_dco));
+						C3 = c_o*(1+c_3*(V_In-v_dco));
 
 						//Apply this to the output
-						VA_Efficiency = (((p_max/(C1-C2))-C3*(C1-C2))*(VA_In.Re()-C2)+C3*(VA_In.Re()-C2)*(VA_In.Re()-C2));
+						VA_Efficiency = (((p_max/(C1-C2))-C3*(C1-C2))*(P_In-C2)+C3*(P_In-C2)*(P_In-C2));
 						//Ab add
-						P_in = fabs(VA_In.Re());
 						net_eff = fabs(VA_Efficiency / P_in);
 						//end Ab add
 					}
@@ -3211,25 +3208,25 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					VW_m = (VW_P2 - VW_P1) / (VW_V2 - VW_V1);
 				}
 
-				//Compute power in - supposedly DC, but since it's complex, we'll be proper (other models may need fixing)
-				VA_In = V_In * ~ I_In;
+				//Compute power in
+				P_In = V_In * I_In;
 				//Determine how to efficiency weight it
 				if(use_multipoint_efficiency == false)
 				{
 					//Normal scaling
-					VA_Efficiency = VA_In.Re() * efficiency;
+					VA_Efficiency = P_In * efficiency;
 				}
 				else
 				{
 					//See if above minimum DC power input
-					if(VA_In.Mag() <= p_so)
+					if(P_In <= p_so)
 					{
 						VA_Efficiency = 0.0;	//Nope, no output
 					}
 					else	//Yes, apply effiency change
 					{
 						//Make sure voltage isn't too low
-						if(V_In.Mag() > v_dco)
+						if(fabs(V_In) > v_dco)
 						{
 							gl_warning("The dc voltage is greater than the specified maximum for the inverter. Efficiency model may be inaccurate.");
 							/*  TROUBLESHOOT
@@ -3239,12 +3236,12 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						}
 
 						//Compute coefficients for multipoint efficiency
-						C1 = p_dco*(1+c_1*(V_In.Re()-v_dco));
-						C2 = p_so*(1+c_2*(V_In.Re()-v_dco));
-						C3 = c_o*(1+c_3*(V_In.Re()-v_dco));
+						C1 = p_dco*(1+c_1*(V_In-v_dco));
+						C2 = p_so*(1+c_2*(V_In-v_dco));
+						C3 = c_o*(1+c_3*(V_In-v_dco));
 
 						//Apply this to the output
-						VA_Efficiency = (((p_max/(C1-C2))-C3*(C1-C2))*(VA_In.Re()-C2)+C3*(VA_In.Re()-C2)*(VA_In.Re()-C2));
+						VA_Efficiency = (((p_max/(C1-C2))-C3*(C1-C2))*(P_In-C2)+C3*(P_In-C2)*(P_In-C2));
 					}
 				}
 				if ((phases & 0x10) == 0x10){
@@ -3267,12 +3264,12 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 			{
 				if(power_factor != 0.0)	//Not purely imaginary
 				{
-					if (VA_In<0.0)	//Discharge at input, so must be "load"
+					if (P_In<0.0)	//Discharge at input, so must be "load"
 					{
 						//Total power output is the magnitude
 						VA_Out.SetReal(VA_Efficiency*-1.0);
 					}
-					else if (VA_In>0.0)	//Positive input, so must be generator
+					else if (P_In>0.0)	//Positive input, so must be generator
 					{
 						//Total power output is the magnitude
 						VA_Out.SetReal(VA_Efficiency);
@@ -3564,7 +3561,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 				//TODO : add lookup for power for frequency regulation P_Out_fr
 
-				if((VA_In.Re() == 0.0) && (disable_volt_var_if_no_input_power == true))
+				if((P_In == 0.0) && (disable_volt_var_if_no_input_power == true))
 					VA_Out = complex(0,0);
 				else
 				{
@@ -3588,7 +3585,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 					double Po = (P_in * net_eff) - fabs(Qo) * (1 - net_eff)/net_eff;
 
-					if(VA_In.Re() < 0.0)
+					if(P_In < 0.0)
 						VA_Out = complex(Po,-Qo);	//Qo sign convention backwards from what i was expecting
 					else
 						VA_Out = complex(-Po,-Qo);	//Qo sign convention backwards from what i was expecting
@@ -6614,9 +6611,9 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 					// PI controller parameters updates
 					if((phases & 0x10) == 0x10) {
 						pred_state.md[0] = curr_state.md[0] + (deltat * curr_state.dmd[0]);
-						pred_state.Idq[0].SetReal(pred_state.md[0] * I_In.Re());
+						pred_state.Idq[0].SetReal(pred_state.md[0] * I_In);
 						pred_state.mq[0] = curr_state.mq[0] + (deltat * curr_state.dmq[0]);
-						pred_state.Idq[0].SetImag(pred_state.mq[0] * I_In.Re());
+						pred_state.Idq[0].SetImag(pred_state.mq[0] * I_In);
 						pred_state.Iac[0] = pred_state.Idq[0];
 
 						//Compute power value
@@ -6698,8 +6695,8 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 								// Update the output current values, as well as the current multipliers
 								pred_state.Idq[0] = temp_current_val[0];
-								pred_state.md[0] = pred_state.Idq[0].Re()/I_In.Re();
-								pred_state.mq[0] = pred_state.Idq[0].Im()/I_In.Re();
+								pred_state.md[0] = pred_state.Idq[0].Re()/I_In;
+								pred_state.mq[0] = pred_state.Idq[0].Im()/I_In;
 								pred_state.Iac[0] = pred_state.Idq[0];
 
 							}
@@ -6722,9 +6719,9 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 					else if((phases & 0x07) == 0x07) {
 						for(i = 0; i < 3; i++) {
 							pred_state.md[i] = curr_state.md[i] + (deltat * curr_state.dmd[i]);
-							pred_state.Idq[i].SetReal(pred_state.md[i] * I_In.Re());
+							pred_state.Idq[i].SetReal(pred_state.md[i] * I_In);
 							pred_state.mq[i] = curr_state.mq[i] + (deltat * curr_state.dmq[i]);
-							pred_state.Idq[i].SetImag(pred_state.mq[i] * I_In.Re());
+							pred_state.Idq[i].SetImag(pred_state.mq[i] * I_In);
 							pred_state.Iac[i] = pred_state.Idq[i];
 
 							//Compute power value
@@ -6806,8 +6803,8 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 									// Update the output current values, as well as the current multipliers
 									pred_state.Idq[i] = temp_current_val[i];
-									pred_state.md[i] = pred_state.Idq[i].Re()/I_In.Re();
-									pred_state.mq[i] = pred_state.Idq[i].Im()/I_In.Re();
+									pred_state.md[i] = pred_state.Idq[i].Re()/I_In;
+									pred_state.mq[i] = pred_state.Idq[i].Im()/I_In;
 									pred_state.Iac[i] = pred_state.Idq[i];
 
 								}
@@ -6955,12 +6952,12 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 						pred_state.ded[0] = (pred_state.ed[0] - curr_state.ed[0]) / deltat;
 						pred_state.dmd[0] = (kpd * pred_state.ded[0]) + (kid * pred_state.ed[0]);
 						curr_state.md[0] = curr_state.md[0] + (curr_state.dmd[0] + pred_state.dmd[0]) * deltath;
-						curr_state.Idq[0].SetReal(curr_state.md[0] * I_In.Re());
+						curr_state.Idq[0].SetReal(curr_state.md[0] * I_In);
 
 						pred_state.deq[0] = (pred_state.eq[0] - curr_state.eq[0]) / deltat;
 						pred_state.dmq[0] = (kpq * pred_state.deq[0]) + (kiq * pred_state.eq[0]);
 						curr_state.mq[0] = curr_state.mq[0] + (curr_state.dmq[0] + pred_state.dmq[0]) * deltath;
-						curr_state.Idq[0].SetImag(curr_state.mq[0] * I_In.Re());
+						curr_state.Idq[0].SetImag(curr_state.mq[0] * I_In);
 						curr_state.Iac[0] = curr_state.Idq[0];
 
 						//Compute the power output
@@ -7043,8 +7040,8 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 								// Update the output current values, as well as the current multipliers
 								curr_state.Idq[0] = temp_current_val[0];
-								curr_state.md[0] = curr_state.Idq[0].Re()/I_In.Re();
-								curr_state.mq[0] = curr_state.Idq[0].Im()/I_In.Re();
+								curr_state.md[0] = curr_state.Idq[0].Re()/I_In;
+								curr_state.mq[0] = curr_state.Idq[0].Im()/I_In;
 								curr_state.Iac[0] = curr_state.Idq[0];
 
 							}
@@ -7091,12 +7088,12 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 							pred_state.ded[i] = (pred_state.ed[i] - curr_state.ed[i]) / deltat;
 							pred_state.dmd[i] = (kpd * pred_state.ded[i]) + (kid * pred_state.ed[i]);
 							curr_state.md[i] = curr_state.md[i] + (curr_state.dmd[i] + pred_state.dmd[i]) * deltath;
-							curr_state.Idq[i].SetReal(curr_state.md[i] * I_In.Re());
+							curr_state.Idq[i].SetReal(curr_state.md[i] * I_In);
 
 							pred_state.deq[i] = (pred_state.eq[i] - curr_state.eq[i]) / deltat;
 							pred_state.dmq[i] = (kpq * pred_state.deq[i]) + (kiq * pred_state.eq[i]);
 							curr_state.mq[i] = curr_state.mq[i] + (curr_state.dmq[i] + pred_state.dmq[i]) * deltath;
-							curr_state.Idq[i].SetImag(curr_state.mq[i] * I_In.Re());
+							curr_state.Idq[i].SetImag(curr_state.mq[i] * I_In);
 							curr_state.Iac[i] = curr_state.Idq[i];
 
 							//Compute the power output
@@ -7179,8 +7176,8 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 									// Update the output current values, as well as the current multipliers
 									curr_state.Idq[i] = temp_current_val[i];
-									curr_state.md[i] = curr_state.Idq[i].Re()/I_In.Re();
-									curr_state.mq[i] = curr_state.Idq[i].Im()/I_In.Re();
+									curr_state.md[i] = curr_state.Idq[i].Re()/I_In;
+									curr_state.mq[i] = curr_state.Idq[i].Im()/I_In;
 									curr_state.Iac[i] = curr_state.Idq[i];
 
 								}
@@ -7280,7 +7277,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 				}
 
 				//Update input current
-				curr_PID_state.I_in = I_In.Re();		//Input current
+				curr_PID_state.I_in = I_In;		//Input current
 
 				//New timestep - also update the control references
 				update_control_references();
@@ -7612,7 +7609,7 @@ STATUS inverter::init_PI_dynamics(INV_STATE *curr_time)
 			} else {
 				curr_time->md[0] = 0.0;
 			}
-			curr_time->Idq[0].SetReal(curr_time->md[0] * I_In.Re());
+			curr_time->Idq[0].SetReal(curr_time->md[0] * I_In);
 
 			Qref = VA_Out.Im();
 			if(last_I_In > 1e-9) {
@@ -7620,7 +7617,7 @@ STATUS inverter::init_PI_dynamics(INV_STATE *curr_time)
 			} else {
 				curr_time->mq[0] = 0.0;
 			}
-			curr_time->Idq[0].SetImag(curr_time->mq[0] * I_In.Re());
+			curr_time->Idq[0].SetImag(curr_time->mq[0] * I_In);
 			curr_time->Iac[0] = curr_time->Idq[0];
 
 			//Post the value
@@ -7651,8 +7648,8 @@ STATUS inverter::init_PI_dynamics(INV_STATE *curr_time)
 					curr_time->md[i] = 0.0;
 					curr_time->mq[i] = 0.0;
 				}
-				curr_time->Idq[i].SetReal(curr_time->md[i] * I_In.Re());
-				curr_time->Idq[i].SetImag(curr_time->mq[i] * I_In.Re());
+				curr_time->Idq[i].SetReal(curr_time->md[i] * I_In);
+				curr_time->Idq[i].SetImag(curr_time->mq[i] * I_In);
 				curr_time->Iac[i] = curr_time->Idq[i];
 
 				//Post the value
@@ -7853,7 +7850,7 @@ STATUS inverter::init_PID_dynamics(void)
 	Qref = VA_Out.Im();
 
 	//Copy the current input
-	curr_PID_state.I_in = I_In.Re();
+	curr_PID_state.I_in = I_In;
 
 	//Check the phases to see how to populate
 	if ( (phases & 0x10) == 0x10 ) // split phase
@@ -8002,26 +7999,26 @@ void inverter::update_control_references(void)
 	OBJECT *obj = OBJECTHDR(this);
 	bool VA_changed = false; // A flag indicating whether VAref is changed due to limitations
 
-	//Compute power in - supposedly DC, but since it's complex, we'll be proper (other models may need fixing)
-	VA_In = V_In * ~ I_In;
+	//Compute power in
+	P_In = V_In * I_In;
 
 	//Determine how to efficiency weight it
 	if(use_multipoint_efficiency == false)
 	{
 		//Normal scaling
-		VA_Efficiency = VA_In.Re() * efficiency;
+		VA_Efficiency = P_In * efficiency;
 	}
 	else
 	{
 		//See if above minimum DC power input
-		if(VA_In.Mag() <= p_so)
+		if(P_In <= p_so)
 		{
 			VA_Efficiency = 0.0;	//Nope, no output
 		}
 		else	//Yes, apply effiency change
 		{
 			//Make sure voltage isn't too low
-			if(V_In.Mag() > v_dco)
+			if(fabs(V_In) > v_dco)
 			{
 				gl_warning("The dc voltage is greater than the specified maximum for the inverter. Efficiency model may be inaccurate.");
 				/*  TROUBLESHOOT
@@ -8031,12 +8028,12 @@ void inverter::update_control_references(void)
 			}
 
 			//Compute coefficients for multipoint efficiency
-			C1 = p_dco*(1+c_1*(V_In.Re()-v_dco));
-			C2 = p_so*(1+c_2*(V_In.Re()-v_dco));
-			C3 = c_o*(1+c_3*(V_In.Re()-v_dco));
+			C1 = p_dco*(1+c_1*(V_In-v_dco));
+			C2 = p_so*(1+c_2*(V_In-v_dco));
+			C3 = c_o*(1+c_3*(V_In-v_dco));
 
 			//Apply this to the output
-			VA_Efficiency = (((p_max/(C1-C2))-C3*(C1-C2))*(VA_In.Re()-C2)+C3*(VA_In.Re()-C2)*(VA_In.Re()-C2));
+			VA_Efficiency = (((p_max/(C1-C2))-C3*(C1-C2))*(P_In-C2)+C3*(P_In-C2)*(P_In-C2));
 		}
 	}
 
@@ -8045,12 +8042,12 @@ void inverter::update_control_references(void)
 	{
 		if(power_factor != 0.0)	//Not purely imaginary
 		{
-			if (VA_In<0.0)	//Discharge at input, so must be "load"
+			if (P_In<0.0)	//Discharge at input, so must be "load"
 			{
 				//Total power output is the magnitude
 				VA_Outref.SetReal(VA_Efficiency*-1.0);
 			}
-			else if (VA_In>0.0)	//Positive input, so must be generator
+			else if (P_In>0.0)	//Positive input, so must be generator
 			{
 				//Total power output is the magnitude
 				VA_Outref.SetReal(VA_Efficiency);

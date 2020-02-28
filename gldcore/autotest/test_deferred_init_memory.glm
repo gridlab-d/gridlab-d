@@ -15,12 +15,10 @@ module powerflow {
 }
 
 object solar {
-	phases BN;
 	generator_mode SUPPLY_DRIVEN;
 	name imasolar;
 	parent imainverter;
 	area 325.0271;
-	generator_status ONLINE;
 	efficiency 0.2;
 	panel_type SINGLE_CRYSTAL_SILICON;
 }

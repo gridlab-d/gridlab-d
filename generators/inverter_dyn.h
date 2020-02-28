@@ -10,11 +10,13 @@
 #define _inverter_dyn_H
 
 #include "generators.h"
+#include <vector>
 
 EXPORT STATUS preupdate_inverter_dyn(OBJECT *obj,TIMESTAMP t0, unsigned int64 delta_time);
 EXPORT SIMULATIONMODE interupdate_inverter_dyn(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 EXPORT STATUS postupdate_inverter_dyn(OBJECT *obj, complex *useful_value, unsigned int mode_pass);
 EXPORT STATUS inverter_dyn_NR_current_injection_update(OBJECT *obj, int64 iteration_count);
+EXPORT STATUS inverter_dyn_DC_object_register(OBJECT *this_obj, OBJECT *DC_obj);
 
 // State variables of grid-forming & grid-following controller
 typedef struct {
@@ -82,7 +84,12 @@ typedef struct {
 	double dQref_droop_pu_filter;  //
 	double Qref_droop_pu_filter; //
 
-} INV_DYN_STATE;	
+} INV_DYN_STATE;
+
+typedef struct {
+	FUNCTIONADDR fxn_address;
+	OBJECT *dc_object;
+} DC_OBJ_FXNS;
 	
 //inverter_dyn class
 class inverter_dyn: public gld_object
@@ -127,6 +134,11 @@ private:
 
 	SIMULATIONMODE desired_simulation_mode;	//deltamode desired simulation mode after corrector pass - prevents starting iterations again
 
+	//Vector for DC object "update" functions
+	std::vector<DC_OBJ_FXNS> dc_interface_objects;
+	double P_DC;
+	double V_DC;
+	double I_DC;
 
 	//Map functions
 	gld_property *map_complex_value(OBJECT *obj, char *name);
@@ -278,6 +290,7 @@ public:
 	STATUS post_deltaupdate(complex *useful_value, unsigned int mode_pass);
 	STATUS updateCurrInjection(int64 iteration_count);
 	STATUS init_dynamics(INV_DYN_STATE *curr_time);
+	STATUS DC_object_register(OBJECT *DC_object);
 public:
 	static CLASS *oclass;
 	static inverter_dyn *defaults;

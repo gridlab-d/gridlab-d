@@ -3497,8 +3497,8 @@ object inverter {
 	VSI_Xfilter 1;
 	P_Out 9000000;
 	Q_Out 3000000;
-	V_In 5000+0j;
-	I_In 2000+0j;
+	V_In 5000.0;
+	I_In 2000.0;
 
 	flags DELTAMODE;
 	dynamic_model_mode PI;
@@ -3562,8 +3562,8 @@ object inverter {
 	rated_power 1000 kVA; // Per phase rating
 	P_Out 1000000;
 	Q_Out 1000000;
-	V_In 1000+0j;
-	I_In 1000+0j;
+	V_In 1000.0;
+	I_In 1000.0;
 
 	flags DELTAMODE;
 	dynamic_model_mode PI;

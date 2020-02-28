@@ -28,11 +28,11 @@
 
 using namespace std;
 
-#define DEG_TO_RAD(x) (x * M_PI) / 180
+#define DEG_TO_RAD(x) (x * M_PI) / 180.0
 #define WPM2_TO_WPFT2(x) x / 10.7639
 #define WPFT2_TO_WPM2(x) x * 10.7639
-#define FAHR_TO_CELS(x) (x - 32) * 5 / 9
-#define CELS_TO_FAHR(x) x * 9 / 5 + 32
+#define FAHR_TO_CELS(x) (x - 32.0) * 5.0 / 9.0
+#define CELS_TO_FAHR(x) x * 9.0 / 5.0 + 32.0
 
 /* Framework */
 CLASS *solar::oclass = NULL;
@@ -395,9 +395,9 @@ solar::solar(MODULE *module)
 								PT_double, "Rated_Insolation[W/sf]", PADDR(Rated_Insolation),
 								PT_double, "Pmax_temp_coeff", PADDR(Pmax_temp_coeff), //temp coefficient of rated Power in %/ deg C
 								PT_double, "Voc_temp_coeff", PADDR(Voc_temp_coeff),
-								PT_complex, "V_Max[V]", PADDR(V_Max),	 // Vmax of solar module found on specs
-								PT_complex, "Voc_Max[V]", PADDR(Voc_Max), //Voc max of solar module
-								PT_complex, "Voc[V]", PADDR(Voc),
+								PT_double, "V_Max[V]", PADDR(V_Max),	 // Vmax of solar module found on specs
+								PT_double, "Voc_Max[V]", PADDR(Voc_Max), //Voc max of solar module
+								PT_double, "Voc[V]", PADDR(Voc),
 								PT_double, "efficiency[unit]", PADDR(efficiency),
 								PT_double, "area[sf]", PADDR(area), //solar panel area
 								PT_double, "soiling[pu]", PADDR(soiling_factor), PT_DESCRIPTION, "Soiling of array factor - representing dirt on array",
@@ -405,10 +405,9 @@ solar::solar(MODULE *module)
 								PT_double, "Tcell[degC]", PADDR(Tcell),
 
 								PT_double, "rated_power[W]", PADDR(Max_P), PT_DESCRIPTION, "Used to define the size of the solar panel in power rather than square footage.",
-								PT_complex, "P_Out[kW]", PADDR(P_Out),
-								PT_complex, "V_Out[V]", PADDR(V_Out),
-								PT_complex, "I_Out[A]", PADDR(I_Out),
-								PT_complex, "VA_Out[VA]", PADDR(VA_Out),
+								PT_double, "P_Out[kW]", PADDR(P_Out),
+								PT_double, "V_Out[V]", PADDR(V_Out),
+								PT_double, "I_Out[A]", PADDR(I_Out),
 								PT_object, "weather", PADDR(weather),
 
 								PT_double, "shading_factor[pu]", PADDR(shading_factor), PT_DESCRIPTION, "Shading factor for scaling solar power to the array",
@@ -416,8 +415,9 @@ solar::solar(MODULE *module)
 								PT_double, "orientation_azimuth[deg]", PADDR(orientation_azimuth), PT_DESCRIPTION, "Facing direction of the PV array",
 								PT_bool, "latitude_angle_fix", PADDR(fix_angle_lat), PT_DESCRIPTION, "Fix tilt angle to installation latitude value",
 
-								PT_complex, "default_voltage_variable", PADDR(default_voltage_array), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Accumulator/placeholder for default voltage value, when solar is run without an inverter",
-								PT_complex, "default_current_variable", PADDR(default_current_array), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Accumulator/placeholder for default current value, when solar is run without an inverter",
+								PT_double, "default_voltage_variable", PADDR(default_voltage_array), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Accumulator/placeholder for default voltage value, when solar is run without an inverter",
+								PT_double, "default_current_variable", PADDR(default_current_array), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Accumulator/placeholder for default current value, when solar is run without an inverter",
+								PT_double, "default_power_variable", PADDR(default_power_array), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Accumulator/placeholder for default power value, when solar is run without an inverter",
 
 								PT_enumeration, "orientation", PADDR(orientation_type),
 								PT_KEYWORD, "DEFAULT", (enumeration)DEFAULT,
@@ -431,6 +431,8 @@ solar::solar(MODULE *module)
 		//Deltamode linkage
 		if (gl_publish_function(oclass, "interupdate_gen_object", (FUNCTIONADDR)interupdate_solar) == NULL)
 			GL_THROW("Unable to publish solar deltamode function");
+		if (gl_publish_function(oclass,"DC_gen_object_update", (FUNCTIONADDR)dc_object_update_solar) == NULL)
+			GL_THROW("Unable to publish solar DC object update function");
 
 		defaults = this;
 		memset(this, 0, sizeof(solar));
@@ -451,9 +453,9 @@ int solar::create(void)
 	currTemp = 15.0; //Start at a reasonable ambient temp (degC)
 	prevTime = 0;
 	Rated_Insolation = 92.902; //W/Sf for 1000 W/m2
-	V_Max = complex(27.1, 0);  // max. power voltage (Vmp) from GE solar cell performance charatcetristics
-	Voc_Max = complex(34, 0);  //taken from GEPVp-200-M-Module performance characteristics
-	Voc = complex(34, 0);	  //taken from GEPVp-200-M-Module performance characteristics
+	V_Max = 27.1;  // max. power voltage (Vmp) from GE solar cell performance charatcetristics
+	Voc_Max = 34.0;  //taken from GEPVp-200-M-Module performance characteristics
+	Voc = 34.0;	  //taken from GEPVp-200-M-Module performance characteristics
 	P_Out = 0.0;
 
 	area = 0; //sq f , 30m2
@@ -495,10 +497,16 @@ int solar::create(void)
 	//Inverter pointers
 	inverter_voltage_property = NULL;
 	inverter_current_property = NULL;
+	inverter_power_property = NULL;
 
 	//Default versions
-	default_voltage_array = complex(0.0, 0.0);
-	default_current_array = complex(0.0, 0.0);
+	default_voltage_array = 0.0;
+	default_current_array = 0.0;
+	default_power_array = 0.0;
+
+	//Initialize DC trackng variables
+	last_DC_current = 0.0;
+	last_DC_power = 0.0;
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -786,11 +794,6 @@ int solar::init_climate()
 /* Object initialization is called once after all object have been created */
 int solar::init(OBJECT *parent)
 {
-	if (solar_power_model == PV_CURVE)
-	{
-		init_pub_vars_pvcurve_mode();
-	}
-
 	OBJECT *obj = OBJECTHDR(this);
 	int climate_result;
 	gld_property *temp_property_pointer;
@@ -800,6 +803,8 @@ int solar::init(OBJECT *parent)
 	double temp_double_div_value_eta, temp_double_div_value_eff;
 	enumeration temp_enum_val;
 	int32 temp_phase_count_val;
+	FUNCTIONADDR temp_fxn;
+	STATUS fxn_return_status;
 
 	if (parent != NULL)
 	{
@@ -934,13 +939,13 @@ int solar::init(OBJECT *parent)
 	// find parent inverter, if not defined, use a default voltage
 	if (parent != NULL)
 	{
-		if (gl_object_isa(parent, "inverter", "generators") == true) // SOLAR has a PARENT and PARENT is an INVERTER
+		if (gl_object_isa(parent, "inverter", "generators") == true) // SOLAR has a PARENT and PARENT is an INVERTER - old-school inverter
 		{
 			//Map the inverter voltage
 			inverter_voltage_property = new gld_property(parent, "V_In");
 
 			//Check it
-			if ((inverter_voltage_property->is_valid() != true) || (inverter_voltage_property->is_complex() != true))
+			if ((inverter_voltage_property->is_valid() != true) || (inverter_voltage_property->is_double() != true))
 			{
 				GL_THROW("solar:%d - %s - Unable to map inverter power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
@@ -953,7 +958,17 @@ int solar::init(OBJECT *parent)
 			inverter_current_property = new gld_property(parent, "I_In");
 
 			//Check it
-			if ((inverter_current_property->is_valid() != true) || (inverter_current_property->is_complex() != true))
+			if ((inverter_current_property->is_valid() != true) || (inverter_current_property->is_double() != true))
+			{
+				GL_THROW("solar:%d - %s - Unable to map inverter power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
+				//Defined above
+			}
+
+			//Map the inverter power value
+			inverter_power_property = new gld_property(parent,"P_In");
+
+			//Check it
+			if ((inverter_power_property->is_valid() != true) || (inverter_power_property->is_double() != true))
 			{
 				GL_THROW("solar:%d - %s - Unable to map inverter power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -1129,6 +1144,76 @@ int solar::init(OBJECT *parent)
 			}
 			//gl_verbose("Max_P is : %f", Max_P);
 		}
+		else if (gl_object_isa(parent, "inverter_dyn", "generators") == true) // SOLAR has a PARENT and PARENT is an inverter_dyn object
+		{
+			//Map the inverter voltage
+			inverter_voltage_property = new gld_property(parent, "V_In");
+
+			//Check it
+			if ((inverter_voltage_property->is_valid() != true) || (inverter_voltage_property->is_double() != true))
+			{
+				GL_THROW("solar:%d - %s - Unable to map inverter power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
+				//Defined above
+			}
+
+			//Map the inverter current
+			inverter_current_property = new gld_property(parent, "I_In");
+
+			//Check it
+			if ((inverter_current_property->is_valid() != true) || (inverter_current_property->is_double() != true))
+			{
+				GL_THROW("solar:%d - %s - Unable to map inverter power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
+				//Defined above
+			}
+
+			//Map the inverter power value
+			inverter_power_property = new gld_property(parent,"P_In");
+
+			//Check it
+			if ((inverter_power_property->is_valid() != true) || (inverter_power_property->is_double() != true))
+			{
+				GL_THROW("solar:%d - %s - Unable to map inverter power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
+				//Defined above
+			}
+
+			//Other variables mapped to normal inverter above -- if these end up being needed for inverter_dyn implementations, map them here
+			//See if we're the PV-DC model - if so, register us with the inverter
+			if (solar_power_model != PV_CURVE)
+			{
+				gl_warning("solar:%d - %s - inverter_dyn object only supports PV_CURVE model - forcing that", obj->id, (obj->name ? obj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				At this time, the inverter_dyn and solar interactions only support the PV_CURVE model.  This may change in the future. 
+				*/
+
+				//Force it
+				solar_power_model = PV_CURVE;
+			}
+
+			//"Register" us with the inverter
+
+			//Map the function
+			temp_fxn = (FUNCTIONADDR)(gl_get_function(parent,"register_gen_DC_object"));
+
+			//See if it was located
+			if (temp_fxn == NULL)
+			{
+				GL_THROW("solar:%d - %s - failed to map additional current injection mapping for inverter_dyn:%d - %s",obj->id,(obj->name?obj->name:"unnamed"),parent->id,(parent->name?parent->name:"unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to map the DC interfacing function for the solar object, an error was encountered.
+				Please try again.  If the error persists, please submit your code and a bug report via the issues tracker.
+				*/
+			}
+
+			//Call the mapping function
+			fxn_return_status = ((STATUS (*)(OBJECT *, OBJECT *))(*temp_fxn))(obj->parent,obj);
+
+			//Make sure it worked
+			if (fxn_return_status != SUCCESS)
+			{
+				GL_THROW("solar:%d - %s - failed to map additional current injection mapping for inverter_dyn:%d - %s",obj->id,(obj->name?obj->name:"unnamed"),parent->id,(parent->name?parent->name:"unnamed"));
+				//Defined above
+			}
+		}//End inverter_dyn
 		else //It's not an inverter - fail it.
 		{
 			GL_THROW("Solar panel can only have an inverter as its parent.");
@@ -1147,7 +1232,7 @@ int solar::init(OBJECT *parent)
 		inverter_voltage_property = new gld_property(obj, "default_voltage_variable");
 
 		//Check it
-		if ((inverter_voltage_property->is_valid() != true) || (inverter_voltage_property->is_complex() != true))
+		if ((inverter_voltage_property->is_valid() != true) || (inverter_voltage_property->is_double() != true))
 		{
 			GL_THROW("solar:%d - %s - Unable to map a default power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
@@ -1160,14 +1245,24 @@ int solar::init(OBJECT *parent)
 		inverter_current_property = new gld_property(obj, "default_current_variable");
 
 		//Check it
-		if ((inverter_current_property->is_valid() != true) || (inverter_current_property->is_complex() != true))
+		if ((inverter_current_property->is_valid() != true) || (inverter_current_property->is_double() != true))
+		{
+			GL_THROW("solar:%d - %s - Unable to map a default power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		//Map the inverter power
+		inverter_power_property = new gld_property(obj, "default_power_variable");
+
+		//Check it
+		if ((inverter_power_property->is_valid() != true) || (inverter_power_property->is_double() != true))
 		{
 			GL_THROW("solar:%d - %s - Unable to map a default power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
 			//Defined above
 		}
 
 		//Set the local voltage value
-		default_voltage_array = complex(V_Max.Re() / sqrt(3.0), 0);
+		default_voltage_array = V_Max / sqrt(3.0);
 	}
 
 	climate_result = init_climate();
@@ -1251,12 +1346,22 @@ int solar::init(OBJECT *parent)
 		}
 	}
 
+	//************* NOTE - @Jing - Moved this down here - the code above makes sure the parent inits first
+	//*************** By moving it here, it ensures it only gets called once, not however many times the parent defers us
+	//***********************************************
+
+	//Initialize PV DC model, if desired
+	if (solar_power_model == PV_CURVE)
+	{
+		init_pub_vars_pvcurve_mode();
+	}
+
 	return climate_result; /* return 1 on success, 0 on failure */
 }
 
 TIMESTAMP solar::presync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	I_Out = complex(0.0, 0.0);
+	I_Out = 0.0;
 
 	TIMESTAMP t2 = TS_NEVER;
 	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
@@ -1409,7 +1514,7 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 	{
 		Tambient = FAHR_TO_CELS(Tamb);					   //Read Tamb into the variable - convert to degC for consistency (with below - where the algorithm is more complex and I'm too lazy to convert it to degF in MANY places)
 		Tmodule = Tamb + (NOCT - 68) / 74.32 * Insolation; //74.32 sf = 800 W/m2; 68 deg F = 20deg C
-		VA_Out = Max_P * Insolation / Rated_Insolation *
+		P_Out = Max_P * Insolation / Rated_Insolation *
 				 (1 + (Pmax_temp_coeff) * (Tmodule - 77)) * derating_factor * soiling_factor; //derating due to manufacturing tolerance, derating sue to soiling both dimensionless
 	}
 	else if (solar_power_model == FLATPLATE) //Flat plate efficiency
@@ -1451,29 +1556,12 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 		//Place into the DC value - factor in area, derating, and all of the related items
 		//P_Out = Insolation*soiling_factor*derating_factor*area*efficiency*Ftempcorr;
 		P_Out = Insolation * soiling_factor * derating_factor * (Max_P / Rated_Insolation) * Ftempcorr;
-
-		//Populate VA, just because it seems to be used below
-		VA_Out = P_Out;
 	}
 	else if (solar_power_model == PV_CURVE)
 	{
-		pvc_cur_t_cels = FAHR_TO_CELS(Tamb);
-		pvc_cur_S_wpm2 = WPFT2_TO_WPM2(Insolation);
+		//Solar is slaved in this mode - inverter calls the update, so all "property updates" will be in the function below
 
-		//double temp_pvc_U_of_P_max = get_u_of_p_max();
-		//double temp_pvc_cur_P_max = get_p_max();
-		//double temp_pvc_I_of_P_max = get_i_from_u(temp_pvc_U_of_P_max);
-
-		V_Out.Re() = get_u_of_p_max();
-		VA_Out.Re() = get_p_from_u(V_Out.Re());
-		I_Out.Re() = get_i_from_u(V_Out.Re());
-
-		/* For Testing */
-		//display_params(); // Test PV Panel Params
-		//print_init_pub_vars();
-		//test_nr_solver(); // Test N-R Solver
-
-		return TS_NEVER; //@Frank, as you may modify the VA_Out for the other modes, I simply return here.
+		return TS_NEVER;
 	}
 	else
 	{
@@ -1485,13 +1573,13 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 		*/
 	}
 
-	Voc = Voc_Max * (1 + (Voc_temp_coeff) * (Tmodule - 77)); //@Frank, I think this Voc does not need to be published. Please take a look.
+	Voc = Voc_Max * (1 + (Voc_temp_coeff) * (Tmodule - 77));
 	V_Out = V_Max * (Voc / Voc_Max);
-	I_Out = (VA_Out / V_Out);
+	I_Out = (P_Out / V_Out);
 
 	//Export the values
-	inverter_voltage_property->setp<complex>(V_Out, *test_rlock);
-	inverter_current_property->setp<complex>(I_Out, *test_rlock);
+	inverter_voltage_property->setp<double>(V_Out, *test_rlock);
+	inverter_current_property->setp<double>(I_Out, *test_rlock);
 
 	return TS_NEVER;
 }
@@ -1513,7 +1601,7 @@ SIMULATIONMODE solar::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 	//Get timestep value
 	deltat = (double)dt / (double)DT_SECOND;
 
-	if ((iteration_count_val == 0) || (solar_power_model == PV_CURVE)) //Only update timestamp tracker on first iteration
+	if (iteration_count_val == 0) //Only update timestamp tracker on first iteration
 	{
 		//Get decimal timestamp value
 		deltatimedbl = (double)delta_time / (double)DT_SECOND;
@@ -1528,9 +1616,65 @@ SIMULATIONMODE solar::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 		//Don't care about the return value either
 		ret_value = sync(time_passin_value, TS_NEVER);
 	}
+	//PV_CURVE Model is called by the inverter, so it doesn't need to do anything in here - it's all in the sub-function
 
 	//Solar object never drives anything, so it's always ready to leave
 	return SM_EVENT;
+}
+
+//DC update function
+STATUS solar::solar_dc_update(OBJECT *calling_obj, bool init_mode)
+{
+	gld_wlock *test_rlock;
+	STATUS temp_status = SUCCESS;
+	double inv_I, inv_P;
+
+	//General updates - theoretically happen for all runs
+	//Tamb and Insolation were theoretically updated in the sync call (either as exec or in interupdate)
+	pvc_cur_t_cels = FAHR_TO_CELS(Tamb);
+	pvc_cur_S_wpm2 = WPFT2_TO_WPM2(Insolation);
+
+	if (init_mode == true)	//Initialization - first runs
+	{
+		//Pull P_In from the inverter - for now, this is singular (may need to be adjusted when multiple objects exist)
+		inv_P = inverter_power_property->get_double();
+
+		//Built on the assumption that the inverter will have a P_In set, and we'l compute the voltage from this
+		V_Out = get_u_of_p_max();
+
+		//Push the voltage back out to the inverter - this may need different logic when there are multiple objects
+		inverter_voltage_property->setp<double>(V_Out, *test_rlock);
+	}
+	else	//Standard runs
+	{
+		//Pull the values from the inverter
+		V_Out = inverter_voltage_property->get_double();
+		inv_I = inverter_current_property->get_double();
+		inv_P = inverter_power_property->get_double();
+
+		//Built on assumption that in this portion, inverter is providing just V_In and we need to compute the P and I from that
+		P_Out = get_p_from_u(V_Out);
+		I_Out = get_i_from_u(V_Out);
+
+		//Already written for assumption that multiple DC objects will be on the inverter
+		inv_I += I_Out - last_DC_current;
+		inv_P += P_Out - last_DC_power;
+
+		//Push the changes
+		inverter_current_property->setp<double>(inv_I, *test_rlock);
+		inverter_power_property->setp<double>(inv_P, *test_rlock);
+
+		//Update trackers
+		last_DC_current = I_Out;
+		last_DC_power = P_Out;
+	}
+
+	//*********** DC Impelment notes ****************
+	//Right now, this will always succeed.  If there's a failure mode, it could be good to catch it here
+	//**********************************
+
+	//Return our status
+	return temp_status;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -1609,4 +1753,17 @@ EXPORT SIMULATIONMODE interupdate_solar(OBJECT *obj, unsigned int64 delta_time, 
 		gl_error("interupdate_solar(obj=%d;%s): %s", obj->id, obj->name ? obj->name : "unnamed", msg);
 		return status;
 	}
+}
+
+//DC Object calls from inverter linkage
+EXPORT STATUS dc_object_update_solar(OBJECT *calling_obj, OBJECT *us_obj, bool init_mode)
+{
+	solar *me_solar = OBJECTDATA(us_obj,solar);
+	STATUS temp_status;
+
+	//Call our update function
+	temp_status = me_solar->solar_dc_update(calling_obj, init_mode);
+
+	//Return this value
+	return temp_status;
 }

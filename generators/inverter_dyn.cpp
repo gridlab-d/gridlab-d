@@ -155,8 +155,12 @@ inverter_dyn::inverter_dyn(MODULE *module)
 			PT_double, "Pmax", PADDR(Pmax), PT_DESCRIPTION, "DELTAMODE: maximum limit and minimum limit of Pmax controller and Pmin controller.",		
 			PT_double, "Pmin", PADDR(Pmin), PT_DESCRIPTION, "DELTAMODE: maximum limit and minimum limit of Pmax controller and Pmin controller.",
 			PT_double, "w_ref", PADDR(w_ref), PT_DESCRIPTION, "DELTAMODE: the rated frequency, usually 376.99 rad/s.",
-			PT_double, "freq", PADDR(freq), PT_DESCRIPTION, "DELTAMODE: the frequency obtained from the P-f droop controller.",			
+			PT_double, "freq", PADDR(freq), PT_DESCRIPTION, "DELTAMODE: the frequency obtained from the P-f droop controller.",
 
+			//DC Bus portions
+			PT_double, "V_In[V]",PADDR(V_DC), PT_DESCRIPTION, "DC input voltage",
+			PT_double, "I_In[A]",PADDR(I_DC), PT_DESCRIPTION, "DC input current",
+			PT_double, "P_In[W]", PADDR(P_DC), PT_DESCRIPTION, "DC input power",
 			
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
@@ -172,6 +176,8 @@ inverter_dyn::inverter_dyn(MODULE *module)
 				GL_THROW("Unable to publish inverter_dyn deltamode function");
 			if (gl_publish_function(oclass, "current_injection_update", (FUNCTIONADDR)inverter_dyn_NR_current_injection_update)==NULL)
 				GL_THROW("Unable to publish inverter_dyn current injection update function");
+			if (gl_publish_function(oclass, "register_gen_DC_object", (FUNCTIONADDR)inverter_dyn_DC_object_register) == NULL)
+				GL_THROW("Unable to publish inverter_dyn DC registration function");
 	}
 }
 /* Object creation is called once for each object that is created by the core */
@@ -278,6 +284,14 @@ int inverter_dyn::create(void)
 
 	//Set up the deltamode "next state" tracking variable
 	desired_simulation_mode = SM_EVENT;
+
+	//Clear the DC interface list - paranoia
+	dc_interface_objects.clear();
+
+	//DC Bus items
+	P_DC = 0.0;
+	V_DC = 0.0;
+	I_DC = 0.0;
 	
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -858,8 +872,6 @@ int inverter_dyn::init(OBJECT *parent)
 		}
 	}
 
-	//**** FT -- Other initialization variables
-	
 	inverter_start_time = gl_globalclock;
 	
 	w_ref = 2 * PI * f_nominal;
@@ -897,8 +909,6 @@ TIMESTAMP inverter_dyn::presync(TIMESTAMP t0, TIMESTAMP t1)
 		pull_complex_powerflow_values();
 	}
 
-	//**** FT -- Presync items go here
-		
 	return t2; 
 }
 
@@ -906,6 +916,7 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP tret_value;
+	int temp_idx;
 
 	FUNCTIONADDR test_fxn;
 	STATUS fxn_return_status;
@@ -1000,7 +1011,6 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//Update pointer
 			gen_object_current++;
 
-			
 			if (parent_is_a_meter == true)
 			{
 
@@ -1050,6 +1060,41 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 	{
 		inverter_first_step = false;
 	}
+	else	//Implies it is the first time step
+	{
+		//See if there are any DC objects to handle
+		if (dc_interface_objects.empty() != true)
+		{
+			//****************** DC Stuff - a call to the DC bus objects, since P_In is known now (this may be wrong, this is an example) ***************
+			//****************** This is done here instead of init because solar objects (and future objects) "register" in init ***********************
+			P_DC = VA_Out.Re();
+
+			//Loop through and call the DC objects
+			for (temp_idx=0; temp_idx < dc_interface_objects.size(); temp_idx++)
+			{
+				//May eventually have a "DC ratio" or similar, if multiple objects on bus or "you are DC voltage master"
+				//DC object, calling object (us), init mode (true/false)
+				fxn_return_status = ((STATUS (*)(OBJECT *, OBJECT *, bool))(*dc_interface_objects[temp_idx].fxn_address))(dc_interface_objects[temp_idx].dc_object,obj,true);
+
+				//Make sure it worked
+				if (fxn_return_status == FAILED)
+				{
+					//Pull the object from the array - this is just for readability (otherwise the 
+					OBJECT *temp_obj = dc_interface_objects[temp_idx].dc_object;
+
+					//Error it up
+					GL_THROW("inverter_dyn:%d - %s - DC object update for object:%d - %s - failed!",obj->id,(obj->name ? obj->name : "Unnamed"),temp_obj->id,(temp_obj->name ? temp_obj->name : "Unnamed"));
+					/*  TROUBLESHOOT
+					While performing the update to a DC-bus object on this inverter, an error occurred.  Please try again.
+					If the error persists, please check your model.  If the model appears correct, please submit a bug report via the issues tracker.
+					*/
+				}
+			}
+			
+			//Theoretically, the DC objects have no set V_DC and I_DC appropriately - updated equations would go here
+		}//End DC object update
+
+	}//End is still first time step - *********DC Case - does this need to be "singular execution" blocked? **************
 	
 	//Calculate power based on measured terminal voltage and currents
 	if (parent_is_single_phase == true) // single phase/split-phase implementation
@@ -1087,6 +1132,37 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 		if (inverter_first_step == false)
 		{
+
+			//********************** DC Stuff - I have no idea if this goes here, just putting it as an example.  This is a "non-init" call
+			//********************** Theoretically, we are giving V to DC objects, and they are returning I (and maybe P?)
+			if (dc_interface_objects.empty() != true)
+			{
+				//V_DC was set here, somehow
+
+				//Loop through and call the DC objects
+				for (temp_idx=0; temp_idx < dc_interface_objects.size(); temp_idx++)
+				{
+					//DC object, calling object (us), init mode (true/false)
+					//False at end now, because not initialization
+					fxn_return_status = ((STATUS (*)(OBJECT *, OBJECT *, bool))(*dc_interface_objects[temp_idx].fxn_address))(dc_interface_objects[temp_idx].dc_object,obj,false);
+
+					//Make sure it worked
+					if (fxn_return_status == FAILED)
+					{
+						//Pull the object from the array - this is just for readability (otherwise the 
+						OBJECT *temp_obj = dc_interface_objects[temp_idx].dc_object;
+
+						//Error it up
+						GL_THROW("inverter_dyn:%d - %s - DC object update for object:%d - %s - failed!",obj->id,(obj->name ? obj->name : "Unnamed"),temp_obj->id,(temp_obj->name ? temp_obj->name : "Unnamed"));
+						//Defined above
+					}
+				}
+
+				//I_DC is done now.  If P_DC isn't, it could be calculated
+			}//End DC object update
+
+			//*********************** END DC Example ********************************
+
 			//Update output power
 			//Get current injected
 			temp_current_val[0] = (value_IGenerated[0] - generator_admittance[0][0]*value_Circuit_V[0] - generator_admittance[0][1]*value_Circuit_V[1] - generator_admittance[0][2]*value_Circuit_V[2]);
@@ -1344,6 +1420,8 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 {
 	double deltat, deltath;
 	int i;
+	STATUS fxn_return_status;
+	int temp_idx;
 	
 	OBJECT *obj = OBJECTHDR(this);
 
@@ -1360,6 +1438,36 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 	//Get timestep value
 	deltat = (double)dt/(double)DT_SECOND;
 	deltath = deltat/2.0;
+
+	//********************** DC Stuff - I have no idea if this goes here, just putting it as an example.  This is a "non-init" call
+	//********************** Theoretically, we are giving V to DC objects, and they are returning I (and maybe P?)
+	if (dc_interface_objects.empty() != true)
+	{
+		//V_DC was set here, somehow
+
+		//Loop through and call the DC objects
+		for (temp_idx=0; temp_idx < dc_interface_objects.size(); temp_idx++)
+		{
+			//DC object, calling object (us), init mode (true/false)
+			//False at end now, because not initialization
+			fxn_return_status = ((STATUS (*)(OBJECT *, OBJECT *, bool))(*dc_interface_objects[temp_idx].fxn_address))(dc_interface_objects[temp_idx].dc_object,obj,false);
+
+			//Make sure it worked
+			if (fxn_return_status == FAILED)
+			{
+				//Pull the object from the array - this is just for readability (otherwise the 
+				OBJECT *temp_obj = dc_interface_objects[temp_idx].dc_object;
+
+				//Error it up
+				GL_THROW("inverter_dyn:%d - %s - DC object update for object:%d - %s - failed!",obj->id,(obj->name ? obj->name : "Unnamed"),temp_obj->id,(temp_obj->name ? temp_obj->name : "Unnamed"));
+				//Defined above
+			}
+		}
+
+		//I_DC is done now.  If P_DC isn't, it could be calculated
+	}//End DC object update
+
+	//*********************** END DC Example ********************************
 
 	//**** FT -- Predictor/correct or differential equations or related items
 	
@@ -4782,6 +4890,37 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count)
 	return SUCCESS;
 }
 
+//Internal function to the mapping of the DC object update function
+STATUS inverter_dyn::DC_object_register(OBJECT *DC_object)
+{
+	FUNCTIONADDR temp_add = NULL;
+	DC_OBJ_FXNS temp_DC_struct;
+	OBJECT *obj = OBJECTHDR(this);
+
+	//Put the object into the structure
+	temp_DC_struct.dc_object = DC_object;
+
+	//Find the update function
+	temp_DC_struct.fxn_address = (FUNCTIONADDR)(gl_get_function(DC_object,"DC_gen_object_update"));
+
+	//Make sure it worked
+	if (temp_DC_struct.fxn_address == NULL)
+	{
+		gl_error("inverter_dyn:%s - failed to map DC update for object %s",(obj->name?obj->name:"unnamed"),(DC_object->name?DC_object->name:"unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map the update function for a DC-bus device, an error was encountered.
+		Please try again.  If the error persists, please submit your code and a bug report via the issues tracker.
+		*/
+
+		return FAILED;
+	}
+
+	//Push us onto the memory
+	dc_interface_objects.push_back(temp_DC_struct);
+
+	//If we made it this far, all should be good!
+	return SUCCESS;
+}
 
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
@@ -4908,6 +5047,20 @@ EXPORT STATUS inverter_dyn_NR_current_injection_update(OBJECT *obj, int64 iterat
 
 }
 
+// Export function for registering a DC interaction object
+EXPORT STATUS inverter_dyn_DC_object_register(OBJECT *this_obj, OBJECT *DC_obj)
+{
+	STATUS temp_status;
+
+	//Map us
+	inverter_dyn *this_inv = OBJECTDATA(this_obj,inverter_dyn);
+
+	//Call the function to register us
+	temp_status = this_inv->DC_object_register(DC_obj);
+
+	//Return the status
+	return temp_status;
+}
 
 
 
