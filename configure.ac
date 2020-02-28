@@ -82,18 +82,44 @@ AC_ARG_ENABLE([optimization],
 ###############################################################################
 #windows-mingw specific flag runs
 ###############################################################################
-AC_CANONICAL_HOST
-case $host_os in
-  *mingw*) mingw=true ;;
-  *) mingw=false ;;
-esac
-AM_CONDITIONAL([HAVE_MINGW], [test "x$mingw" = "xtrue"])
 
-###another trial#####
-#case $host in
-#*mingw*)
-#		LDFLAGS = $LDFLAGS -lws2_32
-#esac
+
+is_linux=false
+is_windows=false
+is_mac=false
+mingw=false
+platform="unknown"
+
+AC_CANONICAL_HOST
+case "${host_os}" in
+    *linux* )
+        is_linux=true;
+        platform="linux"
+        ;;
+    *mingw*|*msys* )
+        is_windows=true
+        platform="windows"
+        is_mingw=true
+        ;;
+    *cygwin* )
+    	is_windows=true
+    	platform="windows"
+    	;;
+    *darwin* )
+        is_mac=true
+		platform="darwin"
+        ;;
+    * )
+        AC_MSG_ERROR(["OS $host_os is not supported"])
+        ;;
+esac
+
+# Pass the conditionals to automake
+AM_CONDITIONAL([LINUX], [test "$is_linux" = "true"])
+AM_CONDITIONAL([WINDOWS], [test "$is_windows" = "true"])
+AM_CONDITIONAL([OSX], [test "$is_mac" = "true"])
+AM_CONDITIONAL([HAVE_MINGW], [test "$is_mingw" = "true"])
+
 ###############################################################################
 # C compiler
 ###############################################################################
@@ -376,7 +402,7 @@ AC_CACHE_CHECK([whether thread affinity macros defined],
             [[#include <mach/thread_policy.h>]],
 [[
 #if !defined(THREAD_AFFINITY_POLICY) || !defined(THREAD_AFFINITY_TAG_NULL)
-    :'thread macros not defined
+    :'thread macros not defined'
 #endif
 ]],
         [gld_cv_have_thread_affinity_policy=yes],
@@ -394,6 +420,16 @@ unset XERCES_VERSION
 AX_LIB_XERCES([2.7])
 AM_CONDITIONAL([MISSING_XERCES], [test x$HAVE_XERCES != xyes])
 AC_SUBST([HAVE_XERCES])
+
+# Check for hdf5
+unset HDF5_VERSION
+AX_LIB_HDF5([serial])
+if test "$with_hdf5" = "yes"; then
+      LDFLAGS="$LDFLAGS $HDF5_LDFLAGS  -lhdf5_cpp  $HDF5_LIBS"
+fi
+AC_MSG_CHECKING([for HDF5])
+AC_MSG_RESULT([$with_hdf5])
+
 
 # Check for CppUnit
 AM_PATH_CPPUNIT([1.12], [HAVE_CPPUNIT=yes], [HAVE_CPPUNIT=no])
@@ -494,27 +530,27 @@ gld_save_LIBS="$LIBS"; LIBS="$LIBS $HELICS_LIBS"
 gld_save_LDFLAGS="$LDFLAGS"; LDFLAGS="$LDFLAGS $HELICS_LDFLAGS"
 gld_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $HELICS_CPPFLAGS"
 # add libhelics to HELICS_LIBS if missing
-AS_CASE([$host],
+AS_CASE([$platform],
 	[*linux*], [AS_CASE([$HELICS_LIBS],
-					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lrt -lzmq -lboost_filesystem -lboost_program_options -lboost_system -lboost_unit_test_framework"])
+					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lzmq"])
 				AS_CASE([$LIBS],
-					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lrt -lzmq -lboost_filesystem -lboost_program_options -lboost_system -lboost_unit_test_framework"])],
+					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lzmq"])],
 	[*darwin*], [AS_CASE([$HELICS_LIBS],
-					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lrt -lzmq -lboost_filesystem -lboost_program_options -lboost_system -lboost_unit_test_framework"])
+					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lzmq"])
 				AS_CASE([$LIBS],
-					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lrt -lzmq -lboost_filesystem -lboost_program_options -lboost_system -lboost_unit_test_framework"])],
-	[*mingw*], [AS_CASE([$HELICS_LIBS],
-					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lzmq -lboost_filesystem-mt -lboost_program_options-mt -lboost_system-mt -lboost_unit_test_framework-mt"])
+					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lzmq"])],
+	[*windows*], [AS_CASE([$HELICS_LIBS],
+					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lzmq"])
 				AS_CASE([$LIBS],
-					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lzmq -lboost_filesystem-mt -lboost_program_options-mt -lboost_system-mt -lboost_unit_test_framework-mt"])])
+					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lzmq"])])
 have_helics=yes
 AC_MSG_CHECKING([for HELICS])
 AC_LINK_IFELSE(
-    [AC_LANG_PROGRAM([[
+	[AC_LANG_PROGRAM([[ 
 #include <helics/application_api/helicsTypes.hpp>
 ]],
-[[
-helics::NamedPoint t;
+[[ 
+helics::NamedPoint t; 
 ]])],
     [have_helics=yes; have_helics_int=1],
     [have_helics=no; have_helics_int=0])
@@ -544,17 +580,27 @@ LT_PREREQ([2.2])
 LT_INIT([dlopen win32-dll shared disable-static])
 AC_SUBST([LIBTOOL_DEPS])
 
-AS_CASE([$host_os],
-[darwin*],
-    [LIBEXT=.so],
-[cygwin*],
-    [LIBEXT=.a],
-[mingw*],
-    [LIBEXT=.dll],
-[LIBEXT=.so
- GLD_LDFLAGS="$GLD_LDFLAGS -Wl,--no-undefined"])
+AC_MSG_NOTICE([platform is $platform])
+
+case "${platform}" in
+*linux* )
+LIBEXT=.so
+;;
+*darwin* )
+LIBEXT=.so
+# LIBEXT=.dylib # This is the proper extension for MacOS now, but libtool does not build it properly.
+;;
+*windows* )
+LIBEXT=.dll
+;;
+* )
+LIBEXT=.so
+GLD_LDFLAGS="$GLD_LDFLAGS -Wl,--no-undefined"
+;;
+esac
 
 AC_DEFINE_UNQUOTED([DLEXT], ["$LIBEXT"], [Dynamic library extension])
+AC_MSG_NOTICE([Dynamic Library Extension is $LIBEXT])
 
 AC_SUBST([LIBEXT])
 AC_SUBST([GLD_LDFLAGS])
@@ -599,14 +645,14 @@ AS_CASE([$with_matlab],
 	[no], [],)
 AS_IF([test "x$MATLAB" != "xno"],
 	[MATLAB_CPPFLAGS="'-I$MATLAB/extern/include'"
-	AS_CASE([$host],
+	AS_CASE([$platform],
 		[*linux*], [AS_CASE([$build_cpu],
 							[*x86_64*], [MATLAB_LDFLAGS="'-L$MATLAB/bin/glnxa64' '-L$MATLAB/extern/lib/glnxa64'"],
 							[*i686*], [MATLAB_LDFLAGS="'-L$MATLAB/bin/glnx86' '-L$MATLAB/extern/lib/glnx86'"])],
 		[*darwin*], [AS_CASE([$build_cpu],
 							[*x86_64*], [MATLAB_LDFLAGS="'-L$MATLAB/bin/maci64' '-L$MATLAB/extern/lib/maci64'"],
 							[*i686*], [MATLAB_LDFLAGS="'-L$MATLAB/bin/macx86' '-L$MATLAB/extern/lib/macx86'"])],
-		[*mingw*], [AS_CASE([$build_cpu],
+		[*windows*], [AS_CASE([$build_cpu],
 							[*x86_64*], [MATLAB_LDFLAGS="'-L$MATLAB/bin/win64' '-L$MATLAB/extern/lib/win64/microsoft'"],
 							[*i686*], [MATLAB_LDFLAGS="'-L$MATLAB/bin/win32' '-L$MATLAB/extern/lib/win32/microsoft'"])])
 	MATLAB_LIBS="-lmx -leng"
@@ -619,12 +665,12 @@ AC_SUBST([MATLAB_LDPATH])
 AC_SUBST([MATLAB_LIBS])
 	
 # Check for MinGW
-AS_IF([test "x$mingw" = "xtrue"],
+AS_IF([test "x$is_mingw" = "xtrue"],
 	[HAS_MINGW=yes],
-	[AS_CASE([$host],
+	[AS_CASE([$platform],
 		[*linux*], [HAS_MINGW=no],
 		[*darwin*], [HAS_MINGW=no],
-		[*mingw*], [HAS_MINGW="no (required)"])])
+		[*windows*], [HAS_MINGW="no (required)"])])
 AC_SUBST([HAS_MINGW])		
 
 # Check for mysql
@@ -637,8 +683,8 @@ AC_ARG_WITH([mysql],
 MYSQL=$with_mysql
 AS_IF([test "x$MYSQL" != "xno"],
 	[MYSQL_CPPFLAGS="'-I$MYSQL/include'"
-		AS_CASE([$host],
-			[*mingw*], [MYSQL_LDFLAGS="'-L$MYSQL/lib'"
+		AS_CASE([$platform],
+			[*windows*], [MYSQL_LDFLAGS="'-L$MYSQL/lib'"
 				MYSQL_LIBS="-lmysql"],
 			[*linux*], [MYSQL_LDFLAGS="'-L$MYSQL/lib'"
 				MYSQL_LIBS="-lmysqlclient"],
@@ -677,11 +723,11 @@ AS_IF([test "x$HAVE_MYSQL" != "xyes" &&
 			HAVE_MYSQL=yes]
 	,[HAVE_MYSQL=$HAVE_MYSQL]) 
 	
-AC_MSG_RESULT([Is MySQL configured: $HAVE_MYSQL])
-AC_MSG_RESULT([MySQL_CPPFLAGS: $MYSQL_CPPFLAGS])
-AC_MSG_RESULT([MYSQL_LDFLAGS: $MYSQL_LDFLAGS])
-AC_MSG_RESULT([MYSQL_LIBS: $MYSQL_LIBS])
-AC_MSG_RESULT([GLD_CPPFLAGS: $GLD_CPPFLAGS])
+#AC_MSG_RESULT([Is MySQL configured: $HAVE_MYSQL])
+#AC_MSG_RESULT([MySQL_CPPFLAGS: $MYSQL_CPPFLAGS])
+#AC_MSG_RESULT([MYSQL_LDFLAGS: $MYSQL_LDFLAGS])
+#AC_MSG_RESULT([MYSQL_LIBS: $MYSQL_LIBS])
+#AC_MSG_RESULT([GLD_CPPFLAGS: $GLD_CPPFLAGS])
 
 
 AC_SUBST([MYSQL_CPPFLAGS])
@@ -697,9 +743,15 @@ AC_CONFIG_FILES([gridlabd.spec])
 AC_CONFIG_FILES([gldcore/gridlabd.sh], [chmod +x gldcore/gridlabd.sh])
 AC_OUTPUT
 
-BINDIR=`eval echo $(eval echo $bindir)`
-LIBDIR=`eval echo $(eval echo $libdir)`
-DOCDIR=`eval echo $(eval echo $docdir)`
+BINVAR=(`eval echo $bindir`)
+BINDIR=(`eval echo ${BINVAR}`)
+
+LIBVAR=(`eval echo $libdir`)
+LIBDIR=(`eval echo ${LIBVAR}`)
+
+DOCVAR=(`eval echo $docdir`)
+DOCDIR=(`eval echo ${DOCVAR}`)
+
 AS_IF([test "x$HAVE_XERCES" = xyes],
     [CONFIG_RESULT=OK
      AS_IF([test -z "$XERCES_VERSION" || expr "$XERCES_VERSION" \< 3 >/dev/null],
@@ -716,8 +768,9 @@ AC_MSG_RESULT([
 
   Dependencies:
 
-    MinGW: ...................... $HAS_MINGW
+    MinGW/MSYS: ................. $HAS_MINGW
     Doxygen: .................... $HAVE_DOXYGEN
+    hdf5: ....................... $with_hdf5
     libcppunit: ................. $HAVE_CPPUNIT
     libxerces-c: ................ $HAVE_XERCES
     matlab: ..................... $HAVE_MATLAB

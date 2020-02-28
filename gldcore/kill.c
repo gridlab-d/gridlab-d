@@ -7,7 +7,7 @@
  @{
  **/
 
-#ifdef WIN32
+#ifdef _WIN32
 #include "errno.h"
 #include "windows.h"
 #include "output.h"

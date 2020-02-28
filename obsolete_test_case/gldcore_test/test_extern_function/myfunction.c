@@ -2,7 +2,7 @@ typedef struct s_data {
 	void *data; // pointer to the data itself
 	void *info; // pointer to the property info
 } DATA;
-#ifdef WIN32
+#ifdef _WIN32
 __declspec(dllexport)
 #endif
 int myfunction(int nlhs, DATA *plhs, int nrhs, DATA *prhs)

@@ -12,7 +12,7 @@ typedef struct s_udp_socket_data{
 bool setupUDPSocket(ENGINELINK *given){
 	UDP_SOCKET_DATA *data=(UDP_SOCKET_DATA*)malloc(sizeof(UDP_SOCKET_DATA));
 	memset(data,0,sizeof(UDP_SOCKET_DATA));
-#ifdef WIN32
+#ifdef _WIN32
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2,0),&wsaData)!=0)
 	{

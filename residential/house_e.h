@@ -420,6 +420,7 @@ private:
 	bool deltamode_registered;	//Boolean for deltamode registration -- basically a "first run" flag
 	bool proper_meter_parent;		//Flag to see if powerflow interactions should occur
 	bool proper_climate_found;		//Flag to see if climate interactions should occur
+	bool commercial_load_parent;    // proper_meter_parent is true, but the parent is actually a load
 
 	//Pointers for powerflow properties
 	gld_property *pCircuit_V[3];					///< pointer to the three voltages on three lines
@@ -436,6 +437,17 @@ private:
 	complex value_Power[3];						///< value holder for power value on triplex parent
 	enumeration value_MeterStatus;				///< value holder for service_status variable on triplex parent
 	double value_Frequency;						///< value holder for measured frequency on triplex parent
+
+	// interface to powerflow calculations, need not be public?
+	void pull_complex_powerflow_values(void);
+	void push_complex_powerflow_values(void);
+
+	// for commercial meter connections
+	gld_property *pNominalVoltage;
+	gld_property *pPhases;
+	double internalTurnsRatio;  // ratio of meter VLN / 120
+	set externalPhases;         // for A, B and C present
+	int numPhases;
 
 	//Pointers for climate properties
 	gld_property *pTout;		// pointer to outdoor temperature (see climate)
@@ -481,9 +493,7 @@ public:
 	//Map function
 	gld_property *map_complex_value(OBJECT *obj, char *name);
 	gld_property *map_double_value(OBJECT *obj, char *name);
-	void pull_complex_powerflow_values(void);
 	void pull_climate_values(void);
-	void push_complex_powerflow_values(void);
 };
 
 #endif
