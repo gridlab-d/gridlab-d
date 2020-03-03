@@ -195,13 +195,13 @@ public:
 		r -= x;
 		return *this;
 	};
-	complex &operator *= (double x) /**< multiply a double to real part */
+	complex &operator *= (double x) /**< multiply a double to both parts */
 	{
 		r *= x;
 		i *= x;
 		return *this;
 	};
-	complex &operator /= (double x) /**< divide into the real part */
+	complex &operator /= (double x) /**< divide into both parts */
 	{
 		r /= x;
 		i /= x;
