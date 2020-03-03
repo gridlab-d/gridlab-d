@@ -480,6 +480,7 @@ int switch_object::init(OBJECT *parent)
 
 	//Store switch status - will get updated as things change later
 	phased_switch_status = prev_full_status;
+	prev_status = status;
 
 	return result;
 }
