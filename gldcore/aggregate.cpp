@@ -325,12 +325,12 @@ AGGREGATION *aggregate_mkgroup(char *aggregator, /**< aggregator (min,max,avg,st
 	return result;
 }
 
-//double mag(complex *x)
+//double mag(gld::complex *x)
 //{
 //	return sqrt(x->r*x->r + x->i*x->i);
 //}
 //
-//double arg(complex *x)
+//double arg(gld::complex *x)
 //{
 //	return (x->r==0) ? (x->i>0 ? PI/2 : (x->i==0 ? 0 : -PI/2)) : ((x->i>0) ? (x->r>0 ? atan(x->i/x->r) : PI-atan(x->i/x->r)) : (x->r>0 ? -atan(x->i/x->r) : PI+atan(x->i/x->r)));
 //}
@@ -351,7 +351,7 @@ double aggregate_value(AGGREGATION *aggr) /**< the aggregation to perform */
 	for(obj = find_first(aggr->last); obj != NULL; obj = find_next(aggr->last, obj)){
 		double value=0;
 		double *pdouble = NULL;
-		complex *pcomplex = NULL;
+		gld::complex *pcomplex = NULL;
 
 		/* add time-sensitivity to verify that we are only aggregating objects that are in-service and not out-service. */
 		if(obj->in_svc >= global_clock || obj->out_svc <= global_clock)

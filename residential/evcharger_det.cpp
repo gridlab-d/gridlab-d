@@ -1002,7 +1002,7 @@ TIMESTAMP evcharger_det::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	double temp_double, charge_out_percent;
-	complex temp_complex;
+	gld::complex temp_complex;
 	TIMESTAMP t2, tret, tdiff;
 
 	temp_double = 0;

@@ -119,24 +119,24 @@ STATUS jsondump::dump_system(void)
 	int index = 0;
 	int phaseCount;
 	double per_unit_base, temp_impedance_base, temp_voltage_base, temp_de_pu_base;
-	complex temp_complex_voltage_value[3];
-	complex temp_complex_power_value[3];
+	gld::complex temp_complex_voltage_value[3];
+	gld::complex temp_complex_power_value[3];
 	double temp_voltage_output_value;
 	int indexA, indexB, indexC;
-	complex *b_mat_pu;
+	gld::complex *b_mat_pu;
 	bool *b_mat_defined;
-	complex *b_mat_tp_pu;
+	gld::complex *b_mat_tp_pu;
 	bool  *b_mat_tp_defined;
-	complex *b_mat_trans_pu;
+	gld::complex *b_mat_trans_pu;
 	bool *b_mat_trans_defined;
 	int *trans_phase_count;
-	complex *b_mat_reg_pu;
+	gld::complex *b_mat_reg_pu;
 	bool *b_mat_reg_defined;
 	int *reg_phase_count;
-	complex b_mat_switch_pu[9];
+	gld::complex b_mat_switch_pu[9];
 	bool b_mat_switch_defined;
 	int switch_phase_count;
-	complex b_mat_fuse_pu[9];
+	gld::complex b_mat_fuse_pu[9];
 	bool b_mat_fuse_defined;
 	int fuse_phase_count;
 	set temp_set_value;
@@ -234,7 +234,7 @@ STATUS jsondump::dump_system(void)
 
 
 		//Define b_mat_pu
-		b_mat_pu = (complex *)gl_malloc((lineConfs->hit_count)*9*sizeof(complex));
+		b_mat_pu = (gld::complex *)gl_malloc((lineConfs->hit_count)*9*sizeof(gld::complex));
 
 		//Check it
 		if (b_mat_pu == nullptr)
@@ -261,7 +261,7 @@ STATUS jsondump::dump_system(void)
 
 			for (indexB=0; indexB<9; indexB++)
 			{
-				b_mat_pu[indexA*9+indexB] = complex(0.0,0.0);
+				b_mat_pu[indexA*9+indexB] = gld::complex(0.0,0.0);
 			}
 		}
 
@@ -303,7 +303,7 @@ STATUS jsondump::dump_system(void)
 		}
 
 		//Define b_mat_tp_pu
-		b_mat_tp_pu = (complex *)gl_malloc((tpLineConfs->hit_count)*9*sizeof(complex));
+		b_mat_tp_pu = (gld::complex *)gl_malloc((tpLineConfs->hit_count)*9*sizeof(gld::complex));
 
 		//Check it
 		if (b_mat_tp_pu == NULL)
@@ -331,7 +331,7 @@ STATUS jsondump::dump_system(void)
 
 			for (indexB=0; indexB<9; indexB++)
 			{
-				b_mat_tp_pu[indexA*9+indexB] = complex(0.0,0.0);
+				b_mat_tp_pu[indexA*9+indexB] = gld::complex(0.0,0.0);
 			}
 		}
 
@@ -375,7 +375,7 @@ STATUS jsondump::dump_system(void)
 		}
 
 		//Define b_mat_trans_pu
-		b_mat_trans_pu = (complex *)gl_malloc((TransConfsList->hit_count)*9*sizeof(complex));
+		b_mat_trans_pu = (gld::complex *)gl_malloc((TransConfsList->hit_count)*9*sizeof(gld::complex));
 
 		//Check it
 		if (b_mat_trans_pu == NULL)
@@ -387,7 +387,7 @@ STATUS jsondump::dump_system(void)
 		//Zero it, to be safe
 		for (indexA=0; indexA < (TransConfsList->hit_count*9); indexA++)
 		{
-			b_mat_trans_pu[indexA] = complex(0.0,0.0);
+			b_mat_trans_pu[indexA] = gld::complex(0.0,0.0);
 		}
 
 		//Define b_mat_trans_defined
@@ -458,7 +458,7 @@ STATUS jsondump::dump_system(void)
 		}
 
 		//Define b_mat_trans_pu
-		b_mat_reg_pu = (complex *)gl_malloc((regConfs->hit_count)*9*sizeof(complex));
+		b_mat_reg_pu = (gld::complex *)gl_malloc((regConfs->hit_count)*9*sizeof(gld::complex));
 
 		//Check it
 		if (b_mat_reg_pu == NULL)
@@ -470,7 +470,7 @@ STATUS jsondump::dump_system(void)
 		//Zero it, to be safe
 		for (indexA=0; indexA < (regConfs->hit_count*9); indexA++)
 		{
-			b_mat_reg_pu[indexA] = complex(0.0,0.0);
+			b_mat_reg_pu[indexA] = gld::complex(0.0,0.0);
 		}
 
 		//Define b_mat_trans_defined
@@ -3877,10 +3877,10 @@ double jsondump::get_double_value(OBJECT *obj, const char *name)
 }
 
 //Complex value
-complex jsondump::get_complex_value(OBJECT *obj, const char *name)
+gld::complex jsondump::get_complex_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
-	complex output_value;
+	gld::complex output_value;
 	OBJECT *objhdr = OBJECTHDR(this);
 
 	//Map to the property of interest

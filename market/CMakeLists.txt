@@ -1,46 +1,55 @@
 project(market)
 
-include_directories(../${GLDCORE_LOC})
-
 add_library(${PROJECT_NAME}
-        market/auction.cpp
-        market/auction.h
-        market/bid.cpp
-        market/bid.h
-        market/collect.cpp
-        market/collect.h
-        market/controller.cpp
-        market/controller.h
-        market/curve.cpp
-        market/curve.h
-        market/double_controller.cpp
-        market/double_controller.h
-        market/generator_controller.cpp
-        market/generator_controller.h
-        market/init.cpp
-        market/main.cpp
-        market/market.h
-        market/passive_controller.cpp
-        market/passive_controller.h
-        market/stub_bidder.cpp
-        market/stub_bidder.h
-        market/stubauction.cpp
-        market/stubauction.h
-        market/supervisory_control.cpp
-        market/supervisory_control.h
+        auction.cpp
+        auction.h
+        bid.cpp
+        bid.h
+        collect.cpp
+        collect.h
+        controller.cpp
+        controller.h
+        curve.cpp
+        curve.h
+        double_controller.cpp
+        double_controller.h
+        generator_controller.cpp
+        generator_controller.h
+        init.cpp
+        main.cpp
+        market.h
+        passive_controller.cpp
+        passive_controller.h
+        stub_bidder.cpp
+        stub_bidder.h
+        stubauction.cpp
+        stubauction.h
+        supervisory_control.cpp
+        supervisory_control.h
 
-        market/auction_ccsi.cpp
-        market/auction_ccsi.h
-        market/bid_ccsi.cpp
-        market/bid_ccsi.h
-        market/curve_ccsi.cpp
-        market/curve_ccsi.h
-        market/controller_ccsi.cpp
-        market/controller_ccsi.h
+        auction_ccsi.cpp
+        auction_ccsi.h
+        bid_ccsi.cpp
+        bid_ccsi.h
+        curve_ccsi.cpp
+        curve_ccsi.h
+        controller_ccsi.cpp
+        controller_ccsi.h
         )
 
-set_target_properties(${PROJECT_NAME}
-        PROPERTIES PREFIX ""
-        )
+set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
+target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
+target_link_libraries(${PROJECT_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
 
-target_link_libraries(${PROJECT_NAME} ${OS_SPECIFIC_LIBRARIES})
+install(TARGETS ${PROJECT_NAME}
+        ${FILE_PERMISSIONS}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        COMPONENT library)
+
+if (GLD_USE_CLANG_TIDY)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+            CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}"
+            )
+endif ()

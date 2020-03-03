@@ -1,56 +1,65 @@
 project(residential)
 
-include_directories(../${GLDCORE_LOC})
-
 add_library(${PROJECT_NAME}
-        residential/appliance.cpp
-        residential/appliance.h
-        residential/clotheswasher.cpp
-        residential/clotheswasher.h
-        residential/dishwasher.cpp
-        residential/dishwasher.h
-        residential/dryer.cpp
-        residential/dryer.h
-        residential/evcharger.cpp
-        residential/evcharger_det.cpp
-        residential/evcharger_det.h
-        residential/evcharger.h
-        residential/freezer.cpp
-        residential/freezer.h
-        residential/house_e.cpp
-        residential/house_e.h
-        residential/init.cpp
-        residential/lights.cpp
-        residential/lights.h
-        residential/main.cpp
-        residential/microwave.cpp
-        residential/microwave.h
-        residential/occupantload.cpp
-        residential/occupantload.h
-        residential/plugload.cpp
-        residential/plugload.h
-        residential/range.cpp
-        residential/range.h
-        residential/refrigerator.cpp
-        residential/refrigerator.h
-        residential/residential_enduse.cpp
-        residential/residential_enduse.h
-        residential/residential.h
-        residential/rbsa2014.h
-        residential/solvers.cpp
-        residential/solvers.h
-        residential/thermal_storage.cpp
-        residential/thermal_storage.h
-        residential/waterheater.cpp
-        residential/waterheater.h
-        residential/zipload.cpp
-        residential/zipload.h
-        residential/elcap1990.h
-        residential/elcap2010.h
+        appliance.cpp
+        appliance.h
+        clotheswasher.cpp
+        clotheswasher.h
+        dishwasher.cpp
+        dishwasher.h
+        dryer.cpp
+        dryer.h
+        evcharger.cpp
+        evcharger_det.cpp
+        evcharger_det.h
+        evcharger.h
+        freezer.cpp
+        freezer.h
+        house_e.cpp
+        house_e.h
+        init.cpp
+        lights.cpp
+        lights.h
+        main.cpp
+        microwave.cpp
+        microwave.h
+        occupantload.cpp
+        occupantload.h
+        plugload.cpp
+        plugload.h
+        range.cpp
+        range.h
+        refrigerator.cpp
+        refrigerator.h
+        residential_enduse.cpp
+        residential_enduse.h
+        residential.h
+        rbsa2014.h
+        solvers.cpp
+        solvers.h
+        thermal_storage.cpp
+        thermal_storage.h
+        waterheater.cpp
+        waterheater.h
+        zipload.cpp
+        zipload.h
+        elcap1990.h
+        elcap2010.h
 )
 
-set_target_properties(${PROJECT_NAME}
-        PROPERTIES PREFIX ""
-        )
+set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
+target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
+target_link_libraries(${PROJECT_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
 
-target_link_libraries(${PROJECT_NAME} ${OS_SPECIFIC_LIBRARIES})
+install(TARGETS ${PROJECT_NAME}
+        ${FILE_PERMISSIONS}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        COMPONENT library)
+
+if (GLD_USE_CLANG_TIDY)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+            CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}"
+            )
+endif ()

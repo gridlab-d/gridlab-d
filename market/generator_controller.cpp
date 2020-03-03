@@ -194,7 +194,7 @@ int generator_controller::init(OBJECT *parent)
 		}
 
 		//Get the address
-		power_link = (complex *)GETADDR(parent,ptemp);
+		power_link = (gld::complex *)GETADDR(parent,ptemp);
 
 		//Check this as well
 		if (power_link == NULL)
@@ -261,7 +261,7 @@ int generator_controller::init(OBJECT *parent)
 		}
 
 		//Get the address
-		power_link = (complex *)GETADDR(parent,ptemp);
+		power_link = (gld::complex *)GETADDR(parent,ptemp);
 
 		//Check this as well
 		if (power_link == NULL)

@@ -695,24 +695,24 @@ double *object_get_double_by_name(OBJECT *obj, const char *name)
 /* Get the pointer to the value of a complex property.
  * Returns NULL if the property is not found or if the value the right type.
  */
-complex *object_get_complex_quick(OBJECT *obj, PROPERTY *prop)
+gld::complex *object_get_complex_quick(OBJECT *obj, PROPERTY *prop)
 {	/* no checks */
-	return (complex*)((char*)obj+sizeof(OBJECT)+(int64)(prop->addr)); /* warning: cast from pointer to integer of different size */
+	return (gld::complex*)((char*)obj+sizeof(OBJECT)+(int64)(prop->addr)); /* warning: cast from pointer to integer of different size */
 }
 
-complex *object_get_complex(OBJECT *obj, PROPERTY *prop)
+gld::complex *object_get_complex(OBJECT *obj, PROPERTY *prop)
 {
 	if(object_prop_in_class(obj, prop) && prop->ptype==PT_complex && prop->access != PA_PRIVATE)
-		return (complex*)((char*)obj+sizeof(OBJECT)+(int64)(prop->addr)); /* warning: cast from pointer to integer of different size */
+		return (gld::complex*)((char*)obj+sizeof(OBJECT)+(int64)(prop->addr)); /* warning: cast from pointer to integer of different size */
 	errno = ENOENT;
 	return NULL;
 }
 
-complex *object_get_complex_by_name(OBJECT *obj, const char *name)
+gld::complex *object_get_complex_by_name(OBJECT *obj, const char *name)
 {
 	PROPERTY *prop = class_find_property(obj->oclass,name);
 	if(prop!=NULL && prop->access != PA_PRIVATE)
-		return (complex *)((char*)obj+sizeof(OBJECT)+(int64)(prop->addr)); /* warning: cast from pointer to integer of different size */
+		return (gld::complex *)((char*)obj+sizeof(OBJECT)+(int64)(prop->addr)); /* warning: cast from pointer to integer of different size */
 	errno = ENOENT;
 	return NULL;
 }
@@ -1113,7 +1113,7 @@ int object_set_double_by_name(OBJECT *obj, const PROPERTYNAME name, double value
 
 /* Set a property value by reference to its name
  */
-int object_set_complex_by_name(OBJECT *obj, const PROPERTYNAME name, complex value)
+int object_set_complex_by_name(OBJECT *obj, const PROPERTYNAME name, gld::complex value)
 {
 	PROPERTY *prop = class_find_property(obj->oclass,name);
 	if(prop==NULL)
@@ -1128,7 +1128,7 @@ int object_set_complex_by_name(OBJECT *obj, const PROPERTYNAME name, complex val
 		*/
 		return 0;
 	}
-	*(complex*)((char *)(obj+1)+(int64)(prop->addr)) = value; /* warning: cast from pointer to integer of different size */
+	*(gld::complex*)((char *)(obj+1)+(int64)(prop->addr)) = value; /* warning: cast from pointer to integer of different size */
 	return 1;
 }
 

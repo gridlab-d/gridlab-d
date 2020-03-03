@@ -343,7 +343,7 @@ void cast_from_double(PROPERTYTYPE ptype, void *addr, double value)
 	switch ( ptype ) {
 	case PT_void: break;
 	case PT_double: *(double*)addr = value; break;
-	case PT_complex: ((complex*)addr)->SetReal(value); ((complex*)addr)->SetImag(0); break;
+	case PT_complex: ((gld::complex*)addr)->SetReal(value); ((gld::complex*)addr)->SetImag(0); break;
 	case PT_bool: *(int32*)addr = (value!=0); 
 	case PT_int16: *(int16*)addr = (int16)value; break;
 	case PT_int32: *(int32*)addr = (int32)value; break;

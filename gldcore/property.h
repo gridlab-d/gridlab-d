@@ -12,7 +12,7 @@
 #include "config.h"
 #endif
 #include "platform.h"
-#include "complex.h"
+#include "gld_complex.h"
 #include "unit.h"
 #include <iostream>
 
@@ -105,7 +105,7 @@ typedef uint64 set;      /* sets (each of up to 64 values may be defined) */
 typedef uint32 enumeration; /* enumerations (any one of a list of values) */
 typedef struct s_object_list* object; /* GridLAB objects */
 typedef double triplet[3];
-typedef complex triplex[3];
+typedef gld::complex triplex[3];
 
 #define BYREF 0x01
 #include <math.h>
@@ -602,20 +602,20 @@ public:
 class complex_array;
 class complex_vector {
 private:
-	complex **data;
+	gld::complex **data;
 public:
-	complex_vector(complex **x)
+	complex_vector(gld::complex **x)
 	{
 		data=x;
 	};
-	complex &operator[] (const size_t n)
+	gld::complex &operator[] (const size_t n)
 	{
-		if ( data[n]==NULL ) data[n]=new complex;
+		if ( data[n]==NULL ) data[n]=new gld::complex;
 		return *data[n];
 	};
-	const complex operator[] (const size_t n) const
+	const gld::complex operator[] (const size_t n) const
 	{
-		if ( data[n]==NULL ) data[n]=new complex;
+		if ( data[n]==NULL ) data[n]=new gld::complex;
 		return *data[n];
 	}
 };
@@ -625,7 +625,7 @@ private:
 	size_t n, m;
 	size_t max_val; /** current allocation size max_val x max_val */
 	unsigned int *refs; /** reference count **/
-	complex ***x; /** pointer to 2D array of pointers to complex values */
+	gld::complex ***x; /** pointer to 2D array of pointers to complex values */
 	unsigned char *f; /** pointer to array of flags: bit0=byref, */
 	const char *name;
 #ifndef __cplusplus
@@ -648,15 +648,15 @@ private:
 	inline void set_flag(const size_t r, size_t c, const unsigned char b) {f[r*m+c]|=b;};
 	inline void clr_flag(const size_t r, size_t c, const unsigned char b) {f[r*m+c]&=~b;};
 	inline bool tst_flag(const size_t r, size_t c, const unsigned char b) const {return (f[r*m+c]&b)==b;};
-	complex &my(const size_t r, const size_t c)
+	gld::complex &my(const size_t r, const size_t c)
 	{
-		if ( x[r][c]== nullptr) x[r][c] = new complex;
+		if ( x[r][c]== nullptr) x[r][c] = new gld::complex;
 		return (*x[r][c]);
 	};
 public:
 	inline complex_vector operator[] (const size_t n) { return complex_vector(x[n]); }
 	inline const complex_vector operator[] (const size_t n) const { return complex_vector(x[n]); }
-	complex_array(const size_t rows=0, const size_t cols=0, complex **data=NULL)
+	complex_array(const size_t rows=0, const size_t cols=0, gld::complex**data=NULL)
 	{
 		refs = new unsigned int;
 		*refs = 0;
@@ -721,23 +721,23 @@ public:
 	{
 		if ( size<=max_val ) exception(".set_max(%u): cannot shrink complex_array",size);
 		size_t r;
-		complex ***z = (complex***)malloc(sizeof(complex**)*size);
+		gld::complex ***z = (gld::complex***)malloc(sizeof(gld::complex**)*size);
 		// create new rows
 		for ( r=0 ; r<max_val ; r++ )
 		{
 			if ( x[r]!=NULL )
 			{
-				complex **y = (complex**)malloc(sizeof(complex*)*size);
+				gld::complex **y = (gld::complex**)malloc(sizeof(gld::complex*)*size);
 				if ( y==NULL ) exception(".set_max(%u): unable to expand complex_array",size);
-				memcpy(y,x[r],sizeof(complex*)*max_val);
-				memset(y+max_val,0,sizeof(complex*)*(size-max_val));
+				memcpy(y,x[r],sizeof(gld::complex*)*max_val);
+				memset(y+max_val,0,sizeof(gld::complex*)*(size-max_val));
 				free(x[r]);
 				z[r] = y;
 			}
 			else
 				z[r] = NULL;
 		}
-		memset(z+max_val,0,sizeof(complex**)*(size-max_val));
+		memset(z+max_val,0,sizeof(gld::complex**)*(size-max_val));
 		free(x);
 		x = z;
 		unsigned char *nf = (unsigned char*)malloc(sizeof(unsigned char)*size);
@@ -763,8 +763,8 @@ public:
 		{
 			if ( x[n]==NULL ) 
 			{
-				x[n] = (complex**)malloc(sizeof(complex*)*max_val);
-				memset(x[n],0,sizeof(complex*)*max_val);
+				x[n] = (gld::complex**)malloc(sizeof(gld::complex*)*max_val);
+				memset(x[n],0,sizeof(gld::complex*)*max_val);
 			}
 			n++;
 		}
@@ -775,13 +775,13 @@ public:
 			size_t i;
 			for ( i=0 ; i<n ; i++ )
 			{
-				complex **y = (complex**)malloc(sizeof(complex*)*c);
+				gld::complex **y = (gld::complex**)malloc(sizeof(gld::complex*)*c);
 				if ( x[i]!=NULL )
 				{
-					memcpy(y,x[i],sizeof(complex**)*m);
+					memcpy(y,x[i],sizeof(gld::complex**)*m);
 					free(x[i]);
 				}
-				memset(y+m,0,sizeof(complex**)*(c-m));
+				memset(y+m,0,sizeof(gld::complex**)*(c-m));
 				x[i] = y;
 			}
 			m=c;
@@ -809,13 +809,13 @@ public:
 	};
 	inline void clr_at(const size_t c) { return clr_at(0,c); };
 	/// make a new matrix (row major)
-	complex **copy_matrix(void)
+	gld::complex **copy_matrix(void)
 	{
-		complex **y = new complex*[n];
+		gld::complex **y = new gld::complex*[n];
 		unsigned int r;
 		for ( r=0 ; r<n ; r++ )
 		{
-			y[r] = new complex[m];
+			y[r] = new gld::complex[m];
 			unsigned int c;
 			for ( c=0 ; c<m ; c++ )
 				y[r][c] = *(x[r][c]);
@@ -823,7 +823,7 @@ public:
 		return y;
 	};
 	/// free a matrix
-	void free_matrix(complex **y)
+	void free_matrix(gld::complex **y)
 	{
 		unsigned int r;
 		for ( r=0 ; r<n ; r++ )
@@ -831,9 +831,9 @@ public:
 		delete [] y;
 	};
 	/// vector copy (row major)
-	complex *copy_vector(complex *y=NULL)
+	gld::complex *copy_vector(gld::complex *y=NULL)
 	{
-		if ( y==NULL ) y=new complex[m*n];
+		if ( y==NULL ) y=new gld::complex[m*n];
 		unsigned i=0;
 		unsigned int r, c;
 		for ( r=0 ; r<n ; r++ )
@@ -844,11 +844,11 @@ public:
 		return y;
 	}
 	void transpose(void) {
-		complex ***xt = new complex**[n];
+		gld::complex ***xt = new gld::complex**[n];
 		size_t i;
 		for ( i=0 ; i<m ; i++ )
 		{
-			xt[i] = new complex*[n];
+			xt[i] = new gld::complex*[n];
 			size_t j;
 			for ( j=0 ; j<n ; j++ )
 				xt[i][j] = x[j][i];
@@ -859,23 +859,23 @@ public:
 		x = xt;
 		size_t t=m; m=n; n=t;
 	};
-	inline complex *get_addr(const size_t r, const size_t c) { return x[r][c]; };
-	inline complex *get_addr(const size_t c) { return get_addr(0,c); };
-	complex get_at(const size_t r, const size_t c) { return is_nan(r,c) ? QNAN : *(x[r][c]) ; };
-	inline complex get_at(const size_t c) { return get_at(0,c); };
-	inline complex &get(const size_t r, const size_t c) { return *x[r][c]; };
-	inline complex &get(const size_t r, const size_t c) const { return *x[r][c]; };
-	inline complex &get(const size_t c) { return get(0,c); };
-	inline void set_at(const size_t c, const complex v) { set_at(0,c,v); };
-	void set_at(const size_t r, const size_t c, const complex v)
+	inline gld::complex *get_addr(const size_t r, const size_t c) { return x[r][c]; };
+	inline gld::complex *get_addr(const size_t c) { return get_addr(0,c); };
+	gld::complex get_at(const size_t r, const size_t c) { return is_nan(r,c) ? QNAN : *(x[r][c]) ; };
+	inline gld::complex get_at(const size_t c) { return get_at(0,c); };
+	inline gld::complex &get(const size_t r, const size_t c) { return *x[r][c]; };
+	inline gld::complex &get(const size_t r, const size_t c) const { return *x[r][c]; };
+	inline gld::complex &get(const size_t c) { return get(0,c); };
+	inline void set_at(const size_t c, const gld::complex v) { set_at(0,c,v); };
+	void set_at(const size_t r, const size_t c, const gld::complex v)
 	{ 
 		check_valid(r,c);
 		if ( x[r][c]==NULL ) 
-			x[r][c]=(complex*)malloc(sizeof(complex)); 
+			x[r][c]=(gld::complex*)malloc(sizeof(gld::complex));
 		*(x[r][c]) = v; 
 	};
-	inline void set_at(const size_t c, complex *v) { set_at(0,c,v); };
-	void set_at(const size_t r, const size_t c, complex *v)
+	inline void set_at(const size_t c, gld::complex *v) { set_at(0,c,v); };
+	void set_at(const size_t r, const size_t c, gld::complex *v)
 	{ 
 		check_valid(r,c);
 		if ( v==NULL ) 
@@ -915,7 +915,7 @@ public:
 		}
 		fprintf(stderr," }\n");
 	}
-	void operator= (const complex y)
+	void operator= (const gld::complex y)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
@@ -935,7 +935,7 @@ public:
 		}
 		return *this;
 	};
-	complex_array &operator+= (const complex &y)
+	complex_array &operator+= (const gld::complex &y)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
@@ -955,7 +955,7 @@ public:
 		}
 		return *this;
 	};
-	complex_array &operator-= (const complex &y)
+	complex_array &operator-= (const gld::complex &y)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
@@ -975,7 +975,7 @@ public:
 		}
 		return *this;
 	};
-	complex_array &operator *= (const complex y)
+	complex_array &operator *= (const gld::complex y)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
@@ -985,7 +985,7 @@ public:
 		}
 		return *this;
 	};
-	complex_array &operator /= (const complex y)
+	complex_array &operator /= (const gld::complex y)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
@@ -996,7 +996,7 @@ public:
 		return *this;
 	};
 	// binary operators
-	complex_array operator+ (const complex y)
+	complex_array operator+ (const gld::complex y)
 	{
 		complex_array a(get_rows(),get_cols());
 		size_t r,c;
@@ -1005,7 +1005,7 @@ public:
 				a[r][c] = my(r,c) + y;
 		return a;
 	}
-	complex_array operator- (const complex y)
+	complex_array operator- (const gld::complex y)
 	{
 		complex_array a(get_rows(),get_cols());
 		size_t r,c;
@@ -1014,7 +1014,7 @@ public:
 				a[r][c] = my(r,c) - y;
 		return a;
 	}
-	complex_array operator* (const complex y)
+	complex_array operator* (const gld::complex y)
 	{
 		complex_array a(get_rows(),get_cols());
 		size_t r,c;
@@ -1023,7 +1023,7 @@ public:
 				a[r][c] = my(r,c) * y;
 		return a;
 	}
-	complex_array operator/ (const complex y)
+	complex_array operator/ (const gld::complex y)
 	{
 		complex_array a(get_rows(),get_cols());
 		size_t r,c;
@@ -1067,7 +1067,7 @@ public:
 		{
 			for ( c=0 ; c<y.get_cols() ; c++ )
 			{
-				complex b = 0;
+				gld::complex b = 0;
 				for ( k=0 ; k<get_cols() ; k++ )
 					b += my(r,k) * y[k][c];
 				a[r][c] = b;
@@ -1075,13 +1075,13 @@ public:
 		}
 		return a;
 	};
-	void extract_row(complex*y,const size_t r)
+	void extract_row(gld::complex*y,const size_t r)
 	{
 		size_t c;
 		for ( c=0 ; c<m ; c++ )
 			y[c] = my(r,c);
 	}
-	void extract_col(complex*y,const size_t c)
+	void extract_col(gld::complex*y,const size_t c)
 	{
 		size_t r;
 		for ( r=0 ; r<n ; r++ )
@@ -1290,9 +1290,9 @@ double double_array_get_part(void *x, char *name);
 
 /* complex array */
 int complex_array_create(complex_array &a);
-//complex *get_complex_array_value(complex_array*,unsigned int n, unsigned int m);
-//void set_complex_array_value(complex_array*,unsigned int n, unsigned int m, complex *x);
-//complex *get_complex_array_ref(complex_array*,unsigned int n, unsigned int m);
+//gld::complex *get_complex_array_value(complex_array*,unsigned int n, unsigned int m);
+//void set_complex_array_value(complex_array*,unsigned int n, unsigned int m, gld::complex *x);
+//gld::complex *get_complex_array_ref(complex_array*,unsigned int n, unsigned int m);
 double complex_array_get_part(void *x, char *name);
 
 inline PROPERTYTYPE &operator++(PROPERTYTYPE &d){	return d = PROPERTYTYPE(d + 1);}

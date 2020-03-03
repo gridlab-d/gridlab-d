@@ -267,7 +267,7 @@ public:
 	double actual_load;
 	double actual_voltage;
 	double prev_load;
-	complex waterheater_actual_power;	///< the actual power draw of the object after accounting for voltage
+	gld::complex waterheater_actual_power;	///< the actual power draw of the object after accounting for voltage
 //	Fortran water heater parameters
 public:
 	double dr_signal;				//dr_signal

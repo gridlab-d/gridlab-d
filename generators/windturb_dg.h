@@ -17,15 +17,15 @@ class windturb_dg : public gld_object
 {
 private:
 	/* TODO: put private variables here */
-	complex AMx[3][3];			//Impedance matrix for Synchronous Generator
-	complex invAMx[3][3];		//Inverse of SG impedance matrix
-	complex IndTPMat[2][2];		//Induction Generator two port matrix
-	complex Vapu;				//Per unit voltage and current for Induction Generator at terminals
-	complex Vbpu;
-	complex Vcpu;
-	complex Iapu;
-	complex	Ibpu;
-	complex	Icpu;
+	gld::complex AMx[3][3];			//Impedance matrix for Synchronous Generator
+	gld::complex invAMx[3][3];		//Inverse of SG impedance matrix
+	gld::complex IndTPMat[2][2];		//Induction Generator two port matrix
+	gld::complex Vapu;				//Per unit voltage and current for Induction Generator at terminals
+	gld::complex Vbpu;
+	gld::complex Vcpu;
+	gld::complex Iapu;
+	gld::complex	Ibpu;
+	gld::complex	Icpu;
 	double air_dens;
 	double Ridealgas;
 	double Molar;
@@ -33,8 +33,8 @@ private:
 	double std_air_press;
 	gld_property *pCircuit_V[3];		//< pointer to the three voltages on three lines
 	gld_property *pLine_I[3];			//< pointer to the three current on three lines
-	complex value_Circuit_V[3];			//< value holder for voltage values
-	complex value_Line_I[3];			//< value holder for current values
+	gld::complex value_Circuit_V[3];			//< value holder for voltage values
+	gld::complex value_Line_I[3];			//< value holder for current values
 	bool parent_is_valid;				//< Flag to pointers
 
     gld_property *pPress;			
@@ -53,9 +53,9 @@ public:
 	/* TODO: put published variables here */
 	set phases;	/**< device phases (see PHASE codes) */
 
-	complex power_A;//power
-	complex power_B;
-	complex power_C;
+	gld::complex power_A;//power
+	gld::complex power_B;
+	gld::complex power_C;
 
 	enum {OFFLINE=1, ONLINE};
 	enumeration Gen_status;
@@ -91,12 +91,12 @@ public:
 
 	unsigned int *n;
 
-	complex voltage_A;			//terminal voltage
-	complex voltage_B;
-	complex voltage_C;
-	complex current_A;			//terminal current
-	complex current_B;
-	complex current_C;
+	gld::complex voltage_A;			//terminal voltage
+	gld::complex voltage_B;
+	gld::complex voltage_C;
+	gld::complex current_A;			//terminal current
+	gld::complex current_B;
+	gld::complex current_C;
 	double store_last_current;  // Store the last solved current to see if the solution is converged
 
 	double TotalRealPow;		//Real power supplied by generator - used for testing
@@ -108,9 +108,9 @@ public:
 	double Wind_Speed;
 	
 	//Synchronous Generator
-	complex EfA;				// induced voltage on phase A in V
-	complex EfB;				// |
-	complex EfC;				// |
+	gld::complex EfA;				// induced voltage on phase A in V
+	gld::complex EfB;				// |
+	gld::complex EfC;				// |
 	double Rs;					// internal transient resistance in p.u.
 	double Xs;					// internal transient impedance in p.u.
     double Rg;					// grounding resistance in p.u.
@@ -124,12 +124,12 @@ public:
 	double pf;					// desired power factor - TO DO: implement later use with controller
 
 	//Induction Generator
-	complex Vrotor_A;			// induced "rotor" voltage in pu
-	complex Vrotor_B;			// |
-	complex Vrotor_C;			// |
-	complex Irotor_A;			// "rotor" current generated in pu
-	complex Irotor_B;			// |
-	complex Irotor_C;			// |
+	gld::complex Vrotor_A;			// induced "rotor" voltage in pu
+	gld::complex Vrotor_B;			// |
+	gld::complex Vrotor_C;			// |
+	gld::complex Irotor_A;			// "rotor" current generated in pu
+	gld::complex Irotor_B;			// |
+	gld::complex Irotor_C;			// |
 	double Rst;					// stator internal impedance in p.u.
 	double Xst;					// |
 	double Rr;					// rotor internal impedance in p.u.

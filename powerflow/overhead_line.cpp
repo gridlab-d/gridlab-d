@@ -253,7 +253,7 @@ int overhead_line::init(OBJECT *parent)
 void overhead_line::recalc(void)
 {
 	line_configuration *config = OBJECTDATA(configuration, line_configuration);
-	complex Zabc_mat[3][3], Yabc_mat[3][3];
+	gld::complex Zabc_mat[3][3], Yabc_mat[3][3];
 	OBJECT *obj = OBJECTHDR(this);
 
 	// Zero out Zabc_mat and Yabc_mat. Un-needed phases will be left zeroed.
@@ -309,16 +309,16 @@ void overhead_line::recalc(void)
 		// Use Kersting's equations to define the z-matrix
 		double dab, dbc, dac, dan, dbn, dcn;
 		double gmr_a, gmr_b, gmr_c, gmr_n, res_a, res_b, res_c, res_n;
-		complex z_aa, z_ab, z_ac, z_an, z_bb, z_bc, z_bn, z_cc, z_cn, z_nn;
+		gld::complex z_aa, z_ab, z_ac, z_an, z_bb, z_bc, z_bn, z_cc, z_cn, z_nn;
 		double p_aa, p_ab, p_ac, p_an, p_bb, p_bc, p_bn, p_cc, p_cn, p_nn;
 		double daap, dabp, dacp, danp, dbbp, dbcp, dbnp, dccp, dcnp, dnnp, diamA, diamB, diamC, diamN;
-		complex P_mat[3][3];
+		gld::complex P_mat[3][3];
 		bool valid_capacitance = false;	//Assume capacitance is invalid by default
 		double freq_coeff_real, freq_coeff_imag, freq_additive_term;
 		line_spacing *spacing_val = NULL;
 		double miles = length / 5280.0;
 		double cap_coeff;
-		complex cap_freq_mult;
+		gld::complex cap_freq_mult;
 		
 		//Calculate coefficients for self and mutual impedance - incorporates frequency values
 		//Per Kersting (4.39) and (4.40)
@@ -381,11 +381,11 @@ void overhead_line::recalc(void)
 			//Set capacitor frequency/distance/scaling factor (rad/s*S)
 			if (enable_frequency_dependence == true)	//See which frequency to use
 			{
-				cap_freq_mult = complex(0,(2.0*PI*current_frequency*0.000001*miles));
+				cap_freq_mult = gld::complex(0,(2.0*PI*current_frequency*0.000001*miles));
 			}
 			else
 			{
-				cap_freq_mult = complex(0,(2.0*PI*nominal_frequency*0.000001*miles));
+				cap_freq_mult = gld::complex(0,(2.0*PI*nominal_frequency*0.000001*miles));
 			}
 
 			//Extract line spacing (nned for capacitance)
@@ -409,19 +409,19 @@ void overhead_line::recalc(void)
 
 		if (has_phase(PHASE_A)) {
 			if (gmr_a > 0.0 && res_a > 0.0)
-				z_aa = complex(res_a + freq_coeff_real, freq_coeff_imag * (log(1.0 / gmr_a) + freq_additive_term));
+				z_aa = gld::complex(res_a + freq_coeff_real, freq_coeff_imag * (log(1.0 / gmr_a) + freq_additive_term));
 			else
 				z_aa = 0.0;
 			if (has_phase(PHASE_B) && dab > 0.0)
-				z_ab = complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dab) + freq_additive_term));
+				z_ab = gld::complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dab) + freq_additive_term));
 			else
 				z_ab = 0.0;
 			if (has_phase(PHASE_C) && dac > 0.0)
-				z_ac = complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dac) + freq_additive_term));
+				z_ac = gld::complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dac) + freq_additive_term));
 			else
 				z_ac = 0.0;
 			if (has_phase(PHASE_N) && dan > 0.0)
-				z_an = complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dan) + freq_additive_term));
+				z_an = gld::complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dan) + freq_additive_term));
 			else
 				z_an = 0.0;
 
@@ -517,15 +517,15 @@ void overhead_line::recalc(void)
 
 		if (has_phase(PHASE_B)) {
 			if (gmr_b > 0.0 && res_b > 0.0)
-				z_bb = complex(res_b + freq_coeff_real, freq_coeff_imag * (log(1.0 / gmr_b) + freq_additive_term));
+				z_bb = gld::complex(res_b + freq_coeff_real, freq_coeff_imag * (log(1.0 / gmr_b) + freq_additive_term));
 			else
 				z_bb = 0.0;
 			if (has_phase(PHASE_C) && dbc > 0.0)
-				z_bc = complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dbc) + freq_additive_term));
+				z_bc = gld::complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dbc) + freq_additive_term));
 			else
 				z_bc = 0.0;
 			if (has_phase(PHASE_N) && dbn > 0.0)
-				z_bn = complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dbn) + freq_additive_term));
+				z_bn = gld::complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dbn) + freq_additive_term));
 			else
 				z_bn = 0.0;
 
@@ -598,11 +598,11 @@ void overhead_line::recalc(void)
 
 		if (has_phase(PHASE_C)) {
 			if (gmr_c > 0.0 && res_c > 0.0)
-				z_cc = complex(res_c + freq_coeff_real, freq_coeff_imag * (log(1.0 / gmr_c) + freq_additive_term));
+				z_cc = gld::complex(res_c + freq_coeff_real, freq_coeff_imag * (log(1.0 / gmr_c) + freq_additive_term));
 			else
 				z_cc = 0.0;
 			if (has_phase(PHASE_N) && dcn > 0.0)
-				z_cn = complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dcn) + freq_additive_term));
+				z_cn = gld::complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dcn) + freq_additive_term));
 			else
 				z_cn = 0.0;
 
@@ -652,9 +652,9 @@ void overhead_line::recalc(void)
 			z_cc = z_cn = 0.0;
 		}
 
-		complex z_nn_inv = 0;
+		gld::complex z_nn_inv = 0;
 		if (has_phase(PHASE_N) && gmr_n > 0.0 && res_n > 0.0){
-			z_nn = complex(res_n + freq_coeff_real, freq_coeff_imag * (log(1.0 / gmr_n) + freq_additive_term));
+			z_nn = gld::complex(res_n + freq_coeff_real, freq_coeff_imag * (log(1.0 / gmr_n) + freq_additive_term));
 			z_nn_inv = z_nn^(-1.0);
 
 			//capacitance equations
@@ -727,14 +727,14 @@ void overhead_line::recalc(void)
 
 			//Now appropriately invert it - scale for frequency, distance, and microSiemens as well as per Kersting (5.14) and (5.15) 
 			if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
-				Yabc_mat[0][0] = complex(1.0) / P_mat[0][0] * cap_freq_mult;
+				Yabc_mat[0][0] = gld::complex(1.0) / P_mat[0][0] * cap_freq_mult;
 			else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //only B
-				Yabc_mat[1][1] = complex(1.0) / P_mat[1][1] * cap_freq_mult;
+				Yabc_mat[1][1] = gld::complex(1.0) / P_mat[1][1] * cap_freq_mult;
 			else if (!has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //only C
-				Yabc_mat[2][2] = complex(1.0) / P_mat[2][2] * cap_freq_mult;
+				Yabc_mat[2][2] = gld::complex(1.0) / P_mat[2][2] * cap_freq_mult;
 			else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //has A & C
 			{
-				complex detvalue = P_mat[0][0]*P_mat[2][2] - P_mat[0][2]*P_mat[2][0];
+				gld::complex detvalue = P_mat[0][0]*P_mat[2][2] - P_mat[0][2]*P_mat[2][0];
 
 				Yabc_mat[0][0] = P_mat[2][2] / detvalue * cap_freq_mult;
 				Yabc_mat[0][2] = P_mat[0][2] * -1.0 / detvalue * cap_freq_mult;
@@ -743,7 +743,7 @@ void overhead_line::recalc(void)
 			}
 			else if (has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //has A & B
 			{
-				complex detvalue = P_mat[0][0]*P_mat[1][1] - P_mat[0][1]*P_mat[1][0];
+				gld::complex detvalue = P_mat[0][0]*P_mat[1][1] - P_mat[0][1]*P_mat[1][0];
 
 				Yabc_mat[0][0] = P_mat[1][1] / detvalue * cap_freq_mult;
 				Yabc_mat[0][1] = P_mat[0][1] * -1.0 / detvalue * cap_freq_mult;
@@ -752,7 +752,7 @@ void overhead_line::recalc(void)
 			}
 			else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C))	//has B & C
 			{
-				complex detvalue = P_mat[1][1]*P_mat[2][2] - P_mat[1][2]*P_mat[2][1];
+				gld::complex detvalue = P_mat[1][1]*P_mat[2][2] - P_mat[1][2]*P_mat[2][1];
 
 				Yabc_mat[1][1] = P_mat[2][2] / detvalue * cap_freq_mult;
 				Yabc_mat[1][2] = P_mat[1][2] * -1.0 / detvalue * cap_freq_mult;
@@ -783,7 +783,7 @@ void overhead_line::recalc(void)
 			}
 			else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
 			{
-				complex detvalue = P_mat[0][0]*P_mat[1][1]*P_mat[2][2] - P_mat[0][0]*P_mat[1][2]*P_mat[2][1] - P_mat[0][1]*P_mat[1][0]*P_mat[2][2] + P_mat[0][1]*P_mat[2][0]*P_mat[1][2] + P_mat[1][0]*P_mat[0][2]*P_mat[2][1] - P_mat[0][2]*P_mat[1][1]*P_mat[2][0];
+				gld::complex detvalue = P_mat[0][0]*P_mat[1][1]*P_mat[2][2] - P_mat[0][0]*P_mat[1][2]*P_mat[2][1] - P_mat[0][1]*P_mat[1][0]*P_mat[2][2] + P_mat[0][1]*P_mat[2][0]*P_mat[1][2] + P_mat[1][0]*P_mat[0][2]*P_mat[2][1] - P_mat[0][2]*P_mat[1][1]*P_mat[2][0];
 
 				//Invert it
 				Yabc_mat[0][0] = (P_mat[1][1]*P_mat[2][2] - P_mat[1][2]*P_mat[2][1]) / detvalue * cap_freq_mult;

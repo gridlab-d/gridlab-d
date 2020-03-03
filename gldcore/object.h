@@ -10,7 +10,7 @@
 //#pragma GCC push_options
 //#pragma GCC optimize ("O0")
 
-#include "complex.h"
+#include "gld_complex.h"
 #include "timestamp.h"
 #include "class.h"
 #include "aggregate.h"
@@ -233,7 +233,7 @@ public:
 	} file;
 	struct s_objvar_struct {
 		bool *(*bool_var)(OBJECT *obj, PROPERTY *prop);
-		complex *(*complex_var)(OBJECT *obj, PROPERTY *prop);
+		gld::complex *(*complex_var)(OBJECT *obj, PROPERTY *prop);
 		enumeration *(*enum_var)(OBJECT *obj, PROPERTY *prop);
 		set *(*set_var)(OBJECT *obj, PROPERTY *prop);
 		int16 *(*int16_var)(OBJECT *obj, PROPERTY *prop);
@@ -245,7 +245,7 @@ public:
 	} objvar;
 	struct s_objvar_name_struct {
 		bool *(*bool_var)(OBJECT *obj, const char *name);
-		complex *(*complex_var)(OBJECT *obj, const char *name);
+		gld::complex *(*complex_var)(OBJECT *obj, const char *name);
 		enumeration *(*enum_var)(OBJECT *obj, const char *name);
 		set *(*set_var)(OBJECT *obj, const char *name);
 		int16 *(*int16_var)(OBJECT *obj, const char *name);
@@ -361,7 +361,7 @@ int object_set_int16_by_name(OBJECT *obj, const PROPERTYNAME name, int16 value);
 int object_set_int32_by_name(OBJECT *obj, const PROPERTYNAME name, int32 value);
 int object_set_int64_by_name(OBJECT *obj, const PROPERTYNAME name, int64 value);
 int object_set_double_by_name(OBJECT *obj, const PROPERTYNAME name, double value);
-int object_set_complex_by_name(OBJECT *obj, const PROPERTYNAME name, complex value);
+int object_set_complex_by_name(OBJECT *obj, const PROPERTYNAME name, gld::complex value);
 int object_get_value_by_name(OBJECT *obj, const PROPERTYNAME name, char *value, int size);
 int object_get_value_by_addr(OBJECT *obj, void *addr, char *value, int size, PROPERTY *prop);
 int object_set_value_by_type(PROPERTYTYPE,void *addr, char *value);
@@ -391,10 +391,10 @@ int64 *object_get_int64(OBJECT *obj, PROPERTY *prop);
 int64 *object_get_int64_by_name(OBJECT *obj, const char *name);
 double *object_get_double(OBJECT *pObj, PROPERTY *prop);
 double *object_get_double_by_name(OBJECT *pObj, const char *name);
-complex *object_get_complex(OBJECT *pObj, PROPERTY *prop);
-complex *object_get_complex_by_name(OBJECT *pObj, const char *name);
+gld::complex *object_get_complex(OBJECT *pObj, PROPERTY *prop);
+gld::complex *object_get_complex_by_name(OBJECT *pObj, const char *name);
 double *object_get_double_quick(OBJECT *pObj, PROPERTY *prop);
-complex *object_get_complex_quick(OBJECT *pObj, PROPERTY *prop);
+gld::complex *object_get_complex_quick(OBJECT *pObj, PROPERTY *prop);
 char *object_get_string(OBJECT *pObj, PROPERTY *prop);
 char *object_get_string_by_name(OBJECT *obj, const char *name);
 FUNCTIONADDR object_get_function(CLASSNAME classname, FUNCTIONNAME functionname);

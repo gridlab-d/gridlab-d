@@ -28,7 +28,7 @@
 #include "output.h"
 #include "exception.h"
 #include "globals.h"
-#include "complex.h"
+#include "gld_complex.h"
 #include "lock.h"
 #include "platform.h"
 #include "exec.h"

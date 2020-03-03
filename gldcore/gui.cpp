@@ -8,7 +8,7 @@
  */
 
 #include <stdlib.h>
-#include "complex.h"
+#include "gld_complex.h"
 #include "object.h"
 #include "load.h"
 #include "output.h"

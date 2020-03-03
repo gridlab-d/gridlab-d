@@ -48,13 +48,13 @@ public:
 	transformer **pTransformer;
 	TIMESTAMP runtime;
 	int32 runcount;
-	complex *node_voltage;
+	gld::complex *node_voltage;
 	double min_volt_value;
 	double max_volt_value;
 
 private:
 	double get_double_value(OBJECT *obj, const char *name);
-	complex get_complex_value(OBJECT *obj, const char *name);
+	gld::complex get_complex_value(OBJECT *obj, const char *name);
 	set get_set_value(OBJECT *obj, const char *name);
 	enumeration get_enum_value(OBJECT *obj, const char *name);
 	OBJECT *get_object_value(OBJECT *obj, const char *name);

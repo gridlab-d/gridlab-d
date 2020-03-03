@@ -18,7 +18,7 @@
 
 EXPORT STATUS preupdate_inverter(OBJECT *obj,TIMESTAMP t0, unsigned int64 delta_time);
 EXPORT SIMULATIONMODE interupdate_inverter(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
-EXPORT STATUS postupdate_inverter(OBJECT *obj, complex *useful_value, unsigned int mode_pass);
+EXPORT STATUS postupdate_inverter(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass);
 EXPORT STATUS inverter_NR_current_injection_update(OBJECT *obj);
 
 //Alternative PI version Dynamic control Inverter state variable structure
@@ -33,8 +33,8 @@ typedef struct {
 	double mq[3];			///< The q axis current modulator of the inverter
 	double dmd[3];			///< The change in d axis current modulator of the inverter
 	double dmq[3];			///< The change in q axis current modulator of the inverter
-	complex Idq[3];			///< The dq axis current output of the inverter
-	complex Iac[3];	///< The AC current out of the inverter terminals
+	gld::complex Idq[3];			///< The dq axis current output of the inverter
+	gld::complex Iac[3];	///< The AC current out of the inverter terminals
 
 	// Terminal voltage state variable for VSI isochronous mode
 	double V_StateVal[3];	// Magnitude of the VSI terminal voltage
@@ -71,14 +71,14 @@ typedef struct {
 
 //Simple PID controller
 typedef struct {
-	complex error[3];
-	complex mod_vals[3];
-	complex integrator_vals[3];
-	complex derror[3];
-	complex current_vals_ref[3];	//Reference-framed current values
-	complex current_vals[3];		//Unrotated "powerflow-postable" current values
-	complex current_set_raw[3];	//Actual current value
-	complex current_set[3];		//Current rotated to common reference frame
+	gld::complex error[3];
+	gld::complex mod_vals[3];
+	gld::complex integrator_vals[3];
+	gld::complex derror[3];
+	gld::complex current_vals_ref[3];	//Reference-framed current values
+	gld::complex current_vals[3];		//Unrotated "powerflow-postable" current values
+	gld::complex current_set_raw[3];	//Actual current value
+	gld::complex current_set[3];		//Current rotated to common reference frame
 	double reference_angle[3];	//Reference angle tracking
 	double max_error_val;
 	double phase_Pref;
@@ -98,10 +98,10 @@ private:
 	bool first_run;
 
 	gld_property *pIGenerated[3];				//Link to direct current injections to powerflow at bus-level
-	complex generator_admittance[3][3];	//Generator admittance matrix converted from sequence values
-	complex prev_VA_out[3];				//Previous state tracking variable for ramp-rate calculations
-	complex curr_VA_out[3];				//Current state tracking variable for ramp-rate calculations
-	complex value_IGenerated[3];		//Value/accumulator for IGenerated values
+	gld::complex generator_admittance[3][3];	//Generator admittance matrix converted from sequence values
+	gld::complex prev_VA_out[3];				//Previous state tracking variable for ramp-rate calculations
+	gld::complex curr_VA_out[3];				//Current state tracking variable for ramp-rate calculations
+	gld::complex value_IGenerated[3];		//Value/accumulator for IGenerated values
 	double Pref_prev;					//Previous Pref value in the same time step for non-VSI droop mode ramp-rate calculations
 	double Qref_prev[3];				//Previous Qref value in the same time step for non-VSI droop mode ramp-rate calculations
 
@@ -126,10 +126,10 @@ public:
 	enumeration inverter_dyn_mode;
 	enumeration gen_status_v;
 	//INVERTER_TYPE inverter_type_choice;
-	complex V_In; // V_in (DC)
+	gld::complex V_In; // V_in (DC)
 	double Vdc;
-	complex I_In; // I_in (DC)
-	complex VA_In; //power in (DC)
+	gld::complex I_In; // I_in (DC)
+	gld::complex VA_In; //power in (DC)
 
 	double efficiency;
 
@@ -137,8 +137,8 @@ public:
 	enum PF_REG_STATUS {REGULATING = 1, IDLING = 2} pf_reg_status;
 	enum LOAD_FOLLOW_STATUS {IDLE=0, DISCHARGE=1, CHARGE=2} load_follow_status;	//Status variable for what the load_following mode is doing
 
-	complex VA_Out;
-	complex VA_Out_past;
+	gld::complex VA_Out;
+	gld::complex VA_Out_past;
 	double P_Out;  // P_Out and Q_Out are set by the user as set values to output in CONSTANT_PQ mode
 	double Q_Out;
 	double p_in; // the power into the inverter from the DC side
@@ -152,17 +152,17 @@ public:
 	double V_Set_B;
 	double V_Set_C;
 	double margin;
-	complex I_out_prev;
-	complex I_step_max;
+	gld::complex I_out_prev;
+	gld::complex I_step_max;
 	double C_Storage_In;
 	double power_factor;
 	double P_Out_t0;
 	double Q_Out_t0;
 	double power_factor_t0;
 
-	complex V_In_Set_A;
-	complex V_In_Set_B;
-	complex V_In_Set_C; 
+	gld::complex V_In_Set_A;
+	gld::complex V_In_Set_B;
+	gld::complex V_In_Set_C;
 	double output_frequency;
 	
 	double pCircuit_V_Avg;          // average value of 3 phase terminal voltage
@@ -211,7 +211,7 @@ public:
 	double V_angle[3];       // Voltage angle measured at inverter voltage source beind filter after entering the delta mode
 	double V_mag_ref[3]; 			// Initial voltage magnitude of VSI terminal voltage, used as reference values
 	double V_mag[3]; 			// Voltage magnitude of the inverter voltage source
-	complex e_source[3]; 	  // Voltage source behind the filter
+	gld::complex e_source[3]; 	  // Voltage source behind the filter
 	double Tp_delay;	  // Time delay for feeder real power changes seen by inverter droop control
 	double Tq_delay;	  // Time delay for feeder reactive power changes seen by inverter droop control
 
@@ -222,22 +222,22 @@ public:
 	double rampUpRate_reactive;		//Maximum power increase rate for reactive power
 	double rampDownRate_reactive;	//Maximum power decrease rate for reactive power
 
-	complex phaseA_I_Out_prev;      // current
-	complex phaseB_I_Out_prev;
-	complex phaseC_I_Out_prev;
+	gld::complex phaseA_I_Out_prev;      // current
+	gld::complex phaseB_I_Out_prev;
+	gld::complex phaseC_I_Out_prev;
 
-	complex phaseA_V_Out;//voltage
-	complex phaseB_V_Out;
-	complex phaseC_V_Out;
-	complex phaseA_I_Out;      // current
-	complex phaseB_I_Out;
-	complex phaseC_I_Out;
-	complex power_val[3];	//power
-	complex p_clip_A;
-	complex p_clip_B;
-	complex p_clip_C;
-	complex last_current[4];	//Previously applied power output (used to remove from parent so XML files look proper)
-	complex last_power[4];		//Previously applied power output (as constant power) - used to remove from parent so XML looks right
+	gld::complex phaseA_V_Out;//voltage
+	gld::complex phaseB_V_Out;
+	gld::complex phaseC_V_Out;
+	gld::complex phaseA_I_Out;      // current
+	gld::complex phaseB_I_Out;
+	gld::complex phaseC_I_Out;
+	gld::complex power_val[3];	//power
+	gld::complex p_clip_A;
+	gld::complex p_clip_B;
+	gld::complex p_clip_C;
+	gld::complex last_current[4];	//Previously applied power output (used to remove from parent so XML files look proper)
+	gld::complex last_power[4];		//Previously applied power output (as constant power) - used to remove from parent so XML looks right
 	bool islanded;			//ces/nas islanding special boolean.
 
 	//properties for multipoint efficiency model. The model used is from Sandia National Laboratory's 2007 paper "Performance Model For Grid-Connected Photovoltaic Inverters".
@@ -398,14 +398,14 @@ private:
 	gld_property *pMeterStatus;						///< Pointer to service_status variable on meter parent
 	
 	//Default or "connecting point" values for powerflow interactions
-	complex value_Circuit_V[3];					///< value holeder for the three L-N voltage fields
-	complex value_Line_I[3];					///< value holeder for the three current fields
-	complex value_Line_unrotI[3];				///< value holeder for the three pre-rotated current fields
-	complex value_Power[3];						///< value holeder for power value on meter parent
-	complex value_Line12;						//< value holder for triplex L-L variable
-	complex value_Power12;						//< value holder for triplex L-L variable
+	gld::complex value_Circuit_V[3];					///< value holeder for the three L-N voltage fields
+	gld::complex value_Line_I[3];					///< value holeder for the three current fields
+	gld::complex value_Line_unrotI[3];				///< value holeder for the three pre-rotated current fields
+	gld::complex value_Power[3];						///< value holeder for power value on meter parent
+	gld::complex value_Line12;						//< value holder for triplex L-L variable
+	gld::complex value_Power12;						//< value holder for triplex L-L variable
 	enumeration value_MeterStatus;				///< value holder for service_status variable on meter parent
-	complex value_Meter_I[3];					///< value holder for meter measured current on three lines
+	gld::complex value_Meter_I[3];					///< value holder for meter measured current on three lines
 
 	//int number_of_phases_out;	//Count for number of phases
 	bool phaseAOut;
@@ -435,8 +435,8 @@ private:
 
 	TIMESTAMP start_time;				//Recording start time of simulation
 
-	complex last_I_Out[3];
-	complex I_Out[3];
+	gld::complex last_I_Out[3];
+	gld::complex I_Out[3];
 	double last_I_In;
 
 	// Volt-Watt variables
@@ -486,16 +486,16 @@ public:
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 	STATUS pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time);
 	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
-	STATUS post_deltaupdate(complex *useful_value, unsigned int mode_pass);
+	STATUS post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass);
 	double perform_1547_checks(double timestepvalue);
 	STATUS updateCurrInjection();
-	complex check_VA_Out(complex temp_VA, double p_max);
+	gld::complex check_VA_Out(gld::complex temp_VA, double p_max);
 	double getEff(double val);
 public:
 	static CLASS *oclass;
 	static inverter *defaults;
 	static CLASS *plcass;
-	complex complex_exp(double angle);
+	gld::complex complex_exp(double angle);
 	STATUS init_PI_dynamics(INV_STATE *curr_time);
 	STATUS init_PID_dynamics(void);
 #ifdef OPTIONAL

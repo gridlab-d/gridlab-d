@@ -43,14 +43,6 @@
 	#define stricmp strcasecmp	/**< deprecated stricmp */
 	#define strnicmp strncasecmp /**< deprecated strnicmp */
 	#define strtok_s strtok_r
-	#if !defined(_WIN32) && !defined(isfinite)
-		#if __cplusplus
-			#define isfinite std::isfinite
-		#else
-			#define isfinite finite
-		#endif
-	#endif
-
 	#ifdef X64
 		#define NATIVE int64	/**< native integer size */
 	#else

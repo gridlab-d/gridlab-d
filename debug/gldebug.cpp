@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
-#include <complex.h>
+#include <gld_complex.h>
 #include <signal.h>
 
 #define CONSOLE /* enables console/curses support */

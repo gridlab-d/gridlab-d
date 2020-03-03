@@ -468,7 +468,7 @@ int group_recorder::read_line(){
 		// GETADDR is a macro defined in object.h
 		if(curr->prop.ptype == PT_complex && complex_part != NONE){
 			double part_value = 0.0;
-			complex *cptr = 0;
+			gld::complex *cptr = 0;
 			// get value as a complex
 			cptr = gl_get_complex(curr->obj, &(curr->prop));
 			if(0 == cptr){

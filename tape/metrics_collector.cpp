@@ -863,7 +863,7 @@ int metrics_collector::read_line(OBJECT *obj){
 		wh_temp_array[curr_index] = *gl_get_double(obj->parent, propWaterTemp);
 	}
 	else if (strcmp(parent_string, "inverter") == 0) {
-		complex VAOut = *gl_get_complex(obj->parent, propInverterS);
+		gld::complex VAOut = *gl_get_complex(obj->parent, propInverterS);
 		real_power_array[curr_index] = (double)VAOut.Re();
 		reactive_power_array[curr_index] = (double)VAOut.Im();
 	}
@@ -879,7 +879,7 @@ int metrics_collector::read_line(OBJECT *obj){
 	}
 	else if (strcmp(parent_string, "swingbus") == 0) {
 		// Get VAfeeder values
-		complex VAfeeder;
+		gld::complex VAfeeder;
 		if (gl_object_isa(obj->parent, const_cast<char *>("substation"))) {
 			VAfeeder = *gl_get_complex(obj->parent, propSwingSubLoad);
 		} else {
@@ -890,7 +890,7 @@ int metrics_collector::read_line(OBJECT *obj){
 		// Feeder Losses calculation
 		int index = 0;
 		obj = NULL;
-		complex lossesSum = 0.0;
+		gld::complex lossesSum = 0.0;
 		while(obj = gl_find_next(link_objects,obj)){
 			if(index >= link_objects->hit_count){
 				break;
@@ -905,7 +905,7 @@ int metrics_collector::read_line(OBJECT *obj){
 					gl_error("Unable to map the object as link.");
 					return 0;
 				}
-				complex loss = one_link->power_loss;
+				gld::complex loss = one_link->power_loss;
 				// real power losses should be positive
 				if (loss.Re() < 0) {
 					loss.Re() = -loss.Re();

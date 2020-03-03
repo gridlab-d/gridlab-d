@@ -1,47 +1,61 @@
 project(tape)
 
-include_directories(../${GLDCORE_LOC})
-#include_directories(../third_party/jsonCpp)
-#SET( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -I../third_party/jsonCpp" )
-
 add_library(${PROJECT_NAME}
-        tape/collector.cpp
-        tape/collector.h
-        tape/file.cpp
-        tape/file.h
-        tape/group_recorder.h
-        tape/group_recorder.cpp
-        tape/metrics_collector.cpp
-        tape/metrics_collector.h
-        tape/metrics_collector_writer.cpp
-        tape/metrics_collector_writer.h
-        tape/violation_recorder.h
-        tape/violation_recorder.cpp
-        tape/histogram.cpp
-        tape/histogram.h
-        tape/loadshape.cpp
-        tape/loadshape.h
-        tape/main.cpp
-        tape/memory.cpp
-        tape/memory.h
-        tape/multi_recorder.cpp
-        tape/multi_recorder.h
-#        tape/odbc.cpp
-#        tape/odbc.h
-        tape/player.cpp
-        tape/player.h
-        tape/recorder.cpp
-        tape/recorder.h
-        tape/shaper.cpp
-        tape/shaper.h
-        tape/tape.cpp
-        tape/tape.h
+        collector.cpp
+        collector.h
+        file.cpp
+        file.h
+        group_recorder.h
+        group_recorder.cpp
+        metrics_collector.cpp
+        metrics_collector.h
+        metrics_collector_writer.cpp
+        metrics_collector_writer.h
+        violation_recorder.h
+        violation_recorder.cpp
+        histogram.cpp
+        histogram.h
+        loadshape.cpp
+        loadshape.h
+        main.cpp
+        memory.cpp
+        memory.h
+        multi_recorder.cpp
+        multi_recorder.h
+        #        odbc.cpp
+        #        odbc.h
+        player.cpp
+        player.h
+        recorder.cpp
+        recorder.h
+        shaper.cpp
+        shaper.h
+        tape.cpp
+        tape.h
         )
 
-set_target_properties(${PROJECT_NAME}
-        PROPERTIES PREFIX ""
+target_include_directories(${PROJECT_NAME} PRIVATE
+        "${CMAKE_SOURCE_DIR}/third_party/jsonCpp"
+        "${CMAKE_SOURCE_DIR}/third_party/Eigen"
+        )
+target_link_libraries(${PROJECT_NAME} PRIVATE
+        jsoncpp_lib
+        Eigen3::Eigen
         )
 
-target_link_libraries(${PROJECT_NAME} jsoncpp_lib)
+set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
+target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
+target_link_libraries(${PROJECT_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
 
-target_link_libraries(${PROJECT_NAME} ${OS_SPECIFIC_LIBRARIES})
+install(TARGETS ${PROJECT_NAME}
+        ${FILE_PERMISSIONS}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        COMPONENT library)
+
+if (GLD_USE_CLANG_TIDY)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+            CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}"
+            )
+endif ()

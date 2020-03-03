@@ -175,7 +175,7 @@ static int compare_property(OBJECT *obj, char *propname, FINDOP op, void *value)
 	@return boolean value
 **/
 static int compare_property_alt(OBJECT *obj, char *propname, FINDOP op, void *value){
-	complex *complex_target = NULL;
+	gld::complex *complex_target = NULL;
 	char *char_target = NULL;
 	int16 *int16_target = NULL;
 	int32 *int32_target = NULL;

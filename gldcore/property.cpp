@@ -35,7 +35,7 @@ PROPERTYSPEC property_type[_PT_LAST] = {
 				int,
 				void *,
 				PROPERTY *)>(stream_double),                                                                                                        {TCOPS(double)},},
-		{"complex",       "string",  sizeof(complex),       48,                 convert_from_complex,        convert_to_complex,        NULL, NULL, {TCOPS(double)}, complex_get_part},
+		{"complex",       "string",  sizeof(gld::complex),  48,                 convert_from_complex,        convert_to_complex,        NULL, NULL, {TCOPS(double)}, complex_get_part},
 		{"enumeration",   "string",  sizeof(int32),         32,                 convert_from_enumeration,    convert_to_enumeration,    NULL, NULL, {TCOPS(uint64)},},
 		{"set",           "string",  sizeof(int64),         32,                 convert_from_set,            convert_to_set,            NULL, NULL, {TCOPS(uint64)},},
 		{"int16",         "integer", sizeof(int16),         6,                  convert_from_int16,          convert_to_int16,          NULL, NULL, {TCOPS(uint16)},},
@@ -88,7 +88,7 @@ int property_check(void)
 		size_t sz = 0;
 		switch (ptype) {
 		case PT_double: sz = sizeof(double); break;
-		case PT_complex: sz = sizeof(complex); break;
+		case PT_complex: sz = sizeof(gld::complex); break;
 		case PT_enumeration: sz = sizeof(enumeration); break;
 		case PT_set: sz = sizeof(set); break;
 		case PT_int16: sz = sizeof(int16); break;
@@ -293,7 +293,7 @@ double property_get_part(OBJECT *obj, PROPERTY *prop, char *part)
  *********************************************************/
 double complex_get_part(void *x, char *name)
 {
-	complex *c = (complex*)x;
+	gld::complex *c = (gld::complex*)x;
 	if ( strcmp(name,"real")==0) return c->Re();
 	if ( strcmp(name,"imag")==0) return c->Im();
 	if ( strcmp(name,"mag")==0) return c->Mag(); // complex_get_mag(*c);

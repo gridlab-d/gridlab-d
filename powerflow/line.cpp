@@ -146,11 +146,11 @@ int line::isa(char *classname)
 	return strcmp(classname,"line")==0 || link_object::isa(classname);
 }
 
-void line::load_matrix_based_configuration(complex Zabc_mat[3][3], complex Yabc_mat[3][3])
+void line::load_matrix_based_configuration(gld::complex Zabc_mat[3][3], gld::complex Yabc_mat[3][3])
 {
 	line_configuration *config = OBJECTDATA(configuration, line_configuration);
 	double miles;
-	complex cap_freq_mult;
+	gld::complex cap_freq_mult;
 
 	// ft -> miles as z-matrix and c-matrix values are specified in Ohms / nF per mile.
 	miles = length / 5280.0;
@@ -158,7 +158,7 @@ void line::load_matrix_based_configuration(complex Zabc_mat[3][3], complex Yabc_
 	//Set capacitor frequency/distance/scaling factor (rad/s*S)
 	//scale factor allows for the fact that the internal representation of the C matrix
 	//is specified in nF/mile and converts back to Siemens
-	cap_freq_mult = complex(0,(2.0*PI*nominal_frequency*0.000000001*miles));
+	cap_freq_mult = gld::complex(0,(2.0*PI*nominal_frequency*0.000000001*miles));
 
 	// Setting Zabc_mat based on the z-matrix configuration parameters
 	// Setting Yabc_mat based on the c-matrix configuration parameters and the application of Kersting (5.15)
@@ -223,9 +223,9 @@ void line::load_matrix_based_configuration(complex Zabc_mat[3][3], complex Yabc_
 	}
 }
 
-void line::recalc_line_matricies(complex Zabc_mat[3][3], complex Yabc_mat[3][3])
+void line::recalc_line_matricies(gld::complex Zabc_mat[3][3], gld::complex Yabc_mat[3][3])
 {
-	complex U_mat[3][3], temp_mat[3][3];
+	gld::complex U_mat[3][3], temp_mat[3][3];
 
 	// Setup unity matrix
 	U_mat[0][0] = U_mat[1][1] = U_mat[2][2] = 1.0;
@@ -274,21 +274,21 @@ void line::recalc_line_matricies(complex Zabc_mat[3][3], complex Yabc_mat[3][3])
 	if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
 	{
 		//Inverted value
-		A_mat[0][0] = complex(1.0) / a_mat[0][0];
+		A_mat[0][0] = gld::complex(1.0) / a_mat[0][0];
 	}
 	else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //only B
 	{
 		//Inverted value
-		A_mat[1][1] = complex(1.0) / a_mat[1][1];
+		A_mat[1][1] = gld::complex(1.0) / a_mat[1][1];
 	}
 	else if (!has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //only C
 	{
 		//Inverted value
-		A_mat[2][2] = complex(1.0) / a_mat[2][2];
+		A_mat[2][2] = gld::complex(1.0) / a_mat[2][2];
 	}
 	else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //has A & C
 	{
-		complex detvalue = a_mat[0][0]*a_mat[2][2] - a_mat[0][2]*a_mat[2][0];
+		gld::complex detvalue = a_mat[0][0]*a_mat[2][2] - a_mat[0][2]*a_mat[2][0];
 
 		//Inverted value
 		A_mat[0][0] = a_mat[2][2] / detvalue;
@@ -298,7 +298,7 @@ void line::recalc_line_matricies(complex Zabc_mat[3][3], complex Yabc_mat[3][3])
 	}
 	else if (has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //has A & B
 	{
-		complex detvalue = a_mat[0][0]*a_mat[1][1] - a_mat[0][1]*a_mat[1][0];
+		gld::complex detvalue = a_mat[0][0]*a_mat[1][1] - a_mat[0][1]*a_mat[1][0];
 
 		//Inverted value
 		A_mat[0][0] = a_mat[1][1] / detvalue;
@@ -308,7 +308,7 @@ void line::recalc_line_matricies(complex Zabc_mat[3][3], complex Yabc_mat[3][3])
 	}
 	else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C))	//has B & C
 	{
-		complex detvalue = a_mat[1][1]*a_mat[2][2] - a_mat[1][2]*a_mat[2][1];
+		gld::complex detvalue = a_mat[1][1]*a_mat[2][2] - a_mat[1][2]*a_mat[2][1];
 
 		//Inverted value
 		A_mat[1][1] = a_mat[2][2] / detvalue;
@@ -318,7 +318,7 @@ void line::recalc_line_matricies(complex Zabc_mat[3][3], complex Yabc_mat[3][3])
 	}
 	else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
 	{
-		complex detvalue = a_mat[0][0]*a_mat[1][1]*a_mat[2][2] - a_mat[0][0]*a_mat[1][2]*a_mat[2][1] - a_mat[0][1]*a_mat[1][0]*a_mat[2][2] + a_mat[0][1]*a_mat[2][0]*a_mat[1][2] + a_mat[1][0]*a_mat[0][2]*a_mat[2][1] - a_mat[0][2]*a_mat[1][1]*a_mat[2][0];
+		gld::complex detvalue = a_mat[0][0]*a_mat[1][1]*a_mat[2][2] - a_mat[0][0]*a_mat[1][2]*a_mat[2][1] - a_mat[0][1]*a_mat[1][0]*a_mat[2][2] + a_mat[0][1]*a_mat[2][0]*a_mat[1][2] + a_mat[1][0]*a_mat[0][2]*a_mat[2][1] - a_mat[0][2]*a_mat[1][1]*a_mat[2][0];
 
 		//Invert it
 		A_mat[0][0] = (a_mat[1][1]*a_mat[2][2] - a_mat[1][2]*a_mat[2][1]) / detvalue;

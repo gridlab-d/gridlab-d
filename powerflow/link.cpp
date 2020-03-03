@@ -8061,8 +8061,11 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			pf_mesh_fault_values.NodeRefNum = NR_branchdata[NR_branch_reference].to;
 
 			//Call the powerflow/impednace creater
-			pf_resultval = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, pf_solvermode, &pf_mesh_fault_values, &pf_badcompute);
-
+#ifndef GLD_USE_EIGEN
+        pf_resultval = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, pf_solvermode, &pf_mesh_fault_values, &pf_badcompute);
+#else
+        pf_resultval = 0;
+#endif
 			//Check the output
 			if ((pf_badcompute == true) || (pf_mesh_fault_values.return_code != 1) || (pf_resultval <= 0))
 			{

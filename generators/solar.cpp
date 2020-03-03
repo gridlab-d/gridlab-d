@@ -166,9 +166,9 @@ int solar::create(void)
 	currTemp = 15.0;	//Start at a reasonable ambient temp (degC)
 	prevTime = 0;
 	Rated_Insolation = 92.902; //W/Sf for 1000 W/m2
-    V_Max = complex (27.1,0);  // max. power voltage (Vmp) from GE solar cell performance charatcetristics
-	Voc_Max = complex(34,0); //taken from GEPVp-200-M-Module performance characteristics
-	Voc = complex (34,0);  //taken from GEPVp-200-M-Module performance characteristics
+    V_Max = gld::complex (27.1,0);  // max. power voltage (Vmp) from GE solar cell performance charatcetristics
+	Voc_Max = gld::complex(34,0); //taken from GEPVp-200-M-Module performance characteristics
+	Voc = gld::complex (34,0);  //taken from GEPVp-200-M-Module performance characteristics
 	P_Out = 0.0;
 
 	area = 0; //sq f , 30m2
@@ -212,8 +212,8 @@ int solar::create(void)
 	inverter_current_property = NULL;
 
 	//Default versions
-	default_voltage_array = complex(0.0,0.0);
-	default_current_array = complex(0.0,0.0);
+	default_voltage_array = gld::complex(0.0,0.0);
+	default_current_array = gld::complex(0.0,0.0);
 	
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -858,7 +858,7 @@ int solar::init(OBJECT *parent)
 		}
 
 		//Set the local voltage value
-		default_voltage_array = complex(V_Max.Re()/sqrt(3.0),0);
+		default_voltage_array = gld::complex(V_Max.Re()/sqrt(3.0),0);
 	}
 
 	climate_result=init_climate();
@@ -947,7 +947,7 @@ int solar::init(OBJECT *parent)
 
 TIMESTAMP solar::presync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	I_Out = complex(0.0,0.0);
+	I_Out = gld::complex(0.0,0.0);
 	
 	TIMESTAMP t2 = TS_NEVER;
 	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
@@ -1163,8 +1163,8 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
      I_Out = (VA_Out/V_Out);
 
 	//Export the values
-	inverter_voltage_property->setp<complex>(V_Out,*test_rlock);
-	inverter_current_property->setp<complex>(I_Out,*test_rlock);
+	inverter_voltage_property->setp<gld::complex>(V_Out,*test_rlock);
+	inverter_current_property->setp<gld::complex>(I_Out,*test_rlock);
 
 	return TS_NEVER; 
 }

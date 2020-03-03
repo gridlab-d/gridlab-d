@@ -35,10 +35,10 @@
 
  *  In the current implementation, the HVAC equipment is defined
  *  as part of the house_e and attached to the electrical panel
- *  with a 50 amp/220-240V circuit.  
-   
+ *  with a 50 amp/220-240V circuit.
+
  *  @par Commercial building connections
- *  
+ *
  *  House_e is also used to represent commercial building zones.
  *  Most commercial buildings are connected to three-phase
  *  transformers at either 208 or 480 volts. In such cases, the
@@ -55,7 +55,7 @@
  *  transformes as assumed in house_e, and those smaller
  *  commercial buildings can have single-phase loads at 120 or
  *  240 volts.
- *  
+ *
  *  In order to accurately represent the voltage drop and load
  *  balancing in commercial three-phase service, the house_e can
  *  be connected to a regular load (up to 3 phases) instead of
@@ -114,7 +114,7 @@
 #include <math.h>
 #include "solvers.h"
 #include "house_e.h"
-#include "complex.h"
+#include "gld_complex.h"
 
 #ifndef WIN32
 char *_strlwr(char *s)
@@ -777,14 +777,14 @@ int house_e::create()
 	pPhases = NULL;
 	externalPhases = 0;
 	numPhases = 0;
-	
+
 	//Powerflow values -- set defaults here
-	value_Circuit_V[0] = complex(2.0*default_line_voltage,0.0);	//Duplicates old method
-	value_Circuit_V[1] = complex(default_line_voltage,0.0);
-	value_Circuit_V[2] = complex(default_line_voltage,0.0);
-	value_Line_I[0] = value_Line_I[1] = value_Line_I[2] = complex(0.0,0.0);
-	value_Shunt[0] = value_Shunt[1] = value_Shunt[2] = complex(0.0,0.0);
-	value_Power[0] = value_Power[1] = value_Power[2] = complex(0.0,0.0);
+	value_Circuit_V[0] = gld::complex(2.0*default_line_voltage,0.0);	//Duplicates old method
+	value_Circuit_V[1] = gld::complex(default_line_voltage,0.0);
+	value_Circuit_V[2] = gld::complex(default_line_voltage,0.0);
+	value_Line_I[0] = value_Line_I[1] = value_Line_I[2] = gld::complex(0.0,0.0);
+	value_Shunt[0] = value_Shunt[1] = value_Shunt[2] = gld::complex(0.0,0.0);
+	value_Power[0] = value_Power[1] = value_Power[2] = gld::complex(0.0,0.0);
 	value_MeterStatus = 1;
 	value_Frequency = 60.0;
 
@@ -1330,7 +1330,7 @@ int house_e::init(OBJECT *parent)
 
 	// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
 	OBJECT *obj = OBJECTHDR(this);
-	
+
 	if (parent!=NULL && (gl_object_isa(parent,"triplex_meter","powerflow") || gl_object_isa(obj->parent,"triplex_node","powerflow") || gl_object_isa(parent,"triplex_load","powerflow")))	// for single-phase houses
 	{
 		//Map to the triplex variable for houses
@@ -1487,7 +1487,7 @@ int house_e::init(OBJECT *parent)
 		if (externalPhases & 1) numPhases += 1;
 		if (externalPhases & 2) numPhases += 1;
 		if (externalPhases & 4) numPhases += 1;
-//		gl_output ("house: %s is commercial with turns ratio %g and %d phases, set = %d", 
+//		gl_output ("house: %s is commercial with turns ratio %g and %d phases, set = %d",
 //				   obj->name, internalTurnsRatio, numPhases, externalPhases);
 
 		// set flags for the powerflow interface
@@ -1499,9 +1499,9 @@ int house_e::init(OBJECT *parent)
 		gl_warning("house_e:%d %s; using static voltages", obj->id, parent==NULL?"has no parent triplex_meter defined":"parent is not a triplex_meter");
 
 		//Set the default voltage to the global - others are already "mapped", so we just leave them be
-		value_Circuit_V[0] = complex(2.0*default_line_voltage,0.0);	//Assumes a triplex "L1-L2" connection"
-		value_Circuit_V[1] = complex(default_line_voltage,0.0);
-		value_Circuit_V[2] = complex(default_line_voltage,0.0);
+		value_Circuit_V[0] = gld::complex(2.0*default_line_voltage,0.0);	//Assumes a triplex "L1-L2" connection"
+		value_Circuit_V[1] = gld::complex(default_line_voltage,0.0);
+		value_Circuit_V[2] = gld::complex(default_line_voltage,0.0);
 
 		//Map to ourselves -- mostly so enduse loads behave properly
 		pCircuit_V[0] = map_complex_value(obj,"voltage_12");
@@ -1524,7 +1524,7 @@ int house_e::init(OBJECT *parent)
 
 	// set defaults for panel/meter variables
 	if (panel.max_amps==0) panel.max_amps = 200; 
-	load.power = complex(0,0,J);
+	load.power = gld::complex(0,0,J);
 
 	// old-style HVAC system variable mapping
 
@@ -2409,7 +2409,7 @@ void house_e::update_system(double dt)
 						hvac_motor_reactive_loss = sqrt( 1 / (hvac_motor_loss_power_factor*hvac_motor_loss_power_factor) - 1) * hvac_motor_real_loss;
 					}
 
-					load.admittance += complex(hvac_motor_real_loss,hvac_motor_reactive_loss);
+					load.admittance += gld::complex(hvac_motor_real_loss,hvac_motor_reactive_loss);
 				}
 				else if (motor_model == MM_FULL)
 					gl_warning("FULL motor model is not yet supported. No losses are assumed.");
@@ -2470,9 +2470,9 @@ TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1)
 	extern void allocate_deltamode_arrays(void);
 
 	//Zero the accumulator
-	value_Power[0] = value_Power[1] = value_Power[2] = complex(0.0,0.0);
-	value_Line_I[0] = value_Line_I[1] = value_Line_I[2] = complex(0.0,0.0);
-	value_Shunt[0] = value_Shunt[1] = value_Shunt[2] = complex(0.0,0.0);
+	value_Power[0] = value_Power[1] = value_Power[2] = gld::complex(0.0,0.0);
+	value_Line_I[0] = value_Line_I[1] = value_Line_I[2] = gld::complex(0.0,0.0);
+	value_Shunt[0] = value_Shunt[1] = value_Shunt[2] = gld::complex(0.0,0.0);
 
 	/* advance the thermal state of the building */
 	if (t0>0 && dt>0)
@@ -2823,20 +2823,20 @@ TIMESTAMP house_e::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	{
 		//Put negative values in 
 		//Update power
-		value_Power[0] = complex(-1.0,0.0) * value_Power[0];
-		value_Power[1] = complex(-1.0,0.0) * value_Power[1];
-		value_Power[2] = complex(-1.0,0.0) * value_Power[2];
+		value_Power[0] = gld::complex(-1.0,0.0) * value_Power[0];
+		value_Power[1] = gld::complex(-1.0,0.0) * value_Power[1];
+		value_Power[2] = gld::complex(-1.0,0.0) * value_Power[2];
 		
 		//Current
-		value_Line_I[0] = complex(-1.0,0.0) * value_Line_I[0];
-		value_Line_I[1] = complex(-1.0,0.0) * value_Line_I[1];
-		value_Line_I[2] = complex(-1.0,0.0) * value_Line_I[2];
+		value_Line_I[0] = gld::complex(-1.0,0.0) * value_Line_I[0];
+		value_Line_I[1] = gld::complex(-1.0,0.0) * value_Line_I[1];
+		value_Line_I[2] = gld::complex(-1.0,0.0) * value_Line_I[2];
 		//Neutral not handled in here, since it was always zero anyways
 
 		//Admittance
-		value_Shunt[0] = complex(-1.0,0.0) * value_Shunt[0];
-		value_Shunt[1] = complex(-1.0,0.0) * value_Shunt[1];
-		value_Shunt[2] = complex(-1.0,0.0) * value_Shunt[2];
+		value_Shunt[0] = gld::complex(-1.0,0.0) * value_Shunt[0];
+		value_Shunt[1] = gld::complex(-1.0,0.0) * value_Shunt[1];
+		value_Shunt[2] = gld::complex(-1.0,0.0) * value_Shunt[2];
 
 		//Push up the "negative" values now - mostly so XMLs look right
 		push_complex_powerflow_values();
@@ -3192,7 +3192,7 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 	if((t0 >= simulation_beginning_time && t1 > t0) || (!heat_start)){
 		total.heatgain = 0;
 	}
-	total.total = total.power = total.current = total.admittance = complex(0,0);
+	total.total = total.power = total.current = total.admittance = gld::complex(0,0);
 
 	//Pull in the current powerflow values, if connected to a triplex_meter
 	if (proper_meter_parent == true)
@@ -3236,8 +3236,8 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 			}
 			
 			//Current flow is based on the actual load, not nominal load
-			complex actual_power = c->pLoad->power + (c->pLoad->current + c->pLoad->admittance * c->pLoad->voltage_factor)* c->pLoad->voltage_factor;
-			complex current = ~(actual_power*1000 / value_Circuit_V[(int)c->type]); 
+			gld::complex actual_power = c->pLoad->power + (c->pLoad->current + c->pLoad->admittance * c->pLoad->voltage_factor)* c->pLoad->voltage_factor;
+			gld::complex current = ~(actual_power*1000 / value_Circuit_V[(int)c->type]);
 
 			// check breaker
 			if (current.Mag()>c->max_amps)
@@ -3481,9 +3481,9 @@ void house_e::pull_complex_powerflow_values(void)
 /*
 		OBJECT *obj = OBJECTHDR(this);
     gl_output ("house: %s is commercial with %d phases and equivalent panel voltages [%g, %g, %g] angle %g",
-               obj->name, numPhases,                                                                        
-               value_Circuit_V[1].Mag(), value_Circuit_V[2].Mag(), value_Circuit_V[0].Mag(),                
-               value_Circuit_V[1].Arg());                                                                   
+               obj->name, numPhases,
+               value_Circuit_V[1].Mag(), value_Circuit_V[2].Mag(), value_Circuit_V[0].Mag(),
+               value_Circuit_V[1].Arg());
 */
 	} else {
 		value_Circuit_V[0] = pCircuit_V[0]->get_complex();
@@ -3497,32 +3497,32 @@ void house_e::pull_complex_powerflow_values(void)
 //Function to push up all changes of complex properties to powerflow from local variables
 void house_e::push_complex_powerflow_values(void)
 {
-	complex temp_complex_val;
+	gld::complex temp_complex_val;
 	gld_wlock *test_rlock;
 	int indexval;
 
 	if (commercial_load_parent == true) {
-/*    
-	OBJECT *obj = OBJECTHDR(this);                                   
+/*
+	OBJECT *obj = OBJECTHDR(this);
 
 		// for value_Shunt, value_Line_I and value_Power the circuit indices are:
 		//  0 = 1-N, 1 = 2-N, 2 = 1-2s
 		// Unlike for triplex meters, pShunt on loads is Z
-		gl_output ("                     I=[%g @ %g] [%g @ %g] [%g @ %g]",  
-							 obj->name,                                            
-							 value_Line_I[0].Mag(), value_Line_I[0].Arg(),           
-							 value_Line_I[1].Mag(), value_Line_I[1].Arg(),           
-							 value_Line_I[2].Mag(), value_Line_I[2].Arg());          
+		gl_output ("                     I=[%g @ %g] [%g @ %g] [%g @ %g]",
+							 obj->name,
+							 value_Line_I[0].Mag(), value_Line_I[0].Arg(),
+							 value_Line_I[1].Mag(), value_Line_I[1].Arg(),
+							 value_Line_I[2].Mag(), value_Line_I[2].Arg());
     gl_output ("house: %s commercial Y=[%g +j%g] [%g +j%g] [%g +j%g]",
-               obj->name,                                            
-               value_Shunt[0].Re(), value_Shunt[0].Im(),             
-               value_Shunt[1].Re(), value_Shunt[1].Im(),             
-               value_Shunt[2].Re(), value_Shunt[2].Im());            
-    gl_output ("                     P=[%g +j%g] [%g +j%g] [%g +j%g]",  
-               obj->name,                                            
-               value_Power[0].Re(), value_Power[0].Im(),             
-               value_Power[1].Re(), value_Power[1].Im(),             
-               value_Power[2].Re(), value_Power[2].Im());            
+               obj->name,
+               value_Shunt[0].Re(), value_Shunt[0].Im(),
+               value_Shunt[1].Re(), value_Shunt[1].Im(),
+               value_Shunt[2].Re(), value_Shunt[2].Im());
+    gl_output ("                     P=[%g +j%g] [%g +j%g] [%g +j%g]",
+               obj->name,
+               value_Power[0].Re(), value_Power[0].Im(),
+               value_Power[1].Re(), value_Power[1].Im(),
+               value_Power[2].Re(), value_Power[2].Im());
 */
 
 		double denom = numPhases;
@@ -3531,10 +3531,10 @@ void house_e::push_complex_powerflow_values(void)
 		int insertP = 0;
 		if (balPower.Mag() > 0.0) {
 			insertP = 1;
-//			gl_output ("house: %s commercial per-phase P=[%g +j%g]", obj->name, balPower.Re(), balPower.Im());             
+//			gl_output ("house: %s commercial per-phase P=[%g +j%g]", obj->name, balPower.Re(), balPower.Im());
 		}
 		// adjust the constant shunt for voltages and internal turns, then balance among phases
-		complex balShunt = (value_Shunt[0] + value_Shunt[1] + value_Shunt[2] * 4.0) 
+		complex balShunt = (value_Shunt[0] + value_Shunt[1] + value_Shunt[2] * 4.0)
 			/ (internalTurnsRatio * internalTurnsRatio) / denom;
 		int insertS = 0;
 		if (balShunt.Mag() > 0.0) {
@@ -3547,7 +3547,7 @@ void house_e::push_complex_powerflow_values(void)
 		int insertI = 0;
 		if (balCurrent.Mag() > 0.0) {
 			insertI = 1;
-//			gl_output ("house: %s commercial per-phase I=[%g @ %g]", obj->name, balCurrent.Mag(), balCurrent.Arg());             
+//			gl_output ("house: %s commercial per-phase I=[%g @ %g]", obj->name, balCurrent.Mag(), balCurrent.Arg());
 		}
 		// now push this building's power onto the parent load phases that are actually present
 		int mask = 1;
@@ -3555,7 +3555,7 @@ void house_e::push_complex_powerflow_values(void)
 			if (externalPhases & mask) {
 				if (insertP > 0) {
 					temp_complex_val = pPower[indexval]->get_complex();
-//					gl_output ("  adding P to [%g +j%g] on phase mask %d", 
+//					gl_output ("  adding P to [%g +j%g] on phase mask %d",
 //										 temp_complex_val.Re(), temp_complex_val.Im(), mask);
 					temp_complex_val += balPower;
 					pPower[indexval]->setp<complex>(temp_complex_val,*test_rlock);
@@ -3572,7 +3572,7 @@ void house_e::push_complex_powerflow_values(void)
 				if (insertI > 0) {
 					temp_complex_val = pLine_I[indexval]->get_complex();
 
-					//Add in the contribution - current gets phase-rotated within powerflow/elsewhere					
+					//Add in the contribution - current gets phase-rotated within powerflow/elsewhere
 					temp_complex_val += balCurrent;
 
 					//Push the value back up
@@ -3582,38 +3582,37 @@ void house_e::push_complex_powerflow_values(void)
 			mask *= 2;
 		}
 	} else {
-		for (indexval=0; indexval<3; indexval++)
-		{
-			//**** Current value ***/
-			//Pull current value again, just in case
-			temp_complex_val = pLine_I[indexval]->get_complex();
+		for (indexval=0; indexval<3; indexval++) {
+            //**** Current value ***/
+            //Pull current value again, just in case
+            temp_complex_val = pLine_I[indexval]->get_complex();
 
-			//Add the difference
-			temp_complex_val += value_Line_I[indexval];
+            //Add the difference
+            temp_complex_val += value_Line_I[indexval];
 
-			//Push it back up
-			pLine_I[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+            //Push it back up
+            pLine_I[indexval]->setp<gld::complex>(temp_complex_val, *test_rlock);
 
-			//**** shunt value ***/
-			//Pull current value again, just in case
-			temp_complex_val = pShunt[indexval]->get_complex();
+            //**** shunt value ***/
+            //Pull current value again, just in case
+            temp_complex_val = pShunt[indexval]->get_complex();
 
-			//Add the difference
-			temp_complex_val += value_Shunt[indexval];
+            //Add the difference
+            temp_complex_val += value_Shunt[indexval];
 
-			//Push it back up
-			pShunt[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+            //Push it back up
+            pShunt[indexval]->setp<gld::complex>(temp_complex_val, *test_rlock);
 
-			//**** Power value ***/
-			//Pull current value again, just in case
-			temp_complex_val = pPower[indexval]->get_complex();
+            //**** Power value ***/
+            //Pull current value again, just in case
+            temp_complex_val = pPower[indexval]->get_complex();
 
-			//Add the difference
-			temp_complex_val += value_Power[indexval];
+            //Add the difference
+            temp_complex_val += value_Power[indexval];
 
-			//Push it back up
-			pPower[indexval]->setp<complex>(temp_complex_val,*test_rlock);
-		}
+            //Push it back up
+            pPower[indexval]->setp<gld::complex>(temp_complex_val, *test_rlock);
+        }
 	}
 }
 
@@ -3657,7 +3656,7 @@ SIMULATIONMODE house_e::inter_deltaupdate(unsigned int64 delta_time, unsigned lo
 			value_Power[0] = complex(-1.0,0.0) * value_Power[0];
 			value_Power[1] = complex(-1.0,0.0) * value_Power[1];
 			value_Power[2] = complex(-1.0,0.0) * value_Power[2];
-			
+
 			//Current
 			value_Line_I[0] = complex(-1.0,0.0) * value_Line_I[0];
 			value_Line_I[1] = complex(-1.0,0.0) * value_Line_I[1];
@@ -3690,20 +3689,20 @@ STATUS house_e::post_deltaupdate(void)
 	{
 		//Put negative values in 
 		//Update power
-		value_Power[0] = complex(-1.0,0.0) * value_Power[0];
-		value_Power[1] = complex(-1.0,0.0) * value_Power[1];
-		value_Power[2] = complex(-1.0,0.0) * value_Power[2];
+		value_Power[0] = gld::complex(-1.0,0.0) * value_Power[0];
+		value_Power[1] = gld::complex(-1.0,0.0) * value_Power[1];
+		value_Power[2] = gld::complex(-1.0,0.0) * value_Power[2];
 		
 		//Current
-		value_Line_I[0] = complex(-1.0,0.0) * value_Line_I[0];
-		value_Line_I[1] = complex(-1.0,0.0) * value_Line_I[1];
-		value_Line_I[2] = complex(-1.0,0.0) * value_Line_I[2];
+		value_Line_I[0] = gld::complex(-1.0,0.0) * value_Line_I[0];
+		value_Line_I[1] = gld::complex(-1.0,0.0) * value_Line_I[1];
+		value_Line_I[2] = gld::complex(-1.0,0.0) * value_Line_I[2];
 		//Neutral not handled in here, since it was always zero anyways
 
 		//Admittance
-		value_Shunt[0] = complex(-1.0,0.0) * value_Shunt[0];
-		value_Shunt[1] = complex(-1.0,0.0) * value_Shunt[1];
-		value_Shunt[2] = complex(-1.0,0.0) * value_Shunt[2];
+		value_Shunt[0] = gld::complex(-1.0,0.0) * value_Shunt[0];
+		value_Shunt[1] = gld::complex(-1.0,0.0) * value_Shunt[1];
+		value_Shunt[2] = gld::complex(-1.0,0.0) * value_Shunt[2];
 
 		//Push up the "negative" values now - mostly so XMLs look right
 		push_complex_powerflow_values();

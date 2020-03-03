@@ -1,26 +1,36 @@
 project(climate)
 
-include_directories(../${GLDCORE_LOC})
-
 add_library(${PROJECT_NAME}
-        climate/climate.cpp
-        climate/climate.h
-        climate/csv_reader.cpp
-        climate/csv_reader.h
-        climate/init.cpp
-        climate/main.cpp
-        climate/solar_angles.cpp
-        climate/solar_angles.h
-        climate/test.cpp
-        climate/test.h
-        climate/weather.cpp
-        climate/weather.h
-        climate/weather_reader.cpp
-        climate/weather_reader.h
+        climate.cpp
+        climate.h
+        csv_reader.cpp
+        csv_reader.h
+        init.cpp
+        main.cpp
+        solar_angles.cpp
+        solar_angles.h
+        test.cpp
+        test.h
+        weather.cpp
+        weather.h
+        weather_reader.cpp
+        weather_reader.h
         )
 
-set_target_properties(${PROJECT_NAME}
-        PROPERTIES PREFIX ""
-        )
+set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
+target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
+target_link_libraries(${PROJECT_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
 
-target_link_libraries(${PROJECT_NAME} ${OS_SPECIFIC_LIBRARIES})
+install(TARGETS ${PROJECT_NAME}
+        ${FILE_PERMISSIONS}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        COMPONENT library)
+
+if (GLD_USE_CLANG_TIDY)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+            CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}"
+            )
+endif ()
+

@@ -347,7 +347,7 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	//Need information on power flow for this time step so let it run once 
 	//without any central control and then reiterate
-	complex temp_complex_array[3];
+	gld::complex temp_complex_array[3];
 
 	if (t0!=t1) {
 		return t1;
@@ -369,7 +369,7 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 	Q[2] = temp_complex_array[2].Im();
 	P_3p = P[0] + P[1] + P[2];
 	Q_3p = Q[0] + Q[1] + Q[2];
-	S_3p = complex(P_3p, Q_3p);
+	S_3p = gld::complex(P_3p, Q_3p);
 	double potential_pf = 0.0;
 	double Q_disp_so_far = 0.0;
 	double total_avail_soc = 0.0;
@@ -522,7 +522,7 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 								//Q dispatch portion calculated using ratio of this inverter's capacity factor to total capacity factor.
 								this_Q = (inverter_set[n])->p_rated*3.0*sin(acos((inverter_set[n])->VA_Out.Re()/((inverter_set[n])->p_rated)*3.0))/Q_avail_3p*Q_disp_3p;
 								//Calculate and correctly sign corresponding power factor.
-								(inverter_set[n])->power_factor = -(this_Q/fabs(this_Q))*fabs((inverter_set[n])->VA_Out.Re())/complex((inverter_set[n])->VA_Out.Re(),this_Q).Mag();
+								(inverter_set[n])->power_factor = -(this_Q/fabs(this_Q))*fabs((inverter_set[n])->VA_Out.Re())/gld::complex((inverter_set[n])->VA_Out.Re(),this_Q).Mag();
 							}
 							//Dispatch to battery inverters (those in constant PQ mode)
 							else if ((inverter_set[n])->four_quadrant_control_mode==1)
@@ -538,7 +538,7 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 							if ((inverter_set[n])->four_quadrant_control_mode==2 && (inverter_set[n])->VA_Out.Re() > 0.0) {
 								//This inverter QRef = (This inverter available Q/total Available Q)*Q to be dispatched
 								this_Q = (inverter_set[n])->p_rated*3.0*sin(acos((inverter_set[n])->VA_Out.Re()/((inverter_set[n])->p_rated)*3.0));
-								(inverter_set[n])->power_factor = -(this_Q/fabs(this_Q))*fabs((inverter_set[n])->VA_Out.Re())/complex((inverter_set[n])->VA_Out.Re(),this_Q).Mag();
+								(inverter_set[n])->power_factor = -(this_Q/fabs(this_Q))*fabs((inverter_set[n])->VA_Out.Re())/gld::complex((inverter_set[n])->VA_Out.Re(),this_Q).Mag();
 							}
 							else if ((inverter_set[n])->four_quadrant_control_mode==1)
 							{

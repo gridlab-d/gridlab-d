@@ -621,7 +621,7 @@ int get_value_with_unit(OBJECT *obj, char *arg1, char *arg2, char *buffer, size_
 		UNIT *unit;
 		PROPERTY *prop;
 		double rvalue;
-		complex cvalue;
+		gld::complex cvalue;
 		char *spec = NULL;
 		int prec = 4;
 		char fmt[64];

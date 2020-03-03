@@ -301,7 +301,7 @@ int savexml_strict(char *filename,FILE *fp)
 							{
 								if (prop->unit!=NULL && strcmp(prop->unit->name,"V")==0 && prop->ptype==PT_complex)
 								{
-									complex *pval = object_get_complex(obj,prop);
+									gld::complex *pval = object_get_complex(obj,prop);
 									if (pval)
 										pval->SetNotation(A);
 								}

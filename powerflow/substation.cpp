@@ -20,6 +20,8 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
+#include <exception>
+#include <stdexcept>
 
 #include "substation.h"
 #include "timestamp.h"
@@ -504,8 +506,23 @@ EXPORT TIMESTAMP sync_substation(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			throw "invalid pass request";
 		}
 		throw "invalid pass request";
-	} 
-	SYNC_CATCHALL(substation);
+	}
+
+//    catch (char *msg) {
+//        gl_error("sync_substation(obj=%d;%s): %s", obj->id, obj->name ? obj->name : "unnamed", msg);
+//        return TS_INVALID;
+//    } catch (const char *msg) {
+//        gl_error("sync_substation(obj=%d;%s): %s", obj->id, obj->name ? obj->name : "unnamed", msg);
+//        return TS_INVALID;
+//    }
+//    catch(const std::exception& ex) {
+//        gl_error("sync_substation(obj=%d;%s): unhandled exception", obj->id, obj->name ? obj->name : "unnamed");
+//        gl_error(ex.what());
+//        return TS_INVALID;
+//    }
+//    return TS_INVALID;
+
+    SYNC_CATCHALL(substation);
 }
 
 EXPORT int notify_substation(OBJECT *obj, int update_mode, PROPERTY *prop, char *value){

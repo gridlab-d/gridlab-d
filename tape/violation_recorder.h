@@ -268,7 +268,7 @@ private:
 	int check_reverse_flow_violation(TIMESTAMP, int, double, char*);
 	int write_to_stream (TIMESTAMP, bool, char *, ...);
 	double get_observed_double_value(OBJECT *, PROPERTY *);
-	complex get_observed_complex_value(OBJECT *, PROPERTY *);
+	gld::complex get_observed_complex_value(OBJECT *, PROPERTY *);
 	int make_object_list(int, const char *, vobjlist *);
 	int assoc_meter_w_xfrmr_node(vobjlist *, vobjlist *, vobjlist *);
 	int find_substation_node(char256, vobjlist *);
