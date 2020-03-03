@@ -56,6 +56,7 @@ private: /* For N-R Solver & P-V Curve */
 	double get_p_from_u(double);
 	double get_p_max(double = 0);
 	double get_u_of_p_max(double = 0);
+	double get_u_from_p(double, double, double);
 
 	void test_nr_solver(); // Test func
 

@@ -1469,6 +1469,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					{
 						int temp_idx;
 						//V_DC was set here, somehow
+						STATUS fxn_return_status;
 						
 						V_DC = curr_state.Vdc_pu * Vdc_base;
 										
@@ -1737,6 +1738,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					{
 						int temp_idx;
 						//V_DC was set here, somehow
+						STATUS fxn_return_status;
 						
 						V_DC = pred_state.Vdc_pu * Vdc_base;
 									
@@ -4069,6 +4071,8 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 //curr_time is the initial states/information
 STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 {
+	OBJECT *obj = OBJECTHDR(this);
+	
 	//Pull the powerflow values
 	if (parent_is_a_meter == true)
 	{
@@ -4138,6 +4142,8 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 					P_DC = VA_Out.Re();
 					
 					int temp_idx;
+					STATUS fxn_return_status;
+
 					//Loop through and call the DC objects
 					for (temp_idx=0; temp_idx < dc_interface_objects.size(); temp_idx++)
 					{
