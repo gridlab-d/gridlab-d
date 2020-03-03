@@ -25,35 +25,35 @@ recloser::recloser(MODULE *mod) : switch_object(mod)
 	{
 		pclass = link_object::oclass;
 
-		oclass = gl_register_class(mod,const_cast<char*>("recloser"),sizeof(recloser),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,"recloser",sizeof(recloser),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
         if(oclass == NULL)
-            GL_THROW(const_cast<char*>("unable to register object class implemented by %s"),__FILE__);
+            GL_THROW("unable to register object class implemented by %s",__FILE__);
 
         if(gl_publish_variable(oclass,
 			PT_INHERIT, "switch",
 			PT_double, "retry_time[s]", PADDR(retry_time), PT_DESCRIPTION, "the amount of time in seconds to wait before the recloser attempts to close",
 			PT_double, "max_number_of_tries", PADDR(ntries), PT_DESCRIPTION, "the number of times the recloser will try to close before permanently opening",
 			PT_double, "number_of_tries", PADDR(curr_tries), PT_DESCRIPTION, "Current number of tries recloser has attempted",
-			NULL) < 1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
+			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
-		if (gl_publish_function(oclass,const_cast<char*>("change_recloser_state"),(FUNCTIONADDR)change_recloser_state)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish recloser state change function"));
-		if (gl_publish_function(oclass,const_cast<char*>("recloser_reliability_operation"),(FUNCTIONADDR)recloser_reliability_operation)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish recloser reliability operation function"));
-		if (gl_publish_function(oclass,	const_cast<char*>("change_recloser_faults"), (FUNCTIONADDR)recloser_fault_updates)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish recloser fault correction function"));
-        if (gl_publish_function(oclass,	const_cast<char*>("fix_fault"), (FUNCTIONADDR)fix_fault_switch)==NULL)
-            GL_THROW(const_cast<char*>("Unable to publish recloser fault restoration function"));
+		if (gl_publish_function(oclass,"change_recloser_state",(FUNCTIONADDR)change_recloser_state)==NULL)
+			GL_THROW("Unable to publish recloser state change function");
+		if (gl_publish_function(oclass,"recloser_reliability_operation",(FUNCTIONADDR)recloser_reliability_operation)==NULL)
+			GL_THROW("Unable to publish recloser reliability operation function");
+		if (gl_publish_function(oclass,	"change_recloser_faults", (FUNCTIONADDR)recloser_fault_updates)==NULL)
+			GL_THROW("Unable to publish recloser fault correction function");
+        if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_switch)==NULL)
+            GL_THROW("Unable to publish recloser fault restoration function");
 
         //Publish deltamode functions -- replicate switch
-		if (gl_publish_function(oclass,	const_cast<char*>("interupdate_pwr_object"), (FUNCTIONADDR)interupdate_switch)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish recloser deltamode function"));
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_switch)==NULL)
+			GL_THROW("Unable to publish recloser deltamode function");
 
 		//Publish restoration-related function (current update)
-		if (gl_publish_function(oclass,	const_cast<char*>("update_power_pwr_object"), (FUNCTIONADDR)updatepowercalc_link)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish recloser external power calculation function"));
-		if (gl_publish_function(oclass,	const_cast<char*>("check_limits_pwr_object"), (FUNCTIONADDR)calculate_overlimit_link)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish recloser external power limit calculation function"));
+		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+			GL_THROW("Unable to publish recloser external power calculation function");
+		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+			GL_THROW("Unable to publish recloser external power limit calculation function");
     }
 }
 

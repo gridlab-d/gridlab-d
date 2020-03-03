@@ -79,7 +79,7 @@ int xml_translate(char *local, size_t local_len, char *remote, size_t remote_len
 xml::xml(MODULE *module) : native(module)
 {
 	// register to receive notice for first top down. bottom up, and second top down synchronizations
-	oclass = gld_class::create(module,const_cast<char*>("xml"),sizeof(xml),PC_AUTOLOCK|PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_OBSERVER);
+	oclass = gld_class::create(module,"xml",sizeof(xml),PC_AUTOLOCK|PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_OBSERVER);
 	if (oclass==NULL)
 		throw "connection/xml::xml(MODULE*): unable to register class connection:xml";
 	else
@@ -98,9 +98,9 @@ xml::xml(MODULE *module) : native(module)
 		NULL)<1)
 			throw "connection/xml::xml(MODULE*): unable to publish properties of connection:xml";
 
-	if ( !gl_publish_loadmethod(oclass, const_cast<char*>("link"), reinterpret_cast<int (*)(void *, char *)>(loadmethod_xml_link)) )
+	if ( !gl_publish_loadmethod(oclass, "link", reinterpret_cast<int (*)(void *, char *)>(loadmethod_xml_link)) )
 		throw "connection/xml::xml(MODULE*): unable to publish link method of connection:xml";
-	if ( !gl_publish_loadmethod(oclass, const_cast<char*>("option"), reinterpret_cast<int (*)(void *, char *)>(loadmethod_xml_option)) )
+	if ( !gl_publish_loadmethod(oclass, "option", reinterpret_cast<int (*)(void *, char *)>(loadmethod_xml_option)) )
 		throw "connection/xml::xml(MODULE*): unable to publish option method of connection:xml";
 	encoding = UTF8;
 }

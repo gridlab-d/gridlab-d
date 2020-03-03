@@ -33,7 +33,7 @@ central_dg_control::central_dg_control(MODULE *module)
 {	
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,const_cast<char*>("central_dg_control"),sizeof(central_dg_control),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
+		oclass = gl_register_class(module,"central_dg_control",sizeof(central_dg_control),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class central_dg_control";
 		else
@@ -266,10 +266,10 @@ int central_dg_control::init(OBJECT *parent)
 	if (feederhead_meter != NULL)
 	{
 		//Make sure it is a meter
-		if (gl_object_isa(feederhead_meter, const_cast<char*>("meter"), const_cast<char*>("powerflow")))
+		if (gl_object_isa(feederhead_meter, "meter", "powerflow"))
 		{
 			//Map up the values
-			pPower_Meas[0] = new gld_property(feederhead_meter,const_cast<char*>("measured_power_A"));
+			pPower_Meas[0] = new gld_property(feederhead_meter,"measured_power_A");
 
 			//Check it
 			if (!pPower_Meas[0]->is_valid() || !pPower_Meas[0]->is_complex())
@@ -282,7 +282,7 @@ int central_dg_control::init(OBJECT *parent)
 			}
 
 			//Get the next one
-			pPower_Meas[1] = new gld_property(feederhead_meter,const_cast<char*>("measured_power_B"));
+			pPower_Meas[1] = new gld_property(feederhead_meter,"measured_power_B");
 
 			//Check it
 			if (!pPower_Meas[1]->is_valid() || !pPower_Meas[1]->is_complex())
@@ -292,7 +292,7 @@ int central_dg_control::init(OBJECT *parent)
 			}
 
 			//Get the next one
-			pPower_Meas[2] = new gld_property(feederhead_meter,const_cast<char*>("measured_power_C"));
+			pPower_Meas[2] = new gld_property(feederhead_meter,"measured_power_C");
 
 			//Check it
 			if (!pPower_Meas[2]->is_valid() || !pPower_Meas[2]->is_complex())

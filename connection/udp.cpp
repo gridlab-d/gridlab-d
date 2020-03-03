@@ -15,9 +15,9 @@ udp::udp()
 	timeout.tv_sec = 1;
 	timeout.tv_usec = 0;
 	// default defaults for string
-	set_message_format(const_cast<char*>("NONE"));
-	set_hostname(const_cast<char*>("127.0.0.1"));
-	set_uri(const_cast<char*>(""));
+	set_message_format("NONE");
+	set_hostname("127.0.0.1");
+	set_uri("");
 
 #ifdef _WIN32
 	// initialize socket subsystem
@@ -36,7 +36,7 @@ udp::udp()
 	sockdata = new struct sockaddr_in;
 
 	// reset the error message to anticipate create coming next
-	set_errormsg(const_cast<char*>("udp::create() not called"));
+	set_errormsg("udp::create() not called");
 }
 
 udp::~udp()
@@ -53,7 +53,7 @@ int udp::option(char *command)
 		switch ( sscanf(command,"%256[^ =]%*[ =]%[^,;]",param,value) ) {
 		case 1:
 			// TODO
-			error(const_cast<char*>("option \"transport:%s\" not recognized"), command);
+			error("option \"transport:%s\" not recognized", command);
 			return 0;
 		case 2:
 			if ( strcmp(param,"port")==0 )
@@ -65,7 +65,7 @@ int udp::option(char *command)
 			else if ( strcmp(param,"hostname")==0 )
 				set_hostname(value);
 			else if ( strcmp(param,"uri")==0 )
-				set_uri(const_cast<char*>("%s"),value);
+				set_uri("%s",value);
 			else if ( strcmp(param,"de"
 						  "bug_level")==0 )
 				set_debug_level(atoi(value));
@@ -79,7 +79,7 @@ int udp::option(char *command)
 					onerror_ignore();
 				else
 				{
-					error(const_cast<char*>("option \"transport:%s\" not a valid on_error command"), command);
+					error("option \"transport:%s\" not a valid on_error command", command);
 					return 0;
 				}
 			}
@@ -94,19 +94,19 @@ int udp::option(char *command)
 						set_maxretry(n);
 					else
 					{
-						error(const_cast<char*>("option \"transport:%s\" not a valid maxretry command"), command);
+						error("option \"transport:%s\" not a valid maxretry command", command);
 						return 0;
 					}
 				}
 			}
 			else
 			{	
-				error(const_cast<char*>("option \"transport:%s\" not recognized"), command);
+				error("option \"transport:%s\" not recognized", command);
 				return 0;
 			}
 			break;
 		default:
-			error(const_cast<char*>("option \"transport:%s\" cannot be parsed"), command);
+			error("option \"transport:%s\" cannot be parsed", command);
 			return 0;
 		}
 		char *comma = strchr(command,',');
@@ -139,7 +139,7 @@ int udp::create(void)
 	sd = socket(AF_INET,SOCK_DGRAM,0);
 	if ( sd==INVALID_SOCKET ) 
 	{
-		set_errormsg(const_cast<char*>("udp::create() is unable to create a socket: %s"),Socket::strerror());
+		set_errormsg("udp::create() is unable to create a socket: %s",Socket::strerror());
 		return 0;
 	}
 
@@ -147,7 +147,7 @@ int udp::create(void)
 	set_sockdata(NULL);
 
 	// reset the error message to anticipate init coming next
-	set_errormsg(const_cast<char*>("udp::init() not called"));
+	set_errormsg("udp::init() not called");
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -175,7 +175,7 @@ Retry:
 	if ( ::connect(sd,(struct sockaddr*)&serv_addr,sizeof(serv_addr)) < 0 )
 	{
 		if ( retries-->0 ) goto Retry;
-		error(const_cast<char*>("unable to connect to server '%s' on port %d: %s"), hostname, portnum, Socket::strerror());
+		error("unable to connect to server '%s' on port %d: %s", hostname, portnum, Socket::strerror());
 		return 0;
 	}
 	return 1;
@@ -196,7 +196,7 @@ size_t udp::send(const char *msg, size_t len)
 		header_version, header_size, len, message_format, message_version, tlim, 0);
 	if ( len>1500-strlen(temp) )
 	{
-		error(const_cast<char*>("udp::send(const char *msg='%-10.10s', size_t len=%d): message is too long for UDP"), msg, len);
+		error("udp::send(const char *msg='%-10.10s', size_t len=%d): message is too long for UDP", msg, len);
 		return 0;
 	}
 	char sendbuf[2048];
@@ -374,7 +374,7 @@ void udp::set_header_size(unsigned int n)
 {
 	header_size = n;
 }
-void udp::set_message_format(char *s)
+void udp::set_message_format(const char *s)
 {
 	strcpy(message_format,s);
 }
@@ -392,7 +392,7 @@ void udp::set_timeout(unsigned int n)
 		timeout.tv_usec = n;
 	}
 }
-void udp::set_hostname(char *s)
+void udp::set_hostname(const char *s)
 {
 	strcpy(hostname,s);
 }
@@ -400,7 +400,7 @@ void udp::set_portnum(unsigned int n)
 {
 	portnum = n;
 }
-void udp::set_uri(char *fmt, ...)
+void udp::set_uri(const char *fmt, ...)
 {
 	va_list ptr;
 	va_start(ptr,fmt);
@@ -422,14 +422,14 @@ void udp::set_sockdata(struct sockaddr_in *p, size_t n)
 {
 	// TODO
 }
-void udp::set_output(char *fmt, ...)
+void udp::set_output(const char *fmt, ...)
 {
 	va_list ptr;
 	va_start(ptr,fmt);
 	position = vsprintf(output,fmt,ptr);
 	va_end(ptr);
 }
-void udp::add_output(char *fmt, ...)
+void udp::add_output(const char *fmt, ...)
 {
 	va_list ptr;
 	va_start(ptr,fmt);

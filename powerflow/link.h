@@ -67,7 +67,7 @@ public: /// @todo make this private and create interfaces to control values
 	double mean_repair_time;
 	double *link_limits[2][3];		/**< pointers for line limits (emergency vs. continuous) for link objects and by phase - pointered for variation */
 	double link_rating[2][3];		/**< Values for current line rating - gives individual segments the ability to set */
-	double *get_double(OBJECT *obj, char *name);	/**< Gets address of double - mainly for mean_repair_time */
+	double *get_double(OBJECT *obj, const char *name);	/**< Gets address of double - mainly for mean_repair_time */
 	bool overloaded_status;
 public:
 	enumeration status;	///< link status (open disconnect nodes)

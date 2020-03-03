@@ -474,7 +474,7 @@ int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix)
 		if (p->type<_PT_LAST)
 		{
 			prop = property_malloc(p->type,oclass,name,p->addr+(int64)struct_address,NULL);
-			prop->description = const_cast<char*>(p->description);
+			prop->description = p->description;
 			prop->flags = p->flags;
 			class_add_property(oclass,prop);
 			result++;

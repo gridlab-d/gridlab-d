@@ -123,7 +123,7 @@ unsigned int object_get_count(){
 	@return a pointer to the PROPERTY structure
  **/
 PROPERTY *object_get_property(OBJECT *obj, /**< a pointer to the object */
-							  PROPERTYNAME name, /**< the name of the property */
+							  const PROPERTYNAME name, /**< the name of the property */
 							  PROPERTYSTRUCT *pstruct) /** buffer in which to store part info, if found */
 {
 	if(obj == NULL){
@@ -195,7 +195,7 @@ int object_build_object_array(){
 }
 
 
-PROPERTY *object_prop_in_class(OBJECT *obj, PROPERTY *prop){
+const PROPERTY *object_prop_in_class(OBJECT *obj, const PROPERTY *prop){
 	if(prop == NULL){
 		return NULL;
 	}
@@ -249,7 +249,7 @@ char *object_name(OBJECT *obj, char *oname, int size){ /**< a pointer to the obj
 
 /** Get the unit of an object, if any
  **/
-char *object_get_unit(OBJECT *obj, char *name)
+char *object_get_unit(OBJECT *obj, const char *name)
 {
 	static UNIT *dimless = NULL;
 	unsigned int unitlock = 0;
@@ -500,7 +500,7 @@ OBJECT *object_remove_by_id(OBJECTNUM id){
 	@return \e void pointer to the data; \p NULL is not found
  **/
 void *object_get_addr(OBJECT *obj, /**< object to look in */
-					  char *name){ /**< name of property to find */
+					  const char *name){ /**< name of property to find */
 	PROPERTY *prop;
 	if(obj == NULL)
 		return NULL;
@@ -530,7 +530,7 @@ OBJECT **object_get_object(OBJECT *obj, PROPERTY *prop)
 	}
 }
 
-OBJECT **object_get_object_by_name(OBJECT *obj, char *name)
+OBJECT **object_get_object_by_name(OBJECT *obj, const char *name)
 {
 	PROPERTY *prop = class_find_property(obj->oclass, name);
 
@@ -550,7 +550,7 @@ bool *object_get_bool(OBJECT *obj, PROPERTY *prop)
 	return NULL;
 }
 
-bool *object_get_bool_by_name(OBJECT *obj, char *name)
+bool *object_get_bool_by_name(OBJECT *obj, const char *name)
 {
 	PROPERTY *prop = class_find_property(obj->oclass,name);
 	if(prop!=NULL && prop->access != PA_PRIVATE)
@@ -567,7 +567,7 @@ enumeration *object_get_enum(OBJECT *obj, PROPERTY *prop){
 	}
 }
 
-enumeration *object_get_enum_by_name(OBJECT *obj, char *name){
+enumeration *object_get_enum_by_name(OBJECT *obj, const char *name){
 	PROPERTY *prop = class_find_property(obj->oclass, name);
 
 	if(prop != NULL && prop->access != PA_PRIVATE){
@@ -587,7 +587,7 @@ set *object_get_set(OBJECT *obj, PROPERTY *prop){
 	}
 }
 
-set *object_get_set_by_name(OBJECT *obj, char *name){
+set *object_get_set_by_name(OBJECT *obj, const char *name){
 	PROPERTY *prop = class_find_property(obj->oclass, name);
 
 	if(prop != NULL && prop->access != PA_PRIVATE){
@@ -611,7 +611,7 @@ int16 *object_get_int16(OBJECT *obj, PROPERTY *prop)
 	}
 }
 
-int16 *object_get_int16_by_name(OBJECT *obj, char *name)
+int16 *object_get_int16_by_name(OBJECT *obj, const char *name)
 {
 	PROPERTY *prop = class_find_property(obj->oclass, name);
 
@@ -636,7 +636,7 @@ int32 *object_get_int32(OBJECT *obj, PROPERTY *prop)
 	}
 }
 
-int32 *object_get_int32_by_name(OBJECT *obj, char *name)
+int32 *object_get_int32_by_name(OBJECT *obj, const char *name)
 {
 	PROPERTY *prop = class_find_property(obj->oclass,name);
 	if(prop!=NULL && prop->access != PA_PRIVATE)
@@ -658,7 +658,7 @@ int64 *object_get_int64(OBJECT *obj, PROPERTY *prop)
 	}
 }
 
-int64 *object_get_int64_by_name(OBJECT *obj, char *name)
+int64 *object_get_int64_by_name(OBJECT *obj, const char *name)
 {
 	PROPERTY *prop = class_find_property(obj->oclass,name);
 	if(prop!=NULL && prop->access != PA_PRIVATE)
@@ -683,7 +683,7 @@ double *object_get_double(OBJECT *obj, PROPERTY *prop)
 	return NULL;
 }
 
-double *object_get_double_by_name(OBJECT *obj, char *name)
+double *object_get_double_by_name(OBJECT *obj, const char *name)
 {
 	PROPERTY *prop = class_find_property(obj->oclass,name);
 	if(prop!=NULL && prop->access != PA_PRIVATE)
@@ -710,7 +710,7 @@ complex *object_get_complex(OBJECT *obj, PROPERTY *prop)
 
 complex *object_get_complex_by_name(OBJECT *obj, const char *name)
 {
-	PROPERTY *prop = class_find_property(obj->oclass,const_cast<char*>(name));
+	PROPERTY *prop = class_find_property(obj->oclass,name);
 	if(prop!=NULL && prop->access != PA_PRIVATE)
 		return (complex *)((char*)obj+sizeof(OBJECT)+(int64)(prop->addr)); /* warning: cast from pointer to integer of different size */
 	errno = ENOENT;
@@ -727,7 +727,7 @@ char *object_get_string(OBJECT *obj, PROPERTY *prop){
 /* Get the pointer to the value of a string property.
  * Returns NULL if the property is not found or if the value the right type.
  */
-char *object_get_string_by_name(OBJECT *obj, char *name)
+char *object_get_string_by_name(OBJECT *obj, const char *name)
 {
 	PROPERTY *prop = class_find_property(obj->oclass,name);
 	if(prop!=NULL && prop->access != PA_PRIVATE)
@@ -1022,7 +1022,7 @@ int object_set_value_by_name(OBJECT *obj, /**< the object to change */
 
 /* Set a property value by reference to its name
  */
-int object_set_int16_by_name(OBJECT *obj, PROPERTYNAME name, int16 value)
+int object_set_int16_by_name(OBJECT *obj, const PROPERTYNAME name, int16 value)
 {
 	PROPERTY *prop = class_find_property(obj->oclass,name);
 	if(prop==NULL)
@@ -1050,7 +1050,7 @@ int object_set_int16_by_name(OBJECT *obj, PROPERTYNAME name, int16 value)
 
 /* Set a property value by reference to its name
  */
-int object_set_int32_by_name(OBJECT *obj, PROPERTYNAME name, int32 value)
+int object_set_int32_by_name(OBJECT *obj, const PROPERTYNAME name, int32 value)
 {
 	PROPERTY *prop = class_find_property(obj->oclass,name);
 	if(prop==NULL)
@@ -1071,7 +1071,7 @@ int object_set_int32_by_name(OBJECT *obj, PROPERTYNAME name, int32 value)
 
 /* Set a property value by reference to its name
  */
-int object_set_int64_by_name(OBJECT *obj, PROPERTYNAME name, int64 value)
+int object_set_int64_by_name(OBJECT *obj, const PROPERTYNAME name, int64 value)
 {
 	PROPERTY *prop = class_find_property(obj->oclass,name);
 	if(prop==NULL)
@@ -1092,7 +1092,7 @@ int object_set_int64_by_name(OBJECT *obj, PROPERTYNAME name, int64 value)
 
 /* Set a property value by reference to its name
  */
-int object_set_double_by_name(OBJECT *obj, PROPERTYNAME name, double value)
+int object_set_double_by_name(OBJECT *obj, const PROPERTYNAME name, double value)
 {
 	PROPERTY *prop = class_find_property(obj->oclass,name);
 	if(prop==NULL)
@@ -1113,7 +1113,7 @@ int object_set_double_by_name(OBJECT *obj, PROPERTYNAME name, double value)
 
 /* Set a property value by reference to its name
  */
-int object_set_complex_by_name(OBJECT *obj, PROPERTYNAME name, complex value)
+int object_set_complex_by_name(OBJECT *obj, const PROPERTYNAME name, complex value)
 {
 	PROPERTY *prop = class_find_property(obj->oclass,name);
 	if(prop==NULL)
@@ -1155,7 +1155,7 @@ int object_get_value_by_addr(OBJECT *obj, /**< the object from which to get the 
 /** Get a value by reference to its property name
 	@return the number of characters written to the buffer; 0 if failed
  **/
-int object_get_value_by_name(OBJECT *obj, PROPERTYNAME name, char *value, int size)
+int object_get_value_by_name(OBJECT *obj, const PROPERTYNAME name, char *value, int size)
 {
 	char temp[1024];
 	char *buffer;
@@ -1380,7 +1380,7 @@ int object_set_dependent(OBJECT *obj, /**< the object to set */
 
 /* Convert the value of an object property to a string
  */
-char *object_property_to_string(OBJECT *obj, char *name, char *buffer, int sz)
+char *object_property_to_string(OBJECT *obj, const char *name, char *buffer, int sz)
 {
 	//static char buffer[4096];
 	void *addr;
@@ -2264,7 +2264,7 @@ static OBJECTTREE *object_tree_add(OBJECT *obj, OBJECTNAME name){
 
 /*	Finds a name in the tree
  */
-static OBJECTTREE **findin_tree(OBJECTTREE **tree, OBJECTNAME name)
+static OBJECTTREE **findin_tree(OBJECTTREE **tree, const char* name) // Previously used OBJECTNAME
 {
 	if(tree == NULL || *tree == NULL){
 		return NULL;
@@ -2344,7 +2344,7 @@ void object_tree_delete(OBJECT *obj, OBJECTNAME name)
 /** Find an object from a name.  This only works for named objects.  See object_set_name().
 	@return a pointer to the OBJECT structure
  **/
-OBJECT *object_find_name(OBJECTNAME name){
+OBJECT *object_find_name(const char* name){ // Previously used OBJECTNAME
 	OBJECTTREE **item = NULL;
 
 	item = findin_tree(&(top), name);

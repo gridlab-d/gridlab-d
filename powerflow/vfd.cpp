@@ -24,7 +24,7 @@ vfd::vfd(MODULE *mod) : link_object(mod)
 	{
 		pclass = link_object::oclass;
 		
-		oclass = gl_register_class(mod,const_cast<char*>("vfd"),sizeof(vfd),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,"vfd",sizeof(vfd),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class vfd";
 		else
@@ -51,23 +51,23 @@ vfd::vfd(MODULE *mod) : link_object(mod)
 				PT_KEYWORD, "CHANGING", (enumeration)VFD_CHANGING,
 				PT_KEYWORD, "STEADY_STATE", (enumeration)VFD_STEADY,
 			
-			NULL) < 1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
+			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	const_cast<char*>("interupdate_pwr_object"), (FUNCTIONADDR)interupdate_vfd)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish VFD deltamode function"));
-		if (gl_publish_function(oclass,	const_cast<char*>("postupdate_pwr_object"), (FUNCTIONADDR)postupdate_vfd)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish VFD deltamode function"));
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_vfd)==NULL)
+			GL_THROW("Unable to publish VFD deltamode function");
+		if (gl_publish_function(oclass,	"postupdate_pwr_object", (FUNCTIONADDR)postupdate_vfd)==NULL)
+			GL_THROW("Unable to publish VFD deltamode function");
 
 		//Publish restoration-related function (current update)
-		if (gl_publish_function(oclass,	const_cast<char*>("update_power_pwr_object"), (FUNCTIONADDR)updatepowercalc_link)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish VFD external power calculation function"));
-		if (gl_publish_function(oclass,	const_cast<char*>("check_limits_pwr_object"), (FUNCTIONADDR)calculate_overlimit_link)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish VFD external power limit calculation function"));
+		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+			GL_THROW("Unable to publish VFD external power calculation function");
+		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+			GL_THROW("Unable to publish VFD external power limit calculation function");
 
 		//Publish external VFD interfacing function
-		if (gl_publish_function(oclass,	const_cast<char*>("vfd_current_injection_update"), (FUNCTIONADDR)current_injection_update_VFD)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish VFD external current injection calculation function"));
+		if (gl_publish_function(oclass,	"vfd_current_injection_update", (FUNCTIONADDR)current_injection_update_VFD)==NULL)
+			GL_THROW("Unable to publish VFD external current injection calculation function");
     }
 }
 
@@ -159,7 +159,7 @@ int vfd::init(OBJECT *parent)
 
 	if (stableTime <= 0.0)
 	{
-		GL_THROW(const_cast<char*>("VFD:%d - %s - the stableTime must be positive"),obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW("VFD:%d - %s - the stableTime must be positive",obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		The stableTime value for the VFD is negative.  This must be a positive value for the simulation to work
 		properly.
@@ -223,7 +223,7 @@ int vfd::init(OBJECT *parent)
 	//Check rated speed
 	if (ratedRPM <= 0.0)
 	{
-		GL_THROW(const_cast<char*>("VFD:%d - %s - rated_motor_speed must be positive and non-zero!"),obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW("VFD:%d - %s - rated_motor_speed must be positive and non-zero!",obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		The value specified for rated_motor_speed must be positive and non-zero in order to properly work.
 		 */
@@ -234,7 +234,7 @@ int vfd::init(OBJECT *parent)
 	//Check the poles too
 	if (motorPoles <= 0.0)
 	{
-		GL_THROW(const_cast<char*>("VFD:%d - %s - motor_poles must be positive and non-zero!"),obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW("VFD:%d - %s - motor_poles must be positive and non-zero!",obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		The value specified for motor_poles must be positive and non-zero in order to properly work.
 		 */
@@ -245,7 +245,7 @@ int vfd::init(OBJECT *parent)
 	//And finally, the rated horse power
 	if (horsePowerRatedVFD <= 0.0)
 	{
-		GL_THROW(const_cast<char*>("VFD:%d - %s - rated_horse_power must be positive and non-zero!"),obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW("VFD:%d - %s - rated_horse_power must be positive and non-zero!",obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		The value specified for rated_horse_power must be positive and non-zero in order to properly work.
 		 */
@@ -256,7 +256,7 @@ int vfd::init(OBJECT *parent)
 	//Make sure we're three-phase, since that's all that works right now
 	if ((has_phase(PHASE_A) & has_phase(PHASE_B) & has_phase(PHASE_C)) != true)
 	{
-		GL_THROW(const_cast<char*>("VFD:%d - %s - Must be three-phase!"),obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW("VFD:%d - %s - Must be three-phase!",obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		The VFD only operates as a three-phase device, at this time.  Please specify all phases.
 		 */
@@ -300,7 +300,7 @@ int vfd::init(OBJECT *parent)
 	//Check the run
 	if (temp_status_val == FAILED)
 	{
-		GL_THROW(const_cast<char*>("VFD:%d - %s - Allocating the dynamic arrays for the frequency tracking failed"),obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW("VFD:%d - %s - Allocating the dynamic arrays for the frequency tracking failed",obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		While attempting to allocate the dynamic length arrays for the vfd operation, an issue was encountered.  Please try again.  If the error
 		persists, please submit an issue. */
@@ -313,7 +313,7 @@ int vfd::init(OBJECT *parent)
 	//Make sure it worked
 	if (temp_fxn == NULL)
 	{
-		GL_THROW(const_cast<char*>("VFD:%d - %s -- Failed to map TO-node flag function"),obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW("VFD:%d - %s -- Failed to map TO-node flag function",obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		While attempting to update the flagging on the "TO" node to reflect being attached to a VFD, an error occurred.
 		Please try again.  If the error persists, please submit an issue
@@ -326,7 +326,7 @@ int vfd::init(OBJECT *parent)
 	//Make sure it worked
 	if (temp_status_val == FAILED)
 	{
-		GL_THROW(const_cast<char*>("VFD:%d - %s -- Failed to map TO-node flag function"),obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW("VFD:%d - %s -- Failed to map TO-node flag function",obj->id,(obj->name ? obj->name : "Unnamed"));
 		//Defined above - use the same function
 	}
 	
@@ -343,7 +343,7 @@ void vfd::CheckParameters()
 	//Make sure desiredRPM hasn't gone negative
 	if (desiredRPM < 0.0)
 	{
-		GL_THROW(const_cast<char*>("VFD:%d - %s - the desired_motor_speed must be positive"),obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW("VFD:%d - %s - the desired_motor_speed must be positive",obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		The desired_motor_speed value for the VFD is negative.  This must be a positive value for the simulation to work
 		properly.  Backwards spinning motors are not supported at this time.

@@ -24,7 +24,7 @@ billdump::billdump(MODULE *mod)
 	if (oclass==NULL)
 	{
 		// register the class definition
-		oclass = gl_register_class(mod,const_cast<char*>("billdump"),sizeof(billdump),PC_BOTTOMUP|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,"billdump",sizeof(billdump),PC_BOTTOMUP|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class billdump";
 		else
@@ -39,7 +39,7 @@ billdump::billdump(MODULE *mod)
 			PT_enumeration,"meter_type",PADDR(meter_type), PT_DESCRIPTION, "describes whether to collect from 3-phase or S-phase meters",
 				PT_KEYWORD,"TRIPLEX_METER",(enumeration)METER_TP,
 				PT_KEYWORD,"METER",(enumeration)METER_3P,
-			NULL)<1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
+			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		
 	}
 }
@@ -116,15 +116,15 @@ void billdump::dump(TIMESTAMP t){
 		fprintf(outfile,"# %s run at %s on %i triplex meters\n", filename.get_string(), timestr, nodes->hit_count);
 		fprintf(outfile,"meter_name,previous_monthly_bill,previous_monthly_energy\n");
 		while (obj=gl_find_next(nodes,obj)){
-			if(gl_object_isa(obj, const_cast<char*>("triplex_meter"), const_cast<char*>("powerflow"))){
+			if(gl_object_isa(obj, "triplex_meter", "powerflow")){
 
 				//Map the properties of interest - bill
-				node_monthly_bill = new gld_property(obj,const_cast<char*>("previous_monthly_bill"));
+				node_monthly_bill = new gld_property(obj,"previous_monthly_bill");
 
 				//Check it
 				if ((node_monthly_bill->is_valid() != true) || (node_monthly_bill->is_double() != true))
 				{
-					GL_THROW(const_cast<char*>("billdump - Unable to map billing property of triplex_meter:%d - %s"),obj->id,(obj->name ? obj->name : "Unnamed"));
+					GL_THROW("billdump - Unable to map billing property of triplex_meter:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
 					/*  TROUBLESHOOT
 					While the billdump object attempted to map the previous_monthly_bill or previous_monthly_energy properties, an error
 					occurred.  Please try again.  If the error persists, please submit your code via the ticketing and issues system.
@@ -132,12 +132,12 @@ void billdump::dump(TIMESTAMP t){
 				}
 
 				//Map the other one - energy
-				node_monthly_energy = new gld_property(obj,const_cast<char*>("previous_monthly_energy"));
+				node_monthly_energy = new gld_property(obj,"previous_monthly_energy");
 
 				//Check it
 				if ((node_monthly_energy->is_valid() != true) || (node_monthly_energy->is_double() != true))
 				{
-					GL_THROW(const_cast<char*>("billdump - Unable to map billing property of triplex_meter:%d - %s"),obj->id,(obj->name ? obj->name : "Unnamed"));
+					GL_THROW("billdump - Unable to map billing property of triplex_meter:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
 					//Defined above
 				}
 
@@ -163,15 +163,15 @@ void billdump::dump(TIMESTAMP t){
 		fprintf(outfile,"# %s run at %s on %i meters\n", filename.get_string(), timestr, nodes->hit_count);
 		fprintf(outfile,"meter_name,previous_monthly_bill,previous_monthly_energy\n");
 		while (obj=gl_find_next(nodes,obj)){
-			if(gl_object_isa(obj, const_cast<char*>("meter"), const_cast<char*>("powerflow"))){
+			if(gl_object_isa(obj, "meter", "powerflow")){
 
 				//Map the properties of interest - bill
-				node_monthly_bill = new gld_property(obj,const_cast<char*>("previous_monthly_bill"));
+				node_monthly_bill = new gld_property(obj,"previous_monthly_bill");
 
 				//Check it
 				if ((node_monthly_bill->is_valid() != true) || (node_monthly_bill->is_double() != true))
 				{
-					GL_THROW(const_cast<char*>("billdump - Unable to map billing property of meter:%d - %s"),obj->id,(obj->name ? obj->name : "Unnamed"));
+					GL_THROW("billdump - Unable to map billing property of meter:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
 					/*  TROUBLESHOOT
 					While the billdump object attempted to map the previous_monthly_bill or previous_monthly_energy properties, an error
 					occurred.  Please try again.  If the error persists, please submit your code via the ticketing and issues system.
@@ -179,12 +179,12 @@ void billdump::dump(TIMESTAMP t){
 				}
 
 				//Map the other one - energy
-				node_monthly_energy = new gld_property(obj,const_cast<char*>("previous_monthly_energy"));
+				node_monthly_energy = new gld_property(obj,"previous_monthly_energy");
 
 				//Check it
 				if ((node_monthly_energy->is_valid() != true) || (node_monthly_energy->is_double() != true))
 				{
-					GL_THROW(const_cast<char*>("billdump - Unable to map billing property of meter:%d - %s"),obj->id,(obj->name ? obj->name : "Unnamed"));
+					GL_THROW("billdump - Unable to map billing property of meter:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
 					//Defined above
 				}
 

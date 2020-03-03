@@ -15,7 +15,7 @@ double_controller::double_controller(MODULE *module)
 {
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module, const_cast<char*>("double_controller"),sizeof(double_controller),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
+		oclass = gl_register_class(module, "double_controller",sizeof(double_controller),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class double_controller";
 		else
@@ -156,9 +156,9 @@ int double_controller::init(OBJECT *parent){
 	}
 
 	//market = OBJECTDATA(pMarket, auction);
-	pPeriod =	gl_get_double_by_name(pMarket, const_cast<char*>("period"));
-	pNextP = 	gl_get_double_by_name(pMarket, const_cast<char*>("next.P"));
-	pMarketID = gl_get_int64_by_name(pMarket, const_cast<char*>("market_id"));
+	pPeriod =	gl_get_double_by_name(pMarket, "period");
+	pNextP = 	gl_get_double_by_name(pMarket, "next.P");
+	pMarketID = gl_get_int64_by_name(pMarket, "market_id");
 	pAvg =		gl_get_double_by_name(pMarket, avg_target);
 	pStd =		gl_get_double_by_name(pMarket, std_target);
 

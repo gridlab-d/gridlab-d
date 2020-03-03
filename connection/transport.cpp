@@ -26,7 +26,7 @@ connection_transport::connection_transport(void)
 connection_transport::~connection_transport(void)
 {
 	if ( position>0 )
-		warning(const_cast<char*>("transport closed before pending message could be sent"));
+		warning("transport closed before pending message could be sent");
 }
 
 CONNECTIONTRANSPORT connection_transport::get_transport(const char *s)
@@ -59,7 +59,7 @@ connection_transport* connection_transport::new_instance(CONNECTIONTRANSPORT e)
 		return t;
 }
 
-void connection_transport::error(char *fmt, ...)
+void connection_transport::error(const char *fmt, ...)
 {
 	char msg[1024];
 	va_list ptr;
@@ -68,7 +68,7 @@ void connection_transport::error(char *fmt, ...)
 	va_end(ptr);
 	gl_error("connection/%s: %s",get_transport_name(), msg);
 }
-void connection_transport::warning(char *fmt, ...)
+void connection_transport::warning(const char *fmt, ...)
 {
 	char msg[1024];
 	va_list ptr;
@@ -77,7 +77,7 @@ void connection_transport::warning(char *fmt, ...)
 	va_end(ptr);
 	gl_warning("connection/%s: %s",get_transport_name(), msg);
 }
-void connection_transport::info(char *fmt, ...)
+void connection_transport::info(const char *fmt, ...)
 {
 	char msg[1024];
 	va_list ptr;
@@ -139,27 +139,27 @@ bool connection_transport::message_continue()
 	return true;
 }
 
-int connection_transport::message_append(char *fmt,...)
+int connection_transport::message_append(const char *fmt,...)
 {
 	char temp[2048];
 	va_list ptr;
 	va_start(ptr,fmt);
 	if ( get_position()<0 )
 	{
-		error(const_cast<char*>("message append received with no pending message"));
+		error("message append received with no pending message");
 		return -1;
 	}
 	int len = vsprintf(temp,fmt,ptr);
 	if ( len>get_size() )
 	{
-		error(const_cast<char*>("message exceeds protocol size limit"));
+		error("message exceeds protocol size limit");
 		return -1;
 	}
 	if ( delimiter!=NULL && field_count>0 )
 	{
 		if ( get_size()<strlen(delimiter) )
 		{
-			error(const_cast<char*>("message exceeds protocol size limit"));
+			error("message exceeds protocol size limit");
 			return -1;
 		}
 		position += sprintf(output+position,"%s",delimiter);

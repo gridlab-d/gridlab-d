@@ -28,7 +28,7 @@ rectifier::rectifier(MODULE *module)
 {
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module, const_cast<char*>("rectifier"),sizeof(rectifier),PC_BOTTOMUP|PC_AUTOLOCK);
+		oclass = gl_register_class(module, "rectifier",sizeof(rectifier),PC_BOTTOMUP|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class rectifier";
 		else
@@ -72,7 +72,7 @@ rectifier::rectifier(MODULE *module)
 			PT_KEYWORD, "C",(set)PHASE_C,
 			PT_KEYWORD, "N",(set)PHASE_N,
 			PT_KEYWORD, "S",(set)PHASE_S,
-			NULL)<1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
+			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 			defaults = this;
 
 		memset(this,0,sizeof(rectifier));
@@ -97,15 +97,15 @@ int rectifier::init(OBJECT *parent)
 
 	V_Rated = 360;
 
-	if (parent!=NULL && gl_object_isa(parent,const_cast<char*>("inverter")))
+	if (parent!=NULL && gl_object_isa(parent,"inverter"))
 	{
 		//Map the V_In property
-		pCircuit_V = new gld_property(parent,const_cast<char*>("V_In"));
+		pCircuit_V = new gld_property(parent,"V_In");
 
 		//Make sure it worked
 		if (!pCircuit_V->is_valid() || !pCircuit_V->is_complex())
 		{
-			GL_THROW(const_cast<char*>("rectifier:%d - %s - Unable to map parent inverter property"),obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW("rectifier:%d - %s - Unable to map parent inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
 			While attempting to map the parent inverter property, the rectifier encoutnered an error.  Please try again.
 			If the error persists, please submit your model and information via the ticketing system.
@@ -113,18 +113,18 @@ int rectifier::init(OBJECT *parent)
 		}
 
 		//Now get the current
-		pLine_I = new gld_property(parent,const_cast<char*>("I_In"));
+		pLine_I = new gld_property(parent,"I_In");
 
 		//Make sure it worked
 		if (!pLine_I->is_valid() || !pLine_I->is_complex())
 		{
-			GL_THROW(const_cast<char*>("rectifier:%d - %s - Unable to map parent inverter property"),obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW("rectifier:%d - %s - Unable to map parent inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
 		}
 	}
 	else
 	{
-		GL_THROW(const_cast<char*>("Rectifier:%d - %s -- Rectifiers must be parented to inverters"),obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW("Rectifier:%d - %s -- Rectifiers must be parented to inverters",obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		A rectifier either lacks a parent, or has a parent that is not an inverter.  Rectifiers only support inverter
 		objects as parents, at this time.  Please parent it to an inverter.
@@ -134,19 +134,19 @@ int rectifier::init(OBJECT *parent)
 	/* TODO: set the context-dependent initial value of properties */
 	if (gen_mode_v==UNKNOWN)
 	{
-		GL_THROW(const_cast<char*>("Generator control mode is not specified."));
+		GL_THROW("Generator control mode is not specified.");
 	}
 	else if(gen_mode_v == CONSTANT_V)
 	{
-		GL_THROW(const_cast<char*>("Generator mode CONSTANT_V is not implemented yet."));
+		GL_THROW("Generator mode CONSTANT_V is not implemented yet.");
 	}
 	else if(gen_mode_v == CONSTANT_PQ)
 	{
-		GL_THROW(const_cast<char*>("Generator mode CONSTANT_PQ is not implemented yet."));
+		GL_THROW("Generator mode CONSTANT_PQ is not implemented yet.");
 	}
 	else if(gen_mode_v == CONSTANT_PF)
 	{
-		GL_THROW(const_cast<char*>("Generator mode CONSTANT_PF is not implemented yet."));
+		GL_THROW("Generator mode CONSTANT_PF is not implemented yet.");
 	}
 
 
@@ -288,7 +288,7 @@ EXPORT TIMESTAMP sync_rectifier(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 			t2 = my->postsync(obj->clock,t1);
 			break;
 		default:
-			GL_THROW(const_cast<char*>("invalid pass request (%d)"), pass);
+			GL_THROW("invalid pass request (%d)", pass);
 			break;
 		}
 		if (pass==clockpass)

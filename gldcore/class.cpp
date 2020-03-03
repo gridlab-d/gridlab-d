@@ -93,7 +93,8 @@ PROPERTY *class_get_next_property(PROPERTY *prop)
 /** Search class hierarchy for a property
 	@return property pointer if found, NULL if not in class hierarchy
  **/
-PROPERTY *class_prop_in_class(CLASS *oclass, PROPERTY *prop)
+const PROPERTY *class_prop_in_class(CLASS *oclass, const PROPERTY *prop)
+//PROPERTY *class_prop_in_class(CLASS *oclass, PROPERTY *prop)
 {
 	if(oclass == prop->oclass)
 	{
@@ -148,7 +149,7 @@ int property_create(PROPERTY *prop, void *addr)
 	inheritence loops.  these should be impossible if a class_register call is
 	immediately followed by a class_define_map call. -d3p988 */
 PROPERTY *class_find_property_rec(CLASS *oclass, 
-                                  PROPERTYNAME name, 
+                                  const PROPERTYNAME name,
                                   CLASS *pclass)
 {
 	PROPERTY *prop;
@@ -174,7 +175,7 @@ PROPERTY *class_find_property_rec(CLASS *oclass,
 }
 
 static PROPERTY *find_header_property(CLASS *oclass, 
-                                      PROPERTYNAME name)
+                                      const PROPERTYNAME name)
 {
 	PROPERTY *prop = NULL;
 	return prop;
@@ -185,7 +186,7 @@ static PROPERTY *find_header_property(CLASS *oclass,
 	@return a pointer to the PROPERTY, or \p NULL if the property is not found.
  **/
 PROPERTY *class_find_property(CLASS *oclass,     /**< the object class */
-                              PROPERTYNAME name) /**< the property name */
+                              const PROPERTYNAME name) /**< the property name */
 {
 	PROPERTY *prop = find_header_property(oclass,name);
 	if ( prop ) return prop;
@@ -424,7 +425,7 @@ int class_property_to_string(PROPERTY *prop, /**< the property type */
 
  **/
 CLASS *class_register(MODULE *module,        /**< the module that implements the class */
-                      CLASSNAME name,        /**< the class name */
+                      const CLASSNAME name,  /**< the class name */
                       unsigned int size,     /**< the size of the data block */
                       PASSCONFIG passconfig) /**< the passes for which \p sync should be called */
 {
@@ -502,7 +503,7 @@ CLASS *class_get_first_class(void)
 	@return a pointer to the class registered to that module
 	having that \p name, or \p NULL if no match found.
  **/
-CLASS *class_get_class_from_classname_in_module(char *name, MODULE *mod){
+CLASS *class_get_class_from_classname_in_module(const char *name, MODULE *mod){
 	CLASS *oclass = NULL;
 	if(name == NULL) return NULL;
 	if(mod == NULL) return NULL;
@@ -574,7 +575,7 @@ size_t class_get_extendedcount(CLASS *oclass)
 	@return a pointer to the class having that \p name,
 	or \p NULL if no match found.
  **/
-CLASS *class_get_class_from_classname(char *name) /**< a pointer to a \p NULL -terminated string containing the class name */
+CLASS *class_get_class_from_classname(const char *name) /**< a pointer to a \p NULL -terminated string containing the class name */
 {
 	CLASS *oclass = NULL;
 	MODULE *mod = NULL;
@@ -1006,7 +1007,7 @@ int class_define_enumeration_member(CLASS *oclass, /**< pointer to the class whi
                                     const char *member, /**< member name to define */
                                     enumeration value) /**< enum value to associate with the name */
 {
-	PROPERTY *prop = class_find_property(oclass, const_cast<char*>(property_name));
+	PROPERTY *prop = class_find_property(oclass, property_name);
 	KEYWORD *key = (KEYWORD*)malloc(sizeof(KEYWORD));
 	if (prop==NULL || key==NULL) return 0;
 	key->next = prop->keywords;
@@ -1023,7 +1024,7 @@ int class_define_set_member(CLASS *oclass, /**< pointer to the class which imple
                             const char *member, /**< member name to define */
                             unsigned int64 value) /**< set value to associate with the name */
 {
-	PROPERTY *prop = class_find_property(oclass, const_cast<char*>(property_name));
+	PROPERTY *prop = class_find_property(oclass, property_name);
 	KEYWORD *key = (KEYWORD*)malloc(sizeof(KEYWORD));
 	if (prop==NULL || key==NULL) return 0;
 	if (prop->keywords==NULL)
@@ -1041,7 +1042,7 @@ int class_define_set_member(CLASS *oclass, /**< pointer to the class which imple
 /**	Define a class function.
 	@return A structure with the function pointer and the function's published name.
  */
-FUNCTION *class_define_function(CLASS *oclass, FUNCTIONNAME functionname, FUNCTIONADDR call)
+FUNCTION *class_define_function(CLASS *oclass, const FUNCTIONNAME functionname, FUNCTIONADDR call)
 {
 	FUNCTION *func, *tempfunc;
 	if (class_get_function(oclass->name,functionname)!=NULL)
@@ -1254,7 +1255,7 @@ DELEGATEDTYPE *class_register_type(CLASS *oclass, /**< the object class */
 	return dt;
 }
 
-int class_add_loadmethod(CLASS *oclass, char *name, int (*call)(void*,char*))
+int class_add_loadmethod(CLASS *oclass, const char *name, int (*call)(void*,char*))
 {
 	LOADMETHOD *method = (LOADMETHOD*)malloc(sizeof(LOADMETHOD));
 	method->name = name;
@@ -1264,7 +1265,7 @@ int class_add_loadmethod(CLASS *oclass, char *name, int (*call)(void*,char*))
 	return 1;
 }
 
-LOADMETHOD *class_get_loadmethod(CLASS *oclass,char *name)
+LOADMETHOD *class_get_loadmethod(CLASS *oclass, const char *name)
 {
 	LOADMETHOD *method;
 	for ( method=oclass->loadmethods ; method!=NULL ; method=method->next )

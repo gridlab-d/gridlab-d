@@ -57,7 +57,7 @@ typedef struct s_function_map {
 } FUNCTION;
 
 typedef struct s_loadmethod {
-	char *name;
+	const char *name;
 	int (*call)(void*,char*);
 	struct s_loadmethod *next;
 } LOADMETHOD;
@@ -129,8 +129,8 @@ struct s_class_list {
 
 PROPERTY *class_get_first_property(CLASS *oclass);
 PROPERTY *class_get_next_property(PROPERTY *prop);
-PROPERTY *class_prop_in_class(CLASS *oclass, PROPERTY *prop);
-PROPERTY *class_find_property(CLASS *oclass, PROPERTYNAME name);
+const PROPERTY *class_prop_in_class(CLASS *oclass, const PROPERTY *prop);
+PROPERTY *class_find_property(CLASS *oclass, const PROPERTYNAME name);
 void class_add_property(CLASS *oclass, PROPERTY *prop);
 PROPERTY *class_add_extended_property(CLASS *oclass, char *name, PROPERTYTYPE ptype, char *unit);
 PROPERTYTYPE class_get_propertytype_from_typename(char *name);
@@ -139,8 +139,8 @@ int class_string_to_propertytype(PROPERTYTYPE type, void *addr, char *value);
 int class_property_to_string(PROPERTY *prop, void *addr, char *value, int size);
 CLASS *class_get_first_class(void);
 CLASS *class_get_last_class(void);
-CLASS *class_get_class_from_classname(char *name);
-CLASS *class_get_class_from_classname_in_module(char *name, MODULE *mod);
+CLASS *class_get_class_from_classname(const char *name);
+CLASS *class_get_class_from_classname_in_module(const char *name, MODULE *mod);
 const char *class_get_property_typename(PROPERTYTYPE type);
 const char *class_get_property_typexsdname(PROPERTYTYPE type);
 int class_saveall(FILE *fp);
@@ -153,17 +153,17 @@ CLASS *class_get_first_runtime(void);
 CLASS *class_get_next_runtime(CLASS *oclass);
 size_t class_get_extendedcount(CLASS *oclass);
 
-CLASS *class_register(MODULE *module,CLASSNAME classname,unsigned int datasize,PASSCONFIG passconfig);
+CLASS *class_register(MODULE *module,const CLASSNAME classname,unsigned int datasize,PASSCONFIG passconfig);
 int class_define_map(CLASS *oclass, ...);
 int class_define_enumeration_member(CLASS *oclass,const char *property_name,const char *member,enumeration value);
 int class_define_set_member(CLASS *oclass,const char *property_name,const char *member,unsigned int64 value);
-FUNCTION *class_define_function(CLASS *oclass, FUNCTIONNAME functionname, FUNCTIONADDR call);
+FUNCTION *class_define_function(CLASS *oclass, const FUNCTIONNAME functionname, FUNCTIONADDR call);
 FUNCTIONADDR class_get_function(char *classname, const char *functionname);
 DELEGATEDTYPE *class_register_type(CLASS *oclass, char *type,int (*from_string)(void*,char*),int (*to_string)(void*,char*,int));
 int class_define_type(CLASS *oclass, DELEGATEDTYPE *delegation, ...);
 
-int class_add_loadmethod(CLASS *oclass, char *name, int (*call)(void*,char*));
-LOADMETHOD *class_get_loadmethod(CLASS *oclass,char *name);
+int class_add_loadmethod(CLASS *oclass, const char *name, int (*call)(void*,char*));
+LOADMETHOD *class_get_loadmethod(CLASS *oclass, const char *name);
 
 //#ifdef __cplusplus
 //}

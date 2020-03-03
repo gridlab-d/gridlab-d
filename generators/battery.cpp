@@ -28,7 +28,7 @@ battery::battery(MODULE *module)
 
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,const_cast<char*>("battery"),sizeof(battery),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
+		oclass = gl_register_class(module,"battery",sizeof(battery),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class battery";
 		else
@@ -136,16 +136,16 @@ battery::battery(MODULE *module)
 			PT_double,"state_of_charge[pu]", PADDR(soc), PT_DESCRIPTION, "INTERNAL BATTERY MODEL: the current state of charge of the battery.",
 			PT_double,"battery_load[W]", PADDR(bat_load), PT_DESCRIPTION, "INTERNAL BATTERY MODEL: the current power output of the battery.",
 			PT_double,"reserve_state_of_charge[pu]", PADDR(b_soc_reserve), PT_DESCRIPTION, "INTERNAL BATTERY MODEL: the reserve state of charge the battery can reach.",
-			NULL)<1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
+			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		defaults = this;
 		memset(this,0,sizeof(battery));
 
-		if (gl_publish_function(oclass,	const_cast<char*>("preupdate_battery_object"), (FUNCTIONADDR)preupdate_battery)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish battery deltamode function"));
-		if (gl_publish_function(oclass,	const_cast<char*>("interupdate_battery_object"), (FUNCTIONADDR)interupdate_battery)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish battery deltamode function"));
-		if (gl_publish_function(oclass,	const_cast<char*>("postupdate_battery_object"), (FUNCTIONADDR)postupdate_battery)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish battery deltamode function"));
+		if (gl_publish_function(oclass,	"preupdate_battery_object", (FUNCTIONADDR)preupdate_battery)==NULL)
+			GL_THROW("Unable to publish battery deltamode function");
+		if (gl_publish_function(oclass,	"interupdate_battery_object", (FUNCTIONADDR)interupdate_battery)==NULL)
+			GL_THROW("Unable to publish battery deltamode function");
+		if (gl_publish_function(oclass,	"postupdate_battery_object", (FUNCTIONADDR)postupdate_battery)==NULL)
+			GL_THROW("Unable to publish battery deltamode function");
 
 
 		/* TODO: set the default values of all properties here */
@@ -284,7 +284,7 @@ int battery::init(OBJECT *parent)
 		// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
 		if (parent!=NULL)
 		{
-			if (gl_object_isa(parent, const_cast<char*>("meter"), const_cast<char*>("powerflow")))
+			if (gl_object_isa(parent, "meter", "powerflow"))
 			{
 				//Set the flags
 				parent_is_meter = true;
@@ -292,25 +292,25 @@ int battery::init(OBJECT *parent)
 				parent_is_inverter = false;
 
 				//Make the mappings
-				pCircuit_V[0] = map_complex_value(parent,const_cast<char*>("voltage_A"));
-				pCircuit_V[1] = map_complex_value(parent,const_cast<char*>("voltage_B"));
-				pCircuit_V[2] = map_complex_value(parent,const_cast<char*>("voltage_C"));
+				pCircuit_V[0] = map_complex_value(parent,"voltage_A");
+				pCircuit_V[1] = map_complex_value(parent,"voltage_B");
+				pCircuit_V[2] = map_complex_value(parent,"voltage_C");
 
-				pLine_I[0] = map_complex_value(parent,const_cast<char*>("current_A"));
-				pLine_I[1] = map_complex_value(parent,const_cast<char*>("current_B"));
-				pLine_I[2] = map_complex_value(parent,const_cast<char*>("current_C"));
+				pLine_I[0] = map_complex_value(parent,"current_A");
+				pLine_I[1] = map_complex_value(parent,"current_B");
+				pLine_I[2] = map_complex_value(parent,"current_C");
 
 				pLine12 = NULL;
 
-				pPower = map_complex_value(parent,const_cast<char*>("measured_power"));
+				pPower = map_complex_value(parent,"measured_power");
 
 				//Map and pull the phases
-				temp_property_pointer = new gld_property(parent,const_cast<char*>("phases"));
+				temp_property_pointer = new gld_property(parent,"phases");
 
 				//Make sure ti worked
 				if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_set())
 				{
-					GL_THROW(const_cast<char*>("Unable to map phases property - ensure the parent is a meter or triplex_meter"));
+					GL_THROW("Unable to map phases property - ensure the parent is a meter or triplex_meter");
 					/*  TROUBLESHOOT
 					While attempting to map the phases property from the parent object, an error was encountered.
 					Please check and make sure your parent object is a meter or triplex_meter inside the powerflow module and try
@@ -329,14 +329,14 @@ int battery::init(OBJECT *parent)
 				}
 				else if ( ((phases & 0x03) == 0x03) || ((phases & 0x05) == 0x05) || ((phases & 0x06) == 0x06) ){ // two-phase
 					number_of_phases_out = 2;
-					GL_THROW(const_cast<char*>("Battery %d: The battery can only be connected to a meter with all three phases. Please check parent meter's phases."),obj->id);
+					GL_THROW("Battery %d: The battery can only be connected to a meter with all three phases. Please check parent meter's phases.",obj->id);
 					/* TROUBLESHOOT
 					The battery's parent is a meter. The battery can only operate correctly when the parent meter is a three-phase meter.
 					*/
 				}
 				else if ( ((phases & 0x01) == 0x01) || ((phases & 0x02) == 0x02) || ((phases & 0x04) == 0x04) ){ // single phase
 					number_of_phases_out = 1;
-					GL_THROW(const_cast<char*>("Battery %d: The battery can only be connected to a meter with all three phases. Please check parent meter's phases."),obj->id);
+					GL_THROW("Battery %d: The battery can only be connected to a meter with all three phases. Please check parent meter's phases.",obj->id);
 					/* TROUBLESHOOT
 					The battery's parent is a meter. The battery can only operate correctly when the parent meter is a three-phase meter.
 					*/
@@ -344,7 +344,7 @@ int battery::init(OBJECT *parent)
 				else
 				{
 					//Never supposed to really get here
-					GL_THROW(const_cast<char*>("Invalid phase configuration specified!"));
+					GL_THROW("Invalid phase configuration specified!");
 					/*  TROUBLESHOOT
 					An invalid phase congifuration was specified when attaching to the "parent" object.  Please report this
 					error.
@@ -356,7 +356,7 @@ int battery::init(OBJECT *parent)
 				value_Circuit_V[1] = pCircuit_V[1]->get_complex();
 				value_Circuit_V[2] = pCircuit_V[2]->get_complex();
 			}
-			else if (gl_object_isa(parent, const_cast<char*>("triplex_meter"), const_cast<char*>("powerflow")))
+			else if (gl_object_isa(parent, "triplex_meter", "powerflow"))
 			{
 				//Set flags
 				parent_is_meter = true;
@@ -364,25 +364,25 @@ int battery::init(OBJECT *parent)
 				parent_is_inverter = false;
 
 				//Map the variables
-				pCircuit_V[0] = map_complex_value(parent,const_cast<char*>("voltage_12"));
-				pCircuit_V[1] = map_complex_value(parent,const_cast<char*>("voltage_1N"));
-				pCircuit_V[2] = map_complex_value(parent,const_cast<char*>("voltage_2N"));
+				pCircuit_V[0] = map_complex_value(parent,"voltage_12");
+				pCircuit_V[1] = map_complex_value(parent,"voltage_1N");
+				pCircuit_V[2] = map_complex_value(parent,"voltage_2N");
 
-				pLine_I[0] = map_complex_value(parent,const_cast<char*>("current_1"));
-				pLine_I[1] = map_complex_value(parent,const_cast<char*>("current_2"));
-				pLine_I[2] = map_complex_value(parent,const_cast<char*>("current_N"));
+				pLine_I[0] = map_complex_value(parent,"current_1");
+				pLine_I[1] = map_complex_value(parent,"current_2");
+				pLine_I[2] = map_complex_value(parent,"current_N");
 
-				pLine12 = map_complex_value(parent,const_cast<char*>("current_12"));
+				pLine12 = map_complex_value(parent,"current_12");
 
-				pPower = map_complex_value(parent,const_cast<char*>("measured_power"));
+				pPower = map_complex_value(parent,"measured_power");
 
 				//Map and pull the phases
-				temp_property_pointer = new gld_property(parent,const_cast<char*>("phases"));
+				temp_property_pointer = new gld_property(parent,"phases");
 
 				//Make sure ti worked
 				if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_set())
 				{
-					GL_THROW(const_cast<char*>("Unable to map phases property - ensure the parent is a meter or triplex_meter"));
+					GL_THROW("Unable to map phases property - ensure the parent is a meter or triplex_meter");
 					//Defined above
 				}
 
@@ -399,7 +399,7 @@ int battery::init(OBJECT *parent)
 				value_Circuit_V[1] = pCircuit_V[1]->get_complex();
 				value_Circuit_V[2] = pCircuit_V[2]->get_complex();
 			}
-			else if (gl_object_isa(parent, const_cast<char*>("inverter"), const_cast<char*>("generators")))
+			else if (gl_object_isa(parent, "inverter", "generators"))
 			{
 				//Set flags
 				parent_is_meter = true;
@@ -410,23 +410,23 @@ int battery::init(OBJECT *parent)
 				phases = 0x00;
 
 				//Map up the two inverter variabes
-				pCircuit_V[0] = map_complex_value(parent,const_cast<char*>("V_In"));
+				pCircuit_V[0] = map_complex_value(parent,"V_In");
 				pCircuit_V[1] = NULL;
 				pCircuit_V[2] = NULL;
 
-				pLine_I[0] = map_complex_value(parent,const_cast<char*>("I_In"));
+				pLine_I[0] = map_complex_value(parent,"I_In");
 				pLine_I[1] = NULL;
 				pLine_I[2] = NULL;
 
-				peff = map_double_value(parent,const_cast<char*>("inverter_efficiency"));
-				pinverter_VA_Out = map_complex_value(parent,const_cast<char*>("VA_Out"));
+				peff = map_double_value(parent,"inverter_efficiency");
+				pinverter_VA_Out = map_complex_value(parent,"VA_Out");
 
 				//Pull the initial voltage value, to be consistent
 				value_Circuit_V[0] = pCircuit_V[0]->get_complex();
 			}
 			else	//Not a proper parent
 			{
-				GL_THROW(const_cast<char*>("Battery must have a meter or triplex meter or inverter as it's parent"));
+				GL_THROW("Battery must have a meter or triplex meter or inverter as it's parent");
 				/*  TROUBLESHOOT
 				Check the parent object of the inverter.  The battery is only able to be childed via a meter or 
 				triplex meter when connecting into powerflow systems.  You can also choose to have no parent, in which
@@ -453,19 +453,19 @@ int battery::init(OBJECT *parent)
 
 		if (gen_mode_v==GM_UNKNOWN)
 		{
-			GL_THROW(const_cast<char*>("Generator (id:%d) generator_mode is not specified"),obj->id);
+			GL_THROW("Generator (id:%d) generator_mode is not specified",obj->id);
 		}
 		else if (gen_mode_v == GM_VOLTAGE_CONTROLLED)
 		{	
-			GL_THROW(const_cast<char*>("VOLTAGE_CONTROLLED generator_mode is not yet implemented."));
+			GL_THROW("VOLTAGE_CONTROLLED generator_mode is not yet implemented.");
 		}
 		else if (gen_mode_v == GM_CONSTANT_PF)
 		{	
-			GL_THROW(const_cast<char*>("CONSTANT_PF generator_mode is not yet implemented."));
+			GL_THROW("CONSTANT_PF generator_mode is not yet implemented.");
 		}
 		else if (gen_mode_v == GM_SUPPLY_DRIVEN)
 		{	
-			GL_THROW(const_cast<char*>("SUPPLY_DRIVEN generator_mode is not yet implemented."));
+			GL_THROW("SUPPLY_DRIVEN generator_mode is not yet implemented.");
 		}
 			
 		if (additional_controls == AC_LINEAR_TEMPERATURE)
@@ -502,7 +502,7 @@ int battery::init(OBJECT *parent)
 						gl_set_dependent(clim,obj);
 
 					//Map the temperature
-					pTout = map_double_value(clim,const_cast<char*>("temperature"));
+					pTout = map_double_value(clim,"temperature");
 				}
 			}
 		}
@@ -605,15 +605,15 @@ int battery::init(OBJECT *parent)
 		// find parent inverter, if not defined, use a default meter (using static variable 'default_meter')
 		if(parent == NULL)
 		{
-			GL_THROW(const_cast<char*>("Battery must have an inverter as it's parent when using the internal battery model"));
+			GL_THROW("Battery must have an inverter as it's parent when using the internal battery model");
 			/*  TROUBLESHOOT
 			When using the internal battery model parameter option for the battery object, it must be parented
 			to an inverter to work.  If this is not done, the code will fail.
 			*/
 		}
-		else if (!gl_object_isa(parent, const_cast<char*>("inverter"), const_cast<char*>("generators")))
+		else if (!gl_object_isa(parent, "inverter", "generators"))
 		{
-			GL_THROW(const_cast<char*>("Battery must have an inverter as it's parent"));
+			GL_THROW("Battery must have an inverter as it's parent");
 			//Defined above
 		}
 
@@ -678,18 +678,18 @@ int battery::init(OBJECT *parent)
 		}
 
 		//Map up the various inverter properties for interfacing with the battery
-		pSocReserve = map_double_value(parent,const_cast<char*>("soc_reserve"));
-		pSoc = map_double_value(parent,const_cast<char*>("battery_soc"));
-		pBatteryLoad = map_double_value(parent,const_cast<char*>("power_in"));
-		pRatedPower = map_double_value(parent,const_cast<char*>("rated_battery_power"));
+		pSocReserve = map_double_value(parent,"soc_reserve");
+		pSoc = map_double_value(parent,"battery_soc");
+		pBatteryLoad = map_double_value(parent,"power_in");
+		pRatedPower = map_double_value(parent,"rated_battery_power");
 
 		//Map the control mode into the temporary variable
-		temp_property_pointer = new gld_property(parent,const_cast<char*>("four_quadrant_control_mode"));
+		temp_property_pointer = new gld_property(parent,"four_quadrant_control_mode");
 
 		//Make sure it is proper
 		if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_enumeration())
 		{
-			GL_THROW(const_cast<char*>("battery:%d - %s - Unable to map the parent inverter four_quadrant_control_mode"),obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW("battery:%d - %s - Unable to map the parent inverter four_quadrant_control_mode",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
 			While attempting to map the four_quadrant_control_mode variable from the parent inverter, an issue occurred.  Please try again.
 			If the error persists, please submit you model and description via the issue tracking system.
@@ -840,7 +840,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//Check limits of the array
 			if (gen_object_current>=gen_object_count)
 			{
-				GL_THROW(const_cast<char*>("Too many objects tried to populate deltamode objects array in the generators module!"));
+				GL_THROW("Too many objects tried to populate deltamode objects array in the generators module!");
 				/*  TROUBLESHOOT
 				While attempting to populate a reference array of deltamode-enabled objects for the generator
 				module, an attempt was made to write beyond the allocated array space.  Please try again.  If the
@@ -857,7 +857,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//Make sure it worked
 			if (delta_functions[gen_object_current] == NULL)
 			{
-				GL_THROW(const_cast<char*>("Failure to map deltamode function for device:%s"),obj->name);
+				GL_THROW("Failure to map deltamode function for device:%s",obj->name);
 				/*  TROUBLESHOOT
 				Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
 				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
@@ -871,7 +871,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//Make sure it worked
 			if (post_delta_functions[gen_object_current] == NULL)
 			{
-				GL_THROW(const_cast<char*>("Failure to map post-deltamode function for device:%s"),obj->name);
+				GL_THROW("Failure to map post-deltamode function for device:%s",obj->name);
 				/*  TROUBLESHOOT
 				Attempts to map up the postupdate function of a specific device failed.  Please try again and ensure
 				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
@@ -885,7 +885,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//Make sure it worked
 			if (delta_preupdate_functions[gen_object_current] == NULL)
 			{
-				GL_THROW(const_cast<char*>("Failure to map pre-deltamode function for device:%s"),obj->name);
+				GL_THROW("Failure to map pre-deltamode function for device:%s",obj->name);
 				/*  TROUBLESHOOT
 				Attempts to map up the preupdate function of a specific device failed.  Please try again and ensure
 				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
@@ -910,7 +910,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 			if (number_of_phases_out == 3)
 			{
 				if (gen_mode_v == GM_POWER_VOLTAGE_HYBRID)
-					GL_THROW(const_cast<char*>("generator_mode POWER_VOLTAGE_HYBRID is not supported in 3-phase yet (only split phase is supported"));
+					GL_THROW("generator_mode POWER_VOLTAGE_HYBRID is not supported in 3-phase yet (only split phase is supported");
 
 				complex volt[3];
 				TIMESTAMP dt,t_energy_limit;
@@ -2229,7 +2229,7 @@ TIMESTAMP battery::postsync(TIMESTAMP t0, TIMESTAMP t1)
 }
 
 //Map Complex value
-gld_property *battery::map_complex_value(OBJECT *obj, char *name)
+gld_property *battery::map_complex_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	OBJECT *objhdr = OBJECTHDR(this);
@@ -2240,7 +2240,7 @@ gld_property *battery::map_complex_value(OBJECT *obj, char *name)
 	//Make sure it worked
 	if ((pQuantity->is_valid() != true) || (pQuantity->is_complex() != true))
 	{
-		GL_THROW(const_cast<char*>("battery:%d %s - Unable to map property %s from object:%d %s"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW("battery:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		While attempting to map a quantity from another object, an error occurred in battery.  Please try again.
 		If the error persists, please submit your system and a bug report via the ticketing system.
@@ -2252,7 +2252,7 @@ gld_property *battery::map_complex_value(OBJECT *obj, char *name)
 }
 
 //Map double value
-gld_property *battery::map_double_value(OBJECT *obj, char *name)
+gld_property *battery::map_double_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	OBJECT *objhdr = OBJECTHDR(this);
@@ -2263,7 +2263,7 @@ gld_property *battery::map_double_value(OBJECT *obj, char *name)
 	//Make sure it worked
 	if ((pQuantity->is_valid() != true) || (pQuantity->is_double() != true))
 	{
-		GL_THROW(const_cast<char*>("battery:%d %s - Unable to map property %s from object:%d %s"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW("battery:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		While attempting to map a quantity from another object, an error occurred in battery.  Please try again.
 		If the error persists, please submit your system and a bug report via the ticketing system.
@@ -2553,7 +2553,7 @@ EXPORT TIMESTAMP sync_battery(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 			t2 = my->postsync(obj->clock,t1);
 			break;
 		default:
-			GL_THROW(const_cast<char*>("invalid pass request (%d)"), pass);
+			GL_THROW("invalid pass request (%d)", pass);
 			break;
 		}
 		if (pass==clockpass)

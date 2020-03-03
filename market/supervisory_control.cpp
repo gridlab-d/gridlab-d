@@ -25,7 +25,7 @@ static PASSCONFIG clockpass = PC_POSTTOPDOWN;
 supervisory_control::supervisory_control(MODULE *module) {
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,const_cast<char*>("supervisory_control"),sizeof(supervisory_control),passconfig|PC_AUTOLOCK);
+		oclass = gl_register_class(module,"supervisory_control",sizeof(supervisory_control),passconfig|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class supervisory_control";
 		else

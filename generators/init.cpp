@@ -31,10 +31,10 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	}
 
 	/* Publish external global variables */
-	gl_global_create(const_cast<char*>("generators::default_line_voltage"),PT_double,&default_line_voltage,PT_UNITS,"V",PT_DESCRIPTION,"line voltage (L-N) to use when no circuit is attached",NULL);
-	gl_global_create(const_cast<char*>("generators::enable_subsecond_models"), PT_bool, &enable_subsecond_models,PT_DESCRIPTION,"Enable deltamode capabilities within the generators module",NULL);
-	gl_global_create(const_cast<char*>("generators::deltamode_timestep"), PT_double, &deltamode_timestep_publish,PT_UNITS,"ns",PT_DESCRIPTION,"Desired minimum timestep for deltamode-related simulations",NULL);
-	gl_global_create(const_cast<char*>("generators::default_temperature_value"), PT_double, &default_temperature_value,PT_UNITS,"degF",PT_DESCRIPTION,"Temperature when no climate module is detected",NULL);
+	gl_global_create("generators::default_line_voltage",PT_double,&default_line_voltage,PT_UNITS,"V",PT_DESCRIPTION,"line voltage (L-N) to use when no circuit is attached",NULL);
+	gl_global_create("generators::enable_subsecond_models", PT_bool, &enable_subsecond_models,PT_DESCRIPTION,"Enable deltamode capabilities within the generators module",NULL);
+	gl_global_create("generators::deltamode_timestep", PT_double, &deltamode_timestep_publish,PT_UNITS,"ns",PT_DESCRIPTION,"Desired minimum timestep for deltamode-related simulations",NULL);
+	gl_global_create("generators::default_temperature_value", PT_double, &default_temperature_value,PT_UNITS,"degF",PT_DESCRIPTION,"Temperature when no climate module is detected",NULL);
 
 	//Instantiate the classes
 	new diesel_dg(module);
@@ -61,7 +61,7 @@ void schedule_deltamode_start(TIMESTAMP tstart)
 	}
 	else
 	{
-		GL_THROW(const_cast<char*>("generators: a call was made to deltamode functions, but subsecond models are not enabled!"));
+		GL_THROW("generators: a call was made to deltamode functions, but subsecond models are not enabled!");
 		/*  TROUBLESHOOT
 		The schedule_deltamode_start function was called by an object when generators' overall enabled_subsecond_models
 		flag was not set.  The module-level flag indicates that no devices should use deltamode, but one made the call
@@ -85,7 +85,7 @@ void allocate_deltamode_arrays(void)
 		//Make sure it worked
 		if (delta_objects == NULL)
 		{
-			GL_THROW(const_cast<char*>("Failed to allocate deltamode objects array for generators module!"));
+			GL_THROW("Failed to allocate deltamode objects array for generators module!");
 			/*  TROUBLESHOOT
 			While attempting to create a reference array for generator module deltamode-enabled
 			objects, an error was encountered.  Please try again.  If the error persists, please
@@ -99,7 +99,7 @@ void allocate_deltamode_arrays(void)
 		//Make sure it worked
 		if (delta_functions == NULL)
 		{
-			GL_THROW(const_cast<char*>("Failed to allocate deltamode objects function array for generators module!"));
+			GL_THROW("Failed to allocate deltamode objects function array for generators module!");
 			/*  TROUBLESHOOT
 			While attempting to create a reference array for generator module deltamode-enabled
 			objects, an error was encountered.  Please try again.  If the error persists, please
@@ -113,7 +113,7 @@ void allocate_deltamode_arrays(void)
 		//Make sure it worked
 		if (post_delta_functions == NULL)
 		{
-			GL_THROW(const_cast<char*>("Failed to allocate deltamode objects function array for generators module!"));
+			GL_THROW("Failed to allocate deltamode objects function array for generators module!");
 			//Defined above
 		}
 
@@ -123,7 +123,7 @@ void allocate_deltamode_arrays(void)
 		//Make sure it worked
 		if (delta_preupdate_functions == NULL)
 		{
-			GL_THROW(const_cast<char*>("Failed to allocate deltamode objects function array for generators module!"));
+			GL_THROW("Failed to allocate deltamode objects function array for generators module!");
 			//Defined above
 		}
 
@@ -217,7 +217,7 @@ EXPORT unsigned long preupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 					//Make sure we passed
 					if (status_value != SUCCESS)
 					{
-						GL_THROW(const_cast<char*>("generators - object:%d %s failed to run the object-level preupdate function"),delta_objects[curr_object_number]->id,(delta_objects[curr_object_number]->name ? delta_objects[curr_object_number]->name : "Unnamed"));
+						GL_THROW("generators - object:%d %s failed to run the object-level preupdate function",delta_objects[curr_object_number]->id,(delta_objects[curr_object_number]->name ? delta_objects[curr_object_number]->name : "Unnamed"));
 						/*  TROUBLESHOOT
 						While attempting to call a preupdate function for a generator deltamode object, an error occurred.
 						Please look to the console output for more details.
@@ -356,7 +356,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 
 
 		//Now get the "current_frequency" value and push it back
-		extracted_freq = (double *)gl_get_module_var(gl_find_module(const_cast<char*>("powerflow")),"current_frequency");
+		extracted_freq = (double *)gl_get_module_var(gl_find_module("powerflow"),"current_frequency");
 
 		//Make sure it worked
 		if (extracted_freq == 0)

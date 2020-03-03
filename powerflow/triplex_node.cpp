@@ -23,7 +23,7 @@ triplex_node::triplex_node(MODULE *mod) : node(mod)
 	{
 		pclass = node::oclass;
 		
-		oclass = gl_register_class(mod,const_cast<char*>("triplex_node"),sizeof(triplex_node),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,"triplex_node",sizeof(triplex_node),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class triplex_node";
 		else
@@ -177,19 +177,19 @@ triplex_node::triplex_node(MODULE *mod) : node(mod)
 			PT_double,"measured_frequency_12[Hz]", PADDR(curr_freq_state.fmeas[2]),PT_DESCRIPTION,"frequency measurement, across the phases",
 			PT_double,"measured_frequency[Hz]", PADDR(curr_freq_state.average_freq), PT_DESCRIPTION, "frequency measurement - average of present phases",
 
-         	NULL) < 1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
+         	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Deltamode functions
-		if (gl_publish_function(oclass,	const_cast<char*>("interupdate_pwr_object"), (FUNCTIONADDR)interupdate_triplex_node)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish triplex_node deltamode function"));
-		if (gl_publish_function(oclass,	const_cast<char*>("pwr_object_swing_swapper"), (FUNCTIONADDR)swap_node_swing_status)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish triplex_node swing-swapping function"));
-		if (gl_publish_function(oclass,	const_cast<char*>("pwr_current_injection_update_map"), (FUNCTIONADDR)node_map_current_update_function)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish triplex_node current injection update mapping function"));
-		if (gl_publish_function(oclass,	const_cast<char*>("attach_vfd_to_pwr_object"), (FUNCTIONADDR)attach_vfd_to_node)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish triplex_node VFD attachment function"));
-		if (gl_publish_function(oclass, const_cast<char*>("pwr_object_reset_disabled_status"), (FUNCTIONADDR)node_reset_disabled_status) == NULL)
-			GL_THROW(const_cast<char*>("Unable to publish triplex_node island-status-reset function"));
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_triplex_node)==NULL)
+			GL_THROW("Unable to publish triplex_node deltamode function");
+		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
+			GL_THROW("Unable to publish triplex_node swing-swapping function");
+		if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==NULL)
+			GL_THROW("Unable to publish triplex_node current injection update mapping function");
+		if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
+			GL_THROW("Unable to publish triplex_node VFD attachment function");
+		if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
+			GL_THROW("Unable to publish triplex_node island-status-reset function");
     }
 }
 

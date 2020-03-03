@@ -437,6 +437,13 @@ inline bool gl_object_isa(OBJECT *obj, /**< object to test */
 {	bool rv = (*callback->object_isa)(obj,type)!=0;
 	bool mv = modname ? obj->oclass->module == (*callback->module_find)(modname) : true;
 	return (rv && mv);}
+
+inline bool gl_object_isa(OBJECT *obj, /**< object to test */
+                          char *type,
+                          char *modname=NULL) /**< type to test */
+{	bool rv = (*callback->object_isa)(obj,type)!=0;
+    bool mv = modname ? obj->oclass->module == (*callback->module_find)(modname) : true;
+    return (rv && mv);}
 #else
 #define gl_object_isa (*callback->object_isa)
 #endif
@@ -455,7 +462,7 @@ inline bool gl_object_isa(OBJECT *obj, /**< object to test */
 inline FUNCTION *gl_publish_function(CLASS *oclass, /**< class to which function belongs */
 									 const FUNCTIONNAME functionname, /**< name of function */
 									 FUNCTIONADDR call) /**< address of function entry */
-{ return (*callback->function.define)(oclass, const_cast<char*>(functionname), call);}
+{ return (*callback->function.define)(oclass, functionname, call);}
 inline FUNCTIONADDR gl_get_function(OBJECT *obj, const char *name)
 { return obj ? (*callback->function.get)(obj->oclass->name, const_cast<char *>(name)) : NULL;}
 #else
@@ -540,9 +547,14 @@ inline int gl_set_rank(OBJECT *obj, /**< object to change rank */
  **/
 #ifdef __cplusplus
 inline PROPERTY *gl_get_property(OBJECT *obj, /**< a pointer to the object */
-								 const PROPERTYNAME name, /**< the name of the property */
+                                 const PROPERTYNAME name, /**< the name of the property */
+                                 PROPERTYSTRUCT *part=NULL) /**< part info */
+{ return (*callback->properties.get_property)(obj, name,part); }
+
+inline PROPERTY *gl_get_property(OBJECT *obj, /**< a pointer to the object */
+								 PROPERTYNAME name, /**< the name of the property */
 								 PROPERTYSTRUCT *part=NULL) /**< part info */
-{ return (*callback->properties.get_property)(obj, const_cast<char*>(name),part); }
+{ return (*callback->properties.get_property)(obj, name,part); }
 #else
 #define gl_get_property (*callback->properties.get_property)
 #endif
@@ -615,7 +627,7 @@ template <class T> inline int gl_set_value(OBJECT *obj, ///< the object whose pr
  **/
 #ifdef __cplusplus
 inline int gl_get_value_by_name(OBJECT *obj,
-								PROPERTYNAME name,
+								const PROPERTYNAME name,
 								char *value,
 								int size)
 { return (*callback->properties.get_value_by_name)(obj,name,value,size);}
@@ -625,7 +637,7 @@ inline int gl_get_value_by_name(OBJECT *obj,
 
 #ifdef __cplusplus
 inline char *gl_getvalue(OBJECT *obj,
-						 PROPERTYNAME name, char *buffer, int sz)
+						 const PROPERTYNAME name, char *buffer, int sz)
 {
 	return gl_get_value_by_name(obj,name,buffer,sz)>=0 ? buffer : NULL;
 }
@@ -1649,7 +1661,7 @@ public: // write accessors
 
 public: // special functions
 	/// Register a class	
-	static inline CLASS *create(MODULE *m, char *n, size_t s, unsigned int f) { return callback->register_class(m,n,(unsigned int)s,f); };
+	static inline CLASS *create(MODULE *m, const char *n, size_t s, unsigned int f) { return callback->register_class(m,n,(unsigned int)s,f); };
 	
 public: // iterators
 	/// Check if last class registered
@@ -2026,7 +2038,7 @@ public: // constructors/casts
 	inline gld_property(gld_object *o, const char *n) : obj(o->my()), pstruct(nullpstruct)
 	{ 
 		if (o) 
-			callback->properties.get_property(o->my(), const_cast<char*>(n),&pstruct);
+			callback->properties.get_property(o->my(), n,&pstruct);
 		else 
 		{
 			GLOBALVAR *v=callback->global.find(n); 
@@ -2036,7 +2048,7 @@ public: // constructors/casts
 	inline gld_property(OBJECT *o, const char *n) : obj(o), pstruct(nullpstruct)
 	{ 
 		if (o) 
-			callback->properties.get_property(o,const_cast<char*>(n),&pstruct);
+			callback->properties.get_property(o,n,&pstruct);
 		else 
 		{
 			GLOBALVAR *v=callback->global.find(n); 
@@ -2047,7 +2059,7 @@ public: // constructors/casts
 	inline gld_property(OBJECT *o, PROPERTY *p) : obj(o), pstruct(nullpstruct) { pstruct.prop=p; };
 	inline gld_property(OBJECT *o, PROPERTYSTRUCT *p) : obj(o), pstruct(nullpstruct) { pstruct=*p; };
 	inline gld_property(GLOBALVAR *v) : obj(NULL), pstruct(nullpstruct) { pstruct.prop=v->prop; };
-	inline gld_property(char *n) : obj(NULL), pstruct(nullpstruct)
+	inline gld_property(const char *n) : obj(NULL), pstruct(nullpstruct)
 	{
 		char oname[256], vname[256];
 		if ( sscanf(n,"%[A-Za-z0-9_].%[A-Za-z0-9_.]",oname,vname)==2 )
@@ -2062,7 +2074,7 @@ public: // constructors/casts
 		GLOBALVAR *v=callback->global.find(n); 
 		pstruct.prop = (v?v->prop:NULL);  
 	};
-	inline gld_property(char *m, char *n) : obj(NULL), pstruct(nullpstruct) 
+	inline gld_property(const char *m, const char *n) : obj(NULL), pstruct(nullpstruct)
 	{
 		obj = callback->get_object(m);
 		if ( obj != NULL ) {
@@ -2144,6 +2156,7 @@ public: // special operations
 	inline double get_double(UNIT*to) { double rv = get_double(); return get_unit()->convert(to,rv) ? rv : QNAN; };
 	inline double get_double(gld_unit&to) { double rv = get_double(); return get_unit()->convert(to,rv) ? rv : QNAN; };
 	inline double get_double(char*to) { double rv = get_double(); return get_unit()->convert(to,rv) ? rv : QNAN; };
+	inline double get_double(const char*to) { double rv = get_double(); return get_unit()->convert(const_cast<char*>(to),rv) ? rv : QNAN; };
 	inline complex get_complex(void) { errno=0; if ( pstruct.prop->ptype==PT_complex ) return *(complex*)get_addr(); else return complex(QNAN,QNAN); };
 	inline int64 get_integer(void) { errno=0; switch(pstruct.prop->ptype) { case PT_int16: return (int64)*(int16*)get_addr(); case PT_int32: return (int64)*(int32*)get_addr(); case PT_int64: return *(int64*)get_addr(); default: errno=EINVAL; return 0;} };
 	inline TIMESTAMP get_timestamp(void) { if (pstruct.prop->ptype != PT_timestamp) exception("get_timestamp() called on a property that is not a timestamp");return *(TIMESTAMP*) get_addr();};
@@ -2219,8 +2232,8 @@ private: // data
 public: // constructors
 	inline gld_global(void) { var=callback->global.find(NULL); };
 	inline gld_global(GLOBALVAR *v) : var(v) {};
-	inline gld_global(char *n) { var=callback->global.find(n); };
-	inline gld_global(char *n, PROPERTYTYPE t, void *p) { var=callback->global.create(n,t,p,NULL); };
+	inline gld_global(const char *n) { var=callback->global.find(n); };
+	inline gld_global(const char *n, PROPERTYTYPE t, void *p) { var=callback->global.create(n,t,p,NULL); };
 
 public: // read accessors
 	inline operator GLOBALVAR*(void) { return var; };

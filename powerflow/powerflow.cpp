@@ -54,9 +54,9 @@ EXPORT int kmldump(int (*stream)(const char*,...), OBJECT *obj)
 		link_object::kmlinit(stream);
 		return 0;
 	}
-	else if (gl_object_isa(obj,const_cast<char*>("node")))
+	else if (gl_object_isa(obj,"node"))
 		return OBJECTDATA(obj,node)->kmldump(stream);
-	else if (gl_object_isa(obj,const_cast<char*>("link")))
+	else if (gl_object_isa(obj,"link"))
 		return OBJECTDATA(obj,link_object)->kmldump(stream);
 	else
 		// TODO: triplex_node

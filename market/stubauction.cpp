@@ -26,7 +26,7 @@ stubauction::stubauction(MODULE *module)
 {
 	if (oclass== nullptr)
 	{
-		oclass = gl_register_class(module,const_cast<char*>("stubauction"),sizeof(stubauction),passconfig|PC_AUTOLOCK);
+		oclass = gl_register_class(module,"stubauction",sizeof(stubauction),passconfig|PC_AUTOLOCK);
 		if (oclass== nullptr)
 			throw "unable to register class stubauction";
 		else

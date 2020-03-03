@@ -33,7 +33,7 @@ multizone::multizone(MODULE *module)
 {
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,const_cast<char*>("multizone"),sizeof(multizone),passconfig);
+		oclass = gl_register_class(module,"multizone",sizeof(multizone),passconfig);
 		if (oclass==NULL)
 			throw "unable to register class multizone";
 		else
@@ -44,7 +44,7 @@ multizone::multizone(MODULE *module)
 			PT_object, "from", PADDR(from),
 			PT_object, "to", PADDR(to),
 			PT_double, "ua", PADDR(ua),
-			NULL)<1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
+			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		defaults = this;
 		/* TODO: set the default values of all properties here */
 		memset(this,0,sizeof(multizone));
@@ -64,11 +64,11 @@ int multizone::init(OBJECT *parent)
 	OBJECT *obj = OBJECTHDR(this);
 	if (from==NULL)
 		gl_error("%s (multizone:%d): from zone is not specified", obj->name?obj->name:"unnamed",obj->id);
-	else if (!gl_object_isa(from,const_cast<char*>("office")))
+	else if (!gl_object_isa(from,"office"))
 		gl_error("%s (multizone:%d): from object is not an commercial office space", obj->name?obj->name:"unnamed",obj->id);
 	if (to==NULL)
 		gl_error("%s (multizone:%d): to zone is not specified", obj->name?obj->name:"unnamed",obj->id);
-	else if (!gl_object_isa(to,const_cast<char*>("office")))
+	else if (!gl_object_isa(to,"office"))
 		gl_error("%s (multizone:%d): to object is not an commercial office space", obj->name?obj->name:"unnamed",obj->id);
 	if (ua<=0)
 		gl_error("%s (multizone:%d): ua must be positive (value is %.2f)", obj->name?obj->name:"unnamed",obj->id,ua);
@@ -176,7 +176,7 @@ EXPORT TIMESTAMP sync_multizone(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 			t2 = my->postsync(obj->clock,t1);
 			break;
 		default:
-			GL_THROW(const_cast<char*>("invalid pass request (%d)"), pass);
+			GL_THROW("invalid pass request (%d)", pass);
 			break;
 		}
 		if (pass==clockpass)

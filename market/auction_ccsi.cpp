@@ -77,7 +77,7 @@ auction_ccsi::auction_ccsi(MODULE *module)
 {
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,const_cast<char*>("auction_ccsi"),sizeof(auction_ccsi),passconfig|PC_AUTOLOCK);
+		oclass = gl_register_class(module,"auction_ccsi",sizeof(auction_ccsi),passconfig|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class auction_ccsi";
 		else

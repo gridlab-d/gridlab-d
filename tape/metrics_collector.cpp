@@ -14,7 +14,6 @@
 #include <cmath>
 #include <vector>
 #include <assert.h>
-using namespace std;
 
 CLASS *metrics_collector::oclass = NULL;
 CLASS *metrics_collector::pclass = NULL;
@@ -145,21 +144,21 @@ int metrics_collector::init(OBJECT *parent){
 	}
 	parent_string = const_cast<char *>("");
 	// Find parent, if not defined, or if the parent is not a supported class, throw an exception
-	if (gl_object_isa(parent, const_cast<char *>("triplex_meter")))	{
+	if (gl_object_isa(parent, "triplex_meter"))	{
 		parent_string = const_cast<char *>("triplex_meter");
-		if (propTriplexNomV == NULL) propTriplexNomV = gl_get_property (parent, const_cast<char *>("nominal_voltage"));
-		if (propTriplexPrice == NULL) propTriplexPrice = gl_get_property (parent, const_cast<char *>("price"));
-		if (propTriplexBill == NULL) propTriplexBill = gl_get_property (parent, const_cast<char *>("monthly_bill"));
-		if (propTriplexP == NULL) propTriplexP = gl_get_property (parent, const_cast<char *>("measured_real_power"));
-		if (propTriplexQ == NULL) propTriplexQ = gl_get_property (parent, const_cast<char *>("measured_reactive_power"));
-		if (propTriplexV1 == NULL) propTriplexV1 = gl_get_property (parent, const_cast<char *>("voltage_1"));
-		if (propTriplexV2 == NULL) propTriplexV2 = gl_get_property (parent, const_cast<char *>("voltage_2"));
-		if (propTriplexV12 == NULL) propTriplexV12 = gl_get_property (parent, const_cast<char *>("voltage_12"));
+		if (propTriplexNomV == NULL) propTriplexNomV = gl_get_property (parent, "nominal_voltage");
+		if (propTriplexPrice == NULL) propTriplexPrice = gl_get_property (parent, "price");
+		if (propTriplexBill == NULL) propTriplexBill = gl_get_property (parent, "monthly_bill");
+		if (propTriplexP == NULL) propTriplexP = gl_get_property (parent, "measured_real_power");
+		if (propTriplexQ == NULL) propTriplexQ = gl_get_property (parent, "measured_reactive_power");
+		if (propTriplexV1 == NULL) propTriplexV1 = gl_get_property (parent, "voltage_1");
+		if (propTriplexV2 == NULL) propTriplexV2 = gl_get_property (parent, "voltage_2");
+		if (propTriplexV12 == NULL) propTriplexV12 = gl_get_property (parent, "voltage_12");
 		if (!log_set) {
 			log_set = log_me = true;
 		}
 	} else if (gl_object_isa(parent, "house")) {
-		parent_string = "house";
+		parent_string = const_cast<char*>("house");
 		if (propHouseLoad == NULL) propHouseLoad = gl_get_property (parent, "total_load");
 		if (propHouseHVAC == NULL) propHouseHVAC = gl_get_property (parent, "hvac_load");
 		if (propHouseAirTemp == NULL) propHouseAirTemp = gl_get_property (parent, "air_temperature");
@@ -167,21 +166,21 @@ int metrics_collector::init(OBJECT *parent){
 		if (propHouseHeatSet == NULL) propHouseHeatSet = gl_get_property (parent, "heating_setpoint");
 		if (propHouseSystemMode == NULL) propHouseSystemMode = gl_get_property (parent, "system_mode");
 	} else if (gl_object_isa(parent,"waterheater")) {
-		parent_string = "waterheater";
+		parent_string = const_cast<char*>("waterheater");
 		if (propWaterLoad == NULL) propWaterLoad = gl_get_property (parent, "actual_load");
 		if (propWaterSetPoint == NULL) propWaterSetPoint = gl_get_property (parent, "tank_setpoint");
 		if (propWaterDemand == NULL) propWaterDemand = gl_get_property (parent, "water_demand");
 		if (propWaterTemp == NULL) propWaterTemp = gl_get_property (parent, "temperature");
 	} else if (gl_object_isa(parent,"inverter")) {
-		parent_string = "inverter";
+		parent_string = const_cast<char*>("inverter");
 		if (propInverterS == NULL) propInverterS = gl_get_property (parent, "VA_Out");
 	} else if (gl_object_isa(parent,"capacitor")) {
-		parent_string = "capacitor";
+		parent_string = const_cast<char*>("capacitor");
 		if (propCapCountA == NULL) propCapCountA = gl_get_property (parent, "cap_A_switch_count");
 		if (propCapCountB == NULL) propCapCountB = gl_get_property (parent, "cap_B_switch_count");
 		if (propCapCountC == NULL) propCapCountC = gl_get_property (parent, "cap_C_switch_count");
 	} else if (gl_object_isa(parent,"regulator")) {
-		parent_string = "regulator";
+		parent_string = const_cast<char*>("regulator");
 		if (propRegCountA == NULL) propRegCountA = gl_get_property (parent, "tap_A_change_count");
 		if (propRegCountB == NULL) propRegCountB = gl_get_property (parent, "tap_B_change_count");
 		if (propRegCountC == NULL) propRegCountC = gl_get_property (parent, "tap_C_change_count");
@@ -207,17 +206,17 @@ int metrics_collector::init(OBJECT *parent){
                                                                           const_cast<char *>("distribution_load"));
 	} else if (gl_object_isa(parent, const_cast<char *>("meter"))) {
 		parent_string = const_cast<char *>("meter"); // unless it's a swing bus
-		if (propMeterNomV == NULL) propMeterNomV = gl_get_property (parent, const_cast<char *>("nominal_voltage"));
-		if (propMeterPrice == NULL) propMeterPrice = gl_get_property (parent, const_cast<char *>("price"));
-		if (propMeterBill == NULL) propMeterBill = gl_get_property (parent, const_cast<char *>("monthly_bill"));
-		if (propMeterP == NULL) propMeterP = gl_get_property (parent, const_cast<char *>("measured_real_power"));
-		if (propMeterQ == NULL) propMeterQ = gl_get_property (parent, const_cast<char *>("measured_reactive_power"));
-		if (propMeterVa == NULL) propMeterVa = gl_get_property (parent, const_cast<char *>("voltage_A"));
-		if (propMeterVb == NULL) propMeterVb = gl_get_property (parent, const_cast<char *>("voltage_B"));
-		if (propMeterVc == NULL) propMeterVc = gl_get_property (parent, const_cast<char *>("voltage_C"));
-		if (propMeterVab == NULL) propMeterVab = gl_get_property (parent, const_cast<char *>("voltage_AB"));
-		if (propMeterVbc == NULL) propMeterVbc = gl_get_property (parent, const_cast<char *>("voltage_BC"));
-		if (propMeterVca == NULL) propMeterVca = gl_get_property (parent, const_cast<char *>("voltage_CA"));
+		if (propMeterNomV == NULL) propMeterNomV = gl_get_property (parent, "nominal_voltage");
+		if (propMeterPrice == NULL) propMeterPrice = gl_get_property (parent, "price");
+		if (propMeterBill == NULL) propMeterBill = gl_get_property (parent, "monthly_bill");
+		if (propMeterP == NULL) propMeterP = gl_get_property (parent, "measured_real_power");
+		if (propMeterQ == NULL) propMeterQ = gl_get_property (parent, "measured_reactive_power");
+		if (propMeterVa == NULL) propMeterVa = gl_get_property (parent, "voltage_A");
+		if (propMeterVb == NULL) propMeterVb = gl_get_property (parent, "voltage_B");
+		if (propMeterVc == NULL) propMeterVc = gl_get_property (parent, "voltage_C");
+		if (propMeterVab == NULL) propMeterVab = gl_get_property (parent, "voltage_AB");
+		if (propMeterVbc == NULL) propMeterVbc = gl_get_property (parent, "voltage_BC");
+		if (propMeterVca == NULL) propMeterVca = gl_get_property (parent, "voltage_CA");
 		PROPERTY *pval = gl_get_property(parent, const_cast<char *>("bustype"));
 		if ((pval!=NULL) && (pval->ptype==PT_enumeration))
 		{
@@ -229,10 +228,10 @@ int metrics_collector::init(OBJECT *parent){
 			}
 		}
 	} else if (gl_object_isa(parent, "transformer")) {
-    parent_string = "transformer";
+    parent_string = const_cast<char*>("transformer");
 		if (propTransformerOverloaded == NULL) propTransformerOverloaded = gl_get_property (parent, "overloaded_status");
 	} else if (gl_object_isa(parent, "line")) {
-    parent_string = "line";
+    parent_string = const_cast<char*>("line");
 		if (propLineOverloaded == NULL) propLineOverloaded = gl_get_property (parent, "overloaded_status");
 	}
 	else {

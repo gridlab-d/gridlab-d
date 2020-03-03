@@ -14,7 +14,7 @@ controller_ccsi *controller_ccsi::defaults = NULL;
 controller_ccsi::controller_ccsi(MODULE *module){
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,const_cast<char*>("controller_ccsi"),sizeof(controller_ccsi),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
+		oclass = gl_register_class(module,"controller_ccsi",sizeof(controller_ccsi),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class controller_ccsi";
 		else
@@ -258,7 +258,7 @@ void controller_ccsi::cheat(){
  **/
 void controller_ccsi::fetch_double(double **prop, const char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
-	*prop = gl_get_double_by_name(parent, const_cast<char*>(name));
+	*prop = gl_get_double_by_name(parent, name);
 	if(*prop == nullptr){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);
@@ -274,7 +274,7 @@ void controller_ccsi::fetch_double(double **prop, const char *name, OBJECT *pare
 
 void controller_ccsi::fetch_int64(int64 **prop, const char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
-	*prop = gl_get_int64_by_name(parent, const_cast<char*>(name));
+	*prop = gl_get_int64_by_name(parent, name);
 	if(*prop == nullptr){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);
@@ -290,7 +290,7 @@ void controller_ccsi::fetch_int64(int64 **prop, const char *name, OBJECT *parent
 
 void controller_ccsi::fetch_enum(enumeration **prop, const char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
-	*prop = gl_get_enum_by_name(parent, const_cast<char*>(name));
+	*prop = gl_get_enum_by_name(parent, name);
 	if(*prop == nullptr){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);

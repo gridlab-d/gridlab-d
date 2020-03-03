@@ -48,7 +48,7 @@ SET(GLDCORE_LOC gldcore)
 OPTION(BUILD_SHARED_LIBS "Sets Gridlab-d libraries to be built as shared. *DANGER - will currently break build if changed.*" ON)
 
 # Forces certain warnings to trigger errors.
-SET(FORCE_ERROR "-Werror=return-type")
+SET(FORCE_ERROR "-Werror=return-type" "-Werror=write-strings")
 
 # Allows specific compiler optimizations to be disabled for all build types.
 set(DISABLED_OPTIMIZATIONS "") # "-fno-inline-functions")

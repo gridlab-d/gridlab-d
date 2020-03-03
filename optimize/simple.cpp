@@ -34,7 +34,7 @@ simple::simple(MODULE *module)
 {
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,const_cast<char*>("simple"),sizeof(simple),passconfig|PC_AUTOLOCK);
+		oclass = gl_register_class(module,"simple",sizeof(simple),passconfig|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class simple";
 		else

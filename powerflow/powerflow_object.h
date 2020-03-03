@@ -144,7 +144,7 @@ public:
 	TIMESTAMP postsync(TIMESTAMP t0);
 	powerflow_object(MODULE *mod);
 	powerflow_object(CLASS *cl=oclass);
-	int isa(char *classname);
+	static int isa(const char *classname);
 
 	int kmldump(FILE *fp);
 };

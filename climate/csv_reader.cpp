@@ -37,7 +37,7 @@ csv_reader::csv_reader(MODULE *module){
 	memset(this, 0, sizeof(csv_reader));
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,const_cast<char*>("csv_reader"),sizeof(csv_reader), 0);
+		oclass = gl_register_class(module,"csv_reader",sizeof(csv_reader), 0);
 		if (gl_publish_variable(oclass,
 			PT_int32,"index",PADDR(index),PT_ACCESS,PA_REFERENCE,
 			PT_char32,"city_name",PADDR(city_name),
@@ -59,7 +59,7 @@ csv_reader::csv_reader(MODULE *module){
 			PT_double,"timezone_offset",PADDR(tz_numval),
 			PT_char256,"columns",PADDR(columns_str),
 			PT_char256,"filename",PADDR(filename),
-			NULL)<1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
+			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		memset(this,0,sizeof(csv_reader));
 	}
 }
@@ -565,7 +565,7 @@ TIMESTAMP csv_reader::get_data(TIMESTAMP t0, double *temp, double *humid, double
 
 	// having found the index, update the data
 	if(index == start){
-		GL_THROW(const_cast<char*>("something strange happened with the schedule in csv_reader"));
+		GL_THROW("something strange happened with the schedule in csv_reader");
 		/*	TROUBLESHOOT
 			An unidentified error occured while reading data and constructing the weather
 			data schedule.  Please post a ticket detailing this event on the GridLAB-D

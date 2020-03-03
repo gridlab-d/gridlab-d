@@ -203,7 +203,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 	if (oclass==NULL)  
 	{
 		// register the class definition
-		oclass = gl_register_class(mod,const_cast<char*>("house"),sizeof(house_e),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,"house",sizeof(house_e),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class house";
 		else
@@ -1941,7 +1941,7 @@ CIRCUIT *house_e::attach(OBJECT *obj, ///< object to attach
 		c->pLoad = pLoad;
 	else if (obj)
 	{
-		c->pLoad = (enduse*)gl_get_addr(obj,const_cast<char*>("enduse_load"));
+		c->pLoad = (enduse*)gl_get_addr(obj,"enduse_load");
 		if (c->pLoad==NULL)
 			GL_THROW("end-use load %s couldn't be connected because it does not publish 'enduse_load' property", c->pLoad->name);
 	}
@@ -3388,7 +3388,7 @@ void house_e::check_controls(void)
 		{
 			char mode_buffer[1024];
 			gl_warning("house_e:%d (%s) possible control problem (system_mode %s) -- Tevent-Tair mismatch with dTair (Tevent=%.1f, Tair=%.1f, dTair=%.1f) at %s", 
-				obj->id, obj->name?obj->name:"anonymous", gl_getvalue(obj,const_cast<char*>("system_mode"), mode_buffer, 1023)==NULL?"ERR":mode_buffer, Tevent, Tair, dTair, gl_strftime(obj->clock, buffer, 255));
+				obj->id, obj->name?obj->name:"anonymous", gl_getvalue(obj,"system_mode", mode_buffer, 1023)==NULL?"ERR":mode_buffer, Tevent, Tair, dTair, gl_strftime(obj->clock, buffer, 255));
 		}
 	}
 }

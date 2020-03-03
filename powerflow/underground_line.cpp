@@ -25,7 +25,7 @@ underground_line::underground_line(MODULE *mod) : line(mod)
 	{
 		pclass = line::oclass;
 		
-		oclass = gl_register_class(mod,const_cast<char*>("underground_line"),sizeof(underground_line),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,"underground_line",sizeof(underground_line),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class underground_line";
 		else
@@ -33,25 +33,25 @@ underground_line::underground_line(MODULE *mod) : line(mod)
 
         if(gl_publish_variable(oclass,
 			PT_INHERIT, "line",
-			NULL) < 1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
-		if (gl_publish_function(oclass,	const_cast<char*>("create_fault"), (FUNCTIONADDR)create_fault_ugline)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish fault creation function"));
-		if (gl_publish_function(oclass,	const_cast<char*>("fix_fault"), (FUNCTIONADDR)fix_fault_ugline)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish fault restoration function"));
-        if (gl_publish_function(oclass,	const_cast<char*>("clear_fault"), (FUNCTIONADDR)clear_fault_ugline)==NULL)
-            GL_THROW(const_cast<char*>("Unable to publish fault clearing function"));
+			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+		if (gl_publish_function(oclass,	"create_fault", (FUNCTIONADDR)create_fault_ugline)==NULL)
+			GL_THROW("Unable to publish fault creation function");
+		if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_ugline)==NULL)
+			GL_THROW("Unable to publish fault restoration function");
+        if (gl_publish_function(oclass,	"clear_fault", (FUNCTIONADDR)clear_fault_ugline)==NULL)
+            GL_THROW("Unable to publish fault clearing function");
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	const_cast<char*>("interupdate_pwr_object"), (FUNCTIONADDR)interupdate_link)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish underground line deltamode function"));
-		if (gl_publish_function(oclass,	const_cast<char*>("recalc_distribution_line"), (FUNCTIONADDR)recalc_underground_line)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish underground line recalc function"));
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
+			GL_THROW("Unable to publish underground line deltamode function");
+		if (gl_publish_function(oclass,	"recalc_distribution_line", (FUNCTIONADDR)recalc_underground_line)==NULL)
+			GL_THROW("Unable to publish underground line recalc function");
 
 		//Publish restoration-related function (current update)
-		if (gl_publish_function(oclass,	const_cast<char*>("update_power_pwr_object"), (FUNCTIONADDR)updatepowercalc_link)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish underground line external power calculation function"));
-		if (gl_publish_function(oclass,	const_cast<char*>("check_limits_pwr_object"), (FUNCTIONADDR)calculate_overlimit_link)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish underground line external power limit calculation function"));
+		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+			GL_THROW("Unable to publish underground line external power calculation function");
+		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+			GL_THROW("Unable to publish underground line external power limit calculation function");
     }
 }
 
@@ -86,7 +86,7 @@ int underground_line::init(OBJECT *parent)
 		with appropriate values to specify an underground line configuration
 		*/
 
-	if (!gl_object_isa(configuration, const_cast<char*>("line_configuration")))
+	if (!gl_object_isa(configuration, "line_configuration"))
 		throw "invalid line configuration for underground line";
 		/*  TROUBLESHOOT
 		The object specified as the configuration for the underground line is not a valid
@@ -122,7 +122,7 @@ int underground_line::init(OBJECT *parent)
 	//Check for "consistency"
 	if ((cable_types_value != cond_present) && (cable_types_value != cond_present_CN))
 	{
-		GL_THROW(const_cast<char*>("Underground_line:%d %s - Cable types specified in configuration are not consistent!"),obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW("Underground_line:%d %s - Cable types specified in configuration are not consistent!",obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		An underground_line object needs to have all the same cable-tpe in the configuration (e.g., tape-sheild or concentric neutral).  Please
 		correct this.
@@ -159,7 +159,7 @@ int underground_line::init(OBJECT *parent)
 			if (temp_obj != NULL)
 			{
 				//Get continuous - summer
-				temp_rating_value = get_double(temp_obj,const_cast<char*>("rating.summer.continuous"));
+				temp_rating_value = get_double(temp_obj,"rating.summer.continuous");
 
 				//Check if NULL
 				if (temp_rating_value != NULL)
@@ -172,7 +172,7 @@ int underground_line::init(OBJECT *parent)
 				}
 
 				//Get continuous - winter
-				temp_rating_value = get_double(temp_obj,const_cast<char*>("rating.winter.continuous"));
+				temp_rating_value = get_double(temp_obj,"rating.winter.continuous");
 
 				//Check if NULL
 				if (temp_rating_value != NULL)
@@ -185,7 +185,7 @@ int underground_line::init(OBJECT *parent)
 				}
 
 				//Now get emergency - summer
-				temp_rating_value = get_double(temp_obj,const_cast<char*>("rating.summer.emergency"));
+				temp_rating_value = get_double(temp_obj,"rating.summer.emergency");
 
 				//Check if NULL
 				if (temp_rating_value != NULL)
@@ -198,7 +198,7 @@ int underground_line::init(OBJECT *parent)
 				}
 
 				//Now get emergency - winter
-				temp_rating_value = get_double(temp_obj,const_cast<char*>("rating.winter.emergency"));
+				temp_rating_value = get_double(temp_obj,"rating.winter.emergency");
 
 				//Check if NULL
 				if (temp_rating_value != NULL)
@@ -222,7 +222,7 @@ int underground_line::init(OBJECT *parent)
 		if (temp_obj != NULL)
 		{
 			//Get continuous - summer
-			temp_rating_value = get_double(temp_obj,const_cast<char*>("rating.summer.continuous"));
+			temp_rating_value = get_double(temp_obj,"rating.summer.continuous");
 
 			//Check if NULL
 			if (temp_rating_value != NULL)
@@ -235,7 +235,7 @@ int underground_line::init(OBJECT *parent)
 			}
 
 			//Get continuous - winter
-			temp_rating_value = get_double(temp_obj,const_cast<char*>("rating.winter.continuous"));
+			temp_rating_value = get_double(temp_obj,"rating.winter.continuous");
 
 			//Check if NULL
 			if (temp_rating_value != NULL)
@@ -248,7 +248,7 @@ int underground_line::init(OBJECT *parent)
 			}
 
 			//Now get emergency - summer
-			temp_rating_value = get_double(temp_obj,const_cast<char*>("rating.summer.emergency"));
+			temp_rating_value = get_double(temp_obj,"rating.summer.emergency");
 
 			//Check if NULL
 			if (temp_rating_value != NULL)
@@ -261,7 +261,7 @@ int underground_line::init(OBJECT *parent)
 			}
 
 			//Now get emergency - winter
-			temp_rating_value = get_double(temp_obj,const_cast<char*>("rating.winter.emergency"));
+			temp_rating_value = get_double(temp_obj,"rating.winter.emergency");
 
 			//Check if NULL
 			if (temp_rating_value != NULL)
@@ -1191,7 +1191,7 @@ int underground_line::test_phases(line_configuration *config, const char ph)
 	{
 		if (config->impedance11 == 0.0)
 		{
-			condCheck = (config->phaseA_conductor && !gl_object_isa(config->phaseA_conductor, const_cast<char*>("underground_line_conductor"),const_cast<char*>("powerflow")));
+			condCheck = (config->phaseA_conductor && !gl_object_isa(config->phaseA_conductor, "underground_line_conductor","powerflow"));
 			condNotPres = ((!config->phaseA_conductor) && has_phase(PHASE_A));
 
 			//Check to see what kind of conductor this is - if it exists
@@ -1227,7 +1227,7 @@ int underground_line::test_phases(line_configuration *config, const char ph)
 	{
 		if (config->impedance22 == 0.0)
 		{
-			condCheck = (config->phaseB_conductor && !gl_object_isa(config->phaseB_conductor, const_cast<char*>("underground_line_conductor"),const_cast<char*>("powerflow")));
+			condCheck = (config->phaseB_conductor && !gl_object_isa(config->phaseB_conductor, "underground_line_conductor","powerflow"));
 			condNotPres = ((!config->phaseB_conductor) && has_phase(PHASE_B));
 
 			//Check to see what kind of conductor this is - if it exists
@@ -1263,7 +1263,7 @@ int underground_line::test_phases(line_configuration *config, const char ph)
 	{
 		if (config->impedance33 == 0.0)
 		{
-			condCheck = (config->phaseC_conductor && !gl_object_isa(config->phaseC_conductor, const_cast<char*>("underground_line_conductor"),const_cast<char*>("powerflow")));
+			condCheck = (config->phaseC_conductor && !gl_object_isa(config->phaseC_conductor, "underground_line_conductor","powerflow"));
 			condNotPres = ((!config->phaseC_conductor) && has_phase(PHASE_C));
 
 			//Check to see what kind of conductor this is - if it exists
@@ -1299,7 +1299,7 @@ int underground_line::test_phases(line_configuration *config, const char ph)
 	{
 		if (config->impedance11 == 0.0 && config->impedance22 == 0.0 && config->impedance33 == 0.0)
 		{
-			condCheck = (config->phaseN_conductor && !gl_object_isa(config->phaseN_conductor, const_cast<char*>("underground_line_conductor"),const_cast<char*>("powerflow")));
+			condCheck = (config->phaseN_conductor && !gl_object_isa(config->phaseN_conductor, "underground_line_conductor","powerflow"));
 			condNotPres = ((!config->phaseN_conductor) && has_phase(PHASE_N));
 
 			//Check to see what kind of conductor this is - if it exists
@@ -1329,11 +1329,11 @@ int underground_line::test_phases(line_configuration *config, const char ph)
 	//Nothing else down here.  Should never get anything besides ABCN to check
 
 	if (condCheck==true)
-		GL_THROW(const_cast<char*>("invalid conductor for phase %c of underground line"),ph,obj->name);
+		GL_THROW("invalid conductor for phase %c of underground line",ph,obj->name);
 		/*	TROUBLESHOOT  The conductor specified for the indicated phase is not necessarily an underground line conductor, it may be an overhead or triplex-line only conductor. */
 
 	if (condNotPres==true)
-		GL_THROW(const_cast<char*>("missing conductor for phase %c of underground line"),ph,obj->name);
+		GL_THROW("missing conductor for phase %c of underground line",ph,obj->name);
 		/*  TROUBLESHOOT
 		The object specified as the configuration for the underground line is not a valid
 		configuration object.  Please ensure you have a line_configuration object selected.
@@ -1350,12 +1350,12 @@ void underground_line::get_cable_values(OBJECT *line_conductor, double *sh_gmr, 
 	OBJECT *obj = OBJECTHDR(this);
 
 	//Map some properties and get some values
-	temp_prop_A = new gld_property(line_conductor,const_cast<char*>("shield_gmr"));
+	temp_prop_A = new gld_property(line_conductor,"shield_gmr");
 
 	//Make sure it worked properly
 	if ((temp_prop_A->is_valid() != true) || (temp_prop_A->is_double() != true))
 	{
-		GL_THROW(const_cast<char*>("Underground_line:%d %s - conductor %s lacks desired property!"),obj->id,(obj->name ? obj->name : "Unnamed"),(line_conductor->name ? line_conductor->name : "Unnamed"));
+		GL_THROW("Underground_line:%d %s - conductor %s lacks desired property!",obj->id,(obj->name ? obj->name : "Unnamed"),(line_conductor->name ? line_conductor->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		While mapping the sheild_gmr or neutral_gmr property from the Phase N conductor of an underground line, that parameter wasn't found.
 		Check your GLM and try again.
@@ -1369,12 +1369,12 @@ void underground_line::get_cable_values(OBJECT *line_conductor, double *sh_gmr, 
 	delete temp_prop_A;
 
 	//Now map the neutral gmr
-	temp_prop_A = new gld_property(line_conductor,const_cast<char*>("neutral_gmr"));
+	temp_prop_A = new gld_property(line_conductor,"neutral_gmr");
 
 	//Make sure it worked properly
 	if ((temp_prop_A->is_valid() != true) || (temp_prop_A->is_double() != true))
 	{
-		GL_THROW(const_cast<char*>("Underground_line:%d %s - conductor %s lacks desired property!"),obj->id,(obj->name ? obj->name : "Unnamed"),(line_conductor->name ? line_conductor->name : "Unnamed"));
+		GL_THROW("Underground_line:%d %s - conductor %s lacks desired property!",obj->id,(obj->name ? obj->name : "Unnamed"),(line_conductor->name ? line_conductor->name : "Unnamed"));
 		//Defined above
 	}
 

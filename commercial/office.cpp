@@ -93,7 +93,7 @@ office::office(MODULE *module)
 {
 	if (oclass==NULL)
 	{
-		oclass = gld_class::create(module,const_cast<char*>("office"),sizeof(office),PC_PRETOPDOWN|PC_BOTTOMUP|PC_AUTOLOCK);
+		oclass = gld_class::create(module,"office",sizeof(office),PC_PRETOPDOWN|PC_BOTTOMUP|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class office";
 		oclass->trl = TRL_DEMONSTRATED;
@@ -382,31 +382,31 @@ int office::init(OBJECT *parent)
 		OBJECT *obj = gl_find_next(climates,NULL);
 		if (obj->rank<=hdr->rank)
 			gl_set_dependent(obj,hdr);
-		zone.current.pTemperature = (double*)GETADDR(obj,gl_get_property(obj,const_cast<char*>("temperature")));
-		zone.current.pHumidity = (double*)GETADDR(obj,gl_get_property(obj,const_cast<char*>("humidity")));
-		zone.current.pSolar = (double*)GETADDR(obj,gl_get_property(obj,const_cast<char*>("solar_flux")));
+		zone.current.pTemperature = (double*)GETADDR(obj,gl_get_property(obj,"temperature"));
+		zone.current.pHumidity = (double*)GETADDR(obj,gl_get_property(obj,"humidity"));
+		zone.current.pSolar = (double*)GETADDR(obj,gl_get_property(obj,"solar_flux"));
 	}
 
 	/* sanity check the initial values (no ticket) */
 	struct {
-		char *desc;
+		const char *desc;
 		bool test;
 	} map[] = {
 		/* list simple tests to be made on data (no ticket) */
-		{const_cast<char*>("floor height is not valid"), zone.design.floor_height<=0},
-		{const_cast<char*>("interior mass is not valid"), zone.design.interior_mass<=0},
-		{const_cast<char*>("interior UA is not valid"), zone.design.interior_ua<=0},
-		{const_cast<char*>("exterior UA is not valid"), zone.design.exterior_ua<=0},
-		{const_cast<char*>("floor area is not valid"),zone.design.floor_area<=0},
-		{const_cast<char*>("control setpoint deadpoint is invalid"), zone.control.setpoint_deadband<=0},
-		{const_cast<char*>("heating and cooling setpoints conflict"),TheatOn>=TcoolOff},
-		{const_cast<char*>("cooling capacity is not negative"), zone.hvac.cooling.capacity>=0},
-		{const_cast<char*>("heating capacity is not positive"), zone.hvac.heating.capacity<=0},
-		{const_cast<char*>("cooling cop is not negative"), zone.hvac.cooling.cop>=0},
-		{const_cast<char*>("heating cop is not positive"), zone.hvac.heating.cop<=0},
-		{const_cast<char*>("minimum ach is not positive"), zone.hvac.minimum_ach<=0},
-		{const_cast<char*>("auxiliary cutin is not positive"), zone.control.auxiliary_cutin<=0},
-		{const_cast<char*>("economizer cutin is above cooling setpoint deadband"), zone.control.economizer_cutin>=zone.control.cooling_setpoint-zone.control.setpoint_deadband},
+		{"floor height is not valid", zone.design.floor_height<=0},
+		{"interior mass is not valid", zone.design.interior_mass<=0},
+		{"interior UA is not valid", zone.design.interior_ua<=0},
+		{"exterior UA is not valid", zone.design.exterior_ua<=0},
+		{"floor area is not valid",zone.design.floor_area<=0},
+		{"control setpoint deadpoint is invalid", zone.control.setpoint_deadband<=0},
+		{"heating and cooling setpoints conflict",TheatOn>=TcoolOff},
+		{"cooling capacity is not negative", zone.hvac.cooling.capacity>=0},
+		{"heating capacity is not positive", zone.hvac.heating.capacity<=0},
+		{"cooling cop is not negative", zone.hvac.cooling.cop>=0},
+		{"heating cop is not positive", zone.hvac.heating.cop<=0},
+		{"minimum ach is not positive", zone.hvac.minimum_ach<=0},
+		{"auxiliary cutin is not positive", zone.control.auxiliary_cutin<=0},
+		{"economizer cutin is above cooling setpoint deadband", zone.control.economizer_cutin>=zone.control.cooling_setpoint-zone.control.setpoint_deadband},
 	};
 	int i;
 	for (i=0; i<sizeof(map)/sizeof(map[0]); i++)

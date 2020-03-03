@@ -434,8 +434,8 @@ public:
 
 	friend class controller_dg;
 
-	gld_property *map_complex_value(OBJECT *obj, char *name);
-	gld_property *map_double_value(OBJECT *obj, char *name);
+	gld_property *map_complex_value(OBJECT *obj, const char *name);
+	gld_property *map_double_value(OBJECT *obj, const char *name);
 	void pull_powerflow_values(void);
 	void push_powerflow_values(bool update_voltage);
 	void reset_powerflow_accumulators(void);

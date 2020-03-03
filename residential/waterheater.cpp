@@ -84,7 +84,7 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 	{
 		pclass = residential_enduse::oclass;
 		// register the class definition
-		oclass = gl_register_class(module, const_cast<char*>("waterheater"),sizeof(waterheater),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
+		oclass = gl_register_class(module, "waterheater",sizeof(waterheater),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 
@@ -270,9 +270,9 @@ int waterheater::init(OBJECT *parent)
 	}
 
 	if(parent){
-		pTair = gl_get_double_by_name(parent, const_cast<char*>("air_temperature"));
-		pTout = gl_get_double_by_name(parent, const_cast<char*>("outdoor_temperature"));
-		pRH = gl_get_double_by_name(parent,const_cast<char*>("outdoor_rh"));
+		pTair = gl_get_double_by_name(parent, "air_temperature");
+		pTout = gl_get_double_by_name(parent, "outdoor_temperature");
+		pRH = gl_get_double_by_name(parent,"outdoor_rh");
 	}
 
 	if(pTair == 0){

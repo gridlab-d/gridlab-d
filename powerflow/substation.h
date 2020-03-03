@@ -57,9 +57,9 @@ public:
 	int init(OBJECT *parent);
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
-	void fetch_complex(complex **prop, char *name, OBJECT *parent);
-	void fetch_double(double **prop, char *name, OBJECT *parent);
-	int isa(char *classname);
+	void fetch_complex(complex **prop, const char *name, OBJECT *parent);
+	void fetch_double(double **prop, const char *name, OBJECT *parent);
+	static int isa(const char *classname);
 	SIMULATIONMODE inter_deltaupdate_substation(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 };
 

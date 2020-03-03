@@ -19,7 +19,7 @@ appliance::appliance(MODULE *module) : residential_enduse(module)
 	if ( oclass==NULL )
 	{
 		pclass = residential_enduse::oclass;
-		oclass = gl_register_class(module, const_cast<char*>("appliance"),sizeof(appliance),PC_PRETOPDOWN|PC_AUTOLOCK);
+		oclass = gl_register_class(module, "appliance",sizeof(appliance),PC_PRETOPDOWN|PC_AUTOLOCK);
 		if ( oclass==NULL )
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 		if ( gl_publish_variable(oclass,

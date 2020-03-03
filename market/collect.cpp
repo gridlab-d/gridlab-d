@@ -133,7 +133,7 @@ int collect::sort(int sort_mode) {
 
 void collect::fetch_double(double **prop, const char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
-	*prop = gl_get_double_by_name(parent, const_cast<char*>(name));
+	*prop = gl_get_double_by_name(parent, name);
 	if(*prop == nullptr){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);
@@ -149,7 +149,7 @@ void collect::fetch_double(double **prop, const char *name, OBJECT *parent){
 
 void collect::fetch_int(int **prop, const char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
-	*prop = gl_get_int32_by_name(parent, const_cast<char*>(name));
+	*prop = gl_get_int32_by_name(parent, name);
 	if(*prop == nullptr){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);

@@ -260,7 +260,7 @@ int schedule_compile_dtnext(SCHEDULE *sch, unsigned char calendar)
    returns 1 on success, 0 on failure
  */
 
-int schedule_compile_block(SCHEDULE *sch, unsigned char block, char *blockname, char *blockdef)
+int schedule_compile_block(SCHEDULE *sch, unsigned char block, const char *blockname, char *blockdef)
 {
 	char *token = NULL;
 	unsigned int minute=0;
@@ -687,7 +687,7 @@ int schedule_compile(SCHEDULE *sch)
 			output_error("schedule_compile(SCHEDULE *sch={name='%s', ...}) insufficient memory for block definition", sch->name);
 			return 0;
 		}
-		if (schedule_compile_block(sch,sch->block,const_cast<char*>("*"),blockdef))
+		if (schedule_compile_block(sch,sch->block,"*",blockdef))
 		{
 			sch->block++;
 			return 1;

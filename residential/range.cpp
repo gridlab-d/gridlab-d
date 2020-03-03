@@ -33,7 +33,7 @@ range::range(MODULE *module) : residential_enduse(module){
 	{
 		pclass = residential_enduse::oclass;
 		// register the class definition
-		oclass = gl_register_class(module,const_cast<char*>("range"),sizeof(range),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
+		oclass = gl_register_class(module,"range",sizeof(range),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN);
 		if (oclass==NULL)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 
@@ -242,8 +242,8 @@ int range::init(OBJECT *parent)
 	if (heat_fraction==0) heat_fraction = 0.2;
 
 	if(parent){
-		pTair = gl_get_double_by_name(parent, const_cast<char*>("air_temperature"));
-		pTout = gl_get_double_by_name(parent, const_cast<char*>("outdoor_temperature"));
+		pTair = gl_get_double_by_name(parent, "air_temperature");
+		pTout = gl_get_double_by_name(parent, "outdoor_temperature");
 	}
 
 	if(pTair == 0){

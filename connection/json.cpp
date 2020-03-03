@@ -85,7 +85,7 @@ int json_translate(char *local, size_t local_len, char *remote, size_t remote_le
 json::json(MODULE *module) : native(module)
 {
 	// register to receive notice for first top down. bottom up, and second top down synchronizations
-	oclass = gld_class::create(module,const_cast<char*>("json"),sizeof(json),PC_AUTOLOCK|PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_OBSERVER);
+	oclass = gld_class::create(module,"json",sizeof(json),PC_AUTOLOCK|PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_OBSERVER);
 	if (oclass==NULL)
 		throw "connection/json::json(MODULE*): unable to register class connection:json";
 	else
@@ -99,9 +99,9 @@ json::json(MODULE *module) : native(module)
 		NULL)<1)
 			throw "connection/json::json(MODULE*): unable to publish properties of connection:json";
 
-	if ( !gl_publish_loadmethod(oclass, const_cast<char*>("link"), reinterpret_cast<int (*)(void *, char *)>(loadmethod_json_link)) )
+	if ( !gl_publish_loadmethod(oclass, "link", reinterpret_cast<int (*)(void *, char *)>(loadmethod_json_link)) )
 		throw "connection/json::json(MODULE*): unable to publish link method of connection:json";
-	if ( !gl_publish_loadmethod(oclass, const_cast<char*>("option"), reinterpret_cast<int (*)(void *, char *)>(loadmethod_json_option)) )
+	if ( !gl_publish_loadmethod(oclass, "option", reinterpret_cast<int (*)(void *, char *)>(loadmethod_json_option)) )
 		throw "connection/json::json(MODULE*): unable to publish option method of connection:json";
 }
 
@@ -118,21 +118,21 @@ int json_export(connection_transport *transport,
 	{
 		if ( transport->get_size()<2 )
 		{
-			transport->error(const_cast<char*>("json_export(): export buffer overrun"));
+			transport->error("json_export(): export buffer overrun");
 			return -1;
 		}
 		switch ( vlen ) {
 		case ET_GROUPOPEN:
 			if ( tag==NULL )
-				return transport->message_append(const_cast<char*>("%s"),"{");
+				return transport->message_append("%s","{");
 			else
-				return transport->message_append(const_cast<char*>("\"%s\": {"),tag);
+				return transport->message_append("\"%s\": {",tag);
 			break;
 		case ET_GROUPCLOSE:
-			return transport->message_append(const_cast<char*>("%s"),"}");
+			return transport->message_append("%s","}");
 			break;
 		default:
-			transport->error(const_cast<char*>("json_export(): invalid group control code %d"), vlen);
+			transport->error("json_export(): invalid group control code %d", vlen);
 			return -1; // invalid group control code
 		}
 	}
@@ -140,13 +140,13 @@ int json_export(connection_transport *transport,
 	{
 		if ( vlen>transport->get_size() ) 
 		{	
-			transport->error(const_cast<char*>("json_export(): export buffer overrun"));
+			transport->error("json_export(): export buffer overrun");
 			return -1; // refuse to overrun output buffer
 		}
 		else if (options&ETO_QUOTES)
-			return transport->message_append(const_cast<char*>(R"("%s": "%s")"), tag, v);
+			return transport->message_append(R"("%s": "%s")", tag, v);
 		else
-			return transport->message_append(const_cast<char*>("\"%s\": %s"), tag, v);
+			return transport->message_append("\"%s\": %s", tag, v);
 	}
 }
 
@@ -233,8 +233,8 @@ int json::init(OBJECT *parent)
 	}
 
 	get_connection()->set_translators(json_export, json_import, json_translate);
-	get_connection()->get_transport()->set_delimiter(const_cast<char*>(", "));
-	get_connection()->get_transport()->set_message_format(const_cast<char*>("JSON"));
+	get_connection()->get_transport()->set_delimiter(", ");
+	get_connection()->get_transport()->set_message_format("JSON");
 	get_connection()->get_transport()->set_message_version(1.0);
 	if ( get_connection()->init()==0 )
 		return 0;
@@ -242,7 +242,7 @@ int json::init(OBJECT *parent)
 	// handshake exchange
 	char appname[1024] = PACKAGE;
 	double appversion = MAJOR + 0.1*MINOR;
-	gld_global modelname(const_cast<char*>("modelname"));
+	gld_global modelname("modelname");
 	char name[1024];
 	modelname.to_string(name,sizeof(name)-1);
 	int64 id;
@@ -323,7 +323,7 @@ int json::init(OBJECT *parent)
 	}
 
 	// first update
-	return get_connection()->update(get_initmap(),const_cast<char*>("start"),&json_translate)>=0;
+	return get_connection()->update(get_initmap(),"start",&json_translate)>=0;
 }
 
 int json::link(char *value)

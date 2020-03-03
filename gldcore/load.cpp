@@ -1428,7 +1428,7 @@ static int hostname(PARSER, char *result, int size)
 	DONE;
 }
 
-static int delim_value(PARSER, char *result, int size, char *delims)
+static int delim_value(PARSER, char *result, int size, const char *delims)
 {
 	/* everything to any of delims */
 	int quote=0;
@@ -2476,7 +2476,7 @@ static int pathname(PARSER, char *path, int size)
  **/
 static OBJECT *current_object = NULL; /* context object */
 static MODULE *current_module = NULL; /* context module */
-static int expanded_value(char *text, char *result, int size, char *delims)
+static int expanded_value(char *text, char *result, int size, const char *delims)
 {
 	int n=0;
 	if (text[n] == '`')
@@ -2606,7 +2606,7 @@ static int alternate_value(PARSER, char *value, int size)
 	if (WHITE) ACCEPT;
 	if (TERM(expression(HERE,&test,NULL,current_object)) && (WHITE,LITERAL("?")))
 	{
-		if ((WHITE,TERM(expanded_value(HERE,value1,sizeof(value1), const_cast<char*>(" \t\n:")))) && (WHITE,LITERAL(":")) && (WHITE,TERM(expanded_value(HERE,value2,sizeof(value2), const_cast<char*>(" \n\t;")))))
+		if ((WHITE,TERM(expanded_value(HERE,value1,sizeof(value1), " \t\n:"))) && (WHITE,LITERAL(":")) && (WHITE,TERM(expanded_value(HERE,value2,sizeof(value2), " \n\t;"))))
 		{
 			ACCEPT;
 			if (test>0)

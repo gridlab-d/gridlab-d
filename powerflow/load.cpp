@@ -25,7 +25,7 @@ load::load(MODULE *mod) : node(mod)
 	{
 		pclass = node::oclass;
 		
-		oclass = gl_register_class(mod,const_cast<char*>("load"),sizeof(load),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,"load",sizeof(load),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class load";
 		else
@@ -176,19 +176,19 @@ load::load(MODULE *mod) : node(mod)
 				PT_KEYWORD,"TRAPEZOIDAL",(enumeration)IRM_TRAPEZOIDAL,
 				PT_KEYWORD,"BACKWARD_EULER",(enumeration)IRM_BACKEULER,
 
-         	NULL) < 1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
+         	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	const_cast<char*>("interupdate_pwr_object"), (FUNCTIONADDR)interupdate_load)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish load deltamode function"));
-		if (gl_publish_function(oclass,	const_cast<char*>("pwr_object_swing_swapper"), (FUNCTIONADDR)swap_node_swing_status)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish load swing-swapping function"));
-		if (gl_publish_function(oclass,	const_cast<char*>("pwr_current_injection_update_map"), (FUNCTIONADDR)node_map_current_update_function)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish load current injection update mapping function"));
-		if (gl_publish_function(oclass,	const_cast<char*>("attach_vfd_to_pwr_object"), (FUNCTIONADDR)attach_vfd_to_node)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish load VFD attachment function"));
-		if (gl_publish_function(oclass, const_cast<char*>("pwr_object_reset_disabled_status"), (FUNCTIONADDR)node_reset_disabled_status) == NULL)
-			GL_THROW(const_cast<char*>("Unable to publish load island-status-reset function"));
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_load)==NULL)
+			GL_THROW("Unable to publish load deltamode function");
+		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
+			GL_THROW("Unable to publish load swing-swapping function");
+		if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==NULL)
+			GL_THROW("Unable to publish load current injection update mapping function");
+		if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
+			GL_THROW("Unable to publish load VFD attachment function");
+		if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
+			GL_THROW("Unable to publish load island-status-reset function");
     }
 }
 
@@ -263,7 +263,7 @@ int load::init(OBJECT *parent)
 	
 	if (has_phase(PHASE_S))
 	{
-		GL_THROW(const_cast<char*>("Load objects do not support triplex connections at this time!"));
+		GL_THROW("Load objects do not support triplex connections at this time!");
 		/*  TROUBLESHOOT
 		load objects are only designed to be added to the primary side of a distribution power flow.  To add loads
 		to the triplex side, please use the triplex_load object.
@@ -272,7 +272,7 @@ int load::init(OBJECT *parent)
 
 	//Update tracking flag
 	//Get server mode variable
-	gl_global_getvar(const_cast<char*>("multirun_mode"),temp_buff,sizeof(temp_buff));
+	gl_global_getvar("multirun_mode",temp_buff,sizeof(temp_buff));
 
 	//See if we're not in standalone
 	if (strcmp(temp_buff,"STANDALONE"))	//strcmp returns a 0 if they are the same
@@ -285,7 +285,7 @@ int load::init(OBJECT *parent)
 			//Check it
 			if (prev_power_value==NULL)
 			{
-				GL_THROW(const_cast<char*>("Failure to allocate memory for power tracking array"));
+				GL_THROW("Failure to allocate memory for power tracking array");
 				/*  TROUBLESHOOT
 				While attempting to allocate memory for the power tracking array used
 				by the master/slave functionality, an error occurred.  Please try again.
@@ -347,7 +347,7 @@ int load::init(OBJECT *parent)
 			//Check it
 			if (ahrlloadstore == NULL)
 			{
-				GL_THROW(const_cast<char*>("load:%d-%s - failed to allocate memory for in-rush calculations"),obj->id, obj->name ? obj->name : "unnamed");
+				GL_THROW("load:%d-%s - failed to allocate memory for in-rush calculations",obj->id, obj->name ? obj->name : "unnamed");
 				/*  TROUBLESHOOT
 				While allocating memory for the in-rush calculations, an error was encountering.  Please try again.  If the error persists,
 				please post a bug report to the forums or ticketing website, along with your GLM code.
@@ -360,7 +360,7 @@ int load::init(OBJECT *parent)
 			//Check it
 			if (bhrlloadstore == NULL)
 			{
-				GL_THROW(const_cast<char*>("load:%d-%s - failed to allocate memory for in-rush calculations"),obj->id, obj->name ? obj->name : "unnamed");
+				GL_THROW("load:%d-%s - failed to allocate memory for in-rush calculations",obj->id, obj->name ? obj->name : "unnamed");
 				//Defined above
 			}
 
@@ -370,7 +370,7 @@ int load::init(OBJECT *parent)
 			//Check it
 			if (chrcloadstore == NULL)
 			{
-				GL_THROW(const_cast<char*>("load:%d-%s - failed to allocate memory for in-rush calculations"),obj->id, obj->name ? obj->name : "unnamed");
+				GL_THROW("load:%d-%s - failed to allocate memory for in-rush calculations",obj->id, obj->name ? obj->name : "unnamed");
 				//Defined above
 			}
 
@@ -380,7 +380,7 @@ int load::init(OBJECT *parent)
 			//Check it
 			if (LoadHistTermL == NULL)
 			{
-				GL_THROW(const_cast<char*>("load:%d-%s - failed to allocate memory for in-rush calculations"),obj->id, obj->name ? obj->name : "unnamed");
+				GL_THROW("load:%d-%s - failed to allocate memory for in-rush calculations",obj->id, obj->name ? obj->name : "unnamed");
 				//Defined above
 			}
 
@@ -390,7 +390,7 @@ int load::init(OBJECT *parent)
 			//Check it
 			if (LoadHistTermC == NULL)
 			{
-				GL_THROW(const_cast<char*>("load:%d-%s - failed to allocate memory for in-rush calculations"),obj->id, obj->name ? obj->name : "unnamed");
+				GL_THROW("load:%d-%s - failed to allocate memory for in-rush calculations",obj->id, obj->name ? obj->name : "unnamed");
 				//Defined above
 			}
 
@@ -400,7 +400,7 @@ int load::init(OBJECT *parent)
 			//Check it
 			if (full_Y_load == NULL)
 			{
-				GL_THROW(const_cast<char*>("load:%d-%s - failed to allocate memory for in-rush calculations"),obj->id, obj->name ? obj->name : "unnamed");
+				GL_THROW("load:%d-%s - failed to allocate memory for in-rush calculations",obj->id, obj->name ? obj->name : "unnamed");
 				//Defined above
 			}
 
@@ -1975,7 +1975,7 @@ void load::load_update_fxn(bool fault_mode)
 						//Get header information
 						obj = OBJECTHDR(this);
 
-						GL_THROW(const_cast<char*>("node:%s -- %s tried to perform an impedance conversion with an uninitialzed child node!"),obj->id, obj->name?obj->name:"unnamed");
+						GL_THROW("node:%s -- %s tried to perform an impedance conversion with an uninitialzed child node!",obj->id, obj->name?obj->name:"unnamed");
 						/*  TROUBLESHOOT
 						While attempting to convert a load to a constant impedance value for in-rush modeling, a problem occurred mapping a parent node.
 						Please try again.  If the error persists, please submit your code and a bug report via the ticketing system.
@@ -2567,7 +2567,7 @@ void load::load_update_fxn(bool fault_mode)
 					//Get header information
 					obj = OBJECTHDR(this);
 
-					GL_THROW(const_cast<char*>("load:%s - failed to map parent object for childed node"),obj->name ? obj->name : "unnamed");
+					GL_THROW("load:%s - failed to map parent object for childed node",obj->name ? obj->name : "unnamed");
 					/*  TROUBLESHOOT
 					While attempting to link to the parent load, an error occurred.  Please try again.
 					If the error persists, please submit your code and a bug report via the trac website.
@@ -2586,7 +2586,7 @@ void load::load_update_fxn(bool fault_mode)
 					//Check it
 					if (temp_par_node->full_Y_load==NULL)
 					{
-						GL_THROW(const_cast<char*>("Node:%s failed to allocate space for the a deltamode variable"),SubNodeParent->name);
+						GL_THROW("Node:%s failed to allocate space for the a deltamode variable",SubNodeParent->name);
 						/*  TROUBLESHOOT
 						While attempting to allocate memory for a dynamics-required (deltamode) variable, an error
 						occurred. Please try again.  If the error persists, please submit your code and a bug

@@ -113,7 +113,7 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
 	if (oclass==NULL)
 	{
 		pclass = powerflow_object::oclass;
-		oclass = gl_register_class(mod,const_cast<char*>("link"),sizeof(link_object),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,"link",sizeof(link_object),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class link";
 		else
@@ -190,17 +190,17 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
 				PT_KEYWORD,"TRAPEZOIDAL",(enumeration)IRM_TRAPEZOIDAL,
 				PT_KEYWORD,"BACKWARD_EULER",(enumeration)IRM_BACKEULER,
 
-			NULL) < 1 && errno) GL_THROW(const_cast<char*>("unable to publish link properties in %s"),__FILE__);
+			NULL) < 1 && errno) GL_THROW("unable to publish link properties in %s",__FILE__);
 
 			//Publish deltamode functions
-			if (gl_publish_function(oclass,	const_cast<char*>("interupdate_pwr_object"), (FUNCTIONADDR)interupdate_link)==NULL)
-				GL_THROW(const_cast<char*>("Unable to publish link deltamode function"));
+			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
+				GL_THROW("Unable to publish link deltamode function");
 			
 			//Publish restoration-related function (current update)
-			if (gl_publish_function(oclass,	const_cast<char*>("update_power_pwr_object"), (FUNCTIONADDR)updatepowercalc_link)==NULL)
-				GL_THROW(const_cast<char*>("Unable to publish link external power calculation function"));
-			if (gl_publish_function(oclass,	const_cast<char*>("check_limits_pwr_object"), (FUNCTIONADDR)calculate_overlimit_link)==NULL)
-				GL_THROW(const_cast<char*>("Unable to publish link external power limit calculation function"));
+			if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+				GL_THROW("Unable to publish link external power calculation function");
+			if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+				GL_THROW("Unable to publish link external power limit calculation function");
 	}
 }
 
@@ -337,7 +337,7 @@ int link_object::init(OBJECT *parent)
 	//Make sure they don't match -- odd test, but still needs to be done
 	if (from == to)
 	{
-		GL_THROW(const_cast<char*>("link:%d - %s - FROM and TO objects are the same object!"),obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW("link:%d - %s - FROM and TO objects are the same object!",obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		The from-node and to-node of a link are the same object. This is effectively a loop-back on itself and is not allowed.
 		Please choose a different from or to node.
@@ -350,7 +350,7 @@ int link_object::init(OBJECT *parent)
 		if (obj->parent==NULL)
 		{
 			/* make 'from' object parent of this object */
-			if (gl_object_isa(from,const_cast<char*>("node")))
+			if (gl_object_isa(from,"node"))
 			{
 				if(gl_set_parent(obj, from) < 0)
 					throw "error when setting parent";
@@ -373,7 +373,7 @@ int link_object::init(OBJECT *parent)
 		if (to->parent==NULL)
 		{
 			/* make this object parent to 'to' object */
-			if (gl_object_isa(to,const_cast<char*>("node")))
+			if (gl_object_isa(to,"node"))
 			{
 				if(gl_set_parent(to, obj) < 0)
 					throw "error when setting parent";
@@ -385,7 +385,7 @@ int link_object::init(OBJECT *parent)
 		}
 		else
 		{
-			if (gl_object_isa(to->parent,const_cast<char*>("link"),const_cast<char*>("powerflow")))
+			if (gl_object_isa(to->parent,"link","powerflow"))
 			{
 				gl_warning("%s (id:%d) already has a link parented - this could give invalid answers in FBS!",to->name,to->id);
 				/*  TROUBLESHOOT
@@ -398,7 +398,7 @@ int link_object::init(OBJECT *parent)
 				to remove the open switch, consider using the Newton-Raphson (NR) solver instead.
 				*/
 			}
-			else if (gl_object_isa(to->parent,const_cast<char*>("node"),const_cast<char*>("powerflow")))
+			else if (gl_object_isa(to->parent,"node","powerflow"))
 			{
 				gl_warning("%s (id:%d) is parented to a node, but has a link running into it!",to->name,to->id);
 				/*  TROUBLESHOOT
@@ -417,7 +417,7 @@ int link_object::init(OBJECT *parent)
 		break;
 	case SM_GS: /* Gauss-Seidel */
 		{
-			GL_THROW(const_cast<char*>("Gauss_Seidel is a deprecated solver and has been removed"));
+			GL_THROW("Gauss_Seidel is a deprecated solver and has been removed");
 			/*  TROUBLESHOOT 
 			The Gauss-Seidel solver implementation has been removed as of version 3.0.
 			It was never fully functional and has not been updated in a couple versions.  The source
@@ -435,7 +435,7 @@ int link_object::init(OBJECT *parent)
 
 		//Link to the tn constants if we are a triplex (parent/child relationship gets lost)
 		//Also link other end of line to from, so we can steal its currents later
-		if (gl_object_isa(obj,const_cast<char*>("triplex_line"),const_cast<char*>("powerflow")))
+		if (gl_object_isa(obj,"triplex_line","powerflow"))
 		{
 			node *tnode = OBJECTDATA(to,node);
 
@@ -485,7 +485,7 @@ int link_object::init(OBJECT *parent)
 			phase_f_test &= ~(PHASE_S);	//Pull off the single phase portion of from node
 
 			//if ((phase_f_test != (phases_test & ~(PHASE_S))) || (phase_t_test != phases_test) || ((phase_t_test & PHASE_S) != PHASE_S))	//Phase mismatch on the line
-				//GL_THROW(const_cast<char*>("transformer:%d (split phase) - %s has a phase mismatch at one or both ends"),obj->id,obj->name);
+				//GL_THROW("transformer:%d (split phase) - %s has a phase mismatch at one or both ends",obj->id,obj->name);
 				/*  TROUBLESHOOT
 				A line has been configured to carry a certain set of phases.  Either the input node or output
 				node is not providing a source/sink for these different conductors.  The To and From nodes must
@@ -500,14 +500,14 @@ int link_object::init(OBJECT *parent)
 			phase_f_test &= ~(PHASE_N | PHASE_D);	//Pull off the neutral and Delta phase portion of to node
 
 			if ((phase_f_test != (phases & ~(PHASE_N | PHASE_D))) || (phase_t_test != (phases & ~(PHASE_N | PHASE_D))))	//Phase mismatch on the line
-				GL_THROW(const_cast<char*>("transformer:%d (delta-grounded wye) - %s has a phase mismatch at one or both ends"),obj->id,obj->name);
+				GL_THROW("transformer:%d (delta-grounded wye) - %s has a phase mismatch at one or both ends",obj->id,obj->name);
 				//Defined above
 		}
 		else	//Must be a switch then
 		{
 			//Do an initial check just to make sure the connection is physically possible
 			if ((phase_f_test != phases_test) || (phase_t_test != phases_test))	//Phase mismatch on the line
-				GL_THROW(const_cast<char*>("switch:%d - %s has a phase mismatch at one or both ends"),obj->id,obj->name);
+				GL_THROW("switch:%d - %s has a phase mismatch at one or both ends",obj->id,obj->name);
 				//Defined above
 
 			//Now only update if we are closed
@@ -522,7 +522,7 @@ int link_object::init(OBJECT *parent)
 	else												//Everything else
 	{
 		if ((phase_f_test != phases_test) || (phase_t_test != phases_test))	//Phase mismatch on the line
-			GL_THROW(const_cast<char*>("line:%d - %s has a phase mismatch at one or both ends"),obj->id,obj->name);
+			GL_THROW("line:%d - %s has a phase mismatch at one or both ends",obj->id,obj->name);
 			//Defined above
 
 		//Set up the phase test on the to node to make sure all are hit (only do to node)
@@ -538,7 +538,7 @@ int link_object::init(OBJECT *parent)
 	if (use_link_limits==TRUE)
 	{
 		//See what kind of link we are - if not in this list, ignore it
-		if (gl_object_isa(obj,const_cast<char*>("transformer"),const_cast<char*>("powerflow")) || gl_object_isa(obj,const_cast<char*>("underground_line"),const_cast<char*>("powerflow")) || gl_object_isa(obj,const_cast<char*>("overhead_line"),const_cast<char*>("powerflow")) || gl_object_isa(obj,const_cast<char*>("triplex_line"),const_cast<char*>("powerflow")))	//Default line or xformer
+		if (gl_object_isa(obj,"transformer","powerflow") || gl_object_isa(obj,"underground_line","powerflow") || gl_object_isa(obj,"overhead_line","powerflow") || gl_object_isa(obj,"triplex_line","powerflow"))	//Default line or xformer
 		{
 			//link us to local property (individual object populate)
 			link_limits[0][0] = &link_rating[0][0];
@@ -616,7 +616,7 @@ int link_object::init(OBJECT *parent)
 				//Check it
 				if (LinkHistTermL == NULL)
 				{
-					GL_THROW(const_cast<char*>("Link:%s failed to allocate space for deltamode inrush history term"),obj->name?obj->name:"unnamed");
+					GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 					/*  TROUBLESHOOT
 					While attempting to allocate memory for a link object to dynamics-required in-rush calculation
 					terms, an error occurred.  Please try again.  If the error persists, please submit your code and
@@ -640,7 +640,7 @@ int link_object::init(OBJECT *parent)
 				//Check it
 				if (ahrlstore == NULL)
 				{
-					GL_THROW(const_cast<char*>("Link:%s failed to allocate space for deltamode inrush history term"),obj->name?obj->name:"unnamed");
+					GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 					//Defined above
 				}
 
@@ -662,7 +662,7 @@ int link_object::init(OBJECT *parent)
 				//Check it
 				if (bhrlstore == NULL)
 				{
-					GL_THROW(const_cast<char*>("Link:%s failed to allocate space for deltamode inrush history term"),obj->name?obj->name:"unnamed");
+					GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 					//Defined above
 				}
 
@@ -686,7 +686,7 @@ int link_object::init(OBJECT *parent)
 					//Check it
 					if (LinkHistTermCf == NULL)
 					{
-						GL_THROW(const_cast<char*>("Link:%s failed to allocate space for deltamode inrush history term"),obj->name?obj->name:"unnamed");
+						GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 						//Defined above
 					}
 
@@ -696,7 +696,7 @@ int link_object::init(OBJECT *parent)
 					//Check it
 					if (LinkHistTermCt == NULL)
 					{
-						GL_THROW(const_cast<char*>("Link:%s failed to allocate space for deltamode inrush history term"),obj->name?obj->name:"unnamed");
+						GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 						//Defined above
 					}
 
@@ -723,7 +723,7 @@ int link_object::init(OBJECT *parent)
 					//Check it
 					if (chrcstore == NULL)
 					{
-						GL_THROW(const_cast<char*>("Link:%s failed to allocate space for deltamode inrush history term"),obj->name?obj->name:"unnamed");
+						GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 						//Defined above
 					}
 
@@ -733,7 +733,7 @@ int link_object::init(OBJECT *parent)
 					//Check it
 					if (LinkCapShuntTerm == NULL)
 					{
-						GL_THROW(const_cast<char*>("Link:%s failed to allocate space for deltamode inrush history term"),obj->name?obj->name:"unnamed");
+						GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 						//Defined above
 					}
 
@@ -768,7 +768,7 @@ int link_object::init(OBJECT *parent)
 				//Check it
 				if (LinkHistTermL == NULL)
 				{
-					GL_THROW(const_cast<char*>("Link:%s failed to allocate space for deltamode inrush history term"),obj->name?obj->name:"unnamed");
+					GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 					//Defined above
 				}
 
@@ -796,7 +796,7 @@ int link_object::init(OBJECT *parent)
 				//Check it
 				if (ahrlstore == NULL)
 				{
-					GL_THROW(const_cast<char*>("Link:%s failed to allocate space for deltamode inrush history term"),obj->name?obj->name:"unnamed");
+					GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 					//Defined above
 				}
 
@@ -818,7 +818,7 @@ int link_object::init(OBJECT *parent)
 				//Check it
 				if (bhrlstore == NULL)
 				{
-					GL_THROW(const_cast<char*>("Link:%s failed to allocate space for deltamode inrush history term"),obj->name?obj->name:"unnamed");
+					GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 					//Defined above
 				}
 
@@ -840,7 +840,7 @@ int link_object::init(OBJECT *parent)
 				//Check it
 				if (ahmstore == NULL)
 				{
-					GL_THROW(const_cast<char*>("Link:%s failed to allocate space for deltamode inrush history term"),obj->name?obj->name:"unnamed");
+					GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 					//Defined above
 				}
 
@@ -862,7 +862,7 @@ int link_object::init(OBJECT *parent)
 				//Check it
 				if (bhmstore == NULL)
 				{
-					GL_THROW(const_cast<char*>("Link:%s failed to allocate space for deltamode inrush history term"),obj->name?obj->name:"unnamed");
+					GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 					//Defined above
 				}
 
@@ -950,7 +950,7 @@ void link_object::NR_link_presync_fxn(void)
 			//Make sure it worked -- not sure how this happens right now (all return 1), but just in case
 			if (ret_value != 1)
 			{
-				GL_THROW(const_cast<char*>("Updating the frequency-dependent terms of link:%d,%s failed!"),obj->id,obj->name?obj->name:"unnamed");
+				GL_THROW("Updating the frequency-dependent terms of link:%d,%s failed!",obj->id,obj->name?obj->name:"unnamed");
 				/*  TROUBLESHOOT
 				While attempting to call the recalc function for a frequency-dependent link object, an error was returned.
 				Please check your parameters and try again.
@@ -1332,7 +1332,7 @@ void link_object::NR_link_presync_fxn(void)
 						//See if it worked
 						if (transformer_calc_function == NULL)
 						{
-							GL_THROW(const_cast<char*>("Link:%s - failed to map transformer update function"), obj->name ? obj->name : "Unnamed");
+							GL_THROW("Link:%s - failed to map transformer update function", obj->name ? obj->name : "Unnamed");
 							//Below
 						}
 
@@ -1342,7 +1342,7 @@ void link_object::NR_link_presync_fxn(void)
 						//Make sure it worked
 						if (ret_value != 1)
 						{
-							GL_THROW(const_cast<char*>("Link:%s - failed update transformer matrices"), obj->name ? obj->name : "Unnamed");
+							GL_THROW("Link:%s - failed update transformer matrices", obj->name ? obj->name : "Unnamed");
 							//Below
 						}
 					}
@@ -1895,7 +1895,7 @@ void link_object::NR_link_presync_fxn(void)
 					From_Y[1][0] = From_Y[1][1] = From_Y[1][2] = From_Y[2][2] = 0.0;
 				}
 				else
-					GL_THROW(const_cast<char*>("NR: Unknown phase configuration on split-phase transformer"));
+					GL_THROW("NR: Unknown phase configuration on split-phase transformer");
 					/*  TROUBLESHOOT
 					An unknown phase configuration has been entered for a split-phase,
 					center-tapped transformer.  The Newton-Raphson solver does not know how to
@@ -1921,7 +1921,7 @@ void link_object::NR_link_presync_fxn(void)
 					//See if it worked
 					if (transformer_calc_function == NULL)
 					{
-						GL_THROW(const_cast<char*>("Link:%s - failed to map transformer update function"), obj->name ? obj->name : "Unnamed");
+						GL_THROW("Link:%s - failed to map transformer update function", obj->name ? obj->name : "Unnamed");
 						/*  TROUBLESHOOT
 						While attempting to find the function to update a transformer's inrush matrices, an error was encountered.
 						Please try again.  If the error persists, please submit your code and a bug report via the ticketing system.
@@ -1934,7 +1934,7 @@ void link_object::NR_link_presync_fxn(void)
 					//Make sure it worked
 					if (ret_value != 1)
 					{
-						GL_THROW(const_cast<char*>("Link:%s - failed update transformer matrices"), obj->name ? obj->name : "Unnamed");
+						GL_THROW("Link:%s - failed update transformer matrices", obj->name ? obj->name : "Unnamed");
 						/*  TROUBLESHOOT
 						While attempting to perform the update for the transformer in-rush matrices, and error was encountered.
 						Please try again and ensure in-rush computations are enabled.  If the error persists, please submit your code
@@ -2318,7 +2318,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				//See if we worked - not sure how it would get here otherwise, but meh
 				if (NR_branch_reference == -1)
 				{
-					GL_THROW(const_cast<char*>("NR: branch:%s failed to grab a unique bus index value!"),obj->name);
+					GL_THROW("NR: branch:%s failed to grab a unique bus index value!",obj->name);
 					/*  TROUBLESHOOT
 					While attempting to gain a unique branch id for the Newton-Raphson solver, an error
 					was encountered.  This may be related to a parallelization effort.  Please try again.
@@ -2348,7 +2348,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 						//Create them
 						YSfrom = (complex *)gl_malloc(9*sizeof(complex));
 						if (YSfrom == NULL)
-							GL_THROW(const_cast<char*>("NR: Memory allocation failure for transformer matrices."));
+							GL_THROW("NR: Memory allocation failure for transformer matrices.");
 							/*  TROUBLESHOOT
 							This is a bug.  Newton-Raphson tries to allocate memory for two other
 							needed matrices when dealing with transformers.  This failed.  Please submit
@@ -2357,7 +2357,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 
 						YSto = (complex *)gl_malloc(9*sizeof(complex));
 						if (YSto == NULL)
-							GL_THROW(const_cast<char*>("NR: Memory allocation failure for transformer matrices."));
+							GL_THROW("NR: Memory allocation failure for transformer matrices.");
 							//defined above
 
 						NR_branchdata[NR_branch_reference].Yfrom = &From_Y[0][0];
@@ -2375,7 +2375,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 						YSfrom = (complex *)gl_malloc(9*sizeof(complex));
 						if (YSfrom == NULL)
 						{
-							GL_THROW(const_cast<char*>("NR: Memory allocation failure for line matrix."));
+							GL_THROW("NR: Memory allocation failure for line matrix.");
 							/*  TROUBLESHOOT
 							This is a bug.  Newton-Raphson tries to allocate memory for an additional
 							needed matrix when dealing with lines that have capacitance included.
@@ -2411,7 +2411,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				//Make sure it worked, for now
 				if (NR_branchdata[NR_branch_reference].limit_check == NULL)
 				{
-					GL_THROW(const_cast<char*>("Unable to map limit checking function for link:%s"),obj->name ? obj->name : "Unnamed");
+					GL_THROW("Unable to map limit checking function for link:%s",obj->name ? obj->name : "Unnamed");
 					/*  TROUBLESHOOT
 					While attempting to map the power/current checking function for a link object, the mapping failed.
 					Please try again.  If the error persists, please submit your code and a bug report via the ticketing
@@ -2437,36 +2437,36 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					working_phase = 0xF0;	//Start with mask for all USB
 
 					//Update initial stati as necessary as well - do for fuses and switches (both encoded the same SpecialLnk)
-					if (gl_object_isa(obj,const_cast<char*>("switch"),const_cast<char*>("powerflow")))
+					if (gl_object_isa(obj,"switch","powerflow"))
 					{
-						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,const_cast<char*>("phase_A_state")));
+						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_A_state"));
 
 						if (*temp_phase == 1)
 							working_phase |= 0x04;
 
-						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,const_cast<char*>("phase_B_state")));
+						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_B_state"));
 
 						if (*temp_phase == 1)
 							working_phase |= 0x02;
 
-						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,const_cast<char*>("phase_C_state")));
+						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_C_state"));
 
 						if (*temp_phase == 1)
 							working_phase |= 0x01;
 					}
-					else if (gl_object_isa(obj,const_cast<char*>("fuse"),const_cast<char*>("powerflow")))
+					else if (gl_object_isa(obj,"fuse","powerflow"))
 					{
-						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,const_cast<char*>("phase_A_status")));
+						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_A_status"));
 
 						if (*temp_phase == 1)
 							working_phase |= 0x04;
 
-						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,const_cast<char*>("phase_B_status")));
+						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_B_status"));
 
 						if (*temp_phase == 1)
 							working_phase |= 0x02;
 
-						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,const_cast<char*>("phase_C_status")));
+						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_C_status"));
 
 						if (*temp_phase == 1)
 							working_phase |= 0x01;
@@ -2551,7 +2551,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				//If we are OK, populate the list entry
 				if (TempTableIndex >= LinkTableLoc[0])	//Update for intermediate value
 				{
-					GL_THROW(const_cast<char*>("NR: An extra link tried to connected to node %s"),NR_busdata[IndVal].name);
+					GL_THROW("NR: An extra link tried to connected to node %s",NR_busdata[IndVal].name);
 					/*  TROUBLESHOOT
 					During the initialization state, a link tried to connect to a node
 					that's link list is already full.  This is a bug.  Submit your code and
@@ -2602,7 +2602,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				//If we are OK, populate the list entry
 				if (TempTableIndex >= LinkTableLoc[0])
 				{
-					GL_THROW(const_cast<char*>("NR: An extra link tried to connected to node %s"),NR_busdata[IndVal].name);
+					GL_THROW("NR: An extra link tried to connected to node %s",NR_busdata[IndVal].name);
 					//Defined above
 				}
 				else					//We're OK - populate in our parent's list
@@ -2616,7 +2616,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 			}
 			else
 			{
-				GL_THROW(const_cast<char*>("A link was called before NR was initialized by a node."));
+				GL_THROW("A link was called before NR was initialized by a node.");
 				/*	TROUBLESHOOT
 				This is a bug.  The Newton-Raphson solver method relies on a node being called first.  If GridLAB-D
 				made it this far, you should have a swing bus defined and it should be called before any other objects.
@@ -2636,7 +2636,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 			}
 
 			//Figure out what type of link we are and populate accordingly
-			if ((gl_object_isa(obj,const_cast<char*>("transformer"),const_cast<char*>("powerflow"))) || (gl_object_isa(obj,const_cast<char*>("regulator"),const_cast<char*>("powerflow"))))	//Tranformer check
+			if ((gl_object_isa(obj,"transformer","powerflow")) || (gl_object_isa(obj,"regulator","powerflow")))	//Tranformer check
 			{
 				NR_branchdata[NR_branch_reference].lnk_type = 4;
 			}
@@ -2646,19 +2646,19 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				{
 					NR_branchdata[NR_branch_reference].lnk_type = 1;
 				}
-				else if (gl_object_isa(obj,const_cast<char*>("recloser"),const_cast<char*>("powerflow")))	//Recloser - do before switch since a recloser IS a switch
+				else if (gl_object_isa(obj,"recloser","powerflow"))	//Recloser - do before switch since a recloser IS a switch
 				{
 					NR_branchdata[NR_branch_reference].lnk_type = 6;
 				}
-				else if (gl_object_isa(obj,const_cast<char*>("sectionalizer"),const_cast<char*>("powerflow")))	//Sectionalizer - do before switch since a sectionalizer IS a switch
+				else if (gl_object_isa(obj,"sectionalizer","powerflow"))	//Sectionalizer - do before switch since a sectionalizer IS a switch
 				{
 					NR_branchdata[NR_branch_reference].lnk_type = 5;
 				}
-				else if (gl_object_isa(obj,const_cast<char*>("switch"),const_cast<char*>("powerflow")))	//We're a switch
+				else if (gl_object_isa(obj,"switch","powerflow"))	//We're a switch
 				{
 					NR_branchdata[NR_branch_reference].lnk_type = 2;
 				}
-				else if (gl_object_isa(obj,const_cast<char*>("fuse"),const_cast<char*>("powerflow")))
+				else if (gl_object_isa(obj,"fuse","powerflow"))
 				{
 					NR_branchdata[NR_branch_reference].lnk_type = 3;
 				}
@@ -2677,7 +2677,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				//Check limits first
 				if (pwr_object_current>=pwr_object_count)
 				{
-					GL_THROW(const_cast<char*>("Too many objects tried to populate deltamode objects array in the powerflow module!"));
+					GL_THROW("Too many objects tried to populate deltamode objects array in the powerflow module!");
 					/*  TROUBLESHOOT
 					While attempting to populate a reference array of deltamode-enabled objects for the powerflow
 					module, an attempt was made to write beyond the allocated array space.  Please try again.  If the
@@ -2721,7 +2721,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				//No null check, since this one just may not work (post update may not exist)
 
 				//See if we're an appropriate transformer and in-rush enabled
-				if ((enable_inrush_calculations == true) && (gl_object_isa(obj,const_cast<char*>("transformer"),const_cast<char*>("powerflow"))))
+				if ((enable_inrush_calculations == true) && (gl_object_isa(obj,"transformer","powerflow")))
 				{
 					//Map the function for the transformer
 					NR_branchdata[NR_branch_reference].ExtraDeltaModeFunc = (FUNCTIONADDR)(gl_get_function(obj,"recalc_deltamode_saturation"));
@@ -2763,7 +2763,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 								//Check it
 								if (NR_busdata[NR_branchdata[NR_branch_reference].from].BusSatTerm == NULL)
 								{
-									GL_THROW(const_cast<char*>("Failed to allocate saturation current vector in %s"),from->name ? from->name : "Unnamed");
+									GL_THROW("Failed to allocate saturation current vector in %s",from->name ? from->name : "Unnamed");
 									/*  TROUBLESHOOT
 									Failed to allocate the saturation current "holding" matrix for a node.  Please try again.
 									If the error persists, please submit your code and a bug report via the ticketing website.
@@ -2790,7 +2790,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 								//Check it
 								if (NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm == NULL)
 								{
-									GL_THROW(const_cast<char*>("Failed to allocate saturation current vector in %s"),to->name ? to->name : "Unnamed");
+									GL_THROW("Failed to allocate saturation current vector in %s",to->name ? to->name : "Unnamed");
 									//Defined above
 								}
 								else	//Must have worked -- zero them
@@ -2805,7 +2805,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					}
 					else	//Somehow got a failure - catch it, even though I don't know how we get here
 					{
-						GL_THROW(const_cast<char*>("Error while performing first execution of transformer saturation map in %s"),obj->name ? obj->name : "Unnamed");
+						GL_THROW("Error while performing first execution of transformer saturation map in %s",obj->name ? obj->name : "Unnamed");
 						/*  TROUBLESHOOT
 						While attempting to do a first execution of the transformer saturation function, something
 						unexpected occurred.  Please try again.  If the error persists, please submit your code
@@ -3334,8 +3334,8 @@ int link_object::kmlinit(int (*stream)(const char*,...))
 	stream("<Style id=\"underground_line_b\"><LineStyle><color>3f00ffff</color><width>4</width></LineStyle><PolyStyle><color>3f0000ff</color></PolyStyle></Style>\n");
 	stream("<Style id=\"underground_line_k\"><LineStyle><color>3f00ffff</color><width>4</width></LineStyle><PolyStyle><color>3f000000</color></PolyStyle></Style>\n");
 
-	gld_global host(const_cast<char*>("hostname"));
-	gld_global port(const_cast<char*>("server_portnum"));
+	gld_global host("hostname");
+	gld_global port("server_portnum");
 #define STYLE(X) stream("<Style id=\"" #X "_g\"><IconStyle><Icon><href>http://%s:%u/rt/" #X "_g.png</href></Icon></IconStyle></Style>\n", (const char*)host.get_string(), port.get_int32());\
 		stream("<Style id=\"" #X "_r\"><IconStyle><Icon><href>http://%s:%u/rt/" #X "_r.png</href></Icon></IconStyle></Style>\n", (const char*)host.get_string(), port.get_int32());\
 		stream("<Style id=\"" #X "_b\"><IconStyle><Icon><href>http://%s:%u/rt/" #X "_b.png</href></Icon></IconStyle></Style>\n", (const char*)host.get_string(), port.get_int32());\
@@ -5011,7 +5011,7 @@ void link_object::calculate_power()
 }
 
 //Retrieve value of a double
-double *link_object::get_double(OBJECT *obj, char *name)
+double *link_object::get_double(OBJECT *obj, const char *name)
 {
 	PROPERTY *p = gl_get_property(obj,name);
 	if (p==NULL || p->ptype!=PT_double)
@@ -5102,7 +5102,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		//Initial check - faults only work for NR right now
 		if (solver_method != SM_NR)
 		{
-			GL_THROW(const_cast<char*>("Only the NR solver supports link faults!"));
+			GL_THROW("Only the NR solver supports link faults!");
 			/*  TROUBLESHOOT
 			At this time, only the Newton-Raphson solution method supports faults for link objects.
 			Please utilize this solver method, or check back at a later date.
@@ -5235,7 +5235,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}
 			else	//Something else, fail
 			{
-				GL_THROW(const_cast<char*>("Fault type %s for link objects has an invalid phase specification"));
+				GL_THROW("Fault type %s for link objects has an invalid phase specification");
 				/*  TROUBLESHOOT
 				The phase specified for the link fault is not a valid A, B, or C value.  Please check your syntax
 				and ensure the values are uppercase.
@@ -5282,7 +5282,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 			if (numphase == 0)
 			{
-				GL_THROW(const_cast<char*>("No phases detected for %s!"),objhdr->name);
+				GL_THROW("No phases detected for %s!",objhdr->name);
 				/*  TROUBLESHOOT
 				No phases were detected for the link object specified.  This should have
 				been caught much earlier.  Please submit your code and a bug report using the
@@ -5315,7 +5315,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*implemented_fault = 1;								//Flag as a A SLG fault
 					break;
 				default:	//No other cases should exist
-					GL_THROW(const_cast<char*>("Fault type %s for link objects has an invalid phase specification"));
+					GL_THROW("Fault type %s for link objects has an invalid phase specification");
 					//Defined above
 					break;
 				}//end switch
@@ -5361,7 +5361,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*implemented_fault = 4;								//Flag as A and B fault
 					break;
 				default:	//Not sure how we'd ever get here
-					GL_THROW(const_cast<char*>("Unknown phase condition on two-phase fault of %s!"),objhdr->name);
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
 					/*  TROUBLESHOOT
 					While attempting to implement a two-phase fault on a link object, an unknown phase
 					configuration was encountered.  Please try again.  If the error persists, please submit
@@ -5451,7 +5451,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*implemented_fault = 4;								//Flag as A and B fault
 					break;
 				default:	//Not sure how we'd ever get here
-					GL_THROW(const_cast<char*>("Unknown phase condition on two-phase fault of %s!"),objhdr->name);
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
 					//Defined above
 					break;
 				}//end switch
@@ -5461,7 +5461,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}//end all three present
 			else	//Hmmm, how'd we get here?
 			{
-				GL_THROW(const_cast<char*>("An invalid number of phases appears present for %s"),objhdr->name);
+				GL_THROW("An invalid number of phases appears present for %s",objhdr->name);
 				/*  TROUBLESHOOT
 				An unexpected number of phases was found on the link object.  Please submit your
 				code and a bug report using the trac website.
@@ -5508,7 +5508,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				*implemented_fault = 10;							//Flag as all three fault
 				break;
 			default:	//Not sure how we'd ever get here
-				GL_THROW(const_cast<char*>("Unknown phase condition on three-phase fault of %s!"),objhdr->name);
+				GL_THROW("Unknown phase condition on three-phase fault of %s!",objhdr->name);
 				/*  TROUBLESHOOT
 				While attempting to implement a three-phase fault on a link object, an unknown phase
 				configuration was encountered.  Please try again.  If the error persists, please submit
@@ -5560,7 +5560,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				*implemented_fault = 32;							//Flag as all three fault
 				break;
 			default:	//Not sure how we'd ever get here
-				GL_THROW(const_cast<char*>("Unknown phase condition on three-phase fault of %s!"),objhdr->name);
+				GL_THROW("Unknown phase condition on three-phase fault of %s!",objhdr->name);
 				//Defined elsewhere
 				break;
 			}//end phase cases
@@ -5608,7 +5608,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 			if (numphase == 0)
 			{
-				GL_THROW(const_cast<char*>("No phases detected for %s!"),objhdr->name);
+				GL_THROW("No phases detected for %s!",objhdr->name);
 				//Defined above
 			}//end 0 phase
 			else if (numphase < 2)	//Single phase line (no zero phase this way)
@@ -5637,7 +5637,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*implemented_fault = 11;							//Flag as a A OC fault
 					break;
 				default:	//No other cases should exist
-					GL_THROW(const_cast<char*>("Fault type %s for link objects has an invalid phase specification"));
+					GL_THROW("Fault type %s for link objects has an invalid phase specification");
 					//Defined above
 					break;
 				}//end switch
@@ -5682,7 +5682,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*implemented_fault = 7;								//Flag as A and B fault
 					break;
 				default:	//Not sure how we'd ever get here
-					GL_THROW(const_cast<char*>("Unknown phase condition on two-phase fault of %s!"),objhdr->name);
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
 					//Defined above
 					break;
 				}//end switch
@@ -5768,7 +5768,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*implemented_fault = 7;								//Flag as A and B fault
 					break;
 				default:	//Not sure how we'd ever get here
-					GL_THROW(const_cast<char*>("Unknown phase condition on two-phase fault of %s!"),objhdr->name);
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
 					//Defined above
 					break;
 				}//end switch
@@ -5778,7 +5778,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}//end all three present
 			else	//Hmmm, how'd we get here?
 			{
-				GL_THROW(const_cast<char*>("An invalid number of phases appears present for %s"),objhdr->name);
+				GL_THROW("An invalid number of phases appears present for %s",objhdr->name);
 				//Defined above
 			}
 		}//End LL
@@ -5903,7 +5903,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}
 			else	//Something else, fail
 			{
-				GL_THROW(const_cast<char*>("Fault type %s for link objects has an invalid phase specification"));
+				GL_THROW("Fault type %s for link objects has an invalid phase specification");
 				//Defined above
 			}
 		}//End OC1
@@ -5947,7 +5947,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 			if (numphase == 0)
 			{
-				GL_THROW(const_cast<char*>("No phases detected for %s!"),objhdr->name);
+				GL_THROW("No phases detected for %s!",objhdr->name);
 				//Defined above
 			}//end 0 phase
 			else if (numphase < 2)	//Single phase line (no zero phase this way)
@@ -5976,7 +5976,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*implemented_fault = 11;							//Flag as a A OC fault
 					break;
 				default:	//No other cases should exist
-					GL_THROW(const_cast<char*>("Fault type %s for link objects has an invalid phase specification"));
+					GL_THROW("Fault type %s for link objects has an invalid phase specification");
 					//Defined above
 					break;
 				}//end switch
@@ -6022,7 +6022,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*implemented_fault = 14;							//Flag as A and B fault
 					break;
 				default:	//Not sure how we'd ever get here
-					GL_THROW(const_cast<char*>("Unknown phase condition on two-phase fault of %s!"),objhdr->name);
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
 					//Defined above
 					break;
 				}//end switch
@@ -6108,7 +6108,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*implemented_fault = 14;							//Flag as A and B fault
 					break;
 				default:	//Not sure how we'd ever get here
-					GL_THROW(const_cast<char*>("Unknown phase condition on two-phase fault of %s!"),objhdr->name);
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
 					//Defined above
 					break;
 				}//end switch
@@ -6118,7 +6118,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}//end all three present
 			else	//Hmmm, how'd we get here?
 			{
-				GL_THROW(const_cast<char*>("An invalid number of phases appears present for %s"),objhdr->name);
+				GL_THROW("An invalid number of phases appears present for %s",objhdr->name);
 				//Defined above
 			}
 		}//End OC2
@@ -6162,7 +6162,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				*implemented_fault = 17;							//Flag as all three fault
 				break;
 			default:	//Not sure how we'd ever get here
-				GL_THROW(const_cast<char*>("Unknown phase condition on three-phase fault of %s!"),objhdr->name);
+				GL_THROW("Unknown phase condition on three-phase fault of %s!",objhdr->name);
 				//Defined above
 				break;
 			}//end phase cases
@@ -6288,7 +6288,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 					if (numphase == 0)
 					{
-						GL_THROW(const_cast<char*>("No phases detected for %s!"),objhdr->name);
+						GL_THROW("No phases detected for %s!",objhdr->name);
 						//Defined above
 					}//end 0 phase
 					else if (numphase < 2)	//Single phase line (no zero phase this way)
@@ -6315,7 +6315,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 							*implemented_fault = 18;							//Flag as a A switching
 							break;
 						default:	//No other cases should exist
-							GL_THROW(const_cast<char*>("Fault type %s for link objects has an invalid phase specification"));
+							GL_THROW("Fault type %s for link objects has an invalid phase specification");
 							//Defined above
 							break;
 						}//end switch
@@ -6359,7 +6359,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 							*implemented_fault = 21;							//Flag as A and B switching
 							break;
 						default:	//Not sure how we'd ever get here
-							GL_THROW(const_cast<char*>("Unknown phase condition on two-phase fault of %s!"),objhdr->name);
+							GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
 							//Defined above
 							break;
 						}//end switch
@@ -6403,7 +6403,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 							*implemented_fault = 21;							//Flag as A and B switching
 							break;
 						default:	//Not sure how we'd ever get here
-							GL_THROW(const_cast<char*>("Unknown phase condition on two-phase fault of %s!"),objhdr->name);
+							GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
 							//Defined above
 							break;
 						}//end switch
@@ -6413,7 +6413,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					}//end all three present
 					else	//Hmmm, how'd we get here?
 					{
-						GL_THROW(const_cast<char*>("An invalid number of phases appears present for %s"),objhdr->name);
+						GL_THROW("An invalid number of phases appears present for %s",objhdr->name);
 						//Defined above
 					}
 				}//End Switch two phases
@@ -6457,7 +6457,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 						*implemented_fault = 24;							//Flag as all three switching
 						break;
 					default:	//Not sure how we'd ever get here
-						GL_THROW(const_cast<char*>("Unknown phase condition on three-phase fault of %s!"),objhdr->name);
+						GL_THROW("Unknown phase condition on three-phase fault of %s!",objhdr->name);
 						//Defined above
 						break;
 					}//end phase cases
@@ -6580,7 +6580,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 					if (numphase == 0)
 					{
-						GL_THROW(const_cast<char*>("No phases detected for %s!"),objhdr->name);
+						GL_THROW("No phases detected for %s!",objhdr->name);
 						//Defined above
 					}//end 0 phase
 					else if (numphase < 2)	//Single phase line (no zero phase this way)
@@ -6607,7 +6607,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 							*implemented_fault = 18;							//Flag as a A switching
 							break;
 						default:	//No other cases should exist
-							GL_THROW(const_cast<char*>("Fault type %s for link objects has an invalid phase specification"));
+							GL_THROW("Fault type %s for link objects has an invalid phase specification");
 							//Defined above
 							break;
 						}//end switch
@@ -6651,7 +6651,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 							*implemented_fault = 21;							//Flag as A and B switching
 							break;
 						default:	//Not sure how we'd ever get here
-							GL_THROW(const_cast<char*>("Unknown phase condition on two-phase fault of %s!"),objhdr->name);
+							GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
 							//Defined above
 							break;
 						}//end switch
@@ -6695,7 +6695,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 							*implemented_fault = 21;							//Flag as A and B switching
 							break;
 						default:	//Not sure how we'd ever get here
-							GL_THROW(const_cast<char*>("Unknown phase condition on two-phase fault of %s!"),objhdr->name);
+							GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
 							//Defined above
 							break;
 						}//end switch
@@ -6705,7 +6705,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					}//end all three present
 					else	//Hmmm, how'd we get here?
 					{
-						GL_THROW(const_cast<char*>("An invalid number of phases appears present for %s"),objhdr->name);
+						GL_THROW("An invalid number of phases appears present for %s",objhdr->name);
 						//Defined above
 					}
 				}//End Switch two phases
@@ -6749,7 +6749,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 						*implemented_fault = 24;							//Flag as all three switching
 						break;
 					default:	//Not sure how we'd ever get here
-						GL_THROW(const_cast<char*>("Unknown phase condition on three-phase fault of %s!"),objhdr->name);
+						GL_THROW("Unknown phase condition on three-phase fault of %s!",objhdr->name);
 						//Defined above
 						break;
 					}//end phase cases
@@ -6877,7 +6877,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}
 			else	//Something else, fail
 			{
-				GL_THROW(const_cast<char*>("Fault type %s for link objects has an invalid phase specification"));
+				GL_THROW("Fault type %s for link objects has an invalid phase specification");
 				//Defined above
 			}
 		}//End single phase fuse fault
@@ -6921,7 +6921,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 			if (numphase == 0)
 			{
-				GL_THROW(const_cast<char*>("No phases detected for %s!"),objhdr->name);
+				GL_THROW("No phases detected for %s!",objhdr->name);
 				//Defined above
 			}//end 0 phase
 			else if (numphase < 2)	//Single phase line (no zero phase this way)
@@ -6950,7 +6950,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*implemented_fault = 25;							//Flag as a A fuse fault
 					break;
 				default:	//No other cases should exist
-					GL_THROW(const_cast<char*>("Fault type %s for link objects has an invalid phase specification"));
+					GL_THROW("Fault type %s for link objects has an invalid phase specification");
 					//Defined above
 					break;
 				}//end switch
@@ -6996,7 +6996,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*implemented_fault = 28;							//Flag as A and B fuse fault
 					break;
 				default:	//Not sure how we'd ever get here
-					GL_THROW(const_cast<char*>("Unknown phase condition on two-phase fault of %s!"),objhdr->name);
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
 					//Defined above
 					break;
 				}//end switch
@@ -7082,7 +7082,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*implemented_fault = 28;							//Flag as A and B fuse fault
 					break;
 				default:	//Not sure how we'd ever get here
-					GL_THROW(const_cast<char*>("Unknown phase condition on two-phase fault of %s!"),objhdr->name);
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
 					//Defined above
 					break;
 				}//end switch
@@ -7092,7 +7092,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}//end all three present
 			else	//Hmmm, how'd we get here?
 			{
-				GL_THROW(const_cast<char*>("An invalid number of phases appears present for %s"),objhdr->name);
+				GL_THROW("An invalid number of phases appears present for %s",objhdr->name);
 				//Defined above
 			}
 		}//End two-phase fuse fault
@@ -7136,7 +7136,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				*implemented_fault = 31;							//Flag as all three fuse fault
 				break;
 			default:	//Not sure how we'd ever get here
-				GL_THROW(const_cast<char*>("Unknown phase condition on three-phase fault of %s!"),objhdr->name);
+				GL_THROW("Unknown phase condition on three-phase fault of %s!",objhdr->name);
 				//Defined above
 				break;
 			}//end phase cases
@@ -7146,7 +7146,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		}//End three-phase fuse fault
 		else	//Undetermined fault - fail us
 		{
-			GL_THROW(const_cast<char*>("Fault type %s is not recognized for link objects!"),fault_type);
+			GL_THROW("Fault type %s is not recognized for link objects!",fault_type);
 			/*  TROUBLESHOOT
 			The fault type specified in the eventgen object is invalid for link objects.  Please select the
 			appropriate fault type and try again.  If this message has come up in error, please submit your code and a
@@ -7161,7 +7161,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		{
 			if (NR_branchdata[NR_branch_reference].lnk_type != 2)	//Switch
 			{
-				GL_THROW(const_cast<char*>("Event type %s was tried on a non-switch object!"),fault_type);
+				GL_THROW("Event type %s was tried on a non-switch object!",fault_type);
 				/*  TROUBLESHOOT
 				A switch-related faulted was attempted on a device that is not a switch.
 				Please specify a switch in the eventgen group and try again.  If the error
@@ -7174,7 +7174,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		{
 			if (NR_branchdata[NR_branch_reference].lnk_type != 3)	//Fuse
 			{
-				GL_THROW(const_cast<char*>("Event type %s was tried on a non-fuse object!"),fault_type);
+				GL_THROW("Event type %s was tried on a non-fuse object!",fault_type);
 				/*  TROUBLESHOOT
 				A fuse-related faulted was attempted on a device that is not a fuse.
 				Please specify a fuse in the eventgen group and try again.  If the error
@@ -7255,7 +7255,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 				if (tmpobj == NULL)
 				{
-					GL_THROW(const_cast<char*>("An attempt to alter fuse %s failed."),NR_branchdata[NR_branch_reference].name);
+					GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[NR_branch_reference].name);
 					/*  TROUBLESHOOT
 					While attempting to set the state of a fuse, an error occurred.  Please try again.  If the error persists,
 					please submit a bug report and your code via the trac website.
@@ -7267,7 +7267,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Make sure it was found
 				if (funadd == NULL)
 				{
-					GL_THROW(const_cast<char*>("Unable to change fuse state on %s"),tmpobj->name);
+					GL_THROW("Unable to change fuse state on %s",tmpobj->name);
 					/*  TROUBLESHOOT
 					While attempting to alter a fuse state, the proper fuse function was not found.
 					If the problem persists, please submit a bug report and your code to the trac website.
@@ -7280,12 +7280,12 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Make sure it worked
 				if (ext_result != 1)
 				{
-					GL_THROW(const_cast<char*>("An attempt to alter fuse %s failed."),NR_branchdata[NR_branch_reference].name);
+					GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[NR_branch_reference].name);
 					//defined above
 				}
 
 				//Retrieve the mean_repair_time
-				temp_double_val = get_double(tmpobj,const_cast<char*>("mean_repair_time"));
+				temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 				//See if it worked
 				if (temp_double_val == NULL)
@@ -7335,7 +7335,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 				if (tmpobj == NULL)
 				{
-					GL_THROW(const_cast<char*>("An attempt to alter recloser %s failed."),NR_branchdata[NR_branch_reference].name);
+					GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[NR_branch_reference].name);
 					/*  TROUBLESHOOT
 					While attempting to set the state of a recloser, an error occurred.  Please try again.  If the error persists,
 					please submit a bug report and your code via the trac website.
@@ -7347,7 +7347,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Make sure it was found
 				if (funadd == NULL)
 				{
-					GL_THROW(const_cast<char*>("Unable to change recloser state on %s"),tmpobj->name);
+					GL_THROW("Unable to change recloser state on %s",tmpobj->name);
 					/*  TROUBLESHOOT
 					While attempting to alter a recloser state, the proper recloser function was not found.
 					If the problem persists, please submit a bug report and your code to the trac website.
@@ -7360,12 +7360,12 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Make sure it worked
 				if (ext_result_dbl == 0)
 				{
-					GL_THROW(const_cast<char*>("An attempt to alter recloser %s failed."),NR_branchdata[NR_branch_reference].name);
+					GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[NR_branch_reference].name);
 					//defined above
 				}
 
 				//Retrieve the mean_repair_time
-				temp_double_val = get_double(tmpobj,const_cast<char*>("mean_repair_time"));
+				temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 				//See if it worked
 				if (temp_double_val == NULL)
@@ -7415,7 +7415,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 				if (tmpobj == NULL)
 				{
-					GL_THROW(const_cast<char*>("An attempt to alter switch %s failed."),NR_branchdata[NR_branch_reference].name);
+					GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[NR_branch_reference].name);
 					/*  TROUBLESHOOT
 					While attempting to set the state of a switch, an error occurred.  Please try again.  If the error persists,
 					please submit a bug report and your code via the trac website.
@@ -7427,7 +7427,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Make sure it was found
 				if (funadd == NULL)
 				{
-					GL_THROW(const_cast<char*>("Unable to change switch state on %s"),tmpobj->name);
+					GL_THROW("Unable to change switch state on %s",tmpobj->name);
 					/*  TROUBLESHOOT
 					While attempting to alter a switch state, the proper switch function was not found.
 					If the problem persists, please submit a bug report and your code to the trac website.
@@ -7440,12 +7440,12 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Make sure it worked
 				if (ext_result != 1)
 				{
-					GL_THROW(const_cast<char*>("An attempt to alter switch %s failed."),NR_branchdata[NR_branch_reference].name);
+					GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[NR_branch_reference].name);
 					//defined above
 				}
 
 				//Retrieve the mean_repair_time
-				temp_double_val = get_double(tmpobj,const_cast<char*>("mean_repair_time"));
+				temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 				//See if it worked
 				if (temp_double_val == NULL)
@@ -7513,7 +7513,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 					if (tmpobj == NULL)
 					{
-						GL_THROW(const_cast<char*>("An attempt to find the swing node %s failed."),NR_busdata[temp_node].name);
+						GL_THROW("An attempt to find the swing node %s failed.",NR_busdata[temp_node].name);
 						/*  TROUBLESHOOT
 						While attempting to get the mean repair time for the swing bus, an error occurred.  Please try again.  If the error persists,
 						please submit a bug report and your code via the trac website.
@@ -7521,7 +7521,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					}
 
 					//Retrieve the mean_repair_time
-					temp_double_val = get_double(tmpobj,const_cast<char*>("mean_repair_time"));
+					temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 					//See if it worked
 					if (temp_double_val == NULL)
@@ -7563,7 +7563,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 								if (tmpobj == NULL)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter recloser %s failed."),NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
 									/*  TROUBLESHOOT
 									While attempting to set the state of a recloser, an error occurred.  Please try again.  If the error persists,
 									please submit a bug report and your code via the trac website.
@@ -7575,7 +7575,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change recloser state on %s"),tmpobj->name);
+									GL_THROW("Unable to change recloser state on %s",tmpobj->name);
 									/*  TROUBLESHOOT
 									While attempting to alter a recloser state, the proper recloser function was not found.
 									If the problem persists, please submit a bug report and your code to the trac website.
@@ -7588,12 +7588,12 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Make sure it worked
 								if (ext_result_dbl == 0)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter recloser %s failed."),NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
 									//defined above
 								}
 
 								//Retrieve the mean_repair_time
-								temp_double_val = get_double(tmpobj,const_cast<char*>("mean_repair_time"));
+								temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 								//See if it worked
 								if (temp_double_val == NULL)
@@ -7719,7 +7719,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 								if (tmpobj == NULL)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter sectionalizer %s failed."),NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
 									/*  TROUBLESHOOT
 									While attempting to set the state of a sectionalizer, an error occurred.  Please try again.  If the error persists,
 									please submit a bug report and your code via the trac website.
@@ -7731,7 +7731,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change sectionalizer state on %s"),tmpobj->name);
+									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
 									/*  TROUBLESHOOT
 									While attempting to alter a sectionalizer state, the proper sectionalizer function was not found.
 									If the problem persists, please submit a bug report and your code to the trac website.
@@ -7744,7 +7744,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Make sure it worked
 								if (ext_result_dbl == 0)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter sectionalizer %s failed."),NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
 									//defined above
 								}
 								else if (ext_result_dbl < 0)	//Negative number means no upstream recloser was found
@@ -7757,7 +7757,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								else	//Positive number - recloser operated
 								{
 									//Retrieve the mean_repair_time
-									temp_double_val = get_double(tmpobj,const_cast<char*>("mean_repair_time"));
+									temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 									//See if it worked
 									if (temp_double_val == NULL)
@@ -7808,7 +7808,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 								if (tmpobj == NULL)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter fuse %s failed."),NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
 									/*  TROUBLESHOOT
 									While attempting to set the state of a fuse, an error occurred.  Please try again.  If the error persists,
 									please submit a bug report and your code via the trac website.
@@ -7820,7 +7820,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change fuse state on %s"),tmpobj->name);
+									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
 									/*  TROUBLESHOOT
 									While attempting to alter a fuse state, the proper fuse function was not found.
 									If the problem persists, please submit a bug report and your code to the trac website.
@@ -7833,12 +7833,12 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Make sure it worked
 								if (ext_result != 1)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter fuse %s failed."),NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
 									//defined above
 								}
 
 								//Retrieve the mean_repair_time
-								temp_double_val = get_double(tmpobj,const_cast<char*>("mean_repair_time"));
+								temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 								//See if it worked
 								if (temp_double_val == NULL)
@@ -7885,7 +7885,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 								if (tmpobj == NULL)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter transformer %s failed."),NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									GL_THROW("An attempt to alter transformer %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
 									/*  TROUBLESHOOT
 									While attempting to set the state of a transformer, an error occurred.  Please try again.  If the error persists,
 									please submit a bug report and your code via the trac website.
@@ -7902,7 +7902,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								}
 
 								//Retrieve the mean_repair_time
-								temp_double_val = get_double(tmpobj,const_cast<char*>("mean_repair_time"));
+								temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 								//See if it worked
 								if (temp_double_val == NULL)
@@ -7944,7 +7944,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					//Make sure we didn't somehow reach the end
 					if (temp_table_loc == NR_busdata[temp_node].Link_Table_Size)
 					{
-						GL_THROW(const_cast<char*>("Error finding proper to reference for node %s"),NR_busdata[temp_node].name);
+						GL_THROW("Error finding proper to reference for node %s",NR_busdata[temp_node].name);
 						/*  TROUBLESHOOT
 						While attempting to induce a safety reaction to a fault, a progression through the
 						links of the system failed.  Please try again.  If the bug persists, please submit your
@@ -7961,7 +7961,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			//Make sure it was found
 			if (funadd == NULL)
 			{
-				GL_THROW(const_cast<char*>("Unable to update objects for reliability effects"));
+				GL_THROW("Unable to update objects for reliability effects");
 				/*  TROUBLESHOOT
 				While attempting to update the powerflow to properly represent the new post-fault state, an error
 				occurred.  If the problem persists, please submit a bug report and your code to the trac website.
@@ -7977,7 +7977,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				{
 					if (protect_locations[phaseidx] == -1)
 					{
-						GL_THROW(const_cast<char*>("Attempted to restore a device that never appears to have been faulted!"));
+						GL_THROW("Attempted to restore a device that never appears to have been faulted!");
 						/*  TROUBLESHOOT
 						While attempting to restore a device, it was found to have never been in a fault.
 						It is unclear how this occurs, but it should not and should be fixed.
@@ -7994,7 +7994,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			//Make sure it worked
 			if (ext_result != 1)
 			{
-				GL_THROW(const_cast<char*>("Unable to update objects for reliability effects"));
+				GL_THROW("Unable to update objects for reliability effects");
 				//defined above
 			}
 
@@ -8037,7 +8037,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		//Initial check - faults only work for NR right now
 		if (solver_method != SM_NR)
 		{
-			GL_THROW(const_cast<char*>("Only the NR solver supports link faults!"));
+			GL_THROW("Only the NR solver supports link faults!");
 			/*  TROUBLESHOOT
 			At this time, only the Newton-Raphson solution method supports faults for link objects.
 			Please utilize this solver method, or check back at a later date.
@@ -8066,7 +8066,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			//Check the output
 			if ((pf_badcompute == true) || (pf_mesh_fault_values.return_code != 1) || (pf_resultval <= 0))
 			{
-				GL_THROW(const_cast<char*>("link:%d - %s -- Mesh-based fault impedance update failure"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
+				GL_THROW("link:%d - %s -- Mesh-based fault impedance update failure",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				While attempting to obtain the mesh fault method impedance, an error occurred.  Look for an earlier message for the explicit reason.
 				*/
@@ -8200,7 +8200,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}
 			else	//Something else, fail
 			{
-				GL_THROW(const_cast<char*>("Fault type %s for link objects has an invalid phase specification"));
+				GL_THROW("Fault type %s for link objects has an invalid phase specification");
 				/*  TROUBLESHOOT
 				The phase specified for the link fault is not a valid A, B, or C value.  Please check your syntax
 				and ensure the values are uppercase.
@@ -8247,7 +8247,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 			if (numphase == 0)
 			{
-				GL_THROW(const_cast<char*>("No phases detected for %s!"),objhdr->name);
+				GL_THROW("No phases detected for %s!",objhdr->name);
 				/*  TROUBLESHOOT
 				No phases were detected for the link object specified.  This should have
 				been caught much earlier.  Please submit your code and a bug report using the
@@ -8280,7 +8280,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*implemented_fault = 1;								//Flag as a A SLG fault
 					break;
 				default:	//No other cases should exist
-					GL_THROW(const_cast<char*>("Fault type %s for link objects has an invalid phase specification"));
+					GL_THROW("Fault type %s for link objects has an invalid phase specification");
 					//Defined above
 					break;
 				}//end switch
@@ -8326,7 +8326,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*implemented_fault = 4;								//Flag as A and B fault
 					break;
 				default:	//Not sure how we'd ever get here
-					GL_THROW(const_cast<char*>("Unknown phase condition on two-phase fault of %s!"),objhdr->name);
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
 					/*  TROUBLESHOOT
 					While attempting to implement a two-phase fault on a link object, an unknown phase
 					configuration was encountered.  Please try again.  If the error persists, please submit
@@ -8416,7 +8416,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*implemented_fault = 4;								//Flag as A and B fault
 					break;
 				default:	//Not sure how we'd ever get here
-					GL_THROW(const_cast<char*>("Unknown phase condition on two-phase fault of %s!"),objhdr->name);
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
 					//Defined above
 					break;
 				}//end switch
@@ -8426,7 +8426,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}//end all three present
 			else	//Hmmm, how'd we get here?
 			{
-				GL_THROW(const_cast<char*>("An invalid number of phases appears present for %s"),objhdr->name);
+				GL_THROW("An invalid number of phases appears present for %s",objhdr->name);
 				/*  TROUBLESHOOT
 				An unexpected number of phases was found on the link object.  Please submit your
 				code and a bug report using the trac website.
@@ -8473,7 +8473,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				*implemented_fault = 10;							//Flag as all three fault
 				break;
 			default:	//Not sure how we'd ever get here
-				GL_THROW(const_cast<char*>("Unknown phase condition on three-phase fault of %s!"),objhdr->name);
+				GL_THROW("Unknown phase condition on three-phase fault of %s!",objhdr->name);
 				/*  TROUBLESHOOT
 				While attempting to implement a three-phase fault on a link object, an unknown phase
 				configuration was encountered.  Please try again.  If the error persists, please submit
@@ -8525,7 +8525,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				*implemented_fault = 32;							//Flag as all three fault
 				break;
 			default:	//Not sure how we'd ever get here
-				GL_THROW(const_cast<char*>("Unknown phase condition on three-phase fault of %s!"),objhdr->name);
+				GL_THROW("Unknown phase condition on three-phase fault of %s!",objhdr->name);
 				//Defined elsewhere
 				break;
 			}//end phase cases
@@ -8573,7 +8573,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 			if (numphase == 0)
 			{
-				GL_THROW(const_cast<char*>("No phases detected for %s!"),objhdr->name);
+				GL_THROW("No phases detected for %s!",objhdr->name);
 				//Defined above
 			}//end 0 phase
 			else if (numphase < 2)	//Single phase line (no zero phase this way)
@@ -8602,7 +8602,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*implemented_fault = 11;							//Flag as a A OC fault
 					break;
 				default:	//No other cases should exist
-					GL_THROW(const_cast<char*>("Fault type %s for link objects has an invalid phase specification"));
+					GL_THROW("Fault type %s for link objects has an invalid phase specification");
 					//Defined above
 					break;
 				}//end switch
@@ -8647,7 +8647,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*implemented_fault = 7;								//Flag as A and B fault
 					break;
 				default:	//Not sure how we'd ever get here
-					GL_THROW(const_cast<char*>("Unknown phase condition on two-phase fault of %s!"),objhdr->name);
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
 					//Defined above
 					break;
 				}//end switch
@@ -8733,7 +8733,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*implemented_fault = 7;								//Flag as A and B fault
 					break;
 				default:	//Not sure how we'd ever get here
-					GL_THROW(const_cast<char*>("Unknown phase condition on two-phase fault of %s!"),objhdr->name);
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
 					//Defined above
 					break;
 				}//end switch
@@ -8743,7 +8743,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}//end all three present
 			else	//Hmmm, how'd we get here?
 			{
-				GL_THROW(const_cast<char*>("An invalid number of phases appears present for %s"),objhdr->name);
+				GL_THROW("An invalid number of phases appears present for %s",objhdr->name);
 				//Defined above
 			}
 		}//End LL
@@ -8868,7 +8868,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}
 			else	//Something else, fail
 			{
-				GL_THROW(const_cast<char*>("Fault type %s for link objects has an invalid phase specification"));
+				GL_THROW("Fault type %s for link objects has an invalid phase specification");
 				//Defined above
 			}
 		}//End OC1
@@ -8912,7 +8912,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 			if (numphase == 0)
 			{
-				GL_THROW(const_cast<char*>("No phases detected for %s!"),objhdr->name);
+				GL_THROW("No phases detected for %s!",objhdr->name);
 				//Defined above
 			}//end 0 phase
 			else if (numphase < 2)	//Single phase line (no zero phase this way)
@@ -8941,7 +8941,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*implemented_fault = 11;							//Flag as a A OC fault
 					break;
 				default:	//No other cases should exist
-					GL_THROW(const_cast<char*>("Fault type %s for link objects has an invalid phase specification"));
+					GL_THROW("Fault type %s for link objects has an invalid phase specification");
 					//Defined above
 					break;
 				}//end switch
@@ -8987,7 +8987,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*implemented_fault = 14;							//Flag as A and B fault
 					break;
 				default:	//Not sure how we'd ever get here
-					GL_THROW(const_cast<char*>("Unknown phase condition on two-phase fault of %s!"),objhdr->name);
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
 					//Defined above
 					break;
 				}//end switch
@@ -9073,7 +9073,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*implemented_fault = 14;							//Flag as A and B fault
 					break;
 				default:	//Not sure how we'd ever get here
-					GL_THROW(const_cast<char*>("Unknown phase condition on two-phase fault of %s!"),objhdr->name);
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
 					//Defined above
 					break;
 				}//end switch
@@ -9083,7 +9083,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}//end all three present
 			else	//Hmmm, how'd we get here?
 			{
-				GL_THROW(const_cast<char*>("An invalid number of phases appears present for %s"),objhdr->name);
+				GL_THROW("An invalid number of phases appears present for %s",objhdr->name);
 				//Defined above
 			}
 		}//End OC2
@@ -9127,7 +9127,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				*implemented_fault = 17;							//Flag as all three fault
 				break;
 			default:	//Not sure how we'd ever get here
-				GL_THROW(const_cast<char*>("Unknown phase condition on three-phase fault of %s!"),objhdr->name);
+				GL_THROW("Unknown phase condition on three-phase fault of %s!",objhdr->name);
 				//Defined above
 				break;
 			}//end phase cases
@@ -9250,7 +9250,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 				if (numphase == 0)
 				{
-					GL_THROW(const_cast<char*>("No phases detected for %s!"),objhdr->name);
+					GL_THROW("No phases detected for %s!",objhdr->name);
 					//Defined above
 				}//end 0 phase
 				else if (numphase < 2)	//Single phase line (no zero phase this way)
@@ -9277,7 +9277,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 						*implemented_fault = 18;							//Flag as a A switching
 						break;
 					default:	//No other cases should exist
-						GL_THROW(const_cast<char*>("Fault type %s for link objects has an invalid phase specification"));
+						GL_THROW("Fault type %s for link objects has an invalid phase specification");
 						//Defined above
 						break;
 					}//end switch
@@ -9321,7 +9321,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 						*implemented_fault = 21;							//Flag as A and B switching
 						break;
 					default:	//Not sure how we'd ever get here
-						GL_THROW(const_cast<char*>("Unknown phase condition on two-phase fault of %s!"),objhdr->name);
+						GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
 						//Defined above
 						break;
 					}//end switch
@@ -9365,7 +9365,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 						*implemented_fault = 21;							//Flag as A and B switching
 						break;
 					default:	//Not sure how we'd ever get here
-						GL_THROW(const_cast<char*>("Unknown phase condition on two-phase fault of %s!"),objhdr->name);
+						GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
 						//Defined above
 						break;
 					}//end switch
@@ -9375,7 +9375,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}//end all three present
 				else	//Hmmm, how'd we get here?
 				{
-					GL_THROW(const_cast<char*>("An invalid number of phases appears present for %s"),objhdr->name);
+					GL_THROW("An invalid number of phases appears present for %s",objhdr->name);
 					//Defined above
 				}
 			}//End Switch two phases
@@ -9419,7 +9419,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*implemented_fault = 24;							//Flag as all three switching
 					break;
 				default:	//Not sure how we'd ever get here
-					GL_THROW(const_cast<char*>("Unknown phase condition on three-phase fault of %s!"),objhdr->name);
+					GL_THROW("Unknown phase condition on three-phase fault of %s!",objhdr->name);
 					//Defined above
 					break;
 				}//end phase cases
@@ -9546,7 +9546,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}
 			else	//Something else, fail
 			{
-				GL_THROW(const_cast<char*>("Fault type %s for link objects has an invalid phase specification"));
+				GL_THROW("Fault type %s for link objects has an invalid phase specification");
 				//Defined above
 			}
 		}//End single phase fuse fault
@@ -9590,7 +9590,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 			if (numphase == 0)
 			{
-				GL_THROW(const_cast<char*>("No phases detected for %s!"),objhdr->name);
+				GL_THROW("No phases detected for %s!",objhdr->name);
 				//Defined above
 			}//end 0 phase
 			else if (numphase < 2)	//Single phase line (no zero phase this way)
@@ -9619,7 +9619,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*implemented_fault = 25;							//Flag as a A fuse fault
 					break;
 				default:	//No other cases should exist
-					GL_THROW(const_cast<char*>("Fault type %s for link objects has an invalid phase specification"));
+					GL_THROW("Fault type %s for link objects has an invalid phase specification");
 					//Defined above
 					break;
 				}//end switch
@@ -9665,7 +9665,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*implemented_fault = 28;							//Flag as A and B fuse fault
 					break;
 				default:	//Not sure how we'd ever get here
-					GL_THROW(const_cast<char*>("Unknown phase condition on two-phase fault of %s!"),objhdr->name);
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
 					//Defined above
 					break;
 				}//end switch
@@ -9751,7 +9751,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*implemented_fault = 28;							//Flag as A and B fuse fault
 					break;
 				default:	//Not sure how we'd ever get here
-					GL_THROW(const_cast<char*>("Unknown phase condition on two-phase fault of %s!"),objhdr->name);
+					GL_THROW("Unknown phase condition on two-phase fault of %s!",objhdr->name);
 					//Defined above
 					break;
 				}//end switch
@@ -9761,7 +9761,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}//end all three present
 			else	//Hmmm, how'd we get here?
 			{
-				GL_THROW(const_cast<char*>("An invalid number of phases appears present for %s"),objhdr->name);
+				GL_THROW("An invalid number of phases appears present for %s",objhdr->name);
 				//Defined above
 			}
 		}//End two-phase fuse fault
@@ -9805,7 +9805,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				*implemented_fault = 31;							//Flag as all three fuse fault
 				break;
 			default:	//Not sure how we'd ever get here
-				GL_THROW(const_cast<char*>("Unknown phase condition on three-phase fault of %s!"),objhdr->name);
+				GL_THROW("Unknown phase condition on three-phase fault of %s!",objhdr->name);
 				//Defined above
 				break;
 			}//end phase cases
@@ -9815,7 +9815,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		}//End three-phase fuse fault
 		else	//Undetermined fault - fail us
 		{
-			GL_THROW(const_cast<char*>("Fault type %s is not recognized for link objects!"),fault_type);
+			GL_THROW("Fault type %s is not recognized for link objects!",fault_type);
 			/*  TROUBLESHOOT
 			The fault type specified in the eventgen object is invalid for link objects.  Please select the
 			appropriate fault type and try again.  If this message has come up in error, please submit your code and a
@@ -9830,7 +9830,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		{
 			if (NR_branchdata[NR_branch_reference].lnk_type != 2)	//Switch
 			{
-				GL_THROW(const_cast<char*>("Event type %s was tried on a non-switch object!"),fault_type);
+				GL_THROW("Event type %s was tried on a non-switch object!",fault_type);
 				/*  TROUBLESHOOT
 				A switch-related faulted was attempted on a device that is not a switch.
 				Please specify a switch in the eventgen group and try again.  If the error
@@ -9843,7 +9843,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		{
 			if (NR_branchdata[NR_branch_reference].lnk_type != 3)	//Fuse
 			{
-				GL_THROW(const_cast<char*>("Event type %s was tried on a non-fuse object!"),fault_type);
+				GL_THROW("Event type %s was tried on a non-fuse object!",fault_type);
 				/*  TROUBLESHOOT
 				A fuse-related faulted was attempted on a device that is not a fuse.
 				Please specify a fuse in the eventgen group and try again.  If the error
@@ -10137,19 +10137,19 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 				if (tmpobj == NULL)
 				{
-					GL_THROW(const_cast<char*>("An attempt to alter fuse %s failed."),NR_branchdata[NR_branch_reference].name);
+					GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[NR_branch_reference].name);
 					/*  TROUBLESHOOT
 					While attempting to set the state of a fuse, an error occurred.  Please try again.  If the error persists,
 					please submit a bug report and your code via the trac website.
 					*/
 				}
 
-				funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,const_cast<char*>("change_fuse_state")));
+				funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
 				
 				//Make sure it was found
 				if (funadd == NULL)
 				{
-					GL_THROW(const_cast<char*>("Unable to change fuse state on %s"),tmpobj->name);
+					GL_THROW("Unable to change fuse state on %s",tmpobj->name);
 					/*  TROUBLESHOOT
 					While attempting to alter a fuse state, the proper fuse function was not found.
 					If the problem persists, please submit a bug report and your code to the trac website.
@@ -10162,12 +10162,12 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Make sure it worked
 				if (ext_result != 1)
 				{
-					GL_THROW(const_cast<char*>("An attempt to alter fuse %s failed."),NR_branchdata[NR_branch_reference].name);
+					GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[NR_branch_reference].name);
 					//defined above
 				}
 
 				//Retrieve the mean_repair_time
-				temp_double_val = get_double(tmpobj,const_cast<char*>("mean_repair_time"));
+				temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 				//See if it worked
 				if (temp_double_val == NULL)
@@ -10217,7 +10217,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 				if (tmpobj == NULL)
 				{
-					GL_THROW(const_cast<char*>("An attempt to alter recloser %s failed."),NR_branchdata[NR_branch_reference].name);
+					GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[NR_branch_reference].name);
 					/*  TROUBLESHOOT
 					While attempting to set the state of a recloser, an error occurred.  Please try again.  If the error persists,
 					please submit a bug report and your code via the trac website.
@@ -10229,7 +10229,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Make sure it was found
 				if (funadd == NULL)
 				{
-					GL_THROW(const_cast<char*>("Unable to change recloser state on %s"),tmpobj->name);
+					GL_THROW("Unable to change recloser state on %s",tmpobj->name);
 					/*  TROUBLESHOOT
 					While attempting to alter a recloser state, the proper recloser function was not found.
 					If the problem persists, please submit a bug report and your code to the trac website.
@@ -10242,12 +10242,12 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Make sure it worked
 				if (ext_result_dbl == 0)
 				{
-					GL_THROW(const_cast<char*>("An attempt to alter recloser %s failed."),NR_branchdata[NR_branch_reference].name);
+					GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[NR_branch_reference].name);
 					//defined above
 				}
 
 				//Retrieve the mean_repair_time
-				temp_double_val = get_double(tmpobj,const_cast<char*>("mean_repair_time"));
+				temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 				//See if it worked
 				if (temp_double_val == NULL)
@@ -10297,7 +10297,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 				if (tmpobj == NULL)
 				{
-					GL_THROW(const_cast<char*>("An attempt to alter switch %s failed."),NR_branchdata[NR_branch_reference].name);
+					GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[NR_branch_reference].name);
 					/*  TROUBLESHOOT
 					While attempting to set the state of a switch, an error occurred.  Please try again.  If the error persists,
 					please submit a bug report and your code via the trac website.
@@ -10309,7 +10309,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Make sure it was found
 				if (funadd == NULL)
 				{
-					GL_THROW(const_cast<char*>("Unable to change switch state on %s"),tmpobj->name);
+					GL_THROW("Unable to change switch state on %s",tmpobj->name);
 					/*  TROUBLESHOOT
 					While attempting to alter a switch state, the proper switch function was not found.
 					If the problem persists, please submit a bug report and your code to the trac website.
@@ -10322,12 +10322,12 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Make sure it worked
 				if (ext_result != 1)
 				{
-					GL_THROW(const_cast<char*>("An attempt to alter switch %s failed."),NR_branchdata[NR_branch_reference].name);
+					GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[NR_branch_reference].name);
 					//defined above
 				}
 
 				//Retrieve the mean_repair_time
-				temp_double_val = get_double(tmpobj,const_cast<char*>("mean_repair_time"));
+				temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 				//See if it worked
 				if (temp_double_val == NULL)
@@ -10395,7 +10395,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 					if (tmpobj == NULL)
 					{
-						GL_THROW(const_cast<char*>("An attempt to find the swing node %s failed."),NR_busdata[temp_node].name);
+						GL_THROW("An attempt to find the swing node %s failed.",NR_busdata[temp_node].name);
 						/*  TROUBLESHOOT
 						While attempting to get the mean repair time for the swing bus, an error occurred.  Please try again.  If the error persists,
 						please submit a bug report and your code via the trac website.
@@ -10403,7 +10403,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					}
 
 					//Retrieve the mean_repair_time
-					temp_double_val = get_double(tmpobj,const_cast<char*>("mean_repair_time"));
+					temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 					//See if it worked
 					if (temp_double_val == NULL)
@@ -10445,7 +10445,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 								if (tmpobj == NULL)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter recloser %s failed."),NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
 									/*  TROUBLESHOOT
 									While attempting to set the state of a recloser, an error occurred.  Please try again.  If the error persists,
 									please submit a bug report and your code via the trac website.
@@ -10457,7 +10457,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change recloser state on %s"),tmpobj->name);
+									GL_THROW("Unable to change recloser state on %s",tmpobj->name);
 									/*  TROUBLESHOOT
 									While attempting to alter a recloser state, the proper recloser function was not found.
 									If the problem persists, please submit a bug report and your code to the trac website.
@@ -10470,12 +10470,12 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Make sure it worked
 								if (ext_result_dbl == 0)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter recloser %s failed."),NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
 									//defined above
 								}
 
 								//Retrieve the mean_repair_time
-								temp_double_val = get_double(tmpobj,const_cast<char*>("mean_repair_time"));
+								temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 								//See if it worked
 								if (temp_double_val == NULL)
@@ -10601,7 +10601,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 								if (tmpobj == NULL)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter sectionalizer %s failed."),NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
 									/*  TROUBLESHOOT
 									While attempting to set the state of a sectionalizer, an error occurred.  Please try again.  If the error persists,
 									please submit a bug report and your code via the trac website.
@@ -10613,7 +10613,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change sectionalizer state on %s"),tmpobj->name);
+									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
 									/*  TROUBLESHOOT
 									While attempting to alter a sectionalizer state, the proper sectionalizer function was not found.
 									If the problem persists, please submit a bug report and your code to the trac website.
@@ -10626,7 +10626,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Make sure it worked
 								if (ext_result_dbl == 0)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter sectionalizer %s failed."),NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
 									//defined above
 								}
 								else if (ext_result_dbl < 0)	//Negative number means no upstream recloser was found
@@ -10639,7 +10639,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								else	//Positive number - recloser operated
 								{
 									//Retrieve the mean_repair_time
-									temp_double_val = get_double(tmpobj,const_cast<char*>("mean_repair_time"));
+									temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 									//See if it worked
 									if (temp_double_val == NULL)
@@ -10690,7 +10690,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 								if (tmpobj == NULL)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter fuse %s failed."),NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
 									/*  TROUBLESHOOT
 									While attempting to set the state of a fuse, an error occurred.  Please try again.  If the error persists,
 									please submit a bug report and your code via the trac website.
@@ -10702,7 +10702,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change fuse state on %s"),tmpobj->name);
+									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
 									/*  TROUBLESHOOT
 									While attempting to alter a fuse state, the proper fuse function was not found.
 									If the problem persists, please submit a bug report and your code to the trac website.
@@ -10715,12 +10715,12 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Make sure it worked
 								if (ext_result != 1)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter fuse %s failed."),NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
 									//defined above
 								}
 
 								//Retrieve the mean_repair_time
-								temp_double_val = get_double(tmpobj,const_cast<char*>("mean_repair_time"));
+								temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 								//See if it worked
 								if (temp_double_val == NULL)
@@ -10767,7 +10767,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 								if (tmpobj == NULL)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter transformer %s failed."),NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									GL_THROW("An attempt to alter transformer %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
 									/*  TROUBLESHOOT
 									While attempting to set the state of a transformer, an error occurred.  Please try again.  If the error persists,
 									please submit a bug report and your code via the trac website.
@@ -10784,7 +10784,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								}
 
 								//Retrieve the mean_repair_time
-								temp_double_val = get_double(tmpobj,const_cast<char*>("mean_repair_time"));
+								temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 								//See if it worked
 								if (temp_double_val == NULL)
@@ -10826,7 +10826,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					//Make sure we didn't somehow reach the end
 					if (temp_table_loc == NR_busdata[temp_node].Link_Table_Size)
 					{
-						GL_THROW(const_cast<char*>("Error finding proper to reference for node %s"),NR_busdata[temp_node].name);
+						GL_THROW("Error finding proper to reference for node %s",NR_busdata[temp_node].name);
 						/*  TROUBLESHOOT
 						While attempting to induce a safety reaction to a fault, a progression through the
 						links of the system failed.  Please try again.  If the bug persists, please submit your
@@ -10843,7 +10843,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			//Make sure it was found
 			if (funadd == NULL)
 			{
-				GL_THROW(const_cast<char*>("Unable to update objects for reliability effects"));
+				GL_THROW("Unable to update objects for reliability effects");
 				/*  TROUBLESHOOT
 				While attempting to update the powerflow to properly represent the new post-fault state, an error
 				occurred.  If the problem persists, please submit a bug report and your code to the trac website.
@@ -10859,7 +10859,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				{
 					if (protect_locations[phaseidx] == -1)
 					{
-						GL_THROW(const_cast<char*>("Attempted to restore a device that never appears to have been faulted!"));
+						GL_THROW("Attempted to restore a device that never appears to have been faulted!");
 						/*  TROUBLESHOOT
 						While attempting to restore a device, it was found to have never been in a fault.
 						It is unclear how this occurs, but it should not and should be fixed.
@@ -10876,7 +10876,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			//Make sure it worked
 			if (ext_result != 1)
 			{
-				GL_THROW(const_cast<char*>("Unable to update objects for reliability effects"));
+				GL_THROW("Unable to update objects for reliability effects");
 				//defined above
 			}
 
@@ -11216,7 +11216,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				phase_restore = 0x07;	//Put A, B, and C back in service
 				break;
 			default:	//Should never get here
-				GL_THROW(const_cast<char*>("%s - attempted to recover from unsupported fault!"),objhdr->name);
+				GL_THROW("%s - attempted to recover from unsupported fault!",objhdr->name);
 				/*  TROUBLESHOOT
 				The link object attempted to recover from an unknown fault type.  Please try again.  If the
 				error persists, please submit your code and a bug report to the trac website.
@@ -11242,7 +11242,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 					//See if our "protective device" was the swing bus
 					if (protect_locations[phaseidx] == -1)
 					{
-						GL_THROW(const_cast<char*>("An attempt to restore something that was never faulted has occurred!"));
+						GL_THROW("An attempt to restore something that was never faulted has occurred!");
 						/*  TROUBLESHOOT
 						While attempting to restore a device, an unknown state was encountered where it
 						had somehow started faulted and was not caught.  If you have any switches in your
@@ -11258,7 +11258,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 						}
 						else
 						{
-							GL_THROW(const_cast<char*>("A fault was induced on the SWING bus for an unsupported phase!"));
+							GL_THROW("A fault was induced on the SWING bus for an unsupported phase!");
 							/*  TROUBLESHOOT
 							Somehow, a fault was induced on a phase that should not exist on the system.  While
 							attemtping to restore this fault, the SWING bus did not have the proper original phases,
@@ -11276,7 +11276,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 
 							if (tmpobj == NULL)
 							{
-								GL_THROW(const_cast<char*>("An attempt to alter switch %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+								GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 								//Defined above
 							}
 
@@ -11291,7 +11291,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change switch state on %s"),tmpobj->name);
+									GL_THROW("Unable to change switch state on %s",tmpobj->name);
 									//Defined above
 								}
 
@@ -11301,7 +11301,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it worked
 								if (ext_result != 1)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter switch %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+									GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 									//defined above
 								}
 							}
@@ -11317,7 +11317,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change switch state on %s"),tmpobj->name);
+									GL_THROW("Unable to change switch state on %s",tmpobj->name);
 									//Defined above - despite being slightly different
 								}
 
@@ -11327,7 +11327,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it worked
 								if (ext_result != 1)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter switch %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+									GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 									//defined above
 								}
 
@@ -11338,7 +11338,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change switch state on %s"),tmpobj->name);
+									GL_THROW("Unable to change switch state on %s",tmpobj->name);
 									//Defined above
 								}
 
@@ -11348,7 +11348,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it worked
 								if (ext_result != 1)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter switch %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+									GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 									//defined above
 								}
 							}
@@ -11361,7 +11361,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change switch state on %s"),tmpobj->name);
+									GL_THROW("Unable to change switch state on %s",tmpobj->name);
 									//Defined above - despite being slightly different
 								}
 
@@ -11371,7 +11371,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it worked
 								if (ext_result != 1)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter switch %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+									GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 									//defined above
 								}
 							}
@@ -11421,7 +11421,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 
 							if (tmpobj == NULL)
 							{
-								GL_THROW(const_cast<char*>("An attempt to alter recloser %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+								GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 								//Defined above
 							}
 
@@ -11436,7 +11436,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change recloser state on %s"),tmpobj->name);
+									GL_THROW("Unable to change recloser state on %s",tmpobj->name);
 									//Defined above
 								}
 
@@ -11446,7 +11446,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it worked
 								if (ext_result_dbl != 1.0)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter recloser %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+									GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 									//defined above
 								}
 							}
@@ -11462,7 +11462,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change recloser state on %s"),tmpobj->name);
+									GL_THROW("Unable to change recloser state on %s",tmpobj->name);
 									//Defined above - despite being slightly different
 								}
 
@@ -11472,7 +11472,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it worked
 								if (ext_result != 1)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter recloser %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+									GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 									//defined above
 								}
 
@@ -11483,7 +11483,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change recloser state on %s"),tmpobj->name);
+									GL_THROW("Unable to change recloser state on %s",tmpobj->name);
 									//Defined above
 								}
 
@@ -11493,7 +11493,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it worked
 								if (ext_result_dbl != 1.0)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter recloser %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+									GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 									//defined above
 								}
 							}
@@ -11506,7 +11506,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change sectionalizer recloser on %s"),tmpobj->name);
+									GL_THROW("Unable to change sectionalizer recloser on %s",tmpobj->name);
 									//Defined above - despite being slightly different
 								}
 
@@ -11516,7 +11516,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it worked
 								if (ext_result != 1)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter recloser %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+									GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 									//defined above
 								}
 							}
@@ -11551,7 +11551,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 
 							if (tmpobj == NULL)
 							{
-								GL_THROW(const_cast<char*>("An attempt to alter sectionalizer %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+								GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 								//Defined above
 							}
 
@@ -11566,7 +11566,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change sectionalizer state on %s"),tmpobj->name);
+									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
 									//Defined above
 								}
 
@@ -11576,7 +11576,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it worked
 								if (ext_result_dbl != 1.0)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter sectionalizer %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+									GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 									//defined above
 								}
 							}
@@ -11592,7 +11592,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change sectionalizer state on %s"),tmpobj->name);
+									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
 									//Defined above - despite being slightly different
 								}
 
@@ -11602,7 +11602,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it worked
 								if (ext_result != 1)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter sectionalizer %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+									GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 									//defined above
 								}
 
@@ -11613,7 +11613,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change sectionalizer state on %s"),tmpobj->name);
+									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
 									//Defined above
 								}
 
@@ -11623,7 +11623,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it worked
 								if (ext_result_dbl != 1.0)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter sectionalizer %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+									GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 									//defined above
 								}
 							}
@@ -11636,7 +11636,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change sectionalizer state on %s"),tmpobj->name);
+									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
 									//Defined above - despite being slightly different
 								}
 
@@ -11646,7 +11646,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it worked
 								if (ext_result != 1)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter sectionalizer %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+									GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 									//defined above
 								}
 							}
@@ -11681,7 +11681,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 
 							if (tmpobj == NULL)
 							{
-								GL_THROW(const_cast<char*>("An attempt to alter fuse %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+								GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 								//Defined above
 							}
 
@@ -11696,7 +11696,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change fuse state on %s"),tmpobj->name);
+									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
 									//Defined above
 								}
 
@@ -11706,7 +11706,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it worked
 								if (ext_result != 1)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter fuse %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+									GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 									//defined above
 								}
 							}
@@ -11722,7 +11722,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change fuse state on %s"),tmpobj->name);
+									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
 									//Defined above - despite being slightly different
 								}
 
@@ -11732,7 +11732,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it worked
 								if (ext_result != 1)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter fuse %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+									GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 									//defined above
 								}
 
@@ -11743,7 +11743,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change fuse state on %s"),tmpobj->name);
+									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
 									//Defined above
 								}
 
@@ -11753,7 +11753,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it worked
 								if (ext_result != 1)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter fuse %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+									GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 									//defined above
 								}
 							}
@@ -11766,7 +11766,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change fuse state on %s"),tmpobj->name);
+									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
 									//Defined above - despite being slightly different
 								}
 
@@ -11776,7 +11776,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it worked
 								if (ext_result != 1)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter fuse %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+									GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 									//defined above
 								}
 							}
@@ -11847,7 +11847,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 						}//End transformer restoration
 						else
 						{
-							GL_THROW(const_cast<char*>("Protective device %s invalid for restoration!"),NR_branchdata[protect_locations[phaseidx]].name);
+							GL_THROW("Protective device %s invalid for restoration!",NR_branchdata[protect_locations[phaseidx]].name);
 							/*  TROUBLESHOOT
 							While attempting to restore a protective device, something besides a switch, fuse, or transformer was used.
 							This should not have happened.  Please try again.  If the error persists, please submit your code and a bug
@@ -11876,14 +11876,14 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 			//Make sure it was found
 			if (funadd == NULL)
 			{
-				GL_THROW(const_cast<char*>("Unable to update objects for reliability effects"));
+				GL_THROW("Unable to update objects for reliability effects");
 				//Defined above
 			}
 
 			//Make sure we have a valid value
 			if (temp_node == -1)
 			{
-				GL_THROW(const_cast<char*>("Attempts to map a fault location failed!"));
+				GL_THROW("Attempts to map a fault location failed!");
 				/*  TROUBLESHOOT
 				While attempting to restore a fault's protective device, no location
 				for the protective device was found.  If the problem persists, please submit
@@ -11897,7 +11897,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 			//Make sure it worked
 			if (ext_result != 1)
 			{
-				GL_THROW(const_cast<char*>("Unable to update objects for reliability effects"));
+				GL_THROW("Unable to update objects for reliability effects");
 				//defined above
 			}
 
@@ -12225,7 +12225,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				phase_restore = 0x07;	//Put A, B, and C back in service
 				break;
 			default:	//Should never get here
-				GL_THROW(const_cast<char*>("%s - attempted to recover from unsupported fault!"),objhdr->name);
+				GL_THROW("%s - attempted to recover from unsupported fault!",objhdr->name);
 				/*  TROUBLESHOOT
 				The link object attempted to recover from an unknown fault type.  Please try again.  If the
 				error persists, please submit your code and a bug report to the trac website.
@@ -12251,7 +12251,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 					//See if our "protective device" was the swing bus
 					if (protect_locations[phaseidx] == -1)
 					{
-						GL_THROW(const_cast<char*>("An attempt to restore something that was never faulted has occurred!"));
+						GL_THROW("An attempt to restore something that was never faulted has occurred!");
 						/*  TROUBLESHOOT
 						While attempting to restore a device, an unknown state was encountered where it
 						had somehow started faulted and was not caught.  If you have any switches in your
@@ -12267,7 +12267,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 						}
 						else
 						{
-							GL_THROW(const_cast<char*>("A fault was induced on the SWING bus for an unsupported phase!"));
+							GL_THROW("A fault was induced on the SWING bus for an unsupported phase!");
 							/*  TROUBLESHOOT
 							Somehow, a fault was induced on a phase that should not exist on the system.  While
 							attemtping to restore this fault, the SWING bus did not have the proper original phases,
@@ -12285,7 +12285,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 
 							if (tmpobj == NULL)
 							{
-								GL_THROW(const_cast<char*>("An attempt to alter switch %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+								GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 								//Defined above
 							}
 
@@ -12297,7 +12297,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							//Make sure it was found
 							if (funadd == NULL)
 							{
-								GL_THROW(const_cast<char*>("Unable to change switch state on %s"),tmpobj->name);
+								GL_THROW("Unable to change switch state on %s",tmpobj->name);
 								//Defined above
 							}
 
@@ -12307,7 +12307,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							//Make sure it worked
 							if (ext_result != 1)
 							{
-								GL_THROW(const_cast<char*>("An attempt to alter switch %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+								GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 								//defined above
 							}
 
@@ -12350,7 +12350,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 
 							if (tmpobj == NULL)
 							{
-								GL_THROW(const_cast<char*>("An attempt to alter recloser %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+								GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 								//Defined above
 							}
 
@@ -12365,7 +12365,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change recloser state on %s"),tmpobj->name);
+									GL_THROW("Unable to change recloser state on %s",tmpobj->name);
 									//Defined above
 								}
 
@@ -12375,7 +12375,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it worked
 								if (ext_result_dbl != 1.0)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter recloser %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+									GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 									//defined above
 								}
 							}
@@ -12391,7 +12391,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change recloser state on %s"),tmpobj->name);
+									GL_THROW("Unable to change recloser state on %s",tmpobj->name);
 									//Defined above - despite being slightly different
 								}
 
@@ -12401,7 +12401,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it worked
 								if (ext_result != 1)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter recloser %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+									GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 									//defined above
 								}
 
@@ -12412,7 +12412,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change recloser state on %s"),tmpobj->name);
+									GL_THROW("Unable to change recloser state on %s",tmpobj->name);
 									//Defined above
 								}
 
@@ -12422,7 +12422,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it worked
 								if (ext_result_dbl != 1.0)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter recloser %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+									GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 									//defined above
 								}
 							}
@@ -12435,7 +12435,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change sectionalizer recloser on %s"),tmpobj->name);
+									GL_THROW("Unable to change sectionalizer recloser on %s",tmpobj->name);
 									//Defined above - despite being slightly different
 								}
 
@@ -12445,7 +12445,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it worked
 								if (ext_result != 1)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter recloser %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+									GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 									//defined above
 								}
 							}
@@ -12480,7 +12480,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 
 							if (tmpobj == NULL)
 							{
-								GL_THROW(const_cast<char*>("An attempt to alter sectionalizer %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+								GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 								//Defined above
 							}
 
@@ -12495,7 +12495,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change sectionalizer state on %s"),tmpobj->name);
+									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
 									//Defined above
 								}
 
@@ -12505,7 +12505,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it worked
 								if (ext_result_dbl != 1.0)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter sectionalizer %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+									GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 									//defined above
 								}
 							}
@@ -12521,7 +12521,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change sectionalizer state on %s"),tmpobj->name);
+									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
 									//Defined above - despite being slightly different
 								}
 
@@ -12531,7 +12531,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it worked
 								if (ext_result != 1)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter sectionalizer %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+									GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 									//defined above
 								}
 
@@ -12542,7 +12542,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change sectionalizer state on %s"),tmpobj->name);
+									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
 									//Defined above
 								}
 
@@ -12552,7 +12552,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it worked
 								if (ext_result_dbl != 1.0)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter sectionalizer %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+									GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 									//defined above
 								}
 							}
@@ -12565,7 +12565,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change sectionalizer state on %s"),tmpobj->name);
+									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
 									//Defined above - despite being slightly different
 								}
 
@@ -12575,7 +12575,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it worked
 								if (ext_result != 1)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter sectionalizer %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+									GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 									//defined above
 								}
 							}
@@ -12610,7 +12610,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 
 							if (tmpobj == NULL)
 							{
-								GL_THROW(const_cast<char*>("An attempt to alter fuse %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+								GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 								//Defined above
 							}
 
@@ -12625,7 +12625,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change fuse state on %s"),tmpobj->name);
+									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
 									//Defined above
 								}
 
@@ -12635,7 +12635,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it worked
 								if (ext_result != 1)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter fuse %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+									GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 									//defined above
 								}
 							}
@@ -12651,7 +12651,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change fuse state on %s"),tmpobj->name);
+									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
 									//Defined above - despite being slightly different
 								}
 
@@ -12661,7 +12661,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it worked
 								if (ext_result != 1)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter fuse %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+									GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 									//defined above
 								}
 
@@ -12672,7 +12672,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change fuse state on %s"),tmpobj->name);
+									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
 									//Defined above
 								}
 
@@ -12682,7 +12682,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it worked
 								if (ext_result != 1)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter fuse %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+									GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 									//defined above
 								}
 							}
@@ -12695,7 +12695,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it was found
 								if (funadd == NULL)
 								{
-									GL_THROW(const_cast<char*>("Unable to change fuse state on %s"),tmpobj->name);
+									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
 									//Defined above - despite being slightly different
 								}
 
@@ -12705,7 +12705,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								//Make sure it worked
 								if (ext_result != 1)
 								{
-									GL_THROW(const_cast<char*>("An attempt to alter fuse %s failed."),NR_branchdata[protect_locations[phaseidx]].name);
+									GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 									//defined above
 								}
 							}
@@ -12776,7 +12776,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 						}//End transformer restoration
 						else
 						{
-							GL_THROW(const_cast<char*>("Protective device %s invalid for restoration!"),NR_branchdata[protect_locations[phaseidx]].name);
+							GL_THROW("Protective device %s invalid for restoration!",NR_branchdata[protect_locations[phaseidx]].name);
 							/*  TROUBLESHOOT
 							While attempting to restore a protective device, something besides a switch, fuse, or transformer was used.
 							This should not have happened.  Please try again.  If the error persists, please submit your code and a bug
@@ -12805,14 +12805,14 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 			//Make sure it was found
 			if (funadd == NULL)
 			{
-				GL_THROW(const_cast<char*>("Unable to update objects for reliability effects"));
+				GL_THROW("Unable to update objects for reliability effects");
 				//Defined above
 			}
 
 			//Make sure we have a valid value
 			if (temp_node == -1)
 			{
-				GL_THROW(const_cast<char*>("Attempts to map a fault location failed!"));
+				GL_THROW("Attempts to map a fault location failed!");
 				/*  TROUBLESHOOT
 				While attempting to restore a fault's protective device, no location
 				for the protective device was found.  If the problem persists, please submit
@@ -12826,7 +12826,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 			//Make sure it worked
 			if (ext_result != 1)
 			{
-				GL_THROW(const_cast<char*>("Unable to update objects for reliability effects"));
+				GL_THROW("Unable to update objects for reliability effects");
 				//defined above
 			}
 
@@ -14172,7 +14172,7 @@ void link_object::mesh_fault_current_calc(complex Zth[3][3],complex CV[3][3],com
 			}
 		else
 			{
-				GL_THROW(const_cast<char*>("Invalid phase information. Expects one-phase, two-phase, or three-phase"));
+				GL_THROW("Invalid phase information. Expects one-phase, two-phase, or three-phase");
 			}
 }
 
@@ -14233,7 +14233,7 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 		//Make sure we didn't somehow reach the end
 		if (temp_table_loc == NR_busdata[temp_node].Link_Table_Size)
 		{
-			GL_THROW(const_cast<char*>("Error finding proper to reference for node %s"),NR_busdata[temp_node].name);
+			GL_THROW("Error finding proper to reference for node %s",NR_busdata[temp_node].name);
 			/*  TROUBLESHOOT
 			While attempting to induce a safety reaction to a fault, a progression through the
 			links of the system failed.  Please try again.  If the bug persists, please submit your
@@ -14253,10 +14253,10 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 		if(NR_branchdata[temp_branch_fc].lnk_type == 4){//transformer
 			temp_branch_name = NR_branchdata[temp_branch_fc].name;//get the name of the transformer object
 			temp_transformer = NR_branchdata[temp_branch_fc].obj;	//get the transformer object
-			if(gl_object_isa(temp_transformer, const_cast<char*>("transformer"), const_cast<char*>("powerflow"))){ // tranformer
-				temp_trans_config = gl_get_property(temp_transformer,const_cast<char*>("configuration"));//get pointer to the configuration property
+			if(gl_object_isa(temp_transformer, "transformer", "powerflow")){ // tranformer
+				temp_trans_config = gl_get_property(temp_transformer,"configuration");//get pointer to the configuration property
 				temp_transformer_configuration = gl_get_object_prop(temp_transformer, temp_trans_config);//get the transformer configuration object
-				temp_con_typ = gl_get_property(*temp_transformer_configuration, const_cast<char*>("connect_type"));//get pointer to the connection type
+				temp_con_typ = gl_get_property(*temp_transformer_configuration, "connect_type");//get pointer to the connection type
 				temp_connection_type = *(int *)gl_get_enum(*temp_transformer_configuration, temp_con_typ);//get connection type
 				if(temp_connection_type == 1){//WYE_WYE or DELTA-DELTA transformer
 					if(temp_branch_phases == 0x07){//has all three phases
@@ -14352,10 +14352,10 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 				} else {//split-phase transformer
 					gl_warning("split-phase transformers are not supported for fault analysis at this time. Ignoring object. Fault current is not accurate.");
 				}
-			} else if (gl_object_isa(temp_transformer, const_cast<char*>("regulator"), const_cast<char*>("powerflow"))){ // regulator right now assumed to have all taps in neutral.
+			} else if (gl_object_isa(temp_transformer, "regulator", "powerflow")){ // regulator right now assumed to have all taps in neutral.
 				gl_warning("regulators are neglected from the fault calculation");
 			} else {
-				GL_THROW(const_cast<char*>("link object is a type 4 but is not a transformer or a regulator!"));
+				GL_THROW("link object is a type 4 but is not a transformer or a regulator!");
 			}
 		} else {//line or safety device
 			if(temp_branch_phases == 0x07){//has all three phases
@@ -14404,10 +14404,10 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 	if(NR_branchdata[temp_branch_fc].lnk_type == 4){//transformer
 		temp_branch_name = NR_branchdata[temp_branch_fc].name;//get the name of the transformer object
 		temp_transformer = NR_branchdata[temp_branch_fc].obj;//get the transformer object
-		if(gl_object_isa(temp_transformer, const_cast<char*>("transformer"), const_cast<char*>("powerflow"))){ // tranformer
-			temp_trans_config = gl_get_property(temp_transformer,const_cast<char*>("configuration"));//get pointer to the configuration property
+		if(gl_object_isa(temp_transformer, "transformer", "powerflow")){ // tranformer
+			temp_trans_config = gl_get_property(temp_transformer,"configuration");//get pointer to the configuration property
 			temp_transformer_configuration = gl_get_object_prop(temp_transformer, temp_trans_config);//get the transformer configuration object
-			temp_con_typ = gl_get_property(*temp_transformer_configuration, const_cast<char*>("connect_type"));//get pointer to the connection type
+			temp_con_typ = gl_get_property(*temp_transformer_configuration, "connect_type");//get pointer to the connection type
 			temp_connection_type = *(int *)gl_get_enum(*temp_transformer_configuration, temp_con_typ);//get connection type
 			if(temp_connection_type == 1 || temp_connection_type == 2){//WYE_WYE or DELTA-DELTA transformer
 				if(temp_branch_phases == 0x07){//has all three phases
@@ -14503,10 +14503,10 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 			} else {//split-phase transformer
 				gl_warning("split-phase transformers are not supported for fault analysis at this time. Ignoring object. Fault current is not accurate.");
 			}
-		} else if (gl_object_isa(temp_transformer, const_cast<char*>("regulator"), const_cast<char*>("powerflow"))){ // regulator right now assumed to have all taps in neutral.
+		} else if (gl_object_isa(temp_transformer, "regulator", "powerflow")){ // regulator right now assumed to have all taps in neutral.
 			gl_warning("regulators are neglected from the fault calculation");
 		} else {
-			GL_THROW(const_cast<char*>("link object is a type 4 but is not a transformer or a regulator!"));
+			GL_THROW("link object is a type 4 but is not a transformer or a regulator!");
 		}
 	} else {//line or safety device
 		if(temp_branch_phases == 0x07){//has all three phases
@@ -14573,49 +14573,49 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 	if(fault_type == 1){//SLG-A
 		det = C[1][4]*C[2][5] - C[1][5]*C[1][5];
 		if(det.Mag() <= 1e-4)
-			GL_THROW(const_cast<char*>("Distribution system is singular. Unable to solve for SC current."));
+			GL_THROW("Distribution system is singular. Unable to solve for SC current.");
 		C_inv[0][0] = complex(1,0);
 		C_inv[0][1] = (C[0][5]*C[1][5] - C[0][4]*C[2][5])/det;
 		C_inv[0][2] = (C[0][4]*C[1][5] - C[0][5]*C[1][4])/det;
 	} else if(fault_type == 2){//SLG-B
 		det = C[0][3]*C[2][5] - C[0][5]*C[0][5];
 		if(det.Mag() <= 1e-4)
-			GL_THROW(const_cast<char*>("Distribution system is singular. Unable to solve for SC current."));
+			GL_THROW("Distribution system is singular. Unable to solve for SC current.");
 		C_inv[1][1] = complex(1,0);
 		C_inv[1][0] = (C[0][5]*C[1][5] - C[0][4]*C[2][5])/det;
 		C_inv[1][2] = (C[0][4]*C[0][5] - C[0][3]*C[1][5])/det;
 	} else if(fault_type == 3){//SLG-C
 		det = C[0][3]*C[1][4] - C[0][4]*C[0][4];
 		if(det.Mag() <= 1e-4)
-			GL_THROW(const_cast<char*>("Distribution system is singular. Unable to solve for SC current."));
+			GL_THROW("Distribution system is singular. Unable to solve for SC current.");
 		C_inv[2][2] = complex(1,0);
 		C_inv[2][0] = (C[0][4]*C[1][5] - C[0][5]*C[1][4])/det;
 		C_inv[2][1] = (C[0][4]*C[0][5] - C[0][3]*C[1][5])/det;
 	} else if(fault_type == 4){//DLG-AB
 		det = C[2][5];
 		if(det.Mag() <= 1e-4)
-			GL_THROW(const_cast<char*>("Distribution system is singular. Unable to solve for SC current."));
+			GL_THROW("Distribution system is singular. Unable to solve for SC current.");
 		C_inv[0][0] = C_inv[1][1] = complex(1,0);
 		C_inv[0][2] = -C[0][5]/det;
 		C_inv[1][2] = -C[1][5]/det;
 	} else if(fault_type == 5){//DLG-BC
 		det = C[0][3];
 		if(det.Mag() <= 1e-4)
-			GL_THROW(const_cast<char*>("Distribution system is singular. Unable to solve for SC current."));
+			GL_THROW("Distribution system is singular. Unable to solve for SC current.");
 		C_inv[1][1] = C_inv[2][2] = complex(1,0);
 		C_inv[1][0] = -C[0][4]/det;
 		C_inv[2][0] = -C[0][5]/det;
 	} else if(fault_type == 6){//DLG-CA
 		det = C[1][4];
 		if(det.Mag() <= 1e-4)
-			GL_THROW(const_cast<char*>("Distribution system is singular. Unable to solve for SC current."));
+			GL_THROW("Distribution system is singular. Unable to solve for SC current.");
 		C_inv[0][0] = C_inv[2][2] = complex(1,0);
 		C_inv[0][1] = -C[0][4]/det;
 		C_inv[2][1] = -C[1][5]/det;
 	} else if(fault_type == 7){//LL-AB
 		det= C[0][5]*C[0][5] + complex(2,0)*C[0][5]*C[1][5] + C[1][5]*C[1][5] - C[0][3]*C[2][5] - complex(2,0)*C[0][4]*C[2][5] - C[1][4]*C[2][5];
 		if(det.Mag() <= 1e-4)
-			GL_THROW(const_cast<char*>("Distribution system is singular. Unable to solve for SC current."));
+			GL_THROW("Distribution system is singular. Unable to solve for SC current.");
 		C_inv[0][0] = (C[1][5]*C[1][5] + C[0][5]*C[1][5] - C[0][4]*C[2][5] - C[1][4]*C[2][5])/det;
 		C_inv[0][1] = -(C[0][5]*C[0][5] + C[1][5]*C[0][5] - C[0][3]*C[2][5] - C[0][4]*C[2][5])/det;
 		C_inv[0][2] = (C[0][4]*C[0][5] + C[0][5]*C[1][4] - C[0][4]*C[1][5] - C[0][3]*C[1][5])/det;
@@ -14625,7 +14625,7 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 	} else if(fault_type == 8){//LL-BC
 		det= C[0][4]*C[0][4] + complex(2,0)*C[0][4]*C[0][5] + C[0][5]*C[0][5] - C[0][3]*C[1][4] - complex(2,0)*C[0][3]*C[1][5] - C[0][3]*C[2][5];
 		if(det.Mag() <= 1e-4)
-			GL_THROW(const_cast<char*>("Distribution system is singular. Unable to solve for SC current."));
+			GL_THROW("Distribution system is singular. Unable to solve for SC current.");
 		C_inv[1][0] = (C[0][4]*C[1][5] - C[0][5]*C[1][4] - C[0][5]*C[1][5] + C[0][4]*C[2][5])/det;
 		C_inv[1][1] = (C[0][5]*C[0][5] + C[0][4]*C[0][5] - C[0][3]*C[1][5] - C[0][3]*C[2][5])/det;
 		C_inv[1][2] = -(C[0][4]*C[0][4] + C[0][5]*C[0][4] - C[0][3]*C[1][4] - C[0][3]*C[1][5])/det;
@@ -14635,7 +14635,7 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 	} else if(fault_type == 9){//LL-CA
 		det= -(C[0][4]*C[0][4] + complex(2,0)*C[0][4]*C[1][5] + C[1][5]*C[1][5] - C[0][3]*C[1][4] - complex(2,0)*C[0][5]*C[1][4] - C[1][4]*C[2][5]);
 		if(det.Mag() <= 1e-4)
-			GL_THROW(const_cast<char*>("Distribution system is singular. Unable to solve for SC current."));
+			GL_THROW("Distribution system is singular. Unable to solve for SC current.");
 		C_inv[0][0] = -(C[1][5]*C[1][5] + C[0][4]*C[1][5] - C[0][5]*C[1][4] - C[1][4]*C[2][5])/det;
 		C_inv[0][1] = -(C[0][4]*C[0][5] - C[0][3]*C[1][5] - C[0][5]*C[1][5] + C[0][4]*C[2][5])/det;
 		C_inv[0][2] = (C[0][4]*C[0][4] + C[1][5]*C[0][4] - C[0][3]*C[1][4] - C[0][5]*C[1][4])/det;
@@ -14647,7 +14647,7 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 	} else if(fault_type == 11){//TLL
 		det = C[0][3] + complex(2,0)*C[0][4] + complex(2,0)*C[0][5] + C[1][4] + complex(2,0)*C[1][5] + C[2][5];
 		if(det.Mag() <= 1e-4)
-			GL_THROW(const_cast<char*>("Distribution system is singular. Unable to solve for SC current."));
+			GL_THROW("Distribution system is singular. Unable to solve for SC current.");
 		C_inv[0][0] = (C[0][4] + C[0][5] + C[1][4] + complex(2,0)*C[1][5] + C[2][5])/det;
 		C_inv[0][1] = C_inv[0][2] = -C[0][6]/det;
 		C_inv[1][0] = C_inv[1][2] = -C[1][6]/det;
@@ -14672,10 +14672,10 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 		if(NR_branchdata[temp_branch_fc].lnk_type == 4){//transformer
 			temp_branch_name = NR_branchdata[temp_branch_fc].name;//get the name of the transformer object
 			temp_transformer = NR_branchdata[temp_branch_fc].obj;//get the transformer object
-			if(gl_object_isa(temp_transformer, const_cast<char*>("transformer"), const_cast<char*>("powerflow"))){ // tranformer
-				temp_trans_config = gl_get_property(temp_transformer,const_cast<char*>("configuration"));//get pointer to the configuration property
+			if(gl_object_isa(temp_transformer, "transformer", "powerflow")){ // tranformer
+				temp_trans_config = gl_get_property(temp_transformer,"configuration");//get pointer to the configuration property
 				temp_transformer_configuration = gl_get_object_prop(temp_transformer, temp_trans_config);//get the transformer configuration object
-				temp_con_typ = gl_get_property(*temp_transformer_configuration, const_cast<char*>("connect_type"));//get pointer to the connection type
+				temp_con_typ = gl_get_property(*temp_transformer_configuration, "connect_type");//get pointer to the connection type
 				temp_connection_type = *(int *)gl_get_enum(*temp_transformer_configuration, temp_con_typ);//get connection type
 				if(temp_connection_type == 1 || temp_connection_type == 2){//WYE_WYE or DELTA-DELTA transformer
 					if(NR_branchdata[temp_branch_fc].fault_link_below != -1){
@@ -14694,7 +14694,7 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 				} else {//split-phase transformer
 					gl_warning("split-phase transformers are not supported for fault analysis at this time. Fault current is not accurate.");
 				}
-			} else if (gl_object_isa(temp_transformer, const_cast<char*>("regulator"), const_cast<char*>("powerflow"))){ // regulator right now assumed to have all taps in neutral.
+			} else if (gl_object_isa(temp_transformer, "regulator", "powerflow")){ // regulator right now assumed to have all taps in neutral.
 				if(NR_branchdata[temp_branch_fc].fault_link_below != -1){
 					NR_branchdata[temp_branch_fc].If_to[0] = NR_branchdata[NR_branchdata[temp_branch_fc].fault_link_below].If_from[0];
 					NR_branchdata[temp_branch_fc].If_to[1] = NR_branchdata[NR_branchdata[temp_branch_fc].fault_link_below].If_from[1];
@@ -14705,7 +14705,7 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 				NR_branchdata[temp_branch_fc].If_from[2] = NR_branchdata[temp_branch_fc].If_to[2];
 				gl_warning("regulators are neglected from the fault calculation");
 			} else {
-				GL_THROW(const_cast<char*>("link object is a type 4 but is not a transformer or a regulator!"));
+				GL_THROW("link object is a type 4 but is not a transformer or a regulator!");
 			}
 		} else {
 			if(NR_branchdata[temp_branch_fc].fault_link_below != -1){
@@ -14732,7 +14732,7 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 		//Make sure we didn't somehow reach the end
 		if (temp_table_loc == NR_busdata[temp_node].Link_Table_Size)
 		{
-			GL_THROW(const_cast<char*>("Error finding proper to reference for node %s"),NR_busdata[temp_node].name);
+			GL_THROW("Error finding proper to reference for node %s",NR_busdata[temp_node].name);
 			/*  TROUBLESHOOT
 			While attempting to enduce a safety reaction to a fault, a progression through the
 			links of the system failed.  Please try again.  If the bug persists, please submit your
@@ -14745,10 +14745,10 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 	if(NR_branchdata[temp_branch_fc].lnk_type == 4){//transformer
 		temp_branch_name = NR_branchdata[temp_branch_fc].name;//get the name of the transformer object
 		temp_transformer = NR_branchdata[temp_branch_fc].obj;//get the transformer object
-		if(gl_object_isa(temp_transformer, const_cast<char*>("transformer"), const_cast<char*>("powerflow"))){ // tranformer
-			temp_trans_config = gl_get_property(temp_transformer,const_cast<char*>("configuration"));//get pointer to the configuration property
+		if(gl_object_isa(temp_transformer, "transformer", "powerflow")){ // tranformer
+			temp_trans_config = gl_get_property(temp_transformer,"configuration");//get pointer to the configuration property
 			temp_transformer_configuration = gl_get_object_prop(temp_transformer, temp_trans_config);//get the transformer configuration object
-			temp_con_typ = gl_get_property(*temp_transformer_configuration, const_cast<char*>("connect_type"));//get pointer to the connection type
+			temp_con_typ = gl_get_property(*temp_transformer_configuration, "connect_type");//get pointer to the connection type
 			temp_connection_type = *(int *)gl_get_enum(*temp_transformer_configuration, temp_con_typ);//get connection type
 			if(temp_connection_type == 1 || temp_connection_type == 2){//WYE_WYE or DELTA-DELTA transformer
 				if(NR_branchdata[temp_branch_fc].fault_link_below != -1){
@@ -14767,7 +14767,7 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 			} else {//split-phase transformer
 				gl_warning("split-phase transformers are not supported for fault analysis at this time. Fault current is not accurate.");
 			}
-		} else if (gl_object_isa(temp_transformer, const_cast<char*>("regulator"), const_cast<char*>("powerflow"))){ // regulator right now assumed to have all taps in neutral.
+		} else if (gl_object_isa(temp_transformer, "regulator", "powerflow")){ // regulator right now assumed to have all taps in neutral.
 			if(NR_branchdata[temp_branch_fc].fault_link_below != -1){
 				NR_branchdata[temp_branch_fc].If_to[0] = NR_branchdata[NR_branchdata[temp_branch_fc].fault_link_below].If_from[0];
 				NR_branchdata[temp_branch_fc].If_to[1] = NR_branchdata[NR_branchdata[temp_branch_fc].fault_link_below].If_from[1];
@@ -14778,7 +14778,7 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 			NR_branchdata[temp_branch_fc].If_from[2] = NR_branchdata[temp_branch_fc].If_to[2];
 			gl_warning("regulators are neglected from the fault calculation");
 		} else {
-			GL_THROW(const_cast<char*>("link object is a type 4 but is not a transformer or a regulator!"));
+			GL_THROW("link object is a type 4 but is not a transformer or a regulator!");
 		}
 	} else {
 		if(NR_branchdata[temp_branch_fc].fault_link_below != -1){
@@ -14810,14 +14810,14 @@ void link_object::lmatrix_add(complex *matrix_in_A, complex *matrix_in_B, comple
 	//Initial check - make sure nothing NULL has been passed
 	if ((matrix_in_A == NULL) || (matrix_in_B == NULL) || (matrix_out == NULL))
 	{
-		GL_THROW(const_cast<char*>("link:%d-%s attempted to do a large matrix operation with an unallocated input or output matrix"),obj->id,(obj->name ? obj->name : "unnamed"));
+		GL_THROW("link:%d-%s attempted to do a large matrix operation with an unallocated input or output matrix",obj->id,(obj->name ? obj->name : "unnamed"));
 		//Defined above
 	}
 
 	//Do a negative/zero size check, just to stop stupid people
 	if (matsize<1)
 	{
-		GL_THROW(const_cast<char*>("link:%d-%s attempted to add matrices of an invalid size"),obj->id,(obj->name ? obj->name : "unnamed"));
+		GL_THROW("link:%d-%s attempted to add matrices of an invalid size",obj->id,(obj->name ? obj->name : "unnamed"));
 		/*  TROUBLESHOOT
 		While attempting to perform a "large matrix" addition operation, but a negative or zero size was passed.  Please
 		fix this and try again.
@@ -14846,14 +14846,14 @@ void link_object::lmatrix_mult(complex *matrix_in_A, complex *matrix_in_B, compl
 	//Initial check - make sure nothing NULL has been passed
 	if ((matrix_in_A == NULL) || (matrix_in_B == NULL) || (matrix_out == NULL))
 	{
-		GL_THROW(const_cast<char*>("link:%d-%s attempted to do a large matrix operation with an unallocated input or output matrix"),obj->id,(obj->name ? obj->name : "unnamed"));
+		GL_THROW("link:%d-%s attempted to do a large matrix operation with an unallocated input or output matrix",obj->id,(obj->name ? obj->name : "unnamed"));
 		//Defined above
 	}
 
 	//Do a negative/zero size check, just to stop stupid people
 	if (matsize<1)
 	{
-		GL_THROW(const_cast<char*>("link:%d-%s attempted to multiply matrices of an invalid size"),obj->id,(obj->name ? obj->name : "unnamed"));
+		GL_THROW("link:%d-%s attempted to multiply matrices of an invalid size",obj->id,(obj->name ? obj->name : "unnamed"));
 		/*  TROUBLESHOOT
 		While attempting to perform a "large matrix" multiplication operation, but a negative or zero size was passed.  Please
 		fix this and try again.
@@ -14888,14 +14888,14 @@ void link_object::lmatrix_vmult(complex *matrix_in, complex *vector_in, complex 
 	//Initial check - make sure nothing NULL has been passed
 	if ((matrix_in == NULL) || (vector_in == NULL) || (vector_out == NULL))
 	{
-		GL_THROW(const_cast<char*>("link:%d-%s attempted to do a large matrix operation with an unallocated input or output matrix"),obj->id,(obj->name ? obj->name : "unnamed"));
+		GL_THROW("link:%d-%s attempted to do a large matrix operation with an unallocated input or output matrix",obj->id,(obj->name ? obj->name : "unnamed"));
 		//Defined above
 	}
 
 	//Do a negative/zero size check, just to stop stupid people
 	if (matsize<1)
 	{
-		GL_THROW(const_cast<char*>("link:%d-%s attempted to multiply matrices of an invalid size"),obj->id,(obj->name ? obj->name : "unnamed"));
+		GL_THROW("link:%d-%s attempted to multiply matrices of an invalid size",obj->id,(obj->name ? obj->name : "unnamed"));
 		//Define elsewhere
 	}
 
@@ -15066,7 +15066,7 @@ void lu_matrix_inverse(complex *input_mat, complex *output_mat, int size_val)
 	//Check it
 	if (l_mat == NULL)
 	{
-		GL_THROW(const_cast<char*>("link: error allocated space for LU matrix inversion"));
+		GL_THROW("link: error allocated space for LU matrix inversion");
 		/*  TROUBLESHOOT
 		While attempting to allocate space to perform a LU-decomp-based
 		matrix inversion, an error occurred.  Please try again.  If the error
@@ -15079,7 +15079,7 @@ void lu_matrix_inverse(complex *input_mat, complex *output_mat, int size_val)
 	//Check it
 	if (u_mat == NULL)
 	{
-		GL_THROW(const_cast<char*>("link: error allocated space for LU matrix inversion"));
+		GL_THROW("link: error allocated space for LU matrix inversion");
 		//Defined above
 	}
 
@@ -15088,7 +15088,7 @@ void lu_matrix_inverse(complex *input_mat, complex *output_mat, int size_val)
 	//Check it
 	if (b_vec == NULL)
 	{
-		GL_THROW(const_cast<char*>("link: error allocated space for LU matrix inversion"));
+		GL_THROW("link: error allocated space for LU matrix inversion");
 		//Defined above
 	}
 
@@ -15097,7 +15097,7 @@ void lu_matrix_inverse(complex *input_mat, complex *output_mat, int size_val)
 	//Check it
 	if (z_vec == NULL)
 	{
-		GL_THROW(const_cast<char*>("link: error allocated space for LU matrix inversion"));
+		GL_THROW("link: error allocated space for LU matrix inversion");
 		//Defined above
 	}
 
@@ -15106,7 +15106,7 @@ void lu_matrix_inverse(complex *input_mat, complex *output_mat, int size_val)
 	//Check it
 	if (x_vec == NULL)
 	{
-		GL_THROW(const_cast<char*>("link: error allocated space for LU matrix inversion"));
+		GL_THROW("link: error allocated space for LU matrix inversion");
 		//Defined above
 	}
 

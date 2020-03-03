@@ -54,7 +54,7 @@ lights::lights(MODULE *mod)
 		pclass = residential_enduse::oclass;
 
 		// register the class definition
-		oclass = gl_register_class(mod, const_cast<char*>("lights"),sizeof(lights),PC_BOTTOMUP|PC_AUTOLOCK);
+		oclass = gl_register_class(mod, "lights",sizeof(lights),PC_BOTTOMUP|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class lights";
 			/* TROUBLESHOOT
@@ -163,7 +163,7 @@ int lights::init(OBJECT *parent)
 		 */
 
 	// installed power intially re_overrides use of power density
-	double *floor_area = parent?gl_get_double_by_name(parent, const_cast<char*>("floor_area")):NULL;
+	double *floor_area = parent?gl_get_double_by_name(parent, "floor_area"):NULL;
 	if (shape.params.analog.power==0 && shape.schedule==NULL) 
 	{		
 		// set basic properties

@@ -22,7 +22,7 @@ voltdump::voltdump(MODULE *mod)
 	if (oclass==NULL)
 	{
 		// register the class definition
-		oclass = gl_register_class(mod,const_cast<char*>("voltdump"),sizeof(voltdump),PC_BOTTOMUP|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,"voltdump",sizeof(voltdump),PC_BOTTOMUP|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class voltdump";
 		else
@@ -38,7 +38,7 @@ voltdump::voltdump(MODULE *mod)
 			PT_enumeration, "mode", PADDR(mode),PT_DESCRIPTION,"dumps the voltages in either polar or rectangular notation",
 				PT_KEYWORD, "RECT", (enumeration)VDM_RECT,
 				PT_KEYWORD, "POLAR", (enumeration)VDM_POLAR,
-			NULL)<1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
+			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		
 	}
 }
@@ -106,16 +106,16 @@ void voltdump::dump(TIMESTAMP t){
 	obj = 0;
 	while (obj=gl_find_next(nodes,obj))
 	{
-		if(gl_object_isa(obj, const_cast<char*>("triplex_node"), const_cast<char*>("powerflow")))
+		if(gl_object_isa(obj, "triplex_node", "powerflow"))
 		{
 
 			//Map the properties of interest - first current
-			node_voltage_value_link[0] = new gld_property(obj,const_cast<char*>("voltage_1"));
+			node_voltage_value_link[0] = new gld_property(obj,"voltage_1");
 
 			//Check it
 			if ((node_voltage_value_link[0]->is_valid() != true) || (node_voltage_value_link[0]->is_complex() != true))
 			{
-				GL_THROW(const_cast<char*>("voltdump - Unable to map voltage property of triplex_node:%d - %s"),obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW("voltdump - Unable to map voltage property of triplex_node:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				While the voltdump object attempted to map the voltage_1, voltage_2, or voltage_N, an error
 				occurred.  Please try again.  If the error persists, please submit your code via the ticketing and issues system.
@@ -123,34 +123,34 @@ void voltdump::dump(TIMESTAMP t){
 			}
 
 			//Map the properties of interest - second current
-			node_voltage_value_link[1] = new gld_property(obj,const_cast<char*>("voltage_2"));
+			node_voltage_value_link[1] = new gld_property(obj,"voltage_2");
 
 			//Check it
 			if ((node_voltage_value_link[1]->is_valid() != true) || (node_voltage_value_link[1]->is_complex() != true))
 			{
-				GL_THROW(const_cast<char*>("voltdump - Unable to map voltage property of triplex_node:%d - %s"),obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW("voltdump - Unable to map voltage property of triplex_node:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
 			}
 
 			//Map the properties of interest - third current
-			node_voltage_value_link[2] = new gld_property(obj,const_cast<char*>("voltage_N"));
+			node_voltage_value_link[2] = new gld_property(obj,"voltage_N");
 
 			//Check it
 			if ((node_voltage_value_link[2]->is_valid() != true) || (node_voltage_value_link[2]->is_complex() != true))
 			{
-				GL_THROW(const_cast<char*>("voltdump - Unable to map voltage property of triplex_node:%d - %s"),obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW("voltdump - Unable to map voltage property of triplex_node:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
 			}
 		}
-		else if(gl_object_isa(obj, const_cast<char*>("node"), const_cast<char*>("powerflow")))
+		else if(gl_object_isa(obj, "node", "powerflow"))
 		{
 			//Map the properties of interest - first current
-			node_voltage_value_link[0] = new gld_property(obj,const_cast<char*>("voltage_A"));
+			node_voltage_value_link[0] = new gld_property(obj,"voltage_A");
 
 			//Check it
 			if ((node_voltage_value_link[0]->is_valid() != true) || (node_voltage_value_link[0]->is_complex() != true))
 			{
-				GL_THROW(const_cast<char*>("voltdump - Unable to map voltage property of node:%d - %s"),obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW("voltdump - Unable to map voltage property of node:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				While the voltdump object attempted to map the voltage_A, voltage_B, or voltage_C, an error
 				occurred.  Please try again.  If the error persists, please submit your code via the ticketing and issues system.
@@ -158,22 +158,22 @@ void voltdump::dump(TIMESTAMP t){
 			}
 
 			//Map the properties of interest - second current
-			node_voltage_value_link[1] = new gld_property(obj,const_cast<char*>("voltage_B"));
+			node_voltage_value_link[1] = new gld_property(obj,"voltage_B");
 
 			//Check it
 			if ((node_voltage_value_link[1]->is_valid() != true) || (node_voltage_value_link[1]->is_complex() != true))
 			{
-				GL_THROW(const_cast<char*>("voltdump - Unable to map voltage property of node:%d - %s"),obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW("voltdump - Unable to map voltage property of node:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
 			}
 
 			//Map the properties of interest - third current
-			node_voltage_value_link[2] = new gld_property(obj,const_cast<char*>("voltage_C"));
+			node_voltage_value_link[2] = new gld_property(obj,"voltage_C");
 
 			//Check it
 			if ((node_voltage_value_link[2]->is_valid() != true) || (node_voltage_value_link[2]->is_complex() != true))
 			{
-				GL_THROW(const_cast<char*>("voltdump - Unable to map voltage property of node:%d - %s"),obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW("voltdump - Unable to map voltage property of node:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
 			}
 		}

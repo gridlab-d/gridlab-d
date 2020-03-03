@@ -149,8 +149,8 @@ public:
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 
-	gld_property *map_complex_value(OBJECT *obj, char *name);
-	gld_property *map_double_value(OBJECT *obj, char *name);
+	gld_property *map_complex_value(OBJECT *obj, const char *name);
+	gld_property *map_double_value(OBJECT *obj, const char *name);
 	void push_complex_powerflow_values(void);
 
 public:

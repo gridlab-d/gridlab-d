@@ -25,7 +25,7 @@
 typedef int OBJECTRANK; /**< Object rank number */
 typedef unsigned short OBJECTSIZE; /** Object data size */
 typedef unsigned int OBJECTNUM; /** Object id number */
-typedef char * OBJECTNAME; /** Object name */
+typedef char* OBJECTNAME; /** Object name */
 typedef char FULLNAME[1024]; /** Full object name (including space name) */
 
 /* object flags */
@@ -116,19 +116,19 @@ public:
 	int (*output_error)(const char *format, ...);
 	int (*output_debug)(const char *format, ...);
 	int (*output_test)(const char *format, ...);
-	CLASS *(*register_class)(MODULE *,CLASSNAME,unsigned int,PASSCONFIG);
+	CLASS *(*register_class)(MODULE *,const CLASSNAME,unsigned int,PASSCONFIG);
 	struct {
 		OBJECT *(*single)(CLASS*);
 		OBJECT *(*array)(CLASS*,unsigned int);
 		OBJECT *(*foreign)(OBJECT *);
 	} create;
 	int (*define_map)(CLASS*,...);
-	int (*loadmethod)(CLASS*,char*,int (*call)(void*,char*));
+	int (*loadmethod)(CLASS*,const char*,int (*call)(void*,char*));
 	CLASS *(*class_getfirst)(void);
-	CLASS *(*class_getname)(char*);
+	CLASS *(*class_getname)(const char*);
 	PROPERTY *(*class_add_extended_property)(CLASS *,char *,PROPERTYTYPE,char *);
 	struct {
-		FUNCTION *(*define)(CLASS*,FUNCTIONNAME,FUNCTIONADDR);
+		FUNCTION *(*define)(CLASS*,const FUNCTIONNAME,FUNCTIONADDR);
 		FUNCTIONADDR (*get)(char*,const char*);
 	} function;
 	int (*define_enumeration_member)(CLASS*,const char*,const char*,enumeration);
@@ -137,17 +137,17 @@ public:
 		OBJECT *(*get_first)(void);
 		int (*set_dependent)(OBJECT*,OBJECT*);
 		int (*set_parent)(OBJECT*,OBJECT*);
-		int (*set_rank)(OBJECT*,unsigned int);
+		int (*set_rank)(OBJECT*, OBJECTRANK);
 	} object;
 	struct {
-		PROPERTY *(*get_property)(OBJECT*,PROPERTYNAME,PROPERTYSTRUCT*);
+		PROPERTY *(*get_property)(OBJECT*,const PROPERTYNAME,PROPERTYSTRUCT*);
 		int (*set_value_by_addr)(OBJECT *, void*, char*,PROPERTY*);
 		int (*get_value_by_addr)(OBJECT *, void*, char*, int size,PROPERTY*);
 		int (*set_value_by_name)(OBJECT *, char*, char*);
-		int (*get_value_by_name)(OBJECT *, char*, char*, int size);
+		int (*get_value_by_name)(OBJECT *, const char*, char*, int size);
 		OBJECT *(*get_reference)(OBJECT *, char*);
-		char *(*get_unit)(OBJECT *, char *);
-		void *(*get_addr)(OBJECT *, char *);
+		char *(*get_unit)(OBJECT *, const char *);
+		void *(*get_addr)(OBJECT *, const char *);
 		int (*set_value_by_type)(PROPERTYTYPE,void *data,char *);
 		bool (*compare_basic)(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void* x, void* a, void* b, char *part);
 		PROPERTYCOMPAREOP (*get_compare_op)(PROPERTYTYPE ptype, char *opstr);
@@ -162,7 +162,7 @@ public:
 		void (*del)(struct s_findlist*, OBJECT*);
 		void (*clear)(struct s_findlist*);
 	} find;
-	PROPERTY *(*find_property)(CLASS *, PROPERTYNAME);
+	PROPERTY *(*find_property)(CLASS *, const PROPERTYNAME);
 	void *(*malloc)(size_t);
 	void (*free)(void*);
 	struct {
@@ -244,23 +244,23 @@ public:
 		OBJECT **(*object_var)(OBJECT *obj, PROPERTY *prop);
 	} objvar;
 	struct s_objvar_name_struct {
-		bool *(*bool_var)(OBJECT *obj, char *name);
+		bool *(*bool_var)(OBJECT *obj, const char *name);
 		complex *(*complex_var)(OBJECT *obj, const char *name);
-		enumeration *(*enum_var)(OBJECT *obj, char *name);
-		set *(*set_var)(OBJECT *obj, char *name);
-		int16 *(*int16_var)(OBJECT *obj, char *name);
-		int32 *(*int32_var)(OBJECT *obj, char *name);
-		int64 *(*int64_var)(OBJECT *obj, char *name);
-		double *(*double_var)(OBJECT *obj, char *name);
-		char *(*string_var)(OBJECT *obj, char *name);
-		OBJECT **(*object_var)(OBJECT *obj, char *name);
+		enumeration *(*enum_var)(OBJECT *obj, const char *name);
+		set *(*set_var)(OBJECT *obj, const char *name);
+		int16 *(*int16_var)(OBJECT *obj, const char *name);
+		int32 *(*int32_var)(OBJECT *obj, const char *name);
+		int64 *(*int64_var)(OBJECT *obj, const char *name);
+		double *(*double_var)(OBJECT *obj, const char *name);
+		char *(*string_var)(OBJECT *obj, const char *name);
+		OBJECT **(*object_var)(OBJECT *obj, const char *name);
 	} objvarname;
 	struct {
 		int (*string_to_property)(PROPERTY *prop, void *addr, char *value);
 		int (*property_to_string)(PROPERTY *prop, void *addr, char *value, int size);
 	} convert;
 	MODULE *(*module_find)(const char *name);
-	OBJECT *(*get_object)(char *name);
+	OBJECT *(*get_object)(const char *name);
 	OBJECT *(*object_find_by_id)(OBJECTNUM);
 	int (*name_object)(OBJECT *obj, char *buffer, int len);
 	int (*get_oflags)(KEYWORD **extflags);
@@ -352,25 +352,23 @@ STATUS object_finalize(OBJECT *obj);
 int object_set_dependent(OBJECT *obj, OBJECT *dependent);
 int object_set_parent(OBJECT *obj, OBJECT *parent);
 unsigned int object_get_child_count(OBJECT *obj);
-void *object_get_addr(OBJECT *obj, char *name);
-PROPERTY *object_get_property(OBJECT *obj, PROPERTYNAME name, PROPERTYSTRUCT *part);
-PROPERTY *object_prop_in_class(OBJECT *obj, PROPERTY *prop);
+void *object_get_addr(OBJECT *obj, const char *name);
+PROPERTY *object_get_property(OBJECT *obj, const PROPERTYNAME name, PROPERTYSTRUCT *part);
+const PROPERTY *object_prop_in_class(OBJECT *obj, const PROPERTY *prop);
 int object_set_value_by_name(OBJECT *obj, PROPERTYNAME name, char *value);
 int object_set_value_by_addr(OBJECT *obj, void *addr, char *value, PROPERTY *prop);
-int object_set_int16_by_name(OBJECT *obj, PROPERTYNAME name, int16 value);
-int object_set_int32_by_name(OBJECT *obj, PROPERTYNAME name, int32 value);
-int object_set_int64_by_name(OBJECT *obj, PROPERTYNAME name, int64 value);
-int object_set_double_by_name(OBJECT *obj, PROPERTYNAME name, double value);
-bool *object_get_bool(OBJECT *obj, PROPERTY *prop);
-bool *object_get_bool_by_name(OBJECT *obj, char *name);
-int object_set_complex_by_name(OBJECT *obj, PROPERTYNAME name, complex value);
-int object_get_value_by_name(OBJECT *obj, PROPERTYNAME name, char *value, int size);
+int object_set_int16_by_name(OBJECT *obj, const PROPERTYNAME name, int16 value);
+int object_set_int32_by_name(OBJECT *obj, const PROPERTYNAME name, int32 value);
+int object_set_int64_by_name(OBJECT *obj, const PROPERTYNAME name, int64 value);
+int object_set_double_by_name(OBJECT *obj, const PROPERTYNAME name, double value);
+int object_set_complex_by_name(OBJECT *obj, const PROPERTYNAME name, complex value);
+int object_get_value_by_name(OBJECT *obj, const PROPERTYNAME name, char *value, int size);
 int object_get_value_by_addr(OBJECT *obj, void *addr, char *value, int size, PROPERTY *prop);
 int object_set_value_by_type(PROPERTYTYPE,void *addr, char *value);
 OBJECT *object_get_reference(OBJECT *obj, char *name);
 int object_isa(OBJECT *obj, const char *type);
 OBJECTNAME object_set_name(OBJECT *obj, OBJECTNAME name);
-OBJECT *object_find_name(OBJECTNAME name);
+OBJECT *object_find_name(const char* name);
 int object_build_name(OBJECT *obj, char *buffer, int len);
 int object_locate_property(void *addr, OBJECT **pObj, PROPERTY **pProp);
 
@@ -378,28 +376,30 @@ int object_get_oflags(KEYWORD **extflags);
 
 TIMESTAMP object_sync(OBJECT *obj, TIMESTAMP to,PASSCONFIG pass);
 OBJECT **object_get_object(OBJECT *obj, PROPERTY *prop);
-OBJECT **object_get_object_by_name(OBJECT *obj, char *name);
+OBJECT **object_get_object_by_name(OBJECT *obj, const char *name);
 enumeration *object_get_enum(OBJECT *obj, PROPERTY *prop);
-enumeration *object_get_enum_by_name(OBJECT *obj, char *name);
+enumeration *object_get_enum_by_name(OBJECT *obj, const char *name);
 set *object_get_set(OBJECT *obj, PROPERTY *prop);
-set *object_get_set_by_name(OBJECT *obj, char *name);
+set *object_get_set_by_name(OBJECT *obj, const char *name);
+bool *object_get_bool(OBJECT *obj, PROPERTY *prop);
+bool *object_get_bool_by_name(OBJECT *obj, const char *name);
 int16 *object_get_int16(OBJECT *obj, PROPERTY *prop);
-int16 *object_get_int16_by_name(OBJECT *obj, char *name);
+int16 *object_get_int16_by_name(OBJECT *obj, const char *name);
 int32 *object_get_int32(OBJECT *obj, PROPERTY *prop);
-int32 *object_get_int32_by_name(OBJECT *obj, char *name);
+int32 *object_get_int32_by_name(OBJECT *obj, const char *name);
 int64 *object_get_int64(OBJECT *obj, PROPERTY *prop);
-int64 *object_get_int64_by_name(OBJECT *obj, char *name);
+int64 *object_get_int64_by_name(OBJECT *obj, const char *name);
 double *object_get_double(OBJECT *pObj, PROPERTY *prop);
-double *object_get_double_by_name(OBJECT *pObj, char *name);
+double *object_get_double_by_name(OBJECT *pObj, const char *name);
 complex *object_get_complex(OBJECT *pObj, PROPERTY *prop);
 complex *object_get_complex_by_name(OBJECT *pObj, const char *name);
 double *object_get_double_quick(OBJECT *pObj, PROPERTY *prop);
 complex *object_get_complex_quick(OBJECT *pObj, PROPERTY *prop);
 char *object_get_string(OBJECT *pObj, PROPERTY *prop);
-char *object_get_string_by_name(OBJECT *obj, char *name);
+char *object_get_string_by_name(OBJECT *obj, const char *name);
 FUNCTIONADDR object_get_function(CLASSNAME classname, FUNCTIONNAME functionname);
-char *object_property_to_string(OBJECT *obj, char *name, char *buffer, int sz);
-char *object_get_unit(OBJECT *obj, char *name);
+char *object_property_to_string(OBJECT *obj, const char *name, char *buffer, int sz);
+char *object_get_unit(OBJECT *obj, const char *name);
 int object_set_rank(OBJECT *obj, OBJECTRANK rank);
 
 OBJECT *object_find_by_id(OBJECTNUM id);

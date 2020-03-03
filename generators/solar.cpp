@@ -39,7 +39,7 @@ solar::solar(MODULE *module)
 {
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,const_cast<char*>("solar"),sizeof(solar),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
+		oclass = gl_register_class(module,"solar",sizeof(solar),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class solar";
 		else
@@ -138,11 +138,11 @@ solar::solar(MODULE *module)
 				PT_KEYWORD, "C",(set)PHASE_C,
 				PT_KEYWORD, "N",(set)PHASE_N,
 				PT_KEYWORD, "S",(set)PHASE_S,
-			NULL)<1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
+			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Deltamode linkage
-		if (gl_publish_function(oclass,	const_cast<char*>("interupdate_gen_object"), (FUNCTIONADDR)interupdate_solar)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish solar deltamode function"));
+		if (gl_publish_function(oclass,	"interupdate_gen_object", (FUNCTIONADDR)interupdate_solar)==NULL)
+			GL_THROW("Unable to publish solar deltamode function");
 
 		defaults = this;
 		memset(this,0,sizeof(solar));
@@ -235,7 +235,7 @@ int solar::init_climate()
 	{
 		if (weather!=NULL)
 		{
-			if(!gl_object_isa(weather, const_cast<char*>("climate"))){
+			if(!gl_object_isa(weather, "climate")){
 				// strcmp failure
 				gl_error("weather property refers to a(n) \"%s\" object and not a climate object", weather->oclass->name);
 				/*  TROUBLESHOOT
@@ -295,16 +295,16 @@ int solar::init_climate()
 
 			if (orientation_type==FIXED_AXIS)
 			{
-				GL_THROW(const_cast<char*>("FIXED_AXIS requires a climate file!"));
+				GL_THROW("FIXED_AXIS requires a climate file!");
 				/*  TROUBLESHOOT
 				The FIXED_AXIS model for the PV array requires climate data to properly function.
 				Please specify such data, or consider using a different tilt model.
 				*/
 			}
 		}
-		else if (!gl_object_isa(weather,const_cast<char*>("climate")))	//Semi redundant for "weather"
+		else if (!gl_object_isa(weather,"climate"))	//Semi redundant for "weather"
 		{
-			GL_THROW(const_cast<char*>("weather object is not a climate object!"));
+			GL_THROW("weather object is not a climate object!");
 			/*  TROUBLESHOOT
 			The object specified for the weather property is not a climate object and will not work
 			with the solar object.  Please specify a valid climate object, or let the solar object
@@ -336,12 +336,12 @@ int solar::init_climate()
 			}
 			
 			//Map the properties - temperature
-			pTout = new gld_property(obj,const_cast<char*>("temperature"));
+			pTout = new gld_property(obj,"temperature");
 
 			//Check it
 			if (!pTout->is_valid() || !pTout->is_double())
 			{
-				GL_THROW(const_cast<char*>("solar:%d - %s - Failed to map outside temperature"),hdr->id,(hdr->name ? hdr->name : "Unnamed"));
+				GL_THROW("solar:%d - %s - Failed to map outside temperature",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				The solar PV array failed to map the outside air temperature.  Ensure this is
 				properly specified in your climate data and try again.
@@ -349,12 +349,12 @@ int solar::init_climate()
 			}
 
 			//Map the wind speed
-			pWindSpeed = new gld_property(obj,const_cast<char*>("wind_speed"));
+			pWindSpeed = new gld_property(obj,"wind_speed");
 
 			//Check tit
 			if (!pWindSpeed->is_valid() || !pWindSpeed->is_double())
 			{
-				GL_THROW(const_cast<char*>("solar:%d - %s - Failed to map wind speed"),hdr->id,(hdr->name ? hdr->name : "Unnamed"));
+				GL_THROW("solar:%d - %s - Failed to map wind speed",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				The solar PV array failed to map the wind speed.  Ensure this is
 				properly specified in your climate data and try again.
@@ -379,7 +379,7 @@ int solar::init_climate()
 			//Check the tilt angle for absurdity
 			if (tilt_angle < 0)
 			{
-				GL_THROW(const_cast<char*>("Invalid tilt_angle - tilt must be between 0 and 90 degrees"));
+				GL_THROW("Invalid tilt_angle - tilt must be between 0 and 90 degrees");
 				/*  TROUBLESHOOT
 				A negative tilt angle was specified.  This implies the array is under the ground and will
 				not receive any meaningful solar irradiation.  Please correct the tilt angle and try again.
@@ -387,7 +387,7 @@ int solar::init_climate()
 			}
 			else if (tilt_angle > 90.0)
 			{
-				GL_THROW(const_cast<char*>("Invalid tilt angle - values above 90 degrees are unsupported!"));
+				GL_THROW("Invalid tilt angle - values above 90 degrees are unsupported!");
 				/*  TROUBLESHOOT
 				An tilt angle over 90 degrees (straight up and down) was specified.  Beyond this angle, the
 				tilt algorithm does not function properly.  Please specific the tilt angle between 0 and 90 degrees
@@ -420,7 +420,7 @@ int solar::init_climate()
 				//Make sure it was found
 				if (calc_solar_radiation == NULL)
 				{
-					GL_THROW(const_cast<char*>("Unable to map solar radiation function on %s in %s"),obj->name,hdr->name);
+					GL_THROW("Unable to map solar radiation function on %s in %s",obj->name,hdr->name);
 					/*  TROUBLESHOOT
 					While attempting to initialize the photovoltaic array mapping of the solar radiation function.
 					Please try again.  If the bug persists, please submit your GLM and a bug report via the trac website.
@@ -430,7 +430,7 @@ int solar::init_climate()
 				//Check azimuth for absurdity as well
 				if ((orientation_azimuth<0.0) || (orientation_azimuth > 360.0))
 				{
-					GL_THROW(const_cast<char*>("orientation_azimuth must be a value representing a valid cardinal direction of 0 to 360 degrees!"));
+					GL_THROW("orientation_azimuth must be a value representing a valid cardinal direction of 0 to 360 degrees!");
 					/*  TROUBLESHOOT
 					The orientation_azimuth property is expected values on the cardinal points degree system.  For this convention, 0 or
 					360 is north, 90 is east, 180 is south, and 270 is west.  Please specify a direction within the 0 to 360 degree bound and try again.
@@ -469,7 +469,7 @@ int solar::init_climate()
 					}
 					else	//Equator - erm....
 					{
-						GL_THROW(const_cast<char*>("Exact equator location of array detected - unknown how to handle orientation"));
+						GL_THROW("Exact equator location of array detected - unknown how to handle orientation");
 						/*  TROUBLESHOOT
 						The solar orientation algorithm implemented inside GridLAB-D does not understand how to orient
 						itself for an array exactly on the equator.  Shift it north or south a little bit to get valid results.
@@ -638,15 +638,15 @@ int solar::init(OBJECT *parent)
 	// find parent inverter, if not defined, use a default voltage
 	if (parent != NULL)
 	{
-		if (gl_object_isa(parent, const_cast<char*>("inverter"), const_cast<char*>("generators"))) // SOLAR has a PARENT and PARENT is an INVERTER
+		if (gl_object_isa(parent, "inverter", "generators")) // SOLAR has a PARENT and PARENT is an INVERTER
 		{
 			//Map the inverter voltage
-			inverter_voltage_property = new gld_property(parent,const_cast<char*>("V_In"));
+			inverter_voltage_property = new gld_property(parent,"V_In");
 
 			//Check it
 			if (!inverter_voltage_property->is_valid() || !inverter_voltage_property->is_complex())
 			{
-				GL_THROW(const_cast<char*>("solar:%d - %s - Unable to map inverter power interface field"),obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW("solar:%d - %s - Unable to map inverter power interface field",obj->id,(obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				While attempting to map to one of the inverter interface variables, an error occurred.  Please try again.
 				If the error persists, please submit a bug report and your model file via the issue tracking system.
@@ -654,22 +654,22 @@ int solar::init(OBJECT *parent)
 			}
 
 			//Map the inverter current
-			inverter_current_property = new gld_property(parent,const_cast<char*>("I_In"));
+			inverter_current_property = new gld_property(parent,"I_In");
 
 			//Check it
 			if (!inverter_current_property->is_valid() || !inverter_current_property->is_complex())
 			{
-				GL_THROW(const_cast<char*>("solar:%d - %s - Unable to map inverter power interface field"),obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW("solar:%d - %s - Unable to map inverter power interface field",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
 			}
 
 			//Find multipoint efficiency property to check
-			temp_property_pointer = new gld_property(parent,const_cast<char*>("use_multipoint_efficiency"));
+			temp_property_pointer = new gld_property(parent,"use_multipoint_efficiency");
 
 			//Check and make sure it is valid
 			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_bool())
 			{
-				GL_THROW(const_cast<char*>("solar:%d - %s - Unable to map inverter property"),obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW("solar:%d - %s - Unable to map inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				While mapping a property of the inverter parented to a solar object, an error occurred.  Please
 				try again.
@@ -683,12 +683,12 @@ int solar::init(OBJECT *parent)
 			delete temp_property_pointer;
 
 			//Pull the maximum_dc_power property
-			temp_property_pointer = new gld_property(parent,const_cast<char*>("maximum_dc_power"));
+			temp_property_pointer = new gld_property(parent,"maximum_dc_power");
 
 			//Check it
 			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_double())
 			{
-				GL_THROW(const_cast<char*>("solar:%d - %s - Unable to map inverter property"),obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW("solar:%d - %s - Unable to map inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
 			}
 
@@ -699,12 +699,12 @@ int solar::init(OBJECT *parent)
 			delete temp_property_pointer;
 
 			//Pull the inverter_type property
-			temp_property_pointer = new gld_property(parent,const_cast<char*>("inverter_type"));
+			temp_property_pointer = new gld_property(parent,"inverter_type");
 
 			//Check it
 			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_enumeration())
 			{
-				GL_THROW(const_cast<char*>("solar:%d - %s - Unable to map inverter property"),obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW("solar:%d - %s - Unable to map inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
 			}
 
@@ -715,12 +715,12 @@ int solar::init(OBJECT *parent)
 			delete temp_property_pointer;
 
 			//Pull the number of phases
-			temp_property_pointer = new gld_property(parent,const_cast<char*>("number_of_phases_out"));
+			temp_property_pointer = new gld_property(parent,"number_of_phases_out");
 
 			//Check it
 			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_integer())
 			{
-				GL_THROW(const_cast<char*>("solar:%d - %s - Unable to map inverter property"),obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW("solar:%d - %s - Unable to map inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
 			}
 			
@@ -731,12 +731,12 @@ int solar::init(OBJECT *parent)
 			delete temp_property_pointer;
 
 			//Retrieve the rated_power property
-			temp_property_pointer = new gld_property(parent,const_cast<char*>("rated_power"));
+			temp_property_pointer = new gld_property(parent,"rated_power");
 
 			//Check it
 			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_double())
 			{
-				GL_THROW(const_cast<char*>("solar:%d - %s - Unable to map inverter property"),obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW("solar:%d - %s - Unable to map inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
 			}
 
@@ -747,12 +747,12 @@ int solar::init(OBJECT *parent)
 			delete temp_property_pointer;
 
 			//Pull efficiency - efficiency_value
-			temp_property_pointer = new gld_property(parent,const_cast<char*>("efficiency_value"));
+			temp_property_pointer = new gld_property(parent,"efficiency_value");
 
 			//Check it
 			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_double())
 			{
-				GL_THROW(const_cast<char*>("solar:%d - %s - Unable to map inverter property"),obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW("solar:%d - %s - Unable to map inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
 			}
 
@@ -763,12 +763,12 @@ int solar::init(OBJECT *parent)
 			delete temp_property_pointer;
 
 			//Pull inv_eta - "inverter_efficiency"
-			temp_property_pointer = new gld_property(parent,const_cast<char*>("inverter_efficiency"));
+			temp_property_pointer = new gld_property(parent,"inverter_efficiency");
 
 			//Check it
 			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_double())
 			{
-				GL_THROW(const_cast<char*>("solar:%d - %s - Unable to map inverter property"),obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW("solar:%d - %s - Unable to map inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
 			}
 
@@ -822,7 +822,7 @@ int solar::init(OBJECT *parent)
 		}
 		else	//It's not an inverter - fail it.
 		{
-			GL_THROW(const_cast<char*>("Solar panel can only have an inverter as its parent."));
+			GL_THROW("Solar panel can only have an inverter as its parent.");
 			/* TROUBLESHOOT
 			The solar panel can only have an INVERTER as parent, and no other object. Or it can be all by itself, without a parent.
 			*/
@@ -835,12 +835,12 @@ int solar::init(OBJECT *parent)
 		//Map the values to ourself
 
 		//Map the inverter voltage
-		inverter_voltage_property = new gld_property(obj,const_cast<char*>("default_voltage_variable"));
+		inverter_voltage_property = new gld_property(obj,"default_voltage_variable");
 
 		//Check it
 		if (!inverter_voltage_property->is_valid() || !inverter_voltage_property->is_complex())
 		{
-			GL_THROW(const_cast<char*>("solar:%d - %s - Unable to map a default power interface field"),obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW("solar:%d - %s - Unable to map a default power interface field",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
 			While attempting to map to one of the default power interface variables, an error occurred.  Please try again.
 			If the error persists, please submit a bug report and your model file via the issue tracking system.
@@ -848,12 +848,12 @@ int solar::init(OBJECT *parent)
 		}
 
 		//Map the inverter current
-		inverter_current_property = new gld_property(obj,const_cast<char*>("default_current_variable"));
+		inverter_current_property = new gld_property(obj,"default_current_variable");
 
 		//Check it
 		if (!inverter_current_property->is_valid() || !inverter_current_property->is_complex())
 		{
-			GL_THROW(const_cast<char*>("solar:%d - %s - Unable to map a default power interface field"),obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW("solar:%d - %s - Unable to map a default power interface field",obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
 		}
 
@@ -908,12 +908,12 @@ int solar::init(OBJECT *parent)
 		}
 
 		//Make sure our parent is an inverter and deltamode enabled (otherwise this is dumb)
-		if (gl_object_isa(parent,const_cast<char*>("inverter","generators")))
+		if (gl_object_isa(parent,"inverter","generators"))
 		{
 			//Make sure our parent has the flag set
 			if ((parent->flags & OF_DELTAMODE) != OF_DELTAMODE)
 			{
-				GL_THROW(const_cast<char*>("solar:%d %s is attached to an inverter, but that inverter is not set up for deltamode"),obj->id, (obj->name ? obj->name : "Unnamed"));
+				GL_THROW("solar:%d %s is attached to an inverter, but that inverter is not set up for deltamode",obj->id, (obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				The solar object is not parented to a deltamode-enabled inverter.  There is really no reason to have the solar object deltamode-enabled,
 				so this should be fixed.
@@ -923,7 +923,7 @@ int solar::init(OBJECT *parent)
 		}//Not a proper parent
 		else
 		{
-			GL_THROW(const_cast<char*>("solar:%d %s is not parented to an inverter -- deltamode operations do not support this"),obj->id, (obj->name ? obj->name : "Unnamed"));
+			GL_THROW("solar:%d %s is not parented to an inverter -- deltamode operations do not support this",obj->id, (obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
 			The solar object is not parented to an inverter.  Deltamode only supports it being parented to a deltamode-enabled inverter.
 			*/
@@ -963,7 +963,7 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 	//Check the shading factor
 	if ((shading_factor <0) || (shading_factor > 1))
 	{
-		GL_THROW(const_cast<char*>("Shading factor outside [0 1] limits in %s"),obj->name);
+		GL_THROW("Shading factor outside [0 1] limits in %s",obj->name);
 		/*  TROUBLESHOOT
 		The shading factor for the solar device is set outside the limited range
 		of 0 to 1.  Please set it back within this range and try again.
@@ -984,7 +984,7 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//Check limits of the array
 			if (gen_object_current>=gen_object_count)
 			{
-				GL_THROW(const_cast<char*>("Too many objects tried to populate deltamode objects array in the generators module!"));
+				GL_THROW("Too many objects tried to populate deltamode objects array in the generators module!");
 				/*  TROUBLESHOOT
 				While attempting to populate a reference array of deltamode-enabled objects for the generator
 				module, an attempt was made to write beyond the allocated array space.  Please try again.  If the
@@ -1001,7 +1001,7 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//Make sure it worked
 			if (delta_functions[gen_object_current] == NULL)
 			{
-				GL_THROW(const_cast<char*>("Failure to map deltamode function for device:%s"),obj->name);
+				GL_THROW("Failure to map deltamode function for device:%s",obj->name);
 				/*  TROUBLESHOOT
 				Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
 				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
@@ -1064,7 +1064,7 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 					//Make sure it worked
 					if (ret_value == 0)
 					{
-						GL_THROW(const_cast<char*>("Calculation of solar radiation failed in %s"),obj->name);
+						GL_THROW("Calculation of solar radiation failed in %s",obj->name);
 						/*  TROUBLESHOOT
 						While calculating solar radiation in the photovoltaic object, an error
 						occurred.  Please try again.  If the error persists, please submit your
@@ -1079,7 +1079,7 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 			case AZIMUTH_AXIS:
 			default:
 				{
-					GL_THROW(const_cast<char*>("Unknown or unsupported orientation detected"));
+					GL_THROW("Unknown or unsupported orientation detected");
 					/*  TROUBLESHOOT
 					While attempting to calculate solar output, an unknown, or currently unimplemented,
 					orientation was detected.  Please try again.
@@ -1148,7 +1148,7 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 	else
 	{
-		GL_THROW(const_cast<char*>("Unknown solar power output model selected!"));
+		GL_THROW("Unknown solar power output model selected!");
 		/*  TROUBLESHOOT
 		An unknown value was put in for the solar power output model.  Please
 		choose a correct value.  If the value is correct and the error persists, please
@@ -1258,7 +1258,7 @@ EXPORT TIMESTAMP sync_solar(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 			t2 = my->postsync(obj->clock,t1);
 			break;
 		default:
-			GL_THROW(const_cast<char*>("invalid pass request (%d)"), pass);
+			GL_THROW("invalid pass request (%d)", pass);
 			break;
 		}
 		if (pass==clockpass)

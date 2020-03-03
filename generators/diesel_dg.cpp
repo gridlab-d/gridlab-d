@@ -26,7 +26,7 @@ diesel_dg::diesel_dg(MODULE *module)
 
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,const_cast<char*>("diesel_dg"),sizeof(diesel_dg),passconfig|PC_AUTOLOCK);
+		oclass = gl_register_class(module,"diesel_dg",sizeof(diesel_dg),passconfig|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class diesel_dg";
 		else
@@ -354,16 +354,16 @@ diesel_dg::diesel_dg(MODULE *module)
 				PT_KEYWORD, "S",(set)PHASE_S,
 
 			//-- This hides from modehelp -- PT_double,"TD[s]",PADDR(gov_TD),PT_DESCRIPTION,"Governor combustion delay (s)",PT_ACCESS,PA_HIDDEN,
-			NULL)<1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
+			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		defaults = this;
 
 		memset(this,0,sizeof(diesel_dg));
 
-		if (gl_publish_function(oclass,	const_cast<char*>("interupdate_gen_object"), (FUNCTIONADDR)interupdate_diesel_dg)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish diesel_dg deltamode function"));
-		if (gl_publish_function(oclass,	const_cast<char*>("postupdate_gen_object"), (FUNCTIONADDR)postupdate_diesel_dg)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish diesel_dg deltamode function"));
+		if (gl_publish_function(oclass,	"interupdate_gen_object", (FUNCTIONADDR)interupdate_diesel_dg)==NULL)
+			GL_THROW("Unable to publish diesel_dg deltamode function");
+		if (gl_publish_function(oclass,	"postupdate_gen_object", (FUNCTIONADDR)postupdate_diesel_dg)==NULL)
+			GL_THROW("Unable to publish diesel_dg deltamode function");
 	}
 }
 
@@ -655,7 +655,7 @@ int diesel_dg::init(OBJECT *parent)
 	// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
 	if (parent!=NULL)
 	{
-		if (gl_object_isa(parent,const_cast<char*>("meter"),const_cast<char*>("powerflow")) || gl_object_isa(parent,const_cast<char*>("node"),const_cast<char*>("powerflow")) || gl_object_isa(parent,const_cast<char*>("load"),const_cast<char*>("powerflow")))
+		if (gl_object_isa(parent,"meter","powerflow") || gl_object_isa(parent,"node","powerflow") || gl_object_isa(parent,"load","powerflow"))
 		{
 			//Flag us as a proper child
 			parent_is_powerflow = true;
@@ -667,8 +667,8 @@ int diesel_dg::init(OBJECT *parent)
 				tmp_obj = parent->parent;
 
 				//See what it is
-				if (!gl_object_isa(tmp_obj, const_cast<char*>("meter"), const_cast<char*>("powerflow")) && !gl_object_isa(tmp_obj, const_cast<char*>("node"), const_cast<char*>("powerflow")) &&
-					!gl_object_isa(tmp_obj, const_cast<char*>("load"), const_cast<char*>("powerflow")))
+				if (!gl_object_isa(tmp_obj, "meter", "powerflow") && !gl_object_isa(tmp_obj, "node", "powerflow") &&
+					!gl_object_isa(tmp_obj, "load", "powerflow"))
 				{
 					//Not a wierd map, just use normal parent
 					tmp_obj = parent;
@@ -679,12 +679,12 @@ int diesel_dg::init(OBJECT *parent)
 					if (deltamode_inclusive == true)
 					{
 						//Map our deltamode flag and set it (parent will be done below)
-						temp_property_pointer = new gld_property(parent,const_cast<char*>("Norton_dynamic"));
+						temp_property_pointer = new gld_property(parent,"Norton_dynamic");
 
 						//Make sure it worked
 						if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_bool() != true))
 						{
-							GL_THROW(const_cast<char*>("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s"),obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
+							GL_THROW("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
 							//Defined elsewhere
 						}
 
@@ -707,28 +707,28 @@ int diesel_dg::init(OBJECT *parent)
 			//Now do the standard mapping
 
 			//Map the voltage
-			pCircuit_V[0] = map_complex_value(tmp_obj,const_cast<char*>("voltage_A"));
-			pCircuit_V[1] = map_complex_value(tmp_obj,const_cast<char*>("voltage_B"));
-			pCircuit_V[2] = map_complex_value(tmp_obj,const_cast<char*>("voltage_C"));
+			pCircuit_V[0] = map_complex_value(tmp_obj,"voltage_A");
+			pCircuit_V[1] = map_complex_value(tmp_obj,"voltage_B");
+			pCircuit_V[2] = map_complex_value(tmp_obj,"voltage_C");
 
 			//Current gets mapped this way too right now, but that may not be right
-			pLine_I[0] = map_complex_value(tmp_obj,const_cast<char*>("current_A"));
-			pLine_I[1] = map_complex_value(tmp_obj,const_cast<char*>("current_B"));
-			pLine_I[2] = map_complex_value(tmp_obj,const_cast<char*>("current_C"));
+			pLine_I[0] = map_complex_value(tmp_obj,"current_A");
+			pLine_I[1] = map_complex_value(tmp_obj,"current_B");
+			pLine_I[2] = map_complex_value(tmp_obj,"current_C");
 
 			//Map power -- not used by all, but just for the sake of populating
-			pPower[0] = map_complex_value(tmp_obj,const_cast<char*>("power_A"));
-			pPower[1] = map_complex_value(tmp_obj,const_cast<char*>("power_B"));
-			pPower[2] = map_complex_value(tmp_obj,const_cast<char*>("power_C"));
+			pPower[0] = map_complex_value(tmp_obj,"power_A");
+			pPower[1] = map_complex_value(tmp_obj,"power_B");
+			pPower[2] = map_complex_value(tmp_obj,"power_C");
 
 			//Map nominal voltage for populating variables
 			//Pull the nominal voltage
-			pNominal_Voltage = new gld_property(parent,const_cast<char*>("nominal_voltage"));
+			pNominal_Voltage = new gld_property(parent,"nominal_voltage");
 
 			//Make sure it worked
 			if ((pNominal_Voltage->is_valid() != true) || (pNominal_Voltage->is_double() != true))
 			{
-				GL_THROW(const_cast<char*>("diesel_dg:%d %s - Unable to map nominal_voltage from object:%d %s"),obj->id,(obj->name ? obj->name : "Unnamed"),parent->id,(parent->name ? parent->name : "Unnamed"));
+				GL_THROW("diesel_dg:%d %s - Unable to map nominal_voltage from object:%d %s",obj->id,(obj->name ? obj->name : "Unnamed"),parent->id,(parent->name ? parent->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				While attempting to map the nominal_voltage from a parent object, an error occurred.  Please try again.
 				If the error persists, please submit your system and a bug report via the ticketing system.
@@ -753,7 +753,7 @@ int diesel_dg::init(OBJECT *parent)
 				//Make sure it matches
 				if ((nom_test_val > 1.01) || (nom_test_val < 0.99))
 				{
-					GL_THROW(const_cast<char*>("diesel_dg:%d %s - Rated_V does not match the nominal voltage!"),obj->id,(obj->name ? obj->name : "Unnamed"));
+					GL_THROW("diesel_dg:%d %s - Rated_V does not match the nominal voltage!",obj->id,(obj->name ? obj->name : "Unnamed"));
 					/*  TROUBLESHOOT
 					The value specified in Rated_V does not match the nominal_voltage of the parented node.  Please fix this
 					discrepancy.
@@ -773,20 +773,20 @@ int diesel_dg::init(OBJECT *parent)
 			if (deltamode_inclusive==true)
 			{
 				//Map the current injection variables
-				pIGenerated[0] = map_complex_value(tmp_obj,const_cast<char*>("deltamode_generator_current_A"));
-				pIGenerated[1] = map_complex_value(tmp_obj,const_cast<char*>("deltamode_generator_current_B"));
-				pIGenerated[2] = map_complex_value(tmp_obj,const_cast<char*>("deltamode_generator_current_C"));
+				pIGenerated[0] = map_complex_value(tmp_obj,"deltamode_generator_current_A");
+				pIGenerated[1] = map_complex_value(tmp_obj,"deltamode_generator_current_B");
+				pIGenerated[2] = map_complex_value(tmp_obj,"deltamode_generator_current_C");
 
 				//Map the PGenerated value
-				pPGenerated = map_complex_value(tmp_obj,const_cast<char*>("deltamode_PGenTotal"));
+				pPGenerated = map_complex_value(tmp_obj,"deltamode_PGenTotal");
 
 				//Map the flag
-				temp_property_pointer = new gld_property(tmp_obj,const_cast<char*>("Norton_dynamic"));
+				temp_property_pointer = new gld_property(tmp_obj,"Norton_dynamic");
 
 				//Make sure it worked
 				if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_bool() != true))
 				{
-					GL_THROW(const_cast<char*>("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s"),obj->name?obj->name:"unnamed",tmp_obj->name?tmp_obj->name:"unnamed");
+					GL_THROW("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",tmp_obj->name?tmp_obj->name:"unnamed");
 					/*  TROUBLESHOOT
 					While attempting to set up the deltamode interfaces and calculations with powerflow, the required interface could not be mapped.
 					Please check your GLM and try again.  If the error persists, please submit a trac ticket with your code.
@@ -803,7 +803,7 @@ int diesel_dg::init(OBJECT *parent)
 		}
 		else	//Only three-phase node objects supported right now
 		{
-			GL_THROW(const_cast<char*>("diesel_dg:%s only supports a powerflow node/load/meter or no object as its parent at this time"),obj->name?obj->name:"unnamed");
+			GL_THROW("diesel_dg:%s only supports a powerflow node/load/meter or no object as its parent at this time",obj->name?obj->name:"unnamed");
 			/*  TROUBLESHOOT
 			The diesel_dg object has a parent that is not a powerflow node/load/meter object.  At this time, the diesel_dg object can only be parented
 			to a powerflow node, load, or meter or not have a parent.
@@ -811,12 +811,12 @@ int diesel_dg::init(OBJECT *parent)
 		}
 
 		//Map and pull the phases
-		temp_property_pointer = new gld_property(parent,const_cast<char*>("phases"));
+		temp_property_pointer = new gld_property(parent,"phases");
 
 		//Make sure ti worked
 		if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_set() != true))
 		{
-			GL_THROW(const_cast<char*>("Unable to map phases property - ensure the parent is a meter or a node or a load"));
+			GL_THROW("Unable to map phases property - ensure the parent is a meter or a node or a load");
 			/*  TROUBLESHOOT
 			While attempting to map the phases property from the parent object, an error was encountered.
 			Please check and make sure your parent object is a meter or triplex_meter inside the powerflow module and try
@@ -831,7 +831,7 @@ int diesel_dg::init(OBJECT *parent)
 		delete temp_property_pointer;
 
 		if((phases & 0x0007) != 0x0007){//parent does not have all three meters
-			GL_THROW(const_cast<char*>("The diesel_dg object must be connected to all three phases. Please make sure the parent object has all three phases."));
+			GL_THROW("The diesel_dg object must be connected to all three phases. Please make sure the parent object has all three phases.");
 			/* TROUBLESHOOT
 			The diesel_dg object is a three-phase generator. This message occured because the parent object does not have all three phases.
 			Please check and make sure your parent object has all three phases and try again. if the error persists, please submit your code and a bug report via the Trac website.
@@ -954,7 +954,7 @@ int diesel_dg::init(OBJECT *parent)
 		//Make sure our parent is delta enabled!
 		if ((parent->flags & OF_DELTAMODE) != OF_DELTAMODE)
 		{
-			GL_THROW(const_cast<char*>("diesel_dg:%s - The parented object does not have deltamode flags enabled."),obj->name?obj->name:"unnamed");
+			GL_THROW("diesel_dg:%s - The parented object does not have deltamode flags enabled.",obj->name?obj->name:"unnamed");
 			/*  TROUBLESHOOT
 			The parent object for the diesel_dg object does not appear to be flagged for deltamode.  This could cause serious problems
 			when it tries to update.  Please either enable deltamode in the parented object, or select a different operating mode for the
@@ -1025,12 +1025,12 @@ int diesel_dg::init(OBJECT *parent)
 		if ((deltamode_inclusive == true) && (parent_is_powerflow == true))
 		{
 			//Map up the admittance matrix to apply our contributions
-			pbus_full_Y_mat = new gld_property(parent,const_cast<char*>("deltamode_full_Y_matrix"));
+			pbus_full_Y_mat = new gld_property(parent,"deltamode_full_Y_matrix");
 
 			//Check it
 			if ((pbus_full_Y_mat->is_valid() != true) || (pbus_full_Y_mat->is_complex_array() != true))
 			{
-				GL_THROW(const_cast<char*>("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s"),obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
+				GL_THROW("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
 				//Defined above
 			}
 
@@ -1056,7 +1056,7 @@ int diesel_dg::init(OBJECT *parent)
 			{
 				if ((temp_complex_array.get_rows() != 3) && (temp_complex_array.get_cols() != 3))
 				{
-					GL_THROW(const_cast<char*>("diesel_dg:%s exposed Norton-equivalent matrix is the wrong size!"),obj->name?obj->name:"unnamed");
+					GL_THROW("diesel_dg:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
 					/*  TROUBLESHOOT
 					While mapping to an admittance matrix on the parent node device, it was found it is the wrong size.
 					Please try again.  If the error persists, please submit your code and model via the issue tracking system.
@@ -1086,12 +1086,12 @@ int diesel_dg::init(OBJECT *parent)
 
 			//Map the full version needed later
 			//Map up the admittance matrix to apply our contributions
-			pbus_full_Y_all_mat = new gld_property(parent,const_cast<char*>("deltamode_full_Y_all_matrix"));
+			pbus_full_Y_all_mat = new gld_property(parent,"deltamode_full_Y_all_matrix");
 
 			//Check it
 			if ((pbus_full_Y_all_mat->is_valid() != true) || (pbus_full_Y_all_mat->is_complex_array() != true))
 			{
-				GL_THROW(const_cast<char*>("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s"),obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
+				GL_THROW("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
 				//Defined above
 			}
 		}//End powerflow deltamode - generator admittance mapping
@@ -1303,7 +1303,7 @@ int diesel_dg::init(OBJECT *parent)
 		//Make sure min is above zero
 		if ((Min_Ef<=0.0) && (Exciter_type != NO_EXC))
 		{
-			GL_THROW(const_cast<char*>("diesel_dg:%s - Vterm_min is less than or equal to zero"),obj->name?obj->name:"unnamed");
+			GL_THROW("diesel_dg:%s - Vterm_min is less than or equal to zero",obj->name?obj->name:"unnamed");
 			/*  TROUBLESHOOT
 			The minimum (p.u.) terminal voltage for the generator with an AVR is less than or equal to zero.
 			Please specify a positive value and try again.
@@ -1313,7 +1313,7 @@ int diesel_dg::init(OBJECT *parent)
 		//Check Max
 		if ((Max_Ef<=Min_Ef) && (Exciter_type != NO_EXC))
 		{
-			GL_THROW(const_cast<char*>("diesel_dg:%s - Vterm_max is less than or equal to Vterm_min"),obj->name?obj->name:"unnamed");
+			GL_THROW("diesel_dg:%s - Vterm_max is less than or equal to Vterm_min",obj->name?obj->name:"unnamed");
 			/*  TROUBLESHOOT
 			The maximum (p.u.) terminal voltage for the generator with an AVR is less than or equal to the minmum
 			band value.  It must be a higher value.  Please set it to a larger per-unit value and try again.
@@ -1341,12 +1341,12 @@ int diesel_dg::init(OBJECT *parent)
 			Frequency_mapped = NULL;
 
 			//Get linking to checker variable
-			Frequency_mapped = new gld_property(const_cast<char*>("powerflow::master_frequency_update"));
+			Frequency_mapped = new gld_property("powerflow::master_frequency_update");
 
 			//See if it worked
 			if ((Frequency_mapped->is_valid() != true) || (Frequency_mapped->is_bool() != true))
 			{
-				GL_THROW(const_cast<char*>("diesel_dg:%s - Failed to map frequency checking variable from powerflow for deltamode"),obj->name?obj->name:"unnamed");
+				GL_THROW("diesel_dg:%s - Failed to map frequency checking variable from powerflow for deltamode",obj->name?obj->name:"unnamed");
 				/*  TROUBLESHOOT
 				While attempting to map one of the electrical frequency update variables from the powerflow module, an error
 				was encountered.  Please try again, insuring the diesel_dg is parented to a deltamode powerflow object.  If
@@ -1361,12 +1361,12 @@ int diesel_dg::init(OBJECT *parent)
 			if (temp_bool_value == false)	//No one has mapped yet, we are volunteered
 			{
 				//Update powerflow frequency
-				mapped_freq_variable = new gld_property(const_cast<char*>("powerflow::current_frequency"));
+				mapped_freq_variable = new gld_property("powerflow::current_frequency");
 
 				//Make sure it worked
 				if ((mapped_freq_variable->is_valid() != true) || (mapped_freq_variable->is_double() != true))
 				{
-					GL_THROW(const_cast<char*>("diesel_dg:%s - Failed to map frequency checking variable from powerflow for deltamode"),obj->name?obj->name:"unnamed");
+					GL_THROW("diesel_dg:%s - Failed to map frequency checking variable from powerflow for deltamode",obj->name?obj->name:"unnamed");
 					//Defined above
 				}
 
@@ -1386,7 +1386,7 @@ int diesel_dg::init(OBJECT *parent)
 	{
 		if (enable_subsecond_models == true)
 		{
-			GL_THROW(const_cast<char*>("diesel_dg:%d %s - Deltamode is enabled for the module, but not this generator!"),obj->id,(obj->name ? obj->name : "Unnamed"));
+			GL_THROW("diesel_dg:%d %s - Deltamode is enabled for the module, but not this generator!",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
 			The diesel_dg is not flagged for deltamode operations, yet deltamode simulations are enabled for the overall system.  This will cause issues when
 			the simulation executes, due to missing variables.  It is recommend deltamode be enabled for this object, or a different operating mode utilized.
@@ -1471,7 +1471,7 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//Check limits of the array
 			if (gen_object_current>=gen_object_count)
 			{
-				GL_THROW(const_cast<char*>("Too many objects tried to populate deltamode objects array in the generators module!"));
+				GL_THROW("Too many objects tried to populate deltamode objects array in the generators module!");
 				/*  TROUBLESHOOT
 				While attempting to populate a reference array of deltamode-enabled objects for the generator
 				module, an attempt was made to write beyond the allocated array space.  Please try again.  If the
@@ -1488,7 +1488,7 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//Make sure it worked
 			if (delta_functions[gen_object_current] == NULL)
 			{
-				GL_THROW(const_cast<char*>("Failure to map deltamode function for device:%s"),obj->name);
+				GL_THROW("Failure to map deltamode function for device:%s",obj->name);
 				/*  TROUBLESHOOT
 				Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
 				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
@@ -1502,7 +1502,7 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//Make sure it worked
 			if (post_delta_functions[gen_object_current] == NULL)
 			{
-				GL_THROW(const_cast<char*>("Failure to map post-deltamode function for device:%s"),obj->name);
+				GL_THROW("Failure to map post-deltamode function for device:%s",obj->name);
 				/*  TROUBLESHOOT
 				Attempts to map up the postupdate function of a specific device failed.  Please try again and ensure
 				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
@@ -1516,7 +1516,7 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//See if we're attached to a node-esque object
 			if (obj->parent != NULL)
 			{
-				if (gl_object_isa(obj->parent,const_cast<char*>("meter"),const_cast<char*>("powerflow")) || gl_object_isa(obj->parent,const_cast<char*>("load"),const_cast<char*>("powerflow")) || gl_object_isa(obj->parent,const_cast<char*>("node"),const_cast<char*>("powerflow")) || gl_object_isa(obj->parent,const_cast<char*>("elec_frequency"),const_cast<char*>("powerflow")))
+				if (gl_object_isa(obj->parent,"meter","powerflow") || gl_object_isa(obj->parent,"load","powerflow") || gl_object_isa(obj->parent,"node","powerflow") || gl_object_isa(obj->parent,"elec_frequency","powerflow"))
 				{
 					//Accumulate and pass our starting power
 					temp_complex_value_power = power_val[0] + power_val[1] + power_val[2];
@@ -1527,7 +1527,7 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 				}//End parent is a node object
 				else	//Nope, so who knows what is going on - better fail, just to be safe
 				{
-					GL_THROW(const_cast<char*>("diesel_dg:%s - invalid parent object:%s"),(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
+					GL_THROW("diesel_dg:%s - invalid parent object:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
 					/*  TROUBLESHOOT
 					At this time, for proper dynamic functionality a diesel_dg object must be parented to a three-phase powerflow node
 					object (node, load, meter).  The parent object is not one of those objects.
@@ -1707,7 +1707,7 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}//End synchronous dynamics-enabled generator
 	else
 	{
-		GL_THROW(const_cast<char*>("diesel_dg:%d %s - Unknown Gen_type specified!"),obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW("diesel_dg:%d %s - Unknown Gen_type specified!",obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		An unsupported Gen_type was somehow specified in the diesel_dg.  Fix this, and try again.
 		*/
@@ -1806,7 +1806,7 @@ TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 			if (ret_state == FAILED)
 			{
-				GL_THROW(const_cast<char*>("diesel_dg:%s - unsuccessful call to dynamics initialization"),(obj->name?obj->name:"unnamed"));
+				GL_THROW("diesel_dg:%s - unsuccessful call to dynamics initialization",(obj->name?obj->name:"unnamed"));
 				/*  TROUBLESHOOT
 				While attempting to call the dynamics initialization function of the diesel_dg object, a failure
 				state was encountered.  See other error messages for further details.
@@ -1852,7 +1852,7 @@ TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 }
 
 //Map Complex value
-gld_property *diesel_dg::map_complex_value(OBJECT *obj, char *name)
+gld_property *diesel_dg::map_complex_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	OBJECT *objhdr = OBJECTHDR(this);
@@ -1863,7 +1863,7 @@ gld_property *diesel_dg::map_complex_value(OBJECT *obj, char *name)
 	//Make sure it worked
 	if ((pQuantity->is_valid() != true) || (pQuantity->is_complex() != true))
 	{
-		GL_THROW(const_cast<char*>("diesel_dg:%d %s - Unable to map property %s from object:%d %s"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW("diesel_dg:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		While attempting to map a quantity from another object, an error occurred in diesel_dg.  Please try again.
 		If the error persists, please submit your system and a bug report via the ticketing system.
@@ -1875,7 +1875,7 @@ gld_property *diesel_dg::map_complex_value(OBJECT *obj, char *name)
 }
 
 //Map double value
-gld_property *diesel_dg::map_double_value(OBJECT *obj, char *name)
+gld_property *diesel_dg::map_double_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	OBJECT *objhdr = OBJECTHDR(this);
@@ -1886,7 +1886,7 @@ gld_property *diesel_dg::map_double_value(OBJECT *obj, char *name)
 	//Make sure it worked
 	if ((pQuantity->is_valid() != true) || (pQuantity->is_double() != true))
 	{
-		GL_THROW(const_cast<char*>("diesel_dg:%d %s - Unable to map property %s from object:%d %s"),objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
+		GL_THROW("diesel_dg:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		While attempting to map a quantity from another object, an error occurred in diesel_dg.  Please try again.
 		If the error persists, please submit your system and a bug report via the ticketing system.
@@ -4529,7 +4529,7 @@ EXPORT TIMESTAMP sync_diesel_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			t1 = my->postsync(obj->clock,t0);
 			break;
 		default:
-			GL_THROW(const_cast<char*>("invalid pass request (%d)"), pass);
+			GL_THROW("invalid pass request (%d)", pass);
 			break;
 		}
 		if (pass==clockpass)

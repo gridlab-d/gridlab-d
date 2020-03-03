@@ -24,9 +24,9 @@ currdump::currdump(MODULE *mod)
 	if (oclass==NULL)
 	{
 		// register the class definition
-		oclass = gl_register_class(mod,const_cast<char*>("currdump"),sizeof(currdump),PC_BOTTOMUP|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,"currdump",sizeof(currdump),PC_BOTTOMUP|PC_AUTOLOCK);
 		if (oclass==NULL)
-			GL_THROW(const_cast<char*>("unable to register object class implemented by %s"),__FILE__);
+			GL_THROW("unable to register object class implemented by %s",__FILE__);
 
 		// publish the class properties
 		if (gl_publish_variable(oclass,
@@ -37,7 +37,7 @@ currdump::currdump(MODULE *mod)
 			PT_enumeration, "mode", PADDR(mode),
 				PT_KEYWORD, "RECT", (enumeration)CDM_RECT,
 				PT_KEYWORD, "POLAR", (enumeration)CDM_POLAR,
-			NULL)<1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
+			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		
 	}
 }
@@ -103,15 +103,15 @@ void currdump::dump(TIMESTAMP t){
 	}
 	obj = 0;
 	while (obj=gl_find_next(links,obj)){
-		if(gl_object_isa(obj, const_cast<char*>("link"), const_cast<char*>("powerflow"))){
+		if(gl_object_isa(obj, "link", "powerflow")){
 
 			//Map the properties of interest - first current
-			link_current_value_link[0] = new gld_property(obj,const_cast<char*>("current_in_A"));
+			link_current_value_link[0] = new gld_property(obj,"current_in_A");
 
 			//Check it
 			if (!link_current_value_link[0]->is_valid() || !link_current_value_link[0]->is_complex())
 			{
-				GL_THROW(const_cast<char*>("currdump - Unable to map current property of link:%d - %s"),obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW("currdump - Unable to map current property of link:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
 				While the currdump object attempted to map the current_in_A, current_in_B, or current_in_C, an error
 				occurred.  Please try again.  If the error persists, please submit your code via the ticketing and issues system.
@@ -119,22 +119,22 @@ void currdump::dump(TIMESTAMP t){
 			}
 
 			//Map the properties of interest - second current
-			link_current_value_link[1] = new gld_property(obj,const_cast<char*>("current_in_B"));
+			link_current_value_link[1] = new gld_property(obj,"current_in_B");
 
 			//Check it
 			if (!link_current_value_link[1]->is_valid() || !link_current_value_link[1]->is_complex())
 			{
-				GL_THROW(const_cast<char*>(const_cast<char*>("currdump - Unable to map current property of link:%d - %s")),obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW(const_cast<char*>("currdump - Unable to map current property of link:%d - %s"),obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
 			}
 
 			//Map the properties of interest - third current
-			link_current_value_link[2] = new gld_property(obj,const_cast<char*>("current_in_C"));
+			link_current_value_link[2] = new gld_property(obj,"current_in_C");
 
 			//Check it
 			if (!link_current_value_link[2]->is_valid() || !link_current_value_link[2]->is_complex())
 			{
-				GL_THROW(const_cast<char*>(const_cast<char*>("currdump - Unable to map current property of link:%d - %s")),obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW(const_cast<char*>("currdump - Unable to map current property of link:%d - %s"),obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
 			}
 

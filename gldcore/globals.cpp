@@ -294,7 +294,7 @@ STATUS global_init(void)
 
 	for (i = 0; i < sizeof(map) / sizeof(map[0]); i++){
 		struct s_varmap *p = &(map[i]);
-		GLOBALVAR *var = global_create(const_cast<char*>(p->name), p->type, p->addr, PT_ACCESS, p->access, p->description?PT_DESCRIPTION:0, p->description, NULL);
+		GLOBALVAR *var = global_create(p->name, p->type, p->addr, PT_ACCESS, p->access, p->description?PT_DESCRIPTION:0, p->description, NULL);
 		if(var == NULL){
 			output_error("global_init(): global variable '%s' registration failed", p->name);
 			/* TROUBLESHOOT
@@ -360,7 +360,6 @@ GLOBALVAR *global_create(const char *name, ...){
 	PROPERTY *prop = NULL, *lastprop = NULL;
 	PROPERTYTYPE proptype;
 	GLOBALVAR *var = NULL;
-	name = const_cast<char*>(name);
 
 	/* don't create duplicate entries */
 	if(global_find(strdup(name)) != NULL){
@@ -583,7 +582,7 @@ STATUS global_setvar(const char *def, ...) /**< the definition */
 			}
 
 			/** @todo autotype global variables when creating them (ticket #26) */
-			var = global_create(const_cast<char*>(name),PT_char1024,NULL,PT_SIZE,1,PT_ACCESS,PA_PUBLIC,NULL);
+			var = global_create(name,PT_char1024,NULL,PT_SIZE,1,PT_ACCESS,PA_PUBLIC,NULL);
 			if ( var==NULL )
 			{
 				output_error("unable to implicitly create the global variable '%s'", name);
@@ -696,7 +695,7 @@ char *global_seq(char *buffer, int size, const char *name)
 			else
 			{
 				int32 *addr = (int32*)malloc(sizeof(int32));
-				GLOBALVAR *var = global_create(const_cast<char*>(seq),PT_int32,addr,PT_ACCESS,PA_PUBLIC,NULL);
+				GLOBALVAR *var = global_create(seq,PT_int32,addr,PT_ACCESS,PA_PUBLIC,NULL);
 				*addr = 0;
 				return global_getvar(seq,buffer,size);
 			}
@@ -919,7 +918,7 @@ int parameter_expansion(char *buffer, int size, const char *spec)
 		if ( var==NULL )
 		{
 				addr = (int32*)malloc(sizeof(int32));
-				var = global_create(const_cast<char*>(name),PT_int32,addr,PT_ACCESS,PA_PUBLIC,NULL);
+				var = global_create(name,PT_int32,addr,PT_ACCESS,PA_PUBLIC,NULL);
 		}
 		else
 			addr = (int32*) &(var->prop->addr);

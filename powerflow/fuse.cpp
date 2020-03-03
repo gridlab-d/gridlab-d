@@ -31,7 +31,7 @@ fuse::fuse(MODULE *mod) : link_object(mod)
 	{
 		pclass = link_object::oclass;
 		
-		oclass = gl_register_class(mod,const_cast<char*>("fuse"),sizeof(fuse),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,"fuse",sizeof(fuse),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class fuse";
 		else
@@ -54,30 +54,30 @@ fuse::fuse(MODULE *mod) : link_object(mod)
 			PT_double, "current_limit[A]", PADDR(current_limit),
 			PT_double, "mean_replacement_time[s]",PADDR(mean_replacement_time),	//Retains compatibility with older files
 			PT_double, "fuse_resistance[Ohm]",PADDR(fuse_resistance), PT_DESCRIPTION,"The resistance value of the fuse when it is not blown.",
-			NULL) < 1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
+			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
-		if (gl_publish_function(oclass,const_cast<char*>("change_fuse_state"),(FUNCTIONADDR)change_fuse_state)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish fuse state change function"));
-		if (gl_publish_function(oclass,const_cast<char*>("reliability_operation"),(FUNCTIONADDR)fuse_reliability_operation)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish fuse reliability operation function"));
-		if (gl_publish_function(oclass,	const_cast<char*>("create_fault"), (FUNCTIONADDR)create_fault_fuse)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish fault creation function"));
-		if (gl_publish_function(oclass,	const_cast<char*>("fix_fault"), (FUNCTIONADDR)fix_fault_fuse)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish fault restoration function"));
-        if (gl_publish_function(oclass,	const_cast<char*>("clear_fault"), (FUNCTIONADDR)clear_fault_fuse)==NULL)
-            GL_THROW(const_cast<char*>("Unable to publish fault clearing function"));
-		if (gl_publish_function(oclass,	const_cast<char*>("change_fuse_faults"), (FUNCTIONADDR)fuse_fault_updates)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish fuse fault correction function"));
+		if (gl_publish_function(oclass,"change_fuse_state",(FUNCTIONADDR)change_fuse_state)==NULL)
+			GL_THROW("Unable to publish fuse state change function");
+		if (gl_publish_function(oclass,"reliability_operation",(FUNCTIONADDR)fuse_reliability_operation)==NULL)
+			GL_THROW("Unable to publish fuse reliability operation function");
+		if (gl_publish_function(oclass,	"create_fault", (FUNCTIONADDR)create_fault_fuse)==NULL)
+			GL_THROW("Unable to publish fault creation function");
+		if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_fuse)==NULL)
+			GL_THROW("Unable to publish fault restoration function");
+        if (gl_publish_function(oclass,	"clear_fault", (FUNCTIONADDR)clear_fault_fuse)==NULL)
+            GL_THROW("Unable to publish fault clearing function");
+		if (gl_publish_function(oclass,	"change_fuse_faults", (FUNCTIONADDR)fuse_fault_updates)==NULL)
+			GL_THROW("Unable to publish fuse fault correction function");
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	const_cast<char*>("interupdate_pwr_object"), (FUNCTIONADDR)interupdate_link)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish fuse deltamode function"));
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
+			GL_THROW("Unable to publish fuse deltamode function");
 
 		//Publish restoration-related function (current update)
-		if (gl_publish_function(oclass,	const_cast<char*>("update_power_pwr_object"), (FUNCTIONADDR)updatepowercalc_link)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish fuse external power calculation function"));
-		if (gl_publish_function(oclass,	const_cast<char*>("check_limits_pwr_object"), (FUNCTIONADDR)calculate_overlimit_link)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish fuse external power limit calculation function"));
+		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+			GL_THROW("Unable to publish fuse external power calculation function");
+		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+			GL_THROW("Unable to publish fuse external power limit calculation function");
     }
 }
 
@@ -132,7 +132,7 @@ int fuse::init(OBJECT *parent)
 
 	if ((phases & PHASE_S) == PHASE_S)
 	{
-		GL_THROW(const_cast<char*>("fuses cannot be placed on triplex circuits"));
+		GL_THROW("fuses cannot be placed on triplex circuits");
 		/*  TROUBLESHOOT
 		Fuses do not currently support triplex circuits.  Please place the fuse higher upstream in the three-phase power
 		area or utilize another object (such as a circuit breaker in a house model) to limit the current flow.
@@ -151,7 +151,7 @@ int fuse::init(OBJECT *parent)
 	//Check current limit
 	if (current_limit < 0.0)
 	{
-		GL_THROW(const_cast<char*>("fuse:%s has a negative current limit value!"),obj->name);
+		GL_THROW("fuse:%s has a negative current limit value!",obj->name);
 		/*  TROUBLESHOOT
 		The fuse has a negative value current limit specified.  Please specify a positive
 		value for the current and try again.
@@ -304,7 +304,7 @@ int fuse::init(OBJECT *parent)
 	}
 	else
 	{
-		GL_THROW(const_cast<char*>("Fuses are not supported by this solver method"));
+		GL_THROW("Fuses are not supported by this solver method");
 		/*  TROUBLESHOOT
 		Fuses are currently only supported in Forward-Back Sweep and
 		Newton-Raphson Solvers.  Using them in other solvers is
@@ -333,7 +333,7 @@ TIMESTAMP fuse::sync(TIMESTAMP t0)
 		if (fault_check_object != NULL)
 		{
 			//It exists, good start! - now see if the proper variable is populated!
-			eventgen_obj = get_object(fault_check_object, const_cast<char*>("eventgen_object"));
+			eventgen_obj = get_object(fault_check_object, "eventgen_object");
 
 			//See if it worked - if not, assume it doesn't exist
 			if (*eventgen_obj != NULL)
@@ -550,7 +550,7 @@ TIMESTAMP fuse::sync(TIMESTAMP t0)
 			switch (work_phases)
 			{
 			case 0x00:	//No fuses blown !??
-				GL_THROW(const_cast<char*>("fuse:%s supposedly blew, but doesn't register the right phases"),obj->name);
+				GL_THROW("fuse:%s supposedly blew, but doesn't register the right phases",obj->name);
 				/*  TROUBLESHOOT
 				A fuse reported an over-current condition and blew the appropriate link.  However, it did not appear
 				to fully propogate this condition.  Please try again.  If the error persists, please submit your code
@@ -603,7 +603,7 @@ TIMESTAMP fuse::sync(TIMESTAMP t0)
 				fault_val[7] = '\0';
 				break;
 			default:
-				GL_THROW(const_cast<char*>("fuse:%s supposedly blew, but doesn't register the right phases"),obj->name);
+				GL_THROW("fuse:%s supposedly blew, but doesn't register the right phases",obj->name);
 				//Defined above
 			}//End switch
 
@@ -615,7 +615,7 @@ TIMESTAMP fuse::sync(TIMESTAMP t0)
 				//Make sure it worked
 				if (result_val != 1)
 				{
-					GL_THROW(const_cast<char*>("Attempt to blow fuse:%s failed in a reliability manner"),obj->name);
+					GL_THROW("Attempt to blow fuse:%s failed in a reliability manner",obj->name);
 					/*  TROUBLESHOOT
 					While attempting to propagate a blown fuse's impacts, an error was encountered.  Please
 					try again.  If the error persists, please submit your code and a bug report via the trac website.
@@ -1140,7 +1140,7 @@ void fuse::set_fuse_full_reliability(unsigned char desired_status)
 }
 
 //Retrieve the address of an object
-OBJECT **fuse::get_object(OBJECT *obj, char *name)
+OBJECT **fuse::get_object(OBJECT *obj, const char *name)
 {
 	PROPERTY *p = gl_get_property(obj,name);
 	if (p==NULL || p->ptype!=PT_object)
@@ -1196,7 +1196,7 @@ void fuse::fuse_check(set phase_to_check, complex *fcurr)
 	}
 	else
 	{
-		GL_THROW(const_cast<char*>("Unknown phase to check in fuse:%d"),OBJECTHDR(this)->id);
+		GL_THROW("Unknown phase to check in fuse:%d",OBJECTHDR(this)->id);
 		/*  TROUBLESHOOT
 		An invalid phase was specified for the phase check in a fuse.  Please
 		check your code and continue.  If it persists, submit your code and a bug

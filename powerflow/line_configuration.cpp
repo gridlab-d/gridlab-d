@@ -28,7 +28,7 @@ line_configuration::line_configuration(MODULE *mod) : powerflow_library(mod)
 {
 	if(oclass == NULL)
 	{
-		oclass = oclass = gl_register_class(mod,const_cast<char*>("line_configuration"),sizeof(line_configuration),0x00);
+		oclass = oclass = gl_register_class(mod,"line_configuration",sizeof(line_configuration),0x00);
 		if (oclass==NULL)
 			throw "unable to register class line_configuration";
 		else
@@ -62,7 +62,7 @@ line_configuration::line_configuration(MODULE *mod) : powerflow_library(mod)
 			PT_double, "rating.summer.emergency[A]", PADDR(summer.emergency),PT_DESCRIPTION,"amp rating in summer, short term",
 			PT_double, "rating.winter.continuous[A]", PADDR(winter.continuous),PT_DESCRIPTION,"amp rating in winter, continuous",
 			PT_double, "rating.winter.emergency[A]", PADDR(winter.emergency),PT_DESCRIPTION,"amp rating in winter, short term",
-            NULL) < 1) GL_THROW(const_cast<char*>("unable to publish line_configuration properties in %s"),__FILE__);
+            NULL) < 1) GL_THROW("unable to publish line_configuration properties in %s",__FILE__);
     }
 }
 

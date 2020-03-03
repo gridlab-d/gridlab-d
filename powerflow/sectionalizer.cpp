@@ -26,31 +26,31 @@ sectionalizer::sectionalizer(MODULE *mod) : switch_object(mod)
 		pclass = link_object::oclass;
 
 		// register the class definition
-		oclass = gl_register_class(mod,const_cast<char*>("sectionalizer"),sizeof(sectionalizer),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,"sectionalizer",sizeof(sectionalizer),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
         if(oclass == NULL)
-            GL_THROW(const_cast<char*>("unable to register object class implemented by %s"),__FILE__);
+            GL_THROW("unable to register object class implemented by %s",__FILE__);
 
 		// publish the class properties
         if(gl_publish_variable(oclass,
 			PT_INHERIT, "switch",
-			NULL) < 1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
+			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
-		if (gl_publish_function(oclass,const_cast<char*>("change_sectionalizer_state"),(FUNCTIONADDR)change_sectionalizer_state)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish sectionalizer state change function"));
-		if (gl_publish_function(oclass,const_cast<char*>("sectionalizer_reliability_operation"),(FUNCTIONADDR)sectionalizer_reliability_operation)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish sectionalizer reliability operation function"));
-		if (gl_publish_function(oclass,	const_cast<char*>("change_sectionalizer_faults"), (FUNCTIONADDR)sectionalizer_fault_updates)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish sectionalizer fault correction function"));
+		if (gl_publish_function(oclass,"change_sectionalizer_state",(FUNCTIONADDR)change_sectionalizer_state)==NULL)
+			GL_THROW("Unable to publish sectionalizer state change function");
+		if (gl_publish_function(oclass,"sectionalizer_reliability_operation",(FUNCTIONADDR)sectionalizer_reliability_operation)==NULL)
+			GL_THROW("Unable to publish sectionalizer reliability operation function");
+		if (gl_publish_function(oclass,	"change_sectionalizer_faults", (FUNCTIONADDR)sectionalizer_fault_updates)==NULL)
+			GL_THROW("Unable to publish sectionalizer fault correction function");
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	const_cast<char*>("interupdate_pwr_object"), (FUNCTIONADDR)interupdate_switch)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish sectionalizer deltamode function"));
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_switch)==NULL)
+			GL_THROW("Unable to publish sectionalizer deltamode function");
 
 		//Publish restoration-related function (current update)
-		if (gl_publish_function(oclass,	const_cast<char*>("update_power_pwr_object"), (FUNCTIONADDR)updatepowercalc_link)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish sectionalizer external power calculation function"));
-		if (gl_publish_function(oclass,	const_cast<char*>("check_limits_pwr_object"), (FUNCTIONADDR)calculate_overlimit_link)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish sectionalizer external power limit calculation function"));
+		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+			GL_THROW("Unable to publish sectionalizer external power calculation function");
+		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+			GL_THROW("Unable to publish sectionalizer external power limit calculation function");
     }
 }
 
@@ -157,7 +157,7 @@ EXPORT double change_sectionalizer_state(OBJECT *thisobj, unsigned char phase_ch
 		//Call to see if a recloser is present
 		if (fault_check_object == NULL)
 		{
-			GL_THROW(const_cast<char*>("Reliability call made without fault_check object present!"));
+			GL_THROW("Reliability call made without fault_check object present!");
 			/*  TROUBLESHOOT
 			A sectionalizer attempted to call a reliability-related function.  However, this function
 			requires a fault_check object to be present in the system.  Please add the appropriate object.
@@ -171,7 +171,7 @@ EXPORT double change_sectionalizer_state(OBJECT *thisobj, unsigned char phase_ch
 		//make sure it worked
 		if (funadd==NULL)
 		{
-			GL_THROW(const_cast<char*>("Failed to find sectionalizer checking method on object %s"),fault_check_object->name);
+			GL_THROW("Failed to find sectionalizer checking method on object %s",fault_check_object->name);
 			/*  TROUBLESHOOT
 			While attempting to find the fault check method, or its subfunction to handle sectionalizers,
 			an error was encountered.  Please ensure a proper fault_check object is present in the system.
@@ -184,7 +184,7 @@ EXPORT double change_sectionalizer_state(OBJECT *thisobj, unsigned char phase_ch
 
 		if (recloser_count == 0.0)	//Failed :(
 		{
-			GL_THROW(const_cast<char*>("Failed to handle sectionalizer check on %s"),thisobj->name);
+			GL_THROW("Failed to handle sectionalizer check on %s",thisobj->name);
 			/*  TROUBLESHOOT
 			While attempting to handle sectionalizer actions for the specified device, an error occurred.  Please
 			try again and ensure all parameters are correct.  If the error persists, please submit your code and a

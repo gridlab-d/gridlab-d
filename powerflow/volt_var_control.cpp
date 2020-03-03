@@ -29,9 +29,9 @@ volt_var_control::volt_var_control(MODULE *mod) : powerflow_object(mod)
 	if(oclass == NULL)
 	{
 		pclass = powerflow_object::oclass;
-		oclass = gl_register_class(mod,const_cast<char*>("volt_var_control"),sizeof(volt_var_control),PC_PRETOPDOWN|PC_POSTTOPDOWN|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,"volt_var_control",sizeof(volt_var_control),PC_PRETOPDOWN|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if(oclass == NULL)
-			GL_THROW(const_cast<char*>("unable to register object class implemented by %s"),__FILE__);
+			GL_THROW("unable to register object class implemented by %s",__FILE__);
 		if(gl_publish_variable(oclass,
 			PT_enumeration, "control_method", PADDR(control_method),PT_DESCRIPTION,"IVVC activated or in standby",
 				PT_KEYWORD, "ACTIVE", (enumeration)ACTIVE,
@@ -56,7 +56,7 @@ volt_var_control::volt_var_control(MODULE *mod) : powerflow_object(mod)
 			PT_char1024, "high_load_deadband",PADDR(vbw_high_txt),PT_DESCRIPTION,"High loading case voltage deadband for each regulator, separated by commas",
 			PT_char1024, "low_load_deadband",PADDR(vbw_low_txt),PT_DESCRIPTION,"Low loading case voltage deadband for each regulator, separated by commas",
 			PT_bool, "pf_signed",PADDR(pf_signed),PT_DESCRIPTION,"Set to true to consider the sign on the power factor.  Otherwise, it just maintains the deadband of +/-desired_pf",
-			NULL) < 1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
+			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
 
@@ -141,7 +141,7 @@ int volt_var_control::init(OBJECT *parent)
 	{
 		if ((d_max <= 0.0) || (d_max > 1.0))
 		{
-			GL_THROW(const_cast<char*>("volt_var_control %s: d_max must be a number between 0 and 1"),obj->name);
+			GL_THROW("volt_var_control %s: d_max must be a number between 0 and 1",obj->name);
 			/*  TROUBLESHOOT
 			The capacitor threshold value d_max represents a fraction of a capacitor's total kVA rating.
 			It must be specified greater than 0, but less than or equal to 1.
@@ -151,7 +151,7 @@ int volt_var_control::init(OBJECT *parent)
 		//Check power factor range
 		if ((desired_pf <= -1) || (desired_pf > 1))
 		{
-			GL_THROW(const_cast<char*>("volt_var_control %s: Desired signed power factor is outside the valid range"),obj->name);
+			GL_THROW("volt_var_control %s: Desired signed power factor is outside the valid range",obj->name);
 			/*  TROUBLESHOOT
 			With a signed power factor enabled, the desired_pf must be between -1 and 1.  Valid ranges are
 			greater than -1 and less than or equal to 1 (-1 is not accepted, use 1.0 as unity power factor).
@@ -162,7 +162,7 @@ int volt_var_control::init(OBJECT *parent)
 	{
 		if ((d_max <= 0.0) || (d_max > 1.0) || (d_min <= 0.0) || (d_min > 1.0))
 		{
-			GL_THROW(const_cast<char*>("volt_var_control %s: d_max and d_min must be a number between 0 and 1"),obj->name);
+			GL_THROW("volt_var_control %s: d_max and d_min must be a number between 0 and 1",obj->name);
 			/*  TROUBLESHOOT
 			The capacitor threshold values d_max and d_min represent a fraction of a capacitor's total kVA rating.
 			They must be specified greater than 0, but less than or equal to 1.
@@ -171,7 +171,7 @@ int volt_var_control::init(OBJECT *parent)
 
 		if (d_min >= d_max)
 		{
-			GL_THROW(const_cast<char*>("volt_var_control %s: d_min must be less than d_max"),obj->name);
+			GL_THROW("volt_var_control %s: d_min must be less than d_max",obj->name);
 			/*  TROUBLESHOOT
 			The capacitor threshold fraction for d_min must be less than d_max.  Otherwise, improper (or no) operation
 			will occur.
@@ -181,7 +181,7 @@ int volt_var_control::init(OBJECT *parent)
 		//Check power factor
 		if (desired_pf < 0)	//Negative - see if they meant the other mode
 		{
-			GL_THROW(const_cast<char*>("volt_var_control %s: Desired power factor is negative.  Should pf_signed be set?"),obj->name);
+			GL_THROW("volt_var_control %s: Desired power factor is negative.  Should pf_signed be set?",obj->name);
 			/*  TROUBLESHOOT
 			A negative power factor was entered in the "deadband" operation mode of the controller.  If a signed
 			power factor value was desired, set the pf_signed paramter to true to proceed.  Otherwise, correct the
@@ -190,7 +190,7 @@ int volt_var_control::init(OBJECT *parent)
 		}
 		else if (desired_pf > 1)	//Greater than 1, invalid
 		{
-			GL_THROW(const_cast<char*>("volt_var_control %s: Desired power factor is outside the valid range"),obj->name);
+			GL_THROW("volt_var_control %s: Desired power factor is outside the valid range",obj->name);
 			/*  TROUBLESHOOT
 			With a normal power factor enabled, the desired_pf must be between 0 and 1.  Valid ranges are
 			greater than or equal to 0 and less than or equal to 1.
@@ -200,7 +200,7 @@ int volt_var_control::init(OBJECT *parent)
 
 	if (cap_time_delay < 0)
 	{
-		GL_THROW(const_cast<char*>("volt_var_control %s: capacitor_delay must be a positive number!"),obj->name);
+		GL_THROW("volt_var_control %s: capacitor_delay must be a positive number!",obj->name);
 		/*  TROUBLESHOOT
 		The default capacitor delay must be a positive number.  Non-causal or negative time delays are not permitted.
 		*/
@@ -217,7 +217,7 @@ int volt_var_control::init(OBJECT *parent)
 
 	if (reg_time_delay < 0)
 	{
-		GL_THROW(const_cast<char*>("volt_var_control %s: regulator_delay must be a positive number!"),obj->name);
+		GL_THROW("volt_var_control %s: regulator_delay must be a positive number!",obj->name);
 		/*  TROUBLESHOOT
 		The default regilator delay must be a positive number.  Non-causal or negative time delays are not permitted.
 		*/
@@ -359,7 +359,7 @@ int volt_var_control::init(OBJECT *parent)
 			
 			if (pRegulator_list == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: regulator storage allocation failed"),obj->name);
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				/*  TROUBLESHOOT
 				While attempting to allocate one of the storage vectors for the regulators,
 				an error was encountered.  Please try again.  If the error persists, please
@@ -371,7 +371,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			if (pRegulator_configs == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: regulator storage allocation failed"),obj->name);
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
 			}
 
@@ -379,7 +379,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			if (PrevRegState == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: regulator storage allocation failed"),obj->name);
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
 			}
 
@@ -387,14 +387,14 @@ int volt_var_control::init(OBJECT *parent)
 			pMeasurement_list = (node***)gl_malloc(num_regs*sizeof(node**));
 			if (pMeasurement_list == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: regulator storage allocation failed"),obj->name);
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
 			}
 
 			num_meas = (int*)gl_malloc(num_regs*sizeof(int));
 			if (num_meas == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: regulator storage allocation failed"),obj->name);
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
 			}
 
@@ -402,7 +402,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			if (TRegUpdate == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: regulator storage allocation failed"),obj->name);
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
 			}
 
@@ -416,7 +416,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			if (RegUpdateTimes == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: regulator storage allocation failed"),obj->name);
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
 			}
 
@@ -424,7 +424,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			if (reg_step_up == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: regulator storage allocation failed"),obj->name);
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
 			}
 
@@ -432,7 +432,7 @@ int volt_var_control::init(OBJECT *parent)
 			
 			if (reg_step_down == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: regulator storage allocation failed"),obj->name);
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
 			}
 
@@ -440,7 +440,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			if (RegToNodes == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: regulator storage allocation failed"),obj->name);
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
 			}
 
@@ -448,7 +448,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			if (vbw_high == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: regulator storage allocation failed"),obj->name);
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
 			}
 
@@ -456,7 +456,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			if (vbw_low == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: regulator storage allocation failed"),obj->name);
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
 			}
 
@@ -464,7 +464,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			if (max_vdrop == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: regulator storage allocation failed"),obj->name);
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
 			}
 
@@ -472,7 +472,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			if (desired_voltage == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: regulator storage allocation failed"),obj->name);
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
 			}
 
@@ -480,7 +480,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			if (maximum_voltage == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: regulator storage allocation failed"),obj->name);
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
 			}
 
@@ -488,7 +488,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			if (minimum_voltage == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: regulator storage allocation failed"),obj->name);
+				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
 			}
 
@@ -531,7 +531,7 @@ int volt_var_control::init(OBJECT *parent)
 					}
 					//Else is the end of list, so it should already be \0-ed
 
-					GL_THROW(const_cast<char*>("volt_var_control %s: item %s in regulator_list not found"),obj->name,token_a);
+					GL_THROW("volt_var_control %s: item %s in regulator_list not found",obj->name,token_a);
 					/*  TROUBLESHOOT
 					While attempting to populate the regulator list, an invalid object was found.  Please check
 					the object name.
@@ -633,7 +633,7 @@ int volt_var_control::init(OBJECT *parent)
 					//Make sure voltages are ok
 					if (minimum_voltage[index] >= maximum_voltage[index])
 					{
-						GL_THROW(const_cast<char*>("volt_var_control %s: Minimum voltage limit on regulator %d must be less than the maximum voltage limit of the system"),obj->name,(index+1));
+						GL_THROW("volt_var_control %s: Minimum voltage limit on regulator %d must be less than the maximum voltage limit of the system",obj->name,(index+1));
 						/*  TROUBLESHOOT
 						The minimum_voltage value must be less than the maximum_voltage value to ensure proper system operation.
 						*/
@@ -642,7 +642,7 @@ int volt_var_control::init(OBJECT *parent)
 					//Make sure desired voltage is within operating limits
 					if ((desired_voltage[index] < minimum_voltage[index]) || (desired_voltage[index] > maximum_voltage[index]))
 					{
-						GL_THROW(const_cast<char*>("volt_var_control %s: Desired voltage on regulator %d is outside the minimum and maximum set points."),obj->name,(index+1));
+						GL_THROW("volt_var_control %s: Desired voltage on regulator %d is outside the minimum and maximum set points.",obj->name,(index+1));
 						/*  TROUBLESHOOT
 						The desired_voltage property is specified in the range outside of the minimum_voltage and maximum_voltage
 						set points.  It needs to lie between these points for proper operation.  Please adjust the values, or leave
@@ -742,7 +742,7 @@ int volt_var_control::init(OBJECT *parent)
 					//Check to make sure max_vdrop isn't negative
 					if (max_vdrop[index] <= 0)
 					{
-						GL_THROW(const_cast<char*>("volt_var_control %s: Maximum expected voltage drop specified for regulator %d should be a positive non-zero number."),obj->name,(index+1));
+						GL_THROW("volt_var_control %s: Maximum expected voltage drop specified for regulator %d should be a positive non-zero number.",obj->name,(index+1));
 						/*  TROUBLESHOOT
 						The max_vdrop property must be greater than 0 for proper operation of the coordinated Volt-VAr control scheme.
 						*/
@@ -751,7 +751,7 @@ int volt_var_control::init(OBJECT *parent)
 					//Make sure bandwidth values aren't negative
 					if (vbw_low[index] <= 0)
 					{
-						GL_THROW(const_cast<char*>("volt_var_control %s: Low loading deadband (bandwidth) for regulator %d  must be a positive non-zero number"),obj->name,(index+1));
+						GL_THROW("volt_var_control %s: Low loading deadband (bandwidth) for regulator %d  must be a positive non-zero number",obj->name,(index+1));
 						/*  TROUBLESHOOT
 						The low_load_deadband setting must be greater than 0 for proper operation of the Volt-VAr controller.
 						*/
@@ -759,7 +759,7 @@ int volt_var_control::init(OBJECT *parent)
 
 					if (vbw_high[index] <= 0)
 					{
-						GL_THROW(const_cast<char*>("volt_var_control %s: High loading deadband (bandwidth) for regulator %d must be a positive non-zero number"),obj->name,(index+1));
+						GL_THROW("volt_var_control %s: High loading deadband (bandwidth) for regulator %d must be a positive non-zero number",obj->name,(index+1));
 						/*  TROUBLESHOOT
 						The high_load_deadband setting must be greater than 0 for proper operation of the Volt-VAr controller.
 						*/
@@ -780,7 +780,7 @@ int volt_var_control::init(OBJECT *parent)
 	}//End num_regs > 0
 	else	//no regulators found
 	{
-		GL_THROW(const_cast<char*>("volt_var_control %s: regulator_list is empty"),obj->name);
+		GL_THROW("volt_var_control %s: regulator_list is empty",obj->name);
 		/*  TROUBLESHOOT
 		The volt_var_control object requires at one regulator regulator to control for coordinated action.  Please specify
 		an appropriate regulator on the system.
@@ -854,7 +854,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			if (pCapacitor_list == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: Failed to allocate capacitor memory"),obj->name);
+				GL_THROW("volt_var_control %s: Failed to allocate capacitor memory",obj->name);
 				/*  TROUBLESHOOT
 				The volt_var_control failed to allocate memory for the controllable capacitors table.
 				Please try again.  If the error persists, please submit your code and a bug report via
@@ -867,7 +867,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			if (Capacitor_size == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: Failed to allocate capacitor memory"),obj->name);
+				GL_THROW("volt_var_control %s: Failed to allocate capacitor memory",obj->name);
 				//Defined above
 			}
 
@@ -876,7 +876,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			if (CapUpdateTimes == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: Failed to allocate capacitor memory"),obj->name);
+				GL_THROW("volt_var_control %s: Failed to allocate capacitor memory",obj->name);
 				//Defined above
 			}
 
@@ -921,7 +921,7 @@ int volt_var_control::init(OBJECT *parent)
 			}
 			else	//General catch, not sure how it would get here
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: Single capacitor list population failed"),obj->name);
+				GL_THROW("volt_var_control %s: Single capacitor list population failed",obj->name);
 				/*  TROUBLESHOOT
 				While attempting to populate the capacitor list with a single capacitor, it somehow
 				failed to recognize this was a valid object.  Please submit your code and a bug report
@@ -936,7 +936,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			if (pCapacitor_list_temp == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: Failed to allocate capacitor memory"),obj->name);
+				GL_THROW("volt_var_control %s: Failed to allocate capacitor memory",obj->name);
 				//Defined above
 			}
 
@@ -945,7 +945,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			if (pCapacitor_list == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: Failed to allocate capacitor memory"),obj->name);
+				GL_THROW("volt_var_control %s: Failed to allocate capacitor memory",obj->name);
 				//Defined above
 			}
 
@@ -954,7 +954,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			if (CapUpdateTimes == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: Failed to allocate capacitor memory"),obj->name);
+				GL_THROW("volt_var_control %s: Failed to allocate capacitor memory",obj->name);
 				//Defined above
 			}
 
@@ -963,7 +963,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			if (temp_cap_idx == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: Failed to allocate capacitor memory"),obj->name);
+				GL_THROW("volt_var_control %s: Failed to allocate capacitor memory",obj->name);
 				//Defined above
 			}
 
@@ -972,7 +972,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			if (temp_cap_idx_work == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: Failed to allocate capacitor memory"),obj->name);
+				GL_THROW("volt_var_control %s: Failed to allocate capacitor memory",obj->name);
 				//Defined above
 			}
 
@@ -981,7 +981,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			if (temp_cap_size == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: Failed to allocate capacitor memory"),obj->name);
+				GL_THROW("volt_var_control %s: Failed to allocate capacitor memory",obj->name);
 				//Defined above
 			}
 
@@ -990,7 +990,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			if (Capacitor_size == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: Failed to allocate capacitor memory"),obj->name);
+				GL_THROW("volt_var_control %s: Failed to allocate capacitor memory",obj->name);
 				//Defined above
 			}
 
@@ -1045,7 +1045,7 @@ int volt_var_control::init(OBJECT *parent)
 					}
 					//Else is the end of list, so it should already be \0-ed
 
-					GL_THROW(const_cast<char*>("volt_var_control %s: item %s in capacitor_list not found"),obj->name,token_a);
+					GL_THROW("volt_var_control %s: item %s in capacitor_list not found",obj->name,token_a);
 					/*  TROUBLESHOOT
 					While attempting to populate the capacitor list, an invalid object was found.  Please check
 					the object name.
@@ -1077,7 +1077,7 @@ int volt_var_control::init(OBJECT *parent)
 		
 		if (PrevCapState == NULL)
 		{
-			GL_THROW(const_cast<char*>("volt_var_control %s: capacitor previous state allocation failure"),obj->name);
+			GL_THROW("volt_var_control %s: capacitor previous state allocation failure",obj->name);
 			/*  TROUBLESHOOT
 			While attempting to allocate space for the previous capacitor control state vector, a
 			memory allocation error occurred.  Please try again.  If the problem persists, please
@@ -1158,7 +1158,7 @@ int volt_var_control::init(OBJECT *parent)
 		{
 			if (num_regs != 1)	//More than one regulator, so this is unacceptable
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: A measurement is missing a regulator association"),obj->name);
+				GL_THROW("volt_var_control %s: A measurement is missing a regulator association",obj->name);
 				//Defined below
 			}
 			//Defaulted else - 1 regulator, this will be checked below
@@ -1228,7 +1228,7 @@ int volt_var_control::init(OBJECT *parent)
 		
 		if (temp_obj == NULL)	//Not a valid object, error!
 		{
-			GL_THROW(const_cast<char*>("volt_var_control %s: Measurement %s is not a valid node!"),obj->name,token_a);
+			GL_THROW("volt_var_control %s: Measurement %s is not a valid node!",obj->name,token_a);
 			/*  TROUBLESHOOT
 			While parsing the measurement list, an invalid object was found.  Please verify the object
 			name and try again.
@@ -1247,7 +1247,7 @@ int volt_var_control::init(OBJECT *parent)
 
 		if (temp_double != 0)	//Should be no remainder
 		{
-			GL_THROW(const_cast<char*>("volt_var_control %s: A measurement is missing a regulator association"),obj->name);
+			GL_THROW("volt_var_control %s: A measurement is missing a regulator association",obj->name);
 			/*  TROUBLESHOOT
 			If more than one regulator is present, the measurement_list must be specified as a comma-delimited
 			pair with the measurement node and the integer of the regulator it is associated with (e.g., 709,2 associates
@@ -1282,7 +1282,7 @@ int volt_var_control::init(OBJECT *parent)
 
 				if (addy_math > 2)	//Too many characters
 				{
-					GL_THROW(const_cast<char*>("volt_var_control %s: Measurement list item pair %d is invalid."),obj->name,(index+1));
+					GL_THROW("volt_var_control %s: Measurement list item pair %d is invalid.",obj->name,(index+1));
 					/*  TROUBLESHOOT
 					While parsing the measurement list, an invalid pair was encountered.  This may be due to a typo, or
 					there may not be a proper regulator specification.  if more than one regulator is being controlled,
@@ -1313,7 +1313,7 @@ int volt_var_control::init(OBJECT *parent)
 
 				if ((indexa <0) || (indexa > (num_regs-1)))		//Pre-offset for C indexing
 				{
-					GL_THROW(const_cast<char*>("volt_var_control %s: Measurement list references a nonexistant regulator %d"),obj->name,(indexa+1));
+					GL_THROW("volt_var_control %s: Measurement list references a nonexistant regulator %d",obj->name,(indexa+1));
 					/*  TROUBLESHOOT
 					While parsing the measurement list, an invalid regulator reference number was encountered.  These numbers should
 					match the position of the regulator in the regulator_list variable.  Please double check your values and try again.
@@ -1337,7 +1337,7 @@ int volt_var_control::init(OBJECT *parent)
 		temp_meas_idx = (int*)gl_malloc(num_regs*sizeof(int));
 		if (temp_meas_idx == NULL)
 		{
-			GL_THROW(const_cast<char*>("volt_var_control %s: measurement list allocation failure"),obj->name);
+			GL_THROW("volt_var_control %s: measurement list allocation failure",obj->name);
 			//Defined below
 		}
 
@@ -1355,7 +1355,7 @@ int volt_var_control::init(OBJECT *parent)
 			
 			if (pMeasurement_list[index] == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: measurement list allocation failure"),obj->name);
+				GL_THROW("volt_var_control %s: measurement list allocation failure",obj->name);
 				/*  TROUBLESHOOT
 				While attempting to allocate space for the measurment list, a memory allocation error occurred.
 				Please try again.  If the problem persists, please submit your code and a bug report via the trac website.
@@ -1383,7 +1383,7 @@ int volt_var_control::init(OBJECT *parent)
 				}
 				//Else is the end of list, so it should already be \0-ed
 
-				GL_THROW(const_cast<char*>("volt_var_control %s: measurement object %s was not found!"),obj->name,token_a);
+				GL_THROW("volt_var_control %s: measurement object %s was not found!",obj->name,token_a);
 				/*  TROUBLESHOOT
 				While parsing the measurment list for the volt_var_control object, a measurement point
 				was not found.  Please check the name and try again.  If the problem persists, please submit 
@@ -1434,7 +1434,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			if (pMeasurement_list[0] == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: measurement list allocation failure"),obj->name);
+				GL_THROW("volt_var_control %s: measurement list allocation failure",obj->name);
 				//Defined above
 			}
 
@@ -1458,7 +1458,7 @@ int volt_var_control::init(OBJECT *parent)
 					}
 					//Else is the end of list, so it should already be \0-ed
 
-					GL_THROW(const_cast<char*>("volt_var_control %s: measurement object %s was not found!"),obj->name,token_a);
+					GL_THROW("volt_var_control %s: measurement object %s was not found!",obj->name,token_a);
 					/*  TROUBLESHOOT
 					While parsing the measurment list for the volt_var_control object, a measurement point
 					was not found.  Please check the name and try again.  If the problem persists, please submit 
@@ -1484,7 +1484,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			if (pMeasurement_list[0] == NULL)
 			{
-				GL_THROW(const_cast<char*>("volt_var_control %s: measurement list allocation failure"),obj->name);
+				GL_THROW("volt_var_control %s: measurement list allocation failure",obj->name);
 				//Defined above
 			}
 
@@ -1512,7 +1512,7 @@ int volt_var_control::init(OBJECT *parent)
 
 	if ((substation_link->phases & temp_phase) != temp_phase)	//Mismatch
 	{
-		GL_THROW(const_cast<char*>("volt_var_control %s: Power factor monitored phases mismatch"),obj->name);
+		GL_THROW("volt_var_control %s: Power factor monitored phases mismatch",obj->name);
 		/*  TROUBLESHOOT
 		One or more of the phases specified in pf_phase does not match with the phases of
 		substation_link.  Please double check the values for pf_phases on the volt_var_control
@@ -1533,7 +1533,7 @@ int volt_var_control::init(OBJECT *parent)
 
 		if (index < 0)	//Make sure it worked
 		{
-			GL_THROW(const_cast<char*>("Error setting parent"));
+			GL_THROW("Error setting parent");
 			/*  TROUBLESHOOT
 			An error has occurred while setting the parent field of the volt_var_control.  Please
 			submit a bug report and your code so this error can be diagnosed further.
@@ -1545,7 +1545,7 @@ int volt_var_control::init(OBJECT *parent)
 	}
 	else	//Any future solvers and GS - GS doesn't play nice with regulators anyways
 	{
-		GL_THROW(const_cast<char*>("Solver methods other than NR and FBS are unsupported at this time."));
+		GL_THROW("Solver methods other than NR and FBS are unsupported at this time.");
 		/*  TROUBLESHOOT
 		The volt_var_control object only supports the Newton-Raphson and Forward-Back Sweep
 		solvers at this time.  Other solvers (Gauss-Seidel) may be implemented at a future date.

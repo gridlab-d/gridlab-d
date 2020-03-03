@@ -25,7 +25,7 @@ triplex_line_configuration::triplex_line_configuration(MODULE *mod) : line_confi
 	{
 		pclass = line_configuration::oclass;
 		
-		oclass = gl_register_class(mod,const_cast<char*>("triplex_line_configuration"),sizeof(triplex_line_configuration),0x00);
+		oclass = gl_register_class(mod,"triplex_line_configuration",sizeof(triplex_line_configuration),0x00);
 		if (oclass==NULL)
 			throw "unable to register class triplex_line_configuration";
 		else
@@ -46,7 +46,7 @@ triplex_line_configuration::triplex_line_configuration(MODULE *mod) : line_confi
 			PT_double, "rating.summer.emergency[A]", PADDR(summer.emergency),PT_DESCRIPTION,"amp rating in summer, short term",
 			PT_double, "rating.winter.continuous[A]", PADDR(winter.continuous),PT_DESCRIPTION,"amp rating in winter, continuous",
 			PT_double, "rating.winter.emergency[A]", PADDR(winter.emergency),PT_DESCRIPTION,"amp rating in winter, short term",
-            NULL) < 1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
+            NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
     }
 }
 

@@ -31,7 +31,7 @@ series_reactor::series_reactor(MODULE *mod) : link_object(mod)
 	{
 		pclass = link_object::oclass;
 
-		oclass = gl_register_class(mod,const_cast<char*>("series_reactor"),sizeof(series_reactor),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,"series_reactor",sizeof(series_reactor),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class series_reactor";
 		else
@@ -49,17 +49,17 @@ series_reactor::series_reactor(MODULE *mod) : link_object(mod)
 			PT_double, "phase_C_resistance[Ohm]",PADDR(phase_C_impedance.Re()),PT_DESCRIPTION,"Resistive portion of phase C's impedance",
 			PT_double, "phase_C_reactance[Ohm]",PADDR(phase_C_impedance.Im()),PT_DESCRIPTION,"Reactive portion of phase C's impedance",
 			PT_double, "rated_current_limit[A]",PADDR(rated_current_limit),PT_DESCRIPTION,"Rated current limit for the reactor",
-            NULL) < 1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
+            NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	const_cast<char*>("interupdate_pwr_object"), (FUNCTIONADDR)interupdate_link)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish series reactor deltamode function"));
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
+			GL_THROW("Unable to publish series reactor deltamode function");
 
 		//Publish restoration-related function (current update)
-		if (gl_publish_function(oclass,	const_cast<char*>("update_power_pwr_object"), (FUNCTIONADDR)updatepowercalc_link)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish series reactor external power calculation function"));
-		if (gl_publish_function(oclass,	const_cast<char*>("check_limits_pwr_object"), (FUNCTIONADDR)calculate_overlimit_link)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish series reactor external power limit calculation function"));
+		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+			GL_THROW("Unable to publish series reactor external power calculation function");
+		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+			GL_THROW("Unable to publish series reactor external power limit calculation function");
     }
 }
 

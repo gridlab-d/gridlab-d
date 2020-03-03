@@ -53,7 +53,7 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 		pclass = triplex_node::oclass;
 
 		// register the class definition
-		oclass = gl_register_class(mod,const_cast<char*>("triplex_meter"),sizeof(triplex_meter),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,"triplex_meter",sizeof(triplex_meter),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class triplex_meter";
 		else
@@ -146,19 +146,19 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 			PT_double, "third_tier_price[$/kWh]", PADDR(tier_price[2]),PT_DESCRIPTION,"first tier price of energy greater than third tier energy",
 			PT_double, "third_tier_energy[kWh]", PADDR(tier_energy[2]),PT_DESCRIPTION,"price of energy on tier above second tier",
 
-			NULL)<1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
+			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 			//Deltamode functions
-			if (gl_publish_function(oclass,	const_cast<char*>("interupdate_pwr_object"), (FUNCTIONADDR)interupdate_triplex_meter)==NULL)
-				GL_THROW(const_cast<char*>("Unable to publish triplex_meter deltamode function"));
-			if (gl_publish_function(oclass,	const_cast<char*>("pwr_object_swing_swapper"), (FUNCTIONADDR)swap_node_swing_status)==NULL)
-				GL_THROW(const_cast<char*>("Unable to publish triplex_meter swing-swapping function"));
-			if (gl_publish_function(oclass,	const_cast<char*>("pwr_current_injection_update_map"), (FUNCTIONADDR)node_map_current_update_function)==NULL)
-				GL_THROW(const_cast<char*>("Unable to publish triplex_meter current injection update mapping function"));
-			if (gl_publish_function(oclass,	const_cast<char*>("attach_vfd_to_pwr_object"), (FUNCTIONADDR)attach_vfd_to_node)==NULL)
-				GL_THROW(const_cast<char*>("Unable to publish triplex_meter VFD attachment function"));
-			if (gl_publish_function(oclass, const_cast<char*>("pwr_object_reset_disabled_status"), (FUNCTIONADDR)node_reset_disabled_status) == NULL)
-				GL_THROW(const_cast<char*>("Unable to publish triplex_meter island-status-reset function"));
+			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_triplex_meter)==NULL)
+				GL_THROW("Unable to publish triplex_meter deltamode function");
+			if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
+				GL_THROW("Unable to publish triplex_meter swing-swapping function");
+			if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==NULL)
+				GL_THROW("Unable to publish triplex_meter current injection update mapping function");
+			if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
+				GL_THROW("Unable to publish triplex_meter VFD attachment function");
+			if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
+				GL_THROW("Unable to publish triplex_meter island-status-reset function");
 		}
 }
 
@@ -269,11 +269,11 @@ int triplex_meter::check_prices(){
 			tier_energy[2] = tier_energy[1];
 		}
 		if(tier_energy[2] < tier_energy[1] || tier_energy[1] < tier_energy[0]){
-			GL_THROW(const_cast<char*>("triplex_meter energy tiers quantity trend improperly"));
+			GL_THROW("triplex_meter energy tiers quantity trend improperly");
 		}
 		for(int i = 0; i < 3; ++i){
 			if(tier_price[i] < 0.0 || tier_energy[i] < 0.0)
-				GL_THROW(const_cast<char*>("triplex_meter tiers cannot have negative values"));
+				GL_THROW("triplex_meter tiers cannot have negative values");
 		}
 	} else if (bill_mode == BM_TIERED_TOU) { // beware: TOU pricing schedules haven't pushed values yet
 		if(tier_energy[1] == 0){ 
@@ -285,17 +285,17 @@ int triplex_meter::check_prices(){
 			tier_energy[2] = DBL_MAX;
 		}
 		if(tier_energy[2] < tier_energy[1] || tier_energy[1] < tier_energy[0]){
-			GL_THROW(const_cast<char*>("triplex_meter energy tiers quantity trend improperly"));
+			GL_THROW("triplex_meter energy tiers quantity trend improperly");
 		}
 		for(int i = 0; i < 3; ++i){
 			if(tier_price[i] < 0.0 || tier_energy[i] < 0.0)
-				GL_THROW(const_cast<char*>("triplex_meter tiers cannot have negative values"));
+				GL_THROW("triplex_meter tiers cannot have negative values");
 		}
 	}
 
 	if(bill_mode == BM_HOURLY || bill_mode == BM_TIERED_RTP){
 		if(power_market == 0 || price_prop == 0){
-			GL_THROW(const_cast<char*>("triplex_meter cannot use real time energy prices without a power market that publishes the next price"));
+			GL_THROW("triplex_meter cannot use real time energy prices without a power market that publishes the next price");
 		}
 		//price = *gl_get_double(power_market,price_prop);
 	}

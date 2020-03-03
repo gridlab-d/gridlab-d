@@ -51,7 +51,7 @@ meter::meter(MODULE *mod) : node(mod)
 		pclass = node::oclass;
 
 		// register the class definition
-		oclass = gl_register_class(mod,const_cast<char*>("meter"),sizeof(meter),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,"meter",sizeof(meter),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class meter";
 		else
@@ -162,23 +162,23 @@ meter::meter(MODULE *mod) : node(mod)
 			PT_double, "third_tier_energy[kWh]", PADDR(tier_energy[2]),PT_DESCRIPTION,"switching point between second tier price and third tier price",
 
 			//PT_double, "measured_reactive[kVar]", PADDR(measured_reactive), has not implemented yet
-			NULL)<1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
+			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		// publish meter reset function
-		if (gl_publish_function(oclass,const_cast<char*>("reset"),(FUNCTIONADDR)meter_reset)==NULL)
-			GL_THROW(const_cast<char*>("unable to publish meter_reset function in %s"),__FILE__);
+		if (gl_publish_function(oclass,"reset",(FUNCTIONADDR)meter_reset)==NULL)
+			GL_THROW("unable to publish meter_reset function in %s",__FILE__);
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	const_cast<char*>("interupdate_pwr_object"), (FUNCTIONADDR)interupdate_meter)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish meter deltamode function"));
-		if (gl_publish_function(oclass,	const_cast<char*>("pwr_object_swing_swapper"), (FUNCTIONADDR)swap_node_swing_status)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish meter swing-swapping function"));
-		if (gl_publish_function(oclass,	const_cast<char*>("pwr_current_injection_update_map"), (FUNCTIONADDR)node_map_current_update_function)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish meter current injection update mapping function"));
-		if (gl_publish_function(oclass,	const_cast<char*>("attach_vfd_to_pwr_object"), (FUNCTIONADDR)attach_vfd_to_node)==NULL)
-			GL_THROW(const_cast<char*>("Unable to publish meter VFD attachment function"));
-		if (gl_publish_function(oclass, const_cast<char*>("pwr_object_reset_disabled_status"), (FUNCTIONADDR)node_reset_disabled_status) == NULL)
-			GL_THROW(const_cast<char*>("Unable to publish meter island-status-reset function"));
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_meter)==NULL)
+			GL_THROW("Unable to publish meter deltamode function");
+		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
+			GL_THROW("Unable to publish meter swing-swapping function");
+		if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==NULL)
+			GL_THROW("Unable to publish meter current injection update mapping function");
+		if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
+			GL_THROW("Unable to publish meter VFD attachment function");
+		if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
+			GL_THROW("Unable to publish meter island-status-reset function");
 		}
 }
 
@@ -275,7 +275,7 @@ int meter::init(OBJECT *parent)
 	char temp_buff[128];
 
 	if(power_market != 0){
-		price_prop = gl_get_property(power_market, const_cast<char*>("current_market.clearing_price"));
+		price_prop = gl_get_property(power_market, "current_market.clearing_price");
 		if(price_prop == 0){
 			GL_THROW(const_cast<char*>(R"(meter::power_market object '%s' does not publish 'current_market.clearing_price')"), (power_market->name ? power_market->name : "(anon)"));
 		}
@@ -298,7 +298,7 @@ int meter::init(OBJECT *parent)
 
 	//Update tracking flag
 	//Get server mode variable
-	gl_global_getvar(const_cast<char*>("multirun_mode"),temp_buff,sizeof(temp_buff));
+	gl_global_getvar("multirun_mode",temp_buff,sizeof(temp_buff));
 
 	//See if we're not in standalone
 	if (strcmp(temp_buff,"STANDALONE"))	//strcmp returns a 0 if they are the same
@@ -313,7 +313,7 @@ int meter::init(OBJECT *parent)
 			//Check it
 			if (prev_voltage_value==NULL)
 			{
-				GL_THROW(const_cast<char*>("Failure to allocate memory for voltage tracking array"));
+				GL_THROW("Failure to allocate memory for voltage tracking array");
 				/*  TROUBLESHOOT
 				While attempting to allocate memory for the voltage tracking array used
 				by the master/slave functionality, an error occurred.  Please try again.
@@ -347,11 +347,11 @@ int meter::check_prices(){
 			tier_energy[2] = tier_energy[1];
 		}
 		if(tier_energy[2] < tier_energy[1] || tier_energy[1] < tier_energy[0]){
-			GL_THROW(const_cast<char*>("meter energy tiers quantity trend improperly"));
+			GL_THROW("meter energy tiers quantity trend improperly");
 		}
 		for(int i = 0; i < 3; ++i){
 			if(tier_price[i] < 0.0 || tier_energy[i] < 0.0)
-				GL_THROW(const_cast<char*>("meter tiers cannot have negative values"));
+				GL_THROW("meter tiers cannot have negative values");
 		}
 	} else if (bill_mode == BM_TIERED_TOU) { // beware: TOU pricing schedules haven't pushed values yet
 		if(tier_energy[1] == 0){ 
@@ -363,17 +363,17 @@ int meter::check_prices(){
 			tier_energy[2] = DBL_MAX;
 		}
 		if(tier_energy[2] < tier_energy[1] || tier_energy[1] < tier_energy[0]){
-			GL_THROW(const_cast<char*>("meter energy tiers quantity trend improperly"));
+			GL_THROW("meter energy tiers quantity trend improperly");
 		}
 		for(int i = 0; i < 3; ++i){
 			if(tier_price[i] < 0.0 || tier_energy[i] < 0.0)
-				GL_THROW(const_cast<char*>("meter tiers cannot have negative values"));
+				GL_THROW("meter tiers cannot have negative values");
 		}
 	}
 
 	if(bill_mode == BM_HOURLY || bill_mode == BM_TIERED_RTP){
 		if(power_market == 0 || price_prop == 0){
-			GL_THROW(const_cast<char*>("meter cannot use real time energy prices without a power market that publishes the next price"));
+			GL_THROW("meter cannot use real time energy prices without a power market that publishes the next price");
 		}
 		//price = *gl_get_double(power_market,price_prop);
 	}

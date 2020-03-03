@@ -80,7 +80,7 @@ static double tc_erf(double x)
 passive_controller::passive_controller(MODULE *mod)
 {
 	if(oclass == NULL){
-		oclass = gl_register_class(mod,const_cast<char*>("passive_controller"),sizeof(passive_controller),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,"passive_controller",sizeof(passive_controller),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class passive_controller";
 		else
@@ -207,7 +207,7 @@ passive_controller::passive_controller(MODULE *mod)
 
 void passive_controller::fetch_double(double **prop, const char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
-	*prop = gl_get_double_by_name(parent, const_cast<char*>(name));
+	*prop = gl_get_double_by_name(parent, name);
 	if(*prop == nullptr){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);
@@ -223,7 +223,7 @@ void passive_controller::fetch_double(double **prop, const char *name, OBJECT *p
 
 void passive_controller::fetch_int(int **prop, const char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
-	*prop = gl_get_int32_by_name(parent, const_cast<char*>(name));
+	*prop = gl_get_int32_by_name(parent, name);
 	if(*prop == nullptr){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);

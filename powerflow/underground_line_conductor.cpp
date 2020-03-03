@@ -23,7 +23,7 @@ underground_line_conductor::underground_line_conductor(MODULE *mod) : powerflow_
 {
 	if(oclass == NULL)
 	{
-		oclass = gl_register_class(mod,const_cast<char*>("underground_line_conductor"),sizeof(underground_line_conductor),0x00);
+		oclass = gl_register_class(mod,"underground_line_conductor",sizeof(underground_line_conductor),0x00);
 		if (oclass==NULL)
 			throw "unable to register class underground_line_conductor";
 		else
@@ -47,7 +47,7 @@ underground_line_conductor::underground_line_conductor(MODULE *mod) : powerflow_
 			PT_double, "rating.summer.emergency[A]", PADDR(summer.emergency),PT_DESCRIPTION,"amp rating in summer, short term",
 			PT_double, "rating.winter.continuous[A]", PADDR(winter.continuous),PT_DESCRIPTION,"amp rating in winter, continuous",
 			PT_double, "rating.winter.emergency[A]", PADDR(winter.emergency),PT_DESCRIPTION,"amp rating in winter, short term",
-            NULL) < 1) GL_THROW(const_cast<char*>("unable to publish underground_line_conductor properties in %s"),__FILE__);
+            NULL) < 1) GL_THROW("unable to publish underground_line_conductor properties in %s",__FILE__);
     }
 }
 int underground_line_conductor::create(void)
@@ -70,7 +70,7 @@ int underground_line_conductor::init(OBJECT *parent)
 {
 	if (outer_diameter < conductor_diameter)
 	{
-		GL_THROW(const_cast<char*>("outer_diameter was specified as less than or equal to the conductor_diameter"));
+		GL_THROW("outer_diameter was specified as less than or equal to the conductor_diameter");
 		/* TROUBLESHOOT
 		The outer diameter is the diameter of the entire cable, and therefore should be the largest value. Please check your values
 		and refer to Fig. 4.11 of "Distribution System Modeling and Analysis, Third Edition" by William H. Kersting for a diagram.
@@ -78,7 +78,7 @@ int underground_line_conductor::init(OBJECT *parent)
 	}
 	if (outer_diameter < neutral_diameter)
 	{
-		GL_THROW(const_cast<char*>("outer_diameter was specified as less than or equal to the neutral_diameter"));
+		GL_THROW("outer_diameter was specified as less than or equal to the neutral_diameter");
 		/* TROUBLESHOOT
 		The outer diameter is the diameter of the entire cable, and therefore should be the largest value. Please check your values
 		and refer to Fig. 4.11 of "Distribution System Modeling and Analysis, Third Edition" by William H. Kersting for a diagram.
@@ -86,7 +86,7 @@ int underground_line_conductor::init(OBJECT *parent)
 	}
 	if (shield_diameter < shield_thickness)
 	{
-		GL_THROW(const_cast<char*>("shield_diameter was specified as less than or equal to the tapeshield_thickness"));
+		GL_THROW("shield_diameter was specified as less than or equal to the tapeshield_thickness");
 		/* TROUBLESHOOT
 		Refer to Example 5.4 in "Distribution System Modeling and Analysis, Third Edition" by William H. Kersting for a diagram.
 		*/
@@ -94,7 +94,7 @@ int underground_line_conductor::init(OBJECT *parent)
 
 	if ((neutral_gmr > 0.0) && (shield_gmr > 0.0 ))
 	{
-		GL_THROW(const_cast<char*>("Both neutral GMR and shield GMR are larger than zero, it should be specified which type of cable (concentric neutral or tape-shielded) is selected"));
+		GL_THROW("Both neutral GMR and shield GMR are larger than zero, it should be specified which type of cable (concentric neutral or tape-shielded) is selected");
 		/* TROUBLESHOOT
          It should be specified which type of cable (concentric neutral or tape-shielded) is selected
 		*/
@@ -107,7 +107,7 @@ int underground_line_conductor::init(OBJECT *parent)
 
 		if (shield_resistance <= 0 || shield_thickness <=0 || shield_diameter <=0 )
 		{
-			GL_THROW(const_cast<char*>("this cable is tape-shielded, the following four parameters need to be specified: shield_gmr, shield_resistance, shield_thickness, shield_diameter"));
+			GL_THROW("this cable is tape-shielded, the following four parameters need to be specified: shield_gmr, shield_resistance, shield_thickness, shield_diameter");
 			/* TROUBLESHOOT
 	         The following four parameters need to be specified: shield_gmr, shield_resistance, shield_thickness, shield_diameter
 			*/
@@ -119,7 +119,7 @@ int underground_line_conductor::init(OBJECT *parent)
 	{
 		if ((neutral_resistance <= 0.0) || (neutral_diameter <= 0.0) || (neutral_strands <=0) )
 		{
-			GL_THROW(const_cast<char*>("this is a concentric neutral cable, the following four parameters need to be specified: neutral_gmr, neutral_resistance, neutral_diameter, neutral_strands"));
+			GL_THROW("this is a concentric neutral cable, the following four parameters need to be specified: neutral_gmr, neutral_resistance, neutral_diameter, neutral_strands");
 			/* TROUBLESHOOT
 	         The following four parameters need to be specified: neutral_gmr, neutral_resistance, neutral_diameter, neutral_strands
 			*/

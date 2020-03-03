@@ -27,7 +27,7 @@ powerflow_library::powerflow_library(MODULE *mod)
 {
 	if (oclass== nullptr)
 	{
-		oclass = gl_register_class(mod,const_cast<char*>("powerflow_library"),sizeof(powerflow_library),PC_NOSYNC);
+		oclass = gl_register_class(mod,"powerflow_library",sizeof(powerflow_library),PC_NOSYNC);
 		if (oclass== nullptr)
 			throw "unable to register class powerflow_library";
 		else

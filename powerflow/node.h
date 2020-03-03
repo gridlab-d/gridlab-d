@@ -246,7 +246,7 @@ public:
 	TIMESTAMP presync(TIMESTAMP t0);
 	TIMESTAMP sync(TIMESTAMP t0);
 	TIMESTAMP postsync(TIMESTAMP t0);
-	int isa(char *classname);
+	static int isa(const char *classname);
 	int notify(int update_mode, PROPERTY *prop, char *value);
 	SIMULATIONMODE inter_deltaupdate_node(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
@@ -254,7 +254,7 @@ public:
 	TIMESTAMP NR_node_presync_fxn(TIMESTAMP t0_val);
 	void NR_node_sync_fxn(OBJECT *obj);
 	void BOTH_node_postsync_fxn(OBJECT *obj);
-	OBJECT *NR_master_swing_search(char *node_type_value,bool main_swing);
+	static OBJECT *NR_master_swing_search(const char *node_type_value,bool main_swing);
 
 	void init_freq_dynamics(void);
 	STATUS calc_freq_dynamics(double deltat);

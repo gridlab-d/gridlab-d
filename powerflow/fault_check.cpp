@@ -20,7 +20,7 @@ fault_check::fault_check(MODULE *mod) : powerflow_object(mod)
 	if(oclass == NULL)
 	{
 		pclass = powerflow_object::oclass;
-		oclass = gl_register_class(mod,const_cast<char*>("fault_check"),sizeof(fault_check),PC_BOTTOMUP|PC_AUTOLOCK);
+		oclass = gl_register_class(mod,"fault_check",sizeof(fault_check),PC_BOTTOMUP|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class fault_check";
 		else
@@ -39,15 +39,15 @@ fault_check::fault_check(MODULE *mod) : powerflow_object(mod)
 			PT_bool,"full_output_file",PADDR(full_print_output),PT_DESCRIPTION,"Flag to indicate if the output_filename report contains both supported and unsupported nodes -- if false, just does unsupported",
 			PT_bool,"grid_association",PADDR(grid_association_mode),PT_DESCRIPTION,"Flag to indicate if multiple, distinct grids are allowed in a GLM, or if anything not attached to the master swing is removed",
 			PT_object,"eventgen_object",PADDR(rel_eventgen),PT_DESCRIPTION,"Link to generic eventgen object to handle unexpected faults",
-			NULL) < 1) GL_THROW(const_cast<char*>("unable to publish properties in %s"),__FILE__);
-			if (gl_publish_function(oclass,const_cast<char*>("reliability_alterations"),(FUNCTIONADDR)powerflow_alterations)==NULL)
-				GL_THROW(const_cast<char*>("Unable to publish remove from service function"));
-			if (gl_publish_function(oclass,const_cast<char*>("handle_sectionalizer"),(FUNCTIONADDR)handle_sectionalizer)==NULL)
-				GL_THROW(const_cast<char*>("Unable to publish sectionalizer special function"));
-			if (gl_publish_function(oclass,const_cast<char*>("island_removal_function"),(FUNCTIONADDR)powerflow_disable_island)==NULL)
-				GL_THROW(const_cast<char*>("Unable to publish island deletion function"));
-			if (gl_publish_function(oclass,const_cast<char*>("rescan_topology"),(FUNCTIONADDR)powerflow_rescan_topo)==NULL)
-				GL_THROW(const_cast<char*>("Unable to publish the topology rescan function"));
+			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+			if (gl_publish_function(oclass,"reliability_alterations",(FUNCTIONADDR)powerflow_alterations)==NULL)
+				GL_THROW("Unable to publish remove from service function");
+			if (gl_publish_function(oclass,"handle_sectionalizer",(FUNCTIONADDR)handle_sectionalizer)==NULL)
+				GL_THROW("Unable to publish sectionalizer special function");
+			if (gl_publish_function(oclass,"island_removal_function",(FUNCTIONADDR)powerflow_disable_island)==NULL)
+				GL_THROW("Unable to publish island deletion function");
+			if (gl_publish_function(oclass,"rescan_topology",(FUNCTIONADDR)powerflow_rescan_topo)==NULL)
+				GL_THROW("Unable to publish the topology rescan function");
     }
 }
 
@@ -94,7 +94,7 @@ int fault_check::init(OBJECT *parent)
 	}
 	else
 	{
-		GL_THROW(const_cast<char*>("Fault checking object is only valid for the Newton-Raphson solver at this time."));
+		GL_THROW("Fault checking object is only valid for the Newton-Raphson solver at this time.");
 		/*  TROUBLESHOOT
 		The fault_check object only works with the Newton-Raphson powerflow solver at this time.
 		Other solvers may be integrated at a future date.
@@ -108,7 +108,7 @@ int fault_check::init(OBJECT *parent)
 	}
 	else
 	{
-		GL_THROW(const_cast<char*>("Only one fault_check object is supported at this time"));
+		GL_THROW("Only one fault_check object is supported at this time");
 		/*  TROUBLESHOOT
 		At this time, a .GLM file can only contain one fault_check object.  Future implementations
 		may change this.  Please restrict yourself to one fault_check object in the mean time.
@@ -118,7 +118,7 @@ int fault_check::init(OBJECT *parent)
 
 	//Make sure the eventgen_object is an actual eventgen object.
 	if(rel_eventgen != NULL){
-		if(!gl_object_isa(rel_eventgen,const_cast<char*>("eventgen"))){
+		if(!gl_object_isa(rel_eventgen,"eventgen")){
 			gl_error("fault_check:%s %s is not an eventgen object. Please specify the name of an eventgen object.",obj->name,rel_eventgen);
 			return 0;
 			/*  TROUBLESHOOT
@@ -228,7 +228,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 				//Check it
 				if (restoration_fxn == NULL)
 				{
-					GL_THROW(const_cast<char*>("Unable to map restoration function"));
+					GL_THROW("Unable to map restoration function");
 					/*  TROUBLESHOOT
 					While attempting to map the restoration configuration function, an error occurred.  Please
 					try again.  If the error persists, please submit your code and a bug report via the ticketing system.
@@ -255,7 +255,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 			//Make sure it worked
 			if (return_val != 1)
 			{
-				GL_THROW(const_cast<char*>("Restoration failed to execute properly"));
+				GL_THROW("Restoration failed to execute properly");
 				/*  TROUBLESHOOT
 				While attempting to call the restoration/reconfiguration, an error was encountered in the function.
 				Please look for other error messages from restoration itself.
@@ -285,7 +285,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 						//See what mode we are in
 						if ((reliability_mode == false) && (fault_check_override_mode == false))
 						{
-							GL_THROW(const_cast<char*>("Unsupported phase on node %s"),NR_busdata[index].name);
+							GL_THROW("Unsupported phase on node %s",NR_busdata[index].name);
 							/*  TROUBLESHOOT
 							An unsupported connection was found on the indicated bus in the system.  Since reconfiguration
 							is not enabled, the solver will fail here on the next iteration, so the system is broken early.
@@ -317,7 +317,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 			//Internal check, for random "islands"
 			if (NR_curr_bus != NR_bus_count)
 			{
-				GL_THROW(const_cast<char*>("fault_check: Incomplete initialization detected - this will cause issues"));
+				GL_THROW("fault_check: Incomplete initialization detected - this will cause issues");
 				/*  TROUBLESHOOT
 				The fault_check object's topology checking routine tried to run, but detected a system that
 				was not completely initialized.  Look for other output message relating to completely isolated
@@ -356,7 +356,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 				//See what mode we are in
 				if ((reliability_mode == false) && (fault_check_override_mode == false))
 				{
-					GL_THROW(const_cast<char*>("Unsupported phase on a possibly meshed node"));
+					GL_THROW("Unsupported phase on a possibly meshed node");
 					/*  TROUBLESHOOT
 					An unsupported connection was found on the system.  Since reconfiguration is not enabled,
 					the solver will possibly fail here on the next iteration, so the system is broken early.
@@ -859,7 +859,7 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 					}
 				default:	//How'd we get here?
 					{
-						GL_THROW(const_cast<char*>("Error parsing unsupported phases on node %s"),NR_busdata[index].name);
+						GL_THROW("Error parsing unsupported phases on node %s",NR_busdata[index].name);
 						/*  TROUBLESHOOT
 						The output file writing routine for the fault_check object encountered a problem
 						determining which phases are unsupported on the indicated node.  Please try again.
@@ -1091,7 +1091,7 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 						}
 					default:	//How'd we get here?
 						{
-							GL_THROW(const_cast<char*>("Error parsing supported phases on node %s"),NR_busdata[index].name);
+							GL_THROW("Error parsing supported phases on node %s",NR_busdata[index].name);
 							/*  TROUBLESHOOT
 							The output file writing routine for the fault_check object encountered a problem
 							determining which phases are supported on the indicated node.  Please try again.
@@ -1183,7 +1183,7 @@ void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 				//Make sure it worked
 				if (return_val != 1)
 				{
-					GL_THROW(const_cast<char*>("Restoration failed to execute properly"));
+					GL_THROW("Restoration failed to execute properly");
 					/*  TROUBLESHOOT
 					While attempting to call the restoration/reconfiguration, an error was encountered in the function.
 					Please look for other error messages from restoration itself.
@@ -1470,7 +1470,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 			//Make sure it worked
 			if (temp_obj == NULL)
 			{
-				GL_THROW(const_cast<char*>("Failed to find switch object:%s for reliability manipulation"),NR_branchdata[branch_idx].name);
+				GL_THROW("Failed to find switch object:%s for reliability manipulation",NR_branchdata[branch_idx].name);
 				/*  TROUBLESHOOT
 				While attemping to map to an object for reliability-based modifications, GridLAB-D failed to find the object of interest.
 				Please try again.  If they error persists, please submit your code and a bug report to the trac website.
@@ -1483,7 +1483,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 			//make sure it worked
 			if (funadd==NULL)
 			{
-				GL_THROW(const_cast<char*>("Failed to find reliability manipulation method on object %s"),NR_branchdata[branch_idx].name);
+				GL_THROW("Failed to find reliability manipulation method on object %s",NR_branchdata[branch_idx].name);
 				/*  TROUBLESHOOT
 				While attempting to handle special reliability actions on a "special" device (switch, recloser, etc.), the function required
 				was not located.  Ensure this object type supports special actions and try again.  If the problem persists, please submit a bug
@@ -1497,7 +1497,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 
 			if (return_val == 0)	//Failed :(
 			{
-				GL_THROW(const_cast<char*>("Failed to handle reliability manipulation on %s"),NR_branchdata[branch_idx].name);
+				GL_THROW("Failed to handle reliability manipulation on %s",NR_branchdata[branch_idx].name);
 				/*  TROUBLESHOOT
 				While attempting to handle special reliability actions on a "special" device (switch, recloser, etc.), the function required
 				failed to execute properly.  If the problem persists, please submit a bug report and your code to the trac website.
@@ -1512,7 +1512,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 			//Make sure it worked
 			if (temp_obj == NULL)
 			{
-				GL_THROW(const_cast<char*>("Failed to find fuse object:%s for reliability manipulation"),NR_branchdata[branch_idx].name);
+				GL_THROW("Failed to find fuse object:%s for reliability manipulation",NR_branchdata[branch_idx].name);
 				/*  TROUBLESHOOT
 				While attemping to map to an object for reliability-based modifications, GridLAB-D failed to find the object of interest.
 				Please try again.  If they error persists, please submit your code and a bug report to the trac website.
@@ -1525,7 +1525,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 			//make sure it worked
 			if (funadd==NULL)
 			{
-				GL_THROW(const_cast<char*>("Failed to find reliability manipulation method on object %s"),NR_branchdata[branch_idx].name);
+				GL_THROW("Failed to find reliability manipulation method on object %s",NR_branchdata[branch_idx].name);
 				/*  TROUBLESHOOT
 				While attempting to handle special reliability actions on a "special" device (switch, recloser, etc.), the function required
 				was not located.  Ensure this object type supports special actions and try again.  If the problem persists, please submit a bug
@@ -1539,7 +1539,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 
 			if (return_val == 0)	//Failed :(
 			{
-				GL_THROW(const_cast<char*>("Failed to handle reliability manipulation on %s"),NR_branchdata[branch_idx].name);
+				GL_THROW("Failed to handle reliability manipulation on %s",NR_branchdata[branch_idx].name);
 				/*  TROUBLESHOOT
 				While attempting to handle special reliability actions on a "special" device (switch, recloser, etc.), the function required
 				failed to execute properly.  If the problem persists, please submit a bug report and your code to the trac website.
@@ -1554,7 +1554,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 			//Make sure it worked
 			if (temp_obj == NULL)
 			{
-				GL_THROW(const_cast<char*>("Failed to find recloser object:%s for reliability manipulation"),NR_branchdata[branch_idx].name);
+				GL_THROW("Failed to find recloser object:%s for reliability manipulation",NR_branchdata[branch_idx].name);
 				/*  TROUBLESHOOT
 				While attemping to map to an object for reliability-based modifications, GridLAB-D failed to find the object of interest.
 				Please try again.  If they error persists, please submit your code and a bug report to the trac website.
@@ -1567,7 +1567,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 			//make sure it worked
 			if (funadd==NULL)
 			{
-				GL_THROW(const_cast<char*>("Failed to find reliability manipulation method on object %s"),NR_branchdata[branch_idx].name);
+				GL_THROW("Failed to find reliability manipulation method on object %s",NR_branchdata[branch_idx].name);
 				//defined above
 			}
 
@@ -1577,7 +1577,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 
 			if (return_val == 0)	//Failed :(
 			{
-				GL_THROW(const_cast<char*>("Failed to handle reliability manipulation on %s"),NR_branchdata[branch_idx].name);
+				GL_THROW("Failed to handle reliability manipulation on %s",NR_branchdata[branch_idx].name);
 				//Define above
 			}
 		}//end recloser
@@ -1589,7 +1589,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 			//Make sure it worked
 			if (temp_obj == NULL)
 			{
-				GL_THROW(const_cast<char*>("Failed to find sectionalizer object:%s for reliability manipulation"),NR_branchdata[branch_idx].name);
+				GL_THROW("Failed to find sectionalizer object:%s for reliability manipulation",NR_branchdata[branch_idx].name);
 				/*  TROUBLESHOOT
 				While attemping to map to an object for reliability-based modifications, GridLAB-D failed to find the object of interest.
 				Please try again.  If they error persists, please submit your code and a bug report to the trac website.
@@ -1602,7 +1602,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 			//make sure it worked
 			if (funadd==NULL)
 			{
-				GL_THROW(const_cast<char*>("Failed to find reliability manipulation method on object %s"),NR_branchdata[branch_idx].name);
+				GL_THROW("Failed to find reliability manipulation method on object %s",NR_branchdata[branch_idx].name);
 				//Defined above
 			}
 
@@ -1612,7 +1612,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 
 			if (return_val == 0)	//Failed :(
 			{
-				GL_THROW(const_cast<char*>("Failed to handle reliability manipulation on %s"),NR_branchdata[branch_idx].name);
+				GL_THROW("Failed to handle reliability manipulation on %s",NR_branchdata[branch_idx].name);
 				//Defined above
 			}
 		}//end sectionalizer
@@ -1922,7 +1922,7 @@ void fault_check::allocate_alterations_values(bool reliability_mode_bool)
 		
 		if (Supported_Nodes == NULL)
 		{
-			GL_THROW(const_cast<char*>("fault_check: node status vector allocation failure"));
+			GL_THROW("fault_check: node status vector allocation failure");
 			/*  TROUBLESHOOT
 			The fault_check object has failed to allocate the node information vector.  Please try
 			again and if the problem persists, submit your code and a bug report via the trac website.
@@ -1936,7 +1936,7 @@ void fault_check::allocate_alterations_values(bool reliability_mode_bool)
 
 			if (Supported_Nodes[index] == NULL)
 			{
-				GL_THROW(const_cast<char*>("fault_check: node status vector allocation failure"));
+				GL_THROW("fault_check: node status vector allocation failure");
 				//Defined above
 			}
 		}
@@ -1948,7 +1948,7 @@ void fault_check::allocate_alterations_values(bool reliability_mode_bool)
 			Alteration_Nodes = (char*)gl_malloc(NR_bus_count*sizeof(char));
 			if (Alteration_Nodes == NULL)
 			{
-				GL_THROW(const_cast<char*>("fault_check: node alteration status vector allocation failure"));
+				GL_THROW("fault_check: node alteration status vector allocation failure");
 				/*  TROUBLESHOOT
 				The fault_check object has failed to allocate the node alteration information vector.  Please try
 				again and if the problem persists, submit your code and a bug report via the trac website.
@@ -1963,7 +1963,7 @@ void fault_check::allocate_alterations_values(bool reliability_mode_bool)
 				//Check it
 				if (Alteration_Links == NULL)
 				{
-					GL_THROW(const_cast<char*>("fault_check: link alteration status vector allocation failure"));
+					GL_THROW("fault_check: link alteration status vector allocation failure");
 					/*  TROUBLESHOOT
 					The fault_check object has failed to allocate the node alteration information vector.  Please try
 					again and if the problem persists, submit your code and a bug report via the trac website.
@@ -1977,7 +1977,7 @@ void fault_check::allocate_alterations_values(bool reliability_mode_bool)
 			//Check it
 			if (valid_phases == NULL)
 			{
-				GL_THROW(const_cast<char*>("fault_check: node alteration status vector allocation failure"));
+				GL_THROW("fault_check: node alteration status vector allocation failure");
 				//Defined above
 			}
 
@@ -2001,7 +2001,7 @@ void fault_check::momentary_activation(int node_int)
 	//Make sure it worked
 	if (tmp_obj == NULL)
 	{
-		GL_THROW(const_cast<char*>("Failed to map node:%s during momentary interruption!"),NR_busdata[node_int].name);
+		GL_THROW("Failed to map node:%s during momentary interruption!",NR_busdata[node_int].name);
 		/*  TROUBLESHOOT
 		While mapping a node object for the momentary fault inducing process, the node failed to be found.
 		Please try again and ensure the node exists.  If the error persists, please submit your code and a bug
@@ -2010,15 +2010,15 @@ void fault_check::momentary_activation(int node_int)
 	}
 
 	//See if we're a triplex meter or meter
-	if ((gl_object_isa(tmp_obj,const_cast<char*>("triplex_meter"),const_cast<char*>("powerflow"))) || (gl_object_isa(tmp_obj,const_cast<char*>("meter"),const_cast<char*>("powerflow"))))
+	if ((gl_object_isa(tmp_obj,"triplex_meter","powerflow")) || (gl_object_isa(tmp_obj,"meter","powerflow")))
 	{
 		//Find the momentary interruptions flag and set it!
-		pval = gl_get_property(tmp_obj,const_cast<char*>("customer_interrupted_secondary"));
+		pval = gl_get_property(tmp_obj,"customer_interrupted_secondary");
 
 		//Make sure it worked
 		if (pval == NULL)
 		{
-			GL_THROW(const_cast<char*>("Failed to map momentary outage flag on node:%s"),tmp_obj->name);
+			GL_THROW("Failed to map momentary outage flag on node:%s",tmp_obj->name);
 			/*  TROUBLESHOOT
 			While attempting to map the momentary outage flag on a node, it failed to find said flag.
 			Please try again. If the error persists, please submit your code and a bug report via the
@@ -2190,7 +2190,7 @@ void fault_check::associate_grids(void)
 			//Make sure it worked
 			if (stat_return_val == FAILED)
 			{
-				GL_THROW(const_cast<char*>("fault_check: Failed to free up a multi-island NR solver array properly"));
+				GL_THROW("fault_check: Failed to free up a multi-island NR solver array properly");
 				/*  TROUBLESHOOT
 				While attempting to free up one of the multi-island solver variable arrays, an error
 				was encountered.  Please try again.  If the error persists, please submit your code and
@@ -2205,7 +2205,7 @@ void fault_check::associate_grids(void)
 		//Make sure it worked
 		if (stat_return_val == FAILED)
 		{
-			GL_THROW(const_cast<char*>("fault_check: Failed to allocate a multi-island NR solver array properly"));
+			GL_THROW("fault_check: Failed to allocate a multi-island NR solver array properly");
 			/*  TROUBLESHOOT
 			While attempting to allocate a multi-island solver variable array, an error was encountered.
 			Please try again.  If the error persists, please submit your code and a bug report via the
@@ -2265,7 +2265,7 @@ void fault_check::search_associated_grids(unsigned int node_int, int grid_counte
 			}
 			else if (NR_busdata[node_ref].island_number != grid_counter)
 			{
-				GL_THROW(const_cast<char*>("fault_check: duplicate grid assignment on node %s!"),NR_busdata[node_ref].name);
+				GL_THROW("fault_check: duplicate grid assignment on node %s!",NR_busdata[node_ref].name);
 				/*  TROUBLESHOOT
 				While mapping the associated grid/swing node for a system, a condition was encountered where
 				a node tried to belong to two different systems.  This should not have occurred.  Please submit
@@ -2488,7 +2488,7 @@ EXPORT double handle_sectionalizer(OBJECT *thisobj, int sectionalizer_number)
 					//Make sure it worked
 					if (tmp_obj == NULL)
 					{
-						GL_THROW(const_cast<char*>("Failure to map recloser object %s during sectionalizer handling"),NR_branchdata[branch_val].name);
+						GL_THROW("Failure to map recloser object %s during sectionalizer handling",NR_branchdata[branch_val].name);
 						/*  TROUBLESHOOT
 						While mapping a recloser as part of a sectionalizer's reliability function, said recloser failed to be
 						mapped correctly.  Please try again.  If the error persists, please submit your code and a bug report
@@ -2497,12 +2497,12 @@ EXPORT double handle_sectionalizer(OBJECT *thisobj, int sectionalizer_number)
 					}
 
 					//Increment its tries - map it first
-					Pval = gl_get_property(tmp_obj,const_cast<char*>("number_of_tries"));
+					Pval = gl_get_property(tmp_obj,"number_of_tries");
 
 					//Make sure it worked
 					if (Pval == NULL)
 					{
-						GL_THROW(const_cast<char*>("Failed to map recloser:%s retry count!"),NR_branchdata[branch_val].name);
+						GL_THROW("Failed to map recloser:%s retry count!",NR_branchdata[branch_val].name);
 						/*  TROUBLESHOOT
 						While attempting to map a reclosers attempt count, an error was encountered.  Please try again.
 						If the error persists, please submit your code and a bug report via the trac website.

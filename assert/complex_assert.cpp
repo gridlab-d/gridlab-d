@@ -27,7 +27,7 @@ complex_assert::complex_assert(MODULE *module)
 	if (oclass==NULL)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
-		oclass = gl_register_class(module,const_cast<char*>("complex_assert"),sizeof(complex_assert),PC_AUTOLOCK|PC_OBSERVER);
+		oclass = gl_register_class(module,"complex_assert",sizeof(complex_assert),PC_AUTOLOCK|PC_OBSERVER);
 		if (oclass==NULL)
 			throw "unable to register class complex_assert";
 		else
@@ -303,7 +303,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 						gl_localtime(del_clock_int,&delta_dt_val);
 
 						//Determine output format
-						gl_global_getvar(const_cast<char*>("dateformat"),dateformat,sizeof(dateformat));
+						gl_global_getvar("dateformat",dateformat,sizeof(dateformat));
 
 						//Output date appropriately
 						if ( strcmp(dateformat,"ISO")==0)
@@ -340,7 +340,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 						gl_localtime(del_clock_int,&delta_dt_val);
 
 						//Determine output format
-						gl_global_getvar(const_cast<char*>("dateformat"),dateformat,sizeof(dateformat));
+						gl_global_getvar("dateformat",dateformat,sizeof(dateformat));
 
 						//Output date appropriately
 						if ( strcmp(dateformat,"ISO")==0)
@@ -379,7 +379,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 						gl_localtime(del_clock_int,&delta_dt_val);
 
 						//Determine output format
-						gl_global_getvar(const_cast<char*>("dateformat"),dateformat,sizeof(dateformat));
+						gl_global_getvar("dateformat",dateformat,sizeof(dateformat));
 
 						//Output date appropriately
 						if ( strcmp(dateformat,"ISO")==0)
@@ -418,7 +418,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 						gl_localtime(del_clock_int,&delta_dt_val);
 
 						//Determine output format
-						gl_global_getvar(const_cast<char*>("dateformat"),dateformat,sizeof(dateformat));
+						gl_global_getvar("dateformat",dateformat,sizeof(dateformat));
 
 						//Output date appropriately
 						if ( strcmp(dateformat,"ISO")==0)
@@ -466,7 +466,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 						gl_localtime(del_clock_int,&delta_dt_val);
 
 						//Determine output format
-						gl_global_getvar(const_cast<char*>("dateformat"),dateformat,sizeof(dateformat));
+						gl_global_getvar("dateformat",dateformat,sizeof(dateformat));
 
 						//Output date appropriately
 						if ( strcmp(dateformat,"ISO")==0)
@@ -503,7 +503,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 						gl_localtime(del_clock_int,&delta_dt_val);
 
 						//Determine output format
-						gl_global_getvar(const_cast<char*>("dateformat"),dateformat,sizeof(dateformat));
+						gl_global_getvar("dateformat",dateformat,sizeof(dateformat));
 
 						//Output date appropriately
 						if ( strcmp(dateformat,"ISO")==0)
@@ -542,7 +542,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 						gl_localtime(del_clock_int,&delta_dt_val);
 
 						//Determine output format
-						gl_global_getvar(const_cast<char*>("dateformat"),dateformat,sizeof(dateformat));
+						gl_global_getvar("dateformat",dateformat,sizeof(dateformat));
 
 						//Output date appropriately
 						if ( strcmp(dateformat,"ISO")==0)
@@ -581,7 +581,7 @@ EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned 
 						gl_localtime(del_clock_int,&delta_dt_val);
 
 						//Determine output format
-						gl_global_getvar(const_cast<char*>("dateformat"),dateformat,sizeof(dateformat));
+						gl_global_getvar("dateformat",dateformat,sizeof(dateformat));
 
 						//Output date appropriately
 						if ( strcmp(dateformat,"ISO")==0)
