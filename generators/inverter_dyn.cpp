@@ -34,9 +34,14 @@ inverter_dyn::inverter_dyn(MODULE *module)
 				PT_KEYWORD,"GRID_FOLLOWING",(enumeration)GRID_FOLLOWING,
 				PT_KEYWORD,"GFL_CURRENT_SOURCE",(enumeration)GFL_CURRENT_SOURCE,
 
-			PT_enumeration,"grid_following_mode",PADDR(grid_following_mode), PT_DESCRIPTION, "Inverter control mode: grid-forming or grid-following",
+			PT_enumeration,"grid_following_mode",PADDR(grid_following_mode), PT_DESCRIPTION, "grid-following mode, positive sequency or balanced three phase power",
 				PT_KEYWORD,"BALANCED_POWER",(enumeration)BALANCED_POWER,
 				PT_KEYWORD,"POSITIVE_SEQUENCE",(enumeration)POSITIVE_SEQUENCE,
+				
+			PT_enumeration,"grid_forming_mode",PADDR(grid_forming_mode), PT_DESCRIPTION, "grid-forming mode, CONSTANT_DC_BUS or PV_DC_BUS",
+				PT_KEYWORD,"CONSTANT_DC_BUS",(enumeration)CONSTANT_DC_BUS,
+				PT_KEYWORD,"PV_DC_BUS",(enumeration)PV_DC_BUS,				
+				
 			
 			//PT_complex, "phaseA_V_Out[V]", PADDR(phaseA_V_Out), PT_DESCRIPTION, "AC voltage on A phase in three-phase system; 240-V connection on a triplex system",
 			//PT_complex, "phaseB_V_Out[V]", PADDR(phaseB_V_Out), PT_DESCRIPTION, "AC voltage on B phase in three-phase system",
@@ -63,6 +68,7 @@ inverter_dyn::inverter_dyn(MODULE *module)
 
 			//Input
 			PT_double, "rated_power[VA]", PADDR(S_base), PT_DESCRIPTION, " The rated power of the inverter",
+			PT_double, "rated_DC_Voltage[V]", PADDR(Vdc_base), PT_DESCRIPTION, " The rated dc bus of the inverter",			
 			PT_double, "nominal_frequency[Hz]", PADDR(f_nominal), PT_DESCRIPTION, " The rated frequency",
 
 			// Inverter filter parameters
@@ -155,12 +161,20 @@ inverter_dyn::inverter_dyn(MODULE *module)
 			PT_double, "Pmax", PADDR(Pmax), PT_DESCRIPTION, "DELTAMODE: maximum limit and minimum limit of Pmax controller and Pmin controller.",		
 			PT_double, "Pmin", PADDR(Pmin), PT_DESCRIPTION, "DELTAMODE: maximum limit and minimum limit of Pmax controller and Pmin controller.",
 			PT_double, "w_ref", PADDR(w_ref), PT_DESCRIPTION, "DELTAMODE: the rated frequency, usually 376.99 rad/s.",
-			PT_double, "freq", PADDR(freq), PT_DESCRIPTION, "DELTAMODE: the frequency obtained from the P-f droop controller.",
+			PT_double, "freq", PADDR(freq), PT_DESCRIPTION, "DELTAMODE: the frequency obtained from the P-f droop controller.",			
+
+			PT_double, "Vdc_pu", PADDR(curr_state.Vdc_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: dc bus voltage of PV panel when using grid-forming PV Inverter",
+			PT_double, "C_pu", PADDR(C_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: capacitance of dc bus",	
+			PT_double, "kpVdc", PADDR(kpVdc), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: proportional gain of Vdc_min controller",
+			PT_double, "kiVdc", PADDR(kiVdc), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: integral gain of Vdc_min controller",	
+			PT_double, "kdVdc", PADDR(kiVdc), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: derivative gain of Vdc_min controller",			
 
 			//DC Bus portions
 			PT_double, "V_In[V]",PADDR(V_DC), PT_DESCRIPTION, "DC input voltage",
-			PT_double, "I_In[A]",PADDR(I_DC), PT_DESCRIPTION, "DC input current",
+			PT_double, "I_In[A]",PADDR(I_DC), PT_DESCRIPTION, "DC input current",			
 			PT_double, "P_In[W]", PADDR(P_DC), PT_DESCRIPTION, "DC input power",
+
+
 			
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
@@ -279,6 +293,14 @@ int inverter_dyn::create(void)
 	Qref_max = 1.5; // per unit
 	Qref_min = 0; // per unit
 	Rq = 0.05; // per unit
+	
+	Vdc_base = 750; // default value of dc bus voltage
+	
+	// Capacitance of dc bus 
+	C_pu = 0.1; //per unit
+	kpVdc = 35; // per unit, rad/s
+	kiVdc = 350; //per unit, rad/s^2
+	kdVdc = 0; // per unit, rad
 	
 	GridForming_convergence_criterion = 1e-5;
 
@@ -872,9 +894,13 @@ int inverter_dyn::init(OBJECT *parent)
 		}
 	}
 
+	//**** FT -- Other initialization variables
+	
 	inverter_start_time = gl_globalclock;
 	
 	w_ref = 2 * PI * f_nominal;
+	
+	Idc_base = S_base/Vdc_base;
 
 	// Initialize parameters
 	VA_Out = complex(Pref,Qref);
@@ -909,6 +935,8 @@ TIMESTAMP inverter_dyn::presync(TIMESTAMP t0, TIMESTAMP t1)
 		pull_complex_powerflow_values();
 	}
 
+	//**** FT -- Presync items go here
+		
 	return t2; 
 }
 
@@ -916,7 +944,7 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP tret_value;
-	int temp_idx;
+
 
 	FUNCTIONADDR test_fxn;
 	STATUS fxn_return_status;
@@ -1011,6 +1039,7 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//Update pointer
 			gen_object_current++;
 
+			
 			if (parent_is_a_meter == true)
 			{
 
@@ -1060,41 +1089,6 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 	{
 		inverter_first_step = false;
 	}
-	else	//Implies it is the first time step
-	{
-		//See if there are any DC objects to handle
-		if (dc_interface_objects.empty() != true)
-		{
-			//****************** DC Stuff - a call to the DC bus objects, since P_In is known now (this may be wrong, this is an example) ***************
-			//****************** This is done here instead of init because solar objects (and future objects) "register" in init ***********************
-			P_DC = VA_Out.Re();
-
-			//Loop through and call the DC objects
-			for (temp_idx=0; temp_idx < dc_interface_objects.size(); temp_idx++)
-			{
-				//May eventually have a "DC ratio" or similar, if multiple objects on bus or "you are DC voltage master"
-				//DC object, calling object (us), init mode (true/false)
-				fxn_return_status = ((STATUS (*)(OBJECT *, OBJECT *, bool))(*dc_interface_objects[temp_idx].fxn_address))(dc_interface_objects[temp_idx].dc_object,obj,true);
-
-				//Make sure it worked
-				if (fxn_return_status == FAILED)
-				{
-					//Pull the object from the array - this is just for readability (otherwise the 
-					OBJECT *temp_obj = dc_interface_objects[temp_idx].dc_object;
-
-					//Error it up
-					GL_THROW("inverter_dyn:%d - %s - DC object update for object:%d - %s - failed!",obj->id,(obj->name ? obj->name : "Unnamed"),temp_obj->id,(temp_obj->name ? temp_obj->name : "Unnamed"));
-					/*  TROUBLESHOOT
-					While performing the update to a DC-bus object on this inverter, an error occurred.  Please try again.
-					If the error persists, please check your model.  If the model appears correct, please submit a bug report via the issues tracker.
-					*/
-				}
-			}
-			
-			//Theoretically, the DC objects have no set V_DC and I_DC appropriately - updated equations would go here
-		}//End DC object update
-
-	}//End is still first time step - *********DC Case - does this need to be "singular execution" blocked? **************
 	
 	//Calculate power based on measured terminal voltage and currents
 	if (parent_is_single_phase == true) // single phase/split-phase implementation
@@ -1132,37 +1126,6 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 		if (inverter_first_step == false)
 		{
-
-			//********************** DC Stuff - I have no idea if this goes here, just putting it as an example.  This is a "non-init" call
-			//********************** Theoretically, we are giving V to DC objects, and they are returning I (and maybe P?)
-			if (dc_interface_objects.empty() != true)
-			{
-				//V_DC was set here, somehow
-
-				//Loop through and call the DC objects
-				for (temp_idx=0; temp_idx < dc_interface_objects.size(); temp_idx++)
-				{
-					//DC object, calling object (us), init mode (true/false)
-					//False at end now, because not initialization
-					fxn_return_status = ((STATUS (*)(OBJECT *, OBJECT *, bool))(*dc_interface_objects[temp_idx].fxn_address))(dc_interface_objects[temp_idx].dc_object,obj,false);
-
-					//Make sure it worked
-					if (fxn_return_status == FAILED)
-					{
-						//Pull the object from the array - this is just for readability (otherwise the 
-						OBJECT *temp_obj = dc_interface_objects[temp_idx].dc_object;
-
-						//Error it up
-						GL_THROW("inverter_dyn:%d - %s - DC object update for object:%d - %s - failed!",obj->id,(obj->name ? obj->name : "Unnamed"),temp_obj->id,(temp_obj->name ? temp_obj->name : "Unnamed"));
-						//Defined above
-					}
-				}
-
-				//I_DC is done now.  If P_DC isn't, it could be calculated
-			}//End DC object update
-
-			//*********************** END DC Example ********************************
-
 			//Update output power
 			//Get current injected
 			temp_current_val[0] = (value_IGenerated[0] - generator_admittance[0][0]*value_Circuit_V[0] - generator_admittance[0][1]*value_Circuit_V[1] - generator_admittance[0][2]*value_Circuit_V[2]);
@@ -1420,8 +1383,6 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 {
 	double deltat, deltath;
 	int i;
-	STATUS fxn_return_status;
-	int temp_idx;
 	
 	OBJECT *obj = OBJECTHDR(this);
 
@@ -1438,36 +1399,6 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 	//Get timestep value
 	deltat = (double)dt/(double)DT_SECOND;
 	deltath = deltat/2.0;
-
-	//********************** DC Stuff - I have no idea if this goes here, just putting it as an example.  This is a "non-init" call
-	//********************** Theoretically, we are giving V to DC objects, and they are returning I (and maybe P?)
-	if (dc_interface_objects.empty() != true)
-	{
-		//V_DC was set here, somehow
-
-		//Loop through and call the DC objects
-		for (temp_idx=0; temp_idx < dc_interface_objects.size(); temp_idx++)
-		{
-			//DC object, calling object (us), init mode (true/false)
-			//False at end now, because not initialization
-			fxn_return_status = ((STATUS (*)(OBJECT *, OBJECT *, bool))(*dc_interface_objects[temp_idx].fxn_address))(dc_interface_objects[temp_idx].dc_object,obj,false);
-
-			//Make sure it worked
-			if (fxn_return_status == FAILED)
-			{
-				//Pull the object from the array - this is just for readability (otherwise the 
-				OBJECT *temp_obj = dc_interface_objects[temp_idx].dc_object;
-
-				//Error it up
-				GL_THROW("inverter_dyn:%d - %s - DC object update for object:%d - %s - failed!",obj->id,(obj->name ? obj->name : "Unnamed"),temp_obj->id,(temp_obj->name ? temp_obj->name : "Unnamed"));
-				//Defined above
-			}
-		}
-
-		//I_DC is done now.  If P_DC isn't, it could be calculated
-	}//End DC object update
-
-	//*********************** END DC Example ********************************
 
 	//**** FT -- Predictor/correct or differential equations or related items
 	
@@ -1529,6 +1460,48 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 				// Tq is the time constant of low pass filter, it is per-unit value
 				// Function end
 				
+				if (grid_forming_mode == PV_DC_BUS)  // consider the dynamics of PV dc bus
+				{
+					I_dc_pu = P_out_pu/curr_state.Vdc_pu;   // Calculate the equivalent dc current, including the dc capacitor
+					
+				
+					if (dc_interface_objects.empty() != true)
+					{
+						int temp_idx;
+						//V_DC was set here, somehow
+						
+						V_DC = curr_state.Vdc_pu * Vdc_base;
+										
+						//Loop through and call the DC objects
+						for (temp_idx=0; temp_idx < dc_interface_objects.size(); temp_idx++)
+						{
+							//DC object, calling object (us), init mode (true/false)
+							//False at end now, because not initialization
+							fxn_return_status = ((STATUS (*)(OBJECT *, OBJECT *, bool))(*dc_interface_objects[temp_idx].fxn_address))(dc_interface_objects[temp_idx].dc_object,obj,false);
+
+							//Make sure it worked
+							if (fxn_return_status == FAILED)
+							{
+								//Pull the object from the array - this is just for readability (otherwise the 
+								OBJECT *temp_obj = dc_interface_objects[temp_idx].dc_object;
+
+								//Error it up
+								GL_THROW("inverter_dyn:%d - %s - DC object update for object:%d - %s - failed!",obj->id,(obj->name ? obj->name : "Unnamed"),temp_obj->id,(temp_obj->name ? temp_obj->name : "Unnamed"));
+								//Defined above
+							}
+						}
+
+						//I_DC is done now.  If P_DC isn't, it could be calculated
+					}//End DC object update					
+															
+					I_PV_pu = I_DC/Idc_base;  // Calculate the current from PV panel
+				
+					pred_state.dVdc_pu = (I_PV_pu - I_dc_pu)/C_pu;  
+					
+					pred_state.Vdc_pu = curr_state.Vdc_pu + pred_state.dVdc_pu * deltat;
+										
+				}
+				
 				// Function: Low pass filter of V
 				pCircuit_V_Avg_pu = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag() )/3.0/V_base;
 				pred_state.dv_measure = 1.0/Tv*(pCircuit_V_Avg_pu - curr_state.v_measure);
@@ -1576,6 +1549,27 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 				// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
 				// E_max and E_min are the maximum and minimum of the output of voltage controller
 				// Function end
+				
+				if (grid_forming_mode == PV_DC_BUS)  // consider the dynamics of PV dc bus, and the internal voltage magnitude needs to be recalculated
+				{
+					
+					m_Vdc = E_mag/pred_state.Vdc_pu;
+					
+					if (m_Vdc > 1)  // modulation index cannot exceed 1
+					{
+						m_Vdc = 1;
+					}	
+		
+					if (m_Vdc < 0) // modulation index cannot drop below 0
+					{
+						m_Vdc = 0;
+					}
+
+					E_mag = m_Vdc * pred_state.Vdc_pu;
+								
+				}
+					
+				
 				
 				// Function: P-f droop, Pmax and Pmin controller
 				delta_w_droop = (Pset - pred_state.p_measure) * mp;  // P-f droop
@@ -1633,7 +1627,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 				}
 				
 				pred_state.delta_w = delta_w_droop + delta_w_Pmax + delta_w_Pmin ; //the summation of the outputs from P-f droop, Pmax control and Pmin control
-				freq = (pred_state.delta_w + w_ref)/2/PI; // The frequency from the CERTS Droop controller, Hz
+
 				// delta_w_droop is the output of P-f droop
 				// Pset is the power set point
 				// delta_w_Pmax_ini and delta_w_Pmin_ini are the outputs of the integrator of Pmax controller and Pmin controller
@@ -1643,6 +1637,30 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 				// w_ref is the rated frequency, usually 376.99 rad/s
 				// Function end
 				
+				if (grid_forming_mode == PV_DC_BUS)  // consider the dynamics of PV dc bus, and the internal voltage magnitude needs to be recalculated
+				{
+				
+					// Vdc_min controller to protect the dc bus voltage from collapsing
+					pred_state.ddelta_w_Vdc_min_ini = (pred_state.Vdc_pu - Vdc_min_pu) * kiVdc;
+					pred_state.delta_w_Vdc_min_ini = curr_state.delta_w_Vdc_min_ini + pred_state.ddelta_w_Vdc_min_ini * deltat;				
+					
+					if (pred_state.delta_w_Vdc_min_ini > 0) // 
+					{
+						pred_state.delta_w_Vdc_min_ini = 0;
+					}
+					
+					delta_w_Vdc_min = pred_state.delta_w_Vdc_min_ini + pred_state.ddelta_w_Vdc_min_ini/kiVdc*kpVdc + (pred_state.Vdc_pu - curr_state.Vdc_pu)*kdVdc/deltat; // output from Vdc_min controller
+
+					if (delta_w_Vdc_min > 0) // 
+					{
+						delta_w_Vdc_min = 0;
+					}	
+
+					pred_state.delta_w = pred_state.delta_w + delta_w_Vdc_min; //the summation of the outputs from P-f droop, Pmax control and Pmin control, and Vdc_min control
+					
+				}					
+				
+				freq = (pred_state.delta_w + w_ref)/2/PI; // The frequency from the CERTS Droop controller, Hz				
 				
 				// Function: Obtaining the Phase Angle, and obtaining the compelx value of internal voltages and their Norton Equivalence for power flow analysis
 				for(i=0; i < 3; i++)
@@ -1710,6 +1728,47 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 				// q_measure is the filtered reactive power, it is per-unit value
 				// Tq is the time constant of low pass filter, it is per-unit value
 				// Function end
+
+				if (grid_forming_mode == PV_DC_BUS)  // consider the dynamics of PV dc bus
+				{
+					I_dc_pu = P_out_pu/pred_state.Vdc_pu;   // Calculate the equivalent dc current, including the dc capacitor
+
+					if (dc_interface_objects.empty() != true)
+					{
+						int temp_idx;
+						//V_DC was set here, somehow
+						
+						V_DC = pred_state.Vdc_pu * Vdc_base;
+									
+						//Loop through and call the DC objects
+						for (temp_idx=0; temp_idx < dc_interface_objects.size(); temp_idx++)
+						{
+							//DC object, calling object (us), init mode (true/false)
+							//False at end now, because not initialization
+							fxn_return_status = ((STATUS (*)(OBJECT *, OBJECT *, bool))(*dc_interface_objects[temp_idx].fxn_address))(dc_interface_objects[temp_idx].dc_object,obj,false);
+
+							//Make sure it worked
+							if (fxn_return_status == FAILED)
+							{
+								//Pull the object from the array - this is just for readability (otherwise the 
+								OBJECT *temp_obj = dc_interface_objects[temp_idx].dc_object;
+
+								//Error it up
+								GL_THROW("inverter_dyn:%d - %s - DC object update for object:%d - %s - failed!",obj->id,(obj->name ? obj->name : "Unnamed"),temp_obj->id,(temp_obj->name ? temp_obj->name : "Unnamed"));
+								//Defined above
+							}
+						}
+
+						//I_DC is done now.  If P_DC isn't, it could be calculated
+					}//End DC object update					
+									
+					I_PV_pu = I_DC/Idc_base;  // Calculate the current from PV panel
+					
+					next_state.dVdc_pu = (I_PV_pu - I_dc_pu)/C_pu;  
+					
+					next_state.Vdc_pu = curr_state.Vdc_pu + (pred_state.dVdc_pu + next_state.dVdc_pu) * deltat / 2.0;
+										
+				}
 				
 				// Function: Low pass filter of V 
 				pCircuit_V_Avg_pu = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag() )/3.0/V_base;
@@ -1756,6 +1815,27 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 				// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
 				// E_max and E_min are the maximum and minimum of the output of voltage controller
 				// Function end
+				
+				
+				if (grid_forming_mode == PV_DC_BUS)  // consider the dynamics of PV dc bus, and the internal voltage magnitude needs to be recalculated
+				{
+					
+					m_Vdc = E_mag/next_state.Vdc_pu;
+					
+					if (m_Vdc > 1)  // modulation index cannot exceed 1
+					{
+						m_Vdc = 1;
+					}	
+		
+					if (m_Vdc < 0) // modulation index cannot drop below 0
+					{
+						m_Vdc = 0;
+					}
+
+					E_mag = m_Vdc * next_state.Vdc_pu;
+								
+				}				
+				
 				
 				// Function: P-f droop, Pmax and Pmin controller
 				delta_w_droop = (Pset - next_state.p_measure) * mp;  // P-f droop
@@ -1814,7 +1894,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 				}
 				
 				next_state.delta_w = delta_w_droop + delta_w_Pmax + delta_w_Pmin ; //the summation of the outputs from P-f droop, Pmax control and Pmin control
-				freq = (next_state.delta_w + w_ref)/2/PI; // The frequency from the CERTS droop controller, Hz
+
 				// delta_w_droop is the output of P-f droop
 				// Pset is the power set point
 				// delta_w_Pmax_ini and delta_w_Pmin_ini are the outputs of the integrator of Pmax controller and Pmin controller
@@ -1823,6 +1903,31 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 				// w_lim is the saturation limit
 				// w_ref is the rated frequency, usually 376.99 rad/s
 				// Function end
+
+				if (grid_forming_mode == PV_DC_BUS)  // consider the dynamics of PV dc bus, and the internal voltage magnitude needs to be recalculated
+				{
+				
+					// Vdc_min controller to protect the dc bus voltage from collapsing
+					next_state.ddelta_w_Vdc_min_ini = (next_state.Vdc_pu - Vdc_min_pu) * kiVdc;
+					next_state.delta_w_Vdc_min_ini = curr_state.delta_w_Vdc_min_ini + (pred_state.ddelta_w_Vdc_min_ini + next_state.ddelta_w_Vdc_min_ini) * deltat/2.0;				
+					
+					if (next_state.delta_w_Vdc_min_ini > 0) // 
+					{
+						next_state.delta_w_Vdc_min_ini = 0;
+					}
+					
+					delta_w_Vdc_min = next_state.delta_w_Vdc_min_ini + next_state.ddelta_w_Vdc_min_ini/kiVdc*kpVdc + (next_state.Vdc_pu - curr_state.Vdc_pu)*kdVdc/deltat; // output from Vdc_min controller
+
+					if (delta_w_Vdc_min > 0) // 
+					{
+						delta_w_Vdc_min = 0;
+					}	
+
+					next_state.delta_w = next_state.delta_w + delta_w_Vdc_min; //the summation of the outputs from P-f droop, Pmax control and Pmin control, and Vdc_min control
+					
+				}	
+
+				freq = (next_state.delta_w + w_ref)/2/PI; // The frequency from the CERTS droop controller, Hz				
 				
 				// Function: Obtaining the Phase Angle, and obtaining the compelx value of internal voltages and their Norton Equivalence for power flow analysis
 				for(i=0; i < 3; i++)
@@ -4020,6 +4125,48 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 			// Initialize Pmax and Pmin controller
 			curr_time->delta_w_Pmax_ini = 0;
 			curr_time->delta_w_Pmin_ini = 0;
+			
+			
+			// Initialize Vdc_min controller and DC bus voltage
+			if (grid_forming_mode == PV_DC_BUS)  // consider the dynamics of PV dc bus, and the internal voltage magnitude needs to be recalculated
+			{			
+			   //See if there are any DC objects to handle
+				if (dc_interface_objects.empty() != true)
+				{
+					//****************** DC Stuff - a call to the DC bus objects, since P_In is known now (this may be wrong, this is an example) ***************
+					//****************** This is done here instead of init because solar objects (and future objects) "register" in init ***********************
+					P_DC = VA_Out.Re();
+					
+					int temp_idx;
+					//Loop through and call the DC objects
+					for (temp_idx=0; temp_idx < dc_interface_objects.size(); temp_idx++)
+					{
+						//May eventually have a "DC ratio" or similar, if multiple objects on bus or "you are DC voltage master"
+						//DC object, calling object (us), init mode (true/false)
+						fxn_return_status = ((STATUS (*)(OBJECT *, OBJECT *, bool))(*dc_interface_objects[temp_idx].fxn_address))(dc_interface_objects[temp_idx].dc_object,obj,true);
+
+						//Make sure it worked
+						if (fxn_return_status == FAILED)
+						{
+							//Pull the object from the array - this is just for readability (otherwise the 
+							OBJECT *temp_obj = dc_interface_objects[temp_idx].dc_object;
+
+							//Error it up
+							GL_THROW("inverter_dyn:%d - %s - DC object update for object:%d - %s - failed!",obj->id,(obj->name ? obj->name : "Unnamed"),temp_obj->id,(temp_obj->name ? temp_obj->name : "Unnamed"));
+							/*  TROUBLESHOOT
+							While performing the update to a DC-bus object on this inverter, an error occurred.  Please try again.
+							If the error persists, please check your model.  If the model appears correct, please submit a bug report via the issues tracker.
+							*/
+						}
+					}
+			
+					//Theoretically, the DC objects have no set V_DC and I_DC appropriately - updated equations would go here
+				}//End DC object update	
+						
+				curr_time->Vdc_pu = V_DC/Vdc_base;   // This should be done through PV curve
+				curr_time->delta_w_Vdc_min_ini = 0;				
+			}								
+			
 		}
 	}
 	

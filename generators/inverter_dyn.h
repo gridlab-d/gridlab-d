@@ -38,6 +38,9 @@ typedef struct {
 	double V_ini;
 	double dV_ini;
 
+	// state variables of the dc bus voltage when using grid-forming PV
+	double dVdc_pu;
+	double Vdc_pu;
 
 	
 	// state variables of droop control, Pmax and Pmin control
@@ -45,6 +48,11 @@ typedef struct {
 	double delta_w_Pmax_ini;
 	double ddelta_w_Pmin_ini;
 	double delta_w_Pmin_ini;
+
+	// state variables of Vdc_min controller when using PV grid-forming control
+	double ddelta_w_Vdc_min_ini;
+	double delta_w_Vdc_min_ini;	
+	
 
     // state variables of frequency and phase angle of the internal voltage
 	double delta_w;
@@ -157,6 +165,9 @@ public:
 	
 	enum GRID_FOLLOWING_TYPE {BALANCED_POWER=0, POSITIVE_SEQUENCE=1};
 	enumeration grid_following_mode; //
+	
+	enum GRID_FORMING_TYPE {CONSTANT_DC_BUS=0, PV_DC_BUS=1};
+	enumeration grid_forming_mode; //
 
 	complex temp_current_val[3];
 	TIMESTAMP inverter_start_time;
@@ -209,6 +220,8 @@ public:
 
 	double S_base; // S_base is the rated caspacity
 	double V_base; // Vbase is the rated Line to ground voltage
+	double Vdc_base; // rated dc bus voltage
+	double Idc_base; // rated dc current
 	double Z_base; // Zbase is the reated impedance
 	double I_base; // Ibase is the rated current
 	double P_out_pu; // P_out_pu is the per unit value of VA_OUT.Re()
@@ -274,8 +287,17 @@ public:
 	double Rp;  // p-f droop gain in frequency-watt
 	double Rq;  // Q-V droop gain in volt-var
 
-
-
+	double m_Vdc; //modulation index when using grid-forming PV inverter, it is per unit value
+	double Vdc_min_pu; // Tha minimum dc bus voltage that the PV grid-forming inverter can run. It is also the maximum point voltage of PV panel, it is per unit value
+	double I_dc_pu; // equivalent current at the dc side, which is calculated from the ac side, it is per unit value
+	double I_PV_pu; // current from the PV panel
+	double C_pu; // Capacitance of dc bus, it is per unit value
+	
+	double kpVdc; //proportional gain of Vdc_min controller
+	double kiVdc; //integral gain of Vdc_min controller
+	double kdVdc;  // derivative gain of Vdc_min controller
+	
+	double delta_w_Vdc_min; //variable in the Vdc_min controller
 
 
 	/* required implementations */
