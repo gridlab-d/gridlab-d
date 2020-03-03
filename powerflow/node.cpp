@@ -2396,7 +2396,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 	
 	//Final initialization issue - has to be here, or childed deltamode stuff fails
 	//This catches any orphaned/islanded single nodes (that link wouldn't catch), so error checks work
-	//and don't segfault things
+	//and don't segfault things - needs to be duplicated to subclass objects that reference NR before node::sync is called
 	if ((prev_NTime==0) && (solver_method == SM_NR))
 	{
 		//See if we've been initialized yet - links typically do this, but single buses get missed

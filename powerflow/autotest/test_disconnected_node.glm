@@ -31,7 +31,7 @@ object fault_check {
     output_filename "unsupported_nodes.txt";	
 }
 
-//Manual object - open the "tie switches"
+//Manual object - just enables fault_check to remove things (not really needed)
 object eventgen {
 	name testgendev;
 	use_external_faults true;
@@ -154,7 +154,7 @@ object node {
 }
 
 //Floating nodes
-object meter {
+object node {
 	name node1C;
 	phases "ABCN";
 	nominal_voltage 7199.558;
@@ -166,3 +166,19 @@ object node {
 	phases "ABCN";
 	nominal_voltage 7199.558;
 }
+
+object load {
+	name node2CL;
+	parent node1C;
+	phases BN;
+	nominal_voltage 7199.558;
+	constant_power_B 25.0+10.0j;
+}
+
+object meter {
+	name node2CMeter;
+	parent node1C;
+	phases ABCN;
+	nominal_voltage 7199.558;
+}
+	

@@ -438,6 +438,40 @@ TIMESTAMP load::sync(TIMESTAMP t0)
 	//bool all_three_phases;
 	bool fault_mode;
 	TIMESTAMP tresults_val, result;
+	OBJECT *obj = OBJECTHDR(this);
+
+	//Check for straggler nodes - fix so segfaults don't occur
+	if ((prev_NTime==0) && (solver_method == SM_NR))
+	{
+		//See if we've been initialized yet - links typically do this, but single buses get missed
+		if (NR_node_reference == -1)
+		{
+			//Call the populate routine
+			NR_populate();
+		}
+		else if (NR_node_reference == -99)	//Child check us, since that can break things too
+		{
+			//See if our parent was initialized
+			if (*NR_subnode_reference == -1)
+			{
+				//Try to initialize it, for giggles
+				node *Temp_Node = OBJECTDATA(SubNodeParent,node);
+
+				//Call the initialization
+				Temp_Node->NR_populate();
+
+				//Check it again
+				if (*NR_subnode_reference == -1)
+				{
+					GL_THROW("load:%d - %s - Uninitialized parent is causing odd issues - fix your model!",obj->id,(obj->name?obj->name:"Unnamed"));
+					/*  TROUBLESHOOT
+					A childed load object is having issues mapping to its parent node - this typically happens in very odd cases of islanded/orphaned
+					topologies that only contain nodes (no links).  Adjust your GLM to work around this issue.
+					*/
+				}
+			}
+		}
+	}
 
 	//Initialize time
 	tresults_val = TS_NEVER;
@@ -1964,33 +1998,33 @@ void load::load_update_fxn(bool fault_mode)
 			}//Some form of NR parent
 			else	//Basically, not a NR parent
 			{
-				//See if we're a child or not
-				if (NR_node_reference == -99)	//Child or other special object
-				{
-					node_reference_value = *NR_subnode_reference;	//Grab out parent
-
-					//Check it, for giggles/thoroughness
-					if (node_reference_value < 0)
-					{
-						//Get header information
-						obj = OBJECTHDR(this);
-
-						GL_THROW("node:%s -- %s tried to perform an impedance conversion with an uninitialzed child node!",obj->id, obj->name?obj->name:"unnamed");
-						/*  TROUBLESHOOT
-						While attempting to convert a load to a constant impedance value for in-rush modeling, a problem occurred mapping a parent node.
-						Please try again.  If the error persists, please submit your code and a bug report via the ticketing system.
-						*/
-					}
-					//Defaulted else -- it's theoretically a good value
-				}//end child or other
-				else //Normal node
-				{
-					node_reference_value = NR_node_reference;
-				}
-
 				//See if in-rush is enabled - only makes sense in reliability situations
 				if (enable_inrush_calculations == true)
 				{
+					//See if we're a child or not
+					if (NR_node_reference == -99)	//Child or other special object
+					{
+						node_reference_value = *NR_subnode_reference;	//Grab out parent
+
+						//Check it, for giggles/thoroughness
+						if (node_reference_value < 0)
+						{
+							//Get header information
+							obj = OBJECTHDR(this);
+
+							GL_THROW("node:%d -- %s tried to perform an impedance conversion with an uninitialzed child node!",obj->id, obj->name?obj->name:"unnamed");
+							/*  TROUBLESHOOT
+							While attempting to convert a load to a constant impedance value for in-rush modeling, a problem occurred mapping a parent node.
+							Please try again.  If the error persists, please submit your code and a bug report via the ticketing system.
+							*/
+						}
+						//Defaulted else -- it's theoretically a good value
+					}//end child or other
+					else //Normal node
+					{
+						node_reference_value = NR_node_reference;
+					}
+
 					//Reset variable
 					volt_below_thresh = false;
 
