@@ -708,7 +708,7 @@ int controller::init(OBJECT *parent){
 	if(thermostat_state[0] == 0){
 		pThermostatState = NULL;
 	} else {
-		pThermostatState = gl_get_enum_by_name(parent, thermostat_state);
+		pThermostatState = gl_get_enum_by_name(parent, thermostat_state.get_string());
 		if(pThermostatState == 0){
 			gl_error("thermostat state property name \'%s\' is not published by parent class.", (char *)&thermostat_state);
 			return 0;
@@ -761,7 +761,7 @@ int controller::init(OBJECT *parent){
 
 	if(state[0] != 0){
 		// grab state pointer
-		powerstate_prop = gld_property(parent,state); // pState = gl_get_enum_by_name(parent, state);
+		powerstate_prop = gld_property(parent,state);
 		if ( !powerstate_prop.is_valid() )
 		{
 			gl_error("state property name '%s' is not published by parent object '%s'", state, get_object(parent)->get_name());
@@ -779,7 +779,7 @@ int controller::init(OBJECT *parent){
 
 	if(heating_state[0] != 0){
 		// grab state pointer
-		pHeatingState = gl_get_enum_by_name(parent, heating_state);
+		pHeatingState = gl_get_enum_by_name(parent, heating_state.get_string());
 		if(pHeatingState == 0){
 			gl_error("heating_state property name \'%s\' is not published by parent class", (char *)(&heating_state));
 			return 0;
@@ -788,7 +788,7 @@ int controller::init(OBJECT *parent){
 
 	if(cooling_state[0] != 0){
 		// grab state pointer
-		pCoolingState = gl_get_enum_by_name(parent, cooling_state);
+		pCoolingState = gl_get_enum_by_name(parent, cooling_state.get_string());
 		if(pCoolingState == 0){
 			gl_error("cooling_state property name \'%s\' is not published by parent class", (char *)(&cooling_state));
 			return 0;

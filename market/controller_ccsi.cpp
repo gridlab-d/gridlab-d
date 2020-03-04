@@ -290,7 +290,7 @@ void controller_ccsi::fetch_int64(int64 **prop, const char *name, OBJECT *parent
 
 void controller_ccsi::fetch_enum(enumeration **prop, const char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
-	*prop = gl_get_enum_by_name(parent, name);
+	*prop = gl_get_enum_by_name(parent, const_cast<char*>(name));
 	if(*prop == nullptr){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);
@@ -707,7 +707,7 @@ int controller_ccsi::init(OBJECT *parent){
 
 	if(heating_state[0] != 0){
 		// grab state pointer
-		pHeatingState = gl_get_enum_by_name(parent, heating_state);
+		pHeatingState = gl_get_enum_by_name(parent, heating_state.get_string());
 		if(pHeatingState == 0){
 			gl_error("heating_state property name \'%s\' is not published by parent class", (char *)(&heating_state));
 			return 0;
@@ -716,7 +716,7 @@ int controller_ccsi::init(OBJECT *parent){
 
 	if(cooling_state[0] != 0){
 		// grab state pointer
-		pCoolingState = gl_get_enum_by_name(parent, cooling_state);
+		pCoolingState = gl_get_enum_by_name(parent, cooling_state.get_string());
 		if(pCoolingState == 0){
 			gl_error("cooling_state property name \'%s\' is not published by parent class", (char *)(&cooling_state));
 			return 0;
@@ -724,7 +724,7 @@ int controller_ccsi::init(OBJECT *parent){
 	}
 	// get override, if set
 	if(re_override[0] != 0){
-		pOverride = gl_get_enum_by_name(parent, re_override);
+		pOverride = gl_get_enum_by_name(parent, re_override.get_string());
 	}
 	if((pOverride == 0) && (use_override == OU_ON)){
 		gl_error("use_override is ON but no valid override property name is given");
