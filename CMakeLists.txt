@@ -48,7 +48,6 @@ list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
 
 configure_file(gldcore/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/headers/config.h @ONLY)
 configure_file(gldcore/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/headers/version.h @ONLY)
-configure_file(cmake/gridlabd.sh.in ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.sh @ONLY)
 add_definitions(-DHAVE_CONFIG_H)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/headers)
 #include(cmake/ExternalLibraries.cmake)
@@ -75,7 +74,7 @@ add_compile_options(${FORCE_ERROR} ${DISABLED_OPTIMIZATIONS})
 ## Set up platform specific library linking and platform identification
 if (WIN32 OR MSYS OR MINGW OR CYGWIN)
     set(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 dl m)
-    option(HAVE_MINGW "Running under Windows environment" ON)
+    set(FOUND_WINDOWS yes CACHE INTERNAL "Tell script generator we're windows")
 elseif (LINUX)
     set(OS_SPECIFIC_LIBRARIES ${CMAKE_DL_LIBS})
 elseif (APPLE)
@@ -87,6 +86,9 @@ LIST(APPEND CMAKE_REQUIRED_LIBRARIES ${OS_SPECIFIC_LIBRARIES})
 if (CMAKE_REQUIRED_LIBRARIES)
     LIST(REMOVE_DUPLICATES CMAKE_REQUIRED_LIBRARIES)
 endif ()
+
+# Generate runtime wrapper script
+configure_file(cmake/gridlabd.sh.in ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.sh @ONLY)
 
 find_program(
         GLD_CLANG_TIDY_EXE
