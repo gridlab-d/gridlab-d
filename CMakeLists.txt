@@ -5,8 +5,10 @@ set(COMPILE_FLAGS "${WARNING_FLAGS}")
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+
+set(GLD_PACKAGE gridlabd)
 set(CMAKE_INSTALL_BINDIR "${CMAKE_INSTALL_PREFIX}/bin" CACHE PATH "" FORCE)
-set(CMAKE_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/lib/gridlabd" CACHE PATH "" FORCE)
+set(CMAKE_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/lib/${GLD_PACKAGE}" CACHE PATH "" FORCE)
 
 #SET(CMAKE_VERBOSE_MAKEFILE ON)
 
@@ -46,6 +48,7 @@ list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
 
 configure_file(gldcore/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/headers/config.h @ONLY)
 configure_file(gldcore/version.h.in ${CMAKE_CURRENT_BINARY_DIR}/headers/version.h @ONLY)
+configure_file(cmake/gridlabd.sh.in ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.sh @ONLY)
 add_definitions(-DHAVE_CONFIG_H)
 include_directories(${CMAKE_CURRENT_BINARY_DIR}/headers)
 #include(cmake/ExternalLibraries.cmake)
@@ -56,7 +59,7 @@ set(CMAKE_SKIP_BUILD_RPATH FALSE)
 # when building, don't use the install RPATH already
 # (but later on when installing)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib/gridlabd")
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib/${GLD_PACKAGE}")
 
 # add the automatically determined parts of the RPATH
 # which point to directories outside the build tree to the install RPATH
@@ -69,9 +72,10 @@ SET(FORCE_ERROR "-Werror=return-type" "-Werror=write-strings")
 # Compiler/Linker flags for all build types
 add_compile_options(${FORCE_ERROR} ${DISABLED_OPTIMIZATIONS})
 
-## Set up platform specific library linking
+## Set up platform specific library linking and platform identification
 if (WIN32 OR MSYS OR MINGW OR CYGWIN)
     set(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 dl m)
+    option(HAVE_MINGW "Running under Windows environment" ON)
 elseif (LINUX)
     set(OS_SPECIFIC_LIBRARIES ${CMAKE_DL_LIBS})
 elseif (APPLE)
@@ -268,14 +272,19 @@ install(TARGETS gridlabd
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         )
 
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.sh
+        ${FILE_PERMISSIONS}
+        DESTINATION ${CMAKE_INSTALL_BINDIR}
+        )
+
 install(FILES ${HEADER_FILE_NAMES}
         ${FILE_PERMISSIONS}
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/gridlabd
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${GLD_PACKAGE}
         )
 
 install(FILES ${GLD_SHARE}
         ${FILE_PERMISSIONS}
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/share/gridlabd)
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${GLD_PACKAGE})
 install(FILES COPYRIGHT LICENSE
         ${FILE_PERMISSIONS}
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/share/doc/gridlabd)
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/share/doc/${GLD_PACKAGE})

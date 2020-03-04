@@ -7,3 +7,6 @@
 [submodule "third_party/dlfcn-win32"]
 	path = third_party/dlfcn-win32
 	url = https://github.com/dlfcn-win32/dlfcn-win32.git
+[submodule "third_party/SuperLU"]
+	path = third_party/SuperLU
+	url = https://github.com/xiaoyeli/superlu.git
