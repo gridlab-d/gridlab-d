@@ -173,7 +173,7 @@ PROPERTY *class_find_property_rec(CLASS *oclass,
 		return NULL;
 
 }
-
+// FIXME: this this supposed to do anything other than return NULL?
 static PROPERTY *find_header_property(CLASS *oclass, 
                                       const PROPERTYNAME name)
 {

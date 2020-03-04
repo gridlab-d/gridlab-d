@@ -22,12 +22,7 @@ typedef struct s_class_list CLASS;
 // also in class.h
 #ifndef FADDR
 #define FADDR
-#ifdef __MINGW32__
-//#warning Temporary hard coded __int64
 typedef int64 (*FUNCTIONADDR)(void*,...); /** the entry point of a module function */
-#else 
-typedef int64 (*FUNCTIONADDR)(void*,...); /** the entry point of a module function */
-#endif
 #endif
 
 #ifdef HAVE_STDINT_H
@@ -48,11 +43,10 @@ typedef unsigned int64 uint64;
 #endif /* HAVE_STDINT_H */
 
 /* Valid GridLAB data types */
-#ifdef __cplusplus
 template<size_t size> class charbuf;
 
-template<size_t size>
-std::ostream& operator<<(std::ostream& os, const charbuf<size>& buffer)
+template<size_t S>
+std::ostream& operator<<(std::ostream& os, const charbuf<S>& buffer)
 {
 	os << buffer.buffer;
 	return os;
@@ -64,7 +58,7 @@ private:
 public:
 	inline charbuf<size>(void) { erase(); };
 	inline charbuf<size>(const char *s) { copy_from(s); };
-	inline ~charbuf<size>(void) {};
+	inline ~charbuf<size>(void) = default;
 	inline size_t get_size(void) { return size; };
 	inline size_t get_length(void) { return strlen(buffer); };
 	inline char *get_string(void) { return buffer; };
@@ -85,7 +79,8 @@ public:
 	inline size_t format(char *fmt, ...) { va_list ptr; va_start(ptr,fmt); size_t len=vsnprintf(buffer,size,fmt,ptr); va_end(ptr); return len; };
 	inline size_t vformat(char *fmt, va_list ptr) { return vsnprintf(buffer,size,fmt,ptr); };
 
-    friend std::ostream& operator<< <>(std::ostream& out, const charbuf& buffer);
+    template<size_t S>
+    friend std::ostream& operator<<(std::ostream& os, const charbuf<S>& buffer);
 };
 
 typedef charbuf<2049> char2048;
@@ -95,12 +90,6 @@ typedef charbuf<129> char128;
 typedef charbuf<65> char64;
 typedef charbuf<33> char32;
 typedef charbuf<9> char8;
-#else
-typedef char char1024[1025]; /**< strings up to 1024 characters */
-typedef char char256[257]; /**< strings up to 256 characters */
-typedef char char32[33]; /**< strings up to 32 characters */
-typedef char char8[9]; /** string up to 8 characters */
-#endif
 typedef uint64 set;      /* sets (each of up to 64 values may be defined) */
 typedef uint32 enumeration; /* enumerations (any one of a list of values) */
 typedef struct s_object_list* object; /* GridLAB objects */
@@ -110,13 +99,12 @@ typedef gld::complex triplex[3];
 #define BYREF 0x01
 #include <math.h>
 
-#ifdef __cplusplus
 class double_array;
 class double_vector {
 private:
 	double **data;
 public:
-	double_vector(double **x) 
+	explicit double_vector(double **x)
 	{ 
 		data=x; 
 	};
@@ -125,7 +113,7 @@ public:
 		if ( data[n]==NULL ) data[n]=new double; 
 		return *data[n]; 
 	};
-	const double operator[] (const size_t n) const
+	double operator[] (const size_t n) const
 	{
 		if ( data[n]==NULL ) data[n]=new double; 
 		return *data[n];
@@ -133,18 +121,18 @@ public:
 };
 class double_array {
 private:
-#else
-typedef struct s_doublearray {
-#endif
+//#else
+//typedef struct s_doublearray {
+//#endif
 	size_t n, m; /** n rows, m cols */
 	size_t max_val; /** current allocation size max x max */
 	unsigned int *refs; /** reference count **/
 	double ***x; /** pointer to 2D array of pointers to double values */
 	unsigned char *f; /** pointer to array of flags: bit0=byref, */
 	const char *name;
-#ifndef __cplusplus
-} double_array;
-#else
+//#ifndef __cplusplus
+//} double_array;
+//#else
 	friend class double_vector;
 private:
 
@@ -168,7 +156,7 @@ private:
 	};
 public:
 	inline double_vector operator[] (const size_t n) { return double_vector(x[n]); }
-	inline const double_vector operator[] (const size_t n) const { return double_vector(x[n]); }
+	inline double_vector operator[] (const size_t n) const { return double_vector(x[n]); }
 	double_array(const size_t rows=0, const size_t cols=0, double **data=NULL)
 	{
 		refs = new unsigned int;
@@ -199,28 +187,50 @@ public:
 		name = a.name;
 		(*refs)++;
 	}
+
 	~double_array(void) {
-        if (x != NULL && (*refs)-- == 0) {
-            size_t r, c;
-            for (r = 0; r < n; r++) {
-                for (c = 0; c < m; c++) {
-                    if (tst_flag(r, c, BYREF))
-                        free(x[r][c]);
+        if (x != nullptr && (*refs)-- == 0) {
+//            size_t r, c;
+            for (auto r = 0; r < n; r++) {
+                if(n > 0 && x[r] != nullptr) {
+                    for (auto c = 0; c < m; c++) {
+                        if (m > 0 && x[r][c] != nullptr && tst_flag(r, c, BYREF))
+                            free(x[r][c]);
+                    }
+                    free(x[r]);
                 }
-                free(x[r]);
             }
             free(x);
             delete refs;
         }
     }
+
+//    ~double_array(void)
+//    {
+//        if ( (*refs)-- == 0 )
+//        {
+//            size_t r,c;
+//            for ( r=0 ; r<n ; r++ )
+//            {
+//                for ( c=0 ; c<m ; c++ )
+//                {
+//                    if ( tst_flag(r,c,BYREF) )
+//                        free(x[r][c]);
+//                }
+//                free(x[r]);
+//            }
+//            free(x);
+//            delete refs;
+//        }
+//    }
 public:
 	void copy_name(const char *v) { char *s=(char*)malloc(strlen(v)+1); strcpy(s,v); name=(const char*)s; };
 
 	// Getters
 	inline const char *get_name(void) const { return name; };
-	inline const size_t get_rows(void) const { return n; };
-	inline const size_t get_cols(void) const { return m; };
-	inline const size_t get_max(void) const { return max_val; };
+	inline size_t get_rows(void) const { return n; };
+	inline size_t get_cols(void) const { return m; };
+	inline size_t get_max(void) const { return max_val; };
 
 	// Setters
 	void set_name(const char *v) { name = v; };
@@ -230,13 +240,13 @@ public:
 	{
 		if ( size<=max_val ) exception(".set_max(%u): cannot shrink double_array",size);
 		size_t r;
-		double ***z = (double***)malloc(sizeof(double**)*size);
+		auto ***z = (double***)malloc(sizeof(double**)*size);
 		// create new rows
 		for ( r=0 ; r<max_val ; r++ )
 		{
 			if ( x[r]!=NULL )
 			{
-				double **y = (double**)malloc(sizeof(double*)*size);
+				auto **y = (double**)malloc(sizeof(double*)*size);
 				if ( y==NULL ) exception(".set_max(%u): unable to expand double_array",size);
 				memcpy(y,x[r],sizeof(double*)*max_val);
 				memset(y+max_val,0,sizeof(double*)*(size-max_val));
@@ -249,7 +259,7 @@ public:
 		memset(z+max_val,0,sizeof(double**)*(size-max_val));
 		free(x);
 		x = z;
-		unsigned char *nf = (unsigned char*)malloc(sizeof(unsigned char)*size);
+		auto *nf = (unsigned char*)malloc(sizeof(unsigned char)*size);
 		if ( f!=NULL )
 		{
 			memcpy(nf,f,max_val);
@@ -284,7 +294,7 @@ public:
 			size_t i;
 			for ( i=0 ; i<n ; i++ )
 			{
-				double **y = (double**)malloc(sizeof(double*)*c);
+				auto **y = (double**)malloc(sizeof(double*)*c);
                 memset(y,0,sizeof(double*)*c);
 
                 if ( x[i]!=NULL )
@@ -322,7 +332,7 @@ public:
 	/// make a new matrix (row major)
 	double **copy_matrix(void) 
 	{   
-		double **y = new double*[n];
+		auto **y = new double*[n];
 		unsigned int r;
 		for ( r=0 ; r<n ; r++ )
 		{
@@ -355,7 +365,7 @@ public:
 		return y;
 	}
 	void transpose(void) {
-		double ***xt = new double**[n];
+		auto ***xt = new double**[n];
 		size_t i;
 		for ( i=0 ; i<m ; i++ )
 		{
@@ -423,7 +433,7 @@ public:
 		}
 		fprintf(stderr," }\n");
 	}
-	void operator= (const double y)
+    double_array &operator= (const double y)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
@@ -431,8 +441,9 @@ public:
 			for ( c=0 ; c<get_cols() ; c++ )
 				my(r,c) = y;
 		}
+		return *this;
 	};
-	double_array &operator= (const double_array &y)
+	double_array &operator= (const double_array &y) // TODO: fix self-assignment to be C++-correct
 	{
 		size_t r,c;
 		grow_to(y);
@@ -596,9 +607,9 @@ public:
 			y[r] = my(r,c);
 	}
 };
-#endif
+//#endif
 
-#ifdef __cplusplus
+//#ifdef __cplusplus
 class complex_array;
 class complex_vector {
 private:
@@ -621,16 +632,16 @@ public:
 };
 class complex_array {
 private:
-#endif
+//#endif
 	size_t n, m;
 	size_t max_val; /** current allocation size max_val x max_val */
 	unsigned int *refs; /** reference count **/
 	gld::complex ***x; /** pointer to 2D array of pointers to complex values */
 	unsigned char *f; /** pointer to array of flags: bit0=byref, */
 	const char *name;
-#ifndef __cplusplus
-} complex_array;
-#else
+//#ifndef __cplusplus
+//} complex_array;
+//#else
 	friend class complex_vector;
 private:
 
@@ -709,9 +720,9 @@ public:
 
 	// Getters
 	inline const char *get_name(void) const { return name; };
-	inline const size_t get_rows(void) const { return n; };
-	inline const size_t get_cols(void) const { return m; };
-	inline const size_t get_max(void) const { return max_val; };
+	inline size_t get_rows(void) const { return n; };
+	inline size_t get_cols(void) const { return m; };
+	inline size_t get_max(void) const { return max_val; };
 
 	// Setters
 	void set_name(const char *v) { name = v; };
@@ -721,13 +732,13 @@ public:
 	{
 		if ( size<=max_val ) exception(".set_max(%u): cannot shrink complex_array",size);
 		size_t r;
-		gld::complex ***z = (gld::complex***)malloc(sizeof(gld::complex**)*size);
+		auto ***z = (gld::complex***)malloc(sizeof(gld::complex**)*size);
 		// create new rows
 		for ( r=0 ; r<max_val ; r++ )
 		{
 			if ( x[r]!=NULL )
 			{
-				gld::complex **y = (gld::complex**)malloc(sizeof(gld::complex*)*size);
+				auto **y = (gld::complex**)malloc(sizeof(gld::complex*)*size);
 				if ( y==NULL ) exception(".set_max(%u): unable to expand complex_array",size);
 				memcpy(y,x[r],sizeof(gld::complex*)*max_val);
 				memset(y+max_val,0,sizeof(gld::complex*)*(size-max_val));
@@ -740,7 +751,7 @@ public:
 		memset(z+max_val,0,sizeof(gld::complex**)*(size-max_val));
 		free(x);
 		x = z;
-		unsigned char *nf = (unsigned char*)malloc(sizeof(unsigned char)*size);
+		auto *nf = (unsigned char*)malloc(sizeof(unsigned char)*size);
 		if ( f!=NULL )
 		{
 			memcpy(nf,f,max_val);
@@ -775,7 +786,7 @@ public:
 			size_t i;
 			for ( i=0 ; i<n ; i++ )
 			{
-				gld::complex **y = (gld::complex**)malloc(sizeof(gld::complex*)*c);
+				auto **y = (gld::complex**)malloc(sizeof(gld::complex*)*c);
 				if ( x[i]!=NULL )
 				{
 					memcpy(y,x[i],sizeof(gld::complex**)*m);
@@ -1088,7 +1099,7 @@ public:
 			y[r] = my(r,c);
 	}
 };
-#endif
+//#endif
 
 /* ADD NEW CORE TYPES HERE */
 
@@ -1098,13 +1109,13 @@ typedef float real;
 typedef double real;
 #endif
 
-#ifndef __cplusplus
-#ifndef true
-typedef unsigned char bool;
-#define true (1)
-#define false (0)
-#endif
-#endif
+//#ifndef __cplusplus
+//#ifndef true
+//typedef unsigned char bool;
+//#define true (1)
+//#define false (0)
+//#endif
+//#endif
 
 /* delegated types allow module to keep all type operations private
  * this includes convert operations and allocation/deallocation
@@ -1265,10 +1276,6 @@ typedef struct s_property_specs { /**<	the property type conversion specificatio
 	// @todo for greater generality this should be implemented as a linked list
 } PROPERTYSPEC;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 int property_check(void);
 PROPERTYSPEC *property_getspec(PROPERTYTYPE ptype);
 PROPERTY *property_malloc(PROPERTYTYPE, CLASS *, char *, void *, DELEGATEDTYPE *);
@@ -1296,10 +1303,6 @@ int complex_array_create(complex_array &a);
 double complex_array_get_part(void *x, char *name);
 
 inline PROPERTYTYPE &operator++(PROPERTYTYPE &d){	return d = PROPERTYTYPE(d + 1);}
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif //_PROPERTY_H
 
