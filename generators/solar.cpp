@@ -1320,7 +1320,7 @@ int solar::init(OBJECT *parent)
 		}
 
 		//Make sure our parent is an inverter and deltamode enabled (otherwise this is dumb)
-		if (gl_object_isa(parent, "inverter", "generators"))
+		if ((gl_object_isa(parent, "inverter", "generators") == true) || (gl_object_isa(parent, "inverter_dyn", "generators") == true))
 		{
 			//Make sure our parent has the flag set
 			if ((parent->flags & OF_DELTAMODE) != OF_DELTAMODE)
@@ -1765,7 +1765,7 @@ EXPORT SIMULATIONMODE interupdate_solar(OBJECT *obj, unsigned int64 delta_time, 
 }
 
 //DC Object calls from inverter linkage
-EXPORT STATUS dc_object_update_solar(OBJECT *calling_obj, OBJECT *us_obj, bool init_mode)
+EXPORT STATUS dc_object_update_solar(OBJECT *us_obj, OBJECT *calling_obj, bool init_mode)
 {
 	solar *me_solar = OBJECTDATA(us_obj, solar);
 	STATUS temp_status;

@@ -8,7 +8,7 @@
 //#define SOLAR_NR_EPSILON 1e-5
 
 EXPORT SIMULATIONMODE interupdate_solar(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
-EXPORT STATUS dc_object_update_solar(OBJECT *calling_obj, OBJECT *us_obj, bool init_mode);
+EXPORT STATUS dc_object_update_solar(OBJECT *us_obj, OBJECT *calling_obj, bool init_mode);
 
 class solar : public gld_object
 {
