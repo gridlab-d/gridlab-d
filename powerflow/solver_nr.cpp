@@ -35,7 +35,7 @@ Initialization after returning to service?
 #else
 #include "solver_nr_eigen.h"
 #endif
-//#define MT // this enables multithreaded SuperLU
+#define MT // this enables multithreaded SuperLU
 
 #ifdef MT
 #include <slu_mt_ddefs.h>	//superLU_MT

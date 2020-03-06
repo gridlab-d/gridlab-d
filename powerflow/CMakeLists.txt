@@ -111,27 +111,37 @@ add_library(${PROJECT_NAME}
         ${NR_SOLVER}
         )
 
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/third_party/Eigen/cmake) # Gives us FindKLU.cmake without replicating code
-find_package(KLU)
-if(GLD_USE_EIGEN)
+if (GLD_USE_EIGEN)
+    find_package(KLU)
     target_compile_definitions(${PROJECT_NAME} PRIVATE GLD_USE_EIGEN)
     if (KLU_FOUND)
         target_compile_definitions(${PROJECT_NAME} PRIVATE GLD_USE_KLU)
     endif ()
-endif()
+    target_include_directories(${PROJECT_NAME} PRIVATE
+            "${CMAKE_SOURCE_DIR}/third_party/Eigen"
+            "${KLU_INCLUDES}"
+            )
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+            Eigen3::Eigen
+            ${KLU_LIBRARIES}
+            )
+else ()
+    target_include_directories(${PROJECT_NAME} PRIVATE
+            #            "${CMAKE_SOURCE_DIR}/third_party/SuperLU/SRC"
+            "${CMAKE_SOURCE_DIR}/third_party/SuperLU_MT"
+            )
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+            #            superlu
+            superlu_lib
+            )
+endif ()
 
 target_include_directories(${PROJECT_NAME} PRIVATE
-        "${CMAKE_SOURCE_DIR}/third_party/SuperLU/SRC"
         "${CMAKE_SOURCE_DIR}/third_party/jsoncpp/include"
-        "${CMAKE_SOURCE_DIR}/third_party/Eigen"
-        "${KLU_INCLUDES}"
         )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE
-        superlu
         jsoncpp_lib
-        Eigen3::Eigen
-        ${KLU_LIBRARIES}
         )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")

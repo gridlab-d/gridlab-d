@@ -26,12 +26,24 @@ add_library(${PROJECT_NAME}
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
 
-target_include_directories(${PROJECT_NAME} PRIVATE
-        "${CMAKE_SOURCE_DIR}/third_party/Eigen"
-        )
-target_link_libraries(${PROJECT_NAME} PRIVATE
-        Eigen3::Eigen
-        )
+
+if (GLD_USE_EIGEN)
+    target_include_directories(${PROJECT_NAME} PRIVATE
+            "${CMAKE_SOURCE_DIR}/third_party/Eigen"
+            )
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+            Eigen3::Eigen
+            )
+else ()
+    target_include_directories(${PROJECT_NAME} PRIVATE
+            #            "${CMAKE_SOURCE_DIR}/third_party/SuperLU/SRC"
+            "${CMAKE_SOURCE_DIR}/third_party/SuperLU_MT"
+            )
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+            #            superlu
+            superlu_lib
+            )
+endif ()
 
 target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
 target_link_libraries(${PROJECT_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})

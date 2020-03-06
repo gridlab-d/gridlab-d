@@ -9,7 +9,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(GLD_PACKAGE gridlabd)
 set(CMAKE_INSTALL_BINDIR "${CMAKE_INSTALL_PREFIX}/bin" CACHE PATH "" FORCE)
 set(CMAKE_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/lib/${GLD_PACKAGE}" CACHE PATH "" FORCE)
+set(CMAKE_INSTALL_DATADIR "${CMAKE_INSTALL_PREFIX}/share/${GLD_PACKAGE}" CACHE PATH "" FORCE)
 
+option(CMAKE_VERBOSE_MAKEFILE "CMake outputs all build instructions" OFF)
 #SET(CMAKE_VERBOSE_MAKEFILE ON)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
@@ -27,7 +29,8 @@ include(cmake/CheckDependancies.cmake)
 # Generate current build number
 include(cmake/Build_number.cmake)
 
-option(GLD_USE_EIGEN "Use Eigen package for LU Decomposition in Powerflow" OFF)
+option(GLD_USE_EIGEN "[NOT YET SUPPORTED] - Use Eigen package for LU Decomposition in Powerflow" OFF)
+option(GLD_USE_SUPERLU "Use SuperLU package for LU Decomposition in Powerflow" ON)
 option(GLD_USE_HELICS "Link with HELICS" OFF)
 option(GLD_USE_FNCS "Link with FNCS" OFF)
 option(GLD_USE_MYSQL "Link with MySQL" OFF)
@@ -229,17 +232,36 @@ set(FILE_PERMISSIONS PERMISSIONS
 # Load module directories. When adding new module, add it here.
 include_directories(gldcore)
 
-include_directories(third_party/SuperLU/SRC)
-include_directories(third_party/superLU_MT)
-include_directories(third_party/jsoncpp_lib/include)
-include_directories(third_party/Eigen)
 #include_directories(third_party/dlfcn-win32)
 
-add_subdirectory(third_party/SuperLU)
+if (GLD_USE_SUPERLU)
+    set(THIRD_PARTY_PATH ${CMAKE_SOURCE_DIR}/third_party)
+    #    include(third_party/superLU_MT/CMakeLists.txt)
+    add_subdirectory(third_party/superLU_MT)
+    #    list(APPEND CMAKE_MODULE_PATH
+    #            ${CMAKE_BINARY_DIR}/third_party/SuperLU/SRC
+    #            ${CMAKE_BINARY_DIR}/third_party/SuperLU/CBLAS
+    #            )
+    #    include_directories(third_party/SuperLU/SRC)
+    #    add_subdirectory(third_party/SuperLU)
+    #    find_package(SuperLU REQUIRED)
+endif ()
 
-option(JSON_CPP_WITH_TESTS "Build the JSON CPP test suite" OFF)
+option(JSONCPP_WITH_TESTS "Build the JSON CPP test suite" OFF)
+set(BUILD_SHARED_CACHE ${BUILD_SHARED_LIBS} CACHE INTERNAL "Store BUILD_SHARED_LIBS value temporarily")
+set(BUILD_SHARED_LIBS OFF)
+include_directories(third_party/jsoncpp_lib/include)
 add_subdirectory(third_party/jsoncpp_lib)
-find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+set(BUILD_SHARED_LIBS ${BUILD_SHARED_CACHE})
+
+if(GLD_USE_EIGEN)
+    message(FATAL_ERROR "Eigen implementation is not complete, and should not be used at this time.")
+    list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/third_party/Eigen/cmake) # Gives us FindKLU.cmake without replicating code
+    include_directories(third_party/Eigen)
+    find_package (Eigen3 3.3 REQUIRED NO_MODULE)
+endif()
+
+#find_package(superlu)
 
 # Configure module targets
 add_subdirectory(assert)

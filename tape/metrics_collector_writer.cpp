@@ -1195,7 +1195,7 @@ void metrics_collector_writer::hdfLineWrite (size_t objs, Json::Value& metrics) 
 		hdfWrite(filename_line, mtype_lines, &tbl, 5, idx);
 		metrics.clear();
 }
-#endif HAVE_HDF5
+#endif // HAVE_HDF5
 
 EXPORT int create_metrics_collector_writer(OBJECT **obj, OBJECT *parent){
 	int rv = 0;

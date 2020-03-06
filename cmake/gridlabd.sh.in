@@ -1,10 +1,11 @@
 #! /bin/sh
 
+export CC="@CMAKE_C_COMPILER@"
+export CXX="@CMAKE_CXX_COMPILER@"
+
 bindir="@CMAKE_INSTALL_BINDIR@"
-datadir="@CMAKE_INSTALL_PREFIX@/@CMAKE_INSTALL_DATAROOTDIR@"
-libdir="@CMAKE_INSTALL_LIBDIR@"
-pkgdatadir="$datadir/@GLD_PACKAGE@"
-pkglibdir="$libdir/@GLD_PACKAGE@"
+pkgdatadir="@CMAKE_INSTALL_DATADIR@"
+pkglibdir="@CMAKE_INSTALL_LIBDIR@"
 export DYLD_LIBRARY_PATH=$pkglibdir
 HAS_MINGW="@FOUND_WINDOWS@"
 
