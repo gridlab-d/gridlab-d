@@ -37,7 +37,7 @@ if (GLD_USE_EIGEN)
 else ()
     target_include_directories(${PROJECT_NAME} PRIVATE
             #            "${CMAKE_SOURCE_DIR}/third_party/SuperLU/SRC"
-            "${CMAKE_SOURCE_DIR}/third_party/SuperLU_MT"
+            "${CMAKE_SOURCE_DIR}/third_party/superLU_MT"
             )
     target_link_libraries(${PROJECT_NAME} PRIVATE
             #            superlu
