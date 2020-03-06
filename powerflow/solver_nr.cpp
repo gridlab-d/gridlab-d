@@ -30,6 +30,7 @@ Initialization after returning to service?
 
 ***********************************************************************
 */
+#include <cmath>
 #ifndef GLD_USE_EIGEN
 #include "solver_nr.h"
 #else
