@@ -1648,7 +1648,8 @@ STATUS solar::solar_dc_update(OBJECT *calling_obj, bool init_mode)
 		inv_P = inverter_power_property->get_double();
 
 		//Built on the assumption that the inverter will have a P_In set, and we'l compute the voltage from this
-		double x0 = 0;
+		//double test = get_p_max(); //debug @@TODO
+		double x0 = pvc_U_m_V; //quick fix @@TODO
 		V_Out = get_u_from_p(x0, eps_nr_ite, inv_P);
 
 		//Push the voltage back out to the inverter - this may need different logic when there are multiple objects
