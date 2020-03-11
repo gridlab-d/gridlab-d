@@ -35,6 +35,7 @@ option(GLD_USE_HELICS "Link with HELICS" OFF)
 option(GLD_USE_FNCS "Link with FNCS" OFF)
 option(GLD_USE_MYSQL "Link with MySQL" OFF)
 
+set(CMAKE_POSITION_INDEPENDENT_CODE ON) # TODO: only required for SuperLU_MT support with Clang. Future removal recommended.
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads REQUIRED)
 if (CMAKE_USE_PTHREADS_INIT)
