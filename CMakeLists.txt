@@ -91,6 +91,11 @@ if (CMAKE_REQUIRED_LIBRARIES)
 endif ()
 
 # Generate runtime wrapper script
+set(GENFILE_WARNING
+        "WARNING: This is a CMake generated file, modifications to this file will be overwritten."
+        CACHE INTERNAL
+        "Warn user that gridlabd.sh is a generated file."
+        )
 configure_file(cmake/gridlabd.sh.in ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.sh @ONLY)
 
 find_program(

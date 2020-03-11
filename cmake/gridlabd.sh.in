@@ -1,5 +1,7 @@
 #! /bin/sh
 
+# @GENFILE_WARNING@
+
 export CC="@CMAKE_C_COMPILER@"
 export CXX="@CMAKE_CXX_COMPILER@"
 
@@ -9,28 +11,32 @@ pkglibdir="@CMAKE_INSTALL_LIBDIR@"
 export DYLD_LIBRARY_PATH=$pkglibdir
 HAS_MINGW="@FOUND_WINDOWS@"
 
-if test "x$GLPATH" = x; then :
-export GLPATH="$pkglibdir:$pkgdatadir"
+if test "x$GLPATH" = x; then
+  export GLPATH="$pkglibdir:$pkgdatadir"
 else
-export GLPATH="$pkglibdir:$pkgdatadir:$GLPATH"
+  export GLPATH="$pkglibdir:$pkgdatadir:$GLPATH"
 fi
 
-if test "x$TERM" = "xcygwin"; then :
-export CXXFLAGS="-I${pkgdatadir} $CXXFLAGS"
+if test "x$TERM" = "xcygwin"; then
+  export CXXFLAGS="-I${pkgdatadir} $CXXFLAGS"
 else
-export CXXFLAGS="-I$pkgdatadir $CXXFLAGS"
+  export CXXFLAGS="-I$pkgdatadir $CXXFLAGS"
 fi
 
-if test "x$GRIDLABD_DEBUG" = "x"; then :
-if test "x$HAS_MINGW" = "xyes"; then :
-"$bindir/gridlabd.exe" "$@"
-else
-"$bindir/gridlabd" "$@"
+if test "x@FOUND_WINDOWS@" != "xyes"; then # Generated test for WIN32
+  export CXXFLAGS="$CXXFLAGS -fPIC"
 fi
+
+if test "x$GRIDLABD_DEBUG" = "x"; then
+  if test "x$HAS_MINGW" = "xyes"; then
+    "$bindir/gridlabd.exe" "$@"
+  else
+    "$bindir/gridlabd" "$@"
+  fi
 else
-if test "x$HAS_MINGW" = "xyes"; then :
-"$GRIDLABD_DEBUG" "$bindir/gridlabd.exe"
-else
-"$GRIDLABD_DEBUG" "$bindir/gridlabd"
-fi
+  if test "x$HAS_MINGW" = "xyes"; then
+    "$GRIDLABD_DEBUG" "$bindir/gridlabd.exe"
+  else
+    "$GRIDLABD_DEBUG" "$bindir/gridlabd"
+  fi
 fi
