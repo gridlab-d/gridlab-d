@@ -172,10 +172,6 @@ void solar::init_pub_vars_pvcurve_mode()
 }
 
 /* N-R Solver */
-// Params
-double pvc_cur_t_cels = 25;  //Unit: Celsius
-double pvc_cur_S_wpm2 = 1e3; //Unit: w/m^2
-
 // Funcs added for the N-R solver
 double solar::nr_ep_rt(double x)
 {
@@ -590,7 +586,10 @@ int solar::init_climate()
 
 			//default to mock data - for the two fields that exist (temperature and windspeed)
 			//All others just put in the one equation that uses them
-			Tamb = 59.0;
+			if (solar_power_model != PV_CURVE)
+			{
+				Tamb = 59.0;
+			}
 			wind_speed = 0.0;
 
 			if (orientation_type == FIXED_AXIS)
@@ -1470,7 +1469,10 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 				//Original equation the pointed to statics (and weather, but how would it get here?)
 				//Insolation = shading_factor*(*pSolarD) + *pSolarH + *pSolarG*(1 - cos(tilt_angle))*(*pAlbedo)/2.0;
 				//Old static - static double tout=59.0, rhout=0.75, solar=92.902, wsout=0.0, albdefault=0.2;
-				Insolation = 92.902 * (shading_factor + 1.0 + 0.1 * (1.0 - cos(tilt_angle)));
+				if (solar_power_model != PV_CURVE)
+				{
+					Insolation = 92.902 * (shading_factor + 1.0 + 0.1 * (1.0 - cos(tilt_angle)));
+				}
 			}
 			else
 			{
