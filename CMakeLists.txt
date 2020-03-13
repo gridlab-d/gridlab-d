@@ -297,11 +297,6 @@ mark_as_advanced(FORCE
         GLD_SHARE
         )
 
-install(TARGETS gridlabd
-        ${FILE_PERMISSIONS}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-        )
-
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.sh
         ${FILE_PERMISSIONS}
         DESTINATION ${CMAKE_INSTALL_BINDIR}
