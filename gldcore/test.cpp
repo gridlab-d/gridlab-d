@@ -96,7 +96,6 @@ int test_exec(void)
  * MEMORY LOCK TEST
  */
 #include "lock.h"
-#include "pthread.h"
 #include "exec.h"
 #define TESTCOUNT (100000000/global_threadcount)
 

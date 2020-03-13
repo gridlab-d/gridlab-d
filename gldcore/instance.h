@@ -10,7 +10,6 @@
 
 #include "property.h"
 #include "timestamp.h"
-#include "pthread.h"
 #include "linkage.h"
 #include "lock.h"
 

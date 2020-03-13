@@ -90,9 +90,8 @@
 #include <sys/timeb.h>
 #include <thread>
 #ifdef _WIN32
-#include <windows.h>
+#include <winsock2.h>
 #include <winbase.h>
-#include <direct.h>
 
 #else
 #include <unistd.h>
@@ -139,7 +138,6 @@
 #include "link.h"
 #include "save.h"
 
-#include "pthread.h"
 #include "cpp_threadpool.h"
 
 /** Set/get exit code **/
