@@ -44,7 +44,7 @@ object house {
 			file "plugload_load_usage3600.csv";
 			interval 3600;
 			limit 28;
-			property demand,enduse_load,heatgain_fraction,heatgain;
+			property demand,heatgain_fraction,heatgain;
 		};
 	};
 }
