@@ -1,71 +1,98 @@
 # Building Gridlab-d
-
-Gridlab-d is a ...  
-
 ## Prerequisites
 
-CMake \
-CCMake or CMake-gui \
-gcc or Clang
+CMake  
+CCMake or CMake-gui (optional)   
+g++ or Clang
 
 ## Installation
 
-```bash
-git clone *Insert clone link here*
+```shell script
+git clone https://github.com/gridlab-d/gridlab-d.git
 ```
 
+### Prepare out-of-source build directory
 Change directory into folder, and create build directory. Change to build directory and invoke `cmake` as described below:
-
-```bash 
+```shell script 
 cd gridlab-d
 mkdir cmake-build
 cd cmake-build
-cmake ..
 ```
 
-After running cmake, run either `ccmake .` or `cmake-gui .` to execute the graphical interface. 
+### Generate the build system
+CMake flags can be added using the `-D` prefix, and different build systems can be selected using `-G`. 
 
-Adjust settings as needed, then run `configure` and `generate` either from the interface, or by clicking `c` then `g` on the keyboard.
+Below is a general format guide, and an actual viable build command for most platforms. 
+ 
+```shell script
+# Format:
+cmake <flags> ..
 
+# Full Example: 
+cmake -DCMAKE_INSTALL_PREFIX=~/software/GridLAB-D -DCMAKE_BUILD_TYPE=Release -G "CodeBlocks - Unix Makefiles" ..
+```
 
-Run `make install` from the command line. Multithreaded builds are supported via the `-j#` flag.
-
-```bash
-make -j8 install
+### Build and install the application
+CMake can directly invoke the build and install process by running the below command. Multiprocess build is enabled 
+through the `-j#` flag (`-j8` in the included example).
+```shell script
+# Run the build system and install the application
+cmake --build . -j8 --target install
 ```
 
 ## CMake Variables
+The following variables affect the build process and can be changed using the `-D` flag at build generation or by 
+updating the cache using ccmake or cmake-gui (default values are shown).
 
-The following variables affect the build process (default values are shown):
+Sets prefix for GridLAB-D install. It is strongly recommended to change this variable.
 ```
-// Sets prefix for gridlab-d install. It is strongly recommended to change this variable.
-CMAKE_INSTALL_PREFIX=/usr/local
+CMAKE_INSTALL_PREFIX=/usr/local  # linux/MacOS default
+CMAKE_INSTALL_PREFIX=%ProgramFiles%  # Windows default
+```
 
-// Sets build type. Options are 'Debug', 'RelWithDebInfo', 'MinSizeRel', and 'Release'. Options are case sensitive. 
+Sets build type. Options are 'Debug', 'RelWithDebInfo', 'MinSizeRel', and 'Release'. Options are case sensitive.  
 Empty defaults to 'Debug'
+```
 CMAKE_BUILD_TYPE
+```
 
 ### Enable building with FNCS
-set USE_FNCS=ON
-    // To enable FNCS, the following path variables must be set to the install paths of their respective applications:
-    GL_ZeroMQ_DIR
-    GL_CZMQ_DIR
-    GL_FNCS_DIR
-    
+To enable FNCS set the following flag to `ON`
+```
+GLD_USE_FNCS=OFF
+```
+To enable FNCS, several libraries are required. The following variables can be set in CMake or as environmental 
+variables pointed to the install location of these libraries. 
+
+Libraries on the global include path may be detected automatically:  
+```
+GLD_ZeroMQ_DIR
+GLD_CZMQ_DIR
+GLD_FNCS_DIR
+```
+
 ### Enable building with HELICS
-set `USE_HELIC=ON` (default is `OFF`)
-    if HELICS is in a custom path set `HELICS_DIR` to the install location
+To enable HELICS set the following flag to `ON`
+ if HELICS is in a custom path set `HELICS_DIR` to the install location in CMake or as an environmental variable
+```
+GLD_USE_HELICS=OFF
+```
 
 ### Enable building with MySQL
-USE_MYSQL=OFF
-    // These fields will be automatically populated if MySQL is detected. They can be manually specified if MySQL is installed in a non-standard location.
-    MYSQL_INCLUDE_DIRECTORIES
-    MYSQL_LIBRARY
-    MYSQL_EXTRA_LIBRARIES
-    
-// Enable building with OpenMP (No current use support)
-USE_OPENMP=OFF
+To enable MySQL support set the following flag to `ON`
+```
+GLD_USE_MYSQL=OFF
+```
+These fields will be automatically populated if MySQL is detected. 
+They can be manually specified if MySQL is installed in a non-standard location.
+```
+MYSQL_INCLUDE_DIRECTORIES
+MYSQL_LIBRARY
+MYSQL_EXTRA_LIBRARIES
+```
 
-// Setting true will output more information during build process.
-CMAKE_VERBOSE_MAKEFILE=FALSE 
+### Enable build debugging
+To output all build commands during build, set following flag to `ON`
+```
+CMAKE_VERBOSE_MAKEFILE=OFF 
 ```
