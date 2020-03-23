@@ -1,0 +1,184 @@
+//4-node-esque system, with an additional node floating (and with a child)
+//Used to fail with floating node and fault_check
+//Had issues with switch sync and meter sync routines
+//Silent segfault
+
+#set profiler=1
+clock {
+	timezone EST+5EDT;
+	starttime '2000-01-01 0:00:00';
+	stoptime '2000-01-01 0:01:00';
+}
+
+//module assert;
+module tape;
+module powerflow {
+	solver_method NR;
+	line_limits false;
+}
+module reliability {
+	report_event_log false;
+}
+
+//Fault check object
+object fault_check {
+	name base_fault_check_object1;
+	check_mode ONCHANGE;
+	strictly_radial false;
+	grid_association true;
+	full_output_file false;
+	eventgen_object testgendev;
+    output_filename "unsupported_nodes.txt";	
+}
+
+//Manual object - just enables fault_check to remove things (not really needed)
+object eventgen {
+	name testgendev;
+	use_external_faults true;
+}
+
+object overhead_line_conductor {
+	name olc100;
+	geometric_mean_radius 0.0244 ft;
+	resistance 0.306 Ohm/mile;
+}
+
+object overhead_line_conductor {
+	name olc101;
+	geometric_mean_radius 0.00814 ft;
+	resistance 0.592 Ohm/mile;
+}
+
+object line_spacing {
+	name ls200;
+	distance_AB 2.5 ft;
+	distance_BC 4.5 ft;
+	distance_AC 7.0 ft;
+	distance_AN 5.656854 ft; 
+	distance_BN 4.272002 ft;
+	distance_CN 5.0 ft;
+}
+
+object line_configuration {
+	name lc300;
+	conductor_A olc100;
+	conductor_B olc100;
+	conductor_C olc100;
+	conductor_N olc101;
+	spacing ls200;
+}
+
+object transformer_configuration {
+	name tc400;
+	connect_type WYE_WYE;
+	power_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 4160;
+	resistance 0.01;
+	reactance 0.06;
+}
+
+//Switches, that would presumably make this three systems, eventually
+object switch {
+	name switch3_3B;
+	phases ABCN;
+	from node3;
+	to node3B;
+	status CLOSED;
+}
+
+//First system
+object meter {
+	name node1;
+	phases "ABCN";
+	bustype SWING;
+	nominal_voltage 7199.558;
+}
+
+object overhead_line {
+	name ol12;
+	phases "ABCN";
+	from node1;
+	to node2;
+	length 2000;
+	configuration lc300;
+}
+
+object node {
+	name node2;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+}
+
+object transformer {
+	name tran23;
+	phases "ABCN";
+	from node2;
+	to node3;
+	configuration tc400;
+}
+
+object node {
+	name node3;
+	phases "ABCN";
+	nominal_voltage 2401.777;
+}
+
+object overhead_line {
+	name ol34;
+	phases "ABCN";
+	from node3;
+	to load4;
+	length 2500;
+	configuration lc300;
+}
+
+object load {
+	name load4;
+	phases "ABCN";
+	constant_power_A +1275000.000+790174.031j;
+	constant_power_B +1800000.000+871779.789j;
+	constant_power_C +2375000.000+780624.750j;
+	nominal_voltage 2401.777;
+	// object recorder {
+		// property "voltage_A,voltage_B,voltage_C";
+		// interval -1;
+		// file load4out.csv;
+	// };
+}
+
+object node {
+	name node3B;
+	phases "ABCN";
+	nominal_voltage 2401.777;
+}
+
+//Floating nodes
+object node {
+	name node1C;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+}
+
+object node {
+	name node2C;
+	parent node1C;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+}
+
+object load {
+	name node2CL;
+	parent node1C;
+	phases BN;
+	nominal_voltage 7199.558;
+	constant_power_B 25.0+10.0j;
+}
+
+object meter {
+	name node2CMeter;
+	parent node1C;
+	phases ABCN;
+	nominal_voltage 7199.558;
+}
+	
