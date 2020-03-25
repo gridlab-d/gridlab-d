@@ -117,6 +117,8 @@ int metrics_collector_writer::init(OBJECT *parent){
 	}
 
 	// Check valid metrics_collector output interim interval write out and clear
+	new_day = true;
+	day_cnt = 1;
 	line_cnt = 1;
 	interim_cnt = 1;
 	interim_length = (int64)(interim_length_dbl);
@@ -653,6 +655,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 	cout << m_line << "size -> " << line_objects.size() << endl;
 	cout << "final_write -> " << final_write-startTime << "writeTime -> " << writeTime << endl;
 */
+
 	if (writeTime == (interim_length * interim_cnt) || final_write-startTime <= writeTime) {
 		if (strcmp(extension, m_json.c_str()) == 0) {
 			writeJsonFile(filename_billing_meter, metrics_writer_billing_meters);
@@ -663,21 +666,9 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 			writeJsonFile(filename_feeder, metrics_writer_feeders);
 			writeJsonFile(filename_transformer, metrics_writer_transformers);
 			writeJsonFile(filename_line, metrics_writer_lines);
-#ifdef HAVE_HDF5
-			if (both) {
-				hdfBillingMeterWrite(billing_meter_objects.size(), metrics_writer_billing_meters);
-				hdfHouseWrite(house_objects.size(), metrics_writer_houses);
-				hdfInverterWrite(inverter_objects.size() , metrics_writer_inverters);
-				hdfCapacitorWrite(capacitor_objects.size(), metrics_writer_capacitors);
-				hdfRegulatorWrite(regulator_objects.size(), metrics_writer_regulators);
-				hdfFeederWrite(feeder_objects.size(), metrics_writer_feeders);
-				hdfTransformerWrite(transformer_objects.size(), metrics_writer_transformers);
-				hdfLineWrite(line_objects.size(), metrics_writer_lines);
-			}
-#endif
 		}
 #ifdef HAVE_HDF5
-		else {
+		if ((strcmp(extension, m_h5.c_str()) == 0) || both) {
 			hdfBillingMeterWrite(billing_meter_objects.size(), metrics_writer_billing_meters);
 			hdfHouseWrite(house_objects.size(), metrics_writer_houses);
 			hdfInverterWrite(inverter_objects.size() , metrics_writer_inverters);
@@ -688,8 +679,12 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 			hdfLineWrite(line_objects.size(), metrics_writer_lines);
 		}
 #endif
-//		cout << "write_line interim write " << (interim_length * interim_cnt) << endl;
+		new_day = false;
 		interim_cnt++;
+		if ((86400*day_cnt) < (interim_cnt * interim_length)) {
+			new_day = true;
+			day_cnt++;
+		}
 		line_cnt = 0;
 	}
 	next_write = t1 + interval_length;
@@ -731,7 +726,7 @@ void metrics_collector_writer::hdfMetadata () {
 void metrics_collector_writer::hdfBillingMeter () {
 	// defining the datatype to pass HDF55
 	mtype_billing_meters = new H5::CompType(sizeof(BillingMeter));    
-	mtype_billing_meters->insertMember(m_time, HOFFSET(BillingMeter, time), H5::PredType::NATIVE_INT);
+	mtype_billing_meters->insertMember(m_time, HOFFSET(BillingMeter, time), H5::PredType::NATIVE_INT64);
 	mtype_billing_meters->insertMember(m_date, HOFFSET(BillingMeter, date), H5::StrType(H5::PredType::C_S1, MAX_METRIC_VALUE_LENGTH));
 	mtype_billing_meters->insertMember(m_name, HOFFSET(BillingMeter, name), H5::StrType(H5::PredType::C_S1, MAX_METRIC_NAME_LENGTH));
 	mtype_billing_meters->insertMember(m_real_power_min, HOFFSET(BillingMeter, real_power_min), H5::PredType::NATIVE_DOUBLE);
@@ -769,7 +764,7 @@ void metrics_collector_writer::hdfBillingMeter () {
 void metrics_collector_writer::hdfHouse () {
 	// defining the datatype to pass HDF55
 	mtype_houses = new H5::CompType(sizeof(House));
-	mtype_houses->insertMember(m_time, HOFFSET(House, time), H5::PredType::NATIVE_INT);
+	mtype_houses->insertMember(m_time, HOFFSET(House, time), H5::PredType::NATIVE_INT64);
 	mtype_houses->insertMember(m_date, HOFFSET(House, date), H5::StrType(H5::PredType::C_S1, MAX_METRIC_VALUE_LENGTH));
 	mtype_houses->insertMember(m_name, HOFFSET(House, name), H5::StrType(H5::PredType::C_S1, MAX_METRIC_NAME_LENGTH));
 	mtype_houses->insertMember(m_total_load_min, HOFFSET(House, total_load_min), H5::PredType::NATIVE_DOUBLE);
@@ -801,7 +796,7 @@ void metrics_collector_writer::hdfHouse () {
 void metrics_collector_writer::hdfInverter () {
 	// defining the datatype to pass HDF55
 	mtype_inverters = new H5::CompType(sizeof(Inverter));
-	mtype_inverters->insertMember(m_time, HOFFSET(Inverter, time), H5::PredType::NATIVE_INT);
+	mtype_inverters->insertMember(m_time, HOFFSET(Inverter, time), H5::PredType::NATIVE_INT64);
 	mtype_inverters->insertMember(m_date, HOFFSET(Inverter, date), H5::StrType(H5::PredType::C_S1, MAX_METRIC_VALUE_LENGTH));
 	mtype_inverters->insertMember(m_name, HOFFSET(Inverter, name), H5::StrType(H5::PredType::C_S1, MAX_METRIC_NAME_LENGTH));
 	mtype_inverters->insertMember(m_real_power_min, HOFFSET(Inverter, real_power_min), H5::PredType::NATIVE_DOUBLE);
@@ -815,7 +810,7 @@ void metrics_collector_writer::hdfInverter () {
 void metrics_collector_writer::hdfCapacitor () {
 // defining the datatype to pass HDF55
 	mtype_capacitors = new H5::CompType(sizeof(Capacitor));
-	mtype_capacitors->insertMember(m_time, HOFFSET(Capacitor, time), H5::PredType::NATIVE_INT);
+	mtype_capacitors->insertMember(m_time, HOFFSET(Capacitor, time), H5::PredType::NATIVE_INT64);
 	mtype_capacitors->insertMember(m_date, HOFFSET(Capacitor, date), H5::StrType(H5::PredType::C_S1, MAX_METRIC_VALUE_LENGTH));
 	mtype_capacitors->insertMember(m_name, HOFFSET(Capacitor, name), H5::StrType(H5::PredType::C_S1, MAX_METRIC_NAME_LENGTH));
 	mtype_capacitors->insertMember(m_operation_count, HOFFSET(Capacitor, operation_count), H5::PredType::NATIVE_DOUBLE);
@@ -824,7 +819,7 @@ void metrics_collector_writer::hdfCapacitor () {
 void metrics_collector_writer::hdfRegulator () {
 	// defining the datatype to pass HDF55
 	mtype_regulators = new H5::CompType(sizeof(Regulator));
-	mtype_regulators->insertMember(m_time, HOFFSET(Regulator, time), H5::PredType::NATIVE_INT);
+	mtype_regulators->insertMember(m_time, HOFFSET(Regulator, time), H5::PredType::NATIVE_INT64);
 	mtype_regulators->insertMember(m_date, HOFFSET(Regulator, date), H5::StrType(H5::PredType::C_S1, MAX_METRIC_VALUE_LENGTH));
 	mtype_regulators->insertMember(m_name, HOFFSET(Regulator, name), H5::StrType(H5::PredType::C_S1, MAX_METRIC_NAME_LENGTH));
 	mtype_regulators->insertMember(m_operation_count, HOFFSET(Regulator, operation_count), H5::PredType::NATIVE_DOUBLE);
@@ -833,7 +828,7 @@ void metrics_collector_writer::hdfRegulator () {
 void metrics_collector_writer::hdfFeeder () {
 	// defining the datatype to pass HDF55
 	mtype_feeders = new H5::CompType(sizeof(Feeder));    
-	mtype_feeders->insertMember(m_time, HOFFSET(Feeder, time), H5::PredType::NATIVE_INT);
+	mtype_feeders->insertMember(m_time, HOFFSET(Feeder, time), H5::PredType::NATIVE_INT64);
 	mtype_feeders->insertMember(m_date, HOFFSET(Feeder, date), H5::StrType(H5::PredType::C_S1, MAX_METRIC_VALUE_LENGTH));
 	mtype_feeders->insertMember(m_name, HOFFSET(Feeder, name), H5::StrType(H5::PredType::C_S1, MAX_METRIC_NAME_LENGTH));
 	mtype_feeders->insertMember(m_real_power_min, HOFFSET(Feeder, real_power_min), H5::PredType::NATIVE_DOUBLE);
@@ -859,7 +854,7 @@ void metrics_collector_writer::hdfFeeder () {
 void metrics_collector_writer::hdfTransformer () {
 	// defining the datatype to pass HDF55
 	mtype_transformers = new H5::CompType(sizeof(Transformer));
-	mtype_transformers->insertMember(m_time, HOFFSET(Transformer, time), H5::PredType::NATIVE_INT);
+	mtype_transformers->insertMember(m_time, HOFFSET(Transformer, time), H5::PredType::NATIVE_INT64);
 	mtype_transformers->insertMember(m_date, HOFFSET(Transformer, date), H5::StrType(H5::PredType::C_S1, MAX_METRIC_VALUE_LENGTH));
 	mtype_transformers->insertMember(m_name, HOFFSET(Transformer, name), H5::StrType(H5::PredType::C_S1, MAX_METRIC_NAME_LENGTH));
 	mtype_transformers->insertMember(m_trans_overload_perc, HOFFSET(Transformer, trans_overload_perc), H5::PredType::NATIVE_DOUBLE);
@@ -868,7 +863,7 @@ void metrics_collector_writer::hdfTransformer () {
 void metrics_collector_writer::hdfLine () {
 	// defining the datatype to pass HDF55
 	mtype_lines = new H5::CompType(sizeof(Line));
-	mtype_lines->insertMember(m_time, HOFFSET(Line, time), H5::PredType::NATIVE_INT);
+	mtype_lines->insertMember(m_time, HOFFSET(Line, time), H5::PredType::NATIVE_INT64);
 	mtype_lines->insertMember(m_date, HOFFSET(Line, date), H5::StrType(H5::PredType::C_S1, MAX_METRIC_VALUE_LENGTH));
 	mtype_lines->insertMember(m_name, HOFFSET(Line, name), H5::StrType(H5::PredType::C_S1, MAX_METRIC_NAME_LENGTH));
 	mtype_lines->insertMember(m_line_overload_perc, HOFFSET(Line, line_overload_perc), H5::PredType::NATIVE_DOUBLE);
@@ -877,7 +872,8 @@ void metrics_collector_writer::hdfLine () {
 void metrics_collector_writer::hdfWrite(char256 filename, H5::CompType* mtype, void* ptr, int structKind, int size) {
 	H5::Exception::dontPrint();
 	try {
-		if (interim_cnt == 1) {
+//		if (interim_cnt == 1) {
+		if (new_day) {
 			// preparation of a dataset and a file.
 			hsize_t dim[1] = { size };
 			hsize_t maxdims[1] = {H5S_UNLIMITED};
@@ -902,32 +898,41 @@ void metrics_collector_writer::hdfWrite(char256 filename, H5::CompType* mtype, v
 			H5::H5File *file;
 			file = new H5::H5File(FileName, H5F_ACC_RDWR);
 			string DatasetName(m_index);
-			DatasetName.append(to_string(interim_cnt));
+//			DatasetName.append(to_string(interim_cnt));
+			DatasetName.append(to_string(day_cnt));
 			H5::DataSet *dataset = new H5::DataSet(file->createDataSet(DatasetName, *mtype, space, *plist));
 
 			switch (structKind) {
 				case 1:
+					delete set_billing_meters;
 					len_billing_meters = size;	set_billing_meters = dataset;
 					dataset->write(((std::vector <BillingMeter> *)ptr)->data(), *mtype);	break;
 				case 2:
+					delete set_houses;
 					len_houses = size;	set_houses = dataset;
 					dataset->write(((std::vector <House> *)ptr)->data(), *mtype);		break;
 				case 3:
+					delete set_inverters;
 					len_inverters = size;	set_inverters = dataset;
 					dataset->write(((std::vector <Inverter> *)ptr)->data(), *mtype);	break;
 				case 4:
+					delete set_capacitors;
 					len_capacitors = size;	set_capacitors = dataset;
 					dataset->write(((std::vector <Capacitor> *)ptr)->data(), *mtype);	break;
 				case 5:
+					delete set_regulators;
 					len_regulators = size;	set_regulators = dataset;
 					dataset->write(((std::vector <Regulator> *)ptr)->data(), *mtype);	break;
 				case 6:
+					delete set_feeders;
 					len_feeders = size;	set_feeders = dataset;
 					dataset->write(((std::vector <Feeder> *)ptr)->data(), *mtype);		break;
 				case 7:
+					delete set_transformers;
 					len_transformers = size;	set_transformers = dataset;
 					dataset->write(((std::vector <Transformer> *)ptr)->data(), *mtype);	break;
 				case 8:
+					delete set_lines;
 					len_lines = size;	set_lines = dataset;
 					dataset->write(((std::vector <Line> *)ptr)->data(), *mtype);		break;
 			}
@@ -1070,7 +1075,7 @@ void metrics_collector_writer::hdfMetadataWrite(Json::Value& meta, char* time_st
 std::vector<std::string> sortIds(std::vector<std::string> v)
 {
 	std::sort(v.begin(), v.end(), [](std::string a, std::string b) {
-			return std::stoi(a) < std::stoi(b);
+			return std::stol(a) < std::stol(b);
 		});
 	return v;
 };
@@ -1091,7 +1096,7 @@ void metrics_collector_writer::hdfBillingMeterWrite (size_t objs, Json::Value& m
 			for (auto const& uid : name.getMemberNames())  {
 				tbl.push_back(BillingMeter());
 				Json::Value mtr = name[uid];
-				tbl[idx].time = stoi(id);
+				tbl[idx].time = stol(id);
 				maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
 				strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);
 				tbl[idx].real_power_min = mtr[MTR_MIN_REAL_POWER].asDouble();
@@ -1140,7 +1145,7 @@ void metrics_collector_writer::hdfHouseWrite (size_t objs, Json::Value& metrics)
 			for (auto const& uid : name.getMemberNames())  {
 				tbl.push_back(House());
 				Json::Value mtr = name[uid];
-				tbl[idx].time = stoi(id);
+				tbl[idx].time = stol(id);
 				maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
 				strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
 				tbl[idx].total_load_min = mtr[HSE_MIN_TOTAL_LOAD].asDouble();
@@ -1183,7 +1188,7 @@ void metrics_collector_writer::hdfInverterWrite (size_t objs, Json::Value& metri
 			for (auto const& uid : name.getMemberNames())  {
 				tbl.push_back(Inverter());
 				Json::Value mtr = name[uid];
-				tbl[idx].time = stoi(id);
+				tbl[idx].time = stol(id);
 				maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
 				strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
 				tbl[idx].real_power_min = mtr[INV_MIN_REAL_POWER].asDouble(); 
@@ -1208,7 +1213,7 @@ void metrics_collector_writer::hdfCapacitorWrite (size_t objs, Json::Value& metr
 			for (auto const& uid : name.getMemberNames())  {
 				tbl.push_back(Capacitor());
 				Json::Value mtr = name[uid];
-				tbl[idx].time = stoi(id);
+				tbl[idx].time = stol(id);
 				maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
 				strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
 				tbl[idx].operation_count = mtr[CAP_OPERATION_CNT].asDouble(); 
@@ -1228,7 +1233,7 @@ void metrics_collector_writer::hdfRegulatorWrite (size_t objs, Json::Value& metr
 			for (auto const& uid : name.getMemberNames())  {
 				tbl.push_back(Regulator());
 				Json::Value mtr = name[uid];
-				tbl[idx].time = stoi(id);
+				tbl[idx].time = stol(id);
 				maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
 				strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
 				tbl[idx].operation_count = mtr[REG_OPERATION_CNT].asDouble(); 
@@ -1248,7 +1253,7 @@ void metrics_collector_writer::hdfFeederWrite (size_t objs, Json::Value& metrics
 			for (auto const& uid : name.getMemberNames())  {
 				tbl.push_back(Feeder());
 				Json::Value mtr = name[uid];
-				tbl[idx].time = stoi(id);
+				tbl[idx].time = stol(id);
 				maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
 				strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
 				tbl[idx].real_power_min = mtr[FDR_MIN_REAL_POWER].asDouble();
@@ -1285,7 +1290,7 @@ void metrics_collector_writer::hdfTransformerWrite (size_t objs, Json::Value& me
 			for (auto const& uid : name.getMemberNames())  {
 				tbl.push_back(Transformer());
 				Json::Value mtr = name[uid];
-				tbl[idx].time = stoi(id);
+				tbl[idx].time = stol(id);
 				maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
 				strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
 				tbl[idx].trans_overload_perc = mtr[TRANS_OVERLOAD_PERC].asDouble(); 
@@ -1305,7 +1310,7 @@ void metrics_collector_writer::hdfLineWrite (size_t objs, Json::Value& metrics) 
 			for (auto const& uid : name.getMemberNames())  {
 				tbl.push_back(Line());
 				Json::Value mtr = name[uid];
-				tbl[idx].time = stoi(id);
+				tbl[idx].time = stol(id);
 				maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
 				strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
 				tbl[idx].line_overload_perc = mtr[LINE_OVERLOAD_PERC].asDouble(); 

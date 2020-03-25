@@ -131,7 +131,7 @@ typedef struct {
 } hMetadata;
 
 typedef struct _BillingMeter{
-	int time; 
+	long int time; 
 	char date[MAX_METRIC_VALUE_LENGTH]; 
 	char name[MAX_METRIC_NAME_LENGTH]; 
 	double real_power_min;
@@ -167,7 +167,7 @@ typedef struct _BillingMeter{
 } BillingMeter;
 
 typedef struct _House {
-	int time; 
+	long int time; 
 	char date[MAX_METRIC_VALUE_LENGTH]; 
 	char name[MAX_METRIC_NAME_LENGTH]; 
 	double total_load_min;
@@ -197,7 +197,7 @@ typedef struct _House {
 } House;
 
 typedef struct _Inverter {
-	int time; 
+	long int time; 
 	char date[MAX_METRIC_VALUE_LENGTH]; 
 	char name[MAX_METRIC_NAME_LENGTH]; 
 	double real_power_min;
@@ -209,21 +209,21 @@ typedef struct _Inverter {
 } Inverter;
 
 typedef struct _Capacitor {
-	int time; 
+	long int time; 
 	char date[MAX_METRIC_VALUE_LENGTH]; 
 	char name[MAX_METRIC_NAME_LENGTH]; 
 	double operation_count;
 } Capacitor;
 
 typedef struct _Regulator {
-	int time; 
+	long int time; 
 	char date[MAX_METRIC_VALUE_LENGTH]; 
 	char name[MAX_METRIC_NAME_LENGTH]; 
 	double operation_count;
 } Regulator;
 
 typedef struct _Feeder {
-	int time; 
+	long int time; 
 	char date[MAX_METRIC_VALUE_LENGTH]; 
 	char name[MAX_METRIC_NAME_LENGTH]; 
 	double real_power_min;
@@ -247,14 +247,14 @@ typedef struct _Feeder {
 } Feeder;
 
 typedef struct _Transformer {
-	int time;
+	long int time;
 	char date[MAX_METRIC_VALUE_LENGTH]; 
 	char name[MAX_METRIC_NAME_LENGTH];
 	double trans_overload_perc;
 } Transformer;
 
 typedef struct _Line {
-	int time;
+	long int time;
 	char date[MAX_METRIC_VALUE_LENGTH]; 
 	char name[MAX_METRIC_NAME_LENGTH];
 	double line_overload_perc;
@@ -386,7 +386,8 @@ private:
 	TIMESTAMP next_write;
 	TIMESTAMP last_write;
 	bool interval_write;
-
+	bool new_day;
+	
 	char* parent_string;
 
 	FINDLIST *metrics_collectors;
@@ -395,6 +396,7 @@ private:
 	int interim_length;				//integer interim length (seconds to write out intervals and then clear)
 	int interim_cnt;				//integer interim count (count to write out intervals)
 	int line_cnt;					//integer write line count (count how many write_line in a interim write)
+	int day_cnt;					//integer day count (count how many day tables are in written)
 	int writeTime;					//represents the time from the StartTime
 };
 
