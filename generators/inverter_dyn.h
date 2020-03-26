@@ -148,6 +148,9 @@ private:
 	double V_DC;
 	double I_DC;
 
+	// DC object "update" of steady-state
+	double pvc_Pmax;
+
 	//Map functions
 	gld_property *map_complex_value(OBJECT *obj, char *name);
 	gld_property *map_double_value(OBJECT *obj, char *name);

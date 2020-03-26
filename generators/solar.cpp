@@ -171,6 +171,12 @@ void solar::init_pub_vars_pvcurve_mode()
 	pvc_C1 = (1 - pvc_I_m_A / pvc_I_sc_A) * exp(-pvc_U_m_V / pvc_C2 / pvc_U_oc_V);
 }
 
+void solar::update_cur_t_and_S()
+{
+	pvc_cur_t_cels = FAHR_TO_CELS(Tamb);
+	pvc_cur_S_wpm2 = WPFT2_TO_WPM2(Insolation);
+}
+
 /* N-R Solver */
 // Funcs added for the N-R solver
 double solar::nr_ep_rt(double x)
@@ -391,7 +397,7 @@ solar::solar(MODULE *module)
 
 								PT_double, "NOCT[degF]", PADDR(NOCT),			 //Nominal operating cell temperature NOCT in deg F
 								PT_double, "Tmodule[degF]", PADDR(Tmodule),		 //Temperature of PV module
-								PT_double, "Tambient[degC]", PADDR(Tambient),	//Ambient temperature for cell efficiency calculations
+								PT_double, "Tambient[degC]", PADDR(Tambient),	 //Ambient temperature for cell efficiency calculations
 								PT_double, "wind_speed[mph]", PADDR(wind_speed), //Wind speed
 								PT_double, "ambient_temperature[degF]", PADDR(Tamb), PT_DESCRIPTION, "Current ambient temperature of air",
 								PT_double, "Insolation[W/sf]", PADDR(Insolation),
@@ -446,8 +452,8 @@ solar::solar(MODULE *module)
 /* Object creation is called once for each object that is created by the core */
 int solar::create(void)
 {
-	NOCT = 118.4;	//degF
-	Tcell = 21.0;	//degC
+	NOCT = 118.4;	 //degF
+	Tcell = 21.0;	 //degC
 	Tambient = 25.0; //degC
 	Tamb = 77;		 //degF
 	wind_speed = 0.0;
@@ -473,7 +479,7 @@ int solar::create(void)
 	pTout = NULL;
 	pWindSpeed = NULL;
 
-	module_acoeff = -2.81;   //Coefficients from Sandia database - represents
+	module_acoeff = -2.81;	 //Coefficients from Sandia database - represents
 	module_bcoeff = -0.0455; //glass/cell/polymer sheet insulated back, raised structure mounting
 	module_dTcoeff = 0.0;
 	module_Tcoeff = -0.5; //%/C - default from SAM - appears to be a monocrystalline or polycrystalline silicon
@@ -484,11 +490,11 @@ int solar::create(void)
 	orientation_azimuth_corrected = 0; //By default, still zero
 	fix_angle_lat = false;			   //By default, tilt angle fix not enabled (because ideal insolation, by default)
 
-	soiling_factor = 0.95;  //Soiling assumed to block 5% solar irradiance
+	soiling_factor = 0.95;	//Soiling assumed to block 5% solar irradiance
 	derating_factor = 0.95; //Manufacturing variations expected to remove 5% of energy
 
 	orientation_type = DEFAULT;		   //Default = ideal tracking
-	solar_model_tilt = LIUJORDAN;	  //"Classic" tilt model - from Duffie and Beckman (same as ETP inputs)
+	solar_model_tilt = LIUJORDAN;	   //"Classic" tilt model - from Duffie and Beckman (same as ETP inputs)
 	solar_power_model = BASEEFFICIENT; //Use older power output calculation model - unsure where it came from
 
 	//Null out the function pointers
@@ -1153,6 +1159,9 @@ int solar::init(OBJECT *parent)
 			//Map the inverter voltage
 			inverter_voltage_property = new gld_property(parent, "V_In");
 
+			//Map the inverter property pvc_pmax
+			inverter_pvc_Pmax_property = new gld_property(parent, "pvc_Pmax");
+
 			//Check it
 			if ((inverter_voltage_property->is_valid() != true) || (inverter_voltage_property->is_double() != true))
 			{
@@ -1217,7 +1226,7 @@ int solar::init(OBJECT *parent)
 				GL_THROW("solar:%d - %s - failed to map additional current injection mapping for inverter_dyn:%d - %s", obj->id, (obj->name ? obj->name : "unnamed"), parent->id, (parent->name ? parent->name : "unnamed"));
 				//Defined above
 			}
-		}	//End inverter_dyn
+		}	 //End inverter_dyn
 		else //It's not an inverter - fail it.
 		{
 			GL_THROW("Solar panel can only have an inverter as its parent.");
@@ -1227,7 +1236,7 @@ int solar::init(OBJECT *parent)
 		}
 	}
 	else //No parent
-	{	// default values of voltage
+	{	 // default values of voltage
 		gl_warning("solar panel:%d has no parent defined. Using static voltages.", obj->id);
 
 		//Map the values to ourself
@@ -1336,7 +1345,7 @@ int solar::init(OBJECT *parent)
 			The solar object is not parented to an inverter.  Deltamode only supports it being parented to a deltamode-enabled inverter.
 			*/
 		}
-	}	//End deltamode inclusive
+	}	 //End deltamode inclusive
 	else //This particular model isn't enabled
 	{
 		if (enable_subsecond_models == true)
@@ -1428,7 +1437,7 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 			//Flag us as complete
 			first_sync_delta_enabled = false;
-		}	//End deltamode specials - first pass
+		}	 //End deltamode specials - first pass
 		else //Somehow, we got here and deltamode isn't properly enabled...odd, just deflag us
 		{
 			first_sync_delta_enabled = false;
@@ -1563,8 +1572,13 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 	else if (solar_power_model == PV_CURVE)
 	{
-		//Solar is slaved in this mode - inverter calls the update, so all "property updates" will be in the function below
-		//test_nr_solver();
+		//[Deltamode]: Solar is slaved in this mode - inverter calls the update, so all "property updates" will be in the function below
+
+		//[For steady-state]: Solar proactively tells its parent inverter the max P in the PV_CURVE mode
+		update_cur_t_and_S();
+		double pvc_Pmax = get_p_max(pvc_U_m_V);
+		inverter_pvc_Pmax_property->setp<double>(pvc_Pmax, *test_rlock);
+
 		return TS_NEVER;
 	}
 	else
@@ -1635,8 +1649,7 @@ STATUS solar::solar_dc_update(OBJECT *calling_obj, bool init_mode)
 
 	//General updates - theoretically happen for all runs
 	//Tamb and Insolation were theoretically updated in the sync call (either as exec or in interupdate)
-	pvc_cur_t_cels = FAHR_TO_CELS(Tamb);
-	pvc_cur_S_wpm2 = WPFT2_TO_WPM2(Insolation);
+	update_cur_t_and_S();
 
 	if (init_mode == true) //Initialization - first runs
 	{

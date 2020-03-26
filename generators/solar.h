@@ -43,6 +43,7 @@ private: /* For N-R Solver & P-V Curve */
 	// For and From Weather
 	double pvc_cur_t_cels;
 	double pvc_cur_S_wpm2;
+	void update_cur_t_and_S();
 
 	// N-R Sovler Part
 	double nr_ep_rt(double);
@@ -190,6 +191,7 @@ private:
 	gld_property *inverter_voltage_property;
 	gld_property *inverter_current_property;
 	gld_property *inverter_power_property;
+	gld_property *inverter_pvc_Pmax_property;
 
 	//Default voltage and current values, if ran "headless"
 	double default_voltage_array;

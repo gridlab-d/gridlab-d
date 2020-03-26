@@ -174,7 +174,7 @@ inverter_dyn::inverter_dyn(MODULE *module)
 			PT_double, "I_In[A]",PADDR(I_DC), PT_DESCRIPTION, "DC input current",			
 			PT_double, "P_In[W]", PADDR(P_DC), PT_DESCRIPTION, "DC input power",
 
-
+			PT_double, "pvc_Pmax[W]",PADDR(pvc_Pmax), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "P max from the PV curve",
 			
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
@@ -904,6 +904,7 @@ int inverter_dyn::init(OBJECT *parent)
 
 	// Initialize parameters
 	VA_Out = complex(Pref,Qref);
+	pvc_Pmax = 0;
 
 	//See if we had a single phase connection
 	if (parent_is_single_phase == true)
@@ -940,11 +941,11 @@ TIMESTAMP inverter_dyn::presync(TIMESTAMP t0, TIMESTAMP t1)
 	return t2; 
 }
 
-TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1) 
+
+TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP tret_value;
-
 
 	FUNCTIONADDR test_fxn;
 	STATUS fxn_return_status;
@@ -969,19 +970,19 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	//Deltamode check/init items
-	if (first_sync_delta_enabled == true)	//Deltamode first pass
+	if (first_sync_delta_enabled == true) //Deltamode first pass
 	{
 		//TODO: LOCKING!
-		if ((deltamode_inclusive == true) && (enable_subsecond_models == true))	//We want deltamode - see if it's populated yet
+		if ((deltamode_inclusive == true) && (enable_subsecond_models == true)) //We want deltamode - see if it's populated yet
 		{
-			if (((gen_object_current == -1) || (delta_objects==NULL)) && (enable_subsecond_models == true))
+			if (((gen_object_current == -1) || (delta_objects == NULL)) && (enable_subsecond_models == true))
 			{
 				//Call the allocation routine
 				allocate_deltamode_arrays();
 			}
 
 			//Check limits of the array
-			if (gen_object_current>=gen_object_count)
+			if (gen_object_current >= gen_object_count)
 			{
 				GL_THROW("Too many objects tried to populate deltamode objects array in the generators module!");
 				/*  TROUBLESHOOT
@@ -995,12 +996,12 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 			delta_objects[gen_object_current] = obj;
 
 			//Map up the function for interupdate
-			delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"interupdate_gen_object"));
+			delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "interupdate_gen_object"));
 
 			//Make sure it worked
 			if (delta_functions[gen_object_current] == NULL)
 			{
-				GL_THROW("Failure to map deltamode function for device:%s",obj->name);
+				GL_THROW("Failure to map deltamode function for device:%s", obj->name);
 				/*  TROUBLESHOOT
 				Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
 				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
@@ -1009,12 +1010,12 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 
 			//Map up the function for postupdate
-			post_delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"postupdate_gen_object"));
+			post_delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "postupdate_gen_object"));
 
 			//Make sure it worked
 			if (post_delta_functions[gen_object_current] == NULL)
 			{
-				GL_THROW("Failure to map post-deltamode function for device:%s",obj->name);
+				GL_THROW("Failure to map post-deltamode function for device:%s", obj->name);
 				/*  TROUBLESHOOT
 				Attempts to map up the postupdate function of a specific device failed.  Please try again and ensure
 				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
@@ -1023,12 +1024,12 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 
 			//Map up the function for postupdate
-			delta_preupdate_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"preupdate_gen_object"));
-			
+			delta_preupdate_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "preupdate_gen_object"));
+
 			//Make sure it worked
 			if (delta_preupdate_functions[gen_object_current] == NULL)
 			{
-				GL_THROW("Failure to map pre-deltamode function for device:%s",obj->name);
+				GL_THROW("Failure to map pre-deltamode function for device:%s", obj->name);
 				/*  TROUBLESHOOT
 				Attempts to map up the preupdate function of a specific device failed.  Please try again and ensure
 				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
@@ -1039,7 +1040,6 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//Update pointer
 			gen_object_current++;
 
-			
 			if (parent_is_a_meter == true)
 			{
 
@@ -1047,15 +1047,15 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 				temp_complex_value = complex(Pref, Qref);
 
 				//Push it up
-				pGenerated->setp<complex>(temp_complex_value,*test_rlock);
+				pGenerated->setp<complex>(temp_complex_value, *test_rlock);
 
 				//Map the current injection function
-				test_fxn = (FUNCTIONADDR)(gl_get_function(obj->parent,"pwr_current_injection_update_map"));
+				test_fxn = (FUNCTIONADDR)(gl_get_function(obj->parent, "pwr_current_injection_update_map"));
 
 				//See if it was located
 				if (test_fxn == NULL)
 				{
-					GL_THROW("inverter:%s - failed to map additional current injection mapping for node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
+					GL_THROW("inverter:%s - failed to map additional current injection mapping for node:%s", (obj->name ? obj->name : "unnamed"), (obj->parent->name ? obj->parent->name : "unnamed"));
 					/*  TROUBLESHOOT
 					While attempting to map the additional current injection function, an error was encountered.
 					Please try again.  If the error persists, please submit your code and a bug report via the trac website.
@@ -1063,12 +1063,12 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 
 				//Call the mapping function
-				fxn_return_status = ((STATUS (*)(OBJECT *, OBJECT *))(*test_fxn))(obj->parent,obj);
+				fxn_return_status = ((STATUS(*)(OBJECT *, OBJECT *))(*test_fxn))(obj->parent, obj);
 
 				//Make sure it worked
 				if (fxn_return_status != SUCCESS)
 				{
-					GL_THROW("inverter:%s - failed to map additional current injection mapping for node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
+					GL_THROW("inverter:%s - failed to map additional current injection mapping for node:%s", (obj->name ? obj->name : "unnamed"), (obj->parent->name ? obj->parent->name : "unnamed"));
 					//Defined above
 				}
 			}
@@ -1076,12 +1076,12 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//Flag it
 			first_sync_delta_enabled = false;
 
-		}//End deltamode specials - first pass
-		else	//Somehow, we got here and deltamode isn't properly enabled...odd, just deflag us
+		}	 //End deltamode specials - first pass
+		else //Somehow, we got here and deltamode isn't properly enabled...odd, just deflag us
 		{
 			first_sync_delta_enabled = false;
 		}
-	}//End first delta timestep
+	} //End first delta timestep
 	//default else - either not deltamode, or not the first timestep
 
 	//**** FT -- Sync items here
@@ -1089,7 +1089,7 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 	{
 		inverter_first_step = false;
 	}
-	
+
 	//Calculate power based on measured terminal voltage and currents
 	if (parent_is_single_phase == true) // single phase/split-phase implementation
 	{
@@ -1098,56 +1098,52 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 		{
 			//Update output power
 			//Get current injected
-			temp_current_val[0] = value_IGenerated[0] - filter_admittance*value_Circuit_V[0];
+			temp_current_val[0] = value_IGenerated[0] - filter_admittance * value_Circuit_V[0];
 
 			//Update power output variables, just so we can see what is going on
-			VA_Out = value_Circuit_V[0]*~temp_current_val[0];
+			VA_Out = value_Circuit_V[0] * ~temp_current_val[0];
 
-			if ((control_mode == GRID_FOLLOWING)||(control_mode == GFL_CURRENT_SOURCE))
+			if ((control_mode == GRID_FOLLOWING) || (control_mode == GFL_CURRENT_SOURCE))
 			{
 				if (VSI_bustype != 2)
 				{
 
 					//Compute desired output - sign convention appears to be backwards
-					complex temp_VA = complex(Pref,Qref);
+					complex temp_VA = complex(Pref, Qref);
 
 					//Force the output power the same as glm pre-defined values
-					value_IGenerated[0] = ~(temp_VA/value_Circuit_V[0]) + filter_admittance*value_Circuit_V[0];
-
-
+					value_IGenerated[0] = ~(temp_VA / value_Circuit_V[0]) + filter_admittance * value_Circuit_V[0];
 				}
 			}
 		}
-
-		
 	}
-	else	//Three phase variant
+	else //Three phase variant
 	{
 
 		if (inverter_first_step == false)
 		{
 			//Update output power
 			//Get current injected
-			temp_current_val[0] = (value_IGenerated[0] - generator_admittance[0][0]*value_Circuit_V[0] - generator_admittance[0][1]*value_Circuit_V[1] - generator_admittance[0][2]*value_Circuit_V[2]);
-			temp_current_val[1] = (value_IGenerated[1] - generator_admittance[1][0]*value_Circuit_V[0] - generator_admittance[1][1]*value_Circuit_V[1] - generator_admittance[1][2]*value_Circuit_V[2]);
-			temp_current_val[2] = (value_IGenerated[2] - generator_admittance[2][0]*value_Circuit_V[0] - generator_admittance[2][1]*value_Circuit_V[1] - generator_admittance[2][2]*value_Circuit_V[2]);
+			temp_current_val[0] = (value_IGenerated[0] - generator_admittance[0][0] * value_Circuit_V[0] - generator_admittance[0][1] * value_Circuit_V[1] - generator_admittance[0][2] * value_Circuit_V[2]);
+			temp_current_val[1] = (value_IGenerated[1] - generator_admittance[1][0] * value_Circuit_V[0] - generator_admittance[1][1] * value_Circuit_V[1] - generator_admittance[1][2] * value_Circuit_V[2]);
+			temp_current_val[2] = (value_IGenerated[2] - generator_admittance[2][0] * value_Circuit_V[0] - generator_admittance[2][1] * value_Circuit_V[1] - generator_admittance[2][2] * value_Circuit_V[2]);
 
 			//Update power output variables, just so we can see what is going on
-			power_val[0] = value_Circuit_V[0]*~temp_current_val[0];
-			power_val[1] = value_Circuit_V[1]*~temp_current_val[1];
-			power_val[2] = value_Circuit_V[2]*~temp_current_val[2];
+			power_val[0] = value_Circuit_V[0] * ~temp_current_val[0];
+			power_val[1] = value_Circuit_V[1] * ~temp_current_val[1];
+			power_val[2] = value_Circuit_V[2] * ~temp_current_val[2];
 
 			VA_Out = power_val[0] + power_val[1] + power_val[2];
-			
-			if (control_mode == GRID_FORMING)  
+
+			if (control_mode == GRID_FORMING)
 			{
 				/***** This has been moved down to the current injection  */
 				// // Adjust VSI (not on SWING bus) current injection and e_source values only at the first iteration of each time step
-				// if (VSI_bustype != 2) 
+				// if (VSI_bustype != 2)
 				// {
-					
+
 				// 	complex temp_VA = complex(Pref,Qref);
-					
+
 				// 	//Copy in value
 				// 	temp_power_val[0] = power_val[0] + (temp_VA - VA_Out) / 3.0;
 				// 	temp_power_val[1] = power_val[1] + (temp_VA - VA_Out) / 3.0;
@@ -1159,24 +1155,23 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 				// 	temp_current_val[2] = ~(temp_power_val[2]/value_Circuit_V[2]) + generator_admittance[2][0]*value_Circuit_V[0] + generator_admittance[2][1]*value_Circuit_V[1] + generator_admittance[2][2]*value_Circuit_V[2];
 
 				// 	//Apply and see what happens
-				// 	value_IGenerated[0] = temp_current_val[0];			
-												
+				// 	value_IGenerated[0] = temp_current_val[0];
+
 				// }
-				
-				// //for grid forming inverter, the internal voltages and their norton equivalent currents need to be balanced				
-				// value_IGenerated[1].SetPolar(value_IGenerated[0].Mag(),value_IGenerated[0].Arg() - 2.0/3.0*PI); 
-				// value_IGenerated[2].SetPolar(value_IGenerated[0].Mag(),value_IGenerated[0].Arg() + 2.0/3.0*PI); 
-					
+
+				// //for grid forming inverter, the internal voltages and their norton equivalent currents need to be balanced
+				// value_IGenerated[1].SetPolar(value_IGenerated[0].Mag(),value_IGenerated[0].Arg() - 2.0/3.0*PI);
+				// value_IGenerated[2].SetPolar(value_IGenerated[0].Mag(),value_IGenerated[0].Arg() + 2.0/3.0*PI);
 			}
-			else   // grid following or GFL_CURRENT_SOURCE
+			else // grid following or GFL_CURRENT_SOURCE
 			{
-				if(grid_following_mode == BALANCED_POWER)  // Assume the grid-following inverter inject balanced power to the grid
+				if (grid_following_mode == BALANCED_POWER) // Assume the grid-following inverter inject balanced power to the grid
 				{
 					// Adjust VSI (not on SWING bus) current injection and e_source values only at the first iteration of each time step
 					if (VSI_bustype != 2)
 					{
 
-						complex temp_VA = complex(Pref,Qref);
+						complex temp_VA = complex(Pref, Qref);
 
 						//Copy in value
 						//temp_power_val[0] = power_val[0] + (temp_VA - VA_Out) / 3.0;
@@ -1189,56 +1184,47 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 						temp_power_val[2] = temp_VA / 3.0;
 
 						//Back out the current injection
-						temp_current_val[0] = ~(temp_power_val[0]/value_Circuit_V[0]) + generator_admittance[0][0]*value_Circuit_V[0] + generator_admittance[0][1]*value_Circuit_V[1] + generator_admittance[0][2]*value_Circuit_V[2];
-						temp_current_val[1] = ~(temp_power_val[1]/value_Circuit_V[1]) + generator_admittance[1][0]*value_Circuit_V[0] + generator_admittance[1][1]*value_Circuit_V[1] + generator_admittance[1][2]*value_Circuit_V[2];
-						temp_current_val[2] = ~(temp_power_val[2]/value_Circuit_V[2]) + generator_admittance[2][0]*value_Circuit_V[0] + generator_admittance[2][1]*value_Circuit_V[1] + generator_admittance[2][2]*value_Circuit_V[2];
+						temp_current_val[0] = ~(temp_power_val[0] / value_Circuit_V[0]) + generator_admittance[0][0] * value_Circuit_V[0] + generator_admittance[0][1] * value_Circuit_V[1] + generator_admittance[0][2] * value_Circuit_V[2];
+						temp_current_val[1] = ~(temp_power_val[1] / value_Circuit_V[1]) + generator_admittance[1][0] * value_Circuit_V[0] + generator_admittance[1][1] * value_Circuit_V[1] + generator_admittance[1][2] * value_Circuit_V[2];
+						temp_current_val[2] = ~(temp_power_val[2] / value_Circuit_V[2]) + generator_admittance[2][0] * value_Circuit_V[0] + generator_admittance[2][1] * value_Circuit_V[1] + generator_admittance[2][2] * value_Circuit_V[2];
 
 						//Apply and see what happens
 						//for grid following inverter, the internal voltages may not be balanced
 						value_IGenerated[0] = temp_current_val[0];
 						value_IGenerated[1] = temp_current_val[1];
 						value_IGenerated[2] = temp_current_val[2];
-
 					}
-				}  // end of balanced power
-				else  // Positive sequence. Assume the grid-following inverter inject balanced currents to the grid
+				}	 // end of balanced power
+				else // Positive sequence. Assume the grid-following inverter inject balanced currents to the grid
 				{
 					// Adjust VSI (not on SWING bus) current injection and e_source values only at the first iteration of each time step
 					if (VSI_bustype != 2)
 					{
 
-						complex temp_VA = complex(Pref,Qref);
+						complex temp_VA = complex(Pref, Qref);
 
 						// Obtain the positive sequence voltage
-						value_Circuit_V_PS = (value_Circuit_V[0] + value_Circuit_V[1]*complex(cos(2.0/3.0*PI),sin(2.0/3.0*PI)) + value_Circuit_V[2]*complex(cos(-2.0/3.0*PI),sin(-2.0/3.0*PI)))/3.0;
+						value_Circuit_V_PS = (value_Circuit_V[0] + value_Circuit_V[1] * complex(cos(2.0 / 3.0 * PI), sin(2.0 / 3.0 * PI)) + value_Circuit_V[2] * complex(cos(-2.0 / 3.0 * PI), sin(-2.0 / 3.0 * PI))) / 3.0;
 						// Obtain the positive sequence current
-						value_Circuit_I_PS[0] = ~(temp_VA/value_Circuit_V_PS)/3.0;
-						value_Circuit_I_PS[1] = value_Circuit_I_PS[0] * complex(cos(-2.0/3.0*PI),sin(-2.0/3.0*PI));
-						value_Circuit_I_PS[2] = value_Circuit_I_PS[0] * complex(cos(2.0/3.0*PI),sin(2.0/3.0*PI));
+						value_Circuit_I_PS[0] = ~(temp_VA / value_Circuit_V_PS) / 3.0;
+						value_Circuit_I_PS[1] = value_Circuit_I_PS[0] * complex(cos(-2.0 / 3.0 * PI), sin(-2.0 / 3.0 * PI));
+						value_Circuit_I_PS[2] = value_Circuit_I_PS[0] * complex(cos(2.0 / 3.0 * PI), sin(2.0 / 3.0 * PI));
 
 						//Back out the current injection
-						temp_current_val[0] = value_Circuit_I_PS[0] + generator_admittance[0][0]*value_Circuit_V[0] + generator_admittance[0][1]*value_Circuit_V[1] + generator_admittance[0][2]*value_Circuit_V[2];
-						temp_current_val[1] = value_Circuit_I_PS[1] + generator_admittance[1][0]*value_Circuit_V[0] + generator_admittance[1][1]*value_Circuit_V[1] + generator_admittance[1][2]*value_Circuit_V[2];
-						temp_current_val[2] = value_Circuit_I_PS[2] + generator_admittance[2][0]*value_Circuit_V[0] + generator_admittance[2][1]*value_Circuit_V[1] + generator_admittance[2][2]*value_Circuit_V[2];
+						temp_current_val[0] = value_Circuit_I_PS[0] + generator_admittance[0][0] * value_Circuit_V[0] + generator_admittance[0][1] * value_Circuit_V[1] + generator_admittance[0][2] * value_Circuit_V[2];
+						temp_current_val[1] = value_Circuit_I_PS[1] + generator_admittance[1][0] * value_Circuit_V[0] + generator_admittance[1][1] * value_Circuit_V[1] + generator_admittance[1][2] * value_Circuit_V[2];
+						temp_current_val[2] = value_Circuit_I_PS[2] + generator_admittance[2][0] * value_Circuit_V[0] + generator_admittance[2][1] * value_Circuit_V[1] + generator_admittance[2][2] * value_Circuit_V[2];
 
 						//Apply and see what happens
 						//for grid following inverter, the internal voltages may not be balanced
 						value_IGenerated[0] = temp_current_val[0];
 						value_IGenerated[1] = temp_current_val[1];
 						value_IGenerated[2] = temp_current_val[2];
-
 					}
 				}
-
-				
 			}
-			
-	
 		}
-		
-		
 	}
-	
 
 	//Sync the powerflow variables
 	if (parent_is_a_meter == true)
@@ -1261,7 +1247,7 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 TIMESTAMP inverter_dyn::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	OBJECT *obj = OBJECTHDR(this);
-	TIMESTAMP t2 = TS_NEVER;		//By default, we're done forever!
+	TIMESTAMP t2 = TS_NEVER; //By default, we're done forever!
 
 	//If we have a meter, reset the accumulators
 	if (parent_is_a_meter == true)
@@ -1273,43 +1259,74 @@ TIMESTAMP inverter_dyn::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	//**** FT -- Postsync stuff here
-	
-	
+
 	if (parent_is_single_phase == true) // single phase/split-phase implementation
 	{
-		
+
 		//Update output power
 		//Get current injected
-		temp_current_val[0] = value_IGenerated[0] - filter_admittance*value_Circuit_V[0];
+		temp_current_val[0] = value_IGenerated[0] - filter_admittance * value_Circuit_V[0];
 
 		//Update power output variables, just so we can see what is going on
-		VA_Out = value_Circuit_V[0]*~temp_current_val[0];
-
+		VA_Out = value_Circuit_V[0] * ~temp_current_val[0];
 	}
-	else	//Three-phase, by default
+	else //Three-phase, by default
 	{
-		
+
 		//Update output power
 		//Get current injected
-		temp_current_val[0] = (value_IGenerated[0] - generator_admittance[0][0]*value_Circuit_V[0] - generator_admittance[0][1]*value_Circuit_V[1] - generator_admittance[0][2]*value_Circuit_V[2]);
-		temp_current_val[1] = (value_IGenerated[1] - generator_admittance[1][0]*value_Circuit_V[0] - generator_admittance[1][1]*value_Circuit_V[1] - generator_admittance[1][2]*value_Circuit_V[2]);
-		temp_current_val[2] = (value_IGenerated[2] - generator_admittance[2][0]*value_Circuit_V[0] - generator_admittance[2][1]*value_Circuit_V[1] - generator_admittance[2][2]*value_Circuit_V[2]);
+		temp_current_val[0] = (value_IGenerated[0] - generator_admittance[0][0] * value_Circuit_V[0] - generator_admittance[0][1] * value_Circuit_V[1] - generator_admittance[0][2] * value_Circuit_V[2]);
+		temp_current_val[1] = (value_IGenerated[1] - generator_admittance[1][0] * value_Circuit_V[0] - generator_admittance[1][1] * value_Circuit_V[1] - generator_admittance[1][2] * value_Circuit_V[2]);
+		temp_current_val[2] = (value_IGenerated[2] - generator_admittance[2][0] * value_Circuit_V[0] - generator_admittance[2][1] * value_Circuit_V[1] - generator_admittance[2][2] * value_Circuit_V[2]);
 
 		//Update power output variables, just so we can see what is going on
-		power_val[0] = value_Circuit_V[0]*~temp_current_val[0];
-		power_val[1] = value_Circuit_V[1]*~temp_current_val[1];
-		power_val[2] = value_Circuit_V[2]*~temp_current_val[2];
+		power_val[0] = value_Circuit_V[0] * ~temp_current_val[0];
+		power_val[1] = value_Circuit_V[1] * ~temp_current_val[1];
+		power_val[2] = value_Circuit_V[2] * ~temp_current_val[2];
 
 		VA_Out = power_val[0] + power_val[1] + power_val[2];
-	}			
-	
+	}
+
+	if (VA_Out.Mag() > pvc_Pmax)
+	{
+		printf("VA_Out.Mag() is large than pvc_Pmax!!");
+
+		if (pvc_Pmax == 0)
+		{
+			value_IGenerated[0] = 0;
+			value_IGenerated[1] = 0;
+			value_IGenerated[2] = 0;
+		}
+		else if (pvc_Pmax < 0)
+		{
+			gl_warning("pvc_Pmax is negative!!");
+		}
+		else
+		{
+			double red_rt = VA_Out.Mag() / pvc_Pmax;
+
+			VA_Out /= red_rt;
+			power_val[0] /= red_rt;
+			power_val[1] /= red_rt;
+			power_val[2] /= red_rt;
+			temp_current_val[0] /= red_rt;
+			temp_current_val[1] /= red_rt;
+			temp_current_val[2] /= red_rt;
+
+			value_IGenerated[0] = temp_current_val[0] - (-generator_admittance[0][0] * value_Circuit_V[0] - generator_admittance[0][1] * value_Circuit_V[1] - generator_admittance[0][2] * value_Circuit_V[2]);
+			value_IGenerated[1] = temp_current_val[1] - (-generator_admittance[1][0] * value_Circuit_V[0] - generator_admittance[1][1] * value_Circuit_V[1] - generator_admittance[1][2] * value_Circuit_V[2]);
+			value_IGenerated[2] = temp_current_val[2] - (-generator_admittance[2][0] * value_Circuit_V[0] - generator_admittance[2][1] * value_Circuit_V[1] - generator_admittance[2][2] * value_Circuit_V[2]);
+
+			t2 = t1;
+		}
+	}
 
 	//Sync the powerflow variables
 	if (parent_is_a_meter == true)
 	{
 		push_complex_powerflow_values();
 	}
-	
+
 	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
 
