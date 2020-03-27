@@ -172,6 +172,7 @@ int triplex_meter::create()
 {
 	int result = triplex_node::create();
 	measured_real_energy = measured_reactive_energy = 0;
+	measured_real_power = measured_reactive_power = 0.0;
 	measured_real_energy_delta = measured_reactive_energy_delta = 0;
     last_measured_real_energy = last_measured_reactive_energy = 0;
 	last_measured_real_power = last_measured_reactive_power = 0.0;
@@ -242,6 +243,8 @@ int triplex_meter::init(OBJECT *parent)
 	pre_load=0;
 #endif
 
+	OBJECT *obj = OBJECTHDR(this);
+
 	if(power_market != 0){
 		price_prop = gl_get_property(power_market, market_price_name);
 		if(price_prop == 0){
@@ -249,6 +252,16 @@ int triplex_meter::init(OBJECT *parent)
 		}
 	}
 	check_prices();
+
+	//Check power and energy properties - if they are initialized, send a warning
+	if ((measured_real_power != 0.0) || (measured_reactive_power != 0.0) || (measured_real_energy != 0.0) || (measured_reactive_energy != 0.0))
+	{
+		gl_warning("triplex_meter:%d - %s - measured power or energy is not initialized to zero - unexpected energy values may result",obj->id,(obj->name?obj->name:"Unnamed"));
+		/*  TROUBLESHOOT
+		An initial value for measured_real_power, measured_reactive_power, measured_real_energy, or measured_reactive_energy was set in the GLM.  This may cause some unexpected
+		energy values to be computed for the system on this triplex_meter.  If this was not deliberate, be sure to remove those entries from the GLM file.
+		*/
+	}
 
 	return triplex_node::init(parent);
 }
