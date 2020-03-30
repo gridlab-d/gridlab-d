@@ -1243,91 +1243,164 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 }
 
+/* Update the injected currents with respect to VA_Out */
+void inverter_dyn::update_iGen(complex VA_Out)
+{
+	if (parent_is_single_phase == true) // single phase/split-phase implementation
+	{
+		// power_val[0], temp_current_val[0], & value_IGenerated[0]
+		power_val[0] = VA_Out;
+		temp_current_val[0] = ~(power_val[0] / value_Circuit_V[0]);
+		value_IGenerated[0] = temp_current_val[0] + filter_admittance * value_Circuit_V[0];
+	}
+	else
+	{
+		// power_val, temp_current_val, & value_IGenerated
+		power_val[0] = power_val[1] = power_val[2] = VA_Out / 3;
+
+		temp_current_val[0] = ~(power_val[0] / value_Circuit_V[0]);
+		temp_current_val[1] = ~(power_val[1] / value_Circuit_V[1]);
+		temp_current_val[2] = ~(power_val[2] / value_Circuit_V[2]);
+
+		value_IGenerated[0] = temp_current_val[0] - (-generator_admittance[0][0] * value_Circuit_V[0] - generator_admittance[0][1] * value_Circuit_V[1] - generator_admittance[0][2] * value_Circuit_V[2]);
+		value_IGenerated[1] = temp_current_val[1] - (-generator_admittance[1][0] * value_Circuit_V[0] - generator_admittance[1][1] * value_Circuit_V[1] - generator_admittance[1][2] * value_Circuit_V[2]);
+		value_IGenerated[2] = temp_current_val[2] - (-generator_admittance[2][0] * value_Circuit_V[0] - generator_admittance[2][1] * value_Circuit_V[1] - generator_admittance[2][2] * value_Circuit_V[2]);
+	}
+}
+
+/* Check the inverter output and make sure it is in the limit */
+bool inverter_dyn::check_and_update_VA_Out(OBJECT *obj)
+{
+    bool flag_VA_Out_changed = false;
+
+    if (grid_forming_mode == PV_DC_BUS)
+    {
+        // Check if pvc_Pmax is nonnegative
+        if (pvc_Pmax < 0)
+        {
+            GL_THROW("pvc_Pmax (%f [W]) is negative!!",
+                     pvc_Pmax);
+        }
+
+        // Check P_Out & Q_Out
+        double P_Out = VA_Out.Re();
+        double Q_Out = VA_Out.Im();
+
+        //== check P_Out
+        double P_Out_lim = pvc_Pmax;
+        if (S_base < pvc_Pmax) //i.e., double P_Out_lim = S_base < pvc_Pmax ? S_base : pvc_Pmax;
+        {
+            gl_warning("inverter (name: '%s'): The limit of P_Out is capped at"
+                       " the rated power of this inverter, which is %f [W].",
+                       obj->name ? obj->name : "unnamed", S_base);
+            P_Out_lim = S_base;
+        }
+
+        if (P_Out > P_Out_lim)
+        {
+            gl_warning("inverter (name: '%s'): P_Out (%f [W] required by powerflow) is capped at %f [W]."
+                       " VA_Out.Re() will be updated accordingly."
+                       " Note that: 1) P_Out <= min(pvc_Pmax, rated_power);"
+                       " 2) sqrt(P_Out^2 + Q_Out^2) <= sqrt(2)*rated_power.",
+                       obj->name ? obj->name : "unnamed", P_Out, P_Out_lim);
+
+            P_Out = P_Out_lim;
+            flag_VA_Out_changed = true;
+        }
+
+        //== check Q_Out
+        double Q_Out_lim_sq = 2 * pow(S_base, 2) - pow(P_Out, 2);
+
+        if (Q_Out_lim_sq < 0) // Technically, there is no need to check the 'Q_Out_lim_sq', but there is no harm to double check
+        {
+            GL_THROW("Rated power (%f [W]) of the inverter is too small,"
+                     " it needs to be at least 70.71% of the P_Out (%f) [W] at this moment!!",
+                     S_base, P_Out);
+        }
+        else
+        {
+            double Q_Out_lim = sqrt(Q_Out_lim_sq);
+            if (Q_Out > Q_Out_lim)
+            {
+                gl_warning("inverter (name: '%s'): Q_Out (%f [var] required by powerflow) is be capped at %f [var]."
+                           " VA_Out.Im() will be updated accordingly."
+                           " Note that: 1) P_Out <= min(pvc_Pmax, rated_power);"
+                           " 2) sqrt(P_Out^2 + Q_Out^2) <= sqrt(2)*rated_power.",
+                           obj->name ? obj->name : "unnamed", Q_Out, Q_Out_lim);
+
+                Q_Out = Q_Out_lim;
+                flag_VA_Out_changed = true;
+            }
+        }
+
+        if (flag_VA_Out_changed)
+        {
+			// Update VA_Out
+			VA_Out = complex(P_Out, Q_Out);
+			update_iGen(VA_Out);
+		}
+    }
+    return flag_VA_Out_changed;
+}
+
 /* Postsync is called when the clock needs to advance on the second top-down pass */
 TIMESTAMP inverter_dyn::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	OBJECT *obj = OBJECTHDR(this);
-	TIMESTAMP t2 = TS_NEVER; //By default, we're done forever!
+    OBJECT *obj = OBJECTHDR(this);
+    TIMESTAMP t2 = TS_NEVER; //By default, we're done forever!
 
-	//If we have a meter, reset the accumulators
-	if (parent_is_a_meter == true)
-	{
-		reset_complex_powerflow_accumulators();
+    //If we have a meter, reset the accumulators
+    if (parent_is_a_meter == true)
+    {
+        reset_complex_powerflow_accumulators();
 
-		//Also pull the current values
-		pull_complex_powerflow_values();
-	}
+        //Also pull the current values
+        pull_complex_powerflow_values();
+    }
 
-	//**** FT -- Postsync stuff here
+    //**** FT -- Postsync stuff here
+    if (parent_is_single_phase == true) // single phase/split-phase implementation
+    {
+        //Update output power
+        //Get current injected
+        temp_current_val[0] = value_IGenerated[0] - filter_admittance * value_Circuit_V[0];
 
-	if (parent_is_single_phase == true) // single phase/split-phase implementation
-	{
+        //Update power output variables, just so we can see what is going on
+        VA_Out = value_Circuit_V[0] * ~temp_current_val[0];
+    }
+    else //Three-phase, by default
+    {
+        //Update output power
+        //Get current injected
+        temp_current_val[0] = (value_IGenerated[0] - generator_admittance[0][0] * value_Circuit_V[0] - generator_admittance[0][1] * value_Circuit_V[1] - generator_admittance[0][2] * value_Circuit_V[2]);
+        temp_current_val[1] = (value_IGenerated[1] - generator_admittance[1][0] * value_Circuit_V[0] - generator_admittance[1][1] * value_Circuit_V[1] - generator_admittance[1][2] * value_Circuit_V[2]);
+        temp_current_val[2] = (value_IGenerated[2] - generator_admittance[2][0] * value_Circuit_V[0] - generator_admittance[2][1] * value_Circuit_V[1] - generator_admittance[2][2] * value_Circuit_V[2]);
 
-		//Update output power
-		//Get current injected
-		temp_current_val[0] = value_IGenerated[0] - filter_admittance * value_Circuit_V[0];
+        //Update power output variables, just so we can see what is going on
+        power_val[0] = value_Circuit_V[0] * ~temp_current_val[0];
+        power_val[1] = value_Circuit_V[1] * ~temp_current_val[1];
+        power_val[2] = value_Circuit_V[2] * ~temp_current_val[2];
 
-		//Update power output variables, just so we can see what is going on
-		VA_Out = value_Circuit_V[0] * ~temp_current_val[0];
-	}
-	else //Three-phase, by default
-	{
+        VA_Out = power_val[0] + power_val[1] + power_val[2];
+    }
 
-		//Update output power
-		//Get current injected
-		temp_current_val[0] = (value_IGenerated[0] - generator_admittance[0][0] * value_Circuit_V[0] - generator_admittance[0][1] * value_Circuit_V[1] - generator_admittance[0][2] * value_Circuit_V[2]);
-		temp_current_val[1] = (value_IGenerated[1] - generator_admittance[1][0] * value_Circuit_V[0] - generator_admittance[1][1] * value_Circuit_V[1] - generator_admittance[1][2] * value_Circuit_V[2]);
-		temp_current_val[2] = (value_IGenerated[2] - generator_admittance[2][0] * value_Circuit_V[0] - generator_admittance[2][1] * value_Circuit_V[1] - generator_admittance[2][2] * value_Circuit_V[2]);
+    // Limit check for P_Out & Q_Out
+    bool flag_VA_Out_changed = check_and_update_VA_Out(obj);
 
-		//Update power output variables, just so we can see what is going on
-		power_val[0] = value_Circuit_V[0] * ~temp_current_val[0];
-		power_val[1] = value_Circuit_V[1] * ~temp_current_val[1];
-		power_val[2] = value_Circuit_V[2] * ~temp_current_val[2];
+    // Sync the powerflow variables
+    if (parent_is_a_meter == true)
+    {
+        push_complex_powerflow_values();
+    }
 
-		VA_Out = power_val[0] + power_val[1] + power_val[2];
-	}
-
-	if (VA_Out.Mag() > pvc_Pmax)
-	{
-		printf("VA_Out.Mag() is large than pvc_Pmax!!");
-
-		if (pvc_Pmax == 0)
-		{
-			value_IGenerated[0] = 0;
-			value_IGenerated[1] = 0;
-			value_IGenerated[2] = 0;
-		}
-		else if (pvc_Pmax < 0)
-		{
-			gl_warning("pvc_Pmax is negative!!");
-		}
-		else
-		{
-			double red_rt = VA_Out.Mag() / pvc_Pmax;
-
-			VA_Out /= red_rt;
-			power_val[0] /= red_rt;
-			power_val[1] /= red_rt;
-			power_val[2] /= red_rt;
-			temp_current_val[0] /= red_rt;
-			temp_current_val[1] /= red_rt;
-			temp_current_val[2] /= red_rt;
-
-			value_IGenerated[0] = temp_current_val[0] - (-generator_admittance[0][0] * value_Circuit_V[0] - generator_admittance[0][1] * value_Circuit_V[1] - generator_admittance[0][2] * value_Circuit_V[2]);
-			value_IGenerated[1] = temp_current_val[1] - (-generator_admittance[1][0] * value_Circuit_V[0] - generator_admittance[1][1] * value_Circuit_V[1] - generator_admittance[1][2] * value_Circuit_V[2]);
-			value_IGenerated[2] = temp_current_val[2] - (-generator_admittance[2][0] * value_Circuit_V[0] - generator_admittance[2][1] * value_Circuit_V[1] - generator_admittance[2][2] * value_Circuit_V[2]);
-
-			t2 = t1;
-		}
-	}
-
-	//Sync the powerflow variables
-	if (parent_is_a_meter == true)
-	{
-		push_complex_powerflow_values();
-	}
-
-	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
+    if (flag_VA_Out_changed)
+    {
+        return t1;
+    }
+    else
+    {
+        return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////
