@@ -125,6 +125,12 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	/* stitch clock */
 	global_clock = global_starttime;
 
+	/* Check to see if stoptime is set - if not, set to 1-year later */
+	if (global_stoptime == TS_NEVER)
+	{
+		global_stoptime = global_starttime + 31536000;
+	}
+
 	/* initialize scheduler */
 	sched_init(0);
 
