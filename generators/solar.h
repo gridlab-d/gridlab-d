@@ -1,11 +1,9 @@
 #ifndef GLD_GENERATORS_SOLAR_H_
 #define GLD_GENERATORS_SOLAR_H_
 
-#include <stdarg.h>
+#include <cstdarg>
 
 #include "generators.h"
-
-//#define SOLAR_NR_EPSILON 1e-5
 
 EXPORT SIMULATIONMODE interupdate_solar(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 EXPORT STATUS dc_object_update_solar(OBJECT *us_obj, OBJECT *calling_obj, bool init_mode);

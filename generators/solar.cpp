@@ -1,5 +1,5 @@
-/** [@@The following comments may be removed.]
-// Assumptions:
+/**
+ * // Assumptions:
 1. All solar panels are tilted as per the site latitude to perform at their best efficiency
 2. All the solar cells are connected in series in a solar module
 3. 600Volts, 5/7.6 Amps, 200 Watts PV system is used for all residential , commercial and industrial applications. The number of modules will vary based on the surface area
@@ -13,13 +13,6 @@
 **/
 
 #include "solar.h"
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
-
-#define _USE_MATH_DEFINES
 
 #include <cassert>
 #include <cmath>
@@ -1159,14 +1152,25 @@ int solar::init(OBJECT *parent)
 			//Map the inverter voltage
 			inverter_voltage_property = new gld_property(parent, "V_In");
 
-			//Map the inverter property pvc_pmax
-			inverter_pvc_Pmax_property = new gld_property(parent, "pvc_Pmax");
-
 			//Check it
 			if ((inverter_voltage_property->is_valid() != true) || (inverter_voltage_property->is_double() != true))
 			{
 				GL_THROW("solar:%d - %s - Unable to map inverter power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
 				//Defined above
+			}
+
+			//Map the inverter property pvc_pmax, which indicates the maximum power avaialbe from the PV now
+			char *cur_prop_name = "pvc_Pmax";
+			inverter_pvc_Pmax_property = new gld_property(parent, cur_prop_name);
+
+			//Check it
+			if ((inverter_pvc_Pmax_property->is_valid() != true) || (inverter_pvc_Pmax_property->is_double() != true))
+			{
+				GL_THROW("solar:%d - %s - Unable to map a default power interface field '%s'", obj->id, (obj->name ? obj->name : "Unnamed"), cur_prop_name);
+				/*  TROUBLESHOOT
+			While attempting to map to one of the default power interface variables, an error occurred.  Please try again.
+			If the error persists, please submit a bug report and your model file via the issue tracking system.
+			*/
 			}
 
 			//Map the inverter current
