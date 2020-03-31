@@ -68,6 +68,15 @@ void solar::print_init_pub_vars()
 
 void solar::init_pub_vars_pvcurve_mode()
 {
+	// Data Sanity Check
+	if (Max_P < 0)
+	{
+		Max_P = 0;
+		gl_warning("In mode 'PV_CURVE', the rated_power of PV cannot be negative."
+				   " Now it is set as %d [W].",
+				   Max_P);
+	}
+
 	// Init with Reference Temperature & Insolation
 	pvc_cur_S_wpm2 = pvc_S_ref_wpm2;
 	pvc_cur_t_cels = pvc_t_ref_cels;
@@ -76,16 +85,9 @@ void solar::init_pub_vars_pvcurve_mode()
 	if (max_nr_ite <= 0)
 	{
 		max_nr_ite = SHRT_MAX;
-
-		//@TODO: This has segmentation fault on calling gl_warning due to char*
-		//char gl_warn_buf[50];
-		//sprintf(gl_warn_buf, "max_nr_ite was either not specified, or specified as a negative value."
-		//					 " Now it is set as max_nr_ite = SHRT_MAX = %d.",
-		//		SHRT_MAX);
-		//gl_warning(gl_warn_buf);
-
 		gl_warning("max_nr_ite was either not specified, or specified as a nonpositive value."
-				   " Now it is set as max_nr_ite = SHRT_MAX.");
+				   " Now it is set as max_nr_ite = SHRT_MAX = %d.",
+				   SHRT_MAX);
 	}
 
 	if (x0_root_rt <= 0)
@@ -1363,10 +1365,6 @@ int solar::init(OBJECT *parent)
 		}
 	}
 
-	//************* NOTE - @Jing - Moved this down here - the code above makes sure the parent inits first
-	//*************** By moving it here, it ensures it only gets called once, not however many times the parent defers us
-	//***********************************************
-
 	//Initialize PV DC model, if desired
 	if (solar_power_model == PV_CURVE)
 	{
@@ -1583,6 +1581,13 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 		double pvc_Pmax = get_p_max(pvc_U_m_V);
 		inverter_pvc_Pmax_property->setp<double>(pvc_Pmax, *test_rlock);
 
+		if (pvc_Pmax > Max_P)
+		{
+			gl_warning("Solar PV (name: '%s') may be overloaded."
+					   " Its rated power is %f [W], while its pvc_Pmax is %f [W].",
+					   obj->name ? obj->name : "unnamed", Max_P, pvc_Pmax);
+		}
+
 		return TS_NEVER;
 	}
 	else
@@ -1661,9 +1666,14 @@ STATUS solar::solar_dc_update(OBJECT *calling_obj, bool init_mode)
 		inv_P = inverter_power_property->get_double();
 
 		//Built on the assumption that the inverter will have a P_In set, and we'l compute the voltage from this
-		//double test = get_p_max(); //debug @@TODO
-		double x0 = pvc_U_m_V; //quick fix @@TODO
-		V_Out = get_u_from_p(x0, eps_nr_ite, inv_P);
+		double cur_p_max = get_p_max(pvc_U_m_V);
+		if (cur_p_max < inv_P) //Data sanity check
+		{
+			GL_THROW("The inverter is requiring %f [W],"
+					 " which is larger than the maximum power avialble (%f [W]) of the connected PV(s).",
+					 inv_P, cur_p_max);
+		}
+		V_Out = get_u_from_p(pvc_U_m_V, eps_nr_ite, inv_P);
 
 		//Push the voltage back out to the inverter - this may need different logic when there are multiple objects
 		inverter_voltage_property->setp<double>(V_Out, *test_rlock);

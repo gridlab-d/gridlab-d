@@ -1,13 +1,7 @@
-/** $Id: inverter_dyn.cpp,v 1.0 2019/03/11 
-	Copyright (C) 2019 Battelle Memorial Institute
-	@file inverter_dyn.cpp
-	@defgroup inverter_dyn
-	@ingroup generators
-
- @{
- **/
-
 #include "inverter_dyn.h"
+
+// Default Settings
+double def_rated_power = 1e3; //Unit: VA
 
 CLASS *inverter_dyn::oclass = NULL;
 inverter_dyn *inverter_dyn::defaults = NULL;
@@ -333,6 +327,16 @@ int inverter_dyn::init(OBJECT *parent)
 	complex_array temp_complex_array;
 	OBJECT *tmp_obj = NULL;
 
+	// Data sanity check
+	if (S_base <= 0)
+	{
+		S_base = def_rated_power;
+		gl_warning("inverter (name: '%s'): The rated power of this inverter must be positive."
+					" It has been reset as %f [VA].",
+					obj->name ? obj->name : "unnamed", S_base);
+	}
+
+	//
 	if(parent != NULL){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
