@@ -167,10 +167,10 @@ void send_die(void)
 		gl_verbose("helics_msg: Calling error");
 		const helics::Federate::modes fed_state = pHelicsFederate->getCurrentMode();
 		if(fed_state != helics::Federate::modes::finalize) {
-			//pHelicsFederate->error((int)(exitCode.get_int16()));
+			pHelicsFederate->error((int)(exitCode.get_int16()));
 			pHelicsFederate->finalize();
 		}
-		//helics::cleanupHelicsLibrary();
+		helics::cleanupHelicsLibrary();
 #endif
 	} else {
 		//TODO find equivalent helics clean exit message
@@ -362,20 +362,18 @@ int helics_msg::init(OBJECT *parent){
 		return rv;
 	}
 	for(vector<helics_endpoint_subscription*>::iterator sub = helics_endpoint_subscriptions.begin(); sub != helics_endpoint_subscriptions.end(); sub++) {
-		if((*sub)->pObjectProperty.empty()) {
-			for(int i=0; i < (*sub)->objectName.size(); i++) {
-				const char *pObjName = (*sub)->objectName[i].c_str();
-				const char *pPropName = (*sub)->propertyName[i].c_str();
-				char *pObjBuf = new char[strlen(pObjName)+1];
-				char *pPropBuf = new char[strlen(pPropName)+1];
-				strcpy(pObjBuf, pObjName);
-				strcpy(pPropBuf, pPropName);
-				(*sub)->pObjectProperty.push_back(new gld_property(pObjBuf, pPropBuf));
-				if(!(*sub)->pObjectProperty[i]->is_valid()) {
-					rv = 0;
-					gl_error("helics_msg::init(): There is not object %s with property %s",(char *)(*sub)->objectName[i].c_str(), (char *)(*sub)->propertyName[i].c_str());
-					break;
-				}
+		if((*sub)->pObjectProperty == NULL) {
+			const char *pObjName = (*sub)->objectName.c_str();
+			const char *pPropName = (*sub)->propertyName.c_str();
+			char *pObjBuf = new char[strlen(pObjName)+1];
+			char *pPropBuf = new char[strlen(pPropName)+1];
+			strcpy(pObjBuf, pObjName);
+			strcpy(pPropBuf, pPropName);
+			(*sub)->pObjectProperty = new gld_property(pObjBuf, pPropBuf);
+			if(!(*sub)->pObjectProperty->is_valid()) {
+				rv = 0;
+				gl_error("helics_msg::init(): There is not object %s with property %s",(char *)(*sub)->objectName.c_str(), (char *)(*sub)->propertyName.c_str());
+				break;
 			}
 		}
 	}
@@ -401,13 +399,10 @@ int helics_msg::init(OBJECT *parent){
 		}
 	}
 	for(vector<helics_endpoint_subscription*>::iterator sub = helics_endpoint_subscriptions.begin(); sub != helics_endpoint_subscriptions.end(); sub++) {
-		for(int i=0; i < (*sub)->pObjectProperty.size(); i++) {
-			vObj = (*sub)->pObjectProperty[i]->get_object();
-			if((vObj->flags & OF_INIT) != OF_INIT){
-				defer = true;
-			}
+		vObj = (*sub)->pObjectProperty->get_object();
+		if((vObj->flags & OF_INIT) != OF_INIT){
+			defer = true;
 		}
-
 	}
 	if(defer == true){
 		gl_verbose("helics_msg::init(): %s is defering initialization.", obj->name);
@@ -962,9 +957,7 @@ int helics_msg::subscribeVariables(){
 			const string message_buffer = mesg->to_string();
 			if(!message_buffer.empty()){
 				strncpy(valueBuf, message_buffer.c_str(), 1023);
-				for(int i = 0; i < (*sub)->pObjectProperty.size(); i++) {
-					(*sub)->pObjectProperty[i]->from_string(valueBuf);
-				}
+				(*sub)->pObjectProperty->from_string(valueBuf);
 				memset(&valueBuf[0], '\0', 1023);
 			}
 		}

@@ -91,11 +91,12 @@ public:
 class helics_endpoint_subscription {
 public:
 	helics_endpoint_subscription(){
+		pObjectProperty = NULL;
 	}
-	vector<string> objectName;
-	vector<string> propertyName;
+	string objectName;
+	string propertyName;
 	string name;
-	vector<gld_property *> pObjectProperty;
+	gld_property *pObjectProperty;
 	helics::Endpoint HelicsSubscriptionEndpoint;
 };
 #endif

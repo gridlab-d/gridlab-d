@@ -132,10 +132,6 @@ char *_strlwr(char *s)
 // for commercial house-zone sequence transforms
 static complex A_OPERATOR =  complex (-0.5,  0.8660254);
 static complex A2_OPERATOR = complex (-0.5, -0.8660254);
-static double MIN_YSHUNT = 1.0e-12;
-static complex CUNITY = complex (1.0, 0.0);
-static complex CZERO = complex (0.0, 0.0);
-
 // list of enduses that are implicitly active
 set house_e::implicit_enduses_active = IEU_ALL;
 enumeration house_e::implicit_enduse_source = IES_ELCAP1990;
@@ -2824,7 +2820,7 @@ TIMESTAMP house_e::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	OBJECT *obj = OBJECTHDR(this);
 
-	//If we're a proper triplex_meter, zero the accumulators, then remove the values
+	//If we're a proper meter, zero the accumulators, then remove the values
 	if (proper_meter_parent == true)
 	{
 		//Put negative values in 
@@ -3200,7 +3196,7 @@ double house_e::sync_panel(double t0_dbl, double t1_dbl)
 	}
 	total.total = total.power = total.current = total.admittance = complex(0,0);
 
-	//Pull in the current powerflow values, if connected to a triplex_meter
+	//Pull in the current powerflow values, if relevant
 	if (proper_meter_parent == true)
 	{
 		pull_complex_powerflow_values();
@@ -3657,25 +3653,14 @@ void house_e::circuit_voltage_factor_update(void)
 		//See if it is tripped - if it is, set voltage factor to zero
 		if (c->status == BRK_CLOSED)	//Closed
 		{
-			//Put negative values in - postsync negated them to remove them
-			//Update power
-			value_Power[0] = complex(-1.0,0.0) * value_Power[0];
-			value_Power[1] = complex(-1.0,0.0) * value_Power[1];
-			value_Power[2] = complex(-1.0,0.0) * value_Power[2];
-			
-			//Current
-			value_Line_I[0] = complex(-1.0,0.0) * value_Line_I[0];
-			value_Line_I[1] = complex(-1.0,0.0) * value_Line_I[1];
-			value_Line_I[2] = complex(-1.0,0.0) * value_Line_I[2];
-			//Neutral not handled in here, since it was always zero anyways
-
-			//Admittance
-			value_Shunt[0] = complex(-1.0,0.0) * value_Shunt[0];
-			value_Shunt[1] = complex(-1.0,0.0) * value_Shunt[1];
-			value_Shunt[2] = complex(-1.0,0.0) * value_Shunt[2];
-
-			//Push up the "negative" values now - mostly so XMLs look right
-			push_complex_powerflow_values();
+			//Pull the factor -- reference from the "local value" (default or pulled by before for)		
+			c->pLoad->voltage_factor = value_Circuit_V[(int)c->type].Mag() / ((c->pLoad->config&EUC_IS220) ? (2.0* default_line_voltage) : default_line_voltage);
+			if ((c->pLoad->voltage_factor > 1.06 || c->pLoad->voltage_factor < 0.88) && (ANSI_voltage_check==true))
+				gl_warning("%s - %s:%d is outside of ANSI standards (voltage = %.0f percent of nominal 120/240)", obj->name, obj->oclass->name,obj->id,c->pLoad->voltage_factor*100);
+		}
+		else	//Must be open or unknown
+		{
+			c->pLoad->voltage_factor = 0.0;
 		}
 	}
 }
