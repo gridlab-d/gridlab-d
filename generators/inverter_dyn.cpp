@@ -1299,16 +1299,17 @@ bool inverter_dyn::check_and_update_VA_Out(OBJECT *obj)
                        obj->name ? obj->name : "unnamed", S_base);
             P_Out_lim = S_base;
         }
+		double P_Out_lim_flr = floor(P_Out_lim); //P_Out_lim is always positive; And this is important to guarantee that the VA_Out.Re() will be smaller than pvc_Pmax.
 
-        if (P_Out > P_Out_lim)
+        if (abs(P_Out) > P_Out_lim_flr)
         {
-            gl_warning("inverter (name: '%s'): P_Out (%f [W] required by powerflow) is capped at %f [W]."
+            gl_warning("inverter (name: '%s'): The magnitude of P_Out (%f [W] required by powerflow) is capped at %f [W]."
                        " VA_Out.Re() will be updated accordingly."
                        " Note that: 1) P_Out <= min(pvc_Pmax, rated_power);"
                        " 2) sqrt(P_Out^2 + Q_Out^2) <= sqrt(2)*rated_power.",
-                       obj->name ? obj->name : "unnamed", P_Out, P_Out_lim);
+                       obj->name ? obj->name : "unnamed", P_Out, P_Out_lim_flr);
 
-            P_Out = P_Out_lim;
+            P_Out = copysign(P_Out_lim_flr, P_Out);
             flag_VA_Out_changed = true;
         }
 
@@ -1323,16 +1324,16 @@ bool inverter_dyn::check_and_update_VA_Out(OBJECT *obj)
         }
         else
         {
-            double Q_Out_lim = sqrt(Q_Out_lim_sq);
-            if (Q_Out > Q_Out_lim)
+            double Q_Out_lim_flr = floor(sqrt(Q_Out_lim_sq)); // with floor(), the margin is safer
+            if (abs(Q_Out) > Q_Out_lim_flr)
             {
-                gl_warning("inverter (name: '%s'): Q_Out (%f [var] required by powerflow) is be capped at %f [var]."
+                gl_warning("inverter (name: '%s'): The magnitude of Q_Out (%f [var] required by powerflow) is be capped at %f [var]."
                            " VA_Out.Im() will be updated accordingly."
                            " Note that: 1) P_Out <= min(pvc_Pmax, rated_power);"
                            " 2) sqrt(P_Out^2 + Q_Out^2) <= sqrt(2)*rated_power.",
-                           obj->name ? obj->name : "unnamed", Q_Out, Q_Out_lim);
+                           obj->name ? obj->name : "unnamed", Q_Out, Q_Out_lim_flr);
 
-                Q_Out = Q_Out_lim;
+                Q_Out = copysign(Q_Out_lim_flr, Q_Out);
                 flag_VA_Out_changed = true;
             }
         }
