@@ -1212,7 +1212,7 @@ OBJECT *object_get_next(OBJECT *obj){ /**< the object from which to start */
 	the request to prevent looping.  This will prevent
 	an object_set_parent call from creating a parent loop.
  */
-static int _set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
+static unsigned int _set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 {
 	OBJECTRANK parent_rank = -1;
 	if(obj == NULL){
@@ -1254,7 +1254,7 @@ static int _set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 	return obj != NULL ? obj->rank : 0;
 }
 /* this version is fast, blind to errors, and not recursive -- it's only used when global_fastrank is TRUE */
-static int _set_rankx(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
+static unsigned int _set_rankx(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 {
 	int n = object_get_count();
 	if ( obj == NULL )
@@ -1302,7 +1302,7 @@ static int _set_rankx(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 
 	return obj != NULL ? obj->rank : 0;
 }
-static int set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
+static unsigned int set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 {
 	return global_bigranks==TRUE ? _set_rankx(obj,rank,NULL) : _set_rank(obj,rank,NULL);
 }
