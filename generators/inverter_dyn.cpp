@@ -1567,10 +1567,11 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						STATUS fxn_return_status;
 						
 						V_DC = curr_state.Vdc_pu * Vdc_base;
+						P_DC = I_DC = 0; // Clean the buffer
 										
 						//Loop through and call the DC objects
 						for (temp_idx=0; temp_idx < dc_interface_objects.size(); temp_idx++)
-						{
+						{ //I_DC P_DC
 							//DC object, calling object (us), init mode (true/false)
 							//False at end now, because not initialization
 							fxn_return_status = ((STATUS (*)(OBJECT *, OBJECT *, bool))(*dc_interface_objects[temp_idx].fxn_address))(dc_interface_objects[temp_idx].dc_object,obj,false);
