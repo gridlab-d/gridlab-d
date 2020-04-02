@@ -513,7 +513,7 @@ TIMESTAMP mkdatetime(DATETIME *dt)
 
 	if(dt->hour < 0 || dt->hour > 23 || dt->minute < 0 || dt->minute > 60 || dt->second < 0 || dt->second > 62){
 		output_fatal("Invalid time of day provided in datetime");
-		return ts;
+		return TS_INVALID;
 	}
 	/* add day, hour, minute, second, usecs */
 	ts += (TIMESTAMP)((dt->day - 1) * DAY + dt->hour * HOUR + dt->minute * MINUTE + dt->second * SECOND + dt->nanosecond/1.0e9);
