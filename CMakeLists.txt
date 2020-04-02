@@ -28,6 +28,7 @@ include(cmake/SetVersion.cmake)
 include(cmake/CheckDependancies.cmake)
 # Generate current build number
 include(cmake/Build_number.cmake)
+include(cmake/SanitizePaths.cmake)
 
 option(GLD_USE_EIGEN "[NOT YET SUPPORTED] - Use Eigen package for LU Decomposition in Powerflow" OFF)
 option(GLD_USE_SUPERLU "Use SuperLU package for LU Decomposition in Powerflow" ON)
@@ -70,7 +71,9 @@ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 option(BUILD_SHARED_LIBS "Sets Gridlab-d libraries to be built as shared. *DANGER - will currently break build if changed.*" ON)
 
 # Forces certain warnings to trigger errors.
-SET(FORCE_ERROR "-Werror=return-type" "-Werror=write-strings")
+if (NOT MSVC)
+    set(FORCE_ERROR "-Werror=return-type" "-Werror=write-strings")
+endif ()
 
 # Compiler/Linker flags for all build types
 add_compile_options(${FORCE_ERROR} ${DISABLED_OPTIMIZATIONS})
@@ -97,143 +100,144 @@ set(GENFILE_WARNING
         CACHE INTERNAL
         "Warn user that gridlabd.sh is a generated file."
         )
+
 configure_file(cmake/gridlabd.sh.in ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.sh @ONLY)
 
 find_program(
-        GLD_CLANG_TIDY_EXE
-        NAMES
-        "clang-tidy-9"
-        "clang-tidy-10"
-        "clang-tidy-11"
+GLD_CLANG_TIDY_EXE
+NAMES
+"clang-tidy-9"
+"clang-tidy-10"
+"clang-tidy-11"
 )
 
 cmake_dependent_option(GLD_USE_CLANG_TIDY "Run Clang-tidy" OFF "GLD_CLANG_TIDY_EXE" OFF)
 
 if (NOT GLD_CLANG_TIDY_EXE)
-    message(STATUS "clang-tidy not found.")
+message(STATUS "clang-tidy not found.")
 elseif (NOT GLD_USE_CLANG_TIDY)
-    message(STATUS "clang-tidy disabled.")
+message(STATUS "clang-tidy disabled.")
 else ()
-    message(STATUS "clang-tidy found: ${GLD_CLANG_TIDY_EXE}")
-    set(CMAKE_CXX_CLANG_TIDY "${GLD_CLANG_TIDY_EXE}" # "-fix"
-            "-checks=-*,-modernize-avoid-c-arrays,modernize-*"
-            )
+message(STATUS "clang-tidy found: ${GLD_CLANG_TIDY_EXE}")
+set(CMAKE_CXX_CLANG_TIDY "${GLD_CLANG_TIDY_EXE}" # "-fix"
+"-checks=-*,-modernize-avoid-c-arrays,modernize-*"
+)
 endif ()
 
 # Set the list of modules and files which should be copied into the install directory.
 set(GLD_MODULES
-        assert
-        climate
-        commercial
-        connection
-        generators
-        market
-        mysql
-        optimize
-        powerflow
-        reliability
-        residential
-        tape
-        tape_file
-        tape_plot
-        glsolvers
-        glxengine
-        )
+assert
+climate
+commercial
+connection
+generators
+market
+mysql
+optimize
+powerflow
+reliability
+residential
+tape
+tape_file
+tape_plot
+glsolvers
+glxengine
+)
 
 set(HEADER_FILE_NAMES
-        ${CMAKE_SOURCE_DIR}/gldcore/class.h
-        ${CMAKE_SOURCE_DIR}/gldcore/gld_complex.h
-        ${CMAKE_SOURCE_DIR}/gldcore/debug.h
-        ${CMAKE_SOURCE_DIR}/gldcore/enduse.h
-        ${CMAKE_SOURCE_DIR}/gldcore/exception.h
-        ${CMAKE_SOURCE_DIR}/gldcore/loadshape.h
-        ${CMAKE_SOURCE_DIR}/gldcore/lock.h
-        ${CMAKE_SOURCE_DIR}/gldcore/module.h
-        ${CMAKE_SOURCE_DIR}/gldcore/object.h
-        ${CMAKE_SOURCE_DIR}/gldcore/property.h
-        ${CMAKE_SOURCE_DIR}/gldcore/schedule.h
-        ${CMAKE_SOURCE_DIR}/gldcore/test.h
+${CMAKE_SOURCE_DIR}/gldcore/class.h
+${CMAKE_SOURCE_DIR}/gldcore/gld_complex.h
+${CMAKE_SOURCE_DIR}/gldcore/debug.h
+${CMAKE_SOURCE_DIR}/gldcore/enduse.h
+${CMAKE_SOURCE_DIR}/gldcore/exception.h
+${CMAKE_SOURCE_DIR}/gldcore/loadshape.h
+${CMAKE_SOURCE_DIR}/gldcore/lock.h
+${CMAKE_SOURCE_DIR}/gldcore/module.h
+${CMAKE_SOURCE_DIR}/gldcore/object.h
+${CMAKE_SOURCE_DIR}/gldcore/property.h
+${CMAKE_SOURCE_DIR}/gldcore/schedule.h
+${CMAKE_SOURCE_DIR}/gldcore/test.h
 
-        ${CMAKE_CURRENT_BINARY_DIR}/headers/build.h
-        ${CMAKE_CURRENT_BINARY_DIR}/headers/version.h
-        )
+${CMAKE_CURRENT_BINARY_DIR}/headers/build.h
+${CMAKE_CURRENT_BINARY_DIR}/headers/version.h
+)
 
 set(GLD_SHARE
-        ${CMAKE_SOURCE_DIR}/gldcore/tzinfo.txt
-        ${CMAKE_SOURCE_DIR}/gldcore/unitfile.txt
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/about.htm
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/COPYRIGHT
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/debugger.conf
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/eula.htm
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/favicon.ico
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/gnuplot.conf
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/gridlabd.conf
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/gridlabd.css
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/gridlabd.h
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/gridlabd.htm
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/gridlabd.jpg
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/gridlabd.js
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/gridlabd.syn
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/LICENSE
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/mingw.conf
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/STATUS
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/capacitor_b.png
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/capacitor_g.png
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/capacitor_k.png
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/capacitor_r.png
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/load_b.png
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/load_g.png
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/load_k.png
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/load_r.png
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/meter_g.png
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/node_b.png
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/node_g.png
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/node_k.png
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/node_r.png
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/regulator_b.png
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/regulator_g.png
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/regulator_k.png
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/regulator_r.png
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/switch_b.png
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/switch_g.png
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/switch_k.png
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/switch_r.png
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/transformer_b.png
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/transformer_g.png
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/transformer_k.png
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/transformer_r.png
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/triplex_meter_b.png
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/triplex_meter_g.png
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/triplex_meter_k.png
-        ${CMAKE_SOURCE_DIR}/gldcore/rt/triplex_meter_r.png
-        ${CMAKE_SOURCE_DIR}/models/climate_csvreader_example.glm
-        ${CMAKE_SOURCE_DIR}/models/collector_example.glm
-        ${CMAKE_SOURCE_DIR}/models/diesel_deltamode_load_player_A.csv
-        ${CMAKE_SOURCE_DIR}/models/diesel_deltamode_load_player_B.csv
-        ${CMAKE_SOURCE_DIR}/models/diesel_deltamode_load_player_C.csv
-        ${CMAKE_SOURCE_DIR}/models/house_HVAC_example.glm
-        ${CMAKE_SOURCE_DIR}/models/IEEE_13_Node_Test_Feeder.glm
-        ${CMAKE_SOURCE_DIR}/models/IEEE_13_Node_With_Houses.glm
-        ${CMAKE_SOURCE_DIR}/models/passive_controller_example.glm
-        ${CMAKE_SOURCE_DIR}/models/random_fault_generator_example.glm
-        ${CMAKE_SOURCE_DIR}/models/residential_zipload_example.glm
-        ${CMAKE_SOURCE_DIR}/models/Standard_Weather.csv
-        ${CMAKE_SOURCE_DIR}/models/subsecond_diesel_generator_example.glm
-        ${CMAKE_SOURCE_DIR}/models/taxonomy_feeder_R1-12.47-1.glm
-        ${CMAKE_SOURCE_DIR}/models/transactive_controller_example.glm
-        ${CMAKE_SOURCE_DIR}/models/WA-Seattle.tmy2
-        ${CMAKE_SOURCE_DIR}/models/WA-Yakima.tmy2
-        ${CMAKE_SOURCE_DIR}/models/waterheater_example.glm
-        ${CMAKE_SOURCE_DIR}/models/weather.csv
-        ${CMAKE_SOURCE_DIR}/models/wind_turbine_example.glm
-        #        ${CMAKE_SOURCE_DIR}/gldcore/gridlabd.htm
-        ${CMAKE_SOURCE_DIR}/gldcore/gridlabd.htm
-        )
+${CMAKE_SOURCE_DIR}/gldcore/tzinfo.txt
+${CMAKE_SOURCE_DIR}/gldcore/unitfile.txt
+${CMAKE_SOURCE_DIR}/gldcore/rt/about.htm
+${CMAKE_SOURCE_DIR}/gldcore/rt/COPYRIGHT
+${CMAKE_SOURCE_DIR}/gldcore/rt/debugger.conf
+${CMAKE_SOURCE_DIR}/gldcore/rt/eula.htm
+${CMAKE_SOURCE_DIR}/gldcore/rt/favicon.ico
+${CMAKE_SOURCE_DIR}/gldcore/rt/gnuplot.conf
+${CMAKE_SOURCE_DIR}/gldcore/rt/gridlabd.conf
+${CMAKE_SOURCE_DIR}/gldcore/rt/gridlabd.css
+${CMAKE_SOURCE_DIR}/gldcore/rt/gridlabd.h
+${CMAKE_SOURCE_DIR}/gldcore/rt/gridlabd.htm
+${CMAKE_SOURCE_DIR}/gldcore/rt/gridlabd.jpg
+${CMAKE_SOURCE_DIR}/gldcore/rt/gridlabd.js
+${CMAKE_SOURCE_DIR}/gldcore/rt/gridlabd.syn
+${CMAKE_SOURCE_DIR}/gldcore/rt/LICENSE
+${CMAKE_SOURCE_DIR}/gldcore/rt/mingw.conf
+${CMAKE_SOURCE_DIR}/gldcore/rt/STATUS
+${CMAKE_SOURCE_DIR}/gldcore/rt/capacitor_b.png
+${CMAKE_SOURCE_DIR}/gldcore/rt/capacitor_g.png
+${CMAKE_SOURCE_DIR}/gldcore/rt/capacitor_k.png
+${CMAKE_SOURCE_DIR}/gldcore/rt/capacitor_r.png
+${CMAKE_SOURCE_DIR}/gldcore/rt/load_b.png
+${CMAKE_SOURCE_DIR}/gldcore/rt/load_g.png
+${CMAKE_SOURCE_DIR}/gldcore/rt/load_k.png
+${CMAKE_SOURCE_DIR}/gldcore/rt/load_r.png
+${CMAKE_SOURCE_DIR}/gldcore/rt/meter_g.png
+${CMAKE_SOURCE_DIR}/gldcore/rt/node_b.png
+${CMAKE_SOURCE_DIR}/gldcore/rt/node_g.png
+${CMAKE_SOURCE_DIR}/gldcore/rt/node_k.png
+${CMAKE_SOURCE_DIR}/gldcore/rt/node_r.png
+${CMAKE_SOURCE_DIR}/gldcore/rt/regulator_b.png
+${CMAKE_SOURCE_DIR}/gldcore/rt/regulator_g.png
+${CMAKE_SOURCE_DIR}/gldcore/rt/regulator_k.png
+${CMAKE_SOURCE_DIR}/gldcore/rt/regulator_r.png
+${CMAKE_SOURCE_DIR}/gldcore/rt/switch_b.png
+${CMAKE_SOURCE_DIR}/gldcore/rt/switch_g.png
+${CMAKE_SOURCE_DIR}/gldcore/rt/switch_k.png
+${CMAKE_SOURCE_DIR}/gldcore/rt/switch_r.png
+${CMAKE_SOURCE_DIR}/gldcore/rt/transformer_b.png
+${CMAKE_SOURCE_DIR}/gldcore/rt/transformer_g.png
+${CMAKE_SOURCE_DIR}/gldcore/rt/transformer_k.png
+${CMAKE_SOURCE_DIR}/gldcore/rt/transformer_r.png
+${CMAKE_SOURCE_DIR}/gldcore/rt/triplex_meter_b.png
+${CMAKE_SOURCE_DIR}/gldcore/rt/triplex_meter_g.png
+${CMAKE_SOURCE_DIR}/gldcore/rt/triplex_meter_k.png
+${CMAKE_SOURCE_DIR}/gldcore/rt/triplex_meter_r.png
+${CMAKE_SOURCE_DIR}/models/climate_csvreader_example.glm
+${CMAKE_SOURCE_DIR}/models/collector_example.glm
+${CMAKE_SOURCE_DIR}/models/diesel_deltamode_load_player_A.csv
+${CMAKE_SOURCE_DIR}/models/diesel_deltamode_load_player_B.csv
+${CMAKE_SOURCE_DIR}/models/diesel_deltamode_load_player_C.csv
+${CMAKE_SOURCE_DIR}/models/house_HVAC_example.glm
+${CMAKE_SOURCE_DIR}/models/IEEE_13_Node_Test_Feeder.glm
+${CMAKE_SOURCE_DIR}/models/IEEE_13_Node_With_Houses.glm
+${CMAKE_SOURCE_DIR}/models/passive_controller_example.glm
+${CMAKE_SOURCE_DIR}/models/random_fault_generator_example.glm
+${CMAKE_SOURCE_DIR}/models/residential_zipload_example.glm
+${CMAKE_SOURCE_DIR}/models/Standard_Weather.csv
+${CMAKE_SOURCE_DIR}/models/subsecond_diesel_generator_example.glm
+${CMAKE_SOURCE_DIR}/models/taxonomy_feeder_R1-12.47-1.glm
+${CMAKE_SOURCE_DIR}/models/transactive_controller_example.glm
+${CMAKE_SOURCE_DIR}/models/WA-Seattle.tmy2
+${CMAKE_SOURCE_DIR}/models/WA-Yakima.tmy2
+${CMAKE_SOURCE_DIR}/models/waterheater_example.glm
+${CMAKE_SOURCE_DIR}/models/weather.csv
+${CMAKE_SOURCE_DIR}/models/wind_turbine_example.glm
+#        ${CMAKE_SOURCE_DIR}/gldcore/gridlabd.htm
+${CMAKE_SOURCE_DIR}/gldcore/gridlabd.htm
+)
 
 set(FILE_PERMISSIONS PERMISSIONS
-        OWNER_EXECUTE OWNER_READ OWNER_WRITE
-        GROUP_EXECUTE GROUP_READ
-        WORLD_EXECUTE WORLD_READ)
+OWNER_EXECUTE OWNER_READ OWNER_WRITE
+GROUP_EXECUTE GROUP_READ
+WORLD_EXECUTE WORLD_READ)
 
 # Load module directories. When adding new module, add it here.
 include_directories(gldcore)
@@ -241,16 +245,16 @@ include_directories(gldcore)
 #include_directories(third_party/dlfcn-win32)
 
 if (GLD_USE_SUPERLU)
-    set(THIRD_PARTY_PATH ${CMAKE_SOURCE_DIR}/third_party)
-    #    include(third_party/superLU_MT/CMakeLists.txt)
-    add_subdirectory(third_party/superLU_MT)
-    #    list(APPEND CMAKE_MODULE_PATH
-    #            ${CMAKE_BINARY_DIR}/third_party/SuperLU/SRC
-    #            ${CMAKE_BINARY_DIR}/third_party/SuperLU/CBLAS
-    #            )
-    #    include_directories(third_party/SuperLU/SRC)
-    #    add_subdirectory(third_party/SuperLU)
-    #    find_package(SuperLU REQUIRED)
+set(THIRD_PARTY_PATH ${CMAKE_SOURCE_DIR}/third_party)
+#    include(third_party/superLU_MT/CMakeLists.txt)
+add_subdirectory(third_party/superLU_MT)
+#    list(APPEND CMAKE_MODULE_PATH
+#            ${CMAKE_BINARY_DIR}/third_party/SuperLU/SRC
+#            ${CMAKE_BINARY_DIR}/third_party/SuperLU/CBLAS
+#            )
+#    include_directories(third_party/SuperLU/SRC)
+#    add_subdirectory(third_party/SuperLU)
+#    find_package(SuperLU REQUIRED)
 endif ()
 
 option(JSONCPP_WITH_TESTS "Build the JSON CPP test suite" OFF)
@@ -260,12 +264,12 @@ include_directories(third_party/jsoncpp_lib/include)
 add_subdirectory(third_party/jsoncpp_lib)
 set(BUILD_SHARED_LIBS ${BUILD_SHARED_CACHE})
 
-if(GLD_USE_EIGEN)
-    message(FATAL_ERROR "Eigen implementation is not complete, and should not be used at this time.")
-    list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/third_party/Eigen/cmake) # Gives us FindKLU.cmake without replicating code
-    include_directories(third_party/Eigen)
-    find_package (Eigen3 3.3 REQUIRED NO_MODULE)
-endif()
+if (GLD_USE_EIGEN)
+message(FATAL_ERROR "Eigen implementation is not complete, and should not be used at this time.")
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/third_party/Eigen/cmake) # Gives us FindKLU.cmake without replicating code
+include_directories(third_party/Eigen)
+find_package(Eigen3 3.3 REQUIRED NO_MODULE)
+endif ()
 
 #find_package(superlu)
 
@@ -289,27 +293,27 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/gldcore/link/engine)
 add_subdirectory(gldcore)
 
 mark_as_advanced(FORCE
-        OS_SPECIFIC_LIBRARIES
-        DISABLED_OPTIMIZATIONS
-        BUILD_SHARED_LIBS
-        GLD_MODULES
-        HEADER_FILE_NAMES
-        GLD_SHARE
-        )
+OS_SPECIFIC_LIBRARIES
+DISABLED_OPTIMIZATIONS
+BUILD_SHARED_LIBS
+GLD_MODULES
+HEADER_FILE_NAMES
+GLD_SHARE
+)
 
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.sh
-        ${FILE_PERMISSIONS}
-        DESTINATION ${CMAKE_INSTALL_BINDIR}
-        )
+${FILE_PERMISSIONS}
+DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
 
 install(FILES ${HEADER_FILE_NAMES}
-        ${FILE_PERMISSIONS}
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${GLD_PACKAGE}
-        )
+${FILE_PERMISSIONS}
+DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${GLD_PACKAGE}
+)
 
 install(FILES ${GLD_SHARE}
-        ${FILE_PERMISSIONS}
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${GLD_PACKAGE})
+${FILE_PERMISSIONS}
+DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${GLD_PACKAGE})
 install(FILES COPYRIGHT LICENSE
-        ${FILE_PERMISSIONS}
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/share/doc/${GLD_PACKAGE})
+${FILE_PERMISSIONS}
+DESTINATION ${CMAKE_INSTALL_PREFIX}/share/doc/${GLD_PACKAGE})
