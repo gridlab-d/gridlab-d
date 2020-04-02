@@ -2,7 +2,7 @@
 // Copyright (C) 2012 Battelle Memorial Institute
 //
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #include <direct.h>
 #else
@@ -28,7 +28,7 @@
 static bool clean = false; // set to true to force purge of test directories
 
 /* Windows implementation of opendir/readdir/closedir */
-#ifdef WIN32
+#ifdef _WIN32
 struct dirent {
 	unsigned char  d_type;	/* file type, see below */
 	char *d_name;			/* name must be no longer than this */
@@ -235,7 +235,7 @@ static bool run_job(char *file, double *elapsed_time=NULL)
 	}
 	int64 dt = exec_clock();
 	unsigned int code = vsystem("%s %s %s ", 
-#ifdef WIN32
+#ifdef _WIN32
 		_pgmptr,
 #else
 		"gridlabd",

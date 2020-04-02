@@ -1,0 +1,85 @@
+//File to make sure that lines attached to childed nodes get initialized right,
+//especially if that child is after the line in the GLM.
+// Set up so if it runs, it worked.  If it doesn't, it failed.
+
+clock {
+     timezone "UTC0";
+     starttime '2019-10-11 21:18:12';
+     stoptime '2019-10-11 21:20:12';
+}
+//#set profiler=1
+module powerflow {
+     solver_method NR;
+}
+
+object fault_check {
+	name fault_check_object;
+	check_mode ONCHANGE;
+	strictly_radial FALSE;
+	grid_association TRUE;
+}
+
+object meter {
+	name "sourcebus";
+	bustype SWING;
+	phases ABCN;
+	nominal_voltage 66395.28;
+}
+
+object node {
+	name "bus_1";
+	phases ABCN;
+	nominal_voltage 66395.28;
+}
+
+object overhead_line {
+	name "line_hvmv_sub_hsb";
+	from "sourcebus_meter";
+	to "bus_1";
+	phases ABC;
+	length 3.2809;
+	configuration "lcon_hvmv_sub_hsb_ABC";
+}
+
+object line_configuration {
+	name "lcon_hvmv_sub_hsb_ABC";
+	z11 0.00000+14.7983j;
+	c11 0.0000;
+	z12 0.00000+0.00000j;
+	c12 0.0000;
+	z13 0.00000+0.00000j;
+	c13 0.0000;
+	z21 0.00000+0.00000j;
+	c21 0.0000;
+	z22 0.00000+14.7983j;
+	c22 0.0000;
+	z23 0.00000+0.00000j;
+	c23 0.0000;
+	z31 0.00000+0.00000j;
+	c31 0.0000;
+	z32 0.00000+0.00000j;
+	c32 0.0000;
+	z33 0.00000+14.7983j;
+	c33 0.0000;
+}
+
+object switch {
+	name "swt_hvmv115b1_sw";
+	from "bus_1";
+	to "bus_2";
+	phases ABC;
+	status CLOSED;
+}
+
+object node {
+	name "bus_2";
+	phases ABCN;
+	nominal_voltage 66395.28;
+}
+
+object meter {
+	phases ABCN;
+	nominal_voltage 66395.28;
+	parent "sourcebus";
+	name "sourcebus_meter";
+}

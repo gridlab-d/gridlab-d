@@ -30,7 +30,7 @@
 #include <ctype.h>
 #include <errno.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 #define isnan _isnan  /* map isnan to appropriate function under Windows */
 #endif
 
@@ -1212,7 +1212,7 @@ OBJECT *object_get_next(OBJECT *obj){ /**< the object from which to start */
 	the request to prevent looping.  This will prevent
 	an object_set_parent call from creating a parent loop.
  */
-static int _set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
+static unsigned int _set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 {
 	OBJECTRANK parent_rank = -1;
 	if(obj == NULL){
@@ -1251,10 +1251,10 @@ static int _set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 			return -1;
 	}
 	obj->flags &= ~OF_RERANK;
-	return obj->rank;
+	return obj != NULL ? obj->rank : 0;
 }
 /* this version is fast, blind to errors, and not recursive -- it's only used when global_fastrank is TRUE */
-static int _set_rankx(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
+static unsigned int _set_rankx(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 {
 	int n = object_get_count();
 	if ( obj == NULL )
@@ -1299,10 +1299,12 @@ static int _set_rankx(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 	}
 	for ( obj=first ; obj!=NULL ; obj=obj->parent )
 		obj->flags &= ~OF_RERANK;
+
+	return obj != NULL ? obj->rank : 0;
 }
-static int set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
+static unsigned int set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 {
-	global_bigranks==TRUE ? _set_rankx(obj,rank,NULL) : _set_rank(obj,rank,NULL);
+	return global_bigranks==TRUE ? _set_rankx(obj,rank,NULL) : _set_rank(obj,rank,NULL);
 }
 
 /** Set the rank of an object but forcing it's parent
@@ -1417,7 +1419,7 @@ TIMESTAMP _object_sync(OBJECT *obj, /**< the object to synchronize */
 {
 	CLASS *oclass = obj->oclass;
 	register TIMESTAMP plc_time=TS_NEVER, sync_time;
-	TIMESTAMP effective_valid_to = min(obj->clock+global_skipsafe,obj->valid_to);
+	TIMESTAMP effective_valid_to = fmin(obj->clock+global_skipsafe,obj->valid_to);
 	int autolock = obj->oclass->passconfig&PC_AUTOLOCK;
 
 	/* check skipsafe */

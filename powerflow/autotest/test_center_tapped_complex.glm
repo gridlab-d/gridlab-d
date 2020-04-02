@@ -94,14 +94,11 @@ object triplex_line {
 	configuration TLCFG;
 };
 
-// triplex node to act as the load on the circuit (identical to 
+// triplex meter and load to act as the load on the circuit (identical to 
 // the load used in test_triplex_basic/example 11.1 of text
 object triplex_meter {
 	name load_node;
      phases AS;
-	 impedance_1 1.4+0.5j;
-	 impedance_2  0.9+0.4j;
-	 impedance_12 2.0+1.2j;
      nominal_voltage 120.00;
 	//triplex_node asserts
 	object complex_assert {
@@ -193,4 +190,14 @@ object triplex_meter {
 		file "meter_energy.csv"; // <- recorder with the results below
 		property measured_real_energy;
 	 };
+}
+
+object triplex_load {
+	name load_node_actual_load_part;
+	parent load_node;
+	constant_impedance_1 1.4+0.5j;
+	constant_impedance_2  0.9+0.4j;
+	constant_impedance_12 2.0+1.2j;
+	phases AS;
+	nominal_voltage 120.00;
 }

@@ -16,9 +16,9 @@
 #include "loadshape.h"
 #include "enduse.h"
 #include "stream.h"
-#include "random.h"
+#include "gldrandom.h"
 
-#if defined(WIN32) && !defined(__MINGW32__)
+#if defined(_WIN32) && !defined(__MINGW32__)
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 #define _WIN32_WINNT 0x0400
 #include <windows.h>

@@ -13,13 +13,13 @@
 #include "aggregate.h"
 #include "exception.h"
 #include "globals.h"
-#include "random.h"
+#include "gldrandom.h"
 #include "schedule.h"
 #include "transform.h"
 #include "enduse.h"
 
 /* this must match property_type list in object.c */
-typedef unsigned int OBJECTRANK; /**< Object rank number */
+typedef int OBJECTRANK; /**< Object rank number */
 typedef unsigned short OBJECTSIZE; /** Object data size */
 typedef unsigned int OBJECTNUM; /** Object id number */
 typedef char * OBJECTNAME; /** Object name */

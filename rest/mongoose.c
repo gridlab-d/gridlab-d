@@ -41,7 +41,7 @@
 
 // Disable WIN32_LEAN_AND_MEAN.
 // This makes windows.h always include winsock2.h
-#ifdef WIN32_LEAN_AND_MEAN
+#ifdef _WIN32_LEAN_AND_MEAN
 #undef WIN32_LEAN_AND_MEAN
 #endif
 

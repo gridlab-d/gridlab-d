@@ -1,12 +1,14 @@
 pkglib_LTLIBRARIES += reliability/reliability.la
 
 reliability_reliability_la_CPPFLAGS =
+reliability_reliability_la_CPPFLAGS += -I$(top_srcdir)/third_party/jsonCpp
 reliability_reliability_la_CPPFLAGS += $(AM_CPPFLAGS)
 
 reliability_reliability_la_LDFLAGS =
 reliability_reliability_la_LDFLAGS += $(AM_LDFLAGS)
 
 reliability_reliability_la_LIBADD =
+reliability_reliability_la_LIBADD += third_party/jsonCpp/libjsoncpp.la
 
 reliability_reliability_la_SOURCES =
 reliability_reliability_la_SOURCES += reliability/eventgen.cpp

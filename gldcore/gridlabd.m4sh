@@ -1,4 +1,4 @@
-dnl run "autom4te -l m4sh gridlabd.m4sh > gridlabd.in"
+dnl run "autom4te -l m4sh gridlabd.m4sh > gridlabd.sh.in"
 AS_INIT
 
 prefix="@prefix@"
@@ -9,6 +9,7 @@ datadir="@datadir@"
 pkgdatadir="$datadir/@PACKAGE@"
 libdir="@libdir@"
 pkglibdir="$libdir/@PACKAGE@"
+export DYLD_LIBRARY_PATH="$pkglibdir"
 HAS_MINGW="@HAS_MINGW@"
 
 AS_IF([test "x$GLPATH" = x],
@@ -22,7 +23,7 @@ AS_IF([test "x$TERM" = "xcygwin"],
 AS_IF([test "x$GRIDLABD_DEBUG" = "x"],
   	[AS_IF([test "x$HAS_MINGW" = "xyes"],
 		["$bindir/gridlabd.exe" "$@"],
-		["$bindir/gridlabd.bin" "$@"])],
+		["$bindir/gridlabd" "$@"])],
   	[AS_IF([test "x$HAS_MINGW" = "xyes"],
 		["$GRIDLABD_DEBUG" "$bindir/gridlabd.exe"],
-		["$GRIDLABD_DEBUG" "$bindir/gridlabd.bin"])])
+		["$GRIDLABD_DEBUG" "$bindir/gridlabd"])])
