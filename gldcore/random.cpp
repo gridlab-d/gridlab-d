@@ -1344,7 +1344,7 @@ TIMESTAMP randomvar_syncall(TIMESTAMP t1)
 		return TS_NEVER;
 }
 
-double random_get_part(void *x, char *name)
+double random_get_part(void *x, const char *name)
 {
 	randomvar_struct *v = (randomvar_struct*)x;
 	if ( strcmp(name,"a")==0 ) return v->a;

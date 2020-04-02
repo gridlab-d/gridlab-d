@@ -93,7 +93,7 @@ time_t timestamp_to_local(TIMESTAMP t);
 
 int local_tzoffset(TIMESTAMP t);
 
-double timestamp_get_part(void *x, char *name);
+double timestamp_get_part(void *x, const char *name);
 TIMESTAMP earliest_timestamp(TIMESTAMP t, ...);
 TIMESTAMP absolute_timestamp(TIMESTAMP t);
 int is_soft_timestamp(TIMESTAMP t);

@@ -151,7 +151,7 @@ public:
 		int (*set_value_by_type)(PROPERTYTYPE,void *data,char *);
 		bool (*compare_basic)(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void* x, void* a, void* b, char *part);
 		PROPERTYCOMPAREOP (*get_compare_op)(PROPERTYTYPE ptype, char *opstr);
-		double (*get_part)(OBJECT*,PROPERTY*,char*);
+		double (*get_part)(OBJECT*,PROPERTY*,const char*);
 		PROPERTYSPEC *(*get_spec)(PROPERTYTYPE);
 	} properties;
 	struct {
@@ -440,7 +440,7 @@ void forecast_save(FORECAST *fc, TIMESTAMP ts, int32 tstep, int n_values, double
 void *object_remote_read(void *local, OBJECT *obj, PROPERTY *prop); /** access remote object data */
 void object_remote_write(void *local, OBJECT *obj, PROPERTY *prop); /** access remote object data */
 
-double object_get_part(void *x, char *name);
+double object_get_part(void *x, const char *name);
 TIMESTAMP object_heartbeat(OBJECT *obj);
 
 int object_loadmethod(OBJECT *obj, char *name, char *value);

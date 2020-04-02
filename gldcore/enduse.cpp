@@ -26,7 +26,7 @@
 static enduse *enduse_list = NULL;
 static unsigned int n_enduses = 0;
 
-double enduse_get_part(void *x, char *name)
+double enduse_get_part(void *x, const char *name)
 {
 	enduse *e = (enduse*)x;
 #define _DO_DOUBLE(X,Y) if ( strcmp(name,Y)==0) return e->X;

@@ -2751,7 +2751,7 @@ void object_remote_write(void *local, /** local memory for data */
 	}
 }
 
-double object_get_part(void *x, char *name)
+double object_get_part(void *x, const char *name)
 {
 	OBJECT *obj = (OBJECT*)x;
 	char root[64], part[64];

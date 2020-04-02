@@ -86,7 +86,7 @@ TIMESTAMP randomvar_syncall(TIMESTAMP t1);
 int convert_to_randomvar(char *string, void *data, PROPERTY *prop);
 int convert_from_randomvar(char *string,int size,void *data, PROPERTY *prop);
 unsigned int64 random_id(void);
-double random_get_part(void *x, char *name);
+double random_get_part(void *x, const char *name);
 unsigned entropy_source(void);
 randomvar_struct *randomvar_getnext(randomvar_struct *var);
 size_t randomvar_getspec(char *str, size_t size, const randomvar_struct *var);

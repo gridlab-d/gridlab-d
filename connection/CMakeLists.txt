@@ -11,10 +11,10 @@ if (GLD_USE_FNCS)
             ${GLD_ZMQ_LIBRARY}
             )
     if (GLD_ZMQ_LIBRARY AND GLD_CZMQ_LIBRARY AND GLD_FNCS_LIBRARY)
-        option(HAVE_FNCS "FNCS library found" ON)
+        option(FNCS_FOUND "FNCS library found" ON)
         set(FNCS_CONNECTION fncs_msg.cpp fncs_msg.h)
     else ()
-        option(HAVE_FNCS "FNCS library found" OFF)
+        option(FNCS_FOUND "FNCS library found" OFF)
         set(FNCS_CONNECTION)
         message(WARNING "One of the required FNCS libraries could not be located. Check your configuration for "
                 "GLD_ZeroMQ_DIR, "
@@ -64,7 +64,7 @@ add_library(${PROJECT_NAME}
         ${HELICS_CONNECTION}
         )
 
-if (HAVE_FNCS)
+if (FNCS_FOUND)
     target_link_libraries(${PROJECT_NAME} PRIVATE
             fncs
             ${GLD_FNCS_LIBRARIES}
@@ -72,8 +72,8 @@ if (HAVE_FNCS)
     target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_FNCS)
 endif ()
 
-if (HAVE_HELICS)
-    target_link_libraries(${PROJECT_NAME} HELICS::helics-shared)
+if (HELICS_FOUND)
+    target_link_libraries(${PROJECT_NAME} PRIVATE HELICS::helics-shared)
     target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_HELICS)
 endif ()
 

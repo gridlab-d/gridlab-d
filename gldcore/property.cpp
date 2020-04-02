@@ -277,7 +277,7 @@ PROPERTYTYPE property_get_type(char *name)
 	return PT_void;
 }
 
-double property_get_part(OBJECT *obj, PROPERTY *prop, char *part)
+double property_get_part(OBJECT *obj, PROPERTY *prop, const char *part)
 {
 	PROPERTYSPEC *spec = property_getspec(prop->ptype);
 	if ( spec && spec->get_part )
@@ -291,7 +291,7 @@ double property_get_part(OBJECT *obj, PROPERTY *prop, char *part)
 /*********************************************************
  * PROPERTY PARTS
  *********************************************************/
-double complex_get_part(void *x, char *name)
+double complex_get_part(void *x, const char *name)
 {
 	gld::complex *c = (gld::complex*)x;
 	if ( strcmp(name,"real")==0) return c->Re();
@@ -312,7 +312,7 @@ int double_array_create(double_array &a)
 	return 1;
 }
 
-double double_array_get_part(void *x, char *name)
+double double_array_get_part(void *x, const char *name)
 {
 	unsigned int n,m;
 	if (sscanf(name,"%d.%d",&n,&m)==2)
@@ -334,7 +334,7 @@ int complex_array_create(complex_array &a)
 	return 1;
 }
 
-double complex_array_get_part(void *x, char *name)
+double complex_array_get_part(void *x, const char *name)
 {
 	int n,m;
 	char subpart[32];

@@ -2125,7 +2125,7 @@ public: // read accessors
 	};
 	inline int from_string(char *string) { return callback->convert.string_to_property(pstruct.prop,get_addr(),string); };
 	inline char *get_partname(void) { return pstruct.part; };
-	inline double get_part(char *part=NULL) { return callback->properties.get_part(obj,pstruct.prop,part?part:pstruct.part); };
+	inline double get_part(const char *part=nullptr) { return callback->properties.get_part(obj,pstruct.prop,part?part:pstruct.part); };
 
 public: // write accessors
 	inline void set_object(OBJECT *o) { obj=o; };
