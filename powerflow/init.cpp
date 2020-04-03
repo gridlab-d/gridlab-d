@@ -43,6 +43,7 @@
 #include "vfd.h"
 #include "jsondump.h"
 #include "series_compensator.h"
+#include "sync_check.h"
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
@@ -156,6 +157,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new vfd(module);
 	new jsondump(module);
 	new series_compensator(module);
+	new sync_check(module);
 
 	/* always return the first class registered */
 	return node::oclass;
