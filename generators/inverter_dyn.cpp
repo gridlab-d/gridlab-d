@@ -1499,6 +1499,10 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 	
 	if (control_mode == GRID_FORMING)
 	{
+		if ((iteration_count_val == 0) && (delta_time == 0))
+		{
+			P_DC = I_DC = 0; // Clean the buffer, only on the very first delta timestep
+		}
 		
 		// Check pass
 		if (iteration_count_val==0)	// Predictor pass
@@ -1567,7 +1571,6 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						STATUS fxn_return_status;
 						
 						V_DC = curr_state.Vdc_pu * Vdc_base;
-						P_DC = I_DC = 0; // Clean the buffer
 										
 						//Loop through and call the DC objects
 						for (temp_idx=0; temp_idx < dc_interface_objects.size(); temp_idx++)
