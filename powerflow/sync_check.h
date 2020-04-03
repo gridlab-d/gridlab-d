@@ -6,6 +6,8 @@
 
 #include "powerflow.h"
 
+EXPORT SIMULATIONMODE interupdate_sync_check(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
+
 class sync_check : public powerflow_object
 {
 public:
@@ -22,6 +24,8 @@ public:
 	TIMESTAMP presync(TIMESTAMP t0);
     TIMESTAMP sync(TIMESTAMP t0);
 	TIMESTAMP postsync(TIMESTAMP t0);
+
+	SIMULATIONMODE inter_deltaupdate_sync_check(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
 private:
     bool arm_sync;

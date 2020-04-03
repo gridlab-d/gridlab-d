@@ -30,6 +30,9 @@ sync_check::sync_check(MODULE *mod) : powerflow_object(mod)
 		if(gl_publish_variable(oclass,
 			PT_bool, "arm_sync",PADDR(arm_sync),PT_DESCRIPTION,"Flag to arm the synchronization close",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_sync_check)==NULL)
+			GL_THROW("Unable to publish sync_check deltamode function");
     }
 }
 
@@ -76,6 +79,13 @@ TIMESTAMP sync_check::postsync(TIMESTAMP t0)
 	TIMESTAMP tret = powerflow_object::postsync(t0);
 	
     return tret;
+}
+
+//Deltamode call
+//Module-level call
+SIMULATIONMODE sync_check::inter_deltaupdate_sync_check(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
+{
+	return SM_EVENT;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -147,6 +157,23 @@ EXPORT TIMESTAMP sync_sync_check(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 EXPORT int isa_sync_check(OBJECT *obj, char *classname)
 {
 	return OBJECTDATA(obj,sync_check)->isa(classname);
+}
+
+//Deltamode export
+EXPORT SIMULATIONMODE interupdate_sync_check(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
+{
+	sync_check *my = OBJECTDATA(obj,sync_check);
+	SIMULATIONMODE status = SM_ERROR;
+	try
+	{
+		status = my->inter_deltaupdate_sync_check(delta_time,dt,iteration_count_val,interupdate_pos);
+		return status;
+	}
+	catch (char *msg)
+	{
+		gl_error("interupdate_sync_check(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
+		return status;
+	}
 }
 
 /**@}**/
