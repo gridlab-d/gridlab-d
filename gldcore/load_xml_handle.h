@@ -29,7 +29,7 @@
 #include "globals.h"
 #include "module.h"
 #include "convert.h"
-#include "random.h"
+#include "gldrandom.h"
 #include "output.h"
 #include "unit.h"
 #include "gridlabd.h"

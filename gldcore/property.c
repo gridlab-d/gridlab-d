@@ -3,7 +3,7 @@
 	@file property.c
 	@addtogroup property Properties of objects
 	@ingroup core
-	
+
 	GridLAB-D classes contain properties,
 	which are supported by the functions in this module
 
@@ -140,19 +140,19 @@ PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void
 		if (prop->ptype!=PT_double && prop->ptype!=PT_complex)
 			output_error("property_malloc(oclass='%s',...): property %s cannot have unit '%s' because it is not a double or complex value",oclass->name, prop->name,unitspec);
 			/*	TROUBLESHOOT
-				Only <b>double</b> and <b>complex</b> properties can have units.  
+				Only <b>double</b> and <b>complex</b> properties can have units.
 				Either change the type of the property or remove the unit specification from the property's declaration.
 			 */
 
 		/* verify that the requested unit exists or can be derived */
-		else 
+		else
 		{
 			if ((prop->unit = unit_find(unitspec))==NULL)
 				throw_exception("property_malloc(oclass='%s',...): property %s unit '%s' is not recognized",oclass->name, prop->name,unitspec);
 				/*	TROUBLESHOOT
-					A class is attempting to publish a variable using a unit that is not defined.  
+					A class is attempting to publish a variable using a unit that is not defined.
 					This is caused by an incorrect unit specification in a variable publication (in C++) or declaration (in GLM).
-					Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.  
+					Units are defined in the unit file located in the GridLAB-D <b>etc</b> folder.
 				 */
 		}
 	}
@@ -164,7 +164,7 @@ PROPERTY *property_malloc(PROPERTYTYPE proptype, CLASS *oclass, char *name, void
 	if (oclass!=NULL && class_find_property(oclass,prop->name))
 		output_warning("property_malloc(oclass='%s',...): property name '%s' is defined more than once", oclass->name, prop->name);
 		/*	TROUBLESHOOT
-			A class is attempting to publish a variable more than once.  
+			A class is attempting to publish a variable more than once.
 			This is caused by an repeated specification for a variable publication (in C++) or declaration (in GLM).
 		 */
 	return prop;
@@ -195,8 +195,8 @@ int property_create(PROPERTY *prop, void *addr)
 	{
 		if (property_type[prop->ptype].create)
 			return property_type[prop->ptype].create(addr);
-		//memset(addr,0,(prop->size==0?1:prop->size)*property_type[prop->ptype].size);
-		memset(addr,0,property_type[prop->ptype].size);
+		if ( (int)property_type[prop->ptype].size>0 )
+			memset(addr,0,property_type[prop->ptype].size);
 		return 1;
 	}
 	else
@@ -303,10 +303,10 @@ int double_array_create(double_array*a)
 }
 double get_double_array_value(double_array*a,unsigned int n, unsigned int m)
 {
-	if ( a->n>n && a->m>m )
-		return *(a->x[n][m]);
-	else
+	if (!(a->n > n && a->m > m))
 		throw_exception("get_double_array_value(double_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
+
+	return *(a->x[n][m]);
 }
 void set_double_array_value(double_array*a,unsigned int n, unsigned int m, double x)
 {
@@ -317,10 +317,10 @@ void set_double_array_value(double_array*a,unsigned int n, unsigned int m, doubl
 }
 double *get_double_array_ref(double_array*a,unsigned int n, unsigned int m)
 {
-	if ( a->n>n && a->m>m )
-		return a->x[n][m];
-	else
+	if (!(a->n > n && a->m > m))
 		throw_exception("get_double_array_value(double_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
+
+	return a->x[n][m];
 }
 double double_array_get_part(void *x, char *name)
 {
@@ -351,25 +351,25 @@ int complex_array_create(complex_array *a)
 	return 1;
 }
 complex *get_complex_array_value(complex_array *a,unsigned int n, unsigned int m)
-{
-	if ( a->n>n && a->m>m )
-		return a->x[n][m];
-	else
+ {
+	if (!(a->n > n && a->m > m))
 		throw_exception("get_complex_array_value(complex_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
+
+	return a->x[n][m];
 }
 void set_complex_array_value(complex_array *a,unsigned int n, unsigned int m, complex *x)
 {
-	if ( a->n>n && a->m>m )
+	if (a->n > n && a->m > m)
 		*(a->x[n][m]) = *x;
 	else
 		throw_exception("get_complex_array_value(complex_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
 }
 complex *get_complex_array_ref(complex_array *a,unsigned int n, unsigned int m)
 {
-	if ( a->n>n && a->m>m )
-		return a->x[n][m];
-	else
+	if (!(a->n > n && a->m > m))
 		throw_exception("get_complex_array_value(complex_array*a='n=%d,m=%d,...',unsigned int n=%d,unsigned int m=%d): array index out of range",a->n,a->m,n,m);
+
+	return a->x[n][m];
 }
 double complex_array_get_part(void *x, char *name)
 {

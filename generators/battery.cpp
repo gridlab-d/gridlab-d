@@ -367,11 +367,18 @@ int battery::init(OBJECT *parent)
 				pCircuit_V[1] = map_complex_value(parent,"voltage_1N");
 				pCircuit_V[2] = map_complex_value(parent,"voltage_2N");
 
-				pLine_I[0] = map_complex_value(parent,"current_1");
-				pLine_I[1] = map_complex_value(parent,"current_2");
-				pLine_I[2] = map_complex_value(parent,"current_N");
+				// NOTE - Commented code will replace the pLine_I and pLine12 once the triplex_node "deprecated properties" are removed
+				// pLine_I[0] = map_complex_value(parent,"current_1");
+				// pLine_I[1] = map_complex_value(parent,"current_2");
+				// pLine_I[2] = map_complex_value(parent,"current_N");
 
-				pLine12 = map_complex_value(parent,"current_12");
+				// pLine12 = map_complex_value(parent,"current_12");
+
+				pLine_I[0] = map_complex_value(parent,"acc_temp_current_1");
+				pLine_I[1] = map_complex_value(parent,"acc_temp_current_2");
+				pLine_I[2] = map_complex_value(parent,"acc_temp_current_N");
+
+				pLine12 = map_complex_value(parent,"acc_temp_current_12");
 
 				pPower = map_complex_value(parent,"measured_power");
 
@@ -2383,7 +2390,7 @@ SIMULATIONMODE battery::inter_deltaupdate(unsigned int64 delta_time, unsigned lo
 			// Check the delta time step that the soc will be out of limit && update internal_battery_load
 			state_change_time_delta = check_state_change_time_delta(delta_time, dt);
 
-			simmode_return_value = SM_DELTA_ITER; // iterate since inverter is doing so
+			simmode_return_value = SM_EVENT; // Just return event-driven mode - inverter/other will drive it forward
 
 		}
 

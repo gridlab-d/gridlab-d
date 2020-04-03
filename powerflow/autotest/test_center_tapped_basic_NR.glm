@@ -55,13 +55,10 @@ object transformer {
 }
 
 
-// load node
+// load node - as a meter and a load
 object triplex_meter {
 	name load_node;
 	phases AS;
-	impedance_1 1.4+0.5j;
-	impedance_2  0.9+0.4j;
-	impedance_12 2.0+1.2j;
 	nominal_voltage 120.00;
 	bill_mode UNIFORM;
 	object complex_assert { // doesn't work yet
@@ -138,4 +135,14 @@ object triplex_meter {
 		file "meter_energy.csv"; 
 		property measured_real_energy;
 	 };
+}
+
+object triplex_load {
+	name load_node_actual_load_part;
+	parent load_node;
+	constant_impedance_1 1.4+0.5j;
+	constant_impedance_2  0.9+0.4j;
+	constant_impedance_12 2.0+1.2j;
+	phases AS;
+	nominal_voltage 120.00;
 }

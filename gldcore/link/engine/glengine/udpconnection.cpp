@@ -2,7 +2,7 @@
 
 udpconnection::udpconnection(const string &ip,const int  &port) : absconnection(ip,port)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	// init socket system
 	WORD wsaVersion = MAKEWORD(2,2);
 	WSADATA wsaData;
@@ -59,7 +59,7 @@ void udpconnection::close(){
 	if(!connectionOK)
 		return;
 
-	#ifdef WIN32
+	#ifdef _WIN32
 		closesocket(this->sd);
 	#else
 		close(this->sd);
@@ -69,7 +69,7 @@ void udpconnection::close(){
 
 int udpconnection::getErrorCode()
 {
-#ifdef WIN32
+#ifdef _WIN32
 	return WSAGetLastError();
 #else
 	return errno;

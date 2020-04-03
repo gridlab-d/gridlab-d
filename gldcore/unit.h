@@ -19,6 +19,7 @@ typedef struct s_unit {
 } UNIT; /**< the UNIT structure */
 
 #ifdef __cplusplus
+using gld::complex;
 extern "C" {
 #endif
 	int unit_convert(char *from, char *to, double *pValue);

@@ -1,0 +1,607 @@
+//Simple three-phase house connection test
+//Has fixed loads of power, current, and impedance on each house
+//Nodes all at 0.95 puV to make sure that is adjusting
+//Technically a residential test, but duplicated FBS/NR to make sure powerflow interfaces work
+
+module residential{
+	implicit_enduses NONE;
+}
+module tape;
+module assert;
+module climate;
+module powerflow {
+	solver_method NR;
+}
+
+clock{
+	timezone PST+8PDT;
+	starttime '2001-07-24 01:00:00';
+	stoptime '2001-07-24 01:00:10';
+}
+
+object climate {
+	name Simple_Climate;
+	temperature 63.0;
+	solar_diffuse 0.0;
+	solar_direct 0.0;
+	humidity 0.0;
+}
+
+//Voltages all set at 0.95 PU just to make sure that is working
+object load {
+	name load_208;
+	bustype SWING;
+	phases ABCN;
+	nominal_voltage 120.0;
+	voltage_A 114.0+0.0j;	//0.95 puV
+	voltage_B -57.0-98.7269j;
+	voltage_C -57.0+98.7269j;
+	object complex_assert {
+		target measured_power_A;
+		value 1085.0+443.189j;
+		within 0.01;
+	};
+	object complex_assert {
+		target measured_power_B;
+		value 1085.0+443.189j;
+		within 0.01;
+	};
+	object complex_assert {
+		target measured_power_C;
+		value 1085.0+443.189j;
+		within 0.01;
+	};
+	// object recorder {
+		// property "measured_power_A.real,measured_power_A.imag,measured_power_B.real,measured_power_B.imag,measured_power_C.real,measured_power_C.imag";
+		// interval -1;
+		// file test_load_house.csv;
+	// };
+}
+
+object house{
+	name load_house_208;
+	parent load_208;
+	window_wall_ratio 0.07;
+	cooling_COP 3.0;
+	system_mode OFF;
+	auxiliary_strategy DEADBAND;
+	heating_system_type NONE;
+	cooling_system_type NONE;
+	auxiliary_system_type NONE;
+	air_temperature 63.3;
+	mass_temperature 63.3;
+	heating_setpoint 60.0;
+	cooling_setpoint 75.0;
+	object ZIPload {	//Constant current - 1000+j881.9171 - 316.667+j279.2737/phase at 0.95vpu
+		heat_fraction 0;
+		base_power 1.0 kW;
+		power_pf 1;
+		power_fraction 0;
+		current_pf 0.75;
+		current_fraction 1;
+		impedance_pf 1;
+		impedance_fraction 0;
+	};
+	object ZIPload {	//Constant impedance - 2000+j657.3682 - 601.666+j197.7583/phase at .95vpu
+		heat_fraction 0;
+		base_power 2.0 kW;
+		power_pf 1;
+		power_fraction 0;
+		current_pf 1;
+		current_fraction 0;
+		impedance_pf 0.95;
+		impedance_fraction 1;
+	};
+	object ZIPload {	//Constant power - 500-j101.5293 --> 166.666-j33.84/phase
+		heat_fraction 0;
+		base_power 0.5 kW;
+		power_pf -0.98;
+		power_fraction 1;
+		current_pf 1;
+		current_fraction 0;
+		impedance_pf 1;
+		impedance_fraction 0;
+	};
+}
+
+//Node object
+object node {
+	name node_208;
+	phases ABCN;
+	bustype SWING;
+	nominal_voltage 120.0;
+	voltage_A 114.0+0.0j;	//0.95 puV
+	voltage_B -57.0-98.7269j;
+	voltage_C -57.0+98.7269j;
+	object complex_assert {	//Cheat and use current injection, since node doesn't have a power quantity
+		target current_inj_A;
+		value +9.51754-3.88762j;
+		within 0.01;
+	};
+	object complex_assert {
+		target current_inj_B;
+		value -8.12555-6.29862j;
+		within 0.01;
+	};
+	object complex_assert {
+		target current_inj_C;
+		value -1.39199+10.1862j;
+		within 0.01;
+	};
+	// object recorder {
+		// property "current_inj_A.real,current_inj_A.imag,current_inj_B.real,current_inj_B.imag,current_inj_C.real,current_inj_C.imag";
+		// interval -1;
+		// file test_node_house.csv;
+	// };
+}
+
+object house{
+	name node_house_208;
+	parent node_208;
+	window_wall_ratio 0.07;
+	cooling_COP 3.0;
+	system_mode OFF;
+	auxiliary_strategy DEADBAND;
+	heating_system_type NONE;
+	cooling_system_type NONE;
+	auxiliary_system_type NONE;
+	air_temperature 63.3;
+	mass_temperature 63.3;
+	heating_setpoint 60.0;
+	cooling_setpoint 75.0;
+	object ZIPload {	//Constant current - 1000+j881.9171 - 316.667+j279.2737/phase at 0.95vpu
+		heat_fraction 0;
+		base_power 1.0 kW;
+		power_pf 1;
+		power_fraction 0;
+		current_pf 0.75;
+		current_fraction 1;
+		impedance_pf 1;
+		impedance_fraction 0;
+	};
+	object ZIPload {	//Constant impedance - 2000+j657.3682 - 601.666+j197.7583/phase at .95vpu
+		heat_fraction 0;
+		base_power 2.0 kW;
+		power_pf 1;
+		power_fraction 0;
+		current_pf 1;
+		current_fraction 0;
+		impedance_pf 0.95;
+		impedance_fraction 1;
+	};
+	object ZIPload {	//Constant power - 500-j101.5293 --> 166.666-j33.84/phase
+		heat_fraction 0;
+		base_power 0.5 kW;
+		power_pf -0.98;
+		power_fraction 1;
+		current_pf 1;
+		current_fraction 0;
+		impedance_pf 1;
+		impedance_fraction 0;
+	};
+}
+
+//Meter object
+object meter {
+	name meter_208;
+	phases ABCN;
+	bustype SWING;
+	nominal_voltage 120.0;
+	voltage_A 114.0+0.0j;	//0.95 puV
+	voltage_B -57.0-98.7269j;
+	voltage_C -57.0+98.7269j;
+	object complex_assert {
+		target measured_power_A;
+		value 1085.0+443.189j;
+		within 0.01;
+	};
+	object complex_assert {
+		target measured_power_B;
+		value 1085.0+443.189j;
+		within 0.01;
+	};
+	object complex_assert {
+		target measured_power_C;
+		value 1085.0+443.189j;
+		within 0.01;
+	};
+	// object recorder {
+		// property "measured_power_A.real,measured_power_A.imag,measured_power_B.real,measured_power_B.imag,measured_power_C.real,measured_power_C.imag";
+		// interval -1;
+		// file test_node_house.csv;
+	// };
+}
+
+object house{
+	name meter_house_208;
+	parent meter_208;
+	window_wall_ratio 0.07;
+	cooling_COP 3.0;
+	system_mode OFF;
+	auxiliary_strategy DEADBAND;
+	heating_system_type NONE;
+	cooling_system_type NONE;
+	auxiliary_system_type NONE;
+	air_temperature 63.3;
+	mass_temperature 63.3;
+	heating_setpoint 60.0;
+	cooling_setpoint 75.0;
+	object ZIPload {	//Constant current - 1000+j881.9171 - 316.667+j279.2737/phase at 0.95vpu
+		heat_fraction 0;
+		base_power 1.0 kW;
+		power_pf 1;
+		power_fraction 0;
+		current_pf 0.75;
+		current_fraction 1;
+		impedance_pf 1;
+		impedance_fraction 0;
+	};
+	object ZIPload {	//Constant impedance - 2000+j657.3682 - 601.666+j197.7583/phase at .95vpu
+		heat_fraction 0;
+		base_power 2.0 kW;
+		power_pf 1;
+		power_fraction 0;
+		current_pf 1;
+		current_fraction 0;
+		impedance_pf 0.95;
+		impedance_fraction 1;
+	};
+	object ZIPload {	//Constant power - 500-j101.5293 --> 166.666-j33.84/phase
+		heat_fraction 0;
+		base_power 0.5 kW;
+		power_pf -0.98;
+		power_fraction 1;
+		current_pf 1;
+		current_fraction 0;
+		impedance_pf 1;
+		impedance_fraction 0;
+	};
+}
+
+//Triplex objects, for "completeness"
+//Triplex load
+object triplex_load {
+	name tp_load_208;
+	bustype SWING;
+	phases BS;
+	nominal_voltage 120.0;
+	voltage_1 -57.0-98.7269j;	//0.95 puV
+	voltage_2 -57.0-98.7269j;
+	// object recorder {
+		// property "measured_power.real,measured_power.imag";
+		// interval -1;
+		// file test_tp_load_house.csv;
+	// };
+	object complex_assert {
+		target measured_power;
+		value 3255.0+1329.57j;
+		within 0.01;
+	};
+}
+
+object house{
+	name tp_load_house_208;
+	parent tp_load_208;
+	window_wall_ratio 0.07;
+	cooling_COP 3.0;
+	system_mode OFF;
+	auxiliary_strategy DEADBAND;
+	heating_system_type NONE;
+	cooling_system_type NONE;
+	auxiliary_system_type NONE;
+	air_temperature 63.3;
+	mass_temperature 63.3;
+	heating_setpoint 60.0;
+	cooling_setpoint 75.0;
+	object ZIPload {	//Constant current - 1000+j881.9171 - 950+j837.8211 at 0.95vpu
+		heat_fraction 0;
+		base_power 1.0 kW;
+		power_pf 1;
+		power_fraction 0;
+		current_pf 0.75;
+		current_fraction 1;
+		impedance_pf 1;
+		impedance_fraction 0;
+	};
+	object ZIPload {	//Constant impedance - 2000+j657.3682 - 1804.998+j593.2749 at .95vpu
+		heat_fraction 0;
+		base_power 2.0 kW;
+		power_pf 1;
+		power_fraction 0;
+		current_pf 1;
+		current_fraction 0;
+		impedance_pf 0.95;
+		impedance_fraction 1;
+	};
+	object ZIPload {	//Constant power - 500-j101.5293
+		heat_fraction 0;
+		base_power 0.5 kW;
+		power_pf -0.98;
+		power_fraction 1;
+		current_pf 1;
+		current_fraction 0;
+		impedance_pf 1;
+		impedance_fraction 0;
+	};
+}
+
+//Triplex-node object - do as a child (for assert)
+object triplex_meter {
+	name tp_node_208_parent;
+	phases BS;
+	bustype SWING;
+	nominal_voltage 120.0;
+	nominal_voltage 120.0;
+	voltage_1 -57.0-98.7269j;	//0.95 puV
+	voltage_2 -57.0-98.7269j; 
+	// object recorder {
+		// property "measured_power.real,measured_power.imag";
+		// interval -1;
+		// file test_tp_node_house.csv;
+	// };
+	object complex_assert {
+		target measured_power;
+		value 3255.0+1329.57j;
+		within 0.01;
+	};
+}	
+	
+object triplex_node {
+	name tp_node_208;
+	parent tp_node_208_parent;
+	phases BS;
+	nominal_voltage 120.0;
+	voltage_1 -57.0-98.7269j;	//0.95 puV
+	voltage_2 -57.0-98.7269j; 
+}
+
+object house{
+	name tp_node_house_208;
+	parent tp_node_208;
+	window_wall_ratio 0.07;
+	cooling_COP 3.0;
+	system_mode OFF;
+	auxiliary_strategy DEADBAND;
+	heating_system_type NONE;
+	cooling_system_type NONE;
+	auxiliary_system_type NONE;
+	air_temperature 63.3;
+	mass_temperature 63.3;
+	heating_setpoint 60.0;
+	cooling_setpoint 75.0;
+	object ZIPload {	//Constant current - 1000+j881.9171 - 950+j837.8211 at 0.95vpu
+		heat_fraction 0;
+		base_power 1.0 kW;
+		power_pf 1;
+		power_fraction 0;
+		current_pf 0.75;
+		current_fraction 1;
+		impedance_pf 1;
+		impedance_fraction 0;
+	};
+	object ZIPload {	//Constant impedance - 2000+j657.3682 - 1804.998+j593.2749 at .95vpu
+		heat_fraction 0;
+		base_power 2.0 kW;
+		power_pf 1;
+		power_fraction 0;
+		current_pf 1;
+		current_fraction 0;
+		impedance_pf 0.95;
+		impedance_fraction 1;
+	};
+	object ZIPload {	//Constant power - 500-j101.5293
+		heat_fraction 0;
+		base_power 0.5 kW;
+		power_pf -0.98;
+		power_fraction 1;
+		current_pf 1;
+		current_fraction 0;
+		impedance_pf 1;
+		impedance_fraction 0;
+	};
+}
+
+//Triplex-Meter object
+object triplex_meter {
+	name tp_meter_208;
+	phases BS;
+	bustype SWING;
+	nominal_voltage 120.0;
+	voltage_1 -57.0-98.7269j;	//0.95 puV
+	voltage_2 -57.0-98.7269j; 
+	object complex_assert {
+		target measured_power;
+		value 3255.0+1329.57j;
+		within 0.01;
+	};
+	// object recorder {
+		// property "measured_power.real,measured_power.imag";
+		// interval -1;
+		// file test_tp_meter_house.csv;
+	// };
+}
+
+object house{
+	name tp_meter_house_208;
+	parent tp_meter_208;
+	window_wall_ratio 0.07;
+	cooling_COP 3.0;
+	system_mode OFF;
+	auxiliary_strategy DEADBAND;
+	heating_system_type NONE;
+	cooling_system_type NONE;
+	auxiliary_system_type NONE;
+	air_temperature 63.3;
+	mass_temperature 63.3;
+	heating_setpoint 60.0;
+	cooling_setpoint 75.0;
+	object ZIPload {	//Constant current - 1000+j881.9171 - 950+j837.8211 at 0.95vpu
+		heat_fraction 0;
+		base_power 1.0 kW;
+		power_pf 1;
+		power_fraction 0;
+		current_pf 0.75;
+		current_fraction 1;
+		impedance_pf 1;
+		impedance_fraction 0;
+	};
+	object ZIPload {	//Constant impedance - 2000+j657.3682 - 1804.998+j593.2749 at .95vpu
+		heat_fraction 0;
+		base_power 2.0 kW;
+		power_pf 1;
+		power_fraction 0;
+		current_pf 1;
+		current_fraction 0;
+		impedance_pf 0.95;
+		impedance_fraction 1;
+	};
+	object ZIPload {	//Constant power - 500-j101.5293
+		heat_fraction 0;
+		base_power 0.5 kW;
+		power_pf -0.98;
+		power_fraction 1;
+		current_pf 1;
+		current_fraction 0;
+		impedance_pf 1;
+		impedance_fraction 0;
+	};
+}
+
+//Erroneous extra bits - make the system "a little more system-y" for NR (doesn't like stand-alone nodes)
+object node {
+	name extra_load_208;
+	phases ABCN;
+	nominal_voltage 120.0;
+}
+
+object node {
+	name extra_node_208;
+	phases ABCN;
+	nominal_voltage 120.0;
+}
+
+object node {
+	name extra_meter_208;
+	phases ABCN;
+	nominal_voltage 120.0;
+}
+
+object triplex_load {
+	name extra_tp_load_208;
+	phases BS;
+	nominal_voltage 120.0;
+}
+
+object triplex_node {
+	name extra_tp_node_208;
+	phases BS;
+	nominal_voltage 120.0;
+}	
+
+object triplex_node {
+	name extra_tp_meter_208;
+	phases BS;
+	nominal_voltage 120.0;
+}
+
+//Line configurations
+object line_configuration {
+	name ohl_config;
+	conductor_A olc10001;
+	conductor_B olc10001;
+	conductor_C olc10001;
+	conductor_N olc10002;
+	spacing ls5001;
+}
+
+object overhead_line_conductor {
+	name olc10001;
+	geometric_mean_radius 0.0244;
+	resistance 0.30600;
+}
+
+object overhead_line_conductor {
+	name olc10002;
+	geometric_mean_radius 0.008140;
+	resistance 0.59200;
+}
+
+object line_spacing {
+	name ls5001;
+	distance_AB 2.5;
+	distance_AC 7.0;
+	distance_BC 4.5;
+	distance_AN 5.656854;
+	distance_BN 4.272002;
+	distance_CN 5.0;
+}
+
+object triplex_line_conductor {     
+	name triplex_4/0 AA;    
+	resistance 0.48;     
+	geometric_mean_radius 0.0158;     
+}       
+
+object triplex_line_configuration {     
+	name tplx_config;     
+	conductor_1 triplex_4/0 AA;    
+	conductor_2 triplex_4/0 AA;    
+	conductor_N triplex_4/0 AA;    
+	insulation_thickness 0.08;     
+	diameter 0.522;     
+}         
+
+//Extra lines to connect the extra nodes
+object overhead_line {
+	phases ABCN;
+	name extra_load_connect;
+	from load_208;
+	to extra_load_208;
+	configuration ohl_config;
+	length 50.0;
+}
+
+object overhead_line {
+	phases ABCN;
+	name extra_node_connect;
+	from node_208;
+	to extra_node_208;
+	configuration ohl_config;
+	length 50.0;
+}
+
+object overhead_line {
+	phases ABCN;
+	name extra_meter_connect;
+	from meter_208;
+	to extra_meter_208;
+	configuration ohl_config;
+	length 50.0;
+}
+
+object triplex_line {
+	phases BS;
+	name extra_tplex_load_connect;
+	from tp_load_208;
+	to extra_tp_load_208;
+	configuration tplx_config;
+	length 50.0;
+}
+
+object triplex_line {
+	phases BS;
+	name extra_tplex_node_connect;
+	from tp_node_208_parent;
+	to extra_tp_node_208;
+	configuration tplx_config;
+	length 50.0;
+}
+
+object triplex_line {
+	phases BS;
+	name extra_tplex_meter_connect;
+	from tp_meter_208;
+	to extra_tp_meter_208;
+	configuration tplx_config;
+	length 50.0;
+}

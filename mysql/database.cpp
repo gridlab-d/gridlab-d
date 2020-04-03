@@ -5,7 +5,7 @@
 
 #ifdef HAVE_MYSQL
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <io.h>
 #else
 #include <unistd.h>
@@ -104,6 +104,7 @@ int database::create(void)
 
 int database::init(OBJECT *parent)
 {
+	db_initialized = true;
 	// initialize the client
 	mysql_client = mysql_init(mysql_client);
 	if ( mysql_client==NULL )
@@ -123,7 +124,7 @@ int database::init(OBJECT *parent)
 		(const char*)hostname,(const char*)username,(const char*)password,(const char*)schema,port,(const char*)socketname,get_clientflags(),(const char*)flags);
 
 	mysql = mysql_real_connect(mysql_client,hostname,username,password,NULL,port,socketname,(unsigned long)clientflags);
-	if ( mysql==NULL )
+	if ( mysql==0 )
 		exception("mysql connect failed - %s", mysql_error(mysql_client));
 	else
 		gl_verbose("MySQL server info: %s", mysql_get_server_info(mysql));
@@ -220,7 +221,7 @@ void database::check_schema(void)
 	if ( last_used!=this )
 	{
 		char command[1024];
-		sprintf(command,"USE `%s`",get_schema());
+		snprintf(command, sizeof(command),"USE `%s`",get_schema());
 		mysql_query(mysql,command);
 		last_used = this;
 	}
@@ -239,6 +240,47 @@ bool database::table_exists(char *t)
 		}
 	}
 	return false;
+}
+
+const char *database::get_sqltype(gld_property &prop, bool minified){
+	if(!minified)
+		return get_sqltype(prop);
+
+	switch ( prop.get_type() ) {
+		case PT_double:
+			return "FLOAT";
+		case PT_random:
+		case PT_loadshape:
+		case PT_enduse:
+			return "DOUBLE";
+		case PT_int16:
+		case PT_int32:
+		case PT_int64:
+			return "INT(20)";
+		case PT_char8:
+			return "VARCHAR(8)";
+		case PT_char32:
+			return "VARCHAR(32)";
+		case PT_enumeration:
+		case PT_char256:
+			return "VARCHAR(256)";
+		case PT_char1024:
+			return "VARCHAR(1024)";
+		case PT_complex:
+			// special handling for complex
+			return (prop.get_partname()[0] != '\0') ?	"FLOAT" : "VARCHAR(40)";
+		case PT_set:
+			return "LARGETEXT";
+		case PT_bool:
+			return "CHAR(1)";
+		case PT_timestamp:
+			return "DATETIME";
+		case PT_double_array:
+		case PT_complex_array:
+			return "HUGETEXT";
+		default:
+			return NULL;
+		}
 }
 
 const char *database::get_sqltype(gld_property &prop)
@@ -359,7 +401,7 @@ bool database::query(char *fmt,...)
 	char command[1024];
 	va_list ptr;
 	va_start(ptr,fmt);
-	vsnprintf(command,sizeof(command),fmt,ptr);
+	vsnprintf(command,sizeof(command)-1,fmt,ptr);
 	va_end(ptr);
 
 	// query mysql
@@ -383,7 +425,7 @@ bool database::query(const char *command)
 	buffer[1023] = '\0';
 
 	// query mysql
-	gl_debug("%s->query[%s]", get_name(), command);
+	gl_debug("%s->query[%s]", get_name(), buffer);
 	check_schema();
 	if ( mysql_query(mysql,command)!=0 )
 		exception("%s->query[%s] failed - %s", get_name(), buffer, mysql_error(mysql));

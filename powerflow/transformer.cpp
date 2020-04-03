@@ -170,7 +170,12 @@ int transformer::init(OBJECT *parent)
 	link_rating[0][0] = config->kVA_rating;
 	link_rating[1][0] = config->kVA_rating;
 
-	link_object::init(parent);
+	int result = link_object::init(parent);
+
+	//Check for deferred
+	if (result == 2)
+		return 2;	//Return the deferment - no sense doing everything else!
+
 	OBJECT *obj = OBJECTHDR(this);
 
 	V_base = config->V_secondary;
