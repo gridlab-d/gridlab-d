@@ -203,6 +203,7 @@ public:
 	double node_nominal_voltage; // Nominal voltage
 
 	double E_mag; //internal voltage magnitude, used for grid-forming control
+	double mdc;	  // only used when dc bus dynamic is enabled, make sure that the modulation index is enough
 
 	bool frequency_watt; // Boolean value indicating whether the f/p droop curve is included in the inverter or not
 	bool volt_var;		 // Boolean value indicating whether the volt-var droop curve is included in the inverter or not
