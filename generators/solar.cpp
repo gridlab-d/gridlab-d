@@ -204,7 +204,7 @@ double solar::newton_raphson(double x, tpd_hf_ptr nr_rt, double doa, double P)
 		assert(num_nr_ite < max_nr_ite);
 	}
 
-	cout << "The number of iterations is: " << num_nr_ite << "\n";
+	//cout << "The number of iterations is: " << num_nr_ite << "\n";
 	return x;
 }
 

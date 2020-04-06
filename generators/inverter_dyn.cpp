@@ -954,7 +954,6 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 	FUNCTIONADDR test_fxn;
 	STATUS fxn_return_status;
 
-	//complex temp_current_val[3];
 	complex temp_power_val[3];
 
 	complex temp_complex_value;
@@ -1303,7 +1302,7 @@ bool inverter_dyn::check_and_update_VA_Out(OBJECT *obj)
 
         if (abs(P_Out) > P_Out_lim_flr)
         {
-            gl_warning("inverter (name: '%s'): The magnitude of P_Out (%f [W] required by powerflow) is capped at %f [W]."
+            gl_warning("inverter (name: '%s'): The absolute value of P_Out (%f [W] required by powerflow) is capped at %f [W]."
                        " VA_Out.Re() will be updated accordingly."
                        " Note that: 1) P_Out <= min(pvc_Pmax, rated_power);"
                        " 2) sqrt(P_Out^2 + Q_Out^2) <= sqrt(2)*rated_power.",
@@ -1312,6 +1311,16 @@ bool inverter_dyn::check_and_update_VA_Out(OBJECT *obj)
             P_Out = copysign(P_Out_lim_flr, P_Out);
             flag_VA_Out_changed = true;
         }
+
+		if (abs(Pref) > P_Out_lim_flr)
+		{
+			gl_warning("inverter (name: '%s'): The absolute value of Pref (%f [W] set by the user) is capped at %f [W]."
+                       " Note that: 1) Pref <= min(pvc_Pmax, rated_power);"
+                       " 2) sqrt(Pref^2 + Qref^2) <= sqrt(2)*rated_power.",
+                       obj->name ? obj->name : "unnamed", Pref, P_Out_lim_flr);
+			
+			Pref = copysign(P_Out_lim_flr, Pref);
+		}
 
         //== check Q_Out
         double Q_Out_lim_sq = 2 * pow(S_base, 2) - pow(P_Out, 2);
@@ -1325,7 +1334,8 @@ bool inverter_dyn::check_and_update_VA_Out(OBJECT *obj)
         else
         {
             double Q_Out_lim_flr = floor(sqrt(Q_Out_lim_sq)); // with floor(), the margin is safer
-            if (abs(Q_Out) > Q_Out_lim_flr)
+            
+			if (abs(Q_Out) > Q_Out_lim_flr)
             {
                 gl_warning("inverter (name: '%s'): The magnitude of Q_Out (%f [var] required by powerflow) is be capped at %f [var]."
                            " VA_Out.Im() will be updated accordingly."
@@ -1336,6 +1346,16 @@ bool inverter_dyn::check_and_update_VA_Out(OBJECT *obj)
                 Q_Out = copysign(Q_Out_lim_flr, Q_Out);
                 flag_VA_Out_changed = true;
             }
+
+			if (abs(Qref) > Q_Out_lim_flr)
+			{
+				gl_warning("inverter (name: '%s'): The absolute value of Qref (%f [var] set by the user) is capped at %f [var]."
+						" Note that: 1) Pref <= min(pvc_Pmax, rated_power);"
+						" 2) sqrt(Pref^2 + Qref^2) <= sqrt(2)*rated_power.",
+						obj->name ? obj->name : "unnamed", Qref, Q_Out_lim_flr);
+				
+				Qref = copysign(Q_Out_lim_flr, Qref);
+			}
         }
 
         if (flag_VA_Out_changed)
@@ -1344,6 +1364,9 @@ bool inverter_dyn::check_and_update_VA_Out(OBJECT *obj)
 			VA_Out = complex(P_Out, Q_Out);
 			update_iGen(VA_Out);
 		}
+
+		// Update the P_DC, V_DC, and I_DC
+		P_DC = VA_Out.Re(); //Lossless
     }
     return flag_VA_Out_changed;
 }
