@@ -48,6 +48,7 @@ typedef struct  {
 	OBJECT *obj;			///< Link to original object header
 	FUNCTIONADDR ExtraCurrentInjFunc;	///< Link to extra functions of current injection updates -- mostly VSI current updates
 	OBJECT *ExtraCurrentInjFuncObject;	///< Link to the object that mapped the current injection function - needed for function calls
+	FUNCTIONADDR LoadUpdateFxn;			///< Link to load update function for load objects -- for impedance conversion (inrush or forced)
 	int island_number;		///< Numerical designation for which island this bus belongs to
 } BUSDATA;
 

@@ -423,6 +423,10 @@ private:
 	bool proper_climate_found;		//Flag to see if climate interactions should occur
 	bool commercial_load_parent;    // proper_meter_parent is true, but the parent is actually a load
 
+	//Variables for fault_impedance method
+	bool powerflow_impedance_conversion_enabled;	//Boolean for powerflow - see if "convert all to impedance" is active
+	double powerflow_impedance_conversion_level;	//Threshold from powerflow where impedance conversion should occur
+
 	//Pointers for powerflow properties
 	gld_property *pCircuit_V[3];					///< pointer to the three voltages on three lines
 	gld_property *pLine_I[3];						///< pointer to the three current on three lines

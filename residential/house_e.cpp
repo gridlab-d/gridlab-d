@@ -807,6 +807,10 @@ int house_e::create()
 	//External motor flag
 	external_motor_attached = false;
 
+	//Impedance conversion stuff
+	powerflow_impedance_conversion_enabled = false;
+	powerflow_impedance_conversion_level = 0.0;
+
 	return result;
 }
 
@@ -1314,7 +1318,7 @@ and internal gain variables.
 
 int house_e::init(OBJECT *parent)
 {
-	gld_property *meter_house_present;
+	gld_property *temp_gld_property;
 	gld_wlock *test_rlock;
 	bool temp_bool_val;
 
@@ -1336,10 +1340,10 @@ int house_e::init(OBJECT *parent)
 	if (parent!=NULL && (gl_object_isa(parent,"triplex_meter","powerflow") || gl_object_isa(obj->parent,"triplex_node","powerflow") || gl_object_isa(parent,"triplex_load","powerflow")))	// for single-phase houses
 	{
 		//Map to the triplex variable for houses
-		meter_house_present = new gld_property(parent,"house_present");
+		temp_gld_property = new gld_property(parent,"house_present");
 
 		//Make sure it worked
-		if ((meter_house_present->is_valid() != true) || (meter_house_present->is_bool() != true))
+		if ((temp_gld_property->is_valid() != true) || (temp_gld_property->is_bool() != true))
 		{
 			gl_error("house:%d - %s - Failed to map powerflow variable",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
@@ -1352,10 +1356,10 @@ int house_e::init(OBJECT *parent)
 
 		//Set the value
 		temp_bool_val = true;
-		meter_house_present->setp<bool>(temp_bool_val,*test_rlock);
+		temp_gld_property->setp<bool>(temp_bool_val,*test_rlock);
 
 		//Remove the temp property
-		delete meter_house_present;
+		delete temp_gld_property;
 
 		//Map the other properties - voltage
 		pCircuit_V[0] = map_complex_value(parent,"voltage_12");
@@ -1407,15 +1411,74 @@ int house_e::init(OBJECT *parent)
 		//Set flag
 		proper_meter_parent = true;
 		commercial_load_parent = false;
+
+		//*** Get the impedance mapping stuff ***//
+
+		//Get the enabled flag
+		temp_gld_property = new gld_property("powerflow::enable_impedance_conversion");
+
+		//See if it worked
+		if ((temp_gld_property->is_valid() != true) || (temp_gld_property->is_bool() != true))
+		{
+			GL_THROW("house:%d - %s - Failed to impedance mode variable from powerflow",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			While attempting to map a variable associated with converting to impedance mode, an error occurred.  Please
+			try again.  If the error persists, please submit your model and a bug report via the issue tracking system.
+			*/
+		}
+
+		//Pull the value to a temporary
+		temp_gld_property->getp<bool>(temp_bool_val,*test_rlock);
+
+		//Delete the link
+		delete temp_gld_property;
+
+		//Set our tracking variable
+		powerflow_impedance_conversion_enabled = temp_bool_val;
+
+		//Now do the same for inrush, just to be thorough
+		temp_gld_property = new gld_property("powerflow::enable_inrush");
+
+		//See if it worked
+		if ((temp_gld_property->is_valid() != true) || (temp_gld_property->is_bool() != true))
+		{
+			GL_THROW("house:%d - %s - Failed to impedance mode variable from powerflow",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		//Pull the value to a temporary
+		temp_gld_property->getp<bool>(temp_bool_val,*test_rlock);
+
+		//Delete the link
+		delete temp_gld_property;
+
+		//Or us in, in case one or the other is set
+		powerflow_impedance_conversion_enabled |= temp_bool_val;
+
+		//Now get the threshold
+		temp_gld_property = new gld_property("powerflow::low_voltage_impedance_level");
+
+		//See if it worked
+		if ((temp_gld_property->is_valid() != true) || (temp_gld_property->is_double() != true))
+		{
+			GL_THROW("house:%d - %s - Failed to impedance mode variable from powerflow",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		//Pull the value to a temporary
+		temp_gld_property->getp<double>(powerflow_impedance_conversion_level,*test_rlock);
+
+		//Delete the link
+		delete temp_gld_property;
 	}
 	// else if (parent!=NULL && (gl_object_isa(parent,"meter","powerflow") || gl_object_isa(obj->parent,"node","powerflow"))) // for three-phase commercial zone-houses
 	else if (parent!=NULL && (gl_object_isa(parent,"meter","powerflow") || gl_object_isa(obj->parent,"node","powerflow") || gl_object_isa(obj->parent,"load","powerflow"))) // for three-phase commercial zone-houses
 	{
 		//Map to the triplex variable for houses
-		meter_house_present = new gld_property(parent,"house_present");
+		temp_gld_property = new gld_property(parent,"house_present");
 
 		//Make sure it worked
-		if ((meter_house_present->is_valid() != true) || (meter_house_present->is_bool() != true))
+		if ((temp_gld_property->is_valid() != true) || (temp_gld_property->is_bool() != true))
 		{
 			gl_error("house:%d - %s - Failed to map powerflow variable",obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
@@ -1424,10 +1487,10 @@ int house_e::init(OBJECT *parent)
 
 		//Set the value
 		temp_bool_val = true;
-		meter_house_present->setp<bool>(temp_bool_val,*test_rlock);
+		temp_gld_property->setp<bool>(temp_bool_val,*test_rlock);
 
 		//Remove the temp property
-		delete meter_house_present;
+		delete temp_gld_property;
 
 		//Map the other properties - voltage
 		pCircuit_V[0] = map_complex_value(parent,"voltage_A");
@@ -1495,6 +1558,63 @@ int house_e::init(OBJECT *parent)
 		// set flags for the powerflow interface
 		proper_meter_parent = true;
 		commercial_load_parent = true;
+
+
+		//*** Get the impedance mapping stuff ***//
+
+		//Get the enabled flag
+		temp_gld_property = new gld_property("powerflow::enable_impedance_conversion");
+
+		//See if it worked
+		if ((temp_gld_property->is_valid() != true) || (temp_gld_property->is_bool() != true))
+		{
+			GL_THROW("house:%d - %s - Failed to impedance mode variable from powerflow",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		//Pull the value to a temporary
+		temp_gld_property->getp<bool>(temp_bool_val,*test_rlock);
+
+		//Delete the link
+		delete temp_gld_property;
+
+		//Set our tracking variable
+		powerflow_impedance_conversion_enabled = temp_bool_val;
+
+		//Now do the same for inrush, just to be thorough
+		temp_gld_property = new gld_property("powerflow::enable_inrush");
+
+		//See if it worked
+		if ((temp_gld_property->is_valid() != true) || (temp_gld_property->is_bool() != true))
+		{
+			GL_THROW("house:%d - %s - Failed to impedance mode variable from powerflow",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		//Pull the value to a temporary
+		temp_gld_property->getp<bool>(temp_bool_val,*test_rlock);
+
+		//Delete the link
+		delete temp_gld_property;
+
+		//Or us in, in case one or the other is set
+		powerflow_impedance_conversion_enabled |= temp_bool_val;
+
+		//Now get the threshold
+		temp_gld_property = new gld_property("powerflow::low_voltage_impedance_level");
+
+		//See if it worked
+		if ((temp_gld_property->is_valid() != true) || (temp_gld_property->is_double() != true))
+		{
+			GL_THROW("house:%d - %s - Failed to impedance mode variable from powerflow",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		//Pull the value to a temporary
+		temp_gld_property->getp<double>(powerflow_impedance_conversion_level,*test_rlock);
+
+		//Delete the link
+		delete temp_gld_property;
 	}
 	else
 	{
@@ -1519,6 +1639,10 @@ int house_e::init(OBJECT *parent)
 
 		//Map us too, since the enduse loads may use it
 		pFrequency = map_double_value(obj,"grid_frequency");
+
+		//Set the impedance conversion flags, just because
+		powerflow_impedance_conversion_enabled = false;
+		powerflow_impedance_conversion_level = 0.0;
 	}
 
 	//grab the start time of the simulation
@@ -3189,6 +3313,10 @@ double house_e::sync_panel(double t0_dbl, double t1_dbl)
 {
 	double t2_dbl = TSNVRDBL;
 	OBJECT *obj = OBJECTHDR(this);
+	bool perform_impedance_conversion;
+
+	//Set impedance default - don't do conversion
+	perform_impedance_conversion = false;
 
 	// clear accumulator
 	if(((t0_dbl >= simulation_beginning_time_dbl) && (t1_dbl > t0_dbl)) || (!heat_start)){
@@ -3274,23 +3402,57 @@ double house_e::sync_panel(double t0_dbl, double t1_dbl)
 				//Convert values appropriately - assume nominal voltages of 240 and 120 (0 degrees)
 				//All values are given in kW, so convert to normal
 
-				if (n==0)	//1-2 240 V load
+				//Check and see if we're in normal mode, or in "convert to impedance" mode
+				if ((powerflow_impedance_conversion_enabled == true) && (c->pLoad->voltage_factor < powerflow_impedance_conversion_level))
 				{
-					value_Power[2] += c->pLoad->power * 1000.0;
-					value_Line_I[2] += ~(c->pLoad->current * 1000.0 / (2.0 * default_line_voltage));
-					value_Shunt[2] += ~(c->pLoad->admittance * 1000.0 / (4.0 * default_line_voltage * default_line_voltage));	//Note that the denom is 2*120 * 2, so 4 * nominal
+					//Flag to convert
+					perform_impedance_conversion = true;
 				}
-				else if (n==1)	//2-N 120 V load
+
+				//See if we're doing normal loading or not
+				if (perform_impedance_conversion == false)
 				{
-					value_Power[1] += c->pLoad->power * 1000.0;
-					value_Line_I[1] += ~(c->pLoad->current * 1000.0 / default_line_voltage);
-					value_Shunt[1] += ~(c->pLoad->admittance * 1000.0 / (default_line_voltage * default_line_voltage));
+					if (n==0)	//1-2 240 V load
+					{
+						value_Power[2] += c->pLoad->power * 1000.0;
+						value_Line_I[2] += ~(c->pLoad->current * 1000.0 / (2.0 * default_line_voltage));
+						value_Shunt[2] += ~(c->pLoad->admittance * 1000.0 / (4.0 * default_line_voltage * default_line_voltage));	//Note that the denom is 2*120 * 2, so 4 * nominal
+					}
+					else if (n==1)	//2-N 120 V load
+					{
+						value_Power[1] += c->pLoad->power * 1000.0;
+						value_Line_I[1] += ~(c->pLoad->current * 1000.0 / default_line_voltage);
+						value_Shunt[1] += ~(c->pLoad->admittance * 1000.0 / (default_line_voltage * default_line_voltage));
+					}
+					else	//n has to equal 2 here (checked above) - 1-N 120 V load
+					{
+						value_Power[0] += c->pLoad->power * 1000.0;
+						value_Line_I[0] += ~(c->pLoad->current * 1000.0 / default_line_voltage);
+						value_Shunt[0] += ~(c->pLoad->admittance * 1000.0 / (default_line_voltage * default_line_voltage));
+					}
 				}
-				else	//n has to equal 2 here (checked above) - 1-N 120 V load
+				else	//Convert to impedance on the powerflow side - toss a verbose too
 				{
-					value_Power[0] += c->pLoad->power * 1000.0;
-					value_Line_I[0] += ~(c->pLoad->current * 1000.0 / default_line_voltage);
-					value_Shunt[0] += ~(c->pLoad->admittance * 1000.0 / (default_line_voltage * default_line_voltage));
+					//All values get converted from power to impedance, so all look like admittance
+
+					if (n==0)	//1-2 240 V load
+					{
+						value_Shunt[2] += ~(c->pLoad->power * 1000.0 / (4.0 * default_line_voltage * default_line_voltage));	//Note that the denom is 2*120 * 2, so 4 * nominal
+						value_Shunt[2] += ~(c->pLoad->current * 1000.0 / (4.0 * default_line_voltage * default_line_voltage));
+						value_Shunt[2] += ~(c->pLoad->admittance * 1000.0 / (4.0 * default_line_voltage * default_line_voltage));
+					}
+					else if (n==1)	//2-N 120 V load
+					{
+						value_Shunt[1] += ~(c->pLoad->power * 1000.0 / (default_line_voltage * default_line_voltage));
+						value_Shunt[1] += ~(c->pLoad->current * 1000.0 / (default_line_voltage * default_line_voltage));
+						value_Shunt[1] += ~(c->pLoad->admittance * 1000.0 / (default_line_voltage * default_line_voltage));
+					}
+					else	//n has to equal 2 here (checked above) - 1-N 120 V load
+					{
+						value_Shunt[0] += ~(c->pLoad->power * 1000.0 / (default_line_voltage * default_line_voltage));
+						value_Shunt[0] += ~(c->pLoad->current * 1000.0 / (default_line_voltage * default_line_voltage));
+						value_Shunt[0] += ~(c->pLoad->admittance * 1000.0 / (default_line_voltage * default_line_voltage));
+					}
 				}
 
 				total.total += c->pLoad->total;

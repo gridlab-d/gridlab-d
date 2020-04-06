@@ -3562,6 +3562,30 @@ int node::NR_populate(void)
 	NR_busdata[NR_node_reference].ExtraCurrentInjFunc = NULL;
 	NR_busdata[NR_node_reference].ExtraCurrentInjFuncObject = NULL;
 
+	//Extra functions - see if we're a load - map update if we're in the right mode
+	if ((gl_object_isa(me,"load","powerflow")==true) && ((enable_impedance_conversion==true) || (enable_inrush_calculations==true)))
+	{
+		//Map the function
+		NR_busdata[NR_node_reference].LoadUpdateFxn = (FUNCTIONADDR)(gl_get_function(me,"pwr_object_load_update"));
+
+		//Make sure it worked
+		if (NR_busdata[NR_node_reference].LoadUpdateFxn == NULL)
+		{
+			GL_THROW("node:%d - %s - Failed to map load_update",me->id,(me->name ? me->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			The attached node was unable to find the exposed function "current_injection_update" on the calling object.  Be sure
+			it supports this functionality and try again.
+			*/
+		}
+		//Default else -- it worked
+	}
+	else
+	{
+		//Not a load
+		NR_busdata[NR_node_reference].LoadUpdateFxn = NULL;
+	}
+	
+
 	//Allocate dynamic variables -- only if something has requested it
 	if ((deltamode_inclusive==true) && ((dynamic_norton==true) || (dynamic_generator==true)))
 	{
