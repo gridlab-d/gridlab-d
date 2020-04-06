@@ -3434,6 +3434,7 @@ double house_e::sync_panel(double t0_dbl, double t1_dbl)
 				else	//Convert to impedance on the powerflow side - toss a verbose too
 				{
 					//All values get converted from power to impedance, so all look like admittance
+					gl_verbose("house_e:%d, %s converting loads to impedance representation to assist powerflow", obj->id, (obj->name?obj->name:"Unnamed"));
 
 					if (n==0)	//1-2 240 V load
 					{
