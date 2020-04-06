@@ -335,6 +335,9 @@ solar::solar(MODULE *module)
 			oclass->trl = TRL_PROOF;
 
 		if (gl_publish_variable(oclass,
+								// Flag for Mode Section of Calculating pvc_Pmax
+								PT_bool, "pvc_Pmax_calc_simp_mode", PADDR(pvc_Pmax_calc_simp_mode), PT_DESCRIPTION, "If the simple mode is selected, the pvc_Pmax = pvc_U_m_V * pvc_I_m_A.",
+								
 								// Solar PV Panel (under PV_CURVE Mode)
 								PT_double, "t_ref_cels", PADDR(pvc_t_ref_cels), PT_DESCRIPTION, "The referenced temperature in Celsius",
 								PT_double, "S_ref_wpm2", PADDR(pvc_S_ref_wpm2), PT_DESCRIPTION, "The referenced insolation in the unit of w/m^2",
@@ -447,6 +450,8 @@ solar::solar(MODULE *module)
 /* Object creation is called once for each object that is created by the core */
 int solar::create(void)
 {
+	pvc_Pmax_calc_simp_mode = true;
+
 	NOCT = 118.4;	 //degF
 	Tcell = 21.0;	 //degC
 	Tambient = 25.0; //degC
@@ -1578,7 +1583,16 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 		//[For steady-state]: Solar proactively tells its parent inverter the max P in the PV_CURVE mode
 		update_cur_t_and_S();
-		double pvc_Pmax = get_p_max(pvc_U_m_V);
+		double pvc_Pmax;
+		if (pvc_Pmax_calc_simp_mode)
+		{
+			pvc_Pmax = pvc_U_m_V * pvc_I_m_A;
+		}
+		else
+		{
+			pvc_Pmax = get_p_max(pvc_U_m_V);
+		}
+
 		inverter_pvc_Pmax_property->setp<double>(pvc_Pmax, *test_rlock);
 
 		if (pvc_Pmax > Max_P)

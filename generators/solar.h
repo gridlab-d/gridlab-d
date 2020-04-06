@@ -38,6 +38,9 @@ public: /* Published Variables & Other Funcs For 'PV_CURVE' Mode */
 	void init_pub_vars_pvcurve_mode();
 
 private: /* For N-R Solver & P-V Curve */
+	// Flag for Mode Selection of Calculating pvc_Pmax
+	bool pvc_Pmax_calc_simp_mode;
+
 	// For and From Weather
 	double pvc_cur_t_cels;
 	double pvc_cur_S_wpm2;
