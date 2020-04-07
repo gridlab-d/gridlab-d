@@ -225,6 +225,22 @@ int battery::create(void)
 	return 1; /* return 1 on success, 0 on failure */
 }
 
+void battery::fetch_double(double **prop, char *name, OBJECT *parent){
+	OBJECT *hdr = OBJECTHDR(this);
+	*prop = gl_get_double_by_name(parent, name);
+	if(*prop == NULL){
+		char tname[32];
+		char *namestr = (hdr->name ? hdr->name : tname);
+		char msg[256];
+		sprintf(tname, "inverter:%i", hdr->id);
+		if(*name == 0)
+			sprintf(msg, "%s: inverter unable to find property: name is NULL", namestr);
+		else
+			sprintf(msg, "%s: inverter unable to find %s", namestr, name);
+		throw(msg);
+	}
+}
+
 /* Object initialization is called once after all object have been created */
 int battery::init(OBJECT *parent)
 {

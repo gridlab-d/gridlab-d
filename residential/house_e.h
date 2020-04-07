@@ -103,13 +103,13 @@ public:
 	
 	// additional reverse etp parameters
 	set include_solar_quadrant;
-	typedef enum {HC_DEFAULT=0, HC_FLAT=1, HC_LINEAR=2, HC_CURVED=3};
+	typedef enum {HC_DEFAULT=0, HC_FLAT=1, HC_LINEAR=2, HC_CURVED=3} HEATING_COP;
 	enumeration heating_cop_curve;
-	typedef enum {HP_DEFAULT=0, HP_FLAT=1, HP_LINEAR=2, HP_CURVED=3};
+	typedef enum {HP_DEFAULT=0, HP_FLAT=1, HP_LINEAR=2, HP_CURVED=3} HEATING_CAP;
 	enumeration heating_cap_curve;
-	typedef enum {CC_DEFAULT=0, CC_FLAT=1, CC_LINEAR=2, CC_CURVED=3};
+	typedef enum {CC_DEFAULT=0, CC_FLAT=1, CC_LINEAR=2, CC_CURVED=3} COOLING_COP;
 	enumeration cooling_cop_curve;
-	typedef enum {CP_DEFAULT=0, CP_FLAT=1, CP_LINEAR=2, CP_CURVED=3};
+	typedef enum {CP_DEFAULT=0, CP_FLAT=1, CP_LINEAR=2, CP_CURVED=3} COOLING_CAP;
 	enumeration cooling_cap_curve;
 	bool use_latent_heat;
 	bool include_fan_heatgain;
@@ -158,7 +158,7 @@ public:
 	double dlc_offset;
 
 	// hvac control variable
-	typedef enum {TC_FULL=0, TC_BAND=1, TC_NONE=2};
+	typedef enum {TC_FULL=0, TC_BAND=1, TC_NONE=2} THERMOSTAT_CONTROL;
 	enumeration thermostat_control;	///< method of HVAC control
 	double TcoolOn;		///< temperature above which cooling turns on
 	double TcoolOff;	///< temperature below which cooling turns off
