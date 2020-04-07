@@ -34,6 +34,7 @@ public:
 	//Legacy FBS code - will change when reliability makes its way in there
 	int fuse_state(OBJECT *parent);
 	
+	void fuse_change_status_function(void);
 	void set_fuse_full(char desired_status_A, char desired_status_B, char desired_status_C);	//Used to set individual phases - 0 = blown, 1 = good, 2 = don't care (retain current)
 	void set_fuse_full_reliability(unsigned char desired_status);
 	void set_fuse_faulted_phases(unsigned char desired_status);
@@ -64,8 +65,9 @@ private:
 
 EXPORT int change_fuse_state(OBJECT *thisobj, unsigned char phase_change, bool state);
 EXPORT int fuse_reliability_operation(OBJECT *thisobj, unsigned char desired_phases);
-EXPORT int create_fault_fuse(OBJECT *thisobj, OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time, void *Extra_Data);
-EXPORT int fix_fault_fuse(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name, void* Extra_Data);
+EXPORT int create_fault_fuse(OBJECT *thisobj, OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time);
+EXPORT int fix_fault_fuse(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name);
+EXPORT int clear_fault_fuse(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name);
 EXPORT int fuse_fault_updates(OBJECT *thisobj, unsigned char restoration_phases);
 
 #endif // FUSE_H

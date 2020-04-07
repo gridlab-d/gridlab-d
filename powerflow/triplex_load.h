@@ -16,10 +16,14 @@ public:
 private:
 	bool base_load_val_was_nonzero[3];		///< Tracking variable to make ZIP-fraction loads check for zero conditions (but not already zeroed)
 
+	complex prev_load_values[3][3];			///< Tracking variable for accumulators - make loads behave more like nodes
+
 public:
 	complex measured_voltage_1;	///< measured voltage
 	complex measured_voltage_2;
 	complex measured_voltage_12;
+	complex measured_total_power;
+	complex measured_power[3];
 	complex constant_power[3];		// power load
 	complex constant_current[3];	// current load
 	complex constant_impedance[3];	// impedance load
@@ -34,11 +38,14 @@ public:
 
 	enum {LC_UNKNOWN=0, LC_RESIDENTIAL, LC_COMMERCIAL, LC_INDUSTRIAL, LC_AGRICULTURAL};
 	enumeration load_class;
+	enum {DISCRETIONARY=0, PRIORITY, CRITICAL};
+	enumeration load_priority;
 
 	int create(void);
 	int init(OBJECT *parent);
 	
 	void triplex_load_update_fxn(void);
+	void triplex_load_delete_update_fxn(void);
 
 	triplex_load(MODULE *mod);
 	TIMESTAMP sync(TIMESTAMP t0);

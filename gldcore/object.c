@@ -30,7 +30,7 @@
 #include <ctype.h>
 #include <errno.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 #define isnan _isnan  /* map isnan to appropriate function under Windows */
 #endif
 
@@ -771,7 +771,7 @@ int object_set_value_by_addr(OBJECT *obj, /**< the object to alter */
 	int result=0;
 	if(prop==NULL && (prop=get_property_at_addr(obj,addr))==NULL) 
 		return 0;
-	if(prop->access != PA_PUBLIC){
+	if((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN)){
 		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
 		/*	TROUBLESHOOT
 			The specified property was published by its object as private.  It may not be modified by other modules.
@@ -1004,7 +1004,7 @@ int object_set_value_by_name(OBJECT *obj, /**< the object to change */
 			return len>0?(int)len:1; /* empty string is not necessarily wrong */
 		}
 	}
-	if(prop->access != PA_PUBLIC){
+	if((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN)){
 		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
 		/*	TROUBLESHOOT
 			The specified property was published by its object as private.  It may not be modified by other modules.
@@ -1026,7 +1026,7 @@ int object_set_int16_by_name(OBJECT *obj, PROPERTYNAME name, int16 value)
 		errno = ENOENT;
 		return 0;
 	}
-	if(prop->access != PA_PUBLIC){
+	if((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN)){
 		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
 		/*	TROUBLESHOOT
 			The specified property was published by its object as private.  It may not be modified by other modules.
@@ -1054,7 +1054,7 @@ int object_set_int32_by_name(OBJECT *obj, PROPERTYNAME name, int32 value)
 		errno = ENOENT;
 		return 0;
 	}
-	if(prop->access != PA_PUBLIC){
+	if((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN)){
 		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
 		/*	TROUBLESHOOT
 			The specified property was published by its object as private.  It may not be modified by other modules.
@@ -1075,7 +1075,7 @@ int object_set_int64_by_name(OBJECT *obj, PROPERTYNAME name, int64 value)
 		errno = ENOENT;
 		return 0;
 	}
-	if(prop->access != PA_PUBLIC){
+	if((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN)){
 		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
 		/*	TROUBLESHOOT
 			The specified property was published by its object as private.  It may not be modified by other modules.
@@ -1096,7 +1096,7 @@ int object_set_double_by_name(OBJECT *obj, PROPERTYNAME name, double value)
 		errno = ENOENT;
 		return 0;
 	}
-	if(prop->access != PA_PUBLIC){
+	if((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN)){
 		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
 		/*	TROUBLESHOOT
 			The specified property was published by its object as private.  It may not be modified by other modules.
@@ -1117,7 +1117,7 @@ int object_set_complex_by_name(OBJECT *obj, PROPERTYNAME name, complex value)
 		errno = ENOENT;
 		return 0;
 	}
-	if(prop->access != PA_PUBLIC){
+	if((prop->access != PA_PUBLIC) && (prop->access != PA_HIDDEN)){
 		output_error("trying to set the value of non-public property %s in %s", prop->name, obj->oclass->name);
 		/*	TROUBLESHOOT
 			The specified property was published by its object as private.  It may not be modified by other modules.
@@ -1212,7 +1212,7 @@ OBJECT *object_get_next(OBJECT *obj){ /**< the object from which to start */
 	the request to prevent looping.  This will prevent
 	an object_set_parent call from creating a parent loop.
  */
-static int _set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
+static unsigned int _set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 {
 	OBJECTRANK parent_rank = -1;
 	if(obj == NULL){
@@ -1251,10 +1251,10 @@ static int _set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 			return -1;
 	}
 	obj->flags &= ~OF_RERANK;
-	return obj->rank;
+	return obj != NULL ? obj->rank : 0;
 }
 /* this version is fast, blind to errors, and not recursive -- it's only used when global_fastrank is TRUE */
-static int _set_rankx(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
+static unsigned int _set_rankx(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 {
 	int n = object_get_count();
 	if ( obj == NULL )
@@ -1299,10 +1299,12 @@ static int _set_rankx(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 	}
 	for ( obj=first ; obj!=NULL ; obj=obj->parent )
 		obj->flags &= ~OF_RERANK;
+
+	return obj != NULL ? obj->rank : 0;
 }
-static int set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
+static unsigned int set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 {
-	global_bigranks==TRUE ? _set_rankx(obj,rank,NULL) : _set_rank(obj,rank,NULL);
+	return global_bigranks==TRUE ? _set_rankx(obj,rank,NULL) : _set_rank(obj,rank,NULL);
 }
 
 /** Set the rank of an object but forcing it's parent
@@ -1385,9 +1387,11 @@ char *object_property_to_string(OBJECT *obj, char *name, char *buffer, int sz)
 		return NULL;
 	}
 	addr = GETADDR(obj,prop); /* warning: cast from pointer to integer of different size */
-	if(prop->ptype==PT_delegated)
-		return prop->delegation->to_string(addr,buffer,sz)?buffer:NULL;
-	else if(class_property_to_string(prop,addr,buffer,sz))
+	if ( prop->ptype == PT_delegated )
+	{
+		return prop->delegation->to_string(addr,buffer,sz) ? buffer : NULL;
+	}
+	else if ( class_property_to_string(prop,addr,buffer,sz) )
 	{
 		
 		return buffer;
@@ -1415,7 +1419,7 @@ TIMESTAMP _object_sync(OBJECT *obj, /**< the object to synchronize */
 {
 	CLASS *oclass = obj->oclass;
 	register TIMESTAMP plc_time=TS_NEVER, sync_time;
-	TIMESTAMP effective_valid_to = min(obj->clock+global_skipsafe,obj->valid_to);
+	TIMESTAMP effective_valid_to = fmin(obj->clock+global_skipsafe,obj->valid_to);
 	int autolock = obj->oclass->passconfig&PC_AUTOLOCK;
 
 	/* check skipsafe */
@@ -2254,35 +2258,34 @@ static OBJECTTREE *object_tree_add(OBJECT *obj, OBJECTNAME name){
 
 /*	Finds a name in the tree
  */
-static OBJECTTREE **findin_tree(OBJECTTREE *tree, OBJECTNAME name)
+static OBJECTTREE **findin_tree(OBJECTTREE **tree, OBJECTNAME name)
 {
-	static OBJECTTREE **temptree = NULL;
-	if(tree == NULL){
+	if(tree == NULL || *tree == NULL){
 		return NULL;
 	} else {
-		int rel = strcmp(tree->name, name);
+		int rel = strcmp((*tree)->name, name);
 		if(rel > 0){
-			if(tree->before != NULL){
-				if(strcmp(tree->before->name, name) == 0){
-					return &(tree->before);
+			if((*tree)->before != NULL){
+				if(strcmp((*tree)->before->name, name) == 0){
+					return &((*tree)->before);
 				} else {
-					return findin_tree(tree->before, name);
+					return findin_tree(&((*tree)->before), name);
 				}
 			} else {
 				return NULL;
 			}
 		} else if(rel<0) {
-			if(tree->after != NULL){
-				if(strcmp(tree->after->name, name) == 0){
-					return &(tree->after);
+			if((*tree)->after != NULL){
+				if(strcmp((*tree)->after->name, name) == 0){
+					return &((*tree)->after);
 				} else {
-					return findin_tree(tree->after, name);
+					return findin_tree(&((*tree)->after), name);
 				}
 			} else {
 				return NULL;
 			}
 		} else {
-			return (temptree = &tree);
+			return tree;
 		}
 	}
 }
@@ -2292,7 +2295,7 @@ static OBJECTTREE **findin_tree(OBJECTTREE *tree, OBJECTNAME name)
  */
 void object_tree_delete(OBJECT *obj, OBJECTNAME name)
 {
-	OBJECTTREE **item = findin_tree(top,name);
+	OBJECTTREE **item = findin_tree(&(top),name);
 	OBJECTTREE *temp = NULL, **dtemp = NULL;
 
 	if(item != NULL && strcmp((*item)->name, name)!=0){
@@ -2338,7 +2341,7 @@ void object_tree_delete(OBJECT *obj, OBJECTNAME name)
 OBJECT *object_find_name(OBJECTNAME name){
 	OBJECTTREE **item = NULL;
 
-	item = findin_tree(top, name);
+	item = findin_tree(&(top), name);
 	
 	if(item != NULL && *item != NULL){
 		return (*item)->obj;

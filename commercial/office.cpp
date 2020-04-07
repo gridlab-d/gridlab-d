@@ -200,6 +200,7 @@ office::office(MODULE *module)
 			PT_double, "ACH", PADDR(zone.hvac.minimum_ach),
 
 			NULL)<1) throw("unable to publish properties in " __FILE__);
+    
 		memset(defaults,0,sizeof(office));
 
 		/* set default power factors */

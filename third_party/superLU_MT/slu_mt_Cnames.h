@@ -1,3 +1,13 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 /*
  * -- SuperLU MT routine (version 2.0) --
  * Lawrence Berkeley National Lab, Univ. of California Berkeley,
@@ -18,9 +28,10 @@
 #define __SUPERLU_CNAMES
 
 #define ADD_       0
-#define NOCHANGE   1
-#define UPCASE     2
-#define C_CALL     3
+#define ADD__      1
+#define NOCHANGE   2
+#define UPCASE     3
+#define C_CALL     4
 
 #ifdef UpCase
 #define F77_CALL_C UPCASE
@@ -32,6 +43,10 @@
 
 #ifdef Add_
 #define F77_CALL_C ADD_
+#endif
+
+#ifdef Add__
+#define F77_CALL_C ADD__
 #endif
 
 #ifndef F77_CALL_C
@@ -49,6 +64,63 @@
  * This is the default.
  */
 #endif
+
+#if (F77_CALL_C == ADD__)
+/*
+ * These defines set up the naming scheme required to have a fortran 77
+ * routine call a C routine for following Fortran to C interface:
+ *           FORTRAN CALL               C DECLARATION
+ *           call dgemm(...)           void dgemm__(...)
+ */
+#define sgemv_    sgemv__
+#define strsv_    strsv__
+#define sgemm_    sgemm__
+#define strsm_    strsm__
+
+#define dgemv_    dgemv__
+#define dtrsv_    dtrsv__
+#define dgemm_    dgemm__
+#define dtrsm_    dtrsm__
+
+#define cgemv_    cgemv__
+#define ctrsv_    ctrsv__
+#define cgemm_    cgemm__
+#define ctrsm_    ctrsm__
+
+#define zgemv_    zgemv__
+#define ztrsv_    ztrsv__
+#define zgemm_    zgemm__
+#define ztrsm_    ztrsm__
+
+#define sasum_    sasum__
+#define isamax_   isamax__
+#define scopy_    scopy__
+#define sscal_    sscal__
+#define sger_     sger__
+#define snrm2_    snrm2__
+#define ssymv_    ssymv__
+#define sdot_     sdot__
+#define saxpy_    saxpy__
+#define ssyr2_    ssyr2__
+#define srot_     srot__
+
+#define dasum_    dasum__
+#define idamax_   idamax__
+#define dcopy_    dcopy__
+#define dscal_    dscal__
+#define dgemv_    dgemv__
+#define dger_     dger__
+#define dnrm2_    dnrm2__
+#define dsymv_    dsymv__
+#define ddot_     ddot__
+#define daxpy_    daxpy__
+#define dsyr2_    dsyr2__
+#define drot_     drot__
+
+#define c_bridge_pdgssv_  c_bridge_pdgssv__
+
+#endif
+
 
 #if (F77_CALL_C == UPCASE)
 /*

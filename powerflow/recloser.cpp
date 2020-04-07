@@ -42,6 +42,8 @@ recloser::recloser(MODULE *mod) : switch_object(mod)
 			GL_THROW("Unable to publish recloser reliability operation function");
 		if (gl_publish_function(oclass,	"change_recloser_faults", (FUNCTIONADDR)recloser_fault_updates)==NULL)
 			GL_THROW("Unable to publish recloser fault correction function");
+		if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_switch)==NULL)
+			GL_THROW("Unable to publish recloser fault restoration function");
 
 		//Publish deltamode functions -- replicate switch
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_switch)==NULL)
@@ -57,7 +59,7 @@ recloser::recloser(MODULE *mod) : switch_object(mod)
 
 int recloser::isa(char *classname)
 {
-	return strcmp(classname,"recloser")==0 || link_object::isa(classname);
+	return strcmp(classname,"recloser")==0 || switch_object::isa(classname);
 }
 
 int recloser::create()
@@ -81,6 +83,10 @@ int recloser::create()
 int recloser::init(OBJECT *parent)
 {
 	int result = switch_object::init(parent);
+
+	//Check for deferred
+	if (result == 2)
+		return 2;	//Return the deferment - no sense doing everything else!
 
 	TIMESTAMP next_ret;
 	next_ret = gl_globalclock;
@@ -144,12 +150,10 @@ EXPORT int create_recloser(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_recloser: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(recloser);
 }
 
 /**
@@ -160,22 +164,18 @@ EXPORT int create_recloser(OBJECT **obj, OBJECT *parent)
 */
 EXPORT int init_recloser(OBJECT *obj)
 {
-	recloser *my = OBJECTDATA(obj,recloser);
 	try {
+		recloser *my = OBJECTDATA(obj,recloser);
 		return my->init(obj->parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s (recloser:%d): %s", my->get_name(), my->get_id(), msg);
-		return 0;
-	}
+	INIT_CATCHALL(recloser);
 }
 
 //Syncronizing function
 EXPORT TIMESTAMP sync_recloser(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	recloser *pObj = OBJECTDATA(obj,recloser);
 	try {
+		recloser *pObj = OBJECTDATA(obj,recloser);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -189,14 +189,10 @@ EXPORT TIMESTAMP sync_recloser(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		default:
 			throw "invalid pass request";
 		}
-	} catch (const char *error) {
-		gl_error("%s (recloser:%d): %s", pObj->get_name(), pObj->get_id(), error);
-		return TS_INVALID; 
-	} catch (...) {
-		gl_error("%s (recloser:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
-		return TS_INVALID;
 	}
+	SYNC_CATCHALL(recloser);
 }
+
 EXPORT int isa_recloser(OBJECT *obj, char *classname)
 {
 	return OBJECTDATA(obj,recloser)->isa(classname);

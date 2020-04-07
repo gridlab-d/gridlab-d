@@ -13,13 +13,13 @@
 #include "aggregate.h"
 #include "exception.h"
 #include "globals.h"
-#include "random.h"
+#include "gldrandom.h"
 #include "schedule.h"
 #include "transform.h"
 #include "enduse.h"
 
 /* this must match property_type list in object.c */
-typedef unsigned int OBJECTRANK; /**< Object rank number */
+typedef int OBJECTRANK; /**< Object rank number */
 typedef unsigned short OBJECTSIZE; /** Object data size */
 typedef unsigned int OBJECTNUM; /** Object id number */
 typedef char * OBJECTNAME; /** Object name */
@@ -194,6 +194,7 @@ typedef struct s_callbacks {
 		double (*timestamp_to_minutes)(TIMESTAMP t);
 		double (*timestamp_to_seconds)(TIMESTAMP t);
 		int (*local_datetime)(TIMESTAMP ts, DATETIME *dt);
+		int (*local_datetime_delta)(double ts, DATETIME *dt);
 		TIMESTAMP (*convert_to_timestamp)(char *value);
 		TIMESTAMP (*convert_to_timestamp_delta)(const char *value, unsigned int *microseconds, double *dbl_time_value);
 		int (*convert_from_timestamp)(TIMESTAMP ts, char *buffer, int size);

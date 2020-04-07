@@ -1,3 +1,13 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 
 /*
  * -- SuperLU routine (version 3.0) --
@@ -11,20 +21,20 @@
  * Purpose:		Sparse BLAS 2, using some dense BLAS 2 operations.
  */
 
-#include "pzsp_defs.h"
+#include "slu_mt_zdefs.h"
 
 
 /* 
  * Function prototypes 
  */
-extern void zusolve(int, int, doublecomplex*, doublecomplex*);
-extern void zlsolve(int, int, doublecomplex*, doublecomplex*);
-extern void zmatvec(int, int, int, doublecomplex*, doublecomplex*, doublecomplex*);
+extern void zusolve(int_t, int_t, doublecomplex*, doublecomplex*);
+extern void zlsolve(int_t, int_t, doublecomplex*, doublecomplex*);
+extern void zmatvec(int_t, int_t, int_t, doublecomplex*, doublecomplex*, doublecomplex*);
 
 
-int
+int_t
 sp_ztrsv(char *uplo, char *trans, char *diag, SuperMatrix *L, 
-         SuperMatrix *U, doublecomplex *x, int *info)
+         SuperMatrix *U, doublecomplex *x, int_t *info)
 {
 /*
  *   Purpose
@@ -74,7 +84,7 @@ sp_ztrsv(char *uplo, char *trans, char *diag, SuperMatrix *L,
  *             element right-hand side vector b. On exit, X is overwritten 
  *             with the solution vector x.
  *
- *   info    - (output) int*
+ *   info    - (output) int_t*
  *             If *info = -i, the i-th argument had an illegal value.
  *
  */
@@ -88,7 +98,7 @@ sp_ztrsv(char *uplo, char *trans, char *diag, SuperMatrix *L,
     doublecomplex temp;
     doublecomplex alpha = {1.0, 0.0}, beta = {1.0, 0.0};
     doublecomplex comp_zero = {0.0, 0.0};
-    register int fsupc, luptr, istart, irow, k, iptr, jcol, nsuper;
+    register int_t fsupc, luptr, istart, irow, k, iptr, jcol, nsuper;
     int          nsupr, nsupc, nrow, i;
     doublecomplex *work;
     flops_t solve_ops;
@@ -106,10 +116,10 @@ sp_ztrsv(char *uplo, char *trans, char *diag, SuperMatrix *L,
 	return 0;
     }
 
-    Lstore = L->Store;
-    Lval = Lstore->nzval;
-    Ustore = U->Store;
-    Uval = Ustore->nzval;
+    Lstore = (SCPformat*) L->Store;
+    Lval = (doublecomplex*) Lstore->nzval;
+    Ustore = (NCPformat*) U->Store;
+    Uval = (doublecomplex*) Ustore->nzval;
     nsuper = Lstore->nsuper;
     solve_ops = 0;
 
@@ -394,9 +404,9 @@ sp_ztrsv(char *uplo, char *trans, char *diag, SuperMatrix *L,
 
 
 
-int
+int_t
 sp_zgemv(char *trans, doublecomplex alpha, SuperMatrix *A, doublecomplex *x, 
-	 int incx, doublecomplex beta, doublecomplex *y, int incy)
+	 int_t incx, doublecomplex beta, doublecomplex *y, int_t incy)
 {
 /*  Purpose   
     =======   
@@ -458,9 +468,9 @@ sp_zgemv(char *trans, doublecomplex alpha, SuperMatrix *A, doublecomplex *x,
     doublecomplex   *Aval;
     int info;
     doublecomplex temp, temp1;
-    int lenx, leny, i, j, irow;
-    int iy, jx, jy, kx, ky;
-    int notran;
+    int_t lenx, leny, i, j, irow;
+    int_t iy, jx, jy, kx, ky;
+    int_t notran;
     doublecomplex comp_zero = {0.0, 0.0};
     doublecomplex comp_one = {1.0, 0.0};
 

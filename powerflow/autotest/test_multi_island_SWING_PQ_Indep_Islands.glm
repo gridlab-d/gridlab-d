@@ -1,0 +1,334 @@
+//4-node-esque system to test multiple islands/solutions approach
+//Half loads
+//Simple test for multi-islanding capability
+//Event-mode test
+//A player will eventually set the load so high one of the islands should diverge -- see if the simulation continues
+//Then another player will re-assert that grid into existence, to make sure it works again.
+
+clock {
+	timezone EST+5EDT;
+	starttime '2000-01-01 0:00:00';
+	stoptime '2000-01-01 0:01:00';
+}
+
+module assert;
+module tape;
+module reliability {
+	report_event_log false;
+}
+module powerflow {
+	line_capacitance false;
+	solver_method NR;
+	line_limits false;
+	NR_island_failure_handled true;
+}
+
+object overhead_line_conductor {
+	name olc100;
+	geometric_mean_radius 0.0244 ft;
+	resistance 0.306 Ohm/mile;
+}
+
+object overhead_line_conductor {
+	name olc101;
+	geometric_mean_radius 0.00814 ft;
+	resistance 0.592 Ohm/mile;
+}
+
+object line_spacing {
+	name ls200;
+	distance_AB 2.5 ft;
+	distance_BC 4.5 ft;
+	distance_AC 7.0 ft;
+	distance_AN 5.656854 ft; 
+	distance_BN 4.272002 ft;
+	distance_CN 5.0 ft;
+}
+
+object line_configuration {
+	name lc300;
+	conductor_A olc100;
+	conductor_B olc100;
+	conductor_C olc100;
+	conductor_N olc101;
+	spacing ls200;
+}
+
+object transformer_configuration {
+	name tc400;
+	connect_type WYE_WYE;
+	power_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 4160;
+	resistance 0.01;
+	reactance 0.06;
+}
+
+//Fault check option
+object fault_check {
+	name base_fault_check_object;
+	check_mode ONCHANGE;
+	strictly_radial false;
+	eventgen_object testgendev;
+	grid_association true;	//Flag to ensure non-monolithic islands
+	output_filename testtopo.txt;
+	full_output_file true;
+}
+
+//Manual object - needed to get fault_check to behave properly -- arbitrary item added
+object eventgen {
+	name testgendev;
+	fault_type "SW-ABC";     //Type of fault for the object to induce
+	manual_outages "switch3_3B,2000-01-01 00:00:05,2000-01-01 00:00:30";
+}
+
+object eventgen {
+	name testgendev_B;
+	fault_type "SW-ABC";     //Type of fault for the object to induce
+	manual_outages "switch2B_2C,2000-01-01 00:00:04,2000-01-01 00:00:35";
+}
+
+//Switches, that would presumably make this three systems, eventually
+object switch {
+	name switch3_3B;
+	phases ABCN;
+	from node3;
+	to node3B;
+	status CLOSED;
+}
+
+object switch {
+	name switch2B_2C;
+	phases ABCN;
+	from node2B;
+	to node2C;
+	status CLOSED;
+}
+
+//First system
+object node {
+	name node1;
+	phases "ABCN";
+	bustype SWING_PQ;
+	nominal_voltage 7199.558;
+	object recorder {
+		property "voltage_A,voltage_B,voltage_C";
+		interval 1;
+		file node1out.csv;
+	};
+	//Players for work-around to get it to solve - resets SWING voltage
+	object player {
+		property voltage_A;
+		file ../data_swing_pq_voltage_player_A.csv;
+	};
+	object player {
+		property voltage_B;
+		file ../data_swing_pq_voltage_player_B.csv;
+	};
+	object player {
+		property voltage_C;
+		file ../data_swing_pq_voltage_player_C.csv;
+	};
+}
+
+object overhead_line {
+	name ol12;
+	phases "ABCN";
+	from node1;
+	to node2;
+	length 2000;
+	configuration lc300;
+}
+
+object node {
+	name node2;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+}
+
+object transformer {
+	name tran23;
+	phases "ABCN";
+	from node2;
+	to node3;
+	configuration tc400;
+}
+
+object node {
+	name node3;
+	phases "ABCN";
+	nominal_voltage 2401.777;
+}
+
+object overhead_line {
+	name ol34;
+	phases "ABCN";
+	from node3;
+	to load4;
+	length 2500;
+	configuration lc300;
+}
+
+object load {
+	name load4;
+	phases "ABCN";
+	constant_power_A 637500.0+395087.0155j;
+	constant_power_B 900000.0+435889.8945j;
+	constant_power_C 1187500.0+390312.375j;
+	nominal_voltage 2401.777;
+}
+
+//Duplicate B
+object node {
+	name node1B;
+	phases "ABCN";
+	bustype SWING;
+	nominal_voltage 7199.558;
+	// object recorder {
+		// property "voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag";
+		// file testvoltout.csv;
+		// interval -1;
+	// };
+	//Asserts to make sure it zeros on time and recovers -- the multi-island indepdence check
+	object complex_assert {
+		target voltage_A;
+		within 0.01;
+		object player {
+			property value;
+			file "../data_multi_island_separate_fail_volt_A.csv";
+		};
+	};
+	object complex_assert {
+		target voltage_B;
+		within 0.01;
+		object player {
+			property value;
+			file "../data_multi_island_separate_fail_volt_B.csv";
+		};
+	};
+	object complex_assert {
+		target voltage_C;
+		within 0.01;
+		object player {
+			property value;
+			file "../data_multi_island_separate_fail_volt_C.csv";
+		};
+	};
+}
+
+object overhead_line {
+	name ol12B;
+	phases "ABCN";
+	from node1B;
+	to node2B;
+	length 2000;
+	configuration lc300;
+}
+
+object node {
+	name node2B;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+}
+
+object transformer {
+	name tran23B;
+	phases "ABCN";
+	from node2B;
+	to node3B;
+	configuration tc400;
+}
+
+object node {
+	name node3B;
+	phases "ABCN";
+	nominal_voltage 2401.777;
+}
+
+object overhead_line {
+	name ol34B;
+	phases "ABCN";
+	from node3B;
+	to load4B;
+	length 2500;
+	configuration lc300;
+}
+
+object load {
+	name load4B;
+	phases "ABCN";
+	constant_power_A +537500.0+395087.0155j;
+	constant_power_B +900250.0+435889.8945j;
+	constant_power_C +1037500.0+390312.375j;
+	nominal_voltage 2401.777;
+	object player {
+		property constant_power_A;
+		file "../data_multi_island_big_load_step_increase.csv";
+	};
+	// object recorder {
+		// property "constant_power_A,voltage_A";
+		// interval 1;
+		// file testout.csv;
+	// };
+}
+
+//Duplicate C -- No swing here, so it should get removed
+object node {
+	name node1C;
+	phases "ABCN";
+	//bustype SWING;
+	nominal_voltage 7199.558;
+}
+
+object overhead_line {
+	name ol12C;
+	phases "ABCN";
+	from node1C;
+	to node2C;
+	length 2000;
+	configuration lc300;
+}
+
+object node {
+	name node2C;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+}
+
+object transformer {
+	name tran23C;
+	phases "ABCN";
+	from node2C;
+	to node3C;
+	configuration tc400;
+}
+
+object node {
+	name node3C;
+	phases "ABCN";
+	nominal_voltage 2401.777;
+}
+
+object overhead_line {
+	name ol34C;
+	phases "ABCN";
+	from node3C;
+	to load4C;
+	length 2500;
+	configuration lc300;
+}
+
+object load {
+	name load4C;
+	phases "ABCN";
+	constant_power_A +437500.0+395087.0155j;
+	constant_power_B +400500.0+435889.8945j;
+	constant_power_C +802500.0+390312.375j;
+	nominal_voltage 2401.777;
+}
+
+object player {
+	parent node1B;
+	property reset_disabled_island_state;
+	file "../data_multi_island_broken_island_repair.csv";
+}

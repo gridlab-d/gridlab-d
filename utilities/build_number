@@ -20,10 +20,11 @@ new=`git log -n 1 | sed -n '1s/^commit //p' | cut -c1-8`
 mod=`git status -s | cut -c1-3 | sort -u | sed 's/ //g'`
 num=`git log --max-count=1 --pretty=format:"%ad" --date=raw | sed -ne 's/ [\+\-][0-9]\{4\}$//p'`
 rev=$((${num}/86400))
+branchname=`git rev-parse --abbrev-ref HEAD`
 if [ -z "${mod}" ]; then
-	branch="${dir}:${new}"
+	branch="$new:$branchname"
 else
-	branch="${USER}@$(hostname):${PWD/${HOME}\//}:$new"
+	branch="$new:$branchname:Mod"
 fi
 if test -f $2 ; then 
 	oldnum=`cat $2 | sed -ne 's/^#define BUILDNUM //p'`
@@ -35,7 +36,7 @@ if test -z "$oldnum" -o "$rev" -ne "$oldnum" -o -z "$oldbranch" -o "$oldbranch" 
 	echo "Updating $2: revision $rev ($branch)"
 	echo "#define BUILDNUM $rev" > $2
 	if test "${dir:0:6}" != "branch" -o ! -z "$mod" ; then 
-		echo "#define BRANCH \"$branch\"" >> $2
+		echo "#define BRANCH REV_NAME \" [$branch]\"" >> $2
 	fi
 	echo "#define REV_YEAR $(date +%Y)" >> $2
 fi

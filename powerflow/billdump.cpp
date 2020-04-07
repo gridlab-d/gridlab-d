@@ -1,5 +1,3 @@
-#include "billdump.h"
-
 // $Id: billdump.cpp 4738 2014-07-03 00:55:39Z dchassin $
 /**	Copyright (C) 2008 Battelle Memorial Institute
 
@@ -14,7 +12,6 @@
 #include <math.h>
 
 #include "billdump.h"
-#include "node.h"
 
 //////////////////////////////////////////////////////////////////////////
 // billdump CLASS FUNCTIONS
@@ -73,10 +70,10 @@ void billdump::dump(TIMESTAMP t){
 	FINDLIST *nodes = NULL;
 	OBJECT *obj = NULL;
 	FILE *outfile = NULL;
-	triplex_meter *pnode;
-	meter *qnode;
+	gld_property *node_monthly_bill;
+	gld_property *node_monthly_energy;
+	double node_prev_monthly_bill, node_prev_monthly_energy;
 	
-
 //	CLASS *nodeclass = NULL;
 //	PROPERTY *vA, *vB, *vC;
 
@@ -119,11 +116,42 @@ void billdump::dump(TIMESTAMP t){
 		fprintf(outfile,"meter_name,previous_monthly_bill,previous_monthly_energy\n");
 		while (obj=gl_find_next(nodes,obj)){
 			if(gl_object_isa(obj, "triplex_meter", "powerflow")){
-				pnode = OBJECTDATA(obj,triplex_meter);
+
+				//Map the properties of interest - bill
+				node_monthly_bill = new gld_property(obj,"previous_monthly_bill");
+
+				//Check it
+				if ((node_monthly_bill->is_valid() != true) || (node_monthly_bill->is_double() != true))
+				{
+					GL_THROW("billdump - Unable to map billing property of triplex_meter:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
+					/*  TROUBLESHOOT
+					While the billdump object attempted to map the previous_monthly_bill or previous_monthly_energy properties, an error
+					occurred.  Please try again.  If the error persists, please submit your code via the ticketing and issues system.
+					*/
+				}
+
+				//Map the other one - energy
+				node_monthly_energy = new gld_property(obj,"previous_monthly_energy");
+
+				//Check it
+				if ((node_monthly_energy->is_valid() != true) || (node_monthly_energy->is_double() != true))
+				{
+					GL_THROW("billdump - Unable to map billing property of triplex_meter:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
+					//Defined above
+				}
+
+				//Pull the values
+				node_prev_monthly_bill = node_monthly_bill->get_double();
+				node_prev_monthly_energy = node_monthly_energy->get_double();
+
 				if(obj->name == NULL){
 					sprintf(namestr, "%s:%i", obj->oclass->name, obj->id);
 				}
-				fprintf(outfile,"%s,%f,%f\n",(obj->name ? obj->name : namestr),pnode->previous_monthly_bill,pnode->previous_monthly_energy);
+				fprintf(outfile,"%s,%f,%f\n",(obj->name ? obj->name : namestr),node_prev_monthly_bill,node_prev_monthly_energy);
+
+				//Clear the properties
+				delete node_monthly_bill;
+				delete node_monthly_energy;
 			}
 		}
 	}
@@ -135,15 +163,49 @@ void billdump::dump(TIMESTAMP t){
 		fprintf(outfile,"meter_name,previous_monthly_bill,previous_monthly_energy\n");
 		while (obj=gl_find_next(nodes,obj)){
 			if(gl_object_isa(obj, "meter", "powerflow")){
-				qnode = OBJECTDATA(obj,meter);
+
+				//Map the properties of interest - bill
+				node_monthly_bill = new gld_property(obj,"previous_monthly_bill");
+
+				//Check it
+				if ((node_monthly_bill->is_valid() != true) || (node_monthly_bill->is_double() != true))
+				{
+					GL_THROW("billdump - Unable to map billing property of meter:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
+					/*  TROUBLESHOOT
+					While the billdump object attempted to map the previous_monthly_bill or previous_monthly_energy properties, an error
+					occurred.  Please try again.  If the error persists, please submit your code via the ticketing and issues system.
+					*/
+				}
+
+				//Map the other one - energy
+				node_monthly_energy = new gld_property(obj,"previous_monthly_energy");
+
+				//Check it
+				if ((node_monthly_energy->is_valid() != true) || (node_monthly_energy->is_double() != true))
+				{
+					GL_THROW("billdump - Unable to map billing property of meter:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
+					//Defined above
+				}
+
+				//Pull the values
+				node_prev_monthly_bill = node_monthly_bill->get_double();
+				node_prev_monthly_energy = node_monthly_energy->get_double();
+
 				if(obj->name == NULL){
 					sprintf(namestr, "%s:%i", obj->oclass->name, obj->id);
 				}
-				fprintf(outfile,"%s,%f,%f\n",(obj->name ? obj->name : namestr),qnode->previous_monthly_bill,qnode->previous_monthly_energy);
+				fprintf(outfile,"%s,%f,%f\n",(obj->name ? obj->name : namestr),node_prev_monthly_bill,node_prev_monthly_energy);
+
+				//Clear the properties
+				delete node_monthly_bill;
+				delete node_monthly_energy;
 			}
 		}
 	}
 	fclose(outfile);
+
+	//Free the findlist
+	gl_free(nodes);
 }
 
 TIMESTAMP billdump::commit(TIMESTAMP t){

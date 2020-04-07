@@ -1,27 +1,37 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "pcsp_defs.h"
+#include "slu_mt_cdefs.h"
 
-void clsolve(int, int, complex *, complex *);
-void cmatvec(int, int, int, complex *, complex *, complex *);
+void clsolve(int_t, int_t, complex *, complex *);
+void cmatvec(int_t, int_t, int_t, complex *, complex *, complex *);
 
 void
 pcgstrf_bmod1D(
-	       const int pnum,  /* process number */
-	       const int m,     /* number of rows in the matrix */
-	       const int w,     /* current panel width */
-	       const int jcol,  /* leading column of the current panel */
-	       const int fsupc, /* leading column of the updating supernode */ 
-	       const int krep,  /* last column of the updating supernode */ 
-	       const int nsupc, /* number of columns in the updating s-node */ 
-	       int nsupr, /* number of rows in the updating supernode */  
-	       int nrow,  /* number of rows below the diagonal block of
+	       const int_t pnum,  /* process number */
+	       const int_t m,     /* number of rows in the matrix */
+	       const int_t w,     /* current panel width */
+	       const int_t jcol,  /* leading column of the current panel */
+	       const int_t fsupc, /* leading column of the updating supernode */ 
+	       const int_t krep,  /* last column of the updating supernode */ 
+	       const int_t nsupc, /* number of columns in the updating s-node */ 
+	       int_t nsupr, /* number of rows in the updating supernode */  
+	       int_t nrow,  /* number of rows below the diagonal block of
 			     the updating supernode */ 
-	       int *repfnz,     /* in */
-	       int *panel_lsub, /* modified */
-	       int *w_lsub_end, /* modified */
-	       int *spa_marker, /* modified; size n-by-w */
+	       int_t *repfnz,     /* in */
+	       int_t *panel_lsub, /* modified */
+	       int_t *w_lsub_end, /* modified */
+	       int_t *spa_marker, /* modified; size n-by-w */
 	       complex *dense,   /* modified */
 	       complex *tempv,   /* working array - zeros on entry/exit */
 	       GlobalLU_t *Glu, /* modified */
@@ -53,19 +63,19 @@ pcgstrf_bmod1D(
 #endif
 
     complex       ukj, ukj1, ukj2;
-    int          luptr, luptr1, luptr2;
-    int          segsze;
-    register int lptr; /* start of row subscripts of the updating supernode */
-    register int i, krep_ind, kfnz, isub, irow, no_zeros;
-    register int jj;	      /* index through each column in the panel */
-    int          *repfnz_col; /* repfnz[] for a column in the panel */
+    int_t          luptr, luptr1, luptr2;
+    int            segsze, nrow32 = nrow, nsupr32 = nsupr;
+    register int_t lptr; /* start of row subscripts of the updating supernode */
+    register int_t i, krep_ind, kfnz, isub, irow, no_zeros;
+    register int_t jj;	      /* index through each column in the panel */
+    int_t          *repfnz_col; /* repfnz[] for a column in the panel */
     complex       *dense_col;  /* dense[] for a column in the panel */
     complex      *tempv1;     /* used to store matrix-vector result */
-    int          *col_marker; /* each column of the spa_marker[*,w] */
-    int          *col_lsub;   /* each column of the panel_lsub[*,w] */
-    int          *lsub, *xlsub_end;
+    int_t          *col_marker; /* each column of the spa_marker[*,w] */
+    int_t          *col_lsub;   /* each column of the panel_lsub[*,w] */
+    int_t          *lsub, *xlsub_end;
     complex       *lusup;
-    int          *xlusup;
+    int_t          *xlusup;
     register float flopcnt;
 
     complex      zero = {0.0, 0.0};
@@ -111,7 +121,6 @@ if (jcol == BADPAN && krep == BADREP) {
 	luptr = xlusup[fsupc];
 
 	/* Calculate flops: tri-solve + mat-vector */
-	flopcnt = segsze * (segsze - 1) + 2 * nrow * segsze; //sj
 	Gstat->procstat[pnum].fcops += flopcnt;
 
 	/* Case 1: Update U-segment of size 1 -- col-col update */
@@ -232,7 +241,7 @@ if (krep == BADCOL && jj == -1) {
 		  &nsupr, tempv, &incx );
 #else
 	    ctrsv_( "L", "N", "U", &segsze, &lusup[luptr], 
-		   &nsupr, tempv, &incx );
+		   &nsupr32, tempv, &incx );
 #endif
 		
 	    luptr += segsze;	/* Dense matrix-vector */
@@ -244,8 +253,8 @@ if (krep == BADCOL && jj == -1) {
 	    CGEMV( ftcs2, &nrow, &segsze, &alpha, &lusup[luptr], 
 		  &nsupr, tempv, &incx, &beta, tempv1, &incy );
 #else
-	    cgemv_( "N", &nrow, &segsze, &alpha, &lusup[luptr], 
-		   &nsupr, tempv, &incx, &beta, tempv1, &incy );
+	    cgemv_( "N", &nrow32, &segsze, &alpha, &lusup[luptr], 
+		   &nsupr32, tempv, &incx, &beta, tempv1, &incy );
 #endif /* _CRAY_PVP */
 #else
 	    clsolve ( nsupr, segsze, &lusup[luptr], tempv );

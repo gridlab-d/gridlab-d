@@ -169,7 +169,7 @@ object node {
 		};	
 		object inverter {
 			name const_pq_inv;
-			phases BS;
+			phases B;
 			inverter_type FOUR_QUADRANT;
 			use_multipoint_efficiency TRUE;
 			inverter_manufacturer XANTREX;

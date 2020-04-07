@@ -39,6 +39,10 @@ load::load(MODULE *mod) : node(mod)
 				PT_KEYWORD, "C", (enumeration)LC_COMMERCIAL,
 				PT_KEYWORD, "I", (enumeration)LC_INDUSTRIAL,
 				PT_KEYWORD, "A", (enumeration)LC_AGRICULTURAL,
+			PT_enumeration, "load_priority", PADDR(load_priority),PT_DESCRIPTION,"Load classification based on priority",
+				PT_KEYWORD, "DISCRETIONARY", (enumeration)DISCRETIONARY,
+				PT_KEYWORD, "PRIORITY", (enumeration)PRIORITY,
+				PT_KEYWORD, "CRITICAL", (enumeration)CRITICAL,
 			PT_complex, "constant_power_A[VA]", PADDR(constant_power[0]),PT_DESCRIPTION,"constant power load on phase A, specified as VA",
 			PT_complex, "constant_power_B[VA]", PADDR(constant_power[1]),PT_DESCRIPTION,"constant power load on phase B, specified as VA",
 			PT_complex, "constant_power_C[VA]", PADDR(constant_power[2]),PT_DESCRIPTION,"constant power load on phase C, specified as VA",
@@ -123,13 +127,17 @@ load::load(MODULE *mod) : node(mod)
 			PT_double, "constant_impedance_BC_reac[Ohm]", PADDR(constant_impedance_dy[1].Im()),PT_DESCRIPTION,"constant impedance delta-connected load on phase B, imaginary only, specified as Ohms",
 			PT_double, "constant_impedance_CA_reac[Ohm]", PADDR(constant_impedance_dy[2].Im()),PT_DESCRIPTION,"constant impedance delta-connected load on phase C, imaginary only, specified as Ohms",
 
-			PT_complex,	"measured_voltage_A",PADDR(measured_voltage_A),PT_DESCRIPTION,"current measured voltage on phase A",
-			PT_complex,	"measured_voltage_B",PADDR(measured_voltage_B),PT_DESCRIPTION,"current measured voltage on phase B",
-			PT_complex,	"measured_voltage_C",PADDR(measured_voltage_C),PT_DESCRIPTION,"current measured voltage on phase C",
-			PT_complex,	"measured_voltage_AB",PADDR(measured_voltage_AB),PT_DESCRIPTION,"current measured voltage on phases AB",
-			PT_complex,	"measured_voltage_BC",PADDR(measured_voltage_BC),PT_DESCRIPTION,"current measured voltage on phases BC",
-			PT_complex,	"measured_voltage_CA",PADDR(measured_voltage_CA),PT_DESCRIPTION,"current measured voltage on phases CA",
+			PT_complex,	"measured_voltage_A[V]",PADDR(measured_voltage_A),PT_DESCRIPTION,"current measured voltage on phase A",
+			PT_complex,	"measured_voltage_B[V]",PADDR(measured_voltage_B),PT_DESCRIPTION,"current measured voltage on phase B",
+			PT_complex,	"measured_voltage_C[V]",PADDR(measured_voltage_C),PT_DESCRIPTION,"current measured voltage on phase C",
+			PT_complex,	"measured_voltage_AB[V]",PADDR(measured_voltage_AB),PT_DESCRIPTION,"current measured voltage on phases AB",
+			PT_complex,	"measured_voltage_BC[V]",PADDR(measured_voltage_BC),PT_DESCRIPTION,"current measured voltage on phases BC",
+			PT_complex,	"measured_voltage_CA[V]",PADDR(measured_voltage_CA),PT_DESCRIPTION,"current measured voltage on phases CA",
 			PT_bool, "phase_loss_protection", PADDR(three_phase_protect), PT_DESCRIPTION, "Trip all three phases of the load if a fault occurs",
+			PT_complex, "measured_power_A[VA]",PADDR(measured_power[0]),PT_DESCRIPTION,"current measured power on phase A",
+			PT_complex, "measured_power_B[VA]",PADDR(measured_power[1]),PT_DESCRIPTION,"current measured power on phase B",
+			PT_complex, "measured_power_C[VA]",PADDR(measured_power[2]),PT_DESCRIPTION,"current measured power on phase C",
+			PT_complex, "measured_power[VA]",PADDR(measured_total_power),PT_DESCRIPTION,"current total power",
 
 			// This allows the user to set a base power on each phase, and specify the power as a function
 			// of ZIP and pf for each phase (similar to zipload).  This will override the constant values
@@ -156,15 +164,31 @@ load::load(MODULE *mod) : node(mod)
 			PT_double, "current_fraction_C[pu]",PADDR(current_fraction[2]),PT_DESCRIPTION,"this is the constant current fraction of base power on phase C",
 			PT_double, "impedance_fraction_C[pu]",PADDR(impedance_fraction[2]),PT_DESCRIPTION,"this is the constant impedance fraction of base power on phase C",
 
+			PT_enumeration, "inrush_integration_method_capacitance",PADDR(inrush_int_method_capacitance),PT_DESCRIPTION,"Selected integration method to use for capacitive elements of the load",
+				PT_KEYWORD,"NONE",(enumeration)IRM_NONE,
+				PT_KEYWORD,"UNDEFINED",(enumeration)IRM_UNDEFINED,
+				PT_KEYWORD,"TRAPEZOIDAL",(enumeration)IRM_TRAPEZOIDAL,
+				PT_KEYWORD,"BACKWARD_EULER",(enumeration)IRM_BACKEULER,
+
+			PT_enumeration, "inrush_integration_method_inductance",PADDR(inrush_int_method_inductance),PT_DESCRIPTION,"Selected integration method to use for inductive elements of the load",
+				PT_KEYWORD,"NONE",(enumeration)IRM_NONE,
+				PT_KEYWORD,"UNDEFINED",(enumeration)IRM_UNDEFINED,
+				PT_KEYWORD,"TRAPEZOIDAL",(enumeration)IRM_TRAPEZOIDAL,
+				PT_KEYWORD,"BACKWARD_EULER",(enumeration)IRM_BACKEULER,
+
          	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
-			//Publish deltamode functions
-			if (gl_publish_function(oclass,	"delta_linkage_node", (FUNCTIONADDR)delta_linkage)==NULL)
-				GL_THROW("Unable to publish load delta_linkage function");
-			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_load)==NULL)
-				GL_THROW("Unable to publish load deltamode function");
-			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
-				GL_THROW("Unable to publish load deltamode function");
+		//Publish deltamode functions
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_load)==NULL)
+			GL_THROW("Unable to publish load deltamode function");
+		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
+			GL_THROW("Unable to publish load swing-swapping function");
+		if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==NULL)
+			GL_THROW("Unable to publish load current injection update mapping function");
+		if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
+			GL_THROW("Unable to publish load VFD attachment function");
+		if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
+			GL_THROW("Unable to publish load island-status-reset function");
     }
 }
 
@@ -176,6 +200,7 @@ int load::isa(char *classname)
 int load::create(void)
 {
 	int res = node::create();
+	char index_x,index_y;
         
 	maximum_voltage_error = 0;
 	base_power[0] = base_power[1] = base_power[2] = 0;
@@ -189,17 +214,29 @@ int load::create(void)
 	three_phase_protect = false;	//By default, let all three phases go
 
 	//Zero all loads (get the ones missed above)
-	constant_power[0] = constant_power[1] = constant_power[2] = 0.0;
-	constant_current[0] = constant_current[1] = constant_current[2] = 0.0;
-	constant_impedance[0] = constant_impedance[1] = constant_impedance[2] = 0.0;
+	constant_power[0] = constant_power[1] = constant_power[2] = complex(0.0,0.0);
+	constant_current[0] = constant_current[1] = constant_current[2] = complex(0.0,0.0);
+	constant_impedance[0] = constant_impedance[1] = constant_impedance[2] = complex(0.0,0.0);
 
-	constant_power_dy[0] = constant_power_dy[1] = constant_power_dy[2] = 0.0;
-	constant_current_dy[0] = constant_current_dy[1] = constant_current_dy[2] = 0.0;
-	constant_impedance_dy[0] = constant_impedance_dy[1] = constant_impedance_dy[2] = 0.0;
+	constant_power_dy[0] = constant_power_dy[1] = constant_power_dy[2] = complex(0.0,0.0);
+	constant_current_dy[0] = constant_current_dy[1] = constant_current_dy[2] = complex(0.0,0.0);
+	constant_impedance_dy[0] = constant_impedance_dy[1] = constant_impedance_dy[2] = complex(0.0,0.0);
 
-	constant_power_dy[3] = constant_power_dy[4] = constant_power_dy[5] = 0.0;
-	constant_current_dy[3] = constant_current_dy[4] = constant_current_dy[5] = 0.0;
-	constant_impedance_dy[3] = constant_impedance_dy[4] = constant_impedance_dy[5] = 0.0;
+	constant_power_dy[3] = constant_power_dy[4] = constant_power_dy[5] = complex(0.0,0.0);
+	constant_current_dy[3] = constant_current_dy[4] = constant_current_dy[5] = complex(0.0,0.0);
+	constant_impedance_dy[3] = constant_impedance_dy[4] = constant_impedance_dy[5] = complex(0.0,0.0);
+
+	//Initialize the tracking variables - do it as a loop (complex mucks things up)
+	for (index_x=0; index_x<3; index_x++)
+	{
+		for (index_y=0; index_y<3; index_y++)
+		{
+			prev_load_values[index_x][index_y] = complex(0.0,0.0);
+
+			prev_load_values_dy[index_x][index_y] = complex(0.0,0.0);
+			prev_load_values_dy[index_x][index_y+3] = complex(0.0,0.0);
+		}
+	}
 
 	//Flag us as a load
 	node_type = LOAD_NODE;
@@ -209,6 +246,10 @@ int load::create(void)
 
 	//ZIP fraction tracking
 	base_load_val_was_nonzero[0] = base_load_val_was_nonzero[1] = base_load_val_was_nonzero[2] = false;
+
+	//Set defaults to see if anyone changes the integration methods
+	inrush_int_method_inductance = IRM_UNDEFINED;
+	inrush_int_method_capacitance = IRM_UNDEFINED;
 
     return res;
 }
@@ -285,6 +326,20 @@ int load::init(OBJECT *parent)
 		//See if we're going to be "in-rushy" or not
 		if (enable_inrush_calculations==true)
 		{
+			//Figure out if we need our integration method updated - inductance
+			if (inrush_int_method_inductance == IRM_UNDEFINED)
+			{
+				//Pull the main object-level one
+				inrush_int_method_inductance = inrush_integration_method;
+			}
+
+			//Figure out if we need our integration method updated - capacitance
+			if (inrush_int_method_capacitance == IRM_UNDEFINED)
+			{
+				//Pull the main object-level one
+				inrush_int_method_capacitance = inrush_integration_method;
+			}
+
 			//Allocate all of the terms - inductive and capacitive, just in case
 			//Allocate ahrl - inductive term
 			ahrlloadstore = (complex *)gl_malloc(3*sizeof(complex));
@@ -372,24 +427,6 @@ int load::init(OBJECT *parent)
 
 TIMESTAMP load::presync(TIMESTAMP t0)
 {
-	if ((solver_method!=SM_FBS) && ((SubNode==PARENT) || (SubNode==DIFF_PARENT)))	//Need to do something slightly different with NR and parented node
-	{
-		if (SubNode == PARENT)
-		{
-			shunt[0] = shunt[1] = shunt[2] = 0.0;
-			power[0] = power[1] = power[2] = 0.0;
-			current[0] = current[1] = current[2] = 0.0;
-		}
-
-		//Explicitly specified load portions
-		shunt_dy[0] = shunt_dy[1] = shunt_dy[2] = 0.0;
-		shunt_dy[3] = shunt_dy[4] = shunt_dy[5] = 0.0;
-		power_dy[0] = power_dy[1] = power_dy[2] = 0.0;
-		power_dy[3] = power_dy[4] = power_dy[5] = 0.0;
-		current_dy[0] = current_dy[1] = current_dy[2] = 0.0;
-		current_dy[3] = current_dy[4] = current_dy[5] = 0.0;
-	}
-
 	//Must be at the bottom, or the new values will be calculated after the fact
 	TIMESTAMP result = node::presync(t0);
 	
@@ -401,6 +438,40 @@ TIMESTAMP load::sync(TIMESTAMP t0)
 	//bool all_three_phases;
 	bool fault_mode;
 	TIMESTAMP tresults_val, result;
+	OBJECT *obj = OBJECTHDR(this);
+
+	//Check for straggler nodes - fix so segfaults don't occur
+	if ((prev_NTime==0) && (solver_method == SM_NR))
+	{
+		//See if we've been initialized yet - links typically do this, but single buses get missed
+		if (NR_node_reference == -1)
+		{
+			//Call the populate routine
+			NR_populate();
+		}
+		else if (NR_node_reference == -99)	//Child check us, since that can break things too
+		{
+			//See if our parent was initialized
+			if (*NR_subnode_reference == -1)
+			{
+				//Try to initialize it, for giggles
+				node *Temp_Node = OBJECTDATA(SubNodeParent,node);
+
+				//Call the initialization
+				Temp_Node->NR_populate();
+
+				//Check it again
+				if (*NR_subnode_reference == -1)
+				{
+					GL_THROW("load:%d - %s - Uninitialized parent is causing odd issues - fix your model!",obj->id,(obj->name?obj->name:"Unnamed"));
+					/*  TROUBLESHOOT
+					A childed load object is having issues mapping to its parent node - this typically happens in very odd cases of islanded/orphaned
+					topologies that only contain nodes (no links).  Adjust your GLM to work around this issue.
+					*/
+				}
+			}
+		}
+	}
 
 	//Initialize time
 	tresults_val = TS_NEVER;
@@ -451,6 +522,11 @@ TIMESTAMP load::postsync(TIMESTAMP t0)
 	measured_voltage_BC = measured_voltage_B-measured_voltage_C;
 	measured_voltage_CA = measured_voltage_C-measured_voltage_A;
 
+	measured_power[0] = voltageA*(~current_inj[0]);
+	measured_power[1] = voltageB*(~current_inj[1]);
+	measured_power[2] = voltageC*(~current_inj[2]);
+	measured_total_power = measured_power[0] + measured_power[1] + measured_power[2];
+
 	return t1;
 }
 
@@ -472,7 +548,48 @@ void load::load_update_fxn(bool fault_mode)
 	complex working_impedance_value, working_data_value, working_admittance_value;
 	double workingvalue;
 	OBJECT *obj;
+	double baseangles[3];
 	node *temp_par_node = NULL;
+
+	//Remove prior contributions - do this first so everything else can just accumulate to the trackers and accumalators below
+	for (index_var=0; index_var<3; index_var++)
+	{
+		//Remove last values - stops massive accumulations
+		shunt[index_var] -= prev_load_values[0][index_var];
+		current[index_var] -= prev_load_values[1][index_var];
+		power[index_var] -= prev_load_values[2][index_var];
+
+		//Remove last values - explicit connections
+		shunt_dy[index_var] -= prev_load_values_dy[0][index_var];
+		current_dy[index_var] -= prev_load_values_dy[1][index_var];
+		power_dy[index_var] -= prev_load_values_dy[2][index_var];
+
+		shunt_dy[index_var+3] -= prev_load_values_dy[0][index_var+3];
+		current_dy[index_var+3] -= prev_load_values_dy[1][index_var+3];
+		power_dy[index_var+3] -= prev_load_values_dy[2][index_var+3];
+
+		//Zero the trackers too
+		prev_load_values[0][index_var] = complex(0.0,0.0);
+		prev_load_values[1][index_var] = complex(0.0,0.0);
+		prev_load_values[2][index_var] = complex(0.0,0.0);
+
+		//Zero the explicit trackers
+		prev_load_values_dy[0][index_var] = complex(0.0,0.0);
+		prev_load_values_dy[1][index_var] = complex(0.0,0.0);
+		prev_load_values_dy[2][index_var] = complex(0.0,0.0);
+		prev_load_values_dy[0][index_var+3] = complex(0.0,0.0);
+		prev_load_values_dy[1][index_var+3] = complex(0.0,0.0);
+		prev_load_values_dy[2][index_var+3] = complex(0.0,0.0);
+	}
+
+	//Set base angles for ZIP calculations below
+	//Note this assumption HAS to be done this way -- while the ZIP calculation below
+	//correctly rotates for deltamode, no other constant current values do, which means this one
+	//"correct" implementation breaks all the other assumptions.  Therefore, it has to be "stupidified"
+	//so it works with the auto-rotation and impedance-conversion code below
+	baseangles[0] = 0.0;
+	baseangles[1] = -2.0*PI/3.0;
+	baseangles[2] = 2.0*PI/3.0;
 
 	for (int index=0; index<3; index++)
 	{
@@ -547,7 +664,10 @@ void load::load_update_fxn(bool fault_mode)
 				
 				// Calculate then shift the constant current to use the posted voltage as the reference angle
 				temp_curr = ~complex(real_power,imag_power) / complex(nominal_voltage,0);
-				temp_angle = temp_curr.Arg() + voltage[index].Arg();
+
+				//This was "technically correct", but it will break everything else in the system - correcting
+				//temp_angle = temp_curr.Arg() + voltage[index].Arg();
+				temp_angle = temp_curr.Arg() + baseangles[index];
 				temp_curr.SetPolar(temp_curr.Mag(),temp_angle);
 
 				constant_current[index] = temp_curr;
@@ -664,100 +784,68 @@ void load::load_update_fxn(bool fault_mode)
 
 	if (fault_mode == false)	//Not reliability mode - normal mode
 	{
-		if ((solver_method!=SM_FBS) && ((SubNode==PARENT) || (SubNode==DIFF_PARENT)))	//Need to do something slightly different with GS/NR and parented load
-		{													//associated with change due to player methods
-			if (SubNode == PARENT)	//Normal parent gets one routine
-			{
-				if (!(intermed_impedance[0].IsZero()))
-					shunt[0] += complex(1.0)/intermed_impedance[0];
-
-				if (!(intermed_impedance[1].IsZero()))
-					shunt[1] += complex(1.0)/intermed_impedance[1];
-				
-				if (!(intermed_impedance[2].IsZero()))
-					shunt[2] += complex(1.0)/intermed_impedance[2];
-
-				power[0] += constant_power[0];
-				power[1] += constant_power[1];	
-				power[2] += constant_power[2];
-
-				current[0] += constant_current[0];
-				current[1] += constant_current[1];
-				current[2] += constant_current[2];
-			}
-			else //DIFF_PARENT
-			{
-				if(intermed_impedance[0].IsZero())
-					shunt[0] = 0.0;
-				else
-					shunt[0] = complex(1.0)/intermed_impedance[0];
-
-				if(intermed_impedance[1].IsZero())
-					shunt[1] = 0.0;
-				else
-					shunt[1] = complex(1.0)/intermed_impedance[1];
-				
-				if(intermed_impedance[2].IsZero())
-					shunt[2] = 0.0;
-				else
-					shunt[2] = complex(1.0)/intermed_impedance[2];
-				
-				power[0] = constant_power[0];
-				power[1] = constant_power[1];	
-				power[2] = constant_power[2];
-				current[0] = constant_current[0];
-				current[1] = constant_current[1];
-				current[2] = constant_current[2];
-			}
-
-			//Do the same for explicit delta/wye connections -- both parent types get this
-			for (index_var=0; index_var<6; index_var++)
-			{
-				if (!(intermed_impedance_dy[index_var].IsZero()))
-					shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
-
-				power_dy[index_var] += constant_power_dy[index_var];
-
-				current_dy[index_var] += constant_current_dy[index_var];
-			}
-		}
-		else
+		if(!intermed_impedance[0].IsZero())
 		{
-			if(intermed_impedance[0].IsZero())
-				shunt[0] = 0.0;
-			else
-				shunt[0] = complex(1.0)/intermed_impedance[0];
+			//Accumulator
+			shunt[0] += complex(1.0)/intermed_impedance[0];
 
-			if(intermed_impedance[1].IsZero())
-				shunt[1] = 0.0;
-			else
-				shunt[1] = complex(1.0)/intermed_impedance[1];
-			
-			if(intermed_impedance[2].IsZero())
-				shunt[2] = 0.0;
-			else
-				shunt[2] = complex(1.0)/intermed_impedance[2];
-			
-			power[0] = constant_power[0];
-			power[1] = constant_power[1];	
-			power[2] = constant_power[2];
+			//Tracker
+			prev_load_values[0][0] += complex(1.0,0.0)/intermed_impedance[0];
+		}
 
-			current[0] = constant_current[0];
-			current[1] = constant_current[1];
-			current[2] = constant_current[2];
+		if(!intermed_impedance[1].IsZero())
+		{
+			//Accumulator
+			shunt[1] += complex(1.0)/intermed_impedance[1];
 
-			//Do the same for explicit delta/wye connections - handle the same way (draconian overwrites!)
-			for (index_var=0; index_var<6; index_var++)
+			//Tracker
+			prev_load_values[0][1] += complex(1.0,0.0)/intermed_impedance[1];
+		}
+		
+		if(!intermed_impedance[2].IsZero())
+		{
+			//Accumulator
+			shunt[2] += complex(1.0)/intermed_impedance[2];
+
+			//Tracker
+			prev_load_values[0][2] += complex(1.0,0.0)/intermed_impedance[2];
+		}
+		
+		//Power and current accumulators
+		power[0] += constant_power[0];
+		power[1] += constant_power[1];	
+		power[2] += constant_power[2];
+
+		current[0] += constant_current[0];
+		current[1] += constant_current[1];
+		current[2] += constant_current[2];
+
+		//Power and current trackers
+		prev_load_values[1][0] += constant_current[0];
+		prev_load_values[1][1] += constant_current[1];
+		prev_load_values[1][2] += constant_current[2];
+		prev_load_values[2][0] += constant_power[0];
+		prev_load_values[2][1] += constant_power[1];
+		prev_load_values[2][2] += constant_power[2];
+
+		//Do the same for explicit delta/wye connections
+		for (index_var=0; index_var<6; index_var++)
+		{
+			if (!intermed_impedance_dy[index_var].IsZero())
 			{
-				if (intermed_impedance_dy[index_var].IsZero())
-					shunt_dy[index_var] = 0.0;
-				else
-					shunt_dy[index_var] = complex(1.0)/intermed_impedance_dy[index_var];
+				//Accumulator
+				shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
 
-				power_dy[index_var] = constant_power_dy[index_var];
-
-				current_dy[index_var] = constant_current_dy[index_var];
+				//Tracker
+				prev_load_values_dy[0][index_var] += complex(1.0,0.0)/intermed_impedance_dy[index_var];
 			}
+
+			power_dy[index_var] += constant_power_dy[index_var];
+			current_dy[index_var] += constant_current_dy[index_var];
+
+			//Update power/current trackers
+			prev_load_values_dy[1][index_var] += constant_current_dy[index_var];
+			prev_load_values_dy[2][index_var] += constant_power_dy[index_var];
 		}
 	}//End normal mode
 	else	//Reliability mode
@@ -1017,13 +1105,31 @@ void load::load_update_fxn(bool fault_mode)
 
 							//Add the values in
 							if (!(intermed_impedance[0].IsZero()))
+							{
+								//Accumulator
 								shunt[0] += complex(1.0)/intermed_impedance[0];
 
+								//Tracker
+								prev_load_values[0][0] += complex(1.0,0.0)/intermed_impedance[0];
+							}
+
 							if (!(intermed_impedance[1].IsZero()))
+							{
+								//Accumulator
 								shunt[1] += complex(1.0)/intermed_impedance[1];
+
+								//Tracker
+								prev_load_values[0][1] += complex(1.0,0.0)/intermed_impedance[1];
+							}
 							
 							if (!(intermed_impedance[2].IsZero()))
+							{
+								//Accumulator
 								shunt[2] += complex(1.0)/intermed_impedance[2];
+
+								//Tracker
+								prev_load_values[0][2] += complex(1.0,0.0)/intermed_impedance[2];
+							}
 
 							//Power and current remain zero
 
@@ -1184,21 +1290,46 @@ void load::load_update_fxn(bool fault_mode)
 							//Do the updated portion
 							for (index_var=0; index_var<6; index_var++)
 							{
-								if (!(intermed_impedance_dy[index_var].IsZero()))
+								if (!intermed_impedance_dy[index_var].IsZero())
+								{
+									//Accumulator
 									shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
+
+									//Tracker
+									prev_load_values_dy[0][index_var] += complex(1.0,0.0)/intermed_impedance_dy[index_var];
+								}
 							}
 						}//End below thresh - convert
 						else	//Must be above, be "normal"
 						{
 							if (!(intermed_impedance[0].IsZero()))
+							{
+								//Accumulator
 								shunt[0] += complex(1.0)/intermed_impedance[0];
 
+								//Tracker
+								prev_load_values[0][0] += complex(1.0,0.0)/intermed_impedance[0];
+							}
+
 							if (!(intermed_impedance[1].IsZero()))
+							{
+								//Accumulator
 								shunt[1] += complex(1.0)/intermed_impedance[1];
+
+								//Tracker
+								prev_load_values[0][1] += complex(1.0,0.0)/intermed_impedance[1];
+							}
 							
 							if (!(intermed_impedance[2].IsZero()))
+							{
+								//Accumulator
 								shunt[2] += complex(1.0)/intermed_impedance[2];
+
+								//Tracker
+								prev_load_values[0][2] += complex(1.0,0.0)/intermed_impedance[2];
+							}
 							
+							//Current and power accumulators
 							power[0] += constant_power[0];
 							power[1] += constant_power[1];	
 							power[2] += constant_power[2];
@@ -1207,30 +1338,66 @@ void load::load_update_fxn(bool fault_mode)
 							current[1] += constant_current[1];
 							current[2] += constant_current[2];
 
+							//Power and current trackers
+							prev_load_values[1][0] += constant_current[0];
+							prev_load_values[1][1] += constant_current[1];
+							prev_load_values[1][2] += constant_current[2];
+							prev_load_values[2][0] += constant_power[0];
+							prev_load_values[2][1] += constant_power[1];
+							prev_load_values[2][2] += constant_power[2];
+
 							//Combination portion
 							//Do the same for explicit delta/wye connections
 							for (index_var=0; index_var<6; index_var++)
 							{
-								if (!(intermed_impedance_dy[index_var].IsZero()))
+								if (!intermed_impedance_dy[index_var].IsZero())
+								{
+									//Accumulator
 									shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
 
-								power_dy[index_var] += constant_power_dy[index_var];
+									//Tracker
+									prev_load_values_dy[0][index_var] += complex(1.0,0.0)/intermed_impedance_dy[index_var];
+								}
 
+								power_dy[index_var] += constant_power_dy[index_var];
 								current_dy[index_var] += constant_current_dy[index_var];
+
+								//Update power/current trackers
+								prev_load_values_dy[1][index_var] += constant_current_dy[index_var];
+								prev_load_values_dy[2][index_var] += constant_power_dy[index_var];
 							}
 						}//End "perform normally"
 					}//end in-rush
 					else	//False, so go normal
 					{
 						if (!(intermed_impedance[0].IsZero()))
+						{
+							//Accumulator
 							shunt[0] += complex(1.0)/intermed_impedance[0];
 
+							//Tracker
+							prev_load_values[0][0] += complex(1.0,0.0)/intermed_impedance[0];
+						}
+
 						if (!(intermed_impedance[1].IsZero()))
+						{
+							//Accumulator
 							shunt[1] += complex(1.0)/intermed_impedance[1];
+
+							//Tracker
+							prev_load_values[0][1] += complex(1.0,0.0)/intermed_impedance[1];
+						}
 						
 						if (!(intermed_impedance[2].IsZero()))
+						{
+							//Accumulator
 							shunt[2] += complex(1.0)/intermed_impedance[2];
+
+							//Tracker
+							prev_load_values[0][2] += complex(1.0,0.0)/intermed_impedance[2];
+						}
 						
+						//Current and power accumulators
 						power[0] += constant_power[0];
 						power[1] += constant_power[1];	
 						power[2] += constant_power[2];
@@ -1239,16 +1406,33 @@ void load::load_update_fxn(bool fault_mode)
 						current[1] += constant_current[1];
 						current[2] += constant_current[2];
 
+						//Power and current trackers
+						prev_load_values[1][0] += constant_current[0];
+						prev_load_values[1][1] += constant_current[1];
+						prev_load_values[1][2] += constant_current[2];
+						prev_load_values[2][0] += constant_power[0];
+						prev_load_values[2][1] += constant_power[1];
+						prev_load_values[2][2] += constant_power[2];
+
 						//Combination Portion
 						//Do the same for explicit delta/wye connections
 						for (index_var=0; index_var<6; index_var++)
 						{
-							if (!(intermed_impedance_dy[index_var].IsZero()))
+							if (!intermed_impedance_dy[index_var].IsZero())
+							{
+								//Accumulator
 								shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
 
-							power_dy[index_var] += constant_power_dy[index_var];
+								//Tracker
+								prev_load_values_dy[0][index_var] += complex(1.0,0.0)/intermed_impedance_dy[index_var];
+							}
 
+							power_dy[index_var] += constant_power_dy[index_var];
 							current_dy[index_var] += constant_current_dy[index_var];
+
+							//Update power/current trackers
+							prev_load_values_dy[1][index_var] += constant_current_dy[index_var];
+							prev_load_values_dy[2][index_var] += constant_power_dy[index_var];
 						}
 					}//End non-inrush
 				}//End normal parent
@@ -1478,19 +1662,31 @@ void load::load_update_fxn(bool fault_mode)
 
 							//Add the values in
 							if (!(intermed_impedance[0].IsZero()))
-								shunt[0] = complex(1.0)/intermed_impedance[0];
-							else
-								shunt[0] = complex(0.0,0.0);	//Zero, just in case
+							{
+								//Accumulator
+								shunt[0] += complex(1.0)/intermed_impedance[0];
+
+								//Tracker
+								prev_load_values[0][0] += complex(1.0,0.0)/intermed_impedance[0];
+							}
 
 							if (!(intermed_impedance[1].IsZero()))
-								shunt[1] = complex(1.0)/intermed_impedance[1];
-							else
-								shunt[1] = complex(0.0,0.0);	//Zero, just in case
+							{
+								//Accumulator
+								shunt[1] += complex(1.0)/intermed_impedance[1];
+
+								//Tracker
+								prev_load_values[0][1] += complex(1.0,0.0)/intermed_impedance[1];
+							}
 							
 							if (!(intermed_impedance[2].IsZero()))
-								shunt[2] = complex(1.0)/intermed_impedance[2];
-							else
-								shunt[2] = complex(0.0,0.0);	//Zero, just in case
+							{
+								//Accumulator
+								shunt[2] += complex(1.0)/intermed_impedance[2];
+
+								//Tracker
+								prev_load_values[0][2] += complex(1.0,0.0)/intermed_impedance[2];
+							}
 
 							//Power and current remain zero
 							
@@ -1651,114 +1847,184 @@ void load::load_update_fxn(bool fault_mode)
 							//Do the updated portion
 							for (index_var=0; index_var<6; index_var++)
 							{
-								if (!(intermed_impedance_dy[index_var].IsZero()))
+								if (!intermed_impedance_dy[index_var].IsZero())
+								{
+									//Accumulator
 									shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
+
+									//Tracker
+									prev_load_values_dy[0][index_var] += complex(1.0,0.0)/intermed_impedance_dy[index_var];
+								}
 							}
 						}//End below thresh - convert
 						else	//Must be above, be "normal"
 						{
-							if(intermed_impedance[0].IsZero())
-								shunt[0] = 0.0;
-							else
-								shunt[0] = complex(1.0)/intermed_impedance[0];
+							//Apply the values
+							if (!(intermed_impedance[0].IsZero()))
+							{
+								//Accumulator
+								shunt[0] += complex(1.0)/intermed_impedance[0];
 
-							if(intermed_impedance[1].IsZero())
-								shunt[1] = 0.0;
-							else
-								shunt[1] = complex(1.0)/intermed_impedance[1];
+								//Tracker
+								prev_load_values[0][0] += complex(1.0,0.0)/intermed_impedance[0];
+							}
+
+							if (!(intermed_impedance[1].IsZero()))
+							{
+								//Accumulator
+								shunt[1] += complex(1.0)/intermed_impedance[1];
+
+								//Tracker
+								prev_load_values[0][1] += complex(1.0,0.0)/intermed_impedance[1];
+							}
 							
-							if(intermed_impedance[2].IsZero())
-								shunt[2] = 0.0;
-							else
-								shunt[2] = complex(1.0)/intermed_impedance[2];
+							if (!(intermed_impedance[2].IsZero()))
+							{
+								//Accumulator
+								shunt[2] += complex(1.0)/intermed_impedance[2];
+
+								//Tracker
+								prev_load_values[0][2] += complex(1.0,0.0)/intermed_impedance[2];
+							}
 							
-							power[0] = constant_power[0];
-							power[1] = constant_power[1];	
-							power[2] = constant_power[2];
-							current[0] = constant_current[0];
-							current[1] = constant_current[1];
-							current[2] = constant_current[2];
+							//Current and power accumulators
+							power[0] += constant_power[0];
+							power[1] += constant_power[1];	
+							power[2] += constant_power[2];
+
+							current[0] += constant_current[0];
+							current[1] += constant_current[1];
+							current[2] += constant_current[2];
+
+							//Power and current trackers
+							prev_load_values[1][0] += constant_current[0];
+							prev_load_values[1][1] += constant_current[1];
+							prev_load_values[1][2] += constant_current[2];
+							prev_load_values[2][0] += constant_power[0];
+							prev_load_values[2][1] += constant_power[1];
+							prev_load_values[2][2] += constant_power[2];
 
 							//Combination Portion
 							//Do the same for explicit delta/wye connections
 							for (index_var=0; index_var<6; index_var++)
 							{
-								if (!(intermed_impedance_dy[index_var].IsZero()))
+								if (!intermed_impedance_dy[index_var].IsZero())
+								{
+									//Accumulator
 									shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
 
-								power_dy[index_var] += constant_power_dy[index_var];
+									//Tracker
+									prev_load_values_dy[0][index_var] += complex(1.0,0.0)/intermed_impedance_dy[index_var];
+								}
 
+								power_dy[index_var] += constant_power_dy[index_var];
 								current_dy[index_var] += constant_current_dy[index_var];
+
+								//Update power/current trackers
+								prev_load_values_dy[1][index_var] += constant_current_dy[index_var];
+								prev_load_values_dy[2][index_var] += constant_power_dy[index_var];
 							}
 						}//End normal operations
 					}//End in-rush enabled
 					else	//No in-rush, normal operations
 					{
-						if(intermed_impedance[0].IsZero())
-							shunt[0] = 0.0;
-						else
-							shunt[0] = complex(1.0)/intermed_impedance[0];
+						//Apply the updates
+						if (!(intermed_impedance[0].IsZero()))
+						{
+							//Accumulator
+							shunt[0] += complex(1.0)/intermed_impedance[0];
 
-						if(intermed_impedance[1].IsZero())
-							shunt[1] = 0.0;
-						else
-							shunt[1] = complex(1.0)/intermed_impedance[1];
+							//Tracker
+							prev_load_values[0][0] += complex(1.0,0.0)/intermed_impedance[0];
+						}
+
+						if (!(intermed_impedance[1].IsZero()))
+						{
+							//Accumulator
+							shunt[1] += complex(1.0)/intermed_impedance[1];
+
+							//Tracker
+							prev_load_values[0][1] += complex(1.0,0.0)/intermed_impedance[1];
+						}
 						
-						if(intermed_impedance[2].IsZero())
-							shunt[2] = 0.0;
-						else
-							shunt[2] = complex(1.0)/intermed_impedance[2];
+						if (!(intermed_impedance[2].IsZero()))
+						{
+							//Accumulator
+							shunt[2] += complex(1.0)/intermed_impedance[2];
+
+							//Tracker
+							prev_load_values[0][2] += complex(1.0,0.0)/intermed_impedance[2];
+						}
 						
-						power[0] = constant_power[0];
-						power[1] = constant_power[1];	
-						power[2] = constant_power[2];
-						current[0] = constant_current[0];
-						current[1] = constant_current[1];
-						current[2] = constant_current[2];
+						//Current and power accumulators
+						power[0] += constant_power[0];
+						power[1] += constant_power[1];	
+						power[2] += constant_power[2];
+
+						current[0] += constant_current[0];
+						current[1] += constant_current[1];
+						current[2] += constant_current[2];
+
+						//Power and current trackers
+						prev_load_values[1][0] += constant_current[0];
+						prev_load_values[1][1] += constant_current[1];
+						prev_load_values[1][2] += constant_current[2];
+						prev_load_values[2][0] += constant_power[0];
+						prev_load_values[2][1] += constant_power[1];
+						prev_load_values[2][2] += constant_power[2];
 
 						//Combination Portion
 						//Do the same for explicit delta/wye connections
 						for (index_var=0; index_var<6; index_var++)
 						{
-							if (!(intermed_impedance_dy[index_var].IsZero()))
+							if (!intermed_impedance_dy[index_var].IsZero())
+							{
+								//Accumulator
 								shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
 
-							power_dy[index_var] += constant_power_dy[index_var];
+								//Tracker
+								prev_load_values_dy[0][index_var] += complex(1.0,0.0)/intermed_impedance_dy[index_var];
+							}
 
+							power_dy[index_var] += constant_power_dy[index_var];
 							current_dy[index_var] += constant_current_dy[index_var];
+
+							//Update power/current trackers
+							prev_load_values_dy[1][index_var] += constant_current_dy[index_var];
+							prev_load_values_dy[2][index_var] += constant_power_dy[index_var];
 						}
 					}//End normal operations
 				}//End differently connected parent
 			}//Some form of NR parent
 			else	//Basically, not a NR parent
 			{
-				//See if we're a child or not
-				if (NR_node_reference == -99)	//Child or other special object
-				{
-					node_reference_value = *NR_subnode_reference;	//Grab out parent
-
-					//Check it, for giggles/thoroughness
-					if (node_reference_value < 0)
-					{
-						//Get header information
-						obj = OBJECTHDR(this);
-
-						GL_THROW("node:%s -- %s tried to perform an impedance conversion with an uninitialzed child node!",obj->id, obj->name?obj->name:"unnamed");
-						/*  TROUBLESHOOT
-						While attempting to convert a load to a constant impedance value for in-rush modeling, a problem occurred mapping a parent node.
-						Please try again.  If the error persists, please submit your code and a bug report via the ticketing system.
-						*/
-					}
-					//Defaulted else -- it's theoretically a good value
-				}//end child or other
-				else //Normal node
-				{
-					node_reference_value = NR_node_reference;
-				}
-
 				//See if in-rush is enabled - only makes sense in reliability situations
 				if (enable_inrush_calculations == true)
 				{
+					//See if we're a child or not
+					if (NR_node_reference == -99)	//Child or other special object
+					{
+						node_reference_value = *NR_subnode_reference;	//Grab out parent
+
+						//Check it, for giggles/thoroughness
+						if (node_reference_value < 0)
+						{
+							//Get header information
+							obj = OBJECTHDR(this);
+
+							GL_THROW("node:%d -- %s tried to perform an impedance conversion with an uninitialzed child node!",obj->id, obj->name?obj->name:"unnamed");
+							/*  TROUBLESHOOT
+							While attempting to convert a load to a constant impedance value for in-rush modeling, a problem occurred mapping a parent node.
+							Please try again.  If the error persists, please submit your code and a bug report via the ticketing system.
+							*/
+						}
+						//Defaulted else -- it's theoretically a good value
+					}//end child or other
+					else //Normal node
+					{
+						node_reference_value = NR_node_reference;
+					}
+
 					//Reset variable
 					volt_below_thresh = false;
 
@@ -1822,19 +2088,7 @@ void load::load_update_fxn(bool fault_mode)
 					//See if tripped
 					if (volt_below_thresh == true)
 					{
-						//Zero local power and current accumulators - unparented loads don't do this by default (expect to overwrite)
-						power[0] = 0.0;
-						power[1] = 0.0;
-						power[2] = 0.0;
-						current[0] = 0.0;
-						current[1] = 0.0;
-						current[2] = 0.0;
-
-						//Explicitly specified load portions
-						power_dy[0] = power_dy[1] = power_dy[2] = 0.0;
-						power_dy[3] = power_dy[4] = power_dy[5] = 0.0;
-						current_dy[0] = current_dy[1] = current_dy[2] = 0.0;
-						current_dy[3] = current_dy[4] = current_dy[5] = 0.0;
+						//Current and power would be zeroed here - basically, we'll ignore them later
 
 						//Convert all loads to an impedance-equivalent
 						if (has_phase(PHASE_D))	//Delta-connected
@@ -1994,19 +2248,31 @@ void load::load_update_fxn(bool fault_mode)
 
 						//Add the values in
 						if (!(intermed_impedance[0].IsZero()))
-							shunt[0] = complex(1.0)/intermed_impedance[0];
-						else
-							shunt[0] = complex(0.0,0.0);	//Zero, just in case
+						{
+							//Accumulator
+							shunt[0] += complex(1.0)/intermed_impedance[0];
+
+							//Tracker
+							prev_load_values[0][0] += complex(1.0,0.0)/intermed_impedance[0];
+						}
 
 						if (!(intermed_impedance[1].IsZero()))
-							shunt[1] = complex(1.0)/intermed_impedance[1];
-						else
-							shunt[1] = complex(0.0,0.0);	//Zero, just in case
+						{
+							//Accumulator
+							shunt[1] += complex(1.0)/intermed_impedance[1];
+
+							//Tracker
+							prev_load_values[0][1] += complex(1.0,0.0)/intermed_impedance[1];
+						}
 						
 						if (!(intermed_impedance[2].IsZero()))
-							shunt[2] = complex(1.0)/intermed_impedance[2];
-						else
-							shunt[2] = complex(0.0,0.0);	//Zero, just in case
+						{
+							//Accumulator
+							shunt[2] += complex(1.0)/intermed_impedance[2];
+
+							//Tracker
+							prev_load_values[0][2] += complex(1.0,0.0)/intermed_impedance[2];
+						}
 
 						//Power and current remain zero
 						
@@ -2167,110 +2433,154 @@ void load::load_update_fxn(bool fault_mode)
 						//Do the updated portion
 						for (index_var=0; index_var<6; index_var++)
 						{
-							if (!(intermed_impedance_dy[index_var].IsZero()))
-								shunt_dy[index_var] = complex(1.0)/intermed_impedance_dy[index_var];
+							if (!intermed_impedance_dy[index_var].IsZero())
+							{
+								//Accumulator
+								shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
+
+								//Tracker
+								prev_load_values_dy[0][index_var] += complex(1.0,0.0)/intermed_impedance_dy[index_var];
+							}
 						}
 					}//End below thresh - convert
 					else	//Must be above, be "normal"
 					{
-						if(intermed_impedance[0].IsZero())
-							shunt[0] = 0.0;
-						else
-							shunt[0] = complex(1)/intermed_impedance[0];
+						//Add the values in
+						if (!(intermed_impedance[0].IsZero()))
+						{
+							//Accumulator
+							shunt[0] += complex(1.0)/intermed_impedance[0];
 
-						if(intermed_impedance[1].IsZero())
-							shunt[1] = 0.0;
-						else
-							shunt[1] = complex(1)/intermed_impedance[1];
+							//Tracker
+							prev_load_values[0][0] += complex(1.0,0.0)/intermed_impedance[0];
+						}
+
+						if (!(intermed_impedance[1].IsZero()))
+						{
+							//Accumulator
+							shunt[1] += complex(1.0)/intermed_impedance[1];
+
+							//Tracker
+							prev_load_values[0][1] += complex(1.0,0.0)/intermed_impedance[1];
+						}
 						
-						if(intermed_impedance[2].IsZero())
-							shunt[2] = 0.0;
-						else
-							shunt[2] = complex(1)/intermed_impedance[2];
+						if (!(intermed_impedance[2].IsZero()))
+						{
+							//Accumulator
+							shunt[2] += complex(1.0)/intermed_impedance[2];
+
+							//Tracker
+							prev_load_values[0][2] += complex(1.0,0.0)/intermed_impedance[2];
+						}
 						
-						power[0] = constant_power[0];
-						power[1] = constant_power[1];	
-						power[2] = constant_power[2];
+						//Current and power accumulators
+						power[0] += constant_power[0];
+						power[1] += constant_power[1];	
+						power[2] += constant_power[2];
 
-						current[0] = constant_current[0];
-						current[1] = constant_current[1];
-						current[2] = constant_current[2];
+						current[0] += constant_current[0];
+						current[1] += constant_current[1];
+						current[2] += constant_current[2];
 
-						//Do the same for explicit delta/wye connections - handle the same way (draconian overwrites!)
+						//Power and current trackers
+						prev_load_values[1][0] += constant_current[0];
+						prev_load_values[1][1] += constant_current[1];
+						prev_load_values[1][2] += constant_current[2];
+						prev_load_values[2][0] += constant_power[0];
+						prev_load_values[2][1] += constant_power[1];
+						prev_load_values[2][2] += constant_power[2];
+
+						//Do the same for explicit delta/wye connections
 						for (index_var=0; index_var<6; index_var++)
 						{
-							if (intermed_impedance_dy[index_var].IsZero())
-								shunt_dy[index_var] = 0.0;
-							else
-								shunt_dy[index_var] = complex(1.0)/intermed_impedance_dy[index_var];
+							if (!intermed_impedance_dy[index_var].IsZero())
+							{
+								//Accumulator
+								shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
 
-							power_dy[index_var] = constant_power_dy[index_var];
+								//Tracker
+								prev_load_values_dy[0][index_var] += complex(1.0,0.0)/intermed_impedance_dy[index_var];
+							}
 
-							current_dy[index_var] = constant_current_dy[index_var];
+							power_dy[index_var] += constant_power_dy[index_var];
+							current_dy[index_var] += constant_current_dy[index_var];
+
+							//Update power/current trackers
+							prev_load_values_dy[1][index_var] += constant_current_dy[index_var];
+							prev_load_values_dy[2][index_var] += constant_power_dy[index_var];
 						}
 					}//End above voltage threshold
 				}//End in-rush enabled
 				else	//Not in-rush, just normal operations
 				{
-					if(intermed_impedance[0].IsZero())
-						shunt[0] = 0.0;
-					else
-						shunt[0] = complex(1)/intermed_impedance[0];
+					//Add the values in
+					if (!(intermed_impedance[0].IsZero()))
+					{
+						//Accumulator
+						shunt[0] += complex(1.0)/intermed_impedance[0];
 
-					if(intermed_impedance[1].IsZero())
-						shunt[1] = 0.0;
-					else
-						shunt[1] = complex(1)/intermed_impedance[1];
+						//Tracker
+						prev_load_values[0][0] += complex(1.0,0.0)/intermed_impedance[0];
+					}
+
+					if (!(intermed_impedance[1].IsZero()))
+					{
+						//Accumulator
+						shunt[1] += complex(1.0)/intermed_impedance[1];
+
+						//Tracker
+						prev_load_values[0][1] += complex(1.0,0.0)/intermed_impedance[1];
+					}
 					
-					if(intermed_impedance[2].IsZero())
-						shunt[2] = 0.0;
-					else
-						shunt[2] = complex(1)/intermed_impedance[2];
+					if (!(intermed_impedance[2].IsZero()))
+					{
+						//Accumulator
+						shunt[2] += complex(1.0)/intermed_impedance[2];
+
+						//Tracker
+						prev_load_values[0][2] += complex(1.0,0.0)/intermed_impedance[2];
+					}
 					
-					power[0] = constant_power[0];
-					power[1] = constant_power[1];	
-					power[2] = constant_power[2];
+					//Current and power accumulators
+					power[0] += constant_power[0];
+					power[1] += constant_power[1];	
+					power[2] += constant_power[2];
 
-					current[0] = constant_current[0];
-					current[1] = constant_current[1];
-					current[2] = constant_current[2];
+					current[0] += constant_current[0];
+					current[1] += constant_current[1];
+					current[2] += constant_current[2];
 
-					//Do the same for explicit delta/wye connections - handle the same way (draconian overwrites!)
+					//Power and current trackers
+					prev_load_values[1][0] += constant_current[0];
+					prev_load_values[1][1] += constant_current[1];
+					prev_load_values[1][2] += constant_current[2];
+					prev_load_values[2][0] += constant_power[0];
+					prev_load_values[2][1] += constant_power[1];
+					prev_load_values[2][2] += constant_power[2];
+
+					//Do the same for explicit delta/wye connections
 					for (index_var=0; index_var<6; index_var++)
 					{
-						if (intermed_impedance_dy[index_var].IsZero())
-							shunt_dy[index_var] = 0.0;
-						else
-							shunt_dy[index_var] = complex(1.0)/intermed_impedance_dy[index_var];
+						if (!intermed_impedance_dy[index_var].IsZero())
+						{
+							//Accumulator
+							shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
 
-						power_dy[index_var] = constant_power_dy[index_var];
+							//Tracker
+							prev_load_values_dy[0][index_var] += complex(1.0,0.0)/intermed_impedance_dy[index_var];
+						}
 
-						current_dy[index_var] = constant_current_dy[index_var];
+						power_dy[index_var] += constant_power_dy[index_var];
+						current_dy[index_var] += constant_current_dy[index_var];
+
+						//Update power/current trackers
+						prev_load_values_dy[1][index_var] += constant_current_dy[index_var];
+						prev_load_values_dy[2][index_var] += constant_power_dy[index_var];
 					}
 				}//End normal operations
 			}//End not a parented NR
 		}//Handle all three
-		else	//Zero all three - may cause issues with P/C loads, but why parent a load to a load??
-		{
-			power[0] = 0.0;
-			power[1] = 0.0;
-			power[2] = 0.0;
-			shunt[0] = 0.0;
-			shunt[1] = 0.0;
-			shunt[2] = 0.0;
-			current[0] = 0.0;
-			current[1] = 0.0;
-			current[2] = 0.0;
-
-			//Zero out all of the explicit delta/wye connections as well
-			//Do the same for explicit delta/wye connections - handle the same way (draconian overwrites!)
-			for (index_var=0; index_var<6; index_var++)
-			{
-				shunt_dy[index_var] = complex(0.0,0.0);
-				power_dy[index_var] = complex(0.0,0.0);
-				current_dy[index_var] = complex(0.0,0.0);
-			}
-		}//End zero
+		//Default else - everything would stay zero
 	}//End reliability mode
 
 	//One time initialization (for now) code for in-rush -- checks for allocations
@@ -2338,7 +2648,6 @@ void load::load_update_fxn(bool fault_mode)
 	//In-rush update information - incorporate the latest "impedance" values
 	//Put at bottom to ensure it gets the "converted impedance final result"
 	//Deltamode catch and check
-	//if ((deltatimestep_running > 0) && (enable_inrush_calculations == true))
 	if (enable_inrush_calculations == true)
 	{
 		if (deltatimestep_running > 0)	//In deltamode
@@ -2386,7 +2695,8 @@ void load::load_update_fxn(bool fault_mode)
 					if (transf_from_stdy_state == true)
 					{
 						//Check and see what type of load this is -- Phase A
-						if (shunt[index_var].Im()>0.0)	//Capacitve
+						//Use intermediate variable to only get our load parts (not any underlying contributions)
+						if (prev_load_values[0][index_var].Im()>0.0)	//Capacitve
 						{
 							//Zero all inductive terms, just because
 							LoadHistTermL[index_var] = complex(0.0,0.0);
@@ -2400,26 +2710,50 @@ void load::load_update_fxn(bool fault_mode)
 							LoadHistTermC[index_var+3] = LoadHistTermC[index_var];
 
 							//Code from below -- transition in needs an update first
-							//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)*2/dt
-							workingvalue = shunt[index_var].Im() / (PI * current_frequency * deltatimestep_running);
+							if (inrush_int_method_capacitance == IRM_TRAPEZOIDAL)
+							{
+								//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)*2/dt
+								workingvalue = prev_load_values[0][index_var].Im() / (PI * current_frequency * deltatimestep_running);
 
-							//Create chrcstore while we're in here
-							chrcloadstore[index_var] = 2.0 * workingvalue;
+								//Create chrcstore while we're in here
+								chrcloadstore[index_var] = 2.0 * workingvalue;
+
+								//Calculate the updated history terms - hrcf = chrc*vfromprev/2.0
+								//Do a parent check
+								if ((SubNode != CHILD) && (SubNode != DIFF_CHILD))
+								{
+									LoadHistTermC[index_var] = NR_busdata[NR_node_reference].V[index_var] * chrcloadstore[index_var] / complex(2.0,0.0);
+								}
+								else	//Childed - get parent values
+								{
+									LoadHistTermC[index_var] = NR_busdata[*NR_subnode_reference].V[index_var] * chrcloadstore[index_var] / complex(2.0,0.0);
+								}
+							}
+							else if (inrush_int_method_capacitance == IRM_BACKEULER)
+							{
+								//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)/dt
+								workingvalue = prev_load_values[0][index_var].Im() / (2.0 * PI * current_frequency * deltatimestep_running);
+
+								//Create chrcstore while we're in here
+								chrcloadstore[index_var] = workingvalue;
+
+								//Calculate the updated history terms - hrcf = chrc*vfromprev
+								//Do a parent check
+								if ((SubNode != CHILD) && (SubNode != DIFF_CHILD))
+								{
+									LoadHistTermC[index_var] = NR_busdata[NR_node_reference].V[index_var] * chrcloadstore[index_var];
+								}
+								else	//Childed - get parent values
+								{
+									LoadHistTermC[index_var] = NR_busdata[*NR_subnode_reference].V[index_var] * chrcloadstore[index_var];
+								}
+							}
+							//future else
 
 							//End of copy from below
 
-							//Calculate the updated history terms - hrcf = chrc*vfromprev/2.0
-							//Do a parent check
-							if ((SubNode != CHILD) && (SubNode != DIFF_CHILD))
-							{
-								LoadHistTermC[index_var] = NR_busdata[NR_node_reference].V[index_var] * chrcloadstore[index_var] / complex(2.0,0.0);
-							}
-							else	//Childed - get parent values
-							{
-								LoadHistTermC[index_var] = NR_busdata[*NR_subnode_reference].V[index_var] * chrcloadstore[index_var] / complex(2.0,0.0);
-							}
 						}
-						else if (shunt[index_var].Im()<0.0) //Inductive
+						else if (prev_load_values[0][index_var].Im()<0.0) //Inductive - again use tracking variable
 						{
 							//Zero all capacitive terms, just because
 							LoadHistTermC[index_var] = complex(0.0,0.0);
@@ -2433,13 +2767,25 @@ void load::load_update_fxn(bool fault_mode)
 
 							//Copied from below - update
 							//Form the equivalent impedance value
-							working_impedance_value = complex(1.0,0.0) / shunt[index_var];
+							working_impedance_value = complex(1.0,0.0) / prev_load_values[0][index_var];
 
-							//Extract the imaginary part (should be only part) and de-phasor it - Yimped/(2*pi*f)*2/dt
-							workingvalue = working_impedance_value.Im() / (PI * current_frequency * deltatimestep_running);
+							if (inrush_int_method_inductance == IRM_TRAPEZOIDAL)
+							{
+								//Extract the imaginary part (should be only part) and de-phasor it - Yimped/(2*pi*f)*2/dt
+								workingvalue = working_impedance_value.Im() / (PI * current_frequency * deltatimestep_running);
 
-							//Put into the other working matrix (zh)
-							working_data_value = working_impedance_value - complex(workingvalue,0.0);
+								//Put into the other working matrix (zh)
+								working_data_value = working_impedance_value - complex(workingvalue,0.0);
+							}
+							else if (inrush_int_method_inductance == IRM_BACKEULER)
+							{
+								//Extract the imaginary part (should be only part) and de-phasor it - Yimped/(2*pi*f)/dt
+								workingvalue = working_impedance_value.Im() / (2.0 * PI * current_frequency * deltatimestep_running);
+
+								//Put into the other working matrix (zh)
+								working_data_value = complex(-1.0 * workingvalue,0.0);
+							}
+							//Default else -- should never get here
 
 							//Put back into "real" impedance value to make Y (Znew)
 							working_impedance_value += complex(workingvalue,0.0);
@@ -2457,8 +2803,17 @@ void load::load_update_fxn(bool fault_mode)
 							//Form the bhrl term - Y*Zh = bhrl
 							bhrlloadstore[index_var] = working_admittance_value * working_data_value;
 
-							//Compute the ahrl term - Y(Zh*Y - I)
-							ahrlloadstore[index_var] = working_admittance_value*(working_data_value * working_admittance_value - complex(1.0,0.0));
+							if (inrush_int_method_inductance == IRM_TRAPEZOIDAL)
+							{
+								//Compute the ahrl term - Y(Zh*Y - I)
+								ahrlloadstore[index_var] = working_admittance_value*(working_data_value * working_admittance_value - complex(1.0,0.0));
+							}
+							else if (inrush_int_method_inductance == IRM_BACKEULER)
+							{
+								//Compute the ahrl term - Y*Zh*Y
+								ahrlloadstore[index_var] = working_admittance_value * working_data_value * working_admittance_value;
+							}
+							//else should never happen
 
 							//End copy of above
 
@@ -2495,7 +2850,7 @@ void load::load_update_fxn(bool fault_mode)
 					else	//Normal update
 					{
 						//Check and see what type of load this is -- Phase A
-						if (shunt[index_var].Im()>0.0)	//Capacitve
+						if (prev_load_values[0][index_var].Im()>0.0)	//Capacitve - use intermediate variable
 						{
 							//Zero all inductive terms, just because
 							LoadHistTermL[index_var] = complex(0.0,0.0);
@@ -2504,20 +2859,38 @@ void load::load_update_fxn(bool fault_mode)
 							//Update capacitive history terms
 							LoadHistTermC[index_var+3] = LoadHistTermC[index_var];
 
-							//Calculate the updated history terms - hrcf = chrc*vfromprev - hrcfprev
-							//Do a parent check
-							if ((SubNode != CHILD) && (SubNode != DIFF_CHILD))
+							//Figure out which method we're using
+							if (inrush_int_method_capacitance == IRM_TRAPEZOIDAL)
 							{
-								LoadHistTermC[index_var] = NR_busdata[NR_node_reference].V[index_var] * chrcloadstore[index_var] -
-														   LoadHistTermC[index_var+3];
+								//Calculate the updated history terms - hrcf = chrc*vfromprev - hrcfprev
+								//Do a parent check
+								if ((SubNode != CHILD) && (SubNode != DIFF_CHILD))
+								{
+									LoadHistTermC[index_var] = NR_busdata[NR_node_reference].V[index_var] * chrcloadstore[index_var] -
+															LoadHistTermC[index_var+3];
+								}
+								else	//Childed - get parent values
+								{
+									LoadHistTermC[index_var] = NR_busdata[*NR_subnode_reference].V[index_var] * chrcloadstore[index_var] -
+															LoadHistTermC[index_var+3];
+								}
 							}
-							else	//Childed - get parent values
+							else if (inrush_int_method_capacitance == IRM_BACKEULER)
 							{
-								LoadHistTermC[index_var] = NR_busdata[*NR_subnode_reference].V[index_var] * chrcloadstore[index_var] -
-														   LoadHistTermC[index_var+3];
+								//Calculate the updated history terms - hrcf = chrc*vfromprev
+								//Do a parent check
+								if ((SubNode != CHILD) && (SubNode != DIFF_CHILD))
+								{
+									LoadHistTermC[index_var] = NR_busdata[NR_node_reference].V[index_var] * chrcloadstore[index_var];
+								}
+								else	//Childed - get parent values
+								{
+									LoadHistTermC[index_var] = NR_busdata[*NR_subnode_reference].V[index_var] * chrcloadstore[index_var];
+								}
 							}
+							//Default else -- some other method
 						}
-						else if (shunt[index_var].Im()<0.0) //Inductive
+						else if (prev_load_values[0][index_var].Im()<0.0) //Inductive - use intermediate variable
 						{
 							//Zero all capacitive terms, just because
 							LoadHistTermC[index_var] = complex(0.0,0.0);
@@ -2631,34 +3004,61 @@ void load::load_update_fxn(bool fault_mode)
 		for (index_var=0; index_var<3; index_var++)
 		{
 			//Figure out what type of load it is
-			if (shunt[index_var].Im()>0.0)	//Capacitve
+			if (prev_load_values[0][index_var].Im()>0.0)	//Capacitve - use intermediate variable
 			{
 				//Zero the two inductive terms
 				ahrlloadstore[index_var] = complex(0.0,0.0);
 				bhrlloadstore[index_var] = complex(0.0,0.0);
 
-				//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)*2/dt
-				workingvalue = shunt[index_var].Im() / (PI * current_frequency * deltatimestep_running);
+				if (inrush_int_method_capacitance == IRM_TRAPEZOIDAL)
+				{
+					//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)*2/dt
+					workingvalue = prev_load_values[0][index_var].Im() / (PI * current_frequency * deltatimestep_running);
+
+					//Create chrcstore while we're in here
+					chrcloadstore[index_var] = 2.0 * workingvalue;
+				}
+				else if (inrush_int_method_capacitance == IRM_BACKEULER)
+				{
+					//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)/dt
+					workingvalue = prev_load_values[0][index_var].Im() / (2.0 * PI * current_frequency * deltatimestep_running);
+
+					//Create chrcstore while we're in here
+					chrcloadstore[index_var] = workingvalue;
+				}
+				//Future else
 
 				//Put into the "shunt" admittance value
 				shunt[index_var] += complex(workingvalue,0.0);
 
-				//Create chrcstore while we're in here
-				chrcloadstore[index_var] = 2.0 * workingvalue;
+				//Update the tracker
+				prev_load_values[0][index_var] += complex(workingvalue,0.0);
 			}//End capacitve term update
-			else if (shunt[index_var].Im()<0.0) //Inductive
+			else if (prev_load_values[0][index_var].Im()<0.0) //Inductive
 			{
 				//Zero the capacitive term
 				chrcloadstore[index_var] = complex(0.0,0.0);
 
 				//Form the equivalent impedance value
-				working_impedance_value = complex(1.0,0.0) / shunt[index_var];
+				working_impedance_value = complex(1.0,0.0) / prev_load_values[0][index_var];
 
-				//Extract the imaginary part (should be only part) and de-phasor it - Yimped/(2*pi*f)*2/dt
-				workingvalue = working_impedance_value.Im() / (PI * current_frequency * deltatimestep_running);
+				if (inrush_int_method_inductance == IRM_TRAPEZOIDAL)
+				{
+					//Extract the imaginary part (should be only part) and de-phasor it - Yimped/(2*pi*f)*2/dt
+					workingvalue = working_impedance_value.Im() / (PI * current_frequency * deltatimestep_running);
 
-				//Put into the other working matrix (zh)
-				working_data_value = working_impedance_value - complex(workingvalue,0.0);
+					//Put into the other working matrix (zh)
+					working_data_value = working_impedance_value - complex(workingvalue,0.0);
+				}
+				else if (inrush_int_method_inductance == IRM_BACKEULER)
+				{
+					//Extract the imaginary part (should be only part) and de-phasor it - Yimped/(2*pi*f)/dt
+					workingvalue = working_impedance_value.Im() / (2.0 * PI * current_frequency * deltatimestep_running);
+
+					//Put into the other working matrix (zh)
+					working_data_value = complex(-1.0 * workingvalue,0.0);
+				}
+				//future ones
 
 				//Put back into "real" impedance value to make Y (Znew)
 				working_impedance_value += complex(workingvalue,0.0);
@@ -2676,11 +3076,23 @@ void load::load_update_fxn(bool fault_mode)
 				//Form the bhrl term - Y*Zh = bhrl
 				bhrlloadstore[index_var] = working_admittance_value * working_data_value;
 
-				//Compute the ahrl term - Y(Zh*Y - I)
-				ahrlloadstore[index_var] = working_admittance_value*(working_data_value * working_admittance_value - complex(1.0,0.0));
+				if (inrush_int_method_inductance == IRM_TRAPEZOIDAL)
+				{
+					//Compute the ahrl term - Y(Zh*Y - I)
+					ahrlloadstore[index_var] = working_admittance_value*(working_data_value * working_admittance_value - complex(1.0,0.0));
+				}
+				else if (inrush_int_method_inductance == IRM_BACKEULER)
+				{
+					//Compute the ahrl term - Y*Zh*Y
+					ahrlloadstore[index_var] = working_admittance_value * working_data_value * working_admittance_value;
+				}
+				//Future else
 
-				//Make sure we store the "new Y" so things get updated right
-				shunt[index_var] = working_admittance_value;
+				//Make sure we store the "new Y" so things get updated right - remove partial contribution as well
+				shunt[index_var] += working_admittance_value - prev_load_values[0][index_var];
+
+				//Update the tracker - replacement value for above (was an equal before, so it overrides)
+				prev_load_values[0][index_var] = working_admittance_value;
 			}//end inductive term update
 			else	//Must be zero -- purely resistive, or something
 			{
@@ -2706,8 +3118,11 @@ void load::load_update_fxn(bool fault_mode)
 			//Update tracker
 			prev_shunt[index_var] = shunt[index_var];
 
-			//Zero it
-			shunt[index_var] = complex(0.0,0.0);
+			//Remove our "tracked" contribution
+			shunt[index_var] -= prev_load_values[0][index_var];
+			
+			//Zero the tracker
+			prev_load_values[0][index_var] = complex(0.0,0.0);
 		}//End phase looping for in-rush terms
 
 		//TODO:
@@ -2724,36 +3139,32 @@ void load::load_delete_update_fxn(void)
 {
 	int index_var;
 
-	if ((solver_method!=SM_FBS) && ((SubNode==PARENT) || (SubNode==DIFF_PARENT)))	//Need to do something slightly different with GS/NR and parented load
-	{													//associated with change due to player methods
-		if (SubNode != PARENT)	//Normal parent gets one routine
-		{
-			//Loop and clear
-			for (index_var=0; index_var<3; index_var++)
-			{
-				shunt[index_var] = complex(0.0,0.0);
-				power[index_var] = complex(0.0,0.0);
-				current[index_var] = complex(0.0,0.0);
-			}
-		}
-	}
-	else
+	//Loop and clear
+	for (index_var=0; index_var<3; index_var++)
 	{
-		//Loop and clear
-		for (index_var=0; index_var<3; index_var++)
-		{
-			shunt[index_var] = complex(0.0,0.0);
-			power[index_var] = complex(0.0,0.0);
-			current[index_var] = complex(0.0,0.0);
-		}
+		//Remove contributions
+		shunt[index_var] -= prev_load_values[0][index_var];
+		power[index_var] -= prev_load_values[1][index_var];
+		current[index_var] -= prev_load_values[2][index_var];
 
-		//Now do again for the explicit connections
-		for (index_var=0; index_var<6; index_var++)
-		{
-			shunt_dy[index_var] = complex(0.0,0.0);
-			power_dy[index_var] = complex(0.0,0.0);
-			current_dy[index_var] = complex(0.0,0.0);
-		}
+		//Clear the trackers
+		prev_load_values[0][index_var] = complex(0.0,0.0);
+		prev_load_values[1][index_var] = complex(0.0,0.0);
+		prev_load_values[2][index_var] = complex(0.0,0.0);
+	}
+
+	//Now do again for the explicit connections
+	for (index_var=0; index_var<6; index_var++)
+	{
+		//Remove contributions
+		shunt_dy[index_var] -= prev_load_values_dy[0][index_var];
+		power_dy[index_var] -= prev_load_values_dy[1][index_var];
+		current_dy[index_var] -= prev_load_values_dy[2][index_var];
+
+		//Clear the trackers
+		prev_load_values_dy[0][index_var] = complex(0.0,0.0);
+		prev_load_values_dy[1][index_var] = complex(0.0,0.0);
+		prev_load_values_dy[2][index_var] = complex(0.0,0.0);
 	}
 }
 
@@ -2853,7 +3264,6 @@ int load::notify(int update_mode, PROPERTY *prop, char *value)
 //Module-level call
 SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
 {
-	unsigned char pass_mod;
 	OBJECT *hdr = OBJECTHDR(this);
 	bool fault_mode;
 	double deltat, deltatimedbl;
@@ -2862,22 +3272,29 @@ SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned 
 	//Create delta_t variable
 	deltat = (double)dt/(double)DT_SECOND;
 
-	//Initialization items
-	if ((delta_time==0) && (iteration_count_val==0) && (interupdate_pos == false))	//First run of new delta call
-	{
-		//Initialize dynamics
-		init_freq_dynamics(&curr_state);
-	}//End first pass and timestep of deltamode (initial condition stuff)
-
 	//Update time tracking variable - mostly for GFA functionality calls
-	if (iteration_count_val == 0)	//Only update timestamp tracker on first iteration
+	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
 	{
 		//Get decimal timestamp value
 		deltatimedbl = (double)delta_time/(double)DT_SECOND; 
 
 		//Update tracking variable
 		prev_time_dbl = (double)gl_globalclock + deltatimedbl;
+
+		//Update frequency calculation values (if needed)
+		if (fmeas_type != FM_NONE)
+		{
+			//Copy the tracker value
+			memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+		}
 	}
+
+	//Initialization items
+	if ((delta_time==0) && (iteration_count_val==0) && (interupdate_pos == false) && (fmeas_type != FM_NONE))	//First run of new delta call
+	{
+		//Initialize dynamics
+		init_freq_dynamics();
+	}//End first pass and timestep of deltamode (initial condition stuff)
 	
 	//Perform the GFA update, if enabled
 	if ((GFA_enable == true) && (iteration_count_val == 0) && (interupdate_pos == false))	//Always just do on the first pass
@@ -2886,19 +3303,8 @@ SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned 
 		GFA_Update_time = perform_GFA_checks(deltat);
 	}
 
-	//See what we're on, for tracking
-	pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
-
 	if (interupdate_pos == false)	//Before powerflow call
 	{
-		//Load-specific presync items
-		if (SubNode==PARENT)	//Need to do something slightly different with GS and parented node
-		{
-			shunt[0] = shunt[1] = shunt[2] = 0.0;
-			power[0] = power[1] = power[2] = 0.0;
-			current[0] = current[1] = current[2] = 0.0;
-		}
-
 		//Call presync-equivalent items
 		NR_node_presync_fxn(0);
 
@@ -2933,7 +3339,8 @@ SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned 
 		NR_node_sync_fxn(hdr);
 
 		return SM_DELTA;	//Just return something other than SM_ERROR for this call
-	}
+
+	}//End Before NR solver (or inclusive)
 	else	//After the call
 	{
 		//Perform postsync-like updates on the values
@@ -2942,7 +3349,7 @@ SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned 
 		//Frequency measurement stuff
 		if (fmeas_type != FM_NONE)
 		{
-			return_status_val = calc_freq_dynamics(deltat,pass_mod);
+			return_status_val = calc_freq_dynamics(deltat);
 
 			//Check it
 			if (return_status_val == FAILED)
@@ -2959,6 +3366,11 @@ SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned 
 		measured_voltage_AB = measured_voltage_A-measured_voltage_B;
 		measured_voltage_BC = measured_voltage_B-measured_voltage_C;
 		measured_voltage_CA = measured_voltage_C-measured_voltage_A;
+
+		measured_power[0] = voltageA*(~current_inj[0]);
+		measured_power[1] = voltageB*(~current_inj[1]);
+		measured_power[2] = voltageC*(~current_inj[2]);
+		measured_total_power = measured_power[0] + measured_power[1] + measured_power[2];
 
 		//See if GFA functionality is required, since it may require iterations or "continance"
 		if (GFA_enable == true)
@@ -2978,36 +3390,7 @@ SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned 
 		{
 			return SM_EVENT;
 		}
-
-
-		//No control required at this time - powerflow defers to the whims of other modules
-		//Code below implements predictor/corrector-type logic, even though it effectively does nothing
-		//return SM_EVENT;
-
-		////Do deltamode-related logic
-		//if (bustype==SWING)	//We're the SWING bus, control our destiny (which is really controlled elsewhere)
-		//{
-		//	//See what we're on
-		//	pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
-
-		//	//Check pass
-		//	if (pass_mod==0)	//Predictor pass
-		//	{
-		//		return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
-		//	}
-		//	else	//Corrector pass
-		//	{
-		//		//As of right now, we're always ready to leave
-		//		//Other objects will dictate if we stay (powerflow is indifferent)
-		//		return SM_EVENT;
-		//	}//End corrector pass
-		//}//End SWING bus handling
-		//else	//Normal bus
-		//{
-		//	return SM_EVENT;	//Normal nodes want event mode all the time here - SWING bus will
-		//						//control the reiteration process for pred/corr steps
-		//}
-	}
+	}//End "After NR solver" branch
 }
 
 
@@ -3153,6 +3536,5 @@ int load::kmldata(int (*stream)(const char*,...))
 
 	return 0;
 }
-
 
 /**@}*/

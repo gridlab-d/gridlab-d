@@ -30,6 +30,7 @@ public:
 	double measured_reactive_max_power_in_interval;	///< maximum real power over the last interval
 	double measured_real_min_power_in_interval;	///< minimum real power over the last interval
 	double measured_reactive_min_power_in_interval;	///< minimum real power over the last interval
+	double measured_min_max_avg_timestep; // Period of timestep for min/max/average calculations
 
 	complex measured_current[3];	///< measured current
 	double measured_real_energy;	///< metered real energy consumption
@@ -74,7 +75,8 @@ public:
 		BM_UNIFORM,
 		BM_TIERED,
 		BM_HOURLY,
-		BM_TIERED_RTP
+		BM_TIERED_RTP,
+		BM_TIERED_TOU
 	} BILLMODE;
 	//BILLMODE bill_mode;
 	enumeration bill_mode;
@@ -86,7 +88,6 @@ public:
 	double price_base, last_price_base;
 	double tier_price[3], tier_energy[3], last_tier_price[3];  //Allows for additional tiers of pricing over the standard price in TIERED
 
-	double process_bill(TIMESTAMP t1);
 	int check_prices();
 
 	void BOTH_meter_sync_fxn(void);
@@ -94,6 +95,7 @@ public:
 	SIMULATIONMODE inter_deltaupdate_meter(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
 private:
+	double process_bill(TIMESTAMP t1);
 	double previous_energy_total;  // Used to track what the meter reading was the previous month
     double last_measured_real_energy;
     double last_measured_reactive_energy;
@@ -115,6 +117,7 @@ private:
 
     int voltage_avg_count;
     TIMESTAMP last_delta_timestamp;
+    TIMESTAMP last_stat_timestamp;
     TIMESTAMP start_timestamp;
     TIMESTAMP interval_dt;
 

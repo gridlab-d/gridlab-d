@@ -23,7 +23,7 @@
 
 // variation on core/platform.h!
 #ifndef int64
-#ifdef WIN32
+#ifdef _WIN32
 #define int64 __int64
 #endif
 #endif

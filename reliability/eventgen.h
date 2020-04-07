@@ -9,9 +9,11 @@
 #define _eventgen_H
 
 #include <stdarg.h>
+#include <string.h>
+#include <vector>
+#include <json/json.h>
 #include "gridlabd.h"
 #include "reliability.h"
-#include "metrics.h"
 
 EXPORT SIMULATIONMODE interupdate_eventgen(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 
@@ -61,8 +63,21 @@ typedef struct s_relevantstruct {
 	struct s_relevantstruct *next;	//Link to next item
 } RELEVANTSTRUCT;	//"off-key" event structure
 
+class external_event {
+public:
+	std::string name;
+	char * type = NULL;
+	OBJECT *fault_object = NULL;
+	OBJECT *effected_safety_device = NULL;
+	bool enable_event;
+	bool event_enabled;
+	bool disable_event;
+	int implemented_fault;
+};
+
 class eventgen : public gld_object {
 private:
+	std::vector<external_event *> external_events;
 	double curr_fail_dist_params[2];	/**< Current parameters of failure_dist - used to track changes */
 	double curr_rest_dist_params[2];	/**< Current parameters of restore_dist - used to track changes */
 	enumeration curr_fail_dist;			/**< Current failure distribution type - used to track changes */
@@ -70,12 +85,11 @@ private:
 	TIMESTAMP max_outage_length;		/**< Maximum length an outage may be */
 	TIMESTAMP next_event_time;			/**< Time next event (outage or restoration) will occur */
 	double next_event_time_dbl;			/**< Time next event will occur - double representation */
-	metrics *metrics_obj;				/**< Link to metrics object we need to report "restoration" statii to */
 	OBJECT *metrics_obj_hdr;			/**< Link to metrics object - left generalized for locking functions */
 	int curr_time_interrupted;			/**< Number of customers interrupted at current time - used to determine "differential" counts */
 	int curr_time_interrupted_sec;		/**< Number of customers secondarily interrupted at current time - used to determine "differential" counts */
 	bool diff_count_needed;				/**< Flag to indicate a differential count needs to be obtained */
-	bool *secondary_interruption_cnt;	/**< Flag in metrics object to indicate secondary interruption calculations need to occur */
+	gld_property *secondary_interruption_cnt;	/**< Flag in metrics object to indicate secondary interruption calculations need to occur */
 	bool fault_implement_mode;			/**< Flag to indicate if in random fault mode, or user directed fault mode */
 	char *time_token(char *start_token, TIMESTAMP *time_val, unsigned int *micro_time_val, double *dbl_time_val);	//Function to parse a comma-separated list to get the next timestamp value (or the last timestamp)
 	char *obj_token(char *start_token, OBJECT **obj_val);	//Function to parse a comma-separated list to get the next object (or the last object)
@@ -86,6 +100,12 @@ private:
 	
 	void do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type);	/**< Function to execute a status change on objects driven by event_gen */
 	void regen_events(TIMESTAMP t1_ts, double t1_dbl);				/**< Function to update time to next event on the system */
+
+	FUNCTIONADDR metrics_object_event_ended;		/**< Function pointer for the metrics object and "event_ended" function */
+	FUNCTIONADDR metrics_object_event_ended_sec;	/**< Function pointer for the metrics object and "event_ended_sec" function */
+	FUNCTIONADDR metrics_get_interrupted_count;		/**< Function pointer for the metrics object and "get_interrupted" function */
+	FUNCTIONADDR metrics_get_interrupted_count_sec;	/**< Function pointer for the metrics object and "get_interrupted_secondary" function */
+	void parse_external_fault_events(char *event_char);
 
 public:
 	RELEVANTSTRUCT Unhandled_Events;	/**< unhandled event linked list */
@@ -103,15 +123,17 @@ public:
 	char1024 manual_fault_list;	/**< List for manual faulting */
 	char256 controlled_switch; /**< Name of a switch to manually fault/un-fault */
 	int switch_state; /**< Current state (1=closed, 0=open) for the controlled switch */
+	char1024 external_fault_event;
 	void gen_random_time(enumeration rand_dist_type, double param_1, double param_2, TIMESTAMP *event_time, unsigned int *event_nanoseconds, double *event_double);	//Random time function - easier to call this way
 	int add_unhandled_event(OBJECT *obj_to_fault, char *event_type, TIMESTAMP fail_time, TIMESTAMP rest_length, int implemented_fault, bool fault_state);	/**< Function to add unhandled event into the structure */
-	double *get_double(OBJECT *obj, char *name);	/**< Gets address of double - mainly for mean_repair_time */
 	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
+	bool use_external_faults;
 public:
 	/* required implementations */
 	eventgen(MODULE *module);
 	int create(void);
 	int init(OBJECT *parent);
+	int precommit(TIMESTAMP t1);
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 public:

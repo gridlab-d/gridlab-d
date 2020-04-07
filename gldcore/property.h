@@ -70,7 +70,7 @@ public:
 	inline char *find(const char c) { return strchr(buffer,c); };
 	inline char *find(const char *s) { return strstr(buffer,s); };
 	inline char *findrev(const char c) { return strrchr(buffer,c); };
-	inline char *token(char *from, const char *delim, char **context) { this->strtok_s(from,delim,context); };
+	inline char *token(char *from, const char *delim, char **context) { return this->strtok_s(from,delim,context); };
 	inline size_t format(char *fmt, ...) { va_list ptr; va_start(ptr,fmt); size_t len=vsnprintf(buffer,size,fmt,ptr); va_end(ptr); return len; };
 	inline size_t vformat(char *fmt, va_list ptr) { return vsnprintf(buffer,size,fmt,ptr); };
 };
@@ -188,10 +188,14 @@ public:
 		{
 			size_t r,c;
 			for ( r=0 ; r<n ; r++ )
+			{
 				for ( c=0 ; c<m ; c++ )
+				{
 					if ( tst_flag(r,c,BYREF) )
 						free(x[r][c]); 
+				}
 				free(x[r]);
+			}
 			free(x);
 			delete refs;
 		}
@@ -573,32 +577,123 @@ public:
 };
 #endif
 
-#ifndef __cplusplus
-typedef struct s_complexarray {
-#else
+#ifdef __cplusplus
+class complex_array;
+class complex_vector {
+private:
+	complex **data;
+public:
+	complex_vector(complex **x) 
+	{ 
+		data=x; 
+	};
+	complex &operator[] (const size_t n) 
+	{ 
+		if ( data[n]==NULL ) data[n]=new complex; 
+		return *data[n]; 
+	};
+	const complex operator[] (const size_t n) const
+	{
+		if ( data[n]==NULL ) data[n]=new complex; 
+		return *data[n];
+	}
+};
 class complex_array {
 private:
+#else
+typedef struct s_complexarray {
 #endif
-	size_t n, m;
+	size_t n, m; /** n rows, m cols */
 	size_t max; /** current allocation size max x max */
+	unsigned int *refs; /** reference count **/
 	complex ***x; /** pointer to 2D array of pointers to complex values */
 	unsigned char *f; /** pointer to array of flags: bit0=byref, */
+	const char *name;
 #ifndef __cplusplus
 } complex_array;
 #else
+	friend class complex_vector;
 private:
-	inline void set_rows(size_t i) { n=i; };
-	inline void set_cols(size_t i) { m=i; };
-	inline void set_flag(size_t r, size_t c, unsigned char b) {f[r*m+c]|=b;};
-	inline void clr_flag(size_t r, size_t c, unsigned char b) {f[r*m+c]&=~b;};
-	inline bool tst_flag(size_t r, size_t c, unsigned char b) {return (f[r*m+c]&b)==b;};
+
+	inline void exception(const char *msg,...) const
+	{ 
+		static char buf[1024]; 
+		va_list ptr;
+		va_start(ptr,msg);
+		sprintf(buf,"%s", name?name:""); 
+		vsprintf(buf+strlen(buf), msg, ptr); 
+		throw (const char*)buf;
+		va_end(ptr);
+	};
+	inline void set_rows(const size_t i) { n=i; };
+	inline void set_cols(const size_t i) { m=i; };
+	inline void set_flag(const size_t r, size_t c, const unsigned char b) {f[r*m+c]|=b;};
+	inline void clr_flag(const size_t r, size_t c, const unsigned char b) {f[r*m+c]&=~b;};
+	inline bool tst_flag(const size_t r, size_t c, const unsigned char b) const {return (f[r*m+c]&b)==b;};
+	complex &my(const size_t r, const size_t c) 
+	{ 
+		if ( x[r][c]==NULL ) x[r][c] = new complex;
+		return (*x[r][c]); 
+	};
 public:
-	inline size_t get_rows(void) { return n; };
-	inline size_t get_cols(void) { return m; };
-	inline size_t get_max(void) { return max; };
-	inline void set_max(size_t size) 
+	inline complex_vector operator[] (const size_t n) { return complex_vector(x[n]); }
+	inline const complex_vector operator[] (const size_t n) const { return complex_vector(x[n]); }
+	complex_array(const size_t rows=0, const size_t cols=0, complex **data=NULL)
 	{
-		if ( size<=max ) throw "cannot shrink double_array";
+		refs = new unsigned int;
+		*refs = 0;
+		m = n = max = 0;
+		x = NULL;
+		f = NULL;
+		if ( rows>0 )
+			grow_to(rows,cols);
+		for ( size_t r=0 ; r<rows ; r++ )
+		{
+			for ( size_t c=0 ; c<cols ; c++ )
+			{
+				set_at(r,c, ( data!=NULL ? data[r][c] : 0.0 ) );
+			}
+		}
+	}
+	complex_array(const complex_array &a)
+	{
+		n = a.n;
+		m = a.m;
+		max = a.max;
+		refs = a.refs;
+		x = a.x;
+		f = a.f;
+		name = a.name;
+		(*refs)++;
+	}
+	~complex_array(void)
+	{
+		if ( (*refs)-- == 0 )
+		{
+			size_t r,c;
+			for ( r=0 ; r<n ; r++ )
+			{
+				for ( c=0 ; c<m ; c++ )
+				{
+					if ( tst_flag(r,c,BYREF) )
+						free(x[r][c]); 
+				}
+				free(x[r]);
+			}
+			free(x);
+			delete refs;
+		}
+	}
+public:
+	void set_name(const char *v) { name = v; }; 
+	inline const char *get_name(void) const { return name; };
+	void copy_name(const char *v) { char *s=(char*)malloc(strlen(v)+1); strcpy(s,v); name=(const char*)s; };
+	inline const size_t get_rows(void) const { return n; };
+	inline const size_t get_cols(void) const { return m; };
+	inline const size_t get_max(void) const { return max; };
+	void set_max(const size_t size) 
+	{
+		if ( size<=max ) exception(".set_max(%u): cannot shrink complex_array",size);
 		size_t r;
 		complex ***z = (complex***)malloc(sizeof(complex**)*size);
 		// create new rows
@@ -607,7 +702,7 @@ public:
 			if ( x[r]!=NULL )
 			{
 				complex **y = (complex**)malloc(sizeof(complex*)*size);
-				if ( y==NULL ) throw "unable to expand double_array";
+				if ( y==NULL ) exception(".set_max(%u): unable to expand complex_array",size);
 				memcpy(y,x[r],sizeof(complex*)*max);
 				memset(y+max,0,sizeof(complex*)*(size-max));
 				free(x[r]);
@@ -631,14 +726,14 @@ public:
 		f = nf;
 		max=size; 
 	};
-	inline void grow_to(size_t r, size_t c=0) 
+	void grow_to(const size_t r, const size_t c) 
 	{ 
-		size_t s = max;
+		size_t s = (max<1?1:max);
 		while ( c>=s || r>=s ) s*=2; 
 		if ( s>max )set_max(s);
 
 		// add rows
-		while ( n<=r ) 
+		while ( n<r ) 
 		{
 			if ( x[n]==NULL ) 
 			{
@@ -647,33 +742,113 @@ public:
 			}
 			n++;
 		}
-		if (m<=c) m=c+1; 
+
+		// add columns
+		if ( m<c )
+		{
+			size_t i;
+			for ( i=0 ; i<n ; i++ )
+			{
+				complex **y = (complex**)malloc(sizeof(complex*)*c);
+				if ( x[i]!=NULL )
+				{
+					memcpy(y,x[i],sizeof(complex**)*m);
+					free(x[i]);
+				}
+				memset(y+m,0,sizeof(complex**)*(c-m));
+				x[i] = y;
+			}
+			m=c;
+		}
 	};
-	inline void check_valid(size_t r, size_t c=0) { if ( !is_valid(r,c) ) throw "double_array col/row spec is invalid"; };
-	inline bool is_valid(size_t r, size_t c=0) { return r<n && c<m; };
-	inline bool is_nan(size_t r, size_t c=0) 
+	void grow_to(const size_t c) { grow_to(n>0?n:1,c); };
+	void grow_to(const complex_array &y) { grow_to(y.get_rows(),y.get_cols()); };
+	void check_valid(const size_t r, const size_t c) const { if ( !is_valid(r,c) ) exception(".check_value(%u,%u): invalid (r,c)",r,c); };
+	inline void check_valid(const size_t c) const { check_valid(0,c); };
+	bool is_valid(const size_t r, const size_t c) const { return r<n && c<m; };
+	inline bool is_valid(const size_t c) const { return is_valid(0,c); };
+	bool is_nan(const size_t r, const size_t c)  const
 	{
 		check_valid(r,c);
 		return ! ( x[r][c]!=NULL && isfinite(x[r][c]->Re()) && isfinite(x[r][c]->Im()) ); 
 	};
-	inline bool is_empty(void) { return n==0 && m==0; };
-	inline void clr_at(size_t r, size_t c=0) 
+	inline bool is_nan(const size_t c) const { return is_nan(0,c); };
+	bool is_empty(void) const { return n==0 && m==0; };
+	void clr_at(const size_t r, const size_t c) 
 	{ 
 		check_valid(r,c);
 		if ( tst_flag(r,c,BYREF) )
 			free(x[r][c]); 
 		x[r][c]=NULL; 
 	};
-	inline complex *get_addr(size_t r, size_t c=0) { return x[r][c]; };
-	inline complex &get_at(size_t r, size_t c=0) { return *(x[r][c]) ; };
-	inline void set_at(size_t r, size_t c, complex &v) 
+	inline void clr_at(const size_t c) { return clr_at(0,c); };
+	/// make a new matrix (row major)
+	complex **copy_matrix(void) 
+	{   
+		complex **y = new complex*[n];
+		unsigned int r;
+		for ( r=0 ; r<n ; r++ )
+		{
+			y[r] = new complex[m];
+			unsigned int c;
+			for ( c=0 ; c<m ; c++ )
+				y[r][c] = *(x[r][c]);
+		}
+		return y;               
+	};
+	/// free a matrix
+	void free_matrix(complex **y)
+	{
+		unsigned int r;
+		for ( r=0 ; r<n ; r++ )
+			delete [] y[r];
+		delete [] y;
+	};
+	/// vector copy (row major)
+	complex *copy_vector(complex *y=NULL)
+	{
+		if ( y==NULL ) y=new complex[m*n];
+		unsigned i=0;
+		unsigned int r, c;
+		for ( r=0 ; r<n ; r++ )
+		{
+			for ( c=0 ; c<m ; c++ )
+				y[i++] = *(x[r][c]);
+		}
+		return y;
+	}
+	void transpose(void) {
+		complex ***xt = new complex**[n];
+		size_t i;
+		for ( i=0 ; i<m ; i++ )
+		{
+			xt[i] = new complex*[n];
+			size_t j;
+			for ( j=0 ; j<n ; j++ )
+				xt[i][j] = x[j][i];
+		}
+		for ( i=0 ; i<n ; i++ )
+			delete [] x[i];
+		delete [] x;
+		x = xt;
+		size_t t=m; m=n; n=t;
+	};
+	inline complex *get_addr(const size_t r, const size_t c) { return x[r][c]; };
+	inline complex *get_addr(const size_t c) { return get_addr(0,c); };
+	complex get_at(const size_t r, const size_t c) { return is_nan(r,c) ? QNAN : *(x[r][c]) ; };
+	inline complex get_at(const size_t c) { return get_at(0,c); };
+	inline complex &get(const size_t r, const size_t c) { return *x[r][c]; };
+	inline complex &get(const size_t c) { return get(0,c); };
+	inline void set_at(const size_t c, const complex v) { set_at(0,c,v); };
+	void set_at(const size_t r, const size_t c, const complex v) 
 	{ 
 		check_valid(r,c);
 		if ( x[r][c]==NULL ) 
 			x[r][c]=(complex*)malloc(sizeof(complex)); 
 		*(x[r][c]) = v; 
 	};
-	inline void set_at(size_t r, size_t c, complex *v) 
+	inline void set_at(const size_t c, complex *v) { set_at(0,c,v); };
+	void set_at(const size_t r, const size_t c, complex *v) 
 	{ 
 		check_valid(r,c);
 		if ( v==NULL ) 
@@ -687,93 +862,202 @@ public:
 			x[r][c] = v; 
 		}
 	};
-	inline void set_ident(void)
+	void set_ident(void)
 	{
-		complex one(1), zero(0);
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
-				set_at(r,c,(r==c)?one:zero);
+				my(r,c) = (r==c) ? 1 : 0;
 		}
 	};
-	inline void operator= (complex &y)
+	void dump(size_t r1=0, size_t r2=-1, size_t c1=0, size_t c2=-1)
+	{
+		if ( r2==-1 ) r2 = n-1;
+		if ( c2==-1 ) c2 = m-1;
+		if ( r2<r1 || c2<c1 ) exception(".dump(%u,%u,%u,%u): invalid (r,c)", r1,r2,c1,c2);
+		size_t r,c;
+		fprintf(stderr,"complex_array %s = {\n",name?name:"unnamed"); 
+		for ( r=r1 ; r<=n ; r++ )
+		{
+			for ( c=c1 ; c<=m ; c++ )
+				fprintf(stderr," %8g%+8gi", my(r,c).Re(), my(r,c).Im());
+
+			fprintf(stderr,"\n");
+		}
+		fprintf(stderr," }\n");
+	}
+	void operator= (const complex y)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
-				set_at(r,c,y);
+				my(r,c) = y;
 		}
 	};
-	inline void operator= (complex_array &y)
+	complex_array &operator= (const complex_array &y)
 	{
 		size_t r,c;
-		for ( r=0 ; r<get_rows() ; r++ )
+		grow_to(y);
+		for ( r=0 ; r<y.get_rows() ; r++ )
 		{
-			for ( c=0 ; c<get_cols() ; c++ )
-				set_at(r,c,y.get_at(r,c));
+			for ( c=0 ; c<y.get_cols() ; c++ )
+				my(r,c) = y[r][c];
 		}
+		return *this;
 	};
-	inline void operator+= (complex_array &y)
+	complex_array &operator+= (const complex &y)
 	{
 		size_t r,c;
 		for ( r=0 ; r<get_rows() ; r++ )
 		{
 			for ( c=0 ; c<get_cols() ; c++ )
-			{
-				complex z = get_at(r,c) + y.get_at(r,c);
-				set_at(r,c,z);
+				my(r,c) += y;
+		}
+		return *this;
+	}
+	complex_array &operator+= (const complex_array &y)
+	{
+		size_t r,c;
+		for ( r=0 ; r<get_rows() ; r++ )
+		{
+			for ( c=0 ; c<get_cols() ; c++ )
+				my(r,c) += y[r][c];
+		}
+		return *this;
+	};
+	complex_array &operator-= (const complex &y)
+	{
+		size_t r,c;
+		for ( r=0 ; r<get_rows() ; r++ )
+		{
+			for ( c=0 ; c<get_cols() ; c++ )
+				my(r,c) -= y;
+		}
+		return *this;
+	};
+	complex_array &operator-= (const complex_array &y)
+	{
+		size_t r,c;
+		for ( r=0 ; r<get_rows() ; r++ )
+		{
+			for ( c=0 ; c<get_cols() ; c++ )
+				my(r,c) -= y[r][c];
+		}
+		return *this;
+	};
+	complex_array &operator *= (const complex y)
+	{
+		size_t r,c;
+		for ( r=0 ; r<get_rows() ; r++ )
+		{
+			for ( c=0 ; c<get_cols() ; c++ )
+				my(r,c) *= y;
+		}
+		return *this;
+	};
+	complex_array &operator /= (const complex y)
+	{
+		size_t r,c;
+		for ( r=0 ; r<get_rows() ; r++ )
+		{
+			for ( c=0 ; c<get_cols() ; c++ )
+				my(r,c) /= y;
+		}
+		return *this;
+	};
+	// binary operators
+	complex_array operator+ (const complex y)
+	{
+		complex_array a(get_rows(),get_cols());
+		size_t r,c;
+		for ( r=0 ; r<get_rows() ; r++ )
+			for ( c=0 ; c<get_cols() ; c++ )
+				a[r][c] = my(r,c) + y;
+		return a;
+	}
+	complex_array operator- (const complex y)
+	{
+		complex_array a(get_rows(),get_cols());
+		size_t r,c;
+		for ( r=0 ; r<get_rows() ; r++ )
+			for ( c=0 ; c<get_cols() ; c++ )
+				a[r][c] = my(r,c) - y;
+		return a;
+	}
+	complex_array operator* (const complex y)
+	{
+		complex_array a(get_rows(),get_cols());
+		size_t r,c;
+		for ( r=0 ; r<get_rows() ; r++ )
+			for ( c=0 ; c<get_cols() ; c++ )
+				a[r][c] = my(r,c) * y;
+		return a;
+	}
+	complex_array operator/ (const complex y)
+	{
+		complex_array a(get_rows(),get_cols());
+		size_t r,c;
+		for ( r=0 ; r<get_rows() ; r++ )
+			for ( c=0 ; c<get_cols() ; c++ )
+				a[r][c] = my(r,c) / y;
+		return a;
+	}
+	complex_array operator + (const complex_array &y)
+	{
+		size_t r,c;
+		if ( get_rows()!=y.get_rows() || get_cols()!=y.get_cols() )
+			exception("+%s: size mismatch",y.get_name());
+		complex_array a(get_rows(),get_cols());
+		a.set_name("(?+?)");
+		for ( r=0 ; r<get_rows() ; r++ )
+			for ( c=0 ; c<y.get_cols() ; c++ )
+				a[r][c] = my(r,c) + y[r][c];
+		return a;
+	};
+	complex_array operator - (const complex_array &y)
+	{
+		size_t r,c;
+		if ( get_rows()!=y.get_rows() || get_cols()!=y.get_cols() )
+			exception("-%s: size mismatch",y.get_name());
+		complex_array a(get_rows(),get_cols());
+		a.set_name("(?-?)");
+		for ( r=0 ; r<get_rows() ; r++ )
+			for ( c=0 ; c<y.get_cols() ; c++ )
+				a[r][c] = my(r,c) - y[r][c];
+		return a;
+	};
+	complex_array operator * (const complex_array &y)
+	{
+		size_t r,c,k;
+		if ( get_cols()!=y.get_rows() )
+			exception("*%s: size mismatch",y.get_name());
+		complex_array a(get_rows(),y.get_cols());
+		a.set_name("(?*?)");
+		for ( r=0 ; r<get_rows() ; r++ )
+		{
+			for ( c=0 ; c<y.get_cols() ; c++ )
+			{	
+				complex b = 0;
+				for ( k=0 ; k<get_cols() ; k++ )
+					b += my(r,k) * y[k][c];
+				a[r][c] = b;
 			}
 		}
+		return a;
 	};
-	inline void operator-= (complex_array &y)
-	{
-		size_t r,c;
-		for ( r=0 ; r<get_rows() ; r++ )
-		{
-			for ( c=0 ; c<get_cols() ; c++ )
-			{
-				complex z = get_at(r,c) - y.get_at(r,c);
-				set_at(r,c,z);
-			}
-		}
-	};
-	inline void operator *= (complex &y)
-	{
-		size_t r,c;
-		for ( r=0 ; r<get_rows() ; r++ )
-		{
-			for ( c=0 ; c<get_cols() ; c++ )
-			{
-				complex z = get_at(r,c)*y;
-				set_at(r,c,z);
-			}
-		}
-	};
-	inline void operator /= (complex &y)
-	{
-		size_t r,c;
-		for ( r=0 ; r<get_rows() ; r++ )
-		{
-			for ( c=0 ; c<get_cols() ; c++ )
-			{
-				complex z = get_at(r,c)/y;
-				set_at(r,c,z);
-			}
-		}
-	};
-	inline void extract_row(complex*y,size_t r)
+	void extract_row(complex*y,const size_t r)
 	{
 		size_t c;
 		for ( c=0 ; c<m ; c++ )
-			y[c] = get_at(r,c);
+			y[c] = my(r,c);
 	}
-	inline void extract_col(complex*y,size_t c)
+	void extract_col(complex*y,const size_t c)
 	{
 		size_t r;
 		for ( r=0 ; r<n ; r++ )
-			y[r] = get_at(r,c);
+			y[r] = my(r,c);
 	}
 };
 #endif
@@ -837,6 +1121,7 @@ typedef enum {_PT_FIRST=-1,
 	PT_loadshape,	/**< Loadshapes are state machines driven by schedules */
 	PT_enduse,		/**< Enduse load data */
 	PT_random,		/**< Randomized number */
+	PT_method,		/**< Method */
 	/* add new property types here - don't forget to add them also to rt/gridlabd.h and property.c */
 #ifdef USE_TRIPLETS
 	PT_triple, /**< triplet of doubles (not supported) */
@@ -884,6 +1169,8 @@ typedef struct s_keyword {
 	struct s_keyword *next;
 } KEYWORD;
 
+typedef int (*METHODCALL)(void *obj, char *string, int size); /**< the function that read and writes a string */
+
 typedef uint32 PROPERTYFLAGS;
 #define PF_RECALC	0x0001 /**< property has a recalc trigger (only works if recalc_<class> is exported) */
 #define PF_CHARSET	0x0002 /**< set supports single character keywords (avoids use of |) */
@@ -899,13 +1186,14 @@ typedef struct s_property_map {
 	uint32 width; /**< property byte size, copied from array in class.c */
 	PROPERTYACCESS access; /**< property access flags */
 	UNIT *unit; /**< property unit, if any; \p NULL if none */
-	PROPERTYADDR addr; /**< property location, offset from OBJECT header */
+	PROPERTYADDR addr; /**< property location, offset from OBJECT header; OBJECT header itself for methods */
 	DELEGATEDTYPE *delegation; /**< property delegation, if any; \p NULL if none */
 	KEYWORD *keywords; /**< keyword list, if any; \p NULL if none (only for set and enumeration types)*/
 	char *description; /**< description of property */
 	struct s_property_map *next; /**< next property in property list */
 	PROPERTYFLAGS flags; /**< property flags (e.g., PF_RECALC) */
 	FUNCTIONADDR notify;
+	METHODCALL method; /**< method call, addr must be 0 */
 	bool notify_override;
 } PROPERTY; /**< property definition item */
 

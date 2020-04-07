@@ -56,7 +56,7 @@ sectionalizer::sectionalizer(MODULE *mod) : switch_object(mod)
 
 int sectionalizer::isa(char *classname)
 {
-	return strcmp(classname,"sectionalizer")==0 || link_object::isa(classname);
+	return strcmp(classname,"sectionalizer")==0 || switch_object::isa(classname);
 }
 
 //Creation run
@@ -100,31 +100,25 @@ EXPORT int create_sectionalizer(OBJECT **obj, OBJECT *parent)
 			gl_set_parent(*obj,parent);
 			return my->create();
 		}
+		else
+			return 0;
 	}
-	catch (const char *msg)
-	{
-		gl_error("create_sectionalizer: %s", msg);
-	}
-	return 0;
+	CREATE_CATCHALL(sectionalizer);
 }
 
 EXPORT int init_sectionalizer(OBJECT *obj)
 {
-	sectionalizer *my = OBJECTDATA(obj,sectionalizer);
 	try {
+		sectionalizer *my = OBJECTDATA(obj,sectionalizer);
 		return my->init(obj->parent);
 	}
-	catch (const char *msg)
-	{
-		gl_error("%s (sectionalizer:%d): %s", my->get_name(), my->get_id(), msg);
-		return 0; 
-	}
+	INIT_CATCHALL(sectionalizer);
 }
 
 EXPORT TIMESTAMP sync_sectionalizer(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
-	sectionalizer *pObj = OBJECTDATA(obj,sectionalizer);
 	try {
+		sectionalizer *pObj = OBJECTDATA(obj,sectionalizer);
 		TIMESTAMP t1 = TS_NEVER;
 		switch (pass) {
 		case PC_PRETOPDOWN:
@@ -138,13 +132,8 @@ EXPORT TIMESTAMP sync_sectionalizer(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		default:
 			throw "invalid pass request";
 		}
-	} catch (const char *error) {
-		gl_error("%s (sectionalizer:%d): %s", pObj->get_name(), pObj->get_id(), error);
-		return TS_INVALID; 
-	} catch (...) {
-		gl_error("%s (sectionalizer:%d): %s", pObj->get_name(), pObj->get_id(), "unknown exception");
-		return TS_INVALID;
 	}
+	SYNC_CATCHALL(sectionalizer);
 }
 
 //Function to change sectionalizer states - just call underlying switch routine

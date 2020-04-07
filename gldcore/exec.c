@@ -1,4 +1,4 @@
-/** $Id: exec.c 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id: exec.c 1188 2009-01-02 21:51:07Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 	@file exec.c
 	@addtogroup exec Main execution loop
@@ -88,7 +88,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <sys/timeb.h>
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #include <winbase.h>
 #include <direct.h>
@@ -116,7 +116,7 @@
 #include "threadpool.h"
 #include "debug.h"
 #include "exception.h"
-#include "random.h"	
+#include "gldrandom.h"
 #include "local.h"
 #include "schedule.h"
 #include "transform.h"
@@ -196,7 +196,7 @@ int64 exec_clock(void)
 int exec_init()
 {
 #if 0
-#ifdef WIN32
+#ifdef _WIN32
 	char glpathvar[1024];
 #endif
 #endif
@@ -221,7 +221,7 @@ int exec_init()
 	locale_push();
 
 #if 0 /* isn't cooperating for strange reasons -mh */
-#ifdef WIN32
+#ifdef _WIN32
 	glpathlen=strlen("GLPATH=");
 	sprintf(glpathvar, "GLPATH=");
 	ExpandEnvironmentStrings(getenv("GLPATH"), glpathvar+glpathlen, (DWORD)(1024-glpathlen));
@@ -261,6 +261,7 @@ static INDEX **ranks = NULL;
 const PASSCONFIG passtype[] = {PC_PRETOPDOWN, PC_BOTTOMUP, PC_POSTTOPDOWN};
 static unsigned int pass;
 int iteration_counter = 0;   /* number of redos completed */
+int federation_iteration_counter = 0; /* number of federate redos completed */
 
 #ifndef NOLOCKS
 int64 rlock_count = 0, rlock_spin = 0;
@@ -1342,7 +1343,7 @@ TIMESTAMP syncall_internals(TIMESTAMP t1)
 
 void exec_sleep(unsigned int usec)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	Sleep(usec/1000);
 #else
 	usleep(usec);
@@ -1565,13 +1566,13 @@ void exec_sync_merge(struct sync_data *to, /**< sync data to merge to (NULL to u
 	if ( from==NULL ) from = &main_sync;
 	if ( from==to ) return;
 	if ( exec_sync_isinvalid(from) ) 
-		exec_sync_set(to,TS_INVALID);
+		exec_sync_set(to,TS_INVALID,false);
 	else if ( exec_sync_isnever(from) ) 
 		{} /* do nothing */	
 	else if ( exec_sync_ishard(from) )
-		exec_sync_set(to,exec_sync_get(from));
+		exec_sync_set(to,exec_sync_get(from),false);
 	else
-		exec_sync_set(to,-exec_sync_get(from));
+		exec_sync_set(to,-exec_sync_get(from),false);
 }
 /** Update the sync data structure 
 
@@ -1587,7 +1588,8 @@ void exec_sync_merge(struct sync_data *to, /**< sync data to merge to (NULL to u
 	Otherwise, the event status is changed to FAILED.
  **/
 void exec_sync_set(struct sync_data *d, /**< sync data to update (NULL to update main) */
-				  TIMESTAMP t)/**< timestamp to update with (negative time means soft event, 0 means failure) */
+				  TIMESTAMP t,/**< timestamp to update with (negative time means soft event, 0 means failure) */
+				  bool deltaflag)/**< flag to let us know this was a deltamode exit - force it forward, otherwise can fail to exit */
 {
 	if ( d==NULL ) d=&main_sync;
 	if ( t==TS_NEVER ) return; /* nothing to do */
@@ -1613,8 +1615,15 @@ void exec_sync_set(struct sync_data *d, /**< sync data to update (NULL to update
 	else if ( t>0 ) /* hard event */
 	{
 		d->hard_event++;
-		if ( d->step_to>t )
+		if (deltaflag==false)
+		{
+			if ( d->step_to>t )
+				d->step_to = t;
+		}
+		else	/* Deltamode exit - override us */
+		{
 			d->step_to = t;
+		}
 	}
 	else if ( t<0 ) /* soft event */
 	{
@@ -1705,7 +1714,7 @@ void exec_clock_update_modules()
 			}
 		}
 	}
-	exec_sync_set(NULL,t1);
+	exec_sync_set(NULL,t1,false);
 }
 
 /******************************************************************
@@ -1857,12 +1866,13 @@ STATUS exec_start(void)
 	}
 	// maybe that's all we need...
 	iteration_counter = global_iteration_limit;
+	federation_iteration_counter = global_iteration_limit;
 
 	/* reset sync event */
 	exec_sync_reset(NULL);
-	exec_sync_set(NULL,global_clock);
+	exec_sync_set(NULL,global_clock,false);
 	if ( global_stoptime<TS_NEVER )
-		exec_sync_set(NULL,global_stoptime+1);
+		exec_sync_set(NULL,global_stoptime+1,false);
 
 	/* signal handler */
 	signal(SIGABRT, exec_sighandler);
@@ -1958,7 +1968,7 @@ STATUS exec_start(void)
 			if (global_run_realtime>0 && iteration_counter>0)
 			{
 				double metric=0;
-#ifdef WIN32
+#ifdef _WIN32
 				struct timeb tv;
 				ftime(&tv);
 				if (1000-tv.millitm >= 0)
@@ -1986,7 +1996,7 @@ STATUS exec_start(void)
 #define IIR 0.9 /* about 30s for 95% unit step response */
 				global_realtime_metric = global_realtime_metric*IIR + metric*(1-IIR);
 				exec_sync_reset(NULL);
-				exec_sync_set(NULL,global_clock);
+				exec_sync_set(NULL,global_clock,false);
 				output_verbose("realtime clock advancing to %d", (int)global_clock);
 			}
 
@@ -1997,54 +2007,50 @@ STATUS exec_start(void)
 			/* operate delta mode if necessary (but only when event mode is active, e.g., not right after init) */
 			/* note that delta mode cannot be supported for realtime simulation */
 			global_deltaclock = 0;
-//			if ( global_run_realtime==0 )
-			{
-				/* determine whether any modules seek delta mode */
-				DELTAMODEFLAGS flags=DMF_NONE;
-				DT delta_dt = delta_modedesired(&flags);
-				TIMESTAMP t = TS_NEVER;
-				output_debug("delta_dt is %d", (int)delta_dt);
-				switch ( delta_dt ) {
-				case DT_INFINITY: /* no dt -> event mode */
-					global_simulation_mode = SM_EVENT;
-					t = TS_NEVER;
-					break; 
-				case DT_INVALID: /* error dt  */
+			/* determine whether any modules seek delta mode */
+			DELTAMODEFLAGS flags=DMF_NONE;
+			DT delta_dt = delta_modedesired(&flags);
+			TIMESTAMP t = TS_NEVER;
+			output_debug("delta_dt is %d", (int)delta_dt);
+			switch ( delta_dt ) {
+			case DT_INFINITY: /* no dt -> event mode */
+				global_simulation_mode = SM_EVENT;
+				t = TS_NEVER;
+				break;
+			case DT_INVALID: /* error dt  */
+				global_simulation_mode = SM_ERROR;
+				t = TS_INVALID;
+				break; /* simulation mode error */
+			default: /* valid dt */
+				if ( global_minimum_timestep>1 )
+				{
 					global_simulation_mode = SM_ERROR;
+					output_error("minimum_timestep must be 1 second to operate in deltamode");
 					t = TS_INVALID;
-					break; /* simulation mode error */
-				default: /* valid dt */
-					if ( global_minimum_timestep>1 )
-					{
-						global_simulation_mode = SM_ERROR;
-						output_error("minimum_timestep must be 1 second to operate in deltamode");
-						t = TS_INVALID;
-						break;
-					}
-					else
-					{
-						if (delta_dt==0)	/* Delta mode now */
-						{
-							global_simulation_mode = SM_DELTA;
-							t = global_clock;
-						}
-						else	/* Normal sync - get us to delta point */
-						{
-							global_simulation_mode = SM_EVENT;
-							t = global_clock + delta_dt;
-						}
-					}
 					break;
 				}
-				if ( global_simulation_mode==SM_ERROR )
+				else
 				{
-					output_error("a simulation mode error has occurred");
-					break; /* terminate main loop immediately */
+					if (delta_dt==0)	/* Delta mode now */
+					{
+						global_simulation_mode = SM_DELTA;
+						t = global_clock;
+					}
+					else	/* Normal sync - get us to delta point */
+					{
+						global_simulation_mode = SM_EVENT;
+						t = global_clock + delta_dt;
+					}
 				}
-				exec_sync_set(NULL,t);
+				break;
 			}
-//			else
-//				global_simulation_mode = SM_EVENT;
+			if ( global_simulation_mode==SM_ERROR )
+			{
+				output_error("a simulation mode error has occurred");
+				break; /* terminate main loop immediately */
+			}
+			exec_sync_set(NULL,t,false);
+
 			
 			/* synchronize all internal schedules */
 			if ( global_clock < 0 )
@@ -2062,7 +2068,7 @@ STATUS exec_start(void)
 
 			/* account for stoptime only if global clock is not already at stoptime */
 			if ( global_clock<=global_stoptime && global_stoptime!=TS_NEVER )
-				exec_sync_set(NULL,global_stoptime+1);
+				exec_sync_set(NULL,global_stoptime+1,false);
 
 			/* synchronize all internal schedules */
 			internal_synctime = syncall_internals(global_clock);
@@ -2076,7 +2082,7 @@ STATUS exec_start(void)
 					Follow the troubleshooting recommendations for that message and try again.
 				 */
 			}
-			exec_sync_set(NULL,internal_synctime);
+			exec_sync_set(NULL,internal_synctime,false);
 
 			/* prepare multithreading */
 			if (!global_debug_mode)
@@ -2223,7 +2229,7 @@ STATUS exec_start(void)
 
 						for (j = 0; j < thread_data->count; j++) {
 							if (thread_data->data[j].status == FAILED) {
-								exec_sync_set(NULL,TS_INVALID);
+								exec_sync_set(NULL,TS_INVALID,false);
 								THROW("synchronization failed");
 							}
 						}
@@ -2234,7 +2240,7 @@ STATUS exec_start(void)
 				/* run all non-schedule transforms */
 				{
 					TIMESTAMP st = transform_syncall(global_clock,XS_DOUBLE|XS_COMPLEX|XS_ENDUSE);// if (abs(t)<t2) t2=t;
-					exec_sync_set(NULL,st);
+					exec_sync_set(NULL,st,false);
 				}
 			}
 			setTP = false;
@@ -2268,31 +2274,56 @@ STATUS exec_start(void)
 				output_debug("exec_start(), slave received looped time signal (%lli)", exec_sync_get(NULL));
 			}
 
-			/* check for clock advance (indicating last pass) */
-			if ( exec_sync_get(NULL)!=global_clock )
+			/* run sync scripts, if any */
+			if ( exec_run_syncscripts()!=XC_SUCCESS )
 			{
-				TIMESTAMP commit_time = TS_NEVER;
-				commit_time = commit_all(global_clock, exec_sync_get(NULL));
-				if ( absolute_timestamp(commit_time) <= global_clock)
-				{
-					// commit cannot force reiterations, and any event where the time is less than the global clock
-					//  indicates that the object is reporting a failure
-					output_error("model commit failed");
-					/* TROUBLESHOOT
-						The commit procedure failed.  This is usually preceded 
-						by a more detailed message that explains why it failed.  Follow
-						the guidance for that message and try again.
-					 */
-					THROW("commit failure");
-				} else if( absolute_timestamp(commit_time) < exec_sync_get(NULL) )
-				{
-					exec_sync_set(NULL,commit_time);
-				}
-				/* reset iteration count */
-				iteration_counter = global_iteration_limit;
+				output_error("sync script(s) failed");
+				THROW("script synchronization failure");
+			}
+			
+			/* check for clock advance (indicating last pass) */
+			if ( exec_sync_get(NULL)!=global_clock && global_simulation_mode == SM_EVENT)
+			{
+				/* clock update is the very last chance to change the next time */
+				exec_clock_update_modules();
+				if(exec_sync_get(NULL) > global_clock) {
+					global_federation_reiteration = false;
+					TIMESTAMP commit_time = TS_NEVER;
+					commit_time = commit_all(global_clock, exec_sync_get(NULL));
+					if ( absolute_timestamp(commit_time) <= global_clock)
+					{
+						// commit cannot force reiterations, and any event where the time is less than the global clock
+						// indicates that the object is reporting a failure
+						output_error("model_commit_failed");
+						/* TROUBLESHOOT
+							The commit procedure failed. This is usually preceded
+							by a more detailed message that explains why it failed. Follow
+							the guidance for that message and try again.
+						*/
+						THROW("commit failure")
+					} else if( absolute_timestamp(commit_time) < exec_sync_get(NULL) )
+					{
+						exec_sync_set(NULL,commit_time,false);
+					}
+					/* reset iteration count */
+					iteration_counter = global_iteration_limit;
+					federation_iteration_counter = global_iteration_limit;
 
-				/* count number of timesteps */
-				tsteps++;
+					/* count number of timesteps */
+					tsteps++;
+				} else if(exec_sync_get(NULL) == global_clock) {
+					iteration_counter = global_iteration_limit;
+					global_federation_reiteration = true;
+					if (--federation_iteration_counter == 0) {
+						output_error("federation convergence iteration limit reached at %s (exec)", simtime());
+						/* TROUBLESHOOT
+							This indicates that the federation that this gridlab-d model a part of
+							was unable to determine a steady state any time horizon.
+						 */
+						exec_sync_set(NULL,TS_INVALID,false);
+						THROW("convergence failure");
+					}
+				}
 			}
 
 			/* check iteration limit */
@@ -2305,17 +2336,10 @@ STATUS exec_start(void)
 					the object that is causing the convergence problem and contact
 					the developer of the module that implements that object's class.
 				 */
-				exec_sync_set(NULL,TS_INVALID);
+				exec_sync_set(NULL,TS_INVALID,false);
 				THROW("convergence failure");
 			}
 
-			/* run sync scripts, if any */
-			if ( exec_run_syncscripts()!=XC_SUCCESS )
-			{
-				output_error("sync script(s) failed");
-				THROW("script synchronization failure");
-			}
-			
 			/* handle delta mode operation */
 			if ( global_simulation_mode==SM_DELTA && exec_sync_get(NULL)>=global_clock )
 			{
@@ -2332,13 +2356,8 @@ STATUS exec_start(void)
 					THROW("Deltamode simulation failure");
 					break;	//Just in case, but probably not needed
 				}
-				exec_sync_set(NULL,global_clock + deltatime);
+				exec_sync_set(NULL,global_clock + deltatime,true);
 				global_simulation_mode = SM_EVENT;
-			}
-
-			/* clock update is the very last chance to change the next time */
-			if(exec_sync_get(NULL) != global_clock){
-				exec_clock_update_modules();
 			}
 		} // end of while loop
 
@@ -2358,7 +2377,7 @@ STATUS exec_start(void)
 	CATCH(char *msg)
 	{
 		output_error("exec halted: %s", msg);
-		exec_sync_set(NULL,TS_INVALID);
+		exec_sync_set(NULL,TS_INVALID,false);
 		/* TROUBLESHOOT
 			This indicates that the core's solver shut down.  This message
 			is usually preceded by more detailed messages.  Follow the guidance
@@ -2817,7 +2836,7 @@ void *slave_node_proc(void *args)
 		output_debug("snp(): connect to %s:%d", addrstr, mtr_port);
 	}
 
-#ifdef WIN32
+#ifdef _WIN32
 	// write, system() --slave command
 	sprintf(filepath, "%s%s%s", dirname, (dirname[0] ? "\\" : ""), filename);
 	output_debug("filepath = %s", filepath);
@@ -2855,12 +2874,12 @@ void exec_slave_node()
 	struct timeval timer;
 	pthread_t slave_thread;
 	int rct;
-#ifdef WIN32
+#ifdef _WIN32
 	static WSADATA wsaData;
 #endif
 
 	inaddrsz = sizeof(struct sockaddr_in);
-#ifdef WIN32
+#ifdef _WIN32
 	// if we're on windows, we're using WinSock2, so we need WSAStartup.
 	output_debug("starting WS2");
 	if (WSAStartup(MAKEWORD(2,0),&wsaData)!=0)

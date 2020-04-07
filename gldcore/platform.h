@@ -11,6 +11,7 @@
 
 #ifndef _PLATFORM_H
 	#define _PLATFORM_H
+	#define __STDC_FORMAT_MACROS
 	#include <inttypes.h>
 	#ifdef HAVE_CONFIG_H
 		#include "config.h"
@@ -41,11 +42,35 @@
 	#define stricmp strcasecmp	/**< deprecated stricmp */
 	#define strnicmp strncasecmp /**< deprecated strnicmp */
 	#define strtok_s strtok_r
-	#ifndef isfinite
-		#define isfinite finite
-	#endif
-	#define min fmin /**< min macro */
-	#define max fmax /**< max macro */
+
+#if __cplusplus >= 201103L
+#include <cmath>
+#include <cstdio>
+
+#if !defined(isfinite)
+#if !defined(__APPLE__)
+#define isfinite isfinite
+#endif
+#endif
+
+#else
+#include <math.h>
+#include <stdio.h>
+
+#if defined(_MSC_VER)
+#if !defined(isfinite)
+#include <float.h>
+#define isfinite _finite
+#endif
+#endif //_MSC_VER
+
+#if !defined(__APPLE__)
+#if !defined(isfinite)
+#define isfinite finite
+#endif
+#endif
+#endif
+
 	#ifdef X64
 		#define NATIVE int64	/**< native integer size */
 	#else

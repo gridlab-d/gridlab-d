@@ -93,6 +93,8 @@
 #include <math.h>
 #include "link.h"
 #include "node.h"
+
+//More stuff to try and separate when time permits
 #include "meter.h"
 #include "regulator.h"
 #include "triplex_meter.h"
@@ -149,6 +151,13 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
 			PT_complex, "fault_current_out_A[A]", PADDR(If_out[0]),PT_DESCRIPTION,"fault current flowing out, phase A",
 			PT_complex, "fault_current_out_B[A]", PADDR(If_out[1]),PT_DESCRIPTION,"fault current flowing out, phase B",
 			PT_complex, "fault_current_out_C[A]", PADDR(If_out[2]),PT_DESCRIPTION,"fault current flowing out, phase C",
+
+			PT_complex, "fault_voltage_A[A]", PADDR(Vf_out[0]),PT_DESCRIPTION,"fault voltage, phase A",
+			PT_complex, "fault_voltage_B[A]", PADDR(Vf_out[1]),PT_DESCRIPTION,"fault voltage, phase B",
+			PT_complex, "fault_voltage_C[A]", PADDR(Vf_out[2]),PT_DESCRIPTION,"fault voltage, phase C",
+
+			PT_bool, "overloaded_status", PADDR(overloaded_status),PT_DESCRIPTION,"overloaded status (true/false)",
+				
 			PT_set, "flow_direction", PADDR(flow_direction),PT_DESCRIPTION,"flag used for describing direction of the flow of power",
 				PT_KEYWORD, "UNKNOWN", (set)FD_UNKNOWN,
 				PT_KEYWORD, "AF", (set)FD_A_NORMAL,
@@ -161,9 +170,26 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
 				PT_KEYWORD, "CR", (set)FD_C_REVERSE,
 				PT_KEYWORD, "CN", (set)FD_C_NONE,
 			PT_double, "mean_repair_time[s]",PADDR(mean_repair_time), PT_DESCRIPTION, "Time after a fault clears for the object to be back in service",
-			PT_double, "continuous_rating[A]", PADDR(link_rating[0]), PT_DESCRIPTION, "Continuous rating for this link object (set individual line segments",
-			PT_double, "emergency_rating[A]", PADDR(link_rating[1]), PT_DESCRIPTION, "Emergency rating for this link object (set individual line segments",
+			PT_double, "continuous_rating_A[A]", PADDR(link_rating[0][0]), PT_DESCRIPTION, "Continuous rating for phase A of this link object (set individual line segments)",
+			PT_double, "continuous_rating_B[A]", PADDR(link_rating[0][1]), PT_DESCRIPTION, "Continuous rating for phase B of this link object (set individual line segments)",
+			PT_double, "continuous_rating_C[A]", PADDR(link_rating[0][2]), PT_DESCRIPTION, "Continuous rating for phase C of this link object (set individual line segments)",
+			PT_double, "emergency_rating_A[A]", PADDR(link_rating[1][0]), PT_DESCRIPTION, "Emergency rating for phase A of this link object (set individual line segments)",
+			PT_double, "emergency_rating_B[A]", PADDR(link_rating[1][1]), PT_DESCRIPTION, "Emergency rating for phase B of this link object (set individual line segments)",
+			PT_double, "emergency_rating_C[A]", PADDR(link_rating[1][2]), PT_DESCRIPTION, "Emergency rating for phase C of this link object (set individual line segments)",
 			PT_double, "inrush_convergence_value[V]", PADDR(inrush_tol_value), PT_DESCRIPTION, "Tolerance, as change in line voltage drop between iterations, for deltamode in-rush completion",
+
+			PT_enumeration, "inrush_integration_method_capacitance",PADDR(inrush_int_method_capacitance),PT_DESCRIPTION,"Selected integration method to use for capacitive elements of the link",
+				PT_KEYWORD,"NONE",(enumeration)IRM_NONE,
+				PT_KEYWORD,"UNDEFINED",(enumeration)IRM_UNDEFINED,
+				PT_KEYWORD,"TRAPEZOIDAL",(enumeration)IRM_TRAPEZOIDAL,
+				PT_KEYWORD,"BACKWARD_EULER",(enumeration)IRM_BACKEULER,
+
+			PT_enumeration, "inrush_integration_method_inductance",PADDR(inrush_int_method_inductance),PT_DESCRIPTION,"Selected integration method to use for inductive elements of the link",
+				PT_KEYWORD,"NONE",(enumeration)IRM_NONE,
+				PT_KEYWORD,"UNDEFINED",(enumeration)IRM_UNDEFINED,
+				PT_KEYWORD,"TRAPEZOIDAL",(enumeration)IRM_TRAPEZOIDAL,
+				PT_KEYWORD,"BACKWARD_EULER",(enumeration)IRM_BACKEULER,
+
 			NULL) < 1 && errno) GL_THROW("unable to publish link properties in %s",__FILE__);
 
 			//Publish deltamode functions
@@ -213,7 +239,7 @@ int link_object::create(void)
 
 	current_in[0] = current_in[1] = current_in[2] = complex(0,0);
 
-	link_limits[0][0] = link_limits[0][1] = link_limits[0][2] = link_limits[1][0] = link_limits[1][1] = link_limits[1][2] = NULL;
+	link_limits[0][0] = link_limits[0][1] = link_limits[0][2] = link_limits[1][0] = link_limits[1][1] = link_limits[1][2] = 0;
 	
 	link_rating[0][0] = link_rating[0][1] = link_rating[0][2] = 1000;	//Replicates current defaults of line objects
 	link_rating[1][0] = link_rating[1][1] = link_rating[1][2] = 2000;
@@ -245,7 +271,6 @@ int link_object::create(void)
 	deltamode_prev_time = -1.0; 
 	inrush_tol_value = 0.0001;	//0.1 mV - arbitrary
 
-	//****************** DEBUG
 	//Saturation-based items -- probably need to be moved, but putting here since me=lazy
 	D_sat = 0.0;
 	A_phi = complex(0.0,0.0);
@@ -253,12 +278,32 @@ int link_object::create(void)
 	hphi = NULL;
 	saturation_calculated_vals = NULL;
 
+	//Set defaults to see if anyone changes the integration methods
+	inrush_int_method_inductance = IRM_UNDEFINED;
+	inrush_int_method_capacitance = IRM_UNDEFINED;
+
 	return result;
 }
 
 int link_object::init(OBJECT *parent)
 {
 	OBJECT *obj = GETOBJECT(this);
+
+	//Make sure nodes have initialized in NR - otherwise some lines get missed (if connected to children)
+	if (solver_method == SM_NR)
+	{
+		//See if the from/to nodes have parents
+		if ((from->parent != NULL) || (to->parent != NULL))
+		{
+			if	(((from->flags & OF_INIT) != OF_INIT) || ((to->flags & OF_INIT) != OF_INIT))
+			{
+				gl_verbose("link::init(): link:%d - %s - deferring initialization on from/to node", obj->id,(obj->name?obj->name : "Unnamed"));
+				return 2; // defer
+			}
+			//Default else - both have initialized already
+		}
+		//Default else - neither parented, so they can't be children - will get handled like normal
+	}
 
 	powerflow_object::init(parent);
 
@@ -439,8 +484,8 @@ int link_object::init(OBJECT *parent)
 		{
 			phase_f_test &= ~(PHASE_S);	//Pull off the single phase portion of from node
 
-			if ((phase_f_test != (phases_test & ~(PHASE_S))) || (phase_t_test != phases_test) || ((phase_t_test & PHASE_S) != PHASE_S))	//Phase mismatch on the line
-				GL_THROW("transformer:%d (split phase) - %s has a phase mismatch at one or both ends",obj->id,obj->name);
+			//if ((phase_f_test != (phases_test & ~(PHASE_S))) || (phase_t_test != phases_test) || ((phase_t_test & PHASE_S) != PHASE_S))	//Phase mismatch on the line
+				//GL_THROW("transformer:%d (split phase) - %s has a phase mismatch at one or both ends",obj->id,obj->name);
 				/*  TROUBLESHOOT
 				A line has been configured to carry a certain set of phases.  Either the input node or output
 				node is not providing a source/sink for these different conductors.  The To and From nodes must
@@ -551,6 +596,20 @@ int link_object::init(OBJECT *parent)
 			//See if we're a normal line
 			if (SpecialLnk == NORMAL)
 			{
+				//Figure out if we need our integration method updated - inductance
+				if (inrush_int_method_inductance == IRM_UNDEFINED)
+				{
+					//Pull the main object-level one
+					inrush_int_method_inductance = inrush_integration_method;
+				}
+
+				//Figure out if we need our integration method updated - capacitance
+				if (inrush_int_method_capacitance == IRM_UNDEFINED)
+				{
+					//Pull the main object-level one
+					inrush_int_method_capacitance = inrush_integration_method;
+				}
+
 				//Allocate the terms -- Inductance -- fully allocate, to stay consistent
 				LinkHistTermL = (complex *)gl_malloc(6*sizeof(complex));
 
@@ -989,6 +1048,7 @@ void link_object::NR_link_presync_fxn(void)
 
 					if (use_line_cap == true)	//Only enable if capacitance is on
 					{
+						// Both do this, but backward-Euler probably doesn't need this
 						LinkHistTermCf[3] = LinkHistTermCf[0];	//"from" capacitance
 						LinkHistTermCf[4] = LinkHistTermCf[1];
 						LinkHistTermCf[5] = LinkHistTermCf[2];
@@ -1026,37 +1086,70 @@ void link_object::NR_link_presync_fxn(void)
 
 						if (use_line_cap == true)	//Only do if capacitance is enabled
 						{
-							//Calculate the updated history terms - hrcf = chrc*vfromprev - hrcfprev
-							LinkHistTermCf[0] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[0] +
-												NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[1] +
-												NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[2] -
-												LinkHistTermCf[3];
+							//See which method we're using
+							if (inrush_int_method_capacitance == IRM_TRAPEZOIDAL)
+							{
+								//Calculate the updated history terms - hrcf = chrc*vfromprev - hrcfprev
+								LinkHistTermCf[0] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[0] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[1] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[2] -
+													LinkHistTermCf[3];
 
-							LinkHistTermCf[1] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[3] +
-												NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[4] +
-												NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[5] -
-												LinkHistTermCf[4];
+								LinkHistTermCf[1] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[3] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[4] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[5] -
+													LinkHistTermCf[4];
 
-							LinkHistTermCf[2] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[6] +
-												NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[7] +
-												NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[8] -
-												LinkHistTermCf[5];
+								LinkHistTermCf[2] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[6] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[7] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[8] -
+													LinkHistTermCf[5];
 
-							//Calculate the updated history terms - hrcf = chrc*vfromprev - hrcfprev
-							LinkHistTermCt[0] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[0] +
-												NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[1] +
-												NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[2] -
-												LinkHistTermCt[3];
+								//Calculate the updated history terms - hrcf = chrc*vfromprev - hrcfprev
+								LinkHistTermCt[0] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[0] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[1] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[2] -
+													LinkHistTermCt[3];
 
-							LinkHistTermCt[1] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[3] +
-												NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[4] +
-												NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[5] -
-												LinkHistTermCt[4];
+								LinkHistTermCt[1] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[3] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[4] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[5] -
+													LinkHistTermCt[4];
 
-							LinkHistTermCt[2] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[6] +
-												NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[7] +
-												NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[8] -
-												LinkHistTermCt[5];
+								LinkHistTermCt[2] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[6] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[7] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[8] -
+													LinkHistTermCt[5];
+							}//End trapezoial method
+							else if (inrush_int_method_capacitance == IRM_BACKEULER)
+							{
+								//Calculate the updated history terms - hrcf = chrc*vfromprev
+								LinkHistTermCf[0] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[0] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[1] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[2];
+
+								LinkHistTermCf[1] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[3] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[4] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[5];
+
+								LinkHistTermCf[2] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[6] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[7] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[8];
+
+								//Calculate the updated history terms - hrcf = chrc*vfromprev
+								LinkHistTermCt[0] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[0] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[1] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[2];
+
+								LinkHistTermCt[1] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[3] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[4] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[5];
+
+								LinkHistTermCt[2] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[6] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[7] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[8];
+							}
+							//Default else - not any of these
 						}//End capacitance update
 					}//End "normal" run
 					else	//First run from steady state
@@ -1096,31 +1189,64 @@ void link_object::NR_link_presync_fxn(void)
 						//Update capacitance terms
 						if (use_line_cap == true)	//Only do if capacitance is enabled
 						{
-							//Calculate the updated history terms - hrcf = chrc*vfromprev/2.0
-							LinkHistTermCf[0] = (NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[0] +
-												NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[1] +
-												NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[2]) / complex(2.0,0.0);
+							//See which method we are
+							if (inrush_int_method_capacitance == IRM_TRAPEZOIDAL)
+							{
+								//Calculate the updated history terms - hrcf = chrc*vfromprev/2.0
+								LinkHistTermCf[0] = (NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[0] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[1] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[2]) / complex(2.0,0.0);
 
-							LinkHistTermCf[1] = (NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[3] +
-												NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[4] +
-												NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[5]) / complex(2.0,0.0);
+								LinkHistTermCf[1] = (NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[3] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[4] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[5]) / complex(2.0,0.0);
 
-							LinkHistTermCf[2] = (NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[6] +
-												NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[7] +
-												NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[8]) / complex(2.0,0.0);
+								LinkHistTermCf[2] = (NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[6] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[7] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[8]) / complex(2.0,0.0);
 
-							//Calculate the updated history terms - hrcf = chrc*vfromprev - hrcfprev
-							LinkHistTermCt[0] = (NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[0] +
-												NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[1] +
-												NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[2]) / complex(2.0,0.0);
+								//Calculate the updated history terms - hrcf = chrc*vfromprev - hrcfprev
+								LinkHistTermCt[0] = (NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[0] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[1] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[2]) / complex(2.0,0.0);
 
-							LinkHistTermCt[1] = (NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[3] +
-												NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[4] +
-												NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[5]) / complex(2.0,0.0);
+								LinkHistTermCt[1] = (NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[3] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[4] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[5]) / complex(2.0,0.0);
 
-							LinkHistTermCt[2] = (NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[6] +
-												NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[7] +
-												NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[8]) / complex(2.0,0.0);
+								LinkHistTermCt[2] = (NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[6] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[7] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[8]) / complex(2.0,0.0);
+							}
+							else if (inrush_int_method_capacitance == IRM_BACKEULER)
+							{
+								//Calculate the updated history terms - hrcf = chrc*vfromprev
+								LinkHistTermCf[0] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[0] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[1] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[2];
+
+								LinkHistTermCf[1] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[3] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[4] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[5];
+
+								LinkHistTermCf[2] = NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[6] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[7] +
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[8];
+
+								//Calculate the updated history terms - hrcf = chrc*vfromprev
+								LinkHistTermCt[0] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[0] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[1] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[2];
+
+								LinkHistTermCt[1] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[3] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[4] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[5];
+
+								LinkHistTermCt[2] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[6] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[7] +
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[8];
+							}
+							//else - not sure?
 						}//End capacitance update
 					}//End first run of in-rush from steady-state
 
@@ -1225,7 +1351,6 @@ void link_object::NR_link_presync_fxn(void)
 						//Set the transformer flag for "normal"
 						transf_from_stdy_state = false;
 					}
-					/**************************************************************/
 
 					//Update the tracker
 					deltamode_prev_time = curr_delta_time;
@@ -1608,7 +1733,7 @@ void link_object::NR_link_presync_fxn(void)
 				Y[jindex][kindex] = 0.0;
 
 		// compute admittance - invert b matrix - special circumstances given different methods
-		if ((SpecialLnk!=NORMAL) && (SpecialLnk!=SPLITPHASE))
+		if ((SpecialLnk!=NORMAL) && (SpecialLnk!=SPLITPHASE) && (SpecialLnk!=VFD))
 		{
 			;	//Just skip over all of this nonsense
 		}
@@ -1673,7 +1798,7 @@ void link_object::NR_link_presync_fxn(void)
 				complex tempImped;
 
 				//Pre-admittancized matrix
-				equalm(b_mat,Yto);
+				equalm(base_admittance_mat,Yto);
 
 				//Store value into YSto
 				for (jindex=0; jindex<3; jindex++)
@@ -1706,66 +1831,66 @@ void link_object::NR_link_presync_fxn(void)
 			else if (SpecialLnk==SPLITPHASE)	//Split phase
 			{
 				//Yto - same for all
-				YSto[0] = b_mat[0][0];
-				YSto[1] = b_mat[0][1];
-				YSto[3] = b_mat[1][0];
-				YSto[4] = b_mat[1][1];
+				YSto[0] = base_admittance_mat[0][0];
+				YSto[1] = base_admittance_mat[0][1];
+				YSto[3] = base_admittance_mat[1][0];
+				YSto[4] = base_admittance_mat[1][1];
 				YSto[2] = YSto[5] = YSto[6] = YSto[7] = YSto[8] = 0.0;
 
 				if (has_phase(PHASE_A))		//A connected
 				{
 					//To_Y
-					To_Y[0][0] = -b_mat[0][2];
-					To_Y[1][0] = -b_mat[1][2];
+					To_Y[0][0] = -base_admittance_mat[0][2];
+					To_Y[1][0] = -base_admittance_mat[1][2];
 					To_Y[0][1] = To_Y[0][2] = To_Y[1][1] = 0.0;
 					To_Y[1][2] = To_Y[2][0] = To_Y[2][1] = To_Y[2][2] = 0.0;
 
 					//Yfrom
-					YSfrom[0] = b_mat[2][2];
+					YSfrom[0] = base_admittance_mat[2][2];
 					YSfrom[1] = YSfrom[2] = YSfrom[3] = YSfrom[4] = 0.0;
 					YSfrom[5] = YSfrom[6] = YSfrom[7] = YSfrom[8] = 0.0;
 
 					//From_Y
-					From_Y[0][0] = -b_mat[2][0];
-					From_Y[0][1] = -b_mat[2][1];
+					From_Y[0][0] = -base_admittance_mat[2][0];
+					From_Y[0][1] = -base_admittance_mat[2][1];
 					From_Y[0][2] = From_Y[1][0] = From_Y[1][1] = 0.0;
 					From_Y[1][2] = From_Y[2][0] = From_Y[2][1] = From_Y[2][2] = 0.0;
 				}
 				else if (has_phase(PHASE_B))	//B connected
 				{
 					//To_Y
-					To_Y[0][1] = -b_mat[0][2];
-					To_Y[1][1] = -b_mat[1][2];
+					To_Y[0][1] = -base_admittance_mat[0][2];
+					To_Y[1][1] = -base_admittance_mat[1][2];
 					To_Y[0][0] = To_Y[0][2] = To_Y[1][0] = 0.0;
 					To_Y[1][2] = To_Y[2][0] = To_Y[2][1] = To_Y[2][2] = 0.0;
 
 					//Yfrom
-					YSfrom[4] = b_mat[2][2];
+					YSfrom[4] = base_admittance_mat[2][2];
 					YSfrom[0] = YSfrom[1] = YSfrom[2] = YSfrom[3] = 0.0;
 					YSfrom[5] = YSfrom[6] = YSfrom[7] = YSfrom[8] = 0.0;
 
 					//From_Y
-					From_Y[1][0] = -b_mat[2][0];
-					From_Y[1][1] = -b_mat[2][1];
+					From_Y[1][0] = -base_admittance_mat[2][0];
+					From_Y[1][1] = -base_admittance_mat[2][1];
 					From_Y[0][0] = From_Y[0][1] = From_Y[0][2] = 0.0;
 					From_Y[1][2] = From_Y[2][0] = From_Y[2][1] = From_Y[2][2] = 0.0;
 				}
 				else if (has_phase(PHASE_C))	//C connected
 				{
 					//To_Y
-					To_Y[0][2] = -b_mat[0][2];
-					To_Y[1][2] = -b_mat[1][2];
+					To_Y[0][2] = -base_admittance_mat[0][2];
+					To_Y[1][2] = -base_admittance_mat[1][2];
 					To_Y[0][0] = To_Y[0][1] = To_Y[1][0] = 0.0;
 					To_Y[1][1] = To_Y[2][0] = To_Y[2][1] = To_Y[2][2] = 0.0;
 
 					//Yfrom
-					YSfrom[8] = b_mat[2][2];
+					YSfrom[8] = base_admittance_mat[2][2];
 					YSfrom[0] = YSfrom[1] = YSfrom[2] = YSfrom[3] = 0.0;
 					YSfrom[4] = YSfrom[5] = YSfrom[6] = YSfrom[7] = 0.0;
 
 					//From_Y
-					From_Y[2][0] = -b_mat[2][0];
-					From_Y[2][1] = -b_mat[2][1];
+					From_Y[2][0] = -base_admittance_mat[2][0];
+					From_Y[2][1] = -base_admittance_mat[2][1];
 					From_Y[0][0] = From_Y[0][1] = From_Y[0][2] = 0.0;
 					From_Y[1][0] = From_Y[1][1] = From_Y[1][2] = From_Y[2][2] = 0.0;
 				}
@@ -1778,7 +1903,7 @@ void link_object::NR_link_presync_fxn(void)
 					*/
 								
 			}
-			else if ((SpecialLnk==SWITCH) || (SpecialLnk==REGULATOR))
+			else if ((SpecialLnk==SWITCH) || (SpecialLnk==REGULATOR) || (SpecialLnk==VFD))
 			{
 				;	//More nothingness (all handled inside switch/regulator itself)
 			}
@@ -1820,7 +1945,7 @@ void link_object::NR_link_presync_fxn(void)
 				else	//No in-rush or not WYE-WYE, just go like normal
 				{
 					//Pre-admittancized matrix
-					equalm(b_mat,Yto);
+					equalm(base_admittance_mat,Yto);
 
 					//Store value into YSto
 					for (jindex=0; jindex<3; jindex++)
@@ -1875,11 +2000,23 @@ void link_object::NR_link_presync_fxn(void)
 				{
 					for (kindex=0; kindex<3; kindex++)
 					{
-						//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)*2/dt
-						workingvalue = b_mat[jindex][kindex].Im() / (PI * current_frequency * deltatimestep_running);
+						if (inrush_int_method_inductance == IRM_TRAPEZOIDAL)
+						{
+							//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)*2/dt
+							workingvalue = b_mat[jindex][kindex].Im() / (PI * current_frequency * deltatimestep_running);
 
-						//Put into the other working matrix (zh)
-						Ylefttemp[jindex][kindex] = b_mat[jindex][kindex] - complex(workingvalue,0.0);
+							//Put into the other working matrix (zh)
+							Ylefttemp[jindex][kindex] = b_mat[jindex][kindex] - complex(workingvalue,0.0);
+						}
+						else if (inrush_int_method_inductance == IRM_BACKEULER)
+						{
+							//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)/dt
+							workingvalue = b_mat[jindex][kindex].Im() / (2.0 * PI * current_frequency * deltatimestep_running);
+
+							//Put into the other working matrix (zh)
+							Ylefttemp[jindex][kindex] = complex(-1.0 * workingvalue,0.0);
+						}
+						//Default else -- better not get here
 
 						//Put back into the impedance matrix
 						b_mat[jindex][kindex] += complex(workingvalue,0.0);
@@ -1926,12 +2063,21 @@ void link_object::NR_link_presync_fxn(void)
 				//Form the bhrl term - Y*Zh = bhrl
 				multiply(Y,Ylefttemp,Yfrom);
 
-				//Compute the ahrl term - Y(Zh*Y - I)
-				multiply(Ylefttemp,Y,Yto);	//Zh*Y
-				Yto[0][0]-=1.0;	// -I
-				Yto[1][1]-=1.0;
-				Yto[2][2]-=1.0;
-				multiply(Y,Yto,Ylefttemp);	//Y(Zh*Y-I)
+				if (inrush_int_method_inductance == IRM_TRAPEZOIDAL)
+				{
+					//Compute the ahrl term - Y(Zh*Y - I)
+					multiply(Ylefttemp,Y,Yto);	//Zh*Y
+					Yto[0][0]-=1.0;	// -I
+					Yto[1][1]-=1.0;
+					Yto[2][2]-=1.0;
+					multiply(Y,Yto,Ylefttemp);	//Y(Zh*Y-I)
+				}
+				else if (inrush_int_method_inductance == IRM_BACKEULER)
+				{
+					//Compute the ahrl term - Y*Zh*Y
+					multiply(Ylefttemp,Y,Yto);	//Zh*Y
+					multiply(Y,Yto,Ylefttemp);	//Y(Zh*Y))
+				}
 
 				//Loop and store them - translate due to mallocing to be safe
 				for (jindex=0; jindex<3; jindex++)
@@ -2041,17 +2187,29 @@ void link_object::NR_link_presync_fxn(void)
 						{
 							for (kindex=0; kindex<3; kindex++)
 							{
-								//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)*2/dt
-								workingvalue = Ylefttemp[jindex][kindex].Im() / (PI * current_frequency * deltatimestep_running);
+								if (inrush_int_method_capacitance == IRM_TRAPEZOIDAL)
+								{
+									//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)*2/dt
+									workingvalue = Ylefttemp[jindex][kindex].Im() / (PI * current_frequency * deltatimestep_running);
+
+									//Create chrcstore while we're in here
+									chrcstore[jindex*3+kindex] = 2.0 * workingvalue;
+								}
+								else if (inrush_int_method_capacitance == IRM_BACKEULER)
+								{
+									//Extract the imaginary part (should be only part) and de-phasor it - Yshunt/(2*pi*f)/dt
+									workingvalue = Ylefttemp[jindex][kindex].Im() / (2.0 * PI * current_frequency * deltatimestep_running);
+
+									//Create chrcstore while we're in here
+									chrcstore[jindex*3+kindex] = workingvalue;
+								}
+								//Default else
 
 								//Put into the "shunt" matrix
 								Ylefttemp[jindex][kindex] += complex(workingvalue,0.0);
 
 								//Copy this value into the final storage matrix too
 								LinkCapShuntTerm[jindex*3+kindex] = Ylefttemp[jindex][kindex];
-
-								//Create chrcstore while we're in here
-								chrcstore[jindex*3+kindex] = 2.0 * workingvalue;
 							}
 						}
 					}
@@ -2078,7 +2236,7 @@ void link_object::NR_link_presync_fxn(void)
 		}
 		
 		//Update status variable
-		prev_status = status;
+		//prev_status = status;
 	}
 }
 
@@ -2168,6 +2326,8 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					*/
 				}
 
+				//For all initial implementations, we're all part of the same big/happy island - island #0!
+				NR_branchdata[NR_branch_reference].island_number = 0;
 
 				//Start with admittance matrix
 				if (SpecialLnk!=NORMAL)	//Transformer, send more - may not need all 4, but put them there anyways
@@ -2298,17 +2458,17 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					{
 						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_A_status"));
 
-						if (*temp_phase == 0)
+						if (*temp_phase == 1)
 							working_phase |= 0x04;
 
 						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_B_status"));
 
-						if (*temp_phase == 0)
+						if (*temp_phase == 1)
 							working_phase |= 0x02;
 
 						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_C_status"));
 
-						if (*temp_phase == 0)
+						if (*temp_phase == 1)
 							working_phase |= 0x01;
 					}
 					else	//Not sure how we'll get here, just make normal phase
@@ -2464,6 +2624,17 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				*/
 			}
 
+			//See if we were flagged as a special type switch, and if we're in "strictly radial" mode, and "the only one attached"
+			//Note that this may have issues with "multiple-single-phase-switches" connecting to something, but that's a very particular use case (just use mesh checking then)
+			if ((SpecialLnk == SWITCH) && (meshed_fault_checking_enabled == false) && NR_busdata[NR_branchdata[NR_branch_reference].to].Link_Table_Size == 1)
+			{
+				//Update according to our "status"
+				working_phase = ~((NR_branchdata[NR_branch_reference].phases ^ NR_branchdata[NR_branch_reference].origphases) & 0x07);
+
+				//Mask it off
+				NR_busdata[NR_branchdata[NR_branch_reference].to].phases &= working_phase;
+			}
+
 			//Figure out what type of link we are and populate accordingly
 			if ((gl_object_isa(obj,"transformer","powerflow")) || (gl_object_isa(obj,"regulator","powerflow")))	//Tranformer check
 			{
@@ -2544,8 +2715,10 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					*/
 				}
 
-				//Null out the frequency function - links don't do anything with it anyways
-				delta_freq_functions[temp_pwr_object_current] = NULL;
+				//Attempt to map up post-delta
+				post_delta_functions[temp_pwr_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"postupdate_pwr_object"));
+
+				//No null check, since this one just may not work (post update may not exist)
 
 				//See if we're an appropriate transformer and in-rush enabled
 				if ((enable_inrush_calculations == true) && (gl_object_isa(obj,"transformer","powerflow")))
@@ -2698,7 +2871,7 @@ TIMESTAMP link_object::sync(TIMESTAMP t0)
 			/* compute currents */
 			READLOCK_OBJECT(to);
 			complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
-			UNLOCK_OBJECT(to);
+			READUNLOCK_OBJECT(to);
 
 			complex i0, i1, i2;
 
@@ -2789,7 +2962,8 @@ void link_object::BOTH_link_postsync_fxn(void)
 }
 
 //Functionalized limit checking, mostly for restoration calls
-void link_object::perform_limit_checks(double *over_limit_value, bool *over_limits)
+//void link_object::perform_limit_checks(double *over_limit_value, bool *over_limits)
+bool link_object::perform_limit_checks(double *over_limit_value, bool *over_limits)
 {
 	double temp_power_check, temp_current_diff;
 	node *nTo;
@@ -2797,6 +2971,7 @@ void link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 	//Default values
 	*over_limit_value = 0.0;
 	*over_limits = false;
+	overloaded_status = *over_limits;
 
 	//Set it to zero
 	temp_power_check = 0.0;
@@ -2819,10 +2994,11 @@ void link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 				*/
 
 				//Add in the value
-				*over_limit_value = (temp_power_check - (power_out.Mag()/1000.0))*1000.0;
+				*over_limit_value = (temp_power_check - *link_limits[0][0])*1000.0;
 
 				//Flag as over
 				*over_limits = true;
+				overloaded_status = *over_limits;
 			}
 		}//End transformers
 		else	//Must be a line - that's the only other option right now
@@ -2863,6 +3039,7 @@ void link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 
 					//Flag as over
 					*over_limits = true;
+					overloaded_status = overloaded_status || *over_limits;
 
 				}//End Phase 1 check
 
@@ -2899,6 +3076,7 @@ void link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 
 					//Flag as over
 					*over_limits = true;
+					overloaded_status = overloaded_status || *over_limits;
 
 				}//End Phase 2 check
 			}//End triplex line check
@@ -2940,6 +3118,7 @@ void link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 
 						//Flag as over
 						*over_limits = true;
+						overloaded_status = overloaded_status || *over_limits;
 
 					}//End Phase A check
 				}//End has Phase A
@@ -2979,6 +3158,7 @@ void link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 
 						//Flag as over
 						*over_limits = true;
+						overloaded_status = overloaded_status || *over_limits;
 
 					}//End Phase B check
 				}//End has Phase B
@@ -3018,12 +3198,15 @@ void link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 
 						//Flag as over
 						*over_limits = true;
+						overloaded_status = overloaded_status || *over_limits;
 
 					}//End Phase C check
 				}//End has Phase C
 			}//End "normal line" check
 		}//End must be a line check
 	}//End Limit checks
+	
+	return overloaded_status;
 }
 
 TIMESTAMP link_object::postsync(TIMESTAMP t0)
@@ -3397,7 +3580,7 @@ EXPORT int updatepowercalc_link(OBJECT *obj)
 	link_object *my = OBJECTDATA(obj,link_object);
 
 	//Call the current update -- do it as a "self call"
-	my->CurrentCalculation(-1);
+	my->CurrentCalculation(-1,false);
 
 	//Now update the power value
 	my->calculate_power();
@@ -3420,7 +3603,7 @@ EXPORT int calculate_overlimit_link(OBJECT *obj, double *overload_value, bool *o
 	if (use_link_limits == true)
 	{
 		//Call the current update -- do it as a "self call"
-		my->CurrentCalculation(-1);
+		my->CurrentCalculation(-1,false);
 
 		//Now update the power value
 		my->calculate_power();
@@ -3437,19 +3620,38 @@ EXPORT int calculate_overlimit_link(OBJECT *obj, double *overload_value, bool *o
 * CurrentCalculation will perform the Newton-Raphson accumulation of
 * current injections - functionalized for Master/Slave use
 * nodecall is set by calling nodes - indicates the NR reference (for locking issues)
-*
-* This function may supercede "calc_currents" for the restoration module - quite honestly, I don't know if
-*      that function even calculates proper values anymore.
+* link_fault_mode is used by mesh fault current propagation -- use as "false" for normal operations
 *
 * Locking not needed on various fnode/tnode voltage reads - rank separation prevents contention
 *     For normal operation, only from nodes need locking - this is an assumption holdover from FBS days - it may need revisiting
 */
-int link_object::CurrentCalculation(int nodecall)
+int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 {
+	complex *current_pointer_in;
+	complex *current_pointer_out;
+
+	//If we're FBS, just get out - assume success - mainly from API-directed-type calls
+	if (solver_method == SM_FBS)
+	{
+		return 1;
+	}
+	//Default else -- NR, which is mostly how this gets called
+
 	if (current_accumulated==false)	//Only update if we haven't done so yet
 	{
 		//Reset the deltamode-oriented flag, just because - will stay by exception
 		inrush_computations_needed = false;
+
+		if (link_fault_mode == true)
+		{
+			current_pointer_in = &If_in[0];
+			current_pointer_out = &If_out[0];
+		}
+		else
+		{
+			current_pointer_in = &current_in[0];
+			current_pointer_out = &current_out[0];
+		}
 
 		if (is_closed())	//Only compute this if the overall link is "in service"
 		{
@@ -3509,7 +3711,11 @@ int link_object::CurrentCalculation(int nodecall)
 			else
 				ofnode = NULL;	//Ensure it's blanked
 
-			if ((SpecialLnk == DELTADELTA) || (SpecialLnk == WYEWYE))
+			if (SpecialLnk == VFD)
+			{
+				;	//Do nothing for now - handled elsewhere
+			}
+			else if ((SpecialLnk == DELTADELTA) || (SpecialLnk == WYEWYE))
 			{
 				//See if we're in deltamode and in-rush enabled
 				if ((deltatimestep_running > 0) && (enable_inrush_calculations == true) && (SpecialLnk == WYEWYE))
@@ -3581,14 +3787,14 @@ int link_object::CurrentCalculation(int nodecall)
 					}
 
 					//Apply adjustments
-					current_in[0] = current_temp[0] + shunt_current_val[0];
-					current_in[1] = current_temp[1] + shunt_current_val[1];
-					current_in[2] = current_temp[2] + shunt_current_val[2];
+					current_pointer_in[0] = current_temp[0] + shunt_current_val[0];
+					current_pointer_in[1] = current_temp[1] + shunt_current_val[1];
+					current_pointer_in[2] = current_temp[2] + shunt_current_val[2];
 
 					//Output is backwards, plus needs other components negated (full backwards - injection into to node, so KCL)
-					current_out[0] = -current_temp[3] - shunt_current_val[3];
-					current_out[1] = -current_temp[4] - shunt_current_val[4];
-					current_out[2] = -current_temp[5] - shunt_current_val[5];
+					current_pointer_out[0] = -current_temp[3] - shunt_current_val[3];
+					current_pointer_out[1] = -current_temp[4] - shunt_current_val[4];
+					current_pointer_out[2] = -current_temp[5] - shunt_current_val[5];
 
 					//Compute the difference, for convergence checks (semi-silly, but should still work)
 					//Just prim - secondary of each phase, but if the difference doesn't move, should be solved (right?)
@@ -3639,80 +3845,80 @@ int link_object::CurrentCalculation(int nodecall)
 							   A_mat[2][2]*tnode->voltage[2];
 
 					//Put across admittance
-					itemp[0] = b_mat[0][0]*vtemp[0]+
-							   b_mat[0][1]*vtemp[1]+
-							   b_mat[0][2]*vtemp[2];
+					itemp[0] = base_admittance_mat[0][0]*vtemp[0]+
+							   base_admittance_mat[0][1]*vtemp[1]+
+							   base_admittance_mat[0][2]*vtemp[2];
 
-					itemp[1] = b_mat[1][0]*vtemp[0]+
-							   b_mat[1][1]*vtemp[1]+
-							   b_mat[1][2]*vtemp[2];
+					itemp[1] = base_admittance_mat[1][0]*vtemp[0]+
+							   base_admittance_mat[1][1]*vtemp[1]+
+							   base_admittance_mat[1][2]*vtemp[2];
 
-					itemp[2] = b_mat[2][0]*vtemp[0]+
-							   b_mat[2][1]*vtemp[1]+
-							   b_mat[2][2]*vtemp[2];
+					itemp[2] = base_admittance_mat[2][0]*vtemp[0]+
+							   base_admittance_mat[2][1]*vtemp[1]+
+							   base_admittance_mat[2][2]*vtemp[2];
 
-					//Scale the "b_mat" value by the inverse (make it high-side impedance)
+					//Scale the "base_admittance_mat" value by the inverse (make it high-side impedance)
 					//Post values based on phases (reliability related)
 					if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
-						current_in[0] = itemp[0]*invsquared;
+						current_pointer_in[0] = itemp[0]*invsquared;
 					else
-						current_in[0] = 0.0;
+						current_pointer_in[0] = 0.0;
 
 					if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
-						current_in[1] = itemp[1]*invsquared;
+						current_pointer_in[1] = itemp[1]*invsquared;
 					else
-						current_in[1] = 0.0;
+						current_pointer_in[1] = 0.0;
 
 					if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
-						current_in[2] = itemp[2]*invsquared;
+						current_pointer_in[2] = itemp[2]*invsquared;
 					else
-						current_in[2] = 0.0;
+						current_pointer_in[2] = 0.0;
 
 					//Calculate current out
 					if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
 					{
-						current_out[0] = A_mat[0][0]*current_in[0]+
-										 A_mat[0][1]*current_in[1]+
-										 A_mat[0][2]*current_in[2];
+						current_pointer_out[0] = A_mat[0][0]*current_pointer_in[0]+
+										 	 	 A_mat[0][1]*current_pointer_in[1]+
+												 A_mat[0][2]*current_pointer_in[2];
 
 						//Apply additional change
 						if (a_mat[0][0] != 0)
 						{
-							current_out[0] -= tnode->voltage[0]/a_mat[0][0]*voltage_ratio;
+							current_pointer_out[0] -= tnode->voltage[0]/a_mat[0][0]*voltage_ratio;
 						}
 					}
 					else
-						current_out[0] = 0.0;
+						current_pointer_out[0] = 0.0;
 
 					if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
 					{
-						current_out[1] = A_mat[1][0]*current_in[0]+
-										 A_mat[1][1]*current_in[1]+
-										 A_mat[1][2]*current_in[2];
+						current_pointer_out[1] = A_mat[1][0]*current_pointer_in[0]+
+										 	 	 A_mat[1][1]*current_pointer_in[1]+
+												 A_mat[1][2]*current_pointer_in[2];
 
 						//Apply additional update
 						if (a_mat[1][1] != 0)
 						{
-							current_out[1] -= tnode->voltage[1]/a_mat[1][1]*voltage_ratio;
+							current_pointer_out[1] -= tnode->voltage[1]/a_mat[1][1]*voltage_ratio;
 						}
 					}
 					else
-						current_out[1] = 0.0;
+						current_pointer_out[1] = 0.0;
 
 					if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
 					{
-						current_out[2] = A_mat[2][0]*current_in[0]+
-										 A_mat[2][1]*current_in[1]+
-										 A_mat[2][2]*current_in[2];
+						current_pointer_out[2] = A_mat[2][0]*current_pointer_in[0]+
+										 	 	 A_mat[2][1]*current_pointer_in[1]+
+												 A_mat[2][2]*current_pointer_in[2];
 
 						//Apply additional update
 						if (a_mat[2][2] != 0)
 						{
-							current_out[2] -= tnode->voltage[2]/a_mat[2][2]*voltage_ratio;
+							current_pointer_out[2] -= tnode->voltage[2]/a_mat[2][2]*voltage_ratio;
 						}
 					}
 					else
-						current_out[2] = 0.0;
+						current_pointer_out[2] = 0.0;
 
 					//See if our nature requires a lock
 					if (flock)
@@ -3721,10 +3927,14 @@ int link_object::CurrentCalculation(int nodecall)
 						WRITELOCK_OBJECT(fobjval);
 					}
 
-					//Current in is just the same
-					fnode->current_inj[0] += current_in[0];
-					fnode->current_inj[1] += current_in[1];
-					fnode->current_inj[2] += current_in[2];
+					//Check to see which mode we're in
+					if (link_fault_mode == false)
+					{
+						//Current in is just the same
+						fnode->current_inj[0] += current_pointer_in[0];
+						fnode->current_inj[1] += current_pointer_in[1];
+						fnode->current_inj[2] += current_pointer_in[2];
+					}
 
 					//If we locked our from node, be sure to let it go
 					if (flock)
@@ -3734,7 +3944,7 @@ int link_object::CurrentCalculation(int nodecall)
 					}
 
 					//Replicate to the "original parent" if needed
-					if (ofnode != NULL)
+					if ((ofnode != NULL) && (link_fault_mode == false))
 					{
 						//See if our nature requires a lock
 						if (flock)
@@ -3744,9 +3954,9 @@ int link_object::CurrentCalculation(int nodecall)
 						}
 
 						//Apply current injection updates to child as well
-						ofnode->current_inj[0] += current_in[0];
-						ofnode->current_inj[1] += current_in[1];
-						ofnode->current_inj[2] += current_in[2];
+						ofnode->current_inj[0] += current_pointer_in[0];
+						ofnode->current_inj[1] += current_pointer_in[1];
+						ofnode->current_inj[2] += current_pointer_in[2];
 
 						//If we locked our from node, be sure to let it go
 						if (flock)
@@ -3777,58 +3987,58 @@ int link_object::CurrentCalculation(int nodecall)
 
 				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
 				{
-					current_out[0] = From_Y[0][0]*vtemp[0]+
+					current_pointer_out[0] = From_Y[0][0]*vtemp[0]+
 									 From_Y[0][1]*vtemp[1]+
 									 From_Y[0][2]*vtemp[2];
 				}
 				else
-					current_out[0] = 0.0;
+					current_pointer_out[0] = 0.0;
 
 				if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
 				{
-					current_out[1] = From_Y[1][0]*vtemp[0]+
-									 From_Y[1][1]*vtemp[1]+
-									 From_Y[1][2]*vtemp[2];
+					current_pointer_out[1] = From_Y[1][0]*vtemp[0]+
+									 	 	 From_Y[1][1]*vtemp[1]+
+											 From_Y[1][2]*vtemp[2];
 				}
 				else
-					current_out[1] = 0.0;
+					current_pointer_out[1] = 0.0;
 
 				if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
 				{
-					current_out[2] = From_Y[2][0]*vtemp[0]+
-									From_Y[2][1]*vtemp[1]+
-									From_Y[2][2]*vtemp[2];
+					current_pointer_out[2] = From_Y[2][0]*vtemp[0]+
+											 From_Y[2][1]*vtemp[1]+
+											 From_Y[2][2]*vtemp[2];
 				}
 				else
-					current_out[2] = 0.0;
+					current_pointer_out[2] = 0.0;
 
 				//Calculate current_in based on current_out (backwards, isn't it?)
 				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
 				{
-					current_in[0] = d_mat[0][0]*current_out[0]+
-									d_mat[0][1]*current_out[1]+
-									d_mat[0][2]*current_out[2];
+					current_pointer_in[0] = d_mat[0][0]*current_pointer_out[0]+
+											d_mat[0][1]*current_pointer_out[1]+
+											d_mat[0][2]*current_pointer_out[2];
 				}
 				else
-					current_in[0] = 0.0;
+					current_pointer_in[0] = 0.0;
 
 				if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
 				{
-					current_in[1] = d_mat[1][0]*current_out[0]+
-									d_mat[1][1]*current_out[1]+
-									d_mat[1][2]*current_out[2];
+					current_pointer_in[1] = d_mat[1][0]*current_pointer_out[0]+
+											d_mat[1][1]*current_pointer_out[1]+
+											d_mat[1][2]*current_pointer_out[2];
 				}
 				else
-					current_in[1] = 0.0;
+					current_pointer_in[1] = 0.0;
 
 				if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
 				{
-					current_in[2] = d_mat[2][0]*current_out[0]+
-									d_mat[2][1]*current_out[1]+
-									d_mat[2][2]*current_out[2];
+					current_pointer_in[2] = d_mat[2][0]*current_pointer_out[0]+
+											d_mat[2][1]*current_pointer_out[1]+
+											d_mat[2][2]*current_pointer_out[2];
 				}
 				else
-					current_in[2] = 0.0;
+					current_pointer_in[2] = 0.0;
 
 				//See if our nature requires a lock
 				if (flock)
@@ -3837,10 +4047,14 @@ int link_object::CurrentCalculation(int nodecall)
 					WRITELOCK_OBJECT(fobjval);
 				}
 
-				//Current in is just the same
-				fnode->current_inj[0] += current_in[0];
-				fnode->current_inj[1] += current_in[1];
-				fnode->current_inj[2] += current_in[2];
+				//Check to see which mode we're in
+				if (link_fault_mode == false)
+				{
+					//Current in is just the same
+					fnode->current_inj[0] += current_pointer_in[0];
+					fnode->current_inj[1] += current_pointer_in[1];
+					fnode->current_inj[2] += current_pointer_in[2];
+				}
 
 				//If we locked our from node, be sure to let it go
 				if (flock)
@@ -3850,7 +4064,7 @@ int link_object::CurrentCalculation(int nodecall)
 				}
 
 				//Replicate to the "original parent" if needed
-				if (ofnode != NULL)
+				if ((ofnode != NULL) && (link_fault_mode == false))
 				{
 					//See if our nature requires a lock
 					if (flock)
@@ -3860,9 +4074,9 @@ int link_object::CurrentCalculation(int nodecall)
 					}
 
 					//Apply current injection updates to child
-					ofnode->current_inj[0] += current_in[0];
-					ofnode->current_inj[1] += current_in[1];
-					ofnode->current_inj[2] += current_in[2];
+					ofnode->current_inj[0] += current_pointer_in[0];
+					ofnode->current_inj[1] += current_pointer_in[1];
+					ofnode->current_inj[2] += current_pointer_in[2];
 
 					//If we locked our from node, be sure to let it go
 					if (flock)
@@ -3893,32 +4107,32 @@ int link_object::CurrentCalculation(int nodecall)
 				//Get low side current (current out) - for now, oh grand creator (me) mandates D-GWye are three phase or nothing
 				if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x07)	//ABC
 				{
-					current_out[0] = vtemp[0] * b_mat[0][0];
-					current_out[1] = vtemp[1] * b_mat[1][1];
-					current_out[2] = vtemp[2] * b_mat[2][2];
+					current_pointer_out[0] = vtemp[0] * base_admittance_mat[0][0];
+					current_pointer_out[1] = vtemp[1] * base_admittance_mat[1][1];
+					current_pointer_out[2] = vtemp[2] * base_admittance_mat[2][2];
 
 					//Translate back to high-side
-					current_in[0] = d_mat[0][0]*current_out[0]+
-									d_mat[0][1]*current_out[1]+
-									d_mat[0][2]*current_out[2];
+					current_pointer_in[0] = d_mat[0][0]*current_pointer_out[0]+
+											d_mat[0][1]*current_pointer_out[1]+
+											d_mat[0][2]*current_pointer_out[2];
 
-					current_in[1] = d_mat[1][0]*current_out[0]+
-									d_mat[1][1]*current_out[1]+
-									d_mat[1][2]*current_out[2];
+					current_pointer_in[1] = d_mat[1][0]*current_pointer_out[0]+
+											d_mat[1][1]*current_pointer_out[1]+
+											d_mat[1][2]*current_pointer_out[2];
 
-					current_in[2] = d_mat[2][0]*current_out[0]+
-									d_mat[2][1]*current_out[1]+
-									d_mat[2][2]*current_out[2];
+					current_pointer_in[2] = d_mat[2][0]*current_pointer_out[0]+
+											d_mat[2][1]*current_pointer_out[1]+
+											d_mat[2][2]*current_pointer_out[2];
 				}
 				else
 				{
-					current_out[0] = 0.0;
-					current_out[1] = 0.0;
-					current_out[2] = 0.0;
+					current_pointer_out[0] = 0.0;
+					current_pointer_out[1] = 0.0;
+					current_pointer_out[2] = 0.0;
 
-					current_in[0] = 0.0;
-					current_in[1] = 0.0;
-					current_in[2] = 0.0;
+					current_pointer_in[0] = 0.0;
+					current_pointer_in[1] = 0.0;
+					current_pointer_in[2] = 0.0;
 				}
 
 				//See if our nature requires a lock
@@ -3928,10 +4142,14 @@ int link_object::CurrentCalculation(int nodecall)
 					WRITELOCK_OBJECT(fobjval);
 				}
 
-				//Current in is just the same
-				fnode->current_inj[0] += current_in[0];
-				fnode->current_inj[1] += current_in[1];
-				fnode->current_inj[2] += current_in[2];
+				//Check to see which mode we're in
+				if (link_fault_mode == false)
+				{
+					//Current in is just the same
+					fnode->current_inj[0] += current_pointer_in[0];
+					fnode->current_inj[1] += current_pointer_in[1];
+					fnode->current_inj[2] += current_pointer_in[2];
+				}
 
 				//If we locked our from node, be sure to let it go
 				if (flock)
@@ -3941,7 +4159,7 @@ int link_object::CurrentCalculation(int nodecall)
 				}
 
 				//Replicate to the "original parent" if needed
-				if (ofnode != NULL)
+				if ((ofnode != NULL) && (link_fault_mode == false))
 				{
 					//See if our nature requires a lock
 					if (flock)
@@ -3951,9 +4169,9 @@ int link_object::CurrentCalculation(int nodecall)
 					}
 
 					//Apply updates to child object
-					ofnode->current_inj[0] += current_in[0];
-					ofnode->current_inj[1] += current_in[1];
-					ofnode->current_inj[2] += current_in[2];
+					ofnode->current_inj[0] += current_pointer_in[0];
+					ofnode->current_inj[1] += current_pointer_in[1];
+					ofnode->current_inj[2] += current_pointer_in[2];
 
 					//If we locked our from node, be sure to let it go
 					if (flock)
@@ -3967,10 +4185,10 @@ int link_object::CurrentCalculation(int nodecall)
 			{
 				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
 				{
-					current_in[0] = itemp[0] = 
-						fnode->voltage[0]*b_mat[2][2]+
-						tnode->voltage[0]*b_mat[2][0]+
-						tnode->voltage[1]*b_mat[2][1];
+					current_pointer_in[0] = itemp[0] =
+											fnode->voltage[0]*base_admittance_mat[2][2]+
+											tnode->voltage[0]*base_admittance_mat[2][0]+
+											tnode->voltage[1]*base_admittance_mat[2][1];
 
 					//See if our nature requires a lock
 					if (flock)
@@ -3979,8 +4197,12 @@ int link_object::CurrentCalculation(int nodecall)
 						WRITELOCK_OBJECT(fobjval);
 					}
 
-					//Accumulate injection
-					fnode->current_inj[0] += itemp[0];
+					//Check to see which mode we're in
+					if (link_fault_mode == false)
+					{
+						//Accumulate injection
+						fnode->current_inj[0] += itemp[0];
+					}
 
 					//If we locked our from node, be sure to let it go
 					if (flock)
@@ -3990,7 +4212,7 @@ int link_object::CurrentCalculation(int nodecall)
 					}
 
 					//Replicate to the "original parent" if needed
-					if (ofnode != NULL)
+					if ((ofnode != NULL) && (link_fault_mode == false))
 					{
 						//See if our nature requires a lock
 						if (flock)
@@ -4011,20 +4233,20 @@ int link_object::CurrentCalculation(int nodecall)
 					}
 
 					//calculate current out
-					current_out[0] = fnode->voltage[0]*b_mat[0][2]+
-									 tnode->voltage[0]*b_mat[0][0]+
-									 tnode->voltage[1]*b_mat[0][1];
+					current_pointer_out[0] = fnode->voltage[0]*base_admittance_mat[0][2]+
+											 tnode->voltage[0]*base_admittance_mat[0][0]+
+											 tnode->voltage[1]*base_admittance_mat[0][1];
 
-					current_out[1] = fnode->voltage[0]*b_mat[1][2]+
-									 tnode->voltage[0]*b_mat[1][0]+
-									 tnode->voltage[1]*b_mat[1][1];
+					current_pointer_out[1] = fnode->voltage[0]*base_admittance_mat[1][2]+
+											 tnode->voltage[0]*base_admittance_mat[1][0]+
+											 tnode->voltage[1]*base_admittance_mat[1][1];
 				}
 				else if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
 				{
-					current_in[1] = itemp[0] = 
-						fnode->voltage[1]*b_mat[2][2] +
-						tnode->voltage[0]*b_mat[2][0] +
-						tnode->voltage[1]*b_mat[2][1];
+					current_pointer_in[1] = itemp[0] =
+											fnode->voltage[1]*base_admittance_mat[2][2] +
+											tnode->voltage[0]*base_admittance_mat[2][0] +
+											tnode->voltage[1]*base_admittance_mat[2][1];
 
 					//See if our nature requires a lock
 					if (flock)
@@ -4033,8 +4255,12 @@ int link_object::CurrentCalculation(int nodecall)
 						WRITELOCK_OBJECT(fobjval);
 					}
 
-					//Accumulate the injection
-					fnode->current_inj[1] += itemp[0];
+					//Check to see which mode we're in
+					if (link_fault_mode == false)
+					{
+						//Accumulate the injection
+						fnode->current_inj[1] += itemp[0];
+					}
 
 					//If we locked our from node, be sure to let it go
 					if (flock)
@@ -4044,7 +4270,7 @@ int link_object::CurrentCalculation(int nodecall)
 					}
 
 					//Replicate to the "original parent" if needed
-					if (ofnode != NULL)
+					if ((ofnode != NULL) && (link_fault_mode == false))
 					{
 						//See if our nature requires a lock
 						if (flock)
@@ -4065,21 +4291,21 @@ int link_object::CurrentCalculation(int nodecall)
 					}
 
 					//calculate current out
-					current_out[0] = fnode->voltage[1]*b_mat[0][2] +
-									 tnode->voltage[0]*b_mat[0][0] +
-									 tnode->voltage[1]*b_mat[0][1];
+					current_pointer_out[0] = fnode->voltage[1]*base_admittance_mat[0][2] +
+									 	 	 tnode->voltage[0]*base_admittance_mat[0][0] +
+											 tnode->voltage[1]*base_admittance_mat[0][1];
 
-					current_out[1] = fnode->voltage[1]*b_mat[1][2] +
-									 tnode->voltage[0]*b_mat[1][0] +
-									 tnode->voltage[1]*b_mat[1][1];
+					current_pointer_out[1] = fnode->voltage[1]*base_admittance_mat[1][2] +
+									 	 	 tnode->voltage[0]*base_admittance_mat[1][0] +
+											 tnode->voltage[1]*base_admittance_mat[1][1];
 
 				}
 				else if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
 				{
-					current_in[2] = itemp[0] = 
-						fnode->voltage[2]*b_mat[2][2] +
-						tnode->voltage[0]*b_mat[2][0] +
-						tnode->voltage[1]*b_mat[2][1];
+					current_pointer_in[2] = itemp[0] =
+											fnode->voltage[2]*base_admittance_mat[2][2] +
+											tnode->voltage[0]*base_admittance_mat[2][0] +
+											tnode->voltage[1]*base_admittance_mat[2][1];
 
 					//See if our nature requires a lock
 					if (flock)
@@ -4088,8 +4314,12 @@ int link_object::CurrentCalculation(int nodecall)
 						WRITELOCK_OBJECT(fobjval);
 					}
 
-					//Accumulate the injection
-					fnode->current_inj[2] += itemp[0];
+					//Check to see which mode we're in
+					if (link_fault_mode == false)
+					{
+						//Accumulate the injection
+						fnode->current_inj[2] += itemp[0];
+					}
 
 					//If we locked our from node, be sure to let it go
 					if (flock)
@@ -4099,7 +4329,7 @@ int link_object::CurrentCalculation(int nodecall)
 					}
 
 					//Replicate to the "original parent" if needed
-					if (ofnode != NULL)
+					if ((ofnode != NULL) && (link_fault_mode == false))
 					{
 						//See if our nature requires a lock
 						if (flock)
@@ -4120,26 +4350,26 @@ int link_object::CurrentCalculation(int nodecall)
 					}
 
 					//calculate current out
-					current_out[0] = fnode->voltage[2]*b_mat[0][2]+
-									 tnode->voltage[0]*b_mat[0][0]+
-									 tnode->voltage[1]*b_mat[0][1];
+					current_pointer_out[0] = fnode->voltage[2]*base_admittance_mat[0][2]+
+									 	 	 tnode->voltage[0]*base_admittance_mat[0][0]+
+											 tnode->voltage[1]*base_admittance_mat[0][1];
 
-					current_out[1] = fnode->voltage[2]*b_mat[1][2]+
-									 tnode->voltage[0]*b_mat[1][0]+
-									 tnode->voltage[1]*b_mat[1][1];
+					current_pointer_out[1] = fnode->voltage[2]*base_admittance_mat[1][2]+
+									 	 	 tnode->voltage[0]*base_admittance_mat[1][0]+
+											 tnode->voltage[1]*base_admittance_mat[1][1];
 				}
 				else	//No phases valid
 				{
-					current_out[0] = 0.0;
-					current_out[1] = 0.0;
+					current_pointer_out[0] = 0.0;
+					current_pointer_out[1] = 0.0;
 					//2 is generalized below - no sense doing twice
-					current_in[0] = 0.0;
-					current_in[1] = 0.0;
-					current_in[2] = 0.0;
+					current_pointer_in[0] = 0.0;
+					current_pointer_in[1] = 0.0;
+					current_pointer_in[2] = 0.0;
 				}
 
 				//Find neutral
-				current_out[2] = -(current_out[0] + current_out[1]);
+				current_pointer_out[2] = -(current_pointer_out[0] + current_pointer_out[1]);
 
 			}//end split-phase, center tapped xformer
 			else if (has_phase(PHASE_S))	//Split-phase line
@@ -4155,26 +4385,26 @@ int link_object::CurrentCalculation(int nodecall)
 							   a_mat[1][0]*tnode->voltage[0]-
 							   a_mat[1][1]*tnode->voltage[1];
 
-					current_in[0] = From_Y[0][0]*vtemp[0]+
-									From_Y[0][1]*vtemp[1];
+					current_pointer_in[0] = From_Y[0][0]*vtemp[0]+
+											From_Y[0][1]*vtemp[1];
 
-					current_in[1] = From_Y[1][0]*vtemp[0]+
-									From_Y[1][1]*vtemp[1];
+					current_pointer_in[1] = From_Y[1][0]*vtemp[0]+
+											From_Y[1][1]*vtemp[1];
 
 					//Calculate neutral current
-					current_in[2] = tn[0]*current_in[0] + tn[1]*current_in[1];
+					current_pointer_in[2] = tn[0]*current_pointer_in[0] + tn[1]*current_pointer_in[1];
 				}
 				else	//Not valid
 				{
-					current_in[0] = 0.0;
-					current_in[1] = 0.0;
-					current_in[2] = 0.0;
+					current_pointer_in[0] = 0.0;
+					current_pointer_in[1] = 0.0;
+					current_pointer_in[2] = 0.0;
 				}
 
 				//Cuurent out is the same as current in for triplex (simple lines)
-				current_out[0] = current_in[0];
-				current_out[1] = current_in[1];
-				current_out[2] = current_in[2];
+				current_pointer_out[0] = current_pointer_in[0];
+				current_pointer_out[1] = current_pointer_in[1];
+				current_pointer_out[2] = current_pointer_in[2];
 
 				//See if our nature requires a lock
 				if (flock)
@@ -4183,9 +4413,13 @@ int link_object::CurrentCalculation(int nodecall)
 					WRITELOCK_OBJECT(fobjval);
 				}
 
-				//Current in values go to the injection
-				fnode->current_inj[0] += current_in[0];
-				fnode->current_inj[1] += current_in[1];
+				//Check to see which mode we're in
+				if (link_fault_mode == false)
+				{
+					//Current in values go to the injection
+					fnode->current_inj[0] += current_pointer_in[0];
+					fnode->current_inj[1] += current_pointer_in[1];
+				}
 
 				//If we locked our from node, be sure to let it go
 				if (flock)
@@ -4195,7 +4429,7 @@ int link_object::CurrentCalculation(int nodecall)
 				}
 
 				//Replicate to the "original parent" if needed
-				if (ofnode != NULL)
+				if ((ofnode != NULL) && (link_fault_mode == false))
 				{
 					//See if our nature requires a lock
 					if (flock)
@@ -4205,8 +4439,8 @@ int link_object::CurrentCalculation(int nodecall)
 					}
 
 					//Apply current injections to child
-					ofnode->current_inj[0] += current_in[0];
-					ofnode->current_inj[1] += current_in[1];
+					ofnode->current_inj[0] += current_pointer_in[0];
+					ofnode->current_inj[1] += current_pointer_in[1];
 
 					//If we locked our from node, be sure to let it go
 					if (flock)
@@ -4306,61 +4540,61 @@ int link_object::CurrentCalculation(int nodecall)
 					//See if phases are valid
 					if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
 					{
-						current_out[0] = From_Y[0][0]*vtemp[0]+
-										From_Y[0][1]*vtemp[1]+
-										From_Y[0][2]*vtemp[2] - 
-										LinkHistTermL[0];
+						current_pointer_out[0] = From_Y[0][0]*vtemp[0]+
+												 From_Y[0][1]*vtemp[1]+
+												 From_Y[0][2]*vtemp[2] -
+												 LinkHistTermL[0];
 
 						//Update our vmag value
 						vmagtemp[0] = vtemp[0].Mag();
 					}
 					else
 					{
-						current_out[0] = 0.0;
+						current_pointer_out[0] = 0.0;
 						vmagtemp[0] = 0.0;
 					}
 
 					if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
 					{
-						current_out[1] = From_Y[1][0]*vtemp[0]+
-										From_Y[1][1]*vtemp[1]+
-										From_Y[1][2]*vtemp[2] -
-										LinkHistTermL[1];
+						current_pointer_out[1] = From_Y[1][0]*vtemp[0]+
+												 From_Y[1][1]*vtemp[1]+
+												 From_Y[1][2]*vtemp[2] -
+												 LinkHistTermL[1];
 
 						//Update our vmag value
 						vmagtemp[1] = vtemp[1].Mag();
 					}
 					else
 					{
-						current_out[1] = 0.0;
+						current_pointer_out[1] = 0.0;
 						vmagtemp[1] = 0.0;
 					}
 
 					if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
 					{
-						current_out[2] = From_Y[2][0]*vtemp[0]+
-									From_Y[2][1]*vtemp[1]+
-									From_Y[2][2]*vtemp[2] - 
-									LinkHistTermL[2];
+						current_pointer_out[2] = From_Y[2][0]*vtemp[0]+
+												 From_Y[2][1]*vtemp[1]+
+												 From_Y[2][2]*vtemp[2] -
+												 LinkHistTermL[2];
 
 						//Update our vmag value
 						vmagtemp[2] = vtemp[2].Mag();
 					}
 					else
 					{
-						current_out[2] = 0.0;
+						current_pointer_out[2] = 0.0;
 						vmagtemp[2] = 0.0;
 					}
 
 					//Now calculate current_in
-					current_in[0] = current_out[0] + shunt_current_val[0];
-					current_in[1] = current_out[1] + shunt_current_val[1];
-					current_in[2] = current_out[2] + shunt_current_val[2];
+					current_pointer_in[0] = current_pointer_out[0] + shunt_current_val[0];
+					current_pointer_in[1] = current_pointer_out[1] + shunt_current_val[1];
+					current_pointer_in[2] = current_pointer_out[2] + shunt_current_val[2];
 
 					//Adjust current out
-					current_out[0] -= shunt_current_val[3];
-					current_out[1] -= shunt_current_val[4];
-					current_out[2] -= shunt_current_val[5];
+					current_pointer_out[0] -= shunt_current_val[3];
+					current_pointer_out[1] -= shunt_current_val[4];
+					current_pointer_out[2] -= shunt_current_val[5];
 
 					//Final determination of "convergence" or not
 					if (fabs(vmagtemp[0]-inrush_vdiffmag_prev[0]) > inrush_tol_value)
@@ -4401,52 +4635,52 @@ int link_object::CurrentCalculation(int nodecall)
 					//See if phases are valid
 					if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
 					{
-						current_out[0] = From_Y[0][0]*vtemp[0]+
-										From_Y[0][1]*vtemp[1]+
-										From_Y[0][2]*vtemp[2];
+						current_pointer_out[0] = From_Y[0][0]*vtemp[0]+
+												 From_Y[0][1]*vtemp[1]+
+												 From_Y[0][2]*vtemp[2];
 					}
 					else
-						current_out[0] = 0.0;
+						current_pointer_out[0] = 0.0;
 
 					if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
 					{
-						current_out[1] = From_Y[1][0]*vtemp[0]+
-										From_Y[1][1]*vtemp[1]+
-										From_Y[1][2]*vtemp[2];
+						current_pointer_out[1] = From_Y[1][0]*vtemp[0]+
+												 From_Y[1][1]*vtemp[1]+
+												 From_Y[1][2]*vtemp[2];
 					}
 					else
-						current_out[1] = 0.0;
+						current_pointer_out[1] = 0.0;
 
 					if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
 					{
-						current_out[2] = From_Y[2][0]*vtemp[0]+
-									From_Y[2][1]*vtemp[1]+
-									From_Y[2][2]*vtemp[2];
+						current_pointer_out[2] = From_Y[2][0]*vtemp[0]+
+												 From_Y[2][1]*vtemp[1]+
+												 From_Y[2][2]*vtemp[2];
 					}
 					else
-						current_out[2] = 0.0;
+						current_pointer_out[2] = 0.0;
 
 					//Now calculate current_in
-					current_in[0] = c_mat[0][0]*tnode->voltage[0]+
-									c_mat[0][1]*tnode->voltage[1]+
-									c_mat[0][2]*tnode->voltage[2]+
-									d_mat[0][0]*current_out[0]+
-									d_mat[0][1]*current_out[1]+
-									d_mat[0][2]*current_out[2];
+					current_pointer_in[0] = c_mat[0][0]*tnode->voltage[0]+
+											c_mat[0][1]*tnode->voltage[1]+
+											c_mat[0][2]*tnode->voltage[2]+
+											d_mat[0][0]*current_pointer_out[0]+
+											d_mat[0][1]*current_pointer_out[1]+
+											d_mat[0][2]*current_pointer_out[2];
 
-					current_in[1] = c_mat[1][0]*tnode->voltage[0]+
-									c_mat[1][1]*tnode->voltage[1]+
-									c_mat[1][2]*tnode->voltage[2]+
-									d_mat[1][0]*current_out[0]+
-									d_mat[1][1]*current_out[1]+
-									d_mat[1][2]*current_out[2];
+					current_pointer_in[1] = c_mat[1][0]*tnode->voltage[0]+
+											c_mat[1][1]*tnode->voltage[1]+
+											c_mat[1][2]*tnode->voltage[2]+
+											d_mat[1][0]*current_pointer_out[0]+
+											d_mat[1][1]*current_pointer_out[1]+
+											d_mat[1][2]*current_pointer_out[2];
 
-					current_in[2] = c_mat[2][0]*tnode->voltage[0]+
-									c_mat[2][1]*tnode->voltage[1]+
-									c_mat[2][2]*tnode->voltage[2]+
-									d_mat[2][0]*current_out[0]+
-									d_mat[2][1]*current_out[1]+
-									d_mat[2][2]*current_out[2];
+					current_pointer_in[2] = c_mat[2][0]*tnode->voltage[0]+
+											c_mat[2][1]*tnode->voltage[1]+
+											c_mat[2][2]*tnode->voltage[2]+
+											d_mat[2][0]*current_pointer_out[0]+
+											d_mat[2][1]*current_pointer_out[1]+
+											d_mat[2][2]*current_pointer_out[2];
 				}//End "normal" calculation
 
 				//See if our nature requires a lock
@@ -4456,10 +4690,14 @@ int link_object::CurrentCalculation(int nodecall)
 					WRITELOCK_OBJECT(fobjval);
 				}
 
-				//Current in is just the same
-				fnode->current_inj[0] += current_in[0];
-				fnode->current_inj[1] += current_in[1];
-				fnode->current_inj[2] += current_in[2];
+				//Check to see which mode we're in
+				if (link_fault_mode == false)
+				{
+					//Current in is just the same
+					fnode->current_inj[0] += current_pointer_in[0];
+					fnode->current_inj[1] += current_pointer_in[1];
+					fnode->current_inj[2] += current_pointer_in[2];
+				}
 
 				//If we locked our from node, be sure to let it go
 				if (flock)
@@ -4469,7 +4707,7 @@ int link_object::CurrentCalculation(int nodecall)
 				}
 
 				//Replicate to the "original parent" if needed
-				if (ofnode != NULL)
+				if ((ofnode != NULL) && (link_fault_mode == false))
 				{
 					//See if our nature requires a lock
 					if (flock)
@@ -4479,9 +4717,9 @@ int link_object::CurrentCalculation(int nodecall)
 					}
 
 					//Apply current injections to childed object
-					ofnode->current_inj[0] += current_in[0];
-					ofnode->current_inj[1] += current_in[1];
-					ofnode->current_inj[2] += current_in[2];
+					ofnode->current_inj[0] += current_pointer_in[0];
+					ofnode->current_inj[1] += current_pointer_in[1];
+					ofnode->current_inj[2] += current_pointer_in[2];
 
 					//If we locked our from node, be sure to let it go
 					if (flock)
@@ -4494,13 +4732,22 @@ int link_object::CurrentCalculation(int nodecall)
 		}//End is closed
 		else	//Open, so no current
 		{
-			current_in[0] = current_in[1] = current_in[2] = 0.0;
-			current_out[0] = current_out[1] = current_out[2] = 0.0;
+			current_pointer_in[0] = current_pointer_in[1] = current_pointer_in[2] = 0.0;
+			current_pointer_out[0] = current_pointer_out[1] = current_pointer_out[2] = 0.0;
 		}
 
 		//Flag us as done
 		current_accumulated = true;
 	}//End current not accumulated yet
+
+	//Copy in the values to the published values - otherwise, API-type calls may miss them
+	read_I_in[0] = current_in[0];
+	read_I_in[1] = current_in[1];
+	read_I_in[2] = current_in[2];
+
+	read_I_out[0] = current_out[0];
+	read_I_out[1] = current_out[1];
+	read_I_out[2] = current_out[2];
 
 	return 1;	//Assume it's always successful now
 }
@@ -4702,6 +4949,10 @@ void link_object::calculate_power()
 				indiv_power_out[1] = (a_mat[1][1].Re() == 0.0) ? 0.0 : t->voltage[1]*~current_out[1];
 				indiv_power_out[2] = (a_mat[2][2].Re() == 0.0) ? 0.0 : t->voltage[2]*~current_out[2];
 			}
+			else if (SpecialLnk == VFD)
+			{
+				;	//Do nothing, handled elsewhere
+			}
 			else
 			{
 				indiv_power_in[0] = f->voltage[0]*~current_in[0];
@@ -4803,7 +5054,7 @@ double *link_object::get_double(OBJECT *obj, char *name)
 // 30 - FUS-AC or FUS-CA - Fuse action CA
 // 31 - FUS-ABC - Fuse action ABC
 // 32 - TLL - all lines fault - phases A, B, and C
-int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time, void *Extra_Data)
+int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time)
 {
 	unsigned char phase_remove = 0x00;	//Default is no phases removed
 	unsigned char rand_phases,temp_phases, work_phases;			//Working variable
@@ -4817,7 +5068,6 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 	OBJECT *objhdr = OBJECTHDR(this);
 	OBJECT *tmpobj;
 	FUNCTIONADDR funadd = NULL;
-	double *Recloser_Counts;
 	double type_fault;
 	bool switch_val;
 	complex C_mat[7][7];
@@ -4848,9 +5098,6 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 		//Default repair time is non-existant
 		*repair_time = 0;
-
-		//Link up recloser counts for manipulation
-		Recloser_Counts = (double *)Extra_Data;
 
 		//Initial check - faults only work for NR right now
 		if (solver_method != SM_NR)
@@ -7004,7 +7251,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			if (NR_branchdata[NR_branch_reference].lnk_type == 3)	//Fuse
 			{
 				//Get the fuse
-				tmpobj = gl_get_object(NR_branchdata[NR_branch_reference].name);
+				tmpobj = NR_branchdata[NR_branch_reference].obj;
 
 				if (tmpobj == NULL)
 				{
@@ -7084,7 +7331,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			else if (NR_branchdata[NR_branch_reference].lnk_type == 6)	//Recloser
 			{
 				//Get the recloser
-				tmpobj = gl_get_object(NR_branchdata[NR_branch_reference].name);
+				tmpobj = NR_branchdata[NR_branch_reference].obj;
 
 				if (tmpobj == NULL)
 				{
@@ -7133,7 +7380,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}
 
 				//Store the number of recloser actions
-				*Recloser_Counts = ext_result_dbl;
+				reliability_metrics_recloser_counts = ext_result_dbl;
 
 				//Store the branch as an index in appropriate phases
 				for (phaseidx=0; phaseidx < 3; phaseidx++)
@@ -7159,12 +7406,12 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				safety_hit = true;
 
 			}//End recloser
-			else if ((NR_branchdata[NR_branch_reference].lnk_type == 2) && (switch_val == true))	//Switch induced fault - handle it
+			else if (NR_branchdata[NR_branch_reference].lnk_type == 2)	//Switch induced fault - handle it
 			{
 				//Follows convention of safety devices above
 				//Extra coding - basically what would have happened below when it was classified as a safety device
 				//Get the switch
-				tmpobj = gl_get_object(NR_branchdata[NR_branch_reference].name);
+				tmpobj = NR_branchdata[NR_branch_reference].obj;
 
 				if (tmpobj == NULL)
 				{
@@ -7262,7 +7509,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					}
 
 					//Get the swing bus value
-					tmpobj = gl_get_object(NR_busdata[temp_node].name);
+					tmpobj = NR_busdata[temp_node].obj;
 
 					if (tmpobj == NULL)
 					{
@@ -7312,7 +7559,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 							if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 6)	//Recloser
 							{
 								//Get the recloser
-								tmpobj = gl_get_object(NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+								tmpobj = NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].obj;
 
 								if (tmpobj == NULL)
 								{
@@ -7361,7 +7608,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								}
 
 								//Store the number of recloser actions
-								*Recloser_Counts = ext_result_dbl;
+								reliability_metrics_recloser_counts = ext_result_dbl;
 
 								//Store the branch as an index in appropriate phases
 								for (phaseidx=0; phaseidx < 3; phaseidx++)
@@ -7389,10 +7636,86 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Break out of this pesky loop
 								break;
 							}//end recloser
+							else if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 2)	//Switch induced fault - handle it
+							{
+								//Follows convention of safety devices above
+								//Extra coding - basically what would have happened below when it was classified as a safety device
+								//Get the switch
+								tmpobj = NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].obj;
+
+								if (tmpobj == NULL)
+								{
+									GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									/*  TROUBLESHOOT
+									While attempting to set the state of a switch, an error occurred.  Please try again.  If the error persists,
+									please submit a bug report and your code via the trac website.
+									*/
+								}
+
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_state"));
+
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change switch state on %s",tmpobj->name);
+									/*  TROUBLESHOOT
+									While attempting to alter a switch state, the proper switch function was not found.
+									If the problem persists, please submit a bug report and your code to the trac website.
+									*/
+								}
+
+								//Update the switch statii
+								ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+
+								//Make sure it worked
+								if (ext_result != 1)
+								{
+									GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									//defined above
+								}
+
+								//Retrieve the mean_repair_time
+								temp_double_val = get_double(tmpobj,"mean_repair_time");
+
+								//See if it worked
+								if (temp_double_val == NULL)
+								{
+									gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
+									//Defined above
+									*repair_time = 0;
+								}
+								else	//It did map - get the value
+								{
+									*repair_time = (TIMESTAMP)(*temp_double_val);
+								}
+
+								//Store ourselves as our protective device
+								for (phaseidx=0; phaseidx < 3; phaseidx++)
+								{
+									temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+									if ((phase_remove & temp_phases) == temp_phases)
+									{
+										protect_locations[phaseidx] = NR_busdata[temp_node].Link_Table[temp_table_loc];	//Store ourselves
+									}
+								}
+
+								//Flag our fault phases
+								NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].faultphases |= phase_remove;
+
+								//Update our fault phases so we aren't restored
+								NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
+
+								//Store the object handle
+								*protect_obj=tmpobj;
+
+								safety_hit = true;	//We hit a protective device
+								break;
+							}
 							else if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 5)	//Sectionalizer
 							{
 								//Get the sectionalizer
-								tmpobj = gl_get_object(NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+								tmpobj = NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].obj;
 
 								if (tmpobj == NULL)
 								{
@@ -7449,7 +7772,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 									}
 
 									//Store the number of recloser actions
-									*Recloser_Counts = ext_result_dbl;
+									reliability_metrics_recloser_counts = ext_result_dbl;
 
 									//Store the branch as an index in appropriate phases
 									for (phaseidx=0; phaseidx < 3; phaseidx++)
@@ -7481,7 +7804,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 							else if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 3)	//Fuse
 							{
 								//Get the fuse
-								tmpobj = gl_get_object(NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+								tmpobj = NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].obj;
 
 								if (tmpobj == NULL)
 								{
@@ -7558,7 +7881,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 							else if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 4)	//Transformer - not really "protective" - we assume it explodes
 							{
 								//Get the transformer
-								tmpobj = gl_get_object(NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+								tmpobj = NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].obj;
 
 								if (tmpobj == NULL)
 								{
@@ -7681,6 +8004,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				gl_verbose("Event %d induced on %s by using %s",*implemented_fault,objhdr->name,NR_branchdata[temp_branch].name);
 		}//End a change has been flagged
 
+		gl_verbose ("link_fault_on (normal mode) returns:%s:%d:%ld", fault_type, *implemented_fault, *repair_time);
 		return 1;	//Successful
 	}//End "normal" fault operations mode
 	else	//Meshed checking -- handle differently
@@ -7709,9 +8033,6 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 		//Default repair time is non-existant
 		*repair_time = 0;
-
-		//Link up recloser counts for manipulation
-		Recloser_Counts = (double *)Extra_Data;
 
 		//Initial check - faults only work for NR right now
 		if (solver_method != SM_NR)
@@ -9812,7 +10133,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			if (NR_branchdata[NR_branch_reference].lnk_type == 3)	//Fuse
 			{
 				//Get the fuse
-				tmpobj = gl_get_object(NR_branchdata[NR_branch_reference].name);
+				tmpobj = NR_branchdata[NR_branch_reference].obj;
 
 				if (tmpobj == NULL)
 				{
@@ -9892,7 +10213,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			else if (NR_branchdata[NR_branch_reference].lnk_type == 6)	//Recloser
 			{
 				//Get the recloser
-				tmpobj = gl_get_object(NR_branchdata[NR_branch_reference].name);
+				tmpobj = NR_branchdata[NR_branch_reference].obj;
 
 				if (tmpobj == NULL)
 				{
@@ -9941,7 +10262,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}
 
 				//Store the number of recloser actions
-				*Recloser_Counts = ext_result_dbl;
+				reliability_metrics_recloser_counts = ext_result_dbl;
 
 				//Store the branch as an index in appropriate phases
 				for (phaseidx=0; phaseidx < 3; phaseidx++)
@@ -9967,12 +10288,12 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				safety_hit = true;
 
 			}//End recloser
-			else if ((NR_branchdata[NR_branch_reference].lnk_type == 2) && (switch_val == true))	//Switch induced fault - handle it
+			else if (NR_branchdata[NR_branch_reference].lnk_type == 2)	//Switch induced fault - handle it
 			{
 				//Follows convention of safety devices above
 				//Extra coding - basically what would have happened below when it was classified as a safety device
 				//Get the switch
-				tmpobj = gl_get_object(NR_branchdata[NR_branch_reference].name);
+				tmpobj = NR_branchdata[NR_branch_reference].obj;
 
 				if (tmpobj == NULL)
 				{
@@ -10070,7 +10391,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					}
 
 					//Get the swing bus value
-					tmpobj = gl_get_object(NR_busdata[temp_node].name);
+					tmpobj = NR_busdata[temp_node].obj;
 
 					if (tmpobj == NULL)
 					{
@@ -10120,7 +10441,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 							if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 6)	//Recloser
 							{
 								//Get the recloser
-								tmpobj = gl_get_object(NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+								tmpobj = NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].obj;
 
 								if (tmpobj == NULL)
 								{
@@ -10169,7 +10490,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								}
 
 								//Store the number of recloser actions
-								*Recloser_Counts = ext_result_dbl;
+								reliability_metrics_recloser_counts = ext_result_dbl;
 
 								//Store the branch as an index in appropriate phases
 								for (phaseidx=0; phaseidx < 3; phaseidx++)
@@ -10197,10 +10518,86 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Break out of this pesky loop
 								break;
 							}//end recloser
+							else if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 2)	//Switch induced fault - handle it
+							{
+								//Follows convention of safety devices above
+								//Extra coding - basically what would have happened below when it was classified as a safety device
+								//Get the switch
+								tmpobj = NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].obj;
+
+								if (tmpobj == NULL)
+								{
+									GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									/*  TROUBLESHOOT
+									While attempting to set the state of a switch, an error occurred.  Please try again.  If the error persists,
+									please submit a bug report and your code via the trac website.
+									*/
+								}
+
+								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_state"));
+
+								//Make sure it was found
+								if (funadd == NULL)
+								{
+									GL_THROW("Unable to change switch state on %s",tmpobj->name);
+									/*  TROUBLESHOOT
+									While attempting to alter a switch state, the proper switch function was not found.
+									If the problem persists, please submit a bug report and your code to the trac website.
+									*/
+								}
+
+								//Update the switch statii
+								ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+
+								//Make sure it worked
+								if (ext_result != 1)
+								{
+									GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+									//defined above
+								}
+
+								//Retrieve the mean_repair_time
+								temp_double_val = get_double(tmpobj,"mean_repair_time");
+
+								//See if it worked
+								if (temp_double_val == NULL)
+								{
+									gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
+									//Defined above
+									*repair_time = 0;
+								}
+								else	//It did map - get the value
+								{
+									*repair_time = (TIMESTAMP)(*temp_double_val);
+								}
+
+								//Store ourselves as our protective device
+								for (phaseidx=0; phaseidx < 3; phaseidx++)
+								{
+									temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+									if ((phase_remove & temp_phases) == temp_phases)
+									{
+										protect_locations[phaseidx] = NR_busdata[temp_node].Link_Table[temp_table_loc];	//Store ourselves
+									}
+								}
+
+								//Flag our fault phases
+								NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].faultphases |= phase_remove;
+
+								//Update our fault phases so we aren't restored
+								NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
+
+								//Store the object handle
+								*protect_obj=tmpobj;
+
+								safety_hit = true;	//We hit a protective device
+								break;
+							}
 							else if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 5)	//Sectionalizer
 							{
 								//Get the sectionalizer
-								tmpobj = gl_get_object(NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+								tmpobj = NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].obj;
 
 								if (tmpobj == NULL)
 								{
@@ -10257,7 +10654,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 									}
 
 									//Store the number of recloser actions
-									*Recloser_Counts = ext_result_dbl;
+									reliability_metrics_recloser_counts = ext_result_dbl;
 
 									//Store the branch as an index in appropriate phases
 									for (phaseidx=0; phaseidx < 3; phaseidx++)
@@ -10289,7 +10686,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 							else if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 3)	//Fuse
 							{
 								//Get the fuse
-								tmpobj = gl_get_object(NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+								tmpobj = NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].obj;
 
 								if (tmpobj == NULL)
 								{
@@ -10366,7 +10763,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 							else if (NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].lnk_type == 4)	//Transformer - not really "protective" - we assume it explodes
 							{
 								//Get the transformer
-								tmpobj = gl_get_object(NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
+								tmpobj = NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].obj;
 
 								if (tmpobj == NULL)
 								{
@@ -10489,12 +10886,13 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				gl_verbose("Event %d induced on %s by using %s",*implemented_fault,objhdr->name,NR_branchdata[temp_branch].name);
 		}//End a change has been flagged
 
+		gl_verbose ("link_fault_on (meshed mode) returns:%s:%d:%ld", fault_type, *implemented_fault, *repair_time);
 		return 1;	//Successful
 	}//End "Msehed mode" checks
 }
 
 //Function to remove enacted fault on link - use same list as above (link_fault_on)
-int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name, void *Extra_Data)
+int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 {
 	unsigned char phase_restore = 0x00;	//Default is no phases restored
 	unsigned char temp_phases, temp_phases_B, work_phases;			//Working variable
@@ -10504,7 +10902,6 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name, vo
 	OBJECT *objhdr = OBJECTHDR(this);
 	OBJECT *tmpobj;
 	FUNCTIONADDR funadd = NULL;
-	double *Recloser_Counts;
 	bool switch_val;
 
 	//Check our operations mode
@@ -10512,9 +10909,6 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name, vo
 	{
 		//Set up default switch variable - used to indicate special cases
 		switch_val = false;
-
-		//Link up recloser counts for manipulation
-		Recloser_Counts = (double *)Extra_Data;
 
 		//Less logic here - just undo what we did before - find the fault type and clear it out
 		switch (*implemented_fault)
@@ -10875,10 +11269,10 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name, vo
 					else	//Not the SWING Bus
 					{
 						//See if we are of a "protective" device implementation
-						if ((NR_branchdata[protect_locations[phaseidx]].lnk_type == 2) && (switch_val == true))	//Switch
+						if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 2)	//Switch
 						{
 							//Get the switch
-							tmpobj = gl_get_object(NR_branchdata[protect_locations[phaseidx]].name);
+							tmpobj = NR_branchdata[protect_locations[phaseidx]].obj;
 
 							if (tmpobj == NULL)
 							{
@@ -11023,7 +11417,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name, vo
 						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 6)	//recloser
 						{
 							//Get the recloser
-							tmpobj = gl_get_object(NR_branchdata[protect_locations[phaseidx]].name);
+							tmpobj = NR_branchdata[protect_locations[phaseidx]].obj;
 
 							if (tmpobj == NULL)
 							{
@@ -11153,7 +11547,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name, vo
 						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 5)	//Sectionalizer
 						{
 							//Get the sectionalizer
-							tmpobj = gl_get_object(NR_branchdata[protect_locations[phaseidx]].name);
+							tmpobj = NR_branchdata[protect_locations[phaseidx]].obj;
 
 							if (tmpobj == NULL)
 							{
@@ -11283,7 +11677,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name, vo
 						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 3)	//fuse
 						{
 							//Get the fuse
-							tmpobj = gl_get_object(NR_branchdata[protect_locations[phaseidx]].name);
+							tmpobj = NR_branchdata[protect_locations[phaseidx]].obj;
 
 							if (tmpobj == NULL)
 							{
@@ -11517,15 +11911,13 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name, vo
 				gl_verbose("Event %s removed from %s by restoring %s",imp_fault_name,objhdr->name,NR_branchdata[temp_node].name);
 		}//End actual change
 
+		gl_verbose ("link_fault_off (normal mode) returns:%s:%d", imp_fault_name, *implemented_fault);
 		return 1;
 	}//End "normal" operations mode
 	else	//Must be crazy mesh checking mode
 	{
 		//Set up default switch variable - used to indicate special cases
 		switch_val = false;
-
-		//Link up recloser counts for manipulation
-		Recloser_Counts = (double *)Extra_Data;
 
 		//Less logic here - just undo what we did before - find the fault type and clear it out
 		switch (*implemented_fault)
@@ -11886,10 +12278,10 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name, vo
 					else	//Not the SWING Bus
 					{
 						//See if we are of a "protective" device implementation
-						if ((NR_branchdata[protect_locations[phaseidx]].lnk_type == 2) && (switch_val == true))	//Switch
+						if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 2)	//Switch
 						{
 							//Get the switch
-							tmpobj = gl_get_object(NR_branchdata[protect_locations[phaseidx]].name);
+							tmpobj = NR_branchdata[protect_locations[phaseidx]].obj;
 
 							if (tmpobj == NULL)
 							{
@@ -11954,7 +12346,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name, vo
 						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 6)	//recloser
 						{
 							//Get the recloser
-							tmpobj = gl_get_object(NR_branchdata[protect_locations[phaseidx]].name);
+							tmpobj = NR_branchdata[protect_locations[phaseidx]].obj;
 
 							if (tmpobj == NULL)
 							{
@@ -12084,7 +12476,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name, vo
 						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 5)	//Sectionalizer
 						{
 							//Get the sectionalizer
-							tmpobj = gl_get_object(NR_branchdata[protect_locations[phaseidx]].name);
+							tmpobj = NR_branchdata[protect_locations[phaseidx]].obj;
 
 							if (tmpobj == NULL)
 							{
@@ -12214,7 +12606,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name, vo
 						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 3)	//fuse
 						{
 							//Get the fuse
-							tmpobj = gl_get_object(NR_branchdata[protect_locations[phaseidx]].name);
+							tmpobj = NR_branchdata[protect_locations[phaseidx]].obj;
 
 							if (tmpobj == NULL)
 							{
@@ -12448,8 +12840,1093 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name, vo
 				gl_verbose("Event %s removed from %s by restoring %s",imp_fault_name,objhdr->name,NR_branchdata[temp_node].name);
 		}//End actual change
 
+		gl_verbose ("link_fault_off (meshed mode) returns:%s:%d", imp_fault_name, *implemented_fault);
 		return 1;
 	}//End meshed checking mode
+}
+//Function to remove enacted fault on link but not restore the system.
+int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) {
+	unsigned char phase_restore = 0x00;	//Default is no phases restored
+	unsigned char temp_phases, temp_phases_B, work_phases;			//Working variable
+	char phaseidx, indexval;
+	int temp_node, ext_result;
+	double ext_result_dbl;
+	OBJECT *objhdr = OBJECTHDR(this);
+	OBJECT *tmpobj;
+	FUNCTIONADDR funadd = NULL;
+	bool switch_val;
+
+	//Check our operations mode
+	if (meshed_fault_checking_enabled == false)	//Normal mode
+	{
+		//Set up default switch variable - used to indicate special cases
+		switch_val = false;
+
+		//Less logic here - just undo what we did before - find the fault type and clear it out
+		switch (*implemented_fault)
+		{
+			case 0:	//No fault - do nothing
+				imp_fault_name[0] = 'N';
+				imp_fault_name[1] = 'o';
+				imp_fault_name[2] = 'n';
+				imp_fault_name[3] = 'e';
+				imp_fault_name[4] = '\0';
+				break;
+			case 1:	//SLG-A
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x04;	//Put A back in service
+				break;
+			case 2:	//SLG-B
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x02;	//Put B back in service
+				break;
+			case 3:	//SLG-C
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x01;	//Put C back in service
+				break;
+			case 4:	//DLG-AB
+				imp_fault_name[0] = 'D';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = 'B';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				break;
+			case 5:	//DLG-BC
+				imp_fault_name[0] = 'D';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = 'C';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				break;
+			case 6:	//DLG-CA
+				imp_fault_name[0] = 'D';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = 'A';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				break;
+			case 7:	//LL-AB
+				imp_fault_name[0] = 'L';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				break;
+			case 8:	//LL-BC
+				imp_fault_name[0] = 'L';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'B';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				break;
+			case 9:	//LL-CA
+				imp_fault_name[0] = 'L';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'C';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				break;
+			case 10:	//TLG
+				imp_fault_name[0] = 'T';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				break;
+			case 11:	//OC-A
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x04;	//Put A back in service
+				break;
+			case 12:	//OC-B
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'B';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x02;	//Put B back in service
+				break;
+			case 13:	//OC-C
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'C';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x01;	//Put C back in service
+				break;
+			case 14:	//OC2-AB
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '2';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = 'B';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				break;
+			case 15:	//OC2-BC
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '2';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = 'C';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				break;
+			case 16:	//OC2-CA
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '2';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = 'A';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				break;
+			case 17:	//OC3
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '3';
+				imp_fault_name[3] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				break;
+			case 18:	//SW-A
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x04;	//Put A back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 19:	//SW-B
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'B';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x02;	//Put B back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 20:	//SW-C
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'C';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x01;	//Put C back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 21:	//SW-AB
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 22:	//SW-BC
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'B';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 23:	//SW-CA
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'C';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 24:	//SW-ABC
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = 'C';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 25:	//FUS-A
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x04;	//Put A back in service
+				break;
+			case 26:	//FUS-B
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x02;	//Put B back in service
+				break;
+			case 27:	//FUS-C
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x01;	//Put C back in service
+				break;
+			case 28:	//FUS-AB
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = 'B';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				break;
+			case 29:	//FUS-BC
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = 'C';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				break;
+			case 30:	//FUS-CA
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = 'A';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				break;
+			case 31:	//FUS-ABC
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = 'B';
+				imp_fault_name[6] = 'C';
+				imp_fault_name[7] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				break;
+			case 32:	//TLL
+				imp_fault_name[0] = 'T';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'L';
+				imp_fault_name[3] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				break;
+			default:	//Should never get here
+				GL_THROW("%s - attempted to recover from unsupported fault!",objhdr->name);
+				/*  TROUBLESHOOT
+				The link object attempted to recover from an unknown fault type.  Please try again.  If the
+				error persists, please submit your code and a bug report to the trac website.
+				*/
+				break;
+		}//end switch
+
+		//Flag an update if something changed (not a 0 state)
+		if (*implemented_fault != 0)
+		{
+			temp_node = -1;	//Default value
+
+			//Remove our restrictions for these phases
+			for (phaseidx=0; phaseidx<3; phaseidx++)
+			{
+				work_phases = 0x04 >> phaseidx;	//Get check
+
+				if ((phase_restore & work_phases) == work_phases)	//Valid phase to restore
+				{
+					//Store the value of protect_locations for later
+					temp_node = protect_locations[phaseidx];
+
+					//See if our "protective device" was the swing bus
+					if (protect_locations[phaseidx] == -1)
+					{
+						GL_THROW("An attempt to restore something that was never faulted has occurred!");
+						/*  TROUBLESHOOT
+						While attempting to restore a device, an unknown state was encountered where it
+						had somehow started faulted and was not caught.  If you have any switches in your
+						system, consider starting them closed first.
+						*/
+					}
+					else if (protect_locations[phaseidx] == -99)
+					{
+						//Theoretically, this phase should exist on the SWING.  Let's check to make sure
+						if ((NR_busdata[0].origphases & work_phases) == work_phases)	//Valid phase
+						{
+							NR_busdata[0].phases |= work_phases;	//Just turn it back on - it's the SWING, it has to work
+						}
+						else
+						{
+							GL_THROW("A fault was induced on the SWING bus for an unsupported phase!");
+							/*  TROUBLESHOOT
+							Somehow, a fault was induced on a phase that should not exist on the system.  While
+							attemtping to restore this fault, the SWING bus did not have the proper original phases,
+							so this could not be restored.  Please submit your code and a bug report using the trac website.
+							*/
+						}
+					}//End SWING
+					else	//Not the SWING Bus
+					{
+						//See if we are of a "protective" device implementation
+						if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 2)	//Switch
+						{
+							//Get the switch
+							tmpobj = NR_branchdata[protect_locations[phaseidx]].obj;
+
+							if (tmpobj == NULL)
+							{
+								GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
+								//Defined above
+							}
+
+							//Check and see what the supporting nodes are doing - if a switch is already in a fault, this causes issues
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+
+							//Flag the remote object's appropriate phases
+							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
+
+							//Remove the branch as an index in appropriate phases
+							for (phaseidx=0; phaseidx < 3; phaseidx++)
+							{
+								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+								if ((phase_restore & temp_phases) == temp_phases)
+								{
+									protect_locations[phaseidx] = -1;	//Clear our location
+								}
+							}
+
+							//Update our fault phases
+							NR_branchdata[NR_branch_reference].faultphases &= ~(phase_restore);
+
+							//Break out of this pesky loop
+							break;
+						}//end switch closure
+						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 6)	//recloser
+						{
+							//Check and see what the supporting nodes are doing - if a recloser is already in a fault, this causes issues
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+
+							//Flag the remote object's appropriate phases
+							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
+
+							//Remove the branch as an index in appropriate phases
+							for (phaseidx=0; phaseidx < 3; phaseidx++)
+							{
+								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+								if ((phase_restore & temp_phases) == temp_phases)
+								{
+									protect_locations[phaseidx] = -1;	//Clear our location
+								}
+							}
+
+							//Update our fault phases
+							NR_branchdata[NR_branch_reference].faultphases &= ~(phase_restore);
+
+							//Break out of this pesky loop
+							break;
+						}//end recloser closure
+						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 5)	//Sectionalizer
+						{
+							//Check and see what the supporting nodes are doing - if a sectionalizer is already in a fault, this causes issues
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+
+							//Flag the remote object's appropriate phases
+							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
+
+							//Remove the branch as an index in appropriate phases
+							for (phaseidx=0; phaseidx < 3; phaseidx++)
+							{
+								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+								if ((phase_restore & temp_phases) == temp_phases)
+								{
+									protect_locations[phaseidx] = -1;	//Clear our location
+								}
+							}
+
+							//Update our fault phases
+							NR_branchdata[NR_branch_reference].faultphases &= ~(phase_restore);
+
+							//Break out of this pesky loop
+							break;
+						}//end sectionalizer closure
+						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 3)	//fuse
+						{
+							//Check and see what the supporting nodes are doing - if a fuse is already in a fault, this causes issues
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+
+							//Flag the remote object's appropriate phases
+							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
+
+							//Remove the branch as an index in appropriate phases
+							for (phaseidx=0; phaseidx < 3; phaseidx++)
+							{
+								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+								if ((phase_restore & temp_phases) == temp_phases)
+								{
+									protect_locations[phaseidx] = -1;	//Clear our location
+								}
+							}
+
+							//Update our fault phases
+							NR_branchdata[NR_branch_reference].faultphases &= ~(phase_restore);
+
+							//Break out of this pesky loop
+							break;
+						}//End fuse closure
+						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 4)	//Transformer
+						{
+							//Transformers are special case - if the source is supported, all three phases are reinstated
+							temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & 0x07;
+
+							//Make sure we match
+							if ((temp_phases & NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases) == temp_phases)
+							{
+								//Support is there, restore all relevant phases
+								NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(temp_phases);
+
+								//Check for SPCT rating
+								if ((NR_branchdata[protect_locations[phaseidx]].origphases & 0x80) == 0x80)	//SPCT
+								{
+									temp_phases |= 0x80;	//Apply SPCT flag
+								}
+								//Defaulted else - normal xformer
+
+								//Pull the phases back into service
+								NR_branchdata[protect_locations[phaseidx]].phases = (NR_branchdata[protect_locations[phaseidx]].origphases & temp_phases);
+							}
+							else	//Support is not there - clear the flag, but don't restore
+							{
+								NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(temp_phases);
+							}
+
+							//Remove our fault for the appropriate phases
+							temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & 0x07;
+							NR_branchdata[NR_branch_reference].faultphases &= ~(temp_phases);
+
+							//Remove fault indices - loop through transformer phases
+							for (indexval=0; indexval<3; indexval++)
+							{
+								temp_phases = 0x04 >> indexval;
+
+								if ((temp_phases & NR_branchdata[NR_branch_reference].faultphases) == 0x00)	//No fault here
+									protect_locations[indexval] = -1;	//Clear flag
+							}
+
+							break;	//Get us out of phase loop - transformers handle all 3 phases at once
+						}//End transformer restoration
+						else
+						{
+							GL_THROW("Protective device %s invalid for restoration!",NR_branchdata[protect_locations[phaseidx]].name);
+							/*  TROUBLESHOOT
+							While attempting to restore a protective device, something besides a switch, fuse, or transformer was used.
+							This should not have happened.  Please try again.  If the error persists, please submit your code and a bug
+							report using the trac website.
+							*/
+						}
+
+						//Clear "far" device lockout
+						NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(work_phases);	//Remove the phase lock
+					}
+
+					//Clear faulted device lockout
+					protect_locations[phaseidx] = -1;
+
+					//Clear faulted device protect_locations
+					NR_branchdata[NR_branch_reference].faultphases &= ~(work_phases);	//Remove the phase lock from us as well
+				}//End valid phase
+				//Default else - not a phase we care about
+			}//End phase loop
+		}//End actual change
+
+		gl_verbose ("clear_fault_only (normal mode) returns:%s:%d", imp_fault_name, *implemented_fault);
+		return 1;
+	}//End "normal" operations mode
+	else	//Must be crazy mesh checking mode
+	{
+		//Set up default switch variable - used to indicate special cases
+		switch_val = false;
+
+		//Less logic here - just undo what we did before - find the fault type and clear it out
+		switch (*implemented_fault)
+		{
+			case 0:	//No fault - do nothing
+				imp_fault_name[0] = 'N';
+				imp_fault_name[1] = 'o';
+				imp_fault_name[2] = 'n';
+				imp_fault_name[3] = 'e';
+				imp_fault_name[4] = '\0';
+				break;
+			case 1:	//SLG-A
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x04;	//Put A back in service
+				break;
+			case 2:	//SLG-B
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x02;	//Put B back in service
+				break;
+			case 3:	//SLG-C
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x01;	//Put C back in service
+				break;
+			case 4:	//DLG-AB
+				imp_fault_name[0] = 'D';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = 'B';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				break;
+			case 5:	//DLG-BC
+				imp_fault_name[0] = 'D';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = 'C';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				break;
+			case 6:	//DLG-CA
+				imp_fault_name[0] = 'D';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = 'A';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				break;
+			case 7:	//LL-AB
+				imp_fault_name[0] = 'L';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				break;
+			case 8:	//LL-BC
+				imp_fault_name[0] = 'L';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'B';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				break;
+			case 9:	//LL-CA
+				imp_fault_name[0] = 'L';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'C';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				break;
+			case 10:	//TLG
+				imp_fault_name[0] = 'T';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'G';
+				imp_fault_name[3] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				break;
+			case 11:	//OC-A
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x04;	//Put A back in service
+				break;
+			case 12:	//OC-B
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'B';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x02;	//Put B back in service
+				break;
+			case 13:	//OC-C
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'C';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x01;	//Put C back in service
+				break;
+			case 14:	//OC2-AB
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '2';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = 'B';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				break;
+			case 15:	//OC2-BC
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '2';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = 'C';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				break;
+			case 16:	//OC2-CA
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '2';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = 'A';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				break;
+			case 17:	//OC3
+				imp_fault_name[0] = 'O';
+				imp_fault_name[1] = 'C';
+				imp_fault_name[2] = '3';
+				imp_fault_name[3] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				break;
+			case 18:	//SW-A
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x04;	//Put A back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 19:	//SW-B
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'B';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x02;	//Put B back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 20:	//SW-C
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'C';
+				imp_fault_name[4] = '\0';
+				phase_restore = 0x01;	//Put C back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 21:	//SW-AB
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 22:	//SW-BC
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'B';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 23:	//SW-CA
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'C';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 24:	//SW-ABC
+				imp_fault_name[0] = 'S';
+				imp_fault_name[1] = 'W';
+				imp_fault_name[2] = '-';
+				imp_fault_name[3] = 'A';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = 'C';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				switch_val = true;		//Flag as a switch action
+				break;
+			case 25:	//FUS-A
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x04;	//Put A back in service
+				break;
+			case 26:	//FUS-B
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x02;	//Put B back in service
+				break;
+			case 27:	//FUS-C
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = '\0';
+				phase_restore = 0x01;	//Put C back in service
+				break;
+			case 28:	//FUS-AB
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = 'B';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x06;	//Put A and B back in service
+				break;
+			case 29:	//FUS-BC
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'B';
+				imp_fault_name[5] = 'C';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x03;	//Put B and C back in service
+				break;
+			case 30:	//FUS-CA
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'C';
+				imp_fault_name[5] = 'A';
+				imp_fault_name[6] = '\0';
+				phase_restore = 0x05;	//Put C and A back in service
+				break;
+			case 31:	//FUS-ABC
+				imp_fault_name[0] = 'F';
+				imp_fault_name[1] = 'U';
+				imp_fault_name[2] = 'S';
+				imp_fault_name[3] = '-';
+				imp_fault_name[4] = 'A';
+				imp_fault_name[5] = 'B';
+				imp_fault_name[6] = 'C';
+				imp_fault_name[7] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				break;
+			case 32:	//TLL
+				imp_fault_name[0] = 'T';
+				imp_fault_name[1] = 'L';
+				imp_fault_name[2] = 'L';
+				imp_fault_name[3] = '\0';
+				phase_restore = 0x07;	//Put A, B, and C back in service
+				break;
+			default:	//Should never get here
+				GL_THROW("%s - attempted to recover from unsupported fault!",objhdr->name);
+				/*  TROUBLESHOOT
+				The link object attempted to recover from an unknown fault type.  Please try again.  If the
+				error persists, please submit your code and a bug report to the trac website.
+				*/
+				break;
+		}//end switch
+
+		//Flag an update if something changed (not a 0 state)
+		if (*implemented_fault != 0)
+		{
+			temp_node = -1;	//Default value
+
+			//Remove our restrictions for these phases
+			for (phaseidx=0; phaseidx<3; phaseidx++)
+			{
+				work_phases = 0x04 >> phaseidx;	//Get check
+
+				if ((phase_restore & work_phases) == work_phases)	//Valid phase to restore
+				{
+					//Store the value of protect_locations for later
+					temp_node = protect_locations[phaseidx];
+
+					//See if our "protective device" was the swing bus
+					if (protect_locations[phaseidx] == -1)
+					{
+						GL_THROW("An attempt to restore something that was never faulted has occurred!");
+						/*  TROUBLESHOOT
+						While attempting to restore a device, an unknown state was encountered where it
+						had somehow started faulted and was not caught.  If you have any switches in your
+						system, consider starting them closed first.
+						*/
+					}
+					else if (protect_locations[phaseidx] == -99)
+					{
+						//Theoretically, this phase should exist on the SWING.  Let's check to make sure
+						if ((NR_busdata[0].origphases & work_phases) == work_phases)	//Valid phase
+						{
+							NR_busdata[0].phases |= work_phases;	//Just turn it back on - it's the SWING, it has to work
+						}
+						else
+						{
+							GL_THROW("A fault was induced on the SWING bus for an unsupported phase!");
+							/*  TROUBLESHOOT
+							Somehow, a fault was induced on a phase that should not exist on the system.  While
+							attemtping to restore this fault, the SWING bus did not have the proper original phases,
+							so this could not be restored.  Please submit your code and a bug report using the trac website.
+							*/
+						}
+					}//End SWING
+					else	//Not the SWING Bus
+					{
+						//See if we are of a "protective" device implementation
+						if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 2)	//Switch
+						{
+							//Flag the remote object's appropriate phases
+							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
+
+							//Remove the branch as an index in appropriate phases
+							for (phaseidx=0; phaseidx < 3; phaseidx++)
+							{
+								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+								if ((phase_restore & temp_phases) == temp_phases)
+								{
+									protect_locations[phaseidx] = -1;	//Clear our location
+								}
+							}
+
+							//Update our fault phases
+							NR_branchdata[NR_branch_reference].faultphases &= ~(phase_restore);
+
+							//Break out of this pesky loop
+							break;
+						}//end switch closure
+						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 6)	//recloser
+						{
+							//Check and see what the supporting nodes are doing - if a recloser is already in a fault, this causes issues
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+
+							//Flag the remote object's appropriate phases
+							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
+
+							//Remove the branch as an index in appropriate phases
+							for (phaseidx=0; phaseidx < 3; phaseidx++)
+							{
+								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+								if ((phase_restore & temp_phases) == temp_phases)
+								{
+									protect_locations[phaseidx] = -1;	//Clear our location
+								}
+							}
+
+							//Update our fault phases
+							NR_branchdata[NR_branch_reference].faultphases &= ~(phase_restore);
+
+							//Break out of this pesky loop
+							break;
+						}//end recloser closure
+						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 5)	//Sectionalizer
+						{
+							//Check and see what the supporting nodes are doing - if a sectionalizer is already in a fault, this causes issues
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+
+							//Flag the remote object's appropriate phases
+							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
+
+							//Remove the branch as an index in appropriate phases
+							for (phaseidx=0; phaseidx < 3; phaseidx++)
+							{
+								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+								if ((phase_restore & temp_phases) == temp_phases)
+								{
+									protect_locations[phaseidx] = -1;	//Clear our location
+								}
+							}
+
+							//Update our fault phases
+							NR_branchdata[NR_branch_reference].faultphases &= ~(phase_restore);
+
+							//Break out of this pesky loop
+							break;
+						}//end sectionalizer closure
+						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 3)	//fuse
+						{
+							//Check and see what the supporting nodes are doing - if a fuse is already in a fault, this causes issues
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+
+							//Flag the remote object's appropriate phases
+							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
+
+							//Remove the branch as an index in appropriate phases
+							for (phaseidx=0; phaseidx < 3; phaseidx++)
+							{
+								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+
+								if ((phase_restore & temp_phases) == temp_phases)
+								{
+									protect_locations[phaseidx] = -1;	//Clear our location
+								}
+							}
+
+							//Update our fault phases
+							NR_branchdata[NR_branch_reference].faultphases &= ~(phase_restore);
+
+							//Break out of this pesky loop
+							break;
+						}//End fuse closure
+						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 4)	//Transformer
+						{
+							//Transformers are special case - if the source is supported, all three phases are reinstated
+							temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & 0x07;
+
+							//Make sure we match
+							if ((temp_phases & NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases) == temp_phases)
+							{
+								//Support is there, restore all relevant phases
+								NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(temp_phases);
+
+								//Check for SPCT rating
+								if ((NR_branchdata[protect_locations[phaseidx]].origphases & 0x80) == 0x80)	//SPCT
+								{
+									temp_phases |= 0x80;	//Apply SPCT flag
+								}
+								//Defaulted else - normal xformer
+
+								//Pull the phases back into service
+								NR_branchdata[protect_locations[phaseidx]].phases = (NR_branchdata[protect_locations[phaseidx]].origphases & temp_phases);
+							}
+							else	//Support is not there - clear the flag, but don't restore
+							{
+								NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(temp_phases);
+							}
+
+							//Remove our fault for the appropriate phases
+							temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & 0x07;
+							NR_branchdata[NR_branch_reference].faultphases &= ~(temp_phases);
+
+							//Remove fault indices - loop through transformer phases
+							for (indexval=0; indexval<3; indexval++)
+							{
+								temp_phases = 0x04 >> indexval;
+
+								if ((temp_phases & NR_branchdata[NR_branch_reference].faultphases) == 0x00)	//No fault here
+									protect_locations[indexval] = -1;	//Clear flag
+							}
+
+							break;	//Get us out of phase loop - transformers handle all 3 phases at once
+						}//End transformer restoration
+						else
+						{
+							GL_THROW("Protective device %s invalid for restoration!",NR_branchdata[protect_locations[phaseidx]].name);
+							/*  TROUBLESHOOT
+							While attempting to restore a protective device, something besides a switch, fuse, or transformer was used.
+							This should not have happened.  Please try again.  If the error persists, please submit your code and a bug
+							report using the trac website.
+							*/
+						}
+
+						//Clear "far" device lockout
+						NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(work_phases);	//Remove the phase lock
+					}
+
+					//Clear faulted device lockout
+					protect_locations[phaseidx] = -1;
+
+					//Clear faulted device protect_locations
+					NR_branchdata[NR_branch_reference].faultphases &= ~(work_phases);	//Remove the phase lock from us as well
+				}//End valid phase
+				//Default else - not a phase we care about
+			}//End phase loop
+		}//End actual change
+
+		gl_verbose ("clear_fault_only (meshed mode) returns:%s:%d", imp_fault_name, *implemented_fault);
+		return 1;
+	}
 }
 //adding function to calculate the fault current seen at the swing bus then distribute that current down to fault path to the faulted line
 //right now it is assumed that all faults occur at the to end of the faulted link object.
@@ -12514,14 +13991,17 @@ void link_object::mesh_fault_current_calc(complex Zth[3][3],complex CV[3][3],com
 				//Populate fault current into the output
                                 if (fault_type == 111) {
 					If_out[0] = IVf[0];
+					Vf_out[0] = IVf[1];
 					//Assume lines for now -- input is the same (transformers will be different)
 					If_in[0] = If_out[0];
 				} else if (fault_type == 211) {
 					If_out[1] = IVf[0];
+					Vf_out[1] = IVf[1];
 					//Assume lines for now -- input is the same (transformers will be different)
 					If_in[1] = If_out[1];
 				} else if (fault_type == 311) {
 					If_out[2] = IVf[0];
+					Vf_out[2] = IVf[1];
 					//Assume lines for now -- input is the same (transformers will be different)
 					If_in[2] = If_out[2];
 				}
@@ -12594,7 +14074,8 @@ void link_object::mesh_fault_current_calc(complex Zth[3][3],complex CV[3][3],com
 					{
 						If_out[0] = IVf[0];
 						If_out[1] = IVf[1];
-
+						Vf_out[0] = IVf[2];
+						Vf_out[1] = IVf[3];
 						//Assume lines for now -- input is the same (transformers will be different)
 						If_in[0] = If_out[0];
 						If_in[1] = If_out[1];
@@ -12603,7 +14084,8 @@ void link_object::mesh_fault_current_calc(complex Zth[3][3],complex CV[3][3],com
 					{
 						If_out[1] = IVf[0];
 						If_out[2] = IVf[1];
-
+						Vf_out[1] = IVf[2];
+						Vf_out[2] = IVf[3];
 						//Assume lines for now -- input is the same (transformers will be different)
 						If_in[1] = If_out[1];
 						If_in[2] = If_out[2];
@@ -12612,7 +14094,8 @@ void link_object::mesh_fault_current_calc(complex Zth[3][3],complex CV[3][3],com
 					{
 						If_out[0] = IVf[0];
 						If_out[2] = IVf[1];
-
+						Vf_out[0] = IVf[2];
+						Vf_out[2] = IVf[3];
 						//Assume lines for now -- input is the same (transformers will be different)
 						If_in[0] = If_out[0];
 						If_in[2] = If_out[2];
@@ -12679,7 +14162,9 @@ void link_object::mesh_fault_current_calc(complex Zth[3][3],complex CV[3][3],com
 				If_out[0] = IVf[0];
 				If_out[1] = IVf[1];
 				If_out[2] = IVf[2];
-
+				Vf_out[0] = IVf[3];
+				Vf_out[1] = IVf[4];
+				Vf_out[2] = IVf[5];
 				//Assume lines for now -- input is the same (transformers will be different)
 				If_in[0] = If_out[0];
 				If_in[1] = If_out[1];
@@ -12767,7 +14252,7 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 		temp_branch_phases = NR_branchdata[temp_branch_fc].phases & 0x07;
 		if(NR_branchdata[temp_branch_fc].lnk_type == 4){//transformer
 			temp_branch_name = NR_branchdata[temp_branch_fc].name;//get the name of the transformer object
-			temp_transformer = gl_get_object(temp_branch_name);//get the transformer object
+			temp_transformer = NR_branchdata[temp_branch_fc].obj;	//get the transformer object
 			if(gl_object_isa(temp_transformer, "transformer", "powerflow")){ // tranformer
 				temp_trans_config = gl_get_property(temp_transformer,"configuration");//get pointer to the configuration property
 				temp_transformer_configuration = gl_get_object_prop(temp_transformer, temp_trans_config);//get the transformer configuration object
@@ -12918,7 +14403,7 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 	temp_branch_phases = removed_phase | NR_branchdata[temp_branch_fc].phases;
 	if(NR_branchdata[temp_branch_fc].lnk_type == 4){//transformer
 		temp_branch_name = NR_branchdata[temp_branch_fc].name;//get the name of the transformer object
-		temp_transformer = gl_get_object(temp_branch_name);//get the transformer object
+		temp_transformer = NR_branchdata[temp_branch_fc].obj;//get the transformer object
 		if(gl_object_isa(temp_transformer, "transformer", "powerflow")){ // tranformer
 			temp_trans_config = gl_get_property(temp_transformer,"configuration");//get pointer to the configuration property
 			temp_transformer_configuration = gl_get_object_prop(temp_transformer, temp_trans_config);//get the transformer configuration object
@@ -13186,7 +14671,7 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 	{
 		if(NR_branchdata[temp_branch_fc].lnk_type == 4){//transformer
 			temp_branch_name = NR_branchdata[temp_branch_fc].name;//get the name of the transformer object
-			temp_transformer = gl_get_object(temp_branch_name);//get the transformer object
+			temp_transformer = NR_branchdata[temp_branch_fc].obj;//get the transformer object
 			if(gl_object_isa(temp_transformer, "transformer", "powerflow")){ // tranformer
 				temp_trans_config = gl_get_property(temp_transformer,"configuration");//get pointer to the configuration property
 				temp_transformer_configuration = gl_get_object_prop(temp_transformer, temp_trans_config);//get the transformer configuration object
@@ -13259,7 +14744,7 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 	//update the fault current variables in link object connected to the swing bus
 	if(NR_branchdata[temp_branch_fc].lnk_type == 4){//transformer
 		temp_branch_name = NR_branchdata[temp_branch_fc].name;//get the name of the transformer object
-		temp_transformer = gl_get_object(temp_branch_name);//get the transformer object
+		temp_transformer = NR_branchdata[temp_branch_fc].obj;//get the transformer object
 		if(gl_object_isa(temp_transformer, "transformer", "powerflow")){ // tranformer
 			temp_trans_config = gl_get_property(temp_transformer,"configuration");//get pointer to the configuration property
 			temp_transformer_configuration = gl_get_object_prop(temp_transformer, temp_trans_config);//get the transformer configuration object
@@ -13509,7 +14994,7 @@ void lu_decomp(complex *a, complex *l, complex *u, int size_val)
 			u[n*size_val+m] = complex(0,0);
 		}
 	}
-	// for loop to decompose a in to lower triangular matrix l and upper triangular matirx u
+	// for loop to decompose a in to lower triangular matrix l and upper triangular matrix u
 	for(k=0; k<size_val; k++){
 		l[k*size_val+k] = complex(1,0);
 		for(m=k; m<size_val; m++){
@@ -13667,4 +15152,3 @@ void lu_matrix_inverse(complex *input_mat, complex *output_mat, int size_val)
 
 
 /**@}*/
-

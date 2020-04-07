@@ -2,13 +2,17 @@
 // Copyright (C) 2012 Battelle Memorial Institute
 //
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #include <direct.h>
 #include <io.h>
 #else
 #include <unistd.h>
 #include <dirent.h>
+#endif
+
+#ifdef __linux__
+#include <sys/types.h>
 #endif
 
 #include <string.h>
@@ -223,7 +227,7 @@ static int report_close(void)
 }
 
 /* Windows implementation of opendir/readdir/closedir */
-#ifdef WIN32
+#ifdef _WIN32
 struct dirent {
 	unsigned char  d_type;	/* file type, see below */
 	char *d_name;			/* name must be no longer than this */
@@ -448,7 +452,7 @@ static counters run_test(char *file, double *elapsed_time=NULL)
         //output_verbose("run_test(): deleted '%s'", dir);
         rmdir(dir);
 	}
-#ifdef WIN32
+#ifdef _WIN32
 	if ( (0 != mkdir(dir)) && clean )
 #else
 	if ( (0 != mkdir(dir,0750)) && clean )
@@ -471,7 +475,7 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 	int64 dt = exec_clock();
 	result.inc_files(file);
 	unsigned int code = vsystem("%s -W %s %s %s.glm ", 
-#ifdef WIN32
+#ifdef _WIN32
 		_pgmptr,
 #else
 		"gridlabd",
@@ -480,7 +484,7 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 	dt = exec_clock() - dt;
 	double t = (double)dt/(double)CLOCKS_PER_SEC;
 	if ( elapsed_time!=NULL ) *elapsed_time = t;
-//#ifdef WIN32
+//#ifdef _WIN32
 // 	if ( code>256 )
 // 		output_warning("%s exit code %x is outside normal exit code range and may be interpreted incorrectly", name, code);
 //#endif
@@ -652,13 +656,22 @@ static size_t process_dir(const char *path, bool runglms=false)
 	struct dirent *dp;
 	DIR *dirp = opendir(path);
 	if ( dirp==NULL ) return 0; // nothing to do
+
+	#ifdef __linux__
+	struct stat s;
+	#endif
+
 	while ( (dp=readdir(dirp))!=NULL )
 	{
 		char item[1024];
 		size_t len = sprintf(item,"%s/%s",path,dp->d_name);
 		char *ext = strrchr(item,'.');
 		if ( dp->d_name[0]=='.' ) continue; // ignore anything that starts with a dot
+#ifdef __linux__
+		if ( (dp->d_type==DT_DIR || (dp->d_type==DT_UNKNOWN && !lstat(item, &s) && S_ISDIR(s.st_mode))) && strcmp(dp->d_name,"autotest")==0 )
+#else
 		if ( dp->d_type==DT_DIR && strcmp(dp->d_name,"autotest")==0 )
+#endif
 		{
 			count+=process_dir(item,true);
 			if ( global_validateoptions&VO_RPTDIR )
@@ -669,7 +682,11 @@ static size_t process_dir(const char *path, bool runglms=false)
 				report_newrow();
 			}
 		}
+#ifdef __linux__
+		else if ( dp->d_type==DT_DIR || (dp->d_type==DT_UNKNOWN && !lstat(item, &s) && S_ISDIR(s.st_mode)))
+#else
 		else if ( dp->d_type==DT_DIR )
+#endif
 			count+=process_dir(item);
 		else if ( runglms==true && strstr(item,"/test_")!=0 && strcmp(ext,".glm")==0 )
 		{
@@ -739,7 +756,7 @@ int validate(int argc, char *argv[])
 	report_data("%s",strftime(tbuf,sizeof(tbuf),"%Y-%m-%d %H:%M:%S %z",ts)?tbuf:"???");
 	report_newrow();
 	
-#ifdef WIN32
+#ifdef _WIN32
 	char *user=getenv("USERNAME"); 
 #else
 	char *user=getenv("USER"); 
@@ -749,7 +766,7 @@ int validate(int argc, char *argv[])
 	report_data("%s",user?user:"(NA)");
 	report_newrow();
 
-#ifdef WIN32
+#ifdef _WIN32
 	char *host=getenv("COMPUTERNAME");
 #else
 	char *host=getenv("HOSTNAME");

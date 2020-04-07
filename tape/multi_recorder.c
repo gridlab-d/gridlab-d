@@ -43,7 +43,7 @@
 #define strtok_s strtok_r
 #else
 #ifdef __MINGW32__
-inline char* strtok_t(char *str, const char *delim, char **nextp)
+char* strtok_t(char *str, const char *delim, char **nextp)
 {
     char *ret;
 
@@ -154,7 +154,7 @@ static int multi_recorder_open(OBJECT *obj)
 			// write header into temp file
 			fprintf(my->multifp,"# file...... %s\n", my->file);
 			fprintf(my->multifp,"# date...... %s", asctime(localtime(&now)));
-#ifdef WIN32
+#ifdef _WIN32
 			fprintf(my->multifp,"# user...... %s\n", getenv("USERNAME"));
 			fprintf(my->multifp,"# host...... %s\n", getenv("MACHINENAME"));
 #else

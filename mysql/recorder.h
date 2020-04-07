@@ -64,6 +64,8 @@ public:
 	GL_ATOMIC(char1024,header_fieldnames);
 	GL_STRING(char256, data_type);
 	GL_ATOMIC(int32, query_buffer_limit);
+	GL_ATOMIC(bool, minified);
+	GL_STRING(char1024,custom_sql);
 
 private:
 	bool enabled;
@@ -92,6 +94,7 @@ public:
 	int create(void);
 	int init(OBJECT *parent);
 	TIMESTAMP commit(TIMESTAMP t0, TIMESTAMP t1);
+	STATUS finalize();
 public:
 	static CLASS *oclass;
 	static recorder *defaults;

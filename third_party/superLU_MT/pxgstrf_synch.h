@@ -1,9 +1,21 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 /*
- * -- SuperLU MT routine (version 2.0) --
+ * -- SuperLU MT routine (version 2.2) --
  * Lawrence Berkeley National Lab, Univ. of California Berkeley,
  * and Xerox Palo Alto Research Center.
  * September 10, 2007
  *
+ * Last modified: 
+ * -- 8/29/2013: added lock to access Stack memory supplied by user
  */
 
 #ifndef __SUPERLU_SYNCH /* allow multiple inclusions */
@@ -11,10 +23,10 @@
 
 /* Structure for the globally shared work queue */
 
-typedef int qitem_t;
+typedef int_t qitem_t;
 
 typedef struct {
-    int       head, tail, count;
+    int_t       head, tail, count;
     qitem_t   *queue;
 } queue_t;
 
@@ -24,6 +36,7 @@ typedef enum {
     LULOCK,      /* locked once per column in L-supernode */
     NSUPER_LOCK, /* locked once per supernode */
     SCHED_LOCK,  /* locked once per panel, if succeeded each time */
+    STACK_LOCK,  /* locked when upating Stack memory supplied by User */
     NO_GLU_LOCKS
 } lu_locks_t;
 
@@ -46,10 +59,10 @@ typedef struct {
 			               1 -- domain
 			               2 -- regular, non-domain */
     pipe_state_t state; /* one of the 5 states in which the panel can be */
-    int          size;  /* in the leading column, the panel size is stored;
+    int_t          size;  /* in the leading column, the panel size is stored;
 	                   in the other columns, the offset (negative)
 		           to the leading column is stored */
-    int          ukids; /* number of kids not yet finished
+    int_t          ukids; /* number of kids not yet finished
 			 * In linear pipeline --
 			 *   if ukids[firstcol] = 0 then
 			 *      the panel becomes a leaf (CANGO)
@@ -61,8 +74,8 @@ typedef struct {
 
 /* The structure to record a relaxed supernode. */
 typedef struct {
-    int fcol;    /* first column of the relaxed supernode */
-    int size;    /* size of the relaxed supernode */
+    int_t fcol;    /* first column of the relaxed supernode */
+    int_t size;    /* size of the relaxed supernode */
 } pxgstrf_relax_t;
 
 
@@ -75,7 +88,7 @@ typedef struct {
 extern "C" {
 #endif
 
-extern void await(volatile int *);
+extern int_t await(volatile int_t *);
 
 #ifdef __cplusplus
 	   }

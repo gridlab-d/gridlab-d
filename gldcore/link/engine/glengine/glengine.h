@@ -16,7 +16,7 @@
 
 #include "absconnection.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 	#ifdef int64
 	#undef int64 // wtypes.h uses the term int64
 	#endif
@@ -66,7 +66,7 @@ public:
 
 	/// command string
 private:
-#ifdef WIN32
+#ifdef _WIN32
 	PROCESS_INFORMATION gldpid;
 #else
 	pid_t gldpid;

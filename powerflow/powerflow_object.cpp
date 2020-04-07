@@ -116,6 +116,10 @@ powerflow_object::powerflow_object(MODULE *mod)
 				PT_KEYWORD, "B", (set)PHASE_B,
 				PT_KEYWORD, "A", (set)PHASE_A,
 			PT_double,"nominal_voltage[V]",PADDR(nominal_voltage),
+			PT_enumeration, "inrush_integration_method",PADDR(inrush_integration_method),PT_DESCRIPTION,"Integration method for in-rush",
+				PT_KEYWORD,"NONE",(enumeration)IRM_NONE,
+				PT_KEYWORD,"TRAPEZOIDAL",(enumeration)IRM_TRAPEZOIDAL,
+				PT_KEYWORD,"BACKWARD_EULER",(enumeration)IRM_BACKEULER,
 #ifdef SUPPORT_OUTAGES
 			PT_set, "condition", PADDR(condition),
 				PT_KEYWORD, "OPEN", (set)OC_OPEN,
@@ -158,6 +162,9 @@ int powerflow_object::create(void)
 	//Deltamode override flag
 	if (all_powerflow_delta == true)
 		obj->flags |= OF_DELTAMODE;
+	
+	//Set a default for inrush integration - overarching (can be overridden)
+	inrush_integration_method = default_inrush_integration_method;
 
 #ifdef SUPPORT_OUTAGES
 	condition = OC_NORMAL;
@@ -181,8 +188,8 @@ int powerflow_object::init(OBJECT *parent)
 		throw "phases not specified";
 
 	/* split connection must connect to a phase */
-	if (has_phase(PHASE_S) && !(has_phase(PHASE_A) || has_phase(PHASE_B) || has_phase(PHASE_C)))
-		throw "split connection is missing A,B, or C phase connection";
+	//if (has_phase(PHASE_S) && !(has_phase(PHASE_A) || has_phase(PHASE_B) || has_phase(PHASE_C)))
+		//throw "split connection is missing A,B, or C phase connection";
 
 	/* split connection must connect to only one phase */
 	if (has_phase(PHASE_S) && (

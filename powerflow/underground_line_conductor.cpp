@@ -68,7 +68,7 @@ int underground_line_conductor::create(void)
 
 int underground_line_conductor::init(OBJECT *parent)
 {
-	if (outer_diameter <= conductor_diameter)
+	if (outer_diameter < conductor_diameter)
 	{
 		GL_THROW("outer_diameter was specified as less than or equal to the conductor_diameter");
 		/* TROUBLESHOOT
@@ -76,7 +76,7 @@ int underground_line_conductor::init(OBJECT *parent)
 		and refer to Fig. 4.11 of "Distribution System Modeling and Analysis, Third Edition" by William H. Kersting for a diagram.
 		*/
 	}
-	if (outer_diameter <= neutral_diameter)
+	if (outer_diameter < neutral_diameter)
 	{
 		GL_THROW("outer_diameter was specified as less than or equal to the neutral_diameter");
 		/* TROUBLESHOOT
@@ -84,13 +84,49 @@ int underground_line_conductor::init(OBJECT *parent)
 		and refer to Fig. 4.11 of "Distribution System Modeling and Analysis, Third Edition" by William H. Kersting for a diagram.
 		*/
 	}
-	if (shield_diameter <= shield_thickness)
+	if (shield_diameter < shield_thickness)
 	{
 		GL_THROW("shield_diameter was specified as less than or equal to the tapeshield_thickness");
 		/* TROUBLESHOOT
 		Refer to Example 5.4 in "Distribution System Modeling and Analysis, Third Edition" by William H. Kersting for a diagram.
 		*/
 	}
+
+	if ((neutral_gmr > 0.0) && (shield_gmr > 0.0 ))
+	{
+		GL_THROW("Both neutral GMR and shield GMR are larger than zero, it should be specified which type of cable (concentric neutral or tape-shielded) is selected");
+		/* TROUBLESHOOT
+         It should be specified which type of cable (concentric neutral or tape-shielded) is selected
+		*/
+	}
+
+	if ((shield_gmr > 0.0) && (neutral_gmr == 0.0 ))
+	{
+
+		//gl_warning("shield GMR is larger than zero, this cable is considered as tape-shielded");
+
+		if (shield_resistance <= 0 || shield_thickness <=0 || shield_diameter <=0 )
+		{
+			GL_THROW("this cable is tape-shielded, the following four parameters need to be specified: shield_gmr, shield_resistance, shield_thickness, shield_diameter");
+			/* TROUBLESHOOT
+	         The following four parameters need to be specified: shield_gmr, shield_resistance, shield_thickness, shield_diameter
+			*/
+
+		}
+	}
+
+	if ((shield_gmr == 0.0) && (neutral_gmr > 0.0 ))
+	{
+		if ((neutral_resistance <= 0.0) || (neutral_diameter <= 0.0) || (neutral_strands <=0) )
+		{
+			GL_THROW("this is a concentric neutral cable, the following four parameters need to be specified: neutral_gmr, neutral_resistance, neutral_diameter, neutral_strands");
+			/* TROUBLESHOOT
+	         The following four parameters need to be specified: neutral_gmr, neutral_resistance, neutral_diameter, neutral_strands
+			*/
+
+		}
+	}
+
 	return 1;
 }
 
@@ -126,6 +162,15 @@ EXPORT int create_underground_line_conductor(OBJECT **obj, OBJECT *parent)
 			return 0;
 	}
 	CREATE_CATCHALL(underground_line_conductor);
+}
+
+EXPORT int init_underground_line_conductor(OBJECT *obj)
+{
+	try {
+		underground_line_conductor *my = OBJECTDATA(obj,underground_line_conductor);
+		return my->init(obj->parent);
+	}
+	INIT_CATCHALL(underground_line_conductor);
 }
 
 EXPORT TIMESTAMP sync_underground_line_conductor(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)

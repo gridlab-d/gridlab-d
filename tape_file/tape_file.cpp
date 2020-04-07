@@ -347,7 +347,7 @@ EXPORT int open_recorder(struct recorder *my, char *fname, char *flags)
 		/* put useful header information in file first */
 		fprintf(my->fp,"# file...... %s\n", my->file.get_string());
 		fprintf(my->fp,"# date...... %s", asctime(localtime(&now)));
-#ifdef WIN32
+#ifdef _WIN32
 		fprintf(my->fp,"# user...... %s\n", getenv("USERNAME"));
 		fprintf(my->fp,"# host...... %s\n", getenv("MACHINENAME"));
 #else
@@ -408,7 +408,7 @@ EXPORT int open_histogram(histogram *my, char *fname, char *flags)
 		/* put useful header information in file first */
 		fprintf(my->fp,"# file...... %s\n", my->fname.get_string());
 		fprintf(my->fp,"# date...... %s", asctime(localtime(&now)));
-#ifdef WIN32
+#ifdef _WIN32
 		fprintf(my->fp,"# user...... %s\n", getenv("USERNAME"));
 		fprintf(my->fp,"# host...... %s\n", getenv("MACHINENAME"));
 #else
@@ -487,7 +487,7 @@ EXPORT int open_collector(struct collector *my, char *fname, char *flags)
 		/* put useful header information in file first */
 		count += fprintf(my->fp,"# file...... %s\n", my->file.get_string());
 		count += fprintf(my->fp,"# date...... %s", asctime(localtime(&now)));
-#ifdef WIN32
+#ifdef _WIN32
 		count += fprintf(my->fp,"# user...... %s\n", getenv("USERNAME"));
 		count += fprintf(my->fp,"# host...... %s\n", getenv("MACHINENAME"));
 #else

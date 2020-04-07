@@ -71,7 +71,7 @@ module powerflow {
 				  
 		  object recorder
 		  {
-			property total_power,energy_used,energy_needed,dryer_demand,next_t,queue,dryer_run_prob;
+			property total_power,energy_used,energy_needed,next_t,queue,dryer_run_prob;
 			interval 1;
 			limit 70272000;
 			file Dryer_output.csv;

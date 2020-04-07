@@ -96,13 +96,11 @@ capacitor::capacitor(MODULE *mod):node(mod)
 				PT_KEYWORD, "INDIVIDUAL", (enumeration)INDIVIDUAL, 
          	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
-			//Publish deltamode functions
-			if (gl_publish_function(oclass,	"delta_linkage_node", (FUNCTIONADDR)delta_linkage)==NULL)
-				GL_THROW("Unable to publish capacitor delta_linkage function");
-			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_capacitor)==NULL)
-				GL_THROW("Unable to publish capacitor deltamode function");
-			if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
-				GL_THROW("Unable to publish capacitor deltamode function");
+		//Publish deltamode functions
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_capacitor)==NULL)
+			GL_THROW("Unable to publish capacitor deltamode function");
+		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
+			GL_THROW("Unable to publish capacitor swing-swapping function");
     }
 }
 
@@ -160,12 +158,24 @@ int capacitor::create()
 	NotFirstIteration=false;
 	Iteration_Toggle = false;
 	NR_cycle_cap = true;
+	deltamode_reiter_request = false;	//By default deltamode is considered to not be running
+
+	//API/mapping variables
+	RNode_voltage[0] = RNode_voltage[1] = RNode_voltage[2] = NULL;
+	RNode_voltaged[0] = RNode_voltaged[1] = RNode_voltaged[2] = NULL;
+	RLink_indiv_power_in[0] = RLink_indiv_power_in[1] = RLink_indiv_power_in[2] = NULL;
+	RLink_current_in[0] = RLink_current_in[1] = RLink_current_in[2] = NULL;
+	RLink_calculate_power_fxn = NULL;
 
 	return result;
 }
 
 int capacitor::init(OBJECT *parent)
 {
+	gld_property *pTempProperty;
+	gld_wlock *test_rlock;
+	set temp_phases;
+	OBJECT *temp_obj_link;
 	int result = node::init();
 
 	OBJECT *obj = OBJECTHDR(this);
@@ -184,13 +194,19 @@ int capacitor::init(OBJECT *parent)
 		{
 			if ((gl_object_isa(RemoteSensor,"node","powerflow")) && (gl_object_isa(SecondaryRemote,"link","powerflow")))	//Node in 1, link in 2
 			{
-				RNode = OBJECTDATA(RemoteSensor,node);
-				RLink = OBJECTDATA(SecondaryRemote,link_object);
+				RNode = RemoteSensor;
+				RLink = SecondaryRemote;
 			}
 			else if ((gl_object_isa(RemoteSensor,"link","powerflow")) && (gl_object_isa(SecondaryRemote,"node","powerflow")))	//link in 1, node in 2
 			{
-				RNode = OBJECTDATA(SecondaryRemote,node);
-				RLink = OBJECTDATA(RemoteSensor,link_object);
+				RNode = SecondaryRemote;
+				RLink = RemoteSensor;
+			}
+			else if ((gl_object_isa(RemoteSensor,"network_interface")) && (gl_object_isa(SecondaryRemote,"network_interface")))
+			{
+				//Just copy in
+				RNode = RemoteSensor;
+				RLink = SecondaryRemote;
 			}
 			else
 			{
@@ -202,9 +218,9 @@ int capacitor::init(OBJECT *parent)
 			}
 		}
 	}
-	else if (((control==VARVOLT) || (control==CURRENT)) && (SecondaryRemote==NULL) && (RemoteSensor != NULL) && gl_object_isa(RemoteSensor,"link","powerflow"))	//VAR-VOLT scheme, one sensor defined
+	else if (((control==VARVOLT) || (control==CURRENT)) && (SecondaryRemote==NULL) && (RemoteSensor != NULL) && (gl_object_isa(RemoteSensor,"link","powerflow") || gl_object_isa(RemoteSensor,"network_interface")))	//VAR-VOLT scheme, one sensor defined
 	{
-		RLink = OBJECTDATA(RemoteSensor,link_object);
+		RLink = RemoteSensor;
 	}
 	else if (SecondaryRemote != NULL)	//Should only be populated for VARVOLT scheme,
 	{
@@ -219,11 +235,56 @@ int capacitor::init(OBJECT *parent)
 	{
 		if (gl_object_isa(RemoteSensor,"node","powerflow"))
 		{
-			RNode = OBJECTDATA(RemoteSensor,node);	//Get remote node information
+			RNode = RemoteSensor;	//Get remote node information
 		}
 		else if (gl_object_isa(RemoteSensor,"link","powerflow"))
 		{
-			RLink = OBJECTDATA(RemoteSensor,link_object);	//Get remote link information
+			RLink = RemoteSensor;	//Get remote link information
+		}
+		else if (gl_object_isa(RemoteSensor,"network_interface"))
+		{
+			gl_warning("Capacitor:%d - %s - the remote_sense object is a network_interface, node/link connections both enabled",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			A capacitor has detected a network_interface object attached to the remote_sense object pointer.  It will map this object to both the node and link
+			options for remote telemetry.  The capacitor operation method should specify the proper device to use, but this may have unintenteded consequences.
+			*/
+
+			//Put it in both, since it assumes it may need one or the other
+			RNode = RemoteSensor;
+			RLink = RemoteSensor;
+		}
+	}
+
+	//If RLink is assigned, make sure we aren't the "TO" end
+	if ((RLink != NULL) && (gl_object_isa(RLink,"link","powerflow")))
+	{
+		//Double check that the RLink->to isn't us - this will cause some issues with FBS
+		pTempProperty = new gld_property(RLink,"to");
+
+		//Make sure it is valid
+		if ((pTempProperty->is_valid() != true) || (pTempProperty->is_objectref() != true))
+		{
+			GL_THROW("capacitor:%d - %s - Failed to map remote_sense object properties for checks",obj->id,(obj->name?obj->name:"Unnamed"));
+			/*  TROUBLESHOOT
+			While attempting to map the "to" property from the remote link object, an error occurred.  Please try again.  If the error persists,
+			please submit a ticket to the issues tracker.
+			*/
+		}
+
+		//Pull the object
+		pTempProperty->getp<OBJECT*>(temp_obj_link,*test_rlock);
+
+		//Delete the property
+		delete pTempProperty;
+
+		//Check it to make sure it isn't us!
+		if (temp_obj_link == obj)
+		{
+			GL_THROW("capacitor:%d - %s - To-end of the remote link being monitored is us - this can cause readlock errors, especially with FBS",obj->id,(obj->name?obj->name:"Unnamed"));
+			/*  TROUBLESHOOT
+			When specifying a link-based object in the remote_sense or remote_sense_B properties, if this capacitor is the 'to' end of that object, readlock issues
+			can occur, especially with the FBS solver.  Adjust your topology to prevent this issue.
+			*/
 		}
 	}
 
@@ -350,23 +411,69 @@ int capacitor::init(OBJECT *parent)
 	switchC_state_Req_Next = switchC_state_Prev = switchC_state_Next = (CAPSWITCH)switchC_state;
 
 	//Perform phase checks - make sure what we want to look at actually exists
-	if (((control!=MANUAL) && (control!=VOLT)) && ((RLink->phases & pt_phase) != pt_phase))	//VAR, VOLTVAR, CURRENT
+	if ((control!=MANUAL) && (control!=VOLT))	//VAR, VOLTVAR, CURRENT
 	{
-		GL_THROW("One of the monitored remote link phases for capacitor:%d does not exist",obj->id);
-		/*  TROUBLESHOOT
-		One of the phases specified in pt_phase does not exist on the link being monitored by the capacitor.
-		This will cause either no results or erroneous results.  Ensure pt_phase and the phases property of the
-		remote link are compatible.
-		*/
+		//Pull the RLink phases to check
+		pTempProperty = new gld_property(RLink,"phases");
+
+		//Make sure it worked
+		if ((pTempProperty->is_valid() != true) || (pTempProperty->is_set() != true))
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map phases for remote link object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/* TROUBLESHOOT
+			While trying to obtain the phases for the remote link of interest, an error occurred.  Please try again.  If the
+			error persists, please submit an issue.
+			*/
+		}
+
+		//Pull the voltage base value
+		temp_phases = pTempProperty->get_set();
+
+		//Now get rid of the item
+		delete pTempProperty;
+
+		//Check them
+		if ((temp_phases & pt_phase) != pt_phase)
+		{
+			GL_THROW("One of the monitored remote link phases for capacitor:%d does not exist",obj->id);
+			/*  TROUBLESHOOT
+			One of the phases specified in pt_phase does not exist on the link being monitored by the capacitor.
+			This will cause either no results or erroneous results.  Ensure pt_phase and the phases property of the
+			remote link are compatible.
+			*/
+		}
 	}
-	else if (((control==VOLT) || (control==VARVOLT)) && (RNode != NULL) && ((RNode->phases & pt_phase) != pt_phase))	//RNode check
+	else if (((control==VOLT) || (control==VARVOLT)) && (RNode != NULL))	//RNode check
 	{
-		GL_THROW("One of the monitored remote node phases for capacitor:%d does not exist",obj->id);
-		/*  TROUBLESHOOT
-		One of the phases specified in pt_phase does not exist on the node being monitored by the capacitor.
-		This will cause either no results or erroneous results.  Ensure pt_phase and the phases property of the
-		remote node are compatible.
-		*/
+		//Pull the RNode phases to check
+		pTempProperty = new gld_property(RNode,"phases");
+
+		//Make sure it worked
+		if ((pTempProperty->is_valid() != true) || (pTempProperty->is_set() != true))
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map phases for remote node object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/* TROUBLESHOOT
+			While trying to obtain the phases for the remote node of interest, an error occurred.  Please try again.  If the
+			error persists, please submit an issue.
+			*/
+		}
+
+		//Pull the voltage base value
+		temp_phases = pTempProperty->get_set();
+
+		//Now get rid of the item
+		delete pTempProperty;
+
+		//Check to see if the phases are right
+		if ((temp_phases & pt_phase) != pt_phase)
+		{
+			GL_THROW("One of the monitored remote node phases for capacitor:%d does not exist",obj->id);
+			/*  TROUBLESHOOT
+			One of the phases specified in pt_phase does not exist on the node being monitored by the capacitor.
+			This will cause either no results or erroneous results.  Ensure pt_phase and the phases property of the
+			remote node are compatible.
+			*/
+		}
 	}
 	else if (((control==VOLT) || (control==VARVOLT)) && (RNode == NULL) && ((phases & pt_phase) != pt_phase))	//Self node check
 	{
@@ -377,6 +484,157 @@ int capacitor::init(OBJECT *parent)
 		capacitor are compatible.
 		*/
 	}
+
+	//Map the function for calculate power for RLink, if we're in the method we want
+	if ((control==VAR) || (control==VARVOLT))
+	{
+		//Do the map
+		RLink_calculate_power_fxn = (FUNCTIONADDR)(gl_get_function(RLink,"update_power_pwr_object"));
+
+		//Check it
+		if (RLink_calculate_power_fxn == NULL)
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map link power calculation function",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			While attempting to map the power update function for the link of interest in the capacitor, an error occurred.
+			Please try again.  If the error persists, please submit your code and a bug report via the ticketing system.
+			*/
+		}
+	}
+	//Default else -- it should already be nulled
+
+	//Map sub-object properties, if they exist
+	if (RLink != NULL)
+	{
+		//Map to the property of interest - power_in_A
+		RLink_indiv_power_in[0] = new gld_property(RLink,"power_in_A");
+
+		//Make sure it worked
+		if ((RLink_indiv_power_in[0]->is_valid() != true) || (RLink_indiv_power_in[0]->is_complex() != true))
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/* TROUBLESHOOT
+			While attempting to map a property for the remote node or remote link, a property could not be properly mapped.
+			Please try again.  If the error persists, please submit an issue in the ticketing system.
+			*/
+		}
+
+		//Map to the property of interest - power_in_B
+		RLink_indiv_power_in[1] = new gld_property(RLink,"power_in_B");
+
+		//Make sure it worked
+		if ((RLink_indiv_power_in[1]->is_valid() != true) || (RLink_indiv_power_in[1]->is_complex() != true))
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		//Map to the property of interest - power_in_C
+		RLink_indiv_power_in[2] = new gld_property(RLink,"power_in_C");
+
+		//Make sure it worked
+		if ((RLink_indiv_power_in[2]->is_valid() != true) || (RLink_indiv_power_in[2]->is_complex() != true))
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		//Map to the property of interest - current_in_A
+		RLink_current_in[0] = new gld_property(RLink,"current_in_A");
+
+		//Make sure it worked
+		if ((RLink_current_in[0]->is_valid() != true) || (RLink_current_in[0]->is_complex() != true))
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		//Map to the property of interest - current_in_B
+		RLink_current_in[1] = new gld_property(RLink,"current_in_B");
+
+		//Make sure it worked
+		if ((RLink_current_in[1]->is_valid() != true) || (RLink_current_in[1]->is_complex() != true))
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		//Map to the property of interest - current_in_C
+		RLink_current_in[2] = new gld_property(RLink,"current_in_C");
+
+		//Make sure it worked
+		if ((RLink_current_in[2]->is_valid() != true) || (RLink_current_in[2]->is_complex() != true))
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+	}
+	//Default else - not need to map it
+
+	//Do the same for the RNode
+	if (RNode != NULL)
+	{
+		//Map to the property of interest - voltage_A
+		RNode_voltage[0] = new gld_property(RNode,"voltage_A");
+
+		//Make sure it worked
+		if ((RNode_voltage[0]->is_valid() != true) || (RNode_voltage[0]->is_complex() != true))
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		//Map to the property of interest - voltage_B
+		RNode_voltage[1] = new gld_property(RNode,"voltage_B");
+
+		//Make sure it worked
+		if ((RNode_voltage[1]->is_valid() != true) || (RNode_voltage[1]->is_complex() != true))
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		//Map to the property of interest - voltage_C
+		RNode_voltage[2] = new gld_property(RNode,"voltage_C");
+
+		//Make sure it worked
+		if ((RNode_voltage[2]->is_valid() != true) || (RNode_voltage[2]->is_complex() != true))
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		//Map to the property of interest - voltage_AB
+		RNode_voltaged[0] = new gld_property(RNode,"voltage_AB");
+
+		//Make sure it worked
+		if ((RNode_voltaged[0]->is_valid() != true) || (RNode_voltaged[0]->is_complex() != true))
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		//Map to the property of interest - voltage_BC
+		RNode_voltaged[1] = new gld_property(RNode,"voltage_BC");
+
+		//Make sure it worked
+		if ((RNode_voltaged[1]->is_valid() != true) || (RNode_voltaged[1]->is_complex() != true))
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		//Map to the property of interest - voltage_CA
+		RNode_voltaged[2] = new gld_property(RNode,"voltage_CA");
+
+		//Make sure it worked
+		if ((RNode_voltaged[2]->is_valid() != true) || (RNode_voltaged[2]->is_complex() != true))
+		{
+			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+	}
+
 	if(cap_switchA_count < 0)
 		cap_switchA_count = 0;
 	if(cap_switchB_count < 0)
@@ -413,33 +671,22 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 	//Perform appropriate updates
 	if (service_status == ND_IN_SERVICE)
 	{
-		//Compute time delays -- see if we're in deltamode
-		if (deltatimestep_running > 0)	//Deltamode active
+		//Determine updates
+		if (dwell_time_left>0)		//Dwelling in progress, flag us to iterate when it should be done
 		{
-			if (dwell_time_left>0)		//Dwelling in progress, flag us to iterate when it should be done
+			if (dwell_time_left < 1)
+				result = t0 + 1;
+			else
 				result = t0 + (TIMESTAMP)dwell_time_left;	//If nothing changes in the system, it will reiterate at the dwell time.  Otherwise, it will come in earlier
-			else if (time_to_change>0)	//Change in progress, flag us to iterate when it should be done
-				result = t0 + (TIMESTAMP)time_to_change;
-			else;
-		}
-		else	//Normal mode, do some "rounding"
+		}//End Dwell time check
+		else if (time_to_change>0)	//Change in progress, flag us to iterate when it should be done
 		{
-			if (dwell_time_left>0)		//Dwelling in progress, flag us to iterate when it should be done
-			{
-				if (dwell_time_left < 1)
-					result = t0 + 1;
-				else
-					result = t0 + (TIMESTAMP)dwell_time_left;	//If nothing changes in the system, it will reiterate at the dwell time.  Otherwise, it will come in earlier
-			}//End Dwell time check
-			else if (time_to_change>0)	//Change in progress, flag us to iterate when it should be done
-			{
-				if (time_to_change < 1)
-					result = t0 + 1;
-				else
-					result = t0 + (TIMESTAMP)time_to_change;
-			}//End time_to_change check
-			else;
-		}
+			if (time_to_change < 1)
+				result = t0 + 1;
+			else
+				result = t0 + (TIMESTAMP)time_to_change;
+		}//End time_to_change check
+		else;
 
 		if (NotFirstIteration==false)	//Force a reiteration on the very first pass, no matter what
 		{
@@ -457,7 +704,6 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 				NR_cycle_cap = false;
 			}
 		}
-
 	}
 	//Defaulted else -- out of service portions are handled already
 
@@ -587,12 +833,9 @@ bool capacitor::cap_sync_fxn(double time_value)
 					}
 					else
 					{
-						LOCK_OBJECT(OBJECTHDR(RNode));
-						VoltVals[0] = RNode->voltage[0];
-						VoltVals[1] = RNode->voltage[1];
-						VoltVals[2] = RNode->voltage[2];
-						UNLOCK_OBJECT(OBJECTHDR(RNode));
-
+						VoltVals[0] = RNode_voltage[0]->get_complex();
+						VoltVals[1] = RNode_voltage[1]->get_complex();
+						VoltVals[2] = RNode_voltage[2]->get_complex();
 					}
 				}
 				else				//L-L voltages
@@ -605,11 +848,9 @@ bool capacitor::cap_sync_fxn(double time_value)
 					}
 					else
 					{
-						LOCK_OBJECT(OBJECTHDR(RNode));
-						VoltVals[0] = RNode->voltaged[0];
-						VoltVals[1] = RNode->voltaged[1];
-						VoltVals[2] = RNode->voltaged[2];
-						UNLOCK_OBJECT(OBJECTHDR(RNode));
+						VoltVals[0] = RNode_voltaged[0]->get_complex();
+						VoltVals[1] = RNode_voltaged[1]->get_complex();
+						VoltVals[2] = RNode_voltaged[2]->get_complex();
 					}
 				}
 			}
@@ -1173,21 +1414,33 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 {
 	CAPSWITCH cap_A_test_state, cap_B_test_state, cap_C_test_state;
 	complex VoltVals[3];
+	int return_status;
+	OBJECT *obj = OBJECTHDR(this);
 
 	if ((control==VAR) || (control==VARVOLT))	//Grab the power values from remote link
 	{
-		READLOCK_OBJECT(OBJECTHDR(RLink));
+		READLOCK_OBJECT(RLink);
 
 		//Force the link to do an update (will be ignored first run anyways (zero))
-		RLink->calculate_power();
+		return_status = ((int (*)(OBJECT *))(*RLink_calculate_power_fxn))(RLink);
+
+		READUNLOCK_OBJECT(RLink);
+
+		//Make sure it worked
+		if (return_status != 1)
+		{
+			GL_THROW("Capacitor:%d - %s - Link power calculation failed",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			While updated the power flowing through a link for the VAR or VOLTVAR control approach, an error occurred.
+			Please check the console output for additional indications as to why this occurred.
+			*/
+		}
 
 		//Takes all measurements from input side of link (output can not quite be up to date)
-		VArVals[0] = RLink->indiv_power_in[0].Im();
-		VArVals[1] = RLink->indiv_power_in[1].Im();
-		VArVals[2] = RLink->indiv_power_in[2].Im();
+		VArVals[0] = (RLink_indiv_power_in[0]->get_complex()).Im();
+		VArVals[1] = (RLink_indiv_power_in[1]->get_complex()).Im();
+		VArVals[2] = (RLink_indiv_power_in[2]->get_complex()).Im();
 		
-		READUNLOCK_OBJECT(OBJECTHDR(RLink));
-
 		//If NR, force us to do a reiteration if something changed - FBS handles this just due to the nature of how it solves
 		//Basically copied out of actual logic above
 		if (solver_method == SM_NR)
@@ -1251,12 +1504,9 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 					}
 					else
 					{
-						LOCK_OBJECT(OBJECTHDR(RNode));
-						VoltVals[0] = RNode->voltage[0];
-						VoltVals[1] = RNode->voltage[1];
-						VoltVals[2] = RNode->voltage[2];
-						UNLOCK_OBJECT(OBJECTHDR(RNode));
-
+						VoltVals[0] = RNode_voltage[0]->get_complex();
+						VoltVals[1] = RNode_voltage[1]->get_complex();
+						VoltVals[2] = RNode_voltage[2]->get_complex();
 					}
 				}
 				else				//L-L voltages
@@ -1269,11 +1519,9 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 					}
 					else
 					{
-						LOCK_OBJECT(OBJECTHDR(RNode));
-						VoltVals[0] = RNode->voltaged[0];
-						VoltVals[1] = RNode->voltaged[1];
-						VoltVals[2] = RNode->voltaged[2];
-						UNLOCK_OBJECT(OBJECTHDR(RNode));
+						VoltVals[0] = RNode_voltaged[0]->get_complex();
+						VoltVals[1] = RNode_voltaged[1]->get_complex();
+						VoltVals[2] = RNode_voltaged[2]->get_complex();
 					}
 				}
 
@@ -1380,14 +1628,10 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 	}
 	else if (control==CURRENT)	//Grab the current injection values
 	{
-		READLOCK_OBJECT(OBJECTHDR(RLink));
-
 		//Pull off the output currents
-		CurrentVals[0]=RLink->current_in[0].Mag();
-		CurrentVals[1]=RLink->current_in[1].Mag();
-		CurrentVals[2]=RLink->current_in[2].Mag();
-		
-		READUNLOCK_OBJECT(OBJECTHDR(RLink));
+		CurrentVals[0]=(RLink_current_in[0]->get_complex()).Mag();
+		CurrentVals[1]=(RLink_current_in[1]->get_complex()).Mag();
+		CurrentVals[2]=(RLink_current_in[2]->get_complex()).Mag();
 
 		//If NR, check logic to see if we need to request another pass
 		if (solver_method == SM_NR)
@@ -1455,12 +1699,9 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 			}
 			else
 			{
-				LOCK_OBJECT(OBJECTHDR(RNode));
-				VoltVals[0] = RNode->voltage[0];
-				VoltVals[1] = RNode->voltage[1];
-				VoltVals[2] = RNode->voltage[2];
-				UNLOCK_OBJECT(OBJECTHDR(RNode));
-
+				VoltVals[0] = RNode_voltage[0]->get_complex();
+				VoltVals[1] = RNode_voltage[1]->get_complex();
+				VoltVals[2] = RNode_voltage[2]->get_complex();
 			}
 		}
 		else				//L-L voltages
@@ -1473,11 +1714,9 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 			}
 			else
 			{
-				LOCK_OBJECT(OBJECTHDR(RNode));
-				VoltVals[0] = RNode->voltaged[0];
-				VoltVals[1] = RNode->voltaged[1];
-				VoltVals[2] = RNode->voltaged[2];
-				UNLOCK_OBJECT(OBJECTHDR(RNode));
+				VoltVals[0] = RNode_voltaged[0]->get_complex();
+				VoltVals[1] = RNode_voltaged[1]->get_complex();
+				VoltVals[2] = RNode_voltaged[2]->get_complex();
 			}
 		}
 
@@ -1610,7 +1849,6 @@ int capacitor::isa(char *classname)
 //Module-level call
 SIMULATIONMODE capacitor::inter_deltaupdate_capacitor(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
 {
-	unsigned char pass_mod;
 	OBJECT *hdr = OBJECTHDR(this);
 	double curr_time_value;	//Current time of simulation
 	double deltat, deltatimedbl;
@@ -1625,22 +1863,29 @@ SIMULATIONMODE capacitor::inter_deltaupdate_capacitor(unsigned int64 delta_time,
 	//cast the current time
 	curr_time_value = gl_globaldeltaclock;
 
-	//Initialization items
-	if ((delta_time==0) && (iteration_count_val==0) && (interupdate_pos == false))	//First run of new delta call
-	{
-		//Initialize dynamics
-		init_freq_dynamics(&curr_state);
-	}//End first pass and timestep of deltamode (initial condition stuff)
-
 	//Update time tracking variable - mostly for GFA functionality calls
-	if (iteration_count_val == 0)	//Only update timestamp tracker on first iteration
+	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
 	{
 		//Get decimal timestamp value
 		deltatimedbl = (double)delta_time/(double)DT_SECOND; 
 
 		//Update tracking variable
 		prev_time_dbl = (double)gl_globalclock + deltatimedbl;
+
+		//Update frequency calculation values (if needed)
+		if (fmeas_type != FM_NONE)
+		{
+			//Copy the tracker value
+			memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+		}
 	}
+
+	//Initialization items
+	if ((delta_time==0) && (iteration_count_val==0) && (interupdate_pos == false) && (fmeas_type != FM_NONE))	//First run of new delta call
+	{
+		//Initialize dynamics
+		init_freq_dynamics();
+	}//End first pass and timestep of deltamode (initial condition stuff)
 
 	//Perform the GFA update, if enabled
 	if ((GFA_enable == true) && (iteration_count_val == 0) && (interupdate_pos == false))	//Always just do on the first pass
@@ -1648,9 +1893,6 @@ SIMULATIONMODE capacitor::inter_deltaupdate_capacitor(unsigned int64 delta_time,
 		//Do the checks
 		GFA_Update_time = perform_GFA_checks(deltat);
 	}
-
-	//See what we're on, for tracking
-	pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
 
 	if (interupdate_pos == false)	//Before powerflow call
 	{
@@ -1666,11 +1908,11 @@ SIMULATIONMODE capacitor::inter_deltaupdate_capacitor(unsigned int64 delta_time,
 		//Perform appropriate updates - appears to be associated with action counting
 		if (service_status == ND_IN_SERVICE)
 		{
-			if (Phase_Mismatch == true)	//Kludgy test to get to reiteratte - DELETE ME OR FIX ME!
+			if (Phase_Mismatch == true)	//Kludgy test to get to reiterate
 			{
 				if ((Iteration_Toggle == true) && (NR_cycle_cap == true))
 				{
-					//Was a return t0 here -- force a reiterate somehow (happens by default)
+					deltamode_reiter_request = true;	//Was a return t0 here -- force a reiteration to match behavior
 					NR_cycle_cap = false;
 				}
 			}
@@ -1680,7 +1922,8 @@ SIMULATIONMODE capacitor::inter_deltaupdate_capacitor(unsigned int64 delta_time,
 		//Crazy time checks of sync ignored -- deltamode doesn't care in this step (only checks for errors)
 
 		return SM_DELTA;	//Just return something other than SM_ERROR for this call
-	}
+
+	}//End Before NR solver (or inclusive)
 	else	//After the call
 	{
 		//Perform the pre-postsync portions of the capacitor
@@ -1699,7 +1942,7 @@ SIMULATIONMODE capacitor::inter_deltaupdate_capacitor(unsigned int64 delta_time,
 		//Frequency measurement stuff
 		if (fmeas_type != FM_NONE)
 		{
-			return_status_val = calc_freq_dynamics(deltat,pass_mod);
+			return_status_val = calc_freq_dynamics(deltat);
 
 			//Check it
 			if (return_status_val == FAILED)
@@ -1715,36 +1958,36 @@ SIMULATIONMODE capacitor::inter_deltaupdate_capacitor(unsigned int64 delta_time,
 		//Call the functionalized postsync
 		result_dbl = cap_postPost_fxn(result_dbl,curr_time_value);
 
-		//Always "exit" -- if we progress forward, capacitor will operate appropriately
-		
-		//No control required at this time - powerflow defers to the whims of other modules
-		//Code below implements predictor/corrector-type logic, even though it effectively does nothing
-		return SM_EVENT;
+		//See what kind of exit it was -- if we need to reiterate or not (to match QSTS behavior)
+		if ((result_dbl == curr_time_value) || (deltamode_reiter_request == true))
+		{
+			//Set the tracking flag to false, just in case
+			deltamode_reiter_request = false;
 
-		////Do deltamode-related logic
-		//if (bustype==SWING)	//We're the SWING bus, control our destiny (which is really controlled elsewhere)
-		//{
-		//	//See what we're on
-		//	pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
+			//Force an iteration
+			return SM_DELTA_ITER;
+		}
 
-		//	//Check pass
-		//	if (pass_mod==0)	//Predictor pass
-		//	{
-		//		return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
-		//	}
-		//	else	//Corrector pass
-		//	{
-		//		//As of right now, we're always ready to leave
-		//		//Other objects will dictate if we stay (powerflow is indifferent)
-		//		return SM_EVENT;
-		//	}//End corrector pass
-		//}//End SWING bus handling
-		//else	//Normal bus
-		//{
-		//	return SM_EVENT;	//Normal nodes want event mode all the time here - SWING bus will
-		//						//control the reiteration process for pred/corr steps
-		//}
-	}
+		//See if GFA functionality is required, since it may require iterations or "continance"
+		//Not sure this really is needed in capacitors, but whatever
+		if (GFA_enable == true)
+		{
+			//See if our return is value
+			if ((GFA_Update_time > 0.0) && (GFA_Update_time < 1.7))
+			{
+				//Force us to stay
+				return SM_DELTA;
+			}
+			else	//Just return whatever we were going to do
+			{
+				return SM_EVENT;
+			}
+		}
+		else	//Normal mode
+		{
+			return SM_EVENT;
+		}
+	}//End "After NR solver" branch
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -1906,6 +2149,5 @@ int capacitor::kmldata(int (*stream)(const char*,...))
 
 	return 0;
 }
-
 
 /**@}*/

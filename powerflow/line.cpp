@@ -47,7 +47,6 @@
 #include <iostream>
 using namespace std;
 
-#include "node.h"
 #include "line.h"
 
 CLASS* line::oclass = NULL;
@@ -95,15 +94,46 @@ int line::create()
 
 int line::init(OBJECT *parent)
 {
-	int result = link_object::init(parent);
-	
+	OBJECT *obj = OBJECTHDR(this);
+	gld_property *fNode_nominal, *tNode_nominal;
+	double f_nominal_voltage, t_nominal_voltage;
 
-	node *pFrom = OBJECTDATA(from,node);
-	node *pTo = OBJECTDATA(to,node);
+	int result = link_object::init(parent);
+
+	//Check for deferred
+	if (result == 2)
+		return 2;	//Return the deferment - no sense doing everything else!
+
+	//Map the nodes nominal_voltage values
+	fNode_nominal = new gld_property(from,"nominal_voltage");
+
+	//Check it
+	if ((fNode_nominal->is_valid() != true) || (fNode_nominal->is_double() != true))
+	{
+		GL_THROW("line:%d - %s - Unable to map nominal_voltage from connected node!",obj->id,(obj->name ? obj->name : "Unnamed"));
+		/*  TROUBESHOOT
+		While attempting to map the nominal_voltage property of the from or to node on a line, an error occurred.
+		Please try again.  If the error persists, please submit your code and a bug report via the issue tracking system.
+		*/
+	}
+
+	//Get the other one
+	tNode_nominal = new gld_property(to,"nominal_voltage");
+
+	//Check it
+	if ((tNode_nominal->is_valid() != true) || (tNode_nominal->is_double() != true))
+	{
+		GL_THROW("line:%d - %s - Unable to map nominal_voltage from connected node!",obj->id,(obj->name ? obj->name : "Unnamed"));
+		//Defined above
+	}
+
+	//Pull the values
+	f_nominal_voltage = fNode_nominal->get_double();
+	t_nominal_voltage = tNode_nominal->get_double();
 
 	/* check for node nominal voltage mismatch */
-	if ((pFrom->nominal_voltage - pTo->nominal_voltage) > fabs(0.001*pFrom->nominal_voltage))
-		throw "from and to node nominal voltage mismatch of greater than 0.1%";
+	if (fabs(f_nominal_voltage - t_nominal_voltage) > (0.001*f_nominal_voltage))
+		throw "from and to node nominal voltage mismatch of greater than 0.1%%";
 
 	if (solver_method == SM_NR && length == 0.0)
 		throw "Newton-Raphson method does not support zero length lines at this time";
@@ -180,7 +210,7 @@ void line::load_matrix_based_configuration(complex Zabc_mat[3][3], complex Yabc_
 	{
 		if (use_line_cap == false)
 		{
-			gl_warning("Shunt capacitance of line:%s specified without setting powerflow::line_capacitance = TRUE. Shunt capacitance will be ignotred.",OBJECTHDR(this)->name);
+			gl_warning("Shunt capacitance of line:%s specified without setting powerflow::line_capacitance = TRUE. Shunt capacitance will be ignored.",OBJECTHDR(this)->name);
 
 			for (int i = 0; i < 3; i++) 
 			{

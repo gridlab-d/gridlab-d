@@ -523,7 +523,7 @@ int pw_recorder::write_header(){
 
 	fprintf(outfile, "# file...... %s\n", (const char*)outfile_name);
 	fprintf(outfile, "# date...... %s", asctime(localtime(&now))); // adds its own newline
-#ifdef WIN32
+#ifdef _WIN32
 	fprintf(outfile, "# user...... %s\n", getenv("USERNAME"));
 	fprintf(outfile, "# host...... %s\n", getenv("MACHINENAME"));
 #else

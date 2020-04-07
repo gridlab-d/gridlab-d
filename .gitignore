@@ -19,6 +19,9 @@ build-aux/install-sh
 build-aux/ltmain.sh
 build-aux/missing
 gldcore/stamp-h1
+gridlabd
+gldcore/gridlabd.sh
+.pydevproject
 
 # Prerequisites
 *.d
@@ -74,6 +77,7 @@ gldcore/stamp-h1
 .cproject
 .project
 .settings/
+.vscode
 Makefile
 */.deps/
 */*/*/.deps/

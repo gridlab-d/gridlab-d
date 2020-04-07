@@ -122,6 +122,9 @@ meter::meter(MODULE *mod) : node(mod)
 			PT_double, "measured_avg_real_power_in_interval[W]", PADDR(measured_real_avg_power_in_interval),PT_DESCRIPTION,"measured average real power over a specified interval",
 			PT_double, "measured_avg_reactive_power_in_interval[VAr]", PADDR(measured_reactive_avg_power_in_interval),PT_DESCRIPTION,"measured average reactive power over a specified interval",
 			
+			//Interval for the min/max/averages
+            PT_double, "measured_stats_interval[s]",PADDR(measured_min_max_avg_timestep),PT_DESCRIPTION,"Period of timestep for min/max/average calculations",
+
 			PT_complex, "measured_current_A[A]", PADDR(measured_current[0]),PT_DESCRIPTION,"measured current on phase A",
 			PT_complex, "measured_current_B[A]", PADDR(measured_current[1]),PT_DESCRIPTION,"measured current on phase B",
 			PT_complex, "measured_current_C[A]", PADDR(measured_current[2]),PT_DESCRIPTION,"measured current on phase C",
@@ -146,6 +149,7 @@ meter::meter(MODULE *mod) : node(mod)
 				PT_KEYWORD,"TIERED",(enumeration)BM_TIERED,
 				PT_KEYWORD,"HOURLY",(enumeration)BM_HOURLY,
 				PT_KEYWORD,"TIERED_RTP",(enumeration)BM_TIERED_RTP,
+				PT_KEYWORD,"TIERED_TOU",(enumeration)BM_TIERED_TOU,
 			PT_object, "power_market", PADDR(power_market),PT_DESCRIPTION,"Market (auction object) where the price is being received from",
 			PT_int32, "bill_day", PADDR(bill_day),PT_DESCRIPTION,"day of month bill is to be processed (currently limited to days 1-28)",
 			PT_double, "price[$/kWh]", PADDR(price),PT_DESCRIPTION,"current price of electricity",
@@ -165,12 +169,16 @@ meter::meter(MODULE *mod) : node(mod)
 			GL_THROW("unable to publish meter_reset function in %s",__FILE__);
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"delta_linkage_node", (FUNCTIONADDR)delta_linkage)==NULL)
-			GL_THROW("Unable to publish meter delta_linkage function");
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_meter)==NULL)
 			GL_THROW("Unable to publish meter deltamode function");
-		if (gl_publish_function(oclass,	"delta_freq_pwr_object", (FUNCTIONADDR)delta_frequency_node)==NULL)
-			GL_THROW("Unable to publish meter deltamode function");
+		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
+			GL_THROW("Unable to publish meter swing-swapping function");
+		if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==NULL)
+			GL_THROW("Unable to publish meter current injection update mapping function");
+		if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
+			GL_THROW("Unable to publish meter VFD attachment function");
+		if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
+			GL_THROW("Unable to publish meter island-status-reset function");
 		}
 }
 
@@ -210,6 +218,7 @@ int meter::create()
     last_measured_real_energy = last_measured_reactive_energy = 0;
     last_measured_real_power = last_measured_reactive_power = 0.0;
 	measured_energy_delta_timestep = -1;
+	measured_min_max_avg_timestep = -1;
 	measured_power = complex(0,0,J);
 	measured_demand = 0.0;
 	measured_real_power = 0.0;
@@ -344,6 +353,22 @@ int meter::check_prices(){
 			if(tier_price[i] < 0.0 || tier_energy[i] < 0.0)
 				GL_THROW("meter tiers cannot have negative values");
 		}
+	} else if (bill_mode == BM_TIERED_TOU) { // beware: TOU pricing schedules haven't pushed values yet
+		if(tier_energy[1] == 0){ 
+			tier_price[1] = tier_price[0];
+			tier_energy[1] = DBL_MAX;
+		}
+		if(tier_energy[2] == 0){
+			tier_price[2] = tier_price[1];
+			tier_energy[2] = DBL_MAX;
+		}
+		if(tier_energy[2] < tier_energy[1] || tier_energy[1] < tier_energy[0]){
+			GL_THROW("meter energy tiers quantity trend improperly");
+		}
+		for(int i = 0; i < 3; ++i){
+			if(tier_price[i] < 0.0 || tier_energy[i] < 0.0)
+				GL_THROW("meter tiers cannot have negative values");
+		}
 	}
 
 	if(bill_mode == BM_HOURLY || bill_mode == BM_TIERED_RTP){
@@ -382,6 +407,7 @@ TIMESTAMP meter::presync(TIMESTAMP t0)
 void meter::BOTH_meter_sync_fxn()
 {
 	int TempNodeRef;
+	OBJECT *obj = OBJECTHDR(this);
 
 	//Reliability check
 	if ((fault_check_object != NULL) && (solver_method == SM_NR))	//proper solver and fault_object isn't null - may need to set a flag
@@ -389,6 +415,29 @@ void meter::BOTH_meter_sync_fxn()
 		if (NR_node_reference==-99)	//Childed
 		{
 			TempNodeRef=*NR_subnode_reference;
+
+			//See if our parent was initialized
+			if (TempNodeRef == -1)
+			{
+				//Try to initialize it, for giggles
+				node *Temp_Node = OBJECTDATA(SubNodeParent,node);
+
+				//Call the initialization
+				Temp_Node->NR_populate();
+
+				//Pull our reference
+				TempNodeRef=*NR_subnode_reference;
+
+				//Check it again
+				if (TempNodeRef == -1)
+				{
+					GL_THROW("meter:%d - %s - Uninitialized parent is causing odd issues - fix your model!",obj->id,(obj->name?obj->name:"Unnamed"));
+					/*  TROUBLESHOOT
+					A childed meter object is having issues mapping to its parent node - this typically happens in very odd cases of islanded/orphaned
+					topologies that only contain nodes (no links).  Adjust your GLM to work around this issue.
+					*/
+				}
+			}
 		}
 		else	//Normal
 		{
@@ -490,6 +539,35 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		if (measured_energy_delta_timestep > 0) {
 			if (t0 == start_timestamp) {
 				last_delta_timestamp = start_timestamp;
+
+				if (tretval > last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) {
+					tretval = last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep);
+				}
+			}
+
+			if ((t1 > last_delta_timestamp) && (t1 < last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) && (t1 != t0)) {
+				if (tretval > last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) {
+					tretval = last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep);
+				}
+			}
+
+			if ((t1 == last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) && (t1 != t0) && measured_energy_delta_timestep > 0) {
+				measured_real_energy_delta = measured_real_energy - last_measured_real_energy;
+				measured_reactive_energy_delta = measured_reactive_energy - last_measured_reactive_energy;
+				last_measured_real_energy = measured_real_energy;
+				last_measured_reactive_energy = measured_reactive_energy;
+				last_delta_timestamp = t1;
+
+				if (tretval > last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) {
+					tretval = last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep);
+				}
+			}
+		}//End perform delta-energy updates
+
+        // Min/Max/Stat calculation
+		if (measured_min_max_avg_timestep > 0) {
+			if (t0 == start_timestamp) {
+				last_stat_timestamp = start_timestamp;
 				voltage_avg_count = 0;
 				interval_dt = 0;
 
@@ -518,21 +596,21 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				measured_reactive_min_voltageD_in_interval[0] = measured_voltageD[0].Im();
 				measured_reactive_min_voltageD_in_interval[1] = measured_voltageD[1].Im();
 				measured_reactive_min_voltageD_in_interval[2] = measured_voltageD[2].Im();
-				measured_avg_voltage_mag_in_interval[0] = voltageA.Mag();
-				measured_avg_voltage_mag_in_interval[1] = voltageB.Mag();
-				measured_avg_voltage_mag_in_interval[2] = voltageC.Mag();
-				measured_avg_voltageD_mag_in_interval[0] = measured_voltageD[0].Mag();
-				measured_avg_voltageD_mag_in_interval[1] = measured_voltageD[1].Mag();
-				measured_avg_voltageD_mag_in_interval[2] = measured_voltageD[2].Mag();
+				measured_avg_voltage_mag_in_interval[0] = 0.0;
+				measured_avg_voltage_mag_in_interval[1] = 0.0;
+				measured_avg_voltage_mag_in_interval[2] = 0.0;
+				measured_avg_voltageD_mag_in_interval[0] = 0.0;
+				measured_avg_voltageD_mag_in_interval[1] = 0.0;
+				measured_avg_voltageD_mag_in_interval[2] = 0.0;
 				
 				//Power values
 				measured_real_max_power_in_interval = measured_real_power;
 				measured_real_min_power_in_interval = measured_real_power;
-				measured_real_avg_power_in_interval = measured_real_power;
+				measured_real_avg_power_in_interval = 0.0;
 
 				measured_reactive_max_power_in_interval = measured_reactive_power;
 				measured_reactive_min_power_in_interval = measured_reactive_power;
-				measured_reactive_avg_power_in_interval = measured_reactive_power;
+				measured_reactive_avg_power_in_interval = 0.0;
 				
 				last_measured_voltage[0] = voltageA;
 				last_measured_voltage[1] = voltageB;
@@ -540,13 +618,12 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				last_measured_voltageD[0] = measured_voltageD[0];
 				last_measured_voltageD[1] = measured_voltageD[1];
 				last_measured_voltageD[2] = measured_voltageD[2];
-				if (tretval > last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) {
-					tretval = last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep);
+				if (tretval > last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep)) {
+					tretval = last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep);
 				}
 			}
 
-
-			if ((t1 > last_delta_timestamp) && (t1 < last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) && (t1 != t0)) {
+			if ((t1 > last_stat_timestamp) && (t1 < last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep)) && (t1 != t0)) {
 				if (voltage_avg_count <= 0) {
 					last_measured_max_voltage_mag[0] = voltageA;
 					last_measured_max_voltage_mag[1] = voltageB;
@@ -566,7 +643,7 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 					last_measured_avg_voltageD_mag[0] = last_measured_voltageD[0].Mag();
 					last_measured_avg_voltageD_mag[1] = last_measured_voltageD[1].Mag();
 					last_measured_avg_voltageD_mag[2] = last_measured_voltageD[2].Mag();
-
+		
 					//Power
 					last_measured_min_real_power = last_measured_real_power;
 					last_measured_max_real_power = last_measured_real_power;
@@ -648,21 +725,17 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				last_measured_voltageD[0] = measured_voltageD[0].Mag();
 				last_measured_voltageD[1] = measured_voltageD[1].Mag();
 				last_measured_voltageD[2] = measured_voltageD[2].Mag();
-				if (t1 != last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) {
+				if (t1 != last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep)) {
 					voltage_avg_count++;
 					interval_dt = interval_dt + dt;
 				}
-				if (tretval > last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) {
-					tretval = last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep);
+				if (tretval > last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep)) {
+					tretval = last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep);
 				}
 			}
 
-			if ((t1 == last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) && (t1 != t0) && measured_energy_delta_timestep > 0) {
-				measured_real_energy_delta = measured_real_energy - last_measured_real_energy;
-				measured_reactive_energy_delta = measured_reactive_energy - last_measured_reactive_energy;
-				last_measured_real_energy = measured_real_energy;
-				last_measured_reactive_energy = measured_reactive_energy;
-				last_delta_timestamp = t1;
+			if ((t1 == last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep)) && (t1 != t0) && measured_min_max_avg_timestep > 0) {
+				last_stat_timestamp = t1;
 				if ( last_measured_voltage[0].Mag() > last_measured_max_voltage_mag[0].Mag()) {
 					last_measured_max_voltage_mag[0] = last_measured_voltage[0];
 				}
@@ -771,11 +844,13 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				measured_reactive_min_power_in_interval = last_measured_min_reactive_power;
 				measured_reactive_avg_power_in_interval = last_measured_avg_reactive_power;
 
-				if (tretval > last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep)) {
-					tretval = last_delta_timestamp + TIMESTAMP(measured_energy_delta_timestep);
+				if (tretval > last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep)) {
+					tretval = last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep);
 				}
 			}
-		}
+		}//End "Perform stat update" calculations
+
+		monthly_energy = measured_real_energy/1000 - previous_energy_total;
 
 		if (bill_mode == BM_UNIFORM || bill_mode == BM_TIERED)
 		{
@@ -802,7 +877,7 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 		}
 
-		if( (bill_mode == BM_HOURLY || bill_mode == BM_TIERED_RTP) && power_market != NULL && price_prop != NULL){
+		if(bill_mode == BM_HOURLY || bill_mode == BM_TIERED_RTP || bill_mode == BM_TIERED_TOU){
 			double seconds;
 			if (dt != last_t)
 				seconds = (double)(dt);
@@ -811,14 +886,31 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			
 			if (seconds > 0)
 			{
-				hourly_acc += seconds/3600 * price * last_measured_real_power/1000;
+				double acc_price = price;
+				if (bill_mode == BM_TIERED_TOU)
+				{
+					if(monthly_energy < tier_energy[0])
+						acc_price = last_price;
+					else if(monthly_energy < tier_energy[1])
+						acc_price = last_tier_price[0];
+					else if(monthly_energy < tier_energy[2])
+						acc_price = last_tier_price[1];
+					else
+						acc_price = last_tier_price[2];
+				}
+				hourly_acc += seconds/3600 * acc_price * last_measured_real_power/1000;
 				process_bill(t1);
 			}
 
-			// Now that we've accumulated the bill for the last time period, update to the new price
-			double *pprice = (gl_get_double(power_market, price_prop));
-			last_price = price = *pprice;
+			// Now that we've accumulated the bill for the last time period, update to the new price (if using the market)
+			if (bill_mode != BM_TIERED_TOU && power_market != NULL && price_prop != NULL)
+			{
+				double *pprice = (gl_get_double(power_market, price_prop));
+				last_price = price = *pprice;
+			}
+			last_measured_real_power = measured_real_power;
 
+			// copied logic on when the next bill must be processed
 			if (monthly_bill == previous_monthly_bill)
 			{
 				DATETIME t_next;
@@ -859,7 +951,6 @@ double meter::process_bill(TIMESTAMP t1){
 	DATETIME dtime;
 	gl_localtime(t1,&dtime);
 
-	monthly_energy = measured_real_energy/1000 - previous_energy_total;
 	monthly_bill = monthly_fee;
 	switch(bill_mode){
 		case BM_NONE:
@@ -878,6 +969,7 @@ double meter::process_bill(TIMESTAMP t1){
 				monthly_bill += last_price*tier_energy[0] + last_tier_price[0]*(tier_energy[1] - tier_energy[0]) + last_tier_price[1]*(tier_energy[2] - tier_energy[1]) + last_tier_price[2]*(monthly_energy - tier_energy[2]);
 			break;
 		case BM_HOURLY:
+		case BM_TIERED_TOU:
 			monthly_bill += hourly_acc;
 			break;
 		case BM_TIERED_RTP:
@@ -914,7 +1006,6 @@ double meter::process_bill(TIMESTAMP t1){
 //Module-level call
 SIMULATIONMODE meter::inter_deltaupdate_meter(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
 {
-	unsigned char pass_mod;
 	OBJECT *hdr = OBJECTHDR(this);
 	double deltat, deltatimedbl;
 	STATUS return_status_val;
@@ -923,20 +1014,27 @@ SIMULATIONMODE meter::inter_deltaupdate_meter(unsigned int64 delta_time, unsigne
 	deltat = (double)dt/(double)DT_SECOND;
 
 	//Update time tracking variable - mostly for GFA functionality calls
-	if (iteration_count_val == 0)	//Only update timestamp tracker on first iteration
+	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
 	{
 		//Get decimal timestamp value
 		deltatimedbl = (double)delta_time/(double)DT_SECOND; 
 
 		//Update tracking variable
 		prev_time_dbl = (double)gl_globalclock + deltatimedbl;
+
+		//Update frequency calculation values (if needed)
+		if (fmeas_type != FM_NONE)
+		{
+			//Copy the tracker value
+			memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+		}
 	}
 
 	//Initialization items
-	if ((delta_time==0) && (iteration_count_val==0) && (interupdate_pos == false))	//First run of new delta call
+	if ((delta_time==0) && (iteration_count_val==0) && (interupdate_pos == false) && (fmeas_type != FM_NONE))	//First run of new delta call
 	{
 		//Initialize dynamics
-		init_freq_dynamics(&curr_state);
+		init_freq_dynamics();
 	}//End first pass and timestep of deltamode (initial condition stuff)
 
 	//Perform the GFA update, if enabled
@@ -945,9 +1043,6 @@ SIMULATIONMODE meter::inter_deltaupdate_meter(unsigned int64 delta_time, unsigne
 		//Do the checks
 		GFA_Update_time = perform_GFA_checks(deltat);
 	}
-
-	//See what we're on, for tracking
-	pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
 
 	if (interupdate_pos == false)	//Before powerflow call
 	{
@@ -969,7 +1064,8 @@ SIMULATIONMODE meter::inter_deltaupdate_meter(unsigned int64 delta_time, unsigne
 		NR_node_sync_fxn(hdr);
 
 		return SM_DELTA;	//Just return something other than SM_ERROR for this call
-	}
+
+	}//End Before NR solver (or inclusive)
 	else	//After the call
 	{
 		//Perform postsync-like updates on the values
@@ -978,7 +1074,7 @@ SIMULATIONMODE meter::inter_deltaupdate_meter(unsigned int64 delta_time, unsigne
 		//Frequency measurement stuff
 		if (fmeas_type != FM_NONE)
 		{
-			return_status_val = calc_freq_dynamics(deltat,pass_mod);
+			return_status_val = calc_freq_dynamics(deltat);
 
 			//Check it
 			if (return_status_val == FAILED)
@@ -1037,35 +1133,7 @@ SIMULATIONMODE meter::inter_deltaupdate_meter(unsigned int64 delta_time, unsigne
 		{
 			return SM_EVENT;
 		}
-
-		//No control required at this time - powerflow defers to the whims of other modules
-		//Code below implements predictor/corrector-type logic, even though it effectively does nothing
-		//return SM_EVENT;
-
-		////Do deltamode-related logic
-		//if (bustype==SWING)	//We're the SWING bus, control our destiny (which is really controlled elsewhere)
-		//{
-		//	//See what we're on
-		//	pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
-
-		//	//Check pass
-		//	if (pass_mod==0)	//Predictor pass
-		//	{
-		//		return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
-		//	}
-		//	else	//Corrector pass
-		//	{
-		//		//As of right now, we're always ready to leave
-		//		//Other objects will dictate if we stay (powerflow is indifferent)
-		//		return SM_EVENT;
-		//	}//End corrector pass
-		//}//End SWING bus handling
-		//else	//Normal bus
-		//{
-		//	return SM_EVENT;	//Normal nodes want event mode all the time here - SWING bus will
-		//						//control the reiteration process for pred/corr steps
-		//}
-	}
+	}//End "After NR solver" branch
 }
 
 //////////////////////////////////////////////////////////////////////////

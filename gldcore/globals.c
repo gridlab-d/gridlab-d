@@ -131,7 +131,9 @@ static struct s_varmap {
 	{"test", PT_bool, &global_debug_mode, PA_PUBLIC, "test enable flag"},
 	{"verbose", PT_bool, &global_verbose_mode, PA_PUBLIC, "verbose enable flag"},
 	{"iteration_limit", PT_int32, &global_iteration_limit, PA_PUBLIC, "iteration limit"},
+	{"federation_reiteration", PT_bool, &global_federation_reiteration, PA_REFERENCE, "global boolean to enforce a reiteration for all modules due to an external federation reiteration"},
 	{"workdir", PT_char1024, &global_workdir, PA_REFERENCE, "working directory"},
+	{"lock", PT_bool, &global_lock_enabled, PA_PUBLIC, "lock enabled flag"},
 	{"dumpfile", PT_char1024, &global_dumpfile, PA_PUBLIC, "dump filename"},
 	{"savefile", PT_char1024, &global_savefile, PA_PUBLIC, "save filename"},
 	{"dumpall", PT_bool, &global_dumpall, PA_PUBLIC, "dumpall enable flag"},
@@ -224,6 +226,8 @@ static struct s_varmap {
 	{"delta_current_clock", PT_double, &global_delta_curr_clock, PA_PUBLIC, "Absolute delta time (global clock offset)"},
 	{"deltamode_updateorder", PT_char1024, &global_deltamode_updateorder, PA_REFERENCE, "order in which modules are update in deltamode"},
 	{"deltamode_iteration_limit", PT_int32, &global_deltamode_iteration_limit, PA_PUBLIC, "iteration limit for each delta timestep (object and interupdate)"},
+	{"deltamode_forced_extra_timesteps",PT_int32, &global_deltamode_forced_extra_timesteps, PA_PUBLIC, "forced extra deltamode timesteps before returning to event-driven mode"},
+	{"deltamode_forced_always",PT_bool, &global_deltamode_forced_always, PA_PUBLIC, "forced deltamode for debugging -- prevents event-driven mode"},
 	{"run_powerworld", PT_bool, &global_run_powerworld, PA_PUBLIC, "boolean that that says your system is set up correctly to run with PowerWorld"},
 	{"bigranks", PT_bool, &global_bigranks, PA_PUBLIC, "enable fast/blind set_rank operations"},
 	{"exename", PT_char1024, &global_execname, PA_REFERENCE, "argv[0] value"},
@@ -233,7 +237,7 @@ static struct s_varmap {
 	/* add new global variables here */
 };
 
-#ifdef WIN32
+#ifdef _WIN32
 #	define TMP "C:\\WINDOWS\\TEMP"
 #	define PATHSEP "\\"
 #	define HOMEVAR "HOMEPATH"
@@ -255,7 +259,7 @@ static void buildtmp(void)
 		return;
 	}
 	if (home = getenv(HOMEVAR)) {
-#ifdef WIN32
+#ifdef _WIN32
 		char *drive;
 		if (!(drive = getenv("HOMEDRIVE")))
 			drive = "";

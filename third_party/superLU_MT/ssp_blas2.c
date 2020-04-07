@@ -1,3 +1,13 @@
+/*! \file
+Copyright (c) 2003, The Regents of the University of California, through
+Lawrence Berkeley National Laboratory (subject to receipt of any required 
+approvals from U.S. Dept. of Energy) 
+
+All rights reserved. 
+
+The source code is distributed under BSD license, see the file License.txt
+at the top-level directory.
+*/
 
 /*
  * -- SuperLU routine (version 3.0) --
@@ -11,20 +21,20 @@
  * Purpose:		Sparse BLAS 2, using some dense BLAS 2 operations.
  */
 
-#include "pssp_defs.h"
+#include "slu_mt_sdefs.h"
 
 
 /* 
  * Function prototypes 
  */
-extern void susolve(int, int, float*, float*);
-extern void slsolve(int, int, float*, float*);
-extern void smatvec(int, int, int, float*, float*, float*);
+extern void susolve(int_t, int_t, float*, float*);
+extern void slsolve(int_t, int_t, float*, float*);
+extern void smatvec(int_t, int_t, int_t, float*, float*, float*);
 
 
-int
+int_t
 sp_strsv(char *uplo, char *trans, char *diag, SuperMatrix *L, 
-         SuperMatrix *U, float *x, int *info)
+         SuperMatrix *U, float *x, int_t *info)
 {
 /*
  *   Purpose
@@ -74,7 +84,7 @@ sp_strsv(char *uplo, char *trans, char *diag, SuperMatrix *L,
  *             element right-hand side vector b. On exit, X is overwritten 
  *             with the solution vector x.
  *
- *   info    - (output) int*
+ *   info    - (output) int_t*
  *             If *info = -i, the i-th argument had an illegal value.
  *
  */
@@ -86,7 +96,7 @@ sp_strsv(char *uplo, char *trans, char *diag, SuperMatrix *L,
     float   *Lval, *Uval;
     int incx = 1, incy = 1;
     float alpha = 1.0, beta = 1.0;
-    register int fsupc, luptr, istart, irow, k, iptr, jcol, nsuper;
+    register int_t fsupc, luptr, istart, irow, k, iptr, jcol, nsuper;
     int          nsupr, nsupc, nrow, i;
     float *work;
     flops_t solve_ops;
@@ -104,10 +114,10 @@ sp_strsv(char *uplo, char *trans, char *diag, SuperMatrix *L,
 	return 0;
     }
 
-    Lstore = L->Store;
-    Lval = Lstore->nzval;
-    Ustore = U->Store;
-    Uval = Ustore->nzval;
+    Lstore = (SCPformat*) L->Store;
+    Lval = (float*) Lstore->nzval;
+    Ustore = (NCPformat*) U->Store;
+    Uval = (float*) Ustore->nzval;
     nsuper = Lstore->nsuper;
     solve_ops = 0;
 
@@ -304,9 +314,9 @@ sp_strsv(char *uplo, char *trans, char *diag, SuperMatrix *L,
 
 
 
-int
+int_t
 sp_sgemv(char *trans, float alpha, SuperMatrix *A, float *x, 
-	 int incx, float beta, float *y, int incy)
+	 int_t incx, float beta, float *y, int_t incy)
 {
 /*  Purpose   
     =======   
@@ -370,9 +380,9 @@ sp_sgemv(char *trans, float alpha, SuperMatrix *A, float *x,
     float   *Aval;
     int info;
     float temp;
-    int lenx, leny, i, j, irow;
-    int iy, jx, jy, kx, ky;
-    int notran;
+    int_t lenx, leny, i, j, irow;
+    int_t iy, jx, jy, kx, ky;
+    int_t notran;
 
     notran = lsame_(trans, "N");
     Astore = A->Store;

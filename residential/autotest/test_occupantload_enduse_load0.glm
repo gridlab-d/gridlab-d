@@ -27,7 +27,7 @@ object house {
 		number_of_occupants 1;
 		object player {
 			property occupancy_fraction;
-			file "generic_demand.glt";
+			file "../generic_demand.glt";
 			loop 100;
 		};
 		object recorder {

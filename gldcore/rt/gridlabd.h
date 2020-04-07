@@ -1,4 +1,4 @@
-/** $Id: gridlabd.h 4738 2014-07-03 00:55:39Z dchassin $
+/** $Id$
     Copyright (C) 2008 Battelle Memorial Institute
 	@file rt/gridlabd.h
 	@defgroup runtime Runtime Class API
@@ -437,6 +437,7 @@ typedef enum {_PT_FIRST=-1,
 	PT_loadshape,	/**< Loadshapes are state machines driven by schedules */
 	PT_enduse,		/**< Enduse load data */
 	PT_random,		/**< Randomized number */
+	PT_method,		/**< Method interface */
 #ifdef USE_TRIPLETS
 	PT_triple, /**< triplet of doubles (not supported) */
 	PT_triplex, /**< triplet of complexes (not supported) */
@@ -540,6 +541,8 @@ typedef uint32 PROPERTYFLAGS;
 #define PF_RECALC	0x0001 /**< property has a recalc trigger (only works if recalc_<class> is exported) */
 #define PF_CHARSET	0x0002 /**< set supports single character keywords (avoids use of |) */
 
+typedef int (*METHODCALL)(void *obj, char *string, int size); /**< the function that read and writes a string */
+
 struct s_property_map {
 	CLASS *oclass; /**< class implementing the property */
 	PROPERTYNAME name; /**< property name */
@@ -548,13 +551,14 @@ struct s_property_map {
 	uint32 width; /**< property byte size, copied from array in class.c */
 	PROPERTYACCESS access; /**< property access flags */
 	UNIT *unit; /**< property unit, if any; \p NULL if none */
-	PROPERTYADDR addr; /**< property location, offset from OBJECT header */
+	PROPERTYADDR addr; /**< property location, offset from OBJECT header; OBJECT header itself for methods */
 	DELEGATEDTYPE *delegation; /**< property delegation, if any; \p NULL if none */
 	KEYWORD *keywords; /**< keyword list, if any; \p NULL if none (only for set and enumeration types)*/
 	char *description; /**< description of property */
 	PROPERTY *next; /**< next property in property list */
 	PROPERTYFLAGS flags; /**< property flags (e.g., PF_RECALC) */
 	FUNCTIONADDR notify;
+	METHODCALL method; /**< method call, addr must be 0 */
 	bool notify_override;
 }; /**< property definition item */
 
@@ -833,11 +837,11 @@ struct s_loadshape_core {
 };
 
 typedef enum {
-    EUMT_MOTOR_A, /**< 3ph induction motors driving constant torque loads */
-    EUMT_MOTOR_B, /**< induction motors driving high inertia speed-squares torque loads */
-    EUMT_MOTOR_C, /**< induction motors driving low inertia loads speed-squared torque loads */
-    EUMT_MOTOR_D, /**< 1ph induction motors driving constant torque loads */
-    _EUMT_COUNT, /* must be last */
+	EUMT_MOTOR_A, /**< 3ph induction motors driving constant torque loads */
+	EUMT_MOTOR_B, /**< induction motors driving high inertia speed-squares torque loads */
+	EUMT_MOTOR_C, /**< induction motors driving low inertia loads speed-squared torque loads */
+	EUMT_MOTOR_D, /**< 1ph induction motors driving constant torque loads */
+	_EUMT_COUNT, /* must be last */
 } EUMOTORTYPE;
 typedef enum {
     EUET_ELECTRONIC_A, /**< simple power electronics (no backfeed) */
@@ -845,67 +849,69 @@ typedef enum {
     _EUET_COUNT, /* must be last */
 } EUELECTRONICTYPE;
 typedef struct s_motor {
-    complex power;              /**< motor power when running */
-    complex impedance;  /**< motor impedance when stalled */
-    double inertia;             /**< motor inertia in seconds */
-    double v_stall;             /**< motor stall voltage (pu) */
-    double v_start;             /**< motor start voltage (pu) */
-    double v_trip;              /**< motor trip voltage (pu) */
-    double t_trip;              /**< motor thermal trip time in seconds */
+    complex power;		/**< motor power when running */
+    complex impedance;	/**< motor impedance when stalled */
+    double inertia;		/**< motor inertia in seconds */
+    double v_stall;		/**< motor stall voltage (pu) */
+    double v_start;		/**< motor start voltage (pu) */
+    double v_trip;		/**< motor trip voltage (pu) */
+    double t_trip;		/**< motor thermal trip time in seconds */
     /* TODO add slip data (0 for synchronous motors) */
 } EUMOTOR;
 typedef struct s_electronic {
-    complex power;              /**< load power when running */
-    double inertia;             /**< load "inertia" */
-    double v_trip;              /**< load "trip" voltage (pu) */
-    double v_start;             /**< load "start" voltage (pu) */
+    complex power;		/**< load power when running */
+    double inertia;		/**< load "inertia" */
+    double v_trip;		/**< load "trip" voltage (pu) */
+    double v_start;		/**< load "start" voltage (pu) */
 } EUELECTRONIC;
+
 typedef struct s_enduse {
-    /* the output value must be first for transform to stream */
-    /* meter values */
-    complex total;                          /* total power in kW */
-    complex energy;                         /* total energy in kWh */
-    complex demand;                         /* maximum power in kW (can be reset) */
+	/* the output value must be first for transform to stream */
+	/* meter values */
+	complex total;				/* total power in kW */
+	complex energy;				/* total energy in kWh */
+	complex demand;				/* maximum power in kW (can be reset) */
 
-    /* circuit configuration */
-    set config;                                     /* end-use configuration */
-    double breaker_amps;            /* breaker limit (if any) */
+	/* circuit configuration */	
+	set config;					/* end-use configuration */
+	double breaker_amps;		/* breaker limit (if any) */
 
-    /* zip values */
-    complex admittance;                     /* constant impedance oprtion of load in kW */
-    complex current;                        /* constant current portion of load in kW */
-    complex power;                          /* constant power portion of load in kW */
+	/* zip values */
+	complex admittance;			/* constant impedance oprtion of load in kW */
+	complex current;			/* constant current portion of load in kW */
+	complex power;				/* constant power portion of load in kW */
 
-    /* composite load data */
-    EUMOTOR motor[_EUMT_COUNT];                             /* motor loads (A-D) */
-    EUELECTRONIC electronic[_EUET_COUNT];   /* electronic loads (S/D) */
+	/* composite load data */
+	EUMOTOR motor[_EUMT_COUNT];				/* motor loads (A-D) */
+	EUELECTRONIC electronic[_EUET_COUNT];	/* electronic loads (S/D) */
 
-    /* loading */
-    double impedance_fraction;      /* constant impedance fraction (pu load) */
-    double current_fraction;        /* constant current fraction (pu load) */
-    double power_fraction;          /* constant power fraction (pu load)*/
-    double power_factor;            /* power factor */
-    double voltage_factor;          /* voltage factor (pu nominal) */
+	/* loading */
+	double impedance_fraction;	/* constant impedance fraction (pu load) */
+	double current_fraction;	/* constant current fraction (pu load) */
+	double power_fraction;		/* constant power fraction (pu load)*/
+	double power_factor;		/* power factor */
+	double voltage_factor;		/* voltage factor (pu nominal) */
 
-    /* heat */
-    double heatgain;                        /* internal heat from load (Btu/h) */
-    double cumulative_heatgain;  /* internal cumulative heat gain from load (Btu) */
-    double heatgain_fraction;       /* fraction of power that goes to internal heat (pu Btu/h) */
+	/* heat */
+	double heatgain;			/* internal heat from load (Btu/h) */
+	double cumulative_heatgain;  /* internal cumulative heat gain from load (Btu) */ 
+	double heatgain_fraction;	/* fraction of power that goes to internal heat (pu Btu/h) */
 
-    /* misc info */
-    char *name;
-    loadshape *shape;
-    TIMESTAMP t_last;                       /* last time of update */
+	/* misc info */
+	char *name;
+	loadshape *shape;
+	TIMESTAMP t_last;			/* last time of update */
 
-    // added for backward compatibility with res ENDUSELOAD
-    // @todo these are obsolete and must be retrofitted with the above values
-    struct s_object_list *end_obj;
+	// added for backward compatibility with res ENDUSELOAD
+	// @todo these are obsolete and must be retrofitted with the above values
+	struct s_object_list *end_obj;
 
-    struct s_enduse *next;
+        struct s_enduse *next;
 #ifdef _DEBUG
     unsigned int magic;
 #endif
 } enduse;
+
 
 /* object flags */
 #define OF_NONE		0x0000 /**< Object flag; none set */
@@ -924,7 +930,7 @@ typedef struct s_enduse {
  */
 
 #if defined(USE_RUNTIME_LOCKING)
-#if defined(WIN32) && !defined(__GNUC__)
+#if defined(_WIN32) && !defined(__GNUC__)
 	#include <intrin.h>
 	#pragma intrinsic(_InterlockedCompareExchange)
 	#pragma intrinsic(_InterlockedIncrement)
@@ -1186,6 +1192,7 @@ typedef struct s_callbacks {
 		double (*timestamp_to_minutes)(TIMESTAMP t);
 		double (*timestamp_to_seconds)(TIMESTAMP t);
 		int (*local_datetime)(TIMESTAMP ts, DATETIME *dt);
+		int (*local_datetime_delta)(double ts, DATETIME *dt);
 		TIMESTAMP (*convert_to_timestamp)(char *value);
 		TIMESTAMP (*convert_to_timestamp_delta)(const char *value, unsigned int *nanoseconds, double *dbl_time_value);
 		int (*convert_from_timestamp)(TIMESTAMP ts, char *buffer, int size);
@@ -1453,6 +1460,7 @@ inline double gl_random_rayleigh(double a) { return callback->random.rayleigh(NU
 
 inline bool gl_object_isa(OBJECT *obj, char *type) { return callback->object_isa(obj,type)==1;};
 inline DATETIME *gl_localtime(TIMESTAMP ts,DATETIME *dt) { return callback->time.local_datetime(ts,dt)?dt:NULL;};
+inline DATETIME *gl_localtime_delta(double ts,DATETIME *dt) { return callback->time.local_datetime_delta(ts,dt)?dt:NULL;};
 inline TIMESTAMP gl_mkdatetime(DATETIME *dt) { return callback->time.mkdatetime(dt);};
 inline TIMESTAMP gl_mkdatetime(short year, short month, short day, short hour=0, short minute=0, short second=0, char *tz=NULL, unsigned int nsec=0)
 {
