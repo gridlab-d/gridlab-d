@@ -78,7 +78,7 @@ motor::motor(MODULE *mod):node(mod)
 			PT_double, "mechanical_torque[pu]", PADDR(Tmech),PT_DESCRIPTION,"mechanical torque applied to the motor",
 			PT_double, "mechanical_torque_state_var[pu]", PADDR(Tmech_eff),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"Internal state variable torque - three-phase model",
 
-			PT_enumeration, "SPIM_torque_usage_method", PADDR(motor_torque_usage_method), PT_DESCRIPTION, "Approach for using Tmech on single-phase motor",
+			PT_enumeration, "torque_usage_method", PADDR(motor_torque_usage_method), PT_DESCRIPTION, "Approach for using Tmech on both types",
 				PT_KEYWORD, "DIRECT", (enumeration)modelDirectTorque,
 				PT_KEYWORD, "SPEEDFOUR", (enumeration)modelSpeedFour,	//Fixed at 0.85 + 0.15*speed^4
 
@@ -588,7 +588,14 @@ int motor::init(OBJECT *parent)
 		}
 		else	//Assume 3 phase
 		{
-			Tmech = 0.95;
+			if (motor_torque_usage_method==modelDirectTorque)
+			{
+				Tmech = 0.95;
+			}
+			else	//Assumes the speed^4 fraction
+			{
+				Tmech = 1.0;	//Assumes starts at nominal speed
+			}
 
 			//Check mode
 			if (motor_status != statusOFF)
@@ -1249,7 +1256,7 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 		{
 			// figure out if we need to exit delta mode on the next pass
 			if ((Vas.Mag() > DM_volt_exit) && (Vbs.Mag() > DM_volt_exit) && (Vcs.Mag() > DM_volt_exit)
-					&& (wr > DM_speed_exit) && ((fabs(wr_pu-wr_pu_prev)*wbase) > speed_error))
+					&& (wr > DM_speed_exit) && ((fabs(wr_pu-wr_pu_prev)*wbase) <= speed_error))
 			{
 				return SM_EVENT;
 			}
@@ -1812,6 +1819,17 @@ void motor::TPIMSteadyState(TIMESTAMP t1) {
 				Inr_cj = (phinr_cj - phins_cj * lm / Ls) / sigma2; // pu
 				Telec = (~phips * Ips + ~phins_cj * Ins_cj).Im() ;  // pu
 
+				//See which model we're using
+				if (motor_torque_usage_method==modelSpeedFour)
+				{
+					//Compute updated mechanical torque
+					Tmech = 0.85 + 0.15*(wr_pu*wr_pu*wr_pu*wr_pu);
+
+					//Assign it in, too
+					Tmech_eff = Tmech;
+				}
+				//Default else - direct method, so just read (in case player/else changes it)
+
 				// iteratively compute speed increment to make sure Telec matches Tmech during steady state mode
 				// if it does not match, then update current and Telec using new wr_pu
 				omgr0_delta = ( Telec - Tmech_eff ) / ((double)iteration_count);
@@ -2020,9 +2038,22 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
 
     TPIMupdateVars();
 
-	if (wr_pu >= 1.0)
+	//See which model we're using
+	if (motor_torque_usage_method==modelSpeedFour)
 	{
+		//Compute updated mechanical torque
+		Tmech = 0.85 + 0.15*(wr_pu*wr_pu*wr_pu*wr_pu);
+
+		//Assign it in
 		Tmech_eff = Tmech;
+	}
+	else
+	{
+		//Do the old routine - only engage if above 1.0
+		if (wr_pu >= 1.0)
+		{
+			Tmech_eff = Tmech;
+		}
 	}
 
     //*** Predictor Step ***//
