@@ -400,7 +400,7 @@ int node::init(OBJECT *parent)
 	if (has_phase(PHASE_S))
 	{
 		//Make sure we're a valid class
-		if (!(gl_object_isa(obj,"triplex_node","powerflow") || gl_object_isa(obj,"triplex_meter","powerflow") || gl_object_isa(obj,"triplex_load","powerflow") || gl_object_isa(obj,"motor","powerflow")))
+		if (!(gl_object_isa(obj,"triplex_node","powerflow") || gl_object_isa(obj,"triplex_meter","powerflow") || gl_object_isa(obj,"triplex_load","powerflow") || gl_object_isa(obj,"motor","powerflow") || gl_object_isa(obj,"performance_motor","powerflow")))
 		{
 			GL_THROW("Object:%d - %s -- has a phase S, but is not triplex!",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
