@@ -52,6 +52,7 @@ performance_motor::performance_motor(MODULE *mod):node(mod)
             PT_double,"Vbrk",PADDR(Vbrk),
             PT_double,"Vstallbrk",PADDR(Vstallbrk),
             PT_double,"Vstall",PADDR(Vstall),
+			PT_double,"Vrst",PADDR(Vrst),
             PT_double,"P_val",PADDR(P_val),
             PT_double,"Q_val",PADDR(Q_val),
             PT_double,"P_0",PADDR(P_0),
@@ -96,6 +97,7 @@ int performance_motor::create()
 
     Vbrk = 0.86;
     Vstall = 0.70;
+	Vrst = 0.70;
     P_val = 0.0;
     Q_val = 0.0;
     P_0 = 0.0;
@@ -388,6 +390,12 @@ void performance_motor::update_motor_equations(void)
             shunt[2] = stall_admittance;
         }
         //Others are already zerod
+
+		//If goes above Vrest, restart - this will delay one timestep, but meh - crude implementation
+		if (V_current > Vrst)
+		{
+			motor_status = statusRUNNING;
+		}
     }
     else if (motor_status == statusTRIPPED)
     {

@@ -39,6 +39,7 @@ private:
     double Vbrk;
     double Vstallbrk;
     double Vstall;
+    double Vrst;
 
     double P_val;
     double Q_val;
