@@ -291,7 +291,6 @@ public:
 	double kp_Pconstant;		// kp for the PI controller implemented in P constant delta mode
 
 	bool P_constant_mode; 		// Flag indicating whether P constant mode is imployed
-	bool Q_constant_mode;       // Flag indicating whether Q constant mode is imployed
 	double ki_Qconstant;		// ki for the PI controller implemented in Q constant delta mode
 	double kp_Qconstant;		// kp for the PI controller implemented in Q constant delta mode
 	
