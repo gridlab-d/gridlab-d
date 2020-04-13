@@ -210,6 +210,7 @@ EXPORT SIMULATIONMODE deltaClockUpdate(MODULE *module, double t1, unsigned long 
 		result = item->dclkupdate(item->data, t1, timestep, systemmode);
 		return result;
 	}
+	return SM_ERROR; // fall through return value resolves return-type warning. Should be unreachable.
 }
 
 EXPORT int postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
