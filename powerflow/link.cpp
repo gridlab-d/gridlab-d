@@ -2983,7 +2983,6 @@ void link_object::BOTH_link_postsync_fxn(void)
 }
 
 //Functionalized limit checking, mostly for restoration calls
-//void link_object::perform_limit_checks(double *over_limit_value, bool *over_limits)
 bool link_object::perform_limit_checks(double *over_limit_value, bool *over_limits)
 {
 	double temp_power_check, temp_current_diff;
