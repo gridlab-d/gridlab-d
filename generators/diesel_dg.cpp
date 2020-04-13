@@ -115,6 +115,13 @@ diesel_dg::diesel_dg(MODULE *module)
 				PT_KEYWORD,"NO_EXC",(enumeration)NO_EXC,PT_DESCRIPTION,"No exciter",
 				PT_KEYWORD,"SEXS",(enumeration)SEXS,PT_DESCRIPTION,"Simplified Excitation System",
 
+			//modes of SEXS exciter
+			PT_enumeration,"SEXS_mode",PADDR(SEXS_mode),PT_DESCRIPTION,"Exciter model for dynamics-capable implementation",
+				PT_KEYWORD,"CONSTANT_VOLTAGE",(enumeration)SEXS_CV,PT_DESCRIPTION,"The normal operation mode of SEXS",
+				PT_KEYWORD,"CONSTANT_Q",(enumeration)SEXS_CQ,PT_DESCRIPTION,"Constant Q operation mode",
+				PT_KEYWORD,"Q_V_DROOP",(enumeration)SEXS_Q_V_DROOP,PT_DESCRIPTION,"Q-V droop function",
+
+
 			PT_double,"KA[pu]",PADDR(exc_KA),PT_DESCRIPTION,"Exciter gain (p.u.)",
 			PT_double,"TA[s]",PADDR(exc_TA),PT_DESCRIPTION,"Exciter time constant (seconds)",
 			PT_double,"TB[s]",PADDR(exc_TB),PT_DESCRIPTION,"Exciter transient gain reduction time constant (seconds)",
@@ -123,6 +130,11 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double,"EMIN[pu]",PADDR(exc_EMIN),PT_DESCRIPTION,"Exciter lower limit (p.u.)",
 			PT_double,"Vterm_max[pu]",PADDR(Max_Ef),PT_DESCRIPTION,"Upper voltage limit for super-second (p.u.)",
 			PT_double,"Vterm_min[pu]",PADDR(Min_Ef),PT_DESCRIPTION,"Lower voltage limit for super-second (p.u.)",
+
+
+			PT_double,"mq_QV_Droop",PADDR(mq_QV_Droop),PT_DESCRIPTION,"Q-V droop slope",
+			PT_double,"Vset_QV_droop",PADDR(Vset_QV_droop),PT_DESCRIPTION,"Voltage setpoint of QV droop",
+			PT_double,"Vref_SEXS",PADDR(gen_base_set_vals.vset),PT_DESCRIPTION,"Voltage reference for SEXS exciter",
 
 			//State variables - SEXS
 			PT_double,"bias",PADDR(curr_state.avr.bias),PT_DESCRIPTION,"Exciter bias state variable",
@@ -420,7 +432,10 @@ int diesel_dg::create(void)
 	exc_TB=2.0;               
 	exc_TC=10;              
 	exc_EMAX=3.0;             
-	exc_EMIN=-3.0;            
+	exc_EMIN=-3.0;
+
+	mq_QV_Droop=0.05; // Q-V droop slope
+	Vset_QV_droop=1; //Voltage setpoint of QV droop
 
 	//DEGOV1 Governor defaults
 	gov_degov1_R=0.05;             
@@ -518,6 +533,7 @@ int diesel_dg::create(void)
 	value_IGenerated[0] = value_IGenerated[1] = value_IGenerated[2] = complex(0.0,0.0);
 	Governor_type = NO_GOV;
 	Exciter_type = NO_EXC;
+	SEXS_mode = SEXS_CV;
 
 	power_val[0] = power_val[1] = power_val[2] = complex(0.0,0.0);
 	current_val[0] = current_val[1] = current_val[2] = complex(0.0,0.0);
@@ -1691,7 +1707,7 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 				//Get the positive sequence magnitude
 				voltage_mag_curr = temp_voltage_val[0].Mag()/voltage_base;
 
-				if (Q_constant_mode == true) {
+				if (SEXS_mode == SEXS_CQ) {
 					//Figure out Q difference based on given Qref
 					reactive_diff = (gen_base_set_vals.Qref - (power_val[0].Im() + power_val[1].Im() + power_val[2].Im()) / Rated_VA) / 3.0;
 					reactive_diff = reactive_diff * Rated_VA;
@@ -1722,6 +1738,12 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 					//Keep us here
 					tret_value = t1;
+				}
+				else if (SEXS_mode == SEXS_Q_V_DROOP)
+				{
+
+						// Dealta mode trigger should be here
+
 				}
 
 				if ((voltage_mag_curr>Max_Ef) || (voltage_mag_curr<Min_Ef))
@@ -2358,7 +2380,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		apply_dynamics(&curr_state,&predictor_vals,deltat);
 
 		//Apply prediction update
-		if (Q_constant_mode == true) {
+		if (SEXS_mode == SEXS_CQ) {
 			next_state.avr.xfd = curr_state.avr.xfd + predictor_vals.avr.xfd*deltat;
 			next_state.Vfd = next_state.avr.xfd + predictor_vals.avr.xfd*(kp_Qconstant/ki_Qconstant);
 		}
@@ -2778,6 +2800,13 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 
 				// Give value to vset
 				gen_base_set_vals.vset = gen_base_set_vals.vadd + Vref;
+			}
+
+			if(SEXS_mode == SEXS_Q_V_DROOP)
+			{
+
+				gen_base_set_vals.vset = Vset_QV_droop - curr_state.pwr_electric.Im()/Rated_VA * mq_QV_Droop;
+
 			}
 
 
@@ -3230,6 +3259,14 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 
 				// Give value to vset
 				gen_base_set_vals.vset = gen_base_set_vals.vadd + Vref;
+			}
+
+
+			if(SEXS_mode == SEXS_Q_V_DROOP)
+			{
+
+				gen_base_set_vals.vset = Vset_QV_droop - curr_state.pwr_electric.Im()/Rated_VA * mq_QV_Droop;
+
 			}
 
 			next_state.avr.xe = curr_state.avr.xe + (predictor_vals.avr.xe + corrector_vals.avr.xe)*deltath;
@@ -4423,6 +4460,13 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 			curr_time->avr.x_cvr2 = 0;
 			gen_base_set_vals.vadd = 0;
 			gen_base_set_vals.vadd_a = 0;
+		}
+
+		// Initialize the voltage set point of Q-V droop
+		if(SEXS_mode == SEXS_Q_V_DROOP)
+		{
+			Vset_QV_droop = gen_base_set_vals.vset + curr_time->pwr_electric.Im() / Rated_VA * mq_QV_Droop;
+
 		}
 
 		// Define exciter bias value
