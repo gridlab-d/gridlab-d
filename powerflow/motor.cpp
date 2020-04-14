@@ -943,7 +943,7 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 		{
 			// figure out if we need to exit delta mode on the next pass
 			if ((Vas.Mag() > DM_volt_exit) && (Vbs.Mag() > DM_volt_exit) && (Vcs.Mag() > DM_volt_exit)
-					&& (wr > DM_speed_exit) && ((fabs(wr_pu-wr_pu_prev)*wbase) > speed_error))
+					&& (wr > DM_speed_exit) && ((fabs(wr_pu-wr_pu_prev)*wbase) <= speed_error))
 			{
 				return SM_EVENT;
 			}
