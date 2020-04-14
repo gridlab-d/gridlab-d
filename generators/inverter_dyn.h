@@ -123,9 +123,6 @@ private:
 	enumeration value_MeterStatus; ///< value holder for service_status variable on meter parent
 	complex value_Meter_I[3];	   ///< value holder for meter measured current on three lines
 
-	// Feeder frequency determined by the inverters
-	gld_property *mapped_freq_variable; //Mapping to frequency variable in powerflow module - deltamode updates
-
 	gld_property *pbus_full_Y_mat; //Link to the full_Y bus variable -- used for Norton equivalents
 	gld_property *pGenerated;	   //Link to pGenerated value - used for Norton equivalents
 
@@ -187,11 +184,6 @@ public:
 
 	INV_DYN_STATE curr_state; ///< The current state of the inverter in deltamode
 
-	double value_Frequency; //Value storage for current frequency value
-
-	complex phaseA_V_Out; //voltage
-	complex phaseB_V_Out;
-	complex phaseC_V_Out;
 	complex phaseA_I_Out; // current
 	complex phaseB_I_Out;
 	complex phaseC_I_Out;

@@ -34,7 +34,6 @@ public: /* Published Variables & Other Funcs For 'PV_CURVE' Mode */
 	double pvc_I_m_A;
 
 	// Test & Init Funcs
-	void print_init_pub_vars();
 	void init_pub_vars_pvcurve_mode();
 
 private: /* For N-R Solver & P-V Curve */
@@ -60,8 +59,6 @@ private: /* For N-R Solver & P-V Curve */
 	double get_u_of_p_max(double = 0);
 	double get_u_from_p(double, double, double);
 
-	void test_nr_solver(); // Test func
-
 	// Solar PV Panel Part (P-V Curve)
 	double pvc_C1;
 	double pvc_C2;
@@ -76,25 +73,7 @@ private: /* For N-R Solver & P-V Curve */
 	double hf_dfdU(double U, double t, double S);
 	double hf_d2fdU2(double U, double t);
 
-	void display_params(); // Test func
-
 public:
-	/* Published Variables of Two Modes (BASEEFFICIENT = 0, FLATPLATE = 1) */
-	enum GENERATOR_MODE
-	{
-		CONSTANT_V = 1,
-		CONSTANT_PQ = 2,
-		CONSTANT_PF = 4,
-		SUPPLY_DRIVEN = 5
-	};
-	enumeration gen_mode_v; //operating mode of the generator
-	//note solar panel will always operate under the SUPPLY_DRIVEN generator mode
-	enum POWER_TYPE
-	{
-		DC = 1,
-		AC = 2
-	};
-	enumeration power_type_v;
 	enum PANEL_TYPE
 	{
 		SINGLE_CRYSTAL_SILICON = 1,
@@ -104,12 +83,6 @@ public:
 		CONCENTRATOR = 5
 	};
 	enumeration panel_type_v;
-	enum INSTALLATION_TYPE
-	{
-		ROOF_MOUNTED = 1,
-		GROUND_MOUNTED = 2
-	};
-	enumeration installation_type_v;
 	enum SOLAR_TILT_MODEL
 	{
 		LIUJORDAN = 0,

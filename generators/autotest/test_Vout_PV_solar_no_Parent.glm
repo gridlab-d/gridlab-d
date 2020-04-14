@@ -30,7 +30,6 @@ object climate{
 
 object solar {
 	name sol_inv_B_2_645;
-	generator_mode SUPPLY_DRIVEN;
 	panel_type SINGLE_CRYSTAL_SILICON;
 	efficiency 0.2;
 	area 450;

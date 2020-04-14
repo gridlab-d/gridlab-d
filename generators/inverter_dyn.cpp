@@ -1,8 +1,5 @@
 #include "inverter_dyn.h"
 
-// Default Settings
-double def_rated_power = 1e3; //Unit: VA
-
 CLASS *inverter_dyn::oclass = NULL;
 inverter_dyn *inverter_dyn::defaults = NULL;
 
@@ -20,156 +17,151 @@ inverter_dyn::inverter_dyn(MODULE *module)
 			oclass->trl = TRL_PROOF;
 
 		if (gl_publish_variable(oclass,
-								//**** FT -- Properties go here
-								PT_enumeration, "control_mode", PADDR(control_mode), PT_DESCRIPTION, "Inverter control mode: grid-forming or grid-following",
-								PT_KEYWORD, "GRID_FORMING", (enumeration)GRID_FORMING,
-								PT_KEYWORD, "GRID_FOLLOWING", (enumeration)GRID_FOLLOWING,
-								PT_KEYWORD, "GFL_CURRENT_SOURCE", (enumeration)GFL_CURRENT_SOURCE,
+			PT_enumeration, "control_mode", PADDR(control_mode), PT_DESCRIPTION, "Inverter control mode: grid-forming or grid-following",
+				PT_KEYWORD, "GRID_FORMING", (enumeration)GRID_FORMING,
+				PT_KEYWORD, "GRID_FOLLOWING", (enumeration)GRID_FOLLOWING,
+				PT_KEYWORD, "GFL_CURRENT_SOURCE", (enumeration)GFL_CURRENT_SOURCE,
 
-								PT_enumeration, "grid_following_mode", PADDR(grid_following_mode), PT_DESCRIPTION, "grid-following mode, positive sequency or balanced three phase power",
-								PT_KEYWORD, "BALANCED_POWER", (enumeration)BALANCED_POWER,
-								PT_KEYWORD, "POSITIVE_SEQUENCE", (enumeration)POSITIVE_SEQUENCE,
+			PT_enumeration, "grid_following_mode", PADDR(grid_following_mode), PT_DESCRIPTION, "grid-following mode, positive sequency or balanced three phase power",
+				PT_KEYWORD, "BALANCED_POWER", (enumeration)BALANCED_POWER,
+				PT_KEYWORD, "POSITIVE_SEQUENCE", (enumeration)POSITIVE_SEQUENCE,
 
-								PT_enumeration, "grid_forming_mode", PADDR(grid_forming_mode), PT_DESCRIPTION, "grid-forming mode, CONSTANT_DC_BUS or PV_DC_BUS",
-								PT_KEYWORD, "CONSTANT_DC_BUS", (enumeration)CONSTANT_DC_BUS,
-								PT_KEYWORD, "PV_DC_BUS", (enumeration)PV_DC_BUS,
+			PT_enumeration, "grid_forming_mode", PADDR(grid_forming_mode), PT_DESCRIPTION, "grid-forming mode, CONSTANT_DC_BUS or PV_DC_BUS",
+				PT_KEYWORD, "CONSTANT_DC_BUS", (enumeration)CONSTANT_DC_BUS,
+				PT_KEYWORD, "PV_DC_BUS", (enumeration)PV_DC_BUS,
 
-								//PT_complex, "phaseA_V_Out[V]", PADDR(phaseA_V_Out), PT_DESCRIPTION, "AC voltage on A phase in three-phase system; 240-V connection on a triplex system",
-								//PT_complex, "phaseB_V_Out[V]", PADDR(phaseB_V_Out), PT_DESCRIPTION, "AC voltage on B phase in three-phase system",
-								//PT_complex, "phaseC_V_Out[V]", PADDR(phaseC_V_Out), PT_DESCRIPTION, "AC voltage on C phase in three-phase system",
-								PT_complex, "phaseA_I_Out[A]", PADDR(temp_current_val[0]), PT_DESCRIPTION, "AC current on A phase in three-phase system",
-								PT_complex, "phaseB_I_Out[A]", PADDR(temp_current_val[1]), PT_DESCRIPTION, "AC current on B phase in three-phase system",
-								PT_complex, "phaseC_I_Out[A]", PADDR(temp_current_val[2]), PT_DESCRIPTION, "AC current on C phase in three-phase system",
-								PT_complex, "power_A[VA]", PADDR(power_val[0]), PT_DESCRIPTION, "AC power on A phase in three-phase system",
-								PT_complex, "power_B[VA]", PADDR(power_val[1]), PT_DESCRIPTION, "AC power on B phase in three-phase system",
-								PT_complex, "power_C[VA]", PADDR(power_val[2]), PT_DESCRIPTION, "AC power on C phase in three-phase system",
-								PT_complex, "VA_Out[VA]", PADDR(VA_Out), PT_DESCRIPTION, "AC power",
+			PT_complex, "phaseA_I_Out[A]", PADDR(temp_current_val[0]), PT_DESCRIPTION, "AC current on A phase in three-phase system",
+			PT_complex, "phaseB_I_Out[A]", PADDR(temp_current_val[1]), PT_DESCRIPTION, "AC current on B phase in three-phase system",
+			PT_complex, "phaseC_I_Out[A]", PADDR(temp_current_val[2]), PT_DESCRIPTION, "AC current on C phase in three-phase system",
+			PT_complex, "power_A[VA]", PADDR(power_val[0]), PT_DESCRIPTION, "AC power on A phase in three-phase system",
+			PT_complex, "power_B[VA]", PADDR(power_val[1]), PT_DESCRIPTION, "AC power on B phase in three-phase system",
+			PT_complex, "power_C[VA]", PADDR(power_val[2]), PT_DESCRIPTION, "AC power on C phase in three-phase system",
+			PT_complex, "VA_Out[VA]", PADDR(VA_Out), PT_DESCRIPTION, "AC power",
 
-								// Internal Voltage and angle of VSI_DROOP, e_source[i],
-								PT_complex, "e_source_A", PADDR(e_source[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-forming source, phase A",
-								PT_complex, "e_source_B", PADDR(e_source[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-forming source, phase B",
-								PT_complex, "e_source_C", PADDR(e_source[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-forming source, phase C",
-								PT_double, "V_angle_A", PADDR(curr_state.Angle[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal angle of grid-forming source, phase A",
-								PT_double, "V_angle_B", PADDR(curr_state.Angle[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal angle of grid-forming source, phase B",
-								PT_double, "V_angle_C", PADDR(curr_state.Angle[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal angle of grid-forming source, phase C",
+			// Internal Voltage and angle of VSI_DROOP, e_source[i],
+			PT_complex, "e_source_A", PADDR(e_source[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-forming source, phase A",
+			PT_complex, "e_source_B", PADDR(e_source[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-forming source, phase B",
+			PT_complex, "e_source_C", PADDR(e_source[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-forming source, phase C",
+			PT_double, "V_angle_A", PADDR(curr_state.Angle[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal angle of grid-forming source, phase A",
+			PT_double, "V_angle_B", PADDR(curr_state.Angle[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal angle of grid-forming source, phase B",
+			PT_double, "V_angle_C", PADDR(curr_state.Angle[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal angle of grid-forming source, phase C",
 
-								// 3 phase average value of terminal voltage
-								PT_double, "pCircuit_V_Avg_pu", PADDR(pCircuit_V_Avg_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: three-phase average value of terminal voltage, per unit value",
-								PT_double, "E_mag", PADDR(E_mag), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: magnitude of internal voltage of grid-forming inverter",
+			// 3 phase average value of terminal voltage
+			PT_double, "pCircuit_V_Avg_pu", PADDR(pCircuit_V_Avg_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: three-phase average value of terminal voltage, per unit value",
+			PT_double, "E_mag", PADDR(E_mag), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: magnitude of internal voltage of grid-forming inverter",
 
-								//Input
-								PT_double, "rated_power[VA]", PADDR(S_base), PT_DESCRIPTION, " The rated power of the inverter",
-								PT_double, "rated_DC_Voltage[V]", PADDR(Vdc_base), PT_DESCRIPTION, " The rated dc bus of the inverter",
-								PT_double, "nominal_frequency[Hz]", PADDR(f_nominal), PT_DESCRIPTION, " The rated frequency",
+			//Input
+			PT_double, "rated_power[VA]", PADDR(S_base), PT_DESCRIPTION, " The rated power of the inverter",
+			PT_double, "rated_DC_Voltage[V]", PADDR(Vdc_base), PT_DESCRIPTION, " The rated dc bus of the inverter",
 
-								// Inverter filter parameters
-								PT_double, "Xfilter[pu]", PADDR(Xfilter), PT_DESCRIPTION, "DELTAMODE:  per-unit values of inverter filter.",
-								PT_double, "Rfilter[pu]", PADDR(Rfilter), PT_DESCRIPTION, "DELTAMODE:  per-unit values of inverter filter.",
+			// Inverter filter parameters
+			PT_double, "Xfilter[pu]", PADDR(Xfilter), PT_DESCRIPTION, "DELTAMODE:  per-unit values of inverter filter.",
+			PT_double, "Rfilter[pu]", PADDR(Rfilter), PT_DESCRIPTION, "DELTAMODE:  per-unit values of inverter filter.",
 
-								// Grid-Following Controller Parameters
-								PT_double, "Pref[W]", PADDR(Pref), PT_DESCRIPTION, "DELTAMODE: The real power reference.",
-								PT_double, "Qref[VAr]", PADDR(Qref), PT_DESCRIPTION, "DELTAMODE: The reactive power reference.",
-								PT_double, "kpc", PADDR(kpc), PT_DESCRIPTION, "DELTAMODE: Proportional gain of the current loop.",
-								PT_double, "kic", PADDR(kic), PT_DESCRIPTION, "DELTAMODE: Integral gain of the current loop.",
-								PT_double, "F_current", PADDR(F_current), PT_DESCRIPTION, "DELTAMODE: feed forward term gain in current loop.",
-								PT_double, "Tif", PADDR(Tif), PT_DESCRIPTION, "DELTAMODE: time constant of first-order low-pass filter of current loop when using current source representation.",
-								PT_double, "ugd_pu_A", PADDR(ugd_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, d-axis, phase A",
-								PT_double, "ugd_pu_B", PADDR(ugd_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, d-axis, phase B",
-								PT_double, "ugd_pu_C", PADDR(ugd_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, d-axis, phase C",
-								PT_double, "ugq_pu_A", PADDR(ugq_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, q-axis, phase A",
-								PT_double, "ugq_pu_B", PADDR(ugq_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, q-axis, phase B",
-								PT_double, "ugq_pu_C", PADDR(ugq_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, q-axis, phase C",
-								PT_double, "ed_pu_A", PADDR(ed_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, d-axis, phase A",
-								PT_double, "ed_pu_B", PADDR(ed_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, d-axis, phase B",
-								PT_double, "ed_pu_C", PADDR(ed_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, d-axis, phase C",
-								PT_double, "eq_pu_A", PADDR(eq_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, q-axis, phase A",
-								PT_double, "eq_pu_B", PADDR(eq_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, q-axis, phase B",
-								PT_double, "eq_pu_C", PADDR(eq_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, q-axis, phase C",
+			// Grid-Following Controller Parameters
+			PT_double, "Pref[W]", PADDR(Pref), PT_DESCRIPTION, "DELTAMODE: The real power reference.",
+			PT_double, "Qref[VAr]", PADDR(Qref), PT_DESCRIPTION, "DELTAMODE: The reactive power reference.",
+			PT_double, "kpc", PADDR(kpc), PT_DESCRIPTION, "DELTAMODE: Proportional gain of the current loop.",
+			PT_double, "kic", PADDR(kic), PT_DESCRIPTION, "DELTAMODE: Integral gain of the current loop.",
+			PT_double, "F_current", PADDR(F_current), PT_DESCRIPTION, "DELTAMODE: feed forward term gain in current loop.",
+			PT_double, "Tif", PADDR(Tif), PT_DESCRIPTION, "DELTAMODE: time constant of first-order low-pass filter of current loop when using current source representation.",
+			PT_double, "ugd_pu_A", PADDR(ugd_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, d-axis, phase A",
+			PT_double, "ugd_pu_B", PADDR(ugd_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, d-axis, phase B",
+			PT_double, "ugd_pu_C", PADDR(ugd_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, d-axis, phase C",
+			PT_double, "ugq_pu_A", PADDR(ugq_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, q-axis, phase A",
+			PT_double, "ugq_pu_B", PADDR(ugq_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, q-axis, phase B",
+			PT_double, "ugq_pu_C", PADDR(ugq_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, q-axis, phase C",
+			PT_double, "ed_pu_A", PADDR(ed_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, d-axis, phase A",
+			PT_double, "ed_pu_B", PADDR(ed_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, d-axis, phase B",
+			PT_double, "ed_pu_C", PADDR(ed_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, d-axis, phase C",
+			PT_double, "eq_pu_A", PADDR(eq_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, q-axis, phase A",
+			PT_double, "eq_pu_B", PADDR(eq_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, q-axis, phase B",
+			PT_double, "eq_pu_C", PADDR(eq_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, q-axis, phase C",
 
-								PT_double, "igd_pu_A", PADDR(igd_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase A",
-								PT_double, "igd_pu_B", PADDR(igd_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase B",
-								PT_double, "igd_pu_C", PADDR(igd_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase C",
-								PT_double, "igq_pu_A", PADDR(igq_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase A",
-								PT_double, "igq_pu_B", PADDR(igq_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase B",
-								PT_double, "igq_pu_C", PADDR(igq_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase C",
+			PT_double, "igd_pu_A", PADDR(igd_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase A",
+			PT_double, "igd_pu_B", PADDR(igd_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase B",
+			PT_double, "igd_pu_C", PADDR(igd_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase C",
+			PT_double, "igq_pu_A", PADDR(igq_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase A",
+			PT_double, "igq_pu_B", PADDR(igq_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase B",
+			PT_double, "igq_pu_C", PADDR(igq_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase C",
 
-								PT_double, "igd_pu_A_filter", PADDR(curr_state.igd_filter[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase A, current source representation",
-								PT_double, "igd_pu_B_filter", PADDR(curr_state.igd_filter[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase B, current source representation",
-								PT_double, "igd_pu_C_filter", PADDR(curr_state.igd_filter[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase C, current source representation",
-								PT_double, "igq_pu_A_filter", PADDR(curr_state.igq_filter[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase A, current source representation",
-								PT_double, "igq_pu_B_filter", PADDR(curr_state.igq_filter[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase B, current source representation",
-								PT_double, "igq_pu_C_filter", PADDR(curr_state.igq_filter[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase C, current source representation",
+			PT_double, "igd_pu_A_filter", PADDR(curr_state.igd_filter[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase A, current source representation",
+			PT_double, "igd_pu_B_filter", PADDR(curr_state.igd_filter[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase B, current source representation",
+			PT_double, "igd_pu_C_filter", PADDR(curr_state.igd_filter[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase C, current source representation",
+			PT_double, "igq_pu_A_filter", PADDR(curr_state.igq_filter[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase A, current source representation",
+			PT_double, "igq_pu_B_filter", PADDR(curr_state.igq_filter[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase B, current source representation",
+			PT_double, "igq_pu_C_filter", PADDR(curr_state.igq_filter[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase C, current source representation",
 
-								PT_double, "igd_ref_A", PADDR(igd_ref[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, d-axis, phase A",
-								PT_double, "igd_ref_B", PADDR(igd_ref[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, d-axis, phase B",
-								PT_double, "igd_ref_C", PADDR(igd_ref[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, d-axis, phase C",
-								PT_double, "igq_ref_A", PADDR(igq_ref[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, q-axis, phase A",
-								PT_double, "igq_ref_B", PADDR(igq_ref[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, q-axis, phase B",
-								PT_double, "igq_ref_C", PADDR(igq_ref[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, q-axis, phase C",
+			PT_double, "igd_ref_A", PADDR(igd_ref[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, d-axis, phase A",
+			PT_double, "igd_ref_B", PADDR(igd_ref[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, d-axis, phase B",
+			PT_double, "igd_ref_C", PADDR(igd_ref[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, d-axis, phase C",
+			PT_double, "igq_ref_A", PADDR(igq_ref[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, q-axis, phase A",
+			PT_double, "igq_ref_B", PADDR(igq_ref[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, q-axis, phase B",
+			PT_double, "igq_ref_C", PADDR(igq_ref[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, q-axis, phase C",
 
-								PT_double, "Angle_PLL_A", PADDR(curr_state.Angle_PLL[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: phase angle of terminal voltage measured by PLL, phase A",
-								PT_double, "Angle_PLL_B", PADDR(curr_state.Angle_PLL[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: phase angle of terminal voltage measured by PLL, phase B",
-								PT_double, "Angle_PLL_C", PADDR(curr_state.Angle_PLL[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: phase angle of terminal voltage measured by PLL, phase C",
-								PT_double, "f_PLL_A", PADDR(fPLL[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: frequency of terminal voltage measured by PLL, phase A",
-								PT_double, "f_PLL_B", PADDR(fPLL[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: frequency of terminal voltage measured by PLL, phase B",
-								PT_double, "f_PLL_C", PADDR(fPLL[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: frequency of terminal voltage measured by PLL, phase C",
+			PT_double, "Angle_PLL_A", PADDR(curr_state.Angle_PLL[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: phase angle of terminal voltage measured by PLL, phase A",
+			PT_double, "Angle_PLL_B", PADDR(curr_state.Angle_PLL[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: phase angle of terminal voltage measured by PLL, phase B",
+			PT_double, "Angle_PLL_C", PADDR(curr_state.Angle_PLL[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: phase angle of terminal voltage measured by PLL, phase C",
+			PT_double, "f_PLL_A", PADDR(fPLL[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: frequency of terminal voltage measured by PLL, phase A",
+			PT_double, "f_PLL_B", PADDR(fPLL[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: frequency of terminal voltage measured by PLL, phase B",
+			PT_double, "f_PLL_C", PADDR(fPLL[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: frequency of terminal voltage measured by PLL, phase C",
 
-								// Frequency-watt and volt-var in Grid-Following Control mode
-								PT_bool, "frequency_watt", PADDR(frequency_watt), PT_DESCRIPTION, "DELTAMODE: Boolean used to indicate whether inverter f/p droop is included or not",
-								PT_bool, "volt_var", PADDR(volt_var), PT_DESCRIPTION, "DELTAMODE: Boolean used to indicate whether inverter volt-var droop is included or not",
-								PT_double, "Tpf", PADDR(Tpf), PT_DESCRIPTION, "DELTAMODE: the time constant of power measurement low pass filter in frequency-watt.",
-								PT_double, "Tff", PADDR(Tff), PT_DESCRIPTION, "DELTAMODE: the time constant of frequency measurement low pass filter in frequency-watt.",
-								PT_double, "Tqf", PADDR(Tqf), PT_DESCRIPTION, "DELTAMODE: the time constant of low pass filter in volt-var.",
-								PT_double, "Tvf", PADDR(Tvf), PT_DESCRIPTION, "DELTAMODE: the time constant of low pass filter in volt-var.",
-								PT_double, "Pref_max", PADDR(Pref_max), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of power references in grid-following mode.",
-								PT_double, "Pref_min", PADDR(Pref_min), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of power references in grid-following mode.",
-								PT_double, "Qref_max", PADDR(Qref_max), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of reactive power references in grid-following mode.",
-								PT_double, "Qref_min", PADDR(Qref_min), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of reactive power references in grid-following mode.",
-								PT_double, "Rp", PADDR(Rp), PT_DESCRIPTION, "DELTAMODE: p-f droop gain in frequency-watt.",
-								PT_double, "Rq", PADDR(Rq), PT_DESCRIPTION, "DELTAMODE: Q-V droop gain in volt-var.",
-								PT_double, "GridForming_convergence_criterion", PADDR(GridForming_convergence_criterion), PT_DESCRIPTION, "Go back to quasi-steady state.",
+			// Frequency-watt and volt-var in Grid-Following Control mode
+			PT_bool, "frequency_watt", PADDR(frequency_watt), PT_DESCRIPTION, "DELTAMODE: Boolean used to indicate whether inverter f/p droop is included or not",
+			PT_bool, "volt_var", PADDR(volt_var), PT_DESCRIPTION, "DELTAMODE: Boolean used to indicate whether inverter volt-var droop is included or not",
+			PT_double, "Tpf", PADDR(Tpf), PT_DESCRIPTION, "DELTAMODE: the time constant of power measurement low pass filter in frequency-watt.",
+			PT_double, "Tff", PADDR(Tff), PT_DESCRIPTION, "DELTAMODE: the time constant of frequency measurement low pass filter in frequency-watt.",
+			PT_double, "Tqf", PADDR(Tqf), PT_DESCRIPTION, "DELTAMODE: the time constant of low pass filter in volt-var.",
+			PT_double, "Tvf", PADDR(Tvf), PT_DESCRIPTION, "DELTAMODE: the time constant of low pass filter in volt-var.",
+			PT_double, "Pref_max", PADDR(Pref_max), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of power references in grid-following mode.",
+			PT_double, "Pref_min", PADDR(Pref_min), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of power references in grid-following mode.",
+			PT_double, "Qref_max", PADDR(Qref_max), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of reactive power references in grid-following mode.",
+			PT_double, "Qref_min", PADDR(Qref_min), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of reactive power references in grid-following mode.",
+			PT_double, "Rp", PADDR(Rp), PT_DESCRIPTION, "DELTAMODE: p-f droop gain in frequency-watt.",
+			PT_double, "Rq", PADDR(Rq), PT_DESCRIPTION, "DELTAMODE: Q-V droop gain in volt-var.",
+			PT_double, "GridForming_convergence_criterion", PADDR(GridForming_convergence_criterion), PT_DESCRIPTION, "Go back to quasi-steady state.",
 
-								// PLL Parameters
-								PT_double, "kpPLL", PADDR(kpPLL), PT_DESCRIPTION, "DELTAMODE: Proportional gain of the PLL.",
-								PT_double, "kiPLL", PADDR(kiPLL), PT_DESCRIPTION, "DELTAMODE: Proportional gain of the PLL.",
+			// PLL Parameters
+			PT_double, "kpPLL", PADDR(kpPLL), PT_DESCRIPTION, "DELTAMODE: Proportional gain of the PLL.",
+			PT_double, "kiPLL", PADDR(kiPLL), PT_DESCRIPTION, "DELTAMODE: Proportional gain of the PLL.",
 
-								// Grid-Forming Controller Parameters
-								PT_double, "Tp", PADDR(Tp), PT_DESCRIPTION, "DELTAMODE: time constant of low pass filter, P calculation.",
-								PT_double, "Tq", PADDR(Tq), PT_DESCRIPTION, "DELTAMODE: time constant of low pass filter, Q calculation.",
-								PT_double, "Tv", PADDR(Tv), PT_DESCRIPTION, "DELTAMODE: time constant of low pass filter, V calculation.",
-								PT_double, "Vset", PADDR(Vset), PT_DESCRIPTION, "DELTAMODE: voltage set point in grid-forming inverter, usually 1 pu.",
-								PT_double, "kpv", PADDR(kpv), PT_DESCRIPTION, "DELTAMODE: proportional gain and integral gain of voltage loop.",
-								PT_double, "kiv", PADDR(kiv), PT_DESCRIPTION, "DELTAMODE: proportional gain and integral gain of voltage loop.",
-								PT_double, "mq", PADDR(mq), PT_DESCRIPTION, "DELTAMODE: Q-V droop gain, usually 0.05 pu.",
-								PT_double, "E_max", PADDR(E_max), PT_DESCRIPTION, "DELTAMODE: E_max and E_min are the maximum and minimum of the output of voltage controller.",
-								PT_double, "E_min", PADDR(E_min), PT_DESCRIPTION, "DELTAMODE: E_max and E_min are the maximum and minimum of the output of voltage controller.",
-								PT_double, "Pset", PADDR(Pset), PT_DESCRIPTION, "DELTAMODE: power set point in P-f droop.",
-								PT_double, "mp", PADDR(mp), PT_DESCRIPTION, "DELTAMODE: P-f droop gain, usually 3.77 rad/s/pu.",
-								PT_double, "kppmax", PADDR(kppmax), PT_DESCRIPTION, "DELTAMODE: proportional and integral gains for Pmax controller.",
-								PT_double, "kipmax", PADDR(kipmax), PT_DESCRIPTION, "DELTAMODE: proportional and integral gains for Pmax controller.",
-								PT_double, "w_lim", PADDR(w_lim), PT_DESCRIPTION, "DELTAMODE: saturation limit of Pmax controller.",
-								PT_double, "Pmax", PADDR(Pmax), PT_DESCRIPTION, "DELTAMODE: maximum limit and minimum limit of Pmax controller and Pmin controller.",
-								PT_double, "Pmin", PADDR(Pmin), PT_DESCRIPTION, "DELTAMODE: maximum limit and minimum limit of Pmax controller and Pmin controller.",
-								PT_double, "w_ref", PADDR(w_ref), PT_DESCRIPTION, "DELTAMODE: the rated frequency, usually 376.99 rad/s.",
-								PT_double, "freq", PADDR(freq), PT_DESCRIPTION, "DELTAMODE: the frequency obtained from the P-f droop controller.",
+			// Grid-Forming Controller Parameters
+			PT_double, "Tp", PADDR(Tp), PT_DESCRIPTION, "DELTAMODE: time constant of low pass filter, P calculation.",
+			PT_double, "Tq", PADDR(Tq), PT_DESCRIPTION, "DELTAMODE: time constant of low pass filter, Q calculation.",
+			PT_double, "Tv", PADDR(Tv), PT_DESCRIPTION, "DELTAMODE: time constant of low pass filter, V calculation.",
+			PT_double, "Vset", PADDR(Vset), PT_DESCRIPTION, "DELTAMODE: voltage set point in grid-forming inverter, usually 1 pu.",
+			PT_double, "kpv", PADDR(kpv), PT_DESCRIPTION, "DELTAMODE: proportional gain and integral gain of voltage loop.",
+			PT_double, "kiv", PADDR(kiv), PT_DESCRIPTION, "DELTAMODE: proportional gain and integral gain of voltage loop.",
+			PT_double, "mq", PADDR(mq), PT_DESCRIPTION, "DELTAMODE: Q-V droop gain, usually 0.05 pu.",
+			PT_double, "E_max", PADDR(E_max), PT_DESCRIPTION, "DELTAMODE: E_max and E_min are the maximum and minimum of the output of voltage controller.",
+			PT_double, "E_min", PADDR(E_min), PT_DESCRIPTION, "DELTAMODE: E_max and E_min are the maximum and minimum of the output of voltage controller.",
+			PT_double, "Pset", PADDR(Pset), PT_DESCRIPTION, "DELTAMODE: power set point in P-f droop.",
+			PT_double, "mp", PADDR(mp), PT_DESCRIPTION, "DELTAMODE: P-f droop gain, usually 3.77 rad/s/pu.",
+			PT_double, "kppmax", PADDR(kppmax), PT_DESCRIPTION, "DELTAMODE: proportional and integral gains for Pmax controller.",
+			PT_double, "kipmax", PADDR(kipmax), PT_DESCRIPTION, "DELTAMODE: proportional and integral gains for Pmax controller.",
+			PT_double, "w_lim", PADDR(w_lim), PT_DESCRIPTION, "DELTAMODE: saturation limit of Pmax controller.",
+			PT_double, "Pmax", PADDR(Pmax), PT_DESCRIPTION, "DELTAMODE: maximum limit and minimum limit of Pmax controller and Pmin controller.",
+			PT_double, "Pmin", PADDR(Pmin), PT_DESCRIPTION, "DELTAMODE: maximum limit and minimum limit of Pmax controller and Pmin controller.",
+			PT_double, "w_ref", PADDR(w_ref), PT_DESCRIPTION, "DELTAMODE: the rated frequency, usually 376.99 rad/s.",
+			PT_double, "freq", PADDR(freq), PT_DESCRIPTION, "DELTAMODE: the frequency obtained from the P-f droop controller.",
 
-								PT_double, "Vdc_pu", PADDR(curr_state.Vdc_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: dc bus voltage of PV panel when using grid-forming PV Inverter",
-								PT_double, "Vdc_min_pu", PADDR(Vdc_min_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: The reference voltage of the Vdc_min controller",
-								PT_double, "C_pu", PADDR(C_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: capacitance of dc bus",
-								PT_double, "mdc", PADDR(mdc), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: saturation limit of modulation index",
-								PT_double, "kpVdc", PADDR(kpVdc), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: proportional gain of Vdc_min controller",
-								PT_double, "kiVdc", PADDR(kiVdc), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: integral gain of Vdc_min controller",
-								PT_double, "kdVdc", PADDR(kiVdc), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: derivative gain of Vdc_min controller",
+			PT_double, "Vdc_pu", PADDR(curr_state.Vdc_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: dc bus voltage of PV panel when using grid-forming PV Inverter",
+			PT_double, "Vdc_min_pu", PADDR(Vdc_min_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: The reference voltage of the Vdc_min controller",
+			PT_double, "C_pu", PADDR(C_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: capacitance of dc bus",
+			PT_double, "mdc", PADDR(mdc), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: saturation limit of modulation index",
+			PT_double, "kpVdc", PADDR(kpVdc), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: proportional gain of Vdc_min controller",
+			PT_double, "kiVdc", PADDR(kiVdc), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: integral gain of Vdc_min controller",
+			PT_double, "kdVdc", PADDR(kiVdc), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: derivative gain of Vdc_min controller",
 
-								//DC Bus portions
-								PT_double, "V_In[V]", PADDR(V_DC), PT_DESCRIPTION, "DC input voltage",
-								PT_double, "I_In[A]", PADDR(I_DC), PT_DESCRIPTION, "DC input current",
-								PT_double, "P_In[W]", PADDR(P_DC), PT_DESCRIPTION, "DC input power",
+			//DC Bus portions
+			PT_double, "V_In[V]", PADDR(V_DC), PT_DESCRIPTION, "DC input voltage",
+			PT_double, "I_In[A]", PADDR(I_DC), PT_DESCRIPTION, "DC input current",
+			PT_double, "P_In[W]", PADDR(P_DC), PT_DESCRIPTION, "DC input power",
 
-								PT_double, "pvc_Pmax[W]", PADDR(pvc_Pmax), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "P max from the PV curve",
+			PT_double, "pvc_Pmax[W]", PADDR(pvc_Pmax), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "P max from the PV curve",
 
-								NULL) < 1)
-			GL_THROW("unable to publish properties in %s", __FILE__);
+			NULL) < 1)
+				GL_THROW("unable to publish properties in %s", __FILE__);
 
 		defaults = this;
 
@@ -203,9 +195,6 @@ int inverter_dyn::create(void)
 	inverter_first_step = true;
 	first_iteration_current_injection = -1; //Initialize - mainly for tracking SWING_PQ status
 
-	// Feeder frequency
-	mapped_freq_variable = NULL;
-
 	//Variable mapping items
 	parent_is_a_meter = false;		//By default, no parent meter
 	parent_is_single_phase = false; //By default, we're three-phase
@@ -227,10 +216,6 @@ int inverter_dyn::create(void)
 	value_Power[0] = value_Power[1] = value_Power[2] = complex(0.0, 0.0);
 	value_IGenerated[0] = value_IGenerated[1] = value_IGenerated[2] = complex(0.0, 0.0);
 	value_MeterStatus = 1; //Connected, by default
-
-	//**** FT -- Other defaults would go here
-
-	value_Frequency = 60.0; //Default value
 
 	// Inverter filter
 	Xfilter = 0.05; //per unit
@@ -326,16 +311,7 @@ int inverter_dyn::init(OBJECT *parent)
 	complex_array temp_complex_array;
 	OBJECT *tmp_obj = NULL;
 
-	// Data sanity check
-	if (S_base <= 0)
-	{
-		S_base = def_rated_power;
-		gl_warning("inverter (name: '%s'): The rated power of this inverter must be positive."
-				   " It has been reset as %f [VA].",
-				   obj->name ? obj->name : "unnamed", S_base);
-	}
-
-	//
+	//Deferred initialization code
 	if (parent != NULL)
 	{
 		if ((parent->flags & OF_INIT) != OF_INIT)
@@ -344,6 +320,16 @@ int inverter_dyn::init(OBJECT *parent)
 			gl_verbose("inverter_dyn::init(): deferring initialization on %s", gl_name(parent, objname, 255));
 			return 2; // defer
 		}
+	}
+
+	// Data sanity check
+	if (S_base <= 0)
+	{
+		S_base = 1000;
+		gl_warning("inverter_dyn:%d - %s - The rated power of this inverter must be positive - set to 1 kVA.",obj->id,(obj->name ? obj->name : "unnamed"));
+		/*  TROUBLESHOOT
+		The inverter has a rated power that is negative.  It defaulted to a 1 kVA inverter.  If this is not desired, set the property properly in the GLM.
+		*/
 	}
 
 	//Set the deltamode flag, if desired
@@ -386,7 +372,7 @@ int inverter_dyn::init(OBJECT *parent)
 						//Make sure it worked
 						if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_bool() != true))
 						{
-							GL_THROW("inverter:%s failed to map Norton-equivalence deltamode variable from %s", obj->name ? obj->name : "unnamed", parent->name ? parent->name : "unnamed");
+							GL_THROW("inverter_dyn:%s failed to map Norton-equivalence deltamode variable from %s", obj->name ? obj->name : "unnamed", parent->name ? parent->name : "unnamed");
 							/*  TROUBLESHOOT
 							While attempting to set up the deltamode interfaces and calculations with powerflow, the required interface could not be mapped.
 							Please check your GLM and try again.  If the error persists, please submit a trac ticket with your code.
@@ -436,7 +422,7 @@ int inverter_dyn::init(OBJECT *parent)
 			//Simple initial test - if we aren't three-phase, but are grid-forming, toss a warning
 			if (((phases & 0x07) != 0x07) && (control_mode == GRID_FORMING))
 			{
-				gl_warning("inverter:%s is in grid-forming mode, but is not a three-phase connection.  This is untested and may not behave properly.", obj->name ? obj->name : "unnamed");
+				gl_warning("inverter_dyn:%s is in grid-forming mode, but is not a three-phase connection.  This is untested and may not behave properly.", obj->name ? obj->name : "unnamed");
 				/*  TROUBLESHOOT
 				The inverter was set up to be grid-forming, but is either a triplex or a single-phase-connected inverter.  This implementaiton is not fully tested and may either not
 				work, or produce unexpecte results.
@@ -557,7 +543,7 @@ int inverter_dyn::init(OBJECT *parent)
 					}
 					else //Not three-phase, but has more than one phase - fail, because we don't do this right
 					{
-						GL_THROW("inverter:%s is not connected to a single-phase or three-phase node - two-phase connections are not supported at this time.", obj->name ? obj->name : "unnamed");
+						GL_THROW("inverter_dyn:%s is not connected to a single-phase or three-phase node - two-phase connections are not supported at this time.", obj->name ? obj->name : "unnamed");
 						/*  TROUBLESHOOT
 						The inverter only supports single phase (A, B, or C or triplex) or full three-phase connections.  If you try to connect it differntly than this, it will not work.
 						*/
@@ -568,6 +554,25 @@ int inverter_dyn::init(OBJECT *parent)
 			//*** Common items ****//
 			// Many of these go to the "true parent", not the "powerflow parent"
 
+			//Map the nominal frequency
+			temp_property_pointer = new gld_property("powerflow::nominal_frequency");
+
+			//Make sure it worked
+			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+			{
+				GL_THROW("inverter_dyn:%d %s failed to map the nominal_frequency property", obj->id, (obj->name ? obj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to map the nominal_frequency property, an error occurred.  Please try again.
+				If the error persists, please submit your GLM and a bug report to the ticketing system.
+				*/
+			}
+
+			//Must be valid, read it
+			f_nominal = temp_property_pointer->get_double();
+
+			//Remove it
+			delete temp_property_pointer;
+			
 			//See if we are deltamode-enabled -- powerflow parent version
 			if (deltamode_inclusive == true)
 			{
@@ -579,7 +584,7 @@ int inverter_dyn::init(OBJECT *parent)
 					//Make sure it worked
 					if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_bool() != true))
 					{
-						GL_THROW("inverter:%s failed to map Norton-equivalence deltamode variable from %s", obj->name ? obj->name : "unnamed", tmp_obj->name ? tmp_obj->name : "unnamed");
+						GL_THROW("inverter_dyn:%s failed to map Norton-equivalence deltamode variable from %s", obj->name ? obj->name : "unnamed", tmp_obj->name ? tmp_obj->name : "unnamed");
 						//Defined elsewhere
 					}
 
@@ -598,7 +603,7 @@ int inverter_dyn::init(OBJECT *parent)
 					//Make sure it worked
 					if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_bool() != true))
 					{
-						GL_THROW("inverter:%s failed to map generator deltamode variable from %s", obj->name ? obj->name : "unnamed", tmp_obj->name ? tmp_obj->name : "unnamed");
+						GL_THROW("inverter_dyn:%s failed to map generator deltamode variable from %s", obj->name ? obj->name : "unnamed", tmp_obj->name ? tmp_obj->name : "unnamed");
 						/*  TROUBLESHOOT
 						While trying to map a flag indicating a dynamic generator is attached to the system, an error was encountered.  Please
 						try your file again.  If the error persists, please submit an issue ticket.
@@ -714,7 +719,7 @@ int inverter_dyn::init(OBJECT *parent)
 					//Check it
 					if ((pbus_full_Y_mat->is_valid() != true) || (pbus_full_Y_mat->is_complex_array() != true))
 					{
-						GL_THROW("inverter:%s failed to map Norton-equivalence deltamode variable from %s", obj->name ? obj->name : "unnamed", tmp_obj->name ? tmp_obj->name : "unnamed");
+						GL_THROW("inverter_dyn:%s failed to map Norton-equivalence deltamode variable from %s", obj->name ? obj->name : "unnamed", tmp_obj->name ? tmp_obj->name : "unnamed");
 						/*  TROUBLESHOOT
 						While attempting to set up the deltamode interfaces and calculations with powerflow, the required interface could not be mapped.
 						Please check your GLM and try again.  If the error persists, please submit a trac ticket with your code.
@@ -743,7 +748,7 @@ int inverter_dyn::init(OBJECT *parent)
 					{
 						if ((temp_complex_array.get_rows() != 3) && (temp_complex_array.get_cols() != 3))
 						{
-							GL_THROW("inverter:%s exposed Norton-equivalent matrix is the wrong size!", obj->name ? obj->name : "unnamed");
+							GL_THROW("inverter_dyn:%s exposed Norton-equivalent matrix is the wrong size!", obj->name ? obj->name : "unnamed");
 							/*  TROUBLESHOOT
 							While mapping to an admittance matrix on the parent node device, it was found it is the wrong size.
 							Please try again.  If the error persists, please submit your code and model via the issue tracking system.
@@ -778,7 +783,7 @@ int inverter_dyn::init(OBJECT *parent)
 				//Check it
 				if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_enumeration() != true))
 				{
-					GL_THROW("inverter:%s failed to map bustype variable from %s", obj->name ? obj->name : "unnamed", tmp_obj->name ? tmp_obj->name : "unnamed");
+					GL_THROW("inverter_dyn:%s failed to map bustype variable from %s", obj->name ? obj->name : "unnamed", tmp_obj->name ? tmp_obj->name : "unnamed");
 					/*  TROUBLESHOOT
 					While attempting to set up the deltamode interfaces and calculations with powerflow, the required interface could not be mapped.
 					Please check your GLM and try again.  If the error persists, please submit a trac ticket with your code.
@@ -858,8 +863,8 @@ int inverter_dyn::init(OBJECT *parent)
 		//Define the default
 		value_MeterStatus = 1;
 
-		//Set the frequency
-		value_Frequency = 60.0;
+		//Double-set the nominal frequency to NA - no powerflow available
+		f_nominal = 60.0;
 	}
 
 	///////////////////////////////////////////////////////////////////////////
@@ -871,7 +876,7 @@ int inverter_dyn::init(OBJECT *parent)
 		//Check global, for giggles
 		if (enable_subsecond_models != true)
 		{
-			gl_warning("inverter:%s indicates it wants to run deltamode, but the module-level flag is not set!", obj->name ? obj->name : "unnamed");
+			gl_warning("inverter_dyn:%s indicates it wants to run deltamode, but the module-level flag is not set!", obj->name ? obj->name : "unnamed");
 			/*  TROUBLESHOOT
 			The diesel_dg object has the deltamode_inclusive flag set, but not the module-level enable_subsecond_models flag.  The generator
 			will not simulate any dynamics this way.
@@ -897,11 +902,9 @@ int inverter_dyn::init(OBJECT *parent)
 		}
 	}
 
-	//**** FT -- Other initialization variables
-
+	//Other initialization variables
 	inverter_start_time = gl_globalclock;
-
-	w_ref = 2 * PI * f_nominal;
+	w_ref = 2.0 * PI * f_nominal;
 
 	Idc_base = S_base / Vdc_base;
 
@@ -937,8 +940,6 @@ TIMESTAMP inverter_dyn::presync(TIMESTAMP t0, TIMESTAMP t1)
 		//Pull status and voltage (mostly status)
 		pull_complex_powerflow_values();
 	}
-
-	//**** FT -- Presync items go here
 
 	return t2;
 }
@@ -1055,7 +1056,7 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 				//See if it was located
 				if (test_fxn == NULL)
 				{
-					GL_THROW("inverter:%s - failed to map additional current injection mapping for node:%s", (obj->name ? obj->name : "unnamed"), (obj->parent->name ? obj->parent->name : "unnamed"));
+					GL_THROW("inverter_dyn:%s - failed to map additional current injection mapping for node:%s", (obj->name ? obj->name : "unnamed"), (obj->parent->name ? obj->parent->name : "unnamed"));
 					/*  TROUBLESHOOT
 					While attempting to map the additional current injection function, an error was encountered.
 					Please try again.  If the error persists, please submit your code and a bug report via the trac website.
@@ -1068,7 +1069,7 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 				//Make sure it worked
 				if (fxn_return_status != SUCCESS)
 				{
-					GL_THROW("inverter:%s - failed to map additional current injection mapping for node:%s", (obj->name ? obj->name : "unnamed"), (obj->parent->name ? obj->parent->name : "unnamed"));
+					GL_THROW("inverter_dyn:%s - failed to map additional current injection mapping for node:%s", (obj->name ? obj->name : "unnamed"), (obj->parent->name ? obj->parent->name : "unnamed"));
 					//Defined above
 				}
 			}
@@ -1084,7 +1085,7 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 	} //End first delta timestep
 	//default else - either not deltamode, or not the first timestep
 
-	//**** FT -- Sync items here
+	//Deflag first timestep tracker
 	if (inverter_start_time != t1)
 	{
 		inverter_first_step = false;
@@ -1093,7 +1094,6 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 	//Calculate power based on measured terminal voltage and currents
 	if (parent_is_single_phase == true) // single phase/split-phase implementation
 	{
-
 		if (inverter_first_step == false)
 		{
 			//Update output power
@@ -1289,21 +1289,15 @@ bool inverter_dyn::check_and_update_VA_Out(OBJECT *obj)
 		//== check P_Out
 		double P_Out_lim = pvc_Pmax;
 		if (S_base < pvc_Pmax) //i.e., double P_Out_lim = S_base < pvc_Pmax ? S_base : pvc_Pmax;
-		{
-			gl_warning("inverter (name: '%s'): The limit of P_Out is capped at"
-					   " the rated power of this inverter, which is %f [W].",
-					   obj->name ? obj->name : "unnamed", S_base);
+		{	
+			gl_warning("inverter_dyn:%d - %s - P_Out is capped at a rated power of %f [W].",obj->id,(obj->name ? obj->name : "unnamed"), S_base);
 			P_Out_lim = S_base;
 		}
 		double P_Out_lim_flr = floor(P_Out_lim); //P_Out_lim is always positive; And this is important to guarantee that the VA_Out.Re() will be smaller than pvc_Pmax.
 
 		if (abs(P_Out) > P_Out_lim_flr)
 		{
-			gl_warning("inverter (name: '%s'): The absolute value of P_Out (%f [W] required by powerflow) is capped at %f [W]."
-					   " VA_Out.Re() will be updated accordingly."
-					   " Note that: 1) P_Out <= min(pvc_Pmax, rated_power);"
-					   " 2) sqrt(P_Out^2 + Q_Out^2) <= sqrt(2)*rated_power.",
-					   obj->name ? obj->name : "unnamed", P_Out, P_Out_lim_flr);
+			gl_warning("inverter_dyn:%d - %s - The absolute value of P_Out (%f [W] required by powerflow) is capped at %f [W].",obj->id,(obj->name ? obj->name : "unnamed"), P_Out, P_Out_lim_flr);
 
 			P_Out = copysign(P_Out_lim_flr, P_Out);
 			flag_VA_Out_changed = true;
@@ -1311,10 +1305,7 @@ bool inverter_dyn::check_and_update_VA_Out(OBJECT *obj)
 
 		if (abs(Pref) > P_Out_lim_flr)
 		{
-			gl_warning("inverter (name: '%s'): The absolute value of Pref (%f [W] set by the user) is capped at %f [W]."
-					   " Note that: 1) Pref <= min(pvc_Pmax, rated_power);"
-					   " 2) sqrt(Pref^2 + Qref^2) <= sqrt(2)*rated_power.",
-					   obj->name ? obj->name : "unnamed", Pref, P_Out_lim_flr);
+			gl_warning("inverter_dyn:%d - %s - The absolute value of Pref (%f [W] set by the user) is capped at %f [W].",obj->id,(obj->name ? obj->name : "unnamed"), Pref, P_Out_lim_flr);
 
 			Pref = copysign(P_Out_lim_flr, Pref);
 		}
@@ -1324,9 +1315,7 @@ bool inverter_dyn::check_and_update_VA_Out(OBJECT *obj)
 
 		if (Q_Out_lim_sq < 0) // Technically, there is no need to check the 'Q_Out_lim_sq', but there is no harm to double check
 		{
-			GL_THROW("Rated power (%f [W]) of the inverter is too small,"
-					 " it needs to be at least 70.71% of the P_Out (%f) [W] at this moment!!",
-					 S_base, P_Out);
+			GL_THROW("inverter_dyn:%d - %s - Rated power (%f [W]) must be at least 70.71% of the P_Out (%f) [W]",obj->id,(obj->name?obj->name:"Unnamed"),S_base, P_Out);
 		}
 		else
 		{
@@ -1334,11 +1323,7 @@ bool inverter_dyn::check_and_update_VA_Out(OBJECT *obj)
 
 			if (abs(Q_Out) > Q_Out_lim_flr)
 			{
-				gl_warning("inverter (name: '%s'): The magnitude of Q_Out (%f [var] required by powerflow) is be capped at %f [var]."
-						   " VA_Out.Im() will be updated accordingly."
-						   " Note that: 1) P_Out <= min(pvc_Pmax, rated_power);"
-						   " 2) sqrt(P_Out^2 + Q_Out^2) <= sqrt(2)*rated_power.",
-						   obj->name ? obj->name : "unnamed", Q_Out, Q_Out_lim_flr);
+				gl_warning("inverter_dyn:%d - %s - Magnitude of Q_Out (%f [var] required by powerflow) is be capped at %f [var].",obj->id,(obj->name ? obj->name : "unnamed"), Q_Out, Q_Out_lim_flr);
 
 				Q_Out = copysign(Q_Out_lim_flr, Q_Out);
 				flag_VA_Out_changed = true;
@@ -1346,10 +1331,7 @@ bool inverter_dyn::check_and_update_VA_Out(OBJECT *obj)
 
 			if (abs(Qref) > Q_Out_lim_flr)
 			{
-				gl_warning("inverter (name: '%s'): The absolute value of Qref (%f [var] set by the user) is capped at %f [var]."
-						   " Note that: 1) Pref <= min(pvc_Pmax, rated_power);"
-						   " 2) sqrt(Pref^2 + Qref^2) <= sqrt(2)*rated_power.",
-						   obj->name ? obj->name : "unnamed", Qref, Q_Out_lim_flr);
+				gl_warning("inverter_dyn:%d - %s - Absolute value of Qref is capped at %f [var].",obj->id,(obj->name ? obj->name : "unnamed"), Q_Out_lim_flr);
 
 				Qref = copysign(Q_Out_lim_flr, Qref);
 			}
@@ -1383,7 +1365,6 @@ TIMESTAMP inverter_dyn::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		pull_complex_powerflow_values();
 	}
 
-	//**** FT -- Postsync stuff here
 	if (parent_is_single_phase == true) // single phase/split-phase implementation
 	{
 		//Update output power
@@ -1438,8 +1419,6 @@ STATUS inverter_dyn::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 	FUNCTIONADDR funadd = NULL;
 	OBJECT *hdr = OBJECTHDR(this);
 
-	//**** FT -- Good place to init dynamics or transition, and map any powerflow-related items
-
 	//Call the init, since we're here
 	stat_val = init_dynamics(&curr_state);
 
@@ -1463,7 +1442,7 @@ STATUS inverter_dyn::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 		//make sure it worked
 		if (funadd == NULL)
 		{
-			gl_error("inverter:%s -- Failed to find node swing swapper function", (hdr->name ? hdr->name : "Unnamed"));
+			gl_error("inverter_dyn:%s -- Failed to find node swing swapper function", (hdr->name ? hdr->name : "Unnamed"));
 			/*  TROUBLESHOOT
 			While attempting to map the function to change the swing status of the parent bus, the function could not be found.
 			Ensure the inverter is actually attached to something.  If the error persists, please submit your code and a bug report
@@ -1478,7 +1457,7 @@ STATUS inverter_dyn::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 
 		if (stat_val == 0) //Failed :(
 		{
-			gl_error("Failed to swap SWING status of node:%s on inverter:%s", (hdr->parent->name ? hdr->parent->name : "Unnamed"), (hdr->name ? hdr->name : "Unnamed"));
+			gl_error("Failed to swap SWING status of node:%s on inverter_dyn:%s", (hdr->parent->name ? hdr->parent->name : "Unnamed"), (hdr->name ? hdr->name : "Unnamed"));
 			/*  TROUBLESHOOT
 			While attempting to handle special reliability actions on a "special" device (switch, recloser, etc.), the function required
 			failed to execute properly.  If the problem persists, please submit a bug report and your code to the trac website.
@@ -1513,8 +1492,6 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 	//Get timestep value
 	deltat = (double)dt / (double)DT_SECOND;
 	deltath = deltat / 2.0;
-
-	//**** FT -- Predictor/correct or differential equations or related items
 
 	if (control_mode == GRID_FORMING)
 	{
@@ -1791,7 +1768,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					pred_state.delta_w = pred_state.delta_w + delta_w_Vdc_min; //the summation of the outputs from P-f droop, Pmax control and Pmin control, and Vdc_min control
 				}
 
-				freq = (pred_state.delta_w + w_ref) / 2 / PI; // The frequency from the CERTS Droop controller, Hz
+				freq = (pred_state.delta_w + w_ref) / 2.0 / PI; // The frequency from the CERTS Droop controller, Hz
 
 				// Function: Obtaining the Phase Angle, and obtaining the compelx value of internal voltages and their Norton Equivalence for power flow analysis
 				for (i = 0; i < 3; i++)
@@ -2075,7 +2052,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					next_state.delta_w = next_state.delta_w + delta_w_Vdc_min; //the summation of the outputs from P-f droop, Pmax control and Pmin control, and Vdc_min control
 				}
 
-				freq = (next_state.delta_w + w_ref) / 2 / PI; // The frequency from the CERTS droop controller, Hz
+				freq = (next_state.delta_w + w_ref) / 2.0 / PI; // The frequency from the CERTS droop controller, Hz
 
 				// Function: Obtaining the Phase Angle, and obtaining the compelx value of internal voltages and their Norton Equivalence for power flow analysis
 				for (i = 0; i < 3; i++)
@@ -2147,7 +2124,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 				pred_state.ddelta_w_PLL_ini[0] = ugq_pu[0] * kiPLL;
 				pred_state.delta_w_PLL_ini[0] = curr_state.delta_w_PLL_ini[0] + pred_state.ddelta_w_PLL_ini[0] * deltat;	//output from the integrator term
 				pred_state.delta_w_PLL[0] = pred_state.delta_w_PLL_ini[0] + pred_state.ddelta_w_PLL_ini[0] / kiPLL * kpPLL; // output from the PI controller
-				fPLL[0] = (pred_state.delta_w_PLL[0] + w_ref) / 2 / PI;														// frequency measured by PLL
+				fPLL[0] = (pred_state.delta_w_PLL[0] + w_ref) / 2.0 / PI;														// frequency measured by PLL
 				pred_state.Angle_PLL[0] = curr_state.Angle_PLL[0] + pred_state.delta_w_PLL[0] * deltat;						// phase angle from PLL
 
 				// delta_w_PLL_ini[i] is the output from the integrator term
@@ -2306,7 +2283,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						pred_state.ddelta_w_PLL_ini[i] = ugq_pu[i] * kiPLL;
 						pred_state.delta_w_PLL_ini[i] = curr_state.delta_w_PLL_ini[i] + pred_state.ddelta_w_PLL_ini[i] * deltat;	//output from the integrator term
 						pred_state.delta_w_PLL[i] = pred_state.delta_w_PLL_ini[i] + pred_state.ddelta_w_PLL_ini[i] / kiPLL * kpPLL; // output from the PI controller
-						fPLL[i] = (pred_state.delta_w_PLL[i] + w_ref) / 2 / PI;														// frequency measured by PLL
+						fPLL[i] = (pred_state.delta_w_PLL[i] + w_ref) / 2.0 / PI;														// frequency measured by PLL
 						pred_state.Angle_PLL[i] = curr_state.Angle_PLL[i] + pred_state.delta_w_PLL[i] * deltat;						// phase angle from PLL
 					}
 					// delta_w_PLL_ini[i] is the output from the integrator term
@@ -2478,7 +2455,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						pred_state.ddelta_w_PLL_ini[i] = ugq_pu_PS * kiPLL;
 						pred_state.delta_w_PLL_ini[i] = curr_state.delta_w_PLL_ini[i] + pred_state.ddelta_w_PLL_ini[i] * deltat;	//output from the integrator term
 						pred_state.delta_w_PLL[i] = pred_state.delta_w_PLL_ini[i] + pred_state.ddelta_w_PLL_ini[i] / kiPLL * kpPLL; // output from the PI controller
-						fPLL[i] = (pred_state.delta_w_PLL[i] + w_ref) / 2 / PI;														// frequency measured by PLL
+						fPLL[i] = (pred_state.delta_w_PLL[i] + w_ref) / 2.0 / PI;														// frequency measured by PLL
 						pred_state.Angle_PLL[i] = curr_state.Angle_PLL[i] + pred_state.delta_w_PLL[i] * deltat;						// phase angle from PLL
 					}
 					pred_state.Angle_PLL[1] = pred_state.Angle_PLL[0] - 2.0 / 3.0 * PI;
@@ -2639,7 +2616,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 				next_state.ddelta_w_PLL_ini[0] = ugq_pu[0] * kiPLL;
 				next_state.delta_w_PLL_ini[0] = curr_state.delta_w_PLL_ini[0] + (pred_state.ddelta_w_PLL_ini[0] + next_state.ddelta_w_PLL_ini[0]) * deltat / 2.0; //output from the integrator term
 				next_state.delta_w_PLL[0] = next_state.delta_w_PLL_ini[0] + next_state.ddelta_w_PLL_ini[0] / kiPLL * kpPLL;										  // output from the PI controller
-				fPLL[0] = (next_state.delta_w_PLL[0] + w_ref) / 2 / PI;																							  // frequency measured by PLL
+				fPLL[0] = (next_state.delta_w_PLL[0] + w_ref) / 2.0 / PI;																							  // frequency measured by PLL
 				next_state.Angle_PLL[0] = curr_state.Angle_PLL[0] + (pred_state.delta_w_PLL[0] + next_state.delta_w_PLL[0]) * deltat / 2.0;						  // sphase angle from PLL
 
 				// delta_w_PLL_ini[i] is the output from the integrator term
@@ -2801,7 +2778,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						next_state.ddelta_w_PLL_ini[i] = ugq_pu[i] * kiPLL;
 						next_state.delta_w_PLL_ini[i] = curr_state.delta_w_PLL_ini[i] + (pred_state.ddelta_w_PLL_ini[i] + next_state.ddelta_w_PLL_ini[i]) * deltat / 2.0; //output from the integrator term
 						next_state.delta_w_PLL[i] = next_state.delta_w_PLL_ini[i] + next_state.ddelta_w_PLL_ini[i] / kiPLL * kpPLL;										  // output from the PI controller
-						fPLL[i] = (next_state.delta_w_PLL[i] + w_ref) / 2 / PI;																							  // frequency measured by PLL
+						fPLL[i] = (next_state.delta_w_PLL[i] + w_ref) / 2.0 / PI;																							  // frequency measured by PLL
 						next_state.Angle_PLL[i] = curr_state.Angle_PLL[i] + (pred_state.delta_w_PLL[i] + next_state.delta_w_PLL[i]) * deltat / 2.0;						  // sphase angle from PLL
 					}
 					// delta_w_PLL_ini[i] is the output from the integrator term
@@ -2976,7 +2953,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						next_state.ddelta_w_PLL_ini[i] = ugq_pu_PS * kiPLL;
 						next_state.delta_w_PLL_ini[i] = curr_state.delta_w_PLL_ini[i] + (pred_state.ddelta_w_PLL_ini[i] + next_state.ddelta_w_PLL_ini[i]) * deltat / 2.0; //output from the integrator term
 						next_state.delta_w_PLL[i] = next_state.delta_w_PLL_ini[i] + next_state.ddelta_w_PLL_ini[i] / kiPLL * kpPLL;										  // output from the PI controller
-						fPLL[i] = (next_state.delta_w_PLL[i] + w_ref) / 2 / PI;																							  // frequency measured by PLL
+						fPLL[i] = (next_state.delta_w_PLL[i] + w_ref) / 2.0 / PI;																							  // frequency measured by PLL
 						next_state.Angle_PLL[i] = curr_state.Angle_PLL[i] + (pred_state.delta_w_PLL[i] + next_state.delta_w_PLL[i]) * deltat / 2.0;						  // sphase angle from PLL
 					}
 					next_state.Angle_PLL[1] = next_state.Angle_PLL[0] - 2.0 / 3.0 * PI;
@@ -3149,7 +3126,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 				pred_state.ddelta_w_PLL_ini[0] = ugq_pu[0] * kiPLL;
 				pred_state.delta_w_PLL_ini[0] = curr_state.delta_w_PLL_ini[0] + pred_state.ddelta_w_PLL_ini[0] * deltat;	//output from the integrator term
 				pred_state.delta_w_PLL[0] = pred_state.delta_w_PLL_ini[0] + pred_state.ddelta_w_PLL_ini[0] / kiPLL * kpPLL; // output from the PI controller
-				fPLL[0] = (pred_state.delta_w_PLL[0] + w_ref) / 2 / PI;														// frequency measured by PLL
+				fPLL[0] = (pred_state.delta_w_PLL[0] + w_ref) / 2.0 / PI;														// frequency measured by PLL
 				pred_state.Angle_PLL[0] = curr_state.Angle_PLL[0] + pred_state.delta_w_PLL[0] * deltat;						// phase angle from PLL
 
 				// delta_w_PLL_ini[i] is the output from the integrator term
@@ -3298,7 +3275,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						pred_state.ddelta_w_PLL_ini[i] = ugq_pu[i] * kiPLL;
 						pred_state.delta_w_PLL_ini[i] = curr_state.delta_w_PLL_ini[i] + pred_state.ddelta_w_PLL_ini[i] * deltat;	//output from the integrator term
 						pred_state.delta_w_PLL[i] = pred_state.delta_w_PLL_ini[i] + pred_state.ddelta_w_PLL_ini[i] / kiPLL * kpPLL; // output from the PI controller
-						fPLL[i] = (pred_state.delta_w_PLL[i] + w_ref) / 2 / PI;														// frequency measured by PLL
+						fPLL[i] = (pred_state.delta_w_PLL[i] + w_ref) / 2.0 / PI;														// frequency measured by PLL
 						pred_state.Angle_PLL[i] = curr_state.Angle_PLL[i] + pred_state.delta_w_PLL[i] * deltat;						// phase angle from PLL
 					}
 					// delta_w_PLL_ini[i] is the output from the integrator term
@@ -3463,7 +3440,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						pred_state.ddelta_w_PLL_ini[i] = ugq_pu_PS * kiPLL;
 						pred_state.delta_w_PLL_ini[i] = curr_state.delta_w_PLL_ini[i] + pred_state.ddelta_w_PLL_ini[i] * deltat;	//output from the integrator term
 						pred_state.delta_w_PLL[i] = pred_state.delta_w_PLL_ini[i] + pred_state.ddelta_w_PLL_ini[i] / kiPLL * kpPLL; // output from the PI controller
-						fPLL[i] = (pred_state.delta_w_PLL[i] + w_ref) / 2 / PI;														// frequency measured by PLL
+						fPLL[i] = (pred_state.delta_w_PLL[i] + w_ref) / 2.0 / PI;														// frequency measured by PLL
 						pred_state.Angle_PLL[i] = curr_state.Angle_PLL[i] + pred_state.delta_w_PLL[i] * deltat;						// phase angle from PLL
 					}
 					pred_state.Angle_PLL[1] = pred_state.Angle_PLL[0] - 2.0 / 3.0 * PI;
@@ -3619,7 +3596,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 				next_state.ddelta_w_PLL_ini[0] = ugq_pu[0] * kiPLL;
 				next_state.delta_w_PLL_ini[0] = curr_state.delta_w_PLL_ini[0] + (pred_state.ddelta_w_PLL_ini[0] + next_state.ddelta_w_PLL_ini[0]) * deltat / 2.0; //output from the integrator term
 				next_state.delta_w_PLL[0] = next_state.delta_w_PLL_ini[0] + next_state.ddelta_w_PLL_ini[0] / kiPLL * kpPLL;										  // output from the PI controller
-				fPLL[0] = (next_state.delta_w_PLL[0] + w_ref) / 2 / PI;																							  // frequency measured by PLL
+				fPLL[0] = (next_state.delta_w_PLL[0] + w_ref) / 2.0 / PI;																							  // frequency measured by PLL
 				next_state.Angle_PLL[0] = curr_state.Angle_PLL[0] + (pred_state.delta_w_PLL[0] + next_state.delta_w_PLL[0]) * deltat / 2.0;						  // sphase angle from PLL
 
 				// delta_w_PLL_ini[i] is the output from the integrator term
@@ -3771,7 +3748,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						next_state.ddelta_w_PLL_ini[i] = ugq_pu[i] * kiPLL;
 						next_state.delta_w_PLL_ini[i] = curr_state.delta_w_PLL_ini[i] + (pred_state.ddelta_w_PLL_ini[i] + next_state.ddelta_w_PLL_ini[i]) * deltat / 2.0; //output from the integrator term
 						next_state.delta_w_PLL[i] = next_state.delta_w_PLL_ini[i] + next_state.ddelta_w_PLL_ini[i] / kiPLL * kpPLL;										  // output from the PI controller
-						fPLL[i] = (next_state.delta_w_PLL[i] + w_ref) / 2 / PI;																							  // frequency measured by PLL
+						fPLL[i] = (next_state.delta_w_PLL[i] + w_ref) / 2.0 / PI;																							  // frequency measured by PLL
 						next_state.Angle_PLL[i] = curr_state.Angle_PLL[i] + (pred_state.delta_w_PLL[i] + next_state.delta_w_PLL[i]) * deltat / 2.0;						  // sphase angle from PLL
 					}
 					// delta_w_PLL_ini[i] is the output from the integrator term
@@ -3939,7 +3916,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						next_state.ddelta_w_PLL_ini[i] = ugq_pu_PS * kiPLL;
 						next_state.delta_w_PLL_ini[i] = curr_state.delta_w_PLL_ini[i] + (pred_state.ddelta_w_PLL_ini[i] + next_state.ddelta_w_PLL_ini[i]) * deltat / 2.0; //output from the integrator term
 						next_state.delta_w_PLL[i] = next_state.delta_w_PLL_ini[i] + next_state.ddelta_w_PLL_ini[i] / kiPLL * kpPLL;										  // output from the PI controller
-						fPLL[i] = (next_state.delta_w_PLL[i] + w_ref) / 2 / PI;																							  // frequency measured by PLL
+						fPLL[i] = (next_state.delta_w_PLL[i] + w_ref) / 2.0 / PI;																							  // frequency measured by PLL
 						next_state.Angle_PLL[i] = curr_state.Angle_PLL[i] + (pred_state.delta_w_PLL[i] + next_state.delta_w_PLL[i]) * deltat / 2.0;						  // sphase angle from PLL
 					}
 					next_state.Angle_PLL[1] = next_state.Angle_PLL[0] - 2.0 / 3.0 * PI;
@@ -4156,8 +4133,7 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 				//See if there are any DC objects to handle
 				if (dc_interface_objects.empty() != true)
 				{
-					//****************** DC Stuff - a call to the DC bus objects, since P_In is known now (this may be wrong, this is an example) ***************
-					//****************** This is done here instead of init because solar objects (and future objects) "register" in init ***********************
+					//Figure out what our DC power is
 					P_DC = VA_Out.Re();
 
 					int temp_idx;
@@ -4551,8 +4527,6 @@ STATUS inverter_dyn::post_deltaupdate(complex *useful_value, unsigned int mode_p
 		reset_complex_powerflow_accumulators();
 	}
 
-	//**** FT -- Good place to transition back to QSS
-
 	//Should have a parent, but be paranoid
 	if (parent_is_a_meter == true)
 	{
@@ -4717,7 +4691,6 @@ void inverter_dyn::push_complex_powerflow_values(void)
 			//Push it back up
 			pLine_unrotI[indexval]->setp<complex>(temp_complex_val, *test_rlock);
 
-			//**** FT -- VSI-specific if below
 			/* If was VSI, adjust Norton injection */
 			{
 				//**** IGenerated Current value ***/
@@ -4800,7 +4773,7 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count)
 		pull_complex_powerflow_values();
 	}
 
-	//**** FT -- External call to internal variables -- used by powerflow to iterate the VSI implementation, basically
+	//External call to internal variables -- used by powerflow to iterate the VSI implementation, basically
 	temp_VA = complex(Pref, Qref);
 
 	//See if we're a meter
@@ -4815,7 +4788,7 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count)
 		//Make sure it worked
 		if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_enumeration() != true))
 		{
-			GL_THROW("diesel_dg:%s failed to map bustype variable from %s", obj->name ? obj->name : "unnamed", obj->parent->name ? obj->parent->name : "unnamed");
+			GL_THROW("inverter_dyn:%s failed to map bustype variable from %s", obj->name ? obj->name : "unnamed", obj->parent->name ? obj->parent->name : "unnamed");
 			/*  TROUBLESHOOT
 			While attempting to map the bustype variable from the parent node, an error was encountered.  Please try again.  If the error
 			persists, please report it with your GLM via the issues tracking system.

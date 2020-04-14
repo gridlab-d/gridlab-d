@@ -114,7 +114,6 @@ object triplex_meter {
 		rated_power 7560;
 		object solar {
 			name sol_inv_B_2_645;
-			generator_mode SUPPLY_DRIVEN;
 			panel_type SINGLE_CRYSTAL_SILICON;
 			V_Max 79.34;  // max. power voltage (Vmp) from GE solar cell performance charatcetristics
 			Voc 91.22;  //taken from GEPVp-200-M-Module performance characteristics, converted to degF

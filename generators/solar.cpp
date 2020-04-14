@@ -34,295 +34,6 @@ solar *solar::defaults = NULL;
 static PASSCONFIG passconfig = PC_BOTTOMUP | PC_POSTTOPDOWN;
 static PASSCONFIG clockpass = PC_BOTTOMUP;
 
-/* Utility Funcs */
-
-/* */
-void solar::print_init_pub_vars()
-{
-	cout << "solar_power_model = " << solar_power_model << "\n";
-	cout << "max_nr_ite = " << max_nr_ite << "\n";
-	cout << "x0_root_rt = " << x0_root_rt << "\n";
-	cout << "SOLAR_NR_EPSILON = " << eps_nr_ite << "\n";
-
-	cout << "Referenced temperature = " << pvc_t_ref_cels << " (Celsius)"
-		 << "\n";
-	cout << "Referenced insolation = " << pvc_S_ref_wpm2 << " (w/m^2)"
-		 << "\n";
-
-	cout << "Coefficient a1 = " << pvc_a1 << " (1/Celsius)"
-		 << "\n";
-	cout << "Coefficient b1 = " << pvc_b1 << " (1/Celsius)"
-		 << "\n";
-
-	cout << "Uoc = " << pvc_U_oc_V << " (V)"
-		 << "\n";
-	cout << "Isc = " << pvc_I_sc_A << " (A)"
-		 << "\n";
-	cout << "Um = " << pvc_U_m_V << " (V)"
-		 << "\n";
-	cout << "Im = " << pvc_I_m_A << " (A)"
-		 << "\n";
-
-	cout << "\n\n";
-}
-
-void solar::init_pub_vars_pvcurve_mode()
-{
-	// Data Sanity Check
-	if (Max_P < 0)
-	{
-		Max_P = 0;
-		gl_warning("In mode 'PV_CURVE', the rated_power of PV cannot be negative."
-				   " Now it is set as %d [W].",
-				   Max_P);
-	}
-
-	// Init with Reference Temperature & Insolation
-	pvc_cur_S_wpm2 = pvc_S_ref_wpm2;
-	pvc_cur_t_cels = pvc_t_ref_cels;
-
-	// N-R Solver
-	if (max_nr_ite <= 0)
-	{
-		max_nr_ite = SHRT_MAX;
-		gl_warning("max_nr_ite was either not specified, or specified as a nonpositive value."
-				   " Now it is set as max_nr_ite = SHRT_MAX = %d.",
-				   SHRT_MAX);
-	}
-
-	if (x0_root_rt <= 0)
-	{
-		x0_root_rt = 0.15; //Set the initial guess at 15% extra of the absolute value of the extreme point
-		gl_warning("x0_root_rt was either not specified, or specified as a nonpositive value."
-				   " Now it is set as x0_root_rt = 0.15.");
-	}
-
-	if (eps_nr_ite <= 0)
-	{
-		eps_nr_ite = 1e-5;
-		gl_warning("eps_nr_ite was either not specified, or specified as a nonpositive value."
-				   " Now it is set as eps_nr_ite = 1e-5.");
-	}
-
-	// Solar PV
-	if (pvc_t_ref_cels <= 0)
-	{
-		pvc_t_ref_cels = 25; //Unit: Celsius
-		gl_warning("pvc_t_ref_cels was either not specified, or specified as a nonpositive value."
-				   " Now it is set as pvc_t_ref_cels = 25 (Celsius).");
-	}
-
-	if (pvc_S_ref_wpm2 <= 0)
-	{
-		pvc_S_ref_wpm2 = 1e3; //Unit: w/m^2
-		gl_warning("pvc_S_ref_wpm2 was either not specified, or specified as a nonpositive value."
-				   " Now it is set as pvc_S_ref_wpm2 = 1e3 (w/m^2).");
-	}
-
-	if (pvc_a1 < 0)
-	{
-		pvc_a1 = 0;
-		gl_warning("pvc_a1 was specified as a negative value."
-				   " Now it is set as pvc_a1 = 0 (1/Celsius).");
-	}
-
-	if (pvc_b1 < 0)
-	{
-		pvc_b1 = 0;
-		gl_warning("pvc_b1 was specified as a negative value."
-				   " Now it is set as pvc_b1 = 0 (1/Celsius).");
-	}
-
-	if (pvc_U_oc_V <= 0)
-	{
-		pvc_U_oc_V = 1005;
-		gl_warning("pvc_U_oc_V was either not specified, or specified as a nonpositive value."
-				   " Now it is set as pvc_U_oc_V = 1005 (V).");
-	}
-
-	if (pvc_I_sc_A <= 0)
-	{
-		pvc_I_sc_A = 1e2;
-		gl_warning("pvc_I_sc_A was either not specified, or specified as a nonpositive value."
-				   " Now it is set as pvc_I_sc_A = 1e2 (A).");
-	}
-
-	if (pvc_U_m_V <= 0)
-	{
-		pvc_U_m_V = 750;
-		gl_warning("pvc_U_m_V was either not specified, or specified as a nonpositive value."
-				   " Now it is set as pvc_U_m_V = 750 (V).");
-	}
-
-	if (pvc_I_m_A <= 0)
-	{
-		pvc_I_m_A = 84;
-		gl_warning("pvc_I_m_A was either not specified, or specified as a nonpositive value."
-				   " Now it is set as pvc_I_m_A = 84 (V).");
-	}
-
-	// Calc C1 & C2 using other PVC params
-	pvc_C2 = (pvc_U_m_V / pvc_U_oc_V - 1) / log(1 - pvc_I_m_A / pvc_I_sc_A);
-	pvc_C1 = (1 - pvc_I_m_A / pvc_I_sc_A) * exp(-pvc_U_m_V / pvc_C2 / pvc_U_oc_V);
-}
-
-void solar::update_cur_t_and_S()
-{
-	pvc_cur_t_cels = FAHR_TO_CELS(Tamb);
-	pvc_cur_S_wpm2 = WPFT2_TO_WPM2(Insolation);
-}
-
-/* N-R Solver */
-// Funcs added for the N-R solver
-double solar::nr_ep_rt(double x)
-{
-	return hf_dfdU(x, pvc_cur_t_cels, pvc_cur_S_wpm2) / hf_d2fdU2(x, pvc_cur_t_cels);
-}
-
-double solar::nr_root_rt(double x, double P)
-{
-	return hf_f(x, pvc_cur_t_cels, pvc_cur_S_wpm2, P) / hf_dfdU(x, pvc_cur_t_cels, pvc_cur_S_wpm2);
-}
-
-double solar::nr_root_search(double x, double doa, double P)
-{
-	double xn_ep = newton_raphson(x, (tpd_hf_ptr)&nr_ep_rt, eps_nr_ite);
-	double x0_root = xn_ep + x0_root_rt * fabs(xn_ep);
-	double xn_root = newton_raphson(x0_root, (tpd_hf_ptr)&nr_root_rt, eps_nr_ite, P);
-	return xn_root;
-}
-
-double solar::newton_raphson(double x, tpd_hf_ptr nr_rt, double doa, double P)
-{
-	int num_nr_ite = 0;
-	double h = (this->*nr_rt)(x, P);
-	while (fabs(h) >= doa)
-	{
-		x = x - h; // x(n+1) = x(n) - f{x(n)} / f'{x(n)}
-		h = (this->*nr_rt)(x, P);
-		num_nr_ite++;
-		assert(num_nr_ite < max_nr_ite);
-	}
-
-	//cout << "The number of iterations is: " << num_nr_ite << "\n";
-	return x;
-}
-
-double solar::get_i_from_u(double u)
-{
-	double i = hf_I(u, pvc_cur_t_cels, pvc_cur_S_wpm2);
-	return i;
-}
-
-double solar::get_p_from_u(double u)
-{
-	double p = u * hf_I(u, pvc_cur_t_cels, pvc_cur_S_wpm2);
-	return p;
-}
-
-double solar::get_u_of_p_max(double x0)
-{
-	double temp_xn = newton_raphson(x0, (tpd_hf_ptr)&nr_ep_rt, eps_nr_ite);
-	return temp_xn;
-}
-
-double solar::get_p_max(double x0)
-{
-	double temp_xn = get_u_of_p_max(x0);
-	return get_p_from_u(temp_xn);
-}
-
-double solar::get_u_from_p(double x, double doa, double P)
-{
-	return nr_root_search(x, doa, P);
-}
-
-void solar::test_nr_solver()
-{
-	double x0 = 7e2; // Initial value given
-	double xn;
-	xn = newton_raphson(x0, (tpd_hf_ptr)&nr_ep_rt, eps_nr_ite);
-	cout << "The root value of extreme point (using 'newton_raphson') is: " << xn << "\n";
-	cout << "The max P is: " << get_p_from_u(xn) << " (W)"
-		 << "\n";
-
-	double target_P = 61e3; //Unit: w
-	xn = newton_raphson(x0, (tpd_hf_ptr)&nr_root_rt, eps_nr_ite, target_P);
-	cout << "The root value (using 'newton_raphson') is: " << xn << "\n";
-
-	xn = nr_root_search(x0, eps_nr_ite, target_P);
-	cout << "The root value (using 'nr_root_search') is: " << xn << "\n";
-
-	xn = get_u_from_p(x0, eps_nr_ite, target_P);
-	cout << "The root value (using 'nr_root_search') is: " << xn << "\n";
-
-	double in = get_i_from_u(xn);
-	cout << "The current is " << in << " (A), when the voltage = " << xn << " (V)\n";
-
-	double pn = get_p_from_u(xn);
-	cout << "The power is " << pn << " (w), when the voltage = " << xn << " (V)\n";
-	cout << "[Note that the target_P = " << target_P << " (w)]\n";
-	cout << "\n\n";
-}
-
-/* Solar PV Panel Part*/
-// Funcs added for the solar pv model
-double solar::hf_dU(double t)
-{
-	return -pvc_b1 * pvc_U_oc_V * (t - pvc_t_ref_cels);
-}
-
-double solar::hf_dI(double t, double S)
-{
-	return pvc_I_sc_A * (pvc_a1 * S / pvc_S_ref_wpm2 * (t - pvc_t_ref_cels) + S / pvc_S_ref_wpm2 - 1);
-}
-
-double solar::hf_I(double U, double t, double S)
-{
-	return pvc_I_sc_A * (1 - pvc_C1 * (exp((U - hf_dU(t)) / pvc_C2 / pvc_U_oc_V) - 1)) + hf_dI(t, S);
-}
-
-double solar::hf_P(double U, double t, double S)
-{
-	return U * hf_I(U, t, S);
-}
-
-double solar::hf_f(double U, double t, double S, double P)
-{
-	return hf_P(U, t, S) - P;
-}
-
-double solar::hf_dIdU(double U, double t)
-{
-	return pvc_I_sc_A * (-pvc_C1) / pvc_C2 / pvc_U_oc_V * (exp((U - hf_dU(t)) / pvc_C2 / pvc_U_oc_V) - 0);
-}
-
-double solar::hf_d2IdU2(double U, double t)
-{
-	return pvc_I_sc_A * (-pvc_C1) / pvc_C2 / pvc_U_oc_V / pvc_C2 / pvc_U_oc_V * exp((U - hf_dU(t)) / pvc_C2 / pvc_U_oc_V);
-}
-
-double solar::hf_dfdU(double U, double t, double S)
-{
-	return hf_I(U, t, S) + U * hf_dIdU(U, t);
-}
-
-double solar::hf_d2fdU2(double U, double t)
-{
-	return hf_dIdU(U, t) + hf_dIdU(U, t) + U * hf_d2IdU2(U, t);
-}
-
-void solar::display_params()
-{
-	cout << "C2 = " << pvc_C2 << "\n";
-	cout << "C1 = " << pvc_C1 << "\n";
-	cout << "dU (when t=25) = " << hf_dU(25) << "\n";
-	cout << "dI (when t=25, S=2e3) = " << hf_dI(25, 2e3) << "\n";
-	cout << "I (when U=200, t=25, S=2e3) = " << hf_I(200, 25, 2e3) << "\n";
-	cout << "P (when U=200, t=25, S=2e3) = " << hf_P(200, 25, 2e3) << "\n";
-	cout << "dfdU (when U=200, t=25, S=2e3) = " << hf_dfdU(200, 25, 2e3) << "\n";
-}
-
 /* Class registration is only called once to register the class with the core */
 solar::solar(MODULE *module)
 {
@@ -335,106 +46,90 @@ solar::solar(MODULE *module)
 			oclass->trl = TRL_PROOF;
 
 		if (gl_publish_variable(oclass,
-								// Flag for Mode Section of Calculating pvc_Pmax
-								PT_bool, "pvc_Pmax_calc_simp_mode", PADDR(pvc_Pmax_calc_simp_mode), PT_DESCRIPTION, "If the simple mode is selected, the pvc_Pmax = pvc_U_m_V * pvc_I_m_A.",
-								
-								// Solar PV Panel (under PV_CURVE Mode)
-								PT_double, "t_ref_cels", PADDR(pvc_t_ref_cels), PT_DESCRIPTION, "The referenced temperature in Celsius",
-								PT_double, "S_ref_wpm2", PADDR(pvc_S_ref_wpm2), PT_DESCRIPTION, "The referenced insolation in the unit of w/m^2",
+			// Flag for Mode Section of Calculating pvc_Pmax
+			PT_bool, "pvc_Pmax_calc_simp_mode", PADDR(pvc_Pmax_calc_simp_mode), PT_DESCRIPTION, "If the simple mode is selected, the pvc_Pmax = pvc_U_m_V * pvc_I_m_A.",
+			
+			// Solar PV Panel (under PV_CURVE Mode)
+			PT_double, "t_ref_cels", PADDR(pvc_t_ref_cels), PT_DESCRIPTION, "The referenced temperature in Celsius",
+			PT_double, "S_ref_wpm2", PADDR(pvc_S_ref_wpm2), PT_DESCRIPTION, "The referenced insolation in the unit of w/m^2",
 
-								PT_double, "pvc_a1_inv_cels", PADDR(pvc_a1), PT_DESCRIPTION, "In the calculation of dI, this is the coefficient that adjusts the difference between t (temperature) and pvc_t_ref_cels (referenced temperature)",
-								PT_double, "pvc_b1_inv_cels", PADDR(pvc_b1), PT_DESCRIPTION, "In the calculation of dU, this is the coefficient that adjusts the difference between t (temperature) and pvc_t_ref_cels (referenced temperature)",
+			PT_double, "pvc_a1_inv_cels", PADDR(pvc_a1), PT_DESCRIPTION, "In the calculation of dI, this is the coefficient that adjusts the difference between t (temperature) and pvc_t_ref_cels (referenced temperature)",
+			PT_double, "pvc_b1_inv_cels", PADDR(pvc_b1), PT_DESCRIPTION, "In the calculation of dU, this is the coefficient that adjusts the difference between t (temperature) and pvc_t_ref_cels (referenced temperature)",
 
-								PT_double, "pvc_U_oc_V", PADDR(pvc_U_oc_V), PT_DESCRIPTION, "The open circuit voltage in volts",
-								PT_double, "pvc_I_sc_A", PADDR(pvc_I_sc_A), PT_DESCRIPTION, "The short circuit current in amps",
-								PT_double, "pvc_U_m_V", PADDR(pvc_U_m_V), PT_DESCRIPTION, "The thermal votlage of the array in volts",
-								PT_double, "pvc_I_m_A", PADDR(pvc_I_m_A), PT_DESCRIPTION, "The thermal current of the array in amps",
+			PT_double, "pvc_U_oc_V", PADDR(pvc_U_oc_V), PT_DESCRIPTION, "The open circuit voltage in volts",
+			PT_double, "pvc_I_sc_A", PADDR(pvc_I_sc_A), PT_DESCRIPTION, "The short circuit current in amps",
+			PT_double, "pvc_U_m_V", PADDR(pvc_U_m_V), PT_DESCRIPTION, "The thermal votlage of the array in volts",
+			PT_double, "pvc_I_m_A", PADDR(pvc_I_m_A), PT_DESCRIPTION, "The thermal current of the array in amps",
 
-								// N-R Solver
-								PT_int16, "MAX_NR_ITERATIONS", PADDR(max_nr_ite), PT_DESCRIPTION, "The allowed maximum number of newton-raphson itrations",
-								PT_double, "x0_root_rt", PADDR(x0_root_rt), PT_DESCRIPTION, "Set the initial guess at this extra percentage of the absolute x value at the extreme point",
-								PT_double, "DOA_NR_ITERATIONS", PADDR(eps_nr_ite), PT_DESCRIPTION, "Set the degree of accuracy of newton-raphson method",
+			// N-R Solver
+			PT_int16, "MAX_NR_ITERATIONS", PADDR(max_nr_ite), PT_DESCRIPTION, "The allowed maximum number of newton-raphson itrations",
+			PT_double, "x0_root_rt", PADDR(x0_root_rt), PT_DESCRIPTION, "Set the initial guess at this extra percentage of the absolute x value at the extreme point",
+			PT_double, "DOA_NR_ITERATIONS", PADDR(eps_nr_ite), PT_DESCRIPTION, "Set the degree of accuracy of newton-raphson method",
 
-								// Others
-								PT_enumeration, "generator_mode", PADDR(gen_mode_v),
-								PT_KEYWORD, "UNKNOWN", (enumeration)UNKNOWN,
-								PT_KEYWORD, "CONSTANT_V", (enumeration)CONSTANT_V,
-								PT_KEYWORD, "CONSTANT_PQ", (enumeration)CONSTANT_PQ,
-								PT_KEYWORD, "CONSTANT_PF", (enumeration)CONSTANT_PF,
-								PT_KEYWORD, "SUPPLY_DRIVEN", (enumeration)SUPPLY_DRIVEN, //PV must operate in this mode
+			PT_enumeration, "panel_type", PADDR(panel_type_v),
+			PT_KEYWORD, "SINGLE_CRYSTAL_SILICON", (enumeration)SINGLE_CRYSTAL_SILICON, //Mono-crystalline in production and the most efficient, efficiency 0.15-0.17
+			PT_KEYWORD, "MULTI_CRYSTAL_SILICON", (enumeration)MULTI_CRYSTAL_SILICON,
+			PT_KEYWORD, "AMORPHOUS_SILICON", (enumeration)AMORPHOUS_SILICON,
+			PT_KEYWORD, "THIN_FILM_GA_AS", (enumeration)THIN_FILM_GA_AS,
+			PT_KEYWORD, "CONCENTRATOR", (enumeration)CONCENTRATOR,
 
-								PT_enumeration, "panel_type", PADDR(panel_type_v),
-								PT_KEYWORD, "SINGLE_CRYSTAL_SILICON", (enumeration)SINGLE_CRYSTAL_SILICON, //Mono-crystalline in production and the most efficient, efficiency 0.15-0.17
-								PT_KEYWORD, "MULTI_CRYSTAL_SILICON", (enumeration)MULTI_CRYSTAL_SILICON,
-								PT_KEYWORD, "AMORPHOUS_SILICON", (enumeration)AMORPHOUS_SILICON,
-								PT_KEYWORD, "THIN_FILM_GA_AS", (enumeration)THIN_FILM_GA_AS,
-								PT_KEYWORD, "CONCENTRATOR", (enumeration)CONCENTRATOR,
+			PT_enumeration, "SOLAR_TILT_MODEL", PADDR(solar_model_tilt), PT_DESCRIPTION, "solar tilt model used to compute insolation values",
+			PT_KEYWORD, "DEFAULT", (enumeration)LIUJORDAN,
+			PT_KEYWORD, "SOLPOS", (enumeration)SOLPOS,
+			PT_KEYWORD, "PLAYERVALUE", (enumeration)PLAYERVAL,
 
-								PT_enumeration, "power_type", PADDR(power_type_v), // this property is not used in the code. I recomend removing it from the code.
-								PT_KEYWORD, "AC", (enumeration)AC,
-								PT_KEYWORD, "DC", (enumeration)DC,
+			PT_enumeration, "SOLAR_POWER_MODEL", PADDR(solar_power_model),
+			PT_KEYWORD, "DEFAULT", (enumeration)BASEEFFICIENT,
+			PT_KEYWORD, "FLATPLATE", (enumeration)FLATPLATE,
+			PT_KEYWORD, "PV_CURVE", (enumeration)PV_CURVE,
 
-								PT_enumeration, "INSTALLATION_TYPE", PADDR(installation_type_v), // this property is not used in the code. I recomend removing it from the code.
-								PT_KEYWORD, "ROOF_MOUNTED", (enumeration)ROOF_MOUNTED,
-								PT_KEYWORD, "GROUND_MOUNTED", (enumeration)GROUND_MOUNTED,
+			PT_double, "a_coeff", PADDR(module_acoeff), PT_DESCRIPTION, "a coefficient for module temperature correction formula",
+			PT_double, "b_coeff[s/m]", PADDR(module_bcoeff), PT_DESCRIPTION, "b coefficient for module temperature correction formula",
+			PT_double, "dT_coeff[m*m*degC/kW]", PADDR(module_dTcoeff), PT_DESCRIPTION, "Temperature difference coefficient for module temperature correction formula",
+			PT_double, "T_coeff[%/degC]", PADDR(module_Tcoeff), PT_DESCRIPTION, "Maximum power temperature coefficient for module temperature correction formula",
 
-								PT_enumeration, "SOLAR_TILT_MODEL", PADDR(solar_model_tilt), PT_DESCRIPTION, "solar tilt model used to compute insolation values",
-								PT_KEYWORD, "DEFAULT", (enumeration)LIUJORDAN,
-								PT_KEYWORD, "SOLPOS", (enumeration)SOLPOS,
-								PT_KEYWORD, "PLAYERVALUE", (enumeration)PLAYERVAL,
+			PT_double, "NOCT[degF]", PADDR(NOCT),			 //Nominal operating cell temperature NOCT in deg F
+			PT_double, "Tmodule[degF]", PADDR(Tmodule),		 //Temperature of PV module
+			PT_double, "Tambient[degC]", PADDR(Tambient),	 //Ambient temperature for cell efficiency calculations
+			PT_double, "wind_speed[mph]", PADDR(wind_speed), //Wind speed
+			PT_double, "ambient_temperature[degF]", PADDR(Tamb), PT_DESCRIPTION, "Current ambient temperature of air",
+			PT_double, "Insolation[W/sf]", PADDR(Insolation),
+			PT_double, "Rinternal[Ohm]", PADDR(Rinternal),
+			PT_double, "Rated_Insolation[W/sf]", PADDR(Rated_Insolation),
+			PT_double, "Pmax_temp_coeff", PADDR(Pmax_temp_coeff), //temp coefficient of rated Power in %/ deg C
+			PT_double, "Voc_temp_coeff", PADDR(Voc_temp_coeff),
+			PT_double, "V_Max[V]", PADDR(V_Max),	 // Vmax of solar module found on specs
+			PT_double, "Voc_Max[V]", PADDR(Voc_Max), //Voc max of solar module
+			PT_double, "Voc[V]", PADDR(Voc),
+			PT_double, "efficiency[unit]", PADDR(efficiency),
+			PT_double, "area[sf]", PADDR(area), //solar panel area
+			PT_double, "soiling[pu]", PADDR(soiling_factor), PT_DESCRIPTION, "Soiling of array factor - representing dirt on array",
+			PT_double, "derating[pu]", PADDR(derating_factor), PT_DESCRIPTION, "Panel derating to account for manufacturing variances",
+			PT_double, "Tcell[degC]", PADDR(Tcell),
 
-								PT_enumeration, "SOLAR_POWER_MODEL", PADDR(solar_power_model),
-								PT_KEYWORD, "DEFAULT", (enumeration)BASEEFFICIENT,
-								PT_KEYWORD, "FLATPLATE", (enumeration)FLATPLATE,
-								PT_KEYWORD, "PV_CURVE", (enumeration)PV_CURVE,
+			PT_double, "rated_power[W]", PADDR(Max_P), PT_DESCRIPTION, "Used to define the size of the solar panel in power rather than square footage.",
+			PT_double, "P_Out[kW]", PADDR(P_Out),
+			PT_double, "V_Out[V]", PADDR(V_Out),
+			PT_double, "I_Out[A]", PADDR(I_Out),
+			PT_object, "weather", PADDR(weather),
 
-								PT_double, "a_coeff", PADDR(module_acoeff), PT_DESCRIPTION, "a coefficient for module temperature correction formula",
-								PT_double, "b_coeff[s/m]", PADDR(module_bcoeff), PT_DESCRIPTION, "b coefficient for module temperature correction formula",
-								PT_double, "dT_coeff[m*m*degC/kW]", PADDR(module_dTcoeff), PT_DESCRIPTION, "Temperature difference coefficient for module temperature correction formula",
-								PT_double, "T_coeff[%/degC]", PADDR(module_Tcoeff), PT_DESCRIPTION, "Maximum power temperature coefficient for module temperature correction formula",
+			PT_double, "shading_factor[pu]", PADDR(shading_factor), PT_DESCRIPTION, "Shading factor for scaling solar power to the array",
+			PT_double, "tilt_angle[deg]", PADDR(tilt_angle), PT_DESCRIPTION, "Tilt angle of PV array",
+			PT_double, "orientation_azimuth[deg]", PADDR(orientation_azimuth), PT_DESCRIPTION, "Facing direction of the PV array",
+			PT_bool, "latitude_angle_fix", PADDR(fix_angle_lat), PT_DESCRIPTION, "Fix tilt angle to installation latitude value",
 
-								PT_double, "NOCT[degF]", PADDR(NOCT),			 //Nominal operating cell temperature NOCT in deg F
-								PT_double, "Tmodule[degF]", PADDR(Tmodule),		 //Temperature of PV module
-								PT_double, "Tambient[degC]", PADDR(Tambient),	 //Ambient temperature for cell efficiency calculations
-								PT_double, "wind_speed[mph]", PADDR(wind_speed), //Wind speed
-								PT_double, "ambient_temperature[degF]", PADDR(Tamb), PT_DESCRIPTION, "Current ambient temperature of air",
-								PT_double, "Insolation[W/sf]", PADDR(Insolation),
-								PT_double, "Rinternal[Ohm]", PADDR(Rinternal),
-								PT_double, "Rated_Insolation[W/sf]", PADDR(Rated_Insolation),
-								PT_double, "Pmax_temp_coeff", PADDR(Pmax_temp_coeff), //temp coefficient of rated Power in %/ deg C
-								PT_double, "Voc_temp_coeff", PADDR(Voc_temp_coeff),
-								PT_double, "V_Max[V]", PADDR(V_Max),	 // Vmax of solar module found on specs
-								PT_double, "Voc_Max[V]", PADDR(Voc_Max), //Voc max of solar module
-								PT_double, "Voc[V]", PADDR(Voc),
-								PT_double, "efficiency[unit]", PADDR(efficiency),
-								PT_double, "area[sf]", PADDR(area), //solar panel area
-								PT_double, "soiling[pu]", PADDR(soiling_factor), PT_DESCRIPTION, "Soiling of array factor - representing dirt on array",
-								PT_double, "derating[pu]", PADDR(derating_factor), PT_DESCRIPTION, "Panel derating to account for manufacturing variances",
-								PT_double, "Tcell[degC]", PADDR(Tcell),
+			PT_double, "default_voltage_variable", PADDR(default_voltage_array), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Accumulator/placeholder for default voltage value, when solar is run without an inverter",
+			PT_double, "default_current_variable", PADDR(default_current_array), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Accumulator/placeholder for default current value, when solar is run without an inverter",
+			PT_double, "default_power_variable", PADDR(default_power_array), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Accumulator/placeholder for default power value, when solar is run without an inverter",
 
-								PT_double, "rated_power[W]", PADDR(Max_P), PT_DESCRIPTION, "Used to define the size of the solar panel in power rather than square footage.",
-								PT_double, "P_Out[kW]", PADDR(P_Out),
-								PT_double, "V_Out[V]", PADDR(V_Out),
-								PT_double, "I_Out[A]", PADDR(I_Out),
-								PT_object, "weather", PADDR(weather),
-
-								PT_double, "shading_factor[pu]", PADDR(shading_factor), PT_DESCRIPTION, "Shading factor for scaling solar power to the array",
-								PT_double, "tilt_angle[deg]", PADDR(tilt_angle), PT_DESCRIPTION, "Tilt angle of PV array",
-								PT_double, "orientation_azimuth[deg]", PADDR(orientation_azimuth), PT_DESCRIPTION, "Facing direction of the PV array",
-								PT_bool, "latitude_angle_fix", PADDR(fix_angle_lat), PT_DESCRIPTION, "Fix tilt angle to installation latitude value",
-
-								PT_double, "default_voltage_variable", PADDR(default_voltage_array), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Accumulator/placeholder for default voltage value, when solar is run without an inverter",
-								PT_double, "default_current_variable", PADDR(default_current_array), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Accumulator/placeholder for default current value, when solar is run without an inverter",
-								PT_double, "default_power_variable", PADDR(default_power_array), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Accumulator/placeholder for default power value, when solar is run without an inverter",
-
-								PT_enumeration, "orientation", PADDR(orientation_type),
-								PT_KEYWORD, "DEFAULT", (enumeration)DEFAULT,
-								PT_KEYWORD, "FIXED_AXIS", (enumeration)FIXED_AXIS,
-								//PT_KEYWORD, "ONE_AXIS", ONE_AXIS,			//To be implemented later
-								//PT_KEYWORD, "TWO_AXIS", TWO_AXIS,			//To be implemented later
-								//PT_KEYWORD, "AZIMUTH_AXIS", AZIMUTH_AXIS,	//To be implemented later
-								NULL) < 1)
-			GL_THROW("unable to publish properties in %s", __FILE__);
+			PT_enumeration, "orientation", PADDR(orientation_type),
+			PT_KEYWORD, "DEFAULT", (enumeration)DEFAULT,
+			PT_KEYWORD, "FIXED_AXIS", (enumeration)FIXED_AXIS,
+			//PT_KEYWORD, "ONE_AXIS", ONE_AXIS,			//To be implemented later
+			//PT_KEYWORD, "TWO_AXIS", TWO_AXIS,			//To be implemented later
+			//PT_KEYWORD, "AZIMUTH_AXIS", AZIMUTH_AXIS,	//To be implemented later
+			NULL) < 1)
+				GL_THROW("unable to publish properties in %s", __FILE__);
 
 		//Deltamode linkage
 		if (gl_publish_function(oclass, "interupdate_gen_object", (FUNCTIONADDR)interupdate_solar) == NULL)
@@ -578,6 +273,9 @@ int solar::init_climate()
 				obj = gl_find_next(climates, NULL);
 				weather = obj;
 			}
+
+			//Free up the list
+			gl_free(climates);
 		}
 
 		//Make sure it actually found one
@@ -615,12 +313,9 @@ int solar::init_climate()
 		}
 		else //Must be a proper object
 		{
-			if ((obj->flags & OF_INIT) != OF_INIT)
-			{
-				char objname[256];
-				gl_verbose("solar::init(): deferring initialization on %s", gl_name(obj, objname, 255));
-				return 2; // defer
-			}
+			//Deferred init used to be here - handled in mainline init now
+
+			//Check our rank
 			if (obj->rank <= hdr->rank)
 				gl_set_dependent(obj, hdr);
 
@@ -710,13 +405,11 @@ int solar::init_climate()
 				if (solar_model_tilt == LIUJORDAN)
 				{
 					//Map up the "classic" function
-					//calc_solar_radiation = (FUNCTIONADDR)(gl_get_function(obj,"calculate_solar_radiation_shading_degrees"));
 					calc_solar_radiation = (FUNCTIONADDR)(gl_get_function(obj, "calculate_solar_radiation_shading_position_radians"));
 				}
 				else if (solar_model_tilt == SOLPOS) //Use the solpos/Perez tilt model
 				{
-					//Map up the "classic" function
-					//calc_solar_radiation = (FUNCTIONADDR)(gl_get_function(obj,"calc_solpos_radiation_shading_degrees"));
+					//Map up the updated function
 					calc_solar_radiation = (FUNCTIONADDR)(gl_get_function(obj, "calculate_solpos_radiation_shading_position_radians"));
 				}
 
@@ -826,27 +519,6 @@ int solar::init(OBJECT *parent)
 		}
 	}
 
-	if (gen_mode_v == UNKNOWN)
-	{
-		gl_warning("Generator control mode is not specified! Using default: SUPPLY_DRIVEN");
-		gen_mode_v = SUPPLY_DRIVEN;
-	}
-	else if (gen_mode_v == CONSTANT_V)
-	{
-		gl_error("Generator control mode is CONSTANT_V. The Solar object only operates in SUPPLY_DRIVEN generator control mode.");
-		return 0;
-	}
-	else if (gen_mode_v == CONSTANT_PQ)
-	{
-		gl_error("Generator control mode is CONSTANT_PQ. The Solar object only operates in SUPPLY_DRIVEN generator control mode.");
-		return 0;
-	}
-	else if (gen_mode_v == CONSTANT_PF)
-	{
-		gl_error("Generator control mode is CONSTANT_PF. The Solar object only operates in SUPPLY_DRIVEN generator control mode.");
-		return 0;
-	}
-
 	if (panel_type_v == UNKNOWN)
 	{
 		gl_warning("Solar panel type is unknown! Using default: SINGLE_CRYSTAL_SILICON");
@@ -898,7 +570,7 @@ int solar::init(OBJECT *parent)
 	if (Max_P == 0)
 	{
 		Max_P = Rated_Insolation * efficiency * area; // We are calculating the module efficiency which should be less than cell efficiency. What about the sun hours??
-		gl_verbose("init(): Max_P was not specified.  Calculating from other defaults.");
+		gl_verbose("solar:%d %s - Max_P was not specified.  Calculating from other defaults.",obj->id,(obj->name?obj->name:"Unnamed"));
 		/* TROUBLESHOOT
 		The relationship between power output and other physical variables is described by Max_P = Rated_Insolation * efficiency * area. Since Max_P 
 		was not set, using this equation to calculate it.
@@ -906,7 +578,7 @@ int solar::init(OBJECT *parent)
 
 		if (Max_P == 0)
 		{
-			gl_warning("init(): Max_P and {area or Rated_Insolation or effiency} were not specified or specified as zero.  Leads to maximum power output of 0.");
+			gl_warning("solar:%d %s - Max_P and {area or Rated_Insolation or effiency} were not specified or specified as zero.  Leads to maximum power output of 0.",obj->id,(obj->name?obj->name:"Unnamed"));
 			/* TROUBLESHOOT
 			The relationship between power output and other physical variables is described by Max_P = Rated_Insolation * efficiency * area. Since Max_P
 			was not specified and this equation leads to a value of zero, the output of the model is likely to be no power at all times.
@@ -922,7 +594,7 @@ int solar::init(OBJECT *parent)
 			if (temp < Max_P * .99 || temp > Max_P * 1.01)
 			{
 				Max_P = temp;
-				gl_warning("init(): Max_P is not within 99% to 101% of Rated_Insolation * efficiency * area.  Ignoring Max_P.");
+				gl_warning("solar:%d %s - Max_P is not within 99% to 101% of Rated_Insolation * efficiency * area.  Ignoring Max_P.",obj->id,(obj->name?obj->name:"Unnamed"));
 				/* TROUBLESHOOT
 				The relationship between power output and other physical variables is described by Max_P = Rated_Insolation * efficiency * area. However, the model
 				can be overspecified. In the case that it is, we have defaulted to old versions of GridLAB-D and ignored the Max_P and re-calculated it using
@@ -938,7 +610,7 @@ int solar::init(OBJECT *parent)
 			Rated_Insolation = Max_P / area / efficiency;
 		else
 		{
-			gl_error("init(): Rated Insolation was not specified (or zero).  Power outputs cannot be calculated without a rated insolation value.");
+			gl_error("solar:%d %s - Rated Insolation was not specified (or zero).  Power outputs cannot be calculated without a rated insolation value.",obj->id,(obj->name?obj->name:"Unnamed"));
 			/* TROUBLESHOOT
 			The relationship is described by Rated_Insolation = Max_P / area / efficiency.  Nonezero values of area
 			and efficiency are required for this calculation.  Please specify both.
@@ -1597,9 +1269,7 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 		if (pvc_Pmax > Max_P)
 		{
-			gl_warning("Solar PV (name: '%s') may be overloaded."
-					   " Its rated power is %f [W], while its pvc_Pmax is %f [W].",
-					   obj->name ? obj->name : "unnamed", Max_P, pvc_Pmax);
+			gl_warning("solar:%d %s - may be overloaded.",obj->id,(obj->name ? obj->name : "unnamed"));
 		}
 
 		return TS_NEVER;
@@ -1716,12 +1386,215 @@ STATUS solar::solar_dc_update(OBJECT *calling_obj, bool init_mode)
 		last_DC_power = P_Out;
 	}
 
-	//*********** DC Impelment notes ****************
-	//Right now, this will always succeed.  If there's a failure mode, it could be good to catch it here
-	//**********************************
-
 	//Return our status
 	return temp_status;
+}
+
+/* Utility Funcs */
+void solar::init_pub_vars_pvcurve_mode()
+{
+	OBJECT *obj = OBJECTHDR(this);
+
+	// Data Sanity Check
+	if (Max_P < 0)
+	{
+		Max_P = 0;
+		gl_warning("solar:%d %s - 'PV_CURVE', the rated_power of PV cannot be negative - set as %f [W].",obj->id,(obj->name?obj->name:"Unnamed"),Max_P);
+	}
+
+	// Init with Reference Temperature & Insolation
+	pvc_cur_S_wpm2 = pvc_S_ref_wpm2;
+	pvc_cur_t_cels = pvc_t_ref_cels;
+
+	// N-R Solver
+	if (max_nr_ite <= 0)
+	{
+		max_nr_ite = SHRT_MAX;
+		gl_warning("solar:%d %s - max_nr_ite was not a valid value, set to %d.",obj->id,(obj->name?obj->name:"Unnamed"),SHRT_MAX);
+	}
+
+	if (x0_root_rt <= 0)
+	{
+		x0_root_rt = 0.15; //Set the initial guess at 15% extra of the absolute value of the extreme point
+		gl_warning("solar:%d %s - x0_root_rt was not a valid value, set to 0.15.",obj->id,(obj->name?obj->name:"Unnamed"));
+	}
+
+	if (eps_nr_ite <= 0)
+	{
+		eps_nr_ite = 1e-5;
+		gl_warning("solar:%d %s - eps_nr_ite was not a valid value, set to 1e-5.",obj->id,(obj->name?obj->name:"Unnamed"));
+	}
+
+	// Solar PV
+	if (pvc_t_ref_cels <= 0)
+	{
+		pvc_t_ref_cels = 25; //Unit: Celsius
+		gl_warning("solar:%d %s  -pvc_t_ref_cels was not a valid value, set to 25 degC.",obj->id,(obj->name?obj->name:"Unnamed"));
+	}
+
+	if (pvc_S_ref_wpm2 <= 0)
+	{
+		pvc_S_ref_wpm2 = 1e3; //Unit: w/m^2
+		gl_warning("solar:%d %s - pvc_S_ref_wpm2 was not a valid value, set to 1e3 (w/m^2).",obj->id,(obj->name?obj->name:"Unnamed"));
+	}
+
+	if (pvc_a1 < 0)
+	{
+		pvc_a1 = 0;
+		gl_warning("solar:%d %s - pvc_a1 was specified as a negative value - set to 0 (1/Celsius).",obj->id,(obj->name?obj->name:"Unnamed"));
+	}
+
+	if (pvc_b1 < 0)
+	{
+		pvc_b1 = 0;
+		gl_warning("solar:%d %s - pvc_b1 was specified as a negative value - set to 0 (1/Celsius).",obj->id,(obj->name?obj->name:"Unnamed"));
+	}
+
+	if (pvc_U_oc_V <= 0)
+	{
+		pvc_U_oc_V = 1005;
+		gl_warning("solar:%d %s - pvc_U_oc_V was not a valid value - set to 1005 (V).",obj->id,(obj->name?obj->name:"Unnamed"));
+	}
+
+	if (pvc_I_sc_A <= 0)
+	{
+		pvc_I_sc_A = 1e2;
+		gl_warning("solar:%d %s - pvc_I_sc_A was not a valid value - set to 1e2 (A).",obj->id,(obj->name?obj->name:"Unnamed"));
+	}
+
+	if (pvc_U_m_V <= 0)
+	{
+		pvc_U_m_V = 750;
+		gl_warning("solar:%d %s - pvc_U_m_V was not a valid value, set to 750 (V).",obj->id,(obj->name?obj->name:"Unnamed"));
+	}
+
+	if (pvc_I_m_A <= 0)
+	{
+		pvc_I_m_A = 84;
+		gl_warning("solar:%d %s - pvc_I_m_A was not a valid value, set to 84 (V).",obj->id,(obj->name?obj->name:"Unnamed"));
+	}
+
+	// Calc C1 & C2 using other PVC params
+	pvc_C2 = (pvc_U_m_V / pvc_U_oc_V - 1) / log(1 - pvc_I_m_A / pvc_I_sc_A);
+	pvc_C1 = (1 - pvc_I_m_A / pvc_I_sc_A) * exp(-pvc_U_m_V / pvc_C2 / pvc_U_oc_V);
+}
+
+void solar::update_cur_t_and_S()
+{
+	pvc_cur_t_cels = FAHR_TO_CELS(Tamb);
+	pvc_cur_S_wpm2 = WPFT2_TO_WPM2(Insolation);
+}
+
+/* N-R Solver */
+// Funcs added for the N-R solver
+double solar::nr_ep_rt(double x)
+{
+	return hf_dfdU(x, pvc_cur_t_cels, pvc_cur_S_wpm2) / hf_d2fdU2(x, pvc_cur_t_cels);
+}
+
+double solar::nr_root_rt(double x, double P)
+{
+	return hf_f(x, pvc_cur_t_cels, pvc_cur_S_wpm2, P) / hf_dfdU(x, pvc_cur_t_cels, pvc_cur_S_wpm2);
+}
+
+double solar::nr_root_search(double x, double doa, double P)
+{
+	double xn_ep = newton_raphson(x, (tpd_hf_ptr)&nr_ep_rt, eps_nr_ite);
+	double x0_root = xn_ep + x0_root_rt * fabs(xn_ep);
+	double xn_root = newton_raphson(x0_root, (tpd_hf_ptr)&nr_root_rt, eps_nr_ite, P);
+	return xn_root;
+}
+
+double solar::newton_raphson(double x, tpd_hf_ptr nr_rt, double doa, double P)
+{
+	int num_nr_ite = 0;
+	double h = (this->*nr_rt)(x, P);
+	while (fabs(h) >= doa)
+	{
+		x = x - h; // x(n+1) = x(n) - f{x(n)} / f'{x(n)}
+		h = (this->*nr_rt)(x, P);
+		num_nr_ite++;
+		assert(num_nr_ite < max_nr_ite);
+	}
+
+	//cout << "The number of iterations is: " << num_nr_ite << "\n";
+	return x;
+}
+
+double solar::get_i_from_u(double u)
+{
+	double i = hf_I(u, pvc_cur_t_cels, pvc_cur_S_wpm2);
+	return i;
+}
+
+double solar::get_p_from_u(double u)
+{
+	double p = u * hf_I(u, pvc_cur_t_cels, pvc_cur_S_wpm2);
+	return p;
+}
+
+double solar::get_u_of_p_max(double x0)
+{
+	double temp_xn = newton_raphson(x0, (tpd_hf_ptr)&nr_ep_rt, eps_nr_ite);
+	return temp_xn;
+}
+
+double solar::get_p_max(double x0)
+{
+	double temp_xn = get_u_of_p_max(x0);
+	return get_p_from_u(temp_xn);
+}
+
+double solar::get_u_from_p(double x, double doa, double P)
+{
+	return nr_root_search(x, doa, P);
+}
+
+/* Solar PV Panel Part*/
+// Funcs added for the solar pv model
+double solar::hf_dU(double t)
+{
+	return -pvc_b1 * pvc_U_oc_V * (t - pvc_t_ref_cels);
+}
+
+double solar::hf_dI(double t, double S)
+{
+	return pvc_I_sc_A * (pvc_a1 * S / pvc_S_ref_wpm2 * (t - pvc_t_ref_cels) + S / pvc_S_ref_wpm2 - 1);
+}
+
+double solar::hf_I(double U, double t, double S)
+{
+	return pvc_I_sc_A * (1 - pvc_C1 * (exp((U - hf_dU(t)) / pvc_C2 / pvc_U_oc_V) - 1)) + hf_dI(t, S);
+}
+
+double solar::hf_P(double U, double t, double S)
+{
+	return U * hf_I(U, t, S);
+}
+
+double solar::hf_f(double U, double t, double S, double P)
+{
+	return hf_P(U, t, S) - P;
+}
+
+double solar::hf_dIdU(double U, double t)
+{
+	return pvc_I_sc_A * (-pvc_C1) / pvc_C2 / pvc_U_oc_V * (exp((U - hf_dU(t)) / pvc_C2 / pvc_U_oc_V) - 0);
+}
+
+double solar::hf_d2IdU2(double U, double t)
+{
+	return pvc_I_sc_A * (-pvc_C1) / pvc_C2 / pvc_U_oc_V / pvc_C2 / pvc_U_oc_V * exp((U - hf_dU(t)) / pvc_C2 / pvc_U_oc_V);
+}
+
+double solar::hf_dfdU(double U, double t, double S)
+{
+	return hf_I(U, t, S) + U * hf_dIdU(U, t);
+}
+
+double solar::hf_d2fdU2(double U, double t)
+{
+	return hf_dIdU(U, t) + hf_dIdU(U, t) + U * hf_d2IdU2(U, t);
 }
 
 //////////////////////////////////////////////////////////////////////////

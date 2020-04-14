@@ -15,7 +15,6 @@ module powerflow {
 }
 
 object solar {
-	generator_mode SUPPLY_DRIVEN;
 	name imasolar;
 	parent imainverter;
 	area 325.0271;
