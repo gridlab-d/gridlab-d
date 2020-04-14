@@ -438,7 +438,7 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 	i=3;
 	while (i>-1)
 	{
-		if (control_mode_setting[i]!=NULL)
+		if (control_mode_setting[i]!=0)
 		{
 			switch(control_mode_setting[i])
 			{

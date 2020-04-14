@@ -18,14 +18,6 @@
 	  loss through the jacket.
  @{
  **/
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
-#include <chrono>
-#include <iostream>
-
 #include "waterheater.h"
 
 #define TSTAT_PRECISION 0.01
@@ -698,13 +690,13 @@ int waterheater::init(OBJECT *parent)
 		b_matrix_coefficient = heating_element_capacity*BTUPHPKW/(RHOWATER*Cp*V_layer*number_of_mixing_zone_disks);
 		last_transition_time = 0;
 		for(int i=0; i<number_of_states; i++) {
-			T_layers.push_back(vector<double>());
+			T_layers.emplace_back();
 		}
 		for(int i=0; i<number_of_states; i++) {
-			A_diffusion.push_back(vector<double>(number_of_states, 0.0));
-			A_loss.push_back(vector<double>(number_of_states, 0.0));
-			B_control.push_back(vector<double>(2, 0.0));
-			A_matrix.push_back(vector<double>(number_of_states, 0.0));
+			A_diffusion.emplace_back(number_of_states, 0.0);
+			A_loss.emplace_back(number_of_states, 0.0);
+			B_control.emplace_back(2, 0.0);
+			A_matrix.emplace_back(number_of_states, 0.0);
 		}
 		int rows = number_of_states - 1;
 		for(int i=1; i<=rows-1; i++) {
@@ -753,6 +745,24 @@ int waterheater::init(OBJECT *parent)
 		} else {
 			control_lower.push_back(0.0);
 		}
+
+        dT_dt.reserve(number_of_states);
+        T_now.resize(number_of_states, 0.0);
+        T_new.resize(number_of_states, 0.0);
+        control_temp.resize(2, 0.0);
+
+        A_diffusion.resize(number_of_states);
+        A_loss.resize(number_of_states);
+        A_plug.resize(number_of_states);
+        A_circular_flow.resize(number_of_states);
+
+        for (size_t i = 0; i < number_of_states; i++) {
+            A_plug[i].resize(number_of_states, 0.0);
+            A_circular_flow[i].resize(number_of_states, 0.0);
+            A_matrix[i].resize(number_of_states, 0.0);
+        }
+
+        T_layers.resize(number_of_states, vector<double>());
 	}
 	return residential_enduse::init(parent);
 }
@@ -1723,7 +1733,7 @@ double waterheater::get_Tambient(enumeration loc)
 
 void waterheater::wrong_model(WRONGMODEL msg)
 {
-	char *errtxt[] = {"model is not one-zone","model is not two-zone"};
+	const char *errtxt[] = {"model is not one-zone","model is not two-zone"};
 	OBJECT *obj = OBJECTHDR(this);
 	gl_warning("%s (waterheater:%d): %s", obj->name?obj->name:"(anonymous object)", obj->id, errtxt[msg]);
 	throw msg; // this must be caught by the waterheater code, not by the core
@@ -1732,18 +1742,13 @@ void waterheater::wrong_model(WRONGMODEL msg)
 /*
  * calculate the next state change for the multilevel waterheater
  */
-int waterheater::multilayer_time_to_transition(void) {
+int waterheater::multilayer_time_to_transition() {
 	int t_return = 0;
 	int time_new = 0;
 	int time_now = 0;
 	int time_cap =(int)(gl_globalstoptime - gl_globalclock);
 	bool state_changed = false;
-	vector<double> dT_dt;
-	vector<double> T_now(number_of_states,0.0);
-	vector<double> T_new(number_of_states,0.0);
-	vector<double> control_temp(2,0.0);
-	vector<double> product1;
-	vector<double> product2;
+
 	if(re_override == OV_ON || re_override == OV_OFF) {
 		if(time_cap > 300) {
 			time_cap = 300;
@@ -1751,8 +1756,6 @@ int waterheater::multilayer_time_to_transition(void) {
 	}
 	//auto start = std::chrono::high_resolution_clock::now();
 	while(!state_changed) {
-		product1.clear();
-		product2.clear();
 		time_new = time_now + 1;
 		if(time_new >= time_cap) {
 			break;
@@ -1808,8 +1811,12 @@ int waterheater::multilayer_time_to_transition(void) {
 }
 
 void waterheater::calculate_waterheater_matrices(int time_now) {
-	vector<vector<double>> A_plug(number_of_states, vector<double>(number_of_states, 0.0));
-	vector<vector<double>> A_circular_flow(number_of_states, vector<double>(number_of_states, 0.0));
+    // set all values to zero.
+    for (size_t i = 0; i < number_of_states; i++) {
+        std::fill(A_plug[i].begin(), A_plug[i].end(), 0.0);
+        std::fill(A_circular_flow[i].begin(), A_circular_flow[i].end(), 0.0);
+        std::fill(A_matrix[i].begin(), A_matrix[i].end(), 0.0);
+    }
 
 	// mixing valve operation
 	double mixing_fraction;
@@ -1820,10 +1827,6 @@ void waterheater::calculate_waterheater_matrices(int time_now) {
 		mixing_fraction = (T_mixing_valve - Tinlet)/(T_layers[10][time_now] - Tinlet);
 	}
 
-	A_matrix.clear();
-	for(int i=0; i<number_of_states; i++) {
-		A_matrix.push_back(vector<double>(number_of_states, 0.0));
-	}
 	int i;
 	int rows = number_of_states - 1;
 	water_demand = water_demand*mixing_fraction;
@@ -1867,15 +1870,17 @@ void waterheater::reinitialize_internals(int dt) {
 	vector<double> init_T_layers;
 	init_control_upper = control_upper[dt];
 	init_control_lower = control_lower[dt];
+
+	init_T_layers.reserve(number_of_states);
 	for(int i=0; i<number_of_states; i++) {
 		init_T_layers.push_back(T_layers[i][dt]);
 	}
 	control_upper.clear();
 	control_lower.clear();
-	T_layers.clear();
-	T_layers = vector<vector<double>>(number_of_states, vector<double>());
+
 	for(int i=0; i<number_of_states; i++) {
-		T_layers[i].push_back(init_T_layers[i]);
+	    T_layers[i].clear();
+        T_layers[i].push_back(init_T_layers[i]);
 	}
 	T_layers[0][0] = Tinlet;
 	T_layers[number_of_states -1][0] = get_Tambient(location);
@@ -1909,10 +1914,10 @@ void waterheater::reinitialize_internals(int dt) {
 }
 
 vector<double> waterheater::multiply_waterheater_matrices(vector<vector<double>> a, vector<double> b) {
-	vector<double> rv(a.size(), 0.0);
+    auto rv = vector<double>(a.size());
 	for(int i=0; i<a.size(); i++) {
 		for(int j=0; j<a[i].size(); j++){
-			rv[i] += a[i][j]*b[j];
+            rv[i] += a[i][j] * b[j];
 		}
 	}
 	return rv;

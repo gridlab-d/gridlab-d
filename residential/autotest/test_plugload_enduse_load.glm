@@ -6,7 +6,7 @@
 //	enduse_load = demand*constant_power
 clock {
 	timestamp '2000-01-01 0:00:00';
-	stoptime '2000-01-01 24:00:00';
+	stoptime '2000-01-02 0:00:00';
 	timezone PST+8PDT;
 }
 
@@ -38,7 +38,7 @@ object house {
 			file "plugload_load_usage3600.csv";
 			interval 3600;
 			limit 24;
-			property demand,enduse_load,power,total;
+			property demand,power;
 		};
 	};
 }

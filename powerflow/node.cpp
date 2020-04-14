@@ -146,8 +146,8 @@ node::node(MODULE *mod) : powerflow_object(mod)
 
 			PT_complex, "deltamode_PGenTotal",PADDR(deltamode_PGenTotal),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - power value for a diesel generator -- accumulator only, not an output or input",
 
-			PT_complex_array, "deltamode_full_Y_matrix",  get_full_Y_matrix_offset(),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality full_Y matrix exposes so generator objects can interact for Norton equivalents",
-			PT_complex_array, "deltamode_full_Y_all_matrix",  get_full_Y_all_matrix_offset(),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality full_Y_all matrix exposes so generator objects can interact for Norton equivalents",
+			PT_complex_array, "deltamode_full_Y_matrix",  PADDR(full_Y_matrix),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality full_Y matrix exposes so generator objects can interact for Norton equivalents",
+			PT_complex_array, "deltamode_full_Y_all_matrix",  PADDR(full_Y_all_matrix),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality full_Y_all matrix exposes so generator objects can interact for Norton equivalents",
 
 			PT_complex, "current_inj_A[A]", PADDR(current_inj[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
 			PT_complex, "current_inj_B[A]", PADDR(current_inj[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
@@ -171,6 +171,19 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_complex, "shunt_AN[S]", PADDR(power_dy[3]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
 			PT_complex, "shunt_BN[S]", PADDR(power_dy[4]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
 			PT_complex, "shunt_CN[S]", PADDR(power_dy[5]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
+
+			//House-related variables - for 3-phase house connections
+			PT_complex, "residential_nominal_current_A[A]", PADDR(nom_res_curr[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase A from a residential object, if attached",
+			PT_complex, "residential_nominal_current_B[A]", PADDR(nom_res_curr[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase B from a residential object, if attached",
+			PT_complex, "residential_nominal_current_C[A]", PADDR(nom_res_curr[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase C from a residential object, if attached",
+			PT_double, "residential_nominal_current_A_real[A]", PADDR(nom_res_curr[0].Re()),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase A, real, from a residential object, if attached",
+			PT_double, "residential_nominal_current_A_imag[A]", PADDR(nom_res_curr[0].Im()),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase A, imag, from a residential object, if attached",
+			PT_double, "residential_nominal_current_B_real[A]", PADDR(nom_res_curr[1].Re()),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase B, real, from a residential object, if attached",
+			PT_double, "residential_nominal_current_B_imag[A]", PADDR(nom_res_curr[1].Im()),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase B, imag, from a residential object, if attached",
+			PT_double, "residential_nominal_current_C_real[A]", PADDR(nom_res_curr[2].Re()),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase C, real, from a residential object, if attached",
+			PT_double, "residential_nominal_current_C_imag[A]", PADDR(nom_res_curr[2].Im()),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase C, imag, from a residential object, if attached",
+
+			PT_bool, "house_present", PADDR(house_present),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"boolean for detecting whether a house is attached, not an input",
 
 			PT_double, "mean_repair_time[s]",PADDR(mean_repair_time), PT_DESCRIPTION, "Time after a fault clears for the object to be back in service",
 
@@ -2209,114 +2222,59 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			//Post our loads up to our parent
 			node *ParToLoad = OBJECTDATA(SubNodeParent,node);
 
-			if (gl_object_isa(SubNodeParent,"load","powerflow"))	//Load gets cleared at every presync, so reaggregate :(
+			//Lock the parent for accumulation
+			LOCK_OBJECT(SubNodeParent);
+
+			//Import power and "load" characteristics
+			ParToLoad->power[0]+=power[0]-last_child_power[0][0];
+			ParToLoad->power[1]+=power[1]-last_child_power[0][1];
+			ParToLoad->power[2]+=power[2]-last_child_power[0][2];
+
+			ParToLoad->shunt[0]+=shunt[0]-last_child_power[1][0];
+			ParToLoad->shunt[1]+=shunt[1]-last_child_power[1][1];
+			ParToLoad->shunt[2]+=shunt[2]-last_child_power[1][2];
+
+			ParToLoad->current[0]+=current[0]-last_child_power[2][0];
+			ParToLoad->current[1]+=current[1]-last_child_power[2][1];
+			ParToLoad->current[2]+=current[2]-last_child_power[2][2];
+
+			ParToLoad->pre_rotated_current[0] += pre_rotated_current[0]-last_child_power[3][0];
+			ParToLoad->pre_rotated_current[1] += pre_rotated_current[1]-last_child_power[3][1];
+			ParToLoad->pre_rotated_current[2] += pre_rotated_current[2]-last_child_power[3][2];
+
+			//And the deltamode accumulators too -- if deltamode
+			if (deltamode_inclusive == true)
 			{
-				//Lock the parent for accumulation
-				LOCK_OBJECT(SubNodeParent);
-
-				//Import power and "load" characteristics
-				ParToLoad->power[0]+=power[0];
-				ParToLoad->power[1]+=power[1];
-				ParToLoad->power[2]+=power[2];
-
-				ParToLoad->shunt[0]+=shunt[0];
-				ParToLoad->shunt[1]+=shunt[1];
-				ParToLoad->shunt[2]+=shunt[2];
-
-				ParToLoad->current[0]+=current[0];
-				ParToLoad->current[1]+=current[1];
-				ParToLoad->current[2]+=current[2];
-
-				//Accumulate the unrotated values too
-				ParToLoad->pre_rotated_current[0] += pre_rotated_current[0];
-				ParToLoad->pre_rotated_current[1] += pre_rotated_current[1];
-				ParToLoad->pre_rotated_current[2] += pre_rotated_current[2];
-
-				//And the deltamode accumulators too -- if deltamode
-				if (deltamode_inclusive == true)
-				{
-					//Pull our parent value down -- everything is being pushed up there anyways
-					//Pulling to keep meters accurate (theoretically)
-					deltamode_dynamic_current[0] = ParToLoad->deltamode_dynamic_current[0];
-					deltamode_dynamic_current[1] = ParToLoad->deltamode_dynamic_current[1];
-					deltamode_dynamic_current[2] = ParToLoad->deltamode_dynamic_current[2];
-				}
-
-				//Do the same for explicit delta/wye portions
-				for (loop_index_var=0; loop_index_var<6; loop_index_var++)
-				{
-					ParToLoad->power_dy[loop_index_var] += power_dy[loop_index_var];
-					ParToLoad->shunt_dy[loop_index_var] += shunt_dy[loop_index_var];
-					ParToLoad->current_dy[loop_index_var] += current_dy[loop_index_var];
-				}
-
-				//All done, unlock
-				UNLOCK_OBJECT(SubNodeParent);
+				//Pull our parent value down -- everything is being pushed up there anyways
+				//Pulling to keep meters accurate (theoretically)
+				deltamode_dynamic_current[0] = ParToLoad->deltamode_dynamic_current[0];
+				deltamode_dynamic_current[1] = ParToLoad->deltamode_dynamic_current[1];
+				deltamode_dynamic_current[2] = ParToLoad->deltamode_dynamic_current[2];
 			}
-			else if (gl_object_isa(SubNodeParent,"node","powerflow"))	//"parented" node - update values - This has to go to the bottom
-			{												//since load/meter share with node (and load handles power in presync)
-				//Lock the parent for accumulation
-				LOCK_OBJECT(SubNodeParent);
 
-				//Import power and "load" characteristics
-				ParToLoad->power[0]+=power[0]-last_child_power[0][0];
-				ParToLoad->power[1]+=power[1]-last_child_power[0][1];
-				ParToLoad->power[2]+=power[2]-last_child_power[0][2];
-
-				ParToLoad->shunt[0]+=shunt[0]-last_child_power[1][0];
-				ParToLoad->shunt[1]+=shunt[1]-last_child_power[1][1];
-				ParToLoad->shunt[2]+=shunt[2]-last_child_power[1][2];
-
-				ParToLoad->current[0]+=current[0]-last_child_power[2][0];
-				ParToLoad->current[1]+=current[1]-last_child_power[2][1];
-				ParToLoad->current[2]+=current[2]-last_child_power[2][2];
-
-				ParToLoad->pre_rotated_current[0] += pre_rotated_current[0]-last_child_power[3][0];
-				ParToLoad->pre_rotated_current[1] += pre_rotated_current[1]-last_child_power[3][1];
-				ParToLoad->pre_rotated_current[2] += pre_rotated_current[2]-last_child_power[3][2];
-
-				//And the deltamode accumulators too -- if deltamode
-				if (deltamode_inclusive == true)
-				{
-					//Pull our parent value down -- everything is being pushed up there anyways
-					//Pulling to keep meters accurate (theoretically)
-					deltamode_dynamic_current[0] = ParToLoad->deltamode_dynamic_current[0];
-					deltamode_dynamic_current[1] = ParToLoad->deltamode_dynamic_current[1];
-					deltamode_dynamic_current[2] = ParToLoad->deltamode_dynamic_current[2];
-				}
-
-				//Do the same for the explicit delta/wye loads - last_child_power is set up as columns of ZIP, not ABC
-				for (loop_index_var=0; loop_index_var<6; loop_index_var++)
-				{
-					ParToLoad->power_dy[loop_index_var] += power_dy[loop_index_var] - last_child_power_dy[loop_index_var][0];
-					ParToLoad->shunt_dy[loop_index_var] += shunt_dy[loop_index_var] - last_child_power_dy[loop_index_var][1];
-					ParToLoad->current_dy[loop_index_var] += current_dy[loop_index_var] - last_child_power_dy[loop_index_var][2];
-				}
-
-				if (has_phase(PHASE_S))	//Triplex gets another term as well
-				{
-					ParToLoad->current12 +=current12-last_child_current12;
-				}
-
-				//See if we have a house!
-				if (house_present==true)	//Add our values into our parent's accumulator!
-				{
-					ParToLoad->nom_res_curr[0] += nom_res_curr[0];
-					ParToLoad->nom_res_curr[1] += nom_res_curr[1];
-					ParToLoad->nom_res_curr[2] += nom_res_curr[2];
-				}
-
-				//Unlock the parent now that we are done
-				UNLOCK_OBJECT(SubNodeParent);
-			}
-			else
+			//Do the same for the explicit delta/wye loads - last_child_power is set up as columns of ZIP, not ABC
+			for (loop_index_var=0; loop_index_var<6; loop_index_var++)
 			{
-				GL_THROW("NR: Object %d is a child of something that it shouldn't be!",obj->id);
-				/*  TROUBLESHOOT
-				A Newton-Raphson object is childed to something it should not be (not a load, node, or meter).
-				This should have been caught earlier and is likely a bug.  Submit your code and a bug report using the trac website.
-				*/
+				ParToLoad->power_dy[loop_index_var] += power_dy[loop_index_var] - last_child_power_dy[loop_index_var][0];
+				ParToLoad->shunt_dy[loop_index_var] += shunt_dy[loop_index_var] - last_child_power_dy[loop_index_var][1];
+				ParToLoad->current_dy[loop_index_var] += current_dy[loop_index_var] - last_child_power_dy[loop_index_var][2];
 			}
+
+			if (has_phase(PHASE_S))	//Triplex gets another term as well
+			{
+				ParToLoad->current12 +=current12-last_child_current12;
+			}
+
+			//See if we have a house!
+			if (house_present==true)	//Add our values into our parent's accumulator!
+			{
+				ParToLoad->nom_res_curr[0] += nom_res_curr[0];
+				ParToLoad->nom_res_curr[1] += nom_res_curr[1];
+				ParToLoad->nom_res_curr[2] += nom_res_curr[2];
+			}
+
+			//Unlock the parent now that we are done
+			UNLOCK_OBJECT(SubNodeParent);
 
 			//Update previous power tracker
 			last_child_power[0][0] = power[0];
@@ -2439,7 +2397,22 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 	complex delta_shunt_curr[3];
 	complex dy_curr_accum[3];
 	complex temp_current_val[3];
+	char loop_index_val;
+	complex temp_curr_rotate_value, temp_curr_calc_value;
 	
+	//Final initialization issue - has to be here, or childed deltamode stuff fails
+	//This catches any orphaned/islanded single nodes (that link wouldn't catch), so error checks work
+	//and don't segfault things - needs to be duplicated to subclass objects that reference NR before node::sync is called
+	if ((prev_NTime==0) && (solver_method == SM_NR))
+	{
+		//See if we've been initialized yet - links typically do this, but single buses get missed
+		if (NR_node_reference == -1)
+		{
+			//Call the populate routine
+			NR_populate();
+		}
+	}
+
 	//Generic time keeping variable - used for phase checks (GS does this explicitly below)
 	if (t0!=prev_NTime)
 	{
@@ -2653,6 +2626,27 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			current_inj[1] += dy_curr_accum[1];
 			current_inj[2] += dy_curr_accum[2];
 
+			//Do "non-triplex" houses in here too, since they're explicit
+			if (house_present)
+			{
+				//Do in a loop, just becaus
+				for (loop_index_val=0; loop_index_val<3; loop_index_val++)
+				{
+					//See if it is even a valid voltage first
+					if (voltage[loop_index_val].Mag() != 0.0)
+					{
+						//Get the phase rotation
+						temp_curr_rotate_value.SetPolar(1.0,voltage[loop_index_val].Arg());
+
+						//Update the values
+						temp_curr_calc_value = nom_res_curr[loop_index_val]/(~temp_curr_rotate_value);	//Just denominator conjugated to keep math right (rest was conjugated in house)
+
+						//Accumulate it, because we like extra steps
+						current_inj[loop_index_val] += temp_curr_calc_value;
+					}
+					//Default else - wasn't valid, so don't accumulate anything
+				}//End phase loop
+			}//End not-so-triplex house
 		}//End delta/wye explicit
 
 #ifdef SUPPORT_OUTAGES
@@ -3526,10 +3520,20 @@ int node::NR_populate(void)
 
 		NR_busdata[NR_node_reference].extra_var = &current12;	//Stored in a separate variable and this is the easiest way for me to get it
 	}
-	else if (SubNode==DIFF_PARENT)	//Differently connected load/node (only can't be S)
+	else	//Implies it is non-triplex
 	{
-		NR_busdata[NR_node_reference].extra_var = Extra_Data;
-		NR_busdata[NR_node_reference].phases |= 0x10;			//Special flag for a phase mismatch being present
+		if (SubNode==DIFF_PARENT)	//Differently connected load/node (only can't be S)
+		{
+			NR_busdata[NR_node_reference].extra_var = Extra_Data;
+			NR_busdata[NR_node_reference].phases |= 0x10;			//Special flag for a phase mismatch being present
+		}
+
+		//See if we have any houses of the three-phase/non-triplex variety
+		if (house_present)	//We're a proud parent of a house!
+		{
+			NR_busdata[NR_node_reference].house_var = &nom_res_curr[0];	//Separate storage area for nominal house currents
+			NR_busdata[NR_node_reference].phases |= 0x40;					//Flag that we are a house-attached node
+		}
 	}
 
 	//Per unit values - populate nominal voltage on a whim
@@ -3705,6 +3709,7 @@ int node::NR_current_update(bool parentcall)
 	complex assumed_nominal_voltage[6];
 	double nominal_voltage_dval;
 	complex house_pres_current[3];
+	complex temp_store[3];
 
 	//Don't do anything if we've already been "updated"
 	if (current_accumulated==false)
@@ -3961,7 +3966,6 @@ int node::NR_current_update(bool parentcall)
 		{
 			complex vdel;
 			complex temp_current[3];
-			complex temp_store[3];
 			complex temp_val[3];
 
 			//Find V12 (just in case)
@@ -4185,6 +4189,28 @@ int node::NR_current_update(bool parentcall)
 			temp_current_inj[0] += ((voltage[0]==0) ? complex(0,0) : ~(power_dy[3]/voltage[0])) + voltage[0]*shunt_dy[3] + adjusted_current_val[0];
 			temp_current_inj[1] += ((voltage[1]==0) ? complex(0,0) : ~(power_dy[4]/voltage[1])) + voltage[1]*shunt_dy[4] + adjusted_current_val[1];
 			temp_current_inj[2] += ((voltage[2]==0) ? complex(0,0) : ~(power_dy[5]/voltage[2])) + voltage[2]*shunt_dy[5] + adjusted_current_val[2];
+
+			//Explicit house inclusion for "non-triplex" houses
+			if (house_present)	//House present
+			{
+				//Do it in a loop, just because
+				for (loop_index=0; loop_index<3; loop_index++)
+				{
+					//See if we're even a valid voltage
+					if (voltage[loop_index].Mag() != 0.0)
+					{
+						//Update phase adjustments
+						temp_store[loop_index].SetPolar(1.0,voltage[loop_index].Arg());	//Pull phase of this voltage phase
+
+						//Update these current contributions
+						house_pres_current[loop_index] = nom_res_curr[loop_index]/(~temp_store[loop_index]);		//Just denominator conjugated to keep math right (rest was conjugated in house)
+
+						//Now add it into the current contributions
+						temp_current_inj[loop_index] += ((voltage[loop_index]==0) ? complex(0,0) : house_pres_current[loop_index]);
+					}
+					//Default else - voltage is zero, do nothing
+				}//End phase loop for houses
+			}//End house-attached not-so-split-phase
 		}//End both delta/wye
 
 		//If we are a child, apply our current injection directly up to our parent - links accumulate afterwards now because they bypass child relationships
@@ -4199,7 +4225,8 @@ int node::NR_current_update(bool parentcall)
 				ParLoadObj->current_inj[2] += temp_current_inj[2];
 
 				//See if we have a house - if we do, we're inadvertently biasing our parent
-				if (house_present)
+				//Not only a house, but a triplex-connected house
+				if ((house_present) && has_phase(PHASE_S))
 				{
 					//Remove the line_12 current appropriately
 					ParLoadObj->current_inj[0] -= house_pres_current[0] + house_pres_current[2];

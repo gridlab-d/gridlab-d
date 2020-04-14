@@ -204,6 +204,7 @@ int get_source_type(PROPERTY *prop)
 			prop->name,property_getspec(prop->ptype)->name);
 		break;
 	}
+	return source_type;
 }
 int transform_add_filter(OBJECT *target_obj,		/* pointer to the target object (lhs) */
 						 PROPERTY *target_prop,	/* pointer to the target property */

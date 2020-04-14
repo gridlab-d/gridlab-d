@@ -155,6 +155,8 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
 			PT_complex, "fault_voltage_A[A]", PADDR(Vf_out[0]),PT_DESCRIPTION,"fault voltage, phase A",
 			PT_complex, "fault_voltage_B[A]", PADDR(Vf_out[1]),PT_DESCRIPTION,"fault voltage, phase B",
 			PT_complex, "fault_voltage_C[A]", PADDR(Vf_out[2]),PT_DESCRIPTION,"fault voltage, phase C",
+
+			PT_bool, "overloaded_status", PADDR(overloaded_status),PT_DESCRIPTION,"overloaded status (true/false)",
 				
 			PT_set, "flow_direction", PADDR(flow_direction),PT_DESCRIPTION,"flag used for describing direction of the flow of power",
 				PT_KEYWORD, "UNKNOWN", (set)FD_UNKNOWN,
@@ -2643,10 +2645,11 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				*/
 			}
 
-			//See if we were flagged as a special type switch, and if we're in "strictly radial" mode
-			if ((SpecialLnk == SWITCH) && (meshed_fault_checking_enabled == false))
+			//See if we were flagged as a special type switch, and if we're in "strictly radial" mode, and "the only one attached"
+			//Note that this may have issues with "multiple-single-phase-switches" connecting to something, but that's a very particular use case (just use mesh checking then)
+			if ((SpecialLnk == SWITCH) && (meshed_fault_checking_enabled == false) && NR_busdata[NR_branchdata[NR_branch_reference].to].Link_Table_Size == 1)
 			{
-				//See if any statii are open
+				//Update according to our "status"
 				working_phase = ~((NR_branchdata[NR_branch_reference].phases ^ NR_branchdata[NR_branch_reference].origphases) & 0x07);
 
 				//Mask it off
@@ -2980,7 +2983,7 @@ void link_object::BOTH_link_postsync_fxn(void)
 }
 
 //Functionalized limit checking, mostly for restoration calls
-void link_object::perform_limit_checks(double *over_limit_value, bool *over_limits)
+bool link_object::perform_limit_checks(double *over_limit_value, bool *over_limits)
 {
 	double temp_power_check, temp_current_diff;
 	node *nTo;
@@ -2988,6 +2991,7 @@ void link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 	//Default values
 	*over_limit_value = 0.0;
 	*over_limits = false;
+	overloaded_status = *over_limits;
 
 	//Set it to zero
 	temp_power_check = 0.0;
@@ -3010,10 +3014,11 @@ void link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 				*/
 
 				//Add in the value
-				*over_limit_value = (temp_power_check - (power_out.Mag()/1000.0))*1000.0;
+				*over_limit_value = (temp_power_check - *link_limits[0][0])*1000.0;
 
 				//Flag as over
 				*over_limits = true;
+				overloaded_status = *over_limits;
 			}
 		}//End transformers
 		else	//Must be a line - that's the only other option right now
@@ -3054,6 +3059,7 @@ void link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 
 					//Flag as over
 					*over_limits = true;
+					overloaded_status = overloaded_status || *over_limits;
 
 				}//End Phase 1 check
 
@@ -3090,6 +3096,7 @@ void link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 
 					//Flag as over
 					*over_limits = true;
+					overloaded_status = overloaded_status || *over_limits;
 
 				}//End Phase 2 check
 			}//End triplex line check
@@ -3131,6 +3138,7 @@ void link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 
 						//Flag as over
 						*over_limits = true;
+						overloaded_status = overloaded_status || *over_limits;
 
 					}//End Phase A check
 				}//End has Phase A
@@ -3170,6 +3178,7 @@ void link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 
 						//Flag as over
 						*over_limits = true;
+						overloaded_status = overloaded_status || *over_limits;
 
 					}//End Phase B check
 				}//End has Phase B
@@ -3209,12 +3218,15 @@ void link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 
 						//Flag as over
 						*over_limits = true;
+						overloaded_status = overloaded_status || *over_limits;
 
 					}//End Phase C check
 				}//End has Phase C
 			}//End "normal line" check
 		}//End must be a line check
 	}//End Limit checks
+	
+	return overloaded_status;
 }
 
 TIMESTAMP link_object::postsync(TIMESTAMP t0)
