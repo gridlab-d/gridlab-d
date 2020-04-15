@@ -290,7 +290,7 @@ int inverter_dyn::create(void)
 
 	//DC Bus items
 	P_DC = 0.0;
-	V_DC = Vdc_base;
+	V_DC = 0; //Vdc_base;
 	I_DC = 0.0;
 
 	return 1; /* return 1 on success, 0 on failure */
