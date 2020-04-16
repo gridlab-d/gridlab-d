@@ -2281,6 +2281,11 @@ STATUS fault_check::disable_island(int island_number)
 	int index_value;
 	TIMESTAMP curr_time_val_TS;
 	double curr_time_val_DBL;
+	FILE *FPOutput;
+	DATETIME temp_time;
+	char deltaprint_buffer[64];
+	unsigned int ret_value;
+	bool deltamodeflag;
 
 	//Loop through the buses -- remove if it is in this island (keep SWING functions affected though)
 	for (index_value=0; index_value < NR_bus_count; index_value++)
@@ -2323,12 +2328,37 @@ STATUS fault_check::disable_island(int island_number)
 		{
 			curr_time_val_TS = 0;
 			curr_time_val_DBL = gl_globaldeltaclock;
+			deltamodeflag = true;
 		}
 		else	//Steady state
 		{
 			curr_time_val_TS = gl_globalclock;
 			curr_time_val_DBL = 0.0;
+			deltamodeflag = false;
 		}
+
+		//Put a message in the output file, before the topology change (just to be clear)
+		//open the file
+		FPOutput = fopen(output_filename,"at");
+
+		if (deltamodeflag == true)
+		{
+			//Convert the current time to an output
+			ret_value = gl_printtimedelta(curr_time_val_DBL,deltaprint_buffer,64);
+
+			//Write it
+			fprintf(FPOutput,"Island %d removed from powerflow at timestamp %0.9f - %s =\n\n",(island_number+1),curr_time_val_DBL,deltaprint_buffer);
+		}
+		else	//Event-based mode
+		{
+			//Convert timestamp so readable
+			gl_localtime(curr_time_val_TS,&temp_time);
+
+			fprintf(FPOutput,"Island %d removed from powerflow at timestamp %lld - %04d-%02d-%02d %02d:%02d:%02d =\n\n",(island_number+1),curr_time_val_TS,temp_time.year,temp_time.month,temp_time.day,temp_time.hour,temp_time.minute,temp_time.second);
+		}
+
+		//Close the file
+		fclose(FPOutput);
 
 		write_output_file(curr_time_val_TS,curr_time_val_DBL);	//Write it
 	}

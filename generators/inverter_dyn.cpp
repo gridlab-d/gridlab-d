@@ -171,8 +171,8 @@ inverter_dyn::inverter_dyn(MODULE *module)
 			GL_THROW("Unable to publish inverter_dyn deltamode function");
 		if (gl_publish_function(oclass, "interupdate_gen_object", (FUNCTIONADDR)interupdate_inverter_dyn) == NULL)
 			GL_THROW("Unable to publish inverter_dyn deltamode function");
-		if (gl_publish_function(oclass, "postupdate_gen_object", (FUNCTIONADDR)postupdate_inverter_dyn) == NULL)
-			GL_THROW("Unable to publish inverter_dyn deltamode function");
+		// if (gl_publish_function(oclass, "postupdate_gen_object", (FUNCTIONADDR)postupdate_inverter_dyn) == NULL)
+		// 	GL_THROW("Unable to publish inverter_dyn deltamode function");
 		if (gl_publish_function(oclass, "current_injection_update", (FUNCTIONADDR)inverter_dyn_NR_current_injection_update) == NULL)
 			GL_THROW("Unable to publish inverter_dyn current injection update function");
 		if (gl_publish_function(oclass, "register_gen_DC_object", (FUNCTIONADDR)inverter_dyn_DC_object_register) == NULL)
@@ -1010,19 +1010,20 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 				*/
 			}
 
-			//Map up the function for postupdate
-			post_delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "postupdate_gen_object"));
+			/* post_delta_functions removed, since it didn't seem to be doing anything - empty it out/delete it if this is the case! */
+			// //Map up the function for postupdate
+			// post_delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "postupdate_gen_object"));
 
-			//Make sure it worked
-			if (post_delta_functions[gen_object_current] == NULL)
-			{
-				GL_THROW("Failure to map post-deltamode function for device:%s", obj->name);
-				/*  TROUBLESHOOT
-				Attempts to map up the postupdate function of a specific device failed.  Please try again and ensure
-				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
-				trac website.
-				*/
-			}
+			// //Make sure it worked
+			// if (post_delta_functions[gen_object_current] == NULL)
+			// {
+			// 	GL_THROW("Failure to map post-deltamode function for device:%s", obj->name);
+			// 	/*  TROUBLESHOOT
+			// 	Attempts to map up the postupdate function of a specific device failed.  Please try again and ensure
+			// 	the object supports deltamode.  If the error persists, please submit your code and a bug report via the
+			// 	trac website.
+			// 	*/
+			// }
 
 			//Map up the function for postupdate
 			delta_preupdate_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "preupdate_gen_object"));
@@ -4517,24 +4518,24 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 	return SUCCESS;
 }
 
-//Module-level post update call
+// //Module-level post update call
+// /* Think this was just put here as an example - not sure what it would do */
+// STATUS inverter_dyn::post_deltaupdate(complex *useful_value, unsigned int mode_pass)
+// {
+// 	//If we have a meter, reset the accumulators
+// 	if (parent_is_a_meter == true)
+// 	{
+// 		reset_complex_powerflow_accumulators();
+// 	}
 
-STATUS inverter_dyn::post_deltaupdate(complex *useful_value, unsigned int mode_pass)
-{
-	//If we have a meter, reset the accumulators
-	if (parent_is_a_meter == true)
-	{
-		reset_complex_powerflow_accumulators();
-	}
+// 	//Should have a parent, but be paranoid
+// 	if (parent_is_a_meter == true)
+// 	{
+// 		push_complex_powerflow_values();
+// 	}
 
-	//Should have a parent, but be paranoid
-	if (parent_is_a_meter == true)
-	{
-		push_complex_powerflow_values();
-	}
-
-	return SUCCESS; //Always succeeds right now
-}
+// 	return SUCCESS; //Always succeeds right now
+// }
 
 //Map Complex value
 gld_property *inverter_dyn::map_complex_value(OBJECT *obj, char *name)
@@ -5129,21 +5130,21 @@ EXPORT SIMULATIONMODE interupdate_inverter_dyn(OBJECT *obj, unsigned int64 delta
 	}
 }
 
-EXPORT STATUS postupdate_inverter_dyn(OBJECT *obj, complex *useful_value, unsigned int mode_pass)
-{
-	inverter_dyn *my = OBJECTDATA(obj, inverter_dyn);
-	STATUS status = FAILED;
-	try
-	{
-		status = my->post_deltaupdate(useful_value, mode_pass);
-		return status;
-	}
-	catch (char *msg)
-	{
-		gl_error("postupdate_inverter_dyn(obj=%d;%s): %s", obj->id, obj->name ? obj->name : "unnamed", msg);
-		return status;
-	}
-}
+// EXPORT STATUS postupdate_inverter_dyn(OBJECT *obj, complex *useful_value, unsigned int mode_pass)
+// {
+// 	inverter_dyn *my = OBJECTDATA(obj, inverter_dyn);
+// 	STATUS status = FAILED;
+// 	try
+// 	{
+// 		status = my->post_deltaupdate(useful_value, mode_pass);
+// 		return status;
+// 	}
+// 	catch (char *msg)
+// 	{
+// 		gl_error("postupdate_inverter_dyn(obj=%d;%s): %s", obj->id, obj->name ? obj->name : "unnamed", msg);
+// 		return status;
+// 	}
+// }
 
 //// Define export function that update the VSI current injection IGenerated to the grid
 EXPORT STATUS inverter_dyn_NR_current_injection_update(OBJECT *obj, int64 iteration_count)
