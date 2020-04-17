@@ -327,9 +327,8 @@ private:
 	Json::Value metrics_writer_feeders;             // Final output dictionary for feeders
 	Json::Value metrics_writer_capacitors;          // Final output dictionary for capacitors
 	Json::Value metrics_writer_regulators;          // Final output dictionary for regulators
-
 	Json::Value metrics_writer_transformers;        // Final output dictionary for transformers
-	Json::Value metrics_writer_lines;        // Final output dictionary for lines
+	Json::Value metrics_writer_lines;               // Final output dictionary for lines
 
 	Json::Value ary_billing_meters;  // array storage for billing meter metrics
 	Json::Value ary_houses;          // array storage for house (and water heater) metrics
@@ -337,9 +336,8 @@ private:
 	Json::Value ary_feeders;         // array storage for feeder metrics
 	Json::Value ary_capacitors;      // array storage for capacitors metrics
 	Json::Value ary_regulators;      // array storage for regulators metrics
-
 	Json::Value ary_transformers;    // array storage for tranformers metrics
-	Json::Value ary_lines;    // array storage for lines metrics
+	Json::Value ary_lines;           // array storage for lines metrics
 
 #ifdef HAVE_HDF5
 	hsize_t len_billing_meters;
