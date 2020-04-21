@@ -156,6 +156,9 @@ private:
 	complex value_prev_Power[3];	///Storage variable for previous power - mostly for accumulator handling
 
 	bool parent_is_powerflow;
+	enumeration attached_bus_type;	//Determines attached bus type
+
+	FUNCTIONADDR swing_test_fxn;	//Function to map to swing testing function, if needed
 
 	bool first_run;		///< Flag for first run of the diesel_dg object - eliminates t0==0 dependence
 	bool is_isochronous_gen;	///< Flag to indicate if we're isochronous, mostly to help keep us in deltamode

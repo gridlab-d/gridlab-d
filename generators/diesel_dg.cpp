@@ -634,6 +634,9 @@ int diesel_dg::create(void)
 	value_prev_Power[0] = value_prev_Power[1] = value_prev_Power[2] = complex(0.0,0.0);
 	
 	parent_is_powerflow = false;	//By default, we're not a good child
+	attached_bus_type = 0;			//By default, we're basically a PQ bus
+
+	swing_test_fxn = NULL;			//By default, no mapping
 
 	//Overall, force the generator into "PQ mode" first
 	Gen_type = NON_DYN_CONSTANT_PQ;
@@ -856,6 +859,25 @@ int diesel_dg::init(OBJECT *parent)
 			Please check and make sure your parent object has all three phases and try again. if the error persists, please submit your code and a bug report via the Trac website.
 			*/
 		}
+
+		//Pull the bus type
+		temp_property_pointer = new gld_property(tmp_obj, "bustype");
+
+		//Make sure it worked
+		if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_enumeration() != true))
+		{
+			GL_THROW("diesel_dg:%s failed to map bustype variable from %s", obj->name ? obj->name : "unnamed", obj->parent->name ? obj->parent->name : "unnamed");
+			/*  TROUBLESHOOT
+			While attempting to map the bustype variable from the parent node, an error was encountered.  Please try again.  If the error
+			persists, please report it with your GLM via the issues tracking system.
+			*/
+		}
+
+		//Pull the value of the bus
+		attached_bus_type = temp_property_pointer->get_enumeration();
+
+		//Remove it
+		delete temp_property_pointer;
 	}
 	else	//No parent
 	{
@@ -4482,9 +4504,8 @@ STATUS diesel_dg::updateCurrInjection(int64 iteration_count)
 	complex temp_total_power_val[3];
 	complex temp_total_power_internal;
 	complex temp_pos_voltage, temp_pos_current;
-	bool bus_is_a_swing;
-	enumeration attached_bus_type;
-	FUNCTIONADDR test_fxn;
+	bool bus_is_a_swing, bus_is_swing_pq_entry;
+	STATUS temp_status_val;
 	gld_property *temp_property_pointer;
 	OBJECT *obj = OBJECTHDR(this);
 
@@ -4501,43 +4522,35 @@ STATUS diesel_dg::updateCurrInjection(int64 iteration_count)
 		//Pull our "bus status" - see if we're a SWING (or SWING_PQ that is a SWING) or not, otherwise, let us update
 		if (parent_is_powerflow == true)
 		{
-			//See what kind of bus we are purported to be
-			temp_property_pointer = new gld_property(obj->parent,"bustype");
-
-			//Make sure it worked
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_enumeration() != true))
-			{
-				GL_THROW("diesel_dg:%s failed to map bustype variable from %s",obj->name?obj->name:"unnamed",obj->parent->name?obj->parent->name:"unnamed");
-				/*  TROUBLESHOOT
-				While attempting to map the bustype variable from the parent node, an error was encountered.  Please try again.  If the error
-				persists, please report it with your GLM via the issues tracking system.
-				*/
-			}
-
-			//Pull the value of the bus
-			attached_bus_type = temp_property_pointer->get_enumeration();
-
-			//Remove it
-			delete temp_property_pointer;
-
 			//Determine our status
 			if (attached_bus_type > 1)	//SWING or SWING_PQ
 			{
-				//Map the swing status check function
-				test_fxn = (FUNCTIONADDR)(gl_get_function(obj->parent,"pwr_object_swing_status_check"));
-
-				//See if it was located
-				if (test_fxn == NULL)
+				//See if the function has been mapped
+				if (swing_test_fxn == NULL)
 				{
-					GL_THROW("diesel_dg:%s - failed to map swing-checking for node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
-					/*  TROUBLESHOOT
-					While attempting to map the swing-checking function, an error was encountered.
-					Please try again.  If the error persists, please submit your code and a bug report via the trac website.
-					*/
+					//Map the swing status check function
+					swing_test_fxn = (FUNCTIONADDR)(gl_get_function(obj->parent,"pwr_object_swing_status_check"));
+
+					//See if it was located
+					if (swing_test_fxn == NULL)
+					{
+						GL_THROW("diesel_dg:%s - failed to map swing-checking for node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
+						/*  TROUBLESHOOT
+						While attempting to map the swing-checking function, an error was encountered.
+						Please try again.  If the error persists, please submit your code and a bug report via the trac website.
+						*/
+					}
 				}
 
-				//Call the test function
-				bus_is_a_swing = ((bool (*)(OBJECT *))(*test_fxn))(obj->parent);
+				//Call the mapping function
+				temp_status_val = ((STATUS (*)(OBJECT *,bool * , bool*))(*swing_test_fxn))(obj->parent,&bus_is_a_swing,&bus_is_swing_pq_entry);
+
+				//Make sure it worked
+				if (temp_status_val != SUCCESS)
+				{
+					GL_THROW("diesel_dg:%s - failed to map swing-checking for node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
+					//Defined above
+				}
 
 				//Now see how we've gotten here
 				if (first_iteration_current_injection == -1)	//Haven't entered before
@@ -4554,7 +4567,7 @@ STATUS diesel_dg::updateCurrInjection(int64 iteration_count)
 					//Update the iteration counter
 					first_iteration_current_injection = iteration_count;
 				}
-				else if (first_iteration_current_injection != 0)	//We didn't enter on the first iteration
+				else if ((first_iteration_current_injection != 0) || (bus_is_swing_pq_entry==true))	//We didn't enter on the first iteration
 				{
 					//Just override the indication - this only happens if we were a SWING or a SWING_PQ that was "demoted"
 					bus_is_a_swing = true;

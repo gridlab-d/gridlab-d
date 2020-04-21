@@ -32,6 +32,7 @@ typedef struct  {
 	double QL[3];			///< reactive power component of total bus load
 	bool *dynamics_enabled;	///< Flag indicating this particular node has a dynamics contribution function
 	bool swing_functions_enabled;	///< Flag indicating if this particular node is a swing node, and if so, if it is behaving "all swingy"
+	bool swing_topology_entry;		///< Flag to indicate this bus was the source entry point, even if it isn't a swing anymore (SWING_PQ generator stuff)
 	complex *PGenTotal;		///< Total output of any generation at this node - lumped for now for dynamics
 	complex *DynCurrent;	///< Dynamics current portions - used as storage/tracking for generator dynamics
 	complex *BusHistTerm;	///< History term pointer for in-rush-based calculations

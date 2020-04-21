@@ -2134,6 +2134,9 @@ void fault_check::associate_grids(void)
 					//Flag us as a swing - to be safe
 					NR_busdata[indexval].swing_functions_enabled = true;
 
+					//Flag us as the topological entry point
+					NR_busdata[indexval].swing_topology_entry = true;
+
 					//Call the associater routine
 					search_associated_grids(indexval,grid_counter);
 
@@ -2145,6 +2148,9 @@ void fault_check::associate_grids(void)
 			else	//Deflag us as a swing
 			{
 				NR_busdata[indexval].swing_functions_enabled = false;
+
+				//Update the "topological flag" too
+				NR_busdata[indexval].swing_topology_entry = false;
 			}
 			//Default else, we've already been hit, skip out
 		}

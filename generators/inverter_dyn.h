@@ -108,6 +108,9 @@ private:
 	//Comaptibility variables - used to be in power_electronics
 	bool parent_is_a_meter;		 //Boolean to indicate if the parent object is a meter/triplex_meter
 	bool parent_is_single_phase; //Boolean to indicate if the parent object is single-phased (main or triplexed)
+	enumeration attached_bus_type;	//Determines attached bus type - mostly for VSI and grid-forming functionality
+
+	FUNCTIONADDR swing_test_fxn;	//Function to map to swing testing function, if needed
 
 	gld_property *pCircuit_V[3];   ///< pointer to the three L-N voltage fields
 	gld_property *pLine_I[3];	   ///< pointer to the three current fields
@@ -152,7 +155,6 @@ private:
 
 public:
 	set phases;				 /**< device phases (see PHASE codes) */
-	enumeration VSI_bustype; // Bus type of the inverter parent
 	enum INVERTER_TYPE
 	{
 		GRID_FORMING = 0,

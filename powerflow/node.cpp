@@ -3454,6 +3454,9 @@ int node::NR_populate(void)
 		NR_busdata[NR_node_reference].swing_functions_enabled = false;
 	}
 
+	//Default us to topological not the source (mostly used by SWING_PQ - set elsewhere)
+	NR_busdata[NR_node_reference].swing_topology_entry = false;
+
 	//Populate phases
 	NR_busdata[NR_node_reference].phases = 128*has_phase(PHASE_S) + 8*has_phase(PHASE_D) + 4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
 
@@ -5091,12 +5094,10 @@ STATUS node::NR_swap_swing_status(bool desired_status)
 }
 
 //Function to check if a node object is "behaving in a SWING manner"
-bool node::NR_swing_status_check(void)
+void node::NR_swing_status_check(bool *swing_status_check_value, bool *swing_pq_status_value)
 {
-	bool swing_status_check_value;
-
 	//By default, assume we aren't a SWING
-	swing_status_check_value = false;
+	*swing_status_check_value = false;
 
 	//See if we're a child or not
 	if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
@@ -5105,7 +5106,18 @@ bool node::NR_swing_status_check(void)
 		if (NR_busdata[NR_node_reference].type > 1)
 		{
 			//Pull it out of our NR structure
-			swing_status_check_value = NR_busdata[NR_node_reference].swing_functions_enabled;
+			*swing_status_check_value = NR_busdata[NR_node_reference].swing_functions_enabled;
+
+			//See if we are a SWING_PQ, then copy that flag
+			if (NR_busdata[NR_node_reference].type == 3)
+			{
+				*swing_pq_status_value = NR_busdata[NR_node_reference].swing_topology_entry;
+			}
+			else
+			{
+				//Swing and "normal bus" just get set to false - not needed
+				*swing_pq_status_value = false;
+			}
 		}
 		//Default else - we're a PQ, and by definition, not a SWING
 	}
@@ -5115,12 +5127,21 @@ bool node::NR_swing_status_check(void)
 		if (NR_busdata[*NR_subnode_reference].type > 1)
 		{
 			//Pull the value out
-			swing_status_check_value = NR_busdata[*NR_subnode_reference].swing_functions_enabled;
+			*swing_status_check_value = NR_busdata[*NR_subnode_reference].swing_functions_enabled;
+
+			//See if we are a SWING_PQ, then copy that flag
+			if (NR_busdata[*NR_subnode_reference].type == 3)
+			{
+				*swing_pq_status_value = NR_busdata[*NR_subnode_reference].swing_topology_entry;
+			}
+			else
+			{
+				//Swing and "normal bus" just get set to false - not needed
+				*swing_pq_status_value = false;
+			}
 		}
 		//Default else - we're a PQ and not a SWING of any type
 	}
-
-	return swing_status_check_value;
 }
 
 //Function to reset the "disabled state" of the node, if called (re-enable an island, basically)
@@ -5425,13 +5446,16 @@ EXPORT STATUS swap_node_swing_status(OBJECT *obj, bool desired_status)
 }
 
 //Function to query a current node's status as a SWING node -- basically lets generators see how "swing_functions_enabled" is behaving
-EXPORT bool node_swing_status(OBJECT *this_obj)
+EXPORT STATUS node_swing_status(OBJECT *this_obj, bool *swing_status_check_value, bool *swing_pq_status_value)
 {
 	//Map ourselves
 	node *my = OBJECTDATA(this_obj,node);
 
 	//Run the query
-	return my->NR_swing_status_check();
+	my->NR_swing_status_check(swing_status_check_value,swing_pq_status_value);
+
+	//Return success, because reasons
+	return SUCCESS;
 }
 
 //Exposed function to map a "current injection update" routine from another object

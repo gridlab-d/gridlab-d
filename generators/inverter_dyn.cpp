@@ -198,6 +198,8 @@ int inverter_dyn::create(void)
 	//Variable mapping items
 	parent_is_a_meter = false;		//By default, no parent meter
 	parent_is_single_phase = false; //By default, we're three-phase
+	attached_bus_type = 0;			//By default, we're basically a PQ bus
+	swing_test_fxn = NULL;			//By default, no mapping
 
 	pCircuit_V[0] = pCircuit_V[1] = pCircuit_V[2] = NULL;
 	pLine_I[0] = pLine_I[1] = pLine_I[2] = NULL;
@@ -328,7 +330,7 @@ int inverter_dyn::init(OBJECT *parent)
 		S_base = 1000;
 		gl_warning("inverter_dyn:%d - %s - The rated power of this inverter must be positive - set to 1 kVA.",obj->id,(obj->name ? obj->name : "unnamed"));
 		/*  TROUBLESHOOT
-		The inverter has a rated power that is negative.  It defaulted to a 1 kVA inverter.  If this is not desired, set the property properly in the GLM.
+		The inverter_dyn has a rated power that is negative.  It defaulted to a 1 kVA inverter.  If this is not desired, set the property properly in the GLM.
 		*/
 	}
 
@@ -424,10 +426,29 @@ int inverter_dyn::init(OBJECT *parent)
 			{
 				gl_warning("inverter_dyn:%s is in grid-forming mode, but is not a three-phase connection.  This is untested and may not behave properly.", obj->name ? obj->name : "unnamed");
 				/*  TROUBLESHOOT
-				The inverter was set up to be grid-forming, but is either a triplex or a single-phase-connected inverter.  This implementaiton is not fully tested and may either not
+				The inverter_dyn was set up to be grid-forming, but is either a triplex or a single-phase-connected inverter.  This implementaiton is not fully tested and may either not
 				work, or produce unexpecte results.
 				*/
 			}
+
+			//Pull the bus type
+			temp_property_pointer = new gld_property(tmp_obj, "bustype");
+
+			//Make sure it worked
+			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_enumeration() != true))
+			{
+				GL_THROW("inverter_dyn:%s failed to map bustype variable from %s", obj->name ? obj->name : "unnamed", obj->parent->name ? obj->parent->name : "unnamed");
+				/*  TROUBLESHOOT
+				While attempting to map the bustype variable from the parent node, an error was encountered.  Please try again.  If the error
+				persists, please report it with your GLM via the issues tracking system.
+				*/
+			}
+
+			//Pull the value of the bus
+			attached_bus_type = temp_property_pointer->get_enumeration();
+
+			//Remove it
+			delete temp_property_pointer;
 
 			//Determine parent type
 			//Triplex first, otherwise it tries to map to three-phase (since all triplex are nodes)
@@ -545,7 +566,7 @@ int inverter_dyn::init(OBJECT *parent)
 					{
 						GL_THROW("inverter_dyn:%s is not connected to a single-phase or three-phase node - two-phase connections are not supported at this time.", obj->name ? obj->name : "unnamed");
 						/*  TROUBLESHOOT
-						The inverter only supports single phase (A, B, or C or triplex) or full three-phase connections.  If you try to connect it differntly than this, it will not work.
+						The inverter_dyn only supports single phase (A, B, or C or triplex) or full three-phase connections.  If you try to connect it differntly than this, it will not work.
 						*/
 					}
 				} //End non-three-phase
@@ -777,25 +798,6 @@ int inverter_dyn::init(OBJECT *parent)
 					pbus_full_Y_mat->setp<complex_array>(temp_complex_array, *test_rlock);
 				}
 
-				// Check the bustype if the inverter parent
-				temp_property_pointer = new gld_property(tmp_obj, "bustype"); // Obtain VSI parent meter bustype
-
-				//Check it
-				if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_enumeration() != true))
-				{
-					GL_THROW("inverter_dyn:%s failed to map bustype variable from %s", obj->name ? obj->name : "unnamed", tmp_obj->name ? tmp_obj->name : "unnamed");
-					/*  TROUBLESHOOT
-					While attempting to set up the deltamode interfaces and calculations with powerflow, the required interface could not be mapped.
-					Please check your GLM and try again.  If the error persists, please submit a trac ticket with your code.
-					*/
-				}
-
-				//Pull in the value
-				VSI_bustype = temp_property_pointer->get_enumeration();
-
-				//Remove the temporary property
-				delete temp_property_pointer;
-
 				//Map the power variable
 				pGenerated = map_complex_value(tmp_obj, "deltamode_PGenTotal");
 			} //End VSI common items
@@ -806,7 +808,7 @@ int inverter_dyn::init(OBJECT *parent)
 			//Check it
 			if ((pMeterStatus->is_valid() != true) || (pMeterStatus->is_enumeration() != true))
 			{
-				GL_THROW("Inverter failed to map powerflow status variable");
+				GL_THROW("Inverter_dyn failed to map powerflow status variable");
 				/*  TROUBLESHOOT
 				While attempting to map the service_status variable of the parent
 				powerflow object, an error occurred.  Please try again.  If the error
@@ -832,10 +834,10 @@ int inverter_dyn::init(OBJECT *parent)
 		}	 //End valid powerflow parent
 		else //Not sure what it is
 		{
-			GL_THROW("Inverter must have a valid powerflow object as its parent, or no parent at all");
+			GL_THROW("Inverter_dyn must have a valid powerflow object as its parent, or no parent at all");
 			/*  TROUBLESHOOT
-			Check the parent object of the inverter.  The inverter is only able to be childed via to powerflow objects.
-			Alternatively, you can also choose to have no parent, in which case the inverter will be a stand-alone application
+			Check the parent object of the inverter.  The inverter_dyn is only able to be childed via to powerflow objects.
+			Alternatively, you can also choose to have no parent, in which case the inverter_dyn will be a stand-alone application
 			using default voltage values for solving purposes.
 			*/
 		}
@@ -848,7 +850,7 @@ int inverter_dyn::init(OBJECT *parent)
 
 		gl_warning("inverter_dyn:%d has no parent meter object defined; using static voltages", obj->id);
 		/*  TROUBLESHOOT
-		An inverter in the system does not have a parent attached.  It is using static values for the voltage.
+		An inverter_dyn in the system does not have a parent attached.  It is using static values for the voltage.
 		*/
 
 		// Declare all 3 phases
@@ -878,7 +880,7 @@ int inverter_dyn::init(OBJECT *parent)
 		{
 			gl_warning("inverter_dyn:%s indicates it wants to run deltamode, but the module-level flag is not set!", obj->name ? obj->name : "unnamed");
 			/*  TROUBLESHOOT
-			The diesel_dg object has the deltamode_inclusive flag set, but not the module-level enable_subsecond_models flag.  The generator
+			The inverter_dyn object has the deltamode_inclusive flag set, but not the module-level enable_subsecond_models flag.  The generator
 			will not simulate any dynamics this way.
 			*/
 		}
@@ -895,8 +897,8 @@ int inverter_dyn::init(OBJECT *parent)
 		{
 			gl_warning("inverter_dyn:%d %s - Deltamode is enabled for the module, but not this inverter!", obj->id, (obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
-			The inverter is not flagged for deltamode operations, yet deltamode simulations are enabled for the overall system.  When deltamode
-			triggers, this inverter may no longer contribute to the system, until event-driven mode resumes.  This could cause issues with the simulation.
+			The inverter_dyn is not flagged for deltamode operations, yet deltamode simulations are enabled for the overall system.  When deltamode
+			triggers, this inverter_dyn may no longer contribute to the system, until event-driven mode resumes.  This could cause issues with the simulation.
 			It is recommended all objects that support deltamode enable it.
 			*/
 		}
@@ -1106,7 +1108,7 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 			if ((control_mode == GRID_FOLLOWING) || (control_mode == GFL_CURRENT_SOURCE))
 			{
-				if (VSI_bustype != 2)
+				if (attached_bus_type != 2)
 				{
 
 					//Compute desired output - sign convention appears to be backwards
@@ -1140,7 +1142,7 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 			{
 				/***** This has been moved down to the current injection  */
 				// // Adjust VSI (not on SWING bus) current injection and e_source values only at the first iteration of each time step
-				// if (VSI_bustype != 2)
+				// if (attached_bus_type != 2)
 				// {
 
 				// 	complex temp_VA = complex(Pref,Qref);
@@ -1169,7 +1171,7 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 				if (grid_following_mode == BALANCED_POWER) // Assume the grid-following inverter inject balanced power to the grid
 				{
 					// Adjust VSI (not on SWING bus) current injection and e_source values only at the first iteration of each time step
-					if (VSI_bustype != 2)
+					if (attached_bus_type != 2)
 					{
 
 						complex temp_VA = complex(Pref, Qref);
@@ -1199,7 +1201,7 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 				else // Positive sequence. Assume the grid-following inverter inject balanced currents to the grid
 				{
 					// Adjust VSI (not on SWING bus) current injection and e_source values only at the first iteration of each time step
-					if (VSI_bustype != 2)
+					if (attached_bus_type != 2)
 					{
 
 						complex temp_VA = complex(Pref, Qref);
@@ -1425,9 +1427,9 @@ STATUS inverter_dyn::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 
 	if (stat_val != SUCCESS)
 	{
-		gl_error("Inverter failed pre_deltaupdate call");
+		gl_error("Inverter_dyn failed pre_deltaupdate call");
 		/*  TROUBLESHOOT
-		While attempting to call the pre_deltaupdate portion of the inverter code, an error
+		While attempting to call the pre_deltaupdate portion of the inverter_dyn code, an error
 		was encountered.  Please submit your code and a bug report via the ticketing system.
 		*/
 
@@ -1446,7 +1448,7 @@ STATUS inverter_dyn::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 			gl_error("inverter_dyn:%s -- Failed to find node swing swapper function", (hdr->name ? hdr->name : "Unnamed"));
 			/*  TROUBLESHOOT
 			While attempting to map the function to change the swing status of the parent bus, the function could not be found.
-			Ensure the inverter is actually attached to something.  If the error persists, please submit your code and a bug report
+			Ensure the inverter_dyn is actually attached to something.  If the error persists, please submit your code and a bug report
 			via the ticketing/issues system.
 			*/
 
@@ -4748,9 +4750,8 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count)
 	OBJECT *obj = OBJECTHDR(this);
 	complex temp_VA;
 	complex temp_V1, temp_V2;
-	bool bus_is_a_swing;
-	enumeration attached_bus_type;
-	FUNCTIONADDR test_fxn;
+	bool bus_is_a_swing, bus_is_swing_pq_entry;
+	STATUS temp_status_val;
 	gld_property *temp_property_pointer;
 
 	if (deltatimestep_running > 0.0) //Deltamode call
@@ -4783,43 +4784,35 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count)
 		//By default, assume we're not a SWING
 		bus_is_a_swing = false;
 
-		//See what kind of bus we are purported to be
-		temp_property_pointer = new gld_property(obj->parent, "bustype");
-
-		//Make sure it worked
-		if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_enumeration() != true))
-		{
-			GL_THROW("inverter_dyn:%s failed to map bustype variable from %s", obj->name ? obj->name : "unnamed", obj->parent->name ? obj->parent->name : "unnamed");
-			/*  TROUBLESHOOT
-			While attempting to map the bustype variable from the parent node, an error was encountered.  Please try again.  If the error
-			persists, please report it with your GLM via the issues tracking system.
-			*/
-		}
-
-		//Pull the value of the bus
-		attached_bus_type = temp_property_pointer->get_enumeration();
-
-		//Remove it
-		delete temp_property_pointer;
-
 		//Determine our status
 		if (attached_bus_type > 1) //SWING or SWING_PQ
 		{
-			//Map the swing status check function
-			test_fxn = (FUNCTIONADDR)(gl_get_function(obj->parent, "pwr_object_swing_status_check"));
-
-			//See if it was located
-			if (test_fxn == NULL)
+			//Map the function, if we need to
+			if (swing_test_fxn == NULL)
 			{
-				GL_THROW("inverter_dyn:%s - failed to map swing-checking for node:%s", (obj->name ? obj->name : "unnamed"), (obj->parent->name ? obj->parent->name : "unnamed"));
-				/*  TROUBLESHOOT
-				While attempting to map the swing-checking function, an error was encountered.
-				Please try again.  If the error persists, please submit your code and a bug report via the trac website.
-				*/
+				//Map the swing status check function
+				swing_test_fxn = (FUNCTIONADDR)(gl_get_function(obj->parent, "pwr_object_swing_status_check"));
+
+				//See if it was located
+				if (swing_test_fxn == NULL)
+				{
+					GL_THROW("inverter_dyn:%s - failed to map swing-checking for node:%s", (obj->name ? obj->name : "unnamed"), (obj->parent->name ? obj->parent->name : "unnamed"));
+					/*  TROUBLESHOOT
+					While attempting to map the swing-checking function, an error was encountered.
+					Please try again.  If the error persists, please submit your code and a bug report via the trac website.
+					*/
+				}
 			}
 
-			//Call the mapping function
-			bus_is_a_swing = ((bool (*)(OBJECT *))(*test_fxn))(obj->parent);
+			//Call the testing function
+			temp_status_val = ((STATUS (*)(OBJECT *,bool * , bool*))(*swing_test_fxn))(obj->parent,&bus_is_a_swing,&bus_is_swing_pq_entry);
+
+			//Make sure it worked
+			if (temp_status_val != SUCCESS)
+			{
+				GL_THROW("inverter_dyn:%s - failed to map swing-checking for node:%s", (obj->name ? obj->name : "unnamed"), (obj->parent->name ? obj->parent->name : "unnamed"));
+				//Defined above
+			}
 
 			//Now see how we've gotten here
 			if (first_iteration_current_injection == -1) //Haven't entered before
@@ -4836,7 +4829,7 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count)
 				//Update the iteration counter
 				first_iteration_current_injection = iteration_count;
 			}
-			else if (first_iteration_current_injection != 0) //We didn't enter on the first iteration
+			else if ((first_iteration_current_injection != 0) || (bus_is_swing_pq_entry==true)) //We didn't enter on the first iteration, or we're a repatrioted SWING_PQ
 			{
 				//Just override the indication - this only happens if we were a SWING or a SWING_PQ that was "demoted"
 				bus_is_a_swing = true;
