@@ -1361,6 +1361,10 @@ STATUS solar::solar_dc_update(OBJECT *calling_obj, bool init_mode)
 
 		//Push the voltage back out to the inverter - this may need different logic when there are multiple objects
 		inverter_voltage_property->setp<double>(V_Out, *test_rlock);
+
+		//Initialize our tracking variables - since we're likely to go to normal code after this
+		last_DC_current = 0.0;
+		last_DC_power = 0.0;
 	}
 	else //Standard runs
 	{
