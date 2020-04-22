@@ -1177,7 +1177,7 @@ typedef struct s_callbacks {
 		double (*weibull)(unsigned int *rng, double a, double b);
 		double (*rayleigh)(unsigned int *rng, double a);
 	} random;
-	int (*object_isa)(OBJECT *obj, char *type);
+	int (*object_isa)(OBJECT *obj, const char *type);
 	DELEGATEDTYPE* (*register_type)(CLASS *oclass, char *type,int (*from_string)(void*,char*),int (*to_string)(void*,char*,int));
 	int (*define_type)(CLASS*,DELEGATEDTYPE*,...);
 	struct {
@@ -1454,7 +1454,7 @@ inline double gl_random_gamma(double a) { return callback->random.gamma(NULL,a);
 inline double gl_random_weibull(double a, double b) { return callback->random.weibull(NULL,a,b);};
 inline double gl_random_rayleigh(double a) { return callback->random.rayleigh(NULL,a);};
 
-inline bool gl_object_isa(OBJECT *obj, char *type) { return callback->object_isa(obj,type)==1;};
+inline bool gl_object_isa(OBJECT *obj, const char *type) { return callback->object_isa(obj,type)==1;};
 inline DATETIME *gl_localtime(TIMESTAMP ts,DATETIME *dt) { return callback->time.local_datetime(ts,dt)?dt:NULL;};
 inline DATETIME *gl_localtime_delta(double ts,DATETIME *dt) { return callback->time.local_datetime_delta(ts,dt)?dt:NULL;};
 inline TIMESTAMP gl_mkdatetime(DATETIME *dt) { return callback->time.mkdatetime(dt);};

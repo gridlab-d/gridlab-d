@@ -236,7 +236,7 @@ CDECL EXTERN CALLBACKS *callback INIT(NULL);
 	- Outside a #GL_TRY or GL_CATCH(Msg) block, control is transfered to the main core exception handler.
  **/
 #ifdef __cplusplus
-inline void GL_THROW(char *format, ...)
+inline void GL_THROW(const char *format, ...)
 {
 	static char buffer[1024];
 	va_list ptr;
@@ -420,7 +420,7 @@ inline int gl_module_depends(char *name, /**< module name */
  **/
 #ifdef __cplusplus
 inline bool gl_object_isa(OBJECT *obj, /**< object to test */
-						  char *type,
+						  const char *type,
 						  char *modname=NULL) /**< type to test */
 {	bool rv = (*callback->object_isa)(obj,type)!=0;
 	bool mv = modname ? obj->oclass->module == (*callback->module_find)(modname) : true;
@@ -1968,7 +1968,7 @@ public: // core interface
 	inline int set_dependent(OBJECT *obj) { return callback->object.set_dependent(my(),obj); };
 	inline int set_parent(OBJECT *obj) { return callback->object.set_parent(my(),obj); };
 	inline int set_rank(unsigned int r) { return callback->object.set_rank(my(),r); };
-	inline bool isa(char *type) { return callback->object_isa(my(),type) ? true : false; };
+	inline bool isa(const char *type) { return callback->object_isa(my(),type) ? true : false; };
 	inline bool is_valid(void) { return my()!=NULL && my()==OBJECTHDR(this); };
 
 public: // iterators

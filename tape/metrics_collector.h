@@ -117,6 +117,9 @@
 
 EXPORT void new_metrics_collector(MODULE *);
 
+PROPERTY *metrics_gl_get_property(OBJECT *obj, const char *propname);
+CLASS *metrics_gl_register_class(MODULE *mod, const char *classname, size_t size);
+
 #ifdef __cplusplus
 
 // struct containing two return values for voltage violation results
@@ -215,10 +218,10 @@ private:
 	bool write_now;
 	bool first_write;
 	bool log_me;
-	void log_to_console(char *msg, TIMESTAMP t);
+	void log_to_console(const char *msg, TIMESTAMP t);
 	static bool log_set;
 
-	char* parent_string;
+	const char* parent_string;
 	char parent_name[256];
 	double *metrics; // depends on the parent class
 

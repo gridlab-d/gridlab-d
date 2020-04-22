@@ -98,7 +98,7 @@ int recvUDPSocket(ENGINELINK *engine, char *buffer, int maxlen){
 	return rv;
 }
 
-int sendUDPSocket(ENGINELINK *engine, char *buffer,int len){
+int sendUDPSocket(ENGINELINK *engine, const char *buffer,int len){
 
 	if(engine->sd->type!=UDP){
 		return -1;

@@ -63,6 +63,18 @@ PROPERTY *metrics_collector::propLineOverloaded = NULL;
 
 bool metrics_collector::log_set = true;  // if false, the first (some class) instance will print messages to console
 
+PROPERTY *metrics_gl_get_property(OBJECT *obj, const char *propname) {
+  PROPERTYNAME name;
+  strncpy (name, propname, 64);
+  return gl_get_property (obj, name);
+}
+
+CLASS *metrics_gl_register_class(MODULE *mod, const char *classname, size_t size) {
+  CLASSNAME name;
+  strncpy (name, classname, 64);
+  return gl_register_class (mod, name, size, PC_POSTTOPDOWN);
+}
+
 void new_metrics_collector(MODULE *mod){
 	new metrics_collector(mod);
 }
@@ -73,7 +85,7 @@ metrics_collector::metrics_collector(MODULE *mod){
 #ifdef _DEBUG
 		gl_debug("construction metrics_collector class");
 #endif
-		oclass = gl_register_class(mod,"metrics_collector",sizeof(metrics_collector), PC_POSTTOPDOWN);
+		oclass = metrics_gl_register_class(mod,"metrics_collector",sizeof(metrics_collector));
     if(oclass == NULL)
       GL_THROW("unable to register object class implemented by %s",__FILE__);
 
@@ -147,46 +159,46 @@ int metrics_collector::init(OBJECT *parent){
 	// Find parent, if not defined, or if the parent is not a supported class, throw an exception
 	if (gl_object_isa(parent,"triplex_meter"))	{
 		parent_string = "triplex_meter";
-		if (propTriplexNomV == NULL) propTriplexNomV = gl_get_property (parent, "nominal_voltage");
-		if (propTriplexPrice == NULL) propTriplexPrice = gl_get_property (parent, "price");
-		if (propTriplexBill == NULL) propTriplexBill = gl_get_property (parent, "monthly_bill");
-		if (propTriplexP == NULL) propTriplexP = gl_get_property (parent, "measured_real_power");
-		if (propTriplexQ == NULL) propTriplexQ = gl_get_property (parent, "measured_reactive_power");
-		if (propTriplexV1 == NULL) propTriplexV1 = gl_get_property (parent, "voltage_1");
-		if (propTriplexV2 == NULL) propTriplexV2 = gl_get_property (parent, "voltage_2");
-		if (propTriplexV12 == NULL) propTriplexV12 = gl_get_property (parent, "voltage_12");
+		if (propTriplexNomV == NULL) propTriplexNomV = metrics_gl_get_property (parent, "nominal_voltage");
+		if (propTriplexPrice == NULL) propTriplexPrice = metrics_gl_get_property (parent, "price");
+		if (propTriplexBill == NULL) propTriplexBill = metrics_gl_get_property (parent, "monthly_bill");
+		if (propTriplexP == NULL) propTriplexP = metrics_gl_get_property (parent, "measured_real_power");
+		if (propTriplexQ == NULL) propTriplexQ = metrics_gl_get_property (parent, "measured_reactive_power");
+		if (propTriplexV1 == NULL) propTriplexV1 = metrics_gl_get_property (parent, "voltage_1");
+		if (propTriplexV2 == NULL) propTriplexV2 = metrics_gl_get_property (parent, "voltage_2");
+		if (propTriplexV12 == NULL) propTriplexV12 = metrics_gl_get_property (parent, "voltage_12");
 		if (!log_set) {
 			log_set = log_me = true;
 		}
 	} else if (gl_object_isa(parent, "house")) {
 		parent_string = "house";
-		if (propHouseLoad == NULL) propHouseLoad = gl_get_property (parent, "total_load");
-		if (propHouseHVAC == NULL) propHouseHVAC = gl_get_property (parent, "hvac_load");
-		if (propHouseAirTemp == NULL) propHouseAirTemp = gl_get_property (parent, "air_temperature");
-		if (propHouseCoolSet == NULL) propHouseCoolSet = gl_get_property (parent, "cooling_setpoint");
-		if (propHouseHeatSet == NULL) propHouseHeatSet = gl_get_property (parent, "heating_setpoint");
-		if (propHouseSystemMode == NULL) propHouseSystemMode = gl_get_property (parent, "system_mode");
+		if (propHouseLoad == NULL) propHouseLoad = metrics_gl_get_property (parent, "total_load");
+		if (propHouseHVAC == NULL) propHouseHVAC = metrics_gl_get_property (parent, "hvac_load");
+		if (propHouseAirTemp == NULL) propHouseAirTemp = metrics_gl_get_property (parent, "air_temperature");
+		if (propHouseCoolSet == NULL) propHouseCoolSet = metrics_gl_get_property (parent, "cooling_setpoint");
+		if (propHouseHeatSet == NULL) propHouseHeatSet = metrics_gl_get_property (parent, "heating_setpoint");
+		if (propHouseSystemMode == NULL) propHouseSystemMode = metrics_gl_get_property (parent, "system_mode");
 	} else if (gl_object_isa(parent,"waterheater")) {
 		parent_string = "waterheater";
-		if (propWaterLoad == NULL) propWaterLoad = gl_get_property (parent, "actual_load");
-		if (propWaterSetPoint == NULL) propWaterSetPoint = gl_get_property (parent, "tank_setpoint");
-		if (propWaterDemand == NULL) propWaterDemand = gl_get_property (parent, "water_demand");
-		if (propWaterTemp == NULL) propWaterTemp = gl_get_property (parent, "temperature");
+		if (propWaterLoad == NULL) propWaterLoad = metrics_gl_get_property (parent, "actual_load");
+		if (propWaterSetPoint == NULL) propWaterSetPoint = metrics_gl_get_property (parent, "tank_setpoint");
+		if (propWaterDemand == NULL) propWaterDemand = metrics_gl_get_property (parent, "water_demand");
+		if (propWaterTemp == NULL) propWaterTemp = metrics_gl_get_property (parent, "temperature");
 	} else if (gl_object_isa(parent,"inverter")) {
 		parent_string = "inverter";
-		if (propInverterS == NULL) propInverterS = gl_get_property (parent, "VA_Out");
+		if (propInverterS == NULL) propInverterS = metrics_gl_get_property (parent, "VA_Out");
 	} else if (gl_object_isa(parent,"capacitor")) {
 		parent_string = "capacitor";
-		if (propCapCountA == NULL) propCapCountA = gl_get_property (parent, "cap_A_switch_count");
-		if (propCapCountB == NULL) propCapCountB = gl_get_property (parent, "cap_B_switch_count");
-		if (propCapCountC == NULL) propCapCountC = gl_get_property (parent, "cap_C_switch_count");
+		if (propCapCountA == NULL) propCapCountA = metrics_gl_get_property (parent, "cap_A_switch_count");
+		if (propCapCountB == NULL) propCapCountB = metrics_gl_get_property (parent, "cap_B_switch_count");
+		if (propCapCountC == NULL) propCapCountC = metrics_gl_get_property (parent, "cap_C_switch_count");
 	} else if (gl_object_isa(parent,"regulator")) {
 		parent_string = "regulator";
-		if (propRegCountA == NULL) propRegCountA = gl_get_property (parent, "tap_A_change_count");
-		if (propRegCountB == NULL) propRegCountB = gl_get_property (parent, "tap_B_change_count");
-		if (propRegCountC == NULL) propRegCountC = gl_get_property (parent, "tap_C_change_count");
+		if (propRegCountA == NULL) propRegCountA = metrics_gl_get_property (parent, "tap_A_change_count");
+		if (propRegCountB == NULL) propRegCountB = metrics_gl_get_property (parent, "tap_B_change_count");
+		if (propRegCountC == NULL) propRegCountC = metrics_gl_get_property (parent, "tap_C_change_count");
 	} else if (gl_object_isa(parent,"substation")) {  // must be a swing bus
-		PROPERTY *pval = gl_get_property(parent,"bustype");
+		PROPERTY *pval = metrics_gl_get_property(parent,"bustype");
 		if ((pval==NULL) || (pval->ptype!=PT_enumeration))
 		{
 			GL_THROW("metrics_collector:%s failed to map bustype variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
@@ -203,35 +215,35 @@ int metrics_collector::init(OBJECT *parent){
 			return 0;
 		}
 		parent_string = "swingbus";
-		if (propSwingSubLoad == NULL) propSwingSubLoad = gl_get_property (parent, "distribution_load");
+		if (propSwingSubLoad == NULL) propSwingSubLoad = metrics_gl_get_property (parent, "distribution_load");
 	} else if (gl_object_isa(parent,"meter")) {
 		parent_string = "meter"; // unless it's a swing bus
-		if (propMeterNomV == NULL) propMeterNomV = gl_get_property (parent, "nominal_voltage");
-		if (propMeterPrice == NULL) propMeterPrice = gl_get_property (parent, "price");
-		if (propMeterBill == NULL) propMeterBill = gl_get_property (parent, "monthly_bill");
-		if (propMeterP == NULL) propMeterP = gl_get_property (parent, "measured_real_power");
-		if (propMeterQ == NULL) propMeterQ = gl_get_property (parent, "measured_reactive_power");
-		if (propMeterVa == NULL) propMeterVa = gl_get_property (parent, "voltage_A");
-		if (propMeterVb == NULL) propMeterVb = gl_get_property (parent, "voltage_B");
-		if (propMeterVc == NULL) propMeterVc = gl_get_property (parent, "voltage_C");
-		if (propMeterVab == NULL) propMeterVab = gl_get_property (parent, "voltage_AB");
-		if (propMeterVbc == NULL) propMeterVbc = gl_get_property (parent, "voltage_BC");
-		if (propMeterVca == NULL) propMeterVca = gl_get_property (parent, "voltage_CA");
-		PROPERTY *pval = gl_get_property(parent,"bustype");
+		if (propMeterNomV == NULL) propMeterNomV = metrics_gl_get_property (parent, "nominal_voltage");
+		if (propMeterPrice == NULL) propMeterPrice = metrics_gl_get_property (parent, "price");
+		if (propMeterBill == NULL) propMeterBill = metrics_gl_get_property (parent, "monthly_bill");
+		if (propMeterP == NULL) propMeterP = metrics_gl_get_property (parent, "measured_real_power");
+		if (propMeterQ == NULL) propMeterQ = metrics_gl_get_property (parent, "measured_reactive_power");
+		if (propMeterVa == NULL) propMeterVa = metrics_gl_get_property (parent, "voltage_A");
+		if (propMeterVb == NULL) propMeterVb = metrics_gl_get_property (parent, "voltage_B");
+		if (propMeterVc == NULL) propMeterVc = metrics_gl_get_property (parent, "voltage_C");
+		if (propMeterVab == NULL) propMeterVab = metrics_gl_get_property (parent, "voltage_AB");
+		if (propMeterVbc == NULL) propMeterVbc = metrics_gl_get_property (parent, "voltage_BC");
+		if (propMeterVca == NULL) propMeterVca = metrics_gl_get_property (parent, "voltage_CA");
+		PROPERTY *pval = metrics_gl_get_property(parent,"bustype");
 		if ((pval!=NULL) && (pval->ptype==PT_enumeration))
 		{
 			enumeration *meter_bustype = (enumeration*)GETADDR(parent,pval);
 			if (*meter_bustype == 2) {
 				parent_string = "swingbus";
-				if (propSwingMeterS == NULL) propSwingMeterS = gl_get_property (parent, "measured_power");
+				if (propSwingMeterS == NULL) propSwingMeterS = metrics_gl_get_property (parent, "measured_power");
 			}
 		}
 	} else if (gl_object_isa(parent, "transformer")) {
     parent_string = "transformer";
-		if (propTransformerOverloaded == NULL) propTransformerOverloaded = gl_get_property (parent, "overloaded_status");
+		if (propTransformerOverloaded == NULL) propTransformerOverloaded = metrics_gl_get_property (parent, "overloaded_status");
 	} else if (gl_object_isa(parent, "line")) {
     parent_string = "line";
-		if (propLineOverloaded == NULL) propLineOverloaded = gl_get_property (parent, "overloaded_status");
+		if (propLineOverloaded == NULL) propLineOverloaded = metrics_gl_get_property (parent, "overloaded_status");
 	}
 	else {
 		gl_error("metrics_collector allows only these parents: triplex meter, house, waterheater, inverter, substation, meter, capacitor, regulator, transformer, line.");
@@ -955,12 +967,12 @@ int metrics_collector::read_line(OBJECT *obj){
 	return 1;
 }
 
-void metrics_collector::log_to_console(char *msg, TIMESTAMP t) {
+void metrics_collector::log_to_console(const char *msg, TIMESTAMP t) {
 	if (log_me)	{
-		printf("** %s: t = %i, next_write = %i, curr_index = %i\n", 
+		printf("** %s: t = %lld, next_write = %lld, curr_index = %i\n", 
 					 msg, t - start_time, next_write - start_time, curr_index);
 		for (int j = 0; j < curr_index; j++) {
-			printf("	%i", time_array[j] - start_time);			
+			printf("	%lld", time_array[j] - start_time);			
 		}
 		printf("\n");
 		for (int j = 0; j < curr_index; j++) {

@@ -74,6 +74,6 @@ bool setupUDPSocket(ENGINELINK *given);
 bool bindUDPSocket(ENGINELINK *given);
 bool acceptUDPSocket(ENGINELINK *given);
 int recvUDPSocket(ENGINELINK *engine, char *buffer, int maxlen);
-int sendUDPSocket(ENGINELINK *engine, char *buffer,int len);
+int sendUDPSocket(ENGINELINK *engine, const char *buffer,int len);
 
 #endif

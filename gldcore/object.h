@@ -183,7 +183,7 @@ typedef struct s_callbacks {
 		double (*weibull)(unsigned int *rng,double a, double b);
 		double (*rayleigh)(unsigned int *rng,double a);
 	} random;
-	int (*object_isa)(OBJECT *obj, char *type);
+	int (*object_isa)(OBJECT *obj, const char *type);
 	DELEGATEDTYPE* (*register_type)(CLASS *oclass, char *type,int (*from_string)(void*,char*),int (*to_string)(void*,char*,int));
 	int (*define_type)(CLASS*,DELEGATEDTYPE*,...);
 	struct {
@@ -359,7 +359,7 @@ int object_get_value_by_name(OBJECT *obj, PROPERTYNAME name, char *value, int si
 int object_get_value_by_addr(OBJECT *obj, void *addr, char *value, int size, PROPERTY *prop);
 int object_set_value_by_type(PROPERTYTYPE,void *addr, char *value);
 OBJECT *object_get_reference(OBJECT *obj, char *name);
-int object_isa(OBJECT *obj, char *type);
+int object_isa(OBJECT *obj, const char *type);
 OBJECTNAME object_set_name(OBJECT *obj, OBJECTNAME name);
 OBJECT *object_find_name(OBJECTNAME name);
 int object_build_name(OBJECT *obj, char *buffer, int len);

@@ -10,14 +10,14 @@
 
 CLASS *metrics_collector_writer::oclass = NULL;
 
-void new_metrics_collector_writer(MODULE *mod){
+void new_metrics_collector_writer(MODULE *mod) {
 	new metrics_collector_writer(mod);
 }
 
 metrics_collector_writer::metrics_collector_writer(MODULE *mod){
 	if(oclass == NULL)
 	{
-		oclass = gl_register_class(mod,"metrics_collector_writer",sizeof(metrics_collector_writer),PC_POSTTOPDOWN);
+		oclass = metrics_gl_register_class(mod,"metrics_collector_writer",sizeof(metrics_collector_writer));
 		if (oclass==NULL)
 			throw "unable to register class metrics_collector_writer";
 
@@ -381,18 +381,21 @@ int metrics_collector_writer::init(OBJECT *parent){
 
 void metrics_collector_writer::writeMetadata(Json::Value& meta, Json::Value& metadata, char* time_str, char256 filename) {
 	if (strcmp(extension, m_json.c_str()) == 0) {
-		Json::FastWriter writer;
-		// Open file for writing
+//		Json::FastWriter writer;
+//		writer.omitEndingLineFeed();
 		ofstream out_file;
 
-		writer.omitEndingLineFeed();
+		Json::StreamWriterBuilder builder; // FastWriter is deprecated
+		builder["indentation"] = "";
+
 		metadata[m_starttime] = time_str;
 		metadata[m_metadata] = meta;
 		string FileName(filename);
 		if (strcmp(alternate, "yes") == 0) 
 			FileName.append("." + m_json);
 		out_file.open (FileName);
-		out_file << writer.write(metadata);
+//		out_file << writer.write(metadata);
+		out_file << Json::writeString(builder, metadata);
 		out_file.close();
 #ifdef HAVE_HDF5
 		if (both) {
@@ -703,25 +706,35 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 
 // Write seperate JSON files for each object
 void metrics_collector_writer::writeJsonFile (char256 filename, Json::Value& metrics) {
+//	Json::FastWriter writer;
+//	writer.omitEndingLineFeed();
 	long pos = 0;
 	long offset = 1;
-	Json::FastWriter writer;
-	// Open file for writing
 	ofstream out_file;
 
-	writer.omitEndingLineFeed();
+	Json::StreamWriterBuilder builder; // FastWriter is deprecated
+	builder["indentation"] = "";
+
 	string FileName(filename);
 	if (strcmp(alternate, "yes") == 0) 
 		FileName.append("." + m_json);
 	out_file.open (FileName, ofstream::in | ofstream::ate);
+	std::cout << "** opened " << FileName << std::endl;
 	pos = out_file.tellp();
-	out_file << writer.write(metrics);
+	std::cout << "   tellp " << pos << " offset " << offset << std::endl;
+//	out_file << writer.write(metrics);
+	out_file << Json::writeString(builder, metrics);
+	std::cout << "   write metrics" << std::endl;
 	out_file.seekp(pos-offset);
+	std::cout << "   seekp " << (pos-offset) << std::endl;
 	out_file << ", ";
 	out_file.close();
+	std::cout << "   closed " << FileName << std::endl;
 	if (!both) {
 		metrics.clear();
+		std::cout << "   cleared metrics" << std::endl;
 	}
+	std::cout << "   returning" << std::endl;
 }
 
 #ifdef HAVE_HDF5
@@ -1341,7 +1354,7 @@ void metrics_collector_writer::hdfLineWrite (size_t objs, Json::Value& metrics) 
 		hdfWrite(filename_line, mtype_lines, &tbl, 5, idx);
 		metrics.clear();
 }
-#endif HAVE_HDF5
+#endif // HAVE_HDF5
 
 EXPORT int create_metrics_collector_writer(OBJECT **obj, OBJECT *parent){
 	int rv = 0;
