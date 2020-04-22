@@ -643,20 +643,20 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 	metrics_writer_transformers[time_str] = transformer_objects;
 	metrics_writer_lines[time_str] = line_objects;
 
-/*
-	cout << "total size -> " << index << endl;
-	cout << m_billing_meter << "size ->" << billing_meter_objects.size() << endl;
-	cout << m_house << "size -> " << house_objects.size() << endl;
-	cout << m_inverter << "size -> " << inverter_objects.size() << endl;
-	cout << m_capacitor << "size -> " << capacitor_objects.size() << endl;
-	cout << m_regulator << "size -> " << regulator_objects.size() << endl;
-	cout << m_feeder << "size -> " << feeder_objects.size() << endl;
-	cout << m_transformer << "size -> " << transformer_objects.size() << endl;
-	cout << m_line << "size -> " << line_objects.size() << endl;
-	cout << "final_write -> " << final_write-startTime << "writeTime -> " << writeTime << endl;
-*/
-
 	if (writeTime == (interim_length * interim_cnt) || final_write-startTime <= writeTime) {
+		cout << "total size -> " << index << endl;
+		cout << "writeTime -> " << writeTime << endl;
+/*
+		cout << "final_write -> " << final_write-startTime << endl;
+		cout << m_billing_meter << "size ->" << billing_meter_objects.size() << endl;
+		cout << m_house << "size -> " << house_objects.size() << endl;
+		cout << m_inverter << "size -> " << inverter_objects.size() << endl;
+		cout << m_capacitor << "size -> " << capacitor_objects.size() << endl;
+		cout << m_regulator << "size -> " << regulator_objects.size() << endl;
+		cout << m_feeder << "size -> " << feeder_objects.size() << endl;
+		cout << m_transformer << "size -> " << transformer_objects.size() << endl;
+		cout << m_line << "size -> " << line_objects.size() << endl;
+*/
 		if (strcmp(extension, m_json.c_str()) == 0) {
 			writeJsonFile(filename_billing_meter, metrics_writer_billing_meters);
 			writeJsonFile(filename_house, metrics_writer_houses);
@@ -669,14 +669,23 @@ int metrics_collector_writer::write_line(TIMESTAMP t1){
 		}
 #ifdef HAVE_HDF5
 		if ((strcmp(extension, m_h5.c_str()) == 0) || both) {
+	cout << "w1" << endl;
 			hdfBillingMeterWrite(billing_meter_objects.size(), metrics_writer_billing_meters);
+	cout << "w2" << endl;
 			hdfHouseWrite(house_objects.size(), metrics_writer_houses);
+	cout << "w3" << endl;
 			hdfInverterWrite(inverter_objects.size() , metrics_writer_inverters);
+	cout << "w4" << endl;
 			hdfCapacitorWrite(capacitor_objects.size(), metrics_writer_capacitors);
+	cout << "w5" << endl;
 			hdfRegulatorWrite(regulator_objects.size(), metrics_writer_regulators);
+	cout << "w6" << endl;
 			hdfFeederWrite(feeder_objects.size(), metrics_writer_feeders);
+	cout << "w7" << endl;
 			hdfTransformerWrite(transformer_objects.size(), metrics_writer_transformers);
+	cout << "w8" << endl;
 			hdfLineWrite(line_objects.size(), metrics_writer_lines);
+	cout << "done" << endl;
 		}
 #endif
 		new_day = false;
@@ -905,7 +914,7 @@ void metrics_collector_writer::hdfWrite(char256 filename, H5::CompType* mtype, v
 			switch (structKind) {
 				case 1:
 					delete set_billing_meters;
-					len_billing_meters = size;	set_billing_meters = dataset;
+					len_billing_meters = size;	set_billing_meters = dataset; 
 					dataset->write(((std::vector <BillingMeter> *)ptr)->data(), *mtype);	break;
 				case 2:
 					delete set_houses;
@@ -936,6 +945,8 @@ void metrics_collector_writer::hdfWrite(char256 filename, H5::CompType* mtype, v
 					len_lines = size;	set_lines = dataset;
 					dataset->write(((std::vector <Line> *)ptr)->data(), *mtype);		break;
 			}
+			dataset->flush(H5F_SCOPE_GLOBAL);	// - Flushes the entire virtual file
+//			dataset->flush(H5F_SCOPE_LOCAL);	// - Flushes only the specified file
 			delete plist;
 			delete file;
 			if (final_write-startTime <= writeTime) {
@@ -946,40 +957,48 @@ void metrics_collector_writer::hdfWrite(char256 filename, H5::CompType* mtype, v
 			hsize_t dim[1];
 			hsize_t dims[1] = { size };
 			hsize_t maxdims[1] = {H5S_UNLIMITED};
-			hsize_t	offset[1];
+			hsize_t offset[1];
 			switch (structKind) {
 				case 1:
 					offset[0] = len_billing_meters;
 					dim[0] = len_billing_meters + size;
-					len_billing_meters += size;	dataset = set_billing_meters;	break;
+					len_billing_meters += size;	dataset = set_billing_meters;
+					break;
 				case 2:
 					offset[0] = len_houses;
 					dim[0] = len_houses + size;
-					len_houses += size;			dataset = set_houses;			break;
+					len_houses += size;			dataset = set_houses;
+					break;
 				case 3:
 					offset[0] = len_inverters;
 					dim[0] = len_inverters + size;
-					len_inverters += size;		dataset = set_inverters;		break;
+					len_inverters += size;		dataset = set_inverters;
+					break;
 				case 4:
 					offset[0] = len_capacitors;
 					dim[0] = len_capacitors + size;
-					len_capacitors += size;		dataset = set_capacitors;		break;
+					len_capacitors += size;		dataset = set_capacitors;
+					break;
 				case 5:
 					offset[0] = len_regulators;
 					dim[0] = len_regulators + size;
-					len_regulators += size;		dataset = set_regulators;		break;
+					len_regulators += size;		dataset = set_regulators;
+					break;
 				case 6:
 					offset[0] = len_feeders;
 					dim[0] = len_feeders + size;
-					len_feeders += size;		dataset = set_feeders;			break;
+					len_feeders += size;		dataset = set_feeders;
+					break;
 				case 7:
 					offset[0] = len_transformers;
 					dim[0] = len_transformers + size;
-					len_transformers += size;	dataset = set_transformers;		break;
+					len_transformers += size;	dataset = set_transformers;
+					break;
 				case 8:
 					offset[0] = len_lines;
 					dim[0] = len_lines + size;
-					len_lines += size;			dataset = set_lines;			break;
+					len_lines += size;			dataset = set_lines;
+					break;
 			}
 			// Extend the dataset.
 			if (size) {
@@ -1000,6 +1019,8 @@ void metrics_collector_writer::hdfWrite(char256 filename, H5::CompType* mtype, v
 					case 7:	dataset->write(((std::vector <Transformer> *)ptr)->data(), *mtype, memspace, *filespace);		break;
 					case 8:	dataset->write(((std::vector <Line> *)ptr)->data(), *mtype, memspace, *filespace);		break;
 				}
+				dataset->flush(H5F_SCOPE_GLOBAL);	// - Flushes the entire virtual file
+//				dataset->flush(H5F_SCOPE_LOCAL);	// - Flushes only the specified file
 				delete filespace;
 			}
 			if (final_write-startTime <= writeTime) {
