@@ -1347,8 +1347,37 @@ bool inverter_dyn::check_and_update_VA_Out(OBJECT *obj)
 			update_iGen(VA_Out);
 		}
 
-		// Update the P_DC, V_DC, and I_DC
+		// Update the P_DC
 		P_DC = VA_Out.Re(); //Lossless
+
+		// Update V_DC
+		if (dc_interface_objects.empty() != true)
+		{
+			int temp_idx;
+			STATUS fxn_return_status;
+
+			//Loop through and call the DC objects
+			for (temp_idx = 0; temp_idx < dc_interface_objects.size(); temp_idx++)
+			{
+				//DC object, calling object (us), init mode (true/false)
+				//False at end now, because not initialization
+				fxn_return_status = ((STATUS(*)(OBJECT *, OBJECT *, bool))(*dc_interface_objects[temp_idx].fxn_address))(dc_interface_objects[temp_idx].dc_object, obj, true);
+
+				//Make sure it worked
+				if (fxn_return_status == FAILED)
+				{
+					//Pull the object from the array - this is just for readability (otherwise the
+					OBJECT *temp_obj = dc_interface_objects[temp_idx].dc_object;
+
+					//Error it up
+					GL_THROW("inverter_dyn:%d - %s - DC object update for object:%d - %s - failed!", obj->id, (obj->name ? obj->name : "Unnamed"), temp_obj->id, (temp_obj->name ? temp_obj->name : "Unnamed"));
+					//Defined above
+				}
+			}
+		}
+
+		// Update I_DC
+		I_DC = P_DC/V_DC;
 	}
 	return flag_VA_Out_changed;
 }
