@@ -97,6 +97,8 @@ private:
 	bool first_sync_delta_enabled;
 	char first_iter_counter;
 
+	double prev_timestamp_dbl;
+
 	INV_DYN_STATE pred_state; ///< The predictor state of the inverter in delamode
 	INV_DYN_STATE next_state; ///< The next state of the inverter in delamode
 
@@ -145,7 +147,7 @@ private:
 	gld_property *map_double_value(OBJECT *obj, char *name);
 	void pull_complex_powerflow_values(void);
 	void reset_complex_powerflow_accumulators(void);
-	void push_complex_powerflow_values(void);
+	void push_complex_powerflow_values(bool update_voltage);
 
 	// Check limit func
 	bool check_and_update_VA_Out(OBJECT *obj);
@@ -180,6 +182,7 @@ public:
 	complex temp_current_val[3];
 	TIMESTAMP inverter_start_time;
 	bool inverter_first_step;
+	bool first_deltamode_init;
 	int64 first_iteration_current_injection; //Initialization variable - mostly so SWING_PQ buses initalize properly for deltamode
 
 	double GridForming_convergence_criterion;

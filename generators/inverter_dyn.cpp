@@ -194,6 +194,7 @@ int inverter_dyn::create(void)
 	inverter_start_time = TS_INVALID;
 	inverter_first_step = true;
 	first_iteration_current_injection = -1; //Initialize - mainly for tracking SWING_PQ status
+	first_deltamode_init = true;	//First time it goes in will be the first time
 
 	//Variable mapping items
 	parent_is_a_meter = false;		//By default, no parent meter
@@ -925,6 +926,10 @@ int inverter_dyn::init(OBJECT *parent)
 		power_val[1] = VA_Out / 3.0;
 		power_val[2] = VA_Out / 3.0;
 	}
+
+	//Init tracking variable
+	prev_timestamp_dbl = (double)gl_globalclock;
+
 	return 1;
 }
 
@@ -1232,7 +1237,7 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 	//Sync the powerflow variables
 	if (parent_is_a_meter == true)
 	{
-		push_complex_powerflow_values();
+		push_complex_powerflow_values(false);
 	}
 
 	//Return
@@ -1428,7 +1433,7 @@ TIMESTAMP inverter_dyn::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	// Sync the powerflow variables
 	if (parent_is_a_meter == true)
 	{
-		push_complex_powerflow_values();
+		push_complex_powerflow_values(false);
 	}
 
 	if (flag_VA_Out_changed)
@@ -1524,6 +1529,10 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 	//Get timestep value
 	deltat = (double)dt / (double)DT_SECOND;
 	deltath = deltat / 2.0;
+
+	//Update time tracking variable
+	prev_timestamp_dbl = gl_globaldeltaclock;
+
 
 	if (control_mode == GRID_FORMING)
 	{
@@ -4086,7 +4095,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 	//Sync the powerflow variables
 	if (parent_is_a_meter == true)
 	{
-		push_complex_powerflow_values();
+		push_complex_powerflow_values(false);
 	}
 
 	//Set the mode tracking variable for this exit
@@ -4146,9 +4155,16 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 			// Initializa the internal voltage magnitudes
 			curr_time->V_ini = (e_source[0].Mag() + e_source[1].Mag() + e_source[2].Mag()) / 3 / V_base;
 
-			// Initialize Vset and Pset
-			Vset = pCircuit_V_Avg_pu + VA_Out.Im() / S_base * mq;
-			Pset = VA_Out.Re() / S_base;
+			//See if it is the first deltamode entry - theory is all future changes will trigger deltamode, so these should be set
+			if (first_deltamode_init == true)
+			{
+				// Initialize Vset and Pset
+				Vset = pCircuit_V_Avg_pu + VA_Out.Im() / S_base * mq;
+				Pset = VA_Out.Re() / S_base;
+
+				//Set it false in here, for giggles
+				first_deltamode_init = false;
+			}
 
 			// Initialize measured P,Q,and V
 			curr_time->p_measure = VA_Out.Re() / S_base;
@@ -4681,7 +4697,7 @@ void inverter_dyn::reset_complex_powerflow_accumulators(void)
 }
 
 //Function to push up all changes of complex properties to powerflow from local variables
-void inverter_dyn::push_complex_powerflow_values(void)
+void inverter_dyn::push_complex_powerflow_values(bool update_voltage)
 {
 	complex temp_complex_val;
 	gld_wlock *test_rlock;
@@ -4690,86 +4706,109 @@ void inverter_dyn::push_complex_powerflow_values(void)
 	//See which one we are, since that will impact things
 	if (parent_is_single_phase == false) //Three-phase
 	{
-		//Loop through the three-phases/accumulators
-		for (indexval = 0; indexval < 3; indexval++)
+		//See if we were a voltage push or not
+		if (update_voltage == true)
 		{
-			//**** Current value ***/
-			//Pull current value again, just in case
-			temp_complex_val = pLine_I[indexval]->get_complex();
-
-			//Add the difference
-			temp_complex_val += value_Line_I[indexval];
-
-			//Push it back up
-			pLine_I[indexval]->setp<complex>(temp_complex_val, *test_rlock);
-
-			//**** Power value ***/
-			//Pull current value again, just in case
-			temp_complex_val = pPower[indexval]->get_complex();
-
-			//Add the difference
-			temp_complex_val += value_Power[indexval];
-
-			//Push it back up
-			pPower[indexval]->setp<complex>(temp_complex_val, *test_rlock);
-
-			//**** pre-rotated Current value ***/
-			//Pull current value again, just in case
-			temp_complex_val = pLine_unrotI[indexval]->get_complex();
-
-			//Add the difference
-			temp_complex_val += value_Line_unrotI[indexval];
-
-			//Push it back up
-			pLine_unrotI[indexval]->setp<complex>(temp_complex_val, *test_rlock);
-
-			/* If was VSI, adjust Norton injection */
+			//Loop through the three-phases/accumulators
+			for (indexval=0; indexval<3; indexval++)
 			{
-				//**** IGenerated Current value ***/
-				//Direct write, not an accumulator
-				pIGenerated[indexval]->setp<complex>(value_IGenerated[indexval], *test_rlock);
+				//**** push voltage value -- not an accumulator, just force ****/
+				pCircuit_V[indexval]->setp<complex>(value_Circuit_V[indexval],*test_rlock);
 			}
 		}
-	}
+		else
+		{
+			//Loop through the three-phases/accumulators
+			for (indexval = 0; indexval < 3; indexval++)
+			{
+				//**** Current value ***/
+				//Pull current value again, just in case
+				temp_complex_val = pLine_I[indexval]->get_complex();
+
+				//Add the difference
+				temp_complex_val += value_Line_I[indexval];
+
+				//Push it back up
+				pLine_I[indexval]->setp<complex>(temp_complex_val, *test_rlock);
+
+				//**** Power value ***/
+				//Pull current value again, just in case
+				temp_complex_val = pPower[indexval]->get_complex();
+
+				//Add the difference
+				temp_complex_val += value_Power[indexval];
+
+				//Push it back up
+				pPower[indexval]->setp<complex>(temp_complex_val, *test_rlock);
+
+				//**** pre-rotated Current value ***/
+				//Pull current value again, just in case
+				temp_complex_val = pLine_unrotI[indexval]->get_complex();
+
+				//Add the difference
+				temp_complex_val += value_Line_unrotI[indexval];
+
+				//Push it back up
+				pLine_unrotI[indexval]->setp<complex>(temp_complex_val, *test_rlock);
+
+				/* If was VSI, adjust Norton injection */
+				{
+					//**** IGenerated Current value ***/
+					//Direct write, not an accumulator
+					pIGenerated[indexval]->setp<complex>(value_IGenerated[indexval], *test_rlock);
+				}
+			}//End phase loop
+		}//End not voltage push
+	}//End three-phase
 	else //Assumes must be single-phased - else how did it get here?
 	{
-		//Pull the relevant values -- all single pulls
+		//Check for voltage push - in case that's ever needed here
+		if (update_voltage == true)
+		{
+			//Should just be zero
+			//**** push voltage value -- not an accumulator, just force ****/
+			pCircuit_V[0]->setp<complex>(value_Circuit_V[0],*test_rlock);
+		}
+		else
+		{
+			//Pull the relevant values -- all single pulls
 
-		//**** Current value ***/
-		//Pull current value again, just in case
-		temp_complex_val = pLine_I[0]->get_complex();
+			//**** Current value ***/
+			//Pull current value again, just in case
+			temp_complex_val = pLine_I[0]->get_complex();
 
-		//Add the difference
-		temp_complex_val += value_Line_I[0];
+			//Add the difference
+			temp_complex_val += value_Line_I[0];
 
-		//Push it back up
-		pLine_I[0]->setp<complex>(temp_complex_val, *test_rlock);
+			//Push it back up
+			pLine_I[0]->setp<complex>(temp_complex_val, *test_rlock);
 
-		//**** power value ***/
-		//Pull current value again, just in case
-		temp_complex_val = pPower[0]->get_complex();
+			//**** power value ***/
+			//Pull current value again, just in case
+			temp_complex_val = pPower[0]->get_complex();
 
-		//Add the difference
-		temp_complex_val += value_Power[0];
+			//Add the difference
+			temp_complex_val += value_Power[0];
 
-		//Push it back up
-		pPower[0]->setp<complex>(temp_complex_val, *test_rlock);
+			//Push it back up
+			pPower[0]->setp<complex>(temp_complex_val, *test_rlock);
 
-		//**** prerotated value ***/
-		//Pull current value again, just in case
-		temp_complex_val = pLine_unrotI[0]->get_complex();
+			//**** prerotated value ***/
+			//Pull current value again, just in case
+			temp_complex_val = pLine_unrotI[0]->get_complex();
 
-		//Add the difference
-		temp_complex_val += value_Line_unrotI[0];
+			//Add the difference
+			temp_complex_val += value_Line_unrotI[0];
 
-		//Push it back up
-		pLine_unrotI[0]->setp<complex>(temp_complex_val, *test_rlock);
+			//Push it back up
+			pLine_unrotI[0]->setp<complex>(temp_complex_val, *test_rlock);
 
-		//**** IGenerated ****/
-		//********* TODO - Does this need to be deltamode-flagged? *************//
-		//Direct write, not an accumulator
-		pIGenerated[0]->setp<complex>(value_IGenerated[0], *test_rlock);
-	}
+			//**** IGenerated ****/
+			//********* TODO - Does this need to be deltamode-flagged? *************//
+			//Direct write, not an accumulator
+			pIGenerated[0]->setp<complex>(value_IGenerated[0], *test_rlock);
+		}//End not voltage update
+	}//End single-phase
 }
 
 // Function to update current injection IGenerated for VSI
@@ -4782,16 +4821,21 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count)
 	bool bus_is_a_swing, bus_is_swing_pq_entry;
 	STATUS temp_status_val;
 	gld_property *temp_property_pointer;
+	bool running_in_delta;
+	double freq_diff_angle_val, tdiff;
+	complex rotate_value;
 
 	if (deltatimestep_running > 0.0) //Deltamode call
 	{
 		//Get the time
 		temp_time = gl_globaldeltaclock;
+		running_in_delta = true;
 	}
 	else
 	{
 		//Grab the current time
 		temp_time = (double)gl_globalclock;
+		running_in_delta = false;
 	}
 
 	//Pull the current powerflow values
@@ -4802,6 +4846,37 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count)
 
 		//Pull status and voltage (mostly status)
 		pull_complex_powerflow_values();
+	}
+
+	//See if we're in QSTS and a grid-forming inverter - update if we are
+	if ((running_in_delta == false) && (control_mode == GRID_FORMING))
+	{
+		//Compute time difference
+		tdiff = temp_time - prev_timestamp_dbl;
+
+		//Get the frequency difference and make an angle difference
+		freq_diff_angle_val = (freq - f_nominal)*2.0*M_PI*tdiff;
+
+		//Compute the "adjustment" (basically exp(j-angle))
+		//exp(jx) = cos(x)+j*sin(x)
+		rotate_value = complex(cos(freq_diff_angle_val),sin(freq_diff_angle_val));
+
+		//Apply the adjustment to voltage and current injection
+		value_Circuit_V[0] *= rotate_value;
+		value_Circuit_V[1] *= rotate_value;
+		value_Circuit_V[2] *= rotate_value;
+		value_IGenerated[0] *= rotate_value;
+		value_IGenerated[1] *= rotate_value;
+		value_IGenerated[2] *= rotate_value;
+
+		//Push the voltage - standard meter check (bit redundant)
+		if (parent_is_a_meter == true)
+		{
+			push_complex_powerflow_values(true);
+		}
+
+		//Update tracker
+		prev_timestamp_dbl = temp_time;
 	}
 
 	//External call to internal variables -- used by powerflow to iterate the VSI implementation, basically
@@ -5019,7 +5094,7 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count)
 	//Push the changes up
 	if (parent_is_a_meter == true)
 	{
-		push_complex_powerflow_values();
+		push_complex_powerflow_values(false);
 	}
 
 	//Always a success, but power flow solver may not like it if VA_OUT exceeded the rating and thus changed
