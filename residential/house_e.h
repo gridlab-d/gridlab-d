@@ -103,13 +103,13 @@ public:
 	
 	// additional reverse etp parameters
 	set include_solar_quadrant;
-	typedef enum {HC_DEFAULT=0, HC_FLAT=1, HC_LINEAR=2, HC_CURVED=3};
+	typedef enum {HC_DEFAULT=0, HC_FLAT=1, HC_LINEAR=2, HC_CURVED=3} HEATING_COP;
 	enumeration heating_cop_curve;
-	typedef enum {HP_DEFAULT=0, HP_FLAT=1, HP_LINEAR=2, HP_CURVED=3};
+	typedef enum {HP_DEFAULT=0, HP_FLAT=1, HP_LINEAR=2, HP_CURVED=3} HEATING_CAP;
 	enumeration heating_cap_curve;
-	typedef enum {CC_DEFAULT=0, CC_FLAT=1, CC_LINEAR=2, CC_CURVED=3};
+	typedef enum {CC_DEFAULT=0, CC_FLAT=1, CC_LINEAR=2, CC_CURVED=3} COOLING_COP;
 	enumeration cooling_cop_curve;
-	typedef enum {CP_DEFAULT=0, CP_FLAT=1, CP_LINEAR=2, CP_CURVED=3};
+	typedef enum {CP_DEFAULT=0, CP_FLAT=1, CP_LINEAR=2, CP_CURVED=3} COOLING_CAP;
 	enumeration cooling_cap_curve;
 	bool use_latent_heat;
 	bool include_fan_heatgain;
@@ -158,7 +158,7 @@ public:
 	double dlc_offset;
 
 	// hvac control variable
-	typedef enum {TC_FULL=0, TC_BAND=1, TC_NONE=2};
+	typedef enum {TC_FULL=0, TC_BAND=1, TC_NONE=2} THERMOSTAT_CONTROL;
 	enumeration thermostat_control;	///< method of HVAC control
 	double TcoolOn;		///< temperature above which cooling turns on
 	double TcoolOff;	///< temperature below which cooling turns off
@@ -420,6 +420,7 @@ private:
 	bool deltamode_registered;	//Boolean for deltamode registration -- basically a "first run" flag
 	bool proper_meter_parent;		//Flag to see if powerflow interactions should occur
 	bool proper_climate_found;		//Flag to see if climate interactions should occur
+	bool commercial_load_parent;    // proper_meter_parent is true, but the parent is actually a load
 
 	//Pointers for powerflow properties
 	gld_property *pCircuit_V[3];					///< pointer to the three voltages on three lines
@@ -436,6 +437,17 @@ private:
 	complex value_Power[3];						///< value holder for power value on triplex parent
 	enumeration value_MeterStatus;				///< value holder for service_status variable on triplex parent
 	double value_Frequency;						///< value holder for measured frequency on triplex parent
+
+	// interface to powerflow calculations, need not be public?
+	void pull_complex_powerflow_values(void);
+	void push_complex_powerflow_values(void);
+
+	// for commercial meter connections
+	gld_property *pNominalVoltage;
+	gld_property *pPhases;
+	double internalTurnsRatio;  // ratio of meter VLN / 120
+	set externalPhases;         // for A, B and C present
+	int numPhases;
 
 	//Pointers for climate properties
 	gld_property *pTout;		// pointer to outdoor temperature (see climate)
@@ -481,9 +493,7 @@ public:
 	//Map function
 	gld_property *map_complex_value(OBJECT *obj, char *name);
 	gld_property *map_double_value(OBJECT *obj, char *name);
-	void pull_complex_powerflow_values(void);
 	void pull_climate_values(void);
-	void push_complex_powerflow_values(void);
 };
 
 #endif

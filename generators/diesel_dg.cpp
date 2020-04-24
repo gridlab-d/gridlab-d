@@ -115,6 +115,12 @@ diesel_dg::diesel_dg(MODULE *module)
 				PT_KEYWORD,"NO_EXC",(enumeration)NO_EXC,PT_DESCRIPTION,"No exciter",
 				PT_KEYWORD,"SEXS",(enumeration)SEXS,PT_DESCRIPTION,"Simplified Excitation System",
 
+			//modes of SEXS exciter
+			PT_enumeration,"SEXS_mode",PADDR(SEXS_mode),PT_DESCRIPTION,"Exciter model for dynamics-capable implementation",
+				PT_KEYWORD,"CONSTANT_VOLTAGE",(enumeration)SEXS_CV,PT_DESCRIPTION,"The normal operation mode of SEXS",
+				PT_KEYWORD,"CONSTANT_Q",(enumeration)SEXS_CQ,PT_DESCRIPTION,"Constant Q operation mode",
+				PT_KEYWORD,"Q_V_DROOP",(enumeration)SEXS_Q_V_DROOP,PT_DESCRIPTION,"Q-V droop function",
+
 			PT_double,"KA[pu]",PADDR(exc_KA),PT_DESCRIPTION,"Exciter gain (p.u.)",
 			PT_double,"TA[s]",PADDR(exc_TA),PT_DESCRIPTION,"Exciter time constant (seconds)",
 			PT_double,"TB[s]",PADDR(exc_TB),PT_DESCRIPTION,"Exciter transient gain reduction time constant (seconds)",
@@ -123,6 +129,10 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double,"EMIN[pu]",PADDR(exc_EMIN),PT_DESCRIPTION,"Exciter lower limit (p.u.)",
 			PT_double,"Vterm_max[pu]",PADDR(Max_Ef),PT_DESCRIPTION,"Upper voltage limit for super-second (p.u.)",
 			PT_double,"Vterm_min[pu]",PADDR(Min_Ef),PT_DESCRIPTION,"Lower voltage limit for super-second (p.u.)",
+
+			PT_double,"mq_QV_Droop",PADDR(mq_QV_Droop),PT_DESCRIPTION,"Q-V droop slope",
+			PT_double,"Vset_QV_droop",PADDR(Vset_QV_droop),PT_DESCRIPTION,"Voltage setpoint of QV droop",
+			PT_double,"Vref_SEXS",PADDR(gen_base_set_vals.vset),PT_DESCRIPTION,"Voltage reference for SEXS exciter",
 
 			//State variables - SEXS
 			PT_double,"bias",PADDR(curr_state.avr.bias),PT_DESCRIPTION,"Exciter bias state variable",
@@ -142,7 +152,6 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double,"P_CONSTANT_kp", PADDR(kp_Pconstant), PT_DESCRIPTION, "parameter of the proportional control for constant P mode",
 
 			// If Q_constant delta mode is adopted
-			PT_bool, "Exciter_Q_constant_mode",PADDR(Q_constant_mode),PT_DESCRIPTION,"True if the generator is operating under constant Q mode",
 			PT_double,"Exciter_Q_constant_ki", PADDR(ki_Qconstant), PT_DESCRIPTION, "parameter of the integration control for constant Q mode",
 			PT_double,"Exciter_Q_constant_kp", PADDR(kp_Qconstant), PT_DESCRIPTION, "parameter of the propotional control for constant Q mode",
 
@@ -420,7 +429,10 @@ int diesel_dg::create(void)
 	exc_TB=2.0;               
 	exc_TC=10;              
 	exc_EMAX=3.0;             
-	exc_EMIN=-3.0;            
+	exc_EMIN=-3.0;
+
+	mq_QV_Droop=0.05; // Q-V droop slope
+	Vset_QV_droop=1; //Voltage setpoint of QV droop
 
 	//DEGOV1 Governor defaults
 	gov_degov1_R=0.05;             
@@ -518,6 +530,7 @@ int diesel_dg::create(void)
 	value_IGenerated[0] = value_IGenerated[1] = value_IGenerated[2] = complex(0.0,0.0);
 	Governor_type = NO_GOV;
 	Exciter_type = NO_EXC;
+	SEXS_mode = SEXS_CV;
 
 	power_val[0] = power_val[1] = power_val[2] = complex(0.0,0.0);
 	current_val[0] = current_val[1] = current_val[2] = complex(0.0,0.0);
@@ -578,7 +591,6 @@ int diesel_dg::create(void)
 	ki_Pconstant = 1;
 	kp_Pconstant = 0;
 
-	Q_constant_mode = false;
 	ki_Qconstant = 1;
 	kp_Qconstant = 0;
 
@@ -622,6 +634,9 @@ int diesel_dg::create(void)
 	value_prev_Power[0] = value_prev_Power[1] = value_prev_Power[2] = complex(0.0,0.0);
 	
 	parent_is_powerflow = false;	//By default, we're not a good child
+	attached_bus_type = 0;			//By default, we're basically a PQ bus
+
+	swing_test_fxn = NULL;			//By default, no mapping
 
 	//Overall, force the generator into "PQ mode" first
 	Gen_type = NON_DYN_CONSTANT_PQ;
@@ -844,6 +859,25 @@ int diesel_dg::init(OBJECT *parent)
 			Please check and make sure your parent object has all three phases and try again. if the error persists, please submit your code and a bug report via the Trac website.
 			*/
 		}
+
+		//Pull the bus type
+		temp_property_pointer = new gld_property(tmp_obj, "bustype");
+
+		//Make sure it worked
+		if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_enumeration() != true))
+		{
+			GL_THROW("diesel_dg:%s failed to map bustype variable from %s", obj->name ? obj->name : "unnamed", obj->parent->name ? obj->parent->name : "unnamed");
+			/*  TROUBLESHOOT
+			While attempting to map the bustype variable from the parent node, an error was encountered.  Please try again.  If the error
+			persists, please report it with your GLM via the issues tracking system.
+			*/
+		}
+
+		//Pull the value of the bus
+		attached_bus_type = temp_property_pointer->get_enumeration();
+
+		//Remove it
+		delete temp_property_pointer;
 	}
 	else	//No parent
 	{
@@ -1110,7 +1144,7 @@ int diesel_dg::init(OBJECT *parent)
 				power_val[i].Re() = Rated_VA * gen_base_set_vals.Pref/3;
 			}
 		}
-		if (Q_constant_mode == true) {
+		if (SEXS_mode == SEXS_CQ) {
 			for (int i = 0; i < 3; i++) {
 				power_val[i].Im() = Rated_VA * gen_base_set_vals.Qref/3;
 			}
@@ -1691,7 +1725,7 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 				//Get the positive sequence magnitude
 				voltage_mag_curr = temp_voltage_val[0].Mag()/voltage_base;
 
-				if (Q_constant_mode == true) {
+				if (SEXS_mode == SEXS_CQ) {
 					//Figure out Q difference based on given Qref
 					reactive_diff = (gen_base_set_vals.Qref - (power_val[0].Im() + power_val[1].Im() + power_val[2].Im()) / Rated_VA) / 3.0;
 					reactive_diff = reactive_diff * Rated_VA;
@@ -1722,6 +1756,10 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 					//Keep us here
 					tret_value = t1;
+				}
+				else if (SEXS_mode == SEXS_Q_V_DROOP)
+				{
+					// Delta mode trigger should be here
 				}
 
 				if ((voltage_mag_curr>Max_Ef) || (voltage_mag_curr<Min_Ef))
@@ -2358,7 +2396,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		apply_dynamics(&curr_state,&predictor_vals,deltat);
 
 		//Apply prediction update
-		if (Q_constant_mode == true) {
+		if (SEXS_mode == SEXS_CQ) {
 			next_state.avr.xfd = curr_state.avr.xfd + predictor_vals.avr.xfd*deltat;
 			next_state.Vfd = next_state.avr.xfd + predictor_vals.avr.xfd*(kp_Qconstant/ki_Qconstant);
 		}
@@ -2780,6 +2818,10 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 				gen_base_set_vals.vset = gen_base_set_vals.vadd + Vref;
 			}
 
+			if(SEXS_mode == SEXS_Q_V_DROOP)
+			{
+				gen_base_set_vals.vset = Vset_QV_droop - curr_state.pwr_electric.Im()/Rated_VA * mq_QV_Droop;
+			}
 
 			next_state.avr.xe = curr_state.avr.xe + predictor_vals.avr.xe*deltat;
 			next_state.avr.xb = curr_state.avr.xb + predictor_vals.avr.xb*deltat;
@@ -2808,7 +2850,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		apply_dynamics(&next_state,&corrector_vals,deltat);
 
 		//Reconcile updates update
-		if (Q_constant_mode == true) {
+		if (SEXS_mode == SEXS_CQ) {
 			next_state.avr.xfd = curr_state.avr.xfd + (predictor_vals.avr.xfd + corrector_vals.avr.xfd)*deltath;
 			next_state.Vfd = next_state.avr.xfd + (predictor_vals.avr.xfd + corrector_vals.avr.xfd)*0.5*(kp_Qconstant/ki_Qconstant);
 		}
@@ -3230,6 +3272,11 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 
 				// Give value to vset
 				gen_base_set_vals.vset = gen_base_set_vals.vadd + Vref;
+			}
+
+			if(SEXS_mode == SEXS_Q_V_DROOP)
+			{
+				gen_base_set_vals.vset = Vset_QV_droop - curr_state.pwr_electric.Im()/Rated_VA * mq_QV_Droop;
 			}
 
 			next_state.avr.xe = curr_state.avr.xe + (predictor_vals.avr.xe + corrector_vals.avr.xe)*deltath;
@@ -3969,7 +4016,7 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 	//AVR updates, if relevant
 	if (Exciter_type == SEXS)
 	{
-		if (Q_constant_mode == true) {
+		if (SEXS_mode == SEXS_CQ) {
 
 			// Obtain reactive power output in p.u.
 			temp_double_1 = curr_time->pwr_electric.Im() / Rated_VA;
@@ -4037,7 +4084,7 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 		if (curr_time->avr.xe <= exc_EMIN)
 			curr_time->avr.xe = exc_EMIN;
 
-		if (Q_constant_mode == true) {
+		if (SEXS_mode == SEXS_CQ) {
 			// Add PI control for the control of Q output
 			curr_delta->avr.xfd = curr_time->avr.xe*ki_Qconstant;
 		}
@@ -4425,9 +4472,15 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 			gen_base_set_vals.vadd_a = 0;
 		}
 
+		// Initialize the voltage set point of Q-V droop
+		if(SEXS_mode == SEXS_Q_V_DROOP)
+		{
+			Vset_QV_droop = gen_base_set_vals.vset + curr_time->pwr_electric.Im() / Rated_VA * mq_QV_Droop;
+		}
+
 		// Define exciter bias value
 		// For Q_constant mode, set bias as 0, so that Qout will match Qref
-		if (Q_constant_mode == true) {
+		if (SEXS_mode == SEXS_CQ) {
 			curr_time->avr.bias = 0;
 		}
 		// TODO: non-zero bias value results in differences between vset and Vout measured. Need to think about it.
@@ -4451,9 +4504,8 @@ STATUS diesel_dg::updateCurrInjection(int64 iteration_count)
 	complex temp_total_power_val[3];
 	complex temp_total_power_internal;
 	complex temp_pos_voltage, temp_pos_current;
-	bool bus_is_a_swing;
-	enumeration attached_bus_type;
-	FUNCTIONADDR test_fxn;
+	bool bus_is_a_swing, bus_is_swing_pq_entry;
+	STATUS temp_status_val;
 	gld_property *temp_property_pointer;
 	OBJECT *obj = OBJECTHDR(this);
 
@@ -4470,43 +4522,35 @@ STATUS diesel_dg::updateCurrInjection(int64 iteration_count)
 		//Pull our "bus status" - see if we're a SWING (or SWING_PQ that is a SWING) or not, otherwise, let us update
 		if (parent_is_powerflow == true)
 		{
-			//See what kind of bus we are purported to be
-			temp_property_pointer = new gld_property(obj->parent,"bustype");
-
-			//Make sure it worked
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_enumeration() != true))
-			{
-				GL_THROW("diesel_dg:%s failed to map bustype variable from %s",obj->name?obj->name:"unnamed",obj->parent->name?obj->parent->name:"unnamed");
-				/*  TROUBLESHOOT
-				While attempting to map the bustype variable from the parent node, an error was encountered.  Please try again.  If the error
-				persists, please report it with your GLM via the issues tracking system.
-				*/
-			}
-
-			//Pull the value of the bus
-			attached_bus_type = temp_property_pointer->get_enumeration();
-
-			//Remove it
-			delete temp_property_pointer;
-
 			//Determine our status
 			if (attached_bus_type > 1)	//SWING or SWING_PQ
 			{
-				//Map the swing status check function
-				test_fxn = (FUNCTIONADDR)(gl_get_function(obj->parent,"pwr_object_swing_status_check"));
-
-				//See if it was located
-				if (test_fxn == NULL)
+				//See if the function has been mapped
+				if (swing_test_fxn == NULL)
 				{
-					GL_THROW("diesel_dg:%s - failed to map swing-checking for node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
-					/*  TROUBLESHOOT
-					While attempting to map the swing-checking function, an error was encountered.
-					Please try again.  If the error persists, please submit your code and a bug report via the trac website.
-					*/
+					//Map the swing status check function
+					swing_test_fxn = (FUNCTIONADDR)(gl_get_function(obj->parent,"pwr_object_swing_status_check"));
+
+					//See if it was located
+					if (swing_test_fxn == NULL)
+					{
+						GL_THROW("diesel_dg:%s - failed to map swing-checking for node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
+						/*  TROUBLESHOOT
+						While attempting to map the swing-checking function, an error was encountered.
+						Please try again.  If the error persists, please submit your code and a bug report via the trac website.
+						*/
+					}
 				}
 
-				//Call the test function
-				bus_is_a_swing = ((bool (*)(OBJECT *))(*test_fxn))(obj->parent);
+				//Call the mapping function
+				temp_status_val = ((STATUS (*)(OBJECT *,bool * , bool*))(*swing_test_fxn))(obj->parent,&bus_is_a_swing,&bus_is_swing_pq_entry);
+
+				//Make sure it worked
+				if (temp_status_val != SUCCESS)
+				{
+					GL_THROW("diesel_dg:%s - failed to map swing-checking for node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
+					//Defined above
+				}
 
 				//Now see how we've gotten here
 				if (first_iteration_current_injection == -1)	//Haven't entered before
@@ -4523,7 +4567,7 @@ STATUS diesel_dg::updateCurrInjection(int64 iteration_count)
 					//Update the iteration counter
 					first_iteration_current_injection = iteration_count;
 				}
-				else if (first_iteration_current_injection != 0)	//We didn't enter on the first iteration
+				else if ((first_iteration_current_injection != 0) || (bus_is_swing_pq_entry==true))	//We didn't enter on the first iteration
 				{
 					//Just override the indication - this only happens if we were a SWING or a SWING_PQ that was "demoted"
 					bus_is_a_swing = true;
@@ -4583,7 +4627,7 @@ STATUS diesel_dg::updateCurrInjection(int64 iteration_count)
 				pull_powerflow_values();
 
 				//Figure out which "Q goal" to use
-				if ((Exciter_type == SEXS) && (Q_constant_mode == true))
+				if ((Exciter_type == SEXS) && (SEXS_mode == SEXS_CQ))
 				{
 					//Form up the "goal" variable
 					temp_p_setpoint = complex(gen_base_set_vals.Pref,gen_base_set_vals.Qref)*Rated_VA;	

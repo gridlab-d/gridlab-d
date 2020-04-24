@@ -35,8 +35,11 @@ void hvac::post_update(void)
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
-CDECL CLASS *hvac_class = NULL;
-CDECL OBJECT *last_hvac = NULL;
+CDECL CLASS *hvac_class;
+CDECL OBJECT *last_hvac;
+
+CLASS *hvac_class = NULL;
+OBJECT *last_hvac = NULL;
 
 EXPORT int create_hvac(OBJECT **obj, OBJECT *parent)
 {

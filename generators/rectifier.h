@@ -31,21 +31,21 @@ public:
 
 	double efficiency;
 
-	complex VA_In; //power in (DC)
-	complex VA_Out;  // power out (DC)
+	double VA_In; //power in (DC)
+	double VA_Out;  // power out (DC)
 	double P_Out;  // P_Out and Q_Out are set by the user as set values to output in CONSTANT_PQ mode
 	double Q_Out;
 	double V_Rated;
 
-	complex voltage_out[3]; //voltage in
+	double voltage_out[3]; //voltage in
 
-	complex V_Out; // only one voltage out for DC
+	double V_Out; // only one voltage out for DC
 
-	complex current_out[3];      // current in
+	double current_out[3];      // current in
 
-	complex I_Out; //only one current out for DC
+	double I_Out; //only one current out for DC
 
-	complex power_out[3];//power
+	double power_out[3];//power
 
 private:
 	gld_property *pCircuit_V;		//< pointer to the inverter voltage

@@ -3339,8 +3339,8 @@ object inverter {
 	rated_power 200 kVA;
 	P_Out 80000;  // constant real power reference. In steady state, it will be the real power output; in delta mode, the real power output is trying to reach this value, if no droop is defined
 	Q_Out 10000;
-	V_In 1000+0j; // dc voltage
-	I_In 1000+0j; // dc current
+	V_In 1000.0; // dc voltage
+	I_In 1000.0; // dc current
 
 	flags DELTAMODE;
 	dynamic_model_mode PI;

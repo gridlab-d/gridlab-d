@@ -367,11 +367,18 @@ int battery::init(OBJECT *parent)
 				pCircuit_V[1] = map_complex_value(parent,"voltage_1N");
 				pCircuit_V[2] = map_complex_value(parent,"voltage_2N");
 
-				pLine_I[0] = map_complex_value(parent,"current_1");
-				pLine_I[1] = map_complex_value(parent,"current_2");
-				pLine_I[2] = map_complex_value(parent,"current_N");
+				// NOTE - Commented code will replace the pLine_I and pLine12 once the triplex_node "deprecated properties" are removed
+				// pLine_I[0] = map_complex_value(parent,"current_1");
+				// pLine_I[1] = map_complex_value(parent,"current_2");
+				// pLine_I[2] = map_complex_value(parent,"current_N");
 
-				pLine12 = map_complex_value(parent,"current_12");
+				// pLine12 = map_complex_value(parent,"current_12");
+
+				pLine_I[0] = map_complex_value(parent,"acc_temp_current_1");
+				pLine_I[1] = map_complex_value(parent,"acc_temp_current_2");
+				pLine_I[2] = map_complex_value(parent,"acc_temp_current_N");
+
+				pLine12 = map_complex_value(parent,"acc_temp_current_12");
 
 				pPower = map_complex_value(parent,"measured_power");
 
@@ -409,19 +416,19 @@ int battery::init(OBJECT *parent)
 				phases = 0x00;
 
 				//Map up the two inverter variabes
-				pCircuit_V[0] = map_complex_value(parent,"V_In");
+				pCircuit_V[0] = map_double_value(parent,"V_In");
 				pCircuit_V[1] = NULL;
 				pCircuit_V[2] = NULL;
 
-				pLine_I[0] = map_complex_value(parent,"I_In");
+				pLine_I[0] = map_double_value(parent,"I_In");
 				pLine_I[1] = NULL;
 				pLine_I[2] = NULL;
 
 				peff = map_double_value(parent,"inverter_efficiency");
-				pinverter_VA_Out = map_complex_value(parent,"VA_Out");
+				pinverter_VA_Out = map_double_value(parent,"P_Out");
 
 				//Pull the initial voltage value, to be consistent
-				value_Circuit_V[0] = pCircuit_V[0]->get_complex();
+				value_Circuit_V[0] = complex(pCircuit_V[0]->get_double(),0.0);
 			}
 			else	//Not a proper parent
 			{
@@ -1924,12 +1931,26 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//See if the property was valid (since not sure what we are here -- meter or inverter)
 			if (pCircuit_V[0] != NULL)
 			{
-				value_Circuit_V[0] = pCircuit_V[0]->get_complex();
+				if (parent_is_inverter == true)
+				{
+					value_Circuit_V[0] = complex(pCircuit_V[0]->get_double(), 0.0);
+				}
+				else
+				{
+					value_Circuit_V[0] = pCircuit_V[0]->get_complex();
+				}
 			}
 
 			if (pLine_I[0] != NULL)
 			{
-				value_Line_I[0] = pLine_I[0]->get_complex();
+				if (parent_is_inverter == true)
+				{
+					value_Line_I[0] = complex(pLine_I[0]->get_double(), 0.0);
+				}
+				else
+				{
+					value_Line_I[0] = pLine_I[0]->get_complex();
+				}
 			}
 
 			V_Out = value_Circuit_V[0];
@@ -2430,7 +2451,7 @@ double battery::check_state_change_time_delta(unsigned int64 delta_time, unsigne
 	//Retrieve the inverter properties
 	if (parent_is_inverter == true)
 	{
-		inv_VA_out_value = pinverter_VA_Out->get_complex();
+		inv_VA_out_value = complex(pinverter_VA_Out->get_double(), 0.0);
 		inv_eff_value = peff->get_double();
 	}
 

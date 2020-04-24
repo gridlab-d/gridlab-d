@@ -91,10 +91,9 @@ object inverter {
 // panel with shading
 object solar {
 	name trip_shad_solar;
-	phases AS;
 	parent trip_shad_inv;
 	weather "WA-Yakima";
-	Rated_kVA 4.0 kVA;
+	rated_power 4.0 kW;
 	area 29.6296 m^2;
 	tilt_angle 45.0;
 	efficiency 0.135;
@@ -111,14 +110,13 @@ object solar {
 		}; 
 		within 0.01;
 	};
-	object complex_assert {
-		target VA_Out;
-		operation REAL;
+	object double_assert {
+		target P_Out;
 		object player {
 			property value;
 			file "../fixed_45_S_shading_VA_out_15min.player"; 
 		}; 
-		within 0.01;
+		within 0.05;
 	};
 	// object recorder {
 		// property "Insolation,VA_Out.real,shading_factor";

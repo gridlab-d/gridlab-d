@@ -330,6 +330,18 @@ TIMESTAMP triplex_meter::presync(TIMESTAMP t0)
 TIMESTAMP triplex_meter::sync(TIMESTAMP t0)
 {
 	int TempNodeRef;
+	OBJECT *obj = OBJECTHDR(this);
+
+	//Check for straggler nodes - fix so segfaults don't occur
+	if ((prev_NTime==0) && (solver_method == SM_NR))
+	{
+		//See if we've been initialized yet - links typically do this, but single buses get missed
+		if (NR_node_reference == -1)
+		{
+			//Call the populate routine
+			NR_populate();
+		}
+	}
 
 	//Reliability check
 	if ((fault_check_object != NULL) && (solver_method == SM_NR))	//proper solver fault_check is present (so might need to set flag
@@ -337,6 +349,29 @@ TIMESTAMP triplex_meter::sync(TIMESTAMP t0)
 		if (NR_node_reference==-99)	//Childed
 		{
 			TempNodeRef=*NR_subnode_reference;
+
+			//See if our parent was initialized
+			if (TempNodeRef == -1)
+			{
+				//Try to initialize it, for giggles
+				node *Temp_Node = OBJECTDATA(SubNodeParent,node);
+
+				//Call the initialization
+				Temp_Node->NR_populate();
+
+				//Pull our reference
+				TempNodeRef=*NR_subnode_reference;
+
+				//Check it again
+				if (TempNodeRef == -1)
+				{
+					GL_THROW("triplex_meter:%d - %s - Uninitialized parent is causing odd issues - fix your model!",obj->id,(obj->name?obj->name:"Unnamed"));
+					/*  TROUBLESHOOT
+					A childed triplex_meter object is having issues mapping to its parent node - this typically happens in very odd cases of islanded/orphaned
+					topologies that only contain nodes (no links).  Adjust your GLM to work around this issue.
+					*/
+				}
+			}
 		}
 		else	//Normal
 		{
@@ -837,9 +872,6 @@ SIMULATIONMODE triplex_meter::inter_deltaupdate_triplex_meter(unsigned int64 del
 			if (tpmeter_interrupted_secondary == true)
 				tpmeter_interrupted_secondary = false;
 
-		//Call triplex-specific call
-		BOTH_triplex_node_presync_fxn();
-
 		//Call node presync-equivalent items
 		NR_node_presync_fxn(0);
 
@@ -850,6 +882,8 @@ SIMULATIONMODE triplex_meter::inter_deltaupdate_triplex_meter(unsigned int64 del
 				if (NR_node_reference==-99)	//Childed
 				{
 					TempNodeRef=*NR_subnode_reference;
+
+					//No child check from above -- if we're broke this late in the game, we have major problems (should have been caught by now)
 				}
 				else	//Normal
 				{

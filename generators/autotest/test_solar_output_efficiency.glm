@@ -51,7 +51,7 @@ object inverter {
 			property value;
 			file "../inverter_VA_out_default_solar.player";
 		};
-		within 0.01;
+		within 0.05;
 	};
 //	 object recorder {
 //		 property "VA_In.real, VA_Out.real";
@@ -63,7 +63,6 @@ object inverter {
 //default solar object
 object solar {
 	name trip_solar1;
-	phases AS;
 	parent trip_inv1;
 	area 323;
 	object double_assert {
@@ -74,14 +73,13 @@ object solar {
 		};
 		within 0.01;
 	};
-	object complex_assert {
-		target VA_Out;
-		operation REAL;
+	object double_assert {
+		target P_Out;
 		object player {
 			property value;
 			file "../default_solar_VA_out.player";
 		};
-		within 0.01;
+		within 0.05;
 	};
 
 }
@@ -108,7 +106,7 @@ object inverter {
 			property value;
 			file "../mltpt_efficiency_inverter_VA_out.player";
 		};
-		within 0.01;
+		within 0.05;
 	};
 //	 object recorder {
 //		 property "VA_In.real, VA_Out.real";
@@ -120,10 +118,9 @@ object inverter {
 //default solar object
 object solar {
 	name trip_solar2;
-	phases AS;
 	parent trip_inv2;
 	weather "WA-Yakima";
-	Rated_kVA 4.0 kVA;
+	rated_power 4.0 kW;
 	area 29.6296 m^2;
 	tilt_angle 45.0;
 	efficiency 0.135;
@@ -136,14 +133,13 @@ object solar {
 //		 file "deafult_array.csv";
 //		 interval 3600;
 //		 };
-	object complex_assert {
-		target VA_Out;
-		operation REAL;
+	object double_assert {
+		target P_Out;
 		object player {
 			property value;
 			file "../fixed_45_S_VA_out.player"; 
 		}; 
-		within 0.01;
+		within 0.05;
 	};
 	object double_assert {
 		target Insolation;

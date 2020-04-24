@@ -53,10 +53,9 @@ object inverter {
 
 object solar { // player files are used instead of climate object
 	name trip_shad_solar1;
-	phases AS;
 	parent trip_shad_inv;
 	//weather "WA-Yakima";
-	Rated_kVA 4.0 kVA;
+	rated_power 4.0 kW;
 	area 29.6296 m^2;
 	tilt_angle 45.0;
 	efficiency 0.135;
@@ -76,14 +75,13 @@ object solar { // player files are used instead of climate object
 		property wind_speed;
 		file "../Yakima_wind_speed.player";
 	};
-	object complex_assert {
-		target VA_Out;
-		operation REAL;
+	object double_assert {
+		target P_Out;
 		object player {
 			property value;
 			file "../solar_playerval_VA_Out.player"; 
 		}; 
-		within 0.01;
+		within 0.05;
 	};
 	// object recorder {
 		// property "Insolation,VA_Out.real,shading_factor";
@@ -95,9 +93,8 @@ object solar { // player files are used instead of climate object
 
 object solar { // no climate object available -- using default values 
 	name trip_shad_solar2;
-	phases AS;
 	parent trip_shad_inv;
-	Rated_kVA 4.0 kVA;
+	rated_power 4.0 kW;
 	area 29.6296 m^2;
 	efficiency 0.135;
 	orientation_azimuth 180; //equator-facing (South)
@@ -108,10 +105,9 @@ object solar { // no climate object available -- using default values
 		value 190.214; 
 		within 0.01;
 	};
-	object complex_assert {
-		target VA_Out;
-		operation REAL;
-		value 3433.13;	
+	object double_assert {
+		target P_Out;
+		value 3433.18;	
 		within 0.01; 
 	};
 	// object recorder {

@@ -156,6 +156,9 @@ private:
 	complex value_prev_Power[3];	///Storage variable for previous power - mostly for accumulator handling
 
 	bool parent_is_powerflow;
+	enumeration attached_bus_type;	//Determines attached bus type
+
+	FUNCTIONADDR swing_test_fxn;	//Function to map to swing testing function, if needed
 
 	bool first_run;		///< Flag for first run of the diesel_dg object - eliminates t0==0 dependence
 	bool is_isochronous_gen;	///< Flag to indicate if we're isochronous, mostly to help keep us in deltamode
@@ -214,8 +217,14 @@ public:
 	enumeration Gen_type;
 
 	//Dynamics synchronous generator capabilities
-	enum {NO_EXC=1, SEXS};
+	enum {NO_EXC=1, SEXS=2};
 	enumeration Exciter_type;
+
+	//Dynamics synchronous generator capabilities
+	enum {SEXS_CV=1,SEXS_CQ=2,SEXS_Q_V_DROOP=3};
+	enumeration SEXS_mode;
+
+
 	//gastflag
 	enum {NO_GOV=1, DEGOV1=2, GAST=3, GGOV1_OLD=4, GGOV1=5, P_CONSTANT=6};
 	enumeration Governor_type;
@@ -285,10 +294,12 @@ public:
 	double kp_Pconstant;		// kp for the PI controller implemented in P constant delta mode
 
 	bool P_constant_mode; 		// Flag indicating whether P constant mode is imployed
-	bool Q_constant_mode;       // Flag indicating whether Q constant mode is imployed
 	double ki_Qconstant;		// ki for the PI controller implemented in Q constant delta mode
 	double kp_Qconstant;		// kp for the PI controller implemented in Q constant delta mode
 	
+	double mq_QV_Droop; // Q-V droop slope
+	double Vset_QV_droop; //Voltage setpoint of QV droop
+
 	// parameters related to CVR control in AVR
 	bool CVRenabled;				// Flag indicating whether CVR control is enabled or not inside the exciter
 	double ki_cvr;					// Integral gain for PI/PID controller of the CVR control

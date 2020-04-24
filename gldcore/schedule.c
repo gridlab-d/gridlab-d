@@ -541,6 +541,32 @@ int schedule_recompile_block(SCHEDULE *sch, unsigned char calendar, unsigned cha
 		}
 		else
 		{
+			/* See if it has already been normalized */
+			if ((sch->flags & SN_IS_NORMALIZED) == SN_IS_NORMALIZED)
+			{
+				/* See if it is weighted or other normalization */
+				if ((sch->flags & SN_WEIGHTED) == SN_WEIGHTED)
+				{
+					output_error("schedule_recompile(SCHEDULE *sch='{name=%s, ...}') has a weighted normalization", sch->name);
+					/*  TROUBLESHOOT
+					The schedule is categorized as a weighted normalization.  Unfortunately, recompiling this for a new year
+					requires information that is not present.  Avoid running these types of schedules over year transitions.
+					*/
+					return 0;
+
+				}
+				else if ((sch->flags & SN_ABSOLUTE) == SN_ABSOLUTE)	/* Assumed to be unweighted and absolute */
+				{
+					value /= sch->abs[block];
+				}
+				else /*  Must be unweighted, but not absolute */
+				{
+					value /= sch->sum[block];
+				}
+				
+			}
+			// /* Default else - no need to scale */
+
 			/* a valid line was scanned */
 			if ((ndx=find_value_index(sch,block,value))==-1)
 			{	
@@ -1246,6 +1272,7 @@ SCHEDULEINDEX schedule_index(SCHEDULE *sch, TIMESTAMP ts)
 	SCHEDULEINDEX ref = 0;
 	DATETIME dt;
 	unsigned int cal, min;
+	int return_value;
 	
 	/* determine the local time */
 	if (!local_datetime(ts,&dt))
@@ -1264,14 +1291,26 @@ SCHEDULEINDEX schedule_index(SCHEDULE *sch, TIMESTAMP ts)
 	min=(dt.yearday*24 + dt.hour)*60 + dt.minute;
 
 	if ( cal>=MAXCALENDARS || min>=MAXMINUTES )
+	{
 		output_error("schedule_index(): timestamp %" FMT_INT64 "d has calendar %d minute %d which is invalid", ts, cal, min);
+		return -1;
+	}
 
 	SET_CALENDAR(ref, cal);
 	SET_MINUTE(ref, min);
 
 	if ( sch->index[cal] == 0) {
-		schedule_recompile(sch, cal);
-		schedule_compile_dtnext(sch, cal);
+		return_value = schedule_recompile(sch, cal);
+
+		/* Check the return value - if it is 0, pass us as a failure 9no new message, done inside the subfunction) */
+		if (return_value == 0)
+			return -1;
+		
+		return_value = schedule_compile_dtnext(sch, cal);
+
+		/* Error check */
+		if (return_value == 0)
+			return -1;
 	}
 
 	/* got it */
@@ -1348,6 +1387,11 @@ TIMESTAMP schedule_sync(SCHEDULE *sch, /**< the schedule that is to be synchroni
 		{
 			/* first iteration */
 			SCHEDULEINDEX index = schedule_index(sch,t);
+
+			/* Error check */
+			if (index < 0)
+				return TS_INVALID;
+
 			int32 dtnext = schedule_dtnext(sch,index)*60;
 			sch->since = sch->since == TS_ZERO ? t : sch->next_t;
 			sch->duration = schedule_duration(sch,index)/60.0;
@@ -1364,6 +1408,11 @@ TIMESTAMP schedule_sync(SCHEDULE *sch, /**< the schedule that is to be synchroni
 			/* still in the same window, just re-interpolate. */
 			SCHEDULEINDEX start_index = schedule_index(sch,sch->since);
 			SCHEDULEINDEX end_index = schedule_index(sch,sch->next_t);
+
+			/* Error check */
+			if ((start_index < 0) || (end_index < 0))
+				return TS_INVALID;
+
 			double start_value = schedule_value(sch,start_index);
 			double end_value = schedule_value(sch,end_index);
 			sch->value = start_value + ((end_value - start_value) * ((double)(t - sch->since) / (double)(sch->next_t - sch->since))); 
@@ -1376,6 +1425,11 @@ TIMESTAMP schedule_sync(SCHEDULE *sch, /**< the schedule that is to be synchroni
 		{
 			/* move to the new schedule */
 			SCHEDULEINDEX index = schedule_index(sch,t);
+
+			/* Error check */
+			if (index < 0)
+				return TS_INVALID;
+
 			int32 dtnext = schedule_dtnext(sch,index)*60;
 			double value = schedule_value(sch,index);
 #ifdef _DEBUG
@@ -1707,6 +1761,7 @@ void schedule_dump(SCHEDULE *sch, char *file, char *mode)
 			DATETIME dt = {y,0,1,0,0,0};
 			TIMESTAMP ts = mkdatetime(&dt);
 			SCHEDULEINDEX ndx = schedule_index(sch,ts);
+			/* Should error check here - since it is a dump, hopefully someone is watching the console */
 			if (GET_CALENDAR(ndx)==calendar)
 			{
 				fprintf(fp," %d",y);
@@ -1738,11 +1793,13 @@ void schedule_dump(SCHEDULE *sch, char *file, char *mode)
 					DATETIME dt = {year,month+1,day+1,hour,0,0};
 					TIMESTAMP ts = mkdatetime(&dt);
 					SCHEDULEINDEX ndx = schedule_index(sch,ts);
+					/* Should error check here - since it is a dump, hopefully someone is watching the console */
 					unsigned int dtn = schedule_dtnext(sch,ndx);
 					double value = schedule_value(sch,ndx);
 					if ( dtn < 60 )
 					{
 						SCHEDULEINDEX ndx2 = schedule_index(sch,ts+dtn);
+						/* Should error check here - since it is a dump, hopefully someone is watching the console */
 						double value2 = schedule_value(sch,ndx2);
 						fprintf(fp,"%5g%c",schedule_value(sch,ndx),value!=value2?'~':' ');
 					}

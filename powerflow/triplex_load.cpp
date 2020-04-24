@@ -142,6 +142,10 @@ int triplex_load::create(void)
 
 	base_load_val_was_nonzero[0] = base_load_val_was_nonzero[1] = base_load_val_was_nonzero[2] = false;	//Start deflagged
 
+	prev_load_values[0][0] = prev_load_values[0][1] = prev_load_values[0][2] = complex(0.0,0.0);
+	prev_load_values[1][0] = prev_load_values[1][1] = prev_load_values[1][2] = complex(0.0,0.0);
+	prev_load_values[2][0] = prev_load_values[2][1] = prev_load_values[2][2] = complex(0.0,0.0);
+
     return res;
 }
 
@@ -172,13 +176,6 @@ int triplex_load::init(OBJECT *parent)
 
 TIMESTAMP triplex_load::presync(TIMESTAMP t0)
 {
-	if ((solver_method!=SM_FBS) && (SubNode==PARENT))	//Need to do something slightly different with GS and parented node
-	{
-		shunt[0] = shunt[1] = shunt[2] = 0.0;
-		power[0] = power[1] = power[2] = 0.0;
-		current[0] = current[1] = current[2] = 0.0;
-	}
-	
 	//Must be at the bottom, or the new values will be calculated after the fact
 	TIMESTAMP result = triplex_node::presync(t0);
 	
@@ -224,9 +221,9 @@ TIMESTAMP triplex_load::postsync(TIMESTAMP t0)
 	measured_voltage_2.SetPolar(voltage2.Mag(),voltage2.Arg());
 	measured_voltage_12.SetPolar(voltage12.Mag(),voltage12.Arg());
 
-	measured_power[0] = voltage1*(~current_inj[0]);
-	measured_power[1] = -(voltage2*(~current_inj[1]));
-	measured_power[2] = voltage12*(~(-(current_inj[1]+current_inj[0])));
+	measured_power[0] = voltage[0]*(~current_inj[0]);
+	measured_power[1] = -(voltage[1]*(~current_inj[1]));
+	measured_power[2] = voltage[2]*(~(-(current_inj[1]+current_inj[0])));	//Voltage_N
 	measured_total_power = measured_power[0] + measured_power[1] + measured_power[2];
 
 	return t1;
@@ -238,6 +235,27 @@ void triplex_load::triplex_load_update_fxn()
 {
 	complex intermed_impedance[3];
 	int index_var;
+
+	//Remove prior contributions and zero the accumulators
+	shunt[0] -= prev_load_values[0][0];
+	shunt[1] -= prev_load_values[0][1];
+	shunt[2] -= prev_load_values[0][2];
+
+	current[0] -= prev_load_values[1][0];
+	current[1] -= prev_load_values[1][1];
+	current12 -= prev_load_values[1][2];	//12 is a separate variable - [2] is N
+
+	power[0] -= prev_load_values[2][0];
+	power[1] -= prev_load_values[2][1];
+	power[2] -= prev_load_values[2][2];
+
+	//Zero the accumulators
+	for (index_var=0; index_var<3; index_var++)
+	{
+		prev_load_values[0][index_var] = complex(0.0,0.0);
+		prev_load_values[1][index_var] = complex(0.0,0.0);
+		prev_load_values[2][index_var] = complex(0.0,0.0);
+	}
 
 	if(base_power[0] != 0.0){// Phase 1
 
@@ -573,49 +591,50 @@ void triplex_load::triplex_load_update_fxn()
 		intermed_impedance[2] = constant_impedance[2];
 	}
 	
-	if ((solver_method!=SM_FBS) && (SubNode==PARENT))	//Need to do something slightly different with GS/NR and parented load
-	{													//associated with change due to player methods
-
-		if (!(intermed_impedance[0].IsZero()))
-			pub_shunt[0] += complex(1.0)/intermed_impedance[0];
-
-		if (!(intermed_impedance[1].IsZero()))
-			pub_shunt[1] += complex(1.0)/intermed_impedance[1];
-		
-		if (!(intermed_impedance[2].IsZero()))
-			pub_shunt[2] += complex(1.0)/intermed_impedance[2];
-		
-		power1 += constant_power[0];
-		power2 += constant_power[1];	
-		power12 += constant_power[2];
-		current1 += constant_current[0];
-		current2 += constant_current[1];
-		current12 += constant_current[2];
-	}
-	else
+	//See how to accumulate the various values
+	if(!intermed_impedance[0].IsZero())
 	{
-		if(intermed_impedance[0].IsZero())
-			pub_shunt[0] = 0.0;
-		else
-			pub_shunt[0] = complex(1)/intermed_impedance[0];
+		//Accumulator
+		shunt[0] += complex(1.0)/intermed_impedance[0];
 
-		if(intermed_impedance[1].IsZero())
-			pub_shunt[1] = 0.0;
-		else
-			pub_shunt[1] = complex(1)/intermed_impedance[1];
-		
-		if(intermed_impedance[2].IsZero())
-			pub_shunt[2] = 0.0;
-		else
-			pub_shunt[2] = complex(1)/intermed_impedance[2];
-		
-		power1 = constant_power[0];
-		power2 = constant_power[1];	
-		power12 = constant_power[2];
-		current1 = constant_current[0];
-		current2 = constant_current[1];
-		current12 = constant_current[2];
+		//Tracker
+		prev_load_values[0][0] += complex(1.0,0.0)/intermed_impedance[0];
 	}
+
+	if(!intermed_impedance[1].IsZero())
+	{
+		//Accumulator
+		shunt[1] += complex(1.0)/intermed_impedance[1];
+
+		//Tracker
+		prev_load_values[0][1] += complex(1.0,0.0)/intermed_impedance[1];
+	}
+	
+	if(!intermed_impedance[2].IsZero())
+	{
+		//Accumulator
+		shunt[2] += complex(1.0)/intermed_impedance[2];
+
+		//Tracker
+		prev_load_values[0][2] += complex(1.0,0.0)/intermed_impedance[2];
+	}
+	
+	//Power and current accumulators
+	power[0] += constant_power[0];
+	power[1] += constant_power[1];	
+	power[2] += constant_power[2];
+
+	current[0] += constant_current[0];
+	current[1] += constant_current[1];
+	current12 += constant_current[2];
+
+	//Power and current trackers
+	prev_load_values[1][0] += constant_current[0];
+	prev_load_values[1][1] += constant_current[1];
+	prev_load_values[1][2] += constant_current[2];
+	prev_load_values[2][0] += constant_power[0];
+	prev_load_values[2][1] += constant_power[1];
+	prev_load_values[2][2] += constant_power[2];
 }
 
 //Function to appropriately zero load - make sure we don't get too heavy handed
@@ -623,38 +642,27 @@ void triplex_load::triplex_load_delete_update_fxn(void)
 {
 	int index_var;
 
-	if ((solver_method!=SM_FBS) && ((SubNode==PARENT) || (SubNode==DIFF_PARENT)))	//Need to do something slightly different with GS/NR and parented load
-	{													//associated with change due to player methods
-		if (SubNode != PARENT)	//Normal parent gets one routine
-		{
-			//Loop and clear
-			for (index_var=0; index_var<3; index_var++)
-			{
-				pub_shunt[index_var] = complex(0.0,0.0);
-				power[index_var] = complex(0.0,0.0);
-				current[index_var] = complex(0.0,0.0);
-			}
-
-			//Get the straggler
-			current12 = complex(0.0,0.0);
-		}
-	}
-	else
+	//Loop and clear
+	for (index_var=0; index_var<3; index_var++)
 	{
-		//Loop and clear
-		for (index_var=0; index_var<3; index_var++)
-		{
-			pub_shunt[index_var] = complex(0.0,0.0);
-			power[index_var] = complex(0.0,0.0);
-			current[index_var] = complex(0.0,0.0);
-		}
+		//Remove contributions - power and shunt
+		shunt[index_var] -= prev_load_values[0][index_var];
+		power[index_var] -= prev_load_values[2][index_var];
+	}
 
-		//Get the straggler
-		current12 = complex(0.0,0.0);
+	//Do current independently, since it is "odd"
+	current[0] -= prev_load_values[1][0];
+	current[1] -= prev_load_values[1][1];
+	current12 -= prev_load_values[1][2];
+
+	//Zero the accumulators
+	for (index_var=0; index_var<3; index_var++)
+	{
+		prev_load_values[0][index_var] = complex(0.0,0.0);
+		prev_load_values[1][index_var] = complex(0.0,0.0);
+		prev_load_values[2][index_var] = complex(0.0,0.0);
 	}
 }
-
-
 
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF DELTA MODE
@@ -702,17 +710,6 @@ SIMULATIONMODE triplex_load::inter_deltaupdate_triplex_load(unsigned int64 delta
 
 	if (interupdate_pos == false)	//Before powerflow call
 	{
-		//Triplex_load presync items
-			if ((solver_method!=SM_FBS) && (SubNode==PARENT))	//Need to do something slightly different with GS and parented node
-			{
-				shunt[0] = shunt[1] = shunt[2] = 0.0;
-				power[0] = power[1] = power[2] = 0.0;
-				current[0] = current[1] = current[2] = 0.0;
-			}
-
-		//Call triplex-specific call
-		BOTH_triplex_node_presync_fxn();
-
 		//Call node presync-equivalent items
 		NR_node_presync_fxn(0);
 
@@ -756,9 +753,9 @@ SIMULATIONMODE triplex_load::inter_deltaupdate_triplex_load(unsigned int64 delta
 		measured_voltage_2.SetPolar(voltage2.Mag(),voltage2.Arg());
 		measured_voltage_12.SetPolar(voltage12.Mag(),voltage12.Arg());
 
-		measured_power[0] = voltage1*(~current_inj[0]);
-		measured_power[1] = -(voltage2*(~current_inj[1]));
-		measured_power[2] = voltage12*(~(-(current_inj[1]+current_inj[0])));
+		measured_power[0] = voltage[0]*(~current_inj[0]);
+		measured_power[1] = -(voltage[1]*(~current_inj[1]));
+		measured_power[2] = voltage[2]*(~(-(current_inj[1]+current_inj[0])));	//Voltage_N
 		measured_total_power = measured_power[0] + measured_power[1] + measured_power[2];
 
 		//Frequency measurement stuff
