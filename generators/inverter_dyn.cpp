@@ -5052,44 +5052,7 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count)
 			}
 		}
 	}
-	else
-	{
-		//Steady-state grid forming code update - when not a swing (or swing swapped) - deltamode gets handleded differently
-		if ((control_mode == GRID_FORMING) && (deltatimestep_running < 0.0))
-		{
-			if (bus_is_a_swing == false)
-			{
-				//Balance voltage and satisfy power
-				complex aval, avalsq;
-				complex temp_total_power_val[3];
-				complex temp_total_power_internal;
-				complex temp_pos_voltage, temp_pos_current;
-
-				//Conversion variables - 1@120-deg
-				aval = complex(-0.5, (sqrt(3.0) / 2.0));
-				avalsq = aval * aval; //squared value is used a couple places too
-
-				//Calculate the Norton-shunted power
-				temp_total_power_val[0] = value_Circuit_V[0] * ~(generator_admittance[0][0] * value_Circuit_V[0] + generator_admittance[0][1] * value_Circuit_V[1] + generator_admittance[0][2] * value_Circuit_V[2]);
-				temp_total_power_val[1] = value_Circuit_V[1] * ~(generator_admittance[1][0] * value_Circuit_V[0] + generator_admittance[1][1] * value_Circuit_V[1] + generator_admittance[1][2] * value_Circuit_V[2]);
-				temp_total_power_val[2] = value_Circuit_V[2] * ~(generator_admittance[2][0] * value_Circuit_V[0] + generator_admittance[2][1] * value_Circuit_V[1] + generator_admittance[2][2] * value_Circuit_V[2]);
-
-				//Figure out what we should be generating internally
-				temp_total_power_internal = temp_VA + temp_total_power_val[0] + temp_total_power_val[1] + temp_total_power_val[2];
-
-				//Compute the positive sequence voltage (*3)
-				temp_pos_voltage = value_Circuit_V[0] + value_Circuit_V[1] * aval + value_Circuit_V[2] * avalsq;
-
-				//Compute the positive sequence current
-				temp_pos_current = ~(temp_total_power_internal / temp_pos_voltage);
-
-				//Now populate this into the output
-				value_IGenerated[0] = temp_pos_current;
-				value_IGenerated[1] = temp_pos_current * avalsq;
-				value_IGenerated[2] = temp_pos_current * aval;
-			}
-		}
-	}
+	//Default else - things are handled elsewhere
 
 	//Push the changes up
 	if (parent_is_a_meter == true)

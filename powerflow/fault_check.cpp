@@ -2149,8 +2149,8 @@ void fault_check::associate_grids(void)
 			{
 				NR_busdata[indexval].swing_functions_enabled = false;
 
-				//Update the "topological flag" too
-				NR_busdata[indexval].swing_topology_entry = false;
+				//Leave the "swing_topology_entry" flag as-is - used as flag to determine if a SWING_PQ
+				//with a generator suddenly became a main source
 			}
 			//Default else, we've already been hit, skip out
 		}
