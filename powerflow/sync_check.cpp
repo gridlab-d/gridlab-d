@@ -63,55 +63,17 @@ int sync_check::init(OBJECT *parent)
 	int retval = powerflow_object::init(parent);
 
 	data_sanity_check(parent);
-	reg_deltamode();
-	init_sensors();
+	reg_deltamode_check();
+	init_sensors(parent);
 
 	return retval;
 }
 
 TIMESTAMP sync_check::presync(TIMESTAMP t0)
 {
-	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP tret = powerflow_object::presync(t0);
 
-	// Check if this object needs to be registered for running in deltamode
-	if (reg_dm_flag)
-	{
-		// Turn off this one-time flag
-		reg_dm_flag = false;
-
-		//Check limits first
-		if (pwr_object_current >= pwr_object_count)
-		{
-			GL_THROW("Too many objects tried to populate deltamode objects array in the powerflow module!");
-			/*  TROUBLESHOOT
-			While attempting to populate a reference array of deltamode-enabled objects for the powerflow
-			module, an attempt was made to write beyond the allocated array space.  Please try again.  If the
-			error persists, please submit a bug report and your code via the trac website.
-			*/
-		}
-
-		// Add this object into the list of deltamode objects
-		delta_objects[pwr_object_current] = obj;
-
-		// Map up the function
-		delta_functions[pwr_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "interupdate_pwr_object"));
-
-		// Dobule check the mapped function
-		if (delta_functions[pwr_object_current] == NULL)
-		{
-			gl_warning("Failure to map deltamode function for this device: %s", obj->name);
-			/*  TROUBLESHOOT
-			Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
-			the object supports deltamode.  This error may simply be an indication that the object of interest
-			does not support deltamode.  If the error persists and the object does, please submit your code and
-			a bug report via the trac website.
-			*/
-		}
-
-		//Increment
-		pwr_object_current++;
-	}
+	reg_deltamode();
 
 	return tret;
 }
@@ -172,9 +134,11 @@ bool sync_check::data_sanity_check(OBJECT *par)
 		gl_warning("sync_check:%d %s - metrics_period_sec was not set as a positive value, it is reset to %f [secs].", obj->id, (obj->name ? obj->name : "Unnamed"), metrics_period_sec);
 		flag_prop_modified = true;
 	}
+
+	return flag_prop_modified;
 }
 
-void sync_check::reg_deltamode()
+void sync_check::reg_deltamode_check()
 {
 	OBJECT *obj = OBJECTHDR(this);
 
@@ -208,8 +172,80 @@ void sync_check::reg_deltamode()
 	}
 }
 
-void sync_check::init_sensors()
+void sync_check::reg_deltamode()
 {
+	// Check if this object needs to be registered for running in deltamode
+	if (reg_dm_flag)
+	{
+		// Turn off this one-time flag
+		reg_dm_flag = false;
+
+		//Check limits first
+		if (pwr_object_current >= pwr_object_count)
+		{
+			GL_THROW("Too many objects tried to populate deltamode objects array in the powerflow module!");
+			/*  TROUBLESHOOT
+			While attempting to populate a reference array of deltamode-enabled objects for the powerflow
+			module, an attempt was made to write beyond the allocated array space.  Please try again.  If the
+			error persists, please submit a bug report and your code via the trac website.
+			*/
+		}
+
+		// Get the self-pointer
+		OBJECT *obj = OBJECTHDR(this);
+
+		// Add this object into the list of deltamode objects
+		delta_objects[pwr_object_current] = obj;
+
+		// Map up the function
+		delta_functions[pwr_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "interupdate_pwr_object"));
+
+		// Dobule check the mapped function
+		if (delta_functions[pwr_object_current] == NULL)
+		{
+			gl_warning("Failure to map deltamode function for this device: %s", obj->name);
+			/*  TROUBLESHOOT
+			Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
+			the object supports deltamode.  This error may simply be an indication that the object of interest
+			does not support deltamode.  If the error persists and the object does, please submit your code and
+			a bug report via the trac website.
+			*/
+		}
+
+		// Set the post delta function to NULL, thus it does not need to be checked
+		post_delta_functions[pwr_object_current] = NULL;
+
+		//Increment
+		pwr_object_current++;
+	}
+}
+
+void sync_check::init_sensors(OBJECT *par)
+{
+	// Get the self-pointer
+	OBJECT *obj = OBJECTHDR(this);
+
+	/* Get the nominal frequency property */
+	temp_property_pointer = new gld_property("powerflow::nominal_frequency");
+
+	// Double check the validity of the nominal frequency property
+	if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+	{
+		GL_THROW("sync_check:%d %s failed to map the nominal_frequency property", obj->id, (obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map the nominal_frequency property, an error occurred.  Please try again.
+		If the error persists, please submit your GLM and a bug report to the ticketing system.
+		*/
+	}
+
+	// Get the value of nominal frequency from this property
+	freq_norm = temp_property_pointer->get_double();
+
+	// Clean the temporary property pointer
+	delete temp_property_pointer;
+
+	/* Get the norminal voltage */
+	// temp_property_pointer = new gld_property(par, "from");
 }
 
 void sync_check::get_measurements()

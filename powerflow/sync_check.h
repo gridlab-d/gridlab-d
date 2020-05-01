@@ -27,9 +27,14 @@ public:
 
 	SIMULATIONMODE inter_deltaupdate_sync_check(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
-private:
+private: /* Flags & Buffer */
 	bool deltamode_inclusive; //Boolean for deltamode calls - pulled from object flags
 	bool reg_dm_flag;
+
+	gld_property *temp_property_pointer;
+
+private: /* Measurements & Nominal Values*/
+	double freq_norm;
 
 private: /* Published Variables*/
 	bool arm_sync;
@@ -40,8 +45,9 @@ private: /* Published Variables*/
 
 private: /* Init Funcs */
 	bool data_sanity_check(OBJECT *par = NULL);
+	void reg_deltamode_check();
 	void reg_deltamode();
-	void init_sensors();
+	void init_sensors(OBJECT *par = NULL);
 
 private: /* Funcs for Deltamode */
 	void get_measurements();
