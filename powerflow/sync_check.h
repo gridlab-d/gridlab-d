@@ -31,13 +31,28 @@ private: /* Flags & Buffer */
 	bool deltamode_inclusive; //Boolean for deltamode calls - pulled from object flags
 	bool reg_dm_flag;
 
+	bool metrics_flag;
+	double t_sat;
+
 	gld_property *temp_property_pointer;
 
-private: /* Measurements & Nominal Values*/
+private: /* Measurements, actuator, gld objs, & Nominal Values*/
 	double freq_norm;
+	double volt_norm;
+
+	gld_object *swt_fm_node;
+	gld_object *swt_to_node;
+
+	double swt_fm_node_freq;
+	double swt_to_node_freq;
+
+	complex swt_fm_volt_A;
+	complex swt_to_volt_A;
+
+	gld_property *swt_prop_status;
 
 private: /* Published Variables*/
-	bool arm_sync;
+	bool sc_enabled_flag;
 
 	double frequency_tolerance_pu;
 	double voltage_tolerance_pu;
@@ -47,10 +62,15 @@ private: /* Init Funcs */
 	bool data_sanity_check(OBJECT *par = NULL);
 	void reg_deltamode_check();
 	void reg_deltamode();
-	void init_sensors(OBJECT *par = NULL);
+	void init_norm_values(OBJECT *par = NULL);
 
 private: /* Funcs for Deltamode */
-	void get_measurements();
+	void update_measurements();
+	void check_metrics();
+	void check_excitation(unsigned long);
 };
+
+// Utility Funcs
+// TODO: make a func for the get property process
 
 #endif // GLD_POWERFLOW_SYNC_CHECK_H_

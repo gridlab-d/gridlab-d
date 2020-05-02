@@ -27,7 +27,7 @@ sync_check::sync_check(MODULE *mod) : powerflow_object(mod)
 		if (oclass == NULL)
 			GL_THROW("unable to register object class implemented by %s", __FILE__);
 		if (gl_publish_variable(oclass,
-								PT_bool, "enabled", PADDR(arm_sync), PT_DESCRIPTION, "Flag to arm the synchronization close",
+								PT_bool, "armed", PADDR(sc_enabled_flag), PT_DESCRIPTION, "Flag to arm the synchronization close",
 								PT_double, "frequency_tolerance[pu]", PADDR(frequency_tolerance_pu), PT_DESCRIPTION, "The user-specified tolerance for checking the frequency metric",
 								PT_double, "voltage_tolerance[pu]", PADDR(voltage_tolerance_pu), PT_DESCRIPTION, "voltage_tolerance",
 								PT_double, "metrics_period[s]", PADDR(metrics_period_sec), PT_DESCRIPTION, "The user-defined period when both metrics are satisfied",
@@ -51,9 +51,23 @@ int sync_check::create(void)
 	/* init member with default values */
 	deltamode_inclusive = false; //By default, don't be included in deltamode simulations
 	reg_dm_flag = false;
+	metrics_flag = false;
+	temp_property_pointer = NULL;
 
 	/* init some published properties that have the default value */
-	arm_sync = false; //Start disabled
+	sc_enabled_flag = false; //Start disabled
+
+	/* init measurements, gld objs, & Nominal Values*/
+	freq_norm = 0;
+	volt_norm = 0;
+
+	swt_fm_node = NULL;
+	swt_to_node = NULL;
+
+	swt_fm_node_freq = 0;
+	swt_to_node_freq = 0;
+
+	swt_prop_status = NULL;
 
 	return result;
 }
@@ -63,8 +77,8 @@ int sync_check::init(OBJECT *parent)
 	int retval = powerflow_object::init(parent);
 
 	data_sanity_check(parent);
+	init_norm_values(parent);
 	reg_deltamode_check();
-	init_sensors(parent);
 
 	return retval;
 }
@@ -113,6 +127,31 @@ bool sync_check::data_sanity_check(OBJECT *par)
 		}
 	}
 
+	// Check the status of the 'switch_object' object (when it is armed, the partent switch should be in 'OPEN' status)
+	swt_prop_status = new gld_property(par, "status");
+
+	// Double check the validity of the nominal frequency property
+	if ((swt_prop_status->is_valid() != true) || (swt_prop_status->is_enumeration() != true))
+	{
+		GL_THROW("sync_check:%d %s failed to map the swtich status property",
+				 obj->id, (obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map the swtich status property, an error occurred.  Please try again.
+		If the error persists, please submit your GLM and a bug report to the ticketing system.
+		*/
+	}
+
+	if (sc_enabled_flag)
+	{
+		enumeration swt_init_status = swt_prop_status->get_enumeration();
+		if(swt_init_status != LS_OPEN) //@TODO: get the Enum definitation from switch_object may be better, while not convenient? The LS_OPEN seems to be decoupled from the enum defined in the switch, while they are defined in the same way separately
+		{
+			GL_THROW("sync_check (%d - %s): the partent switch_object object must be OPEN when the sync_check is initiated as armed!",
+			obj->id, (obj->name ? obj->name : "Unnamed"));
+		}
+
+	}
+
 	// Check the params
 	if (frequency_tolerance_pu <= 0)
 	{
@@ -130,7 +169,7 @@ bool sync_check::data_sanity_check(OBJECT *par)
 
 	if (metrics_period_sec <= 0)
 	{
-		metrics_period_sec = 5; // i.e., 5 secs
+		metrics_period_sec = 1.2; // i.e., 1.2 secs
 		gl_warning("sync_check:%d %s - metrics_period_sec was not set as a positive value, it is reset to %f [secs].", obj->id, (obj->name ? obj->name : "Unnamed"), metrics_period_sec);
 		flag_prop_modified = true;
 	}
@@ -220,7 +259,7 @@ void sync_check::reg_deltamode()
 	}
 }
 
-void sync_check::init_sensors(OBJECT *par)
+void sync_check::init_norm_values(OBJECT *par)
 {
 	// Get the self-pointer
 	OBJECT *obj = OBJECTHDR(this);
@@ -244,20 +283,157 @@ void sync_check::init_sensors(OBJECT *par)
 	// Clean the temporary property pointer
 	delete temp_property_pointer;
 
-	/* Get the norminal voltage */
-	// temp_property_pointer = new gld_property(par, "from");
+	/* Get the from node */
+	temp_property_pointer = new gld_property(par, "from");
+	// Double check the validity
+	if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_objectref() != true))
+	{
+		GL_THROW("sync_check:%d %s Failed to map the switch property 'from'!",
+				 obj->id, (obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+        While attempting to map the a property from the switch object, an error occurred.  Please try again.
+        If the error persists, please submit your GLM and a bug report to the ticketing system.
+        */
+	}
+
+	swt_fm_node = temp_property_pointer->get_objectref();
+	delete temp_property_pointer;
+
+	/* Get the to node */
+	temp_property_pointer = new gld_property(par, "to");
+	// Double check the validity
+	if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_objectref() != true))
+	{
+		GL_THROW("sync_check:%d %s Failed to map the switch property 'to'!",
+				 obj->id, (obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+        While attempting to map the a property from the switch object, an error occurred.  Please try again.
+        If the error persists, please submit your GLM and a bug report to the ticketing system.
+        */
+	}
+
+	swt_to_node = temp_property_pointer->get_objectref();
+	delete temp_property_pointer;
+
+	/* Get the norminal voltage & check the consistency */
+	// 'From' node voltage
+	temp_property_pointer = new gld_property(swt_fm_node, "nominal_voltage");
+	// Double check the validity of the nominal frequency property
+	if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+	{
+		GL_THROW("sync_check:%d %s failed to map the nominal_voltage property",
+				 obj->id, (obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map the nominal_voltage property, an error occurred.  Please try again.
+		If the error persists, please submit your GLM and a bug report to the ticketing system.
+		*/
+	}
+	double volt_norm_fm = temp_property_pointer->get_double();
+	delete temp_property_pointer;
+
+	// 'To' node voltage
+	temp_property_pointer = new gld_property(swt_to_node, "nominal_voltage");
+	// Double check the validity of the nominal frequency property
+	if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+	{
+		GL_THROW("sync_check:%d %s failed to map the nominal_voltage property",
+				 obj->id, (obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map the nominal_voltage property, an error occurred.  Please try again.
+		If the error persists, please submit your GLM and a bug report to the ticketing system.
+		*/
+	}
+	double volt_norm_to = temp_property_pointer->get_double();
+	delete temp_property_pointer;
+
+	// Check consistency
+	if (abs(volt_norm_fm - volt_norm_to) > voltage_tolerance_pu)
+	{
+		GL_THROW("sync_check:%d %s the normal voltage check fails!",
+				 obj->id, (obj->name ? obj->name : "Unnamed"));
+	}
+	else
+	{
+		volt_norm = (volt_norm_fm + volt_norm_to) / 2;
+	}
 }
 
-void sync_check::get_measurements()
+void sync_check::update_measurements()
 {
-	cout << "Luan~~";
+	//@Todo: 1) validity check of properties; 2) frequency of each phase?
+
+	/* Get the 'from' node freq */
+	temp_property_pointer = new gld_property(swt_fm_node, "measured_frequency");
+	swt_fm_node_freq = temp_property_pointer->get_double();
+	delete temp_property_pointer;
+
+	/* Get the 'to' node freq */
+	temp_property_pointer = new gld_property(swt_to_node, "measured_frequency");
+	swt_to_node_freq = temp_property_pointer->get_double();
+	delete temp_property_pointer;
+
+	/* Get the 'from' node volt phasors */
+	temp_property_pointer = new gld_property(swt_fm_node, "voltage_A");
+	swt_fm_volt_A = temp_property_pointer->get_complex();
+	delete temp_property_pointer;
+
+	/* Get the 'to' node volt phasors */
+	temp_property_pointer = new gld_property(swt_to_node, "voltage_A");
+	swt_to_volt_A = temp_property_pointer->get_complex();
+	delete temp_property_pointer;
+}
+
+void sync_check::check_metrics()
+{
+	double freq_diff = abs(swt_fm_node_freq - swt_to_node_freq);
+	double freq_diff_pu = freq_diff / freq_norm;
+
+	double volt_A_diff = (swt_fm_volt_A - swt_to_volt_A).Mag();
+	double volt_A_diff_pu = volt_A_diff / volt_norm;
+
+	if ((freq_diff_pu <= frequency_tolerance_pu) && (volt_A_diff_pu <= voltage_tolerance_pu))
+	{
+		metrics_flag = true;
+	}
+	else
+	{
+		metrics_flag = false;
+	}
+}
+
+void sync_check::check_excitation(unsigned long dt)
+{
+	double dt_dm_sec = (double)dt / (double)DT_SECOND;
+
+	if (metrics_flag)
+	{
+		t_sat += dt_dm_sec;
+	}
+	else
+	{
+		t_sat = 0;
+	}
+
+	if (t_sat >= metrics_period_sec)
+	{
+		gld_wlock *test_rlock;
+		enumeration swt_cmd = LS_CLOSED;
+		swt_prop_status->setp<enumeration>(swt_cmd, *test_rlock); // Close the switch for parallelling
+		sc_enabled_flag = false; // After closing the swtich, disable itself
+		//@TODO: reset all other buffers & variables
+	}
 }
 
 //Deltamode call
 //Module-level call
 SIMULATIONMODE sync_check::inter_deltaupdate_sync_check(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
 {
-	get_measurements();
+	if (sc_enabled_flag)
+	{
+		update_measurements();
+		check_metrics();
+		check_excitation(dt);
+	}
 
 	return SM_EVENT;
 }
@@ -352,5 +528,3 @@ EXPORT SIMULATIONMODE interupdate_sync_check(OBJECT *obj, unsigned int64 delta_t
 		return status;
 	}
 }
-
-/**@}**/
