@@ -20,6 +20,7 @@ module powerflow {
 	line_capacitance false;
 	solver_method NR;
 	line_limits false;
+	default_resistance 0.00005;	//To make consistent with original switch admittance
 }
 
 object overhead_line_conductor {

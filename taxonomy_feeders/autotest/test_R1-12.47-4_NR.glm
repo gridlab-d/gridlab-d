@@ -8,7 +8,7 @@
 
 // created by: alek332
 clock{
-	timezone EST+8EDT;
+	timezone EST+5EDT;
 	timestamp '2000-01-01 0:00:00';
 	stoptime '2000-01-01 1:00:00';
 }
@@ -6107,32 +6107,32 @@ object underground_line:571 {
 	// };
  object complex_assert{
 		target power_in_A;
-		value +1.77863e-009-6.84044e-010j;
+		value +0.0+0.0j;
 		within 1;
 	};
 	object complex_assert{
 		target power_in_B;
-		value +5.36677e-012+2.93991e-013j;
+		value +0.0+0.0j;
 		within 1;
 	};
 	object complex_assert{
 		target power_in_C;
-		value -2.42853e-012-4.79488e-012j;
+		value +0.0+0.0j;
 		within 1;
 	};
  object complex_assert{
 		target power_out_A;
-		value +1.77863e-009-6.84044e-010j;
+		value +0.0+0.0j;
 		within 1;
 	};
 	object complex_assert{
 		target power_out_B;
-		value +5.36677e-012+2.93991e-013j;
+		value +0.0+0.0j;
 		within 1;
 	};
 	object complex_assert{
 		target power_out_C;
-		value -2.42853e-012-4.79488e-012j;
+		value +0.0+0.0j;
 		within 1;
 	};
  object complex_assert{
@@ -6876,34 +6876,34 @@ object underground_line:651 {
 		// limit 1440;
 		// file "UL651.csv";
 	// };
- object complex_assert{
+	object complex_assert{
 		target power_in_A;
 		value +211368+132287j;
 		within 1;
 	};
 	object complex_assert{
 		target power_in_B;
-		value +268121+166685j;
+		value +268121+166686j;
 		within 1;
 	};
 	object complex_assert{
 		target power_in_C;
-		value +218029+136134j;
+		value +218029+136133j;
 		within 1;
 	};
- object complex_assert{
+	object complex_assert{
 		target power_out_A;
-		value +211368+132286j;
+		value +211368+132287j;
 		within 1;
 	};
 	object complex_assert{
 		target power_out_B;
-		value +268121+166685j;
+		value +268121+166686j;
 		within 1;
 	};
 	object complex_assert{
 		target power_out_C;
-		value +218029+136134j;
+		value +218029+136133j;
 		within 1;
 	};
 }
@@ -8220,42 +8220,6 @@ object underground_line:797 {
 	to R1-12-47-4_node_246;
 	length 355.000;
 	configuration line_configuration:10;
-	// object recorder {
-		// property power_in_A,power_in_B,power_in_C,power_out_A,power_out_B,power_out_C,current_in_A,current_in_B,current_in_C;
-		// interval 60;
-		// limit 1440;
-		// file "UL797.csv";
-	// };
-	// object complex_assert{
-		// target power_in_A;
-		// value -2.72498e-009+1.01463e-008j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target power_in_B;
-		// value -1.3638e-008-3.93928e-008j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target power_in_C;
-		// value +500553+23106.9j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target power_out_A;
-		// value +469698+26022.9j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target power_out_B;
-		// value +408562+25304.6j;
-		// within 1;
-	// };
-	// object complex_assert{
-		// target power_out_C;
-		// value +500332+22816.1j;
-		// within 1;
-	// };
 }
 
 object underground_line:798 {
