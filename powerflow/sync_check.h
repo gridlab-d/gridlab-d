@@ -27,16 +27,17 @@ public:
 
 	SIMULATIONMODE inter_deltaupdate_sync_check(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
-private: /* Flags & Buffer */
-	bool deltamode_inclusive; //Boolean for deltamode calls - pulled from object flags
-	bool reg_dm_flag;
+private:
+	/* Flags & Buffer */
+	bool reg_dm_flag;		  // Flag for indicating the registration of deltamode (array & func)
+	bool deltamode_inclusive; // Boolean for deltamode calls - pulled from object flags
 
-	bool metrics_flag;
-	double t_sat;
+	bool metrics_flag; // True - both metrics are satisfied, False - otherwise
+	double t_sat;	   // Timer for checking the metrics
 
-	gld_property *temp_property_pointer;
+	gld_property *temp_property_pointer; // temporary pointer of property
 
-private: /* Measurements, actuator, gld objs, & Nominal Values*/
+private: /* Measurements, actuator, gld objs, & Nominal Values */
 	double freq_norm;
 	double volt_norm;
 
@@ -58,16 +59,23 @@ private: /* Published Variables*/
 	double voltage_tolerance_pu;
 	double metrics_period_sec;
 
-private: /* Init Funcs */
+private:
+	/* Funcs mainly used in create() */
+	void init_vars();
+
+	/* Funcs mainly used in init() */
 	bool data_sanity_check(OBJECT *par = NULL);
 	void reg_deltamode_check();
-	void reg_deltamode();
 	void init_norm_values(OBJECT *par = NULL);
+
+	/* FUncs mainly used in presync() */
+	void reg_deltamode();
 
 private: /* Funcs for Deltamode */
 	void update_measurements();
 	void check_metrics();
 	void check_excitation(unsigned long);
+	void reset_after_excitation();
 };
 
 // Utility Funcs

@@ -47,28 +47,7 @@ int sync_check::isa(char *classname)
 int sync_check::create(void)
 {
 	int result = powerflow_object::create();
-
-	/* init member with default values */
-	deltamode_inclusive = false; //By default, don't be included in deltamode simulations
-	reg_dm_flag = false;
-	metrics_flag = false;
-	temp_property_pointer = NULL;
-
-	/* init some published properties that have the default value */
-	sc_enabled_flag = false; //Start disabled
-
-	/* init measurements, gld objs, & Nominal Values*/
-	freq_norm = 0;
-	volt_norm = 0;
-
-	swt_fm_node = NULL;
-	swt_to_node = NULL;
-
-	swt_fm_node_freq = 0;
-	swt_to_node_freq = 0;
-
-	swt_prop_status = NULL;
-
+	init_vars();
 	return result;
 }
 
@@ -109,6 +88,30 @@ TIMESTAMP sync_check::postsync(TIMESTAMP t0)
 }
 
 //==Funcs
+void sync_check::init_vars()
+{
+	/* init member with default values */
+	deltamode_inclusive = false; //By default, don't be included in deltamode simulations
+	reg_dm_flag = false;
+	metrics_flag = false;
+	temp_property_pointer = NULL;
+
+	/* init some published properties that have the default value */
+	sc_enabled_flag = false; //Unarmed
+
+	/* init measurements, gld objs, & Nominal Values*/
+	freq_norm = 0;
+	volt_norm = 0;
+
+	swt_fm_node = NULL;
+	swt_to_node = NULL;
+
+	swt_fm_node_freq = 0;
+	swt_to_node_freq = 0;
+
+	swt_prop_status = NULL;
+}
+
 bool sync_check::data_sanity_check(OBJECT *par)
 {
 	bool flag_prop_modified = false;
@@ -144,12 +147,11 @@ bool sync_check::data_sanity_check(OBJECT *par)
 	if (sc_enabled_flag)
 	{
 		enumeration swt_init_status = swt_prop_status->get_enumeration();
-		if(swt_init_status != LS_OPEN) //@TODO: get the Enum definitation from switch_object may be better, while not convenient? The LS_OPEN seems to be decoupled from the enum defined in the switch, while they are defined in the same way separately
+		if (swt_init_status != LS_OPEN) //@TODO: get the Enum definitation from switch_object may be better, while not convenient? The LS_OPEN seems to be decoupled from the enum defined in the switch, while they are defined in the same way separately
 		{
 			GL_THROW("sync_check (%d - %s): the partent switch_object object must be OPEN when the sync_check is initiated as armed!",
-			obj->id, (obj->name ? obj->name : "Unnamed"));
+					 obj->id, (obj->name ? obj->name : "Unnamed"));
 		}
-
 	}
 
 	// Check the params
@@ -419,9 +421,18 @@ void sync_check::check_excitation(unsigned long dt)
 		gld_wlock *test_rlock;
 		enumeration swt_cmd = LS_CLOSED;
 		swt_prop_status->setp<enumeration>(swt_cmd, *test_rlock); // Close the switch for parallelling
-		sc_enabled_flag = false; // After closing the swtich, disable itself
-		//@TODO: reset all other buffers & variables
+		reset_after_excitation();
 	}
+}
+
+void sync_check::reset_after_excitation()
+{
+	// After closing the swtich, disable itself
+	sc_enabled_flag = false; //Unarmed
+
+	// Reset other buffers & variables
+	metrics_flag = false;
+	t_sat = 0;
 }
 
 //Deltamode call
@@ -430,9 +441,12 @@ SIMULATIONMODE sync_check::inter_deltaupdate_sync_check(unsigned int64 delta_tim
 {
 	if (sc_enabled_flag)
 	{
-		update_measurements();
-		check_metrics();
-		check_excitation(dt);
+		if ((iteration_count_val == 0) && (!interupdate_pos)) //@TODO: Need further testings
+		{
+			update_measurements();
+			check_metrics();
+			check_excitation(dt);
+		}
 	}
 
 	return SM_EVENT;
