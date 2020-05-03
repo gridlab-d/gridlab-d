@@ -48,7 +48,12 @@ private: /* Measurements, actuator, gld objs, & Nominal Values */
 	double swt_to_node_freq;
 
 	complex swt_fm_volt_A;
+	complex swt_fm_volt_B;
+	complex swt_fm_volt_C;
+
 	complex swt_to_volt_A;
+	complex swt_to_volt_B;
+	complex swt_to_volt_C;
 
 	gld_property *swt_prop_status;
 

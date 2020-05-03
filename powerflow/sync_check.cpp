@@ -379,9 +379,25 @@ void sync_check::update_measurements()
 	swt_fm_volt_A = temp_property_pointer->get_complex();
 	delete temp_property_pointer;
 
+	temp_property_pointer = new gld_property(swt_fm_node, "voltage_B");
+	swt_fm_volt_B = temp_property_pointer->get_complex();
+	delete temp_property_pointer;
+
+	temp_property_pointer = new gld_property(swt_fm_node, "voltage_C");
+	swt_fm_volt_C = temp_property_pointer->get_complex();
+	delete temp_property_pointer;
+
 	/* Get the 'to' node volt phasors */
 	temp_property_pointer = new gld_property(swt_to_node, "voltage_A");
 	swt_to_volt_A = temp_property_pointer->get_complex();
+	delete temp_property_pointer;
+
+	temp_property_pointer = new gld_property(swt_to_node, "voltage_B");
+	swt_to_volt_B = temp_property_pointer->get_complex();
+	delete temp_property_pointer;
+
+	temp_property_pointer = new gld_property(swt_to_node, "voltage_C");
+	swt_to_volt_C = temp_property_pointer->get_complex();
 	delete temp_property_pointer;
 }
 
@@ -393,7 +409,13 @@ void sync_check::check_metrics()
 	double volt_A_diff = (swt_fm_volt_A - swt_to_volt_A).Mag();
 	double volt_A_diff_pu = volt_A_diff / volt_norm;
 
-	if ((freq_diff_pu <= frequency_tolerance_pu) && (volt_A_diff_pu <= voltage_tolerance_pu))
+	double volt_B_diff = (swt_fm_volt_B - swt_to_volt_B).Mag();
+	double volt_B_diff_pu = volt_B_diff / volt_norm;
+
+	double volt_C_diff = (swt_fm_volt_C - swt_to_volt_C).Mag();
+	double volt_C_diff_pu = volt_C_diff / volt_norm;
+
+	if ((freq_diff_pu <= frequency_tolerance_pu) && (volt_A_diff_pu <= voltage_tolerance_pu) && (volt_B_diff_pu <= voltage_tolerance_pu) && (volt_C_diff_pu <= voltage_tolerance_pu))
 	{
 		metrics_flag = true;
 	}
