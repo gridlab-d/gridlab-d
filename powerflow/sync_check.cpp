@@ -120,17 +120,17 @@ bool sync_check::data_sanity_check(OBJECT *par)
 	// Check if the parent is a switch_object object
 	if (par == NULL)
 	{
-		GL_THROW("sync_check (%d - %s): the partent property must be specified!", obj->id, (obj->name ? obj->name : "Unnamed"));
+		GL_THROW("sync_check (%d - %s): the parent property must be specified!", obj->id, (obj->name ? obj->name : "Unnamed"));
 	}
 	else
 	{
 		if (gl_object_isa(par, "switch", "powerflow") == false)
 		{
-			GL_THROW("sync_check (%d - %s): the partent property must be specified as the name of a switch_object object!", obj->id, (obj->name ? obj->name : "Unnamed"));
+			GL_THROW("sync_check (%d - %s): the parent object must be a powerflow switch object!", obj->id, (obj->name ? obj->name : "Unnamed"));
 		}
 	}
 
-	// Check the status of the 'switch_object' object (when it is armed, the partent switch should be in 'OPEN' status)
+	// Check the status of the 'switch_object' object (when it is armed, the parent switch should be in 'OPEN' status)
 	swt_prop_status = new gld_property(par, "status");
 
 	// Double check the validity of the nominal frequency property
@@ -149,7 +149,7 @@ bool sync_check::data_sanity_check(OBJECT *par)
 		enumeration swt_init_status = swt_prop_status->get_enumeration();
 		if (swt_init_status != LS_OPEN) //@TODO: get the Enum definitation from switch_object may be better, while not convenient? The LS_OPEN seems to be decoupled from the enum defined in the switch, while they are defined in the same way separately
 		{
-			GL_THROW("sync_check (%d - %s): the partent switch_object object must be OPEN when the sync_check is initiated as armed!",
+			GL_THROW("sync_check (%d - %s): the parent switch_object object must be OPEN when the sync_check is initiated as armed!",
 					 obj->id, (obj->name ? obj->name : "Unnamed"));
 		}
 	}
@@ -351,7 +351,7 @@ void sync_check::init_norm_values(OBJECT *par)
 	// Check consistency
 	if (abs(volt_norm_fm - volt_norm_to) > voltage_tolerance_pu)
 	{
-		GL_THROW("sync_check:%d %s the normal voltage check fails!",
+		GL_THROW("sync_check:%d %s nominal_voltage on the from and to nodes of the switch should be the same!",
 				 obj->id, (obj->name ? obj->name : "Unnamed"));
 	}
 	else
