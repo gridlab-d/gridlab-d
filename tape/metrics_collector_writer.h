@@ -19,6 +19,7 @@
 #include <cstring>
 #include <string.h>
 #include <algorithm>
+#include <memory>
 
 #ifdef HAVE_HDF5
 #include <memory>
@@ -307,7 +308,7 @@ private:
 	void hdfLine();
 
 	// Functions to write dataset to a file
-	void hdfWrite(char256 filename, H5::CompType* mtype, void *ptr, int structKind, int size);
+	void hdfWrite(char256 filename, const std::unique_ptr<H5::CompType>& mtype, void *ptr, int structKind, int size);
 	void hdfMetadataWrite(Json::Value& meta, char* time_str, char256 filename);
 	void hdfBillingMeterWrite (size_t objs, Json::Value& metrics);
 	void hdfHouseWrite (size_t objs, Json::Value& metrics);
@@ -349,24 +350,24 @@ private:
 	hsize_t len_transformers;
 	hsize_t len_lines;
 
-	H5::DataSet* set_billing_meters;
-	H5::DataSet* set_houses;
-	H5::DataSet* set_inverters;
-	H5::DataSet* set_feeders;
-	H5::DataSet* set_capacitors;
-	H5::DataSet* set_regulators;
-	H5::DataSet* set_transformers;
-	H5::DataSet* set_lines;
+	std::unique_ptr<H5::DataSet> set_billing_meters;
+	std::unique_ptr<H5::DataSet> set_houses;
+	std::unique_ptr<H5::DataSet> set_inverters;
+	std::unique_ptr<H5::DataSet> set_feeders;
+	std::unique_ptr<H5::DataSet> set_capacitors;
+	std::unique_ptr<H5::DataSet> set_regulators;
+	std::unique_ptr<H5::DataSet> set_transformers;
+	std::unique_ptr<H5::DataSet> set_lines;
 
-	H5::CompType* mtype_metadata;
-	H5::CompType* mtype_billing_meters;
-	H5::CompType* mtype_houses;
-	H5::CompType* mtype_inverters;
-	H5::CompType* mtype_feeders;
-	H5::CompType* mtype_capacitors;
-	H5::CompType* mtype_regulators;
-	H5::CompType* mtype_transformers;
-	H5::CompType* mtype_lines;
+	std::unique_ptr<H5::CompType> mtype_metadata;
+	std::unique_ptr<H5::CompType> mtype_billing_meters;
+	std::unique_ptr<H5::CompType> mtype_houses;
+	std::unique_ptr<H5::CompType> mtype_inverters;
+	std::unique_ptr<H5::CompType> mtype_feeders;
+	std::unique_ptr<H5::CompType> mtype_capacitors;
+	std::unique_ptr<H5::CompType> mtype_regulators;
+	std::unique_ptr<H5::CompType> mtype_transformers;
+	std::unique_ptr<H5::CompType> mtype_lines;
 #endif
 
 	char256 filename_billing_meter;

@@ -765,7 +765,6 @@ int metrics_collector::commit(TIMESTAMP t1){
 	@return 0 on failure, 1 on success
  **/
 int metrics_collector::read_line(OBJECT *obj){
-
 	// save the actual simulator time
 	time_array[curr_index] = gl_globalclock;
 
@@ -941,7 +940,6 @@ int metrics_collector::read_line(OBJECT *obj){
 		return 0;
 	}
 
-
 	// Update index value
 	++curr_index;
 	if (curr_index == vector_length) {
@@ -1080,7 +1078,7 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics[HSE_AVG_AIR_TEMP] = findAverage(air_temperature_array, curr_index);
 		metrics[HSE_AVG_DEV_COOLING] = findAverage(dev_cooling_array, curr_index);
 		metrics[HSE_AVG_DEV_HEATING] = findAverage(dev_heating_array, curr_index);
-		metrics[HSE_SYSTEM_MODE] = system_mode;
+		metrics[HSE_SYSTEM_MODE] = (double) system_mode;
 	}
 	else if (strcmp(parent_string, "waterheater") == 0) {
 		metrics[WH_MIN_ACTUAL_LOAD] = findMin(wh_load_array, curr_index);
@@ -1157,7 +1155,6 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 
 	next_write = std::min(next_write + interval_length, gl_globalstoptime);
 	first_write = false;
-
 	return 1;
 }
 
@@ -1367,24 +1364,27 @@ EXPORT int create_metrics_collector(OBJECT **obj, OBJECT *parent){
 	catch (const char *msg){
 		gl_error("create_metrics_collector: %s", msg);
 	}
-	catch (...){
-		gl_error("create_metrics_collector: unexpected exception caught");
-	}
+    catch( const std::exception& ex){
+        std::cerr << "Unhandled general exception in " << __func__ << ": " << ex.what() << std::endl;
+    }
 	return rv;
 }
 
 EXPORT int init_metrics_collector(OBJECT *obj){
-	metrics_collector *my = OBJECTDATA(obj, metrics_collector);
-	int rv = 0;
-	try {
-		rv = my->init(obj->parent);
-	}
-	catch (char *msg){
-		gl_error("init_metrics_collector: %s", msg);
-	}
-	catch (const char *msg){
-		gl_error("init_metrics_collector: %s", msg);
-	}
+    metrics_collector *my = OBJECTDATA(obj, metrics_collector);
+    int rv = 0;
+    try {
+        rv = my->init(obj->parent);
+    }
+    catch (char *msg) {
+        gl_error("init_metrics_collector: %s", msg);
+    }
+    catch (const char *msg) {
+        gl_error("init_metrics_collector: %s", msg);
+    }
+    catch (const std::exception &ex) {
+        std::cerr << "Unhandled general exception in " << __func__ << ": " << ex.what() << std::endl;
+    }
 	return rv;
 }
 
@@ -1413,6 +1413,9 @@ EXPORT TIMESTAMP sync_metrics_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pa
 	catch(const char *msg){
 		gl_error("sync_metrics_collector: %s", msg);
 	}
+    catch(const std::exception& ex){
+        std::cerr << "Unhandled general exception in " << __func__ << ": " << ex.what() << std::endl;
+    }
 	return rv;
 }
 
@@ -1428,6 +1431,9 @@ EXPORT int commit_metrics_collector(OBJECT *obj){
 	catch (const char *msg){
 		gl_error("commit_metrics_collector: %s", msg);
 	}
+    catch (const std::exception& ex){
+        std::cerr << "Unhandled general exception in " << __func__ << ": " << ex.what() << std::endl;
+    }
 	return rv;
 }
 
