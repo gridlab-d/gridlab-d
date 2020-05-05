@@ -231,16 +231,19 @@ void sync_check::init_sensors(OBJECT *par)
 void sync_check::init_vars()
 {
 	/* init member with default values */
-	deltamode_inclusive = false; //By default, don't be included in deltamode simulations
 	reg_dm_flag = false;
+	deltamode_inclusive = false; //By default, don't be included in deltamode simulations
+
 	metrics_flag = false;
+	t_sat = 0;
+
 	temp_property_pointer = NULL;
 
 	/* init some published properties that have the default value */
 	sc_enabled_flag = false; //Unarmed
 
 	/* init measurements, gld objs, & Nominal Values*/
-	freq_norm = 0; // Technically, these initialization are not necessary.
+	freq_norm = 0;
 	volt_norm = 0;
 
 	swt_fm_node = NULL;
@@ -249,7 +252,31 @@ void sync_check::init_vars()
 	swt_fm_node_freq = 0;
 	swt_to_node_freq = 0;
 
+	prop_fm_node_freq = NULL;
+	prop_to_node_freq = NULL;
+
+	swt_fm_volt_A = complex(0, 0);
+	swt_fm_volt_B = complex(0, 0);
+	swt_fm_volt_C = complex(0, 0);
+
+	prop_fm_node_volt_A = NULL;
+	prop_fm_node_volt_B = NULL;
+	prop_fm_node_volt_C = NULL;
+
+	swt_to_volt_A = complex(0, 0);
+	swt_to_volt_B = complex(0, 0);
+	swt_to_volt_C = complex(0, 0);
+
+	prop_to_node_volt_A = NULL;
+	prop_to_node_volt_B = NULL;
+	prop_to_node_volt_C = NULL;
+
 	swt_prop_status = NULL;
+
+	swt_phases = 0;
+	swt_ph_A_flag = false;
+	swt_ph_B_flag = false;
+	swt_ph_C_flag = false;
 }
 
 void sync_check::data_sanity_check(OBJECT *par)
