@@ -57,6 +57,7 @@ int sync_check::init(OBJECT *parent)
 
 	data_sanity_check(parent);
 	init_norm_values(parent);
+	init_sensors(parent);
 	reg_deltamode_check();
 
 	return retval;
@@ -88,6 +89,145 @@ TIMESTAMP sync_check::postsync(TIMESTAMP t0)
 }
 
 //==Funcs
+void sync_check::init_sensors(OBJECT *par)
+{
+	// Map and pull the phases
+	temp_property_pointer = new gld_property(par, "phases");
+
+	// Validate
+	if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_set() != true))
+	{
+		GL_THROW("Unable to map phases property - ensure the parent is a switch");
+		/*  TROUBLESHOOT
+		While attempting to map the phases property from the parent object, an error was encountered.
+		Please check and make sure your parent object is a switch inside the powerflow module and try
+		again. If the error persists, please submit your code and a bug report via the Trac website.
+		*/
+	}
+
+	// Pull the phase information
+	swt_phases = temp_property_pointer->get_set();
+
+	// Clear the temporary pointer
+	delete temp_property_pointer;
+
+	// Check the phases
+	swt_ph_A_flag = ((phases & 0x1) == 0x01); // Phase A
+	swt_ph_B_flag = ((phases & 0x2) == 0x02); // Phase B
+	swt_ph_C_flag = ((phases & 0x4) == 0x04); // Phase C
+
+	/* Get properties for measurements */
+	OBJECT *obj = OBJECTHDR(this);
+
+	/* Get the 'from' node freq */
+	prop_fm_node_freq = new gld_property(swt_fm_node, "measured_frequency");
+
+	// Double check the validity of the 'from' node frequency property
+	if ((prop_fm_node_freq->is_valid() != true) || (prop_fm_node_freq->is_double() != true))
+	{
+		GL_THROW("sync_check:%d %s failed to map the frequency property of the 'from' node of its parent switch_object.",
+				 obj->id, (obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map the frequency property of the 'from' node of its parent switch_object, an error occurred.  Please try again.
+		If the error persists, please submit your GLM and a bug report to the ticketing system.
+		*/
+	}
+
+	/* Get the 'to' node freq */
+	prop_to_node_freq = new gld_property(swt_to_node, "measured_frequency");
+
+	// Double check the validity of the 'to' node frequency property
+	if ((prop_to_node_freq->is_valid() != true) || (prop_to_node_freq->is_double() != true))
+	{
+		GL_THROW("sync_check:%d %s failed to map the frequency property of the 'to' node of its parent switch_object.",
+				 obj->id, (obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map the frequency property of the 'to' node of its parent switch_object, an error occurred.  Please try again.
+		If the error persists, please submit your GLM and a bug report to the ticketing system.
+		*/
+	}
+
+	/* Get the 'from' node volt phasors */
+	prop_fm_node_volt_A = new gld_property(swt_fm_node, "voltage_A");
+
+	// Double check the validity of the 'from' node voltage A property
+	if ((prop_fm_node_volt_A->is_valid() != true) || (prop_fm_node_volt_A->is_complex() != true))
+	{
+		GL_THROW("sync_check:%d %s failed to map the voltage_A property of the 'from' node of its parent switch_object.",
+				 obj->id, (obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map the voltage_A property of the 'from' node of its parent switch_object, an error occurred.  Please try again.
+		If the error persists, please submit your GLM and a bug report to the ticketing system.
+		*/
+	}
+
+	prop_fm_node_volt_B = new gld_property(swt_fm_node, "voltage_B");
+
+	// Double check the validity of the 'from' node voltage B property
+	if ((prop_fm_node_volt_B->is_valid() != true) || (prop_fm_node_volt_B->is_complex() != true))
+	{
+		GL_THROW("sync_check:%d %s failed to map the voltage_B property of the 'from' node of its parent switch_object.",
+				 obj->id, (obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map the voltage_B property of the 'from' node of its parent switch_object, an error occurred.  Please try again.
+		If the error persists, please submit your GLM and a bug report to the ticketing system.
+		*/
+	}
+
+	prop_fm_node_volt_C = new gld_property(swt_fm_node, "voltage_C");
+
+	// Double check the validity of the 'from' node voltage C property
+	if ((prop_fm_node_volt_C->is_valid() != true) || (prop_fm_node_volt_C->is_complex() != true))
+	{
+		GL_THROW("sync_check:%d %s failed to map the voltage_C property of the 'from' node of its parent switch_object.",
+				 obj->id, (obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map the voltage_C property of the 'from' node of its parent switch_object, an error occurred.  Please try again.
+		If the error persists, please submit your GLM and a bug report to the ticketing system.
+		*/
+	}
+
+	/* Get the 'to' node volt phasors */
+	prop_to_node_volt_A = new gld_property(swt_to_node, "voltage_A");
+
+	// Double check the validity of the 'to' node voltage A property
+	if ((prop_to_node_volt_A->is_valid() != true) || (prop_to_node_volt_A->is_complex() != true))
+	{
+		GL_THROW("sync_check:%d %s failed to map the voltage_A property of the 'to' node of its parent switch_object.",
+				 obj->id, (obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map the voltage_A property of the 'to' node of its parent switch_object, an error occurred.  Please try again.
+		If the error persists, please submit your GLM and a bug report to the ticketing system.
+		*/
+	}
+
+	prop_to_node_volt_B = new gld_property(swt_to_node, "voltage_B");
+
+	// Double check the validity of the 'to' node voltage B property
+	if ((prop_to_node_volt_B->is_valid() != true) || (prop_to_node_volt_B->is_complex() != true))
+	{
+		GL_THROW("sync_check:%d %s failed to map the voltage_B property of the 'to' node of its parent switch_object.",
+				 obj->id, (obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map the voltage_B property of the 'to' node of its parent switch_object, an error occurred.  Please try again.
+		If the error persists, please submit your GLM and a bug report to the ticketing system.
+		*/
+	}
+
+	prop_to_node_volt_C = new gld_property(swt_to_node, "voltage_C");
+
+	// Double check the validity of the 'to' node voltage C property
+	if ((prop_to_node_volt_C->is_valid() != true) || (prop_to_node_volt_C->is_complex() != true))
+	{
+		GL_THROW("sync_check:%d %s failed to map the voltage_C property of the 'to' node of its parent switch_object.",
+				 obj->id, (obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map the voltage_A property of the 'to' node of its parent switch_object, an error occurred.  Please try again.
+		If the error persists, please submit your GLM and a bug report to the ticketing system.
+		*/
+	}
+}
+
 void sync_check::init_vars()
 {
 	/* init member with default values */
@@ -100,7 +240,7 @@ void sync_check::init_vars()
 	sc_enabled_flag = false; //Unarmed
 
 	/* init measurements, gld objs, & Nominal Values*/
-	freq_norm = 0;
+	freq_norm = 0; // Technically, these initialization are not necessary.
 	volt_norm = 0;
 
 	swt_fm_node = NULL;
@@ -112,21 +252,30 @@ void sync_check::init_vars()
 	swt_prop_status = NULL;
 }
 
-bool sync_check::data_sanity_check(OBJECT *par)
+void sync_check::data_sanity_check(OBJECT *par)
 {
-	bool flag_prop_modified = false;
 	OBJECT *obj = OBJECTHDR(this);
 
 	// Check if the parent is a switch_object object
 	if (par == NULL)
 	{
-		GL_THROW("sync_check (%d - %s): the parent property must be specified!", obj->id, (obj->name ? obj->name : "Unnamed"));
+		GL_THROW("sync_check (%d - %s): the parent property must be specified!",
+				 obj->id, (obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While checking the parent swtich_object, an error occurred.  Please try again.
+		If the error persists, please submit your GLM and a bug report to the ticketing system.
+		*/
 	}
 	else
 	{
 		if (gl_object_isa(par, "switch", "powerflow") == false)
 		{
-			GL_THROW("sync_check (%d - %s): the parent object must be a powerflow switch object!", obj->id, (obj->name ? obj->name : "Unnamed"));
+			GL_THROW("sync_check (%d - %s): the parent object must be a powerflow switch object!",
+					 obj->id, (obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			The parent object must be a powerflow switch object. Please try again.
+			If the error persists, please submit your GLM and a bug report to the ticketing system.
+			*/
 		}
 	}
 
@@ -147,10 +296,16 @@ bool sync_check::data_sanity_check(OBJECT *par)
 	if (sc_enabled_flag)
 	{
 		enumeration swt_init_status = swt_prop_status->get_enumeration();
-		if (swt_init_status != LS_OPEN) //@TODO: get the Enum definitation from switch_object may be better, while not convenient? The LS_OPEN seems to be decoupled from the enum defined in the switch, while they are defined in the same way separately
+		if (swt_init_status != LS_OPEN)
 		{
-			GL_THROW("sync_check (%d - %s): the parent switch_object object must be OPEN when the sync_check is initiated as armed!",
-					 obj->id, (obj->name ? obj->name : "Unnamed"));
+			sc_enabled_flag = false; // disarmed itself
+			gl_warning("sync_check (%d - %s): the parent switch_object object is CLOSED. Thus, the sync_check object is disarmed while it was initiated as armed!",
+					   obj->id, (obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			The parent switch_object object is CLOSED. Thus, the sync_check object is disarmed
+			while it was initiated as armed! If the warning persists and the object does, please submit your code and
+			a bug report via the trac website.
+			*/
 		}
 	}
 
@@ -158,25 +313,38 @@ bool sync_check::data_sanity_check(OBJECT *par)
 	if (frequency_tolerance_pu <= 0)
 	{
 		frequency_tolerance_pu = 1e-2; // i.e., 1%
-		gl_warning("sync_check:%d %s - frequency_tolerance_pu was not set as a positive value, it is reset to %f [pu].", obj->id, (obj->name ? obj->name : "Unnamed"), frequency_tolerance_pu);
-		flag_prop_modified = true;
+		gl_warning("sync_check:%d %s - frequency_tolerance_pu was not set as a positive value, it is reset to %f [pu].",
+				   obj->id, (obj->name ? obj->name : "Unnamed"), frequency_tolerance_pu);
+		/*  TROUBLESHOOT
+		The frequency_tolerance_pu was not set as a positive value!
+		If the warning persists and the object does, please submit your code and
+		a bug report via the trac website.
+		*/
 	}
 
 	if (voltage_tolerance_pu <= 0)
 	{
 		voltage_tolerance_pu = 1e-2; // i.e., 1%
-		gl_warning("sync_check:%d %s - voltage_tolerance_pu was not set as a positive value, it is reset to %f [pu].", obj->id, (obj->name ? obj->name : "Unnamed"), voltage_tolerance_pu);
-		flag_prop_modified = true;
+		gl_warning("sync_check:%d %s - voltage_tolerance_pu was not set as a positive value, it is reset to %f [pu].",
+				   obj->id, (obj->name ? obj->name : "Unnamed"), voltage_tolerance_pu);
+		/*  TROUBLESHOOT
+		The voltage_tolerance_pu was not set as a positive value!
+		If the warning persists and the object does, please submit your code and
+		a bug report via the trac website.
+		*/
 	}
 
 	if (metrics_period_sec <= 0)
 	{
 		metrics_period_sec = 1.2; // i.e., 1.2 secs
-		gl_warning("sync_check:%d %s - metrics_period_sec was not set as a positive value, it is reset to %f [secs].", obj->id, (obj->name ? obj->name : "Unnamed"), metrics_period_sec);
-		flag_prop_modified = true;
+		gl_warning("sync_check:%d %s - metrics_period_sec was not set as a positive value, it is reset to %f [secs].",
+				   obj->id, (obj->name ? obj->name : "Unnamed"), metrics_period_sec);
+		/*  TROUBLESHOOT
+		The metrics_period_sec was not set as a positive value!
+		If the warning persists and the object does, please submit your code and
+		a bug report via the trac website.
+		*/
 	}
-
-	return flag_prop_modified;
 }
 
 void sync_check::reg_deltamode_check()
@@ -196,6 +364,11 @@ void sync_check::reg_deltamode_check()
 		{
 			gl_warning("sync_check:%d %s - Deltamode is enabled for the powerflow module, but not this sync_check object!",
 					   obj->id, (obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			Deltamode is enabled for the powerflow module, but not this sync_check object!
+			If the warning persists and the object does, please submit your code and
+			a bug report via the trac website.
+			*/
 		}
 		else // Both the powerflow module and object are enabled for the deltamode
 		{
@@ -209,6 +382,11 @@ void sync_check::reg_deltamode_check()
 		{
 			gl_warning("sync_check:%d %s - Deltamode is enabled for the sync_check object, but not this powerflow module!",
 					   obj->id, (obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			Deltamode is enabled for the sync_check object, but not this powerflow module!
+			If the warning persists and the object does, please submit your code and
+			a bug report via the trac website.
+			*/
 		}
 	}
 }
@@ -247,8 +425,8 @@ void sync_check::reg_deltamode()
 			gl_warning("Failure to map deltamode function for this device: %s", obj->name);
 			/*  TROUBLESHOOT
 			Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
-			the object supports deltamode.  This error may simply be an indication that the object of interest
-			does not support deltamode.  If the error persists and the object does, please submit your code and
+			the object supports deltamode.  This warning may simply be an indication that the object of interest
+			does not support deltamode.  If the warning persists and the object does, please submit your code and
 			a bug report via the trac website.
 			*/
 		}
@@ -351,8 +529,12 @@ void sync_check::init_norm_values(OBJECT *par)
 	// Check consistency
 	if (abs(volt_norm_fm - volt_norm_to) > voltage_tolerance_pu)
 	{
-		GL_THROW("sync_check:%d %s nominal_voltage on the from and to nodes of the switch should be the same!",
+		GL_THROW("sync_check:%d %s nominal_voltage on the from and to nodes of the switch should be close enough!",
 				 obj->id, (obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While checking the nominal voltages of the 'from' and 'to' nodes of the switch_object, an error occurred.  Please try again.
+		If the error persists, please submit your GLM and a bug report to the ticketing system.
+		*/
 	}
 	else
 	{
@@ -365,40 +547,29 @@ void sync_check::update_measurements()
 	//@Todo: 1) validity check of properties; 2) frequency of each phase?
 
 	/* Get the 'from' node freq */
-	temp_property_pointer = new gld_property(swt_fm_node, "measured_frequency");
-	swt_fm_node_freq = temp_property_pointer->get_double();
-	delete temp_property_pointer;
+	swt_fm_node_freq = prop_fm_node_freq->get_double();
 
 	/* Get the 'to' node freq */
-	temp_property_pointer = new gld_property(swt_to_node, "measured_frequency");
-	swt_to_node_freq = temp_property_pointer->get_double();
-	delete temp_property_pointer;
+	swt_to_node_freq = prop_to_node_freq->get_double();
 
-	/* Get the 'from' node volt phasors */
-	temp_property_pointer = new gld_property(swt_fm_node, "voltage_A");
-	swt_fm_volt_A = temp_property_pointer->get_complex();
-	delete temp_property_pointer;
+	/* Get the 'from' & 'to' node volt phasors */
+	if (swt_ph_A_flag)
+	{
+		swt_fm_volt_A = prop_fm_node_volt_A->get_complex();
+		swt_to_volt_A = prop_to_node_volt_A->get_complex();
+	}
 
-	temp_property_pointer = new gld_property(swt_fm_node, "voltage_B");
-	swt_fm_volt_B = temp_property_pointer->get_complex();
-	delete temp_property_pointer;
+	if (swt_ph_B_flag)
+	{
+		swt_fm_volt_B = prop_fm_node_volt_B->get_complex();
+		swt_to_volt_B = prop_to_node_volt_B->get_complex();
+	}
 
-	temp_property_pointer = new gld_property(swt_fm_node, "voltage_C");
-	swt_fm_volt_C = temp_property_pointer->get_complex();
-	delete temp_property_pointer;
-
-	/* Get the 'to' node volt phasors */
-	temp_property_pointer = new gld_property(swt_to_node, "voltage_A");
-	swt_to_volt_A = temp_property_pointer->get_complex();
-	delete temp_property_pointer;
-
-	temp_property_pointer = new gld_property(swt_to_node, "voltage_B");
-	swt_to_volt_B = temp_property_pointer->get_complex();
-	delete temp_property_pointer;
-
-	temp_property_pointer = new gld_property(swt_to_node, "voltage_C");
-	swt_to_volt_C = temp_property_pointer->get_complex();
-	delete temp_property_pointer;
+	if (swt_ph_C_flag)
+	{
+		swt_fm_volt_C = prop_fm_node_volt_C->get_complex();
+		swt_to_volt_C = prop_to_node_volt_C->get_complex();
+	}
 }
 
 void sync_check::check_metrics()

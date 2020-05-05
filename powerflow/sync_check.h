@@ -47,15 +47,31 @@ private: /* Measurements, actuator, gld objs, & Nominal Values */
 	double swt_fm_node_freq;
 	double swt_to_node_freq;
 
+	gld_property *prop_fm_node_freq;
+	gld_property *prop_to_node_freq;
+
 	complex swt_fm_volt_A;
 	complex swt_fm_volt_B;
 	complex swt_fm_volt_C;
+
+	gld_property *prop_fm_node_volt_A;
+	gld_property *prop_fm_node_volt_B;
+	gld_property *prop_fm_node_volt_C;
 
 	complex swt_to_volt_A;
 	complex swt_to_volt_B;
 	complex swt_to_volt_C;
 
+	gld_property *prop_to_node_volt_A;
+	gld_property *prop_to_node_volt_B;
+	gld_property *prop_to_node_volt_C;
+
 	gld_property *swt_prop_status;
+
+	set swt_phases;
+	bool swt_ph_A_flag;
+	bool swt_ph_B_flag;
+	bool swt_ph_C_flag;
 
 private: /* Published Variables*/
 	bool sc_enabled_flag;
@@ -69,9 +85,10 @@ private:
 	void init_vars();
 
 	/* Funcs mainly used in init() */
-	bool data_sanity_check(OBJECT *par = NULL);
+	void data_sanity_check(OBJECT *par = NULL);
 	void reg_deltamode_check();
 	void init_norm_values(OBJECT *par = NULL);
+	void init_sensors(OBJECT *par = NULL);
 
 	/* FUncs mainly used in presync() */
 	void reg_deltamode();
