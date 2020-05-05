@@ -101,7 +101,7 @@ void sync_check::init_sensors(OBJECT *par)
 		/*  TROUBLESHOOT
 		While attempting to map the phases property from the parent object, an error was encountered.
 		Please check and make sure your parent object is a switch inside the powerflow module and try
-		again. If the error persists, please submit your code and a bug report via the Trac website.
+		again. If the error persists, please submit your code and a bug report via the issue tracker.
 		*/
 	}
 
@@ -112,9 +112,9 @@ void sync_check::init_sensors(OBJECT *par)
 	delete temp_property_pointer;
 
 	// Check the phases
-	swt_ph_A_flag = ((phases & 0x1) == 0x01); // Phase A
-	swt_ph_B_flag = ((phases & 0x2) == 0x02); // Phase B
-	swt_ph_C_flag = ((phases & 0x4) == 0x04); // Phase C
+	swt_ph_A_flag = ((phases & PHASE_A) == PHASE_A); // Phase A
+	swt_ph_B_flag = ((phases & PHASE_B) == PHASE_B); // Phase B
+	swt_ph_C_flag = ((phases & PHASE_C) == PHASE_C); // Phase C
 
 	/* Get properties for measurements */
 	OBJECT *obj = OBJECTHDR(this);
@@ -286,7 +286,7 @@ void sync_check::data_sanity_check(OBJECT *par)
 	// Check if the parent is a switch_object object
 	if (par == NULL)
 	{
-		GL_THROW("sync_check (%d - %s): the parent property must be specified!",
+		GL_THROW("sync_check:%d %s the parent property must be specified!",
 				 obj->id, (obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		While checking the parent swtich_object, an error occurred.  Please try again.
@@ -297,7 +297,7 @@ void sync_check::data_sanity_check(OBJECT *par)
 	{
 		if (gl_object_isa(par, "switch", "powerflow") == false)
 		{
-			GL_THROW("sync_check (%d - %s): the parent object must be a powerflow switch object!",
+			GL_THROW("sync_check:%d %s the parent object must be a powerflow switch object!",
 					 obj->id, (obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
 			The parent object must be a powerflow switch object. Please try again.
@@ -326,12 +326,11 @@ void sync_check::data_sanity_check(OBJECT *par)
 		if (swt_init_status != LS_OPEN)
 		{
 			sc_enabled_flag = false; // disarmed itself
-			gl_warning("sync_check (%d - %s): the parent switch_object object is CLOSED. Thus, the sync_check object is disarmed while it was initiated as armed!",
+			gl_warning("sync_check:%d %s the parent switch_object object is starting CLOSED, so sync_check object is disarmed!",
 					   obj->id, (obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
-			The parent switch_object object is CLOSED. Thus, the sync_check object is disarmed
-			while it was initiated as armed! If the warning persists and the object does, please submit your code and
-			a bug report via the trac website.
+			The parent switch_object object is CLOSED. Thus, the sync_check object is disarmed since it won't need to close the switch.
+			If the warning persists and the switch is open, please submit your code and	a bug report via the issue tracker.
 			*/
 		}
 	}
@@ -345,7 +344,7 @@ void sync_check::data_sanity_check(OBJECT *par)
 		/*  TROUBLESHOOT
 		The frequency_tolerance_pu was not set as a positive value!
 		If the warning persists and the object does, please submit your code and
-		a bug report via the trac website.
+		a bug report via the issue tracker.
 		*/
 	}
 
@@ -357,7 +356,7 @@ void sync_check::data_sanity_check(OBJECT *par)
 		/*  TROUBLESHOOT
 		The voltage_tolerance_pu was not set as a positive value!
 		If the warning persists and the object does, please submit your code and
-		a bug report via the trac website.
+		a bug report via the issue tracker.
 		*/
 	}
 
@@ -369,7 +368,7 @@ void sync_check::data_sanity_check(OBJECT *par)
 		/*  TROUBLESHOOT
 		The metrics_period_sec was not set as a positive value!
 		If the warning persists and the object does, please submit your code and
-		a bug report via the trac website.
+		a bug report via the issue tracker.
 		*/
 	}
 }
@@ -394,7 +393,7 @@ void sync_check::reg_deltamode_check()
 			/*  TROUBLESHOOT
 			Deltamode is enabled for the powerflow module, but not this sync_check object!
 			If the warning persists and the object does, please submit your code and
-			a bug report via the trac website.
+			a bug report via the issue tracker.
 			*/
 		}
 		else // Both the powerflow module and object are enabled for the deltamode
@@ -412,7 +411,7 @@ void sync_check::reg_deltamode_check()
 			/*  TROUBLESHOOT
 			Deltamode is enabled for the sync_check object, but not this powerflow module!
 			If the warning persists and the object does, please submit your code and
-			a bug report via the trac website.
+			a bug report via the issue tracker.
 			*/
 		}
 	}
@@ -433,7 +432,7 @@ void sync_check::reg_deltamode()
 			/*  TROUBLESHOOT
 			While attempting to populate a reference array of deltamode-enabled objects for the powerflow
 			module, an attempt was made to write beyond the allocated array space.  Please try again.  If the
-			error persists, please submit a bug report and your code via the trac website.
+			error persists, please submit a bug report and your code via the issue tracker.
 			*/
 		}
 
@@ -454,7 +453,7 @@ void sync_check::reg_deltamode()
 			Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
 			the object supports deltamode.  This warning may simply be an indication that the object of interest
 			does not support deltamode.  If the warning persists and the object does, please submit your code and
-			a bug report via the trac website.
+			a bug report via the issue tracker.
 			*/
 		}
 
