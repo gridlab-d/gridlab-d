@@ -119,7 +119,7 @@ int fault_check::init(OBJECT *parent)
 	//Make sure the eventgen_object is an actual eventgen object.
 	if(rel_eventgen != NULL){
 		if(!gl_object_isa(rel_eventgen,"eventgen")){
-			gl_error("fault_check:%s %s is not an eventgen object. Please specify the name of an eventgen object.",obj->name,rel_eventgen);
+			gl_error("fault_check:%s %s is not an eventgen object. Please specify the name of an eventgen object.",obj->name,rel_eventgen->name);
 			return 0;
 			/*  TROUBLESHOOT
 			The property eventgen_object was given the name of an object that is not an eventgen object.
@@ -282,8 +282,8 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 							write_output_file(t0,0);	//Write it
 						}
 
-						//See what mode we are in
-						if ((reliability_mode == false) && (fault_check_override_mode == false))
+						//See what mode we are in - only check reliability mode if we aren't in grid association
+						if ((reliability_mode == false) && (fault_check_override_mode == false) && (grid_association_mode == false))
 						{
 							GL_THROW("Unsupported phase on node %s",NR_busdata[index].name);
 							/*  TROUBLESHOOT
@@ -353,8 +353,8 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 					write_output_file(t0,0);	//Write it
 				}
 
-				//See what mode we are in
-				if ((reliability_mode == false) && (fault_check_override_mode == false))
+				//See what mode we are in - only "fail" if standard/legacy checking
+				if ((reliability_mode == false) && (fault_check_override_mode == false) && (grid_association_mode == false))
 				{
 					GL_THROW("Unsupported phase on a possibly meshed node");
 					/*  TROUBLESHOOT
