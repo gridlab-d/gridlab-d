@@ -112,17 +112,30 @@ int convert_to_double(const char *buffer, /**< a pointer to the string buffer */
 {
 	char unit[256];
 	int n = sscanf(buffer,"%lg%s",(double *)data,unit);
-	if ( n>1 && prop->unit!=NULL ) /* unit given and unit allowed */
+	if (n>1) /* something else given */
 	{
-		UNIT *from = unit_find(unit);
-		if ( from != prop->unit && unit_convert_ex(from,prop->unit,(double*)data)==0)
+		if (prop->unit!=NULL)	/* Unit allowed - see if it is a valid unit */
 		{
-			output_error("convert_to_double(const char *buffer='%s', void *data=0x%*p, PROPERTY *prop={name='%s',...}): unit conversion failed", buffer, sizeof(void*), data, prop->name);
+			UNIT *from = unit_find(unit);
+			if ( from != prop->unit && unit_convert_ex(from,prop->unit,(double*)data)==0)
+			{
+				output_error("convert_to_double(const char *buffer='%s', void *data=0x%*p, PROPERTY *prop={name='%s',...}): unit conversion failed", buffer, sizeof(void*), data, prop->name);
+				/* TROUBLESHOOT 
+				This error is caused by an attempt to convert a value from a unit that is
+				incompatible with the unit of the target property.  Check your units and
+				try again.
+				*/
+				return 0;
+			}
+		}
+		else	//Unit not specified, give a more general error
+		{
+			output_error("convert_to_double(const char *buffer='%s', void *data=0x%*p, PROPERTY *prop={name='%s',...}): conversion failed", buffer, sizeof(void*), data, prop->name);
 			/* TROUBLESHOOT 
-			   This error is caused by an attempt to convert a value from a unit that is
-			   incompatible with the unit of the target property.  Check your units and
-			   try again.
-		     */
+			This error is caused by either an invalid entry in the conversion (extra decimal points), or
+			with a unit specified where no unit was on the original property.  Check your source data (GLM entry
+			or player file) and	try again.
+			*/
 			return 0;
 		}
 	}
