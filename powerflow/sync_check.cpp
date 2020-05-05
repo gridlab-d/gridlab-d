@@ -553,7 +553,8 @@ void sync_check::init_norm_values(OBJECT *par)
 	delete temp_property_pointer;
 
 	// Check consistency
-	if (abs(volt_norm_fm - volt_norm_to) > voltage_tolerance_pu)
+	volt_norm = (volt_norm_fm + volt_norm_to) / 2;
+	if (abs(volt_norm_fm - volt_norm_to) > (voltage_tolerance_pu * volt_norm))
 	{
 		GL_THROW("sync_check:%d %s nominal_voltage on the from and to nodes of the switch should be close enough!",
 				 obj->id, (obj->name ? obj->name : "Unnamed"));
@@ -561,10 +562,6 @@ void sync_check::init_norm_values(OBJECT *par)
 		While checking the nominal voltages of the 'from' and 'to' nodes of the switch_object, an error occurred.  Please try again.
 		If the error persists, please submit your GLM and a bug report to the ticketing system.
 		*/
-	}
-	else
-	{
-		volt_norm = (volt_norm_fm + volt_norm_to) / 2;
 	}
 }
 
