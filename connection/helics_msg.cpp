@@ -823,7 +823,7 @@ int helics_msg::publishVariables(){
 	memset(&buffer[0], '\0', 1024);
 	int buffer_size = 0;
 	string temp_value = "";
-	stringstream message_buffer_stream;
+	std::stringstream message_buffer_stream;
 	std::complex<double> complex_temp = {0.0, 0.0};
 	for(vector<helics_value_publication*>::iterator pub = helics_value_publications.begin(); pub != helics_value_publications.end(); pub++) {
 		buffer_size = 0;
