@@ -345,6 +345,12 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 
 			override_output = output_check_supported_mesh();	//See if anything changed
 
+			//If full output, do an initial dump
+			if ((prev_time == 0) && (full_print_output == true))
+			{
+				override_output = true;	//Force on, no matter what for an initial output
+			}
+
 			//See if anything broke
 			if (override_output == true && fcheck_state != SWITCHING)
 			{

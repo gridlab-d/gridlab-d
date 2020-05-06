@@ -277,6 +277,11 @@ void sync_check::init_vars()
 	swt_ph_A_flag = false;
 	swt_ph_B_flag = false;
 	swt_ph_C_flag = false;
+
+	//Defaults - mostly to cut down on messages
+	frequency_tolerance_pu = 1e-2; // i.e., 1%
+	voltage_tolerance_pu = 1e-2; // i.e., 1%
+	metrics_period_sec = 1.2;
 }
 
 void sync_check::data_sanity_check(OBJECT *par)
