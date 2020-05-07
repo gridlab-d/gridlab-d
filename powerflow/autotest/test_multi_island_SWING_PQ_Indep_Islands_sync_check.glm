@@ -1,6 +1,8 @@
 //4-node-esque system to test multiple islands/solutions approach
 //Half loads
 //Two SWING buses with players to drive voltage magnitudes/phases together
+//Used to test the sync_check object - pushes voltage and frequency on either side of the connecting
+//switch in/out of bands.  sync_check will close the switch, when appropriate (and a separate player reopens it).
 
 //#set pauseatexit=1
 #set deltamode_timestep=1000000000
@@ -100,21 +102,21 @@ object group_recorder {
 	interval 1;
 }
 
-object recorder {
-	flags DELTAMODE;
-	parent node3;
-	property "voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag";
-	interval 1;
-	file node3voltages.csv;
-}
+// object recorder {
+	// flags DELTAMODE;
+	// parent node3;
+	// property "voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag";
+	// interval 1;
+	// file node3voltages.csv;
+// }
 
-object recorder {
-	flags DELTAMODE;
-	parent node3B;
-	property "voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag";
-	interval 1;
-	file node3Bvoltages.csv;
-}
+// object recorder {
+	// flags DELTAMODE;
+	// parent node3B;
+	// property "voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag";
+	// interval 1;
+	// file node3Bvoltages.csv;
+// }
 
 //Switches, that would presumably make this three systems, eventually
 object switch {
@@ -128,7 +130,7 @@ object switch {
 		target status;
 		object player {
 			property value;
-			file "../assert_switch_status_value.csv"; 
+			file "../data_sync_check_assert_switch_status_value.csv"; 
 		};
 	};
 }
@@ -157,7 +159,7 @@ object player {
 	name sync_check_player;
 	parent sync_check_obj;
 	property armed;
-	file ../data_sync_armed.csv;
+	file ../data_sync_check_sync_armed.csv;
 }
 
 //Player to reopen switches
@@ -166,7 +168,7 @@ object player {
 	name switch_player;
 	parent switch3_3B;
 	property status;
-	file ../data_sync_switch_player.csv;
+	file ../data_sync_check_switch_player.csv;
 }
 
 //First system
@@ -179,19 +181,19 @@ object node {
 		name node1_A_player;
 		flags DELTAMODE;
 		property voltage_A;
-		file ../data_volt_freq_player_bus_1_A.csv;
+		file ../data_sync_check_volt_freq_player_bus_1_A.csv;
 	};
 	object player {
 		name node1_B_player;
 		flags DELTAMODE;
 		property voltage_B;
-		file ../data_volt_freq_player_bus_1_B.csv;
+		file ../data_sync_check_volt_freq_player_bus_1_B.csv;
 	};
 	object player {
 		name node1_C_player;
 		flags DELTAMODE;
 		property voltage_C;
-		file ../data_volt_freq_player_bus_1_C.csv;
+		file ../data_sync_check_volt_freq_player_bus_1_C.csv;
 	};
 }
 
@@ -253,19 +255,19 @@ object node {
 		name node1B_A_player;
 		flags DELTAMODE;
 		property voltage_A;
-		file ../data_volt_freq_player_bus_1B_A.csv;
+		file ../data_sync_check_volt_freq_player_bus_1B_A.csv;
 	};
 	object player {
 		name node1B_B_player;
 		flags DELTAMODE;
 		property voltage_B;
-		file ../data_volt_freq_player_bus_1B_B.csv;
+		file ../data_sync_check_volt_freq_player_bus_1B_B.csv;
 	};
 	object player {
 		name node1B_C_player;
 		flags DELTAMODE;
 		property voltage_C;
-		file ../data_volt_freq_player_bus_1B_C.csv;
+		file ../data_sync_check_volt_freq_player_bus_1B_C.csv;
 	};
 }
 
