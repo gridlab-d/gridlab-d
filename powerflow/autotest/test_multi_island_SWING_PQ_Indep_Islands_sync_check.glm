@@ -127,8 +127,10 @@ object switch {
 	status OPEN;
 	
 	object enum_assert {
+		flags DELTAMODE;
 		target status;
 		object player {
+			flags DELTAMODE;
 			property value;
 			file "../data_sync_check_assert_switch_status_value.csv"; 
 		};
