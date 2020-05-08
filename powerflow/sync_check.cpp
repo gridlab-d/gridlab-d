@@ -14,7 +14,7 @@
 using namespace std;
 
 /* UTIL MACROS */
-#define RAD_TO_DEG(rad) rad / M_PI * 360
+#define RAD_TO_DEG(rad) rad / M_PI * 180
 #define STR(s) #s
 
 //////////////////////////////////////////////////////////////////////////
@@ -37,8 +37,8 @@ sync_check::sync_check(MODULE *mod) : powerflow_object(mod)
 								PT_double, "voltage_tolerance[pu]", PADDR(voltage_tolerance_pu), PT_DESCRIPTION, "voltage_tolerance",
 								PT_double, "metrics_period[s]", PADDR(metrics_period_sec), PT_DESCRIPTION, "The user-defined period when both metrics are satisfied",
 								PT_enumeration, "volt_compare_mode", PADDR(volt_compare_mode), PT_DESCRIPTION, "Determines which voltage difference calculation approach is used",
-								PT_KEYWORD, "MAG_DIFF", (enumeration)MAG_DIFF,
-								PT_KEYWORD, "SEP_DIFF", (enumeration)SEP_DIFF,
+									PT_KEYWORD, "MAG_DIFF", (enumeration)MAG_DIFF,
+									PT_KEYWORD, "SEP_DIFF", (enumeration)SEP_DIFF,
 								PT_double, "voltage_magnitude_tolerance[pu]", PADDR(voltage_magnitude_tolerance_pu), PT_DESCRIPTION, "The user-specified tolerance in per unit for the difference in voltage magnitudes for checking the voltage metric. Used only by the SEP_DIFF mode of volt_compare_mode.",
 								PT_double, "voltage_angle_tolerance[deg]", PADDR(voltage_angle_tolerance_deg), PT_DESCRIPTION, "The user-specified tolerance in degrees for the difference in voltage angles for checking the voltage metric. Used only by the SEP_DIFF mode of volt_compare_mode.",
 								NULL) < 1)
@@ -232,7 +232,7 @@ void sync_check::init_sensors(OBJECT *par)
 		GL_THROW("sync_check:%d %s failed to map the voltage_C property of the 'to' node of its parent switch_object.",
 				 obj->id, (obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
-		While attempting to map the voltage_A property of the 'to' node of its parent switch_object, an error occurred.  Please try again.
+		While attempting to map the voltage_C property of the 'to' node of its parent switch_object, an error occurred.  Please try again.
 		If the error persists, please submit your GLM and a bug report to the ticketing system.
 		*/
 	}
@@ -240,6 +240,9 @@ void sync_check::init_sensors(OBJECT *par)
 
 void sync_check::init_vars()
 {
+	OBJECT *obj = OBJECTHDR(this);
+	double temp_freq_val;
+
 	/* Default - MAG_DIFF Mode */
 	volt_compare_mode = MAG_DIFF;
 
@@ -294,8 +297,28 @@ void sync_check::init_vars()
 	swt_ph_B_flag = false;
 	swt_ph_C_flag = false;
 
+	//Get frequency to populate default - powerflow global has been set by now
+	/* Get the nominal frequency property */
+	temp_property_pointer = new gld_property("powerflow::nominal_frequency");
+
+	// Double check the validity of the nominal frequency property
+	if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+	{
+		GL_THROW("sync_check:%d %s failed to map the nominal_frequency property", obj->id, (obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map the nominal_frequency property, an error occurred.  Please try again.
+		If the error persists, please submit your GLM and a bug report to the ticketing system.
+		*/
+	}
+
+	// Get the value of nominal frequency from this property
+	temp_freq_val = temp_property_pointer->get_double();
+
+	// Clean the temporary property pointer
+	delete temp_property_pointer;
+
 	//Defaults - mostly to cut down on messages
-	frequency_tolerance_hz = 0.6; // i.e., 1% if the system is in 60 Hz
+	frequency_tolerance_hz = 0.01 * temp_freq_val; // i.e., 1%
 	voltage_tolerance_pu = 1e-2;  // i.e., 1%
 	metrics_period_sec = 1.2;
 }
@@ -303,6 +326,7 @@ void sync_check::init_vars()
 void sync_check::data_sanity_check(OBJECT *par)
 {
 	OBJECT *obj = OBJECTHDR(this);
+	double temp_freq_val;
 
 	// Check if the parent is a switch_object object
 	if (par == NULL)
@@ -359,8 +383,28 @@ void sync_check::data_sanity_check(OBJECT *par)
 	// Check the params
 	if (frequency_tolerance_hz <= 0)
 	{
-		frequency_tolerance_hz = 0.6;
-		gl_warning("sync_check:%d %s - frequency_tolerance was not set as a positive value, it is reset to %f [pu].",
+
+
+		/* Get the nominal frequency property */
+		temp_property_pointer = new gld_property("powerflow::nominal_frequency");
+
+		// Double check the validity of the nominal frequency property
+		if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+		{
+			GL_THROW("sync_check:%d %s failed to map the nominal_frequency property", obj->id, (obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		// Get the value of nominal frequency from this property
+		temp_freq_val = temp_property_pointer->get_double();
+
+		// Clean the temporary property pointer
+		delete temp_property_pointer;
+
+		//Default it to 1%
+		frequency_tolerance_hz = 0.01 * temp_freq_val;
+
+		gl_warning("sync_check:%d %s - frequency_tolerance was not set as a positive value, it is reset to %f [Hz].",
 				   obj->id, (obj->name ? obj->name : "Unnamed"), frequency_tolerance_hz);
 		/*  TROUBLESHOOT
 		The frequency_tolerance was not set as a positive value!
