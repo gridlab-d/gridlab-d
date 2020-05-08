@@ -9,8 +9,13 @@
 #include "sync_check.h"
 
 #include <iostream>
+#include <cmath>
 
 using namespace std;
+
+/* UTIL MACROS */
+#define RAD_TO_DEG(rad) rad / M_PI * 360
+#define STR(s) #s
 
 //////////////////////////////////////////////////////////////////////////
 // sync_check CLASS FUNCTIONS
@@ -31,6 +36,11 @@ sync_check::sync_check(MODULE *mod) : powerflow_object(mod)
 								PT_double, "frequency_tolerance[Hz]", PADDR(frequency_tolerance_hz), PT_DESCRIPTION, "The user-specified tolerance for checking the frequency metric",
 								PT_double, "voltage_tolerance[pu]", PADDR(voltage_tolerance_pu), PT_DESCRIPTION, "voltage_tolerance",
 								PT_double, "metrics_period[s]", PADDR(metrics_period_sec), PT_DESCRIPTION, "The user-defined period when both metrics are satisfied",
+								PT_enumeration, "volt_compare_mode", PADDR(volt_compare_mode), PT_DESCRIPTION, "Determines which voltage difference calculation approach is used",
+								PT_KEYWORD, "MAG_DIFF", (enumeration)MAG_DIFF,
+								PT_KEYWORD, "SEP_DIFF", (enumeration)SEP_DIFF,
+								PT_double, "voltage_magnitude_tolerance[pu]", PADDR(voltage_magnitude_tolerance_pu), PT_DESCRIPTION, "The user-specified tolerance in per unit for the difference in voltage magnitudes for checking the voltage metric. Used only by the SEP_DIFF mode of volt_compare_mode.",
+								PT_double, "voltage_angle_tolerance[deg]", PADDR(voltage_angle_tolerance_deg), PT_DESCRIPTION, "The user-specified tolerance in degrees for the difference in voltage angles for checking the voltage metric. Used only by the SEP_DIFF mode of volt_compare_mode.",
 								NULL) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
 
@@ -230,6 +240,13 @@ void sync_check::init_sensors(OBJECT *par)
 
 void sync_check::init_vars()
 {
+	/* Default - MAG_DIFF Mode */
+	volt_compare_mode = MAG_DIFF;
+
+	/* Settings for SEP_DIFF Mode */
+	voltage_magnitude_tolerance_pu = 1e-2;
+	voltage_angle_tolerance_deg = 5;
+
 	/* init member with default values */
 	reg_dm_flag = false;
 	deltamode_inclusive = false; //By default, don't be included in deltamode simulations
@@ -346,12 +363,13 @@ void sync_check::data_sanity_check(OBJECT *par)
 		gl_warning("sync_check:%d %s - frequency_tolerance was not set as a positive value, it is reset to %f [pu].",
 				   obj->id, (obj->name ? obj->name : "Unnamed"), frequency_tolerance_hz);
 		/*  TROUBLESHOOT
-		The frequency_tolerance_hz was not set as a positive value!
+		The frequency_tolerance was not set as a positive value!
 		If the warning persists and the object does, please submit your code and
 		a bug report via the issue tracker.
 		*/
 	}
 
+	// The voltage tolerance settings of both modes are checked, regardless of the mode at init as the mode may be modified later on
 	if (voltage_tolerance_pu <= 0)
 	{
 		voltage_tolerance_pu = 1e-2; // i.e., 1%
@@ -359,6 +377,31 @@ void sync_check::data_sanity_check(OBJECT *par)
 				   obj->id, (obj->name ? obj->name : "Unnamed"), voltage_tolerance_pu);
 		/*  TROUBLESHOOT
 		The voltage_tolerance_pu was not set as a positive value!
+		If the warning persists and the object does, please submit your code and
+		a bug report via the issue tracker.
+		*/
+	}
+
+	if (voltage_magnitude_tolerance_pu <= 0)
+	{
+		voltage_magnitude_tolerance_pu = 1e-2; // i.e, 1%
+		gl_warning("sync_check:%d %s - %s was not set as a positive value, it is reset to %f [pu].",
+				   obj->id, (obj->name ? obj->name : "Unnamed"),
+				   STR(voltage_magnitude_tolerance_pu), voltage_magnitude_tolerance_pu);
+		/*  TROUBLESHOOT
+		The voltage_magnitude_tolerance was not set as a positive value!
+		If the warning persists and the object does, please submit your code and
+		a bug report via the issue tracker.
+		*/
+	}
+
+	if (voltage_angle_tolerance_deg <= 0)
+	{
+		voltage_angle_tolerance_deg = 5; // Unit: Degree
+		gl_warning("sync_check:%d %s - voltage_angle_tolerance was not set as a positive value, it is reset to %f [Deg].",
+				   obj->id, (obj->name ? obj->name : "Unnamed"), voltage_angle_tolerance_deg);
+		/*  TROUBLESHOOT
+		The voltage_angle_tolerance was not set as a positive value!
 		If the warning persists and the object does, please submit your code and
 		a bug report via the issue tracker.
 		*/
@@ -584,22 +627,62 @@ void sync_check::check_metrics()
 {
 	double freq_diff_hz = abs(swt_fm_node_freq - swt_to_node_freq);
 
-	double volt_A_diff = (swt_fm_volt_A - swt_to_volt_A).Mag();
-	double volt_A_diff_pu = volt_A_diff / volt_norm;
-
-	double volt_B_diff = (swt_fm_volt_B - swt_to_volt_B).Mag();
-	double volt_B_diff_pu = volt_B_diff / volt_norm;
-
-	double volt_C_diff = (swt_fm_volt_C - swt_to_volt_C).Mag();
-	double volt_C_diff_pu = volt_C_diff / volt_norm;
-
-	if ((freq_diff_hz <= frequency_tolerance_hz) && (volt_A_diff_pu <= voltage_tolerance_pu) && (volt_B_diff_pu <= voltage_tolerance_pu) && (volt_C_diff_pu <= voltage_tolerance_pu))
+	if (volt_compare_mode == MAG_DIFF)
 	{
-		metrics_flag = true;
+		double volt_A_diff = (swt_fm_volt_A - swt_to_volt_A).Mag();
+		double volt_A_diff_pu = volt_A_diff / volt_norm;
+
+		double volt_B_diff = (swt_fm_volt_B - swt_to_volt_B).Mag();
+		double volt_B_diff_pu = volt_B_diff / volt_norm;
+
+		double volt_C_diff = (swt_fm_volt_C - swt_to_volt_C).Mag();
+		double volt_C_diff_pu = volt_C_diff / volt_norm;
+
+		if ((freq_diff_hz <= frequency_tolerance_hz) && (volt_A_diff_pu <= voltage_tolerance_pu) && (volt_B_diff_pu <= voltage_tolerance_pu) && (volt_C_diff_pu <= voltage_tolerance_pu))
+		{
+			metrics_flag = true;
+		}
+		else
+		{
+			metrics_flag = false;
+		}
 	}
-	else
+	else // SEP_DIFF Mode
 	{
-		metrics_flag = false;
+		// Phase A
+		double volt_A_mag_diff = abs(swt_fm_volt_A.Mag() - swt_to_volt_A.Mag());
+		double volt_A_mag_diff_pu = volt_A_mag_diff / volt_norm;
+
+		double volt_A_ang_rad_diff = abs(swt_fm_volt_A.Arg() - swt_to_volt_A.Arg());
+		double volt_A_ang_deg_diff = RAD_TO_DEG(volt_A_ang_rad_diff);
+
+		// Phase B
+		double volt_B_mag_diff = abs(swt_fm_volt_B.Mag() - swt_to_volt_B.Mag());
+		double volt_B_mag_diff_pu = volt_B_mag_diff / volt_norm;
+
+		double volt_B_ang_rad_diff = abs(swt_fm_volt_B.Arg() - swt_to_volt_B.Arg());
+		double volt_B_ang_deg_diff = RAD_TO_DEG(volt_B_ang_rad_diff);
+
+		// Phase C
+		double volt_C_mag_diff = abs(swt_fm_volt_C.Mag() - swt_to_volt_C.Mag());
+		double volt_C_mag_diff_pu = volt_C_mag_diff / volt_norm;
+
+		double volt_C_ang_rad_diff = abs(swt_fm_volt_C.Arg() - swt_to_volt_C.Arg());
+		double volt_C_ang_deg_diff = RAD_TO_DEG(volt_C_ang_rad_diff);
+
+		// Check
+		if ((freq_diff_hz <= frequency_tolerance_hz) &&
+			(volt_A_mag_diff_pu <= voltage_magnitude_tolerance_pu) &&
+			(volt_B_mag_diff_pu <= voltage_magnitude_tolerance_pu) && (volt_C_mag_diff_pu <= voltage_magnitude_tolerance_pu) &&
+			(volt_A_ang_deg_diff <= voltage_angle_tolerance_deg) &&
+			(volt_B_ang_deg_diff <= voltage_angle_tolerance_deg) && (volt_C_ang_deg_diff <= voltage_angle_tolerance_deg))
+		{
+			metrics_flag = true;
+		}
+		else
+		{
+			metrics_flag = false;
+		}
 	}
 }
 

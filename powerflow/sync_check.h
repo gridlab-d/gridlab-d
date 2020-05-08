@@ -79,6 +79,15 @@ private: /* Published Variables*/
 	double voltage_tolerance_pu;
 	double metrics_period_sec;
 
+	enum VOLT_COMP_MODE
+	{
+		MAG_DIFF = 0,
+		SEP_DIFF = 1
+	} volt_compare_mode;
+
+	double voltage_magnitude_tolerance_pu;
+	double voltage_angle_tolerance_deg;
+
 private:
 	/* Funcs mainly used in create() */
 	void init_vars();
