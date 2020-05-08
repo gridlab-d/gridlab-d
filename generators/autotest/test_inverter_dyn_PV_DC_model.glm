@@ -138,9 +138,6 @@ object load {
 	phases ABCN;
 	name load_bus;
 	nominal_voltage 240.0;
-	// constant_power_A 1000+90.0j;
-	// constant_power_B 1000+90.0j;
-	// constant_power_C 1000+90.0j;
 	constant_impedance_A 57.1372+5.1423j;
 	constant_impedance_B 57.1372+5.1423j;
 	constant_impedance_C 57.1372+5.1423j;
@@ -230,16 +227,6 @@ object inverter_dyn {
 	C_pu 0.01;  				//Capacitor on DC bus - e.g., 10mf
 	kpVdc 35 ;				//DC voltage controller proportional gain
 	kiVdc 350 ;				//DC voltage controller integral gain
-	// object player {
-		// flags DELTAMODE;
-		// property Pset;
-		// file test_Pset.csv;
-	// };
-	// object player {
-		// flags DELTAMODE;
-		// property Vset;
-		// file test_Vset.csv;
-	// };
 	
 	object double_assert {
 		flags DELTAMODE;
@@ -296,27 +283,6 @@ object solar {
 	wind_speed 1.0 mph;
 }
 
-// //Non-dynamic DC bus grid-forming inverter
-// //Effectively has an infinite DC bus
-// object inverter_dyn {
-	// name simple_DC_model_grid_forming_inverter;
-	// parent grid_form_simple_DC;
-	// rated_power 100 kW;	 // per phase
-	// flags DELTAMODE;
-	// control_mode GRID_FORMING;
-	// GridForming_convergence_criterion 1e-6;
-	// Pref 1.0 kW;			//Real power reference/setpoint
-	// Qref 200 W;			//Reactive power reference/setpoint
-	// E_max 1.2;				//Maximum voltage output
-    // Rfilter 0.0076;			//Real portion of inverter filter (pu)
-	// Xfilter 0.1163;			//Reactive portion of inverter filter (pu)
-	// mp 3.14;  				//P-f droop gain, in rad/s/pu - 3.77 represents 1% droop.
-    // kppmax 3;				//Proportional gain for P_Max controller
-	// kipmax 60;				//Integral gain fo P_Max controller
-	// Pmax 20;				//Maximum power controller can deliver (pu, transient)
-	// Pmin 0;					//Minimum power controller can deliver (pu, transient)
-	// mq 0.05; 				//Q-V droop gain -  0.05 represents 5% droop
-// }
 
 //Recorders
 // object group_recorder {
@@ -347,34 +313,10 @@ object solar {
 
 // object recorder {
 	// flags DELTAMODE;
-	// parent grid_form_PV_connect;
-	// interval 1;
-	// property "voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag";
-	// file PVDC_GFM_Bus_Voltages.csv;
-// }
-
-// object recorder {
-	// flags DELTAMODE;
-	// parent grid_form_PV_connect;
-	// property "measured_frequency";
-	// interval 1;
-	// file "node_measured_freq.csv";
-// }
-
-// object recorder {
-	// flags DELTAMODE;
 	// parent PVDC_GFM_Inverter;
 	// property "f_PLL_A,f_PLL_B,f_PLL_C,freq";
 	// interval 1;
 	// file "inverter_frequency.csv";
-// }
-
-// object recorder {
-	// flags DELTAMODE;
-	// parent simple_DC_model_grid_forming_inverter;
-	// interval 1;
-	// property "power_A.real,power_A.imag,power_B.real,power_B.imag,power_C.real,power_C.imag,VA_Out.real,VA_Out.imag";
-	// file STD_GFM_Inverter.csv;
 // }
 
 //Deltamode trigger player - since QSTS transition doesn't work right
