@@ -28,7 +28,7 @@ sync_check::sync_check(MODULE *mod) : powerflow_object(mod)
 			GL_THROW("unable to register object class implemented by %s", __FILE__);
 		if (gl_publish_variable(oclass,
 								PT_bool, "armed", PADDR(sc_enabled_flag), PT_DESCRIPTION, "Flag to arm the synchronization close",
-								PT_double, "frequency_tolerance[pu]", PADDR(frequency_tolerance_pu), PT_DESCRIPTION, "The user-specified tolerance for checking the frequency metric",
+								PT_double, "frequency_tolerance[Hz]", PADDR(frequency_tolerance_hz), PT_DESCRIPTION, "The user-specified tolerance for checking the frequency metric",
 								PT_double, "voltage_tolerance[pu]", PADDR(voltage_tolerance_pu), PT_DESCRIPTION, "voltage_tolerance",
 								PT_double, "metrics_period[s]", PADDR(metrics_period_sec), PT_DESCRIPTION, "The user-defined period when both metrics are satisfied",
 								NULL) < 1)
@@ -243,7 +243,6 @@ void sync_check::init_vars()
 	sc_enabled_flag = false; //Unarmed
 
 	/* init measurements, gld objs, & Nominal Values*/
-	freq_norm = 0;
 	volt_norm = 0;
 
 	swt_fm_node = NULL;
@@ -279,8 +278,8 @@ void sync_check::init_vars()
 	swt_ph_C_flag = false;
 
 	//Defaults - mostly to cut down on messages
-	frequency_tolerance_pu = 1e-2; // i.e., 1%
-	voltage_tolerance_pu = 1e-2; // i.e., 1%
+	frequency_tolerance_hz = 0.6; // i.e., 1% if the system is in 60 Hz
+	voltage_tolerance_pu = 1e-2;  // i.e., 1%
 	metrics_period_sec = 1.2;
 }
 
@@ -341,13 +340,13 @@ void sync_check::data_sanity_check(OBJECT *par)
 	}
 
 	// Check the params
-	if (frequency_tolerance_pu <= 0)
+	if (frequency_tolerance_hz <= 0)
 	{
-		frequency_tolerance_pu = 1e-2; // i.e., 1%
-		gl_warning("sync_check:%d %s - frequency_tolerance_pu was not set as a positive value, it is reset to %f [pu].",
-				   obj->id, (obj->name ? obj->name : "Unnamed"), frequency_tolerance_pu);
+		frequency_tolerance_hz = 0.6;
+		gl_warning("sync_check:%d %s - frequency_tolerance was not set as a positive value, it is reset to %f [pu].",
+				   obj->id, (obj->name ? obj->name : "Unnamed"), frequency_tolerance_hz);
 		/*  TROUBLESHOOT
-		The frequency_tolerance_pu was not set as a positive value!
+		The frequency_tolerance_hz was not set as a positive value!
 		If the warning persists and the object does, please submit your code and
 		a bug report via the issue tracker.
 		*/
@@ -475,25 +474,6 @@ void sync_check::init_norm_values(OBJECT *par)
 	// Get the self-pointer
 	OBJECT *obj = OBJECTHDR(this);
 
-	/* Get the nominal frequency property */
-	temp_property_pointer = new gld_property("powerflow::nominal_frequency");
-
-	// Double check the validity of the nominal frequency property
-	if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
-	{
-		GL_THROW("sync_check:%d %s failed to map the nominal_frequency property", obj->id, (obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		While attempting to map the nominal_frequency property, an error occurred.  Please try again.
-		If the error persists, please submit your GLM and a bug report to the ticketing system.
-		*/
-	}
-
-	// Get the value of nominal frequency from this property
-	freq_norm = temp_property_pointer->get_double();
-
-	// Clean the temporary property pointer
-	delete temp_property_pointer;
-
 	/* Get the from node */
 	temp_property_pointer = new gld_property(par, "from");
 	// Double check the validity
@@ -602,8 +582,7 @@ void sync_check::update_measurements()
 
 void sync_check::check_metrics()
 {
-	double freq_diff = abs(swt_fm_node_freq - swt_to_node_freq);
-	double freq_diff_pu = freq_diff / freq_norm;
+	double freq_diff_hz = abs(swt_fm_node_freq - swt_to_node_freq);
 
 	double volt_A_diff = (swt_fm_volt_A - swt_to_volt_A).Mag();
 	double volt_A_diff_pu = volt_A_diff / volt_norm;
@@ -614,7 +593,7 @@ void sync_check::check_metrics()
 	double volt_C_diff = (swt_fm_volt_C - swt_to_volt_C).Mag();
 	double volt_C_diff_pu = volt_C_diff / volt_norm;
 
-	if ((freq_diff_pu <= frequency_tolerance_pu) && (volt_A_diff_pu <= voltage_tolerance_pu) && (volt_B_diff_pu <= voltage_tolerance_pu) && (volt_C_diff_pu <= voltage_tolerance_pu))
+	if ((freq_diff_hz <= frequency_tolerance_hz) && (volt_A_diff_pu <= voltage_tolerance_pu) && (volt_B_diff_pu <= voltage_tolerance_pu) && (volt_C_diff_pu <= voltage_tolerance_pu))
 	{
 		metrics_flag = true;
 	}

@@ -38,7 +38,6 @@ private:
 	gld_property *temp_property_pointer; // temporary pointer of property
 
 private: /* Measurements, actuator, gld objs, & Nominal Values */
-	double freq_norm;
 	double volt_norm;
 
 	gld_object *swt_fm_node;
@@ -76,7 +75,7 @@ private: /* Measurements, actuator, gld objs, & Nominal Values */
 private: /* Published Variables*/
 	bool sc_enabled_flag;
 
-	double frequency_tolerance_pu;
+	double frequency_tolerance_hz;
 	double voltage_tolerance_pu;
 	double metrics_period_sec;
 
