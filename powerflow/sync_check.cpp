@@ -58,6 +58,7 @@ int sync_check::create(void)
 {
 	int result = powerflow_object::create();
 	init_vars();
+
 	return result;
 }
 
@@ -693,26 +694,46 @@ void sync_check::check_metrics()
 	}
 	else // SEP_DIFF Mode
 	{
+		double volt_A_ang_deg_diff, volt_B_ang_deg_diff, volt_C_ang_deg_diff;
+
 		// Phase A
 		double volt_A_mag_diff = abs(swt_fm_volt_A.Mag() - swt_to_volt_A.Mag());
 		double volt_A_mag_diff_pu = volt_A_mag_diff / volt_norm;
 
 		double volt_A_ang_rad_diff = abs(swt_fm_volt_A.Arg() - swt_to_volt_A.Arg());
-		double volt_A_ang_deg_diff = RAD_TO_DEG(volt_A_ang_rad_diff);
+		double volt_A_ang_deg_diff_temp = RAD_TO_DEG(volt_A_ang_rad_diff);
+		
+		//Adjust calculation to reflect the odd wrapping of angles, as well as magnitude
+		if (volt_A_ang_deg_diff_temp > 180.0)
+			volt_A_ang_deg_diff = 360.0 - volt_A_ang_deg_diff_temp;
+		else
+			volt_A_ang_deg_diff = volt_A_ang_deg_diff_temp;
 
 		// Phase B
 		double volt_B_mag_diff = abs(swt_fm_volt_B.Mag() - swt_to_volt_B.Mag());
 		double volt_B_mag_diff_pu = volt_B_mag_diff / volt_norm;
 
 		double volt_B_ang_rad_diff = abs(swt_fm_volt_B.Arg() - swt_to_volt_B.Arg());
-		double volt_B_ang_deg_diff = RAD_TO_DEG(volt_B_ang_rad_diff);
+		double volt_B_ang_deg_diff_temp = RAD_TO_DEG(volt_B_ang_rad_diff);
+
+		//Adjust calculation to reflect the odd wrapping of angles, as well as magnitude
+		if (volt_B_ang_deg_diff_temp > 180.0)
+			volt_B_ang_deg_diff = 360.0 - volt_B_ang_deg_diff_temp;
+		else
+			volt_B_ang_deg_diff = volt_B_ang_deg_diff_temp;
 
 		// Phase C
 		double volt_C_mag_diff = abs(swt_fm_volt_C.Mag() - swt_to_volt_C.Mag());
 		double volt_C_mag_diff_pu = volt_C_mag_diff / volt_norm;
 
 		double volt_C_ang_rad_diff = abs(swt_fm_volt_C.Arg() - swt_to_volt_C.Arg());
-		double volt_C_ang_deg_diff = RAD_TO_DEG(volt_C_ang_rad_diff);
+		double volt_C_ang_deg_diff_temp = RAD_TO_DEG(volt_C_ang_rad_diff);
+
+		//Adjust calculation to reflect the odd wrapping of angles, as well as magnitude
+		if (volt_C_ang_deg_diff_temp > 180.0)
+			volt_C_ang_deg_diff = 360.0 - volt_C_ang_deg_diff_temp;
+		else
+			volt_C_ang_deg_diff = volt_C_ang_deg_diff_temp;
 
 		// Check
 		if ((freq_diff_hz <= frequency_tolerance_hz) &&
