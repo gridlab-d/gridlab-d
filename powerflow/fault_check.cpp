@@ -1913,7 +1913,7 @@ void fault_check::allocate_alterations_values(bool reliability_mode_bool)
 	{
 		if (restoration_object==NULL && fcheck_state != SWITCHING)
 		{
-			gl_warning("Restoration object not detected!");	//Put down here because the variable may not be populated in time for init
+			gl_verbose("Restoration object not detected!");	//Put down here because the variable may not be populated in time for init
 			/*  TROUBLESHOOT
 			The fault_check object can use a restoration object in the system.  If the restoration object is present,
 			unsuccessful node support checks will call the reconfiguration.

@@ -5067,7 +5067,8 @@ STATUS node::NR_swap_swing_status(bool desired_status)
 		}
 		else	//Indicate we're not one
 		{
-			gl_warning("node:%s - Not a SWING-capable bus, so no swing status swap changed",(hdr->name ? hdr->name : "unnamed"));
+			//Put as a verbose, since mostly just useful for debugging
+			gl_verbose("node:%s - Not a SWING-capable bus, so no swing status swap changed",(hdr->name ? hdr->name : "unnamed"));
 			/*  TROUBLESHOOT
 			While attempting to swap a node from being a "swing node", it was tried on a node that was not already a SWING or SWING_PQ
 			node, which is not a valid attempt.
@@ -5084,7 +5085,7 @@ STATUS node::NR_swap_swing_status(bool desired_status)
 		}
 		else	//Indicate we're not one
 		{
-			gl_warning("node:%s - Not a SWING-capable bus, so no swing status swap changed",(hdr->name ? hdr->name : "unnamed"));
+			gl_verbose("node:%s - Not a SWING-capable bus, so no swing status swap changed",(hdr->name ? hdr->name : "unnamed"));
 			//Defined above
 		}
 	}

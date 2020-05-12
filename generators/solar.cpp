@@ -213,6 +213,19 @@ int solar::create(void)
 	last_DC_current = 0.0;
 	last_DC_power = 0.0;
 
+	//Initialize PV DC model parameters - cuts down on warning messages
+	max_nr_ite = SHRT_MAX;
+	x0_root_rt = 0.15; //Set the initial guess at 15% extra of the absolute value of the extreme point
+	eps_nr_ite = 1e-5;
+	pvc_t_ref_cels = 25; //Unit: Celsius
+	pvc_S_ref_wpm2 = 1e3; //Unit: w/m^2
+	pvc_a1 = 0;
+	pvc_b1 = 0;
+	pvc_U_oc_V = 1005;
+	pvc_I_sc_A = 1e2;
+	pvc_U_m_V = 750;
+	pvc_I_m_A = 84;
+
 	return 1; /* return 1 on success, 0 on failure */
 }
 
