@@ -3410,6 +3410,9 @@ int node::NR_populate(void)
 	//Object header for names
 	OBJECT *me = OBJECTHDR(this);
 	node *temp_par_node = NULL;
+	gld_property *temp_bool_property;
+	gld_wlock *test_rlock;
+	bool temp_bool_val;
 
 	//Lock the SWING for global operations
 	if ( NR_swing_bus!=me ) LOCK_OBJECT(NR_swing_bus);
@@ -3421,7 +3424,7 @@ int node::NR_populate(void)
 	//Quick check to see if there problems
 	if (NR_node_reference == -1)
 	{
-		GL_THROW("NR: bus:%s failed to grab a unique bus index value!",me->name);
+		GL_THROW("NR: node:%s failed to grab a unique bus index value!",me->name);
 		/*  TROUBLESHOOT
 		While attempting to gain a unique bus id for the Newton-Raphson solver, an error
 		was encountered.  This may be related to a parallelization effort.  Please try again.
@@ -3438,7 +3441,7 @@ int node::NR_populate(void)
 	//Interim check to make sure it isn't a PV bus, since those aren't supported yet - this will get removed when that functionality is put in place
 	if (NR_busdata[NR_node_reference].type==1)
 	{
-		GL_THROW("NR: bus:%s is a PV bus - these are not yet supported.",me->name);
+		GL_THROW("NR: node:%s is a PV bus - these are not yet supported.",(me->name?me->name:"Unnamed"));
 		/*  TROUBLESHOOT
 		The Newton-Raphson solver implemented does not currently support the PV bus type.
 		*/
@@ -3447,6 +3450,52 @@ int node::NR_populate(void)
 	//Populate the swing flag - it will get "deflagged" elsewhere
 	if ((bustype == SWING) || (bustype == SWING_PQ))
 	{
+		//See if we're a SWING_PQ
+		if (bustype == SWING_PQ)
+		{
+			//Check for fault_check
+			if (fault_check_object == NULL)
+			{
+				gl_warning("node:%d - %s - Set as a SWING_PQ, but no fault_check present - will be treated as SWING",me->id,(me->name?me->name:"Unnamed"));
+				/*  TROUBLESHOOT
+				A node is set up as a SWING_PQ, but there is no fault_check object on the system.  This will just be treated as a SWING bus for all calculations.
+				*/
+			}
+			else
+			{
+				//Fault check present - see if it is in the proper mode!
+				temp_bool_property = new gld_property(fault_check_object,"grid_association");
+
+				//Make sure it worked
+				if ((temp_bool_property->is_valid() != true) || (temp_bool_property->is_bool() != true))
+				{
+					GL_THROW("NR: node:%s failed to map fault_check object property",(me->name?me->name:"Unnamed"));
+					/*  TROUBLESHOOT
+					While attempting to map a property of a fault_check object, an error was encountered.  Please try again.
+					If the error persists, please submit an item to the issue tracker.
+					*/
+				}
+
+				//Pull the value
+				temp_bool_property->getp<bool>(temp_bool_val,*test_rlock);
+
+				//Clear the property
+				delete temp_bool_property;
+
+				//Compare the value
+				if (temp_bool_val == false)	//Not in grid_association mode!
+				{
+					gl_warning("node:%d - %s - Set as a SWING_PQ, but fault_check in wrong mode - will be treated as SWING",me->id,(me->name?me->name:"Unnamed"));
+					/*  TROUBLESHOOT
+					A node is set up as a SWING_PQ, but the fault_check object is not set to do grid_association, so this bus will just be treated as a
+					SWING bus for all calculations.
+					*/
+				}
+			}
+		}//End SWING PQ check
+		//Must be a SWING
+
+		//Flag it, regardless (unflagged elsewhere, if set right)
 		NR_busdata[NR_node_reference].swing_functions_enabled = true;
 	}
 	else

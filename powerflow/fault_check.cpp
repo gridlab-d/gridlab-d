@@ -153,6 +153,17 @@ int fault_check::init(OBJECT *parent)
 		}
 	}
 
+	//Do a powerflow multi_island check
+	if ((NR_island_fail_method == true) && (grid_association_mode == false))
+	{
+		gl_error("fault_check:%s - powerflow::NR_island_fail_method is set, but grid_association is not!",(obj->name?obj->name:"Unnamed"));
+		/*  TROUBLESHOOT
+		The powerflow directive to handle individual island failures (NR_island_fail_method) is set to true, but grid_association is not
+		enabled in fault_check.  This won't work.  Correct one of them.
+		*/ 
+		return 0;
+	}
+
 	//Set powerflow global flag for checking things
 	if (reliability_search_mode == false)
 	{
