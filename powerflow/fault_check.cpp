@@ -346,10 +346,16 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 			override_output = output_check_supported_mesh();	//See if anything changed
 
 			//If full output, do an initial dump
-			if ((prev_time == 0) && (full_print_output == true))
+			if ((prev_time == 0) && (full_print_output == true) && (fcheck_state != SWITCHING))
 			{
-				override_output = true;	//Force on, no matter what for an initial output
+				//Do a write if one wasn't going to happen - don't override the flag
+				if ((override_output == false) && (output_filename[0] != '\0'))
+				{
+					write_output_file(t0,0);	//Write it
+				}
+				//Default else, we were going to write anyways
 			}
+			//Default else - not a first timestep or the mode of interest, so just go like normal
 
 			//See if anything broke
 			if (override_output == true && fcheck_state != SWITCHING)
@@ -368,7 +374,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 					the solver will possibly fail here on the next iteration, so the system is broken early.
 					*/
 				}
-				else	//Must be in reliability mode
+				else	//Must be in reliability mode or one of the proper handling modes
 				{
 					gl_warning("Unsupported phase on a possibly meshed node");
 					/*  TROUBLESHOOT
@@ -2298,6 +2304,19 @@ STATUS fault_check::disable_island(int island_number)
 	char deltaprint_buffer[64];
 	unsigned int ret_value;
 	bool deltamodeflag;
+
+	//Preliminary check - see if we're even in the right mode
+	if (grid_association_mode == false)
+	{
+		gl_error("fault_check: an island removal call was made, but grid_association is set to false!");
+		/*  TROUBLESHOOT
+		The powerflow is attempting to run in multi-islanded mode with individual island handling, but
+		fault_check is not set up properly.  Please set `grid_association true;` in the fault_check and
+		try again.
+		*/
+
+		return FAILED;
+	}
 
 	//Loop through the buses -- remove if it is in this island (keep SWING functions affected though)
 	for (index_value=0; index_value < NR_bus_count; index_value++)

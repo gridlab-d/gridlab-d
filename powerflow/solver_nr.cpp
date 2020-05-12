@@ -4837,33 +4837,44 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				//No checks necessary -- this will just rail, regardless
 				return_value_for_solver_NR = -NR_iteration_limit;
 
-				//Call the "removal" routine - map it 
-				temp_fxn_val = (FUNCTIONADDR)(gl_get_function(fault_check_object,"island_removal_function"));
-				
-				//Make sure it was found
-				if (temp_fxn_val == NULL)
+				if (fault_check_object == NULL)	//Make sure multi-island support is supported!
 				{
-					GL_THROW("NR: Unable to map island removal function");
+					GL_THROW("NR: Multi-island handing without fault_check is not permitted");
 					/*  TROUBLESHOOT
-					While attempting to map the island removal function, an error was encountered.  Please
-					try again.  If the error persists, please submit your code and a report via the issues
-					system.
+					The NR_island_failure_handled flag requires a fault_check object to be present.  Please add one to your GLM
+					to continue.
 					*/
 				}
-
-				//Call the function
-				call_return_status = ((STATUS (*)(OBJECT *,int))(temp_fxn_val))(fault_check_object,island_loop_index);
-
-				//Make sure it worked
-				if (call_return_status != SUCCESS)
+				else
 				{
-					GL_THROW("NR: Failed to remove island %d from the powerflow",(island_loop_index+1));
-					/*  TROUBLESHOOT
-					While attempting to remove an island from the powerflow, an error occurred.  Please try again.
-					If the error persists, please submit your code and a report via the issues system.
-					*/
-				}
-				//If we succeeded, good to go!
+					//Call the "removal" routine - map it 
+					temp_fxn_val = (FUNCTIONADDR)(gl_get_function(fault_check_object,"island_removal_function"));
+					
+					//Make sure it was found
+					if (temp_fxn_val == NULL)
+					{
+						GL_THROW("NR: Unable to map island removal function");
+						/*  TROUBLESHOOT
+						While attempting to map the island removal function, an error was encountered.  Please
+						try again.  If the error persists, please submit your code and a report via the issues
+						system.
+						*/
+					}
+
+					//Call the function
+					call_return_status = ((STATUS (*)(OBJECT *,int))(temp_fxn_val))(fault_check_object,island_loop_index);
+
+					//Make sure it worked
+					if (call_return_status != SUCCESS)
+					{
+						GL_THROW("NR: Failed to remove island %d from the powerflow",(island_loop_index+1));
+						/*  TROUBLESHOOT
+						While attempting to remove an island from the powerflow, an error occurred.  Please try again.
+						If the error persists, please submit your code and a report via the issues system.
+						*/
+					}
+					//If we succeeded, good to go!
+				}//End fault_check present
 			}
 			//Default else -- a bad failure we just want to ignore
 		}
@@ -4878,26 +4889,34 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				//No checks necessary -- this will just rail, regardless
 				return_value_for_solver_NR = -NR_iteration_limit;
 
-				//Call the "removal" routine - map it 
-				temp_fxn_val = (FUNCTIONADDR)(gl_get_function(fault_check_object,"island_removal_function"));
-				
-				//Make sure it was found
-				if (temp_fxn_val == NULL)
+				if (fault_check_object == NULL)	//Make sure multi-island support is supported!
 				{
-					GL_THROW("NR: Unable to map island removal function");
+					GL_THROW("NR: Multi-island handing without fault_check is not permitted");
 					//Defined above
 				}
-
-				//Call the function
-				call_return_status = ((STATUS (*)(OBJECT *,int))(temp_fxn_val))(fault_check_object,island_loop_index);
-
-				//Make sure it worked
-				if (call_return_status != SUCCESS)
+				else
 				{
-					GL_THROW("NR: Failed to remove island %d from the powerflow",(island_loop_index+1));
-					//Defined above
-				}
-				//If we succeeded, good to go!
+					//Call the "removal" routine - map it 
+					temp_fxn_val = (FUNCTIONADDR)(gl_get_function(fault_check_object,"island_removal_function"));
+					
+					//Make sure it was found
+					if (temp_fxn_val == NULL)
+					{
+						GL_THROW("NR: Unable to map island removal function");
+						//Defined above
+					}
+
+					//Call the function
+					call_return_status = ((STATUS (*)(OBJECT *,int))(temp_fxn_val))(fault_check_object,island_loop_index);
+
+					//Make sure it worked
+					if (call_return_status != SUCCESS)
+					{
+						GL_THROW("NR: Failed to remove island %d from the powerflow",(island_loop_index+1));
+						//Defined above
+					}
+					//If we succeeded, good to go!
+				}//End fault_check present
 			}
 			else	//Nope, just handle like "normal"
 			{
