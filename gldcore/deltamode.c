@@ -295,6 +295,10 @@ DT delta_update(void)
 
 		/* main object update loop */
 		realtime_run_schedule();
+
+		/* time context - so messages look proper */
+		output_set_delta_time_context(global_clock,global_deltaclock);
+
 		/* Federation reiteration loop */
 		while (delta_federation_iteration_remaining > 0)
 		{
