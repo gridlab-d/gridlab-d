@@ -3146,8 +3146,8 @@ void load::load_delete_update_fxn(void)
 	{
 		//Remove contributions
 		shunt[index_var] -= prev_load_values[0][index_var];
-		power[index_var] -= prev_load_values[1][index_var];
-		current[index_var] -= prev_load_values[2][index_var];
+		current[index_var] -= prev_load_values[1][index_var];
+		power[index_var] -= prev_load_values[2][index_var];
 
 		//Clear the trackers
 		prev_load_values[0][index_var] = complex(0.0,0.0);
@@ -3160,8 +3160,8 @@ void load::load_delete_update_fxn(void)
 	{
 		//Remove contributions
 		shunt_dy[index_var] -= prev_load_values_dy[0][index_var];
-		power_dy[index_var] -= prev_load_values_dy[1][index_var];
-		current_dy[index_var] -= prev_load_values_dy[2][index_var];
+		current_dy[index_var] -= prev_load_values_dy[1][index_var];
+		power_dy[index_var] -= prev_load_values_dy[2][index_var];
 
 		//Clear the trackers
 		prev_load_values_dy[0][index_var] = complex(0.0,0.0);

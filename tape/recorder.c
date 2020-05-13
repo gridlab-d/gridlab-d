@@ -155,7 +155,7 @@ static int recorder_open(OBJECT *obj)
 #endif
 			fprintf(my->multifp,"# target.... %s %d\n", obj->parent->oclass->name, obj->parent->id);
 			fprintf(my->multifp,"# trigger... %s\n", my->trigger[0]=='\0'?"(none)":my->trigger);
-			fprintf(my->multifp,"# interval.. %d\n", my->interval);
+			fprintf(my->multifp,"# interval.. %lld\n", my->interval);
 			fprintf(my->multifp,"# limit..... %d\n", my->limit);
 			fprintf(my->multifp,"# flush..... %d\n", my->flush);
 			fprintf(my->multifp,"# property.. %s\n", my->property);
@@ -306,7 +306,7 @@ static int recorder_open(OBJECT *obj)
 					prop = 0;
 					unitstr[0] = 0;
 					propstr[0] = 0;
-					if(2 == sscanf(token, "%[A-Za-z0-9_.][%[^]\n,\0]", propstr, unitstr)){
+					if(2 == sscanf(token, "%[A-Za-z0-9_.][%[^]\n0]", propstr, unitstr)){
 						unit = gl_find_unit(unitstr);
 						if(unit == 0){
 							gl_error("recorder:%d: unable to find unit '%s' for property '%s'", obj->id, unitstr, propstr);
@@ -331,7 +331,7 @@ static int recorder_open(OBJECT *obj)
 			case HU_NONE:
 				strcpy(unit_buffer, my->property);
 				for(token = strtok(unit_buffer, ","); token != NULL; token = strtok(NULL, ",")){
-					if(2 == sscanf(token, "%[A-Za-z0-9_.][%[^]\n,\0]", propstr, unitstr)){
+					if(2 == sscanf(token, "%[A-Za-z0-9_.][%[^]\n0]", propstr, unitstr)){
 						; // no logic change
 					}
 					// print just the property, regardless of type or explicitly declared property
@@ -505,7 +505,7 @@ PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list
 
 		// everything that looks like a property name, then read units up to ]
 		while (isspace(*item)) item++;
-		if(2 == sscanf(item,"%[A-Za-z0-9_.][%[^]\n,\0]", pstr, ustr)){
+		if(2 == sscanf(item,"%[A-Za-z0-9_.][%[^]\n0]", pstr, ustr)){
 			unit = gl_find_unit(ustr);
 			if(unit == NULL){
 				gl_error("recorder:%d: unable to find unit '%s' for property '%s'",obj->id, ustr,pstr);
@@ -630,7 +630,7 @@ EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 	if(obj->parent == NULL){
 		char tb[32];
-		sprintf(buffer, "'%s' lacks a parent object", obj->name ? obj->name : tb, sprintf(tb, "recorder:%i", obj->id));
+		sprintf(buffer, "'%s' lacks a parent object %i ", obj->name ? obj->name : tb, sprintf(tb, "recorder:%i", obj->id));
 		close_recorder(my);
 		my->status = TS_ERROR;
 		goto Error;

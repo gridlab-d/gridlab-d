@@ -177,7 +177,7 @@ void connection_mode::debug(int level, const char *fmt, ...)
 void connection_mode::exception(const char *fmt, ...)
 {
 	static char msg[1024];
-	size_t len = sprintf("connection/%s: ", get_mode_name());
+	size_t len = sprintf(msg, "connection/%s: ", get_mode_name());
 	va_list ptr;
 	va_start(ptr,fmt);
 	vsprintf(msg+len,fmt,ptr);
@@ -456,7 +456,7 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 				case MSG_CRITICAL:
 					critical = true;
 					debug(9,"connection_mode::exchange() message is critical");
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -467,7 +467,7 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 						count = -msgcount;
 						stop = true;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -478,7 +478,7 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 						count = -msgcount;
 						stop = true;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -518,7 +518,7 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 						count = -msgcount;
 						stop = true;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -534,7 +534,7 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 						count = -msgcount;
 						stop = true;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -552,7 +552,7 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 						stop = true;
 						break;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -569,7 +569,7 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 						stop = true;
 						break;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -586,7 +586,7 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 						stop = true;
 						break;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -602,7 +602,7 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 						stop = true;
 						break;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -618,7 +618,7 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 						stop = true;
 						break;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -632,13 +632,13 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 						stop = true;
 						break;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
 				default:
 					warning("connection_mode::exchange(...) unrecognized message control flag %d was ignored", flag);
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -659,7 +659,7 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 			case MSG_CRITICAL:
 				critical = true;
 				debug(9,"connection_mode::exchange() message is critical");
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -671,7 +671,7 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 					count = -msgcount;
 					stop = true;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -682,7 +682,7 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 					count = -msgcount;
 					stop = true;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -722,7 +722,7 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 					count = -msgcount;
 					stop = true;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -738,7 +738,7 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 					count = -msgcount;
 					stop = true;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -756,7 +756,7 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 					stop = true;
 					break;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -773,7 +773,7 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 					stop = true;
 					break;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -790,7 +790,7 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 					stop = true;
 					break;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -806,7 +806,7 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 					stop = true;
 					break;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -822,7 +822,7 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 					stop = true;
 					break;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -836,13 +836,13 @@ int connection_mode::server_response(MESSAGEFLAG flag,...)
 					stop = true;
 					break;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
 			default:
 				warning("connection_mode::exchange(...) unrecognized message control flag %d was ignored", flag);
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -878,7 +878,7 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 			case MSG_CRITICAL:
 				critical = true;
 				debug(9,"connection_mode::exchange() message is critical");
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -890,7 +890,7 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 					count = -msgcount;
 					stop = true;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -901,7 +901,7 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 					count = -msgcount;
 					stop = true;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -941,7 +941,7 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 					count = -msgcount;
 					stop = true;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -957,7 +957,7 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 					count = -msgcount;
 					stop = true;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -975,7 +975,7 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 					stop = true;
 					break;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -992,7 +992,7 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 					stop = true;
 					break;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -1009,7 +1009,7 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 					stop = true;
 					break;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -1025,7 +1025,7 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 					stop = true;
 					break;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -1041,7 +1041,7 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 					stop = true;
 					break;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -1055,13 +1055,13 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 					stop = true;
 					break;
 				}
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
 			default:
 				warning("connection_mode::exchange(...) unrecognized message control flag %d was ignored", flag);
-				if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+				if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 					stop = true;
 				}
 				break;
@@ -1088,7 +1088,7 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 				case MSG_CRITICAL:
 					critical = true;
 					debug(9,"connection_mode::exchange() message is critical");
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -1099,7 +1099,7 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 						count = -msgcount;
 						stop = true;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -1110,7 +1110,7 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 						count = -msgcount;
 						stop = true;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -1150,7 +1150,7 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 						count = -msgcount;
 						stop = true;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -1166,7 +1166,7 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 						count = -msgcount;
 						stop = true;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -1184,7 +1184,7 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 						stop = true;
 						break;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -1201,7 +1201,7 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 						stop = true;
 						break;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -1218,7 +1218,7 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 						stop = true;
 						break;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -1234,7 +1234,7 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 						stop = true;
 						break;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -1250,7 +1250,7 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 						stop = true;
 						break;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
@@ -1264,13 +1264,13 @@ int connection_mode::client_initiated(MESSAGEFLAG flag,...)
 						stop = true;
 						break;
 					}
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;
 				default:
 					warning("connection_mode::exchange(...) unrecognized message control flag %d was ignored", flag);
-					if((flag = (MESSAGEFLAG)va_arg(flg, int))==NULL){
+					if((flag = (MESSAGEFLAG)va_arg(flg, int))==0){
 						stop = true;
 					}
 					break;

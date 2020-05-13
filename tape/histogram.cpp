@@ -226,7 +226,7 @@ int histogram::init(OBJECT *parent)
 	{
 		OBJECT *group_obj = NULL;
 		CLASS *oclass = NULL;
-		if(group[0] == NULL){
+		if(group[0] == 0){
 			gl_error("Histogram has no parent and no group");
 			return 0;
 		}
