@@ -12,6 +12,7 @@
 EXPORT_CREATE(recorder);
 EXPORT_INIT(recorder);
 EXPORT_COMMIT(recorder);
+EXPORT_FINALIZE(recorder);
 
 CLASS *recorder::oclass = NULL;
 recorder *recorder::defaults = NULL;
@@ -58,6 +59,8 @@ recorder::recorder(MODULE *module) {
 				PT_char32, "recordid_fieldname", get_recordid_fieldname_offset(), PT_DESCRIPTION, "name of record-id field",
 				PT_char1024, "header_fieldnames", get_header_fieldnames_offset(), PT_DESCRIPTION, "name of header fields to include",
 				PT_int32, "query_buffer_limit", get_query_buffer_limit_offset(), PT_DESCRIPTION, "max number of queries to buffer before pushing to database",
+				PT_bool, "minimize_data", get_minified_offset(), PT_DESCRIPTION, "sets a signal for size minimization to the database. will use VARCHAR and FLOAT instead of CHAR and DOUBLE for most types",
+				PT_char1024, "custom_sql", get_custom_sql_offset(), PT_DESCRIPTION, "Custom SQL",
 				NULL) < 1) {
 			char msg[256];
 			sprintf(msg, "unable to publish properties in %s", __FILE__);
@@ -76,18 +79,28 @@ int recorder::create(void) {
 	strcpy(group, "");
 	strcpy(recorder_name, "");
 	query_buffer_limit = 200;
-
+	minified = false;
+	strcpy(custom_sql, "");
 	return 1; /* return 1 on success, 0 on failure */
 }
 
 int recorder::init(OBJECT *parent) {
 // check the connection
-	recorder_connection = new query_engine(
-			get_connection() != NULL ? (database*) (get_connection() + 1) : db, query_buffer_limit, 200);
+
+	if ( get_connection()!=NULL )
+		db = (database*)(get_connection()+1);
+	if ( db==NULL )
+		exception("no database connection available or specified");
+	if ( !db->isa("database") )
+		exception("connection is not a mysql database");
+	gl_verbose("connection to mysql server '%s', schema '%s' ok", db->get_hostname(), db->get_schema());
+
+	recorder_connection = new query_engine(db, query_buffer_limit, 200);
 
 	query_engine* rc = recorder_connection;
 	rc->set_table_root(get_table());
 	rc->init_tables(recordid_fieldname, datetime_fieldname, true);
+	rc->get_table_path()->set_custom_sql(string(custom_sql));
 
 	group_mode = (0 != strcmp(group, ""));
 	tag_mode = !(recorder_name == "");
@@ -123,7 +136,8 @@ int recorder::init(OBJECT *parent) {
 	property_specs = split(get_property(), ", \t;");
 
 	if (tag_mode)
-		rc->get_table_path()->add_table_header(new string("recorder_name"), new string("`recorder_name` CHAR(64), "));
+		rc->get_table_path()->add_table_header(new string("recorder_name"), new string("`recorder_name` " + string((
+				get_minified() ? "SMALLINT UNSIGNED" : "VARCHAR(64)"))));
 
 	if (group_mode) {
 		strcpy(header_fieldnames, "");
@@ -155,7 +169,8 @@ int recorder::init(OBJECT *parent) {
 			}
 		}
 
-		rc->get_table_path()->add_table_header(new string("name"), new string("name CHAR(64), index i_name (name), "));
+		rc->get_table_path()->add_table_header(new string("name"), new string("name " + string((
+				get_minified() ? "VARCHAR(64)" : "CHAR(64), index i_name (name)"))));
 
 		// connect the target properties
 		for (size_t n = 0; n < property_specs.size(); n++) {
@@ -185,9 +200,10 @@ int recorder::init(OBJECT *parent) {
 				char tmp[2][2][128];
 				char name_buffer[64];
 				sprintf(tmp[0][0], "%s", prop.get_sql_safe_name(name_buffer));
-				sprintf(tmp[0][1], "`%s` %s, ", prop.get_sql_safe_name(name_buffer), db->get_sqltype(prop));
+				sprintf(tmp[0][1], "`%s` %s", prop.get_sql_safe_name(name_buffer), db->get_sqltype(prop, get_minified()));
 				sprintf(tmp[1][0], "%s_units", prop.get_sql_safe_name(name_buffer));
-				sprintf(tmp[1][1], "`%s_units` %s, ", prop.get_sql_safe_name(name_buffer), "CHAR(10)");
+				sprintf(tmp[1][1], "`%s_units` %s", prop.get_sql_safe_name(name_buffer), (
+						get_minified() ? "VARCHAR(10)" : "CHAR(10)"));
 
 				if (unit.is_valid()) {
 					rc->get_table_path()->add_table_header(new string(tmp[0][0]), new string(tmp[0][1]));
@@ -234,9 +250,10 @@ int recorder::init(OBJECT *parent) {
 				char tmp[2][2][128];
 				char name_buffer[64];
 				sprintf(tmp[0][0], "%s", prop.get_sql_safe_name(name_buffer));
-				sprintf(tmp[0][1], "`%s` %s, ", prop.get_sql_safe_name(name_buffer), db->get_sqltype(prop));
+				sprintf(tmp[0][1], "`%s` %s", prop.get_sql_safe_name(name_buffer), db->get_sqltype(prop, get_minified()));
 				sprintf(tmp[1][0], "%s_units", prop.get_sql_safe_name(name_buffer));
-				sprintf(tmp[1][1], "`%s_units` %s, ", prop.get_sql_safe_name(name_buffer), "CHAR(10)");
+				sprintf(tmp[1][1], "`%s_units` %s", prop.get_sql_safe_name(name_buffer), (
+						get_minified() ? "VARCHAR(10)" : "CHAR(10)"));
 
 				if (unit.is_valid()) {
 					rc->get_table_path()->add_table_header(new string(tmp[0][0]), new string(tmp[0][1]));
@@ -248,6 +265,9 @@ int recorder::init(OBJECT *parent) {
 		}
 	}
 
+//	if (get_custom_sql_header() != "")
+//		query << ", " << get_custom_sql_header() << "";
+
 	// get header fields
 	if (strlen(header_fieldnames) > 0) {
 		if (get_parent() == NULL)
@@ -258,16 +278,20 @@ int recorder::init(OBJECT *parent) {
 		size_t header_pos = 0;
 		for (size_t n = 0; n < header_specs.size(); n++) {
 			if (header_specs[n].compare("name") == 0 && !group_mode) {
-				rc->get_table_path()->add_table_header(new string("name"), new string("name CHAR(64), index i_name (name), "));
+				rc->get_table_path()->add_table_header(new string("name"), new string("name " + string((
+						get_minified() ? "VARCHAR(64)" : "CHAR(64), index i_name (name)"))));
 			}
 			else if (header_specs[n].compare("class") == 0) {
-				rc->get_table_path()->add_table_header(new string("class"), new string("class CHAR(32), index i_class (class), "));
+				rc->get_table_path()->add_table_header(new string("class"), new string("class " + string((
+						get_minified() ? "VARCHAR(32)" : "CHAR(32), index i_class (class)"))));
 			}
 			else if (header_specs[n].compare("latitude") == 0) {
-				rc->get_table_path()->add_table_header(new string("latitude"), new string("latitude DOUBLE, index i_latitude (latitude), "));
+				rc->get_table_path()->add_table_header(new string("latitude"), new string("latitude " + string((
+						get_minified() ? "FLOAT" : "DOUBLE, index i_latitude (latitude)"))));
 			}
 			else if (header_specs[n].compare("longitude") == 0) {
-				rc->get_table_path()->add_table_header(new string("longitude"), new string("longitude DOUBLE, index i_longitude (longitude), "));
+				rc->get_table_path()->add_table_header(new string("longitude"), new string("longitude " + string((
+						get_minified() ? "FLOAT" : "DOUBLE, index i_longitude (longitude)"))));
 			}
 			else
 				exception("header field %s does not exist", (const char*) header_specs[n].c_str());
@@ -290,10 +314,15 @@ int recorder::init(OBJECT *parent) {
 
 		query << "CREATE TABLE IF NOT EXISTS `" << rc->get_table().get_string() << "` ("
 				"`" << recordid_fieldname << "` INT AUTO_INCREMENT PRIMARY KEY, "
-				"`" << datetime_fieldname << "` DATETIME, "
-				"" << rc->get_table_path()->get_table_header_buffer().str() << ""
-				"INDEX `i_" << datetime_fieldname << "` "
-				"(`" << datetime_fieldname << "`))";
+				"`" << datetime_fieldname << "` DATETIME(0), "
+				<< rc->get_table_path()->get_custom_sql_columns() <<
+				"" << rc->get_table_path()->get_table_header_buffer().str() << "";
+
+		if (!get_minified()) {
+			query << ", INDEX `i_" << datetime_fieldname << "` (`" << datetime_fieldname << "`))";
+		} else {
+			query << ")";
+		}
 		if (!db->table_exists(rc->get_table().get_string())) {
 			if (!(get_options() & MO_NOCREATE)) {
 				query_string = query.str();
@@ -353,6 +382,11 @@ EXPORT TIMESTAMP heartbeat_recorder(OBJECT *obj) {
 TIMESTAMP recorder::commit(TIMESTAMP t0, TIMESTAMP t1) {
 	query_engine* rc = recorder_connection;
 
+	if(!rc->get_database()->db_initialized) {
+		gl_error("A fatal database error has occurred.");
+		return -1;
+	}
+
 	// check trigger
 	if (trigger_on) {
 		// trigger condition
@@ -377,7 +411,6 @@ TIMESTAMP recorder::commit(TIMESTAMP t0, TIMESTAMP t1) {
 
 	// collect data
 	if (enabled) {
-
 
 		if (group_mode) {
 			OBJECT* working_object = 0;
@@ -533,6 +566,13 @@ template<class T> std::string recorder::to_string(T t) {
 	string_conversion_buffer << t;
 	returnBuffer = string_conversion_buffer.str();
 	return returnBuffer;
+}
+
+STATUS recorder::finalize() {
+	query_engine* rc = recorder_connection;
+	rc->get_table_path()->commit_state();
+	rc->set_tables_done();
+	return SUCCESS;
 }
 
 #endif // HAVE_MYSQL

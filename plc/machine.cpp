@@ -75,7 +75,7 @@
 
 #include <stdlib.h>
 #include <stdarg.h>
-#ifdef WIN32
+#ifdef _WIN32
 #include <direct.h>
 #define getcwd _getcwd
 #define putenv _putenv
@@ -87,7 +87,7 @@
 #include "plc.h"
 #include "comm.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 char path[1024] = "c:/mingw/bin";
 char tmpdir[1024] = "c:/temp";
 #else
@@ -184,7 +184,7 @@ int machine::compile(char *source)
 	sprintf(cfile,"%s/%s.c", tmpdir,basename);
 	sprintf(ofile,"%s/%s.o", tmpdir,basename);
 
-#ifdef WIN32
+#ifdef _WIN32
 	sprintf(lfile,"%s/%s.dll", tmpdir,basename);
 #else
 	sprintf(lfile,"%s/lib%s.so", tmpdir,basename);
@@ -235,7 +235,7 @@ int machine::compile(char *source)
 	unlink(lfile);
 	if (wait<0)
 	{
-#ifdef WIN32
+#ifdef _WIN32
 		gl_error("%s: %s", lfile, strerror(errno));
 #else
 		gl_error("%s: %s", lfile, dlerror());

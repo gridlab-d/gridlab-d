@@ -67,7 +67,7 @@ typedef struct s_ext_fxn {
 	void *ext_destroy;
 } EXT_LU_FXN_CALLS;
 
-GLOBAL char256 LUSolverName INIT("");				/**< filename for external LU solver */
+GLOBAL char256 LUSolverName INIT("KLU");				/**< filename for external LU solver */
 GLOBAL EXT_LU_FXN_CALLS LUSolverFcns;				/**< links to external LU solver functions */
 GLOBAL SOLVERMETHOD solver_method INIT(SM_FBS);		/**< powerflow solver methodology */
 GLOBAL char256 MDFileName INIT("");					/**< filename for matrix dump */

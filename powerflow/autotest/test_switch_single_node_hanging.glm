@@ -1,0 +1,214 @@
+//Variation of 4-node feeder
+//Checks "switch-like" devices on initial open
+//This whole autotest is effectively deprecated by mesh topology checking mode
+//But still need to make sure this works
+//If it is run in older versions of GLD, the powerflow diverges quickly.
+
+clock {
+	timezone EST+5EDT;
+	starttime '2000-01-01 0:00:00';
+	stoptime '2000-01-01 0:00:11';
+}
+
+module powerflow {
+	line_capacitance TRUE;
+	solver_method NR;
+}
+module assert;
+module tape;
+module reliability;
+
+object fault_check {
+	name fault_check_object;
+	check_mode ONCHANGE;
+	eventgen_object external_event_handler;
+	output_filename fault_check_output.txt;
+	strictly_radial true;
+	grid_association false;
+}
+object eventgen {
+	name external_event_handler;
+	//use_external_faults TRUE;
+	manual_outages "sw_node34,2001-01-01 00:00:05,2001-01-01 00:00:30";
+}
+
+object overhead_line_conductor {
+	name olc100;
+	geometric_mean_radius 0.0244 ft;
+	resistance 0.306 Ohm/mile;
+	diameter 0.721 in;
+}
+
+object overhead_line_conductor {
+	name olc101;
+	geometric_mean_radius 0.00814 ft;
+	resistance 0.592 Ohm/mile;
+	diameter 0.563 in;
+}
+
+object line_spacing {
+	name ls200;
+	distance_AB 2.5 ft;
+	distance_BC 4.5 ft;
+	distance_AC 7.0 ft;
+	distance_AN 5.656854 ft; 
+	distance_BN 4.272002 ft;
+	distance_CN 5.0 ft;
+	distance_AE 28.0 ft;
+	distance_BE 28.0 ft;
+	distance_CE 28.0 ft;
+	distance_NE 24.0 ft;
+}
+
+object line_configuration {
+	name lc300;
+	conductor_A olc100;
+	conductor_B olc100;
+	conductor_C olc100;
+	conductor_N olc101;
+	spacing ls200;
+}
+
+object transformer_configuration {
+	name tc400;
+	connect_type WYE_WYE;
+	power_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 4160;
+	resistance 0.01;
+	reactance 0.06;
+}
+
+object node {
+	name node1;
+	bustype SWING;
+	phases "ABCN";
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7199.558;
+}
+
+object overhead_line {
+	phases "ABCN";
+	name line12;
+	from node1;
+	to node2;
+	length 2000;
+	configuration lc300;
+	// object recorder {
+		// file "line12.csv";
+		// interval 1;
+		// property current_out_A,current_out_B,current_out_C,current_in_A,current_in_B,current_in_C,phases,status,from,to,power_in,power_out,power_losses,flow_direction,length,configuration;
+	// };
+}
+
+object node {
+	name node2;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	// object recorder {
+		// file "yybsd2.csv";
+		// interval 1;
+		// property voltage_A,voltage_B,voltage_C,voltage_AB,voltage_BC,voltage_CA,current_A,current_B,current_C,power_A,power_B,power_C,shunt_A,shunt_B,shunt_C;
+	// };
+}
+
+object transformer {
+	phases "ABCN";
+	name trans23;
+	from node2;
+	to node3;
+	configuration tc400;
+}
+
+object node {
+	name node3;
+	phases "ABCN";
+	nominal_voltage 2401.777;
+	// object recorder {
+		// file "yybsd3.csv";
+		// interval 1;
+		// property voltage_A,voltage_B,voltage_C,voltage_AB,voltage_BC,voltage_CA,current_A,current_B,current_C,power_A,power_B,power_C,shunt_A,shunt_B,shunt_C;
+	// };
+}
+
+object switch {
+	name sw_node34;
+	phases ABC;
+	from node3;
+	to node4;
+	status CLOSED;
+}
+
+object switch {
+	name sw_node45;
+	phases ABC;
+	from node3;
+	to node5;
+	status OPEN;
+}
+
+object node {
+	name node4;
+	phases "ABCN";
+	nominal_voltage 2401.777;
+}
+
+object node {
+	name node5;
+	phases "ABCN";
+	nominal_voltage 2401.777;
+	object recorder {
+		property voltage_A,voltage_B,voltage_C;
+		interval 1;
+		file test_volts.csv;
+	};
+	object complex_assert {
+		target voltage_A;
+		value 0.0+0.0j;
+		within 0.1;
+	};
+	object complex_assert {
+		target voltage_B;
+		value 0.0+0.0j;
+		within 0.1;
+	};
+	object complex_assert {
+		target voltage_C;
+		value 0.0+0.0j;
+		within 0.1;
+	};
+}
+
+object overhead_line {
+	phases "ABCN";
+	name ol34;
+	from node4;
+	to load4;
+	length 2500;
+	configuration lc300;
+	// object recorder {
+		// file "line34.csv";
+		// interval 1;
+		// property current_out_A,current_out_B,current_out_C,current_in_A,current_in_B,current_in_C,phases,status,from,to,power_in,power_out,power_losses,flow_direction,length,configuration;
+	// };
+}
+
+object load {
+	name load4;
+	phases "ABCN";
+	constant_power_A +1800000.000+871779.789j;
+	constant_power_B +1800000.000+871779.789j;
+	constant_power_C +1800000.000+871779.789j;
+	nominal_voltage 2401.777;
+	// object recorder {
+		// file "yybsd4.csv";
+		// interval 1;
+		// property voltage_A,voltage_B,voltage_C,voltage_AB,voltage_BC,voltage_CA,current_A,current_B,current_C,power_A,power_B,power_C,shunt_A,shunt_B,shunt_C;
+	// };
+}
+
+///////////////////////////////
+// END
+///////////////////////////////

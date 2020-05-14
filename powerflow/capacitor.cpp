@@ -172,8 +172,10 @@ int capacitor::create()
 
 int capacitor::init(OBJECT *parent)
 {
-	gld_property *pSetPhases;
+	gld_property *pTempProperty;
+	gld_wlock *test_rlock;
 	set temp_phases;
+	OBJECT *temp_obj_link;
 	int result = node::init();
 
 	OBJECT *obj = OBJECTHDR(this);
@@ -250,6 +252,39 @@ int capacitor::init(OBJECT *parent)
 			//Put it in both, since it assumes it may need one or the other
 			RNode = RemoteSensor;
 			RLink = RemoteSensor;
+		}
+	}
+
+	//If RLink is assigned, make sure we aren't the "TO" end
+	if ((RLink != NULL) && (gl_object_isa(RLink,"link","powerflow")))
+	{
+		//Double check that the RLink->to isn't us - this will cause some issues with FBS
+		pTempProperty = new gld_property(RLink,"to");
+
+		//Make sure it is valid
+		if ((pTempProperty->is_valid() != true) || (pTempProperty->is_objectref() != true))
+		{
+			GL_THROW("capacitor:%d - %s - Failed to map remote_sense object properties for checks",obj->id,(obj->name?obj->name:"Unnamed"));
+			/*  TROUBLESHOOT
+			While attempting to map the "to" property from the remote link object, an error occurred.  Please try again.  If the error persists,
+			please submit a ticket to the issues tracker.
+			*/
+		}
+
+		//Pull the object
+		pTempProperty->getp<OBJECT*>(temp_obj_link,*test_rlock);
+
+		//Delete the property
+		delete pTempProperty;
+
+		//Check it to make sure it isn't us!
+		if (temp_obj_link == obj)
+		{
+			GL_THROW("capacitor:%d - %s - To-end of the remote link being monitored is us - this can cause readlock errors, especially with FBS",obj->id,(obj->name?obj->name:"Unnamed"));
+			/*  TROUBLESHOOT
+			When specifying a link-based object in the remote_sense or remote_sense_B properties, if this capacitor is the 'to' end of that object, readlock issues
+			can occur, especially with the FBS solver.  Adjust your topology to prevent this issue.
+			*/
 		}
 	}
 
@@ -379,10 +414,10 @@ int capacitor::init(OBJECT *parent)
 	if ((control!=MANUAL) && (control!=VOLT))	//VAR, VOLTVAR, CURRENT
 	{
 		//Pull the RLink phases to check
-		pSetPhases = new gld_property(RLink,"phases");
+		pTempProperty = new gld_property(RLink,"phases");
 
 		//Make sure it worked
-		if ((pSetPhases->is_valid() != true) || (pSetPhases->is_set() != true))
+		if ((pTempProperty->is_valid() != true) || (pTempProperty->is_set() != true))
 		{
 			GL_THROW("Capacitor:%d - %s - Unable to map phases for remote link object",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/* TROUBLESHOOT
@@ -392,10 +427,10 @@ int capacitor::init(OBJECT *parent)
 		}
 
 		//Pull the voltage base value
-		temp_phases = pSetPhases->get_set();
+		temp_phases = pTempProperty->get_set();
 
 		//Now get rid of the item
-		delete pSetPhases;
+		delete pTempProperty;
 
 		//Check them
 		if ((temp_phases & pt_phase) != pt_phase)
@@ -411,10 +446,10 @@ int capacitor::init(OBJECT *parent)
 	else if (((control==VOLT) || (control==VARVOLT)) && (RNode != NULL))	//RNode check
 	{
 		//Pull the RNode phases to check
-		pSetPhases = new gld_property(RNode,"phases");
+		pTempProperty = new gld_property(RNode,"phases");
 
 		//Make sure it worked
-		if ((pSetPhases->is_valid() != true) || (pSetPhases->is_set() != true))
+		if ((pTempProperty->is_valid() != true) || (pTempProperty->is_set() != true))
 		{
 			GL_THROW("Capacitor:%d - %s - Unable to map phases for remote node object",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/* TROUBLESHOOT
@@ -424,10 +459,10 @@ int capacitor::init(OBJECT *parent)
 		}
 
 		//Pull the voltage base value
-		temp_phases = pSetPhases->get_set();
+		temp_phases = pTempProperty->get_set();
 
 		//Now get rid of the item
-		delete pSetPhases;
+		delete pTempProperty;
 
 		//Check to see if the phases are right
 		if ((temp_phases & pt_phase) != pt_phase)
@@ -1384,12 +1419,12 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 
 	if ((control==VAR) || (control==VARVOLT))	//Grab the power values from remote link
 	{
-		READLOCK_OBJECT(OBJECTHDR(RLink));
+		READLOCK_OBJECT(RLink);
 
 		//Force the link to do an update (will be ignored first run anyways (zero))
 		return_status = ((int (*)(OBJECT *))(*RLink_calculate_power_fxn))(RLink);
 
-		READUNLOCK_OBJECT(OBJECTHDR(RLink));
+		READUNLOCK_OBJECT(RLink);
 
 		//Make sure it worked
 		if (return_status != 1)

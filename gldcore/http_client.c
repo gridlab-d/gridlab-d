@@ -7,6 +7,7 @@
 #include "output.h"
 #include "http_client.h"
 #include "server.h"
+#include <ctype.h>
 
 
 HTTP* hopen(char *url, int maxlen)
@@ -20,7 +21,7 @@ HTTP* hopen(char *url, int maxlen)
 	char request[1024];
 	int len;
 
-#ifdef WIN32
+#ifdef _WIN32
 	/* init sockets */
 	WORD wsaVersion = MAKEWORD(2,2);
 	WSADATA wsaData;
@@ -116,7 +117,7 @@ HTTP* hopen(char *url, int maxlen)
 		output_debug("no HTTP response received");
 	return http;
 Error:
-#ifdef WIN32
+#ifdef _WIN32
 		output_error("hopen(char *url='%s', int maxlen=%d): WSA error code %d", url, maxlen, WSAGetLastError());
 #endif
 	return NULL;
@@ -126,7 +127,7 @@ int hclose(HTTP*http)
 	if ( http )
 	{
 		if ( http->sd ) 
-#ifdef WIN32
+#ifdef _WIN32
 			closesocket(http->sd);
 #else
 			close(http->sd);
@@ -301,7 +302,7 @@ void http_get_options(void)
 				if ( n>1 )
 				{
 					char unit[1024]="";
-					int m = sscanf(value,"%lu%[A-Za-z]",&wget_maxsize,unit);
+					int m = sscanf(value,"%llu%[A-Za-z]",&wget_maxsize,unit);
 					if ( m==2 )
 					{
 						if ( strcmp(unit,"kB")==0 ) wget_maxsize*=1000;

@@ -178,7 +178,7 @@ EXPORT SIMULATIONMODE update_enum_assert(OBJECT *obj, TIMESTAMP t0, unsigned int
 					else if ( strcmp(dateformat,"EURO")==0)
 						sprintf(datebuff,"ERROR    [%02d-%02d-%04d %02d:%02d:%02d.%.06d %s] : ",delta_dt_val.day,delta_dt_val.month,delta_dt_val.year,delta_dt_val.hour,delta_dt_val.minute,delta_dt_val.second,del_microseconds,delta_dt_val.tz);
 					else
-						sprintf(datebuff,"ERROR    .09f : ",del_clock);
+						sprintf(datebuff,"ERROR    %.09f : ",del_clock);
 
 					//Actual error part
 					sprintf(error_output_buff,"Assert failed on %s - %s (%d) did not match %d",gl_name(obj->parent, buff, 64),da->get_target(), *x, da->get_value());
@@ -221,7 +221,7 @@ EXPORT SIMULATIONMODE update_enum_assert(OBJECT *obj, TIMESTAMP t0, unsigned int
 					else if ( strcmp(dateformat,"EURO")==0)
 						sprintf(datebuff,"ERROR    [%02d-%02d-%04d %02d:%02d:%02d.%.06d %s] : ",delta_dt_val.day,delta_dt_val.month,delta_dt_val.year,delta_dt_val.hour,delta_dt_val.minute,delta_dt_val.second,del_microseconds,delta_dt_val.tz);
 					else
-						sprintf(datebuff,"ERROR    .09f : ",del_clock);
+						sprintf(datebuff,"ERROR    %.09f : ",del_clock);
 
 					//Actual error part
 					sprintf(error_output_buff,"Assert failed on %s - %s (%d) did not match %d",gl_name(obj->parent, buff, 64),da->get_target(), *x, da->get_value());

@@ -74,10 +74,6 @@ int64 exec_clock(void);
 }
 #endif
 
-#ifndef max
-#define max(n, m) ((n) > (m) ? (n) : (m))
-#endif
-
 #endif
 
 /**@}*/

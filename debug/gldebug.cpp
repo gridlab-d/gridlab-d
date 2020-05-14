@@ -458,7 +458,7 @@ bool g_debug::cmd_info(char *args)
 	char cmd[1024];
 	gld_global browser("browser");
 	gld_global infourl("infourl");
-#ifdef WIN32
+#ifdef _WIN32
 	sprintf(cmd,"start %s %s%s", (const char*)browser.get_string(), (const char*)infourl.get_string(), args);
 #elif defined(MACOSX)
 	sprintf(cmd,"open -a %s %s%s", (const char*)browser.get_string(), (const char*)infourl.get_string(), args);

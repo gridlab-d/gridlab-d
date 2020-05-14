@@ -48,8 +48,8 @@ histogram::histogram(MODULE *mod)
 			PT_char1024, "group", PADDR(group),PT_DESCRIPTION,"the GridLAB-D group expression to use for this histogram",
 			PT_char1024, "bins", PADDR(bins),PT_DESCRIPTION,"the specific bin values to use",
 			PT_char256, "property", PADDR(property),PT_DESCRIPTION,"the property to sample",
-			PT_double, "min", PADDR(min),PT_DESCRIPTION,"the minimum value of the auto-sized bins to use",
-			PT_double, "max", PADDR(max),PT_DESCRIPTION,"the maximum value of the auto-sized bins to use",
+			PT_double, "min", PADDR(min_val),PT_DESCRIPTION,"the minimum value of the auto-sized bins to use",
+			PT_double, "max", PADDR(max_val),PT_DESCRIPTION,"the maximum value of the auto-sized bins to use",
 			PT_double, "samplerate[s]", PADDR(sampling_interval),PT_DESCRIPTION,"the rate at which samples are read",
 			PT_double, "countrate[s]", PADDR(counting_interval),PT_DESCRIPTION,"the reate at which bins are counted and written",
 			PT_int32, "bin_count", PADDR(bin_count),PT_DESCRIPTION,"the number of auto-sized bins to use",
@@ -60,8 +60,8 @@ histogram::histogram(MODULE *mod)
 		memset(group, 0, 1025);
 		memset(bins, 0, 1025);
 		memset(property, 0, 33);
-		min = 0;
-		max = -1;
+		min_val = 0;
+		max_val = -1;
 		bin_count = -1;
 		sampling_interval = -1.0;
 		counting_interval = -1.0;
@@ -226,7 +226,7 @@ int histogram::init(OBJECT *parent)
 	{
 		OBJECT *group_obj = NULL;
 		CLASS *oclass = NULL;
-		if(group[0] == NULL){
+		if(group[0] == 0){
 			gl_error("Histogram has no parent and no group");
 			return 0;
 		}
@@ -282,10 +282,10 @@ int histogram::init(OBJECT *parent)
 	/*
 	 *	This will create a uniform partition over the specified range
 	 */
-	if((bin_count > 0) && (min < max))
+	if((bin_count > 0) && (min_val < max_val))
 	{
 		int i=0;
-		double range = max - min;
+		double range = max_val - min_val;
 		double step = range/bin_count;
 		//throw("Histogram bin_count is temporarily disabled.");
 		bin_list = (BIN *)gl_malloc(sizeof(BIN) * bin_count);
@@ -295,7 +295,7 @@ int histogram::init(OBJECT *parent)
 		}
 		memset(bin_list, 0, sizeof(BIN) * bin_count);
 		for(i = 0; i < bin_count; i++){
-			bin_list[i].low_val = min + i * step;
+			bin_list[i].low_val = min_val + i * step;
 			bin_list[i].high_val = bin_list[i].low_val + step;
 			bin_list[i].low_inc = 1;
 			bin_list[i].high_inc = 0;
