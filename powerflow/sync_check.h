@@ -88,6 +88,16 @@ private: /* Published Variables*/
 	double voltage_magnitude_tolerance_pu;
 	double voltage_angle_tolerance_deg;
 
+	//Deltamode trigger/maintainer variables
+	double delta_trigger_mult;
+	double frequency_tolerance_hz_deltamode_trig;
+	double voltage_tolerance_pu_deltamode_trig;
+	double voltage_magnitude_tolerance_pu_deltamode_trig;
+	double voltage_angle_tolerance_deg_deltamode_trig;
+	bool deltamode_trigger_keep_flag;
+	TIMESTAMP next_trigger_update_time;
+	SIMULATIONMODE deltamode_check_return_val;
+
 private:
 	/* Funcs mainly used in create() */
 	void init_vars();
@@ -103,7 +113,7 @@ private:
 
 private: /* Funcs for Deltamode */
 	void update_measurements();
-	void check_metrics();
+	void check_metrics(bool deltamode_check);
 	void check_excitation(unsigned long);
 	void reset_after_excitation();
 };
