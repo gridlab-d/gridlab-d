@@ -119,6 +119,8 @@ private:
 	FREQM_STATES prev_freq_state;
 	double freq_omega_ref;			//Reference frequency for measurements
 
+	bool first_freq_init;	//Flag to indicate if the first init for frequency - prevents from overwriting an off-nominal frequency
+
 	double freq_violation_time_total;		//Keeps track of how long the device has been in a frequency violation, to see if it needs to disconnect or not
 	double volt_violation_time_total;		//Keeps track of how long the device has been in a voltage violation, to see if it needs to disconnect or not
 	double out_of_violation_time_total;		//Tracking variable to see how long we've been "outside of bad conditions"
@@ -259,7 +261,7 @@ public:
 	void BOTH_node_postsync_fxn(OBJECT *obj);
 	OBJECT *NR_master_swing_search(char *node_type_value,bool main_swing);
 
-	void init_freq_dynamics(void);
+	void init_freq_dynamics(double deltat);
 	STATUS calc_freq_dynamics(double deltat);
 
 	double perform_GFA_checks(double timestepvalue);

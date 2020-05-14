@@ -41,6 +41,7 @@ sync_check::sync_check(MODULE *mod) : powerflow_object(mod)
 									PT_KEYWORD, "SEP_DIFF", (enumeration)SEP_DIFF,
 								PT_double, "voltage_magnitude_tolerance[pu]", PADDR(voltage_magnitude_tolerance_pu), PT_DESCRIPTION, "The user-specified tolerance in per unit for the difference in voltage magnitudes for checking the voltage metric. Used only by the SEP_DIFF mode of volt_compare_mode.",
 								PT_double, "voltage_angle_tolerance[deg]", PADDR(voltage_angle_tolerance_deg), PT_DESCRIPTION, "The user-specified tolerance in degrees for the difference in voltage angles for checking the voltage metric. Used only by the SEP_DIFF mode of volt_compare_mode.",
+								PT_double, "delta_trigger_mult", PADDR(delta_trigger_mult), PT_DESCRIPTION, "User-specified multiplier against voltage and frequency tolerances to trigger/maintain deltamode",
 								NULL) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
 
@@ -95,6 +96,40 @@ TIMESTAMP sync_check::postsync(TIMESTAMP t0)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP tret = powerflow_object::postsync(t0);
+
+	//Code to check if we need a deltamode call
+	if (next_trigger_update_time <= t0)
+	{
+		//Update the timing tracker - set it one second up (just because)
+		next_trigger_update_time = t0 + 1;
+
+		if (sc_enabled_flag == true)
+		{
+			//Update measurements and check
+			update_measurements();
+			check_metrics(true);
+
+			//Check if we were flagged
+			if (deltamode_trigger_keep_flag == true)
+			{
+				//Request deltamode
+				schedule_deltamode_start(t0);
+
+				//Reset our flag, out of paranoia
+				deltamode_check_return_val = SM_EVENT;
+
+				//Force a reiteration, just in case
+				tret = t0;
+			}
+			//Default else - don't trigger anything
+		}
+		else	//not armed, so no need to check things
+		{
+			//Set variables/flags, just in case something else pulls us into deltamode (paranoia set)
+			deltamode_trigger_keep_flag = false;
+			deltamode_check_return_val = SM_EVENT;
+		}
+	}
 
 	return tret;
 }
@@ -322,6 +357,16 @@ void sync_check::init_vars()
 	frequency_tolerance_hz = 0.01 * temp_freq_val; // i.e., 1%
 	voltage_tolerance_pu = 1e-2;  // i.e., 1%
 	metrics_period_sec = 1.2;
+
+	//Initialize deltmode trigger variables (will populate most later)
+	delta_trigger_mult = 2.0;	//Defaults to 2x the bands
+	frequency_tolerance_hz_deltamode_trig = 0.0;
+	voltage_tolerance_pu_deltamode_trig = 0.0;
+	voltage_magnitude_tolerance_pu_deltamode_trig = 0.0;
+	voltage_angle_tolerance_deg_deltamode_trig = 0.0;
+
+	deltamode_trigger_keep_flag = false;
+	deltamode_check_return_val = SM_EVENT;	//By default, just want event-driven
 }
 
 void sync_check::data_sanity_check(OBJECT *par)
@@ -636,6 +681,24 @@ void sync_check::init_norm_values(OBJECT *par)
 		If the error persists, please submit your GLM and a bug report to the ticketing system.
 		*/
 	}
+
+	//Populate default tolerances for deltamode triggers
+	if (delta_trigger_mult <= 1.0)
+	{
+		delta_trigger_mult = 2.0;
+		gl_warning("sync_check:%d %s - delta_trigger_mult was below 1.0 - defaulted to 2.0",obj->id, (obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		The delta_trigger_mult value was below, which isn't allowed.  Set this to a positive number larger than 1.0 to be a proper trigger
+		point for deltamode.
+		*/
+	}
+	frequency_tolerance_hz_deltamode_trig = delta_trigger_mult * frequency_tolerance_hz;
+	voltage_tolerance_pu_deltamode_trig = delta_trigger_mult * voltage_tolerance_pu;
+	voltage_magnitude_tolerance_pu_deltamode_trig = delta_trigger_mult * voltage_magnitude_tolerance_pu;
+	voltage_angle_tolerance_deg_deltamode_trig = delta_trigger_mult * voltage_angle_tolerance_deg;
+
+	//Set initial value
+	next_trigger_update_time = gl_globalclock;
 }
 
 void sync_check::update_measurements()
@@ -668,7 +731,7 @@ void sync_check::update_measurements()
 	}
 }
 
-void sync_check::check_metrics()
+void sync_check::check_metrics(bool deltamode_check)
 {
 	double freq_diff_hz = abs(swt_fm_node_freq - swt_to_node_freq);
 
@@ -683,14 +746,30 @@ void sync_check::check_metrics()
 		double volt_C_diff = (swt_fm_volt_C - swt_to_volt_C).Mag();
 		double volt_C_diff_pu = volt_C_diff / volt_norm;
 
-		if ((freq_diff_hz <= frequency_tolerance_hz) && (volt_A_diff_pu <= voltage_tolerance_pu) && (volt_B_diff_pu <= voltage_tolerance_pu) && (volt_C_diff_pu <= voltage_tolerance_pu))
+		if (deltamode_check == true)
 		{
-			metrics_flag = true;
-		}
-		else
+			if ((freq_diff_hz <= frequency_tolerance_hz_deltamode_trig) && (volt_A_diff_pu <= voltage_tolerance_pu_deltamode_trig) &&
+				(volt_B_diff_pu <= voltage_tolerance_pu_deltamode_trig) && (volt_C_diff_pu <= voltage_tolerance_pu_deltamode_trig))
+			{
+				deltamode_trigger_keep_flag = true;
+			}
+			else
+			{
+				deltamode_trigger_keep_flag = false;
+			}
+		}//End "stay/trigger deltamode" check
+		else	//Standard "closure" check
 		{
-			metrics_flag = false;
-		}
+			if ((freq_diff_hz <= frequency_tolerance_hz) && (volt_A_diff_pu <= voltage_tolerance_pu) &&
+				(volt_B_diff_pu <= voltage_tolerance_pu) && (volt_C_diff_pu <= voltage_tolerance_pu))
+			{
+				metrics_flag = true;
+			}
+			else
+			{
+				metrics_flag = false;
+			}
+		}//End standard closure check
 	}
 	else // SEP_DIFF Mode
 	{
@@ -736,18 +815,36 @@ void sync_check::check_metrics()
 			volt_C_ang_deg_diff = volt_C_ang_deg_diff_temp;
 
 		// Check
-		if ((freq_diff_hz <= frequency_tolerance_hz) &&
-			(volt_A_mag_diff_pu <= voltage_magnitude_tolerance_pu) &&
-			(volt_B_mag_diff_pu <= voltage_magnitude_tolerance_pu) && (volt_C_mag_diff_pu <= voltage_magnitude_tolerance_pu) &&
-			(volt_A_ang_deg_diff <= voltage_angle_tolerance_deg) &&
-			(volt_B_ang_deg_diff <= voltage_angle_tolerance_deg) && (volt_C_ang_deg_diff <= voltage_angle_tolerance_deg))
+		if (deltamode_check == true)
 		{
-			metrics_flag = true;
-		}
-		else
+			if ((freq_diff_hz <= frequency_tolerance_hz_deltamode_trig) &&
+				(volt_A_mag_diff_pu <= voltage_magnitude_tolerance_pu_deltamode_trig) &&
+				(volt_B_mag_diff_pu <= voltage_magnitude_tolerance_pu_deltamode_trig) && (volt_C_mag_diff_pu <= voltage_magnitude_tolerance_pu_deltamode_trig) &&
+				(volt_A_ang_deg_diff <= voltage_angle_tolerance_deg_deltamode_trig) &&
+				(volt_B_ang_deg_diff <= voltage_angle_tolerance_deg_deltamode_trig) && (volt_C_ang_deg_diff <= voltage_angle_tolerance_deg_deltamode_trig))
+			{
+				deltamode_trigger_keep_flag = true;
+			}
+			else
+			{
+				deltamode_trigger_keep_flag = false;
+			}
+		}//End deltamode trigger/maintain check
+		else	//Standard "closure check"
 		{
-			metrics_flag = false;
-		}
+			if ((freq_diff_hz <= frequency_tolerance_hz) &&
+				(volt_A_mag_diff_pu <= voltage_magnitude_tolerance_pu) &&
+				(volt_B_mag_diff_pu <= voltage_magnitude_tolerance_pu) && (volt_C_mag_diff_pu <= voltage_magnitude_tolerance_pu) &&
+				(volt_A_ang_deg_diff <= voltage_angle_tolerance_deg) &&
+				(volt_B_ang_deg_diff <= voltage_angle_tolerance_deg) && (volt_C_ang_deg_diff <= voltage_angle_tolerance_deg))
+			{
+				metrics_flag = true;
+			}
+			else
+			{
+				metrics_flag = false;
+			}
+		}//End standard closure check
 	}
 }
 
@@ -792,12 +889,36 @@ SIMULATIONMODE sync_check::inter_deltaupdate_sync_check(unsigned int64 delta_tim
 		if ((iteration_count_val == 0) && (!interupdate_pos)) //@TODO: Need further testings
 		{
 			update_measurements();
-			check_metrics();
+
+			//Do the deltamode trigger check
+			check_metrics(true);
+
+			//See how to proceed
+			if (deltamode_trigger_keep_flag == true)	//In bounds, track!
+			{
+				deltamode_check_return_val = SM_DELTA;
+			}
+			else	//Out of bounds, just let other objects drive us
+			{
+				deltamode_check_return_val = SM_EVENT;
+			}
+
+			//Actual sync_check tests
+			check_metrics(false);
 			check_excitation(dt);
 		}
+		//Default else - other passes, just return whatever value we had set
 	}
+	else	//Not enabled, so something else gets to drive deltamode
+	{
+		//Paranoia set the flag, just in case
+		deltamode_trigger_keep_flag = false;
 
-	return SM_EVENT;
+		//Set return status
+		deltamode_check_return_val = SM_EVENT;
+	}
+	
+	return deltamode_check_return_val;
 }
 
 //////////////////////////////////////////////////////////////////////////
