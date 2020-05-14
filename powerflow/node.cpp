@@ -361,6 +361,7 @@ int node::create(void)
 	freq_sfm_Tf=0.01;
 	freq_pll_Kp=10;
 	freq_pll_Ki=100;
+	first_freq_init=true;	//Start with saying we haven't been in yet
 
 	//Set default values
 	curr_freq_state.fmeas[0] = nominal_frequency;
@@ -4342,17 +4343,19 @@ SIMULATIONMODE node::inter_deltaupdate_node(unsigned int64 delta_time, unsigned 
 		//Update frequency calculation values (if needed)
 		if (fmeas_type != FM_NONE)
 		{
-			//Copy the tracker value
-			memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+			//See which pass
+			if (delta_time == 0)
+			{
+				//Initialize dynamics - first run of new delta call
+				init_freq_dynamics(deltat);
+			}
+			else
+			{
+				//Copy the tracker value
+				memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+			}
 		}
 	}
-
-	//Initialization items
-	if ((delta_time==0) && (iteration_count_val==0) && (interupdate_pos == false) && (fmeas_type != FM_NONE))	//First run of new delta call
-	{
-		//Initialize dynamics
-		init_freq_dynamics();
-	}//End first pass and timestep of deltamode (initial condition stuff)
 
 	//Perform the GFA update, if enabled
 	if ((GFA_enable == true) && (iteration_count_val == 0) && (interupdate_pos == false))	//Always just do on the first pass
@@ -4650,11 +4653,13 @@ STATUS node::calc_freq_dynamics(double deltat)
 //Initializes dynamic equations for first entry
 //Returns a SUCCESS/FAIL
 //curr_time is the initial states/information
-void node::init_freq_dynamics(void)
+void node::init_freq_dynamics(double deltat)
 {
 	unsigned char phase_conf, phase_mask;
 	int indexval;
 	bool is_triplex_node;
+	double frequency_offset_val, angle_offset;
+	complex angle_rotate_value;
 
 	//Extract the phases
 	if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
@@ -4707,16 +4712,16 @@ void node::init_freq_dynamics(void)
 				{
 					if (indexval < 2)
 					{
-						prev_freq_state.voltage_val[indexval]=NR_busdata[NR_node_reference].V[indexval];
+						curr_freq_state.voltage_val[indexval]=NR_busdata[NR_node_reference].V[indexval];
 					}
 					else	//Must be 2
 					{
-						prev_freq_state.voltage_val[indexval]=NR_busdata[NR_node_reference].V[0] + NR_busdata[NR_node_reference].V[1];
+						curr_freq_state.voltage_val[indexval]=NR_busdata[NR_node_reference].V[0] + NR_busdata[NR_node_reference].V[1];
 					}
 				}
 				else
 				{
-					prev_freq_state.voltage_val[indexval]=NR_busdata[NR_node_reference].V[indexval];
+					curr_freq_state.voltage_val[indexval]=NR_busdata[NR_node_reference].V[indexval];
 				}
 			}
 			else	//It is a child - look at parent
@@ -4725,34 +4730,73 @@ void node::init_freq_dynamics(void)
 				{
 					if (indexval < 2)
 					{
-						prev_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[indexval];
+						curr_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[indexval];
 					}
 					else	//Must be 2
 					{
-						prev_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[0] + NR_busdata[*NR_subnode_reference].V[1];
+						curr_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[0] + NR_busdata[*NR_subnode_reference].V[1];
 					}
 				}
 				else
 				{
-					prev_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[indexval];
+					curr_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[indexval];
 				}
 			}
 
-			//Populate the angle - use ATAN2, since it divides better than the complex-oriented .Arg function
-			prev_freq_state.anglemeas[indexval] = atan2(prev_freq_state.voltage_val[indexval].Im(),prev_freq_state.voltage_val[indexval].Re());
+			//See if we're the first start or not
+			if (first_freq_init == true)
+			{
+				//Assume "current" start
+				curr_freq_state.fmeas[indexval] = current_frequency;
+				prev_freq_state.fmeas[indexval] = current_frequency;
+			}
+			//Default else, just leave what was already in our accumulator
+
+			//Assume the frequency was at least "stable" prior to entering - adjust prior value to reflect this
+			//Compute the frequency deviation
+			frequency_offset_val = (curr_freq_state.fmeas[indexval] * 2.0 * PI - freq_omega_ref);
+
+			//Calculate the associated angle offset - negative, for past
+			angle_offset = -1.0 * frequency_offset_val * deltat;
 			
-			//Assume "current" start
-			prev_freq_state.fmeas[indexval] = current_frequency;
+			//Translate it into a multiplier
+			//exp(jx) = cos(x)+j*sin(x)
+			angle_rotate_value = complex(cos(angle_offset),sin(angle_offset));
+
+			//Adjust the previous voltage value by this
+			prev_freq_state.voltage_val[indexval] = curr_freq_state.voltage_val[indexval] * angle_rotate_value;
+
+			//Populate the angle - use ATAN2, since it divides better than the complex-oriented .Arg function
+			curr_freq_state.anglemeas[indexval] = atan2(curr_freq_state.voltage_val[indexval].Im(),curr_freq_state.voltage_val[indexval].Re());
+			prev_freq_state.anglemeas[indexval] = atan2(prev_freq_state.voltage_val[indexval].Im(),prev_freq_state.voltage_val[indexval].Re());
 
 			//Populate other fields, if necessary
 			if (fmeas_type == FM_PLL)
 			{
+				//Initialize other relevant variables
+				curr_freq_state.x[indexval] = frequency_offset_val;
+				prev_freq_state.x[indexval] = frequency_offset_val;
+
+				//Current values of angles
+				curr_freq_state.sinangmeas[indexval] = sin(curr_freq_state.anglemeas[indexval]);
+				curr_freq_state.cosangmeas[indexval] = cos(curr_freq_state.anglemeas[indexval]);
+
+				//Previous values, just because
 				prev_freq_state.sinangmeas[indexval] = sin(prev_freq_state.anglemeas[indexval]);
 				prev_freq_state.cosangmeas[indexval] = cos(prev_freq_state.anglemeas[indexval]);
 			}
 		}//End valid phase
 		else	//Not a valid phase, just zero it all
 		{
+			curr_freq_state.voltage_val[indexval] = complex(0.0,0.0);
+			curr_freq_state.x[indexval] = 0.0;
+			curr_freq_state.anglemeas[indexval] = 0.0;
+			curr_freq_state.fmeas[indexval] = 0.0;
+			curr_freq_state.average_freq = current_frequency;
+			curr_freq_state.sinangmeas[indexval] = 0.0;
+			curr_freq_state.cosangmeas[indexval] = 0.0;
+
+			//DO the same for previous state, out of paranoia
 			prev_freq_state.voltage_val[indexval] = complex(0.0,0.0);
 			prev_freq_state.x[indexval] = 0.0;
 			prev_freq_state.anglemeas[indexval] = 0.0;
@@ -4763,8 +4807,11 @@ void node::init_freq_dynamics(void)
 		}
 	}//End FOR loop
 
-	//Copy into current, since we may have already just done this
-	memcpy(&curr_freq_state,&prev_freq_state,sizeof(FREQM_STATES));
+	//Final check for "first run" to deflag us and to update angle calculation
+	if (first_freq_init == true)
+	{
+		first_freq_init = false;
+	}
 }
 
 //Function to perform the GFA-type responses
