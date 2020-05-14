@@ -246,6 +246,7 @@ public:
 	double delta_w_Pmin;  //
 	double Pset;		  // power set point in P-f droop
 	double mp;			  // P-f droop gain, usually 3.77 rad/s/pu
+	double P_f_droop;     // p-f droop gain, per unit, usually 0.01
 	double kppmax;		  // proportional and integral gains for Pmax controller
 	double kipmax;
 	double w_lim; // w_lim is the saturation limit

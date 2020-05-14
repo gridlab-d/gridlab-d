@@ -133,10 +133,12 @@ inverter_dyn::inverter_dyn(MODULE *module)
 			PT_double, "kpv", PADDR(kpv), PT_DESCRIPTION, "DELTAMODE: proportional gain and integral gain of voltage loop.",
 			PT_double, "kiv", PADDR(kiv), PT_DESCRIPTION, "DELTAMODE: proportional gain and integral gain of voltage loop.",
 			PT_double, "mq", PADDR(mq), PT_DESCRIPTION, "DELTAMODE: Q-V droop gain, usually 0.05 pu.",
+			PT_double, "Q_V_Droop", PADDR(mq), PT_DESCRIPTION, "DELTAMODE: Q-V droop gain, usually 0.05 pu.",
 			PT_double, "E_max", PADDR(E_max), PT_DESCRIPTION, "DELTAMODE: E_max and E_min are the maximum and minimum of the output of voltage controller.",
 			PT_double, "E_min", PADDR(E_min), PT_DESCRIPTION, "DELTAMODE: E_max and E_min are the maximum and minimum of the output of voltage controller.",
 			PT_double, "Pset", PADDR(Pset), PT_DESCRIPTION, "DELTAMODE: power set point in P-f droop.",
 			PT_double, "mp", PADDR(mp), PT_DESCRIPTION, "DELTAMODE: P-f droop gain, usually 3.77 rad/s/pu.",
+			PT_double, "P_f_droop", PADDR(P_f_droop), PT_DESCRIPTION, "DELTAMODE: P-f droop gain in per unit value, usually 0.01.",
 			PT_double, "kppmax", PADDR(kppmax), PT_DESCRIPTION, "DELTAMODE: proportional and integral gains for Pmax controller.",
 			PT_double, "kipmax", PADDR(kipmax), PT_DESCRIPTION, "DELTAMODE: proportional and integral gains for Pmax controller.",
 			PT_double, "w_lim", PADDR(w_lim), PT_DESCRIPTION, "DELTAMODE: saturation limit of Pmax controller.",
@@ -152,6 +154,10 @@ inverter_dyn::inverter_dyn(MODULE *module)
 			PT_double, "kpVdc", PADDR(kpVdc), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: proportional gain of Vdc_min controller",
 			PT_double, "kiVdc", PADDR(kiVdc), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: integral gain of Vdc_min controller",
 			PT_double, "kdVdc", PADDR(kiVdc), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: derivative gain of Vdc_min controller",
+
+			PT_double, "p_measure", PADDR(curr_state.p_measure), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: filtered active power for grid-forming inverter",
+			PT_double, "q_measure", PADDR(curr_state.q_measure), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: filtered reactive power for grid-forming inverter",
+			PT_double, "v_measure", PADDR(curr_state.v_measure), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: filtered voltage for grid-forming inverter",
 
 			//DC Bus portions
 			PT_double, "V_In[V]", PADDR(V_DC), PT_DESCRIPTION, "DC input voltage",
@@ -235,6 +241,7 @@ int inverter_dyn::create(void)
 	E_max = 2;
 	E_min = 0;
 	mp = 3.77;
+	P_f_droop = -100;
 	kppmax = 3;
 	kipmax = 30;
 	w_lim = 50; // rad/s
@@ -293,7 +300,7 @@ int inverter_dyn::create(void)
 
 	//DC Bus items
 	P_DC = 0.0;
-	V_DC = 0; //Vdc_base;
+	V_DC = 0.0; //Vdc_base;
 	I_DC = 0.0;
 
 	return 1; /* return 1 on success, 0 on failure */
@@ -930,7 +937,15 @@ int inverter_dyn::init(OBJECT *parent)
 	//Init tracking variable
 	prev_timestamp_dbl = (double)gl_globalclock;
 
+	// Link P_f_droop to mp
+	if (P_f_droop != -100)
+	{
+		mp = P_f_droop * w_ref;
+	}
+
 	return 1;
+
+
 }
 
 TIMESTAMP inverter_dyn::presync(TIMESTAMP t0, TIMESTAMP t1)
@@ -1534,8 +1549,17 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 	prev_timestamp_dbl = gl_globaldeltaclock;
 
 
+
 	if (control_mode == GRID_FORMING)
 	{
+
+		// Link P_f_droop to mp
+		if (P_f_droop != -100)
+		{
+			mp = P_f_droop * w_ref;
+		}
+
+
 		if ((iteration_count_val == 0) && (delta_time == 0))
 		{
 			P_DC = I_DC = 0; // Clean the buffer, only on the very first delta timestep
@@ -1720,6 +1744,8 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					// E_max and E_min are the maximum and minimum of the output of voltage controller
 					// Function end
 				}
+
+
 
 				// Function: P-f droop, Pmax and Pmin controller
 				delta_w_droop = (Pset - pred_state.p_measure) * mp; // P-f droop

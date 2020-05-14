@@ -33,12 +33,19 @@ series_compensator::series_compensator(MODULE *mod) : link_object(mod)
 		if (gl_publish_variable(oclass,
 			PT_INHERIT, "link",
 
-			PT_double, "vset_A[pu]", PADDR(vset_value[0]), PT_DESCRIPTION, "Voltage magnitude set point for phase A",
-			PT_double, "vset_B[pu]", PADDR(vset_value[1]), PT_DESCRIPTION, "Voltage magnitude set point for phase B",
-			PT_double, "vset_C[pu]", PADDR(vset_value[2]), PT_DESCRIPTION, "Voltage magnitude set point for phase C",
+			PT_double, "vset_A[pu]", PADDR(vset_value[0]), PT_DESCRIPTION, "Voltage magnitude reference for phase A",
+			PT_double, "vset_B[pu]", PADDR(vset_value[1]), PT_DESCRIPTION, "Voltage magnitude reference for phase B",
+			PT_double, "vset_C[pu]", PADDR(vset_value[2]), PT_DESCRIPTION, "Voltage magnitude reference for phase C",
 
-			PT_double, "vset_1[pu]", PADDR(vset_value[0]), PT_DESCRIPTION, "Voltage magnitude set point for phase 1 of a triplex system",
-			PT_double, "vset_2[pu]", PADDR(vset_value[1]), PT_DESCRIPTION, "Voltage magnitude set point for phase 2 of a tryplex system",
+			PT_double, "vset_A_0[pu]", PADDR(vset_value_0[0]), PT_DESCRIPTION, "Voltage magnitude set point for phase A, changed by the player",
+			PT_double, "vset_B_0[pu]", PADDR(vset_value_0[1]), PT_DESCRIPTION, "Voltage magnitude set point for phase B, changed by the player",
+			PT_double, "vset_C_0[pu]", PADDR(vset_value_0[2]), PT_DESCRIPTION, "Voltage magnitude set point for phase C, changed by the player",
+
+			PT_double, "vset_1[pu]", PADDR(vset_value[0]), PT_DESCRIPTION, "Voltage magnitude reference for phase 1 of a triplex system",
+			PT_double, "vset_2[pu]", PADDR(vset_value[1]), PT_DESCRIPTION, "Voltage magnitude reference for phase 2 of a tryplex system",
+
+			PT_double, "vset_1_0[pu]", PADDR(vset_value_0[0]), PT_DESCRIPTION, "Voltage magnitude reference for phase 1 of a triplex system",
+			PT_double, "vset_2_0[pu]", PADDR(vset_value_0[1]), PT_DESCRIPTION, "Voltage magnitude reference for phase 2 of a tryplex system",
 
 			PT_bool, "frequency_regulation", PADDR(frequency_regulation),  PT_DESCRIPTION, "DELTAMODE: Boolean value indicating whether the frequency regulation of the series compensator is enabled or not",
 
@@ -121,6 +128,8 @@ int series_compensator::create()
 
 	voltage_deadband = 1e-5;
 
+	frequency_regulation= false;
+
 	kp = 0;
 	ki = 10;
     n_max[0] = n_max[1] = n_max[2] = 1.13;
@@ -164,6 +173,8 @@ int series_compensator::create()
 	val_FromNode_voltage_pu[0] = val_FromNode_voltage_pu[1] = val_FromNode_voltage_pu[2] = 0.0;
 
 	vset_value[0] = vset_value[1] = vset_value[2] = 1.0;	//Start out set to unity voltage
+	vset_value_0[0] = vset_value_0[1] = vset_value_0[2] = 1.0;	//Start out set to unity voltage
+
 	val_FromNode_nominal_voltage = 0.0;
 	val_FromNode_frequency = nominal_frequency;
 	voltage_iter_tolerance = 0.01;	//1% PU default
@@ -304,6 +315,7 @@ int series_compensator::init(OBJECT *parent)
 
 			//Set the per-unit setpoint too -- otherwise we'll have issues later
 			vset_value[0] = 0.0;
+			vset_value_0[0] = 0.0;
 		}
 
 		//Check for B
@@ -338,6 +350,7 @@ int series_compensator::init(OBJECT *parent)
 
 			//Set the per-unit setpoint too -- otherwise we'll have issues later
 			vset_value[1] = 0.0;
+			vset_value_0[1] = 0.0;
 		}
 
 		//Check for C
@@ -372,6 +385,7 @@ int series_compensator::init(OBJECT *parent)
 
 			//Set the per-unit setpoint too -- otherwise we'll have issues later
 			vset_value[2] = 0.0;
+			vset_value_0[2] = 0.0;
 		}
 	}//End three-phase variants
 
@@ -955,7 +969,7 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 					//Loop it
 					for (index_val=0; index_val<2; index_val++)
 					{
-						vset_value[index_val] = delta_V + 1.0; //get the voltage set point according to the frequency regulation requirement
+						vset_value[index_val] = delta_V + vset_value_0[index_val]; //get the voltage set point according to the frequency regulation requirement
 
 						if (val_FromNode_voltage_pu[index_val] > V_bypass_max_pu)
 						{
@@ -1023,7 +1037,7 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 					if ((NR_branchdata[NR_branch_reference].phases & phase_mask) == phase_mask)
 					{
 
-						vset_value[index_val] = delta_V + 1.0; //get the voltage set point according to the frequency regulation requirement
+						vset_value[index_val] = delta_V + vset_value_0[index_val]; //get the voltage set point according to the frequency regulation requirement
 
 						if (val_FromNode_voltage_pu[index_val] > V_bypass_max_pu)
 						{
@@ -1128,7 +1142,7 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 					for (index_val=0; index_val<2; index_val++)
 					{
 
-						vset_value[index_val] = delta_V + 1.0; //get the voltage set point according to the frequency regulation requirement
+						vset_value[index_val] = delta_V + vset_value_0[index_val]; //get the voltage set point according to the frequency regulation requirement
 
 						//Reset the flag
 						bypass_initiated = false;
@@ -1213,7 +1227,7 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 
 					if ((NR_branchdata[NR_branch_reference].phases & phase_mask) == phase_mask)
 					{
-						vset_value[index_val] = delta_V + 1.0; //get the voltage set point according to the frequency regulation requirement
+						vset_value[index_val] = delta_V + vset_value_0[index_val]; //get the voltage set point according to the frequency regulation requirement
 
 						if (val_FromNode_voltage_pu[index_val] > V_bypass_max_pu)
 						{

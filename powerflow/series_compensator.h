@@ -33,6 +33,7 @@ public:
 
 	double turns_ratio[3];
 	double vset_value[3];  //voltage reference
+	double vset_value_0[3]; //voltage set points changed by the player
 	double voltage_iter_tolerance;
 	double n_max[3]; //maximum turn ratio
 	double n_min[3]; //minimum turn ratio
