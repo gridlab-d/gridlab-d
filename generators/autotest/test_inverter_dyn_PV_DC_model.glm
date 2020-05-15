@@ -209,7 +209,7 @@ object inverter_dyn {
 	name PVDC_GFM_Inverter;
 	parent grid_form_PV_connect;
 	control_mode GRID_FORMING;
-	grid_forming_mode PV_DC_BUS;
+	grid_forming_mode DYNAMIC_DC_BUS;
 	rated_DC_Voltage 850 V;
 	rated_power 100 kW;
 	GridForming_convergence_criterion 1e-9;

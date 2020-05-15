@@ -58,7 +58,7 @@ solar::solar(MODULE *module)
 
 			PT_double, "pvc_U_oc_V", PADDR(pvc_U_oc_V), PT_DESCRIPTION, "The open circuit voltage in volts",
 			PT_double, "pvc_I_sc_A", PADDR(pvc_I_sc_A), PT_DESCRIPTION, "The short circuit current in amps",
-			PT_double, "pvc_U_m_V", PADDR(pvc_U_m_V), PT_DESCRIPTION, "The thermal votlage of the array in volts",
+			PT_double, "pvc_U_m_V", PADDR(pvc_U_m_V), PT_DESCRIPTION, "The thermal voltage of the array in volts",
 			PT_double, "pvc_I_m_A", PADDR(pvc_I_m_A), PT_DESCRIPTION, "The thermal current of the array in amps",
 
 			// N-R Solver

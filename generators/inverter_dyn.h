@@ -175,7 +175,7 @@ public:
 	enum GRID_FORMING_TYPE
 	{
 		CONSTANT_DC_BUS = 0,
-		PV_DC_BUS = 1
+		DYNAMIC_DC_BUS = 1
 	};
 	enumeration grid_forming_mode; //
 

@@ -106,8 +106,11 @@ diesel_dg::diesel_dg(MODULE *module)
 
 			//Overall inputs for dynamics model - governor and exciter "tweakables"
 			PT_double,"wref[pu]", PADDR(gen_base_set_vals.wref), PT_DESCRIPTION, "wref input to governor controls (per-unit)",
+			PT_double,"w_ref[rad/s]",PADDR(gen_base_set_vals.w_ref), PT_DESCRIPTION, "w_ref input to governor controls (rad/s) - takes priority over wref",	//semi-overloaded for commonality to wider control
 			PT_double,"vset[pu]", PADDR(gen_base_set_vals.vset), PT_DESCRIPTION, "vset input to AVR controls (per-unit)",
+			PT_double,"Vset[pu]", PADDR(gen_base_set_vals.vset), PT_DESCRIPTION, "Vset input to AVR controls (per-unit)",
 			PT_double,"Pref[pu]", PADDR(gen_base_set_vals.Pref), PT_DESCRIPTION, "Pref input to governor controls (per-unit), if supported",
+			PT_double,"Pset[pu]", PADDR(gen_base_set_vals.Pref), PT_DESCRIPTION, "Pset input to governor controls (per-unit), if supported",	//overloaded for commonality to wider control
 			PT_double,"Qref[pu]", PADDR(gen_base_set_vals.Qref), PT_DESCRIPTION, "Qref input to govornor or AVR controls (per-unit), if supported",
 
 			//Properties for AVR/Exciter of dynamics model
@@ -419,6 +422,7 @@ int diesel_dg::create(void)
 
 	//Input variables are initialized to -99 (since pu) - if left there, the dynamics initialization gets them
 	gen_base_set_vals.wref = -99.0;
+	gen_base_set_vals.w_ref = -99.0;	//Not pu, but still a bad setting
 	gen_base_set_vals.vset = -99.0;
 	gen_base_set_vals.Pref = -99.0;
 	gen_base_set_vals.Qref = -99.0;
@@ -1466,6 +1470,12 @@ int diesel_dg::init(OBJECT *parent)
 	dg_1000_a = 0.067;
 	dg_1000_b = 5.2435/1000 * (Rated_VA/1000);
 
+	//Update wref to w_ref, if necessary
+	if (gen_base_set_vals.w_ref > 0.0)	//Effectively not -99
+	{
+		gen_base_set_vals.wref = gen_base_set_vals.w_ref / omega_ref;
+	}
+
 	return 1;
 }//init ends here
 
@@ -2188,6 +2198,12 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 
 	//Pull the present powerflow values
 	pull_powerflow_values();
+
+	//Update wref to w_ref, if necessary
+	if (gen_base_set_vals.w_ref > 0.0)	//Effectively not -99
+	{
+		gen_base_set_vals.wref = gen_base_set_vals.w_ref / omega_ref;
+	}
 
 	//Initialization items
 	if ((delta_time==0) && (iteration_count_val==0))	//First run of new delta call
@@ -4142,6 +4158,12 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 	double omega_pu;
 	double temp_double_1, temp_double_2, temp_double_3;
 	unsigned int index_val;
+
+	//Update wref to w_ref, if necessary - makes sure this catches any odd calls to this
+	if (gen_base_set_vals.w_ref > 0.0)	//Effectively not -99
+	{
+		gen_base_set_vals.wref = gen_base_set_vals.w_ref / omega_ref;
+	}
 
 	//Convert voltage to per-unit -- already pulled in outer function
 	voltage_pu[0] = value_Circuit_V[0]/voltage_base;

@@ -132,6 +132,7 @@ typedef struct {
 //Set-point/adjustable variables
 typedef struct {
 	double wref;	//Reference frequency/bias for generator object (governor)
+	double w_ref;	//Reference frequency/bias for generator object (governor), but rad/s (align with other generators)
 	double vset;	//Reference per-unit voltage/bias for generator object (AVR)
 	double vseta;	//Reference per-unit voltage/bias for generator object (AVR) before going into bound check
 	double vsetb;	//Reference per-unit voltage/bias for generator object (AVR) after going into bound check
