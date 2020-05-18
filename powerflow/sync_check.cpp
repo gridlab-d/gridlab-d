@@ -100,6 +100,9 @@ TIMESTAMP sync_check::postsync(TIMESTAMP t0)
 	//Code to check if we need a deltamode call
 	if (next_trigger_update_time <= t0)
 	{
+		//Reset accumulator timer, while we're in here (just because)
+		t_sat = 0.0;
+
 		//Update the timing tracker - set it one second up (just because)
 		next_trigger_update_time = t0 + 1;
 
@@ -916,6 +919,9 @@ SIMULATIONMODE sync_check::inter_deltaupdate_sync_check(unsigned int64 delta_tim
 
 		//Set return status
 		deltamode_check_return_val = SM_EVENT;
+
+		//Reset accumulator timer, in case disabled before a closing happened
+		t_sat = 0.0;
 	}
 	
 	return deltamode_check_return_val;
