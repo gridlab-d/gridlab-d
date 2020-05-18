@@ -50,16 +50,16 @@ solar::solar(MODULE *module)
 			PT_bool, "pvc_Pmax_calc_simp_mode", PADDR(pvc_Pmax_calc_simp_mode), PT_DESCRIPTION, "If the simple mode is selected, the pvc_Pmax = pvc_U_m_V * pvc_I_m_A.",
 			
 			// Solar PV Panel (under PV_CURVE Mode)
-			PT_double, "t_ref_cels", PADDR(pvc_t_ref_cels), PT_DESCRIPTION, "The referenced temperature in Celsius",
-			PT_double, "S_ref_wpm2", PADDR(pvc_S_ref_wpm2), PT_DESCRIPTION, "The referenced insolation in the unit of w/m^2",
+			PT_double, "t_ref_cels[degC]", PADDR(pvc_t_ref_cels), PT_DESCRIPTION, "The referenced temperature",
+			PT_double, "S_ref_wpm2[W/m^2]", PADDR(pvc_S_ref_wpm2), PT_DESCRIPTION, "The referenced insolation",
 
 			PT_double, "pvc_a1_inv_cels", PADDR(pvc_a1), PT_DESCRIPTION, "In the calculation of dI, this is the coefficient that adjusts the difference between t (temperature) and pvc_t_ref_cels (referenced temperature)",
 			PT_double, "pvc_b1_inv_cels", PADDR(pvc_b1), PT_DESCRIPTION, "In the calculation of dU, this is the coefficient that adjusts the difference between t (temperature) and pvc_t_ref_cels (referenced temperature)",
 
-			PT_double, "pvc_U_oc_V", PADDR(pvc_U_oc_V), PT_DESCRIPTION, "The open circuit voltage in volts",
-			PT_double, "pvc_I_sc_A", PADDR(pvc_I_sc_A), PT_DESCRIPTION, "The short circuit current in amps",
-			PT_double, "pvc_U_m_V", PADDR(pvc_U_m_V), PT_DESCRIPTION, "The thermal voltage of the array in volts",
-			PT_double, "pvc_I_m_A", PADDR(pvc_I_m_A), PT_DESCRIPTION, "The thermal current of the array in amps",
+			PT_double, "pvc_U_oc_V[V]", PADDR(pvc_U_oc_V), PT_DESCRIPTION, "The open circuit voltage",
+			PT_double, "pvc_I_sc_A[A]", PADDR(pvc_I_sc_A), PT_DESCRIPTION, "The short circuit current",
+			PT_double, "pvc_U_m_V[V]", PADDR(pvc_U_m_V), PT_DESCRIPTION, "Voltage at maximum power point",
+			PT_double, "pvc_I_m_A[A]", PADDR(pvc_I_m_A), PT_DESCRIPTION, "Current at maximum power point",
 
 			// N-R Solver
 			PT_int16, "MAX_NR_ITERATIONS", PADDR(max_nr_ite), PT_DESCRIPTION, "The allowed maximum number of newton-raphson itrations",
