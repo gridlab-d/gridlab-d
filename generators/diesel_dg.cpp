@@ -44,6 +44,8 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double, "Rated_VA[VA]", PADDR(Rated_VA),PT_DESCRIPTION,"nominal capacity in VA",
 			PT_double, "overload_limit[pu]", PADDR(Overload_Limit_Pub),PT_DESCRIPTION,"per-unit value of the maximum power the generator can provide",
 
+			PT_bool, "deltamode_only_changes", PADDR(only_first_init), PT_DESCRIPTION, "Flag to prevent reinitialization of dynamic equations - implies all changes are in deltamode",
+
 			PT_complex, "current_out_A[A]", PADDR(current_val[0]),PT_DESCRIPTION,"Output current of phase A",
 			PT_complex, "current_out_B[A]", PADDR(current_val[1]),PT_DESCRIPTION,"Output current of phase B",
 			PT_complex, "current_out_C[A]", PADDR(current_val[2]),PT_DESCRIPTION,"Output current of phase C",
@@ -80,7 +82,7 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_complex,"X2[pu]",PADDR(X2),PT_DESCRIPTION,"Negative sequence impedance (p.u.)",
 
 			//Convergence criterion for exiting deltamode - just on rotor_speed for now
-			PT_double,"rotor_speed_convergence[rad]",PADDR(rotor_speed_convergence_criterion),PT_DESCRIPTION,"Convergence criterion on rotor speed used to determine when to exit deltamode",
+			PT_double,"rotor_speed_convergence[rad/s]",PADDR(rotor_speed_convergence_criterion),PT_DESCRIPTION,"Convergence criterion on rotor speed used to determine when to exit deltamode",
 			PT_double,"voltage_convergence[V]",PADDR(voltage_convergence_criterion),PT_DESCRIPTION,"Convergence criterion for voltage changes (if exciter present) to determine when to exit deltamode",
 
 			//Which to enable
@@ -647,6 +649,10 @@ int diesel_dg::create(void)
 
 	//Set up the deltamode "next state" tracking variable
 	desired_simulation_mode = SM_EVENT;
+
+	//Deltamode-only changes variables
+	only_first_init = true;
+	first_init_status = true;
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -1403,8 +1409,8 @@ int diesel_dg::init(OBJECT *parent)
 			//Pull the value
 			Frequency_mapped->getp<bool>(temp_bool_value,*test_rlock);
 			
-			//Check the value
-			if (temp_bool_value == false)	//No one has mapped yet, we are volunteered
+			//Check the value - and make sure we're active (don't let the passive generator dictate it)
+			if ((temp_bool_value == false) && (Governor_type != NO_GOV))	//No one has mapped yet, we are volunteered
 			{
 				//Update powerflow frequency
 				mapped_freq_variable = new gld_property("powerflow::current_frequency");
@@ -2248,8 +2254,28 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 			torque_delay_read_pos = 0;	//Read at beginning
 		}//End DEGOV1 type
 
-		//Initialize dynamics
-		init_dynamics(&curr_state);
+		//See if all changes are expected to be deltamode only
+		if (only_first_init == true)
+		{
+			//See if we've initialized in deltamode yet
+			if (first_init_status == true)
+			{
+				//Initialize dynamics
+				init_dynamics(&curr_state);
+
+				//Force the AVR flag - it would be set by now, no matter what
+				Vset_defined = true;
+
+				//Set the flag to prevent further updates
+				first_init_status = false;
+			}
+			//Default else - already inited, ignore
+		}
+		else	//QSTS changes could occur - re-init
+		{
+			//Initialize dynamics
+			init_dynamics(&curr_state);
+		}
 
 		//GGOV1 delay stuff has to go after the init, since it needs a value to initalize
 		if ((Governor_type == GGOV1) || (Governor_type == GGOV1_OLD)) 
@@ -3447,10 +3473,23 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 //mode_pass 1 is the "update our frequency" call
 STATUS diesel_dg::post_deltaupdate(complex *useful_value, unsigned int mode_pass)
 {
+	OBJECT *obj = OBJECTHDR(this);
+
 	if (mode_pass == 0)	//Accumulation pass
 	{
-		//Put the powerflow frequency in as our current rotor speed (should basically be this way already)
-		curr_state.omega = useful_value->Re();
+		//If no governor, we're subject to the whims of someone else (just assumes is same as master microgrid)
+		if (Governor_type == NO_GOV)
+		{
+			//Put the powerflow frequency in as our current rotor speed (should basically be this way already)
+			curr_state.omega = useful_value->Re();
+
+			//Verbose it
+			gl_verbose("diesel_dg:%d %s - pull current_frequency from powerflow for QSTS mode",obj->id,(obj->name?obj->name:"Unnamed"));
+			/*  TROUBLEHSOOT
+			A diesel_dg object has pulled the powerflow::current_frequency value to use as its rotor speed for QSTS updates.
+			If this is unintended, please put a governor on this diesel_dg.
+			*/
+		}
 
 		//Update tracking variable - see if it was an exact second or not
 		if (deltamode_supersec_endtime != deltamode_endtime)
@@ -3467,7 +3506,7 @@ STATUS diesel_dg::post_deltaupdate(complex *useful_value, unsigned int mode_pass
 	else
 		return FAILED;	//Not sure how we get here, but fail us if we do
 
-	return SUCCESS;	//Allways succeeds right now
+	return SUCCESS;	//Always succeeds right now
 }
 
 
@@ -4476,6 +4515,7 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 			gen_base_set_vals.vset =  (voltage_pu[0].Mag() + voltage_pu[1].Mag() + voltage_pu[2].Mag())/3.0;
 			Vref = gen_base_set_vals.vset; // Record the initial vset value
 		}
+
 		//Default else -- it is set, don't adjust it
 		gen_base_set_vals.vseta = gen_base_set_vals.vset;
 		gen_base_set_vals.vsetb = gen_base_set_vals.vset;

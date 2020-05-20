@@ -162,6 +162,8 @@ private:
 	FUNCTIONADDR swing_test_fxn;	//Function to map to swing testing function, if needed
 
 	bool first_run;		///< Flag for first run of the diesel_dg object - eliminates t0==0 dependence
+	bool only_first_init;		///< Flag to indicate if we should limit the dynamics initialization to only the very first run of deltamode
+	bool first_init_status;		///< Flag to see if that first init has actually occurred
 	bool is_isochronous_gen;	///< Flag to indicate if we're isochronous, mostly to help keep us in deltamode
 
 	TIMESTAMP diesel_start_time;
