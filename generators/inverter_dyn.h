@@ -265,6 +265,7 @@ public:
 	double Xfilter;			  // Rfilter and Xfilter are the per-unit values of inverter filter, they are per-unit values
 	double Rfilter;
 	double freq; // freq is the frequency obtained from the P-f droop controller
+	double fset; // frequency set point is for isochronous mode of grid-forming inverters
 
 	double kpPLL;	// kiPLL and kiPLL are the proportional and integral gains of PLL
 	double kiPLL;	//

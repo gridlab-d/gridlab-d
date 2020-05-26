@@ -137,6 +137,7 @@ inverter_dyn::inverter_dyn(MODULE *module)
 			PT_double, "E_max", PADDR(E_max), PT_DESCRIPTION, "DELTAMODE: E_max and E_min are the maximum and minimum of the output of voltage controller.",
 			PT_double, "E_min", PADDR(E_min), PT_DESCRIPTION, "DELTAMODE: E_max and E_min are the maximum and minimum of the output of voltage controller.",
 			PT_double, "Pset[pu]", PADDR(Pset), PT_DESCRIPTION, "DELTAMODE: power set point in P-f droop.",
+			PT_double, "fset", PADDR(fset), PT_DESCRIPTION, "DELTAMODE: frequency set point in P-f droop.",
 			PT_double, "mp[rad/s/pu]", PADDR(mp), PT_DESCRIPTION, "DELTAMODE: P-f droop gain, usually 3.77 rad/s/pu.",
 			PT_double, "P_f_droop[pu]", PADDR(P_f_droop), PT_DESCRIPTION, "DELTAMODE: P-f droop gain in per unit value, usually 0.01.",
 			PT_double, "kppmax", PADDR(kppmax), PT_DESCRIPTION, "DELTAMODE: proportional and integral gains for Pmax controller.",
@@ -250,6 +251,7 @@ int inverter_dyn::create(void)
 	// w_ref = 376.99;
 	f_nominal = 60;
 	freq = 60;
+	fset = 60;
 
 	// PLL controller parameters
 	kpPLL = 50;
@@ -1802,7 +1804,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					delta_w_Pmin = w_lim;
 				}
 
-				pred_state.delta_w = delta_w_droop + delta_w_Pmax + delta_w_Pmin; //the summation of the outputs from P-f droop, Pmax control and Pmin control
+				pred_state.delta_w = delta_w_droop + delta_w_Pmax + delta_w_Pmin + 2.0 * PI * fset - w_ref; //the summation of the outputs from P-f droop, Pmax control and Pmin control
 
 				// delta_w_droop is the output of P-f droop
 				// Pset is the power set point
@@ -2086,7 +2088,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					delta_w_Pmin = w_lim;
 				}
 
-				next_state.delta_w = delta_w_droop + delta_w_Pmax + delta_w_Pmin; //the summation of the outputs from P-f droop, Pmax control and Pmin control
+				next_state.delta_w = delta_w_droop + delta_w_Pmax + delta_w_Pmin + 2.0 * PI * fset - w_ref; //the summation of the outputs from P-f droop, Pmax control and Pmin control
 
 				// delta_w_droop is the output of P-f droop
 				// Pset is the power set point
