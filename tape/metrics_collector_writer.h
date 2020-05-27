@@ -42,6 +42,7 @@ const string m_house("house");
 const string m_feeder("substation");
 const string m_transformer("transformer");
 const string m_line("line");
+const string m_evchargerdet("evchargerdet");
 
 const string m_index("index");
 const string m_units("units");
@@ -124,6 +125,13 @@ const string m_operation_count ("operation_count");
 
 const string m_trans_overload_perc ("trans_overload_perc");
 const string m_line_overload_perc ("line_overload_perc");
+
+const string m_charge_rate_min ("charge_rate_min");
+const string m_charge_rate_max ("charge_rate_max");
+const string m_charge_rate_avg ("charge_rate_avg");
+const string m_battery_SOC_min ("battery_SOC_min");
+const string m_battery_SOC_max ("battery_SOC_max");
+const string m_battery_SOC_avg ("battery_SOC_avg");
 
 #ifdef HAVE_HDF5
 typedef struct {
@@ -260,6 +268,18 @@ typedef struct _Line {
 	char name[MAX_METRIC_NAME_LENGTH];
 	double line_overload_perc;
 } Line;
+
+typedef struct _EVChargerDet {
+	long int time; 
+	char date[MAX_METRIC_VALUE_LENGTH]; 
+	char name[MAX_METRIC_NAME_LENGTH]; 
+	double charge_rate_min;
+	double charge_rate_max;
+	double charge_rate_avg;
+	double battery_SOC_min;
+	double battery_SOC_max;
+	double battery_SOC_avg;
+} EVChargerDet;
 #endif
 
 EXPORT void new_metrics_collector_writer(MODULE *);
@@ -306,6 +326,7 @@ private:
 	void hdfFeeder ();
 	void hdfTransformer ();
 	void hdfLine();
+	void hdfEvChargerDet ();
 
 	// Functions to write dataset to a file
 	void hdfWrite(char256 filename, const std::unique_ptr<H5::CompType>& mtype, void *ptr, int structKind, int size);
@@ -318,6 +339,7 @@ private:
 	void hdfFeederWrite (size_t objs, Json::Value& metrics);
 	void hdfTransformerWrite (size_t objs, Json::Value& metrics);
 	void hdfLineWrite (size_t objs, Json::Value& metrics);
+	void hdfEvChargerDetWrite  (size_t objs, Json::Value& metrics);
 #endif
 
 private:
@@ -330,6 +352,7 @@ private:
 	Json::Value metrics_writer_regulators;          // Final output dictionary for regulators
 	Json::Value metrics_writer_transformers;        // Final output dictionary for transformers
 	Json::Value metrics_writer_lines;               // Final output dictionary for lines
+	Json::Value metrics_writer_evchargerdets;        // Final output dictionary for evcharger det
 
 	Json::Value ary_billing_meters;  // array storage for billing meter metrics
 	Json::Value ary_houses;          // array storage for house (and water heater) metrics
@@ -339,6 +362,7 @@ private:
 	Json::Value ary_regulators;      // array storage for regulators metrics
 	Json::Value ary_transformers;    // array storage for tranformers metrics
 	Json::Value ary_lines;           // array storage for lines metrics
+	Json::Value ary_evchargerdets;    // array storage for evcharger det metrics
 
 #ifdef HAVE_HDF5
 	hsize_t len_billing_meters;
@@ -349,6 +373,7 @@ private:
 	hsize_t len_regulators;
 	hsize_t len_transformers;
 	hsize_t len_lines;
+	hsize_t len_evchargerdets;
 
 	std::unique_ptr<H5::DataSet> set_billing_meters;
 	std::unique_ptr<H5::DataSet> set_houses;
@@ -358,6 +383,7 @@ private:
 	std::unique_ptr<H5::DataSet> set_regulators;
 	std::unique_ptr<H5::DataSet> set_transformers;
 	std::unique_ptr<H5::DataSet> set_lines;
+	std::unique_ptr<H5::DataSet> set_evchargerdets;
 
 	std::unique_ptr<H5::CompType> mtype_metadata;
 	std::unique_ptr<H5::CompType> mtype_billing_meters;
@@ -368,6 +394,7 @@ private:
 	std::unique_ptr<H5::CompType> mtype_regulators;
 	std::unique_ptr<H5::CompType> mtype_transformers;
 	std::unique_ptr<H5::CompType> mtype_lines;
+	std::unique_ptr<H5::CompType> mtype_evchargerdets;
 #endif
 
 	char256 filename_billing_meter;
@@ -378,6 +405,7 @@ private:
 	char256 filename_regulator;
 	char256 filename_transformer;
 	char256 filename_line;
+	char256 filename_evchargerdet;
 
 	DATETIME dt;
 	TIMESTAMP startTime;

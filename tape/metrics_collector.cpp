@@ -61,6 +61,9 @@ PROPERTY *metrics_collector::propSwingMeterS = NULL;
 PROPERTY *metrics_collector::propTransformerOverloaded = NULL;
 PROPERTY *metrics_collector::propLineOverloaded = NULL;
 
+PROPERTY *metrics_collector::propChargeRate = NULL;
+PROPERTY *metrics_collector::propBatterySOC = NULL;
+
 bool metrics_collector::log_set = true;  // if false, the first (some class) instance will print messages to console
 
 void new_metrics_collector(MODULE *mod){
@@ -115,6 +118,9 @@ int metrics_collector::create(){
 
 	trans_overload_status_array = NULL;
 	line_overload_status_array = NULL;
+
+	charge_rate_array = NULL;
+	battery_SOC_array = NULL;
 
 	metrics = NULL;
 
@@ -227,11 +233,15 @@ int metrics_collector::init(OBJECT *parent){
 			}
 		}
 	} else if (gl_object_isa(parent, "transformer")) {
-    parent_string = "transformer";
+		parent_string = "transformer";
 		if (propTransformerOverloaded == NULL) propTransformerOverloaded = gl_get_property (parent, "overloaded_status");
 	} else if (gl_object_isa(parent, "line")) {
-    parent_string = "line";
+		parent_string = "line";
 		if (propLineOverloaded == NULL) propLineOverloaded = gl_get_property (parent, "overloaded_status");
+	} else if (gl_object_isa(parent, "evcharger_det")) {
+		parent_string = "evcharger_det";
+		if (propChargeRate == NULL) propChargeRate = gl_get_property (parent, "charge_rate");
+		if (propBatterySOC == NULL) propBatterySOC = gl_get_property (parent, "battery_SOC");
 	}
 	else {
 		gl_error("metrics_collector allows only these parents: triplex meter, house, waterheater, inverter, substation, meter, capacitor, regulator, transformer, line.");
@@ -364,6 +374,17 @@ int metrics_collector::init(OBJECT *parent){
 			strcpy (parent_name, parent->name);
 		}
 		metrics = (double *)gl_malloc(LINE_OVERLOAD_ARRAY_SIZE*sizeof(double));
+		if (metrics == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate JSON metrics array",obj->id);
+		}
+	}
+	else if (strcmp(parent_string, "evcharger_det") == 0)
+	{
+		if (parent->name != NULL) {
+			strcpy (parent_name, parent->name);
+		}
+		metrics = (double *)gl_malloc(EVCHARGER_DET_ARRAY_SIZE*sizeof(double));
 		if (metrics == NULL)
 		{
 			GL_THROW("metrics_collector %d::init(): Failed to allocate JSON metrics array",obj->id);
@@ -710,6 +731,32 @@ int metrics_collector::init(OBJECT *parent){
 		}
 		for (int i = 0; i < vector_length; i++) line_overload_status_array[i] = 0;
 	}
+	else if (strcmp(parent_string, "evcharger_det") == 0) {
+		charge_rate_array = (double *)gl_malloc(vector_length*sizeof(double));
+		// Check
+		if (charge_rate_array == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate overload status array",obj->id);
+			/*  TROUBLESHOOT
+			While attempting to allocate the array, an error was encountered.
+			Please try again.  If the error persists, please submit a bug report via the Trac system.
+			*/
+		}
+		battery_SOC_array = (double *)gl_malloc(vector_length*sizeof(double));
+		// Check
+		if (battery_SOC_array == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate overload status array",obj->id);
+			/*  TROUBLESHOOT
+			While attempting to allocate the array, an error was encountered.
+			Please try again.  If the error persists, please submit a bug report via the Trac system.
+			*/
+		}
+		for (int i = 0; i < vector_length; i++) {
+			charge_rate_array[i] = 0.0;
+			battery_SOC_array[i] = 0.0;
+		}
+	}
 	// else not possible come to this step
 	else {
 		gl_error("metrics_collector must have a triplex meter, meter, house, waterheater, inverter, swing-bus, transformer or line as its parent");
@@ -930,6 +977,10 @@ int metrics_collector::read_line(OBJECT *obj){
 			line_overload_status_array[curr_index] = 0;
 		}
 	}
+	else if (strcmp(parent_string, "evcharger_det") == 0) {
+		charge_rate_array[curr_index] = *gl_get_double(obj->parent, propChargeRate);
+		battery_SOC_array[curr_index] = *gl_get_double(obj->parent, propBatterySOC);
+	}
 	// else not possible come to this step
 	else {
 		gl_error("metrics_collector must have a triplex meter, house, waterheater, inverter, swing-bus, capacitor, regulator, transformer or line as its parent");
@@ -1142,6 +1193,15 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics[FDR_AVG_REAC_LOSS] = findAverage(reactive_power_loss_array, curr_index);
 		metrics[FDR_MED_REAC_LOSS] = findMedian(reactive_power_loss_array, curr_index);
 	}
+	else if (strcmp(parent_string, "evcharger_det") == 0) {
+		metrics[EV_MIN_CHARGE_RATE] = findMin(charge_rate_array, curr_index);
+		metrics[EV_MAX_CHARGE_RATE] = findMax(charge_rate_array, curr_index);
+		metrics[EV_AVG_CHARGE_RATE] = findAverage(charge_rate_array, curr_index);
+
+		metrics[EV_MIN_BATTERY_SOC] = findMin(battery_SOC_array, curr_index);
+		metrics[EV_MAX_BATTERY_SOC] = findMax(battery_SOC_array, curr_index);
+		metrics[EV_AVG_BATTERY_SOC] = findAverage(battery_SOC_array, curr_index);
+	}
 
 	// wrap the arrays for next collection interval
 	if (bOverran) {
@@ -1176,6 +1236,8 @@ void metrics_collector::copyHistories (int from, int to) {
 	if (reactive_power_loss_array) reactive_power_loss_array[to] = reactive_power_loss_array[from];
 	if (trans_overload_status_array) trans_overload_status_array[to] = trans_overload_status_array[from];
 	if (line_overload_status_array) line_overload_status_array[to] = line_overload_status_array[from];
+	if (charge_rate_array) charge_rate_array[to] = charge_rate_array[from];
+	if (battery_SOC_array) battery_SOC_array[to] = battery_SOC_array[from];
 }
 
 void metrics_collector::interpolate (double *a, int idx, double denom, double top) {
@@ -1200,6 +1262,8 @@ void metrics_collector::interpolateHistories (int idx, TIMESTAMP t) {
 	if (reactive_power_array) interpolate (reactive_power_array, idx, denom, top);
 	if (real_power_loss_array) interpolate (real_power_loss_array, idx, denom, top);
 	if (reactive_power_loss_array) interpolate (reactive_power_loss_array, idx, denom, top);
+	if (charge_rate_array) interpolate (charge_rate_array, idx, denom, top);
+	if (battery_SOC_array) interpolate (battery_SOC_array, idx, denom, top);
 }
 
 double metrics_collector::countPerc(int array[], int length) {

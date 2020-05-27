@@ -115,6 +115,14 @@
 #define LINE_OVERLOAD_PERC       0
 #define LINE_OVERLOAD_ARRAY_SIZE 1
 
+#define EV_MIN_CHARGE_RATE     0
+#define EV_MAX_CHARGE_RATE     1
+#define EV_AVG_CHARGE_RATE     2
+#define EV_MIN_BATTERY_SOC     3
+#define EV_MAX_BATTERY_SOC     4
+#define EV_AVG_BATTERY_SOC     5
+#define EVCHARGER_DET_ARRAY_SIZE 6
+
 EXPORT void new_metrics_collector(MODULE *);
 
 #ifdef __cplusplus
@@ -210,6 +218,9 @@ private:
 	static PROPERTY *propTransformerOverloaded;
 	static PROPERTY *propLineOverloaded;
 
+	static PROPERTY *propChargeRate;
+	static PROPERTY *propBatterySOC;
+
 	TIMESTAMP next_write; // on global clock, increments by interval_length
 	TIMESTAMP start_time; // start time of simulation
 	bool write_now;
@@ -256,6 +267,10 @@ private:
   // Parameters related to transformer objects
 	int *trans_overload_status_array;
 	int *line_overload_status_array;
+
+  // Parameters related to evcharger det objects
+	double *charge_rate_array;
+	double *battery_SOC_array;
 
 	// Parameters related to Swing-bus meter object
 	FINDLIST *link_objects;

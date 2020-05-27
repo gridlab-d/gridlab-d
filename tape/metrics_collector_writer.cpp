@@ -203,6 +203,9 @@ int metrics_collector_writer::init(OBJECT *parent) {
 		filename_line = m_line.c_str();
 		strcat(filename_line, "_");
 		strcat(filename_line, filename);
+		filename_line = m_evchargerdet.c_str();
+		strcat(filename_evchargerdet, "_");
+		strcat(filename_evchargerdet, filename);
 	} else {
 		strcat(filename_billing_meter, filename);
 		strcat(filename_billing_meter, m_billing_meter.c_str());
@@ -220,6 +223,8 @@ int metrics_collector_writer::init(OBJECT *parent) {
 		strcat(filename_transformer, m_transformer.c_str());
 		strcat(filename_line, filename);
 		strcat(filename_line, m_line.c_str());
+		strcat(filename_evchargerdet, filename);
+		strcat(filename_evchargerdet, m_evchargerdet.c_str());
 	}
 #ifdef HAVE_HDF5
 	//prepare dataset for HDF5 if needed
@@ -235,6 +240,7 @@ int metrics_collector_writer::init(OBJECT *parent) {
 			hdfFeeder();
 			hdfTransformer();
 			hdfLine();
+			hdfEvChargerDet();
 		}
 		// catch failure caused by the H5File operations
 		catch( H5::FileIException error ){
@@ -376,6 +382,16 @@ int metrics_collector_writer::init(OBJECT *parent) {
 	ary_feeders.resize(idx);
 	writeMetadata(meta, metadata, time_str, filename_feeder);
 
+	idx = 0;
+	jsn[m_index] = idx++;	jsn[m_units] = "W";		meta[m_charge_rate_min] = jsn;
+	jsn[m_index] = idx++;	jsn[m_units] = "W";		meta[m_charge_rate_max] = jsn;
+	jsn[m_index] = idx++;	jsn[m_units] = "W";		meta[m_charge_rate_avg] = jsn;
+	jsn[m_index] = idx++;	jsn[m_units] = "%";	meta[m_battery_SOC_min] = jsn;
+	jsn[m_index] = idx++;	jsn[m_units] = "%";	meta[m_battery_SOC_max] = jsn;
+	jsn[m_index] = idx++;	jsn[m_units] = "%";	meta[m_battery_SOC_avg] = jsn;
+	ary_evchargerdets.resize(idx);
+	writeMetadata(meta, metadata, time_str, filename_evchargerdet);
+
 	return 1;
 }
 
@@ -464,6 +480,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1) {
 	Json::Value feeder_objects;
 	Json::Value transformer_objects;
 	Json::Value line_objects;
+	Json::Value evchargerdet_objects;
 
 	// Write Time -> represents the time from the StartTime
 	writeTime = t1 - startTime; // in seconds
@@ -637,6 +654,18 @@ int metrics_collector_writer::write_line(TIMESTAMP t1) {
 			string key = temp_metrics_collector->parent_name;
 			feeder_objects[key] = ary_feeders;
 		} // End of recording metrics_collector data attached to the swing-bus/substation/feeder meter
+		else if (strcmp(temp_metrics_collector->parent_string, "evcharger_det") == 0) {
+			metrics = temp_metrics_collector->metrics;
+			int idx = 0;
+			ary_evchargerdets[idx++] = metrics[EV_MIN_CHARGE_RATE];
+			ary_evchargerdets[idx++] = metrics[EV_MAX_CHARGE_RATE];
+			ary_evchargerdets[idx++] = metrics[EV_AVG_CHARGE_RATE];
+			ary_evchargerdets[idx++] = metrics[EV_MIN_BATTERY_SOC];
+			ary_evchargerdets[idx++] = metrics[EV_MAX_BATTERY_SOC];
+			ary_evchargerdets[idx++] = metrics[EV_AVG_BATTERY_SOC];
+			string key = temp_metrics_collector->parent_name;
+			evchargerdet_objects[key] = ary_evchargerdets;
+		} // End of recording metrics_collector data attached to the swing-bus/substation/feeder meter
 		index++;
 	}
 
@@ -649,12 +678,15 @@ int metrics_collector_writer::write_line(TIMESTAMP t1) {
 	metrics_writer_feeders[time_str] = feeder_objects;
 	metrics_writer_transformers[time_str] = transformer_objects;
 	metrics_writer_lines[time_str] = line_objects;
+	metrics_writer_evchargerdets[time_str] = evchargerdet_objects;
 
 	if (writeTime == (interim_length * interim_cnt) || final_write - startTime <= writeTime) {
-		cout << "total size -> " << index << endl;
-		cout << "writeTime -> " << writeTime << endl;
+		cout << "meterics collected -> " << index << endl;
+		cout << "interim write time -> " << writeTime << endl;
 		/*
 		 cout << "final_write -> " << final_write-startTime << endl;
+		 cout << "interim_length -> " << interim_length << endl;
+		 cout << "interim_cnt -> " << interim_cnt << endl;
 		 cout << m_billing_meter << "size ->" << billing_meter_objects.size() << endl;
 		 cout << m_house << "size -> " << house_objects.size() << endl;
 		 cout << m_inverter << "size -> " << inverter_objects.size() << endl;
@@ -663,6 +695,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1) {
 		 cout << m_feeder << "size -> " << feeder_objects.size() << endl;
 		 cout << m_transformer << "size -> " << transformer_objects.size() << endl;
 		 cout << m_line << "size -> " << line_objects.size() << endl;
+		 cout << m_evchargerdet << "size -> " << evchargerdet_objects.size() << endl;
 		 */
 		if (strcmp(extension, m_json.c_str()) == 0) {
 			writeJsonFile(filename_billing_meter, metrics_writer_billing_meters);
@@ -673,6 +706,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1) {
 			writeJsonFile(filename_feeder, metrics_writer_feeders);
 			writeJsonFile(filename_transformer, metrics_writer_transformers);
 			writeJsonFile(filename_line, metrics_writer_lines);
+			writeJsonFile(filename_evchargerdet, metrics_writer_evchargerdets);
 		}
 #ifdef HAVE_HDF5
 		if ((strcmp(extension, m_h5.c_str()) == 0) || both) {
@@ -684,6 +718,7 @@ int metrics_collector_writer::write_line(TIMESTAMP t1) {
 			hdfFeederWrite(feeder_objects.size(), metrics_writer_feeders);
 			hdfTransformerWrite(transformer_objects.size(), metrics_writer_transformers);
 			hdfLineWrite(line_objects.size(), metrics_writer_lines);
+			hdfEvChargerDetWrite(evchargerdet_objects.size(), metrics_writer_evchargerdets);
 		}
 #endif
 		new_day = false;
@@ -705,8 +740,8 @@ void metrics_collector_writer::writeJsonFile (char256 filename, Json::Value& met
 	Json::FastWriter writer;
 	writer.omitEndingLineFeed();
 #else
-  Json::StreamWriterBuilder builder; // FastWriter is deprecated
-  builder["indentation"] = "";
+	Json::StreamWriterBuilder builder; // FastWriter is deprecated
+	builder["indentation"] = "";
 #endif
 	long pos = 0;
 	long offset = 1;
@@ -716,25 +751,25 @@ void metrics_collector_writer::writeJsonFile (char256 filename, Json::Value& met
 	if (strcmp(alternate, "yes") == 0)
 		FileName.append("." + m_json);
 	out_file.open (FileName, ofstream::in | ofstream::ate);
-	std::cout << "** opened " << FileName << std::endl;
+//	std::cout << "** opened " << FileName << std::endl;
 	pos = out_file.tellp();
-	std::cout << "   tellp " << pos << " offset " << offset << std::endl;
+//	std::cout << "   tellp " << pos << " offset " << offset << std::endl;
 #ifdef USE_DEPRECATED_FASTWRITER
 	out_file << writer.write(metrics);
 #else
 	out_file << Json::writeString(builder, metrics);
 #endif
-	std::cout << "   write metrics" << std::endl;
+//	std::cout << "   write metrics" << std::endl;
 	out_file.seekp(pos-offset);
-	std::cout << "   seekp " << (pos-offset) << std::endl;
+//	std::cout << "   seekp " << (pos-offset) << std::endl;
 	out_file << ", ";
 	out_file.close();
-	std::cout << "   closed " << FileName << std::endl;
+//	std::cout << "   closed " << FileName << std::endl;
 	if (!both) {
 		metrics.clear();
-		std::cout << "   cleared metrics" << std::endl;
+//		std::cout << "   cleared metrics" << std::endl;
 	}
-	std::cout << "   returning" << std::endl;
+//	std::cout << "   returning" << std::endl;
 }
 
 #ifdef HAVE_HDF5
@@ -891,6 +926,20 @@ void metrics_collector_writer::hdfLine () {
 	mtype_lines->insertMember(m_line_overload_perc, HOFFSET(Line, line_overload_perc), H5::PredType::NATIVE_DOUBLE);
 }
 
+void metrics_collector_writer::hdfEvChargerDet () {
+	// defining the datatype to pass HDF55
+	mtype_evchargerdets = std::make_unique<H5::CompType>(sizeof(EVChargerDet));
+	mtype_evchargerdets->insertMember(m_time, HOFFSET(EVChargerDet, time), H5::PredType::NATIVE_INT64);
+	mtype_evchargerdets->insertMember(m_date, HOFFSET(EVChargerDet, date), H5::StrType(H5::PredType::C_S1, MAX_METRIC_VALUE_LENGTH));
+	mtype_evchargerdets->insertMember(m_name, HOFFSET(EVChargerDet, name), H5::StrType(H5::PredType::C_S1, MAX_METRIC_NAME_LENGTH));
+	mtype_evchargerdets->insertMember(m_charge_rate_min, HOFFSET(EVChargerDet, charge_rate_min), H5::PredType::NATIVE_DOUBLE);
+	mtype_evchargerdets->insertMember(m_charge_rate_max, HOFFSET(EVChargerDet, charge_rate_max), H5::PredType::NATIVE_DOUBLE);
+	mtype_evchargerdets->insertMember(m_charge_rate_avg, HOFFSET(EVChargerDet, charge_rate_avg), H5::PredType::NATIVE_DOUBLE);
+	mtype_evchargerdets->insertMember(m_battery_SOC_min, HOFFSET(EVChargerDet, battery_SOC_min), H5::PredType::NATIVE_DOUBLE);
+	mtype_evchargerdets->insertMember(m_battery_SOC_max, HOFFSET(EVChargerDet, battery_SOC_max), H5::PredType::NATIVE_DOUBLE);
+	mtype_evchargerdets->insertMember(m_battery_SOC_avg, HOFFSET(EVChargerDet, battery_SOC_avg), H5::PredType::NATIVE_DOUBLE);
+}
+
 void metrics_collector_writer::hdfWrite(char256 filename, const std::unique_ptr<H5::CompType>& mtype, void* ptr, int structKind, int size) {
 	H5::Exception::dontPrint();
 	cout << "Metric" << structKind;
@@ -971,6 +1020,12 @@ void metrics_collector_writer::hdfWrite(char256 filename, const std::unique_ptr<
 				set_lines->write(((std::vector <Line> *)ptr)->data(), *mtype);
 				set_lines->flush(H5F_SCOPE_GLOBAL);
 				break;
+				case 9:
+				len_evchargerdets = size;
+				set_evchargerdets = std::make_unique<H5::DataSet>(file->createDataSet(DatasetName, *mtype, space, *plist));
+				set_evchargerdets->write(((std::vector <EVChargerDet> *)ptr)->data(), *mtype);
+				set_evchargerdets->flush(H5F_SCOPE_GLOBAL);
+				break;
 			}
 
 		} else {
@@ -1028,6 +1083,12 @@ void metrics_collector_writer::hdfWrite(char256 filename, const std::unique_ptr<
 				len_lines += size;
 				dataset = set_lines.get();
 				break;
+				case 9:
+				offset[0] = len_evchargerdets;
+				dim[0] = len_evchargerdets + size;
+				len_evchargerdets += size;
+				dataset = set_evchargerdets.get();
+				break;
 			}
 			// Extend the dataset.
 			if (size) {
@@ -1047,6 +1108,7 @@ void metrics_collector_writer::hdfWrite(char256 filename, const std::unique_ptr<
 					case 6: dataset->write(((std::vector <Feeder> *)ptr)->data(), *mtype, memspace, *filespace); break;
 					case 7: dataset->write(((std::vector <Transformer> *)ptr)->data(), *mtype, memspace, *filespace); break;
 					case 8: dataset->write(((std::vector <Line> *)ptr)->data(), *mtype, memspace, *filespace); break;
+					case 9: dataset->write(((std::vector <EVChargerDet> *)ptr)->data(), *mtype, memspace, *filespace); break;
 				}
 				dataset->flush(H5F_SCOPE_GLOBAL);// - Flushes the entire virtual file
 			}
@@ -1367,6 +1429,33 @@ void metrics_collector_writer::hdfLineWrite (size_t objs, Json::Value& metrics) 
 	hdfWrite(filename_line, mtype_lines, &tbl, 8, idx);
 	metrics.clear();
 }
+
+void metrics_collector_writer::hdfEvChargerDetWrite (size_t objs, Json::Value& metrics) {
+	std::vector <EVChargerDet> tbl;
+	tbl.reserve(line_cnt*objs);
+	int idx = 0;
+	for (auto const& id : sortIds(metrics.getMemberNames())) {
+		Json::Value name = metrics[id];
+		for (auto const& uid : name.getMemberNames()) {
+			tbl.push_back(EVChargerDet());
+			Json::Value mtr = name[uid];
+			tbl[idx].time = stol(id);
+			maketime(stod(id), tbl[idx].date, MAX_METRIC_VALUE_LENGTH);
+			strncpy(tbl[idx].name, uid.c_str(), MAX_METRIC_NAME_LENGTH);;
+			tbl[idx].charge_rate_min = mtr[EV_MIN_CHARGE_RATE].asDouble();
+			tbl[idx].charge_rate_max = mtr[EV_MAX_CHARGE_RATE].asDouble();
+			tbl[idx].charge_rate_avg = mtr[EV_AVG_CHARGE_RATE].asDouble();
+			tbl[idx].battery_SOC_min = mtr[EV_MIN_BATTERY_SOC].asDouble();
+			tbl[idx].battery_SOC_max = mtr[EV_MAX_BATTERY_SOC].asDouble();
+			tbl[idx].battery_SOC_avg = mtr[EV_AVG_BATTERY_SOC].asDouble();
+			idx++;
+		}
+	}
+	hdfWrite(filename_evchargerdet, mtype_evchargerdets, &tbl, 9, idx);
+	metrics.clear();
+}
+
+
 #endif HAVE_HDF5
 
 EXPORT int create_metrics_collector_writer(OBJECT **obj, OBJECT *parent) {
