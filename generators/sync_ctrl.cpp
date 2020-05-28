@@ -1,7 +1,5 @@
-/** $Id: sync_ctrl
-
+/** $Id: sync_ctrl.cpp
     Implements sychronization control functionality for the sychronization check function.
-
 	Copyright (C) 2020 Battelle Memorial Institute
 **/
 
@@ -26,10 +24,14 @@ sync_ctrl::sync_ctrl(MODULE *mod)
         oclass = gl_register_class(mod, "sync_ctrl", sizeof(sync_ctrl), PC_PRETOPDOWN | PC_BOTTOMUP | PC_POSTTOPDOWN | PC_AUTOLOCK);
         if (oclass == NULL)
             GL_THROW("unable to register object class implemented by %s", __FILE__);
+
         if (gl_publish_variable(oclass,
                                 PT_bool, "arm", PADDR(arm_flag), PT_DESCRIPTION, "Flag to arm the synchronization control functionality",
                                 NULL) < 1)
             GL_THROW("unable to publish properties in %s", __FILE__);
+
+        if (gl_publish_function(oclass, "interupdate_controller_object", (FUNCTIONADDR)interupdate_sync_ctrl) == NULL)
+            GL_THROW("Unable to publish sync_ctrl deltamode function");
     }
 }
 
@@ -63,6 +65,13 @@ TIMESTAMP sync_ctrl::sync(TIMESTAMP t0, TIMESTAMP t1)
 TIMESTAMP sync_ctrl::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
     return TS_NEVER; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
+}
+
+// Deltamode call
+// Module-level call
+SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
+{
+    return SM_EVENT;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -138,4 +147,21 @@ EXPORT TIMESTAMP sync_sync_check(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
     }
     SYNC_CATCHALL(sync_ctrl);
     return t1;
+}
+
+// Deltamode export
+EXPORT SIMULATIONMODE interupdate_sync_ctrl(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
+{
+    sync_ctrl *my = OBJECTDATA(obj, sync_ctrl);
+    SIMULATIONMODE status = SM_ERROR;
+    try
+    {
+        status = my->inter_deltaupdate_sync_ctrl(delta_time,dt,iteration_count_val,interupdate_pos);
+        return status;
+    }
+    catch (char *msg)
+    {
+        gl_error("interupdate_sync_ctrl(obj=%d;%s): %s", obj->id, obj->name ? obj->name : "unnamed", msg);
+        return status;
+    }
 }
