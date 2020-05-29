@@ -69,7 +69,7 @@ TIMESTAMP sync_ctrl::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 // Deltamode call
 // Module-level call
-SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
+SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
     return SM_EVENT;
 }
@@ -150,13 +150,13 @@ EXPORT TIMESTAMP sync_sync_check(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 }
 
 // Deltamode export
-EXPORT SIMULATIONMODE interupdate_sync_ctrl(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
+EXPORT SIMULATIONMODE interupdate_sync_ctrl(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
     sync_ctrl *my = OBJECTDATA(obj, sync_ctrl);
     SIMULATIONMODE status = SM_ERROR;
     try
     {
-        status = my->inter_deltaupdate_sync_ctrl(delta_time,dt,iteration_count_val,interupdate_pos);
+        status = my->inter_deltaupdate_sync_ctrl(delta_time, dt, iteration_count_val);
         return status;
     }
     catch (char *msg)

@@ -6,7 +6,7 @@
 
 #include "generators.h"
 
-EXPORT SIMULATIONMODE interupdate_sync_ctrl(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
+EXPORT SIMULATIONMODE interupdate_sync_ctrl(OBJECT *, unsigned int64, unsigned long, unsigned int);
 
 class sync_ctrl : public gld_object
 {
@@ -23,7 +23,7 @@ public:
     TIMESTAMP sync(TIMESTAMP, TIMESTAMP);
     TIMESTAMP postsync(TIMESTAMP, TIMESTAMP);
 
-    SIMULATIONMODE inter_deltaupdate_sync_ctrl(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
+    SIMULATIONMODE inter_deltaupdate_sync_ctrl(unsigned int64, unsigned long, unsigned int);
 
 private:
     bool arm_flag;
