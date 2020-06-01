@@ -54,6 +54,7 @@ object pw_recorder {
 }
 
 #else
+#error No PowerWorld installed. 
 #warning No PowerWorld
 #endif
 
