@@ -51,18 +51,24 @@ sync_ctrl::sync_ctrl(MODULE *mod)
     }
 }
 
+int sync_ctrl::isa(char *classname)
+{
+    return strcmp(classname, "sync_ctrl") == 0;
+}
+
 int sync_ctrl::create(void)
 {
-    // Default settings
-    arm_flag = false; //Start as disabled
+    init_vars();
 
     return 1;
 }
 
 int sync_ctrl::init(OBJECT *parent)
 {
-    // data_sanity_check(parent);
-    // reg_deltamode();
+    data_sanity_check(parent);
+    // init_norm_values(parent);
+    // init_sensors(parent);
+    // reg_deltamode_check();
 
     return 1;
 }
@@ -180,4 +186,78 @@ EXPORT SIMULATIONMODE interupdate_sync_ctrl(OBJECT *obj, unsigned int64 delta_ti
         gl_error("interupdate_sync_ctrl(obj=%d;%s): %s", obj->id, obj->name ? obj->name : "unnamed", msg);
         return status;
     }
+}
+
+//==Member Funcs
+void sync_ctrl::init_vars() // Init local variables with default settings
+{
+    //==Flag & Status
+    mode_flag = true; //i.e., in Mode A
+    swt_status = SWT_STATUS_ENUM::OPEN;
+    sck_armed_status = false;
+
+    //==Time
+    timer_mode_A_sec = timer_mode_B_sec = dt_dm_sec = 0;
+
+    //==Controller
+
+    //==System Info
+    norm_freq_hz = get_nom_freq();
+}
+
+double sync_ctrl::get_nom_freq() // Return the power system nominal frequency
+{
+    OBJECT *obj = OBJECTHDR(this);
+
+    // Get frequency to populate default - powerflow global has been set by now
+    /* Get the nominal frequency property */
+    gld_property *temp_property_pointer = new gld_property("powerflow::nominal_frequency");
+
+    // Double check the validity of the nominal frequency property
+    if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+    {
+        GL_THROW("sync_ctrl:%d %s failed to map the nominal_frequency property", obj->id, (obj->name ? obj->name : "Unnamed"));
+        /*  TROUBLESHOOT
+		While attempting to map the nominal_frequency property, an error occurred.  Please try again.
+		If the error persists, please submit your GLM and a bug report to the ticketing system.
+		*/
+    }
+
+    // Get the value of nominal frequency from this property
+    double nom_freq = temp_property_pointer->get_double();
+
+    // Clean the temporary property pointer
+    delete temp_property_pointer;
+
+    return nom_freq;
+}
+
+void sync_ctrl::init_pub_prop() // Init published properties with default settings
+{
+    //==Flag
+    arm_flag = false; //Start as disabled
+
+    //==Object
+    sck_obj_pt = NULL;
+    cgu_obj_pt = NULL;
+
+    //==Tolerance
+    sct_freq_tol_ub_hz = 0.66;
+    sct_freq_tol_lb_hz = 0.12;
+    sct_volt_mag_tol_pu = 0.01;
+
+    //==Time
+    pp_t_ctrl_sec = 1;
+    pp_t_mon_sec = 10;
+
+    //==Controller (@TODO: default values to be updated.)
+    pi_freq_kp = 1;
+    pi_freq_ki = 1;
+    pi_volt_mag_kp = 1;
+    pi_volt_mag_kp = 1;
+}
+
+void sync_ctrl::data_sanity_check(OBJECT *par)
+{
+    OBJECT *obj = OBJECTHDR(this);
 }

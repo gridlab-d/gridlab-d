@@ -15,6 +15,7 @@ public:
 
 public:
     sync_ctrl(MODULE *mod);
+    int isa(char *classname);
 
     int create(void);
     int init(OBJECT *parent = NULL);
@@ -24,6 +25,18 @@ public:
     TIMESTAMP postsync(TIMESTAMP, TIMESTAMP);
 
     SIMULATIONMODE inter_deltaupdate_sync_ctrl(unsigned int64, unsigned long, unsigned int);
+
+private: //Member Funcs
+    /* Mainly used in create() */
+    void init_vars();
+    double get_nom_freq();
+    void init_pub_prop();
+
+    /* Mainly used in init() */
+    void data_sanity_check(OBJECT *par);
+    // void reg_deltamode_check();
+    // void init_norm_values(OBJECT *par = NULL);
+    // void init_sensors(OBJECT *par = NULL);
 
 private: //Published Properties
     //==Flag
@@ -62,6 +75,9 @@ private: //Variables
     double timer_mode_A_sec; //The total period (initialized as 0) during which both metrics have been satisfied continuously when this sync_ctrl object is in mode A and PI controllers are working
     double timer_mode_B_sec; //The total period (initialized as 0) during which the both metrics have been satisfied continuously when this sync_ctrl object is in mode B and monitoring.
     double dt_dm_sec;        //Current deltamode timestep.
+
+    //==System Info
+    double norm_freq_hz;
 };
 
 #endif // GLD_GENERATORS_SYNC_CTRL_H_
