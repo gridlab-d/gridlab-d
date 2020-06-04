@@ -26,7 +26,23 @@ sync_ctrl::sync_ctrl(MODULE *mod)
             GL_THROW("unable to register object class implemented by %s", __FILE__);
 
         if (gl_publish_variable(oclass,
-                                PT_bool, "arm", PADDR(arm_flag), PT_DESCRIPTION, "Flag to arm the synchronization control functionality",
+                                //==Flag
+                                PT_bool, "armed", PADDR(arm_flag), PT_DESCRIPTION, "Flag to arm the synchronization control functionality.",
+                                //==Object
+                                PT_object, "sync_check_object", PADDR(sck_obj_pt), PT_DESCRIPTION, "The object reference/name of the sync_check object, which works with this sync_ctrl object.",
+                                PT_object, "controlled_generation_unit", PADDR(cgu_obj_pt), PT_DESCRIPTION, "The object reference/name of the controlled generation unit (i.e., a diesel_dg/inverter_dyn object), which serves as the actuator of the PI controllers of this sync_ctrl object.",
+                                //==Tolerance
+                                PT_double, "frequency_tolerance_ub_Hz[Hz]", PADDR(sct_freq_tol_ub_hz), PT_DESCRIPTION, "The user-specified tolerance in Hz for checking the upper bound of the frequency metric.",
+                                PT_double, "frequency_tolerance_lb_Hz[Hz]", PADDR(sct_freq_tol_lb_hz), PT_DESCRIPTION, "The user-specified tolerance in Hz for checking the lower bound of the frequency metric.",
+                                PT_double, "voltage_magnitude_tolerance_pu[pu]", PADDR(sct_volt_mag_tol_pu), PT_DESCRIPTION, "The user-specified tolerance in per unit for the difference in voltage magnitudes for checking the voltage metric.",
+                                //==Time
+                                PT_double, "controlling_period[s]", PADDR(pp_t_ctrl_sec), PT_DESCRIPTION, "The user-defined period when both metrics are satisfied and this sync_ctrl object works in mode A.",
+                                PT_double, "monitoring_period[s]", PADDR(pp_t_mon_sec), PT_DESCRIPTION, "The user-defined period when this sync_ctrl object keeps on monitoring in mode B, if both metrics are not violated and the switch object is not closed.",
+                                //==Controller
+                                PT_double, "PI_Frequency_Kp", PADDR(pi_freq_kp), PT_DESCRIPTION, "The user-defined proportional gain constant of the PI controller for adjusting the frequency setting.",
+                                PT_double, "PI_Frequency_Ki", PADDR(pi_freq_ki), PT_DESCRIPTION, "The user-defined integral gain constant of the PI controller for adjusting the frequency setting.",
+                                PT_double, "PI_Volt_Mag_Kp", PADDR(pi_volt_mag_kp), PT_DESCRIPTION, "The user-defined proportional gain constant of the PI controller for adjusting the voltage magnitude setting.",
+                                PT_double, "PI_Volt_Mag_Ki", PADDR(pi_volt_mag_ki), PT_DESCRIPTION, "	The user-defined integral gain constant of the PI controller for adjusting the voltage magnitude setting.",
                                 NULL) < 1)
             GL_THROW("unable to publish properties in %s", __FILE__);
 

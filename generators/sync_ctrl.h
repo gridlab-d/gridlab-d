@@ -25,8 +25,43 @@ public:
 
     SIMULATIONMODE inter_deltaupdate_sync_ctrl(unsigned int64, unsigned long, unsigned int);
 
-private:
+private: //Published Properties
+    //==Flag
     bool arm_flag;
+
+    //==Object
+    OBJECT *sck_obj_pt;
+    OBJECT *cgu_obj_pt;
+
+    //==Tolerance
+    double sct_freq_tol_ub_hz;
+    double sct_freq_tol_lb_hz;
+    double sct_volt_mag_tol_pu;
+
+    //==Time
+    double pp_t_ctrl_sec;
+    double pp_t_mon_sec;
+
+    //==Controller
+    double pi_freq_kp;
+    double pi_freq_ki;
+    double pi_volt_mag_kp;
+    double pi_volt_mag_ki;
+
+private: //Variables
+    //==Flags & Status
+    bool mode_flag; //Indicates whether in mode A or not: True - This object is working in mode A, False - This object is working in mode B.
+    enum SWT_STATUS_ENUM
+    {
+        OPEN = 0,
+        CLOSED = 1
+    } swt_status;
+    bool sck_armed_status; //Action functionality status of the specified sync_check object of this sync_ctrl object. Valid states are: True - This sync_check object is functional, False - This sync_check object is disabled.
+
+    //==Time
+    double timer_mode_A_sec; //The total period (initialized as 0) during which both metrics have been satisfied continuously when this sync_ctrl object is in mode A and PI controllers are working
+    double timer_mode_B_sec; //The total period (initialized as 0) during which the both metrics have been satisfied continuously when this sync_ctrl object is in mode B and monitoring.
+    double dt_dm_sec;        //Current deltamode timestep.
 };
 
 #endif // GLD_GENERATORS_SYNC_CTRL_H_
