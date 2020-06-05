@@ -459,6 +459,9 @@ private:
 	double value_Rhout;			//< Value holder for relative humidity
 	double value_Solar[9];		//< Value holder for solar irradiance
 
+	//Circuit pointer for HVAC - used for breaker checks
+	CIRCUIT *pHVAC_EnduseLoad;
+
 public:
 	int error_flag;
 	static CLASS *oclass, *pclass;
