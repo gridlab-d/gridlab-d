@@ -596,6 +596,9 @@ int house_e::create()
 	thermal_storage_present = false;
 	thermal_storage_inuse = false;
 
+	//Null out circuit pointer
+	pHVAC_EnduseLoad = NULL;
+
 	// set up implicit enduse list
 	implicit_enduse_list = NULL;
 	if (strcmp(active_enduses,"NONE")!=0)
@@ -1829,12 +1832,7 @@ int house_e::init(OBJECT *parent)
 
 	// connect any implicit loads
 	attach_implicit_enduses();
-	update_system();
-	if(error_flag == 1){
-		return 0;
-	}
-	update_model();
-	
+
 	// attach the house_e HVAC to the panel
 	if (hvac_breaker_rating == 0)
 	{
@@ -1844,8 +1842,15 @@ int house_e::init(OBJECT *parent)
 	else
 		load.breaker_amps = hvac_breaker_rating;
 	load.config = EUC_IS220;
-	attach(OBJECTHDR(this),hvac_breaker_rating, true, &load);
+	pHVAC_EnduseLoad = attach(OBJECTHDR(this),hvac_breaker_rating, true, &load);
 
+	//Continue initialization - update_system uses the HVAC pointer, so it has to be inited first
+	update_system();
+	if(error_flag == 1){
+		return 0;
+	}
+	update_model();
+	
 	if(include_fan_heatgain == TRUE){
 		fan_heatgain_fraction = 1;
 	} else {
@@ -2228,7 +2233,7 @@ void house_e::update_system(double dt)
 	double voltage_adj_resistive = ((value_Circuit_V[0]).Mag() * (value_Circuit_V[0]).Mag()) / (240.0 * 240.0);
 	
 	//Only provide demand in if meter isn't out of service
-	if (value_MeterStatus!=0)
+	if ((value_MeterStatus!=0) && (pHVAC_EnduseLoad->status == BRK_CLOSED))
 	{
 		// Set Qlatent to zero. Only gets updated if calculated.
 		Qlatent = 0;
@@ -2433,6 +2438,7 @@ void house_e::update_system(double dt)
 
 	// update load
 	hvac_load = load.total.Re() * (load.power_fraction + load.voltage_factor*(load.current_fraction + load.impedance_fraction*load.voltage_factor));
+
 	if (system_mode == SM_COOL)
 		last_cooling_load = hvac_load;
 	else if (system_mode == SM_AUX || system_mode == SM_HEAT)
@@ -3260,6 +3266,14 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 					c->status = BRK_FAULT;
 					c->reclose = TS_NEVER;
 					gl_warning("house_e:%d, %s circuit breaker %d failed - enduse %s is no longer running", obj->id, obj->name, c->id, c->pLoad->name);
+				}
+
+				//After the fact check - if we're the HVAC, be sure to undo our various variables (otherwise reporting is odd)
+				if (c == pHVAC_EnduseLoad)
+				{
+					//Just call the update again, easiest way to set everything
+					//Pushes "zero time", even though dt doesn't do anything right now
+					update_system(0.0);
 				}
 
 				// must immediately reevaluate everything
