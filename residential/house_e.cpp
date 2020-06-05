@@ -1409,7 +1409,6 @@ int house_e::init(OBJECT *parent)
 		proper_meter_parent = true;
 		commercial_load_parent = false;
 	}
-	// else if (parent!=NULL && (gl_object_isa(parent,"meter","powerflow") || gl_object_isa(obj->parent,"node","powerflow"))) // for three-phase commercial zone-houses
 	else if (parent!=NULL && (gl_object_isa(parent,"meter","powerflow") || gl_object_isa(obj->parent,"node","powerflow") || gl_object_isa(obj->parent,"load","powerflow"))) // for three-phase commercial zone-houses
 	{
 		//Map to the triplex variable for houses
@@ -1845,7 +1844,7 @@ int house_e::init(OBJECT *parent)
 	pHVAC_EnduseLoad = attach(OBJECTHDR(this),hvac_breaker_rating, true, &load);
 
 	//Continue initialization - update_system uses the HVAC pointer, so it has to be inited first
-	update_system();
+	update_system(-1.0);
 	if(error_flag == 1){
 		return 0;
 	}
@@ -2124,6 +2123,7 @@ from end uses.  The modeling approach is based on the Equivalent Thermal Paramet
 method of calculating the air and mass temperature in the conditioned space.  These are solved using
 a dual decay solver to obtain the time for next state change based on the thermostat set points.
 This synchronization function updates the HVAC equipment load and power draw.
+-1 for dt is set to be an initialization check item
 **/
 
 void house_e::update_system(double dt)
@@ -2137,6 +2137,8 @@ void house_e::update_system(double dt)
 	double heating_capacity_adj=0;
 	double cooling_capacity_adj=0;
 	double temp_c;
+	double rough_amps;
+	OBJECT *obj = OBJECTHDR(this);
 
 	//Pull climate values, if we're properly linked
 	if (proper_climate_found == true)
@@ -2392,6 +2394,31 @@ void house_e::update_system(double dt)
 			load.total = system_rated_power;
 		}
 		load.heatgain = system_rated_capacity;
+
+		//Initialization check - throw a warning for "commerical building" approach or "really big buildings"
+		if (dt < 0.0)
+		{
+			//Get rough amperage - add 5%, "just because" (for any voltage effects - arbitrary)
+			//Pick whichever is bigger - cooling or heating - convert from kW
+			if (cooling_demand < heating_demand)	//Heating is the largest
+			{
+				rough_amps = (heating_demand + fan_power) * 1000.0 / 240.0 * 1.05;
+			}
+			else	//Cooling must be the largest, or they're the same, and we don't care
+			{
+				rough_amps = (cooling_demand + fan_power) * 1000.0 / 240.0 * 1.05;
+			}
+
+			//Check against what is set
+			if (rough_amps > pHVAC_EnduseLoad->max_amps)
+			{
+				gl_warning("house:%d - %s - HVAC breaker amps may be undersized",obj->id,(obj->name?obj->name:"Unnamed"));
+				/*  TROUBLESHOOT
+				The breaker rating for the HVAC (defaults to 200 Amps) may be too small for the building created.  Either
+				adjust this	via the hvac_breaker_rating property, or adjust your overall building model/approach.
+				*/
+			}
+		} 
 
 		if(	(cooling_system_type == CT_ELECTRIC		&& system_mode == SM_COOL) ||
 			(heating_system_type == HT_HEAT_PUMP	&& system_mode == SM_HEAT)) {
