@@ -137,7 +137,7 @@ inverter_dyn::inverter_dyn(MODULE *module)
 			PT_double, "E_max", PADDR(E_max), PT_DESCRIPTION, "DELTAMODE: E_max and E_min are the maximum and minimum of the output of voltage controller.",
 			PT_double, "E_min", PADDR(E_min), PT_DESCRIPTION, "DELTAMODE: E_max and E_min are the maximum and minimum of the output of voltage controller.",
 			PT_double, "Pset[pu]", PADDR(Pset), PT_DESCRIPTION, "DELTAMODE: power set point in P-f droop.",
-			PT_double, "fset", PADDR(fset), PT_DESCRIPTION, "DELTAMODE: frequency set point in P-f droop.",
+			PT_double, "fset[Hz]", PADDR(fset), PT_DESCRIPTION, "DELTAMODE: frequency set point in P-f droop.",
 			PT_double, "mp[rad/s/pu]", PADDR(mp), PT_DESCRIPTION, "DELTAMODE: P-f droop gain, usually 3.77 rad/s/pu.",
 			PT_double, "P_f_droop[pu]", PADDR(P_f_droop), PT_DESCRIPTION, "DELTAMODE: P-f droop gain in per unit value, usually 0.01.",
 			PT_double, "kppmax", PADDR(kppmax), PT_DESCRIPTION, "DELTAMODE: proportional and integral gains for Pmax controller.",
@@ -235,7 +235,7 @@ int inverter_dyn::create(void)
 	Tp = 0.01; // s
 	Tq = 0.01; // s
 	Tv = 0.01; // s
-	Vset = 1;
+	Vset = -99.0;	//Flag value
 	kpv = 0;
 	kiv = 5.86;
 	mq = 0.05;
@@ -248,10 +248,10 @@ int inverter_dyn::create(void)
 	w_lim = 50; // rad/s
 	Pmax = 1.5;
 	Pmin = 0;
-	// w_ref = 376.99;
+	w_ref = -99.0;	//Flag value
 	f_nominal = 60;
 	freq = 60;
-	fset = 60;
+	fset = -99.0;	//Flag value
 
 	// PLL controller parameters
 	kpPLL = 50;
@@ -313,6 +313,7 @@ int inverter_dyn::init(OBJECT *parent)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	double temp_volt_mag;
+	double temp_volt_ang[3];
 	gld_property *temp_property_pointer;
 	gld_property *Frequency_mapped;
 	gld_wlock *test_rlock;
@@ -841,6 +842,45 @@ int inverter_dyn::init(OBJECT *parent)
 				value_Circuit_V[1] = pCircuit_V[1]->get_complex(); //B
 				value_Circuit_V[2] = pCircuit_V[2]->get_complex(); //C
 			}
+
+			//See if we're grid-forming and attached to a SWING (and vset is higher)
+			if ((control_mode == GRID_FORMING) && (attached_bus_type == 2) && (Vset > 0.0))
+			{
+				//See if the voltage is not 1.0
+				if (Vset != 1.0)
+				{
+					//Compute the magnitude
+					temp_volt_mag = Vset * node_nominal_voltage;
+
+					//See if we're single-phase or not
+					if (parent_is_single_phase == true)
+					{
+						//Pull the angle first, just in case it was intentionally set as off-nominal
+						temp_volt_ang[0] = value_Circuit_V[0].Arg();
+
+						//Set the values of the SWING bus to our desired set point
+						value_Circuit_V[0].SetPolar(temp_volt_mag,temp_volt_ang[0]);	//A, B, C, or 12 - zero angled
+						value_Circuit_V[1] = complex(0.0,0.0);
+						value_Circuit_V[2] = complex(0.0,0.0);
+					}
+					else	//Must be three-phase
+					{
+						//Pull the angle first, just in case it was intentionally set as off-nominal
+						temp_volt_ang[0] = value_Circuit_V[0].Arg();
+						temp_volt_ang[1] = value_Circuit_V[1].Arg();
+						temp_volt_ang[2] = value_Circuit_V[2].Arg();
+						
+						//Set values
+						value_Circuit_V[0].SetPolar(temp_volt_mag,temp_volt_ang[0]);
+						value_Circuit_V[1].SetPolar(temp_volt_mag,temp_volt_ang[1]);
+						value_Circuit_V[2].SetPolar(temp_volt_mag,temp_volt_ang[2]);
+					}
+
+					//Push the value - voltage update
+					push_complex_powerflow_values(true);
+				}
+				//Default else - it's 1.0, so don't do anything
+			}//End Grid-forming, swing, voltage set option
 		}	 //End valid powerflow parent
 		else //Not sure what it is
 		{
@@ -916,7 +956,19 @@ int inverter_dyn::init(OBJECT *parent)
 
 	//Other initialization variables
 	inverter_start_time = gl_globalclock;
-	w_ref = 2.0 * PI * f_nominal;
+
+	//Initalize w_ref, if needed
+	if (w_ref < 0.0)
+	{
+		//Assume want set to nominal
+		w_ref = 2.0 * PI * f_nominal;
+	}
+
+	//Update fset to nominal, if not set
+	if (fset < 0.0)
+	{
+		fset = f_nominal;
+	}
 
 	Idc_base = S_base / Vdc_base;
 
@@ -4186,13 +4238,24 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 			//See if it is the first deltamode entry - theory is all future changes will trigger deltamode, so these should be set
 			if (first_deltamode_init == true)
 			{
-				// Initialize Vset and Pset
-				Vset = pCircuit_V_Avg_pu + VA_Out.Im() / S_base * mq;
+				//Make sure it wasn't "pre-set"
+				if (Vset < 0.0)	//-99 is the flag
+				{
+					// Initialize Vset and Pset
+					Vset = pCircuit_V_Avg_pu + VA_Out.Im() / S_base * mq;
+				}
+				else
+				{
+					//Use the set value, but also bias off the droop
+					Vset += VA_Out.Im() / S_base * mq;
+				}
+
 				Pset = VA_Out.Re() / S_base;
 
 				//Set it false in here, for giggles
 				first_deltamode_init = false;
 			}
+			//Default else - all changes should be in deltamode
 
 			// Initialize measured P,Q,and V
 			curr_time->p_measure = VA_Out.Re() / S_base;
@@ -4257,7 +4320,24 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 
 			VA_Out = value_Circuit_V[0] * ~temp_current_val[0];
 
-			Vset = value_Circuit_V[0].Mag() / V_base + Qref / S_base * Rq;
+			//See if it is the first deltamode entry - theory is all future changes will trigger deltamode, so these should be set
+			if (first_deltamode_init == true)
+			{
+				//See if we set it to something first
+				if (Vset < 0.0)	//-99.0 flag value
+				{
+					Vset = value_Circuit_V[0].Mag() / V_base + Qref / S_base * Rq;
+				}
+				else
+				{
+					//Use Vset, but bias for the Qref values
+					Vset += Qref / S_base * Rq;
+				}
+
+				//Set it false in here, for giggles
+				first_deltamode_init = false;
+			}
+			//Default else - all changes should be in deltamode
 
 			// Initialize the PLL
 			curr_time->Angle_PLL[0] = value_Circuit_V[0].Arg();
@@ -4311,7 +4391,24 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 
 				//Pref = VA_Out.Re();
 				//Qref = VA_Out.Im();
-				Vset = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base + Qref / S_base * Rq;
+				//See if it is the first deltamode entry - theory is all future changes will trigger deltamode, so these should be set
+				if (first_deltamode_init == true)
+				{
+					//See if it was set
+					if (Vset < 0.0)	//-99.0 flag
+					{
+						Vset = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base + Qref / S_base * Rq;
+					}
+					else
+					{
+						//Set, so use Vset, but bias based off the Qref
+						Vset += Qref / S_base * Rq;
+					}
+
+					//Set it false in here, for giggles
+					first_deltamode_init = false;
+				}
+				//Default else - all changes should be in deltamode
 
 				for (int i = 0; i < 3; i++)
 				{
@@ -4370,8 +4467,25 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 
 				//Pref = VA_Out.Re();
 				//Qref = VA_Out.Im();
-				Vset = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base + Qref / S_base * Rq;
+				//See if it is the first deltamode entry - theory is all future changes will trigger deltamode, so these should be set
+				if (first_deltamode_init == true)
+				{
+					//See if set
+					if (Vset < 0.0)	//-99.0 flag
+					{
+						Vset = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base + Qref / S_base * Rq;
+					}
+					else
+					{
+						//Use Vset, but bias with the Qref
+						Vset += Qref / S_base * Rq;
+					}
 
+					//Set it false in here, for giggles
+					first_deltamode_init = false;
+				}
+				//Default else - all changes should be in deltamode
+				
 				// Obtain the positive sequence voltage
 				value_Circuit_V_PS = (value_Circuit_V[0] + value_Circuit_V[1] * complex(cos(2.0 / 3.0 * PI), sin(2.0 / 3.0 * PI)) + value_Circuit_V[2] * complex(cos(-2.0 / 3.0 * PI), sin(-2.0 / 3.0 * PI))) / 3.0;
 
@@ -4432,8 +4546,25 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 
 			VA_Out = value_Circuit_V[0] * ~temp_current_val[0];
 
-			Vset = value_Circuit_V[0].Mag() / V_base + Qref / S_base * Rq;
+			//See if it is the first deltamode entry - theory is all future changes will trigger deltamode, so these should be set
+			if (first_deltamode_init == true)
+			{
+				//See if set
+				if (Vset < 0.0)	//-99.0 flag value
+				{
+					Vset = value_Circuit_V[0].Mag() / V_base + Qref / S_base * Rq;
+				}
+				else
+				{
+					//Bias with Qref
+					Vset += Qref / S_base * Rq;
+				}
 
+				//Set it false in here, for giggles
+				first_deltamode_init = false;
+			}
+			//Default else - all changes should be in deltamode
+			
 			// Initialize the PLL
 			curr_time->Angle_PLL[0] = value_Circuit_V[0].Arg();
 			curr_time->delta_w_PLL_ini[0] = 0;
@@ -4484,8 +4615,26 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 
 				//Pref = VA_Out.Re();
 				//Qref = VA_Out.Im();
-				Vset = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base + Qref / S_base * Rq;
+				//See if it is the first deltamode entry - theory is all future changes will trigger deltamode, so these should be set
+				if (first_deltamode_init == true)
+				{
+					//See if set
+					if (Vset < 0.0) //-99.0 flag
+					{
+						Vset = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base + Qref / S_base * Rq;
+					}
+					else
+					{
+						//Is set - bias with Qref
+						Vset += Qref / S_base * Rq;
+					}
 
+					//Set it false in here, for giggles
+					first_deltamode_init = false;
+				}
+				//Default else - all changes should be in deltamode
+
+				
 				for (int i = 0; i < 3; i++)
 				{
 					// Initialize the PLL
@@ -4541,8 +4690,25 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 
 				//Pref = VA_Out.Re();
 				//Qref = VA_Out.Im();
-				Vset = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base + Qref / S_base * Rq;
+				//See if it is the first deltamode entry - theory is all future changes will trigger deltamode, so these should be set
+				if (first_deltamode_init == true)
+				{
+					//See if set
+					if (Vset < 0.0)	//-99.0 flag value
+					{
+						Vset = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base + Qref / S_base * Rq;
+					}
+					else
+					{
+						//Was set - bias
+						Vset += Qref / S_base * Rq;
+					}
 
+					//Set it false in here, for giggles
+					first_deltamode_init = false;
+				}
+				//Default else - all changes should be in deltamode
+				
 				// Obtain the positive sequence voltage
 				value_Circuit_V_PS = (value_Circuit_V[0] + value_Circuit_V[1] * complex(cos(2.0 / 3.0 * PI), sin(2.0 / 3.0 * PI)) + value_Circuit_V[2] * complex(cos(-2.0 / 3.0 * PI), sin(-2.0 / 3.0 * PI))) / 3.0;
 
