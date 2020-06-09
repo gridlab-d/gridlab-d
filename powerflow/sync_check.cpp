@@ -33,15 +33,17 @@ sync_check::sync_check(MODULE *mod) : powerflow_object(mod)
 			GL_THROW("unable to register object class implemented by %s", __FILE__);
 		if (gl_publish_variable(oclass,
 								PT_bool, "armed", PADDR(sc_enabled_flag), PT_DESCRIPTION, "Flag to arm the synchronization close",
-								PT_double, "frequency_tolerance[Hz]", PADDR(frequency_tolerance_hz), PT_DESCRIPTION, "The user-specified tolerance for checking the frequency metric",
-								PT_double, "voltage_tolerance[pu]", PADDR(voltage_tolerance_pu), PT_DESCRIPTION, "voltage_tolerance",
-								PT_double, "metrics_period[s]", PADDR(metrics_period_sec), PT_DESCRIPTION, "The user-defined period when both metrics are satisfied",
+								PT_double, "frequency_tolerance[Hz]", PADDR(frequency_tolerance_hz), PT_DESCRIPTION, "tolerance for checking the frequency metric",
+								PT_double, "voltage_tolerance_pu[pu]", PADDR(voltage_tolerance_pu), PT_DESCRIPTION, "voltage_tolerance in per-unit - used in MAG_DIFF mode",
+								PT_double, "voltage_tolerance[V]", PADDR(voltage_tolerance), PT_DESCRIPTION, "voltage_tolerance in Volts - used in MAG_DIFF mode - prioritized over voltage_tolerance_pu",
+								PT_double, "metrics_period[s]", PADDR(metrics_period_sec), PT_DESCRIPTION, "period when both metrics are satisfied",
 								PT_enumeration, "volt_compare_mode", PADDR(volt_compare_mode), PT_DESCRIPTION, "Determines which voltage difference calculation approach is used",
 									PT_KEYWORD, "MAG_DIFF", (enumeration)MAG_DIFF,
 									PT_KEYWORD, "SEP_DIFF", (enumeration)SEP_DIFF,
-								PT_double, "voltage_magnitude_tolerance[pu]", PADDR(voltage_magnitude_tolerance_pu), PT_DESCRIPTION, "The user-specified tolerance in per unit for the difference in voltage magnitudes for checking the voltage metric. Used only by the SEP_DIFF mode of volt_compare_mode.",
-								PT_double, "voltage_angle_tolerance[deg]", PADDR(voltage_angle_tolerance_deg), PT_DESCRIPTION, "The user-specified tolerance in degrees for the difference in voltage angles for checking the voltage metric. Used only by the SEP_DIFF mode of volt_compare_mode.",
-								PT_double, "delta_trigger_mult", PADDR(delta_trigger_mult), PT_DESCRIPTION, "User-specified multiplier against voltage and frequency tolerances to trigger/maintain deltamode",
+								PT_double, "voltage_magnitude_tolerance_pu[pu]", PADDR(voltage_magnitude_tolerance_pu), PT_DESCRIPTION, "tolerance in per-unit for the difference in voltage magnitudes - used in SEP_DIFF mode",
+								PT_double, "voltage_magnitude_tolerance[V]", PADDR(voltage_magnitude_tolerance), PT_DESCRIPTION, "tolerance in Volts for the difference in voltage magnitudes - used in SEP_DIFF mode - prioritized over voltage_magnitude_tolerance_pu",
+								PT_double, "voltage_angle_tolerance[deg]", PADDR(voltage_angle_tolerance_deg), PT_DESCRIPTION, "tolerance in degrees for the difference in voltage angles - used in SEP_DIFF mode",
+								PT_double, "delta_trigger_mult", PADDR(delta_trigger_mult), PT_DESCRIPTION, "multiplier against voltage and frequency tolerances to trigger/maintain deltamode",
 								NULL) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
 
@@ -65,10 +67,34 @@ int sync_check::create(void)
 
 int sync_check::init(OBJECT *parent)
 {
+	OBJECT *obj = OBJECTHDR(this);
 	int retval = powerflow_object::init(parent);
 
-	data_sanity_check(parent);
+	// Check if the parent is a switch_object object
+	if (parent == NULL)
+	{
+		GL_THROW("sync_check:%d %s the parent property must be specified!",
+				 obj->id, (obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While checking the parent swtich_object, an error occurred.  Please try again.
+		If the error persists, please submit your GLM and a bug report to the ticketing system.
+		*/
+	}
+	else
+	{
+		if (gl_object_isa(parent, "switch", "powerflow") == false)
+		{
+			GL_THROW("sync_check:%d %s the parent object must be a powerflow switch object!",
+					 obj->id, (obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			The parent object must be a powerflow switch object. Please try again.
+			If the error persists, please submit your GLM and a bug report to the ticketing system.
+			*/
+		}
+	}
+
 	init_norm_values(parent);
+	data_sanity_check(parent);
 	init_sensors(parent);
 	reg_deltamode_check();
 
@@ -287,6 +313,7 @@ void sync_check::init_vars()
 
 	/* Settings for SEP_DIFF Mode */
 	voltage_magnitude_tolerance_pu = 1e-2;
+	voltage_magnitude_tolerance = -99.0;	//Flag value
 	voltage_angle_tolerance_deg = 5;
 
 	/* init member with default values */
@@ -359,6 +386,7 @@ void sync_check::init_vars()
 	//Defaults - mostly to cut down on messages
 	frequency_tolerance_hz = 0.01 * temp_freq_val; // i.e., 1%
 	voltage_tolerance_pu = 1e-2;  // i.e., 1%
+	voltage_tolerance = -99.0;
 	metrics_period_sec = 1.2;
 
 	//Initialize deltmode trigger variables (will populate most later)
@@ -376,29 +404,6 @@ void sync_check::data_sanity_check(OBJECT *par)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	double temp_freq_val;
-
-	// Check if the parent is a switch_object object
-	if (par == NULL)
-	{
-		GL_THROW("sync_check:%d %s the parent property must be specified!",
-				 obj->id, (obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		While checking the parent swtich_object, an error occurred.  Please try again.
-		If the error persists, please submit your GLM and a bug report to the ticketing system.
-		*/
-	}
-	else
-	{
-		if (gl_object_isa(par, "switch", "powerflow") == false)
-		{
-			GL_THROW("sync_check:%d %s the parent object must be a powerflow switch object!",
-					 obj->id, (obj->name ? obj->name : "Unnamed"));
-			/*  TROUBLESHOOT
-			The parent object must be a powerflow switch object. Please try again.
-			If the error persists, please submit your GLM and a bug report to the ticketing system.
-			*/
-		}
-	}
 
 	// Check the status of the 'switch_object' object (when it is armed, the parent switch should be in 'OPEN' status)
 	swt_prop_status = new gld_property(par, "status");
@@ -432,8 +437,6 @@ void sync_check::data_sanity_check(OBJECT *par)
 	// Check the params
 	if (frequency_tolerance_hz <= 0)
 	{
-
-
 		/* Get the nominal frequency property */
 		temp_property_pointer = new gld_property("powerflow::nominal_frequency");
 
@@ -463,6 +466,15 @@ void sync_check::data_sanity_check(OBJECT *par)
 	}
 
 	// The voltage tolerance settings of both modes are checked, regardless of the mode at init as the mode may be modified later on
+	//Sequence it - see if we specified a non-per-unit one first
+	if (voltage_tolerance > 0.0)
+	{
+		//Set this to per-unit value
+		voltage_tolerance_pu = voltage_tolerance / volt_norm;
+	}
+	//Default else - just fallback on voltage_tolerance_pu
+
+	//Overall check
 	if (voltage_tolerance_pu <= 0)
 	{
 		voltage_tolerance_pu = 1e-2; // i.e., 1%
@@ -474,6 +486,14 @@ void sync_check::data_sanity_check(OBJECT *par)
 		a bug report via the issue tracker.
 		*/
 	}
+
+	//Sequence it - see if we specified a non-per-unit one first
+	if (voltage_magnitude_tolerance > 0.0)
+	{
+		//Set this to per-unit value
+		voltage_magnitude_tolerance_pu = voltage_magnitude_tolerance / volt_norm;
+	}
+	//Default else - just fallback on voltage_magnitude_tolerance_pu
 
 	if (voltage_magnitude_tolerance_pu <= 0)
 	{
@@ -511,6 +531,26 @@ void sync_check::data_sanity_check(OBJECT *par)
 		a bug report via the issue tracker.
 		*/
 	}
+
+	//Populate default tolerances for deltamode triggers
+	if (delta_trigger_mult <= 1.0)
+	{
+		delta_trigger_mult = 2.0;
+		gl_warning("sync_check:%d %s - delta_trigger_mult was below 1.0 - defaulted to 2.0",obj->id, (obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		The delta_trigger_mult value was below, which isn't allowed.  Set this to a positive number larger than 1.0 to be a proper trigger
+		point for deltamode.
+		*/
+	}
+
+	//Update deltamode triggers
+	frequency_tolerance_hz_deltamode_trig = delta_trigger_mult * frequency_tolerance_hz;
+	voltage_tolerance_pu_deltamode_trig = delta_trigger_mult * voltage_tolerance_pu;
+	voltage_magnitude_tolerance_pu_deltamode_trig = delta_trigger_mult * voltage_magnitude_tolerance_pu;
+	voltage_angle_tolerance_deg_deltamode_trig = delta_trigger_mult * voltage_angle_tolerance_deg;
+
+	//Set initial value
+	next_trigger_update_time = gl_globalclock;
 }
 
 void sync_check::reg_deltamode_check()
@@ -684,24 +724,6 @@ void sync_check::init_norm_values(OBJECT *par)
 		If the error persists, please submit your GLM and a bug report to the ticketing system.
 		*/
 	}
-
-	//Populate default tolerances for deltamode triggers
-	if (delta_trigger_mult <= 1.0)
-	{
-		delta_trigger_mult = 2.0;
-		gl_warning("sync_check:%d %s - delta_trigger_mult was below 1.0 - defaulted to 2.0",obj->id, (obj->name ? obj->name : "Unnamed"));
-		/*  TROUBLESHOOT
-		The delta_trigger_mult value was below, which isn't allowed.  Set this to a positive number larger than 1.0 to be a proper trigger
-		point for deltamode.
-		*/
-	}
-	frequency_tolerance_hz_deltamode_trig = delta_trigger_mult * frequency_tolerance_hz;
-	voltage_tolerance_pu_deltamode_trig = delta_trigger_mult * voltage_tolerance_pu;
-	voltage_magnitude_tolerance_pu_deltamode_trig = delta_trigger_mult * voltage_magnitude_tolerance_pu;
-	voltage_angle_tolerance_deg_deltamode_trig = delta_trigger_mult * voltage_angle_tolerance_deg;
-
-	//Set initial value
-	next_trigger_update_time = gl_globalclock;
 }
 
 void sync_check::update_measurements()
@@ -740,6 +762,14 @@ void sync_check::check_metrics(bool deltamode_check)
 
 	if (volt_compare_mode == MAG_DIFF)
 	{
+		//See if the metric needs updating - Sequence it - see if we specified a non-per-unit one first
+		if (voltage_tolerance > 0.0)
+		{
+			//Set this to per-unit value
+			voltage_tolerance_pu = voltage_tolerance / volt_norm;
+		}
+		//Default else - just fallback on voltage_tolerance_pu
+
 		double volt_A_diff = (swt_fm_volt_A - swt_to_volt_A).Mag();
 		double volt_A_diff_pu = volt_A_diff / volt_norm;
 
@@ -776,6 +806,14 @@ void sync_check::check_metrics(bool deltamode_check)
 	}
 	else // SEP_DIFF Mode
 	{
+		//See if the metric needs updating - Sequence it - see if we specified a non-per-unit one first
+		if (voltage_magnitude_tolerance > 0.0)
+		{
+			//Set this to per-unit value
+			voltage_magnitude_tolerance_pu = voltage_magnitude_tolerance / volt_norm;
+		}
+		//Default else - just fallback on voltage_magnitude_tolerance_pu
+
 		double volt_A_ang_deg_diff, volt_B_ang_deg_diff, volt_C_ang_deg_diff;
 
 		// Phase A

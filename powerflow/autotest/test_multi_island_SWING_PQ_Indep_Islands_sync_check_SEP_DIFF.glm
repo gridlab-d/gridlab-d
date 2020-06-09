@@ -150,12 +150,12 @@ object sync_check {
 	name sync_check_obj;
 	parent switch3_3B;
 	armed false;
-	frequency_tolerance 0.01;
-	// voltage_tolerance 0.02;
+	frequency_tolerance 0.01 Hz;
+	// voltage_tolerance_pu 0.02;
 	metrics_period 5 ms;
 	
 	volt_compare_mode SEP_DIFF;
-	voltage_magnitude_tolerance -0.01; // Per Unit
+	voltage_magnitude_tolerance_pu 0.01; // Per Unit
 	voltage_angle_tolerance 5 deg;
 }
 

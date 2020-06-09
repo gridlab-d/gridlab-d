@@ -77,6 +77,7 @@ private: /* Published Variables*/
 
 	double frequency_tolerance_hz;
 	double voltage_tolerance_pu;
+	double voltage_tolerance;
 	double metrics_period_sec;
 
 	enum VOLT_COMP_MODE
@@ -86,6 +87,7 @@ private: /* Published Variables*/
 	} volt_compare_mode;
 
 	double voltage_magnitude_tolerance_pu;
+	double voltage_magnitude_tolerance;
 	double voltage_angle_tolerance_deg;
 
 	//Deltamode trigger/maintainer variables
