@@ -47,7 +47,7 @@ object inverter_dyn {
 	name A1;
 	parent Meter1;
 	control_mode GRID_FORMING;
-	GridForming_convergence_criterion 1e-6;
+	frequency_convergence_criterion 1e-6;
 
 	rated_power 200 kVA; 
 	Pref 60000; 

@@ -98,6 +98,7 @@ private:
 	char first_iter_counter;
 
 	double prev_timestamp_dbl;
+	double last_QSTS_GF_Update;
 
 	INV_DYN_STATE pred_state; ///< The predictor state of the inverter in delamode
 	INV_DYN_STATE next_state; ///< The next state of the inverter in delamode
@@ -142,6 +143,9 @@ private:
 	// DC object "update" of steady-state
 	double pvc_Pmax;
 
+	//Convergence check item for grid-forming voltage
+	complex e_source_prev[3];
+
 	//Map functions
 	gld_property *map_complex_value(OBJECT *obj, char *name);
 	gld_property *map_double_value(OBJECT *obj, char *name);
@@ -185,7 +189,8 @@ public:
 	bool first_deltamode_init;
 	int64 first_iteration_current_injection; //Initialization variable - mostly so SWING_PQ buses initalize properly for deltamode
 
-	double GridForming_convergence_criterion;
+	double GridForming_freq_convergence_criterion;
+	double GridForming_volt_convergence_criterion;
 
 	INV_DYN_STATE curr_state; ///< The current state of the inverter in deltamode
 
@@ -265,6 +270,7 @@ public:
 	double Xfilter;			  // Rfilter and Xfilter are the per-unit values of inverter filter, they are per-unit values
 	double Rfilter;
 	double freq; // freq is the frequency obtained from the P-f droop controller
+	double fset; // frequency set point is for isochronous mode of grid-forming inverters
 
 	double kpPLL;	// kiPLL and kiPLL are the proportional and integral gains of PLL
 	double kiPLL;	//

@@ -65,7 +65,7 @@ meter::meter(MODULE *mod) : node(mod)
 			PT_double, "measured_reactive_energy[VAh]",PADDR(measured_reactive_energy),PT_DESCRIPTION,"metered reactive energy consumption, cummalitive",
             PT_double, "measured_reactive_energy_delta[VAh]",PADDR(measured_reactive_energy_delta),PT_DESCRIPTION,"delta in metered reactive energy consumption from last specified measured_energy_delta_timestep",
             PT_double, "measured_energy_delta_timestep[s]",PADDR(measured_energy_delta_timestep),PT_DESCRIPTION,"Period of timestep for real and reactive delta energy calculation",
-			PT_complex, "measured_power[VA]", PADDR(measured_power),PT_DESCRIPTION,"metered real power",
+			PT_complex, "measured_power[VA]", PADDR(measured_power),PT_DESCRIPTION,"metered complex power",
 			PT_complex, "measured_power_A[VA]", PADDR(indiv_measured_power[0]),PT_DESCRIPTION,"metered complex power on phase A",
 			PT_complex, "measured_power_B[VA]", PADDR(indiv_measured_power[1]),PT_DESCRIPTION,"metered complex power on phase B",
 			PT_complex, "measured_power_C[VA]", PADDR(indiv_measured_power[2]),PT_DESCRIPTION,"metered complex power on phase C",

@@ -119,7 +119,8 @@ inverter_dyn::inverter_dyn(MODULE *module)
 			PT_double, "Qref_min[pu]", PADDR(Qref_min), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of reactive power references in grid-following mode.",
 			PT_double, "Rp[pu]", PADDR(Rp), PT_DESCRIPTION, "DELTAMODE: p-f droop gain in frequency-watt.",
 			PT_double, "Rq[pu]", PADDR(Rq), PT_DESCRIPTION, "DELTAMODE: Q-V droop gain in volt-var.",
-			PT_double, "GridForming_convergence_criterion[rad/s]", PADDR(GridForming_convergence_criterion), PT_DESCRIPTION, "Go back to quasi-steady state.",
+			PT_double, "frequency_convergence_criterion[rad/s]", PADDR(GridForming_freq_convergence_criterion), PT_DESCRIPTION, "Max frequency update for grid-forming inverters to return to QSTS",
+			PT_double, "voltage_convergence_criterion[V]", PADDR(GridForming_volt_convergence_criterion), PT_DESCRIPTION, "Max voltage update for grid-forming inverters to return to QSTS",
 
 			// PLL Parameters
 			PT_double, "kpPLL", PADDR(kpPLL), PT_DESCRIPTION, "DELTAMODE: Proportional gain of the PLL.",
@@ -137,6 +138,7 @@ inverter_dyn::inverter_dyn(MODULE *module)
 			PT_double, "E_max", PADDR(E_max), PT_DESCRIPTION, "DELTAMODE: E_max and E_min are the maximum and minimum of the output of voltage controller.",
 			PT_double, "E_min", PADDR(E_min), PT_DESCRIPTION, "DELTAMODE: E_max and E_min are the maximum and minimum of the output of voltage controller.",
 			PT_double, "Pset[pu]", PADDR(Pset), PT_DESCRIPTION, "DELTAMODE: power set point in P-f droop.",
+			PT_double, "fset[Hz]", PADDR(fset), PT_DESCRIPTION, "DELTAMODE: frequency set point in P-f droop.",
 			PT_double, "mp[rad/s/pu]", PADDR(mp), PT_DESCRIPTION, "DELTAMODE: P-f droop gain, usually 3.77 rad/s/pu.",
 			PT_double, "P_f_droop[pu]", PADDR(P_f_droop), PT_DESCRIPTION, "DELTAMODE: P-f droop gain in per unit value, usually 0.01.",
 			PT_double, "kppmax", PADDR(kppmax), PT_DESCRIPTION, "DELTAMODE: proportional and integral gains for Pmax controller.",
@@ -234,7 +236,7 @@ int inverter_dyn::create(void)
 	Tp = 0.01; // s
 	Tq = 0.01; // s
 	Tv = 0.01; // s
-	Vset = 1;
+	Vset = -99.0;	//Flag value
 	kpv = 0;
 	kiv = 5.86;
 	mq = 0.05;
@@ -247,9 +249,10 @@ int inverter_dyn::create(void)
 	w_lim = 50; // rad/s
 	Pmax = 1.5;
 	Pmin = 0;
-	// w_ref = 376.99;
+	w_ref = -99.0;	//Flag value
 	f_nominal = 60;
 	freq = 60;
+	fset = -99.0;	//Flag value
 
 	// PLL controller parameters
 	kpPLL = 50;
@@ -290,10 +293,14 @@ int inverter_dyn::create(void)
 	kiVdc = 350; //per unit, rad/s^2
 	kdVdc = 0;	 // per unit, rad
 	mdc = 1.2;	 //
-	GridForming_convergence_criterion = 1e-5;
+	GridForming_freq_convergence_criterion = 1e-5;
+	GridForming_volt_convergence_criterion = 0.01;
 
 	//Set up the deltamode "next state" tracking variable
 	desired_simulation_mode = SM_EVENT;
+
+	//Tracking variable
+	last_QSTS_GF_Update = TSNVRDBL;
 
 	//Clear the DC interface list - paranoia
 	dc_interface_objects.clear();
@@ -311,6 +318,7 @@ int inverter_dyn::init(OBJECT *parent)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	double temp_volt_mag;
+	double temp_volt_ang[3];
 	gld_property *temp_property_pointer;
 	gld_property *Frequency_mapped;
 	gld_wlock *test_rlock;
@@ -839,6 +847,45 @@ int inverter_dyn::init(OBJECT *parent)
 				value_Circuit_V[1] = pCircuit_V[1]->get_complex(); //B
 				value_Circuit_V[2] = pCircuit_V[2]->get_complex(); //C
 			}
+
+			//See if we're grid-forming and attached to a SWING (and vset is higher)
+			if ((control_mode == GRID_FORMING) && (attached_bus_type == 2) && (Vset > 0.0))
+			{
+				//See if the voltage is not 1.0
+				if (Vset != 1.0)
+				{
+					//Compute the magnitude
+					temp_volt_mag = Vset * node_nominal_voltage;
+
+					//See if we're single-phase or not
+					if (parent_is_single_phase == true)
+					{
+						//Pull the angle first, just in case it was intentionally set as off-nominal
+						temp_volt_ang[0] = value_Circuit_V[0].Arg();
+
+						//Set the values of the SWING bus to our desired set point
+						value_Circuit_V[0].SetPolar(temp_volt_mag,temp_volt_ang[0]);	//A, B, C, or 12 - zero angled
+						value_Circuit_V[1] = complex(0.0,0.0);
+						value_Circuit_V[2] = complex(0.0,0.0);
+					}
+					else	//Must be three-phase
+					{
+						//Pull the angle first, just in case it was intentionally set as off-nominal
+						temp_volt_ang[0] = value_Circuit_V[0].Arg();
+						temp_volt_ang[1] = value_Circuit_V[1].Arg();
+						temp_volt_ang[2] = value_Circuit_V[2].Arg();
+						
+						//Set values
+						value_Circuit_V[0].SetPolar(temp_volt_mag,temp_volt_ang[0]);
+						value_Circuit_V[1].SetPolar(temp_volt_mag,temp_volt_ang[1]);
+						value_Circuit_V[2].SetPolar(temp_volt_mag,temp_volt_ang[2]);
+					}
+
+					//Push the value - voltage update
+					push_complex_powerflow_values(true);
+				}
+				//Default else - it's 1.0, so don't do anything
+			}//End Grid-forming, swing, voltage set option
 		}	 //End valid powerflow parent
 		else //Not sure what it is
 		{
@@ -914,7 +961,19 @@ int inverter_dyn::init(OBJECT *parent)
 
 	//Other initialization variables
 	inverter_start_time = gl_globalclock;
-	w_ref = 2.0 * PI * f_nominal;
+
+	//Initalize w_ref, if needed
+	if (w_ref < 0.0)
+	{
+		//Assume want set to nominal
+		w_ref = 2.0 * PI * f_nominal;
+	}
+
+	//Update fset to nominal, if not set
+	if (fset < 0.0)
+	{
+		fset = f_nominal;
+	}
 
 	Idc_base = S_base / Vdc_base;
 
@@ -1527,7 +1586,12 @@ STATUS inverter_dyn::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
 	double deltat, deltath;
+	double mag_diff_val;
+	bool proceed_to_qsts = true;	//Starts true - prevent QSTS by exception
 	int i;
+	int temp_dc_idx;
+	STATUS fxn_DC_status;
+	OBJECT *temp_DC_obj;
 
 	OBJECT *obj = OBJECTHDR(this);
 
@@ -1548,21 +1612,59 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 	//Update time tracking variable
 	prev_timestamp_dbl = gl_globaldeltaclock;
 
-
-
 	if (control_mode == GRID_FORMING)
 	{
-
 		// Link P_f_droop to mp
 		if (P_f_droop != -100)
 		{
 			mp = P_f_droop * w_ref;
 		}
 
-
-		if ((iteration_count_val == 0) && (delta_time == 0))
+		if ((iteration_count_val == 0) && (delta_time == 0) && (grid_forming_mode == DYNAMIC_DC_BUS))
 		{
 			P_DC = I_DC = 0; // Clean the buffer, only on the very first delta timestep
+		}
+
+		//See if we just came from QSTS and not the first timestep
+		if ((prev_timestamp_dbl == last_QSTS_GF_Update) && (delta_time == 0))
+		{
+			//Technically, QSTS already updated us for this timestamp, so skip
+			desired_simulation_mode = SM_DELTA;	//Go forward
+
+			//In order to keep the rest of the inverter up-to-date, call the DC bus routines
+			if (grid_forming_mode == DYNAMIC_DC_BUS)
+			{
+				I_dc_pu = P_out_pu / curr_state.Vdc_pu; // Calculate the equivalent dc current, including the dc capacitor
+
+				if (dc_interface_objects.empty() != true)
+				{
+					//Update V_DC, just in case
+					V_DC = curr_state.Vdc_pu * Vdc_base;
+
+					//Loop through and call the DC objects
+					for (temp_dc_idx = 0; temp_dc_idx < dc_interface_objects.size(); temp_dc_idx++)
+					{
+						//DC object, calling object (us), init mode (true/false)
+						//False at end now, because not initialization
+						fxn_DC_status = ((STATUS(*)(OBJECT *, OBJECT *, bool))(*dc_interface_objects[temp_dc_idx].fxn_address))(dc_interface_objects[temp_dc_idx].dc_object, obj, false);
+
+						//Make sure it worked
+						if (fxn_DC_status == FAILED)
+						{
+							//Pull the object from the array - this is just for readability (otherwise the
+							temp_DC_obj = dc_interface_objects[temp_dc_idx].dc_object;
+
+							//Error it up
+							GL_THROW("inverter_dyn:%d - %s - DC object update for object:%d - %s - failed!", obj->id, (obj->name ? obj->name : "Unnamed"), temp_DC_obj->id, (temp_DC_obj->name ? temp_DC_obj->name : "Unnamed"));
+							//Defined elsewhere
+						}
+					}
+
+					//I_DC is done now.  If P_DC isn't, it could be calculated
+				} //End DC object update
+			}//End DYNAMIC_DC_BUS
+
+			return SM_DELTA;	//Short circuit it
 		}
 
 		// Check pass
@@ -1802,7 +1904,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					delta_w_Pmin = w_lim;
 				}
 
-				pred_state.delta_w = delta_w_droop + delta_w_Pmax + delta_w_Pmin; //the summation of the outputs from P-f droop, Pmax control and Pmin control
+				pred_state.delta_w = delta_w_droop + delta_w_Pmax + delta_w_Pmin + 2.0 * PI * fset - w_ref; //the summation of the outputs from P-f droop, Pmax control and Pmin control
 
 				// delta_w_droop is the output of P-f droop
 				// Pset is the power set point
@@ -2086,7 +2188,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					delta_w_Pmin = w_lim;
 				}
 
-				next_state.delta_w = delta_w_droop + delta_w_Pmax + delta_w_Pmin; //the summation of the outputs from P-f droop, Pmax control and Pmin control
+				next_state.delta_w = delta_w_droop + delta_w_Pmax + delta_w_Pmin + 2.0 * PI * fset - w_ref; //the summation of the outputs from P-f droop, Pmax control and Pmin control
 
 				// delta_w_droop is the output of P-f droop
 				// Pset is the power set point
@@ -2127,6 +2229,18 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					next_state.Angle[i] = curr_state.Angle[i] + (pred_state.delta_w + next_state.delta_w) * deltat / 2.0; //Obtain the phase angle
 					e_source[i] = complex(E_mag * cos(next_state.Angle[i]), E_mag * sin(next_state.Angle[i])) * V_base;	  // transfers back to non-per-unit values
 					value_IGenerated[i] = e_source[i] / (complex(Rfilter, Xfilter) * Z_base);							  // Thevenin voltage source to Norton current source convertion
+
+					//Convergence check - do on internal voltage, because "reasons"
+					mag_diff_val = e_source[i].Mag() - e_source_prev[i].Mag();
+
+					//Update tracker
+					e_source_prev[i] = e_source[i];
+
+					//Check the difference, while we're in here
+					if (mag_diff_val > GridForming_volt_convergence_criterion)
+					{
+						proceed_to_qsts = false;
+					}
 				}
 				// Angle[i] refers to the phase angle of internal voltage for each phase
 				// e_source[i] is the complex value of internal voltage
@@ -2134,11 +2248,11 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 				// Rfilter and Xfilter are the per-unit values of inverter filter
 				// Function end
 
-				double diff = next_state.delta_w - curr_state.delta_w;
+				double diff_w = next_state.delta_w - curr_state.delta_w;
 
 				memcpy(&curr_state, &next_state, sizeof(INV_DYN_STATE));
 
-				if (fabs(diff) <= GridForming_convergence_criterion)
+				if ((fabs(diff_w) <= GridForming_freq_convergence_criterion) && (proceed_to_qsts == true))
 				{
 					simmode_return_value = SM_EVENT; // we have reached steady state
 				}
@@ -4175,6 +4289,7 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 
 				// Initialize the state variables of the internal voltages
 				e_source[i] = (value_IGenerated[i] * complex(Rfilter, Xfilter) * Z_base);
+				e_source_prev[i] = e_source[i];
 				curr_time->Angle[i] = (e_source[i]).Arg(); // Obtain the inverter internal voltage phasor angle
 			}
 
@@ -4184,13 +4299,24 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 			//See if it is the first deltamode entry - theory is all future changes will trigger deltamode, so these should be set
 			if (first_deltamode_init == true)
 			{
-				// Initialize Vset and Pset
-				Vset = pCircuit_V_Avg_pu + VA_Out.Im() / S_base * mq;
+				//Make sure it wasn't "pre-set"
+				if (Vset < 0.0)	//-99 is the flag
+				{
+					// Initialize Vset and Pset
+					Vset = pCircuit_V_Avg_pu + VA_Out.Im() / S_base * mq;
+				}
+				else
+				{
+					//Use the set value, but also bias off the droop
+					Vset += VA_Out.Im() / S_base * mq;
+				}
+
 				Pset = VA_Out.Re() / S_base;
 
 				//Set it false in here, for giggles
 				first_deltamode_init = false;
 			}
+			//Default else - all changes should be in deltamode
 
 			// Initialize measured P,Q,and V
 			curr_time->p_measure = VA_Out.Re() / S_base;
@@ -4255,7 +4381,24 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 
 			VA_Out = value_Circuit_V[0] * ~temp_current_val[0];
 
-			Vset = value_Circuit_V[0].Mag() / V_base + Qref / S_base * Rq;
+			//See if it is the first deltamode entry - theory is all future changes will trigger deltamode, so these should be set
+			if (first_deltamode_init == true)
+			{
+				//See if we set it to something first
+				if (Vset < 0.0)	//-99.0 flag value
+				{
+					Vset = value_Circuit_V[0].Mag() / V_base + Qref / S_base * Rq;
+				}
+				else
+				{
+					//Use Vset, but bias for the Qref values
+					Vset += Qref / S_base * Rq;
+				}
+
+				//Set it false in here, for giggles
+				first_deltamode_init = false;
+			}
+			//Default else - all changes should be in deltamode
 
 			// Initialize the PLL
 			curr_time->Angle_PLL[0] = value_Circuit_V[0].Arg();
@@ -4309,7 +4452,24 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 
 				//Pref = VA_Out.Re();
 				//Qref = VA_Out.Im();
-				Vset = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base + Qref / S_base * Rq;
+				//See if it is the first deltamode entry - theory is all future changes will trigger deltamode, so these should be set
+				if (first_deltamode_init == true)
+				{
+					//See if it was set
+					if (Vset < 0.0)	//-99.0 flag
+					{
+						Vset = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base + Qref / S_base * Rq;
+					}
+					else
+					{
+						//Set, so use Vset, but bias based off the Qref
+						Vset += Qref / S_base * Rq;
+					}
+
+					//Set it false in here, for giggles
+					first_deltamode_init = false;
+				}
+				//Default else - all changes should be in deltamode
 
 				for (int i = 0; i < 3; i++)
 				{
@@ -4368,8 +4528,25 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 
 				//Pref = VA_Out.Re();
 				//Qref = VA_Out.Im();
-				Vset = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base + Qref / S_base * Rq;
+				//See if it is the first deltamode entry - theory is all future changes will trigger deltamode, so these should be set
+				if (first_deltamode_init == true)
+				{
+					//See if set
+					if (Vset < 0.0)	//-99.0 flag
+					{
+						Vset = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base + Qref / S_base * Rq;
+					}
+					else
+					{
+						//Use Vset, but bias with the Qref
+						Vset += Qref / S_base * Rq;
+					}
 
+					//Set it false in here, for giggles
+					first_deltamode_init = false;
+				}
+				//Default else - all changes should be in deltamode
+				
 				// Obtain the positive sequence voltage
 				value_Circuit_V_PS = (value_Circuit_V[0] + value_Circuit_V[1] * complex(cos(2.0 / 3.0 * PI), sin(2.0 / 3.0 * PI)) + value_Circuit_V[2] * complex(cos(-2.0 / 3.0 * PI), sin(-2.0 / 3.0 * PI))) / 3.0;
 
@@ -4430,8 +4607,25 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 
 			VA_Out = value_Circuit_V[0] * ~temp_current_val[0];
 
-			Vset = value_Circuit_V[0].Mag() / V_base + Qref / S_base * Rq;
+			//See if it is the first deltamode entry - theory is all future changes will trigger deltamode, so these should be set
+			if (first_deltamode_init == true)
+			{
+				//See if set
+				if (Vset < 0.0)	//-99.0 flag value
+				{
+					Vset = value_Circuit_V[0].Mag() / V_base + Qref / S_base * Rq;
+				}
+				else
+				{
+					//Bias with Qref
+					Vset += Qref / S_base * Rq;
+				}
 
+				//Set it false in here, for giggles
+				first_deltamode_init = false;
+			}
+			//Default else - all changes should be in deltamode
+			
 			// Initialize the PLL
 			curr_time->Angle_PLL[0] = value_Circuit_V[0].Arg();
 			curr_time->delta_w_PLL_ini[0] = 0;
@@ -4482,8 +4676,26 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 
 				//Pref = VA_Out.Re();
 				//Qref = VA_Out.Im();
-				Vset = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base + Qref / S_base * Rq;
+				//See if it is the first deltamode entry - theory is all future changes will trigger deltamode, so these should be set
+				if (first_deltamode_init == true)
+				{
+					//See if set
+					if (Vset < 0.0) //-99.0 flag
+					{
+						Vset = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base + Qref / S_base * Rq;
+					}
+					else
+					{
+						//Is set - bias with Qref
+						Vset += Qref / S_base * Rq;
+					}
 
+					//Set it false in here, for giggles
+					first_deltamode_init = false;
+				}
+				//Default else - all changes should be in deltamode
+
+				
 				for (int i = 0; i < 3; i++)
 				{
 					// Initialize the PLL
@@ -4539,8 +4751,25 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 
 				//Pref = VA_Out.Re();
 				//Qref = VA_Out.Im();
-				Vset = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base + Qref / S_base * Rq;
+				//See if it is the first deltamode entry - theory is all future changes will trigger deltamode, so these should be set
+				if (first_deltamode_init == true)
+				{
+					//See if set
+					if (Vset < 0.0)	//-99.0 flag value
+					{
+						Vset = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base + Qref / S_base * Rq;
+					}
+					else
+					{
+						//Was set - bias
+						Vset += Qref / S_base * Rq;
+					}
 
+					//Set it false in here, for giggles
+					first_deltamode_init = false;
+				}
+				//Default else - all changes should be in deltamode
+				
 				// Obtain the positive sequence voltage
 				value_Circuit_V_PS = (value_Circuit_V[0] + value_Circuit_V[1] * complex(cos(2.0 / 3.0 * PI), sin(2.0 / 3.0 * PI)) + value_Circuit_V[2] * complex(cos(-2.0 / 3.0 * PI), sin(-2.0 / 3.0 * PI))) / 3.0;
 
@@ -4901,8 +5130,9 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count)
 			push_complex_powerflow_values(true);
 		}
 
-		//Update tracker
+		//Update trackers
 		prev_timestamp_dbl = temp_time;
+		last_QSTS_GF_Update = temp_time;
 	}
 
 	//External call to internal variables -- used by powerflow to iterate the VSI implementation, basically
