@@ -119,7 +119,8 @@ inverter_dyn::inverter_dyn(MODULE *module)
 			PT_double, "Qref_min[pu]", PADDR(Qref_min), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of reactive power references in grid-following mode.",
 			PT_double, "Rp[pu]", PADDR(Rp), PT_DESCRIPTION, "DELTAMODE: p-f droop gain in frequency-watt.",
 			PT_double, "Rq[pu]", PADDR(Rq), PT_DESCRIPTION, "DELTAMODE: Q-V droop gain in volt-var.",
-			PT_double, "GridForming_convergence_criterion[rad/s]", PADDR(GridForming_convergence_criterion), PT_DESCRIPTION, "Go back to quasi-steady state.",
+			PT_double, "frequency_convergence_criterion[rad/s]", PADDR(GridForming_freq_convergence_criterion), PT_DESCRIPTION, "Max frequency update for grid-forming inverters to return to QSTS",
+			PT_double, "voltage_convergence_criterion[V]", PADDR(GridForming_volt_convergence_criterion), PT_DESCRIPTION, "Max voltage update for grid-forming inverters to return to QSTS",
 
 			// PLL Parameters
 			PT_double, "kpPLL", PADDR(kpPLL), PT_DESCRIPTION, "DELTAMODE: Proportional gain of the PLL.",
@@ -292,10 +293,14 @@ int inverter_dyn::create(void)
 	kiVdc = 350; //per unit, rad/s^2
 	kdVdc = 0;	 // per unit, rad
 	mdc = 1.2;	 //
-	GridForming_convergence_criterion = 1e-5;
+	GridForming_freq_convergence_criterion = 1e-5;
+	GridForming_volt_convergence_criterion = 0.01;
 
 	//Set up the deltamode "next state" tracking variable
 	desired_simulation_mode = SM_EVENT;
+
+	//Tracking variable
+	last_QSTS_GF_Update = TSNVRDBL;
 
 	//Clear the DC interface list - paranoia
 	dc_interface_objects.clear();
@@ -1581,7 +1586,12 @@ STATUS inverter_dyn::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
 	double deltat, deltath;
+	double mag_diff_val;
+	bool proceed_to_qsts = true;	//Starts true - prevent QSTS by exception
 	int i;
+	int temp_dc_idx;
+	STATUS fxn_DC_status;
+	OBJECT *temp_DC_obj;
 
 	OBJECT *obj = OBJECTHDR(this);
 
@@ -1602,21 +1612,59 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 	//Update time tracking variable
 	prev_timestamp_dbl = gl_globaldeltaclock;
 
-
-
 	if (control_mode == GRID_FORMING)
 	{
-
 		// Link P_f_droop to mp
 		if (P_f_droop != -100)
 		{
 			mp = P_f_droop * w_ref;
 		}
 
-
-		if ((iteration_count_val == 0) && (delta_time == 0))
+		if ((iteration_count_val == 0) && (delta_time == 0) && (grid_forming_mode == DYNAMIC_DC_BUS))
 		{
 			P_DC = I_DC = 0; // Clean the buffer, only on the very first delta timestep
+		}
+
+		//See if we just came from QSTS and not the first timestep
+		if ((prev_timestamp_dbl == last_QSTS_GF_Update) && (delta_time == 0))
+		{
+			//Technically, QSTS already updated us for this timestamp, so skip
+			desired_simulation_mode = SM_DELTA;	//Go forward
+
+			//In order to keep the rest of the inverter up-to-date, call the DC bus routines
+			if (grid_forming_mode == DYNAMIC_DC_BUS)
+			{
+				I_dc_pu = P_out_pu / curr_state.Vdc_pu; // Calculate the equivalent dc current, including the dc capacitor
+
+				if (dc_interface_objects.empty() != true)
+				{
+					//Update V_DC, just in case
+					V_DC = curr_state.Vdc_pu * Vdc_base;
+
+					//Loop through and call the DC objects
+					for (temp_dc_idx = 0; temp_dc_idx < dc_interface_objects.size(); temp_dc_idx++)
+					{
+						//DC object, calling object (us), init mode (true/false)
+						//False at end now, because not initialization
+						fxn_DC_status = ((STATUS(*)(OBJECT *, OBJECT *, bool))(*dc_interface_objects[temp_dc_idx].fxn_address))(dc_interface_objects[temp_dc_idx].dc_object, obj, false);
+
+						//Make sure it worked
+						if (fxn_DC_status == FAILED)
+						{
+							//Pull the object from the array - this is just for readability (otherwise the
+							temp_DC_obj = dc_interface_objects[temp_dc_idx].dc_object;
+
+							//Error it up
+							GL_THROW("inverter_dyn:%d - %s - DC object update for object:%d - %s - failed!", obj->id, (obj->name ? obj->name : "Unnamed"), temp_DC_obj->id, (temp_DC_obj->name ? temp_DC_obj->name : "Unnamed"));
+							//Defined elsewhere
+						}
+					}
+
+					//I_DC is done now.  If P_DC isn't, it could be calculated
+				} //End DC object update
+			}//End DYNAMIC_DC_BUS
+
+			return SM_DELTA;	//Short circuit it
 		}
 
 		// Check pass
@@ -2181,6 +2229,18 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					next_state.Angle[i] = curr_state.Angle[i] + (pred_state.delta_w + next_state.delta_w) * deltat / 2.0; //Obtain the phase angle
 					e_source[i] = complex(E_mag * cos(next_state.Angle[i]), E_mag * sin(next_state.Angle[i])) * V_base;	  // transfers back to non-per-unit values
 					value_IGenerated[i] = e_source[i] / (complex(Rfilter, Xfilter) * Z_base);							  // Thevenin voltage source to Norton current source convertion
+
+					//Convergence check - do on internal voltage, because "reasons"
+					mag_diff_val = e_source[i].Mag() - e_source_prev[i].Mag();
+
+					//Update tracker
+					e_source_prev[i] = e_source[i];
+
+					//Check the difference, while we're in here
+					if (mag_diff_val > GridForming_volt_convergence_criterion)
+					{
+						proceed_to_qsts = false;
+					}
 				}
 				// Angle[i] refers to the phase angle of internal voltage for each phase
 				// e_source[i] is the complex value of internal voltage
@@ -2188,11 +2248,11 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 				// Rfilter and Xfilter are the per-unit values of inverter filter
 				// Function end
 
-				double diff = next_state.delta_w - curr_state.delta_w;
+				double diff_w = next_state.delta_w - curr_state.delta_w;
 
 				memcpy(&curr_state, &next_state, sizeof(INV_DYN_STATE));
 
-				if (fabs(diff) <= GridForming_convergence_criterion)
+				if ((fabs(diff_w) <= GridForming_freq_convergence_criterion) && (proceed_to_qsts == true))
 				{
 					simmode_return_value = SM_EVENT; // we have reached steady state
 				}
@@ -4229,6 +4289,7 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 
 				// Initialize the state variables of the internal voltages
 				e_source[i] = (value_IGenerated[i] * complex(Rfilter, Xfilter) * Z_base);
+				e_source_prev[i] = e_source[i];
 				curr_time->Angle[i] = (e_source[i]).Arg(); // Obtain the inverter internal voltage phasor angle
 			}
 
@@ -5069,8 +5130,9 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count)
 			push_complex_powerflow_values(true);
 		}
 
-		//Update tracker
+		//Update trackers
 		prev_timestamp_dbl = temp_time;
+		last_QSTS_GF_Update = temp_time;
 	}
 
 	//External call to internal variables -- used by powerflow to iterate the VSI implementation, basically

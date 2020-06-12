@@ -212,7 +212,7 @@ object inverter_dyn {
 	grid_forming_mode DYNAMIC_DC_BUS;
 	rated_DC_Voltage 850 V;
 	rated_power 100 kW;
-	GridForming_convergence_criterion 1e-9;
+	frequency_convergence_criterion 1e-9;
 	Pref 3.0 kW;			//Real power reference/setpoint
 	Qref 1.0 kW;			//Reactive power reference/setpoint
 	E_max 1.2;				//Maximum voltage output
