@@ -26,9 +26,12 @@ public:
 
     SIMULATIONMODE inter_deltaupdate_sync_ctrl(unsigned int64, unsigned long, unsigned int);
 
-private: //Utility Member Funcs
+private: //Utility Member Funcs (@TODO: These should be moved to an independent file as regular functions instead of memerber functions, once it is permitted to set up a file. Another option is to improve the package/implementtation of gld_property, but it may affect too much.)
     gld_property *get_prop_ptr(char *, bool (gld_property::*)(), bool (gld_property::*)());
     template <class T>
+    gld_property *get_prop_ptr(T *, char *, bool (gld_property::*)(), bool (gld_property::*)());
+    template <class T>
+    
     T get_prop_value(char *, bool (gld_property::*)(), bool (gld_property::*)(), T (gld_property::*)());
     template <class T>
     T get_prop_value(gld_property *, T (gld_property::*)());
