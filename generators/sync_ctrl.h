@@ -26,10 +26,16 @@ public:
 
     SIMULATIONMODE inter_deltaupdate_sync_ctrl(unsigned int64, unsigned long, unsigned int);
 
-private: //Member Funcs
+private: //Utility Member Funcs
+    gld_property *get_prop_ptr(char *, bool (gld_property::*)(), bool (gld_property::*)());
+    template <class T>
+    T get_prop_value(char *, bool (gld_property::*)(), bool (gld_property::*)(), T (gld_property::*)());
+    template <class T>
+    T get_prop_value(gld_property *, T (gld_property::*)());
+
+private: //Init & Check Member Funcs
     /* Mainly used in create() */
     void init_vars();
-    double get_nom_freq();
     void init_pub_prop();
 
     /* Mainly used in init() */

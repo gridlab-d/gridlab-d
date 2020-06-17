@@ -7,8 +7,12 @@
 
 #include <iostream>
 #include <cmath>
+// #include <variant>
 
 using namespace std;
+
+/* UTIL MACROS */
+#define STR(s) #s
 
 static PASSCONFIG clockpass = PC_BOTTOMUP;
 
@@ -188,7 +192,7 @@ EXPORT SIMULATIONMODE interupdate_sync_ctrl(OBJECT *obj, unsigned int64 delta_ti
     }
 }
 
-//==Member Funcs
+//==Init & Check Member Funcs
 void sync_ctrl::init_vars() // Init local variables with default settings
 {
     //==Flag & Status
@@ -202,36 +206,57 @@ void sync_ctrl::init_vars() // Init local variables with default settings
     //==Controller
 
     //==System Info
-    norm_freq_hz = get_nom_freq();
+    //--get the nominal frequency of the power system
+    norm_freq_hz = get_prop_value<double>("powerflow::nominal_frequency",
+                                          &gld_property::is_valid,
+                                          &gld_property::is_double,
+                                          &gld_property::get_double);
+    // std::cout << "Nominal Frequency = " << norm_freq_hz << " (Hz)" << std::endl; // For verifying
 }
 
-double sync_ctrl::get_nom_freq() // Return the power system nominal frequency
+//==Utility Member Funcs
+template <class T>
+T sync_ctrl::get_prop_value(char *prop_name_char_ptr, bool (gld_property::*fp_is_valid)(), bool (gld_property::*fp_is_type)(), T (gld_property::*fp_get_type)())
+{
+    // Get the property pointer
+    gld_property *prop_ptr = get_prop_ptr(prop_name_char_ptr, fp_is_valid, fp_is_type);
+
+    return get_prop_value(prop_ptr, fp_get_type);
+}
+
+template <class T>
+T sync_ctrl::get_prop_value(gld_property *prop_ptr, T (gld_property::*fp_get_type)())
+{
+    // Get the property value
+    T prop_val = (prop_ptr->*fp_get_type)();
+
+    // Clean & return
+    delete prop_ptr;
+    return prop_val;
+}
+
+gld_property *sync_ctrl::get_prop_ptr(char *prop_name_char_ptr, bool (gld_property::*fp_is_valid)(), bool (gld_property::*fp_is_type)())
 {
     OBJECT *obj = OBJECTHDR(this);
 
-    // Get frequency to populate default - powerflow global has been set by now
-    /* Get the nominal frequency property */
-    gld_property *temp_property_pointer = new gld_property("powerflow::nominal_frequency");
+    // Get property pointer
+    gld_property *temp_prop_ptr = new gld_property(prop_name_char_ptr);
 
-    // Double check the validity of the nominal frequency property
-    if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+    // Check the validity and type of the property pointer
+    if (((temp_prop_ptr->*fp_is_valid)() != true) || ((temp_prop_ptr->*fp_is_type)() != true))
     {
-        GL_THROW("sync_ctrl:%d %s failed to map the nominal_frequency property", obj->id, (obj->name ? obj->name : "Unnamed"));
+        GL_THROW("%s:%d %s failed to map the property: '%s'",
+                 STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"), prop_name_char_ptr);
         /*  TROUBLESHOOT
-		While attempting to map the nominal_frequency property, an error occurred.  Please try again.
+		While attempting to map the property named via variable 'prop_name_char_ptr', an error occurred. Please try again.
 		If the error persists, please submit your GLM and a bug report to the ticketing system.
 		*/
     }
 
-    // Get the value of nominal frequency from this property
-    double nom_freq = temp_property_pointer->get_double();
-
-    // Clean the temporary property pointer
-    delete temp_property_pointer;
-
-    return nom_freq;
+    return temp_prop_ptr;
 }
 
+//==Init & Check Member Funcs
 void sync_ctrl::init_pub_prop() // Init published properties with default settings
 {
     //==Flag
