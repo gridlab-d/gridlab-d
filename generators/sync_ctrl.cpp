@@ -211,23 +211,39 @@ void sync_ctrl::init_vars() // Init local variables with default settings
                                           &gld_property::is_valid,
                                           &gld_property::is_double,
                                           &gld_property::get_double);
-    // std::cout << "Nominal Frequency = " << norm_freq_hz << " (Hz)" << std::endl; // For verifying
+    std::cout << "Nominal Frequency = " << norm_freq_hz << " (Hz)" << std::endl; // For verifying
 
     //--
     OBJECT *obj = OBJECTHDR(this);
     gld_property *kk = get_prop_ptr<OBJECT>(obj, "frequency_tolerance_ub_Hz",
-                                    &gld_property::is_valid,
-                                    &gld_property::is_double);
+                                            &gld_property::is_valid,
+                                            &gld_property::is_double);
     double ft_ub_hz = get_prop_value<double>(kk, &gld_property::get_double);
     std::cout << "frequency_tolerance_ub_Hz = " << ft_ub_hz << " (Hz)" << std::endl; // For verifying
+
+    //--
+    double ft_lb_hz = get_prop_value<double, OBJECT>(obj, "frequency_tolerance_lb_Hz",
+                                                     &gld_property::is_valid,
+                                                     &gld_property::is_double,
+                                                     &gld_property::get_double);
+    std::cout << "frequency_tolerance_lb_Hz = " << ft_lb_hz << " (Hz)" << std::endl; // For verifying
 }
 
 //==Utility Member Funcs
+template <class T, class T1>
+T sync_ctrl::get_prop_value(T1 *obj_ptr, char *prop_name_char_ptr, bool (gld_property::*fp_is_valid)(), bool (gld_property::*fp_is_type)(), T (gld_property::*fp_get_type)())
+{
+    // Get the property pointer
+    gld_property *prop_ptr = get_prop_ptr<T1>(obj_ptr, prop_name_char_ptr, fp_is_valid, fp_is_type);
+
+    return get_prop_value(prop_ptr, fp_get_type);
+}
+
 template <class T>
 T sync_ctrl::get_prop_value(char *prop_name_char_ptr, bool (gld_property::*fp_is_valid)(), bool (gld_property::*fp_is_type)(), T (gld_property::*fp_get_type)())
 {
     // Get the property pointer
-    gld_property *prop_ptr = get_prop_ptr(prop_name_char_ptr, fp_is_valid, fp_is_type);
+    gld_property *prop_ptr = get_prop_ptr<char>(nullptr, prop_name_char_ptr, fp_is_valid, fp_is_type);
 
     return get_prop_value(prop_ptr, fp_get_type);
 }
@@ -243,34 +259,18 @@ T sync_ctrl::get_prop_value(gld_property *prop_ptr, T (gld_property::*fp_get_typ
     return prop_val;
 }
 
-gld_property *sync_ctrl::get_prop_ptr(char *prop_name_char_ptr, bool (gld_property::*fp_is_valid)(), bool (gld_property::*fp_is_type)())
-{
-    OBJECT *obj = OBJECTHDR(this);
-
-    // Get property pointer
-    gld_property *temp_prop_ptr = new gld_property(prop_name_char_ptr);
-
-    // Check the validity and type of the property pointer
-    if (((temp_prop_ptr->*fp_is_valid)() != true) || ((temp_prop_ptr->*fp_is_type)() != true))
-    {
-        GL_THROW("%s:%d %s failed to map the property: '%s'",
-                 STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"), prop_name_char_ptr);
-        /*  TROUBLESHOOT
-		While attempting to map the property named via variable 'prop_name_char_ptr', an error occurred. Please try again.
-		If the error persists, please submit your GLM and a bug report to the ticketing system.
-		*/
-    }
-
-    return temp_prop_ptr;
-}
-
 template <class T>
 gld_property *sync_ctrl::get_prop_ptr(T *obj_ptr, char *prop_name_char_ptr, bool (gld_property::*fp_is_valid)(), bool (gld_property::*fp_is_type)())
 {
     OBJECT *obj = OBJECTHDR(this);
 
     // Get property pointer
-    gld_property *temp_prop_ptr = new gld_property(obj_ptr, prop_name_char_ptr);
+    gld_property *temp_prop_ptr;
+
+    if (obj_ptr == nullptr)
+        temp_prop_ptr = new gld_property(prop_name_char_ptr);
+    else
+        temp_prop_ptr = new gld_property(obj_ptr, prop_name_char_ptr);
 
     // Check the validity and type of the property pointer
     if (((temp_prop_ptr->*fp_is_valid)() != true) || ((temp_prop_ptr->*fp_is_type)() != true))
