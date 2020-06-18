@@ -46,7 +46,7 @@ private: //Init & Check Member Funcs
     /* Mainly used in init() */
     void data_sanity_check(OBJECT *par);
     // void reg_deltamode_check();
-    // void init_norm_values(OBJECT *par = NULL);
+    // void init_nom_values(OBJECT *par = NULL);
     // void init_sensors(OBJECT *par = NULL);
 
 private: //Published Properties
@@ -88,7 +88,9 @@ private: //Variables
     double dt_dm_sec;        //Current deltamode timestep.
 
     //==System Info
-    double norm_freq_hz;
+    double nom_freq_hz;
+
+    //==Controller
 };
 
 #endif // GLD_GENERATORS_SYNC_CTRL_H_

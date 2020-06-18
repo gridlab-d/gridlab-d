@@ -63,6 +63,7 @@ int sync_ctrl::isa(char *classname)
 int sync_ctrl::create(void)
 {
     init_vars();
+    init_pub_prop();
 
     return 1;
 }
@@ -70,7 +71,7 @@ int sync_ctrl::create(void)
 int sync_ctrl::init(OBJECT *parent)
 {
     data_sanity_check(parent);
-    // init_norm_values(parent);
+    // init_nom_values(parent);
     // init_sensors(parent);
     // reg_deltamode_check();
 
@@ -203,30 +204,30 @@ void sync_ctrl::init_vars() // Init local variables with default settings
     //==Time
     timer_mode_A_sec = timer_mode_B_sec = dt_dm_sec = 0;
 
-    //==Controller
-
     //==System Info
     //--get the nominal frequency of the power system
-    norm_freq_hz = get_prop_value<double>("powerflow::nominal_frequency",
-                                          &gld_property::is_valid,
-                                          &gld_property::is_double,
-                                          &gld_property::get_double);
-    std::cout << "Nominal Frequency = " << norm_freq_hz << " (Hz)" << std::endl; // For verifying
+    nom_freq_hz = get_prop_value<double>("powerflow::nominal_frequency",
+                                         &gld_property::is_valid,
+                                         &gld_property::is_double,
+                                         &gld_property::get_double);
+    std::cout << "Nominal Frequency = " << nom_freq_hz << " (Hz)" << std::endl; // For verifying
 
-    //--
-    OBJECT *obj = OBJECTHDR(this);
-    gld_property *kk = get_prop_ptr<OBJECT>(obj, "frequency_tolerance_ub_Hz",
-                                            &gld_property::is_valid,
-                                            &gld_property::is_double);
-    double ft_ub_hz = get_prop_value<double>(kk, &gld_property::get_double);
-    std::cout << "frequency_tolerance_ub_Hz = " << ft_ub_hz << " (Hz)" << std::endl; // For verifying
+    //==Controller
 
-    //--
-    double ft_lb_hz = get_prop_value<double, OBJECT>(obj, "frequency_tolerance_lb_Hz",
-                                                     &gld_property::is_valid,
-                                                     &gld_property::is_double,
-                                                     &gld_property::get_double);
-    std::cout << "frequency_tolerance_lb_Hz = " << ft_lb_hz << " (Hz)" << std::endl; // For verifying
+    // //--
+    // OBJECT *obj = OBJECTHDR(this);
+    // gld_property *kk = get_prop_ptr<OBJECT>(obj, "frequency_tolerance_ub_Hz",
+    //                                         &gld_property::is_valid,
+    //                                         &gld_property::is_double);
+    // double ft_ub_hz = get_prop_value<double>(kk, &gld_property::get_double);
+    // std::cout << "frequency_tolerance_ub_Hz = " << ft_ub_hz << " (Hz)" << std::endl; // For verifying
+
+    // //--
+    // double ft_lb_hz = get_prop_value<double, OBJECT>(obj, "frequency_tolerance_lb_Hz",
+    //                                                  &gld_property::is_valid,
+    //                                                  &gld_property::is_double,
+    //                                                  &gld_property::get_double);
+    // std::cout << "frequency_tolerance_lb_Hz = " << ft_lb_hz << " (Hz)" << std::endl; // For verifying
 }
 
 //==Utility Member Funcs
@@ -297,8 +298,8 @@ void sync_ctrl::init_pub_prop() // Init published properties with default settin
     cgu_obj_pt = NULL;
 
     //==Tolerance
-    sct_freq_tol_ub_hz = 0.66;
-    sct_freq_tol_lb_hz = 0.12;
+    sct_freq_tol_ub_hz = 1.1e-2 * nom_freq_hz;
+    sct_freq_tol_lb_hz = 0.2e-2 * nom_freq_hz;
     sct_volt_mag_tol_pu = 0.01;
 
     //==Time
@@ -315,4 +316,76 @@ void sync_ctrl::init_pub_prop() // Init published properties with default settin
 void sync_ctrl::data_sanity_check(OBJECT *par)
 {
     OBJECT *obj = OBJECTHDR(this);
+
+    //==Tolerance
+    if (sct_freq_tol_ub_hz <= 0)
+    {
+        sct_freq_tol_ub_hz = 1.1e-2 * nom_freq_hz; //Default it to 1.1% of the nominal frequency
+
+        gl_warning("%s:%d %s - %s was not set as a positive value, it is reset to %f [Hz].",
+                   STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
+                   STR(sct_freq_tol_ub_hz), sct_freq_tol_ub_hz);
+        /*  TROUBLESHOOT
+		The sct_freq_tol_ub_hz was not set as a positive value!
+		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
+		*/
+    }
+
+    if (sct_freq_tol_lb_hz <= 0)
+    {
+        sct_freq_tol_lb_hz = 0.2e-2 * nom_freq_hz; //Default it to 0.2% of the nominal frequency
+
+        //@TODO: There is an extra '.' at the end of the warning message. Without it, this message
+        // will not be displayed if the previous sanity check fails. This should be a bug of the 'gl_warning',
+        // which is not to be fixed here at this stage.
+        gl_warning("%s:%d %s - %s was not set as a positive value, it is reset to %f [Hz]..",
+                   STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
+                   STR(sct_freq_tol_lb_hz), sct_freq_tol_lb_hz);
+        /*  TROUBLESHOOT
+		The sct_freq_tol_lb_hz was not set as a positive value!
+		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
+		*/
+    }
+
+    if (sct_freq_tol_ub_hz < sct_freq_tol_lb_hz)
+    {
+        swap(sct_freq_tol_lb_hz, sct_freq_tol_ub_hz);
+
+        gl_warning("%s:%d %s - %s was set larger than the %s, their values are swapped. Now %s is %f [Hz], %s is %f [Hz].",
+                   STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
+                   STR(sct_freq_tol_lb_hz), STR(sct_freq_tol_ub_hz),
+                   STR(sct_freq_tol_lb_hz), sct_freq_tol_lb_hz,
+                   STR(sct_freq_tol_ub_hz), sct_freq_tol_ub_hz);
+        /*  TROUBLESHOOT
+		The sct_freq_tol_lb_hz was set larger than the sct_freq_tol_ub_hz! Their values are swapped.
+		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
+		*/
+    }
+
+    if (sct_freq_tol_lb_hz == sct_freq_tol_ub_hz)
+    {
+        sct_freq_tol_lb_hz /= 2;
+
+        gl_warning("%s:%d %s - %s was set the same to the %s. The %s is halved as %f [Hz].",
+                   STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
+                   STR(sct_freq_tol_lb_hz), STR(sct_freq_tol_ub_hz),
+                   STR(sct_freq_tol_lb_hz), sct_freq_tol_lb_hz);
+
+        /*  TROUBLESHOOT
+		The sct_freq_tol_lb_hz was set was set the same to the sct_freq_tol_ub_hz!
+        The %sct_freq_tol_lb_hz is halved.
+		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
+		*/
+    }
+
+    //==Time
+    if (pp_t_ctrl_sec <= 0)
+    {
+        pp_t_ctrl_sec = 1;
+    }
+
+    if (pp_t_mon_sec <= 0)
+    {
+        pp_t_mon_sec = 10;
+    }
 }
