@@ -71,9 +71,7 @@ int sync_ctrl::create(void)
 int sync_ctrl::init(OBJECT *parent)
 {
     data_sanity_check(parent);
-    // init_nom_values(parent);
-    // init_sensors(parent);
-    // reg_deltamode_check();
+    deltamode_check();
 
     return 1;
 }
@@ -317,6 +315,34 @@ void sync_ctrl::data_sanity_check(OBJECT *par)
 {
     OBJECT *obj = OBJECTHDR(this);
 
+    //==Flag
+    // arm_flag does not need a sanity check at this stage
+
+    //==Object
+    //--sync_check object
+    if (sck_obj_pt == NULL)
+    {
+        GL_THROW("%s:%d %s the %s property must be specified!",
+                 STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
+                 STR(sck_obj_pt));
+        /*  TROUBLESHOOT
+		The sck_obj_pt property is not specified! Please try again.
+		If the error persists, please submit your GLM and a bug report to the ticketing system.
+		*/
+    }
+    else if (!gl_object_isa(sck_obj_pt, "sync_check", "powerflow")) //Check if the sck_obj_pt is pointing to a sync_check object
+    {
+        GL_THROW("%s:%d %s the %s property must be set as the name of a sync_check object!",
+                 STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
+                 STR(sck_obj_pt));
+        /*  TROUBLESHOOT
+		The sck_obj_pt property must be set as the name of a sync_check object. Please try again.
+		If the error persists, please submit your GLM and a bug report to the ticketing system.
+		*/
+    }
+
+    //--controlled generation unit
+
     //==Tolerance
     if (sct_freq_tol_ub_hz <= 0)
     {
@@ -336,7 +362,7 @@ void sync_ctrl::data_sanity_check(OBJECT *par)
         sct_freq_tol_lb_hz = 0.2e-2 * nom_freq_hz; //Default it to 0.2% of the nominal frequency
 
         //@TODO: There is an extra '.' at the end of the warning message. Without it, this message
-        // will not be displayed if the previous sanity check fails. This should be a bug of the 'gl_warning',
+        // is considered as a repeat if the previous sanity check fails. This should be a "bug" of the 'gl_warning',
         // which is not to be fixed here at this stage.
         gl_warning("%s:%d %s - %s was not set as a positive value, it is reset to %f [Hz]..",
                    STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
@@ -378,14 +404,86 @@ void sync_ctrl::data_sanity_check(OBJECT *par)
 		*/
     }
 
+    if (sct_volt_mag_tol_pu <= 0)
+    {
+        sct_volt_mag_tol_pu = 1e-2; //Default it to 0.01 pu
+
+        gl_warning("%s:%d %s - %s was not set as a positive value, it is reset to %f [pu].",
+                   STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
+                   STR(sct_volt_mag_tol_pu), sct_volt_mag_tol_pu);
+        /*  TROUBLESHOOT
+		The sct_volt_mag_tol_pu was not set as a positive value!
+		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
+		*/
+    }
+
     //==Time
     if (pp_t_ctrl_sec <= 0)
     {
         pp_t_ctrl_sec = 1;
+
+        gl_warning("%s:%d %s - %s was not set as a positive value, it is reset to %f [sec].",
+                   STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
+                   STR(pp_t_ctrl_sec), pp_t_ctrl_sec);
+
+        /*  TROUBLESHOOT
+		The pp_t_ctrl_sec was not set as a positive value!
+		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
+		*/
     }
 
     if (pp_t_mon_sec <= 0)
     {
         pp_t_mon_sec = 10;
+        // That word 'now' is used to avoid being considerd as a repeat.
+        gl_warning("%s:%d %s - %s was not set as a positive value, now it is reset to %f [sec].",
+                   STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
+                   STR(pp_t_mon_sec), pp_t_mon_sec);
+
+        /*  TROUBLESHOOT
+		The pp_t_mon_sec was not set as a positive value!
+		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
+		*/
+    }
+
+    //==Controller @TODO
+}
+
+void sync_ctrl::deltamode_check()
+{
+    OBJECT *obj = OBJECTHDR(this);
+
+    //==Set the deltamode flag, if desired
+    if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)
+    {
+        deltamode_inclusive = true;
+    }
+
+    //==Check consistency of the module deltamode flag & object deltamode flag
+    if (enable_subsecond_models != deltamode_inclusive)
+    {
+        if (!deltamode_inclusive)
+        {
+            gl_warning("%s:%d %s - Deltamode is enabled for the powerflow module, but not this sync_check object!",
+                       obj->oclass->name, obj->id, (obj->name ? obj->name : "Unnamed"));
+            /*  TROUBLESHOOT
+			Deltamode is enabled for the powerflow module, but not this sync_check object!
+			If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
+			*/
+        }
+        else
+        {
+            gl_warning("%s:%d %s - Deltamode is enabled for the sync_check object, but not this powerflow module!",
+                       STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"));
+            /*  TROUBLESHOOT
+			Deltamode is enabled for the sync_check object, but not this powerflow module!
+			If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
+			*/
+        }
+    }
+    else if (deltamode_inclusive) // Both the powerflow module and object are enabled for the deltamode
+    {
+        gen_object_count++;
+        reg_dm_flag = true;
     }
 }

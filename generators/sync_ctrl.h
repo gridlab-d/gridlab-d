@@ -45,7 +45,7 @@ private: //Init & Check Member Funcs
 
     /* Mainly used in init() */
     void data_sanity_check(OBJECT *par);
-    // void reg_deltamode_check();
+    void deltamode_check();
     // void init_nom_values(OBJECT *par = NULL);
     // void init_sensors(OBJECT *par = NULL);
 
@@ -81,6 +81,9 @@ private: //Variables
         CLOSED = 1
     } swt_status;
     bool sck_armed_status; //Action functionality status of the specified sync_check object of this sync_ctrl object. Valid states are: True - This sync_check object is functional, False - This sync_check object is disabled.
+
+	bool reg_dm_flag;		  // Flag for indicating the registration of deltamode (array & func)
+	bool deltamode_inclusive; // Boolean for deltamode calls - pulled from object flags
 
     //==Time
     double timer_mode_A_sec; //The total period (initialized as 0) during which both metrics have been satisfied continuously when this sync_ctrl object is in mode A and PI controllers are working
