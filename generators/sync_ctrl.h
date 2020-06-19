@@ -57,6 +57,10 @@ private: //QSTS
     /* Pre-sync */
     void deltamode_reg();
 
+private: //Deltamode
+    /* inter_deltaupdate_sync_ctrl */
+    void dm_update_measurements();
+
 private: //Published Properties
     //==Flag
     bool arm_flag;

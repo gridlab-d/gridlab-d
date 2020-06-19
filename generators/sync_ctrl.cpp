@@ -100,8 +100,32 @@ SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time,
 {
     if (arm_flag)
     {
+        dm_update_measurements();
+
+        if (swt_status == SWT_STATUS_ENUM::CLOSED)
+        {
+            arm_flag = false;
+        }
+        else
+        {
+            if(mode_flag)
+            {
+                //Mode A
+            }
+            else
+            {
+                //Mode B
+            }
+            
+        }
+        
     }
     return SM_EVENT;
+}
+
+void sync_ctrl::dm_update_measurements()
+{
+    swt_status = static_cast<SWT_STATUS_ENUM>(get_prop_value<enumeration>(prop_swt_status_ptr, &gld_property::get_enumeration));
 }
 
 //////////////////////////////////////////////////////////////////////////
