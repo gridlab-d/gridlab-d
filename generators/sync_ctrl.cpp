@@ -69,8 +69,10 @@ int sync_ctrl::create(void)
 
 int sync_ctrl::init(OBJECT *parent)
 {
-    data_sanity_check(parent);
+    data_sanity_check();
     deltamode_check();
+
+    init_sensors();
 
     return 1;
 }
@@ -96,6 +98,9 @@ TIMESTAMP sync_ctrl::postsync(TIMESTAMP t0, TIMESTAMP t1)
 // Module-level call
 SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
+    if (arm_flag)
+    {
+    }
     return SM_EVENT;
 }
 
@@ -208,29 +213,27 @@ void sync_ctrl::init_vars() // Init local variables with default settings
                                          &gld_property::is_valid,
                                          &gld_property::is_double,
                                          &gld_property::get_double);
-    std::cout << "Nominal Frequency = " << nom_freq_hz << " (Hz)" << std::endl; // For verifying
+    // std::cout << "Nominal Frequency = " << nom_freq_hz << " (Hz)" << std::endl; // For verifying
 
     //==Controller
 
-    // //--
-    // OBJECT *obj = OBJECTHDR(this);
-    // gld_property *kk = get_prop_ptr<OBJECT>(obj, "frequency_tolerance_ub_Hz",
-    //                                         &gld_property::is_valid,
-    //                                         &gld_property::is_double);
-    // double ft_ub_hz = get_prop_value<double>(kk, &gld_property::get_double);
-    // std::cout << "frequency_tolerance_ub_Hz = " << ft_ub_hz << " (Hz)" << std::endl; // For verifying
-
-    // //--
-    // double ft_lb_hz = get_prop_value<double, OBJECT>(obj, "frequency_tolerance_lb_Hz",
-    //                                                  &gld_property::is_valid,
-    //                                                  &gld_property::is_double,
-    //                                                  &gld_property::get_double);
-    // std::cout << "frequency_tolerance_lb_Hz = " << ft_lb_hz << " (Hz)" << std::endl; // For verifying
+    //==Obj & Prop
+    obj_swt_ptr = nullptr;
+    prop_swt_status_ptr = nullptr;
 }
 
 //==Utility Member Funcs
 template <class T, class T1>
 T sync_ctrl::get_prop_value(T1 *obj_ptr, char *prop_name_char_ptr, bool (gld_property::*fp_is_valid)(), bool (gld_property::*fp_is_type)(), T (gld_property::*fp_get_type)())
+{
+    // Get the property pointer
+    gld_property *prop_ptr = get_prop_ptr<T1>(obj_ptr, prop_name_char_ptr, fp_is_valid, fp_is_type);
+
+    return get_prop_value(prop_ptr, fp_get_type);
+}
+
+template <class T, class T1>
+T *sync_ctrl::get_prop_value(T1 *obj_ptr, char *prop_name_char_ptr, bool (gld_property::*fp_is_valid)(), bool (gld_property::*fp_is_type)(), T *(gld_property::*fp_get_type)())
 {
     // Get the property pointer
     gld_property *prop_ptr = get_prop_ptr<T1>(obj_ptr, prop_name_char_ptr, fp_is_valid, fp_is_type);
@@ -252,6 +255,17 @@ T sync_ctrl::get_prop_value(gld_property *prop_ptr, T (gld_property::*fp_get_typ
 {
     // Get the property value
     T prop_val = (prop_ptr->*fp_get_type)();
+
+    // Clean & return
+    delete prop_ptr;
+    return prop_val;
+}
+
+template <class T>
+T *sync_ctrl::get_prop_value(gld_property *prop_ptr, T *(gld_property::*fp_get_type)())
+{
+    // Get the property value
+    T *prop_val = (prop_ptr->*fp_get_type)();
 
     // Clean & return
     delete prop_ptr;
@@ -311,7 +325,7 @@ void sync_ctrl::init_pub_prop() // Init published properties with default settin
     pi_volt_mag_kp = 1;
 }
 
-void sync_ctrl::data_sanity_check(OBJECT *par)
+void sync_ctrl::data_sanity_check()
 {
     OBJECT *obj = OBJECTHDR(this);
 
@@ -485,6 +499,16 @@ void sync_ctrl::deltamode_check()
         gen_object_count++;
         reg_dm_flag = true;
     }
+}
+
+void sync_ctrl::init_sensors()
+{
+    //==Switch (i.e., the parent of the sync_check object)
+    obj_swt_ptr = sck_obj_pt->parent; //@TODO: here may need to do a sanity check again, as this can be executed before the init of sync_check, where there is a sanity check
+    prop_swt_status_ptr = get_prop_ptr(obj_swt_ptr, "status",
+                                       &gld_property::is_valid, 
+                                       &gld_property::is_enumeration);
+    swt_status = static_cast<SWT_STATUS_ENUM>(get_prop_value<enumeration>(prop_swt_status_ptr, &gld_property::get_enumeration));
 }
 
 //==QSTS Member Funcs

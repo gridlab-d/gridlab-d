@@ -18,7 +18,7 @@ public:
     int isa(char *classname);
 
     int create(void);
-    int init(OBJECT *parent = nullptr);
+    int init(OBJECT * = nullptr);
 
     TIMESTAMP presync(TIMESTAMP, TIMESTAMP);
     TIMESTAMP sync(TIMESTAMP, TIMESTAMP);
@@ -33,10 +33,14 @@ private: //Utility Member Funcs (@TODO: These should be moved to an independent 
 
     template <class T, class T1>
     T get_prop_value(T1 *, char *, bool (gld_property::*)(), bool (gld_property::*)(), T (gld_property::*)());
+    template <class T, class T1>
+    T *get_prop_value(T1 *, char *, bool (gld_property::*)(), bool (gld_property::*)(), T *(gld_property::*)());
     template <class T>
     T get_prop_value(char *, bool (gld_property::*)(), bool (gld_property::*)(), T (gld_property::*)());
     template <class T>
     T get_prop_value(gld_property *, T (gld_property::*)());
+    template <class T>
+    T *get_prop_value(gld_property *, T *(gld_property::*)());
 
 private: //Init & Check Member Funcs
     /* Mainly used in create() */
@@ -44,10 +48,10 @@ private: //Init & Check Member Funcs
     void init_pub_prop();
 
     /* Mainly used in init() */
-    void data_sanity_check(OBJECT *);
+    void data_sanity_check();
     void deltamode_check();
     // void init_nom_values(OBJECT *par = nullptr);
-    // void init_sensors(OBJECT *par = nullptr);
+    void init_sensors();
 
 private: //QSTS
     /* Pre-sync */
@@ -98,6 +102,10 @@ private: //Variables
     double nom_freq_hz;
 
     //==Controller
+
+    //==Obj & Prop
+    OBJECT *obj_swt_ptr;
+    gld_property *prop_swt_status_ptr;
 };
 
 #endif // GLD_GENERATORS_SYNC_CTRL_H_
