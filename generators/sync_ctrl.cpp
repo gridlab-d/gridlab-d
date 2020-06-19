@@ -465,25 +465,26 @@ void sync_ctrl::deltamode_check()
     {
         if (deltamode_inclusive)
         {
-            gl_warning("%s:%d %s - Deltamode is enabled for the %s object, but not the %s module!",
+            gl_warning("%s:%d %s - Deltamode is enabled for this '%s' object, but not the '%s' module!",
                        obj->oclass->name, obj->id, (obj->name ? obj->name : "Unnamed"),
                        obj->oclass->name, obj->oclass->module->name);
             /*  TROUBLESHOOT
-			Deltamode is enabled for the sync_ctrl object, but not the generators module!
+			Deltamode is enabled for this 'sync_ctrl' object, but not the 'generators' module!
 			If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
 			*/
         }
         else
         {
-            gl_warning("%s:%d %s - Deltamode is enabled for the powerflow module, but not this sync_check object!",
-                       obj->oclass->name, obj->id, (obj->name ? obj->name : "Unnamed"));
+            gl_warning("%s:%d %s - Deltamode is enabled for the '%s' module, but not this '%s' object!",
+                       obj->oclass->name, obj->id, (obj->name ? obj->name : "Unnamed"),
+                       obj->oclass->module->name, obj->oclass->name);
             /*  TROUBLESHOOT
-			Deltamode is enabled for the powerflow module, but not this sync_check object!
+			Deltamode is enabled for the 'generators' module, but not this 'sync_ctrl' object!
 			If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
 			*/
         }
     }
-    else if (deltamode_inclusive) // Both the powerflow module and object are enabled for the deltamode
+    else if (deltamode_inclusive) // Both the 'generators' module and 'sync_ctrl' object are enabled for the deltamode
     {
         gen_object_count++;
         reg_dm_flag = true;
@@ -497,44 +498,45 @@ void sync_ctrl::deltamode_reg()
     {
         reg_dm_flag = false; // Turn off this one-time flag
 
+        //==Call the allocation routine, if needed
         if ((gen_object_current == -1) || (delta_objects == NULL))
         {
-            allocate_deltamode_arrays(); //Call the allocation routine
+            allocate_deltamode_arrays();
         }
 
-        if (gen_object_current >= gen_object_count) // Check limits
+        //==Check limits
+        OBJECT *obj = OBJECTHDR(this);
+        if (gen_object_current >= gen_object_count)
         {
-            GL_THROW("Too many objects tried to populate deltamode objects array in the powerflow module!");
+            GL_THROW("Too many objects tried to populate deltamode objects array in the '%s' module!",
+                     obj->oclass->module->name);
             /*  TROUBLESHOOT
-			While attempting to populate a reference array of deltamode-enabled objects for the powerflow
-			module, an attempt was made to write beyond the allocated array space.  Please try again.  If the
-			error persists, please submit a bug report and your code via the issue tracker.
+			While attempting to populate a reference array of deltamode-enabled objects for the 'generators'
+			module, an attempt was made to write beyond the allocated array space. Please try again.
+            If the error persists, please submit a bug report and your code via the issue tracker.
 			*/
         }
 
-        OBJECT *obj = OBJECTHDR(this); // Get the self-pointer
-
+        //==Map func
         delta_objects[gen_object_current] = obj; // Add this object into the list of deltamode objects
-
-        // Map up the function
         delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "interupdate_controller_object"));
 
-        // Dobule check the mapped function
-        if (delta_functions[gen_object_current] == NULL)
+        //==Dobule check the mapped function
+        if (delta_functions[gen_object_current] == nullptr)
         {
             gl_warning("Failure to map deltamode function for this device: %s", obj->name);
             /*  TROUBLESHOOT
 			Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
-			the object supports deltamode.  This warning may simply be an indication that the object of interest
-			does not support deltamode.  If the warning persists and the object does, please submit your code and
+			the object supports deltamode. This warning may simply be an indication that the object of interest
+			does not support deltamode. If the warning persists and the object does, please submit your code and
 			a bug report via the issue tracker.
 			*/
         }
 
-        // Set the post delta function to NULL, thus it does not need to be checked
-        post_delta_functions[gen_object_current] = NULL;
+        //==Set the post delta function to nullptr, thus it does not need to be checked
+        post_delta_functions[gen_object_current] = nullptr;
 
-        //Increment
+        //==Increment
         gen_object_current++;
     }
 }
