@@ -7,7 +7,6 @@
 
 #include <iostream>
 #include <cmath>
-// #include <variant>
 
 using namespace std;
 
@@ -19,14 +18,14 @@ static PASSCONFIG clockpass = PC_BOTTOMUP;
 //////////////////////////////////////////////////////////////////////////
 // sync_ctrl CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS *sync_ctrl::oclass = NULL;
+CLASS *sync_ctrl::oclass = nullptr;
 
 sync_ctrl::sync_ctrl(MODULE *mod)
 {
-    if (oclass == NULL)
+    if (oclass == nullptr)
     {
         oclass = gl_register_class(mod, "sync_ctrl", sizeof(sync_ctrl), PC_PRETOPDOWN | PC_BOTTOMUP | PC_POSTTOPDOWN | PC_AUTOLOCK);
-        if (oclass == NULL)
+        if (oclass == nullptr)
             GL_THROW("unable to register object class implemented by %s", __FILE__);
 
         if (gl_publish_variable(oclass,
@@ -47,10 +46,10 @@ sync_ctrl::sync_ctrl(MODULE *mod)
                                 PT_double, "PI_Frequency_Ki", PADDR(pi_freq_ki), PT_DESCRIPTION, "The user-defined integral gain constant of the PI controller for adjusting the frequency setting.",
                                 PT_double, "PI_Volt_Mag_Kp", PADDR(pi_volt_mag_kp), PT_DESCRIPTION, "The user-defined proportional gain constant of the PI controller for adjusting the voltage magnitude setting.",
                                 PT_double, "PI_Volt_Mag_Ki", PADDR(pi_volt_mag_ki), PT_DESCRIPTION, "	The user-defined integral gain constant of the PI controller for adjusting the voltage magnitude setting.",
-                                NULL) < 1)
+                                nullptr) < 1)
             GL_THROW("unable to publish properties in %s", __FILE__);
 
-        if (gl_publish_function(oclass, "interupdate_controller_object", (FUNCTIONADDR)interupdate_sync_ctrl) == NULL)
+        if (gl_publish_function(oclass, "interupdate_controller_object", (FUNCTIONADDR)interupdate_sync_ctrl) == nullptr)
             GL_THROW("Unable to publish sync_ctrl deltamode function");
     }
 }
@@ -116,7 +115,7 @@ EXPORT int create_sync_ctrl(OBJECT **obj, OBJECT *parent)
     try
     {
         *obj = gl_create_object(sync_ctrl::oclass);
-        if (*obj != NULL)
+        if (*obj != nullptr)
         {
             sync_ctrl *my = OBJECTDATA(*obj, sync_ctrl);
             gl_set_parent(*obj, parent);
@@ -397,7 +396,6 @@ void sync_ctrl::data_sanity_check(OBJECT *par)
                    STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
                    STR(sct_freq_tol_lb_hz), STR(sct_freq_tol_ub_hz),
                    STR(sct_freq_tol_lb_hz), sct_freq_tol_lb_hz);
-
         /*  TROUBLESHOOT
 		The sct_freq_tol_lb_hz was set was set the same to the sct_freq_tol_ub_hz!
         The %sct_freq_tol_lb_hz is halved.
@@ -426,7 +424,6 @@ void sync_ctrl::data_sanity_check(OBJECT *par)
         gl_warning("%s:%d %s - %s was not set as a positive value, it is reset to %f [sec].",
                    STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
                    STR(pp_t_ctrl_sec), pp_t_ctrl_sec);
-
         /*  TROUBLESHOOT
 		The pp_t_ctrl_sec was not set as a positive value!
 		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
@@ -440,7 +437,6 @@ void sync_ctrl::data_sanity_check(OBJECT *par)
         gl_warning("%s:%d %s - %s was not set as a positive value, now it is reset to %f [sec].",
                    STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
                    STR(pp_t_mon_sec), pp_t_mon_sec);
-
         /*  TROUBLESHOOT
 		The pp_t_mon_sec was not set as a positive value!
 		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
@@ -455,7 +451,7 @@ void sync_ctrl::deltamode_check()
     OBJECT *obj = OBJECTHDR(this);
 
     //==Set the deltamode flag, if desired
-    if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)
+    if (obj->flags & OF_DELTAMODE)
     {
         deltamode_inclusive = true;
     }
@@ -499,7 +495,7 @@ void sync_ctrl::deltamode_reg()
         reg_dm_flag = false; // Turn off this one-time flag
 
         //==Call the allocation routine, if needed
-        if ((gen_object_current == -1) || (delta_objects == NULL))
+        if ((gen_object_current == -1) || (delta_objects == nullptr))
         {
             allocate_deltamode_arrays();
         }

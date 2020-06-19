@@ -44,7 +44,7 @@ private: //Init & Check Member Funcs
     void init_pub_prop();
 
     /* Mainly used in init() */
-    void data_sanity_check(OBJECT *par);
+    void data_sanity_check(OBJECT *);
     void deltamode_check();
     // void init_nom_values(OBJECT *par = nullptr);
     // void init_sensors(OBJECT *par = nullptr);
