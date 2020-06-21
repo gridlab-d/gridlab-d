@@ -38,9 +38,9 @@ private: //Utility Member Funcs (@TODO: These should be moved to an independent 
     template <class T>
     T get_prop_value(char *, bool (gld_property::*)(), bool (gld_property::*)(), T (gld_property::*)());
     template <class T>
-    T get_prop_value(gld_property *, T (gld_property::*)());
+    T get_prop_value(gld_property *, T (gld_property::*)(), bool = true);
     template <class T>
-    T *get_prop_value(gld_property *, T *(gld_property::*)());
+    T *get_prop_value(gld_property *, T *(gld_property::*)(), bool = true);
 
 private: //Init & Check Member Funcs
     /* Mainly used in create() */
@@ -66,8 +66,8 @@ private: //Published Properties
     bool arm_flag;
 
     //==Object
-    OBJECT *sck_obj_pt;
-    OBJECT *cgu_obj_pt;
+    OBJECT *sck_obj_ptr;
+    OBJECT *cgu_obj_ptr;
 
     //==Tolerance
     double sct_freq_tol_ub_hz;
@@ -86,7 +86,13 @@ private: //Published Properties
 
 private: //Variables
     //==Flags & Status
-    bool mode_flag; //Indicates whether in mode A or not: True - This object is working in mode A, False - This object is working in mode B.
+    // bool mode_flag; //Indicates whether in mode A or not: True - This object is working in mode A, False - This object is working in mode B.
+    enum SCT_MODE_ENUM
+    {
+        MODE_A,
+        MODE_B
+    } mode_status;
+
     enum SWT_STATUS_ENUM
     {
         OPEN = 0,

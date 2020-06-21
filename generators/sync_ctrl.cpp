@@ -32,8 +32,8 @@ sync_ctrl::sync_ctrl(MODULE *mod)
                                 //==Flag
                                 PT_bool, "armed", PADDR(arm_flag), PT_DESCRIPTION, "Flag to arm the synchronization control functionality.",
                                 //==Object
-                                PT_object, "sync_check_object", PADDR(sck_obj_pt), PT_DESCRIPTION, "The object reference/name of the sync_check object, which works with this sync_ctrl object.",
-                                PT_object, "controlled_generation_unit", PADDR(cgu_obj_pt), PT_DESCRIPTION, "The object reference/name of the controlled generation unit (i.e., a diesel_dg/inverter_dyn object), which serves as the actuator of the PI controllers of this sync_ctrl object.",
+                                PT_object, "sync_check_object", PADDR(sck_obj_ptr), PT_DESCRIPTION, "The object reference/name of the sync_check object, which works with this sync_ctrl object.",
+                                PT_object, "controlled_generation_unit", PADDR(cgu_obj_ptr), PT_DESCRIPTION, "The object reference/name of the controlled generation unit (i.e., a diesel_dg/inverter_dyn object), which serves as the actuator of the PI controllers of this sync_ctrl object.",
                                 //==Tolerance
                                 PT_double, "frequency_tolerance_ub_Hz[Hz]", PADDR(sct_freq_tol_ub_hz), PT_DESCRIPTION, "The user-specified tolerance in Hz for checking the upper bound of the frequency metric.",
                                 PT_double, "frequency_tolerance_lb_Hz[Hz]", PADDR(sct_freq_tol_lb_hz), PT_DESCRIPTION, "The user-specified tolerance in Hz for checking the lower bound of the frequency metric.",
@@ -108,7 +108,7 @@ SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time,
         }
         else
         {
-            if(mode_flag)
+            if (mode_status == SCT_MODE_ENUM::MODE_A)
             {
                 //Mode A
             }
@@ -116,16 +116,14 @@ SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time,
             {
                 //Mode B
             }
-            
         }
-        
     }
     return SM_EVENT;
 }
 
 void sync_ctrl::dm_update_measurements()
 {
-    swt_status = static_cast<SWT_STATUS_ENUM>(get_prop_value<enumeration>(prop_swt_status_ptr, &gld_property::get_enumeration));
+    swt_status = static_cast<SWT_STATUS_ENUM>(get_prop_value<enumeration>(prop_swt_status_ptr, &gld_property::get_enumeration, false));
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -224,7 +222,7 @@ EXPORT SIMULATIONMODE interupdate_sync_ctrl(OBJECT *obj, unsigned int64 delta_ti
 void sync_ctrl::init_vars() // Init local variables with default settings
 {
     //==Flag & Status
-    mode_flag = true; //i.e., in Mode A
+    mode_status = SCT_MODE_ENUM::MODE_A;
     swt_status = SWT_STATUS_ENUM::OPEN;
     sck_armed_status = false;
 
@@ -275,24 +273,30 @@ T sync_ctrl::get_prop_value(char *prop_name_char_ptr, bool (gld_property::*fp_is
 }
 
 template <class T>
-T sync_ctrl::get_prop_value(gld_property *prop_ptr, T (gld_property::*fp_get_type)())
+T sync_ctrl::get_prop_value(gld_property *prop_ptr, T (gld_property::*fp_get_type)(), bool del_prop_ptr_flag /*= true*/)
 {
     // Get the property value
     T prop_val = (prop_ptr->*fp_get_type)();
 
     // Clean & return
-    delete prop_ptr;
+    if (del_prop_ptr_flag)
+    {
+        delete prop_ptr;
+    }
     return prop_val;
 }
 
 template <class T>
-T *sync_ctrl::get_prop_value(gld_property *prop_ptr, T *(gld_property::*fp_get_type)())
+T *sync_ctrl::get_prop_value(gld_property *prop_ptr, T *(gld_property::*fp_get_type)(), bool del_prop_ptr_flag /*= true*/)
 {
     // Get the property value
     T *prop_val = (prop_ptr->*fp_get_type)();
 
     // Clean & return
-    delete prop_ptr;
+    if (del_prop_ptr_flag)
+    {
+        delete prop_ptr;
+    }
     return prop_val;
 }
 
@@ -330,8 +334,8 @@ void sync_ctrl::init_pub_prop() // Init published properties with default settin
     arm_flag = false; //Start as disabled
 
     //==Object
-    sck_obj_pt = nullptr;
-    cgu_obj_pt = nullptr;
+    sck_obj_ptr = nullptr;
+    cgu_obj_ptr = nullptr;
 
     //==Tolerance
     sct_freq_tol_ub_hz = 1.1e-2 * nom_freq_hz;
@@ -358,23 +362,23 @@ void sync_ctrl::data_sanity_check()
 
     //==Object
     //--sync_check object
-    if (sck_obj_pt == nullptr)
+    if (sck_obj_ptr == nullptr)
     {
         GL_THROW("%s:%d %s the %s property must be specified!",
                  STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
-                 STR(sck_obj_pt));
+                 STR(sck_obj_ptr));
         /*  TROUBLESHOOT
-		The sck_obj_pt property is not specified! Please try again.
+		The sck_obj_ptr property is not specified! Please try again.
 		If the error persists, please submit your GLM and a bug report to the ticketing system.
 		*/
     }
-    else if (!gl_object_isa(sck_obj_pt, "sync_check", "powerflow")) //Check if the sck_obj_pt is pointing to a sync_check object
+    else if (!gl_object_isa(sck_obj_ptr, "sync_check", "powerflow")) //Check if the sck_obj_ptr is pointing to a sync_check object
     {
         GL_THROW("%s:%d %s the %s property must be set as the name of a sync_check object!",
                  STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
-                 STR(sck_obj_pt));
+                 STR(sck_obj_ptr));
         /*  TROUBLESHOOT
-		The sck_obj_pt property must be set as the name of a sync_check object. Please try again.
+		The sck_obj_ptr property must be set as the name of a sync_check object. Please try again.
 		If the error persists, please submit your GLM and a bug report to the ticketing system.
 		*/
     }
@@ -528,11 +532,11 @@ void sync_ctrl::deltamode_check()
 void sync_ctrl::init_sensors()
 {
     //==Switch (i.e., the parent of the sync_check object)
-    obj_swt_ptr = sck_obj_pt->parent; //@TODO: here may need to do a sanity check again, as this can be executed before the init of sync_check, where there is a sanity check
+    obj_swt_ptr = sck_obj_ptr->parent; //@TODO: here may need to do a sanity check again, as this can be executed before the init of sync_check, where there is a sanity check
     prop_swt_status_ptr = get_prop_ptr(obj_swt_ptr, "status",
-                                       &gld_property::is_valid, 
+                                       &gld_property::is_valid,
                                        &gld_property::is_enumeration);
-    swt_status = static_cast<SWT_STATUS_ENUM>(get_prop_value<enumeration>(prop_swt_status_ptr, &gld_property::get_enumeration));
+    swt_status = static_cast<SWT_STATUS_ENUM>(get_prop_value<enumeration>(prop_swt_status_ptr, &gld_property::get_enumeration, false));
 }
 
 //==QSTS Member Funcs
