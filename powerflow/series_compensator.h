@@ -54,6 +54,30 @@ public:
 
 	bool frequency_regulation;   // Boolean value indicating whether the frequency regulation of the series compensator is enabled or not;
 
+    bool frequency_open_loop_control; // Boolean value indicating whether the frequency bang-bang control of the series compensator is enabled or not;
+
+    bool t_delay_low_flag;   //status: frequency measurement, under-frequency event
+    bool t_hold_low_flag;    //status: frequency controlled enabled, hold, under-frequency event
+    bool t_recover_low_flag; //status: voltage gradually goes back to normal, under-frequency event
+    bool t_delay_high_flag;  //status: frequency measurement, over-frequency event
+    bool t_hold_high_flag;   //status: frequency controlled enabled, hold, over-frequency event
+    bool t_recover_high_flag;//status: voltage gradually goes back to normal, over-frequency event
+
+
+    double t_count_low_delay; // counter during under-frequency event, frequency measurement
+    double t_count_low_hold; //  counter during under-frequency event, hold
+    double t_count_high_delay; // counter during over-frequency event, frequency measurement
+    double t_count_high_hold; //  counter during over-frequency event, hold
+
+    double t_delay;  // Time delay for frequency measurement
+    double t_hold;   // Time that the regulator stays at the new voltage set point
+    double recover_rate; // The rate the voltage set point recovers to nominal voltage set point. unit pu/s.
+    double frequency_low; // the low frequency set point to enable frequency control
+    double frequency_high; //the high frequency set point to enable frequency control
+    double V_error; //
+
+
+
 	typedef enum {ST_NORMAL=0, ST_BYPASS=1} PHASE_COMP_STATE;
 	enumeration phase_states[3];
 

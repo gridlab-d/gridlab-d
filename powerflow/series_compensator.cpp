@@ -48,6 +48,16 @@ series_compensator::series_compensator(MODULE *mod) : link_object(mod)
 			PT_double, "vset_2_0[pu]", PADDR(vset_value_0[1]), PT_DESCRIPTION, "Voltage magnitude reference for phase 2 of a tryplex system",
 
 			PT_bool, "frequency_regulation", PADDR(frequency_regulation),  PT_DESCRIPTION, "DELTAMODE: Boolean value indicating whether the frequency regulation of the series compensator is enabled or not",
+			PT_bool, "frequency_open_loop_control", PADDR(frequency_open_loop_control),  PT_DESCRIPTION, "DELTAMODE: Boolean value indicating whether the frequency open loop control of the series compensator is enabled or not",
+
+
+			PT_double, "t_delay", PADDR(t_delay), PT_DESCRIPTION, "the controller will wait for t_delay to take actions",
+			PT_double, "t_hold", PADDR(t_hold), PT_DESCRIPTION, "Once the controller changes the voltage set point, it will stay there for t_hold time",
+			PT_double, "recover_rate", PADDR(recover_rate), PT_DESCRIPTION, "The rate that the voltage goes back to nominal, unit: pu/s",
+			PT_double, "frequency_low", PADDR(frequency_low), PT_DESCRIPTION, "The low frequency that activates the controller",
+			PT_double, "frequency_high", PADDR(frequency_high), PT_DESCRIPTION, "The high frequency that activates the controller",
+			PT_double, "V_error", PADDR(V_error), PT_DESCRIPTION, "Make sure the voltage can go back to nominal",
+
 
 			PT_double, "voltage_update_tolerance[pu]", PADDR(voltage_iter_tolerance), PT_DESCRIPTION, "Largest absolute between vset_X and measured voltage that won't force a reiteration",
 
@@ -128,7 +138,29 @@ int series_compensator::create()
 
 	voltage_deadband = 1e-5;
 
-	frequency_regulation= false;
+	frequency_regulation = false;
+	frequency_open_loop_control = false;
+
+
+	// frequency open loop control
+	t_delay_low_flag = false;
+	t_hold_low_flag = false;
+	t_recover_low_flag = false;
+	t_delay_high_flag = false;
+	t_hold_high_flag = false;
+	t_recover_high_flag = false;
+
+	t_count_low_delay = 0;
+	t_count_low_hold = 0;
+	t_count_high_delay = 0;
+	t_count_high_hold = 0;
+
+	t_delay = 0.05; // 0.05 seconds
+	t_hold =  20; // 20 seconds
+	recover_rate = 0.005; // 0.01 pu/s
+	frequency_low = 59; //59 Hz
+	frequency_high = 61; //61 Hz
+	V_error = 1e-6;
 
 	kp = 0;
 	ki = 10;
@@ -139,6 +171,7 @@ int series_compensator::create()
     V_bypass_max_pu = 1.25;
     V_bypass_min_pu = 0.667;
 
+    // frequency regulator
     kpf = 0.01;
     f_db_max = 0.3;
     f_db_min = -0.3;
@@ -820,6 +853,7 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 	int return_val;
 	bool bypass_initiated;
 
+
 	//By default, assume we want to exit normal
 	return_val = 0;
 
@@ -952,6 +986,116 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 				{
 					delta_V = 0;
 				}
+			}
+			else if (frequency_open_loop_control)
+			{
+
+				// Under-frequency event
+				if (t_recover_low_flag == true) // voltage gradually goes back to nominal value
+				{
+					t_hold_low_flag = false;
+					t_delay_low_flag = false;
+					delta_V += recover_rate * deltat;
+
+					if(abs(delta_V) <= V_error)
+					{
+						t_recover_low_flag = false;
+					}
+				}
+
+				else if (t_hold_low_flag == true)  // voltage stays on hold for t_hold time
+				{
+					delta_V = delta_Vmin;
+					t_count_low_hold += deltat;
+					t_delay_low_flag = false;
+					t_recover_low_flag = false;
+
+					if(t_count_low_hold >= t_hold)
+					{
+						t_hold_low_flag = false;
+						t_recover_low_flag = true;
+						t_delay_low_flag = false;
+						t_count_low_hold = 0;
+					}
+				}
+
+				else if ((val_FromNode_frequency < frequency_low) && (t_hold_low_flag == false) && (t_recover_low_flag == false) && (t_delay_high_flag == false) && (t_hold_high_flag == false) && (t_recover_high_flag == false))
+				{
+					t_delay_low_flag = true;
+					t_count_low_delay += deltat;
+					t_hold_low_flag = false;
+					t_recover_low_flag = false;
+
+					if (t_count_low_delay >= t_delay)
+					{
+						delta_V = delta_Vmin;
+						t_hold_low_flag = true;
+						t_delay_low_flag = false;
+						t_recover_low_flag = false;
+						t_count_low_delay = 0;
+						t_count_low_hold = 0;
+					}
+
+				}
+				else
+				{
+					t_delay_low_flag = false;
+					t_count_low_delay = 0;
+				}
+
+				// Over-frequency event
+				if (t_recover_high_flag == true) // voltage gradually goes back to nominal value
+				{
+					t_hold_high_flag = false;
+					t_delay_high_flag = false;
+					delta_V -= recover_rate * deltat;
+
+					if(abs(delta_V) <= V_error)
+					{
+						t_recover_high_flag = false;
+					}
+				}
+
+				else if (t_hold_high_flag == true)  // voltage stays on hold for t_hold time
+				{
+					delta_V = delta_Vmax;
+					t_count_high_hold += deltat;
+					t_delay_high_flag = false;
+					t_recover_high_flag = false;
+
+					if(t_count_high_hold >= t_hold)
+					{
+						t_hold_high_flag = false;
+						t_recover_high_flag = true;
+						t_delay_high_flag = false;
+						t_count_high_hold = 0;
+					}
+				}
+
+				else if ((val_FromNode_frequency > frequency_high) && (t_hold_high_flag == false) && (t_recover_high_flag == false) && (t_delay_low_flag == false) && (t_hold_low_flag == false) && (t_recover_low_flag == false) ) // t_delay status
+				{
+					t_delay_high_flag = true;
+					t_count_high_delay += deltat;
+					t_hold_high_flag = false;
+					t_recover_high_flag = false;
+
+					if (t_count_high_delay >= t_delay)
+					{
+						delta_V = delta_Vmax;
+						t_hold_high_flag = true;
+						t_delay_high_flag = false;
+						t_recover_high_flag = false;
+						t_count_high_delay = 0;
+						t_count_high_hold = 0;
+					}
+
+				}
+				else
+				{
+					t_delay_high_flag = false;
+					t_count_high_delay = 0;
+				}
+
 			}
 			else
 			{
@@ -1126,6 +1270,10 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 				{
 					delta_V = 0;
 				}
+			}
+			else if (frequency_open_loop_control)
+			{
+
 			}
 			else
 			{
