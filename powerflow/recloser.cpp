@@ -68,9 +68,9 @@ int recloser::create()
 
 	prev_full_status = 0x00;		//Flag as all open initially
 	switch_banked_mode = BANKED_SW;	//Assume operates in banked mode normally
-	phase_A_state = CLOSED;			//All switches closed by default
-	phase_B_state = CLOSED;
-	phase_C_state = CLOSED;
+	phase_A_state = SW_CLOSED;			//All switches closed by default
+	phase_B_state = SW_CLOSED;
+	phase_C_state = SW_CLOSED;
 
 	prev_SW_time = 0;
 	retry_time = 0;

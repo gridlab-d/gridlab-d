@@ -66,9 +66,9 @@ int sectionalizer::create()
 
 	prev_full_status = 0x00;		//Flag as all open initially
 	switch_banked_mode = BANKED_SW;	//Sectionalizer starts with all three phases open
-	phase_A_state = CLOSED;			//All switches closed by default
-	phase_B_state = CLOSED;
-	phase_C_state = CLOSED;
+	phase_A_state = SW_CLOSED;			//All switches closed by default
+	phase_B_state = SW_CLOSED;
+	phase_C_state = SW_CLOSED;
 
 	return result;
 }

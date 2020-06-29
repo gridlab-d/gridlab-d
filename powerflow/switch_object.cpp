@@ -37,14 +37,14 @@ switch_object::switch_object(MODULE *mod) : link_object(mod)
         if(gl_publish_variable(oclass,
 			PT_INHERIT, "link",
 			PT_enumeration, "phase_A_state", PADDR(phase_A_state),PT_DESCRIPTION,"Defines the current state of the phase A switch",
-				PT_KEYWORD, "OPEN", (enumeration)OPEN,
-				PT_KEYWORD, "CLOSED", (enumeration)CLOSED,
+				PT_KEYWORD, "OPEN", (enumeration)SW_OPEN,
+				PT_KEYWORD, "CLOSED", (enumeration)SW_CLOSED,
 			PT_enumeration, "phase_B_state", PADDR(phase_B_state),PT_DESCRIPTION,"Defines the current state of the phase B switch",
-				PT_KEYWORD, "OPEN", (enumeration)OPEN,
-				PT_KEYWORD, "CLOSED", (enumeration)CLOSED,
+				PT_KEYWORD, "OPEN", (enumeration)SW_OPEN,
+				PT_KEYWORD, "CLOSED", (enumeration)SW_CLOSED,
 			PT_enumeration, "phase_C_state", PADDR(phase_C_state),PT_DESCRIPTION,"Defines the current state of the phase C switch",
-				PT_KEYWORD, "OPEN", (enumeration)OPEN,
-				PT_KEYWORD, "CLOSED", (enumeration)CLOSED,
+				PT_KEYWORD, "OPEN", (enumeration)SW_OPEN,
+				PT_KEYWORD, "CLOSED", (enumeration)SW_CLOSED,
 			PT_enumeration, "operating_mode", PADDR(switch_banked_mode),PT_DESCRIPTION,"Defines whether the switch operates in a banked or per-phase control mode",
 				PT_KEYWORD, "INDIVIDUAL", (enumeration)INDIVIDUAL_SW,
 				PT_KEYWORD, "BANKED", (enumeration)BANKED_SW,
@@ -91,9 +91,9 @@ int switch_object::create()
 
 	prev_full_status = 0x00;		//Flag as all open initially
 	switch_banked_mode = BANKED_SW;	//Assume operates in banked mode normally
-	phase_A_state = CLOSED;			//All switches closed by default
-	phase_B_state = CLOSED;
-	phase_C_state = CLOSED;
+	phase_A_state = SW_CLOSED;			//All switches closed by default
+	phase_B_state = SW_CLOSED;
+	phase_C_state = SW_CLOSED;
 
 	prev_SW_time = 0;
 
@@ -246,13 +246,13 @@ int switch_object::init(OBJECT *parent)
 		phase_total = (double)(has_phase(PHASE_A) + has_phase(PHASE_B) + has_phase(PHASE_C));	//See how many switches we have
 
 		switch_total = 0.0;
-		if (has_phase(PHASE_A) && (phase_A_state == CLOSED))
+		if (has_phase(PHASE_A) && (phase_A_state == SW_CLOSED))
 			switch_total += 1.0;
 
-		if (has_phase(PHASE_B) && (phase_B_state == CLOSED))
+		if (has_phase(PHASE_B) && (phase_B_state == SW_CLOSED))
 			switch_total += 1.0;
 
-		if (has_phase(PHASE_C) && (phase_C_state == CLOSED))
+		if (has_phase(PHASE_C) && (phase_C_state == SW_CLOSED))
 			switch_total += 1.0;
 
 		switch_total /= phase_total;
@@ -262,11 +262,11 @@ int switch_object::init(OBJECT *parent)
 			//Initial check, make sure stays open
 			if (status == LS_OPEN)
 			{
-				phase_A_state = phase_B_state = phase_C_state = CLOSED;	//Set all to open - phase checks will sort it out
+				phase_A_state = phase_B_state = phase_C_state = SW_CLOSED;	//Set all to open - phase checks will sort it out
 			}
 			else
 			{
-				phase_A_state = phase_B_state = phase_C_state = CLOSED;	//Set all to closed - phase checks will sort it out
+				phase_A_state = phase_B_state = phase_C_state = SW_CLOSED;	//Set all to closed - phase checks will sort it out
 			}
 		}
 		else	//Minority or stalemate
@@ -275,17 +275,17 @@ int switch_object::init(OBJECT *parent)
 			{
 				if (status == LS_OPEN)	//These check assume phase_X_state will be manipulated, not status
 				{
-					phase_A_state = phase_B_state = phase_C_state = OPEN;
+					phase_A_state = phase_B_state = phase_C_state = SW_OPEN;
 				}
 				else	//Closed
 				{
-					phase_A_state = phase_B_state = phase_C_state = CLOSED;
+					phase_A_state = phase_B_state = phase_C_state = SW_CLOSED;
 				}
 			}
 			else	//Not stalemate - open all
 			{
 				status = LS_OPEN;
-				phase_A_state = phase_B_state = phase_C_state = OPEN;	//Set all to open - phase checks will sort it out
+				phase_A_state = phase_B_state = phase_C_state = SW_OPEN;	//Set all to open - phase checks will sort it out
 			}
 		}
 
@@ -330,7 +330,7 @@ int switch_object::init(OBJECT *parent)
 				b_mat[2][2] = complex(0.0,0.0);
 			}
 
-			phase_A_state = phase_B_state = phase_C_state = OPEN;	//All open
+			phase_A_state = phase_B_state = phase_C_state = SW_OPEN;	//All open
 			prev_full_status = 0x00;								//Confirm here
 		}
 		else
@@ -352,7 +352,7 @@ int switch_object::init(OBJECT *parent)
 					b_mat[0][0] = switch_impedance_value;
 				}
 
-				phase_A_state = CLOSED;							//Flag as closed
+				phase_A_state = SW_CLOSED;							//Flag as closed
 				prev_full_status |= 0x04;
 			}
 
@@ -373,7 +373,7 @@ int switch_object::init(OBJECT *parent)
 					b_mat[1][1] = switch_impedance_value;
 				}
 
-				phase_B_state = CLOSED;							//Flag as closed
+				phase_B_state = SW_CLOSED;							//Flag as closed
 				prev_full_status |= 0x02;
 			}
 
@@ -394,7 +394,7 @@ int switch_object::init(OBJECT *parent)
 					b_mat[2][2] = switch_impedance_value;
 				}
 
-				phase_C_state = CLOSED;							//Flag as closed
+				phase_C_state = SW_CLOSED;							//Flag as closed
 				prev_full_status |= 0x01;
 			}
 		}
@@ -442,14 +442,14 @@ int switch_object::init(OBJECT *parent)
 				b_mat[2][2] = complex(0.0,0.0);
 			}
 
-			phase_A_state = phase_B_state = phase_C_state = OPEN;	//All open
+			phase_A_state = phase_B_state = phase_C_state = SW_OPEN;	//All open
 			prev_full_status = 0x00;								//Confirm here
 		}
 		else	//LS_CLOSED - handle individually
 		{
 			if (has_phase(PHASE_A))
 			{
-				if (phase_A_state == CLOSED)
+				if (phase_A_state == SW_CLOSED)
 				{
 					if (solver_method == SM_NR)
 					{
@@ -489,7 +489,7 @@ int switch_object::init(OBJECT *parent)
 
 			if (has_phase(PHASE_B))
 			{
-				if (phase_B_state == CLOSED)
+				if (phase_B_state == SW_CLOSED)
 				{
 					if (solver_method == SM_NR)
 					{
@@ -529,7 +529,7 @@ int switch_object::init(OBJECT *parent)
 
 			if (has_phase(PHASE_C))
 			{
-				if (phase_C_state == CLOSED)
+				if (phase_C_state == SW_CLOSED)
 				{
 					if (solver_method == SM_NR)
 					{
@@ -813,9 +813,9 @@ TIMESTAMP switch_object::presync(TIMESTAMP t0)
 			}
 		}
 		phased_switch_status = 0x00;
-		if (phase_A_state == CLOSED) phased_switch_status |= 0x04;
-		if (phase_B_state == CLOSED) phased_switch_status |= 0x02;
-		if (phase_C_state == CLOSED) phased_switch_status |= 0x01;
+		if (phase_A_state == SW_CLOSED) phased_switch_status |= 0x04;
+		if (phase_B_state == SW_CLOSED) phased_switch_status |= 0x02;
+		if (phase_C_state == SW_CLOSED) phased_switch_status |= 0x01;
 		phase_changes = phased_switch_status ^ prev_full_status;
 		gl_verbose ("switch_object::presync:%s:%ld:%d:%d:%d", get_name(), t0, prev_full_status, phased_switch_status, phase_changes);
 		if (phased_switch_status != prev_full_status)	{
@@ -964,13 +964,13 @@ void switch_object::switch_sync_function(void)
 				phase_total = (double)(has_phase(PHASE_A) + has_phase(PHASE_B) + has_phase(PHASE_C));	//See how many switches we have
 
 				switch_total = 0.0;
-				if (has_phase(PHASE_A) && (phase_A_state == CLOSED))
+				if (has_phase(PHASE_A) && (phase_A_state == SW_CLOSED))
 					switch_total += 1.0;
 
-				if (has_phase(PHASE_B) && (phase_B_state == CLOSED))
+				if (has_phase(PHASE_B) && (phase_B_state == SW_CLOSED))
 					switch_total += 1.0;
 
-				if (has_phase(PHASE_C) && (phase_C_state == CLOSED))
+				if (has_phase(PHASE_C) && (phase_C_state == SW_CLOSED))
 					switch_total += 1.0;
 
 				switch_total /= phase_total;
@@ -978,7 +978,7 @@ void switch_object::switch_sync_function(void)
 				if (switch_total > 0.5)	//In two switches, a stalemate occurs.  We'll consider this a "maintain status quo" state
 				{
 					status = LS_CLOSED;	//If it wasn't here, it is now
-					phase_A_state = phase_B_state = phase_C_state = CLOSED;	//Set all to closed - phase checks will sort it out
+					phase_A_state = phase_B_state = phase_C_state = SW_CLOSED;	//Set all to closed - phase checks will sort it out
 				}
 				else	//Minority or stalemate
 				{
@@ -986,26 +986,26 @@ void switch_object::switch_sync_function(void)
 					{
 						if (status == LS_OPEN)	//These check assume phase_X_state will be manipulated, not status
 						{
-							phase_A_state = phase_B_state = phase_C_state = OPEN;
+							phase_A_state = phase_B_state = phase_C_state = SW_OPEN;
 						}
 						else	//Closed
 						{
-							phase_A_state = phase_B_state = phase_C_state = CLOSED;
+							phase_A_state = phase_B_state = phase_C_state = SW_CLOSED;
 						}
 					}
 					else	//Not stalemate - open all
 					{
 						status = LS_OPEN;
-						phase_A_state = phase_B_state = phase_C_state = OPEN;	//Set all to open - phase checks will sort it out
+						phase_A_state = phase_B_state = phase_C_state = SW_OPEN;	//Set all to open - phase checks will sort it out
 					}
 				}
 			}//End status is same
 			else	//Not the same - force the inputs
 			{
 				if (status==LS_OPEN)
-					phase_A_state = phase_B_state = phase_C_state = OPEN;	//Flag all as open
+					phase_A_state = phase_B_state = phase_C_state = SW_OPEN;	//Flag all as open
 				else
-					phase_A_state = phase_B_state = phase_C_state = CLOSED;	//Flag all as closed
+					phase_A_state = phase_B_state = phase_C_state = SW_CLOSED;	//Flag all as closed
 			}//End not same
 
 			if (status==LS_OPEN)
@@ -1137,7 +1137,7 @@ void switch_object::switch_sync_function(void)
 		{
 			if (status == LS_OPEN)	//Fully opened means all go open
 			{
-				phase_A_state = phase_B_state = phase_C_state = OPEN;	//All open
+				phase_A_state = phase_B_state = phase_C_state = SW_OPEN;	//All open
 
 				if (solver_method == SM_NR)
 				{
@@ -1182,7 +1182,7 @@ void switch_object::switch_sync_function(void)
 			{
 				if (has_phase(PHASE_A))
 				{
-					if (phase_A_state == CLOSED)
+					if (phase_A_state == SW_CLOSED)
 					{
 						pres_status |= 0x04;
 
@@ -1224,7 +1224,7 @@ void switch_object::switch_sync_function(void)
 
 				if (has_phase(PHASE_B))
 				{
-					if (phase_B_state == CLOSED)
+					if (phase_B_state == SW_CLOSED)
 					{
 						pres_status |= 0x02;
 
@@ -1266,7 +1266,7 @@ void switch_object::switch_sync_function(void)
 
 				if (has_phase(PHASE_C))
 				{
-					if (phase_C_state == CLOSED)
+					if (phase_C_state == SW_CLOSED)
 					{
 						pres_status |= 0x01;
 
@@ -1350,7 +1350,7 @@ void switch_object::switch_sync_function(void)
 			//Default else -- already mapped
 
 			//Loop through and handle phases appropriate
-			if (status == CLOSED)
+			if (status == LS_CLOSED)
 			{
 				//Check phases
 				if (has_phase(PHASE_A))
@@ -1361,6 +1361,7 @@ void switch_object::switch_sync_function(void)
 					b_mat[0][0] = switch_impedance_value;
 					a_mat[0][0] = 1.0;
 					d_mat[0][0] = 1.0;
+					phase_A_state = SW_CLOSED;
 				}
 
 				if (has_phase(PHASE_B))
@@ -1370,6 +1371,7 @@ void switch_object::switch_sync_function(void)
 					b_mat[1][1] = switch_impedance_value;
 					a_mat[1][1] = 1.0;
 					d_mat[1][1] = 1.0;
+					phase_B_state = SW_CLOSED;
 				}
 
 				if (has_phase(PHASE_C))
@@ -1379,6 +1381,7 @@ void switch_object::switch_sync_function(void)
 					b_mat[2][2] = switch_impedance_value;
 					a_mat[2][2] = 1.0;
 					d_mat[2][2] = 1.0;
+					phase_C_state = SW_CLOSED;
 				}
 
 				//Call the reconfiguration function
@@ -1436,6 +1439,9 @@ void switch_object::switch_sync_function(void)
 					}
 				}
 				//Default else -- not mapped
+
+				//Set individual flags
+				phase_A_state = phase_B_state = phase_C_state = SW_OPEN;
 			}
 
 			//Update status
@@ -1476,13 +1482,13 @@ unsigned char switch_object::switch_expected_sync_function(void)
 				phase_total = (double)(has_phase(PHASE_A) + has_phase(PHASE_B) + has_phase(PHASE_C));	//See how many switches we have
 
 				switch_total = 0.0;
-				if (has_phase(PHASE_A) && (temp_A_state == CLOSED))
+				if (has_phase(PHASE_A) && (temp_A_state == SW_CLOSED))
 					switch_total += 1.0;
 
-				if (has_phase(PHASE_B) && (temp_B_state == CLOSED))
+				if (has_phase(PHASE_B) && (temp_B_state == SW_CLOSED))
 					switch_total += 1.0;
 
-				if (has_phase(PHASE_C) && (temp_C_state == CLOSED))
+				if (has_phase(PHASE_C) && (temp_C_state == SW_CLOSED))
 					switch_total += 1.0;
 
 				switch_total /= phase_total;
@@ -1490,7 +1496,7 @@ unsigned char switch_object::switch_expected_sync_function(void)
 				if (switch_total > 0.5)	//In two switches, a stalemate occurs.  We'll consider this a "maintain status quo" state
 				{
 					temp_status = LS_CLOSED;	//If it wasn't here, it is now
-					temp_A_state = temp_B_state = temp_C_state = CLOSED;	//Set all to closed - phase checks will sort it out
+					temp_A_state = temp_B_state = temp_C_state = SW_CLOSED;	//Set all to closed - phase checks will sort it out
 				}
 				else	//Minority or stalemate
 				{
@@ -1498,26 +1504,26 @@ unsigned char switch_object::switch_expected_sync_function(void)
 					{
 						if (temp_status == LS_OPEN)	//These check assume phase_X_state will be manipulated, not status
 						{
-							temp_A_state = temp_B_state = temp_C_state = OPEN;
+							temp_A_state = temp_B_state = temp_C_state = SW_OPEN;
 						}
 						else	//Closed
 						{
-							temp_A_state = temp_B_state = temp_C_state = CLOSED;
+							temp_A_state = temp_B_state = temp_C_state = SW_CLOSED;
 						}
 					}
 					else	//Not stalemate - open all
 					{
 						temp_status = LS_OPEN;
-						temp_A_state = temp_B_state = temp_C_state = OPEN;	//Set all to open - phase checks will sort it out
+						temp_A_state = temp_B_state = temp_C_state = SW_OPEN;	//Set all to open - phase checks will sort it out
 					}
 				}
 			}//End status is same
 			else	//Not the same - force the inputs
 			{
 				if (temp_status==LS_OPEN)
-					temp_A_state = temp_B_state = temp_C_state = OPEN;	//Flag all as open
+					temp_A_state = temp_B_state = temp_C_state = SW_OPEN;	//Flag all as open
 				else
-					temp_A_state = temp_B_state = temp_C_state = CLOSED;	//Flag all as closed
+					temp_A_state = temp_B_state = temp_C_state = SW_CLOSED;	//Flag all as closed
 			}//End not same
 
 			if (temp_status==LS_OPEN)
@@ -1559,14 +1565,14 @@ unsigned char switch_object::switch_expected_sync_function(void)
 		{
 			if (temp_status == LS_OPEN)	//Fully opened means all go open
 			{
-				temp_A_state = temp_B_state = temp_C_state = OPEN;	//All open
+				temp_A_state = temp_B_state = temp_C_state = SW_OPEN;	//All open
 				phases_out &= 0xF0;		//Remove all our phases
 			}
 			else	//Closed means a phase-by-phase basis
 			{
 				if (has_phase(PHASE_A))
 				{
-					if (temp_A_state == CLOSED)
+					if (temp_A_state == SW_CLOSED)
 					{
 						phases_out |= 0x04;	//Ensure we're set
 					}
@@ -1578,7 +1584,7 @@ unsigned char switch_object::switch_expected_sync_function(void)
 
 				if (has_phase(PHASE_B))
 				{
-					if (temp_B_state == CLOSED)
+					if (temp_B_state == SW_CLOSED)
 					{
 						phases_out |= 0x02;	//Ensure we're set
 					}
@@ -1590,7 +1596,7 @@ unsigned char switch_object::switch_expected_sync_function(void)
 
 				if (has_phase(PHASE_C))
 				{
-					if (temp_C_state == CLOSED)
+					if (temp_C_state == SW_CLOSED)
 					{
 						phases_out |= 0x01;	//Ensure we're set
 					}
@@ -1628,7 +1634,7 @@ void switch_object::set_switch(bool desired_status)
 					a_mat[0][0] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
 					d_mat[0][0] = 0.0;
 					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Ensure we're not set
-					phase_A_state = OPEN;				//Open this phase
+					phase_A_state = SW_OPEN;				//Open this phase
 				}
 
 				if (has_phase(PHASE_B))
@@ -1638,7 +1644,7 @@ void switch_object::set_switch(bool desired_status)
 					a_mat[1][1] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
 					d_mat[1][1] = 0.0;
 					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Ensure we're not set
-					phase_B_state = OPEN;				//Open this phase
+					phase_B_state = SW_OPEN;				//Open this phase
 				}
 
 				if (has_phase(PHASE_C))
@@ -1648,7 +1654,7 @@ void switch_object::set_switch(bool desired_status)
 					a_mat[2][2] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
 					d_mat[2][2] = 0.0;
 					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Ensure we're not set
-					phase_C_state = OPEN;				//Open this phase
+					phase_C_state = SW_OPEN;				//Open this phase
 				}
 			}//end open
 			else					//Must be closed then
@@ -1660,7 +1666,7 @@ void switch_object::set_switch(bool desired_status)
 					a_mat[0][0] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 					d_mat[0][0] = 1.0;
 					NR_branchdata[NR_branch_reference].phases |= 0x04;	//Ensure we're set
-					phase_A_state = CLOSED;				//Close this phase
+					phase_A_state = SW_CLOSED;				//Close this phase
 				}
 
 				if (has_phase(PHASE_B))
@@ -1670,7 +1676,7 @@ void switch_object::set_switch(bool desired_status)
 					a_mat[1][1] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 					d_mat[1][1] = 1.0;
 					NR_branchdata[NR_branch_reference].phases |= 0x02;	//Ensure we're set
-					phase_B_state = CLOSED;				//Close this phase
+					phase_B_state = SW_CLOSED;				//Close this phase
 				}
 
 				if (has_phase(PHASE_C))
@@ -1680,7 +1686,7 @@ void switch_object::set_switch(bool desired_status)
 					a_mat[2][2] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 					d_mat[2][2] = 1.0;
 					NR_branchdata[NR_branch_reference].phases |= 0x01;	//Ensure we're set
-					phase_C_state = CLOSED;				//Close this phase
+					phase_C_state = SW_CLOSED;				//Close this phase
 				}
 			}//end closed
 
@@ -1716,21 +1722,21 @@ void switch_object::set_switch_full(char desired_status_A, char desired_status_B
 {
 	gl_verbose ("set_switch_full:%s:%d:%d:%d", get_name(), desired_status_A, desired_status_B, desired_status_C);
 	if (desired_status_A == 0)
-		phase_A_state = OPEN;
+		phase_A_state = SW_OPEN;
 	else if (desired_status_A == 1)
-		phase_A_state = CLOSED;
+		phase_A_state = SW_CLOSED;
 	//defaulted else - do nothing, leave it as it is
 
 	if (desired_status_B == 0)
-		phase_B_state = OPEN;
+		phase_B_state = SW_OPEN;
 	else if (desired_status_B == 1)
-		phase_B_state = CLOSED;
+		phase_B_state = SW_CLOSED;
 	//defaulted else - do nothing, leave it as it is
 
 	if (desired_status_C == 0)
-		phase_C_state = OPEN;
+		phase_C_state = SW_OPEN;
 	else if (desired_status_C == 1)
-		phase_C_state = CLOSED;
+		phase_C_state = SW_CLOSED;
 	//defaulted else - do nothing, leave it as it is
 
 	//Call syncing function (does all that used to occur here)
@@ -1770,7 +1776,7 @@ void switch_object::set_switch_full_reliability(unsigned char desired_status)
 		}
 		else	//Removing it (faulting it)
 		{
-			if (phase_A_state == CLOSED)
+			if (phase_A_state == SW_CLOSED)
 			{
 				phased_switch_status |= 0x04;	//Flag it as being "was closed"
 			}
@@ -1805,7 +1811,7 @@ void switch_object::set_switch_full_reliability(unsigned char desired_status)
 		}
 		else	//Removing it (faulting it)
 		{
-			if (phase_B_state == CLOSED)
+			if (phase_B_state == SW_CLOSED)
 			{
 				phased_switch_status |= 0x02;	//Flag it as being "was closed"
 			}
@@ -1840,7 +1846,7 @@ void switch_object::set_switch_full_reliability(unsigned char desired_status)
 		}
 		else	//Removing it (faulting it)
 		{
-			if (phase_C_state == CLOSED)
+			if (phase_C_state == SW_CLOSED)
 			{
 				phased_switch_status |= 0x01;	//Flag it as being "was closed"
 			}
@@ -2081,7 +2087,7 @@ EXPORT int change_switch_state_toggle(OBJECT *thisobj)
 	switch_object *swtchobj = OBJECTDATA(thisobj,switch_object);
 
 	//See the current state
-	if (swtchobj->status == switch_object::OPEN)
+	if (swtchobj->status == LS_OPEN)
 	{
 		swtchobj->set_switch(true);
 	}

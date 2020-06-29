@@ -23,7 +23,7 @@ public:
 	static CLASS *pclass;
 
 public:
-	typedef enum {OPEN=0, CLOSED=1} SWITCHSTATE;
+	typedef enum {SW_OPEN=0, SW_CLOSED=1} SWITCHSTATE;
 	typedef enum {INDIVIDUAL_SW=0, BANKED_SW=1} SWITCHBANK;
 	unsigned char prev_full_status;	///Fully resolved status (ABC) - used for reliability and recalculation detection
 
