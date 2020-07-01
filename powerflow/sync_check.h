@@ -72,6 +72,18 @@ private: /* Measurements, actuator, gld objs, & Nominal Values */
 	bool swt_ph_B_flag;
 	bool swt_ph_C_flag;
 
+private: /* Published Variables (for Measurements of Recorders) */
+	double freq_diff_hz;
+
+	// MAG_DIFF
+	double volt_A_diff, volt_B_diff, volt_C_diff;
+	double volt_A_diff_pu, volt_B_diff_pu, volt_C_diff_pu;
+
+	// SEP_DIFF
+	double volt_A_mag_diff, volt_B_mag_diff, volt_C_mag_diff;
+	double volt_A_mag_diff_pu, volt_B_mag_diff_pu, volt_C_mag_diff_pu;
+	double volt_A_ang_deg_diff, volt_B_ang_deg_diff, volt_C_ang_deg_diff;
+
 private: /* Published Variables*/
 	bool sc_enabled_flag;
 
@@ -103,6 +115,7 @@ private: /* Published Variables*/
 private:
 	/* Funcs mainly used in create() */
 	void init_vars();
+	void init_diff_prop(double = -1); // Measurement Properties (hidden) for Recorders
 
 	/* Funcs mainly used in init() */
 	void data_sanity_check(OBJECT *par = NULL);
@@ -118,6 +131,9 @@ private: /* Funcs for Deltamode */
 	void check_metrics(bool deltamode_check);
 	void check_excitation(unsigned long);
 	void reset_after_excitation();
+
+private: /* Func for both QSTS & Deltamode */
+	void update_diff_prop();
 };
 
 // Utility Funcs
