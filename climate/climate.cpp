@@ -541,7 +541,7 @@ climate::climate(MODULE *module)
 			PT_double,"extraterrestrial_global_horizontal[W/sf]",PADDR(global_horizontal_extra),
 			PT_double,"extraterrestrial_direct_normal[W/sf]",PADDR(direct_normal_extra),
 			PT_double,"pressure[mbar]",PADDR(pressure),
-			PT_double,"wind_speed[m/s]", PADDR(wind_speed),
+			PT_double,"wind_speed[mph]", PADDR(wind_speed),
 			PT_double,"wind_dir[deg]", PADDR(wind_dir),
 			PT_double,"wind_gust[mph]", PADDR(wind_gust),
 			PT_double,"record.low[degF]", PADDR(record.low),
@@ -1758,7 +1758,7 @@ void climate::write_out_cloud_pattern( char pattern){ //Used only for verificati
 	ofstream out_file;
 
 	char buffer [100];
-	sprintf (buffer, "cloud_pattern_%010ld.csv", prev_NTime);
+	sprintf (buffer, "cloud_pattern_%010lld.csv", prev_NTime);
 	std::string file_string = buffer;
 	out_file.open(file_string.c_str(), ios::out);
 

@@ -19,7 +19,7 @@ public:
 		R_PHASE_A,
 		R_PHASE_B,
 		R_PHASE_C
-	};
+	} R_PHASE;
 	enumeration reference_phase;						///< The point of reference for the positive sequence voltage conversion
 	complex average_transmission_power_load;		///<the average constant power load to be posted directly to the pw_load object
 	complex average_transmission_impedance_load;	///<the average constant impedance load to be posted directly to the pw_load object

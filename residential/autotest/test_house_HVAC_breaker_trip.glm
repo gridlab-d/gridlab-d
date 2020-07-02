@@ -1,0 +1,156 @@
+//Tests a large "commerical" type building
+//Set up so the HVAC breaker size is too small, so it will trip and not allow cooling
+//Temperature will basically rise from the ZIPload heat
+
+clock {
+  timezone EST+5EDT;
+  starttime '2016-08-05 00:00:00';
+  stoptime '2016-08-06 00:00:00';
+}
+//#set profiler=1
+
+module assert;
+//module tape;
+module powerflow;
+module residential {
+  implicit_enduses NONE;
+};
+
+//Schedule
+schedule retail_lights {
+     // Weekday {
+     * 0 * * 0-6 0.27;
+     * 1 * * 0-6 0.27;
+     * 2 * * 0-6 0.27;
+     * 3 * * 0-6 0.27;
+     * 4 * * 0-6 0.27;
+     * 5 * * 0-6 0.27;
+     * 6 * * 0-6 0.27;
+     * 7 * * 0-6 0.27;
+     * 8 * * 0-6 0.6;
+     * 9 * * 0-6 1.0000;
+     * 10 * * 0-6 1.0000;
+     * 11 * * 0-6 1.0000;
+     * 12 * * 0-6 1.0000;
+     * 13 * * 0-6 1.0000;
+     * 14 * * 0-6 1.0000;
+     * 15 * * 0-6 1.0000;
+     * 16 * * 0-6 1.0000;
+     * 17 * * 0-6 1.0000;
+     * 18 * * 0-6 1.0000;
+     * 19 * * 0-6 1.0000;
+     * 20 * * 0-6 1.0000;
+     * 21 * * 0-6 0.75;
+     * 22 * * 0-6 0.5;
+     * 23 * * 0-6 0.27;
+
+     // Weekend {
+     * 0 * * 7 0.27;
+     * 1 * * 7 0.27;
+     * 2 * * 7 0.27;
+     * 3 * * 7 0.27;
+     * 4 * * 7 0.27;
+     * 5 * * 7 0.27;
+     * 6 * * 7 0.27;
+     * 7 * * 7 0.27;
+     * 8 * * 7 0.6;
+     * 9 * * 7 1.0000;
+     * 10 * * 7 1.0000;
+     * 11 * * 7 1.0000;
+     * 12 * * 7 1.0000;
+     * 13 * * 7 1.0000;
+     * 14 * * 7 1.0000;
+     * 15 * * 7 1.0000;
+     * 16 * * 7 1.0000;
+     * 17 * * 7 1.0000;
+     * 18 * * 7 1.0000;
+     * 19 * * 7 1.0000;
+     * 20 * * 7 1.0000;
+     * 21 * * 7 0.75;
+     * 22 * * 7 0.5;
+     * 23 * * 7 0.27;
+}
+
+object meter {
+  name meter_bldg;
+  phases ABCN;
+  nominal_voltage 120.0;
+  bill_mode TIERED;
+  price 0.1020;
+  monthly_fee 13.00;
+  bill_day 1;
+  first_tier_energy 500.0;
+  first_tier_price 0.117013;
+  second_tier_energy 1000.0;
+  second_tier_price 0.122513;
+  // object recorder {
+    // file meter_recorder.csv;
+    // property "measured_power.real,measured_power.imag";
+    // interval -1; //15;
+  // };
+}
+// load bldg_36 parent meter_bldg_36 type food_service sqft 8802 kva 58.000 nphs 3 phases ABC vln 120.000
+object house {
+  hvac_breaker_rating 40 A;	//Intentionally undersized to make it trip
+  name bldg;
+  parent meter_bldg;
+  groupid food_service;
+  motor_model BASIC;
+  schedule_skew -129;
+  floor_area 8803;
+  design_internal_gains 214282.52;
+  number_of_doors 3;
+  aspect_ratio 0.78;
+  total_thermal_mass_per_floor_area 2.26;
+  interior_exterior_wall_ratio 1.00;
+  exterior_floor_fraction 1.000;
+  exterior_ceiling_fraction 1.000;
+  Rwall 5.69;
+  Rroof 21.78;
+  Rfloor 22.00;
+  Rdoors 3.0;
+  exterior_wall_fraction 1.00;
+  Rwindows 0.76;
+  window_shading 0.30;
+  window_exterior_transmission_coefficient 0.50;
+  airchange_per_hour 6.24;
+  window_wall_ratio 0.154;
+  heating_system_type RESISTANCE;
+  auxiliary_system_type NONE;
+  fan_type ONE_SPEED;
+  cooling_system_type ELECTRIC;
+  air_temperature 68.65;
+  mass_temperature 68.65;
+  over_sizing_factor 0.21;
+  cooling_COP 3.61;
+  cooling_setpoint 80.0; // retail_cooling
+  heating_setpoint 60.0; // retail_heating
+  object ZIPload { // lights
+    schedule_skew -129;
+    heatgain_fraction 0.9;
+    power_fraction 0.40;
+    impedance_fraction 0.20;
+    current_fraction 0.40;
+    power_pf 0.97;
+    current_pf 0.97;
+    impedance_pf 0.97;
+    base_power retail_lights*40; //4.08;
+  };
+  // object recorder {
+    // file bldg_recorder.csv;
+    // property total_load,hvac_load,hvac_power.real,hvac_power.imag,air_temperature;
+    // interval -1; //15;
+  // };
+}
+
+//Single assert - just catch the high temperature point
+//if it tripped right, that should be sufficient
+object double_assert {
+	name temp_checker;
+	parent bldg;
+	target air_temperature;
+	value 86.626;
+	within 0.01;
+	once ONCE_TRUE;
+	in '2016-08-05 20:57:51 EDT';
+}

@@ -449,7 +449,7 @@ AS_IF([test x"$HAVE_CPPUNIT" = xyes],
      LIBS="$SAVED_LIBS"
      AC_MSG_RESULT([$HAVE_CPPUNIT])])
 AS_IF([test x"$HAVE_CPPUNIT" = xyes],
-    [# CppUnit doesn't separate its flags appropriately
+    [# CppUnit does not separate its flags appropriately
      COMBINED_CPPUNIT_FLAGS="$CPPUNIT_CFLAGS $CPPUNIT_LIBS"
      CPPUNIT_CFLAGS=
      CPPUNIT_LIBS=
@@ -588,6 +588,7 @@ LIBEXT=.so
 ;;
 *darwin* )
 LIBEXT=.so
+GLD_CPPFLAGS="$GLD_CPPFLAGS -stdlib=libc++"
 # LIBEXT=.dylib # This is the proper extension for MacOS now, but libtool does not build it properly.
 ;;
 *windows* )

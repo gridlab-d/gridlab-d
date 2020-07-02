@@ -139,7 +139,7 @@ void collect::fetch_double(double **prop, char *name, OBJECT *parent){
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "collect:%i", hdr->id);
-		if(*name == NULL)
+		if(*name == 0)
 			sprintf(msg, "%s: collect unable to find property: name is NULL", namestr);
 		else
 			sprintf(msg, "%s: collect unable to find %s", namestr, name);
@@ -155,7 +155,7 @@ void collect::fetch_int(int **prop, char *name, OBJECT *parent){
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "collect:%i", hdr->id);
-		if(*name == NULL)
+		if(*name == 0)
 			sprintf(msg, "%s: collect unable to find property: name is NULL", namestr);
 		else
 			sprintf(msg, "%s: collect unable to find %s", namestr, name);
