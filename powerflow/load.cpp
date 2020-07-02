@@ -191,6 +191,8 @@ load::load(MODULE *mod) : node(mod)
 			GL_THROW("Unable to publish load island-status-reset function");
 		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
 			GL_THROW("Unable to publish load swing-status check function");
+		if (gl_publish_function(oclass, "pwr_object_kmldata", (FUNCTIONADDR)load_kmldata) == NULL)
+			GL_THROW("Unable to publish load kmldata function");
     }
 }
 
@@ -3496,6 +3498,17 @@ EXPORT SIMULATIONMODE interupdate_load(OBJECT *obj, unsigned int64 delta_time, u
 		gl_error("interupdate_load(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
 		return status;
 	}
+}
+
+//KML Export
+EXPORT int load_kmldata(OBJECT *obj,int (*stream)(const char*,...))
+{
+	load *n = OBJECTDATA(obj, load);
+	int rv = 1;
+
+	rv = n->kmldata(stream);
+
+	return rv;
 }
 
 int load::kmldata(int (*stream)(const char*,...))

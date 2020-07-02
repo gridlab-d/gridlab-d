@@ -94,12 +94,6 @@
 #include "link.h"
 #include "node.h"
 
-//More stuff to try and separate when time permits
-#include "meter.h"
-#include "regulator.h"
-#include "triplex_meter.h"
-#include "switch_object.h"
-
 CLASS* link_object::oclass = NULL;
 CLASS* link_object::pclass = NULL;
 
@@ -178,6 +172,10 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
 			PT_double, "emergency_rating_C[A]", PADDR(link_rating[1][2]), PT_DESCRIPTION, "Emergency rating for phase C of this link object (set individual line segments)",
 			PT_double, "inrush_convergence_value[V]", PADDR(inrush_tol_value), PT_DESCRIPTION, "Tolerance, as change in line voltage drop between iterations, for deltamode in-rush completion",
 
+			//Hidden properties to do linking better
+			PT_complex, "triplex_neutral_1_value", PADDR(tn[0]), PT_ACCESS, PA_HIDDEN, //Exposed version of tn[0]
+			PT_complex, "triplex_neutral_2_value", PADDR(tn[1]), PT_ACCESS, PA_HIDDEN, //Exposed version of tn[1]
+
 			PT_enumeration, "inrush_integration_method_capacitance",PADDR(inrush_int_method_capacitance),PT_DESCRIPTION,"Selected integration method to use for capacitive elements of the link",
 				PT_KEYWORD,"NONE",(enumeration)IRM_NONE,
 				PT_KEYWORD,"UNDEFINED",(enumeration)IRM_UNDEFINED,
@@ -201,6 +199,8 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
 				GL_THROW("Unable to publish link external power calculation function");
 			if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
 				GL_THROW("Unable to publish link external power limit calculation function");
+			if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==NULL)
+				GL_THROW("Unable to publish link external current calculation function");
 	}
 }
 
@@ -3369,6 +3369,8 @@ int link_object::kmlinit(int (*stream)(const char*,...))
 int link_object::kmldump(int (*stream)(const char*,...))
 {
 	OBJECT *obj = OBJECTHDR(this);
+	FUNCTIONADDR temp_funadd = NULL;
+
 	stream("    <Placemark>\n");
 	if (obj->name)
 		stream("      <name>%s</name>\n", obj->name);
@@ -3383,12 +3385,26 @@ int link_object::kmldump(int (*stream)(const char*,...))
 			"<TH WIDTH=\"25%\" COLSPAN=2 ALIGN=CENTER><NOBR>Phase C</NOBR><HR></TH></TR>\n", get_oclass()->get_name(), get_id());
 
 	int status = 2; // green
-#define HANDLE_EX(X,Y)if ( gl_object_isa(my(),Y) ) status = ((X*)this)->kmldata(stream); else
-#define HANDLE(X) HANDLE_EX(X,#X)
-	HANDLE_EX(switch_object,"switch")
-	HANDLE(regulator)
-	HANDLE(triplex_meter)
-	HANDLE(meter)
+	
+	//Check others - de-"macrotized" so it can do things indirectly
+	//No idea why meter and triplex_meter are in a link version - leaving because they were here before
+	if ((gl_object_isa(my(),"switch","powerflow") == true) || (gl_object_isa(my(),"regulator","powerflow") == true) || (gl_object_isa(my(),"triplex_meter","powerflow") == true) || (gl_object_isa(my(),"meter","powerflow") == true))
+	{
+		//Map to the function
+		temp_funadd = (FUNCTIONADDR)(gl_get_function(obj,"pwr_object_kmldata"));
+
+		//See if it was located
+		if (temp_funadd == NULL)
+		{
+			GL_THROW("object:%s - failed to map kmldata function",(obj->name?obj->name:"unnamed"));
+			//Defined above
+		}
+
+		//Call the function
+		// TODO use triplex_node to get to triplex_meter
+		status = ((int (*)(OBJECT *,int (*stream)(const char*,...)))(*temp_funadd))(obj,stream);
+	}
+	else
 	{
 		// values
 		node *pFrom = OBJECTDATA(from,node);
@@ -3634,6 +3650,19 @@ EXPORT int calculate_overlimit_link(OBJECT *obj, double *overload_value, bool *o
 
 	//Assume success
 	return 1;
+}
+
+//Publish the external call for CurrentCalculation, so it can be called "indirectly"
+EXPORT int currentcalculation_link(OBJECT *obj, int nodecall, bool link_fault_mode)
+{
+	int status_rv;
+	link_object *my = OBJECTDATA(obj,link_object);
+	
+	//Call the current update -- do it as a "self call"
+	status_rv = my->CurrentCalculation(nodecall,link_fault_mode);
+
+	//Return value
+	return status_rv;
 }
 
 /**

@@ -23,7 +23,6 @@
 #include <math.h>
 
 #include "triplex_meter.h"
-#include "timestamp.h"
 
 // useful macros
 #define TO_HOURS(t) (((double)t) / (3600 * TS_SECOND))
@@ -161,6 +160,8 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 				GL_THROW("Unable to publish triplex_meter island-status-reset function");
 			if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
 				GL_THROW("Unable to publish triplex_meter swing-status check function");
+			if (gl_publish_function(oclass, "pwr_object_kmldata", (FUNCTIONADDR)triplex_meter_kmldata) == NULL)
+				GL_THROW("Unable to publish triplex_meter kmldata function");
 		}
 }
 
@@ -1064,6 +1065,17 @@ EXPORT SIMULATIONMODE interupdate_triplex_meter(OBJECT *obj, unsigned int64 delt
 		gl_error("interupdate_triplex_meter(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
 		return status;
 	}
+}
+
+//KML Export
+EXPORT int triplex_meter_kmldata(OBJECT *obj,int (*stream)(const char*,...))
+{
+	triplex_meter *n = OBJECTDATA(obj, triplex_meter);
+	int rv = 1;
+
+	rv = n->kmldata(stream);
+
+	return rv;
 }
 
 int triplex_meter::kmldata(int (*stream)(const char*,...))

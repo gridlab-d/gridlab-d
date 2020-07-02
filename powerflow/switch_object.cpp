@@ -77,6 +77,12 @@ switch_object::switch_object(MODULE *mod) : link_object(mod)
 				GL_THROW("Unable to publish switch external power calculation function");
 			if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
 				GL_THROW("Unable to publish switch external power limit calculation function");
+			if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==NULL)
+				GL_THROW("Unable to publish switch external current calculation function");
+
+			//Other
+			if (gl_publish_function(oclass, "pwr_object_kmldata", (FUNCTIONADDR)switch_object_kmldata) == NULL)
+				GL_THROW("Unable to publish switch kmldata function");
     }
 }
 
@@ -2211,6 +2217,17 @@ EXPORT SIMULATIONMODE interupdate_switch(OBJECT *obj, unsigned int64 delta_time,
 		gl_error("interupdate_link(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
 		return status;
 	}
+}
+
+//KML Export
+EXPORT int switch_object_kmldata(OBJECT *obj,int (*stream)(const char*,...))
+{
+	switch_object *n = OBJECTDATA(obj, switch_object);
+	int rv = 1;
+
+	rv = n->kmldata(stream);
+
+	return rv;
 }
 
 int switch_object::kmldata(int (*stream)(const char*,...))

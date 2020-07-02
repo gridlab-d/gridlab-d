@@ -21,7 +21,6 @@
 #include <math.h>
 
 #include "meter.h"
-#include "timestamp.h"
 
 // useful macros
 #define TO_HOURS(t) (((double)t) / (3600 * TS_SECOND))
@@ -181,6 +180,8 @@ meter::meter(MODULE *mod) : node(mod)
 			GL_THROW("Unable to publish meter island-status-reset function");
 		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
 			GL_THROW("Unable to publish meter swing-status check function");
+		if (gl_publish_function(oclass, "pwr_object_kmldata", (FUNCTIONADDR)meter_kmldata) == NULL)
+			GL_THROW("Unable to publish meter kmldata function");
 		}
 }
 
@@ -1218,6 +1219,17 @@ EXPORT SIMULATIONMODE interupdate_meter(OBJECT *obj, unsigned int64 delta_time, 
 		gl_error("interupdate_meter(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
 		return status;
 	}
+}
+
+//KML Export
+EXPORT int meter_kmldata(OBJECT *obj,int (*stream)(const char*,...))
+{
+	meter *n = OBJECTDATA(obj, meter);
+	int rv = 1;
+
+	rv = n->kmldata(stream);
+
+	return rv;
 }
 
 int meter::kmldata(int (*stream)(const char*,...))

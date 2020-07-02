@@ -16,6 +16,9 @@
 
 EXPORT SIMULATIONMODE interupdate_switch(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
+//KML export
+EXPORT int switch_object_kmldata(OBJECT *obj,int (*stream)(const char*,...));
+
 class switch_object : public link_object
 {
 public:
