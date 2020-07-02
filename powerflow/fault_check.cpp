@@ -2427,8 +2427,12 @@ STATUS fault_check::disable_island(int island_number)
 	//Flag a forced reiteration for the next time something can (not now though, we may be halfway through an NR solver loop)
 	force_reassociation = true;
 
-	//Verbose it, for information
-	gl_verbose("fault_check: Removed island %d from the powerflow",(island_number+1));
+	//Output it - no longer as a verbose (easy to miss)
+	gl_warning("fault_check: Removed island %d from the powerflow",(island_number+1));
+	/*  TROUBLESHOOT
+	One of the islands of teh system was removed (by the multi-island capability).  This may have been due to a 
+	divergent powerflow, or some specifically-command action.  If this was not intended, check your file and try again.
+	*/
 
 	//Not sure how we'd fail, at this point
 	return SUCCESS;
