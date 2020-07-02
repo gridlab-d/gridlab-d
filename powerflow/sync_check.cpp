@@ -153,7 +153,7 @@ TIMESTAMP sync_check::postsync(TIMESTAMP t0)
 		{
 			//Update measurements and check
 			update_measurements();
-			check_metrics(true);
+			check_metrics(false);
 
 			//Check if we were flagged
 			if (deltamode_trigger_keep_flag == true)
@@ -844,7 +844,7 @@ void sync_check::update_measurements()
 	}
 }
 
-void sync_check::check_metrics(bool deltamode_check)
+void sync_check::check_metrics(bool deltamode_run)
 {
 	update_diff_prop();
 
@@ -858,19 +858,20 @@ void sync_check::check_metrics(bool deltamode_check)
 			voltage_tolerance_pu = voltage_tolerance / volt_norm;
 		}
 		//Default else - just fallback on voltage_tolerance_pu
-		if (deltamode_check == true)
+
+		//See if we should be calling/remaining in deltamode - all instances call this
+		if ((freq_diff_hz <= frequency_tolerance_hz_deltamode_trig) && (volt_A_diff_pu <= voltage_tolerance_pu_deltamode_trig) &&
+			(volt_B_diff_pu <= voltage_tolerance_pu_deltamode_trig) && (volt_C_diff_pu <= voltage_tolerance_pu_deltamode_trig))
 		{
-			if ((freq_diff_hz <= frequency_tolerance_hz_deltamode_trig) && (volt_A_diff_pu <= voltage_tolerance_pu_deltamode_trig) &&
-				(volt_B_diff_pu <= voltage_tolerance_pu_deltamode_trig) && (volt_C_diff_pu <= voltage_tolerance_pu_deltamode_trig))
-			{
-				deltamode_trigger_keep_flag = true;
-			}
-			else
-			{
-				deltamode_trigger_keep_flag = false;
-			}
-		}	 //End "stay/trigger deltamode" check
-		else //Standard "closure" check
+			deltamode_trigger_keep_flag = true;
+		}
+		else
+		{
+			deltamode_trigger_keep_flag = false;
+		}
+
+		//See if we're in deltamode - in that case, do the standard "closure" check
+		if (deltamode_run == true)
 		{
 			if ((freq_diff_hz <= frequency_tolerance_hz) && (volt_A_diff_pu <= voltage_tolerance_pu) &&
 				(volt_B_diff_pu <= voltage_tolerance_pu) && (volt_C_diff_pu <= voltage_tolerance_pu))
@@ -893,23 +894,22 @@ void sync_check::check_metrics(bool deltamode_check)
 		}
 		//Default else - just fallback on voltage_magnitude_tolerance_pu
 
-		// Check
-		if (deltamode_check == true)
+		//See if we should be calling/remaining in deltamode - all instances call this
+		if ((freq_diff_hz <= frequency_tolerance_hz_deltamode_trig) &&
+			(volt_A_mag_diff_pu <= voltage_magnitude_tolerance_pu_deltamode_trig) &&
+			(volt_B_mag_diff_pu <= voltage_magnitude_tolerance_pu_deltamode_trig) && (volt_C_mag_diff_pu <= voltage_magnitude_tolerance_pu_deltamode_trig) &&
+			(volt_A_ang_deg_diff <= voltage_angle_tolerance_deg_deltamode_trig) &&
+			(volt_B_ang_deg_diff <= voltage_angle_tolerance_deg_deltamode_trig) && (volt_C_ang_deg_diff <= voltage_angle_tolerance_deg_deltamode_trig))
 		{
-			if ((freq_diff_hz <= frequency_tolerance_hz_deltamode_trig) &&
-				(volt_A_mag_diff_pu <= voltage_magnitude_tolerance_pu_deltamode_trig) &&
-				(volt_B_mag_diff_pu <= voltage_magnitude_tolerance_pu_deltamode_trig) && (volt_C_mag_diff_pu <= voltage_magnitude_tolerance_pu_deltamode_trig) &&
-				(volt_A_ang_deg_diff <= voltage_angle_tolerance_deg_deltamode_trig) &&
-				(volt_B_ang_deg_diff <= voltage_angle_tolerance_deg_deltamode_trig) && (volt_C_ang_deg_diff <= voltage_angle_tolerance_deg_deltamode_trig))
-			{
-				deltamode_trigger_keep_flag = true;
-			}
-			else
-			{
-				deltamode_trigger_keep_flag = false;
-			}
-		}	 //End deltamode trigger/maintain check
-		else //Standard "closure check"
+			deltamode_trigger_keep_flag = true;
+		}
+		else
+		{
+			deltamode_trigger_keep_flag = false;
+		}
+
+		//See if we're in deltamode - in that case, do the standard "closure" check
+		if (deltamode_run == true)
 		{
 			if ((freq_diff_hz <= frequency_tolerance_hz) &&
 				(volt_A_mag_diff_pu <= voltage_magnitude_tolerance_pu) &&
@@ -970,7 +970,7 @@ SIMULATIONMODE sync_check::inter_deltaupdate_sync_check(unsigned int64 delta_tim
 		{
 			update_measurements();
 
-			//Do the deltamode trigger check
+			//Do the bound and deltamode "remain" check
 			check_metrics(true);
 
 			//See how to proceed
@@ -983,8 +983,7 @@ SIMULATIONMODE sync_check::inter_deltaupdate_sync_check(unsigned int64 delta_tim
 				deltamode_check_return_val = SM_EVENT;
 			}
 
-			//Actual sync_check tests
-			check_metrics(false);
+			//Actual sync_check tests - see if it should close
 			check_excitation(dt);
 		}
 		//Default else - other passes, just return whatever value we had set

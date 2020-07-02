@@ -128,7 +128,7 @@ private:
 
 private: /* Funcs for Deltamode */
 	void update_measurements();
-	void check_metrics(bool deltamode_check);
+	void check_metrics(bool deltamode_run);
 	void check_excitation(unsigned long);
 	void reset_after_excitation();
 
