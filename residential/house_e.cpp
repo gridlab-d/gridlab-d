@@ -498,7 +498,6 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
         PT_KEYWORD,"TWOV",(enumeration)XPFV_TWOV,
       PT_complex,"external_v1N",PADDR(external_v1N),PT_DESCRIPTION,"circuit 1N voltage from external power flow",
       PT_complex,"external_v2N",PADDR(external_v2N),PT_DESCRIPTION,"circuit 2N voltage from external power flow",
-      PT_complex,"external_pq[kVA]",PADDR(external_pq),PT_DESCRIPTION,"this house's complex p+jq load for an external power flow",
 
 			//Same idea for frequency
 			PT_double,"grid_frequency",PADDR(value_Frequency),PT_ACCESS,PA_HIDDEN,
@@ -801,7 +800,6 @@ int house_e::create()
   external_pf_mode = XPFV_NONE;
   external_v1N = complex(0,0);
   external_v2N = complex(0,0);
-  external_pq = complex(0,0);
 
 	proper_meter_parent = false;	//By default, assume we have no proper parent
 	commercial_load_parent = false;
@@ -3386,9 +3384,6 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 	//TIMESTAMP t = gl_enduse_sync(&total,t1); if (t<t2) t2 = t;
 
 	total_load = total.total.Mag();
-  if (external_pf_mode != XPFV_NONE) {
-    external_pq = total.total;
-  }
 
 	//Push up the values, if need to do so
 	//Pull in the current powerflow values, if relevant

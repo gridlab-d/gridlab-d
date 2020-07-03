@@ -445,7 +445,6 @@ private:
   enumeration external_pf_mode;
   complex external_v1N;            // from OpenDSS or another external power flow program
   complex external_v2N;            // from OpenDSS or another external power flow program
-  complex external_pq;             // to OpenDSS or another external power flow program
 
 	// interface to powerflow calculations
   void check_external_voltage(void);
