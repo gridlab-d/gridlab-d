@@ -451,7 +451,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"last_heating_load[kW]",PADDR(last_heating_load),PT_DESCRIPTION,"stores the previous heating/cooling system load",
 			PT_double,"last_cooling_load[kW]",PADDR(last_cooling_load),PT_DESCRIPTION,"stores the previous heating/cooling system load",
 			PT_complex,"hvac_power[kVA]",PADDR(hvac_power),PT_DESCRIPTION,"describes hvac load complex power consumption",
-			PT_double,"total_load[kW]",PADDR(total_load),
+			PT_double,"total_load[kVA]",PADDR(total_load),
 			PT_enduse,"panel",PADDR(total),PT_DESCRIPTION,"total panel enduse load",
 			PT_double,"design_internal_gain_density[W/sf]",PADDR(design_internal_gain_density),PT_DESCRIPTION,"average density of heat generating devices in the house",
 			PT_bool,"compressor_on",PADDR(compressor_on),
@@ -498,6 +498,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
         PT_KEYWORD,"TWOV",(enumeration)XPFV_TWOV,
       PT_complex,"external_v1N",PADDR(external_v1N),PT_DESCRIPTION,"circuit 1N voltage from external power flow",
       PT_complex,"external_v2N",PADDR(external_v2N),PT_DESCRIPTION,"circuit 2N voltage from external power flow",
+      PT_complex,"external_pq[kVA]",PADDR(external_pq),PT_DESCRIPTION,"this house's complex p+jq load for an external power flow",
 
 			//Same idea for frequency
 			PT_double,"grid_frequency",PADDR(value_Frequency),PT_ACCESS,PA_HIDDEN,
@@ -800,6 +801,7 @@ int house_e::create()
   external_pf_mode = XPFV_NONE;
   external_v1N = complex(0,0);
   external_v2N = complex(0,0);
+  external_pq = complex(0,0);
 
 	proper_meter_parent = false;	//By default, assume we have no proper parent
 	commercial_load_parent = false;
@@ -1418,6 +1420,10 @@ int house_e::init(OBJECT *parent)
 		//Set flag
 		proper_meter_parent = true;
 		commercial_load_parent = false;
+    if (external_pf_mode != XPFV_NONE) {
+      external_pf_mode = XPFV_NONE;
+      gl_warning("house_e:%d ignores external_pf_mode because it has a meter parent", obj->id);
+    }
 	}
 	else if (parent!=NULL && (gl_object_isa(parent,"meter","powerflow") || gl_object_isa(obj->parent,"node","powerflow") || gl_object_isa(obj->parent,"load","powerflow"))) // for three-phase commercial zone-houses
 	{
@@ -1505,6 +1511,10 @@ int house_e::init(OBJECT *parent)
 		// set flags for the powerflow interface
 		proper_meter_parent = true;
 		commercial_load_parent = true;
+    if (external_pf_mode != XPFV_NONE) {
+      external_pf_mode = XPFV_NONE;
+      gl_warning("house_e:%d ignores external_pf_mode because it has a meter parent", obj->id);
+    }
 	}
 	else
 	{
@@ -3376,6 +3386,9 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 	//TIMESTAMP t = gl_enduse_sync(&total,t1); if (t<t2) t2 = t;
 
 	total_load = total.total.Mag();
+  if (external_pf_mode != XPFV_NONE) {
+    external_pq = total.total;
+  }
 
 	//Push up the values, if need to do so
 	//Pull in the current powerflow values, if relevant

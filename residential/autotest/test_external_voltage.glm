@@ -104,7 +104,7 @@ object house{
 
 object recorder {
 	parent house_120;
-	property air_temperature,cooling_setpoint,hvac_power,total_load,voltage_1N,voltage_2N,voltage_12;
+	property air_temperature,cooling_setpoint,hvac_power,total_load,external_pq,voltage_1N,voltage_2N,voltage_12;
 	interval 1800;
 	file house_120.csv;
 }
