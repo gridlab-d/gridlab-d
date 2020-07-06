@@ -72,6 +72,7 @@ int sync_ctrl::init(OBJECT *parent)
     data_sanity_check();
     deltamode_check();
 
+    init_nom_values();
     init_sensors();
 
     return 1;
@@ -124,6 +125,11 @@ SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time,
 void sync_ctrl::dm_update_measurements()
 {
     swt_status = static_cast<SWT_STATUS_ENUM>(get_prop_value<enumeration>(prop_swt_status_ptr, &gld_property::get_enumeration, false));
+
+    if (swt_status == SWT_STATUS_ENUM::OPEN) // If the switch is closed, there is no need to update other measured/calculated properties
+    {
+        sck_freq_diff_hz = get_prop_value<double>(prop_sck_freq_diff_hz_ptr, &gld_property::get_double, false);
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -231,17 +237,28 @@ void sync_ctrl::init_vars() // Init local variables with default settings
 
     //==System Info
     //--get the nominal frequency of the power system
-    nom_freq_hz = get_prop_value<double>("powerflow::nominal_frequency",
-                                         &gld_property::is_valid,
-                                         &gld_property::is_double,
-                                         &gld_property::get_double);
-    // std::cout << "Nominal Frequency = " << nom_freq_hz << " (Hz)" << std::endl; // For verifying
+    sys_nom_freq_hz = get_prop_value<double>("powerflow::nominal_frequency",
+                                             &gld_property::is_valid,
+                                             &gld_property::is_double,
+                                             &gld_property::get_double);
+    // std::cout << "Nominal Frequency = " << sys_nom_freq_hz << " (Hz)" << std::endl; // For verifying
 
     //==Controller
 
     //==Obj & Prop
+    /* switch */
     obj_swt_ptr = nullptr;
     prop_swt_status_ptr = nullptr;
+
+    /* sync_check */
+    prop_sck_nom_volt_v_ptr = nullptr;
+    prop_sck_freq_diff_hz_ptr = nullptr;
+    prop_sck_volt_A_mag_diff_pu_ptr = nullptr;
+    prop_sck_volt_B_mag_diff_pu_ptr = nullptr;
+    prop_sck_volt_C_mag_diff_pu_ptr = nullptr;
+
+    swt_nom_volt_v = sck_freq_diff_hz = 0;
+    sck_volt_A_mag_diff_pu = sck_volt_B_mag_diff_pu = sck_volt_C_mag_diff_pu = 0;
 }
 
 //==Utility Member Funcs
@@ -338,8 +355,8 @@ void sync_ctrl::init_pub_prop() // Init published properties with default settin
     cgu_obj_ptr = nullptr;
 
     //==Tolerance
-    sct_freq_tol_ub_hz = 1.1e-2 * nom_freq_hz;
-    sct_freq_tol_lb_hz = 0.2e-2 * nom_freq_hz;
+    sct_freq_tol_ub_hz = 1.1e-2 * sys_nom_freq_hz;
+    sct_freq_tol_lb_hz = 0.2e-2 * sys_nom_freq_hz;
     sct_volt_mag_tol_pu = 0.01;
 
     //==Time
@@ -388,7 +405,7 @@ void sync_ctrl::data_sanity_check()
     //==Tolerance
     if (sct_freq_tol_ub_hz <= 0)
     {
-        sct_freq_tol_ub_hz = 1.1e-2 * nom_freq_hz; //Default it to 1.1% of the nominal frequency
+        sct_freq_tol_ub_hz = 1.1e-2 * sys_nom_freq_hz; //Default it to 1.1% of the nominal frequency
 
         gl_warning("%s:%d %s - %s was not set as a positive value, it is reset to %f [Hz].",
                    STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
@@ -401,7 +418,7 @@ void sync_ctrl::data_sanity_check()
 
     if (sct_freq_tol_lb_hz <= 0)
     {
-        sct_freq_tol_lb_hz = 0.2e-2 * nom_freq_hz; //Default it to 0.2% of the nominal frequency
+        sct_freq_tol_lb_hz = 0.2e-2 * sys_nom_freq_hz; //Default it to 0.2% of the nominal frequency
 
         //@TODO: There is an extra '.' at the end of the warning message. Without it, this message
         // is considered as a repeat if the previous sanity check fails. This should be a "bug" of the 'gl_warning',
@@ -529,6 +546,14 @@ void sync_ctrl::deltamode_check()
     }
 }
 
+void sync_ctrl::init_nom_values()
+{
+    swt_nom_volt_v = get_prop_value<double, OBJECT>(sck_obj_ptr, "nominal_volt_v",
+                                                    &gld_property::is_valid,
+                                                    &gld_property::is_double,
+                                                    &gld_property::get_double);
+}
+
 void sync_ctrl::init_sensors()
 {
     //==Switch (i.e., the parent of the sync_check object)
@@ -537,6 +562,16 @@ void sync_ctrl::init_sensors()
                                        &gld_property::is_valid,
                                        &gld_property::is_enumeration);
     swt_status = static_cast<SWT_STATUS_ENUM>(get_prop_value<enumeration>(prop_swt_status_ptr, &gld_property::get_enumeration, false));
+
+    //==Sync_check
+    prop_sck_freq_diff_hz_ptr = get_prop_ptr(sck_obj_ptr, "freq_diff_hz",
+                                             &gld_property::is_valid,
+                                             &gld_property::is_double);
+    sck_freq_diff_hz = get_prop_value<double>(prop_sck_freq_diff_hz_ptr, &gld_property::get_double, false);
+
+    // prop_sck_volt_A_mag_diff_pu_ptr;
+    // prop_sck_volt_B_mag_diff_pu_ptr;
+    // prop_sck_volt_C_mag_diff_pu_ptr;
 }
 
 //==QSTS Member Funcs

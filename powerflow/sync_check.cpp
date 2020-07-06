@@ -38,12 +38,30 @@ sync_check::sync_check(MODULE *mod) : powerflow_object(mod)
 								PT_double, "voltage_tolerance[V]", PADDR(voltage_tolerance), PT_DESCRIPTION, "voltage_tolerance in Volts - used in MAG_DIFF mode - prioritized over voltage_tolerance_pu",
 								PT_double, "metrics_period[s]", PADDR(metrics_period_sec), PT_DESCRIPTION, "period when both metrics are satisfied",
 								PT_enumeration, "volt_compare_mode", PADDR(volt_compare_mode), PT_DESCRIPTION, "Determines which voltage difference calculation approach is used",
-									PT_KEYWORD, "MAG_DIFF", (enumeration)MAG_DIFF,
-									PT_KEYWORD, "SEP_DIFF", (enumeration)SEP_DIFF,
+								PT_KEYWORD, "MAG_DIFF", (enumeration)MAG_DIFF,
+								PT_KEYWORD, "SEP_DIFF", (enumeration)SEP_DIFF,
 								PT_double, "voltage_magnitude_tolerance_pu[pu]", PADDR(voltage_magnitude_tolerance_pu), PT_DESCRIPTION, "tolerance in per-unit for the difference in voltage magnitudes - used in SEP_DIFF mode",
 								PT_double, "voltage_magnitude_tolerance[V]", PADDR(voltage_magnitude_tolerance), PT_DESCRIPTION, "tolerance in Volts for the difference in voltage magnitudes - used in SEP_DIFF mode - prioritized over voltage_magnitude_tolerance_pu",
 								PT_double, "voltage_angle_tolerance[deg]", PADDR(voltage_angle_tolerance_deg), PT_DESCRIPTION, "tolerance in degrees for the difference in voltage angles - used in SEP_DIFF mode",
 								PT_double, "delta_trigger_mult", PADDR(delta_trigger_mult), PT_DESCRIPTION, "multiplier against voltage and frequency tolerances to trigger/maintain deltamode",
+								//Measurement Properties (16=1+6+9)
+								PT_double, "freq_diff_hz", PADDR(freq_diff_hz), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: frequency difference in Hz",
+								PT_double, "volt_A_diff", PADDR(volt_A_diff), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: Magnitude of phase A voltage phasor difference in volt",
+								PT_double, "volt_B_diff", PADDR(volt_B_diff), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: Magnitude of phase B voltage phasor difference in volt",
+								PT_double, "volt_C_diff", PADDR(volt_C_diff), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: Magnitude of phase C voltage phasor difference in volt",
+								PT_double, "volt_A_diff_pu", PADDR(volt_A_diff_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: Magnitude of phase A voltage phasor difference in pu",
+								PT_double, "volt_B_diff_pu", PADDR(volt_B_diff_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: Magnitude of phase B voltage phasor difference in pu",
+								PT_double, "volt_C_diff_pu", PADDR(volt_C_diff_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: Magnitude of phase C voltage phasor difference in pu",
+								PT_double, "volt_A_mag_diff", PADDR(volt_A_mag_diff), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: Difference of phase A voltage magnitude in volt",
+								PT_double, "volt_B_mag_diff", PADDR(volt_B_mag_diff), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: Difference of phase B voltage magnitude in volt",
+								PT_double, "volt_C_mag_diff", PADDR(volt_C_mag_diff), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: Difference of phase C voltage magnitude in volt",
+								PT_double, "volt_A_mag_diff_pu", PADDR(volt_A_mag_diff_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: Difference of phase A voltage magnitude in pu",
+								PT_double, "volt_B_mag_diff_pu", PADDR(volt_B_mag_diff_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: Difference of phase B voltage magnitude in pu",
+								PT_double, "volt_C_mag_diff_pu", PADDR(volt_C_mag_diff_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: Difference of phase C voltage magnitude in pu",
+								PT_double, "volt_A_ang_deg_diff", PADDR(volt_A_ang_deg_diff), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: Difference of phase A voltage angle in degree",
+								PT_double, "volt_B_ang_deg_diff", PADDR(volt_B_ang_deg_diff), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: Difference of phase B voltage angle in degree",
+								PT_double, "volt_C_ang_deg_diff", PADDR(volt_C_ang_deg_diff), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: Difference of phase C voltage angle in degree",
+								PT_double, "nominal_volt_v", PADDR(volt_norm), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement Property: Nominal voltage of from/to node of the parent switch",
 								NULL) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
 
@@ -136,7 +154,7 @@ TIMESTAMP sync_check::postsync(TIMESTAMP t0)
 		{
 			//Update measurements and check
 			update_measurements();
-			check_metrics(true);
+			check_metrics(false);
 
 			//Check if we were flagged
 			if (deltamode_trigger_keep_flag == true)
@@ -152,7 +170,7 @@ TIMESTAMP sync_check::postsync(TIMESTAMP t0)
 			}
 			//Default else - don't trigger anything
 		}
-		else	//not armed, so no need to check things
+		else //not armed, so no need to check things
 		{
 			//Set variables/flags, just in case something else pulls us into deltamode (paranoia set)
 			deltamode_trigger_keep_flag = false;
@@ -303,17 +321,32 @@ void sync_check::init_sensors(OBJECT *par)
 	}
 }
 
+void sync_check::init_diff_prop(double unarmed_val) /* Measurement Properties (hidden) for Recorders*/
+{
+	freq_diff_hz = unarmed_val;
+
+	volt_A_diff = volt_B_diff = volt_C_diff = unarmed_val;
+	volt_A_diff_pu = volt_B_diff_pu = volt_C_diff_pu = unarmed_val;
+
+	volt_A_mag_diff = volt_B_mag_diff = volt_C_mag_diff = unarmed_val;
+	volt_A_mag_diff_pu = volt_B_mag_diff_pu = volt_C_mag_diff_pu = unarmed_val;
+	volt_A_ang_deg_diff = volt_B_ang_deg_diff = volt_C_ang_deg_diff = unarmed_val;
+}
+
 void sync_check::init_vars()
 {
 	OBJECT *obj = OBJECTHDR(this);
 	double temp_freq_val;
+
+	/* Measurement Properties (hidden) for Recorders */
+	init_diff_prop();
 
 	/* Default - MAG_DIFF Mode */
 	volt_compare_mode = MAG_DIFF;
 
 	/* Settings for SEP_DIFF Mode */
 	voltage_magnitude_tolerance_pu = 1e-2;
-	voltage_magnitude_tolerance = -99.0;	//Flag value
+	voltage_magnitude_tolerance = -99.0; //Flag value
 	voltage_angle_tolerance_deg = 5;
 
 	/* init member with default values */
@@ -385,19 +418,19 @@ void sync_check::init_vars()
 
 	//Defaults - mostly to cut down on messages
 	frequency_tolerance_hz = 0.01 * temp_freq_val; // i.e., 1%
-	voltage_tolerance_pu = 1e-2;  // i.e., 1%
+	voltage_tolerance_pu = 1e-2;				   // i.e., 1%
 	voltage_tolerance = -99.0;
 	metrics_period_sec = 1.2;
 
 	//Initialize deltmode trigger variables (will populate most later)
-	delta_trigger_mult = 2.0;	//Defaults to 2x the bands
+	delta_trigger_mult = 2.0; //Defaults to 2x the bands
 	frequency_tolerance_hz_deltamode_trig = 0.0;
 	voltage_tolerance_pu_deltamode_trig = 0.0;
 	voltage_magnitude_tolerance_pu_deltamode_trig = 0.0;
 	voltage_angle_tolerance_deg_deltamode_trig = 0.0;
 
 	deltamode_trigger_keep_flag = false;
-	deltamode_check_return_val = SM_EVENT;	//By default, just want event-driven
+	deltamode_check_return_val = SM_EVENT; //By default, just want event-driven
 }
 
 void sync_check::data_sanity_check(OBJECT *par)
@@ -536,7 +569,7 @@ void sync_check::data_sanity_check(OBJECT *par)
 	if (delta_trigger_mult <= 1.0)
 	{
 		delta_trigger_mult = 2.0;
-		gl_warning("sync_check:%d %s - delta_trigger_mult was below 1.0 - defaulted to 2.0",obj->id, (obj->name ? obj->name : "Unnamed"));
+		gl_warning("sync_check:%d %s - delta_trigger_mult was below 1.0 - defaulted to 2.0", obj->id, (obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		The delta_trigger_mult value was below, which isn't allowed.  Set this to a positive number larger than 1.0 to be a proper trigger
 		point for deltamode.
@@ -726,6 +759,62 @@ void sync_check::init_norm_values(OBJECT *par)
 	}
 }
 
+void sync_check::update_diff_prop()
+{
+	freq_diff_hz = abs(swt_fm_node_freq - swt_to_node_freq);
+
+	//== Measurement Properties
+	//-- MAG_DIFF Mode
+	volt_A_diff = (swt_fm_volt_A - swt_to_volt_A).Mag();
+	volt_A_diff_pu = volt_A_diff / volt_norm;
+
+	volt_B_diff = (swt_fm_volt_B - swt_to_volt_B).Mag();
+	volt_B_diff_pu = volt_B_diff / volt_norm;
+
+	volt_C_diff = (swt_fm_volt_C - swt_to_volt_C).Mag();
+	volt_C_diff_pu = volt_C_diff / volt_norm;
+
+	//-- SEP_DIFF Mode
+	// Phase A
+	volt_A_mag_diff = abs(swt_fm_volt_A.Mag() - swt_to_volt_A.Mag());
+	volt_A_mag_diff_pu = volt_A_mag_diff / volt_norm;
+
+	double volt_A_ang_rad_diff = abs(swt_fm_volt_A.Arg() - swt_to_volt_A.Arg());
+	double volt_A_ang_deg_diff_temp = RAD_TO_DEG(volt_A_ang_rad_diff);
+
+	//Adjust calculation to reflect the odd wrapping of angles, as well as magnitude
+	if (volt_A_ang_deg_diff_temp > 180.0)
+		volt_A_ang_deg_diff = 360.0 - volt_A_ang_deg_diff_temp;
+	else
+		volt_A_ang_deg_diff = volt_A_ang_deg_diff_temp;
+
+	// Phase B
+	volt_B_mag_diff = abs(swt_fm_volt_B.Mag() - swt_to_volt_B.Mag());
+	volt_B_mag_diff_pu = volt_B_mag_diff / volt_norm;
+
+	double volt_B_ang_rad_diff = abs(swt_fm_volt_B.Arg() - swt_to_volt_B.Arg());
+	double volt_B_ang_deg_diff_temp = RAD_TO_DEG(volt_B_ang_rad_diff);
+
+	//Adjust calculation to reflect the odd wrapping of angles, as well as magnitude
+	if (volt_B_ang_deg_diff_temp > 180.0)
+		volt_B_ang_deg_diff = 360.0 - volt_B_ang_deg_diff_temp;
+	else
+		volt_B_ang_deg_diff = volt_B_ang_deg_diff_temp;
+
+	// Phase C
+	volt_C_mag_diff = abs(swt_fm_volt_C.Mag() - swt_to_volt_C.Mag());
+	volt_C_mag_diff_pu = volt_C_mag_diff / volt_norm;
+
+	double volt_C_ang_rad_diff = abs(swt_fm_volt_C.Arg() - swt_to_volt_C.Arg());
+	double volt_C_ang_deg_diff_temp = RAD_TO_DEG(volt_C_ang_rad_diff);
+
+	//Adjust calculation to reflect the odd wrapping of angles, as well as magnitude
+	if (volt_C_ang_deg_diff_temp > 180.0)
+		volt_C_ang_deg_diff = 360.0 - volt_C_ang_deg_diff_temp;
+	else
+		volt_C_ang_deg_diff = volt_C_ang_deg_diff_temp;
+}
+
 void sync_check::update_measurements()
 {
 	//@Todo: 1) validity check of properties; 2) frequency of each phase?
@@ -756,10 +845,11 @@ void sync_check::update_measurements()
 	}
 }
 
-void sync_check::check_metrics(bool deltamode_check)
+void sync_check::check_metrics(bool deltamode_run)
 {
-	double freq_diff_hz = abs(swt_fm_node_freq - swt_to_node_freq);
+	update_diff_prop();
 
+	//== Mode Selection
 	if (volt_compare_mode == MAG_DIFF)
 	{
 		//See if the metric needs updating - Sequence it - see if we specified a non-per-unit one first
@@ -770,28 +860,19 @@ void sync_check::check_metrics(bool deltamode_check)
 		}
 		//Default else - just fallback on voltage_tolerance_pu
 
-		double volt_A_diff = (swt_fm_volt_A - swt_to_volt_A).Mag();
-		double volt_A_diff_pu = volt_A_diff / volt_norm;
-
-		double volt_B_diff = (swt_fm_volt_B - swt_to_volt_B).Mag();
-		double volt_B_diff_pu = volt_B_diff / volt_norm;
-
-		double volt_C_diff = (swt_fm_volt_C - swt_to_volt_C).Mag();
-		double volt_C_diff_pu = volt_C_diff / volt_norm;
-
-		if (deltamode_check == true)
+		//See if we should be calling/remaining in deltamode - all instances call this
+		if ((freq_diff_hz <= frequency_tolerance_hz_deltamode_trig) && (volt_A_diff_pu <= voltage_tolerance_pu_deltamode_trig) &&
+			(volt_B_diff_pu <= voltage_tolerance_pu_deltamode_trig) && (volt_C_diff_pu <= voltage_tolerance_pu_deltamode_trig))
 		{
-			if ((freq_diff_hz <= frequency_tolerance_hz_deltamode_trig) && (volt_A_diff_pu <= voltage_tolerance_pu_deltamode_trig) &&
-				(volt_B_diff_pu <= voltage_tolerance_pu_deltamode_trig) && (volt_C_diff_pu <= voltage_tolerance_pu_deltamode_trig))
-			{
-				deltamode_trigger_keep_flag = true;
-			}
-			else
-			{
-				deltamode_trigger_keep_flag = false;
-			}
-		}//End "stay/trigger deltamode" check
-		else	//Standard "closure" check
+			deltamode_trigger_keep_flag = true;
+		}
+		else
+		{
+			deltamode_trigger_keep_flag = false;
+		}
+
+		//See if we're in deltamode - in that case, do the standard "closure" check
+		if (deltamode_run == true)
 		{
 			if ((freq_diff_hz <= frequency_tolerance_hz) && (volt_A_diff_pu <= voltage_tolerance_pu) &&
 				(volt_B_diff_pu <= voltage_tolerance_pu) && (volt_C_diff_pu <= voltage_tolerance_pu))
@@ -802,7 +883,7 @@ void sync_check::check_metrics(bool deltamode_check)
 			{
 				metrics_flag = false;
 			}
-		}//End standard closure check
+		} //End standard closure check
 	}
 	else // SEP_DIFF Mode
 	{
@@ -814,64 +895,22 @@ void sync_check::check_metrics(bool deltamode_check)
 		}
 		//Default else - just fallback on voltage_magnitude_tolerance_pu
 
-		double volt_A_ang_deg_diff, volt_B_ang_deg_diff, volt_C_ang_deg_diff;
-
-		// Phase A
-		double volt_A_mag_diff = abs(swt_fm_volt_A.Mag() - swt_to_volt_A.Mag());
-		double volt_A_mag_diff_pu = volt_A_mag_diff / volt_norm;
-
-		double volt_A_ang_rad_diff = abs(swt_fm_volt_A.Arg() - swt_to_volt_A.Arg());
-		double volt_A_ang_deg_diff_temp = RAD_TO_DEG(volt_A_ang_rad_diff);
-		
-		//Adjust calculation to reflect the odd wrapping of angles, as well as magnitude
-		if (volt_A_ang_deg_diff_temp > 180.0)
-			volt_A_ang_deg_diff = 360.0 - volt_A_ang_deg_diff_temp;
-		else
-			volt_A_ang_deg_diff = volt_A_ang_deg_diff_temp;
-
-		// Phase B
-		double volt_B_mag_diff = abs(swt_fm_volt_B.Mag() - swt_to_volt_B.Mag());
-		double volt_B_mag_diff_pu = volt_B_mag_diff / volt_norm;
-
-		double volt_B_ang_rad_diff = abs(swt_fm_volt_B.Arg() - swt_to_volt_B.Arg());
-		double volt_B_ang_deg_diff_temp = RAD_TO_DEG(volt_B_ang_rad_diff);
-
-		//Adjust calculation to reflect the odd wrapping of angles, as well as magnitude
-		if (volt_B_ang_deg_diff_temp > 180.0)
-			volt_B_ang_deg_diff = 360.0 - volt_B_ang_deg_diff_temp;
-		else
-			volt_B_ang_deg_diff = volt_B_ang_deg_diff_temp;
-
-		// Phase C
-		double volt_C_mag_diff = abs(swt_fm_volt_C.Mag() - swt_to_volt_C.Mag());
-		double volt_C_mag_diff_pu = volt_C_mag_diff / volt_norm;
-
-		double volt_C_ang_rad_diff = abs(swt_fm_volt_C.Arg() - swt_to_volt_C.Arg());
-		double volt_C_ang_deg_diff_temp = RAD_TO_DEG(volt_C_ang_rad_diff);
-
-		//Adjust calculation to reflect the odd wrapping of angles, as well as magnitude
-		if (volt_C_ang_deg_diff_temp > 180.0)
-			volt_C_ang_deg_diff = 360.0 - volt_C_ang_deg_diff_temp;
-		else
-			volt_C_ang_deg_diff = volt_C_ang_deg_diff_temp;
-
-		// Check
-		if (deltamode_check == true)
+		//See if we should be calling/remaining in deltamode - all instances call this
+		if ((freq_diff_hz <= frequency_tolerance_hz_deltamode_trig) &&
+			(volt_A_mag_diff_pu <= voltage_magnitude_tolerance_pu_deltamode_trig) &&
+			(volt_B_mag_diff_pu <= voltage_magnitude_tolerance_pu_deltamode_trig) && (volt_C_mag_diff_pu <= voltage_magnitude_tolerance_pu_deltamode_trig) &&
+			(volt_A_ang_deg_diff <= voltage_angle_tolerance_deg_deltamode_trig) &&
+			(volt_B_ang_deg_diff <= voltage_angle_tolerance_deg_deltamode_trig) && (volt_C_ang_deg_diff <= voltage_angle_tolerance_deg_deltamode_trig))
 		{
-			if ((freq_diff_hz <= frequency_tolerance_hz_deltamode_trig) &&
-				(volt_A_mag_diff_pu <= voltage_magnitude_tolerance_pu_deltamode_trig) &&
-				(volt_B_mag_diff_pu <= voltage_magnitude_tolerance_pu_deltamode_trig) && (volt_C_mag_diff_pu <= voltage_magnitude_tolerance_pu_deltamode_trig) &&
-				(volt_A_ang_deg_diff <= voltage_angle_tolerance_deg_deltamode_trig) &&
-				(volt_B_ang_deg_diff <= voltage_angle_tolerance_deg_deltamode_trig) && (volt_C_ang_deg_diff <= voltage_angle_tolerance_deg_deltamode_trig))
-			{
-				deltamode_trigger_keep_flag = true;
-			}
-			else
-			{
-				deltamode_trigger_keep_flag = false;
-			}
-		}//End deltamode trigger/maintain check
-		else	//Standard "closure check"
+			deltamode_trigger_keep_flag = true;
+		}
+		else
+		{
+			deltamode_trigger_keep_flag = false;
+		}
+
+		//See if we're in deltamode - in that case, do the standard "closure" check
+		if (deltamode_run == true)
 		{
 			if ((freq_diff_hz <= frequency_tolerance_hz) &&
 				(volt_A_mag_diff_pu <= voltage_magnitude_tolerance_pu) &&
@@ -885,7 +924,7 @@ void sync_check::check_metrics(bool deltamode_check)
 			{
 				metrics_flag = false;
 			}
-		}//End standard closure check
+		} //End standard closure check
 	}
 }
 
@@ -919,6 +958,7 @@ void sync_check::reset_after_excitation()
 	// Reset other buffers & variables
 	metrics_flag = false;
 	t_sat = 0;
+	init_diff_prop();
 }
 
 //Deltamode call
@@ -931,26 +971,25 @@ SIMULATIONMODE sync_check::inter_deltaupdate_sync_check(unsigned int64 delta_tim
 		{
 			update_measurements();
 
-			//Do the deltamode trigger check
+			//Do the bound and deltamode "remain" check
 			check_metrics(true);
 
 			//See how to proceed
-			if (deltamode_trigger_keep_flag == true)	//In bounds, track!
+			if (deltamode_trigger_keep_flag == true) //In bounds, track!
 			{
 				deltamode_check_return_val = SM_DELTA;
 			}
-			else	//Out of bounds, just let other objects drive us
+			else //Out of bounds, just let other objects drive us
 			{
 				deltamode_check_return_val = SM_EVENT;
 			}
 
-			//Actual sync_check tests
-			check_metrics(false);
+			//Actual sync_check tests - see if it should close
 			check_excitation(dt);
 		}
 		//Default else - other passes, just return whatever value we had set
 	}
-	else	//Not enabled, so something else gets to drive deltamode
+	else //Not enabled, so something else gets to drive deltamode
 	{
 		//Paranoia set the flag, just in case
 		deltamode_trigger_keep_flag = false;
@@ -961,7 +1000,7 @@ SIMULATIONMODE sync_check::inter_deltaupdate_sync_check(unsigned int64 delta_tim
 		//Reset accumulator timer, in case disabled before a closing happened
 		t_sat = 0.0;
 	}
-	
+
 	return deltamode_check_return_val;
 }
 

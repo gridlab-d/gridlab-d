@@ -50,7 +50,7 @@ private: //Init & Check Member Funcs
     /* Mainly used in init() */
     void data_sanity_check();
     void deltamode_check();
-    // void init_nom_values(OBJECT *par = nullptr);
+    void init_nom_values();
     void init_sensors();
 
 private: //QSTS
@@ -109,13 +109,28 @@ private: //Variables
     double dt_dm_sec;        //Current deltamode timestep.
 
     //==System Info
-    double nom_freq_hz;
+    double sys_nom_freq_hz;
 
     //==Controller
 
     //==Obj & Prop
+    /* switch */
     OBJECT *obj_swt_ptr;
     gld_property *prop_swt_status_ptr;
+
+    /* sync_check */
+    gld_property *prop_sck_nom_volt_v_ptr;
+    double swt_nom_volt_v;
+
+    gld_property *prop_sck_freq_diff_hz_ptr;
+    double sck_freq_diff_hz;
+
+    gld_property *prop_sck_volt_A_mag_diff_pu_ptr;
+    double sck_volt_A_mag_diff_pu;
+    gld_property *prop_sck_volt_B_mag_diff_pu_ptr;
+    double sck_volt_B_mag_diff_pu;
+    gld_property *prop_sck_volt_C_mag_diff_pu_ptr;
+    double sck_volt_C_mag_diff_pu;
 };
 
 #endif // GLD_GENERATORS_SYNC_CTRL_H_
