@@ -847,7 +847,7 @@ void sync_check::update_measurements()
 
 void sync_check::check_metrics(bool deltamode_run)
 {
-	update_diff_prop();
+	// update_diff_prop(); //@TODO
 
 	//== Mode Selection
 	if (volt_compare_mode == MAG_DIFF)
@@ -958,18 +958,21 @@ void sync_check::reset_after_excitation()
 	// Reset other buffers & variables
 	metrics_flag = false;
 	t_sat = 0;
-	init_diff_prop();
+	// init_diff_prop(); @TODO
 }
 
 //Deltamode call
 //Module-level call
 SIMULATIONMODE sync_check::inter_deltaupdate_sync_check(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
 {
+	update_measurements(); //@TODO: Always update for sync_ctrl
+	update_diff_prop(); //@TODO: Always update for sync_ctrl
+
 	if (sc_enabled_flag)
 	{
 		if ((iteration_count_val == 0) && (!interupdate_pos)) //@TODO: Need further testings
 		{
-			update_measurements();
+			// update_measurements();
 
 			//Do the bound and deltamode "remain" check
 			check_metrics(true);

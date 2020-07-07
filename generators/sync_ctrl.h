@@ -27,10 +27,12 @@ public:
     SIMULATIONMODE inter_deltaupdate_sync_ctrl(unsigned int64, unsigned long, unsigned int);
 
 private: //Utility Member Funcs (@TODO: These should be moved to an independent file as regular functions instead of memerber functions, once it is permitted to set up a file. Another option is to improve the package/implementtation of gld_property, but it may affect too much.)
+    /* Get property */
     // gld_property *get_prop_ptr(char *, bool (gld_property::*)(), bool (gld_property::*)());
     template <class T>
     gld_property *get_prop_ptr(T *, char *, bool (gld_property::*)(), bool (gld_property::*)());
 
+    /* Get property value */
     template <class T, class T1>
     T get_prop_value(T1 *, char *, bool (gld_property::*)(), bool (gld_property::*)(), T (gld_property::*)());
     template <class T, class T1>
@@ -41,6 +43,13 @@ private: //Utility Member Funcs (@TODO: These should be moved to an independent 
     T get_prop_value(gld_property *, T (gld_property::*)(), bool = true);
     template <class T>
     T *get_prop_value(gld_property *, T *(gld_property::*)(), bool = true);
+
+    /* Set & get property*/
+    template <class T>
+    void set_prop(gld_property *, T);
+
+    template <class T> // This one is created to avoid modifying gridlabd.h (note that func get_bool() is not implemented in the gridlabd.h)
+    void get_prop(gld_property *, T);
 
 private: //Init & Check Member Funcs
     /* Mainly used in create() */
@@ -53,6 +62,9 @@ private: //Init & Check Member Funcs
     void init_nom_values();
     void init_sensors();
 
+    /* For reset */
+    void reset_timer();
+
 private: //QSTS
     /* Pre-sync */
     void deltamode_reg();
@@ -60,6 +72,8 @@ private: //QSTS
 private: //Deltamode
     /* inter_deltaupdate_sync_ctrl */
     void dm_update_measurements();
+
+    bool sct_metrics_check_mode_B();
 
 private: //Published Properties
     //==Flag
@@ -119,8 +133,10 @@ private: //Variables
     gld_property *prop_swt_status_ptr;
 
     /* sync_check */
-    gld_property *prop_sck_nom_volt_v_ptr;
     double swt_nom_volt_v;
+
+    gld_property *prop_sck_armed_ptr;
+    bool sck_armed_flag;
 
     gld_property *prop_sck_freq_diff_hz_ptr;
     double sck_freq_diff_hz;

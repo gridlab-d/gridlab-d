@@ -116,6 +116,32 @@ SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time,
             else
             {
                 //Mode B
+                if (sct_metrics_check_mode_B())
+                {
+                    if (~sck_armed_flag)
+                    {
+                        set_prop<bool>(prop_sck_armed_ptr, true);
+                        // gld_wlock *test_rlock;
+                        // bool luan = true;
+                        // prop_sck_armed_ptr->setp<bool>(luan, *test_rlock); //arm sync_check
+                    }
+
+                    //-- tick the timer
+                    double dt_dm_sec = (double)dt / (double)DT_SECOND;
+                    timer_mode_B_sec += dt_dm_sec;
+
+                    //-- check the timer
+                    if (timer_mode_B_sec >= pp_t_mon_sec)
+                    {
+                        reset_timer();
+                        mode_status = SCT_MODE_ENUM::MODE_A;
+                        // disarm sync
+                    }
+                }
+                else
+                {
+                    reset_timer();
+                }
             }
         }
     }
@@ -129,7 +155,28 @@ void sync_ctrl::dm_update_measurements()
     if (swt_status == SWT_STATUS_ENUM::OPEN) // If the switch is closed, there is no need to update other measured/calculated properties
     {
         sck_freq_diff_hz = get_prop_value<double>(prop_sck_freq_diff_hz_ptr, &gld_property::get_double, false);
+
+        sck_volt_A_mag_diff_pu = get_prop_value<double>(prop_sck_volt_A_mag_diff_pu_ptr, &gld_property::get_double, false);
+        sck_volt_B_mag_diff_pu = get_prop_value<double>(prop_sck_volt_B_mag_diff_pu_ptr, &gld_property::get_double, false);
+        sck_volt_C_mag_diff_pu = get_prop_value<double>(prop_sck_volt_C_mag_diff_pu_ptr, &gld_property::get_double, false);
     }
+}
+
+bool sync_ctrl::sct_metrics_check_mode_B()
+{
+    if ((sck_freq_diff_hz >= sct_freq_tol_lb_hz) && (sck_freq_diff_hz <= sct_freq_tol_ub_hz) &&
+        (sck_volt_A_mag_diff_pu <= sct_volt_mag_tol_pu) &&
+        (sck_volt_B_mag_diff_pu <= sct_volt_mag_tol_pu) &&
+        (sck_volt_C_mag_diff_pu <= sct_volt_mag_tol_pu))
+        return true;
+    else
+        return false;
+}
+
+void sync_ctrl::reset_timer()
+{
+    timer_mode_A_sec = 0;
+    timer_mode_B_sec = 0;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -251,7 +298,6 @@ void sync_ctrl::init_vars() // Init local variables with default settings
     prop_swt_status_ptr = nullptr;
 
     /* sync_check */
-    prop_sck_nom_volt_v_ptr = nullptr;
     prop_sck_freq_diff_hz_ptr = nullptr;
     prop_sck_volt_A_mag_diff_pu_ptr = nullptr;
     prop_sck_volt_B_mag_diff_pu_ptr = nullptr;
@@ -262,6 +308,22 @@ void sync_ctrl::init_vars() // Init local variables with default settings
 }
 
 //==Utility Member Funcs
+/* Set */
+template <class T>
+void sync_ctrl::set_prop(gld_property *prop_ptr, T prop_value)
+{
+    gld_wlock *rlock;
+    prop_ptr->setp<T>(prop_value, *rlock);
+}
+
+template <class T>
+void sync_ctrl::get_prop(gld_property *prop_ptr, T prop_value)
+{
+    gld_wlock *rlock;
+    prop_ptr->getp<T>(prop_value, *rlock);
+}
+
+/* Get */
 template <class T, class T1>
 T sync_ctrl::get_prop_value(T1 *obj_ptr, char *prop_name_char_ptr, bool (gld_property::*fp_is_valid)(), bool (gld_property::*fp_is_type)(), T (gld_property::*fp_get_type)())
 {
@@ -564,14 +626,31 @@ void sync_ctrl::init_sensors()
     swt_status = static_cast<SWT_STATUS_ENUM>(get_prop_value<enumeration>(prop_swt_status_ptr, &gld_property::get_enumeration, false));
 
     //==Sync_check
+    prop_sck_armed_ptr = get_prop_ptr(sck_obj_ptr, "armed",
+                                      &gld_property::is_valid,
+                                      &gld_property::is_bool);
+    // sck_armed_flag = get_prop_value<bool>(prop_sck_armed_ptr, &gld_property::get_flags, false);
+    get_prop(prop_sck_armed_ptr, sck_armed_flag);
+
     prop_sck_freq_diff_hz_ptr = get_prop_ptr(sck_obj_ptr, "freq_diff_hz",
                                              &gld_property::is_valid,
                                              &gld_property::is_double);
     sck_freq_diff_hz = get_prop_value<double>(prop_sck_freq_diff_hz_ptr, &gld_property::get_double, false);
 
-    // prop_sck_volt_A_mag_diff_pu_ptr;
-    // prop_sck_volt_B_mag_diff_pu_ptr;
-    // prop_sck_volt_C_mag_diff_pu_ptr;
+    prop_sck_volt_A_mag_diff_pu_ptr = get_prop_ptr(sck_obj_ptr, "volt_A_mag_diff_pu",
+                                                   &gld_property::is_valid,
+                                                   &gld_property::is_double);
+    sck_volt_A_mag_diff_pu = get_prop_value<double>(prop_sck_volt_A_mag_diff_pu_ptr, &gld_property::get_double, false);
+
+    prop_sck_volt_B_mag_diff_pu_ptr = get_prop_ptr(sck_obj_ptr, "volt_B_mag_diff_pu",
+                                                   &gld_property::is_valid,
+                                                   &gld_property::is_double);
+    sck_volt_B_mag_diff_pu = get_prop_value<double>(prop_sck_volt_B_mag_diff_pu_ptr, &gld_property::get_double, false);
+
+    prop_sck_volt_C_mag_diff_pu_ptr = get_prop_ptr(sck_obj_ptr, "volt_C_mag_diff_pu",
+                                                   &gld_property::is_valid,
+                                                   &gld_property::is_double);
+    sck_volt_C_mag_diff_pu = get_prop_value<double>(prop_sck_volt_C_mag_diff_pu_ptr, &gld_property::get_double, false);
 }
 
 //==QSTS Member Funcs
