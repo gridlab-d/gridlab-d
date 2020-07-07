@@ -120,10 +120,7 @@ SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time,
                 {
                     if (~sck_armed_flag)
                     {
-                        set_prop<bool>(prop_sck_armed_ptr, true);
-                        // gld_wlock *test_rlock;
-                        // bool luan = true;
-                        // prop_sck_armed_ptr->setp<bool>(luan, *test_rlock); //arm sync_check
+                        set_prop(prop_sck_armed_ptr, true); // arm sync_check
                     }
 
                     //-- tick the timer
@@ -135,12 +132,14 @@ SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time,
                     {
                         reset_timer();
                         mode_status = SCT_MODE_ENUM::MODE_A;
-                        // disarm sync
+                        set_prop(prop_sck_armed_ptr, false);// disarm sync_check
                     }
                 }
                 else
                 {
                     reset_timer();
+                    mode_status = SCT_MODE_ENUM::MODE_A;
+                    set_prop(prop_sck_armed_ptr, false);// disarm sync_check
                 }
             }
         }
@@ -151,6 +150,7 @@ SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time,
 void sync_ctrl::dm_update_measurements()
 {
     swt_status = static_cast<SWT_STATUS_ENUM>(get_prop_value<enumeration>(prop_swt_status_ptr, &gld_property::get_enumeration, false));
+    sck_armed_flag = get_prop_value<bool>(prop_sck_armed_ptr, &gld_property::get_bool, false);
 
     if (swt_status == SWT_STATUS_ENUM::OPEN) // If the switch is closed, there is no need to update other measured/calculated properties
     {
@@ -315,7 +315,7 @@ void sync_ctrl::set_prop(gld_property *prop_ptr, T prop_value)
     gld_wlock *rlock;
     prop_ptr->setp<T>(prop_value, *rlock);
 }
-
+/* Get */
 template <class T>
 void sync_ctrl::get_prop(gld_property *prop_ptr, T prop_value)
 {
@@ -323,7 +323,7 @@ void sync_ctrl::get_prop(gld_property *prop_ptr, T prop_value)
     prop_ptr->getp<T>(prop_value, *rlock);
 }
 
-/* Get */
+/* Get Prop Value*/
 template <class T, class T1>
 T sync_ctrl::get_prop_value(T1 *obj_ptr, char *prop_name_char_ptr, bool (gld_property::*fp_is_valid)(), bool (gld_property::*fp_is_type)(), T (gld_property::*fp_get_type)())
 {
@@ -629,8 +629,8 @@ void sync_ctrl::init_sensors()
     prop_sck_armed_ptr = get_prop_ptr(sck_obj_ptr, "armed",
                                       &gld_property::is_valid,
                                       &gld_property::is_bool);
-    // sck_armed_flag = get_prop_value<bool>(prop_sck_armed_ptr, &gld_property::get_flags, false);
-    get_prop(prop_sck_armed_ptr, sck_armed_flag);
+    sck_armed_flag = get_prop_value<bool>(prop_sck_armed_ptr, &gld_property::get_bool, false);
+    // get_prop(prop_sck_armed_ptr, sck_armed_flag);
 
     prop_sck_freq_diff_hz_ptr = get_prop_ptr(sck_obj_ptr, "freq_diff_hz",
                                              &gld_property::is_valid,

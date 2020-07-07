@@ -2130,6 +2130,7 @@ public: // special operations
 	inline bool is_timestamp(void) { return pstruct.prop->ptype==PT_timestamp; };
 
 	// TODO these need to use throw instead of returning overloaded values
+	inline bool get_bool(void) {errno=0; if ( pstruct.prop->ptype != PT_bool ) exception("get_bool() called on a property that is not a bool"); return *(bool*)get_addr();};
 	inline double get_double(void) { errno=0; switch(pstruct.prop->ptype) { case PT_double: case PT_random: case PT_enduse: case PT_loadshape: return has_part() ? get_part() : *(double*)get_addr(); default: errno=EINVAL; return NaN;} };
 	inline double get_double(UNIT*to) { double rv = get_double(); return get_unit()->convert(to,rv) ? rv : QNAN; };
 	inline double get_double(gld_unit&to) { double rv = get_double(); return get_unit()->convert(to,rv) ? rv : QNAN; };
