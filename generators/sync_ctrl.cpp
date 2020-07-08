@@ -111,11 +111,24 @@ SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time,
         {
             if (mode_status == SCT_MODE_ENUM::MODE_A)
             {
-                //Mode A
+                //In Mode A
+                if (sct_metrics_check_mode_A(dt))
+                {
+                    mode_transition(SCT_MODE_ENUM::MODE_B, true);
+                }
+                else
+                {
+                    if (sck_armed_flag)
+                    {
+                        set_prop(prop_sck_armed_ptr, false); //disarm sync_check if it is armed
+                    }
+
+                    cgu_ctrl();
+                }
             }
             else
             {
-                //Mode B
+                //In Mode B
                 if (sct_metrics_check_mode_B())
                 {
                     if (~sck_armed_flag)
@@ -130,16 +143,12 @@ SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time,
                     //-- check the timer
                     if (timer_mode_B_sec >= pp_t_mon_sec)
                     {
-                        reset_timer();
-                        mode_status = SCT_MODE_ENUM::MODE_A;
-                        set_prop(prop_sck_armed_ptr, false);// disarm sync_check
+                        mode_transition(SCT_MODE_ENUM::MODE_A, false);
                     }
                 }
                 else
                 {
-                    reset_timer();
-                    mode_status = SCT_MODE_ENUM::MODE_A;
-                    set_prop(prop_sck_armed_ptr, false);// disarm sync_check
+                    mode_transition(SCT_MODE_ENUM::MODE_A, false);
                 }
             }
         }
@@ -162,6 +171,32 @@ void sync_ctrl::dm_update_measurements()
     }
 }
 
+bool sync_ctrl::sct_metrics_check_mode_A(unsigned long dt)
+{
+    if ((sck_freq_diff_hz >= sct_freq_tol_lb_hz) && (sck_freq_diff_hz <= sct_freq_tol_ub_hz) &&
+        (sck_volt_A_mag_diff_pu <= sct_volt_mag_tol_pu) &&
+        (sck_volt_B_mag_diff_pu <= sct_volt_mag_tol_pu) &&
+        (sck_volt_C_mag_diff_pu <= sct_volt_mag_tol_pu))
+    {
+        double dt_dm_sec = (double)dt / (double)DT_SECOND;
+        timer_mode_A_sec += dt_dm_sec;
+    }
+
+    else
+    {
+        timer_mode_A_sec = 0;
+    }
+
+    if (timer_mode_A_sec >= pp_t_ctrl_sec)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
 bool sync_ctrl::sct_metrics_check_mode_B()
 {
     if ((sck_freq_diff_hz >= sct_freq_tol_lb_hz) && (sck_freq_diff_hz <= sct_freq_tol_ub_hz) &&
@@ -173,6 +208,19 @@ bool sync_ctrl::sct_metrics_check_mode_B()
         return false;
 }
 
+void sync_ctrl::mode_transition(SCT_MODE_ENUM sct_mode, bool sck_armed_flag)
+{
+    reset_timer();                                // Reset timers of both modes
+    mode_status = sct_mode;                       // Mode A or B
+    set_prop(prop_sck_armed_ptr, sck_armed_flag); // Arm or disarm sync_check
+}
+
+void sync_ctrl::cgu_ctrl()
+{
+    // To be implemented...
+}
+
+/* For reset */
 void sync_ctrl::reset_timer()
 {
     timer_mode_A_sec = 0;

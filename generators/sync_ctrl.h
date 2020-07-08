@@ -69,12 +69,6 @@ private: //QSTS
     /* Pre-sync */
     void deltamode_reg();
 
-private: //Deltamode
-    /* inter_deltaupdate_sync_ctrl */
-    void dm_update_measurements();
-
-    bool sct_metrics_check_mode_B();
-
 private: //Published Properties
     //==Flag
     bool arm_flag;
@@ -147,6 +141,17 @@ private: //Variables
     double sck_volt_B_mag_diff_pu;
     gld_property *prop_sck_volt_C_mag_diff_pu_ptr;
     double sck_volt_C_mag_diff_pu;
+
+private: //Deltamode
+    /* inter_deltaupdate_sync_ctrl */
+    void dm_update_measurements();
+
+    bool sct_metrics_check_mode_A(unsigned long);
+    bool sct_metrics_check_mode_B();
+
+    void mode_transition(SCT_MODE_ENUM, bool);
+
+    void cgu_ctrl();
 };
 
 #endif // GLD_GENERATORS_SYNC_CTRL_H_
