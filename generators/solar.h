@@ -49,8 +49,8 @@ private: /* For N-R Solver & P-V Curve */
 	double nr_ep_rt(double);
 	double nr_root_rt(double, double);
 
-	using tpd_hf_ptr = double (solar::*)(double, double);
-	double newton_raphson(double, tpd_hf_ptr, double, double = 0);
+	double newton_raphson_nr_ep_rt(double, double);
+	double newton_raphson_nr_root_rt(double, double, double = 0);
 	double nr_root_search(double, double, double);
 
 	double get_i_from_u(double);

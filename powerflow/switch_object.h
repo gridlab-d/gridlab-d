@@ -16,6 +16,9 @@
 
 EXPORT SIMULATIONMODE interupdate_switch(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
+//KML export
+EXPORT int switch_object_kmldata(OBJECT *obj,int (*stream)(const char*,...));
+
 class switch_object : public link_object
 {
 public:
@@ -23,7 +26,7 @@ public:
 	static CLASS *pclass;
 
 public:
-	typedef enum {OPEN=0, CLOSED=1} SWITCHSTATE;
+	typedef enum {SW_OPEN=0, SW_CLOSED=1} SWITCHSTATE;
 	typedef enum {INDIVIDUAL_SW=0, BANKED_SW=1} SWITCHBANK;
 	unsigned char prev_full_status;	///Fully resolved status (ABC) - used for reliability and recalculation detection
 

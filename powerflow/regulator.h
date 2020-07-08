@@ -10,6 +10,9 @@
 
 EXPORT SIMULATIONMODE interupdate_regulator(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
+//KML export
+EXPORT int regulator_kmldata(OBJECT *obj,int (*stream)(const char*,...));
+
 class regulator : public link_object
 {
 public:

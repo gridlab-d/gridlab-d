@@ -133,6 +133,7 @@ typedef struct {
 typedef struct {
 	double wref;	//Reference frequency/bias for generator object (governor)
 	double w_ref;	//Reference frequency/bias for generator object (governor), but rad/s (align with other generators)
+	double f_set;   //Reference frequency in Hz
 	double vset;	//Reference per-unit voltage/bias for generator object (AVR)
 	double vseta;	//Reference per-unit voltage/bias for generator object (AVR) before going into bound check
 	double vsetb;	//Reference per-unit voltage/bias for generator object (AVR) after going into bound check
@@ -232,6 +233,13 @@ public:
 	enum {NO_GOV=1, DEGOV1=2, GAST=3, GGOV1_OLD=4, GGOV1=5, P_CONSTANT=6};
 	enumeration Governor_type;
 
+	enum P_F_DROOP_SETTING_TYPE
+	{
+		FSET_MODE = 0,
+		PSET_MODE = 1
+	};
+	enumeration P_f_droop_setting_mode; //
+
 	//Enable/Disable low-value select blocks
 	bool gov_ggv1_fsrt_enable;	//Enables/disables top fsrt of low-value-select (load limiter)
 	bool gov_ggv1_fsra_enable;	//Enables/disables middle fsra of low-value select (acceleration limiter)
@@ -262,6 +270,7 @@ public:
 
 	//Dynamics-capable synchronous generator inputs
 	double omega_ref;		//Nominal frequency
+	double f_nominal;        // Nominal frequency in Hz
 	double inertia;			//Inertial constant (H) of generator
 	double damping;			//Damping constant (D) of generator
 	double number_poles;	//Number of poles in the generator

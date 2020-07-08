@@ -544,7 +544,7 @@ void fault_check::search_links_mesh(int node_int)
 			if ((valid_phases[node_int] != 0x00) || (valid_phases[node_value] != 0x00))
 			{
 				//Are we a switch
-				if ((NR_branchdata[device_value].lnk_type == 2) || (NR_branchdata[device_value].lnk_type == 5) || (NR_branchdata[device_value].lnk_type == 6))
+				if ((NR_branchdata[device_value].lnk_type == 4) || (NR_branchdata[device_value].lnk_type == 5) || (NR_branchdata[device_value].lnk_type == 6))
 				{
 					if (*NR_branchdata[device_value].status == 1)
 					{
@@ -604,7 +604,7 @@ void fault_check::search_links_mesh(int node_int)
 			if ((valid_phases[node_int] != 0x00) || (valid_phases[node_value] != 0x00))
 			{
 				//Are we a switch
-				if ((NR_branchdata[device_value].lnk_type == 2) || (NR_branchdata[device_value].lnk_type == 5) || (NR_branchdata[device_value].lnk_type == 6))
+				if ((NR_branchdata[device_value].lnk_type == 4) || (NR_branchdata[device_value].lnk_type == 5) || (NR_branchdata[device_value].lnk_type == 6))
 				{
 					if (*NR_branchdata[device_value].status == 1)
 					{
@@ -1369,7 +1369,7 @@ void fault_check::support_search_links_mesh(int baselink_int, bool impact_mode)
 							}
 
 							//See if we're a switch -- if so, just because we're valid on both ends doesn't mean anything
-							if ((NR_branchdata[device_index].lnk_type == 2) || (NR_branchdata[device_index].lnk_type == 5) || (NR_branchdata[device_index].lnk_type == 6))
+							if ((NR_branchdata[device_index].lnk_type == 4) || (NR_branchdata[device_index].lnk_type == 5) || (NR_branchdata[device_index].lnk_type == 6))
 							{
 								if (*NR_branchdata[device_index].status == 1)
 								{
@@ -1482,7 +1482,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 	if (meshed_fault_checking_enabled == false)
 	{
 		//See if we're a switch - if so, call the appropriate function
-		if (NR_branchdata[branch_idx].lnk_type == 2)
+		if (NR_branchdata[branch_idx].lnk_type == 4)
 		{
 			//Find this object
 			temp_obj = NR_branchdata[branch_idx].obj;
@@ -2298,6 +2298,25 @@ void fault_check::search_associated_grids(unsigned int node_int, int grid_counte
 				your code and a bug report via the ticketing system.
 				*/
 			}
+			else if (NR_branchdata[NR_busdata[node_int].Link_Table[index]].island_number != grid_counter)	//This line is unassigned
+			{
+				//See if it is fully unassigned
+				if (NR_branchdata[NR_busdata[node_int].Link_Table[index]].island_number == -1)
+				{
+					//Just got missed by the iterations, so associate us (ends already handled, so no need to recurse)
+					NR_branchdata[NR_busdata[node_int].Link_Table[index]].island_number = grid_counter;
+				}
+				else
+				{
+					//Somehow is associated with a different grid, even though the from/to are the same!
+					GL_THROW("fault_check: invalid grid assignment on line %s!",NR_branchdata[NR_busdata[node_int].Link_Table[index]].name);
+					/*  TROUBLESHOOT
+					While mapping the associated grid/swing node for a line in the system, a condition was encountered where
+					the line belonged to a grid/island it shouldn't.  This should not have occurred.  Please submit
+					your code and a bug report via the ticketing system.
+					*/
+				}
+			}
 			//Default else -- already handled as this grid
 		}
 		//Default else, not a match, so next
@@ -2408,8 +2427,12 @@ STATUS fault_check::disable_island(int island_number)
 	//Flag a forced reiteration for the next time something can (not now though, we may be halfway through an NR solver loop)
 	force_reassociation = true;
 
-	//Verbose it, for information
-	gl_verbose("fault_check: Removed island %d from the powerflow",(island_number+1));
+	//Output it - no longer as a verbose (easy to miss)
+	gl_warning("fault_check: Removed island %d from the powerflow",(island_number+1));
+	/*  TROUBLESHOOT
+	One of the islands of teh system was removed (by the multi-island capability).  This may have been due to a 
+	divergent powerflow, or some specifically-command action.  If this was not intended, check your file and try again.
+	*/
 
 	//Not sure how we'd fail, at this point
 	return SUCCESS;

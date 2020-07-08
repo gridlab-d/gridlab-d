@@ -103,6 +103,8 @@ capacitor::capacitor(MODULE *mod):node(mod)
 			GL_THROW("Unable to publish capacitor swing-swapping function");
 		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
 			GL_THROW("Unable to publish capacitor swing-status check function");
+		if (gl_publish_function(oclass, "pwr_object_kmldata", (FUNCTIONADDR)capacitor_kmldata) == NULL)
+			GL_THROW("Unable to publish capacitor kmldata function");
     }
 }
 
@@ -2093,6 +2095,17 @@ EXPORT SIMULATIONMODE interupdate_capacitor(OBJECT *obj, unsigned int64 delta_ti
 		gl_error("interupdate_capacitor(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
 		return status;
 	}
+}
+
+//KML Export
+EXPORT int capacitor_kmldata(OBJECT *obj,int (*stream)(const char*,...))
+{
+	capacitor *n = OBJECTDATA(obj, capacitor);
+	int rv = 1;
+
+	rv = n->kmldata(stream);
+
+	return rv;
 }
 
 int capacitor::kmldata(int (*stream)(const char*,...))

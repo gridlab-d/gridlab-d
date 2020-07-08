@@ -54,12 +54,6 @@
 
 #include "solver_nr.h"
 #include "node.h"
-#include "link.h"
-
-//See if these can be unwound, not a fan of the cross-linking here:
-#include "capacitor.h"
-#include "load.h"
-#include "triplex_meter.h"
 
 //Library imports items - for external LU solver - stolen from somewhere else in GridLAB-D (tape, I believe)
 #if defined(_WIN32) && !defined(__MINGW32__)
@@ -390,6 +384,9 @@ int node::create(void)
 
 	//Multi-island tracking
 	reset_island_state = false;	//Reset is disabled, by default
+
+	//Triplex/FBS variable
+	tn_values = NULL;
 
 	return result;
 }
@@ -1405,7 +1402,6 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 	TIMESTAMP t1 = powerflow_object::presync(t0); 
 	TIMESTAMP temp_time_value, temp_t1_value;
 	node *temp_par_node = NULL;
-	FUNCTIONADDR temp_funadd = NULL;
 	gld_property *temp_complex_property;
 	gld_wlock *test_rlock;
 	complex temp_complex_value;
@@ -2400,6 +2396,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 	complex temp_current_val[3];
 	char loop_index_val;
 	complex temp_curr_rotate_value, temp_curr_calc_value;
+	gld_property *temp_property;
 	
 	//Final initialization issue - has to be here, or childed deltamode stuff fails
 	//This catches any orphaned/islanded single nodes (that link wouldn't catch), so error checks work
@@ -2491,8 +2488,64 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 #endif
 
 			if (obj->parent!=NULL && gl_object_isa(obj->parent,"triplex_line","powerflow")) {
-				link_object *plink = OBJECTDATA(obj->parent,link_object);
-				complex d = plink->tn[0]*current_inj[0] + plink->tn[1]*current_inj[1];
+
+				//See if we've mapped yet
+				if (tn_values == NULL)
+				{
+					//Allocate space
+					tn_values = (complex *)gl_malloc(2*sizeof(complex));
+
+					//Make sure it worked
+					if (tn_values == NULL)
+					{
+						GL_THROW("node:%d - %s -- Failed to allocate for triplex current data",obj->id,(obj->name ? obj->name : "Unnamed"));
+						/*  TROUBLESHOOT
+						While attempting to allocate memory for triplex neutral calculation values, an error occurred.
+						Please try again.  If the error persists, please submit you GLM and a report via the issue tracker system.
+						*/
+					}
+
+					//Map to neutral current properties
+
+					//Get first one
+					temp_property = new gld_property(obj->parent,"triplex_neutral_1_value");
+
+					//Make sure it worked
+					if ((temp_property->is_valid() != true) || (temp_property->is_complex() != true))
+					{
+						GL_THROW("node:%d - %s -- Failed to map triplex current data",obj->id,(obj->name ? obj->name : "Unnamed"));
+						/* TROUBLESHOOT
+						While attempting to map one of the triplex-line-related multiplier properties, an error occurred.
+						Please try again.  If the error persists, please submit your GLM into the issue tracker with a description.
+						*/
+					}
+
+					//Pull the value
+					tn_values[0] = temp_property->get_complex();
+
+					//Remove it
+					delete temp_property;
+
+					//Get the other one
+					//Get first one
+					temp_property = new gld_property(obj->parent,"triplex_neutral_2_value");
+
+					//Make sure it worked
+					if ((temp_property->is_valid() != true) || (temp_property->is_complex() != true))
+					{
+						GL_THROW("node:%d - %s -- Failed to map triplex current data",obj->id,(obj->name ? obj->name : "Unnamed"));
+						//Defined above
+					}
+
+					//Pull the value
+					tn_values[1] = temp_property->get_complex();
+
+					//Remove it
+					delete temp_property;
+				}
+				//Default else - already mapped, so go forth
+
+				complex d = tn_values[0]*current_inj[0] + tn_values[1]*current_inj[1];
 				current_inj[2] += d;
 			}
 			else {
@@ -3079,6 +3132,8 @@ int node::kmlinit(int (*stream)(const char*,...))
 int node::kmldump(int (*stream)(const char*,...))
 {
 	OBJECT *obj = OBJECTHDR(this);
+	FUNCTIONADDR temp_funadd = NULL;
+
 	if (isnan(get_latitude()) || isnan(get_longitude()))
 		return 0;
 	stream("<Placemark>\n");
@@ -3091,8 +3146,22 @@ int node::kmldump(int (*stream)(const char*,...))
 	int status = 2; // green
 	if ( gl_object_isa(my(),"triplex_meter") )
 	{
+		//Map to the function
+		temp_funadd = (FUNCTIONADDR)(gl_get_function(obj,"pwr_object_kmldata"));
+
+		//See if it was located
+		if (temp_funadd == NULL)
+		{
+			GL_THROW("object:%s - failed to map kmldata function",(obj->name?obj->name:"unnamed"));
+			/*  TROUBLESHOOT
+			While attempting to map the kmldata function, an error was encountered.
+			Please try again.  If the error persists, please submit your code and a bug report via the trac website.
+			*/
+		}
+
+		//Call the function
 		// TODO use triplex_node to get to triplex_meter
-		status = ((triplex_meter*)this)->kmldata(stream);
+		status = ((int (*)(OBJECT *,int (*stream)(const char*,...)))(*temp_funadd))(obj,stream);
 	}
 	else
 	{
@@ -3129,10 +3198,24 @@ int node::kmldump(int (*stream)(const char*,...))
 		}
 		stream("</TR>\n");
 
-	#define HANDLE_EX(X,Y)if ( gl_object_isa(my(),Y) ) ((X*)this)->kmldata(stream); else
-	#define HANDLE(X) HANDLE_EX(X,#X)
-		HANDLE(load)
-		HANDLE(capacitor)
+		//Check others - de-"macrotized" so it can do things indirectly
+		if ((gl_object_isa(my(),"load","powerflow") == true) || (gl_object_isa(my(),"capacitor","powerflow") == true))
+		{
+			//Map to the function
+			temp_funadd = (FUNCTIONADDR)(gl_get_function(obj,"pwr_object_kmldata"));
+
+			//See if it was located
+			if (temp_funadd == NULL)
+			{
+				GL_THROW("object:%s - failed to map kmldata function",(obj->name?obj->name:"unnamed"));
+				//Defined above
+			}
+
+			//Call the function
+			// TODO use triplex_node to get to triplex_meter
+			status = ((int (*)(OBJECT *,int (*stream)(const char*,...)))(*temp_funadd))(obj,stream);
+		}
+		else
 		{
 			// power
 			stream("<TR><TH ALIGN=LEFT>Power</TH>");
@@ -3751,9 +3834,10 @@ int node::NR_populate(void)
 int node::NR_current_update(bool parentcall)
 {
 	unsigned int table_index;
-	link_object *temp_link;
+	FUNCTIONADDR temp_funadd = NULL;
 	int temp_result, loop_index;
 	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *tmp_obj;
 	complex temp_current_inj[3];
 	complex temp_current_val[3];
 	complex adjusted_current_val[3];
@@ -4324,28 +4408,31 @@ int node::NR_current_update(bool parentcall)
 		{
 			for (table_index=0; table_index<NR_busdata[NR_node_reference].Link_Table_Size; table_index++)
 			{
-				//Extract that link
-				temp_link = OBJECTDATA(NR_branchdata[NR_busdata[NR_node_reference].Link_Table[table_index]].obj,link_object);
+				//Extract the object pointer - just for readability
+				tmp_obj = NR_branchdata[NR_busdata[NR_node_reference].Link_Table[table_index]].obj;
 
+				//Extract the function address
+				temp_funadd = (FUNCTIONADDR)(gl_get_function(tmp_obj,"perform_current_calculation_pwr_link"));
+				
 				//Make sure it worked
-				if (temp_link == NULL)
+				if (temp_funadd == NULL)
 				{
-					GL_THROW("Attemped to update current for object:%s, which is not a link!",NR_branchdata[NR_busdata[NR_node_reference].Link_Table[table_index]].name);
+					GL_THROW("Attemped to update current for object:%s failed!",(tmp_obj->name?tmp_obj->name:"Unnamed"));
 					/*  TROUBLESHOOT
 					The current node object tried to update the current injections for what it thought was a link object.  This does
-					not appear to be true.  Try your code again.  If the error persists, please submit your code and a bug report to the
-					trac website.
+					not appear to be true.  Try your code again.  If the error persists, please submit your GLM and a bug report to the
+					issue tracker.
 					*/
 				}
 
 				//Call a lock on that link - just in case multiple nodes call it at once
-				WRITELOCK_OBJECT(NR_branchdata[NR_busdata[NR_node_reference].Link_Table[table_index]].obj);
+				WRITELOCK_OBJECT(tmp_obj);
 
 				//Call its update - tell it who is asking so it knows what to lock
-				temp_result = temp_link->CurrentCalculation(NR_node_reference,false);
+				temp_result = ((int (*)(OBJECT *,int, bool))(*temp_funadd))(tmp_obj,NR_node_reference,false);
 
 				//Unlock the link
-				WRITEUNLOCK_OBJECT(NR_branchdata[NR_busdata[NR_node_reference].Link_Table[table_index]].obj);
+				WRITEUNLOCK_OBJECT(tmp_obj);
 
 				//See if it worked, just in case this gets added in the future
 				if (temp_result != 1)

@@ -276,7 +276,10 @@ DT delta_update(void)
 	/* Initialize the forced "post-update" timestep variable */
 	delta_forced_iteration = global_deltamode_forced_extra_timesteps;
 
-	/* process updates until mode is switched or 1 hour elapses */
+	/* Initialize the timestep check from the global */
+	global_deltamode_maximumtime = (DELTAT)(global_deltamode_maximumtime_pub + 0.5);
+
+	/* process updates until mode is switched or time limit elapses */
 	for ( global_deltaclock=0; global_deltaclock<global_deltamode_maximumtime; global_deltaclock+=timestep )
 	{
 		/* Check to make sure we haven't reached a stop time */
@@ -530,8 +533,15 @@ DT delta_update(void)
 static DT delta_preupdate(void)
 {
 	clock_t t = clock();
-	DT timestep = global_deltamode_timestep;
+	DT timestep;
 	MODULE **module;
+
+	/* Convert the published global into the integer version */
+	global_deltamode_timestep = (DT)(global_deltamode_timestep_pub + 0.5);
+
+	/* Store it for this check */
+	timestep = global_deltamode_timestep;
+
 	for ( module=delta_modulelist; module<delta_modulelist+delta_modulecount; module++ )
 	{
 		DT dt = (*module)->preupdate(*module,global_clock,global_deltaclock);

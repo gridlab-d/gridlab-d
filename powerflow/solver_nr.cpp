@@ -1039,10 +1039,36 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			island_index_val = bus[tempa].island_number;
 
 			//Check and see if we should just skip this branch -- if it's an unassociated node, probably don't need this branch
-			//Explicitly check both ends (branch's island_number could probably work, but this is more thorough)
+			//Explicitly check both ends
 			if ((bus[tempa].island_number == -1) || (bus[tempb].island_number == -1))
 			{
+				//Random error check - see if the branch somehow is oddly associated
+				if (branch[jindexer].island_number != -1)
+				{
+					GL_THROW("NR line:%d - %s has an island association, but the ends do not",branch[jindexer].obj->id,(branch[jindexer].name ? branch[jindexer].name : "Unnamed"));
+					/*  TROUBLESHOOT
+					When parsing the line list, a line connected to an isolated node is still somehow associated with a proper island.
+					This should not occur.  Please submit your GLM file and a description to the 
+					issue tracker.
+					*/
+				}
+				//Default else - unassociated, so just let it go
+
+				//Basically not part of any system, just skip it
 				continue;
+			}
+			else	//from/to are valid
+			{
+				//Paranoia check - make sure this line isn't somehow unassociated - ignore switching-type lines, since they are skipped when open
+				if ((branch[jindexer].island_number == -1) && (branch[jindexer].lnk_type < 3))
+				{
+					GL_THROW("NR line:%d - %s does not have a proper island association",branch[jindexer].obj->id,(branch[jindexer].name ? branch[jindexer].name : "Unnamed"));
+					/*  TROUBLESHOOT
+					When parsing the line list, a line connected to two valid nodes is still somehow unassociated.
+					This should not occur.  Please submit your GLM file and a description to the 
+					issue tracker.
+					*/
+				}
 			}
 
 			//Preliminary check to make sure we weren't missed in the initialization
@@ -1192,6 +1218,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			island_index_val = bus[tempa].island_number;
 
 			//Make sure it isn't invalid -- if it is, just skip this, since that means these lines do nothing anyways
+			//Explicit check on "oddities" for island association was earlier
 			if (branch[jindexer].island_number == -1)
 			{
 				continue;

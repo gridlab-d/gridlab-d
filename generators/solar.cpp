@@ -1516,20 +1516,36 @@ double solar::nr_root_rt(double x, double P)
 
 double solar::nr_root_search(double x, double doa, double P)
 {
-	double xn_ep = newton_raphson(x, (tpd_hf_ptr)&nr_ep_rt, eps_nr_ite);
+	double xn_ep = newton_raphson_nr_ep_rt(x, eps_nr_ite);
 	double x0_root = xn_ep + x0_root_rt * fabs(xn_ep);
-	double xn_root = newton_raphson(x0_root, (tpd_hf_ptr)&nr_root_rt, eps_nr_ite, P);
+	double xn_root = newton_raphson_nr_root_rt(x0_root, eps_nr_ite, P);
 	return xn_root;
 }
 
-double solar::newton_raphson(double x, tpd_hf_ptr nr_rt, double doa, double P)
+double solar::newton_raphson_nr_ep_rt(double x, double doa)
 {
 	int num_nr_ite = 0;
-	double h = (this->*nr_rt)(x, P);
+	double h = nr_ep_rt(x);
 	while (fabs(h) >= doa)
 	{
 		x = x - h; // x(n+1) = x(n) - f{x(n)} / f'{x(n)}
-		h = (this->*nr_rt)(x, P);
+		h = nr_ep_rt(x);
+		num_nr_ite++;
+		assert(num_nr_ite < max_nr_ite);
+	}
+
+	//cout << "The number of iterations is: " << num_nr_ite << "\n";
+	return x;
+}
+
+double solar::newton_raphson_nr_root_rt(double x, double doa, double P)
+{
+	int num_nr_ite = 0;
+	double h = nr_root_rt(x, P);
+	while (fabs(h) >= doa)
+	{
+		x = x - h; // x(n+1) = x(n) - f{x(n)} / f'{x(n)}
+		h = nr_root_rt(x, P);
 		num_nr_ite++;
 		assert(num_nr_ite < max_nr_ite);
 	}
@@ -1552,7 +1568,7 @@ double solar::get_p_from_u(double u)
 
 double solar::get_u_of_p_max(double x0)
 {
-	double temp_xn = newton_raphson(x0, (tpd_hf_ptr)&nr_ep_rt, eps_nr_ite);
+	double temp_xn = newton_raphson_nr_ep_rt(x0, eps_nr_ite);
 	return temp_xn;
 }
 

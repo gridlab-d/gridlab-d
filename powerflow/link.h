@@ -10,6 +10,7 @@ EXPORT int isa_link(OBJECT *obj, char *classname);
 EXPORT SIMULATIONMODE interupdate_link(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 EXPORT int updatepowercalc_link(OBJECT *obj);
 EXPORT int calculate_overlimit_link(OBJECT *obj, double *overload_value, bool *overloaded);
+EXPORT int currentcalculation_link(OBJECT *obj, int nodecall, bool link_fault_mode);
 
 #define impedance(X) (B_mat[X][X])
 
