@@ -309,7 +309,7 @@ int inverter_dyn::create(void)
 	Vdc_base = 850; // default value of dc bus voltage
 	Vdc_min_pu = 1; // default reference of the Vdc_min controller
 
-	P_f_droop_setting_mode = PSET_MODE;
+	P_f_droop_setting_mode = PSET_MODE;	//Defaults to PSET mode
 
 	// Capacitance of dc bus
 	C_pu = 0.1;	 //per unit
@@ -999,7 +999,6 @@ int inverter_dyn::init(OBJECT *parent)
 		fset = f_nominal;
 	}
 
-
 	Idc_base = S_base / Vdc_base;
 
 	// Initialize parameters
@@ -1637,20 +1636,16 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 	//Update time tracking variable
 	prev_timestamp_dbl = gl_globaldeltaclock;
 
-
-
 	if (control_mode == GRID_FORMING)
 	{
-
-		if (P_f_droop_setting_mode == PSET_MODE) //people want to use Pset, which is the power set point at rated frequency
+		if (P_f_droop_setting_mode == PSET_MODE) //Define using power set point at rated frequency
 		{
 			fset = f_nominal;
 		}
-		else if (P_f_droop_setting_mode == FSET_MODE) //people want to use fset, which is the frequency set point at no load
+		else if (P_f_droop_setting_mode == FSET_MODE) //Define using frequency set point at no load
 		{
 			Pset = 0;
 		}
-
 
 		// Link P_f_droop to mp
 		if (P_f_droop != -100)

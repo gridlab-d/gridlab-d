@@ -197,9 +197,9 @@ diesel_dg::diesel_dg(MODULE *module)
 				PT_KEYWORD,"GGOV1",(enumeration)GGOV1,PT_DESCRIPTION,"GGOV1 Governor Model",
 				PT_KEYWORD,"P_CONSTANT",(enumeration)P_CONSTANT,PT_DESCRIPTION,"P_CONSTANT mode Governor Model",
 
-				PT_enumeration, "P_f_droop_setting_mode", PADDR(P_f_droop_setting_mode), PT_DESCRIPTION, "Definition of P-f droop curve",
-					PT_KEYWORD, "FSET_MODE", (enumeration)FSET_MODE,
-					PT_KEYWORD, "PSET_MODE", (enumeration)PSET_MODE,
+			PT_enumeration, "P_f_droop_setting_mode", PADDR(P_f_droop_setting_mode), PT_DESCRIPTION, "Definition of P-f droop curve",
+				PT_KEYWORD, "FSET_MODE", (enumeration)FSET_MODE,
+				PT_KEYWORD, "PSET_MODE", (enumeration)PSET_MODE,
 
 			//Governor properties (DEGOV1)
 			PT_double,"DEGOV1_R[pu]",PADDR(gov_degov1_R),PT_DESCRIPTION,"Governor droop constant (p.u.)",
@@ -411,8 +411,8 @@ int diesel_dg::create(void)
 	Min_Ef = 0.95;
 
 	//Dynamics generator defaults
-	omega_ref=2*PI*60;  
-	f_nominal = 60;
+	omega_ref=0.0;  	//Will be pulled from powerflow
+	f_nominal=0.0;	//Will be pulled from powerflow
 	inertia=0.7;              
 	damping=0.0;                
 	number_poles=2;     
@@ -666,7 +666,7 @@ int diesel_dg::create(void)
 	only_first_init = true;
 	first_init_status = true;
 
-	P_f_droop_setting_mode = PSET_MODE;
+	P_f_droop_setting_mode = PSET_MODE;	//Default to PSET mode, for backwards compatibility
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -814,6 +814,28 @@ int diesel_dg::init(OBJECT *parent)
 				//Get the LN value too
 				Rated_V_LN = nominal_voltage_value;
 			}
+
+			//Pull frequency values - really only deltamode, but put in here too
+			temp_property_pointer = new gld_property("powerflow::nominal_frequency");
+
+			//Make sure it worked
+			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+			{
+				GL_THROW("diesel_dg:%d %s failed to map the nominal_frequency property", obj->id, (obj->name ? obj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to map the nominal_frequency property, an error occurred.  Please try again.
+				If the error persists, please submit your GLM and a bug report to the ticketing system.
+				*/
+			}
+
+			//Must be valid, read it
+			f_nominal = temp_property_pointer->get_double();
+
+			//Remove it
+			delete temp_property_pointer;
+
+			//Update omega_ref to match
+			omega_ref = f_nominal*2.0*PI;
 
 			//If we were deltamode requesting, set the flag on the other side
 			if (deltamode_inclusive==true)
@@ -3821,16 +3843,16 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 	else if ((Governor_type == GGOV1) || (Governor_type == GGOV1_OLD))
 	{
 
-		if (P_f_droop_setting_mode == PSET_MODE) //people want to use Pset, which is the power set point at rated frequency
+		if (P_f_droop_setting_mode == PSET_MODE) //Use Pset, which is the power set point at rated frequency
 		{
 			gen_base_set_vals.f_set = f_nominal;
 		}
-		else if (P_f_droop_setting_mode == FSET_MODE) //people want to use fset, which is the frequency set point at no load
+		else if (P_f_droop_setting_mode == FSET_MODE) //Use fset, which is the frequency set point at no load
 		{
-			gen_base_set_vals.Pref = 0;
+			gen_base_set_vals.Pref = 0.0;
 		}
 
-		if (gen_base_set_vals.f_set > 0)
+		if (gen_base_set_vals.f_set > 0.0)
 		{
 			gen_base_set_vals.wref = gen_base_set_vals.f_set/f_nominal;
 		}
@@ -4389,27 +4411,15 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 	}//End P_CONSTANT initialization
 	else if ((Governor_type == GGOV1) || (Governor_type == GGOV1_OLD))
 	{
-
-
 		if (P_f_droop_setting_mode == PSET_MODE)
 		{
 			gen_base_set_vals.f_set = f_nominal;	//Initialize to the nominal value
 		}
 		else if (P_f_droop_setting_mode == FSET_MODE)
 		{
-			gen_base_set_vals.Pref = 0;
+			gen_base_set_vals.Pref = 0.0;				//Initalize to zero value
 		}
-
-		if (gen_base_set_vals.f_set < 0.0)
-		{
-			gen_base_set_vals.wref = gen_base_set_vals.f_set/f_nominal;
-		}
-
-		if (gen_base_set_vals.wref < -90.0)	//Should be -99 if not set
-		{
-			gen_base_set_vals.wref = curr_time->omega/omega_ref;
-		}
-		//Default else -- already set, just ignore this
+		//Default else - unknown mode, just ignore for now
 
 		if (gov_ggv1_Dm > 0.0)
 		{
@@ -4484,11 +4494,30 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 
 		if (P_f_droop_setting_mode == FSET_MODE)
 		{
+			//See if f_set was set - prioritize
+			if (gen_base_set_vals.f_set > 0.0)
+			{
+				gen_base_set_vals.wref = gen_base_set_vals.f_set/f_nominal;
+			}
+			//Is negative, so let do normal updates/initialization
+
 			if (gen_base_set_vals.wref < 0.0)
 			{
 				gen_base_set_vals.wref = curr_time->gov_ggov1.err2a - curr_time->gov_ggov1.x8 + gov_ggv1_r*curr_time->gov_ggov1.RselectValue - gen_base_set_vals.Pref + curr_time->omega/omega_ref;
+
+				//Implies f_set wasn't set too, so extract that value as an initialization
+				gen_base_set_vals.f_set = gen_base_set_vals.wref*f_nominal;	//Is per-unit, just use a "different base"
 			}
 			//Default else - already set to a value
+		}
+		else	//Other modes
+		{
+			//See if it was initialized
+			if (gen_base_set_vals.wref < -90.0)	//Should be -99 if not set
+			{
+				gen_base_set_vals.wref = curr_time->omega/omega_ref;
+			}
+			//Default else -- already set, just ignore this
 		}
 
 		curr_time->gov_ggov1.werror = curr_time->omega/omega_ref - gen_base_set_vals.wref;
