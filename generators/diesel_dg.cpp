@@ -113,6 +113,7 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double,"Vset[pu]", PADDR(gen_base_set_vals.vset), PT_DESCRIPTION, "Vset input to AVR controls (per-unit)",
 			PT_double,"Pref[pu]", PADDR(gen_base_set_vals.Pref), PT_DESCRIPTION, "Pref input to governor controls (per-unit), if supported",
 			PT_double,"Pset[pu]", PADDR(gen_base_set_vals.Pref), PT_DESCRIPTION, "Pset input to governor controls (per-unit), if supported",	//overloaded for commonality to wider control
+			PT_double,"fset[Hz]",PADDR(gen_base_set_vals.f_set), PT_DESCRIPTION, "fset input to governor controls (Hz) - takes priority over wref",	//semi-overloaded for commonality to wider control
 			PT_double,"Qref[pu]", PADDR(gen_base_set_vals.Qref), PT_DESCRIPTION, "Qref input to govornor or AVR controls (per-unit), if supported",
 
 			//Properties for AVR/Exciter of dynamics model
@@ -136,7 +137,9 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double,"Vterm_min[pu]",PADDR(Min_Ef),PT_DESCRIPTION,"Lower voltage limit for super-second (p.u.)",
 
 			PT_double,"mq_QV_Droop",PADDR(mq_QV_Droop),PT_DESCRIPTION,"Q-V droop slope",
+			PT_double,"SEXS_Q_V_droop",PADDR(mq_QV_Droop),PT_DESCRIPTION,"Q-V droop slope",
 			PT_double,"Vset_QV_droop",PADDR(Vset_QV_droop),PT_DESCRIPTION,"Voltage setpoint of QV droop",
+			PT_double,"SEXS_Vset",PADDR(Vset_QV_droop),PT_DESCRIPTION,"Voltage setpoint of QV droop",
 			PT_double,"Vref_SEXS",PADDR(gen_base_set_vals.vset),PT_DESCRIPTION,"Voltage reference for SEXS exciter",
 
 			//State variables - SEXS
@@ -193,6 +196,10 @@ diesel_dg::diesel_dg(MODULE *module)
 				PT_KEYWORD,"GGOV1_OLD",(enumeration)GGOV1_OLD,PT_DESCRIPTION,"Older GGOV1 Governor Model",
 				PT_KEYWORD,"GGOV1",(enumeration)GGOV1,PT_DESCRIPTION,"GGOV1 Governor Model",
 				PT_KEYWORD,"P_CONSTANT",(enumeration)P_CONSTANT,PT_DESCRIPTION,"P_CONSTANT mode Governor Model",
+
+				PT_enumeration, "P_f_droop_setting_mode", PADDR(P_f_droop_setting_mode), PT_DESCRIPTION, "Definition of P-f droop curve",
+					PT_KEYWORD, "FSET_MODE", (enumeration)FSET_MODE,
+					PT_KEYWORD, "PSET_MODE", (enumeration)PSET_MODE,
 
 			//Governor properties (DEGOV1)
 			PT_double,"DEGOV1_R[pu]",PADDR(gov_degov1_R),PT_DESCRIPTION,"Governor droop constant (p.u.)",
@@ -267,6 +274,9 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double,"GGOV1_Tsb[s]",PADDR(gov_ggv1_Tsb),PT_DESCRIPTION,"Temperature detection lag time constant, sec.",
 //			PT_double,"GGOV1_rup",PADDR(gov_ggv1_rup),PT_DESCRIPTION,"Maximum rate of load limit increase",
 //			PT_double,"GGOV1_rdown",PADDR(gov_ggv1_rdown),PT_DESCRIPTION,"Maximum rate of load limit decrease",
+
+			PT_double,"GGOV1_Pset[pu]", PADDR(gen_base_set_vals.Pref), PT_DESCRIPTION, "GGOV1_Pset input to governor controls (per-unit), if supported",	//overloaded for commonality to wider control
+			PT_double,"GGOV1_fset[Hz]",PADDR(gen_base_set_vals.f_set), PT_DESCRIPTION, "fset input to governor controls (Hz) - takes priority over wref",	//semi-overloaded for commonality to wider control
 
 			//GGOV1 "enable/disable" variables - to give some better control over low value select
 			PT_bool,"GGOV1_Load_Limit_enable",PADDR(gov_ggv1_fsrt_enable),PT_DESCRIPTION,"Enables/disables load limiter (fsrt) of low-value-select",
@@ -402,6 +412,7 @@ int diesel_dg::create(void)
 
 	//Dynamics generator defaults
 	omega_ref=2*PI*60;  
+	f_nominal = 60;
 	inertia=0.7;              
 	damping=0.0;                
 	number_poles=2;     
@@ -428,6 +439,7 @@ int diesel_dg::create(void)
 	gen_base_set_vals.vset = -99.0;
 	gen_base_set_vals.Pref = -99.0;
 	gen_base_set_vals.Qref = -99.0;
+	gen_base_set_vals.f_set = -99.0;
 
 	//SEXS Exciter defaults
 	exc_KA=50;              
@@ -653,6 +665,8 @@ int diesel_dg::create(void)
 	//Deltamode-only changes variables
 	only_first_init = true;
 	first_init_status = true;
+
+	P_f_droop_setting_mode = PSET_MODE;
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -3807,6 +3821,20 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 	else if ((Governor_type == GGOV1) || (Governor_type == GGOV1_OLD))
 	{
 
+		if (P_f_droop_setting_mode == PSET_MODE) //people want to use Pset, which is the power set point at rated frequency
+		{
+			gen_base_set_vals.f_set = f_nominal;
+		}
+		else if (P_f_droop_setting_mode == FSET_MODE) //people want to use fset, which is the frequency set point at no load
+		{
+			gen_base_set_vals.Pref = 0;
+		}
+
+		if (gen_base_set_vals.f_set > 0)
+		{
+			gen_base_set_vals.wref = gen_base_set_vals.f_set/f_nominal;
+		}
+
 		//1 - Pelec measurement
 		curr_delta->gov_ggov1.x1 = 1.0/gov_ggv1_Tpelec*(curr_time->pwr_electric.Re() / Rated_VA - curr_time->gov_ggov1.x1);
 
@@ -4361,6 +4389,22 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 	}//End P_CONSTANT initialization
 	else if ((Governor_type == GGOV1) || (Governor_type == GGOV1_OLD))
 	{
+
+
+		if (P_f_droop_setting_mode == PSET_MODE)
+		{
+			gen_base_set_vals.f_set = f_nominal;	//Initialize to the nominal value
+		}
+		else if (P_f_droop_setting_mode == FSET_MODE)
+		{
+			gen_base_set_vals.Pref = 0;
+		}
+
+		if (gen_base_set_vals.f_set < 0.0)
+		{
+			gen_base_set_vals.wref = gen_base_set_vals.f_set/f_nominal;
+		}
+
 		if (gen_base_set_vals.wref < -90.0)	//Should be -99 if not set
 		{
 			gen_base_set_vals.wref = curr_time->omega/omega_ref;
@@ -4437,13 +4481,26 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 		curr_time->gov_ggov1.x8a = 0.0;
 		curr_time->gov_ggov1.x8 = curr_time->gov_ggov1.x8a;
 		curr_time->gov_ggov1.err2a = 0.0;
+
+		if (P_f_droop_setting_mode == FSET_MODE)
+		{
+			if (gen_base_set_vals.wref < 0.0)
+			{
+				gen_base_set_vals.wref = curr_time->gov_ggov1.err2a - curr_time->gov_ggov1.x8 + gov_ggv1_r*curr_time->gov_ggov1.RselectValue - gen_base_set_vals.Pref + curr_time->omega/omega_ref;
+			}
+			//Default else - already set to a value
+		}
+
 		curr_time->gov_ggov1.werror = curr_time->omega/omega_ref - gen_base_set_vals.wref;
 
-		if (gen_base_set_vals.Pref < -90.0)	//Should be -99.0 if un-initialized
+		if (P_f_droop_setting_mode == PSET_MODE)
 		{
-			gen_base_set_vals.Pref = curr_time->gov_ggov1.err2a - curr_time->gov_ggov1.x8 + curr_time->gov_ggov1.werror + gov_ggv1_r*curr_time->gov_ggov1.RselectValue;
+			if (gen_base_set_vals.Pref < -90.0)	//Should be -99.0 if un-initialized
+			{
+				gen_base_set_vals.Pref = curr_time->gov_ggov1.err2a - curr_time->gov_ggov1.x8 + curr_time->gov_ggov1.werror + gov_ggv1_r*curr_time->gov_ggov1.RselectValue;
+			}
+			//Default else -- already initialized or set
 		}
-		//Default else -- already initialized or set
 		
 		if (curr_time->gov_ggov1.err2a > gov_ggv1_maxerr)
 		{

@@ -30,6 +30,10 @@ inverter_dyn::inverter_dyn(MODULE *module)
 				PT_KEYWORD, "CONSTANT_DC_BUS", (enumeration)CONSTANT_DC_BUS,
 				PT_KEYWORD, "DYNAMIC_DC_BUS", (enumeration)DYNAMIC_DC_BUS,
 
+			PT_enumeration, "P_f_droop_setting_mode", PADDR(P_f_droop_setting_mode), PT_DESCRIPTION, "Definition of P-f droop curve",
+				PT_KEYWORD, "FSET_MODE", (enumeration)FSET_MODE,
+				PT_KEYWORD, "PSET_MODE", (enumeration)PSET_MODE,
+
 			PT_complex, "phaseA_I_Out[A]", PADDR(temp_current_val[0]), PT_DESCRIPTION, "AC current on A phase in three-phase system",
 			PT_complex, "phaseB_I_Out[A]", PADDR(temp_current_val[1]), PT_DESCRIPTION, "AC current on B phase in three-phase system",
 			PT_complex, "phaseC_I_Out[A]", PADDR(temp_current_val[2]), PT_DESCRIPTION, "AC current on C phase in three-phase system",
@@ -304,6 +308,8 @@ int inverter_dyn::create(void)
 
 	Vdc_base = 850; // default value of dc bus voltage
 	Vdc_min_pu = 1; // default reference of the Vdc_min controller
+
+	P_f_droop_setting_mode = PSET_MODE;
 
 	// Capacitance of dc bus
 	C_pu = 0.1;	 //per unit
@@ -993,6 +999,7 @@ int inverter_dyn::init(OBJECT *parent)
 		fset = f_nominal;
 	}
 
+
 	Idc_base = S_base / Vdc_base;
 
 	// Initialize parameters
@@ -1630,8 +1637,21 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 	//Update time tracking variable
 	prev_timestamp_dbl = gl_globaldeltaclock;
 
+
+
 	if (control_mode == GRID_FORMING)
 	{
+
+		if (P_f_droop_setting_mode == PSET_MODE) //people want to use Pset, which is the power set point at rated frequency
+		{
+			fset = f_nominal;
+		}
+		else if (P_f_droop_setting_mode == FSET_MODE) //people want to use fset, which is the frequency set point at no load
+		{
+			Pset = 0;
+		}
+
+
 		// Link P_f_droop to mp
 		if (P_f_droop != -100)
 		{
@@ -3453,7 +3473,16 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 					Vset += VA_Out.Im() / S_base * mq;
 				}
 
-				Pset = VA_Out.Re() / S_base;
+				if (P_f_droop_setting_mode == PSET_MODE)
+				{
+					Pset = VA_Out.Re() / S_base;
+					fset = f_nominal;
+				}
+				else if (P_f_droop_setting_mode == FSET_MODE)
+				{
+					fset = (VA_Out.Re()/S_base)*(mp/(2.0*PI)) + f_nominal;
+					Pset = 0;
+				}
 
 				//Set it false in here, for giggles
 				first_deltamode_init = false;

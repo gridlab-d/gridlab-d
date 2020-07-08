@@ -183,6 +183,14 @@ public:
 	};
 	enumeration grid_forming_mode; //
 
+	enum P_F_DROOP_SETTING_TYPE
+	{
+		FSET_MODE = 0,
+		PSET_MODE = 1
+	};
+	enumeration P_f_droop_setting_mode; //
+
+
 	complex temp_current_val[3];
 	TIMESTAMP inverter_start_time;
 	bool inverter_first_step;
