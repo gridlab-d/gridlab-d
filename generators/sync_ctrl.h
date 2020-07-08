@@ -69,6 +69,18 @@ private: //QSTS
     /* Pre-sync */
     void deltamode_reg();
 
+private: //Deltamode
+    /* inter_deltaupdate_sync_ctrl */
+    void dm_update_measurements();
+
+    bool sct_metrics_check_mode_A(unsigned long);
+    bool sct_metrics_check_mode_B();
+
+    enum class SCT_MODE_ENUM;
+    void mode_transition(SCT_MODE_ENUM, bool);
+
+    void cgu_ctrl();
+
 private: //Published Properties
     //==Flag
     bool arm_flag;
@@ -95,7 +107,7 @@ private: //Published Properties
 private: //Variables
     //==Flags & Status
     // bool mode_flag; //Indicates whether in mode A or not: True - This object is working in mode A, False - This object is working in mode B.
-    enum SCT_MODE_ENUM
+    enum class SCT_MODE_ENUM
     {
         MODE_A,
         MODE_B
@@ -141,17 +153,6 @@ private: //Variables
     double sck_volt_B_mag_diff_pu;
     gld_property *prop_sck_volt_C_mag_diff_pu_ptr;
     double sck_volt_C_mag_diff_pu;
-
-private: //Deltamode
-    /* inter_deltaupdate_sync_ctrl */
-    void dm_update_measurements();
-
-    bool sct_metrics_check_mode_A(unsigned long);
-    bool sct_metrics_check_mode_B();
-
-    void mode_transition(SCT_MODE_ENUM, bool);
-
-    void cgu_ctrl();
 };
 
 #endif // GLD_GENERATORS_SYNC_CTRL_H_
