@@ -81,6 +81,9 @@ private: //Deltamode
 
     void cgu_ctrl();
 
+    /* parameter/data sanity check */
+    void dm_data_sanity_check();
+
 private: //Published Properties
     //==Flag
     bool arm_flag;

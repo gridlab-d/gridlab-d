@@ -102,6 +102,7 @@ SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time,
     if (arm_flag)
     {
         dm_update_measurements();
+        // dm_data_sanity_check(); //@TODO: discuss with Frank and see if we want to keep this on
 
         if (swt_status == SWT_STATUS_ENUM::CLOSED)
         {
@@ -225,6 +226,27 @@ void sync_ctrl::reset_timer()
 {
     timer_mode_A_sec = 0;
     timer_mode_B_sec = 0;
+}
+
+/* parameter/data sanity check */
+void sync_ctrl::dm_data_sanity_check()
+{
+    OBJECT *obj = OBJECTHDR(this);
+
+    double sck_metrics_period_sec = get_prop_value<double, OBJECT>(sck_obj_ptr, "metrics_period",
+                                                                   &gld_property::is_valid,
+                                                                   &gld_property::is_double,
+                                                                   &gld_property::get_double);
+    if (sck_metrics_period_sec >= pp_t_mon_sec)
+    {
+        gl_warning("%s:%d %s - The 'monitoring_period' is smaller or equal to the 'metrics_period' of %s.",
+                   STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
+                   sck_obj_ptr->name);
+        /*  TROUBLESHOOT
+		The sck_metrics_period_sec should be smaller than the pp_t_mon_sec!
+		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
+		*/
+    }
 }
 
 //////////////////////////////////////////////////////////////////////////
