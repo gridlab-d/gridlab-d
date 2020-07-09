@@ -958,7 +958,7 @@ void sync_check::reset_after_excitation()
 	// Reset other buffers & variables
 	metrics_flag = false;
 	t_sat = 0;
-	// init_diff_prop(); @TODO
+	// init_diff_prop(); //@TODO
 }
 
 //Deltamode call
@@ -966,7 +966,7 @@ void sync_check::reset_after_excitation()
 SIMULATIONMODE sync_check::inter_deltaupdate_sync_check(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
 {
 	update_measurements(); //@TODO: Always update for sync_ctrl
-	update_diff_prop(); //@TODO: Always update for sync_ctrl
+	update_diff_prop();	   //@TODO: Always update for sync_ctrl
 
 	if (sc_enabled_flag)
 	{

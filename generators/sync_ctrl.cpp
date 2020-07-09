@@ -348,7 +348,7 @@ void sync_ctrl::init_vars() // Init local variables with default settings
     /* sync_check */
     prop_sck_armed_ptr = nullptr;
     sck_armed_flag = false;
-    
+
     prop_sck_freq_diff_hz_ptr = nullptr;
     prop_sck_volt_A_mag_diff_pu_ptr = nullptr;
     prop_sck_volt_B_mag_diff_pu_ptr = nullptr;
