@@ -69,8 +69,8 @@ int sync_ctrl::create(void)
 
 int sync_ctrl::init(OBJECT *parent)
 {
-    data_sanity_check();
-    deltamode_check();
+    init_data_sanity_check();
+    init_deltamode_check();
 
     init_nom_values();
     init_sensors();
@@ -505,7 +505,7 @@ void sync_ctrl::init_pub_prop() // Init published properties with default settin
     pi_volt_mag_kp = 1;
 }
 
-void sync_ctrl::data_sanity_check()
+void sync_ctrl::init_data_sanity_check()
 {
     OBJECT *obj = OBJECTHDR(this);
 
@@ -536,6 +536,28 @@ void sync_ctrl::data_sanity_check()
     }
 
     //--controlled generation unit
+    if (cgu_obj_ptr == nullptr)
+    {
+        GL_THROW("%s:%d %s the %s property must be specified!",
+                 STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
+                 STR(cgu_obj_ptr));
+        /*  TROUBLESHOOT
+		The cgu_obj_ptr property is not specified! Please try again.
+		If the error persists, please submit your GLM and a bug report to the ticketing system.
+		*/
+    }
+    // @NOTE: the gl_object_isa is implemented in an "interesting" way that leads the isa() to return int (implicit bool to int conversion) instead of bool
+    else if (!gl_object_isa(cgu_obj_ptr, "inverter_dyn", "generators") &&
+             (!gl_object_isa(cgu_obj_ptr, "diesel_dg", "generators"))) //Check if the sck_obj_ptr is pointing to a sync_check object
+    {
+        GL_THROW("%s:%d %s the %s property must be set as the name of a DG or Inverter object!",
+                 STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
+                 STR(cgu_obj_ptr));
+        /*  TROUBLESHOOT
+		The cgu_obj_ptr property must be set as the name of a DG or Inverter object. Please try again.
+		If the error persists, please submit your GLM and a bug report to the ticketing system.
+		*/
+    }
 
     //==Tolerance
     if (sct_freq_tol_ub_hz <= 0)
@@ -638,9 +660,60 @@ void sync_ctrl::data_sanity_check()
     }
 
     //==Controller @TODO
+    if (pi_freq_kp < 0)
+    {
+        pi_freq_kp = 1; //@TODO
+
+        gl_warning("%s:%d %s - %s was set as a negative value, it is reset to %f.",
+                   STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
+                   STR(pi_freq_kp), pi_freq_kp);
+        /*  TROUBLESHOOT
+		The pi_freq_kp was set as a negative value!
+		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
+		*/
+    }
+
+    if (pi_freq_ki < 0)
+    {
+        pi_freq_ki = 1; //@TODO
+
+        gl_warning("%s:%d %s - %s was set as a negative value, it is reset to %f.",
+                   STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
+                   STR(pi_freq_ki), pi_freq_ki);
+        /*  TROUBLESHOOT
+		The pi_freq_ki was set as a negative value!
+		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
+		*/
+    }
+
+    if (pi_volt_mag_kp < 0)
+    {
+        pi_volt_mag_kp = 1; //@TODO
+
+        gl_warning("%s:%d %s - %s was set as a negative value, it is reset to %f.",
+                   STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
+                   STR(pi_volt_mag_kp), pi_volt_mag_kp);
+        /*  TROUBLESHOOT
+		The pi_volt_mag_kp was set as a negative value!
+		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
+		*/
+    }
+
+    if (pi_volt_mag_ki < 0)
+    {
+        pi_volt_mag_ki = 1; //@TODO
+
+        gl_warning("%s:%d %s - %s was set as a negative value, it is reset to %f.",
+                   STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
+                   STR(pi_volt_mag_ki), pi_volt_mag_ki);
+        /*  TROUBLESHOOT
+		The pi_volt_mag_ki was set as a negative value!
+		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
+		*/
+    }
 }
 
-void sync_ctrl::deltamode_check()
+void sync_ctrl::init_deltamode_check()
 {
     OBJECT *obj = OBJECTHDR(this);
 

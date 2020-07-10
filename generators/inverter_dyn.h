@@ -328,6 +328,8 @@ public:
 
 	/* required implementations */
 	inverter_dyn(MODULE *module);
+	int isa(char *);
+
 	int create(void);
 	int init(OBJECT *parent);
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);

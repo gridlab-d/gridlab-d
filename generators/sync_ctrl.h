@@ -15,7 +15,7 @@ public:
 
 public:
     sync_ctrl(MODULE *mod);
-    int isa(char *classname);
+    int isa(char *);
 
     int create(void);
     int init(OBJECT * = nullptr);
@@ -57,8 +57,8 @@ private: //Init & Check Member Funcs
     void init_pub_prop();
 
     /* Mainly used in init() */
-    void data_sanity_check();
-    void deltamode_check();
+    void init_data_sanity_check();
+    void init_deltamode_check();
     void init_nom_values();
     void init_sensors();
 

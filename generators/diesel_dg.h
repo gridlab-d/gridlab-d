@@ -440,6 +440,8 @@ public:
 public:
 	/* required implementations */
 	diesel_dg(MODULE *module);
+	int isa(char *);
+
 	void check_power_output();
 	int create(void);
 	int init(OBJECT *parent);

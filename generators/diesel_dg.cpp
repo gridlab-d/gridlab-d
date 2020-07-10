@@ -5025,3 +5025,9 @@ EXPORT STATUS diesel_dg_NR_current_injection_update(OBJECT *obj,int64 iteration_
 	return temp_status;
 
 }
+
+// isa func
+int diesel_dg::isa(char *classname)
+{
+    return strcmp(classname, "diesel_dg") == 0;
+}

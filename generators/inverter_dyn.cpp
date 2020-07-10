@@ -4393,3 +4393,9 @@ EXPORT STATUS inverter_dyn_DC_object_register(OBJECT *this_obj, OBJECT *DC_obj)
 	//Return the status
 	return temp_status;
 }
+
+// isa func
+int inverter_dyn::isa(char *classname)
+{
+    return strcmp(classname, "inverter_dyn") == 0;
+}
