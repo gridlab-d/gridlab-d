@@ -156,6 +156,21 @@ private: //Variables
     double sck_volt_B_mag_diff_pu;
     gld_property *prop_sck_volt_C_mag_diff_pu_ptr;
     double sck_volt_C_mag_diff_pu;
+
+    /* cgu */
+    gld_property *prop_cgu_P_f_droop_setting_mode_ptr;
+    enum class PF_DROOP_MODE //@TODO: this may not need to be defined repeatly in diesel_dg, inverter_dyn, and here...
+    {
+        FSET_MODE = 0,
+        PSET_MODE = 1
+    } cgu_P_f_droop_setting_mode;
+    
+    enum class CGU_TYPE
+    {
+        UNKNOWN_CGU_TYPE = 0,
+        DG = 1,
+        INV = 2
+    } cgu_type;
 };
 
 #endif // GLD_GENERATORS_SYNC_CTRL_H_

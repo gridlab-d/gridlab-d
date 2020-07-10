@@ -218,7 +218,15 @@ void sync_ctrl::mode_transition(SCT_MODE_ENUM sct_mode, bool sck_armed_flag)
 
 void sync_ctrl::cgu_ctrl()
 {
-    // To be implemented...
+    // if (cgu_type == CGU_TYPE::DG)
+    
+    // PI controller for freq_diff_hz
+
+    // PI controller for volt_mag_diff_ph_a_pu
+
+    // PI controller for volt_mag_diff_ph_b_pu
+
+    // PI controller for volt_mag_diff_ph_c_pu
 }
 
 /* For reset */
@@ -797,6 +805,24 @@ void sync_ctrl::init_sensors()
                                                    &gld_property::is_valid,
                                                    &gld_property::is_double);
     sck_volt_C_mag_diff_pu = get_prop_value<double>(prop_sck_volt_C_mag_diff_pu_ptr, &gld_property::get_double, false);
+
+    //==CGU (controlled generation unit)
+    //--p_f_droop
+    prop_cgu_P_f_droop_setting_mode_ptr = get_prop_ptr(cgu_obj_ptr, "P_f_droop_setting_mode",
+                                                       &gld_property::is_valid,
+                                                       &gld_property::is_enumeration);
+    //@TODO: This may need to be moved into pre-delta update, or use OF_INIT
+    cgu_P_f_droop_setting_mode = static_cast<PF_DROOP_MODE>(
+        get_prop_value<enumeration>(prop_cgu_P_f_droop_setting_mode_ptr,
+                                    &gld_property::get_enumeration, false));
+
+    //--DG or INV
+    if (gl_object_isa(cgu_obj_ptr, "inverter_dyn", "generators"))
+        cgu_type = CGU_TYPE::INV;
+    else if (gl_object_isa(cgu_obj_ptr, "diesel_dg", "generators"))
+        cgu_type = CGU_TYPE::DG;
+    else
+        cgu_type = CGU_TYPE::UNKNOWN_CGU_TYPE;
 }
 
 //==QSTS Member Funcs
