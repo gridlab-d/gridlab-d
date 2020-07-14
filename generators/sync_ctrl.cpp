@@ -74,6 +74,7 @@ int sync_ctrl::init(OBJECT *parent)
 
     init_nom_values();
     init_sensors();
+    init_controllers();
 
     return 1;
 }
@@ -124,7 +125,7 @@ SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time,
                         set_prop(prop_sck_armed_ptr, false); //disarm sync_check if it is armed
                     }
 
-                    cgu_ctrl();
+                    cgu_ctrl((double)dt / (double)DT_SECOND);
                 }
             }
             else
@@ -216,17 +217,30 @@ void sync_ctrl::mode_transition(SCT_MODE_ENUM sct_mode, bool sck_armed_flag)
     set_prop(prop_sck_armed_ptr, sck_armed_flag); // Arm or disarm sync_check
 }
 
-void sync_ctrl::cgu_ctrl()
+void sync_ctrl::cgu_ctrl(double dt)
 {
-    // if (cgu_type == CGU_TYPE::DG)
+    switch (cgu_type)
+    {
+    case CGU_TYPE::DG:
+    {
+        // PI controller for freq_diff_hz
 
-    // PI controller for freq_diff_hz
-
-    // PI controller for volt_mag_diff_ph_a_pu
-
-    // PI controller for volt_mag_diff_ph_b_pu
-
-    // PI controller for volt_mag_diff_ph_c_pu
+        // PI controller for avg(volt_mag_diff_ph_a_pu, volt_mag_diff_ph_b_pu, volt_mag_diff_ph_c_pu) //@TODO: may change to max()
+        double dg_vset_mpv = (sck_volt_A_mag_diff_pu + sck_volt_B_mag_diff_pu + sck_volt_C_mag_diff_pu) / 3;
+        double dg_vset_cv = pi_ctrl_dg_vset->step_update(0, dg_vset_mpv, dt); //@TODO: the setpoint may be set via a published property
+        set_prop(prop_cgu_vset_ptr, dg_vset_cv);
+        break;
+    }
+    case CGU_TYPE::INV:
+    {
+        break;
+    }
+    case CGU_TYPE::UNKNOWN_CGU_TYPE:
+    {
+        GL_THROW("The type of this controlled generation unit is unknown!");
+        break;
+    }
+    }
 }
 
 /* For reset */
@@ -369,6 +383,7 @@ void sync_ctrl::init_vars() // Init local variables with default settings
     // std::cout << "Nominal Frequency = " << sys_nom_freq_hz << " (Hz)" << std::endl; // For verifying
 
     //==Controller
+    pi_ctrl_dg_vset = nullptr;
 
     //==Obj & Prop
     /* switch */
@@ -818,11 +833,30 @@ void sync_ctrl::init_sensors()
 
     //--DG or INV
     if (gl_object_isa(cgu_obj_ptr, "inverter_dyn", "generators"))
+    {
         cgu_type = CGU_TYPE::INV;
+        prop_cgu_vset_name_cc_ptr = "Vset";
+    }
     else if (gl_object_isa(cgu_obj_ptr, "diesel_dg", "generators"))
+    {
         cgu_type = CGU_TYPE::DG;
+        prop_cgu_vset_name_cc_ptr = "Vset_QV_droop";
+    }
     else
+    {
         cgu_type = CGU_TYPE::UNKNOWN_CGU_TYPE;
+        gl_warning("The type of controlled generation unit is unkonwn!");
+    }
+
+    //--properties for the controlled variables //@TODO: maybe move to init_controllers()
+    prop_cgu_vset_ptr = get_prop_ptr(cgu_obj_ptr, (char *)prop_cgu_vset_name_cc_ptr,
+                                     &gld_property::is_valid,
+                                     &gld_property::is_double);
+}
+
+void sync_ctrl::init_controllers()
+{
+    pi_ctrl_dg_vset = new pid_ctrl(pi_volt_mag_kp, pi_volt_mag_ki, 0);
 }
 
 //==QSTS Member Funcs

@@ -8,6 +8,7 @@
 
 EXPORT SIMULATIONMODE interupdate_sync_ctrl(OBJECT *, unsigned int64, unsigned long, unsigned int);
 
+class pid_ctrl;
 class sync_ctrl : public gld_object
 {
 public:
@@ -61,6 +62,7 @@ private: //Init & Check Member Funcs
     void init_deltamode_check();
     void init_nom_values();
     void init_sensors();
+    void init_controllers();
 
     /* For reset */
     void reset_timer();
@@ -79,7 +81,7 @@ private: //Deltamode
     enum class SCT_MODE_ENUM;
     void mode_transition(SCT_MODE_ENUM, bool);
 
-    void cgu_ctrl();
+    void cgu_ctrl(double);
 
     /* parameter/data sanity check */
     void dm_data_sanity_check();
@@ -135,6 +137,9 @@ private: //Variables
     double sys_nom_freq_hz;
 
     //==Controller
+    pid_ctrl *pi_ctrl_dg_vset;
+    // pid_ctrl *pi_ctrl_dg_pset;
+    // pid_ctrl *pi_ctrl_dg_fset;
 
     //==Obj & Prop
     /* switch */
@@ -171,6 +176,9 @@ private: //Variables
         DG = 1,
         INV = 2
     } cgu_type;
+
+    const char *prop_cgu_vset_name_cc_ptr;
+    gld_property *prop_cgu_vset_ptr;
 };
 
 /* ================================================
@@ -190,7 +198,7 @@ private:
     double pre_ev;
     double integral;
 
-private:
+public:
     // kp: proportional gain factor
     // ki: integral gain factor
     // kd: derivative gain facor
