@@ -164,13 +164,44 @@ private: //Variables
         FSET_MODE = 0,
         PSET_MODE = 1
     } cgu_P_f_droop_setting_mode;
-    
+
     enum class CGU_TYPE
     {
         UNKNOWN_CGU_TYPE = 0,
         DG = 1,
         INV = 2
     } cgu_type;
+};
+
+/* ================================================
+PID Controller (@TODO: move to an independent file)
+================================================ */
+class pid_ctrl
+{
+private:
+    double kp;
+    double ki;
+    double kd;
+
+    double dt;
+    double cv_max;
+    double cv_min;
+
+    double pre_ev;
+    double integral;
+
+private:
+    // kp: proportional gain factor
+    // ki: integral gain factor
+    // kd: derivative gain facor
+    // dt: time interval
+    // max: upper bound of the control variable
+    // min: lower bound of the control variable
+    pid_ctrl(double kp, double ki, double kd, double dt = 0, double cv_max = 1, double cv_min = 0);
+    ~pid_ctrl();
+
+    // Returns the control variable, with respect to the setpoint and measured process value as inputs
+    double step_update(double setpoint, double mpv, double cur_dt = 0);
 };
 
 #endif // GLD_GENERATORS_SYNC_CTRL_H_

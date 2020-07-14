@@ -219,7 +219,7 @@ void sync_ctrl::mode_transition(SCT_MODE_ENUM sct_mode, bool sck_armed_flag)
 void sync_ctrl::cgu_ctrl()
 {
     // if (cgu_type == CGU_TYPE::DG)
-    
+
     // PI controller for freq_diff_hz
 
     // PI controller for volt_mag_diff_ph_a_pu
@@ -873,4 +873,63 @@ void sync_ctrl::deltamode_reg()
         //==Increment
         gen_object_current++;
     }
+}
+
+/* ================================================
+PID Controller (@TODO: move to an independent file)
+================================================ */
+pid_ctrl::pid_ctrl(double kp, double ki, double kd,
+                   double dt, double cv_max, double cv_min)
+    : kp(kp),
+      ki(ki),
+      kd(kd),
+      dt(dt),
+      cv_max(cv_max),
+      cv_min(cv_min),
+      pre_ev(0),
+      integral(0)
+{
+}
+
+pid_ctrl::~pid_ctrl()
+{
+}
+
+double pid_ctrl::step_update(double setpoint, double mpv, double cur_dt)
+{
+    //== Step time interval selection
+    double step_dt;
+    if (cur_dt > 0)
+        step_dt = cur_dt;
+    else if (dt > 0)
+        step_dt = dt;
+    else
+    {
+        // Post an error message & terminate (@TODO: use cerr & terminate())
+        GL_THROW("The time step is not specified as positive in both the init and step update processes.");
+    }
+
+    //== Calculation
+    double ev = setpoint - mpv; // Error value
+
+    double p_term = kp * ev; // Proportional term
+
+    integral += ev * step_dt;      // Integral accumulator
+    double i_term = ki * integral; // Integral term
+
+    double derivative = (ev - pre_ev) / step_dt; // Current derivative
+    double d_term = kd * derivative;             // Derivative term
+
+    double pid_ctrl_cv = p_term + i_term + d_term; // Control variable, i.e., the output
+
+    //== Bounds
+    if (pid_ctrl_cv > cv_max)
+        pid_ctrl_cv = cv_max;
+    else if (pid_ctrl_cv < cv_min)
+        pid_ctrl_cv = cv_min;
+
+    //== Update for next step
+    pre_ev = ev;
+
+    return pid_ctrl_cv;
 }
