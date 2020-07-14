@@ -856,7 +856,8 @@ void sync_ctrl::init_sensors()
 
 void sync_ctrl::init_controllers()
 {
-    pi_ctrl_dg_vset = new pid_ctrl(pi_volt_mag_kp, pi_volt_mag_ki, 0);
+    pi_ctrl_dg_vset = new pid_ctrl(pi_volt_mag_kp, pi_volt_mag_ki, 0,
+                                   0, 1.0, 0.6);
 }
 
 //==QSTS Member Funcs
