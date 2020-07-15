@@ -46,6 +46,8 @@ sync_ctrl::sync_ctrl(MODULE *mod)
                                 PT_double, "PI_Frequency_Ki", PADDR(pi_freq_ki), PT_DESCRIPTION, "The user-defined integral gain constant of the PI controller for adjusting the frequency setting.",
                                 PT_double, "PI_Volt_Mag_Kp", PADDR(pi_volt_mag_kp), PT_DESCRIPTION, "The user-defined proportional gain constant of the PI controller for adjusting the voltage magnitude setting.",
                                 PT_double, "PI_Volt_Mag_Ki", PADDR(pi_volt_mag_ki), PT_DESCRIPTION, "The user-defined integral gain constant of the PI controller for adjusting the voltage magnitude setting.",
+                                PT_double, "PI_Volt_Mag_Ub_pu[pu]", PADDR(pi_volt_mag_ub_pu), PT_DESCRIPTION, "The upper bound for the Vset.",
+                                PT_double, "PI_Volt_Mag_Lb_pu[pu]", PADDR(pi_volt_mag_lb_pu), PT_DESCRIPTION, "The lower bound for the Vset.",
                                 //==Hidden ones for checking variables and debugging controls
                                 PT_bool, "sct_cv_arm_flag", PADDR(sct_cv_arm_flag), PT_ACCESS, PA_HIDDEN,
                                 PT_DESCRIPTION, "True - apply the controlled variable, False - do not set the related property.",
@@ -531,10 +533,16 @@ void sync_ctrl::init_pub_prop() // Init published properties with default settin
     pp_t_mon_sec = 10;
 
     //==Controller (@TODO: default values to be updated.)
+    //--frequency
     pi_freq_kp = 1;
     pi_freq_ki = 1;
+    
+    //--voltage magnitude
     pi_volt_mag_kp = 1;
-    pi_volt_mag_kp = 1;
+    pi_volt_mag_ki = 1;
+
+    pi_volt_mag_ub_pu = 1;
+    pi_volt_mag_lb_pu = 0;
 }
 
 void sync_ctrl::init_hidden_prop()
@@ -873,7 +881,7 @@ void sync_ctrl::init_sensors()
 void sync_ctrl::init_controllers()
 {
     pi_ctrl_dg_vset = new pid_ctrl(pi_volt_mag_kp, pi_volt_mag_ki, 0,
-                                   0, 1.0, 0.6);
+                                   0, pi_volt_mag_ub_pu, pi_volt_mag_lb_pu);
 }
 
 //==QSTS Member Funcs

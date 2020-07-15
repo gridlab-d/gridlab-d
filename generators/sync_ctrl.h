@@ -87,6 +87,11 @@ private: //Deltamode
     /* parameter/data sanity check */
     void dm_data_sanity_check();
 
+private:                  //Published Hidden Properties
+    bool sct_cv_arm_flag; // True - apply the controlled variable, False - do not set the related property
+    double dg_vset_mpv;
+    double dg_vset_cv;
+
 private: //Published Properties
     //==Flag
     bool arm_flag;
@@ -107,12 +112,11 @@ private: //Published Properties
     //==Controller
     double pi_freq_kp;
     double pi_freq_ki;
+    
     double pi_volt_mag_kp;
     double pi_volt_mag_ki;
-
-    bool sct_cv_arm_flag; // True - apply the controlled variable, False - do not set the related property
-    double dg_vset_mpv;
-    double dg_vset_cv;
+    double pi_volt_mag_ub_pu;
+    double pi_volt_mag_lb_pu;
 
 private: //Variables
     //==Flags & Status
