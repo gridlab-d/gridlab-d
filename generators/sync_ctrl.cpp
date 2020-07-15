@@ -45,7 +45,14 @@ sync_ctrl::sync_ctrl(MODULE *mod)
                                 PT_double, "PI_Frequency_Kp", PADDR(pi_freq_kp), PT_DESCRIPTION, "The user-defined proportional gain constant of the PI controller for adjusting the frequency setting.",
                                 PT_double, "PI_Frequency_Ki", PADDR(pi_freq_ki), PT_DESCRIPTION, "The user-defined integral gain constant of the PI controller for adjusting the frequency setting.",
                                 PT_double, "PI_Volt_Mag_Kp", PADDR(pi_volt_mag_kp), PT_DESCRIPTION, "The user-defined proportional gain constant of the PI controller for adjusting the voltage magnitude setting.",
-                                PT_double, "PI_Volt_Mag_Ki", PADDR(pi_volt_mag_ki), PT_DESCRIPTION, "	The user-defined integral gain constant of the PI controller for adjusting the voltage magnitude setting.",
+                                PT_double, "PI_Volt_Mag_Ki", PADDR(pi_volt_mag_ki), PT_DESCRIPTION, "The user-defined integral gain constant of the PI controller for adjusting the voltage magnitude setting.",
+                                //==Hidden ones for checking variables and debugging controls
+                                PT_bool, "sct_cv_arm_flag", PADDR(sct_cv_arm_flag), PT_ACCESS, PA_HIDDEN,
+                                PT_DESCRIPTION, "True - apply the controlled variable, False - do not set the related property.",
+                                PT_double, "dg_vset_mpv", PADDR(dg_vset_mpv), PT_ACCESS, PA_HIDDEN,
+                                PT_DESCRIPTION, "The measured process variable (i.e., the feedback signal).",
+                                PT_double, "dg_vset_cv", PADDR(dg_vset_cv), PT_ACCESS, PA_HIDDEN,
+                                PT_DESCRIPTION, "The control variable, i.e., u(t).",
                                 nullptr) < 1)
             GL_THROW("unable to publish properties in %s", __FILE__);
 
@@ -63,6 +70,7 @@ int sync_ctrl::create(void)
 {
     init_vars();
     init_pub_prop();
+    init_hidden_prop();
 
     return 1;
 }
@@ -226,9 +234,10 @@ void sync_ctrl::cgu_ctrl(double dt)
         // PI controller for freq_diff_hz
 
         // PI controller for avg(volt_mag_diff_ph_a_pu, volt_mag_diff_ph_b_pu, volt_mag_diff_ph_c_pu) //@TODO: may change to max()
-        double dg_vset_mpv = (sck_volt_A_mag_diff_pu + sck_volt_B_mag_diff_pu + sck_volt_C_mag_diff_pu) / 3;
-        double dg_vset_cv = pi_ctrl_dg_vset->step_update(0, dg_vset_mpv, dt); //@TODO: the setpoint may be set via a published property
-        set_prop(prop_cgu_vset_ptr, dg_vset_cv);
+        dg_vset_mpv = (sck_volt_A_mag_diff_pu + sck_volt_B_mag_diff_pu + sck_volt_C_mag_diff_pu) / 3;
+        dg_vset_cv = pi_ctrl_dg_vset->step_update(0, dg_vset_mpv, dt); //@TODO: the setpoint may be defined by the user via a published property
+        if (sct_cv_arm_flag)
+            set_prop(prop_cgu_vset_ptr, dg_vset_cv);
         break;
     }
     case CGU_TYPE::INV:
@@ -528,6 +537,13 @@ void sync_ctrl::init_pub_prop() // Init published properties with default settin
     pi_volt_mag_kp = 1;
 }
 
+void sync_ctrl::init_hidden_prop()
+{
+    sct_cv_arm_flag = true;
+    dg_vset_mpv = -1;
+    dg_vset_cv = -1;
+}
+
 void sync_ctrl::init_data_sanity_check()
 {
     OBJECT *obj = OBJECTHDR(this);
@@ -683,57 +699,57 @@ void sync_ctrl::init_data_sanity_check()
     }
 
     //==Controller @TODO
-    if (pi_freq_kp < 0)
-    {
-        pi_freq_kp = 1; //@TODO
+    // if (pi_freq_kp < 0)
+    // {
+    //     pi_freq_kp = 1; //@TODO
 
-        gl_warning("%s:%d %s - %s was set as a negative value, it is reset to %f.",
-                   STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
-                   STR(pi_freq_kp), pi_freq_kp);
-        /*  TROUBLESHOOT
-		The pi_freq_kp was set as a negative value!
-		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
-		*/
-    }
+    //     gl_warning("%s:%d %s - %s was set as a negative value, it is reset to %f.",
+    //                STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
+    //                STR(pi_freq_kp), pi_freq_kp);
+    //     /*  TROUBLESHOOT
+    // 	The pi_freq_kp was set as a negative value!
+    // 	If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
+    // 	*/
+    // }
 
-    if (pi_freq_ki < 0)
-    {
-        pi_freq_ki = 1; //@TODO
+    // if (pi_freq_ki < 0)
+    // {
+    //     pi_freq_ki = 1; //@TODO
 
-        gl_warning("%s:%d %s - %s was set as a negative value, it is reset to %f.",
-                   STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
-                   STR(pi_freq_ki), pi_freq_ki);
-        /*  TROUBLESHOOT
-		The pi_freq_ki was set as a negative value!
-		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
-		*/
-    }
+    //     gl_warning("%s:%d %s - %s was set as a negative value, it is reset to %f.",
+    //                STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
+    //                STR(pi_freq_ki), pi_freq_ki);
+    //     /*  TROUBLESHOOT
+    // 	The pi_freq_ki was set as a negative value!
+    // 	If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
+    // 	*/
+    // }
 
-    if (pi_volt_mag_kp < 0)
-    {
-        pi_volt_mag_kp = 1; //@TODO
+    // if (pi_volt_mag_kp < 0)
+    // {
+    //     pi_volt_mag_kp = 1; //@TODO
 
-        gl_warning("%s:%d %s - %s was set as a negative value, it is reset to %f.",
-                   STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
-                   STR(pi_volt_mag_kp), pi_volt_mag_kp);
-        /*  TROUBLESHOOT
-		The pi_volt_mag_kp was set as a negative value!
-		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
-		*/
-    }
+    //     gl_warning("%s:%d %s - %s was set as a negative value, it is reset to %f.",
+    //                STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
+    //                STR(pi_volt_mag_kp), pi_volt_mag_kp);
+    //     /*  TROUBLESHOOT
+    // 	The pi_volt_mag_kp was set as a negative value!
+    // 	If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
+    // 	*/
+    // }
 
-    if (pi_volt_mag_ki < 0)
-    {
-        pi_volt_mag_ki = 1; //@TODO
+    // if (pi_volt_mag_ki < 0)
+    // {
+    //     pi_volt_mag_ki = 1; //@TODO
 
-        gl_warning("%s:%d %s - %s was set as a negative value, it is reset to %f.",
-                   STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
-                   STR(pi_volt_mag_ki), pi_volt_mag_ki);
-        /*  TROUBLESHOOT
-		The pi_volt_mag_ki was set as a negative value!
-		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
-		*/
-    }
+    //     gl_warning("%s:%d %s - %s was set as a negative value, it is reset to %f.",
+    //                STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
+    //                STR(pi_volt_mag_ki), pi_volt_mag_ki);
+    //     /*  TROUBLESHOOT
+    // 	The pi_volt_mag_ki was set as a negative value!
+    // 	If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
+    // 	*/
+    // }
 }
 
 void sync_ctrl::init_deltamode_check()

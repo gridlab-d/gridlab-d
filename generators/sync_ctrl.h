@@ -56,6 +56,7 @@ private: //Init & Check Member Funcs
     /* Mainly used in create() */
     void init_vars();
     void init_pub_prop();
+    void init_hidden_prop();
 
     /* Mainly used in init() */
     void init_data_sanity_check();
@@ -108,6 +109,10 @@ private: //Published Properties
     double pi_freq_ki;
     double pi_volt_mag_kp;
     double pi_volt_mag_ki;
+
+    bool sct_cv_arm_flag; // True - apply the controlled variable, False - do not set the related property
+    double dg_vset_mpv;
+    double dg_vset_cv;
 
 private: //Variables
     //==Flags & Status
