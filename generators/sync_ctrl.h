@@ -56,7 +56,7 @@ private: //Init & Check Member Funcs
     /* Mainly used in create() */
     void init_vars();
     void init_pub_prop();
-    void init_hidden_prop();
+    void init_hidden_prop(double = -1);
 
     /* Mainly used in init() */
     void init_data_sanity_check();
@@ -92,6 +92,9 @@ private:                  //Published Hidden Properties
     double dg_vset_mpv;
     double dg_vset_cv;
 
+    double dg_freq_set_mpv;
+    double dg_freq_set_cv;
+
 private: //Published Properties
     //==Flag
     bool arm_flag;
@@ -112,7 +115,9 @@ private: //Published Properties
     //==Controller
     double pi_freq_kp;
     double pi_freq_ki;
-    
+    double pi_freq_ub_pu;
+    double pi_freq_lb_pu;
+
     double pi_volt_mag_kp;
     double pi_volt_mag_ki;
     double pi_volt_mag_ub_pu;
@@ -147,6 +152,8 @@ private: //Variables
 
     //==Controller
     pid_ctrl *pi_ctrl_dg_vset;
+    pid_ctrl *pi_ctrl_dg_freq_set;
+
     // pid_ctrl *pi_ctrl_dg_pset;
     // pid_ctrl *pi_ctrl_dg_fset;
 
@@ -188,6 +195,8 @@ private: //Variables
 
     const char *prop_cgu_vset_name_cc_ptr;
     gld_property *prop_cgu_vset_ptr;
+    const char *prop_cgu_freq_set_name_cc_ptr;
+    gld_property *prop_cgu_freq_set_ptr;
 };
 
 /* ================================================

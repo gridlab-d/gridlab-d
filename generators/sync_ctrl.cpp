@@ -44,6 +44,8 @@ sync_ctrl::sync_ctrl(MODULE *mod)
                                 //==Controller
                                 PT_double, "PI_Frequency_Kp", PADDR(pi_freq_kp), PT_DESCRIPTION, "The user-defined proportional gain constant of the PI controller for adjusting the frequency setting.",
                                 PT_double, "PI_Frequency_Ki", PADDR(pi_freq_ki), PT_DESCRIPTION, "The user-defined integral gain constant of the PI controller for adjusting the frequency setting.",
+                                PT_double, "PI_Freq_Ub_pu[pu]", PADDR(pi_freq_ub_pu), PT_DESCRIPTION, "The upper bound for the Pset/fset in per unit.",
+                                PT_double, "PI_Freq_Lb_pu[pu]", PADDR(pi_freq_lb_pu), PT_DESCRIPTION, "The lower bound for the Pset/fset in per unit.",
                                 PT_double, "PI_Volt_Mag_Kp", PADDR(pi_volt_mag_kp), PT_DESCRIPTION, "The user-defined proportional gain constant of the PI controller for adjusting the voltage magnitude setting.",
                                 PT_double, "PI_Volt_Mag_Ki", PADDR(pi_volt_mag_ki), PT_DESCRIPTION, "The user-defined integral gain constant of the PI controller for adjusting the voltage magnitude setting.",
                                 PT_double, "PI_Volt_Mag_Ub_pu[pu]", PADDR(pi_volt_mag_ub_pu), PT_DESCRIPTION, "The upper bound for the Vset.",
@@ -55,6 +57,10 @@ sync_ctrl::sync_ctrl(MODULE *mod)
                                 PT_DESCRIPTION, "The measured process variable (i.e., the feedback signal).",
                                 PT_double, "dg_vset_cv", PADDR(dg_vset_cv), PT_ACCESS, PA_HIDDEN,
                                 PT_DESCRIPTION, "The control variable, i.e., u(t).",
+                                PT_double, "dg_freq_set_mpv", PADDR(dg_freq_set_mpv), PT_ACCESS, PA_HIDDEN,
+                                PT_DESCRIPTION, "The measured process variable (i.e., the feedback signal).", //@TODO: update the description
+                                PT_double, "dg_freq_set_cv", PADDR(dg_freq_set_cv), PT_ACCESS, PA_HIDDEN,
+                                PT_DESCRIPTION, "The control variable, i.e., u(t).", //@TODO: update the description
                                 nullptr) < 1)
             GL_THROW("unable to publish properties in %s", __FILE__);
 
@@ -72,7 +78,7 @@ int sync_ctrl::create(void)
 {
     init_vars();
     init_pub_prop();
-    init_hidden_prop();
+    init_hidden_prop(0);
 
     return 1;
 }
@@ -234,6 +240,16 @@ void sync_ctrl::cgu_ctrl(double dt)
     case CGU_TYPE::DG:
     {
         // PI controller for freq_diff_hz
+        dg_freq_set_mpv = sck_freq_diff_hz / sys_nom_freq_hz;
+        dg_freq_set_cv = pi_ctrl_dg_freq_set->step_update(
+            (sct_freq_tol_ub_hz - sct_freq_tol_lb_hz) / 2 / sys_nom_freq_hz,
+            dg_freq_set_mpv, dt); //@TODO: the setpoint may be defined by the user via a published property
+        if (cgu_P_f_droop_setting_mode == PF_DROOP_MODE::FSET_MODE)
+        {
+            dg_freq_set_cv *= sys_nom_freq_hz;
+        }
+        if (sct_cv_arm_flag)
+            set_prop(prop_cgu_freq_set_ptr, dg_freq_set_cv);
 
         // PI controller for avg(volt_mag_diff_ph_a_pu, volt_mag_diff_ph_b_pu, volt_mag_diff_ph_c_pu) //@TODO: may change to max()
         dg_vset_mpv = (sck_volt_A_mag_diff_pu + sck_volt_B_mag_diff_pu + sck_volt_C_mag_diff_pu) / 3;
@@ -395,6 +411,7 @@ void sync_ctrl::init_vars() // Init local variables with default settings
 
     //==Controller
     pi_ctrl_dg_vset = nullptr;
+    pi_ctrl_dg_freq_set = nullptr;
 
     //==Obj & Prop
     /* switch */
@@ -536,7 +553,10 @@ void sync_ctrl::init_pub_prop() // Init published properties with default settin
     //--frequency
     pi_freq_kp = 1;
     pi_freq_ki = 1;
-    
+
+    pi_freq_ub_pu = 1;
+    pi_freq_lb_pu = 0;
+
     //--voltage magnitude
     pi_volt_mag_kp = 1;
     pi_volt_mag_ki = 1;
@@ -545,11 +565,11 @@ void sync_ctrl::init_pub_prop() // Init published properties with default settin
     pi_volt_mag_lb_pu = 0;
 }
 
-void sync_ctrl::init_hidden_prop()
+void sync_ctrl::init_hidden_prop(double flag_val)
 {
     sct_cv_arm_flag = true;
-    dg_vset_mpv = -1;
-    dg_vset_cv = -1;
+    dg_vset_mpv = flag_val;
+    dg_vset_cv = flag_val;
 }
 
 void sync_ctrl::init_data_sanity_check()
@@ -860,11 +880,35 @@ void sync_ctrl::init_sensors()
     {
         cgu_type = CGU_TYPE::INV;
         prop_cgu_vset_name_cc_ptr = "Vset";
+        if (cgu_P_f_droop_setting_mode == PF_DROOP_MODE::PSET_MODE)
+        {
+            prop_cgu_freq_set_name_cc_ptr = "Pset";
+        }
+        else if (cgu_P_f_droop_setting_mode == PF_DROOP_MODE::FSET_MODE)
+        {
+            prop_cgu_freq_set_name_cc_ptr = "fset"; //@TODO: double check with Frank
+        }
+        else
+        {
+            GL_THROW("Unknown P-F droop setting!");
+        }
     }
     else if (gl_object_isa(cgu_obj_ptr, "diesel_dg", "generators"))
     {
         cgu_type = CGU_TYPE::DG;
         prop_cgu_vset_name_cc_ptr = "Vset_QV_droop";
+        if (cgu_P_f_droop_setting_mode == PF_DROOP_MODE::PSET_MODE)
+        {
+            prop_cgu_freq_set_name_cc_ptr = "Pset";
+        }
+        else if (cgu_P_f_droop_setting_mode == PF_DROOP_MODE::FSET_MODE)
+        {
+            prop_cgu_freq_set_name_cc_ptr = "fset"; //@TODO: double check with Frank
+        }
+        else
+        {
+            GL_THROW("Unknown P-F droop setting!");
+        }
     }
     else
     {
@@ -876,12 +920,18 @@ void sync_ctrl::init_sensors()
     prop_cgu_vset_ptr = get_prop_ptr(cgu_obj_ptr, (char *)prop_cgu_vset_name_cc_ptr,
                                      &gld_property::is_valid,
                                      &gld_property::is_double);
+
+    prop_cgu_freq_set_ptr = get_prop_ptr(cgu_obj_ptr, (char *)prop_cgu_freq_set_name_cc_ptr,
+                                         &gld_property::is_valid,
+                                         &gld_property::is_double);
 }
 
 void sync_ctrl::init_controllers()
 {
     pi_ctrl_dg_vset = new pid_ctrl(pi_volt_mag_kp, pi_volt_mag_ki, 0,
                                    0, pi_volt_mag_ub_pu, pi_volt_mag_lb_pu);
+    pi_ctrl_dg_freq_set = new pid_ctrl(pi_freq_kp, pi_freq_kp, 0,
+                                       0, pi_freq_ub_pu, pi_freq_lb_pu);
 }
 
 //==QSTS Member Funcs

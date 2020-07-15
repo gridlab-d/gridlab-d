@@ -339,7 +339,7 @@ void sync_check::init_vars()
 	double temp_freq_val;
 
 	/* Measurement Properties (hidden) for Recorders */
-	init_diff_prop();
+	init_diff_prop(0); //@TODO: temp setting for check the results, will make it back to -1 later on
 
 	/* Default - MAG_DIFF Mode */
 	volt_compare_mode = MAG_DIFF;
