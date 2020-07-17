@@ -1,6 +1,7 @@
-/** $Id: sync_ctrl.cpp
-    Implements sychronization control functionality for the sychronization check function.
-	Copyright (C) 2020 Battelle Memorial Institute
+/** 
+ * $Id: sync_ctrl.cpp
+ * Implements sychronization control functionality for the sychronization check function.
+ * Copyright (C) 2020 Battelle Memorial Institute
 **/
 
 #include "sync_ctrl.h"

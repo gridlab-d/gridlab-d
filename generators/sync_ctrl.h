@@ -1,5 +1,7 @@
-// $Id: sync_ctrl.h
-// Copyright (C) 2020 Battelle Memorial Institute
+/**
+ * $Id: sync_ctrl.h
+ * Copyright (C) 2020 Battelle Memorial Institute
+**/
 
 #ifndef GLD_GENERATORS_SYNC_CTRL_H_
 #define GLD_GENERATORS_SYNC_CTRL_H_
@@ -8,7 +10,7 @@
 
 EXPORT SIMULATIONMODE interupdate_sync_ctrl(OBJECT *, unsigned int64, unsigned long, unsigned int);
 
-class pid_ctrl;
+class pid_ctrl; //@TODO: to be moved to an independent file, while not sure which folder should it be put under.
 class sync_ctrl : public gld_object
 {
 public:
@@ -27,9 +29,8 @@ public:
 
     SIMULATIONMODE inter_deltaupdate_sync_ctrl(unsigned int64, unsigned long, unsigned int);
 
-private: //Utility Member Funcs (@TODO: These should be moved to an independent file as regular functions instead of memerber functions, once it is permitted to set up a file. Another option is to improve the package/implementtation of gld_property, but it may affect too much.)
-    /* Get property */
-    // gld_property *get_prop_ptr(char *, bool (gld_property::*)(), bool (gld_property::*)());
+private: //Member Funcs: Utilities (@TODO: These should be moved to an independent file as regular functions instead of memerber functions, once it is permitted to set up a file. Another option is to improve the package/implementtation of gld_property, but it may affect too much.)
+    /* Get property pointer */
     template <class T>
     gld_property *get_prop_ptr(T *, char *, bool (gld_property::*)(), bool (gld_property::*)());
 
@@ -45,14 +46,14 @@ private: //Utility Member Funcs (@TODO: These should be moved to an independent 
     template <class T>
     T *get_prop_value(gld_property *, T *(gld_property::*)(), bool = true);
 
-    /* Set & get property*/
+    /* Set & get property value */
     template <class T>
     void set_prop(gld_property *, T);
 
-    template <class T> // This one is created to avoid modifying gridlabd.h (note that func get_bool() is not implemented in the gridlabd.h)
+    template <class T> // This one was created to avoid modifying gridlabd.h (note that func get_bool() was not implemented in the gridlabd.h, but had been added later on)
     void get_prop(gld_property *, T);
 
-private: //Init & Check Member Funcs
+private: //Member Funcs: Init, Sanity Check, and Reset
     /* Mainly used in create() */
     void init_vars();
     void init_pub_prop();
@@ -61,6 +62,7 @@ private: //Init & Check Member Funcs
     /* Mainly used in init() */
     void init_data_sanity_check();
     void init_deltamode_check();
+    
     void init_nom_values();
     void init_sensors();
     void init_controllers();
@@ -84,18 +86,17 @@ private: //Deltamode
 
     void cgu_ctrl(double);
 
-    /* parameter/data sanity check */
-    void dm_data_sanity_check();
+    void dm_data_sanity_check(); //Parameter/data sanity check
 
-private:                  //Published Hidden Properties
-    bool sct_cv_arm_flag; // True - apply the controlled variable, False - do not set the related property
+private:                  //Published (Hidden) Properties
+    bool sct_cv_arm_flag; //True - apply the controlled variable, False - do not set the related property
     double dg_vset_mpv;
     double dg_vset_cv;
 
     double dg_freq_set_mpv;
     double dg_freq_set_cv;
 
-private: //Published Properties
+private: //Published (Unhidden) Properties
     //==Flag
     bool arm_flag;
 
@@ -125,22 +126,21 @@ private: //Published Properties
 
 private: //Variables
     //==Flags & Status
-    // bool mode_flag; //Indicates whether in mode A or not: True - This object is working in mode A, False - This object is working in mode B.
     enum class SCT_MODE_ENUM
     {
         MODE_A,
         MODE_B
-    } mode_status;
+    } mode_status; //Indicates whether in mode A or mode B.
 
     enum SWT_STATUS_ENUM
     {
         OPEN = 0,
         CLOSED = 1
     } swt_status;
-    bool sck_armed_status; //Action functionality status of the specified sync_check object of this sync_ctrl object. Valid states are: True - This sync_check object is functional, False - This sync_check object is disabled.
 
-    bool reg_dm_flag;         // Flag for indicating the registration of deltamode (array & func)
-    bool deltamode_inclusive; // Boolean for deltamode calls - pulled from object flags
+    bool sck_armed_status;    //Action functionality status of the specified sync_check object of this sync_ctrl object. Valid states are: True - This sync_check object is functional, False - This sync_check object is disabled.
+    bool reg_dm_flag;         //Flag for indicating the registration of deltamode (array & func)
+    bool deltamode_inclusive; //Boolean for deltamode calls - pulled from object flags
 
     //==Time
     double timer_mode_A_sec; //The total period (initialized as 0) during which both metrics have been satisfied continuously when this sync_ctrl object is in mode A and PI controllers are working
@@ -153,9 +153,6 @@ private: //Variables
     //==Controller
     pid_ctrl *pi_ctrl_dg_vset;
     pid_ctrl *pi_ctrl_dg_freq_set;
-
-    // pid_ctrl *pi_ctrl_dg_pset;
-    // pid_ctrl *pi_ctrl_dg_fset;
 
     //==Obj & Prop
     /* switch */
@@ -217,16 +214,18 @@ private:
     double integral;
 
 public:
-    // kp: proportional gain factor
-    // ki: integral gain factor
-    // kd: derivative gain facor
-    // dt: time interval
-    // max: upper bound of the control variable
-    // min: lower bound of the control variable
+    /*
+        kp: proportional gain factor
+        ki: integral gain factor
+        kd: derivative gain facor
+        dt: time interval
+        cv_max: upper bound of the control variable
+        cv_min: lower bound of the control variable
+    */
     pid_ctrl(double kp, double ki, double kd, double dt = 0, double cv_max = 1, double cv_min = 0);
     ~pid_ctrl();
 
-    // Returns the control variable, with respect to the setpoint and measured process value as inputs
+    //Returns the control variable, with respect to the setpoint and measured process value as inputs
     double step_update(double setpoint, double mpv, double cur_dt = 0);
 };
 
