@@ -90,8 +90,8 @@ private: //Deltamode
 
 private:                  //Published (Hidden) Properties
     bool sct_cv_arm_flag; //True - apply the controlled variable, False - do not set the related property
-    double dg_vset_mpv;
-    double dg_vset_cv;
+    double dg_volt_set_mpv;
+    double dg_volt_set_cv;
 
     double dg_freq_set_mpv;
     double dg_freq_set_cv;
@@ -151,7 +151,7 @@ private: //Variables
     double sys_nom_freq_hz;
 
     //==Controller
-    pid_ctrl *pi_ctrl_dg_vset;
+    pid_ctrl *pi_ctrl_dg_volt_set;
     pid_ctrl *pi_ctrl_dg_freq_set;
 
     //==Obj & Prop
@@ -190,8 +190,8 @@ private: //Variables
         INV = 2
     } cgu_type;
 
-    const char *prop_cgu_vset_name_cc_ptr;
-    gld_property *prop_cgu_vset_ptr;
+    const char *prop_cgu_volt_set_name_cc_ptr;
+    gld_property *prop_cgu_volt_set_ptr;
     const char *prop_cgu_freq_set_name_cc_ptr;
     gld_property *prop_cgu_freq_set_ptr;
 };

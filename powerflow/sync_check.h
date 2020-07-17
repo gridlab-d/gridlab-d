@@ -74,6 +74,7 @@ private: /* Measurements, actuator, gld objs, & Nominal Values */
 
 private: /* Published Variables (for Measurements of Recorders) */
 	double freq_diff_hz;
+	double freq_diff_noabs_hz;
 
 	// MAG_DIFF
 	double volt_A_diff, volt_B_diff, volt_C_diff;
@@ -82,6 +83,7 @@ private: /* Published Variables (for Measurements of Recorders) */
 	// SEP_DIFF
 	double volt_A_mag_diff, volt_B_mag_diff, volt_C_mag_diff;
 	double volt_A_mag_diff_pu, volt_B_mag_diff_pu, volt_C_mag_diff_pu;
+	double volt_A_mag_diff_noabs_pu, volt_B_mag_diff_noabs_pu, volt_C_mag_diff_noabs_pu;
 	double volt_A_ang_deg_diff, volt_B_ang_deg_diff, volt_C_ang_deg_diff;
 
 private: /* Published Variables*/

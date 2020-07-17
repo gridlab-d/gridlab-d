@@ -54,9 +54,9 @@ sync_ctrl::sync_ctrl(MODULE *mod)
                                 //==Hidden ones for checking variables and debugging controls
                                 PT_bool, "sct_cv_arm_flag", PADDR(sct_cv_arm_flag), PT_ACCESS, PA_HIDDEN,
                                 PT_DESCRIPTION, "True - apply the controlled variable, False - do not set the related property.",
-                                PT_double, "dg_vset_mpv", PADDR(dg_vset_mpv), PT_ACCESS, PA_HIDDEN,
+                                PT_double, "dg_volt_set_mpv", PADDR(dg_volt_set_mpv), PT_ACCESS, PA_HIDDEN,
                                 PT_DESCRIPTION, "The measured process variable (i.e., the feedback signal).",
-                                PT_double, "dg_vset_cv", PADDR(dg_vset_cv), PT_ACCESS, PA_HIDDEN,
+                                PT_double, "dg_volt_set_cv", PADDR(dg_volt_set_cv), PT_ACCESS, PA_HIDDEN,
                                 PT_DESCRIPTION, "The control variable, i.e., u(t).",
                                 PT_double, "dg_freq_set_mpv", PADDR(dg_freq_set_mpv), PT_ACCESS, PA_HIDDEN,
                                 PT_DESCRIPTION, "The measured process variable (i.e., the feedback signal).", //@TODO: update the description
@@ -253,10 +253,10 @@ void sync_ctrl::cgu_ctrl(double dt)
             set_prop(prop_cgu_freq_set_ptr, dg_freq_set_cv);
 
         // PI controller for avg(volt_mag_diff_ph_a_pu, volt_mag_diff_ph_b_pu, volt_mag_diff_ph_c_pu) //@TODO: may change to max()
-        dg_vset_mpv = (sck_volt_A_mag_diff_pu + sck_volt_B_mag_diff_pu + sck_volt_C_mag_diff_pu) / 3;
-        dg_vset_cv = pi_ctrl_dg_vset->step_update(0, dg_vset_mpv, dt); //@TODO: the setpoint may be defined by the user via a published property
+        dg_volt_set_mpv = (sck_volt_A_mag_diff_pu + sck_volt_B_mag_diff_pu + sck_volt_C_mag_diff_pu) / 3;
+        dg_volt_set_cv = pi_ctrl_dg_volt_set->step_update(0, dg_volt_set_mpv, dt); //@TODO: the setpoint may be defined by the user via a published property
         if (sct_cv_arm_flag)
-            set_prop(prop_cgu_vset_ptr, dg_vset_cv);
+            set_prop(prop_cgu_volt_set_ptr, dg_volt_set_cv);
         break;
     }
     case CGU_TYPE::INV:
@@ -411,7 +411,7 @@ void sync_ctrl::init_vars() // Init local variables with default settings
     // std::cout << "Nominal Frequency = " << sys_nom_freq_hz << " (Hz)" << std::endl; // For verifying
 
     //==Controller
-    pi_ctrl_dg_vset = nullptr;
+    pi_ctrl_dg_volt_set = nullptr;
     pi_ctrl_dg_freq_set = nullptr;
 
     //==Obj & Prop
@@ -569,8 +569,8 @@ void sync_ctrl::init_pub_prop() // Init published properties with default settin
 void sync_ctrl::init_hidden_prop(double flag_val)
 {
     sct_cv_arm_flag = true;
-    dg_vset_mpv = flag_val;
-    dg_vset_cv = flag_val;
+    dg_volt_set_mpv = flag_val;
+    dg_volt_set_cv = flag_val;
 }
 
 void sync_ctrl::init_data_sanity_check()
@@ -843,25 +843,24 @@ void sync_ctrl::init_sensors()
     prop_sck_armed_ptr = get_prop_ptr(sck_obj_ptr, "armed",
                                       &gld_property::is_valid,
                                       &gld_property::is_bool);
-    sck_armed_flag = get_prop_value<bool>(prop_sck_armed_ptr, &gld_property::get_bool, false);
-    // get_prop(prop_sck_armed_ptr, sck_armed_flag);
+    sck_armed_flag = get_prop_value<bool>(prop_sck_armed_ptr, &gld_property::get_bool, false);    //i.e., get_prop(prop_sck_armed_ptr, sck_armed_flag);
 
-    prop_sck_freq_diff_hz_ptr = get_prop_ptr(sck_obj_ptr, "freq_diff_hz",
+    prop_sck_freq_diff_hz_ptr = get_prop_ptr(sck_obj_ptr, "freq_diff_noabs_hz",
                                              &gld_property::is_valid,
                                              &gld_property::is_double);
     sck_freq_diff_hz = get_prop_value<double>(prop_sck_freq_diff_hz_ptr, &gld_property::get_double, false);
 
-    prop_sck_volt_A_mag_diff_pu_ptr = get_prop_ptr(sck_obj_ptr, "volt_A_mag_diff_pu",
+    prop_sck_volt_A_mag_diff_pu_ptr = get_prop_ptr(sck_obj_ptr, "volt_A_mag_diff_noabs_pu",
                                                    &gld_property::is_valid,
                                                    &gld_property::is_double);
     sck_volt_A_mag_diff_pu = get_prop_value<double>(prop_sck_volt_A_mag_diff_pu_ptr, &gld_property::get_double, false);
 
-    prop_sck_volt_B_mag_diff_pu_ptr = get_prop_ptr(sck_obj_ptr, "volt_B_mag_diff_pu",
+    prop_sck_volt_B_mag_diff_pu_ptr = get_prop_ptr(sck_obj_ptr, "volt_B_mag_diff_noabs_pu",
                                                    &gld_property::is_valid,
                                                    &gld_property::is_double);
     sck_volt_B_mag_diff_pu = get_prop_value<double>(prop_sck_volt_B_mag_diff_pu_ptr, &gld_property::get_double, false);
 
-    prop_sck_volt_C_mag_diff_pu_ptr = get_prop_ptr(sck_obj_ptr, "volt_C_mag_diff_pu",
+    prop_sck_volt_C_mag_diff_pu_ptr = get_prop_ptr(sck_obj_ptr, "volt_C_mag_diff_noabs_pu",
                                                    &gld_property::is_valid,
                                                    &gld_property::is_double);
     sck_volt_C_mag_diff_pu = get_prop_value<double>(prop_sck_volt_C_mag_diff_pu_ptr, &gld_property::get_double, false);
@@ -880,7 +879,7 @@ void sync_ctrl::init_sensors()
     if (gl_object_isa(cgu_obj_ptr, "inverter_dyn", "generators"))
     {
         cgu_type = CGU_TYPE::INV;
-        prop_cgu_vset_name_cc_ptr = "Vset";
+        prop_cgu_volt_set_name_cc_ptr = "Vset";
         if (cgu_P_f_droop_setting_mode == PF_DROOP_MODE::PSET_MODE)
         {
             prop_cgu_freq_set_name_cc_ptr = "Pset";
@@ -897,7 +896,7 @@ void sync_ctrl::init_sensors()
     else if (gl_object_isa(cgu_obj_ptr, "diesel_dg", "generators"))
     {
         cgu_type = CGU_TYPE::DG;
-        prop_cgu_vset_name_cc_ptr = "Vset_QV_droop";
+        prop_cgu_volt_set_name_cc_ptr = "Vset_QV_droop";
         if (cgu_P_f_droop_setting_mode == PF_DROOP_MODE::PSET_MODE)
         {
             prop_cgu_freq_set_name_cc_ptr = "Pset";
@@ -918,7 +917,7 @@ void sync_ctrl::init_sensors()
     }
 
     //--properties for the controlled variables //@TODO: maybe move to init_controllers()
-    prop_cgu_vset_ptr = get_prop_ptr(cgu_obj_ptr, (char *)prop_cgu_vset_name_cc_ptr,
+    prop_cgu_volt_set_ptr = get_prop_ptr(cgu_obj_ptr, (char *)prop_cgu_volt_set_name_cc_ptr,
                                      &gld_property::is_valid,
                                      &gld_property::is_double);
 
@@ -929,7 +928,7 @@ void sync_ctrl::init_sensors()
 
 void sync_ctrl::init_controllers()
 {
-    pi_ctrl_dg_vset = new pid_ctrl(pi_volt_mag_kp, pi_volt_mag_ki, 0,
+    pi_ctrl_dg_volt_set = new pid_ctrl(pi_volt_mag_kp, pi_volt_mag_ki, 0,
                                    0, pi_volt_mag_ub_pu, pi_volt_mag_lb_pu);
     pi_ctrl_dg_freq_set = new pid_ctrl(pi_freq_kp, pi_freq_kp, 0,
                                        0, pi_freq_ub_pu, pi_freq_lb_pu);

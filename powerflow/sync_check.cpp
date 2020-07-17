@@ -44,7 +44,11 @@ sync_check::sync_check(MODULE *mod) : powerflow_object(mod)
 								PT_double, "voltage_magnitude_tolerance[V]", PADDR(voltage_magnitude_tolerance), PT_DESCRIPTION, "tolerance in Volts for the difference in voltage magnitudes - used in SEP_DIFF mode - prioritized over voltage_magnitude_tolerance_pu",
 								PT_double, "voltage_angle_tolerance[deg]", PADDR(voltage_angle_tolerance_deg), PT_DESCRIPTION, "tolerance in degrees for the difference in voltage angles - used in SEP_DIFF mode",
 								PT_double, "delta_trigger_mult", PADDR(delta_trigger_mult), PT_DESCRIPTION, "multiplier against voltage and frequency tolerances to trigger/maintain deltamode",
-								//Measurement Properties (16=1+6+9)
+								//Measurement Properties (16=1+6+9)(+4 for sync_ctrl)
+								PT_double, "freq_diff_noabs_hz", PADDR(freq_diff_noabs_hz), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: frequency difference in Hz without abs()",
+								PT_double, "volt_A_mag_diff_noabs_pu", PADDR(volt_A_mag_diff_noabs_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: Difference of phase A voltage magnitude in pu without abs()",
+								PT_double, "volt_B_mag_diff_noabs_pu", PADDR(volt_B_mag_diff_noabs_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: Difference of phase B voltage magnitude in pu without abs()",
+								PT_double, "volt_C_mag_diff_noabs_pu", PADDR(volt_C_mag_diff_noabs_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: Difference of phase C voltage magnitude in pu without abs()",
 								PT_double, "freq_diff_hz", PADDR(freq_diff_hz), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: frequency difference in Hz",
 								PT_double, "volt_A_diff", PADDR(volt_A_diff), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: Magnitude of phase A voltage phasor difference in volt",
 								PT_double, "volt_B_diff", PADDR(volt_B_diff), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Measurement property: Magnitude of phase B voltage phasor difference in volt",
@@ -761,7 +765,8 @@ void sync_check::init_norm_values(OBJECT *par)
 
 void sync_check::update_diff_prop()
 {
-	freq_diff_hz = abs(swt_fm_node_freq - swt_to_node_freq);
+	freq_diff_noabs_hz = swt_fm_node_freq - swt_to_node_freq;
+	freq_diff_hz = abs(freq_diff_noabs_hz);
 
 	//== Measurement Properties
 	//-- MAG_DIFF Mode
@@ -778,6 +783,7 @@ void sync_check::update_diff_prop()
 	// Phase A
 	volt_A_mag_diff = abs(swt_fm_volt_A.Mag() - swt_to_volt_A.Mag());
 	volt_A_mag_diff_pu = volt_A_mag_diff / volt_norm;
+	volt_A_mag_diff_noabs_pu = (swt_fm_volt_A.Mag() - swt_to_volt_A.Mag()) / volt_norm;
 
 	double volt_A_ang_rad_diff = abs(swt_fm_volt_A.Arg() - swt_to_volt_A.Arg());
 	double volt_A_ang_deg_diff_temp = RAD_TO_DEG(volt_A_ang_rad_diff);
@@ -791,6 +797,7 @@ void sync_check::update_diff_prop()
 	// Phase B
 	volt_B_mag_diff = abs(swt_fm_volt_B.Mag() - swt_to_volt_B.Mag());
 	volt_B_mag_diff_pu = volt_B_mag_diff / volt_norm;
+	volt_B_mag_diff_noabs_pu = (swt_fm_volt_B.Mag() - swt_to_volt_B.Mag()) / volt_norm;
 
 	double volt_B_ang_rad_diff = abs(swt_fm_volt_B.Arg() - swt_to_volt_B.Arg());
 	double volt_B_ang_deg_diff_temp = RAD_TO_DEG(volt_B_ang_rad_diff);
@@ -804,6 +811,7 @@ void sync_check::update_diff_prop()
 	// Phase C
 	volt_C_mag_diff = abs(swt_fm_volt_C.Mag() - swt_to_volt_C.Mag());
 	volt_C_mag_diff_pu = volt_C_mag_diff / volt_norm;
+	volt_C_mag_diff_noabs_pu = (swt_fm_volt_C.Mag() - swt_to_volt_C.Mag()) / volt_norm;
 
 	double volt_C_ang_rad_diff = abs(swt_fm_volt_C.Arg() - swt_to_volt_C.Arg());
 	double volt_C_ang_deg_diff_temp = RAD_TO_DEG(volt_C_ang_rad_diff);
