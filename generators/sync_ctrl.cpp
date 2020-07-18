@@ -242,8 +242,18 @@ void sync_ctrl::cgu_ctrl(double dt)
     switch (cgu_type)
     {
     case CGU_TYPE::DG:
+    case CGU_TYPE::INV:
     {
-        // PI controller for freq_diff_hz
+        //==PI controller for freq_diff_hz
+        //--init CV
+        if(pi_ctrl_dg_freq_set_fsu_flag)
+        {
+            double cur_freq_set = get_prop_value(prop_cgu_freq_set_ptr, &gld_property::get_double, false);
+            pi_ctrl_dg_freq_set->set_cv_init(cur_freq_set);
+            pi_ctrl_dg_freq_set_fsu_flag = false;
+        }
+
+        //--step update
         dg_freq_set_mpv = sck_freq_diff_hz / sys_nom_freq_hz;
         dg_freq_set_cv = pi_ctrl_dg_freq_set->step_update(
             (sct_freq_tol_ub_hz - sct_freq_tol_lb_hz) / 2 / sys_nom_freq_hz,
@@ -252,18 +262,16 @@ void sync_ctrl::cgu_ctrl(double dt)
         {
             dg_freq_set_cv *= sys_nom_freq_hz;
         }
+
+        //--apply/send cv
         if (sct_cv_arm_flag)
             set_prop(prop_cgu_freq_set_ptr, dg_freq_set_cv);
 
-        // PI controller for avg(volt_mag_diff_ph_a_pu, volt_mag_diff_ph_b_pu, volt_mag_diff_ph_c_pu) //@TODO: may change to max()
+        //==PI controller for avg(volt_mag_diff_ph_a_pu, volt_mag_diff_ph_b_pu, volt_mag_diff_ph_c_pu) //@TODO: may change to max()
         dg_volt_set_mpv = (sck_volt_A_mag_diff_pu + sck_volt_B_mag_diff_pu + sck_volt_C_mag_diff_pu) / 3;
         dg_volt_set_cv = pi_ctrl_dg_volt_set->step_update(0, dg_volt_set_mpv, dt); //@TODO: the setpoint may be defined by the user via a published property
         if (sct_cv_arm_flag)
             set_prop(prop_cgu_volt_set_ptr, dg_volt_set_cv);
-        break;
-    }
-    case CGU_TYPE::INV:
-    {
         break;
     }
     case CGU_TYPE::UNKNOWN_CGU_TYPE:
@@ -935,6 +943,9 @@ void sync_ctrl::init_controllers()
                                        0, pi_volt_mag_ub_pu, pi_volt_mag_lb_pu);
     pi_ctrl_dg_freq_set = new pid_ctrl(pi_freq_kp, pi_freq_kp, 0,
                                        0, pi_freq_ub_pu, pi_freq_lb_pu);
+    
+    pi_ctrl_dg_volt_set_fsu_flag = true;
+    pi_ctrl_dg_freq_set_fsu_flag = true;
 }
 
 //==QSTS Member Funcs
@@ -1007,6 +1018,11 @@ pid_ctrl::pid_ctrl(double kp, double ki, double kd,
 
 pid_ctrl::~pid_ctrl()
 {
+}
+
+void pid_ctrl::set_cv_init(double init_val)
+{
+    cv_init = init_val;
 }
 
 double pid_ctrl::step_update(double setpoint, double mpv, double cur_dt)

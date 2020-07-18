@@ -154,6 +154,9 @@ private: //Variables
     pid_ctrl *pi_ctrl_dg_volt_set;
     pid_ctrl *pi_ctrl_dg_freq_set;
 
+    bool pi_ctrl_dg_volt_set_fsu_flag; //fsu: first step update
+    bool pi_ctrl_dg_freq_set_fsu_flag;
+
     //==Obj & Prop
     /* switch */
     OBJECT *obj_swt_ptr;
@@ -223,9 +226,13 @@ public:
         dt: time interval
         cv_max: upper bound of the control variable
         cv_min: lower bound of the control variable
+        cv_init: initial value of the control variable (e.g., when error starts with 0)
     */
     pid_ctrl(double kp, double ki, double kd, double dt = 0, double cv_max = 1, double cv_min = 0, double cv_init = 0);
     ~pid_ctrl();
+
+    //Update the cv_init
+    void set_cv_init(double);
 
     //Returns the control variable, with respect to the setpoint and measured process value as inputs
     double step_update(double setpoint, double mpv, double cur_dt = 0);
