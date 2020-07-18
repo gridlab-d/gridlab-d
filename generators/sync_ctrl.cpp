@@ -122,52 +122,55 @@ SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time,
         dm_update_measurements();
         // dm_data_sanity_check(); //@TODO: discuss with Frank and see if we want to keep this on
 
-        if (swt_status == SWT_STATUS_ENUM::CLOSED)
+        if (iteration_count_val == 1) //Corrector pass @TODO: Need further testings
         {
-            arm_flag = false;
-        }
-        else
-        {
-            if (mode_status == SCT_MODE_ENUM::MODE_A)
+            if (swt_status == SWT_STATUS_ENUM::CLOSED)
             {
-                //In Mode A
-                if (sct_metrics_check_mode_A(dt))
-                {
-                    mode_transition(SCT_MODE_ENUM::MODE_B, true);
-                }
-                else
-                {
-                    if (sck_armed_flag)
-                    {
-                        set_prop(prop_sck_armed_ptr, false); //disarm sync_check if it is armed
-                    }
-
-                    cgu_ctrl((double)dt / (double)DT_SECOND);
-                }
+                arm_flag = false;
             }
             else
             {
-                //In Mode B
-                if (sct_metrics_check_mode_B())
+                if (mode_status == SCT_MODE_ENUM::MODE_A)
                 {
-                    if (~sck_armed_flag)
+                    //In Mode A
+                    if (sct_metrics_check_mode_A(dt))
                     {
-                        set_prop(prop_sck_armed_ptr, true); // arm sync_check
+                        mode_transition(SCT_MODE_ENUM::MODE_B, true);
                     }
-
-                    //-- tick the timer
-                    double dt_dm_sec = (double)dt / (double)DT_SECOND;
-                    timer_mode_B_sec += dt_dm_sec;
-
-                    //-- check the timer
-                    if (timer_mode_B_sec >= pp_t_mon_sec)
+                    else
                     {
-                        mode_transition(SCT_MODE_ENUM::MODE_A, false);
+                        if (sck_armed_flag)
+                        {
+                            set_prop(prop_sck_armed_ptr, false); //disarm sync_check if it is armed
+                        }
+
+                        cgu_ctrl((double)dt / (double)DT_SECOND);
                     }
                 }
                 else
                 {
-                    mode_transition(SCT_MODE_ENUM::MODE_A, false);
+                    //In Mode B
+                    if (sct_metrics_check_mode_B())
+                    {
+                        if (~sck_armed_flag)
+                        {
+                            set_prop(prop_sck_armed_ptr, true); // arm sync_check
+                        }
+
+                        //-- tick the timer
+                        double dt_dm_sec = (double)dt / (double)DT_SECOND;
+                        timer_mode_B_sec += dt_dm_sec;
+
+                        //-- check the timer
+                        if (timer_mode_B_sec >= pp_t_mon_sec)
+                        {
+                            mode_transition(SCT_MODE_ENUM::MODE_A, false);
+                        }
+                    }
+                    else
+                    {
+                        mode_transition(SCT_MODE_ENUM::MODE_A, false);
+                    }
                 }
             }
         }
@@ -843,7 +846,7 @@ void sync_ctrl::init_sensors()
     prop_sck_armed_ptr = get_prop_ptr(sck_obj_ptr, "armed",
                                       &gld_property::is_valid,
                                       &gld_property::is_bool);
-    sck_armed_flag = get_prop_value<bool>(prop_sck_armed_ptr, &gld_property::get_bool, false);    //i.e., get_prop(prop_sck_armed_ptr, sck_armed_flag);
+    sck_armed_flag = get_prop_value<bool>(prop_sck_armed_ptr, &gld_property::get_bool, false); //i.e., get_prop(prop_sck_armed_ptr, sck_armed_flag);
 
     prop_sck_freq_diff_hz_ptr = get_prop_ptr(sck_obj_ptr, "freq_diff_noabs_hz",
                                              &gld_property::is_valid,
@@ -918,8 +921,8 @@ void sync_ctrl::init_sensors()
 
     //--properties for the controlled variables //@TODO: maybe move to init_controllers()
     prop_cgu_volt_set_ptr = get_prop_ptr(cgu_obj_ptr, (char *)prop_cgu_volt_set_name_cc_ptr,
-                                     &gld_property::is_valid,
-                                     &gld_property::is_double);
+                                         &gld_property::is_valid,
+                                         &gld_property::is_double);
 
     prop_cgu_freq_set_ptr = get_prop_ptr(cgu_obj_ptr, (char *)prop_cgu_freq_set_name_cc_ptr,
                                          &gld_property::is_valid,
@@ -929,7 +932,7 @@ void sync_ctrl::init_sensors()
 void sync_ctrl::init_controllers()
 {
     pi_ctrl_dg_volt_set = new pid_ctrl(pi_volt_mag_kp, pi_volt_mag_ki, 0,
-                                   0, pi_volt_mag_ub_pu, pi_volt_mag_lb_pu);
+                                       0, pi_volt_mag_ub_pu, pi_volt_mag_lb_pu);
     pi_ctrl_dg_freq_set = new pid_ctrl(pi_freq_kp, pi_freq_kp, 0,
                                        0, pi_freq_ub_pu, pi_freq_lb_pu);
 }
@@ -988,13 +991,15 @@ void sync_ctrl::deltamode_reg()
 PID Controller (@TODO: move to an independent file)
 ================================================ */
 pid_ctrl::pid_ctrl(double kp, double ki, double kd,
-                   double dt, double cv_max, double cv_min)
+                   double dt, double cv_max, double cv_min,
+                   double cv_init)
     : kp(kp),
       ki(ki),
       kd(kd),
       dt(dt),
       cv_max(cv_max),
       cv_min(cv_min),
+      cv_init(cv_init),
       pre_ev(0),
       integral(0)
 {
@@ -1029,7 +1034,7 @@ double pid_ctrl::step_update(double setpoint, double mpv, double cur_dt)
     double derivative = (ev - pre_ev) / step_dt; // Current derivative
     double d_term = kd * derivative;             // Derivative term
 
-    double pid_ctrl_cv = p_term + i_term + d_term; // Control variable, i.e., the output
+    double pid_ctrl_cv = p_term + i_term + d_term + cv_init; // Control variable, i.e., the output
 
     //== Bounds
     if (pid_ctrl_cv > cv_max)

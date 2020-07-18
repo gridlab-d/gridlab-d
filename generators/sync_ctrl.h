@@ -62,7 +62,7 @@ private: //Member Funcs: Init, Sanity Check, and Reset
     /* Mainly used in init() */
     void init_data_sanity_check();
     void init_deltamode_check();
-    
+
     void init_nom_values();
     void init_sensors();
     void init_controllers();
@@ -210,6 +210,8 @@ private:
     double cv_max;
     double cv_min;
 
+    double cv_init;
+
     double pre_ev;
     double integral;
 
@@ -222,7 +224,7 @@ public:
         cv_max: upper bound of the control variable
         cv_min: lower bound of the control variable
     */
-    pid_ctrl(double kp, double ki, double kd, double dt = 0, double cv_max = 1, double cv_min = 0);
+    pid_ctrl(double kp, double ki, double kd, double dt = 0, double cv_max = 1, double cv_min = 0, double cv_init = 0);
     ~pid_ctrl();
 
     //Returns the control variable, with respect to the setpoint and measured process value as inputs
