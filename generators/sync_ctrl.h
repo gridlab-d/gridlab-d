@@ -90,11 +90,11 @@ private: //Deltamode
 
 private:                  //Published (Hidden) Properties
     bool sct_cv_arm_flag; //True - apply the controlled variable, False - do not set the related property
-    double dg_volt_set_mpv;
-    double dg_volt_set_cv;
+    double cgu_volt_set_mpv;
+    double cgu_volt_set_cv;
 
-    double dg_freq_set_mpv;
-    double dg_freq_set_cv;
+    double cgu_freq_set_mpv;
+    double cgu_freq_set_cv;
 
 private: //Published (Unhidden) Properties
     //==Flag

@@ -54,13 +54,13 @@ sync_ctrl::sync_ctrl(MODULE *mod)
                                 //==Hidden ones for checking variables and debugging controls
                                 PT_bool, "sct_cv_arm_flag", PADDR(sct_cv_arm_flag), PT_ACCESS, PA_HIDDEN,
                                 PT_DESCRIPTION, "True - apply the controlled variable, False - do not set the related property.",
-                                PT_double, "dg_volt_set_mpv", PADDR(dg_volt_set_mpv), PT_ACCESS, PA_HIDDEN,
+                                PT_double, "cgu_volt_set_mpv", PADDR(cgu_volt_set_mpv), PT_ACCESS, PA_HIDDEN,
                                 PT_DESCRIPTION, "The measured process variable (i.e., the feedback signal).",
-                                PT_double, "dg_volt_set_cv", PADDR(dg_volt_set_cv), PT_ACCESS, PA_HIDDEN,
+                                PT_double, "cgu_volt_set_cv", PADDR(cgu_volt_set_cv), PT_ACCESS, PA_HIDDEN,
                                 PT_DESCRIPTION, "The control variable, i.e., u(t).",
-                                PT_double, "dg_freq_set_mpv", PADDR(dg_freq_set_mpv), PT_ACCESS, PA_HIDDEN,
+                                PT_double, "cgu_freq_set_mpv", PADDR(cgu_freq_set_mpv), PT_ACCESS, PA_HIDDEN,
                                 PT_DESCRIPTION, "The measured process variable (i.e., the feedback signal).", //@TODO: update the description
-                                PT_double, "dg_freq_set_cv", PADDR(dg_freq_set_cv), PT_ACCESS, PA_HIDDEN,
+                                PT_double, "cgu_freq_set_cv", PADDR(cgu_freq_set_cv), PT_ACCESS, PA_HIDDEN,
                                 PT_DESCRIPTION, "The control variable, i.e., u(t).", //@TODO: update the description
                                 nullptr) < 1)
             GL_THROW("unable to publish properties in %s", __FILE__);
@@ -251,24 +251,24 @@ void sync_ctrl::cgu_ctrl(double dt)
         }
 
         //--step update
-        dg_freq_set_mpv = sck_freq_diff_hz / sys_nom_freq_hz;
-        dg_freq_set_cv = pi_ctrl_cgu_freq_set->step_update(
+        cgu_freq_set_mpv = sck_freq_diff_hz / sys_nom_freq_hz;
+        cgu_freq_set_cv = pi_ctrl_cgu_freq_set->step_update(
             (sct_freq_tol_ub_hz - sct_freq_tol_lb_hz) / 2 / sys_nom_freq_hz,
-            dg_freq_set_mpv, dt); //@TODO: the setpoint may be defined by the user via a published property
+            cgu_freq_set_mpv, dt); //@TODO: the setpoint may be defined by the user via a published property
         if (cgu_P_f_droop_setting_mode == PF_DROOP_MODE::FSET_MODE)
         {
-            dg_freq_set_cv *= sys_nom_freq_hz;
+            cgu_freq_set_cv *= sys_nom_freq_hz;
         }
 
         //--apply/send cv
         if (sct_cv_arm_flag)
-            set_prop(prop_cgu_freq_set_ptr, dg_freq_set_cv);
+            set_prop(prop_cgu_freq_set_ptr, cgu_freq_set_cv);
 
         //==PI controller for avg(volt_mag_diff_ph_a_pu, volt_mag_diff_ph_b_pu, volt_mag_diff_ph_c_pu) //@TODO: may change to max()
-        dg_volt_set_mpv = (sck_volt_A_mag_diff_pu + sck_volt_B_mag_diff_pu + sck_volt_C_mag_diff_pu) / 3;
-        dg_volt_set_cv = pi_ctrl_cgu_volt_set->step_update(0, dg_volt_set_mpv, dt); //@TODO: the setpoint may be defined by the user via a published property
+        cgu_volt_set_mpv = (sck_volt_A_mag_diff_pu + sck_volt_B_mag_diff_pu + sck_volt_C_mag_diff_pu) / 3;
+        cgu_volt_set_cv = pi_ctrl_cgu_volt_set->step_update(0, cgu_volt_set_mpv, dt); //@TODO: the setpoint may be defined by the user via a published property
         if (sct_cv_arm_flag)
-            set_prop(prop_cgu_volt_set_ptr, dg_volt_set_cv);
+            set_prop(prop_cgu_volt_set_ptr, cgu_volt_set_cv);
         break;
     }
     case CGU_TYPE::UNKNOWN_CGU_TYPE:
@@ -577,8 +577,8 @@ void sync_ctrl::init_pub_prop() // Init published properties with default settin
 void sync_ctrl::init_hidden_prop(double flag_val)
 {
     sct_cv_arm_flag = true;
-    dg_volt_set_mpv = flag_val;
-    dg_volt_set_cv = flag_val;
+    cgu_volt_set_mpv = flag_val;
+    cgu_volt_set_cv = flag_val;
 }
 
 void sync_ctrl::init_data_sanity_check()
@@ -937,9 +937,9 @@ void sync_ctrl::init_sensors()
 void sync_ctrl::init_controllers()
 {
     pi_ctrl_cgu_volt_set = new pid_ctrl(pi_volt_mag_kp, pi_volt_mag_ki, 0,
-                                       0, pi_volt_mag_ub_pu, pi_volt_mag_lb_pu);
+                                        0, pi_volt_mag_ub_pu, pi_volt_mag_lb_pu);
     pi_ctrl_cgu_freq_set = new pid_ctrl(pi_freq_kp, pi_freq_kp, 0,
-                                       0, pi_freq_ub_pu, pi_freq_lb_pu);
+                                        0, pi_freq_ub_pu, pi_freq_lb_pu);
 
     pi_ctrl_cgu_volt_set_fsu_flag = true;
     pi_ctrl_cgu_freq_set_fsu_flag = true;
