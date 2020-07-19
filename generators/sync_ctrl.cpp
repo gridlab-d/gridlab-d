@@ -117,60 +117,57 @@ TIMESTAMP sync_ctrl::postsync(TIMESTAMP t0, TIMESTAMP t1)
 // Module-level call
 SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-    if (arm_flag)
+    if ((arm_flag) && (iteration_count_val == 1)) //Corrector pass @TODO: Need further testings
     {
         dm_update_measurements();
         // dm_data_sanity_check(); //@TODO: discuss with Frank and see if we want to keep this on
 
-        if (iteration_count_val == 1) //Corrector pass @TODO: Need further testings
+        if (swt_status == SWT_STATUS_ENUM::CLOSED)
         {
-            if (swt_status == SWT_STATUS_ENUM::CLOSED)
+            arm_flag = false;
+        }
+        else
+        {
+            if (mode_status == SCT_MODE_ENUM::MODE_A)
             {
-                arm_flag = false;
+                //In Mode A
+                if (sct_metrics_check_mode_A(dt))
+                {
+                    mode_transition(SCT_MODE_ENUM::MODE_B, true);
+                }
+                else
+                {
+                    if (sck_armed_flag)
+                    {
+                        set_prop(prop_sck_armed_ptr, false); //disarm sync_check if it is armed
+                    }
+
+                    cgu_ctrl((double)dt / (double)DT_SECOND);
+                }
             }
             else
             {
-                if (mode_status == SCT_MODE_ENUM::MODE_A)
+                //In Mode B
+                if (sct_metrics_check_mode_B())
                 {
-                    //In Mode A
-                    if (sct_metrics_check_mode_A(dt))
+                    if (~sck_armed_flag)
                     {
-                        mode_transition(SCT_MODE_ENUM::MODE_B, true);
+                        set_prop(prop_sck_armed_ptr, true); // arm sync_check
                     }
-                    else
-                    {
-                        if (sck_armed_flag)
-                        {
-                            set_prop(prop_sck_armed_ptr, false); //disarm sync_check if it is armed
-                        }
 
-                        cgu_ctrl((double)dt / (double)DT_SECOND);
+                    //-- tick the timer
+                    double dt_dm_sec = (double)dt / (double)DT_SECOND;
+                    timer_mode_B_sec += dt_dm_sec;
+
+                    //-- check the timer
+                    if (timer_mode_B_sec >= pp_t_mon_sec)
+                    {
+                        mode_transition(SCT_MODE_ENUM::MODE_A, false);
                     }
                 }
                 else
                 {
-                    //In Mode B
-                    if (sct_metrics_check_mode_B())
-                    {
-                        if (~sck_armed_flag)
-                        {
-                            set_prop(prop_sck_armed_ptr, true); // arm sync_check
-                        }
-
-                        //-- tick the timer
-                        double dt_dm_sec = (double)dt / (double)DT_SECOND;
-                        timer_mode_B_sec += dt_dm_sec;
-
-                        //-- check the timer
-                        if (timer_mode_B_sec >= pp_t_mon_sec)
-                        {
-                            mode_transition(SCT_MODE_ENUM::MODE_A, false);
-                        }
-                    }
-                    else
-                    {
-                        mode_transition(SCT_MODE_ENUM::MODE_A, false);
-                    }
+                    mode_transition(SCT_MODE_ENUM::MODE_A, false);
                 }
             }
         }
@@ -246,7 +243,7 @@ void sync_ctrl::cgu_ctrl(double dt)
     {
         //==PI controller for freq_diff_hz
         //--init CV
-        if(pi_ctrl_dg_freq_set_fsu_flag)
+        if (pi_ctrl_dg_freq_set_fsu_flag)
         {
             double cur_freq_set = get_prop_value(prop_cgu_freq_set_ptr, &gld_property::get_double, false);
             pi_ctrl_dg_freq_set->set_cv_init(cur_freq_set);
@@ -943,7 +940,7 @@ void sync_ctrl::init_controllers()
                                        0, pi_volt_mag_ub_pu, pi_volt_mag_lb_pu);
     pi_ctrl_dg_freq_set = new pid_ctrl(pi_freq_kp, pi_freq_kp, 0,
                                        0, pi_freq_ub_pu, pi_freq_lb_pu);
-    
+
     pi_ctrl_dg_volt_set_fsu_flag = true;
     pi_ctrl_dg_freq_set_fsu_flag = true;
 }
