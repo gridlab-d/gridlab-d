@@ -89,10 +89,11 @@ private: //Deltamode
     void dm_data_sanity_check(); //Parameter/data sanity check
 
 private:                  //Published (Hidden) Properties
-    bool sct_cv_arm_flag; //True - apply the controlled variable, False - do not set the related property
+    bool sct_volt_cv_arm_flag; //True - apply the volt controlled variable, False - do not set the related property
     double cgu_volt_set_mpv;
     double cgu_volt_set_cv;
 
+    bool sct_freq_cv_arm_flag; //True - apply the freq controlled variable, False - do not set the related property
     double cgu_freq_set_mpv;
     double cgu_freq_set_cv;
 

@@ -52,12 +52,14 @@ sync_ctrl::sync_ctrl(MODULE *mod)
                                 PT_double, "PI_Volt_Mag_Ub_pu[pu]", PADDR(pi_volt_mag_ub_pu), PT_DESCRIPTION, "The upper bound for the Vset.",
                                 PT_double, "PI_Volt_Mag_Lb_pu[pu]", PADDR(pi_volt_mag_lb_pu), PT_DESCRIPTION, "The lower bound for the Vset.",
                                 //==Hidden ones for checking variables and debugging controls
-                                PT_bool, "sct_cv_arm_flag", PADDR(sct_cv_arm_flag), PT_ACCESS, PA_HIDDEN,
-                                PT_DESCRIPTION, "True - apply the controlled variable, False - do not set the related property.",
+                                PT_bool, "sct_volt_cv_arm_flag", PADDR(sct_volt_cv_arm_flag), PT_ACCESS, PA_HIDDEN,
+                                PT_DESCRIPTION, "True - apply the volt controlled variable, False - do not set the related property.",
                                 PT_double, "cgu_volt_set_mpv", PADDR(cgu_volt_set_mpv), PT_ACCESS, PA_HIDDEN,
                                 PT_DESCRIPTION, "The measured process variable (i.e., the feedback signal).",
                                 PT_double, "cgu_volt_set_cv", PADDR(cgu_volt_set_cv), PT_ACCESS, PA_HIDDEN,
                                 PT_DESCRIPTION, "The control variable, i.e., u(t).",
+                                PT_bool, "sct_freq_cv_arm_flag", PADDR(sct_freq_cv_arm_flag), PT_ACCESS, PA_HIDDEN,
+                                PT_DESCRIPTION, "True - apply the freq controlled variable, False - do not set the related property.",
                                 PT_double, "cgu_freq_set_mpv", PADDR(cgu_freq_set_mpv), PT_ACCESS, PA_HIDDEN,
                                 PT_DESCRIPTION, "The measured process variable (i.e., the feedback signal).", //@TODO: update the description
                                 PT_double, "cgu_freq_set_cv", PADDR(cgu_freq_set_cv), PT_ACCESS, PA_HIDDEN,
@@ -261,13 +263,13 @@ void sync_ctrl::cgu_ctrl(double dt)
         }
 
         //--apply/send cv
-        if (sct_cv_arm_flag)
+        if (sct_freq_cv_arm_flag)
             set_prop(prop_cgu_freq_set_ptr, cgu_freq_set_cv);
 
         //==PI controller for avg(volt_mag_diff_ph_a_pu, volt_mag_diff_ph_b_pu, volt_mag_diff_ph_c_pu) //@TODO: may change to max()
         cgu_volt_set_mpv = (sck_volt_A_mag_diff_pu + sck_volt_B_mag_diff_pu + sck_volt_C_mag_diff_pu) / 3;
         cgu_volt_set_cv = pi_ctrl_cgu_volt_set->step_update(0, cgu_volt_set_mpv, dt); //@TODO: the setpoint may be defined by the user via a published property
-        if (sct_cv_arm_flag)
+        if (sct_volt_cv_arm_flag)
             set_prop(prop_cgu_volt_set_ptr, cgu_volt_set_cv);
         break;
     }
@@ -576,9 +578,13 @@ void sync_ctrl::init_pub_prop() // Init published properties with default settin
 
 void sync_ctrl::init_hidden_prop(double flag_val)
 {
-    sct_cv_arm_flag = true;
+    sct_volt_cv_arm_flag = true;
     cgu_volt_set_mpv = flag_val;
     cgu_volt_set_cv = flag_val;
+
+    sct_freq_cv_arm_flag = true;
+    cgu_freq_set_mpv = flag_val;
+    cgu_freq_set_cv = flag_val;
 }
 
 void sync_ctrl::init_data_sanity_check()
