@@ -243,16 +243,16 @@ void sync_ctrl::cgu_ctrl(double dt)
     {
         //==PI controller for freq_diff_hz
         //--init CV
-        if (pi_ctrl_dg_freq_set_fsu_flag)
+        if (pi_ctrl_cgu_freq_set_fsu_flag)
         {
             double cur_freq_set = get_prop_value(prop_cgu_freq_set_ptr, &gld_property::get_double, false);
-            pi_ctrl_dg_freq_set->set_cv_init(cur_freq_set);
-            pi_ctrl_dg_freq_set_fsu_flag = false;
+            pi_ctrl_cgu_freq_set->set_cv_init(cur_freq_set);
+            pi_ctrl_cgu_freq_set_fsu_flag = false;
         }
 
         //--step update
         dg_freq_set_mpv = sck_freq_diff_hz / sys_nom_freq_hz;
-        dg_freq_set_cv = pi_ctrl_dg_freq_set->step_update(
+        dg_freq_set_cv = pi_ctrl_cgu_freq_set->step_update(
             (sct_freq_tol_ub_hz - sct_freq_tol_lb_hz) / 2 / sys_nom_freq_hz,
             dg_freq_set_mpv, dt); //@TODO: the setpoint may be defined by the user via a published property
         if (cgu_P_f_droop_setting_mode == PF_DROOP_MODE::FSET_MODE)
@@ -266,7 +266,7 @@ void sync_ctrl::cgu_ctrl(double dt)
 
         //==PI controller for avg(volt_mag_diff_ph_a_pu, volt_mag_diff_ph_b_pu, volt_mag_diff_ph_c_pu) //@TODO: may change to max()
         dg_volt_set_mpv = (sck_volt_A_mag_diff_pu + sck_volt_B_mag_diff_pu + sck_volt_C_mag_diff_pu) / 3;
-        dg_volt_set_cv = pi_ctrl_dg_volt_set->step_update(0, dg_volt_set_mpv, dt); //@TODO: the setpoint may be defined by the user via a published property
+        dg_volt_set_cv = pi_ctrl_cgu_volt_set->step_update(0, dg_volt_set_mpv, dt); //@TODO: the setpoint may be defined by the user via a published property
         if (sct_cv_arm_flag)
             set_prop(prop_cgu_volt_set_ptr, dg_volt_set_cv);
         break;
@@ -419,8 +419,8 @@ void sync_ctrl::init_vars() // Init local variables with default settings
     // std::cout << "Nominal Frequency = " << sys_nom_freq_hz << " (Hz)" << std::endl; // For verifying
 
     //==Controller
-    pi_ctrl_dg_volt_set = nullptr;
-    pi_ctrl_dg_freq_set = nullptr;
+    pi_ctrl_cgu_volt_set = nullptr;
+    pi_ctrl_cgu_freq_set = nullptr;
 
     //==Obj & Prop
     /* switch */
@@ -936,13 +936,13 @@ void sync_ctrl::init_sensors()
 
 void sync_ctrl::init_controllers()
 {
-    pi_ctrl_dg_volt_set = new pid_ctrl(pi_volt_mag_kp, pi_volt_mag_ki, 0,
+    pi_ctrl_cgu_volt_set = new pid_ctrl(pi_volt_mag_kp, pi_volt_mag_ki, 0,
                                        0, pi_volt_mag_ub_pu, pi_volt_mag_lb_pu);
-    pi_ctrl_dg_freq_set = new pid_ctrl(pi_freq_kp, pi_freq_kp, 0,
+    pi_ctrl_cgu_freq_set = new pid_ctrl(pi_freq_kp, pi_freq_kp, 0,
                                        0, pi_freq_ub_pu, pi_freq_lb_pu);
 
-    pi_ctrl_dg_volt_set_fsu_flag = true;
-    pi_ctrl_dg_freq_set_fsu_flag = true;
+    pi_ctrl_cgu_volt_set_fsu_flag = true;
+    pi_ctrl_cgu_freq_set_fsu_flag = true;
 }
 
 //==QSTS Member Funcs

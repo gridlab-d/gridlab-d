@@ -151,11 +151,11 @@ private: //Variables
     double sys_nom_freq_hz;
 
     //==Controller
-    pid_ctrl *pi_ctrl_dg_volt_set;
-    pid_ctrl *pi_ctrl_dg_freq_set;
+    pid_ctrl *pi_ctrl_cgu_volt_set;
+    pid_ctrl *pi_ctrl_cgu_freq_set;
 
-    bool pi_ctrl_dg_volt_set_fsu_flag; //fsu: first step update
-    bool pi_ctrl_dg_freq_set_fsu_flag;
+    bool pi_ctrl_cgu_volt_set_fsu_flag; //fsu: first step update
+    bool pi_ctrl_cgu_freq_set_fsu_flag;
 
     //==Obj & Prop
     /* switch */
