@@ -123,10 +123,12 @@ SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time,
     {
         dm_update_measurements();
         // dm_data_sanity_check(); //@TODO: discuss with Frank and see if we want to keep this on
+        //@TODO: mode change track (the mode may be changed by the user via a player, if so, this change should be monitored and proper reset actions should be taken.)
 
         if (swt_status == SWT_STATUS_ENUM::CLOSED)
         {
             arm_flag = false;
+            dm_reset_after_disarmed();
         }
         else
         {
@@ -231,6 +233,21 @@ bool sync_ctrl::sct_metrics_check_mode_B()
 
 void sync_ctrl::mode_transition(SCT_MODE_ENUM sct_mode, bool sck_armed_flag)
 {
+    //==Sanity Check
+    if (mode_status == sct_mode)
+    {
+        OBJECT *obj = OBJECTHDR(this);
+        gl_warning("%s:%d %s - Invalid mode transition (target mode is the same to the current mode)!",
+                   STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"));
+    }
+
+    //==Reset Controller (when it leaves Mode A, i.e., from Mode A to Mode B when we have two modes only)
+    if (mode_status == SCT_MODE_ENUM::MODE_A)
+    {
+        dm_reset_controllers();
+    }
+
+    //==Mode Transition
     reset_timer();                                // Reset timers of both modes
     mode_status = sct_mode;                       // Mode A or B
     set_prop(prop_sck_armed_ptr, sck_armed_flag); // Arm or disarm sync_check
@@ -299,6 +316,22 @@ void sync_ctrl::reset_timer()
 {
     timer_mode_A_sec = 0;
     timer_mode_B_sec = 0;
+}
+
+void sync_ctrl::dm_reset_controllers()
+{
+    delete pi_ctrl_cgu_volt_set;
+    pi_ctrl_cgu_volt_set = nullptr; //avoid segamentation fault caused by the double delete in unexpected mode transitions
+
+    delete pi_ctrl_cgu_freq_set;
+    pi_ctrl_cgu_freq_set = nullptr; //avoid segamentation fault caused by the double delete in unexpected mode transitions
+
+    init_controllers();
+}
+
+void sync_ctrl::dm_reset_after_disarmed()
+{
+    reset_timer();
 }
 
 /* parameter/data sanity check */
