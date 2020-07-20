@@ -267,10 +267,23 @@ void sync_ctrl::cgu_ctrl(double dt)
             set_prop(prop_cgu_freq_set_ptr, cgu_freq_set_cv);
 
         //==PI controller for avg(volt_mag_diff_ph_a_pu, volt_mag_diff_ph_b_pu, volt_mag_diff_ph_c_pu) //@TODO: may change to max()
+        //--init CV
+        if (pi_ctrl_cgu_volt_set_fsu_flag)
+        {
+            double cur_volt_set = get_prop_value(prop_cgu_volt_set_ptr, &gld_property::get_double, false);
+            pi_ctrl_cgu_volt_set->set_cv_init(cur_volt_set);
+            pi_ctrl_cgu_volt_set_fsu_flag = false;
+        }
+
+        //--step update
         cgu_volt_set_mpv = (sck_volt_A_mag_diff_pu + sck_volt_B_mag_diff_pu + sck_volt_C_mag_diff_pu) / 3;
         cgu_volt_set_cv = pi_ctrl_cgu_volt_set->step_update(0, cgu_volt_set_mpv, dt); //@TODO: the setpoint may be defined by the user via a published property
+
+        //--apply/send cv
         if (sct_volt_cv_arm_flag)
             set_prop(prop_cgu_volt_set_ptr, cgu_volt_set_cv);
+
+        //==End case CGU_TYPE::INV & case CGU_TYPE::DG
         break;
     }
     case CGU_TYPE::UNKNOWN_CGU_TYPE:
