@@ -1,0 +1,10 @@
+//
+// Test purpose: Make sure invalid times in the start or stop time are caught and fail, rather than continuing to a "success"
+// (like they used to)
+
+//24 is an invalid time - this should error out!
+clock {
+	starttime '2000-01-01 0:00:00';
+	stoptime '2000-01-01 24:00:00';
+	timezone PST+8PDT;
+}

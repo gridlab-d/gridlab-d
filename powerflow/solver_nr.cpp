@@ -43,6 +43,26 @@ Initialization after returning to service?
 #include <slu_ddefs.h>	//Sequential superLU (other platforms)
 #endif
 
+namespace gld {
+    template<typename Tv, typename Te>
+    constexpr Tv pow(Tv value, Te exp) {
+        switch (exp) {
+            case 2:
+                return value * value;
+                break;
+            case 3:
+                return value * value * value;
+                break;
+            case 4:
+                return value * value * value * value;
+                break;
+            default:
+                return std::pow(value, exp);
+                break;
+        }
+    }
+}
+
 //SuperLU variable structure
 //These are the working variables, but structured for island implementation
 typedef struct {
@@ -939,7 +959,8 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			island_index_val = bus[tempa].island_number;
 
 			//Check and see if we should just skip this branch -- if it's an unassociated node, probably don't need this branch
-			if (island_index_val == -1)
+			//Explicitly check both ends (branch's island_number could probably work, but this is more thorough)
+			if ((bus[tempa].island_number == -1) || (bus[tempb].island_number == -1))
 			{
 				continue;
 			}
@@ -947,7 +968,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			//Preliminary check to make sure we weren't missed in the initialization
 			if ((bus[tempa].Matrix_Loc == -1) || (bus[tempb].Matrix_Loc == -1))
 			{
-				GL_THROW("An element in NR line:%d was not properly localized");
+				GL_THROW("An element in NR line:%d - %s was not properly localized",branch[jindexer].obj->id,(branch[jindexer].name ? branch[jindexer].name : "Unnamed"));
 				/*  TROUBLESHOOT
 				When parsing the bus list, the Newton-Raphson solver found a bus that did not
 				appear to have a location within the overall admittance/Jacobian matrix.  Please
@@ -1752,8 +1773,8 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 				if (temp_size_c==-1)	//Make sure it is right
 				{
-					GL_THROW("NR: A line's phase was flagged as not full three-phase, but wasn't: (%s) %u %u", 
-									 branch[jindexer].name, branch[jindexer].phases, branch[jindexer].origphases);
+					GL_THROW("NR: A line's phase was flagged as not full three-phase, but wasn't: (%s) %u %u %u %u", 
+									 branch[jindexer].name, branch[jindexer].phases, branch[jindexer].origphases, phase_worka, phase_workb);
 					/*  TROUBLESHOOT
 					A line inside the powerflow model was flagged as not being full three-phase or
 					triplex in any form.  It failed the other cases though, so it must have been.
@@ -4875,10 +4896,10 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 
 						if ((bus[indexer].V[temp_index_b]).Mag()!=0)
 						{
-							bus[indexer].Jacob_A[temp_index] = ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Re() + (undeltacurr[temp_index_b]).Im() *pow((bus[indexer].V[temp_index_b]).Im(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3);// second part of equation(37) - no power term needed
-							bus[indexer].Jacob_B[temp_index] = -((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Im() + (undeltacurr[temp_index_b]).Re() *pow((bus[indexer].V[temp_index_b]).Re(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3);// second part of equation(38) - no power term needed
-							bus[indexer].Jacob_C[temp_index] =((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Im() - (undeltacurr[temp_index_b]).Re() *pow((bus[indexer].V[temp_index_b]).Im(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3);// second part of equation(39) - no power term needed
-							bus[indexer].Jacob_D[temp_index] = ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Re() - (undeltacurr[temp_index_b]).Im() *pow((bus[indexer].V[temp_index_b]).Re(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3);// second part of equation(40) - no power term needed
+							bus[indexer].Jacob_A[temp_index] = ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Re() + (undeltacurr[temp_index_b]).Im() *gld::pow((bus[indexer].V[temp_index_b]).Im(),2))/gld::pow((bus[indexer].V[temp_index_b]).Mag(),3);// second part of equation(37) - no power term needed
+							bus[indexer].Jacob_B[temp_index] = -((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Im() + (undeltacurr[temp_index_b]).Re() *gld::pow((bus[indexer].V[temp_index_b]).Re(),2))/gld::pow((bus[indexer].V[temp_index_b]).Mag(),3);// second part of equation(38) - no power term needed
+							bus[indexer].Jacob_C[temp_index] =((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Im() - (undeltacurr[temp_index_b]).Re() *gld::pow((bus[indexer].V[temp_index_b]).Im(),2))/gld::pow((bus[indexer].V[temp_index_b]).Mag(),3);// second part of equation(39) - no power term needed
+							bus[indexer].Jacob_D[temp_index] = ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Re() - (undeltacurr[temp_index_b]).Im() *gld::pow((bus[indexer].V[temp_index_b]).Re(),2))/gld::pow((bus[indexer].V[temp_index_b]).Mag(),3);// second part of equation(40) - no power term needed
 						}
 						else	//Zero voltage = only impedance is valid (others get divided by VMag, so are IND) - not entirely sure how this gets in here anyhow
 						{
@@ -4958,10 +4979,10 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					{
 						if ((bus[indexer].V[jindex]).Mag()!=0)	//Only current
 						{
-							bus[indexer].Jacob_A[jindex] = ((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(temp_store[jindex]).Re() + (temp_store[jindex]).Im() *pow((bus[indexer].V[jindex]).Im(),2))/pow((bus[indexer].V[jindex]).Mag(),3);// second part of equation(37)
-							bus[indexer].Jacob_B[jindex] = -((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(temp_store[jindex]).Im() + (temp_store[jindex]).Re() *pow((bus[indexer].V[jindex]).Re(),2))/pow((bus[indexer].V[jindex]).Mag(),3);// second part of equation(38)
-							bus[indexer].Jacob_C[jindex] =((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(temp_store[jindex]).Im() - (temp_store[jindex]).Re() *pow((bus[indexer].V[jindex]).Im(),2))/pow((bus[indexer].V[jindex]).Mag(),3);// second part of equation(39)
-							bus[indexer].Jacob_D[jindex] = ((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(temp_store[jindex]).Re() - (temp_store[jindex]).Im() *pow((bus[indexer].V[jindex]).Re(),2))/pow((bus[indexer].V[jindex]).Mag(),3);// second part of equation(40)
+							bus[indexer].Jacob_A[jindex] = ((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(temp_store[jindex]).Re() + (temp_store[jindex]).Im() *gld::pow((bus[indexer].V[jindex]).Im(),2))/gld::pow((bus[indexer].V[jindex]).Mag(),3);// second part of equation(37)
+							bus[indexer].Jacob_B[jindex] = -((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(temp_store[jindex]).Im() + (temp_store[jindex]).Re() *gld::pow((bus[indexer].V[jindex]).Re(),2))/gld::pow((bus[indexer].V[jindex]).Mag(),3);// second part of equation(38)
+							bus[indexer].Jacob_C[jindex] =((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(temp_store[jindex]).Im() - (temp_store[jindex]).Re() *gld::pow((bus[indexer].V[jindex]).Im(),2))/gld::pow((bus[indexer].V[jindex]).Mag(),3);// second part of equation(39)
+							bus[indexer].Jacob_D[jindex] = ((bus[indexer].V[jindex]).Re()*(bus[indexer].V[jindex]).Im()*(temp_store[jindex]).Re() - (temp_store[jindex]).Im() *gld::pow((bus[indexer].V[jindex]).Re(),2))/gld::pow((bus[indexer].V[jindex]).Mag(),3);// second part of equation(40)
 						}
 						else
 						{
@@ -5296,21 +5317,21 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 
 						if ((bus[indexer].V[temp_index_b]).Mag()!=0)
 						{
-							bus[indexer].Jacob_A[temp_index] = ((bus[indexer].S[temp_index_b]).Im() * (pow((bus[indexer].V[temp_index_b]).Re(),2) - pow((bus[indexer].V[temp_index_b]).Im(),2)) - 2*(bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(bus[indexer].S[temp_index_b]).Re())/pow((bus[indexer].V[temp_index_b]).Mag(),4);// first part of equation(37)
-							bus[indexer].Jacob_A[temp_index] += ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(adjusted_constant_current[temp_index_b]).Re() + (adjusted_constant_current[temp_index_b]).Im() *pow((bus[indexer].V[temp_index_b]).Im(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3) + (bus[indexer].Y[temp_index_b]).Im();// second part of equation(37)
-							bus[indexer].Jacob_A[temp_index] += ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Re() + (undeltacurr[temp_index_b]).Im() *pow((bus[indexer].V[temp_index_b]).Im(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3);// current part of equation (37) - Handles "different" children
+							bus[indexer].Jacob_A[temp_index] = ((bus[indexer].S[temp_index_b]).Im() * (gld::pow((bus[indexer].V[temp_index_b]).Re(),2) - gld::pow((bus[indexer].V[temp_index_b]).Im(),2)) - 2*(bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(bus[indexer].S[temp_index_b]).Re())/gld::pow((bus[indexer].V[temp_index_b]).Mag(),4);// first part of equation(37)
+							bus[indexer].Jacob_A[temp_index] += ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(adjusted_constant_current[temp_index_b]).Re() + (adjusted_constant_current[temp_index_b]).Im() *gld::pow((bus[indexer].V[temp_index_b]).Im(),2))/gld::pow((bus[indexer].V[temp_index_b]).Mag(),3) + (bus[indexer].Y[temp_index_b]).Im();// second part of equation(37)
+							bus[indexer].Jacob_A[temp_index] += ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Re() + (undeltacurr[temp_index_b]).Im() *gld::pow((bus[indexer].V[temp_index_b]).Im(),2))/gld::pow((bus[indexer].V[temp_index_b]).Mag(),3);// current part of equation (37) - Handles "different" children
 
-							bus[indexer].Jacob_B[temp_index] = ((bus[indexer].S[temp_index_b]).Re() * (pow((bus[indexer].V[temp_index_b]).Re(),2) - pow((bus[indexer].V[temp_index_b]).Im(),2)) + 2*(bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(bus[indexer].S[temp_index_b]).Im())/pow((bus[indexer].V[temp_index_b]).Mag(),4);// first part of equation(38)
-							bus[indexer].Jacob_B[temp_index] += -((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(adjusted_constant_current[temp_index_b]).Im() + (adjusted_constant_current[temp_index_b]).Re() *pow((bus[indexer].V[temp_index_b]).Re(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3) - (bus[indexer].Y[temp_index_b]).Re();// second part of equation(38)
-							bus[indexer].Jacob_B[temp_index] += -((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Im() + (undeltacurr[temp_index_b]).Re() *pow((bus[indexer].V[temp_index_b]).Re(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3);// current part of equation(38) - Handles "different" children
+							bus[indexer].Jacob_B[temp_index] = ((bus[indexer].S[temp_index_b]).Re() * (gld::pow((bus[indexer].V[temp_index_b]).Re(),2) - gld::pow((bus[indexer].V[temp_index_b]).Im(),2)) + 2*(bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(bus[indexer].S[temp_index_b]).Im())/gld::pow((bus[indexer].V[temp_index_b]).Mag(),4);// first part of equation(38)
+							bus[indexer].Jacob_B[temp_index] += -((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(adjusted_constant_current[temp_index_b]).Im() + (adjusted_constant_current[temp_index_b]).Re() *gld::pow((bus[indexer].V[temp_index_b]).Re(),2))/gld::pow((bus[indexer].V[temp_index_b]).Mag(),3) - (bus[indexer].Y[temp_index_b]).Re();// second part of equation(38)
+							bus[indexer].Jacob_B[temp_index] += -((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Im() + (undeltacurr[temp_index_b]).Re() *gld::pow((bus[indexer].V[temp_index_b]).Re(),2))/gld::pow((bus[indexer].V[temp_index_b]).Mag(),3);// current part of equation(38) - Handles "different" children
 
-							bus[indexer].Jacob_C[temp_index] = ((bus[indexer].S[temp_index_b]).Re() * (pow((bus[indexer].V[temp_index_b]).Im(),2) - pow((bus[indexer].V[temp_index_b]).Re(),2)) - 2*(bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(bus[indexer].S[temp_index_b]).Im())/pow((bus[indexer].V[temp_index_b]).Mag(),4);// first part of equation(39)
-							bus[indexer].Jacob_C[temp_index] +=((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(adjusted_constant_current[temp_index_b]).Im() - (adjusted_constant_current[temp_index_b]).Re() *pow((bus[indexer].V[temp_index_b]).Im(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3) - (bus[indexer].Y[temp_index_b]).Re();// second part of equation(39)
-							bus[indexer].Jacob_C[temp_index] +=((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Im() - (undeltacurr[temp_index_b]).Re() *pow((bus[indexer].V[temp_index_b]).Im(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3);// Current part of equation(39) - Handles "different" children
+							bus[indexer].Jacob_C[temp_index] = ((bus[indexer].S[temp_index_b]).Re() * (gld::pow((bus[indexer].V[temp_index_b]).Im(),2) - gld::pow((bus[indexer].V[temp_index_b]).Re(),2)) - 2*(bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(bus[indexer].S[temp_index_b]).Im())/gld::pow((bus[indexer].V[temp_index_b]).Mag(),4);// first part of equation(39)
+							bus[indexer].Jacob_C[temp_index] +=((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(adjusted_constant_current[temp_index_b]).Im() - (adjusted_constant_current[temp_index_b]).Re() *gld::pow((bus[indexer].V[temp_index_b]).Im(),2))/gld::pow((bus[indexer].V[temp_index_b]).Mag(),3) - (bus[indexer].Y[temp_index_b]).Re();// second part of equation(39)
+							bus[indexer].Jacob_C[temp_index] +=((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Im() - (undeltacurr[temp_index_b]).Re() *gld::pow((bus[indexer].V[temp_index_b]).Im(),2))/gld::pow((bus[indexer].V[temp_index_b]).Mag(),3);// Current part of equation(39) - Handles "different" children
 
-							bus[indexer].Jacob_D[temp_index] = ((bus[indexer].S[temp_index_b]).Im() * (pow((bus[indexer].V[temp_index_b]).Re(),2) - pow((bus[indexer].V[temp_index_b]).Im(),2)) - 2*(bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(bus[indexer].S[temp_index_b]).Re())/pow((bus[indexer].V[temp_index_b]).Mag(),4);// first part of equation(40)
-							bus[indexer].Jacob_D[temp_index] += ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(adjusted_constant_current[temp_index_b]).Re() - (adjusted_constant_current[temp_index_b]).Im() *pow((bus[indexer].V[temp_index_b]).Re(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3) - (bus[indexer].Y[temp_index_b]).Im();// second part of equation(40)
-							bus[indexer].Jacob_D[temp_index] += ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Re() - (undeltacurr[temp_index_b]).Im() *pow((bus[indexer].V[temp_index_b]).Re(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3);// Current part of equation(40) - Handles "different" children
+							bus[indexer].Jacob_D[temp_index] = ((bus[indexer].S[temp_index_b]).Im() * (gld::pow((bus[indexer].V[temp_index_b]).Re(),2) - gld::pow((bus[indexer].V[temp_index_b]).Im(),2)) - 2*(bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(bus[indexer].S[temp_index_b]).Re())/gld::pow((bus[indexer].V[temp_index_b]).Mag(),4);// first part of equation(40)
+							bus[indexer].Jacob_D[temp_index] += ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(adjusted_constant_current[temp_index_b]).Re() - (adjusted_constant_current[temp_index_b]).Im() *gld::pow((bus[indexer].V[temp_index_b]).Re(),2))/gld::pow((bus[indexer].V[temp_index_b]).Mag(),3) - (bus[indexer].Y[temp_index_b]).Im();// second part of equation(40)
+							bus[indexer].Jacob_D[temp_index] += ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Re() - (undeltacurr[temp_index_b]).Im() *gld::pow((bus[indexer].V[temp_index_b]).Re(),2))/gld::pow((bus[indexer].V[temp_index_b]).Mag(),3);// Current part of equation(40) - Handles "different" children
 
 						}
 						else
@@ -5507,6 +5528,16 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 
 					//Current values
 					undeltacurr[0] += adjusted_constant_current[3];
+
+					//Add any three-phase/non-triplex house contributions, if they exist
+					if ((bus[indexer].phases & 0x40) == 0x40)
+					{
+						//Update phase adjustments - use the temp array (not really needed)
+						temp_store[0].SetPolar(1.0,bus[indexer].V[0].Arg());
+
+						//Update these current contributions
+						undeltacurr[0] += bus[indexer].house_var[0]/(~temp_store[0]);		//Just denominator conjugated to keep math right (rest was conjugated in house)
+					}//End house-attached non-triplex
 				}
 				else
 				{
@@ -5528,6 +5559,16 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 
 					//Current values
 					undeltacurr[1] += adjusted_constant_current[4];
+
+					//Add any three-phase/non-triplex house contributions, if they exist
+					if ((bus[indexer].phases & 0x40) == 0x40)
+					{
+						//Update phase adjustments - use the temp array (not really needed)
+						temp_store[1].SetPolar(1.0,bus[indexer].V[1].Arg());
+
+						//Update these current contributions
+						undeltacurr[1] += bus[indexer].house_var[1]/(~temp_store[1]);		//Just denominator conjugated to keep math right (rest was conjugated in house)
+					}//End house-attached non-triplex
 				}
 				else
 				{
@@ -5549,6 +5590,16 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 
 					//Current values
 					undeltacurr[2] += adjusted_constant_current[5];
+
+					//Add any three-phase/non-triplex house contributions, if they exist
+					if ((bus[indexer].phases & 0x40) == 0x40)
+					{
+						//Update phase adjustments - use the temp array (not really needed)
+						temp_store[2].SetPolar(1.0,bus[indexer].V[2].Arg());
+
+						//Update these current contributions
+						undeltacurr[2] += bus[indexer].house_var[2]/(~temp_store[2]);		//Just denominator conjugated to keep math right (rest was conjugated in house)
+					}//End house-attached non-triplex
 				}
 				else
 				{
@@ -5648,10 +5699,10 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 						if ((bus[indexer].V[temp_index_b]).Mag()!=0)
 						{
 							//Apply as an accumulation, in case any "normal" connections are present too
-							bus[indexer].Jacob_A[temp_index] += ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Re() + (undeltacurr[temp_index_b]).Im() *pow((bus[indexer].V[temp_index_b]).Im(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3); // + (undeltaimped[temp_index_b]).Im();// second part of equation(37) - no power term needed
-							bus[indexer].Jacob_B[temp_index] += -((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Im() + (undeltacurr[temp_index_b]).Re() *pow((bus[indexer].V[temp_index_b]).Re(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3); // - (undeltaimped[temp_index_b]).Re();// second part of equation(38) - no power term needed
-							bus[indexer].Jacob_C[temp_index] +=((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Im() - (undeltacurr[temp_index_b]).Re() *pow((bus[indexer].V[temp_index_b]).Im(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3); // - (undeltaimped[temp_index_b]).Re();// second part of equation(39) - no power term needed
-							bus[indexer].Jacob_D[temp_index] += ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Re() - (undeltacurr[temp_index_b]).Im() *pow((bus[indexer].V[temp_index_b]).Re(),2))/pow((bus[indexer].V[temp_index_b]).Mag(),3); // - (undeltaimped[temp_index_b]).Im();// second part of equation(40) - no power term needed
+							bus[indexer].Jacob_A[temp_index] += ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Re() + (undeltacurr[temp_index_b]).Im() *gld::pow((bus[indexer].V[temp_index_b]).Im(),2))/gld::pow((bus[indexer].V[temp_index_b]).Mag(),3); // + (undeltaimped[temp_index_b]).Im();// second part of equation(37) - no power term needed
+							bus[indexer].Jacob_B[temp_index] += -((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Im() + (undeltacurr[temp_index_b]).Re() *gld::pow((bus[indexer].V[temp_index_b]).Re(),2))/gld::pow((bus[indexer].V[temp_index_b]).Mag(),3); // - (undeltaimped[temp_index_b]).Re();// second part of equation(38) - no power term needed
+							bus[indexer].Jacob_C[temp_index] +=((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Im() - (undeltacurr[temp_index_b]).Re() *gld::pow((bus[indexer].V[temp_index_b]).Im(),2))/gld::pow((bus[indexer].V[temp_index_b]).Mag(),3); // - (undeltaimped[temp_index_b]).Re();// second part of equation(39) - no power term needed
+							bus[indexer].Jacob_D[temp_index] += ((bus[indexer].V[temp_index_b]).Re()*(bus[indexer].V[temp_index_b]).Im()*(undeltacurr[temp_index_b]).Re() - (undeltacurr[temp_index_b]).Im() *gld::pow((bus[indexer].V[temp_index_b]).Re(),2))/gld::pow((bus[indexer].V[temp_index_b]).Mag(),3); // - (undeltaimped[temp_index_b]).Im();// second part of equation(40) - no power term needed
 						}
 						else	//Zero voltage = only impedance is valid (others get divided by VMag, so are IND) - not entirely sure how this gets in here anyhow
 						{

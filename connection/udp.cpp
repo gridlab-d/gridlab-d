@@ -19,7 +19,7 @@ udp::udp()
 	set_hostname("127.0.0.1");
 	set_uri("");
 
-#ifdef WIN32
+#ifdef _WIN32
 	// initialize socket subsystem
 	WORD wsaVersion = MAKEWORD(2,2);
 	WSADATA wsaData;
@@ -111,7 +111,13 @@ int udp::option(char *command)
 		char *comma = strchr(command,',');
 		char *semic = strchr(command,';');
 		if ( comma && semic )
-			command = min(comma,semic);
+			if ((comma - command) > (semic - command)) {
+				command = semic;
+			} else {
+				command = comma;
+			}
+			// original intent was:
+			// command = min(comma, semic);
 		else if ( comma )
 			command = comma;
 		else if ( semic )
@@ -185,7 +191,7 @@ size_t udp::send(const char *msg, size_t len)
 	char temp[256];
 	int tlim = (int)ceil((double)timeout.tv_usec/1000.0) + (int)timeout.tv_sec;
 	if ( tlim>0 ) tlim=9; else if ( tlim<1 ) tlim=1;
-	sprintf(temp,"%-1d %-3d %-7d %-5.5s %-3.1f %-1d %-3d   ", 
+	sprintf(temp,"%-1d %-3d %-7lu %-5.5s %-3.1f %-1d %-3d   ", 
 		header_version, header_size, len, message_format, message_version, tlim, 0);
 	if ( len>1500-strlen(temp) )
 	{
@@ -300,7 +306,7 @@ Retry:
 }
 int udp::call_setsockopt(SOCKET s, int level, int optname, timeval *optval, int optlen)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	int time_out;
 	time_out = (int)optval->tv_usec + (int)(optval->tv_sec*1000);
 	return setsockopt(s, level, optname, (const char*)&time_out, sizeof(time_out));

@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifdef WIN32
+#ifdef _WIN32
 
 #include <winsock2.h>
 
@@ -60,7 +60,7 @@ static void shutdown_now(void)
 	exec_setexitcode(XC_SVRKLL);
 	shutdown_server = 1;
 	if (sockfd!=(SOCKET)0)
-#ifdef WIN32
+#ifdef _WIN32
 		shutdown(sockfd,SD_BOTH);
 #else
 		shutdown(sockfd,SHUT_RDWR);
@@ -88,7 +88,7 @@ void *http_response(void *ptr);
  **/
 static size_t send_data(SOCKET s, char *buffer, size_t len)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	return (size_t)send(s,buffer,(int)len,0);
 #else
 	return (size_t)write(s,buffer,len);
@@ -100,7 +100,7 @@ static size_t send_data(SOCKET s, char *buffer, size_t len)
  **/
 static size_t recv_data(SOCKET s,char *buffer, size_t len)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	return (size_t)recv(s,buffer,(int)len,0);
 #else
 	return (size_t)read(s,(void *)buffer,len);
@@ -184,7 +184,7 @@ STATUS server_startup(int argc, char *argv[])
 	int portNumber = global_server_portnum==0 ? DEFAULT_PORTNUM : global_server_portnum;
 	SOCKET sockfd;
 	struct sockaddr_in serv_addr;
-#ifdef WIN32
+#ifdef _WIN32
 	static WSADATA wsaData;
 #endif
 	void *result = NULL;
@@ -192,7 +192,7 @@ STATUS server_startup(int argc, char *argv[])
 	if (started)
 		return SUCCESS;
 
-#ifdef WIN32
+#ifdef _WIN32
 	IN_MYCONTEXT output_debug("starting WS2");
 	if (WSAStartup(MAKEWORD(2,0),&wsaData)!=0)
 	{
@@ -238,14 +238,14 @@ Retry:
 			output_warning("server port not available, trying port %d...", portNumber);
 			goto Retry;
 		}
-#ifdef WIN32
+#ifdef _WIN32
 		output_error("can't bind to %d.%d.%d.%d",serv_addr.sin_addr.S_un.S_un_b.s_b1,serv_addr.sin_addr.S_un.S_un_b.s_b2,serv_addr.sin_addr.S_un.S_un_b.s_b3,serv_addr.sin_addr.S_un.S_un_b.s_b4);
 #else
 		output_error("can't bind address: %s",strerror(GetLastError()));
 #endif
 		return FAILED;
 	}
-#ifdef WIN32
+#ifdef _WIN32
 	IN_MYCONTEXT output_verbose("bind ok to %d.%d.%d.%d",serv_addr.sin_addr.S_un.S_un_b.s_b1,serv_addr.sin_addr.S_un.S_un_b.s_b2,serv_addr.sin_addr.S_un.S_un_b.s_b3,serv_addr.sin_addr.S_un.S_un_b.s_b4);
 #else
 	IN_MYCONTEXT output_verbose("bind ok to address");
@@ -294,7 +294,7 @@ typedef struct s_httpcnx {
 	char query[1024];
 	char *buffer;
 	size_t len;
-	size_t max;
+	size_t max_size;
 	char *status;
 	char *type;
 	SOCKET s;
@@ -309,8 +309,8 @@ static HTTPCNX *http_create(SOCKET s)
 	HTTPCNX *http = (HTTPCNX*)malloc(sizeof(HTTPCNX));
 	memset(http,0,sizeof(HTTPCNX));
 	http->s = s;
-	http->max = 65536;
-	http->buffer = malloc(http->max);
+	http->max_size = 65536;
+	http->buffer = malloc(http->max_size);
 	return http;
 }
 
@@ -458,19 +458,19 @@ static void http_write(HTTPCNX *http, char *data, size_t len)
 		tmp = (char*)malloc(need*2+1);
 		len = http_rewrite(tmp,data,len,need*2);
 	}
-	if (http->len+len>=http->max)
+	if (http->len+len>=http->max_size)
 	{
 		/* extend buffer */
 		void *old = http->buffer;
-		if (http->len+len < http->max*2)
+		if (http->len+len < http->max_size*2)
 		{
-			http->max *= 2;
+			http->max_size *= 2;
 		}
 		else
 		{
-			http->max = http->len+len+1;
+			http->max_size = http->len+len+1;
 		}
-		http->buffer = malloc(http->max);
+		http->buffer = malloc(http->max_size);
 		memcpy(http->buffer,old,http->len);
 		free(old);
 	}
@@ -485,7 +485,7 @@ static void http_close(HTTPCNX *http)
 {
 	if (http->len>0)
 		http_send(http);
-#ifdef WIN32
+#ifdef _WIN32
 	closesocket(http->s);
 #else
 	close(http->s);
@@ -1498,7 +1498,7 @@ int http_run_r(HTTPCNX *http,char *uri)
 
 	/* setup gnuplot command */
 	sprintf(script,"%s",uri);
-#ifdef WIN32
+#ifdef _WIN32
 	sprintf(command,"r CMD BATCH %s",script);
 #else
 	sprintf(command,"R --vanilla CMD BATCH %s",script);
@@ -1673,7 +1673,7 @@ int http_run_gnuplot(HTTPCNX *http,char *uri)
 
 	/* setup gnuplot command */
 	sprintf(script,"%s",uri);
-#ifdef WIN32
+#ifdef _WIN32
 	sprintf(command,"wgnuplot %s",script);
 #else
 	sprintf(command,"gnuplot %s",script);

@@ -70,7 +70,7 @@ public:
 	inline char *find(const char c) { return strchr(buffer,c); };
 	inline char *find(const char *s) { return strstr(buffer,s); };
 	inline char *findrev(const char c) { return strrchr(buffer,c); };
-	inline char *token(char *from, const char *delim, char **context) { this->strtok_s(from,delim,context); };
+	inline char *token(char *from, const char *delim, char **context) { return this->strtok_s(from,delim,context); };
 	inline size_t format(char *fmt, ...) { va_list ptr; va_start(ptr,fmt); size_t len=vsnprintf(buffer,size,fmt,ptr); va_end(ptr); return len; };
 	inline size_t vformat(char *fmt, va_list ptr) { return vsnprintf(buffer,size,fmt,ptr); };
 };
@@ -881,7 +881,8 @@ public:
 		for ( r=r1 ; r<=n ; r++ )
 		{
 			for ( c=c1 ; c<=m ; c++ )
-				fprintf(stderr," %8g", my(r,c));
+				fprintf(stderr," %8g%+8gi", my(r,c).Re(), my(r,c).Im());
+
 			fprintf(stderr,"\n");
 		}
 		fprintf(stderr," }\n");
@@ -1120,6 +1121,7 @@ typedef enum {_PT_FIRST=-1,
 	PT_loadshape,	/**< Loadshapes are state machines driven by schedules */
 	PT_enduse,		/**< Enduse load data */
 	PT_random,		/**< Randomized number */
+	PT_method,		/**< Method */
 	/* add new property types here - don't forget to add them also to rt/gridlabd.h and property.c */
 #ifdef USE_TRIPLETS
 	PT_triple, /**< triplet of doubles (not supported) */
@@ -1167,6 +1169,8 @@ typedef struct s_keyword {
 	struct s_keyword *next;
 } KEYWORD;
 
+typedef int (*METHODCALL)(void *obj, char *string, int size); /**< the function that read and writes a string */
+
 typedef uint32 PROPERTYFLAGS;
 #define PF_RECALC	0x0001 /**< property has a recalc trigger (only works if recalc_<class> is exported) */
 #define PF_CHARSET	0x0002 /**< set supports single character keywords (avoids use of |) */
@@ -1182,13 +1186,14 @@ typedef struct s_property_map {
 	uint32 width; /**< property byte size, copied from array in class.c */
 	PROPERTYACCESS access; /**< property access flags */
 	UNIT *unit; /**< property unit, if any; \p NULL if none */
-	PROPERTYADDR addr; /**< property location, offset from OBJECT header */
+	PROPERTYADDR addr; /**< property location, offset from OBJECT header; OBJECT header itself for methods */
 	DELEGATEDTYPE *delegation; /**< property delegation, if any; \p NULL if none */
 	KEYWORD *keywords; /**< keyword list, if any; \p NULL if none (only for set and enumeration types)*/
 	char *description; /**< description of property */
 	struct s_property_map *next; /**< next property in property list */
 	PROPERTYFLAGS flags; /**< property flags (e.g., PF_RECALC) */
 	FUNCTIONADDR notify;
+	METHODCALL method; /**< method call, addr must be 0 */
 	bool notify_override;
 } PROPERTY; /**< property definition item */
 

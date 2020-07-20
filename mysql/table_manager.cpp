@@ -101,7 +101,7 @@ int table_manager::add_table_header(string* property_name, string* property_full
 	table_headers.push_back(property_name);
 	table_units.push_back(property_unit_buffer);
 
-	table_header_buffer << *property_full_header;
+	table_header_buffer << (column_count > 0 ? ", " : "") << *property_full_header;
 	column_count++;
 
 	// cleanup input variable which does not need to persist.
@@ -135,6 +135,41 @@ int table_manager::add_insert_values(query_engine* parent, string* column_name, 
 	return 1; // Success
 }
 
+// Sadly C++ lacks a slice() or split() function, so this mess was necessary.
+void table_manager::set_custom_sql(std::string sql) {
+	if(sql.length() == 0) return;
+	std::vector<std::string> header, datatype, value;
+	std::string delimiter = ", ";
+	size_t pos = 0;
+	bool last_run = false;
+	std::string token, inner_token;
+	while ((pos = sql.find(delimiter)) != std::string::npos || !last_run) {
+		last_run = (sql.find(delimiter) == std::string::npos);
+		bool inner_last_run = false;
+		token = sql.substr(0, pos);
+
+		std::string inner_delimiter = " ";
+		size_t inner_pos = 0;
+		std::vector<std::string> buffer;
+
+		while ((inner_pos = token.find(inner_delimiter)) != std::string::npos || !inner_last_run) {
+			inner_last_run = (token.find(inner_delimiter) == std::string::npos);
+			inner_token = token.substr(0, inner_pos);
+			buffer.push_back(inner_token);
+			token.erase(0, inner_pos + inner_delimiter.length());
+		}
+		header.push_back(buffer[0]);
+		datatype.push_back(buffer[1]);
+		value.push_back(buffer[2]);
+
+		sql.erase(0, pos + delimiter.length());
+	}
+
+	custom_sql_headers = header;
+	custom_sql_datatypes = datatype;
+	custom_sql_values = value;
+}
+
 void table_manager::flush_value_row(TIMESTAMP* timestamp) {
 	if (!done) {
 		if (query_count == threshold) {
@@ -154,12 +189,27 @@ void table_manager::flush_value_row(TIMESTAMP* timestamp) {
 			for (int i = 0; i < value_count - 1; i++) {
 				insert_values_buffer << insert_values[i] << ", ";
 			}
-			insert_values_buffer << insert_values[value_count - 1] << ")" << std::flush;
+			insert_values_buffer << insert_values[value_count - 1];
+
+			if (custom_sql_headers.size() != 0)
+				for (int index = 0; index < custom_sql_values.size(); index++)
+					insert_values_buffer << ", " << custom_sql_values[index];
+
+			insert_values_buffer << ")" << std::flush;
 
 			insert_values.clear();
 			query_count++;
 		}
 	}
+}
+
+std::string table_manager::get_custom_sql_columns() {
+	string column_values;
+	for (int index = 0; index < custom_sql_headers.size(); index++)
+			{
+		column_values += "`" + custom_sql_headers[index] + "` " + custom_sql_datatypes[index] + ", ";
+	}
+	return column_values;
 }
 
 void table_manager::commit_values() {
@@ -174,7 +224,13 @@ void table_manager::commit_values() {
 			query << *table_headers[i] << "`, `";
 		}
 		value_buffer = insert_values_buffer.str();
-		query << *table_headers[column_count - 1] << "`) " << value_buffer << ";" << std::flush;
+		query << *table_headers[column_count - 1] << "`";
+
+		if (custom_sql_headers.size() != 0)
+			for (int index = 0; index < custom_sql_values.size(); index++)
+				query << ", `" << custom_sql_headers[index] << "`";
+
+		query << ") " << value_buffer << ";" << std::flush;
 		query_string = query.str();
 		if (value_buffer.length() > 0)
 			db->query(query_string.c_str());

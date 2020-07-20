@@ -7,7 +7,7 @@
 #include <stdlib.h>
 #include "gridlabd.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 // code for loading and initializing PLC machines
 #include "machine.h"
 int load_library(char *name, PLCCODE *code, PLCINIT *init, PLCDATA *data)

@@ -84,9 +84,11 @@ GLOBAL int global_verbose_mode INIT(FALSE); /**< The verbose mode flag */
 GLOBAL int global_debug_output INIT(FALSE); /**< Enables debug output */
 GLOBAL int global_keep_progress INIT(FALSE); /**< Flag to keep progress reports */
 GLOBAL unsigned global_iteration_limit INIT(100); /**< The global iteration limit */
+GLOBAL bool global_federation_reiteration INIT(false); /**< enforce a hard reiteration for all modules due to a external federation reiteration. */
 GLOBAL char global_workdir[1024] INIT("."); /**< The current working directory */
 GLOBAL char global_dumpfile[1024] INIT("gridlabd.xml"); /**< The dump file name */
 GLOBAL char global_savefile[1024] INIT(""); /**< The save file name */
+GLOBAL int global_lock_enabled INIT(TRUE); /**Disable locks*/
 GLOBAL int global_dumpall INIT(FALSE);	/**< Flags all modules to dump data after run complete */
 GLOBAL int global_runchecks INIT(FALSE); /**< Flags module check code to be called after initialization */
 /** @todo Set the threadcount to zero to automatically use the maximum system resources (tickets 180) */
@@ -111,7 +113,7 @@ GLOBAL char global_urlbase[1024] /**< default urlbase used for online resources 
 #endif
 GLOBAL unsigned int global_randomseed INIT(0); /**< random number seed (default 0 means true randomization, non-zero means deterministic random state) */
 GLOBAL char global_include[1024] 
-#ifdef WIN32
+#ifdef _WIN32
 	INIT(""); 
 #else
 	INIT("");
@@ -122,7 +124,7 @@ GLOBAL int global_gdb_window INIT(0); /**< start gdb in a separate window */
 GLOBAL int global_process_id INIT(0); /**< the main process id */
 GLOBAL char global_execname[1024] INIT(""); /**< the main program full path */
 GLOBAL char global_tmp[1024] /**< location for temp files */
-#ifdef WIN32
+#ifdef _WIN32
 							INIT("C:\\WINDOWS\\TEMP");
 #else
 							INIT("/tmp"); 
@@ -154,7 +156,7 @@ GLOBAL int global_maximum_synctime INIT(60); /**< the maximum time allotted to a
 
 GLOBAL char global_platform[8] /**< the host operating platform */
 
-#ifdef WIN32
+#ifdef _WIN32
 	INIT("WINDOWS");
 #elif __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ >= 1050
 	INIT("MACOSX");
@@ -182,7 +184,7 @@ GLOBAL int global_server_portnum INIT(0); /**< port used in server mode (6267 wa
 GLOBAL char global_server_inaddr[1024] INIT(""); /**< interface address to bind server to */
 GLOBAL char global_client_allowed[1024] INIT(""); /**< internet address from which clients can be accepted */
 GLOBAL char global_browser[1024] /**< default browser to use for GUI */
-#ifdef WIN32
+#ifdef _WIN32
 	INIT("iexplore"); 
 #elif defined(MACOSX)
 	INIT("safari");

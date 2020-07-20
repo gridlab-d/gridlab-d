@@ -51,8 +51,8 @@
 	Hassayampa		Version 3.0 originated at PNNL November 2011
 	Hatwai			Version 3.1 originated at PNNL 2013
 	Jojoba			Version 3.2 originated at PNNL 2014
-	Keeler			Version 4.0 planned for 2015
-	Lugo
+	Keeler			Version 4.0 originated at PNNL 2017
+	Lugo			Version 4.1 originated at PNNL 2018
 	McNary
 	Navajo
 	Ostrander
