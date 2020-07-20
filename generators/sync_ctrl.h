@@ -149,7 +149,6 @@ private: //Variables
     //==Time
     double timer_mode_A_sec; //The total period (initialized as 0) during which both metrics have been satisfied continuously when this sync_ctrl object is in mode A and PI controllers are working
     double timer_mode_B_sec; //The total period (initialized as 0) during which the both metrics have been satisfied continuously when this sync_ctrl object is in mode B and monitoring.
-    double dt_dm_sec;        //Current deltamode timestep.
 
     //==System Info
     double sys_nom_freq_hz;

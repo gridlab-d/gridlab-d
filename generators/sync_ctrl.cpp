@@ -160,7 +160,7 @@ SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time,
                     }
 
                     //-- tick the timer
-                    double dt_dm_sec = (double)dt / (double)DT_SECOND;
+                    double dt_dm_sec = (double)dt / (double)DT_SECOND; //@TODO: may not need to save it to dt_dm_sec here
                     timer_mode_B_sec += dt_dm_sec;
 
                     //-- check the timer
@@ -253,7 +253,7 @@ void sync_ctrl::mode_transition(SCT_MODE_ENUM sct_mode, bool sck_armed_flag)
     set_prop(prop_sck_armed_ptr, sck_armed_flag); // Arm or disarm sync_check
 }
 
-void sync_ctrl::cgu_ctrl(double dt)
+void sync_ctrl::cgu_ctrl(double dm_dt_sec)
 {
     switch (cgu_type)
     {
@@ -273,7 +273,7 @@ void sync_ctrl::cgu_ctrl(double dt)
         cgu_freq_set_mpv = sck_freq_diff_hz / sys_nom_freq_hz;
         cgu_freq_set_cv = pi_ctrl_cgu_freq_set->step_update(
             (sct_freq_tol_ub_hz - sct_freq_tol_lb_hz) / 2 / sys_nom_freq_hz,
-            cgu_freq_set_mpv, dt); //@TODO: the setpoint may be defined by the user via a published property
+            cgu_freq_set_mpv, dm_dt_sec); //@TODO: the setpoint may be defined by the user via a published property
         if (cgu_P_f_droop_setting_mode == PF_DROOP_MODE::FSET_MODE)
         {
             cgu_freq_set_cv *= sys_nom_freq_hz;
@@ -294,7 +294,7 @@ void sync_ctrl::cgu_ctrl(double dt)
 
         //--step update
         cgu_volt_set_mpv = (sck_volt_A_mag_diff_pu + sck_volt_B_mag_diff_pu + sck_volt_C_mag_diff_pu) / 3;
-        cgu_volt_set_cv = pi_ctrl_cgu_volt_set->step_update(0, cgu_volt_set_mpv, dt); //@TODO: the setpoint may be defined by the user via a published property
+        cgu_volt_set_cv = pi_ctrl_cgu_volt_set->step_update(0, cgu_volt_set_mpv, dm_dt_sec); //@TODO: the setpoint may be defined by the user via a published property
 
         //--apply/send cv
         if (sct_volt_cv_arm_flag)
@@ -330,8 +330,12 @@ void sync_ctrl::dm_reset_controllers()
 }
 
 void sync_ctrl::dm_reset_after_disarmed()
-{
+{//@TODO: maybe more need to be reset here
     reset_timer();
+    dm_reset_controllers();
+    
+    init_hidden_prop(0);
+    mode_status = SCT_MODE_ENUM::MODE_A; //Back to Mode_A as the starting mode @TODO: discuss with Frank
 }
 
 /* parameter/data sanity check */
@@ -456,10 +460,10 @@ void sync_ctrl::init_vars() // Init local variables with default settings
     sck_armed_status = false;
 
     //==Time
-    timer_mode_A_sec = timer_mode_B_sec = dt_dm_sec = 0;
+    timer_mode_A_sec = timer_mode_B_sec = 0;
 
     //==System Info
-    //--get the nominal frequency of the power system
+    //--get the nominal frequency of the power system //@TODO: cosider to move this to somewhere else
     sys_nom_freq_hz = get_prop_value<double>("powerflow::nominal_frequency",
                                              &gld_property::is_valid,
                                              &gld_property::is_double,
@@ -609,14 +613,14 @@ void sync_ctrl::init_pub_prop() // Init published properties with default settin
     //==Controller (@TODO: default values to be updated.)
     //--frequency
     pi_freq_kp = 1;
-    pi_freq_ki = 1;
+    pi_freq_ki = 0.1;
 
     pi_freq_ub_pu = 1;
     pi_freq_lb_pu = 0;
 
     //--voltage magnitude
     pi_volt_mag_kp = 1;
-    pi_volt_mag_ki = 1;
+    pi_volt_mag_ki = 0.1;
 
     pi_volt_mag_ub_pu = 1;
     pi_volt_mag_lb_pu = 0;
