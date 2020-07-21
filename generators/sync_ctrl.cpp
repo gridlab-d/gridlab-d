@@ -196,10 +196,10 @@ void sync_ctrl::dm_update_measurements()
 
 bool sync_ctrl::sct_metrics_check_mode_A(unsigned long dt)
 {
-    if ((sck_freq_diff_hz >= sct_freq_tol_lb_hz) && (sck_freq_diff_hz <= sct_freq_tol_ub_hz) &&
-        (sck_volt_A_mag_diff_pu <= sct_volt_mag_tol_pu) &&
-        (sck_volt_B_mag_diff_pu <= sct_volt_mag_tol_pu) &&
-        (sck_volt_C_mag_diff_pu <= sct_volt_mag_tol_pu))
+    if ((sck_freq_diff_hz >= sct_freq_tol_lb_hz) && (sck_freq_diff_hz <= sct_freq_tol_ub_hz) && //@TODO: discuss with Frank to see if there are better options for checking the sck_freq_diff_hz.
+        (abs(sck_volt_A_mag_diff_pu) <= sct_volt_mag_tol_pu) &&
+        (abs(sck_volt_B_mag_diff_pu) <= sct_volt_mag_tol_pu) &&
+        (abs(sck_volt_C_mag_diff_pu) <= sct_volt_mag_tol_pu))
     {
         double dt_dm_sec = (double)dt / (double)DT_SECOND;
         timer_mode_A_sec += dt_dm_sec;
