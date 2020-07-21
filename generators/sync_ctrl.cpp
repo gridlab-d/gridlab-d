@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <algorithm>
 
 using namespace std;
 
@@ -15,6 +16,9 @@ using namespace std;
 #define STR(s) #s
 
 static PASSCONFIG clockpass = PC_BOTTOMUP;
+
+/* Comp func for max() */
+bool comp_func_dbl(double v1, double v2) { return (abs(v1) < abs(v2)); }
 
 //////////////////////////////////////////////////////////////////////////
 // sync_ctrl CLASS FUNCTIONS
@@ -265,6 +269,10 @@ void sync_ctrl::cgu_ctrl(double dm_dt_sec)
         if (pi_ctrl_cgu_freq_set_fsu_flag)
         {
             double cur_freq_set = get_prop_value(prop_cgu_freq_set_ptr, &gld_property::get_double, false);
+            if (cgu_P_f_droop_setting_mode == PF_DROOP_MODE::FSET_MODE)
+            {
+                cur_freq_set /= sys_nom_freq_hz;
+            }
             pi_ctrl_cgu_freq_set->set_cv_init(cur_freq_set);
             pi_ctrl_cgu_freq_set_fsu_flag = false;
         }
@@ -283,7 +291,8 @@ void sync_ctrl::cgu_ctrl(double dm_dt_sec)
         if (sct_freq_cv_arm_flag)
             set_prop(prop_cgu_freq_set_ptr, cgu_freq_set_cv);
 
-        //==PI controller for avg(volt_mag_diff_ph_a_pu, volt_mag_diff_ph_b_pu, volt_mag_diff_ph_c_pu) //@TODO: may change to max()
+        //==PI controller for getting the one of volt_mag_diff_ph_a_pu, volt_mag_diff_ph_b_pu, and volt_mag_diff_ph_c_pu that has the largest absolute value
+        //@TODO: discuss with Frank
         //--init CV
         if (pi_ctrl_cgu_volt_set_fsu_flag)
         {
@@ -293,7 +302,7 @@ void sync_ctrl::cgu_ctrl(double dm_dt_sec)
         }
 
         //--step update
-        cgu_volt_set_mpv = (sck_volt_A_mag_diff_pu + sck_volt_B_mag_diff_pu + sck_volt_C_mag_diff_pu) / 3;
+        cgu_volt_set_mpv = max({sck_volt_A_mag_diff_pu, sck_volt_B_mag_diff_pu, sck_volt_C_mag_diff_pu}, comp_func_dbl);
         cgu_volt_set_cv = pi_ctrl_cgu_volt_set->step_update(0, cgu_volt_set_mpv, dm_dt_sec); //@TODO: the setpoint may be defined by the user via a published property
 
         //--apply/send cv
