@@ -15,6 +15,8 @@ using namespace std;
 /* UTIL MACROS */
 #define STR(s) #s
 
+#define FLAG_VAL -2.2e-2 // @TODO: after testing, replace the flag value with -1
+
 static PASSCONFIG clockpass = PC_BOTTOMUP;
 
 /* Comp func for max() */
@@ -85,7 +87,7 @@ int sync_ctrl::create(void)
 {
     init_vars();
     init_pub_prop();
-    init_hidden_prop(0);
+    init_hidden_prop(FLAG_VAL);
 
     return 1;
 }
@@ -253,7 +255,7 @@ void sync_ctrl::mode_transition(SCT_MODE_ENUM sct_mode, bool sck_armed_flag)
 
     //==Mode Transition
     reset_timer();                                // Reset timers of both modes
-    mode_status = sct_mode;                       // Mode A or B
+    mode_status = sct_mode;                       // Transit to Mode A or B
     set_prop(prop_sck_armed_ptr, sck_armed_flag); // Arm or disarm sync_check
 }
 
@@ -336,6 +338,7 @@ void sync_ctrl::dm_reset_controllers()
     pi_ctrl_cgu_freq_set = nullptr; //avoid segamentation fault caused by the double delete in unexpected mode transitions
 
     init_controllers();
+    init_hidden_prop_controllers(FLAG_VAL); // FLAG_VAL is the flag value that indicates the update of these hidden properties is stopped
 }
 
 void sync_ctrl::dm_reset_after_disarmed()
@@ -343,7 +346,7 @@ void sync_ctrl::dm_reset_after_disarmed()
     reset_timer();
     dm_reset_controllers();
 
-    init_hidden_prop(0);
+    init_hidden_prop(FLAG_VAL);
     mode_status = SCT_MODE_ENUM::MODE_A; //Back to Mode_A as the starting mode @TODO: discuss with Frank
 }
 
@@ -637,6 +640,12 @@ void sync_ctrl::init_pub_prop() // Init published properties with default settin
 
 void sync_ctrl::init_hidden_prop(double flag_val)
 {
+    init_hidden_prop_controllers(flag_val);
+}
+
+void sync_ctrl::init_hidden_prop_controllers(double flag_val)
+{
+    /* Signals & flags for controllers */
     sct_volt_cv_arm_flag = true;
     cgu_volt_set_mpv = flag_val;
     cgu_volt_set_cv = flag_val;

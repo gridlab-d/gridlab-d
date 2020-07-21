@@ -58,6 +58,7 @@ private: //Member Funcs: Init, Sanity Check, and Reset
     void init_vars();
     void init_pub_prop();
     void init_hidden_prop(double = -1);
+    void init_hidden_prop_controllers(double = -1);
 
     /* Mainly used in init() */
     void init_data_sanity_check();
@@ -92,6 +93,7 @@ private: //Deltamode
     void dm_reset_controllers();    //Reset both controllers
 
 private:                       //Published (Hidden) Properties
+    /* Signals & flags for controllers */
     bool sct_volt_cv_arm_flag; //True - apply the volt controlled variable, False - do not set the related property
     double cgu_volt_set_mpv;
     double cgu_volt_set_cv;

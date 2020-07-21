@@ -17,6 +17,8 @@ using namespace std;
 #define RAD_TO_DEG(rad) rad / M_PI * 180
 #define STR(s) #s
 
+#define FLAG_VAL -2.2e-2 //@TODO: temp setting for check the results, will make it back to -1 later on
+
 //////////////////////////////////////////////////////////////////////////
 // sync_check CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
@@ -335,6 +337,8 @@ void sync_check::init_diff_prop(double unarmed_val) /* Measurement Properties (h
 	volt_A_mag_diff = volt_B_mag_diff = volt_C_mag_diff = unarmed_val;
 	volt_A_mag_diff_pu = volt_B_mag_diff_pu = volt_C_mag_diff_pu = unarmed_val;
 	volt_A_ang_deg_diff = volt_B_ang_deg_diff = volt_C_ang_deg_diff = unarmed_val;
+
+	volt_A_mag_diff_noabs_pu = volt_B_mag_diff_noabs_pu = volt_C_mag_diff_noabs_pu = unarmed_val;
 }
 
 void sync_check::init_vars()
@@ -343,7 +347,7 @@ void sync_check::init_vars()
 	double temp_freq_val;
 
 	/* Measurement Properties (hidden) for Recorders */
-	init_diff_prop(0); //@TODO: temp setting for check the results, will make it back to -1 later on
+	init_diff_prop(FLAG_VAL);
 
 	/* Default - MAG_DIFF Mode */
 	volt_compare_mode = MAG_DIFF;
@@ -966,7 +970,7 @@ void sync_check::reset_after_excitation()
 	// Reset other buffers & variables
 	metrics_flag = false;
 	t_sat = 0;
-	// init_diff_prop(); //@TODO
+	init_diff_prop(FLAG_VAL);
 }
 
 //Deltamode call
