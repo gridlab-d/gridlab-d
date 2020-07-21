@@ -89,9 +89,9 @@ private: //Deltamode
     void dm_data_sanity_check(); //Parameter/data sanity check
 
     void dm_reset_after_disarmed(); //Reset once sync_ctrl is disarmed
-    void dm_reset_controllers(); //Reset both controllers
+    void dm_reset_controllers();    //Reset both controllers
 
-private:                  //Published (Hidden) Properties
+private:                       //Published (Hidden) Properties
     bool sct_volt_cv_arm_flag; //True - apply the volt controlled variable, False - do not set the related property
     double cgu_volt_set_mpv;
     double cgu_volt_set_cv;

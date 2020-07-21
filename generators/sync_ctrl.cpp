@@ -222,10 +222,10 @@ bool sync_ctrl::sct_metrics_check_mode_A(unsigned long dt)
 
 bool sync_ctrl::sct_metrics_check_mode_B()
 {
-    if ((sck_freq_diff_hz >= sct_freq_tol_lb_hz) && (sck_freq_diff_hz <= sct_freq_tol_ub_hz) &&
-        (sck_volt_A_mag_diff_pu <= sct_volt_mag_tol_pu) &&
-        (sck_volt_B_mag_diff_pu <= sct_volt_mag_tol_pu) &&
-        (sck_volt_C_mag_diff_pu <= sct_volt_mag_tol_pu))
+    if ((abs(sck_freq_diff_hz) >= sct_freq_tol_lb_hz) && (abs(sck_freq_diff_hz) <= sct_freq_tol_ub_hz) &&
+        (abs(sck_volt_A_mag_diff_pu) <= sct_volt_mag_tol_pu) &&
+        (abs(sck_volt_B_mag_diff_pu) <= sct_volt_mag_tol_pu) &&
+        (abs(sck_volt_C_mag_diff_pu) <= sct_volt_mag_tol_pu))
         return true;
     else
         return false;
@@ -330,10 +330,10 @@ void sync_ctrl::dm_reset_controllers()
 }
 
 void sync_ctrl::dm_reset_after_disarmed()
-{//@TODO: maybe more need to be reset here
+{ //@TODO: maybe more need to be reset here
     reset_timer();
     dm_reset_controllers();
-    
+
     init_hidden_prop(0);
     mode_status = SCT_MODE_ENUM::MODE_A; //Back to Mode_A as the starting mode @TODO: discuss with Frank
 }
