@@ -2525,7 +2525,13 @@ void house_e::update_system(double dt)
 					load.admittance.SetRect(load.impedance_fraction * load.total.Re() , load.impedance_fraction * load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) );
 					load.current.SetRect(load.current_fraction * load.total.Re(), load.current_fraction * load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) );
 				}
-
+				else	//Attached, but zero these, because below are accumulators
+				{
+					load.power = complex(0.0,0.0);
+					load.admittance = complex(0.0,0.0);
+					load.current = complex(0.0,0.0);
+				}
+				
 				// Motor losses that are related to the efficiency of the induction motor. These contribute to electric power
 				// consumed, but are not incorporated into the heat flow equations.
 				if (motor_model == MM_BASIC)
