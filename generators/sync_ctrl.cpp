@@ -642,17 +642,20 @@ void sync_ctrl::init_pub_prop() // Init published properties with default settin
 
 void sync_ctrl::init_hidden_prop(double flag_val)
 {
+    /* Flags for controllers */
+    sct_volt_cv_arm_flag = true; //@TODO: may move these two statements to other places
+    sct_freq_cv_arm_flag = true;
+
+    /* Signals for controllers */
     init_hidden_prop_controllers(flag_val);
 }
 
 void sync_ctrl::init_hidden_prop_controllers(double flag_val)
 {
-    /* Signals & flags for controllers */
-    sct_volt_cv_arm_flag = true;
+    /* Signals for controllers */
     cgu_volt_set_mpv = flag_val;
     cgu_volt_set_cv = flag_val;
 
-    sct_freq_cv_arm_flag = true;
     cgu_freq_set_mpv = flag_val;
     cgu_freq_set_cv = flag_val;
 }
