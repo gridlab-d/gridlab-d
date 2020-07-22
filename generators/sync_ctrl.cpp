@@ -204,7 +204,8 @@ void sync_ctrl::dm_update_measurements()
 
 bool sync_ctrl::sct_metrics_check_mode_A(unsigned long dt)
 {
-    if ((sck_freq_diff_hz >= sct_freq_tol_lb_hz) && (sck_freq_diff_hz <= sct_freq_tol_ub_hz) && //@TODO: discuss with Frank to see if there are better options for checking the sck_freq_diff_hz.
+    bool freq_diff_flag = ((sck_freq_diff_hz - sct_freq_tol_lb_hz) * (sck_freq_diff_hz - sct_freq_tol_ub_hz) <= 0);
+    if (freq_diff_flag &&
         (abs(sck_volt_A_mag_diff_pu) <= sct_volt_mag_tol_pu) &&
         (abs(sck_volt_B_mag_diff_pu) <= sct_volt_mag_tol_pu) &&
         (abs(sck_volt_C_mag_diff_pu) <= sct_volt_mag_tol_pu))
@@ -230,7 +231,8 @@ bool sync_ctrl::sct_metrics_check_mode_A(unsigned long dt)
 
 bool sync_ctrl::sct_metrics_check_mode_B()
 {
-    if ((abs(sck_freq_diff_hz) >= sct_freq_tol_lb_hz) && (abs(sck_freq_diff_hz) <= sct_freq_tol_ub_hz) &&
+    bool freq_diff_flag = ((sck_freq_diff_hz - sct_freq_tol_lb_hz) * (sck_freq_diff_hz - sct_freq_tol_ub_hz) <= 0);
+    if (freq_diff_flag &&
         (abs(sck_volt_A_mag_diff_pu) <= sct_volt_mag_tol_pu) &&
         (abs(sck_volt_B_mag_diff_pu) <= sct_volt_mag_tol_pu) &&
         (abs(sck_volt_C_mag_diff_pu) <= sct_volt_mag_tol_pu))
