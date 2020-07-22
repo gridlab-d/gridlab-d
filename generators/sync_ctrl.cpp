@@ -715,6 +715,9 @@ void sync_ctrl::init_data_sanity_check()
     }
 
     //==Tolerance
+    /* Frequency tolerance */
+
+    /* // sct_freq_tol_ub_hz & sct_freq_tol_lb_hz are allowed to be negative (@2020-7-22)
     if (sct_freq_tol_ub_hz <= 0)
     {
         sct_freq_tol_ub_hz = 1.1e-2 * sys_nom_freq_hz; //Default it to 1.1% of the nominal frequency
@@ -722,10 +725,9 @@ void sync_ctrl::init_data_sanity_check()
         gl_warning("%s:%d %s - %s was not set as a positive value, it is reset to %f [Hz].",
                    STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
                    STR(sct_freq_tol_ub_hz), sct_freq_tol_ub_hz);
-        /*  TROUBLESHOOT
-		The sct_freq_tol_ub_hz was not set as a positive value!
-		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
-		*/
+        // TROUBLESHOOT
+        // The sct_freq_tol_ub_hz was not set as a positive value!
+        // If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
     }
 
     if (sct_freq_tol_lb_hz <= 0)
@@ -738,10 +740,9 @@ void sync_ctrl::init_data_sanity_check()
         gl_warning("%s:%d %s - %s was not set as a positive value, it is reset to %f [Hz]..",
                    STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
                    STR(sct_freq_tol_lb_hz), sct_freq_tol_lb_hz);
-        /*  TROUBLESHOOT
-		The sct_freq_tol_lb_hz was not set as a positive value!
-		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
-		*/
+        // TROUBLESHOOT
+        // The sct_freq_tol_lb_hz was not set as a positive value!
+        // If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
     }
 
     if (sct_freq_tol_ub_hz < sct_freq_tol_lb_hz)
@@ -749,15 +750,15 @@ void sync_ctrl::init_data_sanity_check()
         swap(sct_freq_tol_lb_hz, sct_freq_tol_ub_hz);
 
         gl_warning("%s:%d %s - %s was set larger than the %s, their values are swapped. Now %s is %f [Hz], %s is %f [Hz].",
-                   STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
-                   STR(sct_freq_tol_lb_hz), STR(sct_freq_tol_ub_hz),
-                   STR(sct_freq_tol_lb_hz), sct_freq_tol_lb_hz,
-                   STR(sct_freq_tol_ub_hz), sct_freq_tol_ub_hz);
-        /*  TROUBLESHOOT
-		The sct_freq_tol_lb_hz was set larger than the sct_freq_tol_ub_hz! Their values are swapped.
-		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
-		*/
+                STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
+                STR(sct_freq_tol_lb_hz), STR(sct_freq_tol_ub_hz),
+                STR(sct_freq_tol_lb_hz), sct_freq_tol_lb_hz,
+                STR(sct_freq_tol_ub_hz), sct_freq_tol_ub_hz);
+        // TROUBLESHOOT
+        // The sct_freq_tol_lb_hz was set larger than the sct_freq_tol_ub_hz! Their values are swapped.
+        // If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
     }
+    */
 
     if (sct_freq_tol_lb_hz == sct_freq_tol_ub_hz)
     {
@@ -767,13 +768,13 @@ void sync_ctrl::init_data_sanity_check()
                    STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
                    STR(sct_freq_tol_lb_hz), STR(sct_freq_tol_ub_hz),
                    STR(sct_freq_tol_lb_hz), sct_freq_tol_lb_hz);
-        /*  TROUBLESHOOT
-		The sct_freq_tol_lb_hz was set was set the same to the sct_freq_tol_ub_hz!
-        The %sct_freq_tol_lb_hz is halved.
-		If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
-		*/
+        // TROUBLESHOOT
+        // The sct_freq_tol_lb_hz was set was set the same to the sct_freq_tol_ub_hz!
+        // The %sct_freq_tol_lb_hz is halved.
+        // If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
     }
 
+    /* Voltage magnitude tolerance */
     if (sct_volt_mag_tol_pu <= 0)
     {
         sct_volt_mag_tol_pu = 1e-2; //Default it to 0.01 pu
