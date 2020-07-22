@@ -284,7 +284,7 @@ void sync_ctrl::cgu_ctrl(double dm_dt_sec)
         //--step update
         cgu_freq_set_mpv = sck_freq_diff_hz / sys_nom_freq_hz;
         cgu_freq_set_cv = pi_ctrl_cgu_freq_set->step_update(
-            (sct_freq_tol_ub_hz - sct_freq_tol_lb_hz) / 2 / sys_nom_freq_hz,
+            (sct_freq_tol_ub_hz + sct_freq_tol_lb_hz) / 2 / sys_nom_freq_hz,
             cgu_freq_set_mpv, dm_dt_sec); //@TODO: the setpoint may be defined by the user via a published property
         if (cgu_P_f_droop_setting_mode == PF_DROOP_MODE::FSET_MODE)
         {
