@@ -70,6 +70,8 @@ sync_ctrl::sync_ctrl(MODULE *mod)
                                 PT_DESCRIPTION, "The measured process variable (i.e., the feedback signal).", //@TODO: update the description
                                 PT_double, "cgu_freq_set_cv", PADDR(cgu_freq_set_cv), PT_ACCESS, PA_HIDDEN,
                                 PT_DESCRIPTION, "The control variable, i.e., u(t).", //@TODO: update the description
+                                PT_enumeration, "mode_status", PADDR(mode_status), PT_ACCESS, PA_HIDDEN,
+                                PT_DESCRIPTION, "The current working mode status.",
                                 nullptr) < 1)
             GL_THROW("unable to publish properties in %s", __FILE__);
 
