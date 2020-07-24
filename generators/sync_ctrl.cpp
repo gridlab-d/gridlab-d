@@ -15,16 +15,16 @@ using namespace std;
 /* UTIL MACROS */
 #define STR(s) #s
 
-#define FLAG_VAL -2.2e-2 // @TODO: after testing, replace the flag value with -1
+#define FLAG_VAL -2.2e-2 // @TODO: after further testing, replace the flag value with -1
 
 static PASSCONFIG clockpass = PC_BOTTOMUP;
 
 /* Comp func for max() */
 bool comp_func_dbl(double v1, double v2) { return (abs(v1) < abs(v2)); }
 
-//////////////////////////////////////////////////////////////////////////
-// sync_ctrl CLASS FUNCTIONS
-//////////////////////////////////////////////////////////////////////////
+/* ================================================
+sync_ctrl CLASS FUNCTIONS
+================================================ */
 CLASS *sync_ctrl::oclass = nullptr;
 
 sync_ctrl::sync_ctrl(MODULE *mod)
@@ -67,9 +67,9 @@ sync_ctrl::sync_ctrl(MODULE *mod)
                                 PT_bool, "sct_freq_cv_arm_flag", PADDR(sct_freq_cv_arm_flag), PT_ACCESS, PA_HIDDEN,
                                 PT_DESCRIPTION, "True - apply the freq controlled variable, False - do not set the related property.",
                                 PT_double, "cgu_freq_set_mpv", PADDR(cgu_freq_set_mpv), PT_ACCESS, PA_HIDDEN,
-                                PT_DESCRIPTION, "The measured process variable (i.e., the feedback signal).", //@TODO: update the description
+                                PT_DESCRIPTION, "The measured process variable (i.e., the feedback signal).",
                                 PT_double, "cgu_freq_set_cv", PADDR(cgu_freq_set_cv), PT_ACCESS, PA_HIDDEN,
-                                PT_DESCRIPTION, "The control variable, i.e., u(t).", //@TODO: update the description
+                                PT_DESCRIPTION, "The control variable, i.e., u(t).",
                                 PT_enumeration, "mode_status", PADDR(mode_status), PT_ACCESS, PA_HIDDEN,
                                 PT_DESCRIPTION, "The current working mode status.",
                                 nullptr) < 1)
@@ -127,11 +127,10 @@ TIMESTAMP sync_ctrl::postsync(TIMESTAMP t0, TIMESTAMP t1)
 // Module-level call
 SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-    if ((arm_flag) && (iteration_count_val == 1)) //Corrector pass @TODO: Need further testings
+    if ((arm_flag) && (iteration_count_val == 1)) //Corrector pass
     {
         dm_update_measurements();
-        // dm_data_sanity_check(); //@TODO: discuss with Frank and see if we want to keep this on
-        //@TODO: mode change track (the mode may be changed by the user via a player, if so, this change should be monitored and proper reset actions should be taken.)
+        // dm_data_sanity_check();
 
         if (swt_status == SWT_STATUS_ENUM::CLOSED)
         {
@@ -168,7 +167,7 @@ SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time,
                     }
 
                     //-- tick the timer
-                    double dt_dm_sec = (double)dt / (double)DT_SECOND; //@TODO: may not need to save it to dt_dm_sec here
+                    double dt_dm_sec = (double)dt / (double)DT_SECOND;
                     timer_mode_B_sec += dt_dm_sec;
 
                     //-- check the timer
@@ -298,7 +297,6 @@ void sync_ctrl::cgu_ctrl(double dm_dt_sec)
             set_prop(prop_cgu_freq_set_ptr, cgu_freq_set_cv);
 
         //==PI controller for getting the one of volt_mag_diff_ph_a_pu, volt_mag_diff_ph_b_pu, and volt_mag_diff_ph_c_pu that has the largest absolute value
-        //@TODO: discuss with Frank
         //--init CV
         if (pi_ctrl_cgu_volt_set_fsu_flag)
         {
@@ -309,7 +307,7 @@ void sync_ctrl::cgu_ctrl(double dm_dt_sec)
 
         //--step update
         cgu_volt_set_mpv = max({sck_volt_A_mag_diff_pu, sck_volt_B_mag_diff_pu, sck_volt_C_mag_diff_pu}, comp_func_dbl);
-        cgu_volt_set_cv = pi_ctrl_cgu_volt_set->step_update(0, cgu_volt_set_mpv, dm_dt_sec); //@TODO: the setpoint may be defined by the user via a published property
+        cgu_volt_set_cv = pi_ctrl_cgu_volt_set->step_update(0, cgu_volt_set_mpv, dm_dt_sec);
 
         //--apply/send cv
         if (sct_volt_cv_arm_flag)
@@ -346,12 +344,12 @@ void sync_ctrl::dm_reset_controllers()
 }
 
 void sync_ctrl::dm_reset_after_disarmed()
-{ //@TODO: maybe more need to be reset here
+{
     reset_timer();
     dm_reset_controllers();
 
     init_hidden_prop(FLAG_VAL);
-    mode_status = SCT_MODE_ENUM::MODE_A; //Back to Mode_A as the starting mode @TODO: discuss with Frank
+    mode_status = SCT_MODE_ENUM::MODE_A; //Back to Mode_A as the starting mode
 }
 
 /* parameter/data sanity check */
@@ -479,7 +477,7 @@ void sync_ctrl::init_vars() // Init local variables with default settings
     timer_mode_A_sec = timer_mode_B_sec = 0;
 
     //==System Info
-    //--get the nominal frequency of the power system //@TODO: cosider to move this to somewhere else
+    //--get the nominal frequency of the power system
     sys_nom_freq_hz = get_prop_value<double>("powerflow::nominal_frequency",
                                              &gld_property::is_valid,
                                              &gld_property::is_double,
@@ -626,7 +624,7 @@ void sync_ctrl::init_pub_prop() // Init published properties with default settin
     pp_t_ctrl_sec = 1;
     pp_t_mon_sec = 10;
 
-    //==Controller (@TODO: default values to be updated.)
+    //==Controller
     //--frequency
     pi_freq_kp = 1;
     pi_freq_ki = 0.1;
@@ -645,7 +643,7 @@ void sync_ctrl::init_pub_prop() // Init published properties with default settin
 void sync_ctrl::init_hidden_prop(double flag_val)
 {
     /* Flags for controllers */
-    sct_volt_cv_arm_flag = true; //@TODO: may move these two statements to other places
+    sct_volt_cv_arm_flag = true;
     sct_freq_cv_arm_flag = true;
 
     /* Signals for controllers */
@@ -718,50 +716,6 @@ void sync_ctrl::init_data_sanity_check()
 
     //==Tolerance
     /* Frequency tolerance */
-
-    /* // sct_freq_tol_ub_hz & sct_freq_tol_lb_hz are allowed to be negative (@2020-7-22)
-    if (sct_freq_tol_ub_hz <= 0)
-    {
-        sct_freq_tol_ub_hz = 1.1e-2 * sys_nom_freq_hz; //Default it to 1.1% of the nominal frequency
-
-        gl_warning("%s:%d %s - %s was not set as a positive value, it is reset to %f [Hz].",
-                   STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
-                   STR(sct_freq_tol_ub_hz), sct_freq_tol_ub_hz);
-        // TROUBLESHOOT
-        // The sct_freq_tol_ub_hz was not set as a positive value!
-        // If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
-    }
-
-    if (sct_freq_tol_lb_hz <= 0)
-    {
-        sct_freq_tol_lb_hz = 0.2e-2 * sys_nom_freq_hz; //Default it to 0.2% of the nominal frequency
-
-        //@TODO: There is an extra '.' at the end of the warning message. Without it, this message
-        // is considered as a repeat if the previous sanity check fails. This should be a "bug" of the 'gl_warning',
-        // which is not to be fixed here at this stage.
-        gl_warning("%s:%d %s - %s was not set as a positive value, it is reset to %f [Hz]..",
-                   STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
-                   STR(sct_freq_tol_lb_hz), sct_freq_tol_lb_hz);
-        // TROUBLESHOOT
-        // The sct_freq_tol_lb_hz was not set as a positive value!
-        // If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
-    }
-
-    if (sct_freq_tol_ub_hz < sct_freq_tol_lb_hz)
-    {
-        swap(sct_freq_tol_lb_hz, sct_freq_tol_ub_hz);
-
-        gl_warning("%s:%d %s - %s was set larger than the %s, their values are swapped. Now %s is %f [Hz], %s is %f [Hz].",
-                STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
-                STR(sct_freq_tol_lb_hz), STR(sct_freq_tol_ub_hz),
-                STR(sct_freq_tol_lb_hz), sct_freq_tol_lb_hz,
-                STR(sct_freq_tol_ub_hz), sct_freq_tol_ub_hz);
-        // TROUBLESHOOT
-        // The sct_freq_tol_lb_hz was set larger than the sct_freq_tol_ub_hz! Their values are swapped.
-        // If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
-    }
-    */
-
     if (sct_freq_tol_lb_hz == sct_freq_tol_ub_hz)
     {
         sct_freq_tol_lb_hz /= 2;
@@ -817,58 +771,7 @@ void sync_ctrl::init_data_sanity_check()
 		*/
     }
 
-    //==Controller @TODO
-    // if (pi_freq_kp < 0)
-    // {
-    //     pi_freq_kp = 1; //@TODO
-
-    //     gl_warning("%s:%d %s - %s was set as a negative value, it is reset to %f.",
-    //                STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
-    //                STR(pi_freq_kp), pi_freq_kp);
-    //     /*  TROUBLESHOOT
-    // 	The pi_freq_kp was set as a negative value!
-    // 	If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
-    // 	*/
-    // }
-
-    // if (pi_freq_ki < 0)
-    // {
-    //     pi_freq_ki = 1; //@TODO
-
-    //     gl_warning("%s:%d %s - %s was set as a negative value, it is reset to %f.",
-    //                STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
-    //                STR(pi_freq_ki), pi_freq_ki);
-    //     /*  TROUBLESHOOT
-    // 	The pi_freq_ki was set as a negative value!
-    // 	If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
-    // 	*/
-    // }
-
-    // if (pi_volt_mag_kp < 0)
-    // {
-    //     pi_volt_mag_kp = 1; //@TODO
-
-    //     gl_warning("%s:%d %s - %s was set as a negative value, it is reset to %f.",
-    //                STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
-    //                STR(pi_volt_mag_kp), pi_volt_mag_kp);
-    //     /*  TROUBLESHOOT
-    // 	The pi_volt_mag_kp was set as a negative value!
-    // 	If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
-    // 	*/
-    // }
-
-    // if (pi_volt_mag_ki < 0)
-    // {
-    //     pi_volt_mag_ki = 1; //@TODO
-
-    //     gl_warning("%s:%d %s - %s was set as a negative value, it is reset to %f.",
-    //                STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"),
-    //                STR(pi_volt_mag_ki), pi_volt_mag_ki);
-    //     /*  TROUBLESHOOT
-    // 	The pi_volt_mag_ki was set as a negative value!
-    // 	If the warning persists and the object does, please submit your code and a bug report via the issue tracker.
-    // 	*/
-    // }
+    //==Controller
 }
 
 void sync_ctrl::init_deltamode_check()
@@ -923,7 +826,7 @@ void sync_ctrl::init_nom_values()
 void sync_ctrl::init_sensors()
 {
     //==Switch (i.e., the parent of the sync_check object)
-    obj_swt_ptr = sck_obj_ptr->parent; //@TODO: here may need to do a sanity check again, as this can be executed before the init of sync_check, where there is a sanity check
+    obj_swt_ptr = sck_obj_ptr->parent;
     prop_swt_status_ptr = get_prop_ptr(obj_swt_ptr, "status",
                                        &gld_property::is_valid,
                                        &gld_property::is_enumeration);
@@ -960,7 +863,6 @@ void sync_ctrl::init_sensors()
     prop_cgu_P_f_droop_setting_mode_ptr = get_prop_ptr(cgu_obj_ptr, "P_f_droop_setting_mode",
                                                        &gld_property::is_valid,
                                                        &gld_property::is_enumeration);
-    //@TODO: This may need to be moved into pre-delta update, or use OF_INIT
     cgu_P_f_droop_setting_mode = static_cast<PF_DROOP_MODE>(
         get_prop_value<enumeration>(prop_cgu_P_f_droop_setting_mode_ptr,
                                     &gld_property::get_enumeration, false));
@@ -976,7 +878,7 @@ void sync_ctrl::init_sensors()
         }
         else if (cgu_P_f_droop_setting_mode == PF_DROOP_MODE::FSET_MODE)
         {
-            prop_cgu_freq_set_name_cc_ptr = "fset"; //@TODO: double check with Frank
+            prop_cgu_freq_set_name_cc_ptr = "fset";
         }
         else
         {
@@ -993,7 +895,7 @@ void sync_ctrl::init_sensors()
         }
         else if (cgu_P_f_droop_setting_mode == PF_DROOP_MODE::FSET_MODE)
         {
-            prop_cgu_freq_set_name_cc_ptr = "fset"; //@TODO: double check with Frank
+            prop_cgu_freq_set_name_cc_ptr = "fset";
         }
         else
         {
@@ -1006,7 +908,7 @@ void sync_ctrl::init_sensors()
         gl_warning("The type of controlled generation unit is unkonwn!");
     }
 
-    //--properties for the controlled variables //@TODO: maybe move to init_controllers()
+    //--properties for the controlled variables
     prop_cgu_volt_set_ptr = get_prop_ptr(cgu_obj_ptr, (char *)prop_cgu_volt_set_name_cc_ptr,
                                          &gld_property::is_valid,
                                          &gld_property::is_double);
@@ -1078,7 +980,7 @@ void sync_ctrl::deltamode_reg()
 }
 
 /* ================================================
-PID Controller (@TODO: move to an independent file)
+PID Controller
 ================================================ */
 pid_ctrl::pid_ctrl(double kp, double ki, double kd,
                    double dt, double cv_max, double cv_min,
@@ -1114,7 +1016,7 @@ double pid_ctrl::step_update(double setpoint, double mpv, double cur_dt)
         step_dt = dt;
     else
     {
-        // Post an error message & terminate (@TODO: use cerr & terminate())
+        // Post an error message & terminate
         GL_THROW("The time step is not specified as positive in both the init and step update processes.");
     }
 

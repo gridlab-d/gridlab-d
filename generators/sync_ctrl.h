@@ -10,7 +10,7 @@
 
 EXPORT SIMULATIONMODE interupdate_sync_ctrl(OBJECT *, unsigned int64, unsigned long, unsigned int);
 
-class pid_ctrl; //@TODO: to be moved to an independent file, while not sure which folder should it be put under.
+class pid_ctrl;
 class sync_ctrl : public gld_object
 {
 public:
@@ -29,7 +29,7 @@ public:
 
     SIMULATIONMODE inter_deltaupdate_sync_ctrl(unsigned int64, unsigned long, unsigned int);
 
-private: //Member Funcs: Utilities (@TODO: These should be moved to an independent file as regular functions instead of memerber functions, once it is permitted to set up a file. Another option is to improve the package/implementtation of gld_property, but it may affect too much.)
+private: //Member Funcs: Utilities
     /* Get property pointer */
     template <class T>
     gld_property *get_prop_ptr(T *, char *, bool (gld_property::*)(), bool (gld_property::*)());
@@ -185,7 +185,7 @@ private: //Variables
 
     /* cgu */
     gld_property *prop_cgu_P_f_droop_setting_mode_ptr;
-    enum class PF_DROOP_MODE //@TODO: this may not need to be defined repeatly in diesel_dg, inverter_dyn, and here...
+    enum class PF_DROOP_MODE
     {
         FSET_MODE = 0,
         PSET_MODE = 1
@@ -205,7 +205,7 @@ private: //Variables
 };
 
 /* ================================================
-PID Controller (@TODO: move to an independent file)
+PID Controller
 ================================================ */
 class pid_ctrl
 {
