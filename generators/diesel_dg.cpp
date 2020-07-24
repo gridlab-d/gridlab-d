@@ -1813,35 +1813,37 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 				{
 					// Delta mode trigger should be here
 				}
-
-				if ((voltage_mag_curr>Max_Ef) || (voltage_mag_curr<Min_Ef))
+				else if (SEXS_mode == SEXS_CV)	//Standard voltage regulation - try QSTS exciter manipulations
 				{
+					if ((voltage_mag_curr>Max_Ef) || (voltage_mag_curr<Min_Ef))
+					{
 
-					//See where the value is
-					vdiff = temp_voltage_val[0].Mag()/voltage_base - gen_base_set_vals.vset;
+						//See where the value is
+						vdiff = temp_voltage_val[0].Mag()/voltage_base - gen_base_set_vals.vset;
 
-					//Figure out Q difference
-					reactive_diff = (YS1_Full.Im()*(vdiff*voltage_base)*voltage_base)/3.0;
+						//Figure out Q difference
+						reactive_diff = (YS1_Full.Im()*(vdiff*voltage_base)*voltage_base)/3.0;
 
-					//Copy in value
-					temp_power_val[0] = power_val[0] + complex(0.0,reactive_diff);
-					temp_power_val[1] = power_val[1] + complex(0.0,reactive_diff);
-					temp_power_val[2] = power_val[2] + complex(0.0,reactive_diff);
+						//Copy in value
+						temp_power_val[0] = power_val[0] + complex(0.0,reactive_diff);
+						temp_power_val[1] = power_val[1] + complex(0.0,reactive_diff);
+						temp_power_val[2] = power_val[2] + complex(0.0,reactive_diff);
 
-					//Back out the current injection
-					temp_current_val[0] = ~(temp_power_val[0]/value_Circuit_V[0]) + generator_admittance[0][0]*value_Circuit_V[0] + generator_admittance[0][1]*value_Circuit_V[1] + generator_admittance[0][2]*value_Circuit_V[2];
-					temp_current_val[1] = ~(temp_power_val[1]/value_Circuit_V[1]) + generator_admittance[1][0]*value_Circuit_V[0] + generator_admittance[1][1]*value_Circuit_V[1] + generator_admittance[1][2]*value_Circuit_V[2];
-					temp_current_val[2] = ~(temp_power_val[2]/value_Circuit_V[2]) + generator_admittance[2][0]*value_Circuit_V[0] + generator_admittance[2][1]*value_Circuit_V[1] + generator_admittance[2][2]*value_Circuit_V[2];
+						//Back out the current injection
+						temp_current_val[0] = ~(temp_power_val[0]/value_Circuit_V[0]) + generator_admittance[0][0]*value_Circuit_V[0] + generator_admittance[0][1]*value_Circuit_V[1] + generator_admittance[0][2]*value_Circuit_V[2];
+						temp_current_val[1] = ~(temp_power_val[1]/value_Circuit_V[1]) + generator_admittance[1][0]*value_Circuit_V[0] + generator_admittance[1][1]*value_Circuit_V[1] + generator_admittance[1][2]*value_Circuit_V[2];
+						temp_current_val[2] = ~(temp_power_val[2]/value_Circuit_V[2]) + generator_admittance[2][0]*value_Circuit_V[0] + generator_admittance[2][1]*value_Circuit_V[1] + generator_admittance[2][2]*value_Circuit_V[2];
 
-					//Apply and see what happens
-					value_IGenerated[0] = temp_current_val[0];
-					value_IGenerated[1] = temp_current_val[1];
-					value_IGenerated[2] = temp_current_val[2];
+						//Apply and see what happens
+						value_IGenerated[0] = temp_current_val[0];
+						value_IGenerated[1] = temp_current_val[1];
+						value_IGenerated[2] = temp_current_val[2];
 
-					//Keep us here
-					tret_value = t1;
-				}
-				//Default else - do nothing
+						//Keep us here
+						tret_value = t1;
+					}
+					//Default else - do nothing
+				}//End SEXS_CV
 			}
 			//Default else - no AVR
 		}
