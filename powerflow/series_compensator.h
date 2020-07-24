@@ -103,6 +103,8 @@ private:
 	SERIES_STATE next_state;	///< The next state of the inverter in deltamode
 	SERIES_STATE curr_state;  ///< The current state of the inverter in deltamode
 
+	int deltamode_return_val;	///< Value for deltamode iterations to return when not iterating
+
 public:
 	static CLASS *oclass;
 	static CLASS *pclass;
