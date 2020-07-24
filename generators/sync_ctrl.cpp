@@ -15,7 +15,7 @@ using namespace std;
 /* UTIL MACROS */
 #define STR(s) #s
 
-#define FLAG_VAL -2.2e-2 // @TODO: after further testing, replace the flag value with -1
+#define FLAG_VAL -1.0
 
 static PASSCONFIG clockpass = PC_BOTTOMUP;
 

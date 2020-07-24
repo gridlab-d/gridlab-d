@@ -17,7 +17,7 @@ using namespace std;
 #define RAD_TO_DEG(rad) rad / M_PI * 180
 #define STR(s) #s
 
-#define FLAG_VAL -2.2e-2 //@TODO: temp setting for check the results, will make it back to -1 later on
+#define FLAG_VAL -1.0
 
 //////////////////////////////////////////////////////////////////////////
 // sync_check CLASS FUNCTIONS
