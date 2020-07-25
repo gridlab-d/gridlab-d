@@ -16,6 +16,7 @@
 
 #include "generators.h"
 
+EXPORT int isa_inverter(OBJECT *obj, char *classname);
 EXPORT STATUS preupdate_inverter(OBJECT *obj,TIMESTAMP t0, unsigned int64 delta_time);
 EXPORT SIMULATIONMODE interupdate_inverter(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 EXPORT STATUS postupdate_inverter(OBJECT *obj, complex *useful_value, unsigned int mode_pass);
@@ -483,6 +484,7 @@ private:
 public:
 	/* required implementations */
 	inverter(MODULE *module);
+	int isa(char *classname);
 	int create(void);
 	int init(OBJECT *parent);
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);

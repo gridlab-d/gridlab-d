@@ -859,8 +859,6 @@ void sync_check::update_measurements()
 
 void sync_check::check_metrics(bool deltamode_run)
 {
-	// update_diff_prop(); //@TODO
-
 	//== Mode Selection
 	if (volt_compare_mode == MAG_DIFF)
 	{
@@ -984,8 +982,6 @@ SIMULATIONMODE sync_check::inter_deltaupdate_sync_check(unsigned int64 delta_tim
 	{
 		if ((iteration_count_val == 0) && (!interupdate_pos)) //@TODO: Need further testings
 		{
-			// update_measurements();
-
 			//Do the bound and deltamode "remain" check
 			check_metrics(true);
 

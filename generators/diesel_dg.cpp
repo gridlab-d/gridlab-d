@@ -392,6 +392,12 @@ diesel_dg::diesel_dg(MODULE *module)
 	}
 }
 
+//Isa function for identification
+int diesel_dg::isa(char *classname)
+{
+	return strcmp(classname,"diesel_dg")==0;
+}
+
 /* Object creation is called once for each object that is created by the core */
 int diesel_dg::create(void) 
 {
@@ -4980,6 +4986,11 @@ EXPORT STATUS update_diesel_dg(OBJECT *obj, unsigned int64 dt, unsigned int iter
 }
 */
 
+EXPORT int isa_diesel_dg(OBJECT *obj, char *classname)
+{
+	return OBJECTDATA(obj,diesel_dg)->isa(classname);
+}
+
 EXPORT SIMULATIONMODE interupdate_diesel_dg(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
 	diesel_dg *my = OBJECTDATA(obj,diesel_dg);
@@ -5026,10 +5037,4 @@ EXPORT STATUS diesel_dg_NR_current_injection_update(OBJECT *obj,int64 iteration_
 	//Return what the sub function said we were
 	return temp_status;
 
-}
-
-// isa func
-int diesel_dg::isa(char *classname)
-{
-    return strcmp(classname, "diesel_dg") == 0;
 }

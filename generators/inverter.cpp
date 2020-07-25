@@ -346,6 +346,13 @@ inverter::inverter(MODULE *module)
 				GL_THROW("Unable to publish inverter current injection update function");
 	}
 }
+
+//Isa function for identification
+int inverter::isa(char *classname)
+{
+	return strcmp(classname,"inverter")==0;
+}
+
 /* Object creation is called once for each object that is created by the core */
 int inverter::create(void) 
 {
@@ -9425,6 +9432,11 @@ EXPORT TIMESTAMP sync_inverter(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	}
 	SYNC_CATCHALL(inverter);
 	return t2;
+}
+
+EXPORT int isa_inverter(OBJECT *obj, char *classname)
+{
+	return OBJECTDATA(obj,inverter)->isa(classname);
 }
 
 EXPORT STATUS preupdate_inverter(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_time)

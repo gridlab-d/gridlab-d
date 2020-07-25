@@ -448,6 +448,11 @@ EXPORT TIMESTAMP sync_sync_ctrl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
     return t1;
 }
 
+EXPORT int isa_sync_ctrl(OBJECT *obj, char *classname)
+{
+	return OBJECTDATA(obj,sync_ctrl)->isa(classname);
+}
+
 // Deltamode export
 EXPORT SIMULATIONMODE interupdate_sync_ctrl(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
