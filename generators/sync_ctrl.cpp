@@ -37,7 +37,7 @@ sync_ctrl::sync_ctrl(MODULE *mod)
 
         if (gl_publish_variable(oclass,
                                 //==Flag
-                                PT_bool, "armed", PADDR(arm_flag), PT_DESCRIPTION, "Flag to arm the synchronization control functionality.",
+                                PT_bool, "armed", PADDR(sct_armed_flag), PT_DESCRIPTION, "Flag to arm the synchronization control functionality.",
                                 //==Object
                                 PT_object, "sync_check_object", PADDR(sck_obj_ptr), PT_DESCRIPTION, "The object reference/name of the sync_check object, which works with this sync_ctrl object.",
                                 PT_object, "controlled_generation_unit", PADDR(cgu_obj_ptr), PT_DESCRIPTION, "The object reference/name of the controlled generation unit (i.e., a diesel_dg/inverter_dyn object), which serves as the actuator of the PI controllers of this sync_ctrl object.",
@@ -127,14 +127,14 @@ TIMESTAMP sync_ctrl::postsync(TIMESTAMP t0, TIMESTAMP t1)
 // Module-level call
 SIMULATIONMODE sync_ctrl::inter_deltaupdate_sync_ctrl(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-    if ((arm_flag) && (iteration_count_val == 1)) //Corrector pass
+    if ((sct_armed_flag) && (iteration_count_val == 1)) //Corrector pass
     {
         dm_update_measurements();
         // dm_data_sanity_check();
 
         if (swt_status == SWT_STATUS_ENUM::CLOSED)
         {
-            arm_flag = false;
+            sct_armed_flag = false;
             dm_reset_after_disarmed();
         }
         else
@@ -609,7 +609,7 @@ gld_property *sync_ctrl::get_prop_ptr(T *obj_ptr, char *prop_name_char_ptr, bool
 void sync_ctrl::init_pub_prop() // Init published properties with default settings
 {
     //==Flag
-    arm_flag = false; //Start as disabled
+    sct_armed_flag = false; //Start as disabled
 
     //==Object
     sck_obj_ptr = nullptr;
@@ -665,7 +665,7 @@ void sync_ctrl::init_data_sanity_check()
     OBJECT *obj = OBJECTHDR(this);
 
     //==Flag
-    // arm_flag does not need a sanity check at this stage
+    // sct_armed_flag does not need a sanity check at this stage
 
     //==Object
     //--sync_check object

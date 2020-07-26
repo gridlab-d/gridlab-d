@@ -102,9 +102,9 @@ private: //Published (Hidden) Properties
     double cgu_freq_set_mpv;
     double cgu_freq_set_cv;
 
-private: //Published (Unhidden) Properties
+private: //Published (Public) Properties
     //==Flag
-    bool arm_flag;
+    bool sct_armed_flag;
 
     //==Object
     OBJECT *sck_obj_ptr;
