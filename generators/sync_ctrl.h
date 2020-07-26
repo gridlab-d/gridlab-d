@@ -8,6 +8,7 @@
 
 #include "generators.h"
 
+EXPORT int isa_sync_ctrl(OBJECT *obj, char *classname);
 EXPORT SIMULATIONMODE interupdate_sync_ctrl(OBJECT *, unsigned int64, unsigned long, unsigned int);
 
 class pid_ctrl;
@@ -18,8 +19,8 @@ public:
 
 public:
     sync_ctrl(MODULE *mod);
-    int isa(char *);
-
+    int isa(char *classname);
+    
     int create(void);
     int init(OBJECT * = nullptr);
 

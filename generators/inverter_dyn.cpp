@@ -198,6 +198,13 @@ inverter_dyn::inverter_dyn(MODULE *module)
 			GL_THROW("Unable to publish inverter_dyn DC registration function");
 	}
 }
+
+//Isa function for identification
+int inverter_dyn::isa(char *classname)
+{
+	return strcmp(classname,"inverter_dyn")==0;
+}
+
 /* Object creation is called once for each object that is created by the core */
 int inverter_dyn::create(void)
 {
@@ -4315,6 +4322,11 @@ EXPORT TIMESTAMP sync_inverter_dyn(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 	return t2;
 }
 
+EXPORT int isa_inverter_dyn(OBJECT *obj, char *classname)
+{
+	return OBJECTDATA(obj,inverter_dyn)->isa(classname);
+}
+
 EXPORT STATUS preupdate_inverter_dyn(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_time)
 {
 	inverter_dyn *my = OBJECTDATA(obj, inverter_dyn);
@@ -4392,10 +4404,4 @@ EXPORT STATUS inverter_dyn_DC_object_register(OBJECT *this_obj, OBJECT *DC_obj)
 
 	//Return the status
 	return temp_status;
-}
-
-// isa func
-int inverter_dyn::isa(char *classname)
-{
-    return strcmp(classname, "inverter_dyn") == 0;
 }

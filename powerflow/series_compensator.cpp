@@ -217,6 +217,9 @@ int series_compensator::create()
 	//Operating in normal, by default
 	phase_states[0] = phase_states[1] = phase_states[2] = ST_NORMAL;
 
+	//Arbirtrary value for deltamode return
+	deltamode_return_val = -1;
+
 	return result;
 }
 
@@ -855,7 +858,6 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 	int return_val;
 	bool bypass_initiated;
 
-
 	//By default, assume we want to exit normal
 	return_val = 0;
 
@@ -1240,8 +1242,10 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 
 			return_val = 1;	//Reiterate - to get us to corrector pass
 
+			//Store return value, for sake of doing so (semi-redundant here)
+			deltamode_return_val = return_val;
 		}
-		else //corrector pass
+		else if  (pass_value==1) //corrector pass
 		{
 
 			if(frequency_regulation)
@@ -1446,8 +1450,15 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 
 			return_val =  2;
 
-			memcpy(&curr_state,&next_state,sizeof(SERIES_STATE));
+			//Store return value, for sake of doing so (semi-redundant here)
+			deltamode_return_val = return_val;
 
+			memcpy(&curr_state,&next_state,sizeof(SERIES_STATE));
+		}
+		else	//Other iterations (if more than predictor/corrector - e.g., HELICS)
+		{
+			//Just read the last value
+			return_val = deltamode_return_val;
 		}
 	}
 	else
@@ -1494,7 +1505,6 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 		}
 	}
 
-
 	//Return
 	return return_val;
 }
@@ -1505,16 +1515,12 @@ SIMULATIONMODE series_compensator::inter_deltaupdate_series_compensator(unsigned
 	//OBJECT *hdr = OBJECTHDR(this);
 	double curr_time_value;	//Current time of simulation
 	int temp_return_val;
-	unsigned char pass_mod;
 	double deltat;
 
 	deltat = (double)dt/(double)DT_SECOND;
 
 	//Get the current time
 	curr_time_value = gl_globaldeltaclock;
-
-	//Figure out which pass we are (for integration methods)
-	pass_mod = iteration_count_val - ((iteration_count_val >> 1) << 1);
 
 	if (interupdate_pos == false)	//Before powerflow call
 	{
@@ -1538,7 +1544,7 @@ SIMULATIONMODE series_compensator::inter_deltaupdate_series_compensator(unsigned
 
 		//Call the regulator-specific post-postsync function
 		//******************* Implementation -- Inside this function will probably be where the logic and/or pred/corr needs to go ******//
-		temp_return_val = sercom_postPost_fxn(pass_mod,deltat);
+		temp_return_val = sercom_postPost_fxn(iteration_count_val,deltat);
 
 		//Make sure it wasn't an error
 		if (temp_return_val == -1)
