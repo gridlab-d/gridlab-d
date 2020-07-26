@@ -49,27 +49,27 @@ sync_ctrl::sync_ctrl(MODULE *mod)
                                 PT_double, "controlling_period[s]", PADDR(pp_t_ctrl_sec), PT_DESCRIPTION, "The user-defined period when both metrics are satisfied and this sync_ctrl object works in mode A.",
                                 PT_double, "monitoring_period[s]", PADDR(pp_t_mon_sec), PT_DESCRIPTION, "The user-defined period when this sync_ctrl object keeps on monitoring in mode B, if both metrics are not violated and the switch object is not closed.",
                                 //==Controller
-                                PT_double, "pi_frequency_kp", PADDR(pi_freq_kp), PT_DESCRIPTION, "The user-defined proportional gain constant of the PI controller for adjusting the frequency setting.",
-                                PT_double, "pi_frequency_ki", PADDR(pi_freq_ki), PT_DESCRIPTION, "The user-defined integral gain constant of the PI controller for adjusting the frequency setting.",
-                                PT_double, "pi_freq_ub_pu[pu]", PADDR(pi_freq_ub_pu), PT_DESCRIPTION, "The upper bound for the Pset/fset in per unit.",
-                                PT_double, "pi_freq_lb_pu[pu]", PADDR(pi_freq_lb_pu), PT_DESCRIPTION, "The lower bound for the Pset/fset in per unit.",
+                                PT_double, "pi_freq_kp", PADDR(pi_freq_kp), PT_DESCRIPTION, "The user-defined proportional gain constant of the PI controller for adjusting the frequency setting.",
+                                PT_double, "pi_freq_ki", PADDR(pi_freq_ki), PT_DESCRIPTION, "The user-defined integral gain constant of the PI controller for adjusting the frequency setting.",
+                                PT_double, "pi_freq_ub_pu[pu]", PADDR(pi_freq_ub_pu), PT_DESCRIPTION, "The upper bound of the output (i.e., the control variable 'Pset'/'fset') of the PI controller that adjusts the frequency difference in per unit.",
+                                PT_double, "pi_freq_lb_pu[pu]", PADDR(pi_freq_lb_pu), PT_DESCRIPTION, "	The lower bound of the output (i.e., the control variable 'Pset'/'fset') of the PI controller that adjusts the frequency difference in per unit.",
                                 PT_double, "pi_volt_mag_kp", PADDR(pi_volt_mag_kp), PT_DESCRIPTION, "The user-defined proportional gain constant of the PI controller for adjusting the voltage magnitude setting.",
                                 PT_double, "pi_volt_mag_ki", PADDR(pi_volt_mag_ki), PT_DESCRIPTION, "The user-defined integral gain constant of the PI controller for adjusting the voltage magnitude setting.",
-                                PT_double, "pi_volt_mag_ub_pu[pu]", PADDR(pi_volt_mag_ub_pu), PT_DESCRIPTION, "The upper bound for the Vset.",
-                                PT_double, "pi_volt_mag_lb_pu[pu]", PADDR(pi_volt_mag_lb_pu), PT_DESCRIPTION, "The lower bound for the Vset.",
+                                PT_double, "pi_volt_mag_ub_pu[pu]", PADDR(pi_volt_mag_ub_pu), PT_DESCRIPTION, "The upper bound of the output (i.e., the control variable 'Vset') of the PI controller that adjusts the voltage magnitude difference in per unit.",
+                                PT_double, "pi_volt_mag_lb_pu[pu]", PADDR(pi_volt_mag_lb_pu), PT_DESCRIPTION, "The lower bound of the output (i.e., the control variable 'Vset') of the PI controller that adjusts the voltage magnitude difference in per unit",
                                 //==Hidden ones for checking variables and debugging controls
                                 PT_bool, "sct_volt_cv_arm_flag", PADDR(sct_volt_cv_arm_flag), PT_ACCESS, PA_HIDDEN,
                                 PT_DESCRIPTION, "True - apply the volt controlled variable, False - do not set the related property.",
                                 PT_double, "cgu_volt_set_mpv", PADDR(cgu_volt_set_mpv), PT_ACCESS, PA_HIDDEN,
-                                PT_DESCRIPTION, "The measured process variable (i.e., the feedback signal).",
+                                PT_DESCRIPTION, "The measured process variable (i.e., the feedback signal) of the PI controller that adjusts the voltage magnitude difference.",
                                 PT_double, "cgu_volt_set_cv", PADDR(cgu_volt_set_cv), PT_ACCESS, PA_HIDDEN,
-                                PT_DESCRIPTION, "The control variable, i.e., u(t).",
+                                PT_DESCRIPTION, "The output of the PI controller that adjusts the voltage magnitude difference (i.e., the control variable, which is denoted as u(t) in usual).",
                                 PT_bool, "sct_freq_cv_arm_flag", PADDR(sct_freq_cv_arm_flag), PT_ACCESS, PA_HIDDEN,
                                 PT_DESCRIPTION, "True - apply the freq controlled variable, False - do not set the related property.",
                                 PT_double, "cgu_freq_set_mpv", PADDR(cgu_freq_set_mpv), PT_ACCESS, PA_HIDDEN,
-                                PT_DESCRIPTION, "The measured process variable (i.e., the feedback signal).",
+                                PT_DESCRIPTION, "The measured process variable (i.e., the feedback signal) of the PI controller that adjusts the frequency difference.",
                                 PT_double, "cgu_freq_set_cv", PADDR(cgu_freq_set_cv), PT_ACCESS, PA_HIDDEN,
-                                PT_DESCRIPTION, "The control variable, i.e., u(t).",
+                                PT_DESCRIPTION, "The output of the PI controller that adjusts the frequency difference (i.e., the control variable, which is denoted as u(t) in usual).",
                                 PT_enumeration, "mode_status", PADDR(mode_status), PT_ACCESS, PA_HIDDEN,
                                 PT_DESCRIPTION, "The current working mode status.",
                                 nullptr) < 1)
@@ -450,7 +450,7 @@ EXPORT TIMESTAMP sync_sync_ctrl(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 EXPORT int isa_sync_ctrl(OBJECT *obj, char *classname)
 {
-	return OBJECTDATA(obj,sync_ctrl)->isa(classname);
+    return OBJECTDATA(obj, sync_ctrl)->isa(classname);
 }
 
 // Deltamode export

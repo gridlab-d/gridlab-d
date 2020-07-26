@@ -20,7 +20,7 @@ public:
 public:
     sync_ctrl(MODULE *mod);
     int isa(char *classname);
-    
+
     int create(void);
     int init(OBJECT * = nullptr);
 
