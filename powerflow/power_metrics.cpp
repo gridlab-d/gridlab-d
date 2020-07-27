@@ -305,7 +305,7 @@ void power_metrics::check_fault_check(void)
 		//See if a "master powerflow" object has been mapped
 		if (fault_check_object == NULL)
 		{
-			GL_THROW("power_metrics failed to map fault_check object!");
+			GL_THROW("power_metrics failed to map fault_check object - ensure it is near the top of the GLM!");
 			/*  TROUBLESHOOT
 			power_metrics encountered an error while trying to map the fault_check
 			object's location.  Please ensure that a fault_check object exists in the
