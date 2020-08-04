@@ -33,8 +33,38 @@
 	and energy consumption.  Solving the ETP model simultaneously for T_{air} and T_{mass},
 	the heating/cooling loads can be obtained as a function of time.
 
-	In the current implementation, the HVAC equipment is defined as part of the house_e and
-	attached to the electrical panel with a 50 amp/220-240V circuit.
+ *  In the current implementation, the HVAC equipment is defined
+ *  as part of the house_e and attached to the electrical panel
+ *  with a 50 amp/220-240V circuit.  
+   
+ *  @par Commercial building connections
+ *  
+ *  House_e is also used to represent commercial building zones.
+ *  Most commercial buildings are connected to three-phase
+ *  transformers at either 208 or 480 volts. In such cases, the
+ *  largest building loads are inherently balanced three-phase
+ *  motors or motor drives, while the single-phase building
+ *  loads are internally distributed among the phases. The
+ *  larger buildings take service at 480 volts, and have
+ *  internal transformers that step down to the single-phase
+ *  120-volt loads as needed. Single-phase loads can be served
+ *  at 120 volts line-to-neutral (as in residential buildings)
+ *  or 208 volts line-to-line, i.e., less than the 240 V in
+ *  residential buildings. Only the smaller commercial buildings
+ *  are connected directly to single-phase, split secondary
+ *  transformes as assumed in house_e, and those smaller
+ *  commercial buildings can have single-phase loads at 120 or
+ *  240 volts.
+ *  
+ *  In order to accurately represent the voltage drop and load
+ *  balancing in commercial three-phase service, the house_e can
+ *  be connected to a regular load (up to 3 phases) instead of
+ *  just a triplex_meter. In such cases, ideal voltage and
+ *  current transformations occur to present average phase
+ *  voltage to the internal house_e loads, and balanced
+ *  three-phase or single-phase power to the external power
+ *  flow. commercial_load_parent is the flag indicating such
+ *  connections.
 
 	@par Implicit enduses
 
@@ -98,6 +128,13 @@ char *_strlwr(char *s)
 	return r;
 }
 #endif
+
+// for commercial house-zone sequence transforms
+static complex A_OPERATOR =  complex (-0.5,  0.8660254);
+static complex A2_OPERATOR = complex (-0.5, -0.8660254);
+static double MIN_YSHUNT = 1.0e-12;
+static complex CUNITY = complex (1.0, 0.0);
+static complex CZERO = complex (0.0, 0.0);
 
 // list of enduses that are implicitly active
 set house_e::implicit_enduses_active = IEU_ALL;
@@ -263,7 +300,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"cooling_design_temperature[degF]", PADDR(cooling_design_temperature),PT_DESCRIPTION,"system cooling design temperature",
 			PT_double,"heating_design_temperature[degF]", PADDR(heating_design_temperature),PT_DESCRIPTION,"system heating design temperature",
 			PT_double,"design_peak_solar[Btu/h*sf]", PADDR(design_peak_solar),PT_DESCRIPTION,"system design solar load",
-			PT_double,"design_internal_gains[W/sf]", PADDR(design_internal_gains),PT_DESCRIPTION,"system design internal gains",
+			PT_double,"design_internal_gains[Btu/h]", PADDR(design_internal_gains),PT_DESCRIPTION,"system design internal gains",
 			PT_double,"air_heat_fraction[pu]", PADDR(air_heat_fraction), PT_DESCRIPTION, "fraction of heat gain/loss that goes to air (as opposed to mass)",
 			PT_double,"mass_solar_gain_fraction[pu]", PADDR(mass_solar_gain_fraction), PT_DESCRIPTION, "fraction of the heat gain/loss from the solar gains that goes to the mass",
 			PT_double,"mass_internal_gain_fraction[pu]", PADDR(mass_internal_gain_fraction), PT_DESCRIPTION, "fraction of heat gain/loss from the internal gains that goes to the mass",
@@ -559,6 +596,9 @@ int house_e::create()
 	thermal_storage_present = false;
 	thermal_storage_inuse = false;
 
+	//Null out circuit pointer
+	pHVAC_EnduseLoad = NULL;
+
 	// set up implicit enduse list
 	implicit_enduse_list = NULL;
 	if (strcmp(active_enduses,"NONE")!=0)
@@ -736,6 +776,10 @@ int house_e::create()
 	pPower[0] = pPower[1] = pPower[2] = NULL;
 	pMeterStatus = NULL;
 	pFrequency = NULL;
+	pNominalVoltage = NULL;
+	pPhases = NULL;
+	externalPhases = 0;
+	numPhases = 0;
 	
 	//Powerflow values -- set defaults here
 	value_Circuit_V[0] = complex(2.0*default_line_voltage,0.0);	//Duplicates old method
@@ -748,6 +792,8 @@ int house_e::create()
 	value_Frequency = 60.0;
 
 	proper_meter_parent = false;	//By default, assume we have no proper parent
+	commercial_load_parent = false;
+	internalTurnsRatio = 1.0;
 	proper_climate_found = false;	//By default, assume we don't know what climate is doing
 
 	//Weather defaults
@@ -1287,7 +1333,8 @@ int house_e::init(OBJECT *parent)
 
 	// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
 	OBJECT *obj = OBJECTHDR(this);
-	if (parent!=NULL && (gl_object_isa(parent,"triplex_meter","powerflow") || gl_object_isa(obj->parent,"triplex_node","powerflow")))
+	
+	if (parent!=NULL && (gl_object_isa(parent,"triplex_meter","powerflow") || gl_object_isa(obj->parent,"triplex_node","powerflow") || gl_object_isa(parent,"triplex_load","powerflow")))	// for single-phase houses
 	{
 		//Map to the triplex variable for houses
 		meter_house_present = new gld_property(parent,"house_present");
@@ -1321,15 +1368,26 @@ int house_e::init(OBJECT *parent)
 		pLine_I[1] = map_complex_value(parent,"residential_nominal_current_2");
 		pLine_I[2] = map_complex_value(parent,"residential_nominal_current_12");
 
+		// NOTE - Commented code will replace the pShunt and pPower once the triplex_node "deprecated properties" are removed
+		// //Shunt
+		// pShunt[0] = map_complex_value(parent,"shunt_1");
+		// pShunt[1] = map_complex_value(parent,"shunt_2");
+		// pShunt[2] = map_complex_value(parent,"shunt_12");
+
+		// //Power
+		// pPower[0] = map_complex_value(parent,"power_1");
+		// pPower[1] = map_complex_value(parent,"power_2");
+		// pPower[2] = map_complex_value(parent,"power_12");
+
 		//Shunt
-		pShunt[0] = map_complex_value(parent,"shunt_1");
-		pShunt[1] = map_complex_value(parent,"shunt_2");
-		pShunt[2] = map_complex_value(parent,"shunt_12");
+		pShunt[0] = map_complex_value(parent,"acc_temp_shunt_1");
+		pShunt[1] = map_complex_value(parent,"acc_temp_shunt_2");
+		pShunt[2] = map_complex_value(parent,"acc_temp_shunt_12");
 
 		//Power
-		pPower[0] = map_complex_value(parent,"power_1");
-		pPower[1] = map_complex_value(parent,"power_2");
-		pPower[2] = map_complex_value(parent,"power_12");
+		pPower[0] = map_complex_value(parent,"acc_temp_power_1");
+		pPower[1] = map_complex_value(parent,"acc_temp_power_2");
+		pPower[2] = map_complex_value(parent,"acc_temp_power_12");
 
 		//Map the status
 		pMeterStatus = new gld_property(parent,"service_status");
@@ -1339,7 +1397,7 @@ int house_e::init(OBJECT *parent)
 		{
 			GL_THROW("house:%d - %s - Failed to map meter status variable from parent",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
-			While attempting to map the service_status variable from the parent meter, house encountered an error.  Please
+			While attempting to map the service_status variable from the parent triplex_meter, house encountered an error.  Please
 			try again.  If the error persists, please submit your model and a bug report via the issue tracking system.
 			*/
 		}
@@ -1349,6 +1407,94 @@ int house_e::init(OBJECT *parent)
 
 		//Set flag
 		proper_meter_parent = true;
+		commercial_load_parent = false;
+	}
+	else if (parent!=NULL && (gl_object_isa(parent,"meter","powerflow") || gl_object_isa(obj->parent,"node","powerflow") || gl_object_isa(obj->parent,"load","powerflow"))) // for three-phase commercial zone-houses
+	{
+		//Map to the triplex variable for houses
+		meter_house_present = new gld_property(parent,"house_present");
+
+		//Make sure it worked
+		if ((meter_house_present->is_valid() != true) || (meter_house_present->is_bool() != true))
+		{
+			gl_error("house:%d - %s - Failed to map powerflow variable",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+			return 0;
+		}
+
+		//Set the value
+		temp_bool_val = true;
+		meter_house_present->setp<bool>(temp_bool_val,*test_rlock);
+
+		//Remove the temp property
+		delete meter_house_present;
+
+		//Map the other properties - voltage
+		pCircuit_V[0] = map_complex_value(parent,"voltage_A");
+		pCircuit_V[1] = map_complex_value(parent,"voltage_B");
+		pCircuit_V[2] = map_complex_value(parent,"voltage_C");
+
+		//Current
+		pLine_I[0] = map_complex_value(parent,"residential_nominal_current_A");
+		pLine_I[1] = map_complex_value(parent,"residential_nominal_current_B");
+		pLine_I[2] = map_complex_value(parent,"residential_nominal_current_C");
+
+		//Shunt
+		pShunt[0] = map_complex_value(parent,"shunt_A");
+		pShunt[1] = map_complex_value(parent,"shunt_B");
+		pShunt[2] = map_complex_value(parent,"shunt_C");
+
+		//Power
+		pPower[0] = map_complex_value(parent,"power_A");
+		pPower[1] = map_complex_value(parent,"power_B");
+		pPower[2] = map_complex_value(parent,"power_C");
+
+		//Map the status
+		pMeterStatus = new gld_property(parent,"service_status");
+
+		//Make sure it worked
+		if ((pMeterStatus->is_valid() != true) || (pMeterStatus->is_enumeration() != true))
+		{
+			GL_THROW("house:%d - %s - Failed to map meter status variable from parent",obj->id,(obj->name ? obj->name : "Unnamed"));
+			//Defined above
+		}
+
+		//Map the frequency
+		pFrequency = map_double_value(parent,"measured_frequency");
+
+		//Map nominal voltage - only used for turns ratio for now
+		pNominalVoltage = map_double_value(parent,"nominal_voltage");
+
+		//Compute the internal turns ratio
+		internalTurnsRatio = pNominalVoltage->get_double() / 120.0;
+
+		//Get the phase connection
+		pPhases = new gld_property(parent,"phases");
+
+		//Make sure it is valie
+		if ((pPhases->is_valid() != true) || (pPhases->is_set() != true))
+		{
+			GL_THROW("house:%d - %s - Failed to map node phases from parent",obj->id,(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			While attempting to map the phases variable from the parent node, house encountered an error.  Please
+			try again.  If the error persists, please submit your model and a bug report via the issue tracking system.
+			*/
+		}
+
+		//Pull the phases
+		externalPhases = pPhases->get_set();
+
+		//See which ones are present
+		numPhases = 0;
+		if (externalPhases & 1) numPhases += 1;
+		if (externalPhases & 2) numPhases += 1;
+		if (externalPhases & 4) numPhases += 1;
+//		gl_output ("house: %s is commercial with turns ratio %g and %d phases, set = %d", 
+//				   obj->name, internalTurnsRatio, numPhases, externalPhases);
+
+		// set flags for the powerflow interface
+		proper_meter_parent = true;
+		commercial_load_parent = true;
 	}
 	else
 	{
@@ -1366,6 +1512,7 @@ int house_e::init(OBJECT *parent)
 
 		//Set flag
 		proper_meter_parent = false;
+		commercial_load_parent = false;
 
 		//Set frequency
 		value_Frequency = default_grid_frequency;
@@ -1684,12 +1831,7 @@ int house_e::init(OBJECT *parent)
 
 	// connect any implicit loads
 	attach_implicit_enduses();
-	update_system();
-	if(error_flag == 1){
-		return 0;
-	}
-	update_model();
-	
+
 	// attach the house_e HVAC to the panel
 	if (hvac_breaker_rating == 0)
 	{
@@ -1699,8 +1841,15 @@ int house_e::init(OBJECT *parent)
 	else
 		load.breaker_amps = hvac_breaker_rating;
 	load.config = EUC_IS220;
-	attach(OBJECTHDR(this),hvac_breaker_rating, true, &load);
+	pHVAC_EnduseLoad = attach(OBJECTHDR(this),hvac_breaker_rating, true, &load);
 
+	//Continue initialization - update_system uses the HVAC pointer, so it has to be inited first
+	update_system(-1.0);
+	if(error_flag == 1){
+		return 0;
+	}
+	update_model();
+	
 	if(include_fan_heatgain == TRUE){
 		fan_heatgain_fraction = 1;
 	} else {
@@ -1974,6 +2123,7 @@ from end uses.  The modeling approach is based on the Equivalent Thermal Paramet
 method of calculating the air and mass temperature in the conditioned space.  These are solved using
 a dual decay solver to obtain the time for next state change based on the thermostat set points.
 This synchronization function updates the HVAC equipment load and power draw.
+-1 for dt is set to be an initialization check item
 **/
 
 void house_e::update_system(double dt)
@@ -1987,6 +2137,8 @@ void house_e::update_system(double dt)
 	double heating_capacity_adj=0;
 	double cooling_capacity_adj=0;
 	double temp_c;
+	double rough_amps;
+	OBJECT *obj = OBJECTHDR(this);
 
 	//Pull climate values, if we're properly linked
 	if (proper_climate_found == true)
@@ -2083,7 +2235,7 @@ void house_e::update_system(double dt)
 	double voltage_adj_resistive = ((value_Circuit_V[0]).Mag() * (value_Circuit_V[0]).Mag()) / (240.0 * 240.0);
 	
 	//Only provide demand in if meter isn't out of service
-	if (value_MeterStatus!=0)
+	if ((value_MeterStatus!=0) && (pHVAC_EnduseLoad->status == BRK_CLOSED))
 	{
 		// Set Qlatent to zero. Only gets updated if calculated.
 		Qlatent = 0;
@@ -2243,6 +2395,31 @@ void house_e::update_system(double dt)
 		}
 		load.heatgain = system_rated_capacity;
 
+		//Initialization check - throw a warning for "commerical building" approach or "really big buildings"
+		if (dt < 0.0)
+		{
+			//Get rough amperage - add 5%, "just because" (for any voltage effects - arbitrary)
+			//Pick whichever is bigger - cooling or heating - convert from kW
+			if (cooling_demand < heating_demand)	//Heating is the largest
+			{
+				rough_amps = (heating_demand + fan_power) * 1000.0 / 240.0 * 1.05;
+			}
+			else	//Cooling must be the largest, or they're the same, and we don't care
+			{
+				rough_amps = (cooling_demand + fan_power) * 1000.0 / 240.0 * 1.05;
+			}
+
+			//Check against what is set
+			if (rough_amps > pHVAC_EnduseLoad->max_amps)
+			{
+				gl_warning("house:%d - %s - HVAC breaker amps may be undersized",obj->id,(obj->name?obj->name:"Unnamed"));
+				/*  TROUBLESHOOT
+				The breaker rating for the HVAC (defaults to 200 Amps) may be too small for the building created.  Either
+				adjust this	via the hvac_breaker_rating property, or adjust your overall building model/approach.
+				*/
+			}
+		} 
+
 		if(	(cooling_system_type == CT_ELECTRIC		&& system_mode == SM_COOL) ||
 			(heating_system_type == HT_HEAT_PUMP	&& system_mode == SM_HEAT)) {
 				load.power.SetRect(load.power_fraction * load.total.Re() , load.power_fraction * load.total.Re() * sqrt( 1 / (load.power_factor*load.power_factor) - 1) );
@@ -2288,6 +2465,7 @@ void house_e::update_system(double dt)
 
 	// update load
 	hvac_load = load.total.Re() * (load.power_fraction + load.voltage_factor*(load.current_fraction + load.impedance_fraction*load.voltage_factor));
+
 	if (system_mode == SM_COOL)
 		last_cooling_load = hvac_load;
 	else if (system_mode == SM_AUX || system_mode == SM_HEAT)
@@ -2673,7 +2851,7 @@ TIMESTAMP house_e::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	OBJECT *obj = OBJECTHDR(this);
 
-	//If we're a proper meter, zero the accumulators, then remove the values
+	//If we're a proper triplex_meter, zero the accumulators, then remove the values
 	if (proper_meter_parent == true)
 	{
 		//Put negative values in 
@@ -3049,7 +3227,7 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 	}
 	total.total = total.power = total.current = total.admittance = complex(0,0);
 
-	//Pull in the current powerflow values, if relevant
+	//Pull in the current powerflow values, if connected to a triplex_meter
 	if (proper_meter_parent == true)
 	{
 		pull_complex_powerflow_values();
@@ -3070,7 +3248,7 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 			c->status = BRK_CLOSED;
 			c->reclose = TS_NEVER;
 			t2 = t1; // must immediately reevaluate devices affected
-			gl_debug("house_e:%d panel breaker %d closed", obj->id, c->id);
+			gl_verbose("house_e:%d - %s - panel breaker %d (enduse %s) closed", obj->id, (obj->name?obj->name:"Unnamed"),c->id,c->pLoad->name);
 		}
 
 		// if breaker is closed
@@ -3079,7 +3257,7 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 			// compute circuit current
 			if ((value_Circuit_V[(int)c->type].Mag() == 0) || (value_MeterStatus==0))	//Meter offline or voltage 0
 			{
-				gl_debug("house_e:%d circuit %d (enduse %s) voltage is zero", obj->id, c->id, c->pLoad->name);
+				gl_warning("house_e:%d - %s - circuit %d (enduse %s) voltage is zero or meter is disabled", obj->id, (obj->name?obj->name:"Unnamed"), c->id, c->pLoad->name);
 
 				if (value_MeterStatus==0)	//If we've been disconnected, still apply latent load heat
 				{
@@ -3105,7 +3283,7 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 
 					// average five minutes before reclosing, exponentially distributed
 					c->reclose = t1 + (TIMESTAMP)(gl_random_exponential(RNGSTATE,1/300.0)*TS_SECOND); 
-					gl_debug("house_e:%d circuit breaker %d tripped - enduse %s overload at %.0f A", obj->id, c->id,
+					gl_warning("house_e:%d - %s - circuit breaker %d tripped - enduse %s overload at %.0f A", obj->id, (obj->name?obj->name:"Unnamed"),c->id,
 						c->pLoad->name, current.Mag());
 				}
 
@@ -3114,7 +3292,15 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 				{
 					c->status = BRK_FAULT;
 					c->reclose = TS_NEVER;
-					gl_warning("house_e:%d, %s circuit breaker %d failed - enduse %s is no longer running", obj->id, obj->name, c->id, c->pLoad->name);
+					gl_warning("house_e:%d, %s circuit breaker %d failed - enduse %s is no longer running", obj->id, (obj->name?obj->name:"Unnamed"), c->id, c->pLoad->name);
+				}
+
+				//After the fact check - if we're the HVAC, be sure to undo our various variables (otherwise reporting is odd)
+				if (c == pHVAC_EnduseLoad)
+				{
+					//Just call the update again, easiest way to set everything
+					//Pushes "zero time", even though dt doesn't do anything right now
+					update_system(0.0);
 				}
 
 				// must immediately reevaluate everything
@@ -3298,9 +3484,53 @@ gld_property *house_e::map_double_value(OBJECT *obj, char *name)
 void house_e::pull_complex_powerflow_values(void)
 {
 	//Pull in the various values from powerflow - straight reads
-	value_Circuit_V[0] = pCircuit_V[0]->get_complex();
-	value_Circuit_V[1] = pCircuit_V[1]->get_complex();
-	value_Circuit_V[2] = pCircuit_V[2]->get_complex();
+	if (commercial_load_parent == true) {
+		if (numPhases == 3) { // V1n = positive-sequence voltage
+			complex Va = pCircuit_V[0]->get_complex();
+			complex Vb = pCircuit_V[1]->get_complex();
+			complex Vc = pCircuit_V[2]->get_complex();
+			value_Circuit_V[1] = Va + A_OPERATOR * Vb + A2_OPERATOR * Vc;
+			value_Circuit_V[1] /= 3.0;
+		} else if (numPhases == 2) {
+			complex v1;
+			complex v2;
+			if (!(externalPhases & 1)) { // phases B and C
+				v1 = pCircuit_V[1]->get_complex();
+				v2 = pCircuit_V[2]->get_complex();
+			} else if (!(externalPhases & 2)) { // phases A and C
+				v1 = pCircuit_V[0]->get_complex();
+				v2 = pCircuit_V[2]->get_complex();
+			} else if (!(externalPhases & 4)) { // phases A and B
+				v1 = pCircuit_V[0]->get_complex();
+				v2 = pCircuit_V[1]->get_complex();
+			}
+			double vavg = 0.5 * (v1.Mag() + v2.Mag());
+			v1.Mag(vavg);
+			value_Circuit_V[1] = v1;
+		} else if (numPhases == 1) { // V1n = positive-sequence voltage
+			if (externalPhases & 1) {
+				value_Circuit_V[1] = pCircuit_V[0]->get_complex();
+			} else if (externalPhases & 2) {
+				value_Circuit_V[1] = pCircuit_V[1]->get_complex();
+			} else if (externalPhases & 4) {
+				value_Circuit_V[1] = pCircuit_V[2]->get_complex();
+			}
+		}
+		value_Circuit_V[1] /= internalTurnsRatio;
+		value_Circuit_V[2] = -value_Circuit_V[1]; // equal and opposite hot voltages, i.e., V2n = -V1n
+		value_Circuit_V[0] = value_Circuit_V[1] * 2.0; // line-to-line is V1n - V2n, or just 2V1n as assumed above
+/*
+		OBJECT *obj = OBJECTHDR(this);
+    gl_output ("house: %s is commercial with %d phases and equivalent panel voltages [%g, %g, %g] angle %g",
+               obj->name, numPhases,                                                                        
+               value_Circuit_V[1].Mag(), value_Circuit_V[2].Mag(), value_Circuit_V[0].Mag(),                
+               value_Circuit_V[1].Arg());                                                                   
+*/
+	} else {
+		value_Circuit_V[0] = pCircuit_V[0]->get_complex();
+		value_Circuit_V[1] = pCircuit_V[1]->get_complex();
+		value_Circuit_V[2] = pCircuit_V[2]->get_complex();
+	}
 	value_MeterStatus = pMeterStatus->get_enumeration();
 	value_Frequency = pFrequency->get_double();
 }
@@ -3312,37 +3542,119 @@ void house_e::push_complex_powerflow_values(void)
 	gld_wlock *test_rlock;
 	int indexval;
 
-	for (indexval=0; indexval<3; indexval++)
-	{
-		//**** Current value ***/
-		//Pull current value again, just in case
-		temp_complex_val = pLine_I[indexval]->get_complex();
+	if (commercial_load_parent == true) {
+/*    
+	OBJECT *obj = OBJECTHDR(this);                                   
 
-		//Add the difference
-		temp_complex_val += value_Line_I[indexval];
+		// for value_Shunt, value_Line_I and value_Power the circuit indices are:
+		//  0 = 1-N, 1 = 2-N, 2 = 1-2s
+		// Unlike for triplex meters, pShunt on loads is Z
+		gl_output ("                     I=[%g @ %g] [%g @ %g] [%g @ %g]",  
+							 obj->name,                                            
+							 value_Line_I[0].Mag(), value_Line_I[0].Arg(),           
+							 value_Line_I[1].Mag(), value_Line_I[1].Arg(),           
+							 value_Line_I[2].Mag(), value_Line_I[2].Arg());          
+    gl_output ("house: %s commercial Y=[%g +j%g] [%g +j%g] [%g +j%g]",
+               obj->name,                                            
+               value_Shunt[0].Re(), value_Shunt[0].Im(),             
+               value_Shunt[1].Re(), value_Shunt[1].Im(),             
+               value_Shunt[2].Re(), value_Shunt[2].Im());            
+    gl_output ("                     P=[%g +j%g] [%g +j%g] [%g +j%g]",  
+               obj->name,                                            
+               value_Power[0].Re(), value_Power[0].Im(),             
+               value_Power[1].Re(), value_Power[1].Im(),             
+               value_Power[2].Re(), value_Power[2].Im());            
+*/
 
-		//Push it back up
-		pLine_I[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+		double denom = numPhases;
+		// split the total power equally among the phases
+		complex balPower = (value_Power[0] + value_Power[1] + value_Power[2]) / denom;
+		int insertP = 0;
+		if (balPower.Mag() > 0.0) {
+			insertP = 1;
+//			gl_output ("house: %s commercial per-phase P=[%g +j%g]", obj->name, balPower.Re(), balPower.Im());             
+		}
+		// adjust the constant shunt for voltages and internal turns, then balance among phases
+		complex balShunt = (value_Shunt[0] + value_Shunt[1] + value_Shunt[2] * 4.0) 
+			/ (internalTurnsRatio * internalTurnsRatio) / denom;
+		int insertS = 0;
+		if (balShunt.Mag() > 0.0) {
+			insertS = 1;
+//			gl_output ("house: %s commercial per-phase Y=[%g +j%g]", obj->name, balShunt.Re(), balShunt.Im());
+		}
+		// adjust the constant current for voltages and internal turns, then balance among phases
+		complex balCurrent = (value_Line_I[0] + value_Line_I[1] + value_Line_I[2] * 2.0)
+			/ internalTurnsRatio / denom;
+		int insertI = 0;
+		if (balCurrent.Mag() > 0.0) {
+			insertI = 1;
+//			gl_output ("house: %s commercial per-phase I=[%g @ %g]", obj->name, balCurrent.Mag(), balCurrent.Arg());             
+		}
+		// now push this building's power onto the parent load phases that are actually present
+		int mask = 1;
+		for (indexval = 0; indexval < 3; indexval++) {
+			if (externalPhases & mask) {
+				if (insertP > 0) {
+					temp_complex_val = pPower[indexval]->get_complex();
+//					gl_output ("  adding P to [%g +j%g] on phase mask %d", 
+//										 temp_complex_val.Re(), temp_complex_val.Im(), mask);
+					temp_complex_val += balPower;
+					pPower[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+				}
+				if (insertS > 0) {
+					temp_complex_val = pShunt[indexval]->get_complex();
 
-		//**** shunt value ***/
-		//Pull current value again, just in case
-		temp_complex_val = pShunt[indexval]->get_complex();
+					//Add in our contribution
+					temp_complex_val += balShunt;
 
-		//Add the difference
-		temp_complex_val += value_Shunt[indexval];
+					//Push it back up
+					pShunt[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+				}
+				if (insertI > 0) {
+					temp_complex_val = pLine_I[indexval]->get_complex();
 
-		//Push it back up
-		pShunt[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+					//Add in the contribution - current gets phase-rotated within powerflow/elsewhere					
+					temp_complex_val += balCurrent;
 
-		//**** Power value ***/
-		//Pull current value again, just in case
-		temp_complex_val = pPower[indexval]->get_complex();
+					//Push the value back up
+					pLine_I[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+				}
+			}
+			mask *= 2;
+		}
+	} else {
+		for (indexval=0; indexval<3; indexval++)
+		{
+			//**** Current value ***/
+			//Pull current value again, just in case
+			temp_complex_val = pLine_I[indexval]->get_complex();
 
-		//Add the difference
-		temp_complex_val += value_Power[indexval];
+			//Add the difference
+			temp_complex_val += value_Line_I[indexval];
 
-		//Push it back up
-		pPower[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+			//Push it back up
+			pLine_I[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+
+			//**** shunt value ***/
+			//Pull current value again, just in case
+			temp_complex_val = pShunt[indexval]->get_complex();
+
+			//Add the difference
+			temp_complex_val += value_Shunt[indexval];
+
+			//Push it back up
+			pShunt[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+
+			//**** Power value ***/
+			//Pull current value again, just in case
+			temp_complex_val = pPower[indexval]->get_complex();
+
+			//Add the difference
+			temp_complex_val += value_Power[indexval];
+
+			//Push it back up
+			pPower[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+		}
 	}
 }
 
@@ -3381,6 +3693,23 @@ SIMULATIONMODE house_e::inter_deltaupdate(unsigned int64 delta_time, unsigned lo
 		//If we're a proper meter, zero the accumulators, then remove the values
 		if (proper_meter_parent == true)
 		{
+			//Put negative values in - postsync negated them to remove them
+			//Update power
+			value_Power[0] = complex(-1.0,0.0) * value_Power[0];
+			value_Power[1] = complex(-1.0,0.0) * value_Power[1];
+			value_Power[2] = complex(-1.0,0.0) * value_Power[2];
+			
+			//Current
+			value_Line_I[0] = complex(-1.0,0.0) * value_Line_I[0];
+			value_Line_I[1] = complex(-1.0,0.0) * value_Line_I[1];
+			value_Line_I[2] = complex(-1.0,0.0) * value_Line_I[2];
+			//Neutral not handled in here, since it was always zero anyways
+
+			//Admittance
+			value_Shunt[0] = complex(-1.0,0.0) * value_Shunt[0];
+			value_Shunt[1] = complex(-1.0,0.0) * value_Shunt[1];
+			value_Shunt[2] = complex(-1.0,0.0) * value_Shunt[2];
+
 			//Push up the "negative" values now - mostly so XMLs look right
 			push_complex_powerflow_values();
 		}

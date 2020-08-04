@@ -267,7 +267,7 @@ EXPORT SIMULATIONMODE update_double_assert(OBJECT *obj, TIMESTAMP t0, unsigned i
 					else if ( strcmp(dateformat,"EURO")==0)
 						sprintf(datebuff,"ERROR    [%02d-%02d-%04d %02d:%02d:%02d.%.06d %s] : ",delta_dt_val.day,delta_dt_val.month,delta_dt_val.year,delta_dt_val.hour,delta_dt_val.minute,delta_dt_val.second,del_microseconds,delta_dt_val.tz);
 					else
-						sprintf(datebuff,"ERROR    .09f : ",del_clock);
+						sprintf(datebuff,"ERROR    %.09lf : ",del_clock);
 
 					//Actual error part
 					sprintf(error_output_buff,"Assert failed on %s - %s (%g) not within %f of given value %g",gl_name(obj->parent, buff, 64),da->get_target(), *x, da->get_within(), da->get_value());
@@ -308,7 +308,7 @@ EXPORT SIMULATIONMODE update_double_assert(OBJECT *obj, TIMESTAMP t0, unsigned i
 					else if ( strcmp(dateformat,"EURO")==0)
 						sprintf(datebuff,"ERROR    [%02d-%02d-%04d %02d:%02d:%02d.%.06d %s] : ",delta_dt_val.day,delta_dt_val.month,delta_dt_val.year,delta_dt_val.hour,delta_dt_val.minute,delta_dt_val.second,del_microseconds,delta_dt_val.tz);
 					else
-						sprintf(datebuff,"ERROR    .09f : ",del_clock);
+						sprintf(datebuff,"ERROR    %.09lf : ",del_clock);
 
 					//Actual error part
 					sprintf(error_output_buff,"Assert failed on %s - %s (%g) not within %f of given value %g",gl_name(obj->parent, buff, 64),da->get_target(), *x, da->get_within(), da->get_value());

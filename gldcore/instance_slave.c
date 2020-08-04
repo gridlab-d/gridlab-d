@@ -610,6 +610,7 @@ STATUS instance_slave_init_mem(){
 	return SUCCESS;
 #else
 	// @todo linux/unix slave signalling
+	return FAILED; // default to resolve return-value undefined value.
 #endif
 }
 

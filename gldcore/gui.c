@@ -1000,7 +1000,7 @@ size_t gui_glm_write(FILE *fp, GUIENTITY *entity, int indent)
 		else if (entity->value[0]!='\0')
 			count += fprintf(fp,"%s\tvalue \"%s\";\n", tabs,entity->value);
 		if (entity->unit)
-			count += fprintf(fp,"%s\tunit \"%s\";\n", tabs,entity->unit);
+			count += fprintf(fp,"%s\tunit \"%s\";\n", tabs,entity->unit->name);
 		if (entity->size>0)
 			count += fprintf(fp,"%s\tsize %d;\n", tabs,entity->size);
 		if (entity->action[0]!='\0')

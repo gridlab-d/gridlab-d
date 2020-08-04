@@ -409,7 +409,7 @@ int violation_recorder::write_header(){
 	if(0 > fprintf(rec_file,"# host...... %s\n", getenv("HOST"))){ return 0; }
 #endif
 	if(0 > fprintf(rec_file,"# limit..... %d\n", limit)){ return 0; }
-	if(0 > fprintf(rec_file,"# interval.. %d\n", write_interval)){ return 0; }
+	if(0 > fprintf(rec_file,"# interval.. %lld\n", write_interval)){ return 0; }
 	if(0 > fprintf(rec_file,"# timestamp, violation, observation, upper_limit, lower_limit, object(s), object type(s), phase, message\n")){ return 0; }
 //	if(0 > fprintf(rec_file, "\n")){ return 0; }
 	return 1;

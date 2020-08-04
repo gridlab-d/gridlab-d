@@ -12,6 +12,16 @@
 
 #include "residential.h"
 #include "residential_enduse.h"
+
+#include <cstdlib>
+#include <cstdio>
+#include <cerrno>
+#include <cmath>
+
+#include <chrono>
+#include <iostream>
+#include <exception>
+#include <algorithm>
 #include <limits>
 #include <sstream>
 #include <string>
@@ -343,11 +353,24 @@ private:
 	double a_loss_top_coefficient;
 	double a_circular_const;
 	double b_matrix_coefficient;
+
 	vector<vector<double>> A_diffusion;
 	vector<vector<double>> A_loss;
+    vector<vector<double>> A_plug;
+    vector<vector<double>> A_circular_flow;
+
 	vector<double> control_upper;
 	vector<double> control_lower;
+
 	vector<vector<double>> T_layers;
+
+    vector<double> dT_dt;
+    vector<double> T_now;
+    vector<double> T_new;
+    vector<double> control_temp;
+    vector<double> product1;
+    vector<double> product2;
+
 	TIMESTAMP start_time;
 	TIMESTAMP next_transition_time;
 	TIMESTAMP last_time_calculate_state_change_called;
@@ -411,7 +434,7 @@ public:
 	double new_h_2zone(double h0, double delta_t);      // Calcs h after transition...
 	int multilayer_time_to_transition(void);
 	void calculate_waterheater_matrices(int time_now);
-	vector<double> multiply_waterheater_matrices(vector<vector<double>> a, vector<double> b);
+	static vector<double> multiply_waterheater_matrices(vector<vector<double>> a, vector<double> b);
 	void reinitialize_internals(int dt);
 
 	double get_Tambient(enumeration water_heater_location);		// ambient T [F] -- either an indoor house temperature or a garage temperature, probably...

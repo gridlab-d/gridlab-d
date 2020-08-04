@@ -1,5 +1,6 @@
 #include "collect.h"
 #include <algorithm>
+#include <stdexcept>
 
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF BID collect for primary frequency control
@@ -107,6 +108,7 @@ int collect::calculate_freq_thresholds(double droop, double nom_freq, double fre
 }
 
 int collect::sort(int sort_mode) {
+	try {
 	for (int i = 0; i < number_of_bids_on; ++i){ //set mode for on bids
 		supervisor_bid_on[i].sort_by = sort_mode;
 	}
@@ -122,6 +124,10 @@ int collect::sort(int sort_mode) {
 			std::sort(supervisor_bid_off, supervisor_bid_off+number_of_bids_off);
 		}
 	}
+	}
+	catch (std::logic_error &ex){
+		gl_error(ex.what());
+	}
 	return 0;
 }
 
@@ -133,7 +139,7 @@ void collect::fetch_double(double **prop, char *name, OBJECT *parent){
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "collect:%i", hdr->id);
-		if(*name == NULL)
+		if(*name == 0)
 			sprintf(msg, "%s: collect unable to find property: name is NULL", namestr);
 		else
 			sprintf(msg, "%s: collect unable to find %s", namestr, name);
@@ -149,7 +155,7 @@ void collect::fetch_int(int **prop, char *name, OBJECT *parent){
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "collect:%i", hdr->id);
-		if(*name == NULL)
+		if(*name == 0)
 			sprintf(msg, "%s: collect unable to find property: name is NULL", namestr);
 		else
 			sprintf(msg, "%s: collect unable to find %s", namestr, name);
