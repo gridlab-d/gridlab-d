@@ -313,7 +313,11 @@ public:
 	double Qref_max;	  // Qref_max and Qref_min are the upper and lower limits of Q references
 	double Qref_min;	  //
 	double Rp;			  // p-f droop gain in frequency-watt
+	double db_UF;         // dead band for frequency-watt, UF for under-frequency
+	double db_OF;         // dead band for frequency-watt, OF for over-frequency
 	double Rq;			  // Q-V droop gain in volt-var
+	double db_UV;         // dead band for volt-var, UV for under-voltage
+	double db_OV;         // dead band for volt-var, OV for over-voltage
 
 	double m_Vdc;	   //modulation index when using grid-forming PV inverter, it is per unit value
 	double Vdc_min_pu; // Tha minimum dc bus voltage that the PV grid-forming inverter can run. It is also the maximum point voltage of PV panel, it is per unit value

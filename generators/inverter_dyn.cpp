@@ -124,7 +124,13 @@ inverter_dyn::inverter_dyn(MODULE *module)
 			PT_double, "Qref_max[pu]", PADDR(Qref_max), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of reactive power references in grid-following mode.",
 			PT_double, "Qref_min[pu]", PADDR(Qref_min), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of reactive power references in grid-following mode.",
 			PT_double, "Rp[pu]", PADDR(Rp), PT_DESCRIPTION, "DELTAMODE: p-f droop gain in frequency-watt.",
+			PT_double, "frequency_watt_droop[pu]", PADDR(Rp), PT_DESCRIPTION, "DELTAMODE: p-f droop gain in frequency-watt.",
+			PT_double, "db_UF[Hz]", PADDR(db_UF), PT_DESCRIPTION, "DELTAMODE: upper dead band for frequency-watt control, UF for under-frequency",
+			PT_double, "db_OF[Hz]", PADDR(db_OF), PT_DESCRIPTION, "DELTAMODE: lower dead band for frequency-watt control, OF for over-frequency",
 			PT_double, "Rq[pu]", PADDR(Rq), PT_DESCRIPTION, "DELTAMODE: Q-V droop gain in volt-var.",
+			PT_double, "volt_var_droop[pu]", PADDR(Rq), PT_DESCRIPTION, "DELTAMODE: Q-V droop gain in volt-var.",
+			PT_double, "db_UV[pu]", PADDR(db_UV), PT_DESCRIPTION, "DELTAMODE: dead band for volt-var control, UV for under-voltage",
+			PT_double, "db_OV[pu]", PADDR(db_OV), PT_DESCRIPTION, "DELTAMODE: dead band for volt-var control, OV for over-voltage",
 			PT_double, "rampUpRate_real", PADDR(rampUpRate_real), PT_DESCRIPTION, "DELTAMODE: ramp rate for grid-following frequency-watt",
 			PT_double, "rampDownRate_real", PADDR(rampDownRate_real), PT_DESCRIPTION, "DELTAMODE: ramp rate for grid-following frequency-watt",
 			PT_double, "rampUpRate_reactive", PADDR(rampUpRate_reactive), PT_DESCRIPTION, "DELTAMODE: ramp rate for grid-following volt-var",
@@ -301,22 +307,26 @@ int inverter_dyn::create(void)
 	Tff = 0.1;		// s
 	Pref_max = 1.5; // per unit
 	Pref_min = -1.5;	// per unit
-	Rp = 0.04;		//P-f droop 4%
+	Rp = 0.05;		//P-f droop 5%, default value by IEEE 1547 2018
+	db_UF = 0.0; //0.036;  // dead band 0.036 Hz, default value by IEEE 1547 2018
+	db_OF = 0.0; //0.036;  // dead band 0.036 Hz, default value by IEEE 1547 2018
 
 	//volt-var
 	volt_var = false;
 	Tqf = 0.2;	// s
 	Tvf = 0.05; // s
+	db_UV = 0;  // volt-var dead band
+	db_OV = 0;  // volt-var dead band
 
 	//Vset = 1;  // per unit
 	Qref_max = 1.5; // per unit
 	Qref_min = -1.5;	// per unit
-	Rq = 0.05;		// per unit
+	Rq = 0.4;		// per unit, default value by IEEE 1547 2018
 
 	Vdc_base = 850; // default value of dc bus voltage
 	Vdc_min_pu = 1; // default reference of the Vdc_min controller
 
-	P_f_droop_setting_mode = PSET_MODE;	//Defaults to PSET mode
+	P_f_droop_setting_mode = PSET_MODE;
 
 	// Capacitance of dc bus
 	C_pu = 0.1;	 //per unit
@@ -1005,6 +1015,7 @@ int inverter_dyn::init(OBJECT *parent)
 	{
 		fset = f_nominal;
 	}
+
 
 	Idc_base = S_base / Vdc_base;
 
@@ -2362,7 +2373,15 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					pred_state.df_filter = 1.0 / Tff * (fPLL[0] - curr_state.f_filter);
 					pred_state.f_filter = curr_state.f_filter + (deltat * pred_state.df_filter);
 
-					Pref_droop_pu = (f_nominal - pred_state.f_filter) / f_nominal / Rp + Pref / S_base;
+					if ((pred_state.f_filter < (f_nominal + db_OF))&&(pred_state.f_filter > (f_nominal - db_UF)))  // add dead band
+					{
+						Pref_droop_pu = Pref / S_base;
+					}
+					else
+					{
+						Pref_droop_pu = (f_nominal - pred_state.f_filter) / f_nominal / Rp + Pref / S_base;
+					}
+
 
 					if (Pref_droop_pu > Pref_max)
 					{
@@ -2411,7 +2430,15 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					pred_state.dV_filter = 1.0 / Tvf * (V_Avg_pu - curr_state.V_filter);
 					pred_state.V_filter = curr_state.V_filter + (deltat * pred_state.dV_filter);
 
-					Qref_droop_pu = (Vset - pred_state.V_filter) / Rq;
+					if ((pred_state.V_filter < (Vset + db_OV))&&(pred_state.V_filter > (Vset - db_UV)))  // add dead band
+					{
+						Qref_droop_pu = Qref / S_base;
+					}
+					else
+					{
+						Qref_droop_pu = (Vset - pred_state.V_filter) / Rq + Qref / S_base;
+					}
+
 
 					if (Qref_droop_pu > Qref_max)
 					{
@@ -2625,7 +2652,14 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						pred_state.df_filter = 1.0 / Tff * ((fPLL[0] + fPLL[1] + fPLL[2]) / 3.0 - curr_state.f_filter);
 						pred_state.f_filter = curr_state.f_filter + (deltat * pred_state.df_filter);
 
-						Pref_droop_pu = (f_nominal - pred_state.f_filter) / f_nominal / Rp + Pref / S_base;
+						if ((pred_state.f_filter < (f_nominal + db_OF))&&(pred_state.f_filter > (f_nominal - db_UF)))  // add dead band
+						{
+							Pref_droop_pu = Pref / S_base;
+						}
+						else
+						{
+							Pref_droop_pu = (f_nominal - pred_state.f_filter) / f_nominal / Rp + Pref / S_base;
+						}
 
 						if (Pref_droop_pu > Pref_max)
 						{
@@ -2672,7 +2706,14 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						pred_state.dV_filter = 1.0 / Tvf * (V_Avg_pu - curr_state.V_filter);
 						pred_state.V_filter = curr_state.V_filter + (deltat * pred_state.dV_filter);
 
-						Qref_droop_pu = (Vset - pred_state.V_filter) / Rq;
+						if ((pred_state.V_filter < (Vset + db_OV))&&(pred_state.V_filter > (Vset - db_UV)))  // add dead band
+						{
+							Qref_droop_pu = Qref / S_base;
+						}
+						else
+						{
+							Qref_droop_pu = (Vset - pred_state.V_filter) / Rq + Qref / S_base;
+						}
 
 						if (Qref_droop_pu > Qref_max)
 						{
@@ -2899,7 +2940,14 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					next_state.df_filter = 1.0 / Tff * (fPLL[0] - pred_state.f_filter);
 					next_state.f_filter = curr_state.f_filter + (pred_state.df_filter + next_state.df_filter) * deltat / 2.0;
 
-					Pref_droop_pu = (f_nominal - next_state.f_filter) / f_nominal / Rp + Pref / S_base;
+					if ((next_state.f_filter < (f_nominal + db_OF))&&(next_state.f_filter > (f_nominal - db_UF)))  // add dead band
+					{
+						Pref_droop_pu = Pref / S_base;
+					}
+					else
+					{
+						Pref_droop_pu = (f_nominal - next_state.f_filter) / f_nominal / Rp + Pref / S_base;
+					}
 
 					if (Pref_droop_pu > Pref_max)
 					{
@@ -2946,7 +2994,14 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					next_state.dV_filter = 1.0 / Tvf * (V_Avg_pu - pred_state.V_filter);
 					next_state.V_filter = curr_state.V_filter + (pred_state.dV_filter + next_state.dV_filter) * deltat / 2.0;
 
-					Qref_droop_pu = (Vset - next_state.V_filter) / Rq;
+					if ((next_state.V_filter < (Vset + db_OV))&&(next_state.V_filter > (Vset - db_UV)))  // add dead band
+					{
+						Qref_droop_pu = Qref / S_base;
+					}
+					else
+					{
+						Qref_droop_pu = (Vset - next_state.V_filter) / Rq + Qref / S_base;
+					}
 
 					if (Qref_droop_pu > Qref_max)
 					{
@@ -3159,7 +3214,14 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						next_state.df_filter = 1.0 / Tff * ((fPLL[0] + fPLL[1] + fPLL[2]) / 3.0 - pred_state.f_filter);
 						next_state.f_filter = curr_state.f_filter + (pred_state.df_filter + next_state.df_filter) * deltat / 2.0;
 
-						Pref_droop_pu = (f_nominal - next_state.f_filter) / f_nominal / Rp + Pref / S_base;
+						if ((next_state.f_filter < (f_nominal + db_OF))&&(next_state.f_filter > (f_nominal - db_UF)))  // add dead band
+						{
+							Pref_droop_pu = Pref / S_base;
+						}
+						else
+						{
+							Pref_droop_pu = (f_nominal - next_state.f_filter) / f_nominal / Rp + Pref / S_base;
+						}
 
 						if (Pref_droop_pu > Pref_max)
 						{
@@ -3205,7 +3267,15 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						next_state.dV_filter = 1.0 / Tvf * (V_Avg_pu - pred_state.V_filter);
 						next_state.V_filter = curr_state.V_filter + (pred_state.dV_filter + next_state.dV_filter) * deltat / 2.0;
 
-						Qref_droop_pu = (Vset - next_state.V_filter) / Rq;
+						if ((next_state.V_filter < (Vset + db_OV))&&(next_state.V_filter > (Vset - db_UV)))  // add dead band
+						{
+							Qref_droop_pu = Qref / S_base;
+						}
+						else
+						{
+							Qref_droop_pu = (Vset - next_state.V_filter) / Rq + Qref / S_base;
+						}
+
 
 						if (Qref_droop_pu > Qref_max)
 						{
@@ -3464,16 +3534,8 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 			if (first_deltamode_init == true)
 			{
 				//Make sure it wasn't "pre-set"
-				if (Vset < 0.0)	//-99 is the flag
-				{
-					// Initialize Vset and Pset
-					Vset = pCircuit_V_Avg_pu + VA_Out.Im() / S_base * mq;
-				}
-				else
-				{
-					//Use the set value, but also bias off the droop
-					Vset += VA_Out.Im() / S_base * mq;
-				}
+
+				Vset = pCircuit_V_Avg_pu + VA_Out.Im() / S_base * mq;
 
 				if (P_f_droop_setting_mode == PSET_MODE)
 				{
@@ -3557,15 +3619,7 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 			if (first_deltamode_init == true)
 			{
 				//See if we set it to something first
-				if (Vset < 0.0)	//-99.0 flag value
-				{
-					Vset = value_Circuit_V[0].Mag() / V_base + Qref / S_base * Rq;
-				}
-				else
-				{
-					//Use Vset, but bias for the Qref values
-					Vset += Qref / S_base * Rq;
-				}
+				Vset = value_Circuit_V[0].Mag() / V_base;
 
 				//Set it false in here, for giggles
 				first_deltamode_init = false;
@@ -3604,7 +3658,16 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 			{
 				// Initialize the frequency-watt
 				curr_time->f_filter = fPLL[0];
-				Pref_droop_pu = (w_ref / 2.0 / PI - curr_time->f_filter) / Rp + Pref / S_base;
+
+				if ((curr_time->f_filter < (f_nominal + db_OF))&&(curr_time->f_filter > (f_nominal - db_UF)))  // add dead band
+				{
+					Pref_droop_pu = Pref / S_base;
+				}
+				else
+				{
+					Pref_droop_pu = (f_nominal - curr_time->f_filter) / Rp + Pref / S_base;
+				}
+
 				curr_time->Pref_droop_pu_filter = Pref_droop_pu;
 			}
 
@@ -3613,7 +3676,17 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 				// Initialize the volt-var control
 				V_Avg_pu = value_Circuit_V[0].Mag() / V_base;
 				curr_time->V_filter = V_Avg_pu;
-				curr_time->Qref_droop_pu_filter = Qref / S_base;
+
+				if ((curr_time->V_filter < (Vset + db_OV))&&(curr_time->V_filter > (Vset - db_UV)))  // add dead band
+				{
+					Qref_droop_pu = Qref / S_base;
+				}
+				else
+				{
+					Qref_droop_pu = (Vset - curr_time->V_filter) / Rq + Qref / S_base;
+				}
+
+				curr_time->Qref_droop_pu_filter = Qref_droop_pu;
 			}
 		}
 		else //Three-phase
@@ -3639,15 +3712,9 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 				if (first_deltamode_init == true)
 				{
 					//See if it was set
-					if (Vset < 0.0)	//-99.0 flag
-					{
-						Vset = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base + Qref / S_base * Rq;
-					}
-					else
-					{
-						//Set, so use Vset, but bias based off the Qref
-						Vset += Qref / S_base * Rq;
-					}
+
+
+					Vset = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base;
 
 					//Set it false in here, for giggles
 					first_deltamode_init = false;
@@ -3711,7 +3778,16 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 				{
 					// Initialize the frequency-watt
 					curr_time->f_filter = (fPLL[0] + fPLL[1] + fPLL[2]) / 3.0;
-					Pref_droop_pu = (w_ref / 2.0 / PI - curr_time->f_filter) / Rp + Pref / S_base;
+
+					if ((curr_time->f_filter < (f_nominal + db_OF))&&(curr_time->f_filter > (f_nominal - db_UF)))  // add dead band
+					{
+						Pref_droop_pu = Pref / S_base;
+					}
+					else
+					{
+						Pref_droop_pu = (f_nominal - curr_time->f_filter) / Rp + Pref / S_base;
+					}
+
 					curr_time->Pref_droop_pu_filter = Pref_droop_pu;
 				}
 
@@ -3720,7 +3796,17 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 					// Initialize the volt-var control
 					V_Avg_pu = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base;
 					curr_time->V_filter = V_Avg_pu;
-					curr_time->Qref_droop_pu_filter = Qref / S_base;
+
+					if ((curr_time->V_filter < (Vset + db_OV))&&(curr_time->V_filter > (Vset - db_UV)))  // add dead band
+					{
+						Qref_droop_pu = Qref / S_base;
+					}
+					else
+					{
+						Qref_droop_pu = (Vset - curr_time->V_filter) / Rq + Qref / S_base;
+					}
+
+					curr_time->Qref_droop_pu_filter = Qref_droop_pu;
 				}
 
 			}	 // end of three phase initialization
