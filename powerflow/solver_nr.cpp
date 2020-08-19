@@ -30,15 +30,16 @@ Initialization after returning to service?
 
 ***********************************************************************
 */
-
-
-
+#include <cmath>
+#ifndef GLD_USE_EIGEN
 #include "solver_nr.h"
-
+#else
+#include "solver_nr_eigen.h"
+#endif
 #define MT // this enables multithreaded SuperLU
 
 #ifdef MT
-#include <slu_mt_ddefs.h>	//superLU_MT 
+#include <slu_mt_ddefs.h>	//superLU_MT
 #else
 #include <slu_ddefs.h>	//Sequential superLU (other platforms)
 #endif
@@ -79,7 +80,7 @@ typedef struct {
 void sparse_init(SPARSE* sm, int nels, int ncols)
 {
 	int indexval;
-	
+
 	//Allocate the column pointer GLD heap
 	sm->cols = (SP_E**)gl_malloc(ncols*sizeof(SP_E*));
 
@@ -1773,7 +1774,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 				if (temp_size_c==-1)	//Make sure it is right
 				{
-					GL_THROW("NR: A line's phase was flagged as not full three-phase, but wasn't: (%s) %u %u %u %u", 
+					GL_THROW("NR: A line's phase was flagged as not full three-phase, but wasn't: (%s) %u %u %u %u",
 									 branch[jindexer].name, branch[jindexer].phases, branch[jindexer].origphases, phase_worka, phase_workb);
 					/*  TROUBLESHOOT
 					A line inside the powerflow model was flagged as not being full three-phase or
@@ -3494,6 +3495,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		n = 2*powerflow_values->island_matrix_values[island_loop_index].total_variables;
 		nnz = powerflow_values->island_matrix_values[island_loop_index].size_Amatrix;
 
+//        std::cout<<(char*)matrix_solver_method<<std::endl;
 		if (powerflow_values->island_matrix_values[island_loop_index].matrices_LU.a_LU == NULL)	//First run
 		{
 			/* Set aside space for the arrays. */
@@ -3557,7 +3559,6 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			}
 			else if (matrix_solver_method == MM_EXTERN)	//External routine
 			{
-				//Run allocation routine
 				((void (*)(void *,unsigned int, unsigned int, bool))(LUSolverFcns.ext_alloc))(powerflow_values->island_matrix_values[island_loop_index].LU_solver_vars,n,n,NR_admit_change);
 			}
 			else

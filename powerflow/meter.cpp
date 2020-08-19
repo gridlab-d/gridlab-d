@@ -277,7 +277,7 @@ int meter::init(OBJECT *parent)
 	if(power_market != 0){
 		price_prop = gl_get_property(power_market, "current_market.clearing_price");
 		if(price_prop == 0){
-			GL_THROW("meter::power_market object \'%s\' does not publish \'current_market.clearing_price\'", (power_market->name ? power_market->name : "(anon)"));
+			GL_THROW(const_cast<char*>(R"(meter::power_market object '%s' does not publish 'current_market.clearing_price')"), (power_market->name ? power_market->name : "(anon)"));
 		}
 	}
 

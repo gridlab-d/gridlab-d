@@ -74,7 +74,7 @@ public:
 	inline int listen(int backlog) { return ::listen(sd,backlog); }; 
 	inline bool accept(Socket &svr) { int len=get_infosize(); sd=::accept(svr.get_socket(),(struct sockaddr*)get_info(),(socklen_t*)&len); return sd!=INVALID_SOCKET; };
 public:
-	static char *strerror(void);
+	static const char *strerror(void);
 };
 
 #endif

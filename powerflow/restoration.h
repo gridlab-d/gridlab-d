@@ -217,7 +217,7 @@ private:
 	OBJECT **fLinkObjList;				//Feeder "power link" - object list
 	FUNCTIONADDR *fLinkPowerFunc;		//Feeder "power update" function list (matches fLinkObjList)
 	double *feeder_power_limit;			//Feeder power limits - must match number of feeder vertices (feeders) - parsed from string
-	complex **feeder_power_link_value;	//Feeder power output - linked from parsed feeder list
+	gld::complex **feeder_power_link_value;	//Feeder power output - linked from parsed feeder list
 
 	int numMG;							//Number of microgrids
 	INTVECT MGIdx;						//Microgrid vertices - specify by object name and parse (string)
@@ -226,8 +226,8 @@ private:
 	OBJECT **mVerObjList;				//Microgrid vertices - object list
 	OBJECT **mLinkObjList;				//Microgrid "power link" - object list
 	FUNCTIONADDR *mLinkPowerFunc;		//Microgrid "power update" function list (matches fLinkObjList)
-	complex *microgrid_limit;			//Microgrid power limit - must match number of microgrid vertices - parsed from string (real & reactive)
-	complex **microgrid_power_link_value;	//Microgrid power output - linked from parsed microgrid list
+	gld::complex *microgrid_limit;			//Microgrid power limit - must match number of microgrid vertices - parsed from string (real & reactive)
+	gld::complex **microgrid_power_link_value;	//Microgrid power output - linked from parsed microgrid list
 	
 	FUNCTIONADDR fault_check_fxn;		//Function address for "reliability_alterations" function - meant to do topology check after a restoration operation
 
@@ -264,7 +264,7 @@ private:
 	CANDSWOP candidateSwOpe_1;			//Candidate switching operations on top_sim_1
 	CANDSWOP candidateSwOpe_2;			//Candidate switching operations on top_sim_2
 
-	complex **voltage_storage;			//Voltage storage - to restore when powerflow dies a horrible death
+	gld::complex **voltage_storage;			//Voltage storage - to restore when powerflow dies a horrible death
 
 	//Voltage saving (value saving) functions
 	void PowerflowSave(void);
@@ -272,7 +272,7 @@ private:
 
 	//General parsing functions
 	double *ParseDoubleString(char *input_string,int *num_items_found);
-	complex *ParseComplexString(char *input_string,int *num_items_found);
+	gld::complex *ParseComplexString(char *input_string,int *num_items_found);
 	OBJECT **ParseObjectString(char *input_string,int *num_items_found);
 	bool isSwitch(int iIndex, int jIndex);
 	bool isSwiInFeeder(BRANCHVERTICES *swi_2, int feederID_overload);

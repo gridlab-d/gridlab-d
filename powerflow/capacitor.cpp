@@ -20,6 +20,7 @@
 CLASS* capacitor::oclass = NULL;
 CLASS* capacitor::pclass = NULL;
 
+
 /**
 * constructor.  Class registration is only called once to 
 * register the class with the core. Include parent class constructor (node)
@@ -32,7 +33,7 @@ capacitor::capacitor(MODULE *mod):node(mod)
 	{
 		pclass = node::oclass;
 		
-		oclass = gl_register_class(mod,"capacitor",sizeof(capacitor),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
+		oclass = gl_register_class(mod, "capacitor",sizeof(capacitor),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class capacitor";
 		else
@@ -449,7 +450,7 @@ int capacitor::init(OBJECT *parent)
 		pTempProperty = new gld_property(RNode,"phases");
 
 		//Make sure it worked
-		if ((pTempProperty->is_valid() != true) || (pTempProperty->is_set() != true))
+		if (!pTempProperty->is_valid() || !pTempProperty->is_set())
 		{
 			GL_THROW("Capacitor:%d - %s - Unable to map phases for remote node object",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/* TROUBLESHOOT
@@ -510,7 +511,7 @@ int capacitor::init(OBJECT *parent)
 		RLink_indiv_power_in[0] = new gld_property(RLink,"power_in_A");
 
 		//Make sure it worked
-		if ((RLink_indiv_power_in[0]->is_valid() != true) || (RLink_indiv_power_in[0]->is_complex() != true))
+		if (!RLink_indiv_power_in[0]->is_valid() || !RLink_indiv_power_in[0]->is_complex())
 		{
 			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/* TROUBLESHOOT
@@ -523,7 +524,7 @@ int capacitor::init(OBJECT *parent)
 		RLink_indiv_power_in[1] = new gld_property(RLink,"power_in_B");
 
 		//Make sure it worked
-		if ((RLink_indiv_power_in[1]->is_valid() != true) || (RLink_indiv_power_in[1]->is_complex() != true))
+		if (!RLink_indiv_power_in[1]->is_valid() || !RLink_indiv_power_in[1]->is_complex())
 		{
 			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
@@ -533,7 +534,7 @@ int capacitor::init(OBJECT *parent)
 		RLink_indiv_power_in[2] = new gld_property(RLink,"power_in_C");
 
 		//Make sure it worked
-		if ((RLink_indiv_power_in[2]->is_valid() != true) || (RLink_indiv_power_in[2]->is_complex() != true))
+		if (!RLink_indiv_power_in[2]->is_valid() || !RLink_indiv_power_in[2]->is_complex())
 		{
 			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
@@ -543,7 +544,7 @@ int capacitor::init(OBJECT *parent)
 		RLink_current_in[0] = new gld_property(RLink,"current_in_A");
 
 		//Make sure it worked
-		if ((RLink_current_in[0]->is_valid() != true) || (RLink_current_in[0]->is_complex() != true))
+		if (!RLink_current_in[0]->is_valid() || !RLink_current_in[0]->is_complex())
 		{
 			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
@@ -553,7 +554,7 @@ int capacitor::init(OBJECT *parent)
 		RLink_current_in[1] = new gld_property(RLink,"current_in_B");
 
 		//Make sure it worked
-		if ((RLink_current_in[1]->is_valid() != true) || (RLink_current_in[1]->is_complex() != true))
+		if (!RLink_current_in[1]->is_valid() || !RLink_current_in[1]->is_complex())
 		{
 			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
@@ -563,7 +564,7 @@ int capacitor::init(OBJECT *parent)
 		RLink_current_in[2] = new gld_property(RLink,"current_in_C");
 
 		//Make sure it worked
-		if ((RLink_current_in[2]->is_valid() != true) || (RLink_current_in[2]->is_complex() != true))
+		if (!RLink_current_in[2]->is_valid() || !RLink_current_in[2]->is_complex())
 		{
 			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
@@ -578,7 +579,7 @@ int capacitor::init(OBJECT *parent)
 		RNode_voltage[0] = new gld_property(RNode,"voltage_A");
 
 		//Make sure it worked
-		if ((RNode_voltage[0]->is_valid() != true) || (RNode_voltage[0]->is_complex() != true))
+		if (!RNode_voltage[0]->is_valid() || !RNode_voltage[0]->is_complex())
 		{
 			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
@@ -588,7 +589,7 @@ int capacitor::init(OBJECT *parent)
 		RNode_voltage[1] = new gld_property(RNode,"voltage_B");
 
 		//Make sure it worked
-		if ((RNode_voltage[1]->is_valid() != true) || (RNode_voltage[1]->is_complex() != true))
+		if (!RNode_voltage[1]->is_valid() || !RNode_voltage[1]->is_complex())
 		{
 			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
@@ -598,7 +599,7 @@ int capacitor::init(OBJECT *parent)
 		RNode_voltage[2] = new gld_property(RNode,"voltage_C");
 
 		//Make sure it worked
-		if ((RNode_voltage[2]->is_valid() != true) || (RNode_voltage[2]->is_complex() != true))
+		if (!RNode_voltage[2]->is_valid() || !RNode_voltage[2]->is_complex())
 		{
 			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
@@ -608,7 +609,7 @@ int capacitor::init(OBJECT *parent)
 		RNode_voltaged[0] = new gld_property(RNode,"voltage_AB");
 
 		//Make sure it worked
-		if ((RNode_voltaged[0]->is_valid() != true) || (RNode_voltaged[0]->is_complex() != true))
+		if (!RNode_voltaged[0]->is_valid() || !RNode_voltaged[0]->is_complex())
 		{
 			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
@@ -618,7 +619,7 @@ int capacitor::init(OBJECT *parent)
 		RNode_voltaged[1] = new gld_property(RNode,"voltage_BC");
 
 		//Make sure it worked
-		if ((RNode_voltaged[1]->is_valid() != true) || (RNode_voltaged[1]->is_complex() != true))
+		if (!RNode_voltaged[1]->is_valid() || !RNode_voltaged[1]->is_complex())
 		{
 			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
@@ -628,7 +629,7 @@ int capacitor::init(OBJECT *parent)
 		RNode_voltaged[2] = new gld_property(RNode,"voltage_CA");
 
 		//Make sure it worked
-		if ((RNode_voltaged[2]->is_valid() != true) || (RNode_voltaged[2]->is_complex() != true))
+		if (!RNode_voltaged[2]->is_valid() || !RNode_voltaged[2]->is_complex())
 		{
 			GL_THROW("Capacitor:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
@@ -2098,7 +2099,11 @@ int capacitor::kmldata(int (*stream)(const char*,...))
 {
 	int phase[3] = {has_phase(PHASE_A),has_phase(PHASE_B),has_phase(PHASE_C)};
 	enumeration state[3] = {switchA_state, switchB_state, switchC_state};
-	char *control_desc[] = {"MANUAL","VAR","VOLT","VARVOLT","CURRENT"};
+	char *control_desc[] = {const_cast<char*>("MANUAL"),
+                         const_cast<char*>("VAR"),
+                         const_cast<char*>("VOLT"),
+                         const_cast<char*>("VARVOLT"),
+                         const_cast<char*>("CURRENT")};
 
 	// switch state
 	stream("<TR><TH ALIGN=LEFT>Status</TH>");

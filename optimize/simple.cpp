@@ -81,7 +81,7 @@ int simple::init(OBJECT *parent)
 	OBJECT *my = OBJECTHDR(this);
 	char buffer[1024];
 	struct {
-		char *name;
+		const char *name;
 		char *param;
 		double **var;
 		bool (**op)(double,double);

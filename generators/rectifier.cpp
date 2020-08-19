@@ -25,10 +25,10 @@ static PASSCONFIG clockpass = PC_BOTTOMUP;
 
 /* Class registration is only called once to register the class with the core */
 rectifier::rectifier(MODULE *module)
-{	
+{
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"rectifier",sizeof(rectifier),PC_BOTTOMUP|PC_AUTOLOCK);
+		oclass = gl_register_class(module, "rectifier",sizeof(rectifier),PC_BOTTOMUP|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class rectifier";
 		else
@@ -103,7 +103,7 @@ int rectifier::init(OBJECT *parent)
 		pCircuit_V = new gld_property(parent,"V_In");
 
 		//Make sure it worked
-		if ((pCircuit_V->is_valid() != true) || (pCircuit_V->is_complex() != true))
+		if (!pCircuit_V->is_valid() || !pCircuit_V->is_complex())
 		{
 			GL_THROW("rectifier:%d - %s - Unable to map parent inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
@@ -116,7 +116,7 @@ int rectifier::init(OBJECT *parent)
 		pLine_I = new gld_property(parent,"I_In");
 
 		//Make sure it worked
-		if ((pLine_I->is_valid() != true) || (pLine_I->is_complex() != true))
+		if (!pLine_I->is_valid() || !pLine_I->is_complex())
 		{
 			GL_THROW("rectifier:%d - %s - Unable to map parent inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
@@ -185,21 +185,21 @@ TIMESTAMP rectifier::sync(TIMESTAMP t0, TIMESTAMP t1)
 {	
 	gld_wlock *test_rlock;
 
-	V_Out = complex(V_Rated, 0);
+	V_Out = gld::complex(V_Rated, 0);
 
 	//TODO: consider installing duty or on-ratio limits
 	//AC-DC voltage magnitude ratio rule
 	double VInMag = V_Out.Mag() * PI / (3 * sqrt(6.0));
-	voltage_out[0] = complex(VInMag,0);
-	voltage_out[1] = complex(-VInMag/2, VInMag * sqrt(3.0) / 2);
-	voltage_out[2] = complex(-VInMag/2, -VInMag * sqrt(3.0) / 2);
+	voltage_out[0] = gld::complex(VInMag,0);
+	voltage_out[1] = gld::complex(-VInMag/2, VInMag * sqrt(3.0) / 2);
+	voltage_out[2] = gld::complex(-VInMag/2, -VInMag * sqrt(3.0) / 2);
 
 
 	switch(gen_mode_v){
 		case SUPPLY_DRIVEN:
 			{
 
-				complex S_A_In, S_B_In, S_C_In;
+				gld::complex S_A_In, S_B_In, S_C_In;
 
 				//DC Voltage, controlled by parent object determines DC Voltage.
 				S_A_In = voltage_out[0]*(~(current_out[0]));
@@ -216,10 +216,10 @@ TIMESTAMP rectifier::sync(TIMESTAMP t0, TIMESTAMP t1)
 				I_Out = ~(VA_Out / V_Out); //These values are completely real, but since parent object uses complex, use here as well and follow rule for complex conjugate
 
 				//Write the current
-				pLine_I->setp<complex>(I_Out,*test_rlock);
+				pLine_I->setp<gld::complex>(I_Out,*test_rlock);
 
 				//Write the voltage
-				pCircuit_V->setp<complex>(V_Out,*test_rlock);
+				pCircuit_V->setp<gld::complex>(V_Out,*test_rlock);
 
 				return TS_NEVER;
 			}

@@ -3,6 +3,7 @@
  Copyright (C) 2012 Battelle Memorial Institute
  **/
 
+#include "config.h"
 #ifdef HAVE_MYSQL
 
 #include <time.h>

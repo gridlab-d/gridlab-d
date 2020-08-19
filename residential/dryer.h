@@ -16,7 +16,7 @@
 class dryer : public residential_enduse
 {
 public:
-	typedef enum {	DRYER_STOPPED=0,		///< motor is stopped
+	enum {	DRYER_STOPPED=0,		///< motor is stopped
 			DRYER_STALLED=1,						///< motor is stalled
 			DRYER_TRIPPED=2,						///< motor is tripped
 			DRYER_MOTOR_COIL_ONLY=3,				///<only the coil and motor are operating
@@ -73,7 +73,7 @@ public:
 
 	double stall_voltage;				///< voltage at which the motor stalls
 	double start_voltage;				///< voltage at which motor can start
-	complex stall_impedance;			///< impedance of motor when stalled
+	gld::complex stall_impedance;			///< impedance of motor when stalled
 	double trip_delay;					///< stalled time before thermal trip
 	double reset_delay;					///< trip time before thermal reset and restart
 	double heat_fraction;				///< internal gain fraction of installed power

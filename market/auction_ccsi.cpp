@@ -1430,14 +1430,14 @@ void auction_ccsi::clear_market(void)
 
 void auction_ccsi::record_bid(char *from, double quantity, double real_price, BIDDERSTATE state){
 	char name_buffer[256];
-	char *unkState = "unknown";
-	char *offState = "off";
-	char *onState = "on";
-	char *unk = "unknown time";
+	const char *unkState = "unknown";
+	const char *offState = "off";
+	const char *onState = "on";
+	const char *unk = "unknown time";
 	char buffer[256];
 	char bigbuffer[1024];
-	char *pState;
-	char *tStr;
+	const char *pState;
+	const char *tStr;
 	DATETIME dt;
 	TIMESTAMP submit_time = gl_globalclock;
 	if(trans_file){ // copied from version below
@@ -1516,6 +1516,7 @@ int auction_ccsi::submit_nolock(char *from, double quantity, double real_price, 
 		/* TROUBLESHOOT
 			Tracking bids input markets other than the immediately open one will be supported in the future.
 			*/
+		throw; // TODO: resolve this to be desired value.
 	}
 	else if (mkt_id == market_id && rebid == true) // resubmit
 	{

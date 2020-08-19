@@ -158,7 +158,7 @@ private:
 	gld_keyword *PS_OFF, *PS_ON, *PS_UNKNOWN;
 	enumeration last_pState;
 	void cheat();
-	int fetch_property(gld_property **prop, char *propName, OBJECT *obj);
+	int fetch_property(gld_property **prop, const char *propName, OBJECT *obj);
 	int dir, direction;
 	int dir2, direction2;
 	int market_flag;

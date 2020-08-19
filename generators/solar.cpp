@@ -166,9 +166,9 @@ int solar::create(void)
 	currTemp = 15.0;	//Start at a reasonable ambient temp (degC)
 	prevTime = 0;
 	Rated_Insolation = 92.902; //W/Sf for 1000 W/m2
-    V_Max = complex (27.1,0);  // max. power voltage (Vmp) from GE solar cell performance charatcetristics
-	Voc_Max = complex(34,0); //taken from GEPVp-200-M-Module performance characteristics
-	Voc = complex (34,0);  //taken from GEPVp-200-M-Module performance characteristics
+    V_Max = gld::complex (27.1,0);  // max. power voltage (Vmp) from GE solar cell performance charatcetristics
+	Voc_Max = gld::complex(34,0); //taken from GEPVp-200-M-Module performance characteristics
+	Voc = gld::complex (34,0);  //taken from GEPVp-200-M-Module performance characteristics
 	P_Out = 0.0;
 
 	area = 0; //sq f , 30m2
@@ -212,8 +212,8 @@ int solar::create(void)
 	inverter_current_property = NULL;
 
 	//Default versions
-	default_voltage_array = complex(0.0,0.0);
-	default_current_array = complex(0.0,0.0);
+	default_voltage_array = gld::complex(0.0,0.0);
+	default_current_array = gld::complex(0.0,0.0);
 	
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -339,7 +339,7 @@ int solar::init_climate()
 			pTout = new gld_property(obj,"temperature");
 
 			//Check it
-			if ((pTout->is_valid() != true) || (pTout->is_double() != true))
+			if (!pTout->is_valid() || !pTout->is_double())
 			{
 				GL_THROW("solar:%d - %s - Failed to map outside temperature",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
 				/*  TROUBLESHOOT
@@ -352,7 +352,7 @@ int solar::init_climate()
 			pWindSpeed = new gld_property(obj,"wind_speed");
 
 			//Check tit
-			if ((pWindSpeed->is_valid() != true) || (pWindSpeed->is_double() != true))
+			if (!pWindSpeed->is_valid() || !pWindSpeed->is_double())
 			{
 				GL_THROW("solar:%d - %s - Failed to map wind speed",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
 				/*  TROUBLESHOOT
@@ -362,7 +362,7 @@ int solar::init_climate()
 			}
 
 			//If climate data was found, check other related variables
-			if (fix_angle_lat==true)
+			if (fix_angle_lat)
 			{
 				if (hdr->latitude < 0)	//Southern hemisphere
 				{
@@ -638,13 +638,13 @@ int solar::init(OBJECT *parent)
 	// find parent inverter, if not defined, use a default voltage
 	if (parent != NULL)
 	{
-		if (gl_object_isa(parent,"inverter","generators") == true) // SOLAR has a PARENT and PARENT is an INVERTER
+		if (gl_object_isa(parent, "inverter", "generators")) // SOLAR has a PARENT and PARENT is an INVERTER
 		{
 			//Map the inverter voltage
 			inverter_voltage_property = new gld_property(parent,"V_In");
 
 			//Check it
-			if ((inverter_voltage_property->is_valid() != true) || (inverter_voltage_property->is_complex() != true))
+			if (!inverter_voltage_property->is_valid() || !inverter_voltage_property->is_complex())
 			{
 				GL_THROW("solar:%d - %s - Unable to map inverter power interface field",obj->id,(obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
@@ -657,7 +657,7 @@ int solar::init(OBJECT *parent)
 			inverter_current_property = new gld_property(parent,"I_In");
 
 			//Check it
-			if ((inverter_current_property->is_valid() != true) || (inverter_current_property->is_complex() != true))
+			if (!inverter_current_property->is_valid() || !inverter_current_property->is_complex())
 			{
 				GL_THROW("solar:%d - %s - Unable to map inverter power interface field",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -667,7 +667,7 @@ int solar::init(OBJECT *parent)
 			temp_property_pointer = new gld_property(parent,"use_multipoint_efficiency");
 
 			//Check and make sure it is valid
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_bool() != true))
+			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_bool())
 			{
 				GL_THROW("solar:%d - %s - Unable to map inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
@@ -686,7 +686,7 @@ int solar::init(OBJECT *parent)
 			temp_property_pointer = new gld_property(parent,"maximum_dc_power");
 
 			//Check it
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_double())
 			{
 				GL_THROW("solar:%d - %s - Unable to map inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -702,7 +702,7 @@ int solar::init(OBJECT *parent)
 			temp_property_pointer = new gld_property(parent,"inverter_type");
 
 			//Check it
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_enumeration() != true))
+			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_enumeration())
 			{
 				GL_THROW("solar:%d - %s - Unable to map inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -718,7 +718,7 @@ int solar::init(OBJECT *parent)
 			temp_property_pointer = new gld_property(parent,"number_of_phases_out");
 
 			//Check it
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_integer() != true))
+			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_integer())
 			{
 				GL_THROW("solar:%d - %s - Unable to map inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -734,7 +734,7 @@ int solar::init(OBJECT *parent)
 			temp_property_pointer = new gld_property(parent,"rated_power");
 
 			//Check it
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_double())
 			{
 				GL_THROW("solar:%d - %s - Unable to map inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -750,7 +750,7 @@ int solar::init(OBJECT *parent)
 			temp_property_pointer = new gld_property(parent,"efficiency_value");
 
 			//Check it
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_double())
 			{
 				GL_THROW("solar:%d - %s - Unable to map inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -766,7 +766,7 @@ int solar::init(OBJECT *parent)
 			temp_property_pointer = new gld_property(parent,"inverter_efficiency");
 
 			//Check it
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_double())
 			{
 				GL_THROW("solar:%d - %s - Unable to map inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -838,7 +838,7 @@ int solar::init(OBJECT *parent)
 		inverter_voltage_property = new gld_property(obj,"default_voltage_variable");
 
 		//Check it
-		if ((inverter_voltage_property->is_valid() != true) || (inverter_voltage_property->is_complex() != true))
+		if (!inverter_voltage_property->is_valid() || !inverter_voltage_property->is_complex())
 		{
 			GL_THROW("solar:%d - %s - Unable to map a default power interface field",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
@@ -851,14 +851,14 @@ int solar::init(OBJECT *parent)
 		inverter_current_property = new gld_property(obj,"default_current_variable");
 
 		//Check it
-		if ((inverter_current_property->is_valid() != true) || (inverter_current_property->is_complex() != true))
+		if (!inverter_current_property->is_valid() || !inverter_current_property->is_complex())
 		{
 			GL_THROW("solar:%d - %s - Unable to map a default power interface field",obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
 		}
 
 		//Set the local voltage value
-		default_voltage_array = complex(V_Max.Re()/sqrt(3.0),0);
+		default_voltage_array = gld::complex(V_Max.Re()/sqrt(3.0),0);
 	}
 
 	climate_result=init_climate();
@@ -947,7 +947,7 @@ int solar::init(OBJECT *parent)
 
 TIMESTAMP solar::presync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	I_Out = complex(0.0,0.0);
+	I_Out = gld::complex(0.0,0.0);
 	
 	TIMESTAMP t2 = TS_NEVER;
 	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
@@ -1163,8 +1163,8 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
      I_Out = (VA_Out/V_Out);
 
 	//Export the values
-	inverter_voltage_property->setp<complex>(V_Out,*test_rlock);
-	inverter_current_property->setp<complex>(I_Out,*test_rlock);
+	inverter_voltage_property->setp<gld::complex>(V_Out,*test_rlock);
+	inverter_current_property->setp<gld::complex>(I_Out,*test_rlock);
 
 	return TS_NEVER; 
 }

@@ -17,7 +17,7 @@ void new_metrics_collector_writer(MODULE *mod){
 metrics_collector_writer::metrics_collector_writer(MODULE *mod){
 	if(oclass == NULL)
 	{
-		oclass = gl_register_class(mod,"metrics_collector_writer",sizeof(metrics_collector_writer),PC_POSTTOPDOWN);
+		oclass = gl_register_class(mod, const_cast<char *>("metrics_collector_writer"), sizeof(metrics_collector_writer), PC_POSTTOPDOWN);
 		if (oclass==NULL)
 			throw "unable to register class metrics_collector_writer";
 
@@ -27,7 +27,7 @@ metrics_collector_writer::metrics_collector_writer(MODULE *mod){
 			PT_char8,"alternate",PADDR(alternate),PT_DESCRIPTION,"the alternate file name convention",
 			PT_double, "interim[s]", PADDR(interim_length_dbl), PT_DESCRIPTION, "Interim at which metrics_collector_writer output is written",
 			PT_double, "interval[s]", PADDR(interval_length_dbl), PT_DESCRIPTION, "Interval at which the metrics_collector_writer output is stored in JSON format",
-			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+			NULL) < 1) GL_THROW(const_cast<char *>("unable to publish properties in %s"), __FILE__);
     }
 }
 
@@ -1195,7 +1195,7 @@ void metrics_collector_writer::hdfLineWrite (size_t objs, Json::Value& metrics) 
 		hdfWrite(filename_line, mtype_lines, &tbl, 5, idx);
 		metrics.clear();
 }
-#endif HAVE_HDF5
+#endif // HAVE_HDF5
 
 EXPORT int create_metrics_collector_writer(OBJECT **obj, OBJECT *parent){
 	int rv = 0;

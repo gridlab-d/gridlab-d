@@ -1,0 +1,23 @@
+#ifndef _GRIDLABD_VERSION_H
+#define _GRIDLABD_VERSION_H
+
+#define REV_MAJOR @REV_MAJOR@
+#define REV_MINOR @REV_MINOR@
+#define REV_PATCH @REV_PATCH@
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#else
+#define PACKAGE "@PACKAGE@"
+#define PACKAGE_NAME "@PACKAGE_NAME@"
+#define PACKAGE_VERSION "@PACKAGE_VERSION@"
+#define PACKAGE_STRING "@PACKAGE_STRING@"
+#endif
+
+char *version_copyright(void);
+unsigned int version_major(void);
+unsigned int version_minor(void);
+unsigned int version_patch(void);
+unsigned int version_build(void);
+const char *version_branch(void);
+#endif

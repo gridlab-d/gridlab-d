@@ -350,7 +350,7 @@ int link_object::init(OBJECT *parent)
 		if (obj->parent==NULL)
 		{
 			/* make 'from' object parent of this object */
-			if (gl_object_isa(from,"node")) 
+			if (gl_object_isa(from,"node"))
 			{
 				if(gl_set_parent(obj, from) < 0)
 					throw "error when setting parent";
@@ -3363,7 +3363,7 @@ int link_object::kmldump(int (*stream)(const char*,...))
 			"<TH WIDTH=\"25%\" COLSPAN=2 ALIGN=CENTER><NOBR>Phase C</NOBR><HR></TH></TR>\n", get_oclass()->get_name(), get_id());
 
 	int status = 2; // green
-#define HANDLE_EX(X,Y)if ( gl_object_isa(my(),Y) ) status = ((X*)this)->kmldata(stream); else
+#define HANDLE_EX(X, Y)if ( gl_object_isa(my(),strdup(Y)) ) status = ((X*)this)->kmldata(stream); else
 #define HANDLE(X) HANDLE_EX(X,#X)
 	HANDLE_EX(switch_object,"switch")
 	HANDLE(regulator)
@@ -5011,7 +5011,7 @@ void link_object::calculate_power()
 }
 
 //Retrieve value of a double
-double *link_object::get_double(OBJECT *obj, char *name)
+double *link_object::get_double(OBJECT *obj, const char *name)
 {
 	PROPERTY *p = gl_get_property(obj,name);
 	if (p==NULL || p->ptype!=PT_double)
@@ -8061,8 +8061,11 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			pf_mesh_fault_values.NodeRefNum = NR_branchdata[NR_branch_reference].to;
 
 			//Call the powerflow/impednace creater
-			pf_resultval = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, pf_solvermode, &pf_mesh_fault_values, &pf_badcompute);
-
+#ifndef GLD_USE_EIGEN
+        pf_resultval = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, pf_solvermode, &pf_mesh_fault_values, &pf_badcompute);
+#else
+        pf_resultval = 0;
+#endif
 			//Check the output
 			if ((pf_badcompute == true) || (pf_mesh_fault_values.return_code != 1) || (pf_resultval <= 0))
 			{

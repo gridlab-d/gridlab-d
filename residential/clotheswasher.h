@@ -25,13 +25,13 @@ public:
 	double state_time;					///< remaining time in current state (s)
 	double stall_voltage;				///< voltage at which the motor stalls
 	double start_voltage;				///< voltage at which motor can start
-	complex stall_impedance;			///< impedance of motor when stalled
+	gld::complex stall_impedance;			///< impedance of motor when stalled
 	double trip_delay;					///< stalled time before thermal trip
 	double reset_delay;					///< trip time before thermal reset and restart
 	double heat_fraction;				///< internal gain fraction of installed power
 	TIMESTAMP time_state;				///< time in current state
 	bool starttime;
-	typedef enum {
+	enum {
 		STOPPED=0,						///< motor is stopped
 		RUNNING=1,						///< motor is running
 		STALLED=2,						///< motor is stalled

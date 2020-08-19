@@ -171,9 +171,9 @@ private:
 	enumeration *pState;
 	enumeration last_pState;
 	void cheat();
-	void fetch_double(double **prop, char *name, OBJECT *parent);
-	void fetch_int64(int64 **prop, char *name, OBJECT *parent);
-	void fetch_enum(enumeration **prop, char *name, OBJECT *parent);
+	void fetch_double(double **prop, const char *name, OBJECT *parent);
+	void fetch_int64(int64 **prop, const char *name, OBJECT *parent);
+	void fetch_enum(enumeration **prop, const char *name, OBJECT *parent);
 	int dir, direction;
 	double min, max;
 	double T_lim, k_T;

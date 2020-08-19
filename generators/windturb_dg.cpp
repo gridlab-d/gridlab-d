@@ -10,7 +10,7 @@ Copyright (C) 2008 Battelle Memorial Institute
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
-#include <complex.h>
+#include <gld_complex.h>
 
 #include "windturb_dg.h"
 
@@ -128,7 +128,7 @@ windturb_dg::windturb_dg(MODULE *module)
 			PT_KEYWORD, "C",(set)PHASE_C,
 			PT_KEYWORD, "N",(set)PHASE_N,
 			PT_KEYWORD, "S",(set)PHASE_S,
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);		
+			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 	}
 }
 
@@ -170,8 +170,8 @@ int windturb_dg::create(void)
 
 	pCircuit_V[0] = pCircuit_V[1] = pCircuit_V[2] = NULL;
 	pLine_I[0] = pLine_I[1] = pLine_I[2] = NULL;
-	value_Circuit_V[0] = value_Circuit_V[1] = value_Circuit_V[2] = complex(0.0,0.0);
-	value_Line_I[0] = value_Line_I[1] = value_Line_I[2] = complex(0.0,0.0);
+	value_Circuit_V[0] = value_Circuit_V[1] = value_Circuit_V[2] = gld::complex(0.0,0.0);
+	value_Line_I[0] = value_Line_I[1] = value_Line_I[2] = gld::complex(0.0,0.0);
 	parent_is_valid = false;
 
     pPress = NULL;
@@ -234,7 +234,7 @@ int windturb_dg::init_climate()
 			if (obj->rank<=hdr->rank)
 				gl_set_dependent(obj,hdr);
 
-			pWS = map_double_value(obj,"wind_speed");  
+			pWS = map_double_value(obj,"wind_speed");
 			pPress = map_double_value(obj,"pressure");
 			pTemp = map_double_value(obj,"temperature");
 
@@ -254,7 +254,7 @@ int windturb_dg::init(OBJECT *parent)
 	int temp_phases=0;
 		
 	double ZB, SB, EB;
-	complex tst, tst2, tst3, tst4;
+	gld::complex tst, tst2, tst3, tst4;
 
 	switch (Turbine_Model)	{
 		case GENERIC_IND_LARGE:
@@ -520,7 +520,7 @@ int windturb_dg::init(OBJECT *parent)
 			//Map the voltages
 			temp_property_pointer = new gld_property(parent,"nominal_voltage");
 
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_double())
 			{
 				GL_THROW("Unable to map nominal_voltage property - ensure the parent is a powerflow:meter");
 				/*  TROUBLESHOOT
@@ -570,7 +570,7 @@ int windturb_dg::init(OBJECT *parent)
 			//Map the voltages
 			temp_property_pointer = new gld_property(parent,"V_Rated");
 
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_double())
 			{
 				GL_THROW("Unable to map V_Rated property - ensure the parent is a powerflow:meter");
 				/*  TROUBLESHOOT
@@ -658,14 +658,14 @@ int windturb_dg::init(OBJECT *parent)
 
 	if (Gen_type == INDUCTION)  
 	{
-		complex Zrotor(Rr,Xr);
-		complex Zmag = complex(Rc*Xm*Xm/(Rc*Rc + Xm*Xm),Rc*Rc*Xm/(Rc*Rc + Xm*Xm));
-		complex Zstator(Rst,Xst);
+		gld::complex Zrotor(Rr,Xr);
+		gld::complex Zmag = gld::complex(Rc*Xm*Xm/(Rc*Rc + Xm*Xm),Rc*Rc*Xm/(Rc*Rc + Xm*Xm));
+		gld::complex Zstator(Rst,Xst);
 
 		//Induction machine two-port matrix.
 		IndTPMat[0][0] = (Zmag + Zstator)/Zmag;
 		IndTPMat[0][1] = Zrotor + Zstator + Zrotor*Zstator/Zmag;
-		IndTPMat[1][0] = complex(1,0) / Zmag;
+		IndTPMat[1][0] = gld::complex(1,0) / Zmag;
 		IndTPMat[1][1] = (Zmag + Zrotor) / Zmag;
 	}
 
@@ -675,13 +675,13 @@ int windturb_dg::init(OBJECT *parent)
 		double Real_Xs = Xs * ZB;
 		double Real_Rg = Rg * ZB; 
 		double Real_Xg = Xg * ZB;
-		tst = complex(Real_Rg,Real_Xg);
-		tst2 = complex(Real_Rs,Real_Xs);
+		tst = gld::complex(Real_Rg,Real_Xg);
+		tst2 = gld::complex(Real_Rs,Real_Xs);
 		AMx[0][0] = tst2 + tst;			//Impedance matrix
 		AMx[1][1] = tst2 + tst;
 		AMx[2][2] = tst2 + tst;
 		AMx[0][1] = AMx[0][2] = AMx[1][0] = AMx[1][2] = AMx[2][0] = AMx[2][1] = tst;
-		tst3 = (complex(1,0) + complex(2,0)*tst/tst2)/(tst2 + complex(3,0)*tst);
+		tst3 = (gld::complex(1,0) + gld::complex(2,0)*tst/tst2)/(tst2 + gld::complex(3,0)*tst);
 		tst4 = (-tst/tst2)/(tst2 + tst);
 		invAMx[0][0] = tst3;			//Admittance matrix (inverse of Impedance matrix)
 		invAMx[1][1] = tst3;
@@ -875,7 +875,7 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			Vrotor_B = Vbpu;
 			Vrotor_C = Vcpu;
 
-			complex detTPMat = IndTPMat[1][1]*IndTPMat[0][0] - IndTPMat[1][0]*IndTPMat[0][1];
+			gld::complex detTPMat = IndTPMat[1][1]*IndTPMat[0][0] - IndTPMat[1][0]*IndTPMat[0][1];
 
 			if (Pconv > 0)			
 			{
@@ -884,17 +884,17 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 				case CONSTANTE:
 					for(k = 0; k < 6; k++) //TODO: convert to a convergence
 					{
-						Irotor_A = (~((complex(Pconva,0)/Vrotor_A)));
-						Irotor_B = (~((complex(Pconvb,0)/Vrotor_B)));
-						Irotor_C = (~((complex(Pconvc,0)/Vrotor_C)));
+						Irotor_A = (~((gld::complex(Pconva,0)/Vrotor_A)));
+						Irotor_B = (~((gld::complex(Pconvb,0)/Vrotor_B)));
+						Irotor_C = (~((gld::complex(Pconvc,0)/Vrotor_C)));
 
 						Iapu = IndTPMat[1][0]*Vrotor_A + IndTPMat[1][1]*Irotor_A;
 						Ibpu = IndTPMat[1][0]*Vrotor_B + IndTPMat[1][1]*Irotor_B;
 						Icpu = IndTPMat[1][0]*Vrotor_C + IndTPMat[1][1]*Irotor_C;
 
-						Vrotor_A = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vapu - IndTPMat[0][1]*Iapu);
-						Vrotor_B = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vbpu - IndTPMat[0][1]*Ibpu);
-						Vrotor_C = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vcpu - IndTPMat[0][1]*Icpu);
+						Vrotor_A = gld::complex(1,0)/detTPMat * (IndTPMat[1][1]*Vapu - IndTPMat[0][1]*Iapu);
+						Vrotor_B = gld::complex(1,0)/detTPMat * (IndTPMat[1][1]*Vbpu - IndTPMat[0][1]*Ibpu);
+						Vrotor_C = gld::complex(1,0)/detTPMat * (IndTPMat[1][1]*Vcpu - IndTPMat[0][1]*Icpu);
 
 						Vrotor_A = Vrotor_A * Max_Vrotor / Vrotor_A.Mag();
 						Vrotor_B = Vrotor_B * Max_Vrotor / Vrotor_B.Mag();
@@ -910,17 +910,17 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 					{
 						last_Ipu = current_Ipu;
 
-						Irotor_A = -(~complex(-Pconva/Vrotor_A.Mag()*cos(Vrotor_A.Arg()),Pconva/Vrotor_A.Mag()*sin(Vrotor_A.Arg())));
-						Irotor_B = -(~complex(-Pconvb/Vrotor_B.Mag()*cos(Vrotor_B.Arg()),Pconvb/Vrotor_B.Mag()*sin(Vrotor_B.Arg())));
-						Irotor_C = -(~complex(-Pconvc/Vrotor_C.Mag()*cos(Vrotor_C.Arg()),Pconvc/Vrotor_C.Mag()*sin(Vrotor_C.Arg())));
+						Irotor_A = -(~gld::complex(-Pconva/Vrotor_A.Mag()*cos(Vrotor_A.Arg()),Pconva/Vrotor_A.Mag()*sin(Vrotor_A.Arg())));
+						Irotor_B = -(~gld::complex(-Pconvb/Vrotor_B.Mag()*cos(Vrotor_B.Arg()),Pconvb/Vrotor_B.Mag()*sin(Vrotor_B.Arg())));
+						Irotor_C = -(~gld::complex(-Pconvc/Vrotor_C.Mag()*cos(Vrotor_C.Arg()),Pconvc/Vrotor_C.Mag()*sin(Vrotor_C.Arg())));
 
 						Iapu = IndTPMat[1][0]*Vrotor_A - IndTPMat[1][1]*Irotor_A;
 						Ibpu = IndTPMat[1][0]*Vrotor_B - IndTPMat[1][1]*Irotor_B;
 						Icpu = IndTPMat[1][0]*Vrotor_C - IndTPMat[1][1]*Irotor_C;
 
-						Vrotor_A = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vapu - IndTPMat[0][1]*Iapu);
-						Vrotor_B = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vbpu - IndTPMat[0][1]*Ibpu);
-						Vrotor_C = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vcpu - IndTPMat[0][1]*Icpu);
+						Vrotor_A = gld::complex(1,0)/detTPMat * (IndTPMat[1][1]*Vapu - IndTPMat[0][1]*Iapu);
+						Vrotor_B = gld::complex(1,0)/detTPMat * (IndTPMat[1][1]*Vbpu - IndTPMat[0][1]*Ibpu);
+						Vrotor_C = gld::complex(1,0)/detTPMat * (IndTPMat[1][1]*Vcpu - IndTPMat[0][1]*Icpu);
 
 						current_Ipu = Iapu.Mag() + Ibpu.Mag() + Icpu.Mag();
 
@@ -959,8 +959,8 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 		else if (Gen_type == SYNCHRONOUS)			//synch gen is NOT solved in pu
 		{											//sg ef mode is not working yet
 			double Mxef, Mnef, PoutA, PoutB, PoutC, QoutA, QoutB, QoutC;
-			complex SoutA, SoutB, SoutC;
-			complex lossesA, lossesB, lossesC;
+			gld::complex SoutA, SoutB, SoutC;
+			gld::complex lossesA, lossesB, lossesC;
 
 			Mxef = Max_Ef * Rated_V/sqrt(3.0);
 			Mnef = Min_Ef * Rated_V/sqrt(3.0);
@@ -991,19 +991,19 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 					Pconvc = 1.025*Max_P/3;
 				}
 				if(voltage_A.Mag() > 0.0){
-					current_A = -(~(complex(Pconva,Pconva*tan(acos(pf)))/voltage_A));
+					current_A = -(~(gld::complex(Pconva,Pconva*tan(acos(pf)))/voltage_A));
 				} else {
-					current_A = complex(0.0,0.0);
+					current_A = gld::complex(0.0,0.0);
 				}
 				if(voltage_B.Mag() > 0.0){
-					current_B = -(~(complex(Pconvb,Pconvb*tan(acos(pf)))/voltage_B));
+					current_B = -(~(gld::complex(Pconvb,Pconvb*tan(acos(pf)))/voltage_B));
 				} else {
-					current_B = complex(0.0,0.0);
+					current_B = gld::complex(0.0,0.0);
 				}
 				if(voltage_B.Mag() > 0.0){
-					current_C = -(~(complex(Pconvc,Pconvc*tan(acos(pf)))/voltage_C));
+					current_C = -(~(gld::complex(Pconvc,Pconvc*tan(acos(pf)))/voltage_C));
 				} else {
-					current_C = complex(0.0,0.0);
+					current_C = gld::complex(0.0,0.0);
 				}
 
 				if (Pconv > 0)
@@ -1024,19 +1024,19 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 						QoutB = pf/fabs(pf)*PoutB*sin(acos(pf));
 						QoutC = pf/fabs(pf)*PoutC*sin(acos(pf));
 						if(voltage_A.Mag() > 0.0){
-							current_A = -(~(complex(PoutA,QoutA)/voltage_A));
+							current_A = -(~(gld::complex(PoutA,QoutA)/voltage_A));
 						} else {
-							current_A = complex(0.0,0.0);
+							current_A = gld::complex(0.0,0.0);
 						}
 						if(voltage_B.Mag() > 0.0){
-						current_B = -(~(complex(PoutB,QoutB)/voltage_B));
+						current_B = -(~(gld::complex(PoutB,QoutB)/voltage_B));
 						} else {
-							current_B = complex(0.0,0.0);
+							current_B = gld::complex(0.0,0.0);
 						}
 						if(voltage_C.Mag() > 0.0){
-						current_C = -(~(complex(PoutC,QoutC)/voltage_C));
+						current_C = -(~(gld::complex(PoutC,QoutC)/voltage_C));
 						} else {
-							current_C = complex(0.0,0.0);
+							current_C = gld::complex(0.0,0.0);
 						}
 
 						current_current = current_A.Mag() + current_B.Mag() + current_C.Mag();
@@ -1086,9 +1086,9 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 		QB = -voltage_B.Mag()*current_B.Mag()*sin(voltage_B.Arg() - current_B.Arg());
 		QC = -voltage_C.Mag()*current_C.Mag()*sin(voltage_C.Arg() - current_C.Arg());
 
-		power_A = complex(PowerA,QA);
-		power_B = complex(PowerB,QB);
-		power_C = complex(PowerC,QC);
+		power_A = gld::complex(PowerA,QA);
+		power_B = gld::complex(PowerB,QB);
+		power_C = gld::complex(PowerC,QC);
 
 		TotalRealPow = PowerA + PowerB + PowerC;
 		TotalReacPow = QA + QB + QC;
@@ -1115,9 +1115,9 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 		current_B = 0;
 		current_C = 0;
 
-		power_A = complex(0,0);
-		power_B = complex(0,0);
-		power_C = complex(0,0);
+		power_A = gld::complex(0,0);
+		power_B = gld::complex(0,0);
+		power_C = gld::complex(0,0);
 	}
 
 	// Double check to make sure it is actually converged to a steady answer
@@ -1141,7 +1141,7 @@ TIMESTAMP windturb_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	value_Line_I[2] = -current_C;
 
 	//Push up the powerflow interface
-	if (parent_is_valid == true)
+	if (parent_is_valid)
 	{
 		push_complex_powerflow_values();
 	}
@@ -1150,7 +1150,7 @@ TIMESTAMP windturb_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 }
 
 //Map Complex value
-gld_property *windturb_dg::map_complex_value(OBJECT *obj, char *name)
+gld_property *windturb_dg::map_complex_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	OBJECT *objhdr = OBJECTHDR(this);
@@ -1159,7 +1159,7 @@ gld_property *windturb_dg::map_complex_value(OBJECT *obj, char *name)
 	pQuantity = new gld_property(obj,name);
 
 	//Make sure it worked
-	if ((pQuantity->is_valid() != true) || (pQuantity->is_complex() != true))
+	if (!pQuantity->is_valid() || !pQuantity->is_complex())
 	{
 		GL_THROW("windturb_dg:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
@@ -1173,7 +1173,7 @@ gld_property *windturb_dg::map_complex_value(OBJECT *obj, char *name)
 }
 
 //Map double value
-gld_property *windturb_dg::map_double_value(OBJECT *obj, char *name)
+gld_property *windturb_dg::map_double_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	OBJECT *objhdr = OBJECTHDR(this);
@@ -1198,7 +1198,7 @@ gld_property *windturb_dg::map_double_value(OBJECT *obj, char *name)
 //Function to push up all changes of complex properties to powerflow from local variables
 void windturb_dg::push_complex_powerflow_values(void)
 {
-	complex temp_complex_val;
+	gld::complex temp_complex_val;
 	gld_wlock *test_rlock;
 	int indexval;
 
@@ -1213,7 +1213,7 @@ void windturb_dg::push_complex_powerflow_values(void)
 		temp_complex_val += value_Line_I[indexval];
 
 		//Push it back up
-		pLine_I[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+		pLine_I[indexval]->setp<gld::complex>(temp_complex_val,*test_rlock);
 	}
 }
 

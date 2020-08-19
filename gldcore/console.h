@@ -12,9 +12,11 @@
 
 /* simulate needed curses functions in Windows */
 #ifdef _WIN32
+#include <windows.h>
+#undef HAVE_CURSES
 #define HAVE_CURSES
-HANDLE console = NULL;
-HANDLE keyboard = NULL;
+static HANDLE console = NULL;
+static HANDLE keyboard = NULL;
 #define stdscr console
 #define ERR -1
 #define A_BOLD FOREGROUND_INTENSITY
@@ -25,8 +27,8 @@ HANDLE keyboard = NULL;
 #define KEY_ENTER 13
 #define KEY_TAB 9
 #define KEY_DEL 892
-int attr = 0;
-void initscr(void)
+static int attr = 0;
+inline void initscr(void)
 {
 	CONSOLE_SCREEN_BUFFER_INFO info;
 	DWORD mode;
@@ -41,19 +43,19 @@ void initscr(void)
 	mode &= ~ENABLE_LINE_INPUT;
 	SetConsoleMode(keyboard,mode);
 }
-void cbreak(void)
+inline void cbreak(void)
 {
 	/* nothing to do - Windows already does this by default */
 }
-void echo(void)
+inline void echo(void)
 {
 	/* doesn't work with ENABLE_LINE_INPUT off so it's done manually in wgetch */
 }
-void refresh(void)
+inline void refresh(void)
 {
 	/* currently unbuffered output */
 }
-void clear(void)
+inline void clear(void)
 {
 	COORD home={0,0};
 	CONSOLE_SCREEN_BUFFER_INFO cbsi;
@@ -66,30 +68,30 @@ void clear(void)
 	FillConsoleOutputAttribute(console,cbsi.wAttributes,size,home,&done);
 	SetConsoleCursorPosition(console,home);
 }
-void intrflush(HANDLE w, BOOL bf)
+inline void intrflush(HANDLE w, BOOL bf)
 {
 	/* nothing to do - Windows already does this by default */
 }
-void keypad(HANDLE w, BOOL bf)
+inline void keypad(HANDLE w, BOOL bf)
 {
 }
 #include <sys/timeb.h>
-int delay=0;
-int halfdelay(int t)
+static int delay=0;
+inline int halfdelay(int t)
 {
 	delay = t;
 	return 0;
 }
-void mvprintw(int y, int x, const char *fmt, ...)
+inline void mvprintw(int y, int x, const char *fmt, ...)
 {
 	va_list ptr;
-	COORD pos={x,y};
+	COORD pos={static_cast<SHORT>(x), static_cast<SHORT>(y)};
 	SetConsoleCursorPosition(console,pos);
 	va_start(ptr,fmt);
 	vfprintf(stdout,fmt,ptr);
 	va_end(ptr);
 }
-int wgetch(HANDLE w)
+inline int wgetch(HANDLE w)
 {
 	struct timeb t0, t1;
 	double dt=0;
@@ -127,17 +129,17 @@ Error:
 		exit(1);
 	}
 }
-void endwin(void)
+inline void endwin(void)
 {
 }
-void attron(int n)
+inline void attron(int n)
 {
 	CONSOLE_SCREEN_BUFFER_INFO info;
 	GetConsoleScreenBufferInfo(console,&info);
 	info.wAttributes |= n;
 	SetConsoleTextAttribute(console,info.wAttributes);
 }
-void attroff(int n)
+inline void attroff(int n)
 {
 	CONSOLE_SCREEN_BUFFER_INFO info;
 	GetConsoleScreenBufferInfo(console,&info);
@@ -159,7 +161,7 @@ void attroff(int n)
 #endif
 
 #ifdef _WIN32
-long getwidth(void)
+inline long getwidth(void)
 {
 	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
 	if ( console )
@@ -171,7 +173,7 @@ long getwidth(void)
 	else
 		return -1;
 }
-long getheight(void)
+inline long getheight(void)
 {
 	HANDLE console = GetStdHandle(STD_OUTPUT_HANDLE);
 	if ( console )
@@ -191,7 +193,7 @@ long getheight(void)
 #define ts_cols ws_col
 #define ts_lines ws_row
 #endif
-long getwidth(void)
+inline long getwidth(void)
 {
 	struct ttysize ws;
 	if ( ioctl(1,TIOCGWINSZ,&ws)!=-1 )
@@ -199,7 +201,7 @@ long getwidth(void)
 	else
 		return -1;
 }
-long getheight(void)
+inline long getheight(void)
 {
 	struct ttysize ws;
 	if ( ioctl(1,TIOCGWINSZ,&ws)!=-1 )

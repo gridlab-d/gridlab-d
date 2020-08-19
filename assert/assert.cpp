@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
-#include <complex.h>
+#include <gld_complex.h>
 
 #include "assert.h"
 
@@ -22,6 +22,7 @@ g_assert *g_assert::defaults = NULL;
 
 g_assert::g_assert(MODULE *module)
 {
+
 	if (oclass==NULL)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations

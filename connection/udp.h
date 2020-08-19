@@ -28,8 +28,8 @@
 	#include <sys/errno.h>
 	#include <netdb.h>
 
-	#ifdef INVALID_SOCKET 
-	#undef INVALID_SOCKET 
+	#ifdef INVALID_SOCKET
+	#undef INVALID_SOCKET
 	#endif
 
 	#define INVALID_SOCKET (-1)
@@ -63,17 +63,17 @@ public:
 	// write accessors
 	void set_header_version(unsigned int n);
 	void set_header_size(unsigned int n);
-	void set_message_format(char *s);
+	void set_message_format(const char *s);
 	void set_message_version(double x);
 	void set_timeout(unsigned int n);
-	void set_hostname(char *s);
+	void set_hostname(const char *s);
 	void set_portnum(unsigned int n);
-	void set_uri(char *fmt, ...);
-	void set_errormsg(char *fmt, ...);
+	void set_uri(const char *fmt, ...);
+	void set_errormsg(const char *fmt, ...);
 	void set_debug_level(unsigned int n);
 	void set_sockdata(struct sockaddr_in *p, size_t n=sizeof(struct sockaddr_in));
-	void set_output(char *fmt, ...);
-	void add_output(char *fmt, ...);
+	void set_output(const char *fmt, ...);
+	void add_output(const char *fmt, ...);
 
 private:
 	// private data

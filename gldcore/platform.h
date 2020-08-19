@@ -34,7 +34,8 @@
 	#if __WORDSIZE__ == 64
 		#define X64
 		#define int64 long long /**< standard 64-bit integers on 64-bit machines */
-	#else
+    #else
+    	#undef int64
 		#define int64 long long /**< standard 64-bit integers on 32-bit machines */
 	#endif
 	#define FMT_INT64 "ll" /**< standard version of 64-bit integer printf format string */
@@ -42,35 +43,6 @@
 	#define stricmp strcasecmp	/**< deprecated stricmp */
 	#define strnicmp strncasecmp /**< deprecated strnicmp */
 	#define strtok_s strtok_r
-
-#if __cplusplus >= 201103L
-#include <cmath>
-#include <cstdio>
-
-#if !defined(isfinite)
-#if !defined(__APPLE__)
-#define isfinite isfinite
-#endif
-#endif
-
-#else
-#include <math.h>
-#include <stdio.h>
-
-#if defined(_MSC_VER)
-#if !defined(isfinite)
-#include <float.h>
-#define isfinite _finite
-#endif
-#endif //_MSC_VER
-
-#if !defined(__APPLE__)
-#if !defined(isfinite)
-#define isfinite finite
-#endif
-#endif
-#endif
-
 	#ifdef X64
 		#define NATIVE int64	/**< native integer size */
 	#else

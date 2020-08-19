@@ -1,3 +1,5 @@
+#ifdef HAVE_MYSQL
+
 #ifndef _GROUP_RECORDER_H
 #define _GROUP_RECORDER_H
 
@@ -101,3 +103,5 @@ class group_recorder : public gld_object {
 
 #endif // _GROUP_RECORDER_H
 // EOF
+
+#endif

@@ -111,7 +111,7 @@ int convert_to_double(const char *buffer, /**< a pointer to the string buffer */
 					  PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
 	char unit[256];
-	int n = sscanf(buffer,"%lg%s",(double *)data,unit);
+	int n = sscanf(buffer,"%lg%s", static_cast<double*>(data),unit);
 	if ( n>1 && prop->unit!=NULL ) /* unit given and unit allowed */
 	{
 		UNIT *from = unit_find(unit);
@@ -141,7 +141,7 @@ int convert_from_complex(char *buffer, /**< pointer to the string buffer */
 {
 	int count = 0;
 	char temp[1025];
-	complex *v = (complex*)data;
+	gld::complex *v = (gld::complex*)data;
 
 	double scale = 1.0;
 	if ( prop->unit!=NULL )
@@ -198,7 +198,7 @@ int convert_to_complex(const char *buffer, /**< a pointer to the string buffer *
 					   void *data, /**< a pointer to the data */
 					   PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
-	complex *v = (complex*)data;
+	gld::complex *v = (gld::complex*)data;
 	char unit[256];
 	char notation[2]={'\0','\0'}; /* force detection invalid complex number */
 	int n;
@@ -496,7 +496,7 @@ int convert_to_int16(const char *buffer, /**< a pointer to the string buffer */
 					    void *data, /**< a pointer to the data */
 					    PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
-	return sscanf(buffer,"%hd",(short*)data);
+	return sscanf(buffer,"%hd",static_cast<short*>(data));
 }
 
 /** Convert from an \e int32
@@ -511,7 +511,7 @@ int convert_from_int32(char *buffer, /**< pointer to the string buffer */
 	char temp[1025];
 	int count = sprintf(temp,"%d",*(int*)data);
 	if(count < size - 1){
-		memcpy(buffer, temp, count);
+		memcpy(buffer, temp, static_cast<size_t>(count));
 		buffer[count] = 0;
 		return count;
 	} else {
@@ -529,7 +529,7 @@ int convert_to_int32(const char *buffer, /**< a pointer to the string buffer */
 					    void *data, /**< a pointer to the data */
 					    PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
-	return sscanf(buffer,"%d",(int*)data);
+	return sscanf(buffer,"%d",static_cast<int*>(data));
 }
 
 /** Convert from an \e int64
@@ -560,7 +560,7 @@ int convert_to_int64(const char *buffer, /**< a pointer to the string buffer */
 					    void *data, /**< a pointer to the data */
 					    PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
-	return sscanf(buffer,"%" FMT_INT64 "d",(int64*)data);
+	return sscanf(buffer,"%" FMT_INT64 "d", static_cast<long long*>(data));
 }
 
 /** Convert from a \e char8
@@ -600,9 +600,9 @@ int convert_to_char8(const char *buffer, /**< a pointer to the string buffer */
 	case '\0':
 		return ((char*)data)[0]='\0', 1;
 	case '"':
-		return sscanf(buffer+1,"%8[^\"]",(char*)data);
+		return sscanf(buffer+1,"%8[^\"]", static_cast<char*>(data));
 	default:
-		return sscanf(buffer,"%8s",(char*)data);
+		return sscanf(buffer,"%8s",static_cast<char*>(data));
 	}
 }
 
@@ -643,9 +643,9 @@ int convert_to_char32(const char *buffer, /**< a pointer to the string buffer */
 	case '\0':
 		return ((char*)data)[0]='\0', 1;
 	case '"':
-		return sscanf(buffer+1,"%32[^\"]",(char*)data);
+		return sscanf(buffer+1,"%32[^\"]",static_cast<char*>(data));
 	default:
-		return sscanf(buffer,"%32s",(char*)data);
+		return sscanf(buffer,"%32s", static_cast<char*>(data));
 	}
 }
 
@@ -686,10 +686,10 @@ int convert_to_char256(const char *buffer, /**< a pointer to the string buffer *
 	case '\0':
 		return ((char*)data)[0]='\0', 1;
 	case '"':
-		return sscanf(buffer+1,"%256[^\"]",(char*)data);
+		return sscanf(buffer+1,"%256[^\"]", static_cast<char*>(data));
 	default:
 		//return sscanf(buffer,"%256s",data);
-		return sscanf(buffer,"%256[^\n\r;]",(char*)data);
+		return sscanf(buffer,"%256[^\n\r;]", static_cast<char*>(data));
 	}
 }
 
@@ -730,9 +730,9 @@ int convert_to_char1024(const char *buffer, /**< a pointer to the string buffer 
 	case '\0':
 		return ((char*)data)[0]='\0', 1;
 	case '"':
-		return sscanf(buffer+1,"%1024[^\"]",(char*)data);
+		return sscanf(buffer+1,"%1024[^\"]", static_cast<char*>(data));
 	default:
-		return sscanf(buffer,"%1024[^\n]",(char*)data);
+		return sscanf(buffer,"%1024[^\n]",static_cast<char*>(data));
 	}
 }
 
@@ -774,7 +774,7 @@ int convert_from_object(char *buffer, /**< pointer to the string buffer */
 	}
 
 	/* construct the object's name */
-	if (sprintf(temp,global_object_format,obj->oclass->name,obj->id)<size)
+	if (obj->oclass!=nullptr && (sprintf(temp,global_object_format,obj->oclass->name,obj->id)<size))
 		strcat(buffer,temp);
 	else
 		return 0;
@@ -923,8 +923,9 @@ int convert_to_timestamp_stub(const char *buffer, void *data, PROPERTY *prop)
  **/
 int convert_from_double_array(char *buffer, int size, void *data, PROPERTY *prop)
 {
-	double_array *a = (double_array*)data;
-	unsigned int n,m;
+//	double_array *a = (double_array*)data;
+    double_array *a= new double_array(0, 0, reinterpret_cast<double**>(&data));
+    unsigned int n,m;
 	unsigned int p = 0;
 	for ( n=0 ; n<a->get_rows() ; n++ )
 	{
@@ -947,9 +948,9 @@ int convert_from_double_array(char *buffer, int size, void *data, PROPERTY *prop
  **/
 int convert_to_double_array(const char *buffer, void *data, PROPERTY *prop)
 {
-	double_array *a=(double_array*)data;
-	a->set_name(prop->name);
 	unsigned row=0, col=0;
+	double_array *a= new double_array(row, col, reinterpret_cast<double**>(&data));
+	a->set_name(prop->name);
 	const char *p = buffer;
 	
 	/* new array */
@@ -1106,7 +1107,7 @@ int convert_to_complex_array(const char *buffer, void *data, PROPERTY *prop)
 	{
 		char value[256];
 		char objectname[64], propertyname[64];
-		complex c;
+		gld::complex c;
 		while ( *p!='\0' && isspace(*p) ) p++; /* skip spaces */
 		if ( *p!='\0' && sscanf(p,"%s",value)==1 )
 		{
@@ -1163,7 +1164,7 @@ int convert_to_complex_array(const char *buffer, void *data, PROPERTY *prop)
 					return 0;
 				}
 				a->grow_to(row,col);
-				a->set_at(row,col,(complex*)var->prop->addr);
+				a->set_at(row,col,(gld::complex*)var->prop->addr);
 				if ( a->is_nan(row,col) )
 				{
 					output_error("convert_to_double_array(const char *buffer='%10s...',...): entry at row %d, col %d property '%s' in object '%s' is not accessible", buffer,row,col,propertyname,objectname);
@@ -1185,7 +1186,7 @@ int convert_to_complex_array(const char *buffer, void *data, PROPERTY *prop)
 /** Convert a string to a double with a given unit
    @return 1 on success, 0 on failure
  **/
-extern "C" int convert_unit_double(char *buffer,char *unit, double *data)
+extern "C" int convert_unit_double(char *buffer,const char *unit, double *data)
 {
 	char *from = strchr(buffer,' ');
 	*data = atof(buffer);
@@ -1196,7 +1197,7 @@ extern "C" int convert_unit_double(char *buffer,char *unit, double *data)
 	/* skip white space in from of unit */
 	while (isspace(*from)) from++;
 
-	return unit_convert(from,unit,data);
+	return unit_convert((const char *)from,(const char *)unit,data);
 }
 
 /** Convert a struct object to a string

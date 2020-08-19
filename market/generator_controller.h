@@ -110,7 +110,7 @@ public:
 
 private:
 	auction *auction_object;
-	complex *power_link;
+	gld::complex *power_link;
 	unsigned char phase_information;
 	unsigned char num_phases;
 	double price_cap_value;

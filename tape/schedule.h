@@ -7,6 +7,8 @@
  @{
  **/
 
+// TODO: find out if this is even a needed component anymore, possibly deep-6. -Mark
+
 #ifndef _TAPE_SCHEDULE_H
 #define _TAPE_SCHEDULE_H
 

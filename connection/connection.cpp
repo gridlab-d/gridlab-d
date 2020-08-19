@@ -138,7 +138,7 @@ void connection_mode::set_transport(CONNECTIONTRANSPORT t)
 	seqnum = 0;
 }
 
-void connection_mode::error(char *fmt, ...)
+void connection_mode::error(const char *fmt, ...)
 {
 	char msg[1024];
 	va_list ptr;
@@ -147,7 +147,7 @@ void connection_mode::error(char *fmt, ...)
 	va_end(ptr);
 	gl_error("connection/%s: %s",get_mode_name(), msg);
 }
-void connection_mode::warning(char *fmt, ...)
+void connection_mode::warning(const char *fmt, ...)
 {
 	char msg[1024];
 	va_list ptr;
@@ -156,7 +156,7 @@ void connection_mode::warning(char *fmt, ...)
 	va_end(ptr);
 	gl_warning("connection/%s: %s",get_mode_name(), msg);
 }
-void connection_mode::info(char *fmt, ...)
+void connection_mode::info(const char *fmt, ...)
 {
 	char msg[1024];
 	va_list ptr;
@@ -177,12 +177,12 @@ void connection_mode::debug(int level, const char *fmt, ...)
 void connection_mode::exception(const char *fmt, ...)
 {
 	static char msg[1024];
-	size_t len = sprintf(msg, "connection/%s: ", get_mode_name());
+	auto len = sprintf(msg, "connection/%s: ", get_mode_name());
 	va_list ptr;
 	va_start(ptr,fmt);
 	vsprintf(msg+len,fmt,ptr);
 	va_end(ptr);
-	throw msg;
+	throw std::runtime_error(msg);
 }
 
 int connection_mode::init(void)
@@ -191,7 +191,7 @@ int connection_mode::init(void)
 }
 int connection_mode::option(char *target, char *command)
 {
-	// specifically targetted to server or client
+	// specifically targeted to server or client
 	if ( strcmp(target,get_mode_name())==0 ) 
 	{
 		switch ( get_mode() ) {
@@ -250,7 +250,7 @@ int connection_mode::update(VARMAP *var, DATAEXCHANGEDIRECTION dir, TRANSLATOR *
 	return 1;
 }
 
-int connection_mode::update(varmap *varlist, char *tag, TRANSLATOR *xlate)
+int connection_mode::update(varmap *varlist, const char *tag, TRANSLATOR *xlate)
 {
 	int count=0;
 	VARMAP *v;

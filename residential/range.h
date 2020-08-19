@@ -100,7 +100,7 @@ public:
 
 	double stall_voltage;				///< voltage at which the motor stalls
 	double start_voltage;				///< voltage at which motor can start
-	complex stall_impedance;			///< impedance of motor when stalled
+	gld::complex stall_impedance;			///< impedance of motor when stalled
 	double trip_delay;					///< stalled time before thermal trip
 	double reset_delay;					///< trip time before thermal reset and restart
 	double cooktop_energy_baseline;     ///<amount of energy needed to 
@@ -149,7 +149,7 @@ public:
 
 	double actual_load;
 	double prev_load;
-	complex range_actual_power;	///< the actual power draw of the object after accounting for voltage
+	gld::complex range_actual_power;	///< the actual power draw of the object after accounting for voltage
 	
 
 public:

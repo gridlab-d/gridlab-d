@@ -13,7 +13,7 @@ CLASS* controller::oclass = NULL;
 controller::controller(MODULE *module){
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"controller",sizeof(controller),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
+		oclass = gl_register_class(module, "controller",sizeof(controller),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class controller";
 		else
@@ -307,7 +307,7 @@ void controller::cheat(){
 
 /** convenience shorthand
  **/
-int controller::fetch_property(gld_property **prop, char *propName, OBJECT *obj){
+int controller::fetch_property(gld_property **prop, const char *propName, OBJECT *obj){
 	OBJECT *hdr = OBJECTHDR(this);
 	*prop = new gld_property(obj, propName);
 	if(!(*prop)->is_valid()){
@@ -708,7 +708,7 @@ int controller::init(OBJECT *parent){
 	if(thermostat_state[0] == 0){
 		pThermostatState = NULL;
 	} else {
-		pThermostatState = gl_get_enum_by_name(parent, thermostat_state);
+		pThermostatState = gl_get_enum_by_name(parent, thermostat_state.get_string());
 		if(pThermostatState == 0){
 			gl_error("thermostat state property name \'%s\' is not published by parent class.", (char *)&thermostat_state);
 			return 0;
@@ -761,7 +761,7 @@ int controller::init(OBJECT *parent){
 
 	if(state[0] != 0){
 		// grab state pointer
-		powerstate_prop = gld_property(parent,state); // pState = gl_get_enum_by_name(parent, state);
+		powerstate_prop = gld_property(parent,state);
 		if ( !powerstate_prop.is_valid() )
 		{
 			gl_error("state property name '%s' is not published by parent object '%s'", state, get_object(parent)->get_name());
@@ -779,7 +779,7 @@ int controller::init(OBJECT *parent){
 
 	if(heating_state[0] != 0){
 		// grab state pointer
-		pHeatingState = gl_get_enum_by_name(parent, heating_state);
+		pHeatingState = gl_get_enum_by_name(parent, heating_state.get_string());
 		if(pHeatingState == 0){
 			gl_error("heating_state property name \'%s\' is not published by parent class", (char *)(&heating_state));
 			return 0;
@@ -788,7 +788,7 @@ int controller::init(OBJECT *parent){
 
 	if(cooling_state[0] != 0){
 		// grab state pointer
-		pCoolingState = gl_get_enum_by_name(parent, cooling_state);
+		pCoolingState = gl_get_enum_by_name(parent, cooling_state.get_string());
 		if(pCoolingState == 0){
 			gl_error("cooling_state property name \'%s\' is not published by parent class", (char *)(&cooling_state));
 			return 0;
@@ -1333,11 +1333,11 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				} else {
 					controller_bid.state = BS_OFF;
 				}
-				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+				((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 				controller_bid.rebid = true;
 			} else {
 				controller_bid.state = BS_UNKNOWN;
-				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+				((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 				controller_bid.rebid = true;
 			}
 			if(controller_bid.bid_accepted == false){
@@ -1582,7 +1582,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				controller_bid2.price = last_p;
 				controller_bid2.quantity = last_q;
 				controller_bid2.state = BS_UNKNOWN;
-				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit2))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt2), "submit_bid_state", "auction", (void *)&controller_bid2, (size_t)sizeof(controller_bid2));
+				((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit2))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt2), "submit_bid_state", "auction", (void *)&controller_bid2, (size_t)sizeof(controller_bid2));
 				controller_bid2.rebid = true;
 				if(controller_bid2.bid_accepted == false){
 					return TS_INVALID;
@@ -1596,7 +1596,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 					controller_bid.price = pCap;
 					controller_bid.quantity = last_q;
 					controller_bid.state = BS_UNKNOWN;
-					((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+					((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 					controller_bid.rebid = true;
 					if(controller_bid.bid_accepted == false){
 						return TS_INVALID;
@@ -1618,7 +1618,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				controller_bid.price = last_p;
 				controller_bid.quantity = last_q;
 				controller_bid.state = BS_UNKNOWN;
-				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+				((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 				controller_bid.rebid = true;
 				if(controller_bid.bid_accepted == false){
 					return TS_INVALID;
@@ -1632,7 +1632,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 					controller_bid2.price = pCap2;
 					controller_bid2.quantity = last_q;
 					controller_bid2.state = BS_UNKNOWN;
-					((void (*)(char *, char *, char *, char *, void *, size_t))(*submit2))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt2), "submit_bid_state", "auction", (void *)&controller_bid2, (size_t)sizeof(controller_bid2));
+					((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit2))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt2), "submit_bid_state", "auction", (void *)&controller_bid2, (size_t)sizeof(controller_bid2));
 					controller_bid2.rebid = true;
 					if(controller_bid2.bid_accepted == false){
 						return TS_INVALID;
@@ -1871,11 +1871,11 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				} else {
 					controller_bid.state = BS_OFF;
 				}
-				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+				((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 				controller_bid.rebid = true;
 			} else {
 				controller_bid.state = BS_UNKNOWN;
-				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+				((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 				controller_bid.rebid = true;
 			}
 			if(controller_bid.bid_accepted == false){
@@ -1896,7 +1896,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				} else {
 					controller_bid.state = BS_OFF;
 				}
-				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+				((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 				if(controller_bid.bid_accepted == false){
 					return TS_INVALID;
 				}

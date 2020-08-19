@@ -59,7 +59,7 @@ connection_transport* connection_transport::new_instance(CONNECTIONTRANSPORT e)
 		return t;
 }
 
-void connection_transport::error(char *fmt, ...)
+void connection_transport::error(const char *fmt, ...)
 {
 	char msg[1024];
 	va_list ptr;
@@ -68,7 +68,7 @@ void connection_transport::error(char *fmt, ...)
 	va_end(ptr);
 	gl_error("connection/%s: %s",get_transport_name(), msg);
 }
-void connection_transport::warning(char *fmt, ...)
+void connection_transport::warning(const char *fmt, ...)
 {
 	char msg[1024];
 	va_list ptr;
@@ -77,7 +77,7 @@ void connection_transport::warning(char *fmt, ...)
 	va_end(ptr);
 	gl_warning("connection/%s: %s",get_transport_name(), msg);
 }
-void connection_transport::info(char *fmt, ...)
+void connection_transport::info(const char *fmt, ...)
 {
 	char msg[1024];
 	va_list ptr;
@@ -98,7 +98,7 @@ void connection_transport::debug(int level, const char *fmt, ...)
 void connection_transport::exception(const char *fmt, ...)
 {
 	static char msg[1024];
-	size_t len = sprintf(msg,"connection/%s: ", get_transport_name());
+	int len = sprintf(msg,"connection/%s: ", get_transport_name());
 	va_list ptr;
 	va_start(ptr,fmt);
 	vsprintf(msg+len,fmt,ptr);
@@ -139,7 +139,7 @@ bool connection_transport::message_continue()
 	return true;
 }
 
-int connection_transport::message_append(char *fmt,...)
+int connection_transport::message_append(const char *fmt,...)
 {
 	char temp[2048];
 	va_list ptr;

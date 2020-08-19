@@ -7,6 +7,7 @@
  *      Provides a unified MySQL Connection interface and query constructor.
  */
 
+#include "config.h"
 #ifdef HAVE_MYSQL
 
 #include <sstream>

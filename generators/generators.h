@@ -12,7 +12,9 @@
 #define GLOBAL
 #define INIT(A) = (A)
 #else
+#undef GLOBAL
 #define GLOBAL extern
+#undef INIT
 #define INIT(A)
 #endif
 

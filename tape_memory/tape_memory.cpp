@@ -8,12 +8,12 @@
 	could access.  It works by allocating a large block of memory as a global variable, which can be accessed at any
 	time by any module.  The tapes specifically wrap this allocated block with tape functionality.
 
-	The global variables referenced by a Memory tape MUST exist before the tape attempts to “open” them during the
+	The global variables referenced by a Memory tape MUST exist before the tape attempts to ï¿½openï¿½ them during the
 	first sync call, and the user must include the size limits in the tape properties to prevent memory overflow.
 	There does not appear to be any method to data-drive the data to or from files.  The contents of a Memory tape
 	must be set or retrieved programmatically. 
 
-	Memory types are arranged as an interleaved array of double timestamps and double values within a malloc’ed block.
+	Memory types are arranged as an interleaved array of double timestamps and double values within a mallocï¿½ed block.
 	Properly arranging these values, and not overrunning the buffer, is the responsibility of the user.
 
  
@@ -73,7 +73,7 @@ char *read_player(struct player *my,char *buffer,unsigned int size)
 	{
 		double *ptr = (double*)my->memory->buffer->prop->addr + my->memory->index;
 		my->memory->index += 2;
-		sprintf(temp,"%"FMT_INT64"d,%lg",(TIMESTAMP)ptr[0],ptr[1]);
+		sprintf(temp,"%" FMT_INT64 "d,%lg",(TIMESTAMP)ptr[0],ptr[1]);
 		strncpy(buffer,temp,((size < sizeof(temp)) ? size : sizeof(temp))); // inlined min() -d3p988
 		return buffer;
 	}

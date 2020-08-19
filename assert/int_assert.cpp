@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
-#include <complex.h>
+#include <gld_complex.h>
 
 #include "int_assert.h"
 
@@ -74,7 +74,7 @@ int int_assert::create(void)
 
 int int_assert::init(OBJECT *parent)
 {
-	char *msg = "A negative value has been specified for within.";
+	const char *msg = "A negative value has been specified for within.";
 	if (within < 0)
 		throw msg;
     /*  TROUBLESHOOT

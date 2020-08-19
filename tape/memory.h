@@ -5,10 +5,8 @@
 #ifndef _MEMORY_H
 #define _MEMORY_H
 
-struct player;
-struct shaper;
-struct recorder;
-struct collector;
+#include "globals.h"
+
 
 typedef struct s_memory {
 	GLOBALVAR *buffer;

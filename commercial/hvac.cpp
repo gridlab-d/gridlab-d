@@ -38,8 +38,8 @@ void hvac::post_update(void)
 CDECL CLASS *hvac_class;
 CDECL OBJECT *last_hvac;
 
-CLASS *hvac_class = NULL;
-OBJECT *last_hvac = NULL;
+CLASS *hvac_class = nullptr;
+OBJECT *last_hvac = nullptr;
 
 EXPORT int create_hvac(OBJECT **obj, OBJECT *parent)
 {

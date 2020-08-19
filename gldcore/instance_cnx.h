@@ -8,6 +8,7 @@
 #include "config.h"
 #endif
 #ifdef _WIN32
+#undef _WIN32_WINNT
 #define _WIN32_WINNT 0x0400
 #include <winsock2.h>
 #include <windows.h>
@@ -24,7 +25,6 @@
 
 #include "property.h"
 #include "timestamp.h"
-#include "pthread.h"
 #include "linkage.h"
 #include "output.h"
 #include "globals.h"

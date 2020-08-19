@@ -9,7 +9,7 @@
 #include <errno.h>
 #include <math.h>
 #include <ctype.h>
-#include <complex.h>
+#include <gld_complex.h>
 
 #include "ss_model.h"
 
