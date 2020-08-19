@@ -11,7 +11,7 @@
 #include "build.h" // BRANCH will be defined automatically from the ticket
 
 #ifndef BRANCH
-#define BRANCH "Lugo" // update this from legal.h each time trunk is branched
+#define BRANCH "Navajo" // update this from legal.h each time trunk is branched
 #endif
 
 #ifndef BUILDNUM

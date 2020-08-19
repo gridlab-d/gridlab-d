@@ -507,35 +507,47 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 			else 
 				output_warning("optional test %s error, code %d in %.1f seconds", name, code, t);
 		}
-		else if ( is_exc && code==XC_EXCEPTION ) // expected exception
+		else if ( is_exc && code==XC_EXCEPTION ) // expected exception and got one
+		{
 			output_verbose("%s exception was expected, code %d in %.1f seconds", name, code, t);
-		else if ( is_err && code!=XC_SUCCESS ) // expected error
-			output_verbose("%s error was expected, code %d in %.1f seconds", name, code, t);
-		else if ( code==XC_SUCCESS ) // expected success
-			output_verbose("%s success was expected, code %d in %.1f seconds", name, code, t);
-        else if ( code==XC_EXCEPTION ){ // unexpected exception
-			result.inc_exceptions(file,code,t);
-            problem = true;
-        } else if ( code==XC_SUCCESS  ){ // unexpected success
-			result.inc_success(file,code,t);
-            problem = true;
-        } else if ( code!=XC_SUCCESS ){ // unexpected error
-			result.inc_failed(file,code,t);
-            problem = true;
 		}
-	}
-	else // signaled
-	{
-		code = WTERMSIG(code);
-		output_debug("signal %d received from %s", code, name);
-		if ( is_opt ) // no expected outcome
-			output_warning("optional test %s exception, code %d in %.1f seconds", name, code, t);
-		else if ( is_exc ) // expected exception
-			output_warning("%s exception expected, code %d in %.1f seconds", name, code, t);
-        else {
+		else if ( is_err && code!=XC_SUCCESS ) // expected error and got one
+		{
+			output_verbose("%s error was expected, code %d in %.1f seconds", name, code, t);
+		}
+		else if ( code==XC_SUCCESS && !(is_exc||is_err) ) // expected success and got it
+		{
+			output_verbose("%s success was expected, code %d in %.1f seconds", name, code, t);
+        	}
+		else if ( code==XC_EXCEPTION ) // unexpected exception
+		{
 			result.inc_exceptions(file,code,t);
-            problem = true;
-        }
+			problem = true;
+        	} 
+		else if ( code==XC_SUCCESS  ) // unexpected success
+		{
+			result.inc_success(file,code,t);
+			problem = true;
+        	} 
+		else if ( code!=XC_SUCCESS ) // unexpected error
+		{
+			result.inc_failed(file,code,t);
+			problem = true;
+			}
+		}
+		else // signaled
+		{
+			code = WTERMSIG(code);
+			output_debug("signal %d received from %s", code, name);
+			if ( is_opt ) // no expected outcome
+				output_warning("optional test %s exception, code %d in %.1f seconds", name, code, t);
+			else if ( is_exc ) // expected exception
+				output_warning("%s exception expected, code %d in %.1f seconds", name, code, t);
+	        else 
+		{
+			result.inc_exceptions(file,code,t);
+			problem = true;
+        	}
 	} 
 	output_debug("run_test(char *file='%s') done", file);
     if ( !problem && clean && !destroy_dir(dir) )

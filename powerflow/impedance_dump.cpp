@@ -1949,11 +1949,11 @@ int impedance_dump::dump(TIMESTAMP t)
 				fprintf(fn,"\t\t<to_node>%s:%d</to_node>\n",pTpLine[index]->to->oclass->name,pTpLine[index]->to->id);
 			}
 
-			//write the from %ide's voltage
-			fprintf(fn,"\t\t<from_voltage>%i</from_voltage>\n",120);
+			//write the from node's voltage
+			fprintf(fn,"\t\t<from_voltage>%d</from_voltage>\n",120);
 
 			//write the to node's voltage
-			fprintf(fn,"\t\t<to_voltage>%i</to_voltage>\n",120);
+			fprintf(fn,"\t\t<to_voltage>%d</to_voltage>\n",120);
 
 			//write the phases
 			if(pTpLine[index]->phases == 0x0001){//A

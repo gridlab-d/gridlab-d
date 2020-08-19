@@ -8,6 +8,7 @@
 #include "output.h"
 #include "http_client.h"
 #include "server.h"
+#include <ctype.h>
 
 
 HTTP* hopen(const char *url, int maxlen)

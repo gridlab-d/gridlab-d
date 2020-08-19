@@ -27,7 +27,12 @@
 	#include <unistd.h>
 	#include <sys/errno.h>
 	#include <netdb.h>
-//	#define INVALID_SOCKET (-1)
+
+	#ifdef INVALID_SOCKET
+	#undef INVALID_SOCKET
+	#endif
+
+	#define INVALID_SOCKET (-1)
 	#define SOCKET_ERROR (-1)
 	#define int64 long long
 #endif

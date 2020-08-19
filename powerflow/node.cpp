@@ -95,7 +95,6 @@
 CLASS *node::oclass = NULL;
 CLASS *node::pclass = NULL;
 
-
 unsigned int node::n = 0; 
 
 node::node(MODULE *mod) : powerflow_object(mod)

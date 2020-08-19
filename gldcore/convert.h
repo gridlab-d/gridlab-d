@@ -63,6 +63,9 @@ int convert_to_float(const char *a, void *b, PROPERTY *c);
 int convert_from_struct(char *buffer, size_t len, void *data, PROPERTY *prop);
 int convert_to_struct(const char *buffer, void *data, PROPERTY *prop);
 
+int convert_from_method(char *buffer, int size, void *data, PROPERTY *prop);
+int convert_to_method(const char *buffer, void *data, PROPERTY *prop);
+
 #ifdef __cplusplus
 }
 #endif

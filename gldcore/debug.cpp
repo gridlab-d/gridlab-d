@@ -600,7 +600,6 @@ Retry:
 		else if (strncmp(cmd,"details",std::max<unsigned long>(1,strlen(cmd)))==0)
 		{
 			char cmd[1024];
-//			int n = sscanf(buffer,"%*s %[^\0]", cmd);
 			int n = sscanf(buffer,"%*s %s", cmd);
 			if (n==1)
 			{
@@ -731,7 +730,7 @@ Retry:
 		else if (strncmp(cmd,"system",std::max<unsigned long>(2,strlen(cmd)))==0)
 		{
 			char cmd[1024];
-			if (sscanf(buffer,"%*s %[^\0]", cmd)==1)
+			if (sscanf(buffer,"%*s %s", cmd)==1)
 				int result = system(cmd);
 #ifdef _WIN32
 			else if (getenv("COMSPEC")!=NULL)
@@ -749,7 +748,7 @@ Retry:
 		{
 			char bptype[256]="";
 			char bpval[256]="";
-			if (sscanf(buffer,"%*s %s %[^\n]", bptype, bpval)==0)
+			if (sscanf(buffer,"%*s %s %s", bptype, bpval)==0)
 			{
 				/* display all breakpoints */
 				BREAKPOINT *bp;

@@ -22,7 +22,7 @@ public:
 			DRYER_MOTOR_COIL_ONLY=3,				///<only the coil and motor are operating
 			DRYER_MOTOR_ONLY=4,						///< only the motor is running (air fluff)
 			DRYER_CONTROL_ONLY=5					///< only the controls are running
-	};										///< control state
+	} DRYER;										///< control state
 
 
 

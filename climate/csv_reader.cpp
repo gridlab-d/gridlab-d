@@ -203,8 +203,7 @@ int csv_reader::read_prop(char *line){ // already pulled the '$' off the front
 //	}
 	void *addr = (void *)((uint64)this + (uint64)prop->addr);
 	if(prop->ptype == PT_double){
-	    //TODO: Review use of format specifier here
-		if(1 != sscanf(valstr, "%p", &addr)){
+		if(1 != sscanf(valstr, "%lg", static_cast<double*>(addr))){
 			gl_error(R"(csv_reader::read_prop ~ unable to set property '%s' to '%s')", propstr, valstr);
 			/* TROUBLESHOOT
 				The double parser was not able to convert the property value into a number.  Please

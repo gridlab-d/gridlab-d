@@ -40,8 +40,7 @@ transformer_configuration::transformer_configuration(MODULE *mod) : powerflow_li
 {
 	if(oclass == NULL)
 	{
-		//TODO: Review use of 0 as initialization value, previously NULL
-		oclass = gl_register_class(mod,"transformer_configuration",sizeof(transformer_configuration), 0);
+		oclass = gl_register_class(mod,"transformer_configuration",sizeof(transformer_configuration),0);
 		if (oclass==NULL)
 			throw "unable to register class transformer_configuration";
 		else

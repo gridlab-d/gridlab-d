@@ -21,14 +21,14 @@ public:
 		SSL,			///< solid state lights
 		HID,			///< high-intensity discharge lights
 		_MAXTYPES
-	};
+	} TYPES_OF_LIGHTS;
 	enumeration type;				///< lighting type
 	static double power_factor[_MAXTYPES]; ///< Lighting power factors (the ordinals must match the \p type enumeration)
 	static double power_fraction[_MAXTYPES][3];
 	enum {
 		INDOOR=0,		///< indoor lighting (100% indoor heat gain)
 		OUTDOOR=1,		///< outdoor lighting (0% indoor heat gain)
-	};
+	} LOCATION_LIGHTING;
 	enumeration placement;		///< lighting location 
 	double circuit_split;			///< -1=100% negative, 0=balanced, +1=100% positive (DEPRECATED)
 	double power_density;			///< Installed lighting power density [W/sf]

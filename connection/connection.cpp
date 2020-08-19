@@ -177,7 +177,7 @@ void connection_mode::debug(int level, const char *fmt, ...)
 void connection_mode::exception(const char *fmt, ...)
 {
 	static char msg[1024];
-	int len = printf("connection/%s: ", get_mode_name());
+	auto len = sprintf(msg, "connection/%s: ", get_mode_name());
 	va_list ptr;
 	va_start(ptr,fmt);
 	vsprintf(msg+len,fmt,ptr);

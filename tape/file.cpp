@@ -284,7 +284,7 @@ int file_open_recorder(struct recorder *my, char *fname, char *flags)
 #endif
 	fprintf(my->fp,"# target.... %s %d\n", obj->parent->oclass->name, obj->parent->id);
 	fprintf(my->fp,"# trigger... %s\n", my->trigger[0]=='\0'?"(none)":my->trigger.get_string());
-	fprintf(my->fp, "# interval.. %d\n", static_cast<int>(my->interval));
+	fprintf(my->fp, "# interval.. %lld\n", my->interval);
 	fprintf(my->fp,"# limit..... %d\n", my->limit);
 	fprintf(my->fp,"# timestamp,%s\n", my->property.get_string());
 
@@ -338,7 +338,7 @@ int file_open_collector(struct collector *my, char *fname, char *flags)
 #endif
 	count += fprintf(my->fp,"# group..... %s\n", my->group.get_string());
 	count += fprintf(my->fp,"# trigger... %s\n", my->trigger[0]=='\0'?"(none)":my->trigger.get_string());
-	count += fprintf(my->fp, "# interval.. %d\n", static_cast<int>(my->interval));
+	count += fprintf(my->fp, "# interval.. %lld\n", my->interval);
 	count += fprintf(my->fp,"# limit..... %d\n", my->limit);
 	count += fprintf(my->fp,"# property.. timestamp,%s\n", my->property.get_string());
 

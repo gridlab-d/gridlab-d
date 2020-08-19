@@ -1021,7 +1021,7 @@ static int resolve_object(UNRESOLVED *item, char *filename)
 		for ( obj = object_get_first() ; obj != NULL ; obj = object_get_next(obj) )
 		{
 			char value[1024];
-			if ( object_get_child_count(obj)==0 && object_get_value_by_name(obj,propname,value,sizeof(value))!=NAN && strcmp(value,target)==0 )
+			if ( object_get_child_count(obj)==0 && object_get_value_by_name(obj,propname,value,sizeof(value))!='\0' && strcmp(value,target)==0 )
 			{
 				object_set_parent(*(OBJECT**)(item->ref),obj);
 				break;
@@ -4031,7 +4031,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				for ( target = object_get_first() ; target != NULL ; target = object_get_next(target) )
 				{
 					char value[1024];
-					if ( object_get_child_count(target)==0 && object_get_value_by_name(target,targetprop,value,sizeof(value))!=NAN && strcmp(value,targetvalue)==0 )
+					if ( object_get_child_count(target)==0 && object_get_value_by_name(target,targetprop,value,sizeof(value))!='\0' && strcmp(value,targetvalue)==0 )
 					{
 						object_set_parent(obj,target);
 						break;
@@ -4055,7 +4055,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 					output_error_raw("%s(%d): cannot inherit from an parent that hasn't been resolved yet or isn't specified", filename, linenum);
 					REJECT;
 				}
-				else if ( object_get_value_by_name(obj->parent,propname,value,sizeof(value))==NAN )
+				else if ( object_get_value_by_name(obj->parent,propname,value,sizeof(value))=='\0' )
 				{
 					output_error_raw("%s(%d): unable to get value of inherit property '%s'", filename, linenum, propname);
 					REJECT;

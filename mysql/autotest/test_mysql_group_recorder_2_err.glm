@@ -49,12 +49,8 @@ object line_spacing {
     distance_BN 3;
     distance_CN 3;
 }
-
-object overhead_line_conductor {
-    name overhead_line_conductor_1;
-    geometric_mean_radius 0.0271;
-    resistance 0.0369;
-}
+#else
+#error No mysql installed. 
 
 // Line, load, and meter 1
 object overhead_line {
@@ -74,17 +70,8 @@ object load {
 	base_power_B 130000;
 	base_power_C 110000;
 	power_pf_A 0.98;
-	current_pf_A 0.92;
-	impedance_pf_A 0.95;
-	power_fraction_A 0.8;
-	current_fraction_A 0.15;
-	impedance_fraction_A 0.05;
-	power_pf_B 0.98;
-	current_pf_B 0.92;
-	impedance_pf_B 0.95;
-	power_fraction_B 0.1;
-	current_fraction_B 0.3;
-	impedance_fraction_B 0.6;
+	current_pf_A 0.92;#else
+#error No mysql installed. 
 	power_pf_C 0.98;
 	current_pf_C 0.92;
 	impedance_pf_C 0.95;
@@ -200,5 +187,6 @@ object group_recorder {
   table Voltage_A;
   mode "w";
 };
-
+#else
+#error No mysql installed. 
 #endif

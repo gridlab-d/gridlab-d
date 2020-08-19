@@ -441,7 +441,7 @@ EXPORT int open_recorder(struct recorder *my, char *fname, char *flags)
 
 	write_default_plot_commands_rec(my, extension);
 	if (my->columns[0]){
-		sscanf(my->columns,"%s", columnlist);
+		sscanf(my->columns,"%s ", columnlist);
 		fprintf(my->fp, "plot \'-\' using %s with lines;\n", columnlist);
 	}
 	

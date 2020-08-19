@@ -42,7 +42,7 @@ public:
 		SPIN2=7,
 		SPIN3=8,
 		SPIN4=9
-	};
+	} MOTOR;
 	enumeration state;							///< control state
 
 public:

@@ -33,7 +33,7 @@ enum{
 	CI_NONE = 0,
 	CI_LINEAR,
 	CI_QUADRATIC
-};
+} CI;
 
 enum{
 	CM_NONE = 0,
@@ -172,7 +172,7 @@ enum {
 		RT_NONE,
 		RT_TMY2,
 		RT_CSV,
-};
+} RT;
 
 class climate : public gld_object {
 	
@@ -180,7 +180,7 @@ class climate : public gld_object {
 	GL_STRING(char32,city); ///< the city
 	GL_ATOMIC(double,temperature); ///< the temperature (degF)
 	GL_ATOMIC(double,humidity); ///< the relative humidity (%)
-	GL_ATOMIC(double,wind_speed); ///< wind speed (m/s)
+	GL_ATOMIC(double,wind_speed); ///< wind speed (mph)
 	GL_ATOMIC(double,tz_meridian); ///< timezone meridian
 	GL_ATOMIC(double,solar_global); ///< global solar flux (W/sf)
 	GL_ATOMIC(double,solar_direct); ///< direct solar flux (W/sf)

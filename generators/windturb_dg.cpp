@@ -717,14 +717,13 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	//Pull the updates, if needed
 	if (climate_is_valid == true)
 	{
-		value_Press = pPress->get_double();
-		value_Temp = pTemp->get_double();
-		value_WS = pWS->get_double();
+		value_Press = pPress->get_double() * 100;       // in Pa; climate is in mbar
+		value_Temp = (pTemp->get_double() - 32) * 5/9;  // in degC; climate is in degF
+		value_WS = pWS->get_double() * 0.44704;         // in m/s; climate wind speed is in mph
 	}
 
-	// convert press to Pascals and temp to Kelvins
-	// TODO: convert this to using gl_convert
-	air_dens = (value_Press*100) * Molar / (Ridealgas * ( (value_Temp - 32)*5/9 + 273.15));
+	// press in Pascals and temp in Kelvins
+	air_dens = (value_Press) * Molar / (Ridealgas * ( value_Temp + 273.15) );
 
 	//wind speed at height of hub - uses European Wind Atlas method
 	if(ref_height == roughness_l){
@@ -736,6 +735,8 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	and then pseudo-randomize the wind speed values beween 1st and 2nd
 	WSadj = gl_pseudorandomvalue(RT_RAYLEIGH,&c,(WS1/sqrt(PI/2)));*/
 
+	// It looks cleaner to switch to a density adjustment on an interpolated power curve
+	//    Pwind error is on the order of Cp error cubed
 	Pwind = 0.5 * (air_dens) * PI * pow(blade_diam/2,2) * pow(WSadj,3);
 
 	if (CP_Data == GENERAL_LARGE || CP_Data == GENERAL_MID || CP_Data == GENERAL_SMALL)	
@@ -784,13 +785,13 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 				{	
 					Cp = 0;	
 				}
-				else  //TO DO:  possibly replace polynomial with spline library function interpolation
+				else
 				{	  
-					//Uses a centered, 10th-degree polynomial Matlab interpolation of original Manuf. data
-					double z = (WSadj - 10.5)/5.9161;
-
 					//Original data [0 0 0 0 0.135 0.356 0.442 0.461 .458 .431 .397 .349 .293 .232 .186 .151 .125 .104 .087 .074 .064] from 4-20 m/s
-					Cp = -0.08609*pow(z,10) + 0.078599*pow(z,9) + 0.50509*pow(z,8) - 0.45466*pow(z,7) - 0.94154*pow(z,6) + 0.77922*pow(z,5) + 0.59082*pow(z,4) - 0.23196*pow(z,3) - 0.25009*pow(z,2) - 0.24282*z + 0.37502;
+					double Cp_tab[21] = {0, 0, 0, 0, 0.135, 0.356, 0.442, 0.461, 0.458, 0.431, 0.397, 0.349, 0.293, 0.232, 0.186, 0.151, 0.125, 0.104, 0.087, 0.074, 0.064};
+					
+					// Linear interpolation on the table
+					Cp = Cp_tab[(int)WSadj] + (WSadj - (int)WSadj) * (Cp_tab[(int)WSadj+1] - Cp_tab[(int)WSadj]);
 				}
 				break;
 			default:
