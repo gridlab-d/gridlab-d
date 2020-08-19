@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include "version.h"
 #include "output.h"
 #include "globals.h"
 #include "module.h"

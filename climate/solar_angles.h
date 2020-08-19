@@ -71,7 +71,7 @@ public:
 			double cl;       // cosine of the latitude
 			double sd;       // sine of the declination
 			double sl;       // sine of the latitude
-		} SOLPOS_TRIGDATA;
+		};
 
 	struct SOLPOS_POSDATA
 	{
@@ -229,7 +229,7 @@ public:
 		double perez_brightness;			//Sky brightness value from Perez tilt model
 		double perez_F1;					//F1 coefficient calculation from Perez tilt model
 		double perez_F2;					//F2 coefficient calculation from Perez tilt model
-	} SOLPOS_POSDATA;
+	};
 
 	SOLPOS_POSDATA solpos_vals;				//Working variable for all solpos calculations
 

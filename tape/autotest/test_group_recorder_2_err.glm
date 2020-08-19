@@ -1,17 +1,6 @@
 // Simple model with three loads for testing mysql group_recorder
-#ifdef MYSQL
-
 #set profiler=1
 
-module mysql;
-object database {   
-   hostname "localhost";
-   username "gridlabd";
-   password "";
-   schema "gridlabd";
-   port 3306;
-   tz_offset 0;
-}
 module powerflow {
 	solver_method NR;
 };
@@ -200,5 +189,3 @@ object group_recorder {
   table Voltage_A;
   mode "w";
 };
-
-#endif

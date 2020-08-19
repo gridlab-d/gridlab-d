@@ -985,7 +985,7 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			if ( proptype==PT_method )
 			{
 				prop->addr = 0;
-				prop->method = (METHODCALL*)addr;
+				prop->method = reinterpret_cast<METHODCALL>(addr);
 			}
 
 			/* attach to property list */
