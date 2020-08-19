@@ -1,6 +1,6 @@
 ## Building GridLAB-D
 Instructions for building GridLAB-D can be found on our wiki under [Builds](http://gridlab-d.shoutwiki.com/wiki/Builds).
-# Building Gridlab-d
+# Building GridLAB-D
 ## Prerequisites
 
 CMake  
@@ -9,9 +9,13 @@ g++ or Clang
 
 ## Installation
 
+### Git
+Clone the git repository for GridLAB-D, and update submodules:
 ```shell script
 git clone https://github.com/gridlab-d/gridlab-d.git
+git submodule update --init
 ```
+
 
 ### Prepare out-of-source build directory
 Change directory into folder, and create build directory. Change to build directory and invoke `cmake` as described below:
