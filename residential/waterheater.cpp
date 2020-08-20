@@ -750,20 +750,27 @@ int waterheater::init(OBJECT *parent)
 		next_transition_time = gl_globalclock;
 		last_time_calculate_state_change_called = gl_globalclock;
 		vector<double> control_states {0.0, 1.0};
-		if(Tw < Tmin_upper) {
-			control_upper.push_back(1.0);
-		} else if(Tw >= Tmin_upper && Tw <= Tmax_upper) {
-			control_upper.push_back(control_states[rand() % 2]);
-		} else {
-			control_upper.push_back(0.0);
-		}
-		if(Tw < Tmin_lower && control_upper[0] == 0.0) {
-			control_lower.push_back(1.0);
-		} else if(Tw >= Tmin_lower && Tw <= Tmax_lower && control_upper[0] == 0.0) {
-			control_lower.push_back(control_states[rand() % 2]);
-		} else {
-			control_lower.push_back(0.0);
-		}
+ 		/*
+         * The following code is required because some part of the gridlab module initialization logic invalidates the
+         * default constructed unordered maps contained in the header file. If you know what breaks this, fix it or tell
+         * someone who can, because this is a bad solution to the problem.
+         */
+        control_upper = std::unordered_map<unsigned, double>();
+        control_lower = std::unordered_map<unsigned, double>();
+        if (Tw < Tmin_upper) {
+            control_upper[0] = 1.0;
+        } else if (Tw >= Tmin_upper && Tw <= Tmax_upper) {
+            control_upper[0] = control_states[rand() % 2];
+        } else {
+            control_upper[0] = 0.0;
+        }
+        if (Tw < Tmin_lower && control_upper[0] == 0.0) {
+            control_lower[0] = 1.0;
+        } else if (Tw >= Tmin_lower && Tw <= Tmax_lower && control_upper[0] == 0.0) {
+            control_lower[0] = control_states[rand() % 2];
+        } else {
+            control_lower[0] = 0.0;
+        }
 
         dT_dt.reserve(number_of_states);
         T_now.resize(number_of_states, 0.0);
@@ -1794,20 +1801,20 @@ int waterheater::multilayer_time_to_transition() {
 			T_layers[i].push_back(T_new[i]);
 		}
 		// control logic for upper layer
-		if(T_layers[10][time_new] >= Tmax_upper) {
-			control_upper.push_back(0.0);
-		} else if(T_layers[10][time_new] <= Tmin_upper) {
-			control_upper.push_back(1.0);
-		} else {
-			control_upper.push_back(control_upper[time_now]);
-		}
-		// control logic for lower
-		if(T_layers[1][time_new] >= Tmax_lower || control_upper[time_new] == 1.0) {
-			control_lower.push_back(0.0);
-		} else if(T_layers[1][time_new] <= Tmin_lower && control_upper[time_new] == 0.0) {
-			control_lower.push_back(1.0);
-		} else {
-			control_lower.push_back(control_lower[time_now]);
+        if (T_layers[10][time_new] >= Tmax_upper) {
+            control_upper[time_new] = 0.0;
+        } else if (T_layers[10][time_new] <= Tmin_upper) {
+            control_upper[time_new] = 1.0;
+        } else {
+            control_upper[time_new] = control_upper[time_now];
+        }
+        // control logic for lower
+        if (T_layers[1][time_new] >= Tmax_lower || control_upper[time_new] == 1.0) {
+            control_lower[time_new] = 0.0;
+        } else if (T_layers[1][time_new] <= Tmin_lower && control_upper[time_new] == 0.0) {
+            control_lower[time_new] = 1.0;
+        } else {
+            control_lower[time_new] = control_lower[time_now];
 		}
 		if(re_override == OV_ON) {
 			control_lower[time_new] = 0.0;
@@ -1908,20 +1915,20 @@ void waterheater::reinitialize_internals(int dt) {
 	Tmax_upper = tank_setpoint_2 + (deadband_2/2.0);
 	Tmin_upper = tank_setpoint_2 - (deadband_2/2.0);
 	// control logic for upper layer
-	if(T_layers[10][0] >= Tmax_upper) {
-		control_upper.push_back(0.0);
-	} else if(T_layers[10][0] <= Tmin_upper) {
-		control_upper.push_back(1.0);
-	} else {
-		control_upper.push_back(init_control_upper);
-	}
-	// control logic for lower
-	if(T_layers[1][0] >= Tmax_lower || control_upper[0] == 1.0) {
-		control_lower.push_back(0.0);
-	} else if(T_layers[1][0] <= Tmin_lower && control_upper[0] == 0.0) {
-		control_lower.push_back(1.0);
-	} else {
-		control_lower.push_back(init_control_lower);
+    if (T_layers[10][0] >= Tmax_upper) {
+        control_upper[0] = 0.0;
+    } else if (T_layers[10][0] <= Tmin_upper) {
+        control_upper[0] = 1.0;
+    } else {
+        control_upper[0] = init_control_upper;
+    }
+    // control logic for lower
+    if (T_layers[1][0] >= Tmax_lower || control_upper[0] == 1.0) {
+        control_lower[0] = 0.0;
+    } else if (T_layers[1][0] <= Tmin_lower && control_upper[0] == 0.0) {
+        control_lower[0] = 1.0;
+    } else {
+        control_lower[0] = init_control_lower;
 	}
 	if(re_override == OV_ON) {
 		control_lower[0] = 0.0;
@@ -1932,7 +1939,7 @@ void waterheater::reinitialize_internals(int dt) {
 	}
 }
 
-std::vector<double> waterheater::multiply_waterheater_matrices(vector<vector<double>> &a, vector<double> &b) {
+std::vector<double>&& waterheater::multiply_waterheater_matrices(vector<vector<double>> &a, vector<double> &b) {
     auto rv = vector<double>(a.size());
 	for(int i=0; i<a.size(); i++) {
 		for(int j=0; j<a[i].size(); j++){
