@@ -1939,7 +1939,7 @@ void waterheater::reinitialize_internals(int dt) {
 	}
 }
 
-std::vector<double>&& waterheater::multiply_waterheater_matrices(vector<vector<double>> &a, vector<double> &b) {
+std::vector<double> waterheater::multiply_waterheater_matrices(vector<vector<double>> &a, vector<double> &b) {
     auto rv = vector<double>(a.size());
 	for(int i=0; i<a.size(); i++) {
 		for(int j=0; j<a[i].size(); j++){

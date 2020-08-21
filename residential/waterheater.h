@@ -421,7 +421,7 @@ public:
 	double new_h_2zone(double h0, double delta_t);      // Calcs h after transition...
 	int multilayer_time_to_transition(void);
 	void calculate_waterheater_matrices(int time_now);
-	vector<double>&& multiply_waterheater_matrices(vector<vector<double>> &, vector<double> &);
+	vector<double> multiply_waterheater_matrices(vector<vector<double>> &, vector<double> &);
 	void reinitialize_internals(int dt);
 
 	double get_Tambient(enumeration water_heater_location);		// ambient T [F] -- either an indoor house temperature or a garage temperature, probably...
