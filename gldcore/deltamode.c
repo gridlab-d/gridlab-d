@@ -542,19 +542,6 @@ static DT delta_preupdate(void)
 	/* Store it for this check */
 	timestep = global_deltamode_timestep;
 
-	/* Check it and make sure it isn't invalid - only zero is invalid */
-	/* Unsigned, so a negative number will just roll over */
-	/* Would theoretically get caught by the overall zero check, but not really indicate why */
-	if (timestep == 0)
-	{
-		output_error("delta_preupdate(): global deltamode_timestep is zero!");
-		/*  TROUBLESHOOT
-		The value for the global deltamode_timestep returned as zero.  It needs to be a positive number, with 1 ns
-		being the smallest timestep.  If it was specified below 1 ns, try again with a larger timestep.
-		*/
-		return 0;
-	}
-
 	for ( module=delta_modulelist; module<delta_modulelist+delta_modulecount; module++ )
 	{
 		DT dt = (*module)->preupdate(*module,global_clock,global_deltaclock);
