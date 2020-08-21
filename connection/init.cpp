@@ -121,25 +121,9 @@ EXPORT unsigned long preupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 {
 	if (enable_subsecond_models == true)
 	{
-		gld_global dtimestep("deltamode_timestep");
-		if (!dtimestep.is_valid()){
-			gl_error("connection::preupdate: unable to find delamode_timestep!");
-			return DT_INVALID;
-		}
-		if ( dtimestep.get_int32() <= 0)
-		{
-			gl_error("connection::preupdate: deltamode_timestep must be a positive, non-zero number!");
-			/*  TROUBLESHOOT
-			The value for global_deltamode_timestep, must be a positive, non-zero number.
-			Please use such a number and try again.
-			*/
-
-			return DT_INVALID;
-		}
-		else
-		{
-			return (unsigned long)(dtimestep.get_int32());
-		}
+		//Just return the global - error check is in deltamode
+		//This would be where an explicit timestep would be specified, if needed
+		return global_deltamode_timestep;
 	}
 	else	//Not desired, just return an arbitrarily large value
 	{
