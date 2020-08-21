@@ -58,6 +58,9 @@ helics_msg::helics_msg(MODULE *module)
 	defaults = this;
 	if (gl_publish_variable(oclass,
 		PT_double, "version", get_version_offset(), PT_DESCRIPTION, "fncs_msg version",
+		PT_enumeration, "message_type", PADDR(message_type), PT_DESCRIPTION, "set the type of message format you wish to construct",
+			PT_KEYWORD, "GENERAL", enumeration(MT_GENERAL), PT_DESCRIPTION, "use this for sending a general HELICS topic/value pair.",
+			PT_KEYWORD, "JSON", enumeration(MT_JSON), PT_DESCRIPTION, "us this for want to send a bundled json formatted messag in a single topic.",
 		// TODO add published properties here
 		NULL)<1)
 			throw "connection/helics_msg::helics_msg(MODULE*): unable to publish properties of connection:helics_msg";
@@ -69,8 +72,7 @@ int helics_msg::create(){
 	add_clock_update((void *)this,clocks_update);
 	register_object_interupdate((void *)this, dInterupdate);
 	register_object_deltaclockupdate((void *)this, dClockupdate);
-
-
+	message_type = MT_GENERAL;
 	return 1;
 }
 
@@ -226,79 +228,150 @@ int helics_msg::init(OBJECT *parent){
 			helics_value_subscription *gld_sub;
 			helics_endpoint_publication *gld_ep_pub;
 			helics_endpoint_subscription *gld_ep_sub;
+			json_helics_value_publication *json_gld_pub;
+			json_helics_value_subscription *json_gld_sub;
+			json_helics_endpoint_publication *json_gld_ep_pub;
+			json_helics_endpoint_subscription *json_gld_ep_sub;
 			string config_info_temp = "";
 			Json::Reader json_reader;
 			Json::Value config_info;
-			for( idx = 0; idx < pub_count; idx++ ) {
-				helicscpp::Publication pub = gld_helics_federate->getPublication(idx);
-				if( pub.isValid() ) {
-					gld_pub = new helics_value_publication();
-					gld_pub->key = string(pub.getKey());
-					config_info_temp = string(pub.getInfo());
-					json_reader.parse(config_info_temp, config_info);
-					gld_pub->objectName = config_info["object"].asString();
-					gld_pub->propertyName = config_info["property"].asString();
-					gld_pub->HelicsPublication = pub;
-					helics_value_publications.push_back(gld_pub);
+			if(message_type == MT_GENERAL){
+				for( idx = 0; idx < pub_count; idx++ ) {
+					helicscpp::Publication pub = gld_helics_federate->getPublication(idx);
+					if( pub.isValid() ) {
+						gld_pub = new helics_value_publication();
+						gld_pub->key = string(pub.getKey());
+						config_info_temp = string(pub.getInfo());
+						json_reader.parse(config_info_temp, config_info);
+						gld_pub->objectName = config_info["object"].asString();
+						gld_pub->propertyName = config_info["property"].asString();
+						gld_pub->HelicsPublication = pub;
+						helics_value_publications.push_back(gld_pub);
+					}
 				}
-			}
-			for( idx = 0; idx < sub_count; idx++ ) {
-				helicscpp::Input sub = gld_helics_federate->getSubscription(idx);
-				if( sub.isValid() ) {
-					gld_sub = new helics_value_subscription();
-					gld_sub->key = string(sub.getKey());
-					config_info_temp = string(sub.getInfo());
-					json_reader.parse(config_info_temp, config_info);
-					gld_sub->objectName = config_info["object"].asString();
-					gld_sub->propertyName = config_info["property"].asString();
-					gld_sub->HelicsSubscription = sub;
-					helics_value_subscriptions.push_back(gld_sub);
+				for( idx = 0; idx < sub_count; idx++ ) {
+					helicscpp::Input sub = gld_helics_federate->getSubscription(idx);
+					if( sub.isValid() ) {
+						gld_sub = new helics_value_subscription();
+						gld_sub->key = string(sub.getKey());
+						config_info_temp = string(sub.getInfo());
+						json_reader.parse(config_info_temp, config_info);
+						gld_sub->objectName = config_info["object"].asString();
+						gld_sub->propertyName = config_info["property"].asString();
+						gld_sub->HelicsSubscription = sub;
+						helics_value_subscriptions.push_back(gld_sub);
+					}
 				}
-			}
-			for( idx = 0; idx < ep_count; idx++ ) {
-				helicscpp::Endpoint ep = gld_helics_federate->getEndpoint(idx);
-				if( ep.isValid() ) {
-					string dest = string(ep.getDefaultDestination());
-					config_info_temp = string(ep.getInfo());
-					json_reader.parse(config_info_temp, config_info);
-					if( config_info.isMember("object") && config_info.isMember("property") ){
-						if( !dest.empty() ){
+				for( idx = 0; idx < ep_count; idx++ ) {
+					helicscpp::Endpoint ep = gld_helics_federate->getEndpoint(idx);
+					if( ep.isValid() ) {
+						string dest = string(ep.getDefaultDestination());
+						config_info_temp = string(ep.getInfo());
+						json_reader.parse(config_info_temp, config_info);
+						if( config_info.isMember("object") && config_info.isMember("property") ){
+							if( !dest.empty() ){
+								gld_ep_pub = new helics_endpoint_publication();
+								gld_ep_pub->name = string(ep.getName());
+								gld_ep_pub->destination = dest;
+								gld_ep_pub->objectName = config_info["object"].asString();
+								gld_ep_pub->propertyName = config_info["property"].asString();
+								gld_ep_pub->HelicsPublicationEndpoint = ep;
+								helics_endpoint_publications.push_back(gld_ep_pub);
+								gl_verbose("helics_msg::init(): registering publishing endpoint: %s", gld_ep_pub->name.c_str());
+							} else {
+								gld_ep_sub = new helics_endpoint_subscription();
+								gld_ep_sub->name = string(ep.getName());
+								gld_ep_sub->objectName = config_info["object"].asString();
+								gld_ep_sub->propertyName = config_info["property"].asString();
+								gld_ep_sub->HelicsSubscriptionEndpoint = ep;
+								helics_endpoint_subscriptions.push_back(gld_ep_sub);
+								gl_verbose("helics_msg::init(): registering subscribing endpoint: %s", gld_ep_sub->name.c_str());
+							}
+						}
+						if( config_info.isMember("publication_info") ) {
 							gld_ep_pub = new helics_endpoint_publication();
 							gld_ep_pub->name = string(ep.getName());
 							gld_ep_pub->destination = dest;
-							gld_ep_pub->objectName = config_info["object"].asString();
-							gld_ep_pub->propertyName = config_info["property"].asString();
+							gld_ep_pub->objectName = config_info["publication_info"]["object"].asString();
+							gld_ep_pub->propertyName = config_info["publication_info"]["property"].asString();
 							gld_ep_pub->HelicsPublicationEndpoint = ep;
 							helics_endpoint_publications.push_back(gld_ep_pub);
 							gl_verbose("helics_msg::init(): registering publishing endpoint: %s", gld_ep_pub->name.c_str());
-						} else {
+						}
+						if( config_info.isMember("subscription_info") ) {
 							gld_ep_sub = new helics_endpoint_subscription();
 							gld_ep_sub->name = string(ep.getName());
-							gld_ep_sub->objectName = config_info["object"].asString();
-							gld_ep_sub->propertyName = config_info["property"].asString();
+							gld_ep_sub->objectName = config_info["subscription_info"]["object"].asString();
+							gld_ep_sub->propertyName = config_info["subscription_info"]["property"].asString();
 							gld_ep_sub->HelicsSubscriptionEndpoint = ep;
 							helics_endpoint_subscriptions.push_back(gld_ep_sub);
 							gl_verbose("helics_msg::init(): registering subscribing endpoint: %s", gld_ep_sub->name.c_str());
 						}
 					}
-					if( config_info.isMember("publication_info") ) {
-						gld_ep_pub = new helics_endpoint_publication();
-						gld_ep_pub->name = string(ep.getName());
-						gld_ep_pub->destination = dest;
-						gld_ep_pub->objectName = config_info["publication_info"]["object"].asString();
-						gld_ep_pub->propertyName = config_info["publication_info"]["property"].asString();
-						gld_ep_pub->HelicsPublicationEndpoint = ep;
-						helics_endpoint_publications.push_back(gld_ep_pub);
-						gl_verbose("helics_msg::init(): registering publishing endpoint: %s", gld_ep_pub->name.c_str());
+				}
+			} else if(message_type == MT_JSON) {
+				for(idx = 0; idx < pub_count; idx++) {
+					helicscpp::Publication pub = gld_helics_federate->getPublication(idx);
+					if(pub.isValid()) {
+						json_gld_pub = new json_helics_value_publication();
+						json_gld_pub->key = string(pub.getKey());
+						config_info_temp = string(pub.getInfo());
+						json_reader.parse(config_info_temp, json_gld_pub->objectPropertyBundle);
+						json_publication *gldPropety = NULL;
+						for(Json::ValueIterator it = json_gld_pub->objectPropertyBundle.begin(); it != json_gld_pub->objectPropertyBundle.end(); it++){
+							const string gldObjName = it.name();
+							string gldPropName;
+							int n = json_gld_pub->objectPropertyBundle[gldObjName].size();
+							for(int i = 0; i < n; i++){
+								gldPropName = json_gld_pub->objectPropertyBundle[gldObjName][i];
+								gldProperty = new json_publication(gldObjName, gldPropName);
+								json_gld_pbu->jsonPublications.push_back(gldProperty);
+							}
+						}
+						json_gld_pub->HelicsPublication = pub;
+						json_helics_value_publications.push_back(json_gld_pub);
 					}
-					if( config_info.isMember("subscription_info") ) {
-						gld_ep_sub = new helics_endpoint_subscription();
-						gld_ep_sub->name = string(ep.getName());
-						gld_ep_sub->objectName = config_info["subscription_info"]["object"].asString();
-						gld_ep_sub->propertyName = config_info["subscription_info"]["property"].asString();
-						gld_ep_sub->HelicsSubscriptionEndpoint = ep;
-						helics_endpoint_subscriptions.push_back(gld_ep_sub);
-						gl_verbose("helics_msg::init(): registering subscribing endpoint: %s", gld_ep_sub->name.c_str());
+				}
+				for(idx = 0; idx < sub_count; idx++){
+					helicscpp::Input sub = gld_helics_federate->getInput(idx);
+					if(sub.isValid()){
+						json_gld_sub = new json_helics_value_subscription();
+						json_gld_sub->key = string(sub.getKey());
+						json_gld_sub->HelicsSubscription = sub;
+						json_helics_value_subscriptions.push_back(json_gld_sub);
+					}
+				}
+				for( idx = 0; idx < ep_count; idx++ ) {
+					helics::Endpoint ep = helics_federate->getEndpoint(idx);
+					if( ep.isValid() ) {
+						string dest = string(ep.getDefaultDestination());
+						if( !dest.empty() ){
+							json_gld_ep_pub = new json_helics_endpoint_publication();
+							json_gld_ep_pub->name = string(ep.getName());
+							json_gld_ep_pub->destination = dest;
+							config_info_temp = string(ep.getInfo());
+							json_reader.parse(config_info_temp, json_gld_ep_pub->objectPropertyBundle);
+							json_publication *gldProperty = NULL;
+							for(Json::ValueIterator it = json_gld_ep_pub->objectPropertyBundle.begin(); it != json_gld_ep_pub->objectPropertyBundle.end(); it++){
+								const string gldObjName = it.name();
+								string gldPropName;
+								int n = json_gld_ep_pub->objectPropertyBundle[gldObjName].size();
+								for(int i = 0; i < n; i++){
+									gldPropName = json_gld_ep_pub->objectPropertyBundle[gldObjName][i];
+									gldProperty = new json_publication(gldOjbName, gldPropName);
+									json_gld_ep_pub->jsonPublications.push_back(gldProperty);
+								}
+							}
+							json_gld_ep_pub->HelicsPublicationEndpoint = ep;
+							json_helics_endpoint_publications.push_back(json_gld_ep_pub);
+							gl_verbose("helics_msg::init(): registering publishing endpoint: %s", json_gld_ep_pub->name.c_str());
+						} else {
+							json_gld_ep_sub = new helics_endpoint_subscription();
+							json_gld_ep_sub->name = ep.getName();
+							json_gld_ep_sub->HelicsSubscriptionEndpoint = ep;
+							json_helics_endpoint_subscriptions.push_back(json_gld_ep_sub);
+							gl_verbose("helics_msg::init(): registering subscribing endpoint: %s", json_gld_ep_sub->name.c_str());
+						}
 					}
 				}
 			}
@@ -520,16 +593,23 @@ int helics_msg::init(OBJECT *parent){
 
 int helics_msg::precommit(TIMESTAMP t1){
 	int result = 0;
-
-	result = subscribeVariables();
-	if(result == 0){
-		return result;
+	if(message_type == MT_GENERAL){
+		result = subscribeVariables();
+		if(result == 0){
+			return result;
+		}
 	}
-
 	return 1;
 }
 
 TIMESTAMP helics_msg::presync(TIMESTAMP t1){
+	if(message_type == MT_JSON){
+		int result = 0;
+		result = subscribeJsonVariables();
+		if(result == 0){
+			return TS_INVALID;
+		}
+	}
 	return TS_NEVER;
 }
 
@@ -651,9 +731,16 @@ TIMESTAMP helics_msg::clk_update(TIMESTAMP t1)
 		} else if (t1 > gl_globalstoptime && gl_globalclock < gl_globalstoptime){
 			t1 == gl_globalstoptime;
 		}
-		result = publishVariables();
-		if(result == 0){
-			return TS_INVALID;
+		if(message_type == MT_GENERAL){
+			result = publishVariables();
+			if(result == 0){
+				return TS_INVALID;
+			}
+		} else if(message_type == MT_JSON){
+			result = publishJsonVariables();
+			if(result == 0){
+				return TS_INVALID;
+			}
 		}
 #if HAVE_HELICS
 		helics_time t((double)((t1 - initial_sim_time)));
@@ -976,8 +1063,199 @@ int helics_msg::subscribeVariables(){
 	return 1;
 }
 
+int helics_msg::publishJsonVariables(){
+	OBJECT *obj = OBJECTHDR(this);
+	char buf[1024] = "";
+	string simName = string(gl_name(obj, buf, 1023));
+	Json::Value jsonPublishData;
+	gld_property *prop = NULL;
+	jsonPublishData.clear();
+	jsonPublishData[simName];
+	stringstream complex_val;
+	Json::FastWriter jsonWriter;
+	string jsonMessageStr = "";
+#if HAVE_HELICS
+	for(vector<json_helics_value_publication*>::iterator pub = json_helics_value_publications.begin(); pub != json_helics_value_publications.end(); pub++){
+		jsonPublishData[simName].clear();
+		for(vector<json_publication*>::iterator o = (*pub)->jsonPublications.begin(); o != (*pub)->jsonPublications.end(); o++) {
+			prop = (*o)->prop;
+			if(prop->is_valid()){
+				if(!jsonPublishData[simName].isMember((*o)->object_name)){
+					jsonPublishData[simName][(*o)->object_name];
+				}
+				if(prop->is_double()){
+					jsonPublishData[simName][(*o)->object_name][(*o)->property_name] = prop->get_double();
+				} else if(prop->is_complex()){
+					double real_part = prop->get_part("real");
+					double imag_part =prop->get_part("imag");
+					gld_unit *val_unit = prop->get_unit();
+					complex_val.str(string());
+					complex_val << fixed << real_part;
+					if(imag_part >= 0){
+						complex_val << fixed << "+" << fabs(imag_part) << "j";
+					} else {
+						complex_val << fixed << imag_part << "j";
+					}
+					if(val_unit != NULL && val_unit->is_valid()){
+						string unit_name = string(val_unit->get_name());
+						complex_val << " " << unit_name;
+					}
+					jsonPublishData[simName][(*o)->object_name][(*o)->property_name] = complex_val.str();
+				} else if(prop->is_integer()){
+					jsonPublishData[simName][(*o)->object_name][(*o)->property_name] = (Json::Value::Int64)prop->get_integer();
+				} else if(prop->is_timestamp()){
+					jsonPublishData[simName][(*o)->object_name][(*o)->property_name] = (Json::Value::Int64)prop->get_timestamp();
+				} else {
+					char chTemp[1024];
+					prop->to_string(chTemp, 1023);
+					jsonPublishData[simName][(*o)->object_name][(*o)->property_name] = string((char *)chTemp);
+				}
+			}
+		}
+		jsonMessageStr = jsonWriter.write(jsonPublishData);
+		(*pub)->HelicsPublication.publish(jsonMessageStr);
+	}
+	for(vector<json_helics_endpoint_publication*>::iterator pub = json_helics_endpoint_publications.begin(); pub != json_helics_endpoint_publications.end(); pub++){
+		jsonPublishData[simName].clear();
+		for(vector<json_publication*>::iterator o = (*pub)->jsonPublications.begin(); o != (*pub)->jsonPublications.end(); o++) {
+			prop = (*o)->prop;
+			if(prop->is_valid()){
+				if(!jsonPublishData[simName].isMember((*o)->object_name)){
+					jsonPublishData[simName][(*o)->object_name];
+				}
+				if(prop->is_double()){
+					jsonPublishData[simName][(*o)->object_name][(*o)->property_name] = prop->get_double();
+				} else if(prop->is_complex()){
+					double real_part = prop->get_part("real");
+					double imag_part =prop->get_part("imag");
+					gld_unit *val_unit = prop->get_unit();
+					complex_val.str(string());
+					complex_val << fixed << real_part;
+					if(imag_part >= 0){
+						complex_val << fixed << "+" << fabs(imag_part) << "j";
+					} else {
+						complex_val << fixed << imag_part << "j";
+					}
+					if(val_unit != NULL && val_unit->is_valid()){
+						string unit_name = string(val_unit->get_name());
+						complex_val << " " << unit_name;
+					}
+					jsonPublishData[simName][(*o)->object_name][(*o)->property_name] = complex_val.str();
+				} else if(prop->is_integer()){
+					jsonPublishData[simName][(*o)->object_name][(*o)->property_name] = (Json::Value::Int64)prop->get_integer();
+				} else if(prop->is_timestamp()){
+					jsonPublishData[simName][(*o)->object_name][(*o)->property_name] = (Json::Value::Int64)prop->get_timestamp();
+				} else {
+					char chTemp[1024];
+					prop->to_string(chTemp, 1023);
+					jsonPublishData[simName][(*o)->object_name][(*o)->property_name] = string((char *)chTemp);
+				}
+			}
+		}
+		jsonMessageStr = jsonWriter.write(jsonPublishData);
+		(*pub)->HelicsPublicationEndpoint.sendMessage(jsonMessageStr);
+	}
+#endif
+	return 1;
+}
 
-
+int helics_msg::subscribeJsonVariables(){
+	OBJECT *obj = OBJECTHDR(this);
+	char buf[1024] = "";
+	string simName = string(gl_name(obj, buf, 1023));
+	Json::Value jsonMessage;
+	Json::Value jsonData;
+	Json::Reader jsonReader;
+	string value = "";
+	string objectName = "";
+	string propertyName = "";
+	gld_property *gldProperty = NULL;
+#if HAVE_HELICS
+	for(vector<json_helics_value_subscription*>::iterator sub = json_helics_value_subscriptions.begin(); sub != json_helics_value_subscriptions.end(); pub++){
+		value = (*sub)->HelicsSubscription.getString();
+		jsonReader.parse(value,jsonMessage);
+		if(!jsonMessage.isMember(simName.c_str())){
+			gl_warning("helics_msg::subscribeJsonVariables: The simulation name, %s, is not a member of the json schema.",simName.c_str());
+		} else {
+			jsonData = jsonMessage[simName];
+			for(Json::ValueIterator o = jsonData.begin(); o != jsonData.end(); o++){
+				objectName = o.name();
+				for(Json::ValueIterator p = jsonData[objectName].begin(); p != jsonData[objectName].end(); p++){
+					propertyName = p.name();
+					const char *expr1 = objectName.c_str();
+					const char *expr2 = propertyName.c_str();
+					char *bufObj = new char[strlen(expr1)+1];
+					char *bufProp = new char[strlen(expr2)+1];
+					strcpy(bufObj, expr1);
+					strcpy(bufProp, expr2);
+					gldProperty = new gld_property(bufObj, bufProp);
+					if(gldProperty->is_valid()){
+						if(gldProperty->is_integer()){
+							int itmp = jsonData[objectName][propertyName].asInt();
+							gldProperty->setp(itmp);
+						} else if(gldProperty->is_double()){
+							double dtmp = jsonData[objectName][propertyName].asDouble();
+							gldProperty->setp(dtmp);
+						} else {
+							string stmp = jsonData[objectName][propertyName].asString();
+							char sbuf[1024] = "";
+							strncpy(sbuf, stmp.c_str(), 1023);
+							gldProperty->from_string(sbuf);
+						}
+					}
+					delete gldProperty;
+				}
+			}
+		}
+	}
+	for(vector<json_helics_endpoint_subscription*>::iterator sub = json_helics_endpoint_subscriptions.begin(); sub != json_helics_endpoint_subscriptions.end(); sub++){
+		if(helics_federate->hasMessage((*sub)->HelicsSubscriptionEndpoint)){
+			std::unique_ptr<helics::Message> mesg;
+			int pendingMessages = (int) (*sub)->HelicsSubscriptionEndpoint.pendingMessages();
+			for(int i = 0; i < pendingMessages; i++) {
+				gl_verbose("calling getMessage() for endpoint %s", (*sub)->name.c_str());
+				mesg = (*sub)->HelicsSubscriptionEndpoint.getMessage();
+			}
+			const string message_buffer = mesg->to_string();
+			jsonReader.parse(message_buffer, jsonMessage);
+			if(!jsonMessage.isMember(simName.c_str())){
+				gl_warning("helics_msg::subscribeJsonVariables: The simulation name, %s, is not a member of the json schema.",simName.c_str());
+			} else {
+				jsonData = jsonMessage[simName];
+				for(Json::ValueIterator o = jsonData.begin(); o != jsonData.end(); o++){
+					objectName = o.name();
+					for(Json::ValueIterator p = jsonData[objectName].begin(); p != jsonData[objectName].end(); p++){
+						propertyName = p.name();
+						const char *expr1 = objectName.c_str();
+						const char *expr2 = propertyName.c_str();
+						char *bufObj = new char[strlen(expr1)+1];
+						char *bufProp = new char[strlen(expr2)+1];
+						strcpy(bufObj, expr1);
+						strcpy(bufProp, expr2);
+						gldProperty = new gld_property(bufObj, bufProp);
+						if(gldProperty->is_valid()){
+							if(gldProperty->is_integer()){
+								int itmp = jsonData[objectName][propertyName].asInt();
+								gldProperty->setp(itmp);
+							} else if(gldProperty->is_double()){
+								double dtmp = jsonData[objectName][propertyName].asDouble();
+								gldProperty->setp(dtmp);
+							} else {
+								string stmp = jsonData[objectName][propertyName].asString();
+								char sbuf[1024] = "";
+								strncpy(sbuf, stmp.c_str(), 1023);
+								gldProperty->from_string(sbuf);
+							}
+						}
+						delete gldProperty;
+					}
+				}
+			}
+		}
+	}
+#endif
+	return 1;
+}
 
 /*static char helics_hex(char c)
 {

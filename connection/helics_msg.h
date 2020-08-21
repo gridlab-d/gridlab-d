@@ -51,6 +51,28 @@ class helics_msg;
 //extern "C" FUNCTIONSRELAY *find_helics_function(const char *rclass, const char *rname);
 //extern "C" size_t helics_from_hex(void *buf, size_t len, const char *hex, size_t hexlen);
 
+class json_publication {
+public:
+	json_publication(string objName, string propName){
+		object_name = objName;
+		property_name = propName;
+		const char *pObjName = objName.c_str();
+		const char *pPropName = propName.c_str();
+		char *pObjBuf = new char[strlen(pObjName)+1];
+		char *pPropBuf = new char[strlen(pPropName)+1];
+		strcpy(pObjBuf, pObjName);
+		strcpy(pPropBuf, pPropName);
+		if(objName.compare("globals") != 0){
+			prop = new gld_property(pObjBuf, pPropBuf);
+			if(!prop->is_valid()){
+				gl_warning("helics_msg::init(): There is no object %s with property %s.",pObjBuf,pPropBuf);
+			}
+		}
+	}
+	string object_name;
+	string property_name;
+	gld_property *prop;
+};
 #if HAVE_HELICS
 class helics_value_publication {
 public:
@@ -100,7 +122,54 @@ public:
 	gld_property *pObjectProperty;
 	helicscpp::Endpoint HelicsSubscriptionEndpoint;
 };
+
+class json_helics_value_publication {
+public:
+	json_helics_value_publication(){
+		pObjectProperty = NULL;
+	}
+	JSON::Value objectPropertyBundle;
+	vector<json_publication*> jsonPublications;
+	string key;
+	helicscpp::Publication HelicsPublication;
+};
+
+class json_helics_value_subscription {
+public:
+	json_helics_value_subscription(){
+		pObjectProperty = NULL;
+	}
+	string key;
+	helicscpp::Input HelicsSubscription;
+};
+
+class json_helics_endpoint_publication {
+public:
+	json_helics_endpoint_publication(){
+		pObjectProperty = NULL;
+	}
+	JSON::Value objectPropertyBundle;
+	vector<json_publication*> jsonPublications;
+	string name;
+	string destination;
+	helicscpp::Endpoint HelicsPublicationEndpoint;
+};
+
+class json_helics_endpoint_subscription {
+public:
+	json_helics_endpoint_subscription(){
+		pObjectProperty = NULL;
+	}
+	string name;
+	helicscpp::Endpoint HelicsSubscriptionEndpoint;
+};
 #endif
+
+typedef enum {
+	MT_GENERAL,
+	MT_JSON,
+} MESSAGETYPE;
+
 class helics_msg : public gld_object {
 public:
 	GL_ATOMIC(double,version);
@@ -112,6 +181,10 @@ private:
 	vector<helics_value_publication*> helics_value_publications;
 	vector<helics_endpoint_subscription*> helics_endpoint_subscriptions;
 	vector<helics_endpoint_publication*> helics_endpoint_publications;
+	vector<json_helics_value_subscription*> json_helics_value_subscriptions;
+	vector<json_helics_value_publication*> json_helics_value_publications;
+	vector<json_helics_endpoint_subscription*> json_helics_endpoint_subscriptions;
+	vector<json_helics_endpoint_publication*> json_helics_endpoint_publications;
 #endif
 	vector<string> *inFunctionTopics;
 	varmap *vmap[14];
@@ -140,11 +213,14 @@ public:
 //	void incoming_helics_function(void);
 	int publishVariables();
 	int subscribeVariables();
+	int publishJsonVariables();
+	int subscribeJsonVariables();
 	char simulationName[1024];
 	void term(TIMESTAMP t1);
 	TIMESTAMP clk_update(TIMESTAMP t1);
 	SIMULATIONMODE deltaInterUpdate(unsigned int delta_iteration_counter, TIMESTAMP t0, unsigned int64 dt);
 	SIMULATIONMODE deltaClockUpdate(double t1, unsigned long timestep, SIMULATIONMODE sysmode);
+	enumeration message_type;
 	// TODO add other event handlers here
 public:
 	// special variables for GridLAB-D classes
