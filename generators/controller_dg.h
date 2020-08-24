@@ -10,11 +10,8 @@
 
 #include <stdarg.h>
 
-#include "../powerflow/switch_object.h"
-#include "../powerflow/node.h"
 #include "gridlabd.h"
 #include "generators.h"
-#include "diesel_dg.h"
 
 EXPORT SIMULATIONMODE interupdate_controller_dg(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 EXPORT STATUS postupdate_controller_dg(OBJECT *obj, complex *useful_value, unsigned int mode_pass);
@@ -38,6 +35,46 @@ typedef struct {
 	CTRL_VARS *next_state;  //Next state of all variables
 } CTRL_Gen;
 
+//DG Variables
+typedef struct {
+	OBJECT *obj;
+	gld_property *Pref_prop;
+	gld_property *Vset_prop;
+	gld_property *omega_prop;
+	double Pref;
+	double Vset;
+	double omega;
+	double omega_ref;
+	OBJECT *parent;
+} DG_VARS;
+
+//Node variables
+typedef struct {
+	OBJECT *obj;
+	gld_property *voltage_A_prop;
+	gld_property *voltage_B_prop;
+	gld_property *voltage_C_prop;
+	complex voltage_A;
+	complex voltage_B;
+	complex voltage_C;
+	double nominal_voltage;
+} NODE_VARS;
+
+//Switch variables
+typedef struct {
+	OBJECT *obj;
+	gld_property *status_prop;
+	gld_property *power_in_prop;
+	gld_property *power_out_A_prop;
+	gld_property *power_out_B_prop;
+	gld_property *power_out_C_prop;
+	complex power_in;
+	complex power_out_A;
+	complex power_out_B;
+	complex power_out_C;
+	enumeration status_val;
+} SWITCH_VARS;
+
 class controller_dg: public gld_object
 {
 private:
@@ -45,19 +82,19 @@ private:
 	bool flag_switchOn;
 	unsigned int64 controlTime;
 
-	switch_object **pSwitch;
 	FINDLIST *switches;
-	diesel_dg **pDG;
+	DG_VARS *pDG;
 	FINDLIST *dgs;
 
 	CTRL_Gen **ctrlGen; 		   // Pointer to all the controls of each generator
-	node **GenPobj;
+	NODE_VARS *GenPobj;
+
+	NODE_VARS *Switch_Froms;
+	SWITCH_VARS *pSwitchObjs;
 
 	double *prev_Pref_val;		   //Previous value of x - used for delta-exiting convergence check
 	double *prev_Vset_val;		   // Previous value of Vset - used for delta-exiting convergence check
 
-	char **DGpNdName;              // Store the generator parent node names
-	OBJECT **dgSwitchObj;		   // Store the switch objects that connected to the generators
 	int dgswitchFound; 		   // Index for storing found switches that connected to the generators
 
 	CTRL_VARS predictor_vals;	   //Predictor pass values of variables
@@ -66,6 +103,8 @@ private:
 	bool deltamode_inclusive;	   //Boolean for deltamode calls - pulled from object flags
 	double *mapped_freq_variable;  //Mapping to frequency variable in powerflow module - deltamode updates
 
+	gld_property *map_complex_value(OBJECT *obj, char *name);
+	gld_property *map_double_value(OBJECT *obj, char *name);
 public:
 	char32 controlled_dgs;
 

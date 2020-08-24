@@ -174,8 +174,8 @@ object node {
 			rated_power 1340;
 			P_Out output_power*1;
 			Q_Out output_var*1;
-			V_In 266+0j;
-			I_In 15.1203+0j;
+			V_In 266.0;
+			I_In 15.1203;
 			// object recorder {
 				// property V_In,I_In,VA_In,VA_Out;
 				// file const_pq_inv.csv;
@@ -220,8 +220,8 @@ object triplex_meter {
 		power_factor pf_sched*1;
 		use_multipoint_efficiency FALSE;
 		four_quadrant_control_mode CONSTANT_PF;
-		V_In 266+0j;
-		I_In 15.1203+0j;
+		V_In 266.0;
+		I_In 15.1203;
 		// object recorder {
 			// property V_In,I_In,VA_In,VA_Out;
 			// file const_pf_inv.csv;
