@@ -73,6 +73,7 @@ GLOBAL SOLVERMETHOD solver_method INIT(SM_FBS);		/**< powerflow solver methodolo
 GLOBAL char256 MDFileName INIT("");					/**< filename for matrix dump */
 GLOBAL MATRIXDUMPMETHOD NRMatDumpMethod INIT(MD_NONE);	/**< NR-based matrix output method */
 GLOBAL bool NRMatReferences INIT(false);			/**< Flag to indicate if the decoding information for the matrix is dumped - row/col to bus */
+GLOBAL bool NRMatRHSDump INIT(false);				/**< Flag to indicate if the RHS portion (current injection) should be exported to the file */
 GLOBAL bool use_line_cap INIT(false);				/**< Flag to include line capacitance quantities */
 GLOBAL bool use_link_limits INIT(true);				/**< Flag to include line/transformer ratings and provide a warning if exceeded */
 GLOBAL MATRIXSOLVERMETHOD matrix_solver_method INIT(MM_SUPERLU);	/**< Newton-Raphson uses superLU as the default solver */
