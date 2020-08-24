@@ -119,7 +119,7 @@ GLOBAL double reliability_metrics_recloser_counts INIT(0.0);	/***< Recloser coun
 GLOBAL bool enable_subsecond_models INIT(false);		/* normally not operating in delta mode */
 GLOBAL bool all_powerflow_delta INIT(false);			/* Flag to make all powerflow objects participate in deltamode -- otherwise is individually flagged per object */
 GLOBAL FREQMEASDEFAULT all_powerflow_freq_measure_method INIT(FMM_NONE);		/* Flag to enable all capable powerflow objects to do frequency measurements */
-GLOBAL unsigned long deltamode_timestep INIT(10000000); /* deltamode timestep value - 10 ms timestep, at first - intermnal */
+GLOBAL unsigned long deltamode_timestep INIT(10000000); /* deltamode timestep value - 10 ms timestep, at first - internal */
 GLOBAL double deltamode_timestep_publish INIT(10000000.0); /* deltamode module-published 10 ms timestep, at first -- module property version, to be converted*/
 GLOBAL OBJECT **delta_objects INIT(NULL);				/* Array pointer objects that need deltamode interupdate calls */
 GLOBAL FUNCTIONADDR *delta_functions INIT(NULL);	/* Array pointer functions for objects that need deltamode interupdate calls */

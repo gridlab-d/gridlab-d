@@ -582,7 +582,7 @@ int restoration::PerformRestoration(int faulting_link)
 	for (indexval=0; indexval<NR_branch_count; indexval++)
 	{
 		//Add them in, unless it is an open fuse/open switch/open sectionalizer
-		if ((NR_branchdata[indexval].lnk_type == 3) || (NR_branchdata[indexval].lnk_type == 2) || (NR_branchdata[indexval].lnk_type == 5))	//Normal switch considered sectionalizer, as well
+		if ((NR_branchdata[indexval].lnk_type == 3) || (NR_branchdata[indexval].lnk_type == 4) || (NR_branchdata[indexval].lnk_type == 5))	//Normal switch considered sectionalizer, as well
 		{
 			//Make sure it is closed (if open, just don't add it)
 			if (*NR_branchdata[indexval].status == LS_CLOSED)
@@ -638,7 +638,7 @@ int restoration::PerformRestoration(int faulting_link)
 	for (indexval=0; indexval<NR_branch_count; indexval++)
 	{
 		//See if we're a normal switch or sectionalizer
-		if ((NR_branchdata[indexval].lnk_type == 2) || (NR_branchdata[indexval].lnk_type == 5))
+		if ((NR_branchdata[indexval].lnk_type == 4) || (NR_branchdata[indexval].lnk_type == 5))
 		{
 			//Check out status
 			if (*NR_branchdata[indexval].status == LS_CLOSED)
@@ -3149,7 +3149,7 @@ void restoration::modifyModel(int counter)
 		//Pull the object header, just cause
 		swobj = NR_branchdata[locations.data[idx]].obj;
 
-		if (NR_branchdata[locations.data[idx]].lnk_type == 2)	//Normal switch
+		if (NR_branchdata[locations.data[idx]].lnk_type == 4)	//Normal switch
 		{
 			//See if we can find the switching function
 			switching_fxn = (FUNCTIONADDR)(gl_get_function(swobj,"change_switch_state"));

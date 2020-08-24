@@ -34,6 +34,7 @@ module powerflow {
 	maximum_voltage_error 1e-9;
 	//lu_solver KLU_x64;
 	//enable_inrush true;
+	default_resistance 0.00005;	//To make consistent with original switch admittance
 }
 
 
