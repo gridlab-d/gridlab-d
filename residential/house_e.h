@@ -468,6 +468,8 @@ private:
 
 	void circuit_voltage_factor_update(void);	///<Functionalized version of the voltage_factor update, so can be called in deltamode
 	void powerflow_accumulator_remover(void);	///<Functioanlized item that removes current accumulator values from powerflow (mostly for XML stuff)
+	//Circuit pointer for HVAC - used for breaker checks
+	CIRCUIT *pHVAC_EnduseLoad;
 
 public:
 	int error_flag;

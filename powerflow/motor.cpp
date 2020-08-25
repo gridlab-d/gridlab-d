@@ -164,6 +164,8 @@ motor::motor(MODULE *mod):node(mod)
 			GL_THROW("Unable to publish motor swing-swapping function");
 		if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
 			GL_THROW("Unable to publish motor VFD attachment function");
+		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
+			GL_THROW("Unable to publish motor swing-status check function");
     }
 }
 
@@ -987,18 +989,35 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 	STATUS return_status_val;
 	bool temp_house_motor_state;
 	gld_wlock *test_rlock;
+	double deltat;
 
 	// make sure to capture the current time
 	curr_delta_time = gl_globaldeltaclock;
 
 	// I need the time delta in seconds
-	double deltaTime = (double)dt/(double)DT_SECOND;
+	deltat = (double)dt/(double)DT_SECOND;
 
-	//mostly for GFA functionality calls
-	if ((iteration_count_val==0) && (interupdate_pos == false) && (fmeas_type != FM_NONE)) 
+	//Update time tracking variable - mostly for GFA functionality calls
+	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
 	{
+		//Update tracking variable
+		prev_time_dbl = gl_globaldeltaclock;
+
 		//Update frequency calculation values (if needed)
-		memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+		if (fmeas_type != FM_NONE)
+		{
+			//See which pass
+			if (delta_time == 0)
+			{
+				//Initialize dynamics - first run of new delta call
+				init_freq_dynamics(deltat);
+			}
+			else
+			{
+				//Copy the tracker value
+				memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+			}
+		}
 	}
 
 	//In the first call we need to initilize the dynamic model
@@ -1006,11 +1025,6 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 	{
 		//Call presync-equivalent items
 		NR_node_presync_fxn(0);
-
-		if (fmeas_type != FM_NONE) {
-			//Initialize dynamics
-			init_freq_dynamics();
-		}
 
 		if (motor_op_mode == modeSPIM)
 		{
@@ -1088,7 +1102,7 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 			}//End crude house coupling check
 
 			// if deltaTime is not small enough we will run into problems
-			if (deltaTime > 0.0003) {
+			if (deltat > 0.0003) {
 				gl_warning("Delta time for the SPIM model needs to be lower than 0.0003 seconds");
 			}
 
@@ -1104,12 +1118,12 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 
 			// update protection
 			if (delta_time>0) {
-				SPIMUpdateProtection(deltaTime);
+				SPIMUpdateProtection(deltat);
 			}
 
 			if (motor_override == overrideON && ws > 1 && Vs.Mag() > 0.1 && motor_trip == 0) { // motor is currently connected and grid conditions are not "collapsed"
 				// run the dynamic solver
-				SPIMDynamic(curr_delta_time, deltaTime);
+				SPIMDynamic(curr_delta_time, deltat);
 
 				// update current draw
 				if (triplex_connected == true)
@@ -1165,8 +1179,8 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 		}
 		else 	//Must be three-phase
 		{
-			// if deltaTime is not small enough we will run into problems
-			if (deltaTime > 0.0005) {
+			// if deltat is not small enough we will run into problems
+			if (deltat > 0.0005) {
 				gl_warning("Delta time for the TPIM model needs to be lower than 0.0005 seconds");
 			}
 
@@ -1182,14 +1196,14 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 
 			// update protection
 			if (delta_time>0) {
-				TPIMUpdateProtection(deltaTime);
+				TPIMUpdateProtection(deltat);
 			}
 
 
 			if (motor_override == overrideON && ws_pu > 0.1 && Vas.Mag() > 0.1 && Vbs.Mag() > 0.1 && Vcs.Mag() > 0.1 &&
 					motor_trip == 0) { // motor is currently connected and grid conditions are not "collapsed"
 				// run the dynamic solver
-				TPIMDynamic(curr_delta_time, deltaTime);
+				TPIMDynamic(curr_delta_time, deltat);
 
 				// update current draw -- pre_rotated_current
 				pre_rotated_current[0] = Ias*Ibase; // A
@@ -1224,7 +1238,7 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 		//Frequency measurement stuff
 		if (fmeas_type != FM_NONE)
 		{
-			return_status_val = calc_freq_dynamics(deltaTime);
+			return_status_val = calc_freq_dynamics(deltat);
 
 			//Check it
 			if (return_status_val == FAILED)

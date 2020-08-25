@@ -9,6 +9,9 @@
 EXPORT SIMULATIONMODE interupdate_load(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 EXPORT STATUS update_load_values(OBJECT *obj);
 
+//KML export
+EXPORT int load_kmldata(OBJECT *obj,int (*stream)(const char*,...));
+
 class load : public node
 {
 public:

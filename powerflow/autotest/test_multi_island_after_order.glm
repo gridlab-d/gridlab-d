@@ -1,0 +1,209 @@
+// Simple autotest for topology checking
+// Has lines near the end (especially Line_36) that get
+// topo-checked/initialized after their respective buses have been associated
+// Used to cause them to be dissociated (-1 island), which would cause NR to have issues
+// populating things
+//
+// Simple autotest - just runs
+
+clock {
+	timezone "PST+8PDT";
+	starttime '2001-08-01 12:00:00 PDT';
+	stoptime '2001-08-01 12:02:00 PDT';
+}
+
+#set profiler=1
+
+module powerflow {
+	solver_method NR;
+}
+
+//Fault check object
+object fault_check {
+	name fault_checker;
+	check_mode ONCHANGE;
+	strictly_radial false;
+	grid_association true;
+	output_filename test_topo.txt;
+	//full_output_file true;
+}
+
+//Simple line configuration
+object overhead_line_conductor {
+	name ohl_conductor_conductor;	//336,400 26/7 ACSR
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+	diameter 0.721;
+}
+
+object overhead_line_conductor {
+	name ohl_conductor_neutral;	//4/0 6/1 ACSR
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+	diameter 0.563;
+}
+
+object line_spacing {
+	name ohl_spacing;
+	distance_AB 2.5 ft;
+	distance_AC 7.0 ft;
+	distance_BC 4.5 ft;
+	distance_CN 5.0 ft;
+	distance_AN 5.65685424949 ft;
+	distance_BN 4.27200187266 ft;
+	distance_AE 28.0 ft;
+	distance_BE 28.0 ft;
+	distance_CE 28.0 ft;
+	distance_NE 24.0 ft;
+}
+
+object line_configuration {
+	name ohl_line_config;
+	conductor_A ohl_conductor_conductor;
+	conductor_B ohl_conductor_conductor;
+	conductor_C ohl_conductor_conductor;
+	conductor_N ohl_conductor_neutral;
+	spacing ohl_spacing;
+}
+
+//Nodes
+object meter {
+	phases ABCN;
+	name Node_1;
+	nominal_voltage 240.0;
+	bustype SWING;
+}
+
+object meter {
+	phases ABCN;
+	name Node_2;
+	nominal_voltage 240.0;
+}
+
+object meter {
+	phases ABCN;
+	name Node_3;
+	nominal_voltage 240.0;
+}
+
+object meter {
+	phases ABCN;
+	name Node_6;
+	nominal_voltage 240.0;
+}
+
+object meter {
+	phases ABCN;
+	name Node_5;
+	nominal_voltage 240.0;
+}
+
+object meter {
+	phases ABCN;
+	name Node_7;
+	nominal_voltage 240.0;
+}
+
+object meter {
+	phases ABCN;
+	name Node_8;
+	nominal_voltage 240.0;
+}
+
+object meter {
+	phases ABCN;
+	name Node_9;
+	nominal_voltage 240.0;
+}
+
+object load {
+	phases ABCN;
+	name load_bus;
+	nominal_voltage 240.0;
+	constant_impedance_A 57.1372+5.1423j;
+	constant_impedance_B 57.1372+5.1423j;
+	constant_impedance_C 57.1372+5.1423j;
+}
+
+//Switch to main grid
+object switch {
+	name grid_switch;
+	phases ABCN;
+	from Node_1;
+	to Node_2;
+	status CLOSED;
+}
+
+//Lines connecting
+object overhead_line {
+	phases ABCN;
+	name Line_12;
+	from Node_2;
+	to Node_3;
+	length 50.0 ft;
+	configuration ohl_line_config;
+}
+
+object overhead_line {
+	phases ABCN;
+	name Line_3Load;
+	from Node_3;
+	to load_bus;
+	length 2500.0 ft;
+	configuration ohl_line_config;
+}
+
+object overhead_line { // Line to DG1
+	phases ABCN;
+	name Line_36;
+	from Node_6;
+	to Node_3;
+	length 500.0 ft;
+	configuration ohl_line_config;
+}
+
+object overhead_line { // Line to DG2
+	phases ABCN;
+	name Line_37;
+	from Node_7;
+	to Node_3;
+	length 500.0 ft;
+	configuration ohl_line_config;
+}
+
+object overhead_line { // Line to INV 1
+	phases ABCN;
+	name Line_35;
+	from Node_5;
+	to Node_3;
+	length 500.0 ft;
+	configuration ohl_line_config;
+}
+
+object overhead_line {
+	phases ABCN;
+	name Line_78;
+	from Node_7;
+	to Node_8;
+	length 500.0 ft;
+	configuration ohl_line_config;
+}
+
+object overhead_line {
+	phases ABCN;
+	name Line_89;
+	from Node_8;
+	to Node_9;
+	length 500.0 ft;
+	configuration ohl_line_config;
+}
+
+object overhead_line {
+	phases ABCN;
+	name Line_69;
+	from Node_6;
+	to Node_9;
+	length 500.0 ft;
+	configuration ohl_line_config;
+}
+

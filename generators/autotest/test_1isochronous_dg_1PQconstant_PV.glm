@@ -3358,8 +3358,8 @@ object inverter {
 	rated_power 300 kVA;
 	P_Out 200000;
 	Q_Out 100000;
-	V_In 1000+0j;
-	I_In 1000+0j;
+	V_In 1000.0;
+	I_In 1000.0;
 
 	flags DELTAMODE;
 	dynamic_model_mode PI;

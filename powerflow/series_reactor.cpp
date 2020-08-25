@@ -60,6 +60,8 @@ series_reactor::series_reactor(MODULE *mod) : link_object(mod)
 			GL_THROW("Unable to publish series reactor external power calculation function");
 		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
 			GL_THROW("Unable to publish series reactor external power limit calculation function");
+		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==NULL)
+			GL_THROW("Unable to publish series reactor external current calculation function");
     }
 }
 

@@ -296,7 +296,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_double,"cooling_design_temperature[degF]", PADDR(cooling_design_temperature),PT_DESCRIPTION,"system cooling design temperature",
 			PT_double,"heating_design_temperature[degF]", PADDR(heating_design_temperature),PT_DESCRIPTION,"system heating design temperature",
 			PT_double,"design_peak_solar[Btu/h*sf]", PADDR(design_peak_solar),PT_DESCRIPTION,"system design solar load",
-			PT_double,"design_internal_gains[W/sf]", PADDR(design_internal_gains),PT_DESCRIPTION,"system design internal gains",
+			PT_double,"design_internal_gains[Btu/h]", PADDR(design_internal_gains),PT_DESCRIPTION,"system design internal gains",
 			PT_double,"air_heat_fraction[pu]", PADDR(air_heat_fraction), PT_DESCRIPTION, "fraction of heat gain/loss that goes to air (as opposed to mass)",
 			PT_double,"mass_solar_gain_fraction[pu]", PADDR(mass_solar_gain_fraction), PT_DESCRIPTION, "fraction of the heat gain/loss from the solar gains that goes to the mass",
 			PT_double,"mass_internal_gain_fraction[pu]", PADDR(mass_internal_gain_fraction), PT_DESCRIPTION, "fraction of heat gain/loss from the internal gains that goes to the mass",
@@ -594,6 +594,9 @@ int house_e::create()
 	//Set thermal storage flag
 	thermal_storage_present = false;
 	thermal_storage_inuse = false;
+
+	//Null out circuit pointer
+	pHVAC_EnduseLoad = NULL;
 
 	// set up implicit enduse list
 	implicit_enduse_list = NULL;
@@ -1471,7 +1474,6 @@ int house_e::init(OBJECT *parent)
 		//Delete the link
 		delete temp_gld_property;
 	}
-	// else if (parent!=NULL && (gl_object_isa(parent,"meter","powerflow") || gl_object_isa(obj->parent,"node","powerflow"))) // for three-phase commercial zone-houses
 	else if (parent!=NULL && (gl_object_isa(parent,"meter","powerflow") || gl_object_isa(obj->parent,"node","powerflow") || gl_object_isa(obj->parent,"load","powerflow"))) // for three-phase commercial zone-houses
 	{
 		//Map to the triplex variable for houses
@@ -1956,12 +1958,7 @@ int house_e::init(OBJECT *parent)
 
 	// connect any implicit loads
 	attach_implicit_enduses();
-	update_system();
-	if(error_flag == 1){
-		return 0;
-	}
-	update_model();
-	
+
 	// attach the house_e HVAC to the panel
 	if (hvac_breaker_rating == 0)
 	{
@@ -1971,8 +1968,15 @@ int house_e::init(OBJECT *parent)
 	else
 		load.breaker_amps = hvac_breaker_rating;
 	load.config = EUC_IS220;
-	attach(OBJECTHDR(this),hvac_breaker_rating, true, &load);
+	pHVAC_EnduseLoad = attach(OBJECTHDR(this),hvac_breaker_rating, true, &load);
 
+	//Continue initialization - update_system uses the HVAC pointer, so it has to be inited first
+	update_system(-1.0);
+	if(error_flag == 1){
+		return 0;
+	}
+	update_model();
+	
 	if(include_fan_heatgain == TRUE){
 		fan_heatgain_fraction = 1;
 	} else {
@@ -2246,6 +2250,7 @@ from end uses.  The modeling approach is based on the Equivalent Thermal Paramet
 method of calculating the air and mass temperature in the conditioned space.  These are solved using
 a dual decay solver to obtain the time for next state change based on the thermostat set points.
 This synchronization function updates the HVAC equipment load and power draw.
+-1 for dt is set to be an initialization check item
 **/
 
 void house_e::update_system(double dt)
@@ -2259,6 +2264,8 @@ void house_e::update_system(double dt)
 	double heating_capacity_adj=0;
 	double cooling_capacity_adj=0;
 	double temp_c;
+	double rough_amps;
+	OBJECT *obj = OBJECTHDR(this);
 
 	//Pull climate values, if we're properly linked
 	if (proper_climate_found == true)
@@ -2355,7 +2362,7 @@ void house_e::update_system(double dt)
 	double voltage_adj_resistive = ((value_Circuit_V[0]).Mag() * (value_Circuit_V[0]).Mag()) / (240.0 * 240.0);
 	
 	//Only provide demand in if meter isn't out of service
-	if (value_MeterStatus!=0)
+	if ((value_MeterStatus!=0) && (pHVAC_EnduseLoad->status == BRK_CLOSED))
 	{
 		// Set Qlatent to zero. Only gets updated if calculated.
 		Qlatent = 0;
@@ -2515,6 +2522,31 @@ void house_e::update_system(double dt)
 		}
 		load.heatgain = system_rated_capacity;
 
+		//Initialization check - throw a warning for "commerical building" approach or "really big buildings"
+		if (dt < 0.0)
+		{
+			//Get rough amperage - add 5%, "just because" (for any voltage effects - arbitrary)
+			//Pick whichever is bigger - cooling or heating - convert from kW
+			if (cooling_demand < heating_demand)	//Heating is the largest
+			{
+				rough_amps = (heating_demand + fan_power) * 1000.0 / 240.0 * 1.05;
+			}
+			else	//Cooling must be the largest, or they're the same, and we don't care
+			{
+				rough_amps = (cooling_demand + fan_power) * 1000.0 / 240.0 * 1.05;
+			}
+
+			//Check against what is set
+			if (rough_amps > pHVAC_EnduseLoad->max_amps)
+			{
+				gl_warning("house:%d - %s - HVAC breaker amps may be undersized",obj->id,(obj->name?obj->name:"Unnamed"));
+				/*  TROUBLESHOOT
+				The breaker rating for the HVAC (defaults to 200 Amps) may be too small for the building created.  Either
+				adjust this	via the hvac_breaker_rating property, or adjust your overall building model/approach.
+				*/
+			}
+		} 
+
 		if(	(cooling_system_type == CT_ELECTRIC		&& system_mode == SM_COOL) ||
 			(heating_system_type == HT_HEAT_PUMP	&& system_mode == SM_HEAT)) {
 
@@ -2571,6 +2603,7 @@ void house_e::update_system(double dt)
 
 	// update load
 	hvac_load = load.total.Re() * (load.power_fraction + load.voltage_factor*(load.current_fraction + load.impedance_fraction*load.voltage_factor));
+
 	if (system_mode == SM_COOL)
 		last_cooling_load = hvac_load;
 	else if (system_mode == SM_AUX || system_mode == SM_HEAT)
@@ -3351,7 +3384,7 @@ double house_e::sync_panel(double t0_dbl, double t1_dbl)
 			c->status = BRK_CLOSED;
 			c->reclose = TSNVRDBL;
 			t2_dbl = t1_dbl; // must immediately reevaluate devices affected
-			gl_debug("house_e:%d panel breaker %d closed", obj->id, c->id);
+			gl_verbose("house_e:%d - %s - panel breaker %d (enduse %s) closed", obj->id, (obj->name?obj->name:"Unnamed"),c->id,c->pLoad->name);
 		}
 
 		// if breaker is closed
@@ -3360,7 +3393,7 @@ double house_e::sync_panel(double t0_dbl, double t1_dbl)
 			// compute circuit current
 			if ((value_Circuit_V[(int)c->type].Mag() == 0) || (value_MeterStatus==0))	//Meter offline or voltage 0
 			{
-				gl_debug("house_e:%d circuit %d (enduse %s) voltage is zero", obj->id, c->id, c->pLoad->name);
+				gl_warning("house_e:%d - %s - circuit %d (enduse %s) voltage is zero or meter is disabled", obj->id, (obj->name?obj->name:"Unnamed"), c->id, c->pLoad->name);
 
 				if (value_MeterStatus==0)	//If we've been disconnected, still apply latent load heat
 				{
@@ -3386,7 +3419,7 @@ double house_e::sync_panel(double t0_dbl, double t1_dbl)
 
 					// average five minutes before reclosing, exponentially distributed
 					c->reclose = t1_dbl + (gl_random_exponential(RNGSTATE,1/300.0)*(double)TS_SECOND); 
-					gl_debug("house_e:%d circuit breaker %d tripped - enduse %s overload at %.0f A", obj->id, c->id,
+					gl_warning("house_e:%d - %s - circuit breaker %d tripped - enduse %s overload at %.0f A", obj->id, (obj->name?obj->name:"Unnamed"),c->id,
 						c->pLoad->name, current.Mag());
 				}
 
@@ -3395,7 +3428,15 @@ double house_e::sync_panel(double t0_dbl, double t1_dbl)
 				{
 					c->status = BRK_FAULT;
 					c->reclose = TSNVRDBL;
-					gl_warning("house_e:%d, %s circuit breaker %d failed - enduse %s is no longer running", obj->id, obj->name, c->id, c->pLoad->name);
+					gl_warning("house_e:%d, %s circuit breaker %d failed - enduse %s is no longer running", obj->id, (obj->name?obj->name:"Unnamed"), c->id, c->pLoad->name);
+				}
+
+				//After the fact check - if we're the HVAC, be sure to undo our various variables (otherwise reporting is odd)
+				if (c == pHVAC_EnduseLoad)
+				{
+					//Just call the update again, easiest way to set everything
+					//Pushes "zero time", even though dt doesn't do anything right now
+					update_system(0.0);
 				}
 
 				// must immediately reevaluate everything
