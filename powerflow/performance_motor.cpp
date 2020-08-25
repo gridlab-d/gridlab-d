@@ -233,6 +233,7 @@ TIMESTAMP performance_motor::postsync(TIMESTAMP t0, TIMESTAMP t1)
 //Module-level call
 SIMULATIONMODE performance_motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos)
 {
+	double deltat;
 	OBJECT *hdr = OBJECTHDR(this);
 	STATUS return_status_val;
 	bool temp_house_motor_state;
@@ -241,24 +242,31 @@ SIMULATIONMODE performance_motor::inter_deltaupdate(unsigned int64 delta_time, u
 	// make sure to capture the current time
 	curr_time_val = gl_globaldeltaclock;
 
-	// I need the time delta in seconds
-	double deltaTime = (double)dt/(double)DT_SECOND;
+	//Create delta_t variable
+	deltat = (double)dt/(double)DT_SECOND;
 
-	//mostly for GFA functionality calls
-	if ((iteration_count_val==0) && (interupdate_pos == false) && (fmeas_type != FM_NONE)) 
+	//Update time tracking variable - mostly for GFA functionality calls
+	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
 	{
+		//Update tracking variable
+		prev_time_dbl = gl_globaldeltaclock;
+
 		//Update frequency calculation values (if needed)
-		memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
-	}
-
-	//In the first call we need to initilize the dynamic model
-	if ((delta_time==0) && (iteration_count_val==0) && (interupdate_pos == false))	//First run of new delta call
-	{
-		if (fmeas_type != FM_NONE) {
-			//Initialize dynamics
-			init_freq_dynamics();
+		if (fmeas_type != FM_NONE)
+		{
+			//See which pass
+			if (delta_time == 0)
+			{
+				//Initialize dynamics - first run of new delta call
+				init_freq_dynamics(deltat);
+			}
+			else
+			{
+				//Copy the tracker value
+				memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+			}
 		}
-	}//End first pass and timestep of deltamode (initial condition stuff)
+	}
 
 	if (interupdate_pos == false)	//Before powerflow call
 	{
@@ -285,7 +293,7 @@ SIMULATIONMODE performance_motor::inter_deltaupdate(unsigned int64 delta_time, u
 		//Frequency measurement stuff
 		if (fmeas_type != FM_NONE)
 		{
-			return_status_val = calc_freq_dynamics(deltaTime);
+			return_status_val = calc_freq_dynamics(deltat);
 
 			//Check it
 			if (return_status_val == FAILED)

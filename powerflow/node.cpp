@@ -943,6 +943,22 @@ int node::init(OBJECT *parent)
 				gl_error("INIT: The global default_resistance was less than or equal to zero. default_resistance must be greater than zero.");
 				return 0;
 			}
+
+			//Check and see if in-rush and impedance conversion are enabled - if so, disable one
+			if ((enable_inrush_calculations == true) && (enable_impedance_conversion == true))
+			{
+				//Turn off impedance conversion, otherwise it breaks in-rush in weird ways
+				enable_impedance_conversion = false;
+
+				//Throw as a verbose - behavior is the same
+				gl_verbose("NR: enable_inrush and enable_impedance_conversion conflict - in-rush overrides");
+				/*  TROUBLESHOOT
+				The in-rush-based calculations and enable_impedance_conversion basically do the same thing, but
+				in different sequencing intervals.  When in-rush is enabled, it performs the impedance conversion
+				anyways.  If enable_impedance_conversion is enabled, it can cause conflicts in calculations, so it was
+				disabled.  The observable behavior should not be affected.
+				*/
+			}
 		}//End matrix solver if
 
 		if (mean_repair_time < 0.0)
@@ -3705,7 +3721,7 @@ int node::NR_populate(void)
 	NR_busdata[NR_node_reference].ExtraCurrentInjFuncObject = NULL;
 
 	//Extra functions - see if we're a load - map update if we're in the right mode
-	if ((gl_object_isa(me,"load","powerflow")==true) && ((enable_impedance_conversion==true) || (enable_inrush_calculations==true)))
+	if ((gl_object_isa(me,"load","powerflow")==true) && (enable_impedance_conversion==true))
 	{
 		//Map the function
 		NR_busdata[NR_node_reference].LoadUpdateFxn = (FUNCTIONADDR)(gl_get_function(me,"pwr_object_load_update"));
