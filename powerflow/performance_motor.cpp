@@ -1,5 +1,6 @@
 // $Id: performance_motor.cpp
 //	Copyright (C) 2020 Battelle Memorial Institute
+// Implemented the performance-based model from LD1PAC
 
 #include <stdlib.h>	
 #include <stdio.h>
@@ -12,13 +13,6 @@
 
 CLASS* performance_motor::oclass = NULL;
 CLASS* performance_motor::pclass = NULL;
-
-/**
-* constructor.  Class registration is only called once to 
-* register the class with the core. Include parent class constructor (node)
-*
-* @param mod a module structure maintained by the core
-*/
 
 static PASSCONFIG passconfig = PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN;
 static PASSCONFIG clockpass = PC_BOTTOMUP;
@@ -34,7 +28,7 @@ performance_motor::performance_motor(MODULE *mod):node(mod)
 		if (oclass==NULL)
 			throw "unable to register class performance_motor";
 		else
-			oclass->trl = TRL_PRINCIPLE;
+			oclass->trl = TRL_PROOF;
 
 		if(gl_publish_variable(oclass,
 			PT_INHERIT, "node",
@@ -46,39 +40,42 @@ performance_motor::performance_motor(MODULE *mod):node(mod)
 				PT_KEYWORD,"OFF",(enumeration)statusOFF,
 			PT_int32,"motor_status_number",PADDR(motor_status),PT_DESCRIPTION,"the current status of the motor as an integer",
 
-            PT_double,"Pbase[W]",PADDR(P_base),
-            PT_complex,"power_value[W]",PADDR(PowerVal),
-            PT_double,"delta_f_val",PADDR(delta_f_val),
-            PT_double,"Vbrk",PADDR(Vbrk),
-            PT_double,"Vstallbrk",PADDR(Vstallbrk),
-            PT_double,"Vstall",PADDR(Vstall),
-			PT_double,"Vrst",PADDR(Vrst),
-            PT_double,"P_val",PADDR(P_val),
-            PT_double,"Q_val",PADDR(Q_val),
-            PT_double,"P_0",PADDR(P_0),
-            PT_double,"Q_0",PADDR(Q_0),
-            PT_double,"K_p1",PADDR(K_p1),
-            PT_double,"K_q1",PADDR(K_q1),
-            PT_double,"K_p2",PADDR(K_p2),
-            PT_double,"K_q2",PADDR(K_q2),
-            PT_double,"N_p1",PADDR(N_p1),
-            PT_double,"N_q1",PADDR(N_q1),
-            PT_double,"N_p2",PADDR(N_p2),
-            PT_double,"N_q2",PADDR(N_q2),
-            PT_double,"CmpKpf",PADDR(CmpKpf),
-            PT_double,"CmpKqf",PADDR(CmpKqf),
-            PT_complex,"stall_impedance[pu]",PADDR(stall_impedance_pu),
-            PT_double,"Tstall[s]",PADDR(Tstall),
-            PT_double,"reconnect_time[s]",PADDR(reconnect_time),
-            PT_double,"Pinit",PADDR(Pinit),
-            PT_double,"Vinit",PADDR(Vinit),
-            PT_double,"stall_time_tracker[s]",PADDR(stall_time_tracker),
-            PT_double,"reconnect_time_tracker[s]",PADDR(reconnect_time_tracker),
+            PT_double,"Pbase[W]",PADDR(P_base),PT_DESCRIPTION,"motor rated size",
+            PT_complex,"power_value[VA]",PADDR(PowerVal),PT_DESCRIPTION,"motor power consumption",
+			PT_double,"power_factor[pu]",PADDR(CompPF),PT_DESCRIPTION,"Compressor power factor",
+            PT_double,"delta_f_val",PADDR(delta_f_val),PT_DESCRIPTION,"Frequency change value for compressor sensitivities",
+            PT_double,"Vbrk[pu]",PADDR(Vbrk),PT_DESCRIPTION,"Compressor motor breakdown voltage",
+            PT_double,"Vstallbrk",PADDR(Vstallbrk),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"Intersection point for power curve and power stall curve - calculated",
+            PT_double,"Vstall[pu]",PADDR(Vstall),PT_DESCRIPTION,"Compressor stall threshold voltage",
+			PT_double,"Vrst[pu]",PADDR(Vrst),PT_DESCRIPTION,"Voltage at which motor can restart",
+            PT_double,"P_val[pu]",PADDR(P_val),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"real power portion of motor power consumption calculation",
+            PT_double,"Q_val[pu]",PADDR(Q_val),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"reactive power portion of motor power consumption calculation",
+            PT_double,"P_0[pu]",PADDR(P_0),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"Computed power curve initialization point - real power",
+            PT_double,"Q_0[pu]",PADDR(Q_0),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"Computed power curve initialization point - reactive power",
+            PT_double,"K_p1[pu]",PADDR(K_p1),PT_DESCRIPTION,"Real power coefficient for running state 1, puP/puV",
+            PT_double,"K_q1[pu]",PADDR(K_q1),PT_DESCRIPTION,"Reactive power coefficient for running state 1, puQ/puV",
+            PT_double,"K_p2[pu]",PADDR(K_p2),PT_DESCRIPTION,"Real power coefficient for running state 2, puP/puV",
+            PT_double,"K_q2[pu]",PADDR(K_q2),PT_DESCRIPTION,"Reactive power coefficient for running state 2, puQ/puV",
+            PT_double,"N_p1",PADDR(N_p1),PT_DESCRIPTION,"Real power exponent for running state 1",
+            PT_double,"N_q1",PADDR(N_q1),PT_DESCRIPTION,"Reactive power exponent for running state 1",
+            PT_double,"N_p2",PADDR(N_p2),PT_DESCRIPTION,"Real power exponent for running state 2",
+            PT_double,"N_q2",PADDR(N_q2),PT_DESCRIPTION,"Reactive power exponent for running state 2",
+            PT_double,"CmpKpf[pu]",PADDR(CmpKpf),PT_DESCRIPTION,"Real power frequency sensitivity in puP/puf",
+            PT_double,"CmpKqf[pu]",PADDR(CmpKqf),PT_DESCRIPTION,"Reactive power frequency sensitivity in puQ/puf",
+            PT_complex,"stall_impedance[pu]",PADDR(stall_impedance_pu),PT_DESCRIPTION,"compressor stall imepdance",
+			PT_double,"stall_resistance[pu]",PADDR(stall_impedance_pu.Re()),PT_DESCRIPTION,"compressor stall resistance",
+			PT_double,"stall_reactance[pu]",PADDR(stall_impedance_pu.Im()),PT_DESCRIPTION,"compressor stall reactance",
+            PT_double,"Tstall[s]",PADDR(Tstall),PT_DESCRIPTION,"stall time",
+            PT_double,"reconnect_time[s]",PADDR(reconnect_time),PT_DESCRIPTION,"reconnect time after a trip",
+            PT_double,"Pinit[pu]",PADDR(Pinit),PT_DESCRIPTION,"Initial assumed real power loading of connected terminal",
+            PT_double,"Vinit[pu]",PADDR(Vinit),PT_DESCRIPTION,"Initial assumed voltage value of connected terminal",
+            PT_double,"stall_time_tracker[s]",PADDR(stall_time_tracker),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"internal stall time tracker variable",
+            PT_double,"reconnect_time_tracker[s]",PADDR(reconnect_time_tracker),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"internal reconnect time tracker variable",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_performance_motor)==NULL)
-			GL_THROW("Unable to publish motor deltamode function");
+			GL_THROW("Unable to publish performance_motor deltamode function");
     }
 }
 
@@ -91,6 +88,11 @@ int performance_motor::create()
 
     PowerVal = complex(0.0,0.0);
 
+	//Most default parameters taken from WECC Air Conditioner Motor Model Test Report
+	//https://www.wecc.org/Reliability/WECC%20Air%20Conditioner%20Motor%20Model%20Test%20Report--%20Final.pdf
+	//See Appendix 1 - ld1pac model
+	//Actual equations/implementation follow the LD1PAC user manual for PowerWorld
+	//https://www.powerworld.com/WebHelp/Content/TransientModels_HTML/Load%20Characteristic%20LD1PAC.htm
     delta_f_val = 0.0;
 
     Vstallbrk = 0.0;
@@ -118,7 +120,7 @@ int performance_motor::create()
 
     CompPF = 0.97;
     Pinit = 1.0;
-    Vinit = 1.0;
+    Vinit = 1.0;	//May need to be revisited - should this be from the actual bus?
 
     stall_time_tracker = 0.0;
     reconnect_time_tracker = 0.0;
@@ -162,7 +164,7 @@ int performance_motor::init(OBJECT *parent)
 	}
 	else
 	{
-		GL_THROW("motor:%s -- only single-phase or three-phase motors are supported",(obj->name ? obj->name : "Unnamed"));
+		GL_THROW("performance_motor:%s -- only single-phase or three-phase motors are supported",(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
 		The motor only supports single-phase and three-phase motors at this time.  Please use one of these connection types.
 		*/
@@ -416,7 +418,7 @@ void performance_motor::update_motor_equations(void)
 }
 
 //////////////////////////////////////////////////////////////////////////
-// IMPLEMENTATION OF CORE LINKAGE: motor
+// IMPLEMENTATION OF CORE LINKAGE: performance_motor
 //////////////////////////////////////////////////////////////////////////
 
 /**
@@ -455,7 +457,7 @@ EXPORT int init_performance_motor(OBJECT *obj)
 		performance_motor *my = OBJECTDATA(obj,performance_motor);
 		return my->init(obj->parent);
 	}
-	INIT_CATCHALL(motor);
+	INIT_CATCHALL(performance_motor);
 }
 
 /**
