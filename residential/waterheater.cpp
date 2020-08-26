@@ -788,7 +788,7 @@ int waterheater::init(OBJECT *parent)
             A_matrix[i].resize(number_of_states, 0.0);
         }
 
-        T_layers.resize(number_of_states, vector<double>());
+        T_layers.resize(number_of_states,unordered_map<unsigned,double>()); // vector<double>());
 	}
 	return residential_enduse::init(parent);
 }
@@ -868,11 +868,11 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 			last_override_value = re_override;
 		}
 		if(t0 == start_time && t0 == t1) {
-			T_layers[0].push_back(Tinlet);
+			T_layers[0][0] = Tinlet;
 			for(int i=1; i<number_of_states - 1; i++) {
-				T_layers[i].push_back(Tw);
+				T_layers[i][0] = Tw;
 			}
-			T_layers[number_of_states - 1].push_back(Tamb);
+			T_layers[number_of_states - 1][0] = Tamb;
 		} else if(t0 < t1 && conditions_changed == true){
 			reinitialize_internals(idx);
 			idx = 0;
@@ -1798,7 +1798,7 @@ int waterheater::multilayer_time_to_transition() {
 		for(int i=0; i<number_of_states; i++) {
 			dT_dt.push_back(product1[i] + product2[i]);//should be deg F/hr
 			T_new[i] = (T_now[i] + (dT_dt[i]*(int)discrete_step_size/3600.0));
-			T_layers[i].push_back(T_new[i]);
+			T_layers[i][time_new] = T_new[i];
 		}
 		// control logic for upper layer
         if (T_layers[10][time_new] >= Tmax_upper) {
@@ -1906,7 +1906,7 @@ void waterheater::reinitialize_internals(int dt) {
 
 	for(int i=0; i<number_of_states; i++) {
 	    T_layers[i].clear();
-        T_layers[i].push_back(init_T_layers[i]);
+        T_layers[i][dt] = init_T_layers[i];
 	}
 	T_layers[0][0] = Tinlet;
 	T_layers[number_of_states -1][0] = get_Tambient(location);

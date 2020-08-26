@@ -349,7 +349,7 @@ private:
 	unordered_map<unsigned, double> control_upper;
 	unordered_map<unsigned, double> control_lower;
 
-	vector<vector<double>> T_layers;
+	vector<unordered_map<unsigned, double>> T_layers;
 
     vector<double> dT_dt;
     vector<double> T_now;
