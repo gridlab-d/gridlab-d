@@ -24,7 +24,7 @@ object house {
 	outdoor_temperature 73;
 	object recorder{
 		property panel;
-		file "test_lights_implicit_power.csv";
+		file "../test_lights_implicit_power.csv";
 		interval 3600;
 		limit 10000;
 	};
@@ -33,7 +33,7 @@ object house {
 		within 1;
 		object player {
 			property value;
-			file "test_lights_explicit_power2.player";
+			file "../test_lights_explicit_power2.player";
 			loop 1;
 		};
 	};
