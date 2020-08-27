@@ -1905,7 +1905,8 @@ void waterheater::reinitialize_internals(int dt) {
 	control_lower.clear();
 
 	for(int i=0; i<number_of_states; i++) {
-	    T_layers[i].clear();
+		std::unordered_map<unsigned, double> empty;
+		std::swap(T_layers[i], empty);
         T_layers[i][dt] = init_T_layers[i];
 	}
 	T_layers[0][0] = Tinlet;
