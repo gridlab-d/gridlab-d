@@ -1,3 +1,4 @@
+//Autoteset to check SWITCHING state behavior on fault_check object
 clock {
   timezone EST+5EDT;
   starttime '2000-01-01 0:00:00';
@@ -11,6 +12,7 @@ clock {
 module powerflow {
   solver_method NR;
   line_capacitance TRUE;
+  default_resistance 0.00005;	//To make consistent with original switch admittance
 };
 module tape;
 module assert;

@@ -1,5 +1,5 @@
 // $Id$
-// Copyright (C) 2008 Battelle Memorial Institute
+// Copyright (C) 2020 Battelle Memorial Institute
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -9,7 +9,7 @@
 
 #define _GENERATORS_GLOBALS
 #include "generators.h"
-#undef  _GENERATORS_GLOBALS
+#undef _GENERATORS_GLOBALS
 
 //Include the various items
 #include "diesel_dg.h"
@@ -20,6 +20,7 @@
 #include "solar.h"
 #include "central_dg_control.h"
 #include "controller_dg.h"
+#include "inverter_dyn.h"
 
 //Define defaults, since many use them and they aren't here yet
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
@@ -46,7 +47,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new solar(module);
 	new central_dg_control(module);
 	new controller_dg(module);
-
+	new inverter_dyn(module);
+	
 	/* always return the first class registered */
 	return diesel_dg::oclass;
 }
@@ -417,6 +419,7 @@ CDECL int do_kill()
 	return 0;
 }
 
-EXPORT int check(){
+EXPORT int check()
+{
 	return 0;
 }

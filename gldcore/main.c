@@ -233,12 +233,15 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 
 	/* if pause enabled */
 #ifndef WIN32
+#ifdef _DEBUG
         if (global_pauseatexit) {
-                output_verbose("pausing at exit");
-		while (true) {
-                        sleep(5);
-                }
+			output_verbose("pausing at exit");
+
+			/* Replicate "pause" on Windows */
+			output_message("Press Enter to continue . . .");
+			getchar();
         }
+#endif
 #endif
 
 	/* compute elapsed runtime */

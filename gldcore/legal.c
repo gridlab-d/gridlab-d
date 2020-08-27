@@ -53,8 +53,8 @@
 	Jojoba			Version 3.2 originated at PNNL 2014
 	Keeler			Version 4.0 originated at PNNL 2017
 	Lugo			Version 4.1 originated at PNNL 2018
-	McNary
-	Navajo
+	McNary			Version 4.2 originated at PNNL 2019
+	Navajo			Version 4.3 originated at PNNL 2020
 	Ostrander
 	Palo Verde
 	Perkins
@@ -185,7 +185,7 @@ static pthread_t check_version_thread_id;
 void *check_version_proc(void *ptr)
 {
 	int patch, build;
-	char *url = "http://sourceforge.net/p/gridlab-d/code/HEAD/tree/trunk/core/versions.txt?format=raw";
+	char *url = "https://raw.githubusercontent.com/gridlab-d/gridlab-d/master/gldcore/versions.txt";
 	HTTPRESULT *result = http_read(url,0x1000);
 	char target[32];
 	char *pv = NULL, *nv = NULL;

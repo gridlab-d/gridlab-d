@@ -206,5 +206,6 @@ object group_recorder {
   property measured_current_C;
   mode "w";
 };
-
+#else
+#error No mysql installed. 
 #endif

@@ -103,7 +103,7 @@ int rectifier::init(OBJECT *parent)
 		pCircuit_V = new gld_property(parent,"V_In");
 
 		//Make sure it worked
-		if ((pCircuit_V->is_valid() != true) || (pCircuit_V->is_complex() != true))
+		if ((pCircuit_V->is_valid() != true) || (pCircuit_V->is_double() != true))
 		{
 			GL_THROW("rectifier:%d - %s - Unable to map parent inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
@@ -116,7 +116,7 @@ int rectifier::init(OBJECT *parent)
 		pLine_I = new gld_property(parent,"I_In");
 
 		//Make sure it worked
-		if ((pLine_I->is_valid() != true) || (pLine_I->is_complex() != true))
+		if ((pLine_I->is_valid() != true) || (pLine_I->is_double() != true))
 		{
 			GL_THROW("rectifier:%d - %s - Unable to map parent inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above
@@ -185,41 +185,42 @@ TIMESTAMP rectifier::sync(TIMESTAMP t0, TIMESTAMP t1)
 {	
 	gld_wlock *test_rlock;
 
-	V_Out = complex(V_Rated, 0);
+	V_Out = V_Rated;
 
 	//TODO: consider installing duty or on-ratio limits
 	//AC-DC voltage magnitude ratio rule
-	double VInMag = V_Out.Mag() * PI / (3 * sqrt(6.0));
-	voltage_out[0] = complex(VInMag,0);
-	voltage_out[1] = complex(-VInMag/2, VInMag * sqrt(3.0) / 2);
-	voltage_out[2] = complex(-VInMag/2, -VInMag * sqrt(3.0) / 2);
+	double VInMag = V_Out * PI / (3 * sqrt(6.0));
+	voltage_out[0] = VInMag;
+	voltage_out[1] = voltage_out[0];
+	voltage_out[2] = voltage_out[0];
 
 
 	switch(gen_mode_v){
 		case SUPPLY_DRIVEN:
 			{
 
-				complex S_A_In, S_B_In, S_C_In;
+				double S_A_In, S_B_In, S_C_In;
 
 				//DC Voltage, controlled by parent object determines DC Voltage.
-				S_A_In = voltage_out[0]*(~(current_out[0]));
-				S_B_In = voltage_out[1]*(~(current_out[1]));
-				S_C_In = voltage_out[2]*(~(current_out[2]));
+				S_A_In = voltage_out[0]*current_out[0];
+				S_B_In = voltage_out[1]*current_out[1];
+				S_C_In = voltage_out[2]*current_out[2];
 
-				power_out[0] = S_A_In.Re();
-				power_out[1] = S_B_In.Re();
-				power_out[2] = S_C_In.Re();
+				power_out[0] = S_A_In;
+				power_out[1] = S_B_In;
+				power_out[2] = S_C_In;
 				VA_In = power_out[0] + power_out[1] + power_out[2];
 
 				VA_Out = VA_In * efficiency;
 
-				I_Out = ~(VA_Out / V_Out); //These values are completely real, but since parent object uses complex, use here as well and follow rule for complex conjugate
+				I_Out = VA_Out / V_Out;
 
 				//Write the current
-				pLine_I->setp<complex>(I_Out,*test_rlock);
+				//NOTE: This isn't checked/bounded because right now this only works with an inverter as a parent (no unparanted or other)
+				pLine_I->setp<double>(I_Out,*test_rlock);
 
 				//Write the voltage
-				pCircuit_V->setp<complex>(V_Out,*test_rlock);
+				pCircuit_V->setp<double>(V_Out,*test_rlock);
 
 				return TS_NEVER;
 			}
