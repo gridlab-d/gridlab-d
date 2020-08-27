@@ -1901,11 +1901,15 @@ void waterheater::reinitialize_internals(int dt) {
 	for(int i=0; i<number_of_states; i++) {
 		init_T_layers.push_back(T_layers[i][dt]);
 	}
-	control_upper.clear();
-	control_lower.clear();
+	std::unordered_map<unsigned, double> new_control_upper, new_control_lower;
+	new_control_upper.reserve(64);
+	new_control_lower.reserve(64);
+	std::swap(control_upper, new_control_upper);
+	std::swap(control_lower, new_control_upper);
 
 	for(int i=0; i<number_of_states; i++) {
 		std::unordered_map<unsigned, double> empty;
+		empty.reserve(64);
 		std::swap(T_layers[i], empty);
         T_layers[i][dt] = init_T_layers[i];
 	}
