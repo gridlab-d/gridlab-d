@@ -29,8 +29,6 @@ public:
 	TIMESTAMP series_compensator_start_time;
 	bool series_compensator_first_step;
 
-	double voltage_deadband; // used for initialization of the series compensator
-
 	double turns_ratio[3];
 	double vset_value[3];  //voltage reference
 	double vset_value_0[3]; //voltage set points changed by the player

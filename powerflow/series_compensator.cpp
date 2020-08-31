@@ -138,7 +138,6 @@ int series_compensator::create()
 	series_compensator_start_time = TS_INVALID;
 	series_compensator_first_step = true;
 
-	voltage_deadband = 1e-5;
 
 	frequency_regulation = false;
 	frequency_open_loop_control = false;
@@ -212,7 +211,7 @@ int series_compensator::create()
 
 	val_FromNode_nominal_voltage = 0.0;
 	val_FromNode_frequency = nominal_frequency;
-	voltage_iter_tolerance = 0.01;	//1% PU default
+	voltage_iter_tolerance = 1e-4;	//1% PU default
 
 	//Operating in normal, by default
 	phase_states[0] = phase_states[1] = phase_states[2] = ST_NORMAL;
@@ -554,13 +553,13 @@ TIMESTAMP series_compensator::postsync(TIMESTAMP t0)
 			voltage_difference[0] = val_ToNode_voltage_pu[0] - vset_value[0];
 			voltage_difference[1] = val_ToNode_voltage_pu[1] - vset_value[1];
 
-			if ( abs(voltage_difference[0]) > voltage_deadband)
+			if ( abs(voltage_difference[0]) > voltage_iter_tolerance)
 			{
 				iterate = true;
 				curr_state.n_ini_StateVal[0] = turns_ratio[0] = vset_value[0]/val_FromNode_voltage_pu[0];
 			}
 
-			if ( abs(voltage_difference[1]) > voltage_deadband)
+			if ( abs(voltage_difference[1]) > voltage_iter_tolerance)
 			{
 				iterate = true;
 				curr_state.n_ini_StateVal[1] = turns_ratio[1] = vset_value[1]/val_FromNode_voltage_pu[1];
@@ -582,7 +581,7 @@ TIMESTAMP series_compensator::postsync(TIMESTAMP t0)
 
 				voltage_difference[0] = val_ToNode_voltage_pu[0] - vset_value[0];
 
-				if ( abs(voltage_difference[0]) > voltage_deadband)
+				if ( abs(voltage_difference[0]) > voltage_iter_tolerance)
 				{
 					iterate = true;
 					curr_state.n_ini_StateVal[0] = turns_ratio[0] = vset_value[0]/val_FromNode_voltage_pu[0];
@@ -611,7 +610,7 @@ TIMESTAMP series_compensator::postsync(TIMESTAMP t0)
 
 				voltage_difference[1] = val_ToNode_voltage_pu[1] - vset_value[1];
 
-				if ( abs(voltage_difference[1]) > voltage_deadband)
+				if ( abs(voltage_difference[1]) > voltage_iter_tolerance)
 				{
 					iterate = true;
 					curr_state.n_ini_StateVal[1] = turns_ratio[1] = vset_value[1]/val_FromNode_voltage_pu[1];
@@ -641,7 +640,7 @@ TIMESTAMP series_compensator::postsync(TIMESTAMP t0)
 
 				voltage_difference[2] = val_ToNode_voltage_pu[2] - vset_value[2];
 
-				if ( abs(voltage_difference[2]) > voltage_deadband)
+				if ( abs(voltage_difference[2]) > voltage_iter_tolerance)
 				{
 					iterate = true;
 					curr_state.n_ini_StateVal[2] = turns_ratio[2] = vset_value[2]/val_FromNode_voltage_pu[2];
