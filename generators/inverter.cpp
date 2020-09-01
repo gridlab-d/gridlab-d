@@ -4044,11 +4044,11 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 			// Check P_in (calcualted from V_In and I_In), and compared with p_in (calculated from VA_Out)
 			if (P_in < p_in) {
-				gl_warning("DC maximum power output is less than the real power output from the inverter. A higher DC power rating is recommended. Currently the VSI power output is not limited by the DC power output.");
+				gl_warning("inverter:%d - %s - Real power output exceeds maximum DC output",obj->id,(obj->name?obj->name:"Unnamed"));
 				/*  TROUBLESHOOT
-				DC maximum power output is less than the real power output from the inverter.
-				Although currently inverter does not adjust its power output based on teh DC limitations.
-				A higher DC power rating is recommended.
+				The real power output of the inverter exceeds the maximum DC power being input.  In the specific operating mode used,
+				the inverter will not limit the output.  Choose a different dispatch point, change the inverter rating, or adjust the
+				DC input.
 				*/
 			}
 

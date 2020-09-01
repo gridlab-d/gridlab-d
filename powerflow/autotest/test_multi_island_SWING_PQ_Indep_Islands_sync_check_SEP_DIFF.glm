@@ -152,7 +152,7 @@ object sync_check {
 	armed false;
 	frequency_tolerance 0.01 Hz;
 	// voltage_tolerance_pu 0.02;
-	metrics_period 5 ms;
+	metrics_period 5.1 ms;
 	
 	volt_compare_mode SEP_DIFF;
 	voltage_magnitude_tolerance_pu 0.01; // Per Unit
