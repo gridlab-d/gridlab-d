@@ -1,0 +1,85 @@
+//Test for group_recorder with an interval that isn't a multiple
+//of the minimum_timestep.  Could basically get stuck.
+//Just a "if it runs, it works" autotest
+//If it failed, it would get stuck in basically a race condition
+
+clock {
+	timezone CST+6CDT;
+	starttime '2006-01-01 00:00:00 CST';
+	stoptime '2006-01-01 09:00:00 CST';
+}
+
+#set minimum_timestep=15
+
+module powerflow;
+module tape;
+
+object node {
+	name three-phase;
+	phases ABCN;
+	bustype SWING;
+	nominal_voltage 7200;
+}
+
+object transformer_configuration {
+	name default_transformer;
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	install_type PADMOUNT;
+	primary_voltage 7200 V;
+	secondary_voltage 120 V;
+	power_rating 50.0;
+	powerA_rating 50.0;
+	resistance 0.011;
+	reactance 0.018;
+}
+
+object transformer {
+	name center_tap_transformer_A;
+	phases AS;
+	from three-phase;
+	to trip_node;
+	configuration default_transformer;
+}
+
+object transformer {
+	name center_tap_transformer_A_2;
+	phases AS;
+	from three-phase;
+	to trip_node_2;
+	configuration default_transformer;
+}
+
+object triplex_meter {
+	name trip_node;
+	phases AS;
+	nominal_voltage 120.00;
+	object recorder {
+		interval 5;	//Odd interval to make sure it hits the race condition
+		file "meter_power.csv";
+		property indiv_measured_power_1;
+	};
+}
+
+object triplex_load {
+	name load_node_actual_load_part;
+	parent trip_node;
+	constant_impedance_1 1.4+0.5j;
+	constant_impedance_2  0.9+0.4j;
+	constant_impedance_12 2.0+1.2j;
+	phases AS;
+	nominal_voltage 120.00;
+}
+
+object triplex_meter {
+	name trip_node_2;
+	phases AS;
+	nominal_voltage 120.00;
+}
+
+object group_recorder {
+    name test_group_recorder;
+	interval 1000;
+    group "class=triplex_meter";
+    file group_recorder_output.csv;
+	property measured_real_energy;
+}
