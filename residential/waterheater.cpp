@@ -126,20 +126,20 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module) {
                                 "the inlet temperature of the water tank",
                                 PT_enumeration, "waterheater_model", PADDR(current_model), PT_DESCRIPTION,
                                 "the water heater model to use",
-                                PT_KEYWORD, "ONEZNODE", (enumeration) ONENODE,
-                                PT_KEYWORD, "TWONODE", (enumeration) TWONODE,
-                                PT_KEYWORD, "FORTRAN", (enumeration) FORTRAN,
-                                PT_KEYWORD, "MULTILAYER", (enumeration) MULTILAYER,
-                                PT_KEYWORD, "NONE", (enumeration) NONE,
+                                    PT_KEYWORD, "ONEZNODE", (enumeration) ONENODE,
+                                    PT_KEYWORD, "TWONODE", (enumeration) TWONODE,
+                                    PT_KEYWORD, "FORTRAN", (enumeration) FORTRAN,
+                                    PT_KEYWORD, "MULTILAYER", (enumeration) MULTILAYER,
+                                    PT_KEYWORD, "NONE", (enumeration) NONE,
                                 PT_enumeration, "heat_mode", PADDR(heat_mode), PT_DESCRIPTION,
                                 "the energy source for heating the water heater",
-                                PT_KEYWORD, "ELECTRIC", (enumeration) ELECTRIC,
-                                PT_KEYWORD, "GASHEAT", (enumeration) GASHEAT,
-                                PT_KEYWORD, "HEAT_PUMP", (enumeration) HEAT_PUMP,
+                                    PT_KEYWORD, "ELECTRIC", (enumeration) ELECTRIC,
+                                    PT_KEYWORD, "GASHEAT", (enumeration) GASHEAT,
+                                    PT_KEYWORD, "HEAT_PUMP", (enumeration) HEAT_PUMP,
                                 PT_enumeration, "location", PADDR(location), PT_DESCRIPTION,
                                 "whether the water heater is inside or outside",
-                                PT_KEYWORD, "INSIDE", (enumeration) INSIDE,
-                                PT_KEYWORD, "GARAGE", (enumeration) GARAGE,
+                                    PT_KEYWORD, "INSIDE", (enumeration) INSIDE,
+                                    PT_KEYWORD, "GARAGE", (enumeration) GARAGE,
                                 PT_double, "tank_setpoint[degF]", PADDR(tank_setpoint), PT_DESCRIPTION,
                                 "the temperature around which the water heater will heat its contents",
                                 PT_double, "thermostat_deadband[degF]", PADDR(thermostat_deadband), PT_DESCRIPTION,
@@ -168,9 +168,9 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module) {
                                 PT_double, "Tcontrol[degF]", PADDR(Tcontrol), PT_DESCRIPTION,
                                 "in heat pump operation, defines the blended temperature used for turning on and off HP - currently calculated internally and not an input",
                                 PT_enumeration, "current_tank_status", PADDR(current_tank_state),
-                                PT_KEYWORD, "FULL", (enumeration) FULL,
-                                PT_KEYWORD, "PARTIAL", (enumeration) PARTIAL,
-                                PT_KEYWORD, "EMPTY", (enumeration) EMPTY,
+                                    PT_KEYWORD, "FULL", (enumeration) FULL,
+                                    PT_KEYWORD, "PARTIAL", (enumeration) PARTIAL,
+                                    PT_KEYWORD, "EMPTY", (enumeration) EMPTY,
                 //published variables for fortran water heater
                                 PT_double, "dr_signal", PADDR(dr_signal), PT_DESCRIPTION,
                                 "the on/off signal to send to the fortran waterheater model",
@@ -183,16 +183,16 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module) {
                                 PT_double, "waterheater_power[kW]", PADDR(fwh_power_now), PT_DESCRIPTION,
                                 "the current power draw from the fortran water heater.",
                                 PT_enumeration, "load_state", PADDR(load_state),
-                                PT_KEYWORD, "DEPLETING", (enumeration) DEPLETING,
-                                PT_KEYWORD, "RECOVERING", (enumeration) RECOVERING,
-                                PT_KEYWORD, "STABLE", (enumeration) STABLE,
+                                    PT_KEYWORD, "DEPLETING", (enumeration) DEPLETING,
+                                    PT_KEYWORD, "RECOVERING", (enumeration) RECOVERING,
+                                    PT_KEYWORD, "STABLE", (enumeration) STABLE,
                                 PT_double, "actual_voltage", PADDR(actual_voltage), PT_ACCESS, PA_HIDDEN,
                                 PT_double, "nominal_voltage", PADDR(nominal_voltage), PT_ACCESS, PA_HIDDEN,
                                 PT_enumeration, "re_override", PADDR(re_override), PT_DESCRIPTION,
                                 "the override setting for the water heater",
-                                PT_KEYWORD, "OV_ON", (enumeration) OV_ON,
-                                PT_KEYWORD, "OV_NORMAL", (enumeration) OV_NORMAL,
-                                PT_KEYWORD, "OV_OFF", (enumeration) OV_OFF,
+                                    PT_KEYWORD, "OV_ON", (enumeration) OV_ON,
+                                    PT_KEYWORD, "OV_NORMAL", (enumeration) OV_NORMAL,
+                                    PT_KEYWORD, "OV_OFF", (enumeration) OV_OFF,
                 //published variables for the multi layer waterheater model
                                 PT_double, "lower_tank_setpoint[degF]", PADDR(tank_setpoint_1), PT_DESCRIPTION,
                                 "MULTILAYER_MODEL: The setpoint for the lower heating element thermostat in the tank",
@@ -212,14 +212,16 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module) {
                                 "MULTILAYER MODEL: Heuristic flow activated once the heating elements turn on.",
                                 PT_double, "T_mixing_valve[degF]", PADDR(T_mixing_valve), PT_DESCRIPTION,
                                 "MULTILAYER MODEL: Reference temperature to which mixing valve operate.",
+                                PT_int64, "state_change_buffer_size", PADDR(state_change_buffer_size), PT_DESCRIPTION,
+                                "MULTILAYER MODEL: Size in number of double precision numbers to allocate for the state-change buffers",
                                 PT_enumeration, "lower_heating_element_state", PADDR(control_switch_1), PT_DESCRIPTION,
                                 "MULTILAYER MODEL: The state of the lower heating element in the tank.",
-                                PT_KEYWORD, "OFF", (enumeration) OFF,
-                                PT_KEYWORD, "ON", (enumeration) ON,
+                                    PT_KEYWORD, "OFF", (enumeration) OFF,
+                                    PT_KEYWORD, "ON", (enumeration) ON,
                                 PT_enumeration, "upper_heating_element_state", PADDR(control_switch_2), PT_DESCRIPTION,
                                 "MULTILAYER MODEL: The state of the upper heating element in the tank.",
-                                PT_KEYWORD, "OFF", (enumeration) OFF,
-                                PT_KEYWORD, "ON", (enumeration) ON,
+                                    PT_KEYWORD, "OFF", (enumeration) OFF,
+                                    PT_KEYWORD, "ON", (enumeration) ON,
                                 NULL) < 1)
             GL_THROW("unable to publish properties in %s", __FILE__);
     }
@@ -287,6 +289,9 @@ int waterheater::create() {
     gas_standby_power = -1.0;
 
     dr_signal = 1;
+
+    state_change_buffer_size = 256;
+
     return res;
     last_water_demand = -1.0;
     last_ambient_temperature = -200.0;
@@ -1789,7 +1794,7 @@ int waterheater::multilayer_time_to_transition() {
     //auto start = std::chrono::high_resolution_clock::now();
     while (!state_changed) {
         transition_count++;
-        if (transition_count > 255) {
+        if (transition_count > state_change_buffer_size - 1) {
             purge_control_maps(time_now);
             transition_count = 0;
         }
@@ -1844,7 +1849,6 @@ int waterheater::multilayer_time_to_transition() {
 //	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
 //	std::cout << "waterheater while loop took: " << duration.count() << " microseconds" << std::endl;
 //	std::cout << "waterheater calculates " << time_new << " seconds to next state changes." << std::endl;
-//    std::cout << "transition count: " << transition_count << std::endl;
     return t_return;
 }
 
@@ -1913,14 +1917,14 @@ void waterheater::reinitialize_internals(int dt) {
         init_T_layers.push_back(T_layers[i][dt]);
     }
     std::unordered_map<unsigned, double> new_control_upper, new_control_lower;
-    new_control_upper.reserve(256);
-    new_control_lower.reserve(256);
+    new_control_upper.reserve(state_change_buffer_size);
+    new_control_lower.reserve(state_change_buffer_size);
     std::swap(control_upper, new_control_upper);
     std::swap(control_lower, new_control_upper);
 
     for (int i = 0; i < number_of_states; i++) {
         std::unordered_map<unsigned, double> new_T_layer;
-        new_T_layer.reserve(256);
+        new_T_layer.reserve(state_change_buffer_size);
         std::swap(T_layers[i], new_T_layer);
         T_layers[i][dt] = init_T_layers[i];
     }

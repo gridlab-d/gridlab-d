@@ -371,8 +371,8 @@ private:
     double last_lower_thermostat_setpoint;
     enumeration last_override_value;
     int last_transition_time;
-
     bool conditions_changed;
+
 public:
     double tank_setpoint_1;
     double tank_setpoint_2;
@@ -389,6 +389,7 @@ public:
     double discrete_step_size;
     double Vdot_circ;
     double T_mixing_valve;
+    long state_change_buffer_size;
 public:
     static CLASS *oclass, *pclass;
     static waterheater *defaults;
