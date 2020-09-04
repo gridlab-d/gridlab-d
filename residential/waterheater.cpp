@@ -811,8 +811,8 @@ int waterheater::init(OBJECT *parent) {
         * default constructed unordered maps contained in the header file. If you know what breaks this, fix it or tell
         * someone who can, because this is a bad solution to the problem.
         */
-        control_upper = std::unordered_map<unsigned, double>();
-        control_lower = std::unordered_map<unsigned, double>();
+        control_upper = std::unordered_map<unsigned, double>(state_change_buffer_size);
+        control_lower = std::unordered_map<unsigned, double>(state_change_buffer_size);
         if (Tw < Tmin_upper) {
             control_upper[0] = 1.0;
         } else if (Tw >= Tmin_upper && Tw <= Tmax_upper) {
@@ -844,7 +844,7 @@ int waterheater::init(OBJECT *parent) {
             A_matrix[i].resize(number_of_states, 0.0);
         }
 
-        T_layers.resize(number_of_states, unordered_map<unsigned, double>()); // vector<double>());
+        T_layers.resize(number_of_states, unordered_map<unsigned, double>(state_change_buffer_size));
     }
     return residential_enduse::init(parent);
 }
