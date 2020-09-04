@@ -210,9 +210,6 @@ int group_recorder::init(OBJECT *obj){
 		offnominal_time = true;
 	}
 
-	//Clear the global mapper
-	delete min_ts_value;
-
 	/* set up the delta_mode flag, if necessary */
 	if ( (thisobj->flags)&OF_DELTAMODE )
 	{
