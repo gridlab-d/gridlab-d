@@ -63,9 +63,16 @@ public:
 		strcpy(pObjBuf, pObjName);
 		strcpy(pPropBuf, pPropName);
 		if(objName.compare("globals") != 0){
+			gl_verbose("helics_msg::init(): Creating publication of property %s for object %s.",pPropBuf,pObjBuf);
 			prop = new gld_property(pObjBuf, pPropBuf);
 			if(!prop->is_valid()){
 				gl_warning("helics_msg::init(): There is no object %s with property %s.",pObjBuf,pPropBuf);
+			}
+		} else {
+			gl_verbose("helics_msg::init(): Creating publication of global property %s.",pPropBuf);
+			prop = new gld_property(pPropBuf);
+			if(!prop->is_valid()){
+				gl_warning("helics_msg::init(): There is no global variable named %s.",pPropBuf);
 			}
 		}
 	}
@@ -126,9 +133,8 @@ public:
 class json_helics_value_publication {
 public:
 	json_helics_value_publication(){
-		pObjectProperty = NULL;
 	}
-	JSON::Value objectPropertyBundle;
+	Json::Value objectPropertyBundle;
 	vector<json_publication*> jsonPublications;
 	string key;
 	helicscpp::Publication HelicsPublication;
@@ -137,7 +143,6 @@ public:
 class json_helics_value_subscription {
 public:
 	json_helics_value_subscription(){
-		pObjectProperty = NULL;
 	}
 	string key;
 	helicscpp::Input HelicsSubscription;
@@ -146,9 +151,8 @@ public:
 class json_helics_endpoint_publication {
 public:
 	json_helics_endpoint_publication(){
-		pObjectProperty = NULL;
 	}
-	JSON::Value objectPropertyBundle;
+	Json::Value objectPropertyBundle;
 	vector<json_publication*> jsonPublications;
 	string name;
 	string destination;
@@ -158,7 +162,6 @@ public:
 class json_helics_endpoint_subscription {
 public:
 	json_helics_endpoint_subscription(){
-		pObjectProperty = NULL;
 	}
 	string name;
 	helicscpp::Endpoint HelicsSubscriptionEndpoint;
@@ -166,9 +169,9 @@ public:
 #endif
 
 typedef enum {
-	MT_GENERAL,
-	MT_JSON,
-} MESSAGETYPE;
+	HMT_GENERAL,
+	HMT_JSON,
+} HMESSAGETYPE;
 
 class helics_msg : public gld_object {
 public:
@@ -193,6 +196,7 @@ private:
 #endif
 	TIMESTAMP last_approved_helics_time;
 	TIMESTAMP initial_sim_time;
+	TIMESTAMP gridappsd_publish_time;
 	double last_delta_helics_time;
 	bool exitDeltamode;
 	string *federate_configuration_file;
@@ -221,6 +225,8 @@ public:
 	SIMULATIONMODE deltaInterUpdate(unsigned int delta_iteration_counter, TIMESTAMP t0, unsigned int64 dt);
 	SIMULATIONMODE deltaClockUpdate(double t1, unsigned long timestep, SIMULATIONMODE sysmode);
 	enumeration message_type;
+	int32 real_time_gridappsd_publish_period;
+
 	// TODO add other event handlers here
 public:
 	// special variables for GridLAB-D classes
