@@ -128,6 +128,37 @@ solar::solar(MODULE *module)
 			//PT_KEYWORD, "ONE_AXIS", ONE_AXIS,			//To be implemented later
 			//PT_KEYWORD, "TWO_AXIS", TWO_AXIS,			//To be implemented later
 			//PT_KEYWORD, "AZIMUTH_AXIS", AZIMUTH_AXIS,	//To be implemented later
+
+			/* DEPRECATED properties - delete in next version */
+			PT_enumeration,"generator_mode",PADDR(gen_mode_v_deprecated),PT_DEPRECATED,	//Unused
+				PT_KEYWORD,"UNKNOWN",(enumeration)UNKNOWN,
+				PT_KEYWORD,"CONSTANT_V",(enumeration)CONSTANT_V,
+				PT_KEYWORD,"CONSTANT_PQ",(enumeration)CONSTANT_PQ,
+				PT_KEYWORD,"CONSTANT_PF",(enumeration)CONSTANT_PF,
+				PT_KEYWORD,"SUPPLY_DRIVEN",(enumeration)SUPPLY_DRIVEN,
+
+			PT_enumeration,"generator_status",PADDR(gen_status_v_deprecated), PT_DEPRECATED, //unused
+				PT_KEYWORD,"OFFLINE",(enumeration)OFFLINE,
+				PT_KEYWORD,"ONLINE",(enumeration)ONLINE,	
+
+			PT_enumeration,"power_type",PADDR(power_type_v_deprecated),
+				PT_KEYWORD,"AC",(enumeration)AC,
+				PT_KEYWORD,"DC",(enumeration)DC,
+
+			PT_enumeration, "INSTALLATION_TYPE", PADDR(installation_type_v_deprecated), PT_DEPRECATED, //unused
+			   PT_KEYWORD, "ROOF_MOUNTED", (enumeration)ROOF_MOUNTED,
+               PT_KEYWORD, "GROUND_MOUNTED",(enumeration)GROUND_MOUNTED,
+
+			PT_complex, "VA_Out[VA]", PADDR(VA_Out_deprecated), PT_DEPRECATED, //unused
+
+			PT_set, "phases", PADDR(phases_deprecated), PT_DEPRECATED, //unused
+				PT_KEYWORD, "A",(set)PHASE_A,
+				PT_KEYWORD, "B",(set)PHASE_B,
+				PT_KEYWORD, "C",(set)PHASE_C,
+				PT_KEYWORD, "N",(set)PHASE_N,
+				PT_KEYWORD, "S",(set)PHASE_S,
+			/* END Deprecated */
+
 			NULL) < 1)
 				GL_THROW("unable to publish properties in %s", __FILE__);
 
