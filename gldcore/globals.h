@@ -260,6 +260,7 @@ GLOBAL char global_deltamode_updateorder[1025] INIT(""); /**< the order in which
 GLOBAL unsigned int global_deltamode_iteration_limit INIT(10);	/**< Global iteration limit for each delta timestep (object and interupdate calls) */
 GLOBAL unsigned int global_deltamode_forced_extra_timesteps INIT(0);	/**< Deltamode forced extra time steps -- once all items want SM_EVENT, this will force this many more updates */
 GLOBAL bool global_deltamode_forced_always INIT(false);	/**< Deltamode flag - prevents exit from deltamode (no SM_EVENT) -- mainly for debugging purposes */
+GLOBAL bool global_deltamode_force_preferred_order INIT(true);	/** Deltamode flag - orders modules in deltamode execution according to preferred execution order - false will make it load based on GLM order */
 
 /* master/slave */
 GLOBAL char global_master[1024] INIT(""); /**< master hostname */
