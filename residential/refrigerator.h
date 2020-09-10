@@ -111,14 +111,14 @@ public:
 			DM_NORMAL=2,						///< normal signal
 			DM_HIGH=3,							///< high demand response signal
 			DM_CRITICAL=4,						///< critical demand response signal 
-	};
+	} MODE_RESPONSE_SIGNAL;
 	enumeration dr_mode;
 
 	typedef enum {  
 			DC_TIMED=1,						///< For the timed option
 			DC_DOOR_OPENINGS=2,				///< For the door openings option
 			DC_COMPRESSOR_TIME=3,				///< For the compressor time option		
-	};
+	} DCTIME_DOOROPENING_COMPRESSORTIME;
 	enumeration defrost_criterion;
 
 	double dr_mode_double; ///temporary variable for testing

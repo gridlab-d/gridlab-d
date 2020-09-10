@@ -9,6 +9,9 @@
 
 EXPORT SIMULATIONMODE interupdate_triplex_meter(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
+//KML export
+EXPORT int triplex_meter_kmldata(OBJECT *obj,int (*stream)(const char*,...));
+
 class triplex_meter : public triplex_node
 {
 public:

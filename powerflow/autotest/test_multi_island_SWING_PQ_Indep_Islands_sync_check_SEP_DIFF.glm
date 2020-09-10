@@ -1,0 +1,381 @@
+//4-node-esque system to test multiple islands/solutions approach
+//Half loads
+//Two SWING buses with players to drive voltage magnitudes/phases together
+//Used to test the sync_check object - pushes voltage and frequency on either side of the connecting
+//switch in/out of bands.  sync_check will close the switch, when appropriate (and a separate player reopens it).
+
+//#set pauseatexit=1
+#set deltamode_timestep=1000000000
+
+//Forces deltamode to stay, despite players only driving it (QSTS whole time transitions)
+#set deltamode_forced_extra_timesteps=1
+
+clock {
+	timezone EST+5EDT;
+	starttime '2000-01-01 0:00:00';
+	stoptime '2000-01-01 0:00:20';
+}
+
+module assert;
+module tape;
+module reliability {
+	report_event_log false;
+	enable_subsecond_models true;
+	deltamode_timestep 100.0 ms;
+}
+module powerflow {
+	line_capacitance false;
+	solver_method NR;
+	line_limits false;
+	NR_island_failure_handled true;
+	enable_subsecond_models true;
+	all_powerflow_delta true;
+	deltamode_timestep 1.0 ms;
+	all_frequency_measure_default SIMPLE;
+}
+
+object overhead_line_conductor {
+	name olc100;
+	geometric_mean_radius 0.0244 ft;
+	resistance 0.306 Ohm/mile;
+}
+
+object overhead_line_conductor {
+	name olc101;
+	geometric_mean_radius 0.00814 ft;
+	resistance 0.592 Ohm/mile;
+}
+
+object line_spacing {
+	name ls200;
+	distance_AB 2.5 ft;
+	distance_BC 4.5 ft;
+	distance_AC 7.0 ft;
+	distance_AN 5.656854 ft; 
+	distance_BN 4.272002 ft;
+	distance_CN 5.0 ft;
+}
+
+object line_configuration {
+	name lc300;
+	conductor_A olc100;
+	conductor_B olc100;
+	conductor_C olc100;
+	conductor_N olc101;
+	spacing ls200;
+}
+
+object transformer_configuration {
+	name tc400;
+	connect_type WYE_WYE;
+	power_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 4160;
+	resistance 0.01;
+	reactance 0.06;
+}
+
+//Fault check option
+object fault_check {
+	name base_fault_check_object;
+	check_mode ONCHANGE;
+	strictly_radial false;
+	grid_association true;	//Flag to ensure non-monolithic islands
+	output_filename testtopo.txt;
+	full_output_file true;
+}
+
+//Recorders
+object recorder {
+	parent switch3_3B;
+	property status;
+	file switch_status_value.csv;
+	interval 1;
+	flags DELTAMODE;
+}
+
+object group_recorder {
+	flags DELTAMODE;
+	group "groupid=connection_point";
+	property measured_frequency;
+	file measured_node_frequency.csv;
+	interval 1;
+}
+
+// object recorder {
+	// flags DELTAMODE;
+	// parent node3;
+	// property "voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag";
+	// interval 1;
+	// file node3voltages.csv;
+// }
+
+// object recorder {
+	// flags DELTAMODE;
+	// parent node3B;
+	// property "voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag";
+	// interval 1;
+	// file node3Bvoltages.csv;
+// }
+
+//Switches, that would presumably make this three systems, eventually
+object switch {
+	name switch3_3B;
+	phases ABCN;
+	from node3;
+	to node3B;
+	status OPEN;
+	
+	object enum_assert {
+		flags DELTAMODE;
+		target status;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file "../data_sync_check_assert_switch_status_value_SEP_DIFF.csv"; 
+		};
+	};
+}
+
+object switch {
+	name switch2B_2C;
+	phases ABCN;
+	from node2B;
+	to node2C;
+	status CLOSED;
+}
+
+//Sync_check
+object sync_check {
+	name sync_check_obj;
+	parent switch3_3B;
+	armed false;
+	frequency_tolerance 0.01 Hz;
+	// voltage_tolerance_pu 0.02;
+	metrics_period 5.1 ms;
+	
+	volt_compare_mode SEP_DIFF;
+	voltage_magnitude_tolerance_pu 0.01; // Per Unit
+	voltage_angle_tolerance 5 deg;
+}
+
+//Player to trigger sync_check
+object player {
+	flags DELTAMODE;
+	name sync_check_player;
+	parent sync_check_obj;
+	property armed;
+	file ../data_sync_check_sync_armed.csv;
+}
+
+//Player to reopen switches
+object player {
+	flags DELTAMODE;
+	name switch_player;
+	parent switch3_3B;
+	property status;
+	file ../data_sync_check_switch_player.csv;
+}
+
+//First system
+object node {
+	name node1;
+	phases "ABCN";
+	bustype SWING_PQ;
+	nominal_voltage 7199.558;
+	object player {
+		name node1_A_player;
+		flags DELTAMODE;
+		property voltage_A;
+		file ../data_sync_check_volt_freq_player_bus_1_A.csv;
+	};
+	object player {
+		name node1_B_player;
+		flags DELTAMODE;
+		property voltage_B;
+		file ../data_sync_check_volt_freq_player_bus_1_B.csv;
+	};
+	object player {
+		name node1_C_player;
+		flags DELTAMODE;
+		property voltage_C;
+		file ../data_sync_check_volt_freq_player_bus_1_C.csv;
+	};
+}
+
+object overhead_line {
+	name ol12;
+	phases "ABCN";
+	from node1;
+	to node2;
+	length 2000;
+	configuration lc300;
+}
+
+object node {
+	name node2;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+}
+
+object transformer {
+	name tran23;
+	phases "ABCN";
+	from node2;
+	to node3;
+	configuration tc400;
+}
+
+object node {
+	name node3;
+	groupid connection_point;
+	phases "ABCN";
+	nominal_voltage 2401.777;
+}
+
+object overhead_line {
+	name ol34;
+	phases "ABCN";
+	from node3;
+	to load4;
+	length 2500;
+	configuration lc300;
+}
+
+object load {
+	name load4;
+	phases "ABCN";
+	constant_power_A 637500.0+395087.0155j;
+	constant_power_B 900000.0+435889.8945j;
+	constant_power_C 1187500.0+390312.375j;
+	nominal_voltage 2401.777;
+}
+
+//Duplicate B
+object node {
+	name node1B;
+	phases "ABCN";
+	bustype SWING;
+	nominal_voltage 7199.558;
+	object player {
+		name node1B_A_player;
+		flags DELTAMODE;
+		property voltage_A;
+		file ../data_sync_check_volt_freq_player_bus_1B_A.csv;
+	};
+	object player {
+		name node1B_B_player;
+		flags DELTAMODE;
+		property voltage_B;
+		file ../data_sync_check_volt_freq_player_bus_1B_B.csv;
+	};
+	object player {
+		name node1B_C_player;
+		flags DELTAMODE;
+		property voltage_C;
+		file ../data_sync_check_volt_freq_player_bus_1B_C.csv;
+	};
+}
+
+object overhead_line {
+	name ol12B;
+	phases "ABCN";
+	from node1B;
+	to node2B;
+	length 2000;
+	configuration lc300;
+}
+
+object node {
+	name node2B;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+}
+
+object transformer {
+	name tran23B;
+	phases "ABCN";
+	from node2B;
+	to node3B;
+	configuration tc400;
+}
+
+object node {
+	name node3B;
+	phases "ABCN";
+	groupid connection_point;
+	nominal_voltage 2401.777;
+}
+
+object overhead_line {
+	name ol34B;
+	phases "ABCN";
+	from node3B;
+	to load4B;
+	length 2500;
+	configuration lc300;
+}
+
+object load {
+	name load4B;
+	phases "ABCN";
+	constant_power_A +537500.0+395087.0155j;
+	constant_power_B +900250.0+435889.8945j;
+	constant_power_C +1037500.0+390312.375j;
+	nominal_voltage 2401.777;
+}
+
+//Duplicate C -- No swing here, so it should get removed
+object node {
+	name node1C;
+	phases "ABCN";
+	//bustype SWING;
+	nominal_voltage 7199.558;
+}
+
+object overhead_line {
+	name ol12C;
+	phases "ABCN";
+	from node1C;
+	to node2C;
+	length 2000;
+	configuration lc300;
+}
+
+object node {
+	name node2C;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+}
+
+object transformer {
+	name tran23C;
+	phases "ABCN";
+	from node2C;
+	to node3C;
+	configuration tc400;
+}
+
+object node {
+	name node3C;
+	phases "ABCN";
+	nominal_voltage 2401.777;
+}
+
+object overhead_line {
+	name ol34C;
+	phases "ABCN";
+	from node3C;
+	to load4C;
+	length 2500;
+	configuration lc300;
+}
+
+object load {
+	name load4C;
+	phases "ABCN";
+	constant_power_A +437500.0+395087.0155j;
+	constant_power_B +400500.0+435889.8945j;
+	constant_power_C +802500.0+390312.375j;
+	nominal_voltage 2401.777;
+}

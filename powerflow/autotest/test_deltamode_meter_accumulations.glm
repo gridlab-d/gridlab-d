@@ -127,25 +127,25 @@ object meter {
 		flags DELTAMODE;
 		target measured_power;
 		within 0.01;
-		value -10973.50714-109967.4914j;
+		value -10739.66-109435.98j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_A;
 		within 0.01;
-		value -21909.09183-41805.94511j;
+		value -21828.79-41630.01j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_B;
 		within 0.01;
-		value 21997.97098-30978.08718j;
+		value 22072.15-30799.39j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_C;
 		within 0.01;
-		value -11062.38629-37183.45909j;
+		value -10983.02-37006.57j;
 	};	
 }
 
@@ -159,25 +159,25 @@ object meter {
 		flags DELTAMODE;
 		target measured_power;
 		within 0.01;
-		value 144120.1265+12764.94096j;
+		value 144261.46+13056.37j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_A;
 		within 0.01;
-		value 43777.38956+1933.450055j;
+		value 43825.92+2029.87j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_B;
 		within 0.01;
-		value 53703.80495+6516.376248j;
+		value 53748.65+6614.47j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_C;
 		within 0.01;
-		value 46638.93201+4315.114652j;
+		value 46686.90+4412.02j;
 	};	
 }
 
@@ -192,25 +192,25 @@ object meter {
 		flags DELTAMODE;
 		target measured_power;
 		within 0.01;
-		value 269276.1988+95544.02812j;
+		value 269228.68+95441.78j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_A;
 		within 0.01;
-		value 96204.45015+33438.47154j;
+		value 96188.15+33404.65j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_B;
 		within 0.01;
-		value 78113.80545+32314.69508j;
+		value 78098.71+32280.30j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_C;
 		within 0.01;
-		value 94957.94321+29790.86151j;
+		value 94941.82+29756.83j;
 	};	
 }
 
@@ -225,25 +225,25 @@ object meter {
 		flags DELTAMODE;
 		target measured_power;
 		within 0.01;
-		value -125162.8504-262860.2995j;
+		value -125013.01-262530.22j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_A;
 		within 0.01;
-		value -56679.68063-90139.53046j;
+		value -56628.20-90030.31j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_B;
 		within 0.01;
-		value -19849.4597-81839.10448j;
+		value -19801.97-81728.04j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_C;
 		within 0.01;
-		value -48633.71004-90881.66456j;
+		value -48582.84-90771.88j;
 	};
 }
 
@@ -257,25 +257,25 @@ object meter {
 		flags DELTAMODE;
 		target measured_power;
 		within 0.01;
-		value 2423952.978+1411843.032j;
+		value 2424150.91+1412277.22j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_A;
 		within 0.01;
-		value 845573.6902+468246.7682j;
+		value 845641.73+468390.45j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_B;
 		within 0.01;
-		value 752957.4566+474485.4802j;
+		value 753020.10+474631.51j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_C;
 		within 0.01;
-		value 825421.8314+469110.7835j;
+		value 825489.08+469255.26j;
 	};	
 }
 

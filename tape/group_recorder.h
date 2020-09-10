@@ -68,7 +68,7 @@ private:
 	char *line_buffer;
 	size_t line_size;
 	bool interval_write;
-	bool deltamode_gr;
+	bool offnominal_time;
 };
 
 #endif // C++

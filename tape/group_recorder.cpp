@@ -50,13 +50,15 @@ group_recorder::group_recorder(MODULE *mod){
 
 int group_recorder::create(){
 	memcpy(this, defaults, sizeof(group_recorder));
-	deltamode_gr = false;
+	offnominal_time = false;	//By default, assume we'll be handled like normal time
 	return 1;
 }
 
 int group_recorder::init(OBJECT *obj){
 	OBJECT *gr_obj = 0;
 	OBJECT *thisobj = OBJECTHDR(this);
+	gld_global min_ts_value("minimum_timestep");
+	int32 temp_min_ts_value;
 	int retvalue;
 
 	// check for group
@@ -188,6 +190,26 @@ int group_recorder::init(OBJECT *obj){
 		return 0;
 	}
 
+	/* Check to see if a minimum timestep was set */
+	if (min_ts_value.is_valid() != true)
+	{
+		gl_error("group_recorder::init() - %s - Failed to map minimum_timestep variable!");
+		/*  TROUBLESHOOT
+		While mapping the global minimum_timestamp variable, an error occurred.  Try again.  If the error
+		persists, submit an issue via GitHub
+		*/
+		return 0;
+	}
+
+	temp_min_ts_value = min_ts_value.get_int32();
+
+	/* Check it */
+	if (temp_min_ts_value > 1)
+	{
+		/* Set the flag for off-nominal times */
+		offnominal_time = true;
+	}
+
 	/* set up the delta_mode flag, if necessary */
 	if ( (thisobj->flags)&OF_DELTAMODE )
 	{
@@ -201,8 +223,8 @@ int group_recorder::init(OBJECT *obj){
 			return 0;
 		}
 
-		/* Set the flag */
-		deltamode_gr = true;
+		/* Set the flag - deltamode qualifies as something that may have "odd update intervals"*/
+		offnominal_time = true;
 	}
 
 	return 1;
@@ -227,8 +249,8 @@ TIMESTAMP group_recorder::postsync(TIMESTAMP t0, TIMESTAMP t1){
 			last_write = t1;
 			next_write = t1 + write_interval;
 		}
-		//Extra check for deltamode-related group_recorder - make sure it didn't get stuck
-		if (deltamode_gr == true)
+		//Extra check for offnominal time steps (deltamode or minimum_timestep) - make sure it didn't get stuck
+		if (offnominal_time == true)
 		{
 			//See if we stagnated
 			if ((t0 == t1) && (t1 == next_write))
@@ -398,7 +420,7 @@ int group_recorder::write_header(){
 	if(0 > fprintf(rec_file,"# group..... %s\n", group_def.get_string())){ return 0; }
 	if(0 > fprintf(rec_file,"# property.. %s\n", property_name.get_string())){ return 0; }
 	if(0 > fprintf(rec_file,"# limit..... %d\n", limit)){ return 0; }
-	if(0 > fprintf(rec_file,"# interval.. %d\n", write_interval)){ return 0; }
+	if(0 > fprintf(rec_file,"# interval.. %lld\n", write_interval)){ return 0; }
 
 	// write list of properties
 	if(0 > fprintf(rec_file, "# timestamp")){ return 0; }

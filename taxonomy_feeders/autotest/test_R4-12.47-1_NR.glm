@@ -7,7 +7,7 @@
 // also validates power_in/out/losses at select overhead lines
 // written by alek332
 clock{
-	timezone EST+8EDT;
+	timezone EST+5EDT;
 	timestamp '2000-01-01 0:00:00';
 	stoptime '2000-01-01 1:00:00';
 }
@@ -7249,15 +7249,15 @@ object overhead_line:3317 {
 	to R4-12-47-1_node_8;
 	length 299.000;
 	configuration line_configuration:25;
-			// object recorder {
+	// object recorder {
 		// property power_in_A,power_in_B,power_in_C,power_out_A,power_out_B,power_out_C,power_losses_A,power_losses_B,power_losses_C,current_in_A,current_in_B,current_in_C,current_out_A,current_out_B,current_out_C;
 		// interval 60;
 		// limit 1440;
 		// file "OL3317.csv";
 	// };
-	 object complex_assert{
+	object complex_assert{
 		target power_in_A;
-		value +542953+289974j;
+		value +542953+289973j;
 		within 2;
 	};
 	object complex_assert{
@@ -7267,12 +7267,12 @@ object overhead_line:3317 {
 	};
 	object complex_assert{
 		target power_in_C;
-		value +794700+420119j;
+		value +794699+420118j;
 		within 2;
 	};
 	object complex_assert{
 		target power_out_A;
-		value +542875+289678j;
+		value +542876+289677j;
 		within 2;
 	};
 	object complex_assert{
@@ -7282,22 +7282,22 @@ object overhead_line:3317 {
 	};
 	object complex_assert{
 		target power_out_C;
-		value +794135+419384j;
+		value +794134+419381j;
 		within 2;
 	};
  object complex_assert{
 		target power_losses_A;
-		value +77.6059+296.059j;
+		value +77.6006+296.057j;
 		within .1;
 	};
 	object complex_assert{
 		target power_losses_B;
-		value +108.1+36.8922j;
+		value +108.102+36.8935j;
 		within .1;
 	};
 	object complex_assert{
 		target power_losses_C;
-		value +565.118+736.939j;
+		value +565.116+736.952j;
 		within .1;
 	};
 }
@@ -8074,20 +8074,20 @@ object overhead_line:3427 {
 	to R4-12-47-1_node_138; //187
 	length 306.000;
 	configuration line_configuration:38;
-		// object recorder {
+	// object recorder {
 		// property power_in_A,power_in_B,power_in_C,power_out_A,power_out_B,power_out_C,power_losses_A,power_losses_B,power_losses_C,current_in_A,current_in_B,current_in_C,current_out_A,current_out_B,current_out_C;
 		// interval 60;
 		// limit 1440;
 		// file "OL3427.csv";
 	// };
-	 object complex_assert{
+	object complex_assert{
 		target power_in_A;
 		value +0+0j;
 		within 2;
 	};
 	object complex_assert{
 		target power_in_B;
-		value +33690.8+18301j;
+		value +33690.8+18300.9j;
 		within 2;
 	};
 	object complex_assert{
@@ -8102,7 +8102,7 @@ object overhead_line:3427 {
 	};
 	object complex_assert{
 		target power_out_B;
-		value +33690.5+18299.4j;
+		value +33690.5+18299.3j;
 		within 2;
 	};
 	object complex_assert{
@@ -8117,7 +8117,7 @@ object overhead_line:3427 {
 	};
 	object complex_assert{
 		target power_losses_B;
-		value +0.32195+1.56881j;
+		value +0.32195+1.56884j;
 		within .1;
 	};
 	object complex_assert{
@@ -8845,15 +8845,15 @@ object overhead_line:3512 {
 	to R4-12-47-1_node_243;
 	length 323.000;
 	configuration line_configuration:28;
-		// object recorder {
+	// object recorder {
 		// property power_in_A,power_in_B,power_in_C,power_out_A,power_out_B,power_out_C,power_losses_A,power_losses_B,power_losses_C,current_in_A,current_in_B,current_in_C,current_out_A,current_out_B,current_out_C;
 		// interval 60;
 		// limit 1440;
 		// file "OL3512.csv";
 	// };
-	 object complex_assert{
+	object complex_assert{
 		target power_in_A;
-		value +17899.2+28.2742d;
+		value +15763.7+8478.71j;
 		within 2;
 	};
 	object complex_assert{
@@ -8868,7 +8868,7 @@ object overhead_line:3512 {
 	};
 	object complex_assert{
 		target power_out_A;
-		value +17898.5+28.2738d;
+		value +15763.1+8478.27j;
 		within 2;
 	};
 	object complex_assert{
@@ -8881,9 +8881,9 @@ object overhead_line:3512 {
 		value +0+0j;
 		within 2;
 	};
- object complex_assert{
+	object complex_assert{
 		target power_losses_A;
-		value +0.716835+38.0949d;
+		value +0.564144+0.442269j;
 		within .1;
 	};
 	object complex_assert{
@@ -9931,13 +9931,13 @@ object overhead_line:3629 {
 	to R4-12-47-1_node_351;
 	length 101.000;
 	configuration line_configuration:38;
-		// object recorder {
+	// object recorder {
 		// property power_in_A,power_in_B,power_in_C,power_out_A,power_out_B,power_out_C,power_losses_A,power_losses_B,power_losses_C,current_in_A,current_in_B,current_in_C,current_out_A,current_out_B,current_out_C;
 		// interval 60;
 		// limit 1440;
 		// file "OL3629.csv";
 	// };
-	 object complex_assert{
+	object complex_assert{
 		target power_in_A;
 		value +0+0j;
 		within 2;
@@ -9967,14 +9967,14 @@ object overhead_line:3629 {
 		value +0+0j;
 		within 2;
 	};
- object complex_assert{
+	object complex_assert{
 		target power_losses_A;
 		value +0+0j;
 		within .1;
 	};
 	object complex_assert{
 		target power_losses_B;
-		value +0.0325736+0.158726j;
+		value +0.0325737+0.158729j;
 		within .1;
 	};
 	object complex_assert{
@@ -10567,13 +10567,13 @@ object overhead_line:3694 {
 	to R4-12-47-1_node_427; // 476
 	length 208.000;
 	configuration line_configuration:40;
-		// object recorder {
+	// object recorder {
 		// property power_in_A,power_in_B,power_in_C,power_out_A,power_out_B,power_out_C,power_losses_A,power_losses_B,power_losses_C,current_in_A,current_in_B,current_in_C,current_out_A,current_out_B,current_out_C;
 		// interval 60;
 		// limit 1440;
 		// file "OL3694.csv";
 	// };
-	 object complex_assert{
+	object complex_assert{
 		target power_in_A;
 		value +70060.3+36526.9j;
 		within 2;
@@ -10603,19 +10603,19 @@ object overhead_line:3694 {
 		value +119148+61358.2j;
 		within 2;
 	};
- object complex_assert{
+	object complex_assert{
 		target power_losses_A;
-		value +0.865249+2.80685j;
+		value +0.865229+2.8069j;
 		within .1;
 	};
 	object complex_assert{
 		target power_losses_B;
-		value +3.05069+1.85269j;
+		value +3.0507+1.85273j;
 		within .1;
 	};
 	object complex_assert{
 		target power_losses_C;
-		value +7.53078+11.472j;
+		value +7.53079+11.4723j;
 		within .1;
 	};
 }
@@ -11094,12 +11094,12 @@ object overhead_line:3760 {
 	// };
 	 object complex_assert{
 		target power_in_A;
-		value +3.12949e-005+3.27329e-005j;
+		value +0.0+0.0j;
 		within 2;
 	};
 	object complex_assert{
 		target power_in_B;
-		value +3.88298e-007+1.8263e-005j;
+		value +0.0+0.0j;
 		within 2;
 	};
 	object complex_assert{

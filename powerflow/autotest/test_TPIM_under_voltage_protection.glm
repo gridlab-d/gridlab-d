@@ -32,6 +32,7 @@ module powerflow {
 	enable_frequency_dependence true;
 	deltamode_timestep 0.2000 ms;
 	maximum_voltage_error 1e-9;
+	default_resistance 0.00005;	//To make consistent with original switch admittance
 	//lu_solver KLU_x64;
 	//enable_inrush true;
 }

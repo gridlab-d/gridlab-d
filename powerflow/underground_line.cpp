@@ -52,6 +52,8 @@ underground_line::underground_line(MODULE *mod) : line(mod)
 			GL_THROW("Unable to publish underground line external power calculation function");
 		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
 			GL_THROW("Unable to publish underground line external power limit calculation function");
+		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==NULL)
+			GL_THROW("Unable to publish underground line external current calculation function");
     }
 }
 
@@ -569,7 +571,12 @@ void underground_line::recalc(void)
 		//Notes for above #define: z11, z22, z33 - self conductor; z77 - self neutral. RES(i=4,5,6) is neutral_resitance, GMR(i=4,5,6) is neutral GMR. For z77, neutral_resistance to be added in real term
                 //so pick RES(i) such that is is neutral_resistance. For imaginaray temrm, neutral_gmr to be used in ln(1/GMRn) so pick GMR(i) such that it is neutral GMR
                 #define Z_GMR_S_SELF(i) (GMR_S(i) == 0.0 ? complex(0.0) : complex(freq_coeff_real+RES_S(i), freq_coeff_imag*(log(1.0/GMR_S(i)) + freq_additive_term))) //z44, z55, z66 - self tape
-                #define Z_GMR_S(i) (GMR_S(i) == 0.0 ? complex(0.0) : complex(freq_coeff_real, freq_coeff_imag*(log(1.0/GMR_S(i)) + freq_additive_term))) //z14, z25, z36 - mutual - conductor-tape  
+                
+		#ifdef Z_GMR_S
+		#undef Z_GMR_S
+		#endif
+
+		#define Z_GMR_S(i) (GMR_S(i) == 0.0 ? complex(0.0) : complex(freq_coeff_real, freq_coeff_imag*(log(1.0/GMR_S(i)) + freq_additive_term))) //z14, z25, z36 - mutual - conductor-tape  
                 #define Z_DIST(i, j) (D(i, j) == 0.0 ? complex(0.0) : complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / D(i, j)) + freq_additive_term))) 
                //Notes for above #define: z12,z13,z15,z16,z17,z21,z23,z24,z26,z27,z31,z32,z34,z35,z37,z41,z42,z43,z45,z46,z47,z51-z54,z36,z57,z61-z65,z67,z71-z76 mutual/coupling
 

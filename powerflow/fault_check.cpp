@@ -119,7 +119,7 @@ int fault_check::init(OBJECT *parent)
 	//Make sure the eventgen_object is an actual eventgen object.
 	if(rel_eventgen != NULL){
 		if(!gl_object_isa(rel_eventgen,"eventgen")){
-			gl_error("fault_check:%s %s is not an eventgen object. Please specify the name of an eventgen object.",obj->name,rel_eventgen);
+			gl_error("fault_check:%s %s is not an eventgen object. Please specify the name of an eventgen object.",obj->name,rel_eventgen->name);
 			return 0;
 			/*  TROUBLESHOOT
 			The property eventgen_object was given the name of an object that is not an eventgen object.
@@ -151,6 +151,17 @@ int fault_check::init(OBJECT *parent)
 
 			reliability_search_mode = false;
 		}
+	}
+
+	//Do a powerflow multi_island check
+	if ((NR_island_fail_method == true) && (grid_association_mode == false))
+	{
+		gl_error("fault_check:%s - powerflow::NR_island_fail_method is set, but grid_association is not!",(obj->name?obj->name:"Unnamed"));
+		/*  TROUBLESHOOT
+		The powerflow directive to handle individual island failures (NR_island_fail_method) is set to true, but grid_association is not
+		enabled in fault_check.  This won't work.  Correct one of them.
+		*/ 
+		return 0;
 	}
 
 	//Set powerflow global flag for checking things
@@ -282,8 +293,8 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 							write_output_file(t0,0);	//Write it
 						}
 
-						//See what mode we are in
-						if ((reliability_mode == false) && (fault_check_override_mode == false))
+						//See what mode we are in - only check reliability mode if we aren't in grid association
+						if ((reliability_mode == false) && (fault_check_override_mode == false) && (grid_association_mode == false))
 						{
 							GL_THROW("Unsupported phase on node %s",NR_busdata[index].name);
 							/*  TROUBLESHOOT
@@ -345,6 +356,18 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 
 			override_output = output_check_supported_mesh();	//See if anything changed
 
+			//If full output, do an initial dump
+			if ((prev_time == 0) && (full_print_output == true) && (fcheck_state != SWITCHING))
+			{
+				//Do a write if one wasn't going to happen - don't override the flag
+				if ((override_output == false) && (output_filename[0] != '\0'))
+				{
+					write_output_file(t0,0);	//Write it
+				}
+				//Default else, we were going to write anyways
+			}
+			//Default else - not a first timestep or the mode of interest, so just go like normal
+
 			//See if anything broke
 			if (override_output == true && fcheck_state != SWITCHING)
 			{
@@ -353,8 +376,8 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 					write_output_file(t0,0);	//Write it
 				}
 
-				//See what mode we are in
-				if ((reliability_mode == false) && (fault_check_override_mode == false))
+				//See what mode we are in - only "fail" if standard/legacy checking
+				if ((reliability_mode == false) && (fault_check_override_mode == false) && (grid_association_mode == false))
 				{
 					GL_THROW("Unsupported phase on a possibly meshed node");
 					/*  TROUBLESHOOT
@@ -362,7 +385,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 					the solver will possibly fail here on the next iteration, so the system is broken early.
 					*/
 				}
-				else	//Must be in reliability mode
+				else	//Must be in reliability mode or one of the proper handling modes
 				{
 					gl_warning("Unsupported phase on a possibly meshed node");
 					/*  TROUBLESHOOT
@@ -521,7 +544,7 @@ void fault_check::search_links_mesh(int node_int)
 			if ((valid_phases[node_int] != 0x00) || (valid_phases[node_value] != 0x00))
 			{
 				//Are we a switch
-				if ((NR_branchdata[device_value].lnk_type == 2) || (NR_branchdata[device_value].lnk_type == 5) || (NR_branchdata[device_value].lnk_type == 6))
+				if ((NR_branchdata[device_value].lnk_type == 4) || (NR_branchdata[device_value].lnk_type == 5) || (NR_branchdata[device_value].lnk_type == 6))
 				{
 					if (*NR_branchdata[device_value].status == 1)
 					{
@@ -581,7 +604,7 @@ void fault_check::search_links_mesh(int node_int)
 			if ((valid_phases[node_int] != 0x00) || (valid_phases[node_value] != 0x00))
 			{
 				//Are we a switch
-				if ((NR_branchdata[device_value].lnk_type == 2) || (NR_branchdata[device_value].lnk_type == 5) || (NR_branchdata[device_value].lnk_type == 6))
+				if ((NR_branchdata[device_value].lnk_type == 4) || (NR_branchdata[device_value].lnk_type == 5) || (NR_branchdata[device_value].lnk_type == 6))
 				{
 					if (*NR_branchdata[device_value].status == 1)
 					{
@@ -1148,8 +1171,7 @@ void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 		//See if the FROM side of our newly restored greatness is supported.  If it isn't, there's no point in proceeding
 		if (rest_mode == true)	//Restoration
 		{
-			gl_verbose("  alterations support check called restoration on bus %s with phases %d",
-								 NR_busdata[base_bus_val].name, int(NR_busdata[base_bus_val].phases));
+			gl_verbose("fault_check: alterations support check called restoration on bus %s with phases %d",NR_busdata[base_bus_val].name, int(NR_busdata[base_bus_val].phases));
 
 			if ((NR_busdata[base_bus_val].phases & 0x07) != 0x00)	//We have phase, means OK above us
 			{
@@ -1161,8 +1183,7 @@ void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 		}
 		else	//Destructive!
 		{
-			gl_verbose("  alterations support check called removal on bus %s with phases %d",
-								 NR_busdata[base_bus_val].name, int(NR_busdata[base_bus_val].phases));
+			gl_verbose("fault_check: alterations support check called removal on bus %s with phases %d",NR_busdata[base_bus_val].name, int(NR_busdata[base_bus_val].phases));
 
 			//Recurse our way in - adjusted version of original search_links function above (but no storage, because we don't care now)
 			support_search_links(base_bus_val, base_bus_val, rest_mode);
@@ -1348,7 +1369,7 @@ void fault_check::support_search_links_mesh(int baselink_int, bool impact_mode)
 							}
 
 							//See if we're a switch -- if so, just because we're valid on both ends doesn't mean anything
-							if ((NR_branchdata[device_index].lnk_type == 2) || (NR_branchdata[device_index].lnk_type == 5) || (NR_branchdata[device_index].lnk_type == 6))
+							if ((NR_branchdata[device_index].lnk_type == 4) || (NR_branchdata[device_index].lnk_type == 5) || (NR_branchdata[device_index].lnk_type == 6))
 							{
 								if (*NR_branchdata[device_index].status == 1)
 								{
@@ -1461,7 +1482,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 	if (meshed_fault_checking_enabled == false)
 	{
 		//See if we're a switch - if so, call the appropriate function
-		if (NR_branchdata[branch_idx].lnk_type == 2)
+		if (NR_branchdata[branch_idx].lnk_type == 4)
 		{
 			//Find this object
 			temp_obj = NR_branchdata[branch_idx].obj;
@@ -1909,7 +1930,7 @@ void fault_check::allocate_alterations_values(bool reliability_mode_bool)
 	{
 		if (restoration_object==NULL && fcheck_state != SWITCHING)
 		{
-			gl_warning("Restoration object not detected!");	//Put down here because the variable may not be populated in time for init
+			gl_verbose("Restoration object not detected!");	//Put down here because the variable may not be populated in time for init
 			/*  TROUBLESHOOT
 			The fault_check object can use a restoration object in the system.  If the restoration object is present,
 			unsuccessful node support checks will call the reconfiguration.
@@ -2136,6 +2157,9 @@ void fault_check::associate_grids(void)
 					//Flag us as a swing - to be safe
 					NR_busdata[indexval].swing_functions_enabled = true;
 
+					//Flag us as the topological entry point
+					NR_busdata[indexval].swing_topology_entry = true;
+
 					//Call the associater routine
 					search_associated_grids(indexval,grid_counter);
 
@@ -2147,6 +2171,9 @@ void fault_check::associate_grids(void)
 			else	//Deflag us as a swing
 			{
 				NR_busdata[indexval].swing_functions_enabled = false;
+
+				//Leave the "swing_topology_entry" flag as-is - used as flag to determine if a SWING_PQ
+				//with a generator suddenly became a main source
 			}
 			//Default else, we've already been hit, skip out
 		}
@@ -2271,6 +2298,25 @@ void fault_check::search_associated_grids(unsigned int node_int, int grid_counte
 				your code and a bug report via the ticketing system.
 				*/
 			}
+			else if (NR_branchdata[NR_busdata[node_int].Link_Table[index]].island_number != grid_counter)	//This line is unassigned
+			{
+				//See if it is fully unassigned
+				if (NR_branchdata[NR_busdata[node_int].Link_Table[index]].island_number == -1)
+				{
+					//Just got missed by the iterations, so associate us (ends already handled, so no need to recurse)
+					NR_branchdata[NR_busdata[node_int].Link_Table[index]].island_number = grid_counter;
+				}
+				else
+				{
+					//Somehow is associated with a different grid, even though the from/to are the same!
+					GL_THROW("fault_check: invalid grid assignment on line %s!",NR_branchdata[NR_busdata[node_int].Link_Table[index]].name);
+					/*  TROUBLESHOOT
+					While mapping the associated grid/swing node for a line in the system, a condition was encountered where
+					the line belonged to a grid/island it shouldn't.  This should not have occurred.  Please submit
+					your code and a bug report via the ticketing system.
+					*/
+				}
+			}
 			//Default else -- already handled as this grid
 		}
 		//Default else, not a match, so next
@@ -2283,6 +2329,24 @@ STATUS fault_check::disable_island(int island_number)
 	int index_value;
 	TIMESTAMP curr_time_val_TS;
 	double curr_time_val_DBL;
+	FILE *FPOutput;
+	DATETIME temp_time;
+	char deltaprint_buffer[64];
+	unsigned int ret_value;
+	bool deltamodeflag;
+
+	//Preliminary check - see if we're even in the right mode
+	if (grid_association_mode == false)
+	{
+		gl_error("fault_check: an island removal call was made, but grid_association is set to false!");
+		/*  TROUBLESHOOT
+		The powerflow is attempting to run in multi-islanded mode with individual island handling, but
+		fault_check is not set up properly.  Please set `grid_association true;` in the fault_check and
+		try again.
+		*/
+
+		return FAILED;
+	}
 
 	//Loop through the buses -- remove if it is in this island (keep SWING functions affected though)
 	for (index_value=0; index_value < NR_bus_count; index_value++)
@@ -2325,12 +2389,37 @@ STATUS fault_check::disable_island(int island_number)
 		{
 			curr_time_val_TS = 0;
 			curr_time_val_DBL = gl_globaldeltaclock;
+			deltamodeflag = true;
 		}
 		else	//Steady state
 		{
 			curr_time_val_TS = gl_globalclock;
 			curr_time_val_DBL = 0.0;
+			deltamodeflag = false;
 		}
+
+		//Put a message in the output file, before the topology change (just to be clear)
+		//open the file
+		FPOutput = fopen(output_filename,"at");
+
+		if (deltamodeflag == true)
+		{
+			//Convert the current time to an output
+			ret_value = gl_printtimedelta(curr_time_val_DBL,deltaprint_buffer,64);
+
+			//Write it
+			fprintf(FPOutput,"Island %d removed from powerflow at timestamp %0.9f - %s =\n\n",(island_number+1),curr_time_val_DBL,deltaprint_buffer);
+		}
+		else	//Event-based mode
+		{
+			//Convert timestamp so readable
+			gl_localtime(curr_time_val_TS,&temp_time);
+
+			fprintf(FPOutput,"Island %d removed from powerflow at timestamp %lld - %04d-%02d-%02d %02d:%02d:%02d =\n\n",(island_number+1),curr_time_val_TS,temp_time.year,temp_time.month,temp_time.day,temp_time.hour,temp_time.minute,temp_time.second);
+		}
+
+		//Close the file
+		fclose(FPOutput);
 
 		write_output_file(curr_time_val_TS,curr_time_val_DBL);	//Write it
 	}
@@ -2338,8 +2427,12 @@ STATUS fault_check::disable_island(int island_number)
 	//Flag a forced reiteration for the next time something can (not now though, we may be halfway through an NR solver loop)
 	force_reassociation = true;
 
-	//Verbose it, for information
-	gl_verbose("fault_check: Removed island %d from the powerflow",(island_number+1));
+	//Output it - no longer as a verbose (easy to miss)
+	gl_warning("fault_check: Removed island %d from the powerflow",(island_number+1));
+	/*  TROUBLESHOOT
+	One of the islands of teh system was removed (by the multi-island capability).  This may have been due to a 
+	divergent powerflow, or some specifically-command action.  If this was not intended, check your file and try again.
+	*/
 
 	//Not sure how we'd fail, at this point
 	return SUCCESS;

@@ -32,6 +32,7 @@ typedef struct  {
 	double QL[3];			///< reactive power component of total bus load
 	bool *dynamics_enabled;	///< Flag indicating this particular node has a dynamics contribution function
 	bool swing_functions_enabled;	///< Flag indicating if this particular node is a swing node, and if so, if it is behaving "all swingy"
+	bool swing_topology_entry;		///< Flag to indicate this bus was the source entry point, even if it isn't a swing anymore (SWING_PQ generator stuff)
 	complex *PGenTotal;		///< Total output of any generation at this node - lumped for now for dynamics
 	complex *DynCurrent;	///< Dynamics current portions - used as storage/tracking for generator dynamics
 	complex *BusHistTerm;	///< History term pointer for in-rush-based calculations
@@ -63,7 +64,7 @@ typedef struct {
 	int to;					///< index into bus data
 	int fault_link_below;    ///< index indicating next faulted link object below the current link object
 	enumeration *status;	///< status of the object, if it is a switch (restoration module usage)
-	unsigned char lnk_type;	///< type of link the object is - 0 = UG/OH line, 1 = Triplex line, 2 = switch, 3 = fuse, 4 = transformer, 5 = sectionalizer, 6 = recloser
+	unsigned char lnk_type;	///< type of link the object is - 0 = UG/OH line, 1 = Triplex line, 2 = transformer, 3 = fuse, 4 = switch, , 5 = sectionalizer, 6 = recloser
 	double v_ratio;			///< voltage ratio (v_from/v_to)
 	char *name;				///< original name
 	OBJECT *obj;			///< Link to original object header

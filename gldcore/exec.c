@@ -2274,6 +2274,13 @@ STATUS exec_start(void)
 				output_debug("exec_start(), slave received looped time signal (%lli)", exec_sync_get(NULL));
 			}
 
+			/* run sync scripts, if any */
+			if ( exec_run_syncscripts()!=XC_SUCCESS )
+			{
+				output_error("sync script(s) failed");
+				THROW("script synchronization failure");
+			}
+			
 			/* check for clock advance (indicating last pass) */
 			if ( exec_sync_get(NULL)!=global_clock && global_simulation_mode == SM_EVENT)
 			{
@@ -2333,13 +2340,6 @@ STATUS exec_start(void)
 				THROW("convergence failure");
 			}
 
-			/* run sync scripts, if any */
-			if ( exec_run_syncscripts()!=XC_SUCCESS )
-			{
-				output_error("sync script(s) failed");
-				THROW("script synchronization failure");
-			}
-			
 			/* handle delta mode operation */
 			if ( global_simulation_mode==SM_DELTA && exec_sync_get(NULL)>=global_clock )
 			{
@@ -2735,7 +2735,7 @@ void *slave_node_proc(void *args)
 	if (tok_len > 0)
 	{
 		char temp[256];
-		sprintf(temp, "%%d offset and %%d len for \'%%%ds\'", tok_len);
+		sprintf(temp, "%%ld offset and %%ld len for \'%%%lds\'", tok_len);
 		output_debug(temp, offset, tok_len, buffer+offset);
 		memcpy(dirname, buffer+offset, (tok_len > sizeof(dirname) ? sizeof(dirname) : tok_len));
 	} else {
@@ -2759,7 +2759,7 @@ void *slave_node_proc(void *args)
 		char temp[256];
 		memcpy(filename, buffer+offset, (tok_len > sizeof(filename) ? sizeof(filename) : tok_len));
 		filename[tok_len]=0;
-		sprintf(temp, "%%d offset and %%d len for \'%%%ds\'", tok_len);
+		sprintf(temp, "%%ld offset and %%ld len for \'%%%lds\'", tok_len);
 		output_debug(temp, offset, tok_len, buffer+offset);
 	} 
 	else 

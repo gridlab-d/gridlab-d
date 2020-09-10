@@ -99,11 +99,10 @@ object transformer {
 	object solar {
 		name sol_inv_B_2_645;
 		generator_mode SUPPLY_DRIVEN;
-		generator_status ONLINE;
 		panel_type SINGLE_CRYSTAL_SILICON;
-		V_Max 79.34+0j;  // max. power voltage (Vmp) from GE solar cell performance charatcetristics
-		Voc 91.22+0j;  //taken from GEPVp-200-M-Module performance characteristics, converted to degF
-		Voc_Max 91.22+0j; //taken from GEPVp-200-M-Module performance characteristics,  converted to degF
+		V_Max 79.34;  // max. power voltage (Vmp) from GE solar cell performance charatcetristics
+		Voc 91.22;  //taken from GEPVp-200-M-Module performance characteristics, converted to degF
+		Voc_Max 91.22; //taken from GEPVp-200-M-Module performance characteristics,  converted to degF
 		efficiency 0.2;
 		area 450;
 	};	

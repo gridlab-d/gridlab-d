@@ -59,7 +59,7 @@
 
 // module version info (must match core version info)
 #define MAJOR 4
-#define MINOR 1
+#define MINOR 3
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -96,6 +96,8 @@
 #include "gldrandom.h"
 #define STREAM_MODULE
 #include "stream.h"
+#pragma GCC diagnostic ignored "-Wwrite-strings"
+
 
 #ifdef DLMAIN
 #define EXTERN
@@ -1877,6 +1879,13 @@ public: // iterators
 	inline gld_string get_##X##_string(void) { return get_##X##_property().get_string(); }; \
 	inline void set_##X(char *str) { get_##X##_property().from_string(str); }; \
 
+/// Define a method property
+#define GL_METHOD(C,X) public: int X(char *buffer, size_t len); \
+	static inline size_t get_##X##_offset(void) { return (size_t)method_##C##_##X; }; \
+	inline int get_##X(char *buffer, size_t len) { return X(buffer,len); }; \
+	inline int set_##X(char *buffer) { return X(buffer,0); }
+#define IMPL_METHOD(C,X) int C::X(char *buffer, size_t len)  // use this to implement a method
+
 /// Set bits of a bitflag property
 inline void setbits(unsigned long &flags, unsigned int bits) { flags|=bits; }; 
 /// Clear bits of a bitflag property
@@ -2121,6 +2130,7 @@ public: // special operations
 	inline bool is_timestamp(void) { return pstruct.prop->ptype==PT_timestamp; };
 
 	// TODO these need to use throw instead of returning overloaded values
+	inline bool get_bool(void) {errno=0; if ( pstruct.prop->ptype != PT_bool ) exception("get_bool() called on a property that is not a bool"); return *(bool*)get_addr();};
 	inline double get_double(void) { errno=0; switch(pstruct.prop->ptype) { case PT_double: case PT_random: case PT_enduse: case PT_loadshape: return has_part() ? get_part() : *(double*)get_addr(); default: errno=EINVAL; return NaN;} };
 	inline double get_double(UNIT*to) { double rv = get_double(); return get_unit()->convert(to,rv) ? rv : QNAN; };
 	inline double get_double(gld_unit&to) { double rv = get_double(); return get_unit()->convert(to,rv) ? rv : QNAN; };
@@ -2333,7 +2343,9 @@ EXPORT int do_kill(void*);
 EXPORT int gld_major=MAJOR, gld_minor=MINOR; 
 BOOL APIENTRY DllMain(HANDLE h, DWORD r) { if (r==DLL_PROCESS_DETACH) do_kill(h); return TRUE; }
 #else // !WIN32
-CDECL int gld_major=MAJOR, gld_minor=MINOR; 
+CDECL int gld_major, gld_minor; 
+int gld_major=MAJOR;
+int gld_minor=MINOR;
 CDECL int dllinit() __attribute__((constructor));
 CDECL int dllkill() __attribute__((destructor));
 CDECL int dllinit() { return 0; }
@@ -2428,6 +2440,15 @@ CDECL int dllkill() { return do_kill(NULL); }
 	} else return 0; } \
 	T_CATCHALL(X,loadmethod); }
 #define EXPORT_LOADMETHOD(X,N) EXPORT_LOADMETHOD_C(X,X,N)
+
+
+#define DECL_METHOD(X,N) EXPORT int method_##X##_##N(OBJECT *obj, char *value, size_t size)
+#define EXPORT_METHOD_C(X,C,N) DECL_METHOD(X,N) \
+		{	C *my = OBJECTDATA(obj,C); try { if ( obj!=NULL ) { \
+			return my->N(value,size); \
+			} else return 0; } \
+			T_CATCHALL(X,method); }
+		#define EXPORT_METHOD(X,N) EXPORT_METHOD_C(X,X,N)
 
 #endif
 

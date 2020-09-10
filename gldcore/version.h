@@ -4,9 +4,9 @@
 #define _GRIDLABD_VERSION_H
 
 #define REV_MAJOR 4
-#define REV_MINOR 1
+#define REV_MINOR 3
 #define REV_PATCH 0
-#define REV_NAME "Lugo"
+#define REV_NAME "Navajo"
 //Version follows convention in legal.c
 
 #ifdef HAVE_CONFIG_H
