@@ -15,6 +15,7 @@ clock {
 module assert;
 module powerflow {
 	solver_method NR;
+	default_resistance 0.00005;	//To make consistent with original switch admittance
 }
 
 object voltdump {

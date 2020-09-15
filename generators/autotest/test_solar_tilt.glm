@@ -62,10 +62,9 @@ object inverter {
 
 object solar {
 	name trip_shad_solar90;
-	phases AS;
 	parent trip_shad_inv;
 	weather "WA-Yakima";
-	Rated_kVA 4.0 kVA;
+	rated_power 4.0 kW;
 	area 29.6296 m^2;
 	tilt_angle 90.0;
 	efficiency 0.135;
@@ -81,23 +80,21 @@ object solar {
 		};
 		within 0.01;
 	};
-	object complex_assert {
-		operation REAL;
+	object double_assert {
 		object player {
 			property value;
 			file "../fixed_90_S_VA_out.player"; 
 		};
-		target VA_Out;
-		within 0.01; 
+		target P_Out;
+		within 0.05; 
 	};
 }
 
 object solar {
 	name trip_shad_solar20;
-	phases AS;
 	parent trip_shad_inv;
 	weather "WA-Yakima";
-	Rated_kVA 4.0 kVA;
+	rated_power 4.0 kW;
 	area 29.6296 m^2;
 	tilt_angle 20.0;
 	efficiency 0.135;
@@ -105,14 +102,13 @@ object solar {
 	orientation FIXED_AXIS;
 	SOLAR_TILT_MODEL SOLPOS;
 	SOLAR_POWER_MODEL FLATPLATE;
-	object complex_assert {
-		operation REAL; 
+	object double_assert {
 		object player {
 			property value;
 			file "../fixed_20_S_VA_out.player"; 
 		};
-		target VA_Out;
-		within 0.01; 
+		target P_Out;
+		within 0.05; 
 	};
 }
 

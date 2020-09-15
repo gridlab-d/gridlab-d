@@ -19,7 +19,8 @@
 //Module globals
 GLOBAL double event_max_duration INIT(432000.0);	/**< Maximum length of any event on the system - given in seconds - defaults to 5 days */
 GLOBAL bool enable_subsecond_models INIT(false);	/**< normally not operating in delta mode */
-GLOBAL unsigned long deltamode_timestep INIT(10000000); /* 10 ms timestep */
+GLOBAL unsigned long deltamode_timestep INIT(10000000); /* deltamode timestep value - 10 ms timestep, at first - internal */
+GLOBAL double deltamode_timestep_publish INIT(10000000.0); /* deltamode module-published 10 ms timestep, at first -- module property version, to be converted*/
 GLOBAL FUNCTIONADDR *delta_functions INIT(NULL);			/* Array pointer functions for objects that need deltamode interupdate calls */
 GLOBAL OBJECT **delta_objects INIT(NULL);				/* Array pointer objects that need deltamode interupdate calls */
 GLOBAL int eventgen_object_count INIT(0);		/* deltamode object count */

@@ -101,6 +101,10 @@ capacitor::capacitor(MODULE *mod):node(mod)
 			GL_THROW("Unable to publish capacitor deltamode function");
 		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
 			GL_THROW("Unable to publish capacitor swing-swapping function");
+		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
+			GL_THROW("Unable to publish capacitor swing-status check function");
+		if (gl_publish_function(oclass, "pwr_object_kmldata", (FUNCTIONADDR)capacitor_kmldata) == NULL)
+			GL_THROW("Unable to publish capacitor kmldata function");
     }
 }
 
@@ -1851,7 +1855,7 @@ SIMULATIONMODE capacitor::inter_deltaupdate_capacitor(unsigned int64 delta_time,
 {
 	OBJECT *hdr = OBJECTHDR(this);
 	double curr_time_value;	//Current time of simulation
-	double deltat, deltatimedbl;
+	double deltat;
 	double result_dbl;		//Working variable for capacitors
 	int retvalue;	//Working variable for one case
 	bool Phase_Mismatch;	//Working variable
@@ -1866,26 +1870,25 @@ SIMULATIONMODE capacitor::inter_deltaupdate_capacitor(unsigned int64 delta_time,
 	//Update time tracking variable - mostly for GFA functionality calls
 	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
 	{
-		//Get decimal timestamp value
-		deltatimedbl = (double)delta_time/(double)DT_SECOND; 
-
 		//Update tracking variable
-		prev_time_dbl = (double)gl_globalclock + deltatimedbl;
+		prev_time_dbl = gl_globaldeltaclock;
 
 		//Update frequency calculation values (if needed)
 		if (fmeas_type != FM_NONE)
 		{
-			//Copy the tracker value
-			memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+			//See which pass
+			if (delta_time == 0)
+			{
+				//Initialize dynamics - first run of new delta call
+				init_freq_dynamics(deltat);
+			}
+			else
+			{
+				//Copy the tracker value
+				memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+			}
 		}
 	}
-
-	//Initialization items
-	if ((delta_time==0) && (iteration_count_val==0) && (interupdate_pos == false) && (fmeas_type != FM_NONE))	//First run of new delta call
-	{
-		//Initialize dynamics
-		init_freq_dynamics();
-	}//End first pass and timestep of deltamode (initial condition stuff)
 
 	//Perform the GFA update, if enabled
 	if ((GFA_enable == true) && (iteration_count_val == 0) && (interupdate_pos == false))	//Always just do on the first pass
@@ -2092,6 +2095,17 @@ EXPORT SIMULATIONMODE interupdate_capacitor(OBJECT *obj, unsigned int64 delta_ti
 		gl_error("interupdate_capacitor(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
 		return status;
 	}
+}
+
+//KML Export
+EXPORT int capacitor_kmldata(OBJECT *obj,int (*stream)(const char*,...))
+{
+	capacitor *n = OBJECTDATA(obj, capacitor);
+	int rv = 1;
+
+	rv = n->kmldata(stream);
+
+	return rv;
 }
 
 int capacitor::kmldata(int (*stream)(const char*,...))

@@ -250,7 +250,9 @@ typedef enum {
 	DMF_SOFTEVENT	= 0x01,/**< event is soft */
 } DELTAMODEFLAGS; /**< delta mode flags */
 GLOBAL SIMULATIONMODE global_simulation_mode INIT(SM_INIT); /**< simulation mode */
+GLOBAL double global_deltamode_timestep_pub INIT(10000000.0); /**< delta mode time step in ns (default is 10ms) - published value (for unit conversions) */
 GLOBAL DT global_deltamode_timestep INIT(10000000); /**< delta mode time step in ns (default is 10ms) */
+GLOBAL double global_deltamode_maximumtime_pub INIT(3600000000000.0); /**< the maximum time (in ns) delta mode is allowed to run without an event (default is 1 hour) - published (for unit conversions) */
 GLOBAL DELTAT global_deltamode_maximumtime INIT(3600000000000); /**< the maximum time (in ns) delta mode is allowed to run without an event (default is 1 hour) */
 GLOBAL DELTAT global_deltaclock INIT(0); /**< the cumulative delta runtime with respect to the global clock */
 GLOBAL double global_delta_curr_clock INIT(0.0);	/**< Deltamode clock offset by main clock (not just delta offset) */

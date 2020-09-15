@@ -157,8 +157,8 @@ object inverter {
 	Q3 0.0;
 	V4 1.10;
 	Q4 -0.8;
-	V_In 200.0+0.0j;
-	I_In 200.0+0.0j;
+	V_In 200.0;
+	I_In 200.0;
 }
 
 object load {

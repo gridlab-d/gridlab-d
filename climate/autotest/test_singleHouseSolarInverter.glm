@@ -1254,7 +1254,6 @@ object inverter {
 }
 object solar {
 	name DHHL_3_PV;
-	phases AS;
 	parent DHHL_3_inv;
 	area 141.76 ft^2;
 	tilt_angle 90.0;
