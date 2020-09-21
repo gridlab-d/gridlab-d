@@ -547,10 +547,10 @@ have_helics=yes
 AC_MSG_CHECKING([for HELICS])
 AC_LINK_IFELSE(
 	[AC_LANG_PROGRAM([[ 
-#include <helics/application_api/helicsTypes.hpp>
+#include <helics/helics98.hpp>
 ]],
 [[ 
-helics::NamedPoint t; 
+helicscpp::Input ipt; 
 ]])],
     [have_helics=yes; have_helics_int=1],
     [have_helics=no; have_helics_int=0])
