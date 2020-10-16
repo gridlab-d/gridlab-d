@@ -684,6 +684,8 @@ SIMULATIONMODE helics_msg::deltaClockUpdate(double t1, unsigned long timestep, S
 //		helics::time t = 0;
 		helics_time t = 0;
 		double dt = 0;
+		int t_ns = 0;
+		int helics_t_ns = 0;
 		dt = (t1 - (double)initial_sim_time)*1000000000.0;
 		if(sysmode == SM_EVENT) {
 			t = (helics_time)(((dt + (1000000000.0 / 2.0)) - fmod((dt + (1000000000.0 / 2.0)), 1000000000.0))/1000000000.0);
@@ -695,7 +697,9 @@ SIMULATIONMODE helics_msg::deltaClockUpdate(double t1, unsigned long timestep, S
 		//TODO call helics time update function
 		if(sysmode == SM_EVENT)
 			exitDeltamode = true;
-		if(helics_t != t){
+		t_ns = (int)(round(t * 1000000000.0));
+		helics_t_ns = (int)(round(helics_t * 1000000000.0));
+		if(helics_t_ns != t_ns){
 			gl_error("helics_msg::deltaClockUpdate: Cannot return anything other than the time GridLAB-D requested in deltamode. Time requested %f. Time returned %f.", (double)t, (double)helics_t);
 			return SM_ERROR;
 		} else {
