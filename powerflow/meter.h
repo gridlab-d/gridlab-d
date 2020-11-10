@@ -33,12 +33,12 @@ public:
 	double measured_reactive_max_power_in_interval;	///< maximum real power over the last interval
 	double measured_real_min_power_in_interval;	///< minimum real power over the last interval
 	double measured_reactive_min_power_in_interval;	///< minimum real power over the last interval
-    double measured_real_avg_power_in_interval[3];	///< metered real part of average power over the last interval
-    double measured_reactive_avg_power_in_interval[3];	///< metered reactive part of average power over the last interval
-    double measured_real_max_power_in_interval[3];	///< maximum real power over the last interval
-    double measured_reactive_max_power_in_interval[3];	///< maximum real power over the last interval
-    double measured_real_min_power_in_interval[3];	///< minimum real power over the last interval
-    double measured_reactive_min_power_in_interval[3];	///< minimum real power over the last interval
+    double measured_real_avg_power_in_interval_3ph[3];	///< metered real part of average power over the last interval
+    double measured_reactive_avg_power_in_interval_3ph[3];	///< metered reactive part of average power over the last interval
+    double measured_real_max_power_in_interval_3ph[3];	///< maximum real power over the last interval
+    double measured_reactive_max_power_in_interval_3ph[3];	///< maximum real power over the last interval
+    double measured_real_min_power_in_interval_3ph[3];	///< minimum real power over the last interval
+    double measured_reactive_min_power_in_interval_3ph[3];	///< minimum real power over the last interval
 	double measured_min_max_avg_timestep; // Period of timestep for min/max/average calculations
 
 	complex measured_current[3];	///< measured current
