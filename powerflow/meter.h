@@ -124,6 +124,13 @@ private:
 	double last_measured_avg_real_power;
 	double last_measured_avg_reactive_power;
 
+    double last_measured_max_real_power_3ph[3];
+    double last_measured_min_real_power_3ph[3];
+    double last_measured_max_reactive_power_3ph[3];
+    double last_measured_min_reactive_power_3ph[3];
+    double last_measured_avg_real_power_3ph[3];
+    double last_measured_avg_reactive_power_3ph[3];
+
     int voltage_avg_count;
     TIMESTAMP last_delta_timestamp;
     TIMESTAMP last_stat_timestamp;
