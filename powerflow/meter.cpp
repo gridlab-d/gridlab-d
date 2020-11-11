@@ -1198,12 +1198,12 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		//Update trackers -- could probably be one more level out
 		last_measured_real_power = measured_real_power;
 		last_measured_reactive_power = measured_reactive_power;
-        last_measured_real_power_3ph[0] = (indiv_measured_power[0]).Re()
-        last_measured_real_power_3ph[1] = (indiv_measured_power[1]).Re()
-        last_measured_real_power_3ph[2] = (indiv_measured_power[2]).Re()
-        last_measured_reactive_power_3ph[0] = (indiv_measured_power[0]).Im()
-        last_measured_reactive_power_3ph[1] = (indiv_measured_power[1]).Im()
-        last_measured_reactive_power_3ph[2] = (indiv_measured_power[2]).Im()
+        last_measured_real_power_3ph[0] = (indiv_measured_power[0]).Re();
+        last_measured_real_power_3ph[1] = (indiv_measured_power[1]).Re();
+        last_measured_real_power_3ph[2] = (indiv_measured_power[2]).Re();
+        last_measured_reactive_power_3ph[0] = (indiv_measured_power[0]).Im();
+        last_measured_reactive_power_3ph[1] = (indiv_measured_power[1]).Im();
+        last_measured_reactive_power_3ph[2] = (indiv_measured_power[2]).Im();
 	}
 
 	//Multi run (for now) updates to power values
