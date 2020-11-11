@@ -51,8 +51,10 @@ public:
 	double measured_demand;			///< metered demand (peak of power)
 	double measured_real_power;		///< metered real power
 	double last_measured_real_power; ///< previous metered real power
+	double last_measured_real_power_3ph[3]; ///< previous metered real power, all three phases
 	double measured_reactive_power; ///< metered reactive power
 	double last_measured_reactive_power; ///< previously measured reactive power
+	double last_measured_reactive_power_3ph[3]; ///< previously measured reactive power, all three phases
 	complex indiv_measured_power[3];///< metered power on each phase
 	bool meter_interrupted;			///< Reliability flag - goes active if the customer is in an "interrupted" state
 	bool meter_interrupted_secondary;	///< Reliability flag - goes active if the customer is in an "secondary interrupted" state - i.e., momentary
@@ -123,6 +125,13 @@ private:
 	double last_measured_min_reactive_power;
 	double last_measured_avg_real_power;
 	double last_measured_avg_reactive_power;
+
+    double last_measured_max_real_power_3ph[3];
+    double last_measured_min_real_power_3ph[3];
+    double last_measured_max_reactive_power_3ph[3];
+    double last_measured_min_reactive_power_3ph[3];
+    double last_measured_avg_real_power_3ph[3];
+    double last_measured_avg_reactive_power_3ph[3];
 
     int voltage_avg_count;
     TIMESTAMP last_delta_timestamp;
