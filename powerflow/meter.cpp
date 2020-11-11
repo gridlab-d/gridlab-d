@@ -317,26 +317,26 @@ int meter::create()
 	last_measured_avg_reactive_power = 0.0;
 
     // A
-    last_measured_real_max_power_3ph[0] = 0.0;
-    last_measured_reactive_max_power_3ph[0] = 0.0;
-    last_measured_real_min_power_3ph[0] = 0.0;
-    last_measured_reactive_min_power_3ph[0] = 0.0;
-    last_measured_real_avg_power_3ph[0] = 0.0;
-    last_measured_reactive_avg_power_3ph[0] = 0.0;
+	last_measured_max_real_power_3ph[0] = 0.0;
+	last_measured_min_real_power_3ph[0] = 0.0;
+	last_measured_max_reactive_power_3ph[0] = 0.0;
+	last_measured_min_reactive_power_3ph[0] = 0.0;
+	last_measured_avg_real_power_3ph[0] = 0.0;
+	last_measured_avg_reactive_power_3ph[0] = 0.0;
     // B
-    last_measured_real_max_power_3ph[1] = 0.0;
-    last_measured_reactive_max_power_3ph[1] = 0.0;
-    last_measured_real_min_power_3ph[1] = 0.0;
-    last_measured_reactive_min_power_3ph[1] = 0.0;
-    last_measured_real_avg_power_3ph[1] = 0.0;
-    last_measured_reactive_avg_power_3ph[1] = 0.0;
+	last_measured_max_real_power_3ph[1] = 0.0;
+	last_measured_min_real_power_3ph[1] = 0.0;
+	last_measured_max_reactive_power_3ph[1] = 0.0;
+	last_measured_min_reactive_power_3ph[1] = 0.0;
+	last_measured_avg_real_power_3ph[1] = 0.0;
+	last_measured_avg_reactive_power_3ph[1] = 0.0;
     // C
-    last_measured_real_max_power_3ph[2] = 0.0;
-    last_measured_reactive_max_power_3ph[2] = 0.0;
-    last_measured_real_min_power_3ph[2] = 0.0;
-    last_measured_reactive_min_power_3ph[2] = 0.0;
-    last_measured_real_avg_power_3ph[2] = 0.0;
-    last_measured_reactive_avg_power_3ph[2] = 0.0;
+	last_measured_max_real_power_3ph[2] = 0.0;
+	last_measured_min_real_power_3ph[2] = 0.0;
+	last_measured_max_reactive_power_3ph[2] = 0.0;
+	last_measured_min_reactive_power_3ph[2] = 0.0;
+	last_measured_avg_real_power_3ph[2] = 0.0;
+	last_measured_avg_reactive_power_3ph[2] = 0.0;
 
 	return result;
 }
@@ -1171,9 +1171,9 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				last_price = price = *pprice;
 			}
 			last_measured_real_power = measured_real_power;
-			last_measured_real_power_3ph[0] = (indiv_measured_power[0]).Re()
-			last_measured_real_power_3ph[1] = (indiv_measured_power[1]).Re()
-			last_measured_real_power_3ph[2] = (indiv_measured_power[2]).Re()
+			last_measured_real_power_3ph[0] = (indiv_measured_power[0]).Re();
+			last_measured_real_power_3ph[1] = (indiv_measured_power[1]).Re();
+			last_measured_real_power_3ph[2] = (indiv_measured_power[2]).Re();
 
 			// copied logic on when the next bill must be processed
 			if (monthly_bill == previous_monthly_bill)
