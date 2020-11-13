@@ -147,6 +147,7 @@ object meter {
 object load {
 	name THREE_PHASE_LOAD;
 	phases ABCN;
+    parent THREE_PHASE_ROOT;
 	nominal_voltage 7200.0;
 	constant_power_A 2500.0-120.0j;
 	constant_power_B 2500.0-120.0j;
@@ -165,14 +166,14 @@ object load {
 	};
 };
 
-object overhead_line {
-	phases ABCN;
-	name three_phase_line;
-	from THREE_PHASE_ROOT;
-	to THREE_PHASE_LOAD;
-	length 100.0 ft;
-	configuration OHL_config;
-}
+//object overhead_line {
+//	phases ABCN;
+//	name three_phase_line;
+//	from THREE_PHASE_ROOT;
+//	to THREE_PHASE_LOAD;
+//	length 100.0 ft;
+//	configuration OHL_config;
+//}
 
 
 //Triplex system
