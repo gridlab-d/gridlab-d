@@ -176,7 +176,7 @@ int metrics_collector_writer::init(OBJECT *parent) {
 		return 0;
 	}
 
-	// Write separate json files for meters, triplex_meters, inverters, capacitors, regulators, houses, feeders, transformers, lines:
+	// Write separate json files for meters, triplex_meters, inverters, capacitors, regulators, houses, feeders, transformers, lines, evchargers:
 
 	if (strcmp(alternate, "no") == 0) {
 		filename_billing_meter = m_billing_meter.c_str();
@@ -203,7 +203,7 @@ int metrics_collector_writer::init(OBJECT *parent) {
 		filename_line = m_line.c_str();
 		strcat(filename_line, "_");
 		strcat(filename_line, filename);
-		filename_line = m_evchargerdet.c_str();
+		filename_evchargerdet = m_evchargerdet.c_str();
 		strcat(filename_evchargerdet, "_");
 		strcat(filename_evchargerdet, filename);
 	} else {
