@@ -246,15 +246,15 @@ private:
 	double *total_load_array; 		//array storing total_load measured at the house
 	double *hvac_load_array; 		//array storing hvac_load measured at the house
 	double *air_temperature_array; 		//array storing air_temperature measured at the house
-	double *dev_cooling_array;	// array storing air_temperature deviation from the cooling setpoint
-	double *dev_heating_array;	// array storing air_temperature deviation from the heating setpoint
+	double *set_cooling_array;	// array storing air_temperature cooling setpoint
+	double *set_heating_array;	// array storing air_temperature heating setpoint
 	int system_mode;
 
 	// Parameters related to waterheater object
-	double *wh_load_array; 		//array storing actual_load measured at the house
-	double *wh_setpoint_array; 		//array storing actual_load measured at the house
-	double *wh_demand_array; 		//array storing actual_load measured at the house
-	double *wh_temp_array; 		//array storing actual_load measured at the house
+	double *wh_load_array; 		
+	double *wh_setpoint_array;
+	double *wh_demand_array; 	
+	double *wh_temp_array; 		
 	char waterheaterName[256];				// char array storing names of the waterheater
 
 	// Parameters related to inverter object

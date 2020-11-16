@@ -107,8 +107,8 @@ int metrics_collector::create(){
 	hvac_load_array = NULL;
 	wh_load_array = NULL;
 	air_temperature_array = NULL;
-	dev_cooling_array = NULL;
-	dev_heating_array = NULL;
+	set_cooling_array = NULL;
+	set_heating_array = NULL;
 	count_array = NULL;
 	real_power_loss_array = NULL;
 	reactive_power_loss_array = NULL;
@@ -525,11 +525,11 @@ int metrics_collector::init(OBJECT *parent){
 		}
 
 		// Allocate air temperature deviation from cooling setpointarray
-		dev_cooling_array = (double *)gl_malloc(vector_length*sizeof(double));
+		set_cooling_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
-		if (dev_cooling_array == NULL)
+		if (set_cooling_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocate dev_cooling_array array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate set_cooling_array array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -537,11 +537,11 @@ int metrics_collector::init(OBJECT *parent){
 		}
 
 		// Allocate air temperature deviation from heating setpointarray
-		dev_heating_array = (double *)gl_malloc(vector_length*sizeof(double));
+		set_heating_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
-		if (dev_heating_array == NULL)
+		if (set_heating_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocate dev_heating_array array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate set_heating_array array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -554,8 +554,8 @@ int metrics_collector::init(OBJECT *parent){
 			total_load_array[curr_index] = 0.0;
 			hvac_load_array[curr_index] = 0.0;
 			air_temperature_array[curr_index] = 0.0;
-			dev_cooling_array[curr_index] = 0.0;
-			dev_heating_array[curr_index] = 0.0;
+			set_cooling_array[curr_index] = 0.0;
+			set_heating_array[curr_index] = 0.0;
 			system_mode = 0.0;
 		}
 	}
@@ -897,8 +897,8 @@ int metrics_collector::read_line(OBJECT *obj){
 		total_load_array[curr_index] = *gl_get_double(obj->parent, propHouseLoad);
 		hvac_load_array[curr_index] = *gl_get_double(obj->parent, propHouseHVAC);
 		air_temperature_array[curr_index] = *gl_get_double(obj->parent, propHouseAirTemp);
-		dev_cooling_array[curr_index] = *gl_get_double(obj->parent, propHouseCoolSet);
-		dev_heating_array[curr_index] = *gl_get_double(obj->parent, propHouseHeatSet);
+		set_cooling_array[curr_index] = *gl_get_double(obj->parent, propHouseCoolSet);
+		set_heating_array[curr_index] = *gl_get_double(obj->parent, propHouseHeatSet);
 		system_mode = *gl_get_enum(obj->parent, propHouseSystemMode);
 	}
 	else if (strcmp(parent_string, "waterheater") == 0) {
@@ -1127,8 +1127,8 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics[HSE_MIN_AIR_TEMP] = findMin(air_temperature_array, curr_index);
 		metrics[HSE_MAX_AIR_TEMP] = findMax(air_temperature_array, curr_index);
 		metrics[HSE_AVG_AIR_TEMP] = findAverage(air_temperature_array, curr_index);
-		metrics[HSE_AVG_DEV_COOLING] = findAverage(dev_cooling_array, curr_index);
-		metrics[HSE_AVG_DEV_HEATING] = findAverage(dev_heating_array, curr_index);
+		metrics[HSE_AVG_DEV_COOLING] = findAverage(set_cooling_array, curr_index);
+		metrics[HSE_AVG_DEV_HEATING] = findAverage(set_heating_array, curr_index);
 		metrics[HSE_SYSTEM_MODE] = (double) system_mode;
 	}
 	else if (strcmp(parent_string, "waterheater") == 0) {
@@ -1226,8 +1226,8 @@ void metrics_collector::copyHistories (int from, int to) {
 	if (total_load_array) total_load_array[to] = total_load_array[from];
 	if (hvac_load_array) hvac_load_array[to] = hvac_load_array[from];
 	if (air_temperature_array) air_temperature_array[to] = air_temperature_array[from];
-	if (dev_cooling_array) dev_cooling_array[to] = dev_cooling_array[from];
-	if (dev_heating_array) dev_heating_array[to] = dev_heating_array[from];
+	if (set_cooling_array) set_cooling_array[to] = set_cooling_array[from];
+	if (set_heating_array) set_heating_array[to] = set_heating_array[from];
 	if (wh_load_array) wh_load_array[to] = wh_load_array[from];
 	if (count_array) count_array[to] = count_array[from];
 	if (real_power_array) real_power_array[to] = real_power_array[from];
@@ -1254,8 +1254,8 @@ void metrics_collector::interpolateHistories (int idx, TIMESTAMP t) {
 	if (total_load_array) interpolate (total_load_array, idx, denom, top);
 	if (hvac_load_array) interpolate (hvac_load_array, idx, denom, top);
 	if (air_temperature_array) interpolate (air_temperature_array, idx, denom, top);
-	if (dev_cooling_array) interpolate (dev_cooling_array, idx, denom, top);
-	if (dev_heating_array) interpolate (dev_heating_array, idx, denom, top);
+	if (set_cooling_array) interpolate (set_cooling_array, idx, denom, top);
+	if (set_heating_array) interpolate (set_heating_array, idx, denom, top);
 	if (wh_load_array) interpolate (wh_load_array, idx, denom, top);
 	if (count_array) interpolate (count_array, idx, denom, top);
 	if (real_power_array) interpolate (real_power_array, idx, denom, top);

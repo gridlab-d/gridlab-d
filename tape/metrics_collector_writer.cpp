@@ -312,8 +312,8 @@ int metrics_collector_writer::init(OBJECT *parent) {
 	jsn[m_index] = idx++;	jsn[m_units] = "degF";	meta[m_air_temperature_min] = jsn;
 	jsn[m_index] = idx++;	jsn[m_units] = "degF";	meta[m_air_temperature_max] = jsn;
 	jsn[m_index] = idx++;	jsn[m_units] = "degF";	meta[m_air_temperature_avg] = jsn;
-	jsn[m_index] = idx++;	jsn[m_units] = "degF";	meta[m_air_temperature_deviation_cooling] = jsn;
-	jsn[m_index] = idx++;	jsn[m_units] = "degF";	meta[m_air_temperature_deviation_heating] = jsn;
+	jsn[m_index] = idx++;	jsn[m_units] = "degF";	meta[m_air_temperature_setpoint_cooling] = jsn;
+	jsn[m_index] = idx++;	jsn[m_units] = "degF";	meta[m_air_temperature_setpoint_heating] = jsn;
 	jsn[m_index] = idx++;	jsn[m_units] = "";		meta[m_system_mode] = jsn;
 	jsn[m_index] = idx++;	jsn[m_units] = "kW";	meta[m_waterheater_load_min] = jsn;
 	jsn[m_index] = idx++;	jsn[m_units] = "kW";	meta[m_waterheater_load_max] = jsn;
@@ -833,8 +833,8 @@ void metrics_collector_writer::hdfHouse () {
 	mtype_houses->insertMember(m_air_temperature_min, HOFFSET(House, air_temperature_min), H5::PredType::NATIVE_DOUBLE);
 	mtype_houses->insertMember(m_air_temperature_max, HOFFSET(House, air_temperature_max), H5::PredType::NATIVE_DOUBLE);
 	mtype_houses->insertMember(m_air_temperature_avg, HOFFSET(House, air_temperature_avg), H5::PredType::NATIVE_DOUBLE);
-	mtype_houses->insertMember(m_air_temperature_deviation_cooling, HOFFSET(House, air_temperature_deviation_cooling), H5::PredType::NATIVE_DOUBLE);
-	mtype_houses->insertMember(m_air_temperature_deviation_heating, HOFFSET(House, air_temperature_deviation_heating), H5::PredType::NATIVE_DOUBLE);
+	mtype_houses->insertMember(m_air_temperature_setpoint_cooling, HOFFSET(House, air_temperature_setpoint_cooling), H5::PredType::NATIVE_DOUBLE);
+	mtype_houses->insertMember(m_air_temperature_setpoint_heating, HOFFSET(House, air_temperature_setpoint_heating), H5::PredType::NATIVE_DOUBLE);
 	mtype_houses->insertMember(m_system_mode, HOFFSET(House, system_mode), H5::PredType::NATIVE_INT);
 	mtype_houses->insertMember(m_waterheater_load_min, HOFFSET(House, waterheater_load_min), H5::PredType::NATIVE_DOUBLE);
 	mtype_houses->insertMember(m_waterheater_load_max, HOFFSET(House, waterheater_load_max), H5::PredType::NATIVE_DOUBLE);
@@ -1266,8 +1266,8 @@ void metrics_collector_writer::hdfHouseWrite (size_t objs, Json::Value& metrics)
 			tbl[idx].air_temperature_min = mtr[HSE_MIN_AIR_TEMP].asDouble();
 			tbl[idx].air_temperature_max = mtr[HSE_MAX_AIR_TEMP].asDouble();
 			tbl[idx].air_temperature_avg = mtr[HSE_AVG_AIR_TEMP].asDouble();
-			tbl[idx].air_temperature_deviation_cooling = mtr[HSE_AVG_DEV_COOLING].asDouble();
-			tbl[idx].air_temperature_deviation_heating = mtr[HSE_AVG_DEV_HEATING].asDouble();
+			tbl[idx].air_temperature_setpoint_cooling = mtr[HSE_AVG_DEV_COOLING].asDouble();
+			tbl[idx].air_temperature_setpoint_heating = mtr[HSE_AVG_DEV_HEATING].asDouble();
 			tbl[idx].system_mode = mtr[HSE_SYSTEM_MODE].asInt();
 			tbl[idx].waterheater_load_min = mtr[HSE_SYSTEM_MODE + 1].asDouble();
 			tbl[idx].waterheater_load_max = mtr[HSE_SYSTEM_MODE + 2].asDouble();
