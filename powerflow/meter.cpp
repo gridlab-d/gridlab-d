@@ -1075,6 +1075,12 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				measured_reactive_min_voltageD_in_interval[0] = last_measured_min_voltageD_mag[0].Im();
 				measured_reactive_min_voltageD_in_interval[1] = last_measured_min_voltageD_mag[1].Im();
 				measured_reactive_min_voltageD_in_interval[2] = last_measured_min_voltageD_mag[2].Im();
+                measured_avg_voltage_mag_in_interval[0] = last_measured_avg_voltage_mag[0];
+                measured_avg_voltage_mag_in_interval[1] = last_measured_avg_voltage_mag[1];
+                measured_avg_voltage_mag_in_interval[2] = last_measured_avg_voltage_mag[2];
+                measured_avg_voltageD_mag_in_interval[0] = last_measured_avg_voltageD_mag[0];
+                measured_avg_voltageD_mag_in_interval[1] = last_measured_avg_voltageD_mag[1];
+                measured_avg_voltageD_mag_in_interval[2] = last_measured_avg_voltageD_mag[2];
 
 				//Power values
 				// 3 phase:
