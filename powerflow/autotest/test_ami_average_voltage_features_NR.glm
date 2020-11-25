@@ -4,7 +4,7 @@
 clock {
      timezone UTC0;
      starttime '2012-01-01 00:00:00';
-     stoptime '2012-01-01 01:00:00';
+     stoptime '2012-01-01 01:01:00';
 }
 
 //#set profiler=1
