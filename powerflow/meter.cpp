@@ -241,6 +241,8 @@ int meter::create()
 	measured_current[0] = measured_current[1] = measured_current[2] = complex(0,0,J);
 	measured_real_energy = measured_reactive_energy = 0.0;
     measured_real_energy_delta = measured_reactive_energy_delta = 0;
+    last_measured_voltage[0] = last_measured_voltage[1] = last_measured_voltage[2] = complex(0,0,A);
+    last_measured_voltageD[0] = last_measured_voltageD[1] = last_measured_voltageD[2] = complex(0,0,A);
     last_measured_real_energy = last_measured_reactive_energy = 0;
     last_measured_real_power = last_measured_reactive_power = 0.0;
     last_measured_real_power_3ph[0] = last_measured_real_power_3ph[1] = last_measured_real_power_3ph[2] = 0.0;
