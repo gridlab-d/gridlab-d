@@ -604,8 +604,9 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 								+ (indiv_measured_power[1]).Im()
 								+ (indiv_measured_power[2]).Im();
 
-		if (measured_real_power > measured_demand) 
+		if (measured_real_power > measured_demand) {
 			measured_demand = measured_real_power;
+		}
         
         // Delta energy calculation
 		if (measured_energy_delta_timestep > 0) {
