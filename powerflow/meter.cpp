@@ -730,12 +730,12 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 					last_measured_min_voltageD_mag[1] = measured_voltageD[1];
 					last_measured_min_voltageD_mag[2] = measured_voltageD[2];
                     // averages:
-					last_measured_avg_voltage_mag[0] = voltageA.Mag();
-					last_measured_avg_voltage_mag[1] = voltageB.Mag();
-					last_measured_avg_voltage_mag[2] = voltageC.Mag();
-					last_measured_avg_voltageD_mag[0] = measured_voltageD[0].Mag();
-					last_measured_avg_voltageD_mag[1] = measured_voltageD[1].Mag();
-					last_measured_avg_voltageD_mag[2] = measured_voltageD[2].Mag();
+					last_measured_avg_voltage_mag[0] = last_measured_voltage[0].Mag();
+					last_measured_avg_voltage_mag[1] = last_measured_voltage[1].Mag();
+					last_measured_avg_voltage_mag[2] = last_measured_voltage[2].Mag();
+					last_measured_avg_voltageD_mag[0] = last_measured_voltageD[0].Mag();
+					last_measured_avg_voltageD_mag[1] = last_measured_voltageD[1].Mag();
+					last_measured_avg_voltageD_mag[2] = last_measured_voltageD[2].Mag();
 
 					//Power
 					// 3 phase:
@@ -897,12 +897,7 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
                     last_measured_avg_real_power_3ph[2] = ((interval_dt * last_measured_avg_real_power_3ph[2]) + (dt * last_measured_real_power_3ph[2]))/(dt + interval_dt);
                     last_measured_avg_reactive_power_3ph[2] = ((interval_dt * last_measured_avg_reactive_power_3ph[2]) + (dt * last_measured_reactive_power_3ph[2]))/(dt + interval_dt);
 				}
-				last_measured_voltage[0] = voltageA.Mag();
-				last_measured_voltage[1] = voltageB.Mag();
-				last_measured_voltage[2] = voltageC.Mag();
-				last_measured_voltageD[0] = measured_voltageD[0].Mag();
-				last_measured_voltageD[1] = measured_voltageD[1].Mag();
-				last_measured_voltageD[2] = measured_voltageD[2].Mag();
+
 				if (t1 != last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep)) {
 					voltage_avg_count++;
 					interval_dt = interval_dt + dt;
@@ -1027,12 +1022,6 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				last_measured_avg_voltageD_mag[0] = ((interval_dt * last_measured_avg_voltageD_mag[0]) + (dt * last_measured_voltageD[0].Mag()))/(interval_dt + dt);
 				last_measured_avg_voltageD_mag[1] = ((interval_dt * last_measured_avg_voltageD_mag[1]) + (dt * last_measured_voltageD[1].Mag()))/(interval_dt + dt);
 				last_measured_avg_voltageD_mag[2] = ((interval_dt * last_measured_avg_voltageD_mag[2]) + (dt * last_measured_voltageD[2].Mag()))/(interval_dt + dt);
-				last_measured_voltage[0] = voltageA.Mag();
-				last_measured_voltage[1] = voltageB.Mag();
-				last_measured_voltage[2] = voltageC.Mag();
-				last_measured_voltageD[0] = measured_voltageD[0].Mag();
-				last_measured_voltageD[1] = measured_voltageD[1].Mag();
-				last_measured_voltageD[2] = measured_voltageD[2].Mag();
 
 				//Update the power averages
 				// 3 phase:
