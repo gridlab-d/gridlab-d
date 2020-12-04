@@ -241,6 +241,8 @@ int meter::create()
 	measured_current[0] = measured_current[1] = measured_current[2] = complex(0,0,J);
 	measured_real_energy = measured_reactive_energy = 0.0;
     measured_real_energy_delta = measured_reactive_energy_delta = 0;
+    last_measured_voltage[0] = last_measured_voltage[1] = last_measured_voltage[2] = complex(0,0,A);
+    last_measured_voltageD[0] = last_measured_voltageD[1] = last_measured_voltageD[2] = complex(0,0,A);
     last_measured_real_energy = last_measured_reactive_energy = 0;
     last_measured_real_power = last_measured_reactive_power = 0.0;
     last_measured_real_power_3ph[0] = last_measured_real_power_3ph[1] = last_measured_real_power_3ph[2] = 0.0;
@@ -604,8 +606,9 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 								+ (indiv_measured_power[1]).Im()
 								+ (indiv_measured_power[2]).Im();
 
-		if (measured_real_power > measured_demand) 
+		if (measured_real_power > measured_demand) {
 			measured_demand = measured_real_power;
+		}
         
         // Delta energy calculation
 		if (measured_energy_delta_timestep > 0) {
@@ -705,12 +708,6 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
                 measured_reactive_min_power_in_interval_3ph[2] = (indiv_measured_power[2]).Im();
                 measured_reactive_avg_power_in_interval_3ph[2] = 0.0;
 
-				last_measured_voltage[0] = voltageA;
-				last_measured_voltage[1] = voltageB;
-				last_measured_voltage[2] = voltageC;
-				last_measured_voltageD[0] = measured_voltageD[0];
-				last_measured_voltageD[1] = measured_voltageD[1];
-				last_measured_voltageD[2] = measured_voltageD[2];
 				if (tretval > last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep)) {
 					tretval = last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep);
 				}
@@ -718,25 +715,28 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 			if ((t1 > last_stat_timestamp) && (t1 < last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep)) && (t1 != t0)) {
 				if (voltage_avg_count <= 0) {
+				    // maximums:
 					last_measured_max_voltage_mag[0] = voltageA;
 					last_measured_max_voltage_mag[1] = voltageB;
 					last_measured_max_voltage_mag[2] = voltageC;
 					last_measured_max_voltageD_mag[0] = measured_voltageD[0];
 					last_measured_max_voltageD_mag[1] = measured_voltageD[1];
 					last_measured_max_voltageD_mag[2] = measured_voltageD[2];
+					// minimums:
 					last_measured_min_voltage_mag[0] = voltageA;
 					last_measured_min_voltage_mag[1] = voltageB;
 					last_measured_min_voltage_mag[2] = voltageC;
 					last_measured_min_voltageD_mag[0] = measured_voltageD[0];
 					last_measured_min_voltageD_mag[1] = measured_voltageD[1];
 					last_measured_min_voltageD_mag[2] = measured_voltageD[2];
+                    // averages:
 					last_measured_avg_voltage_mag[0] = last_measured_voltage[0].Mag();
 					last_measured_avg_voltage_mag[1] = last_measured_voltage[1].Mag();
 					last_measured_avg_voltage_mag[2] = last_measured_voltage[2].Mag();
 					last_measured_avg_voltageD_mag[0] = last_measured_voltageD[0].Mag();
 					last_measured_avg_voltageD_mag[1] = last_measured_voltageD[1].Mag();
 					last_measured_avg_voltageD_mag[2] = last_measured_voltageD[2].Mag();
-		
+
 					//Power
 					// 3 phase:
 					last_measured_min_real_power = last_measured_real_power;
@@ -875,8 +875,7 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
                         last_measured_min_reactive_power_3ph[2] = last_measured_reactive_power_3ph[2];
                     }
 
-
-
+                    // Update voltage averages
 					last_measured_avg_voltage_mag[0] = ((interval_dt * last_measured_avg_voltage_mag[0]) + (dt * last_measured_voltage[0].Mag()))/(interval_dt + dt);
 					last_measured_avg_voltage_mag[1] = ((interval_dt * last_measured_avg_voltage_mag[1]) + (dt * last_measured_voltage[1].Mag()))/(interval_dt + dt);
 					last_measured_avg_voltage_mag[2] = ((interval_dt * last_measured_avg_voltage_mag[2]) + (dt * last_measured_voltage[2].Mag()))/(interval_dt + dt);
@@ -898,12 +897,7 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
                     last_measured_avg_real_power_3ph[2] = ((interval_dt * last_measured_avg_real_power_3ph[2]) + (dt * last_measured_real_power_3ph[2]))/(dt + interval_dt);
                     last_measured_avg_reactive_power_3ph[2] = ((interval_dt * last_measured_avg_reactive_power_3ph[2]) + (dt * last_measured_reactive_power_3ph[2]))/(dt + interval_dt);
 				}
-				last_measured_voltage[0] = voltageA.Mag();
-				last_measured_voltage[1] = voltageB.Mag();
-				last_measured_voltage[2] = voltageC.Mag();
-				last_measured_voltageD[0] = measured_voltageD[0].Mag();
-				last_measured_voltageD[1] = measured_voltageD[1].Mag();
-				last_measured_voltageD[2] = measured_voltageD[2].Mag();
+
 				if (t1 != last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep)) {
 					voltage_avg_count++;
 					interval_dt = interval_dt + dt;
@@ -1028,12 +1022,6 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				last_measured_avg_voltageD_mag[0] = ((interval_dt * last_measured_avg_voltageD_mag[0]) + (dt * last_measured_voltageD[0].Mag()))/(interval_dt + dt);
 				last_measured_avg_voltageD_mag[1] = ((interval_dt * last_measured_avg_voltageD_mag[1]) + (dt * last_measured_voltageD[1].Mag()))/(interval_dt + dt);
 				last_measured_avg_voltageD_mag[2] = ((interval_dt * last_measured_avg_voltageD_mag[2]) + (dt * last_measured_voltageD[2].Mag()))/(interval_dt + dt);
-				last_measured_voltage[0] = voltageA.Mag();
-				last_measured_voltage[1] = voltageB.Mag();
-				last_measured_voltage[2] = voltageC.Mag();
-				last_measured_voltageD[0] = measured_voltageD[0].Mag();
-				last_measured_voltageD[1] = measured_voltageD[1].Mag();
-				last_measured_voltageD[2] = measured_voltageD[2].Mag();
 
 				//Update the power averages
 				// 3 phase:
@@ -1075,6 +1063,12 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				measured_reactive_min_voltageD_in_interval[0] = last_measured_min_voltageD_mag[0].Im();
 				measured_reactive_min_voltageD_in_interval[1] = last_measured_min_voltageD_mag[1].Im();
 				measured_reactive_min_voltageD_in_interval[2] = last_measured_min_voltageD_mag[2].Im();
+                measured_avg_voltage_mag_in_interval[0] = last_measured_avg_voltage_mag[0];
+                measured_avg_voltage_mag_in_interval[1] = last_measured_avg_voltage_mag[1];
+                measured_avg_voltage_mag_in_interval[2] = last_measured_avg_voltage_mag[2];
+                measured_avg_voltageD_mag_in_interval[0] = last_measured_avg_voltageD_mag[0];
+                measured_avg_voltageD_mag_in_interval[1] = last_measured_avg_voltageD_mag[1];
+                measured_avg_voltageD_mag_in_interval[2] = last_measured_avg_voltageD_mag[2];
 
 				//Power values
 				// 3 phase:
@@ -1110,7 +1104,7 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 					tretval = last_stat_timestamp + TIMESTAMP(measured_min_max_avg_timestep);
 				}
 			}
-		}//End "Perform stat update" calculations
+		}//End Min/Max/Stat calculation
 
 		monthly_energy = measured_real_energy/1000 - previous_energy_total;
 
@@ -1204,6 +1198,13 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
         last_measured_reactive_power_3ph[0] = (indiv_measured_power[0]).Im();
         last_measured_reactive_power_3ph[1] = (indiv_measured_power[1]).Im();
         last_measured_reactive_power_3ph[2] = (indiv_measured_power[2]).Im();
+
+        last_measured_voltage[0] = measured_voltage[0];
+        last_measured_voltage[1] = measured_voltage[1];
+        last_measured_voltage[2] = measured_voltage[2];
+        last_measured_voltageD[0] = measured_voltageD[0];
+        last_measured_voltageD[1] = measured_voltageD[1];
+        last_measured_voltageD[2] = measured_voltageD[2];
 	}
 
 	//Multi run (for now) updates to power values
