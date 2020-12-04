@@ -1,7 +1,12 @@
 project(superlu_lib)
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_PTHREAD -DAdd_ -lm")
-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_PTHREAD -DAdd_ -lm")
+if (APPLE)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_PTHREAD -DAdd_")
+    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_PTHREAD -DAdd_ -Wno-implicit-function-declaration")
+else ()
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_PTHREAD -DAdd_ -lm")
+    SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_PTHREAD -DAdd_ -lm")
+endif ()
 
 add_library(CBLAS OBJECT
         # from ${THIRD_PARTY_PATH}/CBLAS

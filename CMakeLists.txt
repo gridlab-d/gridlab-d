@@ -247,13 +247,16 @@ include_directories(gldcore)
 if (GLD_USE_SUPERLU)
 set(THIRD_PARTY_PATH ${CMAKE_SOURCE_DIR}/third_party)
 #    include(third_party/superLU_MT/CMakeLists.txt)
+
 add_subdirectory(third_party/superLU_MT)
+
 #    list(APPEND CMAKE_MODULE_PATH
 #            ${CMAKE_BINARY_DIR}/third_party/SuperLU/SRC
 #            ${CMAKE_BINARY_DIR}/third_party/SuperLU/CBLAS
 #            )
 #    include_directories(third_party/SuperLU/SRC)
 #    add_subdirectory(third_party/SuperLU)
+
 #    find_package(SuperLU REQUIRED)
 endif ()
 
