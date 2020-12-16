@@ -1009,106 +1009,36 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 					case 0x01:	//Only C
 						{
 							fprintf(FPOutput,"Phase C on node %s",NR_busdata[index].name);
-							
-							//Print extra information, if needed
-							if (grid_association_mode == true)
-							{
-								fprintf(FPOutput," - Island %d\n",(NR_busdata[index].island_number+1));
-							}
-							else
-							{
-								fprintf(FPOutput,"\n");
-							}
 							break;
 						}
 					case 0x02:	//Only B
 						{
 							fprintf(FPOutput,"Phase B on node %s",NR_busdata[index].name);
-							
-							//Print extra information, if needed
-							if (grid_association_mode == true)
-							{
-								fprintf(FPOutput," - Island %d\n",(NR_busdata[index].island_number+1));
-							}
-							else
-							{
-								fprintf(FPOutput,"\n");
-							}
 							break;
 						}
 					case 0x03:	//B and C supported
 						{
 							fprintf(FPOutput,"Phases B and C on node %s",NR_busdata[index].name);
-							
-							//Print extra information, if needed
-							if (grid_association_mode == true)
-							{
-								fprintf(FPOutput," - Island %d\n",(NR_busdata[index].island_number+1));
-							}
-							else
-							{
-								fprintf(FPOutput,"\n");
-							}
 							break;
 						}
 					case 0x04:	//Only A
 						{
 							fprintf(FPOutput,"Phase A on node %s",NR_busdata[index].name);
-							
-							//Print extra information, if needed
-							if (grid_association_mode == true)
-							{
-								fprintf(FPOutput," - Island %d\n",(NR_busdata[index].island_number+1));
-							}
-							else
-							{
-								fprintf(FPOutput,"\n");
-							}
 							break;
 						}
 					case 0x05:	//A and C supported
 						{
 							fprintf(FPOutput,"Phases A and C on node %s",NR_busdata[index].name);
-							
-							//Print extra information, if needed
-							if (grid_association_mode == true)
-							{
-								fprintf(FPOutput," - Island %d\n",(NR_busdata[index].island_number+1));
-							}
-							else
-							{
-								fprintf(FPOutput,"\n");
-							}
 							break;
 						}
 					case 0x06:	//A and B supported
 						{
 							fprintf(FPOutput,"Phases A and B on node %s",NR_busdata[index].name);
-							
-							//Print extra information, if needed
-							if (grid_association_mode == true)
-							{
-								fprintf(FPOutput," - Island %d\n",(NR_busdata[index].island_number+1));
-							}
-							else
-							{
-								fprintf(FPOutput,"\n");
-							}
 							break;
 						}
 					case 0x07:	//All three supported
 						{
 							fprintf(FPOutput,"Phases A, B, and C on node %s",NR_busdata[index].name);
-							
-							//Print extra information, if needed
-							if (grid_association_mode == true)
-							{
-								fprintf(FPOutput," - Island %d\n",(NR_busdata[index].island_number+1));
-							}
-							else
-							{
-								fprintf(FPOutput,"\n");
-							}
 							break;
 						}
 					default:	//How'd we get here?
@@ -1121,6 +1051,23 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 							*/
 						}
 				}//End case
+
+				//Common write portions
+				//Print extra information, if needed
+				if (grid_association_mode == true)
+				{
+					fprintf(FPOutput," - Island %d",(NR_busdata[index].island_number+1));
+				}
+
+				//See if we're a SWING-enabled bus
+				if (NR_busdata[index].swing_functions_enabled == true)
+				{
+					fprintf(FPOutput," - SWING-enabled\n");
+				}
+				else
+				{
+					fprintf(FPOutput,"\n");
+				}
 			}//end supported
 		}//end secondary bus bus traversion
 	}//End proper reliability mode
