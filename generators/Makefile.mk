@@ -21,6 +21,8 @@ generators_generators_la_SOURCES += generators/generators.h
 generators_generators_la_SOURCES += generators/init.cpp
 generators_generators_la_SOURCES += generators/inverter.cpp
 generators_generators_la_SOURCES += generators/inverter.h
+generators_generators_la_SOURCES += generators/inverter_dyn.cpp
+generators_generators_la_SOURCES += generators/inverter_dyn.h
 generators_generators_la_SOURCES += generators/main.cpp
 generators_generators_la_SOURCES += generators/rectifier.cpp
 generators_generators_la_SOURCES += generators/rectifier.h
@@ -30,3 +32,4 @@ generators_generators_la_SOURCES += generators/windturb_dg.cpp
 generators_generators_la_SOURCES += generators/windturb_dg.h
 generators_generators_la_SOURCES += generators/controller_dg.cpp
 generators_generators_la_SOURCES += generators/controller_dg.h
+

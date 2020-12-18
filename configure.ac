@@ -449,7 +449,7 @@ AS_IF([test x"$HAVE_CPPUNIT" = xyes],
      LIBS="$SAVED_LIBS"
      AC_MSG_RESULT([$HAVE_CPPUNIT])])
 AS_IF([test x"$HAVE_CPPUNIT" = xyes],
-    [# CppUnit doesn't separate its flags appropriately
+    [# CppUnit does not separate its flags appropriately
      COMBINED_CPPUNIT_FLAGS="$CPPUNIT_CFLAGS $CPPUNIT_LIBS"
      CPPUNIT_CFLAGS=
      CPPUNIT_LIBS=
@@ -532,25 +532,25 @@ gld_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $HELICS_CPPFLAGS"
 # add libhelics to HELICS_LIBS if missing
 AS_CASE([$platform],
 	[*linux*], [AS_CASE([$HELICS_LIBS],
-					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lzmq"])
+					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelicsSharedLib"])
 				AS_CASE([$LIBS],
-					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lzmq"])],
+					[*lhelics*], [], [LIBS="$LIBS -lhelicsSharedLib"])],
 	[*darwin*], [AS_CASE([$HELICS_LIBS],
-					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lzmq"])
+					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelicsSharedLib"])
 				AS_CASE([$LIBS],
-					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lzmq"])],
+					[*lhelics*], [], [LIBS="$LIBS -lhelicsSharedLib"])],
 	[*windows*], [AS_CASE([$HELICS_LIBS],
-					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lzmq"])
+					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelicsSharedLib"])
 				AS_CASE([$LIBS],
-					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lzmq"])])
+					[*lhelics*], [], [LIBS="$LIBS -lhelicsSharedLib"])])
 have_helics=yes
 AC_MSG_CHECKING([for HELICS])
 AC_LINK_IFELSE(
 	[AC_LANG_PROGRAM([[ 
-#include <helics/application_api/helicsTypes.hpp>
+#include <helics/helics98.hpp>
 ]],
 [[ 
-helics::NamedPoint t; 
+helicscpp::Input ipt; 
 ]])],
     [have_helics=yes; have_helics_int=1],
     [have_helics=no; have_helics_int=0])
@@ -588,6 +588,7 @@ LIBEXT=.so
 ;;
 *darwin* )
 LIBEXT=.so
+GLD_CPPFLAGS="$GLD_CPPFLAGS -stdlib=libc++"
 # LIBEXT=.dylib # This is the proper extension for MacOS now, but libtool does not build it properly.
 ;;
 *windows* )

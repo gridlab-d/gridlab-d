@@ -30,15 +30,13 @@ object climate{
 
 object solar {
 	name sol_inv_B_2_645;
-	generator_mode SUPPLY_DRIVEN;
-	generator_status ONLINE;
 	panel_type SINGLE_CRYSTAL_SILICON;
 	efficiency 0.2;
 	area 450;
-	V_Max 79.34+0j;  // max. power voltage (Vmp) from GE solar cell performance charatcetristics
-	Voc 91.22+0j;  //taken from GEPVp-200-M-Module performance characteristics, converted to degF
-	Voc_Max 91.22+0j; //taken from GEPVp-200-M-Module performance characteristics,  converted to degF
-	object complex_assert {
+	V_Max 79.34;  // max. power voltage (Vmp) from GE solar cell performance charatcetristics
+	Voc 91.22;  //taken from GEPVp-200-M-Module performance characteristics, converted to degF
+	Voc_Max 91.22; //taken from GEPVp-200-M-Module performance characteristics,  converted to degF
+	object double_assert {
 		target "V_Out";
 		object player {
 			property value;

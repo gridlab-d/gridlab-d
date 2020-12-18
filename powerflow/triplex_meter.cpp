@@ -23,7 +23,6 @@
 #include <math.h>
 
 #include "triplex_meter.h"
-#include "timestamp.h"
 
 // useful macros
 #define TO_HOURS(t) (((double)t) / (3600 * TS_SECOND))
@@ -159,6 +158,10 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 				GL_THROW("Unable to publish triplex_meter VFD attachment function");
 			if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
 				GL_THROW("Unable to publish triplex_meter island-status-reset function");
+			if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
+				GL_THROW("Unable to publish triplex_meter swing-status check function");
+			if (gl_publish_function(oclass, "pwr_object_kmldata", (FUNCTIONADDR)triplex_meter_kmldata) == NULL)
+				GL_THROW("Unable to publish triplex_meter kmldata function");
 		}
 }
 
@@ -328,6 +331,18 @@ TIMESTAMP triplex_meter::presync(TIMESTAMP t0)
 TIMESTAMP triplex_meter::sync(TIMESTAMP t0)
 {
 	int TempNodeRef;
+	OBJECT *obj = OBJECTHDR(this);
+
+	//Check for straggler nodes - fix so segfaults don't occur
+	if ((prev_NTime==0) && (solver_method == SM_NR))
+	{
+		//See if we've been initialized yet - links typically do this, but single buses get missed
+		if (NR_node_reference == -1)
+		{
+			//Call the populate routine
+			NR_populate();
+		}
+	}
 
 	//Reliability check
 	if ((fault_check_object != NULL) && (solver_method == SM_NR))	//proper solver fault_check is present (so might need to set flag
@@ -335,6 +350,29 @@ TIMESTAMP triplex_meter::sync(TIMESTAMP t0)
 		if (NR_node_reference==-99)	//Childed
 		{
 			TempNodeRef=*NR_subnode_reference;
+
+			//See if our parent was initialized
+			if (TempNodeRef == -1)
+			{
+				//Try to initialize it, for giggles
+				node *Temp_Node = OBJECTDATA(SubNodeParent,node);
+
+				//Call the initialization
+				Temp_Node->NR_populate();
+
+				//Pull our reference
+				TempNodeRef=*NR_subnode_reference;
+
+				//Check it again
+				if (TempNodeRef == -1)
+				{
+					GL_THROW("triplex_meter:%d - %s - Uninitialized parent is causing odd issues - fix your model!",obj->id,(obj->name?obj->name:"Unnamed"));
+					/*  TROUBLESHOOT
+					A childed triplex_meter object is having issues mapping to its parent node - this typically happens in very odd cases of islanded/orphaned
+					topologies that only contain nodes (no links).  Adjust your GLM to work around this issue.
+					*/
+				}
+			}
 		}
 		else	//Normal
 		{
@@ -788,7 +826,7 @@ SIMULATIONMODE triplex_meter::inter_deltaupdate_triplex_meter(unsigned int64 del
 {
 	OBJECT *hdr = OBJECTHDR(this);
 	int TempNodeRef;
-	double deltat, deltatimedbl;
+	double deltat;
 	STATUS return_status_val;
 
 	//Create delta_t variable
@@ -797,26 +835,25 @@ SIMULATIONMODE triplex_meter::inter_deltaupdate_triplex_meter(unsigned int64 del
 	//Update time tracking variable - mostly for GFA functionality calls
 	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
 	{
-		//Get decimal timestamp value
-		deltatimedbl = (double)delta_time/(double)DT_SECOND; 
-
 		//Update tracking variable
-		prev_time_dbl = (double)gl_globalclock + deltatimedbl;
+		prev_time_dbl = gl_globaldeltaclock;
 
 		//Update frequency calculation values (if needed)
 		if (fmeas_type != FM_NONE)
 		{
-			//Copy the tracker value
-			memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+			//See which pass
+			if (delta_time == 0)
+			{
+				//Initialize dynamics - first run of new delta call
+				init_freq_dynamics(deltat);
+			}
+			else
+			{
+				//Copy the tracker value
+				memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+			}
 		}
 	}
-
-	//Initialization items
-	if ((delta_time==0) && (iteration_count_val==0) && (interupdate_pos == false) && (fmeas_type != FM_NONE))	//First run of new delta call
-	{
-		//Initialize dynamics
-		init_freq_dynamics();
-	}//End first pass and timestep of deltamode (initial condition stuff)
 
 	//Perform the GFA update, if enabled
 	if ((GFA_enable == true) && (iteration_count_val == 0) && (interupdate_pos == false))	//Always just do on the first pass
@@ -845,6 +882,8 @@ SIMULATIONMODE triplex_meter::inter_deltaupdate_triplex_meter(unsigned int64 del
 				if (NR_node_reference==-99)	//Childed
 				{
 					TempNodeRef=*NR_subnode_reference;
+
+					//No child check from above -- if we're broke this late in the game, we have major problems (should have been caught by now)
 				}
 				else	//Normal
 				{
@@ -1026,6 +1065,17 @@ EXPORT SIMULATIONMODE interupdate_triplex_meter(OBJECT *obj, unsigned int64 delt
 		gl_error("interupdate_triplex_meter(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
 		return status;
 	}
+}
+
+//KML Export
+EXPORT int triplex_meter_kmldata(OBJECT *obj,int (*stream)(const char*,...))
+{
+	triplex_meter *n = OBJECTDATA(obj, triplex_meter);
+	int rv = 1;
+
+	rv = n->kmldata(stream);
+
+	return rv;
 }
 
 int triplex_meter::kmldata(int (*stream)(const char*,...))

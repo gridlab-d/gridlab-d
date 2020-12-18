@@ -195,7 +195,6 @@ object inverter {
 
 object solar {
 	name trip_shad_solar1;
-	phases AS;
 	parent trip_shad_inv;
 	rated_power 550 kW;
 	tilt_angle 45.0;

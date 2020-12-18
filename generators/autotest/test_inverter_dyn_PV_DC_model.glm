@@ -1,0 +1,329 @@
+//Used to test the PV DC Bus Modeling Mode - The DC bus voltage is calculated with respect to the output power of the PV
+
+
+clock {
+	timezone "PST+8PDT";
+	starttime '2001-08-01 12:00:00 PDT';
+	stoptime '2001-08-01 12:00:35 PDT';
+}
+
+#set suppress_repeat_messages=1
+#set profiler=1
+// #set pauseatexit=1
+#set double_format=%+.12lg
+#set complex_format=%+.12lg%+.12lg%c
+
+//Deltamode declarations - global values
+#set deltamode_timestep=100000000		//100 ms
+#set deltamode_maximumtime=60000000000	//1 minute
+#set deltamode_iteration_limit=10		//Iteration limit
+//#set deltamode_forced_always=true
+
+module assert;
+module tape;
+module reliability {
+	enable_subsecond_models true;
+	maximum_event_length 1800000;
+	report_event_log true;
+}
+
+module powerflow {
+	enable_subsecond_models true;
+	line_limits false;
+	deltamode_timestep 1 ms;
+	solver_method NR;
+	all_powerflow_delta true;
+	NR_island_failure_handled true;
+	lu_solver "KLU";
+}
+
+module generators {
+	enable_subsecond_models true;
+	deltamode_timestep 1 ms;
+}
+
+//Fault check object
+object fault_check {
+	name fault_checker;
+	check_mode ONCHANGE;
+	strictly_radial false;
+	grid_association true;
+	output_filename test_topo.txt;
+	full_output_file true;
+	eventgen_object main_grid_disconnect;
+}
+
+//Islands the system from the main grid
+object eventgen {
+	flags DELTAMODE;
+	name main_grid_disconnect;
+	fault_type "SW-ABC";
+	// manual_outages "grid_switch,2001-08-01 12:00:04.001 PDT,2001-08-01 12:00:31.003 PDT";	//Original "bad" synchronization time
+	manual_outages "grid_switch,2001-08-01 12:00:04.001 PDT,2001-08-01 12:00:25.268 PDT";	//Better close time - good synchronization
+}
+
+//Simple line configuration
+object overhead_line_conductor {
+	name ohl_conductor_conductor;	//336,400 26/7 ACSR
+	geometric_mean_radius 0.0244;
+	resistance 0.306;
+	diameter 0.721;
+}
+
+object overhead_line_conductor {
+	name ohl_conductor_neutral;	//4/0 6/1 ACSR
+	geometric_mean_radius 0.00814;
+	resistance 0.592;
+	diameter 0.563;
+}
+
+object line_spacing {
+	name ohl_spacing;
+	distance_AB 2.5 ft;
+	distance_AC 7.0 ft;
+	distance_BC 4.5 ft;
+	distance_CN 5.0 ft;
+	distance_AN 5.65685424949 ft;
+	distance_BN 4.27200187266 ft;
+	distance_AE 28.0 ft;
+	distance_BE 28.0 ft;
+	distance_CE 28.0 ft;
+	distance_NE 24.0 ft;
+}
+
+object line_configuration {
+	name ohl_line_config;
+	conductor_A ohl_conductor_conductor;
+	conductor_B ohl_conductor_conductor;
+	conductor_C ohl_conductor_conductor;
+	conductor_N ohl_conductor_neutral;
+	spacing ohl_spacing;
+}
+
+//Nodes
+object meter {
+	phases ABCN;
+	name Grid_Connection;
+	nominal_voltage 240.0;
+	bustype SWING;
+}
+
+object meter {
+	phases ABCN;
+	name other_side_of_switch;
+	nominal_voltage 240.0;
+}
+
+object meter {
+	phases ABCN;
+	name midpoint;
+	nominal_voltage 240.0;
+}
+
+object meter {
+	phases ABCN;
+	name grid_form_simple_DC;
+	nominal_voltage 240.0;
+}
+
+object meter {
+	phases ABCN;
+	name grid_form_PV_connect;
+	bustype SWING_PQ;
+	frequency_measure_type PLL;
+	nominal_voltage 240.0;
+}
+
+object load {
+	phases ABCN;
+	name load_bus;
+	nominal_voltage 240.0;
+	constant_impedance_A 57.1372+5.1423j;
+	constant_impedance_B 57.1372+5.1423j;
+	constant_impedance_C 57.1372+5.1423j;
+	object player {
+		flags DELTAMODE;
+		property constant_impedance_A;
+		file ../data_inverter_dyn_player_impedance.csv;
+	};
+	object player {
+		flags DELTAMODE;
+		property constant_impedance_B;
+		file ../data_inverter_dyn_player_impedance.csv;
+	};
+	object player {
+		flags DELTAMODE;
+		property constant_impedance_C;
+		file ../data_inverter_dyn_player_impedance.csv;
+	};
+}
+
+//Switch to main grid
+object switch {
+	name grid_switch;
+	phases ABCN;
+	from Grid_Connection;
+	to other_side_of_switch;
+}
+
+//Lines connecting
+object overhead_line {
+	phases ABCN;
+	name other_to_mid;
+	from other_side_of_switch;
+	to midpoint;
+	length 50.0 ft;
+	configuration ohl_line_config;
+}
+
+object overhead_line {
+	phases ABCN;
+	name mid_to_load;
+	from midpoint;
+	to load_bus;
+	length 1050.0 ft;
+	configuration ohl_line_config;
+}
+
+object overhead_line {
+	phases ABCN;
+	name mid_to_inf_inv;
+	from grid_form_simple_DC;
+	to midpoint;
+	length 150.0 ft;
+	configuration ohl_line_config;
+}
+
+object overhead_line {
+	phases ABCN;
+	name mid_to_PV_inv;
+	from grid_form_PV_connect;
+	to midpoint;
+	length 80.0 ft;
+	configuration ohl_line_config;
+}
+
+//PV-DC bus grid forming inverter
+object inverter_dyn {
+	flags DELTAMODE;
+	name PVDC_GFM_Inverter;
+	parent grid_form_PV_connect;
+	control_mode GRID_FORMING;
+	grid_forming_mode DYNAMIC_DC_BUS;
+	rated_DC_Voltage 850 V;
+	rated_power 100 kW;
+	frequency_convergence_criterion 1e-9;
+	Pref 3.0 kW;			//Real power reference/setpoint
+	Qref 1.0 kW;			//Reactive power reference/setpoint
+	E_max 1.2;				//Maximum voltage output
+    Rfilter 0.0076;			//Real portion of inverter filter (pu)
+	Xfilter 0.1163;			//Reactive portion of inverter filter (pu)
+	mp 3.14;  				//P-f droop gain, in rad/s/pu - 3.77 represents 1% droop.
+    kppmax 3;				//Proportional gain for P_Max controller
+	kipmax 60;				//Integral gain fo P_Max controller
+	Pmax 20;				//Maximum power controller can deliver (pu, transient)
+	Pmin 0;					//Minimum power controller can deliver (pu, transient)
+	mq 0.05; 				//Q-V droop gain -  0.05 represents 5% droop
+	C_pu 0.01;  				//Capacitor on DC bus - e.g., 10mf
+	kpVdc 35 ;				//DC voltage controller proportional gain
+	kiVdc 350 ;				//DC voltage controller integral gain
+	
+	object double_assert {
+		flags DELTAMODE;
+		target freq;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file "../data_inverter_dyn_assert_inverter_frequency.csv";
+		};
+		within 0.01;
+	};
+	
+	object double_assert {
+		flags DELTAMODE;
+		target P_In;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file "../data_inverter_dyn_assert_inverter_P_In.csv";
+		};
+		within 0.5;
+	};
+
+	object complex_assert {
+		flags DELTAMODE;
+		target VA_Out;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file "../data_inverter_dyn_assert_inverter_VA_Out.csv";
+		};
+		within 0.5;
+	};
+}
+
+//PV-DC bus solar object
+object solar {
+    name PV_Bus_DC_Solar;
+    parent PVDC_GFM_Inverter;
+	flags DELTAMODE;
+    panel_type SINGLE_CRYSTAL_SILICON;
+	SOLAR_POWER_MODEL PV_CURVE;
+	rated_power 100 kW;	//Roughly U_oc * I_sc
+
+	pvc_U_oc_V 1155;	//Open-circuit voltage
+	pvc_I_sc_A 90;		//short-circuit current
+	pvc_U_m_V 850;  	//Thermal? voltage of the PV panel
+	pvc_I_m_A 70.59;	//Thermal? current of the PV panel
+
+	//Solar panel configuration - standard and player driven (GLM-driven, in this case)
+    SOLAR_TILT_MODEL PLAYERVALUE;
+	ambient_temperature 77 degF;
+	Insolation 92.9031 W/ft^2;
+	wind_speed 1.0 mph;
+}
+
+
+//Recorders
+// object group_recorder {
+	// name Meter_real_power;
+	// flags DELTAMODE;
+	// group "class=meter";
+	// property "measured_real_power";
+	// interval 1;
+	// file Meter_Real_Power.csv;
+// }
+
+// object group_recorder {
+	// name Meter_reactive_power;
+	// flags DELTAMODE;
+	// group "class=meter";
+	// property "measured_reactive_power";
+	// interval 1;
+	// file Meter_Reactive_Power.csv;
+// }
+
+// object recorder {
+	// flags DELTAMODE;
+	// parent PVDC_GFM_Inverter;
+	// interval 1;
+	// property "power_A.real,power_A.imag,power_B.real,power_B.imag,power_C.real,power_C.imag,VA_Out,VA_Out.real,VA_Out.imag,V_In,I_In,P_In,pvc_Pmax,Pref,Qref,Pset,Vset";
+	// file PVDC_GFM_Inverter.csv;
+// }
+
+// object recorder {
+	// flags DELTAMODE;
+	// parent PVDC_GFM_Inverter;
+	// property "f_PLL_A,f_PLL_B,f_PLL_C,freq";
+	// interval 1;
+	// file "inverter_frequency.csv";
+// }
+
+//Deltamode trigger player - since QSTS transition doesn't work right
+object player {
+	name trigger_player;
+	parent Grid_Connection;
+	property nominal_voltage;
+	flags DELTAMODE;
+	file ../data_inverter_dyn_grid_trigger.player;
+}

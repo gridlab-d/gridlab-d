@@ -958,6 +958,12 @@ int class_define_map(CLASS *oclass, /**< the object class */
 			if (prop==NULL)
 				goto Error;
 
+			if ( proptype==PT_method )
+			{
+				prop->addr = 0;
+				prop->method = (METHODCALL*)addr;
+			}
+
 			/* attach to property list */
 			class_add_property(oclass,prop);
 			count++;
@@ -1029,7 +1035,7 @@ FUNCTION *class_define_function(CLASS *oclass, FUNCTIONNAME functionname, FUNCTI
 			Only one function of any given name is permitted in each class.
 			Remove or correct the duplicate function declaration and try again.
 		 */
-		errno = 0;
+		errno = 1;
 		return NULL;
 	}
 

@@ -177,8 +177,8 @@ object node {
 			rated_power 1340; // to keep maximum AC power out less than maximum DC power in (4022) for Xantrex
 			P_Out output_power*1;
 			Q_Out output_var*1;
-			V_In 266+0j;
-			I_In 15.1203+0j;
+			V_In 266.0;
+			I_In 15.1203;
 			// object recorder {
 				// property V_In,I_In,VA_In,VA_Out;
 				// file const_pq_inv.csv;
@@ -234,8 +234,6 @@ object triplex_meter {
 		// };
 		object solar {
 			name sol_inv_B_2_645;
-			generator_mode SUPPLY_DRIVEN;
-			generator_status ONLINE;
 			panel_type SINGLE_CRYSTAL_SILICON;
 			orientation FIXED_AXIS; 
 			area 323;
