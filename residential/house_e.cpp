@@ -491,13 +491,13 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_complex,"voltage_12",PADDR(value_Circuit_V[0]),PT_ACCESS,PA_HIDDEN,
 			PT_complex,"voltage_1N",PADDR(value_Circuit_V[1]),PT_ACCESS,PA_HIDDEN,
 			PT_complex,"voltage_2N",PADDR(value_Circuit_V[2]),PT_ACCESS,PA_HIDDEN,
-      // set these attributes from an external power flow solver, e.g., OpenDSS, such that v12 = v1n - v2n
-      PT_enumeration,"external_pf_mode",PADDR(external_pf_mode),PT_DESCRIPTION,"set up for using ONE or TWO external_v1N and v2N from another powerflow solver. v12 = v1N - v2N. If ONEV, v2N = -v1N",
-        PT_KEYWORD,"NONE",(enumeration)XPFV_NONE,
-        PT_KEYWORD,"ONEV",(enumeration)XPFV_ONEV,
-        PT_KEYWORD,"TWOV",(enumeration)XPFV_TWOV,
-      PT_complex,"external_v1N",PADDR(external_v1N),PT_DESCRIPTION,"circuit 1N voltage from external power flow",
-      PT_complex,"external_v2N",PADDR(external_v2N),PT_DESCRIPTION,"circuit 2N voltage from external power flow",
+			// set these attributes from an external power flow solver, e.g., OpenDSS, such that v12 = v1n - v2n
+			PT_enumeration,"external_pf_mode",PADDR(external_pf_mode),PT_DESCRIPTION,"set up for using ONE or TWO external_v1N and v2N from another powerflow solver. v12 = v1N - v2N. If ONEV, v2N = -v1N",
+				PT_KEYWORD,"NONE",(enumeration)XPFV_NONE,
+				PT_KEYWORD,"ONEV",(enumeration)XPFV_ONEV,
+				PT_KEYWORD,"TWOV",(enumeration)XPFV_TWOV,
+			PT_complex,"external_v1N",PADDR(external_v1N),PT_DESCRIPTION,"circuit 1N voltage from external power flow",
+			PT_complex,"external_v2N",PADDR(external_v2N),PT_DESCRIPTION,"circuit 2N voltage from external power flow",
 
 			//Same idea for frequency
 			PT_double,"grid_frequency",PADDR(value_Frequency),PT_ACCESS,PA_HIDDEN,
@@ -797,9 +797,9 @@ int house_e::create()
 	value_Power[0] = value_Power[1] = value_Power[2] = complex(0.0,0.0);
 	value_MeterStatus = 1;
 	value_Frequency = 60.0;
-  external_pf_mode = XPFV_NONE;
-  external_v1N = complex(0,0);
-  external_v2N = complex(0,0);
+	external_pf_mode = XPFV_NONE;
+	external_v1N = complex(0,0);
+	external_v2N = complex(0,0);
 
 	proper_meter_parent = false;	//By default, assume we have no proper parent
 	commercial_load_parent = false;
@@ -1418,10 +1418,10 @@ int house_e::init(OBJECT *parent)
 		//Set flag
 		proper_meter_parent = true;
 		commercial_load_parent = false;
-    if (external_pf_mode != XPFV_NONE) {
-      external_pf_mode = XPFV_NONE;
-      gl_warning("house_e:%d ignores external_pf_mode because it has a meter parent", obj->id);
-    }
+		if (external_pf_mode != XPFV_NONE) {
+			external_pf_mode = XPFV_NONE;
+			gl_warning("house_e:%d ignores external_pf_mode because it has a meter parent", obj->id);
+		}
 	}
 	else if (parent!=NULL && (gl_object_isa(parent,"meter","powerflow") || gl_object_isa(obj->parent,"node","powerflow") || gl_object_isa(obj->parent,"load","powerflow"))) // for three-phase commercial zone-houses
 	{
@@ -1509,16 +1509,16 @@ int house_e::init(OBJECT *parent)
 		// set flags for the powerflow interface
 		proper_meter_parent = true;
 		commercial_load_parent = true;
-    if (external_pf_mode != XPFV_NONE) {
-      external_pf_mode = XPFV_NONE;
-      gl_warning("house_e:%d ignores external_pf_mode because it has a meter parent", obj->id);
-    }
+		if (external_pf_mode != XPFV_NONE) {
+			external_pf_mode = XPFV_NONE;
+			gl_warning("house_e:%d ignores external_pf_mode because it has a meter parent", obj->id);
+		}
 	}
 	else
 	{
-    if (external_pf_mode == XPFV_NONE) {
-      gl_warning("house_e:%d %s; using static voltages", obj->id, parent==NULL?"has no parent triplex_meter defined":"parent is not a triplex_meter");
-    }
+		if (external_pf_mode == XPFV_NONE) {
+			gl_warning("house_e:%d %s; using static voltages", obj->id, parent==NULL?"has no parent triplex_meter defined":"parent is not a triplex_meter");
+		}
 
 		//Set the default voltage to the global - others are already "mapped", so we just leave them be
 		value_Circuit_V[0] = complex(2.0*default_line_voltage,0.0);	//Assumes a triplex "L1-L2" connection"
@@ -2640,10 +2640,10 @@ TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1)
 	{
 		pull_complex_powerflow_values();
 	}
-  else
-  {
-    check_external_voltage();
-  }
+	else
+	{
+		check_external_voltage();
+	}
 
 	/* update all voltage factors */
 	for (c=panel.circuits; c!=NULL; c=c->next)
@@ -3256,10 +3256,10 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 	{
 		pull_complex_powerflow_values();
 	}
-  else
-  {
-    check_external_voltage();
-  }
+	else
+	{
+		check_external_voltage();
+	}
 
 	// gather load power and compute current for each circuit
 	CIRCUIT *c;
@@ -3360,11 +3360,12 @@ TIMESTAMP house_e::sync_panel(TIMESTAMP t0, TIMESTAMP t1)
 					value_Shunt[0] += ~(c->pLoad->admittance * 1000.0 / (default_line_voltage * default_line_voltage));
 				}
 
-        if (external_pf_mode != XPFV_NONE) {
-          total.total += actual_power; // we want the voltage corrections here
-        } else {
-          total.total += c->pLoad->total;
-        }
+				if (external_pf_mode != XPFV_NONE) {
+					total.total += actual_power; // we want the voltage corrections here
+				} else {
+					total.total += c->pLoad->total;
+				}
+
 				total.power += c->pLoad->power;
 				total.current += c->pLoad->current;
 				total.admittance += c->pLoad->admittance;
@@ -3515,11 +3516,11 @@ gld_property *house_e::map_double_value(OBJECT *obj, char *name)
 // update the voltages from external power flow solver
 void house_e::check_external_voltage(void)
 {
-  if (external_pf_mode == XPFV_NONE) return;
-  if (external_pf_mode == XPFV_ONEV) external_v2N = -external_v1N;
-  value_Circuit_V[0] = external_v1N - external_v2N;
-  value_Circuit_V[1] = external_v1N;
-  value_Circuit_V[2] = external_v2N;
+	if (external_pf_mode == XPFV_NONE) return;
+	if (external_pf_mode == XPFV_ONEV) external_v2N = -external_v1N;
+	value_Circuit_V[0] = external_v1N - external_v2N;
+	value_Circuit_V[1] = external_v1N;
+	value_Circuit_V[2] = external_v2N;
 }
 
 //Function to pull all the complex properties from powerflow into local variables

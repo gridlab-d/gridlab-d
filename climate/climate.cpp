@@ -532,7 +532,7 @@ climate::climate(MODULE *module)
             PT_double,"solar_zenith",PADDR(solar_zenith),
 			PT_char32, "city", PADDR(city),
 			PT_char1024,"tmyfile",PADDR(tmyfile),
-      PT_double,"tz_meridian",PADDR(tz_meridian),PT_DESCRIPTION,"Specify 15*(time zone offset of weather source) if using CSV, manual, FNCS or HELICS control. Negative value in the U.S.",
+			PT_double,"tz_meridian",PADDR(tz_meridian),PT_DESCRIPTION,"Specify 15*(time zone offset of weather source) if using CSV, manual, FNCS or HELICS control. Negative value in the U.S.",
 			PT_double,"temperature[degF]",PADDR(temperature),
 			PT_double,"humidity[pu]",PADDR(humidity),
 			PT_double,"solar_flux[W/sf]",PADDR(solar_flux),	PT_SIZE, 9,
@@ -645,10 +645,10 @@ int climate::init(OBJECT *parent)
 
 	// ignore "" files ~ manual climate control is a feature
 	if (strcmp(tmyfile,"")==0) {
-    gl_verbose ("Manual or FNCS/HELICS climate control; initializing to the starttime");
-    presync(gl_globalclock);
+		gl_verbose ("Manual or FNCS/HELICS climate control; initializing to the starttime");
+		presync(gl_globalclock);
 		return 1;
-  }
+	}
 
 	// open access to the TMY file
 	char found_file[1024];
