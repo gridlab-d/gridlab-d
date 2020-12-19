@@ -859,7 +859,7 @@ int helics_msg::publishJsonVariables(){
 	gld_property *prop = NULL;
 	jsonPublishData.clear();
 	jsonPublishData[simName];
-	stringstream complex_val;
+	std::stringstream complex_val;
 	Json::FastWriter jsonWriter;
 	string jsonMessageStr = "";
 #if HAVE_HELICS
@@ -878,11 +878,11 @@ int helics_msg::publishJsonVariables(){
 					double imag_part =prop->get_part("imag");
 					gld_unit *val_unit = prop->get_unit();
 					complex_val.str(string());
-					complex_val << fixed << real_part;
+					complex_val << std::fixed << real_part;
 					if(imag_part >= 0){
-						complex_val << fixed << "+" << fabs(imag_part) << "j";
+						complex_val << std::fixed << "+" << fabs(imag_part) << "j";
 					} else {
-						complex_val << fixed << imag_part << "j";
+						complex_val << std::fixed << imag_part << "j";
 					}
 					if(val_unit != NULL && val_unit->is_valid()){
 						string unit_name = string(val_unit->get_name());
@@ -918,11 +918,11 @@ int helics_msg::publishJsonVariables(){
 					double imag_part =prop->get_part("imag");
 					gld_unit *val_unit = prop->get_unit();
 					complex_val.str(string());
-					complex_val << fixed << real_part;
+					complex_val << std::fixed << real_part;
 					if(imag_part >= 0){
-						complex_val << fixed << "+" << fabs(imag_part) << "j";
+						complex_val << std::fixed << "+" << fabs(imag_part) << "j";
 					} else {
-						complex_val << fixed << imag_part << "j";
+						complex_val << std::fixed << imag_part << "j";
 					}
 					if(val_unit != NULL && val_unit->is_valid()){
 						string unit_name = string(val_unit->get_name());
