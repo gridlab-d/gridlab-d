@@ -85,72 +85,6 @@ int helics_msg::configure(char *value)
 	strcpy(configFile, value);
 	if (strcmp(configFile, "") != 0) {
 		federate_configuration_file = new string(configFile);
-		/*ifstream ifile;
-		helics_value_publication *pub = NULL;
-		helics_value_subscription *sub = NULL;
-		helics_endpoint_publication *ep_pub = NULL;
-		helics_endpoint_subscription *ep_sub = NULL;
-		string config_info_temp = "";
-		Json::ValueIterator it;
-		Json::Value publish_json_config;
-		Json::Value config_info;
-
-		ifile.open(configFile, ifstream::in);
-		if (ifile.good()) {
-			stringstream json_config_stream ("");
-			string json_config_line;
-			string json_config_string;
-			Json::Reader json_reader;
-			json_config_stream << ifile.rdbuf();
-			json_config_string = json_config_stream.str();
-			federate_configuration = new string(json_config_string);
-			gl_verbose("helics_msg::configure(): json string read from configure file: %s .\n", json_config_string.c_str()); //renke debug
-			json_reader.parse(json_config_string, publish_json_config);
-			if(publish_json_config.isMember("publications")) {
-				for(Json::Value pubConfig : publish_json_config["publications"]) {
-					pub = new helics_value_publication();
-					pub->key = pubConfig["key"].asString();
-					config_info_temp = pubConfig["info"].asString();
-					json_reader.parse(config_info_temp, config_info);
-					pub->objectName = config_info["object"].asString();
-					pub->propertyName = config_info["property"].asString();
-					helics_value_publications.push_back(pub);
-				}
-			}
-			if(publish_json_config.isMember("subscriptions")) {
-				for(Json::Value subConfig : publish_json_config["subscriptions"]) {
-					sub = new helics_value_subscription();
-					sub->subscription_topic = subConfig["key"].asString();
-					config_info_temp = subConfig["info"].asString();
-					json_reader.parse(config_info_temp, config_info);
-					sub->objectName = config_info["object"].asString();
-					sub->propertyName = config_info["property"].asString();
-					helics_value_subscriptions.push_back(sub);
-				}
-			}
-			if(publish_json_config.isMember("endpoints")) {
-				for(Json::Value eptConfig : publish_json_config["endpoints"]) {
-					config_info_temp = eptConfig["info"].asString();
-					json_reader.parse(config_info_temp, config_info);
-					if(eptConfig.isMember("knownDestinations")) {
-						ep_pub = new helics_endpoint_publication();
-						ep_pub->name = eptConfig["name"].asString();
-						ep_pub->objectName = config_info["object"].asString();
-						ep_pub->propertyName = config_info["property"].asString();
-						helics_endpoint_publications.push_back(ep_pub);
-					} else {
-						ep_sub = new helics_endpoint_subscription();
-						ep_sub->name = eptConfig["name"].asString();
-						ep_sub->objectName = config_info["object"].asString();
-						ep_sub->propertyName = config_info["property"].asString();
-						helics_endpoint_subscriptions.push_back(ep_sub);
-					}
-				}
-			}
-		} else {
-			gl_error("helics_msg::configure(): failed to open the configuration file %s \n", (char *)configFile);
-			rv = 0;
-		} // end of if (ifile.good())*/
 	} else {
 		gl_error("helics_msg::configure(): No configuration file was give. Please provide a configuration file!");
 		rv = 0;
@@ -488,23 +422,6 @@ int helics_msg::init(OBJECT *parent){
 		gl_verbose("helics_msg::init(): %s is defering initialization.", obj->name);
 		return 2;
 	}
-	//get a string vector of the unique function subscriptions
-/*	for(relay = first_helicsfunction; relay != NULL; relay = relay->next){
-		if(relay->drtn == DXD_READ){
-			uniqueTopic = true;
-			for(i = 0; i < inFunctionTopics->size(); i++){
-				if((*inFunctionTopics)[i].compare(string(relay->remotename)) == 0){
-					uniqueTopic = false;
-				}
-			}
-			if(uniqueTopic == true){
-				inFunctionTopics->push_back(string(relay->remotename));
-				zplfile << "    " << string(relay->remotename) << endl;
-				zplfile << "        topic = " << string(relay->remotename) << endl;
-				zplfile << "        list = true" << endl;
-			}
-		}
-	}*/
 	//register with helics
 #if HAVE_HELICS
 	pHelicsFederate = gld_helics_federate;
@@ -779,157 +696,13 @@ TIMESTAMP helics_msg::clk_update(TIMESTAMP t1)
 	return t1;
 }
 
-/*int helics_msg::helics_link(char *value, COMMUNICATIONTYPE comtype){
-	int rv = 0;
-	int n = 0;
-	char command[1024] = "";
-	char argument[1024] = "";
-	VARMAP *mp = NULL;
-	//parse argument to fill the relay function link list and the varmap link list.
-	if(sscanf(value, "%[^:]:%[^\n]", command, argument) == 2){
-		if(strncmp(command,"init", 4) == 0){
-			gl_warning("helics_msg::publish: It is not possible to pass information at init time with helics. communication is ignored");
-			rv = 1;
-		} else if(strncmp(command, "function", 8) == 0){
-			rv = parse_helics_function(argument, comtype);
-		} else {
-			n = get_varmapindex(command);
-			if(n != 0){
-				rv = vmap[n]->add(argument, comtype);
-			}
-		}
-	} else {
-		gl_error("helics_msg::publish: Unable to parse input %s.", value);
-		rv = 0;
-	}
-	return rv;
-}*/
-/*int helics_msg::parse_helics_function(char *value, COMMUNICATIONTYPE comtype){
-	int rv = 0;
-	char localClass[64] = "";
-	char localFuncName[64] = "";
-	char direction[8] = "";
-	char remoteClassName[64] = "";
-	char remoteFuncName[64] = "";
-	char topic[1024] = "";
-	CLASS *fclass = NULL;
-	FUNCTIONADDR flocal = NULL;
-	if(sscanf(value, "%[^/]/%[^-<>\t ]%*[\t ]%[-<>]%*[\t ]%[^\n]", localClass, localFuncName, direction, topic) != 4){
-		gl_error("helics_msg::parse_helics_function: Unable to parse input %s.", value);
-		return rv;
-	}
-	// get local class structure
-	fclass = callback->class_getname(localClass);
-	if ( fclass==NULL )
-	{
-		gl_error("helics_msg::parse_helics_function(const char *spec='%s'): local class '%s' does not exist", value, localClass);
-		return rv;
-	}
-	flocal = callback->function.get(localClass, localFuncName);
-	// setup outgoing call
-	if(strcmp(direction, "->") == 0){
-		// check local class function map
-		if ( flocal!=NULL )
-			gl_warning("helics_msg::parse_helics_function(const char *spec='%s'): outgoing call definition of '%s' overwrites existing function definition in class '%s'",value,localFuncName,localClass);
-
-		sscanf(topic, "%[^/]/%[^\n]", remoteClassName, remoteFuncName);
-		// get relay function
-		flocal = add_helics_function(this,localClass, localFuncName,remoteClassName,remoteFuncName,NULL,DXD_WRITE, comtype);
-
-		if ( flocal==NULL )
-			return rv;
-
-		// define relay function
-		rv = callback->function.define(fclass,localFuncName,flocal)!=NULL;
-		if(rv == 0){
-			gl_error("helics_msg::parse_helics_function(const char *spec='%s'): failed to define the function '%s' in local class '%s'.", value, localFuncName, localClass);
-			return rv;
-		}
-	// setup incoming call
-	} else if ( strcmp(direction,"<-")==0 ){
-		// check to see is local class function is valid
-		if( flocal == NULL){
-			gl_error("helics_msg::parse_helics_function(const char *spec='%s'): local function '%s' is not valid.",value, localFuncName);
-			return 0;
-		}
-		flocal = add_helics_function(this, localClass, localFuncName, "", topic, NULL, DXD_READ, comtype);
-		if( flocal == NULL){
-			rv = 1;
-		}
-	}
-	return rv;
-}*/
-
-/*void helics_msg::incoming_helics_function()
-{
-	FUNCTIONSRELAY *relay = NULL;
-	vector<string> functionCalls;
-	const char *message;
-	char from[64] = "";
-	char to[64] = "";
-	char funcName[64] = "";
-	char payloadString[3000] = "";
-	char payloadLengthstr[64] = "";
-	int payloadLength = 0;
-	int payloadStringLength = 0;
-	size_t s = 0;
-	size_t rplen = 0;
-	OBJECT *obj = NULL;
-	FUNCTIONADDR funcAddr = NULL;
-
-	for(relay = first_helicsfunction; relay!=NULL; relay=relay->next){
-		if(relay->drtn == DXD_READ){
-#if HAVE_HELICS
-			//functionCalls = helics::get_values(string(relay->remotename));
-			//TODO call appropiate helics function to get value from endpoint?
-#endif
-			s = functionCalls.size();
-			if(s > 0){
-				for(int i = 0; i < s; i++){
-					message = functionCalls[i].c_str();
-					//parse the message
-					memset(from,'\0',64);
-					memset(to,'\0',64);
-					memset(funcName,'\0',64);
-					memset(payloadString,'\0',3000);
-					memset(payloadLengthstr, '\0', 64);
-					if(sscanf(message,"\"{\"from\":\"%[^\"]\", \"to\":\"%[^\"]\", \"function\":\"%[^\"]\", \"data\":\"%[^\"]\", \"data length\":\"%[^\"]\"}\"",from, to, funcName, payloadString,payloadLengthstr) != 5){
-						throw("helics_msg::incomming_helics_function: unable to parse function message %s", message);
-					}
-
-					//check function is correct
-					if(strcmp(funcName, relay->localcall) != 0){
-						throw("helics_msg::incomming_helics_function: The remote side function call, %s, is not the same as the local function name, %s.", funcName, relay->localcall);
-					}
-					payloadLength = atoi(payloadLengthstr);
-					payloadStringLength = payloadLength*2;
-					void *rawPayload = new char[payloadLength];
-					memset(rawPayload, 0, payloadLength);
-					//unhex raw payload
-					rplen = helics_from_hex(rawPayload, (size_t)payloadLength, payloadString, (size_t)payloadStringLength);
-					if( rplen < strlen(payloadString)){
-						throw("helics_msg::incomming_helics_function: unable to decode function payload %s.", payloadString);
-					}
-					//call local function
-					obj = gl_get_object(to);
-					if( obj == NULL){
-						throw("helics_msg::incomming_helics_function: the to object does not exist. %s.", to);
-					}
-					funcAddr = (FUNCTIONADDR)(gl_get_function(obj, relay->localcall));
-					((void (*)(char *, char *, char *, char *, void *, size_t))(*funcAddr))(from, to, relay->localcall, relay->localclass, rawPayload, (size_t)payloadLength);
-				}
-			}
-		}
-	}
-}*/
-
 //publishes gld properties to the cache
 int helics_msg::publishVariables(){
 	char buffer[1024] = "";
 	memset(&buffer[0], '\0', 1024);
 	int buffer_size = 0;
 	string temp_value = "";
-	stringstream message_buffer_stream;
+	std::stringstream message_buffer_stream;
 	std::complex<double> complex_temp = {0.0, 0.0};
 	for(vector<helics_value_publication*>::iterator pub = helics_value_publications.begin(); pub != helics_value_publications.end(); pub++) {
 		buffer_size = 0;
@@ -1086,7 +859,7 @@ int helics_msg::publishJsonVariables(){
 	gld_property *prop = NULL;
 	jsonPublishData.clear();
 	jsonPublishData[simName];
-	stringstream complex_val;
+	std::stringstream complex_val;
 	Json::FastWriter jsonWriter;
 	string jsonMessageStr = "";
 #if HAVE_HELICS
@@ -1105,11 +878,11 @@ int helics_msg::publishJsonVariables(){
 					double imag_part =prop->get_part("imag");
 					gld_unit *val_unit = prop->get_unit();
 					complex_val.str(string());
-					complex_val << fixed << real_part;
+					complex_val << std::fixed << real_part;
 					if(imag_part >= 0){
-						complex_val << fixed << "+" << fabs(imag_part) << "j";
+						complex_val << std::fixed << "+" << fabs(imag_part) << "j";
 					} else {
-						complex_val << fixed << imag_part << "j";
+						complex_val << std::fixed << imag_part << "j";
 					}
 					if(val_unit != NULL && val_unit->is_valid()){
 						string unit_name = string(val_unit->get_name());
@@ -1145,11 +918,11 @@ int helics_msg::publishJsonVariables(){
 					double imag_part =prop->get_part("imag");
 					gld_unit *val_unit = prop->get_unit();
 					complex_val.str(string());
-					complex_val << fixed << real_part;
+					complex_val << std::fixed << real_part;
 					if(imag_part >= 0){
-						complex_val << fixed << "+" << fabs(imag_part) << "j";
+						complex_val << std::fixed << "+" << fabs(imag_part) << "j";
 					} else {
-						complex_val << fixed << imag_part << "j";
+						complex_val << std::fixed << imag_part << "j";
 					}
 					if(val_unit != NULL && val_unit->is_valid()){
 						string unit_name = string(val_unit->get_name());

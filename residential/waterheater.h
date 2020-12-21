@@ -13,24 +13,9 @@
 #include "residential.h"
 #include "residential_enduse.h"
 
-#include <cstdlib>
-#include <cstdio>
-#include <cerrno>
-#include <cmath>
 
-#include <chrono>
-#include <iostream>
-#include <exception>
-#include <algorithm>
-#include <limits>
-#include <sstream>
-#include <string>
-#include <fstream>
 #include <vector>
 using std::vector;
-using std::stringstream;
-using std::ofstream;
-using std::string;
 
 /*
 class w_vector;
@@ -434,7 +419,7 @@ public:
 	double new_h_2zone(double h0, double delta_t);      // Calcs h after transition...
 	int multilayer_time_to_transition(void);
 	void calculate_waterheater_matrices(int time_now);
-	static vector<double> multiply_waterheater_matrices(vector<vector<double>> a, vector<double> b);
+	vector<double> multiply_waterheater_matrices(vector<vector<double>> &, vector<double> &);
 	void reinitialize_internals(int dt);
 
 	double get_Tambient(enumeration water_heater_location);		// ambient T [F] -- either an indoor house temperature or a garage temperature, probably...
