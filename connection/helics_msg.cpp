@@ -830,7 +830,7 @@ int helics_msg::subscribeVariables(){
         gl_verbose("Has message status for endpoint %s: %s", (*sub)->name.c_str(), (*sub)->HelicsSubscriptionEndpoint.hasMessage() ? "True" : "False");
         if((*sub)->HelicsSubscriptionEndpoint.hasMessage()){
 			helicscpp::Message mesg;
-			int pendingMessages = (int) (*sub)->HelicsSubscriptionEndpoint.pendingMessages();
+			int pendingMessages = (int) (*sub)->HelicsSubscriptionEndpoint.pendingMessagesCount();
 			for(int i = 0; i < pendingMessages; i++) {
 				gl_verbose("calling getMessage() for endpoint %s", (*sub)->name.c_str());
 				mesg = (*sub)->HelicsSubscriptionEndpoint.getMessage();
@@ -1003,7 +1003,7 @@ int helics_msg::subscribeJsonVariables(){
 	for(vector<json_helics_endpoint_subscription*>::iterator sub = json_helics_endpoint_subscriptions.begin(); sub != json_helics_endpoint_subscriptions.end(); sub++){
 		if((*sub)->HelicsSubscriptionEndpoint.hasMessage()){
 			helicscpp::Message mesg;
-			int pendingMessages = (int) (*sub)->HelicsSubscriptionEndpoint.pendingMessages();
+			int pendingMessages = (int) (*sub)->HelicsSubscriptionEndpoint.pendingMessagesCount();
 			for(int i = 0; i < pendingMessages; i++) {
 				gl_verbose("calling getMessage() for endpoint %s", (*sub)->name.c_str());
 				mesg = (*sub)->HelicsSubscriptionEndpoint.getMessage();

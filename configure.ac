@@ -532,17 +532,17 @@ gld_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $HELICS_CPPFLAGS"
 # add libhelics to HELICS_LIBS if missing
 AS_CASE([$platform],
 	[*linux*], [AS_CASE([$HELICS_LIBS],
-					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelicsSharedLib"])
+					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics"])
 				AS_CASE([$LIBS],
-					[*lhelics*], [], [LIBS="$LIBS -lhelicsSharedLib"])],
+					[*lhelics*], [], [LIBS="$LIBS -lhelics"])],
 	[*darwin*], [AS_CASE([$HELICS_LIBS],
-					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelicsSharedLib"])
+					[*lhelics*], [], [HELICS_LIBS="$HELICS _LIBS -lhelics"])
 				AS_CASE([$LIBS],
-					[*lhelics*], [], [LIBS="$LIBS -lhelicsSharedLib"])],
+					[*lhelics*], [], [LIBS="$LIBS -lhelics"])],
 	[*windows*], [AS_CASE([$HELICS_LIBS],
-					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelicsSharedLib"])
+					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics"])
 				AS_CASE([$LIBS],
-					[*lhelics*], [], [LIBS="$LIBS -lhelicsSharedLib"])])
+					[*lhelics*], [], [LIBS="$LIBS -lhelics"])])
 have_helics=yes
 AC_MSG_CHECKING([for HELICS])
 AC_LINK_IFELSE(
