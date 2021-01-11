@@ -805,10 +805,11 @@ int helics_msg::subscribeVariables(){
 					gl_verbose("helics_msg: Calling getString\n");
 					value_buffer = (*sub)->HelicsSubscription.getString();
 					if(!value_buffer.empty()) {
-						char valueBuf[value_buffer.size() + 1] = "";
+						char *valueBuf = new char[value_buffer.size() + 1];
+						memset(&valueBuf[0], '\0', value_buffer.size());
 						strncpy(valueBuf, value_buffer.c_str(), value_buffer.size());
 						(*sub)->pObjectProperty->from_string(valueBuf);
-						memset(&valueBuf[0], '\0', value_buffer.size());
+						delete[] valueBuf;
 					}
 				}
 			} catch(...) {
@@ -816,10 +817,11 @@ int helics_msg::subscribeVariables(){
 				gl_verbose("helics_msg: Calling getString");
 				value_buffer = (*sub)->HelicsSubscription.getString();
 				if(!value_buffer.empty()){
-					char valueBuf[value_buffer.size()] = "";
+					char *valueBuf = new char[value_buffer.size() + 1];
+					memset(&valueBuf[0], '\0', value_buffer.size());
 					strncpy(valueBuf, value_buffer.c_str(), value_buffer.size());
 					(*sub)->pObjectProperty->from_string(valueBuf);
-					memset(&valueBuf[0], '\0', value_buffer.size());
+					delete[] valueBuf;
 				}
 			}
 			value_buffer = "";
@@ -838,10 +840,11 @@ int helics_msg::subscribeVariables(){
 			const char *message_buffer = mesg.c_str();
 			int message_size = mesg.size();
 			if(message_size != 0){
-				char valueBuf[message_size + 1] = "";
+				char *valueBuf = new char[value_buffer.size() + 1];
+				memset(&valueBuf[0], '\0', value_buffer.size());
 				strncpy(valueBuf, message_buffer, message_size);
 				(*sub)->pObjectProperty->from_string(valueBuf);
-				memset(&valueBuf[0], '\0', message_size);
+				delete[] valueBuf;
 			}
 		}
 
