@@ -196,10 +196,6 @@ public:
 
 	//*** End LEGACY model parameters ***//
 
-	//********** DEPRECATED variables - Remove on next release ****************//
-	double Rated_kVA; //< nominal capacity in kVA
-	complex V_In;
-
 public:
 	/* required implementations */
 	battery(MODULE *module);

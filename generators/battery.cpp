@@ -134,10 +134,6 @@ battery::battery(MODULE *module)
 			PT_double,"battery_load[W]", PADDR(bat_load), PT_DESCRIPTION, "INTERNAL BATTERY MODEL: the current power output of the battery.",
 			PT_double,"reserve_state_of_charge[pu]", PADDR(b_soc_reserve), PT_DESCRIPTION, "INTERNAL BATTERY MODEL: the reserve state of charge the battery can reach.",
 
-			//DEPRECATED - Remove in next version - variables that basically do nothing
-			PT_double, "Rated_kVA[kVA]", PADDR(Rated_kVA), PT_DEPRECATED, PT_DESCRIPTION, "LEGACY MODEL: the rated power of the battery.",
-			PT_complex, "V_In[V]", PADDR(V_In), PT_DEPRECATED, PT_DESCRIPTION, "LEGACY MODEL: the voltage at the terminals of the battery.",
-
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		defaults = this;
 		memset(this,0,sizeof(battery));
@@ -1958,8 +1954,6 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//gl_verbose("battery sync: I_Out from parent is: (%f , %f)", I_Out.Re(), V_Out.Im());
 
 
-			V_In = V_Out;
-
 			V_Internal = calculate_v_terminal(V_Out, I_Out);
 			//V_Out = V_internal;
 
@@ -2027,7 +2021,6 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 				if(fabs((double)V_Out.Re()) > fabs((double)V_Max.Re())){
 					//gl_verbose("battery sync: V_Out exceeded allowable V_Out, setting to max");
 					V_Out = V_Max;
-					V_In = V_Out;
 					V_Internal = V_Out - (I_Out * Rinternal);
 				}
 
