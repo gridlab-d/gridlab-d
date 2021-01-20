@@ -713,44 +713,53 @@ int diesel_dg::init(OBJECT *parent)
 			//Flag us as a proper child
 			parent_is_powerflow = true;
 
-			//See if this attached node is a child or not
-			if (parent->parent != NULL)
+			//See which mode we are - if QSTS only, use standard parent issues
+			if (Gen_type == DYNAMIC)
 			{
-				//Map parent
-				tmp_obj = parent->parent;
-
-				//See what it is
-				if ((gl_object_isa(tmp_obj,"meter","powerflow") == false) && (gl_object_isa(tmp_obj,"node","powerflow")==false) && (gl_object_isa(tmp_obj,"load","powerflow")==false))
+				//See if this attached node is a child or not
+				if (parent->parent != NULL)
 				{
-					//Not a wierd map, just use normal parent
+					//Map parent
+					tmp_obj = parent->parent;
+
+					//See what it is
+					if ((gl_object_isa(tmp_obj,"meter","powerflow") == false) && (gl_object_isa(tmp_obj,"node","powerflow")==false) && (gl_object_isa(tmp_obj,"load","powerflow")==false))
+					{
+						//Not a wierd map, just use normal parent
+						tmp_obj = parent;
+					}
+					else	//Implies it is a powerflow parent
+					{
+						//See if we are deltamode-enabled -- if so, flag our parent while we're here
+						if (deltamode_inclusive == true)
+						{
+							//Map our deltamode flag and set it (parent will be done below)
+							temp_property_pointer = new gld_property(parent,"Norton_dynamic");
+
+							//Make sure it worked
+							if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_bool() != true))
+							{
+								GL_THROW("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
+								//Defined elsewhere
+							}
+
+							//Flag it to true
+							temp_bool_value = true;
+							temp_property_pointer->setp<bool>(temp_bool_value,*test_rlock);
+
+							//Remove it
+							delete temp_property_pointer;
+						}
+						//Default else -- it is one of those, but not deltamode, so nothing extra to do
+					}//End we were a powerflow child
+				}
+				else	//It is null
+				{
+					//Just point it to the normal parent
 					tmp_obj = parent;
 				}
-				else	//Implies it is a powerflow parent
-				{
-					//See if we are deltamode-enabled -- if so, flag our parent while we're here
-					if (deltamode_inclusive == true)
-					{
-						//Map our deltamode flag and set it (parent will be done below)
-						temp_property_pointer = new gld_property(parent,"Norton_dynamic");
-
-						//Make sure it worked
-						if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_bool() != true))
-						{
-							GL_THROW("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
-							//Defined elsewhere
-						}
-
-						//Flag it to true
-						temp_bool_value = true;
-						temp_property_pointer->setp<bool>(temp_bool_value,*test_rlock);
-
-						//Remove it
-						delete temp_property_pointer;
-					}
-					//Default else -- it is one of those, but not deltamode, so nothing extra to do
-				}//End we were a powerflow child
 			}
-			else	//It is nul
+			else	//Not deltamode, so just map normally
 			{
 				//Just point it to the normal parent
 				tmp_obj = parent;

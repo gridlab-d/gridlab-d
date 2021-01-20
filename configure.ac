@@ -532,25 +532,25 @@ gld_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $HELICS_CPPFLAGS"
 # add libhelics to HELICS_LIBS if missing
 AS_CASE([$platform],
 	[*linux*], [AS_CASE([$HELICS_LIBS],
-					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lzmq"])
+					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelicsSharedLib"])
 				AS_CASE([$LIBS],
-					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lzmq"])],
+					[*lhelics*], [], [LIBS="$LIBS -lhelicsSharedLib"])],
 	[*darwin*], [AS_CASE([$HELICS_LIBS],
-					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lzmq"])
+					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelicsSharedLib"])
 				AS_CASE([$LIBS],
-					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lzmq"])],
+					[*lhelics*], [], [LIBS="$LIBS -lhelicsSharedLib"])],
 	[*windows*], [AS_CASE([$HELICS_LIBS],
-					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics-shared -lzmq"])
+					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelicsSharedLib"])
 				AS_CASE([$LIBS],
-					[*lhelics*], [], [LIBS="$LIBS -lhelics-shared -lzmq"])])
+					[*lhelics*], [], [LIBS="$LIBS -lhelicsSharedLib"])])
 have_helics=yes
 AC_MSG_CHECKING([for HELICS])
 AC_LINK_IFELSE(
 	[AC_LANG_PROGRAM([[ 
-#include <helics/application_api/helicsTypes.hpp>
+#include <helics/helics98.hpp>
 ]],
 [[ 
-helics::NamedPoint t; 
+helicscpp::Input ipt; 
 ]])],
     [have_helics=yes; have_helics_int=1],
     [have_helics=no; have_helics_int=0])

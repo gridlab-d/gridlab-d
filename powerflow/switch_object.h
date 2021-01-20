@@ -73,6 +73,8 @@ private:
 
 	complex switch_impedance_value;			//Used for closed-switch value
 	complex switch_admittance_value;		//Admittance version - save some divides
+
+	set node_phase_information(OBJECT *obj);
 };
 
 EXPORT int change_switch_state(OBJECT *thisobj, unsigned char phase_change, bool state);

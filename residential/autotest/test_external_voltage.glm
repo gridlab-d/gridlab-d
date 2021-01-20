@@ -1,0 +1,110 @@
+#set minimum_timestep=60;
+#set suppress_repeat_messages=FALSE;
+
+module residential{
+	implicit_enduses NONE;
+}
+module tape;
+module assert;
+module climate;
+
+clock{
+	timezone PST+8PDT;
+	starttime '2001-07-24 12:00:00';
+	stoptime '2001-07-24 15:00:00';
+}
+
+schedule external_v120 {
+	* 0-12 * * * 120;
+	* 13 * * * 114;
+	* 14 * * * 126;
+	* 15-23 * * * 120;
+}
+
+object climate{
+	tmyfile "../WA-Yakima.tmy2";
+}
+
+object house{
+  name house_120;
+	window_wall_ratio 0.07;
+	cooling_COP 3.0;
+	system_mode OFF;
+	auxiliary_strategy DEADBAND;
+	heating_system_type HEAT_PUMP;
+	cooling_system_type ELECTRIC;
+	air_temperature 85;
+	mass_temperature 85;
+	heating_setpoint 60;
+	cooling_setpoint 75;
+  external_pf_mode ONEV;
+  external_v1N external_v120;
+//  external_v2N external_v120*-1; // works with external_pf_mode TWOV
+	object ZIPload {
+		heat_fraction 1;
+		base_power 2.0;
+		power_pf 1;
+		power_fraction 0.2;
+		current_pf 1;
+		current_fraction 0.4;
+		impedance_pf 1;
+		impedance_fraction 0.4;
+// at 0.95 pu voltage, expecting ZIPload P=2*[0.2 + 0.4*0.95 + 0.4*0.95^2] = 1.882 kW
+// at 1.05 pu voltage, expecting ZIPload P=2*[0.2 + 0.4*1.05 + 0.4*1.05^2] = 2.122 kW
+// these ZIP loads are masked in the output because 1) total_load is kVA instead of kW
+//   and 2) the HVAC reactive power load is not zero
+// checking outputs in the house_120.csv file:
+//   at 120: S = (3.51357 + 2.000) + j0.880583 ==> 5.583447 kVA
+//   at 114: S = (3.48158 + 1.882) + j0.872566 ==> 5.434093 kVA
+//   at 126: S = (3.66464 + 2.122) + j0.918445 ==> 5.859074 kVA
+	};
+  object double_assert{
+    target hvac_load;
+    in '2001-07-24 12:30:00';
+    once ONCE_TRUE;
+    value 3.51357; // HVAC kW load at 120 volts
+    within 0.001;
+  };
+  object double_assert{
+    target hvac_load;
+    in '2001-07-24 13:30:00';
+    once ONCE_TRUE;
+    value 3.48158; // HVAC kW load at 114 volts
+    within 0.001;
+  };
+  object double_assert{
+    target hvac_load;
+    in '2001-07-24 14:30:00';
+    once ONCE_TRUE;
+    value 3.66464; // HVAC kW load at 126 volts
+    within 0.001;
+  };
+  object double_assert{
+    target total_load;
+    in '2001-07-24 12:30:00';
+    once ONCE_TRUE;
+    value 5.58345; // total kVA at 120 volts
+    within 0.001;
+  };
+  object double_assert{
+    target total_load;
+    in '2001-07-24 13:30:00';
+    once ONCE_TRUE;
+    value 5.43409; // total kVA at 114 volts
+    within 0.001;
+  };
+  object double_assert{
+    target total_load;
+    in '2001-07-24 14:30:00';
+    once ONCE_TRUE;
+    value 5.85907; // total kVA at 126 volts
+    within 0.001;
+  };
+};
+
+object recorder {
+	parent house_120;
+	property air_temperature,cooling_setpoint,hvac_power,total_load,panel.power,voltage_1N,voltage_2N,voltage_12;
+	interval 1800;
+	file house_120.csv;
+}
