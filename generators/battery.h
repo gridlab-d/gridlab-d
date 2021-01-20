@@ -12,14 +12,13 @@
 #include <stdarg.h>
 
 #include "generators.h"
-#include "energy_storage.h"
 
 EXPORT STATUS preupdate_battery(OBJECT *obj,TIMESTAMP t0, unsigned int64 delta_time);
 EXPORT SIMULATIONMODE interupdate_battery(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 EXPORT STATUS postupdate_battery(OBJECT *obj, complex *useful_value, unsigned int mode_pass);
 
 
-class battery : public energy_storage
+class battery : public gld_object
 {
 private:
 	TIMESTAMP prev_time;
@@ -169,6 +168,37 @@ public:
 	unsigned int64 state_change_time_delta;
 	double pre_soc; //store the soc value during iterations
 	double Pout_delta; //Power output from parent inverter
+
+	//*** LEGACY model parameters - ported from energy_storage before separation ***//
+	double Rinternal;
+	double Energy;
+	double efficiency;
+
+	double Max_P;//< maximum real power capacity in kW
+	complex V_Max;
+	complex I_Max;
+	double E_Max;
+
+	double base_efficiency;
+
+	complex V_Out;
+	complex I_Out;
+	complex VA_Out;
+	complex I_In;
+	complex V_Internal;
+	complex I_Internal;
+	complex VA_Internal;
+	complex I_Prev;
+	double margin;
+	double E_Next;
+
+	bool recalculate;
+
+	//*** End LEGACY model parameters ***//
+
+	//********** DEPRECATED variables - Remove on next release ****************//
+	double Rated_kVA; //< nominal capacity in kVA
+	complex V_In;
 
 public:
 	/* required implementations */
