@@ -55,6 +55,26 @@ int overhead_line_conductor::create(void)
 
 int overhead_line_conductor::init(OBJECT *parent)
 {
+	//Check resistance
+	if (resistance == 0.0)
+	{
+		if (solver_method == SM_NR)
+		{
+			GL_THROW("overhead_line_conductor:%d - %s - NR: resistance is zero",get_id(),get_name());
+			/*  TROUBLESHOOT
+			The overhead_line_conductor has a resistance of zero.  This will cause problems with the 
+			Newton-Raphson solution.  Please put a valid resistance value.
+			*/
+		}
+		else //Assumes FBS
+		{
+			gl_warning("overhead_line_conductor:%d - %s - FBS: resistance is zero",get_id(),get_name());
+			/*  TROUBLESHOOT
+			The overhead_line_conductor has a resistance of zero.  This will cause problems with the 
+			Newton-Raphson solution.  Please put a valid resistance value.
+			*/
+		}
+	}
 	return 1;
 }
 

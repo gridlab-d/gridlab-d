@@ -127,6 +127,27 @@ int underground_line_conductor::init(OBJECT *parent)
 		}
 	}
 
+	//Check resistance
+	if (conductor_resistance == 0.0)
+	{
+		if (solver_method == SM_NR)
+		{
+			GL_THROW("underground_line_conductor:%d - %s - NR: conductor_resistance is zero",get_id(),get_name());
+			/*  TROUBLESHOOT
+			The underground_line_conductor has a conductor_resistance of zero.  This will cause problems with the 
+			Newton-Raphson solution.  Please put a valid conductor_resistance value.
+			*/
+		}
+		else //Assumes FBS
+		{
+			gl_warning("underground_line_conductor:%d - %s - FBS: conductor_resistance is zero",get_id(),get_name());
+			/*  TROUBLESHOOT
+			The underground_line_conductor has a conductor_resistance of zero.  This will cause problems with the 
+			Newton-Raphson solution.  Please put a valid conductor_resistance value.
+			*/
+		}
+	}
+
 	return 1;
 }
 

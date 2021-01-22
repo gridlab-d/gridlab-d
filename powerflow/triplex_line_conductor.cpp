@@ -52,6 +52,31 @@ int triplex_line_conductor::create(void)
 	return result;
 }
 
+int triplex_line_conductor::init(OBJECT *parent)
+{
+	//Check resistance
+	if (resistance == 0.0)
+	{
+		if (solver_method == SM_NR)
+		{
+			GL_THROW("triplex_line_conductor:%d - %s - NR: resistance is zero",get_id(),get_name());
+			/*  TROUBLESHOOT
+			The triplex_line_conductor has a resistance of zero.  This will cause problems with the 
+			Newton-Raphson solution.  Please put a valid resistance value.
+			*/
+		}
+		else //Assumes FBS
+		{
+			gl_warning("triplex_line_conductor:%d - %s - FBS: resistance is zero",get_id(),get_name());
+			/*  TROUBLESHOOT
+			The triplex_line_conductor has a resistance of zero.  This will cause problems with the 
+			Newton-Raphson solution.  Please put a valid resistance value.
+			*/
+		}
+	}
+	return 1;
+}
+
 int triplex_line_conductor::isa(char *classname)
 {
 	return strcmp(classname,"triplex_line_conductor")==0;
@@ -84,6 +109,15 @@ EXPORT int create_triplex_line_conductor(OBJECT **obj, OBJECT *parent)
 			return 0;
 	}
 	CREATE_CATCHALL(triplex_line_conductor);
+}
+
+EXPORT int init_triplex_line_conductor(OBJECT *obj)
+{
+	try {
+		triplex_line_conductor *my = OBJECTDATA(obj,triplex_line_conductor);
+		return my->init(obj->parent);
+	}
+	INIT_CATCHALL(triplex_line_conductor);
 }
 
 EXPORT TIMESTAMP sync_triplex_line_conductor(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
