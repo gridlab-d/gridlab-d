@@ -305,8 +305,8 @@ int inverter_dyn::create(void)
 	frequency_watt = false;
 	Tpf = 0.5;		// S
 	Tff = 0.1;		// s
-	Pref_max = 1.5; // per unit
-	Pref_min = -1.5;	// per unit
+	Pref_max = 1.0; // per unit
+	Pref_min = -1.0;	// per unit
 	Rp = 0.05;		//P-f droop 5%, default value by IEEE 1547 2018
 	db_UF = 0.0; //0.036;  // dead band 0.036 Hz, default value by IEEE 1547 2018
 	db_OF = 0.0; //0.036;  // dead band 0.036 Hz, default value by IEEE 1547 2018
@@ -319,8 +319,8 @@ int inverter_dyn::create(void)
 	db_OV = 0;  // volt-var dead band
 
 	//Vset = 1;  // per unit
-	Qref_max = 1.5; // per unit
-	Qref_min = -1.5;	// per unit
+	Qref_max = 1.0; // per unit
+	Qref_min = -1.0;	// per unit
 	Rq = 0.4;		// per unit, default value by IEEE 1547 2018
 
 	Vdc_base = 850; // default value of dc bus voltage
@@ -1020,7 +1020,34 @@ int inverter_dyn::init(OBJECT *parent)
 	Idc_base = S_base / Vdc_base;
 
 	// Initialize parameters
+	if (sqrt(Pref*Pref+Qref*Qref) > S_base)
+	{
+		gl_warning("inverter_dyn:%d %s - The output apparent power is larger than the rated apparent power, P and Q are capped", obj->id, (obj->name ? obj->name : "Unnamed"));
+
+	}
+
+	if(Pref > S_base)
+	{
+		Pref = S_base;
+	}
+	else if (Pref < -S_base)
+	{
+		Pref = -S_base;
+	}
+	else
+		if(Qref > sqrt(S_base*S_base-Pref*Pref))
+		{
+			Qref = sqrt(S_base*S_base-Pref*Pref);
+		}
+		else if (Qref < -sqrt(S_base*S_base-Pref*Pref))
+		{
+			Qref = -sqrt(S_base*S_base-Pref*Pref);
+		}
+
 	VA_Out = complex(Pref, Qref);
+
+
+
 	pvc_Pmax = 0;
 
 	//See if we had a single phase connection
@@ -1171,7 +1198,32 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 			{
 
 				//Accumulate the starting power
+				if (sqrt(Pref*Pref+Qref*Qref) > S_base)
+				{
+					gl_warning("inverter_dyn:%d %s - The output apparent power is larger than the rated apparent power, P and Q are capped", obj->id, (obj->name ? obj->name : "Unnamed"));
+
+				}
+
+				if(Pref > S_base)
+				{
+					Pref = S_base;
+				}
+				else if (Pref < -S_base)
+				{
+					Pref = -S_base;
+				}
+				else
+					if(Qref > sqrt(S_base*S_base-Pref*Pref))
+					{
+						Qref = sqrt(S_base*S_base-Pref*Pref);
+					}
+					else if (Qref < -sqrt(S_base*S_base-Pref*Pref))
+					{
+						Qref = -sqrt(S_base*S_base-Pref*Pref);
+					}
+
 				temp_complex_value = complex(Pref, Qref);
+
 
 				//Push it up
 				pGenerated->setp<complex>(temp_complex_value, *test_rlock);
@@ -1235,7 +1287,32 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 				{
 
 					//Compute desired output - sign convention appears to be backwards
+					if (sqrt(Pref*Pref+Qref*Qref) > S_base)
+					{
+						gl_warning("inverter_dyn:%d %s - The output apparent power is larger than the rated apparent power, P and Q are capped", obj->id, (obj->name ? obj->name : "Unnamed"));
+
+					}
+
+					if(Pref > S_base)
+					{
+						Pref = S_base;
+					}
+					else if (Pref < -S_base)
+					{
+						Pref = -S_base;
+					}
+					else
+						if(Qref > sqrt(S_base*S_base-Pref*Pref))
+						{
+							Qref = sqrt(S_base*S_base-Pref*Pref);
+						}
+						else if (Qref < -sqrt(S_base*S_base-Pref*Pref))
+						{
+							Qref = -sqrt(S_base*S_base-Pref*Pref);
+						}
+
 					complex temp_VA = complex(Pref, Qref);
+
 
 					//Force the output power the same as glm pre-defined values
 					if (value_Circuit_V[0].Mag() > 0.0)
@@ -1304,7 +1381,32 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 					if (attached_bus_type != 2)
 					{
 
+						if (sqrt(Pref*Pref+Qref*Qref) > S_base)
+						{
+							gl_warning("inverter_dyn:%d %s - The output apparent power is larger than the rated apparent power, P and Q are capped", obj->id, (obj->name ? obj->name : "Unnamed"));
+
+						}
+
+						if(Pref > S_base)
+						{
+							Pref = S_base;
+						}
+						else if (Pref < -S_base)
+						{
+							Pref = -S_base;
+						}
+						else
+							if(Qref > sqrt(S_base*S_base-Pref*Pref))
+							{
+								Qref = sqrt(S_base*S_base-Pref*Pref);
+							}
+							else if (Qref < -sqrt(S_base*S_base-Pref*Pref))
+							{
+								Qref = -sqrt(S_base*S_base-Pref*Pref);
+							}
+
 						complex temp_VA = complex(Pref, Qref);
+
 
 						//Copy in value
 						//temp_power_val[0] = power_val[0] + (temp_VA - VA_Out) / 3.0;
@@ -1346,7 +1448,32 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 					if (attached_bus_type != 2)
 					{
 
+						if (sqrt(Pref*Pref+Qref*Qref) > S_base)
+						{
+							gl_warning("inverter_dyn:%d %s - The output apparent power is larger than the rated apparent power, P and Q are capped", obj->id, (obj->name ? obj->name : "Unnamed"));
+
+						}
+
+						if(Pref > S_base)
+						{
+							Pref = S_base;
+						}
+						else if (Pref < -S_base)
+						{
+							Pref = -S_base;
+						}
+						else
+							if(Qref > sqrt(S_base*S_base-Pref*Pref))
+							{
+								Qref = sqrt(S_base*S_base-Pref*Pref);
+							}
+							else if (Qref < -sqrt(S_base*S_base-Pref*Pref))
+							{
+								Qref = -sqrt(S_base*S_base-Pref*Pref);
+							}
+
 						complex temp_VA = complex(Pref, Qref);
+
 
 						// Obtain the positive sequence voltage
 						value_Circuit_V_PS = (value_Circuit_V[0] + value_Circuit_V[1] * complex(cos(2.0 / 3.0 * PI), sin(2.0 / 3.0 * PI)) + value_Circuit_V[2] * complex(cos(-2.0 / 3.0 * PI), sin(-2.0 / 3.0 * PI))) / 3.0;
@@ -2416,6 +2543,23 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 				// fPLL is the frequency measured by PLL
 				// Fuction end
 
+
+				// Check Pref and Qref, make sure the inverter output S does not exceed S_base, Pref has the priority
+				if(Pref > S_base)
+				{
+					Pref = S_base;
+					gl_warning("inverter_dyn:%d %s - The dispatched active power is larger than the rated apparent power, the output active power is capped at the rated apparent power", obj->id, (obj->name ? obj->name : "Unnamed"));
+				}
+
+				if(Pref < -S_base)
+				{
+					Pref = -S_base;
+					gl_warning("inverter_dyn:%d %s - The dispatched active power is larger than the rated apparent power, the output active power is capped at the rated apparent power", obj->id, (obj->name ? obj->name : "Unnamed"));
+				}
+                //Function end
+
+
+
 				// Frequency-watt function enabled
 				if (frequency_watt)
 				{
@@ -2457,6 +2601,16 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 							Pref_droop_pu = Pref_droop_pu_prev + rampUpRate_real * deltat;
 						}
 
+						if (Pref_droop_pu > Pref_max)
+						{
+							Pref_droop_pu = Pref_max;
+						}
+
+						if (Pref_droop_pu < Pref_min)
+						{
+							Pref_droop_pu = Pref_min;
+						}
+
 					}
 					else
 					{
@@ -2471,6 +2625,54 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 				// Tpf is the time constant in the power low pass filter
 				// Pref_max and Pref_min are the upper and lower limits of power references
 				// Function end
+
+				// Find the limit for Qref, Qref_max and Qref_min
+				if(volt_var) //When volt-var is enabled, Q is limited by Qref_max and Qref_min
+				{
+					if(frequency_watt)  // When frequency-watt is enabled, P is controlled by Pref_droop_pu
+					{
+						Qref_max = sqrt(1-Pref_droop_pu*Pref_droop_pu);
+						Qref_min = -Qref_max;
+					}
+					else  //When frequency-watt is disabled, P is controlled by Pref
+					{
+						Qref_max = sqrt(1-(Pref/S_base)*(Pref/S_base));
+						Qref_min = -Qref_max;
+					}
+				}
+				else //When volt-var is disabled, Q is limited by Qref
+				{
+					if(frequency_watt)
+					{
+		                if(Qref > sqrt(S_base*S_base - (Pref_droop_pu*S_base)*(Pref_droop_pu*S_base)))
+		                {
+		                	Qref = sqrt(S_base*S_base - Pref*Pref);
+							gl_warning("inverter_dyn:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
+		                }
+
+		                if(Qref < -sqrt(S_base*S_base - (Pref_droop_pu*S_base)*(Pref_droop_pu*S_base)))
+		                {
+		                	Qref = -sqrt(S_base*S_base - Pref*Pref);
+							gl_warning("inverter_dyn:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
+		                }
+					}
+					else
+					{
+		                if(Qref > sqrt(S_base*S_base - Pref*Pref))
+		                {
+		                	Qref = sqrt(S_base*S_base - Pref*Pref);
+							gl_warning("inverter_dyn:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
+		                }
+
+		                if(Qref < -sqrt(S_base*S_base - Pref*Pref))
+		                {
+		                	Qref = -sqrt(S_base*S_base - Pref*Pref);
+							gl_warning("inverter_dyn:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
+		                }
+					}
+				}
+				// Function end
+
 
 				// Volt-var function enabled
 				if (volt_var)
@@ -2512,6 +2714,16 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						else if ((power_diff_val < 0) && (-power_diff_val > rampUpRate_reactive* deltat))
 						{
 							Qref_droop_pu = Qref_droop_pu_prev + rampUpRate_reactive* deltat;
+						}
+
+						if (Qref_droop_pu > Qref_max)
+						{
+							Qref_droop_pu = Qref_max;
+						}
+
+						if (Qref_droop_pu < Qref_min)
+						{
+							Qref_droop_pu = Qref_min;
 						}
 					}
 					else
@@ -2695,6 +2907,21 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					}
 
 
+					// Check Pref and Qref, make sure the inverter output S does not exceed S_base, Pref has the priority
+					if(Pref > S_base)
+					{
+						Pref = S_base;
+						gl_warning("inverter_dyn:%d %s - The dispatched active power is larger than the rated apparent power, the output active power is capped at the rated apparent power", obj->id, (obj->name ? obj->name : "Unnamed"));
+					}
+
+					if(Pref < -S_base)
+					{
+						Pref = -S_base;
+						gl_warning("inverter_dyn:%d %s - The dispatched active power is larger than the rated apparent power, the output active power is capped at the rated apparent power", obj->id, (obj->name ? obj->name : "Unnamed"));
+					}
+	                //Function end
+
+
 					// Frequency-watt function enabled
 					if (frequency_watt)
 					{
@@ -2734,6 +2961,16 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 							{
 								Pref_droop_pu = Pref_droop_pu_prev + rampUpRate_real * deltat;
 							}
+
+							if (Pref_droop_pu > Pref_max)
+							{
+								Pref_droop_pu = Pref_max;
+							}
+
+							if (Pref_droop_pu < Pref_min)
+							{
+								Pref_droop_pu = Pref_min;
+							}
 						}
 						else
 						{
@@ -2747,6 +2984,54 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					// Pref_droop_pu_filter is the power reference pass through the low pass filter
 					// Tpf is the time constant in the power low pass filter
 					// Pref_max and Pref_min are the upper and lower limits of power references
+					// Function end
+
+
+					// Find the limit for Qref, Qref_max and Qref_min
+					if(volt_var) //When volt-var is enabled, Q is limited by Qref_max and Qref_min
+					{
+						if(frequency_watt)  // When frequency-watt is enabled, P is controlled by Pref_droop_pu
+						{
+							Qref_max = sqrt(1-Pref_droop_pu*Pref_droop_pu);
+							Qref_min = -Qref_max;
+						}
+						else  //When frequency-watt is disabled, P is controlled by Pref
+						{
+							Qref_max = sqrt(1-(Pref/S_base)*(Pref/S_base));
+							Qref_min = -Qref_max;
+						}
+					}
+					else //When volt-var is disabled, Q is limited by Qref
+					{
+						if(frequency_watt)
+						{
+			                if(Qref > sqrt(S_base*S_base - (Pref_droop_pu*S_base)*(Pref_droop_pu*S_base)))
+			                {
+			                	Qref = sqrt(S_base*S_base - Pref*Pref);
+								gl_warning("inverter_dyn:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
+			                }
+
+			                if(Qref < -sqrt(S_base*S_base - (Pref_droop_pu*S_base)*(Pref_droop_pu*S_base)))
+			                {
+			                	Qref = -sqrt(S_base*S_base - Pref*Pref);
+								gl_warning("inverter_dyn:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
+			                }
+						}
+						else
+						{
+			                if(Qref > sqrt(S_base*S_base - Pref*Pref))
+			                {
+			                	Qref = sqrt(S_base*S_base - Pref*Pref);
+								gl_warning("inverter_dyn:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
+			                }
+
+			                if(Qref < -sqrt(S_base*S_base - Pref*Pref))
+			                {
+			                	Qref = -sqrt(S_base*S_base - Pref*Pref);
+								gl_warning("inverter_dyn:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
+			                }
+						}
+					}
 					// Function end
 
 					// Volt-var function enabled
@@ -2787,6 +3072,16 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 							else if ((power_diff_val < 0) && (-power_diff_val > rampUpRate_reactive* deltat))
 							{
 								Qref_droop_pu = Qref_droop_pu_prev + rampUpRate_reactive* deltat;
+							}
+
+							if (Qref_droop_pu > Qref_max)
+							{
+								Qref_droop_pu = Qref_max;
+							}
+
+							if (Qref_droop_pu < Qref_min)
+							{
+								Qref_droop_pu = Qref_min;
 							}
 						}
 						else
@@ -2985,6 +3280,21 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 				// fPLL is the frequency measured by PLL
 				// Fuction end
 
+				// Check Pref and Qref, make sure the inverter output S does not exceed S_base, Pref has the priority
+				if(Pref > S_base)
+				{
+					Pref = S_base;
+					gl_warning("inverter_dyn:%d %s - The dispatched active power is larger than the rated apparent power, the output active power is capped at the rated apparent power", obj->id, (obj->name ? obj->name : "Unnamed"));
+				}
+
+				if(Pref < -S_base)
+				{
+					Pref = -S_base;
+					gl_warning("inverter_dyn:%d %s - The dispatched active power is larger than the rated apparent power, the output active power is capped at the rated apparent power", obj->id, (obj->name ? obj->name : "Unnamed"));
+				}
+                //Function end
+
+
 				// Frequency-watt function enabled
 				if (frequency_watt)
 				{
@@ -3022,6 +3332,16 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						{
 							Pref_droop_pu = Pref_droop_pu_prev + rampUpRate_real * deltat;
 						}
+
+						if (Pref_droop_pu > Pref_max)
+						{
+							Pref_droop_pu = Pref_max;
+						}
+
+						if (Pref_droop_pu < Pref_min)
+						{
+							Pref_droop_pu = Pref_min;
+						}
 					}
 					else
 					{
@@ -3036,6 +3356,54 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 				// Pref_droop_pu_filter is the power reference pass through the low pass filter
 				// Tpf is the time constant in the power low pass filter
 				// Pref_max and Pref_min are the upper and lower limits of power references
+				// Function end
+
+
+				// Find the limit for Qref, Qref_max and Qref_min
+				if(volt_var) //When volt-var is enabled, Q is limited by Qref_max and Qref_min
+				{
+					if(frequency_watt)  // When frequency-watt is enabled, P is controlled by Pref_droop_pu
+					{
+						Qref_max = sqrt(1-Pref_droop_pu*Pref_droop_pu);
+						Qref_min = -Qref_max;
+					}
+					else  //When frequency-watt is disabled, P is controlled by Pref
+					{
+						Qref_max = sqrt(1-(Pref/S_base)*(Pref/S_base));
+						Qref_min = -Qref_max;
+					}
+				}
+				else //When volt-var is disabled, Q is limited by Qref
+				{
+					if(frequency_watt)
+					{
+		                if(Qref > sqrt(S_base*S_base - (Pref_droop_pu*S_base)*(Pref_droop_pu*S_base)))
+		                {
+		                	Qref = sqrt(S_base*S_base - Pref*Pref);
+							gl_warning("inverter_dyn:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
+		                }
+
+		                if(Qref < -sqrt(S_base*S_base - (Pref_droop_pu*S_base)*(Pref_droop_pu*S_base)))
+		                {
+		                	Qref = -sqrt(S_base*S_base - Pref*Pref);
+							gl_warning("inverter_dyn:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
+		                }
+					}
+					else
+					{
+		                if(Qref > sqrt(S_base*S_base - Pref*Pref))
+		                {
+		                	Qref = sqrt(S_base*S_base - Pref*Pref);
+							gl_warning("inverter_dyn:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
+		                }
+
+		                if(Qref < -sqrt(S_base*S_base - Pref*Pref))
+		                {
+		                	Qref = -sqrt(S_base*S_base - Pref*Pref);
+							gl_warning("inverter_dyn:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
+		                }
+					}
+				}
 				// Function end
 
 				// Volt-var function enabled
@@ -3074,6 +3442,16 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						else if ((power_diff_val < 0) && (-power_diff_val > rampUpRate_reactive* deltat))
 						{
 							Qref_droop_pu = Qref_droop_pu_prev + rampUpRate_reactive* deltat;
+						}
+
+						if (Qref_droop_pu > Qref_max)
+						{
+							Qref_droop_pu = Qref_max;
+						}
+
+						if (Qref_droop_pu < Qref_min)
+						{
+							Qref_droop_pu = Qref_min;
 						}
 					}
 					else
@@ -3259,6 +3637,21 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 						// Fuction end
 					}
 
+					// Check Pref and Qref, make sure the inverter output S does not exceed S_base, Pref has the priority
+					if(Pref > S_base)
+					{
+						Pref = S_base;
+						gl_warning("inverter_dyn:%d %s - The dispatched active power is larger than the rated apparent power, the output active power is capped at the rated apparent power", obj->id, (obj->name ? obj->name : "Unnamed"));
+					}
+
+					if(Pref < -S_base)
+					{
+						Pref = -S_base;
+						gl_warning("inverter_dyn:%d %s - The dispatched active power is larger than the rated apparent power, the output active power is capped at the rated apparent power", obj->id, (obj->name ? obj->name : "Unnamed"));
+					}
+	                //Function end
+
+
 					// Frequency-watt function enabled
 					if (frequency_watt)
 					{
@@ -3296,6 +3689,16 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 							{
 								Pref_droop_pu = Pref_droop_pu_prev + rampUpRate_real * deltat;
 							}
+
+							if (Pref_droop_pu > Pref_max)
+							{
+								Pref_droop_pu = Pref_max;
+							}
+
+							if (Pref_droop_pu < Pref_min)
+							{
+								Pref_droop_pu = Pref_min;
+							}
 						}
 						else
 						{
@@ -3309,6 +3712,54 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					// Pref_droop_pu_filter is the power reference pass through the low pass filter
 					// Tpf is the time constant in the power low pass filter
 					// Pref_max and Pref_min are the upper and lower limits of power references
+					// Function end
+
+
+					// Find the limit for Qref, Qref_max and Qref_min
+					if(volt_var) //When volt-var is enabled, Q is limited by Qref_max and Qref_min
+					{
+						if(frequency_watt)  // When frequency-watt is enabled, P is controlled by Pref_droop_pu
+						{
+							Qref_max = sqrt(1-Pref_droop_pu*Pref_droop_pu);
+							Qref_min = -Qref_max;
+						}
+						else  //When frequency-watt is disabled, P is controlled by Pref
+						{
+							Qref_max = sqrt(1-(Pref/S_base)*(Pref/S_base));
+							Qref_min = -Qref_max;
+						}
+					}
+					else //When volt-var is disabled, Q is limited by Qref
+					{
+						if(frequency_watt)
+						{
+			                if(Qref > sqrt(S_base*S_base - (Pref_droop_pu*S_base)*(Pref_droop_pu*S_base)))
+			                {
+			                	Qref = sqrt(S_base*S_base - Pref*Pref);
+								gl_warning("inverter_dyn:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
+			                }
+
+			                if(Qref < -sqrt(S_base*S_base - (Pref_droop_pu*S_base)*(Pref_droop_pu*S_base)))
+			                {
+			                	Qref = -sqrt(S_base*S_base - Pref*Pref);
+								gl_warning("inverter_dyn:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
+			                }
+						}
+						else
+						{
+			                if(Qref > sqrt(S_base*S_base - Pref*Pref))
+			                {
+			                	Qref = sqrt(S_base*S_base - Pref*Pref);
+								gl_warning("inverter_dyn:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
+			                }
+
+			                if(Qref < -sqrt(S_base*S_base - Pref*Pref))
+			                {
+			                	Qref = -sqrt(S_base*S_base - Pref*Pref);
+								gl_warning("inverter_dyn:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
+			                }
+						}
+					}
 					// Function end
 
 					// Volt-var function enabled
@@ -3349,6 +3800,16 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 							else if ((power_diff_val < 0) && (-power_diff_val > rampUpRate_reactive* deltat))
 							{
 								Qref_droop_pu = Qref_droop_pu_prev + rampUpRate_reactive* deltat;
+							}
+
+							if (Qref_droop_pu > Qref_max)
+							{
+								Qref_droop_pu = Qref_max;
+							}
+
+							if (Qref_droop_pu < Qref_min)
+							{
+								Qref_droop_pu = Qref_min;
 							}
 						}
 						else
@@ -4185,6 +4646,31 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count)
 	}
 
 	//External call to internal variables -- used by powerflow to iterate the VSI implementation, basically
+
+	if (sqrt(Pref*Pref+Qref*Qref) > S_base)
+	{
+		gl_warning("inverter_dyn:%d %s - The output apparent power is larger than the rated apparent power, P and Q are capped", obj->id, (obj->name ? obj->name : "Unnamed"));
+
+	}
+
+	if(Pref > S_base)
+	{
+		Pref = S_base;
+	}
+	else if (Pref < -S_base)
+	{
+		Pref = -S_base;
+	}
+	else
+		if(Qref > sqrt(S_base*S_base-Pref*Pref))
+		{
+			Qref = sqrt(S_base*S_base-Pref*Pref);
+		}
+		else if (Qref < -sqrt(S_base*S_base-Pref*Pref))
+		{
+			Qref = -sqrt(S_base*S_base-Pref*Pref);
+		}
+
 	temp_VA = complex(Pref, Qref);
 
 	//See if we're a meter
