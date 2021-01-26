@@ -708,6 +708,7 @@ TIMESTAMP windturb_dg::presync(TIMESTAMP t0, TIMESTAMP t1)
 
 TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
+	//Branching
 	TIMESTAMP t2 = TS_NEVER;
 	double Pwind, Pmech, detCp, F, G, gearbox_eff;
 	double matCp[2][3];
