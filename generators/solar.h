@@ -167,6 +167,9 @@ private:
 	gld_property *inverter_power_property;
 	gld_property *inverter_pvc_Pmax_property;
 
+	gld_property *inverter_rated_power_va_property;
+	gld_property *inverter_rated_dc_voltage;
+
 	//Default voltage and current values, if ran "headless"
 	double default_voltage_array;
 	double default_current_array;

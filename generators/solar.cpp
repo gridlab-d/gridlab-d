@@ -27,6 +27,8 @@ using namespace std;
 #define FAHR_TO_CELS(x) (x - 32.0) * 5.0 / 9.0
 #define CELS_TO_FAHR(x) x * 9.0 / 5.0 + 32.0
 
+#define PV_CURVE_PARAM_RATIO 1.2
+
 /* Framework */
 CLASS *solar::oclass = NULL;
 solar *solar::defaults = NULL;
@@ -203,6 +205,8 @@ int solar::create(void)
 	inverter_voltage_property = NULL;
 	inverter_current_property = NULL;
 	inverter_power_property = NULL;
+	inverter_rated_power_va_property = NULL;
+	inverter_rated_dc_voltage = NULL;
 
 	//Default versions
 	default_voltage_array = 0.0;
@@ -221,10 +225,10 @@ int solar::create(void)
 	pvc_S_ref_wpm2 = 1e3; //Unit: w/m^2
 	pvc_a1 = 0;
 	pvc_b1 = 0;
-	pvc_U_oc_V = 1005;
-	pvc_I_sc_A = 1e2;
-	pvc_U_m_V = 750;
-	pvc_I_m_A = 84;
+	pvc_U_oc_V = 0; //1005;
+	pvc_I_sc_A = 0; //1e2;
+	pvc_U_m_V = 0; //750;
+	pvc_I_m_A = 0; //84;
 
 	//Init rated_power
 	Max_P = 0;
@@ -583,25 +587,27 @@ int solar::init(OBJECT *parent)
 	//efficiency dictates how much of the rate insolation the panel can capture and
 	//turn into electricity
 	//Rated power output
-	if (Max_P == 0)
+	if (solar_power_model != PV_CURVE) //Get rid of the warning when PV_CURVE mode is used
 	{
-		Max_P = Rated_Insolation * efficiency * area; // We are calculating the module efficiency which should be less than cell efficiency. What about the sun hours??
-		gl_verbose("solar:%d %s - Max_P was not specified.  Calculating from other defaults.",obj->id,(obj->name?obj->name:"Unnamed"));
-		/* TROUBLESHOOT
-		The relationship between power output and other physical variables is described by Max_P = Rated_Insolation * efficiency * area. Since Max_P 
-		was not set, using this equation to calculate it.
-		*/
-
 		if (Max_P == 0)
 		{
-			gl_warning("solar:%d %s - Max_P and {area or Rated_Insolation or effiency} were not specified or specified as zero.  Leads to maximum power output of 0.",obj->id,(obj->name?obj->name:"Unnamed"));
+			Max_P = Rated_Insolation * efficiency * area; // We are calculating the module efficiency which should be less than cell efficiency. What about the sun hours??
+			gl_verbose("solar:%d %s - Max_P was not specified.  Calculating from other defaults.",obj->id,(obj->name?obj->name:"Unnamed"));
 			/* TROUBLESHOOT
-			The relationship between power output and other physical variables is described by Max_P = Rated_Insolation * efficiency * area. Since Max_P
-			was not specified and this equation leads to a value of zero, the output of the model is likely to be no power at all times.
+			The relationship between power output and other physical variables is described by Max_P = Rated_Insolation * efficiency * area. Since Max_P 
+			was not set, using this equation to calculate it.
 			*/
+
+			if (Max_P == 0)
+			{
+				gl_warning("solar:%d %s - Max_P and {area or Rated_Insolation or effiency} were not specified or specified as zero.  Leads to maximum power output of 0.",obj->id,(obj->name?obj->name:"Unnamed"));
+				/* TROUBLESHOOT
+				The relationship between power output and other physical variables is described by Max_P = Rated_Insolation * efficiency * area. Since Max_P
+				was not specified and this equation leads to a value of zero, the output of the model is likely to be no power at all times.
+				*/
+			}
 		}
-	}
-	else
+		else
 	{
 		if (efficiency != 0 && area != 0 && Rated_Insolation != 0)
 		{
@@ -618,6 +624,7 @@ int solar::init(OBJECT *parent)
 				*/
 			}
 		}
+	}
 	}
 
 	if (Rated_Insolation == 0)
@@ -885,6 +892,26 @@ int solar::init(OBJECT *parent)
 			if ((inverter_power_property->is_valid() != true) || (inverter_power_property->is_double() != true))
 			{
 				GL_THROW("solar:%d - %s - Unable to map inverter power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
+				//Defined above
+			}
+
+			//Map the inverter rated power value
+			inverter_rated_power_va_property = new gld_property(parent, "rated_power");
+
+			//Check it
+			if ((inverter_rated_power_va_property->is_valid() != true) || (inverter_rated_power_va_property->is_double() != true))
+			{
+				GL_THROW("solar:%d - %s - Unable to map inverter rated power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
+				//Defined above
+			}
+
+			//Map the inverter dc voltage
+			inverter_rated_dc_voltage = new gld_property(parent, "rated_DC_Voltage");
+
+			//Check it
+			if ((inverter_rated_dc_voltage->is_valid() != true) || (inverter_rated_dc_voltage->is_double() != true))
+			{
+				GL_THROW("solar:%d - %s - Unable to map inverter rated DC voltage interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
 				//Defined above
 			}
 
@@ -1415,13 +1442,6 @@ void solar::init_pub_vars_pvcurve_mode()
 {
 	OBJECT *obj = OBJECTHDR(this);
 
-	// Data Sanity Check
-	if (Max_P < 0)
-	{
-		Max_P = 0;
-		gl_warning("solar:%d %s - 'PV_CURVE', the rated_power of PV cannot be negative - set as %f [W].",obj->id,(obj->name?obj->name:"Unnamed"),Max_P);
-	}
-
 	// Init with Reference Temperature & Insolation
 	pvc_cur_S_wpm2 = pvc_S_ref_wpm2;
 	pvc_cur_t_cels = pvc_t_ref_cels;
@@ -1469,7 +1489,7 @@ void solar::init_pub_vars_pvcurve_mode()
 		pvc_b1 = 0;
 		gl_warning("solar:%d %s - pvc_b1 was specified as a negative value - set to 0 (1/Celsius).",obj->id,(obj->name?obj->name:"Unnamed"));
 	}
-
+	/*
 	if (pvc_U_oc_V <= 0)
 	{
 		pvc_U_oc_V = 1005;
@@ -1492,6 +1512,61 @@ void solar::init_pub_vars_pvcurve_mode()
 	{
 		pvc_I_m_A = 84;
 		gl_warning("solar:%d %s - pvc_I_m_A was not a valid value, set to 84 (V).",obj->id,(obj->name?obj->name:"Unnamed"));
+	}*/
+
+	// Data Sanity Check
+	if (Max_P <= 0)
+	{
+		if ((pvc_U_m_V > 0) && (pvc_I_m_A > 0))
+		{
+			Max_P = pvc_U_m_V * pvc_I_m_A;
+
+			if(pvc_I_sc_A <= 0)
+			{
+				pvc_I_sc_A = pvc_I_m_A * PV_CURVE_PARAM_RATIO;
+				gl_warning("solar:%d %s - pvc_I_sc_A was not a valid value - set to %lf (A).",obj->id,(obj->name?obj->name:"Unnamed"), pvc_I_sc_A);
+			}
+			if(pvc_U_oc_V <= 0)
+			{
+				pvc_U_oc_V = pvc_U_m_V * PV_CURVE_PARAM_RATIO;
+				gl_warning("solar:%d %s - pvc_U_oc_V was not a valid value - set to %lf (V).",obj->id,(obj->name?obj->name:"Unnamed"), pvc_U_oc_V);
+			}
+		}
+		else
+		{
+			double inv_rated_power_va = inverter_rated_power_va_property->get_double();
+			Max_P = inv_rated_power_va;
+
+			double inv_rated_dc_volt_v = inverter_rated_dc_voltage->get_double();
+			pvc_U_m_V = inv_rated_dc_volt_v;
+
+			pvc_I_m_A = Max_P / pvc_U_m_V;
+			
+			pvc_I_sc_A = pvc_I_m_A * PV_CURVE_PARAM_RATIO;
+			pvc_U_oc_V = pvc_U_m_V * PV_CURVE_PARAM_RATIO;
+		}
+
+		gl_warning("solar:%d %s - 'PV_CURVE', the rated_power of PV cannot be nonpositive - set as %f [W].",obj->id,(obj->name?obj->name:"Unnamed"),Max_P);
+	}
+	else
+	{
+		if (pvc_U_m_V <= 0)
+		{
+			double inv_rated_dc_volt_v = inverter_rated_dc_voltage->get_double();
+			pvc_U_m_V = inv_rated_dc_volt_v;
+		}
+		if (pvc_I_m_A <= 0)
+		{
+			pvc_I_m_A = Max_P / pvc_U_m_V;
+		}
+		if (pvc_I_sc_A <= 0)
+		{
+			pvc_I_sc_A = pvc_I_m_A * PV_CURVE_PARAM_RATIO;
+		}
+		if (pvc_U_oc_V <= 0)
+		{
+			pvc_U_oc_V = pvc_U_m_V * PV_CURVE_PARAM_RATIO;
+		}
 	}
 
 	// Calc C1 & C2 using other PVC params
