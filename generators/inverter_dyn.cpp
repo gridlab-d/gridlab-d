@@ -1571,81 +1571,10 @@ void inverter_dyn::update_iGen(complex VA_Out)
 }
 
 /* Check the inverter output and make sure it is in the limit */
-bool inverter_dyn::check_and_update_VA_Out(OBJECT *obj)
+void inverter_dyn::check_and_update_VA_Out(OBJECT *obj)
 {
-	bool flag_VA_Out_changed = false;
-
 	if (grid_forming_mode == DYNAMIC_DC_BUS)
 	{
-		// Check if pvc_Pmax is nonnegative
-		if (pvc_Pmax < 0)
-		{
-			GL_THROW("pvc_Pmax (%f [W]) is negative!!",
-					 pvc_Pmax);
-		}
-
-		// Check P_Out & Q_Out
-		double P_Out = VA_Out.Re();
-		double Q_Out = VA_Out.Im();
-
-		//== check P_Out
-		double P_Out_lim = pvc_Pmax;
-		if (S_base < pvc_Pmax) //i.e., double P_Out_lim = S_base < pvc_Pmax ? S_base : pvc_Pmax;
-		{	
-			gl_warning("inverter_dyn:%d - %s - P_Out is capped at a rated power of %f [W].",obj->id,(obj->name ? obj->name : "unnamed"), S_base);
-			P_Out_lim = S_base;
-		}
-		double P_Out_lim_flr = floor(P_Out_lim); //P_Out_lim is always positive; And this is important to guarantee that the VA_Out.Re() will be smaller than pvc_Pmax.
-
-		if (abs(P_Out) > P_Out_lim_flr)
-		{
-			gl_warning("inverter_dyn:%d - %s - The absolute value of P_Out (%f [W] required by powerflow) is capped at %f [W].",obj->id,(obj->name ? obj->name : "unnamed"), P_Out, P_Out_lim_flr);
-
-			P_Out = copysign(P_Out_lim_flr, P_Out);
-			flag_VA_Out_changed = true;
-		}
-
-		if (abs(Pref) > P_Out_lim_flr)
-		{
-			gl_warning("inverter_dyn:%d - %s - The absolute value of Pref (%f [W] set by the user) is capped at %f [W].",obj->id,(obj->name ? obj->name : "unnamed"), Pref, P_Out_lim_flr);
-
-			Pref = copysign(P_Out_lim_flr, Pref);
-		}
-
-		//== check Q_Out
-		double Q_Out_lim_sq = 2 * pow(S_base, 2) - pow(P_Out, 2);
-
-		if (Q_Out_lim_sq < 0) // Technically, there is no need to check the 'Q_Out_lim_sq', but there is no harm to double check
-		{
-			GL_THROW("inverter_dyn:%d - %s - Rated power (%f [W]) must be at least 70.71% of the P_Out (%f) [W]",obj->id,(obj->name?obj->name:"Unnamed"),S_base, P_Out);
-		}
-		else
-		{
-			double Q_Out_lim_flr = floor(sqrt(Q_Out_lim_sq)); // with floor(), the margin is safer
-
-			if (abs(Q_Out) > Q_Out_lim_flr)
-			{
-				gl_warning("inverter_dyn:%d - %s - Magnitude of Q_Out (%f [var] required by powerflow) is be capped at %f [var].",obj->id,(obj->name ? obj->name : "unnamed"), Q_Out, Q_Out_lim_flr);
-
-				Q_Out = copysign(Q_Out_lim_flr, Q_Out);
-				flag_VA_Out_changed = true;
-			}
-
-			if (abs(Qref) > Q_Out_lim_flr)
-			{
-				gl_warning("inverter_dyn:%d - %s - Absolute value of Qref is capped at %f [var].",obj->id,(obj->name ? obj->name : "unnamed"), Q_Out_lim_flr);
-
-				Qref = copysign(Q_Out_lim_flr, Qref);
-			}
-		}
-
-		if (flag_VA_Out_changed)
-		{
-			// Update VA_Out
-			VA_Out = complex(P_Out, Q_Out);
-			update_iGen(VA_Out);
-		}
-
 		// Update the P_DC
 		P_DC = VA_Out.Re(); //Lossless
 
@@ -1678,7 +1607,6 @@ bool inverter_dyn::check_and_update_VA_Out(OBJECT *obj)
 		// Update I_DC
 		I_DC = P_DC/V_DC;
 	}
-	return flag_VA_Out_changed;
 }
 
 /* Postsync is called when the clock needs to advance on the second top-down pass */
@@ -1722,7 +1650,7 @@ TIMESTAMP inverter_dyn::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	// Limit check for P_Out & Q_Out
-	bool flag_VA_Out_changed = check_and_update_VA_Out(obj);
+	check_and_update_VA_Out(obj);
 
 	// Sync the powerflow variables
 	if (parent_is_a_meter == true)
@@ -1730,14 +1658,7 @@ TIMESTAMP inverter_dyn::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		push_complex_powerflow_values(false);
 	}
 
-	if (flag_VA_Out_changed)
-	{
-		return t1;
-	}
-	else
-	{
-		return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
-	}
+	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
 
 //////////////////////////////////////////////////////////////////////////

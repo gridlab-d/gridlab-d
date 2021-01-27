@@ -155,7 +155,7 @@ private:
 	void push_complex_powerflow_values(bool update_voltage);
 
 	// Check limit func
-	bool check_and_update_VA_Out(OBJECT *obj);
+	void check_and_update_VA_Out(OBJECT *obj);
 
 	// Update current func
 	void update_iGen(complex);

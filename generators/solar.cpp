@@ -226,6 +226,9 @@ int solar::create(void)
 	pvc_U_m_V = 750;
 	pvc_I_m_A = 84;
 
+	//Init rated_power
+	Max_P = 0;
+
 	return 1; /* return 1 on success, 0 on failure */
 }
 
