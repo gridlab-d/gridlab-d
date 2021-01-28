@@ -1076,6 +1076,8 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 	STATUS fxn_return_status;
 
 	complex temp_power_val[3];
+	complex temp_intermed_curr_val[3];
+	char loop_var;
 
 	complex temp_complex_value;
 	gld_wlock *test_rlock;
@@ -1236,7 +1238,14 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 					complex temp_VA = complex(Pref, Qref);
 
 					//Force the output power the same as glm pre-defined values
-					value_IGenerated[0] = ~(temp_VA / value_Circuit_V[0]) + filter_admittance * value_Circuit_V[0];
+					if (value_Circuit_V[0].Mag() > 0.0)
+					{
+						value_IGenerated[0] = ~(temp_VA / value_Circuit_V[0]) + filter_admittance * value_Circuit_V[0];
+					}
+					else
+					{
+						value_IGenerated[0] = complex(0.0,0.0);
+					}
 				}
 			}
 		}
@@ -1307,10 +1316,22 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 						temp_power_val[1] = temp_VA / 3.0;
 						temp_power_val[2] = temp_VA / 3.0;
 
-						//Back out the current injection
-						temp_current_val[0] = ~(temp_power_val[0] / value_Circuit_V[0]) + generator_admittance[0][0] * value_Circuit_V[0] + generator_admittance[0][1] * value_Circuit_V[1] + generator_admittance[0][2] * value_Circuit_V[2];
-						temp_current_val[1] = ~(temp_power_val[1] / value_Circuit_V[1]) + generator_admittance[1][0] * value_Circuit_V[0] + generator_admittance[1][1] * value_Circuit_V[1] + generator_admittance[1][2] * value_Circuit_V[2];
-						temp_current_val[2] = ~(temp_power_val[2] / value_Circuit_V[2]) + generator_admittance[2][0] * value_Circuit_V[0] + generator_admittance[2][1] * value_Circuit_V[1] + generator_admittance[2][2] * value_Circuit_V[2];
+						//Back out the current injection - do voltage checks
+						for (loop_var=0; loop_var<3; loop_var++)
+						{
+							if (value_Circuit_V[loop_var].Mag() > 0.0)
+							{
+								temp_intermed_curr_val[loop_var] = ~(temp_power_val[loop_var] / value_Circuit_V[loop_var]);
+							}
+							else
+							{
+								temp_intermed_curr_val[loop_var] = complex(0.0,0.0);
+							}
+						}
+						
+						temp_current_val[0] = temp_intermed_curr_val[0] + generator_admittance[0][0] * value_Circuit_V[0] + generator_admittance[0][1] * value_Circuit_V[1] + generator_admittance[0][2] * value_Circuit_V[2];
+						temp_current_val[1] = temp_intermed_curr_val[1] + generator_admittance[1][0] * value_Circuit_V[0] + generator_admittance[1][1] * value_Circuit_V[1] + generator_admittance[1][2] * value_Circuit_V[2];
+						temp_current_val[2] = temp_intermed_curr_val[2] + generator_admittance[2][0] * value_Circuit_V[0] + generator_admittance[2][1] * value_Circuit_V[1] + generator_admittance[2][2] * value_Circuit_V[2];
 
 						//Apply and see what happens
 						//for grid following inverter, the internal voltages may not be balanced
@@ -1329,8 +1350,17 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 						// Obtain the positive sequence voltage
 						value_Circuit_V_PS = (value_Circuit_V[0] + value_Circuit_V[1] * complex(cos(2.0 / 3.0 * PI), sin(2.0 / 3.0 * PI)) + value_Circuit_V[2] * complex(cos(-2.0 / 3.0 * PI), sin(-2.0 / 3.0 * PI))) / 3.0;
+						
 						// Obtain the positive sequence current
-						value_Circuit_I_PS[0] = ~(temp_VA / value_Circuit_V_PS) / 3.0;
+						if (value_Circuit_V_PS.Mag() > 0.0)
+						{
+							value_Circuit_I_PS[0] = ~(temp_VA / value_Circuit_V_PS) / 3.0;
+						}
+						else
+						{
+							value_Circuit_I_PS[0] = complex(0.0,0.0);
+						}
+						
 						value_Circuit_I_PS[1] = value_Circuit_I_PS[0] * complex(cos(-2.0 / 3.0 * PI), sin(-2.0 / 3.0 * PI));
 						value_Circuit_I_PS[2] = value_Circuit_I_PS[0] * complex(cos(2.0 / 3.0 * PI), sin(2.0 / 3.0 * PI));
 
@@ -1370,21 +1400,42 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 /* Update the injected currents with respect to VA_Out */
 void inverter_dyn::update_iGen(complex VA_Out)
 {
+	char loop_var;
+
 	if (parent_is_single_phase == true) // single phase/split-phase implementation
 	{
 		// power_val[0], temp_current_val[0], & value_IGenerated[0]
-		power_val[0] = VA_Out;
-		temp_current_val[0] = ~(power_val[0] / value_Circuit_V[0]);
-		value_IGenerated[0] = temp_current_val[0] + filter_admittance * value_Circuit_V[0];
+		if (value_Circuit_V[0].Mag() > 0.0)
+		{
+			power_val[0] = VA_Out;
+			temp_current_val[0] = ~(power_val[0] / value_Circuit_V[0]);
+			value_IGenerated[0] = temp_current_val[0] + filter_admittance * value_Circuit_V[0];
+		}
+		else
+		{
+			power_val[0] = complex(0.0,0.0);
+			temp_current_val[0] = complex(0.0,0.0);
+			value_IGenerated[0] = complex(0.0,0.0);
+		}
 	}
 	else
 	{
-		// power_val, temp_current_val, & value_IGenerated
-		power_val[0] = power_val[1] = power_val[2] = VA_Out / 3;
+		//Loop through for voltage check
+		for (loop_var=0; loop_var<3; loop_var++)
+		{
+			if (value_Circuit_V[loop_var].Mag() > 0.0)
+			{
+				// power_val, temp_current_val, & value_IGenerated
+				power_val[loop_var] = VA_Out / 3;
 
-		temp_current_val[0] = ~(power_val[0] / value_Circuit_V[0]);
-		temp_current_val[1] = ~(power_val[1] / value_Circuit_V[1]);
-		temp_current_val[2] = ~(power_val[2] / value_Circuit_V[2]);
+				temp_current_val[loop_var] = ~(power_val[loop_var] / value_Circuit_V[loop_var]);
+			}
+			else
+			{
+				power_val[loop_var] = complex(0.0,0.0);
+				temp_current_val[loop_var] = complex(0.0,0.0);
+			}
+		}
 
 		value_IGenerated[0] = temp_current_val[0] - (-generator_admittance[0][0] * value_Circuit_V[0] - generator_admittance[0][1] * value_Circuit_V[1] - generator_admittance[0][2] * value_Circuit_V[2]);
 		value_IGenerated[1] = temp_current_val[1] - (-generator_admittance[1][0] * value_Circuit_V[0] - generator_admittance[1][1] * value_Circuit_V[1] - generator_admittance[1][2] * value_Circuit_V[2]);
@@ -4075,6 +4126,8 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count)
 	bool running_in_delta;
 	double freq_diff_angle_val, tdiff;
 	complex rotate_value;
+	char loop_var;
+	complex intermed_curr_calc[3];
 
 	if (deltatimestep_running > 0.0) //Deltamode call
 	{
@@ -4221,7 +4274,14 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count)
 				}
 
 				//Back out the current injection
-				temp_current_val[0] = ~(temp_VA / value_Circuit_V[0]) + filter_admittance * value_Circuit_V[0];
+				if (value_Circuit_V[0].Mag() > 0.0)
+				{
+					temp_current_val[0] = ~(temp_VA / value_Circuit_V[0]) + filter_admittance * value_Circuit_V[0];
+				}
+				else
+				{
+					temp_current_val[0] = complex(0.0,0.0);
+				}
 
 				//Apply and see what happens
 				value_IGenerated[0] = temp_current_val[0]; // for grid-following inverters, the internal voltages need to be three phase balanced
@@ -4269,11 +4329,22 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count)
 			{
 				if (grid_following_mode == BALANCED_POWER) // Assume the inverter injects balanced power
 				{
+					for (loop_var=0; loop_var<3; loop_var++)
+					{
+						if (value_Circuit_V[loop_var].Mag() > 0.0)
+						{
+							intermed_curr_calc[loop_var] = ~(temp_VA / 3.0 / value_Circuit_V[loop_var]);
+						}
+						else
+						{
+							intermed_curr_calc[loop_var] = complex(0.0,0.0);
+						}
+					}
 
 					//Back out the current injection
-					temp_current_val[0] = ~(temp_VA / 3.0 / value_Circuit_V[0]) + generator_admittance[0][0] * value_Circuit_V[0] + generator_admittance[0][1] * value_Circuit_V[1] + generator_admittance[0][2] * value_Circuit_V[2];
-					temp_current_val[1] = ~(temp_VA / 3.0 / value_Circuit_V[1]) + generator_admittance[1][0] * value_Circuit_V[0] + generator_admittance[1][1] * value_Circuit_V[1] + generator_admittance[1][2] * value_Circuit_V[2];
-					temp_current_val[2] = ~(temp_VA / 3.0 / value_Circuit_V[2]) + generator_admittance[2][0] * value_Circuit_V[0] + generator_admittance[2][1] * value_Circuit_V[1] + generator_admittance[2][2] * value_Circuit_V[2];
+					temp_current_val[0] = intermed_curr_calc[0] + generator_admittance[0][0] * value_Circuit_V[0] + generator_admittance[0][1] * value_Circuit_V[1] + generator_admittance[0][2] * value_Circuit_V[2];
+					temp_current_val[1] = intermed_curr_calc[1] + generator_admittance[1][0] * value_Circuit_V[0] + generator_admittance[1][1] * value_Circuit_V[1] + generator_admittance[1][2] * value_Circuit_V[2];
+					temp_current_val[2] = intermed_curr_calc[2] + generator_admittance[2][0] * value_Circuit_V[0] + generator_admittance[2][1] * value_Circuit_V[1] + generator_admittance[2][2] * value_Circuit_V[2];
 
 					//Apply and see what happens
 					value_IGenerated[0] = temp_current_val[0]; // for grid-following inverters, the internal voltages need to be three phase balanced
@@ -4284,8 +4355,18 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count)
 				{
 					// Obtain the positive sequence voltage
 					value_Circuit_V_PS = (value_Circuit_V[0] + value_Circuit_V[1] * complex(cos(2.0 / 3.0 * PI), sin(2.0 / 3.0 * PI)) + value_Circuit_V[2] * complex(cos(-2.0 / 3.0 * PI), sin(-2.0 / 3.0 * PI))) / 3.0;
-					// Obtain the positive sequence current
-					value_Circuit_I_PS[0] = ~(temp_VA / 3.0 / value_Circuit_V_PS);
+					
+					//Check value
+					if (value_Circuit_V_PS.Mag() > 0.0)
+					{
+						// Obtain the positive sequence current
+						value_Circuit_I_PS[0] = ~(temp_VA / 3.0 / value_Circuit_V_PS);
+					}
+					else
+					{
+						value_Circuit_I_PS[0] = complex(0.0,0.0);
+					}
+					
 					value_Circuit_I_PS[1] = value_Circuit_I_PS[0] * complex(cos(-2.0 / 3.0 * PI), sin(-2.0 / 3.0 * PI));
 					value_Circuit_I_PS[2] = value_Circuit_I_PS[0] * complex(cos(2.0 / 3.0 * PI), sin(2.0 / 3.0 * PI));
 

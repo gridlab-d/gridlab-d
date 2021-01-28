@@ -20,6 +20,12 @@
 
 static GLOBALVAR *global_varlist = NULL, *lastvar = NULL;
 
+static KEYWORD cnf_keys[] = {
+	{"DEFAULT", CNF_DEFAULT, cnf_keys+1},
+	{"RECT", CNF_RECT, cnf_keys+2},
+	{"POLAR_DEG", CNF_POLAR_DEG, cnf_keys+3},
+	{"POLAR_RAD", CNF_POLAR_RAD, NULL},
+};
 static KEYWORD df_keys[] = {
 	{"ISO", DF_ISO, df_keys+1},
 	{"US", DF_US, df_keys+2},
@@ -149,6 +155,7 @@ static struct s_varmap {
 	{"stoptime", PT_timestamp, &global_stoptime, PA_PUBLIC, "simulation stop time"},
 	{"double_format", PT_char32, &global_double_format, PA_PUBLIC, "format for writing double values"},
 	{"complex_format", PT_char256, &global_complex_format, PA_PUBLIC, "format for writing complex values"},
+	{"complex_output_format", PT_enumeration, &global_complex_output_format, PA_PUBLIC, "complex output representation", cnf_keys},
 	{"object_format", PT_char32, &global_object_format, PA_PUBLIC, "format for writing anonymous object names"},
 	{"object_scan", PT_char32, &global_object_scan, PA_PUBLIC, "format for reading anonymous object names"},
 	{"object_tree_balance", PT_bool, &global_no_balance, PA_PUBLIC, "object index tree balancing enable flag"},

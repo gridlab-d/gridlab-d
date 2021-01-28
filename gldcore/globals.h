@@ -147,7 +147,15 @@ GLOBAL TIMESTAMP global_stoptime INIT(TS_NEVER); /**< The simulation stop time (
 
 GLOBAL char global_double_format[32] INIT("%+lg"); /**< the format to use when processing real numbers */
 GLOBAL char global_complex_format[256] INIT("%+lg%+lg%c"); /**< the format to use when processing complex numbers */
-//GLOBAL char global_complex_format[256] INIT("%+8.4f%+8.4f%c"); /**< the format to use when processing complex numbers */
+
+typedef enum {
+	CNF_DEFAULT, 	/**< complex numbers are left to whatever format the notation flag is set to */
+	CNF_RECT,     	/**< complex numbers are forced into rectangular format for outputs */
+	CNF_POLAR_DEG, 	/**< complex numbers are forced into polar format with degree angles */
+	CNF_POLAR_RAD, 	/**< complex numbers are forced into polar format with radian angles */
+} COMPLEXCONVERFORMAT; /**< determines the type of run */
+GLOBAL COMPLEXCONVERFORMAT global_complex_output_format INIT(CNF_DEFAULT);	/**< use whatever the numbers already are */
+
 GLOBAL char global_object_format[32] INIT("%s:%d"); 
 GLOBAL char global_object_scan[32] INIT("%[^:]:%d"); /**< the format to use when scanning for object ids */
 

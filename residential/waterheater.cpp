@@ -20,6 +20,25 @@
  **/
 #include "waterheater.h"
 
+#include <cstdlib>
+#include <cstdio>
+#include <cerrno>
+#include <cmath>
+
+#include <chrono>
+#include <iostream>
+#include <exception>
+#include <algorithm>
+#include <limits>
+#include <sstream>
+#include <string>
+#include <fstream>
+#include <memory>
+
+using std::stringstream;
+using std::ofstream;
+using std::string;
+
 #define TSTAT_PRECISION 0.01
 #define HEIGHT_PRECISION 0.01
 /*
@@ -1913,14 +1932,14 @@ void waterheater::reinitialize_internals(int dt) {
 	}
 }
 
-vector<double> waterheater::multiply_waterheater_matrices(vector<vector<double>> a, vector<double> b) {
+std::vector<double> waterheater::multiply_waterheater_matrices(vector<vector<double>> &a, vector<double> &b) {
     auto rv = vector<double>(a.size());
 	for(int i=0; i<a.size(); i++) {
 		for(int j=0; j<a[i].size(); j++){
             rv[i] += a[i][j] * b[j];
 		}
 	}
-	return rv;
+	return std::move(rv);
 }
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE

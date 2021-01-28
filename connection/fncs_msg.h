@@ -20,6 +20,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <memory>
 #include <json/json.h>
 //#include "../third_party/jsonCpp/json/json.h"
 using namespace std;

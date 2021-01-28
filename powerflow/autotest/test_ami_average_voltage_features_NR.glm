@@ -1,0 +1,92 @@
+// Tests "average reporting" for AMI systems
+// Checks the voltage values
+
+clock {
+     timezone UTC0;
+     starttime '2012-01-01 00:00:00';
+     stoptime '2012-01-01 01:01:00';
+}
+
+//#set profiler=1
+#set double_format=%+.12lg
+
+module tape;
+module assert;
+module powerflow {
+	solver_method NR;
+	maximum_voltage_error 1e-12;
+}
+
+//Three-phase system
+object meter {
+	bustype SWING;
+	name THREE_PHASE_ROOT;
+	phases ABCN;
+	// 15 minutes:
+	measured_stats_interval 900;
+	nominal_voltage 7200.0;
+
+    // Initialize voltages to the first value in the player files.
+    voltage_A 8167.05135671602+0j;
+    voltage_B -3416.7849446180494+5918.045122614877j;
+    voltage_C -3616.065987332662-6263.21001358189j;
+
+    // Play in voltages over time.
+    object player {
+        property voltage_A;
+        file "../data_voltage_values_AMI_average_test_A.player";
+    };
+    object player {
+        property voltage_B;
+        file "../data_voltage_values_AMI_average_test_B.player";
+    };
+    object player {
+        property voltage_C;
+        file "../data_voltage_values_AMI_average_test_C.player";
+    };
+
+    // Test the average voltage magnitudes:
+    // A:
+    object double_assert {
+		target measured_avg_voltage_A_mag_in_interval;
+		within 0.01;
+		object player {
+			property value;
+			file "../data_AMI_average_test_15_min_avg_voltage_mag_A.csv";
+		};
+	};
+    // B:
+    object double_assert {
+		target measured_avg_voltage_B_mag_in_interval;
+		within 0.01;
+		object player {
+			property value;
+			file "../data_AMI_average_test_15_min_avg_voltage_mag_B.csv";
+		};
+	};
+    // C:
+    object double_assert {
+		target measured_avg_voltage_C_mag_in_interval;
+		within 0.01;
+		object player {
+			property value;
+			file "../data_AMI_average_test_15_min_avg_voltage_mag_C.csv";
+		};
+	};
+    
+    //object recorder {
+    //    name voltage_recorder;
+    //    property "voltage_A,voltage_B,voltage_C";
+    //    interval 60;
+    //    file voltage.csv;
+    //    limit -1;
+    //};
+    //
+    //object recorder {
+    //    name avg_recorder;
+    //    property "measured_avg_voltage_A_mag_in_interval,measured_avg_voltage_B_mag_in_interval,measured_avg_voltage_C_mag_in_interval";
+    //    interval 60;
+    //    file v_avg.csv;
+    //    limit -1;
+    //};
+}
