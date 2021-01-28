@@ -1524,12 +1524,10 @@ void solar::init_pub_vars_pvcurve_mode()
 			if(pvc_I_sc_A <= 0)
 			{
 				pvc_I_sc_A = pvc_I_m_A * PV_CURVE_PARAM_RATIO;
-				gl_warning("solar:%d %s - pvc_I_sc_A was not a valid value - set to %lf (A).",obj->id,(obj->name?obj->name:"Unnamed"), pvc_I_sc_A);
 			}
 			if(pvc_U_oc_V <= 0)
 			{
 				pvc_U_oc_V = pvc_U_m_V * PV_CURVE_PARAM_RATIO;
-				gl_warning("solar:%d %s - pvc_U_oc_V was not a valid value - set to %lf (V).",obj->id,(obj->name?obj->name:"Unnamed"), pvc_U_oc_V);
 			}
 		}
 		else
@@ -1547,6 +1545,7 @@ void solar::init_pub_vars_pvcurve_mode()
 		}
 
 		gl_warning("solar:%d %s - 'PV_CURVE', the rated_power of PV cannot be nonpositive - set as %f [W].",obj->id,(obj->name?obj->name:"Unnamed"),Max_P);
+		gl_warning("solar:%d %s - the pv curve parameters are updated.",obj->id,(obj->name?obj->name:"Unnamed"));
 	}
 	else
 	{
@@ -1567,6 +1566,8 @@ void solar::init_pub_vars_pvcurve_mode()
 		{
 			pvc_U_oc_V = pvc_U_m_V * PV_CURVE_PARAM_RATIO;
 		}
+		
+		gl_warning("solar:%d %s - the pv curve parameters are updated.",obj->id,(obj->name?obj->name:"Unnamed"));
 	}
 
 	// Calc C1 & C2 using other PVC params
