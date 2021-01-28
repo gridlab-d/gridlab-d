@@ -124,6 +124,7 @@ int switch_object::init(OBJECT *parent)
 {
 	double phase_total, switch_total;
 	char indexa, indexb;
+	set phase_from, phase_to;
 
 	OBJECT *obj = OBJECTHDR(this);
 
@@ -135,6 +136,20 @@ int switch_object::init(OBJECT *parent)
 	//Check for deferred
 	if (result == 2)
 		return 2;	//Return the deferment - no sense doing everything else!
+
+	//Grab phase information
+	phase_from = node_phase_information(from);
+	phase_to = node_phase_information(to);
+
+	//Just blanket check them - none would be valid
+	if (((phase_from | phase_to | phases) & PHASE_S) == PHASE_S)
+	{
+		GL_THROW("switch:%d - %s - triplex/S-phase connections unsupported at this time",get_id(),get_name());
+		/*  TROUBLESHOOT
+		A switch was placed connected to a triplex/split-phase node, or was flagged as triplex/split-phase itself.  This is not
+		supported at this time - all switching must be done on the standard three-phase portion of the system.
+		*/
+	}
 
 	//secondary init stuff - should have been done, but we'll be safe
 	//Basically zero everything
@@ -1906,6 +1921,35 @@ void switch_object::set_switch_faulted_phases(unsigned char desired_status)
 	gl_verbose ("set_switch_faulted_phases:%d", desired_status);
 	//Remove from the fault tracker
 	phased_switch_status |= desired_status;
+}
+
+//Function to pull phase information from the from/to node, using API - for triplex check at this point
+set switch_object::node_phase_information(OBJECT *obj)
+{
+	gld_property *temp_phase_property;
+	set phase_information;
+
+	//Map it
+	temp_phase_property = new gld_property(obj,"phases");
+
+	//Make sure it worked
+	if ((temp_phase_property->is_valid() != true) || (temp_phase_property->is_set() != true))
+	{
+		GL_THROW("switch:%d - %s - unable to map phase property of connecting node",get_id(),get_name());
+		/*  TROUBLESHOOT
+		While attempting to map the phases of the from or to node of a switch-based object, an error occurred.
+		Please try again.  If the error persists, please submit a bugfix ticket.
+		*/
+	}
+
+	//Pull the value
+	phase_information = temp_phase_property->get_set();
+
+	//Clean up
+	delete temp_phase_property;
+
+	//Send it back
+	return phase_information;
 }
 
 //Module-level deltamode call
