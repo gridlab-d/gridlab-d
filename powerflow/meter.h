@@ -33,6 +33,12 @@ public:
 	double measured_reactive_max_power_in_interval;	///< maximum real power over the last interval
 	double measured_real_min_power_in_interval;	///< minimum real power over the last interval
 	double measured_reactive_min_power_in_interval;	///< minimum real power over the last interval
+    double measured_real_avg_power_in_interval_3ph[3];	///< metered real part of average power over the last interval
+    double measured_reactive_avg_power_in_interval_3ph[3];	///< metered reactive part of average power over the last interval
+    double measured_real_max_power_in_interval_3ph[3];	///< maximum real power over the last interval
+    double measured_reactive_max_power_in_interval_3ph[3];	///< maximum real power over the last interval
+    double measured_real_min_power_in_interval_3ph[3];	///< minimum real power over the last interval
+    double measured_reactive_min_power_in_interval_3ph[3];	///< minimum real power over the last interval
 	double measured_min_max_avg_timestep; // Period of timestep for min/max/average calculations
 
 	complex measured_current[3];	///< measured current
@@ -45,8 +51,10 @@ public:
 	double measured_demand;			///< metered demand (peak of power)
 	double measured_real_power;		///< metered real power
 	double last_measured_real_power; ///< previous metered real power
+	double last_measured_real_power_3ph[3]; ///< previous metered real power, all three phases
 	double measured_reactive_power; ///< metered reactive power
 	double last_measured_reactive_power; ///< previously measured reactive power
+	double last_measured_reactive_power_3ph[3]; ///< previously measured reactive power, all three phases
 	complex indiv_measured_power[3];///< metered power on each phase
 	bool meter_interrupted;			///< Reliability flag - goes active if the customer is in an "interrupted" state
 	bool meter_interrupted_secondary;	///< Reliability flag - goes active if the customer is in an "secondary interrupted" state - i.e., momentary
@@ -117,6 +125,13 @@ private:
 	double last_measured_min_reactive_power;
 	double last_measured_avg_real_power;
 	double last_measured_avg_reactive_power;
+
+    double last_measured_max_real_power_3ph[3];
+    double last_measured_min_real_power_3ph[3];
+    double last_measured_max_reactive_power_3ph[3];
+    double last_measured_min_reactive_power_3ph[3];
+    double last_measured_avg_real_power_3ph[3];
+    double last_measured_avg_reactive_power_3ph[3];
 
     int voltage_avg_count;
     TIMESTAMP last_delta_timestamp;

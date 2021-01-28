@@ -936,7 +936,7 @@ void load::load_update_fxn(bool fault_mode)
 							}
 
 							//Check them - Phase B
-							if (((NR_busdata[NR_node_reference].phases & 0x02) == 0x01) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
+							if (((NR_busdata[NR_node_reference].phases & 0x02) == 0x02) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
 							{
 								volt_below_thresh = true;
 							}
@@ -1493,7 +1493,7 @@ void load::load_update_fxn(bool fault_mode)
 							}
 
 							//Check them - Phase B
-							if (((NR_busdata[NR_node_reference].phases & 0x02) == 0x01) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
+							if (((NR_busdata[NR_node_reference].phases & 0x02) == 0x02) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
 							{
 								volt_below_thresh = true;
 							}
@@ -2077,7 +2077,7 @@ void load::load_update_fxn(bool fault_mode)
 						}
 
 						//Check them - Phase B
-						if (((NR_busdata[node_reference_value].phases & 0x02) == 0x01) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
+						if (((NR_busdata[node_reference_value].phases & 0x02) == 0x02) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
 						{
 							volt_below_thresh = true;
 						}

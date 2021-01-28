@@ -65,6 +65,8 @@ object meter {
 	phases ABCN;
 	measured_stats_interval 7.0 min;
 	nominal_voltage 7200.0;
+    
+    // Three phase:
 	object double_assert {
 		target measured_avg_real_power_in_interval;
 		within 0.01;
@@ -81,6 +83,59 @@ object meter {
 			file "../data_AMI_average_test_7_min_avg_reac_power_threephase.csv";
 		};
 	};
+    
+    // Per phase:
+    // A:
+    object double_assert {
+		target measured_avg_real_power_A_in_interval;
+		within 0.01;
+		object player {
+			property value;
+			file "../data_AMI_average_test_7_min_avg_real_power_A.csv";
+		};
+	};
+	object double_assert {
+		target measured_avg_reactive_power_A_in_interval;
+		within 0.01;
+		object player {
+			property value;
+			file "../data_AMI_average_test_7_min_avg_reac_power_A.csv";
+		};
+	};
+    // B:
+    object double_assert {
+		target measured_avg_real_power_B_in_interval;
+		within 0.01;
+		object player {
+			property value;
+			file "../data_AMI_average_test_7_min_avg_real_power_B.csv";
+		};
+	};
+	object double_assert {
+		target measured_avg_reactive_power_B_in_interval;
+		within 0.01;
+		object player {
+			property value;
+			file "../data_AMI_average_test_7_min_avg_reac_power_B.csv";
+		};
+	};
+    // C:
+    object double_assert {
+		target measured_avg_real_power_C_in_interval;
+		within 0.01;
+		object player {
+			property value;
+			file "../data_AMI_average_test_7_min_avg_real_power_C.csv";
+		};
+	};
+	object double_assert {
+		target measured_avg_reactive_power_C_in_interval;
+		within 0.01;
+		object player {
+			property value;
+			file "../data_AMI_average_test_7_min_avg_reac_power_C.csv";
+		};
+	};   
 	// object recorder
 	// {
 		// property "measured_real_power,measured_reactive_power,measured_avg_real_power_in_interval,measured_avg_reactive_power_in_interval,measured_real_max_power_in_interval,measured_reactive_max_power_in_interval,measured_real_min_power_in_interval,measured_reactive_min_power_in_interval";
@@ -92,32 +147,33 @@ object meter {
 object load {
 	name THREE_PHASE_LOAD;
 	phases ABCN;
+    parent THREE_PHASE_ROOT;
 	nominal_voltage 7200.0;
 	constant_power_A 2500.0-120.0j;
 	constant_power_B 2500.0-120.0j;
 	constant_power_C 2500.0-120.0j;
 	object player {
 		property constant_power_A;
-		file "../data_power_values_ami_average_test.player";
+		file "../data_power_values_ami_average_test_A.player";
 	};
 	object player {
 		property constant_power_B;
-		file "../data_power_values_ami_average_test.player";
+		file "../data_power_values_ami_average_test_B.player";
 	};
 	object player {
 		property constant_power_C;
-		file "../data_power_values_ami_average_test.player";
+		file "../data_power_values_ami_average_test_C.player";
 	};
 };
 
-object overhead_line {
-	phases ABCN;
-	name three_phase_line;
-	from THREE_PHASE_ROOT;
-	to THREE_PHASE_LOAD;
-	length 100.0 ft;
-	configuration OHL_config;
-}
+//object overhead_line {
+//	phases ABCN;
+//	name three_phase_line;
+//	from THREE_PHASE_ROOT;
+//	to THREE_PHASE_LOAD;
+//	length 100.0 ft;
+//	configuration OHL_config;
+//}
 
 
 //Triplex system

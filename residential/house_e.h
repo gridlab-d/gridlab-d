@@ -437,8 +437,17 @@ private:
 	complex value_Power[3];						///< value holder for power value on triplex parent
 	enumeration value_MeterStatus;				///< value holder for service_status variable on triplex parent
 	double value_Frequency;						///< value holder for measured frequency on triplex parent
+	typedef enum {	
+		XPFV_NONE	= 0,		// no external power flow
+		XPFV_ONEV	= 1,		// set just external_v1N, assume v2N equal and opposite
+		XPFV_TWOV	= 2,		// will set both external_v1N and v2N, require v12 = v1N - v2N
+	} EXTERNALPFMODE;
+	enumeration external_pf_mode;
+	complex external_v1N;            // from OpenDSS or another external power flow program
+	complex external_v2N;            // from OpenDSS or another external power flow program
 
-	// interface to powerflow calculations, need not be public?
+	// interface to powerflow calculations
+	void check_external_voltage(void);
 	void pull_complex_powerflow_values(void);
 	void push_complex_powerflow_values(void);
 

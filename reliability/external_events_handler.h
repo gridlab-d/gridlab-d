@@ -19,7 +19,7 @@ public:
 		this->name = name;
 		this->fault_impedance = fault_impedance;
 		this->fault_type = fault_type;
-		this->fault_object = gl_get_object(fault_type.c_str());
+		this->fault_object = gl_get_object(fault_object.c_str());
 		this->start = start;
 		this->stop = end;
 	}
