@@ -1489,30 +1489,6 @@ void solar::init_pub_vars_pvcurve_mode()
 		pvc_b1 = 0;
 		gl_warning("solar:%d %s - pvc_b1 was specified as a negative value - set to 0 (1/Celsius).",obj->id,(obj->name?obj->name:"Unnamed"));
 	}
-	/*
-	if (pvc_U_oc_V <= 0)
-	{
-		pvc_U_oc_V = 1005;
-		gl_warning("solar:%d %s - pvc_U_oc_V was not a valid value - set to 1005 (V).",obj->id,(obj->name?obj->name:"Unnamed"));
-	}
-
-	if (pvc_I_sc_A <= 0)
-	{
-		pvc_I_sc_A = 1e2;
-		gl_warning("solar:%d %s - pvc_I_sc_A was not a valid value - set to 1e2 (A).",obj->id,(obj->name?obj->name:"Unnamed"));
-	}
-
-	if (pvc_U_m_V <= 0)
-	{
-		pvc_U_m_V = 750;
-		gl_warning("solar:%d %s - pvc_U_m_V was not a valid value, set to 750 (V).",obj->id,(obj->name?obj->name:"Unnamed"));
-	}
-
-	if (pvc_I_m_A <= 0)
-	{
-		pvc_I_m_A = 84;
-		gl_warning("solar:%d %s - pvc_I_m_A was not a valid value, set to 84 (V).",obj->id,(obj->name?obj->name:"Unnamed"));
-	}*/
 
 	// Data Sanity Check
 	if (Max_P <= 0)
@@ -1544,8 +1520,11 @@ void solar::init_pub_vars_pvcurve_mode()
 			pvc_U_oc_V = pvc_U_m_V * PV_CURVE_PARAM_RATIO;
 		}
 
-		gl_warning("solar:%d %s - 'PV_CURVE', the rated_power of PV cannot be nonpositive - set as %f [W].",obj->id,(obj->name?obj->name:"Unnamed"),Max_P);
-		gl_warning("solar:%d %s - the pv curve parameters are updated.",obj->id,(obj->name?obj->name:"Unnamed"));
+		gl_warning("solar:%d %s - Max power not set. Using inverter defaults for pv curve parameters",obj->id,(obj->name?obj->name:"Unnamed"));
+		/*  TROUBLESHOOT
+		The rated_power as not set for the solar object.  The rated_power for the inverter is taken instead, and all characteristics of the
+		PV curve are computed from assumed defaults.  If this is not desired, direclty populate the values.
+		*/
 	}
 	else
 	{
@@ -1566,8 +1545,12 @@ void solar::init_pub_vars_pvcurve_mode()
 		{
 			pvc_U_oc_V = pvc_U_m_V * PV_CURVE_PARAM_RATIO;
 		}
-		
-		gl_warning("solar:%d %s - the pv curve parameters are updated.",obj->id,(obj->name?obj->name:"Unnamed"));
+
+		gl_warning("solar:%d %s - PV curve specification incomplete - defaults calcualted",obj->id,(obj->name?obj->name:"Unnamed"));
+		/*  TROUBLESHOOT
+		One or more of the four PV curve characteristics were not specified, so they were computed from an assumed default.  If this is
+		undesired, explicitly specify the parameters.
+		*/
 	}
 
 	// Calc C1 & C2 using other PVC params
