@@ -525,7 +525,8 @@ AS_CASE([$with_helics],
                 [GLD_FLAG_PARSE([with_helics],
                         [HELICS_LIBS],
                         [HELICS_LDFLAGS],
-                        [HELICS_CPPFLAGS])])
+                        [HELICS_CPPFLAGS],
+                        [HELICS_LIB_DIR])])
 gld_save_LIBS="$LIBS"; LIBS="$LIBS $HELICS_LIBS"
 gld_save_LDFLAGS="$LDFLAGS"; LDFLAGS="$LDFLAGS $HELICS_LDFLAGS"
 gld_save_CPPFLAGS="$CPPFLAGS"; CPPFLAGS="$CPPFLAGS $HELICS_CPPFLAGS"
@@ -536,15 +537,18 @@ AS_CASE([$platform],
 				AS_CASE([$LIBS],
 					[*lhelics*], [], [LIBS="$LIBS -lhelics"])],
 	[*darwin*], [AS_CASE([$HELICS_LIBS],
-					[*lhelics*], [], [HELICS_LIBS="$HELICS _LIBS -lhelics"])
+					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics"])
 				AS_CASE([$LIBS],
-					[*lhelics*], [], [LIBS="$LIBS -lhelics"])],
+					[*lhelics*], [], [LIBS="$LIBS -lhelics"])
+                AS_CASE([$HELICS_LDFLAGS],
+                   [*rpath*], [], [HELICS_LDFLAGS="-Wl,-rpath,$HELICS_LIB_DIR $HELICS_LDFLAGS"])],
 	[*windows*], [AS_CASE([$HELICS_LIBS],
 					[*lhelics*], [], [HELICS_LIBS="$HELICS_LIBS -lhelics"])
 				AS_CASE([$LIBS],
 					[*lhelics*], [], [LIBS="$LIBS -lhelics"])])
 have_helics=yes
 AC_MSG_CHECKING([for HELICS])
+AC_MSG_NOTICE(["HELICS LDFLAGS: $HELICS_LDFLAGS"])
 AC_LINK_IFELSE(
 	[AC_LANG_PROGRAM([[ 
 #include <helics/helics98.hpp>
