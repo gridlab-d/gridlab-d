@@ -5,8 +5,7 @@ residential_residential_la_CPPFLAGS += $(AM_CPPFLAGS)
 
 residential_residential_la_LDFLAGS =
 residential_residential_la_LDFLAGS += $(AM_LDFLAGS)
-
-residential_residential_la_LIBADD = -ldl
+residential_residential_la_LDFLAGS += -ldl
 
 residential_residential_la_SOURCES =
 residential_residential_la_SOURCES += residential/appliance.cpp
