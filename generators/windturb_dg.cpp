@@ -50,6 +50,13 @@ windturb_dg::windturb_dg(MODULE *module)
 			PT_KEYWORD,"VESTAS_V82",(enumeration)VESTAS_V82, PT_DESCRIPTION, "Sets all defaults to represent the power output of a VESTAS V82 turbine",
 			PT_KEYWORD,"GE_25MW",(enumeration)GE_25MW, PT_DESCRIPTION, "Sets all defaults to represent the power output of a GE 2.5MW turbine",
 			PT_KEYWORD,"BERGEY_10kW",(enumeration)BERGEY_10kW, PT_DESCRIPTION, "Sets all defaults to represent the power output of a Bergey 10kW turbine",
+			PT_KEYWORD,"GEN_TURB_POW_CURVE_2_4KW",(enumeration)GEN_TURB_POW_CURVE_2_4KW, PT_DESCRIPTION, "Generic model for a 2.4kW turbine, power curve implementation",
+			PT_KEYWORD,"GEN_TURB_POW_CURVE_10KW",(enumeration)GEN_TURB_POW_CURVE_10KW, PT_DESCRIPTION, "Generic model for a 10kW turbine, power curve implementation",
+			PT_KEYWORD,"GEN_TURB_POW_CURVE_100KW",(enumeration)GEN_TURB_POW_CURVE_100KW, PT_DESCRIPTION, "Generic model for a 100kW turbine, power curve implementation",
+			PT_KEYWORD,"GEN_TURB_POW_CURVE_1_5MW",(enumeration)GEN_TURB_POW_CURVE_1_5MW, PT_DESCRIPTION, "Generic model for a 1.5MW turbine, power curve implementation",
+			PT_enumeration,"Turbine_implementation",PADDR(Turbine_implementation), PT_DESCRIPTION, "Type of implementation for wind turbine generator",
+			PT_KEYWORD,"COEFF_OF_PERFORMANCE",(enumeration)COEFF_OF_PERFORMANCE, PT_DESCRIPTION, "Wind turbine generator implementation based on Coefficient of performance",
+			PT_KEYWORD,"POWER_CURVE",(enumeration)POWER_CURVE, PT_DESCRIPTION, "Wind turbine implementation based on Generic Power Curve",
 
 			// TODO: There are a number of repeat variables due to poor variable name formatting.
 			//       These need to be corrected through the deprecation process.
@@ -157,6 +164,7 @@ int windturb_dg::create(void)
 	Turbine_Model = GENERIC_SYNCH_LARGE;	//************** Default specified so it doesn't crash out
 	Gen_mode = CONSTANTP;					//************** Default specified so values actually come out
 	Gen_status = ONLINE;
+	Turbine_implementation = POWER_CURVE;
 
 	turbine_height = -9999;
 	blade_diam = -9999;
@@ -462,6 +470,26 @@ int windturb_dg::init(OBJECT *parent)
 			Maximum coefficient of performance must be specified as a value greater than or equal to zero.
 			*/
 			break;
+		case GEN_TURB_POW_CURVE_2_4KW:
+			turbine_height = 21;
+			Rated_VA = 2400;
+			
+			break;
+		case GEN_TURB_POW_CURVE_10KW:
+			turbine_height = 37;
+			Rated_VA = 10000;
+			
+			break;
+		case GEN_TURB_POW_CURVE_100KW:
+			turbine_height = 37;
+			Rated_VA = 100000;
+			
+			break;
+		case GEN_TURB_POW_CURVE_1_5MW:
+			turbine_height = 80;
+			Rated_VA = 1500000;
+			
+			break;
 		default:
 			GL_THROW("Unknown turbine model was specified");
 			/*  TROUBLESHOOT
@@ -708,7 +736,6 @@ TIMESTAMP windturb_dg::presync(TIMESTAMP t0, TIMESTAMP t1)
 
 TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
-	//Branching
 	TIMESTAMP t2 = TS_NEVER;
 	double Pwind, Pmech, detCp, F, G, gearbox_eff;
 	double matCp[2][3];
@@ -735,34 +762,74 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	/* TODO:  import previous and future wind data 
 	and then pseudo-randomize the wind speed values beween 1st and 2nd
 	WSadj = gl_pseudorandomvalue(RT_RAYLEIGH,&c,(WS1/sqrt(PI/2)));*/
+	switch (Turbine_implementation){
+		case COEFF_OF_PERFORMANCE:
+			// It looks cleaner to switch to a density adjustment on an interpolated power curve
+			//    Pwind error is on the order of Cp error cubed
+			Pwind = 0.5 * (air_dens) * PI * pow(blade_diam/2,2) * pow(WSadj,3);
 
-	// It looks cleaner to switch to a density adjustment on an interpolated power curve
-	//    Pwind error is on the order of Cp error cubed
-	Pwind = 0.5 * (air_dens) * PI * pow(blade_diam/2,2) * pow(WSadj,3);
-
-	if (CP_Data == GENERAL_LARGE || CP_Data == GENERAL_MID || CP_Data == GENERAL_SMALL)	
-	{
-		if (WSadj <= cut_in_ws)
-		{	
-			Cp = 0;	
-		}
-
-		else if (WSadj > cut_out_ws)
-		{	
-			Cp = 0;	
-		}
-
-		else if(WSadj > ws_rated)
-		{
-			Cp = Cp_rated * pow(ws_rated,3) / pow(WSadj,3);	
-		}
-		else
-		{   
-			if (WSadj == 0 || WSadj <= cut_in_ws || WSadj >= cut_out_ws)
+			if (CP_Data == GENERAL_LARGE || CP_Data == GENERAL_MID || CP_Data == GENERAL_SMALL)	
 			{
-				Cp = 0;
+				if (WSadj <= cut_in_ws)
+				{	
+					Cp = 0;	
+				}
+
+				else if (WSadj > cut_out_ws)
+				{	
+					Cp = 0;	
+				}
+
+				else if(WSadj > ws_rated)
+				{
+					Cp = Cp_rated * pow(ws_rated,3) / pow(WSadj,3);	
+				}
+				else
+				{   
+					if (WSadj == 0 || WSadj <= cut_in_ws || WSadj >= cut_out_ws)
+					{
+						Cp = 0;
+					}
+					else {
+						matCp[0][0] = pow((ws_maxcp/cut_in_ws - 1),2);   //Coeff of Performance found 
+						matCp[0][1] = pow((ws_maxcp/cut_in_ws - 1),3);	 //by using method described in [1]
+						matCp[0][2] = 1;
+						matCp[1][0] = pow((ws_maxcp/ws_rated - 1),2);
+						matCp[1][1] = pow((ws_maxcp/ws_rated - 1),3);
+						matCp[1][2] = 1 - Cp_rated/Cp_max;
+						detCp = matCp[0][0]*matCp[1][1] - matCp[0][1]*matCp[1][0];
+
+						F = (matCp[0][2]*matCp[1][1] - matCp[0][1]*matCp[1][2])/detCp;
+						G = (matCp[0][0]*matCp[1][2] - matCp[0][2]*matCp[1][0])/detCp;
+
+						Cp = Cp_max*(1 - F*pow((ws_maxcp/WSadj - 1),2) - G*pow((ws_maxcp/WSadj - 1),3));
+					}
+				}
 			}
-			else {
+			else if (CP_Data == MANUF_TABLE)	//Coefficient of Perfomance generated from Manufacturer's table
+			{
+				switch (Turbine_Model)	{
+					case VESTAS_V82:
+						if (WSadj <= cut_in_ws || WSadj >= cut_out_ws)
+						{	
+							Cp = 0;	
+						}
+						else
+						{	  
+							//Original data [0 0 0 0 0.135 0.356 0.442 0.461 .458 .431 .397 .349 .293 .232 .186 .151 .125 .104 .087 .074 .064] from 4-20 m/s
+							double Cp_tab[21] = {0, 0, 0, 0, 0.135, 0.356, 0.442, 0.461, 0.458, 0.431, 0.397, 0.349, 0.293, 0.232, 0.186, 0.151, 0.125, 0.104, 0.087, 0.074, 0.064};
+							
+							// Linear interpolation on the table
+							Cp = Cp_tab[(int)WSadj] + (WSadj - (int)WSadj) * (Cp_tab[(int)WSadj+1] - Cp_tab[(int)WSadj]);
+						}
+						break;
+					default:
+						GL_THROW("Coefficient of Performance model not determined.");
+				}
+
+			}
+			else if (CP_Data == CALCULATED)
+			{
 				matCp[0][0] = pow((ws_maxcp/cut_in_ws - 1),2);   //Coeff of Performance found 
 				matCp[0][1] = pow((ws_maxcp/cut_in_ws - 1),3);	 //by using method described in [1]
 				matCp[0][2] = 1;
@@ -776,349 +843,384 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 				Cp = Cp_max*(1 - F*pow((ws_maxcp/WSadj - 1),2) - G*pow((ws_maxcp/WSadj - 1),3));
 			}
-		}
-	}
-	else if (CP_Data == MANUF_TABLE)	//Coefficient of Perfomance generated from Manufacturer's table
-	{
-		switch (Turbine_Model)	{
-			case VESTAS_V82:
-				if (WSadj <= cut_in_ws || WSadj >= cut_out_ws)
-				{	
-					Cp = 0;	
-				}
-				else
-				{	  
-					//Original data [0 0 0 0 0.135 0.356 0.442 0.461 .458 .431 .397 .349 .293 .232 .186 .151 .125 .104 .087 .074 .064] from 4-20 m/s
-					double Cp_tab[21] = {0, 0, 0, 0, 0.135, 0.356, 0.442, 0.461, 0.458, 0.431, 0.397, 0.349, 0.293, 0.232, 0.186, 0.151, 0.125, 0.104, 0.087, 0.074, 0.064};
-					
-					// Linear interpolation on the table
-					Cp = Cp_tab[(int)WSadj] + (WSadj - (int)WSadj) * (Cp_tab[(int)WSadj+1] - Cp_tab[(int)WSadj]);
-				}
-				break;
-			default:
-				GL_THROW("Coefficient of Performance model not determined.");
-		}
-
-	}
-	else if (CP_Data == CALCULATED)
-	{
-		matCp[0][0] = pow((ws_maxcp/cut_in_ws - 1),2);   //Coeff of Performance found 
-		matCp[0][1] = pow((ws_maxcp/cut_in_ws - 1),3);	 //by using method described in [1]
-		matCp[0][2] = 1;
-		matCp[1][0] = pow((ws_maxcp/ws_rated - 1),2);
-		matCp[1][1] = pow((ws_maxcp/ws_rated - 1),3);
-		matCp[1][2] = 1 - Cp_rated/Cp_max;
-		detCp = matCp[0][0]*matCp[1][1] - matCp[0][1]*matCp[1][0];
-
-		F = (matCp[0][2]*matCp[1][1] - matCp[0][1]*matCp[1][2])/detCp;
-		G = (matCp[0][0]*matCp[1][2] - matCp[0][2]*matCp[1][0])/detCp;
-
-		Cp = Cp_max*(1 - F*pow((ws_maxcp/WSadj - 1),2) - G*pow((ws_maxcp/WSadj - 1),3));
-	}
-	else
-	{
-		GL_THROW("CP_Data not defined.");
-	}
-
-	/// define user defined data , also catch for future cases
-
-	Pmech = Pwind * Cp; 
-
-	if (Pmech != 0)
-	{
-		gearbox_eff = 1 - (q*.01*Rated_VA / Pmech);	 //Method described in [2].	
-
-		if (gearbox_eff < .1)		
-		{
-			gearbox_eff = .1;	//Prevents efficiency from becoming negative at low power.
-		}							
-
-		Pmech = Pwind * Cp * gearbox_eff;
-	}	
-
-	Pconv = 1 * Pmech;  //TODO: Assuming 0% losses due to friction and miscellaneous losses
-
-	if (Gen_status==ONLINE)
-	{
-		int k;
-
-		//Pull the voltage values
-		if (parent_is_valid == true)
-		{
-			value_Circuit_V[0] = pCircuit_V[0]->get_complex();
-			value_Circuit_V[1] = pCircuit_V[1]->get_complex();
-			value_Circuit_V[2] = pCircuit_V[2]->get_complex();
-		}
-
-		voltage_A = value_Circuit_V[0];	//Syncs the meter parent to the generator.
-		voltage_B = value_Circuit_V[1];
-		voltage_C = value_Circuit_V[2];
-		double Pconva = 0.0;
-		double Pconvb = 0.0;
-		double Pconvc = 0.0;
-		if((voltage_A.Mag() + voltage_B.Mag() + voltage_C.Mag()) > 1e-9){
-			Pconva = (voltage_A.Mag() / (voltage_A.Mag() + voltage_B.Mag() + voltage_C.Mag()))*Pconv;
-			Pconvb = (voltage_B.Mag() / (voltage_A.Mag() + voltage_B.Mag() + voltage_C.Mag()))*Pconv;
-			Pconvc = (voltage_C.Mag() / (voltage_A.Mag() + voltage_B.Mag() + voltage_C.Mag()))*Pconv;
-		}
-
-		if (Gen_type == INDUCTION)	//TO DO:  Induction gen. Ef not working correctly yet.
-		{
-			Pconva = Pconva/Rated_VA;					//induction generator solved in pu
-			Pconvb = Pconvb/Rated_VA;
-			Pconvc = Pconvc/Rated_VA;
-
-			Vapu = voltage_A/(Rated_V/sqrt(3.0));	
-			Vbpu = voltage_B/(Rated_V/sqrt(3.0));
-			Vcpu = voltage_C/(Rated_V/sqrt(3.0));
-
-			Vrotor_A = Vapu;  
-			Vrotor_B = Vbpu;
-			Vrotor_C = Vcpu;
-
-			complex detTPMat = IndTPMat[1][1]*IndTPMat[0][0] - IndTPMat[1][0]*IndTPMat[0][1];
-
-			if (Pconv > 0)			
+			else
 			{
-				switch (Gen_mode)	
+				GL_THROW("CP_Data not defined.");
+			}
+
+			/// define user defined data , also catch for future cases
+
+			Pmech = Pwind * Cp; 
+
+			if (Pmech != 0)
+			{
+				gearbox_eff = 1 - (q*.01*Rated_VA / Pmech);	 //Method described in [2].	
+
+				if (gearbox_eff < .1)		
 				{
-				case CONSTANTE:
-					for(k = 0; k < 6; k++) //TODO: convert to a convergence
+					gearbox_eff = .1;	//Prevents efficiency from becoming negative at low power.
+				}							
+
+				Pmech = Pwind * Cp * gearbox_eff;
+			}	
+
+			Pconv = 1 * Pmech;  //TODO: Assuming 0% losses due to friction and miscellaneous losses
+
+			if (Gen_status==ONLINE)
+			{
+				int k;
+
+				//Pull the voltage values
+				if (parent_is_valid == true)
+				{
+					value_Circuit_V[0] = pCircuit_V[0]->get_complex();
+					value_Circuit_V[1] = pCircuit_V[1]->get_complex();
+					value_Circuit_V[2] = pCircuit_V[2]->get_complex();
+				}
+
+				voltage_A = value_Circuit_V[0];	//Syncs the meter parent to the generator.
+				voltage_B = value_Circuit_V[1];
+				voltage_C = value_Circuit_V[2];
+				double Pconva = 0.0;
+				double Pconvb = 0.0;
+				double Pconvc = 0.0;
+				if((voltage_A.Mag() + voltage_B.Mag() + voltage_C.Mag()) > 1e-9){
+					Pconva = (voltage_A.Mag() / (voltage_A.Mag() + voltage_B.Mag() + voltage_C.Mag()))*Pconv;
+					Pconvb = (voltage_B.Mag() / (voltage_A.Mag() + voltage_B.Mag() + voltage_C.Mag()))*Pconv;
+					Pconvc = (voltage_C.Mag() / (voltage_A.Mag() + voltage_B.Mag() + voltage_C.Mag()))*Pconv;
+				}
+
+				if (Gen_type == INDUCTION)	//TO DO:  Induction gen. Ef not working correctly yet.
+				{
+					Pconva = Pconva/Rated_VA;					//induction generator solved in pu
+					Pconvb = Pconvb/Rated_VA;
+					Pconvc = Pconvc/Rated_VA;
+
+					Vapu = voltage_A/(Rated_V/sqrt(3.0));	
+					Vbpu = voltage_B/(Rated_V/sqrt(3.0));
+					Vcpu = voltage_C/(Rated_V/sqrt(3.0));
+
+					Vrotor_A = Vapu;  
+					Vrotor_B = Vbpu;
+					Vrotor_C = Vcpu;
+
+					complex detTPMat = IndTPMat[1][1]*IndTPMat[0][0] - IndTPMat[1][0]*IndTPMat[0][1];
+
+					if (Pconv > 0)			
 					{
-						Irotor_A = (~((complex(Pconva,0)/Vrotor_A)));
-						Irotor_B = (~((complex(Pconvb,0)/Vrotor_B)));
-						Irotor_C = (~((complex(Pconvc,0)/Vrotor_C)));
-
-						Iapu = IndTPMat[1][0]*Vrotor_A + IndTPMat[1][1]*Irotor_A;
-						Ibpu = IndTPMat[1][0]*Vrotor_B + IndTPMat[1][1]*Irotor_B;
-						Icpu = IndTPMat[1][0]*Vrotor_C + IndTPMat[1][1]*Irotor_C;
-
-						Vrotor_A = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vapu - IndTPMat[0][1]*Iapu);
-						Vrotor_B = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vbpu - IndTPMat[0][1]*Ibpu);
-						Vrotor_C = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vcpu - IndTPMat[0][1]*Icpu);
-
-						Vrotor_A = Vrotor_A * Max_Vrotor / Vrotor_A.Mag();
-						Vrotor_B = Vrotor_B * Max_Vrotor / Vrotor_B.Mag();
-						Vrotor_C = Vrotor_C * Max_Vrotor / Vrotor_C.Mag();
-					}
-					break;
-				case CONSTANTPQ:
-					double last_Ipu = 0;
-					double current_Ipu = 1;
-					unsigned int temp_ind = 1;
-
-					while ( fabs( (last_Ipu-current_Ipu)/current_Ipu) > 0.005 )
-					{
-						last_Ipu = current_Ipu;
-
-						Irotor_A = -(~complex(-Pconva/Vrotor_A.Mag()*cos(Vrotor_A.Arg()),Pconva/Vrotor_A.Mag()*sin(Vrotor_A.Arg())));
-						Irotor_B = -(~complex(-Pconvb/Vrotor_B.Mag()*cos(Vrotor_B.Arg()),Pconvb/Vrotor_B.Mag()*sin(Vrotor_B.Arg())));
-						Irotor_C = -(~complex(-Pconvc/Vrotor_C.Mag()*cos(Vrotor_C.Arg()),Pconvc/Vrotor_C.Mag()*sin(Vrotor_C.Arg())));
-
-						Iapu = IndTPMat[1][0]*Vrotor_A - IndTPMat[1][1]*Irotor_A;
-						Ibpu = IndTPMat[1][0]*Vrotor_B - IndTPMat[1][1]*Irotor_B;
-						Icpu = IndTPMat[1][0]*Vrotor_C - IndTPMat[1][1]*Irotor_C;
-
-						Vrotor_A = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vapu - IndTPMat[0][1]*Iapu);
-						Vrotor_B = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vbpu - IndTPMat[0][1]*Ibpu);
-						Vrotor_C = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vcpu - IndTPMat[0][1]*Icpu);
-
-						current_Ipu = Iapu.Mag() + Ibpu.Mag() + Icpu.Mag();
-
-						temp_ind += 1;
-						if (temp_ind > 100)
+						switch (Gen_mode)	
 						{
-							OBJECT *obj = OBJECTHDR(this);
+						case CONSTANTE:
+							for(k = 0; k < 6; k++) //TODO: convert to a convergence
+							{
+								Irotor_A = (~((complex(Pconva,0)/Vrotor_A)));
+								Irotor_B = (~((complex(Pconvb,0)/Vrotor_B)));
+								Irotor_C = (~((complex(Pconvc,0)/Vrotor_C)));
 
-							gl_warning("windturb_dg (id:%d,name:%s): internal iteration limit reached, breaking out of loop.  Injected current may not be solved sufficiently.",obj->id,obj->name);
-							/* TROUBLESHOOT
-							This may need some work.  The generator models are solved iteratively by using the system voltage
-							as the boundary condition.  The current model iterates on solving the current injection, but then
-							breaks out if not solved within 100 iterations.  May indicate some issues with the model (i.e.,
-							voltage is incorrectly set on the connection node) or it may indicate poor programming.  Please report
-							if you see this message.
-							*/
+								Iapu = IndTPMat[1][0]*Vrotor_A + IndTPMat[1][1]*Irotor_A;
+								Ibpu = IndTPMat[1][0]*Vrotor_B + IndTPMat[1][1]*Irotor_B;
+								Icpu = IndTPMat[1][0]*Vrotor_C + IndTPMat[1][1]*Irotor_C;
+
+								Vrotor_A = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vapu - IndTPMat[0][1]*Iapu);
+								Vrotor_B = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vbpu - IndTPMat[0][1]*Ibpu);
+								Vrotor_C = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vcpu - IndTPMat[0][1]*Icpu);
+
+								Vrotor_A = Vrotor_A * Max_Vrotor / Vrotor_A.Mag();
+								Vrotor_B = Vrotor_B * Max_Vrotor / Vrotor_B.Mag();
+								Vrotor_C = Vrotor_C * Max_Vrotor / Vrotor_C.Mag();
+							}
+							break;
+						case CONSTANTPQ:
+							double last_Ipu = 0;
+							double current_Ipu = 1;
+							unsigned int temp_ind = 1;
+
+							while ( fabs( (last_Ipu-current_Ipu)/current_Ipu) > 0.005 )
+							{
+								last_Ipu = current_Ipu;
+
+								Irotor_A = -(~complex(-Pconva/Vrotor_A.Mag()*cos(Vrotor_A.Arg()),Pconva/Vrotor_A.Mag()*sin(Vrotor_A.Arg())));
+								Irotor_B = -(~complex(-Pconvb/Vrotor_B.Mag()*cos(Vrotor_B.Arg()),Pconvb/Vrotor_B.Mag()*sin(Vrotor_B.Arg())));
+								Irotor_C = -(~complex(-Pconvc/Vrotor_C.Mag()*cos(Vrotor_C.Arg()),Pconvc/Vrotor_C.Mag()*sin(Vrotor_C.Arg())));
+
+								Iapu = IndTPMat[1][0]*Vrotor_A - IndTPMat[1][1]*Irotor_A;
+								Ibpu = IndTPMat[1][0]*Vrotor_B - IndTPMat[1][1]*Irotor_B;
+								Icpu = IndTPMat[1][0]*Vrotor_C - IndTPMat[1][1]*Irotor_C;
+
+								Vrotor_A = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vapu - IndTPMat[0][1]*Iapu);
+								Vrotor_B = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vbpu - IndTPMat[0][1]*Ibpu);
+								Vrotor_C = complex(1,0)/detTPMat * (IndTPMat[1][1]*Vcpu - IndTPMat[0][1]*Icpu);
+
+								current_Ipu = Iapu.Mag() + Ibpu.Mag() + Icpu.Mag();
+
+								temp_ind += 1;
+								if (temp_ind > 100)
+								{
+									OBJECT *obj = OBJECTHDR(this);
+
+									gl_warning("windturb_dg (id:%d,name:%s): internal iteration limit reached, breaking out of loop.  Injected current may not be solved sufficiently.",obj->id,obj->name);
+									/* TROUBLESHOOT
+									This may need some work.  The generator models are solved iteratively by using the system voltage
+									as the boundary condition.  The current model iterates on solving the current injection, but then
+									breaks out if not solved within 100 iterations.  May indicate some issues with the model (i.e.,
+									voltage is incorrectly set on the connection node) or it may indicate poor programming.  Please report
+									if you see this message.
+									*/
+									break;
+								}
+							}
 							break;
 						}
+
+						// convert current back out of p.u.
+						current_A = Iapu * Rated_VA/(Rated_V/sqrt(3.0));	
+						current_B = Ibpu * Rated_VA/(Rated_V/sqrt(3.0));	
+						current_C = Icpu * Rated_VA/(Rated_V/sqrt(3.0));
 					}
-					break;
-				}
-
-				// convert current back out of p.u.
-				current_A = Iapu * Rated_VA/(Rated_V/sqrt(3.0));	
-				current_B = Ibpu * Rated_VA/(Rated_V/sqrt(3.0));	
-				current_C = Icpu * Rated_VA/(Rated_V/sqrt(3.0));
-			}
-			else // Generator is offline
-			{
-				current_A = 0;	
-				current_B = 0;	
-				current_C = 0;
-			}
-		}
-
-		else if (Gen_type == SYNCHRONOUS)			//synch gen is NOT solved in pu
-		{											//sg ef mode is not working yet
-			double Mxef, Mnef, PoutA, PoutB, PoutC, QoutA, QoutB, QoutC;
-			complex SoutA, SoutB, SoutC;
-			complex lossesA, lossesB, lossesC;
-
-			Mxef = Max_Ef * Rated_V/sqrt(3.0);
-			Mnef = Min_Ef * Rated_V/sqrt(3.0);
-
-			//TODO: convert to a convergence
-			if (Gen_mode == CONSTANTE)	//Ef is controllable to give a needed power output.
-			{
-				current_A = invAMx[0][0]*(voltage_A - EfA) + invAMx[0][1]*(voltage_B - EfB) + invAMx[0][2]*(voltage_C - EfC);
-				current_B = invAMx[1][0]*(voltage_A - EfA) + invAMx[1][1]*(voltage_B - EfB) + invAMx[1][2]*(voltage_C - EfC);
-				current_C = invAMx[2][0]*(voltage_A - EfA) + invAMx[2][1]*(voltage_B - EfB) + invAMx[2][2]*(voltage_C - EfC);
-
-				SoutA = -voltage_A * (~(current_A));  //TO DO:  unbalanced
-				SoutB = -voltage_B * (~(current_B));
-				SoutC = -voltage_C * (~(current_C));
-
-			}
-			//Gives a constant output power of real power converted Pout,then Qout is found through a controllable power factor.
-			else if (Gen_mode == CONSTANTP)	
-			{	
-				//If air density increases, power extracted can be much greater than the default specifications - cap it.								
-				if (Pconva > 1.025*Max_P/3) {
-					Pconva = 1.025*Max_P/3;		
-				}								
-				if (Pconvb > 1.025*Max_P/3) {
-					Pconvb = 1.025*Max_P/3;
-				}
-				if (Pconvc > 1.025*Max_P/3) {
-					Pconvc = 1.025*Max_P/3;
-				}
-				if(voltage_A.Mag() > 0.0){
-					current_A = -(~(complex(Pconva,Pconva*tan(acos(pf)))/voltage_A));
-				} else {
-					current_A = complex(0.0,0.0);
-				}
-				if(voltage_B.Mag() > 0.0){
-					current_B = -(~(complex(Pconvb,Pconvb*tan(acos(pf)))/voltage_B));
-				} else {
-					current_B = complex(0.0,0.0);
-				}
-				if(voltage_B.Mag() > 0.0){
-					current_C = -(~(complex(Pconvc,Pconvc*tan(acos(pf)))/voltage_C));
-				} else {
-					current_C = complex(0.0,0.0);
-				}
-
-				if (Pconv > 0)
-				{
-					double last_current = 0;
-					double current_current = current_A.Mag() + current_B.Mag() + current_C.Mag();
-					unsigned int temp_count = 1;
-					
-					while ( fabs( (last_current-current_current)/current_current) > 0.005 )
+					else // Generator is offline
 					{
-						last_current = current_current;
+						current_A = 0;	
+						current_B = 0;	
+						current_C = 0;
+					}
+				}
 
-						PoutA = Pconva - current_A.Mag()*current_A.Mag()*(AMx[0][0] - AMx[0][1]).Re();
-						PoutB = Pconvb - current_B.Mag()*current_B.Mag()*(AMx[1][1] - AMx[0][1]).Re();
-						PoutC = Pconvc - current_C.Mag()*current_C.Mag()*(AMx[2][2] - AMx[0][1]).Re();
+				else if (Gen_type == SYNCHRONOUS)			//synch gen is NOT solved in pu
+				{											//sg ef mode is not working yet
+					double Mxef, Mnef, PoutA, PoutB, PoutC, QoutA, QoutB, QoutC;
+					complex SoutA, SoutB, SoutC;
+					complex lossesA, lossesB, lossesC;
 
-						QoutA = pf/fabs(pf)*PoutA*sin(acos(pf));
-						QoutB = pf/fabs(pf)*PoutB*sin(acos(pf));
-						QoutC = pf/fabs(pf)*PoutC*sin(acos(pf));
+					Mxef = Max_Ef * Rated_V/sqrt(3.0);
+					Mnef = Min_Ef * Rated_V/sqrt(3.0);
+
+					//TODO: convert to a convergence
+					if (Gen_mode == CONSTANTE)	//Ef is controllable to give a needed power output.
+					{
+						current_A = invAMx[0][0]*(voltage_A - EfA) + invAMx[0][1]*(voltage_B - EfB) + invAMx[0][2]*(voltage_C - EfC);
+						current_B = invAMx[1][0]*(voltage_A - EfA) + invAMx[1][1]*(voltage_B - EfB) + invAMx[1][2]*(voltage_C - EfC);
+						current_C = invAMx[2][0]*(voltage_A - EfA) + invAMx[2][1]*(voltage_B - EfB) + invAMx[2][2]*(voltage_C - EfC);
+
+						SoutA = -voltage_A * (~(current_A));  //TO DO:  unbalanced
+						SoutB = -voltage_B * (~(current_B));
+						SoutC = -voltage_C * (~(current_C));
+
+					}
+					//Gives a constant output power of real power converted Pout,then Qout is found through a controllable power factor.
+					else if (Gen_mode == CONSTANTP)	
+					{	
+						//If air density increases, power extracted can be much greater than the default specifications - cap it.								
+						if (Pconva > 1.025*Max_P/3) {
+							Pconva = 1.025*Max_P/3;		
+						}								
+						if (Pconvb > 1.025*Max_P/3) {
+							Pconvb = 1.025*Max_P/3;
+						}
+						if (Pconvc > 1.025*Max_P/3) {
+							Pconvc = 1.025*Max_P/3;
+						}
 						if(voltage_A.Mag() > 0.0){
-							current_A = -(~(complex(PoutA,QoutA)/voltage_A));
+							current_A = -(~(complex(Pconva,Pconva*tan(acos(pf)))/voltage_A));
 						} else {
 							current_A = complex(0.0,0.0);
 						}
 						if(voltage_B.Mag() > 0.0){
-						current_B = -(~(complex(PoutB,QoutB)/voltage_B));
+							current_B = -(~(complex(Pconvb,Pconvb*tan(acos(pf)))/voltage_B));
 						} else {
 							current_B = complex(0.0,0.0);
 						}
-						if(voltage_C.Mag() > 0.0){
-						current_C = -(~(complex(PoutC,QoutC)/voltage_C));
+						if(voltage_B.Mag() > 0.0){
+							current_C = -(~(complex(Pconvc,Pconvc*tan(acos(pf)))/voltage_C));
 						} else {
 							current_C = complex(0.0,0.0);
 						}
 
-						current_current = current_A.Mag() + current_B.Mag() + current_C.Mag();
-
-						temp_count += 1;
-
-						if ( temp_count > 100 )
+						if (Pconv > 0)
 						{
-							OBJECT *obj = OBJECTHDR(this);
+							double last_current = 0;
+							double current_current = current_A.Mag() + current_B.Mag() + current_C.Mag();
+							unsigned int temp_count = 1;
+							
+							while ( fabs( (last_current-current_current)/current_current) > 0.005 )
+							{
+								last_current = current_current;
 
-							gl_warning("windturb_dg (id:%d,name:%s): internal iteration limit reached, breaking out of loop.  Injected current may not be solved sufficiently.",obj->id,obj->name);
-							/* TROUBLESHOOT
-							This may need some work.  The generator models are solved iteratively by using the system voltage
-							as the boundary condition.  The current model iterates on solving the current injection, but then
-							breaks out if not solved within 100 iterations.  May indicate some issues with the model (i.e.,
-							voltage is incorrectly set on the connection node) or it may indicate poor programming.  Please report
-							if you see this message.
-							*/
-							break;
+								PoutA = Pconva - current_A.Mag()*current_A.Mag()*(AMx[0][0] - AMx[0][1]).Re();
+								PoutB = Pconvb - current_B.Mag()*current_B.Mag()*(AMx[1][1] - AMx[0][1]).Re();
+								PoutC = Pconvc - current_C.Mag()*current_C.Mag()*(AMx[2][2] - AMx[0][1]).Re();
+
+								QoutA = pf/fabs(pf)*PoutA*sin(acos(pf));
+								QoutB = pf/fabs(pf)*PoutB*sin(acos(pf));
+								QoutC = pf/fabs(pf)*PoutC*sin(acos(pf));
+								if(voltage_A.Mag() > 0.0){
+									current_A = -(~(complex(PoutA,QoutA)/voltage_A));
+								} else {
+									current_A = complex(0.0,0.0);
+								}
+								if(voltage_B.Mag() > 0.0){
+								current_B = -(~(complex(PoutB,QoutB)/voltage_B));
+								} else {
+									current_B = complex(0.0,0.0);
+								}
+								if(voltage_C.Mag() > 0.0){
+								current_C = -(~(complex(PoutC,QoutC)/voltage_C));
+								} else {
+									current_C = complex(0.0,0.0);
+								}
+
+								current_current = current_A.Mag() + current_B.Mag() + current_C.Mag();
+
+								temp_count += 1;
+
+								if ( temp_count > 100 )
+								{
+									OBJECT *obj = OBJECTHDR(this);
+
+									gl_warning("windturb_dg (id:%d,name:%s): internal iteration limit reached, breaking out of loop.  Injected current may not be solved sufficiently.",obj->id,obj->name);
+									/* TROUBLESHOOT
+									This may need some work.  The generator models are solved iteratively by using the system voltage
+									as the boundary condition.  The current model iterates on solving the current injection, but then
+									breaks out if not solved within 100 iterations.  May indicate some issues with the model (i.e.,
+									voltage is incorrectly set on the connection node) or it may indicate poor programming.  Please report
+									if you see this message.
+									*/
+									break;
+								}
+							}
+							gl_debug("windturb_dg iteration count = %d",temp_count);
 						}
+						else
+						{
+							current_A = 0;
+							current_B = 0;
+							current_C = 0;
+						}
+
+						EfA = voltage_A - (AMx[0][0] - AMx[0][1])*current_A - AMx[0][2]*(current_A + current_B + current_C);
+						EfB = voltage_B - (AMx[1][1] - AMx[1][0])*current_A - AMx[1][2]*(current_A + current_B + current_C);
+						EfC = voltage_C - (AMx[2][2] - AMx[2][0])*current_A - AMx[2][1]*(current_A + current_B + current_C);
 					}
-					gl_debug("windturb_dg iteration count = %d",temp_count);
-				}
-				else
-				{
-					current_A = 0;
-					current_B = 0;
-					current_C = 0;
+					else
+						GL_THROW("Unknown generator mode");
 				}
 
-				EfA = voltage_A - (AMx[0][0] - AMx[0][1])*current_A - AMx[0][2]*(current_A + current_B + current_C);
-				EfB = voltage_B - (AMx[1][1] - AMx[1][0])*current_A - AMx[1][2]*(current_A + current_B + current_C);
-				EfC = voltage_C - (AMx[2][2] - AMx[2][0])*current_A - AMx[2][1]*(current_A + current_B + current_C);
+				//sum up and finalize everything for output
+				double PowerA, PowerB, PowerC, QA, QB, QC;
+
+				PowerA = -voltage_A.Mag()*current_A.Mag()*cos(voltage_A.Arg() - current_A.Arg());
+				PowerB = -voltage_B.Mag()*current_B.Mag()*cos(voltage_B.Arg() - current_B.Arg());
+				PowerC = -voltage_C.Mag()*current_C.Mag()*cos(voltage_C.Arg() - current_C.Arg());
+
+				QA = -voltage_A.Mag()*current_A.Mag()*sin(voltage_A.Arg() - current_A.Arg());
+				QB = -voltage_B.Mag()*current_B.Mag()*sin(voltage_B.Arg() - current_B.Arg());
+				QC = -voltage_C.Mag()*current_C.Mag()*sin(voltage_C.Arg() - current_C.Arg());
+
+				power_A = complex(PowerA,QA);
+				power_B = complex(PowerB,QB);
+				power_C = complex(PowerC,QC);
+
+				TotalRealPow = PowerA + PowerB + PowerC;
+				TotalReacPow = QA + QB + QC;
+
+				GenElecEff = TotalRealPow/Pconv * 100;
+
+				Wind_Speed = WSadj;
+				
+				//Update values
+				value_Line_I[0] = current_A;
+				value_Line_I[1] = current_B;
+				value_Line_I[2] = current_C;
+
+				//Powerflow post-it
+				if (parent_is_valid == true)
+				{
+					push_complex_powerflow_values();
+				}
+			}
+			// Generator is offline
+			else 
+			{
+				current_A = 0;
+				current_B = 0;
+				current_C = 0;
+
+				power_A = complex(0,0);
+				power_B = complex(0,0);
+				power_C = complex(0,0);
+			}
+			break;
+		case POWER_CURVE:
+			double Power_pu;
+			double PowerA, PowerB, PowerC;
+			/* Initializing Generic Power Curve*/
+			double Generic_Power_Curve[2][21] = {
+				{2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0, 25.0},
+				{0.0, 0.0084725, 0.026315, 0.049903, 0.083323, 0.12564, 0.17541, 0.23191, 0.30286, 0.38807, 0.49134, 0.58717, 0.66827, 0.75071, 0.82431, 0.89813, 0.95368, 1.0013, 1.0331, 1.0602, 1.0602}
+			};
+			if (parent_is_valid == true)
+			{
+				value_Circuit_V[0] = pCircuit_V[0]->get_complex();
+				value_Circuit_V[1] = pCircuit_V[1]->get_complex();
+				value_Circuit_V[2] = pCircuit_V[2]->get_complex();
+			}
+
+			voltage_A = value_Circuit_V[0];	//Syncs the meter parent to the generator.
+			voltage_B = value_Circuit_V[1];
+			voltage_C = value_Circuit_V[2];
+			if (WSadj <= Generic_Power_Curve[0][0] || WSadj > Generic_Power_Curve[0][20])
+			{	
+				Power_pu = 0;	
 			}
 			else
-				GL_THROW("Unknown generator mode");
-		}
+			{	  
+				for (int i=0; i<sizeof(Generic_Power_Curve[0])/sizeof(double); i++){
+			        if (WSadj >= Generic_Power_Curve[0][i] && WSadj <= Generic_Power_Curve[0][i+1]){
 
-		//sum up and finalize everything for output
-		double PowerA, PowerB, PowerC, QA, QB, QC;
-
-		PowerA = -voltage_A.Mag()*current_A.Mag()*cos(voltage_A.Arg() - current_A.Arg());
-		PowerB = -voltage_B.Mag()*current_B.Mag()*cos(voltage_B.Arg() - current_B.Arg());
-		PowerC = -voltage_C.Mag()*current_C.Mag()*cos(voltage_C.Arg() - current_C.Arg());
-
-		QA = -voltage_A.Mag()*current_A.Mag()*sin(voltage_A.Arg() - current_A.Arg());
-		QB = -voltage_B.Mag()*current_B.Mag()*sin(voltage_B.Arg() - current_B.Arg());
-		QC = -voltage_C.Mag()*current_C.Mag()*sin(voltage_C.Arg() - current_C.Arg());
-
-		power_A = complex(PowerA,QA);
-		power_B = complex(PowerB,QB);
-		power_C = complex(PowerC,QC);
-
-		TotalRealPow = PowerA + PowerB + PowerC;
-		TotalReacPow = QA + QB + QC;
-
-		GenElecEff = TotalRealPow/Pconv * 100;
-
-		Wind_Speed = WSadj;
-		
-		//Update values
-		value_Line_I[0] = current_A;
-		value_Line_I[1] = current_B;
-		value_Line_I[2] = current_C;
-
-		//Powerflow post-it
-		if (parent_is_valid == true)
-		{
-			push_complex_powerflow_values();
-		}
-	}
-	// Generator is offline
-	else 
-	{
-		current_A = 0;
-		current_B = 0;
-		current_C = 0;
-
-		power_A = complex(0,0);
-		power_B = complex(0,0);
-		power_C = complex(0,0);
+                        Power_pu = Generic_Power_Curve[1][i] + ((Generic_Power_Curve[1][i+1] - Generic_Power_Curve[1][i]) * ((WSadj - Generic_Power_Curve[0][i]) / (Generic_Power_Curve[0][i+1] - Generic_Power_Curve[0][i])));
+			        }
+			    }
+			}
+			
+			power_A = complex((Power_pu*Rated_VA)/3,0);
+			power_B = complex((Power_pu*Rated_VA)/3,0);
+			power_C = complex((Power_pu*Rated_VA)/3,0);
+			
+			Wind_Speed = WSadj;
+			
+			if(voltage_A.Mag() > 0.0){
+				current_A = -(~(power_A/voltage_A));
+			} else {
+				current_A = complex(0.0,0.0);
+			}
+			if(voltage_B.Mag() > 0.0){
+				current_B = -(~(power_B/voltage_B));
+			} else {
+				current_B = complex(0.0,0.0);
+			}
+			if(voltage_C.Mag() > 0.0){
+				current_C = -(~(power_C/voltage_C));
+			} else {
+				current_C = complex(0.0,0.0);
+			}
+			
+			PowerA = -voltage_A.Mag()*current_A.Mag()*cos(voltage_A.Arg() - current_A.Arg());
+			PowerB = -voltage_B.Mag()*current_B.Mag()*cos(voltage_B.Arg() - current_B.Arg());
+			PowerC = -voltage_C.Mag()*current_C.Mag()*cos(voltage_C.Arg() - current_C.Arg());
+			
+			TotalRealPow = PowerA + PowerB + PowerC;
+			
+			//Update values
+			value_Line_I[0] = current_A;
+			value_Line_I[1] = current_B;
+			value_Line_I[2] = current_C;
+			
+			//Powerflow post-it
+			if (parent_is_valid == true)
+			{
+				push_complex_powerflow_values();
+			}
+			
+			break;
 	}
 
 	// Double check to make sure it is actually converged to a steady answer
