@@ -23,7 +23,7 @@ residential_la_SOURCES =                            \
 	thermal_storage.cpp    thermal_storage.h    \
 	waterheater.cpp        waterheater.h        \
 	zipload.cpp            zipload.h
-residential_la_LDFLAGS = -ldl -module -no-undefined -avoid-version -version-info 0:0:0
+residential_la_LDFLAGS = -module -no-undefined -avoid-version -version-info 0:0:0 -ldl
 
 uninstall-hook:
 	-rmdir $(DESTDIR)$(pkglibdir)
