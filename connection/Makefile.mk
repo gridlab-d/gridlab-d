@@ -12,6 +12,8 @@ endif
 
 connection_connection_la_LDFLAGS =
 connection_connection_la_LDFLAGS += $(AM_LDFLAGS)
+connection_connection_la_LDFLAGS += -ldl
+
 if HAVE_FNCS
 connection_connection_la_LDFLAGS += $(FNCS_LDFLAGS)
 endif
@@ -29,7 +31,6 @@ connection_connection_la_LIBADD += $(HELICS_LIBS)
 endif
 connection_connection_la_LIBADD += $(PTHREAD_CFLAGS)
 connection_connection_la_LIBADD += $(PTHREAD_LIBS)
-connection_connection_la_LIBADD += -ldl
 
 connection_connection_la_SOURCES =
 connection_connection_la_SOURCES += connection/connection.cpp
