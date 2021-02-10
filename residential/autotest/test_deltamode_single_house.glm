@@ -13,7 +13,7 @@ module tape;
 module residential {
      implicit_enduses NONE;
 	 enable_subsecond_models true;
-	 all_house_delta true;
+	 all_residential_delta true;
 	 deltamode_timestep 100.0 ms;
 }
 module powerflow {
