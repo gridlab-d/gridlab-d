@@ -58,7 +58,7 @@ typedef struct s_circuit {
 	double max_amps; ///< maximum breaker amps
 	int id; ///< circuit id
 	BREAKERSTATUS status; ///< breaker status
-	TIMESTAMP reclose; ///< time at which breaker is reclosed
+	double reclose; ///< time at which breaker is reclosed
 	unsigned short tripsleft; ///< the number of trips left before breaker faults
 	struct s_circuit *next; ///< next circuit in list
 	// DPC: commented this out until the rest of house_e is updated
@@ -86,15 +86,16 @@ GLOBAL double default_grid_frequency INIT(60.0);		//Value for frequency
 
 //Deltamode inclusion
 GLOBAL bool enable_subsecond_models INIT(false); 			/* normally not operating in delta mode */
-GLOBAL bool all_house_delta INIT(false);					/* Cheater flag -- may not make it into the merge -- basically allows all houses to use deltamode */
+GLOBAL bool all_residential_delta INIT(false);				/* Cheater flag -- may not make it into the merge -- basically allows all residential objects to use deltamode */
 GLOBAL double deltamode_timestep_publish INIT(10000000.0); 	/* 10 ms timestep */
 GLOBAL unsigned long deltamode_timestep INIT(10000000);		/* 10 ms timestep */
+GLOBAL TIMESTAMP deltamode_starttime INIT(TS_NEVER);			/* Tracking variable for next desired instance of deltamode */
+GLOBAL double deltatimestep_running INIT(-1.0);				/* Flagging variable - starts indicating QSTS */
 GLOBAL OBJECT **delta_objects INIT(NULL);						/* Array pointer objects that need deltamode interupdate calls */
 GLOBAL FUNCTIONADDR *delta_functions INIT(NULL);				/* Array pointer functions for objects that need deltamode interupdate calls */
 GLOBAL FUNCTIONADDR *post_delta_functions INIT(NULL);			/* Array pointer functions for objects that need deltamode postupdate calls */
 GLOBAL int res_object_count INIT(0);							/* deltamode object count */
 GLOBAL int res_object_current INIT(-1);						/* Index of current deltamode object */
-GLOBAL TIMESTAMP deltamode_starttime INIT(TS_NEVER);			/* Tracking variable for next desired instance of deltamode */
 
 //Function definitions
 void schedule_deltamode_start(TIMESTAMP tstart);	/* Anticipated time for a deltamode start, even if it is now */
