@@ -4862,6 +4862,25 @@ STATUS inverter_dyn::DC_object_register(OBJECT *DC_object)
 	//Push us onto the memory
 	dc_interface_objects.push_back(temp_DC_struct);
 
+    if (gl_object_isa(DC_object,"energy_storage","generators"))
+    {
+
+		//Map the battery SOC
+    	pSOC = new gld_property(DC_object, "SOC_ES");
+
+		//Check it
+		if ((pSOC->is_valid() != true) || (pSOC->is_double() != true))
+		{
+			GL_THROW("inverter_dyn:%s - failed to map battery SOC ", (obj->name ? obj->name : "unnamed"));
+			/*  TROUBLESHOOT
+			Failed to map battery SOC.
+			*/
+		}
+
+		SOC = pSOC->get_double();  //
+
+    }
+
 	//If we made it this far, all should be good!
 	return SUCCESS;
 }

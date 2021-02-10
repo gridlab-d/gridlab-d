@@ -121,12 +121,14 @@ private:
 	gld_property *pLine_unrotI[3]; ///< pointer to the three pre-rotated current fields
 	gld_property *pPower[3];	   ///< pointer to power value on meter parent
 	gld_property *pMeterStatus;	   ///< Pointer to service_status variable on meter parent
+	gld_property *pSOC;            ///< Pointer to battery SOC
+
 
 	//Default or "connecting point" values for powerflow interactions
-	complex value_Circuit_V[3];	   ///< value holeder for the three L-N voltage fields
-	complex value_Line_I[3];	   ///< value holeder for the three current fields
-	complex value_Line_unrotI[3];  ///< value holeder for the three pre-rotated current fields
-	complex value_Power[3];		   ///< value holeder for power value on meter parent
+	complex value_Circuit_V[3];	   ///< value holder for the three L-N voltage fields
+	complex value_Line_I[3];	   ///< value holder for the three current fields
+	complex value_Line_unrotI[3];  ///< value holder for the three pre-rotated current fields
+	complex value_Power[3];		   ///< value holder for power value on meter parent
 	enumeration value_MeterStatus; ///< value holder for service_status variable on meter parent
 	complex value_Meter_I[3];	   ///< value holder for meter measured current on three lines
 
@@ -140,6 +142,8 @@ private:
 	double P_DC;
 	double V_DC;
 	double I_DC;
+	double SOC;
+
 
 	// DC object "update" of steady-state
 	double pvc_Pmax;

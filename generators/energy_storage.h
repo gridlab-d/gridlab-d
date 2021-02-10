@@ -22,11 +22,33 @@ private:
 	double default_current_array;
 	double default_power_array;
 
+	double prev_time;
+
 public:
 	//Example published/keeper values - can be changed
-	double ES_DC_Voltage;
-	double ES_DC_Current;
-	double ES_DC_Power_Val;
+	double ES_DC_Voltage;  // unit V
+	double ES_DC_Current;  // unit A
+	double ES_DC_Power_Val; // unit w
+
+	double Vbase_ES;  // Rated voltage of ES, unit V
+	double Sbase_ES;  // Rated rating of ES, unit VA
+	double Qbase_ES;  // Rated capacity of ES, unit Wh
+	double SOC_0_ES;  // Initial state of charge
+	double SOC_ES;    // State of charge
+    double Q_ES;      // Energy of ES, unit Wh
+
+
+	double E_ES_pu;   // No-load voltage, per unit
+	double E0_ES_pu;  // Battery constant voltage, per unit
+	double K_ES_pu;   // Polarisation voltage, per unit
+    double A_ES_pu;   // Exponential zone amplitude, per unit
+    double B_ES_pu;   // Exponential zone time constant inverse, per unit
+    double V_ES_pu;   // ES terminal voltage, per unit
+    double I_ES_pu;   // ES output current, per unit
+    double R_ES_pu;   // ES internal resitance, per unit
+    double P_ES_pu;   // ES ouptut active power, per unit
+
+
 
 	/* required implementations */
 	energy_storage(MODULE *module);

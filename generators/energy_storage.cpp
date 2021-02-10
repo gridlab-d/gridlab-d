@@ -2,6 +2,7 @@
 // Copyright (C) 2021 Battelle Memorial Institute
 
 #include "energy_storage.h"
+#include <cmath>
 
 using namespace std;
 
@@ -27,7 +28,26 @@ energy_storage::energy_storage(MODULE *module)
 			//These are basically just placeholders - feel free to change them
 			PT_double, "output_voltage[V]", PADDR(ES_DC_Voltage), PT_DESCRIPTION, "Energy storage DC output voltage",
 			PT_double, "output_current[A]", PADDR(ES_DC_Current), PT_DESCRIPTION, "Energy storage DC output current",
-			PT_double, "output_power", PADDR(ES_DC_Power_Val), PT_DESCRIPTION, "Energy storage DC output power",
+			PT_double, "output_power[W]", PADDR(ES_DC_Power_Val), PT_DESCRIPTION, "Energy storage DC output power",
+
+			PT_double, "Vbase_ES[V]", PADDR(Vbase_ES), PT_DESCRIPTION, "Rated voltage of ES",
+			PT_double, "Sbase_ES[VA]", PADDR(Sbase_ES), PT_DESCRIPTION, "Rated rating of ES",
+			PT_double, "Qbase_ES[Wh]", PADDR(Qbase_ES), PT_DESCRIPTION, "Rated capacity of ES, unit Wh",
+			PT_double, "SOC_0_ES[pu]", PADDR(SOC_0_ES), PT_DESCRIPTION, "Initial state of charge",
+			PT_double, "SOC_ES[pu]", PADDR(SOC_ES), PT_DESCRIPTION, "State of charge",
+			PT_double, "Q_ES[Wh]", PADDR(Q_ES), PT_DESCRIPTION, "Energy of ES",
+
+			PT_double, "E_ES_pu[pu]", PADDR(E_ES_pu), PT_DESCRIPTION, "No-load voltage, per unit",
+			PT_double, "E0_ES_pu[pu]", PADDR(E0_ES_pu), PT_DESCRIPTION, "Battery constant voltage, per unit",
+			PT_double, "K_ES_pu[pu]", PADDR(K_ES_pu), PT_DESCRIPTION, "Polarisation voltage, per unit",
+			PT_double, "A_ES_pu[pu]", PADDR(A_ES_pu), PT_DESCRIPTION, "Exponential zone amplitude, per unit",
+			PT_double, "B_ES_pu[pu]", PADDR(B_ES_pu), PT_DESCRIPTION, "Exponential zone time constant inverse, per unit",
+
+			PT_double, "V_ES_pu[pu]", PADDR(V_ES_pu), PT_DESCRIPTION, "ES terminal voltage, per unit",
+			PT_double, "I_ES_pu[pu]", PADDR(I_ES_pu), PT_DESCRIPTION, "ES output current, per unit",
+			PT_double, "R_ES_pu[pu]", PADDR(R_ES_pu), PT_DESCRIPTION, "ES internal resitance, per unit",
+			PT_double, "P_ES_pu[pu]", PADDR(P_ES_pu), PT_DESCRIPTION, "ES output active power, per unit",
+
 
 			NULL) < 1)
 				GL_THROW("unable to publish properties in %s", __FILE__);
@@ -44,9 +64,20 @@ energy_storage::energy_storage(MODULE *module)
 int energy_storage::create(void)
 {
 	//Initialize variables
-	ES_DC_Voltage = 120.0;
+	ES_DC_Voltage = 0.0;
 	ES_DC_Current = 0.0;
 	ES_DC_Power_Val = 0.0;
+
+	SOC_0_ES = 1.0;  // Assume the ES is fully charged
+
+	E0_ES_pu = 1.0374; // Based on a typical Li-on battery
+	K_ES_pu = 0.0024333;  // Based on a typical Li-on battery
+	A_ES_pu = 0.13; // Based on a typical Li-on battery
+	B_ES_pu = 3.5294; //Based on a typical Li-on battery
+	R_ES_pu = 0.025; //Based on a typical Li-on battery
+
+	prev_time = 0.0; // Previous model update time
+
 
 	//Deltamode flags
 	deltamode_inclusive = false;
@@ -72,6 +103,7 @@ int energy_storage::init(OBJECT *parent)
 	FUNCTIONADDR temp_fxn;
 	STATUS fxn_return_status;
 
+
 	if (parent != NULL)
 	{
 		if ((parent->flags & OF_INIT) != OF_INIT)
@@ -81,6 +113,20 @@ int energy_storage::init(OBJECT *parent)
 			return 2; // defer
 		}
 	}
+
+	prev_time = (double)gl_globalclock;
+
+	SOC_ES = SOC_0_ES;  // Initialize the SOC_ES
+
+	if ((SOC_ES < 0.0)||(SOC_ES > 1.0)) // energy_storage has a PARENT and PARENT is an INVERTER - old-school inverter
+	{
+		//Throw an error for now - we'll have to think if we want to support old school inverters or not
+		GL_THROW("energy_storage:%d - %s - The battery SOC has to be between 0.0 and 1.0", obj->id, (obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		The battery SOC is specified as a per-unit value, not a percentage.
+		*/
+	}
+
 
 	// find parent inverter, if not defined, use a default voltage
 	if (parent != NULL)
@@ -267,6 +313,9 @@ int energy_storage::init(OBJECT *parent)
 
 TIMESTAMP energy_storage::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
+	double curr_time;
+	double deltat;
+
 	OBJECT *obj = OBJECTHDR(this);
 
 	if (first_sync_delta_enabled == true) //Deltamode first pass
@@ -329,6 +378,20 @@ TIMESTAMP energy_storage::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	//******* QSTS Updates might go here - this may also be called by deltamode *******//
 
+	curr_time = (double)t1;
+	if (curr_time > prev_time)
+	{
+		deltat = curr_time - prev_time;
+
+		ES_DC_Current = inverter_current_property->get_double(); // Get the updated current
+		SOC_ES = SOC_ES - (ES_DC_Current * deltat / 3600.00) / (Qbase_ES/Vbase_ES);  // Calculate the SOC, second to hour conversion (3600)
+
+		prev_time = curr_time;
+
+	}
+
+
+
 	return TS_NEVER;
 }
 
@@ -337,10 +400,7 @@ TIMESTAMP energy_storage::sync(TIMESTAMP t0, TIMESTAMP t1)
 SIMULATIONMODE energy_storage::inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
 	double deltat, deltatimedbl, currentDBLtime;
-	TIMESTAMP time_passin_value;
 
-	//Get timestep value
-	deltat = (double)dt / (double)DT_SECOND;
 
 	if (iteration_count_val == 0) //Only update timestamp tracker on first iteration
 	{
@@ -350,10 +410,14 @@ SIMULATIONMODE energy_storage::inter_deltaupdate(unsigned int64 delta_time, unsi
 		//Update tracking variable
 		currentDBLtime = (double)gl_globalclock + deltatimedbl;
 
-		//Cast it back
-		time_passin_value = (TIMESTAMP)currentDBLtime;
+		deltat = currentDBLtime - prev_time;
 
 		//******* Some initialization routine may go here *******//
+		ES_DC_Current = inverter_current_property->get_double(); // Get the updated current
+		SOC_ES = SOC_ES - (ES_DC_Current * deltat / 3600.00) / (Qbase_ES/Vbase_ES);  // Calculate the SOC, second to hour conversion (3600)
+
+		prev_time = currentDBLtime;
+
 	}
 	//Update is called by the inverter, so it doesn't need to do anything in here - it's all in the sub-function
 
@@ -366,31 +430,55 @@ STATUS energy_storage::energy_storage_dc_update(OBJECT *calling_obj, bool init_m
 {
 	gld_wlock *test_rlock;
 	STATUS temp_status = SUCCESS;
-	double inv_I, inv_P;
+	//double  P_ES_pu;
+
 
 	if (init_mode == true) //Initialization - if needed
 	{
 		//Pull P_In from the inverter - for now, this is singular (may need to be adjusted when multiple objects exist)
-		inv_P = inverter_power_property->get_double();
+		ES_DC_Power_Val = inverter_power_property->get_double();
+		P_ES_pu = ES_DC_Power_Val/Sbase_ES;
 
-		//******* Some initialization routine may go here *******//
+
+		//******* Initialize the ES output voltage and current *******//
+
+		E_ES_pu = E0_ES_pu - K_ES_pu/SOC_0_ES + A_ES_pu * exp(-B_ES_pu * (1.0-SOC_0_ES));  // Calculate the battery internal votlage
+		V_ES_pu = (E_ES_pu + sqrt(E_ES_pu*E_ES_pu - 4*P_ES_pu*R_ES_pu))/2.0;  // Calculate the terminal voltage
+		I_ES_pu = P_ES_pu/V_ES_pu;  //Calculate the output current
+
+		ES_DC_Voltage = V_ES_pu * Vbase_ES;
+		ES_DC_Current = I_ES_pu * (Sbase_ES / Vbase_ES);
+
 
 		//Push the voltage back out to the inverter - this may need different logic when there are multiple objects
 		//******* Just an example - may not be needed *******//
 		inverter_voltage_property->setp<double>(ES_DC_Voltage, *test_rlock);
+		inverter_current_property->setp<double>(ES_DC_Current, *test_rlock);
+
 	}
 	else //Standard runs
 	{
 		//Pull the values from the inverter - these may not all be needed - put here as examples
 		ES_DC_Voltage = inverter_voltage_property->get_double();
-		inv_I = inverter_current_property->get_double();
-		inv_P = inverter_power_property->get_double();
+		//ES_DC_Current = inverter_current_property->get_double();
+		//inv_P = inverter_power_property->get_double();
 
 		//******* Energy storage update equations would go here *******//
 
+		V_ES_pu = ES_DC_Voltage / Vbase_ES;
+
+		E_ES_pu = E0_ES_pu - K_ES_pu/SOC_ES + A_ES_pu * exp(-B_ES_pu * (1.0-SOC_ES));  // Calculate the battery internal votlage
+
+		I_ES_pu = (E_ES_pu - V_ES_pu)/R_ES_pu;  // Calculate the battery output current
+
+		ES_DC_Current = I_ES_pu * (Sbase_ES/Vbase_ES);
+
+		P_ES_pu = V_ES_pu * I_ES_pu;  // Calculate the battery output power
+
+
 		//Push the changes
-		inverter_current_property->setp<double>(inv_I, *test_rlock);
-		inverter_power_property->setp<double>(inv_P, *test_rlock);
+		inverter_current_property->setp<double>(ES_DC_Current, *test_rlock);
+		//inverter_power_property->setp<double>(inv_P, *test_rlock);
 	}
 
 	//Return our status
