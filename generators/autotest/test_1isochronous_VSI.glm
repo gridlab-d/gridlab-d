@@ -3565,7 +3565,7 @@ object inverter {
 	kp_Vterminal 0.1;
 	
 	object recorder {
-		property V_In,I_In,VA_In, Pref, Qref, VA_Out, VA_Out.real, VA_Out.imag, VSI_freq;
+		property V_In,I_In, Pref, Qref, VA_Out, VA_Out.real, VA_Out.imag, VSI_freq;
 		 file VSI_inv.csv;
 		 flags DELTAMODE;
 		 interval 1;

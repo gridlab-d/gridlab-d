@@ -33,7 +33,7 @@ object house {
 		within 1;
 		object player {
 			property value;
-			file "test_lights_explicit_power2.player";
+			file "../test_lights_explicit_power2.player";
 			loop 1;
 		};
 	};
