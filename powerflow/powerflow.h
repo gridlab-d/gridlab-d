@@ -140,6 +140,7 @@ GLOBAL double default_resistance INIT(1e-4);		/**< sets the default resistance f
 GLOBAL bool enable_inrush_calculations INIT(false);	/**< Flag to enable in-rush calculations in deltamode */
 GLOBAL INRUSHINTMETHOD default_inrush_integration_method INIT(IRM_TRAPEZOIDAL);	/**< Integration method used for inrush calculations */
 GLOBAL double impedance_conversion_low_pu INIT(0.7);	/** Lower PU voltage level to convert all loads to impedance */
+GLOBAL bool enable_impedance_conversion INIT(false);	/**< Flag to enable conversion of loads to impedance-based - used for non-inrush cases */
 GLOBAL double deltatimestep_running INIT(-1.0);			/** Value of the current deltamode simulation - used for integration method in in-rush */
 
 //Mesh fault current stuff
