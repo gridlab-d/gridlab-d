@@ -216,6 +216,8 @@ inverter::inverter(MODULE *module)
 				PT_KEYWORD, "NONE", (enumeration)IEEE_NONE,
 				PT_KEYWORD, "IEEE1547", (enumeration)IEEE1547,
 				PT_KEYWORD, "IEEE1547A", (enumeration)IEEE1547A,
+				PT_KEYWORD, "IEEE1547_2003", (enumeration)IEEE1547,	//Duplicated to reflect inverter_dyn changes and make the same
+				PT_KEYWORD, "IEEE1547A_2014", (enumeration)IEEE1547A,
 
 			//Frequency bands of 1547a checks
 			PT_double, "over_freq_high_cutout[Hz]", PADDR(over_freq_high_band_setpoint),PT_DESCRIPTION,"DELTAMODE: OF2 set point for IEEE 1547a",
