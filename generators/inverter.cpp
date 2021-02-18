@@ -504,7 +504,7 @@ int inverter::create(void)
 	under_freq_high_band_setpoint = 59.5;	//UF2 set point for IEEE 1547a
 	under_freq_high_band_delay = 2.0;		//UF2 clearing time for IEEE1547a
 	under_freq_high_band_viol_time = 0.0;	//Accumulator for IEEE1547a UF high-band violation time
-	under_freq_low_band_setpoint = 57;		//UF1 set point for IEEE 1547a
+	under_freq_low_band_setpoint = 57.0;		//UF1 set point for IEEE 1547a
 	under_freq_low_band_delay = 0.16;		//UF1 clearing time for IEEE 1547a
 	under_freq_low_band_viol_time = 0.0;	//Accumulator for IEEE1547a UF low-band violation time
 
@@ -6831,7 +6831,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 						// Before updating pLine_unrotI and Iout, need to check inverter real power output:
 						// If not attached to the battery, need to check if real power < 0 or > rating
-						complex VA_Out_temp = value_Circuit_V[0] * ~(pred_state.Iac[0]);
+						VA_Out = value_Circuit_V[0] * ~(pred_state.Iac[0]);
 
 
 						// Then continue update current
@@ -6956,7 +6956,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 						// Before updating pLine_unrotI and Iout, need to check inverter real power output:
 						// If not attached to the battery, need to check if real power < 0 or > rating
-						complex VA_Out_temp = (value_Circuit_V[0] * ~(pred_state.Iac[0])) + (value_Circuit_V[1] * ~(pred_state.Iac[1])) + (value_Circuit_V[2] * ~(pred_state.Iac[2]));
+						VA_Out = (value_Circuit_V[0] * ~(pred_state.Iac[0])) + (value_Circuit_V[1] * ~(pred_state.Iac[1])) + (value_Circuit_V[2] * ~(pred_state.Iac[2]));
 
 						for (int i = 0; i< 3; i++) {
 							//if ((b_soc == -1 && VA_Out_temp.Re() < 0) || Pref == 0) {
@@ -7209,7 +7209,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 						// Before updating pLine_unrotI and Iout, need to check inverter real power output:
 						// If not attached to the battery, need to check if real power < 0 or > rating
-						complex VA_Out_temp = value_Circuit_V[0] * ~(curr_state.Iac[0]);
+						VA_Out = value_Circuit_V[0] * ~(curr_state.Iac[0]);
 
 
 						// Then continue update current
@@ -7360,7 +7360,8 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 						// Before updating pLine_unrotI and Iout, need to check inverter real power output:
 						// If not attached to the battery, need to check if real power < 0 or > rating
-						complex VA_Out_temp = (value_Circuit_V[0] * ~(curr_state.Iac[0])) + (value_Circuit_V[1] * ~(curr_state.Iac[1])) + (value_Circuit_V[2] * ~(curr_state.Iac[2]));
+						VA_Out = (value_Circuit_V[0] * ~(curr_state.Iac[0])) + (value_Circuit_V[1] * ~(curr_state.Iac[1])) + (value_Circuit_V[2] * ~(curr_state.Iac[2]));
+						
 						for (int i = 0; i< 3; i++) {
 
 							value_Line_unrotI[i] += I_Out[i];
@@ -7513,6 +7514,9 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 				//Compute the error
 				curr_PID_state.max_error_val = curr_PID_state.error[0].Mag();
 
+				//Update VA out
+				VA_Out = -(value_Circuit_V[0]*~curr_PID_state.current_vals[0]);
+
 			}//End Triplex
 			else	//Three-phase
 			{
@@ -7572,6 +7576,10 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 						curr_PID_state.max_error_val = curr_PID_state.error[indexval].Mag();
 					}
 				}
+
+				//Update VA_Out
+				VA_Out = -(value_Circuit_V[0]*~curr_PID_state.current_vals[0] + value_Circuit_V[1]* ~curr_PID_state.current_vals[1] + value_Circuit_V[2]*~curr_PID_state.current_vals[2]);
+
 			}//End three-phase
 
 			//Check the error
@@ -7649,6 +7657,9 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 			}
 		}
 		//Default else, who knows
+
+		//Zero the output variable too - for giggles
+		VA_Out = complex(0.0,0.0);
 
 		//We're disabled - unless something else wants deltamode, we're done
 		simmode_return_value = SM_EVENT;
@@ -8446,7 +8457,7 @@ STATUS inverter::initalize_IEEE_1547_checks(OBJECT *parent)
 				under_freq_low_band_delay = 0.16;		//Same value as low frequency, since this band doesn't technically exist
 			}
 
-			//Set the voltage values as well - basically, the under votlage has an extra category
+			//Set the voltage values as well - basically, the under voltage has an extra category
 			under_voltage_lowest_voltage_setpoint = 0.40;	//Lower than range before, so just duplicate disconnect value
 			under_voltage_middle_voltage_setpoint = 0.50;	//Lower limit of 1547
 			under_voltage_high_voltage_setpoint = 0.88;		//Low area threshold for 1547
@@ -8518,7 +8529,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 			under_freq_high_band_viol_time = 0.0;
 			under_freq_low_band_viol_time = 0.0;
 
-			if (over_freq_high_band_viol_time >= over_freq_high_band_delay)
+			if (over_freq_high_band_viol_time > over_freq_high_band_delay)
 			{
 				trigger_disconnect = true;
 				return_time_freq = reconnect_time;
@@ -8526,7 +8537,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 				//Flag us as high over-frequency violation
 				ieee_1547_trip_method = IEEE_1547_HIGH_OF;
 			}
-			else if (over_freq_low_band_viol_time >= over_freq_low_band_delay)	//Triggered existing band
+			else if (over_freq_low_band_viol_time > over_freq_low_band_delay)	//Triggered existing band
 			{
 				trigger_disconnect = true;
 				return_time_freq = reconnect_time;
@@ -8559,7 +8570,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 			over_freq_high_band_viol_time = 0.0;
 			over_freq_low_band_viol_time = 0.0;
 
-			if (under_freq_low_band_viol_time >= under_freq_low_band_delay)
+			if (under_freq_low_band_viol_time > under_freq_low_band_delay)
 			{
 				trigger_disconnect = true;
 				return_time_freq = reconnect_time;
@@ -8567,7 +8578,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 				//Flag us as the low under-frequency violation
 				ieee_1547_trip_method = IEEE_1547_LOW_UF;
 			}
-			else if (under_freq_high_band_viol_time >= under_freq_high_band_delay)	//Other band trigger
+			else if (under_freq_high_band_viol_time > under_freq_high_band_delay)	//Other band trigger
 			{
 				trigger_disconnect = true;
 				return_time_freq = reconnect_time;
@@ -8602,7 +8613,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 			over_freq_high_band_viol_time = 0.0;
 			over_freq_low_band_viol_time = 0.0;
 
-			if (under_freq_high_band_viol_time >= under_freq_high_band_delay)
+			if (under_freq_high_band_viol_time > under_freq_high_band_delay)
 			{
 				trigger_disconnect = true;
 				return_time_freq = reconnect_time;
@@ -8628,7 +8639,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 			under_freq_high_band_viol_time = 0.0;
 			under_freq_low_band_viol_time = 0.0;
 
-			if (over_freq_low_band_viol_time >= over_freq_low_band_delay)
+			if (over_freq_low_band_viol_time > over_freq_low_band_delay)
 			{
 				trigger_disconnect = true;
 				return_time_freq = reconnect_time;
@@ -8798,7 +8809,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 		//Reconcile the violation times and see how we need to break
 		if (uv_low_hit == true)
 		{
-			if (under_voltage_lowest_viol_time >= under_voltage_lowest_delay)
+			if (under_voltage_lowest_viol_time > under_voltage_lowest_delay)
 			{
 				trigger_disconnect = true;
 				return_time_volt = reconnect_time;
@@ -8806,7 +8817,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 				//Flag us as the lowest under voltage violation
 				ieee_1547_trip_method = IEEE_1547_LOWEST_UV;
 			}
-			else if (under_voltage_middle_viol_time >= under_voltage_middle_delay)	//Check other ranges
+			else if (under_voltage_middle_viol_time > under_voltage_middle_delay)	//Check other ranges
 			{
 				trigger_disconnect = true;
 				return_time_volt = reconnect_time;
@@ -8815,7 +8826,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 				ieee_1547_trip_method = IEEE_1547_MIDDLE_UV;
 			}
 
-			else if (under_voltage_high_viol_time >= under_voltage_high_delay)
+			else if (under_voltage_high_viol_time > under_voltage_high_delay)
 			{
 				trigger_disconnect = true;
 				return_time_volt = reconnect_time;
@@ -8831,7 +8842,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 		}
 		else if (uv_mid_hit == true)
 		{
-			if (under_voltage_middle_viol_time >= under_voltage_middle_delay)
+			if (under_voltage_middle_viol_time > under_voltage_middle_delay)
 			{
 				trigger_disconnect = true;
 				return_time_volt = reconnect_time;
@@ -8839,7 +8850,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 				//Flag us as the middle under voltage violation
 				ieee_1547_trip_method = IEEE_1547_MIDDLE_UV;
 			}
-			else if (under_voltage_high_viol_time >= under_voltage_high_delay)	//Check higher bands
+			else if (under_voltage_high_viol_time > under_voltage_high_delay)	//Check higher bands
 			{
 				trigger_disconnect = true;
 				return_time_volt = reconnect_time;
@@ -8855,7 +8866,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 		}
 		else if (uv_high_hit == true)
 		{
-			if (under_voltage_high_viol_time >= under_voltage_high_delay)
+			if (under_voltage_high_viol_time > under_voltage_high_delay)
 			{
 				trigger_disconnect = true;
 				return_time_volt = reconnect_time;
@@ -8871,7 +8882,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 		}
 		else if (ov_low_hit == true)
 		{
-			if (over_voltage_low_viol_time >= over_voltage_low_delay)
+			if (over_voltage_low_viol_time > over_voltage_low_delay)
 			{
 				trigger_disconnect = true;
 				return_time_volt = reconnect_time;
@@ -8887,7 +8898,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 		}
 		else if (ov_high_hit == true)
 		{
-			if (over_voltage_high_viol_time >= over_voltage_high_delay)
+			if (over_voltage_high_viol_time > over_voltage_high_delay)
 			{
 				trigger_disconnect = true;
 				return_time_volt = reconnect_time;
@@ -8895,7 +8906,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 				//Flag us as the high over voltage violation
 				ieee_1547_trip_method = IEEE_1547_HIGH_OV;
 			}
-			else if (over_voltage_low_viol_time >= over_voltage_low_delay)	//Lower band overlap
+			else if (over_voltage_low_viol_time > over_voltage_low_delay)	//Lower band overlap
 			{
 				trigger_disconnect = true;
 				return_time_volt = reconnect_time;
@@ -8968,7 +8979,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 	//See what we are - if we're out of service, see if we can be restored
 	if (inverter_1547_status == false)
 	{
-		if (out_of_violation_time_total >= reconnect_time)
+		if (out_of_violation_time_total > reconnect_time)
 		{
 			//Set us back into service
 			inverter_1547_status = true;
