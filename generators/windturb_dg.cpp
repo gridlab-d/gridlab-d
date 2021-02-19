@@ -12,6 +12,12 @@ Copyright (C) 2008 Battelle Memorial Institute
 #include <math.h>
 #include <complex.h>
 
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <vector>
+
 #include "windturb_dg.h"
 
 CLASS *windturb_dg::oclass = NULL;
@@ -40,6 +46,7 @@ windturb_dg::windturb_dg(MODULE *module)
 			PT_KEYWORD,"CONSTANTP",(enumeration)CONSTANTP, PT_DESCRIPTION, "Maintains the real power output at the terminals",
 			PT_KEYWORD,"CONSTANTPQ",(enumeration)CONSTANTPQ, PT_DESCRIPTION, "Maintains the real and reactive output at the terminals - currently unsupported",
 			PT_enumeration,"Turbine_Model",PADDR(Turbine_Model), PT_DESCRIPTION, "Type of turbine being represented; using any of these except USER_DEFINED also specifies a large number of defaults",
+			PT_KEYWORD,"GENERIC_DEFAULT",(enumeration)GENERIC_DEFAULT, PT_DESCRIPTION, "Generic model used to set default parameters if user doesnot specify",
 			PT_KEYWORD,"GENERIC_SYNCH_SMALL",(enumeration)GENERIC_SYNCH_SMALL, PT_DESCRIPTION, "Generic model for a small, fixed pitch synchronous turbine",
 			PT_KEYWORD,"GENERIC_SYNCH_MID",(enumeration)GENERIC_SYNCH_MID, PT_DESCRIPTION, "Generic model for a mid-size, fixed pitch synchronous turbine",
 			PT_KEYWORD,"GENERIC_SYNCH_LARGE",(enumeration)GENERIC_SYNCH_LARGE, PT_DESCRIPTION, "Generic model for a large, fixed pitch synchronous turbine",
@@ -112,6 +119,8 @@ windturb_dg::windturb_dg(MODULE *module)
 
 			PT_double, "pf[pu]", PADDR(pf), PT_DESCRIPTION, "Desired power factor in CONSTANTP mode (can be modified over time)",
 			PT_double, "power_factor[pu]", PADDR(pf), PT_DESCRIPTION, "Desired power factor in CONSTANTP mode (can be modified over time)",
+			
+			PT_char1024, "power_curve_csv", PADDR(power_curve_csv), PT_DESCRIPTION, "Name of .csv file containing user defined power curve",
 
 			PT_complex, "voltage_A[V]", PADDR(voltage_A), PT_DESCRIPTION, "Terminal voltage on phase A",
 			PT_complex, "voltage_B[V]", PADDR(voltage_B), PT_DESCRIPTION, "Terminal voltage on phase B",
@@ -161,20 +170,44 @@ int windturb_dg::create(void)
 	//std_air_dens = 1.2754;	//dry air density at std pressure and temp in kg/m^3
 	std_air_temp = 0;	//IUPAC std air temp in Celsius
 	std_air_press = 100000;	//IUPAC std air pressure in Pascals
-	Turbine_Model = GENERIC_SYNCH_LARGE;	//************** Default specified so it doesn't crash out
+	Turbine_Model = GENERIC_DEFAULT;	//************** Defaults specified according to GENERIC_SYNCH_LARGE so it doesn't crash out
+	blade_diam = 82.5;
+	turbine_height = 90;
+	q = 3;						//number of gearbox stages
+	Rated_VA = 1635000;
+	Max_P = 1500000;
+	Max_Q = 650000;
+	Rated_V = 600;
+	pf = 0.95;
+	CP_Data = GENERAL_LARGE;
+	cut_in_ws = 4;			//lowest wind speed 
+	cut_out_ws = 25;		//highest wind speed 
+	Cp_max = 0.302;			//rotor specifications for power curve
+	ws_maxcp = 7;			
+	Cp_rated = Cp_max-.05;	
+	ws_rated = 12.5;
+	Gen_type = SYNCHRONOUS;
+	Rs = 0.05;
+	Xs = 0.200;
+	Rg = 0.000;
+	Xg = 0.000;                           //*******************Defaults specified according to GENERIC_SYNCH_LARGE
+	
 	Gen_mode = CONSTANTP;					//************** Default specified so values actually come out
 	Gen_status = ONLINE;
+	
 	Turbine_implementation = POWER_CURVE;
 
-	turbine_height = -9999;
-	blade_diam = -9999;
-	cut_in_ws = -9999;
-	cut_out_ws = -9999;
-	Cp_max = -9999;
-	Cp_rated =-9999;
-	ws_maxcp = -9999;
-	ws_rated = -9999;
-	CP_Data = CALCULATED;
+	//turbine_height = -9999;
+	//blade_diam = -9999;
+	//cut_in_ws = -9999;
+	//cut_out_ws = -9999;
+	//Cp_max = -9999;
+	//Cp_rated =-9999;
+	//ws_maxcp = -9999;
+	//ws_rated = -9999;
+	//CP_Data = CALCULATED;
+	
+	strcpy(power_curve_csv,"");      //initializing string to null
 
 	pCircuit_V[0] = pCircuit_V[1] = pCircuit_V[2] = NULL;
 	pLine_I[0] = pLine_I[1] = pLine_I[2] = NULL;
@@ -263,6 +296,63 @@ int windturb_dg::init(OBJECT *parent)
 		
 	double ZB, SB, EB;
 	complex tst, tst2, tst3, tst4;
+
+	if(strstr(power_curve_csv, ".csv")){                  //Todo: checking for size and other illegeal things in csv
+	
+	// Read the file ----------
+		FILE* fp = fopen(power_curve_csv, "rb");
+		if (fp == NULL) return 0;
+		fseek(fp, 0, SEEK_END);
+		long size = ftell(fp);
+		fseek(fp, 0, SEEK_SET);
+		char *pData = new char[size + 1];
+		fread(pData, sizeof(char), size, fp);
+		fclose(fp);
+		// Read the file ----------
+
+		// Parse the file content ----------
+		char* pch;
+		pch = strtok (pData, ",");
+		
+		int i=0;
+		int k=0;
+		int l=0;
+		while (pch != NULL)
+		{
+			if ((i % 2) == 0){
+				Generic_Power_Curve[0][k] = std::stof(pch);
+				k++;
+			} else {
+				Generic_Power_Curve[1][l] = std::stof(pch);
+				l++;
+			}
+			i++;
+			pch = strtok (NULL, ",\n");
+			
+		}		
+	} else {
+		if (strcmp(power_curve_csv,"")==0) {
+			gl_warning("No user defined power curve provided, resorting to default power curve");
+		} else{
+			gl_warning("windturb_dg: unrecognized filetype, resorting to default power curve");
+		}
+		
+		double Generic_Power_Curve_default[2][21] = {
+			{2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0, 25.0},
+			{0.0, 0.0084725, 0.026315, 0.049903, 0.083323, 0.12564, 0.17541, 0.23191, 0.30286, 0.38807, 0.49134, 0.58717, 0.66827, 0.75071, 0.82431, 0.89813, 0.95368, 1.0013, 1.0331, 1.0602, 1.0602}
+		};
+		
+		for (int i=0; i<sizeof(Generic_Power_Curve[0])/sizeof(double); i++){
+			Generic_Power_Curve[0][i] = Generic_Power_Curve_default[0][i];
+			Generic_Power_Curve[1][i] = Generic_Power_Curve_default[1][i];
+		}
+	}
+	
+	//int i;
+	//for (i=0;i < (sizeof (Generic_Power_Curve[0]) /sizeof (double));i++) {
+	//	printf("%f\n",Generic_Power_Curve[0][i]);
+	//	printf("%f\n",Generic_Power_Curve[1][i]);
+	//}
 
 	switch (Turbine_Model)	{
 		case GENERIC_IND_LARGE:
@@ -490,6 +580,12 @@ int windturb_dg::init(OBJECT *parent)
 			Rated_VA = 1500000;
 			
 			break;
+		case GENERIC_DEFAULT:
+			//Add nothing here. Used to set turbine default parameters to GENERIC_SYNCH_LARGE. Implemented in create function. Not implemented here because it allows for higher
+			//configurability from the user end while maintining compatibility with the lagacy code
+			break;
+		//Todo--user defined custom will come in here
+			
 		default:
 			GL_THROW("Unknown turbine model was specified");
 			/*  TROUBLESHOOT
@@ -565,7 +661,7 @@ int windturb_dg::init(OBJECT *parent)
 			delete temp_property_pointer;
 
 			// check nominal voltage against rated voltage
-			if ( fabs(1 - (temp_double_value * sqrt(3.0) / Rated_V) ) > 0.1 )
+			if (( fabs(1 - (temp_double_value * sqrt(3.0) / Rated_V) ) > 0.1 ) && (Turbine_implementation != POWER_CURVE))
 				gl_warning("windturb_dg (id:%d, name:%s): Rated generator voltage (LL: %.1f) and nominal voltage (LL: %.1f) of meter parent are different by greater than 10 percent. Odd behavior may occur.",obj->id,obj->name,Rated_V,temp_double_value * sqrt(3.0));
 			/* TROUBLESHOOT
 			Currently, the model allows you to attach the turbine to a voltage that is quite different than the rated terminal
@@ -615,7 +711,7 @@ int windturb_dg::init(OBJECT *parent)
 			delete temp_property_pointer;
 
 			// check nominal voltage against rated voltage
-			if ( fabs(1 - (temp_double_value / Rated_V) ) > 0.1 )
+			if (( fabs(1 - (temp_double_value / Rated_V) ) > 0.1 ) && (Turbine_implementation != POWER_CURVE))
 				gl_warning("windturb_dg (id:%d, name:%s): Rated generator voltage (LL: %.1f) and nominal voltage (LL: %.1f) of meter parent are different by greater than 10 percent. Odd behavior may occur.",obj->id,obj->name,Rated_V,temp_double_value * sqrt(3.0));
 			/* TROUBLESHOOT
 			Currently, the model allows you to attach the turbine to a voltage that is quite different than the rated terminal
@@ -684,43 +780,45 @@ int windturb_dg::init(OBJECT *parent)
 	Rated_VA of generator must be specified so that per unit values can be calculated
 	*/
 
-	if (Gen_type == INDUCTION)  
-	{
-		complex Zrotor(Rr,Xr);
-		complex Zmag = complex(Rc*Xm*Xm/(Rc*Rc + Xm*Xm),Rc*Rc*Xm/(Rc*Rc + Xm*Xm));
-		complex Zstator(Rst,Xst);
+	if (Turbine_implementation != POWER_CURVE){
+		if (Gen_type == INDUCTION)  
+		{
+			complex Zrotor(Rr,Xr);
+			complex Zmag = complex(Rc*Xm*Xm/(Rc*Rc + Xm*Xm),Rc*Rc*Xm/(Rc*Rc + Xm*Xm));
+			complex Zstator(Rst,Xst);
 
-		//Induction machine two-port matrix.
-		IndTPMat[0][0] = (Zmag + Zstator)/Zmag;
-		IndTPMat[0][1] = Zrotor + Zstator + Zrotor*Zstator/Zmag;
-		IndTPMat[1][0] = complex(1,0) / Zmag;
-		IndTPMat[1][1] = (Zmag + Zrotor) / Zmag;
-	}
+			//Induction machine two-port matrix.
+			IndTPMat[0][0] = (Zmag + Zstator)/Zmag;
+			IndTPMat[0][1] = Zrotor + Zstator + Zrotor*Zstator/Zmag;
+			IndTPMat[1][0] = complex(1,0) / Zmag;
+			IndTPMat[1][1] = (Zmag + Zrotor) / Zmag;
+		}
 
-	else if (Gen_type == SYNCHRONOUS)  
-	{
-		double Real_Rs = Rs * ZB; 
-		double Real_Xs = Xs * ZB;
-		double Real_Rg = Rg * ZB; 
-		double Real_Xg = Xg * ZB;
-		tst = complex(Real_Rg,Real_Xg);
-		tst2 = complex(Real_Rs,Real_Xs);
-		AMx[0][0] = tst2 + tst;			//Impedance matrix
-		AMx[1][1] = tst2 + tst;
-		AMx[2][2] = tst2 + tst;
-		AMx[0][1] = AMx[0][2] = AMx[1][0] = AMx[1][2] = AMx[2][0] = AMx[2][1] = tst;
-		tst3 = (complex(1,0) + complex(2,0)*tst/tst2)/(tst2 + complex(3,0)*tst);
-		tst4 = (-tst/tst2)/(tst2 + tst);
-		invAMx[0][0] = tst3;			//Admittance matrix (inverse of Impedance matrix)
-		invAMx[1][1] = tst3;
-		invAMx[2][2] = tst3;
-		invAMx[0][1] = AMx[0][2] = AMx[1][0] = AMx[1][2] = AMx[2][0] = AMx[2][1] = tst4;
+		else if (Gen_type == SYNCHRONOUS)  
+		{
+			double Real_Rs = Rs * ZB; 
+			double Real_Xs = Xs * ZB;
+			double Real_Rg = Rg * ZB; 
+			double Real_Xg = Xg * ZB;
+			tst = complex(Real_Rg,Real_Xg);
+			tst2 = complex(Real_Rs,Real_Xs);
+			AMx[0][0] = tst2 + tst;			//Impedance matrix
+			AMx[1][1] = tst2 + tst;
+			AMx[2][2] = tst2 + tst;
+			AMx[0][1] = AMx[0][2] = AMx[1][0] = AMx[1][2] = AMx[2][0] = AMx[2][1] = tst;
+			tst3 = (complex(1,0) + complex(2,0)*tst/tst2)/(tst2 + complex(3,0)*tst);
+			tst4 = (-tst/tst2)/(tst2 + tst);
+			invAMx[0][0] = tst3;			//Admittance matrix (inverse of Impedance matrix)
+			invAMx[1][1] = tst3;
+			invAMx[2][2] = tst3;
+			invAMx[0][1] = AMx[0][2] = AMx[1][0] = AMx[1][2] = AMx[2][0] = AMx[2][1] = tst4;
+		}
+		else
+			GL_THROW("Unknown generator type specified");
+		/* TROUBLESHOOT 
+		Shouldn't have been able to specify an unknown generator type.  Please report this error to GridLAB-D support.
+		*/
 	}
-	else
-		GL_THROW("Unknown generator type specified");
-	/* TROUBLESHOOT 
-	Shouldn't have been able to specify an unknown generator type.  Please report this error to GridLAB-D support.
-	*/
 
 	init_climate();
 
@@ -1152,11 +1250,9 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 		case POWER_CURVE:
 			double Power_pu;
 			double PowerA, PowerB, PowerC;
-			/* Initializing Generic Power Curve*/
-			double Generic_Power_Curve[2][21] = {
-				{2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0, 25.0},
-				{0.0, 0.0084725, 0.026315, 0.049903, 0.083323, 0.12564, 0.17541, 0.23191, 0.30286, 0.38807, 0.49134, 0.58717, 0.66827, 0.75071, 0.82431, 0.89813, 0.95368, 1.0013, 1.0331, 1.0602, 1.0602}
-			};
+			
+			//printf("%f\n",Rated_VA);
+			
 			if (parent_is_valid == true)
 			{
 				value_Circuit_V[0] = pCircuit_V[0]->get_complex();

@@ -36,6 +36,8 @@ private:
 	complex value_Circuit_V[3];			//< value holder for voltage values
 	complex value_Line_I[3];			//< value holder for current values
 	bool parent_is_valid;				//< Flag to pointers
+	
+	double Generic_Power_Curve[2][21];  //Look-up table carrying power curve values. Equals default (defined in .cpp) or user defined power curve 
 
     gld_property *pPress;			
 	gld_property *pTemp;			
@@ -63,7 +65,7 @@ public:
 	enumeration Gen_type;
 	enum {CONSTANTE=1, CONSTANTP, CONSTANTPQ};
 	enumeration Gen_mode;
-	enum {GENERIC_SYNCH_SMALL, GENERIC_SYNCH_MID,GENERIC_SYNCH_LARGE, GENERIC_IND_SMALL, GENERIC_IND_MID, GENERIC_IND_LARGE, USER_DEFINED, VESTAS_V82, GE_25MW, BERGEY_10kW, GEN_TURB_POW_CURVE_2_4KW, GEN_TURB_POW_CURVE_10KW, GEN_TURB_POW_CURVE_100KW, GEN_TURB_POW_CURVE_1_5MW};
+	enum {GENERIC_DEFAULT, GENERIC_SYNCH_SMALL, GENERIC_SYNCH_MID,GENERIC_SYNCH_LARGE, GENERIC_IND_SMALL, GENERIC_IND_MID, GENERIC_IND_LARGE, USER_DEFINED, VESTAS_V82, GE_25MW, BERGEY_10kW, GEN_TURB_POW_CURVE_2_4KW, GEN_TURB_POW_CURVE_10KW, GEN_TURB_POW_CURVE_100KW, GEN_TURB_POW_CURVE_1_5MW};
 	enumeration Turbine_Model;
 	enum {GENERAL_LARGE, GENERAL_MID,GENERAL_SMALL,MANUF_TABLE, CALCULATED, USER_SPECIFY};
 	enumeration CP_Data;
@@ -140,6 +142,8 @@ public:
 	double Xm;					// |
 	double Max_Vrotor;			// maximum induced voltage in p.u., e.g. 1.2
     double Min_Vrotor;			// minimum induced voltage in p.u., e.g. 0.8
+	
+	char power_curve_csv[1024]; // name of csv file containing the power curve
 
 public:
 	/* required implementations */

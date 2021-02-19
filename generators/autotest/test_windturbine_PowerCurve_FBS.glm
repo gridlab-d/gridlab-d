@@ -180,6 +180,7 @@ object windturb_dg {
 	Gen_mode CONSTANTP;
 	Turbine_Model VESTAS_V82;
 	//Turbine_implementation POWER_CURVE;
+	power_curve_csv "WT_pow_curve.csv";
 	object multi_recorder {
 		file test_wind_power_${PF}1.csv;
 		interval 900;
@@ -215,11 +216,14 @@ object windturb_dg {
 	parent my_meter2;
 	phases ABCN;
 	name windturb2;
-	Gen_status ONLINE;
-	Gen_type SYNCHRONOUS;
-	Gen_mode CONSTANTP;
-	//Turbine_implementation POWER_CURVE;
-	Turbine_Model GEN_TURB_POW_CURVE_2_4KW;
+	//Gen_status ONLINE;
+	//Gen_type SYNCHRONOUS;
+	//Gen_mode CONSTANTP;
+	//Turbine_implementation COEFF_OF_PERFORMANCE;
+	//Turbine_Model GEN_TURB_POW_CURVE_1_5MW;
+	Rated_VA 8000;
+	turbine_height 60;
+	//power_curve_csv "WT_pow_curve.csv";
 	object multi_recorder {
 		file test_wind_power_${PF}2.csv;
 		interval 900;
