@@ -134,6 +134,10 @@ int line::init(OBJECT *parent)
 	f_nominal_voltage = fNode_nominal->get_double();
 	t_nominal_voltage = tNode_nominal->get_double();
 
+	//Remove the property pointers, since they are no longer needed
+	delete fNode_nominal;
+	delete tNode_nominal;
+
 	/* check for node nominal voltage mismatch */
 	if (fabs(f_nominal_voltage - t_nominal_voltage) > (0.001*f_nominal_voltage))
 		throw "from and to node nominal voltage mismatch of greater than 0.1%%";

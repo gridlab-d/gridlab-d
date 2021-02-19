@@ -404,6 +404,15 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	//Set the global - we're working now, so no more adjustments to island arrays until we're done (except removals)
 	NR_solver_working = true;
 
+	//General "short circuit check" - if there are no islands, just leave
+	if (NR_islands_detected <= 0)
+	{
+		//Make sure the bad computations flag is set
+		*bad_computations = false;
+
+		return 0;	//Not really a valid return, but with the false above, should still continue
+	}
+
 	//Initialize the tracker variable inside each island, just in case
 	for (island_loop_index=0; island_loop_index<NR_islands_detected; island_loop_index++)
 	{
