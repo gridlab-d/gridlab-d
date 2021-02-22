@@ -178,6 +178,7 @@ EXPORT int create_player(OBJECT **obj, OBJECT *parent)
 		my->delta_track.ns = 0;
 		my->delta_track.ts = TS_NEVER;
 		my->delta_track.value[0] = '\0';
+		my->all_events_delta = false;
 		return 1;
 	}
 	return 0;
@@ -213,6 +214,9 @@ static int player_open(OBJECT *obj)
 	my->ops = tf->player;
 	if(my->ops == NULL)
 		return 0;
+
+	//Store the starting timestamp - for deltamode stuff
+	my->sim_start_time = gl_globalclock;
 
 	/* access the input stream to the player */
 	if ( (my->ops->open)(my, fname, flags)==1 )
@@ -348,7 +352,19 @@ Retry:
 			strcpy(dt.tz, tz);
 			t1 = (TIMESTAMP)gl_mktime(&dt);
 			if ((obj->flags & OF_DELTAMODE)==OF_DELTAMODE)	/* Only request deltamode if we're explicitly enabled */
-				enable_deltamode(dt.nanosecond==0?TS_NEVER:t1);
+			{
+				if (my->all_events_delta == true)
+				{
+					if (my->sim_start_time < t1)
+					{
+						enable_deltamode(t1);
+					}
+				}
+				else
+				{
+					enable_deltamode(dt.nanosecond==0?TS_NEVER:t1);
+				}
+			}
 			if (t1!=TS_INVALID && my->loop==my->loopnum){
 				my->next.ts = t1;
 				my->next.ns = dt.nanosecond;
@@ -386,7 +402,19 @@ Retry:
 			dt.nanosecond = (unsigned int)(1e9*(S-dt.second));
 			t1 = (TIMESTAMP)gl_mktime(&dt);
 			if ((obj->flags & OF_DELTAMODE)==OF_DELTAMODE)	/* Only request deltamode if we're explicitly enabled */
-				enable_deltamode(dt.nanosecond==0?TS_NEVER:t1);
+			{
+				if (my->all_events_delta == true)
+				{
+					if (my->sim_start_time < t1)
+					{
+						enable_deltamode(t1);
+					}
+				}
+				else
+				{
+					enable_deltamode(dt.nanosecond==0?TS_NEVER:t1);
+				}
+			}
 			if (t1!=TS_INVALID && my->loop==my->loopnum){
 				my->next.ts = t1;
 				my->next.ns = dt.nanosecond;
@@ -429,7 +457,19 @@ Retry:
 				my->next.ts = (unsigned short)S;
 				my->next.ns = (unsigned int)(1e9*(S-my->next.ts));
 				if ((obj->flags & OF_DELTAMODE)==OF_DELTAMODE)	/* Only request deltamode if we're explicitly enabled */
-					enable_deltamode(my->next.ns==0?TS_NEVER:t1);
+				{
+					if (my->all_events_delta == true)
+					{
+						if (my->sim_start_time < t1)
+						{
+							enable_deltamode(t1);
+						}
+					}
+					else
+					{
+						enable_deltamode(my->next.ns==0?TS_NEVER:t1);
+					}
+				}
 				while(value[voff] == ' '){
 					++voff;
 				}

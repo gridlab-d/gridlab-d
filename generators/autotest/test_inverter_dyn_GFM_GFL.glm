@@ -439,18 +439,21 @@ object load {
 		file ../data_inverter_GFM_GFL_Load4_A.player;
 		property constant_impedance_A;
 		flags DELTAMODE;
+		all_events_delta true;
 	};
 
 	object player {
 		file ../data_inverter_GFM_GFL_Load4_B.player;
 		property constant_impedance_B;
 		flags DELTAMODE;
+		all_events_delta true;
 	};
 
 	object player {
 		file ../data_inverter_GFM_GFL_Load4_C.player;
 		property constant_impedance_C;
 		flags DELTAMODE;
+		all_events_delta true;
 	};
 	 
 }		 
