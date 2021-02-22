@@ -267,6 +267,7 @@ int inverter_dyn::create(void)
 	////////////////////////////////////////////////////////
 	deltamode_inclusive = false; //By default, don't be included in deltamode simulations
 	first_sync_delta_enabled = false;
+	deltamode_exit_iteration_met = false;	//Init - will be set elsewhere
 
 	inverter_start_time = TS_INVALID;
 	inverter_first_step = true;
@@ -401,6 +402,8 @@ int inverter_dyn::create(void)
 	I_DC = 0.0;
 
 	//1547 parameters
+	Reconnect_Warn_Flag = true;			//Flag to send the warning initially
+
 	enable_1547_compliance = false;		//1547 turned off, but default
 	IEEE1547_reconnect_time = 300.0;				//5 minute default, as suggested by 1547-2003
 	inverter_1547_status = true;		//Not in a violation, by default
@@ -1964,6 +1967,9 @@ STATUS inverter_dyn::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 		memcpy(prev_value_IGenerated,value_IGenerated,3*sizeof(complex));
 	}
 
+	//Reset the QSTS criterion flag
+	deltamode_exit_iteration_met = false;
+
 	//Just return a pass - not sure how we'd fail
 	return SUCCESS;
 }
@@ -2681,7 +2687,7 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 			// Check pass
 			if (iteration_count_val == 0) // Predictor pass
 			{
-				//Caluclate injection current based on voltage soruce magtinude and angle obtained
+				//Calculate injection current based on voltage soruce magtinude and angle obtained
 				if (parent_is_single_phase == true) // single phase/split-phase implementation
 				{
 					//Update output power
@@ -3760,11 +3766,27 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					//Get the "convergence" test to see if we can exit to QSTS
 					if (mag_diff_val > GridForming_curr_convergence_criterion)
 					{
+						//Set return mode
 						simmode_return_value = SM_DELTA;
+
+						//Set flag
+						deltamode_exit_iteration_met = false;
 					}
 					else
 					{
-						simmode_return_value = SM_EVENT;
+						//Check and see if we met our iteration criterion (due to how sequencing happens)
+						if (deltamode_exit_iteration_met == true)
+						{
+							simmode_return_value = SM_EVENT;
+						}
+						else
+						{
+							//Reiterate once
+							simmode_return_value = SM_DELTA;
+
+							//Set the flag
+							deltamode_exit_iteration_met = true;
+						}
 					}
 				}
 				else //Three-phase
@@ -4191,8 +4213,25 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 							if (mag_diff_val > GridForming_curr_convergence_criterion)
 							{
 								simmode_return_value = SM_DELTA;
+
+								//Force the iteration flag
+								deltamode_exit_iteration_met = false;
 							}
 							//Default - was set to SM_EVENT above
+						}
+
+						//Check and see if we met our iteration criterion (due to how sequencing happens)
+						if (simmode_return_value == SM_EVENT)
+						{
+							if (deltamode_exit_iteration_met != true)
+							{
+								//Reiterate once
+								simmode_return_value = SM_DELTA;
+
+								//Set the flag
+								deltamode_exit_iteration_met = true;
+							}
+							//Must be true, and already SM_EVENT, so exit
 						}
 
 						//Update the states
@@ -4216,6 +4255,11 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 
 			//Zero VA_Out though
 			VA_Out = complex(0.0,0.0);
+
+			//Zero the "recordable current" outputs
+			temp_current_val[0] = complex(0.0,0.0);
+			temp_current_val[1] = complex(0.0,0.0);
+			temp_current_val[2] = complex(0.0,0.0);
 		}
 	} // end of grid-following
 
@@ -5808,6 +5852,20 @@ double inverter_dyn::perform_1547_checks(double timestepvalue)
 
 			//Flag us as no reason
 			ieee_1547_trip_method = IEEE_1547_NOTRIP;
+
+			//*********** Warning in place for now - remove this when we update the reconnect behavior properly **************//
+			if (Reconnect_Warn_Flag == true)
+			{
+				gl_warning("Inverter_dyn - Reconnections after an IEEE-1547 cessation are not fully validated.  May cause odd transients.");
+				/*  TROUBLESHOOT
+				The simple/base IEEE-1547 functionality in the inverter_dyn object only handles the cessation/disconnect side.  Upon reconnecting,
+				the proper inverter reconnect behavior is not implemented yet.  Additional transients may apply.  This is expected to be fixed in
+				a future update.
+				*/
+
+				//Set the flag
+				Reconnect_Warn_Flag = false;
+			}
 
 			//Implies no violations, return -99.0 to indicate we just restored
 			return -99.0;

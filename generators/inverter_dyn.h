@@ -97,6 +97,7 @@ private:
 	bool deltamode_inclusive; //Boolean for deltamode calls - pulled from object flags
 	bool first_sync_delta_enabled;
 	char first_iter_counter;
+	bool deltamode_exit_iteration_met;
 
 	double prev_timestamp_dbl;
 	double last_QSTS_GF_Update;
@@ -166,6 +167,8 @@ private:
 	void update_iGen(complex);
 
 	//*** IEEE 1547 functionality ***//
+	bool Reconnect_Warn_Flag;		//Flag to warn on a 1547 recovery that the behavior is not fully validated
+
 	bool enable_1547_compliance;	//Flag to enable IEEE 1547-2003/2014 condition checking
 	double IEEE1547_reconnect_time;			//Time after a 1547 violation clears before we reconnect
 	bool inverter_1547_status;		//Flag to indicate if we are online, or "curtailed" due to 1547 mapping
