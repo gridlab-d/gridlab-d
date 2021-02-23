@@ -47,6 +47,7 @@ object inverter_dyn {
 	parent Load1;
 	control_mode GFL_CURRENT_SOURCE;
 	grid_following_mode POSITIVE_SEQUENCE;
+	current_convergence_criterion 0.000001;
 
 	rated_power 100 kVA;  // per phase, 3 phase 60 kW
 	Qref 10000;
