@@ -194,6 +194,9 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 	if (prev_time == 0)	//First run - see if restoration exists (we need it for now)
 	{
 		allocate_alterations_values(reliability_mode);
+
+		//Override tret to force a reiteration - mostly to catch "initially islanded nodes" in single runs
+		tret = t0;
 	}
 
 	if (fault_check_override_mode == true)	//Special mode -- do a single topology check and then fail

@@ -108,15 +108,14 @@ object inverter_dyn {
 		flags DELTAMODE;
 		target power_A;
 		operation REAL;
-		within 0.01;
+		within 0.1;
 		object player {
 			flags DELTAMODE;
 			property value;
 			file ../data_inverter_dyn_GFM_power.csv;
 		};
     };	
-	
-	
+
 		
 };	
 
