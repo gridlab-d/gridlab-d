@@ -745,7 +745,7 @@ EXPORT TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	else if (my->status==TS_INIT && !recorder_open(obj))
 	{
 		close_recorder(my);
-		return TS_NEVER;
+		return TS_INVALID;
 	}
 
 	if(my->last.ts < 1 && my->interval != -1)
