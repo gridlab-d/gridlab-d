@@ -37,8 +37,6 @@ diesel_dg::diesel_dg(MODULE *module)
 				PT_KEYWORD,"CONSTANT_PQ",(enumeration)NON_DYN_CONSTANT_PQ,PT_DESCRIPTION,"Non-dynamic mode of diesel generator with constant PQ output as defined",
 				PT_KEYWORD,"DYN_SYNCHRONOUS",(enumeration)DYNAMIC,PT_DESCRIPTION,"Dynamics-capable implementation of synchronous diesel generator",
 		
-			PT_double, "pf", PADDR(power_factor),PT_DESCRIPTION,"desired power factor",
-
 			//End of synchronous generator inputs
 			PT_double, "Rated_V[V]", PADDR(Rated_V_LL),PT_DESCRIPTION,"nominal line-line voltage in Volts",
 			PT_double, "Rated_VA[VA]", PADDR(Rated_VA),PT_DESCRIPTION,"nominal capacity in VA",
@@ -190,7 +188,7 @@ diesel_dg::diesel_dg(MODULE *module)
 
 			//Properties for Governor of dynamics model
 			PT_enumeration,"Governor_type",PADDR(Governor_type),PT_DESCRIPTION,"Governor model for dynamics-capable implementation",
-				PT_KEYWORD,"NO_GOV",(enumeration)NO_GOV,PT_DESCRIPTION,"No exciter",
+				PT_KEYWORD,"NO_GOV",(enumeration)NO_GOV,PT_DESCRIPTION,"No governor",
 				PT_KEYWORD,"DEGOV1",(enumeration)DEGOV1,PT_DESCRIPTION,"DEGOV1 Woodward Diesel Governor",
 				PT_KEYWORD,"GAST",(enumeration)GAST,PT_DESCRIPTION,"GAST Gas Turbine Governor",
 				PT_KEYWORD,"GGOV1_OLD",(enumeration)GGOV1_OLD,PT_DESCRIPTION,"Older GGOV1 Governor Model",
@@ -351,30 +349,23 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double,"P_CONSTANT_GovOutPut",PADDR(curr_state.gov_pconstant.GovOutPut),
 
 			PT_bool,"fuelEmissionCal", PADDR(fuelEmissionCal),  PT_DESCRIPTION, "Boolean value indicating whether fuel and emission calculations are used or not",
-			PT_double,"outputEnergy",PADDR(outputEnergy),PT_DESCRIPTION,"Total energy(kWh) output from the generator",
-			PT_double,"FuelUse",PADDR(FuelUse),PT_DESCRIPTION,"Total fuel usage (gal) based on kW power output",
-			PT_double,"efficiency",PADDR(efficiency),PT_DESCRIPTION,"Total energy output per fuel usage (kWh/gal)",
-			PT_double,"CO2_emission",PADDR(CO2_emission),PT_DESCRIPTION,"Total CO2 emissions (lbs) based on fule usage",
-			PT_double,"SOx_emission",PADDR(SOx_emission),PT_DESCRIPTION,"Total SOx emissions (lbs) based on fule usage",
-			PT_double,"NOx_emission",PADDR(NOx_emission),PT_DESCRIPTION,"Total NOx emissions (lbs) based on fule usage",
-			PT_double,"PM10_emission",PADDR(PM10_emission),PT_DESCRIPTION,"Total PM-10 emissions (lbs) based on fule usage",
+			PT_double,"outputEnergy[kWh]",PADDR(outputEnergy),PT_DESCRIPTION,"Total energy(kWh) output from the generator",
+			PT_double,"FuelUse[gal]",PADDR(FuelUse),PT_DESCRIPTION,"Total fuel usage (gal) based on kW power output",
+			PT_double,"efficiency[kWh/gal]",PADDR(efficiency),PT_DESCRIPTION,"Total energy output per fuel usage (kWh/gal)",
+			PT_double,"CO2_emission[lb]",PADDR(CO2_emission),PT_DESCRIPTION,"Total CO2 emissions (lbs) based on fuel usage",
+			PT_double,"SOx_emission[lb]",PADDR(SOx_emission),PT_DESCRIPTION,"Total SOx emissions (lbs) based on fuel usage",
+			PT_double,"NOx_emission[lb]",PADDR(NOx_emission),PT_DESCRIPTION,"Total NOx emissions (lbs) based on fuel usage",
+			PT_double,"PM10_emission[lb]",PADDR(PM10_emission),PT_DESCRIPTION,"Total PM-10 emissions (lbs) based on fuel usage",
 
-			PT_double,"frequency_deviation",PADDR(frequency_deviation),PT_DESCRIPTION,"Frequency deviation of diesel_dg",
-			PT_double,"frequency_deviation_energy",PADDR(frequency_deviation_energy),PT_DESCRIPTION,"Frequency deviation accumulation of diesel_dg",
-			PT_double,"frequency_deviation_max",PADDR(frequency_deviation_max),PT_DESCRIPTION,"Frequency deviation of diesel_dg",
-			PT_double,"realPowerChange",PADDR(realPowerChange),PT_DESCRIPTION,"Real power output change of diesel_dg",
-			PT_double,"ratio_f_p",PADDR(ratio_f_p),PT_DESCRIPTION,"Ratio of frequency deviation to real power output change of diesel_dg",
+			PT_double,"frequency_deviation[pu]",PADDR(frequency_deviation),PT_DESCRIPTION,"Frequency deviation of diesel_dg",
+			PT_double,"frequency_deviation_energy[pu]",PADDR(frequency_deviation_energy),PT_DESCRIPTION,"Frequency deviation accumulation of diesel_dg",
+			PT_double,"frequency_deviation_max[pu]",PADDR(frequency_deviation_max),PT_DESCRIPTION,"Frequency deviation of diesel_dg",
+			PT_double,"realPowerChange[W]",PADDR(realPowerChange),PT_DESCRIPTION,"Real power output change of diesel_dg",
+			PT_double,"ratio_f_p[pu]",PADDR(ratio_f_p),PT_DESCRIPTION,"Ratio of frequency deviation to real power output change of diesel_dg",
 
 			//CONSTANT_PQ steady state outputs
 			PT_double,"real_power_generation[W]",PADDR(real_power_gen),PT_DESCRIPTION,"The total real power generation",
 			PT_double,"reactive_power_generation[VAr]",PADDR(imag_power_gen),PT_DESCRIPTION,"The total reactive power generation",
-
-			PT_set, "phases", PADDR(phases), PT_DESCRIPTION, "Specifies which phases to connect to - currently not supported and assumes three-phase connection",
-				PT_KEYWORD, "A",(set)PHASE_A,
-				PT_KEYWORD, "B",(set)PHASE_B,
-				PT_KEYWORD, "C",(set)PHASE_C,
-				PT_KEYWORD, "N",(set)PHASE_N,
-				PT_KEYWORD, "S",(set)PHASE_S,
 
 			//-- This hides from modehelp -- PT_double,"TD[s]",PADDR(gov_TD),PT_DESCRIPTION,"Governor combustion delay (s)",PT_ACCESS,PA_HIDDEN,
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
@@ -402,8 +393,6 @@ int diesel_dg::isa(char *classname)
 int diesel_dg::create(void) 
 {
 ////Initialize tracking variables
-
-	power_factor = 0.0;
 
 	//End of synchronous generator inputs
 	Rated_V_LL = 0.0;
@@ -695,6 +684,7 @@ int diesel_dg::init(OBJECT *parent)
 	complex_array temp_complex_array;
 	gld_property *pNominal_Voltage;
 	double nominal_voltage_value, nom_test_val;
+	set temp_phases;
 	
 	//Set the deltamode flag, if desired
 	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)
@@ -908,12 +898,12 @@ int diesel_dg::init(OBJECT *parent)
 		}
 
 		//Pull the phase information
-		phases = temp_property_pointer->get_set();
+		temp_phases = temp_property_pointer->get_set();
 
 		//Clear the temporary pointer
 		delete temp_property_pointer;
 
-		if((phases & 0x0007) != 0x0007){//parent does not have all three meters
+		if((temp_phases & 0x0007) != 0x0007){//parent does not have all three phases
 			GL_THROW("The diesel_dg object must be connected to all three phases. Please make sure the parent object has all three phases.");
 			/* TROUBLESHOOT
 			The diesel_dg object is a three-phase generator. This message occured because the parent object does not have all three phases.

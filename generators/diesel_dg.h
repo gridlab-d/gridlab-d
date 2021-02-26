@@ -250,7 +250,6 @@ public:
 	double Rated_V_LL;	//Rated voltage - LL value
 	double Rated_VA;
 	double Overload_Limit_Pub;	//Maximum rating for the generator, in per-unit
-	double power_factor;
 
 	//Synchronous gen inputs
 	
@@ -397,8 +396,6 @@ public:
 	double gov_ggv1_Tsb;			//Temperature detection lag time constant, sec.
 	//double gov_ggv1_rup;				//Maximum rate of load limit increase
 	//double gov_ggv1_rdown;			//Maximum rate of load limit decrease
-
-	set phases;	/**< device phases (see PHASE codes) */
 
 	// P_CONSTANT mode properties
 	double pconstant_Tpelec;		//Electrical power transducer time constant, sec. (>0.)
