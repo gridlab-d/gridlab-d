@@ -4,7 +4,7 @@ clock {
      stoptime '2009-01-05 00:00:00';
 }
 
-#define PF=NR
+#define PF=FBS
 
 #set profiler=1;
 #set double_format=%+.12lg
@@ -175,12 +175,12 @@ object windturb_dg {
 	parent my_meter1;
 	phases ABCN;
 	name windturb1;
-	Gen_status ONLINE;
-	Gen_type SYNCHRONOUS;
-	Gen_mode CONSTANTP;
+	//Gen_status ONLINE;
+	//Gen_type SYNCHRONOUS;
+	//Gen_mode CONSTANTP;
 	Turbine_Model VESTAS_V82;
-	//Turbine_implementation POWER_CURVE;
-	power_curve_csv "WT_pow_curve.csv";
+	Turbine_implementation COEFF_OF_PERFORMANCE;
+	//power_curve_csv "WT_pow_curve.csv";
 	object multi_recorder {
 		file test_wind_power_${PF}1.csv;
 		interval 900;
@@ -221,8 +221,8 @@ object windturb_dg {
 	//Gen_mode CONSTANTP;
 	//Turbine_implementation COEFF_OF_PERFORMANCE;
 	//Turbine_Model GEN_TURB_POW_CURVE_1_5MW;
-	Rated_VA 8000;
-	turbine_height 60;
+	//Rated_VA 9000;
+	turbine_height 20;
 	//power_curve_csv "WT_pow_curve.csv";
 	object multi_recorder {
 		file test_wind_power_${PF}2.csv;

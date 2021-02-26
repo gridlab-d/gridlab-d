@@ -172,9 +172,9 @@ int windturb_dg::create(void)
 	std_air_press = 100000;	//IUPAC std air pressure in Pascals
 	Turbine_Model = GENERIC_DEFAULT;	//************** Defaults specified according to GENERIC_SYNCH_LARGE so it doesn't crash out
 	blade_diam = 82.5;
-	turbine_height = 90;
+	//turbine_height = 90;
 	q = 3;						//number of gearbox stages
-	Rated_VA = 1635000;
+	//Rated_VA = 1635000;
 	Max_P = 1500000;
 	Max_Q = 650000;
 	Rated_V = 600;
@@ -197,7 +197,8 @@ int windturb_dg::create(void)
 	
 	Turbine_implementation = POWER_CURVE;
 
-	//turbine_height = -9999;
+	turbine_height = -9999;
+	Rated_VA = -9999;
 	//blade_diam = -9999;
 	//cut_in_ws = -9999;
 	//cut_out_ws = -9999;
@@ -583,6 +584,36 @@ int windturb_dg::init(OBJECT *parent)
 		case GENERIC_DEFAULT:
 			//Add nothing here. Used to set turbine default parameters to GENERIC_SYNCH_LARGE. Implemented in create function. Not implemented here because it allows for higher
 			//configurability from the user end while maintining compatibility with the lagacy code
+			if ((turbine_height != -9999) && (Rated_VA == -9999)){
+				gl_warning("Attempting to approximate Turbine capacity from the height provided. May be not accurate");
+				if ((turbine_height > 0) && (turbine_height < 25)){
+					Rated_VA = 2400;
+					gl_warning("Translated turbine height to approximate capacity of: %f VA - May not be accurate", Rated_VA);
+				} else if ((turbine_height >= 25) && (turbine_height < 45)){
+					Rated_VA = 10000;
+					gl_warning("Translated turbine height to approximate capacity of: %f VA - May not be accurate", Rated_VA);
+				} else if ((turbine_height >= 45) && (turbine_height < 100)){
+					Rated_VA = (exp((turbine_height + 104.402)/24.8885))*1000;
+					gl_warning("Translated turbine height to approximate capacity of: %f VA - May not be accurate", Rated_VA);
+				} else {
+					if (turbine_height <= 0){
+						GL_THROW ("turbine height cannot have a negative or zero value.");
+					}
+					if (turbine_height >= 100){
+						Rated_VA = 1635000;
+						gl_warning("Unable to translate turbine height to approximate capacity - Setting capacity to default value of: %f VA", Rated_VA);
+					}
+				}
+			}
+			
+			if ((turbine_height == -9999) && (Rated_VA != -9999)){
+				turbine_height = 90;    //Setting to default if user did not provide
+			}
+			
+			if ((turbine_height == -9999) && (Rated_VA == -9999)) {
+				turbine_height = 90;    //Setting to defaults 
+				Rated_VA = 1635000;
+			}
 			break;
 		//Todo--user defined custom will come in here
 			
@@ -592,6 +623,12 @@ int windturb_dg::init(OBJECT *parent)
 			An unknown wind turbine model was selected.  Please select a Turbine_Model from the available list.
 			*/
 	}
+	
+	printf("Turbine Capacity %f\n", Rated_VA);
+	printf("Turbine Height %f\n", turbine_height);
+
+	//Remove the pointer
+	delete temp_property_pointer;
 
 	// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
 	if (parent!=NULL)
