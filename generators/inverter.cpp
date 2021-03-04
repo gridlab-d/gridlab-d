@@ -2564,6 +2564,21 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}//End first delta timestep
 	//default else - either not deltamode, or not the first timestep
 
+	//Other models (QSTS - first step check) - force a reiteration
+	if ((deltamode_inclusive==false) && (inverter_first_step==true))
+	{
+		//General counter to force an additional reiteration - help converge the current values
+		first_iter_counter++;
+
+		//Determine our path forward - two iterations seems to work (this probably needs to be revisited)
+		if (first_iter_counter < 3)
+		{
+			//Reiterate
+			tret_value = t1;
+		}
+		//Default else - let it do what it wanted - likely TS_NEVER
+	}
+
 	//Flag to check first steps - for current injection initialization
 	if (inverter_start_time != t1)
 	{
