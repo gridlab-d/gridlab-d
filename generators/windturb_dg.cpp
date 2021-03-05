@@ -170,8 +170,8 @@ int windturb_dg::create(void)
 	//std_air_dens = 1.2754;	//dry air density at std pressure and temp in kg/m^3
 	std_air_temp = 0;	//IUPAC std air temp in Celsius
 	std_air_press = 100000;	//IUPAC std air pressure in Pascals
-	Turbine_Model = GENERIC_DEFAULT;	//************** Defaults specified according to GENERIC_SYNCH_LARGE so it doesn't crash out
-	blade_diam = 82.5;
+	Turbine_Model = GENERIC_DEFAULT;	//************** Defaults specified so it doesn't crash out
+/* 	blade_diam = 82.5;
 	//turbine_height = 90;
 	q = 3;						//number of gearbox stages
 	//Rated_VA = 1635000;
@@ -190,7 +190,7 @@ int windturb_dg::create(void)
 	Rs = 0.05;
 	Xs = 0.200;
 	Rg = 0.000;
-	Xg = 0.000;                           //*******************Defaults specified according to GENERIC_SYNCH_LARGE
+	Xg = 0.000; */                           //*******************Defaults specified according to GENERIC_SYNCH_LARGE
 	
 	Gen_mode = CONSTANTP;					//************** Default specified so values actually come out
 	Gen_status = ONLINE;
@@ -199,14 +199,14 @@ int windturb_dg::create(void)
 
 	turbine_height = -9999;
 	Rated_VA = -9999;
-	//blade_diam = -9999;
-	//cut_in_ws = -9999;
-	//cut_out_ws = -9999;
-	//Cp_max = -9999;
-	//Cp_rated =-9999;
-	//ws_maxcp = -9999;
-	//ws_rated = -9999;
-	//CP_Data = CALCULATED;
+	blade_diam = -9999;
+	cut_in_ws = -9999;
+	cut_out_ws = -9999;
+	Cp_max = -9999;
+	Cp_rated =-9999;
+	ws_maxcp = -9999;
+	ws_rated = -9999;
+	CP_Data = CALCULATED;
 	
 	strcpy(power_curve_csv,"");      //initializing string to null
 
@@ -354,6 +354,7 @@ int windturb_dg::init(OBJECT *parent)
 	//	printf("%f\n",Generic_Power_Curve[0][i]);
 	//	printf("%f\n",Generic_Power_Curve[1][i]);
 	//}
+	
 
 	switch (Turbine_Model)	{
 		case GENERIC_IND_LARGE:
@@ -582,40 +583,77 @@ int windturb_dg::init(OBJECT *parent)
 			
 			break;
 		case GENERIC_DEFAULT:
-			//Add nothing here. Used to set turbine default parameters to GENERIC_SYNCH_LARGE. Implemented in create function. Not implemented here because it allows for higher
-			//configurability from the user end while maintining compatibility with the lagacy code
+			//Default turbine parameters when user specifies no generic turbine
+			blade_diam = 22;
+			//turbine_height = 90;
+			q = 3;						//number of gearbox stages
+			//Rated_VA = 1635000;
+			Max_P = 90000;
+			Max_Q = 40000;
+			Rated_V = 600;
+			pf = 0.9;
+			CP_Data = GENERAL_MID;
+			cut_in_ws = 3.5;			//lowest wind speed 
+			cut_out_ws = 25;		//highest wind speed 
+			Cp_max = 0.302;			//rotor specifications for power curve
+			ws_maxcp = 7;			
+			Cp_rated = Cp_max-.05;	
+			ws_rated = 12.5;
+			Gen_type = SYNCHRONOUS;
+			Rs = 0.05;
+			Xs = 0.200;
+			Rg = 0.000;
+			Xg = 0.000;                           //*******************Defaults specified
+			
 			if ((turbine_height != -9999) && (Rated_VA == -9999)){
-				gl_warning("Attempting to approximate Turbine capacity from the height provided. May be not accurate");
-				if ((turbine_height > 0) && (turbine_height < 25)){
-					Rated_VA = 2400;
-					gl_warning("Translated turbine height to approximate capacity of: %f VA - May not be accurate", Rated_VA);
-				} else if ((turbine_height >= 25) && (turbine_height < 45)){
-					Rated_VA = 10000;
-					gl_warning("Translated turbine height to approximate capacity of: %f VA - May not be accurate", Rated_VA);
-				} else if ((turbine_height >= 45) && (turbine_height < 100)){
-					Rated_VA = (exp((turbine_height + 104.402)/24.8885))*1000;
-					gl_warning("Translated turbine height to approximate capacity of: %f VA - May not be accurate", Rated_VA);
+				if (turbine_height <= 0){
+					GL_THROW ("turbine height cannot have a negative or zero value.");
 				} else {
-					if (turbine_height <= 0){
-						GL_THROW ("turbine height cannot have a negative or zero value.");
+					gl_warning("Attempting to approximate Turbine capacity from the height provided. May be not accurate");
+					if ((turbine_height > 0) && (turbine_height < 25)){
+						Rated_VA = 2400;
+					} else if ((turbine_height >= 25) && (turbine_height < 45)){
+						Rated_VA = 10000;
+					} else if ((turbine_height >= 45) && (turbine_height < 105)){
+						Rated_VA = (exp((turbine_height + 104.402)/24.8885))*1000;
+					} else if (turbine_height >= 105){
+						Rated_VA = 5000000;
+						turbine_height = 105;
+						gl_warning("Specified turbine height greater than the maximum allowable value. Limited to : %f m", turbine_height);
+					} else {
+						GL_THROW("windturb_dg Invalid input %f",turbine_height);
 					}
-					if (turbine_height >= 100){
-						Rated_VA = 1635000;
-						gl_warning("Unable to translate turbine height to approximate capacity - Setting capacity to default value of: %f VA", Rated_VA);
-					}
+					gl_warning("Translated turbine height to approximate capacity of: %f VA - May not be accurate", Rated_VA);
 				}
 			}
 			
 			if ((turbine_height == -9999) && (Rated_VA != -9999)){
-				turbine_height = 90;    //Setting to default if user did not provide
+				if (Rated_VA <= 0){
+					GL_THROW ("Turbine capacity cannot have a negative or zero value.");
+				} else{
+					gl_warning("Attempting to approximate Turbine height from the capacity provided. May be not accurate");
+					if ((Rated_VA > 0) && (Rated_VA < 4500)){
+						turbine_height = 21;
+					} else if ((Rated_VA >= 4500) && (Rated_VA < 300000)){
+						turbine_height = 37;
+					} else if ((Rated_VA >= 300000) && (Rated_VA < 5000000)){
+						turbine_height = 24.8885*log(Rated_VA/1000) - 104.402;
+					} else if (Rated_VA >= 5000000){
+						Rated_VA = 5000000;
+						turbine_height = 105;
+						gl_warning("Specified turbine capacity greater than the maximum allowable value. Limited to : %f VA", Rated_VA);
+					} else {
+						GL_THROW("windturb_dg Invalid input %f",Rated_VA);
+					}
+					gl_warning("Translated turbine capacity to approximate height of: %f m - May not be accurate", turbine_height);
+				}
 			}
 			
 			if ((turbine_height == -9999) && (Rated_VA == -9999)) {
-				turbine_height = 90;    //Setting to defaults 
-				Rated_VA = 1635000;
+				turbine_height = 37;    //Setting to defaults i.e. 10 kW turbine capacity and height
+				Rated_VA = 100000;
 			}
 			break;
-		//Todo--user defined custom will come in here
 			
 		default:
 			GL_THROW("Unknown turbine model was specified");
@@ -1300,18 +1338,18 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			voltage_A = value_Circuit_V[0];	//Syncs the meter parent to the generator.
 			voltage_B = value_Circuit_V[1];
 			voltage_C = value_Circuit_V[2];
-			if (WSadj <= Generic_Power_Curve[0][0] || WSadj > Generic_Power_Curve[0][20])
+			if (WSadj <= Generic_Power_Curve[0][0])
 			{	
 				Power_pu = 0;	
 			}
 			else
 			{	  
-				for (int i=0; i<sizeof(Generic_Power_Curve[0])/sizeof(double); i++){
-			        if (WSadj >= Generic_Power_Curve[0][i] && WSadj <= Generic_Power_Curve[0][i+1]){
+				for (int i=0; i<sizeof(Generic_Power_Curve[0])/sizeof(double); i++){              //test what happens if ws is beyond last point
+					if (WSadj >= Generic_Power_Curve[0][i] && WSadj <= Generic_Power_Curve[0][i+1]){
 
-                        Power_pu = Generic_Power_Curve[1][i] + ((Generic_Power_Curve[1][i+1] - Generic_Power_Curve[1][i]) * ((WSadj - Generic_Power_Curve[0][i]) / (Generic_Power_Curve[0][i+1] - Generic_Power_Curve[0][i])));
-			        }
-			    }
+						Power_pu = Generic_Power_Curve[1][i] + ((Generic_Power_Curve[1][i+1] - Generic_Power_Curve[1][i]) * ((WSadj - Generic_Power_Curve[0][i]) / (Generic_Power_Curve[0][i+1] - Generic_Power_Curve[0][i])));
+					}
+				}
 			}
 			
 			power_A = complex((Power_pu*Rated_VA)/3,0);

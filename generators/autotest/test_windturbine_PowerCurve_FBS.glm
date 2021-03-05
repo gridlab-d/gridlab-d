@@ -221,8 +221,8 @@ object windturb_dg {
 	//Gen_mode CONSTANTP;
 	//Turbine_implementation COEFF_OF_PERFORMANCE;
 	//Turbine_Model GEN_TURB_POW_CURVE_1_5MW;
-	//Rated_VA 9000;
-	turbine_height 20;
+	//Rated_VA 6200000;
+	turbine_height 120;
 	//power_curve_csv "WT_pow_curve.csv";
 	object multi_recorder {
 		file test_wind_power_${PF}2.csv;
