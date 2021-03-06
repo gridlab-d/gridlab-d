@@ -321,8 +321,6 @@ public:
 	double kw_cvr;	 				// Gain for feedback loop in CVR control
 	bool CVR_PI;					// Flag indicating CVR implementation is using PI controller
 	bool CVR_PID;					// Flag indicating CVR implementation is using PID controller
-	double vset_EMAX;				// Vset uppper limit
-	double vset_EMIN;				// Vset lower limit
 	double Vref;					// vset initial value before entering transient
 	double Kd1;						// Parameter of second order transfer function
 	double Kd2;						// Parameter of second order transfer function
@@ -407,7 +405,6 @@ public:
 	double pconstant_Teng;			//Transport lag time constant for diesel engine
 	double pconstant_ropen;			//Maximum valve opening rate, p.u./sec.
 	double pconstant_rclose;		//Minimum valve closing rate, p.u./sec.
-	double pconstant_Kimw;			//Power controller (reset) gain
 	unsigned int pconstant_Flag;	//Switch for fuel source characteristic, = 0 for fuel flow independent of speed, = 1 fuel flow proportional to speed
 
 	// Fuel useage and emmisions

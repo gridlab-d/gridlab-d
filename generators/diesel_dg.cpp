@@ -134,20 +134,19 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double,"Vterm_max[pu]",PADDR(Max_Ef),PT_DESCRIPTION,"Upper voltage limit for super-second (p.u.)",
 			PT_double,"Vterm_min[pu]",PADDR(Min_Ef),PT_DESCRIPTION,"Lower voltage limit for super-second (p.u.)",
 
-			PT_double,"mq_QV_Droop",PADDR(mq_QV_Droop),PT_DESCRIPTION,"Q-V droop slope",
-			PT_double,"SEXS_Q_V_droop",PADDR(mq_QV_Droop),PT_DESCRIPTION,"Q-V droop slope",
-			PT_double,"Vset_QV_droop",PADDR(Vset_QV_droop),PT_DESCRIPTION,"Voltage setpoint of QV droop",
-			PT_double,"SEXS_Vset",PADDR(Vset_QV_droop),PT_DESCRIPTION,"Voltage setpoint of QV droop",
-			PT_double,"Vref_SEXS",PADDR(gen_base_set_vals.vset),PT_DESCRIPTION,"Voltage reference for SEXS exciter",
+			PT_double,"mq_QV_Droop[pu]",PADDR(mq_QV_Droop),PT_DESCRIPTION,"Q-V droop slope",
+			PT_double,"SEXS_Q_V_droop[pu]",PADDR(mq_QV_Droop),PT_DESCRIPTION,"Q-V droop slope",
+			PT_double,"Vset_QV_droop[pu]",PADDR(Vset_QV_droop),PT_DESCRIPTION,"Voltage setpoint of QV droop",
+			PT_double,"SEXS_Vset[pu]",PADDR(Vset_QV_droop),PT_DESCRIPTION,"Voltage setpoint of QV droop",
+			PT_double,"Vref_SEXS[pu]",PADDR(gen_base_set_vals.vset),PT_DESCRIPTION,"Voltage reference for SEXS exciter",
 
 			//State variables - SEXS
-			PT_double,"bias",PADDR(curr_state.avr.bias),PT_DESCRIPTION,"Exciter bias state variable",
-			PT_double,"xe",PADDR(curr_state.avr.xe),PT_DESCRIPTION,"Exciter state variable",
-			PT_double,"xb",PADDR(curr_state.avr.xb),PT_DESCRIPTION,"Exciter state variable",
-//			PT_double,"xcvr",PADDR(curr_state.avr.x_cvr),PT_DESCRIPTION,"Exciter state variable",
-			PT_double,"x_cvr1",PADDR(curr_state.avr.x_cvr1),PT_DESCRIPTION,"Exciter state variable",
-			PT_double,"x_cvr2",PADDR(curr_state.avr.x_cvr2),PT_DESCRIPTION,"Exciter state variable",
-			PT_double,"Vref",PADDR(Vref),PT_DESCRIPTION,"Exciter CVR control voltage reference value",
+			PT_double,"bias[pu]",PADDR(curr_state.avr.bias),PT_DESCRIPTION,"Exciter bias state variable",
+			PT_double,"xe[pu]",PADDR(curr_state.avr.xe),PT_DESCRIPTION,"Exciter state variable",
+			PT_double,"xb[pu]",PADDR(curr_state.avr.xb),PT_DESCRIPTION,"Exciter state variable",
+			PT_double,"x_cvr1[pu]",PADDR(curr_state.avr.x_cvr1),PT_DESCRIPTION,"Exciter state variable - CVR mode",
+			PT_double,"x_cvr2[pu]",PADDR(curr_state.avr.x_cvr2),PT_DESCRIPTION,"Exciter state variable - CVR mode",
+			PT_double,"Vref[pu]",PADDR(Vref),PT_DESCRIPTION,"Exciter CVR control voltage reference value",
 			//Properties for CVR mode
 			PT_enumeration,"CVR_mode",PADDR(CVRmode),PT_DESCRIPTION,"CVR mode in Exciter model",
 				PT_KEYWORD,"HighOrder",(enumeration)HighOrder,PT_DESCRIPTION,"High order control mode",
@@ -158,40 +157,39 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double,"P_CONSTANT_kp", PADDR(kp_Pconstant), PT_DESCRIPTION, "parameter of the proportional control for constant P mode",
 
 			// If Q_constant delta mode is adopted
-			PT_double,"Exciter_Q_constant_ki", PADDR(ki_Qconstant), PT_DESCRIPTION, "parameter of the integration control for constant Q mode",
-			PT_double,"Exciter_Q_constant_kp", PADDR(kp_Qconstant), PT_DESCRIPTION, "parameter of the propotional control for constant Q mode",
+			PT_double,"Exciter_Q_constant_ki[pu]", PADDR(ki_Qconstant), PT_DESCRIPTION, "parameter of the integration control for constant Q mode",
+			PT_double,"Exciter_Q_constant_kp[pu]", PADDR(kp_Qconstant), PT_DESCRIPTION, "parameter of the propotional control for constant Q mode",
 
 			// Set PQ reference again here with different names:
-			PT_double,"P_CONSTANT_Pref[pu]", PADDR(gen_base_set_vals.Pref), PT_DESCRIPTION, "Pref input to governor controls (per-unit), if supported",
-			PT_double,"Exciter_Q_constant_Qref[pu]", PADDR(gen_base_set_vals.Qref), PT_DESCRIPTION, "Qref input to govornor or AVR controls (per-unit), if supported",
+			PT_double,"P_CONSTANT_Pref[pu]", PADDR(gen_base_set_vals.Pref), PT_DESCRIPTION, "Pref input to governor controls (per-unit), if supported",	//Overloaded with Pref
+			PT_double,"Exciter_Q_constant_Qref[pu]", PADDR(gen_base_set_vals.Qref), PT_DESCRIPTION, "Qref input to AVR controls (per-unit), if supported",
 
 			// If CVR control is enabled
 			PT_bool, "CVR_enabled",PADDR(CVRenabled),PT_DESCRIPTION,"True if the CVR control is enabled in the exciter",
-			PT_double,"CVR_ki_cvr", PADDR(ki_cvr), PT_DESCRIPTION, "parameter of the integration control for CVR control",
-			PT_double,"CVR_kp_cvr", PADDR(kp_cvr), PT_DESCRIPTION, "parameter of the proportional control for CVR control",
-			PT_double,"CVR_kd_cvr", PADDR(kd_cvr), PT_DESCRIPTION, "parameter of the deviation control for CVR control",
-			PT_double,"CVR_kt_cvr", PADDR(kt_cvr), PT_DESCRIPTION, "parameter of the gain in feedback loop for CVR control",
-			PT_double,"CVR_kw_cvr", PADDR(kw_cvr), PT_DESCRIPTION, "parameter of the gain in feedback loop for CVR control",
+			PT_double,"CVR_ki_cvr[pu]", PADDR(ki_cvr), PT_DESCRIPTION, "parameter of the integration control for CVR control",
+			PT_double,"CVR_kp_cvr[pu]", PADDR(kp_cvr), PT_DESCRIPTION, "parameter of the proportional control for CVR control",
+			PT_double,"CVR_kd_cvr[pu]", PADDR(kd_cvr), PT_DESCRIPTION, "parameter of the deviation control for CVR control",
+			PT_double,"CVR_kt_cvr[pu]", PADDR(kt_cvr), PT_DESCRIPTION, "parameter of the gain in feedback loop for CVR control",
+			PT_double,"CVR_kw_cvr[pu]", PADDR(kw_cvr), PT_DESCRIPTION, "parameter of the gain in feedback loop for CVR control",
 			PT_bool, "CVR_PI",PADDR(CVR_PI),PT_DESCRIPTION,"True if the PI controller is implemented in CVR control",
 			PT_bool, "CVR_PID",PADDR(CVR_PID),PT_DESCRIPTION,"True if the PID controller is implemented in CVR control",
-			PT_double,"vset_EMAX",PADDR(vset_EMAX),PT_DESCRIPTION,"Maximum Vset limit",
-			PT_double,"vset_EMIN",PADDR(vset_EMIN),PT_DESCRIPTION,"Minimum Vset limit",
 			PT_double,"CVR_Kd1", PADDR(Kd1), PT_DESCRIPTION, "parameter of the second order transfer function for CVR control",
 			PT_double,"CVR_Kd2", PADDR(Kd2), PT_DESCRIPTION, "parameter of the second order transfer function for CVR control",
 			PT_double,"CVR_Kd3", PADDR(Kd3), PT_DESCRIPTION, "parameter of the second order transfer function for CVR control",
 			PT_double,"CVR_Kn1", PADDR(Kn1), PT_DESCRIPTION, "parameter of the second order transfer function for CVR control",
 			PT_double,"CVR_Kn2", PADDR(Kn2), PT_DESCRIPTION, "parameter of the second order transfer function for CVR control",
-			PT_double,"vset_delta_MAX",PADDR(vset_delta_MAX),PT_DESCRIPTION,"Maximum delta Vset limit",
-			PT_double,"vset_delta_MIN",PADDR(vset_delta_MIN),PT_DESCRIPTION,"Minimum delta Vset limit",
-			PT_double,"vadd",PADDR(gen_base_set_vals.vadd),PT_DESCRIPTION,"Delta Vset",
-			PT_double,"vadd_a",PADDR(gen_base_set_vals.vadd_a),PT_DESCRIPTION,"Delta Vset before going into bound check",
+			PT_double,"vset_delta_MAX[pu]",PADDR(vset_delta_MAX),PT_DESCRIPTION,"Maximum delta Vset limit",
+			PT_double,"vset_delta_MIN[pu]",PADDR(vset_delta_MIN),PT_DESCRIPTION,"Minimum delta Vset limit",
+			PT_double,"vadd[pu]",PADDR(gen_base_set_vals.vadd),PT_DESCRIPTION,"Delta Vset",
+			PT_double,"vadd_a[pu]",PADDR(gen_base_set_vals.vadd_a),PT_DESCRIPTION,"Delta Vset before going into bound check",
 
 			//Properties for Governor of dynamics model
 			PT_enumeration,"Governor_type",PADDR(Governor_type),PT_DESCRIPTION,"Governor model for dynamics-capable implementation",
 				PT_KEYWORD,"NO_GOV",(enumeration)NO_GOV,PT_DESCRIPTION,"No governor",
 				PT_KEYWORD,"DEGOV1",(enumeration)DEGOV1,PT_DESCRIPTION,"DEGOV1 Woodward Diesel Governor",
 				PT_KEYWORD,"GAST",(enumeration)GAST,PT_DESCRIPTION,"GAST Gas Turbine Governor",
-				PT_KEYWORD,"GGOV1_OLD",(enumeration)GGOV1_OLD,PT_DESCRIPTION,"Older GGOV1 Governor Model",
+				//PT_KEYWORD,"GGOV1_OLD",(enumeration)GGOV1_OLD,PT_DESCRIPTION,"Older GGOV1 Governor Model",
+				//Flagging this for deletion - it's not clear how it is different from GGOV1 - not sure it is anymore (defaults would handle it anyways)
 				PT_KEYWORD,"GGOV1",(enumeration)GGOV1,PT_DESCRIPTION,"GGOV1 Governor Model",
 				PT_KEYWORD,"P_CONSTANT",(enumeration)P_CONSTANT,PT_DESCRIPTION,"P_CONSTANT mode Governor Model",
 
@@ -213,12 +211,12 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double,"DEGOV1_TD[s]",PADDR(gov_degov1_TD),PT_DESCRIPTION,"Governor combustion delay (s)",
 
 			//State variables - DEGOV1
-			PT_double,"DEGOV1_x1",PADDR(curr_state.gov_degov1.x1),PT_DESCRIPTION,"Governor electric box state variable",
-			PT_double,"DEGOV1_x2",PADDR(curr_state.gov_degov1.x2),PT_DESCRIPTION,"Governor electric box state variable",
-			PT_double,"DEGOV1_x4",PADDR(curr_state.gov_degov1.x4),PT_DESCRIPTION,"Governor electric box state variable",
-			PT_double,"DEGOV1_x5",PADDR(curr_state.gov_degov1.x5),PT_DESCRIPTION,"Governor electric box state variable",
-			PT_double,"DEGOV1_x6",PADDR(curr_state.gov_degov1.x6),PT_DESCRIPTION,"Governor electric box state variable",
-			PT_double,"DEGOV1_throttle",PADDR(curr_state.gov_degov1.throttle),PT_DESCRIPTION,"Governor electric box state variable",
+			PT_double,"DEGOV1_x1[pu]",PADDR(curr_state.gov_degov1.x1),PT_DESCRIPTION,"Governor electric box state variable",
+			PT_double,"DEGOV1_x2[pu]",PADDR(curr_state.gov_degov1.x2),PT_DESCRIPTION,"Governor electric box state variable",
+			PT_double,"DEGOV1_x4[pu]",PADDR(curr_state.gov_degov1.x4),PT_DESCRIPTION,"Governor electric box state variable",
+			PT_double,"DEGOV1_x5[pu]",PADDR(curr_state.gov_degov1.x5),PT_DESCRIPTION,"Governor electric box state variable",
+			PT_double,"DEGOV1_x6[pu]",PADDR(curr_state.gov_degov1.x6),PT_DESCRIPTION,"Governor electric box state variable",
+			PT_double,"DEGOV1_throttle[pu]",PADDR(curr_state.gov_degov1.throttle),PT_DESCRIPTION,"Governor throttle state variable",
 
 			//Governor properties (GAST)
 			PT_double,"GAST_R[pu]",PADDR(gov_gast_R),PT_DESCRIPTION,"Governor droop constant (p.u.)",
@@ -234,28 +232,28 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double,"GAST_x1",PADDR(curr_state.gov_gast.x1),PT_DESCRIPTION,"Governor electric box state variable",
 			PT_double,"GAST_x2",PADDR(curr_state.gov_gast.x2),PT_DESCRIPTION,"Governor electric box state variable",
 			PT_double,"GAST_x3",PADDR(curr_state.gov_gast.x3),PT_DESCRIPTION,"Governor electric box state variable",
-			PT_double,"GAST_throttle",PADDR(curr_state.gov_gast.throttle),PT_DESCRIPTION,"Governor electric box state variable",
+			PT_double,"GAST_throttle",PADDR(curr_state.gov_gast.throttle),PT_DESCRIPTION,"Governor throttle state variable",
 
 			//Governor properties (GGOV1 and GGOV1_OLD)
 			PT_double,"GGOV1_R[pu]",PADDR(gov_ggv1_r),PT_DESCRIPTION,"Permanent droop, p.u.",
 			PT_int32,"GGOV1_Rselect",PADDR(gov_ggv1_rselect),PT_DESCRIPTION,"Feedback signal for droop, = 1 selected electrical power, = 0 none (isochronous governor), = -1 fuel valve stroke ( true stroke),= -2 governor output ( requested stroke)",
 			PT_double,"GGOV1_Tpelec[s]",PADDR(gov_ggv1_Tpelec),PT_DESCRIPTION,"Electrical power transducer time constant, sec. (>0.)",
-			PT_double,"GGOV1_maxerr",PADDR(gov_ggv1_maxerr),PT_DESCRIPTION,"Maximum value for speed error signal",
-			PT_double,"GGOV1_minerr",PADDR(gov_ggv1_minerr),PT_DESCRIPTION,"Minimum value for speed error signal",
+			PT_double,"GGOV1_maxerr[pu]",PADDR(gov_ggv1_maxerr),PT_DESCRIPTION,"Maximum value for speed error signal",
+			PT_double,"GGOV1_minerr[pu]",PADDR(gov_ggv1_minerr),PT_DESCRIPTION,"Minimum value for speed error signal",
 			PT_double,"GGOV1_Kpgov",PADDR(gov_ggv1_Kpgov),PT_DESCRIPTION,"Governor proportional gain",
 			PT_double,"GGOV1_Kigov",PADDR(gov_ggv1_Kigov),PT_DESCRIPTION,"Governor integral gain",
 			PT_double,"GGOV1_Kdgov",PADDR(gov_ggv1_Kdgov),PT_DESCRIPTION,"Governor derivative gain",
 			PT_double,"GGOV1_Tdgov[s]",PADDR(gov_ggv1_Tdgov),PT_DESCRIPTION,"Governor derivative controller time constant, sec.",
-			PT_double,"GGOV1_vmax",PADDR(gov_ggv1_vmax),PT_DESCRIPTION,"Maximum valve position limit",
-			PT_double,"GGOV1_vmin",PADDR(gov_ggv1_vmin),PT_DESCRIPTION,"Minimum valve position limit",
-			PT_double,"GGOV1_Tact",PADDR(gov_ggv1_Tact),PT_DESCRIPTION,"Actuator time constant",
+			PT_double,"GGOV1_vmax[pu]",PADDR(gov_ggv1_vmax),PT_DESCRIPTION,"Maximum valve position limit",
+			PT_double,"GGOV1_vmin[pu]",PADDR(gov_ggv1_vmin),PT_DESCRIPTION,"Minimum valve position limit",
+			PT_double,"GGOV1_Tact[s]",PADDR(gov_ggv1_Tact),PT_DESCRIPTION,"Actuator time constant",
 			PT_double,"GGOV1_Kturb",PADDR(gov_ggv1_Kturb),PT_DESCRIPTION,"Turbine gain (>0.)",
 			PT_double,"GGOV1_wfnl[pu]",PADDR(gov_ggv1_wfnl),PT_DESCRIPTION,"No load fuel flow, p.u",
 			PT_double,"GGOV1_Tb[s]",PADDR(gov_ggv1_Tb),PT_DESCRIPTION,"Turbine lag time constant, sec. (>0.)",
 			PT_double,"GGOV1_Tc[s]",PADDR(gov_ggv1_Tc),PT_DESCRIPTION,"Turbine lead time constant, sec.",
 			PT_int32,"GGOV1_Fuel_lag",PADDR(gov_ggv1_Flag),PT_DESCRIPTION,"Switch for fuel source characteristic, = 0 for fuel flow independent of speed, = 1 fuel flow proportional to speed",
-			PT_double,"GGOV1_Teng",PADDR(gov_ggv1_Teng),PT_DESCRIPTION,"Transport lag time constant for diesel engine",
-			PT_double,"GGOV1_Tfload",PADDR(gov_ggv1_Tfload),PT_DESCRIPTION,"Load Limiter time constant, sec. (>0.)",
+			PT_double,"GGOV1_Teng[s]",PADDR(gov_ggv1_Teng),PT_DESCRIPTION,"Transport lag time constant for diesel engine",
+			PT_double,"GGOV1_Tfload[s]",PADDR(gov_ggv1_Tfload),PT_DESCRIPTION,"Load Limiter time constant, sec. (>0.)",
 			PT_double,"GGOV1_Kpload",PADDR(gov_ggv1_Kpload),PT_DESCRIPTION,"Load limiter proportional gain for PI controller",
 			PT_double,"GGOV1_Kiload",PADDR(gov_ggv1_Kiload),PT_DESCRIPTION,"Load limiter integral gain for PI controller",
 			PT_double,"GGOV1_Ldref[pu]",PADDR(gov_ggv1_Ldref),PT_DESCRIPTION,"Load limiter reference value p.u.",
@@ -324,29 +322,28 @@ diesel_dg::diesel_dg(MODULE *module)
 
 			//P_CONSTANT mode properties
 			PT_double,"P_CONSTANT_Tpelec[s]",PADDR(pconstant_Tpelec),PT_DESCRIPTION,"Electrical power transducer time constant, sec. (>0.)",
-			PT_double,"P_CONSTANT_Tact",PADDR(pconstant_Tact),PT_DESCRIPTION,"Actuator time constant",
-			PT_double,"P_CONSTANT_Kturb",PADDR(pconstant_Kturb),PT_DESCRIPTION,"Turbine gain (>0.)",
+			PT_double,"P_CONSTANT_Tact[s]",PADDR(pconstant_Tact),PT_DESCRIPTION,"Actuator time constant",
+			PT_double,"P_CONSTANT_Kturb[pu]",PADDR(pconstant_Kturb),PT_DESCRIPTION,"Turbine gain (>0.)",
 			PT_double,"P_CONSTANT_wfnl[pu]",PADDR(pconstant_wfnl),PT_DESCRIPTION,"No load fuel flow, p.u",
 			PT_double,"P_CONSTANT_Tb[s]",PADDR(pconstant_Tb),PT_DESCRIPTION,"Turbine lag time constant, sec. (>0.)",
 			PT_double,"P_CONSTANT_Tc[s]",PADDR(pconstant_Tc),PT_DESCRIPTION,"Turbine lead time constant, sec.",
-			PT_double,"P_CONSTANT_Teng",PADDR(pconstant_Teng),PT_DESCRIPTION,"Transport lag time constant for diesel engine",
+			PT_double,"P_CONSTANT_Teng[s]",PADDR(pconstant_Teng),PT_DESCRIPTION,"Transport lag time constant for diesel engine",
 			PT_double,"P_CONSTANT_ropen[pu/s]",PADDR(pconstant_ropen),PT_DESCRIPTION,"Maximum valve opening rate, p.u./sec.",
 			PT_double,"P_CONSTANT_rclose[pu/s]",PADDR(pconstant_rclose),PT_DESCRIPTION,"Minimum valve closing rate, p.u./sec.",
-			PT_double,"P_CONSTANT_Kimw",PADDR(pconstant_Kimw),PT_DESCRIPTION,"Power controller (reset) gain",
 
 			// P_CONSTANT mode state variables
-			PT_double,"P_CONSTANT_x1",PADDR(curr_state.gov_pconstant.x1),
-			PT_double,"P_CONSTANT_x4",PADDR(curr_state.gov_pconstant.x4),
-			PT_double,"P_CONSTANT_x4a",PADDR(curr_state.gov_pconstant.x4a),
-			PT_double,"P_CONSTANT_x4b",PADDR(curr_state.gov_pconstant.x4b),
-			PT_double,"P_CONSTANT_x5",PADDR(curr_state.gov_pconstant.x5),
-			PT_double,"P_CONSTANT_x5a",PADDR(curr_state.gov_pconstant.x5a),
-			PT_double,"P_CONSTANT_x5b",PADDR(curr_state.gov_pconstant.x5b),
-			PT_double,"P_CONSTANT_x_Pconstant",PADDR(curr_state.gov_pconstant.x_Pconstant),
-			PT_double,"P_CONSTANT_err4",PADDR(curr_state.gov_pconstant.err4),
-			PT_double,"P_CONSTANT_ValveStroke",PADDR(curr_state.gov_pconstant.ValveStroke),
-			PT_double,"P_CONSTANT_FuelFlow",PADDR(curr_state.gov_pconstant.FuelFlow),
-			PT_double,"P_CONSTANT_GovOutPut",PADDR(curr_state.gov_pconstant.GovOutPut),
+			PT_double,"P_CONSTANT_x1[pu]",PADDR(curr_state.gov_pconstant.x1),
+			PT_double,"P_CONSTANT_x4[pu]",PADDR(curr_state.gov_pconstant.x4),
+			PT_double,"P_CONSTANT_x4a[pu]",PADDR(curr_state.gov_pconstant.x4a),
+			PT_double,"P_CONSTANT_x4b[pu]",PADDR(curr_state.gov_pconstant.x4b),
+			PT_double,"P_CONSTANT_x5[pu]",PADDR(curr_state.gov_pconstant.x5),
+			PT_double,"P_CONSTANT_x5a[pu]",PADDR(curr_state.gov_pconstant.x5a),
+			PT_double,"P_CONSTANT_x5b[pu]",PADDR(curr_state.gov_pconstant.x5b),
+			PT_double,"P_CONSTANT_x_Pconstant[pu]",PADDR(curr_state.gov_pconstant.x_Pconstant),
+			PT_double,"P_CONSTANT_err4[pu]",PADDR(curr_state.gov_pconstant.err4),
+			PT_double,"P_CONSTANT_ValveStroke[pu]",PADDR(curr_state.gov_pconstant.ValveStroke),
+			PT_double,"P_CONSTANT_FuelFlow[pu]",PADDR(curr_state.gov_pconstant.FuelFlow),
+			PT_double,"P_CONSTANT_GovOutPut[pu]",PADDR(curr_state.gov_pconstant.GovOutPut),
 
 			PT_bool,"fuelEmissionCal", PADDR(fuelEmissionCal),  PT_DESCRIPTION, "Boolean value indicating whether fuel and emission calculations are used or not",
 			PT_double,"outputEnergy[kWh]",PADDR(outputEnergy),PT_DESCRIPTION,"Total energy(kWh) output from the generator",
@@ -521,7 +518,6 @@ int diesel_dg::create(void)
 	pconstant_Teng = 0.0;
 	pconstant_ropen = 0.10;
 	pconstant_rclose = -0.1;
-	pconstant_Kimw = 0.002;
 
 	//By default, all paths enabled
 	gov_ggv1_fsrt_enable = true;
@@ -613,8 +609,6 @@ int diesel_dg::create(void)
 	kd_cvr = 0;
 	CVR_PI = false;
 	CVR_PID = false;
-	vset_EMAX = 1.05;
-	vset_EMIN = 0.95;
 
 	Kd1 = 1;
 	Kd2 = 1;
@@ -2831,35 +2825,6 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		//Exciter updates
 		if (Exciter_type == SEXS)
 		{
-//			if (CVRenabled) {
-//				if (CVR_PI) {
-//					next_state.avr.x_cvr = curr_state.avr.x_cvr + predictor_vals.avr.x_cvr*deltat;
-//					gen_base_set_vals.vseta = Vref + next_state.avr.x_cvr + predictor_vals.avr.diff_f * kp_cvr;
-//				}
-//				else if (CVR_PID) {
-//					next_state.avr.x_cvr = curr_state.avr.x_cvr + predictor_vals.avr.x_cvr*deltat;
-//					next_state.avr.xerr_cvr = predictor_vals.avr.diff_f * kd_cvr;
-//					predictor_vals.avr.xerr_cvr = (next_state.avr.xerr_cvr - curr_state.avr.xerr_cvr) / deltat;
-//					gen_base_set_vals.vseta = Vref + next_state.avr.x_cvr + predictor_vals.avr.diff_f * kp_cvr + predictor_vals.avr.xerr_cvr;
-//				}
-//
-//				//Limit check
-// 				if (gen_base_set_vals.vseta >= vset_EMAX)
-//					gen_base_set_vals.vsetb = vset_EMAX;
-//
-//				if (gen_base_set_vals.vseta <= vset_EMIN)
-//					gen_base_set_vals.vsetb = vset_EMIN;
-//
-//				// Give value to vset
-//				gen_base_set_vals.vset = gen_base_set_vals.vsetb;
-//			}
-
-//			if (CVRenabled) {
-//				next_state.avr.xerr_cvr = predictor_vals.avr.diff_f * kd_cvr;
-//				predictor_vals.avr.xerr_cvr = (next_state.avr.xerr_cvr - curr_state.avr.xerr_cvr) / deltat;
-//				gen_base_set_vals.vadd = predictor_vals.avr.xerr_cvr + predictor_vals.avr.diff_f * kp_cvr;
-//			}
-
 			if (CVRenabled) {
 
 				// Implementation for high order CVR control
@@ -3285,37 +3250,6 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		//Exciter updates
 		if (Exciter_type == SEXS)
 		{
-//			if (CVRenabled) {
-//				if (CVR_PI) {
-//					next_state.avr.x_cvr = curr_state.avr.x_cvr + (predictor_vals.avr.x_cvr + corrector_vals.avr.x_cvr)*deltath;
-//					gen_base_set_vals.vseta = Vref + next_state.avr.x_cvr + (predictor_vals.avr.diff_f + corrector_vals.avr.diff_f) * 0.5 * kp_cvr;
-//				}
-//				else if (CVR_PID) {
-//					next_state.avr.x_cvr = curr_state.avr.x_cvr + (predictor_vals.avr.x_cvr + corrector_vals.avr.x_cvr)*deltath;
-//					temp_double = (predictor_vals.avr.diff_f + corrector_vals.avr.diff_f) * 0.5;
-//					next_state.avr.xerr_cvr = temp_double * kd_cvr;
-//					corrector_vals.avr.xerr_cvr = (next_state.avr.xerr_cvr - curr_state.avr.xerr_cvr) / deltat;
-//					gen_base_set_vals.vseta = Vref + next_state.avr.x_cvr + temp_double * kp_cvr + corrector_vals.avr.xerr_cvr;
-//				}
-//
-//				//Limit check
-//				if (gen_base_set_vals.vseta >= vset_EMAX)
-//					gen_base_set_vals.vsetb = vset_EMAX;
-//
-//				if (gen_base_set_vals.vseta <= vset_EMIN)
-//					gen_base_set_vals.vsetb = vset_EMIN;
-//
-//				// Give value of vsetb to vset
-//				gen_base_set_vals.vset = gen_base_set_vals.vsetb;
-//			}
-
-//			if (CVRenabled) {
-//				temp_double = (predictor_vals.avr.diff_f + corrector_vals.avr.diff_f) * 0.5;
-//				next_state.avr.xerr_cvr = temp_double * kd_cvr;
-//				corrector_vals.avr.xerr_cvr = (next_state.avr.xerr_cvr - curr_state.avr.xerr_cvr) / deltat;
-//				gen_base_set_vals.vadd = corrector_vals.avr.xerr_cvr + temp_double * kp_cvr;
-//			}
-
 			if (CVRenabled) {
 
 				// Implementation for high order CVR control
@@ -4137,13 +4071,6 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 			temp_double_2 = gen_base_set_vals.Qref - temp_double_1;
 		}
 		else {
-
-//			// If CVR control is enabled, gen_base_set_vals.vset will be changed based on frequency deviation
-//			if (CVRenabled) {
-//				curr_delta->avr.diff_f = (omega_pu - 1.0);
-//				curr_delta->avr.x_cvr = (omega_pu - 1.0) * ki_cvr + (gen_base_set_vals.vsetb - gen_base_set_vals.vseta) * kt_cvr; // Same for PI and PID controller
-//			}
-
 			// If CVR control is enabled with second order transfer function
 			if (CVRenabled) {
 
@@ -4204,31 +4131,6 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 
 			//Apply update
 			curr_time->Vfd = curr_time->avr.xe;
-
-//			// If CVR control is enabled, field voltage will be affected by frequency deviation
-//			if (CVRenabled) {
-//
-//				// Obtain frequency deviation
-//				curr_delta->avr.diff_f = omega_pu - 1.0;
-//
-//				temp_Vfd = curr_time->avr.xe + gen_base_set_vals.vadd;
-//
-//				//Limit check
-//				if (temp_Vfd >= exc_EMAX)
-//					temp_Vfd = exc_EMAX;
-//
-//				if (temp_Vfd <= exc_EMIN)
-//					temp_Vfd = exc_EMIN;
-//
-//				//Apply update
-//				curr_time->Vfd = temp_Vfd;
-//
-//			}
-//			else {
-//
-//				//Apply update
-//				curr_time->Vfd = curr_time->avr.xe;
-//			}
 		}
 
 	}//End AVR update for SEXS exciter
@@ -4612,13 +4514,6 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 		//Default else -- it is set, don't adjust it
 		gen_base_set_vals.vseta = gen_base_set_vals.vset;
 		gen_base_set_vals.vsetb = gen_base_set_vals.vset;
-
-		// Assign initial values to state variables ralated to CVR control if enabled
-//		if (CVRenabled == true) {
-////			curr_time->avr.x_cvr = 0;
-//			curr_time->avr.xerr_cvr = 0;
-//			gen_base_set_vals.vadd = 0;
-//		}
 
 		if (CVRenabled == true) {
 			curr_time->avr.x_cvr1 = 0;
