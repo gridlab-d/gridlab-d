@@ -121,6 +121,7 @@ windturb_dg::windturb_dg(MODULE *module)
 			PT_double, "power_factor[pu]", PADDR(pf), PT_DESCRIPTION, "Desired power factor in CONSTANTP mode (can be modified over time)",
 			
 			PT_char1024, "power_curve_csv", PADDR(power_curve_csv), PT_DESCRIPTION, "Name of .csv file containing user defined power curve",
+			PT_bool, "power_curve_pu", PADDR(power_curve_pu), PT_DESCRIPTION, "Flag when set indicates that user provided power curve has power values in p.u. Defaults to false",
 
 			PT_complex, "voltage_A[V]", PADDR(voltage_A), PT_DESCRIPTION, "Terminal voltage on phase A",
 			PT_complex, "voltage_B[V]", PADDR(voltage_B), PT_DESCRIPTION, "Terminal voltage on phase B",
@@ -196,6 +197,7 @@ int windturb_dg::create(void)
 	Gen_status = ONLINE;
 	
 	Turbine_implementation = POWER_CURVE;
+	power_curve_pu = false;
 
 	turbine_height = -9999;
 	Rated_VA = -9999;
@@ -297,63 +299,77 @@ int windturb_dg::init(OBJECT *parent)
 		
 	double ZB, SB, EB;
 	complex tst, tst2, tst3, tst4;
-
-	if(strstr(power_curve_csv, ".csv")){                  //Todo: checking for size and other illegeal things in csv
 	
-	// Read the file ----------
-		FILE* fp = fopen(power_curve_csv, "rb");
-		if (fp == NULL) return 0;
-		fseek(fp, 0, SEEK_END);
-		long size = ftell(fp);
-		fseek(fp, 0, SEEK_SET);
-		char *pData = new char[size + 1];
-		fread(pData, sizeof(char), size, fp);
-		fclose(fp);
-		// Read the file ----------
+	if (Turbine_implementation == POWER_CURVE){
 
-		// Parse the file content ----------
-		char* pch;
-		pch = strtok (pData, ",");
+		if(strstr(power_curve_csv, ".csv")){                  //Todo: checking for size and other illegeal things in csv
 		
-		int i=0;
-		int k=0;
-		int l=0;
-		while (pch != NULL)
-		{
-			if ((i % 2) == 0){
-				Generic_Power_Curve[0][k] = std::stof(pch);
-				k++;
-			} else {
-				Generic_Power_Curve[1][l] = std::stof(pch);
-				l++;
-			}
-			i++;
-			pch = strtok (NULL, ",\n");
+		// Read the file ----------
+			FILE* fp = fopen(power_curve_csv, "rb");
+			if (fp == NULL) return 0;
+			fseek(fp, 0, SEEK_END);
+			long size = ftell(fp);
+			fseek(fp, 0, SEEK_SET);
+			char *pData = new char[size + 1];
+			fread(pData, sizeof(char), size, fp);
+			fclose(fp);
+			// Read the file ----------
+
+			// Parse the file content ----------
+			char* pch;
+			pch = strtok (pData, ",");
 			
-		}		
-	} else {
-		if (strcmp(power_curve_csv,"")==0) {
-			gl_warning("No user defined power curve provided, resorting to default power curve");
-		} else{
-			gl_warning("windturb_dg: unrecognized filetype, resorting to default power curve");
+			int i=0;
+			int k=0;
+			int l=0;
+			while (pch != NULL)
+			{
+				if ((i % 2) == 0){
+					if (k < 50){
+						Generic_Power_Curve[0][k] = std::stof(pch);
+					}
+					k++;
+				} else {
+					if (l < 50){
+						Generic_Power_Curve[1][l] = std::stof(pch);
+					}
+					l++;
+				}
+				i++;
+				pch = strtok (NULL, ",\n");
+				
+			}
+			delete[] pData;
+			
+			if (k != l){
+				gl_warning("Invalid data format - unequal number of data points in wind speed and power output fields, resorting to default power curve"); //todo: not detecting all cases
+			} else if (k < 5){
+				gl_warning("Invalid data format - less than 5 data points in wind speed and power output fields. Provide atleast 5 data points, resorting to default power curve");
+			}
+		} else {
+			if (strcmp(power_curve_csv,"")==0) {
+				gl_warning("No user defined power curve provided, resorting to default power curve");
+			} else{
+				gl_warning("windturb_dg: unrecognized filetype, resorting to default power curve");
+			}
+			
+			double Generic_Power_Curve_default[2][21] = {
+				{2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0, 25.0},
+				{0.0, 0.0084725, 0.026315, 0.049903, 0.083323, 0.12564, 0.17541, 0.23191, 0.30286, 0.38807, 0.49134, 0.58717, 0.66827, 0.75071, 0.82431, 0.89813, 0.95368, 1.0013, 1.0331, 1.0602, 1.0602}
+			};
+			
+			for (int i=0; i<sizeof(Generic_Power_Curve_default[0])/sizeof(double); i++){
+				Generic_Power_Curve[0][i] = Generic_Power_Curve_default[0][i];
+				Generic_Power_Curve[1][i] = Generic_Power_Curve_default[1][i];
+			}
 		}
 		
-		double Generic_Power_Curve_default[2][21] = {
-			{2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0, 25.0},
-			{0.0, 0.0084725, 0.026315, 0.049903, 0.083323, 0.12564, 0.17541, 0.23191, 0.30286, 0.38807, 0.49134, 0.58717, 0.66827, 0.75071, 0.82431, 0.89813, 0.95368, 1.0013, 1.0331, 1.0602, 1.0602}
-		};
-		
-		for (int i=0; i<sizeof(Generic_Power_Curve[0])/sizeof(double); i++){
-			Generic_Power_Curve[0][i] = Generic_Power_Curve_default[0][i];
-			Generic_Power_Curve[1][i] = Generic_Power_Curve_default[1][i];
+		int i;
+		for (i=0;i < (sizeof (Generic_Power_Curve[0]) /sizeof (double));i++) {
+			printf("%f\n",Generic_Power_Curve[0][i]);
+			printf("%f\n",Generic_Power_Curve[1][i]);
 		}
 	}
-	
-	//int i;
-	//for (i=0;i < (sizeof (Generic_Power_Curve[0]) /sizeof (double));i++) {
-	//	printf("%f\n",Generic_Power_Curve[0][i]);
-	//	printf("%f\n",Generic_Power_Curve[1][i]);
-	//}
 	
 
 	switch (Turbine_Model)	{
@@ -605,7 +621,7 @@ int windturb_dg::init(OBJECT *parent)
 			Rg = 0.000;
 			Xg = 0.000;                           //*******************Defaults specified
 			
-			if ((turbine_height != -9999) && (Rated_VA == -9999)){
+			if ((turbine_height != -9999) && (Rated_VA == -9999)){                 //Todo: increase upper limits to 300 m/10 GW
 				if (turbine_height <= 0){
 					GL_THROW ("turbine height cannot have a negative or zero value.");
 				} else {
@@ -650,7 +666,7 @@ int windturb_dg::init(OBJECT *parent)
 			}
 			
 			if ((turbine_height == -9999) && (Rated_VA == -9999)) {
-				turbine_height = 37;    //Setting to defaults i.e. 10 kW turbine capacity and height
+				turbine_height = 37;    //Setting to defaults i.e. 100 kW turbine capacity and height
 				Rated_VA = 100000;
 			}
 			break;
@@ -1323,7 +1339,7 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 			break;
 		case POWER_CURVE:
-			double Power_pu;
+			double Power_calc;
 			double PowerA, PowerB, PowerC;
 			
 			//printf("%f\n",Rated_VA);
@@ -1340,21 +1356,35 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			voltage_C = value_Circuit_V[2];
 			if (WSadj <= Generic_Power_Curve[0][0])
 			{	
-				Power_pu = 0;	
+				Power_calc = 0;	
 			}
+			//if (WSadj >= last entry){    //todo:
+			//	Power_calc = last entry one;
+			//}
 			else
 			{	  
 				for (int i=0; i<sizeof(Generic_Power_Curve[0])/sizeof(double); i++){              //test what happens if ws is beyond last point
 					if (WSadj >= Generic_Power_Curve[0][i] && WSadj <= Generic_Power_Curve[0][i+1]){
 
-						Power_pu = Generic_Power_Curve[1][i] + ((Generic_Power_Curve[1][i+1] - Generic_Power_Curve[1][i]) * ((WSadj - Generic_Power_Curve[0][i]) / (Generic_Power_Curve[0][i+1] - Generic_Power_Curve[0][i])));
+						Power_calc = Generic_Power_Curve[1][i] + ((Generic_Power_Curve[1][i+1] - Generic_Power_Curve[1][i]) * ((WSadj - Generic_Power_Curve[0][i]) / (Generic_Power_Curve[0][i+1] - Generic_Power_Curve[0][i])));
 					}
 				}
 			}
-			
-			power_A = complex((Power_pu*Rated_VA)/3,0);
-			power_B = complex((Power_pu*Rated_VA)/3,0);
-			power_C = complex((Power_pu*Rated_VA)/3,0);
+			if(strstr(power_curve_csv, ".csv")){
+				if (power_curve_pu == true){
+					power_A = complex((Power_calc*Rated_VA)/3,0);
+					power_B = complex((Power_calc*Rated_VA)/3,0);
+					power_C = complex((Power_calc*Rated_VA)/3,0);
+				} else {
+					power_A = complex((Power_calc)/3,0);
+					power_B = complex((Power_calc)/3,0);
+					power_C = complex((Power_calc)/3,0);
+				}
+			} else {
+				power_A = complex((Power_calc*Rated_VA)/3,0);
+				power_B = complex((Power_calc*Rated_VA)/3,0);
+				power_C = complex((Power_calc*Rated_VA)/3,0);
+			}
 			
 			Wind_Speed = WSadj;
 			

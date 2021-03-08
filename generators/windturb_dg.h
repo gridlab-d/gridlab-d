@@ -44,7 +44,7 @@ private:
 
 	//Generic_Power_Curve Power_Curve;
 	
-	double Generic_Power_Curve[2][21];  //Look-up table carrying power curve values. Maximum points limited to 50. Equals default (defined in .cpp) or user defined power curve 
+	double Generic_Power_Curve[2][50];  //Look-up table carrying power curve values. Maximum points limited to 50. Equals default (defined in .cpp) or user defined power curve 
 
     gld_property *pPress;			
 	gld_property *pTemp;			
@@ -151,6 +151,7 @@ public:
     double Min_Vrotor;			// minimum induced voltage in p.u., e.g. 0.8
 	
 	char power_curve_csv[1024]; // name of csv file containing the power curve
+	bool power_curve_pu;				// Flag when set indicates that user provided power curve has power values in pu. Defaults to false in .cpp
 
 public:
 	/* required implementations */
