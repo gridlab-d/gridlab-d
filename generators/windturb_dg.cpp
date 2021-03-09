@@ -300,6 +300,15 @@ int windturb_dg::init(OBJECT *parent)
 	double ZB, SB, EB;
 	complex tst, tst2, tst3, tst4;
 	
+	for (int i=0;i < (sizeof (Generic_Power_Curve[0]) /sizeof (double));i++) {
+		Generic_Power_Curve[0][i] = -1;
+	}
+	
+	double Generic_Power_Curve_default[2][21] = {
+		{2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0, 25.0},
+		{0.0, 0.0084725, 0.026315, 0.049903, 0.083323, 0.12564, 0.17541, 0.23191, 0.30286, 0.38807, 0.49134, 0.58717, 0.66827, 0.75071, 0.82431, 0.89813, 0.95368, 1.0013, 1.0331, 1.0602, 1.0602}
+	};
+	
 	if (Turbine_implementation == POWER_CURVE){
 
 		if(strstr(power_curve_csv, ".csv")){                  //Todo: checking for size and other illegeal things in csv
@@ -325,13 +334,17 @@ int windturb_dg::init(OBJECT *parent)
 			while (pch != NULL)
 			{
 				if ((i % 2) == 0){
-					if (k < 50){
+					if (k < (sizeof(Generic_Power_Curve[0])/sizeof(double))){
 						Generic_Power_Curve[0][k] = std::stof(pch);
+					} else {
+						GL_THROW ("Invalid data format - More than %lu data points in wind speed and power output fields, Provide file with upto %lu points", (sizeof(Generic_Power_Curve[0])/sizeof(double)), (sizeof(Generic_Power_Curve[0])/sizeof(double)));
 					}
 					k++;
 				} else {
-					if (l < 50){
+					if (l < (sizeof(Generic_Power_Curve[0])/sizeof(double))){
 						Generic_Power_Curve[1][l] = std::stof(pch);
+					} else {
+						GL_THROW ("Invalid data format - More than %lu data points in wind speed and power output fields, Provide file with upto %lu points", (sizeof(Generic_Power_Curve[0])/sizeof(double)), (sizeof(Generic_Power_Curve[0])/sizeof(double)));
 					}
 					l++;
 				}
@@ -342,9 +355,9 @@ int windturb_dg::init(OBJECT *parent)
 			delete[] pData;
 			
 			if (k != l){
-				gl_warning("Invalid data format - unequal number of data points in wind speed and power output fields, resorting to default power curve"); //todo: not detecting all cases
+				GL_THROW("Invalid data format - unequal number of data points in wind speed and power output fields"); //todo: not detecting all cases
 			} else if (k < 5){
-				gl_warning("Invalid data format - less than 5 data points in wind speed and power output fields. Provide atleast 5 data points, resorting to default power curve");
+				GL_THROW("Invalid data format - less than 5 data points in wind speed and power output fields. Provide atleast 5 data points");
 			}
 		} else {
 			if (strcmp(power_curve_csv,"")==0) {
@@ -353,22 +366,28 @@ int windturb_dg::init(OBJECT *parent)
 				gl_warning("windturb_dg: unrecognized filetype, resorting to default power curve");
 			}
 			
-			double Generic_Power_Curve_default[2][21] = {
-				{2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0, 25.0},
-				{0.0, 0.0084725, 0.026315, 0.049903, 0.083323, 0.12564, 0.17541, 0.23191, 0.30286, 0.38807, 0.49134, 0.58717, 0.66827, 0.75071, 0.82431, 0.89813, 0.95368, 1.0013, 1.0331, 1.0602, 1.0602}
-			};
-			
+
 			for (int i=0; i<sizeof(Generic_Power_Curve_default[0])/sizeof(double); i++){
 				Generic_Power_Curve[0][i] = Generic_Power_Curve_default[0][i];
 				Generic_Power_Curve[1][i] = Generic_Power_Curve_default[1][i];
 			}
 		}
 		
-		int i;
-		for (i=0;i < (sizeof (Generic_Power_Curve[0]) /sizeof (double));i++) {
-			printf("%f\n",Generic_Power_Curve[0][i]);
-			printf("%f\n",Generic_Power_Curve[1][i]);
+		int valid_entries = 0;
+		for (int i=0;i < (sizeof (Generic_Power_Curve[0]) /sizeof (double));i++) {
+			if (Generic_Power_Curve[0][i] != -1){
+				valid_entries ++;
+			}
 		}
+		number_of_points = valid_entries;
+		
+		//int i;
+		//for (i=0;i < (sizeof (Generic_Power_Curve[0]) /sizeof (double));i++) {
+		//	printf("%f\n",Generic_Power_Curve[0][i]);
+		//	printf("%f\n",Generic_Power_Curve[1][i]);
+		//}
+		//printf("%i\n",number_of_points);
+
 	}
 	
 
@@ -678,8 +697,8 @@ int windturb_dg::init(OBJECT *parent)
 			*/
 	}
 	
-	printf("Turbine Capacity %f\n", Rated_VA);
-	printf("Turbine Height %f\n", turbine_height);
+	//printf("Turbine Capacity %f\n", Rated_VA);
+	//printf("Turbine Height %f\n", turbine_height);
 
 	//Remove the pointer
 	delete temp_property_pointer;
@@ -1341,9 +1360,7 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 		case POWER_CURVE:
 			double Power_calc;
 			double PowerA, PowerB, PowerC;
-			
-			//printf("%f\n",Rated_VA);
-			
+						
 			if (parent_is_valid == true)
 			{
 				value_Circuit_V[0] = pCircuit_V[0]->get_complex();
@@ -1354,16 +1371,16 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			voltage_A = value_Circuit_V[0];	//Syncs the meter parent to the generator.
 			voltage_B = value_Circuit_V[1];
 			voltage_C = value_Circuit_V[2];
-			if (WSadj <= Generic_Power_Curve[0][0])
-			{	
+			
+			if (WSadj <= Generic_Power_Curve[0][0]) {	
 				Power_calc = 0;	
-			}
-			//if (WSadj >= last entry){    //todo:
-			//	Power_calc = last entry one;
-			//}
-			else
-			{	  
-				for (int i=0; i<sizeof(Generic_Power_Curve[0])/sizeof(double); i++){              //test what happens if ws is beyond last point
+			} else if (WSadj >= Generic_Power_Curve[0][number_of_points-1]){
+				Power_calc = Generic_Power_Curve[1][number_of_points-1];
+			} else {	  
+				for (int i=0; i<(number_of_points-1); i++){              //test what happens if ws is beyond last point
+					if ((Generic_Power_Curve[0][i+1] - Generic_Power_Curve[0][i]) <= 0) {
+						GL_THROW ("Invalid data format - wind speed values should be unique and increasing in the power curve data");
+					}
 					if (WSadj >= Generic_Power_Curve[0][i] && WSadj <= Generic_Power_Curve[0][i+1]){
 
 						Power_calc = Generic_Power_Curve[1][i] + ((Generic_Power_Curve[1][i+1] - Generic_Power_Curve[1][i]) * ((WSadj - Generic_Power_Curve[0][i]) / (Generic_Power_Curve[0][i+1] - Generic_Power_Curve[0][i])));

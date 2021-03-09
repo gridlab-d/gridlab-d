@@ -37,14 +37,8 @@ private:
 	complex value_Line_I[3];			//< value holder for current values
 	bool parent_is_valid;				//< Flag to pointers
 	
-	//struct Generic_Power_Curve {
-	//double data[2][50];                 //Look-up table carrying power curve values. Maximum points limited to 50. Equals default (defined in .cpp) or user defined power curve
-	//int number_of_points;
-	//};
-
-	//Generic_Power_Curve Power_Curve;
-	
-	double Generic_Power_Curve[2][50];  //Look-up table carrying power curve values. Maximum points limited to 50. Equals default (defined in .cpp) or user defined power curve 
+	double Generic_Power_Curve[2][100];  //Look-up table carrying power curve values. Maximum points limited to 100. Equals default (defined in .cpp) or user defined power curve 
+	int number_of_points;
 
     gld_property *pPress;			
 	gld_property *pTemp;			
