@@ -259,11 +259,26 @@ void line::recalc_line_matricies(complex Zabc_mat[3][3], complex Yabc_mat[3][3])
 {
 	complex U_mat[3][3], temp_mat[3][3];
 
-	// Setup unity matrix
-	U_mat[0][0] = U_mat[1][1] = U_mat[2][2] = 1.0;
-	U_mat[0][1] = U_mat[0][2] = 0.0;
-	U_mat[1][0] = U_mat[1][2] = 0.0;
-	U_mat[2][0] = U_mat[2][1] = 0.0;
+	//Do an initial zero
+	U_mat[0][0] = U_mat[0][1] = U_mat[0][2] = 0.0;
+	U_mat[1][0] = U_mat[1][1] = U_mat[1][2] = 0.0;
+	U_mat[2][0] = U_mat[2][1] = U_mat[2][2] = 0.0;
+
+	// Setup unity matrix - by phase
+	if (has_phase(PHASE_A))
+	{
+		U_mat[0][0] = 1.0;
+	}
+
+	if (has_phase(PHASE_B))
+	{
+		U_mat[1][1] = 1.0;
+	}
+
+	if (has_phase(PHASE_C))
+	{
+		U_mat[2][2] = 1.0;
+	}
 
 	//b_mat = Zabc_mat as per Kersting (6.10)
 		equalm(Zabc_mat,b_mat);
