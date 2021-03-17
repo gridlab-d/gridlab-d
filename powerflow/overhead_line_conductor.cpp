@@ -71,7 +71,8 @@ int overhead_line_conductor::init(OBJECT *parent)
 			gl_warning("overhead_line_conductor:%d - %s - FBS: resistance is zero",get_id(),get_name());
 			/*  TROUBLESHOOT
 			The overhead_line_conductor has a resistance of zero.  This will cause problems with the 
-			Newton-Raphson solution.  Please put a valid resistance value.
+			Newton-Raphson solver - if you intend to swap powerflow solvers, this must be fixed.
+			Please put a valid resistance value if that is the case.
 			*/
 		}
 	}
