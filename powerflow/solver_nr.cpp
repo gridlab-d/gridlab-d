@@ -404,6 +404,15 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	//Set the global - we're working now, so no more adjustments to island arrays until we're done (except removals)
 	NR_solver_working = true;
 
+	//General "short circuit check" - if there are no islands, just leave
+	if (NR_islands_detected <= 0)
+	{
+		//Make sure the bad computations flag is set
+		*bad_computations = false;
+
+		return 0;	//Not really a valid return, but with the false above, should still continue
+	}
+
 	//Initialize the tracker variable inside each island, just in case
 	for (island_loop_index=0; island_loop_index<NR_islands_detected; island_loop_index++)
 	{
@@ -5009,6 +5018,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 	complex delta_current[3], voltageDel[3], undeltacurr[3];
 	complex temp_current[3], temp_store[3];
 	char jindex, temp_index, temp_index_b;
+	STATUS temp_status;
 
 	//Loop through the buses
 	for (indexer=0; indexer<bus_count; indexer++)
@@ -5016,6 +5026,24 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 		//See if we're relevant to the island of interest
 		if (bus[indexer].island_number == island_number)
 		{
+			//See if we have a load update function to call
+			if (bus[indexer].LoadUpdateFxn != NULL)
+			{
+				//Call the function
+				temp_status = ((STATUS (*)(OBJECT *))(*bus[indexer].LoadUpdateFxn))(bus[indexer].obj);
+
+				//Make sure it worked
+				if (temp_status == FAILED)
+				{
+					GL_THROW("NR: Load update failed for device %s",bus[indexer].obj->name ? bus[indexer].obj->name : "Unnamed");
+					/*  TROUBLESHOOT
+					While attempting to perform the load update function call, something failed.  Please try again.
+					If the error persists, please submit your code and a bug report via the ticketing system.
+					*/
+				}
+				//Default else - it worked
+			}
+
 			if ((bus[indexer].phases & 0x08) == 0x08)	//Delta connected node
 			{
 				//Populate the values for constant current -- deltamode different right now (all same in future?)

@@ -289,6 +289,18 @@ int link_object::init(OBJECT *parent)
 {
 	OBJECT *obj = GETOBJECT(this);
 
+	/* check link from node */
+	if (from==NULL)
+		throw "link from node is not specified";
+		/*  TROUBLESHOOT
+		The from node for a line or link is not connected to anything.
+		*/
+	if (to==NULL)
+		throw "link to node is not specified";
+		/*  TROUBLESHOOT
+		The to node for a line or link is not connected to anything.
+		*/
+
 	//Make sure nodes have initialized in NR - otherwise some lines get missed (if connected to children)
 	if (solver_method == SM_NR)
 	{
@@ -311,18 +323,6 @@ int link_object::init(OBJECT *parent)
 	node *fNode = OBJECTDATA(from,node);
 	node *tNode = OBJECTDATA(to,node);
 
-	/* check link from node */
-	if (from==NULL)
-		throw "link from node is not specified";
-		/*  TROUBLESHOOT
-		The from node for a line or link is not connected to anything.
-		*/
-	if (to==NULL)
-		throw "link to node is not specified";
-		/*  TROUBLESHOOT
-		The to node for a line or link is not connected to anything.
-		*/
-	
 	if (mean_repair_time < 0.0)
 	{
 		gl_warning("link:%s has a negative mean_repair_time, set to 1 hour",obj->name);

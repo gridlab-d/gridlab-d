@@ -5,8 +5,7 @@ residential_residential_la_CPPFLAGS += $(AM_CPPFLAGS)
 
 residential_residential_la_LDFLAGS =
 residential_residential_la_LDFLAGS += $(AM_LDFLAGS)
-
-residential_residential_la_LIBADD = -ldl
+residential_residential_la_LDFLAGS += -ldl
 
 residential_residential_la_SOURCES =
 residential_residential_la_SOURCES += residential/appliance.cpp
@@ -18,9 +17,9 @@ residential_residential_la_SOURCES += residential/dishwasher.h
 residential_residential_la_SOURCES += residential/dryer.cpp
 residential_residential_la_SOURCES += residential/dryer.h
 residential_residential_la_SOURCES += residential/evcharger.cpp
+residential_residential_la_SOURCES += residential/evcharger.h
 residential_residential_la_SOURCES += residential/evcharger_det.cpp
 residential_residential_la_SOURCES += residential/evcharger_det.h
-residential_residential_la_SOURCES += residential/evcharger.h
 residential_residential_la_SOURCES += residential/freezer.cpp
 residential_residential_la_SOURCES += residential/freezer.h
 residential_residential_la_SOURCES += residential/house_e.cpp

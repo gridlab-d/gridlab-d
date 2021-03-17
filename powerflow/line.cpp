@@ -134,6 +134,10 @@ int line::init(OBJECT *parent)
 	f_nominal_voltage = fNode_nominal->get_double();
 	t_nominal_voltage = tNode_nominal->get_double();
 
+	//Remove the property pointers, since they are no longer needed
+	delete fNode_nominal;
+	delete tNode_nominal;
+
 	/* check for node nominal voltage mismatch */
 	if (fabs(f_nominal_voltage - t_nominal_voltage) > (0.001*f_nominal_voltage))
 		throw "from and to node nominal voltage mismatch of greater than 0.1%%";
@@ -255,11 +259,26 @@ void line::recalc_line_matricies(complex Zabc_mat[3][3], complex Yabc_mat[3][3])
 {
 	complex U_mat[3][3], temp_mat[3][3];
 
-	// Setup unity matrix
-	U_mat[0][0] = U_mat[1][1] = U_mat[2][2] = 1.0;
-	U_mat[0][1] = U_mat[0][2] = 0.0;
-	U_mat[1][0] = U_mat[1][2] = 0.0;
-	U_mat[2][0] = U_mat[2][1] = 0.0;
+	//Do an initial zero
+	U_mat[0][0] = U_mat[0][1] = U_mat[0][2] = 0.0;
+	U_mat[1][0] = U_mat[1][1] = U_mat[1][2] = 0.0;
+	U_mat[2][0] = U_mat[2][1] = U_mat[2][2] = 0.0;
+
+	// Setup unity matrix - by phase
+	if (has_phase(PHASE_A))
+	{
+		U_mat[0][0] = 1.0;
+	}
+
+	if (has_phase(PHASE_B))
+	{
+		U_mat[1][1] = 1.0;
+	}
+
+	if (has_phase(PHASE_C))
+	{
+		U_mat[2][2] = 1.0;
+	}
 
 	//b_mat = Zabc_mat as per Kersting (6.10)
 		equalm(Zabc_mat,b_mat);

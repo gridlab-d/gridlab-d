@@ -8,8 +8,7 @@ AM_CFLAGS = $(PTHREAD_CFLAGS)
 # Debug symbols must also be included with -g if not done elsewhere.
 AM_CPPFLAGS = $(XERCES_CPPFLAGS)
 AM_CXXFLAGS = $(PTHREAD_CFLAGS)
-#AM_LDFLAGS = $(EXTRA_gridlabd_LDFLAGS) -ldl -lX11 -L/usr/lib/X11 $(XERCES_LDFLAGS) $(XERCES_LIBS) $(PTHREAD_LIBS) $(PTHREAD_CFLAGS)
-AM_LDFLAGS = $(EXTRA_gridlabd_LDFLAGS) -ldl -L/usr/lib/X11 $(XERCES_LDFLAGS) $(XERCES_LIBS) $(PTHREAD_LIBS) $(PTHREAD_CFLAGS)
+AM_LDFLAGS = $(EXTRA_gridlabd_LDFLAGS) -L/usr/lib/X11 $(XERCES_LDFLAGS) $(XERCES_LIBS) $(PTHREAD_LIBS) $(PTHREAD_CFLAGS) -ldl
 gridlabd_bin_SOURCES = \
 	aggregate.c aggregate.h \
 	build.h \
