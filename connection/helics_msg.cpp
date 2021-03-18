@@ -326,11 +326,20 @@ int helics_msg::init(OBJECT *parent){
 			char *pPropBuf = new char[strlen(pPropName)+1];
 			strcpy(pObjBuf, pObjName);
 			strcpy(pPropBuf, pPropName);
-			(*pub)->pObjectProperty = new gld_property(pObjBuf, pPropBuf);
-			if(!(*pub)->pObjectProperty->is_valid()) {
-				rv = 0;
-				gl_error("helics_msg::init(): There is not object %s with property %s",(char *)(*pub)->objectName.c_str(), (char *)(*pub)->propertyName.c_str());
-				break;
+			if((*pub)->objectName.compare("global") != 0) {
+				(*pub)->pObjectProperty = new gld_property(pObjBuf, pPropBuf);
+				if(!(*pub)->pObjectProperty->is_valid()) {
+					rv = 0;
+					gl_error("helics_msg::init(): There is no object %s with property %s",(char *)(*pub)->objectName.c_str(), (char *)(*pub)->propertyName.c_str());
+					break;
+				}
+			} else {
+				(*pub)->pObjectProperty = new gld_property(pPropBuf);
+				if(!(*pub)->pObjectProperty->is_valid()) {
+					rv = 0;
+					gl_error("helics_msg::init(): There is no global property %s",(char *)(*pub)->propertyName.c_str());
+					break;
+				}
 			}
 		}
 	}
@@ -345,11 +354,20 @@ int helics_msg::init(OBJECT *parent){
 			char *pPropBuf = new char[strlen(pPropName)+1];
 			strcpy(pObjBuf, pObjName);
 			strcpy(pPropBuf, pPropName);
-			(*sub)->pObjectProperty = new gld_property(pObjBuf, pPropBuf);
-			if(!(*sub)->pObjectProperty->is_valid()) {
-				rv = 0;
-				gl_error("helics_msg::init(): There is not object %s with property %s",(char *)(*sub)->objectName.c_str(), (char *)(*sub)->propertyName.c_str());
-				break;
+			if((*sub)->objectName.compare("global") != 0) {
+				(*sub)->pObjectProperty = new gld_property(pObjBuf, pPropBuf);
+				if(!(*sub)->pObjectProperty->is_valid()) {
+					rv = 0;
+					gl_error("helics_msg::init(): There is no object %s with property %s",(char *)(*sub)->objectName.c_str(), (char *)(*sub)->propertyName.c_str());
+					break;
+				}
+			} else {
+				(*sub)->pObjectProperty = new gld_property(pPropBuf);
+				if(!(*sub)->pObjectProperty->is_valid()) {
+					rv = 0;
+					gl_error("helics_msg::init(): There is no global property %s",(char *)(*sub)->propertyName.c_str());
+					break;
+				}
 			}
 		}
 	}
@@ -364,11 +382,20 @@ int helics_msg::init(OBJECT *parent){
 			char *pPropBuf = new char[strlen(pPropName)+1];
 			strcpy(pObjBuf, pObjName);
 			strcpy(pPropBuf, pPropName);
-			(*pub)->pObjectProperty = new gld_property(pObjBuf, pPropBuf);
-			if(!(*pub)->pObjectProperty->is_valid()) {
-				rv = 0;
-				gl_error("helics_msg::init(): There is not object %s with property %s",(char *)(*pub)->objectName.c_str(), (char *)(*pub)->propertyName.c_str());
-				break;
+			if((*pub)->objectName.compare("global") != 0) {
+				(*pub)->pObjectProperty = new gld_property(pObjBuf, pPropBuf);
+				if(!(*pub)->pObjectProperty->is_valid()) {
+					rv = 0;
+					gl_error("helics_msg::init(): There is no object %s with property %s",(char *)(*pub)->objectName.c_str(), (char *)(*pub)->propertyName.c_str());
+					break;
+				}
+			} else {
+				(*pub)->pObjectProperty = new gld_property(pPropBuf);
+				if(!(*pub)->pObjectProperty->is_valid()) {
+					rv = 0;
+					gl_error("helics_msg::init(): There is no global property %s",(char *)(*pub)->propertyName.c_str());
+					break;
+				}
 			}
 		}
 	}
@@ -383,11 +410,20 @@ int helics_msg::init(OBJECT *parent){
 			char *pPropBuf = new char[strlen(pPropName)+1];
 			strcpy(pObjBuf, pObjName);
 			strcpy(pPropBuf, pPropName);
-			(*sub)->pObjectProperty = new gld_property(pObjBuf, pPropBuf);
-			if(!(*sub)->pObjectProperty->is_valid()) {
-				rv = 0;
-				gl_error("helics_msg::init(): There is not object %s with property %s",(char *)(*sub)->objectName.c_str(), (char *)(*sub)->propertyName.c_str());
-				break;
+			if((*sub)->objectName.compare("global") != 0) {
+				(*sub)->pObjectProperty = new gld_property(pObjBuf, pPropBuf);
+				if(!(*sub)->pObjectProperty->is_valid()) {
+					rv = 0;
+					gl_error("helics_msg::init(): There is no object %s with property %s",(char *)(*sub)->objectName.c_str(), (char *)(*sub)->propertyName.c_str());
+					break;
+				}
+			} else {
+				(*sub)->pObjectProperty = new gld_property(pPropBuf);
+				if(!(*sub)->pObjectProperty->is_valid()) {
+					rv = 0;
+					gl_error("helics_msg::init(): There is no global property %s",(char *)(*sub)->propertyName.c_str());
+					break;
+				}
 			}
 		}
 	}
@@ -396,26 +432,34 @@ int helics_msg::init(OBJECT *parent){
 	}
 	for(vector<helics_value_publication*>::iterator pub = helics_value_publications.begin(); pub != helics_value_publications.end(); pub++) {
 		vObj = (*pub)->pObjectProperty->get_object();
-		if((vObj->flags & OF_INIT) != OF_INIT){
-			defer = true;
+		if(vObj != NULL) {
+			if((vObj->flags & OF_INIT) != OF_INIT){
+				defer = true;
+			}
 		}
 	}
 	for(vector<helics_value_subscription*>::iterator sub = helics_value_subscriptions.begin(); sub != helics_value_subscriptions.end(); sub++) {
 		vObj = (*sub)->pObjectProperty->get_object();
-		if((vObj->flags & OF_INIT) != OF_INIT){
-			defer = true;
+		if(vObj != NULL) {
+			if((vObj->flags & OF_INIT) != OF_INIT){
+				defer = true;
+			}
 		}
 	}
 	for(vector<helics_endpoint_publication*>::iterator pub = helics_endpoint_publications.begin(); pub != helics_endpoint_publications.end(); pub++) {
 		vObj = (*pub)->pObjectProperty->get_object();
-		if((vObj->flags & OF_INIT) != OF_INIT){
-			defer = true;
+		if(vObj != NULL) {
+			if((vObj->flags & OF_INIT) != OF_INIT){
+				defer = true;
+			}
 		}
 	}
 	for(vector<helics_endpoint_subscription*>::iterator sub = helics_endpoint_subscriptions.begin(); sub != helics_endpoint_subscriptions.end(); sub++) {
 		vObj = (*sub)->pObjectProperty->get_object();
-		if((vObj->flags & OF_INIT) != OF_INIT){
-			defer = true;
+		if(vObj != NULL) {
+			if((vObj->flags & OF_INIT) != OF_INIT){
+				defer = true;
+			}
 		}
 	}
 	if(defer == true){
