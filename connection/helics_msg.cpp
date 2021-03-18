@@ -698,7 +698,7 @@ TIMESTAMP helics_msg::clk_update(TIMESTAMP t1)
 #endif
 			return t1;
 		} else if (t1 > gl_globalstoptime && gl_globalclock < gl_globalstoptime){
-			t1 == gl_globalstoptime;
+			t1 = gl_globalstoptime;
 		}
 		if(message_type == HMT_GENERAL){
 			result = publishVariables();

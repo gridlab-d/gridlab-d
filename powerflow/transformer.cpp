@@ -477,9 +477,21 @@ int transformer::init(OBJECT *parent)
 				*/
 			}
 
-			B_mat[0][0] = zt*zc/(zt+zc);
-			B_mat[1][1] = zt*zc/(zt+zc);
-			B_mat[2][2] = zt*zc/(zt+zc);
+			//Check by phase and populate
+			if (has_phase(PHASE_A))
+			{
+				B_mat[0][0] = zt*zc/(zt+zc);
+			}
+
+			if (has_phase(PHASE_B))
+			{
+				B_mat[1][1] = zt*zc/(zt+zc);
+			}
+
+			if (has_phase(PHASE_C))
+			{
+				B_mat[2][2] = zt*zc/(zt+zc);
+			}
 
 			break;
 		case transformer_configuration::DELTA_DELTA:
