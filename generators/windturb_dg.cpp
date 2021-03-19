@@ -311,7 +311,7 @@ int windturb_dg::init(OBJECT *parent)
 	
 	if (Turbine_implementation == POWER_CURVE){
 
-		if(strstr(power_curve_csv, ".csv")){                  //Todo: checking for size and other illegeal things in csv
+		if(strstr(power_curve_csv, ".csv")){                  //Todo: Fix enter csv bug!!
 		
 		// Read the file ----------
 			FILE* fp = fopen(power_curve_csv, "rb");
@@ -335,14 +335,24 @@ int windturb_dg::init(OBJECT *parent)
 			{
 				if ((i % 2) == 0){
 					if (k < (sizeof(Generic_Power_Curve[0])/sizeof(double))){
-						Generic_Power_Curve[0][k] = std::stof(pch);
+						try{
+							Generic_Power_Curve[0][k] = std::stod(pch);
+						}
+						catch(...){
+							printf("Invalid entry in csv - Please check csv file");
+						}
 					} else {
 						GL_THROW ("Invalid data format - More than %lu data points in wind speed and power output fields, Provide file with upto %lu points", (sizeof(Generic_Power_Curve[0])/sizeof(double)), (sizeof(Generic_Power_Curve[0])/sizeof(double)));
 					}
 					k++;
 				} else {
 					if (l < (sizeof(Generic_Power_Curve[0])/sizeof(double))){
-						Generic_Power_Curve[1][l] = std::stof(pch);
+						try{
+							Generic_Power_Curve[1][l] = std::stod(pch);
+						} 
+						catch(...){
+							printf("Invalid entry in csv - Please check csv file");
+						}
 					} else {
 						GL_THROW ("Invalid data format - More than %lu data points in wind speed and power output fields, Provide file with upto %lu points", (sizeof(Generic_Power_Curve[0])/sizeof(double)), (sizeof(Generic_Power_Curve[0])/sizeof(double)));
 					}
@@ -356,8 +366,8 @@ int windturb_dg::init(OBJECT *parent)
 			
 			if (k != l){
 				GL_THROW("Invalid data format - unequal number of data points in wind speed and power output fields"); //todo: not detecting all cases
-			} else if (k < 5){
-				GL_THROW("Invalid data format - less than 5 data points in wind speed and power output fields. Provide atleast 5 data points");
+			} else if (k < 3){
+				GL_THROW("Invalid data format - less than 3 data points in wind speed and power output fields. Provide atleast 3 data points");
 			}
 		} else {
 			if (strcmp(power_curve_csv,"")==0) {
@@ -1375,12 +1385,9 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			if (WSadj <= Generic_Power_Curve[0][0]) {	
 				Power_calc = 0;	
 			} else if (WSadj >= Generic_Power_Curve[0][number_of_points-1]){
-				Power_calc = Generic_Power_Curve[1][number_of_points-1];
+				Power_calc = 0;
 			} else {	  
 				for (int i=0; i<(number_of_points-1); i++){              //test what happens if ws is beyond last point
-					if ((Generic_Power_Curve[0][i+1] - Generic_Power_Curve[0][i]) <= 0) {
-						GL_THROW ("Invalid data format - wind speed values should be unique and increasing in the power curve data");
-					}
 					if (WSadj >= Generic_Power_Curve[0][i] && WSadj <= Generic_Power_Curve[0][i+1]){
 
 						Power_calc = Generic_Power_Curve[1][i] + ((Generic_Power_Curve[1][i+1] - Generic_Power_Curve[1][i]) * ((WSadj - Generic_Power_Curve[0][i]) / (Generic_Power_Curve[0][i+1] - Generic_Power_Curve[0][i])));
