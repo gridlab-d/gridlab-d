@@ -311,7 +311,7 @@ int windturb_dg::init(OBJECT *parent)
 	
 	if (Turbine_implementation == POWER_CURVE){
 
-		if(strstr(power_curve_csv, ".csv")){                  //Todo: Fix enter csv bug!!
+		if(strstr(power_curve_csv, ".csv")){                  //Todo: Fix enter csv bug!!!
 		
 		// Read the file ----------
 			FILE* fp = fopen(power_curve_csv, "rb");
