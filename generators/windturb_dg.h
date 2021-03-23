@@ -12,6 +12,10 @@
 
 #include <stdarg.h>
 #include "generators.h"
+
+#include <vector>
+#include <string>
+
 	
 class windturb_dg : public gld_object
 {
@@ -72,6 +76,8 @@ public:
 	enumeration CP_Data;
 	enum {POWER_CURVE=1, COEFF_OF_PERFORMANCE}; 
 	enumeration Turbine_implementation;
+	
+	enum class CSVState {UnquotedField, QuotedField, QuotedQuote};
 
 	double blade_diam;
 	double turbine_height;
@@ -160,6 +166,9 @@ public:
 	gld_property *map_complex_value(OBJECT *obj, char *name);
 	gld_property *map_double_value(OBJECT *obj, char *name);
 	void push_complex_powerflow_values(void);
+	
+	std::vector<std::string> readCSVRow(const std::string &row);
+	std::vector<std::vector<std::string>> readCSV(std::istream &in);
 
 public:
 	static CLASS *oclass;

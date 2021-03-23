@@ -17,6 +17,7 @@ Copyright (C) 2008 Battelle Memorial Institute
 #include <sstream>
 #include <string>
 #include <vector>
+#include <iterator>
 
 #include "windturb_dg.h"
 
@@ -302,6 +303,7 @@ int windturb_dg::init(OBJECT *parent)
 	
 	for (int i=0;i < (sizeof (Generic_Power_Curve[0]) /sizeof (double));i++) {
 		Generic_Power_Curve[0][i] = -1;
+		Generic_Power_Curve[1][i] = -1;
 	}
 	
 	double Generic_Power_Curve_default[2][21] = {
@@ -313,8 +315,53 @@ int windturb_dg::init(OBJECT *parent)
 
 		if(strstr(power_curve_csv, ".csv")){                  //Todo: Fix enter csv bug!!!
 		
+			std::ifstream file(power_curve_csv);
+			
+			std::vector<std::vector<std::string>> csvData;
+
+			csvData = readCSV(file);
+			
+			int k=0;
+			int l=0;
+			for ( size_t i = 0; i < csvData.size(); i++ )
+			{
+				for ( size_t j = 0; j < csvData[i].size(); j++ ){ 
+					//std::cout << csvData[i][j] << ' ';
+					
+					if (j == 0){
+						if (k < (sizeof(Generic_Power_Curve[0])/sizeof(double))){
+							try{
+								Generic_Power_Curve[0][k] = std::stod(csvData[i][j]);
+							}
+							catch(...){
+								gl_warning("Invalid entry in .csv file - Please check .csv file");
+							}
+						} else {
+							GL_THROW ("Invalid data format - More than %lu data points in wind speed and power output fields, Provide file with upto %lu points", (sizeof(Generic_Power_Curve[0])/sizeof(double)), (sizeof(Generic_Power_Curve[0])/sizeof(double)));
+						}
+						k++;
+					} else if (j == 1){
+						if (l < (sizeof(Generic_Power_Curve[0])/sizeof(double))){
+							try{
+								Generic_Power_Curve[1][l] = std::stod(csvData[i][j]);
+							} 
+							catch(...){
+								gl_warning("Invalid entry in .csv file - Please check .csv file");
+							}
+						} else {
+							GL_THROW ("Invalid data format - More than %lu data points in wind speed and power output fields, Provide file with upto %lu points", (sizeof(Generic_Power_Curve[0])/sizeof(double)), (sizeof(Generic_Power_Curve[0])/sizeof(double)));
+						}
+						l++;
+						
+					} else {
+						GL_THROW ("Invalid data format - More than 2 columns in .csv file");
+					}
+				}
+				//std::cout << std::endl;
+			}
+		
 		// Read the file ----------
-			FILE* fp = fopen(power_curve_csv, "rb");
+/* 			FILE* fp = fopen(power_curve_csv, "rb");
 			if (fp == NULL) return 0;
 			fseek(fp, 0, SEEK_END);
 			long size = ftell(fp);
@@ -362,11 +409,12 @@ int windturb_dg::init(OBJECT *parent)
 				pch = strtok (NULL, ",\n");
 				
 			}
-			delete[] pData;
+			delete[] pData; */
 			
-			if (k != l){
-				GL_THROW("Invalid data format - unequal number of data points in wind speed and power output fields"); //todo: not detecting all cases
-			} else if (k < 3){
+			//if (k != l){
+			//	GL_THROW("Invalid data format - unequal number of data points in wind speed and power output fields"); //todo: not detecting all cases
+			//} else 
+			if (k < 3){
 				GL_THROW("Invalid data format - less than 3 data points in wind speed and power output fields. Provide atleast 3 data points");
 			}
 		} else {
@@ -388,9 +436,12 @@ int windturb_dg::init(OBJECT *parent)
 			if (Generic_Power_Curve[0][i] != -1){
 				valid_entries ++;
 			}
-		}
+			if (((Generic_Power_Curve[0][i] != -1) && (Generic_Power_Curve[1][i] == -1)) || ((Generic_Power_Curve[0][i] == -1) && (Generic_Power_Curve[1][i] != -1))){
+				GL_THROW("Invalid .csv file data format - unequal number of data points in wind speed and power output fields");
+			}
+		}		
 		number_of_points = valid_entries;
-		
+				
 		//int i;
 		//for (i=0;i < (sizeof (Generic_Power_Curve[0]) /sizeof (double));i++) {
 		//	printf("%f\n",Generic_Power_Curve[0][i]);
@@ -1543,6 +1594,62 @@ void windturb_dg::push_complex_powerflow_values(void)
 		//Push it back up
 		pLine_I[indexval]->setp<complex>(temp_complex_val,*test_rlock);
 	}
+}
+
+std::vector<std::string> windturb_dg::readCSVRow(const std::string &row) {
+    CSVState state = CSVState::UnquotedField;
+    std::vector<std::string> fields {""};
+    size_t i = 0; // index of the current field
+    for (char c : row) {
+        switch (state) {
+            case CSVState::UnquotedField:
+                switch (c) {
+                    case ',': // end of field
+                              fields.push_back(""); i++;
+                              break;
+                    case '"': state = CSVState::QuotedField;
+                              break;
+                    default:  fields[i].push_back(c);
+                              break; }
+                break;
+            case CSVState::QuotedField:
+                switch (c) {
+                    case '"': state = CSVState::QuotedQuote;
+                              break;
+                    default:  fields[i].push_back(c);
+                              break; }
+                break;
+            case CSVState::QuotedQuote:
+                switch (c) {
+                    case ',': // , after closing quote
+                              fields.push_back(""); i++;
+                              state = CSVState::UnquotedField;
+                              break;
+                    case '"': // "" -> "
+                              fields[i].push_back('"');
+                              state = CSVState::QuotedField;
+                              break;
+                    default:  // end of quote
+                              state = CSVState::UnquotedField;
+                              break; }
+                break;
+        }
+    }
+    return fields;
+}
+
+std::vector<std::vector<std::string>> windturb_dg::readCSV(std::istream &in) {
+    std::vector<std::vector<std::string>> table;
+    std::string row;
+    while (!in.eof()) {
+        std::getline(in, row);
+        if (in.bad() || in.fail()) {
+            break;
+        }
+        auto fields = readCSVRow(row);
+        table.push_back(fields);
+    }
+    return table;
 }
 
 //////////////////////////////////////////////////////////////////////////
