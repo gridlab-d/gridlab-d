@@ -4,7 +4,7 @@ clock {
      stoptime '2009-01-05 00:00:00';
 }
 
-#define PF=FBS
+#define PF=NR
 
 #set profiler=1;
 #set double_format=%+.12lg
@@ -223,7 +223,7 @@ object windturb_dg {
 	//Turbine_Model GEN_TURB_POW_CURVE_1_5MW;
 	Rated_VA 4000000;
 	turbine_height 115;
-	power_curve_csv "WT_pow_curve.csv";
+	//power_curve_csv "WT_pow_curve.csv";
 	power_curve_pu true;
 	
 	object multi_recorder {

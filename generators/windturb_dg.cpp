@@ -37,31 +37,31 @@ windturb_dg::windturb_dg(MODULE *module)
 
 		if (gl_publish_variable(oclass,
 			PT_enumeration,"Gen_status",PADDR(Gen_status), PT_DESCRIPTION, "Describes whether the generator is currently online or offline",
-			PT_KEYWORD,"OFFLINE",(enumeration)OFFLINE, PT_DESCRIPTION, "Generator is currently not supplying power",
-			PT_KEYWORD,"ONLINE",(enumeration)ONLINE, PT_DESCRIPTION, "Generator is currently available to supply power",
+			PT_KEYWORD,"OFFLINE",(enumeration)OFFLINE, PT_DESCRIPTION, "COP: Generator is currently not supplying power",
+			PT_KEYWORD,"ONLINE",(enumeration)ONLINE, PT_DESCRIPTION, "COP: Generator is currently available to supply power",
 			PT_enumeration,"Gen_type",PADDR(Gen_type), PT_DESCRIPTION, "Type of generator",
-			PT_KEYWORD,"INDUCTION",(enumeration)INDUCTION, PT_DESCRIPTION, "Standard induction generator",
-			PT_KEYWORD,"SYNCHRONOUS",(enumeration)SYNCHRONOUS, PT_DESCRIPTION, "Standard synchronous generator; is also used to 'fake' a doubly-fed induction generator for now",
+			PT_KEYWORD,"INDUCTION",(enumeration)INDUCTION, PT_DESCRIPTION, "COP: Standard induction generator",
+			PT_KEYWORD,"SYNCHRONOUS",(enumeration)SYNCHRONOUS, PT_DESCRIPTION, "COP: Standard synchronous generator; is also used to 'fake' a doubly-fed induction generator for now",
 			PT_enumeration,"Gen_mode",PADDR(Gen_mode), PT_DESCRIPTION, "Control mode that is used for the generator output",
-			PT_KEYWORD,"CONSTANTE",(enumeration)CONSTANTE, PT_DESCRIPTION, "Maintains the voltage at the terminals",
-			PT_KEYWORD,"CONSTANTP",(enumeration)CONSTANTP, PT_DESCRIPTION, "Maintains the real power output at the terminals",
-			PT_KEYWORD,"CONSTANTPQ",(enumeration)CONSTANTPQ, PT_DESCRIPTION, "Maintains the real and reactive output at the terminals - currently unsupported",
+			PT_KEYWORD,"CONSTANTE",(enumeration)CONSTANTE, PT_DESCRIPTION, "COP: Maintains the voltage at the terminals",
+			PT_KEYWORD,"CONSTANTP",(enumeration)CONSTANTP, PT_DESCRIPTION, "COP: Maintains the real power output at the terminals",
+			PT_KEYWORD,"CONSTANTPQ",(enumeration)CONSTANTPQ, PT_DESCRIPTION, "COP: Maintains the real and reactive output at the terminals - currently unsupported",
 			PT_enumeration,"Turbine_Model",PADDR(Turbine_Model), PT_DESCRIPTION, "Type of turbine being represented; using any of these except USER_DEFINED also specifies a large number of defaults",
-			PT_KEYWORD,"GENERIC_DEFAULT",(enumeration)GENERIC_DEFAULT, PT_DESCRIPTION, "Generic model used to set default parameters if user doesnot specify",
-			PT_KEYWORD,"GENERIC_SYNCH_SMALL",(enumeration)GENERIC_SYNCH_SMALL, PT_DESCRIPTION, "Generic model for a small, fixed pitch synchronous turbine",
-			PT_KEYWORD,"GENERIC_SYNCH_MID",(enumeration)GENERIC_SYNCH_MID, PT_DESCRIPTION, "Generic model for a mid-size, fixed pitch synchronous turbine",
-			PT_KEYWORD,"GENERIC_SYNCH_LARGE",(enumeration)GENERIC_SYNCH_LARGE, PT_DESCRIPTION, "Generic model for a large, fixed pitch synchronous turbine",
-			PT_KEYWORD,"GENERIC_IND_SMALL",(enumeration)GENERIC_IND_SMALL, PT_DESCRIPTION, "Generic model for a small induction, fixed pitch generator turbine",
-			PT_KEYWORD,"GENERIC_IND_MID",(enumeration)GENERIC_IND_MID, PT_DESCRIPTION, "Generic model for a mid-size induction, fixed pitch generator turbine",
-			PT_KEYWORD,"GENERIC_IND_LARGE",(enumeration)GENERIC_IND_LARGE, PT_DESCRIPTION, "Generic model for a large induction, fixed pitch generator turbine",
-			PT_KEYWORD,"USER_DEFINED",(enumeration)USER_DEFINED, PT_DESCRIPTION, "Allows user to specify all parameters - is not currently supported", // TODO: Doesnt work yet
-			PT_KEYWORD,"VESTAS_V82",(enumeration)VESTAS_V82, PT_DESCRIPTION, "Sets all defaults to represent the power output of a VESTAS V82 turbine",
-			PT_KEYWORD,"GE_25MW",(enumeration)GE_25MW, PT_DESCRIPTION, "Sets all defaults to represent the power output of a GE 2.5MW turbine",
-			PT_KEYWORD,"BERGEY_10kW",(enumeration)BERGEY_10kW, PT_DESCRIPTION, "Sets all defaults to represent the power output of a Bergey 10kW turbine",
-			PT_KEYWORD,"GEN_TURB_POW_CURVE_2_4KW",(enumeration)GEN_TURB_POW_CURVE_2_4KW, PT_DESCRIPTION, "Generic model for a 2.4kW turbine, power curve implementation",
-			PT_KEYWORD,"GEN_TURB_POW_CURVE_10KW",(enumeration)GEN_TURB_POW_CURVE_10KW, PT_DESCRIPTION, "Generic model for a 10kW turbine, power curve implementation",
-			PT_KEYWORD,"GEN_TURB_POW_CURVE_100KW",(enumeration)GEN_TURB_POW_CURVE_100KW, PT_DESCRIPTION, "Generic model for a 100kW turbine, power curve implementation",
-			PT_KEYWORD,"GEN_TURB_POW_CURVE_1_5MW",(enumeration)GEN_TURB_POW_CURVE_1_5MW, PT_DESCRIPTION, "Generic model for a 1.5MW turbine, power curve implementation",
+			PT_KEYWORD,"GENERIC_DEFAULT",(enumeration)GENERIC_DEFAULT, PT_DESCRIPTION, "Power_Curve: Generic model used to set default parameters if user doesnot specify",
+			PT_KEYWORD,"GENERIC_SYNCH_SMALL",(enumeration)GENERIC_SYNCH_SMALL, PT_DESCRIPTION, "COP: Generic model for a small, fixed pitch synchronous turbine",
+			PT_KEYWORD,"GENERIC_SYNCH_MID",(enumeration)GENERIC_SYNCH_MID, PT_DESCRIPTION, "COP: Generic model for a mid-size, fixed pitch synchronous turbine",
+			PT_KEYWORD,"GENERIC_SYNCH_LARGE",(enumeration)GENERIC_SYNCH_LARGE, PT_DESCRIPTION, "COP: Generic model for a large, fixed pitch synchronous turbine",
+			PT_KEYWORD,"GENERIC_IND_SMALL",(enumeration)GENERIC_IND_SMALL, PT_DESCRIPTION, "COP: Generic model for a small induction, fixed pitch generator turbine",
+			PT_KEYWORD,"GENERIC_IND_MID",(enumeration)GENERIC_IND_MID, PT_DESCRIPTION, "COP: Generic model for a mid-size induction, fixed pitch generator turbine",
+			PT_KEYWORD,"GENERIC_IND_LARGE",(enumeration)GENERIC_IND_LARGE, PT_DESCRIPTION, "COP: Generic model for a large induction, fixed pitch generator turbine",
+			PT_KEYWORD,"USER_DEFINED",(enumeration)USER_DEFINED, PT_DESCRIPTION, "COP: Allows user to specify all parameters - is not currently supported", // TODO: Doesnt work yet
+			PT_KEYWORD,"VESTAS_V82",(enumeration)VESTAS_V82, PT_DESCRIPTION, "COP: Sets all defaults to represent the power output of a VESTAS V82 turbine",
+			PT_KEYWORD,"GE_25MW",(enumeration)GE_25MW, PT_DESCRIPTION, "COP: Sets all defaults to represent the power output of a GE 2.5MW turbine",
+			PT_KEYWORD,"BERGEY_10kW",(enumeration)BERGEY_10kW, PT_DESCRIPTION, "COP: Sets all defaults to represent the power output of a Bergey 10kW turbine",
+			PT_KEYWORD,"GEN_TURB_POW_CURVE_2_4KW",(enumeration)GEN_TURB_POW_CURVE_2_4KW, PT_DESCRIPTION, "Power_Curve: Generic model for a 2.4kW turbine, power curve implementation",
+			PT_KEYWORD,"GEN_TURB_POW_CURVE_10KW",(enumeration)GEN_TURB_POW_CURVE_10KW, PT_DESCRIPTION, "Power_Curve: Generic model for a 10kW turbine, power curve implementation",
+			PT_KEYWORD,"GEN_TURB_POW_CURVE_100KW",(enumeration)GEN_TURB_POW_CURVE_100KW, PT_DESCRIPTION, "Power_Curve: Generic model for a 100kW turbine, power curve implementation",
+			PT_KEYWORD,"GEN_TURB_POW_CURVE_1_5MW",(enumeration)GEN_TURB_POW_CURVE_1_5MW, PT_DESCRIPTION, "Power_Curve: Generic model for a 1.5MW turbine, power curve implementation",
 			PT_enumeration,"Turbine_implementation",PADDR(Turbine_implementation), PT_DESCRIPTION, "Type of implementation for wind turbine generator",
 			PT_KEYWORD,"COEFF_OF_PERFORMANCE",(enumeration)COEFF_OF_PERFORMANCE, PT_DESCRIPTION, "Wind turbine generator implementation based on Coefficient of performance",
 			PT_KEYWORD,"POWER_CURVE",(enumeration)POWER_CURVE, PT_DESCRIPTION, "Wind turbine implementation based on Generic Power Curve",
@@ -75,18 +75,18 @@ windturb_dg::windturb_dg(MODULE *module)
 			PT_double, "cut_in_ws[m/s]", PADDR(cut_in_ws), PT_DESCRIPTION, "Minimum wind speed for generator operation",
 			PT_double, "cut_out_ws[m/s]", PADDR(cut_out_ws), PT_DESCRIPTION, "Maximum wind speed for generator operation",
 			PT_double, "ws_rated[m/s]", PADDR(ws_rated), PT_DESCRIPTION, "Rated wind speed for generator operation",
-			PT_double, "ws_maxcp[m/s]", PADDR(ws_maxcp), PT_DESCRIPTION, "Wind speed at which generator reaches maximum Cp",
-			PT_double, "Cp_max[pu]", PADDR(Cp_max), PT_DESCRIPTION, "Maximum coefficient of performance",
-			PT_double, "Cp_rated[pu]", PADDR(Cp_rated), PT_DESCRIPTION, "Rated coefficient of performance",
-			PT_double, "Cp[pu]", PADDR(Cp), PT_DESCRIPTION, "Calculated coefficient of performance",
+			PT_double, "ws_maxcp[m/s]", PADDR(ws_maxcp), PT_DESCRIPTION, "COP: Wind speed at which generator reaches maximum Cp",
+			PT_double, "Cp_max[pu]", PADDR(Cp_max), PT_DESCRIPTION, "COP: Maximum coefficient of performance",
+			PT_double, "Cp_rated[pu]", PADDR(Cp_rated), PT_DESCRIPTION, "COP: Rated coefficient of performance",
+			PT_double, "Cp[pu]", PADDR(Cp), PT_DESCRIPTION, "COP: Calculated coefficient of performance",
 
 			PT_double, "Rated_VA[VA]", PADDR(Rated_VA), PT_DESCRIPTION, "Rated generator power output",
 			PT_double, "Rated_V[V]", PADDR(Rated_V), PT_DESCRIPTION, "Rated generator terminal voltage",
-			PT_double, "Pconv[W]", PADDR(Pconv), PT_DESCRIPTION, "Amount of electrical power converted from mechanical power delivered",
+			PT_double, "Pconv[W]", PADDR(Pconv), PT_DESCRIPTION, "COP: Amount of electrical power converted from mechanical power delivered",
 			PT_double, "P_converted[W]", PADDR(Pconv), PT_DESCRIPTION, "Amount of electrical power converted from mechanical power delivered",
 
-			PT_double, "GenElecEff[%]", PADDR(GenElecEff), PT_DESCRIPTION, "Calculated generator electrical efficiency",
-			PT_double, "generator_efficiency[%]", PADDR(GenElecEff), PT_DESCRIPTION, "Calculated generator electrical efficiency",
+			PT_double, "GenElecEff[%]", PADDR(GenElecEff), PT_DESCRIPTION, "COP: Calculated generator electrical efficiency",
+			PT_double, "generator_efficiency[%]", PADDR(GenElecEff), PT_DESCRIPTION, "COP: Calculated generator electrical efficiency",
 			PT_double, "TotalRealPow[W]", PADDR(TotalRealPow), PT_DESCRIPTION, "Total real power output",
 			PT_double, "total_real_power[W]", PADDR(TotalRealPow), PT_DESCRIPTION, "Total real power output",
 			PT_double, "TotalReacPow[VA]", PADDR(TotalReacPow), PT_DESCRIPTION, "Total reactive power output",
@@ -100,29 +100,29 @@ windturb_dg::windturb_dg(MODULE *module)
 			PT_double, "wind_speed_adjusted[m/s]", PADDR(WSadj), PT_DESCRIPTION, "Speed of wind at hub height",
 			PT_double, "Wind_Speed[m/s]", PADDR(Wind_Speed),  PT_DESCRIPTION, "Wind speed at 5-15m level (typical measurement height)",
 			PT_double, "wind_speed[m/s]", PADDR(Wind_Speed),  PT_DESCRIPTION, "Wind speed at 5-15m level (typical measurement height)",
-			PT_double, "air_density[kg/m^3]", PADDR(air_dens), PT_DESCRIPTION, "Estimated air density",
+			PT_double, "air_density[kg/m^3]", PADDR(air_dens), PT_DESCRIPTION, "COP: Estimated air density",
 
-			PT_double, "R_stator[pu*Ohm]", PADDR(Rst), PT_DESCRIPTION, "Induction generator primary stator resistance in p.u.",
-			PT_double, "X_stator[pu*Ohm]", PADDR(Xst), PT_DESCRIPTION, "Induction generator primary stator reactance in p.u.",
-			PT_double, "R_rotor[pu*Ohm]", PADDR(Rr), PT_DESCRIPTION, "Induction generator primary rotor resistance in p.u.",
-			PT_double, "X_rotor[pu*Ohm]", PADDR(Xr), PT_DESCRIPTION, "Induction generator primary rotor reactance in p.u.",
-			PT_double, "R_core[pu*Ohm]", PADDR(Rc), PT_DESCRIPTION, "Induction generator primary core resistance in p.u.",
-			PT_double, "X_magnetic[pu*Ohm]", PADDR(Xm), PT_DESCRIPTION, "Induction generator primary core reactance in p.u.",
-			PT_double, "Max_Vrotor[pu*V]", PADDR(Max_Vrotor), PT_DESCRIPTION, "Induction generator maximum induced rotor voltage in p.u., e.g. 1.2",
-			PT_double, "Min_Vrotor[pu*V]", PADDR(Min_Vrotor), PT_DESCRIPTION, "Induction generator minimum induced rotor voltage in p.u., e.g. 0.8",
+			PT_double, "R_stator[pu*Ohm]", PADDR(Rst), PT_DESCRIPTION, "COP: Induction generator primary stator resistance in p.u.",
+			PT_double, "X_stator[pu*Ohm]", PADDR(Xst), PT_DESCRIPTION, "COP: Induction generator primary stator reactance in p.u.",
+			PT_double, "R_rotor[pu*Ohm]", PADDR(Rr), PT_DESCRIPTION, "COP: Induction generator primary rotor resistance in p.u.",
+			PT_double, "X_rotor[pu*Ohm]", PADDR(Xr), PT_DESCRIPTION, "COP: Induction generator primary rotor reactance in p.u.",
+			PT_double, "R_core[pu*Ohm]", PADDR(Rc), PT_DESCRIPTION, "COP: Induction generator primary core resistance in p.u.",
+			PT_double, "X_magnetic[pu*Ohm]", PADDR(Xm), PT_DESCRIPTION, "COP: Induction generator primary core reactance in p.u.",
+			PT_double, "Max_Vrotor[pu*V]", PADDR(Max_Vrotor), PT_DESCRIPTION, "COP: Induction generator maximum induced rotor voltage in p.u., e.g. 1.2",
+			PT_double, "Min_Vrotor[pu*V]", PADDR(Min_Vrotor), PT_DESCRIPTION, "COP: Induction generator minimum induced rotor voltage in p.u., e.g. 0.8",
 
-			PT_double, "Rs[pu*Ohm]", PADDR(Rs), PT_DESCRIPTION, "Synchronous generator primary stator resistance in p.u.",
-			PT_double, "Xs[pu*Ohm]", PADDR(Xs), PT_DESCRIPTION, "Synchronous generator primary stator reactance in p.u.",
-			PT_double, "Rg[pu*Ohm]", PADDR(Rg), PT_DESCRIPTION, "Synchronous generator grounding resistance in p.u.",
-			PT_double, "Xg[pu*Ohm]", PADDR(Xg), PT_DESCRIPTION, "Synchronous generator grounding reactance in p.u.",
-			PT_double, "Max_Ef[pu*V]", PADDR(Max_Ef), PT_DESCRIPTION, "Synchronous generator maximum induced rotor voltage in p.u., e.g. 0.8",
-			PT_double, "Min_Ef[pu*V]", PADDR(Min_Ef), PT_DESCRIPTION, "Synchronous generator minimum induced rotor voltage in p.u., e.g. 0.8",
+			PT_double, "Rs[pu*Ohm]", PADDR(Rs), PT_DESCRIPTION, "COP: Synchronous generator primary stator resistance in p.u.",
+			PT_double, "Xs[pu*Ohm]", PADDR(Xs), PT_DESCRIPTION, "COP: Synchronous generator primary stator reactance in p.u.",
+			PT_double, "Rg[pu*Ohm]", PADDR(Rg), PT_DESCRIPTION, "COP: Synchronous generator grounding resistance in p.u.",
+			PT_double, "Xg[pu*Ohm]", PADDR(Xg), PT_DESCRIPTION, "COP: Synchronous generator grounding reactance in p.u.",
+			PT_double, "Max_Ef[pu*V]", PADDR(Max_Ef), PT_DESCRIPTION, "COP: Synchronous generator maximum induced rotor voltage in p.u., e.g. 0.8",
+			PT_double, "Min_Ef[pu*V]", PADDR(Min_Ef), PT_DESCRIPTION, "COP: Synchronous generator minimum induced rotor voltage in p.u., e.g. 0.8",
 
-			PT_double, "pf[pu]", PADDR(pf), PT_DESCRIPTION, "Desired power factor in CONSTANTP mode (can be modified over time)",
-			PT_double, "power_factor[pu]", PADDR(pf), PT_DESCRIPTION, "Desired power factor in CONSTANTP mode (can be modified over time)",
+			PT_double, "pf[pu]", PADDR(pf), PT_DESCRIPTION, "COP: Desired power factor in CONSTANTP mode (can be modified over time)",
+			PT_double, "power_factor[pu]", PADDR(pf), PT_DESCRIPTION, "COP: Desired power factor in CONSTANTP mode (can be modified over time)",
 			
-			PT_char1024, "power_curve_csv", PADDR(power_curve_csv), PT_DESCRIPTION, "Name of .csv file containing user defined power curve",
-			PT_bool, "power_curve_pu", PADDR(power_curve_pu), PT_DESCRIPTION, "Flag when set indicates that user provided power curve has power values in p.u. Defaults to false",
+			PT_char1024, "power_curve_csv", PADDR(power_curve_csv), PT_DESCRIPTION, "Power_Curve: Name of .csv file containing user defined power curve",
+			PT_bool, "power_curve_pu", PADDR(power_curve_pu), PT_DESCRIPTION, "Power_Curve: Flag when set indicates that user provided power curve has power values in p.u. Defaults to false",
 
 			PT_complex, "voltage_A[V]", PADDR(voltage_A), PT_DESCRIPTION, "Terminal voltage on phase A",
 			PT_complex, "voltage_B[V]", PADDR(voltage_B), PT_DESCRIPTION, "Terminal voltage on phase B",
@@ -130,15 +130,15 @@ windturb_dg::windturb_dg(MODULE *module)
 			PT_complex, "current_A[A]", PADDR(current_A), PT_DESCRIPTION, "Calculated terminal current on phase A",
 			PT_complex, "current_B[A]", PADDR(current_B), PT_DESCRIPTION, "Calculated terminal current on phase B",
 			PT_complex, "current_C[A]", PADDR(current_C), PT_DESCRIPTION, "Calculated terminal current on phase C",
-			PT_complex, "EfA[V]", PADDR(EfA), PT_DESCRIPTION, "Synchronous generator induced voltage on phase A",
-			PT_complex, "EfB[V]", PADDR(EfB), PT_DESCRIPTION, "Synchronous generator induced voltage on phase B",
-			PT_complex, "EfC[V]", PADDR(EfC), PT_DESCRIPTION, "Synchronous generator induced voltage on phase C",
-			PT_complex, "Vrotor_A[V]", PADDR(Vrotor_A), PT_DESCRIPTION, "Induction generator induced voltage on phase A in p.u.",//Induction Generator
-			PT_complex, "Vrotor_B[V]", PADDR(Vrotor_B), PT_DESCRIPTION, "Induction generator induced voltage on phase B in p.u.",
-			PT_complex, "Vrotor_C[V]", PADDR(Vrotor_C), PT_DESCRIPTION, "Induction generator induced voltage on phase C in p.u.",
-			PT_complex, "Irotor_A[V]", PADDR(Irotor_A), PT_DESCRIPTION, "Induction generator induced current on phase A in p.u.",
-			PT_complex, "Irotor_B[V]", PADDR(Irotor_B), PT_DESCRIPTION, "Induction generator induced current on phase B in p.u.",
-			PT_complex, "Irotor_C[V]", PADDR(Irotor_C), PT_DESCRIPTION, "Induction generator induced current on phase C in p.u.",
+			PT_complex, "EfA[V]", PADDR(EfA), PT_DESCRIPTION, "COP: Synchronous generator induced voltage on phase A",
+			PT_complex, "EfB[V]", PADDR(EfB), PT_DESCRIPTION, "COP: Synchronous generator induced voltage on phase B",
+			PT_complex, "EfC[V]", PADDR(EfC), PT_DESCRIPTION, "COP: Synchronous generator induced voltage on phase C",
+			PT_complex, "Vrotor_A[V]", PADDR(Vrotor_A), PT_DESCRIPTION, "COP: Induction generator induced voltage on phase A in p.u.",//Induction Generator
+			PT_complex, "Vrotor_B[V]", PADDR(Vrotor_B), PT_DESCRIPTION, "COP: Induction generator induced voltage on phase B in p.u.",
+			PT_complex, "Vrotor_C[V]", PADDR(Vrotor_C), PT_DESCRIPTION, "COP: Induction generator induced voltage on phase C in p.u.",
+			PT_complex, "Irotor_A[V]", PADDR(Irotor_A), PT_DESCRIPTION, "COP: Induction generator induced current on phase A in p.u.",
+			PT_complex, "Irotor_B[V]", PADDR(Irotor_B), PT_DESCRIPTION, "COP: Induction generator induced current on phase B in p.u.",
+			PT_complex, "Irotor_C[V]", PADDR(Irotor_C), PT_DESCRIPTION, "COP: Induction generator induced current on phase C in p.u.",
 
 			PT_set, "phases", PADDR(phases), PT_DESCRIPTION, "Specifies which phases to connect to - currently not supported and assumes three-phase connection",
 			PT_KEYWORD, "A",(set)PHASE_A,
@@ -300,157 +300,6 @@ int windturb_dg::init(OBJECT *parent)
 		
 	double ZB, SB, EB;
 	complex tst, tst2, tst3, tst4;
-	
-	for (int i=0;i < (sizeof (Generic_Power_Curve[0]) /sizeof (double));i++) {
-		Generic_Power_Curve[0][i] = -1;
-		Generic_Power_Curve[1][i] = -1;
-	}
-	
-	double Generic_Power_Curve_default[2][21] = {
-		{2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0, 25.0},
-		{0.0, 0.0084725, 0.026315, 0.049903, 0.083323, 0.12564, 0.17541, 0.23191, 0.30286, 0.38807, 0.49134, 0.58717, 0.66827, 0.75071, 0.82431, 0.89813, 0.95368, 1.0013, 1.0331, 1.0602, 1.0602}
-	};
-	
-	if (Turbine_implementation == POWER_CURVE){
-
-		if(strstr(power_curve_csv, ".csv")){                  //Todo: Fix enter csv bug!!!
-		
-			std::ifstream file(power_curve_csv);
-			
-			std::vector<std::vector<std::string>> csvData;
-
-			csvData = readCSV(file);
-			
-			int k=0;
-			int l=0;
-			for ( size_t i = 0; i < csvData.size(); i++ )
-			{
-				for ( size_t j = 0; j < csvData[i].size(); j++ ){ 
-					//std::cout << csvData[i][j] << ' ';
-					
-					if (j == 0){
-						if (k < (sizeof(Generic_Power_Curve[0])/sizeof(double))){
-							try{
-								Generic_Power_Curve[0][k] = std::stod(csvData[i][j]);
-							}
-							catch(...){
-								gl_warning("Invalid entry in .csv file - Please check .csv file");
-							}
-						} else {
-							GL_THROW ("Invalid data format - More than %lu data points in wind speed and power output fields, Provide file with upto %lu points", (sizeof(Generic_Power_Curve[0])/sizeof(double)), (sizeof(Generic_Power_Curve[0])/sizeof(double)));
-						}
-						k++;
-					} else if (j == 1){
-						if (l < (sizeof(Generic_Power_Curve[0])/sizeof(double))){
-							try{
-								Generic_Power_Curve[1][l] = std::stod(csvData[i][j]);
-							} 
-							catch(...){
-								gl_warning("Invalid entry in .csv file - Please check .csv file");
-							}
-						} else {
-							GL_THROW ("Invalid data format - More than %lu data points in wind speed and power output fields, Provide file with upto %lu points", (sizeof(Generic_Power_Curve[0])/sizeof(double)), (sizeof(Generic_Power_Curve[0])/sizeof(double)));
-						}
-						l++;
-						
-					} else {
-						GL_THROW ("Invalid data format - More than 2 columns in .csv file");
-					}
-				}
-				//std::cout << std::endl;
-			}
-		
-		// Read the file ----------
-/* 			FILE* fp = fopen(power_curve_csv, "rb");
-			if (fp == NULL) return 0;
-			fseek(fp, 0, SEEK_END);
-			long size = ftell(fp);
-			fseek(fp, 0, SEEK_SET);
-			char *pData = new char[size + 1];
-			fread(pData, sizeof(char), size, fp);
-			fclose(fp);
-			// Read the file ----------
-
-			// Parse the file content ----------
-			char* pch;
-			pch = strtok (pData, ",");
-			
-			int i=0;
-			int k=0;
-			int l=0;
-			while (pch != NULL)
-			{
-				if ((i % 2) == 0){
-					if (k < (sizeof(Generic_Power_Curve[0])/sizeof(double))){
-						try{
-							Generic_Power_Curve[0][k] = std::stod(pch);
-						}
-						catch(...){
-							printf("Invalid entry in csv - Please check csv file");
-						}
-					} else {
-						GL_THROW ("Invalid data format - More than %lu data points in wind speed and power output fields, Provide file with upto %lu points", (sizeof(Generic_Power_Curve[0])/sizeof(double)), (sizeof(Generic_Power_Curve[0])/sizeof(double)));
-					}
-					k++;
-				} else {
-					if (l < (sizeof(Generic_Power_Curve[0])/sizeof(double))){
-						try{
-							Generic_Power_Curve[1][l] = std::stod(pch);
-						} 
-						catch(...){
-							printf("Invalid entry in csv - Please check csv file");
-						}
-					} else {
-						GL_THROW ("Invalid data format - More than %lu data points in wind speed and power output fields, Provide file with upto %lu points", (sizeof(Generic_Power_Curve[0])/sizeof(double)), (sizeof(Generic_Power_Curve[0])/sizeof(double)));
-					}
-					l++;
-				}
-				i++;
-				pch = strtok (NULL, ",\n");
-				
-			}
-			delete[] pData; */
-			
-			//if (k != l){
-			//	GL_THROW("Invalid data format - unequal number of data points in wind speed and power output fields"); //todo: not detecting all cases
-			//} else 
-			if (k < 3){
-				GL_THROW("Invalid data format - less than 3 data points in wind speed and power output fields. Provide atleast 3 data points");
-			}
-		} else {
-			if (strcmp(power_curve_csv,"")==0) {
-				gl_warning("No user defined power curve provided, resorting to default power curve");
-			} else{
-				gl_warning("windturb_dg: unrecognized filetype, resorting to default power curve");
-			}
-			
-
-			for (int i=0; i<sizeof(Generic_Power_Curve_default[0])/sizeof(double); i++){
-				Generic_Power_Curve[0][i] = Generic_Power_Curve_default[0][i];
-				Generic_Power_Curve[1][i] = Generic_Power_Curve_default[1][i];
-			}
-		}
-		
-		int valid_entries = 0;
-		for (int i=0;i < (sizeof (Generic_Power_Curve[0]) /sizeof (double));i++) {
-			if (Generic_Power_Curve[0][i] != -1){
-				valid_entries ++;
-			}
-			if (((Generic_Power_Curve[0][i] != -1) && (Generic_Power_Curve[1][i] == -1)) || ((Generic_Power_Curve[0][i] == -1) && (Generic_Power_Curve[1][i] != -1))){
-				GL_THROW("Invalid .csv file data format - unequal number of data points in wind speed and power output fields");
-			}
-		}		
-		number_of_points = valid_entries;
-				
-		//int i;
-		//for (i=0;i < (sizeof (Generic_Power_Curve[0]) /sizeof (double));i++) {
-		//	printf("%f\n",Generic_Power_Curve[0][i]);
-		//	printf("%f\n",Generic_Power_Curve[1][i]);
-		//}
-		//printf("%i\n",number_of_points);
-
-	}
-	
 
 	switch (Turbine_Model)	{
 		case GENERIC_IND_LARGE:
@@ -469,7 +318,7 @@ int windturb_dg::init(OBJECT *parent)
 			Cp_max = 0.302;			//rotor specifications for power curve
 			ws_maxcp = 7;			
 			Cp_rated = Cp_max-.05;	
-			ws_rated = 12.5;		
+			ws_rated = 12.5;
 			if (Turbine_Model == GENERIC_IND_LARGE) {
 				Gen_type = INDUCTION;
 				Rst = 0.12;					
@@ -485,6 +334,10 @@ int windturb_dg::init(OBJECT *parent)
 				Xs = 0.200;
 				Rg = 0.000;
 				Xg = 0.000;
+			}
+			if (Turbine_implementation == POWER_CURVE){
+				Turbine_implementation = COEFF_OF_PERFORMANCE;
+				gl_warning("windturb_dg (id:%d, name:%s): Cannot use Power Curve implementation with built-in legacy turbines. Forced coefficient of performance based implementation", obj->id,obj->name);
 			}
 			break;
 		case GENERIC_IND_MID:
@@ -520,6 +373,10 @@ int windturb_dg::init(OBJECT *parent)
 				Rg = 0.000;
 				Xg = 0.000;
 			}
+			if (Turbine_implementation == POWER_CURVE){
+				Turbine_implementation = COEFF_OF_PERFORMANCE;
+				gl_warning("windturb_dg (id:%d, name:%s): Cannot use Power Curve implementation with built-in legacy turbines. Forced coefficient of performance based implementation", obj->id,obj->name);
+			}
 			break;
 		case GENERIC_IND_SMALL:					
 		case GENERIC_SYNCH_SMALL:	//Creates generic 5 kW wind turbine, Fortis Montana 5 kW wind turbine
@@ -554,6 +411,10 @@ int windturb_dg::init(OBJECT *parent)
 				Rg = 0.000;
 				Xg = 0.000;
 			}
+			if (Turbine_implementation == POWER_CURVE){
+				Turbine_implementation = COEFF_OF_PERFORMANCE;
+				gl_warning("windturb_dg (id:%d, name:%s): Cannot use Power Curve implementation with built-in legacy turbines. Forced coefficient of performance based implementation", obj->id,obj->name);
+			}
 			break;
 		case VESTAS_V82:	//Include manufacturer's data - cases can be added to call other wind turbines
 			turbine_height = 78;
@@ -572,6 +433,10 @@ int windturb_dg::init(OBJECT *parent)
 			Xs = 0.200;
 			Rg = 0.000;
 			Xg = 0.000;
+			if (Turbine_implementation == POWER_CURVE){
+				Turbine_implementation = COEFF_OF_PERFORMANCE;
+				gl_warning("windturb_dg (id:%d, name:%s): Cannot use Power Curve implementation with built-in legacy turbines. Forced coefficient of performance based implementation", obj->id,obj->name);
+			}
 			break;
 		case GE_25MW:
 			turbine_height = 100;
@@ -594,6 +459,10 @@ int windturb_dg::init(OBJECT *parent)
 			Xs = 0.200;
 			Rg = 0.000;
 			Xg = 0.000;
+			if (Turbine_implementation == POWER_CURVE){
+				Turbine_implementation = COEFF_OF_PERFORMANCE;
+				gl_warning("windturb_dg (id:%d, name:%s): Cannot use Power Curve implementation with built-in legacy turbines. Forced coefficient of performance based implementation", obj->id,obj->name);
+			}
 			break;
 		case BERGEY_10kW:
 			turbine_height = 24;
@@ -616,6 +485,10 @@ int windturb_dg::init(OBJECT *parent)
 			Xs = 0.200;
 			Rg = 0.000;
 			Xg = 0.000;
+			if (Turbine_implementation == POWER_CURVE){
+				Turbine_implementation = COEFF_OF_PERFORMANCE;
+				gl_warning("windturb_dg (id:%d, name:%s): Cannot use Power Curve implementation with built-in legacy turbines. Forced coefficient of performance based implementation", obj->id,obj->name);
+			}
 			break;
 		case USER_DEFINED:
 
@@ -705,7 +578,7 @@ int windturb_dg::init(OBJECT *parent)
 				if (turbine_height <= 0){
 					GL_THROW ("turbine height cannot have a negative or zero value.");
 				} else {
-					gl_warning("Attempting to approximate Turbine capacity from the height provided. May be not accurate");
+					gl_warning("windturb_dg (id:%d, name:%s): Attempting to approximate Turbine capacity from the height provided. May be not accurate", obj->id,obj->name);
 					if ((turbine_height > 0) && (turbine_height < 25)){
 						Rated_VA = 2400;
 					} else if ((turbine_height >= 25) && (turbine_height < 45)){
@@ -715,19 +588,17 @@ int windturb_dg::init(OBJECT *parent)
 					} else if (turbine_height >= 105){
 						Rated_VA = 5000000;
 						turbine_height = 105;
-						gl_warning("Specified turbine height greater than the maximum allowable value. Limited to : %f m", turbine_height);
+						gl_warning("windturb_dg (id:%d, name:%s): Specified turbine height greater than the maximum allowable value. Limited to : %.1f m", obj->id,obj->name, turbine_height);
 					} else {
 						GL_THROW("windturb_dg Invalid input %f",turbine_height);
 					}
-					gl_warning("Translated turbine height to approximate capacity of: %f VA - May not be accurate", Rated_VA);
+					gl_warning("windturb_dg (id:%d, name:%s): Translated turbine height to approximate capacity of: %.1f VA - May not be accurate", obj->id,obj->name, Rated_VA);
 				}
-			}
-			
-			if ((turbine_height == -9999) && (Rated_VA != -9999)){
+			} else if ((turbine_height == -9999) && (Rated_VA != -9999)){
 				if (Rated_VA <= 0){
 					GL_THROW ("Turbine capacity cannot have a negative or zero value.");
 				} else{
-					gl_warning("Attempting to approximate Turbine height from the capacity provided. May be not accurate");
+					gl_warning("windturb_dg (id:%d, name:%s): Attempting to approximate Turbine height from the capacity provided. May be not accurate", obj->id,obj->name);
 					if ((Rated_VA > 0) && (Rated_VA < 4500)){
 						turbine_height = 21;
 					} else if ((Rated_VA >= 4500) && (Rated_VA < 300000)){
@@ -737,17 +608,40 @@ int windturb_dg::init(OBJECT *parent)
 					} else if (Rated_VA >= 5000000){
 						Rated_VA = 5000000;
 						turbine_height = 105;
-						gl_warning("Specified turbine capacity greater than the maximum allowable value. Limited to : %f VA", Rated_VA);
+						gl_warning("windturb_dg (id:%d, name:%s): Specified turbine capacity greater than the maximum allowable value. Limited to : %.1f VA", obj->id,obj->name, Rated_VA);
 					} else {
 						GL_THROW("windturb_dg Invalid input %f",Rated_VA);
 					}
-					gl_warning("Translated turbine capacity to approximate height of: %f m - May not be accurate", turbine_height);
+					gl_warning("windturb_dg (id:%d, name:%s): Translated turbine capacity to approximate height of: %.1f m - May not be accurate", obj->id,obj->name, turbine_height);
 				}
-			}
-			
-			if ((turbine_height == -9999) && (Rated_VA == -9999)) {
+			} else if ((turbine_height == -9999) && (Rated_VA == -9999)) {
 				turbine_height = 37;    //Setting to defaults i.e. 100 kW turbine capacity and height
 				Rated_VA = 100000;
+				gl_warning("windturb_dg (id:%d, name:%s): Turbine parameters not specified. Setting turbine capacity to: %.1f VA and turbine height to: %.1f m - (Default parameters)", obj->id,obj->name, Rated_VA, turbine_height);
+			} else {
+				if (turbine_height <= 0){
+					GL_THROW ("turbine height cannot have a negative or zero value.");
+				} else if (Rated_VA <= 0){
+					GL_THROW ("Turbine capacity cannot have a negative or zero value.");
+				} else {
+					if ((Rated_VA > 0) && (Rated_VA < 4500)){
+						if ((turbine_height < 4) || (turbine_height > 41)){
+							gl_warning("windturb_dg (id:%d, name:%s): Potential mismatch of Turbine parameters i.e. Turbine capacity: %.1f VA and turbine height: %.1f m", obj->id,obj->name, Rated_VA, turbine_height);
+						}
+					} else if ((Rated_VA >= 4500) && (Rated_VA < 300000)){
+						if ((turbine_height < 12) || (turbine_height > 51)){
+							gl_warning("windturb_dg (id:%d, name:%s): Potential mismatch of Turbine parameters i.e. Turbine capacity: %.1f VA and turbine height: %.1f m", obj->id,obj->name, Rated_VA, turbine_height);
+						}
+					} else if ((Rated_VA >= 300000) && (Rated_VA < 5000000)){
+						//lower 20
+						//upper 11
+						double temp_height;
+						temp_height = 24.8885*log(Rated_VA/1000) - 104.402;
+						if ((turbine_height < (temp_height - 20)) || (turbine_height > (temp_height + 11))){
+							gl_warning("windturb_dg (id:%d, name:%s): Potential mismatch of Turbine parameters i.e. Turbine capacity: %.1f VA and turbine height: %.1f m", obj->id,obj->name, Rated_VA, turbine_height);
+						}
+					}
+				}
 			}
 			break;
 			
@@ -758,8 +652,102 @@ int windturb_dg::init(OBJECT *parent)
 			*/
 	}
 	
-	//printf("Turbine Capacity %f\n", Rated_VA);
-	//printf("Turbine Height %f\n", turbine_height);
+	
+	for (int i=0;i < (sizeof (Generic_Power_Curve[0]) /sizeof (double));i++) {
+		Generic_Power_Curve[0][i] = -1;
+		Generic_Power_Curve[1][i] = -1;
+	}
+	
+	double Generic_Power_Curve_default[2][21] = {
+		{2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0, 25.0},
+		{0.0, 0.0084725, 0.026315, 0.049903, 0.083323, 0.12564, 0.17541, 0.23191, 0.30286, 0.38807, 0.49134, 0.58717, 0.66827, 0.75071, 0.82431, 0.89813, 0.95368, 1.0013, 1.0331, 1.0602, 1.0602}
+	};
+	
+	if (Turbine_implementation == POWER_CURVE){
+
+		if(strstr(power_curve_csv, ".csv")){
+		
+			std::ifstream file(power_curve_csv);
+			
+			std::vector<std::vector<std::string>> csvData;
+
+			csvData = readCSV(file);
+			
+			int k=0;
+			int l=0;
+			for ( size_t i = 0; i < csvData.size(); i++ )
+			{
+				for ( size_t j = 0; j < csvData[i].size(); j++ ){ 
+					//std::cout << csvData[i][j] << ' ';
+					
+					if (j == 0){
+						if (k < (sizeof(Generic_Power_Curve[0])/sizeof(double))){
+							try{
+								Generic_Power_Curve[0][k] = std::stod(csvData[i][j]);
+							}
+							catch(...){
+								gl_warning("windturb_dg (id:%d, name:%s): Invalid entry in .csv file - Please check .csv file", obj->id,obj->name);
+							}
+						} else {
+							GL_THROW ("Invalid data format - More than %lu data points in wind speed and power output fields, Provide file with upto %lu points", (sizeof(Generic_Power_Curve[0])/sizeof(double)), (sizeof(Generic_Power_Curve[0])/sizeof(double)));
+						}
+						k++;
+					} else if (j == 1){
+						if (l < (sizeof(Generic_Power_Curve[0])/sizeof(double))){
+							try{
+								Generic_Power_Curve[1][l] = std::stod(csvData[i][j]);
+							} 
+							catch(...){
+								gl_warning("windturb_dg (id:%d, name:%s): Invalid entry in .csv file - Please check .csv file", obj->id,obj->name);
+							}
+						} else {
+							GL_THROW ("Invalid data format - More than %lu data points in wind speed and power output fields, Provide file with upto %lu points", (sizeof(Generic_Power_Curve[0])/sizeof(double)), (sizeof(Generic_Power_Curve[0])/sizeof(double)));
+						}
+						l++;
+						
+					} else {
+						GL_THROW ("Invalid data format - More than 2 columns in .csv file");
+					}
+				}
+				//std::cout << std::endl;
+			}
+			if (k < 3){
+				GL_THROW("Invalid data format - less than 3 data points in wind speed and power output fields. Provide atleast 3 data points");
+			}
+		} else {
+			if (strcmp(power_curve_csv,"")==0) {
+				gl_warning("windturb_dg (id:%d, name:%s): No user defined power curve provided, resorting to default power curve", obj->id,obj->name);
+			} else{
+				gl_warning("windturb_dg (id:%d, name:%s): windturb_dg: unrecognized filetype, resorting to default power curve", obj->id,obj->name);
+			}
+			
+
+			for (int i=0; i<sizeof(Generic_Power_Curve_default[0])/sizeof(double); i++){
+				Generic_Power_Curve[0][i] = Generic_Power_Curve_default[0][i];
+				Generic_Power_Curve[1][i] = Generic_Power_Curve_default[1][i];
+			}
+		}
+		
+		int valid_entries = 0;
+		for (int i=0;i < (sizeof (Generic_Power_Curve[0]) /sizeof (double));i++) {
+			if (Generic_Power_Curve[0][i] != -1){
+				valid_entries ++;
+			}
+			if (((Generic_Power_Curve[0][i] != -1) && (Generic_Power_Curve[1][i] == -1)) || ((Generic_Power_Curve[0][i] == -1) && (Generic_Power_Curve[1][i] != -1))){
+				GL_THROW("Invalid .csv file data format - unequal number of data points in wind speed and power output fields");
+			}
+		}		
+		number_of_points = valid_entries;
+				
+		//int i;
+		//for (i=0;i < (sizeof (Generic_Power_Curve[0]) /sizeof (double));i++) {
+		//	printf("%f\n",Generic_Power_Curve[0][i]);
+		//	printf("%f\n",Generic_Power_Curve[1][i]);
+		//}
+		//printf("%i\n",number_of_points);
+	}
+	
+
 
 	//Remove the pointer
 	delete temp_property_pointer;
