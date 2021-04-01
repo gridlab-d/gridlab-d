@@ -3,6 +3,8 @@
 //Two SWING buses with players to drive voltage magnitudes/phases together
 //Used to test the sync_check object - pushes voltage and frequency on either side of the connecting
 //switch in/out of bands.  sync_check will close the switch, when appropriate (and a separate player reopens it).
+//
+//Also a secondary test for the deltamode module order implementation - will fail if the order isn't fixed internally
 
 //#set pauseatexit=1
 #set deltamode_timestep=1000000000
@@ -16,13 +18,9 @@ clock {
 	stoptime '2000-01-01 0:00:20';
 }
 
-module assert;
-module tape;
-module reliability {
-	report_event_log false;
-	enable_subsecond_models true;
-	deltamode_timestep 100.0 ms;
-}
+//In this line-up, powerflow should be last, not first
+//Should get appropriately moved by GLD core, otherwise the autotest fails
+//Use #set deltamode_preferred_module_order=false to make it fail (to show the behavior)
 module powerflow {
 	line_capacitance false;
 	solver_method NR;
@@ -33,6 +31,18 @@ module powerflow {
 	deltamode_timestep 1.0 ms;
 	all_frequency_measure_default SIMPLE;
 }
+
+//This should be second to last (right before powerflow)
+module reliability {
+	report_event_log false;
+	enable_subsecond_models true;
+	deltamode_timestep 100.0 ms;
+}
+
+module assert;
+
+//This one should be first
+module tape;
 
 object overhead_line_conductor {
 	name olc100;

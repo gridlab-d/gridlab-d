@@ -389,8 +389,7 @@ int diesel_dg::isa(char *classname)
 /* Object creation is called once for each object that is created by the core */
 int diesel_dg::create(void) 
 {
-////Initialize tracking variables
-
+	//Initialize tracking variables
 	//End of synchronous generator inputs
 	Rated_V_LL = 0.0;
 	Rated_V_LN = 0.0;

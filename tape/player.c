@@ -105,7 +105,7 @@ PROPERTY *player_link_properties(struct player *player, OBJECT *obj, char *prope
 		if (prop!=NULL && target!=NULL)
 		{
 			if(unit != NULL && target->unit == NULL){
-				gl_error("sync_player:%d: property '%s' is unitless, ignoring unit conversion", obj->id, item);
+				gl_warning("sync_player:%d: property '%s' is unitless, ignoring unit conversion", obj->id, item);
 			}
 			else if(unit != NULL && 0 == gl_convert_ex(target->unit, unit, &scale))
 			{
@@ -134,23 +134,34 @@ PROPERTY *player_link_properties(struct player *player, OBJECT *obj, char *prope
 	return first;
 }
 
-int player_write_properties(struct player *my, OBJECT *obj, PROPERTY *prop, const char *buffer)
+int player_write_properties(struct player *my, OBJECT *thisplyr, OBJECT *obj, PROPERTY *prop, const char *buffer)
 {
 	int count=0;
+	int return_value;
 	const char delim[] = ",\n\r\t";
 	char1024 bufcpy;
 	memcpy(bufcpy, buffer, sizeof(char1024));
 	char *next;
 	char *token = strtok_s(bufcpy, delim, &next);
 	PROPERTY *p=NULL;
+
 	for (p=prop; p!=NULL; p=p->next)
 	{
 		if (token == NULL)
 		{
-			gl_error("sync_player:%d: not enough values on line: %s", obj->id, buffer);
-			return count;
+			gl_error("sync_player:%d: not enough values on line: %s", thisplyr->id, buffer);
+			return -1;
 		}		
-		gl_set_value(obj,GETADDR(obj,p),token,p);
+		return_value = gl_set_value(obj,GETADDR(obj,p),token,p);
+
+		if (return_value == 0)
+		{
+			gl_error("sync_player:%d: %s - failure to set or convert property while reading line: %s", thisplyr->id, (thisplyr->name?thisplyr->name:"Unnamed"),buffer);
+			/*  TROUBLESHOOT
+			While attempting to set a property value from a player, an error occurred.  See the console for more information.
+			*/
+			return -1;
+		}
 		count++;
 		token = strtok_s(NULL, delim, &next);
 	}
@@ -322,7 +333,7 @@ Retry:
 	if (result[0]=='#' || result[0]=='\n') /* ignore comments and blank lines */
 		goto Retry;
 
-	if(sscanf(result, "%32[^,],%1024[^\n\r;]", tbuf, valbuf) == 2){
+	if(sscanf(result, "%64[^,],%1024[^\n\r;]", tbuf, valbuf) == 2){
 		trim(tbuf, timebuf);
 		trim(valbuf, value);
 		if (sscanf(timebuf,"%d-%d-%d %d:%d:%lf %4s",&Y,&m,&d,&H,&M,&S, tz)==7){
@@ -478,10 +489,12 @@ Retry:
 		}
 		else
 		{
-			gl_warning("player was unable to parse timestamp \'%s\'", result);
+			gl_error("player was unable to parse timestamp \'%s\'", result);
+			return TS_INVALID;
 		}
 	} else {
-		gl_warning("player was unable to split input string \'%s\'", result);
+		gl_error("player was unable to split input string \'%s\'", result);
+		return TS_INVALID;
 	}
 
 Done:
@@ -490,6 +503,7 @@ Done:
 
 EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 {
+	int return_val;
 	struct player *my = OBJECTDATA(obj,struct player);
 	TIMESTAMP t1 = (TS_OPEN == my->status) ? my->next.ts : TS_NEVER;
 	TIMESTAMP temp_t;
@@ -503,10 +517,17 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		if(player_open(obj) == 0)
 		{
 			gl_error("sync_player: Unable to open player file '%s' for object '%s'", my->file, obj->name?obj->name:"(anon)");
+			return TS_INVALID;
 		}
 		else
 		{
 			t1 = player_read(obj);
+
+			/* Check it */
+			if (t1 == TS_INVALID)
+			{
+				return TS_INVALID;
+			}
 		}
 	}
 	while (my->status==TS_OPEN && t1<=t0
@@ -517,11 +538,17 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		if (my->target==NULL){
 			gl_error("sync_player: Unable to find property \"%s\" in object %s", my->property, obj->name?obj->name:"(anon)");
 			my->status = TS_ERROR;
+			return TS_INVALID;
 		}
 		if (my->target!=NULL)
 		{
 			OBJECT *target = obj->parent ? obj->parent : obj; /* target myself if no parent */
-			player_write_properties(my, target, my->target, my->next.value);
+			return_val = player_write_properties(my, obj, target, my->target, my->next.value);
+
+			if (return_val < 0)	//See if the above came back with an error state
+			{
+				return TS_INVALID;
+			}
 		}
 		
 		/* Copy the current value into our "tracking" variable */
@@ -530,13 +557,24 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		memcpy(my->delta_track.value,my->next.value,sizeof(char1024));
 
 		t1 = player_read(obj);
+
+		/* Check the result */
+		if (t1 == TS_INVALID)
+		{
+			return TS_INVALID;
+		}
 	}
 
 	/* Apply an intermediate value, if necessary - mainly for "DELTA players in non-delta situations" */
 	if ((my->target!=NULL) && (my->delta_track.ts<t0) && (my->delta_track.ns!=0))
 	{
 		OBJECT *target = obj->parent ? obj->parent : obj; /* target myself if no parent */
-		player_write_properties(my, target, my->target, my->delta_track.value);
+		return_val = player_write_properties(my, obj, target, my->target, my->delta_track.value);
+
+		if (return_val < 0)	//See if the above came back with an error state
+		{
+			return TS_INVALID;
+		}
 	}
 
 	/* Delta-mode catch - if we're not explicitly in delta mode and a nano-second values pops up, try to advance past it */
@@ -551,6 +589,7 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 		if (my->target==NULL){
 			gl_error("sync_player: Unable to find property \"%s\" in object %s", my->property, obj->name?obj->name:"(anon)");
 			my->status = TS_ERROR;
+			return TS_INVALID;
 		}
 
 		/* Advance to a zero */
@@ -561,7 +600,12 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			if ((my->target!=NULL) && (my->next.ts<t0))
 			{
 				OBJECT *target = obj->parent ? obj->parent : obj; /* target myself if no parent */
-				player_write_properties(my, target, my->target, my->next.value);
+				return_val = player_write_properties(my, obj, target, my->target, my->next.value);
+
+				if (return_val < 0)	//See if the above came back with an error state
+				{
+					return TS_INVALID;
+				}
 			}
 
 			/* Copy the value into the tracking variable */
@@ -571,6 +615,12 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 			/* Perform the update */
 			temp_t = player_read(obj);
+
+			/* Check for error */
+			if (temp_t == TS_INVALID)
+			{
+				return TS_INVALID;
+			}
 		}
 
 		/* Apply the update */
@@ -588,7 +638,12 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 				if ((my->target!=NULL) && (my->next.ts<t0))
 				{
 					OBJECT *target = obj->parent ? obj->parent : obj; /* target myself if no parent */
-					player_write_properties(my, target, my->target, my->next.value);			
+					return_val = player_write_properties(my, obj, target, my->target, my->next.value);			
+
+					if (return_val < 0)	//See if the above came back with an error state
+					{
+						return TS_INVALID;
+					}
 				}
 
 				/* Copy the value into the tracking variable */
@@ -598,6 +653,12 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 				/* Perform the update */
 				temp_t = player_read(obj);
+
+				/* Check for errors */
+				if (temp_t == TS_INVALID)
+				{
+					return TS_INVALID;
+				}
 			}
 
 			/* Do the adjustment of return */
@@ -622,6 +683,12 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 
 			/* Perform the update */
 			temp_t = player_read(obj);
+
+			/* Check for error */
+			if (temp_t == TS_INVALID)
+			{
+				return TS_INVALID;
+			}
 		}
 	}
 

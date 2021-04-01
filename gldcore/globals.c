@@ -236,6 +236,7 @@ static struct s_varmap {
 	{"deltamode_iteration_limit", PT_int32, &global_deltamode_iteration_limit, PA_PUBLIC, "iteration limit for each delta timestep (object and interupdate)"},
 	{"deltamode_forced_extra_timesteps",PT_int32, &global_deltamode_forced_extra_timesteps, PA_PUBLIC, "forced extra deltamode timesteps before returning to event-driven mode"},
 	{"deltamode_forced_always",PT_bool, &global_deltamode_forced_always, PA_PUBLIC, "forced deltamode for debugging -- prevents event-driven mode"},
+	{"deltamode_preferred_module_order",PT_bool, &global_deltamode_force_preferred_order, PA_PUBLIC, "sets execution order for deltamode, as opposed to GLM order"},
 	{"run_powerworld", PT_bool, &global_run_powerworld, PA_PUBLIC, "boolean that that says your system is set up correctly to run with PowerWorld"},
 	{"bigranks", PT_bool, &global_bigranks, PA_PUBLIC, "enable fast/blind set_rank operations"},
 	{"exename", PT_char1024, &global_execname, PA_REFERENCE, "argv[0] value"},

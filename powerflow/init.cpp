@@ -43,6 +43,7 @@
 #include "vfd.h"
 #include "jsondump.h"
 #include "series_compensator.h"
+#include "performance_motor.h"
 #include "sync_check.h"
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
@@ -109,6 +110,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		PT_KEYWORD,"PLL", FMM_PLL,
 		NULL);
 	gl_global_create("powerflow::low_voltage_impedance_level",PT_double,&impedance_conversion_low_pu,PT_DESCRIPTION,"Lower limit of voltage (in per-unit) at which all load types are converted to impedance for in-rush calculations",NULL);
+	gl_global_create("powerflow::enable_impedance_conversion",PT_bool,&enable_impedance_conversion,PT_DESCRIPTION,"Flag to enable conversion of loads to impedance-based when voltage limit exceeded - non-in-rush capability",NULL);
 	gl_global_create("powerflow::enable_mesh_fault_current",PT_bool,&enable_mesh_fault_current,PT_DESCRIPTION,"Flag to enable mesh-based fault current calculations",NULL);
 	gl_global_create("powerflow::market_price_name",PT_char1024,&market_price_name,PT_DESCRIPTION,"Market current price published variable name",NULL);
 
@@ -158,6 +160,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new vfd(module);
 	new jsondump(module);
 	new series_compensator(module);
+	new performance_motor(module);
 	new sync_check(module);
 
 	/* always return the first class registered */

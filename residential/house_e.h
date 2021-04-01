@@ -402,6 +402,7 @@ public:
 
 private:
 	TIMESTAMP simulation_beginning_time;
+	double simulation_beginning_time_dbl;
 	void set_thermal_integrity();
 	void set_window_shgc();
 	void set_window_Rvalue();
@@ -421,6 +422,10 @@ private:
 	bool proper_meter_parent;		//Flag to see if powerflow interactions should occur
 	bool proper_climate_found;		//Flag to see if climate interactions should occur
 	bool commercial_load_parent;    // proper_meter_parent is true, but the parent is actually a load
+
+	//Variables for fault_impedance method
+	bool powerflow_impedance_conversion_enabled;	//Boolean for powerflow - see if "convert all to impedance" is active
+	double powerflow_impedance_conversion_level;	//Threshold from powerflow where impedance conversion should occur
 
 	//Pointers for powerflow properties
 	gld_property *pCircuit_V[3];					///< pointer to the three voltages on three lines
@@ -468,6 +473,10 @@ private:
 	double value_Rhout;			//< Value holder for relative humidity
 	double value_Solar[9];		//< Value holder for solar irradiance
 
+	bool external_motor_attached;	//< Flag for external powerflow motor being used - removes that panel contributions
+
+	void circuit_voltage_factor_update(void);	///<Functionalized version of the voltage_factor update, so can be called in deltamode
+	void powerflow_accumulator_remover(void);	///<Functioanlized item that removes current accumulator values from powerflow (mostly for XML stuff)
 	//Circuit pointer for HVAC - used for breaker checks
 	CIRCUIT *pHVAC_EnduseLoad;
 
@@ -483,7 +492,7 @@ public:
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync_billing(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync_thermostat(TIMESTAMP t0, TIMESTAMP t1);
-	TIMESTAMP sync_panel(TIMESTAMP t0, TIMESTAMP t1);
+	double sync_panel(double t0_dbl, double t1_dbl);
 	TIMESTAMP sync_enduses(TIMESTAMP t0, TIMESTAMP t1);
 	void update_system(double dt=0);
 	void update_model(double dt=0);

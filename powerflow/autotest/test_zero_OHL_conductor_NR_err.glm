@@ -1,0 +1,46 @@
+//Zero conductor tests
+//Overhead line conductor
+
+clock {
+	timezone EST+5EDT;
+	starttime '2000-01-01 0:00:00';
+	stoptime '2000-01-01 0:00:01';
+}
+
+module powerflow {
+	solver_method NR;
+}
+
+object overhead_line_conductor {
+	name olc309;	//1/0 ACSR
+	geometric_mean_radius 0.004460;
+	resistance 0.0;		//Should error
+	diameter 0.398;
+}
+
+object underground_line_conductor {
+	name ulc312;	//1/0 AA, CN
+	outer_diameter 1.06;
+	conductor_gmr 0.0111;
+	conductor_diameter 0.368;
+	conductor_resistance 0.97;
+	neutral_gmr 0.00208;
+	neutral_resistance 14.8722;
+	neutral_diameter 0.0640837;
+	neutral_strands 16.0;
+}
+
+//Triplex configuration - stolen from another file
+object triplex_line_conductor {     
+	name F2407-4/0_AA_triplex;     
+	resistance 0.484;
+	geometric_mean_radius 0.0158;     
+	rating.summer.continuous 299;     
+}       
+
+object node {
+	name test_node;
+	phases ABCN;
+	bustype SWING;
+	nominal_voltage 120.0;
+}
