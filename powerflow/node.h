@@ -298,7 +298,6 @@ public:
 	friend class load;			// Needs access to deltamode_inclusive
 	friend class capacitor;		// Needs access to deltamode stuff
 	friend class fuse;			// needs access to current_inj
-	friend class frequency_gen;	// needs access to current_inj
 	friend class motor;	// needs access to curr_state
 	friend class performance_motor;	//needs access to curr_state
 

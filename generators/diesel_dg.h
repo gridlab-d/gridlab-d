@@ -217,11 +217,6 @@ private:
 protected:
 	/* TODO: put unpublished but inherited variables */
 public:
-	/* TODO: Deprecated properties to be deleted on next version */
-	double power_factor;
-	set phases;	/**< device phases (see PHASE codes) */
-	//******** END DEPRECATED **************//
-	
 	/* TODO: put published variables here */
 	enum {DYNAMIC=1, NON_DYN_CONSTANT_PQ};
 	enumeration Gen_type;
