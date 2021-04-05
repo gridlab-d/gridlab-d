@@ -25,13 +25,13 @@ module powerflow {
 //#set savefile="test_my_turbine_${PF}.xml"
 
 object climate {
-    tmyfile "../Standard_Weather.csv";
+    tmyfile "Standard_Weather.csv";
     reader csvreader;
 };
 
 object csv_reader {
 	name csvreader;
-	filename "../Standard_Weather.csv";
+	filename "Standard_Weather.csv";
 }
 
 object overhead_line_conductor:100 {
@@ -102,16 +102,16 @@ object transformer:23 {
 	to node:3;
 	configuration transformer_configuration:400;
 	name transformer23;
-	object double_assert {
-		object player {
-			property value;
-			file ../windpower_assert.player;
-		};
-		target power_out_real;
-		// Solutions were determined from FBS - represents
-		//  less than a 0.1% difference between the answers
-		within 5000;
-	};
+	//object double_assert {
+	//	object player {
+	//		property value;
+	//		file windpower_assert.player;
+	//	};
+	//	target power_out_real;
+	//	// Solutions were determined from FBS - represents
+	//	//  less than a 0.1% difference between the answers
+	//	within 5;
+	//};
 	object recorder {
 		property power_out_real;
 		interval 900;
@@ -175,10 +175,12 @@ object windturb_dg {
 	parent my_meter1;
 	phases ABCN;
 	name windturb1;
-	Gen_status ONLINE;
-	Gen_type SYNCHRONOUS;
-	Gen_mode CONSTANTP;
+	//Gen_status ONLINE;
+	//Gen_type SYNCHRONOUS;
+	//Gen_mode CONSTANTP;
 	Turbine_Model VESTAS_V82;
+	Turbine_implementation COEFF_OF_PERFORMANCE;
+	//power_curve_csv "WT_pow_curve.csv";
 	object multi_recorder {
 		file test_wind_power_${PF}1.csv;
 		interval 900;
@@ -214,13 +216,19 @@ object windturb_dg {
 	parent my_meter2;
 	phases ABCN;
 	name windturb2;
-	Gen_status ONLINE;
-	Gen_type SYNCHRONOUS;
-	Gen_mode CONSTANTP;
-	Turbine_Model GE_25MW;
+	//Gen_status ONLINE;
+	//Gen_type SYNCHRONOUS;
+	//Gen_mode CONSTANTP;
+	//Turbine_implementation COEFF_OF_PERFORMANCE;
+	//Turbine_Model GEN_TURB_POW_CURVE_1_5MW;
+	Rated_VA 4000000;
+	turbine_height 115;
+	//power_curve_csv "WT_pow_curve.csv";
+	power_curve_pu true;
+	
 	object multi_recorder {
 		file test_wind_power_${PF}2.csv;
 		interval 900;
-		property wind_speed,WSadj,Cp,my_meter2:measured_real_power,total_real_power;
+		property voltage_A, voltage_B, voltage_C, current_A, current_B, current_C, power_A, power_B, power_C, wind_speed,WSadj,Cp,my_meter2:measured_real_power,total_real_power;
 	};
 }

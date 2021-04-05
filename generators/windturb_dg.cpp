@@ -36,18 +36,18 @@ windturb_dg::windturb_dg(MODULE *module)
 			oclass->trl = TRL_PROOF;
 
 		if (gl_publish_variable(oclass,
-			PT_enumeration,"Gen_status",PADDR(Gen_status), PT_DESCRIPTION, "Describes whether the generator is currently online or offline",
+			PT_enumeration,"Gen_status",PADDR(Gen_status), PT_DESCRIPTION, "COP: Describes whether the generator is currently online or offline",
 			PT_KEYWORD,"OFFLINE",(enumeration)OFFLINE, PT_DESCRIPTION, "COP: Generator is currently not supplying power",
 			PT_KEYWORD,"ONLINE",(enumeration)ONLINE, PT_DESCRIPTION, "COP: Generator is currently available to supply power",
-			PT_enumeration,"Gen_type",PADDR(Gen_type), PT_DESCRIPTION, "Type of generator",
+			PT_enumeration,"Gen_type",PADDR(Gen_type), PT_DESCRIPTION, "COP: Type of generator",
 			PT_KEYWORD,"INDUCTION",(enumeration)INDUCTION, PT_DESCRIPTION, "COP: Standard induction generator",
 			PT_KEYWORD,"SYNCHRONOUS",(enumeration)SYNCHRONOUS, PT_DESCRIPTION, "COP: Standard synchronous generator; is also used to 'fake' a doubly-fed induction generator for now",
-			PT_enumeration,"Gen_mode",PADDR(Gen_mode), PT_DESCRIPTION, "Control mode that is used for the generator output",
+			PT_enumeration,"Gen_mode",PADDR(Gen_mode), PT_DESCRIPTION, "COP: Control mode that is used for the generator output",
 			PT_KEYWORD,"CONSTANTE",(enumeration)CONSTANTE, PT_DESCRIPTION, "COP: Maintains the voltage at the terminals",
 			PT_KEYWORD,"CONSTANTP",(enumeration)CONSTANTP, PT_DESCRIPTION, "COP: Maintains the real power output at the terminals",
 			PT_KEYWORD,"CONSTANTPQ",(enumeration)CONSTANTPQ, PT_DESCRIPTION, "COP: Maintains the real and reactive output at the terminals - currently unsupported",
 			PT_enumeration,"Turbine_Model",PADDR(Turbine_Model), PT_DESCRIPTION, "Type of turbine being represented; using any of these except USER_DEFINED also specifies a large number of defaults",
-			PT_KEYWORD,"GENERIC_DEFAULT",(enumeration)GENERIC_DEFAULT, PT_DESCRIPTION, "Power_Curve: Generic model used to set default parameters if user doesnot specify",
+			PT_KEYWORD,"GENERIC_DEFAULT",(enumeration)GENERIC_DEFAULT, PT_DESCRIPTION, "Generic model used to set default parameters if user doesnot specify",
 			PT_KEYWORD,"GENERIC_SYNCH_SMALL",(enumeration)GENERIC_SYNCH_SMALL, PT_DESCRIPTION, "COP: Generic model for a small, fixed pitch synchronous turbine",
 			PT_KEYWORD,"GENERIC_SYNCH_MID",(enumeration)GENERIC_SYNCH_MID, PT_DESCRIPTION, "COP: Generic model for a mid-size, fixed pitch synchronous turbine",
 			PT_KEYWORD,"GENERIC_SYNCH_LARGE",(enumeration)GENERIC_SYNCH_LARGE, PT_DESCRIPTION, "COP: Generic model for a large, fixed pitch synchronous turbine",
@@ -70,20 +70,20 @@ windturb_dg::windturb_dg(MODULE *module)
 			//       These need to be corrected through the deprecation process.
 			PT_double, "turbine_height[m]", PADDR(turbine_height), PT_DESCRIPTION, "Describes the height of the wind turbine hub above the ground",
 			PT_double, "roughness_length_factor", PADDR(roughness_l), PT_DESCRIPTION, "European Wind Atlas unitless correction factor for adjusting wind speed at various heights above ground and terrain types, default=0.055",
-			PT_double, "blade_diam[m]", PADDR(blade_diam), PT_DESCRIPTION, "Diameter of blades",
-			PT_double, "blade_diameter[m]", PADDR(blade_diam), PT_DESCRIPTION, "Diameter of blades",
-			PT_double, "cut_in_ws[m/s]", PADDR(cut_in_ws), PT_DESCRIPTION, "Minimum wind speed for generator operation",
-			PT_double, "cut_out_ws[m/s]", PADDR(cut_out_ws), PT_DESCRIPTION, "Maximum wind speed for generator operation",
-			PT_double, "ws_rated[m/s]", PADDR(ws_rated), PT_DESCRIPTION, "Rated wind speed for generator operation",
+			PT_double, "blade_diam[m]", PADDR(blade_diam), PT_DESCRIPTION, "COP: Diameter of blades",
+			PT_double, "blade_diameter[m]", PADDR(blade_diam), PT_DESCRIPTION, "COP: Diameter of blades",
+			PT_double, "cut_in_ws[m/s]", PADDR(cut_in_ws), PT_DESCRIPTION, "COP: Minimum wind speed for generator operation",
+			PT_double, "cut_out_ws[m/s]", PADDR(cut_out_ws), PT_DESCRIPTION, "COP: Maximum wind speed for generator operation",
+			PT_double, "ws_rated[m/s]", PADDR(ws_rated), PT_DESCRIPTION, "COP: Rated wind speed for generator operation",
 			PT_double, "ws_maxcp[m/s]", PADDR(ws_maxcp), PT_DESCRIPTION, "COP: Wind speed at which generator reaches maximum Cp",
 			PT_double, "Cp_max[pu]", PADDR(Cp_max), PT_DESCRIPTION, "COP: Maximum coefficient of performance",
 			PT_double, "Cp_rated[pu]", PADDR(Cp_rated), PT_DESCRIPTION, "COP: Rated coefficient of performance",
 			PT_double, "Cp[pu]", PADDR(Cp), PT_DESCRIPTION, "COP: Calculated coefficient of performance",
 
 			PT_double, "Rated_VA[VA]", PADDR(Rated_VA), PT_DESCRIPTION, "Rated generator power output",
-			PT_double, "Rated_V[V]", PADDR(Rated_V), PT_DESCRIPTION, "Rated generator terminal voltage",
+			PT_double, "Rated_V[V]", PADDR(Rated_V), PT_DESCRIPTION, "COP: Rated generator terminal voltage",
 			PT_double, "Pconv[W]", PADDR(Pconv), PT_DESCRIPTION, "COP: Amount of electrical power converted from mechanical power delivered",
-			PT_double, "P_converted[W]", PADDR(Pconv), PT_DESCRIPTION, "Amount of electrical power converted from mechanical power delivered",
+			PT_double, "P_converted[W]", PADDR(Pconv), PT_DESCRIPTION, "COP: Amount of electrical power converted from mechanical power delivered",
 
 			PT_double, "GenElecEff[%]", PADDR(GenElecEff), PT_DESCRIPTION, "COP: Calculated generator electrical efficiency",
 			PT_double, "generator_efficiency[%]", PADDR(GenElecEff), PT_DESCRIPTION, "COP: Calculated generator electrical efficiency",
@@ -337,7 +337,7 @@ int windturb_dg::init(OBJECT *parent)
 			}
 			if (Turbine_implementation == POWER_CURVE){
 				Turbine_implementation = COEFF_OF_PERFORMANCE;
-				gl_warning("windturb_dg (id:%d, name:%s): Cannot use Power Curve implementation with built-in legacy turbines. Forced coefficient of performance based implementation", obj->id,obj->name);
+				gl_warning("windturb_dg (id:%d, name:%s): GENERIC_SYNCH_LARGE/GENERIC_IND_LARGE is not compatible with the Power Curve turbine model. Assuming legacy coefficient of performance model", obj->id,obj->name);
 			}
 			break;
 		case GENERIC_IND_MID:
@@ -375,7 +375,7 @@ int windturb_dg::init(OBJECT *parent)
 			}
 			if (Turbine_implementation == POWER_CURVE){
 				Turbine_implementation = COEFF_OF_PERFORMANCE;
-				gl_warning("windturb_dg (id:%d, name:%s): Cannot use Power Curve implementation with built-in legacy turbines. Forced coefficient of performance based implementation", obj->id,obj->name);
+				gl_warning("windturb_dg (id:%d, name:%s): GENERIC_SYNCH_MID/GENERIC_IND_MID is not compatible with the Power Curve turbine model. Assuming legacy coefficient of performance model", obj->id,obj->name);
 			}
 			break;
 		case GENERIC_IND_SMALL:					
@@ -413,7 +413,7 @@ int windturb_dg::init(OBJECT *parent)
 			}
 			if (Turbine_implementation == POWER_CURVE){
 				Turbine_implementation = COEFF_OF_PERFORMANCE;
-				gl_warning("windturb_dg (id:%d, name:%s): Cannot use Power Curve implementation with built-in legacy turbines. Forced coefficient of performance based implementation", obj->id,obj->name);
+				gl_warning("windturb_dg (id:%d, name:%s): GENERIC_SYNCH_SMALL/GENERIC_IND_SMALL is not compatible with the Power Curve turbine model. Assuming legacy coefficient of performance model", obj->id,obj->name);
 			}
 			break;
 		case VESTAS_V82:	//Include manufacturer's data - cases can be added to call other wind turbines
@@ -435,7 +435,7 @@ int windturb_dg::init(OBJECT *parent)
 			Xg = 0.000;
 			if (Turbine_implementation == POWER_CURVE){
 				Turbine_implementation = COEFF_OF_PERFORMANCE;
-				gl_warning("windturb_dg (id:%d, name:%s): Cannot use Power Curve implementation with built-in legacy turbines. Forced coefficient of performance based implementation", obj->id,obj->name);
+				gl_warning("windturb_dg (id:%d, name:%s): VESTAS_V82 is not compatible with the Power Curve turbine model. Assuming legacy coefficient of performance model", obj->id,obj->name);
 			}
 			break;
 		case GE_25MW:
@@ -461,7 +461,7 @@ int windturb_dg::init(OBJECT *parent)
 			Xg = 0.000;
 			if (Turbine_implementation == POWER_CURVE){
 				Turbine_implementation = COEFF_OF_PERFORMANCE;
-				gl_warning("windturb_dg (id:%d, name:%s): Cannot use Power Curve implementation with built-in legacy turbines. Forced coefficient of performance based implementation", obj->id,obj->name);
+				gl_warning("windturb_dg (id:%d, name:%s): GE_25MW is not compatible with the Power Curve turbine model. Assuming legacy coefficient of performance model", obj->id,obj->name);
 			}
 			break;
 		case BERGEY_10kW:
@@ -487,7 +487,7 @@ int windturb_dg::init(OBJECT *parent)
 			Xg = 0.000;
 			if (Turbine_implementation == POWER_CURVE){
 				Turbine_implementation = COEFF_OF_PERFORMANCE;
-				gl_warning("windturb_dg (id:%d, name:%s): Cannot use Power Curve implementation with built-in legacy turbines. Forced coefficient of performance based implementation", obj->id,obj->name);
+				gl_warning("windturb_dg (id:%d, name:%s): BERGEY_10kW is not compatible with the Power Curve turbine model. Assuming legacy coefficient of performance model", obj->id,obj->name);
 			}
 			break;
 		case USER_DEFINED:
@@ -628,16 +628,16 @@ int windturb_dg::init(OBJECT *parent)
 						if ((turbine_height < 4) || (turbine_height > 41)){
 							gl_warning("windturb_dg (id:%d, name:%s): Potential mismatch of Turbine parameters i.e. Turbine capacity: %.1f VA and turbine height: %.1f m", obj->id,obj->name, Rated_VA, turbine_height);
 						}
-					} else if ((Rated_VA >= 4500) && (Rated_VA < 300000)){
-						if ((turbine_height < 12) || (turbine_height > 51)){
+					} else if ((Rated_VA >= 4500) && (Rated_VA < 20000)){
+						if ((turbine_height < 12) || (turbine_height > 49)){
 							gl_warning("windturb_dg (id:%d, name:%s): Potential mismatch of Turbine parameters i.e. Turbine capacity: %.1f VA and turbine height: %.1f m", obj->id,obj->name, Rated_VA, turbine_height);
 						}
-					} else if ((Rated_VA >= 300000) && (Rated_VA < 5000000)){
-						//lower 20
-						//upper 11
-						double temp_height;
-						temp_height = 24.8885*log(Rated_VA/1000) - 104.402;
-						if ((turbine_height < (temp_height - 20)) || (turbine_height > (temp_height + 11))){
+					} else if ((Rated_VA >= 20000) && (Rated_VA < 300000)){
+						if ((turbine_height < 18) || (turbine_height > 55)){
+							gl_warning("windturb_dg (id:%d, name:%s): Potential mismatch of Turbine parameters i.e. Turbine capacity: %.1f VA and turbine height: %.1f m", obj->id,obj->name, Rated_VA, turbine_height);
+						}
+					} else {
+						if ((turbine_height < ((24.8885*log(Rated_VA/1000) - 104.402) - 20)) || (turbine_height > ((24.8885*log(Rated_VA/1000) - 104.402) + 11))){
 							gl_warning("windturb_dg (id:%d, name:%s): Potential mismatch of Turbine parameters i.e. Turbine capacity: %.1f VA and turbine height: %.1f m", obj->id,obj->name, Rated_VA, turbine_height);
 						}
 					}
@@ -1426,7 +1426,7 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			} else if (WSadj >= Generic_Power_Curve[0][number_of_points-1]){
 				Power_calc = 0;
 			} else {	  
-				for (int i=0; i<(number_of_points-1); i++){              //test what happens if ws is beyond last point
+				for (int i=0; i<(number_of_points-1); i++){
 					if (WSadj >= Generic_Power_Curve[0][i] && WSadj <= Generic_Power_Curve[0][i+1]){
 
 						Power_calc = Generic_Power_Curve[1][i] + ((Generic_Power_Curve[1][i+1] - Generic_Power_Curve[1][i]) * ((WSadj - Generic_Power_Curve[0][i]) / (Generic_Power_Curve[0][i+1] - Generic_Power_Curve[0][i])));
