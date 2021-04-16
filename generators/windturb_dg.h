@@ -37,9 +37,18 @@ private:
 	double std_air_press;
 	gld_property *pCircuit_V[3];		//< pointer to the three voltages on three lines
 	gld_property *pLine_I[3];			//< pointer to the three current on three lines
+	gld_property *pLine12;			    //< used in triplex metering
+	
+	int number_of_phases_out;
+	
 	complex value_Circuit_V[3];			//< value holder for voltage values
 	complex value_Line_I[3];			//< value holder for current values
+	complex value_Line12;
+
+	
 	bool parent_is_valid;				//< Flag to pointers
+	bool parent_is_meter;
+	bool parent_is_triplex;
 	
 	double Generic_Power_Curve[2][100];  //Look-up table carrying power curve values. Maximum points limited to 100. Equals default (defined in .cpp) or user defined power curve 
 	int number_of_points;

@@ -58,10 +58,10 @@ windturb_dg::windturb_dg(MODULE *module)
 			PT_KEYWORD,"VESTAS_V82",(enumeration)VESTAS_V82, PT_DESCRIPTION, "COP: Sets all defaults to represent the power output of a VESTAS V82 turbine",
 			PT_KEYWORD,"GE_25MW",(enumeration)GE_25MW, PT_DESCRIPTION, "COP: Sets all defaults to represent the power output of a GE 2.5MW turbine",
 			PT_KEYWORD,"BERGEY_10kW",(enumeration)BERGEY_10kW, PT_DESCRIPTION, "COP: Sets all defaults to represent the power output of a Bergey 10kW turbine",
-			PT_KEYWORD,"GEN_TURB_POW_CURVE_2_4KW",(enumeration)GEN_TURB_POW_CURVE_2_4KW, PT_DESCRIPTION, "Power_Curve: Generic model for a 2.4kW turbine, power curve implementation",
-			PT_KEYWORD,"GEN_TURB_POW_CURVE_10KW",(enumeration)GEN_TURB_POW_CURVE_10KW, PT_DESCRIPTION, "Power_Curve: Generic model for a 10kW turbine, power curve implementation",
-			PT_KEYWORD,"GEN_TURB_POW_CURVE_100KW",(enumeration)GEN_TURB_POW_CURVE_100KW, PT_DESCRIPTION, "Power_Curve: Generic model for a 100kW turbine, power curve implementation",
-			PT_KEYWORD,"GEN_TURB_POW_CURVE_1_5MW",(enumeration)GEN_TURB_POW_CURVE_1_5MW, PT_DESCRIPTION, "Power_Curve: Generic model for a 1.5MW turbine, power curve implementation",
+			PT_KEYWORD,"GEN_TURB_POW_CURVE_2_4KW",(enumeration)GEN_TURB_POW_CURVE_2_4KW, PT_DESCRIPTION, "Generic model for a 2.4kW turbine, power curve implementation",
+			PT_KEYWORD,"GEN_TURB_POW_CURVE_10KW",(enumeration)GEN_TURB_POW_CURVE_10KW, PT_DESCRIPTION, "Generic model for a 10kW turbine, power curve implementation",
+			PT_KEYWORD,"GEN_TURB_POW_CURVE_100KW",(enumeration)GEN_TURB_POW_CURVE_100KW, PT_DESCRIPTION, "Generic model for a 100kW turbine, power curve implementation",
+			PT_KEYWORD,"GEN_TURB_POW_CURVE_1_5MW",(enumeration)GEN_TURB_POW_CURVE_1_5MW, PT_DESCRIPTION, "Generic model for a 1.5MW turbine, power curve implementation",
 			PT_enumeration,"Turbine_implementation",PADDR(Turbine_implementation), PT_DESCRIPTION, "Type of implementation for wind turbine generator",
 			PT_KEYWORD,"COEFF_OF_PERFORMANCE",(enumeration)COEFF_OF_PERFORMANCE, PT_DESCRIPTION, "Wind turbine generator implementation based on Coefficient of performance",
 			PT_KEYWORD,"POWER_CURVE",(enumeration)POWER_CURVE, PT_DESCRIPTION, "Wind turbine implementation based on Generic Power Curve",
@@ -95,6 +95,7 @@ windturb_dg::windturb_dg(MODULE *module)
 			PT_complex, "power_A[VA]", PADDR(power_A), PT_DESCRIPTION, "Total complex power injected on phase A",
 			PT_complex, "power_B[VA]", PADDR(power_B), PT_DESCRIPTION, "Total complex power injected on phase B",
 			PT_complex, "power_C[VA]", PADDR(power_C), PT_DESCRIPTION, "Total complex power injected on phase C",
+			PT_complex, "power_12[VA]", PADDR(power_A), PT_DESCRIPTION, "Triplex mode - Total complex power on line 1 and 2",
 
 			PT_double, "WSadj[m/s]", PADDR(WSadj), PT_DESCRIPTION, "Speed of wind at hub height",
 			PT_double, "wind_speed_adjusted[m/s]", PADDR(WSadj), PT_DESCRIPTION, "Speed of wind at hub height",
@@ -121,15 +122,19 @@ windturb_dg::windturb_dg(MODULE *module)
 			PT_double, "pf[pu]", PADDR(pf), PT_DESCRIPTION, "COP: Desired power factor in CONSTANTP mode (can be modified over time)",
 			PT_double, "power_factor[pu]", PADDR(pf), PT_DESCRIPTION, "COP: Desired power factor in CONSTANTP mode (can be modified over time)",
 			
-			PT_char1024, "power_curve_csv", PADDR(power_curve_csv), PT_DESCRIPTION, "Power_Curve: Name of .csv file containing user defined power curve",
-			PT_bool, "power_curve_pu", PADDR(power_curve_pu), PT_DESCRIPTION, "Power_Curve: Flag when set indicates that user provided power curve has power values in p.u. Defaults to false",
+			PT_char1024, "power_curve_csv", PADDR(power_curve_csv), PT_DESCRIPTION, "Name of .csv file containing user defined power curve",
+			PT_bool, "power_curve_pu", PADDR(power_curve_pu), PT_DESCRIPTION, "Flag when set indicates that user provided power curve has power values in p.u. Defaults to false",
 
-			PT_complex, "voltage_A[V]", PADDR(voltage_A), PT_DESCRIPTION, "Terminal voltage on phase A",
-			PT_complex, "voltage_B[V]", PADDR(voltage_B), PT_DESCRIPTION, "Terminal voltage on phase B",
-			PT_complex, "voltage_C[V]", PADDR(voltage_C), PT_DESCRIPTION, "Terminal voltage on phase C",
+			PT_complex, "voltage_A[V]", PADDR(voltage_A),PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Terminal voltage on phase A",
+			PT_complex, "voltage_B[V]", PADDR(voltage_B),PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Terminal voltage on phase B",
+			PT_complex, "voltage_C[V]", PADDR(voltage_C),PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Terminal voltage on phase C",
+			PT_complex, "voltage_12[V]", PADDR(voltage_A),PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Triplex mode - Voltage between line 1 and line 2",
+			PT_complex, "voltage_1N[V]", PADDR(voltage_B),PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Triplex mode - Voltage between line 1 and the neutral N",
+			PT_complex, "voltage_2N[V]", PADDR(voltage_C),PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Triplex mode - Voltage between line 2 and the neutral N",
 			PT_complex, "current_A[A]", PADDR(current_A), PT_DESCRIPTION, "Calculated terminal current on phase A",
 			PT_complex, "current_B[A]", PADDR(current_B), PT_DESCRIPTION, "Calculated terminal current on phase B",
 			PT_complex, "current_C[A]", PADDR(current_C), PT_DESCRIPTION, "Calculated terminal current on phase C",
+			PT_complex, "current_12[A]", PADDR(current_A), PT_DESCRIPTION, "Triplex mode - Calculated line current 12",
 			PT_complex, "EfA[V]", PADDR(EfA), PT_DESCRIPTION, "COP: Synchronous generator induced voltage on phase A",
 			PT_complex, "EfB[V]", PADDR(EfB), PT_DESCRIPTION, "COP: Synchronous generator induced voltage on phase B",
 			PT_complex, "EfC[V]", PADDR(EfC), PT_DESCRIPTION, "COP: Synchronous generator induced voltage on phase C",
@@ -215,9 +220,15 @@ int windturb_dg::create(void)
 
 	pCircuit_V[0] = pCircuit_V[1] = pCircuit_V[2] = NULL;
 	pLine_I[0] = pLine_I[1] = pLine_I[2] = NULL;
+	pLine12 = NULL;
 	value_Circuit_V[0] = value_Circuit_V[1] = value_Circuit_V[2] = complex(0.0,0.0);
 	value_Line_I[0] = value_Line_I[1] = value_Line_I[2] = complex(0.0,0.0);
+	value_Line12 = complex(0.0,0.0);
+	
 	parent_is_valid = false;
+	parent_is_meter = false;
+	parent_is_triplex = false;
+
 
     pPress = NULL;
 	pTemp = NULL;
@@ -764,6 +775,8 @@ int windturb_dg::init(OBJECT *parent)
 		{
 			//Flag properly
 			parent_is_valid = true;
+			parent_is_meter = true;
+			parent_is_triplex = false;
 
 			//Map phases
 			//Map and pull the phases
@@ -785,6 +798,10 @@ int windturb_dg::init(OBJECT *parent)
 
 			//Clear the temporary pointer
 			delete temp_property_pointer;
+			
+			if ( (temp_phases_set & 0x07) == 0x07 ){ // three phase
+				number_of_phases_out = 3;
+			}
 
 			// Currently only supports 3-phase connection, so check number of phases of parent
 			if ((temp_phases_set & PHASE_A) == PHASE_A)
@@ -837,18 +854,72 @@ int windturb_dg::init(OBJECT *parent)
 			pLine_I[0] = map_complex_value(parent,"current_A");
 			pLine_I[1] = map_complex_value(parent,"current_B");
 			pLine_I[2] = map_complex_value(parent,"current_C");
+			
+			pLine12 = NULL;
 		}
 		else if (gl_object_isa(parent,"triplex_meter","powerflow"))
 		{
-			GL_THROW("The wind turbine model does currently support direct connection to single phase or triplex meters. Connect through a rectifier-inverter combination.");
+			//GL_THROW("The wind turbine model does currently support direct connection to single phase or triplex meters. Connect through a rectifier-inverter combination.");
 			/*  TROUBLESHOOT
 			This model does not currently support connection to a triplex system.  Please connect to a 3-phase meter.
 			*/
+			//Set flags			
+			parent_is_valid = true;
+			parent_is_meter = true;
+			parent_is_triplex = true;
+
+			//Map the variables
+			pCircuit_V[0] = map_complex_value(parent,"voltage_12");
+			pCircuit_V[1] = map_complex_value(parent,"voltage_1N");
+			pCircuit_V[2] = map_complex_value(parent,"voltage_2N");
+
+			// NOTE - Commented code will replace the pLine_I and pLine12 once the triplex_node "deprecated properties" are removed
+			// pLine_I[0] = map_complex_value(parent,"current_1");
+			// pLine_I[1] = map_complex_value(parent,"current_2");
+			// pLine_I[2] = map_complex_value(parent,"current_N");
+
+			// pLine12 = map_complex_value(parent,"current_12");
+
+			pLine_I[0] = map_complex_value(parent,"acc_temp_current_1");
+			pLine_I[1] = map_complex_value(parent,"acc_temp_current_2");
+			pLine_I[2] = map_complex_value(parent,"acc_temp_current_N");
+
+			pLine12 = map_complex_value(parent,"acc_temp_current_12");
+
+			//pPower = map_complex_value(parent,"measured_power");
+
+			//Map and pull the phases
+			temp_property_pointer = new gld_property(parent,"phases");
+
+			//Make sure ti worked
+			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_set() != true))
+			{
+				GL_THROW("Unable to map phases property - ensure the parent is a meter or triplex_meter");
+				//Defined above
+			}
+
+			//Pull the phase information
+			temp_phases_set = temp_property_pointer->get_set();
+
+			//Clear the temporary pointer
+			delete temp_property_pointer;
+
+			number_of_phases_out = 1;
+
+			//Pull the initial voltages in, just to init them
+			//value_Circuit_V[0] = pCircuit_V[0]->get_complex();
+			//value_Circuit_V[1] = pCircuit_V[1]->get_complex();
+			//value_Circuit_V[2] = pCircuit_V[2]->get_complex();
+		
 		}
 		else if (gl_object_isa(parent,"rectifier","generators"))
 		{
 			//Set the "pull flag"
 			parent_is_valid = true;
+			parent_is_meter = true;
+			parent_is_triplex = false;
+			
+			number_of_phases_out = 0;
 
 			//Map the voltages
 			temp_property_pointer = new gld_property(parent,"V_Rated");
@@ -1407,8 +1478,8 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 			break;
 		case POWER_CURVE:
+			
 			double Power_calc;
-			double PowerA, PowerB, PowerC;
 						
 			if (parent_is_valid == true)
 			{
@@ -1417,7 +1488,7 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 				value_Circuit_V[2] = pCircuit_V[2]->get_complex();
 			}
 
-			voltage_A = value_Circuit_V[0];	//Syncs the meter parent to the generator.
+			voltage_A = value_Circuit_V[0];	//Syncs the meter parent to the wind turbine
 			voltage_B = value_Circuit_V[1];
 			voltage_C = value_Circuit_V[2];
 			
@@ -1433,55 +1504,95 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 				}
 			}
-			if(strstr(power_curve_csv, ".csv")){
-				if (power_curve_pu == true){
+			if (number_of_phases_out == 3)//has all three phases
+			{
+				double PowerA, PowerB, PowerC;
+				
+				if(strstr(power_curve_csv, ".csv")){
+					if (power_curve_pu == true){
+						power_A = complex((Power_calc*Rated_VA)/3,0);
+						power_B = complex((Power_calc*Rated_VA)/3,0);
+						power_C = complex((Power_calc*Rated_VA)/3,0);
+					} else {
+						power_A = complex((Power_calc)/3,0);
+						power_B = complex((Power_calc)/3,0);
+						power_C = complex((Power_calc)/3,0);
+					}
+				} else {
 					power_A = complex((Power_calc*Rated_VA)/3,0);
 					power_B = complex((Power_calc*Rated_VA)/3,0);
 					power_C = complex((Power_calc*Rated_VA)/3,0);
-				} else {
-					power_A = complex((Power_calc)/3,0);
-					power_B = complex((Power_calc)/3,0);
-					power_C = complex((Power_calc)/3,0);
 				}
+				
+				Wind_Speed = WSadj;
+				
+				if(voltage_A.Mag() > 0.0){
+					current_A = -(~(power_A/voltage_A));
+				} else {
+					current_A = complex(0.0,0.0);
+				}
+				if(voltage_B.Mag() > 0.0){
+					current_B = -(~(power_B/voltage_B));
+				} else {
+					current_B = complex(0.0,0.0);
+				}
+				if(voltage_C.Mag() > 0.0){
+					current_C = -(~(power_C/voltage_C));
+				} else {
+					current_C = complex(0.0,0.0);
+				}
+				
+				PowerA = -voltage_A.Mag()*current_A.Mag()*cos(voltage_A.Arg() - current_A.Arg());
+				PowerB = -voltage_B.Mag()*current_B.Mag()*cos(voltage_B.Arg() - current_B.Arg());
+				PowerC = -voltage_C.Mag()*current_C.Mag()*cos(voltage_C.Arg() - current_C.Arg());
+				
+				TotalRealPow = PowerA + PowerB + PowerC;
+				
+				//Update values
+				value_Line_I[0] = current_A;
+				value_Line_I[1] = current_B;
+				value_Line_I[2] = current_C;
+				
+				//Powerflow post-it
+				if (parent_is_valid == true)
+				{
+					push_complex_powerflow_values();
+				}
+			} else if ( ((phases & PHASE_S1) == PHASE_S1) && (number_of_phases_out == 1) ) { // Split-phase
+				
+				if(strstr(power_curve_csv, ".csv")){
+					if (power_curve_pu == true){
+						power_A = complex((Power_calc*Rated_VA),0);
+					} else {
+						power_A = complex((Power_calc),0);
+					}
+				} else {
+					power_A = complex((Power_calc*Rated_VA),0);
+				}
+				
+				Wind_Speed = WSadj;
+				
+				if(voltage_A.Mag() > 0.0){
+					current_A = -(~(power_A/voltage_A));
+				} else {
+					current_A = complex(0.0,0.0);
+				}
+				
+				TotalRealPow = -voltage_A.Mag()*current_A.Mag()*cos(voltage_A.Arg() - current_A.Arg());
+				
+				//Update value
+				value_Line12 = current_A;
+				
+				//Powerflow post-it
+				if (parent_is_valid == true)
+				{
+					push_complex_powerflow_values();
+				}
+			} else if ( (((phases & PHASE_ABCN) == PHASE_ABCN) && (number_of_phases_out == 1)) || (((phases & PHASE_ABC) == PHASE_ABC) && (number_of_phases_out == 1)) ) {    //case where a three-phase wind turbine is connected to triplex meter
+				GL_THROW ("Phase mismatch between the wind turbine and the triplex parent");
 			} else {
-				power_A = complex((Power_calc*Rated_VA)/3,0);
-				power_B = complex((Power_calc*Rated_VA)/3,0);
-				power_C = complex((Power_calc*Rated_VA)/3,0);
-			}
-			
-			Wind_Speed = WSadj;
-			
-			if(voltage_A.Mag() > 0.0){
-				current_A = -(~(power_A/voltage_A));
-			} else {
-				current_A = complex(0.0,0.0);
-			}
-			if(voltage_B.Mag() > 0.0){
-				current_B = -(~(power_B/voltage_B));
-			} else {
-				current_B = complex(0.0,0.0);
-			}
-			if(voltage_C.Mag() > 0.0){
-				current_C = -(~(power_C/voltage_C));
-			} else {
-				current_C = complex(0.0,0.0);
-			}
-			
-			PowerA = -voltage_A.Mag()*current_A.Mag()*cos(voltage_A.Arg() - current_A.Arg());
-			PowerB = -voltage_B.Mag()*current_B.Mag()*cos(voltage_B.Arg() - current_B.Arg());
-			PowerC = -voltage_C.Mag()*current_C.Mag()*cos(voltage_C.Arg() - current_C.Arg());
-			
-			TotalRealPow = PowerA + PowerB + PowerC;
-			
-			//Update values
-			value_Line_I[0] = current_A;
-			value_Line_I[1] = current_B;
-			value_Line_I[2] = current_C;
-			
-			//Powerflow post-it
-			if (parent_is_valid == true)
-			{
-				push_complex_powerflow_values();
+				//Should not get here
+				GL_THROW ("Invalid phase configuration");
 			}
 			
 			break;
@@ -1503,9 +1614,16 @@ TIMESTAMP windturb_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	// Handling for NR || FBS
 
 	//Remove our parent contributions (so XMLs look proper)
-	value_Line_I[0] = -current_A;
-	value_Line_I[1] = -current_B;
-	value_Line_I[2] = -current_C;
+	if (number_of_phases_out == 3)//has all three phases
+	{
+		value_Line_I[0] = -current_A;
+		value_Line_I[1] = -current_B;
+		value_Line_I[2] = -current_C;
+	}
+	else if ( ((phases & PHASE_S1) == PHASE_S1) && (number_of_phases_out == 1) )
+	{
+		value_Line12 = -current_A;
+	}
 
 	//Push up the powerflow interface
 	if (parent_is_valid == true)
@@ -1569,18 +1687,36 @@ void windturb_dg::push_complex_powerflow_values(void)
 	gld_wlock *test_rlock;
 	int indexval;
 
-	//Loop through the three-phases/accumulators
-	for (indexval=0; indexval<3; indexval++)
+	if (parent_is_triplex == true)	//It is
 	{
-		//**** Current value ***/
-		//Pull current value again, just in case
-		temp_complex_val = pLine_I[indexval]->get_complex();
+		//Shouldn't need to NULL check this one, but do it anyways, for consistency
+		if (pLine12 != NULL)
+		{
+			//**** Current value ***/
+			//Pull current value again, just in case
+			temp_complex_val = pLine12->get_complex();
 
-		//Add the difference
-		temp_complex_val += value_Line_I[indexval];
+			//Add the difference
+			temp_complex_val += value_Line12;
 
-		//Push it back up
-		pLine_I[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+			//Push it back up
+			pLine12->setp<complex>(temp_complex_val,*test_rlock);
+		}//End pLine_I valid
+		//Default else -- it's null, so skip it
+	} else //End is triplex, //Loop through the three-phases/accumulators
+	{       
+		for (indexval=0; indexval<3; indexval++)
+		{
+			//**** Current value ***/
+			//Pull current value again, just in case
+			temp_complex_val = pLine_I[indexval]->get_complex();
+
+			//Add the difference
+			temp_complex_val += value_Line_I[indexval];
+
+			//Push it back up
+			pLine_I[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+		}
 	}
 }
 

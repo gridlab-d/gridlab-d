@@ -212,9 +212,37 @@ object meter {
 	nominal_voltage 400;
 }
 
+object transformer_configuration:800 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	power_rating 3000;
+	primary_voltage 4160;
+	secondary_voltage 120;
+	resistance 0.01;
+	reactance 0.06;
+	install_type PADMOUNT;
+}
+
+object transformer {
+	phases "AS";
+	from load:4;
+	to TrplMtr1;
+	configuration transformer_configuration:800;
+}
+
+object triplex_meter {
+	name TrplMtr1;
+	phases AS;
+	nominal_voltage 208;
+	object multi_recorder {
+		file test_wind_power_${PF}2_meter.csv;
+		interval 900;
+		property measured_voltage_1, measured_voltage_2, measured_voltage_N, measured_current_1, measured_current_2, measured_current_N, indiv_measured_power_1, indiv_measured_power_2, indiv_measured_power_N, measured_real_power, measured_reactive_power;
+	};
+}
+
 object windturb_dg {
-	parent my_meter2;
-	phases ABCN;
+	parent TrplMtr1;
+	phases AS;
 	name windturb2;
 	//Gen_status ONLINE;
 	//Gen_type SYNCHRONOUS;
@@ -222,13 +250,18 @@ object windturb_dg {
 	//Turbine_implementation COEFF_OF_PERFORMANCE;
 	//Turbine_Model GEN_TURB_POW_CURVE_1_5MW;
 	Rated_VA 5000000;
-	turbine_height 120;
-	power_curve_csv "WT_pow_curve_EO25_watts.csv";
+	turbine_height 25;
+	power_curve_csv "WT_pow_curve_BerExcel15_watts.csv";
 	//power_curve_pu true;
 	
+	//object multi_recorder {
+	//	file test_wind_power_${PF}2.csv;
+	//	interval 900;
+	//	property voltage_A, voltage_B, voltage_C, current_A, current_B, current_C, power_A, power_B, power_C, wind_speed,wind_speed_adjusted,Cp,my_meter2:measured_real_power,total_real_power;
+	//};
 	object multi_recorder {
 		file test_wind_power_${PF}2.csv;
 		interval 900;
-		property voltage_A, voltage_B, voltage_C, current_A, current_B, current_C, power_A, power_B, power_C, wind_speed,WSadj,Cp,my_meter2:measured_real_power,total_real_power;
+		property voltage_12, voltage_1N, voltage_2N, current_12, power_12, wind_speed,wind_speed_adjusted,Cp,my_meter2:measured_real_power,total_real_power;
 	};
 }
