@@ -37,13 +37,13 @@ private:
 	double std_air_press;
 	gld_property *pCircuit_V[3];		//< pointer to the three voltages on three lines
 	gld_property *pLine_I[3];			//< pointer to the three current on three lines
-	gld_property *pLine12;			    //< used in triplex metering
+	gld_property *pLine12;			    //< pointer to line current 12, used in triplex metering
 	
-	int number_of_phases_out;
+	int number_of_phases_out;           //Used to flag three phase or triplex parent
 	
 	complex value_Circuit_V[3];			//< value holder for voltage values
 	complex value_Line_I[3];			//< value holder for current values
-	complex value_Line12;
+	complex value_Line12;               //< value holder for line current 12 in triplex metering
 
 	
 	bool parent_is_valid;				//< Flag to pointers
@@ -159,7 +159,7 @@ public:
     double Min_Vrotor;			// minimum induced voltage in p.u., e.g. 0.8
 	
 	char power_curve_csv[1024]; // name of csv file containing the power curve
-	bool power_curve_pu;				// Flag when set indicates that user provided power curve has power values in pu. Defaults to false in .cpp
+	bool power_curve_pu;		// Flag when set indicates that user provided power curve has power values in pu. Defaults to false in .cpp
 
 public:
 	/* required implementations */

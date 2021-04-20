@@ -47,7 +47,7 @@ windturb_dg::windturb_dg(MODULE *module)
 			PT_KEYWORD,"CONSTANTP",(enumeration)CONSTANTP, PT_DESCRIPTION, "COP: Maintains the real power output at the terminals",
 			PT_KEYWORD,"CONSTANTPQ",(enumeration)CONSTANTPQ, PT_DESCRIPTION, "COP: Maintains the real and reactive output at the terminals - currently unsupported",
 			PT_enumeration,"Turbine_Model",PADDR(Turbine_Model), PT_DESCRIPTION, "Type of turbine being represented; using any of these except USER_DEFINED also specifies a large number of defaults",
-			PT_KEYWORD,"GENERIC_DEFAULT",(enumeration)GENERIC_DEFAULT, PT_DESCRIPTION, "Generic model used to set default parameters if user doesnot specify",
+			PT_KEYWORD,"GENERIC_DEFAULT",(enumeration)GENERIC_DEFAULT, PT_DESCRIPTION, "Generic model used to set default parameters if user doesnot specify anything",
 			PT_KEYWORD,"GENERIC_SYNCH_SMALL",(enumeration)GENERIC_SYNCH_SMALL, PT_DESCRIPTION, "COP: Generic model for a small, fixed pitch synchronous turbine",
 			PT_KEYWORD,"GENERIC_SYNCH_MID",(enumeration)GENERIC_SYNCH_MID, PT_DESCRIPTION, "COP: Generic model for a mid-size, fixed pitch synchronous turbine",
 			PT_KEYWORD,"GENERIC_SYNCH_LARGE",(enumeration)GENERIC_SYNCH_LARGE, PT_DESCRIPTION, "COP: Generic model for a large, fixed pitch synchronous turbine",
@@ -145,7 +145,7 @@ windturb_dg::windturb_dg(MODULE *module)
 			PT_complex, "Irotor_B[V]", PADDR(Irotor_B), PT_DESCRIPTION, "COP: Induction generator induced current on phase B in p.u.",
 			PT_complex, "Irotor_C[V]", PADDR(Irotor_C), PT_DESCRIPTION, "COP: Induction generator induced current on phase C in p.u.",
 
-			PT_set, "phases", PADDR(phases), PT_DESCRIPTION, "Specifies which phases to connect to - currently not supported and assumes three-phase connection",
+			PT_set, "phases", PADDR(phases), PT_DESCRIPTION, "Specifies which phases to connect to - currently triplex mode is only supported for power curve implementation",
 			PT_KEYWORD, "A",(set)PHASE_A,
 			PT_KEYWORD, "B",(set)PHASE_B,
 			PT_KEYWORD, "C",(set)PHASE_C,
@@ -178,26 +178,6 @@ int windturb_dg::create(void)
 	std_air_temp = 0;	//IUPAC std air temp in Celsius
 	std_air_press = 100000;	//IUPAC std air pressure in Pascals
 	Turbine_Model = GENERIC_DEFAULT;	//************** Defaults specified so it doesn't crash out
-/* 	blade_diam = 82.5;
-	//turbine_height = 90;
-	q = 3;						//number of gearbox stages
-	//Rated_VA = 1635000;
-	Max_P = 1500000;
-	Max_Q = 650000;
-	Rated_V = 600;
-	pf = 0.95;
-	CP_Data = GENERAL_LARGE;
-	cut_in_ws = 4;			//lowest wind speed 
-	cut_out_ws = 25;		//highest wind speed 
-	Cp_max = 0.302;			//rotor specifications for power curve
-	ws_maxcp = 7;			
-	Cp_rated = Cp_max-.05;	
-	ws_rated = 12.5;
-	Gen_type = SYNCHRONOUS;
-	Rs = 0.05;
-	Xs = 0.200;
-	Rg = 0.000;
-	Xg = 0.000; */                           //*******************Defaults specified according to GENERIC_SYNCH_LARGE
 	
 	Gen_mode = CONSTANTP;					//************** Default specified so values actually come out
 	Gen_status = ONLINE;
@@ -541,32 +521,30 @@ int windturb_dg::init(OBJECT *parent)
 			Maximum coefficient of performance must be specified as a value greater than or equal to zero.
 			*/
 			break;
-		case GEN_TURB_POW_CURVE_2_4KW:
+		case GEN_TURB_POW_CURVE_2_4KW:             //2.4 kW generic turbine
 			turbine_height = 21;
 			Rated_VA = 2400;
 			
 			break;
-		case GEN_TURB_POW_CURVE_10KW:
+		case GEN_TURB_POW_CURVE_10KW:              //10 kW generic turbine
 			turbine_height = 37;
 			Rated_VA = 10000;
 			
 			break;
-		case GEN_TURB_POW_CURVE_100KW:
+		case GEN_TURB_POW_CURVE_100KW:             //100 kW generic turbine
 			turbine_height = 37;
 			Rated_VA = 100000;
 			
 			break;
-		case GEN_TURB_POW_CURVE_1_5MW:
+		case GEN_TURB_POW_CURVE_1_5MW:             //1.5 MW generic turbine
 			turbine_height = 80;
 			Rated_VA = 1500000;
 			
 			break;
 		case GENERIC_DEFAULT:
-			//Default turbine parameters when user specifies no generic turbine
+			//Default turbine parameters used when user specifies no generic turbine or turbine parameters
 			blade_diam = 22;
-			//turbine_height = 90;
 			q = 3;						//number of gearbox stages
-			//Rated_VA = 1635000;
 			Max_P = 90000;
 			Max_Q = 40000;
 			Rated_V = 600;
@@ -584,7 +562,8 @@ int windturb_dg::init(OBJECT *parent)
 			Rg = 0.000;
 			Xg = 0.000;                           //*******************Defaults specified
 			
-			if ((turbine_height != -9999) && (Rated_VA == -9999)){                 // while estimating, upper limit of height is 300 m, upper limit of capacity is 11 GW
+			//Estimating turbine capacity/height if only turbine height/capacity is specified. Uses capacity-height clusters. While estimating, upper limit of height is 300 m, upper limit of capacity is 11 GW
+			if ((turbine_height != -9999) && (Rated_VA == -9999)){                 // Case when only turbine height is specified by the user
 				if (turbine_height <= 0){
 					GL_THROW ("turbine height cannot have a negative or zero value.");
 				} else {
@@ -604,7 +583,7 @@ int windturb_dg::init(OBJECT *parent)
 					}
 					gl_warning("windturb_dg (id:%d, name:%s): Translated turbine height to approximate capacity of: %.1f VA - May not be accurate", obj->id,obj->name, Rated_VA);
 				}
-			} else if ((turbine_height == -9999) && (Rated_VA != -9999)){
+			} else if ((turbine_height == -9999) && (Rated_VA != -9999)){          // Case when only turbine capacity is specified by the user
 				if (Rated_VA <= 0){
 					GL_THROW ("Turbine capacity cannot have a negative or zero value.");
 				} else{
@@ -624,11 +603,11 @@ int windturb_dg::init(OBJECT *parent)
 					}
 					gl_warning("windturb_dg (id:%d, name:%s): Translated turbine capacity to approximate height of: %.1f m - May not be accurate", obj->id,obj->name, turbine_height);
 				}
-			} else if ((turbine_height == -9999) && (Rated_VA == -9999)) {
+			} else if ((turbine_height == -9999) && (Rated_VA == -9999)) {        // Case when none of capacity or height is specified by the user
 				turbine_height = 37;    //Setting to defaults i.e. 100 kW turbine capacity and height
 				Rated_VA = 100000;
 				gl_warning("windturb_dg (id:%d, name:%s): Turbine parameters not specified. Setting turbine capacity to: %.1f VA and turbine height to: %.1f m - (Default parameters)", obj->id,obj->name, Rated_VA, turbine_height);
-			} else {
+			} else {                                                              //Case when both capacity and height are specified by user. Check for incompatibility and issue warnings.
 				if (turbine_height <= 0){
 					GL_THROW ("turbine height cannot have a negative or zero value.");
 				} else if (Rated_VA <= 0){
@@ -668,14 +647,14 @@ int windturb_dg::init(OBJECT *parent)
 		Generic_Power_Curve[1][i] = -1;
 	}
 	
-	double Generic_Power_Curve_default[2][21] = {
+	double Generic_Power_Curve_default[2][21] = {                           //Default power curve 
 		{2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0, 25.0},
 		{0.0, 0.0084725, 0.026315, 0.049903, 0.083323, 0.12564, 0.17541, 0.23191, 0.30286, 0.38807, 0.49134, 0.58717, 0.66827, 0.75071, 0.82431, 0.89813, 0.95368, 1.0013, 1.0331, 1.0602, 1.0602}
 	};
 	
 	if (Turbine_implementation == POWER_CURVE){
 
-		if(strstr(power_curve_csv, ".csv")){
+		if(strstr(power_curve_csv, ".csv")){             //read power curve .csv file if provided. Doing sanity checks on data format
 		
 			std::ifstream file(power_curve_csv);
 			
@@ -691,38 +670,47 @@ int windturb_dg::init(OBJECT *parent)
 			int l=0;
 			for ( size_t i = 0; i < csvData.size(); i++ )
 			{
-				for ( size_t j = 0; j < csvData[i].size(); j++ ){ 
-					
-					if (j == 0){
-						if (k < (sizeof(Generic_Power_Curve[0])/sizeof(double))){
-							try{
+				for ( size_t j = 0; j < csvData[i].size(); j++ )
+				{
+					if (j == 0)
+					{
+						if (k < (sizeof(Generic_Power_Curve[0])/sizeof(double)))
+						{
+							try
+							{
 								Generic_Power_Curve[0][k] = std::stod(csvData[i][j]);
 							}
-							catch(...){
+							catch(...)
+							{
 								gl_warning("windturb_dg (id:%d, name:%s): Invalid entry in .csv file - Please check .csv file", obj->id,obj->name);
 							}
-						} else {
+						} else 
+						{
 							GL_THROW ("Invalid data format - More than %lu data points in wind speed and power output fields, Provide file with upto %lu points", (sizeof(Generic_Power_Curve[0])/sizeof(double)), (sizeof(Generic_Power_Curve[0])/sizeof(double)));
 						}
 						k++;
-					} else if (j == 1){
-						if (l < (sizeof(Generic_Power_Curve[0])/sizeof(double))){
-							try{
+					} else if (j == 1)
+					{
+						if (l < (sizeof(Generic_Power_Curve[0])/sizeof(double)))
+						{
+							try
+							{
 								Generic_Power_Curve[1][l] = std::stod(csvData[i][j]);
 							} 
-							catch(...){
+							catch(...)
+							{
 								gl_warning("windturb_dg (id:%d, name:%s): Invalid entry in .csv file - Please check .csv file", obj->id,obj->name);
 							}
-						} else {
+						} else 
+						{
 							GL_THROW ("Invalid data format - More than %lu data points in wind speed and power output fields, Provide file with upto %lu points", (sizeof(Generic_Power_Curve[0])/sizeof(double)), (sizeof(Generic_Power_Curve[0])/sizeof(double)));
 						}
 						l++;
-						
-					} else {
+					} else 
+					{
 						GL_THROW ("Invalid data format - More than 2 columns in .csv file");
 					}
 				}
-				//std::cout << std::endl;
 			}
 			if (k < 3){
 				GL_THROW("Invalid data format - less than 3 data points in wind speed and power output fields. Provide atleast 3 data points");
@@ -734,7 +722,6 @@ int windturb_dg::init(OBJECT *parent)
 				gl_warning("windturb_dg (id:%d, name:%s): windturb_dg: unrecognized filetype, resorting to default power curve", obj->id,obj->name);
 			}
 			
-
 			for (int i=0; i<sizeof(Generic_Power_Curve_default[0])/sizeof(double); i++){
 				Generic_Power_Curve[0][i] = Generic_Power_Curve_default[0][i];
 				Generic_Power_Curve[1][i] = Generic_Power_Curve_default[1][i];
@@ -751,19 +738,7 @@ int windturb_dg::init(OBJECT *parent)
 			}
 		}		
 		number_of_points = valid_entries;
-				
-		//int i;
-		//for (i=0;i < (sizeof (Generic_Power_Curve[0]) /sizeof (double));i++) {
-		//	printf("%f\n",Generic_Power_Curve[0][i]);
-		//	printf("%f\n",Generic_Power_Curve[1][i]);
-		//}
-		//printf("%i\n",number_of_points);
 	}
-	
-
-
-	//Remove the pointer
-	delete temp_property_pointer;
 
 	// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
 	if (parent!=NULL)
@@ -799,10 +774,6 @@ int windturb_dg::init(OBJECT *parent)
 
 			//Clear the temporary pointer
 			delete temp_property_pointer;
-			
-			if ( (temp_phases_set & 0x07) == 0x07 ){ // three phase
-				number_of_phases_out = 3;
-			}
 
 			// Currently only supports 3-phase connection, so check number of phases of parent
 			if ((temp_phases_set & PHASE_A) == PHASE_A)
@@ -812,11 +783,14 @@ int windturb_dg::init(OBJECT *parent)
 			if ((temp_phases_set & PHASE_C) == PHASE_C)
 				temp_phases += 1;
 
-			if (temp_phases < 3)
+			if (temp_phases < 3){
 				GL_THROW("The wind turbine model currently only supports a 3-phase connection, please check meter connection");
-			/*  TROUBLESHOOT
-			Currently the wind turbine model only supports 3-phase connnections. Please attach to 3-phase meter.
-			*/
+				/*  TROUBLESHOOT
+				Currently the wind turbine model only supports 3-phase connnections. Please attach to 3-phase meter.
+				*/
+			} else {        // three phase
+				number_of_phases_out = 3;
+			}
 
 			//Map the voltages
 			temp_property_pointer = new gld_property(parent,"nominal_voltage");
@@ -905,11 +879,6 @@ int windturb_dg::init(OBJECT *parent)
 			delete temp_property_pointer;
 
 			number_of_phases_out = 1;
-
-			//Pull the initial voltages in, just to init them
-			//value_Circuit_V[0] = pCircuit_V[0]->get_complex();
-			//value_Circuit_V[1] = pCircuit_V[1]->get_complex();
-			//value_Circuit_V[2] = pCircuit_V[2]->get_complex();
 		
 		}
 		else if (gl_object_isa(parent,"rectifier","generators"))
@@ -962,7 +931,7 @@ int windturb_dg::init(OBJECT *parent)
 		{
 			GL_THROW("windturb_dg (id:%d): Invalid parent object",obj->id);
 			/* TROUBLESHOOT 
-			The wind turbine object must be attached a 3-phase meter object.  Please check parent of object.
+			The wind turbine object must be attached a 3-phase meter object, triplex meter or a rectifier.  Please check parent of object.
 			*/
 		}
 	}
@@ -1506,21 +1475,25 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			if (number_of_phases_out == 3)//has all three phases
 			{
 				double PowerA, PowerB, PowerC;
+				double QA, QB, QC;   					//reactive power assumed to be zero.
+				QA = 0;
+				QB = 0;
+				QC = 0;
 				
-				if(strstr(power_curve_csv, ".csv")){
-					if (power_curve_pu == true){
-						power_A = complex((Power_calc*Rated_VA)/3,0);
-						power_B = complex((Power_calc*Rated_VA)/3,0);
-						power_C = complex((Power_calc*Rated_VA)/3,0);
-					} else {
-						power_A = complex((Power_calc)/3,0);
-						power_B = complex((Power_calc)/3,0);
-						power_C = complex((Power_calc)/3,0);
+				if(strstr(power_curve_csv, ".csv")){  //user provided power curve .csv file
+					if (power_curve_pu == true){      //p.u. power curve provided, uses turbine capacity
+						power_A = complex((Power_calc*Rated_VA)/3,QA);
+						power_B = complex((Power_calc*Rated_VA)/3,QB);
+						power_C = complex((Power_calc*Rated_VA)/3,QC);
+					} else {                          //power curve in watts provided, ignores capacity even if it is specified
+						power_A = complex((Power_calc)/3,QA);
+						power_B = complex((Power_calc)/3,QB);
+						power_C = complex((Power_calc)/3,QC);
 					}
-				} else {
-					power_A = complex((Power_calc*Rated_VA)/3,0);
-					power_B = complex((Power_calc*Rated_VA)/3,0);
-					power_C = complex((Power_calc*Rated_VA)/3,0);
+				} else {                              //case with Default power curve (p.u.), uses capacity
+					power_A = complex((Power_calc*Rated_VA)/3,QA);
+					power_B = complex((Power_calc*Rated_VA)/3,QB);
+					power_C = complex((Power_calc*Rated_VA)/3,QC);
 				}
 				
 				Wind_Speed = WSadj;
@@ -1546,6 +1519,7 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 				PowerC = -voltage_C.Mag()*current_C.Mag()*cos(voltage_C.Arg() - current_C.Arg());
 				
 				TotalRealPow = PowerA + PowerB + PowerC;
+				TotalReacPow = QA + QB + QC;
 				
 				//Update values
 				value_Line_I[0] = current_A;
@@ -1558,15 +1532,18 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 					push_complex_powerflow_values();
 				}
 			} else if ( ((phases & PHASE_S1) == PHASE_S1) && (number_of_phases_out == 1) ) { // Split-phase
+			
+				double QA;  					//reactive power assumed to be zero.
+				QA = 0;
 				
-				if(strstr(power_curve_csv, ".csv")){
-					if (power_curve_pu == true){
-						power_A = complex((Power_calc*Rated_VA),0);
-					} else {
-						power_A = complex((Power_calc),0);
+				if(strstr(power_curve_csv, ".csv")){       //user provided power curve .csv file
+					if (power_curve_pu == true){           //p.u. power curve provided, uses turbine capacity
+						power_A = complex((Power_calc*Rated_VA),QA);
+					} else {                               //power curve in watts provided, ignores capacity even if it is specified
+						power_A = complex((Power_calc),QA);
 					}
-				} else {
-					power_A = complex((Power_calc*Rated_VA),0);
+				} else {                                   //case with Default power curve (p.u.), uses capacity
+					power_A = complex((Power_calc*Rated_VA),QA);
 				}
 				
 				Wind_Speed = WSadj;
@@ -1578,6 +1555,7 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 				
 				TotalRealPow = -voltage_A.Mag()*current_A.Mag()*cos(voltage_A.Arg() - current_A.Arg());
+				TotalReacPow = QA;
 				
 				//Update value
 				value_Line12 = current_A;
@@ -1619,7 +1597,7 @@ TIMESTAMP windturb_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		value_Line_I[1] = -current_B;
 		value_Line_I[2] = -current_C;
 	}
-	else if ( ((phases & PHASE_S1) == PHASE_S1) && (number_of_phases_out == 1) )
+	else if ( ((phases & PHASE_S1) == PHASE_S1) && (number_of_phases_out == 1) )  //split-phase
 	{
 		value_Line12 = -current_A;
 	}
@@ -1686,7 +1664,7 @@ void windturb_dg::push_complex_powerflow_values(void)
 	gld_wlock *test_rlock;
 	int indexval;
 
-	if (parent_is_triplex == true)	//It is
+	if (parent_is_triplex == true)
 	{
 		//Shouldn't need to NULL check this one, but do it anyways, for consistency
 		if (pLine12 != NULL)
@@ -1718,7 +1696,7 @@ void windturb_dg::push_complex_powerflow_values(void)
 		}
 	}
 }
-
+//Generic Functions to read .csv files
 std::vector<std::string> windturb_dg::readCSVRow(const std::string &row) {
     CSVState state = CSVState::UnquotedField;
     std::vector<std::string> fields {""};
