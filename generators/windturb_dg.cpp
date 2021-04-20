@@ -226,7 +226,6 @@ int windturb_dg::create(void)
 	value_Line12 = complex(0.0,0.0);
 	
 	parent_is_valid = false;
-	parent_is_meter = false;
 	parent_is_triplex = false;
 
 
@@ -585,7 +584,7 @@ int windturb_dg::init(OBJECT *parent)
 			Rg = 0.000;
 			Xg = 0.000;                           //*******************Defaults specified
 			
-			if ((turbine_height != -9999) && (Rated_VA == -9999)){                 //Todo: increase upper limits to 300 m/10 GW
+			if ((turbine_height != -9999) && (Rated_VA == -9999)){                 // while estimating, upper limit of height is 300 m, upper limit of capacity is 11 GW
 				if (turbine_height <= 0){
 					GL_THROW ("turbine height cannot have a negative or zero value.");
 				} else {
@@ -594,11 +593,11 @@ int windturb_dg::init(OBJECT *parent)
 						Rated_VA = 2400;
 					} else if ((turbine_height >= 25) && (turbine_height < 45)){
 						Rated_VA = 10000;
-					} else if ((turbine_height >= 45) && (turbine_height < 105)){
+					} else if ((turbine_height >= 45) && (turbine_height < 300)){
 						Rated_VA = (exp((turbine_height + 104.402)/24.8885))*1000;
-					} else if (turbine_height >= 105){
-						Rated_VA = 5000000;
-						turbine_height = 105;
+					} else if (turbine_height >= 300){
+						Rated_VA = 11000000000;
+						turbine_height = 300;
 						gl_warning("windturb_dg (id:%d, name:%s): Specified turbine height greater than the maximum allowable value. Limited to : %.1f m", obj->id,obj->name, turbine_height);
 					} else {
 						GL_THROW("windturb_dg Invalid input %f",turbine_height);
@@ -614,11 +613,11 @@ int windturb_dg::init(OBJECT *parent)
 						turbine_height = 21;
 					} else if ((Rated_VA >= 4500) && (Rated_VA < 300000)){
 						turbine_height = 37;
-					} else if ((Rated_VA >= 300000) && (Rated_VA < 5000000)){
+					} else if ((Rated_VA >= 300000) && (Rated_VA < 11000000000)){
 						turbine_height = 24.8885*log(Rated_VA/1000) - 104.402;
-					} else if (Rated_VA >= 5000000){
-						Rated_VA = 5000000;
-						turbine_height = 105;
+					} else if (Rated_VA >= 11000000000){
+						Rated_VA = 11000000000;
+						turbine_height = 300;
 						gl_warning("windturb_dg (id:%d, name:%s): Specified turbine capacity greater than the maximum allowable value. Limited to : %.1f VA", obj->id,obj->name, Rated_VA);
 					} else {
 						GL_THROW("windturb_dg Invalid input %f",Rated_VA);
@@ -684,12 +683,15 @@ int windturb_dg::init(OBJECT *parent)
 
 			csvData = readCSV(file);
 			
+			if (csvData.size() == 0){
+				GL_THROW("Unable to read power curve .csv file");
+			}
+			
 			int k=0;
 			int l=0;
 			for ( size_t i = 0; i < csvData.size(); i++ )
 			{
 				for ( size_t j = 0; j < csvData[i].size(); j++ ){ 
-					//std::cout << csvData[i][j] << ' ';
 					
 					if (j == 0){
 						if (k < (sizeof(Generic_Power_Curve[0])/sizeof(double))){
@@ -775,7 +777,6 @@ int windturb_dg::init(OBJECT *parent)
 		{
 			//Flag properly
 			parent_is_valid = true;
-			parent_is_meter = true;
 			parent_is_triplex = false;
 
 			//Map phases
@@ -859,13 +860,12 @@ int windturb_dg::init(OBJECT *parent)
 		}
 		else if (gl_object_isa(parent,"triplex_meter","powerflow"))
 		{
-			//GL_THROW("The wind turbine model does currently support direct connection to single phase or triplex meters. Connect through a rectifier-inverter combination.");
-			/*  TROUBLESHOOT
-			This model does not currently support connection to a triplex system.  Please connect to a 3-phase meter.
-			*/
+			if (Turbine_implementation == COEFF_OF_PERFORMANCE){
+				GL_THROW("windturb_dg (id:%d): 3-phase coefficient of performance implementation uses a 3-phase generator and cannot be connected to a triplex meter",obj->id);
+			}
+			
 			//Set flags			
 			parent_is_valid = true;
-			parent_is_meter = true;
 			parent_is_triplex = true;
 
 			//Map the variables
@@ -916,10 +916,9 @@ int windturb_dg::init(OBJECT *parent)
 		{
 			//Set the "pull flag"
 			parent_is_valid = true;
-			parent_is_meter = true;
 			parent_is_triplex = false;
 			
-			number_of_phases_out = 0;
+			number_of_phases_out = 3;
 
 			//Map the voltages
 			temp_property_pointer = new gld_property(parent,"V_Rated");
