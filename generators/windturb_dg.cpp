@@ -62,7 +62,7 @@ windturb_dg::windturb_dg(MODULE *module)
 			PT_KEYWORD,"GEN_TURB_POW_CURVE_10KW",(enumeration)GEN_TURB_POW_CURVE_10KW, PT_DESCRIPTION, "Generic model for a 10kW turbine, power curve implementation",
 			PT_KEYWORD,"GEN_TURB_POW_CURVE_100KW",(enumeration)GEN_TURB_POW_CURVE_100KW, PT_DESCRIPTION, "Generic model for a 100kW turbine, power curve implementation",
 			PT_KEYWORD,"GEN_TURB_POW_CURVE_1_5MW",(enumeration)GEN_TURB_POW_CURVE_1_5MW, PT_DESCRIPTION, "Generic model for a 1.5MW turbine, power curve implementation",
-			PT_enumeration,"Turbine_implementation",PADDR(Turbine_implementation), PT_DESCRIPTION, "Type of implementation for wind turbine generator",
+			PT_enumeration,"Turbine_implementation",PADDR(Turbine_implementation), PT_DESCRIPTION, "Type of implementation for wind turbine model",
 			PT_KEYWORD,"COEFF_OF_PERFORMANCE",(enumeration)COEFF_OF_PERFORMANCE, PT_DESCRIPTION, "Wind turbine generator implementation based on Coefficient of performance",
 			PT_KEYWORD,"POWER_CURVE",(enumeration)POWER_CURVE, PT_DESCRIPTION, "Wind turbine implementation based on Generic Power Curve",
 
@@ -327,7 +327,7 @@ int windturb_dg::init(OBJECT *parent)
 			}
 			if (Turbine_implementation == POWER_CURVE){
 				Turbine_implementation = COEFF_OF_PERFORMANCE;
-				gl_warning("windturb_dg (id:%d, name:%s): GENERIC_SYNCH_LARGE/GENERIC_IND_LARGE is not compatible with the Power Curve turbine model. Assuming legacy coefficient of performance model", obj->id,obj->name);
+				gl_warning("windturb_dg (id:%d, name:%s): GENERIC_SYNCH_LARGE/GENERIC_IND_LARGE is not compatible with the power curve implementation. Switching to legacy coefficient of performance implementation.", obj->id,obj->name);
 			}
 			break;
 		case GENERIC_IND_MID:
@@ -365,7 +365,7 @@ int windturb_dg::init(OBJECT *parent)
 			}
 			if (Turbine_implementation == POWER_CURVE){
 				Turbine_implementation = COEFF_OF_PERFORMANCE;
-				gl_warning("windturb_dg (id:%d, name:%s): GENERIC_SYNCH_MID/GENERIC_IND_MID is not compatible with the Power Curve turbine model. Assuming legacy coefficient of performance model", obj->id,obj->name);
+				gl_warning("windturb_dg (id:%d, name:%s): GENERIC_SYNCH_MID/GENERIC_IND_MID is not compatible with the power curve implementation. Switching to legacy coefficient of performance implementation.", obj->id,obj->name);
 			}
 			break;
 		case GENERIC_IND_SMALL:					
@@ -403,7 +403,7 @@ int windturb_dg::init(OBJECT *parent)
 			}
 			if (Turbine_implementation == POWER_CURVE){
 				Turbine_implementation = COEFF_OF_PERFORMANCE;
-				gl_warning("windturb_dg (id:%d, name:%s): GENERIC_SYNCH_SMALL/GENERIC_IND_SMALL is not compatible with the Power Curve turbine model. Assuming legacy coefficient of performance model", obj->id,obj->name);
+				gl_warning("windturb_dg (id:%d, name:%s): GENERIC_SYNCH_SMALL/GENERIC_IND_SMALL is not compatible with the power curve implementation. Switching to legacy coefficient of performance implementation.", obj->id,obj->name);
 			}
 			break;
 		case VESTAS_V82:	//Include manufacturer's data - cases can be added to call other wind turbines
@@ -425,7 +425,7 @@ int windturb_dg::init(OBJECT *parent)
 			Xg = 0.000;
 			if (Turbine_implementation == POWER_CURVE){
 				Turbine_implementation = COEFF_OF_PERFORMANCE;
-				gl_warning("windturb_dg (id:%d, name:%s): VESTAS_V82 is not compatible with the Power Curve turbine model. Assuming legacy coefficient of performance model", obj->id,obj->name);
+				gl_warning("windturb_dg (id:%d, name:%s): VESTAS_V82 is not compatible with the power curve implementation. Switching to legacy coefficient of performance implementation.", obj->id,obj->name);
 			}
 			break;
 		case GE_25MW:
@@ -451,7 +451,7 @@ int windturb_dg::init(OBJECT *parent)
 			Xg = 0.000;
 			if (Turbine_implementation == POWER_CURVE){
 				Turbine_implementation = COEFF_OF_PERFORMANCE;
-				gl_warning("windturb_dg (id:%d, name:%s): GE_25MW is not compatible with the Power Curve turbine model. Assuming legacy coefficient of performance model", obj->id,obj->name);
+				gl_warning("windturb_dg (id:%d, name:%s): GE_25MW is not compatible with the power curve implementation. Switching to legacy coefficient of performance implementation.", obj->id,obj->name);
 			}
 			break;
 		case BERGEY_10kW:
@@ -477,7 +477,7 @@ int windturb_dg::init(OBJECT *parent)
 			Xg = 0.000;
 			if (Turbine_implementation == POWER_CURVE){
 				Turbine_implementation = COEFF_OF_PERFORMANCE;
-				gl_warning("windturb_dg (id:%d, name:%s): BERGEY_10kW is not compatible with the Power Curve turbine model. Assuming legacy coefficient of performance model", obj->id,obj->name);
+				gl_warning("windturb_dg (id:%d, name:%s): BERGEY_10kW is not compatible with the power curve implementation. Switching to legacy coefficient of performance implementation.", obj->id,obj->name);
 			}
 			break;
 		case USER_DEFINED:
@@ -562,73 +562,77 @@ int windturb_dg::init(OBJECT *parent)
 			Rg = 0.000;
 			Xg = 0.000;                           //*******************Defaults specified
 			
-			//Estimating turbine capacity/height if only turbine height/capacity is specified. Uses capacity-height clusters. While estimating, upper limit of height is 300 m, upper limit of capacity is 11 GW
+			
+			//Basic checks on height and capacity here
+			if (turbine_height > 400){
+				gl_warning("windturb_dg (id:%d, name:%s): Specified turbine height of %.1f m is greater than 400 m and may be unrealistically tall.", obj->id,obj->name, turbine_height);
+			}
+			if (Rated_VA > 25000000){
+				gl_warning("windturb_dg (id:%d, name:%s): Specified turbine capacity of %.1f VA is greater than 25 MW and may be unrealistically large.", obj->id,obj->name, Rated_VA);
+			}
+			
+			if ((turbine_height <= 0) && (turbine_height != -9999)) {      //Checks for user-specified turbine height
+				GL_THROW ("Turbine height must have a positive value.");
+			}
+			if ((Rated_VA <= 0) && (Rated_VA != -9999)){                   //Checks for user-specified turbine capacity
+				GL_THROW ("Turbine capacity must have a positive value.");
+			}
+			
+			//Estimating turbine capacity/height if only turbine height/capacity is specified. Uses capacity-height clusters. While estimating, upper limit of height is 400 m, upper limit of capacity is 25 MW
 			if ((turbine_height != -9999) && (Rated_VA == -9999)){                 // Case when only turbine height is specified by the user
-				if (turbine_height <= 0){
-					GL_THROW ("turbine height cannot have a negative or zero value.");
+				gl_warning("windturb_dg (id:%d, name:%s): Turbine capacity is unspecified. Approximating turbine capacity from the height provided.", obj->id,obj->name);
+				if ((turbine_height > 0) && (turbine_height < 25)){
+					Rated_VA = 2400;
+				} else if ((turbine_height >= 25) && (turbine_height < 45)){
+					Rated_VA = 10000;
+				} else if ((turbine_height >= 45)){
+					Rated_VA = (exp((turbine_height + 104.402)/24.8885))*1000;
+					if (Rated_VA > 25000000){
+						Rated_VA = 25000000;
+						gl_warning("windturb_dg (id:%d, name:%s): Turbine capacity is set to the inferred-capacity limit.", obj->id,obj->name);
+					} 
 				} else {
-					gl_warning("windturb_dg (id:%d, name:%s): Attempting to approximate Turbine capacity from the height provided. May be not accurate", obj->id,obj->name);
-					if ((turbine_height > 0) && (turbine_height < 25)){
-						Rated_VA = 2400;
-					} else if ((turbine_height >= 25) && (turbine_height < 45)){
-						Rated_VA = 10000;
-					} else if ((turbine_height >= 45) && (turbine_height < 300)){
-						Rated_VA = (exp((turbine_height + 104.402)/24.8885))*1000;
-					} else if (turbine_height >= 300){
-						Rated_VA = 11000000000;
-						turbine_height = 300;
-						gl_warning("windturb_dg (id:%d, name:%s): Specified turbine height greater than the maximum allowable value. Limited to : %.1f m", obj->id,obj->name, turbine_height);
-					} else {
-						GL_THROW("windturb_dg Invalid input %f",turbine_height);
-					}
-					gl_warning("windturb_dg (id:%d, name:%s): Translated turbine height to approximate capacity of: %.1f VA - May not be accurate", obj->id,obj->name, Rated_VA);
+					GL_THROW("windturb_dg Invalid input %f",turbine_height);
 				}
+				gl_warning("windturb_dg (id:%d, name:%s): Approximated turbine capacity is: %.1f VA.", obj->id,obj->name, Rated_VA);
+				
 			} else if ((turbine_height == -9999) && (Rated_VA != -9999)){          // Case when only turbine capacity is specified by the user
-				if (Rated_VA <= 0){
-					GL_THROW ("Turbine capacity cannot have a negative or zero value.");
-				} else{
-					gl_warning("windturb_dg (id:%d, name:%s): Attempting to approximate Turbine height from the capacity provided. May be not accurate", obj->id,obj->name);
-					if ((Rated_VA > 0) && (Rated_VA < 4500)){
-						turbine_height = 21;
-					} else if ((Rated_VA >= 4500) && (Rated_VA < 300000)){
-						turbine_height = 37;
-					} else if ((Rated_VA >= 300000) && (Rated_VA < 11000000000)){
-						turbine_height = 24.8885*log(Rated_VA/1000) - 104.402;
-					} else if (Rated_VA >= 11000000000){
-						Rated_VA = 11000000000;
-						turbine_height = 300;
-						gl_warning("windturb_dg (id:%d, name:%s): Specified turbine capacity greater than the maximum allowable value. Limited to : %.1f VA", obj->id,obj->name, Rated_VA);
-					} else {
-						GL_THROW("windturb_dg Invalid input %f",Rated_VA);
+				gl_warning("windturb_dg (id:%d, name:%s): Turbine height is unspecified. Approximating Turbine height from the capacity provided.", obj->id,obj->name);
+				if ((Rated_VA > 0) && (Rated_VA < 4500)){
+					turbine_height = 21;
+				} else if ((Rated_VA >= 4500) && (Rated_VA < 300000)){
+					turbine_height = 37;
+				} else if ((Rated_VA >= 300000)){
+					turbine_height = 24.8885*log(Rated_VA/1000) - 104.402;
+					if (turbine_height > 400){
+						turbine_height = 400;
+						gl_warning("windturb_dg (id:%d, name:%s): Turbine height is set to the inferred-height limit.", obj->id,obj->name);
 					}
-					gl_warning("windturb_dg (id:%d, name:%s): Translated turbine capacity to approximate height of: %.1f m - May not be accurate", obj->id,obj->name, turbine_height);
+				} else {
+					GL_THROW("windturb_dg Invalid input %f",Rated_VA);
 				}
+				gl_warning("windturb_dg (id:%d, name:%s): Approximated turbine height is: %.1f m.", obj->id,obj->name, turbine_height);
+				
 			} else if ((turbine_height == -9999) && (Rated_VA == -9999)) {        // Case when none of capacity or height is specified by the user
 				turbine_height = 37;    //Setting to defaults i.e. 100 kW turbine capacity and height
 				Rated_VA = 100000;
-				gl_warning("windturb_dg (id:%d, name:%s): Turbine parameters not specified. Setting turbine capacity to: %.1f VA and turbine height to: %.1f m - (Default parameters)", obj->id,obj->name, Rated_VA, turbine_height);
+				gl_warning("windturb_dg (id:%d, name:%s): Turbine capacity and height not specified. Using default turbine capacity of %.1f VA and default turbine height of %.1f m.", obj->id,obj->name, Rated_VA, turbine_height);
 			} else {                                                              //Case when both capacity and height are specified by user. Check for incompatibility and issue warnings.
-				if (turbine_height <= 0){
-					GL_THROW ("turbine height cannot have a negative or zero value.");
-				} else if (Rated_VA <= 0){
-					GL_THROW ("Turbine capacity cannot have a negative or zero value.");
+				if ((Rated_VA > 0) && (Rated_VA < 4500)){
+					if ((turbine_height < 4) || (turbine_height > 41)){
+						gl_warning("windturb_dg (id:%d, name:%s): Potential mismatch of turbine capacity %.1f VA and turbine height %.1f m.", obj->id,obj->name, Rated_VA, turbine_height);
+					}
+				} else if ((Rated_VA >= 4500) && (Rated_VA < 20000)){
+					if ((turbine_height < 12) || (turbine_height > 49)){
+						gl_warning("windturb_dg (id:%d, name:%s): Potential mismatch of turbine capacity %.1f VA and turbine height %.1f m.", obj->id,obj->name, Rated_VA, turbine_height);
+					}
+				} else if ((Rated_VA >= 20000) && (Rated_VA < 300000)){
+					if ((turbine_height < 18) || (turbine_height > 55)){
+						gl_warning("windturb_dg (id:%d, name:%s): Potential mismatch of turbine capacity %.1f VA and turbine height %.1f m.", obj->id,obj->name, Rated_VA, turbine_height);
+					}
 				} else {
-					if ((Rated_VA > 0) && (Rated_VA < 4500)){
-						if ((turbine_height < 4) || (turbine_height > 41)){
-							gl_warning("windturb_dg (id:%d, name:%s): Potential mismatch of Turbine parameters i.e. Turbine capacity: %.1f VA and turbine height: %.1f m", obj->id,obj->name, Rated_VA, turbine_height);
-						}
-					} else if ((Rated_VA >= 4500) && (Rated_VA < 20000)){
-						if ((turbine_height < 12) || (turbine_height > 49)){
-							gl_warning("windturb_dg (id:%d, name:%s): Potential mismatch of Turbine parameters i.e. Turbine capacity: %.1f VA and turbine height: %.1f m", obj->id,obj->name, Rated_VA, turbine_height);
-						}
-					} else if ((Rated_VA >= 20000) && (Rated_VA < 300000)){
-						if ((turbine_height < 18) || (turbine_height > 55)){
-							gl_warning("windturb_dg (id:%d, name:%s): Potential mismatch of Turbine parameters i.e. Turbine capacity: %.1f VA and turbine height: %.1f m", obj->id,obj->name, Rated_VA, turbine_height);
-						}
-					} else {
-						if ((turbine_height < ((24.8885*log(Rated_VA/1000) - 104.402) - 20)) || (turbine_height > ((24.8885*log(Rated_VA/1000) - 104.402) + 11))){
-							gl_warning("windturb_dg (id:%d, name:%s): Potential mismatch of Turbine parameters i.e. Turbine capacity: %.1f VA and turbine height: %.1f m", obj->id,obj->name, Rated_VA, turbine_height);
-						}
+					if ((turbine_height < ((24.8885*log(Rated_VA/1000) - 104.402) - 20)) || (turbine_height > ((24.8885*log(Rated_VA/1000) - 104.402) + 11))){
+						gl_warning("windturb_dg (id:%d, name:%s): Potential mismatch of turbine capacity %.1f VA and turbine height %.1f m.", obj->id,obj->name, Rated_VA, turbine_height);
 					}
 				}
 			}
@@ -642,20 +646,35 @@ int windturb_dg::init(OBJECT *parent)
 	}
 	
 	
-	for (int i=0;i < (sizeof (Generic_Power_Curve[0]) /sizeof (double));i++) {
-		Generic_Power_Curve[0][i] = -1;
-		Generic_Power_Curve[1][i] = -1;
+	for (int i=0;i < (sizeof (Power_Curve[0]) /sizeof (double));i++) {
+		Power_Curve[0][i] = -1;
+		Power_Curve[1][i] = -1;
 	}
 	
-	double Generic_Power_Curve_default[2][21] = {                           //Default power curve 
+	double Power_Curve_default[2][21] = {                           //Default power curve 
 		{2.5, 3.0, 3.5, 4.0, 4.5, 5.0, 5.5, 6.0, 6.5, 7.0, 7.5, 8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 11.0, 11.5, 12.0, 25.0},
 		{0.0, 0.0084725, 0.026315, 0.049903, 0.083323, 0.12564, 0.17541, 0.23191, 0.30286, 0.38807, 0.49134, 0.58717, 0.66827, 0.75071, 0.82431, 0.89813, 0.95368, 1.0013, 1.0331, 1.0602, 1.0602}
 	};
 	
 	if (Turbine_implementation == POWER_CURVE){
 
-		if(strstr(power_curve_csv, ".csv")){             //read power curve .csv file if provided. Doing sanity checks on data format
-		
+		//Todo: .csv should be ending 
+		if(!(strstr(power_curve_csv, ".csv"))){             //read power curve .csv file if provided. Doing sanity checks on data format 
+			// No valid .csv file name - Using default power curve	
+			if (strcmp(power_curve_csv,"")==0) {
+				// .csv file name not specified - Issue warning
+				gl_warning("windturb_dg (id:%d, name:%s): No user defined power curve provided. Resorting to default power curve.", obj->id,obj->name);
+			} else{
+				// Invalid .csv file name specified - Issue warning
+				gl_warning("windturb_dg (id:%d, name:%s): windturb_dg: Unrecognized file type. Resorting to default power curve.", obj->id,obj->name);
+			}
+			
+			for (int i=0; i<sizeof(Power_Curve_default[0])/sizeof(double); i++){
+				Power_Curve[0][i] = Power_Curve_default[0][i];
+				Power_Curve[1][i] = Power_Curve_default[1][i];
+			}
+		} else {
+			// Valid .csv file name found - Attempting to load power curve data from .csv file
 			std::ifstream file(power_curve_csv);
 			
 			std::vector<std::vector<std::string>> csvData;
@@ -663,78 +682,53 @@ int windturb_dg::init(OBJECT *parent)
 			csvData = readCSV(file);
 			
 			if (csvData.size() == 0){
-				GL_THROW("Unable to read power curve .csv file");
+				// Empty .csv file - Issue an error
+				GL_THROW("Unable to read power curve data from .csv file.");
 			}
 			
-			int k=0;
-			int l=0;
+			if (csvData.size() < 3){
+				// Too few points in .csv file - Issue an error
+				GL_THROW("Invalid data format. Provide at least 3 data points.");
+			}
+			
+			if (csvData.size() > (sizeof(Power_Curve[0])/sizeof(double))){
+				// Too many points in .csv file - Issue an error
+				GL_THROW ("Invalid data format. Provide up to %lu points.", (sizeof(Power_Curve[0])/sizeof(double)));
+			}
 			for ( size_t i = 0; i < csvData.size(); i++ )
 			{
-				for ( size_t j = 0; j < csvData[i].size(); j++ )
+				if (csvData[i].size() != 2){
+					// Too few cloumns in .csv file row - Issue an error
+					GL_THROW ("Invalid data format. More than 2 columns in row %i of the .csv file", i+1);
+				}
+				
+				// Copying wind speed data from data object to power curve object
+				try
 				{
-					if (j == 0)
-					{
-						if (k < (sizeof(Generic_Power_Curve[0])/sizeof(double)))
-						{
-							try
-							{
-								Generic_Power_Curve[0][k] = std::stod(csvData[i][j]);
-							}
-							catch(...)
-							{
-								gl_warning("windturb_dg (id:%d, name:%s): Invalid entry in .csv file - Please check .csv file", obj->id,obj->name);
-							}
-						} else 
-						{
-							GL_THROW ("Invalid data format - More than %lu data points in wind speed and power output fields, Provide file with upto %lu points", (sizeof(Generic_Power_Curve[0])/sizeof(double)), (sizeof(Generic_Power_Curve[0])/sizeof(double)));
-						}
-						k++;
-					} else if (j == 1)
-					{
-						if (l < (sizeof(Generic_Power_Curve[0])/sizeof(double)))
-						{
-							try
-							{
-								Generic_Power_Curve[1][l] = std::stod(csvData[i][j]);
-							} 
-							catch(...)
-							{
-								gl_warning("windturb_dg (id:%d, name:%s): Invalid entry in .csv file - Please check .csv file", obj->id,obj->name);
-							}
-						} else 
-						{
-							GL_THROW ("Invalid data format - More than %lu data points in wind speed and power output fields, Provide file with upto %lu points", (sizeof(Generic_Power_Curve[0])/sizeof(double)), (sizeof(Generic_Power_Curve[0])/sizeof(double)));
-						}
-						l++;
-					} else 
-					{
-						GL_THROW ("Invalid data format - More than 2 columns in .csv file");
-					}
+					Power_Curve[0][i] = std::stod(csvData[i][0]);
+				}
+				catch(...)
+				{
+					GL_THROW("Invalid entry in row %i and column %i of the .csv file. Please check .csv file.", i+1, 1);
+				}
+				
+				// Copying turbine power data from data object to power curve object
+				try
+				{
+					Power_Curve[1][i] = std::stod(csvData[i][1]);
+				} 
+				catch(...)
+				{
+					GL_THROW("Invalid entry in row %i and column %i of the .csv file. Please check .csv file.", i+1, 2);
 				}
 			}
-			if (k < 3){
-				GL_THROW("Invalid data format - less than 3 data points in wind speed and power output fields. Provide atleast 3 data points");
-			}
-		} else {
-			if (strcmp(power_curve_csv,"")==0) {
-				gl_warning("windturb_dg (id:%d, name:%s): No user defined power curve provided, resorting to default power curve", obj->id,obj->name);
-			} else{
-				gl_warning("windturb_dg (id:%d, name:%s): windturb_dg: unrecognized filetype, resorting to default power curve", obj->id,obj->name);
-			}
 			
-			for (int i=0; i<sizeof(Generic_Power_Curve_default[0])/sizeof(double); i++){
-				Generic_Power_Curve[0][i] = Generic_Power_Curve_default[0][i];
-				Generic_Power_Curve[1][i] = Generic_Power_Curve_default[1][i];
-			}
 		}
 		
 		int valid_entries = 0;
-		for (int i=0;i < (sizeof (Generic_Power_Curve[0]) /sizeof (double));i++) {
-			if (Generic_Power_Curve[0][i] != -1){
+		for (int i=0;i < (sizeof (Power_Curve[0]) /sizeof (double));i++) {
+			if ((Power_Curve[0][i] != -1) && (Power_Curve[1][i] != -1)){
 				valid_entries ++;
-			}
-			if (((Generic_Power_Curve[0][i] != -1) && (Generic_Power_Curve[1][i] == -1)) || ((Generic_Power_Curve[0][i] == -1) && (Generic_Power_Curve[1][i] != -1))){
-				GL_THROW("Invalid .csv file data format - unequal number of data points in wind speed and power output fields");
 			}
 		}		
 		number_of_points = valid_entries;
@@ -1460,15 +1454,15 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			voltage_B = value_Circuit_V[1];
 			voltage_C = value_Circuit_V[2];
 			
-			if (WSadj <= Generic_Power_Curve[0][0]) {	
+			if (WSadj <= Power_Curve[0][0]) {	
 				Power_calc = 0;	
-			} else if (WSadj >= Generic_Power_Curve[0][number_of_points-1]){
+			} else if (WSadj >= Power_Curve[0][number_of_points-1]){
 				Power_calc = 0;
 			} else {	  
 				for (int i=0; i<(number_of_points-1); i++){
-					if (WSadj >= Generic_Power_Curve[0][i] && WSadj <= Generic_Power_Curve[0][i+1]){
+					if (WSadj >= Power_Curve[0][i] && WSadj <= Power_Curve[0][i+1]){
 
-						Power_calc = Generic_Power_Curve[1][i] + ((Generic_Power_Curve[1][i+1] - Generic_Power_Curve[1][i]) * ((WSadj - Generic_Power_Curve[0][i]) / (Generic_Power_Curve[0][i+1] - Generic_Power_Curve[0][i])));
+						Power_calc = Power_Curve[1][i] + ((Power_Curve[1][i+1] - Power_Curve[1][i]) * ((WSadj - Power_Curve[0][i]) / (Power_Curve[0][i+1] - Power_Curve[0][i])));
 					}
 				}
 			}
@@ -1698,43 +1692,15 @@ void windturb_dg::push_complex_powerflow_values(void)
 }
 //Generic Functions to read .csv files
 std::vector<std::string> windturb_dg::readCSVRow(const std::string &row) {
-    CSVState state = CSVState::UnquotedField;
     std::vector<std::string> fields {""};
     size_t i = 0; // index of the current field
     for (char c : row) {
-        switch (state) {
-            case CSVState::UnquotedField:
-                switch (c) {
-                    case ',': // end of field
-                              fields.push_back(""); i++;
-                              break;
-                    case '"': state = CSVState::QuotedField;
-                              break;
-                    default:  fields[i].push_back(c);
-                              break; }
-                break;
-            case CSVState::QuotedField:
-                switch (c) {
-                    case '"': state = CSVState::QuotedQuote;
-                              break;
-                    default:  fields[i].push_back(c);
-                              break; }
-                break;
-            case CSVState::QuotedQuote:
-                switch (c) {
-                    case ',': // , after closing quote
-                              fields.push_back(""); i++;
-                              state = CSVState::UnquotedField;
-                              break;
-                    case '"': // "" -> "
-                              fields[i].push_back('"');
-                              state = CSVState::QuotedField;
-                              break;
-                    default:  // end of quote
-                              state = CSVState::UnquotedField;
-                              break; }
-                break;
-        }
+		if (c == ','){
+			fields.push_back("");
+			i++;
+		} else {
+			fields[i].push_back(c);
+		}
     }
     return fields;
 }

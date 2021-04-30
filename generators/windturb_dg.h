@@ -49,7 +49,7 @@ private:
 	bool parent_is_valid;				//< Flag to pointers
 	bool parent_is_triplex;
 	
-	double Generic_Power_Curve[2][100];  //Look-up table carrying power curve values. Maximum points limited to 100. Equals default (defined in .cpp) or user defined power curve 
+	double Power_Curve[2][100];  //Look-up table carrying power curve values. Maximum points limited to 100. Equals default (defined in .cpp) or user defined power curve 
 	int number_of_points;
 
     gld_property *pPress;			
@@ -85,8 +85,6 @@ public:
 	enum {POWER_CURVE=1, COEFF_OF_PERFORMANCE}; 
 	enumeration Turbine_implementation;
 	
-	enum class CSVState {UnquotedField, QuotedField, QuotedQuote};
-
 	double blade_diam;
 	double turbine_height;
 	double roughness_l;
