@@ -60,7 +60,6 @@ cp /usr/local/lib/libboost_thread.a %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_context.a %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_contract.a %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_coroutine.a %{buildroot}/%{_libdir}/gridlabd
-cp /usr/local/lib/libboost_date_time.a %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_filesystem.a %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_regex.a %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_graph.a %{buildroot}/%{_libdir}/gridlabd
@@ -88,13 +87,11 @@ cp /usr/local/lib/libboost_type_erasure.a %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_wave.a %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_atomic.so.1.68.0 %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_system.so.1.68.0 %{buildroot}/%{_libdir}/gridlabd
-cp /usr/local/lib/libboost_chrono.so.1.68.0 %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_container.so.1.68.0 %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_thread.so.1.68.0 %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_context.so.1.68.0 %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_contract.so.1.68.0 %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_coroutine.so.1.68.0 %{buildroot}/%{_libdir}/gridlabd
-cp /usr/local/lib/libboost_date_time.so.1.68.0 %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_filesystem.so.1.68.0 %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_regex.so.1.68.0 %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_graph.so.1.68.0 %{buildroot}/%{_libdir}/gridlabd
@@ -112,15 +109,12 @@ cp /usr/local/lib/libboost_signals.so.1.68.0 %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_stacktrace_noop.so.1.68.0 %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_stacktrace_addr2line.so.1.68.0 %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_stacktrace_basic.so.1.68.0 %{buildroot}/%{_libdir}/gridlabd
-cp /usr/local/lib/libboost_timer.so.1.68.0 %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_prg_exec_monitor.so.1.68.0 %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_unit_test_framework.so.1.68.0 %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_type_erasure.so.1.68.0 %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_wave.so.1.68.0 %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_exception.a %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_system.a %{buildroot}/%{_libdir}/gridlabd
-cp /usr/local/lib/libboost_chrono.a %{buildroot}/%{_libdir}/gridlabd
-cp /usr/local/lib/libboost_timer.a %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_test_exec_monitor.a %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_fiber.a %{buildroot}/%{_libdir}/gridlabd
 cp /usr/local/lib/libboost_fiber.so.1.68.0 %{buildroot}/%{_libdir}/gridlabd
@@ -134,12 +128,10 @@ rm -rf %{buildroot}
 
 %post
  ln -s %{_libdir}/gridlabd/libboost_atomic.so.1.68.0 %{_libdir}/gridlabd/libboost_atomic.so
- ln -s %{_libdir}/gridlabd/libboost_chrono.so.1.68.0 %{_libdir}/gridlabd/libboost_chrono.so
  ln -s %{_libdir}/gridlabd/libboost_container.so.1.68.0 %{_libdir}/gridlabd/libboost_container.so
  ln -s %{_libdir}/gridlabd/libboost_context.so.1.68.0 %{_libdir}/gridlabd/libboost_context.so
  ln -s %{_libdir}/gridlabd/libboost_contract.so.1.68.0 %{_libdir}/gridlabd/libboost_contract.so
  ln -s %{_libdir}/gridlabd/libboost_coroutine.so.1.68.0 %{_libdir}/gridlabd/libboost_coroutine.so
- ln -s %{_libdir}/gridlabd/libboost_date_time.so.1.68.0 %{_libdir}/gridlabd/libboost_date_time.so
  ln -s %{_libdir}/gridlabd/libboost_fiber.so.1.68.0 %{_libdir}/gridlabd/libboost_fiber.so
  ln -s %{_libdir}/gridlabd/libboost_filesystem.so.1.68.0 %{_libdir}/gridlabd/libboost_filesystem.so
  ln -s %{_libdir}/gridlabd/libboost_graph.so.1.68.0 %{_libdir}/gridlabd/libboost_graph.so
@@ -164,7 +156,6 @@ rm -rf %{buildroot}
  ln -s %{_libdir}/gridlabd/libboost_stacktrace_noop.so.1.68.0 %{_libdir}/gridlabd/libboost_stacktrace_noop.so
  ln -s %{_libdir}/gridlabd/libboost_system.so.1.68.0 %{_libdir}/gridlabd/libboost_system.so
  ln -s %{_libdir}/gridlabd/libboost_thread.so.1.68.0 %{_libdir}/gridlabd/libboost_thread.so
- ln -s %{_libdir}/gridlabd/libboost_timer.so.1.68.0 %{_libdir}/gridlabd/libboost_timer.so
  ln -s %{_libdir}/gridlabd/libboost_type_erasure.so.1.68.0 %{_libdir}/gridlabd/libboost_type_erasure.so
  ln -s %{_libdir}/gridlabd/libboost_unit_test_framework.so.1.68.0 %{_libdir}/gridlabd/libboost_unit_test_framework.so
  ln -s %{_libdir}/gridlabd/libboost_wave.so.1.68.0 %{_libdir}/gridlabd/libboost_wave.so
@@ -180,12 +171,10 @@ rm -rf %{buildroot}
 
 %postun
 rm -f %{_libdir}/gridlabd/libboost_atomic.so
-rm -f %{_libdir}/gridlabd/libboost_chrono.so
 rm -f %{_libdir}/gridlabd/libboost_container.so
 rm -f %{_libdir}/gridlabd/libboost_context.so
 rm -f %{_libdir}/gridlabd/libboost_contract.so
 rm -f %{_libdir}/gridlabd/libboost_coroutine.so
-rm -f %{_libdir}/gridlabd/libboost_date_time.so
 rm -f %{_libdir}/gridlabd/libboost_fiber.so
 rm -f %{_libdir}/gridlabd/libboost_filesystem.so
 rm -f %{_libdir}/gridlabd/libboost_graph.so
@@ -210,7 +199,6 @@ rm -f %{_libdir}/gridlabd/libboost_stacktrace_basic.so
 rm -f %{_libdir}/gridlabd/libboost_stacktrace_noop.so
 rm -f %{_libdir}/gridlabd/libboost_system.so
 rm -f %{_libdir}/gridlabd/libboost_thread.so
-rm -f %{_libdir}/gridlabd/libboost_timer.so
 rm -f %{_libdir}/gridlabd/libboost_type_erasure.so
 rm -f %{_libdir}/gridlabd/libboost_unit_test_framework.so
 rm -f %{_libdir}/gridlabd/libboost_wave.so
