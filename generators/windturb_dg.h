@@ -15,6 +15,10 @@
 
 #include <vector>
 #include <string>
+#include <iostream>
+
+EXPORT STATUS windturb_dg_NR_current_injection_update(OBJECT *obj, int64 iteration_count);
+
 
 	
 class windturb_dg : public gld_object
@@ -60,6 +64,12 @@ private:
 	double value_Temp;				
 	double value_WS;				
 	bool climate_is_valid;			//< Flag to pointer values
+	
+	//For current injection updates
+	complex prev_current[3];
+	bool NR_first_run;
+	
+	complex prev_current12;
 	
 protected:
 	/* TODO: put unpublished but inherited variables */
@@ -168,6 +178,10 @@ public:
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
+	
+	void compute_current_injection(void);
+	void compute_current_injection_pc(void);
+	STATUS updateCurrInjection(int64 iteration_count);
 
 	gld_property *map_complex_value(OBJECT *obj, char *name);
 	gld_property *map_double_value(OBJECT *obj, char *name);
@@ -175,6 +189,7 @@ public:
 	
 	std::vector<std::string> readCSVRow(const std::string &row);
 	std::vector<std::vector<std::string>> readCSV(std::istream &in);
+	bool hasEnding(const std::string &fullString, const std::string &ending);
 
 public:
 	static CLASS *oclass;
