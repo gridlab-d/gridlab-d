@@ -110,7 +110,7 @@ object transformer:23 {
 		target power_out_real;
 		// Solutions were determined from FBS - represents
 		//  less than a 0.1% difference between the answers
-		within 20000;
+		within 5;
 	};
 	object recorder {
 		property power_out_real;

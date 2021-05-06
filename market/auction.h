@@ -113,6 +113,7 @@ public:
 	double capacity_reference_bid_price; // the bid price the capacity reference bids
 	double max_capacity_reference_bid_quantity; // the maximum bid quantity
 	double capacity_reference_bid_quantity; // the bid quantity the capacity reference bids
+	double fixed_uncontrollable_load;		//Imported from auction_ccsi
 	int32 warmup;
 	int64 total_samples;
 	double clearing_scalar;

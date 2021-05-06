@@ -12,7 +12,7 @@ rest_rest_la_CPPFLAGS += -I$(top_srcdir)/core
 rest_rest_la_CPPFLAGS = $(AM_CPPFLAGS)
 
 rest_rest_la_LDFLAGS =
-rest_rest_la_LDFLAGS = $(AM_LDFLAGS)
+rest_rest_la_LDFLAGS += $(AM_LDFLAGS)
 rest_rest_la_LDFLAGS += -ldl
 
 rest_rest_la_LIBADD = 

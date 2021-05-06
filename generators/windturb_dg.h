@@ -19,8 +19,6 @@
 
 EXPORT STATUS windturb_dg_NR_current_injection_update(OBJECT *obj, int64 iteration_count);
 
-
-	
 class windturb_dg : public gld_object
 {
 private:
@@ -124,7 +122,6 @@ public:
 	complex current_A;			//terminal current
 	complex current_B;
 	complex current_C;
-	double store_last_current;  // Store the last solved current to see if the solution is converged
 
 	double TotalRealPow;		//Real power supplied by generator - used for testing
 	double TotalReacPow;		//Reactive power supplied - used for testing

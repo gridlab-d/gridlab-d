@@ -399,7 +399,7 @@ int node::init(OBJECT *parent)
 	if (has_phase(PHASE_S))
 	{
 		//Make sure we're a valid class
-		if (!(gl_object_isa(obj,"triplex_node","powerflow") || gl_object_isa(obj,"triplex_meter","powerflow") || gl_object_isa(obj,"triplex_load","powerflow") || gl_object_isa(obj,"motor","powerflow")))
+		if (!(gl_object_isa(obj,"triplex_node","powerflow") || gl_object_isa(obj,"triplex_meter","powerflow") || gl_object_isa(obj,"triplex_load","powerflow") || gl_object_isa(obj,"motor","powerflow") || gl_object_isa(obj,"performance_motor","powerflow")))
 		{
 			GL_THROW("Object:%d - %s -- has a phase S, but is not triplex!",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
@@ -943,6 +943,22 @@ int node::init(OBJECT *parent)
 				gl_error("INIT: The global default_resistance was less than or equal to zero. default_resistance must be greater than zero.");
 				return 0;
 			}
+
+			//Check and see if in-rush and impedance conversion are enabled - if so, disable one
+			if ((enable_inrush_calculations == true) && (enable_impedance_conversion == true))
+			{
+				//Turn off impedance conversion, otherwise it breaks in-rush in weird ways
+				enable_impedance_conversion = false;
+
+				//Throw as a verbose - behavior is the same
+				gl_verbose("NR: enable_inrush and enable_impedance_conversion conflict - in-rush overrides");
+				/*  TROUBLESHOOT
+				The in-rush-based calculations and enable_impedance_conversion basically do the same thing, but
+				in different sequencing intervals.  When in-rush is enabled, it performs the impedance conversion
+				anyways.  If enable_impedance_conversion is enabled, it can cause conflicts in calculations, so it was
+				disabled.  The observable behavior should not be affected.
+				*/
+			}
 		}//End matrix solver if
 
 		if (mean_repair_time < 0.0)
@@ -1339,12 +1355,11 @@ TIMESTAMP node::NR_node_presync_fxn(TIMESTAMP t0_val)
 		Extra_Data[6] = Extra_Data[7] = Extra_Data[8] = 0.0;
 	}
 
-	//Uncomment us eventually, like when houses work in deltamode
-	////If we're a parent and "have house", zero our accumulator
-	//if ((SubNode==PARENT) && (house_present==true))
-	//{
-	//	nom_res_curr[0] = nom_res_curr[1] = nom_res_curr[2] = 0.0;
-	//}
+	//If we're a parent and "have house", zero our accumulator
+	if ((SubNode==PARENT) && (house_present==true))
+	{
+		nom_res_curr[0] = nom_res_curr[1] = nom_res_curr[2] = 0.0;
+	}
 
 	//Base GFA Functionality
 	//Call the GFA-type functionality, if appropriate
@@ -1759,13 +1774,6 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 				*/
 			}
 		}//End busdata and branchdata null (first in)
-
-		//Comment us out eventually, when houses work in deltamode
-		//If we're a parent and "have house", zero our accumulator
-		if ((SubNode==PARENT) && (house_present==true))
-		{
-			nom_res_curr[0] = nom_res_curr[1] = nom_res_curr[2] = 0.0;
-		}
 
 		//Populate individual object references into deltamode, if needed
 		if ((deltamode_inclusive==true) && (enable_subsecond_models == true) && (prev_NTime==0))
@@ -3711,6 +3719,30 @@ int node::NR_populate(void)
 	//Null the extra function pointer -- the individual object will call to populate this
 	NR_busdata[NR_node_reference].ExtraCurrentInjFunc = NULL;
 	NR_busdata[NR_node_reference].ExtraCurrentInjFuncObject = NULL;
+
+	//Extra functions - see if we're a load - map update if we're in the right mode
+	if ((gl_object_isa(me,"load","powerflow")==true) && (enable_impedance_conversion==true))
+	{
+		//Map the function
+		NR_busdata[NR_node_reference].LoadUpdateFxn = (FUNCTIONADDR)(gl_get_function(me,"pwr_object_load_update"));
+
+		//Make sure it worked
+		if (NR_busdata[NR_node_reference].LoadUpdateFxn == NULL)
+		{
+			GL_THROW("node:%d - %s - Failed to map load_update",me->id,(me->name ? me->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			The attached node was unable to find the exposed function "current_injection_update" on the calling object.  Be sure
+			it supports this functionality and try again.
+			*/
+		}
+		//Default else -- it worked
+	}
+	else
+	{
+		//Not a load
+		NR_busdata[NR_node_reference].LoadUpdateFxn = NULL;
+	}
+	
 
 	//Allocate dynamic variables -- only if something has requested it
 	if ((deltamode_inclusive==true) && ((dynamic_norton==true) || (dynamic_generator==true)))

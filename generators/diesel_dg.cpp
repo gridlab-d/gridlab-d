@@ -37,7 +37,7 @@ diesel_dg::diesel_dg(MODULE *module)
 				PT_KEYWORD,"CONSTANT_PQ",(enumeration)NON_DYN_CONSTANT_PQ,PT_DESCRIPTION,"Non-dynamic mode of diesel generator with constant PQ output as defined",
 				PT_KEYWORD,"DYN_SYNCHRONOUS",(enumeration)DYNAMIC,PT_DESCRIPTION,"Dynamics-capable implementation of synchronous diesel generator",
 		
-			PT_double, "pf", PADDR(power_factor),PT_DESCRIPTION,"desired power factor",
+			PT_double, "pf", PADDR(power_factor),PT_DESCRIPTION,"desired power factor",PT_DEPRECATED,
 
 			//End of synchronous generator inputs
 			PT_double, "Rated_V[V]", PADDR(Rated_V_LL),PT_DESCRIPTION,"nominal line-line voltage in Volts",
@@ -369,7 +369,7 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double,"real_power_generation[W]",PADDR(real_power_gen),PT_DESCRIPTION,"The total real power generation",
 			PT_double,"reactive_power_generation[VAr]",PADDR(imag_power_gen),PT_DESCRIPTION,"The total reactive power generation",
 
-			PT_set, "phases", PADDR(phases), PT_DESCRIPTION, "Specifies which phases to connect to - currently not supported and assumes three-phase connection",
+			PT_set, "phases", PADDR(phases), PT_DESCRIPTION, "Specifies which phases to connect to - currently not supported and assumes three-phase connection",PT_DEPRECATED,
 				PT_KEYWORD, "A",(set)PHASE_A,
 				PT_KEYWORD, "B",(set)PHASE_B,
 				PT_KEYWORD, "C",(set)PHASE_C,
@@ -402,9 +402,6 @@ int diesel_dg::isa(char *classname)
 int diesel_dg::create(void) 
 {
 ////Initialize tracking variables
-
-	power_factor = 0.0;
-
 	//End of synchronous generator inputs
 	Rated_V_LL = 0.0;
 	Rated_V_LN = 0.0;
@@ -695,6 +692,7 @@ int diesel_dg::init(OBJECT *parent)
 	complex_array temp_complex_array;
 	gld_property *pNominal_Voltage;
 	double nominal_voltage_value, nom_test_val;
+	set temp_phases;
 	
 	//Set the deltamode flag, if desired
 	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)
@@ -908,12 +906,12 @@ int diesel_dg::init(OBJECT *parent)
 		}
 
 		//Pull the phase information
-		phases = temp_property_pointer->get_set();
+		temp_phases = temp_property_pointer->get_set();
 
 		//Clear the temporary pointer
 		delete temp_property_pointer;
 
-		if((phases & 0x0007) != 0x0007){//parent does not have all three meters
+		if((temp_phases & 0x0007) != 0x0007){//parent does not have all three meters
 			GL_THROW("The diesel_dg object must be connected to all three phases. Please make sure the parent object has all three phases.");
 			/* TROUBLESHOOT
 			The diesel_dg object is a three-phase generator. This message occured because the parent object does not have all three phases.

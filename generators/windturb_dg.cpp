@@ -863,6 +863,7 @@ int windturb_dg::init(OBJECT *parent)
 				NR_first_run = false;
 			}
 			
+			//Null the triplex interface point, just in case
 			pLine12 = NULL;
 		}
 		else if (gl_object_isa(parent,"triplex_meter","powerflow"))
@@ -1111,9 +1112,7 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//Map the current injection function
 			test_fxn = (FUNCTIONADDR)(gl_get_function(obj->parent, "pwr_current_injection_update_map"));
 
-	//store_last_current = current_A.Mag() + current_B.Mag() + current_C.Mag();
-	
-	//See if it was located
+			//See if it was located
 			if (test_fxn == NULL)
 			{
 				GL_THROW("windturb_dg:%s - failed to map additional current injection mapping for node:%s", (obj->name ? obj->name : "unnamed"), (obj->parent->name ? obj->parent->name : "unnamed"));
@@ -1576,7 +1575,6 @@ void windturb_dg::compute_current_injection(void)
 		GenElecEff = TotalRealPow/Pconv * 100;
 
 		Wind_Speed = WSadj;
-		
 	}
 	// Generator is offline
 	else 
@@ -1959,7 +1957,6 @@ EXPORT STATUS windturb_dg_NR_current_injection_update(OBJECT *obj, int64 iterati
 	//Return what the sub function said we were
 	return temp_status;
 }
-
 
 /*
 [1]	Malinga, B., Sneckenberger, J., and Feliachi, A.; "Modeling and Control of a Wind Turbine as a Distributed Resource", 
