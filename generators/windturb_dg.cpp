@@ -145,6 +145,8 @@ windturb_dg::windturb_dg(MODULE *module)
 			PT_complex, "Irotor_B[V]", PADDR(Irotor_B), PT_DESCRIPTION, "COP: Induction generator induced current on phase B in p.u.",
 			PT_complex, "Irotor_C[V]", PADDR(Irotor_C), PT_DESCRIPTION, "COP: Induction generator induced current on phase C in p.u.",
 
+			PT_double, "internal_model_current_convergence[pu]", PADDR(internal_model_current_convergence), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Convergence value for internal current calculations",
+
 			PT_set, "phases", PADDR(phases), PT_DESCRIPTION, "Specifies which phases to connect to - currently triplex mode is only supported for power curve implementation",
 			PT_KEYWORD, "A",(set)PHASE_A,
 			PT_KEYWORD, "B",(set)PHASE_B,
@@ -224,6 +226,9 @@ int windturb_dg::create(void)
 	NR_first_run = false;
 	
 	prev_current12 = complex(0.0,0.0);
+
+	//Set default convergence
+	internal_model_current_convergence = 0.005;
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -1084,6 +1089,17 @@ int windturb_dg::init(OBJECT *parent)
 
 	init_climate();
 
+	//Check the convergence criterion
+	if (internal_model_current_convergence <= 0.0)
+	{
+		gl_error("windturb_dg:%d - %s: invalid convergence criterion specified!", obj->id,(obj->name ? obj->name:"Unnamed"));
+		/*  TROUBLESHOOT
+		The internal model convergence criterion was set to zero or negative.  This invalid.  Fix it to continue.
+		*/
+
+		return 0;
+	}
+
 	return 1;
 }
 
@@ -1099,10 +1115,14 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	TIMESTAMP t2 = TS_NEVER;
 	double Pwind, Pmech, detCp, F, G, gearbox_eff;
 	double matCp[2][3];
+	double store_current_current, store_last_current;
 	
 	OBJECT *obj = OBJECTHDR(this);
 	FUNCTIONADDR test_fxn;
 	STATUS fxn_return_status;
+
+	//Update tracker
+	store_last_current = current_A.Mag() + current_B.Mag() + current_C.Mag();
 
 	//Map the current injection routine to our parent bus, if needed
 	if (NR_first_run == true)
@@ -1132,6 +1152,9 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 				//Defined above
 			}
 		}
+
+		//Force a reiteration on the first run.  Current convergence check should get it, but just to be safe
+		t2 = t0;
 
 		//Deflag us
 		NR_first_run = false;
@@ -1265,19 +1288,21 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			
 			compute_current_injection();
 			
-			return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
-			
 			break;
 		case POWER_CURVE:
 			
 			compute_current_injection_pc();
-
-			return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */	
 			
 			break;
 	}
 
-	
+	// Double check to make sure it is actually converged to a steady answer
+	// Initial comment had this flagged for NR, but FBS is actually the one most sensitive to this
+	store_current_current = current_A.Mag() + current_B.Mag() + current_C.Mag();
+	if ( fabs((store_current_current - store_last_current) / store_last_current) > internal_model_current_convergence )
+		t2 = t1;
+		
+	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
 /* Postsync is called when the clock needs to advance on the second top-down pass */
 TIMESTAMP windturb_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
@@ -1726,13 +1751,6 @@ void windturb_dg::compute_current_injection_pc(void){
 		//Should not get here
 		GL_THROW ("Invalid phase configuration");
 	}
-	
-	// Double check to make sure it is actually converged to a steady answer
-	//   Mostly applies to NR mode to make sure terminal voltage has converged enough
-	//   in NR to give a good boundary condition for solving the generator circuit
-	//double store_current_current = current_A.Mag() + current_B.Mag() + current_C.Mag();
-	//if ( fabs((store_current_current - store_last_current) / store_last_current) > 0.005 )
-	//	t2 = t1;
 }
 
 //Map Complex value
