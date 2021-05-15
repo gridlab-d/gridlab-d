@@ -11,6 +11,7 @@ clock {
 #set randomseed=10;
 #set relax_naming_rules=1;
 
+
 module tape;
 module climate;
 module generators;
@@ -63,7 +64,7 @@ object line_configuration:300 {
 
 object transformer_configuration:400 {
 	connect_type WYE_WYE;
-	power_rating 6000;
+	power_rating 12000;
 	primary_voltage 12470;
 	secondary_voltage 4160;
 	resistance 0.01;
@@ -152,7 +153,7 @@ object load:4 {
 
 object transformer_configuration:600 {
 	connect_type WYE_WYE;
-	power_rating 6000;
+	power_rating 12000;
 	primary_voltage 4160;
 	secondary_voltage 690;
 	resistance 0.01;
@@ -164,7 +165,7 @@ object transformer_configuration:600 {
 
 object transformer_configuration:800 {
 	connect_type SINGLE_PHASE_CENTER_TAPPED;
-	power_rating 3000;
+	power_rating 6000;
 	primary_voltage 4160;
 	secondary_voltage 240;
 	resistance 0.01;
@@ -306,7 +307,7 @@ object windturb_dg {
 	parent my_meter5;
 	phases ABCN;
 	name windturb5;
-	Rated_VA 5000000;
+	Rated_VA 500000;
 	
 	object multi_recorder {
 		file test_wind_power_${PF}5.csv;
