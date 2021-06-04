@@ -4081,9 +4081,9 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 			} // End VOLT_VAR and VOLT_WATT
 
-			// Check P_in (calcualted from V_In and I_In), and compared with p_in (calculated from VA_Out)
-			if (P_in < p_in) {
-				gl_warning("inverter:%d - %s - Real power output exceeds maximum DC output",obj->id,(obj->name?obj->name:"Unnamed"));
+			// Check P_In (calcualted from V_In and I_In), and compared with p_in (calculated from VA_Out)
+			if (P_In < p_in) {
+				gl_warning("inverter:%d - %s - Real power output (%g) exceeds maximum DC output (%g)",obj->id,(obj->name?obj->name:"Unnamed"),p_in,P_In);
 				/*  TROUBLESHOOT
 				The real power output of the inverter exceeds the maximum DC power being input.  In the specific operating mode used,
 				the inverter will not limit the output.  Choose a different dispatch point, change the inverter rating, or adjust the
