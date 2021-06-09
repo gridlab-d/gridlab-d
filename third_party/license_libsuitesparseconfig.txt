@@ -1,0 +1,141 @@
+Excerpted from https://raw.githubusercontent.com/DrTimothyAldenDavis/SuiteSparse/master/LICENSE.txt
+and specific SuiteSparse_config subfolder
+
+This covers libklu.dll, libbtf.dll, libamd.dll, libcolamd.dll, libsuitesparseconfig.dll
+
+This file lists all licenses for all packages in SuiteSparse, for your
+convenience.  Each package has its own separate license, which can be
+found in the lists below.
+
+==> AMD/Doc/License.txt <==
+
+    AMD, Copyright (c), 1996-2015, Timothy A. Davis,
+    Patrick R. Amestoy, and Iain S. Duff.  All Rights Reserved.
+
+    Availability:
+
+        http://suitesparse.com
+
+    -------------------------------------------------------------------------------
+    AMD License: BSD 3-clause:
+    -------------------------------------------------------------------------------
+
+        Redistribution and use in source and binary forms, with or without
+        modification, are permitted provided that the following conditions are met:
+            * Redistributions of source code must retain the above copyright
+              notice, this list of conditions and the following disclaimer.
+            * Redistributions in binary form must reproduce the above copyright
+              notice, this list of conditions and the following disclaimer in the
+              documentation and/or other materials provided with the distribution.
+            * Neither the name of the organizations to which the authors are
+              affiliated, nor the names of its contributors may be used to endorse
+              or promote products derived from this software without specific prior
+              written permission.
+
+        THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+        AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+        IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+        ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY
+        DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+        (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+        SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+        CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+        LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+        OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+        DAMAGE.
+
+==> BTF/Doc/License.txt <==
+    BTF, Copyright (C) 2004-2013, University of Florida
+    by Timothy A. Davis and Ekanathan Palamadai.
+    BTF is also available under other licenses; contact authors for details.
+    http://suitesparse.com
+
+    --------------------------------------------------------------------------------
+
+    BTF is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    BTF is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this Module; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+==> COLAMD/Doc/License.txt <==
+    COLAMD, Copyright 1998-2016, Timothy A. Davis.  http://suitesparse.com
+    http://suitesparse.com
+
+    COLAMD License: BSD 3-clause
+
+        Redistribution and use in source and binary forms, with or without
+        modification, are permitted provided that the following conditions are met:
+            * Redistributions of source code must retain the above copyright
+              notice, this list of conditions and the following disclaimer.
+            * Redistributions in binary form must reproduce the above copyright
+              notice, this list of conditions and the following disclaimer in the
+              documentation and/or other materials provided with the distribution.
+            * Neither the name of the organizations to which the authors are
+              affiliated, nor the names of its contributors may be used to endorse
+              or promote products derived from this software without specific prior
+              written permission.
+
+        THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+        AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+        IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+        ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDERS BE LIABLE FOR ANY
+        DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+        (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+        SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+        CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+        LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+        OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+        DAMAGE.
+
+==> KLU/Doc/License.txt <==
+    KLU, Copyright (C) 2004-2013, University of Florida
+    by Timothy A. Davis and Ekanathan Palamadai.
+    KLU is also available under other licenses; contact authors for details.
+    http://suitesparse.com
+
+    --------------------------------------------------------------------------------
+
+    KLU is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    KLU is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this Module; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+==> SuiteSparse_config - extracted from source code:
+
+    SuiteSparse_config, 2021, Timothy A. Davis, http://www.suitesparse.com
+    (formerly the UFconfig package)
+    
+    This directory contains a default SuiteSparse_config.mk file.  It tries to
+    detect your system (Linux, SunOS, or Mac), which compiler to use (icc or cc),
+    which BLAS and LAPACK library to use (Intel MKL is strongly preferred), and
+    whether or not to compile with CUDA.
+    
+    For alternatives, see the comments in the SuiteSparse_config.mk file.
+    
+    License: No licensing restrictions apply to this file or to the
+    SuiteSparse_config directory.
+    
+    --------------------------------------------------------------------------------
+    
+    SuiteSparse_config contains configuration settings for all many of the software
+    packages that I develop or co-author.  Note that older versions of some of
+    these packages do not require SuiteSparse_config.
+    
