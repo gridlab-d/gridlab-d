@@ -5,6 +5,10 @@
 // The feeder is a static powerflow model. There are no houses or varying loads on the model.
 // validates voltages with FBS at selected load, node, meter, triplex_node, and
 // triplex_meter objects
+//
+//******* Note: this file uses an older/deprecated object naming/numbering style.  This is highly
+//*******       discouraged from use.  All population scripts that use the taxonomy feeders fix this
+//*******		in the population process.
 
 clock{
 	timezone EST+8EDT;

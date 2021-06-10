@@ -113,6 +113,7 @@ object house {
 		tank_setpoint 120;
 		temperature 121;
 		tank_volume 20;
+		tank_height 3.78 ft;
 		location INSIDE;
 		tank_UA 3.3;
 		object recorder {

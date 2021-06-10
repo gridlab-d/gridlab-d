@@ -7,8 +7,8 @@
 #define rotor_convergence=0.0001
 
 //Deltamode declarations - global values
-#set deltamode_timestep=100000000		//100 ms
-#set deltamode_maximumtime=60000000000	//1 minute
+#set deltamode_timestep=100 ms		//100 ms
+#set deltamode_maximumtime=60 s		//1 minute
 #set deltamode_iteration_limit=10		//Iteration limit
 
 clock {
@@ -20,12 +20,12 @@ clock {
 module tape;
 module powerflow {
 	enable_subsecond_models true;
-	deltamode_timestep 10000000;	//10 ms
+	deltamode_timestep 10.0 ms;	//10 ms
 	solver_method NR;
 };
 module generators {
 	enable_subsecond_models TRUE;
-	deltamode_timestep 10000000;	//Initial value - dictates how we want the models to run
+	deltamode_timestep 10.0 ms;	//Initial value - dictates how we want the models to run
 }
 
 //Reference line type
