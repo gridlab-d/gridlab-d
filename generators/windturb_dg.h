@@ -12,6 +12,8 @@
 
 #include <stdarg.h>
 #include "generators.h"
+
+EXPORT STATUS windturb_dg_NR_current_injection_update(OBJECT *obj, int64 iteration_count);
 	
 class windturb_dg : public gld_object
 {
@@ -45,7 +47,11 @@ private:
 	double value_Temp;				
 	double value_WS;				
 	bool climate_is_valid;			//< Flag to pointer values
-	
+
+	//For current injection updates
+	complex prev_current[3];
+	bool NR_first_run;
+
 protected:
 	/* TODO: put unpublished but inherited variables */
 
@@ -97,7 +103,6 @@ public:
 	complex current_A;			//terminal current
 	complex current_B;
 	complex current_C;
-	double store_last_current;  // Store the last solved current to see if the solution is converged
 
 	double TotalRealPow;		//Real power supplied by generator - used for testing
 	double TotalReacPow;		//Reactive power supplied - used for testing
@@ -148,6 +153,9 @@ public:
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
+
+	void compute_current_injection(void);
+	STATUS updateCurrInjection(int64 iteration_count);
 
 	gld_property *map_complex_value(OBJECT *obj, char *name);
 	gld_property *map_double_value(OBJECT *obj, char *name);

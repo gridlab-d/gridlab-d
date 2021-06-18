@@ -40,7 +40,6 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	//Instantiate the classes
 	new diesel_dg(module);
 	new windturb_dg(module);
-	new energy_storage(module);
 	new inverter(module);
 	new rectifier(module);
 	new battery(module);

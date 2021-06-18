@@ -581,6 +581,13 @@ AC_MSG_NOTICE
 
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR])
 LT_PREREQ([2.2])
+
+dnl override platform specific check for dependent libraries
+dnl otherwise libtool linking of shared libraries will
+dnl fail on anything other than pass_all.
+AC_CACHE_VAL(lt_cv_deplibs_check_method,
+    [lt_cv_deplibs_check_method=pass_all])
+
 LT_INIT([dlopen win32-dll shared disable-static])
 AC_SUBST([LIBTOOL_DEPS])
 

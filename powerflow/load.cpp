@@ -189,6 +189,8 @@ load::load(MODULE *mod) : node(mod)
 			GL_THROW("Unable to publish load VFD attachment function");
 		if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
 			GL_THROW("Unable to publish load island-status-reset function");
+		if (gl_publish_function(oclass, "pwr_object_load_update", (FUNCTIONADDR)update_load_values) == NULL)
+			GL_THROW("Unable to publish load impedance-conversion/update function");
 		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
 			GL_THROW("Unable to publish load swing-status check function");
 		if (gl_publish_function(oclass, "pwr_object_kmldata", (FUNCTIONADDR)load_kmldata) == NULL)
@@ -786,7 +788,7 @@ void load::load_update_fxn(bool fault_mode)
 		}
 	}
 
-	if (fault_mode == false)	//Not reliability mode - normal mode
+	if ((fault_mode == false) && (enable_impedance_conversion==false))	//Not reliability mode - normal mode
 	{
 		if(!intermed_impedance[0].IsZero())
 		{
@@ -886,7 +888,7 @@ void load::load_update_fxn(bool fault_mode)
 				if (SubNode == PARENT)	//Normal parents need this
 				{
 					//See if in-rush is enabled - only makes sense in reliability situations
-					if (enable_inrush_calculations == true)
+					if ((enable_inrush_calculations == true) || (enable_impedance_conversion == true))
 					{
 						//Reset variable
 						volt_below_thresh = false;
@@ -1443,7 +1445,7 @@ void load::load_update_fxn(bool fault_mode)
 				else //DIFF_PARENT
 				{
 					//See if in-rush is enabled - only makes sense in reliability situations
-					if (enable_inrush_calculations == true)
+					if ((enable_inrush_calculations == true) || (enable_impedance_conversion==true))
 					{
 						//Reset variable
 						volt_below_thresh = false;
@@ -2003,7 +2005,7 @@ void load::load_update_fxn(bool fault_mode)
 			else	//Basically, not a NR parent
 			{
 				//See if in-rush is enabled - only makes sense in reliability situations
-				if (enable_inrush_calculations == true)
+				if ((enable_inrush_calculations == true) || (enable_impedance_conversion==true))
 				{
 					//See if we're a child or not
 					if (NR_node_reference == -99)	//Child or other special object
@@ -3498,6 +3500,18 @@ EXPORT SIMULATIONMODE interupdate_load(OBJECT *obj, unsigned int64 delta_time, u
 		gl_error("interupdate_load(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
 		return status;
 	}
+}
+
+//Exposed function to do load update - primarily to get impedance conversion into solver_nr directly
+EXPORT STATUS update_load_values(OBJECT *obj)
+{
+	load *my = OBJECTDATA(obj,load);
+
+	//Call the update
+	my->load_update_fxn(false);	//Always just assume we're not in reliability
+
+	//Return us - always succeed, for now
+	return SUCCESS;
 }
 
 //KML Export

@@ -97,11 +97,27 @@ private:
 	} MOTOR_OVERRIDE;		
 	enumeration motor_override;
 
+	OBJECT *mtr_house_pointer;				///< Pointer to house object to monitor
+	gld_property *mtr_house_state_pointer;	///< Property map for house to monitor
+
 	typedef enum {
 		modeSPIM=0,		///<Single-phase induction motor
 		modeTPIM=1		///<Three-phase induction motor
 	} MOTOR_OPERATION_MODE;
 	enumeration motor_op_mode;
+
+	typedef enum {
+		modelDirectTorque=0,	///< Torque value in Tmech taken directly
+		modelSpeedFour=1		///< Torque is set at 0.85 + .15*speed^4
+	} MOTOR_TORQUE_MODEL;
+	enumeration motor_torque_usage_method;
+
+	typedef enum {
+		house_mode_NONE=0,		//Default - basically ignore it
+		house_mode_COOLING=1,	//Expected to be cooling (heat pump or specific AC)
+		house_mode_HEATING=2	//Expected to be heating (heat pump)
+	} HOUSE_MODE_USAGE;
+	enumeration connected_house_assumed_mode;
 
 	double trip;
 	double reconnect;
