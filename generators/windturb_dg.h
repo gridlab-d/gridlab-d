@@ -13,8 +13,12 @@
 #include <stdarg.h>
 #include "generators.h"
 
+#include <vector>
+#include <string>
+#include <iostream>
+
 EXPORT STATUS windturb_dg_NR_current_injection_update(OBJECT *obj, int64 iteration_count);
-	
+
 class windturb_dg : public gld_object
 {
 private:
@@ -35,9 +39,20 @@ private:
 	double std_air_press;
 	gld_property *pCircuit_V[3];		//< pointer to the three voltages on three lines
 	gld_property *pLine_I[3];			//< pointer to the three current on three lines
+	gld_property *pLine12;			    //< pointer to line current 12, used in triplex metering
+	
+	int number_of_phases_out;           //Used to flag three phase or triplex parent
+	
 	complex value_Circuit_V[3];			//< value holder for voltage values
 	complex value_Line_I[3];			//< value holder for current values
+	complex value_Line12;               //< value holder for line current 12 in triplex metering
+
+	
 	bool parent_is_valid;				//< Flag to pointers
+	bool parent_is_triplex;
+	
+	double Power_Curve[2][100];  //Look-up table carrying power curve values. Maximum points limited to 100. Equals default (defined in .cpp) or user defined power curve 
+	int number_of_points;
 
     gld_property *pPress;			
 	gld_property *pTemp;			
@@ -47,11 +62,14 @@ private:
 	double value_Temp;				
 	double value_WS;				
 	bool climate_is_valid;			//< Flag to pointer values
-
+	
 	//For current injection updates
 	complex prev_current[3];
 	bool NR_first_run;
-
+	double internal_model_current_convergence;	//Variable to set convergence/reiteration context (for normal executions)
+	
+	complex prev_current12;
+	
 protected:
 	/* TODO: put unpublished but inherited variables */
 
@@ -69,11 +87,13 @@ public:
 	enumeration Gen_type;
 	enum {CONSTANTE=1, CONSTANTP, CONSTANTPQ};
 	enumeration Gen_mode;
-	enum {GENERIC_SYNCH_SMALL, GENERIC_SYNCH_MID,GENERIC_SYNCH_LARGE, GENERIC_IND_SMALL, GENERIC_IND_MID, GENERIC_IND_LARGE, USER_DEFINED, VESTAS_V82, GE_25MW, BERGEY_10kW};
+	enum {GENERIC_DEFAULT, GENERIC_SYNCH_SMALL, GENERIC_SYNCH_MID,GENERIC_SYNCH_LARGE, GENERIC_IND_SMALL, GENERIC_IND_MID, GENERIC_IND_LARGE, USER_DEFINED, VESTAS_V82, GE_25MW, BERGEY_10kW, GEN_TURB_POW_CURVE_2_4KW, GEN_TURB_POW_CURVE_10KW, GEN_TURB_POW_CURVE_100KW, GEN_TURB_POW_CURVE_1_5MW};
 	enumeration Turbine_Model;
 	enum {GENERAL_LARGE, GENERAL_MID,GENERAL_SMALL,MANUF_TABLE, CALCULATED, USER_SPECIFY};
 	enumeration CP_Data;
-
+	enum {POWER_CURVE=1, COEFF_OF_PERFORMANCE}; 
+	enumeration Turbine_implementation;
+	
 	double blade_diam;
 	double turbine_height;
 	double roughness_l;
@@ -143,6 +163,9 @@ public:
 	double Xm;					// |
 	double Max_Vrotor;			// maximum induced voltage in p.u., e.g. 1.2
     double Min_Vrotor;			// minimum induced voltage in p.u., e.g. 0.8
+	
+	char power_curve_csv[1024]; // name of csv file containing the power curve
+	bool power_curve_pu;		// Flag when set indicates that user provided power curve has power values in pu. Defaults to false in .cpp
 
 public:
 	/* required implementations */
@@ -153,13 +176,18 @@ public:
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
-
+	
 	void compute_current_injection(void);
+	void compute_current_injection_pc(void);
 	STATUS updateCurrInjection(int64 iteration_count);
 
 	gld_property *map_complex_value(OBJECT *obj, char *name);
 	gld_property *map_double_value(OBJECT *obj, char *name);
 	void push_complex_powerflow_values(void);
+	
+	std::vector<std::string> readCSVRow(const std::string &row);
+	std::vector<std::vector<std::string>> readCSV(std::istream &in);
+	bool hasEnding(const std::string &fullString, const std::string &ending);
 
 public:
 	static CLASS *oclass;
