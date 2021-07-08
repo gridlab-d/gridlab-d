@@ -4,9 +4,15 @@
 # Uncomment this to turn on verbose mode.
 #export DH_VERBOSE=1
 
+override_dh_auto_configure:
+	dh_auto_configure -- --enable-silent-rules 'CFLAGS=-g -O0 -w' 'CXXFLAGS=-g -O0 -w' 'LDFLAGS=-g -O0 -w'
+
 %:
 	dh  $@
 
 override_dh_install:
 	dh_install
 	rm -f debian/gridlabd/usr/lib/gridlabd/*.la
+
+override_dh_fixperms:
+	dh_fixperms --exclude .so

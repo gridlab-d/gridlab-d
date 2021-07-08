@@ -16,9 +16,9 @@ AppVerName=GridLAB-D 4.1
 ;AppVerName=GridLAB-D 0.1 Debug
 ; --DEBUG--
 
-AppVersion=3.0
+AppVersion=4.0
 AppPublisher=Pacific Northwest National Laboratory, operated by Battelle
-AppCopyright=Copyright © 2004-2013 Battelle Memorial Institute
+AppCopyright=Copyright © 2004-2017 Battelle Memorial Institute
 AppPublisherURL=http://www.pnl.gov
 ;AppReadmeFile={app}\README.TXT
 ;AppSupportURL=http://gridlab.pnl.gov/support
@@ -150,7 +150,7 @@ Source: "share\gridlabd\tzinfo.txt"; DestDir: "{app}\etc"; Components: core
 Source: "share\gridlabd\unitfile.txt"; DestDir: "{app}\etc"; Components: core
 ;;Source: "xerces-c_3_1.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: core
 Source: "lib\gridlabd\climate.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\climate
-Source: "lib\gridlabd\commercial.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\commercial
+;Source: "lib\gridlabd\commercial.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\commercial
 Source: "lib\gridlabd\generators.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\generators
 Source: "lib\gridlabd\market.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\market
 ;Source: "mysql.dll"; DestDir: "{app}\lib"; Flags: ignoreversion; Components: modules\mysql
@@ -222,6 +222,7 @@ Source: "share\gridlabd\gridlabd.htm"; DestDir: "{app}"
 ;Source: network.dll; DestDir: {app}\lib; Flags: ignoreversion
 ;Source: sample.dll; DestDir: {app}\lib; Flags: ignoreversion
 ;Source: cppunit.dll; DestDir: {app}\bin; Flags: ignoreversion; Components: core
+;Source: "..\models\Four_quadrant_inverter_example.glm"; DestDir: "{app}\samples"
 
 ;Source: ..\..\..\models\powerflow_IEEE_4node.glm; DestDir: {app}\samples; Components: samples
 ;Source: ..\..\..\models\residential_loads.glm; DestDir: {app}\samples

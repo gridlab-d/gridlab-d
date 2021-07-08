@@ -2281,7 +2281,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 			//See if there's any leftovers
 			temp_double = gov_degov1_TD-(double)(torque_delay_len*dt)/(double)DT_SECOND;
 
-			if (temp_double > 0.0)	//Means bigger, +1 it
+			if (temp_double > delta_thresh)	//Means bigger, +1 it
 				torque_delay_len += 1;
 			//Default else - it's either just right, or negative (meaning we should be 1 bigger already)
 
@@ -2345,7 +2345,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 				//See if there's any leftovers
 				temp_double = gov_ggv1_Teng-(double)(x5a_delayed_len*dt)/(double)DT_SECOND;
 
-				if (temp_double > 0.0)	//Means bigger, +1 it
+				if (temp_double > delta_thresh)	//Means bigger, +1 it
 					x5a_delayed_len += 1;
 				//Default else - it's either just right, or negative (meaning we should be 1 bigger already)
 

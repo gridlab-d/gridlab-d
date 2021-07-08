@@ -881,7 +881,7 @@ TIMESTAMP fncs_msg::clk_update(TIMESTAMP t1)
 			//t1 = gl_globalstoptime + 1;
 			return TS_NEVER;
 		} else if (t1 > gl_globalstoptime && gl_globalclock < gl_globalstoptime){
-			t1 == gl_globalstoptime;
+			t1 = gl_globalstoptime;
 		}
 #if HAVE_FNCS
 		fncs::time t = 0;
