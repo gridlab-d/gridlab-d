@@ -128,7 +128,10 @@ windturb_dg::windturb_dg(MODULE *module)
 			PT_KEYWORD, "C",(set)PHASE_C,
 			PT_KEYWORD, "N",(set)PHASE_N,
 			PT_KEYWORD, "S",(set)PHASE_S,
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);		
+			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			if (gl_publish_function(oclass, "current_injection_update", (FUNCTIONADDR)windturb_dg_NR_current_injection_update) == NULL)
+				GL_THROW("Unable to publish wind turbine current injection update function");
+		
 	}
 }
 
@@ -181,6 +184,10 @@ int windturb_dg::create(void)
 	value_Temp = 0.0;
 	value_WS = 0.0;
 	climate_is_valid = false;
+
+	//Current injection tracking variables
+	prev_current[0] = prev_current[1] = prev_current[2] = complex(0.0,0.0);
+	NR_first_run = false;
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -250,6 +257,7 @@ int windturb_dg::init(OBJECT *parent)
 	OBJECT *obj = OBJECTHDR(this);
 	double temp_double_value;
 	gld_property *temp_property_pointer;
+	enumeration temp_enum;
 	set temp_phases_set;
 	int temp_phases=0;
 		
@@ -554,6 +562,36 @@ int windturb_dg::init(OBJECT *parent)
 			pLine_I[0] = map_complex_value(parent,"current_A");
 			pLine_I[1] = map_complex_value(parent,"current_B");
 			pLine_I[2] = map_complex_value(parent,"current_C");
+
+			//Map the solver method and see if we're NR-oriented
+			temp_property_pointer = new gld_property("powerflow::solver_method");
+
+			//Make sure it worked
+			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_enumeration() != true))
+			{
+				GL_THROW("windturb_dg:%d %s failed to map the nominal_frequency property", obj->id, (obj->name ? obj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to map the powerflow:solver_method property, an error occurred.  Please try again.
+				If the error persists, please submit your GLM and a bug report to the ticketing system.
+				*/
+			}
+
+			//Must be valid, read it
+			temp_enum = temp_property_pointer->get_enumeration();
+
+			//Remove the link
+			delete temp_property_pointer;
+
+			//Check which method we are - NR=2
+			if (temp_enum == 2)
+			{
+				//Set NR first run flag
+				NR_first_run = true;
+			}
+			else	//Other methods - should already be set, but be explicit
+			{
+				NR_first_run = false;
+			}
 		}
 		else if (gl_object_isa(parent,"triplex_meter","powerflow"))
 		{
@@ -711,8 +749,43 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	TIMESTAMP t2 = TS_NEVER;
 	double Pwind, Pmech, detCp, F, G, gearbox_eff;
 	double matCp[2][3];
+	OBJECT *obj = OBJECTHDR(this);
+	FUNCTIONADDR test_fxn;
+	STATUS fxn_return_status;
 
-	store_last_current = current_A.Mag() + current_B.Mag() + current_C.Mag();
+	//Map the current injection routine to our parent bus, if needed
+	if (NR_first_run == true)
+	{
+		if (parent_is_valid == true)
+		{
+			//Map the current injection function
+			test_fxn = (FUNCTIONADDR)(gl_get_function(obj->parent, "pwr_current_injection_update_map"));
+
+			//See if it was located
+			if (test_fxn == NULL)
+			{
+				GL_THROW("windturb_dg:%s - failed to map additional current injection mapping for node:%s", (obj->name ? obj->name : "unnamed"), (obj->parent->name ? obj->parent->name : "unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to map the additional current injection function, an error was encountered.
+				Please try again.  If the error persists, please submit your code and a bug report via the issues tracker.
+				*/
+			}
+
+			//Call the mapping function
+			fxn_return_status = ((STATUS(*)(OBJECT *, OBJECT *))(*test_fxn))(obj->parent, obj);
+
+			//Make sure it worked
+			if (fxn_return_status != SUCCESS)
+			{
+				GL_THROW("windturb_dg:%s - failed to map additional current injection mapping for node:%s", (obj->name ? obj->name : "unnamed"), (obj->parent->name ? obj->parent->name : "unnamed"));
+				//Defined above
+			}
+		}
+
+		//Deflag us
+		NR_first_run = false;
+	}
+	//Default else - FBS or not first run
 
 	//Pull the updates, if needed
 	if (climate_is_valid == true)
@@ -837,6 +910,40 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	Pconv = 1 * Pmech;  //TODO: Assuming 0% losses due to friction and miscellaneous losses
 
+	//Perform the load update
+	compute_current_injection();
+
+	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */	
+}
+/* Postsync is called when the clock needs to advance on the second top-down pass */
+TIMESTAMP windturb_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
+{
+	TIMESTAMP t2 = TS_NEVER;
+	// Handling for NR || FBS
+
+	//Remove our parent contributions (so XMLs look proper)
+	value_Line_I[0] = -prev_current[0];
+	value_Line_I[1] = -prev_current[1];
+	value_Line_I[2] = -prev_current[2];
+
+	//Zero the tracker, otherwise this won't work right next round
+	prev_current[0] = prev_current[1] = prev_current[2] = complex(0.0,0.0);
+
+	//Push up the powerflow interface
+	if (parent_is_valid == true)
+	{
+		push_complex_powerflow_values();
+	}
+
+	//Re-zero the tracker, or the next iteration will have issues
+	prev_current[0] = prev_current[1] = prev_current[2] = complex(0.0,0.0);
+
+	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
+}
+
+//Functionalized current calculation - basically so NR can call it on iterations
+void windturb_dg::compute_current_injection(void)
+{
 	if (Gen_status==ONLINE)
 	{
 		int k;
@@ -1096,17 +1203,6 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 		GenElecEff = TotalRealPow/Pconv * 100;
 
 		Wind_Speed = WSadj;
-		
-		//Update values
-		value_Line_I[0] = current_A;
-		value_Line_I[1] = current_B;
-		value_Line_I[2] = current_C;
-
-		//Powerflow post-it
-		if (parent_is_valid == true)
-		{
-			push_complex_powerflow_values();
-		}
 	}
 	// Generator is offline
 	else 
@@ -1120,34 +1216,18 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 		power_C = complex(0,0);
 	}
 
-	// Double check to make sure it is actually converged to a steady answer
-	//   Mostly applies to NR mode to make sure terminal voltage has converged enough
-	//   in NR to give a good boundary condition for solving the generator circuit
-	double store_current_current = current_A.Mag() + current_B.Mag() + current_C.Mag();
-	if ( fabs((store_current_current - store_last_current) / store_last_current) > 0.005 )
-		t2 = t1;
+	//Update values
+	value_Line_I[0] = current_A;
+	value_Line_I[1] = current_B;
+	value_Line_I[2] = current_C;
 
-	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */	
-}
-/* Postsync is called when the clock needs to advance on the second top-down pass */
-TIMESTAMP windturb_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
-{
-	TIMESTAMP t2 = TS_NEVER;
-	// Handling for NR || FBS
-
-	//Remove our parent contributions (so XMLs look proper)
-	value_Line_I[0] = -current_A;
-	value_Line_I[1] = -current_B;
-	value_Line_I[2] = -current_C;
-
-	//Push up the powerflow interface
+	//Powerflow post-it
 	if (parent_is_valid == true)
 	{
 		push_complex_powerflow_values();
 	}
-
-	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
+
 
 //Map Complex value
 gld_property *windturb_dg::map_complex_value(OBJECT *obj, char *name)
@@ -1210,11 +1290,24 @@ void windturb_dg::push_complex_powerflow_values(void)
 		temp_complex_val = pLine_I[indexval]->get_complex();
 
 		//Add the difference
-		temp_complex_val += value_Line_I[indexval];
+		temp_complex_val += value_Line_I[indexval] - prev_current[indexval];
 
 		//Push it back up
 		pLine_I[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+
+		//Store the update value
+		prev_current[indexval] = value_Line_I[indexval];
 	}
+}
+
+// Function to update current injection value
+STATUS windturb_dg::updateCurrInjection(int64 iteration_count)
+{
+	//Call the current updating function
+	compute_current_injection();
+
+	//Always succeed for now
+	return SUCCESS;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -1277,6 +1370,20 @@ EXPORT TIMESTAMP sync_windturb_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	return t1;
 }
 
+//Current injection exposed function
+EXPORT STATUS windturb_dg_NR_current_injection_update(OBJECT *obj, int64 iteration_count)
+{
+	STATUS temp_status;
+
+	//Map the node
+	windturb_dg *my = OBJECTDATA(obj, windturb_dg);
+
+	//Call the function, where we can update the current injection
+	temp_status = my->updateCurrInjection(iteration_count);
+
+	//Return what the sub function said we were
+	return temp_status;
+}
 
 /*
 [1]	Malinga, B., Sneckenberger, J., and Feliachi, A.; "Modeling and Control of a Wind Turbine as a Distributed Resource", 
