@@ -11,6 +11,7 @@ clock {
 #set randomseed=10;
 #set relax_naming_rules=1;
 
+
 module tape;
 module climate;
 module generators;
@@ -63,7 +64,7 @@ object line_configuration:300 {
 
 object transformer_configuration:400 {
 	connect_type WYE_WYE;
-	power_rating 6000;
+	power_rating 12000;
 	primary_voltage 12470;
 	secondary_voltage 4160;
 	resistance 0.01;
@@ -105,7 +106,7 @@ object transformer:23 {
 	object double_assert {
 		object player {
 			property value;
-			file ../windpower_assert.player;
+			file ../windpower_assert_pc.player;
 		};
 		target power_out_real;
 		// Solutions were determined from FBS - represents
@@ -140,56 +141,19 @@ object load:4 {
 	voltage_A +2401.777+0.000j;
 	voltage_B -1200.889-2080.000j;
 	voltage_C -1200.889+2080.000j;
-	constant_power_A +1275000.000+790174.031j;
-	constant_power_B +1800000.000+871779.789j;
+	constant_power_A +2275000.000+790174.031j;
+	constant_power_B +2800000.000+871779.789j;
 	constant_power_C +2375000.000+780624.750j;
 	maximum_voltage_error 0.001;
 	nominal_voltage 2400;
 }
 
 // Add Vestas wind turbine
-object transformer_configuration:500 {
-	connect_type WYE_WYE;
-	power_rating 3000;
-	primary_voltage 4160;
-	secondary_voltage 600;
-	resistance 0.01;
-	reactance 0.06;
-	install_type PADMOUNT;
-}
 
-object transformer {
-	phases "ABCN";
-	from load:4;
-	to my_meter1;
-	configuration transformer_configuration:500;
-}
 
-object meter {
-	name my_meter1;
-	phases ABCN;
-	nominal_voltage 350;
-}
-
-object windturb_dg {
-	parent my_meter1;
-	phases ABCN;
-	name windturb1;
-	Gen_status ONLINE;
-	Gen_type SYNCHRONOUS;
-	Gen_mode CONSTANTP;
-	Turbine_Model VESTAS_V82;
-	object multi_recorder {
-		file test_wind_power_${PF}1.csv;
-		interval 900;
-		property wind_speed,WSadj,Cp,my_meter1:measured_real_power,total_real_power;
-	};
-}
-
-// Add GE wind turbine
 object transformer_configuration:600 {
 	connect_type WYE_WYE;
-	power_rating 3000;
+	power_rating 12000;
 	primary_voltage 4160;
 	secondary_voltage 690;
 	resistance 0.01;
@@ -197,30 +161,187 @@ object transformer_configuration:600 {
 	install_type PADMOUNT;
 }
 
+
+
+object transformer_configuration:800 {
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	power_rating 6000;
+	primary_voltage 4160;
+	secondary_voltage 240;
+	resistance 0.01;
+	reactance 0.06;
+	install_type PADMOUNT;
+}
+
+object transformer {
+	phases "BS";
+	from load:4;
+	to TrplMtr1;
+	configuration transformer_configuration:800;
+}
+
+object triplex_meter {
+	name TrplMtr1;
+	phases BS;
+	nominal_voltage 240;
+}
+//Tests use case where user specifies turbine capacity, height, and p.u. power curve. Also tests the triplex implementation
+object windturb_dg {
+	parent TrplMtr1;
+	phases BS;
+	name windturb1;
+	Rated_VA 15600;
+	turbine_height 37;
+	power_curve_csv "../WT_pow_curve.csv";
+	power_curve_pu true;
+	
+	object multi_recorder {
+		file test_wind_power_${PF}1.csv;
+		interval 900;
+		property voltage_12, voltage_1N, voltage_2N, current_12, power_12, wind_speed,wind_speed_adjusted,Cp,TrplMtr1:measured_real_power,total_real_power;
+	};
+}
+//----------------------------------------------------------------------
+object transformer {
+	phases "AS";
+	from load:4;
+	to TrplMtr2;
+	configuration transformer_configuration:800;
+}
+
+object triplex_meter {
+	name TrplMtr2;
+	phases AS;
+	nominal_voltage 240;
+	//object multi_recorder {
+	//	file test_wind_power_${PF}2_meter.csv;
+	//	interval 900;
+	//	property measured_voltage_1, measured_voltage_2, measured_voltage_N, measured_current_1, measured_current_2, measured_current_N, indiv_measured_power_1, indiv_measured_power_2, indiv_measured_power_N, measured_real_power, measured_reactive_power;
+	//};
+}
+//Tests use case where user specifies turbine height and power curve in watts. Also tests the triplex implementation
+object windturb_dg {
+	parent TrplMtr2;
+	phases AS;
+	name windturb2;
+	turbine_height 40;
+	power_curve_csv "../WT_pow_curve_watts.csv";
+	
+	object multi_recorder {
+		file test_wind_power_${PF}2.csv;
+		interval 900;
+		property voltage_12, voltage_1N, voltage_2N, current_12, power_12, wind_speed,wind_speed_adjusted,Cp,TrplMtr2:measured_real_power,total_real_power;
+	};
+}
+
+
+//----------------------------------------------------------------------
 object transformer {
 	phases "ABCN";
 	from load:4;
-	to my_meter2;
+	to my_meter3;
 	configuration transformer_configuration:600;
 }
 
 object meter {
-	name my_meter2;
+	name my_meter3;
+	phases ABCN;
+	nominal_voltage 600;
+}
+
+//Tests use case when user specifies nothing
+object windturb_dg {
+	parent my_meter3;
+	phases ABCN;
+	name windturb3;
+	
+	object multi_recorder {
+		file test_wind_power_${PF}3.csv;
+		interval 900;
+		property voltage_A, voltage_B, voltage_C, current_A, current_B, current_C, power_A, power_B, power_C, wind_speed,wind_speed_adjusted,Cp,my_meter3:measured_real_power,total_real_power;
+	};
+}
+//----------------------------------------------------------------------
+object transformer {
+	phases "ABCN";
+	from load:4;
+	to my_meter4;
+	configuration transformer_configuration:600;
+}
+
+object meter {
+	name my_meter4;
+	phases ABCN;
+	nominal_voltage 600;
+}
+
+//Tests use case when user specifies a generic turbine
+object windturb_dg {
+	parent my_meter4;
+	phases ABCN;
+	name windturb4;
+	Turbine_Model GEN_TURB_POW_CURVE_1_5MW;
+	
+	object multi_recorder {
+		file test_wind_power_${PF}4.csv;
+		interval 900;
+		property voltage_A, voltage_B, voltage_C, current_A, current_B, current_C, power_A, power_B, power_C, wind_speed,wind_speed_adjusted,Cp,my_meter4:measured_real_power,total_real_power;
+	};
+}
+//----------------------------------------------------------------------
+object transformer {
+	phases "ABCN";
+	from load:4;
+	to my_meter5;
+	configuration transformer_configuration:600;
+}
+
+object meter {
+	name my_meter5;
+	phases ABCN;
+	nominal_voltage 600;
+}
+
+//Tests use case when user specifies turbine capacity only
+object windturb_dg {
+	parent my_meter5;
+	phases ABCN;
+	name windturb5;
+	Rated_VA 500000;
+	
+	object multi_recorder {
+		file test_wind_power_${PF}5.csv;
+		interval 900;
+		property voltage_A, voltage_B, voltage_C, current_A, current_B, current_C, power_A, power_B, power_C, wind_speed,wind_speed_adjusted,Cp,my_meter5:measured_real_power,total_real_power;
+	};
+}
+//----------------------------------------------------------------------
+object transformer {
+	phases "ABCN";
+	from load:4;
+	to my_meter6;
+	configuration transformer_configuration:600;
+}
+
+object meter {
+	name my_meter6;
 	phases ABCN;
 	nominal_voltage 400;
 }
 
+//Tests use case when user specifies turbine capacity and height
 object windturb_dg {
-	parent my_meter2;
+	parent my_meter6;
 	phases ABCN;
-	name windturb2;
-	Gen_status ONLINE;
-	Gen_type SYNCHRONOUS;
-	Gen_mode CONSTANTP;
-	Turbine_Model GE_25MW;
+	name windturb6;
+	Rated_VA 10000;
+	turbine_height 40;
+	
 	object multi_recorder {
-		file test_wind_power_${PF}2.csv;
+		file test_wind_power_${PF}6.csv;
 		interval 900;
-		property wind_speed,WSadj,Cp,my_meter2:measured_real_power,total_real_power;
+		property voltage_A, voltage_B, voltage_C, current_A, current_B, current_C, power_A, power_B, power_C, wind_speed,wind_speed_adjusted,Cp,my_meter6:measured_real_power,total_real_power;
 	};
 }
+//-------------------------------------------------------------------
+
