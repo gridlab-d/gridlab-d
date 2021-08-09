@@ -2356,6 +2356,13 @@ STATUS exec_start(void)
 					THROW("Deltamode simulation failure");
 					break;	//Just in case, but probably not needed
 				}
+				else if (deltatime > 0)
+				{
+					/* Reset the iteration counter here - if we made it this far, we moved forward */
+					/* If a simulate "stays" in deltamode too long, the periodic checks will still exhaust the iteration limit - this fixes that */
+					iteration_counter = global_iteration_limit;
+					federation_iteration_counter = global_iteration_limit;
+				}
 				exec_sync_set(NULL,global_clock + deltatime,true);
 				global_simulation_mode = SM_EVENT;
 			}
