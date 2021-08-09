@@ -127,7 +127,7 @@ static struct s_varmap {
 	{"version.minor", PT_int32, &global_version_minor, PA_REFERENCE, "minor version"},
 	{"version.patch", PT_int32, &global_version_patch, PA_REFERENCE, "patch number"},
 	{"version.build", PT_int32, &global_version_build, PA_REFERENCE, "build number"},
-	{"version.branch", PT_char32, &global_version_branch, PA_REFERENCE, "branch name"},
+	{"version.branch", PT_char256, &global_version_branch, PA_REFERENCE, "branch name"},
 	{"command_line", PT_char1024, &global_command_line, PA_REFERENCE, "command line"},
 	{"environment", PT_char1024, &global_environment, PA_PUBLIC, "operating environment"},
 	{"quiet", PT_bool, &global_quiet_mode, PA_PUBLIC, "quiet output status flag"},
