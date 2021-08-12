@@ -3721,7 +3721,9 @@ int node::NR_populate(void)
 	NR_busdata[NR_node_reference].ExtraCurrentInjFuncObject = NULL;
 
 	//Extra functions - see if we're a load - map update if we're in the right mode
-	if ((gl_object_isa(me,"load","powerflow")==true) && (enable_impedance_conversion==true))
+	//Could potentially flag this in load/triplex_load - it's primarily needed to keep constant_current-based loads properly rotated
+	//Flagging it could improve performance
+	if (((gl_object_isa(me,"load","powerflow")==true) || (gl_object_isa(me,"triplex_load","powerflow")==true)) && (enable_inrush_calculations == false))
 	{
 		//Map the function
 		NR_busdata[NR_node_reference].LoadUpdateFxn = (FUNCTIONADDR)(gl_get_function(me,"pwr_object_load_update"));
@@ -4188,13 +4190,10 @@ int node::NR_current_update(bool parentcall)
 			temp_current[1] = adjusted_current_val[1];
 			temp_current[2] = adjusted_current_val[2];
 
-			//Add in the unrotated bit, if we're deltamode
-			if (deltamode_inclusive == true)
-			{
-				temp_current[0] += pre_rotated_current[0];	//1
-				temp_current[1] += pre_rotated_current[1];	//2
-				temp_current[2] += pre_rotated_current[2];	//12
-			}
+			//Add in the unrotated bit
+			temp_current[0] += pre_rotated_current[0];	//1
+			temp_current[1] += pre_rotated_current[1];	//2
+			temp_current[2] += pre_rotated_current[2];	//12
 
 			//Now add in power contributions
 			temp_current[0] += voltage[0] == 0.0 ? 0.0 : ~(power[0]/voltage[0]);
