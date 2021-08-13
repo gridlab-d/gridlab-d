@@ -7,7 +7,7 @@
 #include "triplex_node.h"
 
 EXPORT SIMULATIONMODE interupdate_triplex_load(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
-EXPORT STATUS update_load_values(OBJECT *obj);
+EXPORT STATUS update_triplex_load_values(OBJECT *obj);
 
 class triplex_load : public triplex_node
 {

@@ -118,7 +118,7 @@ triplex_load::triplex_load(MODULE *mod) : triplex_node(mod)
 				GL_THROW("Unable to publish triplex_load island-status-reset function");
 			if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
 				GL_THROW("Unable to publish triplex_load swing-status check function");
-			if (gl_publish_function(oclass, "pwr_object_load_update", (FUNCTIONADDR)update_load_values) == NULL)
+			if (gl_publish_function(oclass, "pwr_object_load_update", (FUNCTIONADDR)update_triplex_load_values) == NULL)
 				GL_THROW("Unable to publish triplex_load impedance-conversion/update function");
     }
 }
@@ -947,7 +947,7 @@ EXPORT SIMULATIONMODE interupdate_triplex_load(OBJECT *obj, unsigned int64 delta
 }
 
 //Exposed function to do load update - primarily to get impedance conversion into solver_nr directly
-EXPORT STATUS update_load_values(OBJECT *obj)
+EXPORT STATUS update_triplex_load_values(OBJECT *obj)
 {
 	triplex_load *my = OBJECTDATA(obj,triplex_load);
 
