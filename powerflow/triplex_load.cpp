@@ -217,11 +217,11 @@ void triplex_load::triplex_load_update_fxn(void)
 {
 	complex intermed_impedance[3];
 	int index_var;
-	complex adjusted_FBS_current[3];
-	complex adjust_FBS_temp_nominal_voltage[3];
-	double adjust_FBS_temp_voltage_mag[3];
-	double adjust_FBS_nominal_voltage_val[3];
-	complex adjust_FBS_voltage_val[3];
+	complex adjusted_current[3];
+	complex adjust_temp_nominal_voltage[3];
+	double adjust_temp_voltage_mag[3];
+	double adjust_nominal_voltage_val[3];
+	complex adjust_voltage_val[3];
 
 	//Roll GFA check into here, so current loads updates are handled properly
 	//See if GFA functionality is enabled
@@ -639,76 +639,59 @@ void triplex_load::triplex_load_update_fxn(void)
 	power[1] += constant_power[1];	
 	power[2] += constant_power[2];
 
-	//Adjust values for FBS - NR handled directly/elsewhere
-	if (solver_method == SM_FBS)
+	//Adjust values for both - FBS/NR are identical here, due to triplex nature
+
+	//Compute constants (just do it once)
+	//Set nominal voltage values - set up for explicit down below
+	adjust_nominal_voltage_val[0] = nominal_voltage;		//1N
+	adjust_nominal_voltage_val[1] = nominal_voltage;		//2N
+	adjust_nominal_voltage_val[2] = nominal_voltage * 2.0;	//12
+
+	//Just copy in the voltages (and compute delta) - mostly for explicit calculation, so the loop can just use it
+	adjust_voltage_val[0] = voltage[0];
+	adjust_voltage_val[1] = voltage[1];
+	adjust_voltage_val[2] = voltage1 + voltage2;
+
+	//Create the nominal voltage vectors - delta first
+	adjust_temp_nominal_voltage[0].SetPolar(adjust_nominal_voltage_val[0],0.0);
+	adjust_temp_nominal_voltage[1].SetPolar(adjust_nominal_voltage_val[1],0.0);
+	adjust_temp_nominal_voltage[2].SetPolar(adjust_nominal_voltage_val[2],0.0);
+
+	//Get magnitudes of all
+	adjust_temp_voltage_mag[0] = adjust_voltage_val[0].Mag();
+	adjust_temp_voltage_mag[1] = adjust_voltage_val[1].Mag();
+	adjust_temp_voltage_mag[2] = adjust_voltage_val[2].Mag();
+
+	//Start adjustments - loop them
+	for (index_var=0; index_var<3; index_var++)
 	{
-		//Set the base values
-
-
-		//Compute constants (just do it once)
-		//Set nominal voltage values - set up for explicit down below
-		adjust_FBS_nominal_voltage_val[0] = nominal_voltage;		//1N
-		adjust_FBS_nominal_voltage_val[1] = nominal_voltage;		//2N
-		adjust_FBS_nominal_voltage_val[2] = nominal_voltage * 2.0;	//12
-
-		//Just copy in the voltages (and compute delta) - mostly for explicit calculation, so the loop can just use it
-		adjust_FBS_voltage_val[0] = voltage[0];
-		adjust_FBS_voltage_val[1] = voltage[1];
-		adjust_FBS_voltage_val[2] = voltage1 + voltage2;
-
-		//Create the nominal voltage vectors - delta first
-		adjust_FBS_temp_nominal_voltage[0].SetPolar(adjust_FBS_nominal_voltage_val[0],0.0);
-		adjust_FBS_temp_nominal_voltage[1].SetPolar(adjust_FBS_nominal_voltage_val[1],0.0);
-		adjust_FBS_temp_nominal_voltage[2].SetPolar(adjust_FBS_nominal_voltage_val[2],0.0);
-
-		//Get magnitudes of all
-		adjust_FBS_temp_voltage_mag[0] = adjust_FBS_voltage_val[0].Mag();
-		adjust_FBS_temp_voltage_mag[1] = adjust_FBS_voltage_val[1].Mag();
-		adjust_FBS_temp_voltage_mag[2] = adjust_FBS_voltage_val[2].Mag();
-
-		//Start adjustments - loop them
-		for (index_var=0; index_var<3; index_var++)
+		if ((constant_current[index_var] != 0.0) && (adjust_temp_voltage_mag[index_var] != 0.0) && (ZIP_constant_current[index_var] == false))
 		{
-			if ((constant_current[index_var] != 0.0) && (adjust_FBS_temp_voltage_mag[index_var] != 0.0) && (ZIP_constant_current[index_var] == false))
+			//calculate new value
+			adjusted_current[index_var] = ~(adjust_temp_nominal_voltage[index_var] * ~constant_current[index_var] * adjust_temp_voltage_mag[index_var] / (adjust_voltage_val[index_var] * adjust_nominal_voltage_val[index_var]));
+		}
+		else
+		{
+			if (ZIP_constant_current[index_var] == false)
 			{
-				//calculate new value
-				adjusted_FBS_current[index_var] = ~(adjust_FBS_temp_nominal_voltage[index_var] * ~constant_current[index_var] * adjust_FBS_temp_voltage_mag[index_var] / (adjust_FBS_voltage_val[index_var] * adjust_FBS_nominal_voltage_val[index_var]));
+				adjusted_current[index_var] = complex(0.0,0.0);
 			}
 			else
 			{
-				if (ZIP_constant_current[index_var] == false)
-				{
-					adjusted_FBS_current[index_var] = complex(0.0,0.0);
-				}
-				else
-				{
-					adjusted_FBS_current[index_var] = constant_current[index_var];
-				}
+				adjusted_current[index_var] = constant_current[index_var];
 			}
 		}
-
-		//Update the accumulator
-		current[0] += adjusted_FBS_current[0];
-		current[1] += adjusted_FBS_current[1];
-		current12 += adjusted_FBS_current[2];
-
-		//Current trackers
-		prev_load_values[1][0] += adjusted_FBS_current[0];
-		prev_load_values[1][1] += adjusted_FBS_current[1];
-		prev_load_values[1][2] += adjusted_FBS_current[2];
 	}
-	else
-	{
-		//Update the accumulator
-		current[0] += constant_current[0];
-		current[1] += constant_current[1];
-		current12 += constant_current[2];
 
-		//Current trackers
-		prev_load_values[1][0] += constant_current[0];
-		prev_load_values[1][1] += constant_current[1];
-		prev_load_values[1][2] += constant_current[2];
-	}
+	//Update the accumulator
+	current[0] += adjusted_current[0];
+	current[1] += adjusted_current[1];
+	current12 += adjusted_current[2];
+
+	//Current trackers
+	prev_load_values[1][0] += adjusted_current[0];
+	prev_load_values[1][1] += adjusted_current[1];
+	prev_load_values[1][2] += adjusted_current[2];
 
 	//Power trackers
 	prev_load_values[2][0] += constant_power[0];
