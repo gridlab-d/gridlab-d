@@ -762,6 +762,36 @@ int windturb_dg::init(OBJECT *parent)
 			parent_is_valid = true;
 			parent_is_triplex = false;
 
+			//Map the solver method and see if we're NR-oriented
+			temp_property_pointer = new gld_property("powerflow::solver_method");
+
+			//Make sure it worked
+			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_enumeration() != true))
+			{
+				GL_THROW("windturb_dg:%d %s failed to map the nominal_frequency property", obj->id, (obj->name ? obj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to map the powerflow:solver_method property, an error occurred.  Please try again.
+				If the error persists, please submit your GLM and a bug report to the ticketing system.
+				*/
+			}
+
+			//Must be valid, read it
+			temp_enum = temp_property_pointer->get_enumeration();
+
+			//Remove the link
+			delete temp_property_pointer;
+
+			//Check which method we are - NR=2
+			if (temp_enum == 2)
+			{
+				//Set NR first run flag
+				NR_first_run = true;
+			}
+			else	//Other methods - should already be set, but be explicit
+			{
+				NR_first_run = false;
+			}
+
 			//Map phases
 			//Map and pull the phases
 			temp_property_pointer = new gld_property(parent,"phases");
@@ -834,10 +864,25 @@ int windturb_dg::init(OBJECT *parent)
 			pCircuit_V[1] = map_complex_value(parent,"voltage_B");
 			pCircuit_V[2] = map_complex_value(parent,"voltage_C");
 
-			pLine_I[0] = map_complex_value(parent,"current_A");
-			pLine_I[1] = map_complex_value(parent,"current_B");
-			pLine_I[2] = map_complex_value(parent,"current_C");
+			//If we're NR, map a different field to avoid the rotation
+			if (NR_first_run == true)
+			{
+				pLine_I[0] = map_complex_value(parent,"prerotated_current_A");
+				pLine_I[1] = map_complex_value(parent,"prerotated_current_B");
+				pLine_I[2] = map_complex_value(parent,"prerotated_current_C");
+			}
+			else
+			{
+				pLine_I[0] = map_complex_value(parent,"current_A");
+				pLine_I[1] = map_complex_value(parent,"current_B");
+				pLine_I[2] = map_complex_value(parent,"current_C");
+			}
 			
+			//Null the triplex interface point, just in case
+			pLine12 = NULL;
+		}
+		else if (gl_object_isa(parent,"triplex_meter","powerflow"))
+		{
 			//Map the solver method and see if we're NR-oriented
 			temp_property_pointer = new gld_property("powerflow::solver_method");
 
@@ -868,11 +913,6 @@ int windturb_dg::init(OBJECT *parent)
 				NR_first_run = false;
 			}
 			
-			//Null the triplex interface point, just in case
-			pLine12 = NULL;
-		}
-		else if (gl_object_isa(parent,"triplex_meter","powerflow"))
-		{
 			if (Turbine_implementation == COEFF_OF_PERFORMANCE){
 				GL_THROW("windturb_dg (id:%d): 3-phase coefficient of performance implementation uses a 3-phase generator and cannot be connected to a triplex meter",obj->id);
 			}
@@ -886,18 +926,30 @@ int windturb_dg::init(OBJECT *parent)
 			pCircuit_V[1] = map_complex_value(parent,"voltage_1N");
 			pCircuit_V[2] = map_complex_value(parent,"voltage_2N");
 
-			// NOTE - Commented code will replace the pLine_I and pLine12 once the triplex_node "deprecated properties" are removed
-			// pLine_I[0] = map_complex_value(parent,"current_1");
-			// pLine_I[1] = map_complex_value(parent,"current_2");
-			// pLine_I[2] = map_complex_value(parent,"current_N");
+			//If we're NR, map a different field to avoid the rotation
+			if (NR_first_run == true)
+			{
+				pLine_I[0] = map_complex_value(parent,"prerotated_current_1");
+				pLine_I[1] = map_complex_value(parent,"prerotated_current_2");
+				pLine_I[2] = map_complex_value(parent,"acc_temp_current_N");
 
-			// pLine12 = map_complex_value(parent,"current_12");
+				pLine12 = map_complex_value(parent,"prerotated_current_12");
+			}
+			else
+			{
+				// NOTE - Commented code will replace the pLine_I and pLine12 once the triplex_node "deprecated properties" are removed
+				// pLine_I[0] = map_complex_value(parent,"current_1");
+				// pLine_I[1] = map_complex_value(parent,"current_2");
+				// pLine_I[2] = map_complex_value(parent,"current_N");
 
-			pLine_I[0] = map_complex_value(parent,"acc_temp_current_1");
-			pLine_I[1] = map_complex_value(parent,"acc_temp_current_2");
-			pLine_I[2] = map_complex_value(parent,"acc_temp_current_N");
+				// pLine12 = map_complex_value(parent,"current_12");
 
-			pLine12 = map_complex_value(parent,"acc_temp_current_12");
+				pLine_I[0] = map_complex_value(parent,"acc_temp_current_1");
+				pLine_I[1] = map_complex_value(parent,"acc_temp_current_2");
+				pLine_I[2] = map_complex_value(parent,"acc_temp_current_N");
+
+				pLine12 = map_complex_value(parent,"acc_temp_current_12");
+			}
 
 			//pPower = map_complex_value(parent,"measured_power");
 
@@ -918,37 +970,7 @@ int windturb_dg::init(OBJECT *parent)
 			delete temp_property_pointer;
 
 			number_of_phases_out = 1;
-			
-			//Map the solver method and see if we're NR-oriented
-			temp_property_pointer = new gld_property("powerflow::solver_method");
-
-			//Make sure it worked
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_enumeration() != true))
-			{
-				GL_THROW("windturb_dg:%d %s failed to map the nominal_frequency property", obj->id, (obj->name ? obj->name : "Unnamed"));
-				/*  TROUBLESHOOT
-				While attempting to map the powerflow:solver_method property, an error occurred.  Please try again.
-				If the error persists, please submit your GLM and a bug report to the ticketing system.
-				*/
-			}
-
-			//Must be valid, read it
-			temp_enum = temp_property_pointer->get_enumeration();
-
-			//Remove the link
-			delete temp_property_pointer;
-
-			//Check which method we are - NR=2
-			if (temp_enum == 2)
-			{
-				//Set NR first run flag
-				NR_first_run = true;
-			}
-			else	//Other methods - should already be set, but be explicit
-			{
-				NR_first_run = false;
-			}
-		
+	
 		}
 		else if (gl_object_isa(parent,"rectifier","generators"))
 		{
