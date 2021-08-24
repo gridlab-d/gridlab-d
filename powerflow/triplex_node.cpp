@@ -370,6 +370,12 @@ TIMESTAMP triplex_node::sync(TIMESTAMP t0)
 	return node::sync(t0);
 }
 
+TIMESTAMP triplex_node::postsync(TIMESTAMP t0)
+{
+	//Just call the node one - explicit definition, just so easier to add things in the future
+	return node::postsync(t0);
+}
+
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF DELTA MODE
 //////////////////////////////////////////////////////////////////////////
