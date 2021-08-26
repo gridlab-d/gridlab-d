@@ -1269,7 +1269,7 @@ int helics_msg::publishJsonVariables(){
 int helics_msg::subscribeJsonVariables(){
 	OBJECT *obj = OBJECTHDR(this);
 	char buf[1024] = "";
-	string simName = string(gl_name(obj, buf, 1023));
+	string simName = string(gld_helics_federate->getName());
 	Json::Value jsonMessage;
 	Json::Value jsonData;
 	Json::Reader jsonReader;
@@ -1283,7 +1283,35 @@ int helics_msg::subscribeJsonVariables(){
 			value = (*sub)->HelicsSubscription.getString();
 			jsonReader.parse(value,jsonMessage);
 			if(!jsonMessage.isMember(simName.c_str())){
-				gl_warning("helics_msg::subscribeJsonVariables: The simulation name, %s, is not a member of the json schema.",simName.c_str());
+				jsonData = jsonMessage;
+				for(Json::ValueIterator o = jsonData.begin(); o != jsonData.end(); o++){
+					objectName = o.name();
+					for(Json::ValueIterator p = jsonData[objectName].begin(); p != jsonData[objectName].end(); p++){
+						propertyName = p.name();
+						const char *expr1 = objectName.c_str();
+						const char *expr2 = propertyName.c_str();
+						char *bufObj = new char[strlen(expr1)+1];
+						char *bufProp = new char[strlen(expr2)+1];
+						strcpy(bufObj, expr1);
+						strcpy(bufProp, expr2);
+						gldProperty = new gld_property(bufObj, bufProp);
+						if(gldProperty->is_valid()){
+							if(gldProperty->is_integer()){
+								int itmp = jsonData[objectName][propertyName].asInt();
+								gldProperty->setp(itmp);
+							} else if(gldProperty->is_double()){
+								double dtmp = jsonData[objectName][propertyName].asDouble();
+								gldProperty->setp(dtmp);
+							} else {
+								string stmp = jsonData[objectName][propertyName].asString();
+								char sbuf[1024] = "";
+								strncpy(sbuf, stmp.c_str(), 1023);
+								gldProperty->from_string(sbuf);
+							}
+						}
+						delete gldProperty;
+					}
+				}
 			} else {
 				jsonData = jsonMessage[simName];
 				for(Json::ValueIterator o = jsonData.begin(); o != jsonData.end(); o++){
@@ -1328,7 +1356,35 @@ int helics_msg::subscribeJsonVariables(){
 			const string message_buffer = string(mesg.c_str());
 			jsonReader.parse(message_buffer, jsonMessage);
 			if(!jsonMessage.isMember(simName.c_str())){
-				gl_warning("helics_msg::subscribeJsonVariables: The simulation name, %s, is not a member of the json schema.",simName.c_str());
+				jsonData = jsonMessage;
+				for(Json::ValueIterator o = jsonData.begin(); o != jsonData.end(); o++){
+					objectName = o.name();
+					for(Json::ValueIterator p = jsonData[objectName].begin(); p != jsonData[objectName].end(); p++){
+						propertyName = p.name();
+						const char *expr1 = objectName.c_str();
+						const char *expr2 = propertyName.c_str();
+						char *bufObj = new char[strlen(expr1)+1];
+						char *bufProp = new char[strlen(expr2)+1];
+						strcpy(bufObj, expr1);
+						strcpy(bufProp, expr2);
+						gldProperty = new gld_property(bufObj, bufProp);
+						if(gldProperty->is_valid()){
+							if(gldProperty->is_integer()){
+								int itmp = jsonData[objectName][propertyName].asInt();
+								gldProperty->setp(itmp);
+							} else if(gldProperty->is_double()){
+								double dtmp = jsonData[objectName][propertyName].asDouble();
+								gldProperty->setp(dtmp);
+							} else {
+								string stmp = jsonData[objectName][propertyName].asString();
+								char sbuf[1024] = "";
+								strncpy(sbuf, stmp.c_str(), 1023);
+								gldProperty->from_string(sbuf);
+							}
+						}
+						delete gldProperty;
+					}
+				}
 			} else {
 				jsonData = jsonMessage[simName];
 				for(Json::ValueIterator o = jsonData.begin(); o != jsonData.end(); o++){
