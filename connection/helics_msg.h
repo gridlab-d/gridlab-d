@@ -196,7 +196,7 @@ private:
 #endif
 	TIMESTAMP last_approved_helics_time;
 	TIMESTAMP initial_sim_time;
-	TIMESTAMP gridappsd_publish_time;
+	TIMESTAMP publish_time;
 	double last_delta_helics_time;
 	bool exitDeltamode;
 	string *federate_configuration_file;
@@ -225,7 +225,7 @@ public:
 	SIMULATIONMODE deltaInterUpdate(unsigned int delta_iteration_counter, TIMESTAMP t0, unsigned int64 dt);
 	SIMULATIONMODE deltaClockUpdate(double t1, unsigned long timestep, SIMULATIONMODE sysmode);
 	enumeration message_type;
-	int32 real_time_gridappsd_publish_period;
+	int32 publish_period;
 
 	// TODO add other event handlers here
 public:
