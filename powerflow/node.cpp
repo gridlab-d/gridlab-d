@@ -3721,7 +3721,9 @@ int node::NR_populate(void)
 	NR_busdata[NR_node_reference].ExtraCurrentInjFuncObject = NULL;
 
 	//Extra functions - see if we're a load - map update if we're in the right mode
-	if ((gl_object_isa(me,"load","powerflow")==true) && (enable_impedance_conversion==true))
+	//Could potentially flag this in load/triplex_load - it's primarily needed to keep constant_current-based loads properly rotated
+	//Flagging it could improve performance
+	if (((gl_object_isa(me,"load","powerflow")==true) || (gl_object_isa(me,"triplex_load","powerflow")==true)) && (enable_inrush_calculations == false))
 	{
 		//Map the function
 		NR_busdata[NR_node_reference].LoadUpdateFxn = (FUNCTIONADDR)(gl_get_function(me,"pwr_object_load_update"));
@@ -4054,36 +4056,32 @@ int node::NR_current_update(bool parentcall)
 		//Handle our "self" - do this in a "temporary fashion" for children problems
 		temp_current_inj[0] = temp_current_inj[1] = temp_current_inj[2] = complex(0.0,0.0);
 
-		//If deltamode - adjust these accumulations, since this is already done inside powerflow (so numbers match)
-		if (deltamode_inclusive == true)
+		//Set up reference voltage for any accumulator adjustments
+		//See if we're a triplex
+		if (has_phase(PHASE_S))
 		{
-			//See if we're a triplex
-			if (has_phase(PHASE_S))
-			{
-				assumed_nominal_voltage[0].SetPolar(nominal_voltage,0.0);			//1
-				assumed_nominal_voltage[1].SetPolar(nominal_voltage,0.0);			//2
-				assumed_nominal_voltage[2] = assumed_nominal_voltage[0] + assumed_nominal_voltage[1];	//12
-				assumed_nominal_voltage[3] = complex(0.0,0.0);	//Not needed - zero for giggles
-				assumed_nominal_voltage[4] = complex(0.0,0.0);
-				assumed_nominal_voltage[5] = complex(0.0,0.0);
+			assumed_nominal_voltage[0].SetPolar(nominal_voltage,0.0);			//1
+			assumed_nominal_voltage[1].SetPolar(nominal_voltage,0.0);			//2
+			assumed_nominal_voltage[2] = assumed_nominal_voltage[0] + assumed_nominal_voltage[1];	//12
+			assumed_nominal_voltage[3] = complex(0.0,0.0);	//Not needed - zero for giggles
+			assumed_nominal_voltage[4] = complex(0.0,0.0);
+			assumed_nominal_voltage[5] = complex(0.0,0.0);
 
-				//Populate LL value
-				nominal_voltage_dval = 2.0 * nominal_voltage;
-			}
-			else //Standard fare
-			{
-				assumed_nominal_voltage[0].SetPolar(nominal_voltage,0.0);			//AN
-				assumed_nominal_voltage[1].SetPolar(nominal_voltage,(-2.0*PI/3.0));	//BN
-				assumed_nominal_voltage[2].SetPolar(nominal_voltage,(2.0*PI/3.0));	//CN
-				assumed_nominal_voltage[3] = assumed_nominal_voltage[0] - assumed_nominal_voltage[1];	//AB
-				assumed_nominal_voltage[4] = assumed_nominal_voltage[1] - assumed_nominal_voltage[2];	//BC
-				assumed_nominal_voltage[5] = assumed_nominal_voltage[2] - assumed_nominal_voltage[0];	//CA
-
-				//Populate LL value
-				nominal_voltage_dval = assumed_nominal_voltage[3].Mag();
-			}
+			//Populate LL value
+			nominal_voltage_dval = 2.0 * nominal_voltage;
 		}
-		//Default else - not deltamode, so don't care (don't even zero them)
+		else //Standard fare
+		{
+			assumed_nominal_voltage[0].SetPolar(nominal_voltage,0.0);			//AN
+			assumed_nominal_voltage[1].SetPolar(nominal_voltage,(-2.0*PI/3.0));	//BN
+			assumed_nominal_voltage[2].SetPolar(nominal_voltage,(2.0*PI/3.0));	//CN
+			assumed_nominal_voltage[3] = assumed_nominal_voltage[0] - assumed_nominal_voltage[1];	//AB
+			assumed_nominal_voltage[4] = assumed_nominal_voltage[1] - assumed_nominal_voltage[2];	//BC
+			assumed_nominal_voltage[5] = assumed_nominal_voltage[2] - assumed_nominal_voltage[0];	//CA
+
+			//Populate LL value
+			nominal_voltage_dval = assumed_nominal_voltage[3].Mag();
+		}
 
 		if (has_phase(PHASE_D))	//Delta connection
 		{
@@ -4097,29 +4095,19 @@ int node::NR_current_update(bool parentcall)
 			delta_current[1]= (voltaged[1]==0) ? complex(0,0) : ~(power[1]/voltaged[1]);
 			delta_current[2]= (voltaged[2]==0) ? complex(0,0) : ~(power[2]/voltaged[2]);
 
-			//Adjust constant current values, if deltamode
-			if (deltamode_inclusive == true)
+			//Adjust constant current values, as necessary
+			//Loop through the phases
+			for (loop_index=0; loop_index<3; loop_index++)
 			{
-				//Loop through the phases
-				for (loop_index=0; loop_index<3; loop_index++)
+				//Check existence of phases and adjust the currents appropriately
+				if (voltaged[loop_index] != 0.0)
 				{
-					//Check existence of phases and adjust the currents appropriately
-					if (voltaged[loop_index] != 0.0)
-					{
-						adjusted_current_val[loop_index] =  ~((assumed_nominal_voltage[loop_index+3]*~current[loop_index]*voltaged[loop_index].Mag())/(voltaged[loop_index]*nominal_voltage_dval));
-					}
-					else
-					{
-						adjusted_current_val[loop_index] = complex(0.0,0.0);
-					}
+					adjusted_current_val[loop_index] =  ~((assumed_nominal_voltage[loop_index+3]*~current[loop_index]*voltaged[loop_index].Mag())/(voltaged[loop_index]*nominal_voltage_dval));
 				}
-			}
-			else
-			{
-				//Standard approach
-				adjusted_current_val[0] = current[0];
-				adjusted_current_val[1] = current[1];
-				adjusted_current_val[2] = current[2];
+				else
+				{
+					adjusted_current_val[loop_index] = complex(0.0,0.0);
+				}
 			}
 
 			//Translate into a line current
@@ -4140,61 +4128,20 @@ int node::NR_current_update(bool parentcall)
 			//Find V12 (just in case)
 			vdel=voltage[0] + voltage[1];
 
-			//Find contributions
-			//Adjust constant current values, if deltamode
-			if (deltamode_inclusive == true)
-			{
-				//Check existence of phases and adjust the currents appropriately
-				//Phase 1
-				if (voltage[0] != 0.0)
-				{
-					adjusted_current_val[0] =  ~((assumed_nominal_voltage[0]*~current[0]*voltage[0].Mag())/(voltage[0]*nominal_voltage));
-				}
-				else
-				{
-					adjusted_current_val[0] = complex(0.0,0.0);
-				}
-
-				//Phase 2
-				if (voltage[1] != 0.0)
-				{
-					adjusted_current_val[1] =  ~((assumed_nominal_voltage[1]*~current[1]*voltage[1].Mag())/(voltage[1]*nominal_voltage));
-				}
-				else
-				{
-					adjusted_current_val[1] = complex(0.0,0.0);
-				}
-
-				//Phase 12
-				if (vdel != 0.0)
-				{
-					adjusted_current_val[2] =  ~((assumed_nominal_voltage[2]*~current12*vdel.Mag())/(vdel*nominal_voltage_dval));
-				}
-				else
-				{
-					adjusted_current_val[2] = complex(0.0,0.0);
-				}
-			}
-			else
-			{
-				//Standard approach
-				adjusted_current_val[0] = current[0];
-				adjusted_current_val[1] = current[1];
-				adjusted_current_val[2] = current12;	//current12 is not part of the standard current array
-			}
+			//Find contributions - don't need to be adjusted, since everything does that elsewhere now
+			adjusted_current_val[0] = current[0];
+			adjusted_current_val[1] = current[1];
+			adjusted_current_val[2] = current12;	//current12 is not part of the standard current array
 
 			//Start with the currents (just put them in)
 			temp_current[0] = adjusted_current_val[0];
 			temp_current[1] = adjusted_current_val[1];
 			temp_current[2] = adjusted_current_val[2];
 
-			//Add in the unrotated bit, if we're deltamode
-			if (deltamode_inclusive == true)
-			{
-				temp_current[0] += pre_rotated_current[0];	//1
-				temp_current[1] += pre_rotated_current[1];	//2
-				temp_current[2] += pre_rotated_current[2];	//12
-			}
+			//Add in the unrotated bit
+			temp_current[0] += pre_rotated_current[0];	//1
+			temp_current[1] += pre_rotated_current[1];	//2
+			temp_current[2] += pre_rotated_current[2];	//12
 
 			//Now add in power contributions
 			temp_current[0] += voltage[0] == 0.0 ? 0.0 : ~(power[0]/voltage[0]);
@@ -4247,29 +4194,19 @@ int node::NR_current_update(bool parentcall)
 		}
 		else					//Wye connection
 		{
-			//Adjust constant current values, if deltamode
-			if (deltamode_inclusive == true)
+			//Adjust constant current values
+			//Loop through the phases
+			for (loop_index=0; loop_index<3; loop_index++)
 			{
-				//Loop through the phases
-				for (loop_index=0; loop_index<3; loop_index++)
+				//Check existence of phases and adjust the currents appropriately
+				if (voltage[loop_index] != 0.0)
 				{
-					//Check existence of phases and adjust the currents appropriately
-					if (voltage[loop_index] != 0.0)
-					{
-						adjusted_current_val[loop_index] =  ~((assumed_nominal_voltage[loop_index]*~current[loop_index]*voltage[loop_index].Mag())/(voltage[loop_index]*nominal_voltage));
-					}
-					else
-					{
-						adjusted_current_val[loop_index] = complex(0.0,0.0);
-					}
+					adjusted_current_val[loop_index] =  ~((assumed_nominal_voltage[loop_index]*~current[loop_index]*voltage[loop_index].Mag())/(voltage[loop_index]*nominal_voltage));
 				}
-			}
-			else
-			{
-				//Standard approach
-				adjusted_current_val[0] = current[0];
-				adjusted_current_val[1] = current[1];
-				adjusted_current_val[2] = current[2];
+				else
+				{
+					adjusted_current_val[loop_index] = complex(0.0,0.0);
+				}
 			}
 
 			//PQP needs power converted to current
@@ -4299,59 +4236,38 @@ int node::NR_current_update(bool parentcall)
 			delta_current[1]= (voltaged[1]==0) ? complex(0,0) : ~(power_dy[1]/voltaged[1]);
 			delta_current[2]= (voltaged[2]==0) ? complex(0,0) : ~(power_dy[2]/voltaged[2]);
 
-			//Adjust constant current values of delta-connected, if deltamode
-			if (deltamode_inclusive == true)
+			//Adjust constant current values of delta-connected
+			//Loop through the phases
+			for (loop_index=0; loop_index<3; loop_index++)
 			{
-				//Loop through the phases
-				for (loop_index=0; loop_index<3; loop_index++)
+				//Check existence of phases and adjust the currents appropriately
+				if (voltaged[loop_index] != 0.0)
 				{
-					//Check existence of phases and adjust the currents appropriately
-					if (voltaged[loop_index] != 0.0)
-					{
-						adjusted_current_val[loop_index] =  ~((assumed_nominal_voltage[loop_index+3]*~current_dy[loop_index]*voltaged[loop_index].Mag())/(voltaged[loop_index]*nominal_voltage_dval));
-					}
-					else
-					{
-						adjusted_current_val[loop_index] = complex(0.0,0.0);
-					}
+					adjusted_current_val[loop_index] =  ~((assumed_nominal_voltage[loop_index+3]*~current_dy[loop_index]*voltaged[loop_index].Mag())/(voltaged[loop_index]*nominal_voltage_dval));
+				}
+				else
+				{
+					adjusted_current_val[loop_index] = complex(0.0,0.0);
 				}
 			}
-			else
-			{
-				//Standard approach
-				adjusted_current_val[0] = current_dy[0];
-				adjusted_current_val[1] = current_dy[1];
-				adjusted_current_val[2] = current_dy[2];
-			}
-
 
 			//Put into accumulator
 			temp_current_inj[0] += delta_shunt[0]-delta_shunt[2] + delta_current[0]-delta_current[2] + adjusted_current_val[0]-adjusted_current_val[2];
 			temp_current_inj[1] += delta_shunt[1]-delta_shunt[0] + delta_current[1]-delta_current[0] + adjusted_current_val[1]-adjusted_current_val[0];
 			temp_current_inj[2] += delta_shunt[2]-delta_shunt[1] + delta_current[2]-delta_current[1] + adjusted_current_val[2]-adjusted_current_val[1];
 
-			//Adjust constant current values for Wye-connected, if deltamode
-			if (deltamode_inclusive == true)
+			//Adjust constant current values for Wye-connected
+			//Loop through the phases
+			for (loop_index=0; loop_index<3; loop_index++)
 			{
-				//Loop through the phases
-				for (loop_index=0; loop_index<3; loop_index++)
+				if (voltage[loop_index] != 0.0)
 				{
-					if (voltage[loop_index] != 0.0)
-					{
-						adjusted_current_val[loop_index] =  ~((assumed_nominal_voltage[loop_index]*~current_dy[loop_index+3]*voltage[loop_index].Mag())/(voltage[loop_index]*nominal_voltage));
-					}
-					else
-					{
-						adjusted_current_val[loop_index] = complex(0.0,0.0);
-					}
+					adjusted_current_val[loop_index] =  ~((assumed_nominal_voltage[loop_index]*~current_dy[loop_index+3]*voltage[loop_index].Mag())/(voltage[loop_index]*nominal_voltage));
 				}
-			}
-			else
-			{
-				//Standard approach
-				adjusted_current_val[0] = current_dy[3];
-				adjusted_current_val[1] = current_dy[4];
-				adjusted_current_val[2] = current_dy[5];
+				else
+				{
+					adjusted_current_val[loop_index] = complex(0.0,0.0);
+				}
 			}
 
 			//Now put in Wye components

@@ -1117,14 +1117,15 @@ int helics_msg::subscribeVariables(){
 			const char *message_buffer = mesg.c_str();
 			int message_size = mesg.size();
 			if(message_size != 0){
-				char *valueBuf = new char[value_buffer.size() + 1];
-				memset(&valueBuf[0], '\0', value_buffer.size()+1);
+				char *valueBuf = new char[sizeof(message_buffer) + 1];
+				memset(valueBuf, '\0', sizeof(message_buffer) + 1);
 				strncpy(valueBuf, message_buffer, message_size);
 				(*sub)->pObjectProperty->from_string(valueBuf);
 				delete[] valueBuf;
 			}
 		}
 	}
+
 	for(vector<json_helics_value_subscription*>::iterator sub = json_helics_value_subscriptions.begin(); sub != json_helics_value_subscriptions.end(); sub++){
 		if((*sub)->HelicsSubscription.isUpdated()){
 			gl_verbose("JSON subscription %s updated.", (*sub)->target.c_str());
