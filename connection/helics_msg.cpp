@@ -61,7 +61,7 @@ helics_msg::helics_msg(MODULE *module)
 		PT_enumeration, "message_type", PADDR(message_type), PT_DESCRIPTION, "set the type of message format you wish to construct",
 			PT_KEYWORD, "GENERAL", enumeration(HMT_GENERAL), PT_DESCRIPTION, "use this for sending a general HELICS topic/value pair.",
 			PT_KEYWORD, "JSON", enumeration(HMT_JSON), PT_DESCRIPTION, "use this for want to send a bundled json formatted messag in a single topic.",
-			PT_int32, "gridappsd_publish_period", PADDR(real_time_gridappsd_publish_period), PT_DESCRIPTION, "use this with json bundling to set the period [s] at which data is published.",
+			PT_int32, "publish_period", PADDR(publish_period), PT_DESCRIPTION, "use this with json bundling to set the period [s] at which data is published.",
 		// TODO add published properties here
 		NULL)<1)
 			throw "connection/helics_msg::helics_msg(MODULE*): unable to publish properties of connection:helics_msg";
@@ -74,7 +74,7 @@ int helics_msg::create(){
 	register_object_interupdate((void *)this, dInterupdate);
 	register_object_deltaclockupdate((void *)this, dClockupdate);
 	message_type = HMT_GENERAL;
-	real_time_gridappsd_publish_period = 3;
+	publish_period = 0;
 	return 1;
 }
 
@@ -643,7 +643,12 @@ int helics_msg::init(OBJECT *parent){
 	last_approved_helics_time = gl_globalclock;
 	last_delta_helics_time = (double)(gl_globalclock);
 	initial_sim_time = gl_globalclock;
-	gridappsd_publish_time = initial_sim_time + (TIMESTAMP)real_time_gridappsd_publish_period;
+	if(message_type == HMT_JSON && publish_period == 0) {
+		publish_period = 3;
+	}
+	if(publish_period > 0) {
+		publish_time = initial_sim_time + (TIMESTAMP)publish_period;
+	}
 	return rv;
 }
 
@@ -792,14 +797,19 @@ TIMESTAMP helics_msg::clk_update(TIMESTAMP t1)
 			t1 = gl_globalstoptime;
 		}
 		if(message_type == HMT_GENERAL){
-			result = publishVariables();
-			if(result == 0){
-				return TS_INVALID;
+			if (publish_period == 0 || t1 == publish_time){
+				if(publish_period > 0){
+					publish_time = t1 + (TIMESTAMP)publish_period;
+				}
+				result = publishVariables();
+				if(result == 0){
+					return TS_INVALID;
+				}
 			}
 		} else if(message_type == HMT_JSON){
-			if (real_time_gridappsd_publish_period == 0 || t1 == gridappsd_publish_time){
-				if(real_time_gridappsd_publish_period > 0){
-					gridappsd_publish_time = t1 + (TIMESTAMP)real_time_gridappsd_publish_period;
+			if (publish_period == 0 || t1 == publish_time){
+				if(publish_period > 0){
+					publish_time = t1 + (TIMESTAMP)publish_period;
 				}
 				if(t1<gl_globalstoptime){
 					result = publishJsonVariables();
