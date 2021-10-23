@@ -655,7 +655,11 @@ void load::load_update_fxn(void)
 				}
 				
 				// Calculate then shift the constant current to use the posted voltage as the reference angle
-				temp_curr = ~complex(real_power,imag_power) / complex(nominal_voltage,0);
+        if (has_phase(PHASE_D)) {
+          temp_curr = ~complex(real_power,imag_power) / complex(sqrt(3.0)*nominal_voltage,0);
+        } else {
+          temp_curr = ~complex(real_power,imag_power) / complex(nominal_voltage,0);
+        }
 
 				//This was "technically correct", but it will break everything else in the system - correcting
 				//temp_angle = temp_curr.Arg() + voltage[index].Arg();
@@ -690,7 +694,11 @@ void load::load_update_fxn(void)
 					imag_power *= -1.0;	//Adjust imaginary portion for negative PF
 				}
 
-				constant_impedance[index] = ~( complex(nominal_voltage * nominal_voltage, 0) / complex(real_power,imag_power) );
+        if (has_phase(PHASE_D)) {
+          constant_impedance[index] = ~( complex(3.0 * nominal_voltage * nominal_voltage, 0) / complex(real_power,imag_power) );
+        } else {
+          constant_impedance[index] = ~( complex(nominal_voltage * nominal_voltage, 0) / complex(real_power,imag_power) );
+        }
 
 			}
 			else
