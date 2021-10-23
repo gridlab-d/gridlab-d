@@ -119,7 +119,7 @@ object meter {
 			property value;
 			file ../data_zip_measload_phaseA.csv;
 		};
-		within 1.0;
+		within 0.1;
 	};
 	object complex_assert {
 		target measured_power_B;
@@ -127,7 +127,7 @@ object meter {
 			property value;
 			file ../data_zip_measload_phaseB.csv;
 		};
-		within 1.0;
+		within 0.1;
 	};
 	object complex_assert {
 		target measured_power_C;
@@ -135,7 +135,7 @@ object meter {
 			property value;
 			file ../data_zip_measload_phaseC.csv;
 		};
-		within 1.0;
+		within 0.1;
 	};
 }
 
