@@ -657,13 +657,13 @@ void load::load_update_fxn(void)
 				// Calculate then shift the constant current to use the posted voltage as the reference angle
         if (has_phase(PHASE_D)) {
           temp_curr = ~complex(real_power,imag_power) / complex(sqrt(3.0)*nominal_voltage,0);
+          temp_angle = temp_curr.Arg() + baseangles[index] + PI/6.0;
         } else {
           temp_curr = ~complex(real_power,imag_power) / complex(nominal_voltage,0);
+          temp_angle = temp_curr.Arg() + baseangles[index];
         }
-
 				//This was "technically correct", but it will break everything else in the system - correcting
 				//temp_angle = temp_curr.Arg() + voltage[index].Arg();
-				temp_angle = temp_curr.Arg() + baseangles[index];
 				temp_curr.SetPolar(temp_curr.Mag(),temp_angle);
 
 				constant_current[index] = temp_curr;
