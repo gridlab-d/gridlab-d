@@ -3118,7 +3118,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 		else	//FOUR_QUADRANT code
 		{
 			//FOUR_QUADRANT model (originally written for NAS/CES, altered for PV)
-			double VA_Efficiency, temp_PF, temp_QVal, P_in, net_eff; //Ab added last two
+			double VA_Efficiency, temp_PF, temp_QVal, net_eff; //Ab added last two
 			complex temp_VA;
 			complex battery_power_out = complex(0,0);
 			if ((four_quadrant_control_mode != FQM_VOLT_VAR) && (four_quadrant_control_mode != FQM_VOLT_WATT))
@@ -3156,7 +3156,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					{
 						VA_Efficiency = 0.0;	//Nope, no output
 						//Ab add
-						P_in = 0;
+						P_In = 0;
 						net_eff = 0;
 						//end Ab add
 					}
@@ -3180,7 +3180,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						//Apply this to the output
 						VA_Efficiency = (((p_max/(C1-C2))-C3*(C1-C2))*(P_In-C2)+C3*(P_In-C2)*(P_In-C2));
 						//Ab add
-						net_eff = fabs(VA_Efficiency / P_in);
+						net_eff = fabs(VA_Efficiency / P_In);
 						//end Ab add
 					}
 				}
@@ -3621,7 +3621,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						prevQ = VoltVArSched[i].second;
 					}
 
-					double Po = (P_in * net_eff) - fabs(Qo) * (1 - net_eff)/net_eff;
+					double Po = (P_In * net_eff) - fabs(Qo) * (1 - net_eff)/net_eff;
 
 					if(P_In < 0.0)
 						VA_Out = complex(Po,-Qo);	//Qo sign convention backwards from what i was expecting
@@ -4081,9 +4081,9 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				}
 			} // End VOLT_VAR and VOLT_WATT
 
-			// Check P_in (calcualted from V_In and I_In), and compared with p_in (calculated from VA_Out)
-			if (P_in < p_in) {
-				gl_warning("inverter:%d - %s - Real power output exceeds maximum DC output",obj->id,(obj->name?obj->name:"Unnamed"));
+			// Check P_In (calcualted from V_In and I_In), and compared with p_in (calculated from VA_Out)
+			if (P_In < p_in) {
+				gl_warning("inverter:%d - %s - Real power output (%g) exceeds maximum DC output (%g)",obj->id,(obj->name?obj->name:"Unnamed"),p_in,P_In);
 				/*  TROUBLESHOOT
 				The real power output of the inverter exceeds the maximum DC power being input.  In the specific operating mode used,
 				the inverter will not limit the output.  Choose a different dispatch point, change the inverter rating, or adjust the

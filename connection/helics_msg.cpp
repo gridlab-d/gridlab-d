@@ -61,7 +61,7 @@ helics_msg::helics_msg(MODULE *module)
 		PT_enumeration, "message_type", PADDR(message_type), PT_DESCRIPTION, "set the type of message format you wish to construct",
 			PT_KEYWORD, "GENERAL", enumeration(HMT_GENERAL), PT_DESCRIPTION, "use this for sending a general HELICS topic/value pair.",
 			PT_KEYWORD, "JSON", enumeration(HMT_JSON), PT_DESCRIPTION, "use this for want to send a bundled json formatted messag in a single topic.",
-			PT_int32, "gridappsd_publish_period", PADDR(real_time_gridappsd_publish_period), PT_DESCRIPTION, "use this with json bundling to set the period [s] at which data is published.",
+			PT_int32, "publish_period", PADDR(publish_period), PT_DESCRIPTION, "use this with json bundling to set the period [s] at which data is published.",
 		// TODO add published properties here
 		NULL)<1)
 			throw "connection/helics_msg::helics_msg(MODULE*): unable to publish properties of connection:helics_msg";
@@ -74,7 +74,7 @@ int helics_msg::create(){
 	register_object_interupdate((void *)this, dInterupdate);
 	register_object_deltaclockupdate((void *)this, dClockupdate);
 	message_type = HMT_GENERAL;
-	real_time_gridappsd_publish_period = 3;
+	publish_period = 0;
 	return 1;
 }
 
@@ -643,7 +643,12 @@ int helics_msg::init(OBJECT *parent){
 	last_approved_helics_time = gl_globalclock;
 	last_delta_helics_time = (double)(gl_globalclock);
 	initial_sim_time = gl_globalclock;
-	gridappsd_publish_time = initial_sim_time + (TIMESTAMP)real_time_gridappsd_publish_period;
+	if(message_type == HMT_JSON && publish_period == 0) {
+		publish_period = 3;
+	}
+	if(publish_period > 0) {
+		publish_time = initial_sim_time + (TIMESTAMP)publish_period;
+	}
 	return rv;
 }
 
@@ -792,14 +797,19 @@ TIMESTAMP helics_msg::clk_update(TIMESTAMP t1)
 			t1 = gl_globalstoptime;
 		}
 		if(message_type == HMT_GENERAL){
-			result = publishVariables();
-			if(result == 0){
-				return TS_INVALID;
+			if (publish_period == 0 || t1 == publish_time){
+				if(publish_period > 0){
+					publish_time = t1 + (TIMESTAMP)publish_period;
+				}
+				result = publishVariables();
+				if(result == 0){
+					return TS_INVALID;
+				}
 			}
 		} else if(message_type == HMT_JSON){
-			if (real_time_gridappsd_publish_period == 0 || t1 == gridappsd_publish_time){
-				if(real_time_gridappsd_publish_period > 0){
-					gridappsd_publish_time = t1 + (TIMESTAMP)real_time_gridappsd_publish_period;
+			if (publish_period == 0 || t1 == publish_time){
+				if(publish_period > 0){
+					publish_time = t1 + (TIMESTAMP)publish_period;
 				}
 				if(t1<gl_globalstoptime){
 					result = publishJsonVariables();
@@ -1269,7 +1279,7 @@ int helics_msg::publishJsonVariables(){
 int helics_msg::subscribeJsonVariables(){
 	OBJECT *obj = OBJECTHDR(this);
 	char buf[1024] = "";
-	string simName = string(gl_name(obj, buf, 1023));
+	string simName = string(gld_helics_federate->getName());
 	Json::Value jsonMessage;
 	Json::Value jsonData;
 	Json::Reader jsonReader;
@@ -1283,7 +1293,35 @@ int helics_msg::subscribeJsonVariables(){
 			value = (*sub)->HelicsSubscription.getString();
 			jsonReader.parse(value,jsonMessage);
 			if(!jsonMessage.isMember(simName.c_str())){
-				gl_warning("helics_msg::subscribeJsonVariables: The simulation name, %s, is not a member of the json schema.",simName.c_str());
+				jsonData = jsonMessage;
+				for(Json::ValueIterator o = jsonData.begin(); o != jsonData.end(); o++){
+					objectName = o.name();
+					for(Json::ValueIterator p = jsonData[objectName].begin(); p != jsonData[objectName].end(); p++){
+						propertyName = p.name();
+						const char *expr1 = objectName.c_str();
+						const char *expr2 = propertyName.c_str();
+						char *bufObj = new char[strlen(expr1)+1];
+						char *bufProp = new char[strlen(expr2)+1];
+						strcpy(bufObj, expr1);
+						strcpy(bufProp, expr2);
+						gldProperty = new gld_property(bufObj, bufProp);
+						if(gldProperty->is_valid()){
+							if(gldProperty->is_integer()){
+								int itmp = jsonData[objectName][propertyName].asInt();
+								gldProperty->setp(itmp);
+							} else if(gldProperty->is_double()){
+								double dtmp = jsonData[objectName][propertyName].asDouble();
+								gldProperty->setp(dtmp);
+							} else {
+								string stmp = jsonData[objectName][propertyName].asString();
+								char sbuf[1024] = "";
+								strncpy(sbuf, stmp.c_str(), 1023);
+								gldProperty->from_string(sbuf);
+							}
+						}
+						delete gldProperty;
+					}
+				}
 			} else {
 				jsonData = jsonMessage[simName];
 				for(Json::ValueIterator o = jsonData.begin(); o != jsonData.end(); o++){
@@ -1328,7 +1366,35 @@ int helics_msg::subscribeJsonVariables(){
 			const string message_buffer = string(mesg.c_str());
 			jsonReader.parse(message_buffer, jsonMessage);
 			if(!jsonMessage.isMember(simName.c_str())){
-				gl_warning("helics_msg::subscribeJsonVariables: The simulation name, %s, is not a member of the json schema.",simName.c_str());
+				jsonData = jsonMessage;
+				for(Json::ValueIterator o = jsonData.begin(); o != jsonData.end(); o++){
+					objectName = o.name();
+					for(Json::ValueIterator p = jsonData[objectName].begin(); p != jsonData[objectName].end(); p++){
+						propertyName = p.name();
+						const char *expr1 = objectName.c_str();
+						const char *expr2 = propertyName.c_str();
+						char *bufObj = new char[strlen(expr1)+1];
+						char *bufProp = new char[strlen(expr2)+1];
+						strcpy(bufObj, expr1);
+						strcpy(bufProp, expr2);
+						gldProperty = new gld_property(bufObj, bufProp);
+						if(gldProperty->is_valid()){
+							if(gldProperty->is_integer()){
+								int itmp = jsonData[objectName][propertyName].asInt();
+								gldProperty->setp(itmp);
+							} else if(gldProperty->is_double()){
+								double dtmp = jsonData[objectName][propertyName].asDouble();
+								gldProperty->setp(dtmp);
+							} else {
+								string stmp = jsonData[objectName][propertyName].asString();
+								char sbuf[1024] = "";
+								strncpy(sbuf, stmp.c_str(), 1023);
+								gldProperty->from_string(sbuf);
+							}
+						}
+						delete gldProperty;
+					}
+				}
 			} else {
 				jsonData = jsonMessage[simName];
 				for(Json::ValueIterator o = jsonData.begin(); o != jsonData.end(); o++){
