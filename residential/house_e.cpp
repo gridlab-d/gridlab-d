@@ -112,6 +112,8 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
+#include <fstream>
+#include <string>
 #include "solvers.h"
 #include "house_e.h"
 #include "complex.h"
@@ -505,6 +507,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 				PT_KEYWORD, "FULL", (enumeration)TC_FULL, // setpoint/deadband controls HVAC
 				PT_KEYWORD, "BAND", (enumeration)TC_BAND, // T<mode>{On,Off} control HVAC (setpoints/deadband are ignored)
 				PT_KEYWORD, "NONE", (enumeration)TC_NONE, // system_mode controls HVAC (setpoints/deadband and T<mode>{On,Off} are ignored)
+			PT_bool,"dump_house_initialization_parameters",PADDR(dump_house_parameters), PT_DESCRIPTION, "bool to dump the house initialization parameters to <house object name>_parameters_dump.txt",
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);			
 
@@ -823,6 +826,9 @@ int house_e::create()
 	//Impedance conversion stuff
 	powerflow_impedance_conversion_enabled = false;
 	powerflow_impedance_conversion_level = 0.0;
+
+	//dump house parameters stuff
+	dump_house_parameters = false;
 
 	return result;
 }
@@ -2046,7 +2052,9 @@ int house_e::init(OBJECT *parent)
 			*/
 		}
 	}
-
+	if(dump_house_parameters) {
+		dump_house_parameters_function();
+	}
 	return 1;
 }
 
@@ -3943,6 +3951,127 @@ void house_e::powerflow_accumulator_remover(void)
 		//Push up the "negative" values now - mostly so XMLs look right
 		push_complex_powerflow_values();
 	}
+}
+
+void house_e::dump_house_parameters_function(void)
+{
+	OBJECT *obj = OBJECTHDR(this);
+	std::string house_name = (obj->name?obj->name:"Unnamed");
+	std::string dump_file_name = house_name + "_house_parameters_dump.txt";
+	std::ofstream dump_file(dump_file_name, std::ofstream::out);
+	dump_file << "system_type: " << system_type << "\n";
+	dump_file << "heating_system_type: " << heating_system_type << "\n";
+	dump_file << "cooling_system_type: " << cooling_system_type << "\n";
+	dump_file << "fan_type: " << fan_type << "\n";
+	dump_file << "auxiliary_system_type: " << auxiliary_system_type << "\n";
+	dump_file << "auxiliary_strategy: " << auxiliary_strategy << "\n";
+	dump_file << "thermal_integrity_level: " << thermal_integrity_level << "\n";
+	dump_file << "Rroof: " << Rroof << "\n";
+	dump_file << "Rwall: " << Rwall << "\n";
+	dump_file << "Rdoors: " << Rdoors << "\n";
+	dump_file << "Rwindows: " << Rwindows << "\n";
+	dump_file << "airchange_per_hour: " << airchange_per_hour << "\n";
+	dump_file << "heating_COP: " << heating_COP << "\n";
+	dump_file << "cooling_COP: " << cooling_COP << "\n";
+	dump_file << "number_of_stories: " << number_of_stories << "\n";
+	dump_file << "aspect_ratio: " << aspect_ratio << "\n";
+	dump_file << "floor_area: " << floor_area << "\n";
+	dump_file << "ceiling_height: " << ceiling_height << "\n";
+	dump_file << "gross_wall_area: " << gross_wall_area << "\n";
+	dump_file << "window_wall_ratio: " << window_wall_ratio << "\n";
+	dump_file << "number_of_doors: " << number_of_doors << "\n";
+	dump_file << "interior_exterior_wall_ratio: " << interior_exterior_wall_ratio << "\n";
+	dump_file << "exterior_wall_fraction: " << exterior_wall_fraction << "\n";
+	dump_file << "exterior_ceiling_fraction: " << exterior_ceiling_fraction << "\n";
+	dump_file << "exterior_floor_fraction: " << exterior_floor_fraction << "\n";
+	dump_file << "window_exterior_transmission_coefficient: " << window_exterior_transmission_coefficient << "\n";
+	dump_file << "glazing_layers: " << glazing_layers << "\n";
+	dump_file << "glazing_treatment: " << glazing_treatment << "\n";
+	dump_file << "window_frame: " << window_frame << "\n";
+	dump_file << "glazing_shgc: " << glazing_shgc << "\n";
+	dump_file << "glass_type: " << glass_type << "\n";
+	dump_file << "air_density: " << air_density << "\n";
+	dump_file << "air_heat_capacity: " << air_heat_capacity << "\n";
+	dump_file << "volume: " << volume << "\n";
+	dump_file << "air_mass: " << air_mass << "\n";
+	dump_file << "air_thermal_mass: " << air_thermal_mass << "\n";
+	dump_file << "air_heat_fraction: " << air_heat_fraction << "\n";
+	dump_file << "mass_solar_gain_fraction: " << mass_solar_gain_fraction << "\n";
+	dump_file << "mass_internal_gain_fraction: " << mass_internal_gain_fraction << "\n";
+	dump_file << "total_thermal_mass_per_floor_area: " << total_thermal_mass_per_floor_area << "\n";
+	dump_file << "interior_surface_heat_transfer_coeff: " << interior_surface_heat_transfer_coeff << "\n";
+	dump_file << "airchange_UA: " << airchange_UA << "\n";
+	dump_file << "envelope_UA: " << envelope_UA << "\n";
+	dump_file << "UA: " << UA << "\n";
+	dump_file << "solar_heatgain_factor: " << solar_heatgain_factor << "\n";
+	dump_file << "heating_setpoint: " << heating_setpoint << "\n";
+	dump_file << "cooling_setpoint: " << cooling_setpoint << "\n";
+	dump_file << "design_peak_solar: " << design_peak_solar << "\n";
+	dump_file << "thermostat_deadband: " << thermostat_deadband << "\n";
+	dump_file << "thermostat_cycle_time: " << thermostat_cycle_time << "\n";
+	dump_file << "Tair: " << Tair << "\n";
+	dump_file << "over_sizing_factor: " << over_sizing_factor << "\n";
+	dump_file << "cooling_design_temperature: " << cooling_design_temperature << "\n";
+	dump_file << "design_internal_gains: " << design_internal_gains << "\n";
+	dump_file << "latent_load_fraction: " << latent_load_fraction << "\n";
+	dump_file << "design_cooling_capacity: " << design_cooling_capacity << "\n";
+	dump_file << "design_heating_capacity: " << design_heating_capacity << "\n";
+	dump_file << "system_mode: " << system_mode << "\n";
+	dump_file << "last_system_mode: " << last_system_mode << "\n";
+	dump_file << "last_mode_timer: " << last_mode_timer << "\n";
+	dump_file << "aux_heat_capacity: " << aux_heat_capacity << "\n";
+	dump_file << "aux_heat_deadband: " << aux_heat_deadband << "\n";
+	dump_file << "aux_heat_temp_lockout: " << aux_heat_temp_lockout << "\n";
+	dump_file << "aux_heat_time_delay: " << aux_heat_time_delay << "\n";
+	dump_file << "duct_pressure_drop: " << duct_pressure_drop << "\n";
+	dump_file << "fan_design_airflow: " << fan_design_airflow << "\n";
+	dump_file << "fan_design_power: " << fan_design_power << "\n";
+	dump_file << "fan_low_power_fraction: " << fan_low_power_fraction << "\n";
+	dump_file << "fan_power: " << fan_power << "\n";
+	dump_file << "house_content_thermal_mass: " << house_content_thermal_mass << "\n";
+	dump_file << "house_content_heat_transfer_coeff: " << house_content_heat_transfer_coeff << "\n";
+	dump_file << "Tmaterials: " << Tmaterials << "\n";
+	dump_file << "motor_model: " << motor_model << "\n";
+	dump_file << "hvac_motor_loss_power_factor: " << hvac_motor_loss_power_factor << "\n";
+	dump_file << "hvac_motor_efficiency: " << hvac_motor_efficiency << "\n";
+	dump_file << "motor_efficiency: " << motor_efficiency << "\n";
+	dump_file << "Ca: " << Ca << "\n";
+	dump_file << "Tout: " << Tout << "\n";
+	dump_file << "Cm: " << Cm << "\n";
+	dump_file << "Hm: " << Hm << "\n";
+	dump_file << "Qs: " << Qs << "\n";
+	dump_file << "Qh: " << Qh << "\n";
+	dump_file << "Ta: " << Ta << "\n";
+	dump_file << "dTa: " << dTa << "\n";
+	dump_file << "Tm: " << Tm << "\n";
+	dump_file << "a: " << a << "\n";
+	dump_file << "b: " << b << "\n";
+	dump_file << "c: " << c << "\n";
+	dump_file << "c1: " << c1 << "\n";
+	dump_file << "c2: " << c2 << "\n";
+	dump_file << "r1: " << r1 << "\n";
+	dump_file << "r2: " << r2 << "\n";
+	dump_file << "A3: " << A3 << "\n";
+	dump_file << "A4: " << A4 << "\n";
+	dump_file << "outside_temperature: " << outside_temperature << "\n";
+	dump_file << "default_outdoor_temperature: " << default_outdoor_temperature << "\n";
+	dump_file << "hvac_power_factor: " << hvac_power_factor << "\n";
+	dump_file << "load.power_factor: " << load.power_factor << "\n";
+	dump_file << "hvac_breaker_rating: " << hvac_breaker_rating << "\n";
+	dump_file << "load.breaker_amps: " << load.breaker_amps << "\n";
+	dump_file << "heating_cop_curve: " << heating_cop_curve << "\n";
+	dump_file << "cooling_cop_curve: " << cooling_cop_curve << "\n";
+	dump_file << "adj_heating_cop: " << adj_heating_cop << "\n";
+	dump_file << "adj_cooling_cop: " << adj_cooling_cop << "\n";
+	dump_file << "heating_cap_curve: " << heating_cap_curve << "\n";
+	dump_file << "cooling_cap_curve: " << cooling_cap_curve << "\n";
+	dump_file << "adj_heating_cap: " << adj_heating_cap << "\n";
+	dump_file << "adj_cooling_cap: " << adj_cooling_cap << "\n";
+	dump_file << "heating_demand: " << heating_demand << "\n";
+	dump_file << "cooling_demand: " << cooling_demand << "\n";
+	dump_file << "include_fan_heatgain: " << include_fan_heatgain << "\n";
+	dump_file << "fan_heatgain_fraction: " << fan_heatgain_fraction;
+	dump_file.close();
 }
 
 //////////////////////////////////////////////////////////////////////////
