@@ -3545,17 +3545,17 @@ object inverter {
 	generator_status ONLINE;
 	inverter_efficiency 1;	
 	
-	enable_ramp_rates_real true; //true;
-    max_ramp_down_real 25.0 MW/s;
-	max_ramp_up_real 30.0 MW/s;
+	enable_ramp_rates_real false; //true;
+    //max_ramp_down_real 25.0 MW/s;
+	//max_ramp_up_real 30.0 MW/s;
 
 	rated_power 10000 kVA; // Per phase rating
 	VSI_Rfilter 0.25;
 	VSI_Xfilter 1;
 	P_Out 9000000;
 	Q_Out 3000000;
-	V_In 3000+0j;
-	I_In 2000+0j;
+	V_In 3000.0;
+	I_In 2000.0;
 
 	flags DELTAMODE;
 	dynamic_model_mode PI;
@@ -3564,12 +3564,12 @@ object inverter {
 	ki_Vterminal 0.01;
 	kp_Vterminal 0.1;
 	
-	// object recorder {
-		// property V_In,I_In,VA_In, Pref, Qref, VA_Out, VA_Out.real, VA_Out.imag, VSI_freq;
-		 // file VSI_inv.csv;
-		 // flags DELTAMODE;
-		 // interval 1;
-	// };
+	object recorder {
+		property V_In,I_In, Pref, Qref, VA_Out, VA_Out.real, VA_Out.imag, VSI_freq;
+		 file VSI_inv.csv;
+		 flags DELTAMODE;
+		 interval 1;
+	};
 	
 	object complex_assert {
 		flags DELTAMODE;
@@ -3579,7 +3579,7 @@ object inverter {
 			property value;
 			file "../VSI_isochronous_VA.csv";
 		};
-		within "0.1";
+		within "0.5";
 	};
 }
 

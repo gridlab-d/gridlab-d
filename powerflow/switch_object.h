@@ -16,6 +16,9 @@
 
 EXPORT SIMULATIONMODE interupdate_switch(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
+//KML export
+EXPORT int switch_object_kmldata(OBJECT *obj,int (*stream)(const char*,...));
+
 class switch_object : public link_object
 {
 public:
@@ -23,13 +26,14 @@ public:
 	static CLASS *pclass;
 
 public:
-	typedef enum {OPEN=0, CLOSED=1} SWITCHSTATE;
+	typedef enum {SW_OPEN=0, SW_CLOSED=1} SWITCHSTATE;
 	typedef enum {INDIVIDUAL_SW=0, BANKED_SW=1} SWITCHBANK;
 	unsigned char prev_full_status;	///Fully resolved status (ABC) - used for reliability and recalculation detection
 
 	int create(void);
 	int init(OBJECT *parent);
 	TIMESTAMP sync(TIMESTAMP t0);
+	TIMESTAMP presync(TIMESTAMP t0);  // implements local switching; TODO: this should have two TIMESTAMP arguments
 	switch_object(MODULE *mod);
 	inline switch_object(CLASS *cl=oclass):link_object(cl){};
 	int isa(char *classname);
@@ -58,19 +62,26 @@ public:
 	enumeration phase_B_state;				///< Defines the current state of the phase B switch
 	enumeration phase_C_state;				///< Defines the current state of the phase C switch
 
-	double switch_resistance;
+	bool local_switching;             // for switching and fault checking without reliability module; uses phased_switch_status and prev_full_status in presync
+
 	int kmldata(int (*stream)(const char*,...));
 private:
 	OBJECT **eventgen_obj;					//Reliability variable - link to eventgen object
 	FUNCTIONADDR event_schedule;			//Reliability variable - links to "add_event" function in eventgen
 	FUNCTIONADDR fault_handle_call;			//Reliability-type variable - calls topology reconfiguration after switch changes state
 	bool event_schedule_map_attempt;		//Flag to see if we've tried to map the event_schedule variable, or not
+
+	complex switch_impedance_value;			//Used for closed-switch value
+	complex switch_admittance_value;		//Admittance version - save some divides
+
+	set node_phase_information(OBJECT *obj);
 };
 
 EXPORT int change_switch_state(OBJECT *thisobj, unsigned char phase_change, bool state);
 EXPORT int reliability_operation(OBJECT *thisobj, unsigned char desired_phases);
 EXPORT int create_fault_switch(OBJECT *thisobj, OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time);
 EXPORT int fix_fault_switch(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name);
+EXPORT int clear_fault_switch(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name);
 EXPORT int switch_fault_updates(OBJECT *thisobj, unsigned char restoration_phases);
 EXPORT int change_switch_state_toggle(OBJECT *thisobj);
 

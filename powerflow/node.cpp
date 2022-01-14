@@ -54,15 +54,9 @@
 
 #include "solver_nr.h"
 #include "node.h"
-#include "link.h"
-
-//See if these can be unwound, not a fan of the cross-linking here:
-#include "capacitor.h"
-#include "load.h"
-#include "triplex_meter.h"
 
 //Library imports items - for external LU solver - stolen from somewhere else in GridLAB-D (tape, I believe)
-#if defined(WIN32) && !defined(__MINGW32__)
+#if defined(_WIN32) && !defined(__MINGW32__)
 #define WIN32_LEAN_AND_MEAN		// Exclude rarely-used stuff from Windows headers
 #define _WIN32_WINNT 0x0400
 #include <windows.h>
@@ -146,8 +140,8 @@ node::node(MODULE *mod) : powerflow_object(mod)
 
 			PT_complex, "deltamode_PGenTotal",PADDR(deltamode_PGenTotal),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality - power value for a diesel generator -- accumulator only, not an output or input",
 
-			PT_complex_array, "deltamode_full_Y_matrix",  get_full_Y_matrix_offset(),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality full_Y matrix exposes so generator objects can interact for Norton equivalents",
-			PT_complex_array, "deltamode_full_Y_all_matrix",  get_full_Y_all_matrix_offset(),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality full_Y_all matrix exposes so generator objects can interact for Norton equivalents",
+			PT_complex_array, "deltamode_full_Y_matrix",  PADDR(full_Y_matrix),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality full_Y matrix exposes so generator objects can interact for Norton equivalents",
+			PT_complex_array, "deltamode_full_Y_all_matrix",  PADDR(full_Y_all_matrix),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality full_Y_all matrix exposes so generator objects can interact for Norton equivalents",
 
 			PT_complex, "current_inj_A[A]", PADDR(current_inj[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
 			PT_complex, "current_inj_B[A]", PADDR(current_inj[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
@@ -171,6 +165,19 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_complex, "shunt_AN[S]", PADDR(power_dy[3]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
 			PT_complex, "shunt_BN[S]", PADDR(power_dy[4]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
 			PT_complex, "shunt_CN[S]", PADDR(power_dy[5]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus shunt wye-connected admittance, this an accumulator only, not a output or input variable",
+
+			//House-related variables - for 3-phase house connections
+			PT_complex, "residential_nominal_current_A[A]", PADDR(nom_res_curr[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase A from a residential object, if attached",
+			PT_complex, "residential_nominal_current_B[A]", PADDR(nom_res_curr[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase B from a residential object, if attached",
+			PT_complex, "residential_nominal_current_C[A]", PADDR(nom_res_curr[2]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase C from a residential object, if attached",
+			PT_double, "residential_nominal_current_A_real[A]", PADDR(nom_res_curr[0].Re()),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase A, real, from a residential object, if attached",
+			PT_double, "residential_nominal_current_A_imag[A]", PADDR(nom_res_curr[0].Im()),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase A, imag, from a residential object, if attached",
+			PT_double, "residential_nominal_current_B_real[A]", PADDR(nom_res_curr[1].Re()),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase B, real, from a residential object, if attached",
+			PT_double, "residential_nominal_current_B_imag[A]", PADDR(nom_res_curr[1].Im()),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase B, imag, from a residential object, if attached",
+			PT_double, "residential_nominal_current_C_real[A]", PADDR(nom_res_curr[2].Re()),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase C, real, from a residential object, if attached",
+			PT_double, "residential_nominal_current_C_imag[A]", PADDR(nom_res_curr[2].Im()),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"posted current on phase C, imag, from a residential object, if attached",
+
+			PT_bool, "house_present", PADDR(house_present),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"boolean for detecting whether a house is attached, not an input",
 
 			PT_double, "mean_repair_time[s]",PADDR(mean_repair_time), PT_DESCRIPTION, "Time after a fault clears for the object to be back in service",
 
@@ -199,8 +206,8 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_double, "service_status_double", PADDR(service_status_dbl),PT_DESCRIPTION,"In and out of service flag - type double - will indiscriminately override service_status - useful for schedules",
 			PT_double, "previous_uptime[min]", PADDR(previous_uptime),PT_DESCRIPTION,"Previous time between disconnects of node in minutes",
 			PT_double, "current_uptime[min]", PADDR(current_uptime),PT_DESCRIPTION,"Current time since last disconnect of node in minutes",
-			PT_bool, "Norton_dynamic", PADDR(dynamic_norton),PT_DESCRIPTION,"Flag to indicate a Norton-equivalent connection -- used for generators and deltamode",
-			PT_bool, "generator_dynamic", PADDR(dynamic_generator),PT_DESCRIPTION,"Flag to indicate a voltage-sourcing or swing-type generator is present -- used for generators and deltamode",
+			PT_bool, "Norton_dynamic", PADDR(dynamic_norton),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"Flag to indicate a Norton-equivalent connection -- used for generators and deltamode",
+			PT_bool, "generator_dynamic", PADDR(dynamic_generator),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"Flag to indicate a voltage-sourcing or swing-type generator is present -- used for generators and deltamode",
 
 			PT_bool, "reset_disabled_island_state", PADDR(reset_island_state), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Deltamode/multi-island flag -- used to reset disabled status (and reform an island)",
 
@@ -213,7 +220,7 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_double, "GFA_reconnect_time[s]", PADDR(GFA_reconnect_time), PT_DESCRIPTION, "Reconnect time for Grid Friendly Appliance(TM)-type functionality",
 			PT_double, "GFA_freq_disconnect_time[s]", PADDR(GFA_freq_disconnect_time), PT_DESCRIPTION, "Frequency violation disconnect time for Grid Friendly Appliance(TM)-type functionality",
 			PT_double, "GFA_volt_disconnect_time[s]", PADDR(GFA_volt_disconnect_time), PT_DESCRIPTION, "Voltage violation disconnect time for Grid Friendly Appliance(TM)-type functionality",
-			PT_bool, "GFA_status", PADDR(GFA_status), PT_DESCRIPTION, "Low frequency trip point for Grid Friendly Appliance(TM)-type functionality",
+			PT_bool, "GFA_status", PADDR(GFA_status), PT_DESCRIPTION, "Grid Friendly Appliance(TM)-type functionality - whether it is in service (not tripped) or not",
 
 			PT_enumeration, "GFA_trip_method", PADDR(GFA_trip_method), PT_DESCRIPTION, "Reason for GFA trip - what caused the GFA to activate",
 				PT_KEYWORD, "NONE", (enumeration)GFA_NONE, PT_DESCRIPTION, "No GFA trip",
@@ -235,6 +242,8 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			GL_THROW("Unable to publish node VFD attachment function");
 		if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
 			GL_THROW("Unable to publish node island-status-reset function");
+		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
+			GL_THROW("Unable to publish node swing-status check function");
 	}
 }
 
@@ -290,7 +299,7 @@ int node::create(void)
 
 	full_Y = NULL;		//Not used by default
 	full_Y_load = NULL;	//Not used by default
-	full_Y_all = NULL;	//Not used by default
+	full_Y_all = NULL;	//Not used by default   **** NOTE -- full_Y_all only appears to be used by diesel QSTS exciter code - it can probably be removed when that is fixed *****
 	BusHistTerm[0] = complex(0.0,0.0);
 	BusHistTerm[1] = complex(0.0,0.0);
 	BusHistTerm[2] = complex(0.0,0.0);
@@ -346,6 +355,7 @@ int node::create(void)
 	freq_sfm_Tf=0.01;
 	freq_pll_Kp=10;
 	freq_pll_Ki=100;
+	first_freq_init=true;	//Start with saying we haven't been in yet
 
 	//Set default values
 	curr_freq_state.fmeas[0] = nominal_frequency;
@@ -375,6 +385,9 @@ int node::create(void)
 	//Multi-island tracking
 	reset_island_state = false;	//Reset is disabled, by default
 
+	//Triplex/FBS variable
+	tn_values = NULL;
+
 	return result;
 }
 
@@ -386,7 +399,7 @@ int node::init(OBJECT *parent)
 	if (has_phase(PHASE_S))
 	{
 		//Make sure we're a valid class
-		if (!(gl_object_isa(obj,"triplex_node","powerflow") || gl_object_isa(obj,"triplex_meter","powerflow") || gl_object_isa(obj,"triplex_load","powerflow") || gl_object_isa(obj,"motor","powerflow")))
+		if (!(gl_object_isa(obj,"triplex_node","powerflow") || gl_object_isa(obj,"triplex_meter","powerflow") || gl_object_isa(obj,"triplex_load","powerflow") || gl_object_isa(obj,"motor","powerflow") || gl_object_isa(obj,"performance_motor","powerflow")))
 		{
 			GL_THROW("Object:%d - %s -- has a phase S, but is not triplex!",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
@@ -788,7 +801,7 @@ int node::init(OBJECT *parent)
 				LUSolverFcns.ext_solve = NULL;
 				LUSolverFcns.ext_destroy = NULL;
 
-#ifdef WIN32
+#ifdef _WIN32
 				snprintf(ext_lib_file_name, 1024, "solver_%s" DLEXT,LUSolverName.get_string());
 #else
 				snprintf(ext_lib_file_name, 1024, "lib_solver_%s" DLEXT,LUSolverName.get_string());
@@ -929,6 +942,22 @@ int node::init(OBJECT *parent)
 			if(default_resistance <= 0.0){
 				gl_error("INIT: The global default_resistance was less than or equal to zero. default_resistance must be greater than zero.");
 				return 0;
+			}
+
+			//Check and see if in-rush and impedance conversion are enabled - if so, disable one
+			if ((enable_inrush_calculations == true) && (enable_impedance_conversion == true))
+			{
+				//Turn off impedance conversion, otherwise it breaks in-rush in weird ways
+				enable_impedance_conversion = false;
+
+				//Throw as a verbose - behavior is the same
+				gl_verbose("NR: enable_inrush and enable_impedance_conversion conflict - in-rush overrides");
+				/*  TROUBLESHOOT
+				The in-rush-based calculations and enable_impedance_conversion basically do the same thing, but
+				in different sequencing intervals.  When in-rush is enabled, it performs the impedance conversion
+				anyways.  If enable_impedance_conversion is enabled, it can cause conflicts in calculations, so it was
+				disabled.  The observable behavior should not be affected.
+				*/
 			}
 		}//End matrix solver if
 
@@ -1162,7 +1191,22 @@ int node::init(OBJECT *parent)
 			}
 		}
 		else
-			throw("Please specify which phase (A,B,or C) the triplex node is attached to.");
+		{
+			//This could be a verbose - leaving it as a warning though for now
+			gl_warning("node:%d - %s - triplex-based node does not specify phase connection - assuming phase A basis",obj->id,(obj->name?obj->name:"Unnamed"));
+			/*  TROUBLESHOOT
+			A triplex-based node just has phase S specified.  Without a three-phase phase designation, it will assume this is phase A-based and set all
+			angles appropriately.  If this is not desired, set a proper phase basis.
+			*/
+			if (voltage[0] == 0)
+			{
+				voltage[0].SetPolar(nominal_voltage,0.0);
+			}
+			if (voltage[1] == 0)
+			{
+				voltage[1].SetPolar(nominal_voltage,0.0);
+			}
+		}
 
 		voltage[2] = complex(0,0);	//Ground always assumed it seems
 	}
@@ -1311,12 +1355,11 @@ TIMESTAMP node::NR_node_presync_fxn(TIMESTAMP t0_val)
 		Extra_Data[6] = Extra_Data[7] = Extra_Data[8] = 0.0;
 	}
 
-	//Uncomment us eventually, like when houses work in deltamode
-	////If we're a parent and "have house", zero our accumulator
-	//if ((SubNode==PARENT) && (house_present==true))
-	//{
-	//	nom_res_curr[0] = nom_res_curr[1] = nom_res_curr[2] = 0.0;
-	//}
+	//If we're a parent and "have house", zero our accumulator
+	if ((SubNode==PARENT) && (house_present==true))
+	{
+		nom_res_curr[0] = nom_res_curr[1] = nom_res_curr[2] = 0.0;
+	}
 
 	//Base GFA Functionality
 	//Call the GFA-type functionality, if appropriate
@@ -1374,7 +1417,6 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 	TIMESTAMP t1 = powerflow_object::presync(t0); 
 	TIMESTAMP temp_time_value, temp_t1_value;
 	node *temp_par_node = NULL;
-	FUNCTIONADDR temp_funadd = NULL;
 	gld_property *temp_complex_property;
 	gld_wlock *test_rlock;
 	complex temp_complex_value;
@@ -1511,16 +1553,11 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 
 			if (((SubNode == CHILD) || (SubNode == DIFF_CHILD)) && (NR_connected_links[0] > 0))
 			{
-				node *parNode = OBJECTDATA(SubNodeParent,node);
-
-				WRITELOCK_OBJECT(SubNodeParent);	//Lock
-
-				parNode->NR_connected_links[0] += NR_connected_links[0];
-
-				//Zero our accumulator, just in case (used later)
-				NR_connected_links[0] = 0;
-
-				WRITEUNLOCK_OBJECT(SubNodeParent);	//Unlock
+				GL_THROW("NR: node:%d - %s - extra links acquired outside of init routine",obj->id,(obj->name?obj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to initialize a childed node for the NR solver, extra links that were not detected in the node::init
+				routine were discovered.  This should not have happen.  Please submit your GLM and a bug report to the issues tracker.
+				*/
 			}
 
 			//See if we need to alloc our child space
@@ -1737,13 +1774,6 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 				*/
 			}
 		}//End busdata and branchdata null (first in)
-
-		//Comment us out eventually, when houses work in deltamode
-		//If we're a parent and "have house", zero our accumulator
-		if ((SubNode==PARENT) && (house_present==true))
-		{
-			nom_res_curr[0] = nom_res_curr[1] = nom_res_curr[2] = 0.0;
-		}
 
 		//Populate individual object references into deltamode, if needed
 		if ((deltamode_inclusive==true) && (enable_subsecond_models == true) && (prev_NTime==0))
@@ -2197,114 +2227,59 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			//Post our loads up to our parent
 			node *ParToLoad = OBJECTDATA(SubNodeParent,node);
 
-			if (gl_object_isa(SubNodeParent,"load","powerflow"))	//Load gets cleared at every presync, so reaggregate :(
+			//Lock the parent for accumulation
+			LOCK_OBJECT(SubNodeParent);
+
+			//Import power and "load" characteristics
+			ParToLoad->power[0]+=power[0]-last_child_power[0][0];
+			ParToLoad->power[1]+=power[1]-last_child_power[0][1];
+			ParToLoad->power[2]+=power[2]-last_child_power[0][2];
+
+			ParToLoad->shunt[0]+=shunt[0]-last_child_power[1][0];
+			ParToLoad->shunt[1]+=shunt[1]-last_child_power[1][1];
+			ParToLoad->shunt[2]+=shunt[2]-last_child_power[1][2];
+
+			ParToLoad->current[0]+=current[0]-last_child_power[2][0];
+			ParToLoad->current[1]+=current[1]-last_child_power[2][1];
+			ParToLoad->current[2]+=current[2]-last_child_power[2][2];
+
+			ParToLoad->pre_rotated_current[0] += pre_rotated_current[0]-last_child_power[3][0];
+			ParToLoad->pre_rotated_current[1] += pre_rotated_current[1]-last_child_power[3][1];
+			ParToLoad->pre_rotated_current[2] += pre_rotated_current[2]-last_child_power[3][2];
+
+			//And the deltamode accumulators too -- if deltamode
+			if (deltamode_inclusive == true)
 			{
-				//Lock the parent for accumulation
-				LOCK_OBJECT(SubNodeParent);
-
-				//Import power and "load" characteristics
-				ParToLoad->power[0]+=power[0];
-				ParToLoad->power[1]+=power[1];
-				ParToLoad->power[2]+=power[2];
-
-				ParToLoad->shunt[0]+=shunt[0];
-				ParToLoad->shunt[1]+=shunt[1];
-				ParToLoad->shunt[2]+=shunt[2];
-
-				ParToLoad->current[0]+=current[0];
-				ParToLoad->current[1]+=current[1];
-				ParToLoad->current[2]+=current[2];
-
-				//Accumulate the unrotated values too
-				ParToLoad->pre_rotated_current[0] += pre_rotated_current[0];
-				ParToLoad->pre_rotated_current[1] += pre_rotated_current[1];
-				ParToLoad->pre_rotated_current[2] += pre_rotated_current[2];
-
-				//And the deltamode accumulators too -- if deltamode
-				if (deltamode_inclusive == true)
-				{
-					//Pull our parent value down -- everything is being pushed up there anyways
-					//Pulling to keep meters accurate (theoretically)
-					deltamode_dynamic_current[0] = ParToLoad->deltamode_dynamic_current[0];
-					deltamode_dynamic_current[1] = ParToLoad->deltamode_dynamic_current[1];
-					deltamode_dynamic_current[2] = ParToLoad->deltamode_dynamic_current[2];
-				}
-
-				//Do the same for explicit delta/wye portions
-				for (loop_index_var=0; loop_index_var<6; loop_index_var++)
-				{
-					ParToLoad->power_dy[loop_index_var] += power_dy[loop_index_var];
-					ParToLoad->shunt_dy[loop_index_var] += shunt_dy[loop_index_var];
-					ParToLoad->current_dy[loop_index_var] += current_dy[loop_index_var];
-				}
-
-				//All done, unlock
-				UNLOCK_OBJECT(SubNodeParent);
+				//Pull our parent value down -- everything is being pushed up there anyways
+				//Pulling to keep meters accurate (theoretically)
+				deltamode_dynamic_current[0] = ParToLoad->deltamode_dynamic_current[0];
+				deltamode_dynamic_current[1] = ParToLoad->deltamode_dynamic_current[1];
+				deltamode_dynamic_current[2] = ParToLoad->deltamode_dynamic_current[2];
 			}
-			else if (gl_object_isa(SubNodeParent,"node","powerflow"))	//"parented" node - update values - This has to go to the bottom
-			{												//since load/meter share with node (and load handles power in presync)
-				//Lock the parent for accumulation
-				LOCK_OBJECT(SubNodeParent);
 
-				//Import power and "load" characteristics
-				ParToLoad->power[0]+=power[0]-last_child_power[0][0];
-				ParToLoad->power[1]+=power[1]-last_child_power[0][1];
-				ParToLoad->power[2]+=power[2]-last_child_power[0][2];
-
-				ParToLoad->shunt[0]+=shunt[0]-last_child_power[1][0];
-				ParToLoad->shunt[1]+=shunt[1]-last_child_power[1][1];
-				ParToLoad->shunt[2]+=shunt[2]-last_child_power[1][2];
-
-				ParToLoad->current[0]+=current[0]-last_child_power[2][0];
-				ParToLoad->current[1]+=current[1]-last_child_power[2][1];
-				ParToLoad->current[2]+=current[2]-last_child_power[2][2];
-
-				ParToLoad->pre_rotated_current[0] += pre_rotated_current[0]-last_child_power[3][0];
-				ParToLoad->pre_rotated_current[1] += pre_rotated_current[1]-last_child_power[3][1];
-				ParToLoad->pre_rotated_current[2] += pre_rotated_current[2]-last_child_power[3][2];
-
-				//And the deltamode accumulators too -- if deltamode
-				if (deltamode_inclusive == true)
-				{
-					//Pull our parent value down -- everything is being pushed up there anyways
-					//Pulling to keep meters accurate (theoretically)
-					deltamode_dynamic_current[0] = ParToLoad->deltamode_dynamic_current[0];
-					deltamode_dynamic_current[1] = ParToLoad->deltamode_dynamic_current[1];
-					deltamode_dynamic_current[2] = ParToLoad->deltamode_dynamic_current[2];
-				}
-
-				//Do the same for the explicit delta/wye loads - last_child_power is set up as columns of ZIP, not ABC
-				for (loop_index_var=0; loop_index_var<6; loop_index_var++)
-				{
-					ParToLoad->power_dy[loop_index_var] += power_dy[loop_index_var] - last_child_power_dy[loop_index_var][0];
-					ParToLoad->shunt_dy[loop_index_var] += shunt_dy[loop_index_var] - last_child_power_dy[loop_index_var][1];
-					ParToLoad->current_dy[loop_index_var] += current_dy[loop_index_var] - last_child_power_dy[loop_index_var][2];
-				}
-
-				if (has_phase(PHASE_S))	//Triplex gets another term as well
-				{
-					ParToLoad->current12 +=current12-last_child_current12;
-				}
-
-				//See if we have a house!
-				if (house_present==true)	//Add our values into our parent's accumulator!
-				{
-					ParToLoad->nom_res_curr[0] += nom_res_curr[0];
-					ParToLoad->nom_res_curr[1] += nom_res_curr[1];
-					ParToLoad->nom_res_curr[2] += nom_res_curr[2];
-				}
-
-				//Unlock the parent now that we are done
-				UNLOCK_OBJECT(SubNodeParent);
-			}
-			else
+			//Do the same for the explicit delta/wye loads - last_child_power is set up as columns of ZIP, not ABC
+			for (loop_index_var=0; loop_index_var<6; loop_index_var++)
 			{
-				GL_THROW("NR: Object %d is a child of something that it shouldn't be!",obj->id);
-				/*  TROUBLESHOOT
-				A Newton-Raphson object is childed to something it should not be (not a load, node, or meter).
-				This should have been caught earlier and is likely a bug.  Submit your code and a bug report using the trac website.
-				*/
+				ParToLoad->power_dy[loop_index_var] += power_dy[loop_index_var] - last_child_power_dy[loop_index_var][0];
+				ParToLoad->shunt_dy[loop_index_var] += shunt_dy[loop_index_var] - last_child_power_dy[loop_index_var][1];
+				ParToLoad->current_dy[loop_index_var] += current_dy[loop_index_var] - last_child_power_dy[loop_index_var][2];
 			}
+
+			if (has_phase(PHASE_S))	//Triplex gets another term as well
+			{
+				ParToLoad->current12 +=current12-last_child_current12;
+			}
+
+			//See if we have a house!
+			if (house_present==true)	//Add our values into our parent's accumulator!
+			{
+				ParToLoad->nom_res_curr[0] += nom_res_curr[0];
+				ParToLoad->nom_res_curr[1] += nom_res_curr[1];
+				ParToLoad->nom_res_curr[2] += nom_res_curr[2];
+			}
+
+			//Unlock the parent now that we are done
+			UNLOCK_OBJECT(SubNodeParent);
 
 			//Update previous power tracker
 			last_child_power[0][0] = power[0];
@@ -2427,7 +2402,23 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 	complex delta_shunt_curr[3];
 	complex dy_curr_accum[3];
 	complex temp_current_val[3];
+	char loop_index_val;
+	complex temp_curr_rotate_value, temp_curr_calc_value;
+	gld_property *temp_property;
 	
+	//Final initialization issue - has to be here, or childed deltamode stuff fails
+	//This catches any orphaned/islanded single nodes (that link wouldn't catch), so error checks work
+	//and don't segfault things - needs to be duplicated to subclass objects that reference NR before node::sync is called
+	if ((prev_NTime==0) && (solver_method == SM_NR))
+	{
+		//See if we've been initialized yet - links typically do this, but single buses get missed
+		if (NR_node_reference == -1)
+		{
+			//Call the populate routine
+			NR_populate();
+		}
+	}
+
 	//Generic time keeping variable - used for phase checks (GS does this explicitly below)
 	if (t0!=prev_NTime)
 	{
@@ -2505,8 +2496,64 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 #endif
 
 			if (obj->parent!=NULL && gl_object_isa(obj->parent,"triplex_line","powerflow")) {
-				link_object *plink = OBJECTDATA(obj->parent,link_object);
-				complex d = plink->tn[0]*current_inj[0] + plink->tn[1]*current_inj[1];
+
+				//See if we've mapped yet
+				if (tn_values == NULL)
+				{
+					//Allocate space
+					tn_values = (complex *)gl_malloc(2*sizeof(complex));
+
+					//Make sure it worked
+					if (tn_values == NULL)
+					{
+						GL_THROW("node:%d - %s -- Failed to allocate for triplex current data",obj->id,(obj->name ? obj->name : "Unnamed"));
+						/*  TROUBLESHOOT
+						While attempting to allocate memory for triplex neutral calculation values, an error occurred.
+						Please try again.  If the error persists, please submit you GLM and a report via the issue tracker system.
+						*/
+					}
+
+					//Map to neutral current properties
+
+					//Get first one
+					temp_property = new gld_property(obj->parent,"triplex_neutral_1_value");
+
+					//Make sure it worked
+					if ((temp_property->is_valid() != true) || (temp_property->is_complex() != true))
+					{
+						GL_THROW("node:%d - %s -- Failed to map triplex current data",obj->id,(obj->name ? obj->name : "Unnamed"));
+						/* TROUBLESHOOT
+						While attempting to map one of the triplex-line-related multiplier properties, an error occurred.
+						Please try again.  If the error persists, please submit your GLM into the issue tracker with a description.
+						*/
+					}
+
+					//Pull the value
+					tn_values[0] = temp_property->get_complex();
+
+					//Remove it
+					delete temp_property;
+
+					//Get the other one
+					//Get first one
+					temp_property = new gld_property(obj->parent,"triplex_neutral_2_value");
+
+					//Make sure it worked
+					if ((temp_property->is_valid() != true) || (temp_property->is_complex() != true))
+					{
+						GL_THROW("node:%d - %s -- Failed to map triplex current data",obj->id,(obj->name ? obj->name : "Unnamed"));
+						//Defined above
+					}
+
+					//Pull the value
+					tn_values[1] = temp_property->get_complex();
+
+					//Remove it
+					delete temp_property;
+				}
+				//Default else - already mapped, so go forth
+
+				complex d = tn_values[0]*current_inj[0] + tn_values[1]*current_inj[1];
 				current_inj[2] += d;
 			}
 			else {
@@ -2641,6 +2688,27 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			current_inj[1] += dy_curr_accum[1];
 			current_inj[2] += dy_curr_accum[2];
 
+			//Do "non-triplex" houses in here too, since they're explicit
+			if (house_present)
+			{
+				//Do in a loop, just becaus
+				for (loop_index_val=0; loop_index_val<3; loop_index_val++)
+				{
+					//See if it is even a valid voltage first
+					if (voltage[loop_index_val].Mag() != 0.0)
+					{
+						//Get the phase rotation
+						temp_curr_rotate_value.SetPolar(1.0,voltage[loop_index_val].Arg());
+
+						//Update the values
+						temp_curr_calc_value = nom_res_curr[loop_index_val]/(~temp_curr_rotate_value);	//Just denominator conjugated to keep math right (rest was conjugated in house)
+
+						//Accumulate it, because we like extra steps
+						current_inj[loop_index_val] += temp_curr_calc_value;
+					}
+					//Default else - wasn't valid, so don't accumulate anything
+				}//End phase loop
+			}//End not-so-triplex house
 		}//End delta/wye explicit
 
 #ifdef SUPPORT_OUTAGES
@@ -3072,6 +3140,8 @@ int node::kmlinit(int (*stream)(const char*,...))
 int node::kmldump(int (*stream)(const char*,...))
 {
 	OBJECT *obj = OBJECTHDR(this);
+	FUNCTIONADDR temp_funadd = NULL;
+
 	if (isnan(get_latitude()) || isnan(get_longitude()))
 		return 0;
 	stream("<Placemark>\n");
@@ -3084,8 +3154,22 @@ int node::kmldump(int (*stream)(const char*,...))
 	int status = 2; // green
 	if ( gl_object_isa(my(),"triplex_meter") )
 	{
+		//Map to the function
+		temp_funadd = (FUNCTIONADDR)(gl_get_function(obj,"pwr_object_kmldata"));
+
+		//See if it was located
+		if (temp_funadd == NULL)
+		{
+			GL_THROW("object:%s - failed to map kmldata function",(obj->name?obj->name:"unnamed"));
+			/*  TROUBLESHOOT
+			While attempting to map the kmldata function, an error was encountered.
+			Please try again.  If the error persists, please submit your code and a bug report via the trac website.
+			*/
+		}
+
+		//Call the function
 		// TODO use triplex_node to get to triplex_meter
-		status = ((triplex_meter*)this)->kmldata(stream);
+		status = ((int (*)(OBJECT *,int (*stream)(const char*,...)))(*temp_funadd))(obj,stream);
 	}
 	else
 	{
@@ -3122,10 +3206,24 @@ int node::kmldump(int (*stream)(const char*,...))
 		}
 		stream("</TR>\n");
 
-	#define HANDLE_EX(X,Y)if ( gl_object_isa(my(),Y) ) ((X*)this)->kmldata(stream); else
-	#define HANDLE(X) HANDLE_EX(X,#X)
-		HANDLE(load)
-		HANDLE(capacitor)
+		//Check others - de-"macrotized" so it can do things indirectly
+		if ((gl_object_isa(my(),"load","powerflow") == true) || (gl_object_isa(my(),"capacitor","powerflow") == true))
+		{
+			//Map to the function
+			temp_funadd = (FUNCTIONADDR)(gl_get_function(obj,"pwr_object_kmldata"));
+
+			//See if it was located
+			if (temp_funadd == NULL)
+			{
+				GL_THROW("object:%s - failed to map kmldata function",(obj->name?obj->name:"unnamed"));
+				//Defined above
+			}
+
+			//Call the function
+			// TODO use triplex_node to get to triplex_meter
+			status = ((int (*)(OBJECT *,int (*stream)(const char*,...)))(*temp_funadd))(obj,stream);
+		}
+		else
 		{
 			// power
 			stream("<TR><TH ALIGN=LEFT>Power</TH>");
@@ -3404,6 +3502,9 @@ int node::NR_populate(void)
 	//Object header for names
 	OBJECT *me = OBJECTHDR(this);
 	node *temp_par_node = NULL;
+	gld_property *temp_bool_property;
+	gld_wlock *test_rlock;
+	bool temp_bool_val;
 
 	//Lock the SWING for global operations
 	if ( NR_swing_bus!=me ) LOCK_OBJECT(NR_swing_bus);
@@ -3415,7 +3516,7 @@ int node::NR_populate(void)
 	//Quick check to see if there problems
 	if (NR_node_reference == -1)
 	{
-		GL_THROW("NR: bus:%s failed to grab a unique bus index value!",me->name);
+		GL_THROW("NR: node:%s failed to grab a unique bus index value!",me->name);
 		/*  TROUBLESHOOT
 		While attempting to gain a unique bus id for the Newton-Raphson solver, an error
 		was encountered.  This may be related to a parallelization effort.  Please try again.
@@ -3432,7 +3533,7 @@ int node::NR_populate(void)
 	//Interim check to make sure it isn't a PV bus, since those aren't supported yet - this will get removed when that functionality is put in place
 	if (NR_busdata[NR_node_reference].type==1)
 	{
-		GL_THROW("NR: bus:%s is a PV bus - these are not yet supported.",me->name);
+		GL_THROW("NR: node:%s is a PV bus - these are not yet supported.",(me->name?me->name:"Unnamed"));
 		/*  TROUBLESHOOT
 		The Newton-Raphson solver implemented does not currently support the PV bus type.
 		*/
@@ -3441,12 +3542,61 @@ int node::NR_populate(void)
 	//Populate the swing flag - it will get "deflagged" elsewhere
 	if ((bustype == SWING) || (bustype == SWING_PQ))
 	{
+		//See if we're a SWING_PQ
+		if (bustype == SWING_PQ)
+		{
+			//Check for fault_check
+			if (fault_check_object == NULL)
+			{
+				gl_warning("node:%d - %s - Set as a SWING_PQ, but no fault_check present - will be treated as SWING",me->id,(me->name?me->name:"Unnamed"));
+				/*  TROUBLESHOOT
+				A node is set up as a SWING_PQ, but there is no fault_check object on the system.  This will just be treated as a SWING bus for all calculations.
+				*/
+			}
+			else
+			{
+				//Fault check present - see if it is in the proper mode!
+				temp_bool_property = new gld_property(fault_check_object,"grid_association");
+
+				//Make sure it worked
+				if ((temp_bool_property->is_valid() != true) || (temp_bool_property->is_bool() != true))
+				{
+					GL_THROW("NR: node:%s failed to map fault_check object property",(me->name?me->name:"Unnamed"));
+					/*  TROUBLESHOOT
+					While attempting to map a property of a fault_check object, an error was encountered.  Please try again.
+					If the error persists, please submit an item to the issue tracker.
+					*/
+				}
+
+				//Pull the value
+				temp_bool_property->getp<bool>(temp_bool_val,*test_rlock);
+
+				//Clear the property
+				delete temp_bool_property;
+
+				//Compare the value
+				if (temp_bool_val == false)	//Not in grid_association mode!
+				{
+					gl_warning("node:%d - %s - Set as a SWING_PQ, but fault_check in wrong mode - will be treated as SWING",me->id,(me->name?me->name:"Unnamed"));
+					/*  TROUBLESHOOT
+					A node is set up as a SWING_PQ, but the fault_check object is not set to do grid_association, so this bus will just be treated as a
+					SWING bus for all calculations.
+					*/
+				}
+			}
+		}//End SWING PQ check
+		//Must be a SWING
+
+		//Flag it, regardless (unflagged elsewhere, if set right)
 		NR_busdata[NR_node_reference].swing_functions_enabled = true;
 	}
 	else
 	{
 		NR_busdata[NR_node_reference].swing_functions_enabled = false;
 	}
+
+	//Default us to topological not the source (mostly used by SWING_PQ - set elsewhere)
+	NR_busdata[NR_node_reference].swing_topology_entry = false;
 
 	//Populate phases
 	NR_busdata[NR_node_reference].phases = 128*has_phase(PHASE_S) + 8*has_phase(PHASE_D) + 4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
@@ -3514,10 +3664,20 @@ int node::NR_populate(void)
 
 		NR_busdata[NR_node_reference].extra_var = &current12;	//Stored in a separate variable and this is the easiest way for me to get it
 	}
-	else if (SubNode==DIFF_PARENT)	//Differently connected load/node (only can't be S)
+	else	//Implies it is non-triplex
 	{
-		NR_busdata[NR_node_reference].extra_var = Extra_Data;
-		NR_busdata[NR_node_reference].phases |= 0x10;			//Special flag for a phase mismatch being present
+		if (SubNode==DIFF_PARENT)	//Differently connected load/node (only can't be S)
+		{
+			NR_busdata[NR_node_reference].extra_var = Extra_Data;
+			NR_busdata[NR_node_reference].phases |= 0x10;			//Special flag for a phase mismatch being present
+		}
+
+		//See if we have any houses of the three-phase/non-triplex variety
+		if (house_present)	//We're a proud parent of a house!
+		{
+			NR_busdata[NR_node_reference].house_var = &nom_res_curr[0];	//Separate storage area for nominal house currents
+			NR_busdata[NR_node_reference].phases |= 0x40;					//Flag that we are a house-attached node
+		}
 	}
 
 	//Per unit values - populate nominal voltage on a whim
@@ -3559,6 +3719,32 @@ int node::NR_populate(void)
 	//Null the extra function pointer -- the individual object will call to populate this
 	NR_busdata[NR_node_reference].ExtraCurrentInjFunc = NULL;
 	NR_busdata[NR_node_reference].ExtraCurrentInjFuncObject = NULL;
+
+	//Extra functions - see if we're a load - map update if we're in the right mode
+	//Could potentially flag this in load/triplex_load - it's primarily needed to keep constant_current-based loads properly rotated
+	//Flagging it could improve performance
+	if (((gl_object_isa(me,"load","powerflow")==true) || (gl_object_isa(me,"triplex_load","powerflow")==true)) && (enable_inrush_calculations == false))
+	{
+		//Map the function
+		NR_busdata[NR_node_reference].LoadUpdateFxn = (FUNCTIONADDR)(gl_get_function(me,"pwr_object_load_update"));
+
+		//Make sure it worked
+		if (NR_busdata[NR_node_reference].LoadUpdateFxn == NULL)
+		{
+			GL_THROW("node:%d - %s - Failed to map load_update",me->id,(me->name ? me->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			The attached node was unable to find the exposed function "current_injection_update" on the calling object.  Be sure
+			it supports this functionality and try again.
+			*/
+		}
+		//Default else -- it worked
+	}
+	else
+	{
+		//Not a load
+		NR_busdata[NR_node_reference].LoadUpdateFxn = NULL;
+	}
+	
 
 	//Allocate dynamic variables -- only if something has requested it
 	if ((deltamode_inclusive==true) && ((dynamic_norton==true) || (dynamic_generator==true)))
@@ -3682,9 +3868,10 @@ int node::NR_populate(void)
 int node::NR_current_update(bool parentcall)
 {
 	unsigned int table_index;
-	link_object *temp_link;
+	FUNCTIONADDR temp_funadd = NULL;
 	int temp_result, loop_index;
 	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *tmp_obj;
 	complex temp_current_inj[3];
 	complex temp_current_val[3];
 	complex adjusted_current_val[3];
@@ -3693,6 +3880,7 @@ int node::NR_current_update(bool parentcall)
 	complex assumed_nominal_voltage[6];
 	double nominal_voltage_dval;
 	complex house_pres_current[3];
+	complex temp_store[3];
 
 	//Don't do anything if we've already been "updated"
 	if (current_accumulated==false)
@@ -3868,36 +4056,32 @@ int node::NR_current_update(bool parentcall)
 		//Handle our "self" - do this in a "temporary fashion" for children problems
 		temp_current_inj[0] = temp_current_inj[1] = temp_current_inj[2] = complex(0.0,0.0);
 
-		//If deltamode - adjust these accumulations, since this is already done inside powerflow (so numbers match)
-		if (deltamode_inclusive == true)
+		//Set up reference voltage for any accumulator adjustments
+		//See if we're a triplex
+		if (has_phase(PHASE_S))
 		{
-			//See if we're a triplex
-			if (has_phase(PHASE_S))
-			{
-				assumed_nominal_voltage[0].SetPolar(nominal_voltage,0.0);			//1
-				assumed_nominal_voltage[1].SetPolar(nominal_voltage,0.0);			//2
-				assumed_nominal_voltage[2] = assumed_nominal_voltage[0] + assumed_nominal_voltage[1];	//12
-				assumed_nominal_voltage[3] = complex(0.0,0.0);	//Not needed - zero for giggles
-				assumed_nominal_voltage[4] = complex(0.0,0.0);
-				assumed_nominal_voltage[5] = complex(0.0,0.0);
+			assumed_nominal_voltage[0].SetPolar(nominal_voltage,0.0);			//1
+			assumed_nominal_voltage[1].SetPolar(nominal_voltage,0.0);			//2
+			assumed_nominal_voltage[2] = assumed_nominal_voltage[0] + assumed_nominal_voltage[1];	//12
+			assumed_nominal_voltage[3] = complex(0.0,0.0);	//Not needed - zero for giggles
+			assumed_nominal_voltage[4] = complex(0.0,0.0);
+			assumed_nominal_voltage[5] = complex(0.0,0.0);
 
-				//Populate LL value
-				nominal_voltage_dval = 2.0 * nominal_voltage;
-			}
-			else //Standard fare
-			{
-				assumed_nominal_voltage[0].SetPolar(nominal_voltage,0.0);			//AN
-				assumed_nominal_voltage[1].SetPolar(nominal_voltage,(-2.0*PI/3.0));	//BN
-				assumed_nominal_voltage[2].SetPolar(nominal_voltage,(2.0*PI/3.0));	//CN
-				assumed_nominal_voltage[3] = assumed_nominal_voltage[0] - assumed_nominal_voltage[1];	//AB
-				assumed_nominal_voltage[4] = assumed_nominal_voltage[1] - assumed_nominal_voltage[2];	//BC
-				assumed_nominal_voltage[5] = assumed_nominal_voltage[2] - assumed_nominal_voltage[0];	//CA
-
-				//Populate LL value
-				nominal_voltage_dval = assumed_nominal_voltage[3].Mag();
-			}
+			//Populate LL value
+			nominal_voltage_dval = 2.0 * nominal_voltage;
 		}
-		//Default else - not deltamode, so don't care (don't even zero them)
+		else //Standard fare
+		{
+			assumed_nominal_voltage[0].SetPolar(nominal_voltage,0.0);			//AN
+			assumed_nominal_voltage[1].SetPolar(nominal_voltage,(-2.0*PI/3.0));	//BN
+			assumed_nominal_voltage[2].SetPolar(nominal_voltage,(2.0*PI/3.0));	//CN
+			assumed_nominal_voltage[3] = assumed_nominal_voltage[0] - assumed_nominal_voltage[1];	//AB
+			assumed_nominal_voltage[4] = assumed_nominal_voltage[1] - assumed_nominal_voltage[2];	//BC
+			assumed_nominal_voltage[5] = assumed_nominal_voltage[2] - assumed_nominal_voltage[0];	//CA
+
+			//Populate LL value
+			nominal_voltage_dval = assumed_nominal_voltage[3].Mag();
+		}
 
 		if (has_phase(PHASE_D))	//Delta connection
 		{
@@ -3911,29 +4095,19 @@ int node::NR_current_update(bool parentcall)
 			delta_current[1]= (voltaged[1]==0) ? complex(0,0) : ~(power[1]/voltaged[1]);
 			delta_current[2]= (voltaged[2]==0) ? complex(0,0) : ~(power[2]/voltaged[2]);
 
-			//Adjust constant current values, if deltamode
-			if (deltamode_inclusive == true)
+			//Adjust constant current values, as necessary
+			//Loop through the phases
+			for (loop_index=0; loop_index<3; loop_index++)
 			{
-				//Loop through the phases
-				for (loop_index=0; loop_index<3; loop_index++)
+				//Check existence of phases and adjust the currents appropriately
+				if (voltaged[loop_index] != 0.0)
 				{
-					//Check existence of phases and adjust the currents appropriately
-					if (voltaged[loop_index] != 0.0)
-					{
-						adjusted_current_val[loop_index] =  ~((assumed_nominal_voltage[loop_index+3]*~current[loop_index]*voltaged[loop_index].Mag())/(voltaged[loop_index]*nominal_voltage_dval));
-					}
-					else
-					{
-						adjusted_current_val[loop_index] = complex(0.0,0.0);
-					}
+					adjusted_current_val[loop_index] =  ~((assumed_nominal_voltage[loop_index+3]*~current[loop_index]*voltaged[loop_index].Mag())/(voltaged[loop_index]*nominal_voltage_dval));
 				}
-			}
-			else
-			{
-				//Standard approach
-				adjusted_current_val[0] = current[0];
-				adjusted_current_val[1] = current[1];
-				adjusted_current_val[2] = current[2];
+				else
+				{
+					adjusted_current_val[loop_index] = complex(0.0,0.0);
+				}
 			}
 
 			//Translate into a line current
@@ -3949,67 +4123,25 @@ int node::NR_current_update(bool parentcall)
 		{
 			complex vdel;
 			complex temp_current[3];
-			complex temp_store[3];
 			complex temp_val[3];
 
 			//Find V12 (just in case)
 			vdel=voltage[0] + voltage[1];
 
-			//Find contributions
-			//Adjust constant current values, if deltamode
-			if (deltamode_inclusive == true)
-			{
-				//Check existence of phases and adjust the currents appropriately
-				//Phase 1
-				if (voltage[0] != 0.0)
-				{
-					adjusted_current_val[0] =  ~((assumed_nominal_voltage[0]*~current[0]*voltage[0].Mag())/(voltage[0]*nominal_voltage));
-				}
-				else
-				{
-					adjusted_current_val[0] = complex(0.0,0.0);
-				}
-
-				//Phase 2
-				if (voltage[1] != 0.0)
-				{
-					adjusted_current_val[1] =  ~((assumed_nominal_voltage[1]*~current[1]*voltage[1].Mag())/(voltage[1]*nominal_voltage));
-				}
-				else
-				{
-					adjusted_current_val[1] = complex(0.0,0.0);
-				}
-
-				//Phase 12
-				if (vdel != 0.0)
-				{
-					adjusted_current_val[2] =  ~((assumed_nominal_voltage[2]*~current12*vdel.Mag())/(vdel*nominal_voltage_dval));
-				}
-				else
-				{
-					adjusted_current_val[2] = complex(0.0,0.0);
-				}
-			}
-			else
-			{
-				//Standard approach
-				adjusted_current_val[0] = current[0];
-				adjusted_current_val[1] = current[1];
-				adjusted_current_val[2] = current12;	//current12 is not part of the standard current array
-			}
+			//Find contributions - don't need to be adjusted, since everything does that elsewhere now
+			adjusted_current_val[0] = current[0];
+			adjusted_current_val[1] = current[1];
+			adjusted_current_val[2] = current12;	//current12 is not part of the standard current array
 
 			//Start with the currents (just put them in)
 			temp_current[0] = adjusted_current_val[0];
 			temp_current[1] = adjusted_current_val[1];
 			temp_current[2] = adjusted_current_val[2];
 
-			//Add in the unrotated bit, if we're deltamode
-			if (deltamode_inclusive == true)
-			{
-				temp_current[0] += pre_rotated_current[0];	//1
-				temp_current[1] += pre_rotated_current[1];	//2
-				temp_current[2] += pre_rotated_current[2];	//12
-			}
+			//Add in the unrotated bit
+			temp_current[0] += pre_rotated_current[0];	//1
+			temp_current[1] += pre_rotated_current[1];	//2
+			temp_current[2] += pre_rotated_current[2];	//12
 
 			//Now add in power contributions
 			temp_current[0] += voltage[0] == 0.0 ? 0.0 : ~(power[0]/voltage[0]);
@@ -4062,29 +4194,19 @@ int node::NR_current_update(bool parentcall)
 		}
 		else					//Wye connection
 		{
-			//Adjust constant current values, if deltamode
-			if (deltamode_inclusive == true)
+			//Adjust constant current values
+			//Loop through the phases
+			for (loop_index=0; loop_index<3; loop_index++)
 			{
-				//Loop through the phases
-				for (loop_index=0; loop_index<3; loop_index++)
+				//Check existence of phases and adjust the currents appropriately
+				if (voltage[loop_index] != 0.0)
 				{
-					//Check existence of phases and adjust the currents appropriately
-					if (voltage[loop_index] != 0.0)
-					{
-						adjusted_current_val[loop_index] =  ~((assumed_nominal_voltage[loop_index]*~current[loop_index]*voltage[loop_index].Mag())/(voltage[loop_index]*nominal_voltage));
-					}
-					else
-					{
-						adjusted_current_val[loop_index] = complex(0.0,0.0);
-					}
+					adjusted_current_val[loop_index] =  ~((assumed_nominal_voltage[loop_index]*~current[loop_index]*voltage[loop_index].Mag())/(voltage[loop_index]*nominal_voltage));
 				}
-			}
-			else
-			{
-				//Standard approach
-				adjusted_current_val[0] = current[0];
-				adjusted_current_val[1] = current[1];
-				adjusted_current_val[2] = current[2];
+				else
+				{
+					adjusted_current_val[loop_index] = complex(0.0,0.0);
+				}
 			}
 
 			//PQP needs power converted to current
@@ -4114,65 +4236,66 @@ int node::NR_current_update(bool parentcall)
 			delta_current[1]= (voltaged[1]==0) ? complex(0,0) : ~(power_dy[1]/voltaged[1]);
 			delta_current[2]= (voltaged[2]==0) ? complex(0,0) : ~(power_dy[2]/voltaged[2]);
 
-			//Adjust constant current values of delta-connected, if deltamode
-			if (deltamode_inclusive == true)
+			//Adjust constant current values of delta-connected
+			//Loop through the phases
+			for (loop_index=0; loop_index<3; loop_index++)
 			{
-				//Loop through the phases
-				for (loop_index=0; loop_index<3; loop_index++)
+				//Check existence of phases and adjust the currents appropriately
+				if (voltaged[loop_index] != 0.0)
 				{
-					//Check existence of phases and adjust the currents appropriately
-					if (voltaged[loop_index] != 0.0)
-					{
-						adjusted_current_val[loop_index] =  ~((assumed_nominal_voltage[loop_index+3]*~current_dy[loop_index]*voltaged[loop_index].Mag())/(voltaged[loop_index]*nominal_voltage_dval));
-					}
-					else
-					{
-						adjusted_current_val[loop_index] = complex(0.0,0.0);
-					}
+					adjusted_current_val[loop_index] =  ~((assumed_nominal_voltage[loop_index+3]*~current_dy[loop_index]*voltaged[loop_index].Mag())/(voltaged[loop_index]*nominal_voltage_dval));
+				}
+				else
+				{
+					adjusted_current_val[loop_index] = complex(0.0,0.0);
 				}
 			}
-			else
-			{
-				//Standard approach
-				adjusted_current_val[0] = current_dy[0];
-				adjusted_current_val[1] = current_dy[1];
-				adjusted_current_val[2] = current_dy[2];
-			}
-
 
 			//Put into accumulator
 			temp_current_inj[0] += delta_shunt[0]-delta_shunt[2] + delta_current[0]-delta_current[2] + adjusted_current_val[0]-adjusted_current_val[2];
 			temp_current_inj[1] += delta_shunt[1]-delta_shunt[0] + delta_current[1]-delta_current[0] + adjusted_current_val[1]-adjusted_current_val[0];
 			temp_current_inj[2] += delta_shunt[2]-delta_shunt[1] + delta_current[2]-delta_current[1] + adjusted_current_val[2]-adjusted_current_val[1];
 
-			//Adjust constant current values for Wye-connected, if deltamode
-			if (deltamode_inclusive == true)
+			//Adjust constant current values for Wye-connected
+			//Loop through the phases
+			for (loop_index=0; loop_index<3; loop_index++)
 			{
-				//Loop through the phases
-				for (loop_index=0; loop_index<3; loop_index++)
+				if (voltage[loop_index] != 0.0)
 				{
-					if (voltage[loop_index] != 0.0)
-					{
-						adjusted_current_val[loop_index] =  ~((assumed_nominal_voltage[loop_index]*~current_dy[loop_index+3]*voltage[loop_index].Mag())/(voltage[loop_index]*nominal_voltage));
-					}
-					else
-					{
-						adjusted_current_val[loop_index] = complex(0.0,0.0);
-					}
+					adjusted_current_val[loop_index] =  ~((assumed_nominal_voltage[loop_index]*~current_dy[loop_index+3]*voltage[loop_index].Mag())/(voltage[loop_index]*nominal_voltage));
 				}
-			}
-			else
-			{
-				//Standard approach
-				adjusted_current_val[0] = current_dy[3];
-				adjusted_current_val[1] = current_dy[4];
-				adjusted_current_val[2] = current_dy[5];
+				else
+				{
+					adjusted_current_val[loop_index] = complex(0.0,0.0);
+				}
 			}
 
 			//Now put in Wye components
 			temp_current_inj[0] += ((voltage[0]==0) ? complex(0,0) : ~(power_dy[3]/voltage[0])) + voltage[0]*shunt_dy[3] + adjusted_current_val[0];
 			temp_current_inj[1] += ((voltage[1]==0) ? complex(0,0) : ~(power_dy[4]/voltage[1])) + voltage[1]*shunt_dy[4] + adjusted_current_val[1];
 			temp_current_inj[2] += ((voltage[2]==0) ? complex(0,0) : ~(power_dy[5]/voltage[2])) + voltage[2]*shunt_dy[5] + adjusted_current_val[2];
+
+			//Explicit house inclusion for "non-triplex" houses
+			if (house_present)	//House present
+			{
+				//Do it in a loop, just because
+				for (loop_index=0; loop_index<3; loop_index++)
+				{
+					//See if we're even a valid voltage
+					if (voltage[loop_index].Mag() != 0.0)
+					{
+						//Update phase adjustments
+						temp_store[loop_index].SetPolar(1.0,voltage[loop_index].Arg());	//Pull phase of this voltage phase
+
+						//Update these current contributions
+						house_pres_current[loop_index] = nom_res_curr[loop_index]/(~temp_store[loop_index]);		//Just denominator conjugated to keep math right (rest was conjugated in house)
+
+						//Now add it into the current contributions
+						temp_current_inj[loop_index] += ((voltage[loop_index]==0) ? complex(0,0) : house_pres_current[loop_index]);
+					}
+					//Default else - voltage is zero, do nothing
+				}//End phase loop for houses
+			}//End house-attached not-so-split-phase
 		}//End both delta/wye
 
 		//If we are a child, apply our current injection directly up to our parent - links accumulate afterwards now because they bypass child relationships
@@ -4187,7 +4310,8 @@ int node::NR_current_update(bool parentcall)
 				ParLoadObj->current_inj[2] += temp_current_inj[2];
 
 				//See if we have a house - if we do, we're inadvertently biasing our parent
-				if (house_present)
+				//Not only a house, but a triplex-connected house
+				if ((house_present) && has_phase(PHASE_S))
 				{
 					//Remove the line_12 current appropriately
 					ParLoadObj->current_inj[0] -= house_pres_current[0] + house_pres_current[2];
@@ -4232,28 +4356,31 @@ int node::NR_current_update(bool parentcall)
 		{
 			for (table_index=0; table_index<NR_busdata[NR_node_reference].Link_Table_Size; table_index++)
 			{
-				//Extract that link
-				temp_link = OBJECTDATA(NR_branchdata[NR_busdata[NR_node_reference].Link_Table[table_index]].obj,link_object);
+				//Extract the object pointer - just for readability
+				tmp_obj = NR_branchdata[NR_busdata[NR_node_reference].Link_Table[table_index]].obj;
 
+				//Extract the function address
+				temp_funadd = (FUNCTIONADDR)(gl_get_function(tmp_obj,"perform_current_calculation_pwr_link"));
+				
 				//Make sure it worked
-				if (temp_link == NULL)
+				if (temp_funadd == NULL)
 				{
-					GL_THROW("Attemped to update current for object:%s, which is not a link!",NR_branchdata[NR_busdata[NR_node_reference].Link_Table[table_index]].name);
+					GL_THROW("Attemped to update current for object:%s failed!",(tmp_obj->name?tmp_obj->name:"Unnamed"));
 					/*  TROUBLESHOOT
 					The current node object tried to update the current injections for what it thought was a link object.  This does
-					not appear to be true.  Try your code again.  If the error persists, please submit your code and a bug report to the
-					trac website.
+					not appear to be true.  Try your code again.  If the error persists, please submit your GLM and a bug report to the
+					issue tracker.
 					*/
 				}
 
 				//Call a lock on that link - just in case multiple nodes call it at once
-				WRITELOCK_OBJECT(NR_branchdata[NR_busdata[NR_node_reference].Link_Table[table_index]].obj);
+				WRITELOCK_OBJECT(tmp_obj);
 
 				//Call its update - tell it who is asking so it knows what to lock
-				temp_result = temp_link->CurrentCalculation(NR_node_reference,false);
+				temp_result = ((int (*)(OBJECT *,int, bool))(*temp_funadd))(tmp_obj,NR_node_reference,false);
 
 				//Unlock the link
-				WRITEUNLOCK_OBJECT(NR_branchdata[NR_busdata[NR_node_reference].Link_Table[table_index]].obj);
+				WRITEUNLOCK_OBJECT(tmp_obj);
 
 				//See if it worked, just in case this gets added in the future
 				if (temp_result != 1)
@@ -4281,7 +4408,7 @@ int node::NR_current_update(bool parentcall)
 SIMULATIONMODE node::inter_deltaupdate_node(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
 {
 	//unsigned char pass_mod;
-	double deltat, deltatimedbl;
+	double deltat;
 	OBJECT *hdr = OBJECTHDR(this);
 	STATUS return_status_val;
 
@@ -4294,26 +4421,25 @@ SIMULATIONMODE node::inter_deltaupdate_node(unsigned int64 delta_time, unsigned 
 	//Update time tracking variable - mostly for GFA functionality calls
 	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
 	{
-		//Get decimal timestamp value
-		deltatimedbl = (double)delta_time/(double)DT_SECOND; 
-
 		//Update tracking variable
-		prev_time_dbl = (double)gl_globalclock + deltatimedbl;
+		prev_time_dbl = gl_globaldeltaclock;
 
 		//Update frequency calculation values (if needed)
 		if (fmeas_type != FM_NONE)
 		{
-			//Copy the tracker value
-			memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+			//See which pass
+			if (delta_time == 0)
+			{
+				//Initialize dynamics - first run of new delta call
+				init_freq_dynamics(deltat);
+			}
+			else
+			{
+				//Copy the tracker value
+				memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+			}
 		}
 	}
-
-	//Initialization items
-	if ((delta_time==0) && (iteration_count_val==0) && (interupdate_pos == false) && (fmeas_type != FM_NONE))	//First run of new delta call
-	{
-		//Initialize dynamics
-		init_freq_dynamics();
-	}//End first pass and timestep of deltamode (initial condition stuff)
 
 	//Perform the GFA update, if enabled
 	if ((GFA_enable == true) && (iteration_count_val == 0) && (interupdate_pos == false))	//Always just do on the first pass
@@ -4481,11 +4607,18 @@ STATUS node::calc_freq_dynamics(double deltat)
 			{
 				if (is_triplex_node == true)
 				{
-					curr_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[indexval];
+					if (indexval < 2)
+					{
+						curr_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[indexval];
+					}
+					else	//Must be 2
+					{
+						curr_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[0] + NR_busdata[*NR_subnode_reference].V[1];
+					}
 				}
 				else
 				{
-					curr_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[0] + NR_busdata[*NR_subnode_reference].V[1];
+					curr_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[indexval];
 				}
 			}
 
@@ -4604,11 +4737,13 @@ STATUS node::calc_freq_dynamics(double deltat)
 //Initializes dynamic equations for first entry
 //Returns a SUCCESS/FAIL
 //curr_time is the initial states/information
-void node::init_freq_dynamics(void)
+void node::init_freq_dynamics(double deltat)
 {
 	unsigned char phase_conf, phase_mask;
 	int indexval;
 	bool is_triplex_node;
+	double frequency_offset_val, angle_offset;
+	complex angle_rotate_value;
 
 	//Extract the phases
 	if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
@@ -4661,45 +4796,91 @@ void node::init_freq_dynamics(void)
 				{
 					if (indexval < 2)
 					{
-						prev_freq_state.voltage_val[indexval]=NR_busdata[NR_node_reference].V[indexval];
+						curr_freq_state.voltage_val[indexval]=NR_busdata[NR_node_reference].V[indexval];
 					}
 					else	//Must be 2
 					{
-						prev_freq_state.voltage_val[indexval]=NR_busdata[NR_node_reference].V[0] + NR_busdata[NR_node_reference].V[1];
+						curr_freq_state.voltage_val[indexval]=NR_busdata[NR_node_reference].V[0] + NR_busdata[NR_node_reference].V[1];
 					}
 				}
 				else
 				{
-					prev_freq_state.voltage_val[indexval]=NR_busdata[NR_node_reference].V[indexval];
+					curr_freq_state.voltage_val[indexval]=NR_busdata[NR_node_reference].V[indexval];
 				}
 			}
 			else	//It is a child - look at parent
 			{
 				if (is_triplex_node == true)
 				{
-					prev_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[indexval];
+					if (indexval < 2)
+					{
+						curr_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[indexval];
+					}
+					else	//Must be 2
+					{
+						curr_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[0] + NR_busdata[*NR_subnode_reference].V[1];
+					}
 				}
 				else
 				{
-					prev_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[0] + NR_busdata[*NR_subnode_reference].V[1];
+					curr_freq_state.voltage_val[indexval]=NR_busdata[*NR_subnode_reference].V[indexval];
 				}
 			}
 
-			//Populate the angle - use ATAN2, since it divides better than the complex-oriented .Arg function
-			prev_freq_state.anglemeas[indexval] = atan2(prev_freq_state.voltage_val[indexval].Im(),prev_freq_state.voltage_val[indexval].Re());
+			//See if we're the first start or not
+			if (first_freq_init == true)
+			{
+				//Assume "current" start
+				curr_freq_state.fmeas[indexval] = current_frequency;
+				prev_freq_state.fmeas[indexval] = current_frequency;
+			}
+			//Default else, just leave what was already in our accumulator
+
+			//Assume the frequency was at least "stable" prior to entering - adjust prior value to reflect this
+			//Compute the frequency deviation
+			frequency_offset_val = (curr_freq_state.fmeas[indexval] * 2.0 * PI - freq_omega_ref);
+
+			//Calculate the associated angle offset - negative, for past
+			angle_offset = -1.0 * frequency_offset_val * deltat;
 			
-			//Assume "current" start
-			prev_freq_state.fmeas[indexval] = current_frequency;
+			//Translate it into a multiplier
+			//exp(jx) = cos(x)+j*sin(x)
+			angle_rotate_value = complex(cos(angle_offset),sin(angle_offset));
+
+			//Adjust the previous voltage value by this
+			prev_freq_state.voltage_val[indexval] = curr_freq_state.voltage_val[indexval] * angle_rotate_value;
+
+			//Populate the angle - use ATAN2, since it divides better than the complex-oriented .Arg function
+			curr_freq_state.anglemeas[indexval] = atan2(curr_freq_state.voltage_val[indexval].Im(),curr_freq_state.voltage_val[indexval].Re());
+			prev_freq_state.anglemeas[indexval] = atan2(prev_freq_state.voltage_val[indexval].Im(),prev_freq_state.voltage_val[indexval].Re());
 
 			//Populate other fields, if necessary
 			if (fmeas_type == FM_PLL)
 			{
+				//Initialize other relevant variables
+				curr_freq_state.x[indexval] = frequency_offset_val;
+				prev_freq_state.x[indexval] = frequency_offset_val;
+
+				//Current values of angles
+				curr_freq_state.sinangmeas[indexval] = sin(curr_freq_state.anglemeas[indexval]);
+				curr_freq_state.cosangmeas[indexval] = cos(curr_freq_state.anglemeas[indexval]);
+
+				//Previous values, just because
 				prev_freq_state.sinangmeas[indexval] = sin(prev_freq_state.anglemeas[indexval]);
 				prev_freq_state.cosangmeas[indexval] = cos(prev_freq_state.anglemeas[indexval]);
 			}
 		}//End valid phase
 		else	//Not a valid phase, just zero it all
 		{
+			curr_freq_state.voltage_val[indexval] = complex(0.0,0.0);
+			curr_freq_state.x[indexval] = 0.0;
+			curr_freq_state.anglemeas[indexval] = 0.0;
+			curr_freq_state.fmeas[indexval] = 0.0;
+			curr_freq_state.average_freq = current_frequency;
+			curr_freq_state.sinangmeas[indexval] = 0.0;
+			curr_freq_state.cosangmeas[indexval] = 0.0;
+
+			//DO the same for previous state, out of paranoia
 			prev_freq_state.voltage_val[indexval] = complex(0.0,0.0);
 			prev_freq_state.x[indexval] = 0.0;
 			prev_freq_state.anglemeas[indexval] = 0.0;
@@ -4710,8 +4891,11 @@ void node::init_freq_dynamics(void)
 		}
 	}//End FOR loop
 
-	//Copy into current, since we may have already just done this
-	memcpy(&curr_freq_state,&prev_freq_state,sizeof(FREQM_STATES));
+	//Final check for "first run" to deflag us and to update angle calculation
+	if (first_freq_init == true)
+	{
+		first_freq_init = false;
+	}
 }
 
 //Function to perform the GFA-type responses
@@ -4754,7 +4938,7 @@ double node::perform_GFA_checks(double timestepvalue)
 		//Check the times - split out
 		if (curr_freq_state.average_freq > GFA_freq_high_trip)
 		{
-			if (freq_violation_time_total >= GFA_freq_disconnect_time)
+			if (freq_violation_time_total > GFA_freq_disconnect_time)
 			{
 				trigger_disconnect = true;
 				return_time_freq = GFA_reconnect_time;
@@ -4770,7 +4954,7 @@ double node::perform_GFA_checks(double timestepvalue)
 		}
 		else if (curr_freq_state.average_freq < GFA_freq_low_trip)
 		{
-			if (freq_violation_time_total >= GFA_freq_disconnect_time)
+			if (freq_violation_time_total > GFA_freq_disconnect_time)
 			{
 				trigger_disconnect = true;
 				return_time_freq = GFA_reconnect_time;
@@ -4864,7 +5048,7 @@ double node::perform_GFA_checks(double timestepvalue)
 				//See which case we are
 				if (temp_pu_voltage < GFA_voltage_low_trip)
 				{
-					if (volt_violation_time_total >= GFA_volt_disconnect_time)
+					if (volt_violation_time_total > GFA_volt_disconnect_time)
 					{
 						trigger_disconnect = true;
 						return_time_volt = GFA_reconnect_time;
@@ -4880,7 +5064,7 @@ double node::perform_GFA_checks(double timestepvalue)
 				}
 				else if (temp_pu_voltage >= GFA_voltage_high_trip)
 				{
-					if (volt_violation_time_total >= GFA_volt_disconnect_time)
+					if (volt_violation_time_total > GFA_volt_disconnect_time)
 					{
 						trigger_disconnect = true;
 						return_time_volt = GFA_reconnect_time;
@@ -5014,7 +5198,8 @@ STATUS node::NR_swap_swing_status(bool desired_status)
 		}
 		else	//Indicate we're not one
 		{
-			gl_warning("node:%s - Not a SWING-capable bus, so no swing status swap changed",(hdr->name ? hdr->name : "unnamed"));
+			//Put as a verbose, since mostly just useful for debugging
+			gl_verbose("node:%s - Not a SWING-capable bus, so no swing status swap changed",(hdr->name ? hdr->name : "unnamed"));
 			/*  TROUBLESHOOT
 			While attempting to swap a node from being a "swing node", it was tried on a node that was not already a SWING or SWING_PQ
 			node, which is not a valid attempt.
@@ -5031,13 +5216,64 @@ STATUS node::NR_swap_swing_status(bool desired_status)
 		}
 		else	//Indicate we're not one
 		{
-			gl_warning("node:%s - Not a SWING-capable bus, so no swing status swap changed",(hdr->name ? hdr->name : "unnamed"));
+			gl_verbose("node:%s - Not a SWING-capable bus, so no swing status swap changed",(hdr->name ? hdr->name : "unnamed"));
 			//Defined above
 		}
 	}
 
 	//Always a success, we think
 	return SUCCESS;
+}
+
+//Function to check if a node object is "behaving in a SWING manner"
+void node::NR_swing_status_check(bool *swing_status_check_value, bool *swing_pq_status_value)
+{
+	//By default, assume we aren't a SWING
+	*swing_status_check_value = false;
+
+	//See if we're a child or not
+	if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+	{
+		//Make sure we're a SWING or SWING_PQ first
+		if (NR_busdata[NR_node_reference].type > 1)
+		{
+			//Pull it out of our NR structure
+			*swing_status_check_value = NR_busdata[NR_node_reference].swing_functions_enabled;
+
+			//See if we are a SWING_PQ, then copy that flag
+			if (NR_busdata[NR_node_reference].type == 3)
+			{
+				*swing_pq_status_value = NR_busdata[NR_node_reference].swing_topology_entry;
+			}
+			else
+			{
+				//Swing and "normal bus" just get set to false - not needed
+				*swing_pq_status_value = false;
+			}
+		}
+		//Default else - we're a PQ, and by definition, not a SWING
+	}
+	else	//It is a child - look at parent
+	{
+		//Make sure we're a SWING or SWING_PQ first
+		if (NR_busdata[*NR_subnode_reference].type > 1)
+		{
+			//Pull the value out
+			*swing_status_check_value = NR_busdata[*NR_subnode_reference].swing_functions_enabled;
+
+			//See if we are a SWING_PQ, then copy that flag
+			if (NR_busdata[*NR_subnode_reference].type == 3)
+			{
+				*swing_pq_status_value = NR_busdata[*NR_subnode_reference].swing_topology_entry;
+			}
+			else
+			{
+				//Swing and "normal bus" just get set to false - not needed
+				*swing_pq_status_value = false;
+			}
+		}
+		//Default else - we're a PQ and not a SWING of any type
+	}
 }
 
 //Function to reset the "disabled state" of the node, if called (re-enable an island, basically)
@@ -5339,6 +5575,19 @@ EXPORT STATUS swap_node_swing_status(OBJECT *obj, bool desired_status)
 
 	//Return what the sub function said we were
 	return temp_status;
+}
+
+//Function to query a current node's status as a SWING node -- basically lets generators see how "swing_functions_enabled" is behaving
+EXPORT STATUS node_swing_status(OBJECT *this_obj, bool *swing_status_check_value, bool *swing_pq_status_value)
+{
+	//Map ourselves
+	node *my = OBJECTDATA(this_obj,node);
+
+	//Run the query
+	my->NR_swing_status_check(swing_status_check_value,swing_pq_status_value);
+
+	//Return success, because reasons
+	return SUCCESS;
 }
 
 //Exposed function to map a "current injection update" routine from another object

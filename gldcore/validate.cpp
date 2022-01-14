@@ -2,7 +2,7 @@
 // Copyright (C) 2012 Battelle Memorial Institute
 //
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #include <direct.h>
 #include <io.h>
@@ -227,7 +227,7 @@ static int report_close(void)
 }
 
 /* Windows implementation of opendir/readdir/closedir */
-#ifdef WIN32
+#ifdef _WIN32
 struct dirent {
 	unsigned char  d_type;	/* file type, see below */
 	char *d_name;			/* name must be no longer than this */
@@ -452,7 +452,7 @@ static counters run_test(char *file, double *elapsed_time=NULL)
         //output_verbose("run_test(): deleted '%s'", dir);
         rmdir(dir);
 	}
-#ifdef WIN32
+#ifdef _WIN32
 	if ( (0 != mkdir(dir)) && clean )
 #else
 	if ( (0 != mkdir(dir,0750)) && clean )
@@ -475,7 +475,7 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 	int64 dt = exec_clock();
 	result.inc_files(file);
 	unsigned int code = vsystem("%s -W %s %s %s.glm ", 
-#ifdef WIN32
+#ifdef _WIN32
 		_pgmptr,
 #else
 		"gridlabd",
@@ -484,7 +484,7 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 	dt = exec_clock() - dt;
 	double t = (double)dt/(double)CLOCKS_PER_SEC;
 	if ( elapsed_time!=NULL ) *elapsed_time = t;
-//#ifdef WIN32
+//#ifdef _WIN32
 // 	if ( code>256 )
 // 		output_warning("%s exit code %x is outside normal exit code range and may be interpreted incorrectly", name, code);
 //#endif
@@ -505,35 +505,47 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 			else 
 				output_warning("optional test %s error, code %d in %.1f seconds", name, code, t);
 		}
-		else if ( is_exc && code==XC_EXCEPTION ) // expected exception
+		else if ( is_exc && code==XC_EXCEPTION ) // expected exception and got one
+		{
 			output_verbose("%s exception was expected, code %d in %.1f seconds", name, code, t);
-		else if ( is_err && code!=XC_SUCCESS ) // expected error
-			output_verbose("%s error was expected, code %d in %.1f seconds", name, code, t);
-		else if ( code==XC_SUCCESS ) // expected success
-			output_verbose("%s success was expected, code %d in %.1f seconds", name, code, t);
-        else if ( code==XC_EXCEPTION ){ // unexpected exception
-			result.inc_exceptions(file,code,t);
-            problem = true;
-        } else if ( code==XC_SUCCESS  ){ // unexpected success
-			result.inc_success(file,code,t);
-            problem = true;
-        } else if ( code!=XC_SUCCESS ){ // unexpected error
-			result.inc_failed(file,code,t);
-            problem = true;
 		}
-	}
-	else // signaled
-	{
-		code = WTERMSIG(code);
-		output_debug("signal %d received from %s", code, name);
-		if ( is_opt ) // no expected outcome
-			output_warning("optional test %s exception, code %d in %.1f seconds", name, code, t);
-		else if ( is_exc ) // expected exception
-			output_warning("%s exception expected, code %d in %.1f seconds", name, code, t);
-        else {
+		else if ( is_err && code!=XC_SUCCESS ) // expected error and got one
+		{
+			output_verbose("%s error was expected, code %d in %.1f seconds", name, code, t);
+		}
+		else if ( code==XC_SUCCESS && !(is_exc||is_err) ) // expected success and got it
+		{
+			output_verbose("%s success was expected, code %d in %.1f seconds", name, code, t);
+        	}
+		else if ( code==XC_EXCEPTION ) // unexpected exception
+		{
 			result.inc_exceptions(file,code,t);
-            problem = true;
-        }
+			problem = true;
+        	} 
+		else if ( code==XC_SUCCESS  ) // unexpected success
+		{
+			result.inc_success(file,code,t);
+			problem = true;
+        	} 
+		else if ( code!=XC_SUCCESS ) // unexpected error
+		{
+			result.inc_failed(file,code,t);
+			problem = true;
+			}
+		}
+		else // signaled
+		{
+			code = WTERMSIG(code);
+			output_debug("signal %d received from %s", code, name);
+			if ( is_opt ) // no expected outcome
+				output_warning("optional test %s exception, code %d in %.1f seconds", name, code, t);
+			else if ( is_exc ) // expected exception
+				output_warning("%s exception expected, code %d in %.1f seconds", name, code, t);
+	        else 
+		{
+			result.inc_exceptions(file,code,t);
+			problem = true;
+        	}
 	} 
 	output_debug("run_test(char *file='%s') done", file);
     if ( !problem && clean && !destroy_dir(dir) )
@@ -756,7 +768,7 @@ int validate(int argc, char *argv[])
 	report_data("%s",strftime(tbuf,sizeof(tbuf),"%Y-%m-%d %H:%M:%S %z",ts)?tbuf:"???");
 	report_newrow();
 	
-#ifdef WIN32
+#ifdef _WIN32
 	char *user=getenv("USERNAME"); 
 #else
 	char *user=getenv("USER"); 
@@ -766,7 +778,7 @@ int validate(int argc, char *argv[])
 	report_data("%s",user?user:"(NA)");
 	report_newrow();
 
-#ifdef WIN32
+#ifdef _WIN32
 	char *host=getenv("COMPUTERNAME");
 #else
 	char *host=getenv("HOSTNAME");

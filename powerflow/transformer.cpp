@@ -81,6 +81,8 @@ transformer::transformer(MODULE *mod) : link_object(mod)
 				GL_THROW("Unable to publish transformer external power calculation function");
 			if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
 				GL_THROW("Unable to publish transformer external power limit calculation function");
+			if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==NULL)
+				GL_THROW("Unable to publish transformer external current calculation function");
     }
 }
 
@@ -119,7 +121,7 @@ void transformer::fetch_double(double **prop, char *name, OBJECT *parent){
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "transformer:%i", hdr->id);
-		if(*name == NULL)
+		if(*name == 0)
 			sprintf(msg, "%s: transformer unable to find property: name is NULL", namestr);
 		else
 			sprintf(msg, "%s: transformer unable to find %s", namestr, name);
@@ -170,7 +172,12 @@ int transformer::init(OBJECT *parent)
 	link_rating[0][0] = config->kVA_rating;
 	link_rating[1][0] = config->kVA_rating;
 
-	link_object::init(parent);
+	int result = link_object::init(parent);
+
+	//Check for deferred
+	if (result == 2)
+		return 2;	//Return the deferment - no sense doing everything else!
+
 	OBJECT *obj = OBJECTHDR(this);
 
 	V_base = config->V_secondary;
@@ -470,9 +477,21 @@ int transformer::init(OBJECT *parent)
 				*/
 			}
 
-			B_mat[0][0] = zt*zc/(zt+zc);
-			B_mat[1][1] = zt*zc/(zt+zc);
-			B_mat[2][2] = zt*zc/(zt+zc);
+			//Check by phase and populate
+			if (has_phase(PHASE_A))
+			{
+				B_mat[0][0] = zt*zc/(zt+zc);
+			}
+
+			if (has_phase(PHASE_B))
+			{
+				B_mat[1][1] = zt*zc/(zt+zc);
+			}
+
+			if (has_phase(PHASE_C))
+			{
+				B_mat[2][2] = zt*zc/(zt+zc);
+			}
 
 			break;
 		case transformer_configuration::DELTA_DELTA:
@@ -1026,7 +1045,7 @@ int transformer::init(OBJECT *parent)
 				R = config->full_load_loss/config->no_load_loss;
 			} else if(config->impedance.Re()!=0 && config->shunt_impedance.Re()!=0)
 				R = config->impedance.Re()*config->shunt_impedance.Re();
-			if(config->t_W==NULL || config->dtheta_TO_R==NULL){
+			if(config->t_W==0 || config->dtheta_TO_R==0){
 				GL_THROW("winding time constant or rated top-oil hotspot rise for transformer configuration %s must be nonzero",configuration->name);
 				/*  TROUBLESHOOT
 				When using the thermal aging model, the rated_winding_time_constant or the rated_top_oil_rise must be given as a non-zero value.

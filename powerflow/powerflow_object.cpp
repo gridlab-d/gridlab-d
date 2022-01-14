@@ -175,6 +175,8 @@ int powerflow_object::create(void)
 
 int powerflow_object::init(OBJECT *parent)
 {
+	OBJECT *obj = OBJECTHDR(this);
+
 	/* unspecified phase inherits from parent, if any */
 	if (parent && gl_object_isa(parent,"powerflow_object"))
 	{
@@ -188,8 +190,15 @@ int powerflow_object::init(OBJECT *parent)
 		throw "phases not specified";
 
 	/* split connection must connect to a phase */
+	//Compromised and made it a verbose, since it is still useful for debugging
 	if (has_phase(PHASE_S) && !(has_phase(PHASE_A) || has_phase(PHASE_B) || has_phase(PHASE_C)))
-		throw "split connection is missing A,B, or C phase connection";
+	{
+		gl_verbose("object:%d - %s - split connection is missing A,B, or C phase connection",obj->id,(obj->name?obj->name:"Unnamed"));
+		/*  TROUBLESHOOT
+		A triplex-based object does not have the three-phase basis specified.  If this behavior is not intended, please adjust your model
+		and try again.
+		*/
+	}
 
 	/* split connection must connect to only one phase */
 	if (has_phase(PHASE_S) && (

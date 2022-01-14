@@ -7,6 +7,7 @@
 #include "triplex_node.h"
 
 EXPORT SIMULATIONMODE interupdate_triplex_load(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
+EXPORT STATUS update_triplex_load_values(OBJECT *obj);
 
 class triplex_load : public triplex_node
 {
@@ -15,11 +16,16 @@ public:
 	static CLASS *pclass;
 private:
 	bool base_load_val_was_nonzero[3];		///< Tracking variable to make ZIP-fraction loads check for zero conditions (but not already zeroed)
+	bool ZIP_constant_current[3];			///< Tracking variable for if ZIP-fraction loads have overwritten constant_current_X
+
+	complex prev_load_values[3][3];			///< Tracking variable for accumulators - make loads behave more like nodes
 
 public:
 	complex measured_voltage_1;	///< measured voltage
 	complex measured_voltage_2;
 	complex measured_voltage_12;
+	complex measured_total_power;
+	complex measured_power[3];
 	complex constant_power[3];		// power load
 	complex constant_current[3];	// current load
 	complex constant_impedance[3];	// impedance load

@@ -101,6 +101,10 @@ capacitor::capacitor(MODULE *mod):node(mod)
 			GL_THROW("Unable to publish capacitor deltamode function");
 		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
 			GL_THROW("Unable to publish capacitor swing-swapping function");
+		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
+			GL_THROW("Unable to publish capacitor swing-status check function");
+		if (gl_publish_function(oclass, "pwr_object_kmldata", (FUNCTIONADDR)capacitor_kmldata) == NULL)
+			GL_THROW("Unable to publish capacitor kmldata function");
     }
 }
 
@@ -172,8 +176,10 @@ int capacitor::create()
 
 int capacitor::init(OBJECT *parent)
 {
-	gld_property *pSetPhases;
+	gld_property *pTempProperty;
+	gld_wlock *test_rlock;
 	set temp_phases;
+	OBJECT *temp_obj_link;
 	int result = node::init();
 
 	OBJECT *obj = OBJECTHDR(this);
@@ -250,6 +256,39 @@ int capacitor::init(OBJECT *parent)
 			//Put it in both, since it assumes it may need one or the other
 			RNode = RemoteSensor;
 			RLink = RemoteSensor;
+		}
+	}
+
+	//If RLink is assigned, make sure we aren't the "TO" end
+	if ((RLink != NULL) && (gl_object_isa(RLink,"link","powerflow")))
+	{
+		//Double check that the RLink->to isn't us - this will cause some issues with FBS
+		pTempProperty = new gld_property(RLink,"to");
+
+		//Make sure it is valid
+		if ((pTempProperty->is_valid() != true) || (pTempProperty->is_objectref() != true))
+		{
+			GL_THROW("capacitor:%d - %s - Failed to map remote_sense object properties for checks",obj->id,(obj->name?obj->name:"Unnamed"));
+			/*  TROUBLESHOOT
+			While attempting to map the "to" property from the remote link object, an error occurred.  Please try again.  If the error persists,
+			please submit a ticket to the issues tracker.
+			*/
+		}
+
+		//Pull the object
+		pTempProperty->getp<OBJECT*>(temp_obj_link,*test_rlock);
+
+		//Delete the property
+		delete pTempProperty;
+
+		//Check it to make sure it isn't us!
+		if (temp_obj_link == obj)
+		{
+			GL_THROW("capacitor:%d - %s - To-end of the remote link being monitored is us - this can cause readlock errors, especially with FBS",obj->id,(obj->name?obj->name:"Unnamed"));
+			/*  TROUBLESHOOT
+			When specifying a link-based object in the remote_sense or remote_sense_B properties, if this capacitor is the 'to' end of that object, readlock issues
+			can occur, especially with the FBS solver.  Adjust your topology to prevent this issue.
+			*/
 		}
 	}
 
@@ -379,10 +418,10 @@ int capacitor::init(OBJECT *parent)
 	if ((control!=MANUAL) && (control!=VOLT))	//VAR, VOLTVAR, CURRENT
 	{
 		//Pull the RLink phases to check
-		pSetPhases = new gld_property(RLink,"phases");
+		pTempProperty = new gld_property(RLink,"phases");
 
 		//Make sure it worked
-		if ((pSetPhases->is_valid() != true) || (pSetPhases->is_set() != true))
+		if ((pTempProperty->is_valid() != true) || (pTempProperty->is_set() != true))
 		{
 			GL_THROW("Capacitor:%d - %s - Unable to map phases for remote link object",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/* TROUBLESHOOT
@@ -392,10 +431,10 @@ int capacitor::init(OBJECT *parent)
 		}
 
 		//Pull the voltage base value
-		temp_phases = pSetPhases->get_set();
+		temp_phases = pTempProperty->get_set();
 
 		//Now get rid of the item
-		delete pSetPhases;
+		delete pTempProperty;
 
 		//Check them
 		if ((temp_phases & pt_phase) != pt_phase)
@@ -411,10 +450,10 @@ int capacitor::init(OBJECT *parent)
 	else if (((control==VOLT) || (control==VARVOLT)) && (RNode != NULL))	//RNode check
 	{
 		//Pull the RNode phases to check
-		pSetPhases = new gld_property(RNode,"phases");
+		pTempProperty = new gld_property(RNode,"phases");
 
 		//Make sure it worked
-		if ((pSetPhases->is_valid() != true) || (pSetPhases->is_set() != true))
+		if ((pTempProperty->is_valid() != true) || (pTempProperty->is_set() != true))
 		{
 			GL_THROW("Capacitor:%d - %s - Unable to map phases for remote node object",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/* TROUBLESHOOT
@@ -424,10 +463,10 @@ int capacitor::init(OBJECT *parent)
 		}
 
 		//Pull the voltage base value
-		temp_phases = pSetPhases->get_set();
+		temp_phases = pTempProperty->get_set();
 
 		//Now get rid of the item
-		delete pSetPhases;
+		delete pTempProperty;
 
 		//Check to see if the phases are right
 		if ((temp_phases & pt_phase) != pt_phase)
@@ -1384,12 +1423,12 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 
 	if ((control==VAR) || (control==VARVOLT))	//Grab the power values from remote link
 	{
-		READLOCK_OBJECT(OBJECTHDR(RLink));
+		READLOCK_OBJECT(RLink);
 
 		//Force the link to do an update (will be ignored first run anyways (zero))
 		return_status = ((int (*)(OBJECT *))(*RLink_calculate_power_fxn))(RLink);
 
-		READUNLOCK_OBJECT(OBJECTHDR(RLink));
+		READUNLOCK_OBJECT(RLink);
 
 		//Make sure it worked
 		if (return_status != 1)
@@ -1816,7 +1855,7 @@ SIMULATIONMODE capacitor::inter_deltaupdate_capacitor(unsigned int64 delta_time,
 {
 	OBJECT *hdr = OBJECTHDR(this);
 	double curr_time_value;	//Current time of simulation
-	double deltat, deltatimedbl;
+	double deltat;
 	double result_dbl;		//Working variable for capacitors
 	int retvalue;	//Working variable for one case
 	bool Phase_Mismatch;	//Working variable
@@ -1831,26 +1870,25 @@ SIMULATIONMODE capacitor::inter_deltaupdate_capacitor(unsigned int64 delta_time,
 	//Update time tracking variable - mostly for GFA functionality calls
 	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
 	{
-		//Get decimal timestamp value
-		deltatimedbl = (double)delta_time/(double)DT_SECOND; 
-
 		//Update tracking variable
-		prev_time_dbl = (double)gl_globalclock + deltatimedbl;
+		prev_time_dbl = gl_globaldeltaclock;
 
 		//Update frequency calculation values (if needed)
 		if (fmeas_type != FM_NONE)
 		{
-			//Copy the tracker value
-			memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+			//See which pass
+			if (delta_time == 0)
+			{
+				//Initialize dynamics - first run of new delta call
+				init_freq_dynamics(deltat);
+			}
+			else
+			{
+				//Copy the tracker value
+				memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+			}
 		}
 	}
-
-	//Initialization items
-	if ((delta_time==0) && (iteration_count_val==0) && (interupdate_pos == false) && (fmeas_type != FM_NONE))	//First run of new delta call
-	{
-		//Initialize dynamics
-		init_freq_dynamics();
-	}//End first pass and timestep of deltamode (initial condition stuff)
 
 	//Perform the GFA update, if enabled
 	if ((GFA_enable == true) && (iteration_count_val == 0) && (interupdate_pos == false))	//Always just do on the first pass
@@ -2057,6 +2095,17 @@ EXPORT SIMULATIONMODE interupdate_capacitor(OBJECT *obj, unsigned int64 delta_ti
 		gl_error("interupdate_capacitor(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
 		return status;
 	}
+}
+
+//KML Export
+EXPORT int capacitor_kmldata(OBJECT *obj,int (*stream)(const char*,...))
+{
+	capacitor *n = OBJECTDATA(obj, capacitor);
+	int rv = 1;
+
+	rv = n->kmldata(stream);
+
+	return rv;
 }
 
 int capacitor::kmldata(int (*stream)(const char*,...))

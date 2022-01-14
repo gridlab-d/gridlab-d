@@ -9,6 +9,9 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
+#ifdef __APPLE__
+#include <cmath>
+#endif
 #include <vector>
 #include <algorithm>
 #include <iostream>
@@ -16,12 +19,6 @@
 
 #include <string>
 #include "gridlabd.h"
-#ifdef max
-#undef max
-#endif
-#ifdef min
-#undef min
-#endif
 #include "climate.h"
 #include "timestamp.h"
 EXPORT_CREATE(climate)
@@ -535,6 +532,7 @@ climate::climate(MODULE *module)
             PT_double,"solar_zenith",PADDR(solar_zenith),
 			PT_char32, "city", PADDR(city),
 			PT_char1024,"tmyfile",PADDR(tmyfile),
+			PT_double,"tz_meridian",PADDR(tz_meridian),PT_DESCRIPTION,"Specify 15*(time zone offset of weather source) if using CSV, manual, FNCS or HELICS control. Negative value in the U.S.",
 			PT_double,"temperature[degF]",PADDR(temperature),
 			PT_double,"humidity[pu]",PADDR(humidity),
 			PT_double,"solar_flux[W/sf]",PADDR(solar_flux),	PT_SIZE, 9,
@@ -544,7 +542,7 @@ climate::climate(MODULE *module)
 			PT_double,"extraterrestrial_global_horizontal[W/sf]",PADDR(global_horizontal_extra),
 			PT_double,"extraterrestrial_direct_normal[W/sf]",PADDR(direct_normal_extra),
 			PT_double,"pressure[mbar]",PADDR(pressure),
-			PT_double,"wind_speed[m/s]", PADDR(wind_speed),
+			PT_double,"wind_speed[mph]", PADDR(wind_speed),
 			PT_double,"wind_dir[deg]", PADDR(wind_dir),
 			PT_double,"wind_gust[mph]", PADDR(wind_gust),
 			PT_double,"record.low[degF]", PADDR(record.low),
@@ -646,8 +644,11 @@ int climate::init(OBJECT *parent)
 	reader_type = RT_NONE;
 
 	// ignore "" files ~ manual climate control is a feature
-	if (strcmp(tmyfile,"")==0)
+	if (strcmp(tmyfile,"")==0) {
+		gl_verbose ("Manual or FNCS/HELICS climate control; initializing to the starttime");
+		presync(gl_globalclock);
 		return 1;
+	}
 
 	// open access to the TMY file
 	char found_file[1024];
@@ -1133,7 +1134,7 @@ void climate::update_cloud_pattern(TIMESTAMP delta_t) {
 	//double windspeed = windspeed_tmy2 * log(1000/roughness_length)/log(10/roughness_length);
 
 	//C. W. Hansen, J. S. Stein, and A. Ellis,
-	//“Simulation of One-Minute Power Output from Utility-Scale Photovoltaic Generation Systems,” SAND2011-5529, 2011.
+	//"Simulation of One-Minute Power Output from Utility-Scale Photovoltaic Generation Systems," SAND2011-5529, 2011.
 	// Shows distribution of wind speeds at cumulus cloud elevations based on weather balloon launches (pg. 18)
 	// A cursory inspection of the TMY3 measured wind speeds shows this is roughly consistent with histogram
 	// presented in the paper.
@@ -1761,7 +1762,7 @@ void climate::write_out_cloud_pattern( char pattern){ //Used only for verificati
 	ofstream out_file;
 
 	char buffer [100];
-	sprintf (buffer, "cloud_pattern_%010ld.csv", prev_NTime);
+	sprintf (buffer, "cloud_pattern_%010lld.csv", prev_NTime);
 	std::string file_string = buffer;
 	out_file.open(file_string.c_str(), ios::out);
 
@@ -1993,17 +1994,19 @@ TIMESTAMP climate::presync(TIMESTAMP t0) /* called in presync */
     // establish the current time
     update_time = t0;
     // %%%%% 20170224 MJB Stub in solar computation
-    if(t0 > TS_ZERO && tmy==NULL && reader_type != RT_CSV) {
+    if(t0 > TS_ZERO && tmy==NULL && reader_type != RT_CSV) { // no file was read, so it's probably manual, FNCS or HELICS control
         gld_clock now(t0);
         //calculate the solar radiation
         OBJECT *obj=OBJECTHDR(this);
         double longitude = obj->longitude;
         double sol_time =
             sa->solar_time((double)now.get_hour()+(now.get_minute()/60.0)+(now.get_second()/3600.0)+(now.get_is_dst()
-                        ? -1:0),now.get_yearday(),RAD(tz_meridian),longitude);
+                        ? -1:0),now.get_yearday(),RAD(tz_meridian),RAD(longitude));
         gl_localtime(t0, &dt);
         short day_of_yr = sa->day_of_yr(dt.month,dt.day);
         solar_zenith = sa->zenith(day_of_yr, RAD(obj->latitude), sol_time);
+        solar_elevation = sa->altitude(day_of_yr, RAD(obj->latitude), sol_time);
+        solar_azimuth = sa->azimuth(day_of_yr, RAD(obj->latitude), sol_time);
         double sol_rad = 0.0;
         for(COMPASS_PTS c_point = CP_H; c_point < CP_LAST;
                 c_point=COMPASS_PTS(c_point+1)) {

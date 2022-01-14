@@ -59,13 +59,13 @@
 
 // module version info (must match core version info)
 #define MAJOR 4
-#define MINOR 1
+#define MINOR 3
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #define HAVE_LIBCPPUNIT
 #endif
 
@@ -78,7 +78,7 @@
 	#define CDECL
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #ifndef EXPORT
 /** Defines a function as exported to core **/
 #define EXPORT CDECL __declspec(dllexport)
@@ -96,6 +96,8 @@
 #include "gldrandom.h"
 #define STREAM_MODULE
 #include "stream.h"
+#pragma GCC diagnostic ignored "-Wwrite-strings"
+
 
 #ifdef DLMAIN
 #define EXTERN
@@ -1279,7 +1281,7 @@ inline void wunlock(unsigned int* lock) { callback->unlock.write(lock); }
 #define LOCKED(X,C) {WRITELOCK_OBJECT(X);(C);WRITEUNLOCK_OBJECT(X);} /**< @todo this is deprecated and should not be used anymore */
 
 static unsigned long _nan[] = { 0xffffffff, 0x7fffffff, };
-#ifdef WIN32
+#ifdef _WIN32
 #define NaN (*(double*)&_nan)
 #else// UNIX/LINUX
 #include <math.h>
@@ -1877,6 +1879,13 @@ public: // iterators
 	inline gld_string get_##X##_string(void) { return get_##X##_property().get_string(); }; \
 	inline void set_##X(char *str) { get_##X##_property().from_string(str); }; \
 
+/// Define a method property
+#define GL_METHOD(C,X) public: int X(char *buffer, size_t len); \
+	static inline size_t get_##X##_offset(void) { return (size_t)method_##C##_##X; }; \
+	inline int get_##X(char *buffer, size_t len) { return X(buffer,len); }; \
+	inline int set_##X(char *buffer) { return X(buffer,0); }
+#define IMPL_METHOD(C,X) int C::X(char *buffer, size_t len)  // use this to implement a method
+
 /// Set bits of a bitflag property
 inline void setbits(unsigned long &flags, unsigned int bits) { flags|=bits; }; 
 /// Clear bits of a bitflag property
@@ -1888,8 +1897,9 @@ inline bool hasbits(unsigned long flags, unsigned int bits) { return (flags&bits
 class gld_object {
 public:
 	inline OBJECT *my() { return this?(((OBJECT*)this)-1):NULL; }
-public:
-	inline gld_object &operator=(gld_object&o) { exception("copy constructor is forbidden on gld_object"); };
+private:
+	// Make gld_object not copy-constructable.
+	gld_object& operator=(const gld_object&) = delete;
 
 public: // constructors
 	inline static gld_object *find_object(char *n) { OBJECT *obj = callback->get_object(n); if (obj) return (gld_object*)(obj+1); else return NULL; };
@@ -2120,15 +2130,19 @@ public: // special operations
 	inline bool is_timestamp(void) { return pstruct.prop->ptype==PT_timestamp; };
 
 	// TODO these need to use throw instead of returning overloaded values
+	inline bool get_bool(void) {errno=0; if ( pstruct.prop->ptype != PT_bool ) exception("get_bool() called on a property that is not a bool"); return *(bool*)get_addr();};
 	inline double get_double(void) { errno=0; switch(pstruct.prop->ptype) { case PT_double: case PT_random: case PT_enduse: case PT_loadshape: return has_part() ? get_part() : *(double*)get_addr(); default: errno=EINVAL; return NaN;} };
 	inline double get_double(UNIT*to) { double rv = get_double(); return get_unit()->convert(to,rv) ? rv : QNAN; };
 	inline double get_double(gld_unit&to) { double rv = get_double(); return get_unit()->convert(to,rv) ? rv : QNAN; };
 	inline double get_double(char*to) { double rv = get_double(); return get_unit()->convert(to,rv) ? rv : QNAN; };
 	inline complex get_complex(void) { errno=0; if ( pstruct.prop->ptype==PT_complex ) return *(complex*)get_addr(); else return complex(QNAN,QNAN); };
 	inline int64 get_integer(void) { errno=0; switch(pstruct.prop->ptype) { case PT_int16: return (int64)*(int16*)get_addr(); case PT_int32: return (int64)*(int32*)get_addr(); case PT_int64: return *(int64*)get_addr(); default: errno=EINVAL; return 0;} };
-	inline TIMESTAMP get_timestamp(void) { if (pstruct.prop->ptype == PT_timestamp) return *(TIMESTAMP*)get_addr(); exception("get_timestamp() called on a property that is not a timestamp"); };
-	inline enumeration get_enumeration(void) { if ( pstruct.prop->ptype == PT_enumeration ) return *(enumeration*)get_addr(); exception("get_enumeration() called on a property that is not an enumeration"); };
-	inline set get_set(void) { if ( pstruct.prop->ptype == PT_set ) return *(set*)get_addr(); exception("get_set() called on a property that is not a set"); };
+//	inline TIMESTAMP get_timestamp(void) { if (pstruct.prop->ptype == PT_timestamp) return *(TIMESTAMP*)get_addr(); exception("get_timestamp() called on a property that is not a timestamp"); };
+	inline TIMESTAMP get_timestamp(void) { if (pstruct.prop->ptype != PT_timestamp) exception("get_timestamp() called on a property that is not a timestamp");return *(TIMESTAMP*) get_addr();};
+//	inline enumeration get_enumeration(void) { if ( pstruct.prop->ptype == PT_enumeration ) return *(enumeration*)get_addr(); exception("get_enumeration() called on a property that is not an enumeration"); };
+	inline enumeration get_enumeration(void) { if ( pstruct.prop->ptype != PT_enumeration ) exception("get_enumeration() called on a property that is not an enumeration"); return *(enumeration*)get_addr(); };
+//	inline set get_set(void) { if ( pstruct.prop->ptype == PT_set ) return *(set*)get_addr(); exception("get_set() called on a property that is not a set"); };
+	inline set get_set(void) { if ( pstruct.prop->ptype != PT_set ) exception("get_set() called on a property that is not a set"); return *(set*)get_addr(); };
 	inline gld_object* get_objectref(void) { if ( is_objectref() ) return ::get_object(*(OBJECT**)get_addr()); else return NULL; };
 	template <class T> inline void getp(T &value) { ::rlock(&obj->lock); value = *(T*)get_addr(); ::runlock(&obj->lock); };
 	template <class T> inline void setp(T &value) { ::wlock(&obj->lock); *(T*)get_addr()=value; ::wunlock(&obj->lock); };
@@ -2323,20 +2337,22 @@ public:
 
 #ifdef DLMAIN
 EXPORT int do_kill(void*);
-#ifdef WIN32
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 EXPORT int gld_major=MAJOR, gld_minor=MINOR; 
 BOOL APIENTRY DllMain(HANDLE h, DWORD r) { if (r==DLL_PROCESS_DETACH) do_kill(h); return TRUE; }
 #else // !WIN32
-CDECL int gld_major=MAJOR, gld_minor=MINOR; 
+CDECL int gld_major, gld_minor; 
+int gld_major=MAJOR;
+int gld_minor=MINOR;
 CDECL int dllinit() __attribute__((constructor));
 CDECL int dllkill() __attribute__((destructor));
 CDECL int dllinit() { return 0; }
-CDECL int dllkill() { do_kill(NULL); }
+CDECL int dllkill() { return do_kill(NULL); }
 #endif // !WIN32
 #elif defined CONSOLE
-#ifdef WIN32
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
@@ -2424,6 +2440,15 @@ CDECL int dllkill() { do_kill(NULL); }
 	} else return 0; } \
 	T_CATCHALL(X,loadmethod); }
 #define EXPORT_LOADMETHOD(X,N) EXPORT_LOADMETHOD_C(X,X,N)
+
+
+#define DECL_METHOD(X,N) EXPORT int method_##X##_##N(OBJECT *obj, char *value, size_t size)
+#define EXPORT_METHOD_C(X,C,N) DECL_METHOD(X,N) \
+		{	C *my = OBJECTDATA(obj,C); try { if ( obj!=NULL ) { \
+			return my->N(value,size); \
+			} else return 0; } \
+			T_CATCHALL(X,method); }
+		#define EXPORT_METHOD(X,N) EXPORT_METHOD_C(X,X,N)
 
 #endif
 

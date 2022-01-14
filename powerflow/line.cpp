@@ -79,6 +79,8 @@ line::line(MODULE *mod) : link_object(mod) {
 			GL_THROW("Unable to publish line external power calculation function");
 		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
 			GL_THROW("Unable to publish line external power limit calculation function");
+		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==NULL)
+			GL_THROW("Unable to publish line external current calculation function");
 	}
 }
 
@@ -97,8 +99,13 @@ int line::init(OBJECT *parent)
 	OBJECT *obj = OBJECTHDR(this);
 	gld_property *fNode_nominal, *tNode_nominal;
 	double f_nominal_voltage, t_nominal_voltage;
+	complex Zabc_mat_temp[3][3], Yabc_mat_temp[3][3];
 
 	int result = link_object::init(parent);
+
+	//Check for deferred
+	if (result == 2)
+		return 2;	//Return the deferment - no sense doing everything else!
 
 	//Map the nodes nominal_voltage values
 	fNode_nominal = new gld_property(from,"nominal_voltage");
@@ -127,12 +134,41 @@ int line::init(OBJECT *parent)
 	f_nominal_voltage = fNode_nominal->get_double();
 	t_nominal_voltage = tNode_nominal->get_double();
 
+	//Remove the property pointers, since they are no longer needed
+	delete fNode_nominal;
+	delete tNode_nominal;
+
 	/* check for node nominal voltage mismatch */
 	if (fabs(f_nominal_voltage - t_nominal_voltage) > (0.001*f_nominal_voltage))
 		throw "from and to node nominal voltage mismatch of greater than 0.1%%";
 
 	if (solver_method == SM_NR && length == 0.0)
 		throw "Newton-Raphson method does not support zero length lines at this time";
+	
+	//Now see if we are truly "just a line" (not overhead or anything) - if so, do a recalc for us
+	if (strcmp(obj->oclass->name,"line")==0)
+	{
+		gl_warning("line:%d - %s - use of an overhead_line, underground_line, or other line-based subclass is highly recommended!",obj->id,(obj->name?obj->name:"Unnamed"));
+		/*  TROUBLESHOOT
+		Users are encouraged to use one of the specific sub-classes of line objects, not line itself.  Functionality with line objects is limited and mostly handled
+		by their appropriate subclasses (e.g., overhead_line, underground_line, triplex_line).
+		*/
+
+		//Make sure a configuration was actually specified
+		if ((configuration == NULL) || (!gl_object_isa(configuration,"line_configuration","powerflow")))
+		{
+			GL_THROW("line:%d - %s - configuration object either doesn't exist, or is not a valid configuration object!",obj->id,(obj->name?obj->name:"Unnamed"));
+			/*  TROUBLESHOOT
+			The configuration field for the line object is either empty, or does not contain a line_configuration object.  Please fix this and try again.
+			*/
+		}
+
+		//Perform the calculation assuming we're matrix-based (because we basically have to be)
+		load_matrix_based_configuration(Zabc_mat_temp, Yabc_mat_temp);
+
+		//Now push it
+		recalc_line_matricies(Zabc_mat_temp, Yabc_mat_temp);
+	}
 
 	return result;
 }
@@ -223,11 +259,26 @@ void line::recalc_line_matricies(complex Zabc_mat[3][3], complex Yabc_mat[3][3])
 {
 	complex U_mat[3][3], temp_mat[3][3];
 
-	// Setup unity matrix
-	U_mat[0][0] = U_mat[1][1] = U_mat[2][2] = 1.0;
-	U_mat[0][1] = U_mat[0][2] = 0.0;
-	U_mat[1][0] = U_mat[1][2] = 0.0;
-	U_mat[2][0] = U_mat[2][1] = 0.0;
+	//Do an initial zero
+	U_mat[0][0] = U_mat[0][1] = U_mat[0][2] = 0.0;
+	U_mat[1][0] = U_mat[1][1] = U_mat[1][2] = 0.0;
+	U_mat[2][0] = U_mat[2][1] = U_mat[2][2] = 0.0;
+
+	// Setup unity matrix - by phase
+	if (has_phase(PHASE_A))
+	{
+		U_mat[0][0] = 1.0;
+	}
+
+	if (has_phase(PHASE_B))
+	{
+		U_mat[1][1] = 1.0;
+	}
+
+	if (has_phase(PHASE_C))
+	{
+		U_mat[2][2] = 1.0;
+	}
 
 	//b_mat = Zabc_mat as per Kersting (6.10)
 		equalm(Zabc_mat,b_mat);

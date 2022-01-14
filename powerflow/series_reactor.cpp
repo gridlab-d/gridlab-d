@@ -60,6 +60,8 @@ series_reactor::series_reactor(MODULE *mod) : link_object(mod)
 			GL_THROW("Unable to publish series reactor external power calculation function");
 		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
 			GL_THROW("Unable to publish series reactor external power limit calculation function");
+		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==NULL)
+			GL_THROW("Unable to publish series reactor external current calculation function");
     }
 }
 
@@ -79,6 +81,10 @@ int series_reactor::create()
 int series_reactor::init(OBJECT *parent)
 {
 	int result = link_object::init(parent);
+
+	//Check for deferred
+	if (result == 2)
+		return 2;	//Return the deferment - no sense doing everything else!
 
 	a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = (has_phase(PHASE_A)) ? 1.0 : 0.0;
 	a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = (has_phase(PHASE_B)) ? 1.0 : 0.0;

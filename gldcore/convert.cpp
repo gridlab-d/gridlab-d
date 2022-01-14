@@ -111,18 +111,31 @@ int convert_to_double(const char *buffer, /**< a pointer to the string buffer */
 					  PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
 	char unit[256];
-	int n = sscanf(buffer,"%lg%s",data,unit);
-	if ( n>1 && prop->unit!=NULL ) /* unit given and unit allowed */
+	int n = sscanf(buffer,"%lg%s",(double *)data,unit);
+	if (n>1) /* something else given */
 	{
-		UNIT *from = unit_find(unit);
-		if ( from != prop->unit && unit_convert_ex(from,prop->unit,(double*)data)==0)
+		if (prop->unit!=NULL)	/* Unit allowed - see if it is a valid unit */
 		{
-			output_error("convert_to_double(const char *buffer='%s', void *data=0x%*p, PROPERTY *prop={name='%s',...}): unit conversion failed", buffer, sizeof(void*), data, prop->name);
+			UNIT *from = unit_find(unit);
+			if ( from != prop->unit && unit_convert_ex(from,prop->unit,(double*)data)==0)
+			{
+				output_error("convert_to_double(const char *buffer='%s', void *data=0x%*p, PROPERTY *prop={name='%s',...}): unit conversion failed", buffer, sizeof(void*), data, prop->name);
+				/* TROUBLESHOOT 
+				This error is caused by an attempt to convert a value from a unit that is
+				incompatible with the unit of the target property.  Check your units and
+				try again.
+				*/
+				return 0;
+			}
+		}
+		else	//Unit not specified, give a more general error
+		{
+			output_error("convert_to_double(const char *buffer='%s', void *data=0x%*p, PROPERTY *prop={name='%s',...}): conversion failed", buffer, sizeof(void*), data, prop->name);
 			/* TROUBLESHOOT 
-			   This error is caused by an attempt to convert a value from a unit that is
-			   incompatible with the unit of the target property.  Check your units and
-			   try again.
-		     */
+			This error is caused by either an invalid entry in the conversion (extra decimal points), or
+			with a unit specified where no unit was on the original property.  Check your source data (GLM entry
+			or player file) and	try again.
+			*/
 			return 0;
 		}
 	}
@@ -142,6 +155,7 @@ int convert_from_complex(char *buffer, /**< pointer to the string buffer */
 	int count = 0;
 	char temp[1025];
 	complex *v = (complex*)data;
+	CNOTATION cplex_output_type = J;
 
 	double scale = 1.0;
 	if ( prop->unit!=NULL )
@@ -163,14 +177,33 @@ int convert_from_complex(char *buffer, /**< pointer to the string buffer */
 		}
 	}
 
-	if (v->Notation()==A)
+	/* Check the format or global override */
+	if (global_complex_output_format == CNF_RECT)
+	{
+		cplex_output_type = J;
+	}
+	else if (global_complex_output_format == CNF_POLAR_DEG)
+	{
+		cplex_output_type = A;
+	}
+	else if (global_complex_output_format == CNF_POLAR_RAD)
+	{
+		cplex_output_type = R;
+	}
+	else	/* Must be default - see what the property wants */
+	{
+		cplex_output_type = v->Notation();
+	}
+	
+	/* Now output appropriately */
+	if (cplex_output_type==A)
 	{
 		double m = v->Mag()*scale;
 		double a = v->Arg();
 		if (a>PI) a-=(2*PI);
 		count = sprintf(temp,global_complex_format,m,a*180/PI,A);
 	} 
-	else if (v->Notation()==R)
+	else if (cplex_output_type==R)
 	{
 		double m = v->Mag()*scale;
 		double a = v->Arg();
@@ -178,7 +211,7 @@ int convert_from_complex(char *buffer, /**< pointer to the string buffer */
 		count = sprintf(temp,global_complex_format,m,a,R);
 	} 
 	else {
-		count = sprintf(temp,global_complex_format,v->Re()*scale,v->Im()*scale,v->Notation()?v->Notation():'i');
+		count = sprintf(temp,global_complex_format,v->Re()*scale,v->Im()*scale,cplex_output_type?cplex_output_type:'i');
 	}
 	if(count < size - 1){
 		memcpy(buffer, temp, count);
@@ -496,7 +529,7 @@ int convert_to_int16(const char *buffer, /**< a pointer to the string buffer */
 					    void *data, /**< a pointer to the data */
 					    PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
-	return sscanf(buffer,"%hd",data);
+	return sscanf(buffer,"%hd",(short*)data);
 }
 
 /** Convert from an \e int32
@@ -509,7 +542,7 @@ int convert_from_int32(char *buffer, /**< pointer to the string buffer */
 					    PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
 	char temp[1025];
-	int count = sprintf(temp,"%ld",*(int*)data);
+	int count = sprintf(temp,"%d",*(int*)data);
 	if(count < size - 1){
 		memcpy(buffer, temp, count);
 		buffer[count] = 0;
@@ -518,7 +551,7 @@ int convert_from_int32(char *buffer, /**< pointer to the string buffer */
 		return 0;
 	}
 }
-#ifdef WIN32
+#ifdef _WIN32
 #define SCNd32 "d"
 #endif
 /** Convert to an \e int32
@@ -529,7 +562,7 @@ int convert_to_int32(const char *buffer, /**< a pointer to the string buffer */
 					    void *data, /**< a pointer to the data */
 					    PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
-	return sscanf(buffer,"%" SCNd32,data);
+	return sscanf(buffer,"%d",(int*)data);
 }
 
 /** Convert from an \e int64
@@ -560,7 +593,7 @@ int convert_to_int64(const char *buffer, /**< a pointer to the string buffer */
 					    void *data, /**< a pointer to the data */
 					    PROPERTY *prop) /**< a pointer to keywords that are supported */
 {
-	return sscanf(buffer,"%" FMT_INT64 "d",data);
+	return sscanf(buffer,"%" FMT_INT64 "d",(int64*)data);
 }
 
 /** Convert from a \e char8
@@ -600,9 +633,9 @@ int convert_to_char8(const char *buffer, /**< a pointer to the string buffer */
 	case '\0':
 		return ((char*)data)[0]='\0', 1;
 	case '"':
-		return sscanf(buffer+1,"%8[^\"]",data);
+		return sscanf(buffer+1,"%8[^\"]",(char*)data);
 	default:
-		return sscanf(buffer,"%8s",data);
+		return sscanf(buffer,"%8s",(char*)data);
 	}
 }
 
@@ -643,9 +676,9 @@ int convert_to_char32(const char *buffer, /**< a pointer to the string buffer */
 	case '\0':
 		return ((char*)data)[0]='\0', 1;
 	case '"':
-		return sscanf(buffer+1,"%32[^\"]",data);
+		return sscanf(buffer+1,"%32[^\"]",(char*)data);
 	default:
-		return sscanf(buffer,"%32s",data);
+		return sscanf(buffer,"%32s",(char*)data);
 	}
 }
 
@@ -686,10 +719,10 @@ int convert_to_char256(const char *buffer, /**< a pointer to the string buffer *
 	case '\0':
 		return ((char*)data)[0]='\0', 1;
 	case '"':
-		return sscanf(buffer+1,"%256[^\"]",data);
+		return sscanf(buffer+1,"%256[^\"]",(char*)data);
 	default:
 		//return sscanf(buffer,"%256s",data);
-		return sscanf(buffer,"%256[^\n\r;]",data);
+		return sscanf(buffer,"%256[^\n\r;]",(char*)data);
 	}
 }
 
@@ -730,9 +763,9 @@ int convert_to_char1024(const char *buffer, /**< a pointer to the string buffer 
 	case '\0':
 		return ((char*)data)[0]='\0', 1;
 	case '"':
-		return sscanf(buffer+1,"%1024[^\"]",data);
+		return sscanf(buffer+1,"%1024[^\"]",(char*)data);
 	default:
-		return sscanf(buffer,"%1024[^\n]",data);
+		return sscanf(buffer,"%1024[^\n]",(char*)data);
 	}
 }
 
@@ -1252,6 +1285,29 @@ int convert_from_struct(char *buffer, size_t len, void *data, PROPERTY *prop)
 		if ( prop==NULL ) return -len;
 	}
 	return -len;
+}
+
+int convert_from_method (	char *buffer, /**< a pointer to the string buffer */
+							int size, /**< the size of the string buffer */
+							void *data, /**< a pointer to the data that is not changed */
+							PROPERTY *prop) /**< a pointer to keywords that are supported */
+{
+	if ( buffer==NULL ) { output_error("gldcore/convert_from_method(): buffer is null"); return -1; }
+	if ( data==NULL ) { output_error("gldcore/convert_from_method(): data is null"); return -1; }
+	if ( prop==NULL ) { output_error("gldcore/convert_from_method(): prop is null"); return -1; }
+	if ( prop->method==NULL ) { output_error("gldcore/convert_from_method(prop='%s'): method is null", prop->name ? prop->name : "(anon)"); return -1; }
+	return (prop->method)((OBJECT*)data,buffer,size);
+}
+int convert_to_method (	const char *buffer, /**< a pointer to the string buffer that is ignored */
+						void *data, /**< a pointer to the data that is not changed */
+						PROPERTY *prop) /**< a pointer to keywords that are supported */
+{
+	if ( buffer==NULL ) { output_error("gldcore/convert_to_method(): buffer is null"); return -1; }
+	if ( data==NULL ) { output_error("gldcore/convert_to_method(): data is null"); return -1; }
+	if ( prop==NULL ) { output_error("gldcore/convert_to_method(): prop is null"); return -1; }
+	if ( prop->method==NULL ) { output_error("gldcore/convert_to_method(prop='%s'): method is null", prop->name ? prop->name : "(anon)"); return -1; }
+	void *ptr = (void*)buffer; // force to non-const (trust me)
+	return (prop->method)((OBJECT*)data,(char*)ptr,0);
 }
 
 /**@}**/

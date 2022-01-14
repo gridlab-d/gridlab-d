@@ -46,9 +46,52 @@ STATUS delta_init(void)
 	OBJECT ***ranklist;
 	int *rankcount;
 	MODULE *module;
+	typedef struct {
+		MODULE *tape_mod;
+		MODULE *connection_mod;
+		MODULE *reliability_mod;
+		MODULE *powerflow_mod;
+	} MODFOUNDSTRUCT;
+	MODFOUNDSTRUCT modules_found;
+	bool *ordered_module;
 	clock_t t = clock();
+	size_t mod_count = module_getcount(); 
 
-	/* count qualified modules */
+	/* Ordered module initialization - just because */
+	modules_found.tape_mod = NULL;
+	modules_found.connection_mod = NULL;
+	modules_found.reliability_mod = NULL;
+	modules_found.powerflow_mod = NULL;
+	ordered_module = NULL;
+
+	/* Preallocate the tracking array, if in the "preferred sort" mode */
+	if (global_deltamode_force_preferred_order == true)
+	{
+		ordered_module = (bool *)malloc(mod_count*sizeof(bool));
+
+		// Make sure it worked
+		if (ordered_module == NULL)
+		{
+			output_error("deltamode: unable to allocate memory for module order tracking");
+			/*  TROUBLESHOOT
+			While attempting to allocate memory for a deltamode tracking array, an error occurred.
+			Please try again.  If the error persists, please submit an issue via the ticketing system.
+			*/
+			return FAILED;
+		}
+
+		//Ensure it is false, for giggles
+		for (n=0; n<mod_count; n++)
+		{
+			ordered_module[n] = false;
+		}
+	}
+	//Default else - array not needed
+
+	//Reset loop counter - for next item
+	n = 0;
+
+	/* count qualified modules - populate "special" ones, if necessary */
 	for ( module=module_get_first() ; module!=NULL ; module=module_get_next(module) )
 	{
 		if ( 0 != module->deltadesired ){
@@ -57,11 +100,60 @@ STATUS delta_init(void)
 			if (profile.module_list[0]!=0)
 				strcat(profile.module_list,",");
 			strcat(profile.module_list,module->name);
+
+			//See if we are trying to do the "managed order"
+			if (global_deltamode_force_preferred_order == true)
+			{
+				if (strcmp(module->name,"tape") == 0)
+				{
+					//Store
+					modules_found.tape_mod = module;
+
+					//Flag
+					ordered_module[n] = true;
+				}
+				else if (strcmp(module->name,"connection") == 0)
+				{
+					//Store
+					modules_found.connection_mod = module;
+
+					//Flag
+					ordered_module[n] = true;
+				}
+				else if (strcmp(module->name,"reliability") == 0)
+				{
+					//Store
+					modules_found.reliability_mod = module;
+
+					//Flag
+					ordered_module[n] = true;
+				}
+				else if (strcmp(module->name,"powerflow") == 0)
+				{
+					//Store
+					modules_found.powerflow_mod = module;
+
+					//Flag
+					ordered_module[n] = true;
+				}
+				//Default else - other module, don't care - already set false in tracker
+			}
+			//Default else - no, just leave as is
 		}
+		//Default else - no deltamode update function
+
+		//Increment the counter - regardless of if used or not
+		n++;
 	}
 
 	/* if none, stop here */
 	if ( delta_modulecount==0 ){
+		//De-allocate the tracking array, if it was used
+		if (ordered_module != NULL)
+		{
+			free(ordered_module);
+		}
+
 		goto Success;
 	}
 
@@ -78,8 +170,75 @@ STATUS delta_init(void)
 	/* build qualified module list */
 	delta_modulecount = 0;
 	global_deltamode_updateorder[0]='\0';
+
+	/* See if we want "ordered mode" first */
+	if (global_deltamode_force_preferred_order == true)
+	{
+		//Check the individual ones - tape
+		if (modules_found.tape_mod != NULL)
+		{
+			//Assumes it is first - put in the string
+			strcat(global_deltamode_updateorder,modules_found.tape_mod->name);
+
+			//Add to the pointer list
+			delta_modulelist[delta_modulecount++] = modules_found.tape_mod;
+		}
+
+		//Connection
+		if (modules_found.connection_mod != NULL)
+		{
+			//Add to the string list
+			if ( delta_modulecount>0 )
+				strcat(global_deltamode_updateorder,",");
+			strcat(global_deltamode_updateorder,modules_found.connection_mod->name);
+
+			//Add to the main list
+			delta_modulelist[delta_modulecount++] = modules_found.connection_mod;
+		}
+
+		//Reliability
+		if (modules_found.reliability_mod != NULL)
+		{
+			//Add to the string list
+			if ( delta_modulecount>0 )
+				strcat(global_deltamode_updateorder,",");
+			strcat(global_deltamode_updateorder,modules_found.reliability_mod->name);
+
+			//Add to the main list
+			delta_modulelist[delta_modulecount++] = modules_found.reliability_mod;
+		}
+
+		//Powerflow
+		if (modules_found.powerflow_mod != NULL)
+		{
+			//Add to the string list
+			if ( delta_modulecount>0 )
+				strcat(global_deltamode_updateorder,",");
+			strcat(global_deltamode_updateorder,modules_found.powerflow_mod->name);
+
+			//Add to the main list
+			delta_modulelist[delta_modulecount++] = modules_found.powerflow_mod;
+		}
+	}
+	//Default else - just do normal routine
+
+	//Reset loop varaible, again
+	n=0;
+
+	//Loop through the modules and populate them
 	for ( module=module_get_first() ; module!=NULL ; module=module_get_next(module) )
 	{
+		//See which mode we're in
+		if (global_deltamode_force_preferred_order == true)
+		{
+			if (ordered_module[n++] == true)
+			{
+				continue;	//Already handled - onward
+			}
+			//Not handled yet, proceed with normal/unsorted routine
+		}
+
+		//Standard/unhandled module population
 		if ( 0 != module->deltadesired )
 		{
 			if ( delta_modulecount>0 )
@@ -87,6 +246,12 @@ STATUS delta_init(void)
 			strcat(global_deltamode_updateorder,module->name);
 			delta_modulelist[delta_modulecount++] = module;
 		}
+	}
+
+	//Free up the malloced array, if done (since not needed anymore)
+	if (ordered_module != NULL)
+	{
+		free(ordered_module);
 	}
 
 	/* count qualified objects */
@@ -276,7 +441,10 @@ DT delta_update(void)
 	/* Initialize the forced "post-update" timestep variable */
 	delta_forced_iteration = global_deltamode_forced_extra_timesteps;
 
-	/* process updates until mode is switched or 1 hour elapses */
+	/* Initialize the timestep check from the global */
+	global_deltamode_maximumtime = (DELTAT)(global_deltamode_maximumtime_pub + 0.5);
+
+	/* process updates until mode is switched or time limit elapses */
 	for ( global_deltaclock=0; global_deltaclock<global_deltamode_maximumtime; global_deltaclock+=timestep )
 	{
 		/* Check to make sure we haven't reached a stop time */
@@ -295,6 +463,10 @@ DT delta_update(void)
 
 		/* main object update loop */
 		realtime_run_schedule();
+
+		/* time context - so messages look proper */
+		output_set_delta_time_context(global_clock,global_deltaclock);
+
 		/* Federation reiteration loop */
 		while (delta_federation_iteration_remaining > 0)
 		{
@@ -526,8 +698,28 @@ DT delta_update(void)
 static DT delta_preupdate(void)
 {
 	clock_t t = clock();
-	DT timestep = global_deltamode_timestep;
+	DT timestep;
 	MODULE **module;
+
+	/* Convert the published global into the integer version */
+	global_deltamode_timestep = (DT)(global_deltamode_timestep_pub + 0.5);
+
+	/* Store it for this check */
+	timestep = global_deltamode_timestep;
+
+	/* Check it and make sure it isn't invalid - only zero is invalid */
+	/* Unsigned, so a negative number will just roll over */
+	/* Would theoretically get caught by the overall zero check, but not really indicate why */
+	if (timestep == 0)
+	{
+		output_error("delta_preupdate(): global deltamode_timestep is zero!");
+		/*  TROUBLESHOOT
+		The value for the global deltamode_timestep returned as zero.  It needs to be a positive number, with 1 ns
+		being the smallest timestep.  If it was specified below 1 ns, try again with a larger timestep.
+		*/
+		return 0;
+	}
+
 	for ( module=delta_modulelist; module<delta_modulelist+delta_modulecount; module++ )
 	{
 		DT dt = (*module)->preupdate(*module,global_clock,global_deltaclock);
@@ -616,8 +808,10 @@ static SIMULATIONMODE delta_clockupdate(DT timestep, SIMULATIONMODE interupdate_
 	} else if(interupdate_result == SM_EVENT) {
 		rv = SM_EVENT;
 		// we are exiting deltamode so we need to determine the timestep to the next whole second.
+		DT nextTimeNano = (DT)(ceil(global_delta_curr_clock)*((double)DT_SECOND));
+		DT currTimeNano = (DT)(global_delta_curr_clock*((double)DT_SECOND));
 		nextTime = ceil(global_delta_curr_clock);
-		exitDeltaTimestep = (DT)((nextTime - global_delta_curr_clock)*DT_SECOND);
+		exitDeltaTimestep = nextTimeNano - currTimeNano;
 		for(module=delta_modulelist; module < (delta_modulelist + delta_modulecount); module++)
 		{
 			if((*module)->deltaClockUpdate != NULL)

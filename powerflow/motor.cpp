@@ -77,6 +77,11 @@ motor::motor(MODULE *mod):node(mod)
 			//Reconcile torque and speed, primarily
 			PT_double, "mechanical_torque[pu]", PADDR(Tmech),PT_DESCRIPTION,"mechanical torque applied to the motor",
 			PT_double, "mechanical_torque_state_var[pu]", PADDR(Tmech_eff),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"Internal state variable torque - three-phase model",
+
+			PT_enumeration, "torque_usage_method", PADDR(motor_torque_usage_method), PT_DESCRIPTION, "Approach for using Tmech on both types",
+				PT_KEYWORD, "DIRECT", (enumeration)modelDirectTorque,
+				PT_KEYWORD, "SPEEDFOUR", (enumeration)modelSpeedFour,	//Fixed at 0.85 + 0.15*speed^4
+
 			PT_int32, "iteration_count", PADDR(iteration_count),PT_DESCRIPTION,"maximum number of iterations for steady state model",
 			PT_double, "delta_mode_voltage_trigger[%]", PADDR(DM_volt_trig_per),PT_DESCRIPTION,"percentage voltage of nominal when delta mode is triggered",
 			PT_double, "delta_mode_rotor_speed_trigger[%]", PADDR(DM_speed_trig_per),PT_DESCRIPTION,"percentage speed of nominal when delta mode is triggered",
@@ -93,6 +98,14 @@ motor::motor(MODULE *mod):node(mod)
 			PT_enumeration,"desired_motor_state",PADDR(motor_override),PT_DESCRIPTION,"Should the motor be on or off",
 				PT_KEYWORD,"ON",(enumeration)overrideON,
 				PT_KEYWORD,"OFF",(enumeration)overrideOFF,
+
+			PT_object,"connected_house",PADDR(mtr_house_pointer),PT_DESCRIPTION,"house object to monitor the XXX property to determine if the motor is running",
+
+			PT_enumeration,"connected_house_assumed_mode", PADDR(connected_house_assumed_mode), PT_DESCRIPTION, "Assumed operation mode of connected_house object",
+				PT_KEYWORD,"NONE",(enumeration)house_mode_NONE,
+				PT_KEYWORD,"COOLING",(enumeration)house_mode_COOLING,
+				PT_KEYWORD,"HEATING",(enumeration)house_mode_HEATING,
+
 			PT_enumeration,"motor_operation_type",PADDR(motor_op_mode),PT_DESCRIPTION,"current operation type of the motor - deltamode related",
 				PT_KEYWORD,"SINGLE-PHASE",(enumeration)modeSPIM,
 				PT_KEYWORD,"THREE-PHASE",(enumeration)modeTPIM,
@@ -151,6 +164,8 @@ motor::motor(MODULE *mod):node(mod)
 			GL_THROW("Unable to publish motor swing-swapping function");
 		if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
 			GL_THROW("Unable to publish motor VFD attachment function");
+		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
+			GL_THROW("Unable to publish motor swing-status check function");
     }
 }
 
@@ -226,6 +241,13 @@ int motor::create()
     //Mode initialization
     motor_op_mode = modeSPIM; // share the variable with TPIM
 
+	//House connection capability
+	mtr_house_pointer = NULL;
+	mtr_house_state_pointer = NULL;
+
+	//Set to none initially - if this isn't set, this will just get ignored
+	connected_house_assumed_mode = house_mode_NONE;
+
     //Three-phase induction motor parameters, 500 HP, 2.3kV
     pf = 4;
     Rs= 0.262;
@@ -262,14 +284,36 @@ int motor::create()
 	triplex_connected = false;	//By default, not connected to triplex
 	triplex_connection_type = TPNconnected12;	//If it does end up being triplex, we default it to L1-L2
 
+	//Torque model element - by default, just pull in value from property
+	motor_torque_usage_method = modelDirectTorque;
+
 	return result;
 }
 
 int motor::init(OBJECT *parent)
 {
-
 	OBJECT *obj = OBJECTHDR(this);
-	int result = node::init(parent);
+	int result;
+	bool temp_house_motor_state;
+	double temp_house_capacity_info, temp_house_cop;
+	enumeration temp_house_type;
+	gld_property *temp_gld_property;
+	gld_wlock *test_rlock;
+
+	//See if we have a house connection defined -- if so, do this after that initializes (to get data)
+	if (mtr_house_pointer != NULL)
+	{
+		//Check it's status
+		if ((mtr_house_pointer->flags & OF_INIT) != OF_INIT)
+		{
+			char objname[256];
+			gl_verbose("motor:%d - %s ::init(): deferring initialization on %s", obj->id,(obj->name ? obj->name : "Unnamed"),gl_name(mtr_house_pointer, objname, 255));
+			return 2; // defer
+		}
+	}
+
+	//Now run node init, as necessary
+	result = node::init(parent);
 
 	// Check what phases are connected on this motor
 	int num_phases = 0;
@@ -299,17 +343,261 @@ int motor::init(OBJECT *parent)
 		*/
 	}
 
+	// determine the specific phase this motor is connected to
+	if (motor_op_mode == modeSPIM)
+	{
+		if (has_phase(PHASE_S))
+		{
+			connected_phase = -1;		//Arbitrary
+			triplex_connected = true;	//Flag us as triplex
+		}
+		else	//Three-phase
+		{
+			//Affirm the triplex flag is not set
+			triplex_connected = false;
+
+			if (has_phase(PHASE_A)) {
+				connected_phase = 0;
+			}
+			else if (has_phase(PHASE_B)) {
+				connected_phase = 1;
+			}
+			else {	//Phase C, by default
+				connected_phase = 2;
+			}
+		}
+	}
+	//Default else -- three-phase diagnostics (none needed right now)
+
+	//Map the connected house
+	if (mtr_house_pointer != NULL)
+	{
+		//Make sure it is a house first, just for giggles
+		if (gl_object_isa(mtr_house_pointer,"house","residential") != true)
+		{
+			GL_THROW("motor:%s -- connected_house must point toward a residential:house object",(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			The motor connected_house field only supports connections to a residential:house object at this time.
+			*/
+		}
+
+		//Make sure our mode is SPIM and triplexy - if not, failure
+		if (triplex_connected != true)
+		{
+			GL_THROW("motor:%s -- When using the house-connected mode, the motor must be a triplex device",(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			In the house-tied mode, the motor must be a triplex-connected motor.  Ideally, it should be connected to the same triplex device
+			as the house.  Three-phase implementations may be supported at a future date.
+			*/
+		}
+
+		//See if a mode is assumed - if not, throw an error, "just because"
+		if (connected_house_assumed_mode == house_mode_NONE)
+		{
+			GL_THROW("motor:%s -- When using the house-connected mode, an expected type of operation must be specified",(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			If using the motor in a "house_connected" mode, an assumption on if it is running as a heating or cooling motor must be assumed.  This 
+			is used to extract the motor size from the house.  If left to "NONE", this error will persist.
+			*/
+		}
+
+		//Implies it is set, determine which one we are and pull the appropriate properties
+		if (connected_house_assumed_mode == house_mode_COOLING)
+		{
+			//Make sure it is a compatible type!
+			temp_gld_property = new gld_property(mtr_house_pointer,"cooling_system_type");
+
+			//Make sure it worked
+			if ((temp_gld_property->is_valid() != true) || (temp_gld_property->is_enumeration() != true))
+			{
+				GL_THROW("motor:%s -- Unable to map house property",(obj->name ? obj->name : "Unnamed"));
+				//Defined below
+			}
+
+			//Pull the value
+			temp_gld_property->getp<enumeration>(temp_house_type,*test_rlock);
+
+			//Delete the connection
+			delete temp_gld_property;
+
+			//Check to see if it is valid
+			if ((temp_house_type != 2) && (temp_house_type != 3))	//Not a normal AC or heat pump
+			{
+				GL_THROW("motor:%s - Mapped house does not support the type of heating/cooling mode expected!",(obj->name ? obj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to map the motor to a house object, the house does not have the appropriate heating or cooling system
+				to connect the motor.  If assuming COOLING, the house cooling_system_type must be ELECTRIC or HEAT_PUMP.  If assuming
+				HEATING, the house heating_system_type must be HEAT_PUMP.  Select the appropriate mode and try again.
+				*/
+			}
+
+			//Map to design cooling capacity
+			temp_gld_property = new gld_property(mtr_house_pointer,"design_cooling_capacity");
+
+			//Make sure it worked
+			if ((temp_gld_property->is_valid() != true) || (temp_gld_property->is_double() != true))
+			{
+				GL_THROW("motor:%s -- Unable to map house property",(obj->name ? obj->name : "Unnamed"));
+				//Defined below
+			}
+
+			//Pull the value
+			temp_house_capacity_info = temp_gld_property->get_double();
+
+			//Clear the mapping
+			delete temp_gld_property;
+
+			//Map to the cooling COP
+			temp_gld_property = new gld_property(mtr_house_pointer,"cooling_COP");
+
+			//Make sure it worked
+			if ((temp_gld_property->is_valid() != true) || (temp_gld_property->is_double() != true))
+			{
+				GL_THROW("motor:%s -- Unable to map house property",(obj->name ? obj->name : "Unnamed"));
+				//Defined below
+			}
+
+			//Pull the value
+			temp_house_cop = temp_gld_property->get_double();
+
+			//Clear the property
+			delete temp_gld_property;
+		}
+		else if (connected_house_assumed_mode == house_mode_HEATING)
+		{
+			//Make sure it is a compatible type!
+			temp_gld_property = new gld_property(mtr_house_pointer,"heating_system_type");
+
+			//Make sure it worked
+			if ((temp_gld_property->is_valid() != true) || (temp_gld_property->is_enumeration() != true))
+			{
+				GL_THROW("motor:%s -- Unable to map house property",(obj->name ? obj->name : "Unnamed"));
+				//Defined below
+			}
+
+			//Pull the value
+			temp_gld_property->getp<enumeration>(temp_house_type,*test_rlock);
+
+			//Delete the connection
+			delete temp_gld_property;
+
+			//Check to see if it is valid
+			if (temp_house_type != 3)	//Must be a heat pump
+			{
+				GL_THROW("motor:%s - Mapped house does not support the type of heating/cooling mode expected!",(obj->name ? obj->name : "Unnamed"));
+				//Defined above
+			}
+
+			//Map to design heating capacity
+			temp_gld_property = new gld_property(mtr_house_pointer,"design_heating_capacity");
+
+			//Make sure it worked
+			if ((temp_gld_property->is_valid() != true) || (temp_gld_property->is_double() != true))
+			{
+				GL_THROW("motor:%s -- Unable to map house property",(obj->name ? obj->name : "Unnamed"));
+				//Defined below
+			}
+
+			//Pull the value
+			temp_house_capacity_info = temp_gld_property->get_double();
+
+			//Clear the mapping
+			delete temp_gld_property;
+
+			//Map to the heating COP
+			temp_gld_property = new gld_property(mtr_house_pointer,"heating_COP");
+
+			//Make sure it worked
+			if ((temp_gld_property->is_valid() != true) || (temp_gld_property->is_double() != true))
+			{
+				GL_THROW("motor:%s -- Unable to map house property",(obj->name ? obj->name : "Unnamed"));
+				//Defined below
+			}
+
+			//Pull the value
+			temp_house_cop = temp_gld_property->get_double();
+
+			//Clear the property
+			delete temp_gld_property;
+		}
+		//Default else - would be NONE, but we should never get here with that!
+
+		//Perform the conversion to get a power amount for this motor (based on house)
+		Pbase = temp_house_capacity_info / temp_house_cop / 3.4120;
+
+
+		//Set the flag on the house
+		temp_gld_property = new gld_property(mtr_house_pointer,"external_motor_attached");
+
+		//Make sure it worked
+		if ((temp_gld_property->is_valid() != true) || (temp_gld_property->is_bool() != true))
+		{
+			GL_THROW("motor:%s -- Unable to map house external motor property",(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			While attempting to map the external_motor_attached property of the house to set motor state, an error occurred.  Please try again.
+			If the error persists, please submit your code and a bug report via the issues tracker.
+			*/
+		}
+
+		//Set the flag and push it
+		temp_house_motor_state = true;
+		temp_gld_property->setp<bool>(temp_house_motor_state,*test_rlock);
+
+		//Now that it is done, kill it
+		delete temp_gld_property;
+
+		//Map up the property
+		mtr_house_state_pointer = new gld_property(mtr_house_pointer,"compressor_on");
+
+		//Make sure it worked
+		if ((mtr_house_state_pointer->is_valid() != true) || (mtr_house_state_pointer->is_bool() != true))
+		{
+			GL_THROW("motor:%s -- Unable to map house property",(obj->name ? obj->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			While attempting to map a property of the house needed to operate the motor externally, an error occurred.  Please try again.
+			If the error persists, please submit your code and a bug report via the issues tracker.
+			*/
+		}
+
+		//Check the initial state - pull the value (not sure it is actually set yet)
+		mtr_house_state_pointer->getp<bool>(temp_house_motor_state,*test_rlock);
+
+		//Determine our state
+		if (temp_house_motor_state == true)
+		{
+			motor_override = overrideON;
+		}
+		else
+		{
+			motor_override = overrideOFF;
+		}
+	}
+
 	//Check the initial torque conditions
 	if (Tmech == -1.0)
 	{
 		//See which one we are
 		if (motor_op_mode == modeSPIM)
 		{
-			Tmech = 1.0448;
+			if (motor_torque_usage_method==modelDirectTorque)
+			{
+				Tmech = 1.0448;
+			}
+			else	//Assumes the speed^4 fraction
+			{
+				Tmech = 1.0;	//Assumes starts at nominal speed
+			}
 		}
 		else	//Assume 3 phase
 		{
-			Tmech = 0.95;
+			if (motor_torque_usage_method==modelDirectTorque)
+			{
+				Tmech = 0.95;
+			}
+			else	//Assumes the speed^4 fraction
+			{
+				Tmech = 1.0;	//Assumes starts at nominal speed
+			}
 
 			//Check mode
 			if (motor_status != statusOFF)
@@ -420,33 +708,6 @@ int motor::init(OBJECT *parent)
 	llr = Xr/Zbase;  // pu
 	lm = Xm/Zbase;  // pu
 
-
-	// determine the specific phase this motor is connected to
-	if (motor_op_mode == modeSPIM)
-	{
-		if (has_phase(PHASE_S))
-		{
-			connected_phase = -1;		//Arbitrary
-			triplex_connected = true;	//Flag us as triplex
-		}
-		else	//Three-phase
-		{
-			//Affirm the triplex flag is not set
-			triplex_connected = false;
-
-			if (has_phase(PHASE_A)) {
-				connected_phase = 0;
-			}
-			else if (has_phase(PHASE_B)) {
-				connected_phase = 1;
-			}
-			else {	//Phase C, by default
-				connected_phase = 2;
-			}
-		}
-	}
-	//Default else -- three-phase diagnostics (none needed right now)
-
 	//Parameters
 	if (motor_op_mode == modeSPIM)
 	{
@@ -527,11 +788,31 @@ TIMESTAMP motor::presync(TIMESTAMP t0, TIMESTAMP t1)
 
 TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
+	bool temp_house_motor_state;
+	gld_wlock *test_rlock;
+
 	// update voltage and frequency
 	updateFreqVolt();
 
 	if (motor_op_mode == modeSPIM)
 	{
+		//See if we're in "house-check mode"
+		if (mtr_house_state_pointer != NULL)
+		{
+			//Pull the updated state
+			mtr_house_state_pointer->getp<bool>(temp_house_motor_state,*test_rlock);
+
+			//Set the motor state
+			if (temp_house_motor_state == true)
+			{
+				motor_override = overrideON;
+			}
+			else
+			{
+				motor_override = overrideOFF;
+			}
+		}//End crude house coupling check
+
 		if((double)t1 == last_cycle) { // if time did not advance, load old values
 			SPIMreinitializeVars();
 		}
@@ -706,18 +987,37 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 {
 	OBJECT *hdr = OBJECTHDR(this);
 	STATUS return_status_val;
+	bool temp_house_motor_state;
+	gld_wlock *test_rlock;
+	double deltat;
 
 	// make sure to capture the current time
 	curr_delta_time = gl_globaldeltaclock;
 
 	// I need the time delta in seconds
-	double deltaTime = (double)dt/(double)DT_SECOND;
+	deltat = (double)dt/(double)DT_SECOND;
 
-	//mostly for GFA functionality calls
-	if ((iteration_count_val==0) && (interupdate_pos == false) && (fmeas_type != FM_NONE)) 
+	//Update time tracking variable - mostly for GFA functionality calls
+	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
 	{
+		//Update tracking variable
+		prev_time_dbl = gl_globaldeltaclock;
+
 		//Update frequency calculation values (if needed)
-		memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+		if (fmeas_type != FM_NONE)
+		{
+			//See which pass
+			if (delta_time == 0)
+			{
+				//Initialize dynamics - first run of new delta call
+				init_freq_dynamics(deltat);
+			}
+			else
+			{
+				//Copy the tracker value
+				memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+			}
+		}
 	}
 
 	//In the first call we need to initilize the dynamic model
@@ -726,13 +1026,25 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 		//Call presync-equivalent items
 		NR_node_presync_fxn(0);
 
-		if (fmeas_type != FM_NONE) {
-			//Initialize dynamics
-			init_freq_dynamics();
-		}
-
 		if (motor_op_mode == modeSPIM)
 		{
+			//See if we're in "house-check mode"
+			if (mtr_house_state_pointer != NULL)
+			{
+				//Pull the updated state
+				mtr_house_state_pointer->getp<bool>(temp_house_motor_state,*test_rlock);
+
+				//Set the motor state
+				if (temp_house_motor_state == true)
+				{
+					motor_override = overrideON;
+				}
+				else
+				{
+					motor_override = overrideOFF;
+				}
+			}//End crude house coupling check
+
 			// update voltage and frequency
 			updateFreqVolt();
 
@@ -772,8 +1084,25 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 
 		if (motor_op_mode == modeSPIM)
 		{
+			//See if we're in "house-check mode"
+			if (mtr_house_state_pointer != NULL)
+			{
+				//Pull the updated state
+				mtr_house_state_pointer->getp<bool>(temp_house_motor_state,*test_rlock);
+
+				//Set the motor state
+				if (temp_house_motor_state == true)
+				{
+					motor_override = overrideON;
+				}
+				else
+				{
+					motor_override = overrideOFF;
+				}
+			}//End crude house coupling check
+
 			// if deltaTime is not small enough we will run into problems
-			if (deltaTime > 0.0003) {
+			if (deltat > 0.0003) {
 				gl_warning("Delta time for the SPIM model needs to be lower than 0.0003 seconds");
 			}
 
@@ -789,12 +1118,12 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 
 			// update protection
 			if (delta_time>0) {
-				SPIMUpdateProtection(deltaTime);
+				SPIMUpdateProtection(deltat);
 			}
 
 			if (motor_override == overrideON && ws > 1 && Vs.Mag() > 0.1 && motor_trip == 0) { // motor is currently connected and grid conditions are not "collapsed"
 				// run the dynamic solver
-				SPIMDynamic(curr_delta_time, deltaTime);
+				SPIMDynamic(curr_delta_time, deltat);
 
 				// update current draw
 				if (triplex_connected == true)
@@ -850,8 +1179,8 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 		}
 		else 	//Must be three-phase
 		{
-			// if deltaTime is not small enough we will run into problems
-			if (deltaTime > 0.0005) {
+			// if deltat is not small enough we will run into problems
+			if (deltat > 0.0005) {
 				gl_warning("Delta time for the TPIM model needs to be lower than 0.0005 seconds");
 			}
 
@@ -867,14 +1196,14 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 
 			// update protection
 			if (delta_time>0) {
-				TPIMUpdateProtection(deltaTime);
+				TPIMUpdateProtection(deltat);
 			}
 
 
 			if (motor_override == overrideON && ws_pu > 0.1 && Vas.Mag() > 0.1 && Vbs.Mag() > 0.1 && Vcs.Mag() > 0.1 &&
 					motor_trip == 0) { // motor is currently connected and grid conditions are not "collapsed"
 				// run the dynamic solver
-				TPIMDynamic(curr_delta_time, deltaTime);
+				TPIMDynamic(curr_delta_time, deltat);
 
 				// update current draw -- pre_rotated_current
 				pre_rotated_current[0] = Ias*Ibase; // A
@@ -909,7 +1238,7 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 		//Frequency measurement stuff
 		if (fmeas_type != FM_NONE)
 		{
-			return_status_val = calc_freq_dynamics(deltaTime);
+			return_status_val = calc_freq_dynamics(deltat);
 
 			//Check it
 			if (return_status_val == FAILED)
@@ -941,7 +1270,7 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 		{
 			// figure out if we need to exit delta mode on the next pass
 			if ((Vas.Mag() > DM_volt_exit) && (Vbs.Mag() > DM_volt_exit) && (Vcs.Mag() > DM_volt_exit)
-					&& (wr > DM_speed_exit) && ((fabs(wr_pu-wr_pu_prev)*wbase) > speed_error))
+					&& (wr > DM_speed_exit) && ((fabs(wr_pu-wr_pu_prev)*wbase) <= speed_error))
 			{
 				return SM_EVENT;
 			}
@@ -1362,6 +1691,14 @@ void motor::SPIMSteadyState(TIMESTAMP t1) {
         //electrical torque 
 		Telec = (Xm/Xr)*2.0*(If.Im()*psi_f.Re() - If.Re()*psi_f.Im() - Ib.Im()*psi_b.Re() + Ib.Re()*psi_b.Im()); 
 
+		//See which model we're using
+		if (motor_torque_usage_method==modelSpeedFour)
+		{
+			//Compute updated mechanical torque
+			Tmech = 0.85 + 0.15*(wr_pu*wr_pu*wr_pu*wr_pu);
+		}
+		//Default else - direct method, so just read (in case player/else changes it)
+
         //calculate speed deviation 
         wr_delta = Telec-Tmech;
 
@@ -1495,6 +1832,17 @@ void motor::TPIMSteadyState(TIMESTAMP t1) {
 				Ins_cj = (phins_cj - phinr_cj * lm / Lr) / sigma1; // pu
 				Inr_cj = (phinr_cj - phins_cj * lm / Ls) / sigma2; // pu
 				Telec = (~phips * Ips + ~phins_cj * Ins_cj).Im() ;  // pu
+
+				//See which model we're using
+				if (motor_torque_usage_method==modelSpeedFour)
+				{
+					//Compute updated mechanical torque
+					Tmech = 0.85 + 0.15*(wr_pu*wr_pu*wr_pu*wr_pu);
+
+					//Assign it in, too
+					Tmech_eff = Tmech;
+				}
+				//Default else - direct method, so just read (in case player/else changes it)
 
 				// iteratively compute speed increment to make sure Telec matches Tmech during steady state mode
 				// if it does not match, then update current and Telec using new wr_pu
@@ -1649,6 +1997,14 @@ void motor::SPIMDynamic(double curr_delta_time, double dTime) {
     //electrical torque 
 	Telec = (Xm/Xr)*2*(If.Im()*psi_f.Re() - If.Re()*psi_f.Im() - Ib.Im()*psi_b.Re() + Ib.Re()*psi_b.Im()); 
 
+	//See which model we're using
+	if (motor_torque_usage_method==modelSpeedFour)
+	{
+		//Compute updated mechanical torque
+		Tmech = 0.85 + 0.15*(wr_pu*wr_pu*wr_pu*wr_pu);
+	}
+	//Default else - direct method, so just read (in case player/else changes it)
+
 	// speed equation 
 	wr = wr + (((Telec-Tmech)*wbase)/(2*H))*dTime;
 
@@ -1696,9 +2052,22 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
 
     TPIMupdateVars();
 
-	if (wr_pu >= 1.0)
+	//See which model we're using
+	if (motor_torque_usage_method==modelSpeedFour)
 	{
+		//Compute updated mechanical torque
+		Tmech = 0.85 + 0.15*(wr_pu*wr_pu*wr_pu*wr_pu);
+
+		//Assign it in
 		Tmech_eff = Tmech;
+	}
+	else
+	{
+		//Do the old routine - only engage if above 1.0
+		if (wr_pu >= 1.0)
+		{
+			Tmech_eff = Tmech;
+		}
 	}
 
     //*** Predictor Step ***//

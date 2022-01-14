@@ -10,7 +10,7 @@
 #include "gridlabd.h"
 #include "connection.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 #ifdef int64
 #undef int64 // wtypes.h uses the term int64
 #endif
@@ -27,6 +27,11 @@
 	#include <unistd.h>
 	#include <sys/errno.h>
 	#include <netdb.h>
+
+	#ifdef INVALID_SOCKET 
+	#undef INVALID_SOCKET 
+	#endif
+
 	#define INVALID_SOCKET (-1)
 	#define SOCKET_ERROR (-1)
 	#define int64 long long

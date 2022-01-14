@@ -73,6 +73,10 @@ triplex_load::triplex_load(MODULE *mod) : triplex_node(mod)
 			PT_complex,	"measured_voltage_1[V]",PADDR(measured_voltage_1),PT_DESCRIPTION,"measured voltage on phase 1",
 			PT_complex,	"measured_voltage_2[V]",PADDR(measured_voltage_2),PT_DESCRIPTION,"measured voltage on phase 2",
 			PT_complex,	"measured_voltage_12[V]",PADDR(measured_voltage_12),PT_DESCRIPTION,"measured voltage on phase 12",
+			PT_complex, "indiv_measured_power_1[VA]",PADDR(measured_power[0]),PT_DESCRIPTION,"current measured power on phase 1",
+			PT_complex, "indiv_measured_power_2[VA]",PADDR(measured_power[1]),PT_DESCRIPTION,"current measured power on phase 2",
+			PT_complex, "indiv_measured_power_12[VA]",PADDR(measured_power[2]),PT_DESCRIPTION,"current measured power on phase 12",
+			PT_complex, "measured_power[VA]",PADDR(measured_total_power),PT_DESCRIPTION,"current total measured power",
 
 			// This allows the user to set a base power on each phase, and specify the power as a function
 			// of ZIP and pf for each phase (similar to zipload).  This will override the constant values
@@ -112,6 +116,10 @@ triplex_load::triplex_load(MODULE *mod) : triplex_node(mod)
 				GL_THROW("Unable to publish triplex_load VFD attachment function");
 			if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
 				GL_THROW("Unable to publish triplex_load island-status-reset function");
+			if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
+				GL_THROW("Unable to publish triplex_load swing-status check function");
+			if (gl_publish_function(oclass, "pwr_object_load_update", (FUNCTIONADDR)update_triplex_load_values) == NULL)
+				GL_THROW("Unable to publish triplex_load impedance-conversion/update function");
     }
 }
 
@@ -135,6 +143,11 @@ int triplex_load::create(void)
 	load_class = LC_UNKNOWN;
 
 	base_load_val_was_nonzero[0] = base_load_val_was_nonzero[1] = base_load_val_was_nonzero[2] = false;	//Start deflagged
+	ZIP_constant_current[0] = ZIP_constant_current[1] = ZIP_constant_current[2] = false;				//Start assuming not touched
+
+	prev_load_values[0][0] = prev_load_values[0][1] = prev_load_values[0][2] = complex(0.0,0.0);
+	prev_load_values[1][0] = prev_load_values[1][1] = prev_load_values[1][2] = complex(0.0,0.0);
+	prev_load_values[2][0] = prev_load_values[2][1] = prev_load_values[2][2] = complex(0.0,0.0);
 
     return res;
 }
@@ -147,18 +160,15 @@ int triplex_load::init(OBJECT *parent)
 
 	ret_value = triplex_node::init(parent);
 
-	//Provide warning about constant current loads
-	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)	//Deltamode warning check
+	if (((constant_current[0] != 0.0) && (base_power[0] != 0.0)) ||
+		((constant_current[1] != 0.0) && (base_power[1] != 0.0)) ||
+		((constant_current[2] != 0.0) && (base_power[2] != 0.0)))
 	{
-		if ((constant_current[0] != 0.0) || (constant_current[1] != 0.0) || (constant_current[2] != 0.0))
-		{
-			gl_warning("triplex_load:%s - constant_current loads in deltamode are handled slightly different", obj->name ? obj->name : "unnamed");
-			/*  TROUBLESHOOT
-			Due to the potential for moving reference frame of deltamode systems, constant current loads are computed using a scaled
-			per-unit approach, rather than the fixed constant_current value.  You may get results that differ from traditional GridLAB-D
-			super-second or static powerflow results in this mode.
-			*/
-		}
+		gl_warning("triplex_load:%s - ZIP fractions will override constant_current_X values", obj->name ? obj->name : "unnamed");
+		/*  TROUBLESHOOT
+		In triplex_load objects, if constant_current_X is specified and a base_power_X has a constant current portion, the base_power_X-based
+		values will override constant_current_X and inputs to constant_current_X will be ignored for the remainder of the simulation.
+		*/
 	}
 
 	return ret_value;
@@ -166,13 +176,6 @@ int triplex_load::init(OBJECT *parent)
 
 TIMESTAMP triplex_load::presync(TIMESTAMP t0)
 {
-	if ((solver_method!=SM_FBS) && (SubNode==PARENT))	//Need to do something slightly different with GS and parented node
-	{
-		shunt[0] = shunt[1] = shunt[2] = 0.0;
-		power[0] = power[1] = power[2] = 0.0;
-		current[0] = current[1] = current[2] = 0.0;
-	}
-	
 	//Must be at the bottom, or the new values will be calculated after the fact
 	TIMESTAMP result = triplex_node::presync(t0);
 	
@@ -181,26 +184,8 @@ TIMESTAMP triplex_load::presync(TIMESTAMP t0)
 
 TIMESTAMP triplex_load::sync(TIMESTAMP t0)
 {
-	//Call the GFA-type functionality, if appropriate
-	if (GFA_enable == true)
-	{
-		//See if we're enabled - just skipping the load update should be enough, if we are not
-		if (GFA_status == true)
-		{
-			//Functionalized so deltamode can parttake
-			triplex_load_update_fxn();
-		}
-		else
-		{
-			//Remove any load contributions
-			triplex_load_delete_update_fxn();
-		}
-	}
-	else	//GFA checks are not enabled
-	{
-		//Functionalized so deltamode can parttake
-		triplex_load_update_fxn();
-	}
+	//Functionalized load update - so deltamode can parttake
+	triplex_load_update_fxn();
 
 	//Must be at the bottom, or the new values will be calculated after the fact
 	TIMESTAMP result = triplex_node::sync(t0);
@@ -218,15 +203,65 @@ TIMESTAMP triplex_load::postsync(TIMESTAMP t0)
 	measured_voltage_2.SetPolar(voltage2.Mag(),voltage2.Arg());
 	measured_voltage_12.SetPolar(voltage12.Mag(),voltage12.Arg());
 
+	measured_power[0] = voltage[0]*(~current_inj[0]);
+	measured_power[1] = -(voltage[1]*(~current_inj[1]));
+	measured_power[2] = voltage[2]*(~(-(current_inj[1]+current_inj[0])));	//Voltage_N
+	measured_total_power = measured_power[0] + measured_power[1] + measured_power[2];
+
 	return t1;
 }
 
 //Functional call to sync-level load updates
-//Here primarily so deltamode players can actually influence things
-void triplex_load::triplex_load_update_fxn()
+//Here primarily so deltamode players can actually influence things, as well as constant current rotations
+void triplex_load::triplex_load_update_fxn(void)
 {
 	complex intermed_impedance[3];
 	int index_var;
+	complex adjusted_current[3];
+	complex adjust_temp_nominal_voltage[3];
+	double adjust_temp_voltage_mag[3];
+	double adjust_nominal_voltage_val[3];
+	complex adjust_voltage_val[3];
+
+	//Roll GFA check into here, so current loads updates are handled properly
+	//See if GFA functionality is enabled
+	if (GFA_enable == true)
+	{
+		//See if we're enabled - just skipping the load update should be enough, if we are not
+		if (GFA_status == false)
+		{
+			//Remove any load contributions
+			triplex_load_delete_update_fxn();
+
+			//Exit
+			return;
+		}
+	}
+	//Default elses - just continue like normal
+
+	//Remove prior contributions and zero the accumulators
+	shunt[0] -= prev_load_values[0][0];
+	shunt[1] -= prev_load_values[0][1];
+	shunt[2] -= prev_load_values[0][2];
+
+	current[0] -= prev_load_values[1][0];
+	current[1] -= prev_load_values[1][1];
+	current12 -= prev_load_values[1][2];	//12 is a separate variable - [2] is N
+
+	power[0] -= prev_load_values[2][0];
+	power[1] -= prev_load_values[2][1];
+	power[2] -= prev_load_values[2][2];
+
+	//Update voltage12, since that wouldn't happen yet
+	voltage12 = voltage1 + voltage2;
+
+	//Zero the accumulators
+	for (index_var=0; index_var<3; index_var++)
+	{
+		prev_load_values[0][index_var] = complex(0.0,0.0);
+		prev_load_values[1][index_var] = complex(0.0,0.0);
+		prev_load_values[2][index_var] = complex(0.0,0.0);
+	}
 
 	if(base_power[0] != 0.0){// Phase 1
 
@@ -289,6 +324,9 @@ void triplex_load::triplex_load_update_fxn()
 			temp_curr.SetPolar(temp_curr.Mag(), temp_angle);
 
 			constant_current[0] = temp_curr;
+
+			//Set the flag
+			ZIP_constant_current[0] = true;
 		} else {
 			constant_current[0] = complex(0, 0);
 		}
@@ -383,10 +421,13 @@ void triplex_load::triplex_load_update_fxn()
 			
 			// Calculate then shift the constant current to use the posted voltage as the reference angle
 			temp_curr = ~complex(real_power, imag_power)/complex(nominal_voltage, 0);
-			temp_angle = temp_curr.Arg() + voltage1.Arg();
+			temp_angle = temp_curr.Arg() + voltage2.Arg();
 			temp_curr.SetPolar(temp_curr.Mag(), temp_angle);
 
 			constant_current[1] = temp_curr;
+
+			//Set the flag
+			ZIP_constant_current[1] = true;
 		} else {
 			constant_current[1] = complex(0, 0);
 		}
@@ -481,11 +522,14 @@ void triplex_load::triplex_load_update_fxn()
 			
 			// Calculate then shift the constant current to use the posted voltage as the reference angle
 			//Note that the 2*nominal_voltage is to account for the 240 V connection
-			temp_curr = ~complex(real_power, imag_power)/complex(2*nominal_voltage, 0);
+			temp_curr = ~complex(real_power, imag_power)/complex(2.0*nominal_voltage, 0);
 			temp_angle = temp_curr.Arg() + voltage12.Arg();
 			temp_curr.SetPolar(temp_curr.Mag(), temp_angle);
 
 			constant_current[2] = temp_curr;
+
+			//Set the flag
+			ZIP_constant_current[2] = true;
 		} else {
 			constant_current[2] = complex(0, 0);
 		}
@@ -562,49 +606,97 @@ void triplex_load::triplex_load_update_fxn()
 		intermed_impedance[2] = constant_impedance[2];
 	}
 	
-	if ((solver_method!=SM_FBS) && (SubNode==PARENT))	//Need to do something slightly different with GS/NR and parented load
-	{													//associated with change due to player methods
-
-		if (!(intermed_impedance[0].IsZero()))
-			pub_shunt[0] += complex(1.0)/intermed_impedance[0];
-
-		if (!(intermed_impedance[1].IsZero()))
-			pub_shunt[1] += complex(1.0)/intermed_impedance[1];
-		
-		if (!(intermed_impedance[2].IsZero()))
-			pub_shunt[2] += complex(1.0)/intermed_impedance[2];
-		
-		power1 += constant_power[0];
-		power2 += constant_power[1];	
-		power12 += constant_power[2];
-		current1 += constant_current[0];
-		current2 += constant_current[1];
-		current12 += constant_current[2];
-	}
-	else
+	//See how to accumulate the various values
+	if(!intermed_impedance[0].IsZero())
 	{
-		if(intermed_impedance[0].IsZero())
-			pub_shunt[0] = 0.0;
-		else
-			pub_shunt[0] = complex(1)/intermed_impedance[0];
+		//Accumulator
+		shunt[0] += complex(1.0)/intermed_impedance[0];
 
-		if(intermed_impedance[1].IsZero())
-			pub_shunt[1] = 0.0;
-		else
-			pub_shunt[1] = complex(1)/intermed_impedance[1];
-		
-		if(intermed_impedance[2].IsZero())
-			pub_shunt[2] = 0.0;
-		else
-			pub_shunt[2] = complex(1)/intermed_impedance[2];
-		
-		power1 = constant_power[0];
-		power2 = constant_power[1];	
-		power12 = constant_power[2];
-		current1 = constant_current[0];
-		current2 = constant_current[1];
-		current12 = constant_current[2];
+		//Tracker
+		prev_load_values[0][0] += complex(1.0,0.0)/intermed_impedance[0];
 	}
+
+	if(!intermed_impedance[1].IsZero())
+	{
+		//Accumulator
+		shunt[1] += complex(1.0)/intermed_impedance[1];
+
+		//Tracker
+		prev_load_values[0][1] += complex(1.0,0.0)/intermed_impedance[1];
+	}
+	
+	if(!intermed_impedance[2].IsZero())
+	{
+		//Accumulator
+		shunt[2] += complex(1.0)/intermed_impedance[2];
+
+		//Tracker
+		prev_load_values[0][2] += complex(1.0,0.0)/intermed_impedance[2];
+	}
+	
+	//Power and current accumulators
+	power[0] += constant_power[0];
+	power[1] += constant_power[1];	
+	power[2] += constant_power[2];
+
+	//Adjust values for both - FBS/NR are identical here, due to triplex nature
+
+	//Compute constants (just do it once)
+	//Set nominal voltage values - set up for explicit down below
+	adjust_nominal_voltage_val[0] = nominal_voltage;		//1N
+	adjust_nominal_voltage_val[1] = nominal_voltage;		//2N
+	adjust_nominal_voltage_val[2] = nominal_voltage * 2.0;	//12
+
+	//Just copy in the voltages (and compute delta) - mostly for explicit calculation, so the loop can just use it
+	adjust_voltage_val[0] = voltage[0];
+	adjust_voltage_val[1] = voltage[1];
+	adjust_voltage_val[2] = voltage1 + voltage2;
+
+	//Create the nominal voltage vectors - delta first
+	adjust_temp_nominal_voltage[0].SetPolar(adjust_nominal_voltage_val[0],0.0);
+	adjust_temp_nominal_voltage[1].SetPolar(adjust_nominal_voltage_val[1],0.0);
+	adjust_temp_nominal_voltage[2].SetPolar(adjust_nominal_voltage_val[2],0.0);
+
+	//Get magnitudes of all
+	adjust_temp_voltage_mag[0] = adjust_voltage_val[0].Mag();
+	adjust_temp_voltage_mag[1] = adjust_voltage_val[1].Mag();
+	adjust_temp_voltage_mag[2] = adjust_voltage_val[2].Mag();
+
+	//Start adjustments - loop them
+	for (index_var=0; index_var<3; index_var++)
+	{
+		if ((constant_current[index_var] != 0.0) && (adjust_temp_voltage_mag[index_var] != 0.0) && (ZIP_constant_current[index_var] == false))
+		{
+			//calculate new value
+			adjusted_current[index_var] = ~(adjust_temp_nominal_voltage[index_var] * ~constant_current[index_var] * adjust_temp_voltage_mag[index_var] / (adjust_voltage_val[index_var] * adjust_nominal_voltage_val[index_var]));
+		}
+		else
+		{
+			if (ZIP_constant_current[index_var] == false)
+			{
+				adjusted_current[index_var] = complex(0.0,0.0);
+			}
+			else
+			{
+				adjusted_current[index_var] = constant_current[index_var];
+			}
+		}
+	}
+
+	//Update the accumulator
+	current[0] += adjusted_current[0];
+	current[1] += adjusted_current[1];
+	current12 += adjusted_current[2];
+
+	//Current trackers
+	prev_load_values[1][0] += adjusted_current[0];
+	prev_load_values[1][1] += adjusted_current[1];
+	prev_load_values[1][2] += adjusted_current[2];
+
+	//Power trackers
+	prev_load_values[2][0] += constant_power[0];
+	prev_load_values[2][1] += constant_power[1];
+	prev_load_values[2][2] += constant_power[2];
 }
 
 //Function to appropriately zero load - make sure we don't get too heavy handed
@@ -612,38 +704,27 @@ void triplex_load::triplex_load_delete_update_fxn(void)
 {
 	int index_var;
 
-	if ((solver_method!=SM_FBS) && ((SubNode==PARENT) || (SubNode==DIFF_PARENT)))	//Need to do something slightly different with GS/NR and parented load
-	{													//associated with change due to player methods
-		if (SubNode != PARENT)	//Normal parent gets one routine
-		{
-			//Loop and clear
-			for (index_var=0; index_var<3; index_var++)
-			{
-				pub_shunt[index_var] = complex(0.0,0.0);
-				power[index_var] = complex(0.0,0.0);
-				current[index_var] = complex(0.0,0.0);
-			}
-
-			//Get the straggler
-			current12 = complex(0.0,0.0);
-		}
-	}
-	else
+	//Loop and clear
+	for (index_var=0; index_var<3; index_var++)
 	{
-		//Loop and clear
-		for (index_var=0; index_var<3; index_var++)
-		{
-			pub_shunt[index_var] = complex(0.0,0.0);
-			power[index_var] = complex(0.0,0.0);
-			current[index_var] = complex(0.0,0.0);
-		}
+		//Remove contributions - power and shunt
+		shunt[index_var] -= prev_load_values[0][index_var];
+		power[index_var] -= prev_load_values[2][index_var];
+	}
 
-		//Get the straggler
-		current12 = complex(0.0,0.0);
+	//Do current independently, since it is "odd"
+	current[0] -= prev_load_values[1][0];
+	current[1] -= prev_load_values[1][1];
+	current12 -= prev_load_values[1][2];
+
+	//Zero the accumulators
+	for (index_var=0; index_var<3; index_var++)
+	{
+		prev_load_values[0][index_var] = complex(0.0,0.0);
+		prev_load_values[1][index_var] = complex(0.0,0.0);
+		prev_load_values[2][index_var] = complex(0.0,0.0);
 	}
 }
-
-
 
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF DELTA MODE
@@ -652,7 +733,7 @@ void triplex_load::triplex_load_delete_update_fxn(void)
 SIMULATIONMODE triplex_load::inter_deltaupdate_triplex_load(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
 {
 	OBJECT *hdr = OBJECTHDR(this);
-	double deltat, deltatimedbl;
+	double deltat;
 	STATUS return_status_val;
 
 	//Create delta_t variable
@@ -661,26 +742,25 @@ SIMULATIONMODE triplex_load::inter_deltaupdate_triplex_load(unsigned int64 delta
 	//Update time tracking variable - mostly for GFA functionality calls
 	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
 	{
-		//Get decimal timestamp value
-		deltatimedbl = (double)delta_time/(double)DT_SECOND; 
-
 		//Update tracking variable
-		prev_time_dbl = (double)gl_globalclock + deltatimedbl;
+		prev_time_dbl = gl_globaldeltaclock;
 
 		//Update frequency calculation values (if needed)
 		if (fmeas_type != FM_NONE)
 		{
-			//Copy the tracker value
-			memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+			//See which pass
+			if (delta_time == 0)
+			{
+				//Initialize dynamics - first run of new delta call
+				init_freq_dynamics(deltat);
+			}
+			else
+			{
+				//Copy the tracker value
+				memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+			}
 		}
 	}
-
-	//Initialization items
-	if ((delta_time==0) && (iteration_count_val==0) && (interupdate_pos == false) && (fmeas_type != FM_NONE))	//First run of new delta call
-	{
-		//Initialize dynamics
-		init_freq_dynamics();
-	}//End first pass and timestep of deltamode (initial condition stuff)
 
 	//Perform the GFA update, if enabled
 	if ((GFA_enable == true) && (iteration_count_val == 0) && (interupdate_pos == false))	//Always just do on the first pass
@@ -691,40 +771,11 @@ SIMULATIONMODE triplex_load::inter_deltaupdate_triplex_load(unsigned int64 delta
 
 	if (interupdate_pos == false)	//Before powerflow call
 	{
-		//Triplex_load presync items
-			if ((solver_method!=SM_FBS) && (SubNode==PARENT))	//Need to do something slightly different with GS and parented node
-			{
-				shunt[0] = shunt[1] = shunt[2] = 0.0;
-				power[0] = power[1] = power[2] = 0.0;
-				current[0] = current[1] = current[2] = 0.0;
-			}
-
-		//Call triplex-specific call
-		BOTH_triplex_node_presync_fxn();
-
 		//Call node presync-equivalent items
 		NR_node_presync_fxn(0);
 
-		//See if GFA functionality is enabled
-		if (GFA_enable == true)
-		{
-			//See if we're enabled - just skipping the load update should be enough, if we are not
-			if (GFA_status == true)
-			{
-				//Functionalized so deltamode can parttake
-				triplex_load_update_fxn();
-			}
-			else
-			{
-				//Remove any load contributions
-				triplex_load_delete_update_fxn();
-			}
-		}
-		else	//No GFA checks - go like normal
-		{
-			//Functionalized so deltamode can parttake
-			triplex_load_update_fxn();
-		}
+		//Functionalized load updates - so deltamode can parttake
+		triplex_load_update_fxn();
 
 		//Call sync-equivalent of triplex portion first
 		BOTH_triplex_node_sync_fxn();
@@ -741,9 +792,14 @@ SIMULATIONMODE triplex_load::inter_deltaupdate_triplex_load(unsigned int64 delta
 		BOTH_node_postsync_fxn(hdr);
 
 		//Triplex_load-specific postsync items
-			measured_voltage_1.SetPolar(voltage1.Mag(),voltage1.Arg());  //Used for testing and xml output
-			measured_voltage_2.SetPolar(voltage2.Mag(),voltage2.Arg());
-			measured_voltage_12.SetPolar(voltage12.Mag(),voltage12.Arg());
+		measured_voltage_1.SetPolar(voltage1.Mag(),voltage1.Arg());  //Used for testing and xml output
+		measured_voltage_2.SetPolar(voltage2.Mag(),voltage2.Arg());
+		measured_voltage_12.SetPolar(voltage12.Mag(),voltage12.Arg());
+
+		measured_power[0] = voltage[0]*(~current_inj[0]);
+		measured_power[1] = -(voltage[1]*(~current_inj[1]));
+		measured_power[2] = voltage[2]*(~(-(current_inj[1]+current_inj[0])));	//Voltage_N
+		measured_total_power = measured_power[0] + measured_power[1] + measured_power[2];
 
 		//Frequency measurement stuff
 		if (fmeas_type != FM_NONE)
@@ -871,5 +927,17 @@ EXPORT SIMULATIONMODE interupdate_triplex_load(OBJECT *obj, unsigned int64 delta
 		gl_error("interupdate_triplex_load(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
 		return status;
 	}
+}
+
+//Exposed function to do load update - primarily to get impedance conversion into solver_nr directly
+EXPORT STATUS update_triplex_load_values(OBJECT *obj)
+{
+	triplex_load *my = OBJECTDATA(obj,triplex_load);
+
+	//Call the update
+	my->triplex_load_update_fxn();
+
+	//Return us - always succeed, for now
+	return SUCCESS;
 }
 /**@}*/

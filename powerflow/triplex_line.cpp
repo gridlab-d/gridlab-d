@@ -46,6 +46,8 @@ triplex_line::triplex_line(MODULE *mod) : line(mod)
 			GL_THROW("Unable to publish triplex line external power calculation function");
 		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
 			GL_THROW("Unable to publish triplex line external power limit calculation function");
+		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==NULL)
+			GL_THROW("Unable to publish triplex line external current calculation function");
     }
 }
 
@@ -71,6 +73,10 @@ int triplex_line::init(OBJECT *parent)
 	triplex_line_configuration *temp_config = NULL;
 	
 	int result = line::init(parent);
+
+	//Check for deferred
+	if (result == 2)
+		return 2;	//Return the deferment - no sense doing everything else!
 
 	if (!has_phase(PHASE_S))
 		gl_warning("%s (%s:%d) is triplex but doesn't have phases S set", obj->name, obj->oclass->name, obj->id);

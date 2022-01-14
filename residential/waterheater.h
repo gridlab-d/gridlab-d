@@ -13,15 +13,172 @@
 #include "residential.h"
 #include "residential_enduse.h"
 
+
+#include <vector>
+using std::vector;
+
+/*
+class w_vector;
+class w_matrix;
+
+//custom vector class
+class w_vector {
+public:
+	int dimension;
+	double *data;
+
+public:
+	w_vector() {
+		dimension = 0;
+		data = NULL;
+	};
+	w_vector(int dim) {
+		dimension = dim;
+		data = new double[dimension];
+		for(int i=0; i<dimension; i++) {
+			data[i] = 0.0;
+		}
+	};
+	w_vector(const w_vector& v) {
+		dimension = v.Dimension();
+		data = new double[dimension];
+		for(int i=0; i<dimension; i++) {
+			data[i] = v.data[i];
+		}
+	};
+	w_vector(int col, const w_matrix &A){
+		dimension = A.Rows();
+		data = new double[dimension];
+		for(int i=0; i<A.Rows(); i++) {
+			data[i] = A(i,col);
+		}
+	};
+	~w_vector() {
+		dimension = 0;
+		delete[] data;
+		data = NULL;
+	};
+
+	void Initialize(int dim) {
+		if(dimension!=0)
+			delete[] data;
+		dimension = dim;
+		data = new double[dimension];
+		for(int i=0;i<dimension;i++)
+			data[i] = 0.0;
+	};
+	int Dimension() const { return dimension; };
+
+	void Initialize(double a) {
+		for(int i=0; i<dimension; i++) {
+			data[i] = a;
+		}
+	};
+	void Initialize(double *v) {
+		for(int i=0; i<dimension; i++) {
+			data[i] = v[i];
+		}
+	};
+};
+
+//custom matrix class
+class w_matrix {
+public:
+	int rows, columns;
+	double **data;
+
+public:
+	w_matrix(int dim) {
+		rows = dim;
+		columns = dim;
+		data = new double* [rows];
+		for(int i=0; i<rows; i++) {
+			data[i] = new double[columns];
+			for(int j=0; i<columns; j++) {
+				data[i][j] = 0.0;
+			}
+		}
+	};
+	w_matrix(int rows1, int columns1) {
+		rows = rows1;
+		columns = columns1;
+		data = new double* [rows];
+		for(int i=0; i<rows; i++) {
+			data[i] = new double[columns];
+			for(int j=0; i<columns; j++) {
+				data[i][j] = 0.0;
+			}
+		}
+	};
+	w_matrix(const w_matrix& m) {
+		rows = m.rows;
+		columns = m.columns;
+		data = new double* [rows];
+		for(int i=0; i<rows; i++) {
+			data[i] = new double[columns];
+			for(int j=0; i<columns; j++) {
+				data[i][j] = m.data[i][j];
+			}
+		}
+	};
+	w_matrix(int num_vectors, const w_vector *q) {
+		rows = q[0].Dimension();
+		columns = num_vectors;
+		data = new double* [rows];
+		for(int i=0; i<rows; i++) {
+			data[i] = new double[columns];
+			for(int j=0; i<columns; j++) {
+				data[i][j] = q->data[i][j];
+			}
+		}
+	};
+	w_matrix(int rows1, int columns1, double **rowptrs){
+		rows = rows1;
+		columns = columns1;
+		data = new double*[rows];
+		for(int i=0;i<rows;i++)
+			data[i] = rowptrs[i];
+	};
+	~w_matrix() {
+		for(int i=0;i<rows;i++)
+			delete[] data[i];
+		rows = 0;
+		columns = 0;
+		delete[] data;
+	};
+	int Rows() const{ return rows; };
+	int Columns() const{ return columns; };
+	double **GetPointer() { return data; };
+	void GetColumn(int col, w_vector &x) {
+		x.Initialize(0.0);
+		for(int i=0; i<rows; i++) {
+			x[i] = data[i][col];
+		}
+	};
+	void GetColumn(int col, w_vector &x, int rowoffset) {
+		x.Initialize(0.0);
+		for(int i=0;i<rows-rowoffset;i++) {
+			x[i] = data[i+rowoffset][col];
+		}
+	};
+	void PutColumn(int col, const w_vector &x) {
+		for(int i=0;i<rows;i++) {
+			data[i][col] = x[i];
+		}
+	}
+};
+*/
+
 class waterheater : public residential_enduse {
 private:
 	double standby_load;	///< typical power loss through thermal jacket losses (UA 2, 60 to 140 degF, 160 BTU/hr, 47W, 411kWh/year, ~10% energy star guesstimate)
 public:
 	typedef enum {
-		ONENODE,	///< tank model uses a single zone
-		TWONODE,	///< tank model uses two zones
-		FORTRAN, ///< uses the fortran tank model.
-		NONE,		///< tank model zoning isn't defined
+		ONENODE=1,	///< tank model uses a single zone
+		TWONODE=2,	///< tank model uses two zones
+		FORTRAN=3, ///< uses the fortran tank model.
+		MULTILAYER=4, ///< tank model uses the multi-layer model
+		NONE=0,		///< tank model zoning isn't defined
 	} WHMODEL;	///< tank model currently in use
 	typedef enum {
 		DEPLETING,	///< tank heat is dropping fast
@@ -152,6 +309,83 @@ public:
 
 	TIMESTAMP fwh_sim_time;
 
+//Multi Layer Waterheater parameters.
+private:
+	int number_of_mixing_zone_disks;
+	int total_mixing_zones;
+	int number_of_regular_disks;
+	int total_regular_zones;
+	int bottom_layer_disk;
+	int top_layer_disk;
+	int number_of_layers;
+	int number_of_states;
+	int number_of_inputs;
+	int number_of_outputs;
+	double H_layer;
+	double A_layer;
+	double A_bottom;
+	double A_top;
+	double V_layer;
+//	int Vdot_circ;
+	double U_val;
+	double Tmax_lower;
+	double Tmin_lower;
+	double Tmax_upper;
+	double Tmin_upper;
+	double a_diffusion_coefficient;
+	double a_loss_layer_coefficient;
+	double a_loss_bottom_coefficient;
+	double a_loss_top_coefficient;
+	double a_circular_const;
+	double b_matrix_coefficient;
+
+	vector<vector<double>> A_diffusion;
+	vector<vector<double>> A_loss;
+    vector<vector<double>> A_plug;
+    vector<vector<double>> A_circular_flow;
+
+	vector<double> control_upper;
+	vector<double> control_lower;
+
+	vector<vector<double>> T_layers;
+
+    vector<double> dT_dt;
+    vector<double> T_now;
+    vector<double> T_new;
+    vector<double> control_temp;
+    vector<double> product1;
+    vector<double> product2;
+
+	TIMESTAMP start_time;
+	TIMESTAMP next_transition_time;
+	TIMESTAMP last_time_calculate_state_change_called;
+	vector<vector<double>> A_matrix;
+	vector<vector<double>> B_control;
+	double last_water_demand;
+	double last_ambient_temperature;
+	double last_inlet_temperature;
+	double last_upper_thermostat_setpoint;
+	double last_lower_thermostat_setpoint;
+	enumeration last_override_value;
+	int last_transition_time;
+
+	bool conditions_changed;
+public:
+	double tank_setpoint_1;
+	double tank_setpoint_2;
+	double deadband_1;
+	double deadband_2;
+	double Tw_1;
+	double Tw_2;
+	typedef enum {
+		OFF = 0,
+		ON = 1
+	} HEATELEMENTSTATE;
+	enumeration control_switch_1;
+	enumeration control_switch_2;
+	double discrete_step_size;
+	double Vdot_circ;
+	double T_mixing_valve;
 public:
 	static CLASS *oclass, *pclass;
 	static waterheater *defaults;
@@ -183,6 +417,10 @@ public:
 	double new_temp_1node(double T0, double delta_t);	// Calcs temp after transition...
 	double new_time_2zone(double h0, double h1);		// Calcs time to transition...
 	double new_h_2zone(double h0, double delta_t);      // Calcs h after transition...
+	int multilayer_time_to_transition(void);
+	void calculate_waterheater_matrices(int time_now);
+	vector<double> multiply_waterheater_matrices(vector<vector<double>> &, vector<double> &);
+	void reinitialize_internals(int dt);
 
 	double get_Tambient(enumeration water_heater_location);		// ambient T [F] -- either an indoor house temperature or a garage temperature, probably...
 	typedef enum {MODEL_NOT_1ZONE=0, MODEL_NOT_2ZONE=1} WRONGMODEL;

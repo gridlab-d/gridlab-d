@@ -1,0 +1,184 @@
+//Variation of 4-node feeder
+//Checks "switch-like" devices on initial open
+//Slight variation in that it is a parallel path, but open to "not make a mesh"
+//This whole autotest is also effectively deprecated by mesh topology checking mode
+//But still need to make sure this works
+//If it is run in older versions of GLD, the powerflow diverges quickly.
+//Assert is just to "verify" - typically, it will fail well before the assert with bad topology handling
+
+clock {
+	timezone EST+5EDT;
+	starttime '2000-01-01 0:00:00';
+	stoptime '2000-01-01 0:00:11';
+}
+
+module assert;
+module powerflow {
+	solver_method NR;
+	default_resistance 0.00005;	//To make consistent with original switch admittance
+}
+
+object voltdump {
+	mode RECT;
+	file voltage_vals_out.csv;
+}
+
+object overhead_line_conductor {
+	name olc100;
+	geometric_mean_radius 0.0244 ft;
+	resistance 0.306 Ohm/mile;
+	diameter 0.721 in;
+}
+
+object overhead_line_conductor {
+	name olc101;
+	geometric_mean_radius 0.00814 ft;
+	resistance 0.592 Ohm/mile;
+	diameter 0.563 in;
+}
+
+object line_spacing {
+	name ls200;
+	distance_AB 2.5 ft;
+	distance_BC 4.5 ft;
+	distance_AC 7.0 ft;
+	distance_AN 5.656854 ft; 
+	distance_BN 4.272002 ft;
+	distance_CN 5.0 ft;
+	distance_AE 28.0 ft;
+	distance_BE 28.0 ft;
+	distance_CE 28.0 ft;
+	distance_NE 24.0 ft;
+}
+
+object line_configuration {
+	name lc300;
+	conductor_A olc100;
+	conductor_B olc100;
+	conductor_C olc100;
+	conductor_N olc101;
+	spacing ls200;
+}
+
+object transformer_configuration {
+	name tc400;
+	connect_type WYE_WYE;
+	power_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 4160;
+	resistance 0.01;
+	reactance 0.06;
+}
+
+object node {
+	name node1;
+	bustype SWING;
+	phases "ABCN";
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	nominal_voltage 7199.558;
+}
+
+object overhead_line {
+	phases "ABCN";
+	name line12;
+	from node1;
+	to node2;
+	length 2000;
+	configuration lc300;
+}
+
+object node {
+	name node2;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+}
+
+object transformer {
+	phases "ABCN";
+	name trans23;
+	from node2;
+	to node3;
+	configuration tc400;
+}
+
+object node {
+	name node3;
+	phases "ABCN";
+	nominal_voltage 2401.777;
+}
+
+object switch {
+	name sw_node34;
+	phases ABC;
+	from node3;
+	to node4;
+	status CLOSED;
+}
+
+object overhead_line {
+	phases "ABCN";
+	name ol3parallel;
+	from node3;
+	to node3parallel;
+	length 2500;
+	configuration lc300;
+} 
+
+object node {
+	name node3parallel;
+	phases "ABCN";
+	nominal_voltage 2401.777;
+}
+
+object node {
+	name node4;
+	phases "ABCN";
+	nominal_voltage 2401.777;
+}
+
+object switch {
+	name sw_node3par4;
+	phases ABC;
+	from node3parallel;
+	to load4;
+	status OPEN;
+}
+
+object overhead_line {
+	phases "ABCN";
+	name ol34;
+	from node4;
+	to load4;
+	length 2500;
+	configuration lc300;
+}
+
+object load {
+	name load4;
+	phases "ABCN";
+	constant_power_A +1800000.000+871779.789j;
+	constant_power_B +1800000.000+871779.789j;
+	constant_power_C +1800000.000+871779.789j;
+	nominal_voltage 2401.777;
+	object complex_assert {
+		target voltage_A;
+		value 1893.754675-302.379786j;
+		within 0.01;
+	};
+	object complex_assert {
+		target voltage_B;
+		value -1277.912894-1617.302456j;
+		within 0.01;
+	};
+	object complex_assert {
+		target voltage_C;
+		value -705.244792+1850.942204j;
+		within 0.01;
+	};
+}
+
+///////////////////////////////
+// END
+///////////////////////////////

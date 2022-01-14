@@ -18,13 +18,26 @@
 	  loss through the jacket.
  @{
  **/
-
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
-
 #include "waterheater.h"
+
+#include <cstdlib>
+#include <cstdio>
+#include <cerrno>
+#include <cmath>
+
+#include <chrono>
+#include <iostream>
+#include <exception>
+#include <algorithm>
+#include <limits>
+#include <sstream>
+#include <string>
+#include <fstream>
+#include <memory>
+
+using std::stringstream;
+using std::ofstream;
+using std::string;
 
 #define TSTAT_PRECISION 0.01
 #define HEIGHT_PRECISION 0.01
@@ -108,6 +121,7 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 				PT_KEYWORD,"ONEZNODE",(enumeration)ONENODE,
 				PT_KEYWORD,"TWONODE",(enumeration)TWONODE,
 				PT_KEYWORD,"FORTRAN",(enumeration)FORTRAN,
+				PT_KEYWORD,"MULTILAYER",(enumeration)MULTILAYER,
 				PT_KEYWORD,"NONE",(enumeration)NONE,
 			PT_enumeration,"heat_mode",PADDR(heat_mode), PT_DESCRIPTION, "the energy source for heating the water heater",
 				PT_KEYWORD,"ELECTRIC",(enumeration)ELECTRIC,
@@ -149,6 +163,22 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 				PT_KEYWORD,"OV_ON",(enumeration)OV_ON,
 				PT_KEYWORD,"OV_NORMAL",(enumeration)OV_NORMAL,
 				PT_KEYWORD,"OV_OFF",(enumeration)OV_OFF,
+			//published variables for the multi layer waterheater model
+			PT_double,"lower_tank_setpoint[degF]", PADDR(tank_setpoint_1), PT_DESCRIPTION, "MULTILAYER_MODEL: The setpoint for the lower heating element thermostat in the tank",
+			PT_double,"upper_tank_setpoint[degF]", PADDR(tank_setpoint_2), PT_DESCRIPTION, "MULTILAYER_MODEL: The setpoint for the upper heating element thermostat in the tank",
+			PT_double,"lower_tank_deadband[degF]", PADDR(deadband_1), PT_DESCRIPTION, "MULTILAYER_MODEL: The deadband for the lower heating element thermostat in the tank",
+			PT_double,"upper_tank_deadband[degF]", PADDR(deadband_2), PT_DESCRIPTION, "MULTILAYER_MODEL: The deadband for the upper heating element thermostat in the tank",
+			PT_double,"lower_tank_temperature[degF]", PADDR(Tw_1), PT_DESCRIPTION, "MULTILAYER_MODEL: The water temperature at the lower heating element thermostat in the tank",
+			PT_double,"upper_tank_temperature[degF]", PADDR(Tw_2), PT_DESCRIPTION, "MULTILAYER_MODEL: The water temperature for the upper heating element thermostat in the tank",
+			PT_double,"discrete_step_size[s]", PADDR(discrete_step_size), PT_DESCRIPTION, "MULTILAYER MODEL: The step size in seconds to use in the discrete tank temperature dynamics loop.",
+			PT_double,"circular_flow_rate[gpm]", PADDR(Vdot_circ), PT_DESCRIPTION, "MULTILAYER MODEL: Heuristic flow activated once the heating elements turn on.",
+			PT_double,"T_mixing_valve[degF]", PADDR(T_mixing_valve), PT_DESCRIPTION, "MULTILAYER MODEL: Reference temperature to which mixing valve operate.",
+			PT_enumeration,"lower_heating_element_state", PADDR(control_switch_1), PT_DESCRIPTION, "MULTILAYER MODEL: The state of the lower heating element in the tank.",
+				PT_KEYWORD,"OFF",(enumeration)OFF,
+				PT_KEYWORD,"ON",(enumeration)ON,
+			PT_enumeration,"upper_heating_element_state", PADDR(control_switch_2), PT_DESCRIPTION, "MULTILAYER MODEL: The state of the upper heating element in the tank.",
+				PT_KEYWORD,"OFF",(enumeration)OFF,
+				PT_KEYWORD,"ON",(enumeration)ON,
 			NULL)<1) 
 			GL_THROW("unable to publish properties in %s",__FILE__);
 	}
@@ -191,11 +221,15 @@ int waterheater::create()
 	tank_setpoint = gl_random_normal(RNGSTATE,125,5);
 	if (tank_setpoint<90) tank_setpoint = 90;
 	if (tank_setpoint>160) tank_setpoint = 160;
+	tank_setpoint_1 = tank_setpoint;
+	tank_setpoint_2 = tank_setpoint;
 
 	/* initialize water tank deadband */
 	thermostat_deadband = fabs(gl_random_normal(RNGSTATE,2,1))+1;
 	if (thermostat_deadband>10)
 		thermostat_deadband = 10;
+	deadband_1 = thermostat_deadband;
+	deadband_2 = thermostat_deadband;
 
 	tank_UA = clip(gl_random_normal(RNGSTATE,2.0, 0.20),0.1,10) * tank_volume/50;  
 	if(tank_UA <= 1.0)
@@ -215,7 +249,15 @@ int waterheater::create()
 
 	dr_signal = 1;
 	return res;
-
+	last_water_demand = -1.0;
+	last_ambient_temperature = -200.0;
+	last_inlet_temperature = -200.0;
+	last_upper_thermostat_setpoint = 0.0;
+	last_lower_thermostat_setpoint = 0.0;
+	last_override_value = OV_NORMAL;
+	discrete_step_size = -1;
+	Vdot_circ = -1;
+	T_mixing_valve = -1;
 }
 
 /** Initialize water heater model properties - randomized defaults for all published variables
@@ -409,7 +451,7 @@ int waterheater::init(OBJECT *parent)
 		Tw = gl_random_uniform(RNGSTATE,tank_setpoint - thermostat_deadband, tank_setpoint + thermostat_deadband);
 	}
 
-	if(current_model != FORTRAN){
+	if(current_model != FORTRAN && current_model != MULTILAYER){
 		current_model = NONE;
 		load_state = STABLE;
 
@@ -603,8 +645,143 @@ int waterheater::init(OBJECT *parent)
 				tank_water_temp[i] = init_tank_temp[i];
 			}
 		} else {
-			GL_THROW("Invalide tank volume for the fortran water heater_model. Valid volumes are 40 or 80 gallons.");
+			GL_THROW("Invalid tank volume for the fortran water heater_model. Valid volumes are 40 or 80 gallons.");
 		}
+	}
+	if(current_model == MULTILAYER) {
+		tank_setpoint_1 = tank_setpoint;
+		tank_setpoint_2 = tank_setpoint;
+		deadband_1 = thermostat_deadband;
+		deadband_2 = thermostat_deadband;
+		if(discrete_step_size < 1) {
+			discrete_step_size = 1;
+		}
+		else if(discrete_step_size > 60){
+			gl_warning("waterheater::init() : The discretization step size is chosen too large. To reduce error setting it to 60 seconds.");
+			discrete_step_size = 60;
+		}
+		if (Vdot_circ < 0.0) { // if no user input, set a default value
+			Vdot_circ = 2.0;
+		} else if (Vdot_circ < 1.0) {
+			gl_warning("waterheater::init() : The Heuristic flow rate is too small for 10 layers. Setting it to minimum 1 gpm.");
+			Vdot_circ = 1.0;
+		} else if (Vdot_circ > 3.0) {
+			gl_warning("waterheater::init() : The Heuristic flow rate is too large for 10 layers. Setting it to maximum 3 gpm.");
+			Vdot_circ = 3.0;
+		}
+
+		double tank_surface_area = 2*area + (tank_height*pi*tank_diameter);
+		U_val = tank_UA/tank_surface_area;
+		thermal_conductivity = 0.5918/1.728;
+		Tmax_lower = tank_setpoint_1 + (deadband_1/2.0);
+		Tmin_lower = tank_setpoint_1 - (deadband_1/2.0);
+		Tmax_upper = tank_setpoint_2 + (deadband_2/2.0);
+		Tmin_upper = tank_setpoint_2 - (deadband_2/2.0);
+
+		if (T_mixing_valve < 1.0){
+			gl_warning("waterheater::init() : Mixing valve temperature was not set, setting it to minimum upper element setpoint.");
+			T_mixing_valve = Tmin_upper; // if mixing valve temperature is not set by the user then just try to provide small mixing so consumer get a bit less temperature in their home than the upper heating layer
+		}
+		else if (T_mixing_valve > Tmax_upper) {
+			gl_warning("waterheater::init() : Mixing valve temperature is set very high, it will not be very efficient. Try choosing a value less than upper element setpoint.");
+		}
+		number_of_mixing_zone_disks = 2;
+		total_mixing_zones = 2;
+		number_of_regular_disks = 2;
+		total_regular_zones = 2;
+		bottom_layer_disk = 1;
+		top_layer_disk = 1;
+		number_of_layers = (number_of_mixing_zone_disks*total_mixing_zones) + (number_of_regular_disks*total_regular_zones) + bottom_layer_disk + top_layer_disk;
+		number_of_states = 2 + number_of_layers;
+		number_of_inputs = 2;
+		number_of_outputs = 2;
+		H_layer = tank_height/number_of_layers;
+		A_layer = H_layer*pi*tank_diameter;
+		A_bottom = area;
+		A_top = area;
+		V_layer = tank_volume/(number_of_layers * GALPCF);
+//		Vdot_circ = 2;
+		a_diffusion_coefficient = thermal_conductivity/(RHOWATER*Cp*H_layer*H_layer);
+		a_loss_layer_coefficient = A_layer*U_val/(RHOWATER*Cp*V_layer);
+		a_loss_bottom_coefficient = ((A_layer + A_bottom)*U_val/(RHOWATER*Cp*V_layer));
+		a_loss_top_coefficient = ((A_bottom + A_top)*U_val/(RHOWATER*Cp*V_layer));
+		a_circular_const = (Vdot_circ*60.0)/(GALPCF*V_layer);
+		b_matrix_coefficient = heating_element_capacity*BTUPHPKW/(RHOWATER*Cp*V_layer*number_of_mixing_zone_disks);
+		last_transition_time = 0;
+		for(int i=0; i<number_of_states; i++) {
+			T_layers.emplace_back();
+		}
+		for(int i=0; i<number_of_states; i++) {
+			A_diffusion.emplace_back(number_of_states, 0.0);
+			A_loss.emplace_back(number_of_states, 0.0);
+			B_control.emplace_back(2, 0.0);
+			A_matrix.emplace_back(number_of_states, 0.0);
+		}
+		int rows = number_of_states - 1;
+		for(int i=1; i<=rows-1; i++) {
+			A_diffusion[i][i-1] = a_diffusion_coefficient;
+			A_diffusion[i][i] = -2.0*a_diffusion_coefficient;
+			A_diffusion[i][i+1] = a_diffusion_coefficient;
+			A_loss[i][i] = -1.0*a_loss_layer_coefficient;
+			A_loss[i][rows] = a_loss_layer_coefficient;
+		}
+		// bottom/top layer corrections
+		A_diffusion[1][0] = 0.0;
+		A_diffusion[1][1] = -1.0*a_diffusion_coefficient;
+		A_diffusion[1][2] = a_diffusion_coefficient;
+		A_diffusion[rows-1][rows] = 0.0;
+		A_diffusion[rows-1][rows-1] = -1.0*a_diffusion_coefficient;
+		A_diffusion[rows-1][rows-2] = a_diffusion_coefficient;
+		A_loss[1][1] = -1.0*a_loss_bottom_coefficient;
+		A_loss[1][rows] = a_loss_bottom_coefficient;
+		A_loss[rows-1][rows-1] = -1.0*a_loss_top_coefficient;
+		A_loss[rows-1][rows] = a_loss_top_coefficient;
+		int start_index_1 = 1;
+		int end_index_1 = start_index_1 + number_of_mixing_zone_disks + number_of_regular_disks;
+		int start_index_2 = end_index_1 + 1;
+		int end_index_2 = start_index_2 + number_of_mixing_zone_disks + number_of_regular_disks;
+		for(int i=start_index_1+1; i<=start_index_1+number_of_mixing_zone_disks; i++) {
+			B_control[i][0] = b_matrix_coefficient;
+		}
+		for(int i=start_index_2; i<=start_index_2+number_of_mixing_zone_disks-1; i++) {
+			B_control[i][1] = b_matrix_coefficient;
+		}
+		start_time = gl_globalclock;
+		next_transition_time = gl_globalclock;
+		last_time_calculate_state_change_called = gl_globalclock;
+		vector<double> control_states {0.0, 1.0};
+		if(Tw < Tmin_upper) {
+			control_upper.push_back(1.0);
+		} else if(Tw >= Tmin_upper && Tw <= Tmax_upper) {
+			control_upper.push_back(control_states[rand() % 2]);
+		} else {
+			control_upper.push_back(0.0);
+		}
+		if(Tw < Tmin_lower && control_upper[0] == 0.0) {
+			control_lower.push_back(1.0);
+		} else if(Tw >= Tmin_lower && Tw <= Tmax_lower && control_upper[0] == 0.0) {
+			control_lower.push_back(control_states[rand() % 2]);
+		} else {
+			control_lower.push_back(0.0);
+		}
+
+        dT_dt.reserve(number_of_states);
+        T_now.resize(number_of_states, 0.0);
+        T_new.resize(number_of_states, 0.0);
+        control_temp.resize(2, 0.0);
+
+        A_diffusion.resize(number_of_states);
+        A_loss.resize(number_of_states);
+        A_plug.resize(number_of_states);
+        A_circular_flow.resize(number_of_states);
+
+        for (size_t i = 0; i < number_of_states; i++) {
+            A_plug[i].resize(number_of_states, 0.0);
+            A_circular_flow[i].resize(number_of_states, 0.0);
+            A_matrix[i].resize(number_of_states, 0.0);
+        }
+
+        T_layers.resize(number_of_states, vector<double>());
 	}
 	return residential_enduse::init(parent);
 }
@@ -660,6 +837,7 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 	/* time has passed ~ calculate internal gains, height change, temperature change */
 	double nHours = (gl_tohours(t1) - gl_tohours(t0))/TS_SECOND;
 	OBJECT *my = OBJECTHDR(this);
+	double Tamb = get_Tambient(location);
 
 	DATETIME t_next;
 	gl_localtime(t1,&t_next);
@@ -669,12 +847,45 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 				double temp = 2;
 		}
 	}
-	if(current_model != FORTRAN){
+	if(current_model == MULTILAYER) {
+		int dt = (int)(t1-last_time_calculate_state_change_called);
+		int idx = (dt - (dt % (int)discrete_step_size))/(int)discrete_step_size;
+		int idx2 = (idx>0?idx-1:idx);
+		conditions_changed = false;
+		if(water_demand != last_water_demand || Tinlet != last_inlet_temperature || tank_setpoint_1 != last_lower_thermostat_setpoint || tank_setpoint_2 != last_upper_thermostat_setpoint || re_override != last_override_value || control_upper[idx] != control_upper[idx2] || control_lower[idx] != control_lower[idx2]) {
+			conditions_changed = true;
+			last_water_demand = water_demand;
+			last_inlet_temperature = Tinlet;
+			last_lower_thermostat_setpoint = tank_setpoint_1;
+			last_upper_thermostat_setpoint = tank_setpoint_2;
+			last_override_value = re_override;
+		}
+		if(t0 == start_time && t0 == t1) {
+			T_layers[0].push_back(Tinlet);
+			for(int i=1; i<number_of_states - 1; i++) {
+				T_layers[i].push_back(Tw);
+			}
+			T_layers[number_of_states - 1].push_back(Tamb);
+		} else if(t0 < t1 && conditions_changed == true){
+			reinitialize_internals(idx);
+			idx = 0;
+		}
+		Tw_1 = T_layers[1][idx];
+		Tw_2 = T_layers[10][idx];
+		control_switch_1 = control_lower[idx];
+		control_switch_2 = control_upper[idx];
+		if(control_upper[idx] == 1.0 || control_lower[idx] == 1.0) {
+			heat_needed = TRUE;
+		} else {
+			heat_needed = FALSE;
+		}
+	}
+	if(current_model != FORTRAN && current_model != MULTILAYER){
 		// update temperature and height
 		update_T_and_or_h(nHours);
 	}
 
-	if(Tw > 212.0){
+	if(Tw > 212.0 || Tw_1 > 212.0 || Tw_2 > 212.0){
 		//GL_THROW("the waterheater is boiling!");
 		gl_warning("waterheater:%i is boiling", my->id);
 		/*	TROUBLESHOOT
@@ -746,7 +957,6 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 			GL_THROW("waterheater load shape has an unknown state!");
 			break;
 	}
-
 	return TS_NEVER;
 	//return residential_enduse::sync(t0,t1);
 }
@@ -759,14 +969,24 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	double internal_gain = 0.0;
 	double nHours = (gl_tohours(t1) - gl_tohours(t0))/TS_SECOND;
 	double Tamb = get_Tambient(location);
+	int multilayer_transition_time = 0;
 	int i = 0;
+	int dt = (int)(t1-t0);
 	// use re_override to control heat_needed state
 	// runs after thermostat() but before "the usual" calculations
 	if(current_model != FORTRAN){
 		if(re_override == OV_ON){
 			heat_needed = TRUE;
+			if(current_model == MULTILAYER) {
+				control_upper[0] = 1.0;
+				control_lower[0] = 0.0;
+			}
 		} else if(re_override == OV_OFF){
 			heat_needed = FALSE;
+			if(current_model == MULTILAYER) {
+				control_upper[0] = 0.0;
+				control_lower[0] = 0.0;
+			}
 		}
 	}
 
@@ -774,15 +994,27 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 		heat_needed = FALSE;
 		is_waterheater_on = 0;
 	}
-
-
+	if(Tw_1 > 212.0 - (deadband_1/2.0)) {
+		heat_needed = FALSE;
+		control_upper[0] = 0.0;
+		control_lower[0] = 0.0;
+	}
 	TIMESTAMP t2 = residential_enduse::sync(t0,t1);
 	
 	// Now find our current temperatures and boundary height...
 	// And compute the time to the next transition...
 	//Adjusted because shapers go on sync, not presync
-	if(current_model != FORTRAN){
+	if(current_model != FORTRAN && current_model != MULTILAYER){
 		set_time_to_transition();
+	}
+	if(current_model == MULTILAYER) {
+
+		if(dt == last_transition_time || conditions_changed){
+			multilayer_transition_time = multilayer_time_to_transition();
+			last_time_calculate_state_change_called = t1;
+		} else {
+			multilayer_transition_time = last_transition_time - dt;
+		}
 	}
 	// determine internal gains
 	if (location == INSIDE){
@@ -797,6 +1029,15 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 			internal_gain += tank_UA * (Tlower - Tamb) * (1 - h / height);
 			//Subtract heat drawn in from heat pump
 			if(heat_mode == HEAT_PUMP){
+				internal_gain -= (actual_kW() * (HP_COP - 1) * BTUPHPKW);
+			}
+		} else if(this->current_model == MULTILAYER) {
+			//TODO: update internal gain from all layers in the tank.
+			internal_gain = A_bottom*U_val*(T_layers[1][0] - Tamb) + A_top*U_val*(T_layers[10][0] - Tamb);
+			for(int i=2; i<=9; i++) {
+				internal_gain += A_layer*U_val*(T_layers[i][0] - Tamb);
+			}
+			if(heat_mode == HEAT_PUMP) {
 				internal_gain -= (actual_kW() * (HP_COP - 1) * BTUPHPKW);
 			}
 		} else {
@@ -909,20 +1150,29 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	// update the previous load property before returning from sync
 	prev_load = actual_load;
-
 //	gl_enduse_sync(&(residential_enduse::load),t1);
 	if(current_model != FORTRAN){
-		if(re_override == OV_NORMAL){
-			if (time_to_transition >= (1.0/3600.0))	// 0.0167 represents one second
-			{
-				TIMESTAMP t_to_trans = (TIMESTAMP)(t1+time_to_transition*3600.0/TS_SECOND);
-				return -(t_to_trans); // negative means soft transition
+		if(current_model != MULTILAYER) {
+			if(re_override == OV_NORMAL){
+				if (time_to_transition >= (1.0/3600.0))	// 0.0167 represents one second
+				{
+					TIMESTAMP t_to_trans = (TIMESTAMP)(t1+time_to_transition*3600.0/TS_SECOND);
+					return -(t_to_trans); // negative means soft transition
+				}
+				// less than one second means never
+				else
+					return TS_NEVER;
+			} else {
+				return TS_NEVER; // keep running until the forced state ends
 			}
-			// less than one second means never
-			else
-				return TS_NEVER;
 		} else {
-			return TS_NEVER; // keep running until the forced state ends
+			TIMESTAMP t_to_trans = (TIMESTAMP)(t1+multilayer_transition_time);
+			last_transition_time = multilayer_transition_time;
+			if(t_to_trans < t2) {
+				return -t_to_trans;
+			} else {
+				return t2;
+			}
 		}
 	} else {
 		if(fwh_sim_time < t2){
@@ -1502,12 +1752,195 @@ double waterheater::get_Tambient(enumeration loc)
 
 void waterheater::wrong_model(WRONGMODEL msg)
 {
-	char *errtxt[] = {"model is not one-zone","model is not two-zone"};
+	const char *errtxt[] = {"model is not one-zone","model is not two-zone"};
 	OBJECT *obj = OBJECTHDR(this);
 	gl_warning("%s (waterheater:%d): %s", obj->name?obj->name:"(anonymous object)", obj->id, errtxt[msg]);
 	throw msg; // this must be caught by the waterheater code, not by the core
 }
 
+/*
+ * calculate the next state change for the multilevel waterheater
+ */
+int waterheater::multilayer_time_to_transition() {
+	int t_return = 0;
+	int time_new = 0;
+	int time_now = 0;
+	int time_cap =(int)(gl_globalstoptime - gl_globalclock);
+	bool state_changed = false;
+
+	if(re_override == OV_ON || re_override == OV_OFF) {
+		if(time_cap > 300) {
+			time_cap = 300;
+		}
+	}
+	//auto start = std::chrono::high_resolution_clock::now();
+	while(!state_changed) {
+		time_new = time_now + 1;
+		if(time_new >= time_cap) {
+			break;
+		}
+		control_temp[0] = control_lower[time_now];
+		control_temp[1] = control_upper[time_now];
+		calculate_waterheater_matrices(time_now);
+		for(int i=0; i<number_of_states; i++) {
+			T_now[i] = T_layers[i][time_now];
+		}
+		product1 = multiply_waterheater_matrices(A_matrix, T_now);
+		product2 = multiply_waterheater_matrices(B_control, control_temp);
+		dT_dt.clear();
+		for(int i=0; i<number_of_states; i++) {
+			dT_dt.push_back(product1[i] + product2[i]);//should be deg F/hr
+			T_new[i] = (T_now[i] + (dT_dt[i]*(int)discrete_step_size/3600.0));
+			T_layers[i].push_back(T_new[i]);
+		}
+		// control logic for upper layer
+		if(T_layers[10][time_new] >= Tmax_upper) {
+			control_upper.push_back(0.0);
+		} else if(T_layers[10][time_new] <= Tmin_upper) {
+			control_upper.push_back(1.0);
+		} else {
+			control_upper.push_back(control_upper[time_now]);
+		}
+		// control logic for lower
+		if(T_layers[1][time_new] >= Tmax_lower || control_upper[time_new] == 1.0) {
+			control_lower.push_back(0.0);
+		} else if(T_layers[1][time_new] <= Tmin_lower && control_upper[time_new] == 0.0) {
+			control_lower.push_back(1.0);
+		} else {
+			control_lower.push_back(control_lower[time_now]);
+		}
+		if(re_override == OV_ON) {
+			control_lower[time_new] = 0.0;
+			control_upper[time_new] = 1.0;
+		} else if(re_override == OV_OFF) {
+			control_lower[time_new] = 0.0;
+			control_upper[time_new] = 0.0;
+		}
+		if(control_upper[time_now] != control_upper[time_new] || control_lower[time_now] != control_lower[time_new]) {
+			state_changed = true;
+		}
+		time_now += 1;
+	}
+	t_return = time_new*(int)discrete_step_size;
+//	auto stop = std::chrono::high_resolution_clock::now();
+//	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+//	std::cout << "waterheater while loop took: " << duration.count() << " microseconds" << std::endl;
+//	std::cout << "waterheater calculates " << time_new << " seconds to next state changes." << std::endl;
+	return t_return;
+}
+
+void waterheater::calculate_waterheater_matrices(int time_now) {
+    // set all values to zero.
+    for (size_t i = 0; i < number_of_states; i++) {
+        std::fill(A_plug[i].begin(), A_plug[i].end(), 0.0);
+        std::fill(A_circular_flow[i].begin(), A_circular_flow[i].end(), 0.0);
+        std::fill(A_matrix[i].begin(), A_matrix[i].end(), 0.0);
+    }
+
+	// mixing valve operation
+	double mixing_fraction;
+	if(T_mixing_valve > T_layers[10][time_now]) {
+			mixing_fraction = 1.0;
+	}
+	else{
+		mixing_fraction = (T_mixing_valve - Tinlet)/(T_layers[10][time_now] - Tinlet);
+	}
+
+	int i;
+	int rows = number_of_states - 1;
+	water_demand = water_demand*mixing_fraction;
+	double a_plug_coefficient = (water_demand*60.0)/(GALPCF*V_layer);
+	for(i=1; i<=rows-1; i++) {
+		A_plug[i][i-1] = a_plug_coefficient;
+		A_plug[i][i] = -1.0*a_plug_coefficient;
+	}
+	int start_index_1 = 1;
+	int end_index_1 = start_index_1 + number_of_mixing_zone_disks + number_of_regular_disks;
+	int start_index_2 = end_index_1 + 1;
+	int end_index_2 = start_index_2 + number_of_mixing_zone_disks + number_of_regular_disks;
+	for(i=start_index_1; i<=end_index_1; i++) {
+		A_circular_flow[i][i-1] = a_circular_const*control_lower[time_now];
+		A_circular_flow[i][i] = -2.0*a_circular_const*control_lower[time_now];
+		A_circular_flow[i][i+1] = a_circular_const*control_lower[time_now];
+	}
+	A_circular_flow[start_index_1][start_index_1-1] = 0.0;
+	A_circular_flow[start_index_1][start_index_1] = -1.0*a_circular_const*control_lower[time_now];
+	A_circular_flow[end_index_1][end_index_1] = -1.0*a_circular_const*control_lower[time_now];
+	A_circular_flow[end_index_1][end_index_1+1] = 0.0;
+	for (i=start_index_2;i<=end_index_2;i++){
+		A_circular_flow[i][i-1] = a_circular_const*control_upper[time_now];
+		A_circular_flow[i][i] = -2.0*a_circular_const*control_upper[time_now];
+		A_circular_flow[i][i+1] = a_circular_const*control_upper[time_now];
+	}
+	A_circular_flow[start_index_2][start_index_2-1] = 0.0;
+	A_circular_flow[start_index_2][start_index_2] = -1.0*a_circular_const*control_upper[time_now];
+	A_circular_flow[end_index_2][end_index_2] = -1.0*a_circular_const*control_upper[time_now];
+	A_circular_flow[end_index_2][end_index_2+1] = 0.0;
+	for(i=0; i<number_of_states; i++) {
+		for(int j=0; j<number_of_states; j++) {
+			A_matrix[i][j] = A_diffusion[i][j] + A_loss[i][j] + A_plug[i][j] + A_circular_flow[i][j];
+		}
+	}
+}
+
+void waterheater::reinitialize_internals(int dt) {
+	double init_control_upper;
+	double init_control_lower;
+	vector<double> init_T_layers;
+	init_control_upper = control_upper[dt];
+	init_control_lower = control_lower[dt];
+
+	init_T_layers.reserve(number_of_states);
+	for(int i=0; i<number_of_states; i++) {
+		init_T_layers.push_back(T_layers[i][dt]);
+	}
+	control_upper.clear();
+	control_lower.clear();
+
+	for(int i=0; i<number_of_states; i++) {
+	    T_layers[i].clear();
+        T_layers[i].push_back(init_T_layers[i]);
+	}
+	T_layers[0][0] = Tinlet;
+	T_layers[number_of_states -1][0] = get_Tambient(location);
+	Tmax_lower = tank_setpoint_1 + (deadband_1/2.0);
+	Tmin_lower = tank_setpoint_1 - (deadband_1/2.0);
+	Tmax_upper = tank_setpoint_2 + (deadband_2/2.0);
+	Tmin_upper = tank_setpoint_2 - (deadband_2/2.0);
+	// control logic for upper layer
+	if(T_layers[10][0] >= Tmax_upper) {
+		control_upper.push_back(0.0);
+	} else if(T_layers[10][0] <= Tmin_upper) {
+		control_upper.push_back(1.0);
+	} else {
+		control_upper.push_back(init_control_upper);
+	}
+	// control logic for lower
+	if(T_layers[1][0] >= Tmax_lower || control_upper[0] == 1.0) {
+		control_lower.push_back(0.0);
+	} else if(T_layers[1][0] <= Tmin_lower && control_upper[0] == 0.0) {
+		control_lower.push_back(1.0);
+	} else {
+		control_lower.push_back(init_control_lower);
+	}
+	if(re_override == OV_ON) {
+		control_lower[0] = 0.0;
+		control_upper[0] = 1.0;
+	} else if(re_override == OV_OFF) {
+		control_lower[0] = 0.0;
+		control_upper[0] = 0.0;
+	}
+}
+
+std::vector<double> waterheater::multiply_waterheater_matrices(vector<vector<double>> &a, vector<double> &b) {
+    auto rv = vector<double>(a.size());
+	for(int i=0; i<a.size(); i++) {
+		for(int j=0; j<a[i].size(); j++){
+            rv[i] += a[i][j] * b[j];
+		}
+	}
+	return std::move(rv);
+}
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
@@ -1587,8 +2020,10 @@ EXPORT TIMESTAMP plc_waterheater(OBJECT *obj, TIMESTAMP t0)
 		obj->clock = t0;  //set the clock if it has not been set yet
 
 	waterheater *my = OBJECTDATA(obj,waterheater);
-	my->thermostat(obj->clock, t0);
-	
+	if(my->current_model != 4) {
+		my->thermostat(obj->clock, t0);
+	}
+
 	// no changes to timestamp will be made by the internal water heater thermostat
 	/// @todo If external plc codes return a timestamp, it will allow sync sooner but not later than water heater time to transition (ticket #147)
 	return TS_NEVER;  

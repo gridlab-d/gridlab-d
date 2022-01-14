@@ -159,7 +159,7 @@ object <class>[:<spec>] { // spec may be <id>, or <startid>..<endid>, or ..<coun
 #define MACRO "#"
 #endif
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <io.h>
 #include <process.h>
 #include <direct.h>
@@ -565,7 +565,7 @@ static int mkdirs(char *path)
 	int rc;
 	//struct stat st;
 
-#ifdef WIN32
+#ifdef _WIN32
 #	define PATHSEP '\\'
 #	define mkdir(P,M) _mkdir((P)) // windows does not use mode info
 #	define access _access
@@ -779,7 +779,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 				char ldstr[1024];
 				char mopt[8]="";
 				char *libs = "-lstdc++";
-#ifdef WIN32
+#ifdef _WIN32
 				snprintf(mopt,sizeof(mopt),"-m%d",sizeof(void*)*8);
 				libs = "";
 #endif
@@ -1021,7 +1021,7 @@ static int resolve_object(UNRESOLVED *item, char *filename)
 		for ( obj = object_get_first() ; obj != NULL ; obj = object_get_next(obj) )
 		{
 			char value[1024];
-			if ( object_get_child_count(obj)==0 && object_get_value_by_name(obj,propname,value,sizeof(value))!=NULL && strcmp(value,target)==0 )
+			if ( object_get_child_count(obj)==0 && object_get_value_by_name(obj,propname,value,sizeof(value))!='\0' && strcmp(value,target)==0 )
 			{
 				object_set_parent(*(OBJECT**)(item->ref),obj);
 				break;
@@ -4049,7 +4049,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 				for ( target = object_get_first() ; target != NULL ; target = object_get_next(target) )
 				{
 					char value[1024];
-					if ( object_get_child_count(target)==0 && object_get_value_by_name(target,targetprop,value,sizeof(value))!=NULL && strcmp(value,targetvalue)==0 )
+					if ( object_get_child_count(target)==0 && object_get_value_by_name(target,targetprop,value,sizeof(value))!='\0' && strcmp(value,targetvalue)==0 )
 					{
 						object_set_parent(obj,target);
 						break;
@@ -4073,7 +4073,7 @@ static int object_properties(PARSER, CLASS *oclass, OBJECT *obj)
 					output_error_raw("%s(%d): cannot inherit from an parent that hasn't been resolved yet or isn't specified", filename, linenum);
 					REJECT;
 				}
-				else if ( object_get_value_by_name(obj->parent,propname,value,sizeof(value))==NULL )
+				else if ( object_get_value_by_name(obj->parent,propname,value,sizeof(value))=='\0' )
 				{
 					output_error_raw("%s(%d): unable to get value of inherit property '%s'", filename, linenum, propname);
 					REJECT;
@@ -6004,12 +6004,38 @@ static int buffer_read_alt(FILE *fp, char *buffer, char *filename, int size)
 	{
 		int len;
 		char subst[65536];
+		char *c;
+		
+		/* comments must have preceding whitespace (or tab) in macros */
+		/* Expanded to handle units in global sets */
+		if (line[0]=='#')
+		{
+			/* Trim off a comment with a space */
+			c = strstr(line, " " COMMENT);
 
-		/* comments must have preceding whitespace in macros */
-		char *c = line[0]!='#'?strstr(line,COMMENT):strstr(line, " " COMMENT);
+			if (c!=NULL) /* truncate at comment */
+			{
+				strcpy(c,"\n");
+			}
+			else	/* No space comment, see if a tab comment exists */
+			{
+				/* See if it has a tab instead */
+				c = strstr(line, "\t" COMMENT);
+
+				/* Trim, if necessary */
+				if (c!=NULL)
+					strcpy(c,"\n");
+			}
+		}
+		else
+		{
+			c = strstr(line,COMMENT);	
+
+			if (c!=NULL) /* truncate at comment */
+				strcpy(c,"\n");
+		}
 		_linenum++;
-		if (c!=NULL) /* truncate at comment */
-			strcpy(c,"\n");
+		
 		len = (int)strlen(line);
 		if (len>=size-1){
 			output_error("load.c: buffer exhaustion reading %i lines past line %i", _linenum, linenum);
@@ -6230,7 +6256,7 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 /** @return 1 if the variable is autodefined */
 int is_autodef(char *value)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	if ( strcmp(value,"WINDOWS")==0 ) return 1;
 #elif defined APPLE
 	if ( strcmp(value,"APPLE")==0 ) return 1;
@@ -6317,7 +6343,7 @@ void* start_process(const char *cmd)
 	return threadlist;
 }
 
-#ifdef WIN32
+#ifdef _WIN32
 /* TODO: move this to a better place */
 char *strsep(char **from, const char *delim) {
     char *s, *dp, *ret;
@@ -6641,7 +6667,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		//if (sscanf(term+1,"%[^\n\r]",value)==1)
 		strcpy(value, strip_right_white(term+1));
 		if(1){
-#ifdef WIN32
+#ifdef _WIN32
 			putenv(value);
 #else
 			var = strtok_r(value, "=", &save);

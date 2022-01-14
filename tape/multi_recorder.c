@@ -154,7 +154,7 @@ static int multi_recorder_open(OBJECT *obj)
 			// write header into temp file
 			fprintf(my->multifp,"# file...... %s\n", my->file);
 			fprintf(my->multifp,"# date...... %s", asctime(localtime(&now)));
-#ifdef WIN32
+#ifdef _WIN32
 			fprintf(my->multifp,"# user...... %s\n", getenv("USERNAME"));
 			fprintf(my->multifp,"# host...... %s\n", getenv("MACHINENAME"));
 #else
@@ -167,7 +167,7 @@ static int multi_recorder_open(OBJECT *obj)
 				fprintf(my->multifp,"# target.... (none)\n");
 			}
 			fprintf(my->multifp,"# trigger... %s\n", my->trigger[0]=='\0'?"(none)":my->trigger);
-			fprintf(my->multifp,"# interval.. %d\n", my->interval);
+			fprintf(my->multifp,"# interval.. %lld\n", my->interval);
 			fprintf(my->multifp,"# limit..... %d\n", my->limit);
 			fprintf(my->multifp,"# property.. %s\n", my->property);
 			//fprintf(my->multifp,"# timestamp,%s\n", my->property);
@@ -365,7 +365,7 @@ static int multi_recorder_open(OBJECT *obj)
 						strcpy(propstr, bigpropstr);
 					} else {
 						// has explicit unit
-						if(2 == sscanf(bigpropstr, "%[A-Za-z0-9_.][%[^]\n,\0]", propstr, unitstr)){
+						if(2 == sscanf(bigpropstr, "%[A-Za-z0-9_.][%[^]\n0]", propstr, unitstr)){
 							unit = gl_find_unit(unitstr);
 							if(unit == 0){
 								gl_error("multi_recorder:%d: unable to find unit '%s' for property '%s'", obj->id, unitstr, propstr);
@@ -423,7 +423,7 @@ static int multi_recorder_open(OBJECT *obj)
 			case HU_NONE:
 				strcpy(unit_buffer, my->property);
 				for(token = strtok(unit_buffer, ","); token != NULL; token = strtok(NULL, ",")){
-					if(2 == sscanf(token, "%[A-Za-z0-9_:.][%[^]\n,\0]", propstr, unitstr)){
+					if(2 == sscanf(token, "%[A-Za-z0-9_:.][%[^]\n0]", propstr, unitstr)){
 						; // no logic change
 					}
 					// print just the property, regardless of type or explicitly declared property
@@ -602,7 +602,7 @@ RECORDER_MAP *link_multi_properties(OBJECT *obj, char *property_list)
 
 		// everything that looks like a property name, then read units up to ]
 		while (isspace(*item)) item++;
-		if(2 == sscanf(item,"%[A-Za-z0-9_.][%[^]\n,\0]", pstr, ustr)){
+		if(2 == sscanf(item,"%[A-Za-z0-9_.][%[^]\n0]", pstr, ustr)){
 			unit = gl_find_unit(ustr);
 			if(unit == NULL){
 				gl_error("multirecorder: unable to find unit '%s' for property '%s' in object '%s %i'", ustr,pstr,target_obj->oclass->name, target_obj->id);

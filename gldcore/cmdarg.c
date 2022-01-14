@@ -13,7 +13,7 @@
 
 #include <stdio.h>
 #include <string.h>
-#ifdef WIN32 && !(__MINGW__)
+#ifdef _WIN32 && !(__MINGW__)
 #include <direct.h>
 #else
 #include <unistd.h>
@@ -220,7 +220,7 @@ static STATUS no_cmdargs()
 		char cmd[1024];
 
 		/* enter server mode and wait */
-#ifdef WIN32
+#ifdef _WIN32
 		if ( htmlfile[1]!=':' )
 			sprintf(htmlfile,"%s\\gridlabd.htm", global_workdir);
 		output_message("opening html page '%s'", htmlfile);
@@ -389,7 +389,7 @@ static int server_inaddr(int argc, char *argv[])
 }
 static int version(int argc, char *argv[])
 {
-	output_message("GridLAB-D %d.%d.%d-%d (%s) %d-bit %s %s", 
+	output_message("GridLAB-D %d.%d.%d-%d (%.48s) %d-bit %s %s", 
 		global_version_major, global_version_minor, global_version_patch, 
 		global_version_build, global_version_branch, 8*sizeof(void*), global_platform,
 #ifdef _DEBUG
@@ -988,7 +988,7 @@ static int info(int argc, char *argv[])
 	if ( argc>1 )
 	{
 		char cmd[1024];
-#ifdef WIN32
+#ifdef _WIN32
 		sprintf(cmd,"start %s \"%s%s\"", global_browser, global_infourl, argv[1]);
 #elif defined(MACOSX)
 		sprintf(cmd,"open -a %s \"%s%s\"", global_browser, global_infourl, argv[1]);
@@ -1188,7 +1188,10 @@ static int locktest(int argc, char *argv[])
 	test_lock();
 	return CMDOK;
 }
-
+static int lock(int argc, char *argv[]){
+	global_lock_enabled = !global_lock_enabled;
+	return 0;
+}
 static int workdir(int argc, char *argv[])
 {
 	if ( argc<2 )
@@ -1231,6 +1234,7 @@ static CMDARG main[] = {
 	{"verbose",		"v",	verbose,		NULL, "Toggles output of verbose messages" },
 	{"warn",		"w",	warn,			NULL, "Toggles display of warning messages" },
 	{"workdir",		"W",	workdir,		NULL, "Sets the working directory" },
+	{"lock",        "l",    lock,           NULL, "Toggles read and write locks"},
 	
 	{NULL,NULL,NULL,NULL, "Global and module control"},
 	{"define",		"D",	define,			"<name>=[<module>:]<value>", "Defines or sets a global (or module) variable" },

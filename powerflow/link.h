@@ -10,6 +10,7 @@ EXPORT int isa_link(OBJECT *obj, char *classname);
 EXPORT SIMULATIONMODE interupdate_link(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 EXPORT int updatepowercalc_link(OBJECT *obj);
 EXPORT int calculate_overlimit_link(OBJECT *obj, double *overload_value, bool *overloaded);
+EXPORT int currentcalculation_link(OBJECT *obj, int nodecall, bool link_fault_mode);
 
 #define impedance(X) (B_mat[X][X])
 
@@ -63,10 +64,12 @@ public: /// @todo make this private and create interfaces to control values
 	void set_flow_directions();
 	int link_fault_on(OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time);		//Function to create fault on line
 	int link_fault_off(int *implemented_fault, char *imp_fault_name);	//Function to remove fault from line
+	int clear_fault_only(int *implemented_fault, char *imp_fault_name); //Function to remove the fault from the link object but not restore the system
 	double mean_repair_time;
 	double *link_limits[2][3];		/**< pointers for line limits (emergency vs. continuous) for link objects and by phase - pointered for variation */
 	double link_rating[2][3];		/**< Values for current line rating - gives individual segments the ability to set */
 	double *get_double(OBJECT *obj, char *name);	/**< Gets address of double - mainly for mean_repair_time */
+	bool overloaded_status;
 public:
 	enumeration status;	///< link status (open disconnect nodes)
 	enumeration prev_status;	///< Previous link status (used for recalculation detection)
@@ -131,7 +134,7 @@ public:
 
 	void NR_link_presync_fxn(void);
 	void BOTH_link_postsync_fxn(void);
-	void perform_limit_checks(double *over_limit_value, bool *over_limits);
+	bool perform_limit_checks(double *over_limit_value, bool *over_limits);
 	double inrush_tol_value;	///< Tolerance value (of vdiff on the line ends) before "inrush convergence" is accepted
 	INRUSHINTMETHOD inrush_int_method_inductance;	//Individual mode selection
 	INRUSHINTMETHOD inrush_int_method_capacitance;

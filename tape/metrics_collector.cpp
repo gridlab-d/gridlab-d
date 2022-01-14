@@ -43,7 +43,11 @@ PROPERTY *metrics_collector::propHouseHVAC = NULL;
 PROPERTY *metrics_collector::propHouseAirTemp = NULL;
 PROPERTY *metrics_collector::propHouseCoolSet = NULL;
 PROPERTY *metrics_collector::propHouseHeatSet = NULL;
+PROPERTY *metrics_collector::propHouseSystemMode = NULL;
 PROPERTY *metrics_collector::propWaterLoad = NULL;
+PROPERTY *metrics_collector::propWaterSetPoint = NULL;
+PROPERTY *metrics_collector::propWaterDemand = NULL;
+PROPERTY *metrics_collector::propWaterTemp = NULL;
 PROPERTY *metrics_collector::propInverterS = NULL;
 PROPERTY *metrics_collector::propCapCountA = NULL;
 PROPERTY *metrics_collector::propCapCountB = NULL;
@@ -53,6 +57,12 @@ PROPERTY *metrics_collector::propRegCountB = NULL;
 PROPERTY *metrics_collector::propRegCountC = NULL;
 PROPERTY *metrics_collector::propSwingSubLoad = NULL;
 PROPERTY *metrics_collector::propSwingMeterS = NULL;
+
+PROPERTY *metrics_collector::propTransformerOverloaded = NULL;
+PROPERTY *metrics_collector::propLineOverloaded = NULL;
+
+PROPERTY *metrics_collector::propChargeRate = NULL;
+PROPERTY *metrics_collector::propBatterySOC = NULL;
 
 bool metrics_collector::log_set = true;  // if false, the first (some class) instance will print messages to console
 
@@ -97,11 +107,20 @@ int metrics_collector::create(){
 	hvac_load_array = NULL;
 	wh_load_array = NULL;
 	air_temperature_array = NULL;
-	dev_cooling_array = NULL;
-	dev_heating_array = NULL;
+	set_cooling_array = NULL;
+	set_heating_array = NULL;
 	count_array = NULL;
 	real_power_loss_array = NULL;
 	reactive_power_loss_array = NULL;
+	wh_setpoint_array = NULL;
+	wh_demand_array = NULL;
+	wh_temp_array = NULL;
+
+	trans_overload_status_array = NULL;
+	line_overload_status_array = NULL;
+
+	charge_rate_array = NULL;
+	battery_SOC_array = NULL;
 
 	metrics = NULL;
 
@@ -152,9 +171,13 @@ int metrics_collector::init(OBJECT *parent){
 		if (propHouseAirTemp == NULL) propHouseAirTemp = gl_get_property (parent, "air_temperature");
 		if (propHouseCoolSet == NULL) propHouseCoolSet = gl_get_property (parent, "cooling_setpoint");
 		if (propHouseHeatSet == NULL) propHouseHeatSet = gl_get_property (parent, "heating_setpoint");
+		if (propHouseSystemMode == NULL) propHouseSystemMode = gl_get_property (parent, "system_mode");
 	} else if (gl_object_isa(parent,"waterheater")) {
 		parent_string = "waterheater";
 		if (propWaterLoad == NULL) propWaterLoad = gl_get_property (parent, "actual_load");
+		if (propWaterSetPoint == NULL) propWaterSetPoint = gl_get_property (parent, "tank_setpoint");
+		if (propWaterDemand == NULL) propWaterDemand = gl_get_property (parent, "water_demand");
+		if (propWaterTemp == NULL) propWaterTemp = gl_get_property (parent, "temperature");
 	} else if (gl_object_isa(parent,"inverter")) {
 		parent_string = "inverter";
 		if (propInverterS == NULL) propInverterS = gl_get_property (parent, "VA_Out");
@@ -209,8 +232,19 @@ int metrics_collector::init(OBJECT *parent){
 				if (propSwingMeterS == NULL) propSwingMeterS = gl_get_property (parent, "measured_power");
 			}
 		}
-	} else {
-		gl_error("metrics_collector allows only these parents: triplex meter, house, waterheater, inverter, substation, meter, capacitor, regulator");
+	} else if (gl_object_isa(parent, "transformer")) {
+		parent_string = "transformer";
+		if (propTransformerOverloaded == NULL) propTransformerOverloaded = gl_get_property (parent, "overloaded_status");
+	} else if (gl_object_isa(parent, "line")) {
+		parent_string = "line";
+		if (propLineOverloaded == NULL) propLineOverloaded = gl_get_property (parent, "overloaded_status");
+	} else if (gl_object_isa(parent, "evcharger_det")) {
+		parent_string = "evcharger_det";
+		if (propChargeRate == NULL) propChargeRate = gl_get_property (parent, "charge_rate");
+		if (propBatterySOC == NULL) propBatterySOC = gl_get_property (parent, "battery_SOC");
+	}
+	else {
+		gl_error("metrics_collector allows only these parents: triplex meter, house, waterheater, inverter, substation, meter, capacitor, regulator, transformer, line.");
 		/*  TROUBLESHOOT
 		Check the parent object of the metrics_collector.
 		*/
@@ -318,6 +352,39 @@ int metrics_collector::init(OBJECT *parent){
 			strcpy (parent_name, "Swing Bus Metrics");
 		}
 		metrics = (double *)gl_malloc(FDR_ARRAY_SIZE*sizeof(double));
+		if (metrics == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate JSON metrics array",obj->id);
+		}
+	}
+	else if (strcmp(parent_string, "transformer") == 0)
+	{
+		if (parent->name != NULL) {
+			strcpy (parent_name, parent->name);
+		}
+		metrics = (double *)gl_malloc(TRANS_OVERLOAD_ARRAY_SIZE*sizeof(double));
+		if (metrics == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate JSON metrics array",obj->id);
+		}
+	}
+	else if (strcmp(parent_string, "line") == 0)
+	{
+		if (parent->name != NULL) {
+			strcpy (parent_name, parent->name);
+		}
+		metrics = (double *)gl_malloc(LINE_OVERLOAD_ARRAY_SIZE*sizeof(double));
+		if (metrics == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate JSON metrics array",obj->id);
+		}
+	}
+	else if (strcmp(parent_string, "evcharger_det") == 0)
+	{
+		if (parent->name != NULL) {
+			strcpy (parent_name, parent->name);
+		}
+		metrics = (double *)gl_malloc(EVCHARGER_DET_ARRAY_SIZE*sizeof(double));
 		if (metrics == NULL)
 		{
 			GL_THROW("metrics_collector %d::init(): Failed to allocate JSON metrics array",obj->id);
@@ -458,11 +525,11 @@ int metrics_collector::init(OBJECT *parent){
 		}
 
 		// Allocate air temperature deviation from cooling setpointarray
-		dev_cooling_array = (double *)gl_malloc(vector_length*sizeof(double));
+		set_cooling_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
-		if (dev_cooling_array == NULL)
+		if (set_cooling_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocate dev_cooling_array array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate set_cooling_array array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -470,11 +537,11 @@ int metrics_collector::init(OBJECT *parent){
 		}
 
 		// Allocate air temperature deviation from heating setpointarray
-		dev_heating_array = (double *)gl_malloc(vector_length*sizeof(double));
+		set_heating_array = (double *)gl_malloc(vector_length*sizeof(double));
 		// Check
-		if (dev_heating_array == NULL)
+		if (set_heating_array == NULL)
 		{
-			GL_THROW("metrics_collector %d::init(): Failed to allocate dev_heating_array array",obj->id);
+			GL_THROW("metrics_collector %d::init(): Failed to allocate set_heating_array array",obj->id);
 			/*  TROUBLESHOOT
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
@@ -487,8 +554,9 @@ int metrics_collector::init(OBJECT *parent){
 			total_load_array[curr_index] = 0.0;
 			hvac_load_array[curr_index] = 0.0;
 			air_temperature_array[curr_index] = 0.0;
-			dev_cooling_array[curr_index] = 0.0;
-			dev_heating_array[curr_index] = 0.0;
+			set_cooling_array[curr_index] = 0.0;
+			set_heating_array[curr_index] = 0.0;
+			system_mode = 0.0;
 		}
 	}
 	// If parent is waterheater
@@ -503,6 +571,50 @@ int metrics_collector::init(OBJECT *parent){
 			While attempting to allocate the array, an error was encountered.
 			Please try again.  If the error persists, please submit a bug report via the Trac system.
 			*/
+		}
+
+		// Allocate wh_setpoint array
+		wh_setpoint_array = (double *)gl_malloc(vector_length*sizeof(double));
+		// Check
+		if (wh_setpoint_array == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate wh_setpoint array",obj->id);
+			/*  TROUBLESHOOT
+			While attempting to allocate the array, an error was encountered.
+			Please try again.  If the error persists, please submit a bug report via the Trac system.
+			*/
+		}
+
+		// Allocate wh_demand array
+		wh_demand_array = (double *)gl_malloc(vector_length*sizeof(double));
+		// Check
+		if (wh_demand_array == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate wh_demand array",obj->id);
+			/*  TROUBLESHOOT
+			While attempting to allocate the array, an error was encountered.
+			Please try again.  If the error persists, please submit a bug report via the Trac system.
+			*/
+		}
+
+		// Allocate wh_temp array
+		wh_temp_array = (double *)gl_malloc(vector_length*sizeof(double));
+		// Check
+		if (wh_temp_array == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate wh_temp array",obj->id);
+			/*  TROUBLESHOOT
+			While attempting to allocate the array, an error was encountered.
+			Please try again.  If the error persists, please submit a bug report via the Trac system.
+			*/
+		}
+
+		for (curr_index=0; curr_index<vector_length; curr_index++)
+		{
+			wh_load_array[curr_index] = 0.0;
+			wh_setpoint_array[curr_index] = 0.0;
+			wh_demand_array[curr_index] = 0.0;
+			wh_temp_array[curr_index] = 0.0;
 		}
 	}
 	// If parent is inverter
@@ -593,9 +705,61 @@ int metrics_collector::init(OBJECT *parent){
 		}
 		for (int i = 0; i < vector_length; i++) count_array[i] = 0.0;
 	}
+	else if (strcmp(parent_string, "transformer") == 0) {
+		trans_overload_status_array = (int *)gl_malloc(vector_length*sizeof(int));
+		// Check
+		if (trans_overload_status_array == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate overload status array",obj->id);
+			/*  TROUBLESHOOT
+			While attempting to allocate the array, an error was encountered.
+			Please try again.  If the error persists, please submit a bug report via the Trac system.
+			*/
+		}
+		for (int i = 0; i < vector_length; i++) trans_overload_status_array[i] = 0;
+	}
+	else if (strcmp(parent_string, "line") == 0) {
+		line_overload_status_array = (int *)gl_malloc(vector_length*sizeof(int));
+		// Check
+		if (line_overload_status_array == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate overload status array",obj->id);
+			/*  TROUBLESHOOT
+			While attempting to allocate the array, an error was encountered.
+			Please try again.  If the error persists, please submit a bug report via the Trac system.
+			*/
+		}
+		for (int i = 0; i < vector_length; i++) line_overload_status_array[i] = 0;
+	}
+	else if (strcmp(parent_string, "evcharger_det") == 0) {
+		charge_rate_array = (double *)gl_malloc(vector_length*sizeof(double));
+		// Check
+		if (charge_rate_array == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate overload status array",obj->id);
+			/*  TROUBLESHOOT
+			While attempting to allocate the array, an error was encountered.
+			Please try again.  If the error persists, please submit a bug report via the Trac system.
+			*/
+		}
+		battery_SOC_array = (double *)gl_malloc(vector_length*sizeof(double));
+		// Check
+		if (battery_SOC_array == NULL)
+		{
+			GL_THROW("metrics_collector %d::init(): Failed to allocate overload status array",obj->id);
+			/*  TROUBLESHOOT
+			While attempting to allocate the array, an error was encountered.
+			Please try again.  If the error persists, please submit a bug report via the Trac system.
+			*/
+		}
+		for (int i = 0; i < vector_length; i++) {
+			charge_rate_array[i] = 0.0;
+			battery_SOC_array[i] = 0.0;
+		}
+	}
 	// else not possible come to this step
 	else {
-		gl_error("metrics_collector must have a triplex meter, meter, house, waterheater, inverter or swing-bus as its parent");
+		gl_error("metrics_collector must have a triplex meter, meter, house, waterheater, inverter, swing-bus, transformer or line as its parent");
 		/*  TROUBLESHOOT
 		Check the parent object of the metrics_collector. The metrics_collector is only able to be childed via a
 		triplex meter or a house or an inverter when connecting into powerflow systems.
@@ -618,6 +782,9 @@ TIMESTAMP metrics_collector::postsync(TIMESTAMP t0, TIMESTAMP t1) {
 	// recalculate next_time, since we know commit() will fire
 	if (next_write <= t1) {
 		write_now = true;
+	}
+	if (t1 < next_write) {
+		return next_write;
 	}
 	return t1 + interval_length;
 }
@@ -645,7 +812,6 @@ int metrics_collector::commit(TIMESTAMP t1){
 	@return 0 on failure, 1 on success
  **/
 int metrics_collector::read_line(OBJECT *obj){
-
 	// save the actual simulator time
 	time_array[curr_index] = gl_globalclock;
 
@@ -678,27 +844,49 @@ int metrics_collector::read_line(OBJECT *obj){
 		price_parent = *gl_get_double(obj->parent, propMeterPrice);
 		bill_parent = *gl_get_double(obj->parent, propMeterBill);
 
-		// assuming these are three-phase loads; this is the only difference with triplex meters 
+		// these can have one, two or three phases 
 		double va = (*gl_get_complex(obj->parent, propMeterVa)).Mag();   
 		double vb = (*gl_get_complex(obj->parent, propMeterVb)).Mag();   
 		double vc = (*gl_get_complex(obj->parent, propMeterVc)).Mag();
-		double vavg = (va + vb + vc) / 3.0;
-		double vmin = va;
-		double vmax = va;
-		if (vb < vmin) vmin = vb;
-		if (vb > vmax) vmax = vb;
-		if (vc < vmin) vmin = vc;
-		if (vc > vmax) vmax = vc;
+		double nph = 0.0;
+		if (va > 0.0) nph += 1.0;
+		if (vb > 0.0) nph += 1.0;
+		if (vc > 0.0) nph += 1.0;
+		if (nph < 1.0) nph = 1.0;
+		double vavg = (va + vb + vc) / nph;
+		double vmin = vavg;
+		double vmax = vavg;
+		if (va > 0.0) {
+			if (va < vmin) vmin = va;
+			if (va > vmax) vmax = va;
+		}
+		if (vb > 0.0) {
+			if (vb < vmin) vmin = vb;
+			if (vb > vmax) vmax = vb;
+		}
+		if (vc > 0.0) {
+			if (vc < vmin) vmin = vc;
+			if (vc > vmax) vmax = vc;
+		}
 		double vab = (*gl_get_complex(obj->parent, propMeterVab)).Mag();   
 		double vbc = (*gl_get_complex(obj->parent, propMeterVbc)).Mag();   
 		double vca = (*gl_get_complex(obj->parent, propMeterVca)).Mag();
-		double vll = (vab + vbc + vca) / 3.0;
+		double vll = (vab + vbc + vca) / nph;
 		// determine unbalance per C84.1
-		double vdev = fabs(vab - vll);
-		double vdev2 = fabs(vbc - vll);
-		double vdev3 = fabs(vca - vll);
-		if (vdev2 > vdev) vdev = vdev2;
-		if (vdev3 > vdev) vdev = vdev3;
+		double vdev = 0.0;
+		double vdevph;
+		if (vab > 0.0) {
+			vdevph = fabs(vab - vll);
+			if (vdevph > vdev) vdev = vdevph;
+		}
+		if (vbc > 0.0) {
+			vdevph = fabs(vbc - vll);
+			if (vdevph > vdev) vdev = vdevph;
+		}
+		if (vca > 0.0) {
+			vdevph = fabs(vca - vll);
+			if (vdevph > vdev) vdev = vdevph;
+		}
 
 		voltage_vll_array[curr_index] = vll;  // Vll
 		voltage_vln_array[curr_index] = vavg;  // Vln
@@ -709,11 +897,15 @@ int metrics_collector::read_line(OBJECT *obj){
 		total_load_array[curr_index] = *gl_get_double(obj->parent, propHouseLoad);
 		hvac_load_array[curr_index] = *gl_get_double(obj->parent, propHouseHVAC);
 		air_temperature_array[curr_index] = *gl_get_double(obj->parent, propHouseAirTemp);
-		dev_cooling_array[curr_index] = *gl_get_double(obj->parent, propHouseCoolSet);
-		dev_heating_array[curr_index] = *gl_get_double(obj->parent, propHouseHeatSet);
+		set_cooling_array[curr_index] = *gl_get_double(obj->parent, propHouseCoolSet);
+		set_heating_array[curr_index] = *gl_get_double(obj->parent, propHouseHeatSet);
+		system_mode = *gl_get_enum(obj->parent, propHouseSystemMode);
 	}
 	else if (strcmp(parent_string, "waterheater") == 0) {
 		wh_load_array[curr_index] = *gl_get_double(obj->parent, propWaterLoad);
+		wh_setpoint_array[curr_index] = *gl_get_double(obj->parent, propWaterSetPoint);
+		wh_demand_array[curr_index] = *gl_get_double(obj->parent, propWaterDemand);
+		wh_temp_array[curr_index] = *gl_get_double(obj->parent, propWaterTemp);
 	}
 	else if (strcmp(parent_string, "inverter") == 0) {
 		complex VAOut = *gl_get_complex(obj->parent, propInverterS);
@@ -771,16 +963,33 @@ int metrics_collector::read_line(OBJECT *obj){
 		real_power_loss_array[curr_index] = (double)lossesSum.Re();
 		reactive_power_loss_array[curr_index] = (double)lossesSum.Im();
 	}
+	else if (strcmp(parent_string, "transformer") == 0) {
+		if (*gl_get_bool(obj->parent, propTransformerOverloaded)) {
+		  trans_overload_status_array[curr_index] = 1;
+		} else {
+			trans_overload_status_array[curr_index] = 0;
+		}
+	}
+	else if (strcmp(parent_string, "line") == 0) {
+		if (*gl_get_bool(obj->parent, propLineOverloaded)) {
+		  line_overload_status_array[curr_index] = 1;
+		} else {
+			line_overload_status_array[curr_index] = 0;
+		}
+	}
+	else if (strcmp(parent_string, "evcharger_det") == 0) {
+		charge_rate_array[curr_index] = *gl_get_double(obj->parent, propChargeRate);
+		battery_SOC_array[curr_index] = *gl_get_double(obj->parent, propBatterySOC);
+	}
 	// else not possible come to this step
 	else {
-		gl_error("metrics_collector must have a triplex meter, house, waterheater, inverter, swing-bus, capacitor or regulator as its parent");
+		gl_error("metrics_collector must have a triplex meter, house, waterheater, inverter, swing-bus, capacitor, regulator, transformer or line as its parent");
 		/*  TROUBLESHOOT
 		Check the parent object of the metrics_collector. The metrics_collector is only able to be childed via a
 		triplex meter or a house or a waterheater or an inverter or a swing-bus when connecting into powerflow systems.
 		*/
 		return 0;
 	}
-
 
 	// Update index value
 	++curr_index;
@@ -843,7 +1052,7 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics[MTR_MIN_VLL] = findMin(voltage_vll_array, curr_index);
 		metrics[MTR_MAX_VLL] = findMax(voltage_vll_array, curr_index);
 		metrics[MTR_AVG_VLL] = findAverage(voltage_vll_array, curr_index);
-
+#ifdef ALL_MTR_METRICS
 		metrics[MTR_MIN_VLN] = findMin(voltage_vln_array, curr_index);
 		metrics[MTR_MAX_VLN] = findMax(voltage_vln_array, curr_index);
 		metrics[MTR_AVG_VLN] = findAverage(voltage_vln_array, curr_index);
@@ -851,7 +1060,7 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics[MTR_MIN_VUNB] = findMin(voltage_unbalance_array, curr_index);
 		metrics[MTR_MAX_VUNB] = findMax(voltage_unbalance_array, curr_index);
 		metrics[MTR_AVG_VUNB] = findAverage(voltage_unbalance_array, curr_index);
-
+#endif
 		// Voltage above/below ANSI C84 A/B Range
 		double normVol = 1.0, aboveRangeA, belowRangeA, aboveRangeB, belowRangeB, belowOutage;
 		if (strcmp(parent_string, "triplex_meter") == 0) {
@@ -877,23 +1086,33 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		// Voltage above Range A
 		struct vol_violation vol_Vio = findOutLimit(first_write, voltage_vll_array, true, aboveRangeA, curr_index);
 		metrics[MTR_ABOVE_A_DUR] = vol_Vio.durationViolation;
+#ifdef ALL_MTR_METRICS
 		metrics[MTR_ABOVE_A_CNT] = vol_Vio.countViolation;
+#endif
 		// Voltage below Range A
 		vol_Vio = findOutLimit(first_write, voltage_vll_array, false, belowRangeA, curr_index);
 		metrics[MTR_BELOW_A_DUR] = vol_Vio.durationViolation;
+#ifdef ALL_MTR_METRICS
 		metrics[MTR_BELOW_A_CNT] = vol_Vio.countViolation;
+#endif
 		// Voltage above Range B
 		vol_Vio = findOutLimit(first_write, voltage_vll_array, true, aboveRangeB, curr_index);
 		metrics[MTR_ABOVE_B_DUR] = vol_Vio.durationViolation;
+#ifdef ALL_MTR_METRICS
 		metrics[MTR_ABOVE_B_CNT] = vol_Vio.countViolation;
+#endif
 		// Voltage below Range B
 		vol_Vio = findOutLimit(first_write, voltage_vll_array, false, belowRangeB, curr_index);
 		metrics[MTR_BELOW_B_DUR] = vol_Vio.durationViolation;
+#ifdef ALL_MTR_METRICS
 		metrics[MTR_BELOW_B_CNT] = vol_Vio.countViolation;
+#endif
+#ifdef ALL_MTR_METRICS
 		// Voltage below 10% of the norminal voltage rating
 		vol_Vio = findOutLimit(first_write, voltage_vll_array, false, belowOutage, curr_index);
 		metrics[MTR_BELOW_10_DUR] = vol_Vio.durationViolation;
 		metrics[MTR_BELOW_10_CNT] = vol_Vio.countViolation;
+#endif
 	}
 	// If parent is house
 	else if (strcmp(parent_string, "house") == 0) {
@@ -908,13 +1127,23 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics[HSE_MIN_AIR_TEMP] = findMin(air_temperature_array, curr_index);
 		metrics[HSE_MAX_AIR_TEMP] = findMax(air_temperature_array, curr_index);
 		metrics[HSE_AVG_AIR_TEMP] = findAverage(air_temperature_array, curr_index);
-		metrics[HSE_AVG_DEV_COOLING] = findAverage(dev_cooling_array, curr_index);
-		metrics[HSE_AVG_DEV_HEATING] = findAverage(dev_heating_array, curr_index);
+		metrics[HSE_AVG_DEV_COOLING] = findAverage(set_cooling_array, curr_index);
+		metrics[HSE_AVG_DEV_HEATING] = findAverage(set_heating_array, curr_index);
+		metrics[HSE_SYSTEM_MODE] = (double) system_mode;
 	}
 	else if (strcmp(parent_string, "waterheater") == 0) {
 		metrics[WH_MIN_ACTUAL_LOAD] = findMin(wh_load_array, curr_index);
 		metrics[WH_MAX_ACTUAL_LOAD] = findMax(wh_load_array, curr_index);
 		metrics[WH_AVG_ACTUAL_LOAD] = findAverage(wh_load_array, curr_index);
+		metrics[WH_MIN_SETPOINT] = findMin(wh_setpoint_array, curr_index);
+		metrics[WH_MAX_SETPOINT] = findMax(wh_setpoint_array, curr_index);
+		metrics[WH_AVG_SETPOINT] = findAverage(wh_setpoint_array, curr_index);
+		metrics[WH_MIN_DEMAND] = findMin(wh_demand_array, curr_index);
+		metrics[WH_MAX_DEMAND] = findMax(wh_demand_array, curr_index);
+		metrics[WH_AVG_DEMAND] = findAverage(wh_demand_array, curr_index);
+		metrics[WH_MIN_TEMP] = findMin(wh_temp_array, curr_index);
+		metrics[WH_MAX_TEMP] = findMax(wh_temp_array, curr_index);
+		metrics[WH_AVG_TEMP] = findAverage(wh_temp_array, curr_index);
 	}
 	else if (strcmp(parent_string, "inverter") == 0) {
 		metrics[INV_MIN_REAL_POWER] = findMin(real_power_array, curr_index);
@@ -930,6 +1159,14 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 	}
 	else if (strcmp(parent_string, "regulator") == 0) {
 		metrics[REG_OPERATION_CNT] = findMax(count_array, curr_index);
+	}
+	// If parent is transformer
+	else if (strcmp(parent_string, "transformer") == 0) {
+		metrics[TRANS_OVERLOAD_PERC] = countPerc(trans_overload_status_array, curr_index);
+	}
+	// If parent is line
+	else if (strcmp(parent_string, "line") == 0) {
+		metrics[LINE_OVERLOAD_PERC] = countPerc(line_overload_status_array, curr_index);
 	}
 	else if (strcmp(parent_string, "swingbus") == 0) {
 		// real power data
@@ -956,6 +1193,15 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		metrics[FDR_AVG_REAC_LOSS] = findAverage(reactive_power_loss_array, curr_index);
 		metrics[FDR_MED_REAC_LOSS] = findMedian(reactive_power_loss_array, curr_index);
 	}
+	else if (strcmp(parent_string, "evcharger_det") == 0) {
+		metrics[EV_MIN_CHARGE_RATE] = findMin(charge_rate_array, curr_index);
+		metrics[EV_MAX_CHARGE_RATE] = findMax(charge_rate_array, curr_index);
+		metrics[EV_AVG_CHARGE_RATE] = findAverage(charge_rate_array, curr_index);
+
+		metrics[EV_MIN_BATTERY_SOC] = findMin(battery_SOC_array, curr_index);
+		metrics[EV_MAX_BATTERY_SOC] = findMax(battery_SOC_array, curr_index);
+		metrics[EV_AVG_BATTERY_SOC] = findAverage(battery_SOC_array, curr_index);
+	}
 
 	// wrap the arrays for next collection interval
 	if (bOverran) {
@@ -967,9 +1213,8 @@ int metrics_collector::write_line(TIMESTAMP t1, OBJECT *obj){
 		curr_index = 1;
 	}
 
-	next_write = min(next_write + interval_length, gl_globalstoptime);
+	next_write = std::min(next_write + interval_length, gl_globalstoptime);
 	first_write = false;
-
 	return 1;
 }
 
@@ -981,14 +1226,18 @@ void metrics_collector::copyHistories (int from, int to) {
 	if (total_load_array) total_load_array[to] = total_load_array[from];
 	if (hvac_load_array) hvac_load_array[to] = hvac_load_array[from];
 	if (air_temperature_array) air_temperature_array[to] = air_temperature_array[from];
-	if (dev_cooling_array) dev_cooling_array[to] = dev_cooling_array[from];
-	if (dev_heating_array) dev_heating_array[to] = dev_heating_array[from];
+	if (set_cooling_array) set_cooling_array[to] = set_cooling_array[from];
+	if (set_heating_array) set_heating_array[to] = set_heating_array[from];
 	if (wh_load_array) wh_load_array[to] = wh_load_array[from];
 	if (count_array) count_array[to] = count_array[from];
 	if (real_power_array) real_power_array[to] = real_power_array[from];
 	if (reactive_power_array) reactive_power_array[to] = reactive_power_array[from];
 	if (real_power_loss_array) real_power_loss_array[to] = real_power_loss_array[from];
 	if (reactive_power_loss_array) reactive_power_loss_array[to] = reactive_power_loss_array[from];
+	if (trans_overload_status_array) trans_overload_status_array[to] = trans_overload_status_array[from];
+	if (line_overload_status_array) line_overload_status_array[to] = line_overload_status_array[from];
+	if (charge_rate_array) charge_rate_array[to] = charge_rate_array[from];
+	if (battery_SOC_array) battery_SOC_array[to] = battery_SOC_array[from];
 }
 
 void metrics_collector::interpolate (double *a, int idx, double denom, double top) {
@@ -1005,14 +1254,26 @@ void metrics_collector::interpolateHistories (int idx, TIMESTAMP t) {
 	if (total_load_array) interpolate (total_load_array, idx, denom, top);
 	if (hvac_load_array) interpolate (hvac_load_array, idx, denom, top);
 	if (air_temperature_array) interpolate (air_temperature_array, idx, denom, top);
-	if (dev_cooling_array) interpolate (dev_cooling_array, idx, denom, top);
-	if (dev_heating_array) interpolate (dev_heating_array, idx, denom, top);
+	if (set_cooling_array) interpolate (set_cooling_array, idx, denom, top);
+	if (set_heating_array) interpolate (set_heating_array, idx, denom, top);
 	if (wh_load_array) interpolate (wh_load_array, idx, denom, top);
 	if (count_array) interpolate (count_array, idx, denom, top);
 	if (real_power_array) interpolate (real_power_array, idx, denom, top);
 	if (reactive_power_array) interpolate (reactive_power_array, idx, denom, top);
 	if (real_power_loss_array) interpolate (real_power_loss_array, idx, denom, top);
 	if (reactive_power_loss_array) interpolate (reactive_power_loss_array, idx, denom, top);
+	if (charge_rate_array) interpolate (charge_rate_array, idx, denom, top);
+	if (battery_SOC_array) interpolate (battery_SOC_array, idx, denom, top);
+}
+
+double metrics_collector::countPerc(int array[], int length) {
+	double perc;
+	double totalOnes = 0;
+	for (int i = 0; i < length; i++) {
+		if (array[i] == 1) totalOnes++;
+	}
+	perc = 100 * totalOnes/length;
+	return perc;
 }
 
 double metrics_collector::findMax(double array[], int length) {
@@ -1167,24 +1428,27 @@ EXPORT int create_metrics_collector(OBJECT **obj, OBJECT *parent){
 	catch (const char *msg){
 		gl_error("create_metrics_collector: %s", msg);
 	}
-	catch (...){
-		gl_error("create_metrics_collector: unexpected exception caught");
-	}
+    catch( const std::exception& ex){
+        std::cerr << "Unhandled general exception in " << __func__ << ": " << ex.what() << std::endl;
+    }
 	return rv;
 }
 
 EXPORT int init_metrics_collector(OBJECT *obj){
-	metrics_collector *my = OBJECTDATA(obj, metrics_collector);
-	int rv = 0;
-	try {
-		rv = my->init(obj->parent);
-	}
-	catch (char *msg){
-		gl_error("init_metrics_collector: %s", msg);
-	}
-	catch (const char *msg){
-		gl_error("init_metrics_collector: %s", msg);
-	}
+    metrics_collector *my = OBJECTDATA(obj, metrics_collector);
+    int rv = 0;
+    try {
+        rv = my->init(obj->parent);
+    }
+    catch (char *msg) {
+        gl_error("init_metrics_collector: %s", msg);
+    }
+    catch (const char *msg) {
+        gl_error("init_metrics_collector: %s", msg);
+    }
+    catch (const std::exception &ex) {
+        std::cerr << "Unhandled general exception in " << __func__ << ": " << ex.what() << std::endl;
+    }
 	return rv;
 }
 
@@ -1213,6 +1477,9 @@ EXPORT TIMESTAMP sync_metrics_collector(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pa
 	catch(const char *msg){
 		gl_error("sync_metrics_collector: %s", msg);
 	}
+    catch(const std::exception& ex){
+        std::cerr << "Unhandled general exception in " << __func__ << ": " << ex.what() << std::endl;
+    }
 	return rv;
 }
 
@@ -1228,6 +1495,9 @@ EXPORT int commit_metrics_collector(OBJECT *obj){
 	catch (const char *msg){
 		gl_error("commit_metrics_collector: %s", msg);
 	}
+    catch (const std::exception& ex){
+        std::cerr << "Unhandled general exception in " << __func__ << ": " << ex.what() << std::endl;
+    }
 	return rv;
 }
 

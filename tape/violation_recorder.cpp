@@ -401,7 +401,7 @@ int violation_recorder::write_header(){
 	// write model file name
 	if(0 > fprintf(rec_file,"# file...... %s\n", filename.get_string())){ return 0; }
 	if(0 > fprintf(rec_file,"# date...... %s", asctime(localtime(&now)))){ return 0; }
-#ifdef WIN32
+#ifdef _WIN32
 	if(0 > fprintf(rec_file,"# user...... %s\n", getenv("USERNAME"))){ return 0; }
 	if(0 > fprintf(rec_file,"# host...... %s\n", getenv("MACHINENAME"))){ return 0; }
 #else
@@ -409,7 +409,7 @@ int violation_recorder::write_header(){
 	if(0 > fprintf(rec_file,"# host...... %s\n", getenv("HOST"))){ return 0; }
 #endif
 	if(0 > fprintf(rec_file,"# limit..... %d\n", limit)){ return 0; }
-	if(0 > fprintf(rec_file,"# interval.. %d\n", write_interval)){ return 0; }
+	if(0 > fprintf(rec_file,"# interval.. %lld\n", write_interval)){ return 0; }
 	if(0 > fprintf(rec_file,"# timestamp, violation, observation, upper_limit, lower_limit, object(s), object type(s), phase, message\n")){ return 0; }
 //	if(0 > fprintf(rec_file, "\n")){ return 0; }
 	return 1;
@@ -1379,7 +1379,7 @@ int violation_recorder::write_summary() {
 
 	if(0 > fprintf(f,"# file...... %s\n", summary.get_string())){ return 0; }
 	if(0 > fprintf(f,"# date...... %s", asctime(localtime(&now)))){ return 0; }
-#ifdef WIN32
+#ifdef _WIN32
 	if(0 > fprintf(f,"# user...... %s\n", getenv("USERNAME"))){ return 0; }
 	if(0 > fprintf(f,"# host...... %s\n", getenv("MACHINENAME"))){ return 0; }
 #else

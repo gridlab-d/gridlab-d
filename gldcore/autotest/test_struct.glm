@@ -13,7 +13,7 @@ object house {
 		energy 24;
 	};
 	object recorder {
-		property load.power;
+		property energy;
 		interval 0;
 		file test_struct.csv;
 	};

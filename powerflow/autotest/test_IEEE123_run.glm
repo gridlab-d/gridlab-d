@@ -1,0 +1,89 @@
+//Autoteset to check SWITCHING state behavior on fault_check object
+clock {
+  timezone EST+5EDT;
+  starttime '2000-01-01 0:00:00';
+  stoptime '2000-01-01 17:00:00';
+};
+
+#set relax_naming_rules=1
+#set profiler=1
+// #set verbose=1
+
+module powerflow {
+  solver_method NR;
+  line_capacitance TRUE;
+  default_resistance 0.00005;	//To make consistent with original switch admittance
+};
+module tape;
+module assert;
+
+object fault_check {
+	name test_fault;
+	check_mode SWITCHING;
+	reliability_mode TRUE;
+	strictly_radial FALSE; // because open switches mesh the system
+}
+
+// switches 7 and 8 are normally open, others normally closed
+// switch 8 is single-phase A, others are three-phase ganged
+// the following schedules toggle each switch one at a time, for one hour
+schedule SW1_STATE {
+ * 0     * * * 1;
+ * 1     * * * 0;
+ * 2-23  * * * 1;
+}
+schedule SW2_STATE {
+ * 0-2   * * * 1;
+ * 3     * * * 0;
+ * 4-23  * * * 1;
+}
+schedule SW3_STATE {
+ * 0-4   * * * 1;
+ * 5     * * * 0;
+ * 6-23  * * * 1;
+}
+schedule SW4_STATE {
+ * 0-6   * * * 1;
+ * 7     * * * 0;
+ * 8-23  * * * 1;
+}
+schedule SW5_STATE {
+ * 0-8   * * * 1;
+ * 9     * * * 0;
+ * 10-23 * * * 1;
+}
+schedule SW6_STATE {
+ * 0-10  * * * 1;
+ * 11    * * * 0;
+ * 12-23 * * * 1;
+}
+schedule SW7_STATE {
+ * 0-12  * * * 0;
+ * 13    * * * 0;
+ * 14-23 * * * 0;
+}
+schedule SW8_STATE {
+ * 0-14  * * * 0;
+ * 15    * * * 0;
+ * 16-23 * * * 0;
+}
+
+#define VSOURCE=2401.8
+#include "../IEEE123_base.inc";
+
+object multi_recorder {
+	property n150:distribution_load.real,n150r:voltage_A.real,n149:voltage_A.real,n152:voltage_A.real,n135:voltage_A.real,n160:voltage_A.real,n197:voltage_A.real,n610:voltage_A.real;
+	interval 1800.0;
+	file switching_123_output.csv;
+}
+
+#ifdef WANT_VI_DUMP
+object voltdump {
+  filename IEEE123_volt.csv;
+  mode POLAR;
+};
+object currdump {
+  filename IEEE123_curr.csv;
+  mode POLAR;
+};
+#endif

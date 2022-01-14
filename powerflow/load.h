@@ -7,6 +7,10 @@
 #include "node.h"
 
 EXPORT SIMULATIONMODE interupdate_load(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
+EXPORT STATUS update_load_values(OBJECT *obj);
+
+//KML export
+EXPORT int load_kmldata(OBJECT *obj,int (*stream)(const char*,...));
 
 class load : public node
 {
@@ -18,6 +22,9 @@ private:
 
 	bool base_load_val_was_nonzero[3];		///< Tracking variable to make ZIP-fraction loads check for zero conditions (but not already zeroed)
 
+	complex prev_load_values[3][3];			///< Tracking variable for accumulators - make loads behave more like nodes
+	complex prev_load_values_dy[3][6];		///< Tracking varaible for accumulators - full connection - make loads behave more like nodes.
+
 public:
 	complex measured_voltage_A;	///< measured voltage
 	complex measured_voltage_B;
@@ -25,6 +32,8 @@ public:
 	complex measured_voltage_AB;	
 	complex measured_voltage_BC;
 	complex measured_voltage_CA;
+	complex measured_total_power;
+	complex measured_power[3];
 	complex constant_power[3];		// power load
 	complex constant_current[3];	// current load
 	complex constant_impedance[3];	// impedance load
@@ -51,7 +60,7 @@ public:
 	int create(void);
 	int init(OBJECT *parent);
 	
-	void load_update_fxn(bool fault_mode);
+	void load_update_fxn(void);
 	void load_delete_update_fxn(void);
 	SIMULATIONMODE inter_deltaupdate_load(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 

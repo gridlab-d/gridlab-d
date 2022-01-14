@@ -67,12 +67,13 @@ typedef struct s_ext_fxn {
 	void *ext_destroy;
 } EXT_LU_FXN_CALLS;
 
-GLOBAL char256 LUSolverName INIT("");				/**< filename for external LU solver */
+GLOBAL char256 LUSolverName INIT("KLU");				/**< filename for external LU solver */
 GLOBAL EXT_LU_FXN_CALLS LUSolverFcns;				/**< links to external LU solver functions */
 GLOBAL SOLVERMETHOD solver_method INIT(SM_FBS);		/**< powerflow solver methodology */
 GLOBAL char256 MDFileName INIT("");					/**< filename for matrix dump */
 GLOBAL MATRIXDUMPMETHOD NRMatDumpMethod INIT(MD_NONE);	/**< NR-based matrix output method */
 GLOBAL bool NRMatReferences INIT(false);			/**< Flag to indicate if the decoding information for the matrix is dumped - row/col to bus */
+GLOBAL bool NRMatRHSDump INIT(false);				/**< Flag to indicate if the RHS portion (current injection) should be exported to the file */
 GLOBAL bool use_line_cap INIT(false);				/**< Flag to include line capacitance quantities */
 GLOBAL bool use_link_limits INIT(true);				/**< Flag to include line/transformer ratings and provide a warning if exceeded */
 GLOBAL MATRIXSOLVERMETHOD matrix_solver_method INIT(MM_SUPERLU);	/**< Newton-Raphson uses superLU as the default solver */
@@ -119,7 +120,7 @@ GLOBAL double reliability_metrics_recloser_counts INIT(0.0);	/***< Recloser coun
 GLOBAL bool enable_subsecond_models INIT(false);		/* normally not operating in delta mode */
 GLOBAL bool all_powerflow_delta INIT(false);			/* Flag to make all powerflow objects participate in deltamode -- otherwise is individually flagged per object */
 GLOBAL FREQMEASDEFAULT all_powerflow_freq_measure_method INIT(FMM_NONE);		/* Flag to enable all capable powerflow objects to do frequency measurements */
-GLOBAL unsigned long deltamode_timestep INIT(10000000); /* deltamode timestep value - 10 ms timestep, at first - intermnal */
+GLOBAL unsigned long deltamode_timestep INIT(10000000); /* deltamode timestep value - 10 ms timestep, at first - internal */
 GLOBAL double deltamode_timestep_publish INIT(10000000.0); /* deltamode module-published 10 ms timestep, at first -- module property version, to be converted*/
 GLOBAL OBJECT **delta_objects INIT(NULL);				/* Array pointer objects that need deltamode interupdate calls */
 GLOBAL FUNCTIONADDR *delta_functions INIT(NULL);	/* Array pointer functions for objects that need deltamode interupdate calls */
@@ -139,6 +140,7 @@ GLOBAL double default_resistance INIT(1e-4);		/**< sets the default resistance f
 GLOBAL bool enable_inrush_calculations INIT(false);	/**< Flag to enable in-rush calculations in deltamode */
 GLOBAL INRUSHINTMETHOD default_inrush_integration_method INIT(IRM_TRAPEZOIDAL);	/**< Integration method used for inrush calculations */
 GLOBAL double impedance_conversion_low_pu INIT(0.7);	/** Lower PU voltage level to convert all loads to impedance */
+GLOBAL bool enable_impedance_conversion INIT(false);	/**< Flag to enable conversion of loads to impedance-based - used for non-inrush cases */
 GLOBAL double deltatimestep_running INIT(-1.0);			/** Value of the current deltamode simulation - used for integration method in in-rush */
 
 //Mesh fault current stuff

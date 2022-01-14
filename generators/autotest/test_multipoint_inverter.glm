@@ -85,7 +85,7 @@ object inverter {
 						file "../MPINV_OUT1.player";
 						//file "MPINV_OUT1.player";
 					};
-				within 0.01;
+				within 0.1;
 		};
 		object recorder {	                	       
 				file MPINV_OUT1.csv;
@@ -96,16 +96,15 @@ object inverter {
 
 object solar {
 	name trip_lat_solar;
-	phases AS;
 	parent trip_lat;
-	Rated_kVA 4.0 kVA;
+	rated_power 4.0 kW;
 	area 29.6296 m^2;
 	latitude_angle_fix true;
 	efficiency 0.135;
 	orientation_azimuth 25.0;
 	orientation FIXED_AXIS;
 	object recorder {
-		property "Insolation,VA_Out.real";
+		property "Insolation,P_Out";
 		file "fixed_array_lat_angle_fix.csv";
 		interval 1800;
 		};

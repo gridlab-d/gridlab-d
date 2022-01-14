@@ -103,13 +103,13 @@ public:
 	
 	// additional reverse etp parameters
 	set include_solar_quadrant;
-	typedef enum {HC_DEFAULT=0, HC_FLAT=1, HC_LINEAR=2, HC_CURVED=3};
+	typedef enum {HC_DEFAULT=0, HC_FLAT=1, HC_LINEAR=2, HC_CURVED=3} HEATING_COP;
 	enumeration heating_cop_curve;
-	typedef enum {HP_DEFAULT=0, HP_FLAT=1, HP_LINEAR=2, HP_CURVED=3};
+	typedef enum {HP_DEFAULT=0, HP_FLAT=1, HP_LINEAR=2, HP_CURVED=3} HEATING_CAP;
 	enumeration heating_cap_curve;
-	typedef enum {CC_DEFAULT=0, CC_FLAT=1, CC_LINEAR=2, CC_CURVED=3};
+	typedef enum {CC_DEFAULT=0, CC_FLAT=1, CC_LINEAR=2, CC_CURVED=3} COOLING_COP;
 	enumeration cooling_cop_curve;
-	typedef enum {CP_DEFAULT=0, CP_FLAT=1, CP_LINEAR=2, CP_CURVED=3};
+	typedef enum {CP_DEFAULT=0, CP_FLAT=1, CP_LINEAR=2, CP_CURVED=3} COOLING_CAP;
 	enumeration cooling_cap_curve;
 	bool use_latent_heat;
 	bool include_fan_heatgain;
@@ -158,7 +158,7 @@ public:
 	double dlc_offset;
 
 	// hvac control variable
-	typedef enum {TC_FULL=0, TC_BAND=1, TC_NONE=2};
+	typedef enum {TC_FULL=0, TC_BAND=1, TC_NONE=2} THERMOSTAT_CONTROL;
 	enumeration thermostat_control;	///< method of HVAC control
 	double TcoolOn;		///< temperature above which cooling turns on
 	double TcoolOff;	///< temperature below which cooling turns off
@@ -402,6 +402,7 @@ public:
 
 private:
 	TIMESTAMP simulation_beginning_time;
+	double simulation_beginning_time_dbl;
 	void set_thermal_integrity();
 	void set_window_shgc();
 	void set_window_Rvalue();
@@ -420,6 +421,11 @@ private:
 	bool deltamode_registered;	//Boolean for deltamode registration -- basically a "first run" flag
 	bool proper_meter_parent;		//Flag to see if powerflow interactions should occur
 	bool proper_climate_found;		//Flag to see if climate interactions should occur
+	bool commercial_load_parent;    // proper_meter_parent is true, but the parent is actually a load
+
+	//Variables for fault_impedance method
+	bool powerflow_impedance_conversion_enabled;	//Boolean for powerflow - see if "convert all to impedance" is active
+	double powerflow_impedance_conversion_level;	//Threshold from powerflow where impedance conversion should occur
 
 	//Pointers for powerflow properties
 	gld_property *pCircuit_V[3];					///< pointer to the three voltages on three lines
@@ -436,6 +442,26 @@ private:
 	complex value_Power[3];						///< value holder for power value on triplex parent
 	enumeration value_MeterStatus;				///< value holder for service_status variable on triplex parent
 	double value_Frequency;						///< value holder for measured frequency on triplex parent
+	typedef enum {	
+		XPFV_NONE	= 0,		// no external power flow
+		XPFV_ONEV	= 1,		// set just external_v1N, assume v2N equal and opposite
+		XPFV_TWOV	= 2,		// will set both external_v1N and v2N, require v12 = v1N - v2N
+	} EXTERNALPFMODE;
+	enumeration external_pf_mode;
+	complex external_v1N;            // from OpenDSS or another external power flow program
+	complex external_v2N;            // from OpenDSS or another external power flow program
+
+	// interface to powerflow calculations
+	void check_external_voltage(void);
+	void pull_complex_powerflow_values(void);
+	void push_complex_powerflow_values(void);
+
+	// for commercial meter connections
+	gld_property *pNominalVoltage;
+	gld_property *pPhases;
+	double internalTurnsRatio;  // ratio of meter VLN / 120
+	set externalPhases;         // for A, B and C present
+	int numPhases;
 
 	//Pointers for climate properties
 	gld_property *pTout;		// pointer to outdoor temperature (see climate)
@@ -446,6 +472,13 @@ private:
 	double value_Tout;			//< Value holder for outside temperature
 	double value_Rhout;			//< Value holder for relative humidity
 	double value_Solar[9];		//< Value holder for solar irradiance
+
+	bool external_motor_attached;	//< Flag for external powerflow motor being used - removes that panel contributions
+
+	void circuit_voltage_factor_update(void);	///<Functionalized version of the voltage_factor update, so can be called in deltamode
+	void powerflow_accumulator_remover(void);	///<Functioanlized item that removes current accumulator values from powerflow (mostly for XML stuff)
+	//Circuit pointer for HVAC - used for breaker checks
+	CIRCUIT *pHVAC_EnduseLoad;
 
 public:
 	int error_flag;
@@ -459,7 +492,7 @@ public:
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync_billing(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync_thermostat(TIMESTAMP t0, TIMESTAMP t1);
-	TIMESTAMP sync_panel(TIMESTAMP t0, TIMESTAMP t1);
+	double sync_panel(double t0_dbl, double t1_dbl);
 	TIMESTAMP sync_enduses(TIMESTAMP t0, TIMESTAMP t1);
 	void update_system(double dt=0);
 	void update_model(double dt=0);
@@ -481,9 +514,7 @@ public:
 	//Map function
 	gld_property *map_complex_value(OBJECT *obj, char *name);
 	gld_property *map_double_value(OBJECT *obj, char *name);
-	void pull_complex_powerflow_values(void);
 	void pull_climate_values(void);
-	void push_complex_powerflow_values(void);
 };
 
 #endif

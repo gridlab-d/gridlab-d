@@ -63,6 +63,12 @@ regulator::regulator(MODULE *mod) : link_object(mod)
 			GL_THROW("Unable to publish regulator external power calculation function");
 		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
 			GL_THROW("Unable to publish regulator external power limit calculation function");
+		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==NULL)
+			GL_THROW("Unable to publish regulator external current calculation function");
+		
+		//Other
+		if (gl_publish_function(oclass, "pwr_object_kmldata", (FUNCTIONADDR)regulator_kmldata) == NULL)
+			GL_THROW("Unable to publish regulator kmldata function");
 	}
 }
 
@@ -97,6 +103,10 @@ int regulator::init(OBJECT *parent)
 	bool TapInitialValue[3];
 	char jindex;
 	int result = link_object::init(parent);
+
+	//Check for deferred
+	if (result == 2)
+		return 2;	//Return the deferment - no sense doing everything else!
 
 	OBJECT *obj = OBJECTHDR(this);
 
@@ -1628,6 +1638,17 @@ EXPORT SIMULATIONMODE interupdate_regulator(OBJECT *obj, unsigned int64 delta_ti
 		gl_error("interupdate_regulator(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
 		return status;
 	}
+}
+
+//KML Export
+EXPORT int regulator_kmldata(OBJECT *obj,int (*stream)(const char*,...))
+{
+	regulator *n = OBJECTDATA(obj, regulator);
+	int rv = 1;
+
+	rv = n->kmldata(stream);
+
+	return rv;
 }
 
 /**@}*/

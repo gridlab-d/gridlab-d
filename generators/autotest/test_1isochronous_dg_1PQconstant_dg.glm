@@ -3371,7 +3371,7 @@ object diesel_dg {
 	P_CONSTANT_ki 0.05;  // kp for the PI controller implemented in P constant delta mode
 	
 	Exciter_Q_constant_Qref 0.5; // Set Q reference, p.u. 
-	Exciter_Q_constant_mode true; // Flag indicating whether the diesel generator exciter is operating based on Qref given
+	SEXS_mode CONSTANT_Q;
 	Exciter_Q_constant_kp 0.01;  // ki for the PI controller implemented in Q constant delta mode
 	Exciter_Q_constant_ki 0.05;  // kp for the PI controller implemented in Q constant delta mode
 	

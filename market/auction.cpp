@@ -106,6 +106,7 @@ auction::auction(MODULE *module)
 			PT_char32, "capacity_reference_property", PADDR(capacity_reference_propname),
 			PT_double, "capacity_reference_bid_price", PADDR(capacity_reference_bid_price),
 			PT_double, "max_capacity_reference_bid_quantity", PADDR(max_capacity_reference_bid_quantity),
+			PT_double, "fixed_uncontrollable_load", PADDR(fixed_uncontrollable_load),
 			PT_double, "capacity_reference_bid_quantity", PADDR(capacity_reference_bid_quantity),
 			PT_double, "init_price", PADDR(init_price),
 			PT_double, "init_stdev", PADDR(init_stdev),
@@ -238,6 +239,7 @@ int auction::create(void)
 		gl_set_value(OBJECTHDR(this), stat->prop, val);
 	}
 	statistic_mode = ST_ON;
+	fixed_uncontrollable_load = -1;
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -447,6 +449,9 @@ int auction::init(OBJECT *parent)
 	past_frame.clearing_price = init_price;
 	if(latency > 0)
 		next_frame.clearing_price = init_price;
+	if(fixed_uncontrollable_load == -1){
+		fixed_uncontrollable_load = 0;
+	}
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -910,7 +915,11 @@ void auction::clear_market(void)
 		unresponsive.from = (char *)gl_name(capacity_reference_object, capname, sizeof(capname));
 		unresponsive.price = pricecap;
 		unresponsive.state = BS_UNKNOWN;
-		unresponsive.quantity = (refload - asks.get_total_on() - total_unknown/2); /* estimate load on as 1/2 unknown load */
+		if(fixed_uncontrollable_load > 0){
+			unresponsive.quantity = fixed_uncontrollable_load;
+		} else {
+			unresponsive.quantity = (refload - asks.get_total_on() - total_unknown/2); /* estimate load on as 1/2 unknown load */
+		}
 		unresponsive.bid_id = (int64)capacity_reference_object->id;
 		cap_ref_unrep = unresponsive.quantity;
 		if (unresponsive.quantity < -0.001)
@@ -1598,8 +1607,8 @@ int auction::submit_nolock(char *from, double quantity, double real_price, KEY k
 				gl_name(OBJECTHDR(this),myname,sizeof(myname)),quantity<0?"ask":"offer",
 				from);
 		}
-		return 1;
 	}
+	return 0;
 }
 
 TIMESTAMP auction::nextclear(void) const
@@ -1671,5 +1680,6 @@ EXPORT TIMESTAMP sync_auction(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 		return t2;
 	}
 	SYNC_CATCHALL(auction);
+	return TS_INVALID; // resolves compiler warning, but can not be reached.
 }
 

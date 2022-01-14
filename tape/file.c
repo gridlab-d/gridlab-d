@@ -272,7 +272,7 @@ int file_open_recorder(struct recorder *my, char *fname, char *flags)
 	/* put useful header information in file first */
 	fprintf(my->fp,"# file...... %s\n", my->file);
 	fprintf(my->fp,"# date...... %s", asctime(localtime(&now)));
-#ifdef WIN32
+#ifdef _WIN32
 	fprintf(my->fp,"# user...... %s\n", getenv("USERNAME"));
 	fprintf(my->fp,"# host...... %s\n", getenv("MACHINENAME"));
 #else
@@ -281,7 +281,7 @@ int file_open_recorder(struct recorder *my, char *fname, char *flags)
 #endif
 	fprintf(my->fp,"# target.... %s %d\n", obj->parent->oclass->name, obj->parent->id);
 	fprintf(my->fp,"# trigger... %s\n", my->trigger[0]=='\0'?"(none)":my->trigger);
-	fprintf(my->fp,"# interval.. %d\n", my->interval);
+	fprintf(my->fp,"# interval.. %lld\n", my->interval);
 	fprintf(my->fp,"# limit..... %d\n", my->limit);
 	fprintf(my->fp,"# timestamp,%s\n", my->property);
 
@@ -326,7 +326,7 @@ int file_open_collector(struct collector *my, char *fname, char *flags)
 	/* put useful header information in file first */
 	count += fprintf(my->fp,"# file...... %s\n", my->file);
 	count += fprintf(my->fp,"# date...... %s", asctime(localtime(&now)));
-#ifdef WIN32
+#ifdef _WIN32
 	count += fprintf(my->fp,"# user...... %s\n", getenv("USERNAME"));
 	count += fprintf(my->fp,"# host...... %s\n", getenv("MACHINENAME"));
 #else
@@ -335,7 +335,7 @@ int file_open_collector(struct collector *my, char *fname, char *flags)
 #endif
 	count += fprintf(my->fp,"# group..... %s\n", my->group);
 	count += fprintf(my->fp,"# trigger... %s\n", my->trigger[0]=='\0'?"(none)":my->trigger);
-	count += fprintf(my->fp,"# interval.. %d\n", my->interval);
+	count += fprintf(my->fp,"# interval.. %lld\n", my->interval);
 	count += fprintf(my->fp,"# limit..... %d\n", my->limit);
 	count += fprintf(my->fp,"# property.. timestamp,%s\n", my->property);
 

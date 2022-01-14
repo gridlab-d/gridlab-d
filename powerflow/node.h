@@ -12,6 +12,7 @@
 //Deltamode functions
 EXPORT SIMULATIONMODE interupdate_node(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 EXPORT STATUS swap_node_swing_status(OBJECT *obj, bool desired_status);
+EXPORT STATUS node_swing_status(OBJECT *this_obj, bool *swing_status_check_value, bool *swing_pq_status_value);
 EXPORT STATUS node_reset_disabled_status(OBJECT *nodeObj);
 EXPORT STATUS node_map_current_update_function(OBJECT *nodeObj, OBJECT *callObj);
 EXPORT STATUS attach_vfd_to_node(OBJECT *obj,OBJECT *calledVFD);
@@ -118,11 +119,15 @@ private:
 	FREQM_STATES prev_freq_state;
 	double freq_omega_ref;			//Reference frequency for measurements
 
+	bool first_freq_init;	//Flag to indicate if the first init for frequency - prevents from overwriting an off-nominal frequency
+
 	double freq_violation_time_total;		//Keeps track of how long the device has been in a frequency violation, to see if it needs to disconnect or not
 	double volt_violation_time_total;		//Keeps track of how long the device has been in a voltage violation, to see if it needs to disconnect or not
 	double out_of_violation_time_total;		//Tracking variable to see how long we've been "outside of bad conditions"
 	double prev_time_dbl;					//Tracking variable for GFA functionality
 	double GFA_Update_time;
+
+	//Deltamode interfacing matrices
 	GL_STRUCT(complex_array,full_Y_matrix);
 	GL_STRUCT(complex_array,full_Y_all_matrix);
 
@@ -130,6 +135,8 @@ private:
 	bool VFD_attached;						///< Flag to indicate this is on the to-side of a VFD link
 	FUNCTIONADDR VFD_updating_function;		///< Address for VFD updating function, if it is present
 	OBJECT *VFD_object;						///< Object pointer for the VFD - for later function calls
+
+	complex *tn_values;		//Variable (mostly for FBS) to map triplex multipliers for neutral current.  Mostly so saves API calls.
 
 	double compute_angle_diff(double angle_B, double angle_A);	//Function to do differences, but handle the phase wrap/jump
 
@@ -256,7 +263,7 @@ public:
 	void BOTH_node_postsync_fxn(OBJECT *obj);
 	OBJECT *NR_master_swing_search(char *node_type_value,bool main_swing);
 
-	void init_freq_dynamics(void);
+	void init_freq_dynamics(double deltat);
 	STATUS calc_freq_dynamics(double deltat);
 
 	double perform_GFA_checks(double timestepvalue);
@@ -272,6 +279,9 @@ public:
 
 	//NR bus status toggle function
 	STATUS NR_swap_swing_status(bool desired_status);
+
+	//NR bus swing-status check
+	void NR_swing_status_check(bool *swing_status_check_value, bool *swing_pq_status_value);
 
 	//Island-condition reset function
 	STATUS reset_node_island_condition(void);
@@ -290,6 +300,7 @@ public:
 	friend class fuse;			// needs access to current_inj
 	friend class frequency_gen;	// needs access to current_inj
 	friend class motor;	// needs access to curr_state
+	friend class performance_motor;	//needs access to curr_state
 
 	static int kmlinit(int (*stream)(const char*,...));
 	int kmldump(int (*stream)(const char*,...));

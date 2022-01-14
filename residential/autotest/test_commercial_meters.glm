@@ -1,0 +1,266 @@
+// patterned after test_HVAC_common_cool, but not with triplex_meter
+// we have 3 identical houses connected to:
+//    1) a 480-volt, 225-kVA 3-phase transformer
+//    2) a 208-volt,  75-kVA 3-phase transformer
+//    3) a 120-volt,  15-kVA transformer on phase B
+
+#set minimum_timestep=1;
+
+module residential{
+	implicit_enduses NONE;
+}
+module tape;
+module assert;
+module climate;
+module powerflow;
+
+clock{
+	timezone PST+0PDT;
+	starttime '2001-07-24 01:00:00';
+	stoptime '2001-07-25 01:00:10';
+}
+
+schedule zippwr {
+	* 0-5 * * * .29307107017222;
+	* 6 * * * 0.58614214034444;
+	* 7-9 * * * 0.87921321051666;
+	* 10-15 * * * 0.58614214034444;
+	* 16 * * * 0.87921321051666;
+	* 17 * * * 1.1722842806889;
+	* 18-20 * * * 1.4653553508611;
+	* 21 * * * 1.1722842806889;
+	* 22 * * * 0.58614214034444;
+	* 23 * * * .29307107017222;
+}
+
+object climate{
+	tmyfile "../WA-Yakima.tmy2";
+}
+
+schedule heatspt{
+	* * * * * 60;
+}
+
+schedule coolspt{
+	* * * * * 75;
+}
+
+object transformer_configuration {
+  name COMMERCIAL_208_75;
+  power_rating 75.00;
+  powerA_rating 25.00;
+  powerB_rating 25.00;
+  powerC_rating 25.00;
+  install_type POLETOP;
+  connect_type WYE_WYE;
+  primary_voltage 12470.0;
+  secondary_voltage 208.0;
+  resistance 0.01750;
+  reactance 0.02120;
+  shunt_resistance 142.86;
+  shunt_reactance 25.38;
+}
+object transformer_configuration {
+  name COMMERCIAL_480_225;
+  power_rating 225.00;
+  powerA_rating 75.00;
+  powerB_rating 75.00;
+  powerC_rating 75.00;
+  install_type POLETOP;
+  connect_type WYE_WYE;
+  primary_voltage 12470.0;
+  secondary_voltage 480.0;
+  resistance 0.01300;
+  reactance 0.03520;
+  shunt_resistance 200.00;
+  shunt_reactance 40.00;
+}
+object transformer_configuration {
+  name BPHASE_15;
+  power_rating 15.00;
+  powerA_rating 0.0;
+  powerB_rating 15.00;
+  powerC_rating 0.0;
+  install_type POLETOP;
+  connect_type SINGLE_PHASE;
+  primary_voltage 7200.0;
+  secondary_voltage 120.0;
+  resistance 0.017;
+  reactance 0.0147;
+  shunt_resistance 166.67;
+  shunt_reactance 39.53;
+}
+
+object substation {
+  name network_node;
+  bustype SWING;
+  nominal_voltage 7200;
+  positive_sequence_voltage 7200;
+  base_power 12000000.00;
+  power_convergence_value 100.0;
+  phases ABCN;
+	// phases A and C should be the same at each time point, because each house is the same
+  object complex_assert{
+    target distribution_power_A;
+    in '2001-07-24 13:31:40';
+    once ONCE_TRUE;
+    value 3309.02+3451.25j;
+    within 1.0;
+  };
+  object complex_assert{
+    target distribution_power_B;
+    in '2001-07-24 13:31:40';
+    once ONCE_TRUE;
+    value 7544.98+4733.1j;
+    within 1.0;
+  };
+  object complex_assert{
+    target distribution_power_C;
+    in '2001-07-24 13:31:40';
+    once ONCE_TRUE;
+    value 3309.02+3451.26j;
+    within 1.0;
+  };
+}
+
+object load {
+  name load_480;
+  phases ABCN;
+  nominal_voltage 277.0;
+  voltage_A 277.0+0.0j;
+  voltage_B -138.50-239.89j;
+  voltage_C -138.50+239.89j;
+}
+
+object load {
+  name load_208;
+  phases ABCN;
+  nominal_voltage 120.0;
+  voltage_A 120.0+0.0j;
+  voltage_B -60.00-103.92j;
+  voltage_C -60.00+103.92j;
+}
+
+object load {
+  name load_120;
+  phases BN;
+  nominal_voltage 120.0;
+  voltage_B -60.00-103.92j;
+}
+
+object transformer {
+  name xf_480;
+  from network_node;
+  to load_480;
+  phases ABCN;
+  configuration COMMERCIAL_480_225;
+}
+object transformer {
+  name xf_208;
+  from network_node;
+  to load_208;
+  phases ABCN;
+  configuration COMMERCIAL_208_75;
+}
+object transformer {
+  name xf_120;
+  from network_node;
+  to load_120;
+  phases BN;
+  configuration BPHASE_15;
+}
+
+object house{
+  name house_120;
+	parent load_120;
+	window_wall_ratio 0.07;
+	cooling_COP 3.0;
+	system_mode OFF;
+	auxiliary_strategy DEADBAND;
+	heating_system_type HEAT_PUMP;
+	cooling_system_type ELECTRIC;
+	air_temperature 63.3;
+	mass_temperature 63.3;
+	heating_setpoint heatspt*1;
+	cooling_setpoint coolspt*1;
+	object ZIPload {
+		heat_fraction 1;
+		base_power zippwr*1;
+		power_pf 1;
+		power_fraction 0;
+		current_pf 1;
+		current_fraction 1;
+		impedance_pf 1;
+		impedance_fraction 0;
+	};
+};
+
+object house{
+  name house_208;
+	parent load_208;
+	window_wall_ratio 0.07;
+	cooling_COP 3.0;
+	system_mode OFF;
+	auxiliary_strategy DEADBAND;
+	heating_system_type HEAT_PUMP;
+	cooling_system_type ELECTRIC;
+	air_temperature 63.3;
+	mass_temperature 63.3;
+	heating_setpoint heatspt*1;
+	cooling_setpoint coolspt*1;
+	object ZIPload {
+		heat_fraction 1;
+		base_power zippwr*1;
+		power_pf 1;
+		power_fraction 0;
+		current_pf 1;
+		current_fraction 1;
+		impedance_pf 1;
+		impedance_fraction 0;
+	};
+};
+
+object house{
+  name house_480;
+	parent load_480;
+	window_wall_ratio 0.07;
+	cooling_COP 3.0;
+	system_mode OFF;
+	auxiliary_strategy DEADBAND;
+	heating_system_type HEAT_PUMP;
+	cooling_system_type ELECTRIC;
+	air_temperature 63.3;
+	mass_temperature 63.3;
+	heating_setpoint heatspt*1;
+	cooling_setpoint coolspt*1;
+	object ZIPload {
+		heat_fraction 1;
+		base_power zippwr*1;
+		power_pf 1;
+		power_fraction 0;
+		current_pf 1;
+		current_fraction 1;
+		impedance_pf 1;
+		impedance_fraction 0;
+	};
+};
+
+// without houses connected, the no-load transformer losses are:
+//   550.353 + j2857.52 VA on phases A and C
+//   640.439 + j3236.76 VA on phase B
+// each house draws a peak of about 2 kW
+object recorder{
+	parent network_node;
+	property distribution_power_A.real,distribution_power_A.imag,distribution_power_B.real,distribution_power_B.imag,distribution_power_C.real,distribution_power_C.imag;
+	file "test_commercial_meters_load.csv";
+	interval 10;
+	limit 86425;
+};
+object recorder{
+	parent load_480;
+	property voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag;
+	file "voltages_480.csv";
+	interval 10;
+	limit 86425;
+};
+

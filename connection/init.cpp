@@ -119,14 +119,23 @@ EXPORT int deltamode_desired(int *flags)
 //Deltamode functions
 EXPORT unsigned long preupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 {
+	double double_timestep_value;
+
 	if (enable_subsecond_models == true)
 	{
+		//NOTE: that given how this is used currently, preupdate could just be a return DT_INFINITY for all cases
+
+		//Pull global timestep
 		gld_global dtimestep("deltamode_timestep");
 		if (!dtimestep.is_valid()){
 			gl_error("connection::preupdate: unable to find delamode_timestep!");
 			return DT_INVALID;
 		}
-		if ( dtimestep.get_int32() <= 0)
+
+		//Pull it for use
+		double_timestep_value = dtimestep.get_double();
+
+		if (double_timestep_value <= 0.0)
 		{
 			gl_error("connection::preupdate: deltamode_timestep must be a positive, non-zero number!");
 			/*  TROUBLESHOOT
@@ -138,7 +147,8 @@ EXPORT unsigned long preupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 		}
 		else
 		{
-			return (unsigned long)(dtimestep.get_int32());
+			//Do the casting conversion on it to put it back in integer format
+			return (unsigned long)(double_timestep_value + 0.5);
 		}
 	}
 	else	//Not desired, just return an arbitrarily large value
@@ -209,6 +219,17 @@ EXPORT SIMULATIONMODE deltaClockUpdate(MODULE *module, double t1, unsigned long 
 	{
 		result = item->dclkupdate(item->data, t1, timestep, systemmode);
 		return result;
+	}
+
+	//Check for a NULL list (no objects), that could get us here
+	if (dClockUpdateList == NULL)
+	{
+		//Our list is empty, so nothing wants deltamode
+		return SM_EVENT;
+	}
+	else
+	{
+		return SM_ERROR; // fall through return value resolves return-type warning. Should be unreachable.
 	}
 }
 

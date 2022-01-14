@@ -413,7 +413,7 @@ Retry:
 	else if (entity->env)
 	{
 		char env[1024];
-#ifdef WIN32
+#ifdef _WIN32
 		sprintf("%s=%s",entity->env,buffer);
 		putenv(env);
 #else
@@ -642,7 +642,7 @@ static void gui_output_html_graph(GUIENTITY *entity)
 
 	/* setup gnuplot command */
 	sprintf(script,"%s.plt",entity->source);
-#ifdef WIN32
+#ifdef _WIN32
 	sprintf(command,"start wgnuplot %s",script);
 #else
 	sprintf(command,"gnuplot %s",script);
@@ -1000,7 +1000,7 @@ size_t gui_glm_write(FILE *fp, GUIENTITY *entity, int indent)
 		else if (entity->value[0]!='\0')
 			count += fprintf(fp,"%s\tvalue \"%s\";\n", tabs,entity->value);
 		if (entity->unit)
-			count += fprintf(fp,"%s\tunit \"%s\";\n", tabs,entity->unit);
+			count += fprintf(fp,"%s\tunit \"%s\";\n", tabs,entity->unit->name);
 		if (entity->size>0)
 			count += fprintf(fp,"%s\tsize %d;\n", tabs,entity->size);
 		if (entity->action[0]!='\0')
@@ -1040,7 +1040,7 @@ STATUS gui_startup(int argc, char *argv[])
 	char cmd[1024];
 	if (started)
 		return SUCCESS;
-#ifdef WIN32
+#ifdef _WIN32
 	sprintf(cmd,"start %s http://localhost:%d/gui/", global_browser, global_server_portnum);
 #else
 	sprintf(cmd,"%s http://localhost:%d/gui/ & ps -p $! >/dev/null", global_browser, global_server_portnum);

@@ -88,7 +88,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <sys/timeb.h>
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 #include <winbase.h>
 #include <direct.h>
@@ -196,7 +196,7 @@ int64 exec_clock(void)
 int exec_init()
 {
 #if 0
-#ifdef WIN32
+#ifdef _WIN32
 	char glpathvar[1024];
 #endif
 #endif
@@ -221,7 +221,7 @@ int exec_init()
 	locale_push();
 
 #if 0 /* isn't cooperating for strange reasons -mh */
-#ifdef WIN32
+#ifdef _WIN32
 	glpathlen=strlen("GLPATH=");
 	sprintf(glpathvar, "GLPATH=");
 	ExpandEnvironmentStrings(getenv("GLPATH"), glpathvar+glpathlen, (DWORD)(1024-glpathlen));
@@ -1343,7 +1343,7 @@ TIMESTAMP syncall_internals(TIMESTAMP t1)
 
 void exec_sleep(unsigned int usec)
 {
-#ifdef WIN32
+#ifdef _WIN32
 	Sleep(usec/1000);
 #else
 	usleep(usec);
@@ -1968,7 +1968,7 @@ STATUS exec_start(void)
 			if (global_run_realtime>0 && iteration_counter>0)
 			{
 				double metric=0;
-#ifdef WIN32
+#ifdef _WIN32
 				struct timeb tv;
 				ftime(&tv);
 				if (1000-tv.millitm >= 0)
@@ -2274,6 +2274,13 @@ STATUS exec_start(void)
 				output_debug("exec_start(), slave received looped time signal (%lli)", exec_sync_get(NULL));
 			}
 
+			/* run sync scripts, if any */
+			if ( exec_run_syncscripts()!=XC_SUCCESS )
+			{
+				output_error("sync script(s) failed");
+				THROW("script synchronization failure");
+			}
+			
 			/* check for clock advance (indicating last pass) */
 			if ( exec_sync_get(NULL)!=global_clock && global_simulation_mode == SM_EVENT)
 			{
@@ -2333,13 +2340,6 @@ STATUS exec_start(void)
 				THROW("convergence failure");
 			}
 
-			/* run sync scripts, if any */
-			if ( exec_run_syncscripts()!=XC_SUCCESS )
-			{
-				output_error("sync script(s) failed");
-				THROW("script synchronization failure");
-			}
-			
 			/* handle delta mode operation */
 			if ( global_simulation_mode==SM_DELTA && exec_sync_get(NULL)>=global_clock )
 			{
@@ -2355,6 +2355,13 @@ STATUS exec_start(void)
 					global_simulation_mode = SM_ERROR;
 					THROW("Deltamode simulation failure");
 					break;	//Just in case, but probably not needed
+				}
+				else if (deltatime > 0)
+				{
+					/* Reset the iteration counter here - if we made it this far, we moved forward */
+					/* If a simulate "stays" in deltamode too long, the periodic checks will still exhaust the iteration limit - this fixes that */
+					iteration_counter = global_iteration_limit;
+					federation_iteration_counter = global_iteration_limit;
 				}
 				exec_sync_set(NULL,global_clock + deltatime,true);
 				global_simulation_mode = SM_EVENT;
@@ -2735,7 +2742,7 @@ void *slave_node_proc(void *args)
 	if (tok_len > 0)
 	{
 		char temp[256];
-		sprintf(temp, "%%d offset and %%d len for \'%%%ds\'", tok_len);
+		sprintf(temp, "%%ld offset and %%ld len for \'%%%lds\'", tok_len);
 		output_debug(temp, offset, tok_len, buffer+offset);
 		memcpy(dirname, buffer+offset, (tok_len > sizeof(dirname) ? sizeof(dirname) : tok_len));
 	} else {
@@ -2759,7 +2766,7 @@ void *slave_node_proc(void *args)
 		char temp[256];
 		memcpy(filename, buffer+offset, (tok_len > sizeof(filename) ? sizeof(filename) : tok_len));
 		filename[tok_len]=0;
-		sprintf(temp, "%%d offset and %%d len for \'%%%ds\'", tok_len);
+		sprintf(temp, "%%ld offset and %%ld len for \'%%%lds\'", tok_len);
 		output_debug(temp, offset, tok_len, buffer+offset);
 	} 
 	else 
@@ -2836,7 +2843,7 @@ void *slave_node_proc(void *args)
 		output_debug("snp(): connect to %s:%d", addrstr, mtr_port);
 	}
 
-#ifdef WIN32
+#ifdef _WIN32
 	// write, system() --slave command
 	sprintf(filepath, "%s%s%s", dirname, (dirname[0] ? "\\" : ""), filename);
 	output_debug("filepath = %s", filepath);
@@ -2874,12 +2881,12 @@ void exec_slave_node()
 	struct timeval timer;
 	pthread_t slave_thread;
 	int rct;
-#ifdef WIN32
+#ifdef _WIN32
 	static WSADATA wsaData;
 #endif
 
 	inaddrsz = sizeof(struct sockaddr_in);
-#ifdef WIN32
+#ifdef _WIN32
 	// if we're on windows, we're using WinSock2, so we need WSAStartup.
 	output_debug("starting WS2");
 	if (WSAStartup(MAKEWORD(2,0),&wsaData)!=0)

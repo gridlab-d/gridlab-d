@@ -1,5 +1,5 @@
 // $Id$
-// Copyright (C) 2008 Battelle Memorial Institute
+// Copyright (C) 2020 Battelle Memorial Institute
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -9,7 +9,7 @@
 
 #define _GENERATORS_GLOBALS
 #include "generators.h"
-#undef  _GENERATORS_GLOBALS
+#undef _GENERATORS_GLOBALS
 
 //Include the various items
 #include "diesel_dg.h"
@@ -20,6 +20,7 @@
 #include "solar.h"
 #include "central_dg_control.h"
 #include "controller_dg.h"
+#include "inverter_dyn.h"
 
 //Define defaults, since many use them and they aren't here yet
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
@@ -39,14 +40,14 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	//Instantiate the classes
 	new diesel_dg(module);
 	new windturb_dg(module);
-	new energy_storage(module);
 	new inverter(module);
 	new rectifier(module);
 	new battery(module);
 	new solar(module);
 	new central_dg_control(module);
 	new controller_dg(module);
-
+	new inverter_dyn(module);
+	
 	/* always return the first class registered */
 	return diesel_dg::oclass;
 }
@@ -294,7 +295,10 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 				*/
 				return SM_ERROR;
 			}
-			//Default else, we're in SM_EVENT, so no flag change needed
+			else	//Must be SM_EVENT - just put this here for verbose messaging
+			{
+				gl_verbose("Generator object:%d - %s - requested exit to event-driven mode",delta_objects[curr_object_number]->id,(delta_objects[curr_object_number]->name ? delta_objects[curr_object_number]->name : "Unnamed"));
+			}
 		}
 				
 		//Determine how to exit - event or delta driven
@@ -414,6 +418,7 @@ CDECL int do_kill()
 	return 0;
 }
 
-EXPORT int check(){
+EXPORT int check()
+{
 	return 0;
 }

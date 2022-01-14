@@ -42,6 +42,8 @@
 #include "impedance_dump.h"
 #include "vfd.h"
 #include "jsondump.h"
+#include "performance_motor.h"
+#include "sync_check.h"
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
@@ -77,6 +79,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		PT_KEYWORD,"ALL",MD_ALL,
 		NULL);
 	gl_global_create("powerflow::NR_matrix_output_references",PT_bool,&NRMatReferences,NULL);
+	gl_global_create("powerflow::NR_matrix_output_rhs",PT_bool,&NRMatRHSDump,PT_DESCRIPTION,"Flag to indicate if the RHS (delta-current-injections) should be output to the matrix dump",NULL);
 	gl_global_create("powerflow::NR_island_failure_handled",PT_bool,&NR_island_fail_method,PT_DESCRIPTION,"Indicates if an island fails if it should be removed from service",NULL);
 	gl_global_create("powerflow::line_capacitance",PT_bool,&use_line_cap,NULL);
 	gl_global_create("powerflow::line_limits",PT_bool,&use_link_limits,NULL);
@@ -106,6 +109,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		PT_KEYWORD,"PLL", FMM_PLL,
 		NULL);
 	gl_global_create("powerflow::low_voltage_impedance_level",PT_double,&impedance_conversion_low_pu,PT_DESCRIPTION,"Lower limit of voltage (in per-unit) at which all load types are converted to impedance for in-rush calculations",NULL);
+	gl_global_create("powerflow::enable_impedance_conversion",PT_bool,&enable_impedance_conversion,PT_DESCRIPTION,"Flag to enable conversion of loads to impedance-based when voltage limit exceeded - non-in-rush capability",NULL);
 	gl_global_create("powerflow::enable_mesh_fault_current",PT_bool,&enable_mesh_fault_current,PT_DESCRIPTION,"Flag to enable mesh-based fault current calculations",NULL);
 	gl_global_create("powerflow::market_price_name",PT_char1024,&market_price_name,PT_DESCRIPTION,"Market current price published variable name",NULL);
 
@@ -154,6 +158,8 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new impedance_dump(module);
 	new vfd(module);
 	new jsondump(module);
+	new performance_motor(module);
+	new sync_check(module);
 
 	/* always return the first class registered */
 	return node::oclass;
@@ -444,7 +450,10 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 					error_state = true;
 					break;
 				}
-				//Default else, we're in SM_EVENT, so no flag change needed
+				else	//SM_EVENT - just put here for verbose messaging
+				{
+					gl_verbose("Powerflow object:%d - %s - requested exit to event-driven mode",delta_objects[curr_object_number]->id,(delta_objects[curr_object_number]->name ? delta_objects[curr_object_number]->name : "Unnamed"));						
+				}
 			}
 
 			//Check for error states -- blocks the reiteration if something was already angry

@@ -13,12 +13,14 @@
 #if HAVE_FNCS
 #include <fncs.hpp>
 #endif
+#include <algorithm>
 #include<sstream>
 #include<vector>
 #include <string>
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <memory>
 #include <json/json.h>
 //#include "../third_party/jsonCpp/json/json.h"
 using namespace std;
@@ -101,6 +103,7 @@ private:
 	varmap *vmap[14];
 	TIMESTAMP last_approved_fncs_time;
 	TIMESTAMP initial_sim_time;
+	TIMESTAMP gridappsd_publish_time;
 	double last_delta_fncs_time;
 	bool exitDeltamode;
 	// TODO add other properties here as needed.
@@ -139,6 +142,9 @@ public:
 	int get_varmapindex(const char *);
 	SIMULATIONMODE deltaInterUpdate(unsigned int delta_iteration_counter, TIMESTAMP t0, unsigned int64 dt);
 	SIMULATIONMODE deltaClockUpdate(double t1, unsigned long timestep, SIMULATIONMODE sysmode);
+	int32 real_time_gridappsd_publish_period;
+	bool aggregate_pub;
+	bool aggregate_sub;
 	// TODO add other event handlers here
 
 public:
@@ -152,6 +158,11 @@ public:
 	string publish_json_key; //add by Renke
 	string subscribe_json_key; //add by Renke
 	vector <JsonProperty*> vjson_publish_gld_property_name;
+#if HAVE_FNCS
+	fncs::time fncs_step;
+#else
+	unsigned long long fncs_step; // only to build without FNCS, we can't actually use this
+#endif
 public:
 	// special variables for GridLAB-D classes
 	static CLASS *oclass;
