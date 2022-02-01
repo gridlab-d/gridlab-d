@@ -7,6 +7,7 @@
 #include "node.h"
 
 EXPORT SIMULATIONMODE interupdate_load(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
+EXPORT STATUS update_load_values(OBJECT *obj);
 
 //KML export
 EXPORT int load_kmldata(OBJECT *obj,int (*stream)(const char*,...));
@@ -59,7 +60,7 @@ public:
 	int create(void);
 	int init(OBJECT *parent);
 	
-	void load_update_fxn(bool fault_mode);
+	void load_update_fxn(void);
 	void load_delete_update_fxn(void);
 	SIMULATIONMODE inter_deltaupdate_load(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 

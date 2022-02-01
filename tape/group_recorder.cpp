@@ -51,6 +51,7 @@ group_recorder::group_recorder(MODULE *mod){
 int group_recorder::create(){
 	memcpy(this, defaults, sizeof(group_recorder));
 	offnominal_time = false;	//By default, assume we'll be handled like normal time
+	strict = true;	//By default, errors are errors - make the user override them
 	return 1;
 }
 

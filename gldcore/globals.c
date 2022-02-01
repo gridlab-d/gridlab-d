@@ -20,6 +20,12 @@
 
 static GLOBALVAR *global_varlist = NULL, *lastvar = NULL;
 
+static KEYWORD cnf_keys[] = {
+	{"DEFAULT", CNF_DEFAULT, cnf_keys+1},
+	{"RECT", CNF_RECT, cnf_keys+2},
+	{"POLAR_DEG", CNF_POLAR_DEG, cnf_keys+3},
+	{"POLAR_RAD", CNF_POLAR_RAD, NULL},
+};
 static KEYWORD df_keys[] = {
 	{"ISO", DF_ISO, df_keys+1},
 	{"US", DF_US, df_keys+2},
@@ -121,7 +127,7 @@ static struct s_varmap {
 	{"version.minor", PT_int32, &global_version_minor, PA_REFERENCE, "minor version"},
 	{"version.patch", PT_int32, &global_version_patch, PA_REFERENCE, "patch number"},
 	{"version.build", PT_int32, &global_version_build, PA_REFERENCE, "build number"},
-	{"version.branch", PT_char32, &global_version_branch, PA_REFERENCE, "branch name"},
+	{"version.branch", PT_char256, &global_version_branch, PA_REFERENCE, "branch name"},
 	{"command_line", PT_char1024, &global_command_line, PA_REFERENCE, "command line"},
 	{"environment", PT_char1024, &global_environment, PA_PUBLIC, "operating environment"},
 	{"quiet", PT_bool, &global_quiet_mode, PA_PUBLIC, "quiet output status flag"},
@@ -149,6 +155,7 @@ static struct s_varmap {
 	{"stoptime", PT_timestamp, &global_stoptime, PA_PUBLIC, "simulation stop time"},
 	{"double_format", PT_char32, &global_double_format, PA_PUBLIC, "format for writing double values"},
 	{"complex_format", PT_char256, &global_complex_format, PA_PUBLIC, "format for writing complex values"},
+	{"complex_output_format", PT_enumeration, &global_complex_output_format, PA_PUBLIC, "complex output representation", cnf_keys},
 	{"object_format", PT_char32, &global_object_format, PA_PUBLIC, "format for writing anonymous object names"},
 	{"object_scan", PT_char32, &global_object_scan, PA_PUBLIC, "format for reading anonymous object names"},
 	{"object_tree_balance", PT_bool, &global_no_balance, PA_PUBLIC, "object index tree balancing enable flag"},
@@ -229,6 +236,7 @@ static struct s_varmap {
 	{"deltamode_iteration_limit", PT_int32, &global_deltamode_iteration_limit, PA_PUBLIC, "iteration limit for each delta timestep (object and interupdate)"},
 	{"deltamode_forced_extra_timesteps",PT_int32, &global_deltamode_forced_extra_timesteps, PA_PUBLIC, "forced extra deltamode timesteps before returning to event-driven mode"},
 	{"deltamode_forced_always",PT_bool, &global_deltamode_forced_always, PA_PUBLIC, "forced deltamode for debugging -- prevents event-driven mode"},
+	{"deltamode_preferred_module_order",PT_bool, &global_deltamode_force_preferred_order, PA_PUBLIC, "sets execution order for deltamode, as opposed to GLM order"},
 	{"run_powerworld", PT_bool, &global_run_powerworld, PA_PUBLIC, "boolean that that says your system is set up correctly to run with PowerWorld"},
 	{"bigranks", PT_bool, &global_bigranks, PA_PUBLIC, "enable fast/blind set_rank operations"},
 	{"exename", PT_char1024, &global_execname, PA_REFERENCE, "argv[0] value"},

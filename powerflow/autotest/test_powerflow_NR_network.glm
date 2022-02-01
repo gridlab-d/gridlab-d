@@ -12,7 +12,7 @@ clock {
 module powerflow {
 	solver_method NR;
 	line_capacitance true;
-	}
+}
 module assert;
 
 // Phase Conductor for 601: 556,500 26/7 ACSR
@@ -310,15 +310,15 @@ object node { //633 {
      nominal_voltage 2401.7771;
 	 object complex_assert {
 		target voltage_A;
-		value 2445.01-2.56d;
-		within 5;
+		value 2444.96-2.55d;
+		within 2;
 	 };	 object complex_assert {
 		target voltage_B;
-		value 2498.09-121.77d;
+		value 2498.11-121.77d;
 		within 5;
 	 };	 object complex_assert {
 		target voltage_C;
-		value 2437.32+117.82d;
+		value 2437.49+117.83d;
 		within 5;
 	 };
 }
@@ -341,15 +341,15 @@ object node { //632 {
      nominal_voltage 2401.7771;
 	 object complex_assert {
 		target voltage_A;
-		value 2452.21-2.49d;
+		value 2452.23-2.49d;
 		within 5;
 	 };	 object complex_assert {
 		target voltage_B;
-		value 2502.56-121.72d;
+		value 2502.66-121.72d;
 		within 5;
 	 };	 object complex_assert {
 		target voltage_C;
-		value 2443.56+117.83d;
+		value 2443.76+117.83d;
 		within 5;
 	 };
 }
@@ -386,17 +386,17 @@ object node { //680 {
        nominal_voltage 2401.7771;
 		object complex_assert {
 			target voltage_A;
-			value 2377.75-5.3d;
+			value 2377.73-5.3d;
 			within 5;
 		};	 
 		object complex_assert {
 			target voltage_B;
-			value 2528.82-122.34dd;
+			value 2528.90-122.34d;
 			within 5;
 		};	
 		object complex_assert {
 			target voltage_C;
-			value 2348.46+116.02d;
+			value 2348.57+116.02d;
 			within 10;  //@note: V_C not exactly matching with IEEE 13-node test feeder
 		};
 }
@@ -411,12 +411,12 @@ object node { //684 {
       nominal_voltage 2401.7771;
 	object complex_assert {
 		target voltage_A;
-		value 2373.65-5.32d;
+		value 2373.05-5.32d;
 		within 5;
 	};	 
 	object complex_assert {
 		target voltage_C; 
-		value 2343.65+115.78d;
+		value 2343.73+115.93d;
 		within 5;  
 	};
 } 
@@ -438,7 +438,7 @@ object load { //634 {
 	object complex_assert {
 		target voltage_A;
 		within 5;
-		value 275-3.23d;
+		value 275.47-3.23d;
 	};
 	object complex_assert {
 		target voltage_B;
@@ -448,7 +448,7 @@ object load { //634 {
 	object complex_assert {
 		target voltage_C;
 		within 5;
-		value 276.02+117.34d;
+		value 276.03+117.35d;
 	};
 }
  
@@ -463,12 +463,12 @@ object load { //645 {
 	object complex_assert {
 		target voltage_B;
 		within 5;
-		value 2480.798-121.90d;
+		value 2480.63-121.90d;
 	};
 	object complex_assert {
 		target voltage_C;
 		within 5;
-		value 2439.00+117.86d;
+		value 2439.01+117.86d;
 	};
 }
  
@@ -487,7 +487,7 @@ object load { //646 {
     	object complex_assert {
     		target voltage_C;
     		within 5;
-    		value 2433.96+117.90d;
+    		value 2434.06+117.90d;
 	};
 }
  
@@ -503,7 +503,7 @@ object load { //652 {
     	object complex_assert {
     		target voltage_A;
     		within 5;
-    		value 2359.74-5.25d;
+    		value 2363.30-5.21d;
     	};
 }
  
@@ -520,17 +520,17 @@ object load { //671 {
     	object complex_assert {
     		target voltage_A;
     		within 5;
-    		value 2377.76-5.3d;
+    		value 2377.73-5.3d;
     	};
     	object complex_assert {
     		target voltage_B;
     		within 5;
-    		value 2526.67-122.34d;
+    		value 2528.90-122.34d;
     	};
     	object complex_assert {
     		target voltage_C;
     		within 8;
-    		value 2348.46+116.02d;
+    		value 2348.57+116.03d;
 	};
 }
  
@@ -550,17 +550,17 @@ object load { //675 {
     	object complex_assert {
     		target voltage_A;
     		within 5;
-    		value 2362.15-5.56d;
+    		value 2362.09-5.55d;
     	};
     	object complex_assert {
     		target voltage_B;
     		within 5;
-    		value 2534.59-122.52d;
+    		value 2534.63-122.52d;
     	};
     	object complex_assert {
     		target voltage_C;
     		within 8;
-    		value 2343.65+116.03d;
+    		value 2343.97+116.04d;
 	};
 }
  
@@ -577,17 +577,17 @@ object load { //692 {
 	object complex_assert {
 		target voltage_A;
 		within 5;
-		value 2377.76-5.31d;
+		value 2377.71-5.30d;
 	};
 	object complex_assert {
 		target voltage_B;
 		within 5;
-		value 2526.67-122.34d;
+		value 2528.90-122.34d;
 	};
 	object complex_assert {
 		target voltage_C;
 		within 8;
-		value 2348.22+116.02d;
+		value 2348.56+116.03d;
 	};
 }
  
@@ -603,7 +603,7 @@ object load { //611 {
 	object complex_assert {
 		target voltage_C;
 		within 8;
-		value 2338.85+115.78d;
+		value 2338.94+115.78d;
 	};
 }
  

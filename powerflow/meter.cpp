@@ -254,6 +254,8 @@ int meter::create()
 	measured_real_power = 0.0;
 	measured_reactive_power = 0.0;
 
+	indiv_measured_power[0] = indiv_measured_power[1] = indiv_measured_power[2] = complex(0.0,0.0);
+
 	meter_interrupted = false;	//We default to being in service
 	meter_interrupted_secondary = false;	//Default to no momentary interruptions
 
@@ -347,6 +349,7 @@ int meter::create()
 int meter::init(OBJECT *parent)
 {
 	char temp_buff[128];
+	OBJECT *obj = OBJECTHDR(this);
 
 	if(power_market != 0){
 		price_prop = gl_get_property(power_market, "current_market.clearing_price");
@@ -401,6 +404,16 @@ int meter::init(OBJECT *parent)
 			prev_voltage_value[1] = complex(0.0,0.0);
 			prev_voltage_value[2] = complex(0.0,0.0);
 		}
+	}
+
+	//Check power and energy properties - if they are initialized, send a warning
+	if ((measured_real_power != 0.0) || (measured_reactive_power != 0.0) || (measured_real_energy != 0.0) || (measured_reactive_energy != 0.0))
+	{
+		gl_warning("meter:%d - %s - measured power or energy is not initialized to zero - unexpected energy values may result",obj->id,(obj->name?obj->name:"Unnamed"));
+		/*  TROUBLESHOOT
+		An initial value for measured_real_power, measured_reactive_power, measured_real_energy, or measured_reactive_energy was set in the GLM.  This may cause some unexpected
+		energy values to be computed for the system on this meter.  If this was not deliberate, be sure to remove those entries from the GLM file.
+		*/
 	}
 
 	return node::init(parent);
@@ -584,7 +597,7 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		measured_current[2] = current_inj[2];
 
 		// compute energy use from previous cycle
-		// - everything below this can moved to commit function once tape player is collecting from commit function7
+		// - everything below this can moved to commit function once tape:recorder is collecting from commit function7
 		if (dt > 0 && last_t != dt)
 		{	
 			measured_real_energy += measured_real_power * TO_HOURS(dt);

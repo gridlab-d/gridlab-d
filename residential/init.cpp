@@ -53,7 +53,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	gl_global_create("residential::ANSI_voltage_check",PT_bool,&ANSI_voltage_check,PT_DESCRIPTION,"enable or disable messages about ANSI voltage limit violations in the house",NULL);
 	gl_global_create("residential::enable_subsecond_models", PT_bool, &enable_subsecond_models,PT_DESCRIPTION,"Enable deltamode capabilities within the residential module",NULL);
 	gl_global_create("residential::deltamode_timestep", PT_double, &deltamode_timestep_publish,PT_UNITS,"ns",PT_DESCRIPTION,"Desired minimum timestep for deltamode-related simulations",NULL);
-	gl_global_create("residential::all_house_delta", PT_bool, &all_house_delta,PT_DESCRIPTION,"Modeling convenient - enables all houses in deltamode",NULL);
+	gl_global_create("residential::all_residential_delta", PT_bool, &all_residential_delta,PT_DESCRIPTION,"Modeling convenient - enables all residential objects in deltamode",NULL);
 
 	new residential_enduse(module);
 	new appliance(module);
@@ -241,6 +241,14 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 
 	if (enable_subsecond_models == true)
 	{
+		//See if this is the first instance -- if so, update the timestep (flagging-related)
+		if (deltatimestep_running < 0.0)
+		{
+			//Set the powerflow global -- technically the same as dt, but in double precision (less divides)
+			deltatimestep_running = (double)((double)dt/(double)DT_SECOND);
+		}
+		//Default else -- already set
+
 		//Loop through the object list and call the updates
 		for (curr_object_number=0; curr_object_number<res_object_count; curr_object_number++)
 		{
@@ -319,6 +327,9 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 
 	if (enable_subsecond_models == true)
 	{
+		//Final item of transitioning out is resetting the next timestep so a smaller one can take its place
+		deltamode_starttime = TS_NEVER;
+
 		//Loop through delta objects and update the after items
 		for (curr_object_number=0; curr_object_number<res_object_count; curr_object_number++)
 		{
@@ -361,6 +372,9 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 			}
 			//Default else -- we didn't have one, so just skip
 		}
+
+		//Deflag the timestep variable as well
+		deltatimestep_running = -1.0;
 
 		//We always succeed from this, just because (unless we failed above)
 		return SUCCESS;

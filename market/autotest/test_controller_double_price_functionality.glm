@@ -1,0 +1,177 @@
+//Simple test of functionality of controller to reflect CCSI imports
+//DOUBLE_PRICE mode
+//Not a thorough test
+//Built off test_markets_controller_cooling_inelastic_double.glm
+#set suppress_repeat_messages=1;
+
+module market;
+module tape;
+module assert;
+module climate;
+module powerflow;
+module residential {
+	implicit_enduses NONE;
+}
+
+clock {
+	timezone PST+8PDT;
+	starttime '2001-06-25 14:00:00';
+	stoptime '2001-06-25 16:00:00';
+}
+
+schedule fixed_prices {
+	0-14 14 * * * 100;
+	15-29 14 * * * 10;
+	30-44 14 * * * 25;
+	45-59 14 * * * 112;
+	0-14 15 * * * 49.5;
+	15-29 15 * * * 49.8;
+	30-44 15 * * * 50.2;
+	45-59 15 * * * 77;
+	* 16 * * * 82;
+}
+
+schedule cooling_setpoints {
+	0-14 14 * * * 70;
+	15-29 14 * * * 70;
+	30-44 14 * * * 72.5;
+	45-59 14 * * * 72.5;
+	0-14 15 * * * 70;
+	15-29 15 * * * 72.5;
+	30-44 15 * * * 72.5;
+	45-59 15 * * * 72.5;
+	* 16 * * * 72.5;
+}
+
+object climate {
+	name "Yakima WA";
+	tmyfile "../WA-Yakima.tmy2";
+}
+
+class auction {
+	double current_price_mean_30min;
+	double current_price_stdev_30min;
+}
+
+object auction {
+	name Market_1;
+	unit MW;
+	period 900;
+	verbose TRUE;
+	//rank 2;
+	special_mode BUYERS_ONLY;
+	fixed_price fixed_prices*1;
+	warmup 0;
+	init_price 100;
+	init_stdev 0;
+	object recorder {
+		interval 15;	//Helps drive simulation
+		property "current_market.clearing_quantity";
+		file clearing_quantity_check.csv;
+	};
+	// object recorder {
+		// interval -1;	//Helps drive simulation
+		// property "current_market.clearing_quantity";
+		// file data_controller_double_price_clearing_quant_assert.csv;
+	// };	
+	object double_assert {
+		target "current_market.clearing_quantity";
+		within 1e-6;
+		object player {
+			property value;
+			file ../data_controller_double_price_clearing_quant_assert.csv;
+		};
+	};
+}
+
+object triplex_meter {
+	phases AS;
+	nominal_voltage 120;
+	name house_meter;
+}
+	
+object house {
+	name house1;
+	parent house_meter;
+	weather "Yakima WA";
+	cooling_setpoint 70;
+	air_temperature 72;
+	object double_assert {
+		target "cooling_setpoint";
+		within 1e-3;
+		object player {
+			property value;
+			file ../data_controller_double_price_cool_setpoint_assert.csv;
+		};
+	};
+	// object recorder {
+		// property "cooling_setpoint";
+		// file data_controller_double_price_cool_setpoint_assert.csv;
+		// interval -1;
+	// };
+	
+	// object controller_ccsi {
+	object controller {
+		name cool_control;
+		market Market_1;
+		bid_mode ON;
+		bid_delay 30;
+		control_mode DOUBLE_PRICE;
+		resolve_mode DEADBAND;
+		period 300;
+		average_target current_price_mean_30min;
+		standard_deviation_target current_price_stdev_30min;
+		target air_temperature;
+		deadband thermostat_deadband;
+		total total_load;
+		load hvac_load;
+		state power_state;
+		ramp_low 2;
+		ramp_high 2;
+		range_low 0;
+		range_high 5;
+		base_setpoint cooling_setpoints*1.0;
+		setpoint cooling_setpoint;
+		demand last_cooling_load;
+		// object recorder {
+			// property bid_price;
+			// interval -1;
+			// file data_controller_double_price_bids_assert.csv;
+		// };
+		object double_assert {
+			target "bid_price";
+			within 1e-3;
+			object player {
+				file ../data_controller_double_price_bids_assert.csv;
+				property value;
+			};
+		};
+	};
+}
+
+object house {
+	name house2;
+	parent house_meter;
+	weather "Yakima WA";
+	cooling_setpoint 70;
+	air_temperature 72;
+	object controller {
+		name cool_control2;			
+		market Market_1;
+		bid_mode ON;			
+		period 900;
+		average_target current_price_mean_30min;
+		standard_deviation_target current_price_stdev_30min;		
+		control_mode RAMP;
+		target air_temperature;
+		setpoint cooling_setpoint;
+		demand cooling_demand;
+		total total_load;
+		load hvac_load;
+		//slider_setting 0; //set to 0 or ramps will be overwritten
+		ramp_low 2;
+		ramp_high 2;
+		range_low 0;
+		range_high 5;
+	};
+}

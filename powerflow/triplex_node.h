@@ -41,6 +41,7 @@ public:
 	int init(OBJECT *parent=NULL);
 	TIMESTAMP presync(TIMESTAMP t0);
 	TIMESTAMP sync(TIMESTAMP t0);
+	TIMESTAMP postsync(TIMESTAMP t0);
 	int isa(char *classname);
 
 	void BOTH_triplex_node_sync_fxn(void);
