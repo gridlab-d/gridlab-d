@@ -32,6 +32,7 @@ void print_matrix(complex mat[3][3]);
 #define TSNVRDBL 9223372036854775808.0
 
 typedef enum {SM_FBS=0, SM_GS=1, SM_NR=2} SOLVERMETHOD;		/**< powerflow solver methodology */
+typedef enum {NRM_TCIM=0, NRM_FPI=1} NRSOLVERALG;		/**< NR solver underlying appraoch */
 typedef enum {MM_SUPERLU=0, MM_EXTERN=1} MATRIXSOLVERMETHOD;	/**< NR matrix solver methodlogy */
 typedef enum {
 	MD_NONE=0,			///< No matrix dump desired
@@ -70,6 +71,7 @@ typedef struct s_ext_fxn {
 GLOBAL char256 LUSolverName INIT("KLU");				/**< filename for external LU solver */
 GLOBAL EXT_LU_FXN_CALLS LUSolverFcns;				/**< links to external LU solver functions */
 GLOBAL SOLVERMETHOD solver_method INIT(SM_FBS);		/**< powerflow solver methodology */
+GLOBAL NRSOLVERALG NR_solver_algorithm INIT(NRM_TCIM);	/**< NR underlying algorithm */
 GLOBAL char256 MDFileName INIT("");					/**< filename for matrix dump */
 GLOBAL MATRIXDUMPMETHOD NRMatDumpMethod INIT(MD_NONE);	/**< NR-based matrix output method */
 GLOBAL bool NRMatReferences INIT(false);			/**< Flag to indicate if the decoding information for the matrix is dumped - row/col to bus */

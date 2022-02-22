@@ -72,6 +72,10 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		PT_KEYWORD,"GS",SM_GS,
 		PT_KEYWORD,"NR",SM_NR,
 		NULL);
+	gl_global_create("powerflow::NR_solver_algorithm",PT_enumeration,&NR_solver_algorithm,PT_DESCRIPTION,"Underlying algorithm for NR powerflow - TCIM or FPI",
+		PT_KEYWORD,"TCIM", NRM_TCIM,
+		PT_KEYWORD,"FPI", NRM_FPI,
+		NULL);
 	gl_global_create("powerflow::NR_matrix_file",PT_char256,&MDFileName,NULL);
 	gl_global_create("powerflow::NR_matrix_output_interval",PT_enumeration,&NRMatDumpMethod,
 		PT_KEYWORD,"NEVER",MD_NONE,

@@ -43,6 +43,7 @@ typedef struct  {
 	double Jacob_B[3];		// Element b in equation (38), which is used to update the Jacobian matrix at each iteration
 	double Jacob_C[3];		// Element c in equation (39), which is used to update the Jacobian matrix at each iteration
 	double Jacob_D[3];		// Element d in equation (40), which is used to update the Jacobian matrix at each iteration
+	complex FPI_current[3];	// Current for  FPI RHS
 	unsigned int Matrix_Loc;// Starting index of this object's place in all matrices/equations
 	double max_volt_error;	///< Maximum voltage error specified for that node
 	char *name;				///< original name
@@ -118,7 +119,7 @@ typedef struct {
 } SPARSE;
 
 typedef struct {
-	double *deltaI_NR;					/// Storage array for current injection
+	double *current_RHS_NR;					/// Storage array for current injection/RHS materials
 	unsigned int size_offdiag_PQ;		/// Number of fixed off-diagonal matrix elements
 	unsigned int size_diag_fixed;		/// Number of fixed diagonal matrix elements
 	unsigned int total_variables;		/// Total number of phases to be calculating (size of matrices)
