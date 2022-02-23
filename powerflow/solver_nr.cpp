@@ -5847,9 +5847,9 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 				}//End TCIM Update
 				else	//Assumes FPI
 				{
-					//Convert 'em to line currents - they need to be negated (due to the convention from earlier)
-					temp_store[0] = -(temp_current[0] + temp_current[2]);
-					temp_store[1] = -(-temp_current[1] - temp_current[2]);
+					//Convert 'em to line currents
+					temp_store[0] = (temp_current[0] + temp_current[2]);
+					temp_store[1] = (-temp_current[1] - temp_current[2]);
 
 					//Store update
 					bus[indexer].FPI_current[0] = temp_store[0];
