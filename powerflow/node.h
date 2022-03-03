@@ -219,7 +219,7 @@ public:
 	complex power_dy[6];	/// bus power injection (positive = in), explicitly specify delta and wye portions
 	complex shunt_dy[6];	/// bus shunt admittance, explicitly specify delta and wye portions
 	complex *full_Y;		/// full 3x3 bus shunt admittance - populate as necessary
-	complex *full_Y_load;	/// 3x1 bus shunt admittance - meant to update (not part of BA_diag) - populate as necessary
+	complex full_Y_load[3][3];	/// 3x3 bus shunt admittance - meant to update - used for in-rush or FPI
 	complex *full_Y_all;	/// Full 3x3 bus admittance with "other" contributions (self of full admittance) - populate as necessary
 	DYN_NODE_TYPE node_type;/// Variable to indicate what we are - prevents needing a gl_object_isa EVERY...SINGLE...TIME in an already slow dynamic simulation
 	complex current12;		/// Used for phase 1-2 current injections in triplex

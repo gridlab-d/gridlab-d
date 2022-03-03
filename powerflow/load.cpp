@@ -383,16 +383,6 @@ int load::init(OBJECT *parent)
 				//Defined above
 			}
 
-			//Allocate our "updating admittance" portion as well
-			full_Y_load = (complex *)gl_malloc(3*sizeof(complex));
-
-			//Check it
-			if (full_Y_load == NULL)
-			{
-				GL_THROW("load:%d-%s - failed to allocate memory for in-rush calculations",obj->id, obj->name ? obj->name : "unnamed");
-				//Defined above
-			}
-
 			//Now zero them all, for good measure
 			ahrlloadstore[0] = ahrlloadstore[1] = ahrlloadstore[2] = complex(0.0,0.0);
 			bhrlloadstore[0] = bhrlloadstore[1] = bhrlloadstore[2] = complex(0.0,0.0);
@@ -404,9 +394,7 @@ int load::init(OBJECT *parent)
 			LoadHistTermC[0] = LoadHistTermC[1] = LoadHistTermC[2] = complex(0.0,0.0);
 			LoadHistTermC[3] = LoadHistTermC[4] = LoadHistTermC[5] = complex(0.0,0.0);
 
-			full_Y_load[0] = full_Y_load[1] = full_Y_load[2] = complex(0.0,0.0);
-			//full_Y_load[3] = full_Y_load[4] = full_Y_load[5] = complex(0.0,0.0);	//If this ever becomes 3x3, need these
-			//full_Y_load[6] = full_Y_load[7] = full_Y_load[8] = complex(0.0,0.0);	//Need to update the admittance to handle them though (lazy)
+			//full_Y_load inited in node
 		}
 		//Default else - not needed
 	}
@@ -520,12 +508,21 @@ void load::load_update_fxn(void)
 	double adjust_FBS_temp_voltage_mag[6];
 	double adjust_FBS_nominal_voltage_val[6];
 	complex adjust_FBS_voltage_val[6];
+	complex shunt_change_check[3];
 
 	//See if we're reliability-enabled
 	if (fault_check_object == NULL)
 		fault_mode = false;
 	else
 		fault_mode = true;
+
+	//Store current shunt values "of interest" to see if it changed for FPIM
+	if (NR_solver_algorithm == NRM_FPI)
+	{
+		shunt_change_check[0] = shunt[0];
+		shunt_change_check[1] = shunt[1];
+		shunt_change_check[2] = shunt[2];
+	}
 
 	//Roll GFA check into here, so current loads updates are handled properly
 	//See if GFA functionality is enabled
@@ -2725,68 +2722,6 @@ void load::load_update_fxn(void)
 		//Default else - everything would stay zero
 	}//End reliability mode
 
-	//One time initialization (for now) code for in-rush -- checks for allocations
-	if (enable_inrush_calculations == true)
-	{
-		//See if we're a parent or child
-		if ((SubNode == CHILD) || (SubNode == DIFF_CHILD))	//We're a child - check with our Mommy/Daddy
-		{
-			//We're not a legit parent! See if we need to allocate for our senile parents
-			if (NR_busdata[*NR_subnode_reference].full_Y_load == NULL)	//Nope, not set yet
-			{
-				//Map our parent
-				temp_par_node = OBJECTDATA(SubNodeParent,node);
-
-				//Make sure it worked, for giggles
-				if (temp_par_node == NULL)
-				{
-					//Get header information
-					obj = OBJECTHDR(this);
-
-					GL_THROW("load:%s - failed to map parent object for childed node",obj->name ? obj->name : "unnamed");
-					/*  TROUBLESHOOT
-					While attempting to link to the parent load, an error occurred.  Please try again.
-					If the error persists, please submit your code and a bug report via the trac website.
-					*/
-				}
-
-				//See if our parent has been allocated yet or not - theoretically should have been done by now
-				if (temp_par_node->full_Y_load == NULL)
-				{
-					//Lock our parent
-					LOCK_OBJECT(SubNodeParent);
-
-					//Do allocations
-					temp_par_node->full_Y_load = (complex *)gl_malloc(3*sizeof(complex));
-
-					//Check it
-					if (temp_par_node->full_Y_load==NULL)
-					{
-						GL_THROW("Node:%s failed to allocate space for the a deltamode variable",SubNodeParent->name);
-						/*  TROUBLESHOOT
-						While attempting to allocate memory for a dynamics-required (deltamode) variable, an error
-						occurred. Please try again.  If the error persists, please submit your code and a bug
-						report via the trac website.
-						*/
-					}
-
-					//Zero it, just to be safe (gens will accumulate into it)
-					temp_par_node->full_Y_load[0] = temp_par_node->full_Y_load[1] = temp_par_node->full_Y_load[2] = complex(0.0,0.0);
-					//temp_par_node->full_Y_load[3] = temp_par_node->full_Y_load[4] = temp_par_node->full_Y_load[5] = complex(0.0,0.0);	//Needed if ever go full 3x3
-					//temp_par_node->full_Y_load[6] = temp_par_node->full_Y_load[7] = temp_par_node->full_Y_load[8] = complex(0.0,0.0);
-
-					//Unlock our parent
-					UNLOCK_OBJECT(SubNodeParent);
-
-					//Link our parent up inside the NR_busdata structure, otherwise this will do nothing
-					NR_busdata[*NR_subnode_reference].full_Y_load = temp_par_node->full_Y_load;
-				}//End parent wasn't allocated
-			}//End allocation check
-		}//End childed load
-		//Default else -- if we're a parent, we're a load, so we already allocated this as part of our routine in init
-	}
-	//Defaulted else -- either already done, or not needed
-
 	//In-rush update information - incorporate the latest "impedance" values
 	//Put at bottom to ensure it gets the "converted impedance final result"
 	//Deltamode catch and check
@@ -3111,10 +3046,14 @@ void load::load_update_fxn(void)
 				NR_busdata[NR_node_reference].BusHistTerm[1] = complex(0.0,0.0);
 				NR_busdata[NR_node_reference].BusHistTerm[2] = complex(0.0,0.0);
 
-				//Add this into the main admittance matrix (handled directly)
-				NR_busdata[NR_node_reference].full_Y_load[0] = complex(0.0,0.0);
-				NR_busdata[NR_node_reference].full_Y_load[1] = complex(0.0,0.0);
-				NR_busdata[NR_node_reference].full_Y_load[2] = complex(0.0,0.0);
+				//@FPIM - see if this needs revisiting - may not even need to be zeroed for TCIM
+				if (NR_solver_algorithm == NRM_TCIM)
+				{
+					//Add this into the main admittance matrix (handled directly)
+					NR_busdata[NR_node_reference].full_Y_load[0] = complex(0.0,0.0);
+					NR_busdata[NR_node_reference].full_Y_load[4] = complex(0.0,0.0);
+					NR_busdata[NR_node_reference].full_Y_load[8] = complex(0.0,0.0);
+				}
 			}
 			else	//It is a child - look at parent
 			{
@@ -3123,9 +3062,13 @@ void load::load_update_fxn(void)
 				NR_busdata[*NR_subnode_reference].BusHistTerm[1] = complex(0.0,0.0);
 				NR_busdata[*NR_subnode_reference].BusHistTerm[2] = complex(0.0,0.0);
 
-				NR_busdata[*NR_subnode_reference].full_Y_load[0] = complex(0.0,0.0);
-				NR_busdata[*NR_subnode_reference].full_Y_load[1] = complex(0.0,0.0);
-				NR_busdata[*NR_subnode_reference].full_Y_load[2] = complex(0.0,0.0);
+				//@FPIM - see if this needs revisiting - may not even need to be zeroed for TCIM
+				if (NR_solver_algorithm == NRM_TCIM)
+				{
+					NR_busdata[*NR_subnode_reference].full_Y_load[0] = complex(0.0,0.0);
+					NR_busdata[*NR_subnode_reference].full_Y_load[4] = complex(0.0,0.0);
+					NR_busdata[*NR_subnode_reference].full_Y_load[8] = complex(0.0,0.0);
+				}
 			}
 
 			//Zero previous shunt values, just because
@@ -3249,12 +3192,12 @@ void load::load_update_fxn(void)
 			if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
 			{
 				//Add this into the main admittance matrix (handled directly)
-				NR_busdata[NR_node_reference].full_Y_load[index_var] += shunt[index_var]-prev_shunt[index_var];
+				NR_busdata[NR_node_reference].full_Y_load[(index_var*3+index_var)] += shunt[index_var]-prev_shunt[index_var];
 			}
 			else	//It is a child - look at parent
 			{
 				//Add this into the main admittance matrix (handled directly)
-				NR_busdata[*NR_subnode_reference].full_Y_load[index_var] += shunt[index_var]-prev_shunt[index_var];
+				NR_busdata[*NR_subnode_reference].full_Y_load[(index_var*3+index_var)] += shunt[index_var]-prev_shunt[index_var];
 			}
 
 			//Update tracker
@@ -3274,6 +3217,36 @@ void load::load_update_fxn(void)
 
 	}//End in-rush term updat needed
 	//Default else -- no update needed
+
+	//FPIM "convergence check" stuff
+	if (NR_solver_algorithm == NRM_FPI)
+	{
+		for (index_var=0; index_var<3; index_var++)
+		{
+			//Compute the difference
+			working_impedance_value = shunt[index_var] - shunt_change_check[index_var];
+
+			//Check it
+			if (working_impedance_value.Mag() > 0.0)
+			{
+				NR_FPI_imp_load_change = true;
+
+				//Update the matrix - diagonal for now
+				//See if we're a parented load or not
+				if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+				{
+					//Compute the values and post them to our bus term
+					NR_busdata[NR_node_reference].full_Y_load[index_var*3+index_var] += shunt[index_var] - shunt_change_check[index_var];
+				}
+				else	//It is a child - look at parent
+				{
+					//Compute the values and post them to our bus term
+					NR_busdata[*NR_subnode_reference].full_Y_load[index_var*3+index_var] += shunt[index_var] - shunt_change_check[index_var];
+				}
+			}
+		}
+	}//End FPI
+	//TCIM doesn't use this
 }
 
 //Function to appropriately zero load - make sure we don't get too heavy handed

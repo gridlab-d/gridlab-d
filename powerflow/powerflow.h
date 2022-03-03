@@ -92,6 +92,7 @@ GLOBAL int NR_curr_branch INIT(-1);					/**< Newton-Raphson current branch indic
 GLOBAL int64 NR_iteration_limit INIT(500);			/**< Newton-Raphson iteration limit (per GridLAB-D iteration) */
 GLOBAL bool NR_dyn_first_run INIT(true);			/**< Newton-Raphson first run indicator - used by deltamode functionality for initialization powerflow */
 GLOBAL bool NR_admit_change INIT(true);				/**< Newton-Raphson admittance matrix change detector - used to prevent complete recalculation of admittance at every timestep */
+GLOBAL bool NR_FPI_imp_load_change INIT(true);		/**< Newton-Raphson Fixed-Point-Iterative - flag to indicate if impedance load changed (for admittance reform) */
 GLOBAL int NR_superLU_procs INIT(1);				/**< Newton-Raphson related - superLU MT processor count to request - separate from thread_count */
 GLOBAL TIMESTAMP NR_retval INIT(TS_NEVER);			/**< Newton-Raphson current return value - if t0 objects know we aren't going anywhere */
 GLOBAL OBJECT *NR_swing_bus INIT(NULL);				/**< Newton-Raphson swing bus */

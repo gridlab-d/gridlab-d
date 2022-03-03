@@ -345,6 +345,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	char jindex, kindex;
 	char temp_index, temp_index_b;
 	unsigned int temp_index_c;
+	char mat_temp_index;
 
 	//Working matrix for admittance collapsing/determinations
 	complex tempY[3][3];
@@ -2438,7 +2439,11 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				}//end not full ABC with AC on either side case
 			}//end all others else
 		}//end branch for
+	}// Off-diagonal elements update - same for both
 
+	//If an impedance load change
+	if ((NR_admit_change == true) || (NR_FPI_imp_load_change == true))
+	{
 		//Loop through the islands
 		for (island_loop_index=0; island_loop_index<NR_islands_detected; island_loop_index++)
 		{
@@ -2460,17 +2465,45 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					{
 						continue;	//Skip us - won't be part of the fixed diagonal
 					}
+
+					//Secondary - call the load update function for the device, if it has one (ensures full_Y_load gets updated, if needed)
+					if (bus[jindexer].LoadUpdateFxn != NULL)
+					{
+						//Call the function
+						call_return_status = ((STATUS (*)(OBJECT *))(*bus[jindexer].LoadUpdateFxn))(bus[jindexer].obj);
+
+						//Make sure it worked
+						if (call_return_status == FAILED)
+						{
+							GL_THROW("NR: Load update failed for device %s",bus[indexer].obj->name ? bus[indexer].obj->name : "Unnamed");
+							//Defined below in compute_load_values
+						}
+						//Default else - it worked
+					}
 				}
 
 				//Loop through and get sizes
 				for (jindex=0; jindex<3; jindex++)
 				{
 					for (kindex=0; kindex<3; kindex++)
-					{		 
-						if (((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Re() != 0) && (bus[jindexer].type != 1) && (jindex!=kindex))
-							powerflow_values->island_matrix_values[island_loop_index].size_diag_fixed += 1; 
-						if (((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Im() != 0) && (bus[jindexer].type != 1) && (jindex!=kindex))
-							powerflow_values->island_matrix_values[island_loop_index].size_diag_fixed += 1; 
+					{	
+						if (NR_solver_algorithm == NRM_TCIM)	 
+						{
+							if (((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Re() != 0) && (bus[jindexer].type != 1) && (jindex!=kindex))
+								powerflow_values->island_matrix_values[island_loop_index].size_diag_fixed += 1; 
+							if (((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Im() != 0) && (bus[jindexer].type != 1) && (jindex!=kindex))
+								powerflow_values->island_matrix_values[island_loop_index].size_diag_fixed += 1; 
+						}
+						else	//Implies FPIM
+						{
+							//Calculate matrix index
+							mat_temp_index = jindex*3+kindex;
+
+							if ((((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Re() != 0) || ((bus[jindexer].full_Y_load[mat_temp_index]).Re() !=0)) && (bus[jindexer].type != 1))
+								powerflow_values->island_matrix_values[island_loop_index].size_diag_fixed += 1; 
+							if ((((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Im() != 0) || ((bus[jindexer].full_Y_load[mat_temp_index]).Im() !=0)) && (bus[jindexer].type != 1))
+								powerflow_values->island_matrix_values[island_loop_index].size_diag_fixed += 1; 
+						}	//End FPIM
 					}
 				}
 			}
@@ -2536,39 +2569,88 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			}
 			//Defauilt TCIM - keep
 
-			for (jindex=0; jindex<powerflow_values->BA_diag[jindexer].size; jindex++)
+			//Wrapper for both - no PV buses supported (does this even need to be checked?)
+			if (bus[jindexer].type != 1)	//Not PV
 			{
-				for (kindex=0; kindex<powerflow_values->BA_diag[jindexer].size; kindex++)
-				{					
-					if ((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Im() != 0 && bus[jindexer].type != 1 && jindex!=kindex)
+				//Populate matrix - TCIM neglects main diagonal, so handle differently
+				if (NR_solver_algorithm == NRM_TCIM)
+				{
+					for (jindex=0; jindex<powerflow_values->BA_diag[jindexer].size; jindex++)
 					{
-						powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*powerflow_values->BA_diag[jindexer].row_ind + jindex;
-						powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*powerflow_values->BA_diag[jindexer].col_ind + kindex;
-						powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = (powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Im();
-						powerflow_values->island_matrix_values[island_index_val].indexer += 1;
+						for (kindex=0; kindex<powerflow_values->BA_diag[jindexer].size; kindex++)
+						{					
+							if (((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Im() != 0) && (jindex!=kindex))
+							{
+								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*powerflow_values->BA_diag[jindexer].row_ind + jindex;
+								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*powerflow_values->BA_diag[jindexer].col_ind + kindex;
+								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = (powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Im();
+								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 
-						powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*powerflow_values->BA_diag[jindexer].row_ind + jindex +powerflow_values->BA_diag[jindexer].size;
-						powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*powerflow_values->BA_diag[jindexer].col_ind + kindex +powerflow_values->BA_diag[jindexer].size;
-						powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Im();
-						powerflow_values->island_matrix_values[island_index_val].indexer += 1;
+								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*powerflow_values->BA_diag[jindexer].row_ind + jindex +powerflow_values->BA_diag[jindexer].size;
+								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*powerflow_values->BA_diag[jindexer].col_ind + kindex +powerflow_values->BA_diag[jindexer].size;
+								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -(powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Im();
+								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
+							}
+
+							if (((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Re() != 0) && (jindex!=kindex))
+							{
+								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*powerflow_values->BA_diag[jindexer].row_ind + jindex;
+								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*powerflow_values->BA_diag[jindexer].col_ind + kindex +powerflow_values->BA_diag[jindexer].size;
+								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = (powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Re();
+								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
+								
+								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*powerflow_values->BA_diag[jindexer].row_ind + jindex +powerflow_values->BA_diag[jindexer].size;
+								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*powerflow_values->BA_diag[jindexer].col_ind + kindex;
+								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = (powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Re();
+								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
+							}
+						}
 					}
-
-					if ((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Re() != 0 && bus[jindexer].type != 1 && jindex!=kindex)
+				}//End TCIM
+				else	//Implies FPI
+				{
+					for (jindex=0; jindex<powerflow_values->BA_diag[jindexer].size; jindex++)
 					{
-						powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*powerflow_values->BA_diag[jindexer].row_ind + jindex;
-						powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*powerflow_values->BA_diag[jindexer].col_ind + kindex +powerflow_values->BA_diag[jindexer].size;
-						powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = (powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Re();
-						powerflow_values->island_matrix_values[island_index_val].indexer += 1;
-						
-						powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*powerflow_values->BA_diag[jindexer].row_ind + jindex +powerflow_values->BA_diag[jindexer].size;
-						powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*powerflow_values->BA_diag[jindexer].col_ind + kindex;
-						powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = (powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Re();
-						powerflow_values->island_matrix_values[island_index_val].indexer += 1;
+						for (kindex=0; kindex<powerflow_values->BA_diag[jindexer].size; kindex++)
+						{
+							//Calculate matrix index
+							mat_temp_index = jindex*3+kindex;
+				
+							if (((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Im() != 0) || (bus[jindexer].full_Y_load[mat_temp_index].Im() != 0))
+							{
+								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*powerflow_values->BA_diag[jindexer].row_ind + jindex;
+								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*powerflow_values->BA_diag[jindexer].col_ind + kindex;
+								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = ((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Im() + bus[jindexer].full_Y_load[mat_temp_index].Im());
+								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
+
+								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*powerflow_values->BA_diag[jindexer].row_ind + jindex +powerflow_values->BA_diag[jindexer].size;
+								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*powerflow_values->BA_diag[jindexer].col_ind + kindex +powerflow_values->BA_diag[jindexer].size;
+								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Im() + bus[jindexer].full_Y_load[mat_temp_index].Im());
+								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
+							}
+
+							if (((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Re() != 0) || (bus[jindexer].full_Y_load[mat_temp_index].Re() != 0))
+							{
+								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*powerflow_values->BA_diag[jindexer].row_ind + jindex;
+								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*powerflow_values->BA_diag[jindexer].col_ind + kindex +powerflow_values->BA_diag[jindexer].size;
+								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = ((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Re() + bus[jindexer].full_Y_load[mat_temp_index].Re());
+								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
+								
+								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*powerflow_values->BA_diag[jindexer].row_ind + jindex +powerflow_values->BA_diag[jindexer].size;
+								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*powerflow_values->BA_diag[jindexer].col_ind + kindex;
+								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = ((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Re() + bus[jindexer].full_Y_load[mat_temp_index].Re());
+								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
+							}
+						}
 					}
 				}
-			}
+			}//End not PV bus
+			//Default else - is a PV bus somehow, but skipped
 		}//End bus parse for fixed diagonal
-	}//End admittance update
+	}//End admittance update - fixed diagonal or load change
+
+	//Deflag the load change, regardless
+	NR_FPI_imp_load_change = false;
 
 	//Loop through each island to reset these flags
 	for (island_loop_index=0; island_loop_index<NR_islands_detected; island_loop_index++)
@@ -3155,10 +3237,11 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 							//In-rush load contributions (if any) - only along explicit diagonal
 							//@FPIM - See how this may work
-							if ((bus[indexer].full_Y_load != NULL) && (jindex==kindex))
+							if ((bus[indexer].full_Y_load != NULL) && (jindex==kindex) && (NR_solver_algorithm == NRM_TCIM))
 							{
-								tempIcalcReal += (bus[indexer].full_Y_load[temp_index]).Re() * (bus[indexer].V[temp_index]).Re() - (bus[indexer].full_Y_load[temp_index]).Im() * (bus[indexer].V[temp_index]).Im();// equation (7), the diag elements of bus admittance matrix 
-								tempIcalcImag += (bus[indexer].full_Y_load[temp_index]).Re() * (bus[indexer].V[temp_index]).Im() + (bus[indexer].full_Y_load[temp_index]).Im() * (bus[indexer].V[temp_index]).Re();// equation (8), the diag elements of bus admittance matrix 
+								mat_temp_index = temp_index*3+temp_index;	//Create index - make diagonal for inrush
+								tempIcalcReal += (bus[indexer].full_Y_load[mat_temp_index]).Re() * (bus[indexer].V[temp_index]).Re() - (bus[indexer].full_Y_load[mat_temp_index]).Im() * (bus[indexer].V[temp_index]).Im();// equation (7), the diag elements of bus admittance matrix 
+								tempIcalcImag += (bus[indexer].full_Y_load[mat_temp_index]).Re() * (bus[indexer].V[temp_index]).Im() + (bus[indexer].full_Y_load[mat_temp_index]).Im() * (bus[indexer].V[temp_index]).Re();// equation (8), the diag elements of bus admittance matrix 
 							}
 
 							//Off diagonal contributions
@@ -3869,163 +3952,125 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			//Default else -- not in this island, so skip us!
 		}//End delta_I for each bus
 
-		//Call the load subfunction - flag for Jacobian update
-		compute_load_values(bus_count,bus,powerflow_values,true,island_loop_index);
+		//Call the load subfunction - flag for Jacobian update - only need to do for TCIM right now
+		if (NR_solver_algorithm == NRM_TCIM)
+		{
+			compute_load_values(bus_count,bus,powerflow_values,true,island_loop_index);
+		}
 
 		//Build the dynamic diagnal elements of 6n*6n Y matrix. All the elements in this part will be updated at each iteration.
 
 		//Reset it
 		powerflow_values->island_matrix_values[island_loop_index].size_diag_update = 0;
 
-		//Adjust it
-		for (jindexer=0; jindexer<bus_count;jindexer++) 
+		//Method check - FPIM doesn't need
+		if (NR_solver_algorithm == NRM_TCIM)
 		{
-			//Check our relevance to this matrix
-			if (bus[jindexer].island_number == island_loop_index)
+			//Adjust it
+			for (jindexer=0; jindexer<bus_count;jindexer++) 
 			{
-				if (NR_solver_algorithm == NRM_TCIM)
+				//Check our relevance to this matrix
+				if (bus[jindexer].island_number == island_loop_index)
 				{
 					if  (bus[jindexer].type != 1)	//PV bus ignored (for now?)
 						powerflow_values->island_matrix_values[island_loop_index].size_diag_update += powerflow_values->BA_diag[jindexer].size; 
 					//Defaulted else - PV bus ignored
 				}
-				else	//Implies FPI
-				{
-					//See if we're a SWING bus
-					if ((bus[jindexer].type > 1) && (bus[jindexer].swing_functions_enabled == true))
-					{
-						continue;	//We won't be used, so just skip over us
-					}
-					else
-					{
-						//Normal bus, of some sort
-						if  (bus[jindexer].type != 1)	//PV bus ignored (for now?)
-							powerflow_values->island_matrix_values[island_loop_index].size_diag_update += powerflow_values->BA_diag[jindexer].size; 
-						//Defaulted else - PV bus ignored
-					}
-				}
+				//Default else -- different island, skip for now
 			}
-			//Default else -- different island, skip for now
-		}
 
-		if (powerflow_values->island_matrix_values[island_loop_index].Y_diag_update == NULL)
-		{
-			powerflow_values->island_matrix_values[island_loop_index].Y_diag_update = (Y_NR *)gl_malloc((4*powerflow_values->island_matrix_values[island_loop_index].size_diag_update) *sizeof(Y_NR));   //powerflow_values->island_matrix_values[island_loop_index].Y_diag_update store the row,column and value of the dynamic part of the diagonal PQ bus elements of 6n*6n Y_NR matrix.
-
-			//Make sure it worked
 			if (powerflow_values->island_matrix_values[island_loop_index].Y_diag_update == NULL)
-				GL_THROW("NR: Failed to allocate memory for one of the necessary matrices");
-
-			//Update maximum size
-			powerflow_values->island_matrix_values[island_loop_index].max_size_diag_update = powerflow_values->island_matrix_values[island_loop_index].size_diag_update;
-		}
-		else if (powerflow_values->island_matrix_values[island_loop_index].size_diag_update > powerflow_values->island_matrix_values[island_loop_index].max_size_diag_update)	//We've exceeded our limits
-		{
-			//Disappear the old one
-			gl_free(powerflow_values->island_matrix_values[island_loop_index].Y_diag_update);
-
-			//Make a new one in its image
-			powerflow_values->island_matrix_values[island_loop_index].Y_diag_update = (Y_NR *)gl_malloc((4*powerflow_values->island_matrix_values[island_loop_index].size_diag_update) *sizeof(Y_NR));
-
-			//Make sure it worked
-			if (powerflow_values->island_matrix_values[island_loop_index].Y_diag_update == NULL)
-				GL_THROW("NR: Failed to allocate memory for one of the necessary matrices");
-
-			//Update the size
-			powerflow_values->island_matrix_values[island_loop_index].max_size_diag_update = powerflow_values->island_matrix_values[island_loop_index].size_diag_update;
-
-			//Flag for a realloc
-			powerflow_values->island_matrix_values[island_loop_index].NR_realloc_needed = true;
-		}
-
-		indexer = 0;	//Rest positional counter
-
-		for (jindexer=0; jindexer<bus_count; jindexer++)	//Parse through bus list
-		{
-			//Mode check
-			if (NR_solver_algorithm == NRM_FPI)
 			{
-				//See if we're a SWING bus
-				if ((bus[jindexer].type > 1) && (bus[jindexer].swing_functions_enabled == true))
-				{
-					continue;	//We won't be used, so just skip over us
-				}
-				//Normal bus, of some sort
+				powerflow_values->island_matrix_values[island_loop_index].Y_diag_update = (Y_NR *)gl_malloc((4*powerflow_values->island_matrix_values[island_loop_index].size_diag_update) *sizeof(Y_NR));   //powerflow_values->island_matrix_values[island_loop_index].Y_diag_update store the row,column and value of the dynamic part of the diagonal PQ bus elements of 6n*6n Y_NR matrix.
+
+				//Make sure it worked
+				if (powerflow_values->island_matrix_values[island_loop_index].Y_diag_update == NULL)
+					GL_THROW("NR: Failed to allocate memory for one of the necessary matrices");
+
+				//Update maximum size
+				powerflow_values->island_matrix_values[island_loop_index].max_size_diag_update = powerflow_values->island_matrix_values[island_loop_index].size_diag_update;
 			}
-			//TCIM - proceed as usual
-
-			//See if we're part of the currently progressing island -- if not, skip us
-			if (bus[jindexer].island_number == island_loop_index)
+			else if (powerflow_values->island_matrix_values[island_loop_index].size_diag_update > powerflow_values->island_matrix_values[island_loop_index].max_size_diag_update)	//We've exceeded our limits
 			{
-				if ((bus[jindexer].type > 1) && (bus[jindexer].swing_functions_enabled == true))	//Swing bus - and we aren't ignoring it
+				//Disappear the old one
+				gl_free(powerflow_values->island_matrix_values[island_loop_index].Y_diag_update);
+
+				//Make a new one in its image
+				powerflow_values->island_matrix_values[island_loop_index].Y_diag_update = (Y_NR *)gl_malloc((4*powerflow_values->island_matrix_values[island_loop_index].size_diag_update) *sizeof(Y_NR));
+
+				//Make sure it worked
+				if (powerflow_values->island_matrix_values[island_loop_index].Y_diag_update == NULL)
+					GL_THROW("NR: Failed to allocate memory for one of the necessary matrices");
+
+				//Update the size
+				powerflow_values->island_matrix_values[island_loop_index].max_size_diag_update = powerflow_values->island_matrix_values[island_loop_index].size_diag_update;
+
+				//Flag for a realloc
+				powerflow_values->island_matrix_values[island_loop_index].NR_realloc_needed = true;
+			}
+
+			indexer = 0;	//Rest positional counter
+
+			for (jindexer=0; jindexer<bus_count; jindexer++)	//Parse through bus list
+			{
+				//See if we're part of the currently progressing island -- if not, skip us
+				if (bus[jindexer].island_number == island_loop_index)
 				{
-					for (jindex=0; jindex<powerflow_values->BA_diag[jindexer].size; jindex++)
+					if ((bus[jindexer].type > 1) && (bus[jindexer].swing_functions_enabled == true))	//Swing bus - and we aren't ignoring it
 					{
-						powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind = 2*bus[jindexer].Matrix_Loc + jindex;
-						powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].col_ind = powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind;
-						powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].Y_value = 1e10; // swing bus gets large admittance
-						indexer += 1;
+						for (jindex=0; jindex<powerflow_values->BA_diag[jindexer].size; jindex++)
+						{
+							powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind = 2*bus[jindexer].Matrix_Loc + jindex;
+							powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].col_ind = powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind;
+							powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].Y_value = 1e10; // swing bus gets large admittance
+							indexer += 1;
 
-						powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind = 2*bus[jindexer].Matrix_Loc + jindex;
-						powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].col_ind = powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind + powerflow_values->BA_diag[jindexer].size;
-						powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].Y_value = (powerflow_values->BA_diag[jindexer].Y[jindex][jindex]).Re();	//Normal admittance portion
-						indexer += 1;
+							powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind = 2*bus[jindexer].Matrix_Loc + jindex;
+							powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].col_ind = powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind + powerflow_values->BA_diag[jindexer].size;
+							powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].Y_value = (powerflow_values->BA_diag[jindexer].Y[jindex][jindex]).Re();	//Normal admittance portion
+							indexer += 1;
 
-						powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind = 2*bus[jindexer].Matrix_Loc + jindex + powerflow_values->BA_diag[jindexer].size;
-						powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].col_ind = powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind - powerflow_values->BA_diag[jindexer].size;
-						powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].Y_value = (powerflow_values->BA_diag[jindexer].Y[jindex][jindex]).Re();	//Normal admittance portion
-						indexer += 1;
+							powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind = 2*bus[jindexer].Matrix_Loc + jindex + powerflow_values->BA_diag[jindexer].size;
+							powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].col_ind = powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind - powerflow_values->BA_diag[jindexer].size;
+							powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].Y_value = (powerflow_values->BA_diag[jindexer].Y[jindex][jindex]).Re();	//Normal admittance portion
+							indexer += 1;
 
-						powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind = 2*bus[jindexer].Matrix_Loc + jindex + powerflow_values->BA_diag[jindexer].size;
-						powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].col_ind = powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind;
-						powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].Y_value = 1e10; // swing bus gets large admittance
-						indexer += 1;
-					}//End swing bus traversion
-				}//End swing bus
+							powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind = 2*bus[jindexer].Matrix_Loc + jindex + powerflow_values->BA_diag[jindexer].size;
+							powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].col_ind = powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind;
+							powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].Y_value = 1e10; // swing bus gets large admittance
+							indexer += 1;
+						}//End swing bus traversion
+					}//End swing bus
 
-				if ((bus[jindexer].type == 0) || ((bus[jindexer].type > 1) && bus[jindexer].swing_functions_enabled == false))	//Only do on PQ (or SWING masquerading as PQ)
-				{
-					for (jindex=0; jindex<powerflow_values->BA_diag[jindexer].size; jindex++)
+					if ((bus[jindexer].type == 0) || ((bus[jindexer].type > 1) && bus[jindexer].swing_functions_enabled == false))	//Only do on PQ (or SWING masquerading as PQ)
 					{
-						powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind = 2*bus[jindexer].Matrix_Loc + jindex;
-						powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].col_ind = powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind;
-						powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].Y_value = (powerflow_values->BA_diag[jindexer].Y[jindex][jindex]).Im();
-						if (NR_solver_algorithm == NRM_TCIM)	//TCIM Injections
+						for (jindex=0; jindex<powerflow_values->BA_diag[jindexer].size; jindex++)
 						{
-							powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].Y_value += bus[jindexer].Jacob_A[jindex]; // Equation(14)
-						}
-						indexer += 1;
-						
-						powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind = 2*bus[jindexer].Matrix_Loc + jindex;
-						powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].col_ind = powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind + powerflow_values->BA_diag[jindexer].size;
-						powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].Y_value = (powerflow_values->BA_diag[jindexer].Y[jindex][jindex]).Re();
-						if (NR_solver_algorithm == NRM_TCIM)	//TCIM Injections
-						{
-							powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].Y_value += bus[jindexer].Jacob_B[jindex]; // Equation(15)
-						}
-						indexer += 1;
-						
-						powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind = 2*bus[jindexer].Matrix_Loc + jindex + powerflow_values->BA_diag[jindexer].size;
-						powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].col_ind = 2*bus[jindexer].Matrix_Loc + jindex;
-						powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].Y_value = (powerflow_values->BA_diag[jindexer].Y[jindex][jindex]).Re();
-						if (NR_solver_algorithm == NRM_TCIM)	//TCIM Injections
-						{
-							powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].Y_value += bus[jindexer].Jacob_C[jindex]; // Equation(16)
-						}
-						indexer += 1;
-						
-						powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind = 2*bus[jindexer].Matrix_Loc + jindex + powerflow_values->BA_diag[jindexer].size;
-						powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].col_ind = powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind;
-						powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].Y_value = -(powerflow_values->BA_diag[jindexer].Y[jindex][jindex]).Im();
-						if (NR_solver_algorithm == NRM_TCIM)	//TCIM Injections
-						{
-							powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].Y_value += bus[jindexer].Jacob_D[jindex]; // Equation(17)
-						}
-						indexer += 1;
-					}//end PQ phase traversion
-				}//End PQ bus
-			}//End island relevance check
-		}//End bus parse list
+							powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind = 2*bus[jindexer].Matrix_Loc + jindex;
+							powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].col_ind = powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind;
+							powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].Y_value = (powerflow_values->BA_diag[jindexer].Y[jindex][jindex]).Im() + bus[jindexer].Jacob_A[jindex]; // Equation(14)
+							indexer += 1;
+							
+							powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind = 2*bus[jindexer].Matrix_Loc + jindex;
+							powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].col_ind = powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind + powerflow_values->BA_diag[jindexer].size;
+							powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].Y_value = (powerflow_values->BA_diag[jindexer].Y[jindex][jindex]).Re() + bus[jindexer].Jacob_B[jindex]; // Equation(15)
+							indexer += 1;
+							
+							powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind = 2*bus[jindexer].Matrix_Loc + jindex + powerflow_values->BA_diag[jindexer].size;
+							powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].col_ind = 2*bus[jindexer].Matrix_Loc + jindex;
+							powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].Y_value = (powerflow_values->BA_diag[jindexer].Y[jindex][jindex]).Re() + bus[jindexer].Jacob_C[jindex]; // Equation(16)
+							indexer += 1;
+							
+							powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind = 2*bus[jindexer].Matrix_Loc + jindex + powerflow_values->BA_diag[jindexer].size;
+							powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].col_ind = powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind;
+							powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].Y_value = -(powerflow_values->BA_diag[jindexer].Y[jindex][jindex]).Im() + bus[jindexer].Jacob_D[jindex]; // Equation(17)
+							indexer += 1;
+						}//end PQ phase traversion
+					}//End PQ bus
+				}//End island relevance check
+			}//End bus parse list
+		}
+		//Default else - FPIM, nothing needed (zero size and NULL still valid)
 
 		// Build the Amatrix, Amatrix includes all the elements of Y_offdiag_PQ, Y_diag_fixed and Y_diag_update.
 		powerflow_values->island_matrix_values[island_loop_index].size_Amatrix = powerflow_values->island_matrix_values[island_loop_index].size_offdiag_PQ*2 + powerflow_values->island_matrix_values[island_loop_index].size_diag_fixed*2 + 4*powerflow_values->island_matrix_values[island_loop_index].size_diag_update;
@@ -4120,13 +4165,17 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			sparse_add(powerflow_values->island_matrix_values[island_loop_index].Y_Amatrix, row, col, value, bus, bus_count, powerflow_values, island_loop_index);
 		}
 
-		//Integrate the variable portions of the diagonal components
-		for (indexer=0; indexer< (4*powerflow_values->island_matrix_values[island_loop_index].size_diag_update); indexer++)
+		//Only happens in TCIM
+		if (NR_solver_algorithm == NRM_TCIM)
 		{
-			row = powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind;
-			col = powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].col_ind;
-			value = powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].Y_value;
-			sparse_add(powerflow_values->island_matrix_values[island_loop_index].Y_Amatrix, row, col, value, bus, bus_count, powerflow_values, island_loop_index);
+			//Integrate the variable portions of the diagonal components
+			for (indexer=0; indexer< (4*powerflow_values->island_matrix_values[island_loop_index].size_diag_update); indexer++)
+			{
+				row = powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].row_ind;
+				col = powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].col_ind;
+				value = powerflow_values->island_matrix_values[island_loop_index].Y_diag_update[indexer].Y_value;
+				sparse_add(powerflow_values->island_matrix_values[island_loop_index].Y_Amatrix, row, col, value, bus, bus_count, powerflow_values, island_loop_index);
+			}
 		}
 
 		//See if we want to dump out the matrix values
@@ -5366,6 +5415,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 	char jindex, temp_index, temp_index_b;
 	STATUS temp_status;
 
+	//@FPIM - Still need to figure out if delta-connected loads do something
 	//Loop through the buses
 	for (indexer=0; indexer<bus_count; indexer++)
 	{
@@ -5775,10 +5825,13 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 				temp_current[1] += bus[indexer].V[1] == 0.0 ? 0.0 : ~(bus[indexer].S[1]/bus[indexer].V[1]);
 				temp_current[2] += voltageDel[0] == 0.0 ? 0.0 : ~(bus[indexer].S[2]/voltageDel[0]);
 
-				//Last, but not least, admittance/impedance contributions
-				temp_current[0] += bus[indexer].Y[0]*bus[indexer].V[0];
-				temp_current[1] += bus[indexer].Y[1]*bus[indexer].V[1];
-				temp_current[2] += bus[indexer].Y[2]*voltageDel[0];
+				//Last, but not least, admittance/impedance contributions - but only if TCIM
+				if (NR_solver_algorithm == NRM_TCIM)
+				{
+					temp_current[0] += bus[indexer].Y[0]*bus[indexer].V[0];
+					temp_current[1] += bus[indexer].Y[1]*bus[indexer].V[1];
+					temp_current[2] += bus[indexer].Y[2]*voltageDel[0];
+				}
 
 				//See if we are a house-connected node, if so, adjust and add in those values as well
 				if ((bus[indexer].phases & 0x40) == 0x40)
@@ -6185,11 +6238,8 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 							//Defined above
 						}
 
-						//Calculate the current contribution - impedance
-						bus[indexer].FPI_current[temp_index_b] = bus[indexer].Y[temp_index_b] * bus[indexer].V[temp_index_b];
-
-						//Add currents
-						bus[indexer].FPI_current[temp_index_b] += adjusted_constant_current[temp_index_b] + undeltacurr[temp_index_b];
+						//Calculate the current contribution - currents
+						bus[indexer].FPI_current[temp_index_b] = adjusted_constant_current[temp_index_b] + undeltacurr[temp_index_b];
 
 						//Do Power, as relevant
 						if ((bus[indexer].V[temp_index_b]).Mag()!=0)
@@ -6571,7 +6621,8 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 				}//End phase traversion
 			}//End delta/wye explicit loads
 
-			if (jacobian_pass == true)	//This part only gets done on the Jacobian update
+			//@FPIM - Figure out if this needs to be adjusted
+			if ((jacobian_pass == true) && (NR_solver_algorithm == NRM_TCIM))	//This part only gets done on the Jacobian update and TCIM
 			{
 				//Delta load components  get added to the Jacobian values too -- mostly because this is the most convenient place to do it
 				//See if we're even needed first
@@ -6588,13 +6639,13 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 							case 0x01:	//C
 								{
 									temp_index=0;
-									temp_index_b=2;
+									temp_index_b=8;
 									break;
 								}
 							case 0x02:	//B
 								{
 									temp_index=0;
-									temp_index_b=1;
+									temp_index_b=4;
 									break;
 								}
 							case 0x03:	//BC
@@ -6602,12 +6653,12 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 									if (jindex==0)	//B
 									{
 										temp_index=0;
-										temp_index_b=1;
+										temp_index_b=4;
 									}
 									else			//C
 									{
 										temp_index=1;
-										temp_index_b=2;
+										temp_index_b=8;
 									}
 									break;
 								}
@@ -6627,7 +6678,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 									else			//C
 									{
 										temp_index=1;
-										temp_index_b=2;
+										temp_index_b=8;
 									}
 									break;
 								}
@@ -6635,7 +6686,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 							case 0x07:	//ABC
 								{
 									temp_index=jindex;
-									temp_index_b=jindex;
+									temp_index_b=(jindex*3+jindex);
 									break;
 								}
 							default:
@@ -6648,7 +6699,6 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 							//Defined below
 						}
 
-						//@FPIM - Figure out if this needs to be adjusted
 						//Accumulate the values
 						bus[indexer].Jacob_A[temp_index] += bus[indexer].full_Y_load[temp_index_b].Im();
 						bus[indexer].Jacob_B[temp_index] += bus[indexer].full_Y_load[temp_index_b].Re();

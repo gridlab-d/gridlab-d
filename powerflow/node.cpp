@@ -298,7 +298,9 @@ int node::create(void)
 	current_uptime = -1.0;		///< Flags as not initialized
 
 	full_Y = NULL;		//Not used by default
-	full_Y_load = NULL;	//Not used by default
+	full_Y_load[0][0] = full_Y_load[0][1] = full_Y_load[0][2] = complex(0.0,0.0);	//Empty, by default
+	full_Y_load[1][0] = full_Y_load[1][1] = full_Y_load[1][2] = complex(0.0,0.0);
+	full_Y_load[2][0] = full_Y_load[2][1] = full_Y_load[2][2] = complex(0.0,0.0);
 	full_Y_all = NULL;	//Not used by default   **** NOTE -- full_Y_all only appears to be used by diesel QSTS exciter code - it can probably be removed when that is fixed *****
 	BusHistTerm[0] = complex(0.0,0.0);
 	BusHistTerm[1] = complex(0.0,0.0);
@@ -3697,20 +3699,27 @@ int node::NR_populate(void)
 	NR_busdata[NR_node_reference].dynamics_enabled = &deltamode_inclusive;
 
 	//Check and see if we're in deltamode, and in-rush is enabled to allocation a variable
+	if ((NR_solver_algorithm == NRM_FPI) || ((NR_solver_algorithm == NRM_TCIM) && (deltamode_inclusive==true) && (enable_inrush_calculations == true)))
+	{
+		//Map the admittance load matrix
+		NR_busdata[NR_node_reference].full_Y_load = &full_Y_load[0][0];
+	}
+	else	//Not deltamode or not FPI
+	{
+		//Null it, just to be safe
+		NR_busdata[NR_node_reference].full_Y_load = NULL;
+	}
+
+	//Other items
 	if ((deltamode_inclusive==true) && (enable_inrush_calculations==true))
 	{
 		//Link up the array (prealloced now, so always exists)
 		NR_busdata[NR_node_reference].BusHistTerm = BusHistTerm;
-
-		//Link our load matrix -- if we're a load, it was done in init
-		//If we're not a load, one of our children will do it later (and this is NULL anyways)
-		NR_busdata[NR_node_reference].full_Y_load = full_Y_load;
 	}
 	else	//One of these isn't true
 	{
 		//Null it, just to be safe - do with both
 		NR_busdata[NR_node_reference].BusHistTerm = NULL;
-		NR_busdata[NR_node_reference].full_Y_load = NULL;
 	}
 
 	//Always null the saturation term -- if it is needed, the link will populate it

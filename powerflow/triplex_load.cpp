@@ -222,6 +222,16 @@ void triplex_load::triplex_load_update_fxn(void)
 	double adjust_temp_voltage_mag[3];
 	double adjust_nominal_voltage_val[3];
 	complex adjust_voltage_val[3];
+	complex shunt_change_check[3];
+	complex working_impedance_value;
+
+	//Store current shunt values "of interest" to see if it changed for FPIM
+	if (NR_solver_algorithm == NRM_FPI)
+	{
+		shunt_change_check[0] = shunt[0];
+		shunt_change_check[1] = shunt[1];
+		shunt_change_check[2] = shunt[2];
+	}
 
 	//Roll GFA check into here, so current loads updates are handled properly
 	//See if GFA functionality is enabled
@@ -697,6 +707,39 @@ void triplex_load::triplex_load_update_fxn(void)
 	prev_load_values[2][0] += constant_power[0];
 	prev_load_values[2][1] += constant_power[1];
 	prev_load_values[2][2] += constant_power[2];
+
+	//FPIM "convergence check" stuff
+	if (NR_solver_algorithm == NRM_FPI)
+	{
+		for (index_var=0; index_var<3; index_var++)
+		{
+			//Compute the difference
+			working_impedance_value = shunt[index_var] - shunt_change_check[index_var];
+
+			//@FPIM ********************* How does 12 get implemented like this ?!?!?!? ************* //
+
+			//Check it
+			if (working_impedance_value.Mag() > 0.0)
+			{
+				NR_FPI_imp_load_change = true;
+
+				//Update the matrix - diagonal for now
+				//See if we're a parented load or not
+				if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+				{
+					//Compute the values and post them to our bus term
+					NR_busdata[NR_node_reference].full_Y_load[index_var*3+index_var] += shunt[index_var] - shunt_change_check[index_var];
+				}
+				else	//It is a child - look at parent
+				{
+					//Compute the values and post them to our bus term
+					NR_busdata[*NR_subnode_reference].full_Y_load[index_var*3+index_var] += shunt[index_var] - shunt_change_check[index_var];
+				}
+			}
+		}
+	}//End FPI
+	//TCIM doesn't use this
+
 }
 
 //Function to appropriately zero load - make sure we don't get too heavy handed
