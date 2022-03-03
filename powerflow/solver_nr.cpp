@@ -2439,7 +2439,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				}//end not full ABC with AC on either side case
 			}//end all others else
 		}//end branch for
-	}// Off-diagonal elements update - same for both
+	}// Off-diagonal elements update, as well as diagon fixed "base" elements- same for both
 
 	//If an impedance load change
 	if ((NR_admit_change == true) || (NR_FPI_imp_load_change == true))
@@ -2480,35 +2480,134 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						}
 						//Default else - it worked
 					}
-				}
 
-				//Loop through and get sizes
-				for (jindex=0; jindex<3; jindex++)
-				{
-					for (kindex=0; kindex<3; kindex++)
-					{	
-						if (NR_solver_algorithm == NRM_TCIM)	 
+					//Copy load values in appropriately
+					if (bus[jindexer].full_Y_load != NULL)
+					{
+						//Not triplex
+						if ((bus[jindexer].phases & 0x80) != 0x80)
 						{
-							if (((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Re() != 0) && (bus[jindexer].type != 1) && (jindex!=kindex))
-								powerflow_values->island_matrix_values[island_loop_index].size_diag_fixed += 1; 
-							if (((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Im() != 0) && (bus[jindexer].type != 1) && (jindex!=kindex))
-								powerflow_values->island_matrix_values[island_loop_index].size_diag_fixed += 1; 
+							//Figure out what our casing looks like - populate based on this (in case some were children)
+							switch(bus[jindexer].phases & 0x07) {
+								case 0x00:	//No phases
+								{
+									break;	//Just get us out
+								}
+								case 0x01:	//Phase C
+								{
+									powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[8];
+									break;
+								}
+								case 0x02:	//Phase B
+								{
+									powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[4];
+									break;
+								}
+								case 0x03:	//Phase BC
+								{
+									powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[4];
+									powerflow_values->BA_diag[jindexer].Yload[0][1] = bus[jindexer].full_Y_load[5];
+									powerflow_values->BA_diag[jindexer].Yload[1][0] = bus[jindexer].full_Y_load[7];
+									powerflow_values->BA_diag[jindexer].Yload[1][1] = bus[jindexer].full_Y_load[8];
+									break;
+								}
+								case 0x04:	//Phase A
+								{
+									powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[0];
+									break;
+								}
+								case 0x05:	//Phase AC
+								{
+									powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[0];
+									powerflow_values->BA_diag[jindexer].Yload[0][1] = bus[jindexer].full_Y_load[2];
+									powerflow_values->BA_diag[jindexer].Yload[1][0] = bus[jindexer].full_Y_load[6];
+									powerflow_values->BA_diag[jindexer].Yload[1][1] = bus[jindexer].full_Y_load[8];
+									break;
+								}
+								case 0x06:	//Phase AB
+								{
+									powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[0];
+									powerflow_values->BA_diag[jindexer].Yload[0][1] = bus[jindexer].full_Y_load[1];
+									powerflow_values->BA_diag[jindexer].Yload[1][0] = bus[jindexer].full_Y_load[3];
+									powerflow_values->BA_diag[jindexer].Yload[1][1] = bus[jindexer].full_Y_load[4];
+									break;
+								}
+								case 0x07:	//Phase ABC
+								{
+									//Loop and add all in
+									for (jindex=0; jindex<3; jindex++)
+									{
+										for (kindex=0; kindex<3; kindex++)
+										{
+											powerflow_values->BA_diag[jindexer].Yload[jindex][kindex] = bus[jindexer].full_Y_load[jindex*3+kindex];	//Adds in any self-admittance terms (generators)
+										}
+									}
+									break;
+								}
+								default:
+								{
+									GL_THROW("NR: Improper Impedance Reference Found");
+									/*  TROUBLESHOOT
+									While populating the impedance portion of the FPI admittance matrix, an unexpected
+									phase condition was encountered with the admittance.  Please try again.  If the error
+									persists, please submit a bug report via the issue tracker.
+									*/
+								}
+							}//End case
 						}
-						else	//Implies FPIM
+						else  //Must be Triplex - add the "12" combination for the shunt
 						{
-							//Calculate matrix index
-							mat_temp_index = jindex*3+kindex;
+							//@FPIM - revisit this/confirm it
+							//See if we're the stupid "backwards notation" bus or not
+							if ((bus[jindexer].phases & 0x20) == 0x20)	//Special case
+							{
+								//Need to be negated, due to crazy conventions
+								powerflow_values->BA_diag[jindexer].Yload[0][0] = -bus[jindexer].full_Y_load[0];
+								powerflow_values->BA_diag[jindexer].Yload[0][1] = -bus[jindexer].full_Y_load[0];
+								powerflow_values->BA_diag[jindexer].Yload[1][0] = bus[jindexer].full_Y_load[0];
+								powerflow_values->BA_diag[jindexer].Yload[1][1] = bus[jindexer].full_Y_load[0];
+							}
+							else	//Standard triplex
+							{
+								powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[0];
+								powerflow_values->BA_diag[jindexer].Yload[0][1] = bus[jindexer].full_Y_load[0];
+								powerflow_values->BA_diag[jindexer].Yload[1][0] = -bus[jindexer].full_Y_load[0];
+								powerflow_values->BA_diag[jindexer].Yload[1][1] = -bus[jindexer].full_Y_load[0];
+							}
+						}
+					}//End full_Y_load not NULL
+				}//End FPI provisions
 
-							if ((((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Re() != 0) || ((bus[jindexer].full_Y_load[mat_temp_index]).Re() !=0)) && (bus[jindexer].type != 1))
-								powerflow_values->island_matrix_values[island_loop_index].size_diag_fixed += 1; 
-							if ((((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Im() != 0) || ((bus[jindexer].full_Y_load[mat_temp_index]).Im() !=0)) && (bus[jindexer].type != 1))
-								powerflow_values->island_matrix_values[island_loop_index].size_diag_fixed += 1; 
-						}	//End FPIM
+				//Loop through and get sizes - make sure not a PV bus (not sure how would be)
+				if (bus[jindexer].type != 1)
+				{
+					for (jindex=0; jindex<powerflow_values->BA_diag[jindexer].size; jindex++)
+					{
+						for (kindex=0; kindex<powerflow_values->BA_diag[jindexer].size; kindex++)
+						{	
+							if (NR_solver_algorithm == NRM_TCIM)	 
+							{
+								if (((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Re() != 0) && (jindex!=kindex))
+									powerflow_values->island_matrix_values[island_loop_index].size_diag_fixed += 1; 
+								if (((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Im() != 0) && (jindex!=kindex))
+									powerflow_values->island_matrix_values[island_loop_index].size_diag_fixed += 1; 
+							}
+							else	//Implies FPIM
+							{
+								//Calculate matrix index
+								mat_temp_index = jindex*3+kindex;
+
+								if (((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Re() != 0) || ((powerflow_values->BA_diag[jindexer].Yload[jindex][kindex]).Re() !=0))
+									powerflow_values->island_matrix_values[island_loop_index].size_diag_fixed += 1; 
+								if (((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Im() != 0) || ((powerflow_values->BA_diag[jindexer].Yload[jindex][kindex]).Im() !=0))
+									powerflow_values->island_matrix_values[island_loop_index].size_diag_fixed += 1; 
+							}	//End FPIM
+						}
 					}
-				}
+				}//End not a PV bus
 			}
 			//Default else -- not a valid island anyways
-		}
+		}//End Size estimator
 
 		//Loop through the islands again
 		for (island_loop_index=0; island_loop_index<NR_islands_detected; island_loop_index++)
@@ -2613,32 +2712,29 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					{
 						for (kindex=0; kindex<powerflow_values->BA_diag[jindexer].size; kindex++)
 						{
-							//Calculate matrix index
-							mat_temp_index = jindex*3+kindex;
-				
-							if (((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Im() != 0) || (bus[jindexer].full_Y_load[mat_temp_index].Im() != 0))
+							if (((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Im() != 0) || (powerflow_values->BA_diag[jindexer].Yload[jindex][kindex].Im() != 0))
 							{
 								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*powerflow_values->BA_diag[jindexer].row_ind + jindex;
 								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*powerflow_values->BA_diag[jindexer].col_ind + kindex;
-								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = ((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Im() + bus[jindexer].full_Y_load[mat_temp_index].Im());
+								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = ((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Im() + powerflow_values->BA_diag[jindexer].Yload[jindex][kindex].Im());
 								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 
 								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*powerflow_values->BA_diag[jindexer].row_ind + jindex +powerflow_values->BA_diag[jindexer].size;
 								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*powerflow_values->BA_diag[jindexer].col_ind + kindex +powerflow_values->BA_diag[jindexer].size;
-								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Im() + bus[jindexer].full_Y_load[mat_temp_index].Im());
+								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = -((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Im() + powerflow_values->BA_diag[jindexer].Yload[jindex][kindex].Im());
 								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 							}
 
-							if (((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Re() != 0) || (bus[jindexer].full_Y_load[mat_temp_index].Re() != 0))
+							if (((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Re() != 0) || (powerflow_values->BA_diag[jindexer].Yload[jindex][kindex].Re() != 0))
 							{
 								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*powerflow_values->BA_diag[jindexer].row_ind + jindex;
 								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*powerflow_values->BA_diag[jindexer].col_ind + kindex +powerflow_values->BA_diag[jindexer].size;
-								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = ((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Re() + bus[jindexer].full_Y_load[mat_temp_index].Re());
+								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = ((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Re() + powerflow_values->BA_diag[jindexer].Yload[jindex][kindex].Re());
 								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 								
 								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].row_ind = 2*powerflow_values->BA_diag[jindexer].row_ind + jindex +powerflow_values->BA_diag[jindexer].size;
 								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].col_ind = 2*powerflow_values->BA_diag[jindexer].col_ind + kindex;
-								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = ((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Re() + bus[jindexer].full_Y_load[mat_temp_index].Re());
+								powerflow_values->island_matrix_values[island_index_val].Y_diag_fixed[powerflow_values->island_matrix_values[island_index_val].indexer].Y_value = ((powerflow_values->BA_diag[jindexer].Y[jindex][kindex]).Re() + powerflow_values->BA_diag[jindexer].Yload[jindex][kindex].Re());
 								powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 							}
 						}

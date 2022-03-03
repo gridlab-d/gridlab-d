@@ -87,6 +87,7 @@ typedef struct {
 	int row_ind;  ///< row location of the element in n*n bus admittance matrix in NR solver
 	int	col_ind;  ///< column location of the element in n*n bus admittance matrix in NR solver
     complex Y[3][3]; ///< complex value of elements in bus admittance matrix in NR solver
+	complex Yload[3][3];	///< complex value of elements in load portion of bus admittance matrix
 	char size;		///< size of the admittance diagonal - assumed square, useful for smaller size
 } Bus_admit;
 
