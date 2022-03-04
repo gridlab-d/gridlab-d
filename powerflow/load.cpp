@@ -490,7 +490,7 @@ void load::load_update_fxn(void)
 	bool all_three_phases, transf_from_stdy_state;
 	complex intermed_impedance[3];
 	complex intermed_impedance_dy[6];
-	int index_var;
+	int index_var, extract_node_ref;
 	bool volt_below_thresh;
 	double voltage_base_val;
 	double voltage_pu_vals[3];
@@ -3221,29 +3221,69 @@ void load::load_update_fxn(void)
 	//FPIM "convergence check" stuff
 	if (NR_solver_algorithm == NRM_FPI)
 	{
-		for (index_var=0; index_var<3; index_var++)
+		if (has_phase(PHASE_D))
 		{
-			//Compute the difference
-			working_impedance_value = shunt[index_var] - shunt_change_check[index_var];
-
-			//Check it
-			if (working_impedance_value.Mag() > 0.0)
+			//Loop through and check for "differences"
+			for (index_var=0; index_var<3; index_var++)
 			{
-				NR_FPI_imp_load_change = true;
+				//Compute the difference
+				intermed_impedance[index_var] = shunt[index_var] - shunt_change_check[index_var];
 
-				//Update the matrix - diagonal for now
-				//See if we're a parented load or not
-				if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+				//Check it
+				if (intermed_impedance[index_var].Mag() > 0.0)
 				{
-					//Compute the values and post them to our bus term
-					NR_busdata[NR_node_reference].full_Y_load[index_var*3+index_var] += shunt[index_var] - shunt_change_check[index_var];
-				}
-				else	//It is a child - look at parent
-				{
-					//Compute the values and post them to our bus term
-					NR_busdata[*NR_subnode_reference].full_Y_load[index_var*3+index_var] += shunt[index_var] - shunt_change_check[index_var];
+					NR_FPI_imp_load_change = true;
 				}
 			}
+
+			//Pull the ref
+			//See if we're a parented load or not
+			if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+			{
+				extract_node_ref = NR_node_reference;
+			}
+			else	//It is a child - look at parent
+			{
+				extract_node_ref = *NR_subnode_reference;
+			}
+
+			//Update the matrix
+			NR_busdata[extract_node_ref].full_Y_load[0] += intermed_impedance[0] + intermed_impedance[2];
+			NR_busdata[extract_node_ref].full_Y_load[1] -= intermed_impedance[0];
+			NR_busdata[extract_node_ref].full_Y_load[2] -= intermed_impedance[2];
+			NR_busdata[extract_node_ref].full_Y_load[3] -= intermed_impedance[0];
+			NR_busdata[extract_node_ref].full_Y_load[4] += intermed_impedance[1] + intermed_impedance[0];
+			NR_busdata[extract_node_ref].full_Y_load[5] -= intermed_impedance[1];
+			NR_busdata[extract_node_ref].full_Y_load[6] -= intermed_impedance[2];
+			NR_busdata[extract_node_ref].full_Y_load[7] -= intermed_impedance[1];
+			NR_busdata[extract_node_ref].full_Y_load[8] += intermed_impedance[2] + intermed_impedance[1];
+		}
+		else
+		{
+			for (index_var=0; index_var<3; index_var++)
+			{
+				//Compute the difference
+				working_impedance_value = shunt[index_var] - shunt_change_check[index_var];
+
+				//Check it
+				if (working_impedance_value.Mag() > 0.0)
+				{
+					NR_FPI_imp_load_change = true;
+
+					//Update the matrix
+					//See if we're a parented load or not
+					if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+					{
+						//Compute the values and post them to our bus term
+						NR_busdata[NR_node_reference].full_Y_load[index_var*3+index_var] += shunt[index_var] - shunt_change_check[index_var];
+					}
+					else	//It is a child - look at parent
+					{
+						//Compute the values and post them to our bus term
+						NR_busdata[*NR_subnode_reference].full_Y_load[index_var*3+index_var] += shunt[index_var] - shunt_change_check[index_var];
+					}
+				}
+			}//End of for loop for Wye
 		}
 	}//End FPI
 	//TCIM doesn't use this

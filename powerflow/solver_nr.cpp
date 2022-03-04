@@ -5656,8 +5656,11 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					//Power - convert to a current (uses less iterations this way)
 					delta_current[0] = (voltageDel[0] == 0) ? 0 : ~(bus[indexer].S[0]/voltageDel[0]);
 
-					//Convert delta connected load to appropriate Wye
-					delta_current[0] += voltageDel[0] * (bus[indexer].Y[0]);
+					if (NR_solver_algorithm == NRM_TCIM)
+					{
+						//Convert delta connected load to appropriate Wye
+						delta_current[0] += voltageDel[0] * (bus[indexer].Y[0]);
+					}
 				}
 				else
 				{
@@ -5674,8 +5677,11 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					//Power - convert to a current (uses less iterations this way)
 					delta_current[1] = (voltageDel[1] == 0) ? 0 : ~(bus[indexer].S[1]/voltageDel[1]);
 
-					//Convert delta connected load to appropriate Wye
-					delta_current[1] += voltageDel[1] * (bus[indexer].Y[1]);
+					if (NR_solver_algorithm == NRM_TCIM)
+					{
+						//Convert delta connected load to appropriate Wye
+						delta_current[1] += voltageDel[1] * (bus[indexer].Y[1]);
+					}
 				}
 				else
 				{
@@ -5692,8 +5698,11 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					//Power - convert to a current (uses less iterations this way)
 					delta_current[2] = (voltageDel[2] == 0) ? 0 : ~(bus[indexer].S[2]/voltageDel[2]);
 
-					//Convert delta connected load to appropriate Wye
-					delta_current[2] += voltageDel[2] * (bus[indexer].Y[2]);
+					if (NR_solver_algorithm == NRM_TCIM)
+					{
+						//Convert delta connected load to appropriate Wye
+						delta_current[2] += voltageDel[2] * (bus[indexer].Y[2]);
+					}
 				}
 				else
 				{
