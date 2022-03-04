@@ -226,22 +226,22 @@ int helics_msg::init(OBJECT *parent){
 							individual_message_type = config_info["message_type"].asString();
 							if( individual_message_type.compare("JSON") == 0 ) {
 								json_gld_sub = new json_helics_value_subscription();
-								json_gld_sub->key = string(sub.getKey());
+								json_gld_sub->key = string(sub.getTarget());
 								json_gld_sub->HelicsSubscription = sub;
 								json_helics_value_subscriptions.push_back(json_gld_sub);
 							} else if( individual_message_type.compare("GENERAL") == 0 ){
 								gld_sub = new helics_value_subscription();
-								gld_sub->key = string(sub.getKey());
+								gld_sub->key = string(sub.getTarget());
 								gld_sub->objectName = config_info["object"].asString();
 								gld_sub->propertyName = config_info["property"].asString();
 								gld_sub->HelicsSubscription = sub;
 								helics_value_subscriptions.push_back(gld_sub);
 							} else {
-								throw("The info field of the subscription:%s defines an unknown message_type:%s. Valid message types are JSON and GENERAL", sub.getKey(), individual_message_type.c_str());
+								throw("The info field of the subscription:%s defines an unknown message_type:%s. Valid message types are JSON and GENERAL", sub.getTarget(), individual_message_type.c_str());
 							}
 						} else {
 							gld_sub = new helics_value_subscription();
-							gld_sub->key = string(sub.getKey());
+							gld_sub->key = string(sub.getTarget());
 							gld_sub->objectName = config_info["object"].asString();
 							gld_sub->propertyName = config_info["property"].asString();
 							gld_sub->HelicsSubscription = sub;
@@ -364,7 +364,7 @@ int helics_msg::init(OBJECT *parent){
 					helicscpp::Input sub = gld_helics_federate->getSubscription(idx);
 					if(sub.isValid()){
 						json_gld_sub = new json_helics_value_subscription();
-						json_gld_sub->key = string(sub.getKey());
+						json_gld_sub->key = string(sub.getTarget());
 						json_gld_sub->HelicsSubscription = sub;
 						json_helics_value_subscriptions.push_back(json_gld_sub);
 					}
