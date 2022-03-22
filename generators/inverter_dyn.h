@@ -12,6 +12,11 @@ EXPORT STATUS postupdate_inverter_dyn(OBJECT *obj, complex *useful_value, unsign
 EXPORT STATUS inverter_dyn_NR_current_injection_update(OBJECT *obj, int64 iteration_count);
 EXPORT STATUS inverter_dyn_DC_object_register(OBJECT *this_obj, OBJECT *DC_obj);
 
+//Alias the currents
+#define phaseA_I_Out terminal_current_val[0]
+#define phaseB_I_Out terminal_current_val[1]
+#define phaseC_I_Out terminal_current_val[2]
+
 // State variables of grid-forming & grid-following controller
 typedef struct
 {
@@ -42,6 +47,13 @@ typedef struct
 	double delta_w_Pmax_ini;
 	double ddelta_w_Pmin_ini;
 	double delta_w_Pmin_ini;
+
+	// state variables of the Qmax and Qmin control
+	double ddelta_V_Qmax_ini;
+	double delta_V_Qmax_ini;
+	double ddelta_V_Qmin_ini;
+	double delta_V_Qmin_ini;
+
 
 	// state variables of Vdc_min controller when using PV grid-forming control
 	double ddelta_w_Vdc_min_ini;
@@ -151,7 +163,7 @@ private:
 	double pvc_Pmax;
 
 	//Convergence check item for grid-forming voltage
-	complex e_source_prev[3];
+	complex e_droop_prev[3];
 
 	//Map functions
 	gld_property *map_complex_value(OBJECT *obj, char *name);
@@ -263,7 +275,8 @@ public:
 	enumeration P_f_droop_setting_mode; //
 
 
-	complex temp_current_val[3];
+	complex terminal_current_val[3];
+	complex terminal_current_val_pu[3];
 	TIMESTAMP inverter_start_time;
 	bool inverter_first_step;
 	bool first_deltamode_init;
@@ -275,9 +288,9 @@ public:
 
 	INV_DYN_STATE curr_state; ///< The current state of the inverter in deltamode
 
-	complex phaseA_I_Out; // current
-	complex phaseB_I_Out;
-	complex phaseC_I_Out;
+
+	complex I_out_PU_temp[3];  //This is mainly used for current limiting function of a grid-forming inverter
+
 	complex power_val[3];		   //power
 	complex VA_Out;				   // complex output power
 	complex value_Circuit_V_PS;	   // Positive sequence voltage of three phase terminal voltages
@@ -307,6 +320,11 @@ public:
 	double igq_pu[3];
 	double igd_ref[3];
 	double igq_ref[3];
+	double igd_ref_max;  //Upper limit for igd_ref
+	double igd_ref_min;  //Lower limit for igd_ref
+	double igq_ref_max;  //Upper limit for igq_ref
+	double igq_ref_min;  //Lower limit for igq_ref
+
 	double ugd_pu_PS; // positive sequence voltage value in dq frame
 	double ugq_pu_PS; // positive sequence voltage value in dq frame
 
@@ -337,20 +355,31 @@ public:
 	double E_max;		  // E_max and E_min are the maximum and minimum of the output of voltage controller
 	double E_min;		  //
 	double delta_w_droop; // delta mega from P-f droop
-	double delta_w_Pmax;  //
+	double delta_w_Pmax;  // output of the Pmax controller
 	double delta_w_Pmin;  //
+	double delta_V_Qmax; // output of the Qmax controller
+	double delta_V_Qmin;
 	double Pset;		  // power set point in P-f droop
 	double mp;			  // P-f droop gain, usually 3.77 rad/s/pu
 	double P_f_droop;     // p-f droop gain, per unit, usually 0.01
-	double kppmax;		  // proportional and integral gains for Pmax controller
+	double kppmax;		  // proportional and integral gains for Pmax and Pmin controllers
 	double kipmax;
+	double kpqmax;        // proportional and integral gains for Qmax and Qmin controllers
+	double kiqmax;
 	double w_lim; // w_lim is the saturation limit
+	double V_lim; // the saturation limit of the Qmax and Qmin controllers
 	double Pmax;  // Pmax and Pmin are the maximum limit and minimum limit of Pmax controller and Pmin controller
 	double Pmin;
+	double Qmax;  // Qmax and Qmin are the limits for the Qmax and Qmin controllers
+	double Qmin;
+	double Imax;  // The maximum output current of a grid-forming inverter
 	double w_ref;		 // w_ref is the rated frequency, usually 376.99 rad/s
 	double f_nominal;	 // rated frequency, 60 Hz
 	double Angle[3];	 // Phase angle of the internal voltage
 	complex e_source[3]; // e_source[i] is the complex value of internal voltage
+	complex e_source_pu[3]; // e_source[i] is the complex per-unit value of internal voltage
+	complex e_droop[3]; // e_droop is the complex value of the inverter internal voltage given by the grid-forming droop control
+	complex e_droop_pu[3]; // e_droop is the complex value of the inverter internal voltage given by the grid-forming droop control
 	double e_source_Re[3];
 	double e_source_Im[3];
 	complex I_source[3]; // I_source[i] is the complex value when using current source representation
