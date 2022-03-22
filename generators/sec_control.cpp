@@ -281,13 +281,78 @@ SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigne
 	prev_timestamp_dbl = gl_globaldeltaclock;
 	
 	//**************** Primary deltamode executor - dynamics usually go/get called here ****************//
+	//weights for PID control. these are constant in deltat and the gains.
+	// since the gains should be adjustable, these should be editable as well.
+	PIDw[0] = kpPID + kiPID*deltat + kdPID/deltat;
+	PIDw[1] = -kpPID - 2*kdPID/deltat;
+	PIDw[2] = kdPID/deltat;
+	/*
+	kpPID is the proportinal gain in units of MW (or kW?)/Hz
+	kiPID is the integration gain in units MW/sec/Hz
+	kdPID is the derivative gain in units of MW*sec/Hz (or whatever units deltat is in)
+	*/
 
 	//**************** Check pass - predictor/corrector type setup ****************//
 	if (iteration_count_val == 0) // Predictor pass
 	{
 		//**************** Predictor pass stuff ****************//
+		// Get Frequency Deviation
+		curr_state.deltaf[0] = f0 - f_meas; // frequency error [Hz]
+		if (deltaf > deltaf_max) // limit maximum up deviation (underfrequency)
+		{
+			deltaf = deltaf_max;
+		}
+		else if (deltaf < deltaf_min) //limit maximum down deviation (overfrequency)
+		{
+			deltaf = deltaf_min;
+		}
+		else if (abs(deltaf) < dead_band) //frequency is within deadband
+		{
+			deltaf = 0;
+		}
 
-		simmode_return_value = SM_DELTA_ITER; //Reiterate - to get us to corrector pass
+		//PID Controller
+		curr_state.ddeltaPtot = PIDw[0]*curr_state.deltaf[0] + PIDw[1]*curr_state.deltaf[1] + PIDw[2]*curr_state.deltaf[2]
+		next_state.deltaPtot  = curr_state.deltaPtot + curr_state.ddeltaPtot
+		// End PID controller
+
+		//Update participating objects
+		if (delta_time >= next_sample)
+		{
+			sampleflag = true; 				//sample output on this timestep
+			next_sample = delta_time + Ts;  // set next timestep to sample
+		}
+		else
+		{
+			sampleflag = false;
+		}
+		nobj = sizeof(controlobjs)/sizeof(controlobj[0]);
+		for (int i = 0; i < nobj; i++) {
+			// calculate participation based on factors
+			next_state.dP[i] = alpha[i] * next_state.deltaPtot; // calculate change for object i
+			
+			// Apply low pass filter
+			if (Tfilter[i] > deltat) // sensible filter time constant given.
+			{
+				next_state.dPfilter[i] = curr_state.dPfilter[i] + deltat/Tfilter[i]*(next_state.dP[i] - curr_state.dPfilter[i]); // change following lowpass filter.
+			}
+			else // no lowpass filter
+			{
+				gl_warning("sec_control: lowpass filter Timeconstant for %s is less than deltat", objs[i]->name ? objs[i]->name : "unnamed object");
+				next_state.dPfilter[i] = next_state.dP[i];
+			}
+			
+			// sample output
+			if (sampleflag)
+			{
+				//code to update object setpoints
+			}
+			
+		}
+		
+		
+		simmode_return_value =  SM_DELTA;
+		// simmode_return_value = SM_DELTA_ITER; //Reiterate - to get us to corrector pass
 	}//End predictor pass
 	else if (iteration_count_val == 1) // Corrector pass
 	{
