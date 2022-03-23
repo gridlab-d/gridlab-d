@@ -65,6 +65,12 @@ windturb_dg::windturb_dg(MODULE *module)
 			PT_enumeration,"Turbine_implementation",PADDR(Turbine_implementation), PT_DESCRIPTION, "Type of implementation for wind turbine model",
 			PT_KEYWORD,"COEFF_OF_PERFORMANCE",(enumeration)COEFF_OF_PERFORMANCE, PT_DESCRIPTION, "Wind turbine generator implementation based on Coefficient of performance",
 			PT_KEYWORD,"POWER_CURVE",(enumeration)POWER_CURVE, PT_DESCRIPTION, "Wind turbine implementation based on Generic Power Curve",
+			
+			PT_enumeration,"Wind_speed_source",PADDR(Wind_speed_source), PT_DESCRIPTION, "Specifies the source of wind speed",
+			PT_KEYWORD,"DEFAULT",(enumeration)DEFAULT, PT_DESCRIPTION, "A defualt that equals either BUILT_IN or CLIMATE_DATA",
+			PT_KEYWORD,"BUILT_IN",(enumeration)BUILT_IN, PT_DESCRIPTION, "The built-in source (avg_ws) specifying the wind speed",
+			PT_KEYWORD,"WIND_SPEED",(enumeration)WIND_SPEED, PT_DESCRIPTION, "The wind speed at hub height specified by the user",
+			PT_KEYWORD,"CLIMATE_DATA",(enumeration)CLIMATE_DATA, PT_DESCRIPTION, "The climate data specifying the wind speed",
 
 			// TODO: There are a number of repeat variables due to poor variable name formatting.
 			//       These need to be corrected through the deprecation process.
@@ -102,6 +108,10 @@ windturb_dg::windturb_dg(MODULE *module)
 			PT_double, "Wind_Speed[m/s]", PADDR(Wind_Speed),  PT_DESCRIPTION, "Wind speed at 5-15m level (typical measurement height)",
 			PT_double, "wind_speed[m/s]", PADDR(Wind_Speed),  PT_DESCRIPTION, "Wind speed at 5-15m level (typical measurement height)",
 			PT_double, "air_density[kg/m^3]", PADDR(air_dens), PT_DESCRIPTION, "COP: Estimated air density",
+			//PT_double, "avg_ws[m/s]", PADDR(avg_ws), PT_DESCRIPTION, "Wind speed at reference height. This is an input",      //we dont need to expose these. also line below
+			//PT_double, "wind_speed[m/s]", PADDR(avg_ws), PT_DESCRIPTION, "exposing wind speed variable",
+			PT_double, "wind_speed_hub_ht[m/s]", PADDR(wind_speed_hub_ht), PT_DESCRIPTION, "Wind speed at hub height. This is an input",
+			// New param for ws at hub height...in discription say-> this is like an input and not the output...maybe wind_speed_hub_ht
 
 			PT_double, "R_stator[pu*Ohm]", PADDR(Rst), PT_DESCRIPTION, "COP: Induction generator primary stator resistance in p.u.",
 			PT_double, "X_stator[pu*Ohm]", PADDR(Xst), PT_DESCRIPTION, "COP: Induction generator primary stator reactance in p.u.",
@@ -171,7 +181,8 @@ int windturb_dg::create(void)
 	Min_Vrotor = 0.8;
 	Max_Ef = 1.2;
 	Min_Ef = 0.8;
-	avg_ws = 8;				//wind speed in m/s
+	avg_ws = 8;				    //This is wind speed in m/s at reference height (ref_height=10m)
+	wind_speed_hub_ht = 10;    //This is wind speed at 37 m hub height
 
 	time_advance = 3600;	//amount of time to advance for WS data import in secs.
 
@@ -187,6 +198,9 @@ int windturb_dg::create(void)
 	Gen_status = ONLINE;
 	
 	Turbine_implementation = POWER_CURVE;
+	//Wind_speed_source = BUILT_IN;
+	Wind_speed_source = DEFAULT;
+	
 	power_curve_pu = false;
 
 	turbine_height = -9999;
@@ -282,12 +296,19 @@ int windturb_dg::init_climate()
 			if (obj->rank<=hdr->rank)
 				gl_set_dependent(obj,hdr);
 
-			pWS = map_double_value(obj,"wind_speed");  
+			pWS = map_double_value(obj,"wind_speed");
 			pPress = map_double_value(obj,"pressure");
-			pTemp = map_double_value(obj,"temperature");
+			pTemp = map_double_value(obj,"temperature");   //if we get through these lines, does that mean we have ws data or just climate data exists?? what if clim is valid but no ws??
 
-			//Flag properly
+			//Flag properly, either put conditional here
 			climate_is_valid = true;
+		}
+	}
+	if (Wind_speed_source == DEFAULT){
+		if (climate_is_valid == true){
+			Wind_speed_source = CLIMATE_DATA;
+		}else{
+			Wind_speed_source = BUILT_IN;
 		}
 	}
 	return 1;
@@ -762,36 +783,6 @@ int windturb_dg::init(OBJECT *parent)
 			parent_is_valid = true;
 			parent_is_triplex = false;
 
-			//Map the solver method and see if we're NR-oriented
-			temp_property_pointer = new gld_property("powerflow::solver_method");
-
-			//Make sure it worked
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_enumeration() != true))
-			{
-				GL_THROW("windturb_dg:%d %s failed to map the nominal_frequency property", obj->id, (obj->name ? obj->name : "Unnamed"));
-				/*  TROUBLESHOOT
-				While attempting to map the powerflow:solver_method property, an error occurred.  Please try again.
-				If the error persists, please submit your GLM and a bug report to the ticketing system.
-				*/
-			}
-
-			//Must be valid, read it
-			temp_enum = temp_property_pointer->get_enumeration();
-
-			//Remove the link
-			delete temp_property_pointer;
-
-			//Check which method we are - NR=2
-			if (temp_enum == 2)
-			{
-				//Set NR first run flag
-				NR_first_run = true;
-			}
-			else	//Other methods - should already be set, but be explicit
-			{
-				NR_first_run = false;
-			}
-
 			//Map phases
 			//Map and pull the phases
 			temp_property_pointer = new gld_property(parent,"phases");
@@ -864,25 +855,10 @@ int windturb_dg::init(OBJECT *parent)
 			pCircuit_V[1] = map_complex_value(parent,"voltage_B");
 			pCircuit_V[2] = map_complex_value(parent,"voltage_C");
 
-			//If we're NR, map a different field to avoid the rotation
-			if (NR_first_run == true)
-			{
-				pLine_I[0] = map_complex_value(parent,"prerotated_current_A");
-				pLine_I[1] = map_complex_value(parent,"prerotated_current_B");
-				pLine_I[2] = map_complex_value(parent,"prerotated_current_C");
-			}
-			else
-			{
-				pLine_I[0] = map_complex_value(parent,"current_A");
-				pLine_I[1] = map_complex_value(parent,"current_B");
-				pLine_I[2] = map_complex_value(parent,"current_C");
-			}
+			pLine_I[0] = map_complex_value(parent,"current_A");
+			pLine_I[1] = map_complex_value(parent,"current_B");
+			pLine_I[2] = map_complex_value(parent,"current_C");
 			
-			//Null the triplex interface point, just in case
-			pLine12 = NULL;
-		}
-		else if (gl_object_isa(parent,"triplex_meter","powerflow"))
-		{
 			//Map the solver method and see if we're NR-oriented
 			temp_property_pointer = new gld_property("powerflow::solver_method");
 
@@ -913,6 +889,11 @@ int windturb_dg::init(OBJECT *parent)
 				NR_first_run = false;
 			}
 			
+			//Null the triplex interface point, just in case
+			pLine12 = NULL;
+		}
+		else if (gl_object_isa(parent,"triplex_meter","powerflow"))
+		{
 			if (Turbine_implementation == COEFF_OF_PERFORMANCE){
 				GL_THROW("windturb_dg (id:%d): 3-phase coefficient of performance implementation uses a 3-phase generator and cannot be connected to a triplex meter",obj->id);
 			}
@@ -926,30 +907,18 @@ int windturb_dg::init(OBJECT *parent)
 			pCircuit_V[1] = map_complex_value(parent,"voltage_1N");
 			pCircuit_V[2] = map_complex_value(parent,"voltage_2N");
 
-			//If we're NR, map a different field to avoid the rotation
-			if (NR_first_run == true)
-			{
-				pLine_I[0] = map_complex_value(parent,"prerotated_current_1");
-				pLine_I[1] = map_complex_value(parent,"prerotated_current_2");
-				pLine_I[2] = map_complex_value(parent,"acc_temp_current_N");
+			// NOTE - Commented code will replace the pLine_I and pLine12 once the triplex_node "deprecated properties" are removed
+			// pLine_I[0] = map_complex_value(parent,"current_1");
+			// pLine_I[1] = map_complex_value(parent,"current_2");
+			// pLine_I[2] = map_complex_value(parent,"current_N");
 
-				pLine12 = map_complex_value(parent,"prerotated_current_12");
-			}
-			else
-			{
-				// NOTE - Commented code will replace the pLine_I and pLine12 once the triplex_node "deprecated properties" are removed
-				// pLine_I[0] = map_complex_value(parent,"current_1");
-				// pLine_I[1] = map_complex_value(parent,"current_2");
-				// pLine_I[2] = map_complex_value(parent,"current_N");
+			// pLine12 = map_complex_value(parent,"current_12");
 
-				// pLine12 = map_complex_value(parent,"current_12");
+			pLine_I[0] = map_complex_value(parent,"acc_temp_current_1");
+			pLine_I[1] = map_complex_value(parent,"acc_temp_current_2");
+			pLine_I[2] = map_complex_value(parent,"acc_temp_current_N");
 
-				pLine_I[0] = map_complex_value(parent,"acc_temp_current_1");
-				pLine_I[1] = map_complex_value(parent,"acc_temp_current_2");
-				pLine_I[2] = map_complex_value(parent,"acc_temp_current_N");
-
-				pLine12 = map_complex_value(parent,"acc_temp_current_12");
-			}
+			pLine12 = map_complex_value(parent,"acc_temp_current_12");
 
 			//pPower = map_complex_value(parent,"measured_power");
 
@@ -970,7 +939,37 @@ int windturb_dg::init(OBJECT *parent)
 			delete temp_property_pointer;
 
 			number_of_phases_out = 1;
-	
+			
+			//Map the solver method and see if we're NR-oriented
+			temp_property_pointer = new gld_property("powerflow::solver_method");
+
+			//Make sure it worked
+			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_enumeration() != true))
+			{
+				GL_THROW("windturb_dg:%d %s failed to map the nominal_frequency property", obj->id, (obj->name ? obj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to map the powerflow:solver_method property, an error occurred.  Please try again.
+				If the error persists, please submit your GLM and a bug report to the ticketing system.
+				*/
+			}
+
+			//Must be valid, read it
+			temp_enum = temp_property_pointer->get_enumeration();
+
+			//Remove the link
+			delete temp_property_pointer;
+
+			//Check which method we are - NR=2
+			if (temp_enum == 2)
+			{
+				//Set NR first run flag
+				NR_first_run = true;
+			}
+			else	//Other methods - should already be set, but be explicit
+			{
+				NR_first_run = false;
+			}
+		
 		}
 		else if (gl_object_isa(parent,"rectifier","generators"))
 		{
@@ -1145,6 +1144,8 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	//Update tracker
 	store_last_current = current_A.Mag() + current_B.Mag() + current_C.Mag();
+	
+	//value_WS = avg_ws;      //this goes away
 
 	//Map the current injection routine to our parent bus, if needed
 	if (NR_first_run == true)
@@ -1182,14 +1183,15 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 		NR_first_run = false;
 	}
 	//Default else - FBS or not first run
-
-	//Pull the updates, if needed
+    
+	
+	//Pull the updates, if needed 
 	if (climate_is_valid == true)
 	{
 		value_Press = pPress->get_double() * 100;       // in Pa; climate is in mbar
 		value_Temp = (pTemp->get_double() - 32) * 5/9;  // in degC; climate is in degF
-		value_WS = pWS->get_double() * 0.44704;         // in m/s; climate wind speed is in mph
-	}
+	} 
+	
 
 	// press in Pascals and temp in Kelvins
 	air_dens = (value_Press) * Molar / (Ridealgas * ( value_Temp + 273.15) );
@@ -1198,7 +1200,31 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	if(ref_height == roughness_l){
 		ref_height = roughness_l+0.001;
 	}
-	WSadj = value_WS * log(turbine_height/roughness_l)/log(ref_height/roughness_l); 
+	
+	//WSadj = value_WS * log(turbine_height/roughness_l)/log(ref_height/roughness_l); log(37/.055)/log(10/0.055) = 2.828/2.26 = 1.25
+	
+	switch (Wind_speed_source){
+		case WIND_SPEED:
+			//value_WS = wind_speed_hub_ht;       //new var. should also have a default vale
+			WSadj = wind_speed_hub_ht; 
+			break;
+		
+		case BUILT_IN:
+			//value_WS = avg_ws;          //
+			WSadj = avg_ws * log(turbine_height/roughness_l)/log(ref_height/roughness_l); 
+			break;
+			
+		case CLIMATE_DATA:
+			double climate_ws=0;
+			if (climate_is_valid == true){
+				climate_ws = pWS->get_double() * 0.44704;       //mph to m/s conversion
+			}else{
+				climate_ws = avg_ws;
+				gl_warning("windturb_dg (id:%d)::sync(): no climate data found, using built in source",obj->id);
+			}
+			WSadj = climate_ws * log(turbine_height/roughness_l)/log(ref_height/roughness_l); 
+			break;
+	}
 
 	/* TODO:  import previous and future wind data 
 	and then pseudo-randomize the wind speed values beween 1st and 2nd
