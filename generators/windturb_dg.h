@@ -92,7 +92,8 @@ public:
 	enum {GENERAL_LARGE, GENERAL_MID,GENERAL_SMALL,MANUF_TABLE, CALCULATED, USER_SPECIFY};
 	enumeration CP_Data;
 	enum {POWER_CURVE=1, COEFF_OF_PERFORMANCE}; 
-	enumeration Turbine_implementation;
+	enumeration Turbine_implementation; 
+	//change here
 	
 	double blade_diam;
 	double turbine_height;
