@@ -5951,7 +5951,11 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 						undeltacurr[0] += (bus[indexer].V[0] == 0) ? 0 : ~(bus[indexer].extra_var[0]/bus[indexer].V[0]);
 
 						//Shunt values
-						undeltacurr[0] += bus[indexer].extra_var[3]*bus[indexer].V[0];
+						if (NR_solver_algorithm == NRM_TCIM)
+						{
+							undeltacurr[0] += bus[indexer].extra_var[3]*bus[indexer].V[0];
+						}
+						//Default else - FPI handles impedance/admittance directly
 
 						//Current values
 						undeltacurr[0] += adjusted_constant_current[3];
@@ -5974,7 +5978,11 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 						undeltacurr[1] += (bus[indexer].V[1] == 0) ? 0 : ~(bus[indexer].extra_var[1]/bus[indexer].V[1]);
 
 						//Shunt values
-						undeltacurr[1] += bus[indexer].extra_var[4]*bus[indexer].V[1];
+						if (NR_solver_algorithm == NRM_TCIM)
+						{
+							undeltacurr[1] += bus[indexer].extra_var[4]*bus[indexer].V[1];
+						}
+						//Default else - FPI handles impedance/admittance directly
 
 						//Current values
 						undeltacurr[1] += adjusted_constant_current[4];
@@ -5997,7 +6005,11 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 						undeltacurr[2] += (bus[indexer].V[2] == 0) ? 0 : ~(bus[indexer].extra_var[2]/bus[indexer].V[2]);
 
 						//Shunt values
-						undeltacurr[2] += bus[indexer].extra_var[5]*bus[indexer].V[2];
+						if (NR_solver_algorithm == NRM_TCIM)
+						{
+							undeltacurr[2] += bus[indexer].extra_var[5]*bus[indexer].V[2];
+						}
+						//Default else - FPI handles impedance/admittance directly
 
 						//Current values
 						undeltacurr[2] += adjusted_constant_current[5];
@@ -6377,7 +6389,11 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 						delta_current[0] = (voltageDel[0] == 0) ? 0 : ~(bus[indexer].extra_var[0]/voltageDel[0]);
 
 						//Convert delta connected load to appropriate Wye
-						delta_current[0] += voltageDel[0] * (bus[indexer].extra_var[3]);
+						if (NR_solver_algorithm == NRM_TCIM)
+						{
+							delta_current[0] += voltageDel[0] * (bus[indexer].extra_var[3]);
+						}
+						//Default else - FPI handles impedance/admittance directly
 					}
 					else
 					{
@@ -6396,7 +6412,11 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 						delta_current[1] = (voltageDel[1] == 0) ? 0 : ~(bus[indexer].extra_var[1]/voltageDel[1]);
 
 						//Convert delta connected load to appropriate Wye
-						delta_current[1] += voltageDel[1] * (bus[indexer].extra_var[4]);
+						if (NR_solver_algorithm == NRM_TCIM)
+						{
+							delta_current[1] += voltageDel[1] * (bus[indexer].extra_var[4]);
+						}
+						//Default else - FPI handles impedance/admittance directly
 					}
 					else
 					{
@@ -6415,7 +6435,11 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 						delta_current[2] = (voltageDel[2] == 0) ? 0 : ~(bus[indexer].extra_var[2]/voltageDel[2]);
 
 						//Convert delta connected load to appropriate Wye
-						delta_current[2] += voltageDel[2] * (bus[indexer].extra_var[5]);
+						if (NR_solver_algorithm == NRM_TCIM)
+						{
+							delta_current[2] += voltageDel[2] * (bus[indexer].extra_var[5]);
+						}
+						//Default else - FPI handles impedance/admittance directly
 					}
 					else
 					{
