@@ -6618,9 +6618,12 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					//Power - convert to a current (uses less iterations this way)
 					delta_current[0] = (voltageDel[0] == 0) ? 0 : ~(bus[indexer].S_dy[0]/voltageDel[0]);
 
-					//Convert delta connected load to appropriate Wye
-					delta_current[0] += voltageDel[0] * (bus[indexer].Y_dy[0]);
-
+					//Convert delta connected load to appropriate Wye - if TCIM
+					if (NR_solver_algorithm == NRM_TCIM)
+					{
+						delta_current[0] += voltageDel[0] * (bus[indexer].Y_dy[0]);
+					}
+					//Default else - FPI handled directly
 				}
 				else
 				{
@@ -6637,9 +6640,12 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					//Power - convert to a current (uses less iterations this way)
 					delta_current[1] = (voltageDel[1] == 0) ? 0 : ~(bus[indexer].S_dy[1]/voltageDel[1]);
 
-					//Convert delta connected load to appropriate Wye
-					delta_current[1] += voltageDel[1] * (bus[indexer].Y_dy[1]);
-
+					//Convert delta connected load to appropriate Wye - if TCIM
+					if (NR_solver_algorithm == NRM_TCIM)
+					{
+						delta_current[1] += voltageDel[1] * (bus[indexer].Y_dy[1]);
+					}
+					//Default else - FPI handled directly
 				}
 				else
 				{
@@ -6656,9 +6662,12 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					//Power - convert to a current (uses less iterations this way)
 					delta_current[2] = (voltageDel[2] == 0) ? 0 : ~(bus[indexer].S_dy[2]/voltageDel[2]);
 
-					//Convert delta connected load to appropriate Wye
-					delta_current[2] += voltageDel[2] * (bus[indexer].Y_dy[2]);
-
+					//Convert delta connected load to appropriate Wye - if TCIM
+					if (NR_solver_algorithm == NRM_TCIM)
+					{
+						delta_current[2] += voltageDel[2] * (bus[indexer].Y_dy[2]);
+					}
+					//Default else - FPI handled directly
 				}
 				else
 				{
@@ -6771,8 +6780,12 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					//Power values
 					undeltacurr[0] += (bus[indexer].V[0] == 0) ? 0 : ~(bus[indexer].S_dy[3]/bus[indexer].V[0]);
 
-					//Shunt values
-					undeltacurr[0] += bus[indexer].Y_dy[3]*bus[indexer].V[0];
+					//Shunt values - if TCIM
+					if (NR_solver_algorithm == NRM_TCIM)
+					{
+						undeltacurr[0] += bus[indexer].Y_dy[3]*bus[indexer].V[0];
+					}
+					//Default else - FPI handled directly
 
 					//Current values
 					undeltacurr[0] += adjusted_constant_current[3];
@@ -6802,8 +6815,12 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					//Power values
 					undeltacurr[1] += (bus[indexer].V[1] == 0) ? 0 : ~(bus[indexer].S_dy[4]/bus[indexer].V[1]);
 
-					//Shunt values
-					undeltacurr[1] += bus[indexer].Y_dy[4]*bus[indexer].V[1];
+					//Shunt values - if TCIM
+					if (NR_solver_algorithm == NRM_TCIM)
+					{
+						undeltacurr[1] += bus[indexer].Y_dy[4]*bus[indexer].V[1];
+					}
+					//Default else - FPI handled directly
 
 					//Current values
 					undeltacurr[1] += adjusted_constant_current[4];
@@ -6833,8 +6850,12 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					//Power values
 					undeltacurr[2] += (bus[indexer].V[2] == 0) ? 0 : ~(bus[indexer].S_dy[5]/bus[indexer].V[2]);
 
-					//Shunt values
-					undeltacurr[2] += bus[indexer].Y_dy[5]*bus[indexer].V[2];
+					//Shunt values - if TCIM
+					if (NR_solver_algorithm == NRM_TCIM)
+					{
+						undeltacurr[2] += bus[indexer].Y_dy[5]*bus[indexer].V[2];
+					}
+					//Default else - FPI handled directly
 
 					//Current values
 					undeltacurr[2] += adjusted_constant_current[5];

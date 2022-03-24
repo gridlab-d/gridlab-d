@@ -497,7 +497,7 @@ void load::load_update_fxn(void)
 	complex nominal_voltage_value;
 	int node_reference_value;
 	double curr_delta_time;
-	bool require_inrush_update;
+	bool require_inrush_update, local_shunt_update;
 	complex working_impedance_value, working_data_value, working_admittance_value;
 	double workingvalue;
 	OBJECT *obj;
@@ -509,6 +509,7 @@ void load::load_update_fxn(void)
 	double adjust_FBS_nominal_voltage_val[6];
 	complex adjust_FBS_voltage_val[6];
 	complex shunt_change_check[3];
+	complex shunt_change_check_dy[6];
 
 	//See if we're reliability-enabled
 	if (fault_check_object == NULL)
@@ -522,6 +523,14 @@ void load::load_update_fxn(void)
 		shunt_change_check[0] = shunt[0];
 		shunt_change_check[1] = shunt[1];
 		shunt_change_check[2] = shunt[2];
+
+		//Capture the explicit Delta-Wye portion too
+		shunt_change_check_dy[0] = shunt_dy[0];	//Delta
+		shunt_change_check_dy[1] = shunt_dy[1];
+		shunt_change_check_dy[2] = shunt_dy[2];
+		shunt_change_check_dy[3] = shunt_dy[3];	//Wye
+		shunt_change_check_dy[4] = shunt_dy[4];
+		shunt_change_check_dy[5] = shunt_dy[5];
 	}
 
 	//Roll GFA check into here, so current loads updates are handled properly
@@ -3221,21 +3230,25 @@ void load::load_update_fxn(void)
 	//FPIM "convergence check" stuff
 	if (NR_solver_algorithm == NRM_FPI)
 	{
-		if (has_phase(PHASE_D))
+		//Do the explicit Delta-Wye connections first - update flag
+		local_shunt_update = false;
+
+		//Loop through
+		for (index_var=0; index_var<6; index_var++)
 		{
-			//Loop through and check for "differences"
-			for (index_var=0; index_var<3; index_var++)
+			intermed_impedance_dy[index_var] = shunt_dy[index_var] - shunt_change_check_dy[index_var];
+
+			//Check it
+			if (intermed_impedance_dy[index_var].Mag() > 0.0)
 			{
-				//Compute the difference
-				intermed_impedance[index_var] = shunt[index_var] - shunt_change_check[index_var];
-
-				//Check it
-				if (intermed_impedance[index_var].Mag() > 0.0)
-				{
-					NR_FPI_imp_load_change = true;
-				}
+				NR_FPI_imp_load_change = true;
+				local_shunt_update = true;
 			}
+		}
 
+		//See if any updated
+		if (local_shunt_update == true)
+		{
 			//Pull the ref
 			//See if we're a parented load or not
 			if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
@@ -3247,16 +3260,63 @@ void load::load_update_fxn(void)
 				extract_node_ref = *NR_subnode_reference;
 			}
 
-			//Update the matrix
-			NR_busdata[extract_node_ref].full_Y_load[0] += intermed_impedance[0] + intermed_impedance[2];
-			NR_busdata[extract_node_ref].full_Y_load[1] -= intermed_impedance[0];
-			NR_busdata[extract_node_ref].full_Y_load[2] -= intermed_impedance[2];
-			NR_busdata[extract_node_ref].full_Y_load[3] -= intermed_impedance[0];
-			NR_busdata[extract_node_ref].full_Y_load[4] += intermed_impedance[1] + intermed_impedance[0];
-			NR_busdata[extract_node_ref].full_Y_load[5] -= intermed_impedance[1];
-			NR_busdata[extract_node_ref].full_Y_load[6] -= intermed_impedance[2];
-			NR_busdata[extract_node_ref].full_Y_load[7] -= intermed_impedance[1];
-			NR_busdata[extract_node_ref].full_Y_load[8] += intermed_impedance[2] + intermed_impedance[1];
+			//Update the matrix - both delta and Wye portions
+			NR_busdata[extract_node_ref].full_Y_load[0] += intermed_impedance_dy[0] + intermed_impedance_dy[2] + intermed_impedance_dy[3];
+			NR_busdata[extract_node_ref].full_Y_load[1] -= intermed_impedance_dy[0];
+			NR_busdata[extract_node_ref].full_Y_load[2] -= intermed_impedance_dy[2];
+			NR_busdata[extract_node_ref].full_Y_load[3] -= intermed_impedance_dy[0];
+			NR_busdata[extract_node_ref].full_Y_load[4] += intermed_impedance_dy[1] + intermed_impedance_dy[0] + intermed_impedance_dy[4];
+			NR_busdata[extract_node_ref].full_Y_load[5] -= intermed_impedance_dy[1];
+			NR_busdata[extract_node_ref].full_Y_load[6] -= intermed_impedance_dy[2];
+			NR_busdata[extract_node_ref].full_Y_load[7] -= intermed_impedance_dy[1];
+			NR_busdata[extract_node_ref].full_Y_load[8] += intermed_impedance_dy[2] + intermed_impedance_dy[1] + intermed_impedance_dy[5];
+		}
+
+		if (has_phase(PHASE_D))
+		{
+			//Reset flag
+			local_shunt_update = false;
+
+			//Loop through and check for "differences"
+			for (index_var=0; index_var<3; index_var++)
+			{
+				//Compute the difference
+				intermed_impedance[index_var] = shunt[index_var] - shunt_change_check[index_var];
+
+				//Check it
+				if (intermed_impedance[index_var].Mag() > 0.0)
+				{
+					NR_FPI_imp_load_change = true;
+					local_shunt_update = true;
+				}
+			}
+
+			//Perform the update if we changed - if not, no reason to do so
+			if (local_shunt_update == true)
+			{
+				//Pull the ref
+				//See if we're a parented load or not
+				if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+				{
+					extract_node_ref = NR_node_reference;
+				}
+				else	//It is a child - look at parent
+				{
+					extract_node_ref = *NR_subnode_reference;
+				}
+
+				//Update the matrix
+				NR_busdata[extract_node_ref].full_Y_load[0] += intermed_impedance[0] + intermed_impedance[2];
+				NR_busdata[extract_node_ref].full_Y_load[1] -= intermed_impedance[0];
+				NR_busdata[extract_node_ref].full_Y_load[2] -= intermed_impedance[2];
+				NR_busdata[extract_node_ref].full_Y_load[3] -= intermed_impedance[0];
+				NR_busdata[extract_node_ref].full_Y_load[4] += intermed_impedance[1] + intermed_impedance[0];
+				NR_busdata[extract_node_ref].full_Y_load[5] -= intermed_impedance[1];
+				NR_busdata[extract_node_ref].full_Y_load[6] -= intermed_impedance[2];
+				NR_busdata[extract_node_ref].full_Y_load[7] -= intermed_impedance[1];
+				NR_busdata[extract_node_ref].full_Y_load[8] += intermed_impedance[2] + intermed_impedance[1];
+			}
+			//Default else - no update, so no need to recalc anything
 		}
 		else
 		{
