@@ -92,6 +92,8 @@ public:
 	enumeration CP_Data;
 	enum {POWER_CURVE=1, COEFF_OF_PERFORMANCE}; 
 	enumeration Turbine_implementation;
+	enum {DEFAULT=1, BUILT_IN, WIND_SPEED, CLIMATE_DATA};
+	enumeration Wind_speed_source;
 	
 	double blade_diam;
 	double turbine_height;
@@ -108,6 +110,7 @@ public:
 	double ws_maxcp;			// |
 	double Cp_rated;			// |
 	double ws_rated;			// |
+	double wind_speed_hub_ht;
 
 	double q;					//number of gearboxes
 
