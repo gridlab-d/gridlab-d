@@ -107,10 +107,9 @@ windturb_dg::windturb_dg(MODULE *module)
 			PT_double, "Wind_Speed[m/s]", PADDR(Wind_Speed),  PT_DESCRIPTION, "Wind speed at 5-15m level (typical measurement height)",
 			PT_double, "wind_speed[m/s]", PADDR(Wind_Speed),  PT_DESCRIPTION, "Wind speed at 5-15m level (typical measurement height)",
 			PT_double, "air_density[kg/m^3]", PADDR(air_dens), PT_DESCRIPTION, "COP: Estimated air density",
-			//PT_double, "avg_ws[m/s]", PADDR(avg_ws), PT_DESCRIPTION, "Wind speed at reference height. This is an input",      //we dont need to expose these. also line below
+			//PT_double, "avg_ws[m/s]", PADDR(avg_ws), PT_DESCRIPTION, "Wind speed at reference height. This is an input",
 			//PT_double, "wind_speed[m/s]", PADDR(avg_ws), PT_DESCRIPTION, "exposing wind speed variable",
 			PT_double, "wind_speed_hub_ht[m/s]", PADDR(wind_speed_hub_ht), PT_DESCRIPTION, "Wind speed at hub height. This is an input",
-			// New param for ws at hub height...in discription say-> this is like an input and not the output...maybe wind_speed_hub_ht
 
 			PT_double, "R_stator[pu*Ohm]", PADDR(Rst), PT_DESCRIPTION, "COP: Induction generator primary stator resistance in p.u.",
 			PT_double, "X_stator[pu*Ohm]", PADDR(Xst), PT_DESCRIPTION, "COP: Induction generator primary stator reactance in p.u.",
@@ -196,7 +195,6 @@ int windturb_dg::create(void)
 	Gen_status = ONLINE;
 	
 	Turbine_implementation = POWER_CURVE;
-	//Wind_speed_source = BUILT_IN;
 	Wind_speed_source = DEFAULT;
 	
 	power_curve_pu = false;
