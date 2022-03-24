@@ -724,7 +724,7 @@ void triplex_load::triplex_load_update_fxn(void)
 				NR_FPI_imp_load_change = true;
 
 				//Update the matrix - diagonal for now
-				//See if we're a parented load or not
+				//See if we're a parented load or not - not sure how we'd ever be a "different child", but copy paste!
 				if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
 				{
 					//Compute the values and post them to our bus term
@@ -739,13 +739,34 @@ void triplex_load::triplex_load_update_fxn(void)
 		}
 	}//End FPI
 	//TCIM doesn't use this
-
 }
 
 //Function to appropriately zero load - make sure we don't get too heavy handed
 void triplex_load::triplex_load_delete_update_fxn(void)
 {
-	int index_var;
+	int index_var, extract_node_ref;
+
+	//If FPI, remove the shunt portions
+	if (NR_solver_algorithm == NRM_FPI)
+	{
+		//See if we're a parented load or not - not sure how we'd ever be a "different child", but copy paste!
+		if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+		{
+			extract_node_ref = NR_node_reference;
+		}
+		else	//It is a child - look at parent
+		{
+			extract_node_ref = *NR_subnode_reference;
+		}
+
+		//Remove the components
+		NR_busdata[extract_node_ref].full_Y_load[0] -= prev_load_values[0][0];
+		NR_busdata[extract_node_ref].full_Y_load[4] -= prev_load_values[0][1];
+		NR_busdata[extract_node_ref].full_Y_load[8] -= prev_load_values[0][2];
+
+		//Flag the FPI change
+		NR_FPI_imp_load_change = true;
+	}//End FPI
 
 	//Loop and clear
 	for (index_var=0; index_var<3; index_var++)

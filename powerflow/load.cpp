@@ -3352,7 +3352,58 @@ void load::load_update_fxn(void)
 //Function to appropriately zero load - make sure we don't get too heavy handed
 void load::load_delete_update_fxn(void)
 {
-	int index_var;
+	int index_var, extract_node_ref;
+
+	//If FPI - remove the impedance portions from the tracked matrix
+	if (NR_solver_algorithm == NRM_FPI)
+	{
+		//Determine our reference
+		//See if we're a parented load or not
+		if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+		{
+			extract_node_ref = NR_node_reference;
+		}
+		else	//It is a child - look at parent
+		{
+			extract_node_ref = *NR_subnode_reference;
+		}
+
+		//Remove the explicit Delta-Wye componenents
+		NR_busdata[extract_node_ref].full_Y_load[0] -= prev_load_values_dy[0][0] + prev_load_values_dy[0][2] + prev_load_values_dy[0][3];
+		NR_busdata[extract_node_ref].full_Y_load[1] += prev_load_values_dy[0][0];
+		NR_busdata[extract_node_ref].full_Y_load[2] += prev_load_values_dy[0][2];
+		NR_busdata[extract_node_ref].full_Y_load[3] += prev_load_values_dy[0][0];
+		NR_busdata[extract_node_ref].full_Y_load[4] -= prev_load_values_dy[0][1] + prev_load_values_dy[0][0] + prev_load_values_dy[0][4];
+		NR_busdata[extract_node_ref].full_Y_load[5] += prev_load_values_dy[0][1];
+		NR_busdata[extract_node_ref].full_Y_load[6] += prev_load_values_dy[0][2];
+		NR_busdata[extract_node_ref].full_Y_load[7] += prev_load_values_dy[0][1];
+		NR_busdata[extract_node_ref].full_Y_load[8] -= prev_load_values_dy[0][2] + prev_load_values_dy[0][1] + prev_load_values_dy[0][5];
+
+		//Do the "traditional" load removal
+		if (has_phase(PHASE_D))
+		{
+			//Update the matrix
+			NR_busdata[extract_node_ref].full_Y_load[0] -= prev_load_values[0][0] + prev_load_values[0][2];
+			NR_busdata[extract_node_ref].full_Y_load[1] += prev_load_values[0][0];
+			NR_busdata[extract_node_ref].full_Y_load[2] += prev_load_values[0][2];
+			NR_busdata[extract_node_ref].full_Y_load[3] += prev_load_values[0][0];
+			NR_busdata[extract_node_ref].full_Y_load[4] -= prev_load_values[0][1] + prev_load_values[0][0];
+			NR_busdata[extract_node_ref].full_Y_load[5] += prev_load_values[0][1];
+			NR_busdata[extract_node_ref].full_Y_load[6] += prev_load_values[0][2];
+			NR_busdata[extract_node_ref].full_Y_load[7] += prev_load_values[0][1];
+			NR_busdata[extract_node_ref].full_Y_load[8] -= prev_load_values[0][2] + prev_load_values[0][1];
+		}
+		else
+		{
+			//Update the matrix
+			NR_busdata[extract_node_ref].full_Y_load[0] -= prev_load_values[0][0];
+			NR_busdata[extract_node_ref].full_Y_load[4] -= prev_load_values[0][1];
+			NR_busdata[extract_node_ref].full_Y_load[8] -= prev_load_values[0][2];
+		}
+
+		//Flag an update, because we just changed things
+		NR_FPI_imp_load_change = true;
+	}//End FPI Impedance updates
 
 	//Loop and clear
 	for (index_var=0; index_var<3; index_var++)
