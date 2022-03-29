@@ -566,7 +566,7 @@ int capacitor::init(OBJECT *parent)
 		if (gl_object_isa(RLink, "link", "powerflow")) {
 			RLink_current_in[0] = new gld_property(RLink,"current_in_A");
 		} else {
-			RLink_current_in[0] = new gld_property(RLink,"current_A");
+			RLink_current_in[0] = new gld_property(RLink,"current_inj_A");
 		}
 
 		//Make sure it worked
@@ -580,7 +580,7 @@ int capacitor::init(OBJECT *parent)
 		if (gl_object_isa(RLink, "link", "powerflow")) {
 			RLink_current_in[1] = new gld_property(RLink,"current_in_B");
 		} else {
-			RLink_current_in[1] = new gld_property(RLink,"current_B");
+			RLink_current_in[1] = new gld_property(RLink,"current_inj_B");
 		}
 
 		//Make sure it worked
@@ -594,7 +594,7 @@ int capacitor::init(OBJECT *parent)
 		if (gl_object_isa(RLink, "link", "powerflow")) {
 			RLink_current_in[2] = new gld_property(RLink,"current_in_C");
 		} else {
-			RLink_current_in[2] = new gld_property(RLink,"current_C");
+			RLink_current_in[2] = new gld_property(RLink,"current_inj_C");
 		}
 
 		//Make sure it worked

@@ -182,8 +182,9 @@ object capacitor {
 	cap_nominal_voltage 14000;
 	nominal_voltage 14377;
 	object enum_assert {
+		in '2000-01-01 00:00:02';
 		target "switchA";
-		value 0;
+		value 1;
 		status ASSERT_TRUE;
 	};
 }
