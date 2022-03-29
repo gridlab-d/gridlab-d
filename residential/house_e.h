@@ -399,6 +399,7 @@ public:
 		TM_COOL = 3,
 	}THERMOSTATMODE;
 	enumeration thermostat_mode;
+	bool dump_house_parameters;
 
 private:
 	TIMESTAMP simulation_beginning_time;
@@ -479,6 +480,7 @@ private:
 	void powerflow_accumulator_remover(void);	///<Functioanlized item that removes current accumulator values from powerflow (mostly for XML stuff)
 	//Circuit pointer for HVAC - used for breaker checks
 	CIRCUIT *pHVAC_EnduseLoad;
+	void dump_house_parameters_function(void);
 
 public:
 	int error_flag;
