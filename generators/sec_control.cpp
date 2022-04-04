@@ -19,7 +19,32 @@ sec_control::sec_control(MODULE *module)
 		if (gl_publish_variable(oclass,
 			//**************** Sample/test published property - remove ****************//
 			PT_complex, "test_pub_prop[kW]", PADDR(test_published_property), PT_DESCRIPTION, "test published property - has units of kW",
+			//PID controller input
+			PT_double, "f0[Hz]", PADDR(f0), PT_DESCRIPTION, "Nominal frequency in Hz",
+			PT_double, "underfrequency_limit[Hz]", PADDR(underfrequency_limit), PT_DESCRIPTION, "Maximum positive input limit to PID controller is f0 - underfreuqnecy_limit",
+			PT_double, "overfrequency_limit[Hz]", PADDR(overfrequency_limit), PT_DESCRIPTION, "Maximum negative input limit to PID controller is f0 - overfrequency_limit",
+			PT_double, "deadband[Hz]", PADDR(deadband), PT_DESCRIPTION, "Deadpand for PID controller input in Hz",
+			//PID controller
+			PT_double, "PIDw_0[MW/Hz]", PADDR(PIDw[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "PID Weight for current frequency error in MW/Hz",
+			PT_double, "PIDw_1[MW/Hz]", PADDR(PIDw[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "PID Weight for previous timestep frequency error in MW/Hz",
+			PT_double, "PIDw_2[MW/Hz]", PADDR(PIDw[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "PID Weight for t-2 frequency error in MW/Hz",
+			PT_double, "kpPID[MW/Hz]", PADDR(kpPID), PT_DESCRIPTION, "PID proportional gain in MW/Hz",
+			PT_double, "kiPID[MW/Hz/s]", PADDR(kiPID), PT_DESCRIPTION, "PID integral gain in MW/Hz/s",
+			PT_double, "kdPID[MW/Hz*s]", PADDR(kdPID), PT_DESCRIPTION, "PID derivative gain in MW/Hz*s",
+			
+			PT_double, "Ts[s]", PADDR(Ts), PT_DESCRIPTION, "Secondary controller sampling period in sec.",
+			
+			PT_double, "alpha_tol", PADDR(alpha_tol), "Tolerance for participation values not summing to exactly one.",
 
+			PT_bool, "sampleflag", PADDR(sampleflag), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Booling flag whether output should be published or not by secondary controller",
+			PT_double, "sample_time", PADDR(sample_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Next update time for the secondary controller",
+
+			//States
+			PT_double, "deltaf(t)[Hz]", PADDR(curr_state.deltaf[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Frequency error in current iteration [Hz]",
+			PT_double, "deltaf(t-1)[Hz]", PADDR(curr_state.deltaf[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Frequency error in previous timestep [Hz]",
+			PT_double, "dxi[MW]", PADDR(curr_state.dxi), PT_ACCESS, PT_HIDDEN, PT_DESCRIPTION, "Change in PID integrator output",
+			PT_double, "xi[MW]", PADDR(curr_state.xi), PT_ACCESS, PT_HIDDEN, PT_DESCRIPTION, "PID integrator output",
+			PT_double, "PIDout[MW]", PADDR(curr_state.PIDout), PT_ACCESS, PT_HIDDEN, PT_DESCRIPTION, "PID output",
 			NULL) < 1)
 				GL_THROW("unable to publish properties in %s", __FILE__);
 
@@ -260,7 +285,16 @@ TIMESTAMP sec_control::postsync(TIMESTAMP t0, TIMESTAMP t1)
 STATUS sec_control::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 {
 	//**************** Deltamode start initialization function, if any ****************//
+	sample_time = (double)t0 + Ts; //
+	sampleflag = false;
 
+	for (auto & obj : part_obj){
+		//zero derivative terms in initialization
+		for (i=0, i<2, i++){
+			obj.dP[i] = 0;
+			obj.dPP[i] = 0;
+		}
+	}
 	//Just return a pass - not sure how we'd fail
 	return SUCCESS;
 }
@@ -278,97 +312,173 @@ SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigne
 	deltath = deltat / 2.0;
 
 	//Update time tracking variables
-	prev_timestamp_dbl = gl_globaldeltaclock;
+	curr_timestamp_dbl = gl_globaldeltaclock;
 	
 	//**************** Primary deltamode executor - dynamics usually go/get called here ****************//
-	//weights for PID control. these are constant in deltat and the gains.
-	// since the gains should be adjustable, these should be editable as well.
-	PIDw[0] = kpPID + kiPID*deltat + kdPID/deltat;
-	PIDw[1] = -kpPID - 2*kdPID/deltat;
-	PIDw[2] = kdPID/deltat;
-	/*
-	kpPID is the proportinal gain in units of MW (or kW?)/Hz
-	kiPID is the integration gain in units MW/sec/Hz
-	kdPID is the derivative gain in units of MW*sec/Hz (or whatever units deltat is in)
-	*/
 
-	//**************** Check pass - predictor/corrector type setup ****************//
+	/* Publish values only on first itration.
+	Since the secondary controller is placed *before* all other participating objects
+	the effect of this, is that for all participating objects it is as if the change was
+	published at the end of the last iteration of the last timestep.
+	*/
 	if (iteration_count_val == 0) // Predictor pass
 	{
-		//**************** Predictor pass stuff ****************//
-		// Get Frequency Deviation
-		curr_state.deltaf[0] = f0 - f_meas; // frequency error [Hz]
-		if (deltaf > deltaf_max) // limit maximum up deviation (underfrequency)
+		//cycle frequency error state values
+		next_state.deltaf[1] = curr_state.deltaf[0];
+		memcpy(&curr_state, &next_state, sizeof(SEC_CNTRL_STATE);
+		
+		//Determine wheter to pass set point changes on this timestep or not
+		if (curr_timestamp_dbl >= sample_time)
 		{
-			deltaf = deltaf_max;
-		}
-		else if (deltaf < deltaf_min) //limit maximum down deviation (overfrequency)
-		{
-			deltaf = deltaf_min;
-		}
-		else if (abs(deltaf) < dead_band) //frequency is within deadband
-		{
-			deltaf = 0;
-		}
-
-		//PID Controller
-		curr_state.ddeltaPtot = PIDw[0]*curr_state.deltaf[0] + PIDw[1]*curr_state.deltaf[1] + PIDw[2]*curr_state.deltaf[2]
-		next_state.deltaPtot  = curr_state.deltaPtot + curr_state.ddeltaPtot
-		// End PID controller
-
-		//Update participating objects
-		if (delta_time >= next_sample)
-		{
-			sampleflag = true; 				//sample output on this timestep
-			next_sample = delta_time + Ts;  // set next timestep to sample
+			sampleflag = true; 	//sample output on this timestep
+			sample_time += Ts;  // set next timestep to sample
 		}
 		else
 		{
 			sampleflag = false;
 		}
-		nobj = sizeof(controlobjs)/sizeof(controlobj[0]);
-		for (int i = 0; i < nobj; i++) {
-			// calculate participation based on factors
-			next_state.dP[i] = alpha[i] * next_state.deltaPtot; // calculate change for object i
-			
-			// Apply low pass filter
-			if (Tfilter[i] > deltat) // sensible filter time constant given.
+
+		// Get Frequency Deviation (sets curr_state.deltaf[0])
+		get_deltaf(f_meas); //@Frank: how do I get f_meas?
+
+		//PID Controller
+		curr_state.dxi = kiPID*curr_state.deltaf[0];
+		next_state.xi = curr_state.xi + deltat*curr_state.dxi //integrator output
+		next_state.PIDout = next_state.xi + (kpPID + kdPID/deltat)*curr_state.deltaf[0] - kdPID/deltat*curr_state.deltaf[1];
+		// End PID controller
+
+		
+		//iterate over participating objects
+		for (auto & obj : part_obj){
+			if (obj.Tlp < deltat)
 			{
-				next_state.dPfilter[i] = curr_state.dPfilter[i] + deltat/Tfilter[i]*(next_state.dP[i] - curr_state.dPfilter[i]); // change following lowpass filter.
+				gl_warning("sec_control: lowpass filter time constant for %s is less than deltat. Using deltat instead.", obj.name : "unnamed object");
+				obj.Tlp = deltat;
 			}
-			else // no lowpass filter
-			{
-				gl_warning("sec_control: lowpass filter Timeconstant for %s is less than deltat", objs[i]->name ? objs[i]->name : "unnamed object");
-				next_state.dPfilter[i] = next_state.dP[i];
-			}
-			
-			// sample output
+			// update change for ieach participant based on participation factor alpha and low pass filter.
+			obj.ddP[0] = 1/obj.Tlp*(obj.alpha*next_state.PIDout - obj.dP[0]);
+			obj.dP[1] = obj.dP[0] + deltat*obj.ddP[0];
 			if (sampleflag)
 			{
-				//code to update object setpoints
+				//***************code to update object setpoints********************
 			}
-			
 		}
-		
-		
-		simmode_return_value =  SM_DELTA;
-		// simmode_return_value = SM_DELTA_ITER; //Reiterate - to get us to corrector pass
-	}//End predictor pass
-	else if (iteration_count_val == 1) // Corrector pass
-	{
-		//**************** Corrector pass stuff ****************//
-
-		simmode_return_value =  SM_DELTA;
-	}//End corrector pass
-	else //Additional iterations - not a predictor/corrector
-	{
-		//**************** Could be used for other methods, or to do "house-keeping items" if keeps iterating ****************//
-		//Just return whatever our "last desired" was
-		simmode_return_value = desired_simulation_mode;
+		simmode_return_value = SM_DELTA_ITER;
 	}
+	else if (iteration_count_val == 1) // corrector pass
+	{
+		// Get Frequency Deviation (sets curr_state.deltaf[0])
+		get_deltaf(f_meas); //@Frank: how do I get f_meas?
+		
+		//PID Controller
+		next_state.dxi = kiPID*curr_state.deltaf[0];
+		next_state.xi = curr_state.xi + deltath*(curr_state.dxi + next_state.dxi); //integrator output
+		next_state.PIDout = next_state.xi + (kpPID + kdPID/deltat)*curr_state.deltaf[0] - kdPID/deltat*curr_state.deltaf[1];
+		// End PID controller
 
+		//iterate over participating objects
+		for (auto & obj : part_obj){
+			// update change for ieach participant based on participation factor alpha and low pass filter.
+			obj.ddP[1] = 1/obj.Tlp*(obj.alpha*next_state.PIDout - obj.dP[1]);
+			obj.dP[0] += deltath*(obj.ddP[0] + obj.ddP[1]);
+			if (sampleflag)
+			{
+				//***************code to update object setpoints********************
+				// The actually delta we want to pass is obj.dP[0] - obj.dP[1]
+				// since obj.dP[1] was already passed in the predictor iteration
+			}
+		}
+
+		simmode_return_value =  SM_DELTA;
+	}
+	else
+	{
+		// Do nothing
+		simmode_return_value = SM_DELTA;
+	}
+	
 	return simmode_return_value;
 }
+
+// Get Frequency Deviation including limiting and deadband handling.
+// Functinalized since identical for any pass.
+void sec_control::get_deltaf(double f_meas)
+{
+	curr_state.deltaf[0] = f0 - f_meas; // frequency error [Hz] 
+	if (curr_state.deltaf[0] > (f0 - underfrequency_limit)) // limit maximum positive deviation (underfrequency)
+	{
+		curr_state.deltaf[0] = f0 - underfrequency_limit;
+	}
+	else if (curr_state.deltaf[0] < (f0 - overfrequency_limit)) //limit maximum negative deviation (overfrequency)
+	{
+		curr_state.deltaf[0] = f0 - overfrequency_limit;
+	}
+	else if (abs(curr_state.deltaf[0]) < deadband) //frequency is within deadband
+	{
+		curr_state.deltaf[0] = 0;
+	}
+
+	return SUCCESS; //Always succeeds.
+}
+
+STATUS sec_control::check_alpha(void)
+{	
+	double asum = 0; //alpha accumulator
+	for (auto & obj : part_obj){
+		asum += obj.alpha;
+	}
+	if (abs(asum - 1) <= alpha_tol)
+	{
+		return SUCCESS; // alphas sum to 1 (within tolerance)
+	}
+	else
+	{
+		return FAILED;
+	}
+} 
+
+
+void sec_control::parse_objs(char* input)
+{
+	/***** Parse string to create an return an array ******/
+	// Format should be:
+	// ADD name1, alpha1, dp_min1, dp_max1,Tlp1; name2, alpha2, ...
+	// REMOVE name1; name2; name3 ...
+	// MODIFY name1, alpha1, dp_min1, dp_max1, Tlp1; name2, alpha2, ....
+	// for the ADD key word we need all parameters passed.
+	// for the MODIFY key word, it would be nice if we could pass only some
+	// for example: MODIFY name1, alpha1, , , ; name2, , dp_min1, , ; ...
+
+	// TODO: @Frank, i'd appreciate some help here :)
+
+	// for the following it is assumed that the parsing returns
+	// a vector of vectors something like 
+	// [[name, alpha, dp_min, dp_max, Tlp], [...]] 
+	for (auto elem : parsed_elems){
+		SEC_CNTRL_PARTICIPANT tmpobj;
+		for (int i=0, i<5, i++){
+			if (i == 0){
+				tmpobj.name = elem[i];
+				// Does it mae more sense to put these in a different call in init?
+				tmpobj.ptr = get_gld_obj(tmpobj.name); //somehow get the object pointer
+				tmpobj.pset= get_pset(tmpobj.ptr); // pset should be defined based on object type/class
+			}
+			else if (i == 1){
+				tmpobj.alpha = elem[i]
+			}
+			else if (i == 2){
+				tmpobj.dp_min = elem[i]
+			}
+			else if (i == 3){
+				tmpobj.dp_max = elem[i]
+			}
+			else if (i == 4){
+				tmpobj.Tlp = elem[i]
+			}
+		}
+	}
+}
+
 
 
 //Module-level post update call
