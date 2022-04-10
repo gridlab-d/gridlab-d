@@ -553,6 +553,31 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		curr_island_superLU_vars = NULL;
 	}
 
+	//If FPI, call the shunt update function
+	if (NR_solver_algorithm == NRM_FPI)
+	{
+		//Bus loop it
+		for (indexer=0; indexer<bus_count; indexer++) 
+		{
+			if (bus[indexer].ShuntUpdateFxn != NULL)
+			{
+				//Call the function
+				call_return_status = ((STATUS (*)(OBJECT *))(*bus[indexer].ShuntUpdateFxn))(bus[indexer].obj);
+
+				//Make sure it worked
+				if (call_return_status == FAILED)
+				{
+					GL_THROW("NR: Shunt update failed for device %s",bus[indexer].obj->name ? bus[indexer].obj->name : "Unnamed");
+					/*  TROUBLESHOOT
+					While attempting to perform the shunt update function call, something failed.  Please try again.
+					If the error persists, please submit your code and a bug report via the ticketing system.
+					*/
+				}
+				//Default else - it worked
+			}
+		}//End bus loop
+	}//End FPI shunt update call
+
 	//Call the admittance update code
 	NR_admittance_update(bus_count,bus,branch_count,branch,powerflow_values,powerflow_type);
 
@@ -825,7 +850,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 										}
 										//Not initing, so no care
 
-										//SWING bus does something different
+										//SWING bus does something different - injections
 										if ((bus[branch[jindexer].to].type > 1) && (bus[branch[jindexer].to].swing_functions_enabled == true))
 										{
 											work_vals_char_0 = jindex*3;
@@ -995,6 +1020,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 											}
 											//Not initing, so no care
 
+											//SWING injections for FPIM
 											if ((bus[branch[jindexer].from].type > 1) && (bus[branch[jindexer].from].swing_functions_enabled == true))
 											{
 												work_vals_char_0 = jindex*3;
@@ -5448,7 +5474,7 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 						//Make sure it worked
 						if (call_return_status == FAILED)
 						{
-							GL_THROW("NR: Load update failed for device %s",bus[indexer].obj->name ? bus[indexer].obj->name : "Unnamed");
+							GL_THROW("NR: Load update failed for device %s",bus[jindexer].obj->name ? bus[jindexer].obj->name : "Unnamed");
 							//Defined below in compute_load_values
 						}
 						//Default else - it worked
@@ -5536,16 +5562,16 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 							{
 								//Need to be negated, due to crazy conventions
 								powerflow_values->BA_diag[jindexer].Yload[0][0] = -bus[jindexer].full_Y_load[0];
-								powerflow_values->BA_diag[jindexer].Yload[0][1] = -bus[jindexer].full_Y_load[0];
-								powerflow_values->BA_diag[jindexer].Yload[1][0] = bus[jindexer].full_Y_load[0];
-								powerflow_values->BA_diag[jindexer].Yload[1][1] = bus[jindexer].full_Y_load[0];
+								powerflow_values->BA_diag[jindexer].Yload[0][1] = -bus[jindexer].full_Y_load[1];
+								powerflow_values->BA_diag[jindexer].Yload[1][0] = bus[jindexer].full_Y_load[3];
+								powerflow_values->BA_diag[jindexer].Yload[1][1] = bus[jindexer].full_Y_load[4];
 							}
 							else	//Standard triplex
 							{
 								powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[0];
-								powerflow_values->BA_diag[jindexer].Yload[0][1] = bus[jindexer].full_Y_load[0];
-								powerflow_values->BA_diag[jindexer].Yload[1][0] = -bus[jindexer].full_Y_load[0];
-								powerflow_values->BA_diag[jindexer].Yload[1][1] = -bus[jindexer].full_Y_load[0];
+								powerflow_values->BA_diag[jindexer].Yload[0][1] = bus[jindexer].full_Y_load[1];
+								powerflow_values->BA_diag[jindexer].Yload[1][0] = -bus[jindexer].full_Y_load[3];
+								powerflow_values->BA_diag[jindexer].Yload[1][1] = -bus[jindexer].full_Y_load[4];
 							}
 						}
 					}//End full_Y_load not NULL
@@ -6248,9 +6274,19 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					temp_store[0] = (temp_current[0] + temp_current[2]);
 					temp_store[1] = (-temp_current[1] - temp_current[2]);
 
-					//Store update
-					bus[indexer].FPI_current[0] = temp_store[0];
-					bus[indexer].FPI_current[1] = temp_store[1];
+					//SPCT end node and its wonkiness makes this different in FPI
+					if ((bus[indexer].phases & 0x20) == 0x20)
+					{
+						//Store update - negated for wonky current convention
+						bus[indexer].FPI_current[0] = -temp_store[0];
+						bus[indexer].FPI_current[1] = -temp_store[1];
+					}
+					else	//Normal
+					{
+						//Store update - negated for wonky current convention
+						bus[indexer].FPI_current[0] = temp_store[0];
+						bus[indexer].FPI_current[1] = temp_store[1];
+					}
 				}
 			}//end split-phase connected
 			else	//Wye-connected system/load

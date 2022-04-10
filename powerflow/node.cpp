@@ -244,6 +244,8 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			GL_THROW("Unable to publish node island-status-reset function");
 		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
 			GL_THROW("Unable to publish node swing-status check function");
+		if (gl_publish_function(oclass, "pwr_object_shunt_update", (FUNCTIONADDR)node_update_shunt_values) == NULL)
+			GL_THROW("Unable to publish node shunt update function");
 	}
 }
 
@@ -277,6 +279,7 @@ int node::create(void)
 	TopologicalParent = NULL;
 	NR_subnode_reference = NULL;
 	Extra_Data=NULL;
+	Extra_Data_Track_FPI = NULL;
 	NR_link_table = NULL;
 	NR_connected_links[0] = NR_connected_links[1] = 0;
 	NR_number_child_nodes[0] = NR_number_child_nodes[1] = 0;
@@ -311,6 +314,11 @@ int node::create(void)
 	chrcloadstore = NULL;
 	LoadHistTermL = NULL;
 	LoadHistTermC = NULL;
+
+	shunt_change_check[0] = shunt_change_check[1] = shunt_change_check[2] = complex (0.0,0.0);
+	shunt_change_check_dy[0] = shunt_change_check_dy[1] = complex (0.0,0.0);
+	shunt_change_check_dy[2] = shunt_change_check_dy[3] = complex (0.0,0.0);
+	shunt_change_check_dy[4] = shunt_change_check_dy[5] = complex (0.0,0.0);
 
 	memset(voltage,0,sizeof(voltage));
 	memset(voltaged,0,sizeof(voltaged));
@@ -637,8 +645,8 @@ int node::init(OBJECT *parent)
 					}
 					else	//Our parent is unchilded (or has the swing bus as a parent)
 					{
-						//Check and see if the parent or child is a delta - if so, proceed as normal
-						if (((phases & PHASE_D) == PHASE_D) || ((parNode->phases & PHASE_D) == PHASE_D))
+						//Check and see if the parent or child is different - if not, proceed as normal
+						if (((phases ^ parNode->phases) & PHASE_D) == PHASE_D)	//There's a difference between parent and child
 						{
 							//Set appropriate flags (store parent name and flag self & parent)
 							SubNode = DIFF_CHILD;
@@ -663,6 +671,35 @@ int node::init(OBJECT *parent)
 									information to handle a parent-child relationship with differently connected loads.
 									Please submit your code and a bug report using the trac website.
 									*/
+								}
+
+								//Zero the entries
+								parNode->Extra_Data[0] = complex(0.0,0.0);
+								parNode->Extra_Data[1] = complex(0.0,0.0);
+								parNode->Extra_Data[2] = complex(0.0,0.0);
+								parNode->Extra_Data[3] = complex(0.0,0.0);
+								parNode->Extra_Data[4] = complex(0.0,0.0);
+								parNode->Extra_Data[5] = complex(0.0,0.0);
+								parNode->Extra_Data[6] = complex(0.0,0.0);
+								parNode->Extra_Data[7] = complex(0.0,0.0);
+								parNode->Extra_Data[8] = complex(0.0,0.0);
+
+								//Allocate the tracking array, if we're in FPI
+								if (NR_solver_algorithm == NRM_FPI)
+								{
+									parNode->Extra_Data_Track_FPI = (complex *)gl_malloc(3*sizeof(complex));
+
+									//Check it
+									if (parNode->Extra_Data_Track_FPI == NULL)
+									{
+										GL_THROW("NR: Memory allocation failure for differently connected load.");
+										//Defined above
+									}
+
+									//Zero the entries
+									parNode->Extra_Data_Track_FPI[0] = complex(0.0,0.0);
+									parNode->Extra_Data_Track_FPI[1] = complex(0.0,0.0);
+									parNode->Extra_Data_Track_FPI[2] = complex(0.0,0.0);
 								}
 							}
 						}
@@ -3742,7 +3779,7 @@ int node::NR_populate(void)
 		{
 			GL_THROW("node:%d - %s - Failed to map load_update",me->id,(me->name ? me->name : "Unnamed"));
 			/*  TROUBLESHOOT
-			The attached node was unable to find the exposed function "current_injection_update" on the calling object.  Be sure
+			The attached node was unable to find the exposed function "load_update" on the calling object.  Be sure
 			it supports this functionality and try again.
 			*/
 		}
@@ -3753,7 +3790,28 @@ int node::NR_populate(void)
 		//Not a load
 		NR_busdata[NR_node_reference].LoadUpdateFxn = NULL;
 	}
-	
+
+	//See if we're FPI (and a parent)
+	if ((NR_solver_algorithm == NRM_FPI) && (SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+	{
+		//Map our function
+		NR_busdata[NR_node_reference].ShuntUpdateFxn = (FUNCTIONADDR)(gl_get_function(me,"pwr_object_shunt_update"));
+
+		//Make sure it worked
+		if (NR_busdata[NR_node_reference].ShuntUpdateFxn == NULL)
+		{
+			GL_THROW("node:%d - %s - Failed to map shunt",me->id,(me->name ? me->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			The attached node was unable to find the exposed function "shunt_update" on the calling object.  Be sure
+			it supports this functionality and try again.
+			*/
+		}
+		//Default else - must have worked
+	}
+	else	//Child or TCIM
+	{
+		NR_busdata[NR_node_reference].ShuntUpdateFxn = NULL;
+	}
 
 	//Allocate dynamic variables -- only if something has requested it
 	if ((deltamode_inclusive==true) && ((dynamic_norton==true) || (dynamic_generator==true)))
@@ -5524,6 +5582,214 @@ double node::compute_angle_diff(double angle_B, double angle_A)
    return (diff_val - PI);
 }
 
+//Function to perform the shunt update for FPI
+STATUS node::shunt_update_fxn(void)
+{
+	bool local_shunt_update;
+	int loop_index_var;
+	complex intermed_impedance_dy[6];
+	complex intermed_impedance[3];
+	complex working_impedance_value;
+
+	//FPIM "convergence check" stuff
+	if (NR_solver_algorithm == NRM_FPI)
+	{
+		//Do the explicit Delta-Wye connections first - update flag
+		local_shunt_update = false;
+
+		//Loop through
+		for (loop_index_var=0; loop_index_var<6; loop_index_var++)
+		{
+			intermed_impedance_dy[loop_index_var] = shunt_dy[loop_index_var] - shunt_change_check_dy[loop_index_var];
+
+			//Check it
+			if (intermed_impedance_dy[loop_index_var].Mag() > 0.0)
+			{
+				NR_FPI_imp_load_change = true;
+				local_shunt_update = true;
+			}
+		}
+
+		//See if any updated
+		if (local_shunt_update == true)
+		{
+			//Update the matrix - both delta and Wye portions
+			NR_busdata[NR_node_reference].full_Y_load[0] += intermed_impedance_dy[0] + intermed_impedance_dy[2] + intermed_impedance_dy[3];
+			NR_busdata[NR_node_reference].full_Y_load[1] -= intermed_impedance_dy[0];
+			NR_busdata[NR_node_reference].full_Y_load[2] -= intermed_impedance_dy[2];
+			NR_busdata[NR_node_reference].full_Y_load[3] -= intermed_impedance_dy[0];
+			NR_busdata[NR_node_reference].full_Y_load[4] += intermed_impedance_dy[1] + intermed_impedance_dy[0] + intermed_impedance_dy[4];
+			NR_busdata[NR_node_reference].full_Y_load[5] -= intermed_impedance_dy[1];
+			NR_busdata[NR_node_reference].full_Y_load[6] -= intermed_impedance_dy[2];
+			NR_busdata[NR_node_reference].full_Y_load[7] -= intermed_impedance_dy[1];
+			NR_busdata[NR_node_reference].full_Y_load[8] += intermed_impedance_dy[2] + intermed_impedance_dy[1] + intermed_impedance_dy[5];
+		}
+
+		if (has_phase(PHASE_D))
+		{
+			//Reset flag
+			local_shunt_update = false;
+
+			//Loop through and check for "differences"
+			for (loop_index_var=0; loop_index_var<3; loop_index_var++)
+			{
+				//Compute the difference
+				intermed_impedance[loop_index_var] = shunt[loop_index_var] - shunt_change_check[loop_index_var];
+
+				//Check it
+				if (intermed_impedance[loop_index_var].Mag() > 0.0)
+				{
+					NR_FPI_imp_load_change = true;
+					local_shunt_update = true;
+				}
+			}
+
+			//Perform the update if we changed - if not, no reason to do so
+			if (local_shunt_update == true)
+			{
+				//Update the matrix
+				NR_busdata[NR_node_reference].full_Y_load[0] += intermed_impedance[0] + intermed_impedance[2];
+				NR_busdata[NR_node_reference].full_Y_load[1] -= intermed_impedance[0];
+				NR_busdata[NR_node_reference].full_Y_load[2] -= intermed_impedance[2];
+				NR_busdata[NR_node_reference].full_Y_load[3] -= intermed_impedance[0];
+				NR_busdata[NR_node_reference].full_Y_load[4] += intermed_impedance[1] + intermed_impedance[0];
+				NR_busdata[NR_node_reference].full_Y_load[5] -= intermed_impedance[1];
+				NR_busdata[NR_node_reference].full_Y_load[6] -= intermed_impedance[2];
+				NR_busdata[NR_node_reference].full_Y_load[7] -= intermed_impedance[1];
+				NR_busdata[NR_node_reference].full_Y_load[8] += intermed_impedance[2] + intermed_impedance[1];
+			}
+			//Default else - no update, so no need to recalc anything
+
+			//Extra loop, if a different parent
+			if (SubNode == DIFF_PARENT)
+			{
+				//Loop through and check for "differences"
+				for (loop_index_var=0; loop_index_var<3; loop_index_var++)
+				{
+					//Compute the difference
+					intermed_impedance[loop_index_var] = Extra_Data[loop_index_var+3] - Extra_Data_Track_FPI[loop_index_var];
+
+					//Check it
+					if (intermed_impedance[loop_index_var].Mag() > 0.0)
+					{
+						NR_FPI_imp_load_change = true;
+
+						//Apply the update - Wye update (since different)
+						NR_busdata[NR_node_reference].full_Y_load[loop_index_var*3+loop_index_var] += intermed_impedance[loop_index_var];
+
+						//Update the tracking value
+						Extra_Data_Track_FPI[loop_index_var] = Extra_Data[loop_index_var+3];
+					}
+				}
+			}//End DIFF_PARENT - Wye on a Delta
+		}//End has D
+		else if (has_phase(PHASE_S))
+		{
+			//Loop through and see if there are any differences
+			for (loop_index_var=0; loop_index_var<3; loop_index_var++)
+			{
+				//Compute the difference
+				working_impedance_value = shunt[loop_index_var] - shunt_change_check[loop_index_var];
+
+				//Check it
+				if (working_impedance_value.Mag() > 0.0)
+				{
+					NR_FPI_imp_load_change = true;
+
+					//See if it is one of the single-phase portions, or the "delta"
+					if (loop_index_var<2)
+					{
+						//Update the matrix
+						NR_busdata[NR_node_reference].full_Y_load[loop_index_var*3+loop_index_var] += working_impedance_value;
+					}
+					else	//12 connection
+					{
+						//Update the matrix
+						NR_busdata[NR_node_reference].full_Y_load[0] += working_impedance_value;
+						NR_busdata[NR_node_reference].full_Y_load[1] += working_impedance_value;
+						NR_busdata[NR_node_reference].full_Y_load[3] += working_impedance_value;
+						NR_busdata[NR_node_reference].full_Y_load[4] += working_impedance_value;
+					}//End 12
+				}
+			}//End of for loop for triplex
+		}
+		else
+		{
+			for (loop_index_var=0; loop_index_var<3; loop_index_var++)
+			{
+				//Compute the difference
+				working_impedance_value = shunt[loop_index_var] - shunt_change_check[loop_index_var];
+
+				//Check it
+				if (working_impedance_value.Mag() > 0.0)
+				{
+					NR_FPI_imp_load_change = true;
+
+					//Update the matrix
+					NR_busdata[NR_node_reference].full_Y_load[loop_index_var*3+loop_index_var] += working_impedance_value;
+				}
+			}//End of for loop for Wye
+
+			//Do different parent routine
+			if (SubNode == DIFF_PARENT)
+			{
+				//Reset flag
+				local_shunt_update = false;
+
+				//Loop through and check for "differences"
+				for (loop_index_var=0; loop_index_var<3; loop_index_var++)
+				{
+					//Compute the difference
+					intermed_impedance[loop_index_var] = Extra_Data[loop_index_var+3] - Extra_Data_Track_FPI[loop_index_var];
+
+					//Check it
+					if (intermed_impedance[loop_index_var].Mag() > 0.0)
+					{
+						NR_FPI_imp_load_change = true;
+						local_shunt_update = true;
+
+						//Update the tracker
+						Extra_Data_Track_FPI[loop_index_var] = Extra_Data[loop_index_var+3];
+					}
+				}
+
+				//Perform the update if we changed - if not, no reason to do so
+				if (local_shunt_update == true)
+				{
+					//Update the matrix
+					NR_busdata[NR_node_reference].full_Y_load[0] += intermed_impedance[0] + intermed_impedance[2];
+					NR_busdata[NR_node_reference].full_Y_load[1] -= intermed_impedance[0];
+					NR_busdata[NR_node_reference].full_Y_load[2] -= intermed_impedance[2];
+					NR_busdata[NR_node_reference].full_Y_load[3] -= intermed_impedance[0];
+					NR_busdata[NR_node_reference].full_Y_load[4] += intermed_impedance[1] + intermed_impedance[0];
+					NR_busdata[NR_node_reference].full_Y_load[5] -= intermed_impedance[1];
+					NR_busdata[NR_node_reference].full_Y_load[6] -= intermed_impedance[2];
+					NR_busdata[NR_node_reference].full_Y_load[7] -= intermed_impedance[1];
+					NR_busdata[NR_node_reference].full_Y_load[8] += intermed_impedance[2] + intermed_impedance[1];
+				}
+				//Default else - no update, so no need to recalc anything
+			}//End DIFF_PARENT - Delta on a Wye
+		}//End no D (Wye)
+
+		//Update accumulator for FPI
+		//Store current shunt values "of interest" to see if it changed for FPIM
+		shunt_change_check[0] = shunt[0];
+		shunt_change_check[1] = shunt[1];
+		shunt_change_check[2] = shunt[2];
+
+		//Capture the explicit Delta-Wye portion too
+		shunt_change_check_dy[0] = shunt_dy[0];	//Delta
+		shunt_change_check_dy[1] = shunt_dy[1];
+		shunt_change_check_dy[2] = shunt_dy[2];
+		shunt_change_check_dy[3] = shunt_dy[3];	//Wye
+		shunt_change_check_dy[4] = shunt_dy[4];
+		shunt_change_check_dy[5] = shunt_dy[5];
+	}//End FPI
+	//TCIM doesn't use this - shouldn't even be called
+
+	return SUCCESS;	//Not sure how this would fail
+}
+
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF OTHER EXPORT FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
@@ -5625,6 +5891,21 @@ EXPORT STATUS node_reset_disabled_status(OBJECT *nodeObj)
 
 	//Call our local function
 	temp_status = my->reset_node_island_condition();
+
+	//Return
+	return temp_status;
+}
+
+//Exposed function to do shunt update - primarily to get impedance update properly sequenced for FPI in deltamode
+EXPORT STATUS node_update_shunt_values(OBJECT *obj)
+{
+	STATUS temp_status;
+
+	//Map the node
+	node *my = OBJECTDATA(obj,node);
+
+	//Call the update
+	temp_status = my->shunt_update_fxn();
 
 	//Return
 	return temp_status;

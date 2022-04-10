@@ -203,6 +203,8 @@ meter::meter(MODULE *mod) : node(mod)
 			GL_THROW("Unable to publish meter island-status-reset function");
 		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
 			GL_THROW("Unable to publish meter swing-status check function");
+		if (gl_publish_function(oclass, "pwr_object_shunt_update", (FUNCTIONADDR)node_update_shunt_values) == NULL)
+			GL_THROW("Unable to publish meter shunt update function");
 		if (gl_publish_function(oclass, "pwr_object_kmldata", (FUNCTIONADDR)meter_kmldata) == NULL)
 			GL_THROW("Unable to publish meter kmldata function");
 		}

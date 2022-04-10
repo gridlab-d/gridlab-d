@@ -193,6 +193,8 @@ load::load(MODULE *mod) : node(mod)
 			GL_THROW("Unable to publish load impedance-conversion/update function");
 		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
 			GL_THROW("Unable to publish load swing-status check function");
+		if (gl_publish_function(oclass, "pwr_object_shunt_update", (FUNCTIONADDR)node_update_shunt_values) == NULL)
+			GL_THROW("Unable to publish load shunt update function");
 		if (gl_publish_function(oclass, "pwr_object_kmldata", (FUNCTIONADDR)load_kmldata) == NULL)
 			GL_THROW("Unable to publish load kmldata function");
     }
@@ -508,30 +510,12 @@ void load::load_update_fxn(void)
 	double adjust_FBS_temp_voltage_mag[6];
 	double adjust_FBS_nominal_voltage_val[6];
 	complex adjust_FBS_voltage_val[6];
-	complex shunt_change_check[3];
-	complex shunt_change_check_dy[6];
 
 	//See if we're reliability-enabled
 	if (fault_check_object == NULL)
 		fault_mode = false;
 	else
 		fault_mode = true;
-
-	//Store current shunt values "of interest" to see if it changed for FPIM
-	if (NR_solver_algorithm == NRM_FPI)
-	{
-		shunt_change_check[0] = shunt[0];
-		shunt_change_check[1] = shunt[1];
-		shunt_change_check[2] = shunt[2];
-
-		//Capture the explicit Delta-Wye portion too
-		shunt_change_check_dy[0] = shunt_dy[0];	//Delta
-		shunt_change_check_dy[1] = shunt_dy[1];
-		shunt_change_check_dy[2] = shunt_dy[2];
-		shunt_change_check_dy[3] = shunt_dy[3];	//Wye
-		shunt_change_check_dy[4] = shunt_dy[4];
-		shunt_change_check_dy[5] = shunt_dy[5];
-	}
 
 	//Roll GFA check into here, so current loads updates are handled properly
 	//See if GFA functionality is enabled
@@ -3226,127 +3210,6 @@ void load::load_update_fxn(void)
 
 	}//End in-rush term updat needed
 	//Default else -- no update needed
-
-	//FPIM "convergence check" stuff
-	if (NR_solver_algorithm == NRM_FPI)
-	{
-		//Do the explicit Delta-Wye connections first - update flag
-		local_shunt_update = false;
-
-		//Loop through
-		for (index_var=0; index_var<6; index_var++)
-		{
-			intermed_impedance_dy[index_var] = shunt_dy[index_var] - shunt_change_check_dy[index_var];
-
-			//Check it
-			if (intermed_impedance_dy[index_var].Mag() > 0.0)
-			{
-				NR_FPI_imp_load_change = true;
-				local_shunt_update = true;
-			}
-		}
-
-		//See if any updated
-		if (local_shunt_update == true)
-		{
-			//Pull the ref
-			//See if we're a parented load or not
-			if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
-			{
-				extract_node_ref = NR_node_reference;
-			}
-			else	//It is a child - look at parent
-			{
-				extract_node_ref = *NR_subnode_reference;
-			}
-
-			//Update the matrix - both delta and Wye portions
-			NR_busdata[extract_node_ref].full_Y_load[0] += intermed_impedance_dy[0] + intermed_impedance_dy[2] + intermed_impedance_dy[3];
-			NR_busdata[extract_node_ref].full_Y_load[1] -= intermed_impedance_dy[0];
-			NR_busdata[extract_node_ref].full_Y_load[2] -= intermed_impedance_dy[2];
-			NR_busdata[extract_node_ref].full_Y_load[3] -= intermed_impedance_dy[0];
-			NR_busdata[extract_node_ref].full_Y_load[4] += intermed_impedance_dy[1] + intermed_impedance_dy[0] + intermed_impedance_dy[4];
-			NR_busdata[extract_node_ref].full_Y_load[5] -= intermed_impedance_dy[1];
-			NR_busdata[extract_node_ref].full_Y_load[6] -= intermed_impedance_dy[2];
-			NR_busdata[extract_node_ref].full_Y_load[7] -= intermed_impedance_dy[1];
-			NR_busdata[extract_node_ref].full_Y_load[8] += intermed_impedance_dy[2] + intermed_impedance_dy[1] + intermed_impedance_dy[5];
-		}
-
-		if (has_phase(PHASE_D))
-		{
-			//Reset flag
-			local_shunt_update = false;
-
-			//Loop through and check for "differences"
-			for (index_var=0; index_var<3; index_var++)
-			{
-				//Compute the difference
-				intermed_impedance[index_var] = shunt[index_var] - shunt_change_check[index_var];
-
-				//Check it
-				if (intermed_impedance[index_var].Mag() > 0.0)
-				{
-					NR_FPI_imp_load_change = true;
-					local_shunt_update = true;
-				}
-			}
-
-			//Perform the update if we changed - if not, no reason to do so
-			if (local_shunt_update == true)
-			{
-				//Pull the ref
-				//See if we're a parented load or not
-				if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
-				{
-					extract_node_ref = NR_node_reference;
-				}
-				else	//It is a child - look at parent
-				{
-					extract_node_ref = *NR_subnode_reference;
-				}
-
-				//Update the matrix
-				NR_busdata[extract_node_ref].full_Y_load[0] += intermed_impedance[0] + intermed_impedance[2];
-				NR_busdata[extract_node_ref].full_Y_load[1] -= intermed_impedance[0];
-				NR_busdata[extract_node_ref].full_Y_load[2] -= intermed_impedance[2];
-				NR_busdata[extract_node_ref].full_Y_load[3] -= intermed_impedance[0];
-				NR_busdata[extract_node_ref].full_Y_load[4] += intermed_impedance[1] + intermed_impedance[0];
-				NR_busdata[extract_node_ref].full_Y_load[5] -= intermed_impedance[1];
-				NR_busdata[extract_node_ref].full_Y_load[6] -= intermed_impedance[2];
-				NR_busdata[extract_node_ref].full_Y_load[7] -= intermed_impedance[1];
-				NR_busdata[extract_node_ref].full_Y_load[8] += intermed_impedance[2] + intermed_impedance[1];
-			}
-			//Default else - no update, so no need to recalc anything
-		}
-		else
-		{
-			for (index_var=0; index_var<3; index_var++)
-			{
-				//Compute the difference
-				working_impedance_value = shunt[index_var] - shunt_change_check[index_var];
-
-				//Check it
-				if (working_impedance_value.Mag() > 0.0)
-				{
-					NR_FPI_imp_load_change = true;
-
-					//Update the matrix
-					//See if we're a parented load or not
-					if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
-					{
-						//Compute the values and post them to our bus term
-						NR_busdata[NR_node_reference].full_Y_load[index_var*3+index_var] += shunt[index_var] - shunt_change_check[index_var];
-					}
-					else	//It is a child - look at parent
-					{
-						//Compute the values and post them to our bus term
-						NR_busdata[*NR_subnode_reference].full_Y_load[index_var*3+index_var] += shunt[index_var] - shunt_change_check[index_var];
-					}
-				}
-			}//End of for loop for Wye
-		}
-	}//End FPI
-	//TCIM doesn't use this
 }
 
 //Function to appropriately zero load - make sure we don't get too heavy handed
