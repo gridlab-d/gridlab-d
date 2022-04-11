@@ -437,7 +437,7 @@ Retry:
 		else if (sscanf(timebuf,"%lf", &S)==1)
 		{
 			if (my->loop==my->loopnum) {
-				my->next.ts = (unsigned short)S;
+				my->next.ts = (TIMESTAMP)S;
 				my->next.ns = (unsigned int)(1e9*(S-my->next.ts));
 				if ((obj->flags & OF_DELTAMODE)==OF_DELTAMODE)	/* Only request deltamode if we're explicitly enabled */
 					enable_deltamode(my->next.ns==0?TS_NEVER:t1);
