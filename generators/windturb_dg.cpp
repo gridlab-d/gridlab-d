@@ -107,8 +107,6 @@ windturb_dg::windturb_dg(MODULE *module)
 			PT_double, "Wind_Speed[m/s]", PADDR(Wind_Speed),  PT_DESCRIPTION, "Wind speed at 5-15m level (typical measurement height)",
 			PT_double, "wind_speed[m/s]", PADDR(Wind_Speed),  PT_DESCRIPTION, "Wind speed at 5-15m level (typical measurement height)",
 			PT_double, "air_density[kg/m^3]", PADDR(air_dens), PT_DESCRIPTION, "COP: Estimated air density",
-			//PT_double, "avg_ws[m/s]", PADDR(avg_ws), PT_DESCRIPTION, "Wind speed at reference height. This is an input",
-			//PT_double, "wind_speed[m/s]", PADDR(avg_ws), PT_DESCRIPTION, "exposing wind speed variable",
 			PT_double, "wind_speed_hub_ht[m/s]", PADDR(wind_speed_hub_ht), PT_DESCRIPTION, "Wind speed at hub height. This is an input",
 
 			PT_double, "R_stator[pu*Ohm]", PADDR(Rst), PT_DESCRIPTION, "COP: Induction generator primary stator resistance in p.u.",
