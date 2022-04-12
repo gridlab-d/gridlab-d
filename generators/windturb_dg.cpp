@@ -3,7 +3,6 @@ Copyright (C) 2008 Battelle Memorial Institute
 @file windturb_dg.cpp
 @defgroup windturb_dg Wind Turbine gensets
 @ingroup generators
-
 **/
 
 #include <stdlib.h>
@@ -65,6 +64,12 @@ windturb_dg::windturb_dg(MODULE *module)
 			PT_enumeration,"Turbine_implementation",PADDR(Turbine_implementation), PT_DESCRIPTION, "Type of implementation for wind turbine model",
 			PT_KEYWORD,"COEFF_OF_PERFORMANCE",(enumeration)COEFF_OF_PERFORMANCE, PT_DESCRIPTION, "Wind turbine generator implementation based on Coefficient of performance",
 			PT_KEYWORD,"POWER_CURVE",(enumeration)POWER_CURVE, PT_DESCRIPTION, "Wind turbine implementation based on Generic Power Curve",
+			
+			PT_enumeration,"Wind_speed_source",PADDR(Wind_speed_source), PT_DESCRIPTION, "Specifies the source of wind speed",
+			PT_KEYWORD,"DEFAULT",(enumeration)DEFAULT, PT_DESCRIPTION, "A defualt that equals either BUILT_IN or CLIMATE_DATA",
+			PT_KEYWORD,"BUILT_IN",(enumeration)BUILT_IN, PT_DESCRIPTION, "The built-in source (avg_ws) specifying the wind speed",
+			PT_KEYWORD,"WIND_SPEED",(enumeration)WIND_SPEED, PT_DESCRIPTION, "The wind speed at hub height specified by the user",
+			PT_KEYWORD,"CLIMATE_DATA",(enumeration)CLIMATE_DATA, PT_DESCRIPTION, "The climate data specifying the wind speed",
 
 			// TODO: There are a number of repeat variables due to poor variable name formatting.
 			//       These need to be corrected through the deprecation process.
@@ -102,6 +107,7 @@ windturb_dg::windturb_dg(MODULE *module)
 			PT_double, "Wind_Speed[m/s]", PADDR(Wind_Speed),  PT_DESCRIPTION, "Wind speed at 5-15m level (typical measurement height)",
 			PT_double, "wind_speed[m/s]", PADDR(Wind_Speed),  PT_DESCRIPTION, "Wind speed at 5-15m level (typical measurement height)",
 			PT_double, "air_density[kg/m^3]", PADDR(air_dens), PT_DESCRIPTION, "COP: Estimated air density",
+			PT_double, "wind_speed_hub_ht[m/s]", PADDR(wind_speed_hub_ht), PT_DESCRIPTION, "Wind speed at hub height. This is an input",
 
 			PT_double, "R_stator[pu*Ohm]", PADDR(Rst), PT_DESCRIPTION, "COP: Induction generator primary stator resistance in p.u.",
 			PT_double, "X_stator[pu*Ohm]", PADDR(Xst), PT_DESCRIPTION, "COP: Induction generator primary stator reactance in p.u.",
@@ -171,8 +177,8 @@ int windturb_dg::create(void)
 	Min_Vrotor = 0.8;
 	Max_Ef = 1.2;
 	Min_Ef = 0.8;
-	avg_ws = 8;				//wind speed in m/s
-
+	avg_ws = 8;				    //This is wind speed in m/s at reference height (ref_height=10m)
+	wind_speed_hub_ht = 10;    //This is wind speed at 37 m hub height
 	time_advance = 3600;	//amount of time to advance for WS data import in secs.
 
 	/* set the default values of all properties here */
@@ -187,6 +193,8 @@ int windturb_dg::create(void)
 	Gen_status = ONLINE;
 	
 	Turbine_implementation = POWER_CURVE;
+	Wind_speed_source = DEFAULT;
+	
 	power_curve_pu = false;
 
 	turbine_height = -9999;
@@ -288,6 +296,13 @@ int windturb_dg::init_climate()
 
 			//Flag properly
 			climate_is_valid = true;
+		}
+	}
+	if (Wind_speed_source == DEFAULT){
+		if (climate_is_valid == true){
+			Wind_speed_source = CLIMATE_DATA;
+		}else{
+			Wind_speed_source = BUILT_IN;
 		}
 	}
 	return 1;
@@ -1188,8 +1203,8 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	{
 		value_Press = pPress->get_double() * 100;       // in Pa; climate is in mbar
 		value_Temp = (pTemp->get_double() - 32) * 5/9;  // in degC; climate is in degF
-		value_WS = pWS->get_double() * 0.44704;         // in m/s; climate wind speed is in mph
-	}
+	} 
+	
 
 	// press in Pascals and temp in Kelvins
 	air_dens = (value_Press) * Molar / (Ridealgas * ( value_Temp + 273.15) );
@@ -1198,8 +1213,31 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	if(ref_height == roughness_l){
 		ref_height = roughness_l+0.001;
 	}
-	WSadj = value_WS * log(turbine_height/roughness_l)/log(ref_height/roughness_l); 
-
+	
+	//WSadj = value_WS * log(turbine_height/roughness_l)/log(ref_height/roughness_l); log(37/.055)/log(10/0.055) = 2.828/2.26 = 1.25
+	
+	switch (Wind_speed_source){
+		case WIND_SPEED:
+			//value_WS = wind_speed_hub_ht;       //new var. should also have a default vale
+			WSadj = wind_speed_hub_ht; 
+			break;
+		
+		case BUILT_IN:
+			//value_WS = avg_ws;          //
+			WSadj = avg_ws * log(turbine_height/roughness_l)/log(ref_height/roughness_l); 
+			break;
+			
+		case CLIMATE_DATA:
+			double climate_ws=0;
+			if (climate_is_valid == true){
+				climate_ws = pWS->get_double() * 0.44704;       //mph to m/s conversion
+			}else{
+				climate_ws = avg_ws;
+				gl_warning("windturb_dg (id:%d)::sync(): no climate data found, using built in source",obj->id);
+			}
+			WSadj = climate_ws * log(turbine_height/roughness_l)/log(ref_height/roughness_l); 
+			break;
+	}
 	/* TODO:  import previous and future wind data 
 	and then pseudo-randomize the wind speed values beween 1st and 2nd
 	WSadj = gl_pseudorandomvalue(RT_RAYLEIGH,&c,(WS1/sqrt(PI/2)));*/
@@ -2001,7 +2039,6 @@ EXPORT STATUS windturb_dg_NR_current_injection_update(OBJECT *obj, int64 iterati
 /*
 [1]	Malinga, B., Sneckenberger, J., and Feliachi, A.; "Modeling and Control of a Wind Turbine as a Distributed Resource", 
 Proceedings of the 35th Southeastern Symposium on System Theory, Mar 16-18, 2003, pp. 108-112.
-
 [2]	Cotrell J.R., "A preliminary evaluation of a multiple-generator drivetrain configuration for wind turbines,"
 in Proc. 21st ASME Wind Energy Symposium, 2002, pp. 345-352.
 */
