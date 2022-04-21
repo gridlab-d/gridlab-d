@@ -2,6 +2,11 @@
 #define GLD_GENERATORS_SEC_CONTROL_H_
 
 #include <vector>
+#include <string>
+#include <cstring>
+#include <sstream>
+#include <fstream>
+#include <algorithm>
 
 #include "generators.h"
 
@@ -18,8 +23,8 @@ typedef struct{
 	double PIDout; //PID controller output
 } SEC_CNTRL_STATE;
 
+// Datastructure of participants in secondary control
 typedef struct{
-	char* name; //name of object. @Frank, is there some functionality to get this directly from the object pointer?
 	OBJECT *ptr; // pointer to the object
 	double alpha; //participation factor between 0 and 1.
 	gld_property *pset; //pointer to the setpoint of the object, which will be manipulated
@@ -28,7 +33,7 @@ typedef struct{
 	double Tlp; //Low pass time filter time constant in sec.
 	double dP[2]; //Change in stepoint [predictor, corrector]
 	double ddP[2]; //Change in stepoint derivative [predictor, corrector]
-}SEC_CNTRL_PARTICIPANT;
+} SEC_CNTRL_PARTICIPANT;
 
 //sec_control class
 class sec_control : public gld_object
@@ -45,13 +50,41 @@ private:
 
 	double alpha_tol; //tolerance for participations values not summing to one.
 	
-	// Participating object vector
+	gld_property *pFrequency; //pointer to frequency property of parent object
+	double fmeas; //storage for current measured frequency value
+
+	/* participating object vector */
+	// Enumeration for manipulation of secondary control participants
+	enum PARSE_OPTS{
+        ADD = 0,    // Add members to secondary controller
+        REMOVE = 1, // Remove members from the secondary controller
+        MODIFY = 2 // Modify existing secondary controller members
+    };
+	enumeration parse_opt;
+
+	// Structure for parsing the input glm string
+	struct PARSE_KEYS {
+        PARSE_OPTS key;
+        int offset;
+        std::size_t pos;
+        friend bool operator<(const PARSE_KEYS& p1, const PARSE_KEYS& p2)
+        {
+            return (p1.pos < p2.pos);
+        }
+    };
+	
 	std::vector<SEC_CNTRL_PARTICIPANT> part_obj; // Vector of participating objects in secondary control
 	
 	// Sampling
 	bool sampleflag; //Boolean flag whether outputs should be published or not
 	double sample_time; //Secondary control should post a new update at this time
 public:
+	char1024 participant_input; // command string for creating/modifing secondary controller participants (or path to csv file)
+
+	double dp_min_default; // Default maximum allowable change to setpoint - downward direction (shouid still be positive)
+	double dp_max_default; // Default maximum allowable change to setpoint - upward direction
+	double Tlp_default; // Default low pass time filter time constant in sec.
+
 	/* Input to PID controller */
 	double f0; // Nominal frequency in Hz (default is 60 Hz)
 	double underfrequency_limit; //Maximum positive input limit to PID controller is f0 - underfreuqnecy_limit
@@ -71,9 +104,26 @@ public:
 	/* utility functions */
 	gld_property *map_complex_value(OBJECT *obj, char *name);
 	gld_property *map_double_value(OBJECT *obj, char *name);
-	void get_deltaf(double f_meas);
+	
+	void get_deltaf(void);
 	STATUS check_alpha(void);
-	void parse_objs_input(char* input);
+	void clear_states(void);
+	
+	/* parsing functions */
+	void parse_obj(PARSE_OPTS, std::string&);
+    void parse_csv(std::string&);
+    void parse_glm(std::string&);
+    void parse_praticipant_input(char*);
+    double str2double(std::string&, double);
+    void add_obj(std::vector<std::string> &);
+    void mod_obj(std::vector<std::string> &);
+    void rem_obj(std::vector<std::string> &);
+    std::vector<SEC_CNTRL_PARTICIPANT>::iterator find_obj(std::string);
+	std::vector<std::string> split(const std::string&, char);
+	std::string ltrim(const std::string&);
+	std::string rtrim(const std::string&);
+	std::string trim(const std::string&);
+	
 
 	/* required implementations */
 	sec_control(MODULE *module);

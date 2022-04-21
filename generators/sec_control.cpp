@@ -19,32 +19,29 @@ sec_control::sec_control(MODULE *module)
 		if (gl_publish_variable(oclass,
 			//**************** Sample/test published property - remove ****************//
 			PT_complex, "test_pub_prop[kW]", PADDR(test_published_property), PT_DESCRIPTION, "test published property - has units of kW",
+			PT_char1024, "participant_input", PADDR(participant_input), PT_DESCRIPTION, "command string for creating/modifing secondary controller participants",
 			//PID controller input
 			PT_double, "f0[Hz]", PADDR(f0), PT_DESCRIPTION, "Nominal frequency in Hz",
 			PT_double, "underfrequency_limit[Hz]", PADDR(underfrequency_limit), PT_DESCRIPTION, "Maximum positive input limit to PID controller is f0 - underfreuqnecy_limit",
 			PT_double, "overfrequency_limit[Hz]", PADDR(overfrequency_limit), PT_DESCRIPTION, "Maximum negative input limit to PID controller is f0 - overfrequency_limit",
 			PT_double, "deadband[Hz]", PADDR(deadband), PT_DESCRIPTION, "Deadpand for PID controller input in Hz",
 			//PID controller
-			PT_double, "PIDw_0[MW/Hz]", PADDR(PIDw[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "PID Weight for current frequency error in MW/Hz",
-			PT_double, "PIDw_1[MW/Hz]", PADDR(PIDw[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "PID Weight for previous timestep frequency error in MW/Hz",
-			PT_double, "PIDw_2[MW/Hz]", PADDR(PIDw[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "PID Weight for t-2 frequency error in MW/Hz",
 			PT_double, "kpPID[MW/Hz]", PADDR(kpPID), PT_DESCRIPTION, "PID proportional gain in MW/Hz",
 			PT_double, "kiPID[MW/Hz/s]", PADDR(kiPID), PT_DESCRIPTION, "PID integral gain in MW/Hz/s",
 			PT_double, "kdPID[MW/Hz*s]", PADDR(kdPID), PT_DESCRIPTION, "PID derivative gain in MW/Hz*s",
-			
+			//
 			PT_double, "Ts[s]", PADDR(Ts), PT_DESCRIPTION, "Secondary controller sampling period in sec.",
-			
-			PT_double, "alpha_tol", PADDR(alpha_tol), "Tolerance for participation values not summing to exactly one.",
-
+			//
+			PT_double, "alpha_tol", PADDR(alpha_tol), PT_DESCRIPTION, "Tolerance for participation values not summing to exactly one.",
+			//
 			PT_bool, "sampleflag", PADDR(sampleflag), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Booling flag whether output should be published or not by secondary controller",
 			PT_double, "sample_time", PADDR(sample_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Next update time for the secondary controller",
-
 			//States
 			PT_double, "deltaf(t)[Hz]", PADDR(curr_state.deltaf[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Frequency error in current iteration [Hz]",
 			PT_double, "deltaf(t-1)[Hz]", PADDR(curr_state.deltaf[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Frequency error in previous timestep [Hz]",
-			PT_double, "dxi[MW]", PADDR(curr_state.dxi), PT_ACCESS, PT_HIDDEN, PT_DESCRIPTION, "Change in PID integrator output",
-			PT_double, "xi[MW]", PADDR(curr_state.xi), PT_ACCESS, PT_HIDDEN, PT_DESCRIPTION, "PID integrator output",
-			PT_double, "PIDout[MW]", PADDR(curr_state.PIDout), PT_ACCESS, PT_HIDDEN, PT_DESCRIPTION, "PID output",
+			PT_double, "dxi[MW]", PADDR(curr_state.dxi), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Change in PID integrator output",
+			PT_double, "xi[MW]", PADDR(curr_state.xi), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "PID integrator output",
+			PT_double, "PIDout[MW]", PADDR(curr_state.PIDout), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "PID output",
 			NULL) < 1)
 				GL_THROW("unable to publish properties in %s", __FILE__);
 
@@ -80,6 +77,8 @@ int sec_control::create(void)
 	//**************** created/default values go here ****************//
 	test_published_property = complex(-1.0,-1.0);	//Flag value for example
 
+	pFrequency = NULL;
+
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -98,6 +97,22 @@ int sec_control::init(OBJECT *parent)
 			return 2; // defer
 		}
 	}
+
+	//Map up the frequency pointer
+	pFrequency = new gld_property(parent,"measured_frequency");
+
+	//Make sure it worked
+	if ((pFrequency->is_valid() != true) || (pFrequency->is_double() != true))
+	{
+		GL_THROW("sec_control:%s failed to map measured_frequency variable from %s", obj->name ? obj->name : "unnamed", obj->parent->name ? obj->parent->name : "unnamed");
+		/*  TROUBLESHOOT
+		While attempting to map the frequency variable from the parent node, an error was encountered.  Please try again.  If the error
+		persists, please report it with your GLM via the issues tracking system.
+		*/
+	}
+
+	//Pull the current value, because
+	fmeas = pFrequency->get_double();
 
 	//Set the deltamode flag, if desired
 	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)
@@ -149,6 +164,8 @@ int sec_control::init(OBJECT *parent)
 		//Arbitrary
 		test_published_property = complex(1000.0,1000.0);
 	}
+
+	parse_praticipant_input(participant_input); //parse the participating objects
 
 	return 1;
 }
@@ -288,15 +305,32 @@ STATUS sec_control::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 	sample_time = (double)t0 + Ts; //
 	sampleflag = false;
 
-	for (auto & obj : part_obj){
-		//zero derivative terms in initialization
-		for (i=0, i<2, i++){
-			obj.dP[i] = 0;
-			obj.dPP[i] = 0;
-		}
-	}
+	clear_states();
+
 	//Just return a pass - not sure how we'd fail
 	return SUCCESS;
+}
+
+// clear the states of the secondary controller and its participants
+void sec_control::clear_states(void)
+{
+	// clear curr_state structure
+	curr_state.deltaf[0] = 0;
+	curr_state.deltaf[1] = 0;
+	curr_state.dxi = 0;
+	curr_state.xi = 0;
+	curr_state.PIDout = 0;
+
+	// clear next_state structure
+	memcpy(&next_state, &curr_state, sizeof(SEC_CNTRL_STATE));
+
+	// zero participant setpoint change
+	for (auto & obj : part_obj){
+		obj.dP[0] = 0;
+		obj.dP[1] = 0;
+		obj.ddP[0] = 0;
+		obj.ddP[1] = 0;
+	}
 }
 
 //Module-level call
@@ -325,7 +359,7 @@ SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigne
 	{
 		//cycle frequency error state values
 		next_state.deltaf[1] = curr_state.deltaf[0];
-		memcpy(&curr_state, &next_state, sizeof(SEC_CNTRL_STATE);
+		memcpy(&curr_state, &next_state, sizeof(SEC_CNTRL_STATE));
 		
 		//Determine wheter to pass set point changes on this timestep or not
 		if (curr_timestamp_dbl >= sample_time)
@@ -339,11 +373,11 @@ SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigne
 		}
 
 		// Get Frequency Deviation (sets curr_state.deltaf[0])
-		get_deltaf(f_meas); //@Frank: how do I get f_meas?
+		get_deltaf();
 
 		//PID Controller
 		curr_state.dxi = kiPID*curr_state.deltaf[0];
-		next_state.xi = curr_state.xi + deltat*curr_state.dxi //integrator output
+		next_state.xi = curr_state.xi + deltat*curr_state.dxi; //integrator output
 		next_state.PIDout = next_state.xi + (kpPID + kdPID/deltat)*curr_state.deltaf[0] - kdPID/deltat*curr_state.deltaf[1];
 		// End PID controller
 
@@ -352,7 +386,7 @@ SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigne
 		for (auto & obj : part_obj){
 			if (obj.Tlp < deltat)
 			{
-				gl_warning("sec_control: lowpass filter time constant for %s is less than deltat. Using deltat instead.", obj.name : "unnamed object");
+				// gl_warning("sec_control: lowpass filter time constant for %s is less than deltat. Using deltat instead.", obj.name : "unnamed object");
 				obj.Tlp = deltat;
 			}
 			// update change for ieach participant based on participation factor alpha and low pass filter.
@@ -368,7 +402,7 @@ SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigne
 	else if (iteration_count_val == 1) // corrector pass
 	{
 		// Get Frequency Deviation (sets curr_state.deltaf[0])
-		get_deltaf(f_meas); //@Frank: how do I get f_meas?
+		get_deltaf();
 		
 		//PID Controller
 		next_state.dxi = kiPID*curr_state.deltaf[0];
@@ -402,9 +436,10 @@ SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigne
 
 // Get Frequency Deviation including limiting and deadband handling.
 // Functinalized since identical for any pass.
-void sec_control::get_deltaf(double f_meas)
+void sec_control::get_deltaf(void)
 {
-	curr_state.deltaf[0] = f0 - f_meas; // frequency error [Hz] 
+	fmeas = pFrequency->get_double(); //pull current frequency from parent node
+	curr_state.deltaf[0] = f0 - fmeas; // frequency error [Hz] 
 	if (curr_state.deltaf[0] > (f0 - underfrequency_limit)) // limit maximum positive deviation (underfrequency)
 	{
 		curr_state.deltaf[0] = f0 - underfrequency_limit;
@@ -417,10 +452,9 @@ void sec_control::get_deltaf(double f_meas)
 	{
 		curr_state.deltaf[0] = 0;
 	}
-
-	return SUCCESS; //Always succeeds.
 }
 
+//Verify that participation factors sum to 1.
 STATUS sec_control::check_alpha(void)
 {	
 	double asum = 0; //alpha accumulator
@@ -436,49 +470,6 @@ STATUS sec_control::check_alpha(void)
 		return FAILED;
 	}
 } 
-
-
-void sec_control::parse_objs(char* input)
-{
-	/***** Parse string to create an return an array ******/
-	// Format should be:
-	// ADD name1, alpha1, dp_min1, dp_max1,Tlp1; name2, alpha2, ...
-	// REMOVE name1; name2; name3 ...
-	// MODIFY name1, alpha1, dp_min1, dp_max1, Tlp1; name2, alpha2, ....
-	// for the ADD key word we need all parameters passed.
-	// for the MODIFY key word, it would be nice if we could pass only some
-	// for example: MODIFY name1, alpha1, , , ; name2, , dp_min1, , ; ...
-
-	// TODO: @Frank, i'd appreciate some help here :)
-
-	// for the following it is assumed that the parsing returns
-	// a vector of vectors something like 
-	// [[name, alpha, dp_min, dp_max, Tlp], [...]] 
-	for (auto elem : parsed_elems){
-		SEC_CNTRL_PARTICIPANT tmpobj;
-		for (int i=0, i<5, i++){
-			if (i == 0){
-				tmpobj.name = elem[i];
-				// Does it mae more sense to put these in a different call in init?
-				tmpobj.ptr = get_gld_obj(tmpobj.name); //somehow get the object pointer
-				tmpobj.pset= get_pset(tmpobj.ptr); // pset should be defined based on object type/class
-			}
-			else if (i == 1){
-				tmpobj.alpha = elem[i]
-			}
-			else if (i == 2){
-				tmpobj.dp_min = elem[i]
-			}
-			else if (i == 3){
-				tmpobj.dp_max = elem[i]
-			}
-			else if (i == 4){
-				tmpobj.Tlp = elem[i]
-			}
-		}
-	}
-}
-
 
 
 //Module-level post update call
@@ -534,6 +525,247 @@ gld_property *sec_control::map_double_value(OBJECT *obj, char *name)
 
 	//return the pointer
 	return pQuantity;
+}
+
+//////////////////////////////////////////////////////////////////////////
+// IMPLEMENTATION OF PARSING FUNCTIONALITY
+//////////////////////////////////////////////////////////////////////////
+
+// parse string by delimiter
+// from https://www.fluentcpp.com/2017/04/21/how-to-split-a-string-in-c/
+std::vector<std::string> sec_control::split(const std::string& s, char delimiter)
+{
+	std::vector<std::string> tokens;
+	std::string token;
+	std::istringstream tokenStream(s);
+	while (std::getline(tokenStream, token, delimiter))
+	{
+		tokens.push_back(token);
+	}
+	return tokens;
+}
+
+// trim leading whitespace
+// from https://www.techiedelight.com/trim-string-cpp-remove-leading-trailing-spaces/#:~:text=We%20can%20use%20a%20combination,functions%20to%20trim%20the%20string.
+std::string sec_control::ltrim(const std::string &s)
+{
+	size_t start = s.find_first_not_of(" \n\r\t\f\v");
+	return (start == std::string::npos) ? "" : s.substr(start);
+}
+
+// trim trailing whitespace
+// from https://www.techiedelight.com/trim-string-cpp-remove-leading-trailing-spaces/#:~:text=We%20can%20use%20a%20combination,functions%20to%20trim%20the%20string.
+std::string sec_control::rtrim(const std::string &s)
+{
+	size_t end = s.find_last_not_of(" \n\r\t\f\v");
+	return (end == std::string::npos) ? "" : s.substr(0, end + 1);
+}
+
+// trim leading and trailing whitespace
+// from https://www.techiedelight.com/trim-string-cpp-remove-leading-trailing-spaces/#:~:text=We%20can%20use%20a%20combination,functions%20to%20trim%20the%20string.
+std::string sec_control::trim(const std::string &s) {
+	return rtrim(ltrim(s));
+}
+
+//Convert string to double with default value fall-back.
+double sec_control::str2double(std::string &s, double default_val)
+{
+    double out;
+    try
+    {
+        out = std::stod(s);
+    }
+    catch(const std::invalid_argument& e)
+    {
+        out = default_val;
+    }
+    return out;
+}
+
+//Find object by name in the secondary control participant vector
+// Note: the name property *must* be set 
+std::vector<SEC_CNTRL_PARTICIPANT>::iterator sec_control::find_obj(std::string name)
+{
+    for (auto it=part_obj.begin(); it != part_obj.end(); it++)
+    {
+        if (it->ptr->name == name)
+        {
+            return it;
+        }
+    }
+    return part_obj.end();
+}
+
+//Add a memeber to the secondary control participant vector
+void sec_control::add_obj(std::vector<std::string> &vals)
+{
+    SEC_CNTRL_PARTICIPANT tmp;
+    // required
+	std::string sname = trim(vals.at(0));
+	char * cname = new char [sname.length() + 1];
+	std::strcpy(cname, sname.c_str());
+    tmp.ptr = gl_get_object(cname);
+    tmp.alpha = std::stod(vals.at(1));
+	tmp.pset = map_double_value(tmp.ptr, "Pset"); //TODO: put in a function to allow for different property names based on class?
+
+    // optional
+    // first set defaults
+    tmp.dp_min = dp_min_default;
+    tmp.dp_max = dp_max_default;
+    tmp.Tlp = Tlp_default;
+    //now check inputs
+    try
+    {
+        tmp.dp_min = str2double(vals.at(2), tmp.dp_min);
+        tmp.dp_max = str2double(vals.at(3), tmp.dp_max);
+        tmp.Tlp = str2double(vals.at(4), tmp.Tlp);
+    }
+    catch(std::out_of_range const& e)
+    {
+        //do nothing these are optional.
+    }   
+    
+    // Add to list
+    part_obj.push_back(tmp);
+}
+
+//Modify a memeber to the secondary control participant vector
+void sec_control::mod_obj(std::vector<std::string> &vals)
+{
+    std::vector<SEC_CNTRL_PARTICIPANT>::iterator tmp = find_obj(trim(vals.at(0)));
+    if (tmp != part_obj.end())
+    {
+        tmp->alpha = std::stod(vals.at(1));
+        // optional
+        try
+        {
+            tmp->dp_min = str2double(vals.at(2), tmp->dp_min);
+            tmp->dp_max = str2double(vals.at(3), tmp->dp_max);
+            tmp->Tlp = str2double(vals.at(4), tmp->Tlp);
+        }
+        catch(std::out_of_range const& e)
+        {
+            //do nothing these are optional.
+        }   
+    }
+}
+
+//Remove a memeber of the secondary control participant vector
+void sec_control::rem_obj(std::vector<std::string> &vals)
+{
+    std::vector<SEC_CNTRL_PARTICIPANT>::iterator it = find_obj(trim(vals.at(0)));
+    if (it != part_obj.end())
+    {
+        part_obj.erase(it);
+    }
+}
+
+//Parse a single entry of type PARSE_OPTS (ADD, REMOVE, MODIFY)
+void sec_control::parse_obj(PARSE_OPTS key, std::string &valstring)
+{
+    // vals is a comma separated array
+    std::vector<std::string> vals = split(valstring, ',');
+    switch (key)
+    {
+    case ADD:
+        add_obj(vals);
+        break;
+    case REMOVE:
+        rem_obj(vals);
+        break;
+    case MODIFY:
+        mod_obj(vals);
+        break;
+    default:
+        break;
+    }
+}
+
+//Parse csv input to participant_input
+// 	- go line by line
+// 	- identify key words,
+// 	- pass key and line to parse_objs
+void sec_control::parse_csv(std::string &s)
+{
+    std::fstream file;
+    std::string line;
+    std::string tline;
+    PARSE_OPTS key;
+    file.open(s, std::fstream::in);
+    while (std::getline(file, line))
+    {
+        tline = trim(line);
+        if (tline.compare("ADD") == 0)
+        {
+            key = ADD;
+        }
+        else if (tline.compare("MODIFY") == 0)
+        {
+            key = MODIFY;
+        }
+        else if (tline.compare("REMOVE") == 0)
+        {
+            key = REMOVE;
+        }
+        else
+        {
+            parse_obj(key, tline);
+        }
+    }
+}
+
+//Parse command string to participant_input
+// - pick out key words
+// - look for ; as "data chunks"
+// - pass key and "data chunk" to parse_objs
+void sec_control::parse_glm(std::string &s)
+{
+	
+    std::vector<PARSE_KEYS> keys = { {ADD, 3, s.find("ADD")}, {MODIFY,6, s.find("MODIFY")}, {REMOVE, 6, s.find("REMOVE")}};
+
+    std::sort(keys.begin(), keys.end());
+
+    std::string substring;
+    for (int i=0; i < keys.size(); i++){
+        if (keys[i].pos == s.npos){
+            break;
+        }
+        
+		// Get the string between the current key and the next
+		std::size_t start = keys[i].pos+keys[i].offset;
+        std::size_t end   = keys[i+1].pos != s.npos ? keys[i+1].pos - start : s.npos;
+        substring = trim(s.substr(start, end));
+
+        std::istringstream tokenStream(substring);
+        std::string token;
+		// loop over data chuncks separated by ';'
+        while (std::getline(tokenStream, token, ';'))
+        {
+            parse_obj(keys[i].key, token);
+        }
+    }
+}
+
+//Parse the participant_input property
+void sec_control::parse_praticipant_input(char* participant_input)
+{
+	// Check if property has been updated.
+	if (participant_input[0] != '\0')
+	{
+		std::string s = participant_input; // convert to string
+		if (s.find(".csv")!= s.npos)
+		{
+			parse_csv(s);
+        }
+		else // glm
+		{
+			parse_glm(s);
+		}
+
+		//We should clear participant_input at the end here
+		// so we can see later changes easily.
+		participant_input[0] = '\0';
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
