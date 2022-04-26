@@ -1195,10 +1195,8 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 		{
 			if (weather == NULL)
 			{
-				//Original equation the pointed to statics (and weather, but how would it get here?)
-				//Insolation = shading_factor*(*pSolarD) + *pSolarH + *pSolarG*(1 - cos(tilt_angle))*(*pAlbedo)/2.0;
-				//Old static - static double tout=59.0, rhout=0.75, solar=92.902, wsout=0.0, albdefault=0.2;
-				Insolation = 92.902 * (shading_factor + 1.0 + 0.1 * (1.0 - cos(tilt_angle)));
+				//If no weather, just assume this is the Rated_Insolation (defaults to 1000 W/m^2) by the shading factor.
+				Insolation = Rated_Insolation * shading_factor;
 			}
 			else
 			{
