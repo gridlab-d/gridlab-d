@@ -975,15 +975,11 @@ void load_tzspecs(char *tz){
  **/
 char *timestamp_set_tz(char *tz_name)
 {
-	if (tz_name == NULL){
-		tz_name=getenv("TZ");
-	}
-
 	if(tz_name == NULL)
 	{
 		static char guess[64];
 		static unsigned int tzlock=0;
-
+		tzset();
 		if (strcmp(_tzname[0], "") == 0){
 			THROW("timezone not identified");
 			/* TROUBLESHOOT
