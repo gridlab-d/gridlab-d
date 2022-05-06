@@ -277,6 +277,7 @@ int inverter_dyn::create(void)
 	//Variable mapping items
 	parent_is_a_meter = false;		//By default, no parent meter
 	parent_is_single_phase = false; //By default, we're three-phase
+	parent_is_triplex = false;		//By default, not a triplex
 	attached_bus_type = 0;			//By default, we're basically a PQ bus
 	swing_test_fxn = NULL;			//By default, no mapping
 
@@ -630,6 +631,7 @@ int inverter_dyn::init(OBJECT *parent)
 				//Indicate this is a meter, but is also a single-phase variety
 				parent_is_a_meter = true;
 				parent_is_single_phase = true;
+				parent_is_triplex = true;
 
 				//Map the various powerflow variables
 				//Map the other two here for initialization problem
@@ -663,6 +665,7 @@ int inverter_dyn::init(OBJECT *parent)
 				{
 					parent_is_a_meter = true;
 					parent_is_single_phase = false;
+					parent_is_triplex = false;
 
 					//Map the various powerflow variables
 					pCircuit_V[0] = map_complex_value(tmp_obj, "voltage_A");
@@ -691,6 +694,7 @@ int inverter_dyn::init(OBJECT *parent)
 					//Just assume this is true - the only case it isn't is a GL_THROW, so it won't matter
 					parent_is_a_meter = true;
 					parent_is_single_phase = true;
+					parent_is_triplex = false;
 
 					//NULL all the secondary indices - we won't use any of them
 					pCircuit_V[1] = NULL;
@@ -829,8 +833,15 @@ int inverter_dyn::init(OBJECT *parent)
 				}
 				//Default else, it worked
 
-				//Copy that value out
-				node_nominal_voltage = temp_property_pointer->get_double();
+				//Copy that value out - adjust if triplex
+				if (parent_is_triplex == true)
+				{
+					node_nominal_voltage = 2.0 * temp_property_pointer->get_double(); //Adjust to 240V
+				}
+				else
+				{
+					node_nominal_voltage = temp_property_pointer->get_double();
+				}
 
 				//Remove the property pointer
 				delete temp_property_pointer;
@@ -1059,6 +1070,7 @@ int inverter_dyn::init(OBJECT *parent)
 		//Indicate we don't have a meter parent, nor is it single phase (though the latter shouldn't matter)
 		parent_is_a_meter = false;
 		parent_is_single_phase = false;
+		parent_is_triplex = false;
 
 		gl_warning("inverter_dyn:%d has no parent meter object defined; using static voltages", obj->id);
 		/*  TROUBLESHOOT
@@ -5556,7 +5568,7 @@ double inverter_dyn::perform_1547_checks(double timestepvalue)
 		if ((phases & PHASE_S) == PHASE_S)	//Triplex
 		{
 			//See if we're te proper index
-			if (indexval < 2)
+			if (indexval == 0)	//Only check on 0, since that's where _12 gets mapped
 			{
 				check_phase = true;
 			}
@@ -5586,8 +5598,17 @@ double inverter_dyn::perform_1547_checks(double timestepvalue)
 		//See if we were valid
 		if (check_phase == true)
 		{
-			//See if it is a violation
-			temp_pu_voltage = value_Circuit_V[indexval].Mag()/node_nominal_voltage;
+			//See if we're single-phse
+			if (parent_is_single_phase == true)
+			{
+				//See if it is a violation - all single-phase varieties are mapped to 0
+				temp_pu_voltage = value_Circuit_V[0].Mag()/node_nominal_voltage;
+			}
+			else
+			{
+				//See if it is a violation
+				temp_pu_voltage = value_Circuit_V[indexval].Mag()/node_nominal_voltage;
+			}
 
 			//Check it
 			if ((temp_pu_voltage < IEEE1547_under_voltage_high_voltage_setpoint) || (temp_pu_voltage > IEEE1547_over_voltage_low_setpoint))

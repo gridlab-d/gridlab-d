@@ -879,7 +879,14 @@ int inverter::init(OBJECT *parent)
 				//Default else, it worked
 
 				//Copy that value out
-				node_nominal_voltage = temp_property_pointer->get_double();
+				if (parent_is_triplex == true)
+				{
+					node_nominal_voltage = 2.0 * temp_property_pointer->get_double();	//Adjust for 240 V
+				}
+				else
+				{
+					node_nominal_voltage = temp_property_pointer->get_double();
+				}
 
 				//Remove the property pointer
 				delete temp_property_pointer;
@@ -8713,7 +8720,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 		if ((phases & PHASE_S) == PHASE_S)	//Triplex
 		{
 			//See if we're te proper index
-			if (indexval < 2)
+			if (indexval == 0)	//Only need to check 240 V here
 			{
 				check_phase = true;
 			}
