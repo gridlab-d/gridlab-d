@@ -639,9 +639,10 @@ int inverter::init(OBJECT *parent)
 	bool temp_bool_value;
 	int temp_idx_x, temp_idx_y;
 	complex temp_complex_value;
-	complex_array temp_complex_array;
+	complex_array temp_complex_array, temp_child_complex_array;;
 	set parent_phases;
 	OBJECT *tmp_obj = NULL;
+	bool childed_connection = false;
 
 	if(parent != NULL){
 		if((parent->flags & OF_INIT) != OF_INIT){
@@ -687,6 +688,9 @@ int inverter::init(OBJECT *parent)
 					}
 					else	//Implies it is a powerflow parent
 					{
+						//Set flag
+						childed_connection = true;
+						
 						//See if we are deltamode-enabled -- if so, flag our parent while we're here
 						//Map our deltamode flag and set it (parent will be done below)
 						temp_property_pointer = new gld_property(parent,"Norton_dynamic");
@@ -953,6 +957,47 @@ int inverter::init(OBJECT *parent)
 					//Default else -- right size
 				}
 
+				//See if we were connected to a powerflow child
+				if (childed_connection == true)
+				{
+					temp_property_pointer = new gld_property(parent,"deltamode_full_Y_matrix");
+
+					//Check it
+					if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_complex_array() != true))
+					{
+						GL_THROW("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
+						//Defined above
+					}
+
+					//Pull down the variable
+					temp_property_pointer->getp<complex_array>(temp_child_complex_array,*test_rlock);
+
+					//See if it is valid
+					if (temp_child_complex_array.is_valid(0,0) != true)
+					{
+						//Create it
+						temp_child_complex_array.grow_to(3,3);
+
+						//Zero it, by default
+						for (temp_idx_x=0; temp_idx_x<3; temp_idx_x++)
+						{
+							for (temp_idx_y=0; temp_idx_y<3; temp_idx_y++)
+							{
+								temp_child_complex_array.set_at(temp_idx_x,temp_idx_y,complex(0.0,0.0));
+							}
+						}
+					}
+					else	//Already populated, make sure it is the right size!
+					{
+						if ((temp_child_complex_array.get_rows() != 3) && (temp_child_complex_array.get_cols() != 3))
+						{
+							GL_THROW("diesel_dg:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
+							//Defined above
+						}
+						//Default else -- right size
+					}
+				}//End childed powerflow parent
+
 				//Loop through and store the values
 				for (temp_idx_x=0; temp_idx_x<3; temp_idx_x++)
 				{
@@ -966,11 +1011,33 @@ int inverter::init(OBJECT *parent)
 
 						//Store it
 						temp_complex_array.set_at(temp_idx_x,temp_idx_y,temp_complex_value);
+
+						//Do the childed object, if exists
+						if (childed_connection == true)
+						{
+							//Read the existing value
+							temp_complex_value = temp_child_complex_array.get_at(temp_idx_x,temp_idx_y);
+
+							//Accumulate into it
+							temp_complex_value += generator_admittance[temp_idx_x][temp_idx_y];
+
+							//Store it
+							temp_child_complex_array.set_at(temp_idx_x,temp_idx_y,temp_complex_value);
+						}
 					}
 				}
 
 				//Push it back up
 				pbus_full_Y_mat->setp<complex_array>(temp_complex_array,*test_rlock);
+
+				//See if the childed powerflow exists
+				if (childed_connection == true)
+				{
+					temp_property_pointer->setp<complex_array>(temp_child_complex_array,*test_rlock);
+
+					//Clear it
+					delete temp_property_pointer;
+				}
 
 				//Map the power variable
 				pGenerated = map_complex_value(tmp_obj,"deltamode_PGenTotal");
