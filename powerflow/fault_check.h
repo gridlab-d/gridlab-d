@@ -54,7 +54,7 @@ public:
 	bool output_check_supported_mesh(void);								//Function to check and see if anything is unsupported and set overall flag (file outputs)
 
 	void support_search_links(int node_int, int node_start, bool impact_mode);	//Function to check connectivity and support of nodes and remove/restore components as necessary
-	void support_search_links_mesh(int baselink_int, bool impact_mode);			//Function to parse bus list and remove anything that isn't supported (mesh systems)
+	void support_search_links_mesh(void);										//Function to parse bus list and remove anything that isn't supported (mesh systems)
 	void momentary_activation(int node_int);									//Function to progress down a branch and flag momentary outages
 	void special_object_alteration_handle(int branch_idx);						//Functionalized special device alteration code
 

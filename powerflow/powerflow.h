@@ -42,7 +42,8 @@ typedef enum {
 
 typedef enum {
 	LS_OPEN=0,			///< defines that that link is open
-	LS_CLOSED=1			///< defines that that link is closed
+	LS_CLOSED=1,		///< defines that that link is closed
+	LS_INIT=2			///< defines that the link needs to be initalized
 } LINESTATUS;	//Line/link status - made at powerflow level for reusability
 
 typedef enum {
