@@ -114,6 +114,8 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double,"Pset[pu]", PADDR(gen_base_set_vals.Pref), PT_DESCRIPTION, "Pset input to governor controls (per-unit), if supported",	//overloaded for commonality to wider control
 			PT_double,"fset[Hz]",PADDR(gen_base_set_vals.f_set), PT_DESCRIPTION, "fset input to governor controls (Hz) - takes priority over wref",	//semi-overloaded for commonality to wider control
 			PT_double,"Qref[pu]", PADDR(gen_base_set_vals.Qref), PT_DESCRIPTION, "Qref input to govornor or AVR controls (per-unit), if supported",
+			PT_double,"pdispatch[pu]", PADDR(pdispatch_exp.pdispatch), PT_DESCRIPTION, "Desired generator dispatch set point in p.u.",
+			PT_double,"pdispatch_offset[pu]", PADDR(pdispatch_exp.pdispatch_offset), PT_DESCRIPTION, "Desired offset to generator dispatch in p.u.",
 
 			//Properties for AVR/Exciter of dynamics model
 			PT_enumeration,"Exciter_type",PADDR(Exciter_type),PT_DESCRIPTION,"Exciter model for dynamics-capable implementation",
@@ -433,6 +435,9 @@ int diesel_dg::create(void)
 	gen_base_set_vals.Qref = -99.0;
 	gen_base_set_vals.f_set = -99.0;
 
+	pdispatch.pdispatch = -99.0; //essentially flagged as unset
+	pdispatch.pdispatch_offset = 0; //default offset is 0
+
 	//SEXS Exciter defaults
 	exc_KA=50;
 	exc_TA=0.01;
@@ -660,6 +665,10 @@ int diesel_dg::create(void)
 	first_init_status = true;
 
 	P_f_droop_setting_mode = PSET_MODE;	//Default to PSET mode, for backwards compatibility
+
+
+	memcpy(&gen_base_set_vals_check,&gen_base_set_vals,sizeof(MAC_INPUTS));
+	memcpy(&pdispatch_exp,&pdispatch,sizeof(PDISPATCH));
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -1639,6 +1648,8 @@ int diesel_dg::init(OBJECT *parent)
 		gen_base_set_vals.wref = gen_base_set_vals.w_ref / omega_ref;
 	}
 
+	pdispatch_sync();
+
 	return 1;
 }//init ends here
 
@@ -2369,6 +2380,9 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 	{
 		gen_base_set_vals.wref = gen_base_set_vals.w_ref / omega_ref;
 	}
+
+	// synchronize pdispatch and controller setpoints
+	pdispatch_sync();
 
 	//Initialization items
 	if ((delta_time==0) && (iteration_count_val==0))	//First run of new delta call
@@ -4665,6 +4679,9 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 	//Re-initialize tracking variable to event-driven
 	desired_simulation_mode = SM_EVENT;
 
+	// sync up pdispatch values
+	pdispatch_sync();
+
 	return SUCCESS;	//Always succeeds for now, but could have error checks later
 }
 
@@ -4942,6 +4959,111 @@ void diesel_dg::check_power_output()
 		else
 			power_val[2] = gld::complex((power_base*test_pf),(sqrt(1-test_pf*test_pf)*power_base));
 	}//End phase C power limit check
+}
+
+// Sync the pdispatch variable with the various possible controller set points.
+//
+// Controller sets points (Pref and wref) take precedence over pdispatch, that is
+// an update to these properties will *overwrite* pdispatch.
+// If these properties have not be changed however, then pdispatch can be used
+// to update the appropriate one via a unified interface.
+void diesel_dg::pdispatch_sync()
+{
+	
+	// Check if Pref or wref were changed
+	if ((gen_base_set_vals.Pref != gen_base_set_vals_check.Pref) || 
+		(gen_base_set_vals.wref != gen_base_set_vals_check.wref))
+	{
+		// There has been some change to a reference value. 
+		//  - Override pdispatch and set pdispatch_offset = 0.
+		//  - Note: this also overwrites any changes to the exposed pdispatch!!
+		pdispatch.pdispatch_offset = 0;
+		
+		//update pdispatch accordingly
+		// Update appropriate controll variable 
+		switch (Governor_type)
+		{
+		case GGOV1:
+			if (gov_ggv1_rselect == 1)
+			{
+				pdispatch.pdispatch = gen_base_set_vals.Pref/gov_ggv1_r;
+			}
+			else if ((gov_ggv1_rselect == -1) || (gov_ggv1_rselect == -2))
+			{
+				pdispatch.pdispatch = gov_ggv1_Kturb * (gen_base_set_vals.Pref/gov_ggv1_r - gov_ggv1_wfnl);
+			}
+			else
+			{
+				// Do nothing: pdispatch cannot be used for this setting anyways
+			}
+			
+			break;
+		
+		case DEGOV1:
+			pdispatch.pdispatch = (gen_base_set_vals.wref - 1)/gov_degov1_R;
+			break;
+
+		case P_CONSTANT:
+			pdispatch.pdispatch = gen_base_set_vals.Pref;
+			break;
+			
+		default:
+			// Do nothing: pdispatch cannot be used for this setting anyways
+			break;
+		}
+
+		// update the check variables
+		memcpy(&gen_base_set_vals_check,&gen_base_set_vals,sizeof(MAC_INPUTS));
+
+		// overwrite the exposed pdispatch variables
+		memcpy(&pdispatch_exp, &pdispatch, sizeof(PDISPATCH));
+
+	}
+
+	double pstar = pdispatch.pdispatch + pdispatch.pdispatch_offset;
+	if ((pdispatch_exp.pdispatch + pdispatch_exp.pdispatch_offset) != (pstar))
+	{
+		// pdispatch or pdispatch_offset have been changed
+		pdispatch.pdispatch = pdispatch_exp.pdispatch;
+		pdispatch.pdispatch_offset = pdispatch_exp.pdispatch_offset;
+		
+		// update pstar
+		pstar = pdispatch.pdispatch + pdispatch.pdispatch_offset;
+		// Update appropriate controll variable 
+		switch (Governor_type)
+		{
+		case GGOV1:
+			if (gov_ggv1_rselect == 1)
+			{
+				gen_base_set_vals.Pref = gov_ggv1_r*pstar;
+			}
+			else if ((gov_ggv1_rselect == -1) || (gov_ggv1_rselect == -2))
+			{
+				gen_base_set_vals.Pref = gov_ggv1_r*(gov_ggv1_wfnl + pstar/gov_ggv1_Kturb);
+			}
+			else
+			{
+				GL_THROW("diesel_dg::pdispatch_map:GGOV1 pdispatch property cannot be used with Rselec=%d", gov_ggv1_rselect);
+			}
+			
+			break;
+		
+		case DEGOV1:
+			gen_base_set_vals.wref = 1 + gov_degov1_R*pstar;
+			break;
+
+		case P_CONSTANT:
+			gen_base_set_vals.Pref = pstar;
+			break;
+
+		default:
+			GL_THROW("diesel_dg::pdispatch_map: pdispatch property cannot be used provided governor type %d", Governor_type);
+			break;
+		}
+
+		// update the check variables
+		memcpy(&gen_base_set_vals_check,&gen_base_set_vals,sizeof(MAC_INPUTS));	
+	}
 }
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
