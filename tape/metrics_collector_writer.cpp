@@ -179,26 +179,26 @@ int metrics_collector_writer::init(OBJECT *parent) {
 	// Write separate json files for meters, triplex_meters, inverters, capacitors, regulators, houses, feeders, transformers, lines, evchargers:
 
 	if (strcmp(alternate, "no") == 0) {
-		snprintf(filename_billing_meter, sizeof(filename_billing_meter)-1, "%s_%s", m_billing_meter.c_str(), filename);
-		snprintf(filename_inverter, sizeof(filename_inverter)-1, "%s_%s", m_inverter.c_str(), filename);
-		snprintf(filename_capacitor, sizeof(filename_capacitor)-1, "%s_%s", m_capacitor.c_str(), filename);
-		snprintf(filename_regulator, sizeof(filename_regulator)-1, "%s_%s", m_regulator.c_str(), filename);
-		snprintf(filename_house, sizeof(filename_house)-1, "%s_%s", m_house.c_str(), filename);
-		snprintf(filename_feeder, sizeof(filename_feeder)-1, "%s_%s", m_feeder.c_str(), filename);
-		snprintf(filename_transformer, sizeof(filename_transformer)-1, "%s_%s", m_transformer.c_str(), filename);
-		snprintf(filename_line, sizeof(filename_line)-1, "%s_%s", m_line.c_str(), filename);
-		snprintf(filename_evchargerdet, sizeof(filename_evchargerdet)-1, "%s_%s", m_evchargerdet.c_str(), filename);
+		snprintf(filename_billing_meter, sizeof(filename_billing_meter)-1, "%s_%s", m_billing_meter.c_str(), filename.get_string());
+		snprintf(filename_inverter, sizeof(filename_inverter)-1, "%s_%s", m_inverter.c_str(), filename.get_string());
+		snprintf(filename_capacitor, sizeof(filename_capacitor)-1, "%s_%s", m_capacitor.c_str(), filename.get_string());
+		snprintf(filename_regulator, sizeof(filename_regulator)-1, "%s_%s", m_regulator.c_str(), filename.get_string());
+		snprintf(filename_house, sizeof(filename_house)-1, "%s_%s", m_house.c_str(), filename.get_string());
+		snprintf(filename_feeder, sizeof(filename_feeder)-1, "%s_%s", m_feeder.c_str(), filename.get_string());
+		snprintf(filename_transformer, sizeof(filename_transformer)-1, "%s_%s", m_transformer.c_str(), filename.get_string());
+		snprintf(filename_line, sizeof(filename_line)-1, "%s_%s", m_line.c_str(), filename.get_string());
+		snprintf(filename_evchargerdet, sizeof(filename_evchargerdet)-1, "%s_%s", m_evchargerdet.c_str(), filename.get_string());
 
 	} else {
-		snprintf(filename_billing_meter, sizeof(filename_billing_meter)-1, "%s%s", filename, m_billing_meter.c_str());
-		snprintf(filename_inverter, sizeof(filename_inverter)-1, "%s%s", filename, m_inverter.c_str());
-		snprintf(filename_capacitor, sizeof(filename_capacitor)-1, "%s%s", filename, m_capacitor.c_str());
-		snprintf(filename_regulator, sizeof(filename_regulator)-1, "%s%s", filename, m_regulator.c_str());
-		snprintf(filename_house, sizeof(filename_house)-1, "%s%s", filename, m_house.c_str());
-		snprintf(filename_feeder, sizeof(filename_feeder)-1, "%s%s", filename, m_feeder.c_str());
-		snprintf(filename_transformer, sizeof(filename_transformer)-1, "%s%s", filename, m_transformer.c_str());
-		snprintf(filename_line, sizeof(filename_line)-1, "%s%s", filename, m_line.c_str());
-		snprintf(filename_evchargerdet, sizeof(filename_evchargerdet)-1, "%s%s", filename, m_evchargerdet.c_str());
+		snprintf(filename_billing_meter, sizeof(filename_billing_meter)-1, "%s%s", filename.get_string(), m_billing_meter.c_str());
+		snprintf(filename_inverter, sizeof(filename_inverter)-1, "%s%s", filename.get_string(), m_inverter.c_str());
+		snprintf(filename_capacitor, sizeof(filename_capacitor)-1, "%s%s", filename.get_string(), m_capacitor.c_str());
+		snprintf(filename_regulator, sizeof(filename_regulator)-1, "%s%s", filename.get_string(), m_regulator.c_str());
+		snprintf(filename_house, sizeof(filename_house)-1, "%s%s", filename.get_string(), m_house.c_str());
+		snprintf(filename_feeder, sizeof(filename_feeder)-1, "%s%s", filename.get_string(), m_feeder.c_str());
+		snprintf(filename_transformer, sizeof(filename_transformer)-1, "%s%s", filename.get_string(), m_transformer.c_str());
+		snprintf(filename_line, sizeof(filename_line)-1, "%s%s", filename.get_string(), m_line.c_str());
+		snprintf(filename_evchargerdet, sizeof(filename_evchargerdet)-1, "%s%s", filename.get_string(), m_evchargerdet.c_str());
 	}
 #ifdef HAVE_HDF5
 	//prepare dataset for HDF5 if needed
