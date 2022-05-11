@@ -946,24 +946,16 @@ int windturb_dg::init(OBJECT *parent)
 			{
 				pLine_I[0] = map_complex_value(parent,"prerotated_current_1");
 				pLine_I[1] = map_complex_value(parent,"prerotated_current_2");
-				pLine_I[2] = map_complex_value(parent,"acc_temp_current_N");
+				pLine_I[2] = map_complex_value(parent,"current_N");
 
 				pLine12 = map_complex_value(parent,"prerotated_current_12");
 			}
 			else
 			{
-				// NOTE - Commented code will replace the pLine_I and pLine12 once the triplex_node "deprecated properties" are removed
-				// pLine_I[0] = map_complex_value(parent,"current_1");
-				// pLine_I[1] = map_complex_value(parent,"current_2");
-				// pLine_I[2] = map_complex_value(parent,"current_N");
-
-				// pLine12 = map_complex_value(parent,"current_12");
-
-				pLine_I[0] = map_complex_value(parent,"acc_temp_current_1");
-				pLine_I[1] = map_complex_value(parent,"acc_temp_current_2");
-				pLine_I[2] = map_complex_value(parent,"acc_temp_current_N");
-
-				pLine12 = map_complex_value(parent,"acc_temp_current_12");
+				pLine_I[0] = map_complex_value(parent,"current_1");
+				pLine_I[1] = map_complex_value(parent,"current_2");
+				pLine_I[2] = map_complex_value(parent,"current_N");
+				pLine12 = map_complex_value(parent,"current_12");
 			}
 
 			//pPower = map_complex_value(parent,"measured_power");
