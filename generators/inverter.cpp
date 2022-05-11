@@ -332,7 +332,6 @@ inverter::inverter(MODULE *module)
 			PT_double,"VW_P2[pu]", PADDR(VW_P2), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Power limit at VW_P2 (e.g. 0). Used in VOLT_WATT control mode.",
 
 			/* DEPRECATED properties - will be deleted in next version */
-			PT_complex, "VA_In", PADDR(VA_In_deprecated), PT_DEPRECATED, PT_DESCRIPTION, "Deprecated input for inverter - use P_In instead",
 			/* END DEPRECATED */
 
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);

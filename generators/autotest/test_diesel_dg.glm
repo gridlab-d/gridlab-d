@@ -95,7 +95,6 @@ object triplex_meter {
 object diesel_dg {
 	name Imadiesel;
 	parent meter671;
-	phases AS;
 	Gen_type CONSTANT_PQ;
 	Rated_VA 5.0 kVA;
 	power_out_A 250.0+120.0j;	//1

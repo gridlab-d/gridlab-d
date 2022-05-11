@@ -36,8 +36,6 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_enumeration,"Gen_type",PADDR(Gen_type),
 				PT_KEYWORD,"CONSTANT_PQ",(enumeration)NON_DYN_CONSTANT_PQ,PT_DESCRIPTION,"Non-dynamic mode of diesel generator with constant PQ output as defined",
 				PT_KEYWORD,"DYN_SYNCHRONOUS",(enumeration)DYNAMIC,PT_DESCRIPTION,"Dynamics-capable implementation of synchronous diesel generator",
-		
-			PT_double, "pf", PADDR(power_factor),PT_DESCRIPTION,"desired power factor",PT_DEPRECATED,
 
 			//End of synchronous generator inputs
 			PT_double, "Rated_V[V]", PADDR(Rated_V_LL),PT_DESCRIPTION,"nominal line-line voltage in Volts",
@@ -368,13 +366,6 @@ diesel_dg::diesel_dg(MODULE *module)
 			//CONSTANT_PQ steady state outputs
 			PT_double,"real_power_generation[W]",PADDR(real_power_gen),PT_DESCRIPTION,"The total real power generation",
 			PT_double,"reactive_power_generation[VAr]",PADDR(imag_power_gen),PT_DESCRIPTION,"The total reactive power generation",
-
-			PT_set, "phases", PADDR(phases), PT_DESCRIPTION, "Specifies which phases to connect to - currently not supported and assumes three-phase connection",PT_DEPRECATED,
-				PT_KEYWORD, "A",(set)PHASE_A,
-				PT_KEYWORD, "B",(set)PHASE_B,
-				PT_KEYWORD, "C",(set)PHASE_C,
-				PT_KEYWORD, "N",(set)PHASE_N,
-				PT_KEYWORD, "S",(set)PHASE_S,
 
 			//-- This hides from modehelp -- PT_double,"TD[s]",PADDR(gov_TD),PT_DESCRIPTION,"Governor combustion delay (s)",PT_ACCESS,PA_HIDDEN,
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
