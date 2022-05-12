@@ -145,10 +145,6 @@ typedef struct {
 	double Qref;	//Reference reactive power output/bias (per-unit) for generator object (AVR)
 } MAC_INPUTS;
 
-typedef struct {
-	double pdispatch; //Desired generator dispatch set point in p.u.
-	double pdispatch_offset; //Desired offset to generator dispatch in p.u.
-}PDISPATCH;
 
 class diesel_dg : public gld_object
 {
@@ -214,6 +210,10 @@ private:
 	MAC_STATES predictor_vals;	//Predictor pass values of variables
 	MAC_STATES corrector_vals;	//Corrector pass values of variables
 
+	typedef struct {
+		double pdispatch; //Desired generator dispatch set point in p.u.
+		double pdispatch_offset; //Desired offset to generator dispatch in p.u.
+	}PDISPATCH;
 	PDISPATCH pdispatch;	//Dispatch setpoint in p.u. for internal use
 
 	bool deltamode_inclusive;	//Boolean for deltamode calls - pulled from object flags
