@@ -87,6 +87,10 @@ inverter_dyn::inverter_dyn(MODULE *module)
 			PT_double, "Xfilter[pu]", PADDR(Xfilter), PT_DESCRIPTION, "DELTAMODE:  per-unit values of inverter filter.",
 			PT_double, "Rfilter[pu]", PADDR(Rfilter), PT_DESCRIPTION, "DELTAMODE:  per-unit values of inverter filter.",
 
+			// Dispatch variables
+			PT_double,"pdispatch[pu]", PADDR(pdispatch_exp.pdispatch), PT_DESCRIPTION, "Desired generator dispatch set point in p.u.",
+			PT_double,"pdispatch_offset[pu]", PADDR(pdispatch_exp.pdispatch_offset), PT_DESCRIPTION, "Desired offset to generator dispatch in p.u.",
+
 			// Grid-Following Controller Parameters
 			PT_double, "Pref[W]", PADDR(Pref), PT_DESCRIPTION, "DELTAMODE: The real power reference.",
 			PT_double, "Qref[VAr]", PADDR(Qref), PT_DESCRIPTION, "DELTAMODE: The reactive power reference.",
@@ -344,6 +348,11 @@ int inverter_dyn::create(void)
 	Xfilter = 0.15; //per unit
 	Rfilter = 0.01; // per unit
 
+	// Dispatch setpoints
+	pdispatch.pdispatch = -99.0; //essentially flagged as unset
+	pdispatch.pdispatch_offset = 0; //default offset is 0
+	memcpy(&pdispatch_exp,&pdispatch,sizeof(PDISPATCH));
+
 	// Grid-Forming controller parameters
 	Tp = 0.01; // s
 	Tq = 0.01; // s
@@ -500,6 +509,8 @@ int inverter_dyn::create(void)
 	IEEE1547_over_voltage_high_viol_time = 0.0;				//Highest high voltage threshold violation timer
 
 	node_nominal_voltage = 120.0;		//Just pick a value
+
+	update_chk_vars();
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -1429,6 +1440,8 @@ int inverter_dyn::init(OBJECT *parent)
 		mp = P_f_droop * w_ref;
 	}
 
+	pdispatch_sync(); //sync up pdispatch and reference point settings
+
 	return 1;
 }
 
@@ -2216,6 +2229,8 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 		//Do the checks
 		ieee_1547_delta_return = perform_1547_checks(deltat);
 	}
+
+	pdispatch_sync(); //sync up setpoints and pdispatch
 
 	if (control_mode == GRID_FORMING)
 	{
@@ -5978,6 +5993,9 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 
 		}
 	}
+
+	pdispatch_sync(); //sync up dispatch variables and controller setpoints
+
 	return SUCCESS;
 }
 
@@ -7395,6 +7413,105 @@ double inverter_dyn::perform_1547_checks(double timestepvalue)
 			//All is well, indicate as much
 			return return_value;
 		}
+	}
+}
+
+//update checker variables with controller setpoints
+void inverter_dyn::update_chk_vars()
+{
+	setpoint_chk.fset = fset;
+	setpoint_chk.Pref = Pref;
+	setpoint_chk.Pset = Pset;
+}
+
+// Sync the pdispatch variable with the various possible controller set points.
+//
+// Controller sets points (Pref, Pset and fset) take precedence over pdispatch, that is
+// an update to these properties will *overwrite* pdispatch.
+// If these properties have not been changed, however, then pdispatch can be used
+// to update the appropriate one via a unified interface.
+void inverter_dyn::pdispatch_sync()
+{
+	
+	// Check if Pref, Pset or fset were changed
+	if ((Pref != setpoint_chk.Pref) || 
+		(Pset != setpoint_chk.Pset) ||
+		(fset != setpoint_chk.fset))
+	{
+		// There has been some change to a reference value. 
+		//  - Override pdispatch and set pdispatch_offset = 0.
+		//  - Note: this also overwrites any changes to the exposed pdispatch!!
+		pdispatch.pdispatch_offset = 0;
+		
+		//update pdispatch accordingly
+		if (control_mode == GRID_FORMING)
+		{
+			switch (P_f_droop_setting_mode)
+			{
+			case FSET_MODE:
+				pdispatch.pdispatch = (fset * (2*PI) - w_ref)/mp;
+				break;
+
+			case PSET_MODE:
+				pdispatch.pdispatch = Pset;
+				break;
+			
+			default:
+				// guess pdsipatch doesn't work with this mode
+				break;
+			}
+		}
+		else if ((control_mode == GRID_FOLLOWING) || (control_mode == GFL_CURRENT_SOURCE))
+		{
+			pdispatch.pdispatch = Pref/S_base;
+		}
+		// No else since this just means it is a control mode for which pdispatch cannot be used (yet)
+
+		// update the check variables
+		update_chk_vars();
+
+		// overwrite the exposed pdispatch variables
+		memcpy(&pdispatch_exp, &pdispatch, sizeof(PDISPATCH));
+
+	}
+
+	double pstar = pdispatch.pdispatch + pdispatch.pdispatch_offset;
+	if ((pdispatch_exp.pdispatch + pdispatch_exp.pdispatch_offset) != (pstar))
+	{
+		// pdispatch or pdispatch_offset have been changed
+		pdispatch.pdispatch = pdispatch_exp.pdispatch;
+		pdispatch.pdispatch_offset = pdispatch_exp.pdispatch_offset;
+		
+		// update pstar
+		pstar = pdispatch.pdispatch + pdispatch.pdispatch_offset;
+		// Update appropriate controll variable 
+		if (control_mode == GRID_FORMING)
+		{
+			switch (P_f_droop_setting_mode)
+			{
+			case FSET_MODE:
+				fset = (w_ref + pstar * mp)/(2*PI);
+				break;
+
+			case PSET_MODE:
+				Pset = pstar;
+				break;
+			
+			default:
+				// guess pdsipatch doesn't work with this mode
+				break;
+			}
+		}
+		else if ((control_mode == GRID_FOLLOWING) || (control_mode == GFL_CURRENT_SOURCE))
+		{
+			Pref = pstar * S_base;
+		}
+		else {
+			GL_THROW("inverter_dyn::pdispatch_sync: pdispatch property cannot be used with the provided control mode %d", control_mode);
+		}
+
+		// update the check variables
+		update_chk_vars();
 	}
 }
 
