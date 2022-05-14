@@ -27,11 +27,16 @@ typedef struct{
 typedef struct{
 	OBJECT *ptr; // pointer to the object
 	double alpha; //participation factor between 0 and 1.
-	gld_property *pset; //pointer to the setpoint of the object, which will be manipulated
-	double dp_min; //maximum allowable change to setpoint - downward direction (shouid still be positive)
-	double dp_max; //maximum allowable change to setpoint - upward direction
+	gld_property *pdisp; //pointer to the dispatch property of the object
+	gld_property *poffset; //pointer to the dispatch offset propert of the object
+	double rate; //the rating of the object in MW/MVA
+	double pmax; // maximum set point (units dependent on object)
+	double pmin; //minimal set point (units dependent on object)
+	double pinit; // output in MW. dp_dn/dp_up limit movement from this point
+	double dp_dn; //maximum allowable change to setpoint in MW - downward direction (shouid still be positive)
+	double dp_up; //maximum allowable change to setpoint in MW - upward direction
 	double Tlp; //Low pass time filter time constant in sec.
-	double dP[2]; //Change in stepoint [predictor, corrector]
+	double dP[3]; //Change in stepoint [corrector, predictor, actual value set]
 	double ddP[2]; //Change in stepoint derivative [predictor, corrector]
 } SEC_CNTRL_PARTICIPANT;
 
@@ -47,8 +52,6 @@ private:
 
 	////**************** Sample variable - published property for sake of doing so ****************//
 	complex test_published_property;
-
-	double alpha_tol; //tolerance for participations values not summing to one.
 	
 	gld_property *pFrequency; //pointer to frequency property of parent object
 	double fmeas; //storage for current measured frequency value
@@ -78,12 +81,20 @@ private:
 	// Sampling
 	bool sampleflag; //Boolean flag whether outputs should be published or not
 	double sample_time; //Secondary control should post a new update at this time
+	bool deadbandflag; // false=frequency within deadband, true=frequency outside of deadband 
+
+	double curr_dt; //Stores current deltamode deltat value OR -1 if not available
+	double qsts_time; //if the current time is greater than this time then we can switch to delta mode. -1 indicates unset.
+	bool deltaf_flag; // indicates that a non zero deltaf has been detedted at some poin in this deltamode run.
+	SIMULATIONMODE prev_simmode_return_value; //store the previously returned simulation mode value (in case iterations > 2)
 public:
 	char1024 participant_input; // command string for creating/modifing secondary controller participants (or path to csv file)
 
-	double dp_min_default; // Default maximum allowable change to setpoint - downward direction (shouid still be positive)
-	double dp_max_default; // Default maximum allowable change to setpoint - upward direction
+	double dp_dn_default; // Default maximum allowable change to setpoint - downward direction (shouid still be positive)
+	double dp_up_default; // Default maximum allowable change to setpoint - upward direction
 	double Tlp_default; // Default low pass time filter time constant in sec.
+
+	double alpha_tol; //tolerance for participations values not summing to one.
 
 	/* Input to PID controller */
 	double f0; // Nominal frequency in Hz (default is 60 Hz)
@@ -91,10 +102,19 @@ public:
 	double overfrequency_limit; // Maximum negative input limit to PID controller is f0 - overfrequency_limit 
 	double deadband; //Deadband for PID controller input in Hz
 
+	double frequency_delta_default; //default delta to nominal frequency
+
 	/* PID Controller */
 	double kpPID; //PID proprtional gain in MW/Hz
 	double kiPID; //PID integral gain in MW/Hz/sec
 	double kdPID; //PID derivative gain in MW/Hz*sec 
+
+	enum ANTI_WINDUP{
+        NONE = 0, //no anti-windup active
+		ZERO_IN_DEADBAND = 1, //zero integrator when frequency is within deadband
+		FEEDBACK = 2 //feedback difference between PIDout and signal passed to generators
+    };
+	enumeration anti_windup; //windup handling for integrator
 
 	double Ts; //Sampling interval in sec (should be >= dt)
 
@@ -104,11 +124,21 @@ public:
 	/* utility functions */
 	gld_property *map_complex_value(OBJECT *obj, char *name);
 	gld_property *map_double_value(OBJECT *obj, char *name);
+	gld_property *map_enum_value(OBJECT *obj, char *name);
+
+	complex get_complex_value(OBJECT *obj, char *name);
+	double get_double_value(OBJECT *obj, char *name);
+	enumeration get_enum_value(OBJECT *obj, char *name);
 	
+	void init_check(double&, double, double);
+	void participant_tlp_check(SEC_CNTRL_PARTICIPANT *);
+	void participant_tlp_check(SEC_CNTRL_PARTICIPANT &);
 	void get_deltaf(void);
 	STATUS check_alpha(void);
-	void clear_states(void);
-	
+	void update_pdisp(SEC_CNTRL_PARTICIPANT &, double);
+	double get_pelec(SEC_CNTRL_PARTICIPANT &obj);
+
+
 	/* parsing functions */
 	void parse_obj(PARSE_OPTS, std::string&);
     void parse_csv(std::string&);
