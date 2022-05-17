@@ -497,16 +497,18 @@ SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigne
 		next_state.PIDout = next_state.xi + (kpPID + kdPID/deltat)*curr_state.deltaf[0] - kdPID/deltat*curr_state.deltaf[1];
 		//=== End PID controller
 		
-		//iterate over participating objects
-		for (auto & obj : part_obj){
-			// update change for each participant based on participation factor alpha and low pass filter.
-			obj.ddP[0] = (obj.alpha*next_state.PIDout - obj.dP[0])/obj.Tlp;
-			obj.dP[1] = obj.dP[0] + deltat*obj.ddP[0];
-			if (sampleflag && deadbandflag)
-			{
+		if (sampleflag && deadbandflag)
+		{
+			//iterate over participating objects
+			for (auto & obj : part_obj){
+				// update change for each participant based on participation factor alpha and low pass filter.
+				obj.ddP[0] = (obj.alpha*next_state.PIDout - obj.dP[0])/obj.Tlp;
+				obj.dP[1] = obj.dP[0] + deltat*obj.ddP[0];
+				
 				//***************code to update object setpoints********************
 				// on the predictor pass we just want to update with the calculated value dP[1]
 				update_pdisp(obj, obj.dP[1]);
+				
 			}
 		}
 		simmode_return_value = SM_DELTA_ITER;  //call iteration to get to corrector pass
@@ -538,14 +540,15 @@ SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigne
 		}
 		next_state.PIDout = next_state.xi + (kpPID + kdPID/deltat)*curr_state.deltaf[0] - kdPID/deltat*curr_state.deltaf[1];
 		//=== End PID controller
-
-		//iterate over participating objects
-		for (auto & obj : part_obj){
-			// update change for ieach participant based on participation factor alpha and low pass filter.
-			obj.ddP[1] = 1/obj.Tlp*(obj.alpha*next_state.PIDout - obj.dP[1]);
-			obj.dP[0] += deltath*(obj.ddP[0] + obj.ddP[1]);
-			if (sampleflag && deadbandflag)
-			{
+		
+		if (sampleflag && deadbandflag)
+		{
+			//iterate over participating objects
+			for (auto & obj : part_obj){
+				// update change for ieach participant based on participation factor alpha and low pass filter.
+				obj.ddP[1] = 1/obj.Tlp*(obj.alpha*next_state.PIDout - obj.dP[1]);
+				obj.dP[0] += deltath*(obj.ddP[0] + obj.ddP[1]);
+				
 				//***************code to update object setpoints********************
 				// The actuall delta we want to pass is obj.dP[0] - obj.dP[1]
 				// since obj.dP[1] was already passed in the predictor iteration
@@ -553,7 +556,7 @@ SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigne
 				// what we *really* want is obj.dP[0] - obj.dP[2], where obj.dP[2] stores the final
 				// set value via the call to update_pdisp.
 				update_pdisp(obj, obj.dP[0] - obj.dP[2]);
-			}
+				}
 		}
 
 		// Determine desired simulation mode in next timestep
