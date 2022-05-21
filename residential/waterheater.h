@@ -207,7 +207,7 @@ public:
 	double Tset_curtail;			///< lower limit before we cancel curtailment [F]
 	double Tinlet;					///< default will be set to 60 degF
 	enumeration location;			///< location of tank (inside or garage) [enum]
-	enumeration heat_mode;				///< method of heating the water (gas or electric) [enum]
+	enumeration heat_mode;			///< method of heating the water (gas or electric) [enum]
 	enumeration current_tank_state;
 
 	// Characteristics calculated from basics at creation...
@@ -227,6 +227,30 @@ public:
 	double Tw;						///< water temperature [F]
 	double Tw_old;					///< previous water temperature, for internal_gains
 	double Tcontrol;
+	
+	// Midrar's Variable start here
+	double Tw_hp;					///< water temperature of the heat pump water heater [F]
+	double energytake = 0.0;		///< The amount of energy available in the tank to heat the water to the setpoint temperaute.
+	double energytake_limit;		///< The amount of energy available in the tank to heat the water to the setpoint temperaute.
+	double energytake_old = 0.0;
+	double resistive_element_threshold = 0.0;
+	double compressor_max_threshold;
+	double compressor_min_threshold;
+	double heating_element_min_threshold;
+	bool heating_element_on;
+	double heating_ramp_rate;
+	double Tw_new;
+	
+
+	double time_step = 0.0;
+	double compressor_power_hp = 0.0;
+	double hp_fan_power = 0.0;
+	double heating_element_power_hp = 0.0;
+	int interval;
+	int counter;
+	double time_step2 = 0.0;
+	bool turn_fan_on;
+	// Midrar's variables end here
 
 	// Convenience values (some pre-computed here and there for efficiency)...
 	bool heat_needed;				///< need to maintain this bit of state because of Tstat deadband...
@@ -245,6 +269,7 @@ public:
 	double *pTout;
 	double *pRH;
 	double HP_COP;						///< coefficient of performance for heat pump; currently calculated
+	double HP_COP_PSU;						///< coefficient of performance for heat pump; currently calculated
 	double gas_fan_power;		///< fan power draw when a gas waterheater is burning fuel
 	double gas_standby_power;	///< standby power draw when a gas waterheater is NOT burning fuel
 
@@ -401,6 +426,8 @@ public:
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP commit();
 
+	// Midrar's functions
+	void sync_energytake();
 
 public:
 	enumeration current_model;				///< Discerns which water heater model we need to use

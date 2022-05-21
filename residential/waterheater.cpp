@@ -110,6 +110,12 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 		// publish the class properties
 		if (gl_publish_variable(oclass,
 			PT_INHERIT, "residential_enduse",
+			// PSU's variables start here
+			PT_double,"energytake[Wh]",PADDR(energytake), PT_DESCRIPTION, "energytake increases, water temperature decreases",
+			PT_double,"compressor_power_hp[kW]",PADDR(compressor_power_hp), PT_DESCRIPTION, "Compressor rated power for the heat pump",
+			PT_double,"heating_element_power_hp[kW]",PADDR(heating_element_power_hp), PT_DESCRIPTION, "Heating element rated power for the heat pump",
+			PT_double,"temperature_hp[degF]",PADDR(Tw_hp), PT_DESCRIPTION, "the outlet temperature of the water tank",
+			// PSU's variables end here
 			PT_double,"tank_volume[gal]",PADDR(tank_volume), PT_DESCRIPTION, "the volume of water in the tank when it is full",
 			PT_double,"tank_UA[Btu*h/degF]",PADDR(tank_UA), PT_DESCRIPTION, "the UA of the tank (surface area divided by R-value)",
 			PT_double,"tank_diameter[ft]",PADDR(tank_diameter), PT_DESCRIPTION, "the diameter of the water heater tank",
@@ -188,7 +194,7 @@ waterheater::~waterheater()
 {
 }
 
-int waterheater::create() 
+int waterheater::create()
 {
 	int res = residential_enduse::create();
 
@@ -206,6 +212,9 @@ int waterheater::create()
 	tank_setpoint = 0.0;
 	thermostat_deadband = 0.0;
 	is_waterheater_on = 0;
+	//@REMVOE
+	heating_ramp_rate = 0.0002;
+	// -----
 //	power_kw = complex(0,0);
 	Tw = 0.0;
 	prev_load = 0.0;
@@ -243,10 +252,17 @@ int waterheater::create()
 	load.power_fraction = 0.0;
 	load.impedance_fraction = 1.0;
 	load.heatgain_fraction = 0.0; /* power has no effect on heat loss */
-
 	gas_fan_power = -1.0;
 	gas_standby_power = -1.0;
 
+	// Midrar's compressor threshold values
+	compressor_max_threshold = 2000; // Heating element replaces compressor when EnergyTake hits this threshold
+	compressor_min_threshold = ((thermostat_deadband/2) * 2.44 * tank_volume); // Compressor turns on when it hits this threshold
+	heating_element_min_threshold = 1100; // compressor replaces heating element when it hits this threshold.
+	interval = 0;
+	counter = 0;
+	// =================================
+	
 	dr_signal = 1;
 	return res;
 	last_water_demand = -1.0;
@@ -795,10 +811,13 @@ int waterheater::isa(char *classname)
 void waterheater::thermostat(TIMESTAMP t0, TIMESTAMP t1){
 	Ton  = tank_setpoint - thermostat_deadband/2;
 	Toff = tank_setpoint + thermostat_deadband/2;
+	// Ton  = tank_setpoint - thermostat_deadband;
+	// Toff = tank_setpoint + thermostat_deadband;
 
 	enumeration tank_status = tank_state();
 	switch(tank_status){
 		case FULL:
+		
 			if(Tw-TSTAT_PRECISION < Ton){
 				heat_needed = TRUE;
 			} else if (Tw+TSTAT_PRECISION > Toff){
@@ -806,6 +825,7 @@ void waterheater::thermostat(TIMESTAMP t0, TIMESTAMP t1){
 			} else {
 				; // no change
 			}
+			
 			break;
 		case PARTIAL:
 			if (heat_mode == HEAT_PUMP) {
@@ -839,6 +859,10 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 	OBJECT *my = OBJECTHDR(this);
 	double Tamb = get_Tambient(location);
 
+	if(heat_mode == HEAT_PUMP)
+	{
+		Tw = Tcontrol = Tw_hp;
+	}
 	DATETIME t_next;
 	gl_localtime(t1,&t_next);
 	
@@ -964,6 +988,97 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 /** Water heater synchronization determines the time to next
 	synchronization state and the power drawn since last synch
  **/
+
+void waterheater::sync_energytake()
+{
+	/*
+	Some information about Energytake that might help whoever tries to update or work in the code in the future.
+
+	EnergyTake is the amount of energy that the HPWH would need to consume to heat the water in the tank to the temperature set-point.
+	When HPWH is in idle mode (losing heat over time), energytake increases. Further, energytake drops significantly if a water draw occurs.
+	*/
+
+	
+	/*
+	* idle losses calc
+			* ET as function of TIME
+			- use when (in sync?): Toff > Tw_hp >= Ton
+	*/
+	actual_kW();
+	
+
+	if (interval == 60 && ((water_demand) > 0) && turn_fan_on)
+		heating_element_capacity = nominal_voltage * 0.000171; 							// rated fan current is 0.000171.
+
+	if (Toff >= Tw_hp && Tw_hp >= Ton  && heating_element_capacity == 0) 				// when energy take is between setpoints, HPWH is in idle mode.
+	{
+	
+		energytake = (( log( ((70) / (get_Tambient(location) * 0.39)) ) * time_step)); // Constants are based on trial and error to get the most appropraite behavior similar to the physical unit.
+		Tw_hp = (tank_setpoint - (energytake/(tank_volume * 2.44)))+ 1.00034;
+		heat_needed = FALSE;
+		current_model = ONENODE;
+
+		
+	}
+	else // when energy take is not between setpoints (i.e. waterheater is on)
+	{
+					
+		if (Tw_hp <= Ton || heating_element_capacity != 0)
+		{
+			time_step = 0;
+			
+
+			if (water_demand > 0)
+			{
+				// HPWH behavior differ depending on the amount of water demand. 
+				// If water demand is less than 10, the +2 factor will get the model to behave as the physical unit.
+				// Otherwise, a correction factor (0.65 * water demand) is needed to get the model to behave nearly the same as the physical unit
+				double tank_volume_post_draw = tank_volume - water_demand;
+				if (water_demand < 10)
+					Tw_hp = ((((tank_volume_post_draw)* tank_setpoint) + (water_demand * 60))/(tank_volume)) + 2;
+				else
+					Tw_hp = ((((tank_volume_post_draw)* tank_setpoint) + (water_demand * 60))/(tank_volume)) + water_demand * 0.65;
+				// ----------------------------------------------------------
+
+				heat_needed = TRUE;
+				if ((water_demand - water_demand_old) > 0)
+				{
+					energytake_old = energytake;
+				}
+				else
+				{
+					energytake_old += gl_random_normal(RNGSTATE,60,30);
+				}
+				energytake =  ((tank_setpoint - Tw_hp) * tank_volume * 2.44) + energytake_old;
+			}
+				
+			
+			if (heating_element_capacity <= 0.42 && !counter) // compressor operation. The resistive heating element should not trigger when the compressor is ON and Energytake within compressor's limits.
+			{	
+				energytake -= (heating_element_capacity - 0.447)/(-( get_Tambient(location)/ pow(get_Tambient(location),2.4)));
+			}	
+			if (heating_element_capacity  > 0.42)
+			{
+				energytake -= (heating_element_capacity - 4.872)/(-0.0014); // The 4.87 is the operation of the heating element. The -0.0014 is the result of the line fit equation.
+				
+			}
+		}	
+		if (energytake <= heating_element_min_threshold)
+			heating_element_on = false;
+		
+		Tw_hp = tank_setpoint - ((energytake)/(tank_volume * 2.44));
+	}
+	if (energytake<=0){
+		
+		energytake = 0;
+		heating_element_capacity = 0;
+	}	
+	Tw = Tw_hp; // The water temperature variable is the same as the one initialized by developers. Avoid extra variables.
+	return;
+				
+}
+
+
 TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	double internal_gain = 0.0;
@@ -972,6 +1087,10 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	int multilayer_transition_time = 0;
 	int i = 0;
 	int dt = (int)(t1-t0);
+	if (dt > interval)
+		interval = dt;
+
+	time_step += interval * 0.0083;
 	// use re_override to control heat_needed state
 	// runs after thermostat() but before "the usual" calculations
 	if(current_model != FORTRAN){
@@ -1016,29 +1135,39 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 			multilayer_transition_time = last_transition_time - dt;
 		}
 	}
+
 	// determine internal gains
 	if (location == INSIDE){
-		if(this->current_model == ONENODE){
+		if (heat_mode ==HEAT_PUMP)
+			this->current_model = ONENODE;
+	
+		if(this->current_model == ONENODE)
+		{
+
 			internal_gain = tank_UA * (Tw - get_Tambient(location));
 			//Subtract Heat drawn in from Heat pump
-			if(heat_mode == HEAT_PUMP){
+			if(heat_mode == HEAT_PUMP)
+			{
+				
 				internal_gain -= (actual_kW() * (HP_COP - 1) * BTUPHPKW);
+				
 			}
-		} else if(this->current_model == TWONODE){
+		} 
+		else if(this->current_model == TWONODE)
+		{
 			internal_gain = tank_UA * (Tw - Tamb) * h / height;
 			internal_gain += tank_UA * (Tlower - Tamb) * (1 - h / height);
 			//Subtract heat drawn in from heat pump
-			if(heat_mode == HEAT_PUMP){
+			if(heat_mode == HEAT_PUMP)
+			{
 				internal_gain -= (actual_kW() * (HP_COP - 1) * BTUPHPKW);
 			}
+			
 		} else if(this->current_model == MULTILAYER) {
 			//TODO: update internal gain from all layers in the tank.
 			internal_gain = A_bottom*U_val*(T_layers[1][0] - Tamb) + A_top*U_val*(T_layers[10][0] - Tamb);
 			for(int i=2; i<=9; i++) {
 				internal_gain += A_layer*U_val*(T_layers[i][0] - Tamb);
-			}
-			if(heat_mode == HEAT_PUMP) {
-				internal_gain -= (actual_kW() * (HP_COP - 1) * BTUPHPKW);
 			}
 		} else {
 			internal_gain = 0;
@@ -1121,9 +1250,11 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	if(current_model != FORTRAN){
 		// determine the power used
 		if (heat_needed == TRUE){
+			
 			/* power_kw */ load.total = (heat_mode == GASHEAT ? gas_fan_power : heating_element_capacity);
 			is_waterheater_on = 1;
-		} else {
+		}
+		else {
 			/* power_kw */ load.total = (heat_mode == GASHEAT ? gas_standby_power : 0.0);
 			is_waterheater_on = 0;
 		}
@@ -1138,7 +1269,11 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	waterheater_actual_power = load.power + (load.current + load.admittance * load.voltage_factor )* load.voltage_factor;
+	
+	
 	actual_load = waterheater_actual_power.Re();
+	
+
 
 	if (actual_load != 0.0)
 	{
@@ -1184,6 +1319,16 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 }
 
 TIMESTAMP waterheater::postsync(TIMESTAMP t0, TIMESTAMP t1){
+	if (heat_mode == HEAT_PUMP)
+	{
+		if((water_demand- water_demand_old)>0)
+			turn_fan_on = true;
+		
+		sync_energytake();
+		
+		if (turn_fan_on)
+			turn_fan_on = false;
+	}	
 	return TS_NEVER;
 }
 
@@ -1256,7 +1401,7 @@ enumeration waterheater::set_current_model_and_load_state(void)
 
 	enumeration tank_status = tank_state();
 	current_tank_state = tank_status;
-
+	
 	if (tank_status == FULL) {
 		Tcontrol = Tw;
 	} else if (tank_status == PARTIAL) { 
@@ -1264,6 +1409,7 @@ enumeration waterheater::set_current_model_and_load_state(void)
 	} else {
 		Tcontrol = Tw;
 	}
+
 
 	switch(tank_status) 
 	{
@@ -1299,19 +1445,28 @@ enumeration waterheater::set_current_model_and_load_state(void)
 			else
 				load_state = STABLE;
 			break;
-
 		case FULL:
 			// If the tank is full, a negative dh/dt means we're depleting, so
 			// we'll also be switching to the 2-zone model...
+			
 			if (dhdt_full < 0)
 			{
 				// overriding the plc code ignoring thermostat logic
 				// heating will always be on while in two zone model
 				bool cur_heat_needed = heat_needed;
+
 				if (heat_mode == HEAT_PUMP) {
 					if(Tcontrol-TSTAT_PRECISION < Ton){
+						// heat_needed = FALSE;
+						// load_state = ONENODE;
+						// // heat_needed = TRUE;
+						// // load_state = TWONODE;
 						heat_needed = TRUE;
 					} else if (Tcontrol+TSTAT_PRECISION > Toff){
+						// heat_needed = TRUE;
+						// load_state = TWONODE;
+						// // heat_needed = FALSE;
+						// // load_state = ONENODE;
 						heat_needed = FALSE;
 					} else {
 						; // no change
@@ -1319,7 +1474,7 @@ enumeration waterheater::set_current_model_and_load_state(void)
 				} else {
 					// overriding the plc code ignoring thermostat logic
 					// heating will always be on while in two zone model					
-					heat_needed = TRUE;					
+					heat_needed = TRUE;
 				}
 
 				double dhdt_full_temp = dhdt(height);
@@ -1328,11 +1483,11 @@ enumeration waterheater::set_current_model_and_load_state(void)
 				{
 					if (heat_mode == HEAT_PUMP) {
 						if (heat_needed == TRUE) {
-							current_model = TWONODE;
-							load_state = DEPLETING;
+							current_model = TWONODE;	// Added by GLD Folks
+							load_state = DEPLETING;	// Added by GLD Folks
 						} else {
-							current_model = ONENODE;
-							load_state = DEPLETING;
+							current_model = ONENODE; // Added by GLD Folks
+							load_state = DEPLETING;	// Added by GLD Folks
 						}
 					} else {
 						current_model = TWONODE;
@@ -1358,13 +1513,13 @@ enumeration waterheater::set_current_model_and_load_state(void)
 				}
 				else if (dhdt_full_temp < 0)
 				{
+					
 					current_model = TWONODE;
 					load_state = DEPLETING;
 				}
 				else
 				{
 					current_model = ONENODE;
-					
 					heat_needed = cur_heat_needed;
 					load_state = heat_needed ? RECOVERING : DEPLETING;
 				}
@@ -1389,6 +1544,7 @@ enumeration waterheater::set_current_model_and_load_state(void)
 			break;
 
 		case PARTIAL:
+		
 			if (heat_mode == HEAT_PUMP) {
 				if(Tcontrol-TSTAT_PRECISION < Ton || heat_needed == TRUE){
 					heat_needed = TRUE;
@@ -1476,6 +1632,7 @@ void waterheater::update_T_and_or_h(double nHours)
 SingleZone:
 			Tw = new_temp_1node(Tw, nHours);
 			/*Tupper*/ Tw = Tw;
+			
 			Tlower = Tinlet;
 			break;
 
@@ -1493,6 +1650,7 @@ SingleZone:
 				case RECOVERING:
 					try {
 						h = new_h_2zone(h, nHours);
+						
 					} catch (WRONGMODEL m)
 					{
 						if (m==MODEL_NOT_2ZONE)
@@ -1509,6 +1667,7 @@ SingleZone:
 			// Correct h if it overshot...
 			if (h < ROUNDOFF) 
 			{
+				
 				// We've over-depleted the tank slightly.  Make a quickie
 				// adjustment to Tlower/Tw to account for it...
 
@@ -1534,7 +1693,8 @@ SingleZone:
 				// adjust Tlower, even if the Tinlet has changed.  This avoids
 				// the headache of adjusting h and is of minimal consequence because
 				// Tinlet changes so slowly...
-				/*Tupper*/ Tw = Tw;
+				
+				
 			}
 			break;
 
@@ -1563,30 +1723,35 @@ double waterheater::dhdt(double h)
 	// Pre-set some algebra just for efficiency...
 	const double mdot = water_demand * 60 * RHOWATER / GALPCF;		// lbm/hr...
     const double c1 = RHOWATER * Cp * area * (/*Tupper*/ Tw - Tlower);	// Btu/ft...
+	const double tank_volume_post_draw = tank_volume - water_demand;
+	double temp_delta = 0.0;
+	double Q_added;
 	
+
     // check c1 before dividing by it
     if (c1 <= ROUNDOFF)
         return 0.0; //Possible only when /*Tupper*/ Tw and Tlower are very close, and the difference is negligible
 
 	double cA;
-	if (heat_mode == HEAT_PUMP) {
+	if (heat_mode == HEAT_PUMP) 
+	{
 		// @TODO: These values were created from HPWH project; need to make them more accessible
-		HP_COP = (1.04 + (1.21 - 1.04) * (get_Tambient(location) - 50) / (70 - 50)) * (5.259 - 0.0255 * Tw);
+		HP_COP = (1.04 + (1.21 - 1.04) * (get_Tambient(location) - 50) / (70 - 50)) * (5.259 - 0.0255 * Tw_hp); // Added by GLD folks
+
+		double water_left_in_tank = tank_volume - water_demand;
 		cA = -mdot / (RHOWATER * area) + (actual_kW() * BTUPHPKW * HP_COP + tank_UA * (get_Tambient(location) - Tlower)) / c1;
 	} else {
 		cA = -mdot / (RHOWATER * area) + (actual_kW() * BTUPHPKW + tank_UA * (get_Tambient(location) - Tlower)) / c1;
 	}
 	const double cb = (tank_UA / height) * (/*Tupper*/ Tw - Tlower) / c1;
-
-	// Returns the rate of change of 'h'
 	return cA - cb*h;
 }
 
 double waterheater::actual_kW(void)
 {
+
 	OBJECT *obj = OBJECTHDR(this);
     static int trip_counter = 0;
-
 	// calculate rated heat capacity adjusted for the current line voltage
 	if (heat_needed && re_override != OV_OFF)
     {
@@ -1615,17 +1780,40 @@ double waterheater::actual_kW(void)
             else
                 return 0.0;         // @TODO:  This condition should trip the breaker with a counter
         }
+		
 		double test;
-		if (heat_mode == ELECTRIC) {
-			test = heating_element_capacity * (actual_voltage*actual_voltage) / (nominal_voltage*nominal_voltage);
-		} else { 
-			// @TODO: We don't have a voltage dependence for the heat pump yet...but we should
-			//   Using variables from HPWH project...should be pulled out at some point
-			heating_element_capacity = (1.09 + (1.17 - 1.09) * (get_Tambient(location) - 50) / (70 - 50)) * (0.379 + 0.00364 * Tw);
-			test = heating_element_capacity;
-		}
 
-		return test;
+
+
+		if (heat_mode == ELECTRIC) 
+		{
+			test = heating_element_capacity * (actual_voltage*actual_voltage) / (nominal_voltage*nominal_voltage);
+		} 
+		else 
+		{
+			if (heat_mode == HEAT_PUMP)
+			{
+				// compressor should turn on?
+				if (energytake < compressor_max_threshold && energytake > compressor_min_threshold && !heating_element_on && !turn_fan_on)
+				{
+					// 0.42
+					heating_element_capacity =  nominal_voltage * 0.00175;
+				}
+				else if (energytake >= heating_element_min_threshold && !turn_fan_on)
+				{
+					// 4.8
+					heating_element_capacity = (nominal_voltage * 0.020);// Threshold for the compressor 
+					heating_element_on = true;
+				}
+				else{
+					heating_element_capacity = 0;
+				}
+			}
+			test = heating_element_capacity;			
+		}
+			// @TODO: We don't have a voltage dependence for the heat pump yet...but we should
+			//   Using variables from HPWH project...should be pulled out at some point			
+		return test;		
     }
 	else
 		return 0.0;
@@ -1667,15 +1855,16 @@ inline double waterheater::new_temp_1node(double T0, double delta_t)
 	const double c1 = (tank_UA + mdot_Cp) / Cw;
 	double c2;
 	if (heat_mode == HEAT_PUMP) {
+
 		// @TODO: These values were created from HPWH project; need to make them more accessible
 		HP_COP = (1.04 + (1.21 - 1.04) * (get_Tambient(location) - 50) / (70 - 50)) * (5.259 - 0.0255 * Tw);
-		c2 = (actual_kW()*BTUPHPKW*HP_COP + mdot_Cp*Tinlet + tank_UA*get_Tambient(location)) / (tank_UA + mdot_Cp);
+
+		c2 = (actual_kW()*BTUPHPKW*HP_COP_PSU + mdot_Cp*Tinlet + tank_UA*get_Tambient(location)) / (tank_UA + mdot_Cp);
+		// return Tw_hp;
 	} else {
 		c2 = (actual_kW()*BTUPHPKW + mdot_Cp*Tinlet + tank_UA*get_Tambient(location)) / (tank_UA + mdot_Cp);
 	}
-
-//	return  c2 - (c2 + T0) * exp(c1 * delta_t);	// [F]
-	return  c2 - (c2 - T0) * exp(-c1 * delta_t);	// [F]
+	return  c2 - (c2 - T0) * exp(-c1 * delta_t); // [F]
 }
 
 
@@ -1715,7 +1904,7 @@ inline double waterheater::new_h_2zone(double h0, double delta_t)
 	double cA;
 	if (heat_mode == HEAT_PUMP) {
 		// @TODO: These values were created from HPWH project; need to make them more accessible
-		HP_COP = (1.04 + (1.21 - 1.04) * (get_Tambient(location) - 50) / (70 - 50)) * (5.259 - 0.0255 * Tw);
+		HP_COP = (1.04 + (1.21 - 1.04) * (get_Tambient(location) - 50) / (70 - 50)) * (5.259 - 0.0255 * Tw_hp);
 		cA = -mdot / (RHOWATER * area) + (actual_kW()*BTUPHPKW*HP_COP + tank_UA * (get_Tambient(location) - Tlower)) / c1;
 	} else {
 		cA = -mdot / (RHOWATER * area) + (actual_kW()*BTUPHPKW + tank_UA * (get_Tambient(location) - Tlower)) / c1;
@@ -1824,8 +2013,6 @@ int waterheater::multilayer_time_to_transition() {
 	t_return = time_new*(int)discrete_step_size;
 //	auto stop = std::chrono::high_resolution_clock::now();
 //	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-//	std::cout << "waterheater while loop took: " << duration.count() << " microseconds" << std::endl;
-//	std::cout << "waterheater calculates " << time_new << " seconds to next state changes." << std::endl;
 	return t_return;
 }
 
