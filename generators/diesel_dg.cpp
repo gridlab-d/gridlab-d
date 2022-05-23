@@ -1316,11 +1316,32 @@ int diesel_dg::init(OBJECT *parent)
 
 		// If P_CONSTANT mode, change power_val based on given P_CONSTANT_Pref value
 		if (Governor_type == P_CONSTANT) {
+			if (gen_base_set_vals.Pref == -99.0){
+				// Pref has not been initialized
+				gl_warning("diesel_dg:%s - Pref unset in P_CONSTANT mode. Setting to sum of power_out_X.",obj->name?obj->name:"unnamed");
+				/*  TROUBLESHOOT
+				The diesel_dg object is operating with a governor of type P_CONSTANT.
+				In this mode propertie Pref should be set in the glm.
+				Since this was not done, it is set to the sum of (power_out_A + power_out_B + power_out_C)/Rated_VA
+				*/
+				gen_base_set_vals.Pref = (power_val[0].Re() + power_val[1].Re() + power_val[2].Re())/Rated_VA;
+			}
+			
 			for (int i = 0; i < 3; i++) {
 				power_val[i].Re() = Rated_VA * gen_base_set_vals.Pref/3;
 			}
 		}
 		if (SEXS_mode == SEXS_CQ) {
+			if (gen_base_set_vals.Pref == -99.0){
+				// Qref has not been initialized
+				gl_warning("diesel_dg:%s - Qref unset in SEXS_CQ mode. Setting to sum of power_out_X.",obj->name?obj->name:"unnamed");
+				/*  TROUBLESHOOT
+				The diesel_dg object is operating constant Q mode.
+				In this mode propertie Qref should be set in the glm.
+				Since this was not done, it is set to the sum of (power_out_A + power_out_B + power_out_C)/Rated_VA
+				*/
+				gen_base_set_vals.Qref = (power_val[0].Im() + power_val[1].Im() + power_val[2].Im())/Rated_VA;
+			}
 			for (int i = 0; i < 3; i++) {
 				power_val[i].Im() = Rated_VA * gen_base_set_vals.Qref/3;
 			}
