@@ -1405,38 +1405,47 @@ int diesel_dg::init(OBJECT *parent)
 		//Check for zeros - if any are zero, 50% them (real generator, arbitrary)
 		if (power_val[0].Mag() == 0.0)
 		{
-			gl_warning("diesel_dg:%s - power_out_A is zero - arbitrarily setting to 50%%",obj->name?obj->name:"unnamed");
+			gl_warning("diesel_dg:%s - power_out_A is zero",obj->name?obj->name:"unnamed");
 			/*  TROUBLESHOOT
 			The diesel_dg object has a power_out_A value that is zero.  This can cause the generator to never
 			partake in the powerflow.  It is being arbitrarily set to 50% of the per-phase rating.  If this is
 			undesired, please change the value.
 			*/
+<<<<<<< HEAD
 
 			power_val[0] = gld::complex(0.5*power_base,0.0);
+=======
+>>>>>>> a79d84ae (Allow diesel_dg to initialize to zero)
 		}
 
 		if (power_val[1].Mag() == 0.0)
 		{
-			gl_warning("diesel_dg:%s - power_out_B is zero - arbitrarily setting to 50%%",obj->name?obj->name:"unnamed");
+			gl_warning("diesel_dg:%s - power_out_B is zero",obj->name?obj->name:"unnamed");
 			/*  TROUBLESHOOT
 			The diesel_dg object has a power_out_B value that is zero.  This can cause the generator to never
 			partake in the powerflow.  It is being arbitrarily set to 50% of the per-phase rating.  If this is
 			undesired, please change the value.
 			*/
+<<<<<<< HEAD
 
 			power_val[1] = gld::complex(0.5*power_base,0.0);
+=======
+>>>>>>> a79d84ae (Allow diesel_dg to initialize to zero)
 		}
 
 		if (power_val[2].Mag() == 0.0)
 		{
-			gl_warning("diesel_dg:%s - power_out_C is zero - arbitrarily setting to 50%%",obj->name?obj->name:"unnamed");
+			gl_warning("diesel_dg:%s - power_out_C is zero",obj->name?obj->name:"unnamed");
 			/*  TROUBLESHOOT
 			The diesel_dg object has a power_out_C value that is zero.  This can cause the generator to never
 			partake in the powerflow.  It is being arbitrarily set to 50% of the per-phase rating.  If this is
 			undesired, please change the value.
 			*/
+<<<<<<< HEAD
 
 			power_val[2] = gld::complex(0.5*power_base,0.0);
+=======
+>>>>>>> a79d84ae (Allow diesel_dg to initialize to zero)
 		}
 
 		if (apply_rotor_speed_convergence)
