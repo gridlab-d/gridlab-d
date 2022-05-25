@@ -72,7 +72,7 @@ GLOBAL unsigned global_version_major INIT(REV_MAJOR); /**< The software's major 
 GLOBAL unsigned global_version_minor INIT(REV_MINOR); /**< The software's minor version */
 GLOBAL unsigned global_version_patch INIT(REV_PATCH); /**< The software's patch version */
 GLOBAL unsigned global_version_build INIT(0); /**< The software's build number */
-GLOBAL char global_version_branch[32] INIT(""); /**< The software's branch designator */
+GLOBAL char global_version_branch[256] INIT(""); /**< The software's branch designator */
 
 GLOBAL char global_command_line[1024]; /**< The current command-line */
 GLOBAL char global_environment[1024] INIT("batch"); /**< The processing environment in use */
@@ -147,7 +147,15 @@ GLOBAL TIMESTAMP global_stoptime INIT(TS_NEVER); /**< The simulation stop time (
 
 GLOBAL char global_double_format[32] INIT("%+lg"); /**< the format to use when processing real numbers */
 GLOBAL char global_complex_format[256] INIT("%+lg%+lg%c"); /**< the format to use when processing complex numbers */
-//GLOBAL char global_complex_format[256] INIT("%+8.4f%+8.4f%c"); /**< the format to use when processing complex numbers */
+
+typedef enum {
+	CNF_DEFAULT, 	/**< complex numbers are left to whatever format the notation flag is set to */
+	CNF_RECT,     	/**< complex numbers are forced into rectangular format for outputs */
+	CNF_POLAR_DEG, 	/**< complex numbers are forced into polar format with degree angles */
+	CNF_POLAR_RAD, 	/**< complex numbers are forced into polar format with radian angles */
+} COMPLEXCONVERFORMAT; /**< determines the type of run */
+GLOBAL COMPLEXCONVERFORMAT global_complex_output_format INIT(CNF_DEFAULT);	/**< use whatever the numbers already are */
+
 GLOBAL char global_object_format[32] INIT("%s:%d"); 
 GLOBAL char global_object_scan[32] INIT("%[^:]:%d"); /**< the format to use when scanning for object ids */
 
@@ -250,7 +258,9 @@ typedef enum {
 	DMF_SOFTEVENT	= 0x01,/**< event is soft */
 } DELTAMODEFLAGS; /**< delta mode flags */
 GLOBAL SIMULATIONMODE global_simulation_mode INIT(SM_INIT); /**< simulation mode */
+GLOBAL double global_deltamode_timestep_pub INIT(10000000.0); /**< delta mode time step in ns (default is 10ms) - published value (for unit conversions) */
 GLOBAL DT global_deltamode_timestep INIT(10000000); /**< delta mode time step in ns (default is 10ms) */
+GLOBAL double global_deltamode_maximumtime_pub INIT(3600000000000.0); /**< the maximum time (in ns) delta mode is allowed to run without an event (default is 1 hour) - published (for unit conversions) */
 GLOBAL DELTAT global_deltamode_maximumtime INIT(3600000000000); /**< the maximum time (in ns) delta mode is allowed to run without an event (default is 1 hour) */
 GLOBAL DELTAT global_deltaclock INIT(0); /**< the cumulative delta runtime with respect to the global clock */
 GLOBAL double global_delta_curr_clock INIT(0.0);	/**< Deltamode clock offset by main clock (not just delta offset) */
@@ -258,6 +268,7 @@ GLOBAL char global_deltamode_updateorder[1025] INIT(""); /**< the order in which
 GLOBAL unsigned int global_deltamode_iteration_limit INIT(10);	/**< Global iteration limit for each delta timestep (object and interupdate calls) */
 GLOBAL unsigned int global_deltamode_forced_extra_timesteps INIT(0);	/**< Deltamode forced extra time steps -- once all items want SM_EVENT, this will force this many more updates */
 GLOBAL bool global_deltamode_forced_always INIT(false);	/**< Deltamode flag - prevents exit from deltamode (no SM_EVENT) -- mainly for debugging purposes */
+GLOBAL bool global_deltamode_force_preferred_order INIT(true);	/** Deltamode flag - orders modules in deltamode execution according to preferred execution order - false will make it load based on GLM order */
 
 /* master/slave */
 GLOBAL char global_master[1024] INIT(""); /**< master hostname */

@@ -107,12 +107,10 @@ battery::battery(MODULE *module)
 
 			//PT_int64, "generator_mode_choice", PADDR(generator_mode_choice),
 
-			PT_double, "Rated_kVA[kVA]", PADDR(Rated_kVA), PT_DESCRIPTION, "LEGACY MODEL: the rated power of the battery.",
 			//PT_double, "Rated_kV[kV]", PADDR(Rated_kV),
 			PT_complex, "V_Out[V]", PADDR(V_Out), PT_DESCRIPTION, "LEGACY MODEL: the AC voltage at the terminals of the battery.",
 			PT_complex, "I_Out[A]", PADDR(I_Out), PT_DESCRIPTION, "LEGACY MODEL: the AC current output of the battery.",
 			PT_complex, "VA_Out[VA]", PADDR(VA_Out), PT_DESCRIPTION, "LEGACY MODEL: the power output of the battery.",
-			PT_complex, "V_In[V]", PADDR(V_In), PT_DESCRIPTION, "LEGACY MODEL: the voltage at the terminals of the battery.",
 			PT_complex, "I_In[A]", PADDR(I_In), PT_DESCRIPTION, "LEGACY MODEL: the current flowing into the battery of the battery.",
 			PT_complex, "V_Internal[V]", PADDR(V_Internal), PT_DESCRIPTION, "LEGACY MODEL: the internal voltage of the battery.",
 			PT_complex, "I_Internal[A]",PADDR(I_Internal), PT_DESCRIPTION, "LEGACY MODEL: the internal current of the battery.",
@@ -136,6 +134,11 @@ battery::battery(MODULE *module)
 			PT_double,"state_of_charge[pu]", PADDR(soc), PT_DESCRIPTION, "INTERNAL BATTERY MODEL: the current state of charge of the battery.",
 			PT_double,"battery_load[W]", PADDR(bat_load), PT_DESCRIPTION, "INTERNAL BATTERY MODEL: the current power output of the battery.",
 			PT_double,"reserve_state_of_charge[pu]", PADDR(b_soc_reserve), PT_DESCRIPTION, "INTERNAL BATTERY MODEL: the reserve state of charge the battery can reach.",
+
+			//DEPRECATED - Remove in next version - variables that basically do nothing
+			PT_double, "Rated_kVA[kVA]", PADDR(Rated_kVA), PT_DEPRECATED, PT_DESCRIPTION, "LEGACY MODEL: the rated power of the battery.",
+			PT_complex, "V_In[V]", PADDR(V_In), PT_DEPRECATED, PT_DESCRIPTION, "LEGACY MODEL: the voltage at the terminals of the battery.",
+
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		defaults = this;
 		memset(this,0,sizeof(battery));
@@ -178,17 +181,12 @@ int battery::create(void)
 	sensitivity = 0.5;
 	
 	Max_P = 0;//< maximum real power capacity in kW
-    Min_P = 0;//< minimus real power capacity in kW
-	
-	Rated_kVA = 1; //< nominal capacity in kVA
 	
 	efficiency =  0;
 	base_efficiency = 0;
 	Iteration_Toggle = false;
 
 	E_Next = 0;
-	connected = true;
-	gld::complex VA_Internal;
 
 	use_internal_battery_model = false;
 	soc = -1;
@@ -410,19 +408,19 @@ int battery::init(OBJECT *parent)
 				phases = 0x00;
 
 				//Map up the two inverter variabes
-				pCircuit_V[0] = map_complex_value(parent,"V_In");
+				pCircuit_V[0] = map_double_value(parent,"V_In");
 				pCircuit_V[1] = NULL;
 				pCircuit_V[2] = NULL;
 
-				pLine_I[0] = map_complex_value(parent,"I_In");
+				pLine_I[0] = map_double_value(parent,"I_In");
 				pLine_I[1] = NULL;
 				pLine_I[2] = NULL;
 
 				peff = map_double_value(parent,"inverter_efficiency");
-				pinverter_VA_Out = map_complex_value(parent,"VA_Out");
+				pinverter_VA_Out = map_double_value(parent,"P_Out");
 
 				//Pull the initial voltage value, to be consistent
-				value_Circuit_V[0] = pCircuit_V[0]->get_complex();
+				value_Circuit_V[0] = complex(pCircuit_V[0]->get_double(),0.0);
 			}
 			else	//Not a proper parent
 			{
@@ -1925,12 +1923,26 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//See if the property was valid (since not sure what we are here -- meter or inverter)
 			if (pCircuit_V[0] != NULL)
 			{
-				value_Circuit_V[0] = pCircuit_V[0]->get_complex();
+				if (parent_is_inverter == true)
+				{
+					value_Circuit_V[0] = complex(pCircuit_V[0]->get_double(), 0.0);
+				}
+				else
+				{
+					value_Circuit_V[0] = pCircuit_V[0]->get_complex();
+				}
 			}
 
 			if (pLine_I[0] != NULL)
 			{
-				value_Line_I[0] = pLine_I[0]->get_complex();
+				if (parent_is_inverter == true)
+				{
+					value_Line_I[0] = complex(pLine_I[0]->get_double(), 0.0);
+				}
+				else
+				{
+					value_Line_I[0] = pLine_I[0]->get_complex();
+				}
 			}
 
 			V_Out = value_Circuit_V[0];
@@ -2032,7 +2044,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 				//gl_verbose("battery sync: discharging");
 				if(Energy == 0 || Energy <= margin){ 
 					//gl_verbose("battery sync: battery is empty!");
-					if(connected){
+					// if(connected){//Connected was always true
 						//gl_verbose("battery sync: empty BUT it is connected, passing request onward");
 						I_In = I_Max + gld::complex(fabs(I_Out.Re()), fabs(I_Out.Im())); //power was asked for to discharge but battery is empty, forward request along the line
 						I_Prev = I_Max / efficiency;
@@ -2041,22 +2053,22 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 						E_Next = Energy + (((I_In - gld::complex(fabs(I_Out.Re()), fabs(I_Out.Im()))) * V_Internal / efficiency) * t2).Re();  // the energy level at t1
 						TIMESTAMP t3 = rfb_event_time(t0, (I_In - gld::complex(fabs(I_Out.Re()), fabs(I_Out.Im()))) * V_Internal / efficiency, Energy);
 						return t3;
-					}
-					else{
-						//gl_verbose("battery sync: battery is empty with nothing connected!  drop request!");
-						I_In = 0;
-						I_Prev = 0;
-						V_In = V_Out;
-						VA_Out = 0;
-						E_Next = 0;
-						recalculate = false;
-						return TS_NEVER;
-					}
+					// }
+					// else{
+					// 	//gl_verbose("battery sync: battery is empty with nothing connected!  drop request!");
+					// 	I_In = 0;
+					// 	I_Prev = 0;
+					// 	V_In = V_Out;
+					// 	VA_Out = 0;
+					// 	E_Next = 0;
+					// 	recalculate = false;
+					// 	return TS_NEVER;
+					// }
 				}
 
 				if((Energy + (V_Internal * I_Prev.Re()).Re() * t2) <= margin){ //headed to empty
 					//gl_verbose("battery sync: battery is headed to empty");
-					if(connected){
+					// if(connected){//Connected was always true
 						//gl_verbose("battery sync: BUT battery is connected, so pass request onward");
 						I_In = I_Max + gld::complex(fabs(I_Out.Re()), fabs(I_Out.Im())); //this won't let the battery go empty... change course
 						I_Prev = I_Max / efficiency;
@@ -2065,15 +2077,15 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 						recalculate = false;
 						TIMESTAMP t3 = rfb_event_time(t0, (I_In - gld::complex(fabs(I_Out.Re()), fabs(I_Out.Im()))) * V_Internal / efficiency, Energy);
 						return t3;
-					}else{
-						//gl_verbose("battery sync: battery is about to be empty with nothing connected!!");
-						TIMESTAMP t3 = rfb_event_time(t0, VA_Internal, Energy);
-						E_Next = 0; //expecting return when time is empty
-						I_In = 0; 
-						I_Prev = 0;
-						recalculate = false;
-						return t3;
-					}
+					// }else{
+					// 	//gl_verbose("battery sync: battery is about to be empty with nothing connected!!");
+					// 	TIMESTAMP t3 = rfb_event_time(t0, VA_Internal, Energy);
+					// 	E_Next = 0; //expecting return when time is empty
+					// 	I_In = 0;
+					// 	I_Prev = 0;
+					// 	recalculate = false;
+					// 	return t3;
+					// }
 				}else{ // doing fine
 					//gl_verbose("battery sync: battery is not empty, demand supplied from the battery");
 					E_Next = Energy + (VA_Internal.Re() * t2);
@@ -2086,7 +2098,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 			}else if (VA_Out > 0){ //charging
 				if(Energy >= (E_Max - margin)){
 					//gl_verbose("battery sync: battery is full!");
-					if(connected){
+					// if(connected){//Connected was always true
 						//attempt to let other items serve the load if the battery is full instead of draining the battery
 						//gl_verbose("battery sync: battery is full and connected, passing the power request onward");
 						E_Next = Energy;
@@ -2094,15 +2106,15 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 						I_Prev = 0;
 						recalculate = false;
 						return TS_NEVER;
-					}else{
-						//gl_verbose("battery sync: battery is full, and charging");
-						I_In = I_Out = 0; //can't charge any more... drop the current somehow?
-						I_Prev = 0;
-						V_Out = V_Out; // don't drop V_Out in this case
-						VA_Out = 0;
-						E_Next = Energy;
-						return TS_NEVER;
-					}
+					// }else{
+					// 	//gl_verbose("battery sync: battery is full, and charging");
+					// 	I_In = I_Out = 0; //can't charge any more... drop the current somehow?
+					// 	I_Prev = 0;
+					// 	V_Out = V_Out; // don't drop V_Out in this case
+					// 	VA_Out = 0;
+					// 	E_Next = Energy;
+					// 	return TS_NEVER;
+					// }
 				}
 
 				if(Energy + ((V_Internal * I_Prev.Re()) * efficiency * t2).Re() >= (E_Max - margin)){ //if it is this far, it is charging at max
@@ -2114,7 +2126,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 					recalculate = false;
 					return t3;
 				}else{
-					if(connected){
+					// if(connected){	//Connected was always true
 						//gl_verbose("battery sync: battery is charging but not yet full, connected");
 						//if it is connected, use whatever is connected to help it charge;
 						I_In = I_Max - I_Out; // total current in is now I_Max
@@ -2123,15 +2135,15 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 						recalculate = false;
 						TIMESTAMP t3 = rfb_event_time(t0, (I_Max * V_Internal * efficiency), Energy);
 						return t3;
-					}else{
-						//gl_verbose("battery sync: battery is charging but not yet full, not connected");
-						I_In = 0;
-						I_Prev = 0;
-						E_Next = Energy + (VA_Internal * t2).Re();
-						recalculate = false;
-						TIMESTAMP t3 = rfb_event_time(t0, VA_Internal, Energy);
-						return t3;
-					}
+					// }else{
+					// 	//gl_verbose("battery sync: battery is charging but not yet full, not connected");
+					// 	I_In = 0;
+					// 	I_Prev = 0;
+					// 	E_Next = Energy + (VA_Internal * t2).Re();
+					// 	recalculate = false;
+					// 	TIMESTAMP t3 = rfb_event_time(t0, VA_Internal, Energy);
+					// 	return t3;
+					// }
 				}
 			}else{// VA_Out = 0
 				//gl_verbose("battery sync: battery is not charging or discharging");
@@ -2431,7 +2443,7 @@ double battery::check_state_change_time_delta(unsigned int64 delta_time, unsigne
 	//Retrieve the inverter properties
 	if (parent_is_inverter == true)
 	{
-		inv_VA_out_value = pinverter_VA_Out->get_complex();
+		inv_VA_out_value = complex(pinverter_VA_Out->get_double(), 0.0);
 		inv_eff_value = peff->get_double();
 	}
 

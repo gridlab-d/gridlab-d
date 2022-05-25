@@ -97,8 +97,8 @@ object inverter {
 	VW_V2 1.1;
 	VW_P2 0.0;
 //	volt_var_control_lockout 10.0; // shared with VOLT_VAR
-	V_In 200.0+0.0j;
-	I_In 200.0+0.0j;
+	V_In 200.0;
+	I_In 200.0;
 }
 
 object recorder {

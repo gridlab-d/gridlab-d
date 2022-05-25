@@ -390,7 +390,7 @@ static int server_inaddr(int argc, char *argv[])
 }
 static int version(int argc, char *argv[])
 {
-	output_message("GridLAB-D %d.%d.%d-%d (%s) %d-bit %s %s", 
+	output_message("GridLAB-D %d.%d.%d-%d (%.48s) %d-bit %s %s", 
 		global_version_major, global_version_minor, global_version_patch, 
 		global_version_build, global_version_branch, 8*sizeof(void*), global_platform,
 #ifdef _DEBUG

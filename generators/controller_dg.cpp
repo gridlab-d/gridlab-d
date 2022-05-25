@@ -75,16 +75,24 @@ int controller_dg::create(void)
 
 	controlTime = 0;
 
+	pDG = NULL;
+	GenPobj = NULL;
+	Switch_Froms = NULL;
+	pSwitchObjs = NULL;
+
 	return 1;
 }
 
 /* Object initialization is called once after all object have been created */
 int controller_dg::init(OBJECT *parent)
 {
-	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *thisobj = OBJECTHDR(this);
+	OBJECT *obj;
+	gld_property *temp_prop;
+	gld_object *temp_from, *temp_to;
 
 	//Set the deltamode flag, if desired
-	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)
+	if ((thisobj->flags & OF_DELTAMODE) == OF_DELTAMODE)
 	{
 		deltamode_inclusive = true;	//Set the flag and off we go
 	}
@@ -117,44 +125,72 @@ int controller_dg::init(OBJECT *parent)
 	obj = NULL;
 	int index = 0;
 	if(dgs != NULL){
-		pDG = (diesel_dg **)gl_malloc(dgs->hit_count*sizeof(diesel_dg*));
-		DGpNdName = (char **)gl_malloc(dgs->hit_count*sizeof(char*));
+		pDG = (DG_VARS *)gl_malloc(dgs->hit_count*sizeof(DG_VARS));
 		if(pDG == NULL){
 			gl_error("Failed to allocate diesel_dg array.");
 			return TS_NEVER;
 		}
 
-		GenPobj = (node **)gl_malloc(dgs->hit_count*sizeof(node*));
+		GenPobj = (NODE_VARS *)gl_malloc(dgs->hit_count*sizeof(NODE_VARS));
 
 		while(obj = gl_find_next(dgs,obj)){
 
-			// Store each generator parented node name,
-			// so that the corresponding connected switch can be found
-			OBJECT *dgParent = obj->parent;
-			if(dgParent == NULL){
-				gl_error("Failed to find diesel_dg parent node object.");
+			//Verify it is a proper object
+			if (gl_object_isa(obj,"diesel_dg","generators") == false)
+			{
+				gl_error("Invalid diesel_dg object");
 				return 0;
 			}
-			DGpNdName[index] = dgParent->name;
 
 			// Store generator data pointer
 			if(index >= dgs->hit_count){
 				break;
 			}
-			pDG[index] = OBJECTDATA(obj,diesel_dg);
-			if(pDG[index] == NULL){
-				gl_error("Unable to map object as diesel_dg object.");
+
+			// Store each generator parented node name,
+			// so that the corresponding connected switch can be found
+			pDG[index].parent = obj->parent;
+			pDG[index].obj = obj;
+
+			if(pDG[index].parent == NULL){
+				gl_error("Failed to find diesel_dg parent node object.");
 				return 0;
 			}
 
+			//Map properties
+			pDG[index].Pref_prop = map_double_value(obj,"Pref");
+			pDG[index].Vset_prop = map_double_value(obj,"Vset");
+			pDG[index].omega_prop = map_double_value(obj,"rotor_speed");
 
-			// Find DG parent node, and corresponding positive voltage
-			// Find DG parent object data
-			node *tempNode = OBJECTDATA(dgParent,node);
-			if(tempNode == NULL){
-				gl_error("Unable to map object as diesel_dg object.");
-			}
-			GenPobj[index] = tempNode;
+			//Pull the values
+			pDG[index].Pref = pDG[index].Pref_prop->get_double();
+			pDG[index].Vset = pDG[index].Vset_prop->get_double();
+			pDG[index].omega = pDG[index].omega_prop->get_double();
+
+			//Pull the omega_ref (one time)
+			temp_prop = map_double_value(obj,"omega_ref");
+			pDG[index].omega_ref = temp_prop->get_double();
+
+			//clear it
+			delete temp_prop;
+
+			//Pull parent properties
+			GenPobj[index].obj = pDG[index].parent;
+			GenPobj[index].voltage_A_prop = map_complex_value(GenPobj[index].obj,"voltage_A");
+			GenPobj[index].voltage_B_prop = map_complex_value(GenPobj[index].obj,"voltage_B");
+			GenPobj[index].voltage_C_prop = map_complex_value(GenPobj[index].obj,"voltage_C");
+
+			//Get initial values
+			GenPobj[index].voltage_A = GenPobj[index].voltage_A_prop->get_complex();
+			GenPobj[index].voltage_B = GenPobj[index].voltage_B_prop->get_complex();
+			GenPobj[index].voltage_C = GenPobj[index].voltage_C_prop->get_complex();
+
+			//Get nominal voltage (temporary)
+			temp_prop = map_double_value(GenPobj[index].obj,"nominal_voltage");
+			GenPobj[index].nominal_voltage = temp_prop->get_double();
+
+			//Clear it
+			delete temp_prop;
 
 			++index;
 		}
@@ -204,11 +240,19 @@ int controller_dg::init(OBJECT *parent)
 	index = 0;
 	if(switches != NULL){
 
-		dgSwitchObj = (OBJECT**)gl_malloc(dgs->hit_count*sizeof(OBJECT*));
-		pSwitch = (switch_object **)gl_malloc(dgs->hit_count*sizeof(switch_object*));
-		if(pSwitch == NULL){
+		//Allocate switch "from" node items
+		Switch_Froms = (NODE_VARS *)gl_malloc(dgs->hit_count*sizeof(NODE_VARS));
+		if (Switch_Froms == NULL)
+		{
 			gl_error("Failed to allocate switch array.");
-			return TS_NEVER;
+			return 0;
+		}
+
+		pSwitchObjs = (SWITCH_VARS *)gl_malloc(dgs->hit_count*sizeof(pSwitchObjs));
+		if (pSwitchObjs == NULL)
+		{
+			gl_error("Failed to allocate switch array");
+			return 0;
 		}
 
 		while(obj = gl_find_next(switches,obj)){
@@ -216,29 +260,93 @@ int controller_dg::init(OBJECT *parent)
 				break;
 			}
 
-			// Search for switches that connected to the generators
-			switch_object *temp_switch = OBJECTDATA(obj,switch_object);
-
 			// Obtain the voltage and frequency values for each switch
 			// Get the switch from node object
-			char *temp_from_name = temp_switch->from->name;
-			char *temp_to_name = temp_switch->to->name;
+
+			/* Get the from node */
+			temp_prop = new gld_property(obj, "from");
+			// Double check the validity
+			if ((temp_prop->is_valid() != true) || (temp_prop->is_objectref() != true))
+			{
+				GL_THROW("controller_dg:%d %s Failed to map the switch property 'from'!",thisobj->id, (thisobj->name ? thisobj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to map the a property from the switch object, an error occurred.  Please try again.
+				If the error persists, please submit your GLM and a bug report to the ticketing system.
+				*/
+			}
+
+			temp_from = temp_prop->get_objectref();
+			delete temp_prop;
+
+			/* Get the from node */
+			temp_prop = new gld_property(obj, "to");
+			// Double check the validity
+			if ((temp_prop->is_valid() != true) || (temp_prop->is_objectref() != true))
+			{
+				GL_THROW("controller_dg:%d %s Failed to map the switch property 'to'!",thisobj->id, (thisobj->name ? thisobj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to map the a property to the switch object, an error occurred.  Please try again.
+				If the error persists, please submit your GLM and a bug report to the ticketing system.
+				*/
+			}
+
+			temp_to = temp_prop->get_objectref();
+			delete temp_prop;
 
 			bool found = false;
+			OBJECT *fnd_obj = NULL;
 			for (int i = 0; i < dgs->hit_count; i++) {
-				if (strcmp(temp_from_name, DGpNdName[i]) == 0 || strcmp(temp_to_name, DGpNdName[i]) == 0) {
+				if (strcmp(temp_from->get_name(), pDG[i].parent->name) == 0 || strcmp(temp_to->get_name(), pDG[i].parent->name) == 0) {
 					found = true;
+					fnd_obj = pDG[i].parent;
 					break;
 				}
 			}
 			if (found == true) {
 				// Store the switches that connected to the generatos
-				pSwitch[dgswitchFound] = OBJECTDATA(obj,switch_object);
-				dgSwitchObj[dgswitchFound] = obj;
-				if(pSwitch[dgswitchFound] == NULL){
-					gl_error("Unable to map object as switch object.");
-					return 0;
+				//Get node properties
+				Switch_Froms[dgswitchFound].obj = fnd_obj;
+				Switch_Froms[dgswitchFound].voltage_A_prop = map_complex_value(fnd_obj,"voltage_A");
+				Switch_Froms[dgswitchFound].voltage_B_prop = map_complex_value(fnd_obj,"voltage_B");
+				Switch_Froms[dgswitchFound].voltage_C_prop = map_complex_value(fnd_obj,"voltage_C");
+				Switch_Froms[dgswitchFound].voltage_A = Switch_Froms[dgswitchFound].voltage_A_prop->get_complex();
+				Switch_Froms[dgswitchFound].voltage_B = Switch_Froms[dgswitchFound].voltage_B_prop->get_complex();
+				Switch_Froms[dgswitchFound].voltage_C = Switch_Froms[dgswitchFound].voltage_C_prop->get_complex();
+
+				//Get nominal voltage (temporary)
+				temp_prop = map_double_value(fnd_obj,"nominal_voltage");
+				Switch_Froms[dgswitchFound].nominal_voltage = temp_prop->get_double();
+
+				//Clear it
+				delete temp_prop;
+
+				//Store the explicit switch
+				pSwitchObjs[dgswitchFound].obj = obj;
+				pSwitchObjs[dgswitchFound].power_out_A_prop = map_complex_value(obj,"power_out_A");
+				pSwitchObjs[dgswitchFound].power_out_B_prop = map_complex_value(obj,"power_out_B");
+				pSwitchObjs[dgswitchFound].power_out_C_prop = map_complex_value(obj,"power_out_C");
+				pSwitchObjs[dgswitchFound].power_in_prop = map_complex_value(obj,"power_in");
+
+				//Map status
+				pSwitchObjs[dgswitchFound].status_prop = new gld_property(obj,"status");
+
+				//Check it
+				if ((pSwitchObjs[dgswitchFound].status_prop->is_valid() != true) || (pSwitchObjs[dgswitchFound].status_prop->is_enumeration() != true))
+				{
+					GL_THROW("controller_dg:%d %s Failed to map the switch property 'status'!",thisobj->id, (thisobj->name ? thisobj->name : "Unnamed"));
+					/*  TROUBLESHOOT
+					While attempting to map the a property to the switch object, an error occurred.  Please try again.
+					If the error persists, please submit your GLM and a bug report to the ticketing system.
+					*/
 				}
+
+				//Pull the values
+				pSwitchObjs[dgswitchFound].power_out_A = pSwitchObjs[dgswitchFound].power_out_A_prop->get_complex();
+				pSwitchObjs[dgswitchFound].power_out_B = pSwitchObjs[dgswitchFound].power_out_B_prop->get_complex();
+				pSwitchObjs[dgswitchFound].power_out_C = pSwitchObjs[dgswitchFound].power_out_C_prop->get_complex();
+				pSwitchObjs[dgswitchFound].power_in = pSwitchObjs[dgswitchFound].power_in_prop->get_complex();
+				pSwitchObjs[dgswitchFound].status_val = pSwitchObjs[dgswitchFound].status_prop->get_enumeration();
+
 				dgswitchFound++;
 			}
 
@@ -429,12 +537,11 @@ SIMULATIONMODE controller_dg::inter_deltaupdate(unsigned int64 delta_time, unsig
 	double deltat, deltath;
 	double temp_double = 0;
 
-	OBJECT *switchFromNdObj = NULL;
-	node *switchFromNd = NULL;
 	gld::complex vtemp[3];
 	double nominal_voltage;
 	FUNCTIONADDR funadd = NULL;
 	int return_val;
+	gld_wlock *test_rlock;
 	unsigned char openPhases[] = {0x04, 0x02, 0x01};
 
 	// Control of the generator switch
@@ -444,37 +551,32 @@ SIMULATIONMODE controller_dg::inter_deltaupdate(unsigned int64 delta_time, unsig
 	for (int index = 0; index < dgswitchFound; index++) {
 
 		// Obtain the switch object so that function can be called
-		obj = dgSwitchObj[index];
+		obj = pSwitchObjs[index].obj;
 
 		// Obtain the voltage and frequency values for each switch
-		// Get the switch from node object
-		switchFromNdObj = gl_get_object(pSwitch[index]->from->name);
-		if (switchFromNdObj==NULL) {
-			throw "Switch from node is not specified";
-			/*  TROUBLESHOOT
-			The from node for a line or link is not connected to anything.
-			*/
-		}
-
-		// Get the switch from node properties
-		switchFromNd = OBJECTDATA(switchFromNdObj,node);
+		//Pull the switch voltages
+		Switch_Froms[index].voltage_A = Switch_Froms[index].voltage_A_prop->get_complex();
+		Switch_Froms[index].voltage_B = Switch_Froms[index].voltage_B_prop->get_complex();
+		Switch_Froms[index].voltage_C = Switch_Froms[index].voltage_C_prop->get_complex();
 
 		// Check switch from node voltages
-		vtemp[0] = switchFromNd->voltage[0];
-		vtemp[1] = switchFromNd->voltage[1];
-		vtemp[2] = switchFromNd->voltage[2];
-		nominal_voltage = switchFromNd->nominal_voltage;
+		vtemp[0] = Switch_Froms[index].voltage_A;
+		vtemp[1] = Switch_Froms[index].voltage_B;
+		vtemp[2] = Switch_Froms[index].voltage_C;
+		nominal_voltage = Switch_Froms[index].nominal_voltage;
 
-		// Call the switch status
-		enumeration phase_A_state_check = pSwitch[index]->phase_A_state;
-		enumeration phase_B_state_check = pSwitch[index]->phase_B_state;
-		enumeration phase_C_state_check = pSwitch[index]->phase_C_state;
+		//Pull the switch properties
+		pSwitchObjs[index].power_out_A = pSwitchObjs[index].power_out_A_prop->get_complex();
+		pSwitchObjs[index].power_out_B = pSwitchObjs[index].power_out_B_prop->get_complex();
+		pSwitchObjs[index].power_out_C = pSwitchObjs[index].power_out_C_prop->get_complex();
+		pSwitchObjs[index].power_in = pSwitchObjs[index].power_in_prop->get_complex();
+		pSwitchObjs[index].status_val = pSwitchObjs[index].status_prop->get_enumeration();
 
 		// Obtain switch real power value of each phase
-		int total_phase_P = pSwitch[index]->power_in.Re();
-		int phase_A_P = pSwitch[index]->indiv_power_out[0].Re();
-		int phase_B_P = pSwitch[index]->indiv_power_out[1].Re();
-		int phase_C_P = pSwitch[index]->indiv_power_out[2].Re();
+		double total_phase_P = pSwitchObjs[index].power_in.Re();
+		double phase_A_P = pSwitchObjs[index].power_out_A.Re();
+		double phase_B_P = pSwitchObjs[index].power_out_B.Re();
+		double phase_C_P = pSwitchObjs[index].power_out_C.Re();
 
 		// Throw warning
 		if (phase_A_P > 0 || phase_B_P > 0 || phase_C_P > 0) {
@@ -489,7 +591,7 @@ SIMULATIONMODE controller_dg::inter_deltaupdate(unsigned int64 delta_time, unsig
 
 
 		// Check whether the voltage and frequency is out of limit when the switch is closed
-		if ((phase_A_state_check == 1 || phase_B_state_check == 1 || phase_C_state_check == 1) &&
+		if ((pSwitchObjs[index].status_val == 1) &&
 			(((*mapped_freq_variable > omega_ref/(2.0*PI)*1.01) || vtemp[0].Mag() > 1.2*nominal_voltage || vtemp[1].Mag() > 1.2*nominal_voltage || vtemp[2].Mag() > 1.2*nominal_voltage)) ||
 			(phase_A_P > 0 || phase_B_P > 0 || phase_C_P > 0))
 		{
@@ -522,11 +624,6 @@ SIMULATIONMODE controller_dg::inter_deltaupdate(unsigned int64 delta_time, unsig
 						*/
 					}
 				}
-
-				//Call the switch status
-				phase_A_state_check = pSwitch[index]->phase_A_state;
-				phase_B_state_check = pSwitch[index]->phase_B_state;
-				phase_C_state_check = pSwitch[index]->phase_C_state;
 
 				// Set up flags and time control time every time the switch status is changed
 				if (flag_switchOn == false) {
@@ -579,13 +676,16 @@ SIMULATIONMODE controller_dg::inter_deltaupdate(unsigned int64 delta_time, unsig
 			ctrlGen[index]->next_state->x = ctrlGen[index]->curr_state->x + predictor_vals.x*deltat;
 			ctrlGen[index]->next_state->Pref_ctrl = ctrlGen[index]->next_state->x + predictor_vals.x*(kp/ki);
 
-			pDG[index]->gen_base_set_vals.Pref = ctrlGen[index]->next_state->Pref_ctrl;
+			//Set value
+			pDG[index].Pref = ctrlGen[index]->next_state->Pref_ctrl;
+			pDG[index].Pref_prop->setp<double>(pDG[index].Pref,*test_rlock);
 
 			// Apply prediction update
 			ctrlGen[index]->next_state->x_QV = ctrlGen[index]->curr_state->x_QV + predictor_vals.x_QV*deltat;
 			ctrlGen[index]->next_state->Vset_ctrl = ctrlGen[index]->next_state->x_QV + predictor_vals.x_QV*(kp_QV/ki_QV);
 
-			pDG[index]->gen_base_set_vals.vset = ctrlGen[index]->next_state->Vset_ctrl;
+			pDG[index].Vset = ctrlGen[index]->next_state->Vset_ctrl;
+			pDG[index].Vset_prop->setp<double>(pDG[index].Vset,*test_rlock);
 		}
 
 		return SM_DELTA_ITER;	//Reiterate - to get us to corrector pass
@@ -603,13 +703,16 @@ SIMULATIONMODE controller_dg::inter_deltaupdate(unsigned int64 delta_time, unsig
 			ctrlGen[index]->next_state->x = ctrlGen[index]->curr_state->x + (predictor_vals.x + corrector_vals.x)*deltath;
 			ctrlGen[index]->next_state->Pref_ctrl = ctrlGen[index]->next_state->x + (predictor_vals.x + corrector_vals.x)*0.5*(kp/ki);
 
-			pDG[index]->gen_base_set_vals.Pref = ctrlGen[index]->next_state->Pref_ctrl;
+			//Set value
+			pDG[index].Pref = ctrlGen[index]->next_state->Pref_ctrl;
+			pDG[index].Pref_prop->setp<double>(pDG[index].Pref,*test_rlock);
 
 			// Apply prediction update
 			ctrlGen[index]->next_state->x_QV = ctrlGen[index]->curr_state->x_QV + (predictor_vals.x_QV + corrector_vals.x_QV)*deltat;
 			ctrlGen[index]->next_state->Vset_ctrl = ctrlGen[index]->next_state->x_QV + (predictor_vals.x_QV + corrector_vals.x_QV)*0.5*(kp_QV/ki_QV);
 
-			pDG[index]->gen_base_set_vals.vset = ctrlGen[index]->next_state->Vset_ctrl;
+			pDG[index].Vset = ctrlGen[index]->next_state->Vset_ctrl;
+			pDG[index].Vset_prop->setp<double>(pDG[index].Vset,*test_rlock);
 
 			// Copy everything back into curr_state, since we'll be back there
 			memcpy(ctrlGen[index]->curr_state,ctrlGen[index]->next_state,sizeof(CTRL_VARS));
@@ -655,8 +758,13 @@ STATUS controller_dg::apply_dynamics(CTRL_VARS *curr_time, CTRL_VARS *curr_delta
 	// Control of the f/p droop
 	curr_delta->x = gain * (curr_time->wref_ctrl-*mapped_freq_variable*2*PI)/omega_ref*ki;
 
+	//Pull values
+	GenPobj[index].voltage_A = GenPobj[index].voltage_A_prop->get_complex();
+	GenPobj[index].voltage_B = GenPobj[index].voltage_B_prop->get_complex();
+	GenPobj[index].voltage_C = GenPobj[index].voltage_C_prop->get_complex();
+
 	// Control of the v/q droop
-	double V_pos_temp = (GenPobj[index]->voltage[0].Mag() + GenPobj[index]->voltage[1].Mag() + GenPobj[index]->voltage[2].Mag())/3.0;
+	double V_pos_temp = (GenPobj[index].voltage_A.Mag() + GenPobj[index].voltage_B.Mag() + GenPobj[index].voltage_C.Mag())/3.0;
 	curr_delta->x_QV = gain_QV * (curr_time->Vset_ref-V_pos_temp)/nominal_voltage*ki_QV;
 
 	return SUCCESS;	//Always succeeds for now, but could have error checks later
@@ -670,22 +778,80 @@ STATUS controller_dg::init_dynamics(CTRL_VARS *curr_time, int index)
 	OBJECT *obj = NULL;
 	double omega = *mapped_freq_variable*2*PI; // not used here since speed of each generator deirectly used
 
-	curr_time->w_measured = pDG[index]->curr_state.omega/pDG[index]->omega_ref;
-	curr_time->x = pDG[index]->gen_base_set_vals.Pref;
+	//Get current frequency
+	pDG[index].omega = pDG[index].omega_prop->get_double();
+	pDG[index].Pref = pDG[index].Pref_prop->get_double();
+	pDG[index].Vset = pDG[index].Vset_prop->get_double();
+
+	curr_time->w_measured = pDG[index].omega/pDG[index].omega_ref;
+	curr_time->x = pDG[index].Pref;
 	curr_time->wref_ctrl = omega_ref;
 	curr_time->Pref_ctrl = curr_time->x;
 
 	// If Vset_ref has not been set yet, define it as the positive voltage values measured before entering the delta mode
 	if (curr_time->Vset_ref < 0) {
+
+		//Pull values
+		GenPobj[index].voltage_A = GenPobj[index].voltage_A_prop->get_complex();
+		GenPobj[index].voltage_B = GenPobj[index].voltage_B_prop->get_complex();
+		GenPobj[index].voltage_C = GenPobj[index].voltage_C_prop->get_complex();
+
 		// Obatain DG terminal positive voltage
-		curr_time->Vset_ref = (GenPobj[index]->voltage[0].Mag() + GenPobj[index]->voltage[1].Mag() + GenPobj[index]->voltage[2].Mag())/3.0;
-		nominal_voltage = GenPobj[index]->nominal_voltage;
+		curr_time->Vset_ref = (GenPobj[index].voltage_A.Mag() + GenPobj[index].voltage_B.Mag() + GenPobj[index].voltage_C.Mag())/3.0;
+		nominal_voltage = GenPobj[index].nominal_voltage;
 	}
-	curr_time->x_QV = pDG[index]->gen_base_set_vals.vset;
+	curr_time->x_QV = pDG[index].Vset;
 	curr_time->Vset_ctrl = curr_time->x_QV;
 
 	return SUCCESS;	//Always succeeds for now, but could have error checks later
 }
+
+//Map Complex value
+gld_property *controller_dg::map_complex_value(OBJECT *obj, const char *name)
+{
+	gld_property *pQuantity;
+	OBJECT *objhdr = OBJECTHDR(this);
+
+	//Map to the property of interest
+	pQuantity = new gld_property(obj,name);
+
+	//Make sure it worked
+	if ((pQuantity->is_valid() != true) || (pQuantity->is_complex() != true))
+	{
+		GL_THROW("controller_dg:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map a quantity from another object, an error occurred in controller_dg.  Please try again.
+		If the error persists, please submit your system and a bug report via the ticketing system.
+		*/
+	}
+
+	//return the pointer
+	return pQuantity;
+}
+
+//Map double value
+gld_property *controller_dg::map_double_value(OBJECT *obj, const char *name)
+{
+	gld_property *pQuantity;
+	OBJECT *objhdr = OBJECTHDR(this);
+
+	//Map to the property of interest
+	pQuantity = new gld_property(obj,name);
+
+	//Make sure it worked
+	if ((pQuantity->is_valid() != true) || (pQuantity->is_double() != true))
+	{
+		GL_THROW("controller_dg:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		While attempting to map a quantity from another object, an error occurred in controller_dg.  Please try again.
+		If the error persists, please submit your system and a bug report via the ticketing system.
+		*/
+	}
+
+	//return the pointer
+	return pQuantity;
+}
+
 
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE

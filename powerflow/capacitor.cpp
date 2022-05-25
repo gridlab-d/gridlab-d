@@ -102,6 +102,10 @@ capacitor::capacitor(MODULE *mod):node(mod)
 			GL_THROW("Unable to publish capacitor deltamode function");
 		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
 			GL_THROW("Unable to publish capacitor swing-swapping function");
+		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
+			GL_THROW("Unable to publish capacitor swing-status check function");
+		if (gl_publish_function(oclass, "pwr_object_kmldata", (FUNCTIONADDR)capacitor_kmldata) == NULL)
+			GL_THROW("Unable to publish capacitor kmldata function");
     }
 }
 
@@ -256,8 +260,15 @@ int capacitor::init(OBJECT *parent)
 		}
 	}
 
+	if ((RLink == NULL) && (control != VARVOLT))
+	{
+		if (parent != NULL) {
+			RLink = parent;
+		}
+	}
+
 	//If RLink is assigned, make sure we aren't the "TO" end
-	if ((RLink != NULL) && (gl_object_isa(RLink,"link","powerflow")))
+	if ((RLink != NULL) && (gl_object_isa(RLink,"link","powerflow")) && (control != MANUAL) && (control != VOLT))
 	{
 		//Double check that the RLink->to isn't us - this will cause some issues with FBS
 		pTempProperty = new gld_property(RLink,"to");
@@ -487,7 +498,7 @@ int capacitor::init(OBJECT *parent)
 	}
 
 	//Map the function for calculate power for RLink, if we're in the method we want
-	if ((control==VAR) || (control==VARVOLT))
+	if (((control==VAR) || (control==VARVOLT)) && gl_object_isa(RLink, "link", "powerflow"))
 	{
 		//Do the map
 		RLink_calculate_power_fxn = (FUNCTIONADDR)(gl_get_function(RLink,"update_power_pwr_object"));
@@ -508,7 +519,11 @@ int capacitor::init(OBJECT *parent)
 	if (RLink != NULL)
 	{
 		//Map to the property of interest - power_in_A
-		RLink_indiv_power_in[0] = new gld_property(RLink,"power_in_A");
+		if (gl_object_isa(RLink, "link", "powerflow")) {
+			RLink_indiv_power_in[0] = new gld_property(RLink,"power_in_A");
+		} else {
+			RLink_indiv_power_in[0] = new gld_property(RLink,"power_A");
+		}
 
 		//Make sure it worked
 		if (!RLink_indiv_power_in[0]->is_valid() || !RLink_indiv_power_in[0]->is_complex())
@@ -521,7 +536,11 @@ int capacitor::init(OBJECT *parent)
 		}
 
 		//Map to the property of interest - power_in_B
-		RLink_indiv_power_in[1] = new gld_property(RLink,"power_in_B");
+		if (gl_object_isa(RLink, "link", "powerflow")) {
+			RLink_indiv_power_in[1] = new gld_property(RLink,"power_in_B");
+		} else {
+			RLink_indiv_power_in[1] = new gld_property(RLink,"power_B");
+		}
 
 		//Make sure it worked
 		if (!RLink_indiv_power_in[1]->is_valid() || !RLink_indiv_power_in[1]->is_complex())
@@ -531,7 +550,11 @@ int capacitor::init(OBJECT *parent)
 		}
 
 		//Map to the property of interest - power_in_C
-		RLink_indiv_power_in[2] = new gld_property(RLink,"power_in_C");
+		if (gl_object_isa(RLink, "link", "powerflow")) {
+			RLink_indiv_power_in[2] = new gld_property(RLink,"power_in_C");
+		} else {
+			RLink_indiv_power_in[2] = new gld_property(RLink,"power_C");
+		}
 
 		//Make sure it worked
 		if (!RLink_indiv_power_in[2]->is_valid() || !RLink_indiv_power_in[2]->is_complex())
@@ -541,7 +564,11 @@ int capacitor::init(OBJECT *parent)
 		}
 
 		//Map to the property of interest - current_in_A
-		RLink_current_in[0] = new gld_property(RLink,"current_in_A");
+		if (gl_object_isa(RLink, "link", "powerflow")) {
+			RLink_current_in[0] = new gld_property(RLink,"current_in_A");
+		} else {
+			RLink_current_in[0] = new gld_property(RLink,"current_inj_A");
+		}
 
 		//Make sure it worked
 		if (!RLink_current_in[0]->is_valid() || !RLink_current_in[0]->is_complex())
@@ -551,7 +578,11 @@ int capacitor::init(OBJECT *parent)
 		}
 
 		//Map to the property of interest - current_in_B
-		RLink_current_in[1] = new gld_property(RLink,"current_in_B");
+		if (gl_object_isa(RLink, "link", "powerflow")) {
+			RLink_current_in[1] = new gld_property(RLink,"current_in_B");
+		} else {
+			RLink_current_in[1] = new gld_property(RLink,"current_inj_B");
+		}
 
 		//Make sure it worked
 		if (!RLink_current_in[1]->is_valid() || !RLink_current_in[1]->is_complex())
@@ -561,7 +592,11 @@ int capacitor::init(OBJECT *parent)
 		}
 
 		//Map to the property of interest - current_in_C
-		RLink_current_in[2] = new gld_property(RLink,"current_in_C");
+		if (gl_object_isa(RLink, "link", "powerflow")) {
+			RLink_current_in[2] = new gld_property(RLink,"current_in_C");
+		} else {
+			RLink_current_in[2] = new gld_property(RLink,"current_inj_C");
+		}
 
 		//Make sure it worked
 		if (!RLink_current_in[2]->is_valid() || !RLink_current_in[2]->is_complex())
@@ -1423,7 +1458,11 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 		READLOCK_OBJECT(RLink);
 
 		//Force the link to do an update (will be ignored first run anyways (zero))
-		return_status = ((int (*)(OBJECT *))(*RLink_calculate_power_fxn))(RLink);
+		if (RLink_calculate_power_fxn != NULL) {
+			return_status = ((int (*)(OBJECT *))(*RLink_calculate_power_fxn))(RLink);
+		} else {
+			return_status = 1;
+		}
 
 		READUNLOCK_OBJECT(RLink);
 
@@ -1852,7 +1891,7 @@ SIMULATIONMODE capacitor::inter_deltaupdate_capacitor(unsigned int64 delta_time,
 {
 	OBJECT *hdr = OBJECTHDR(this);
 	double curr_time_value;	//Current time of simulation
-	double deltat, deltatimedbl;
+	double deltat;
 	double result_dbl;		//Working variable for capacitors
 	int retvalue;	//Working variable for one case
 	bool Phase_Mismatch;	//Working variable
@@ -1867,26 +1906,25 @@ SIMULATIONMODE capacitor::inter_deltaupdate_capacitor(unsigned int64 delta_time,
 	//Update time tracking variable - mostly for GFA functionality calls
 	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
 	{
-		//Get decimal timestamp value
-		deltatimedbl = (double)delta_time/(double)DT_SECOND; 
-
 		//Update tracking variable
-		prev_time_dbl = (double)gl_globalclock + deltatimedbl;
+		prev_time_dbl = gl_globaldeltaclock;
 
 		//Update frequency calculation values (if needed)
 		if (fmeas_type != FM_NONE)
 		{
-			//Copy the tracker value
-			memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+			//See which pass
+			if (delta_time == 0)
+			{
+				//Initialize dynamics - first run of new delta call
+				init_freq_dynamics(deltat);
+			}
+			else
+			{
+				//Copy the tracker value
+				memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+			}
 		}
 	}
-
-	//Initialization items
-	if ((delta_time==0) && (iteration_count_val==0) && (interupdate_pos == false) && (fmeas_type != FM_NONE))	//First run of new delta call
-	{
-		//Initialize dynamics
-		init_freq_dynamics();
-	}//End first pass and timestep of deltamode (initial condition stuff)
 
 	//Perform the GFA update, if enabled
 	if ((GFA_enable == true) && (iteration_count_val == 0) && (interupdate_pos == false))	//Always just do on the first pass
@@ -2093,6 +2131,17 @@ EXPORT SIMULATIONMODE interupdate_capacitor(OBJECT *obj, unsigned int64 delta_ti
 		gl_error("interupdate_capacitor(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
 		return status;
 	}
+}
+
+//KML Export
+EXPORT int capacitor_kmldata(OBJECT *obj,int (*stream)(const char*,...))
+{
+	capacitor *n = OBJECTDATA(obj, capacitor);
+	int rv = 1;
+
+	rv = n->kmldata(stream);
+
+	return rv;
 }
 
 int capacitor::kmldata(int (*stream)(const char*,...))

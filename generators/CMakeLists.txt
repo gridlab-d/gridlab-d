@@ -13,6 +13,8 @@ add_library(${PROJECT_NAME}
         init.cpp
         inverter.cpp
         inverter.h
+        inverter_dyn.cpp
+        inverter_dyn.h
         main.cpp
         rectifier.cpp
         rectifier.h

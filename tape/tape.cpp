@@ -574,6 +574,12 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 								return SM_ERROR;
 							}
 						}
+						else /* Failed - handle accordingly */
+						{
+							/* Assume message was in read_properties */
+							return SM_ERROR;
+						}
+						
 					}
 					/* Defaulted else, not in service, do nothing */
 				}/* End recorder */
@@ -604,6 +610,8 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 			char *fmt = const_cast<char *>("%d/%d/%d %d:%d:%d.%d,%*s");
 			double t = (double)my->next.ts + (double)my->next.ns/1e9;
 			char256 curr_value;
+			TIMESTAMP return_value;
+			int ret_value;
 
 			/* See if we're in service */
 			if ((obj->in_svc_double <= gl_globaldeltaclock) && (obj->out_svc_double >= gl_globaldeltaclock))
@@ -666,7 +674,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 						if (my->target!=NULL)
 						{
 							OBJECT *target = obj->parent ? obj->parent : obj; *** target myself if no parent ***
-							player_write_properties(my, target, my->target, my->next.value);
+							player_write_properties(my, obj, target, my->target, my->next.value);
 						}
 
 						*** Copy the current value into our "tracking" variable ***
@@ -679,10 +687,25 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 					/* Behave similar to "supersecond" players */
 					while ( t<=clock_val )
 					{
-						gl_set_value(obj->parent,GETADDR(obj->parent,my->target),my->next.value,my->target); /* pointer => int64 */
+						ret_value = gl_set_value(obj->parent,GETADDR(obj->parent,my->target),my->next.value,my->target); /* pointer => int64 */
+
+						if (ret_value == 0)
+						{
+							gl_error("player:%d: %s - failure to set or convert property", obj->id, (obj->name?obj->name:"Unnamed"));
+							/*  TROUBLESHOOT
+							While trying to set the value from a player, an error occurred.  Check your file and try again.
+							*/
+							return SM_ERROR;
+						}
 
 						/* read the next value */
-						player_read(obj);
+						return_value = player_read(obj);
+
+						/* Make sure it worked */
+						if (return_value == TS_INVALID)
+						{
+							return SM_ERROR;
+						}
 
 						/* update time */
 						t = (double)my->next.ts + (double)my->next.ns/1e9;
@@ -799,6 +822,11 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 
 					/*  Copy in the last value, just in case */
 					strcpy(myrec->last.value,value);
+				}
+				else	/* Error state */
+				{
+					/* Assume message was in read_properties */
+					return FAILED;
 				}
 			}
 			/* Defaulted else - not in service */

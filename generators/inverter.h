@@ -16,10 +16,11 @@
 
 #include "generators.h"
 
+EXPORT int isa_inverter(OBJECT *obj, char *classname);
 EXPORT STATUS preupdate_inverter(OBJECT *obj,TIMESTAMP t0, unsigned int64 delta_time);
 EXPORT SIMULATIONMODE interupdate_inverter(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 EXPORT STATUS postupdate_inverter(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass);
-EXPORT STATUS inverter_NR_current_injection_update(OBJECT *obj);
+EXPORT STATUS inverter_NR_current_injection_update(OBJECT *obj, int64 iteration_count);
 
 //Alternative PI version Dynamic control Inverter state variable structure
 typedef struct {
@@ -107,6 +108,10 @@ private:
 
 	SIMULATIONMODE desired_simulation_mode;	//deltamode desired simulation mode after corrector pass - prevents starting iterations again
 
+	/* DEPRECATED: delete these - only here so old models work long enough to be yelled at */
+	complex VA_In_deprecated;
+	/* DEPRECATED END */
+
 protected:
 	/* TODO: put unpublished but inherited variables */
 public:
@@ -126,10 +131,12 @@ public:
 	enumeration inverter_dyn_mode;
 	enumeration gen_status_v;
 	//INVERTER_TYPE inverter_type_choice;
-	gld::complex V_In; // V_in (DC)
+	double V_In; // V_in (DC)
 	double Vdc;
-	gld::complex I_In; // I_in (DC)
-	gld::complex VA_In; //power in (DC)
+	double I_In; // I_in (DC)
+	double P_In; //power in (DC)
+
+	gld::complex temp_current_val[3];
 
 	double efficiency;
 
@@ -190,14 +197,13 @@ public:
 	double kipmax;  // Pmax controller integral gain
 	double Pmax;  //Pmax value
 	double Pmin; //Pmin value
+	double Pmax_Low_Limit; //lower output limit of Pmax controller
 
 	double Tvol_delay;    // Time delay for inverter terminal voltage seen by inverter
 	double V_ref[3]; 	   // Voltage reference values for three phases
 	double Qref0[3]; 		   //The initial Qref set before entering the delta mode
 	bool inverter_droop_vq;   // Boolean value indicating whether the v/q droop curve is included in the inverter or not
 	double R_vq;		   // f/p droop curve parameter
-
-	enumeration VSI_bustype;	// Bus type of the inverter parent
 
 	// Parameters related to VSI mode
 	enum VSI_MODE {VSI_ISOCHRONOUS=0, VSI_DROOP=1};
@@ -292,6 +298,10 @@ public:
 	double group_rated_power;		//Sum of the inverter power ratings of the inverters involved in the group power-factor regulation.
 	
 	double inverter_convergence_criterion; //The convergence criteria for the dynamic inverter to exit deltamode
+
+	TIMESTAMP inverter_start_time;
+	bool inverter_first_step;
+	int64 first_iteration_current_injection;	//Initialization variable - mostly so SWING_PQ buses initalize properly for deltamode
 
 	//VoltVar Control Parameters
 	double V_base;
@@ -388,6 +398,9 @@ private:
 	//Comaptibility variables - used to be in power_electronics
 	bool parent_is_a_meter;		//Boolean to indicate if the parent object is a meter/triplex_meter
 	bool parent_is_triplex;		//Boolean to indicate if the parent object is triplex-oriented (for variable exchange)
+	enumeration attached_bus_type;	//Determines attached bus type - mostly for VSI and grid-forming functionality
+
+	FUNCTIONADDR swing_test_fxn;	//Function to map to swing testing function, if needed
 
 	gld_property *pCircuit_V[3];					///< pointer to the three L-N voltage fields
 	gld_property *pLine_I[3];						///< pointer to the three current fields
@@ -407,10 +420,6 @@ private:
 	enumeration value_MeterStatus;				///< value holder for service_status variable on meter parent
 	gld::complex value_Meter_I[3];					///< value holder for meter measured current on three lines
 
-	//int number_of_phases_out;	//Count for number of phases
-	bool phaseAOut;
-	bool phaseBOut;
-	bool phaseCOut;
 	double Max_P;//< maximum real power capacity in kW
 	double Max_Q;//< maximum reactive power capacity in kVar
 	double Rated_kVA; //< nominal capacity in kVA
@@ -479,6 +488,7 @@ private:
 public:
 	/* required implementations */
 	inverter(MODULE *module);
+	int isa(char *classname);
 	int create(void);
 	int init(OBJECT *parent);
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
@@ -488,7 +498,7 @@ public:
 	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 	STATUS post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass);
 	double perform_1547_checks(double timestepvalue);
-	STATUS updateCurrInjection();
+	STATUS updateCurrInjection(int64 iteration_count);
 	gld::complex check_VA_Out(gld::complex temp_VA, double p_max);
 	double getEff(double val);
 public:

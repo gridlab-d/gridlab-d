@@ -65,6 +65,7 @@ EXPORT int create_recorder(OBJECT **obj, OBJECT *parent)
 
 static int recorder_open(OBJECT *obj)
 {
+	bool error_encountered;
 	char32 type="file";
 	char1024 fname="";
 	char32 flags="w";
@@ -72,6 +73,8 @@ static int recorder_open(OBJECT *obj)
 	struct recorder *my = OBJECTDATA(obj,struct recorder);
 	int retvalue;
 	
+	error_encountered = false;
+
 	my->interval = (int64)(my->dInterval/TS_SECOND);
 	/* if prefix is omitted (no colons found) */
 //	if (sscanf(my->file,"%32[^:]:%1024[^:]:%[^:]",type,fname,flags)==1)
@@ -97,6 +100,7 @@ static int recorder_open(OBJECT *obj)
 		my->multifp = fopen(my->multitempfile, "w");
 		if(my->multifp == NULL){
 			gl_error("unable to open \'%s\' for multi-run output", my->multitempfile.get_string());
+			return 0;
 		} else {
 			time_t now=time(NULL);
 
@@ -145,7 +149,7 @@ static int recorder_open(OBJECT *obj)
 						char256 target;
 						sprintf(target, "%s %d", obj->parent->oclass->name, obj->parent->id);
 						if(0 != strncmp(target, data, strlen(data))){
-							gl_error("recorder:%i: re-recording target mismatch: was %s, now %s", obj->id, data, target.get_string());
+							gl_warning("recorder:%i: re-recording target mismatch: was %s, now %s", obj->id, data, target.get_string());
 						}
 					} else if(strncmp(inbuffer, "# trigger", strlen("# trigger")) == 0){
 						// verify same trigger, or absence thereof
@@ -154,27 +158,35 @@ static int recorder_open(OBJECT *obj)
 						// verify same interval
 						int interval = atoi(data);
 						if(interval != my->interval){
-							gl_error("recorder:%i: re-recording interval mismatch: was %i, now %i", obj->id, interval, my->interval);
+							gl_warning("recorder:%i: re-recording interval mismatch: was %i, now %i", obj->id, interval, my->interval);
 						}
 					} else if(strncmp(inbuffer, "# limit", strlen("# limit")) == 0){
 						// verify same limit
 						int limit = atoi(data);
 						if(limit != my->limit){
-							gl_error("recorder:%i: re-recording limit mismatch: was %i, now %i", obj->id, limit, my->limit);
+							gl_warning("recorder:%i: re-recording limit mismatch: was %i, now %i", obj->id, limit, my->limit);
 						}
 					} else if(strncmp(inbuffer, "# property", strlen("# property")) == 0){
 						// verify same columns
 						if(0 != strncmp(my->property, data, strlen(my->property))){
-							gl_error("recorder:%i: re-recording property mismatch: was %s, now %s", obj->id, data, my->property.get_string());
+							gl_warning("recorder:%i: re-recording property mismatch: was %s, now %s", obj->id, data, my->property.get_string());
 						}
 						// next line is full header column list
 						get_col = 1;
 					}
 				} else {
 					gl_error("error reading multi-read input file \'%s\'", my->multifile.get_string());
+					error_encountered = true;
 					break;
 				}
 			} while(inbuffer[0] == '#' && get_col == 0);
+
+			//Check for an error
+			if (error_encountered == true)
+			{
+				return 0;
+			}
+
 			// get full column list
 			if(0 != fgets(inbuffer, 1024, my->inputfp)){
 				int rep=0;
@@ -202,12 +214,20 @@ static int recorder_open(OBJECT *obj)
 					len = (int)strlen(shortstr);
 					if(len > lenmax){
 						gl_error("multi-run recorder output full property list is larger than the buffer, please start a new file!");
+						error_encountered = true;
 						break; // will still print everything up to this one
 					}
 					strncpy(propstr.get_string()+i, shortstr.get_string(), static_cast<size_t>(len + 1));
 					i += len;
 					tprop = tprop->next;
 				}
+
+				//Do an error check here
+				if (error_encountered == true)
+				{
+					return 0;
+				}
+
 				fprintf(my->multifp, "%s%s\n", inbuffer.get_string(), propstr.get_string());
 			}
 		} else { /* new file, so write repetition & properties with (0) */
@@ -226,11 +246,18 @@ static int recorder_open(OBJECT *obj)
 				len = (int)strlen(shortstr);
 				if(len > lenmax){
 					gl_error("multi-run recorder output full property list is larger than the buffer, please start a new file!");
+					error_encountered = true;
 					break; // will still print everything up to this one
 				}
 				strncpy(propstr.get_string()+i, shortstr.get_string(), static_cast<size_t>(len + 1));
 				i += len;
 				tprop = tprop->next;
+			}
+
+			//Error check
+			if (error_encountered == true)
+			{
+				return 0;
 			}
 			fprintf(my->multifp, "%s\n", propstr.get_string());
 		}
@@ -408,7 +435,7 @@ static TIMESTAMP recorder_write(OBJECT *obj)
 					} else {
 						gl_error("error reading past recordings file");
 						my->status = TS_ERROR;
-						return TS_NEVER;
+						return TS_INVALID;
 					}
 				}
 				// if first char == '#', re-read
@@ -421,6 +448,7 @@ static TIMESTAMP recorder_write(OBJECT *obj)
 
 			if(in_ts == NULL){
 				gl_error("unable to indentify a timestamp within the line read from ");
+				return TS_INVALID;
 			}
 
 			// compare timestamps if my->format == 0
@@ -495,7 +523,7 @@ PROPERTY *link_properties(struct recorder *rec, OBJECT *obj, char *property_list
 		if (prop!=NULL && target!=NULL)
 		{
 			if(unit != NULL && target->unit == NULL){
-				gl_error("recorder:%d: property '%s' is unitless, ignoring unit conversion", obj->id, item);
+				gl_warning("recorder:%d: property '%s' is unitless, ignoring unit conversion", obj->id, item);
 			}
 			else if(unit != NULL && 0 == gl_convert_ex(target->unit, unit, &scale))
 			{
@@ -550,12 +578,13 @@ int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buff
 					value = *gl_get_double(obj, p);
 					p2 = gl_get_property(obj, p->name,NULL);
 					if(p2 == 0){
-						gl_error("unable to locate %s.%s for LU_NONE", obj, p->name);
+						gl_error("unable to locate %s.%s for LU_NONE", obj->name, p->name);
 						return 0;
 					}
 					if(p->unit != 0 && p2->unit != 0){
 						if(0 == gl_convert_ex(p2->unit, p->unit, &value)){
 							gl_error("unable to convert %s to %s for LU_NONE", p->unit, p2->unit);
+							return 0;
 						} else { // converted
 							offset+=gl_get_value(obj,&value,buffer+offset,size-offset-1,&fake); /* pointer => int64 */;
 						}
@@ -576,7 +605,7 @@ int read_properties(struct recorder *my, OBJECT *obj, PROPERTY *prop, char *buff
 }
 
 TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
-    struct recorder *my = OBJECTDATA(obj, struct recorder);
+    TIMESTAMP return_value;struct recorder *my = OBJECTDATA(obj, struct recorder);
     typedef enum {
         NONE = '\0', LT = '<', EQ = '=', GT = '>'
     } COMPAREOP;
@@ -615,18 +644,27 @@ TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
         return sync_recorder_error(&obj, &my, buffer);
     }
 
-    // update clock
-    if ((my->status == TS_OPEN) && (t0 > obj->clock)) {
-        obj->clock = t0;
-        // if the recorder is clock-based, write the value
-        if ((my->interval > 0) && (my->last.ts < t0) && (my->last.value[0] != 0)) {
-            if (my->last.ns == 0) {
-                recorder_write(obj);
-                my->last.value[0] = 0; // once it's been finalized, dump it
-            } else    //Just dump it, we already recorded this "timestamp"
-                my->last.value[0] = 0;
-        }
-    }
+	// update clock
+	if ((my->status==TS_OPEN) && (t0 > obj->clock)) 
+	{	
+		obj->clock = t0;
+		// if the recorder is clock-based, write the value
+		if((my->interval > 0) && (my->last.ts < t0) && (my->last.value[0] != 0)){
+			if (my->last.ns == 0)
+			{
+				return_value = recorder_write(obj);
+
+				//Check for error
+				if (return_value == TS_INVALID)
+				{
+					return TS_INVALID;
+				}
+				my->last.value[0] = 0; // once it's been finalized, dump it
+			}
+			else	//Just dump it, we already recorded this "timestamp"
+				my->last.value[0] = 0;
+		}
+	}
 
     /* update property value */
     if ((my->target != NULL) && (my->interval == 0 || my->interval == -1)) {
@@ -663,7 +701,7 @@ TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
         }
     } else if (my->status == TS_INIT && !recorder_open(obj)) {
         close_recorder(my);
-        return TS_NEVER;
+        return TS_INVALID;
     }
 
     if (my->last.ts < 1 && my->interval != -1) {
@@ -683,7 +721,11 @@ TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
             if (my->last.ts < t0) {
                 my->last.ts = t0;
                 my->last.ns = 0;
-                recorder_write(obj);
+                return_value = recorder_write(obj);
+				if (return_value == TS_INVALID)
+				{
+					return TS_INVALID;
+				}
             }
         } else if ((my->interval > 0) && (my->last.ts == t0) && (my->last.ns == 0)) {
             strncpy(my->last.value, buffer, sizeof(my->last.value));
@@ -698,7 +740,7 @@ TIMESTAMP sync_recorder_error(OBJECT **obj, struct recorder **my, char2048 buffe
         gl_error("recorder %d %s\n",(*obj)->id, buffer.get_string());
         close_recorder((*my));
         (*my)->status=TS_DONE;
-        return TS_NEVER;
+        return TS_INVALID;
     }
 
     if ((*my)->interval==0 || (*my)->interval==-1)

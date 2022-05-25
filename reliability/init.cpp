@@ -27,7 +27,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	gl_global_create("reliability::enable_subsecond_models", PT_bool, &enable_subsecond_models,PT_DESCRIPTION,"Flag to enable deltamode functionality in the reliability module",NULL);
 	gl_global_create("reliability::maximum_event_length",PT_double,&event_max_duration,PT_UNITS,"s",PT_DESCRIPTION,"Maximum duration of any faulting event",NULL);
 	gl_global_create("reliability::report_event_log",PT_bool,&metrics::report_event_log,PT_DESCRIPTION,"Should the metrics object dump a logfile?",NULL);
-	gl_global_create("reliability::deltamode_timestep", PT_int32, &deltamode_timestep,PT_DESCRIPTION,"Default timestep for reliability deltamode operations",NULL);
+	gl_global_create("reliability::deltamode_timestep", PT_double, &deltamode_timestep_publish,PT_UNITS,"ns",PT_DESCRIPTION,"Desired minimum timestep for deltamode-related simulations",NULL);
 
 	new metrics(module);
 	new eventgen(module);
@@ -100,7 +100,24 @@ EXPORT unsigned long preupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 {
 	if (enable_subsecond_models == true)
 	{
-		return deltamode_timestep;
+		if (deltamode_timestep_publish<=0.0)
+		{
+			gl_error("reliability::deltamode_timestep must be a positive, non-zero number!");
+			/*  TROUBLESHOOT
+			The value for deltamode_timestep, as specified as the module level in reliability, must be a positive, non-zero number.
+			Please use such a number and try again.
+			*/
+
+			return DT_INVALID;
+		}
+		else
+		{
+			//Cast in the published value
+			deltamode_timestep = (unsigned long)(deltamode_timestep_publish+0.5);
+
+			//Return it
+			return deltamode_timestep;
+		}
 	}
 	else	//Not desired, just return an arbitrarily large value
 	{

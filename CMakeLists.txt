@@ -43,6 +43,7 @@ if (CMAKE_USE_PTHREADS_INIT)
     option(HAVE_PTHREADS "pthreads library is present on the platform" ON)
 endif ()
 
+# TODO: retire curses
 find_package(Curses)
 if (CURSES_FOUND)
     option(HAVE_CURSES "Curses library is present on the platform" ON)

@@ -107,6 +107,10 @@ add_library(${PROJECT_NAME}
         voltdump.h
         volt_var_control.cpp
         volt_var_control.h
+        sync_check.cpp
+        sync_check.h
+        performance_motor.cpp
+        performance_motor.h
 
         ${NR_SOLVER}
         )

@@ -189,6 +189,12 @@ load::load(MODULE *mod) : node(mod)
 			GL_THROW("Unable to publish load VFD attachment function");
 		if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
 			GL_THROW("Unable to publish load island-status-reset function");
+		if (gl_publish_function(oclass, "pwr_object_load_update", (FUNCTIONADDR)update_load_values) == NULL)
+			GL_THROW("Unable to publish load impedance-conversion/update function");
+		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
+			GL_THROW("Unable to publish load swing-status check function");
+		if (gl_publish_function(oclass, "pwr_object_kmldata", (FUNCTIONADDR)load_kmldata) == NULL)
+			GL_THROW("Unable to publish load kmldata function");
     }
 }
 
@@ -306,23 +312,6 @@ int load::init(OBJECT *parent)
 
 	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)	//Deltamode warning check
 	{
-		if ((constant_current[0] != 0.0) || (constant_current[1] != 0.0) || (constant_current[2] != 0.0))
-		{
-			gl_warning("load:%s - constant_current loads in deltamode are handled slightly different", obj->name ? obj->name : "unnamed");
-			/*  TROUBLESHOOT
-			Due to the potential for moving reference frame of deltamode systems, constant current loads are computed using a scaled
-			per-unit approach, rather than the fixed constant_current value.  You may get results that differ from traditional GridLAB-D
-			super-second or static powerflow results in this mode.
-			*/
-		}
-
-		//Separate, secondary check (for readibility) for the explicit D-Y loads
-		if ((constant_current_dy[0] != 0.0) || (constant_current_dy[1] != 0.0) || (constant_current_dy[2] != 0.0) || (constant_current_dy[3] != 0.0) || (constant_current_dy[4] != 0.0) || (constant_current_dy[5] != 0.0))
-		{
-			gl_warning("load:%s - constant_current loads in deltamode are handled slightly different", obj->name ? obj->name : "unnamed");
-			//Defined above
-		}
-
 		//See if we're going to be "in-rushy" or not
 		if (enable_inrush_calculations==true)
 		{
@@ -436,7 +425,6 @@ TIMESTAMP load::presync(TIMESTAMP t0)
 TIMESTAMP load::sync(TIMESTAMP t0)
 {
 	//bool all_three_phases;
-	bool fault_mode;
 	TIMESTAMP tresults_val, result;
 	OBJECT *obj = OBJECTHDR(this);
 
@@ -476,32 +464,8 @@ TIMESTAMP load::sync(TIMESTAMP t0)
 	//Initialize time
 	tresults_val = TS_NEVER;
 
-	//See if we're reliability-enabled
-	if (fault_check_object == NULL)
-		fault_mode = false;
-	else
-		fault_mode = true;
-
-	//Call the GFA-type functionality, if appropriate
-	if (GFA_enable == true)
-	{
-		//See if we're enabled - just skipping the load update should be enough, if we are not
-		if (GFA_status == true)
-		{
-			//Functionalized so deltamode can parttake
-			load_update_fxn(fault_mode);
-		}
-		else
-		{
-			//Remove any load contributions
-			load_delete_update_fxn();
-		}
-	}
-	else	//GFA checks are not enabled
-	{
-		//Functionalized so deltamode can parttake
-		load_update_fxn(fault_mode);
-	}
+	//Functionalized load updates - so deltamode can parttake
+	load_update_fxn();
 
 	//Must be at the bottom, or the new values will be calculated after the fact
 	result = node::sync(t0);
@@ -532,8 +496,9 @@ TIMESTAMP load::postsync(TIMESTAMP t0)
 
 //Functional call to sync-level load updates
 //Here primarily so deltamode players can actually influence things
-void load::load_update_fxn(bool fault_mode)
+void load::load_update_fxn(void)
 {
+	bool fault_mode;
 	bool all_three_phases, transf_from_stdy_state;
 	complex intermed_impedance[3];
 	complex intermed_impedance_dy[6];
@@ -550,6 +515,33 @@ void load::load_update_fxn(bool fault_mode)
 	OBJECT *obj;
 	double baseangles[3];
 	node *temp_par_node = NULL;
+	complex adjusted_FBS_current[6];
+	complex adjust_FBS_temp_nominal_voltage[6];
+	double adjust_FBS_temp_voltage_mag[6];
+	double adjust_FBS_nominal_voltage_val[6];
+	complex adjust_FBS_voltage_val[6];
+
+	//See if we're reliability-enabled
+	if (fault_check_object == NULL)
+		fault_mode = false;
+	else
+		fault_mode = true;
+
+	//Roll GFA check into here, so current loads updates are handled properly
+	//See if GFA functionality is enabled
+	if (GFA_enable == true)
+	{
+		//See if we're enabled - just skipping the load update should be enough, if we are not
+		if (GFA_status == false)
+		{
+			//Remove any load contributions
+			load_delete_update_fxn();
+
+			//Exit
+			return;
+		}
+	}
+	//Default elses - just continue like normal
 
 	//Remove prior contributions - do this first so everything else can just accumulate to the trackers and accumalators below
 	for (index_var=0; index_var<3; index_var++)
@@ -663,11 +655,15 @@ void load::load_update_fxn(bool fault_mode)
 				}
 				
 				// Calculate then shift the constant current to use the posted voltage as the reference angle
-				temp_curr = ~complex(real_power,imag_power) / complex(nominal_voltage,0);
+				if (has_phase(PHASE_D)) {
+				  temp_curr = ~complex(real_power,imag_power) / complex(sqrt(3.0)*nominal_voltage,0);
+				  temp_angle = temp_curr.Arg() + baseangles[index] + PI/6.0;
+				} else {
+				  temp_curr = ~complex(real_power,imag_power) / complex(nominal_voltage,0);
+				  temp_angle = temp_curr.Arg() + baseangles[index];
+				}
 
-				//This was "technically correct", but it will break everything else in the system - correcting
-				//temp_angle = temp_curr.Arg() + voltage[index].Arg();
-				temp_angle = temp_curr.Arg() + baseangles[index];
+				//Create the corrected value
 				temp_curr.SetPolar(temp_curr.Mag(),temp_angle);
 
 				constant_current[index] = temp_curr;
@@ -698,8 +694,12 @@ void load::load_update_fxn(bool fault_mode)
 					imag_power *= -1.0;	//Adjust imaginary portion for negative PF
 				}
 
-				constant_impedance[index] = ~( complex(nominal_voltage * nominal_voltage, 0) / complex(real_power,imag_power) );
-
+				//Compute the impedance value - adjust for delta-connection, as necessary
+				if (has_phase(PHASE_D)) {
+				  constant_impedance[index] = ~( complex(3.0 * nominal_voltage * nominal_voltage, 0) / complex(real_power,imag_power) );
+				} else {
+				  constant_impedance[index] = ~( complex(nominal_voltage * nominal_voltage, 0) / complex(real_power,imag_power) );
+				}
 			}
 			else
 			{
@@ -782,7 +782,7 @@ void load::load_update_fxn(bool fault_mode)
 		}
 	}
 
-	if (fault_mode == false)	//Not reliability mode - normal mode
+	if ((fault_mode == false) && (enable_impedance_conversion==false))	//Not reliability mode - normal mode
 	{
 		if(!intermed_impedance[0].IsZero())
 		{
@@ -816,14 +816,137 @@ void load::load_update_fxn(bool fault_mode)
 		power[1] += constant_power[1];	
 		power[2] += constant_power[2];
 
-		current[0] += constant_current[0];
-		current[1] += constant_current[1];
-		current[2] += constant_current[2];
+		//Adjustments for FBS - NR does them in solver_NR (and stays there, due to phasing for reliability)
+		if (solver_method == SM_FBS)
+		{
+			//Compute constants (just do it once)
+			//Set nominal voltage values - set up for explicit down below
+			adjust_FBS_nominal_voltage_val[0] = nominal_voltage * sqrt(3.0);	//Delta
+			adjust_FBS_nominal_voltage_val[1] = nominal_voltage * sqrt(3.0);
+			adjust_FBS_nominal_voltage_val[2] = nominal_voltage * sqrt(3.0);
+			adjust_FBS_nominal_voltage_val[3] = nominal_voltage;				//Wye
+			adjust_FBS_nominal_voltage_val[4] = nominal_voltage;
+			adjust_FBS_nominal_voltage_val[5] = nominal_voltage;
 
-		//Power and current trackers
-		prev_load_values[1][0] += constant_current[0];
-		prev_load_values[1][1] += constant_current[1];
-		prev_load_values[1][2] += constant_current[2];
+			//Just copy in the voltages (and compute delta) - mostly for explicit calculation, so the loop can just use it
+			adjust_FBS_voltage_val[0] = voltage[0] - voltage[1];
+			adjust_FBS_voltage_val[1] = voltage[1] - voltage[2];
+			adjust_FBS_voltage_val[2] = voltage[2] - voltage[0];
+			adjust_FBS_voltage_val[3] = voltage[0];
+			adjust_FBS_voltage_val[4] = voltage[1];
+			adjust_FBS_voltage_val[5] = voltage[2];
+
+			//Create the nominal voltage vectors - delta first
+			adjust_FBS_temp_nominal_voltage[0].SetPolar(adjust_FBS_nominal_voltage_val[0],PI/6.0);
+			adjust_FBS_temp_nominal_voltage[1].SetPolar(adjust_FBS_nominal_voltage_val[1],-1.0*PI/2.0);
+			adjust_FBS_temp_nominal_voltage[2].SetPolar(adjust_FBS_nominal_voltage_val[2],5.0*PI/6.0);
+			adjust_FBS_temp_nominal_voltage[3].SetPolar(adjust_FBS_nominal_voltage_val[3],0.0);
+			adjust_FBS_temp_nominal_voltage[4].SetPolar(adjust_FBS_nominal_voltage_val[4],-2.0*PI/3.0);
+			adjust_FBS_temp_nominal_voltage[5].SetPolar(adjust_FBS_nominal_voltage_val[5],2.0*PI/3.0);
+
+			//Get magnitudes of all
+			adjust_FBS_temp_voltage_mag[0] = adjust_FBS_voltage_val[0].Mag();
+			adjust_FBS_temp_voltage_mag[1] = adjust_FBS_voltage_val[1].Mag();
+			adjust_FBS_temp_voltage_mag[2] = adjust_FBS_voltage_val[2].Mag();
+			adjust_FBS_temp_voltage_mag[3] = adjust_FBS_voltage_val[3].Mag();
+			adjust_FBS_temp_voltage_mag[4] = adjust_FBS_voltage_val[4].Mag();
+			adjust_FBS_temp_voltage_mag[5] = adjust_FBS_voltage_val[5].Mag();
+
+			//See if we're delta or not
+			if (has_phase(PHASE_D))
+			{
+				//Start adjustments - AB
+				if ((constant_current[0] != 0.0) && (adjust_FBS_temp_voltage_mag[0] != 0.0))
+				{
+					//calculate new value
+					adjusted_FBS_current[0] = ~(adjust_FBS_temp_nominal_voltage[0] * ~constant_current[0] * adjust_FBS_temp_voltage_mag[0] / (adjust_FBS_voltage_val[0] * adjust_FBS_nominal_voltage_val[0]));
+				}
+				else
+				{
+					adjusted_FBS_current[0] = complex(0.0,0.0);
+				}
+
+				//Start adjustments - BC
+				if ((constant_current[1] != 0.0) && (adjust_FBS_temp_voltage_mag[1] != 0.0))
+				{
+					//calculate new value
+					adjusted_FBS_current[1] = ~(adjust_FBS_temp_nominal_voltage[1] * ~constant_current[1] * adjust_FBS_temp_voltage_mag[1] / (adjust_FBS_voltage_val[1] * adjust_FBS_nominal_voltage_val[1]));
+				}
+				else
+				{
+					adjusted_FBS_current[1] = complex(0.0,0.0);
+				}
+
+				//Start adjustments - CA
+				if ((constant_current[2] != 0.0) && (adjust_FBS_temp_voltage_mag[2] != 0.0))
+				{
+					//calculate new value
+					adjusted_FBS_current[2] = ~(adjust_FBS_temp_nominal_voltage[2] * ~constant_current[2] * adjust_FBS_temp_voltage_mag[2] / (adjust_FBS_voltage_val[2] * adjust_FBS_nominal_voltage_val[2]));
+				}
+				else
+				{
+					adjusted_FBS_current[2] = complex(0.0,0.0);
+				}
+			}
+			else	//Wye
+			{
+				//Start adjustments - A
+				if ((constant_current[0] != 0.0) && (adjust_FBS_temp_voltage_mag[3] != 0.0))
+				{
+					//calculate new value
+					adjusted_FBS_current[0] = ~(adjust_FBS_temp_nominal_voltage[3] * ~constant_current[0] * adjust_FBS_temp_voltage_mag[3] / (adjust_FBS_voltage_val[3] * adjust_FBS_nominal_voltage_val[3]));
+				}
+				else
+				{
+					adjusted_FBS_current[0] = complex(0.0,0.0);
+				}
+
+				//Start adjustments - B
+				if ((constant_current[1] != 0.0) && (adjust_FBS_temp_voltage_mag[4] != 0.0))
+				{
+					//calculate new value
+					adjusted_FBS_current[1] = ~(adjust_FBS_temp_nominal_voltage[4] * ~constant_current[1] * adjust_FBS_temp_voltage_mag[4] / (adjust_FBS_voltage_val[4] * adjust_FBS_nominal_voltage_val[4]));
+				}
+				else
+				{
+					adjusted_FBS_current[1] = complex(0.0,0.0);
+				}
+
+				//Start adjustments - C
+				if ((constant_current[2] != 0.0) && (adjust_FBS_temp_voltage_mag[5] != 0.0))
+				{
+					//calculate new value
+					adjusted_FBS_current[2] = ~(adjust_FBS_temp_nominal_voltage[5] * ~constant_current[2] * adjust_FBS_temp_voltage_mag[5] / (adjust_FBS_voltage_val[5] * adjust_FBS_nominal_voltage_val[5]));
+				}
+				else
+				{
+					adjusted_FBS_current[2] = complex(0.0,0.0);
+				}
+			}
+
+			//Accumulate, same as below
+			current[0] += adjusted_FBS_current[0];
+			current[1] += adjusted_FBS_current[1];
+			current[2] += adjusted_FBS_current[2];
+
+			//Current trackers
+			prev_load_values[1][0] += adjusted_FBS_current[0];
+			prev_load_values[1][1] += adjusted_FBS_current[1];
+			prev_load_values[1][2] += adjusted_FBS_current[2];
+		}
+		else
+		{
+			current[0] += constant_current[0];
+			current[1] += constant_current[1];
+			current[2] += constant_current[2];
+
+			//Ccurrent trackers
+			prev_load_values[1][0] += constant_current[0];
+			prev_load_values[1][1] += constant_current[1];
+			prev_load_values[1][2] += constant_current[2];
+		}
+
+		//Power trackers
 		prev_load_values[2][0] += constant_power[0];
 		prev_load_values[2][1] += constant_power[1];
 		prev_load_values[2][2] += constant_power[2];
@@ -841,10 +964,37 @@ void load::load_update_fxn(bool fault_mode)
 			}
 
 			power_dy[index_var] += constant_power_dy[index_var];
-			current_dy[index_var] += constant_current_dy[index_var];
 
-			//Update power/current trackers
-			prev_load_values_dy[1][index_var] += constant_current_dy[index_var];
+			//Adjustments for FBS - NR does them in solver_NR (and stays there, due to phasing for reliability)
+			if (solver_method == SM_FBS)
+			{
+				//Start adjustments - per-index
+				if ((constant_current_dy[index_var] != 0.0) && (adjust_FBS_temp_voltage_mag[index_var] != 0.0))
+				{
+					//calculate new value
+					adjusted_FBS_current[index_var] = ~(adjust_FBS_temp_nominal_voltage[index_var] * ~constant_current_dy[index_var] * adjust_FBS_temp_voltage_mag[index_var] / (adjust_FBS_voltage_val[index_var] * adjust_FBS_nominal_voltage_val[index_var]));
+				}
+				else
+				{
+					adjusted_FBS_current[index_var] = complex(0.0,0.0);
+				}
+
+				//Accumulate into the variable
+				current_dy[index_var] += adjusted_FBS_current[index_var];
+
+				//Update current trackers
+				prev_load_values_dy[1][index_var] += adjusted_FBS_current[index_var];
+			}
+			else
+			{
+				//Accumulate into the variable
+				current_dy[index_var] += constant_current_dy[index_var];
+
+				//Update current trackers
+				prev_load_values_dy[1][index_var] += constant_current_dy[index_var];
+			}
+
+			//Update power trackers
 			prev_load_values_dy[2][index_var] += constant_power_dy[index_var];
 		}
 	}//End normal mode
@@ -882,7 +1032,7 @@ void load::load_update_fxn(bool fault_mode)
 				if (SubNode == PARENT)	//Normal parents need this
 				{
 					//See if in-rush is enabled - only makes sense in reliability situations
-					if (enable_inrush_calculations == true)
+					if ((enable_inrush_calculations == true) || (enable_impedance_conversion == true))
 					{
 						//Reset variable
 						volt_below_thresh = false;
@@ -932,7 +1082,7 @@ void load::load_update_fxn(bool fault_mode)
 							}
 
 							//Check them - Phase B
-							if (((NR_busdata[NR_node_reference].phases & 0x02) == 0x01) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
+							if (((NR_busdata[NR_node_reference].phases & 0x02) == 0x02) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
 							{
 								volt_below_thresh = true;
 							}
@@ -1439,7 +1589,7 @@ void load::load_update_fxn(bool fault_mode)
 				else //DIFF_PARENT
 				{
 					//See if in-rush is enabled - only makes sense in reliability situations
-					if (enable_inrush_calculations == true)
+					if ((enable_inrush_calculations == true) || (enable_impedance_conversion==true))
 					{
 						//Reset variable
 						volt_below_thresh = false;
@@ -1489,7 +1639,7 @@ void load::load_update_fxn(bool fault_mode)
 							}
 
 							//Check them - Phase B
-							if (((NR_busdata[NR_node_reference].phases & 0x02) == 0x01) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
+							if (((NR_busdata[NR_node_reference].phases & 0x02) == 0x02) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
 							{
 								volt_below_thresh = true;
 							}
@@ -1999,7 +2149,7 @@ void load::load_update_fxn(bool fault_mode)
 			else	//Basically, not a NR parent
 			{
 				//See if in-rush is enabled - only makes sense in reliability situations
-				if (enable_inrush_calculations == true)
+				if ((enable_inrush_calculations == true) || (enable_impedance_conversion==true))
 				{
 					//See if we're a child or not
 					if (NR_node_reference == -99)	//Child or other special object
@@ -2073,7 +2223,7 @@ void load::load_update_fxn(bool fault_mode)
 						}
 
 						//Check them - Phase B
-						if (((NR_busdata[node_reference_value].phases & 0x02) == 0x01) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
+						if (((NR_busdata[node_reference_value].phases & 0x02) == 0x02) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
 						{
 							volt_below_thresh = true;
 						}
@@ -3265,8 +3415,7 @@ int load::notify(int update_mode, PROPERTY *prop, char *value)
 SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val,bool interupdate_pos)
 {
 	OBJECT *hdr = OBJECTHDR(this);
-	bool fault_mode;
-	double deltat, deltatimedbl;
+	double deltat;
 	STATUS return_status_val;
 
 	//Create delta_t variable
@@ -3275,26 +3424,25 @@ SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned 
 	//Update time tracking variable - mostly for GFA functionality calls
 	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
 	{
-		//Get decimal timestamp value
-		deltatimedbl = (double)delta_time/(double)DT_SECOND; 
-
 		//Update tracking variable
-		prev_time_dbl = (double)gl_globalclock + deltatimedbl;
+		prev_time_dbl = gl_globaldeltaclock;
 
 		//Update frequency calculation values (if needed)
 		if (fmeas_type != FM_NONE)
 		{
-			//Copy the tracker value
-			memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+			//See which pass
+			if (delta_time == 0)
+			{
+				//Initialize dynamics - first run of new delta call
+				init_freq_dynamics(deltat);
+			}
+			else
+			{
+				//Copy the tracker value
+				memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+			}
 		}
 	}
-
-	//Initialization items
-	if ((delta_time==0) && (iteration_count_val==0) && (interupdate_pos == false) && (fmeas_type != FM_NONE))	//First run of new delta call
-	{
-		//Initialize dynamics
-		init_freq_dynamics();
-	}//End first pass and timestep of deltamode (initial condition stuff)
 	
 	//Perform the GFA update, if enabled
 	if ((GFA_enable == true) && (iteration_count_val == 0) && (interupdate_pos == false))	//Always just do on the first pass
@@ -3308,32 +3456,8 @@ SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned 
 		//Call presync-equivalent items
 		NR_node_presync_fxn(0);
 
-		//See if we're reliability-enabled
-		if (fault_check_object == NULL)
-			fault_mode = false;
-		else
-			fault_mode = true;
-		
-		//See if GFA functionality is enabled
-		if (GFA_enable == true)
-		{
-			//See if we're enabled - just skipping the load update should be enough, if we are not
-			if (GFA_status == true)
-			{
-				//Functionalized so deltamode can parttake
-				load_update_fxn(fault_mode);
-			}
-			else
-			{
-				//Remove any load contributions
-				load_delete_update_fxn();
-			}
-		}
-		else	//No GFA checks - go like normal
-		{
-			//Functionalized so deltamode can parttake
-			load_update_fxn(fault_mode);
-		}
+		//Functionalized load updates - so deltamode can parttake
+		load_update_fxn();
 
 		//Call sync-equivalent items (solver occurs at end of sync)
 		NR_node_sync_fxn(hdr);
@@ -3495,6 +3619,29 @@ EXPORT SIMULATIONMODE interupdate_load(OBJECT *obj, unsigned int64 delta_time, u
 		gl_error("interupdate_load(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
 		return status;
 	}
+}
+
+//Exposed function to do load update - primarily to get impedance conversion into solver_nr directly
+EXPORT STATUS update_load_values(OBJECT *obj)
+{
+	load *my = OBJECTDATA(obj,load);
+
+	//Call the update
+	my->load_update_fxn();
+
+	//Return us - always succeed, for now
+	return SUCCESS;
+}
+
+//KML Export
+EXPORT int load_kmldata(OBJECT *obj,int (*stream)(const char*,...))
+{
+	load *n = OBJECTDATA(obj, load);
+	int rv = 1;
+
+	rv = n->kmldata(stream);
+
+	return rv;
 }
 
 int load::kmldata(int (*stream)(const char*,...))

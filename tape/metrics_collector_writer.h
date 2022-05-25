@@ -19,6 +19,7 @@
 #include <cstring>
 #include <string.h>
 #include <algorithm>
+#include <memory>
 
 #ifdef HAVE_HDF5
 #include <memory>
@@ -41,6 +42,7 @@ const string m_house("house");
 const string m_feeder("substation");
 const string m_transformer("transformer");
 const string m_line("line");
+const string m_evchargerdet("evchargerdet");
 
 const string m_index("index");
 const string m_units("units");
@@ -103,8 +105,8 @@ const string m_hvac_load_avg ("hvac_load_avg");
 const string m_air_temperature_min ("air_temperature_min");
 const string m_air_temperature_max ("air_temperature_max");
 const string m_air_temperature_avg ("air_temperature_avg");
-const string m_air_temperature_deviation_cooling ("air_temperature_deviation_cooling");
-const string m_air_temperature_deviation_heating ("air_temperature_deviation_heating");
+const string m_air_temperature_setpoint_cooling ("air_temperature_setpoint_cooling");
+const string m_air_temperature_setpoint_heating ("air_temperature_setpoint_heating");
 const string m_system_mode ("system_mode");
 const string m_waterheater_load_min ("waterheater_load_min");
 const string m_waterheater_load_max ("waterheater_load_max");
@@ -124,6 +126,13 @@ const string m_operation_count ("operation_count");
 const string m_trans_overload_perc ("trans_overload_perc");
 const string m_line_overload_perc ("line_overload_perc");
 
+const string m_charge_rate_min ("charge_rate_min");
+const string m_charge_rate_max ("charge_rate_max");
+const string m_charge_rate_avg ("charge_rate_avg");
+const string m_battery_SOC_min ("battery_SOC_min");
+const string m_battery_SOC_max ("battery_SOC_max");
+const string m_battery_SOC_avg ("battery_SOC_avg");
+
 #ifdef HAVE_HDF5
 typedef struct {
 	char name[MAX_METRIC_NAME_LENGTH]; 
@@ -131,7 +140,7 @@ typedef struct {
 } hMetadata;
 
 typedef struct _BillingMeter{
-	int time; 
+	long int time; 
 	char date[MAX_METRIC_VALUE_LENGTH]; 
 	char name[MAX_METRIC_NAME_LENGTH]; 
 	double real_power_min;
@@ -167,7 +176,7 @@ typedef struct _BillingMeter{
 } BillingMeter;
 
 typedef struct _House {
-	int time; 
+	long int time; 
 	char date[MAX_METRIC_VALUE_LENGTH]; 
 	char name[MAX_METRIC_NAME_LENGTH]; 
 	double total_load_min;
@@ -179,8 +188,8 @@ typedef struct _House {
 	double air_temperature_min;
 	double air_temperature_max;
 	double air_temperature_avg;
-	double air_temperature_deviation_cooling;
-	double air_temperature_deviation_heating;
+	double air_temperature_setpoint_cooling;
+	double air_temperature_setpoint_heating;
 	int system_mode;
 	double waterheater_load_min;
 	double waterheater_load_max;
@@ -197,7 +206,7 @@ typedef struct _House {
 } House;
 
 typedef struct _Inverter {
-	int time; 
+	long int time; 
 	char date[MAX_METRIC_VALUE_LENGTH]; 
 	char name[MAX_METRIC_NAME_LENGTH]; 
 	double real_power_min;
@@ -209,21 +218,21 @@ typedef struct _Inverter {
 } Inverter;
 
 typedef struct _Capacitor {
-	int time; 
+	long int time; 
 	char date[MAX_METRIC_VALUE_LENGTH]; 
 	char name[MAX_METRIC_NAME_LENGTH]; 
 	double operation_count;
 } Capacitor;
 
 typedef struct _Regulator {
-	int time; 
+	long int time; 
 	char date[MAX_METRIC_VALUE_LENGTH]; 
 	char name[MAX_METRIC_NAME_LENGTH]; 
 	double operation_count;
 } Regulator;
 
 typedef struct _Feeder {
-	int time; 
+	long int time; 
 	char date[MAX_METRIC_VALUE_LENGTH]; 
 	char name[MAX_METRIC_NAME_LENGTH]; 
 	double real_power_min;
@@ -247,18 +256,30 @@ typedef struct _Feeder {
 } Feeder;
 
 typedef struct _Transformer {
-	int time;
+	long int time;
 	char date[MAX_METRIC_VALUE_LENGTH]; 
 	char name[MAX_METRIC_NAME_LENGTH];
 	double trans_overload_perc;
 } Transformer;
 
 typedef struct _Line {
-	int time;
+	long int time;
 	char date[MAX_METRIC_VALUE_LENGTH]; 
 	char name[MAX_METRIC_NAME_LENGTH];
 	double line_overload_perc;
 } Line;
+
+typedef struct _EVChargerDet {
+	long int time; 
+	char date[MAX_METRIC_VALUE_LENGTH]; 
+	char name[MAX_METRIC_NAME_LENGTH]; 
+	double charge_rate_min;
+	double charge_rate_max;
+	double charge_rate_avg;
+	double battery_SOC_min;
+	double battery_SOC_max;
+	double battery_SOC_avg;
+} EVChargerDet;
 #endif
 
 EXPORT void new_metrics_collector_writer(MODULE *);
@@ -279,9 +300,11 @@ public:
 	int commit(TIMESTAMP);
 
 public:
+	bool both;
 	char256 filename;
 	char8 extension;
 	char8 alternate;
+	char8 allextensions;
 	double interval_length_dbl;			//Metrics output interval length
 	double interim_length_dbl;			//Metrics output interim length
 
@@ -303,9 +326,10 @@ private:
 	void hdfFeeder ();
 	void hdfTransformer ();
 	void hdfLine();
+	void hdfEvChargerDet ();
 
 	// Functions to write dataset to a file
-	void hdfWrite(char256 filename, H5::CompType* mtype, void *ptr, int structKind, int size);
+	void hdfWrite(char256 filename, const std::unique_ptr<H5::CompType>& mtype, void *ptr, int structKind, int size);
 	void hdfMetadataWrite(Json::Value& meta, char* time_str, char256 filename);
 	void hdfBillingMeterWrite (size_t objs, Json::Value& metrics);
 	void hdfHouseWrite (size_t objs, Json::Value& metrics);
@@ -315,6 +339,7 @@ private:
 	void hdfFeederWrite (size_t objs, Json::Value& metrics);
 	void hdfTransformerWrite (size_t objs, Json::Value& metrics);
 	void hdfLineWrite (size_t objs, Json::Value& metrics);
+	void hdfEvChargerDetWrite  (size_t objs, Json::Value& metrics);
 #endif
 
 private:
@@ -325,9 +350,9 @@ private:
 	Json::Value metrics_writer_feeders;             // Final output dictionary for feeders
 	Json::Value metrics_writer_capacitors;          // Final output dictionary for capacitors
 	Json::Value metrics_writer_regulators;          // Final output dictionary for regulators
-
 	Json::Value metrics_writer_transformers;        // Final output dictionary for transformers
-	Json::Value metrics_writer_lines;        // Final output dictionary for lines
+	Json::Value metrics_writer_lines;               // Final output dictionary for lines
+	Json::Value metrics_writer_evchargerdets;        // Final output dictionary for evcharger det
 
 	Json::Value ary_billing_meters;  // array storage for billing meter metrics
 	Json::Value ary_houses;          // array storage for house (and water heater) metrics
@@ -335,20 +360,41 @@ private:
 	Json::Value ary_feeders;         // array storage for feeder metrics
 	Json::Value ary_capacitors;      // array storage for capacitors metrics
 	Json::Value ary_regulators;      // array storage for regulators metrics
-
 	Json::Value ary_transformers;    // array storage for tranformers metrics
-	Json::Value ary_lines;    // array storage for lines metrics
+	Json::Value ary_lines;           // array storage for lines metrics
+	Json::Value ary_evchargerdets;    // array storage for evcharger det metrics
 
 #ifdef HAVE_HDF5
-	H5::CompType* mtype_metadata;
-	H5::CompType* mtype_billing_meters;
-	H5::CompType* mtype_houses;
-	H5::CompType* mtype_inverters;
-	H5::CompType* mtype_feeders;
-	H5::CompType* mtype_capacitors;
-	H5::CompType* mtype_regulators;
-	H5::CompType* mtype_transformers;
-	H5::CompType* mtype_lines;
+	hsize_t len_billing_meters;
+	hsize_t len_houses;
+	hsize_t len_inverters;
+	hsize_t len_feeders;
+	hsize_t len_capacitors;
+	hsize_t len_regulators;
+	hsize_t len_transformers;
+	hsize_t len_lines;
+	hsize_t len_evchargerdets;
+
+	std::unique_ptr<H5::DataSet> set_billing_meters;
+	std::unique_ptr<H5::DataSet> set_houses;
+	std::unique_ptr<H5::DataSet> set_inverters;
+	std::unique_ptr<H5::DataSet> set_feeders;
+	std::unique_ptr<H5::DataSet> set_capacitors;
+	std::unique_ptr<H5::DataSet> set_regulators;
+	std::unique_ptr<H5::DataSet> set_transformers;
+	std::unique_ptr<H5::DataSet> set_lines;
+	std::unique_ptr<H5::DataSet> set_evchargerdets;
+
+	std::unique_ptr<H5::CompType> mtype_metadata;
+	std::unique_ptr<H5::CompType> mtype_billing_meters;
+	std::unique_ptr<H5::CompType> mtype_houses;
+	std::unique_ptr<H5::CompType> mtype_inverters;
+	std::unique_ptr<H5::CompType> mtype_feeders;
+	std::unique_ptr<H5::CompType> mtype_capacitors;
+	std::unique_ptr<H5::CompType> mtype_regulators;
+	std::unique_ptr<H5::CompType> mtype_transformers;
+	std::unique_ptr<H5::CompType> mtype_lines;
+	std::unique_ptr<H5::CompType> mtype_evchargerdets;
 #endif
 
 	char256 filename_billing_meter;
@@ -359,6 +405,7 @@ private:
 	char256 filename_regulator;
 	char256 filename_transformer;
 	char256 filename_line;
+	char256 filename_evchargerdet;
 
 	DATETIME dt;
 	TIMESTAMP startTime;
@@ -366,7 +413,8 @@ private:
 	TIMESTAMP next_write;
 	TIMESTAMP last_write;
 	bool interval_write;
-
+	bool new_day;
+	
 	char* parent_string;
 
 	FINDLIST *metrics_collectors;
@@ -375,6 +423,8 @@ private:
 	int interim_length;				//integer interim length (seconds to write out intervals and then clear)
 	int interim_cnt;				//integer interim count (count to write out intervals)
 	int line_cnt;					//integer write line count (count how many write_line in a interim write)
+	int day_cnt;					//integer day count (count how many day tables are in written)
+	int writeTime;					//represents the time from the StartTime
 };
 
 #endif // C++

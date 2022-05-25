@@ -454,7 +454,21 @@ TIMESTAMP recorder::commit(TIMESTAMP t0, TIMESTAMP t1) {
 					string* name_string = new string(property_target[n].get_sql_safe_name(name_buffer));
 
 					char buffer[1024] = "NULL";
-					if (target_prop.get_unit()->is_valid() && (get_options() & MO_USEUNITS)) {
+					bool valid_unit_test;
+
+					//NULL check for get_unit - no unit = NULL return
+					if (target_prop.get_unit() != NULL)
+					{
+						//Do a validity check on it
+						valid_unit_test = target_prop.get_unit()->is_valid();
+					}
+					else
+					{
+						//Just flag as invalid
+						valid_unit_test = false;
+					}
+
+					if (valid_unit_test && (get_options() & MO_USEUNITS)) {
 						db->get_sqldata(buffer, sizeof(buffer), target_prop, target_prop.get_unit());
 						rc->get_table_path()->add_insert_values(rc, name_string, string(buffer));
 						rc->get_table_path()->add_insert_values(rc, new string(*name_string + "_units"), "'" + string(target_prop.get_unit()->get_name()) + "'");

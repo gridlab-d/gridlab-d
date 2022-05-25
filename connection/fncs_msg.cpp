@@ -1077,15 +1077,10 @@ int fncs_msg::publishVariables(varmap *wmap){
 	string value;
 	string from;
 	string to;
-	complex cval;
-	complex lst_cval;
+	gld::complex cval;
 	double dval;
-	double lst_dval;
 	int64 ival;
-	int64 lst_ival;
-	string lst_sval;
 	bool bval;
-	bool lst_bval;
 	bool pub_value = false;
 	for(mp = wmap->getfirst(); mp != NULL; mp = mp->next){
 		pub_value = false;
@@ -1095,93 +1090,100 @@ int fncs_msg::publishVariables(varmap *wmap){
 			} else {
 				value = string(buffer);
 			}
-			if(value.empty() == false){
+			if(!value.empty()){
 				if(strcmp(mp->threshold,"") == 0)
 				{
 					pub_value = true;
 				} else {
-					if(mp->obj->is_complex() == true)
+					if(mp->obj->is_complex())
 					{
-						cval = *(complex *)mp->obj->get_addr();
-						if(mp->last_value == NULL)
+						cval = *static_cast<gld::complex *>(mp->obj->get_addr());
+						if(!mp->last_value)
 						{
 							pub_value = true;
-							mp->last_value = (void *)(new complex(cval.Re(),cval.Im()));
+							mp->last_value.reset(new last_value_buffer());
+							mp->last_value->set(cval);
 						}
 						else
 						{
-							lst_cval = *((complex *)(mp->last_value));
-							if(fabs(cval.Mag() - lst_cval.Mag()) > atof(mp->threshold)){
+							gld::complex last_val = mp->last_value->getComplex();
+							if(fabs(cval.Mag() - last_val.Mag()) > atof(mp->threshold)){
 								pub_value = true;
-								memcpy(mp->last_value, (void *)(&cval), sizeof(cval));
+								mp->last_value->set(cval);
 							}
 						}
 					}
-					else if(mp->obj->is_double() == true)
+					else if(mp->obj->is_double())
 					{
-						dval = *(double *)mp->obj->get_addr();
-						if(mp->last_value == NULL)
+						dval = *static_cast<double *>(mp->obj->get_addr());
+						if(!mp->last_value)
 						{
 							pub_value = true;
-							mp->last_value = (void *)(new double(dval));
+							mp->last_value.reset(new last_value_buffer());
+							mp->last_value->set(dval);
 						}
 						else
 						{
-							lst_dval = *((double *)(mp->last_value));
-							if(fabs(dval - lst_dval) > atof(mp->threshold)){
+							double last_val = mp->last_value->getDouble();
+							if(fabs(dval - last_val) > atof(mp->threshold)){
 								pub_value = true;
-								memcpy(mp->last_value, (void *)(&dval), sizeof(dval));
+								mp->last_value->set(dval);
 							}
 						}
 					}
-					else if(mp->obj->is_integer() == true)
+					else if(mp->obj->is_integer())
 					{
-						ival = *(int64 *)mp->obj->get_addr();
-						if(mp->last_value == NULL)
+						ival = *static_cast<int64*>(mp->obj->get_addr());
+						if(!mp->last_value)
 						{
 							pub_value = true;
-							mp->last_value = (void *)(new int64(ival));
+							mp->last_value.reset(new last_value_buffer());
+							mp->last_value->set(ival);
 						}
 						else
 						{
-							lst_ival = *((int64 *)(mp->last_value));
-							if(fabs(ival - lst_ival) > atof(mp->threshold)){
+							int64 last_val = mp->last_value->getInt();
+							if(fabs(ival - last_val) > atof(mp->threshold)){
 								pub_value = true;
-								memcpy(mp->last_value, (void *)(&ival), sizeof(ival));
+								mp->last_value->set(ival);
 							}
 						}
 					}
-					else if(mp->obj->is_enumeration() == true || mp->obj->is_character() == true)
+					else if(mp->obj->is_enumeration() || mp->obj->is_character())
 					{
-						if(mp->last_value == NULL)
+						if(!mp->last_value)
 						{
 							pub_value = true;
-							mp->last_value = (void *)(new string(value));
+							mp->last_value.reset(new last_value_buffer());
+							mp->last_value->set(value);
 						}
 						else
 						{
-							lst_sval = *((string *)(mp->last_value));
-							if(value.compare(lst_sval) != 0)
+							std::string last_val = mp->last_value->getString();
+
+							if(value.compare(last_val) != 0)
 							{
 								pub_value = true;
-								memcpy(mp->last_value, (void *)(&value), sizeof(value));
+								mp->last_value->set(value);
 							}
 						}
 					}
-					else if(mp->obj->is_bool() == true)
+					else if(mp->obj->is_bool())
 					{
-						bval = *(bool *)mp->obj->get_addr();
-						if(mp->last_value == NULL)
+						bval = *static_cast<bool *>(mp->obj->get_addr());
+						if(!mp->last_value)
 						{
 							pub_value = true;
-							mp->last_value = (void *)(new bool(bval));
+							mp->last_value.reset(new last_value_buffer());
+							mp->last_value->set(bval);
 						}
 						else
 						{
-							lst_bval = *((bool *)(mp->last_value));
-							if(bval != lst_bval){
+							bool last_val = mp->last_value->getBool();
+							if(bval != last_val){
 								pub_value = true;
-								memcpy(mp->last_value, (void *)(&bval), sizeof(bval));
+								mp->last_value->set(bval);
+
 							}
 						}
 					}

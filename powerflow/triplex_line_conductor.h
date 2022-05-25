@@ -19,6 +19,7 @@ public:
 	triplex_line_conductor(MODULE *mod);
 	inline triplex_line_conductor(CLASS *cl=oclass):powerflow_library(cl){};
 	int isa(char *classname);
+	int init(OBJECT *parent);
 	int create(void);
 };
 

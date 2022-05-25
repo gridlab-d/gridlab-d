@@ -10,6 +10,7 @@ EXPORT int isa_link(OBJECT *obj, char *classname);
 EXPORT SIMULATIONMODE interupdate_link(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 EXPORT int updatepowercalc_link(OBJECT *obj);
 EXPORT int calculate_overlimit_link(OBJECT *obj, double *overload_value, bool *overloaded);
+EXPORT int currentcalculation_link(OBJECT *obj, int nodecall, bool link_fault_mode);
 
 #define impedance(X) (B_mat[X][X])
 
@@ -133,7 +134,6 @@ public:
 
 	void NR_link_presync_fxn(void);
 	void BOTH_link_postsync_fxn(void);
-	//void perform_limit_checks(double *over_limit_value, bool *over_limits);
 	bool perform_limit_checks(double *over_limit_value, bool *over_limits);
 	double inrush_tol_value;	///< Tolerance value (of vdiff on the line ends) before "inrush convergence" is accepted
 	INRUSHINTMETHOD inrush_int_method_inductance;	//Individual mode selection

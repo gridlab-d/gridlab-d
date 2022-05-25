@@ -52,6 +52,8 @@ underground_line::underground_line(MODULE *mod) : line(mod)
 			GL_THROW("Unable to publish underground line external power calculation function");
 		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
 			GL_THROW("Unable to publish underground line external power limit calculation function");
+		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==NULL)
+			GL_THROW("Unable to publish underground line external current calculation function");
     }
 }
 

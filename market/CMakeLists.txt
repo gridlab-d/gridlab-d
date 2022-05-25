@@ -26,15 +26,6 @@ add_library(${PROJECT_NAME}
         stubauction.h
         supervisory_control.cpp
         supervisory_control.h
-
-        auction_ccsi.cpp
-        auction_ccsi.h
-        bid_ccsi.cpp
-        bid_ccsi.h
-        curve_ccsi.cpp
-        curve_ccsi.h
-        controller_ccsi.cpp
-        controller_ccsi.h
         )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")

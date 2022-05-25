@@ -16,7 +16,7 @@ workdir temp
 # Matlab window disposition (hide, show, keep)
 # Default is 'hide'
 #
-window hide
+window keep
 
 #
 # Matlab output buffer size for verbose output

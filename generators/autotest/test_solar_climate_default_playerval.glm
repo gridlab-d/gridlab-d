@@ -1,12 +1,9 @@
 // Test that climate defaults are implemented when climate object is absent. 
 // Test that climate data may be input via players (for Insolation, wind speed, ambient temperature -- use solar_tilt_model PLAYERVALUE)
 
-// GridLab-D output has been validated against SAM output. See "Incorporation of NREL Solar Advisor Model Photovoltaic Capabilities with GridLAB-D" (Tuffner et al. 2012). 
-
 #set profiler=1;
 
 clock {
-     //timezone PST+8PDT;
 	 timezone PST8;
      starttime '2009-01-01 00:00:00';
      stoptime '2010-01-01 00:00:00';
@@ -19,7 +16,7 @@ module assert;
 module powerflow {
      solver_method NR;
      NR_iteration_limit 50;
-};
+}
 
 object triplex_meter {
 	name trip_swing;
@@ -53,10 +50,9 @@ object inverter {
 
 object solar { // player files are used instead of climate object
 	name trip_shad_solar1;
-	phases AS;
 	parent trip_shad_inv;
 	//weather "WA-Yakima";
-	Rated_kVA 4.0 kVA;
+	rated_power 4.0 kW;
 	area 29.6296 m^2;
 	tilt_angle 45.0;
 	efficiency 0.135;
@@ -76,14 +72,13 @@ object solar { // player files are used instead of climate object
 		property wind_speed;
 		file "../Yakima_wind_speed.player";
 	};
-	object complex_assert {
-		target VA_Out;
-		operation REAL;
+	object double_assert {
+		target P_Out;
 		object player {
 			property value;
 			file "../solar_playerval_VA_Out.player"; 
 		}; 
-		within 0.01;
+		within 0.05;
 	};
 	// object recorder {
 		// property "Insolation,VA_Out.real,shading_factor";
@@ -95,23 +90,20 @@ object solar { // player files are used instead of climate object
 
 object solar { // no climate object available -- using default values 
 	name trip_shad_solar2;
-	phases AS;
 	parent trip_shad_inv;
-	Rated_kVA 4.0 kVA;
+	rated_power 4.0 kW;
 	area 29.6296 m^2;
 	efficiency 0.135;
 	orientation_azimuth 180; //equator-facing (South)
-	SOLAR_TILT_MODEL SOLPOS;
-	SOLAR_POWER_MODEL FLATPLATE;
+	//BASEEFFICIENCY and DEFAULT tilt model
 	object double_assert {
 		target Insolation;
-		value 190.214; 
+		value 92.902; 
 		within 0.01;
 	};
-	object complex_assert {
-		target VA_Out;
-		operation REAL;
-		value 3433.13;	
+	object double_assert {
+		target P_Out;
+		value 3589;	//Derated by baseline efficiency model
 		within 0.01; 
 	};
 	// object recorder {

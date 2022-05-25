@@ -72,7 +72,6 @@ int varmap::add(char *spec, COMMUNICATIONTYPE comtype)
 		strcpy(next->remote_name,remName);
 		strcpy(next->threshold,threshold);
 	}
-	next->last_value = NULL;
 	next->obj = NULL;
 	next->next = map;
 	next->dir = dxd;

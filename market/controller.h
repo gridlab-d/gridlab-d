@@ -46,6 +46,7 @@ public:
 		CN_RAMP,
 		CN_DOUBLE_RAMP,
 		CN_DEV_LEVEL,
+		CN_DOUBLE_PRICE
 	} CONTROLMODE;
 	enumeration control_mode;
 	
@@ -204,6 +205,10 @@ private:
 	FUNCTIONADDR submit;
 	FUNCTIONADDR submit2;
 
+	//Double-price CCSI functionality
+	double calcTemp1_double_price(double Tair, double Deadband, enumeration State);
+	double calcTemp2_double_price(gld_property *pUa, gld_property *pHm, gld_property *pCa, gld_property *pCm, gld_property *pMGF, gld_property *pMSFG, gld_property *pQi, gld_property *pQs, gld_property *pQh, gld_property *pTout, double Tair, gld_property *pTmass, double Deadband, enumeration State);
+
 	gld_property override_prop;
 	gld_keyword *OV_NORMAL, *OV_ON, *OV_OFF;
 	enumeration *pOverride2;
@@ -226,6 +231,22 @@ private:
 	gld_property *pClearingType;
 	gld_property *pClearingType2;
 	gld_property *pMarginalFraction2;
+
+	// DOUBLE PRICE variables
+	gld_property *pUa;
+	gld_property *pHm;
+	gld_property *pCa;
+	gld_property *pCm;
+	gld_property *pMassInternalGainFraction;
+	gld_property *pMassSolarGainFraction;
+	gld_property *pQi;
+	gld_property *pQs;
+	gld_property *pQh;
+	gld_property *pTout;
+	gld_property *pTmass;
+	gld_property *pRated_cooling_capacity;
+	gld_property *pCooling_COP;
+
 	//PROXY PROPERTIES
 	double proxy_avg;
 	double proxy_std;

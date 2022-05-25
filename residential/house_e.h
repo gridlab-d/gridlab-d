@@ -399,9 +399,11 @@ public:
 		TM_COOL = 3,
 	}THERMOSTATMODE;
 	enumeration thermostat_mode;
+	bool dump_house_parameters;
 
 private:
 	TIMESTAMP simulation_beginning_time;
+	double simulation_beginning_time_dbl;
 	void set_thermal_integrity();
 	void set_window_shgc();
 	void set_window_Rvalue();
@@ -422,6 +424,10 @@ private:
 	bool proper_climate_found;		//Flag to see if climate interactions should occur
 	bool commercial_load_parent;    // proper_meter_parent is true, but the parent is actually a load
 
+	//Variables for fault_impedance method
+	bool powerflow_impedance_conversion_enabled;	//Boolean for powerflow - see if "convert all to impedance" is active
+	double powerflow_impedance_conversion_level;	//Threshold from powerflow where impedance conversion should occur
+
 	//Pointers for powerflow properties
 	gld_property *pCircuit_V[3];					///< pointer to the three voltages on three lines
 	gld_property *pLine_I[3];						///< pointer to the three current on three lines
@@ -437,8 +443,17 @@ private:
 	gld::complex value_Power[3];						///< value holder for power value on triplex parent
 	enumeration value_MeterStatus;				///< value holder for service_status variable on triplex parent
 	double value_Frequency;						///< value holder for measured frequency on triplex parent
+	typedef enum {	
+		XPFV_NONE	= 0,		// no external power flow
+		XPFV_ONEV	= 1,		// set just external_v1N, assume v2N equal and opposite
+		XPFV_TWOV	= 2,		// will set both external_v1N and v2N, require v12 = v1N - v2N
+	} EXTERNALPFMODE;
+	enumeration external_pf_mode;
+	complex external_v1N;            // from OpenDSS or another external power flow program
+	complex external_v2N;            // from OpenDSS or another external power flow program
 
-	// interface to powerflow calculations, need not be public?
+	// interface to powerflow calculations
+	void check_external_voltage(void);
 	void pull_complex_powerflow_values(void);
 	void push_complex_powerflow_values(void);
 
@@ -459,8 +474,13 @@ private:
 	double value_Rhout;			//< Value holder for relative humidity
 	double value_Solar[9];		//< Value holder for solar irradiance
 
+	bool external_motor_attached;	//< Flag for external powerflow motor being used - removes that panel contributions
+
+	void circuit_voltage_factor_update(void);	///<Functionalized version of the voltage_factor update, so can be called in deltamode
+	void powerflow_accumulator_remover(void);	///<Functioanlized item that removes current accumulator values from powerflow (mostly for XML stuff)
 	//Circuit pointer for HVAC - used for breaker checks
 	CIRCUIT *pHVAC_EnduseLoad;
+	void dump_house_parameters_function(void);
 
 public:
 	int error_flag;
@@ -474,7 +494,7 @@ public:
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync_billing(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync_thermostat(TIMESTAMP t0, TIMESTAMP t1);
-	TIMESTAMP sync_panel(TIMESTAMP t0, TIMESTAMP t1);
+	double sync_panel(double t0_dbl, double t1_dbl);
 	TIMESTAMP sync_enduses(TIMESTAMP t0, TIMESTAMP t1);
 	void update_system(double dt=0);
 	void update_model(double dt=0);

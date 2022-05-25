@@ -20,7 +20,7 @@ class player {
 }
 object player {
 	name loadChange;
-	file flat.player;
+	file ../flat.player;
 	loop 1;
 }
 // Phase Conductor for 601: 556,500 26/7 ACSR

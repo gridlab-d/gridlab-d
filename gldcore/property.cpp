@@ -28,6 +28,7 @@
 #include "exec.h"
 
 /* IMPORTANT: this list must match PROPERTYTYPE enum in property.h */
+/* TODO: Fix "method" - was missing from list and causing segfaults, so populated.  No idea if it works or what it does */
 PROPERTYSPEC property_type[_PT_LAST] = {
 		{"void",          "string",  0,                     0,                  convert_from_void,           convert_to_void},
 		{"double",        "decimal", sizeof(double),        24,                 convert_from_double,         convert_to_double,         NULL, reinterpret_cast<size_t (*)(
@@ -69,6 +70,7 @@ PROPERTYSPEC property_type[_PT_LAST] = {
 				const char *, void *,
 				PROPERTY *)>(convert_to_randomvar),                                                                                    reinterpret_cast<int (*)(
 				void *)>(randomvar_create),                                                                                                   NULL, {TCOPS(double)}, random_get_part},
+	{"method", "string", sizeof(METHODCALL), 0, convert_from_method, convert_to_method}
 };
 
 PROPERTYSPEC *property_getspec(PROPERTYTYPE ptype)

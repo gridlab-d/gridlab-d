@@ -23,7 +23,6 @@
 #include <math.h>
 
 #include "triplex_meter.h"
-#include "timestamp.h"
 
 // useful macros
 #define TO_HOURS(t) (((double)t) / (3600 * TS_SECOND))
@@ -159,6 +158,10 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 				GL_THROW("Unable to publish triplex_meter VFD attachment function");
 			if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
 				GL_THROW("Unable to publish triplex_meter island-status-reset function");
+			if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
+				GL_THROW("Unable to publish triplex_meter swing-status check function");
+			if (gl_publish_function(oclass, "pwr_object_kmldata", (FUNCTIONADDR)triplex_meter_kmldata) == NULL)
+				GL_THROW("Unable to publish triplex_meter kmldata function");
 		}
 }
 
@@ -172,6 +175,7 @@ int triplex_meter::create()
 {
 	int result = triplex_node::create();
 	measured_real_energy = measured_reactive_energy = 0;
+	measured_real_power = measured_reactive_power = 0.0;
 	measured_real_energy_delta = measured_reactive_energy_delta = 0;
     last_measured_real_energy = last_measured_reactive_energy = 0;
 	last_measured_real_power = last_measured_reactive_power = 0.0;
@@ -242,6 +246,8 @@ int triplex_meter::init(OBJECT *parent)
 	pre_load=0;
 #endif
 
+	OBJECT *obj = OBJECTHDR(this);
+
 	if(power_market != 0){
 		price_prop = gl_get_property(power_market, market_price_name);
 		if(price_prop == 0){
@@ -249,6 +255,16 @@ int triplex_meter::init(OBJECT *parent)
 		}
 	}
 	check_prices();
+
+	//Check power and energy properties - if they are initialized, send a warning
+	if ((measured_real_power != 0.0) || (measured_reactive_power != 0.0) || (measured_real_energy != 0.0) || (measured_reactive_energy != 0.0))
+	{
+		gl_warning("triplex_meter:%d - %s - measured power or energy is not initialized to zero - unexpected energy values may result",obj->id,(obj->name?obj->name:"Unnamed"));
+		/*  TROUBLESHOOT
+		An initial value for measured_real_power, measured_reactive_power, measured_real_energy, or measured_reactive_energy was set in the GLM.  This may cause some unexpected
+		energy values to be computed for the system on this triplex_meter.  If this was not deliberate, be sure to remove those entries from the GLM file.
+		*/
+	}
 
 	return triplex_node::init(parent);
 }
@@ -823,7 +839,7 @@ SIMULATIONMODE triplex_meter::inter_deltaupdate_triplex_meter(unsigned int64 del
 {
 	OBJECT *hdr = OBJECTHDR(this);
 	int TempNodeRef;
-	double deltat, deltatimedbl;
+	double deltat;
 	STATUS return_status_val;
 
 	//Create delta_t variable
@@ -832,26 +848,25 @@ SIMULATIONMODE triplex_meter::inter_deltaupdate_triplex_meter(unsigned int64 del
 	//Update time tracking variable - mostly for GFA functionality calls
 	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
 	{
-		//Get decimal timestamp value
-		deltatimedbl = (double)delta_time/(double)DT_SECOND; 
-
 		//Update tracking variable
-		prev_time_dbl = (double)gl_globalclock + deltatimedbl;
+		prev_time_dbl = gl_globaldeltaclock;
 
 		//Update frequency calculation values (if needed)
 		if (fmeas_type != FM_NONE)
 		{
-			//Copy the tracker value
-			memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+			//See which pass
+			if (delta_time == 0)
+			{
+				//Initialize dynamics - first run of new delta call
+				init_freq_dynamics(deltat);
+			}
+			else
+			{
+				//Copy the tracker value
+				memcpy(&prev_freq_state,&curr_freq_state,sizeof(FREQM_STATES));
+			}
 		}
 	}
-
-	//Initialization items
-	if ((delta_time==0) && (iteration_count_val==0) && (interupdate_pos == false) && (fmeas_type != FM_NONE))	//First run of new delta call
-	{
-		//Initialize dynamics
-		init_freq_dynamics();
-	}//End first pass and timestep of deltamode (initial condition stuff)
 
 	//Perform the GFA update, if enabled
 	if ((GFA_enable == true) && (iteration_count_val == 0) && (interupdate_pos == false))	//Always just do on the first pass
@@ -1063,6 +1078,17 @@ EXPORT SIMULATIONMODE interupdate_triplex_meter(OBJECT *obj, unsigned int64 delt
 		gl_error("interupdate_triplex_meter(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
 		return status;
 	}
+}
+
+//KML Export
+EXPORT int triplex_meter_kmldata(OBJECT *obj,int (*stream)(const char*,...))
+{
+	triplex_meter *n = OBJECTDATA(obj, triplex_meter);
+	int rv = 1;
+
+	rv = n->kmldata(stream);
+
+	return rv;
 }
 
 int triplex_meter::kmldata(int (*stream)(const char*,...))

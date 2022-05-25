@@ -79,6 +79,8 @@ line::line(MODULE *mod) : link_object(mod) {
 			GL_THROW("Unable to publish line external power calculation function");
 		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
 			GL_THROW("Unable to publish line external power limit calculation function");
+		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==NULL)
+			GL_THROW("Unable to publish line external current calculation function");
 	}
 }
 
@@ -131,6 +133,10 @@ int line::init(OBJECT *parent)
 	//Pull the values
 	f_nominal_voltage = fNode_nominal->get_double();
 	t_nominal_voltage = tNode_nominal->get_double();
+
+	//Remove the property pointers, since they are no longer needed
+	delete fNode_nominal;
+	delete tNode_nominal;
 
 	/* check for node nominal voltage mismatch */
 	if (fabs(f_nominal_voltage - t_nominal_voltage) > (0.001*f_nominal_voltage))
@@ -253,11 +259,26 @@ void line::recalc_line_matricies(gld::complex Zabc_mat[3][3], gld::complex Yabc_
 {
 	gld::complex U_mat[3][3], temp_mat[3][3];
 
-	// Setup unity matrix
-	U_mat[0][0] = U_mat[1][1] = U_mat[2][2] = 1.0;
-	U_mat[0][1] = U_mat[0][2] = 0.0;
-	U_mat[1][0] = U_mat[1][2] = 0.0;
-	U_mat[2][0] = U_mat[2][1] = 0.0;
+	//Do an initial zero
+	U_mat[0][0] = U_mat[0][1] = U_mat[0][2] = 0.0;
+	U_mat[1][0] = U_mat[1][1] = U_mat[1][2] = 0.0;
+	U_mat[2][0] = U_mat[2][1] = U_mat[2][2] = 0.0;
+
+	// Setup unity matrix - by phase
+	if (has_phase(PHASE_A))
+	{
+		U_mat[0][0] = 1.0;
+	}
+
+	if (has_phase(PHASE_B))
+	{
+		U_mat[1][1] = 1.0;
+	}
+
+	if (has_phase(PHASE_C))
+	{
+		U_mat[2][2] = 1.0;
+	}
 
 	//b_mat = Zabc_mat as per Kersting (6.10)
 		equalm(Zabc_mat,b_mat);

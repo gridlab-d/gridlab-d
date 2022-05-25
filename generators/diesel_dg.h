@@ -12,8 +12,10 @@
 #include <stdarg.h>
 #include "generators.h"
 
+EXPORT int isa_diesel_dg(OBJECT *obj, char *classname);
 EXPORT SIMULATIONMODE interupdate_diesel_dg(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 EXPORT STATUS postupdate_diesel_dg(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass);
+EXPORT STATUS diesel_dg_NR_current_injection_update(OBJECT *obj,int64 iteration_count);
 
 //AVR state variable structure
 typedef struct {
@@ -131,6 +133,8 @@ typedef struct {
 //Set-point/adjustable variables
 typedef struct {
 	double wref;	//Reference frequency/bias for generator object (governor)
+	double w_ref;	//Reference frequency/bias for generator object (governor), but rad/s (align with other generators)
+	double f_set;   //Reference frequency in Hz
 	double vset;	//Reference per-unit voltage/bias for generator object (AVR)
 	double vseta;	//Reference per-unit voltage/bias for generator object (AVR) before going into bound check
 	double vsetb;	//Reference per-unit voltage/bias for generator object (AVR) after going into bound check
@@ -155,9 +159,17 @@ private:
 	gld::complex value_prev_Power[3];	///Storage variable for previous power - mostly for accumulator handling
 
 	bool parent_is_powerflow;
+	enumeration attached_bus_type;	//Determines attached bus type
+
+	FUNCTIONADDR swing_test_fxn;	//Function to map to swing testing function, if needed
 
 	bool first_run;		///< Flag for first run of the diesel_dg object - eliminates t0==0 dependence
+	bool only_first_init;		///< Flag to indicate if we should limit the dynamics initialization to only the very first run of deltamode
+	bool first_init_status;		///< Flag to see if that first init has actually occurred
 	bool is_isochronous_gen;	///< Flag to indicate if we're isochronous, mostly to help keep us in deltamode
+
+	TIMESTAMP diesel_start_time;
+	bool diesel_first_step;
 
 	//Internal synchronous machine variables
 	gld_property *pbus_full_Y_mat;		//Link to the full_Y bus variable -- used for Norton equivalents
@@ -197,6 +209,7 @@ private:
 
 	bool deltamode_inclusive;	//Boolean for deltamode calls - pulled from object flags
 	gld_property *mapped_freq_variable;	//Mapping to frequency variable in powerflow module - deltamode updates
+	int64 first_iteration_current_injection;	//Initialization variable - mostly so SWING_PQ buses initalize properly for deltamode
 
 	double Overload_Limit_Value;	//The computed maximum output power, based on the Rated_VA and the Overload_Limit_Value
 	SIMULATIONMODE desired_simulation_mode;	//deltamode desired simulation mode after corrector pass - prevents starting iterations again
@@ -204,16 +217,34 @@ private:
 protected:
 	/* TODO: put unpublished but inherited variables */
 public:
+	/* TODO: Deprecated properties to be deleted on next version */
+	double power_factor;
+	set phases;	/**< device phases (see PHASE codes) */
+	//******** END DEPRECATED **************//
+
 	/* TODO: put published variables here */
 	enum {DYNAMIC=1, NON_DYN_CONSTANT_PQ};
 	enumeration Gen_type;
 
 	//Dynamics synchronous generator capabilities
-	enum {NO_EXC=1, SEXS};
+	enum {NO_EXC=1, SEXS=2};
 	enumeration Exciter_type;
+
+	//Dynamics synchronous generator capabilities
+	enum {SEXS_CV=1,SEXS_CQ=2,SEXS_Q_V_DROOP=3};
+	enumeration SEXS_mode;
+
+
 	//gastflag
 	enum {NO_GOV=1, DEGOV1=2, GAST=3, GGOV1_OLD=4, GGOV1=5, P_CONSTANT=6};
 	enumeration Governor_type;
+
+	enum P_F_DROOP_SETTING_TYPE
+	{
+		FSET_MODE = 0,
+		PSET_MODE = 1
+	};
+	enumeration P_f_droop_setting_mode; //
 
 	//Enable/Disable low-value select blocks
 	bool gov_ggv1_fsrt_enable;	//Enables/disables top fsrt of low-value-select (load limiter)
@@ -224,7 +255,6 @@ public:
 	double Rated_V_LL;	//Rated voltage - LL value
 	double Rated_VA;
 	double Overload_Limit_Pub;	//Maximum rating for the generator, in per-unit
-	double power_factor;
 
 	//Synchronous gen inputs
 	
@@ -245,6 +275,7 @@ public:
 
 	//Dynamics-capable synchronous generator inputs
 	double omega_ref;		//Nominal frequency
+	double f_nominal;        // Nominal frequency in Hz
 	double inertia;			//Inertial constant (H) of generator
 	double damping;			//Damping constant (D) of generator
 	double number_poles;	//Number of poles in the generator
@@ -280,10 +311,12 @@ public:
 	double kp_Pconstant;		// kp for the PI controller implemented in P constant delta mode
 
 	bool P_constant_mode; 		// Flag indicating whether P constant mode is imployed
-	bool Q_constant_mode;       // Flag indicating whether Q constant mode is imployed
 	double ki_Qconstant;		// ki for the PI controller implemented in Q constant delta mode
 	double kp_Qconstant;		// kp for the PI controller implemented in Q constant delta mode
 	
+	double mq_QV_Droop; // Q-V droop slope
+	double Vset_QV_droop; //Voltage setpoint of QV droop
+
 	// parameters related to CVR control in AVR
 	bool CVRenabled;				// Flag indicating whether CVR control is enabled or not inside the exciter
 	double ki_cvr;					// Integral gain for PI/PID controller of the CVR control
@@ -369,8 +402,6 @@ public:
 	//double gov_ggv1_rup;				//Maximum rate of load limit increase
 	//double gov_ggv1_rdown;			//Maximum rate of load limit decrease
 
-	set phases;	/**< device phases (see PHASE codes) */
-
 	// P_CONSTANT mode properties
 	double pconstant_Tpelec;		//Electrical power transducer time constant, sec. (>0.)
 	double pconstant_Tact;			//Actuator time constant
@@ -412,6 +443,8 @@ public:
 public:
 	/* required implementations */
 	diesel_dg(MODULE *module);
+	int isa(char *classname);
+
 	void check_power_output();
 	int create(void);
 	int init(OBJECT *parent);
@@ -421,6 +454,7 @@ public:
 	//STATUS deltaupdate(unsigned int64 dt, unsigned int iteration_count_val);
 	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 	STATUS post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass);
+	STATUS updateCurrInjection(int64 iteration_count);
 public:
 	static CLASS *oclass;
 	static diesel_dg *defaults;
@@ -430,7 +464,6 @@ public:
 	STATUS apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, double deltaT);
 	STATUS init_dynamics(MAC_STATES *curr_time);
 	gld::complex complex_exp(double angle);
-	double abs_complex(gld::complex val);
 
 	friend class controller_dg;
 

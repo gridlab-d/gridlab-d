@@ -37,13 +37,15 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_enumeration,"Gen_type",PADDR(Gen_type),
 				PT_KEYWORD,"CONSTANT_PQ",(enumeration)NON_DYN_CONSTANT_PQ,PT_DESCRIPTION,"Non-dynamic mode of diesel generator with constant PQ output as defined",
 				PT_KEYWORD,"DYN_SYNCHRONOUS",(enumeration)DYNAMIC,PT_DESCRIPTION,"Dynamics-capable implementation of synchronous diesel generator",
-		
-			PT_double, "pf", PADDR(power_factor),PT_DESCRIPTION,"desired power factor",
+
+			PT_double, "pf", PADDR(power_factor),PT_DESCRIPTION,"desired power factor",PT_DEPRECATED,
 
 			//End of synchronous generator inputs
 			PT_double, "Rated_V[V]", PADDR(Rated_V_LL),PT_DESCRIPTION,"nominal line-line voltage in Volts",
 			PT_double, "Rated_VA[VA]", PADDR(Rated_VA),PT_DESCRIPTION,"nominal capacity in VA",
 			PT_double, "overload_limit[pu]", PADDR(Overload_Limit_Pub),PT_DESCRIPTION,"per-unit value of the maximum power the generator can provide",
+
+			PT_bool, "deltamode_only_changes", PADDR(only_first_init), PT_DESCRIPTION, "Flag to prevent reinitialization of dynamic equations - implies all changes are in deltamode",
 
 			PT_complex, "current_out_A[A]", PADDR(current_val[0]),PT_DESCRIPTION,"Output current of phase A",
 			PT_complex, "current_out_B[A]", PADDR(current_val[1]),PT_DESCRIPTION,"Output current of phase B",
@@ -81,7 +83,7 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_complex,"X2[pu]",PADDR(X2),PT_DESCRIPTION,"Negative sequence impedance (p.u.)",
 
 			//Convergence criterion for exiting deltamode - just on rotor_speed for now
-			PT_double,"rotor_speed_convergence[rad]",PADDR(rotor_speed_convergence_criterion),PT_DESCRIPTION,"Convergence criterion on rotor speed used to determine when to exit deltamode",
+			PT_double,"rotor_speed_convergence[rad/s]",PADDR(rotor_speed_convergence_criterion),PT_DESCRIPTION,"Convergence criterion on rotor speed used to determine when to exit deltamode",
 			PT_double,"voltage_convergence[V]",PADDR(voltage_convergence_criterion),PT_DESCRIPTION,"Convergence criterion for voltage changes (if exciter present) to determine when to exit deltamode",
 
 			//Which to enable
@@ -107,14 +109,24 @@ diesel_dg::diesel_dg(MODULE *module)
 
 			//Overall inputs for dynamics model - governor and exciter "tweakables"
 			PT_double,"wref[pu]", PADDR(gen_base_set_vals.wref), PT_DESCRIPTION, "wref input to governor controls (per-unit)",
+			PT_double,"w_ref[rad/s]",PADDR(gen_base_set_vals.w_ref), PT_DESCRIPTION, "w_ref input to governor controls (rad/s) - takes priority over wref",	//semi-overloaded for commonality to wider control
 			PT_double,"vset[pu]", PADDR(gen_base_set_vals.vset), PT_DESCRIPTION, "vset input to AVR controls (per-unit)",
+			PT_double,"Vset[pu]", PADDR(gen_base_set_vals.vset), PT_DESCRIPTION, "Vset input to AVR controls (per-unit)",
 			PT_double,"Pref[pu]", PADDR(gen_base_set_vals.Pref), PT_DESCRIPTION, "Pref input to governor controls (per-unit), if supported",
+			PT_double,"Pset[pu]", PADDR(gen_base_set_vals.Pref), PT_DESCRIPTION, "Pset input to governor controls (per-unit), if supported",	//overloaded for commonality to wider control
+			PT_double,"fset[Hz]",PADDR(gen_base_set_vals.f_set), PT_DESCRIPTION, "fset input to governor controls (Hz) - takes priority over wref",	//semi-overloaded for commonality to wider control
 			PT_double,"Qref[pu]", PADDR(gen_base_set_vals.Qref), PT_DESCRIPTION, "Qref input to govornor or AVR controls (per-unit), if supported",
 
 			//Properties for AVR/Exciter of dynamics model
 			PT_enumeration,"Exciter_type",PADDR(Exciter_type),PT_DESCRIPTION,"Exciter model for dynamics-capable implementation",
 				PT_KEYWORD,"NO_EXC",(enumeration)NO_EXC,PT_DESCRIPTION,"No exciter",
 				PT_KEYWORD,"SEXS",(enumeration)SEXS,PT_DESCRIPTION,"Simplified Excitation System",
+
+			//modes of SEXS exciter
+			PT_enumeration,"SEXS_mode",PADDR(SEXS_mode),PT_DESCRIPTION,"Exciter model for dynamics-capable implementation",
+				PT_KEYWORD,"CONSTANT_VOLTAGE",(enumeration)SEXS_CV,PT_DESCRIPTION,"The normal operation mode of SEXS",
+				PT_KEYWORD,"CONSTANT_Q",(enumeration)SEXS_CQ,PT_DESCRIPTION,"Constant Q operation mode",
+				PT_KEYWORD,"Q_V_DROOP",(enumeration)SEXS_Q_V_DROOP,PT_DESCRIPTION,"Q-V droop function",
 
 			PT_double,"KA[pu]",PADDR(exc_KA),PT_DESCRIPTION,"Exciter gain (p.u.)",
 			PT_double,"TA[s]",PADDR(exc_TA),PT_DESCRIPTION,"Exciter time constant (seconds)",
@@ -124,6 +136,12 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double,"EMIN[pu]",PADDR(exc_EMIN),PT_DESCRIPTION,"Exciter lower limit (p.u.)",
 			PT_double,"Vterm_max[pu]",PADDR(Max_Ef),PT_DESCRIPTION,"Upper voltage limit for super-second (p.u.)",
 			PT_double,"Vterm_min[pu]",PADDR(Min_Ef),PT_DESCRIPTION,"Lower voltage limit for super-second (p.u.)",
+
+			PT_double,"mq_QV_Droop",PADDR(mq_QV_Droop),PT_DESCRIPTION,"Q-V droop slope",
+			PT_double,"SEXS_Q_V_droop",PADDR(mq_QV_Droop),PT_DESCRIPTION,"Q-V droop slope",
+			PT_double,"Vset_QV_droop",PADDR(Vset_QV_droop),PT_DESCRIPTION,"Voltage setpoint of QV droop",
+			PT_double,"SEXS_Vset",PADDR(Vset_QV_droop),PT_DESCRIPTION,"Voltage setpoint of QV droop",
+			PT_double,"Vref_SEXS",PADDR(gen_base_set_vals.vset),PT_DESCRIPTION,"Voltage reference for SEXS exciter",
 
 			//State variables - SEXS
 			PT_double,"bias",PADDR(curr_state.avr.bias),PT_DESCRIPTION,"Exciter bias state variable",
@@ -143,7 +161,6 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double,"P_CONSTANT_kp", PADDR(kp_Pconstant), PT_DESCRIPTION, "parameter of the proportional control for constant P mode",
 
 			// If Q_constant delta mode is adopted
-			PT_bool, "Exciter_Q_constant_mode",PADDR(Q_constant_mode),PT_DESCRIPTION,"True if the generator is operating under constant Q mode",
 			PT_double,"Exciter_Q_constant_ki", PADDR(ki_Qconstant), PT_DESCRIPTION, "parameter of the integration control for constant Q mode",
 			PT_double,"Exciter_Q_constant_kp", PADDR(kp_Qconstant), PT_DESCRIPTION, "parameter of the propotional control for constant Q mode",
 
@@ -180,6 +197,10 @@ diesel_dg::diesel_dg(MODULE *module)
 				PT_KEYWORD,"GGOV1_OLD",(enumeration)GGOV1_OLD,PT_DESCRIPTION,"Older GGOV1 Governor Model",
 				PT_KEYWORD,"GGOV1",(enumeration)GGOV1,PT_DESCRIPTION,"GGOV1 Governor Model",
 				PT_KEYWORD,"P_CONSTANT",(enumeration)P_CONSTANT,PT_DESCRIPTION,"P_CONSTANT mode Governor Model",
+
+			PT_enumeration, "P_f_droop_setting_mode", PADDR(P_f_droop_setting_mode), PT_DESCRIPTION, "Definition of P-f droop curve",
+				PT_KEYWORD, "FSET_MODE", (enumeration)FSET_MODE,
+				PT_KEYWORD, "PSET_MODE", (enumeration)PSET_MODE,
 
 			//Governor properties (DEGOV1)
 			PT_double,"DEGOV1_R[pu]",PADDR(gov_degov1_R),PT_DESCRIPTION,"Governor droop constant (p.u.)",
@@ -254,6 +275,9 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double,"GGOV1_Tsb[s]",PADDR(gov_ggv1_Tsb),PT_DESCRIPTION,"Temperature detection lag time constant, sec.",
 //			PT_double,"GGOV1_rup",PADDR(gov_ggv1_rup),PT_DESCRIPTION,"Maximum rate of load limit increase",
 //			PT_double,"GGOV1_rdown",PADDR(gov_ggv1_rdown),PT_DESCRIPTION,"Maximum rate of load limit decrease",
+
+			PT_double,"GGOV1_Pset[pu]", PADDR(gen_base_set_vals.Pref), PT_DESCRIPTION, "GGOV1_Pset input to governor controls (per-unit), if supported",	//overloaded for commonality to wider control
+			PT_double,"GGOV1_fset[Hz]",PADDR(gen_base_set_vals.f_set), PT_DESCRIPTION, "fset input to governor controls (Hz) - takes priority over wref",	//semi-overloaded for commonality to wider control
 
 			//GGOV1 "enable/disable" variables - to give some better control over low value select
 			PT_bool,"GGOV1_Load_Limit_enable",PADDR(gov_ggv1_fsrt_enable),PT_DESCRIPTION,"Enables/disables load limiter (fsrt) of low-value-select",
@@ -346,7 +370,7 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double,"real_power_generation[W]",PADDR(real_power_gen),PT_DESCRIPTION,"The total real power generation",
 			PT_double,"reactive_power_generation[VAr]",PADDR(imag_power_gen),PT_DESCRIPTION,"The total reactive power generation",
 
-			PT_set, "phases", PADDR(phases), PT_DESCRIPTION, "Specifies which phases to connect to - currently not supported and assumes three-phase connection",
+			PT_set, "phases", PADDR(phases), PT_DESCRIPTION, "Specifies which phases to connect to - currently not supported and assumes three-phase connection",PT_DEPRECATED,
 				PT_KEYWORD, "A",(set)PHASE_A,
 				PT_KEYWORD, "B",(set)PHASE_B,
 				PT_KEYWORD, "C",(set)PHASE_C,
@@ -364,16 +388,21 @@ diesel_dg::diesel_dg(MODULE *module)
 			GL_THROW("Unable to publish diesel_dg deltamode function");
 		if (gl_publish_function(oclass,	"postupdate_gen_object", (FUNCTIONADDR)postupdate_diesel_dg)==NULL)
 			GL_THROW("Unable to publish diesel_dg deltamode function");
+		if (gl_publish_function(oclass, "current_injection_update", (FUNCTIONADDR)diesel_dg_NR_current_injection_update)==NULL)
+			GL_THROW("Unable to publish diesel_dg current injection update function");
 	}
 }
 
+//Isa function for identification
+int diesel_dg::isa(char *classname)
+{
+	return strcmp(classname,"diesel_dg")==0;
+}
+
 /* Object creation is called once for each object that is created by the core */
-int diesel_dg::create(void) 
+int diesel_dg::create(void)
 {
 ////Initialize tracking variables
-
-	power_factor = 0.0;
-
 	//End of synchronous generator inputs
 	Rated_V_LL = 0.0;
 	Rated_V_LN = 0.0;
@@ -386,59 +415,65 @@ int diesel_dg::create(void)
 	Min_Ef = 0.95;
 
 	//Dynamics generator defaults
-	omega_ref=2*PI*60;  
-	inertia=0.7;              
-	damping=0.0;                
-	number_poles=2;     
-	Ra=0.00625;         
-	Xd=2.06;            
-	Xq=2.5;             
-	Xdp=0.398;          
-	Xqp=0.3;            
-	Xdpp=0.254;         
-	Xqpp=0.254;         
-	Xl=0.1;             
-	Tdp=0.31737;        
-	Tdop=4.45075;       
-	Tqop=3.0;           
-	Tdopp=0.066;        
-	Tqopp=0.075;        
-	Ta=0.03202;         
+	omega_ref=0.0;  	//Will be pulled from powerflow
+	f_nominal=0.0;	//Will be pulled from powerflow
+	inertia=0.7;
+	damping=0.0;
+	number_poles=2;
+	Ra=0.00625;
+	Xd=2.06;
+	Xq=2.5;
+	Xdp=0.398;
+	Xqp=0.3;
+	Xdpp=0.254;
+	Xqpp=0.254;
+	Xl=0.1;
+	Tdp=0.31737;
+	Tdop=4.45075;
+	Tqop=3.0;
+	Tdopp=0.066;
+	Tqopp=0.075;
+	Ta=0.03202;
 	X0=gld::complex(0.005,0.05);
 	X2=gld::complex(0.0072,0.2540);
 
 	//Input variables are initialized to -99 (since pu) - if left there, the dynamics initialization gets them
 	gen_base_set_vals.wref = -99.0;
+	gen_base_set_vals.w_ref = -99.0;	//Not pu, but still a bad setting
 	gen_base_set_vals.vset = -99.0;
 	gen_base_set_vals.Pref = -99.0;
 	gen_base_set_vals.Qref = -99.0;
+	gen_base_set_vals.f_set = -99.0;
 
 	//SEXS Exciter defaults
-	exc_KA=50;              
-	exc_TA=0.01;            
-	exc_TB=2.0;               
-	exc_TC=10;              
-	exc_EMAX=3.0;             
-	exc_EMIN=-3.0;            
+	exc_KA=50;
+	exc_TA=0.01;
+	exc_TB=2.0;
+	exc_TC=10;
+	exc_EMAX=3.0;
+	exc_EMIN=-3.0;
+
+	mq_QV_Droop=0.05; // Q-V droop slope
+	Vset_QV_droop=1; //Voltage setpoint of QV droop
 
 	//DEGOV1 Governor defaults
-	gov_degov1_R=0.05;             
-	gov_degov1_T1=0.2;             
-	gov_degov1_T2=0.3;             
-	gov_degov1_T3=0.5;             
-	gov_degov1_K=0.8;              
-	gov_degov1_T4=1.0;               
-	gov_degov1_T5=0.1;             
-	gov_degov1_T6=0.2;             
-	gov_degov1_TMAX=1.0;             
-	gov_degov1_TMIN=0.0;             
-	gov_degov1_TD=0.01;            
+	gov_degov1_R=0.05;
+	gov_degov1_T1=0.2;
+	gov_degov1_T2=0.3;
+	gov_degov1_T3=0.5;
+	gov_degov1_K=0.8;
+	gov_degov1_T4=1.0;
+	gov_degov1_T5=0.1;
+	gov_degov1_T6=0.2;
+	gov_degov1_TMAX=1.0;
+	gov_degov1_TMIN=0.0;
+	gov_degov1_TD=0.01;
 
 	//GAST Governor defaults
-//	gov_gast_R=.05;             
+//	gov_gast_R=.05;
 //	gov_gast_T1=0.1;
 //	gov_gast_T2=0.05;
-	gov_gast_R=.05;             
+	gov_gast_R=.05;
 	gov_gast_T1=0.4;
 	gov_gast_T2=0.1;
 	gov_gast_T3=3;
@@ -446,7 +481,7 @@ int diesel_dg::create(void)
 	gov_gast_KT=2;
 	gov_gast_VMAX=1.05;
 	gov_gast_VMIN=-0.05;
-	
+
 	//GGOV1 Governor defaults
 	gov_ggv1_r = 0.04;
 	gov_ggv1_rselect = 1;
@@ -517,6 +552,7 @@ int diesel_dg::create(void)
 	value_IGenerated[0] = value_IGenerated[1] = value_IGenerated[2] = gld::complex(0.0,0.0);
 	Governor_type = NO_GOV;
 	Exciter_type = NO_EXC;
+	SEXS_mode = SEXS_CV;
 
 	power_val[0] = power_val[1] = power_val[2] = gld::complex(0.0,0.0);
 	current_val[0] = current_val[1] = current_val[2] = gld::complex(0.0,0.0);
@@ -565,6 +601,10 @@ int diesel_dg::create(void)
 
 	first_run = true;				//First time we run, we are the first run (by definition)
 
+	diesel_start_time = TS_INVALID;			//Gets initialized
+	diesel_first_step = true;
+	first_iteration_current_injection = -1;	//Just initailize it
+
 	prev_time = 0;
 	prev_time_dbl = 0.0;
 
@@ -573,7 +613,6 @@ int diesel_dg::create(void)
 	ki_Pconstant = 1;
 	kp_Pconstant = 0;
 
-	Q_constant_mode = false;
 	ki_Qconstant = 1;
 	kp_Qconstant = 0;
 
@@ -615,14 +654,23 @@ int diesel_dg::create(void)
 	value_Line_I[0] = value_Line_I[1] = value_Line_I[2] = gld::complex(0.0,0.0);
 	value_Power[0] = value_Power[1] = value_Power[2] = gld::complex(0.0,0.0);
 	value_prev_Power[0] = value_prev_Power[1] = value_prev_Power[2] = gld::complex(0.0,0.0);
-	
+
 	parent_is_powerflow = false;	//By default, we're not a good child
+	attached_bus_type = 0;			//By default, we're basically a PQ bus
+
+	swing_test_fxn = NULL;			//By default, no mapping
 
 	//Overall, force the generator into "PQ mode" first
 	Gen_type = NON_DYN_CONSTANT_PQ;
 
 	//Set up the deltamode "next state" tracking variable
 	desired_simulation_mode = SM_EVENT;
+
+	//Deltamode-only changes variables
+	only_first_init = true;
+	first_init_status = true;
+
+	P_f_droop_setting_mode = PSET_MODE;	//Default to PSET mode, for backwards compatibility
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -645,12 +693,16 @@ int diesel_dg::init(OBJECT *parent)
 	complex_array temp_complex_array;
 	gld_property *pNominal_Voltage;
 	double nominal_voltage_value, nom_test_val;
-	
+	set temp_phases;
+
 	//Set the deltamode flag, if desired
 	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)
 	{
 		deltamode_inclusive = true;	//Set the flag and off we go
 	}
+
+	//Initialize the time tracking flag
+	diesel_start_time = gl_globalclock;
 
 	// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
 	if (parent!=NULL)
@@ -660,45 +712,57 @@ int diesel_dg::init(OBJECT *parent)
 			//Flag us as a proper child
 			parent_is_powerflow = true;
 
-			//See if this attached node is a child or not
-			if (parent->parent != NULL)
+			//See which mode we are - if QSTS only, use standard parent issues
+			if (Gen_type == DYNAMIC)
 			{
-				//Map parent
-				tmp_obj = parent->parent;
-
-				//See what it is
-				if (!gl_object_isa(tmp_obj, "meter", "powerflow") && !gl_object_isa(tmp_obj, "node", "powerflow") &&
-					!gl_object_isa(tmp_obj, "load", "powerflow"))
+				//See if this attached node is a child or not
+				if (parent->parent != NULL)
 				{
-					//Not a wierd map, just use normal parent
+					//Map parent
+					tmp_obj = parent->parent;
+
+					//See what it is
+                    if (
+                        !gl_object_isa(tmp_obj, "meter", "powerflow") &&
+                        !gl_object_isa(tmp_obj, "node", "powerflow") &&
+                        !gl_object_isa(tmp_obj, "load", "powerflow")
+                        )
+					{
+						//Not a wierd map, just use normal parent
+						tmp_obj = parent;
+					}
+					else	//Implies it is a powerflow parent
+					{
+						//See if we are deltamode-enabled -- if so, flag our parent while we're here
+						if (deltamode_inclusive == true)
+						{
+							//Map our deltamode flag and set it (parent will be done below)
+							temp_property_pointer = new gld_property(parent,"Norton_dynamic");
+
+							//Make sure it worked
+							if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_bool() != true))
+							{
+								GL_THROW("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
+								//Defined elsewhere
+							}
+
+							//Flag it to true
+							temp_bool_value = true;
+							temp_property_pointer->setp<bool>(temp_bool_value,*test_rlock);
+
+							//Remove it
+							delete temp_property_pointer;
+						}
+						//Default else -- it is one of those, but not deltamode, so nothing extra to do
+					}//End we were a powerflow child
+				}
+				else	//It is null
+				{
+					//Just point it to the normal parent
 					tmp_obj = parent;
 				}
-				else	//Implies it is a powerflow parent
-				{
-					//See if we are deltamode-enabled -- if so, flag our parent while we're here
-					if (deltamode_inclusive == true)
-					{
-						//Map our deltamode flag and set it (parent will be done below)
-						temp_property_pointer = new gld_property(parent,"Norton_dynamic");
-
-						//Make sure it worked
-						if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_bool() != true))
-						{
-							GL_THROW("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
-							//Defined elsewhere
-						}
-
-						//Flag it to true
-						temp_bool_value = true;
-						temp_property_pointer->setp<bool>(temp_bool_value,*test_rlock);
-
-						//Remove it
-						delete temp_property_pointer;
-					}
-					//Default else -- it is one of those, but not deltamode, so nothing extra to do
-				}//End we were a powerflow child
 			}
-			else	//It is nul
+			else	//Not deltamode, so just map normally
 			{
 				//Just point it to the normal parent
 				tmp_obj = parent;
@@ -769,6 +833,28 @@ int diesel_dg::init(OBJECT *parent)
 				Rated_V_LN = nominal_voltage_value;
 			}
 
+			//Pull frequency values - really only deltamode, but put in here too
+			temp_property_pointer = new gld_property("powerflow::nominal_frequency");
+
+			//Make sure it worked
+			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+			{
+				GL_THROW("diesel_dg:%d %s failed to map the nominal_frequency property", obj->id, (obj->name ? obj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to map the nominal_frequency property, an error occurred.  Please try again.
+				If the error persists, please submit your GLM and a bug report to the ticketing system.
+				*/
+			}
+
+			//Must be valid, read it
+			f_nominal = temp_property_pointer->get_double();
+
+			//Remove it
+			delete temp_property_pointer;
+
+			//Update omega_ref to match
+			omega_ref = f_nominal*2.0*PI;
+
 			//If we were deltamode requesting, set the flag on the other side
 			if (deltamode_inclusive==true)
 			{
@@ -825,18 +911,37 @@ int diesel_dg::init(OBJECT *parent)
 		}
 
 		//Pull the phase information
-		phases = temp_property_pointer->get_set();
+		temp_phases = temp_property_pointer->get_set();
 
 		//Clear the temporary pointer
 		delete temp_property_pointer;
 
-		if((phases & 0x0007) != 0x0007){//parent does not have all three meters
+		if((temp_phases & 0x0007) != 0x0007){//parent does not have all three meters
 			GL_THROW("The diesel_dg object must be connected to all three phases. Please make sure the parent object has all three phases.");
 			/* TROUBLESHOOT
 			The diesel_dg object is a three-phase generator. This message occured because the parent object does not have all three phases.
 			Please check and make sure your parent object has all three phases and try again. if the error persists, please submit your code and a bug report via the Trac website.
 			*/
 		}
+
+		//Pull the bus type
+		temp_property_pointer = new gld_property(tmp_obj, "bustype");
+
+		//Make sure it worked
+		if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_enumeration() != true))
+		{
+			GL_THROW("diesel_dg:%s failed to map bustype variable from %s", obj->name ? obj->name : "unnamed", obj->parent->name ? obj->parent->name : "unnamed");
+			/*  TROUBLESHOOT
+			While attempting to map the bustype variable from the parent node, an error was encountered.  Please try again.  If the error
+			persists, please report it with your GLM via the issues tracking system.
+			*/
+		}
+
+		//Pull the value of the bus
+		attached_bus_type = temp_property_pointer->get_enumeration();
+
+		//Remove it
+		delete temp_property_pointer;
 	}
 	else	//No parent
 	{
@@ -1086,6 +1191,7 @@ int diesel_dg::init(OBJECT *parent)
 
 			//Map the full version needed later
 			//Map up the admittance matrix to apply our contributions
+			/* **************** NOTE - This appears to only be used by the QSTS exciter implementation - can probably be removed in the future **************** */
 			pbus_full_Y_all_mat = new gld_property(parent,"deltamode_full_Y_all_matrix");
 
 			//Check it
@@ -1102,7 +1208,7 @@ int diesel_dg::init(OBJECT *parent)
 				power_val[i].Re() = Rated_VA * gen_base_set_vals.Pref/3;
 			}
 		}
-		if (Q_constant_mode == true) {
+		if (SEXS_mode == SEXS_CQ) {
 			for (int i = 0; i < 3; i++) {
 				power_val[i].Im() = Rated_VA * gen_base_set_vals.Qref/3;
 			}
@@ -1356,9 +1462,9 @@ int diesel_dg::init(OBJECT *parent)
 
 			//Pull the value
 			Frequency_mapped->getp<bool>(temp_bool_value,*test_rlock);
-			
-			//Check the value
-			if (temp_bool_value == false)	//No one has mapped yet, we are volunteered
+
+			//Check the value - and make sure we're active (don't let the passive generator dictate it)
+			if ((temp_bool_value == false) && (Governor_type != NO_GOV))	//No one has mapped yet, we are volunteered
 			{
 				//Update powerflow frequency
 				mapped_freq_variable = new gld_property("powerflow::current_frequency");
@@ -1378,7 +1484,7 @@ int diesel_dg::init(OBJECT *parent)
 
 			//Delete the reference
 			delete Frequency_mapped;
-			
+
 			gen_object_count++;	//Increment the counter
 		}
 	}//End deltamode inclusive
@@ -1424,6 +1530,12 @@ int diesel_dg::init(OBJECT *parent)
 	dg_1000_a = 0.067;
 	dg_1000_b = 5.2435/1000 * (Rated_VA/1000);
 
+	//Update wref to w_ref, if necessary
+	if (gen_base_set_vals.w_ref > 0.0)	//Effectively not -99
+	{
+		gen_base_set_vals.wref = gen_base_set_vals.w_ref / omega_ref;
+	}
+
 	return 1;
 }//init ends here
 
@@ -1434,7 +1546,7 @@ TIMESTAMP diesel_dg::presync(TIMESTAMP t0, TIMESTAMP t1)
 	return TS_NEVER; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
 
-TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1) 
+TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	double tdiff, ang_diff;
@@ -1449,12 +1561,20 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	gld::complex temp_power_val[3];
 	gld::complex temp_complex_value_power;
 	gld_wlock *test_rlock;
+	FUNCTIONADDR test_fxn;
+	STATUS fxn_return_status;
 
 	//Assume always want TS_NEVER
 	tret_value = TS_NEVER;
 
 	//Reset the poweflow interfaces
 	reset_powerflow_accumulators();
+
+	//Check the flagging variable
+	if (diesel_start_time != t1)
+	{
+		diesel_first_step = false;
+	}
 
 	//First run allocation - in diesel_dg for now, but may need to move elsewhere
 	if (first_run == true)	//First run
@@ -1524,6 +1644,29 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 					//Push it up
 					pPGenerated->setp<gld::complex>(temp_complex_value_power,*test_rlock);
 
+					//Map the current injection function
+					test_fxn = (FUNCTIONADDR)(gl_get_function(obj->parent,"pwr_current_injection_update_map"));
+
+					//See if it was located
+					if (test_fxn == NULL)
+					{
+						GL_THROW("diesel_dg:%s - failed to map additional current injection mapping for node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
+						/*  TROUBLESHOOT
+						While attempting to map the additional current injection function, an error was encountered.
+						Please try again.  If the error persists, please submit your code and a bug report via the trac website.
+						*/
+					}
+
+					//Call the mapping function
+					fxn_return_status = ((STATUS (*)(OBJECT *, OBJECT *))(*test_fxn))(obj->parent,obj);
+
+					//Make sure it worked
+					if (fxn_return_status != SUCCESS)
+					{
+						GL_THROW("diesel_dg:%s - failed to map additional current injection mapping for node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
+						//Defined above
+					}
+
 				}//End parent is a node object
 				else	//Nope, so who knows what is going on - better fail, just to be safe
 				{
@@ -1556,6 +1699,7 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 			//Force us to reiterate one
 			tret_value = t1;
+
 		}//End deltamode specials - first pass
 		//Default else - no deltamode stuff
 	}//End first timestep
@@ -1565,6 +1709,7 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	{
 		//double check power output is not above rated generation
 		check_power_output();
+
 		// Assign the power output from diesel_dg to its parent node
 		// Note that value_prev_Power is the positive value of power_val (from prev) - so the -(-) = +
 
@@ -1576,6 +1721,8 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 		value_prev_Power[0] = power_val[0];
 		value_prev_Power[1] = power_val[1];
 		value_prev_Power[2] = power_val[2];
+
+		//Update the total power output variables
 		gld::complex total_power = power_val[0] + power_val[1] + power_val[2];
 		real_power_gen = total_power.Re();
 		imag_power_gen = total_power.Im();
@@ -1648,15 +1795,24 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 				//Get the positive sequence magnitude
 				voltage_mag_curr = temp_voltage_val[0].Mag()/voltage_base;
 
-				if (Q_constant_mode == true) {
+				if (SEXS_mode == SEXS_CQ) {
 					//Figure out Q difference based on given Qref
 					reactive_diff = (gen_base_set_vals.Qref - (power_val[0].Im() + power_val[1].Im() + power_val[2].Im()) / Rated_VA) / 3.0;
 					reactive_diff = reactive_diff * Rated_VA;
 
-					//Copy in value
-					temp_power_val[0] = power_val[0] + gld::complex(real_diff,reactive_diff);
-					temp_power_val[1] = power_val[1] + gld::complex(real_diff,reactive_diff);
-					temp_power_val[2] = power_val[2] + gld::complex(real_diff,reactive_diff);
+					//Copy in value - pull the governor value too, if it was P_CONSTANT
+					if (Governor_type == P_CONSTANT)
+					{
+						temp_power_val[0] = power_val[0] + gld::complex(real_diff,reactive_diff);
+						temp_power_val[1] = power_val[1] + gld::complex(real_diff,reactive_diff);
+						temp_power_val[2] = power_val[2] + gld::complex(real_diff,reactive_diff);
+					}
+					else
+					{
+						temp_power_val[0] = power_val[0] + gld::complex(0.0,reactive_diff);
+						temp_power_val[1] = power_val[1] + gld::complex(0.0,reactive_diff);
+						temp_power_val[2] = power_val[2] + gld::complex(0.0,reactive_diff);
+					}
 
 					//Back out the current injection
 					temp_current_val[0] = ~(temp_power_val[0]/value_Circuit_V[0]) + generator_admittance[0][0]*value_Circuit_V[0] + generator_admittance[0][1]*value_Circuit_V[1] + generator_admittance[0][2]*value_Circuit_V[2];
@@ -1671,35 +1827,41 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 					//Keep us here
 					tret_value = t1;
 				}
-
-				if ((voltage_mag_curr>Max_Ef) || (voltage_mag_curr<Min_Ef))
+				else if (SEXS_mode == SEXS_Q_V_DROOP)
 				{
-
-					//See where the value is
-					vdiff = temp_voltage_val[0].Mag()/voltage_base - gen_base_set_vals.vset;
-
-					//Figure out Q difference
-					reactive_diff = (YS1_Full.Im()*(vdiff*voltage_base)*voltage_base)/3.0;
-
-					//Copy in value
-					temp_power_val[0] = power_val[0] + gld::complex(0.0,reactive_diff);
-					temp_power_val[1] = power_val[1] + gld::complex(0.0,reactive_diff);
-					temp_power_val[2] = power_val[2] + gld::complex(0.0,reactive_diff);
-
-					//Back out the current injection
-					temp_current_val[0] = ~(temp_power_val[0]/value_Circuit_V[0]) + generator_admittance[0][0]*value_Circuit_V[0] + generator_admittance[0][1]*value_Circuit_V[1] + generator_admittance[0][2]*value_Circuit_V[2];
-					temp_current_val[1] = ~(temp_power_val[1]/value_Circuit_V[1]) + generator_admittance[1][0]*value_Circuit_V[0] + generator_admittance[1][1]*value_Circuit_V[1] + generator_admittance[1][2]*value_Circuit_V[2];
-					temp_current_val[2] = ~(temp_power_val[2]/value_Circuit_V[2]) + generator_admittance[2][0]*value_Circuit_V[0] + generator_admittance[2][1]*value_Circuit_V[1] + generator_admittance[2][2]*value_Circuit_V[2];
-
-					//Apply and see what happens
-					value_IGenerated[0] = temp_current_val[0];
-					value_IGenerated[1] = temp_current_val[1];
-					value_IGenerated[2] = temp_current_val[2];
-
-					//Keep us here
-					tret_value = t1;
+					// Delta mode trigger should be here
 				}
-				//Default else - do nothing
+				else if (SEXS_mode == SEXS_CV)	//Standard voltage regulation - try QSTS exciter manipulations
+				{
+					if ((voltage_mag_curr>Max_Ef) || (voltage_mag_curr<Min_Ef))
+					{
+
+						//See where the value is
+						vdiff = temp_voltage_val[0].Mag()/voltage_base - gen_base_set_vals.vset;
+
+						//Figure out Q difference
+						reactive_diff = (YS1_Full.Im()*(vdiff*voltage_base)*voltage_base)/3.0;
+
+						//Copy in value
+						temp_power_val[0] = power_val[0] + gld::complex(0.0,reactive_diff);
+						temp_power_val[1] = power_val[1] + gld::complex(0.0,reactive_diff);
+						temp_power_val[2] = power_val[2] + gld::complex(0.0,reactive_diff);
+
+						//Back out the current injection
+						temp_current_val[0] = ~(temp_power_val[0]/value_Circuit_V[0]) + generator_admittance[0][0]*value_Circuit_V[0] + generator_admittance[0][1]*value_Circuit_V[1] + generator_admittance[0][2]*value_Circuit_V[2];
+						temp_current_val[1] = ~(temp_power_val[1]/value_Circuit_V[1]) + generator_admittance[1][0]*value_Circuit_V[0] + generator_admittance[1][1]*value_Circuit_V[1] + generator_admittance[1][2]*value_Circuit_V[2];
+						temp_current_val[2] = ~(temp_power_val[2]/value_Circuit_V[2]) + generator_admittance[2][0]*value_Circuit_V[0] + generator_admittance[2][1]*value_Circuit_V[1] + generator_admittance[2][2]*value_Circuit_V[2];
+
+						//Apply and see what happens
+						value_IGenerated[0] = temp_current_val[0];
+						value_IGenerated[1] = temp_current_val[1];
+						value_IGenerated[2] = temp_current_val[2];
+
+						//Keep us here
+						tret_value = t1;
+					}
+					//Default else - do nothing
+				}//End SEXS_CV
 			}
 			//Default else - no AVR
 		}
@@ -1843,7 +2005,7 @@ TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 		}//End "first run" paired
 		//Default else - not dynamics-oriented, deflag
-		
+
 		//Deflag us
 		first_run = false;
 	}
@@ -1981,7 +2143,7 @@ void diesel_dg::push_powerflow_values(bool update_voltage)
 						//**** Pre-rotated current injection value ***/
 						//This is a direct write - not an accumulator
 						pIGenerated[indexval]->setp<gld::complex>(value_IGenerated[indexval],*test_rlock);
-					}					
+					}
 				}
 			}
 		}//End synchronous
@@ -2014,7 +2176,7 @@ void diesel_dg::convert_Ypn0_to_Yabc(gld::complex Y0, gld::complex Y1, gld::comp
 
 	//Define the "transformation" term (1@120deg)
 	aval = gld::complex(cos(2.0*PI/3.0),sin(2.0*PI/3.0));
-	
+
 	//Make the square, since we'll need it a few places
 	aval_sq = aval*aval;
 
@@ -2042,7 +2204,7 @@ void diesel_dg::convert_pn0_to_abc(gld::complex *Xpn0, gld::complex *Xabc)
 
 	//Define the "transformation" term (1@120deg)
 	aval = gld::complex(cos(2.0*PI/3.0),sin(2.0*PI/3.0));
-	
+
 	//Make the square, since we'll need it a few places
 	aval_sq = aval*aval;
 
@@ -2061,7 +2223,7 @@ void diesel_dg::convert_abc_to_pn0(gld::complex *Xabc, gld::complex *Xpn0)
 
 	//Define the "transformation" term (1@120deg)
 	aval = gld::complex(cos(2.0*PI/3.0),sin(2.0*PI/3.0));
-	
+
 	//Make the square, since we'll need it a few places
 	aval_sq = aval*aval;
 
@@ -2099,12 +2261,18 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 	//Pull the present powerflow values
 	pull_powerflow_values();
 
+	//Update wref to w_ref, if necessary
+	if (gen_base_set_vals.w_ref > 0.0)	//Effectively not -99
+	{
+		gen_base_set_vals.wref = gen_base_set_vals.w_ref / omega_ref;
+	}
+
 	//Initialization items
 	if ((delta_time==0) && (iteration_count_val==0))	//First run of new delta call
 	{
-		
+
 		//Allocate torque-delay array properly - if neeeded
-		if (Governor_type == DEGOV1) 
+		if (Governor_type == DEGOV1)
 		{
 			//See if we need to free first
 			if (torque_delay!=NULL)
@@ -2142,11 +2310,31 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 			torque_delay_read_pos = 0;	//Read at beginning
 		}//End DEGOV1 type
 
-		//Initialize dynamics
-		init_dynamics(&curr_state);
+		//See if all changes are expected to be deltamode only
+		if (only_first_init == true)
+		{
+			//See if we've initialized in deltamode yet
+			if (first_init_status == true)
+			{
+				//Initialize dynamics
+				init_dynamics(&curr_state);
+
+				//Force the AVR flag - it would be set by now, no matter what
+				Vset_defined = true;
+
+				//Set the flag to prevent further updates
+				first_init_status = false;
+			}
+			//Default else - already inited, ignore
+		}
+		else	//QSTS changes could occur - re-init
+		{
+			//Initialize dynamics
+			init_dynamics(&curr_state);
+		}
 
 		//GGOV1 delay stuff has to go after the init, since it needs a value to initalize
-		if ((Governor_type == GGOV1) || (Governor_type == GGOV1_OLD)) 
+		if ((Governor_type == GGOV1) || (Governor_type == GGOV1_OLD))
 		{
 			//See if we need to free first
 			if (x5a_delayed!=NULL)
@@ -2209,7 +2397,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 	else if (iteration_count_val == 0)	//Not first run, just first run of this timestep
 	{
 		//Update "current" pointer of torque array - if necessary
-		if (Governor_type == DEGOV1) 
+		if (Governor_type == DEGOV1)
 		{
 			//Increment positions
 			torque_delay_write_pos++;
@@ -2306,7 +2494,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		apply_dynamics(&curr_state,&predictor_vals,deltat);
 
 		//Apply prediction update
-		if (Q_constant_mode == true) {
+		if (SEXS_mode == SEXS_CQ) {
 			next_state.avr.xfd = curr_state.avr.xfd + predictor_vals.avr.xfd*deltat;
 			next_state.Vfd = next_state.avr.xfd + predictor_vals.avr.xfd*(kp_Qconstant/ki_Qconstant);
 		}
@@ -2316,7 +2504,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		next_state.EpRotated = curr_state.EpRotated + predictor_vals.EpRotated*deltat;
 		next_state.rotor_angle = curr_state.rotor_angle + predictor_vals.rotor_angle*deltat;
 		next_state.omega = curr_state.omega + predictor_vals.omega*deltat;
-		
+
 		next_state.VintRotated  = (Xqpp-Xdpp)*curr_state.Irotated.Im();
 		next_state.VintRotated += (Xqpp-Xl)/(Xqp-Xl)*next_state.EpRotated.Re() - (Xqp-Xqpp)/(Xqp-Xl)*next_state.Flux2q;
 		next_state.VintRotated += gld::complex(0.0,1.0)*((Xdpp-Xl)/(Xdp-Xl)*next_state.EpRotated.Im()+(Xdp-Xdpp)/(Xdp-Xl)*next_state.Flux1d);
@@ -2728,6 +2916,10 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 				gen_base_set_vals.vset = gen_base_set_vals.vadd + Vref;
 			}
 
+			if(SEXS_mode == SEXS_Q_V_DROOP)
+			{
+				gen_base_set_vals.vset = Vset_QV_droop - curr_state.pwr_electric.Im()/Rated_VA * mq_QV_Droop;
+			}
 
 			next_state.avr.xe = curr_state.avr.xe + predictor_vals.avr.xe*deltat;
 			next_state.avr.xb = curr_state.avr.xb + predictor_vals.avr.xb*deltat;
@@ -2756,7 +2948,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		apply_dynamics(&next_state,&corrector_vals,deltat);
 
 		//Reconcile updates update
-		if (Q_constant_mode == true) {
+		if (SEXS_mode == SEXS_CQ) {
 			next_state.avr.xfd = curr_state.avr.xfd + (predictor_vals.avr.xfd + corrector_vals.avr.xfd)*deltath;
 			next_state.Vfd = next_state.avr.xfd + (predictor_vals.avr.xfd + corrector_vals.avr.xfd)*0.5*(kp_Qconstant/ki_Qconstant);
 		}
@@ -2766,7 +2958,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		next_state.EpRotated = curr_state.EpRotated + (predictor_vals.EpRotated + corrector_vals.EpRotated)*deltath;
 		next_state.rotor_angle = curr_state.rotor_angle + (predictor_vals.rotor_angle + corrector_vals.rotor_angle)*deltath;
 		next_state.omega = curr_state.omega + (predictor_vals.omega + corrector_vals.omega)*deltath;
-		
+
 		next_state.VintRotated  = (Xqpp-Xdpp)*next_state.Irotated.Im();
 		next_state.VintRotated += (Xqpp-Xl)/(Xqp-Xl)*next_state.EpRotated.Re() - (Xqp-Xqpp)/(Xqp-Xl)*next_state.Flux2q;
 		next_state.VintRotated += gld::complex(0.0,1.0)*((Xdpp-Xl)/(Xdp-Xl)*next_state.EpRotated.Im()+(Xdp-Xdpp)/(Xdp-Xl)*next_state.Flux1d);
@@ -3180,6 +3372,11 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 				gen_base_set_vals.vset = gen_base_set_vals.vadd + Vref;
 			}
 
+			if(SEXS_mode == SEXS_Q_V_DROOP)
+			{
+				gen_base_set_vals.vset = Vset_QV_droop - curr_state.pwr_electric.Im()/Rated_VA * mq_QV_Droop;
+			}
+
 			next_state.avr.xe = curr_state.avr.xe + (predictor_vals.avr.xe + corrector_vals.avr.xe)*deltath;
 			next_state.avr.xb = curr_state.avr.xb + (predictor_vals.avr.xb + corrector_vals.avr.xb)*deltath;
 		}//End SEXS update
@@ -3332,10 +3529,23 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 //mode_pass 1 is the "update our frequency" call
 STATUS diesel_dg::post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass)
 {
+	OBJECT *obj = OBJECTHDR(this);
+
 	if (mode_pass == 0)	//Accumulation pass
 	{
-		//Put the powerflow frequency in as our current rotor speed (should basically be this way already)
-		curr_state.omega = useful_value->Re();
+		//If no governor, we're subject to the whims of someone else (just assumes is same as master microgrid)
+		if (Governor_type == NO_GOV)
+		{
+			//Put the powerflow frequency in as our current rotor speed (should basically be this way already)
+			curr_state.omega = useful_value->Re();
+
+			//Verbose it
+			gl_verbose("diesel_dg:%d %s - pull current_frequency from powerflow for QSTS mode",obj->id,(obj->name?obj->name:"Unnamed"));
+			/*  TROUBLEHSOOT
+			A diesel_dg object has pulled the powerflow::current_frequency value to use as its rotor speed for QSTS updates.
+			If this is unintended, please put a governor on this diesel_dg.
+			*/
+		}
 
 		//Update tracking variable - see if it was an exact second or not
 		if (deltamode_supersec_endtime != deltamode_endtime)
@@ -3352,7 +3562,7 @@ STATUS diesel_dg::post_deltaupdate(gld::complex *useful_value, unsigned int mode
 	else
 		return FAILED;	//Not sure how we get here, but fail us if we do
 
-	return SUCCESS;	//Allways succeeds right now
+	return SUCCESS;	//Always succeeds right now
 }
 
 
@@ -3373,7 +3583,7 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 	gld::complex Ipn0[3];
 	gld::complex temp_complex;
 	double omega_pu;
-	double temp_double_1, temp_double_2, temp_double_3, delomega, x0; 
+	double temp_double_1, temp_double_2, temp_double_3, delomega, x0;
 	double torquenow, x5a_now;
 	gld::complex temp_current_val[3];
 	double diff_f, temp_Vfd;
@@ -3409,7 +3619,7 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 	temp_double_1 -=(Xqpp-Xdpp)*curr_time->Irotated.Re()*curr_time->Irotated.Im();
 	temp_double_3 = Ipn0[1].Mag();
 	temp_double_1 -=0.5*Rr*temp_double_3*temp_double_3;
-	curr_time->torque_elec=-temp_double_1*Rated_VA/omega_ref; 
+	curr_time->torque_elec=-temp_double_1*Rated_VA/omega_ref;
 	temp_double_1 =(curr_time->torque_mech/(Rated_VA/omega_ref)-curr_time->torque_elec/(Rated_VA/omega_ref));
 	temp_double_1 -=damping*(curr_time->omega-omega_ref)/omega_ref;
 
@@ -3494,7 +3704,7 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 
 		//Compute the offset currently
 		temp_double_1 = gen_base_set_vals.wref - curr_time->omega/omega_ref-gov_degov1_R*curr_time->gov_degov1.throttle;
-		
+
 		//Update variables
 		curr_delta->gov_degov1.x2 = (temp_double_1-curr_time->gov_degov1.x1-gov_degov1_T1*curr_time->gov_degov1.x2)/(gov_degov1_T1*gov_degov1_T2);
 		curr_delta->gov_degov1.x1 = curr_time->gov_degov1.x2;
@@ -3543,7 +3753,7 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 		}
 
 		//Compute the offset currently
-		delomega = curr_time->gov_gast.throttle - (curr_time->omega/omega_ref-1)*gov_gast_R; 
+		delomega = curr_time->gov_gast.throttle - (curr_time->omega/omega_ref-1)*gov_gast_R;
 		if (delomega <= gov_gast_AT+gov_gast_KT*(gov_gast_AT-curr_time->gov_gast.x3))
 		{
 			x0=delomega;
@@ -3652,6 +3862,20 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 	}//End P_CONSTANT updates
 	else if ((Governor_type == GGOV1) || (Governor_type == GGOV1_OLD))
 	{
+
+		if (P_f_droop_setting_mode == PSET_MODE) //Use Pset, which is the power set point at rated frequency
+		{
+			gen_base_set_vals.f_set = f_nominal;
+		}
+		else if (P_f_droop_setting_mode == FSET_MODE) //Use fset, which is the frequency set point at no load
+		{
+			gen_base_set_vals.Pref = 0.0;
+		}
+
+		if (gen_base_set_vals.f_set > 0.0)
+		{
+			gen_base_set_vals.wref = gen_base_set_vals.f_set/f_nominal;
+		}
 
 		//1 - Pelec measurement
 		curr_delta->gov_ggov1.x1 = 1.0/gov_ggv1_Tpelec*(curr_time->pwr_electric.Re() / Rated_VA - curr_time->gov_ggov1.x1);
@@ -3821,7 +4045,7 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 			}
 		}
 		//Translate this into the torque model
-		curr_time->torque_mech = curr_time->pwr_mech / curr_time->omega;		
+		curr_time->torque_mech = curr_time->pwr_mech / curr_time->omega;
 
 		//10 - Temp detection LL
 		if (gov_ggv1_Dm < 0.0)
@@ -3917,7 +4141,7 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 	//AVR updates, if relevant
 	if (Exciter_type == SEXS)
 	{
-		if (Q_constant_mode == true) {
+		if (SEXS_mode == SEXS_CQ) {
 
 			// Obtain reactive power output in p.u.
 			temp_double_1 = curr_time->pwr_electric.Im() / Rated_VA;
@@ -3985,7 +4209,7 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 		if (curr_time->avr.xe <= exc_EMIN)
 			curr_time->avr.xe = exc_EMIN;
 
-		if (Q_constant_mode == true) {
+		if (SEXS_mode == SEXS_CQ) {
 			// Add PI control for the control of Q output
 			curr_delta->avr.xfd = curr_time->avr.xe*ki_Qconstant;
 		}
@@ -4044,6 +4268,12 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 	double temp_double_1, temp_double_2, temp_double_3;
 	unsigned int index_val;
 
+	//Update wref to w_ref, if necessary - makes sure this catches any odd calls to this
+	if (gen_base_set_vals.w_ref > 0.0)	//Effectively not -99
+	{
+		gen_base_set_vals.wref = gen_base_set_vals.w_ref / omega_ref;
+	}
+
 	//Convert voltage to per-unit -- already pulled in outer function
 	voltage_pu[0] = value_Circuit_V[0]/voltage_base;
 	voltage_pu[1] = value_Circuit_V[1]/voltage_base;
@@ -4058,7 +4288,7 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 	current_val[0]=current_pu[0]*current_base;
 	current_val[1]=current_pu[1]*current_base;
 	current_val[2]=current_pu[2]*current_base;
-	
+
 	//Compute initial power
 	curr_time->pwr_electric = (voltage_pu[0]*~current_pu[0]+voltage_pu[1]*~current_pu[1]+voltage_pu[2]*~current_pu[2])*voltage_base*current_base;
 
@@ -4100,7 +4330,7 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 	temp_double_3 /= (Xdp-Xl);
 	temp_double_2 -= (Xdp-Xdpp)*temp_double_3;
 	temp_double_1 -= (Xd-Xdp)*temp_double_2;
-	
+
 	//Set field voltage
 	curr_time->Vfd = -1.0*temp_double_1;
 	curr_time->avr.xfd = curr_time->Vfd;
@@ -4201,11 +4431,15 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 	}//End P_CONSTANT initialization
 	else if ((Governor_type == GGOV1) || (Governor_type == GGOV1_OLD))
 	{
-		if (gen_base_set_vals.wref < -90.0)	//Should be -99 if not set
+		if (P_f_droop_setting_mode == PSET_MODE)
 		{
-			gen_base_set_vals.wref = curr_time->omega/omega_ref;
+			gen_base_set_vals.f_set = f_nominal;	//Initialize to the nominal value
 		}
-		//Default else -- already set, just ignore this
+		else if (P_f_droop_setting_mode == FSET_MODE)
+		{
+			gen_base_set_vals.Pref = 0.0;				//Initalize to zero value
+		}
+		//Default else - unknown mode, just ignore for now
 
 		if (gov_ggv1_Dm > 0.0)
 		{
@@ -4216,7 +4450,7 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 			curr_time->gov_ggov1.x5 = curr_time->pwr_mech / Rated_VA;
 		}
 		//Translate this into the torque model
-		curr_time->torque_mech = curr_time->pwr_mech / curr_time->omega;		
+		curr_time->torque_mech = curr_time->pwr_mech / curr_time->omega;
 
 		curr_time->gov_ggov1.x5b = curr_time->gov_ggov1.x5;
 		curr_time->gov_ggov1.x5a = curr_time->gov_ggov1.x5b;
@@ -4277,14 +4511,46 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 		curr_time->gov_ggov1.x8a = 0.0;
 		curr_time->gov_ggov1.x8 = curr_time->gov_ggov1.x8a;
 		curr_time->gov_ggov1.err2a = 0.0;
+
+		if (P_f_droop_setting_mode == FSET_MODE)
+		{
+			//See if f_set was set - prioritize
+			if (gen_base_set_vals.f_set > 0.0)
+			{
+				gen_base_set_vals.wref = gen_base_set_vals.f_set/f_nominal;
+			}
+			//Is negative, so let do normal updates/initialization
+
+			if (gen_base_set_vals.wref < 0.0)
+			{
+				gen_base_set_vals.wref = curr_time->gov_ggov1.err2a - curr_time->gov_ggov1.x8 + gov_ggv1_r*curr_time->gov_ggov1.RselectValue - gen_base_set_vals.Pref + curr_time->omega/omega_ref;
+
+				//Implies f_set wasn't set too, so extract that value as an initialization
+				gen_base_set_vals.f_set = gen_base_set_vals.wref*f_nominal;	//Is per-unit, just use a "different base"
+			}
+			//Default else - already set to a value
+		}
+		else	//Other modes
+		{
+			//See if it was initialized
+			if (gen_base_set_vals.wref < -90.0)	//Should be -99 if not set
+			{
+				gen_base_set_vals.wref = curr_time->omega/omega_ref;
+			}
+			//Default else -- already set, just ignore this
+		}
+
 		curr_time->gov_ggov1.werror = curr_time->omega/omega_ref - gen_base_set_vals.wref;
 
-		if (gen_base_set_vals.Pref < -90.0)	//Should be -99.0 if un-initialized
+		if (P_f_droop_setting_mode == PSET_MODE)
 		{
-			gen_base_set_vals.Pref = curr_time->gov_ggov1.err2a - curr_time->gov_ggov1.x8 + curr_time->gov_ggov1.werror + gov_ggv1_r*curr_time->gov_ggov1.RselectValue;
+			if (gen_base_set_vals.Pref < -90.0)	//Should be -99.0 if un-initialized
+			{
+				gen_base_set_vals.Pref = curr_time->gov_ggov1.err2a - curr_time->gov_ggov1.x8 + curr_time->gov_ggov1.werror + gov_ggv1_r*curr_time->gov_ggov1.RselectValue;
+			}
+			//Default else -- already initialized or set
 		}
-		//Default else -- already initialized or set
-		
+
 		if (curr_time->gov_ggov1.err2a > gov_ggv1_maxerr)
 		{
 			curr_time->gov_ggov1.err2 = gov_ggv1_maxerr;
@@ -4325,7 +4591,7 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 		curr_time->gov_ggov1.x10b = curr_time->gov_ggov1.x10a;
 		curr_time->gov_ggov1.x10 = (1.0 - gov_ggv1_Tsa/gov_ggv1_Tsb)*curr_time->gov_ggov1.x10b + gov_ggv1_Tsa/gov_ggv1_Tsb*curr_time->gov_ggov1.x10a;
 		curr_time->gov_ggov1.x6 = curr_time->gov_ggov1.x10;
-		
+
 		curr_time->gov_ggov1.x7 = curr_time->gov_ggov1.GovOutPut;
 		curr_time->gov_ggov1.err7 = 0.0;
 		if (gov_ggv1_Kpload > 0.0)
@@ -4355,6 +4621,7 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 			gen_base_set_vals.vset =  (voltage_pu[0].Mag() + voltage_pu[1].Mag() + voltage_pu[2].Mag())/3.0;
 			Vref = gen_base_set_vals.vset; // Record the initial vset value
 		}
+
 		//Default else -- it is set, don't adjust it
 		gen_base_set_vals.vseta = gen_base_set_vals.vset;
 		gen_base_set_vals.vsetb = gen_base_set_vals.vset;
@@ -4373,9 +4640,15 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 			gen_base_set_vals.vadd_a = 0;
 		}
 
+		// Initialize the voltage set point of Q-V droop
+		if(SEXS_mode == SEXS_Q_V_DROOP)
+		{
+			Vset_QV_droop = gen_base_set_vals.vset + curr_time->pwr_electric.Im() / Rated_VA * mq_QV_Droop;
+		}
+
 		// Define exciter bias value
 		// For Q_constant mode, set bias as 0, so that Qout will match Qref
-		if (Q_constant_mode == true) {
+		if (SEXS_mode == SEXS_CQ) {
 			curr_time->avr.bias = 0;
 		}
 		// TODO: non-zero bias value results in differences between vset and Vout measured. Need to think about it.
@@ -4391,6 +4664,181 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 	return SUCCESS;	//Always succeeds for now, but could have error checks later
 }
 
+//Function to do current-injection updates and symmetry constraint checking
+STATUS diesel_dg::updateCurrInjection(int64 iteration_count)
+{
+	complex aval, avalsq;
+	complex temp_p_setpoint;
+	complex temp_total_power_val[3];
+	complex temp_total_power_internal;
+	complex temp_pos_voltage, temp_pos_current;
+	bool bus_is_a_swing, bus_is_swing_pq_entry;
+	STATUS temp_status_val;
+	gld_property *temp_property_pointer;
+	OBJECT *obj = OBJECTHDR(this);
+
+	//Only do during initialization
+	if (diesel_first_step == true)
+	{
+		//Conversion variables - 1@120-deg
+		aval = complex(-0.5,(sqrt(3.0)/2.0));
+		avalsq = aval*aval;	//squared value is used a couple places too
+
+		//Initialize the SWING variable
+		bus_is_a_swing = false;
+
+		//Pull our "bus status" - see if we're a SWING (or SWING_PQ that is a SWING) or not, otherwise, let us update
+		if (parent_is_powerflow == true)
+		{
+			//Determine our status
+			if (attached_bus_type > 1)	//SWING or SWING_PQ
+			{
+				//See if the function has been mapped
+				if (swing_test_fxn == NULL)
+				{
+					//Map the swing status check function
+					swing_test_fxn = (FUNCTIONADDR)(gl_get_function(obj->parent,"pwr_object_swing_status_check"));
+
+					//See if it was located
+					if (swing_test_fxn == NULL)
+					{
+						GL_THROW("diesel_dg:%s - failed to map swing-checking for node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
+						/*  TROUBLESHOOT
+						While attempting to map the swing-checking function, an error was encountered.
+						Please try again.  If the error persists, please submit your code and a bug report via the trac website.
+						*/
+					}
+				}
+
+				//Call the mapping function
+				temp_status_val = ((STATUS (*)(OBJECT *,bool * , bool*))(*swing_test_fxn))(obj->parent,&bus_is_a_swing,&bus_is_swing_pq_entry);
+
+				//Make sure it worked
+				if (temp_status_val != SUCCESS)
+				{
+					GL_THROW("diesel_dg:%s - failed to map swing-checking for node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
+					//Defined above
+				}
+
+				//Now see how we've gotten here
+				if (first_iteration_current_injection == -1)	//Haven't entered before
+				{
+					//See if we are truely the first iteration
+					if (iteration_count != 0)
+					{
+						//We're not, which means we were a SWING or a SWING_PQ "demoted" after balancing was completed - override the indication
+						//If it was already true, well, we just set it again
+						bus_is_a_swing = true;
+					}
+					//Default else - we are zero, so we can just leave the "SWING status" correct
+
+					//Update the iteration counter
+					first_iteration_current_injection = iteration_count;
+				}
+				else if ((first_iteration_current_injection != 0) || (bus_is_swing_pq_entry==true))	//We didn't enter on the first iteration
+				{
+					//Just override the indication - this only happens if we were a SWING or a SWING_PQ that was "demoted"
+					bus_is_a_swing = true;
+				}
+				//Default else is zero - we entered on the first iteration, which implies we are either a PQ bus,
+				//or were a SWING_PQ that was behaving as a PQ from the start
+			}
+			//Default else - keep bus_is_a_swing as false
+		}
+		//Default else -- the parent isn't a powerflow, so just assume we "aren't a swing"
+
+		//See if we're a "standard bus"
+		if (bus_is_a_swing == false)	//Not a SWING or SWING_PQ - otherwise causes issues with internal solver_nr attempts
+		{
+			//Most of the "base governors" initialize the same - check them here
+			//Includes the "no governor" scenario (assuming output is specified)
+			if ((Governor_type == DEGOV1) || (Governor_type == GAST) || (Governor_type == GGOV1_OLD) || (Governor_type == GGOV1) || (Governor_type == NO_GOV))
+			{
+				//Reset the powerflow interface variables
+				reset_powerflow_accumulators();
+
+				//Pull the present powerflow values
+				pull_powerflow_values();
+
+				//Form up the "goal" variable
+				temp_p_setpoint = power_val[0] + power_val[1] + power_val[2];
+
+				//Calculate the Norton-shunted power
+				temp_total_power_val[0] = value_Circuit_V[0] * ~(generator_admittance[0][0]*value_Circuit_V[0] + generator_admittance[0][1]*value_Circuit_V[1] + generator_admittance[0][2]*value_Circuit_V[2]);
+				temp_total_power_val[1] = value_Circuit_V[1] * ~(generator_admittance[1][0]*value_Circuit_V[0] + generator_admittance[1][1]*value_Circuit_V[1] + generator_admittance[1][2]*value_Circuit_V[2]);
+				temp_total_power_val[2] = value_Circuit_V[2] * ~(generator_admittance[2][0]*value_Circuit_V[0] + generator_admittance[2][1]*value_Circuit_V[1] + generator_admittance[2][2]*value_Circuit_V[2]);
+
+				//Figure out what we should be generating internally
+				temp_total_power_internal = temp_p_setpoint + temp_total_power_val[0] + temp_total_power_val[1] + temp_total_power_val[2];
+
+				//Compute the positive sequence voltage (*3)
+				temp_pos_voltage = value_Circuit_V[0] + value_Circuit_V[1]*aval + value_Circuit_V[2]*avalsq;
+
+				//Compute the positive sequence current
+				temp_pos_current = ~(temp_total_power_internal/temp_pos_voltage);
+
+				//Now populate this into the output
+				value_IGenerated[0] = temp_pos_current;
+				value_IGenerated[1] = temp_pos_current*avalsq;
+				value_IGenerated[2] = temp_pos_current*aval;
+
+				//Put the values back
+				push_powerflow_values(false);
+
+			}
+			else if (Governor_type == P_CONSTANT)
+			{
+				//Reset the powerflow interface variables
+				reset_powerflow_accumulators();
+
+				//Pull the present powerflow values
+				pull_powerflow_values();
+
+				//Figure out which "Q goal" to use
+				if ((Exciter_type == SEXS) && (SEXS_mode == SEXS_CQ))
+				{
+					//Form up the "goal" variable
+					temp_p_setpoint = complex(gen_base_set_vals.Pref,gen_base_set_vals.Qref)*Rated_VA;
+				}
+				else	//Just constant P it
+				{
+					//Add up the output first - but do this just to get current Q
+					temp_p_setpoint = power_val[0] + power_val[1] + power_val[2];
+
+					//Now set the real portion
+					temp_p_setpoint.SetReal(gen_base_set_vals.Pref*Rated_VA);
+				}
+
+				//Calculate the Norton-shunted power
+				temp_total_power_val[0] = value_Circuit_V[0] * ~(generator_admittance[0][0]*value_Circuit_V[0] + generator_admittance[0][1]*value_Circuit_V[1] + generator_admittance[0][2]*value_Circuit_V[2]);
+				temp_total_power_val[1] = value_Circuit_V[1] * ~(generator_admittance[1][0]*value_Circuit_V[0] + generator_admittance[1][1]*value_Circuit_V[1] + generator_admittance[1][2]*value_Circuit_V[2]);
+				temp_total_power_val[2] = value_Circuit_V[2] * ~(generator_admittance[2][0]*value_Circuit_V[0] + generator_admittance[2][1]*value_Circuit_V[1] + generator_admittance[2][2]*value_Circuit_V[2]);
+
+				//Figure out what we should be generating internally
+				temp_total_power_internal = temp_p_setpoint + temp_total_power_val[0] + temp_total_power_val[1] + temp_total_power_val[2];
+
+				//Compute the positive sequence voltage (*3)
+				temp_pos_voltage = value_Circuit_V[0] + value_Circuit_V[1]*aval + value_Circuit_V[2]*avalsq;
+
+				//Compute the positive sequence current
+				temp_pos_current = ~(temp_total_power_internal/temp_pos_voltage);
+
+				//Now populate this into the output
+				value_IGenerated[0] = temp_pos_current;
+				value_IGenerated[1] = temp_pos_current*avalsq;
+				value_IGenerated[2] = temp_pos_current*aval;
+
+				//Put the values back
+				push_powerflow_values(false);
+			}
+			//Default else - do nothing (not sure what this would be)
+		}//End not a SWING bus
+		//Default else -- it is a SWING bus, so just skip over
+	}//End first timestep
+
+	return SUCCESS;
+}
+
 //Function to perform exp(j*val)
 //Basically a complex rotation
 gld::complex diesel_dg::complex_exp(double angle)
@@ -4403,15 +4851,7 @@ gld::complex diesel_dg::complex_exp(double angle)
 	return output_val;
 }
 
-// Function to calculate absolute values of complex
-double diesel_dg::abs_complex(gld::complex val)
-{
-	double res;
-	res = sqrt(val.Re() * val.Re() + val.Im() * val.Im());
-
-	return res;
-}
-
+// Function to check power limits during QSTS/simplified implementation
 void diesel_dg::check_power_output()
 {
 	double test_pf = 0.0;
@@ -4483,9 +4923,9 @@ void diesel_dg::check_power_output()
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
 
-EXPORT int create_diesel_dg(OBJECT **obj, OBJECT *parent) 
+EXPORT int create_diesel_dg(OBJECT **obj, OBJECT *parent)
 {
-	try 
+	try
 	{
 		*obj = gl_create_object(diesel_dg::oclass);
 		if (*obj!=NULL)
@@ -4496,13 +4936,13 @@ EXPORT int create_diesel_dg(OBJECT **obj, OBJECT *parent)
 		}
 		else
 			return 0;
-	} 
+	}
 	CREATE_CATCHALL(diesel_dg);
 }
 
-EXPORT int init_diesel_dg(OBJECT *obj, OBJECT *parent) 
+EXPORT int init_diesel_dg(OBJECT *obj, OBJECT *parent)
 {
-	try 
+	try
 	{
 		if (obj!=NULL)
 			return OBJECTDATA(obj,diesel_dg)->init(parent);
@@ -4533,7 +4973,7 @@ EXPORT TIMESTAMP sync_diesel_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			break;
 		}
 		if (pass==clockpass)
-			obj->clock = t1;		
+			obj->clock = t1;
 	}
 	SYNC_CATCHALL(diesel_dg);
 	return t1;
@@ -4557,6 +4997,11 @@ EXPORT STATUS update_diesel_dg(OBJECT *obj, unsigned int64 dt, unsigned int iter
 	}
 }
 */
+
+EXPORT int isa_diesel_dg(OBJECT *obj, char *classname)
+{
+	return OBJECTDATA(obj,diesel_dg)->isa(classname);
+}
 
 EXPORT SIMULATIONMODE interupdate_diesel_dg(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
@@ -4588,4 +5033,20 @@ EXPORT STATUS postupdate_diesel_dg(OBJECT *obj, gld::complex *useful_value, unsi
 		gl_error("postupdate_diesel_dg(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);
 		return status;
 	}
+}
+
+//// Define export function that update the current injection IGenerated to the grid
+EXPORT STATUS diesel_dg_NR_current_injection_update(OBJECT *obj,int64 iteration_count)
+{
+	STATUS temp_status;
+
+	//Map the node
+	diesel_dg *my = OBJECTDATA(obj,diesel_dg);
+
+	//Call the function, where we can update the IGenerated injection
+	temp_status = my->updateCurrInjection(iteration_count);
+
+	//Return what the sub function said we were
+	return temp_status;
+
 }
