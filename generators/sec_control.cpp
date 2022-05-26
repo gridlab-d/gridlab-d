@@ -25,10 +25,11 @@ sec_control::sec_control(MODULE *module)
 			PT_double, "underfrequency_limit[Hz]", PADDR(underfrequency_limit), PT_DESCRIPTION, "Maximum positive input limit to PID controller is f0 - underfreuqnecy_limit",
 			PT_double, "overfrequency_limit[Hz]", PADDR(overfrequency_limit), PT_DESCRIPTION, "Maximum negative input limit to PID controller is f0 - overfrequency_limit",
 			PT_double, "deadband[Hz]", PADDR(deadband), PT_DESCRIPTION, "Deadpand for PID controller input in Hz",
+			PT_double, "B[MW/Hz]", PADDR(B), PT_DESCRIPTION, "frequency bias in MW/Hz",
 			//PID controller
-			PT_double, "kpPID[MW/Hz]", PADDR(kpPID), PT_DESCRIPTION, "PID proportional gain in MW/Hz",
-			PT_double, "kiPID[MW/Hz/s]", PADDR(kiPID), PT_DESCRIPTION, "PID integral gain in MW/Hz/s",
-			PT_double, "kdPID[MW/Hz*s]", PADDR(kdPID), PT_DESCRIPTION, "PID derivative gain in MW/Hz*s",
+			PT_double, "kpPID[pu]", PADDR(kpPID), PT_DESCRIPTION, "PID proportional gain in pu",
+			PT_double, "kiPID[pu]", PADDR(kiPID), PT_DESCRIPTION, "PID integral gain in pu/s",
+			PT_double, "kdPID[pu]", PADDR(kdPID), PT_DESCRIPTION, "PID derivative gain in pu*s",
 			
 			PT_enumeration,"anti_windup",PADDR(anti_windup), PT_DESCRIPTION, "Integrator windup handling",
 				PT_KEYWORD,"NONE",(enumeration)NONE,PT_DESCRIPTION,"No anti-windup active",
@@ -44,8 +45,8 @@ sec_control::sec_control(MODULE *module)
 			PT_double, "sample_time", PADDR(sample_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Next update time for the secondary controller",
 			PT_bool, "deadbandflag", PADDR(deadbandflag), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "false=frequency within deadband, true=frequency outside of deadband",
 			//States
-			PT_double, "deltaf(t)[Hz]", PADDR(curr_state.deltaf[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Frequency error in current iteration [Hz]",
-			PT_double, "deltaf(t-1)[Hz]", PADDR(curr_state.deltaf[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Frequency error in previous timestep [Hz]",
+			PT_double, "perr(t)[MW]", PADDR(curr_state.perr[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Power error in current iteration [MW]",
+			PT_double, "perr(t-1)[MW]", PADDR(curr_state.perr[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Power error in previous timestep [MW]",
 			PT_double, "dxi[MW]", PADDR(curr_state.dxi), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Change in PID integrator output",
 			PT_double, "xi[MW]", PADDR(curr_state.xi), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "PID integrator output",
 			PT_double, "PIDout[MW]", PADDR(curr_state.PIDout), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "PID output",
@@ -357,8 +358,8 @@ STATUS sec_control::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 	//**************** Deltamode start initialization function, if any ****************//
 	
 	// clear curr_state structure
-	curr_state.deltaf[0] = 0;
-	curr_state.deltaf[1] = 0;
+	curr_state.perr[0] = 0;
+	curr_state.perr[1] = 0;
 	curr_state.dxi = 0;
 	curr_state.xi = 0;
 	curr_state.PIDout = 0;
@@ -380,7 +381,7 @@ STATUS sec_control::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 		obj.ddP[0] = 0;
 		obj.ddP[1] = 0;
 
-		obj.pinit = get_pelec(obj); //get initial schedule
+		obj.pout = get_pelec(obj); //get initial schedule
 	}
 
 	//Just return a pass - not sure how we'd fail
@@ -416,7 +417,6 @@ SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigne
 	double deltat, deltath;
 	OBJECT *obj = OBJECTHDR(this);
 	double debugval;
-
 	SIMULATIONMODE simmode_return_value = SM_EVENT;
 
 	//Get timestep value - used for predictor/corrector calculations
@@ -471,11 +471,11 @@ SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigne
 			sampleflag = false;
 		}
 
-		// Get Frequency Deviation (sets curr_state.deltaf[0] and deadbandflag)
-		get_deltaf();
+		// Get power error (sets curr_state.perr[0] and deadbandflag)
+		get_perr();
 
 		// === PID Controller
-		curr_state.dxi = kiPID*curr_state.deltaf[0];
+		curr_state.dxi = kiPID*curr_state.perr[0];
 		next_state.xi = curr_state.xi + deltat*curr_state.dxi;
 		switch (anti_windup)
 		{
@@ -494,7 +494,7 @@ SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigne
 		default:
 			break;
 		}
-		next_state.PIDout = next_state.xi + (kpPID + kdPID/deltat)*curr_state.deltaf[0] - kdPID/deltat*curr_state.deltaf[1];
+		next_state.PIDout = next_state.xi + (kpPID + kdPID/deltat)*curr_state.perr[0] - kdPID/deltat*curr_state.perr[1];
 		//=== End PID controller
 		
 		if (sampleflag && deadbandflag)
@@ -515,11 +515,11 @@ SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigne
 	}
 	else if (iteration_count_val == 1) // corrector pass
 	{
-		// Get Frequency Deviation (sets curr_state.deltaf[0] and deadbandflag)
-		get_deltaf();
+		// Get power error (sets curr_state.perr[0] and deadbandflag)
+		get_perr();
 		
 		//=== PID Controller
-		next_state.dxi = kiPID*curr_state.deltaf[0];
+		next_state.dxi = kiPID*curr_state.perr[0];
 		next_state.xi = curr_state.xi + deltath*(curr_state.dxi + next_state.dxi);
 		switch (anti_windup)
 		{
@@ -538,7 +538,7 @@ SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigne
 		default:
 			break;
 		}
-		next_state.PIDout = next_state.xi + (kpPID + kdPID/deltat)*curr_state.deltaf[0] - kdPID/deltat*curr_state.deltaf[1];
+		next_state.PIDout = next_state.xi + (kpPID + kdPID/deltat)*curr_state.perr[0] - kdPID/deltat*curr_state.perr[1];
 		//=== End PID controller
 		
 		if (sampleflag && deadbandflag)
@@ -591,7 +591,7 @@ SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigne
 		prev_simmode_return_value = simmode_return_value;
 
 		// State update for next timestep
-		next_state.deltaf[1] = curr_state.deltaf[0]; //cycle frequency error state values
+		next_state.perr[1] = curr_state.perr[0]; //cycle power error state values
 		memcpy(&curr_state, &next_state, sizeof(SEC_CNTRL_STATE));
 	}
 	else
@@ -603,34 +603,25 @@ SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigne
 	return simmode_return_value;
 }
 
+// Updates the objects dispatch by val, considering some limit checks.
 void sec_control::update_pdisp(SEC_CNTRL_PARTICIPANT & obj, double val)
 {
+	
 	if (val != 0)
 	{
 		gld_wlock *test_rlock;
 		double pdisp = obj.pdisp->get_double();
 		double poffset = obj.poffset->get_double();
 
-		// if the change will take place as desired the total change
-		// for the initial schedule, pinit, is:
-		// + the current out (get_pelec)
-		// + the proposed change (val)
-		// - the original schedule (pinit) 
-		// double dp_desired = pout + val - obj.pinit;
-
 		// ========= Handle change limits (in units)
-		//if (dp_desired > obj.dp_up){
 		if ((val + poffset*obj.rate) > obj.dp_up)
 		{
 			gl_warning("sec_control: Object %s desired setpoint change of %0.6f MW, would result in a total change of %0.6f > than maximum %0.6f MW. Changing to limit.", obj.ptr->name, val, val+poffset*obj.rate, obj.dp_up);
 			val = obj.dp_up - poffset*obj.rate;
-			// val = (obj.pinit + obj.dp_up) - pout;
 		}
-		// else if (dp_desired < -obj.dp_dn){
 		else if ((val + poffset*obj.rate) < -obj.dp_dn){
 			gl_warning("sec_control: Object %s desired setpoint change of %0.6f MW, would result in a total change of %0.6f < than maximum -%0.6f MW. Changing to limit.", obj.ptr->name, val, val+poffset*obj.rate, obj.dp_dn);
 			val = -obj.dp_dn - poffset*obj.rate;
-			// val = (obj.pinit - obj.dp_dn) - pout;
 		}
 		
 
@@ -653,12 +644,16 @@ void sec_control::update_pdisp(SEC_CNTRL_PARTICIPANT & obj, double val)
 		poffset += val/obj.rate; // increment offset in p.u.
 		obj.poffset->setp<double>(poffset,*test_rlock);
 	}
+	else{
+		// make sure the value is stored for collector pass
+		obj.dP[2] = 0; 
+	}
 }
 
 
-// Get Frequency Deviation including limiting and deadband handling.
+// Get power error including limiting and deadband handling.
 // Functinalized since identical for any pass.
-void sec_control::get_deltaf(void)
+void sec_control::get_perr(void)
 {
 	if (overfrequency_limit < f0)
 	{
@@ -672,21 +667,34 @@ void sec_control::get_deltaf(void)
 	}
 	
 	fmeas = pFrequency->get_double(); //pull current frequency from parent node
-	curr_state.deltaf[0] = f0 - fmeas; // frequency error [Hz] 
-	if (curr_state.deltaf[0] > (f0 - underfrequency_limit)) // limit maximum positive deviation (underfrequency)
+	double deltaf = f0 - fmeas; // frequency error [Hz] 
+	if (deltaf > (f0 - underfrequency_limit)) // limit maximum positive deviation (underfrequency)
 	{
-		curr_state.deltaf[0] = f0 - underfrequency_limit;
+		deltaf = f0 - underfrequency_limit;
 	}
-	else if (curr_state.deltaf[0] < (f0 - overfrequency_limit)) //limit maximum negative deviation (overfrequency)
+	else if (deltaf < (f0 - overfrequency_limit)) //limit maximum negative deviation (overfrequency)
 	{
-		curr_state.deltaf[0] = f0 - overfrequency_limit;
+		deltaf = f0 - overfrequency_limit;
 	}
-	else if (abs(curr_state.deltaf[0]) < deadband) //frequency is within deadband
+	else if (abs(deltaf) < deadband) //frequency is within deadband
 	{
-		curr_state.deltaf[0] = 0;
+		deltaf = 0;
 	}
-	deadbandflag = abs(curr_state.deltaf[0]) > deadband;
-	
+	deadbandflag = abs(deltaf) > deadband;
+
+	double uniterr = 0;
+	double pset = 0;
+	double pout = 0;
+	// iterate over participating objects and calculate difference 
+	// between desired output and current output
+	for (auto & obj : part_obj){
+		pset = obj.pdisp->get_double() + obj.poffset->get_double(); // get current set point
+		pout = get_pelec(obj)/obj.rate; // get current output
+		uniterr += (pset - pout); 
+	}
+
+	//the power error is the frequency error times bias *minus* the total production error.
+	curr_state.perr[0] = deltaf*B - uniterr;
 }
 
 //Verify that participation factors sum to 1.
@@ -912,26 +920,23 @@ void sec_control::add_obj(std::vector<std::string> &vals)
 	std::strcpy(cname, sname.c_str());
     tmp.ptr = gl_get_object(cname); //get pointer to object
     tmp.alpha = std::stod(vals.at(1)); //participation factor
-	
+	tmp.pout = get_pelec(tmp); // current electrical output
+	tmp.pdisp = map_double_value(tmp.ptr, "pdispatch"); // controller setpoint
+	tmp.poffset = map_double_value(tmp.ptr, "pdispatch_offset"); //offset to controller setpont
 	// Handle based on object type
 	if (gl_object_isa(tmp.ptr, "diesel_dg", "generators"))
 	{
 		// ===== Diesel Generator Options =========
-		tmp.pdisp = map_double_value(tmp.ptr, "pdispatch");
-		tmp.poffset = map_double_value(tmp.ptr, "pdispatch_offset");
 		//for now let's just say all generators can operate between 0 and 1 p.u
 		tmp.rate = get_double_value(tmp.ptr, "Rated_VA") * 1e-6; //convert to MW for our purposes
 		tmp.pmax = 1; // p.u
 		tmp.pmin = 0; // p.u.
-		tmp.pinit = get_pelec(tmp);
+		
 	} // END diesel_dg specific
 	else if (gl_object_isa(tmp.ptr, "inverter_dyn", "generators"))
 	{
 		// ===== Inverter_dyn options ==========
-		tmp.pdisp = map_double_value(tmp.ptr, "pdispatch");
-		tmp.poffset = map_double_value(tmp.ptr, "pdispatch_offset");
 		tmp.rate = get_double_value(tmp.ptr, "rated_power") * 1e-6; //convert to MW for our purposes
-		tmp.pinit = get_pelec(tmp);
 		enumeration inv_mode = get_enum_value(tmp.ptr, "control_mode");
 		if (inv_mode == 0) //GRID_FORMING
 		{

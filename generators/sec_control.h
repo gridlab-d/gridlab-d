@@ -17,7 +17,7 @@ EXPORT STATUS postupdate_sec_control(OBJECT *obj, complex *useful_value, unsigne
 
 // State variables for the secondary controller
 typedef struct{
-	double deltaf[2]; //Frequency error for times t, t-1.
+	double perr[2]; //power error in MW for times t, t-1.
 	double dxi; //change of PID integrator output
 	double xi; //ouput of PID integrator
 	double PIDout; //PID controller output
@@ -32,7 +32,7 @@ typedef struct{
 	double rate; //the rating of the object in MW/MVA
 	double pmax; // maximum set point (units dependent on object)
 	double pmin; //minimal set point (units dependent on object)
-	double pinit; // output in MW. dp_dn/dp_up limit movement from this point
+	double pout; // electrical output in MW.
 	double dp_dn; //maximum allowable change to setpoint in MW - downward direction (shouid still be positive)
 	double dp_up; //maximum allowable change to setpoint in MW - upward direction
 	double Tlp; //Low pass time filter time constant in sec.
@@ -104,10 +104,12 @@ public:
 
 	double frequency_delta_default; //default delta to nominal frequency
 
+	double B; //frequency bias in MW/Hz
+
 	/* PID Controller */
-	double kpPID; //PID proprtional gain in MW/Hz
-	double kiPID; //PID integral gain in MW/Hz/sec
-	double kdPID; //PID derivative gain in MW/Hz*sec 
+	double kpPID; //PID proprtional gain in p.u.
+	double kiPID; //PID integral gain in p.u./sec
+	double kdPID; //PID derivative gain in p.u.*sec 
 
 	enum ANTI_WINDUP{
         NONE = 0, //no anti-windup active
@@ -133,7 +135,7 @@ public:
 	void init_check(double&, double, double);
 	void participant_tlp_check(SEC_CNTRL_PARTICIPANT *);
 	void participant_tlp_check(SEC_CNTRL_PARTICIPANT &);
-	void get_deltaf(void);
+	void get_perr(void);
 	STATUS check_alpha(void);
 	void update_pdisp(SEC_CNTRL_PARTICIPANT &, double);
 	double get_pelec(SEC_CNTRL_PARTICIPANT &obj);
