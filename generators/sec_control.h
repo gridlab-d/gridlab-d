@@ -114,7 +114,8 @@ public:
 	enum ANTI_WINDUP{
         NONE = 0, //no anti-windup active
 		ZERO_IN_DEADBAND = 1, //zero integrator when frequency is within deadband
-		FEEDBACK = 2 //feedback difference between PIDout and signal passed to generators
+		FEEDBACK_PIDOUT = 2,  //feedback difference between PIDout and signal passed to generators
+		FEEDBACK_INTEGRATOR = 3 // feedback difference between PIDout and actual "actuated" output (neglecting proportional and derivative paths)
     };
 	enumeration anti_windup; //windup handling for integrator
 

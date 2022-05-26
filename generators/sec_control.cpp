@@ -34,7 +34,8 @@ sec_control::sec_control(MODULE *module)
 			PT_enumeration,"anti_windup",PADDR(anti_windup), PT_DESCRIPTION, "Integrator windup handling",
 				PT_KEYWORD,"NONE",(enumeration)NONE,PT_DESCRIPTION,"No anti-windup active",
 				PT_KEYWORD,"ZERO_IN_DEADBAND",(enumeration)ZERO_IN_DEADBAND,PT_DESCRIPTION,"Zero integrator when frequency is within deadband",
-				PT_KEYWORD,"FEEDBACK",(enumeration)FEEDBACK,PT_DESCRIPTION,"Feedback difference between PIDout and signal passed to generators",
+				PT_KEYWORD,"FEEDBACK_PIDOUT",(enumeration)FEEDBACK_PIDOUT,PT_DESCRIPTION,"Feedback difference between PIDout and signal passed to generators",
+				PT_KEYWORD,"FEEDBACK_INTEGRATOR",(enumeration)FEEDBACK_INTEGRATOR,PT_DESCRIPTION,"Feedback difference between PIDout and signal passed to generators (neglecting proportional and derivative paths)",
 
 			//
 			PT_double, "Ts[s]", PADDR(Ts), PT_DESCRIPTION, "Secondary controller sampling period in sec.",
@@ -100,13 +101,14 @@ int sec_control::create(void)
 	overfrequency_limit = -1.0; //Note: should actually be > 0
 	frequency_delta_default = -1.0; //Note: should actually be > 0
 	deadband = -1.0; //Note: should actually be > 0
+	B = 0; //Note: must be non-zero other wise sec-cntrl does nothing.
 	kpPID = -1.0; //Note: should actually be >= 0
 	kiPID = -1.0; //Note: should actually be >= 0
 	kdPID = -1.0; //Note: should actually be >= 0
 	Ts = -1.0; //Note: should actually be >= dt which is > 0
 
 	curr_dt = -1.0; // indicates that deltat is not available.
-	anti_windup = NONE;
+	anti_windup = FEEDBACK_PIDOUT; //default anti-windup is back-calculation
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -204,9 +206,10 @@ int sec_control::init(OBJECT *parent)
 	init_check(overfrequency_limit, -1.0, 62.0);
 	init_check(frequency_delta_default, -1.0, 2.0);
 	init_check(deadband, -1.0, 0.2);  //200mHz deadband
+	init_check(B, 0, 1); //default bias is 1 MW/Hz
 	// default PID is only integrator
 	init_check(kpPID, -1.0, 0);
-	init_check(kiPID, -1.0, 10);
+	init_check(kiPID, -1.0, 0.0167); // pu/sec default is 1/(60 sec)
 	init_check(kdPID, -1.0, 0);
 
 	parse_praticipant_input(participant_input); //parse the participating objects
@@ -486,8 +489,13 @@ SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigne
 				next_state.xi = 0;
 			}
 			break;
-		case FEEDBACK:
+		case FEEDBACK_PIDOUT:
 			// feedback difference between PIDout and actual "actuated" output
+			curr_state.dxi += curr_state.PIDout*(sampleflag * deadbandflag - 1);
+			next_state.xi = curr_state.xi + deltat*curr_state.dxi;
+			break;
+		case FEEDBACK_INTEGRATOR:
+			// feedback difference between PIDout and actual "actuated" output (neglecting proportional and derivative paths)
 			curr_state.dxi += curr_state.xi*(sampleflag * deadbandflag - 1);
 			next_state.xi = curr_state.xi + deltat*curr_state.dxi;
 			break;
@@ -530,8 +538,13 @@ SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigne
 				next_state.xi = 0;
 			}
 			break;
-		case FEEDBACK:
+		case FEEDBACK_PIDOUT:
 			// feedback difference between PIDout and actual "actuated" output
+			next_state.dxi += curr_state.PIDout*(sampleflag * deadbandflag - 1);
+			next_state.xi = curr_state.xi + deltath*(curr_state.dxi + next_state.dxi);
+			break;
+		case FEEDBACK_INTEGRATOR:
+			// feedback difference between PIDout and actual "actuated" output (neglecting proportional and derivative paths)
 			next_state.dxi += curr_state.xi*(sampleflag * deadbandflag - 1);
 			next_state.xi = curr_state.xi + deltath*(curr_state.dxi + next_state.dxi);
 			break;
@@ -688,8 +701,8 @@ void sec_control::get_perr(void)
 	// iterate over participating objects and calculate difference 
 	// between desired output and current output
 	for (auto & obj : part_obj){
-		pset = obj.pdisp->get_double() + obj.poffset->get_double(); // get current set point
-		pout = get_pelec(obj)/obj.rate; // get current output
+		pset = (obj.pdisp->get_double() + obj.poffset->get_double())*obj.rate; // get current set point in units!
+		pout = get_pelec(obj); // get current output
 		uniterr += (pset - pout); 
 	}
 
