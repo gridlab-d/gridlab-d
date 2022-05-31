@@ -7422,6 +7422,7 @@ void inverter_dyn::update_chk_vars()
 	setpoint_chk.fset = fset;
 	setpoint_chk.Pref = Pref;
 	setpoint_chk.Pset = Pset;
+	setpoint_chk.inverter_1547_status = inverter_1547_status;
 }
 
 // Sync the pdispatch variable with the various possible controller set points.
@@ -7436,7 +7437,8 @@ void inverter_dyn::pdispatch_sync()
 	// Check if Pref, Pset or fset were changed
 	if ((Pref != setpoint_chk.Pref) || 
 		(Pset != setpoint_chk.Pset) ||
-		(fset != setpoint_chk.fset))
+		(fset != setpoint_chk.fset) ||
+		(inverter_1547_status != setpoint_chk.inverter_1547_status))
 	{
 		// There has been some change to a reference value. 
 		//  - Override pdispatch and set pdispatch_offset = 0.
@@ -7463,7 +7465,14 @@ void inverter_dyn::pdispatch_sync()
 		}
 		else if ((control_mode == GRID_FOLLOWING) || (control_mode == GFL_CURRENT_SOURCE))
 		{
-			pdispatch.pdispatch = Pref/S_base;
+			if (inverter_1547_status)
+			{ //inverter is NOT tripped
+				pdispatch.pdispatch = Pref/S_base;
+			}
+			else{
+				pdispatch.pdispatch = 0; //inverter has tripped.
+			}
+			
 		}
 		// No else since this just means it is a control mode for which pdispatch cannot be used (yet)
 
@@ -7504,7 +7513,17 @@ void inverter_dyn::pdispatch_sync()
 		}
 		else if ((control_mode == GRID_FOLLOWING) || (control_mode == GFL_CURRENT_SOURCE))
 		{
-			Pref = pstar * S_base;
+			if (inverter_1547_status)
+			{ //inverter is NOT tripped
+				Pref = pstar * S_base;
+			}
+			else{
+				// Inverter tripped. OVERRIDE change to pdispatch and reset to 0
+				pdispatch.pdispatch = 0;
+				pdispatch.pdispatch_offset =  0;
+				// overwrite the exposed pdispatch variables
+				memcpy(&pdispatch_exp, &pdispatch, sizeof(PDISPATCH));
+			}
 		}
 		else {
 			GL_THROW("inverter_dyn::pdispatch_sync: pdispatch property cannot be used with the provided control mode %d", control_mode);

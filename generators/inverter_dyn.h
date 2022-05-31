@@ -255,6 +255,7 @@ private:
 		double Pset; //helper variable to check changes to Pset
 		double Pref; //helper variable to check changes to Pref
 		double fset; //helper variable to check changes to fset
+		bool inverter_1547_status; //helper variable to check changes to inverter 1547 status
 	}SETPOINT_CHK;
 
 	PDISPATCH pdispatch;	//Dispatch setpoint in p.u. for internal use
