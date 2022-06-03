@@ -48,6 +48,8 @@ sec_control::sec_control(MODULE *module)
 			//States
 			PT_double, "perr(t)[MW]", PADDR(curr_state.perr[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Power error in current iteration [MW]",
 			PT_double, "perr(t-1)[MW]", PADDR(curr_state.perr[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Power error in previous timestep [MW]",
+			PT_double, "uniterr[MW]", PADDR(curr_state.uniterr), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Sum of unit errors in MW.", 
+			PT_double, "deltaf[Hz]", PADDR(curr_state.deltaf), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "frequency error signal *after* adjustment for max/min and deadband in Hz",
 			PT_double, "dxi[MW]", PADDR(curr_state.dxi), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Change in PID integrator output",
 			PT_double, "xi[MW]", PADDR(curr_state.xi), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "PID integrator output",
 			PT_double, "PIDout[MW]", PADDR(curr_state.PIDout), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "PID output",
@@ -705,7 +707,8 @@ void sec_control::get_perr(void)
 		pout = get_pelec(obj); // get current output
 		uniterr += (pset - pout); 
 	}
-
+	next_state.uniterr = uniterr; //saving, mainly for debugging reasons
+	next_state.deltaf = deltaf;  //saving, mainly for debugging reasons
 	//the power error is the frequency error times bias *minus* the total production error.
 	curr_state.perr[0] = deltaf*B - uniterr;
 }

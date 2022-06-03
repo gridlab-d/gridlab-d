@@ -18,6 +18,8 @@ EXPORT STATUS postupdate_sec_control(OBJECT *obj, complex *useful_value, unsigne
 // State variables for the secondary controller
 typedef struct{
 	double perr[2]; //power error in MW for times t, t-1.
+	double uniterr; //total unit error in MW
+	double deltaf; // frequency error signal *after* adjustment for max/min and deadband
 	double dxi; //change of PID integrator output
 	double xi; //ouput of PID integrator
 	double PIDout; //PID controller output
