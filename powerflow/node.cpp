@@ -2704,7 +2704,29 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 					NR_retval=t0;
 				}
 				else
-					NR_retval=t1;
+				{
+					//See if deltamode is enabled
+					if ((enable_subsecond_models == true) && (deltamode_inclusive == true))
+					{
+						if (delta_initialize_iterations > 0)	//Reiterate
+						{
+							//Decrement it
+							delta_initialize_iterations--;
+
+							//Reiterate
+							NR_retval = t0;
+						}
+						else
+						{
+							//Continue
+							NR_retval = t1;
+						}
+					}
+					else	//Normal - continue
+					{
+						NR_retval=t1;
+					}
+				}
 
 				//See where we wanted to go
 				return NR_retval;

@@ -50,6 +50,7 @@ STATUS delta_init(void)
 		MODULE *tape_mod;
 		MODULE *connection_mod;
 		MODULE *reliability_mod;
+		MODULE *residential_mod;
 		MODULE *powerflow_mod;
 	} MODFOUNDSTRUCT;
 	MODFOUNDSTRUCT modules_found;
@@ -61,6 +62,7 @@ STATUS delta_init(void)
 	modules_found.tape_mod = NULL;
 	modules_found.connection_mod = NULL;
 	modules_found.reliability_mod = NULL;
+	modules_found.residential_mod = NULL;
 	modules_found.powerflow_mod = NULL;
 	ordered_module = NULL;
 
@@ -124,6 +126,14 @@ STATUS delta_init(void)
 				{
 					//Store
 					modules_found.reliability_mod = module;
+
+					//Flag
+					ordered_module[n] = true;
+				}
+				else if (strcmp(module->name,"residential") == 0)
+				{
+					//Store
+					modules_found.residential_mod = module;
 
 					//Flag
 					ordered_module[n] = true;
@@ -206,6 +216,18 @@ STATUS delta_init(void)
 
 			//Add to the main list
 			delta_modulelist[delta_modulecount++] = modules_found.reliability_mod;
+		}
+
+		//Residential
+		if (modules_found.residential_mod != NULL)
+		{
+			//Add to the string list
+			if ( delta_modulecount>0 )
+				strcat(global_deltamode_updateorder,",");
+			strcat(global_deltamode_updateorder,modules_found.residential_mod->name);
+
+			//Add to the main list
+			delta_modulelist[delta_modulecount++] = modules_found.residential_mod;
 		}
 
 		//Powerflow

@@ -94,6 +94,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	gl_global_create("powerflow::enable_subsecond_models", PT_bool, &enable_subsecond_models,PT_DESCRIPTION,"Enable deltamode capabilities within the powerflow module",NULL);
 	gl_global_create("powerflow::all_powerflow_delta", PT_bool, &all_powerflow_delta,PT_DESCRIPTION,"Forces all powerflow objects that are capable to participate in deltamode",NULL);
 	gl_global_create("powerflow::deltamode_timestep", PT_double, &deltamode_timestep_publish,PT_UNITS,"ns",PT_DESCRIPTION,"Desired minimum timestep for deltamode-related simulations",NULL);
+	gl_global_create("powerflow::delta_initialize_iterations",PT_int32, &delta_initialize_iterations, PT_DESCRIPTION, "Extra iterations to perform on initial powerflow (when deltamode enabled) to help with initialization");
 	gl_global_create("powerflow::current_frequency",PT_double,&current_frequency,PT_UNITS,"Hz",PT_DESCRIPTION,"Current system-level frequency of the powerflow system",NULL);
 	gl_global_create("powerflow::master_frequency_update",PT_bool,&master_frequency_update,PT_DESCRIPTION,"Tracking variable to see if an object has become the system frequency updater",NULL);
 	gl_global_create("powerflow::enable_frequency_dependence",PT_bool,&enable_frequency_dependence,PT_DESCRIPTION,"Flag to enable frequency-based variations in impedance values of lines and loads",NULL);
