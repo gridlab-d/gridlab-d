@@ -91,7 +91,7 @@ private:
 	SIMULATIONMODE prev_simmode_return_value; //store the previously returned simulation mode value (in case iterations > 2)
 public:
 	char1024 participant_input; // command string for creating/modifing secondary controller participants (or path to csv file)
-
+	int32 participant_count; //Number of participants in the controller
 	double dp_dn_default; // Default maximum allowable change to setpoint - downward direction (shouid still be positive)
 	double dp_up_default; // Default maximum allowable change to setpoint - upward direction
 	double Tlp_default; // Default low pass time filter time constant in sec.

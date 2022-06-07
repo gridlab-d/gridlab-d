@@ -20,6 +20,7 @@ sec_control::sec_control(MODULE *module)
 			//**************** Sample/test published property - remove ****************//
 			PT_complex, "test_pub_prop[kW]", PADDR(test_published_property), PT_DESCRIPTION, "test published property - has units of kW",
 			PT_char1024, "participant_input", PADDR(participant_input), PT_DESCRIPTION, "command string for creating/modifing secondary controller participants",
+			PT_int32, "participant_count", PADDR(participant_count), PT_DESCRIPTION, "Number of objects currrently participating in secondary control.",
 			//PID controller input
 			PT_double, "f0[Hz]", PADDR(f0), PT_DESCRIPTION, "Nominal frequency in Hz",
 			PT_double, "underfrequency_limit[Hz]", PADDR(underfrequency_limit), PT_DESCRIPTION, "Maximum positive input limit to PID controller is f0 - underfreuqnecy_limit",
@@ -1152,6 +1153,8 @@ void sec_control::parse_praticipant_input(char* participant_input)
 		{
 			parse_glm(s);
 		}
+
+		participant_count = part_obj.size();
 
 		//We should clear participant_input at the end here
 		// so we can see later changes easily.
