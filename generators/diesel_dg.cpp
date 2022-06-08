@@ -1332,7 +1332,7 @@ int diesel_dg::init(OBJECT *parent)
 			}
 		}
 		if (SEXS_mode == SEXS_CQ) {
-			if (gen_base_set_vals.Pref == -99.0){
+			if (gen_base_set_vals.Qref == -99.0){
 				// Qref has not been initialized
 				gl_warning("diesel_dg:%s - Qref unset in SEXS_CQ mode. Setting to sum of power_out_X.",obj->name?obj->name:"unnamed");
 				/*  TROUBLESHOOT
