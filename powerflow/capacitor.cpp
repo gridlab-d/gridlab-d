@@ -259,8 +259,15 @@ int capacitor::init(OBJECT *parent)
 		}
 	}
 
+	if ((RLink == NULL) && (control != VARVOLT))
+	{
+		if (parent != NULL) {
+			RLink = parent;
+		}
+	}
+
 	//If RLink is assigned, make sure we aren't the "TO" end
-	if ((RLink != NULL) && (gl_object_isa(RLink,"link","powerflow")))
+	if ((RLink != NULL) && (gl_object_isa(RLink,"link","powerflow")) && (control != MANUAL) && (control != VOLT))
 	{
 		//Double check that the RLink->to isn't us - this will cause some issues with FBS
 		pTempProperty = new gld_property(RLink,"to");
@@ -490,7 +497,7 @@ int capacitor::init(OBJECT *parent)
 	}
 
 	//Map the function for calculate power for RLink, if we're in the method we want
-	if ((control==VAR) || (control==VARVOLT))
+	if (((control==VAR) || (control==VARVOLT)) && gl_object_isa(RLink, "link", "powerflow"))
 	{
 		//Do the map
 		RLink_calculate_power_fxn = (FUNCTIONADDR)(gl_get_function(RLink,"update_power_pwr_object"));
@@ -511,7 +518,11 @@ int capacitor::init(OBJECT *parent)
 	if (RLink != NULL)
 	{
 		//Map to the property of interest - power_in_A
-		RLink_indiv_power_in[0] = new gld_property(RLink,"power_in_A");
+		if (gl_object_isa(RLink, "link", "powerflow")) {
+			RLink_indiv_power_in[0] = new gld_property(RLink,"power_in_A");
+		} else {
+			RLink_indiv_power_in[0] = new gld_property(RLink,"power_A");
+		}
 
 		//Make sure it worked
 		if ((RLink_indiv_power_in[0]->is_valid() != true) || (RLink_indiv_power_in[0]->is_complex() != true))
@@ -524,7 +535,11 @@ int capacitor::init(OBJECT *parent)
 		}
 
 		//Map to the property of interest - power_in_B
-		RLink_indiv_power_in[1] = new gld_property(RLink,"power_in_B");
+		if (gl_object_isa(RLink, "link", "powerflow")) {
+			RLink_indiv_power_in[1] = new gld_property(RLink,"power_in_B");
+		} else {
+			RLink_indiv_power_in[1] = new gld_property(RLink,"power_B");
+		}
 
 		//Make sure it worked
 		if ((RLink_indiv_power_in[1]->is_valid() != true) || (RLink_indiv_power_in[1]->is_complex() != true))
@@ -534,7 +549,11 @@ int capacitor::init(OBJECT *parent)
 		}
 
 		//Map to the property of interest - power_in_C
-		RLink_indiv_power_in[2] = new gld_property(RLink,"power_in_C");
+		if (gl_object_isa(RLink, "link", "powerflow")) {
+			RLink_indiv_power_in[2] = new gld_property(RLink,"power_in_C");
+		} else {
+			RLink_indiv_power_in[2] = new gld_property(RLink,"power_C");
+		}
 
 		//Make sure it worked
 		if ((RLink_indiv_power_in[2]->is_valid() != true) || (RLink_indiv_power_in[2]->is_complex() != true))
@@ -544,7 +563,11 @@ int capacitor::init(OBJECT *parent)
 		}
 
 		//Map to the property of interest - current_in_A
-		RLink_current_in[0] = new gld_property(RLink,"current_in_A");
+		if (gl_object_isa(RLink, "link", "powerflow")) {
+			RLink_current_in[0] = new gld_property(RLink,"current_in_A");
+		} else {
+			RLink_current_in[0] = new gld_property(RLink,"current_inj_A");
+		}
 
 		//Make sure it worked
 		if ((RLink_current_in[0]->is_valid() != true) || (RLink_current_in[0]->is_complex() != true))
@@ -554,7 +577,11 @@ int capacitor::init(OBJECT *parent)
 		}
 
 		//Map to the property of interest - current_in_B
-		RLink_current_in[1] = new gld_property(RLink,"current_in_B");
+		if (gl_object_isa(RLink, "link", "powerflow")) {
+			RLink_current_in[1] = new gld_property(RLink,"current_in_B");
+		} else {
+			RLink_current_in[1] = new gld_property(RLink,"current_inj_B");
+		}
 
 		//Make sure it worked
 		if ((RLink_current_in[1]->is_valid() != true) || (RLink_current_in[1]->is_complex() != true))
@@ -564,7 +591,11 @@ int capacitor::init(OBJECT *parent)
 		}
 
 		//Map to the property of interest - current_in_C
-		RLink_current_in[2] = new gld_property(RLink,"current_in_C");
+		if (gl_object_isa(RLink, "link", "powerflow")) {
+			RLink_current_in[2] = new gld_property(RLink,"current_in_C");
+		} else {
+			RLink_current_in[2] = new gld_property(RLink,"current_inj_C");
+		}
 
 		//Make sure it worked
 		if ((RLink_current_in[2]->is_valid() != true) || (RLink_current_in[2]->is_complex() != true))
@@ -1426,7 +1457,11 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 		READLOCK_OBJECT(RLink);
 
 		//Force the link to do an update (will be ignored first run anyways (zero))
-		return_status = ((int (*)(OBJECT *))(*RLink_calculate_power_fxn))(RLink);
+		if (RLink_calculate_power_fxn != NULL) {
+			return_status = ((int (*)(OBJECT *))(*RLink_calculate_power_fxn))(RLink);
+		} else {
+			return_status = 1;
+		}
 
 		READUNLOCK_OBJECT(RLink);
 

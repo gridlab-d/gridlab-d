@@ -230,6 +230,7 @@ node::node(MODULE *mod) : powerflow_object(mod)
 				PT_KEYWORD, "OVER_VOLTAGE", (enumeration)GFA_OV, PT_DESCRIPTION, "GFA trip for over-voltage",
 
 			PT_object, "topological_parent", PADDR(TopologicalParent),PT_DESCRIPTION,"topological parent as per GLM configuration",
+			PT_bool, "behaving_as_swing", PADDR(swing_functions_enabled), PT_DESCRIPTION, "Indicator flag for if a bus is behaving as a reference voltage source - valid for a SWING or SWING_PQ",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_node)==NULL)
@@ -335,6 +336,7 @@ int node::create(void)
 	deltamode_inclusive = false;	//Begin assuming we aren't delta-enabled
 	dynamic_norton = false;			//By default, no one needs the Norton equivalent posting
 	dynamic_generator = false;		//By default, we don't have any generator attached
+	swing_functions_enabled = false;	//By default, this bus isn't behaving as a swing
 
 	//Check to see if we need to enable an overall frequency method, by default (individual object can override)
 	if (all_powerflow_freq_measure_method == FMM_SIMPLE)	//Default to simple method
@@ -2898,6 +2900,26 @@ void node::BOTH_node_postsync_fxn(OBJECT *obj)
 	//This code performs the new "flattened" NR calculations.
 	if (solver_method == SM_NR)
 	{
+		//Update the status flag for a SWING capabilities - only check for non-parented SWING and SWING_PQ nodes
+		if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+		{
+			//Check for SWING and SWING_PQ
+			if ((bustype == SWING) || (bustype == SWING_PQ))
+			{
+				swing_functions_enabled = NR_busdata[NR_node_reference].swing_functions_enabled;
+			}
+			else
+			{
+				//It's a PQ, so it obviously isn't a SWING
+				swing_functions_enabled = false;
+			}
+		}
+		else
+		{
+			//Children are automatically assumed to "not be a SWING", even if they functionally are one
+			swing_functions_enabled = false;
+		}
+
 		int result = NR_current_update(false);
 
 		//Make sure it worked, just to be thorough
