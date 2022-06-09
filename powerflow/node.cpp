@@ -230,6 +230,7 @@ node::node(MODULE *mod) : powerflow_object(mod)
 				PT_KEYWORD, "OVER_VOLTAGE", (enumeration)GFA_OV, PT_DESCRIPTION, "GFA trip for over-voltage",
 
 			PT_object, "topological_parent", PADDR(TopologicalParent),PT_DESCRIPTION,"topological parent as per GLM configuration",
+			PT_bool, "behaving_as_swing", PADDR(swing_functions_enabled), PT_DESCRIPTION, "Indicator flag for if a bus is behaving as a reference voltage source - valid for a SWING or SWING_PQ",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_node)==NULL)
@@ -345,6 +346,7 @@ int node::create(void)
 	deltamode_inclusive = false;	//Begin assuming we aren't delta-enabled
 	dynamic_norton = false;			//By default, no one needs the Norton equivalent posting
 	dynamic_generator = false;		//By default, we don't have any generator attached
+	swing_functions_enabled = false;	//By default, this bus isn't behaving as a swing
 
 	//Check to see if we need to enable an overall frequency method, by default (individual object can override)
 	if (all_powerflow_freq_measure_method == FMM_SIMPLE)	//Default to simple method
@@ -1864,172 +1866,6 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			post_delta_functions[temp_pwr_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"postupdate_pwr_object"));
 
 			//No null check, since this one just may not work (post update may not exist)
-
-			//Do any additional parent/child mappings for deltamode -- if necessary
-			if (((SubNode==CHILD) || (SubNode==DIFF_CHILD)) && ((dynamic_norton==true) || (dynamic_generator==true)))
-			{
-				//Map our parent
-				temp_par_node = OBJECTDATA(SubNodeParent,node);
-
-				//Make sure it worked, for giggles
-				if (temp_par_node == NULL)
-				{
-					GL_THROW("node:%s - failed to map parent object for childed node",obj->name);
-					/*  TROUBLESHOOT
-					While attempting to link to the parent node, an error occurred.  Please try again.
-					If the error persists, please submit your code and a bug report via the trac website.
-					*/
-				}
-
-				//Lock the parent for all of our shenanigans
-				LOCK_OBJECT(SubNodeParent);
-
-				//See if we're a Norton equivalent
-				if (dynamic_norton==true)
-				{
-					//Flag our parent, just to make sure things work properly
-					temp_par_node->dynamic_norton = true;
-
-					//See if we even have anything to contribute on the full_Y matrix
-					if (full_Y_matrix.is_valid(0,0) == true)
-					{
-						//Make sure it is the right size
-						if ((full_Y_matrix.get_rows() == 3) && (full_Y_matrix.get_cols() == 3))
-						{
-							//Allocate ourself
-							full_Y = (complex *)gl_malloc(9*sizeof(complex));
-
-							//Check it
-							if (full_Y==NULL)
-							{
-								GL_THROW("Node:%s failed to allocate space for the a deltamode variable",(obj->name?obj->name:"Unnamed"));
-								/*  TROUBLESHOOT
-								While attempting to allocate memory for a dynamics-required (deltamode) variable, an error
-								occurred. Please try again.  If the error persists, please submit your code and a bug
-								report via the trac website.
-								*/
-							}
-
-							//Map to the parent property
-							temp_complex_property = new gld_property(SubNodeParent,"deltamode_full_Y_matrix");
-
-							//Check it
-							if ((temp_complex_property->is_valid() != true) || (temp_complex_property->is_complex_array() != true))
-							{
-								GL_THROW("Node:%d - %s - parent deltamode matrix property is not valid!",obj->id,(obj->name ? obj->name : "Unnamed"));
-								/*  TROUBLESHOOT
-								While attempting to map to the exposed deltamode matrix property of a powerflow parent, an error occurred.
-								Please try again.  If the error persists, please submit your model and an issue via the ticketing system.
-								*/
-							}
-
-							//Pull down the variable
-							temp_complex_property->getp<complex_array>(temp_complex_array,*test_rlock);
-
-							//See if it is valid
-							if (temp_complex_array.is_valid(0,0) != true)
-							{
-								//Create it
-								temp_complex_array.grow_to(3,3);
-
-								//Zero it, by default
-								for (temp_idx_x=0; temp_idx_x<3; temp_idx_x++)
-								{
-									for (temp_idx_y=0; temp_idx_y<3; temp_idx_y++)
-									{
-										temp_complex_array.set_at(temp_idx_x,temp_idx_y,complex(0.0,0.0));
-									}
-								}
-							}
-							else	//Already populated, make sure it is the right size!
-							{
-								if ((temp_complex_array.get_rows() != 3) && (temp_complex_array.get_cols() != 3))
-								{
-									GL_THROW("node:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
-									/*  TROUBLESHOOT
-									While mapping to an admittance matrix on the parent node device, it was found it is the wrong size.
-									Please try again.  If the error persists, please submit your code and model via the issue tracking system.
-									*/
-								}
-								//Default else -- right size
-							}
-
-							//Made it this far, just try adding them
-							temp_complex_array += full_Y_matrix;
-
-							//Push it back up
-							temp_complex_property->setp<complex_array>(temp_complex_array,*test_rlock);
-
-							//Loop through and store the local values, while we're at it
-							full_Y[0] = full_Y_matrix.get_at(0,0);
-							full_Y[1] = full_Y_matrix.get_at(0,1);
-							full_Y[2] = full_Y_matrix.get_at(0,2);
-
-							full_Y[3] = full_Y_matrix.get_at(1,0);
-							full_Y[4] = full_Y_matrix.get_at(1,1);
-							full_Y[5] = full_Y_matrix.get_at(1,2);
-
-							full_Y[6] = full_Y_matrix.get_at(2,0);
-							full_Y[7] = full_Y_matrix.get_at(2,1);
-							full_Y[8] = full_Y_matrix.get_at(2,2);
-						}//End size is 3x3
-						else
-						{
-							GL_THROW("Node:%d - %s - Invalid deltamode matrix size!",obj->id,(obj->name ? obj->name : "Unnamed"));
-							/*  TROUBLESHOOT
-							While attempting to link up to one of the deltamode dynamic matrices, an unexpected size was encountered.
-							Please try again.  If the error persists, please submit your code and a bug report via the issue tracker.
-							*/
-						}
-					}//End we have values
-
-					//NULL our overall pointer -- we don't need it
-					full_Y_all = NULL;
-
-					//See if we've somehow already been allocated
-					if (full_Y_all_matrix.is_valid(0,0) == true)
-					{
-						//See if we're the right size already
-						if ((full_Y_all_matrix.get_rows() != 3) && (full_Y_all_matrix.get_cols() != 3))
-						{
-							GL_THROW("node:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
-							//Defined above
-						}
-					}
-					else	//Try allocating it
-					{
-						full_Y_all_matrix.grow_to(3,3);
-					}
-
-					//Now zero it
-					for (temp_idx_x=0; temp_idx_x<3; temp_idx_x++)
-					{
-						for (temp_idx_y=0; temp_idx_y<3; temp_idx_y++)
-						{
-							full_Y_all_matrix.set_at(temp_idx_x,temp_idx_y,complex(0.0,0.0));
-						}
-					}
-				}//End Norton equivalent
-
-				//Now do the other variable
-				if (dynamic_generator==true)
-				{
-					//Flag our parent
-					temp_par_node->dynamic_generator = true;
-				}
-
-				//Unlock our parent
-				UNLOCK_OBJECT(SubNodeParent);
-
-				//NULL the pointers, if necessary (paranoia)
-				if (dynamic_norton!=true)
-				{
-					full_Y = NULL;
-					full_Y_all = NULL;
-				}
-
-				//No need to do NR mappings - we don't get hit anyways
-			}//End child Norton equivalent/dynamic generator postings code
 		}//end deltamode allocations
 
 		//Call NR presync function
@@ -2456,7 +2292,56 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			//Call the populate routine
 			NR_populate();
 		}
-	}
+		else	//Initialized, so SWING or child
+		{
+			//Check our status - make sure we're a child
+			if ((SubNode==CHILD) || (SubNode==DIFF_CHILD))
+			{
+				//Only do admittance allocation if we're a Norton
+				if (dynamic_norton==true)
+				{
+					//Make sure no pesky children have already allocated us
+					if (full_Y == NULL)
+					{
+						//Allocate it
+						full_Y = (complex *)gl_malloc(9*sizeof(complex));
+
+						//Check it
+						if (full_Y==NULL)
+						{
+							GL_THROW("Node:%s failed to allocate space for the a deltamode variable",obj->name);
+							//Defined elsewhere
+						}
+
+						//See if our published matrix has anything in it
+						if ((full_Y_matrix.get_rows() == 3) && (full_Y_matrix.get_cols() == 3))
+						{
+							full_Y[0] = full_Y_matrix.get_at(0,0);
+							full_Y[1] = full_Y_matrix.get_at(0,1);
+							full_Y[2] = full_Y_matrix.get_at(0,2);
+
+							full_Y[3] = full_Y_matrix.get_at(1,0);
+							full_Y[4] = full_Y_matrix.get_at(1,1);
+							full_Y[5] = full_Y_matrix.get_at(1,2);
+
+							full_Y[6] = full_Y_matrix.get_at(2,0);
+							full_Y[7] = full_Y_matrix.get_at(2,1);
+							full_Y[8] = full_Y_matrix.get_at(2,2);
+						}
+						else
+						{
+							//Zero it, just to be safe (gens will accumulate into it)
+							full_Y[0] = full_Y[1] = full_Y[2] = complex(0.0,0.0);
+							full_Y[3] = full_Y[4] = full_Y[5] = complex(0.0,0.0);
+							full_Y[6] = full_Y[7] = full_Y[8] = complex(0.0,0.0);
+						}
+					}
+					//Default else - must somehow already be allocated
+				}//End dynamic Norton
+			}//End is a child
+			//Default else - probably a SWING
+		}//End SWING or child
+	}//First run NR
 
 	//Generic time keeping variable - used for phase checks (GS does this explicitly below)
 	if (t0!=prev_NTime)
@@ -2860,7 +2745,29 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 					NR_retval=t0;
 				}
 				else
-					NR_retval=t1;
+				{
+					//See if deltamode is enabled
+					if ((enable_subsecond_models == true) && (deltamode_inclusive == true))
+					{
+						if (delta_initialize_iterations > 0)	//Reiterate
+						{
+							//Decrement it
+							delta_initialize_iterations--;
+
+							//Reiterate
+							NR_retval = t0;
+						}
+						else
+						{
+							//Continue
+							NR_retval = t1;
+						}
+					}
+					else	//Normal - continue
+					{
+						NR_retval=t1;
+					}
+				}
 
 				//See where we wanted to go
 				return NR_retval;
@@ -3032,6 +2939,26 @@ void node::BOTH_node_postsync_fxn(OBJECT *obj)
 	//This code performs the new "flattened" NR calculations.
 	if (solver_method == SM_NR)
 	{
+		//Update the status flag for a SWING capabilities - only check for non-parented SWING and SWING_PQ nodes
+		if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+		{
+			//Check for SWING and SWING_PQ
+			if ((bustype == SWING) || (bustype == SWING_PQ))
+			{
+				swing_functions_enabled = NR_busdata[NR_node_reference].swing_functions_enabled;
+			}
+			else
+			{
+				//It's a PQ, so it obviously isn't a SWING
+				swing_functions_enabled = false;
+			}
+		}
+		else
+		{
+			//Children are automatically assumed to "not be a SWING", even if they functionally are one
+			swing_functions_enabled = false;
+		}
+
 		int result = NR_current_update(false);
 
 		//Make sure it worked, just to be thorough

@@ -674,10 +674,11 @@ int diesel_dg::init(OBJECT *parent)
 	bool temp_bool_value;
 	double temp_voltage_magnitude;
 	complex temp_complex_value;
-	complex_array temp_complex_array;
+	complex_array temp_complex_array, temp_child_complex_array;
 	gld_property *pNominal_Voltage;
 	double nominal_voltage_value, nom_test_val;
 	set temp_phases;
+	bool childed_connection = false;
 	
 	//Set the deltamode flag, if desired
 	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)
@@ -713,6 +714,9 @@ int diesel_dg::init(OBJECT *parent)
 					}
 					else	//Implies it is a powerflow parent
 					{
+						//Set the flag for later
+						childed_connection = true;
+
 						//See if we are deltamode-enabled -- if so, flag our parent while we're here
 						if (deltamode_inclusive == true)
 						{
@@ -1037,7 +1041,7 @@ int diesel_dg::init(OBJECT *parent)
 	else	//Must be dynamic!
 	{
 		//Make sure our parent is delta enabled!
-		if ((parent->flags & OF_DELTAMODE) != OF_DELTAMODE)
+		if ((tmp_obj->flags & OF_DELTAMODE) != OF_DELTAMODE)
 		{
 			GL_THROW("diesel_dg:%s - The parented object does not have deltamode flags enabled.",obj->name?obj->name:"unnamed");
 			/*  TROUBLESHOOT
@@ -1110,7 +1114,7 @@ int diesel_dg::init(OBJECT *parent)
 		if ((deltamode_inclusive == true) && (parent_is_powerflow == true))
 		{
 			//Map up the admittance matrix to apply our contributions
-			pbus_full_Y_mat = new gld_property(parent,"deltamode_full_Y_matrix");
+			pbus_full_Y_mat = new gld_property(tmp_obj,"deltamode_full_Y_matrix");
 
 			//Check it
 			if ((pbus_full_Y_mat->is_valid() != true) || (pbus_full_Y_mat->is_complex_array() != true))
@@ -1150,6 +1154,47 @@ int diesel_dg::init(OBJECT *parent)
 				//Default else -- right size
 			}
 
+			//See if we were connected to a powerflow child
+			if (childed_connection == true)
+			{
+				temp_property_pointer = new gld_property(parent,"deltamode_full_Y_matrix");
+
+				//Check it
+				if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_complex_array() != true))
+				{
+					GL_THROW("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
+					//Defined above
+				}
+
+				//Pull down the variable
+				temp_property_pointer->getp<complex_array>(temp_child_complex_array,*test_rlock);
+
+				//See if it is valid
+				if (temp_child_complex_array.is_valid(0,0) != true)
+				{
+					//Create it
+					temp_child_complex_array.grow_to(3,3);
+
+					//Zero it, by default
+					for (temp_idx_x=0; temp_idx_x<3; temp_idx_x++)
+					{
+						for (temp_idx_y=0; temp_idx_y<3; temp_idx_y++)
+						{
+							temp_child_complex_array.set_at(temp_idx_x,temp_idx_y,complex(0.0,0.0));
+						}
+					}
+				}
+				else	//Already populated, make sure it is the right size!
+				{
+					if ((temp_child_complex_array.get_rows() != 3) && (temp_child_complex_array.get_cols() != 3))
+					{
+						GL_THROW("diesel_dg:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
+						//Defined above
+					}
+					//Default else -- right size
+				}
+			}//End childed powerflow parent
+
 			//Loop through and store the values
 			for (temp_idx_x=0; temp_idx_x<3; temp_idx_x++)
 			{
@@ -1163,16 +1208,38 @@ int diesel_dg::init(OBJECT *parent)
 
 					//Store it
 					temp_complex_array.set_at(temp_idx_x,temp_idx_y,temp_complex_value);
+
+					//Do the childed object, if exists
+					if (childed_connection == true)
+					{
+						//Read the existing value
+						temp_complex_value = temp_child_complex_array.get_at(temp_idx_x,temp_idx_y);
+
+						//Accumulate into it
+						temp_complex_value += generator_admittance[temp_idx_x][temp_idx_y];
+
+						//Store it
+						temp_child_complex_array.set_at(temp_idx_x,temp_idx_y,temp_complex_value);
+					}
 				}
 			}
 
 			//Push it back up
 			pbus_full_Y_mat->setp<complex_array>(temp_complex_array,*test_rlock);
 
+			//See if the childed powerflow exists
+			if (childed_connection == true)
+			{
+				temp_property_pointer->setp<complex_array>(temp_child_complex_array,*test_rlock);
+
+				//Clear it
+				delete temp_property_pointer;
+			}
+
 			//Map the full version needed later
 			//Map up the admittance matrix to apply our contributions
 			/* **************** NOTE - This appears to only be used by the QSTS exciter implementation - can probably be removed in the future **************** */
-			pbus_full_Y_all_mat = new gld_property(parent,"deltamode_full_Y_all_matrix");
+			pbus_full_Y_all_mat = new gld_property(tmp_obj,"deltamode_full_Y_all_matrix");
 
 			//Check it
 			if ((pbus_full_Y_all_mat->is_valid() != true) || (pbus_full_Y_all_mat->is_complex_array() != true))

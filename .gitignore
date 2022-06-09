@@ -108,3 +108,4 @@ validate.txt
 .libs/
 third_party/xerces*/*
 *.xcbkptlist
+GLD GridLAB-D build instructions.txt

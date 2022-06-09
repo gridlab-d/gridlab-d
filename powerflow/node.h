@@ -136,6 +136,9 @@ private:
 	GL_STRUCT(complex_array,full_Y_matrix);
 	GL_STRUCT(complex_array,full_Y_all_matrix);
 
+	//Swing designation
+	bool swing_functions_enabled;			//Flag to indicate if a bus is behaving as a swing
+
 	//VFD-related items
 	bool VFD_attached;						///< Flag to indicate this is on the to-side of a VFD link
 	FUNCTIONADDR VFD_updating_function;		///< Address for VFD updating function, if it is present

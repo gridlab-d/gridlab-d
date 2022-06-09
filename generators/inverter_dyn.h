@@ -126,6 +126,7 @@ private:
 	//Comaptibility variables - used to be in power_electronics
 	bool parent_is_a_meter;		 //Boolean to indicate if the parent object is a meter/triplex_meter
 	bool parent_is_single_phase; //Boolean to indicate if the parent object is single-phased (main or triplexed)
+	bool parent_is_triplex;		//Boolean to indicate if the parent object was a triplex device - minimal usage
 	enumeration attached_bus_type;	//Determines attached bus type - mostly for VSI and grid-forming functionality
 
 	FUNCTIONADDR swing_test_fxn;	//Function to map to swing testing function, if needed
