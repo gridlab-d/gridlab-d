@@ -1907,8 +1907,11 @@ void windturb_dg::push_complex_powerflow_values(void)
 }
 
 // Function to update current injection value
-STATUS windturb_dg::updateCurrInjection(int64 iteration_count)
+STATUS windturb_dg::updateCurrInjection(int64 iteration_count,bool *converged_failure)
 {
+	//Assume no convergence failure - mostly for deltamode/Norton-equivalent initialization
+	*converged_failure = false;
+	
 	//Call the current updating function
 	switch (Turbine_implementation){
 		case COEFF_OF_PERFORMANCE:
@@ -2022,7 +2025,7 @@ EXPORT TIMESTAMP sync_windturb_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 }
 
 //Current injection exposed function
-EXPORT STATUS windturb_dg_NR_current_injection_update(OBJECT *obj, int64 iteration_count)
+EXPORT STATUS windturb_dg_NR_current_injection_update(OBJECT *obj, int64 iteration_count, bool *converged_failure)
 {
 	STATUS temp_status;
 
@@ -2030,7 +2033,7 @@ EXPORT STATUS windturb_dg_NR_current_injection_update(OBJECT *obj, int64 iterati
 	windturb_dg *my = OBJECTDATA(obj, windturb_dg);
 
 	//Call the function, where we can update the current injection
-	temp_status = my->updateCurrInjection(iteration_count);
+	temp_status = my->updateCurrInjection(iteration_count,converged_failure);
 
 	//Return what the sub function said we were
 	return temp_status;

@@ -9,6 +9,7 @@
 
 #set double_format=%+.12lg
 #set complex_format=%+.12lg%+.12lg%c
+#set complex_output_format=RECT
 
 //Deltamode declarations - global values
 #set deltamode_timestep=100000000		//100 ms
@@ -127,25 +128,25 @@ object meter {
 		flags DELTAMODE;
 		target measured_power;
 		within 0.01;
-		value -10739.66-109435.98j;
+		value -10717.515-109384.122j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_A;
 		within 0.01;
-		value -21828.79-41630.01j;
+		value -21821.182-41612.839j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_B;
 		within 0.01;
-		value 22072.15-30799.39j;
+		value +22079.174-30781.970j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_C;
 		within 0.01;
-		value -10983.02-37006.57j;
+		value -10975.506-36989.313j;
 	};	
 }
 
@@ -159,25 +160,25 @@ object meter {
 		flags DELTAMODE;
 		target measured_power;
 		within 0.01;
-		value 144261.46+13056.37j;
+		value +144270.729+13078.181j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_A;
 		within 0.01;
-		value 43825.92+2029.87j;
+		value +43829.128+2037.091j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_B;
 		within 0.01;
-		value 53748.65+6614.47j;
+		value +53751.544+6621.817j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_C;
 		within 0.01;
-		value 46686.90+4412.02j;
+		value +46690.056+4419.273j;
 	};	
 }
 
@@ -187,30 +188,30 @@ object meter {
 	nominal_voltage 8660.254;
 	
 	//BUS_3 has a child (with just gen), one line in, and one line out
-	//Expected to be a net value, since the generator is injecting
+	//Expected to be a net // value, since the generator is injecting
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power;
 		within 0.01;
-		value 269228.68+95441.78j;
+		value +269224.992+95433.047j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_A;
 		within 0.01;
-		value 96188.15+33404.65j;
+		value +96186.875+33401.757j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_B;
 		within 0.01;
-		value 78098.71+32280.30j;
+		value +78097.554+32277.360j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_C;
 		within 0.01;
-		value 94941.82+29756.83j;
+		value +94940.563+29753.929j;
 	};	
 }
 
@@ -225,25 +226,25 @@ object meter {
 		flags DELTAMODE;
 		target measured_power;
 		within 0.01;
-		value -125013.01-262530.22j;
+		value -125000.0-262500j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_A;
 		within 0.01;
-		value -56628.20-90030.31j;
+		value -56623.726-90020.302j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_B;
 		within 0.01;
-		value -19801.97-81728.04j;
+		value -19797.856-81717.875j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_C;
 		within 0.01;
-		value -48582.84-90771.88j;
+		value -48578.418-90761.823j;
 	};
 }
 
@@ -257,25 +258,25 @@ object meter {
 		flags DELTAMODE;
 		target measured_power;
 		within 0.01;
-		value 2424150.91+1412277.22j;
+		value +2424167.671+1412316.344j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_A;
 		within 0.01;
-		value 845641.73+468390.45j;
+		value +845647.503+468403.404j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_B;
 		within 0.01;
-		value 753020.10+474631.51j;
+		value +753025.385+474644.661j;
 	};	
 	object complex_assert {
 		flags DELTAMODE;
 		target measured_power_C;
 		within 0.01;
-		value 825489.08+469255.26j;
+		value +825494.782+469268.278j;
 	};	
 }
 
@@ -327,6 +328,7 @@ object diesel_dg {
 	Exciter_type SEXS;
 	Governor_type DEGOV1;
 	DEGOV1_R 0.01;
+	// current_convergence 30003.0; //Set convergence to old method
 }
 
 object diesel_dg {
@@ -343,6 +345,7 @@ object diesel_dg {
 	power_out_C 52500.0+37500.0j;
 	Exciter_type NO_EXC;
 	Governor_type NO_GOV;
+	// current_convergence 30003.0; //Set convergence to old method
 }
 	
 object diesel_dg {
@@ -359,6 +362,7 @@ object diesel_dg {
 	power_out_C 42500.0+27500.0j;
 	Exciter_type NO_EXC;
 	Governor_type NO_GOV;
+	// current_convergence 30003.0; //Set convergence to old method
 }
 
 object diesel_dg {
@@ -375,6 +379,7 @@ object diesel_dg {
 	power_out_C 12500.0+87500.0j;
 	Exciter_type NO_EXC;
 	Governor_type NO_GOV;
+	// current_convergence 30003.0; //Set convergence to old method
 }
 
 //Load buses
@@ -520,270 +525,73 @@ object overhead_line {
 
 // //Recorders
 // object group_recorder {
-	// name meter_power_A_real;
+	// name meter_power_A;
 	// flags DELTAMODE;
 	// group "class=meter";
 	// property "measured_power_A";
-	// complex_part REAL;
 	// interval 1;
-	// file meter_power_A_real.csv;
+	// file meter_power_A.csv;
 // }
 	
 // object group_recorder {
-	// name meter_power_A_imag;
-	// flags DELTAMODE;
-	// group "class=meter";
-	// property "measured_power_A";
-	// complex_part IMAG;
-	// interval 1;
-	// file meter_power_A_imag.csv;
-// }
-
-// object group_recorder {
-	// name meter_power_B_real;
+	// name meter_power_B;
 	// flags DELTAMODE;
 	// group "class=meter";
 	// property "measured_power_B";
-	// complex_part REAL;
 	// interval 1;
-	// file meter_power_B_real.csv;
+	// file meter_power_B.csv;
 // }
 	
 // object group_recorder {
-	// name meter_power_B_imag;
-	// flags DELTAMODE;
-	// group "class=meter";
-	// property "measured_power_B";
-	// complex_part IMAG;
-	// interval 1;
-	// file meter_power_B_imag.csv;
-// }
-
-// object group_recorder {
-	// name meter_power_C_real;
+	// name meter_power_C;
 	// flags DELTAMODE;
 	// group "class=meter";
 	// property "measured_power_C";
-	// complex_part REAL;
 	// interval 1;
-	// file meter_power_C_real.csv;
+	// file meter_power_C.csv;
 // }
 	
 // object group_recorder {
-	// name meter_power_C_imag;
-	// flags DELTAMODE;
-	// group "class=meter";
-	// property "measured_power_C";
-	// complex_part IMAG;
-	// interval 1;
-	// file meter_power_C_imag.csv;
-// }
-
-// object group_recorder {
-	// name meter_power_real;
+	// name meter_power;
 	// flags DELTAMODE;
 	// group "class=meter";
 	// property "measured_power";
-	// complex_part REAL;
 	// interval 1;
-	// file meter_power_real.csv;
-// }
-	
-// object group_recorder {
-	// name meter_power_imag;
-	// flags DELTAMODE;
-	// group "class=meter";
-	// property "measured_power";
-	// complex_part IMAG;
-	// interval 1;
-	// file meter_power_imag.csv;
+	// file meter_power.csv;
 // }
 
 // object group_recorder {
-	// name diesel_power_real;
+	// name diesel_power;
 	// flags DELTAMODE;
 	// group "class=diesel_dg";
 	// property "pwr_electric";
-	// complex_part REAL;
 	// interval 1;
-	// file diesel_power_real.csv;
+	// file diesel_power.csv;
 // }
 	
 // object group_recorder {
-	// name diesel_power_imag;
-	// flags DELTAMODE;
-	// group "class=diesel_dg";
-	// property "pwr_electric";
-	// complex_part IMAG;
-	// interval 1;
-	// file diesel_power_imag.csv;
-// }
-
-// object group_recorder {
-	// name diesel_power_A_real;
+	// name diesel_power_A;
 	// flags DELTAMODE;
 	// group "class=diesel_dg";
 	// property "power_out_A";
-	// complex_part REAL;
 	// interval 1;
-	// file diesel_power_A_real.csv;
+	// file diesel_power_A.csv;
 // }
 	
 // object group_recorder {
-	// name diesel_power_A_imag;
-	// flags DELTAMODE;
-	// group "class=diesel_dg";
-	// property "power_out_A";
-	// complex_part IMAG;
-	// interval 1;
-	// file diesel_power_A_imag.csv;
-// }
-
-// object group_recorder {
-	// name diesel_power_B_real;
+	// name diesel_power_B;
 	// flags DELTAMODE;
 	// group "class=diesel_dg";
 	// property "power_out_B";
-	// complex_part REAL;
 	// interval 1;
-	// file diesel_power_B_real.csv;
+	// file diesel_power_B.csv;
 // }
 	
 // object group_recorder {
-	// name diesel_power_B_imag;
-	// flags DELTAMODE;
-	// group "class=diesel_dg";
-	// property "power_out_B";
-	// complex_part IMAG;
-	// interval 1;
-	// file diesel_power_B_imag.csv;
-// }
-
-// object group_recorder {
-	// name diesel_power_C_real;
+	// name diesel_power_C;
 	// flags DELTAMODE;
 	// group "class=diesel_dg";
 	// property "power_out_C";
-	// complex_part REAL;
 	// interval 1;
-	// file diesel_power_C_real.csv;
-// }
-	
-// object group_recorder {
-	// name diesel_power_C_imag;
-	// flags DELTAMODE;
-	// group "class=diesel_dg";
-	// property "power_out_C";
-	// complex_part IMAG;
-	// interval 1;
-	// file diesel_power_C_imag.csv;
-// }
-
-// object group_recorder {
-	// name diesel_power_rotor;
-	// flags DELTAMODE;
-	// group "class=diesel_dg";
-	// property "rotor_speed";
-	// interval 1;
-	// file diesel_rotor_speed.csv;
-// }
-
-// object group_recorder {
-	// name ohl_power_A_real;
-	// flags DELTAMODE;
-	// group "class=overhead_line";
-	// property "power_in_A";
-	// complex_part REAL;
-	// interval 1;
-	// file ohl_power_A_real.csv;
-// }
-	
-// object group_recorder {
-	// name ohl_power_A_imag;
-	// flags DELTAMODE;
-	// group "class=overhead_line";
-	// property "power_in_A";
-	// complex_part IMAG;
-	// interval 1;
-	// file ohl_power_A_imag.csv;
-// }
-
-// object group_recorder {
-	// name ohl_power_B_real;
-	// flags DELTAMODE;
-	// group "class=overhead_line";
-	// property "power_in_B";
-	// complex_part REAL;
-	// interval 1;
-	// file ohl_power_B_real.csv;
-// }
-	
-// object group_recorder {
-	// name ohl_power_B_imag;
-	// flags DELTAMODE;
-	// group "class=overhead_line";
-	// property "power_in_B";
-	// complex_part IMAG;
-	// interval 1;
-	// file ohl_power_B_imag.csv;
-// }
-
-// object group_recorder {
-	// name ohl_power_C_real;
-	// flags DELTAMODE;
-	// group "class=overhead_line";
-	// property "power_in_C";
-	// complex_part REAL;
-	// interval 1;
-	// file ohl_power_C_real.csv;
-// }
-	
-// object group_recorder {
-	// name ohl_power_C_imag;
-	// flags DELTAMODE;
-	// group "class=overhead_line";
-	// property "power_in_C";
-	// complex_part IMAG;
-	// interval 1;
-	// file ohl_power_C_imag.csv;
-// }
-
-// object group_recorder {
-	// name ohl_power_real;
-	// flags DELTAMODE;
-	// group "class=overhead_line";
-	// property "power_in";
-	// complex_part REAL;
-	// interval 1;
-	// file ohl_power_real.csv;
-// }
-	
-// object group_recorder {
-	// name ohl_power_imag;
-	// flags DELTAMODE;
-	// group "class=overhead_line";
-	// property "power_in";
-	// complex_part IMAG;
-	// interval 1;
-	// file ohl_power_imag.csv;
-// }
-
-// object group_recorder {
-	// name ohl_power_out_real;
-	// flags DELTAMODE;
-	// group "class=overhead_line";
-	// property "power_out";
-	// complex_part REAL;
-	// interval 1;
-	// file ohl_power_out_real.csv;
-// }
-	
-// object group_recorder {
-	// name ohl_power_out_imag;
-	// flags DELTAMODE;
-	// group "class=overhead_line";
-	// property "power_out";
-	// complex_part IMAG;
-	// interval 1;
-	// file ohl_power_out_imag.csv;
+	// file diesel_power_C.csv;
 // }

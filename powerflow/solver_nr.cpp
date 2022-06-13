@@ -354,7 +354,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	double temp_z_store[6][6];
 
 	//Miscellaneous flag variables
-	bool Full_Mat_A, Full_Mat_B, proceed_flag;
+	bool Full_Mat_A, Full_Mat_B, proceed_flag, temp_bool_value;
 
 	//Deltamode intermediate variables
 	complex temp_complex_0, temp_complex_1, temp_complex_2, temp_complex_3, temp_complex_4;
@@ -586,6 +586,9 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	{
 		//Reset saturation checks
 		powerflow_values->island_matrix_values[island_loop_index].SaturationMismatchPresent = false;
+
+		//Reset Norton equivalent checks
+		powerflow_values->island_matrix_values[island_loop_index].NortonCurrentMismatchPresent = false;
 
 		//Reset the iteration counters
 		powerflow_values->island_matrix_values[island_loop_index].iteration_count = 0;
@@ -1711,7 +1714,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				if ((bus[indexer].ExtraCurrentInjFunc != NULL) && ((bus[indexer].type == 0) || ((bus[indexer].type > 1) && (bus[indexer].swing_functions_enabled == false))))
 				{
 					//Call the function
-					call_return_status = ((STATUS (*)(OBJECT *,int64))(*bus[indexer].ExtraCurrentInjFunc))(bus[indexer].ExtraCurrentInjFuncObject,powerflow_values->island_matrix_values[island_loop_index].iteration_count);
+					call_return_status = ((STATUS (*)(OBJECT *,int64,bool *))(*bus[indexer].ExtraCurrentInjFunc))(bus[indexer].ExtraCurrentInjFuncObject,powerflow_values->island_matrix_values[island_loop_index].iteration_count,&temp_bool_value);
 
 					//Make sure it worked
 					if (call_return_status == FAILED)
@@ -1723,6 +1726,20 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						*/
 					}
 					//Default else - it worked
+
+					//Update the convergence flag, if needed
+					if (temp_bool_value == true)
+					{
+						gl_verbose("External current injection indicated convergence failure on device %s",bus[indexer].ExtraCurrentInjFuncObject->name ? bus[indexer].ExtraCurrentInjFuncObject->name : "Unnamed");
+						/*  TROUBLESHOOT
+						An external current injection update indicated it is still changing and needs a reiteration.  This is typically
+						the Norton-equivalent current injection for a generation source.  If this is unacceptable, loosen the convergence
+						criterion on that that particular device.
+						*/
+
+						//Flag it
+						powerflow_values->island_matrix_values[island_loop_index].NortonCurrentMismatchPresent = true;
+					}
 				}
 
 				//Add in generator current amounts, if relevant
@@ -3228,6 +3245,13 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			powerflow_values->island_matrix_values[island_loop_index].new_iteration_required = true;
 		}
 		//Default else -- either no saturation, or it has converged - leave it be
+
+		//Check Norton equivalent mismatch
+		if (powerflow_values->island_matrix_values[island_loop_index].NortonCurrentMismatchPresent == true)
+		{
+			//Force a reiteration for this too
+			powerflow_values->island_matrix_values[island_loop_index].new_iteration_required = true;
+		}
 
 		//Check conditions
 		if (proceed_flag == true)
@@ -7287,6 +7311,7 @@ STATUS NR_array_structure_allocate(NR_SOLVER_STRUCT *struct_of_interest,int numb
 		struct_of_interest->island_matrix_values[index_val].swing_converged = false;
 		struct_of_interest->island_matrix_values[index_val].swing_is_a_swing = false;
 		struct_of_interest->island_matrix_values[index_val].SaturationMismatchPresent = false;
+		struct_of_interest->island_matrix_values[index_val].NortonCurrentMismatchPresent = false;
 		struct_of_interest->island_matrix_values[index_val].solver_info = -1;	//"Bad", by default
 		struct_of_interest->island_matrix_values[index_val].return_code = -1;	//Still "bad" too
 		struct_of_interest->island_matrix_values[index_val].max_mismatch_converge = 0.0;

@@ -15,7 +15,7 @@
 EXPORT int isa_diesel_dg(OBJECT *obj, char *classname);
 EXPORT SIMULATIONMODE interupdate_diesel_dg(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 EXPORT STATUS postupdate_diesel_dg(OBJECT *obj, complex *useful_value, unsigned int mode_pass);
-EXPORT STATUS diesel_dg_NR_current_injection_update(OBJECT *obj,int64 iteration_count);
+EXPORT STATUS diesel_dg_NR_current_injection_update(OBJECT *obj,int64 iteration_count, bool *converged_failure);
 
 //AVR state variable structure
 typedef struct {
@@ -177,6 +177,7 @@ private:
 	gld_property *pPGenerated;			//Link to bus PGenerated field - mainly used for SWING generator
 	gld_property *pIGenerated[3];		//Link to direct current injections to powerflow at bus-level (prerot current)
 	complex value_IGenerated[3];		//Accumulator/holding variable for direct current injections at bus-level (pre-rotated current)
+	complex prev_value_IGenerated[3];	//Tracking variable - mostly for initial powerflow convergence of Norton equivalent
 	complex generator_admittance[3][3];	//Generator admittance matrix converted from sequence values
 	complex full_bus_admittance_mat[3][3];	//Full self-admittance of Ybus form - pulled from node connection
 	double power_base;					//Per-phase basis (divide by 3)
@@ -263,6 +264,7 @@ public:
 	//Convergence criteria (ion right now)
 	double rotor_speed_convergence_criterion;
 	double voltage_convergence_criterion;
+	double current_convergence_criterion;
 
 	//Which convergence to apply
 	bool apply_rotor_speed_convergence;
@@ -446,7 +448,7 @@ public:
 	//STATUS deltaupdate(unsigned int64 dt, unsigned int iteration_count_val);
 	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 	STATUS post_deltaupdate(complex *useful_value, unsigned int mode_pass);
-	STATUS updateCurrInjection(int64 iteration_count);
+	STATUS updateCurrInjection(int64 iteration_count, bool *converged_failure);
 public:
 	static CLASS *oclass;
 	static diesel_dg *defaults;

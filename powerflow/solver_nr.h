@@ -147,6 +147,7 @@ typedef struct {
 	bool swing_converged;				///Flag to indicate if the swing imbalance has been resolved -- deltamode-oriented
 	bool swing_is_a_swing;				///Flag to indicate if swing buses should still be in that mode or not -- deltamode-oriented
 	bool SaturationMismatchPresent;		///Flag to indicate if any saturation-based calculations haven't coded
+	bool NortonCurrentMismatchPresent;	///Flag to indicate if any Norton-equivalent currents are changing in magnitude too much
 	int solver_info;					///Status return value for LU solver -- put into the array for tracking
 	int64 return_code;					///Specific return value - just to replicate previous functionality
 	double max_mismatch_converge;		///Current difference for convergence checks

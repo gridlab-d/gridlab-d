@@ -9,7 +9,7 @@ EXPORT int isa_inverter_dyn(OBJECT *obj, char *classname);
 EXPORT STATUS preupdate_inverter_dyn(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_time);
 EXPORT SIMULATIONMODE interupdate_inverter_dyn(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 EXPORT STATUS postupdate_inverter_dyn(OBJECT *obj, complex *useful_value, unsigned int mode_pass);
-EXPORT STATUS inverter_dyn_NR_current_injection_update(OBJECT *obj, int64 iteration_count);
+EXPORT STATUS inverter_dyn_NR_current_injection_update(OBJECT *obj, int64 iteration_count, bool *converged_failure);
 EXPORT STATUS inverter_dyn_DC_object_register(OBJECT *this_obj, OBJECT *DC_obj);
 
 //Alias the currents
@@ -285,7 +285,7 @@ public:
 
 	double GridForming_freq_convergence_criterion;
 	double GridForming_volt_convergence_criterion;
-	double GridForming_curr_convergence_criterion;
+	double GridFollowing_curr_convergence_criterion;
 
 	INV_DYN_STATE curr_state; ///< The current state of the inverter in deltamode
 
@@ -445,7 +445,7 @@ public:
 	STATUS pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time);
 	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 	STATUS post_deltaupdate(complex *useful_value, unsigned int mode_pass);
-	STATUS updateCurrInjection(int64 iteration_count);
+	STATUS updateCurrInjection(int64 iteration_count,bool *converged_failure);
 	STATUS init_dynamics(INV_DYN_STATE *curr_time);
 	STATUS DC_object_register(OBJECT *DC_object);
 

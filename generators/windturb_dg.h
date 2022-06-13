@@ -16,7 +16,7 @@
 #include <string>
 #include <iostream>
 
-EXPORT STATUS windturb_dg_NR_current_injection_update(OBJECT *obj, int64 iteration_count);
+EXPORT STATUS windturb_dg_NR_current_injection_update(OBJECT *obj, int64 iteration_count, bool *converged_failure);
 
 class windturb_dg : public gld_object
 {
@@ -181,7 +181,7 @@ public:
 	
 	void compute_current_injection(void);
 	void compute_current_injection_pc(void);
-	STATUS updateCurrInjection(int64 iteration_count);
+	STATUS updateCurrInjection(int64 iteration_count, bool *converged_failure);
 
 	gld_property *map_complex_value(OBJECT *obj, char *name);
 	gld_property *map_double_value(OBJECT *obj, char *name);
