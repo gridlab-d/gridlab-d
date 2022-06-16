@@ -63,8 +63,10 @@ public:
 	inline char* copy_from(const char *s) { return s?strncpy(buffer,s,size):NULL; };
 	inline operator char*(void) { return buffer; };
 	inline bool operator ==(const char *s) { return strcmp(buffer,s)==0; };
-	inline bool operator <(const char *s) { return strcmp(buffer,s)==-1; };
-	inline bool operator >(const char *s) { return strcmp(buffer,s)==1; };
+	//inline bool operator <(const char *s) { return strcmp(buffer,s)==-1; };
+	inline bool operator <(const char *s) { return strcmp(buffer,s)<0;};
+	//inline bool operator >(const char *s) { return strcmp(buffer,s)==1; };
+	inline bool operator >(const char *s) { return strcmp(buffer,s)>1; };
 	inline bool operator <=(const char *s) { return strcmp(buffer,s)<=0; };
 	inline bool operator >=(const char *s) { return strcmp(buffer,s)>=0; };
 	inline char *find(const char c) { return strchr(buffer,c); };

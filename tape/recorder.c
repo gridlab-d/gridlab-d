@@ -117,6 +117,11 @@ static int recorder_open(OBJECT *obj)
 	error_encountered = false;
 
 	my->interval = (int64)(my->dInterval/TS_SECOND);
+	if ( my->interval < -1 )
+	{
+		gl_error("invalid interval value (%d)", my->interval);
+		return 0;
+	}
 	/* if prefix is omitted (no colons found) */
 //	if (sscanf(my->file,"%32[^:]:%1024[^:]:%[^:]",type,fname,flags)==1)
 //	{
