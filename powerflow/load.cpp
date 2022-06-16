@@ -1005,7 +1005,7 @@ void load::load_update_fxn(void)
 		//Check and see if we're a "protected" load
 		if (three_phase_protect == true)
 		{
-			if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+			if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 			{
 				//See if all phases are still in service
 				if ((NR_busdata[NR_node_reference].origphases & NR_busdata[NR_node_reference].phases) != NR_busdata[NR_node_reference].origphases)
@@ -1027,9 +1027,9 @@ void load::load_update_fxn(void)
 
 		if (all_three_phases == true)	//Handle all phases correctly
 		{
-			if ((solver_method!=SM_FBS) && ((SubNode==PARENT) || (SubNode==DIFF_PARENT)))	//Need to do something slightly different with GS/NR and parented load
+			if ((solver_method!=SM_FBS) && ((SubNode & (SNT_PARENT | SNT_DIFF_PARENT)) != 0))	//Need to do something slightly different with GS/NR and parented load
 			{													//associated with change due to player methods
-				if (SubNode == PARENT)	//Normal parents need this
+				if ((SubNode & SNT_PARENT) == SNT_PARENT)	//Normal parents need this
 				{
 					//See if in-rush is enabled - only makes sense in reliability situations
 					if ((enable_inrush_calculations == true) || (enable_impedance_conversion == true))
@@ -2737,7 +2737,7 @@ void load::load_update_fxn(void)
 	if (enable_inrush_calculations == true)
 	{
 		//See if we're a parent or child
-		if ((SubNode == CHILD) || (SubNode == DIFF_CHILD))	//We're a child - check with our Mommy/Daddy
+		if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) != 0)	//We're a child - check with our Mommy/Daddy
 		{
 			//We're not a legit parent! See if we need to allocate for our senile parents
 			if (NR_busdata[*NR_subnode_reference].full_Y_load == NULL)	//Nope, not set yet
@@ -2822,7 +2822,7 @@ void load::load_update_fxn(void)
 					{
 						//Check phase voltage value - if it is non-zero, assume we were running
 						//Adjust for childed nodes
-						if ((SubNode != CHILD) && (SubNode != DIFF_CHILD))
+						if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 						{
 							if (NR_busdata[NR_node_reference].V[index_var].Mag() > 0.0)
 							{
@@ -2870,7 +2870,7 @@ void load::load_update_fxn(void)
 
 								//Calculate the updated history terms - hrcf = chrc*vfromprev/2.0
 								//Do a parent check
-								if ((SubNode != CHILD) && (SubNode != DIFF_CHILD))
+								if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 								{
 									LoadHistTermC[index_var] = NR_busdata[NR_node_reference].V[index_var] * chrcloadstore[index_var] / complex(2.0,0.0);
 								}
@@ -2889,7 +2889,7 @@ void load::load_update_fxn(void)
 
 								//Calculate the updated history terms - hrcf = chrc*vfromprev
 								//Do a parent check
-								if ((SubNode != CHILD) && (SubNode != DIFF_CHILD))
+								if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 								{
 									LoadHistTermC[index_var] = NR_busdata[NR_node_reference].V[index_var] * chrcloadstore[index_var];
 								}
@@ -2970,7 +2970,7 @@ void load::load_update_fxn(void)
 							//Calculate the updated history terms - hrl = inv((1+bhrl))*ahrl*vprev
 							//Cheating references to voltages
 							//Do a parent check
-							if ((SubNode != CHILD) && (SubNode != DIFF_CHILD))
+							if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 							{
 								LoadHistTermL[index_var] = NR_busdata[NR_node_reference].V[index_var] * ahrlloadstore[index_var] /
 														   (complex(1.0,0.0) + bhrlloadstore[index_var]);
@@ -3014,7 +3014,7 @@ void load::load_update_fxn(void)
 							{
 								//Calculate the updated history terms - hrcf = chrc*vfromprev - hrcfprev
 								//Do a parent check
-								if ((SubNode != CHILD) && (SubNode != DIFF_CHILD))
+								if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 								{
 									LoadHistTermC[index_var] = NR_busdata[NR_node_reference].V[index_var] * chrcloadstore[index_var] -
 															LoadHistTermC[index_var+3];
@@ -3029,7 +3029,7 @@ void load::load_update_fxn(void)
 							{
 								//Calculate the updated history terms - hrcf = chrc*vfromprev
 								//Do a parent check
-								if ((SubNode != CHILD) && (SubNode != DIFF_CHILD))
+								if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 								{
 									LoadHistTermC[index_var] = NR_busdata[NR_node_reference].V[index_var] * chrcloadstore[index_var];
 								}
@@ -3052,7 +3052,7 @@ void load::load_update_fxn(void)
 							//Calculate the updated history terms - hrl = ahrl*vprev-bhrl*hrlprev
 							//Cheating references to voltages
 							//Do a parent check
-							if ((SubNode != CHILD) && (SubNode != DIFF_CHILD))
+							if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 							{
 								LoadHistTermL[index_var] = NR_busdata[NR_node_reference].V[index_var] * ahrlloadstore[index_var] -
 														   bhrlloadstore[index_var] * LoadHistTermL[index_var+3];
@@ -3075,7 +3075,7 @@ void load::load_update_fxn(void)
 					}//End normal update (deltamode running or we started "off"
 
 					//See if we're a parented load or not
-					if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+					if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 					{
 						//Compute the values and post them to our bus term
 						NR_busdata[NR_node_reference].BusHistTerm[index_var] += LoadHistTermL[index_var] + LoadHistTermC[index_var];
@@ -3112,7 +3112,7 @@ void load::load_update_fxn(void)
 
 			//Zero our full load component too
 			//See if we're a parented load or not -- zero us as well (assumes nothing is in delta)
-			if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+			if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 			{
 				//Compute the values and post them to our bus term
 				NR_busdata[NR_node_reference].BusHistTerm[0] = complex(0.0,0.0);
@@ -3254,7 +3254,7 @@ void load::load_update_fxn(void)
 			}//End something else term update
 
 			//See if we're a parented load or not, to make sure we update right
-			if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+			if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 			{
 				//Add this into the main admittance matrix (handled directly)
 				NR_busdata[NR_node_reference].full_Y_load[index_var] += shunt[index_var]-prev_shunt[index_var];

@@ -69,14 +69,12 @@ EXPORT STATUS attach_vfd_to_node(OBJECT *obj,OBJECT *calledVFD);
 #define shunt2 shunt[1]			/// phase 2 constant admittance load
 #define shunt12 shunt[2]		/// phase 1-2 constant admittance load
 
-typedef enum {
-		NONE=0,			///< defines not a child node
-		CHILD=1,		///< defines is a child node
-		CHILD_NOINIT=2,	///< defines is a child node that has not been linked
-		PARENT=3,		///< defines is a parent of a child
-		DIFF_CHILD=4,	///< defines is a child node, but has different phase-connection that our parent
-		DIFF_PARENT=5	///< defines a parent, but has a different phase-connection than our child
-		} SUBNODETYPE;
+#define SNT_NONE 0x0000			///< defines not a child node
+#define SNT_CHILD 0x0001		///< defines is a child node
+#define SNT_CHILD_NOINIT 0x0002	///< defines is a child node that has not been linked
+#define SNT_PARENT 0x0004		///< defines is a parent of a child
+#define SNT_DIFF_CHILD 0x0008	///< defines is a child node, but has different phase-connection that our parent
+#define SNT_DIFF_PARENT 0x0010	///< defines a parent, but has a different phase-connection than our child
 
 typedef enum {
 	NORMAL_NODE=0,		///< We're a plain-old-ugly node
@@ -203,7 +201,7 @@ public:
 	double GFA_volt_disconnect_time;
 	bool GFA_status;
 
-	SUBNODETYPE SubNode;
+	set SubNode;			///< Node child/subtype flags (for NR)
 	set busflags;			///< node flags (see NF_*)
 	set busphasesIn;		///< phase check flags for "reconvergent" lines (input)
 	set busphasesOut;		///< phase check flags for output

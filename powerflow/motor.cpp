@@ -1294,7 +1294,7 @@ void motor::updateFreqVolt() {
 	// update voltage and frequency
 	if (motor_op_mode == modeSPIM)
 	{
-		if ( (SubNode == CHILD) || (SubNode == DIFF_CHILD) ) // if we have a parent, reference the voltage and frequency of the parent
+		if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) != 0) // if we have a parent, reference the voltage and frequency of the parent
 		{
 			node *parNode = OBJECTDATA(SubNodeParent,node);
 			if (triplex_connected == true)
@@ -1355,7 +1355,7 @@ void motor::updateFreqVolt() {
 	}
 	else //TPIM model
 	{
-		if ( (SubNode == CHILD) || (SubNode == DIFF_CHILD) ) // if we have a parent, reference the voltage and frequency of the parent
+		if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) != 0) // if we have a parent, reference the voltage and frequency of the parent
 		{
 			node *parNode = OBJECTDATA(SubNodeParent,node);
 			// obtain 3-phase voltages
