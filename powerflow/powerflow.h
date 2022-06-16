@@ -93,6 +93,9 @@ GLOBAL bool NR_admit_change INIT(true);				/**< Newton-Raphson admittance matrix
 GLOBAL int NR_superLU_procs INIT(1);				/**< Newton-Raphson related - superLU MT processor count to request - separate from thread_count */
 GLOBAL TIMESTAMP NR_retval INIT(TS_NEVER);			/**< Newton-Raphson current return value - if t0 objects know we aren't going anywhere */
 GLOBAL OBJECT *NR_swing_bus INIT(NULL);				/**< Newton-Raphson swing bus */
+GLOBAL int NR_expected_swing_rank INIT(6);			/**< Newton-Raphson expected master swing bus rank - for multi-gen children compatibility */
+GLOBAL bool NR_swing_deferred_pass INIT(false);		/**< Newton-Raphson toggle for deferred init - for multi-gen children compatibility */
+GLOBAL bool NR_swing_rank_set INIT(false);			/**< Newton-Raphson check to see if SWING has set its rank (mostly for other objects) */
 GLOBAL int NR_swing_bus_reference INIT(-1);			/**< Newton-Raphson swing bus index reference in NR_busdata */
 GLOBAL int64 NR_delta_iteration_limit INIT(10);		/**< Newton-Raphson iteration limit (per deltamode timestep) */
 GLOBAL bool FBS_swing_set INIT(false);				/**< Forward-Back Sweep swing assignment variable */

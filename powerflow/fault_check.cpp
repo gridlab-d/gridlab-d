@@ -87,10 +87,37 @@ int fault_check::init(OBJECT *parent)
 	OBJECT *obj = OBJECTHDR(this);
 	FILE *FPoint;
 
+	//Register us in the global - so faults know who they gonna call
+	if (fault_check_object == NULL)	//Make sure we're the only one
+	{
+		fault_check_object = obj;	//Link us up!
+	}
+	else
+	{
+		//Make sure the existing one is not us - just in case the deferred init fired
+		if (fault_check_object != obj)
+		{
+			GL_THROW("Only one fault_check object is supported at this time");
+			/*  TROUBLESHOOT
+			At this time, a .GLM file can only contain one fault_check object.  Future implementations
+			may change this.  Please restrict yourself to one fault_check object in the mean time.
+			*/
+		}
+		//Default else - it's set and it is us, so just proceed.
+	}
+
 	if (solver_method == SM_NR)
 	{
-		//Set the rank to be 1 below swing - lets it execute before NR on synch
-		gl_set_rank(obj,5);	//swing-1
+		//Swing tracking variable - we have to be one below the SWING, so make sure it settled
+		if (NR_swing_rank_set == true)
+		{
+			gl_set_rank(obj,(NR_expected_swing_rank-1));	//swing-1
+		}
+		else
+		{
+			//Not set yet, deferred init
+			return 2;
+		}
 	}
 	else
 	{
@@ -100,21 +127,6 @@ int fault_check::init(OBJECT *parent)
 		Other solvers may be integrated at a future date.
 		*/
 	}
-
-	//Register us in the global - so faults know who they gonna call
-	if (fault_check_object == NULL)	//Make sure we're the only one
-	{
-		fault_check_object = obj;	//Link us up!
-	}
-	else
-	{
-		GL_THROW("Only one fault_check object is supported at this time");
-		/*  TROUBLESHOOT
-		At this time, a .GLM file can only contain one fault_check object.  Future implementations
-		may change this.  Please restrict yourself to one fault_check object in the mean time.
-		*/
-	}
-	
 
 	//Make sure the eventgen_object is an actual eventgen object.
 	if(rel_eventgen != NULL){

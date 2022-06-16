@@ -443,7 +443,7 @@ int link_object::init(OBJECT *parent)
 		}
 
 		//Increment connected links ends for nodes for creating their "link list"
-		if ((fNode->SubNode == CHILD) || (fNode->SubNode == DIFF_CHILD))
+		if ((fNode->SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) != 0)
 		{
 			//Parent/child connected node, so increment our parent's counter
 			node *pfNode = OBJECTDATA(fNode->SubNodeParent,node);
@@ -454,7 +454,7 @@ int link_object::init(OBJECT *parent)
 			fNode->NR_connected_links[0]++;
 		}
 
-		if ((tNode->SubNode == CHILD) || (tNode->SubNode == DIFF_CHILD))
+		if ((tNode->SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) != 0)
 		{
 			//Parent/child connected node, so increment our parent's counter
 			node *ptNode = OBJECTDATA(tNode->SubNodeParent,node);
@@ -3751,14 +3751,8 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 			fnode = OBJECTDATA(fobjval,node);
 			tnode = OBJECTDATA(tobjval,node);
 
-			//See if the from node is childed - it will have a different name address if it is
-			if ((&from->name) != (&fobjval->name))
-			{
-				//Link up the "other from" node - 
-				ofnode = OBJECTDATA(from,node);
-			}
-			else
-				ofnode = NULL;	//Ensure it's blanked
+			//Childed or not - reference the "actual from" node (not powerflow from)
+			ofnode = OBJECTDATA(from,node);
 
 			if (SpecialLnk == VFD)
 			{
@@ -3973,46 +3967,23 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 					if (flock)
 					{
 						//Lock the from side for current dispersion
-						WRITELOCK_OBJECT(fobjval);
+						WRITELOCK_OBJECT(from);
 					}
 
 					//Check to see which mode we're in
 					if (link_fault_mode == false)
 					{
 						//Current in is just the same
-						fnode->current_inj[0] += current_pointer_in[0];
-						fnode->current_inj[1] += current_pointer_in[1];
-						fnode->current_inj[2] += current_pointer_in[2];
+						ofnode->current_inj[0] += current_pointer_in[0];
+						ofnode->current_inj[1] += current_pointer_in[1];
+						ofnode->current_inj[2] += current_pointer_in[2];
 					}
 
 					//If we locked our from node, be sure to let it go
 					if (flock)
 					{
 						//Unlock the from side so others can play
-						WRITEUNLOCK_OBJECT(fobjval);
-					}
-
-					//Replicate to the "original parent" if needed
-					if ((ofnode != NULL) && (link_fault_mode == false))
-					{
-						//See if our nature requires a lock
-						if (flock)
-						{
-							//Lock the from side for current dispersion
-							WRITELOCK_OBJECT(from);
-						}
-
-						//Apply current injection updates to child as well
-						ofnode->current_inj[0] += current_pointer_in[0];
-						ofnode->current_inj[1] += current_pointer_in[1];
-						ofnode->current_inj[2] += current_pointer_in[2];
-
-						//If we locked our from node, be sure to let it go
-						if (flock)
-						{
-							//Unlock the from side so others can play
-							WRITEUNLOCK_OBJECT(from);
-						}
+						WRITEUNLOCK_OBJECT(from);
 					}
 				}//End not in-rush calculations (normal)
 			}//end normal transformers
@@ -4093,48 +4064,24 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 				if (flock)
 				{
 					//Lock the from side for current dispersion
-					WRITELOCK_OBJECT(fobjval);
+					WRITELOCK_OBJECT(from);
 				}
 
 				//Check to see which mode we're in
 				if (link_fault_mode == false)
 				{
 					//Current in is just the same
-					fnode->current_inj[0] += current_pointer_in[0];
-					fnode->current_inj[1] += current_pointer_in[1];
-					fnode->current_inj[2] += current_pointer_in[2];
+					ofnode->current_inj[0] += current_pointer_in[0];
+					ofnode->current_inj[1] += current_pointer_in[1];
+					ofnode->current_inj[2] += current_pointer_in[2];
 				}
 
 				//If we locked our from node, be sure to let it go
 				if (flock)
 				{
 					//Unlock the from side so others can play
-					WRITEUNLOCK_OBJECT(fobjval);
+					WRITEUNLOCK_OBJECT(from);
 				}
-
-				//Replicate to the "original parent" if needed
-				if ((ofnode != NULL) && (link_fault_mode == false))
-				{
-					//See if our nature requires a lock
-					if (flock)
-					{
-						//Lock the from side for current dispersion
-						WRITELOCK_OBJECT(from);
-					}
-
-					//Apply current injection updates to child
-					ofnode->current_inj[0] += current_pointer_in[0];
-					ofnode->current_inj[1] += current_pointer_in[1];
-					ofnode->current_inj[2] += current_pointer_in[2];
-
-					//If we locked our from node, be sure to let it go
-					if (flock)
-					{
-						//Unlock the from side so others can play
-						WRITEUNLOCK_OBJECT(from);
-					}
-				}
-
 			}//End regulators
 			else if (SpecialLnk == DELTAGWYE)
 			{
@@ -4188,46 +4135,23 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 				if (flock)
 				{
 					//Lock the from side for current dispersion
-					WRITELOCK_OBJECT(fobjval);
+					WRITELOCK_OBJECT(from);
 				}
 
 				//Check to see which mode we're in
 				if (link_fault_mode == false)
 				{
 					//Current in is just the same
-					fnode->current_inj[0] += current_pointer_in[0];
-					fnode->current_inj[1] += current_pointer_in[1];
-					fnode->current_inj[2] += current_pointer_in[2];
+					ofnode->current_inj[0] += current_pointer_in[0];
+					ofnode->current_inj[1] += current_pointer_in[1];
+					ofnode->current_inj[2] += current_pointer_in[2];
 				}
 
 				//If we locked our from node, be sure to let it go
 				if (flock)
 				{
 					//Unlock the from side so others can play
-					WRITEUNLOCK_OBJECT(fobjval);
-				}
-
-				//Replicate to the "original parent" if needed
-				if ((ofnode != NULL) && (link_fault_mode == false))
-				{
-					//See if our nature requires a lock
-					if (flock)
-					{
-						//Lock the from side for current dispersion
-						WRITELOCK_OBJECT(from);
-					}
-
-					//Apply updates to child object
-					ofnode->current_inj[0] += current_pointer_in[0];
-					ofnode->current_inj[1] += current_pointer_in[1];
-					ofnode->current_inj[2] += current_pointer_in[2];
-
-					//If we locked our from node, be sure to let it go
-					if (flock)
-					{
-						//Unlock the from side so others can play
-						WRITEUNLOCK_OBJECT(from);
-					}
+					WRITEUNLOCK_OBJECT(from);
 				}
 			}//end delta-GWYE
 			else if (SpecialLnk == SPLITPHASE)	//Split phase, center tapped xformer
@@ -4243,42 +4167,21 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 					if (flock)
 					{
 						//Lock the from side for current dispersion
-						WRITELOCK_OBJECT(fobjval);
+						WRITELOCK_OBJECT(from);
 					}
 
 					//Check to see which mode we're in
 					if (link_fault_mode == false)
 					{
 						//Accumulate injection
-						fnode->current_inj[0] += itemp[0];
+						ofnode->current_inj[0] += itemp[0];
 					}
 
 					//If we locked our from node, be sure to let it go
 					if (flock)
 					{
 						//Unlock the from side so others can play
-						WRITEUNLOCK_OBJECT(fobjval);
-					}
-
-					//Replicate to the "original parent" if needed
-					if ((ofnode != NULL) && (link_fault_mode == false))
-					{
-						//See if our nature requires a lock
-						if (flock)
-						{
-							//Lock the from side for current dispersion
-							WRITELOCK_OBJECT(from);
-						}
-
-						//Apply update to child
-						ofnode->current_inj[0] += itemp[0];
-
-						//If we locked our from node, be sure to let it go
-						if (flock)
-						{
-							//Unlock the from side so others can play
-							WRITEUNLOCK_OBJECT(from);
-						}
+						WRITEUNLOCK_OBJECT(from);
 					}
 
 					//calculate current out
@@ -4301,42 +4204,21 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 					if (flock)
 					{
 						//Lock the from side for current dispersion
-						WRITELOCK_OBJECT(fobjval);
+						WRITELOCK_OBJECT(from);
 					}
 
 					//Check to see which mode we're in
 					if (link_fault_mode == false)
 					{
 						//Accumulate the injection
-						fnode->current_inj[1] += itemp[0];
+						ofnode->current_inj[1] += itemp[0];
 					}
 
 					//If we locked our from node, be sure to let it go
 					if (flock)
 					{
 						//Unlock the from side so others can play
-						WRITEUNLOCK_OBJECT(fobjval);
-					}
-
-					//Replicate to the "original parent" if needed
-					if ((ofnode != NULL) && (link_fault_mode == false))
-					{
-						//See if our nature requires a lock
-						if (flock)
-						{
-							//Lock the from side for current dispersion
-							WRITELOCK_OBJECT(from);
-						}
-
-						//Apply updates to child
-						ofnode->current_inj[1] += itemp[0];
-
-						//If we locked our from node, be sure to let it go
-						if (flock)
-						{
-							//Unlock the from side so others can play
-							WRITEUNLOCK_OBJECT(from);
-						}
+						WRITEUNLOCK_OBJECT(from);
 					}
 
 					//calculate current out
@@ -4360,42 +4242,21 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 					if (flock)
 					{
 						//Lock the from side for current dispersion
-						WRITELOCK_OBJECT(fobjval);
+						WRITELOCK_OBJECT(from);
 					}
 
 					//Check to see which mode we're in
 					if (link_fault_mode == false)
 					{
 						//Accumulate the injection
-						fnode->current_inj[2] += itemp[0];
+						ofnode->current_inj[2] += itemp[0];
 					}
 
 					//If we locked our from node, be sure to let it go
 					if (flock)
 					{
 						//Unlock the from side so others can play
-						WRITEUNLOCK_OBJECT(fobjval);
-					}
-
-					//Replicate to the "original parent" if needed
-					if ((ofnode != NULL) && (link_fault_mode == false))
-					{
-						//See if our nature requires a lock
-						if (flock)
-						{
-							//Lock the from side for current dispersion
-							WRITELOCK_OBJECT(from);
-						}
-
-						//Apply updates to child
-						ofnode->current_inj[2] += itemp[0];
-
-						//If we locked our from node, be sure to let it go
-						if (flock)
-						{
-							//Unlock the from side so others can play
-							WRITEUNLOCK_OBJECT(from);
-						}
+						WRITEUNLOCK_OBJECT(from);
 					}
 
 					//calculate current out
@@ -4459,44 +4320,22 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 				if (flock)
 				{
 					//Lock the from side for current dispersion
-					WRITELOCK_OBJECT(fobjval);
+					WRITELOCK_OBJECT(from);
 				}
 
 				//Check to see which mode we're in
 				if (link_fault_mode == false)
 				{
 					//Current in values go to the injection
-					fnode->current_inj[0] += current_pointer_in[0];
-					fnode->current_inj[1] += current_pointer_in[1];
+					ofnode->current_inj[0] += current_pointer_in[0];
+					ofnode->current_inj[1] += current_pointer_in[1];
 				}
 
 				//If we locked our from node, be sure to let it go
 				if (flock)
 				{
 					//Unlock the from side so others can play
-					WRITEUNLOCK_OBJECT(fobjval);
-				}
-
-				//Replicate to the "original parent" if needed
-				if ((ofnode != NULL) && (link_fault_mode == false))
-				{
-					//See if our nature requires a lock
-					if (flock)
-					{
-						//Lock the from side for current dispersion
-						WRITELOCK_OBJECT(from);
-					}
-
-					//Apply current injections to child
-					ofnode->current_inj[0] += current_pointer_in[0];
-					ofnode->current_inj[1] += current_pointer_in[1];
-
-					//If we locked our from node, be sure to let it go
-					if (flock)
-					{
-						//Unlock the from side so others can play
-						WRITEUNLOCK_OBJECT(from);
-					}
+					WRITEUNLOCK_OBJECT(from);
 				}
 			}//End split phase line
 			else
@@ -4736,46 +4575,23 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 				if (flock)
 				{
 					//Lock the from side for current dispersion
-					WRITELOCK_OBJECT(fobjval);
+					WRITELOCK_OBJECT(from);
 				}
 
 				//Check to see which mode we're in
 				if (link_fault_mode == false)
 				{
 					//Current in is just the same
-					fnode->current_inj[0] += current_pointer_in[0];
-					fnode->current_inj[1] += current_pointer_in[1];
-					fnode->current_inj[2] += current_pointer_in[2];
+					ofnode->current_inj[0] += current_pointer_in[0];
+					ofnode->current_inj[1] += current_pointer_in[1];
+					ofnode->current_inj[2] += current_pointer_in[2];
 				}
 
 				//If we locked our from node, be sure to let it go
 				if (flock)
 				{
 					//Unlock the from side so others can play
-					WRITEUNLOCK_OBJECT(fobjval);
-				}
-
-				//Replicate to the "original parent" if needed
-				if ((ofnode != NULL) && (link_fault_mode == false))
-				{
-					//See if our nature requires a lock
-					if (flock)
-					{
-						//Lock the from side for current dispersion
-						WRITELOCK_OBJECT(from);
-					}
-
-					//Apply current injections to childed object
-					ofnode->current_inj[0] += current_pointer_in[0];
-					ofnode->current_inj[1] += current_pointer_in[1];
-					ofnode->current_inj[2] += current_pointer_in[2];
-
-					//If we locked our from node, be sure to let it go
-					if (flock)
-					{
-						//Unlock the from side so others can play
-						WRITEUNLOCK_OBJECT(from);
-					}
+					WRITEUNLOCK_OBJECT(from);
 				}
 			}//End "normal" lines
 		}//End is closed
