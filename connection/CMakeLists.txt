@@ -26,7 +26,7 @@ else ()
 endif ()
 
 if (GLD_USE_HELICS)
-    FIND_PACKAGE(HELICS 2.3 REQUIRED CONFIG HINTS ${HELICS_DIR} $ENV{HELICS_DIR})
+    FIND_PACKAGE(HELICS 3 REQUIRED CONFIG HINTS ${HELICS_DIR} $ENV{HELICS_DIR})
     set(HELICS_CONNECTION helics_msg.cpp helics_msg.h)
 else ()
     set(HELICS_CONNECTION)
@@ -73,7 +73,7 @@ if (FNCS_FOUND)
 endif ()
 
 if (HELICS_FOUND)
-    target_link_libraries(${PROJECT_NAME} PRIVATE HELICS::helics-shared)
+    target_link_libraries(${PROJECT_NAME} PRIVATE HELICS::helics)
     target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_HELICS)
 endif ()
 
