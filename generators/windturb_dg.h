@@ -49,6 +49,7 @@ private:
 	
 	bool parent_is_valid;				//< Flag to pointers
 	bool parent_is_triplex;
+	bool parent_is_inverter;
 	
 	double Power_Curve[2][100];  //Look-up table carrying power curve values. Maximum points limited to 100. Equals default (defined in .cpp) or user defined power curve 
 	int number_of_points;
@@ -68,6 +69,10 @@ private:
 	double internal_model_current_convergence;	//Variable to set convergence/reiteration context (for normal executions)
 	
 	complex prev_current12;
+	
+	//Inverter connections
+	gld_property *inverter_power_property;
+	gld_property *inverter_flag_property;
 	
 protected:
 	/* TODO: put unpublished but inherited variables */
@@ -181,11 +186,13 @@ public:
 	
 	void compute_current_injection(void);
 	void compute_current_injection_pc(void);
+	void compute_power_injection_pc(void);
 	STATUS updateCurrInjection(int64 iteration_count);
 
 	gld_property *map_complex_value(OBJECT *obj, char *name);
 	gld_property *map_double_value(OBJECT *obj, char *name);
 	void push_complex_powerflow_values(void);
+	void push_complex_power_values(complex inv_P);
 	
 	std::vector<std::string> readCSVRow(const std::string &row);
 	std::vector<std::vector<std::string>> readCSV(std::istream &in);

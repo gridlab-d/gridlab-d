@@ -173,6 +173,9 @@ public:
 	double output_frequency;
 	
 	double pCircuit_V_Avg;          // average value of 3 phase terminal voltage
+	
+	//Hidden variables for wind turbine checks
+	bool WT_is_connected;
 
 	//Deltamode PID-controller implementation
 	double kpd;			///< The proportional gain for the d axis modulation

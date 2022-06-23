@@ -331,6 +331,9 @@ inverter::inverter(MODULE *module)
 			PT_double,"VW_P1[pu]", PADDR(VW_P1), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Power limit at VW_P1 (e.g. 1). Used in VOLT_WATT control mode.",
 			PT_double,"VW_P2[pu]", PADDR(VW_P2), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Power limit at VW_P2 (e.g. 0). Used in VOLT_WATT control mode.",
 
+			//Hidden variables for wind turbine checks
+			PT_bool, "WT_is_connected", PADDR(WT_is_connected), PT_DESCRIPTION, "Internal flag that indicates a wind turbine child is connected",
+			
 			/* DEPRECATED properties - will be deleted in next version */
 			PT_complex, "VA_In", PADDR(VA_In_deprecated), PT_DEPRECATED, PT_DESCRIPTION, "Deprecated input for inverter - use P_In instead",
 			/* END DEPRECATED */
@@ -645,6 +648,8 @@ int inverter::init(OBJECT *parent)
 	complex_array temp_complex_array;
 	set parent_phases;
 	OBJECT *tmp_obj = NULL;
+	
+	WT_is_connected = false;
 
 	if(parent != NULL){
 		if((parent->flags & OF_INIT) != OF_INIT){
@@ -2646,19 +2651,23 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					P_In = V_In * I_In; //DC
 
 					// need to differentiate between different pulses...
-					if(use_multipoint_efficiency == FALSE){
-						VA_Out = P_In * efficiency;
-					} else {
-						if(P_In <= p_so){
-							VA_Out = 0;
+					
+					//Note: if WT_is_connected is true, the VA_Out is written directly by wind turbine
+					if (WT_is_connected == false){
+						if(use_multipoint_efficiency == FALSE){
+							VA_Out = P_In * efficiency;
 						} else {
-							if(V_In > v_dco){
-								gl_warning("The dc voltage is greater than the specified maximum for the inverter. Efficiency model may be inaccurate.");
+							if(P_In <= p_so){
+								VA_Out = 0;
+							} else {
+								if(V_In > v_dco){
+									gl_warning("The dc voltage is greater than the specified maximum for the inverter. Efficiency model may be inaccurate.");
+								}
+								C1 = p_dco*(1+c_1*(V_In-v_dco));
+								C2 = p_so*(1+c_2*(V_In-v_dco));
+								C3 = c_o*(1+c_3*(V_In-v_dco));
+								VA_Out.SetReal((((p_max/(C1-C2))-C3*(C1-C2))*(P_In-C2)+C3*(P_In-C2)*(P_In-C2)));
 							}
-							C1 = p_dco*(1+c_1*(V_In-v_dco));
-							C2 = p_so*(1+c_2*(V_In-v_dco));
-							C3 = c_o*(1+c_3*(V_In-v_dco));
-							VA_Out.SetReal((((p_max/(C1-C2))-C3*(C1-C2))*(P_In-C2)+C3*(P_In-C2)*(P_In-C2)));
 						}
 					}
 
