@@ -3257,39 +3257,43 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 				//Compute power in
 				P_In = V_In * I_In;
-				//Determine how to efficiency weight it
-				if(use_multipoint_efficiency == false)
-				{
-					//Normal scaling
-					VA_Efficiency = P_In * efficiency;
-				}
-				else
-				{
-					//See if above minimum DC power input
-					if(P_In <= p_so)
+				if (WT_is_connected == false){
+					//Determine how to efficiency weight it
+					if(use_multipoint_efficiency == false)
 					{
-						VA_Efficiency = 0.0;	//Nope, no output
+						//Normal scaling
+						VA_Efficiency = P_In * efficiency;
 					}
-					else	//Yes, apply effiency change
+					else
 					{
-						//Make sure voltage isn't too low
-						if(fabs(V_In) > v_dco)
+						//See if above minimum DC power input
+						if(P_In <= p_so)
 						{
-							gl_warning("The dc voltage is greater than the specified maximum for the inverter. Efficiency model may be inaccurate.");
-							/*  TROUBLESHOOT
-							The DC voltage at the input to the inverter is less than the maximum voltage supported by the inverter.  As a result, the
-							multipoint efficiency model may not provide a proper result.
-							*/
+							VA_Efficiency = 0.0;	//Nope, no output
 						}
+						else	//Yes, apply effiency change
+						{
+							//Make sure voltage isn't too low
+							if(fabs(V_In) > v_dco)
+							{
+								gl_warning("The dc voltage is greater than the specified maximum for the inverter. Efficiency model may be inaccurate.");
+								/*  TROUBLESHOOT
+								The DC voltage at the input to the inverter is less than the maximum voltage supported by the inverter.  As a result, the
+								multipoint efficiency model may not provide a proper result.
+								*/
+							}
 
-						//Compute coefficients for multipoint efficiency
-						C1 = p_dco*(1+c_1*(V_In-v_dco));
-						C2 = p_so*(1+c_2*(V_In-v_dco));
-						C3 = c_o*(1+c_3*(V_In-v_dco));
+							//Compute coefficients for multipoint efficiency
+							C1 = p_dco*(1+c_1*(V_In-v_dco));
+							C2 = p_so*(1+c_2*(V_In-v_dco));
+							C3 = c_o*(1+c_3*(V_In-v_dco));
 
-						//Apply this to the output
-						VA_Efficiency = (((p_max/(C1-C2))-C3*(C1-C2))*(P_In-C2)+C3*(P_In-C2)*(P_In-C2));
+							//Apply this to the output
+							VA_Efficiency = (((p_max/(C1-C2))-C3*(C1-C2))*(P_In-C2)+C3*(P_In-C2)*(P_In-C2));
+						}
 					}
+				}else{
+					VA_Efficiency = VA_Out.Re();
 				}
 				if ((phases & 0x10) == 0x10){
 					power_val[0].SetReal(VA_Efficiency);

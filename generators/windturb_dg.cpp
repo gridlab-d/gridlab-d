@@ -1042,6 +1042,10 @@ int windturb_dg::init(OBJECT *parent)
 		}
 		else if (gl_object_isa(parent,"inverter","generators") == true)
 		{
+			//if wind turbine implementation is not power curve-based, throw an error
+			if (Turbine_implementation != POWER_CURVE){
+				GL_THROW("windturb_dg (id:%d): Inverter parent is only supported for power curve-based wind turbine implementation",obj->id);
+			}
 			//Set flags
 			parent_is_valid = true;
 			parent_is_triplex = false;

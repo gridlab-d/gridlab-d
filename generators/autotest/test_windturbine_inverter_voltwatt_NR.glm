@@ -213,14 +213,26 @@ object inverter {
 	name inv1;
 	phases ABCN;
 	parent my_meter2;
-	rated_power 5000000;
+	rated_power 50 kVA;// per phase;
 	inverter_efficiency 1;
+	inverter_type FOUR_QUADRANT;
+	four_quadrant_control_mode VOLT_WATT;
+	V_base 400;
+	V1 0.90;
+	Q1 0.7;
+	V2 0.95;
+	Q2 0.0;
+	V3 1.05;
+	Q3 0.0;
+	V4 1.10;
+	Q4 -0.8;
+	//volt_var_control_lockout 0.5;
 	generator_mode CONSTANT_PF; //DEFAULT
 	//generator_status ONLINE; //DEFAULT
 	//inverter_type PWM; //DEFAULT
 	power_factor 1;
 	object recorder {
-		property V_In, I_In, VA_Out,phaseA_V_Out, phaseB_V_Out, phaseC_V_Out, phaseA_I_Out, phaseB_I_Out, phaseC_I_Out, power_A, power_B, power_C, phases;
+		property V_In, I_In, VA_Out,phaseA_V_Out, phaseB_V_Out, phaseC_V_Out,power_A, power_B, power_C, phases;
 		file TEST_inverter.csv;
 		interval 900;
 	};

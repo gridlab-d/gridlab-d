@@ -231,7 +231,7 @@ object windturb_dg {
 	parent inv1;
 	phases ABCN;
 	name windturb2;
-	//Gen_status ONLINE;
+	Gen_status ONLINE;
 	//Gen_type SYNCHRONOUS;
 	//Gen_mode CONSTANTP;
 	//Turbine_Model GE_25MW;
