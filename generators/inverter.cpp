@@ -642,6 +642,7 @@ int inverter::init(OBJECT *parent)
 	complex_array temp_complex_array, temp_child_complex_array;;
 	set parent_phases;
 	OBJECT *tmp_obj = NULL;
+	gld_object *tmp_gld_obj = NULL;
 	bool childed_connection = false;
 
 	if(parent != NULL){
@@ -676,8 +677,24 @@ int inverter::init(OBJECT *parent)
 				//See if this attached node is a child or not
 				if (parent->parent != NULL)
 				{
-					//Map parent
-					tmp_obj = parent->parent;
+					//Map parent - wherever it may be
+					temp_property_pointer = new gld_property(parent,"NR_powerflow_parent");
+
+					//Make sure it worked
+					if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_objectref() != true))
+					{
+						GL_THROW("inverter:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
+						//Defined elsewhere
+					}
+
+					//Pull the mapping - gld_object
+					tmp_gld_obj = temp_property_pointer->get_objectref();
+
+					//Pull the proper object reference
+					tmp_obj = tmp_gld_obj->my();
+
+					//free the property
+					delete temp_property_pointer;
 
 					//See what it is
 					if ((gl_object_isa(tmp_obj,"meter","powerflow") == false) && (gl_object_isa(tmp_obj,"node","powerflow")==false) && (gl_object_isa(tmp_obj,"load","powerflow")==false) &&
@@ -703,6 +720,23 @@ int inverter::init(OBJECT *parent)
 							While attempting to set up the deltamode interfaces and calculations with powerflow, the required interface could not be mapped.
 							Please check your GLM and try again.  If the error persists, please submit a trac ticket with your code.
 							*/
+						}
+
+						//Flag it to true
+						temp_bool_value = true;
+						temp_property_pointer->setp<bool>(temp_bool_value,*test_rlock);
+
+						//Remove it
+						delete temp_property_pointer;
+
+						//Set the child accumulator flag too
+						temp_property_pointer = new gld_property(tmp_obj,"Norton_dynamic_child");
+
+						//Make sure it worked
+						if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_bool() != true))
+						{
+							GL_THROW("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
+							//Defined elsewhere
 						}
 
 						//Flag it to true

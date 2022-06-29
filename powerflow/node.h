@@ -227,6 +227,7 @@ public:
 	complex nom_res_curr[3];/// Used for the inclusion of nominal residential currents (for angle adjustments)
 	bool house_present;		/// Indicator flag for a house being attached (NR primarily)
 	bool dynamic_norton;	/// Norton-equivalent posting on this bus -- deltamode and diesel generator ties
+	bool dynamic_norton_child;	/// Flag to indicate a childed node object is posting to this bus - prevents a double-accumulation in meters
 	bool dynamic_generator;	/// Swing-type generator posting on this bus -- deltamode and other generator ties
 	complex *Triplex_Data;	/// Link to triplex line for extra current calculation information (NR)
 	complex *Extra_Data;	/// Link to extra data information (NR)

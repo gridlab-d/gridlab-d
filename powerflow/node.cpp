@@ -142,6 +142,7 @@ node::node(MODULE *mod) : powerflow_object(mod)
 
 			PT_complex_array, "deltamode_full_Y_matrix",  PADDR(full_Y_matrix),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality full_Y matrix exposes so generator objects can interact for Norton equivalents",
 			PT_complex_array, "deltamode_full_Y_all_matrix",  PADDR(full_Y_all_matrix),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality full_Y_all matrix exposes so generator objects can interact for Norton equivalents",
+			PT_object, "NR_powerflow_parent",PADDR(SubNodeParent),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"NR powerflow - actual powerflow parent - used by generators accessing child objects",
 
 			PT_complex, "current_inj_A[A]", PADDR(current_inj[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
 			PT_complex, "current_inj_B[A]", PADDR(current_inj[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
@@ -207,6 +208,7 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_double, "previous_uptime[min]", PADDR(previous_uptime),PT_DESCRIPTION,"Previous time between disconnects of node in minutes",
 			PT_double, "current_uptime[min]", PADDR(current_uptime),PT_DESCRIPTION,"Current time since last disconnect of node in minutes",
 			PT_bool, "Norton_dynamic", PADDR(dynamic_norton),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"Flag to indicate a Norton-equivalent connection -- used for generators and deltamode",
+			PT_bool, "Norton_dynamic_child", PADDR(dynamic_norton_child),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"Flag to indicate a Norton-equivalent connection is made by a childed node object -- used for generators and deltamode",
 			PT_bool, "generator_dynamic", PADDR(dynamic_generator),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"Flag to indicate a voltage-sourcing or swing-type generator is present -- used for generators and deltamode",
 
 			PT_bool, "reset_disabled_island_state", PADDR(reset_island_state), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Deltamode/multi-island flag -- used to reset disabled status (and reform an island)",
@@ -335,6 +337,7 @@ int node::create(void)
 	current_accumulated = false;
 	deltamode_inclusive = false;	//Begin assuming we aren't delta-enabled
 	dynamic_norton = false;			//By default, no one needs the Norton equivalent posting
+	dynamic_norton_child = false;	//By default, we're assuming we don't have any descendants doing Norton-equivalents
 	dynamic_generator = false;		//By default, we don't have any generator attached
 	swing_functions_enabled = false;	//By default, this bus isn't behaving as a swing
 
@@ -2173,7 +2176,8 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			ParToLoad->pre_rotated_current[2] += pre_rotated_current[2]-last_child_power[3][2];
 
 			//And the deltamode accumulators too -- if deltamode
-			if (deltamode_inclusive == true)
+			//Only do this if we are a dynamic norton child - otherwise may do extra
+			if ((deltamode_inclusive == true) && (dynamic_norton == true))
 			{
 				//Pull our parent value down -- everything is being pushed up there anyways
 				//Pulling to keep meters accurate (theoretically)
@@ -2263,7 +2267,8 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			ParToLoad->pre_rotated_current[2] += pre_rotated_current[2];
 
 			//And the deltamode accumulators too -- if deltamode
-			if (deltamode_inclusive == true)
+			//Only do this if we are a dynamic norton child - otherwise may do extra
+			if ((deltamode_inclusive == true) && (dynamic_norton == true))
 			{
 				//Pull our parent value down -- everything is being pushed up there anyways
 				//Pulling to keep meters accurate (theoretically)
@@ -2345,7 +2350,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		else	//Initialized, so SWING or child
 		{
 			//Check our status - make sure we're a child
-			if ((SubNode==CHILD) || (SubNode==DIFF_CHILD))
+			if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) != 0)
 			{
 				//Only do admittance allocation if we're a Norton
 				if (dynamic_norton==true)
@@ -4015,7 +4020,8 @@ int node::NR_current_update(bool parentcall)
 			ParToLoad->pre_rotated_current[2] -= last_child_power[3][2];
 
 			//And the deltamode accumulators too -- if deltamode
-			if (deltamode_inclusive == true)
+			//Only do this if we are a dynamic norton child - otherwise may do extra
+			if ((deltamode_inclusive == true) && (dynamic_norton == true))
 			{
 				//Pull our parent value down -- everything is being pushed up there anyways
 				//Pulling to keep meters accurate (theoretically)
@@ -4354,6 +4360,25 @@ int node::NR_current_update(bool parentcall)
 		current_inj[1] += temp_current_inj[1];
 		current_inj[2] += temp_current_inj[2];
 
+		//See if we're delta-enabled and need to accumulate those items
+		//Only do this if we don't have a "greater descendant", since they'll populate it up through current_inj
+		if ((deltamode_inclusive == true) && (dynamic_norton == true) && (dynamic_norton_child == false))
+		{
+			//Injections from generators -- always accumulate (may be zero)
+			current_inj[0] -= deltamode_dynamic_current[0];
+			current_inj[1] -= deltamode_dynamic_current[1];
+			current_inj[2] -= deltamode_dynamic_current[2];
+
+			//See if the shunt exists
+			if (full_Y != NULL)
+			{
+				//This assumes three-phase right now
+				current_inj[0] += full_Y[0]*voltage[0] + full_Y[1]*voltage[1] + full_Y[2]*voltage[2];
+				current_inj[1] += full_Y[3]*voltage[0] + full_Y[4]*voltage[1] + full_Y[5]*voltage[2];
+				current_inj[2] += full_Y[6]*voltage[0] + full_Y[7]*voltage[1] + full_Y[8]*voltage[2];
+			}
+		}
+
 		//If we are a child, apply our current injection directly up to our parent - links accumulate afterwards now because they bypass child relationships
 		if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) != 0)
 		{
@@ -4378,29 +4403,9 @@ int node::NR_current_update(bool parentcall)
 		}
 		//Default else - not a child - no need to propagate
 
-		//See if we're delta-enabled and need to accumulate those items
-		//Note that this is done after the parent/child update due to child deltamode objects mapping "through"
-		//To the parent.  If this was above the previous code, deltamode-related postings get counted twice.
-		if ((deltamode_inclusive == true) && (dynamic_norton == true))
-		{
-			//Injections from generators -- always accumulate (may be zero)
-			current_inj[0] -= deltamode_dynamic_current[0];
-			current_inj[1] -= deltamode_dynamic_current[1];
-			current_inj[2] -= deltamode_dynamic_current[2];
-
-			//See if the shunt exists
-			if (full_Y != NULL)
-			{
-				//This assumes three-phase right now
-				current_inj[0] += full_Y[0]*voltage[0] + full_Y[1]*voltage[1] + full_Y[2]*voltage[2];
-				current_inj[1] += full_Y[3]*voltage[0] + full_Y[4]*voltage[1] + full_Y[5]*voltage[2];
-				current_inj[2] += full_Y[6]*voltage[0] + full_Y[7]*voltage[1] + full_Y[8]*voltage[2];
-			}
-		}
-
 		//Flag us as done
 		current_accumulated = true;
-	}//End current already handled
+	}//End not current already handled
 
 	return 1;	//Always successful
 }
