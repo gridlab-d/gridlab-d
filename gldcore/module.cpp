@@ -250,6 +250,7 @@ s_callbacks::s_callbacks() throw() {
     time.timestamp_to_minutes = timestamp_to_minutes;
     time.timestamp_to_seconds = timestamp_to_seconds;
     time.local_datetime = local_datetime;
+    time.local_datetime_delta = local_datetime_delta;
     time.convert_to_timestamp = convert_to_timestamp;
     time.convert_to_timestamp_delta = convert_to_timestamp_delta;
     time.convert_from_timestamp = convert_from_timestamp;
