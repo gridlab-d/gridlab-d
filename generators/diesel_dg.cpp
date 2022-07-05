@@ -695,6 +695,13 @@ int diesel_dg::init(OBJECT *parent)
 	{
 		if (gl_object_isa(parent,"meter","powerflow") || gl_object_isa(parent,"node","powerflow") || gl_object_isa(parent,"load","powerflow"))
 		{
+			//Check to make sure the parent is initalized - otherwise some things may not exist
+			if ((parent->flags & OF_INIT) != OF_INIT)
+			{
+				gl_verbose("diesel_dg::init(): diesel_dg:%d - %s - deferring initialization on parent node(s)", obj->id,(obj->name?obj->name : "Unnamed"));
+				return 2; // defer
+			}
+
 			//Flag us as a proper child
 			parent_is_powerflow = true;
 
