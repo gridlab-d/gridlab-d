@@ -40,6 +40,7 @@ sec_control::sec_control(MODULE *module)
 
 			//
 			PT_double, "Ts[s]", PADDR(Ts), PT_DESCRIPTION, "Secondary controller sampling period in sec.",
+			PT_double, "Tlp[s]", PADDR(Tlp_default), PT_DESCRIPTION, "Default low pass time constant for participants in sec. Default is 0, meaning no low pass filter.",
 			//
 			PT_double, "alpha_tol", PADDR(alpha_tol), PT_DESCRIPTION, "Tolerance for participation values not summing to exactly one.",
 			//
@@ -54,6 +55,7 @@ sec_control::sec_control(MODULE *module)
 			PT_double, "dxi[MW]", PADDR(curr_state.dxi), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Change in PID integrator output",
 			PT_double, "xi[MW]", PADDR(curr_state.xi), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "PID integrator output",
 			PT_double, "PIDout[MW]", PADDR(curr_state.PIDout), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "PID output",
+			PT_double, "dP[MW]", PADDR(curr_state.dP), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Delta P signal [MW]",
 			NULL) < 1)
 				GL_THROW("unable to publish properties in %s", __FILE__);
 
@@ -98,7 +100,7 @@ int sec_control::create(void)
 	alpha_tol = -1.0; //Note: should actually be > 0
 	dp_dn_default = -1.0;  //Note: should actually be > 0
 	dp_up_default = -1.0; //Note: should actually be > 0
-	Tlp_default = -1.0; //Note: should actually be >= dt which is > 0
+	Tlp_default = -1.0; //Note: should actually be >= dt which is > 0 (or 0 to indicate no low pass filter [default])
 	f0 = -1.0; //Note: should actually be > 0
 	underfrequency_limit = -1.0; //Note: should actually be > 0
 	overfrequency_limit = -1.0; //Note: should actually be > 0
@@ -199,11 +201,12 @@ int sec_control::init(OBJECT *parent)
 	}
 
 
-	//both Tlp_default and Ts are not altered here.
-	//Reason is, that their default value should be dt, which is not known at this point.
-	//Keeping them -1 is an indication for later that they should be adjusted.
+	//Ts is not altered here.
+	//Reason is, that the default value should be dt, which is not known at this point.
+	//Keeping at -1 is an indication for later that they should be adjusted.
 	//Similarly for dp_dn_default and dp_up_default, we'd like to pick those on an object by object basis, e.g. rating
-	init_check(alpha_tol, -1.0, 0.001); 
+	init_check(alpha_tol, -1.0, 0.001);
+	init_check(Tlp_default, -1.0, 0); // zero indicates that it will be ignored
 	init_check(f0, -1.0, 60); 
 	init_check(underfrequency_limit, -1.0, 57.0); 
 	init_check(overfrequency_limit, -1.0, 62.0);
@@ -369,6 +372,7 @@ STATUS sec_control::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 	curr_state.dxi = 0;
 	curr_state.xi = 0;
 	curr_state.PIDout = 0;
+	curr_state.dP = 0;
 
 	// clear next_state structure
 	memcpy(&next_state, &curr_state, sizeof(SEC_CNTRL_STATE));
@@ -400,11 +404,11 @@ void sec_control::participant_tlp_check(SEC_CNTRL_PARTICIPANT *obj)
 	if (curr_dt > 0) // in delta mode therefore deltat is present
 	{	
 		// checks if Tlp was somehow set (could be by setting the Tlp_default value)
-		init_check(obj->Tlp, -1, curr_dt); 
-		if (obj->Tlp < curr_dt) // Specified but is too small
+		init_check(obj->Tlp, -1, 0); 
+		if ((obj->Tlp < curr_dt) && (obj->Tlp != 0))// Specified but is too small or 0 (i.e. ignore)
 		{
-			gl_warning("sec_control: participant %s: Tlp = %0.5f < dt = %0.5f. Setting Tlp = dt", obj->ptr->name, obj->Tlp, curr_dt);
-			obj->Tlp = curr_dt;
+			gl_warning("sec_control: participant %s: Tlp = %0.5f < dt = %0.5f. Setting Tlp = 0 (i.e. ignore)", obj->ptr->name, obj->Tlp, curr_dt);
+			obj->Tlp = 0;
 		}
 	}
 }
@@ -510,17 +514,35 @@ SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigne
 		
 		if (sampleflag && deadbandflag)
 		{
-			//iterate over participating objects
-			for (auto & obj : part_obj){
-				// update change for each participant based on participation factor alpha and low pass filter.
-				obj.ddP[0] = (obj.alpha*next_state.PIDout - obj.dP[0])/obj.Tlp;
-				obj.dP[1] = obj.dP[0] + deltat*obj.ddP[0];
-				
-				//***************code to update object setpoints********************
-				// on the predictor pass we just want to update with the calculated value dP[1]
-				update_pdisp(obj, obj.dP[1]);
-				
+			next_state.dP = next_state.PIDout;
+		}
+		else
+		{
+			next_state.dP = curr_state.dP;
+		}
+		//iterate over participating objects
+		for (auto & obj : part_obj){
+			// update change for each participant based on participation factor alpha and low pass filter.
+			if (obj.Tlp == 0)
+			{
+				// no low pass filter, just pass the fraction of change if sampling, else 0
+				obj.dP[1] = (sampleflag && deadbandflag) ? obj.dP[0] + obj.alpha*next_state.dP : 0;
+				obj.dP[3] = 0; // since no Low pass filter, there is no memory and no need for this t-1 value
 			}
+			else
+			{
+				obj.ddP[0] = (obj.alpha*next_state.dP - obj.dP[0])/obj.Tlp;
+				obj.dP[1] = obj.dP[0] + deltat*obj.ddP[0];
+				// zero when sampling, otherwise store previous timestep
+				obj.dP[3] = (sampleflag && deadbandflag) ? 0 : obj.dP[0];
+			}
+			
+			
+			//***************code to update object setpoints********************
+			// on the predictor pass we just want to update with the calculated value dP[1] if we are sampling.
+			// If we are *between* sampling instances we want to pass the incremental change from the previous step.
+			update_pdisp(obj, obj.dP[1] - obj.dP[3]);
+			
 		}
 		simmode_return_value = SM_DELTA_ITER;  //call iteration to get to corrector pass
 	}
@@ -559,20 +581,34 @@ SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigne
 		
 		if (sampleflag && deadbandflag)
 		{
-			//iterate over participating objects
-			for (auto & obj : part_obj){
-				// update change for ieach participant based on participation factor alpha and low pass filter.
-				obj.ddP[1] = 1/obj.Tlp*(obj.alpha*next_state.PIDout - obj.dP[1]);
+			next_state.dP = next_state.PIDout;
+		}
+		else
+		{
+			next_state.dP = curr_state.dP;
+		}
+		//iterate over participating objects
+		for (auto & obj : part_obj){
+			// update change for ieach participant based on participation factor alpha and low pass filter.
+			if (obj.Tlp == 0)
+			{
+				// no low pass filter, just pass the fraction of change
+				obj.dP[0] = (sampleflag && deadbandflag) ? obj.alpha*next_state.dP : 0;
+			}
+			else
+			{
+				obj.ddP[1] = (obj.alpha*next_state.dP - obj.dP[1])/obj.Tlp;
 				obj.dP[0] += deltath*(obj.ddP[0] + obj.ddP[1]);
-				
-				//***************code to update object setpoints********************
-				// The actuall delta we want to pass is obj.dP[0] - obj.dP[1]
-				// since obj.dP[1] was already passed in the predictor iteration
-				// Since various limits can affect the passed value and what is actually set,
-				// what we *really* want is obj.dP[0] - obj.dP[2], where obj.dP[2] stores the final
-				// set value via the call to update_pdisp.
-				update_pdisp(obj, obj.dP[0] - obj.dP[2]);
-				}
+			}
+			
+			
+			//***************code to update object setpoints********************
+			// The actuall delta we want to pass is obj.dP[0] - obj.dP[1]
+			// since obj.dP[1] was already passed in the predictor iteration
+			// Since various limits can affect the passed value and what is actually set,
+			// what we *really* want is obj.dP[0] - obj.dP[2], where obj.dP[2] stores the final
+			// set value via the call to update_pdisp.
+			update_pdisp(obj, obj.dP[0] - obj.dP[2] - obj.dP[3]);
 		}
 
 		// Determine desired simulation mode in next timestep
@@ -986,7 +1022,7 @@ void sec_control::add_obj(std::vector<std::string> &vals)
 	// unless a default rate is given, the default is the whole range, i.e. pmax-pmin
 	tmp.dp_dn = (dp_dn_default < 0) ? ((tmp.pmax - tmp.pmin)*tmp.rate) : dp_dn_default;
 	tmp.dp_up = (dp_up_default < 0) ? ((tmp.pmax - tmp.pmin)*tmp.rate) : dp_up_default;
-	tmp.Tlp = Tlp_default; // set default (might be negative if not set but is handled later in check)
+	tmp.Tlp = Tlp_default; // set default (might be 0 if not set)
 
     // optional
     //now check inputs

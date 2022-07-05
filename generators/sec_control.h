@@ -23,6 +23,7 @@ typedef struct{
 	double dxi; //change of PID integrator output
 	double xi; //ouput of PID integrator
 	double PIDout; //PID controller output
+	double dP; //total change in MW (PIDout when sampling, or older value otherwise)
 } SEC_CNTRL_STATE;
 
 // Datastructure of participants in secondary control
@@ -38,7 +39,7 @@ typedef struct{
 	double dp_dn; //maximum allowable change to setpoint in MW - downward direction (shouid still be positive)
 	double dp_up; //maximum allowable change to setpoint in MW - upward direction
 	double Tlp; //Low pass time filter time constant in sec.
-	double dP[3]; //Change in stepoint [corrector, predictor, actual value set]
+	double dP[4]; //Change in stepoint [corrector, predictor, actual value set predictor, t-1]
 	double ddP[2]; //Change in stepoint derivative [predictor, corrector]
 } SEC_CNTRL_PARTICIPANT;
 
