@@ -169,6 +169,7 @@ inverter_dyn::inverter_dyn(MODULE *module)
 			PT_double, "rampDownRate_real", PADDR(rampDownRate_real), PT_DESCRIPTION, "DELTAMODE: ramp rate for grid-following frequency-watt",
 			PT_double, "rampUpRate_reactive", PADDR(rampUpRate_reactive), PT_DESCRIPTION, "DELTAMODE: ramp rate for grid-following volt-var",
 			PT_double, "rampDownRate_reactive", PADDR(rampDownRate_reactive), PT_DESCRIPTION, "DELTAMODE: ramp rate for grid-following volt-var",
+			PT_double, "Pref_droop_pu", PADDR(Pref_droop_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: power reference in frequency-watt",
 
 			PT_double, "frequency_convergence_criterion[rad/s]", PADDR(GridForming_freq_convergence_criterion), PT_DESCRIPTION, "Max frequency update for grid-forming inverters to return to QSTS",
 			PT_double, "voltage_convergence_criterion[V]", PADDR(GridForming_volt_convergence_criterion), PT_DESCRIPTION, "Max voltage update for grid-forming inverters to return to QSTS",
@@ -207,7 +208,7 @@ inverter_dyn::inverter_dyn(MODULE *module)
 			PT_double, "kiqmax", PADDR(kiqmax), PT_DESCRIPTION, "DELTAMODE: proportional and integral gains for Qmax controller.",
 			PT_double, "Qmax[pu]", PADDR(Qmax), PT_DESCRIPTION, "DELTAMODE: maximum limit and minimum limit of Qmax controller and Qmin controller.",
 			PT_double, "Qmin[pu]", PADDR(Qmin), PT_DESCRIPTION, "DELTAMODE: maximum limit and minimum limit of Qmax controller and Qmin controller.",
-
+			PT_double, "delta_w_droop[pu]", PADDR(delta_w_droop), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: delta omega fro p-f droop",
 
 			PT_double, "Vdc_pu[pu]", PADDR(curr_state.Vdc_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: dc bus voltage of PV panel when using grid-forming PV Inverter",
 			PT_double, "Vdc_min_pu[pu]", PADDR(Vdc_min_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: The reference voltage of the Vdc_min controller",
