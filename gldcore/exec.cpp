@@ -3246,9 +3246,7 @@ static int update_exports()
 		char value[1024];
 		if ( global_getvar(name,value,sizeof(value)) )
 		{
-			char env[2048];
-			sprintf(env,"%s=%s",name,value);
-			if ( putenv(env)!=0 )
+            if (setenv(name, value, 1) != 0)
 				output_warning("unable to update script export '%s' with value '%s'", name, value);
 		}
 	}
@@ -3277,10 +3275,10 @@ static EXITCODE run_scripts(SIMPLELIST *list)
 	for ( item=list ; item!=NULL ; item=item->next )
 	{
 		EXITCODE rc = system(item->data);
-		if ( rc!=XC_SUCCESS )
+        if (rc == -1 || WEXITSTATUS(rc) != XC_SUCCESS)
 		{
-			output_error("script '%s' return with exit code %d", item->data,rc);
-			return rc;
+			output_error("script '%s' return with exit code %d", item->data,WEXITSTATUS(rc));
+			return WEXITSTATUS(rc);
 		}
 		else
 			output_verbose("script '%s'' returned ok", item->data);
