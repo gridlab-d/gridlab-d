@@ -531,6 +531,7 @@ SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigne
 			}
 			else
 			{
+				obj.dP[0] *= !(sampleflag && deadbandflag); //zero on sample instances
 				obj.ddP[0] = (obj.alpha*next_state.dP - obj.dP[0])/obj.Tlp;
 				obj.dP[1] = obj.dP[0] + deltat*obj.ddP[0];
 				// zero when sampling, otherwise store previous timestep
