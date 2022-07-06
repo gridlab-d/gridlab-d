@@ -12,10 +12,11 @@
  @{
  **/
 
-#include <string.h>
-#include <stdio.h>
-#include <errno.h>
-#include <time.h>
+#include <cerrno>
+#include <cstdio>
+#include <cstring>
+#include <ctime>
+
 #include "class.h"
 #include "object.h"
 #include "output.h"

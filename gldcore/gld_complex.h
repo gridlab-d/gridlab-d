@@ -24,6 +24,7 @@ typedef enum {I='i',J='j',A='d', R='r'} CNOTATION; /**< complex number notation 
 #define GLD_E 2.71828182845905
 
 #include <math.h>
+
 #include "platform.h"
 
 /* only cpp code may actually do complex math */

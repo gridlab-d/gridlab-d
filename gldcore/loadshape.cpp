@@ -27,9 +27,9 @@
 
 **/
 
-#include <stdlib.h>
-#include <stdarg.h>
-#include <ctype.h>
+#include <cctype>
+#include <cstdarg>
+#include <cstdlib>
 #include <pthread.h>
 
 #include "platform.h"

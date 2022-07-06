@@ -74,12 +74,12 @@
  @{
  **/
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <errno.h>
-#include <ctype.h>
-#include <math.h>
+#include <cctype>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <cwctype>
 
 #include "platform.h"

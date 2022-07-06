@@ -9,8 +9,8 @@
 
 //#define USE_MPI
 
-#include <stdlib.h>
-#include <string.h>
+#include <cstdlib>
+#include <cstring>
 #ifdef _WIN32
 #include <direct.h>
 #include <process.h>

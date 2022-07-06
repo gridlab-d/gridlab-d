@@ -2,9 +2,10 @@
  * Copyright (C) 2008 Battelle Memorial Institute
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
 #include "output.h"
 #include "local.h"
 

@@ -1,4 +1,5 @@
 #include "collect.h"
+
 #include <algorithm>
 #include <stdexcept>
 

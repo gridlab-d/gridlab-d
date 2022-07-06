@@ -10,6 +10,7 @@
 #define _energy_storage_H
 
 #include <stdarg.h>
+
 #include "generators.h"
 
 class energy_storage : public gld_object

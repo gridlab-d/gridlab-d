@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <float.h>
+
 #include "object.h"
 #include "gui.h"
 #include "transform.h"

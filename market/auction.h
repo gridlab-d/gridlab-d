@@ -11,6 +11,7 @@
 #define _auction_H
 
 #include <stdarg.h>
+
 #include "gridlabd.h"
 #include "market.h"
 #include "bid.h"

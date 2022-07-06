@@ -3,7 +3,8 @@
 /// @ingroup connection
 /// Native class implementation
 
-#include <stdlib.h>
+#include <cstdlib>
+
 #include "native.h"
 
 EXPORT_CREATE(native);

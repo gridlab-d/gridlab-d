@@ -8,9 +8,9 @@
 
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
+#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
 
 #include "gridlabd.h"
 #include "supervisory_control.h"

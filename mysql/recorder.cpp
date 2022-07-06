@@ -7,6 +7,7 @@
 #ifdef HAVE_MYSQL
 
 #include <time.h>
+
 #include "database.h"
 #include "query_engine.h"
 

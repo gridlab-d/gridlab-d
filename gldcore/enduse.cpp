@@ -4,10 +4,10 @@
 	@addtogroup loadshape
 **/
 
-#include <stdlib.h>
-#include <stdarg.h>
-#include <ctype.h>
-#include <math.h>
+#include <cctype>
+#include <cmath>
+#include <cstdarg>
+#include <cstdlib>
 #include <pthread.h>
 
 #include "platform.h"

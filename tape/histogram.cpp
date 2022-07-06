@@ -7,11 +7,11 @@
 	
 	@{
 */
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
-#include <float.h>
+#include <cerrno>
+#include <cfloat>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "histogram.h"
 

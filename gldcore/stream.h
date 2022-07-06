@@ -6,6 +6,7 @@
 #define _STREAM_H
 
 #include <stdio.h>
+
 #include "platform.h"
 #include "class.h"
 #include "object.h"

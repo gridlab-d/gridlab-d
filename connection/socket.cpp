@@ -1,7 +1,8 @@
 // $Id$
 
-#include <stdlib.h>
-#include <stdio.h>
+#include <cstdio>
+#include <cstdlib>
+
 #include "gridlabd.h"
 #include "socket.h"
 

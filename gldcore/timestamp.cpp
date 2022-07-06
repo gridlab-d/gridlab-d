@@ -22,13 +22,14 @@
  @{
  **/
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <math.h>
-#include <time.h>
-#include <ctype.h>
+#include <cctype>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
 #include <cwctype>
+
 #include "platform.h"
 #include "timestamp.h"
 #include "exception.h"

@@ -10,9 +10,10 @@
  @{
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+
 #include "version.h"
 #include "output.h"
 #include "globals.h"

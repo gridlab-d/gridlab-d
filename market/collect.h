@@ -1,4 +1,5 @@
 #include "gridlabd.h"
+
 #include <stdexcept>
 
 #ifndef _collect_h_

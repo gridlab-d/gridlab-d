@@ -10,11 +10,12 @@
 
 
 #include <stdarg.h>
-#include "generators.h"
-
 #include <vector>
 #include <string>
 #include <iostream>
+
+#include "generators.h"
+
 
 EXPORT STATUS windturb_dg_NR_current_injection_update(OBJECT *obj, int64 iteration_count);
 

@@ -8,9 +8,9 @@
  @{
  **/
 
-#include <stdlib.h>
-#include <ctype.h>
-#include <stdio.h>
+#include <cctype>
+#include <cstdio>
+#include <cstdlib>
 #if defined(_WIN32) && !defined(__MINGW__)
 #include <io.h>
 #	define snprintf _snprintf

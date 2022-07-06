@@ -15,7 +15,8 @@
 #include "globals.h"
 #include "exception.h"
 #include "config.h"
-#include <stdio.h>
+
+#include <cstdio>
 
 //#define LOCKTRACE // enable this to trace locking events back to variables
 #define MAXSPIN 1000000000

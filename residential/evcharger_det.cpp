@@ -2,10 +2,11 @@
 	Copyright (C) 2019 Battelle Memorial Institute
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+
 #include "evcharger_det.h"
 
 //////////////////////////////////////////////////////////////////////////

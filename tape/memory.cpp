@@ -2,11 +2,11 @@
  *	Copyright (C) 2008 Battelle Memorial Institute
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <ctype.h>
-#include <time.h>
+#include <cctype>
+#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
 
 #include "gridlabd.h"
 #include "tape.h"

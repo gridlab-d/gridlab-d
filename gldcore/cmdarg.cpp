@@ -11,8 +11,8 @@
  @{
  **/
 
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstring>
 #if defined(_WIN32) && !defined(__MINGW__)
 #include <direct.h>
 #else

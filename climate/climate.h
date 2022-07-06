@@ -10,11 +10,13 @@
 #define _CLIMATE_H
 
 #include <stdarg.h>
+#include <vector>
+
 #include "gridlabd.h"
 #include "solar_angles.h"
 #include "weather_reader.h"
 #include "csv_reader.h"
-#include <vector>
+
 
 typedef enum{
 	CP_H    = 0,

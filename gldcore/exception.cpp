@@ -52,7 +52,8 @@
  @{
  **/
 
-#include <string.h>
+#include <cstring>
+
 #include "exec.h"
 #include "exception.h"
 #include "output.h"

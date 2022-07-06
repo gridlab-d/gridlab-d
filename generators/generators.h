@@ -2,6 +2,7 @@
 #define _generators_H
 
 #include <stdarg.h>
+
 #include "gridlabd.h"
 
 #ifdef _GENERATORS_GLOBALS

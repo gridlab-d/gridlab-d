@@ -21,10 +21,11 @@
  @{
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <ctype.h>
+#include <cctype>
+#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
+
 #include "gridlabd.h"
 #include "object.h"
 #include "aggregate.h"

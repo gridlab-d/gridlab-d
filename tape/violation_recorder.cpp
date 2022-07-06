@@ -1,5 +1,6 @@
 //Extra include - lets the odd "new" constructor call be used, without having to do it kludgy-manual way
 #include <iostream>
+
 #include "violation_recorder.h"
 
 CLASS *violation_recorder::oclass = NULL;

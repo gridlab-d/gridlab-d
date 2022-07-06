@@ -12,11 +12,11 @@
 @{
 **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <ctype.h>
-#include <time.h>
+#include <cctype>
+#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
 
 #include "gridlabd.h"
 #include "../tape/tape.h"

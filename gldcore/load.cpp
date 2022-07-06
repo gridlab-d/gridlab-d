@@ -134,15 +134,16 @@ object <class>[:<spec>] { // spec may be <id>, or <startid>..<endid>, or ..<coun
 #define DLEXT ".dll"
 #endif // HAVE_CONFIG_H
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-#include <float.h>
-#include <errno.h>
-#include <sys/types.h>
+#include <cctype>
+#include <cerrno>
+#include <cfloat>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <sys/stat.h>
-#include <math.h>
+#include <sys/types.h>
+
 #include "stream.h"
 #include "http_client.h"
 #include "link.h"
@@ -6267,7 +6268,7 @@ int is_autodef(char *value)
 
 /* started processes */
 #include "threadpool.h"
-#include "signal.h"
+#include <csignal>
 struct s_threadlist {
 	pthread_t *data;
 	struct s_threadlist *next;

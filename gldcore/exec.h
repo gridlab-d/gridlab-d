@@ -11,11 +11,12 @@
 #define _EXEC_H
 
 #include <setjmp.h>
+#include <map>
+#include <thread>
+
 #include "globals.h"
 #include "index.h"
 #include "cpp_threadpool.h"
-#include <map>
-#include <thread>
 
 struct sync_data {
 	TIMESTAMP step_to; /**< time to advance to */

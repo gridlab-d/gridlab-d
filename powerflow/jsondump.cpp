@@ -2,11 +2,11 @@
 /**	Copyright (C) 2017 Battelle Memorial Institute
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
-#include <string.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 #include <iostream>
 #include <fstream>

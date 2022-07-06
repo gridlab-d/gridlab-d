@@ -1,4 +1,5 @@
 #include "group_recorder.h"
+
 #include <sstream>
 
 CLASS *group_recorder::oclass = NULL;

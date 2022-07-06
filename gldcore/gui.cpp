@@ -7,7 +7,8 @@
  *
  */
 
-#include <stdlib.h>
+#include <cstdlib>
+
 #include "gld_complex.h"
 #include "object.h"
 #include "load.h"

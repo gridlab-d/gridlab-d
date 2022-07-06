@@ -7,6 +7,7 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
+#include <iostream>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -14,7 +15,6 @@
 #include "platform.h"
 #include "gld_complex.h"
 #include "unit.h"
-#include <iostream>
 
 // also in object.h
 typedef struct s_class_list CLASS;

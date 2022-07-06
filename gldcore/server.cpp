@@ -2,8 +2,8 @@
  * server.c
  */
 
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstdio>
+#include <cstdlib>
 
 #ifdef _WIN32
 
@@ -22,9 +22,9 @@
 
 #endif
 
-#include <memory.h>
+#include <cerrno>
 #include <cstring>
-#include <errno.h>
+#include <memory.h>
 #include <pthread.h>
 #include <unistd.h>
 

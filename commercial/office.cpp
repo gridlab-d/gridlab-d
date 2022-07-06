@@ -65,11 +65,12 @@
 
  @{
  **/
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
-#include <ctype.h>
+#include <cctype>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+
 #include "gridlabd.h"
 #include "solvers.h"
 #include "office.h"

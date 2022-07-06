@@ -3,9 +3,10 @@
  * Top level save routine.  Dispatches saves to subcomponents.  Format of save must be compatible with load module.
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
 #include "platform.h"
 #include "output.h"
 #include "stream.h"

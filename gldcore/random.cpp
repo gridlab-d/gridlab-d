@@ -13,14 +13,14 @@
  @{
  **/
 
-#include <stdlib.h>
-#include <math.h>
-#include <errno.h>
-#include <string.h>
-#include <stdarg.h>
-#include <time.h>
-#include <float.h>
-#include <ctype.h>
+#include <cctype>
+#include <cerrno>
+#include <cfloat>
+#include <cmath>
+#include <cstdarg>
+#include <cstdlib>
+#include <cstring>
+#include <ctime>
 #include <sys/time.h>
 
 #include "gldrandom.h"

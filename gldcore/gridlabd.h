@@ -87,7 +87,8 @@
 #define EXPORT CDECL
 #endif
 
-#include <stdarg.h>
+#include <cstdarg>
+
 #include "platform.h"
 #include "schedule.h"
 #include "transform.h"
@@ -1323,6 +1324,7 @@ static unsigned long _nan[] = { 0xffffffff, 0x7fffffff, };
  **************************************************************************************/
 #include <ctype.h>
 #include <stdio.h>
+
 #include "module.h"
 #include "class.h"
 #include "property.h"

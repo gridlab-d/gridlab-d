@@ -7,6 +7,7 @@
 #include "../powerflow/transformer_configuration.h"
 #include "../powerflow/transformer.h"
 #include "../powerflow/line.h"
+
 #include <new>
 
 EXPORT void new_violation_recorder(MODULE *);

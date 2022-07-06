@@ -10,6 +10,7 @@
 #define _diesel_dg_H
 
 #include <stdarg.h>
+
 #include "generators.h"
 
 EXPORT int isa_diesel_dg(OBJECT *obj, char *classname);

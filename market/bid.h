@@ -1,4 +1,5 @@
 #include <stdarg.h>
+
 #include "gridlabd.h"
 #include "market.h"
 #include "auction.h"

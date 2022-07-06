@@ -1,14 +1,15 @@
 /* $Id: http_client.c 4738 2014-07-03 00:55:39Z dchassin $
  */
 
-#include <stdio.h>
 #include <cctype>
+#include <cstdio>
 
 
 #include "output.h"
 #include "http_client.h"
 #include "server.h"
-#include <ctype.h>
+
+#include <cctype>
 
 
 HTTP* hopen(const char *url, int maxlen)

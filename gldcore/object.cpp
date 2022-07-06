@@ -27,10 +27,10 @@
 //#pragma GCC push_options
 //#pragma GCC optimize ("O0")
 
-#include <float.h>
-#include <math.h>
-#include <ctype.h>
-#include <errno.h>
+#include <cctype>
+#include <cerrno>
+#include <cfloat>
+#include <cmath>
 
 #ifdef _WIN32
 #define isnan _isnan  /* map isnan to appropriate function under Windows */

@@ -11,10 +11,11 @@
  @{
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+
 #include "residential.h"
 #include "house_e.h"
 #include "thermal_storage.h"

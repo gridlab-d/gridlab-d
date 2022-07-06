@@ -3,7 +3,7 @@
  * Integrated system testing routines.  Start is called before executive runs, end after executive exits.
  */
 
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "globals.h"
 #include "cmdarg.h"

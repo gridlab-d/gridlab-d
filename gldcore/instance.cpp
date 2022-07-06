@@ -2,8 +2,8 @@
    Copyright (C) 2011, Battelle Memorial Institute
  */
 
-#include <math.h>
-#include <stdlib.h>
+#include <cmath>
+#include <cstdlib>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"

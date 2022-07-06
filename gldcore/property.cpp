@@ -10,7 +10,7 @@
  @{
  **/
 
-#include <math.h>
+#include <cmath>
 
 #include "class.h"
 #include "output.h"

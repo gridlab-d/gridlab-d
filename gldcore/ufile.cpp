@@ -2,9 +2,10 @@
  * Copyright (C) 2012 Battelle Memorial Institute
  */
 
-#include <stdio.h>
-#include <cstring>
+#include <cstdio>
 #include <cstdlib>
+#include <cstring>
+
 #include "http_client.h"
 #include "ufile.h"
 

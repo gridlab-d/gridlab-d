@@ -1,7 +1,7 @@
 // $Id: engine.cpp
 // Copyright (C) 2012 Battelle Memorial Institute
 
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "engine.h"
 

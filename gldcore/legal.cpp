@@ -168,8 +168,8 @@ STATUS legal_license(void)
  notice is displayed.
 
  **************************************************************************************/
+#include <cctype>
 #include <pthread.h>
-#include <ctype.h>
 
 #include "http_client.h"
 

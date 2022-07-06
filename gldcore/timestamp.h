@@ -10,6 +10,7 @@
 #define _TIMESTAMP_H
 
 #include "platform.h"
+
 #include <time.h>
 #include <climits>
 

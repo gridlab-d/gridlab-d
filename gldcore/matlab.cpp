@@ -12,7 +12,7 @@
  @{
  **/
 
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "globals.h"
 #include "output.h"

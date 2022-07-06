@@ -208,10 +208,10 @@
  @{ strsignal
  **/
 
-#include <signal.h>
-#include <ctype.h>
-#include <cstring>
 #include <algorithm>
+#include <cctype>
+#include <csignal>
+#include <cstring>
 
 #include "platform.h"
 #include "output.h"

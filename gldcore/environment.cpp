@@ -12,10 +12,10 @@
  @{
  **/
 
-#include <stdlib.h>
-#include <string.h>
+#include <csignal>
+#include <cstdlib>
+#include <cstring>
 #include <sys/types.h>
-#include <signal.h>
 
 #include "environment.h"
 #include "exec.h"

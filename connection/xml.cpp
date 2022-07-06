@@ -4,7 +4,8 @@
 
  **/
 
-#include <stdlib.h>
+#include <cstdlib>
+
 #include "xml.h"
 
 EXPORT_CREATE(xml);

@@ -12,6 +12,7 @@
 #include <string.h>
 #include <vector>
 #include <json/json.h>
+
 #include "gridlabd.h"
 #include "reliability.h"
 

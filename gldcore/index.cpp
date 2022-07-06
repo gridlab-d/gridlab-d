@@ -8,10 +8,11 @@
  @{
  **/
 
-#include <stdlib.h>
+#include <cerrno>
+#include <cstdlib>
+#include <cstring>
 #include <memory.h>
-#include <string.h>
-#include <errno.h>
+
 #include "output.h"
 #include "index.h"
 

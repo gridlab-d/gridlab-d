@@ -22,13 +22,14 @@
  @{
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
+#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <iostream>
+
 #include "eventgen.h"
 
-#include <string.h>
-#include <iostream>
 using namespace::std;
 
 EXPORT_PRECOMMIT(eventgen);

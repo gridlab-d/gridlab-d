@@ -10,6 +10,7 @@
 #define _MARKET_DOUBLE_CONTROLLER
 
 #include <stdarg.h>
+
 #include "auction.h"
 #include "gridlabd.h"
 

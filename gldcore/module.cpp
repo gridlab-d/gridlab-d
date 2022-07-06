@@ -28,7 +28,7 @@
 #include <unistd.h>
 #include <dirent.h>
 #endif
-#include <math.h>
+#include <cmath>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -67,7 +67,8 @@
 #include <sched.h>
 #endif
 
-#include <errno.h>
+#include <cerrno>
+
 #include "platform.h"
 #include "globals.h"
 #include "output.h"
@@ -1698,7 +1699,7 @@ void module_profiles(void)
 #include "signal.h"
 extern int kill(pid_t,int); /* defined in kill.c */
 #else
-#include <signal.h>
+#include <csignal>
 #ifdef MACOSX
 #include <mach/mach_init.h>
 #include <mach/thread_policy.h>

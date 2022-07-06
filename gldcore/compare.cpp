@@ -1,7 +1,8 @@
 /** $Id
  **/
 
-#include <math.h>
+#include <cmath>
+
 #include "timestamp.h"
 #include "property.h"
 #include "object.h"

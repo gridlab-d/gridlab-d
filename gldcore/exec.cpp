@@ -84,24 +84,28 @@
  @{
  **/
 
-#include <signal.h>
-#include <ctype.h>
-#include <string.h>
+#include <cctype>
+#include <csignal>
+#include <cstring>
 #include <sys/timeb.h>
+#include <memory>
 #include <thread>
 #ifdef _WIN32
 #include <winsock2.h>
 #include <winbase.h>
-
 #else
 #include <unistd.h>
 #include <sys/types.h>
-#include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#include <sys/errno.h>
+#include <cerrno>
 #include <list>
+#include <cmath>
+#include <chrono>
+#include <ratio>
+
+#include <sys/time.h>
 
 #define SOCKET int
 #define INVALID_SOCKET (-1)
@@ -127,8 +131,6 @@
 #include "loadshape.h"
 #include "enduse.h"
 #include "globals.h"
-#include "math.h"
-#include "time.h"
 #include "lock.h"
 #include "deltamode.h"
 #include "stream.h"

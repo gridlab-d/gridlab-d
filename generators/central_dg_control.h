@@ -10,6 +10,7 @@
 #define _central_dg_control_H
 
 #include <stdarg.h>
+
 #include "generators.h"
 
 EXPORT STATUS postupdate_central_dg_control(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass);

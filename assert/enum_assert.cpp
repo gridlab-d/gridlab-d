@@ -5,12 +5,12 @@
    the commit function and breaks the simulator out with a failure code.
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <gld_complex.h>
-#include <string.h>
 
 #include "enum_assert.h"
 

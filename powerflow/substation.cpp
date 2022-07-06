@@ -16,10 +16,10 @@
 	@{
  **/
 //Built from meter object
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #include <exception>
 #include <stdexcept>
 

@@ -7,13 +7,13 @@
 
 #include "metrics_collector.h"
 
-#include <iostream>
-#include <fstream>
-#include <string.h>
 #include <algorithm>
+#include <cassert>
 #include <cmath>
+#include <cstring>
+#include <fstream>
+#include <iostream>
 #include <vector>
-#include <assert.h>
 
 CLASS *metrics_collector::oclass = NULL;
 CLASS *metrics_collector::pclass = NULL;

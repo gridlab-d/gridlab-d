@@ -5,10 +5,10 @@
    a failure code.
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #include <gld_complex.h>
 
 #include "double_assert.h"

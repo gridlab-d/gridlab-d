@@ -11,6 +11,7 @@
 #define _CONNECTION_H
 
 #include <stdarg.h>
+
 #include "gridlabd.h"
 #include "cache.h"
 #include "transport.h"

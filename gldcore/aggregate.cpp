@@ -28,8 +28,9 @@
  @{
  **/
 
-#include <ctype.h>
-#include <math.h>
+#include <cctype>
+#include <cmath>
+
 #include "platform.h"
 #include "aggregate.h"
 #include "output.h"

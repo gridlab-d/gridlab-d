@@ -15,12 +15,12 @@
 #include <sys/types.h>
 #endif
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
+#include <cerrno>
+#include <csignal>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <sys/stat.h>
-#include <signal.h>
 
 #include "globals.h"
 #include "output.h"

@@ -11,9 +11,10 @@
 @{
  **/
 
-#include <stdio.h>
-#include <math.h>
-#include <ctype.h>
+#include <cctype>
+#include <cmath>
+#include <cstdio>
+
 #include "output.h"
 #include "globals.h"
 #include "convert.h"
@@ -21,7 +22,7 @@
 #include "load.h"
 
 #ifdef HAVE_STDINT_H
-#include <stdint.h>
+#include <cstdint>
 typedef uint32_t  uint32;   /* unsigned 32-bit integers */
 #else
 typedef unsigned int uint32;

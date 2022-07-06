@@ -7,8 +7,9 @@
 	Manage lists of objects in the rank indexes.
  @{
  **/
-#include <stdlib.h>
-#include <errno.h>
+#include <cerrno>
+#include <cstdlib>
+
 #include "list.h"
 
 /** Create a list item and attach it to a list

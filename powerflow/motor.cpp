@@ -1,10 +1,10 @@
 // $Id: motor.cpp 1182 2016-08-15 jhansen $
 //	Copyright (C) 2008 Battelle Memorial Institute
 
-#include <stdlib.h>	
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>	
 
 #include <iostream>
 

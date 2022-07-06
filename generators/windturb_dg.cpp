@@ -5,10 +5,10 @@ Copyright (C) 2008 Battelle Memorial Institute
 @ingroup generators
 **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #include <gld_complex.h>
 
 #include <iostream>

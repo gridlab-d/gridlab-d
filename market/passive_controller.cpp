@@ -17,7 +17,7 @@ CLASS *passive_controller::oclass = NULL;
 *   written: 29-Jan-04
 ***************************/
 
-#include <math.h>
+#include <cmath>
 
 
 static const double rel_error= 1E-14;        //calculate 12^N^N 14 significant figures

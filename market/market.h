@@ -5,6 +5,7 @@
 #define _market_H
 
 #include <stdarg.h>
+
 #include "gridlabd.h"
 
 typedef enum {

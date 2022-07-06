@@ -61,10 +61,11 @@
 #include <Eigen/SparseLU>
 #include <Eigen/Eigen>
 #include <Eigen/Sparse>
-#include "solver_EIGEN.h"
 #include <Eigen/SuperLUSupport>
 #include <iostream>
 #include <math.h>
+
+#include "solver_EIGEN.h"
 
 using namespace Eigen;
 

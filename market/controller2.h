@@ -10,6 +10,7 @@
 #define _controller2_H
 
 #include <stdarg.h>
+
 #include "auction.h"
 #include "gridlabd.h"
 

@@ -30,11 +30,12 @@
 	@{
  **/
 
-#include <stdlib.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include <errno.h>
-#include <string.h>
+#include <cerrno>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+
 #include "output.h"
 #include "globals.h"
 #include "exception.h"

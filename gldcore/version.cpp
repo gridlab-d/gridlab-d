@@ -5,8 +5,9 @@
 #define _VERSION_C // flag special consideration for this file
 
 #include "version.h"
-#include <time.h>
-#include <stdio.h>
+
+#include <cstdio>
+#include <ctime>
 
 #include "build.h" // BRANCH will be defined automatically from the ticket
 

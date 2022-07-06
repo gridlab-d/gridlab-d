@@ -14,9 +14,9 @@
 
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
+#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
 
 #include "office.h"
 #include "multizone.h"
