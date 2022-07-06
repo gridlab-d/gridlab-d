@@ -10,7 +10,7 @@
 #include <math.h>
 #include <gld_complex.h>
 
-#include "assert.h"
+#include "gld_assert.h"
 
 EXPORT_CREATE_C(assert,g_assert);
 EXPORT_INIT_C(assert,g_assert);

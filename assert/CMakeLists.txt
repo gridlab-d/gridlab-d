@@ -1,8 +1,8 @@
 project(assert)
 
 add_library(${PROJECT_NAME}
-        assert.cpp
-        assert.h
+        gld_assert.cpp
+        gld_assert.h
         complex_assert.cpp
         complex_assert.h
         double_assert.cpp

@@ -8,7 +8,7 @@
 #include <math.h>
 #include "gridlabd.h"
 
-#include "assert.h"
+#include "gld_assert.h"
 #include "double_assert.h"
 #include "complex_assert.h"
 #include "enum_assert.h"
