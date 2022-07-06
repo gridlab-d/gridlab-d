@@ -3189,26 +3189,36 @@ void load::load_update_fxn(void)
 				chrcloadstore[index_var] = complex(0.0,0.0);
 			}//End something else term update
 
-			//See if we're a parented load or not, to make sure we update right
-			if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+			//FPI already dumps straight ot full_Y_load, so let it handle that
+			if (NR_solver_algorithm == NRM_TCIM)
 			{
-				//Add this into the main admittance matrix (handled directly)
-				NR_busdata[NR_node_reference].full_Y_load[(index_var*3+index_var)] += shunt[index_var]-prev_shunt[index_var];
+				//See if we're a parented load or not, to make sure we update right
+				if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+				{
+					//Add this into the main admittance matrix (handled directly)
+					NR_busdata[NR_node_reference].full_Y_load[(index_var*3+index_var)] += shunt[index_var]-prev_shunt[index_var];
+				}
+				else	//It is a child - look at parent
+				{
+					//Add this into the main admittance matrix (handled directly)
+					NR_busdata[*NR_subnode_reference].full_Y_load[(index_var*3+index_var)] += shunt[index_var]-prev_shunt[index_var];
+				}
+
+				//Update tracker
+				prev_shunt[index_var] = shunt[index_var];
+
+				//Remove our "tracked" contribution
+				shunt[index_var] -= prev_load_values[0][index_var];
+				
+				//Zero the tracker
+				prev_load_values[0][index_var] = complex(0.0,0.0);
 			}
-			else	//It is a child - look at parent
+			else
 			{
-				//Add this into the main admittance matrix (handled directly)
-				NR_busdata[*NR_subnode_reference].full_Y_load[(index_var*3+index_var)] += shunt[index_var]-prev_shunt[index_var];
+				//Update tracker
+				prev_load_values[0][index_var] = shunt[index_var];
 			}
-
-			//Update tracker
-			prev_shunt[index_var] = shunt[index_var];
-
-			//Remove our "tracked" contribution
-			shunt[index_var] -= prev_load_values[0][index_var];
-			
-			//Zero the tracker
-			prev_load_values[0][index_var] = complex(0.0,0.0);
+			//Default else - FPI
 		}//End phase looping for in-rush terms
 
 		//TODO:

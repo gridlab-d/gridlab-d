@@ -1176,7 +1176,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + jindex] = 0.0;
 								powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc + jindex] = 0.0;
 							}
-							//**** @FPIM - figure out how to fix this - is anything even needed!!! ****//
+							//Assume not needed for FPI, due to it being a SWING bus
 
 							//Saturation skipped for "swing is a swing" case, since it doesn't affect the admittance (no need to offset)
 						}//End SWING bus cases
@@ -1194,7 +1194,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 									powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+ powerflow_values->BA_diag[indexer].size + jindex] = (tempPbus * work_vals_double_1 + tempQbus * work_vals_double_2)/ (work_vals_double_0) - tempIcalcReal ; // equation(7), Real part of deltaI, left hand side of equation (11)
 									powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc + jindex] = (tempPbus * work_vals_double_2 - tempQbus * work_vals_double_1)/ (work_vals_double_0) - tempIcalcImag; // Imaginary part of deltaI, left hand side of equation (11)
 								}
-								else	//Must be FPI - @FPIM - may need a sign adjustment
+								else	//Must be FPI
 								{
 									powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+ powerflow_values->BA_diag[indexer].size + jindex] = (tempIcalcReal - bus[indexer].FPI_current[jindex].Re()); // Real part of I
 									powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc + jindex] = (tempIcalcImag - bus[indexer].FPI_current[jindex].Im()); // Imaginary part of I
@@ -1202,7 +1202,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							}
 							else
 							{
-								//@FPIM - should a zero voltage case be excluded? Needed for faults??
+								//Zero both
 								powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + jindex] = 0.0;
 								powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc + jindex] = 0.0;
 							}
@@ -1295,7 +1295,6 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							}
 
 							//In-rush load contributions (if any) - only along explicit diagonal
-							//@FPIM - See how this may work
 							if ((bus[indexer].full_Y_load != NULL) && (jindex==kindex) && (NR_solver_algorithm == NRM_TCIM))
 							{
 								mat_temp_index = temp_index*3+temp_index;	//Create index - make diagonal for inrush
@@ -1645,7 +1644,6 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 									powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc + jindex] = 0.0;
 								}
 							}
-							//**** @FPIM - figure out how to fix this!!! Need to do anything with BusHist? ***//
 
 							//Saturation skipped for "swing is a swing" case, since it doesn't affect the admittance (no need to offset)
 						}//End SWING bus cases
@@ -1661,8 +1659,16 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								//See if deltamode needs to include extra term
 								if (NR_busdata[indexer].BusHistTerm != NULL)
 								{
-									powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+ powerflow_values->BA_diag[indexer].size + jindex] = (tempPbus * work_vals_double_1 + tempQbus * work_vals_double_2)/ (work_vals_double_0) + NR_busdata[indexer].BusHistTerm[jindex].Re() - tempIcalcReal ; // equation(7), Real part of deltaI, left hand side of equation (11)
-									powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc + jindex] = (tempPbus * work_vals_double_2 - tempQbus * work_vals_double_1)/ (work_vals_double_0) + NR_busdata[indexer].BusHistTerm[jindex].Im() - tempIcalcImag; // Imaginary part of deltaI, left hand side of equation (11)
+									if (NR_solver_algorithm == NRM_TCIM)
+									{
+										powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+ powerflow_values->BA_diag[indexer].size + jindex] = (tempPbus * work_vals_double_1 + tempQbus * work_vals_double_2)/ (work_vals_double_0) + NR_busdata[indexer].BusHistTerm[jindex].Re() - tempIcalcReal ; // equation(7), Real part of deltaI, left hand side of equation (11)
+										powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc + jindex] = (tempPbus * work_vals_double_2 - tempQbus * work_vals_double_1)/ (work_vals_double_0) + NR_busdata[indexer].BusHistTerm[jindex].Im() - tempIcalcImag; // Imaginary part of deltaI, left hand side of equation (11)
+									}
+									else	//Must be FPI
+									{
+										powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+ powerflow_values->BA_diag[indexer].size + jindex] = (tempIcalcReal - bus[indexer].FPI_current[temp_index_b].Re() + NR_busdata[indexer].BusHistTerm[jindex].Re()); // Real part of I
+										powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc + jindex] = (tempIcalcImag - bus[indexer].FPI_current[temp_index_b].Im() + NR_busdata[indexer].BusHistTerm[jindex].Im()); // Imaginary part of I
+									}
 								}
 								else	//Nope
 								{
@@ -1687,6 +1693,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							}
 							else
 							{
+								//FPI doesn't appear to need an exception here, though it is a zero voltage case (so what is this?)
 								if (NR_busdata[indexer].BusHistTerm != NULL)	//See if extra deltamode term needs to be included
 								{
 									powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + jindex] = NR_busdata[indexer].BusHistTerm[jindex].Re();
@@ -1780,7 +1787,6 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								//Don't get added in as part of "normal swing" routine
 								if ((bus[indexer].type == 0) || ((bus[indexer].type>1) && (bus[indexer].swing_functions_enabled == false)))
 								{
-									//@FPIM - Figure out how dynamic/generator current needs adjustment!
 									//Add these into the system - added because "generation"
 									powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[0].Re();		//Phase A
 									powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + 1] += bus[indexer].DynCurrent[1].Re();	//Phase B
@@ -1822,7 +1828,6 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 									//See what kind of triplex we are
 									if ((bus[indexer].phases & 0x20) == 0x20)	//SPCT "exception"
 									{
-										//@FPIM - Figure out how to include (both of these if/else)
 										//Add these into the system - added because "generation" - assumption is it is a flow between 1 and 2
 										powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] -= bus[indexer].DynCurrent[0].Re();		//Phase 1
 										powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + 1] += bus[indexer].DynCurrent[0].Re();	//Phase 2
@@ -1848,7 +1853,6 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								//Don't get added in as part of "normal swing" routine
 								if (bus[indexer].type == 0)	//"SWING not a SWING" was here, but given the exception to being a SWING, it isn't needed here
 								{
-									//@FPIM - Figure out how to include all of these - DynCurrent
 									//Figure out "where/what" to add
 									//Case it out by phases
 									switch (bus[indexer].phases & 0x07)	{
@@ -1953,7 +1957,6 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								//Check for three-phase
 								if ((bus[indexer].phases & 0x07) == 0x07)
 								{
-									//@FPIM - Figure out how to include DynCurrent!
 									//Add these into the system - added because "generation"
 									powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[0].Re();		//Phase A
 									powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + 1] += bus[indexer].DynCurrent[1].Re();	//Phase B
@@ -1967,8 +1970,6 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								{
 									//Add these into the system - added because "generation"
 									//Assume is a 1-2 connection (1 flowing into 2)
-
-									//@FPIM - Figure out how to include DynCurrent!
 
 									//See what kind of triplex we are
 									if ((bus[indexer].phases & 0x20) == 0x20) //SPCT "special"
@@ -1994,7 +1995,6 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 									//Don't get added in as part of "normal swing" routine
 									if (bus[indexer].type == 0)	//"SWING not a SWING" was here, but given the exception to being a SWING, it isn't needed here
 									{
-										//@FPIM - Figure out how to include DynCurrent
 										//Figure out "where/what" to add
 										//Case it out by phases
 										switch (bus[indexer].phases & 0x07)	{
@@ -5580,7 +5580,6 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 						}
 						else  //Must be Triplex - add the "12" combination for the shunt
 						{
-							//@FPIM - revisit this/confirm it
 							//See if we're the stupid "backwards notation" bus or not
 							if ((bus[jindexer].phases & 0x20) == 0x20)	//Special case
 							{
@@ -5788,7 +5787,6 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 	char jindex, temp_index, temp_index_b;
 	STATUS temp_status;
 
-	//@FPIM - Still need to figure out if delta-connected loads do something
 	//Loop through the buses
 	for (indexer=0; indexer<bus_count; indexer++)
 	{
@@ -7058,7 +7056,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 				}//End phase traversion
 			}//End delta/wye explicit loads
 
-			//@FPIM - Figure out if this needs to be adjusted
+			//TCIM full_Y_load - explicitly handled in FPI
 			if ((jacobian_pass == true) && (NR_solver_algorithm == NRM_TCIM))	//This part only gets done on the Jacobian update and TCIM
 			{
 				//Delta load components  get added to the Jacobian values too -- mostly because this is the most convenient place to do it

@@ -1,0 +1,231 @@
+//  2 bus simple system
+// Tests line in-rush and inductive load in-rush
+
+clock {
+	timezone "PST+8PDT";
+	starttime '2001-01-01 00:00:00 PST';
+	stoptime '2001-01-01 00:00:05 PST';
+	
+}
+
+//#set pauseatexit=1;
+
+#set suppress_repeat_messages=1
+//#set profiler=1
+#define rotor_convergence=0.0
+//#set dateformat=US
+#set double_format=%+.12lg
+#set complex_format=%+.12lg%+.12lg%c
+
+//Overall GridLAB-D parameters
+#set complex_output_format=RECT
+
+
+//Deltamode declarations - global values
+#set deltamode_maximumtime=5000000000000	//2 minutes
+#set deltamode_iteration_limit=10		//Iteration limit
+
+module assert;
+module tape;
+module reliability {
+	enable_subsecond_models TRUE;
+	maximum_event_length 18000;	//Maximum length of events in seconds (manual events are excluded from this limit)
+	report_event_log true;
+}
+
+module powerflow {
+	enable_subsecond_models true;
+	deltamode_timestep 1 ms;
+	line_capacitance false;
+	all_powerflow_delta true;
+	solver_method NR;
+	enable_frequency_dependence true;
+	enable_inrush true;
+	NR_solver_algorithm FPI;
+	//low_voltage_impedance_level 0.95;
+}
+
+//Fault check stuff
+//General fault_check object to remove things that aren't supported
+object fault_check {
+	name base_fault_check_object;
+	flags DELTAMODE;
+	check_mode ONCHANGE;
+	strictly_radial false;
+	full_output_file true;
+	eventgen_object testgendev;   //This needs to link to the eventgen object
+	//output_filename testout.txt;
+}
+
+//Manual object - needed to get fault_check to behave properly -- arbitrary item added
+object eventgen {
+	name testgendev;
+	flags DELTAMODE;
+	fault_type "SW-ABC";     //Type of fault for the object to induce
+	manual_outages "testSwitch,2001-01-01 00:00:00,2001-01-01 00:00:02.001";
+}
+
+// Phase Conductor for 601: 556,500 26/7 ACSR
+object overhead_line_conductor {
+	name olc6010;
+	geometric_mean_radius 0.031300;
+	diameter 0.927 in;
+	resistance 0.185900;
+}
+
+// Phase Conductor for 602: 4/0 6/1 ACSR
+object overhead_line_conductor {
+	name olc6020;
+	geometric_mean_radius 0.00814;
+	diameter 0.56 in;
+	resistance 0.592000;
+}
+
+
+// Overhead line configurations
+object line_spacing {
+	name ls500601;	//With capacitance ability
+	distance_AB 2.5;
+	distance_AC 4.5;
+	distance_BC 7.0;
+	distance_BN 5.656854;
+	distance_AN 4.272002;
+	distance_CN 5.0;
+	distance_AE 28.0;
+	distance_BE 28.0;
+	distance_CE 28.0;
+	distance_NE 24.0;
+}
+
+object line_configuration {
+	name lc601;
+	conductor_A olc6010;
+	conductor_B olc6010;
+	conductor_C olc6010;
+	conductor_N olc6020;
+	spacing ls500601;
+}
+
+object overhead_line {
+	phases "ABCN";
+	name node1_to_node2;
+	from node1a;
+	to node2;
+	length 10.0 mile; //15.0 mile;
+	configuration lc601;
+	//inrush_convergence_value 0.000001;
+	// object recorder {
+		// flags DELTAMODE;
+		// property "current_out_A,current_out_B,current_out_C";
+		// interval 1;
+		// file LineFlowCurrentOut.csv;
+	// };
+	object complex_assert {
+		flags DELTAMODE;
+		target current_out_A;
+		within 0.05;
+		operation FULL;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_inrush_LineFlowCurrentOut_A.csv;
+		};
+    };
+	object complex_assert {
+		flags DELTAMODE;
+		target current_out_B;
+		within 0.05;
+		operation FULL;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_inrush_LineFlowCurrentOut_B.csv;
+		};
+    };
+	object complex_assert {
+		flags DELTAMODE;
+		target current_out_C;
+		within 0.05;
+		operation FULL;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_inrush_LineFlowCurrentOut_C.csv;
+		};
+    };
+}
+
+object switch {
+	name testSwitch;
+	phases ABCN;
+	from node1;
+	to node1a;
+	status CLOSED;
+}
+
+object meter {
+	name node1;
+	phases "ABCN";
+	bustype SWING;
+	voltage_A 2401.7771;
+	voltage_B -1200.8886-2080.000j;
+	voltage_C -1200.8886+2080.000j;
+	nominal_voltage 2401.7771;
+}
+
+object node {
+	phases ABCN;
+	name node1a;
+	nominal_voltage 2401.7771;
+}
+
+object load {
+	name node2;
+	phases ABCN;
+	nominal_voltage 2401.7771;
+	constant_impedance_A 34.9608 +17.4804j;
+	constant_impedance_B 87.4020 +43.7010j;
+	constant_impedance_C 21.8505 +10.9253j;
+	// constant_power_A 132000.0+66000.0j; 
+	// constant_power_B 52800.0+26400.0j; 
+	// constant_power_C 211200.0+105600.0j;
+	// object recorder {
+		// property voltage_A,voltage_B,voltage_C;
+		// interval 1;
+		// flags DELTAMODE;
+		// file Voltage_node2.csv;
+	// };
+	object complex_assert {
+		flags DELTAMODE;
+		target voltage_A;
+		within 0.05;
+		operation FULL;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_inrush_Voltage_node2_A.csv;
+		};
+    };
+	object complex_assert {
+		flags DELTAMODE;
+		target voltage_B;
+		within 0.05;
+		operation FULL;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_inrush_Voltage_node2_B.csv;
+		};
+    };
+	object complex_assert {
+		flags DELTAMODE;
+		target voltage_C;
+		within 0.05;
+		operation FULL;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_inrush_Voltage_node2_C.csv;
+		};
+    };
+}
