@@ -105,8 +105,6 @@
 #include <chrono>
 #include <ratio>
 
-#include <sys/time.h>
-
 #define SOCKET int
 #define INVALID_SOCKET (-1)
 #define closesocket close
@@ -141,6 +139,8 @@
 #include "save.h"
 
 #include "cpp_threadpool.h"
+
+using namespace std::literals;
 
 /** Set/get exit code **/
 int exec_setexitcode(int xc)
@@ -2084,10 +2084,10 @@ STATUS exec_start()
 //		pthread_mutex_init(&donelock[k], NULL);
 //		pthread_cond_init(&start[k], NULL);
 //		pthread_cond_init(&done[k], NULL);
-        startlock.push_back(std::unique_ptr<std::mutex>(new std::mutex));
-        donelock.push_back(std::unique_ptr<std::mutex>(new std::mutex));
-        start.push_back(std::unique_ptr<std::condition_variable>(new std::condition_variable));
-        done.push_back(std::unique_ptr<std::condition_variable>(new std::condition_variable));
+        startlock.push_back(std::make_unique<std::mutex>());
+        donelock.push_back(std::make_unique<std::mutex>());
+        start.push_back(std::make_unique<std::condition_variable>());
+        done.push_back(std::make_unique<std::condition_variable>());
 	}
 
 	// global test mode
@@ -2127,32 +2127,36 @@ STATUS exec_start()
 
 			if (global_run_realtime>0 && iteration_counter>0)
 			{
-				double metric=0;
-#ifdef _WIN32
-				struct timeb tv;
-				ftime(&tv);
-				if (1000-tv.millitm >= 0)
-				{
-					output_verbose("waiting %d msec", 1000-tv.millitm);
-					Sleep(1000-tv.millitm );
-					metric = (1000-tv.millitm)/1000.0;
-					global_clock += global_run_realtime;
-				}
-				else
-					output_error("simulation failed to keep up with real time");
-#else
-				struct timeval tv;
-				gettimeofday(&tv, NULL);
-				if (1000000-tv.tv_usec >= 0)
-				{
-					output_verbose("waiting %d usec", 1000000-tv.tv_usec);
-					usleep(1000000-tv.tv_usec);
-					metric = (1000000-tv.tv_usec)/1000000.0;
-					global_clock += global_run_realtime;
-				}
-				else
-					output_error("simulation failed to keep up with real time");
-#endif
+				double metric=0.;
+                short fall_behind=0;
+                using std::chrono::system_clock;
+                static bool initialized = false;
+                static std::chrono::time_point<system_clock, std::chrono::duration<long, std::ratio<1, 1000000000>>> t1;
+                static std::chrono::time_point<system_clock, std::chrono::duration<long, std::ratio<1, 1000000000>>> t2;
+                if (!initialized) [[unlikely]] {
+                    t1 = system_clock::now();
+                    t2 = t1 + 1s;
+                    initialized = true;
+                } else [[likely]] {
+                    t1 = t2;
+                    t2 += 1s; // One second from last time step
+                }
+
+                if (system_clock::now() < t2) {
+                    output_verbose("waiting %d nsec", std::chrono::nanoseconds(t2-system_clock::now()).count());
+                    std::this_thread::sleep_until(t2);
+                    global_clock += global_run_realtime;
+                    metric = (1.0 * (t2 - t1)) / std::chrono::seconds(1);
+                    fall_behind=0;
+                } else {
+                    output_error("simulation failed to keep up with real time");
+                    fall_behind++;
+                }
+
+                if (fall_behind > 5) [[unlikely]] {
+                    output_fatal("simulation fell behind realtime for more than 5 consecutive cycles");
+                }
+
 #define IIR 0.9 /* about 30s for 95% unit step response */
 				global_realtime_metric = global_realtime_metric*IIR + metric*(1-IIR);
 				exec_sync_reset(NULL);
