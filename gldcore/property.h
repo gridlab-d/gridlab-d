@@ -68,8 +68,10 @@ public:
 	operator char*() { return buffer; };
 	operator char() { return *buffer; };
 	inline bool operator ==(const char *s) { return strcmp(buffer,s)==0; };
-	inline bool operator <(const char *s) { return strcmp(buffer,s)==-1; };
-	inline bool operator >(const char *s) { return strcmp(buffer,s)==1; };
+	//inline bool operator <(const char *s) { return strcmp(buffer,s)==-1; };
+	inline bool operator <(const char *s) { return strcmp(buffer,s)<0;};
+	//inline bool operator >(const char *s) { return strcmp(buffer,s)==1; };
+	inline bool operator >(const char *s) { return strcmp(buffer,s)>1; };
 	inline bool operator <=(const char *s) { return strcmp(buffer,s)<=0; };
 	inline bool operator >=(const char *s) { return strcmp(buffer,s)>=0; };
 	inline char *find(const char c) { return strchr(buffer,c); };
