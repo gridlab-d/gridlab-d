@@ -110,10 +110,12 @@ public:
 	TIMESTAMP *global_clock;
 	double *global_delta_curr_clock;
 	TIMESTAMP *global_stoptime;
+    EXITCODE *global_exit_code;
 	int (*output_verbose)(const char *format, ...);
 	int (*output_message)(const char *format, ...);
 	int (*output_warning)(const char *format, ...);
 	int (*output_error)(const char *format, ...);
+	int (*output_fatal)(const char *format, ...);
 	int (*output_debug)(const char *format, ...);
 	int (*output_test)(const char *format, ...);
 	CLASS *(*register_class)(MODULE *,const CLASSNAME,unsigned int,PASSCONFIG);

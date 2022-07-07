@@ -174,11 +174,13 @@ int64 lock_spin;
 s_callbacks::s_callbacks() throw() {
     global_clock = &::global_clock;
     global_delta_curr_clock = &::global_delta_curr_clock;
+    global_exit_code = &::global_exit_code;
     global_stoptime = &::global_stoptime;
     output_verbose = ::output_verbose;
     output_message = ::output_message;
     output_warning = ::output_warning;
     output_error = ::output_error;
+    output_fatal = ::output_fatal;
     output_debug = ::output_debug;
     output_test = ::output_test;
     register_class = class_register;
@@ -352,73 +354,6 @@ extern CALLBACKS* callbacks = new s_callbacks;
 
 CALLBACKS *module_callbacks(void) { return callbacks; }
 
-
-///* these are the core functions available to loadable modules
-// * the structure is defined in object.h */
-//#define MAGIC 0x012BB0B9
-//int64 lock_count;
-//int64 lock_spin;
-//static CALLBACKS callbacks = {
-//	&global_clock,
-//	&global_delta_curr_clock,
-//	&global_stoptime,
-//	output_verbose,
-//	output_message,
-//	output_warning,
-//	output_error,
-//	output_debug,
-//	output_test,
-//	class_register,
-//	{object_create_single,object_create_array,object_create_foreign},
-//	class_define_map, class_add_loadmethod,
-//	class_get_first_class,
-//	class_get_class_from_classname,
-//	class_add_extended_property,
-//	{class_define_function,class_get_function},
-//	class_define_enumeration_member,
-//	class_define_set_member,
-//	{object_get_first,object_set_dependent,object_set_parent,object_set_rank,},
-//	{object_get_property, object_set_value_by_addr,object_get_value_by_addr, object_set_value_by_name,object_get_value_by_name,object_get_reference,object_get_unit,object_get_addr,class_string_to_propertytype,property_compare_basic,property_compare_op,property_get_part,property_getspec},
-//	{find_objects,find_next,findlist_copy,findlist_add,findlist_del,findlist_clear},
-//	class_find_property,
-//	module_malloc,
-//	module_free,
-//	{aggregate_mkgroup,aggregate_value,},
-//	{module_getvar_addr,module_get_first,module_depends,module_find_transform_function},
-//	{random_uniform, random_normal, random_bernoulli, random_pareto, random_lognormal, random_sampled, random_exponential, random_type, random_value, pseudorandom_value, random_triangle, random_beta, random_gamma, random_weibull, random_rayleigh},
-//	object_isa,
-//	class_register_type,
-//	class_define_type,
-//	{mkdatetime,strdatetime,timestamp_to_days,timestamp_to_hours,timestamp_to_minutes,timestamp_to_seconds,local_datetime,convert_to_timestamp,convert_to_timestamp_delta,convert_from_timestamp,convert_from_deltatime_timestamp},
-//	unit_convert, unit_convert_ex, unit_find,
-//	{create_exception_handler,delete_exception_handler,throw_exception,exception_msg},
-//	{global_create, global_setvar, global_getvar, global_find},
-//	{rlock, wlock}, {runlock, wunlock},
-//	{find_file},
-//	{object_get_bool, object_get_complex, object_get_enum, object_get_set, object_get_int16, object_get_int32, object_get_int64, object_get_double, object_get_string, object_get_object},
-//	{object_get_bool_by_name, object_get_complex_by_name, object_get_enum_by_name, object_get_set_by_name, object_get_int16_by_name, object_get_int32_by_name, object_get_int64_by_name,
-//		object_get_double_by_name, object_get_string_by_name, object_get_object_by_name},
-//	{class_string_to_property, class_property_to_string,},
-//	module_find,
-//	object_find_name, object_find_by_id,
-//	object_build_name,
-//	object_get_oflags,
-//	object_get_count,
-//	{schedule_create, schedule_index, schedule_value, schedule_dtnext, schedule_find_byname, schedule_getfirst},
-//	{loadshape_create,loadshape_init},
-//	{enduse_create,enduse_sync},
-//	{interpolate_linear, interpolate_quadratic},
-//	{forecast_create, forecast_find, forecast_read, forecast_save},
-//	{object_remote_read, object_remote_write, global_remote_read, global_remote_write},
-//	{objlist_create,objlist_search,objlist_destroy,objlist_add,objlist_del,objlist_size,objlist_get,objlist_apply},
-//	{{convert_from_latitude, convert_to_latitude},{convert_from_longitude,convert_to_longitude}},
-//	{http_read,http_delete_result},
-//	{transform_getnext,transform_add_linear,transform_add_external,transform_apply},
-//	{randomvar_getnext,randomvar_getspec},
-//	{version_major,version_minor,version_patch,version_build,version_branch},
-//	MAGIC /* used to check structure */
-//};
-//CALLBACKS *module_callbacks(void) { return &callbacks; }
 
 static MODULE *first_module = NULL;
 static MODULE *last_module = NULL;

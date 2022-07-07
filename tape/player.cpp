@@ -40,7 +40,6 @@
 #include "gridlabd.h"
 #include "object.h"
 #include "aggregate.h"
-
 #include "player.h"
 #include "file.h"
 #include "odbc.h"
@@ -142,7 +141,10 @@ int player_write_properties(struct player *my, OBJECT *obj, PROPERTY *prop, cons
             gl_error("sync_player:%d: not enough values on line: %s", obj->id, buffer);
             return count;
         }
-        gl_set_value(obj, GETADDR(obj, p), token, p);
+        if(gl_set_value(obj, GETADDR(obj, p), token, p) <= 0){
+            gl_fatal("sync_player:%d: failed to set value: %s", obj->id, token);
+            gl_globalexitcode = XC_ARGERR;
+        }
         count++;
         token = strtok_s(NULL, delim, &next);
     }
@@ -445,8 +447,9 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
             my->target = gl_get_property(obj, "value", NULL);
 
         if (player_open(obj) == 0) {
-            gl_error("sync_player: Unable to open player file '%s' for object '%s'", my->file.get_string(),
+            gl_fatal("sync_player: Unable to open player file '%s' for object '%s'", my->file.get_string(),
                      obj->name ? obj->name : "(anon)");
+            gl_globalexitcode = XC_ARGERR;
         } else {
             t1 = player_read(obj);
         }
@@ -457,9 +460,9 @@ EXPORT TIMESTAMP sync_player(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
         if (my->target == NULL)
             my->target = player_link_properties(my, obj->parent, my->property);
         if (my->target == NULL) {
-            gl_error("sync_player: Unable to find property '%s' in object %s", my->property.get_string(),
+            gl_fatal("sync_player: Unable to find property '%s' in object %s", my->property.get_string(),
                      obj->name ? obj->name : "(anon)");
-            my->status = TS_ERROR;
+            gl_globalexitcode = XC_ARGERR;
         }
         if (my->target != NULL) {
             OBJECT *target = obj->parent ? obj->parent : obj; /* target myself if no parent */

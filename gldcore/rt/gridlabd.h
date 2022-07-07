@@ -329,6 +329,7 @@ typedef double real;
 #endif
 
 typedef int64 TIMESTAMP;
+typedef int EXITCODE;
 #define TS_TPS ((int64)1)	/* ticks per second time resolution - this needs to be compatible with TS_SECOND is timestamp.h */
 #define TS_REALNOW ((TIMESTAMP)(time(NULL))*TS_TPS)
 #define TS_SIMNOW (*(callback->global_clock))
@@ -1109,10 +1110,12 @@ public:
     TIMESTAMP *global_clock;
     double *global_delta_curr_clock;
     TIMESTAMP *global_stoptime;
+    EXITCODE *global_exit_code;
     int (*output_verbose)(const char *format, ...);
     int (*output_message)(const char *format, ...);
     int (*output_warning)(const char *format, ...);
     int (*output_error)(const char *format, ...);
+    int (*output_fatal)(const char *format, ...);
     int (*output_debug)(const char *format, ...);
     int (*output_test)(const char *format, ...);
     CLASS *(*register_class)(MODULE *,const CLASSNAME,unsigned int,PASSCONFIG);
@@ -1344,6 +1347,7 @@ typedef FUNCTIONADDR function;
 #define gl_output (*callback->output_message) ///< Send a printf-style message to the output stream
 #define gl_warning (*callback->output_warning) ///< Send a printf-style message to the warning stream
 #define gl_error (*callback->output_error) ///< Send a printf-style message to the error stream
+#define gl_fatal (*callback->output_fatal) ///< Send a printf-style message to the error stream
 #define gl_debug (*callback->output_debug) ///< Send a printf-style message to the debug stream
 #define gl_testmsg (*callback->output_test) ///< Send a printf-style message to the testmsg stream
 

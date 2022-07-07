@@ -303,6 +303,12 @@ inline void GL_THROW(const char *format, ...)
 **/
 #define gl_error (*callback->output_error)
 
+/** Produces a fatal error message on stderr.
+    The code should exit immediately after a fatal error, or set global_exit_code to XC_ARGERR.
+ 	@see output_fatal(char *format, ...)
+**/
+#define gl_fatal (*callback->output_fatal)
+
 /** Produces a debug message on stderr, but only when \b --debug is provided on the command line.
  	@see output_debug(char *format, ...)
  **/
@@ -863,6 +869,9 @@ inline bool *gl_get_bool(OBJECT *obj, /**< object to set dependency */
 
 /** Link to double precision deltamode clock (offset by global_clock) **/
 #define gl_globaldeltaclock (*(callback->global_delta_curr_clock))
+
+/** Link to system exit code **/
+#define gl_globalexitcode (*(callback->global_exit_code))
 
 /** Link to stop time of the simulation **/
 #define gl_globalstoptime (*(callback->global_stoptime))
