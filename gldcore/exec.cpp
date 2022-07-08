@@ -142,6 +142,10 @@
 
 using namespace std::literals;
 
+#ifdef _WIN32
+#define WEXITSTATUS(X) (X&127)
+#endif
+
 /** Set/get exit code **/
 int exec_setexitcode(int xc)
 {
@@ -3252,8 +3256,10 @@ static int update_exports()
 		char value[1024];
 		if ( global_getvar(name,value,sizeof(value)) )
 		{
-            if (setenv(name, value, 1) != 0)
-				output_warning("unable to update script export '%s' with value '%s'", name, value);
+            char env[2048];
+            sprintf(env,"%s=%s",name,value);
+            if ( putenv(env)!=0 )
+                output_warning("unable to update script export '%s' with value '%s'", name, value);
 		}
 	}
 	return 1;

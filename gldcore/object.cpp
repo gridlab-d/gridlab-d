@@ -31,12 +31,7 @@
 #include <cerrno>
 #include <cfloat>
 #include <cmath>
-
-#ifdef _WIN32
-#define isnan _isnan  /* map isnan to appropriate function under Windows */
-#else
 #include <unistd.h>
-#endif
 
 #include "object.h"
 #include "convert.h"
@@ -46,6 +41,8 @@
 #include "lock.h"
 #include "threadpool.h"
 #include "exec.h"
+
+using std::isnan;
 
 /* object list */
 static OBJECTNUM next_object_id = 0;
