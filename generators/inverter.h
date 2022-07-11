@@ -20,7 +20,7 @@ EXPORT int isa_inverter(OBJECT *obj, char *classname);
 EXPORT STATUS preupdate_inverter(OBJECT *obj,TIMESTAMP t0, unsigned int64 delta_time);
 EXPORT SIMULATIONMODE interupdate_inverter(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 EXPORT STATUS postupdate_inverter(OBJECT *obj, complex *useful_value, unsigned int mode_pass);
-EXPORT STATUS inverter_NR_current_injection_update(OBJECT *obj, int64 iteration_count);
+EXPORT STATUS inverter_NR_current_injection_update(OBJECT *obj, int64 iteration_count, bool *converged_failure);
 
 //Alternative PI version Dynamic control Inverter state variable structure
 typedef struct {
@@ -103,8 +103,11 @@ private:
 	complex prev_VA_out[3];				//Previous state tracking variable for ramp-rate calculations
 	complex curr_VA_out[3];				//Current state tracking variable for ramp-rate calculations
 	complex value_IGenerated[3];		//Value/accumulator for IGenerated values
+	complex prev_value_IGenerated[3];	//Tracking variable for Norton-equivalent initializations
 	double Pref_prev;					//Previous Pref value in the same time step for non-VSI droop mode ramp-rate calculations
 	double Qref_prev[3];				//Previous Qref value in the same time step for non-VSI droop mode ramp-rate calculations
+
+	double current_convergence_criterion;	//Convergence criterion for initialization of some Norton-equivalent models
 
 	SIMULATIONMODE desired_simulation_mode;	//deltamode desired simulation mode after corrector pass - prevents starting iterations again
 
@@ -494,7 +497,7 @@ public:
 	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 	STATUS post_deltaupdate(complex *useful_value, unsigned int mode_pass);
 	double perform_1547_checks(double timestepvalue);
-	STATUS updateCurrInjection(int64 iteration_count);
+	STATUS updateCurrInjection(int64 iteration_count, bool *converged_failure);
 	complex check_VA_Out(complex temp_VA, double p_max);
 	double getEff(double val);
 public:

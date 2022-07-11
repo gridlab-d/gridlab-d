@@ -70,6 +70,7 @@ inverter::inverter(MODULE *module)
 				PT_KEYWORD,"SUPPLY_DRIVEN",(enumeration)SUPPLY_DRIVEN,
 			
 			PT_double, "inverter_convergence_criterion",PADDR(inverter_convergence_criterion), PT_DESCRIPTION, "The maximum change in error threshold for exitting deltamode.",
+			PT_double,"current_convergence[A]",PADDR(current_convergence_criterion),PT_DESCRIPTION,"Convergence criterion for current changes on first timestep - basically initialization of system",
 			PT_double, "V_In[V]",PADDR(V_In), PT_DESCRIPTION, "DC voltage",
 			PT_double, "I_In[A]",PADDR(I_In), PT_DESCRIPTION, "DC current",
 			PT_double, "P_In[W]", PADDR(P_In), PT_DESCRIPTION, "DC power",
@@ -461,6 +462,7 @@ int inverter::create(void)
 	deltamode_inclusive = false;	//By default, don't be included in deltamode simulations
 	first_run = true;
 	inverter_convergence_criterion = 1e-3;
+	current_convergence_criterion = 1e-3;
 
 	//Default PID controller variables -- no output by default
 	kpd = 0.0;
@@ -600,6 +602,7 @@ int inverter::create(void)
 	value_Line_unrotI[0] = value_Line_unrotI[1] = value_Line_unrotI[2] = complex(0.0,0.0);
 	value_Power[0] = value_Power[1] = value_Power[2] = complex(0.0,0.0);
 	value_IGenerated[0] = value_IGenerated[1] = value_IGenerated[2] = complex(0.0,0.0);
+	prev_value_IGenerated[0] = prev_value_IGenerated[1] = prev_value_IGenerated[2] = complex(0.0,0.0);
 	value_Line12 = complex(0.0,0.0);
 	value_Power12 = complex(0.0,0.0);
 	value_MeterStatus = 1;	//Connected, by default
@@ -9374,9 +9377,8 @@ double inverter::lin_eq_volt(double volt, double m, double b)
 }
 
 // Function to update current injection IGenerated for VSI
-STATUS inverter::updateCurrInjection(int64 iteration_count)
+STATUS inverter::updateCurrInjection(int64 iteration_count, bool *converged_failure)
 {
-
 	double power_diff_val;
 	bool ramp_change;
 	double deltat, temp_time;
@@ -9386,6 +9388,10 @@ STATUS inverter::updateCurrInjection(int64 iteration_count)
 	bool bus_is_a_swing, bus_is_swing_pq_entry;
 	STATUS temp_status_val;
 	gld_property *temp_property_pointer;
+	double mag_diff_value[3];
+
+	//Start with assuming convergence (not a failure)
+	*converged_failure = false;
 
 	if (deltatimestep_running > 0.0)	//Deltamode call
 	{
@@ -9562,6 +9568,22 @@ STATUS inverter::updateCurrInjection(int64 iteration_count)
 				value_IGenerated[1] = temp_pos_current*avalsq;
 				value_IGenerated[2] = temp_pos_current*aval;
 
+				//Get the magnitude of the difference
+				mag_diff_value[0] = (value_IGenerated[0] - prev_value_IGenerated[0]).Mag();
+				mag_diff_value[1] = (value_IGenerated[1] - prev_value_IGenerated[1]).Mag();
+				mag_diff_value[2] = (value_IGenerated[2] - prev_value_IGenerated[2]).Mag();
+
+				//Update trackers
+				prev_value_IGenerated[0] = value_IGenerated[0];
+				prev_value_IGenerated[1] = value_IGenerated[1];
+				prev_value_IGenerated[2] = value_IGenerated[2];
+
+				//Convergence check
+				if ((mag_diff_value[0] > current_convergence_criterion) || (mag_diff_value[1] > current_convergence_criterion) || (mag_diff_value[2] > current_convergence_criterion))
+				{
+					//Flag for failure
+					*converged_failure = true;
+				}
 			}
 			//If it is a swing, this is all handled internally to solver_nr (though it is similar)
 		}
@@ -9792,7 +9814,7 @@ EXPORT STATUS postupdate_inverter(OBJECT *obj, complex *useful_value, unsigned i
 }
 
 // Define export function that update the VIS current injection IGenerated to the grid
-EXPORT STATUS inverter_NR_current_injection_update(OBJECT *obj, int64 iteration_count)
+EXPORT STATUS inverter_NR_current_injection_update(OBJECT *obj, int64 iteration_count, bool *converged_failure)
 {
 	STATUS temp_status;
 
@@ -9800,7 +9822,7 @@ EXPORT STATUS inverter_NR_current_injection_update(OBJECT *obj, int64 iteration_
 	inverter *my = OBJECTDATA(obj,inverter);
 
 	//Call the function, where we can update the IGenerated injection
-	temp_status = my->updateCurrInjection(iteration_count);
+	temp_status = my->updateCurrInjection(iteration_count,converged_failure);
 
 	//Return what the sub function said we were
 	return temp_status;

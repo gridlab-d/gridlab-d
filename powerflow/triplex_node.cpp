@@ -208,6 +208,8 @@ triplex_node::triplex_node(MODULE *mod) : node(mod)
 			GL_THROW("Unable to publish triplex_node VFD attachment function");
 		if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
 			GL_THROW("Unable to publish triplex_node island-status-reset function");
+		if (gl_publish_function(oclass, "pwr_object_shunt_update", (FUNCTIONADDR)node_update_shunt_values) == NULL)
+			GL_THROW("Unable to publish triplex_node shunt update function");
     }
 }
 

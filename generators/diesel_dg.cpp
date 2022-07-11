@@ -82,6 +82,7 @@ diesel_dg::diesel_dg(MODULE *module)
 			//Convergence criterion for exiting deltamode - just on rotor_speed for now
 			PT_double,"rotor_speed_convergence[rad/s]",PADDR(rotor_speed_convergence_criterion),PT_DESCRIPTION,"Convergence criterion on rotor speed used to determine when to exit deltamode",
 			PT_double,"voltage_convergence[V]",PADDR(voltage_convergence_criterion),PT_DESCRIPTION,"Convergence criterion for voltage changes (if exciter present) to determine when to exit deltamode",
+			PT_double,"current_convergence[A]",PADDR(current_convergence_criterion),PT_DESCRIPTION,"Convergence criterion for current changes on first timestep - basically initialization of system",
 
 			//Which to enable
 			PT_bool,"rotor_speed_convergence_enabled",PADDR(apply_rotor_speed_convergence),PT_DESCRIPTION,"Uses rotor_speed_convergence to determine if an exit of deltamode is needed",
@@ -536,6 +537,7 @@ int diesel_dg::create(void)
 	full_bus_admittance_mat[1][0] = full_bus_admittance_mat[1][1] = full_bus_admittance_mat[1][2] = complex(0.0,0.0);
 	full_bus_admittance_mat[2][0] = full_bus_admittance_mat[2][1] = full_bus_admittance_mat[2][2] = complex(0.0,0.0);
 	value_IGenerated[0] = value_IGenerated[1] = value_IGenerated[2] = complex(0.0,0.0);
+	prev_value_IGenerated[0] = prev_value_IGenerated[1] = prev_value_IGenerated[2] = complex(0.0,0.0);
 	Governor_type = NO_GOV;
 	Exciter_type = NO_EXC;
 	SEXS_mode = SEXS_CV;
@@ -554,6 +556,9 @@ int diesel_dg::create(void)
 	prev_voltage_val[0] = 0.0;
 	prev_voltage_val[1] = 0.0;
 	prev_voltage_val[2] = 0.0;
+
+	//Current convergence (magnitude)
+	current_convergence_criterion = 0.001;
 
 	//By default, only speed convergence is on
 	apply_rotor_speed_convergence = true;
@@ -4654,7 +4659,7 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 }
 
 //Function to do current-injection updates and symmetry constraint checking
-STATUS diesel_dg::updateCurrInjection(int64 iteration_count)
+STATUS diesel_dg::updateCurrInjection(int64 iteration_count, bool *converged_failure)
 {
 	complex aval, avalsq;
 	complex temp_p_setpoint;
@@ -4665,6 +4670,10 @@ STATUS diesel_dg::updateCurrInjection(int64 iteration_count)
 	STATUS temp_status_val;
 	gld_property *temp_property_pointer;
 	OBJECT *obj = OBJECTHDR(this);
+	double mag_check_val[3];
+
+	//Start by assuming now convergence failure
+	*converged_failure = false;
 
 	//Only do during initialization
 	if (diesel_first_step == true)
@@ -4821,6 +4830,22 @@ STATUS diesel_dg::updateCurrInjection(int64 iteration_count)
 				push_powerflow_values(false);
 			}
 			//Default else - do nothing (not sure what this would be)
+
+			//Do convergence checks
+			mag_check_val[0] = (value_IGenerated[0]-prev_value_IGenerated[0]).Mag();
+			mag_check_val[1] = (value_IGenerated[1]-prev_value_IGenerated[1]).Mag();
+			mag_check_val[2] = (value_IGenerated[2]-prev_value_IGenerated[2]).Mag();
+
+			//Update trackers
+			prev_value_IGenerated[0] = value_IGenerated[0];
+			prev_value_IGenerated[1] = value_IGenerated[1];
+			prev_value_IGenerated[2] = value_IGenerated[2];
+
+			//Check
+			if ((mag_check_val[0] > current_convergence_criterion) || (mag_check_val[1] > current_convergence_criterion) || (mag_check_val[2] > current_convergence_criterion))
+			{
+				*converged_failure = true;
+			}
 		}//End not a SWING bus
 		//Default else -- it is a SWING bus, so just skip over
 	}//End first timestep
@@ -5025,7 +5050,7 @@ EXPORT STATUS postupdate_diesel_dg(OBJECT *obj, complex *useful_value, unsigned 
 }
 
 //// Define export function that update the current injection IGenerated to the grid
-EXPORT STATUS diesel_dg_NR_current_injection_update(OBJECT *obj,int64 iteration_count)
+EXPORT STATUS diesel_dg_NR_current_injection_update(OBJECT *obj,int64 iteration_count, bool *converged_failure)
 {
 	STATUS temp_status;
 
@@ -5033,7 +5058,7 @@ EXPORT STATUS diesel_dg_NR_current_injection_update(OBJECT *obj,int64 iteration_
 	diesel_dg *my = OBJECTDATA(obj,diesel_dg);
 
 	//Call the function, where we can update the IGenerated injection
-	temp_status = my->updateCurrInjection(iteration_count);
+	temp_status = my->updateCurrInjection(iteration_count,converged_failure);
 
 	//Return what the sub function said we were
 	return temp_status;

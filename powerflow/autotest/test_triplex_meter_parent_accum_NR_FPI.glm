@@ -15,7 +15,7 @@ clock {
 #set profiler=1;
 #set complex_output_format=RECT
 
-//#define FPI=1
+#define FPI=1
 
 module tape;
 module assert;

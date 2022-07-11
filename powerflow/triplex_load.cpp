@@ -120,6 +120,8 @@ triplex_load::triplex_load(MODULE *mod) : triplex_node(mod)
 				GL_THROW("Unable to publish triplex_load swing-status check function");
 			if (gl_publish_function(oclass, "pwr_object_load_update", (FUNCTIONADDR)update_triplex_load_values) == NULL)
 				GL_THROW("Unable to publish triplex_load impedance-conversion/update function");
+			if (gl_publish_function(oclass, "pwr_object_shunt_update", (FUNCTIONADDR)node_update_shunt_values) == NULL)
+				GL_THROW("Unable to publish triplex_load shunt update function");
     }
 }
 
@@ -222,6 +224,7 @@ void triplex_load::triplex_load_update_fxn(void)
 	double adjust_temp_voltage_mag[3];
 	double adjust_nominal_voltage_val[3];
 	complex adjust_voltage_val[3];
+	complex working_impedance_value;
 
 	//Roll GFA check into here, so current loads updates are handled properly
 	//See if GFA functionality is enabled
@@ -702,7 +705,29 @@ void triplex_load::triplex_load_update_fxn(void)
 //Function to appropriately zero load - make sure we don't get too heavy handed
 void triplex_load::triplex_load_delete_update_fxn(void)
 {
-	int index_var;
+	int index_var, extract_node_ref;
+
+	//If FPI, remove the shunt portions
+	if (NR_solver_algorithm == NRM_FPI)
+	{
+		//See if we're a parented load or not - not sure how we'd ever be a "different child", but copy paste!
+		if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
+		{
+			extract_node_ref = NR_node_reference;
+		}
+		else	//It is a child - look at parent
+		{
+			extract_node_ref = *NR_subnode_reference;
+		}
+
+		//Remove the components
+		NR_busdata[extract_node_ref].full_Y_load[0] -= prev_load_values[0][0];
+		NR_busdata[extract_node_ref].full_Y_load[4] -= prev_load_values[0][1];
+		NR_busdata[extract_node_ref].full_Y_load[8] -= prev_load_values[0][2];
+
+		//Flag the FPI change
+		NR_FPI_imp_load_change = true;
+	}//End FPI
 
 	//Loop and clear
 	for (index_var=0; index_var<3; index_var++)

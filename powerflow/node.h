@@ -16,6 +16,7 @@ EXPORT STATUS node_swing_status(OBJECT *this_obj, bool *swing_status_check_value
 EXPORT STATUS node_reset_disabled_status(OBJECT *nodeObj);
 EXPORT STATUS node_map_current_update_function(OBJECT *nodeObj, OBJECT *callObj);
 EXPORT STATUS attach_vfd_to_node(OBJECT *obj,OBJECT *calledVFD);
+EXPORT STATUS node_update_shunt_values(OBJECT *obj);
 
 #define I_INJ(V, S, Z, I) (I_S(S, V) + ((Z.IsFinite()) ? I_Z(Z, V) : complex(0.0)) + I_I(I))
 #define I_S(S, V) (~((S) / (V)))  // Current injection - constant power load
@@ -112,6 +113,10 @@ private:
 	complex *LoadHistTermL;			///< Pointer for array used to store load history value for deltamode-based in-rush computations -- Inductive terms
 	complex *LoadHistTermC;			///< Pointer for array used to store load history value for deltamode-based in-rush computations -- Shunt capacitance terms
 
+	complex shunt_change_check[3];		///< Change tracker for FPI - to trigger update of "standard" loads
+	complex shunt_change_check_dy[6];	///< Change tracker for FPI - trigger update of explicit Wye-Delta loads
+	complex *Extra_Data_Track_FPI;		///Link to extra data tracker information (NR-FPI)
+
 	//Frequently measurement variables
 	FREQM_STATES curr_freq_state;		//Current state of all vari
 	FREQM_STATES prev_freq_state;
@@ -140,6 +145,7 @@ private:
 	complex *tn_values;		//Variable (mostly for FBS) to map triplex multipliers for neutral current.  Mostly so saves API calls.
 
 	double compute_angle_diff(double angle_B, double angle_A);	//Function to do differences, but handle the phase wrap/jump
+	STATUS shunt_update_fxn(void);	//Function to do shunt update for FPI, so sequencing happens correctly
 
 public:
 	double frequency;			///< frequency (only valid on reference bus) */
@@ -220,7 +226,7 @@ public:
 	complex power_dy[6];	/// bus power injection (positive = in), explicitly specify delta and wye portions
 	complex shunt_dy[6];	/// bus shunt admittance, explicitly specify delta and wye portions
 	complex *full_Y;		/// full 3x3 bus shunt admittance - populate as necessary
-	complex *full_Y_load;	/// 3x1 bus shunt admittance - meant to update (not part of BA_diag) - populate as necessary
+	complex full_Y_load[3][3];	/// 3x3 bus shunt admittance - meant to update - used for in-rush or FPI
 	complex *full_Y_all;	/// Full 3x3 bus admittance with "other" contributions (self of full admittance) - populate as necessary
 	DYN_NODE_TYPE node_type;/// Variable to indicate what we are - prevents needing a gl_object_isa EVERY...SINGLE...TIME in an already slow dynamic simulation
 	complex current12;		/// Used for phase 1-2 current injections in triplex
