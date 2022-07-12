@@ -58,8 +58,8 @@
 #endif
 
 // module version info (must match core version info)
-#define MAJOR 4
-#define MINOR 3
+#define MAJOR 5
+#define MINOR 0
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
