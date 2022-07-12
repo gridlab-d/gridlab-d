@@ -34,7 +34,6 @@ include(cmake/SanitizePaths.cmake)
 option(GLD_USE_EIGEN "[NOT YET SUPPORTED] - Use Eigen package for LU Decomposition in Powerflow" OFF)
 option(GLD_USE_SUPERLU "Use SuperLU package for LU Decomposition in Powerflow" ON)
 option(GLD_USE_HELICS "Link with HELICS" OFF)
-option(GLD_USE_FNCS "Link with FNCS" OFF)
 option(GLD_USE_MYSQL "Link with MySQL" OFF)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON) # TODO: only required for SuperLU_MT support with Clang. Future removal recommended.
@@ -132,10 +131,9 @@ elseif (NOT GLD_USE_CLANG_TIDY)
     message(STATUS "clang-tidy disabled.")
 else ()
     message(STATUS "clang-tidy found: ${GLD_CLANG_TIDY_EXE}")
-    set(CMAKE_CXX_CLANG_TIDY "${GLD_CLANG_TIDY_EXE}" # "-fix"
-            "-checks=-*,-modernize-avoid-c-arrays,modernize-*"
-            )
+    set(CMAKE_CXX_CLANG_TIDY ${GLD_CLANG_TIDY_EXE};-checks=-*,bugprone-*,modernize-*,-modernize-use-trailing-return-type,-modernize-avoid-c-arrays;-warnings-as-errors=-*;)
 endif ()
+MESSAGE(STATUS ${CMAKE_CXX_CLANG_TIDY})
 
 # Set the list of modules and files which should be copied into the install directory.
 set(GLD_MODULES
