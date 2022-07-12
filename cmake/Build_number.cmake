@@ -1,12 +1,5 @@
 cmake_minimum_required(VERSION 2.8.12)
 
-# Locate Git
-find_package(Git)
-
-#if (GIT_FOUND)
-#    message("git found: ${GIT_EXECUTABLE} in version     ${GIT_VERSION_STRING}")
-#endif (GIT_FOUND)
-
 SET(GIT_OUTPUT git_out_${CMAKE_BUILD_TYPE})
 
 EXECUTE_PROCESS(

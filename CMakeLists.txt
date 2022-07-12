@@ -133,7 +133,6 @@ else ()
     message(STATUS "clang-tidy found: ${GLD_CLANG_TIDY_EXE}")
     set(CMAKE_CXX_CLANG_TIDY ${GLD_CLANG_TIDY_EXE};-checks=-*,bugprone-*,modernize-*,-modernize-use-trailing-return-type,-modernize-avoid-c-arrays;-warnings-as-errors=-*;)
 endif ()
-MESSAGE(STATUS ${CMAKE_CXX_CLANG_TIDY})
 
 # Set the list of modules and files which should be copied into the install directory.
 set(GLD_MODULES
