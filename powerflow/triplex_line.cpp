@@ -7,10 +7,10 @@
 	@{
 **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
 using namespace std;
 
@@ -246,7 +246,7 @@ void triplex_line::phase_conductor_checks(void)
 		if (line_config->phaseA_conductor != NULL)	//1
 		{
 			//Make sure it is a valid conductor
-			if (gl_object_isa(line_config->phaseA_conductor,"triplex_line_conductor","powerflow") != true)
+			if (!gl_object_isa(line_config->phaseA_conductor, "triplex_line_conductor", "powerflow"))
 			{
 				GL_THROW("triplex_line:%d - %s - configuration does not use a triplex_line_conductor for at least one phase!",obj->id,(obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
@@ -267,7 +267,7 @@ void triplex_line::phase_conductor_checks(void)
 		if (line_config->phaseB_conductor != NULL)	//2
 		{
 			//Make sure it is a valid conductor
-			if (gl_object_isa(line_config->phaseB_conductor,"triplex_line_conductor","powerflow") != true)
+			if (!gl_object_isa(line_config->phaseB_conductor, "triplex_line_conductor", "powerflow"))
 			{
 				GL_THROW("triplex_line:%d - %s - configuration does not use a triplex_line_conductor for at least one phase!",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -283,7 +283,7 @@ void triplex_line::phase_conductor_checks(void)
 		if (line_config->phaseC_conductor != NULL)	//N
 		{
 			//Make sure it is a valid conductor
-			if (gl_object_isa(line_config->phaseC_conductor,"triplex_line_conductor","powerflow") != true)
+			if (!gl_object_isa(line_config->phaseC_conductor, "triplex_line_conductor", "powerflow"))
 			{
 				GL_THROW("triplex_line:%d - %s - configuration does not use a triplex_line_conductor for at least one phase!",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -309,18 +309,18 @@ void triplex_line::recalc(void)
 	{
 		gl_warning("Using a 2x2 z-matrix, instead of geometric values, is an under-determined system. Ground and/or neutral currents will be incorrect.");
 	
-		complex miles = complex(length/5280,0);
+		gld::complex miles = gld::complex(length/5280,0);
 		if ((solver_method == SM_FBS) || (solver_method == SM_NR))
 		{
 			b_mat[0][0] = B_mat[0][0] = line_config->impedance11 * miles;
 			b_mat[0][1] = B_mat[0][1] = line_config->impedance12 * miles;
 			b_mat[1][0] = B_mat[1][0] = line_config->impedance21 * miles;
 			b_mat[1][1] = B_mat[1][1] = line_config->impedance22 * miles; 
-			b_mat[2][0] = B_mat[2][0] = complex(0,0);
-			b_mat[2][1] = B_mat[2][1] = complex(0,0);
-			b_mat[2][2] = B_mat[2][2] = complex(0,0);
-			b_mat[0][2] = B_mat[0][2] = complex(0,0);
-			b_mat[1][2] = B_mat[1][2] = complex(0,0);
+			b_mat[2][0] = B_mat[2][0] = gld::complex(0,0);
+			b_mat[2][1] = B_mat[2][1] = gld::complex(0,0);
+			b_mat[2][2] = B_mat[2][2] = gld::complex(0,0);
+			b_mat[0][2] = B_mat[0][2] = gld::complex(0,0);
+			b_mat[1][2] = B_mat[1][2] = gld::complex(0,0);
 
 			tn[0] = 0;
 			tn[1] = 0;
@@ -335,8 +335,8 @@ void triplex_line::recalc(void)
 		// create local variables that will be used to calculate matrices.
 		double dcond,ins_thick,D12,D13,D23;
 		double r1,r2,rn,gmr1,gmr2,gmrn;
-		complex zp11,zp22,zp33,zp12,zp13,zp23;
-		complex zs[3][3];
+		gld::complex zp11,zp22,zp33,zp12,zp13,zp23;
+		gld::complex zs[3][3];
 		double freq_coeff_real, freq_coeff_imag, freq_additive_term;
 
 		//Calculate coefficients for self and mutual impedance - incorporates frequency values
@@ -395,12 +395,12 @@ void triplex_line::recalc(void)
 			*/
 		}
 
-		zp11 = complex(r1,0) + freq_coeff_real + complex(0.0,freq_coeff_imag) * (log(1/gmr1) + freq_additive_term);
-		zp22 = complex(r2,0) + freq_coeff_real + complex(0.0,freq_coeff_imag) * (log(1/gmr2) + freq_additive_term);
-		zp33 = complex(rn,0) + freq_coeff_real + complex(0.0,freq_coeff_imag) * (log(1/gmrn) + freq_additive_term);
-		zp12 = complex(freq_coeff_real,0.0) + complex(0.0,freq_coeff_imag) * (log(1/D12) + freq_additive_term);
-		zp13 = complex(freq_coeff_real,0.0) + complex(0.0,freq_coeff_imag) * (log(1/D13) + freq_additive_term);
-		zp23 = complex(freq_coeff_real,0.0) + complex(0.0,freq_coeff_imag) * (log(1/D23) + freq_additive_term);
+		zp11 = gld::complex(r1,0) + freq_coeff_real + gld::complex(0.0,freq_coeff_imag) * (log(1/gmr1) + freq_additive_term);
+		zp22 = gld::complex(r2,0) + freq_coeff_real + gld::complex(0.0,freq_coeff_imag) * (log(1/gmr2) + freq_additive_term);
+		zp33 = gld::complex(rn,0) + freq_coeff_real + gld::complex(0.0,freq_coeff_imag) * (log(1/gmrn) + freq_additive_term);
+		zp12 = gld::complex(freq_coeff_real,0.0) + gld::complex(0.0,freq_coeff_imag) * (log(1/D12) + freq_additive_term);
+		zp13 = gld::complex(freq_coeff_real,0.0) + gld::complex(0.0,freq_coeff_imag) * (log(1/D13) + freq_additive_term);
+		zp23 = gld::complex(freq_coeff_real,0.0) + gld::complex(0.0,freq_coeff_imag) * (log(1/D23) + freq_additive_term);
 		
 		if ((solver_method==SM_FBS) || (solver_method==SM_NR))
 		{
@@ -408,11 +408,11 @@ void triplex_line::recalc(void)
 			zs[0][1] = zp12-((zp13*zp23)/zp33);
 			zs[1][0] = -(zp12-((zp13*zp23)/zp33));
 			zs[1][1] = -(zp22-((zp23*zp23)/zp33));
-			zs[0][2] = complex(0,0);
-			zs[1][2] = complex(0,0);
-			zs[2][2] = complex(0,0);
-			zs[2][1] = complex(0,0);
-			zs[2][0] = complex(0,0);
+			zs[0][2] = gld::complex(0,0);
+			zs[1][2] = gld::complex(0,0);
+			zs[2][2] = gld::complex(0,0);
+			zs[2][1] = gld::complex(0,0);
+			zs[2][0] = gld::complex(0,0);
 		}
 		else
 		{
@@ -452,45 +452,45 @@ void triplex_line::recalc(void)
 	}
 
 	// Same in all cases
-	a_mat[0][0] = complex(1,0);
-	a_mat[0][1] = complex(0,0);
-	a_mat[0][2] = complex(0,0);
-	a_mat[1][0] = complex(0,0);
-	a_mat[1][1] = complex(1,0);
-	a_mat[1][2] = complex(0,0);
-	a_mat[2][0] = complex(0,0);
-	a_mat[2][1] = complex(0,0);
-	a_mat[2][2] = complex(1,0); 
+	a_mat[0][0] = gld::complex(1,0);
+	a_mat[0][1] = gld::complex(0,0);
+	a_mat[0][2] = gld::complex(0,0);
+	a_mat[1][0] = gld::complex(0,0);
+	a_mat[1][1] = gld::complex(1,0);
+	a_mat[1][2] = gld::complex(0,0);
+	a_mat[2][0] = gld::complex(0,0);
+	a_mat[2][1] = gld::complex(0,0);
+	a_mat[2][2] = gld::complex(1,0);
 	
-	c_mat[0][0] = complex(0,0);
-	c_mat[0][1] = complex(0,0);
-	c_mat[0][2] = complex(0,0);
-	c_mat[1][0] = complex(0,0);
-	c_mat[1][1] = complex(0,0);
-	c_mat[1][2] = complex(0,0);
-	c_mat[2][0] = complex(0,0);
-	c_mat[2][1] = complex(0,0);
-	c_mat[2][2] = complex(0,0);
+	c_mat[0][0] = gld::complex(0,0);
+	c_mat[0][1] = gld::complex(0,0);
+	c_mat[0][2] = gld::complex(0,0);
+	c_mat[1][0] = gld::complex(0,0);
+	c_mat[1][1] = gld::complex(0,0);
+	c_mat[1][2] = gld::complex(0,0);
+	c_mat[2][0] = gld::complex(0,0);
+	c_mat[2][1] = gld::complex(0,0);
+	c_mat[2][2] = gld::complex(0,0);
 	
-	d_mat[0][0] = complex(1,0);
-	d_mat[0][1] = complex(0,0);
-	d_mat[0][2] = complex(0,0);
-	d_mat[1][0] = complex(0,0);
-	d_mat[1][1] = complex(1,0);
-	d_mat[1][2] = complex(0,0);
-	d_mat[2][0] = complex(0,0);
-	d_mat[2][1] = complex(0,0);
-	d_mat[2][2] = complex(1,0);
+	d_mat[0][0] = gld::complex(1,0);
+	d_mat[0][1] = gld::complex(0,0);
+	d_mat[0][2] = gld::complex(0,0);
+	d_mat[1][0] = gld::complex(0,0);
+	d_mat[1][1] = gld::complex(1,0);
+	d_mat[1][2] = gld::complex(0,0);
+	d_mat[2][0] = gld::complex(0,0);
+	d_mat[2][1] = gld::complex(0,0);
+	d_mat[2][2] = gld::complex(1,0);
 	
-	A_mat[0][0] = complex(1,0);
-	A_mat[0][1] = complex(0,0);
-	A_mat[0][2] = complex(0,0);
-	A_mat[1][0] = complex(0,0);
-	A_mat[1][1] = complex(1,0);
-	A_mat[1][2] = complex(0,0);
-	A_mat[2][0] = complex(0,0);
-	A_mat[2][1] = complex(0,0);
-	A_mat[2][2] = complex(1,0);
+	A_mat[0][0] = gld::complex(1,0);
+	A_mat[0][1] = gld::complex(0,0);
+	A_mat[0][2] = gld::complex(0,0);
+	A_mat[1][0] = gld::complex(0,0);
+	A_mat[1][1] = gld::complex(1,0);
+	A_mat[1][2] = gld::complex(0,0);
+	A_mat[2][0] = gld::complex(0,0);
+	A_mat[2][1] = gld::complex(0,0);
+	A_mat[2][2] = gld::complex(1,0);
 
 	// print out matrices when testing.
 #ifdef _TESTING

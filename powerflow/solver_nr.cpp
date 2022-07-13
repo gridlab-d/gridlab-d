@@ -30,8 +30,12 @@ Initialization after returning to service?
 
 ***********************************************************************
 */
-
+#include <cmath>
+#ifndef GLD_USE_EIGEN
 #include "solver_nr.h"
+#else
+#include "solver_nr_eigen.h"
+#endif
 
 /* access to module global variables */
 #include "powerflow.h"
@@ -39,7 +43,7 @@ Initialization after returning to service?
 #define MT // this enables multithreaded SuperLU
 
 #ifdef MT
-#include <slu_mt_ddefs.h>	//superLU_MT 
+#include <slu_mt_ddefs.h>	//superLU_MT
 #else
 #include <slu_ddefs.h>	//Sequential superLU (other platforms)
 #endif
@@ -77,7 +81,7 @@ typedef struct {
 void sparse_init(SPARSE* sm, int nels, int ncols)
 {
 	int indexval;
-	
+
 	//Allocate the column pointer GLD heap
 	sm->cols = (SP_E**)gl_malloc(ncols*sizeof(SP_E*));
 
@@ -1057,7 +1061,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					GL_THROW("NR line:%d - %s has an island association, but the ends do not",branch[jindexer].obj->id,(branch[jindexer].name ? branch[jindexer].name : "Unnamed"));
 					/*  TROUBLESHOOT
 					When parsing the line list, a line connected to an isolated node is still somehow associated with a proper island.
-					This should not occur.  Please submit your GLM file and a description to the 
+					This should not occur.  Please submit your GLM file and a description to the
 					issue tracker.
 					*/
 				}
@@ -1074,7 +1078,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					GL_THROW("NR line:%d - %s does not have a proper island association",branch[jindexer].obj->id,(branch[jindexer].name ? branch[jindexer].name : "Unnamed"));
 					/*  TROUBLESHOOT
 					When parsing the line list, a line connected to two valid nodes is still somehow unassociated.
-					This should not occur.  Please submit your GLM file and a description to the 
+					This should not occur.  Please submit your GLM file and a description to the
 					issue tracker.
 					*/
 				}
@@ -1889,7 +1893,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 				if (temp_size_c==-1)	//Make sure it is right
 				{
-					GL_THROW("NR: A line's phase was flagged as not full three-phase, but wasn't: (%s) %u %u %u %u", 
+					GL_THROW("NR: A line's phase was flagged as not full three-phase, but wasn't: (%s) %u %u %u %u",
 									 branch[jindexer].name, branch[jindexer].phases, branch[jindexer].origphases, phase_worka, phase_workb);
 					/*  TROUBLESHOOT
 					A line inside the powerflow model was flagged as not being full three-phase or
@@ -2588,7 +2592,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						{
 							//Form denominator term of Ii, since it won't change
 							temp_complex_1 = (~bus[indexer].V[0]) + (~bus[indexer].V[1])*avalsq + (~bus[indexer].V[2])*aval;
-							
+
 							//Form up numerator portion that doesn't change (Q and admittance)
 							//Do in parts, just for readability
 							//Row 1 of admittance mult
@@ -2616,7 +2620,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 							//Form denominator term of Ii, since it won't change
 							temp_complex_1 = ~temp_complex_4;
-							
+
 							//Form up numerator portion that doesn't change (Q and admittance)
 							//Should just be a single entry, for "reasons/asssumptions"
 							temp_complex_0 = ~temp_complex_4*(bus[indexer].full_Y[0]*temp_complex_4);
@@ -2643,7 +2647,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							}
 						}
 						//Default else - some other permutation, but not really supported (single-phase swing, or partial swing
-						
+
 						//numerator done, except PT portion (add in below - SWING bus is different
 					}
 					else	//Not enabled or not "full-Y-ed" - set to zero
@@ -2819,7 +2823,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 									{
 										work_vals_double_0 = 0.0;	//Assumes "converged"
 									}
-									
+
 									if (work_vals_double_0 > bus[indexer].max_volt_error)	//Failure check (defaults to voltage convergence for now)
 									{
 										powerflow_values->island_matrix_values[island_loop_index].swing_converged=false;
@@ -3974,6 +3978,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 		n = 2*powerflow_values->island_matrix_values[island_loop_index].total_variables;
 		nnz = powerflow_values->island_matrix_values[island_loop_index].size_Amatrix;
 
+//        std::cout<<(char*)matrix_solver_method<<std::endl;
 		if (powerflow_values->island_matrix_values[island_loop_index].matrices_LU.a_LU == NULL)	//First run
 		{
 			/* Set aside space for the arrays. */
@@ -4037,7 +4042,6 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			}
 			else if (matrix_solver_method == MM_EXTERN)	//External routine
 			{
-				//Run allocation routine
 				((void (*)(void *,unsigned int, unsigned int, bool))(LUSolverFcns.ext_alloc))(powerflow_values->island_matrix_values[island_loop_index].LU_solver_vars,n,n,NR_admit_change);
 			}
 			else
@@ -4905,9 +4909,9 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				}
 				else
 				{
-					//Call the "removal" routine - map it 
+					//Call the "removal" routine - map it
 					temp_fxn_val = (FUNCTIONADDR)(gl_get_function(fault_check_object,"island_removal_function"));
-					
+
 					//Make sure it was found
 					if (temp_fxn_val == NULL)
 					{
@@ -4954,9 +4958,9 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				}
 				else
 				{
-					//Call the "removal" routine - map it 
+					//Call the "removal" routine - map it
 					temp_fxn_val = (FUNCTIONADDR)(gl_get_function(fault_check_object,"island_removal_function"));
-					
+
 					//Make sure it was found
 					if (temp_fxn_val == NULL)
 					{

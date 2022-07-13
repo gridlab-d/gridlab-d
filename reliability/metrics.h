@@ -11,6 +11,7 @@
 #define _metrics_H
 
 #include <stdarg.h>
+
 #include "gridlabd.h"
 
 EXPORT STATUS metrics_event_ended(OBJECT *obj, OBJECT *event_obj,OBJECT *fault_obj,OBJECT *faulting_obj,TIMESTAMP event_start_time,TIMESTAMP event_end_time,char *fault_type,char *impl_fault,int number_customers_int);

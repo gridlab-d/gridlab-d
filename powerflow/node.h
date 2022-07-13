@@ -86,7 +86,7 @@ typedef enum {
 
 //Frequency measurement variable structure
 typedef struct {
-	complex voltage_val[3];	//Voltage values stored - used for "prev" version
+	gld::complex voltage_val[3];	//Voltage values stored - used for "prev" version
 	double x[3]; 		     //integrator state variable
 	double anglemeas[3];	 //angle measurement
 	double fmeas[3];		 //frequency measurement
@@ -99,20 +99,20 @@ typedef struct {
 class node : public powerflow_object
 {
 private:
-	complex last_voltage[3];		///< voltage at last pass
-	complex current_inj[3];			///< current injection (total of current+shunt+power)
+	gld::complex last_voltage[3];		///< voltage at last pass
+	gld::complex current_inj[3];			///< current injection (total of current+shunt+power)
 	TIMESTAMP prev_NTime;			///< Previous timestep - used for propogating child properties
-	complex last_child_power[4][3];	///< Previous power values - used for child object propogation
-	complex last_child_power_dy[6][3];	///< Previous power values joint - used for child object propogation
-	complex last_child_current12;	///< Previous current value - used for child object propogation (namely triplex)
+	gld::complex last_child_power[4][3];	///< Previous power values - used for child object propogation
+	gld::complex last_child_power_dy[6][3];	///< Previous power values joint - used for child object propogation
+	gld::complex last_child_current12;	///< Previous current value - used for child object propogation (namely triplex)
 	bool deltamode_inclusive;		///< Flag for deltamode functionality, just to prevent having to mask the flags
-	complex BusHistTerm[3];			///< Pointer for array used to store load history value for deltamode-based in-rush computations
+	gld::complex BusHistTerm[3];			///< Pointer for array used to store load history value for deltamode-based in-rush computations
 	double prev_delta_time;			///< Tracking variable for last time deltamode call occurred - used for "once a timestep" in-rush computations
-	complex *ahrlloadstore;			///< Pointer for array used to store load history constant ahrl -- associated with inductance
-	complex *bhrlloadstore;			///< Pointer for array used to store load history constant bhrl -- associated with inductance
-	complex *chrcloadstore;			///< Pointer for array used to store load history constant chrc -- associated with capacitance
-	complex *LoadHistTermL;			///< Pointer for array used to store load history value for deltamode-based in-rush computations -- Inductive terms
-	complex *LoadHistTermC;			///< Pointer for array used to store load history value for deltamode-based in-rush computations -- Shunt capacitance terms
+	gld::complex *ahrlloadstore;			///< Pointer for array used to store load history constant ahrl -- associated with inductance
+	gld::complex *bhrlloadstore;			///< Pointer for array used to store load history constant bhrl -- associated with inductance
+	gld::complex *chrcloadstore;			///< Pointer for array used to store load history constant chrc -- associated with capacitance
+	gld::complex *LoadHistTermL;			///< Pointer for array used to store load history value for deltamode-based in-rush computations -- Inductive terms
+	gld::complex *LoadHistTermC;			///< Pointer for array used to store load history value for deltamode-based in-rush computations -- Shunt capacitance terms
 
 	//Frequently measurement variables
 	FREQM_STATES curr_freq_state;		//Current state of all vari
@@ -148,8 +148,8 @@ public:
 	object reference_bus;		///< reference bus from which frequency is defined */
 	static unsigned int n;		///< node count */
 	unsigned short k;			///< incidence count (number of links connecting to this node) */
-	complex *prev_voltage_value;	// Pointer for array used to store previous voltage value for Master/Slave functionality
-	complex *prev_power_value;		// Pointer for array used to store previous power value for Master/Slave functionality
+	gld::complex *prev_voltage_value;	// Pointer for array used to store previous voltage value for Master/Slave functionality
+	gld::complex *prev_power_value;		// Pointer for array used to store previous power value for Master/Slave functionality
 
 	bool reset_island_state;			//< Flagging variable - indicates the disabled island state should be re-evaluated
 public:
@@ -210,28 +210,28 @@ public:
 	double maximum_voltage_error;  // convergence voltage limit
 
 	// properties
-	complex voltage[3];		/// bus voltage to ground
-	complex voltaged[3];	/// bus voltage differences
-	complex current[3];		/// bus current injection (positive = in)
-	complex pre_rotated_current[3];	/// bus current that has been rotated already for deltamode (direct post to powerflow)
-	complex deltamode_dynamic_current[3];	/// bus current that is pre-rotated, but also has ability to be reset within powerflow
-	complex deltamode_PGenTotal;			/// Bus generated power - used deltamode
-	complex power[3];		/// bus power injection (positive = in)
-	complex shunt[3];		/// bus shunt admittance 
-	complex current_dy[6];	/// bus current injection (positive = in), explicitly specify delta and wye portions
-	complex power_dy[6];	/// bus power injection (positive = in), explicitly specify delta and wye portions
-	complex shunt_dy[6];	/// bus shunt admittance, explicitly specify delta and wye portions
-	complex *full_Y;		/// full 3x3 bus shunt admittance - populate as necessary
-	complex *full_Y_load;	/// 3x1 bus shunt admittance - meant to update (not part of BA_diag) - populate as necessary
-	complex *full_Y_all;	/// Full 3x3 bus admittance with "other" contributions (self of full admittance) - populate as necessary
+	gld::complex voltage[3];		/// bus voltage to ground
+	gld::complex voltaged[3];	/// bus voltage differences
+	gld::complex current[3];		/// bus current injection (positive = in)
+	gld::complex pre_rotated_current[3];	/// bus current that has been rotated already for deltamode (direct post to powerflow)
+	gld::complex deltamode_dynamic_current[3];	/// bus current that is pre-rotated, but also has ability to be reset within powerflow
+	gld::complex deltamode_PGenTotal;			/// Bus generated power - used deltamode
+	gld::complex power[3];		/// bus power injection (positive = in)
+	gld::complex shunt[3];		/// bus shunt admittance
+	gld::complex current_dy[6];	/// bus current injection (positive = in), explicitly specify delta and wye portions
+	gld::complex power_dy[6];	/// bus power injection (positive = in), explicitly specify delta and wye portions
+	gld::complex shunt_dy[6];	/// bus shunt admittance, explicitly specify delta and wye portions
+	gld::complex *full_Y;		/// full 3x3 bus shunt admittance - populate as necessary
+	gld::complex *full_Y_load;	/// 3x1 bus shunt admittance - meant to update (not part of BA_diag) - populate as necessary
+	gld::complex *full_Y_all;	/// Full 3x3 bus admittance with "other" contributions (self of full admittance) - populate as necessary
 	DYN_NODE_TYPE node_type;/// Variable to indicate what we are - prevents needing a gl_object_isa EVERY...SINGLE...TIME in an already slow dynamic simulation
-	complex current12;		/// Used for phase 1-2 current injections in triplex
-	complex nom_res_curr[3];/// Used for the inclusion of nominal residential currents (for angle adjustments)
+	gld::complex current12;		/// Used for phase 1-2 current injections in triplex
+	gld::complex nom_res_curr[3];/// Used for the inclusion of nominal residential currents (for angle adjustments)
 	bool house_present;		/// Indicator flag for a house being attached (NR primarily)
 	bool dynamic_norton;	/// Norton-equivalent posting on this bus -- deltamode and diesel generator ties
 	bool dynamic_generator;	/// Swing-type generator posting on this bus -- deltamode and other generator ties
-	complex *Triplex_Data;	/// Link to triplex line for extra current calculation information (NR)
-	complex *Extra_Data;	/// Link to extra data information (NR)
+	gld::complex *Triplex_Data;	/// Link to triplex line for extra current calculation information (NR)
+	gld::complex *Extra_Data;	/// Link to extra data information (NR)
 	unsigned int NR_connected_links[2];	/// Counter for number of connected links in the system
 	unsigned int NR_number_child_nodes[2];	/// Counter for number of childed nodes we have (for later NR linking)
 	node **NR_child_nodes;	/// Pointer to childed nodes list
@@ -256,7 +256,7 @@ public:
 	TIMESTAMP presync(TIMESTAMP t0);
 	TIMESTAMP sync(TIMESTAMP t0);
 	TIMESTAMP postsync(TIMESTAMP t0);
-	int isa(char *classname);
+	static int isa(const char *classname);
 	int notify(int update_mode, PROPERTY *prop, char *value);
 	SIMULATIONMODE inter_deltaupdate_node(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
@@ -264,7 +264,7 @@ public:
 	TIMESTAMP NR_node_presync_fxn(TIMESTAMP t0_val);
 	void NR_node_sync_fxn(OBJECT *obj);
 	void BOTH_node_postsync_fxn(OBJECT *obj);
-	OBJECT *NR_master_swing_search(char *node_type_value,bool main_swing);
+	static OBJECT *NR_master_swing_search(const char *node_type_value,bool main_swing);
 
 	void init_freq_dynamics(double deltat);
 	STATUS calc_freq_dynamics(double deltat);

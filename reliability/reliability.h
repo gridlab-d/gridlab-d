@@ -6,6 +6,7 @@
 #define _reliability_H
 
 #include <stdarg.h>
+
 #include "gridlabd.h"
 
 #ifdef _RELIABILITY_CPP

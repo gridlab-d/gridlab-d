@@ -11,6 +11,7 @@
 #define _areas_H
 
 #include <stdarg.h>
+
 #include "gridlabd.h"
 
 class areas {

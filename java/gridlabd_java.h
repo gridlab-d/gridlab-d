@@ -21,6 +21,7 @@
  **/
 
 #include <jni.h>
+
 #include "gridlabd.h"
 
 #ifndef _GRIDLABD_JAVA_H_

@@ -7,10 +7,12 @@
  *      Provides a unified MySQL Connection interface and query constructor.
  */
 
+#include "config.h"
 #ifdef HAVE_MYSQL
 
 #include <sstream>
 #include <vector>
+
 #include "query_engine.h"
 
 using namespace std;

@@ -2,6 +2,7 @@
 //	Copyright (C) 2008 Battelle Memorial Institute
 
 #define DLMAIN
+#include "config.h"
 
 #ifdef HAVE_MYSQL
 #include "database.h"
@@ -1136,7 +1137,7 @@ bool export_properties(MYSQL *mysql)
 			void *addr = var.get_addr();
 			switch ( prop->ptype ) {
 			case PT_random:
-				gl_randomvar_getspec(specs,sizeof(specs),(randomvar*)addr);
+				gl_randomvar_getspec(specs,sizeof(specs),(randomvar_struct*)addr);
 				type = "randomvar";
 				break;
 			default:

@@ -4,6 +4,7 @@
 #define _rest_H
 
 #include <stdarg.h>
+
 #include "gridlabd.h"
 #include "object.h"
 #include "server.h"

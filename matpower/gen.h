@@ -10,6 +10,7 @@
 #define _gen_H
 
 #include <stdarg.h>
+
 #include "gridlabd.h"
 
 #define MAX_NODE 10000

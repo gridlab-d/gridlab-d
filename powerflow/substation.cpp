@@ -16,10 +16,12 @@
 	@{
  **/
 //Built from meter object
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <exception>
+#include <stdexcept>
 
 #include "substation.h"
 #include "timestamp.h"
@@ -93,7 +95,7 @@ substation::substation(MODULE *mod) : node(mod)
 	}
 }
 
-int substation::isa(char *classname)
+int substation::isa(const char *classname)
 {
 	return strcmp(classname,"substation")==0 || node::isa(classname);
 }
@@ -116,7 +118,7 @@ int substation::create()
 	return result;
 }
 
-void substation::fetch_complex(complex **prop, char *name, OBJECT *parent){
+void substation::fetch_complex(complex **prop, const char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
 	*prop = gl_get_complex_by_name(parent, name);
 	if(*prop == NULL){
@@ -124,7 +126,7 @@ void substation::fetch_complex(complex **prop, char *name, OBJECT *parent){
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "substation:%i", hdr->id);
-		if(*name == 0)
+		if(name == nullptr || name[0] == '\0')
 			sprintf(msg, "%s: substation unable to find property: name is NULL", namestr);
 		else
 			sprintf(msg, "%s: substation unable to find %s", namestr, name);
@@ -132,7 +134,7 @@ void substation::fetch_complex(complex **prop, char *name, OBJECT *parent){
 	}
 }
 
-void substation::fetch_double(double **prop, char *name, OBJECT *parent){
+void substation::fetch_double(double **prop, const char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
 	*prop = gl_get_double_by_name(parent, name);
 	if(*prop == NULL){
@@ -140,11 +142,11 @@ void substation::fetch_double(double **prop, char *name, OBJECT *parent){
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "substation:%i", hdr->id);
-		if(*name == 0)
-			sprintf(msg, "%s: substation unable to find property: name is NULL", namestr);
+		if(name == nullptr || name[0] == '\0')
+			sprintf(msg, "%s: substation unable to find property: name is not defined", namestr);
 		else
 			sprintf(msg, "%s: substation unable to find %s", namestr, name);
-		throw(msg);
+		throw std::runtime_error(msg);
 	}
 }
 
@@ -174,9 +176,9 @@ int substation::init(OBJECT *parent)
 	}//End convergence value check
 
 	//Check to see if it has a parent (no sense to ISAs if it is empty)
-	if (parent != NULL)
+	if (parent != nullptr)
 	{
-		if (gl_object_isa(parent,"pw_load","network"))
+		if (gl_object_isa(parent, "pw_load","network"))
 		{
 			//Make sure it is done, otherwise defer
 			if((parent->flags & OF_INIT) != OF_INIT){
@@ -508,8 +510,23 @@ EXPORT TIMESTAMP sync_substation(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			throw "invalid pass request";
 		}
 		throw "invalid pass request";
-	} 
-	SYNC_CATCHALL(substation);
+	}
+
+//    catch (char *msg) {
+//        gl_error("sync_substation(obj=%d;%s): %s", obj->id, obj->name ? obj->name : "unnamed", msg);
+//        return TS_INVALID;
+//    } catch (const char *msg) {
+//        gl_error("sync_substation(obj=%d;%s): %s", obj->id, obj->name ? obj->name : "unnamed", msg);
+//        return TS_INVALID;
+//    }
+//    catch(const std::exception& ex) {
+//        gl_error("sync_substation(obj=%d;%s): unhandled exception", obj->id, obj->name ? obj->name : "unnamed");
+//        gl_error(ex.what());
+//        return TS_INVALID;
+//    }
+//    return TS_INVALID;
+
+    SYNC_CATCHALL(substation);
 }
 
 EXPORT int notify_substation(OBJECT *obj, int update_mode, PROPERTY *prop, char *value){

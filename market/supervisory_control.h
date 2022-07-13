@@ -11,6 +11,7 @@
 #define _supervisory_control_H
 
 #include <stdarg.h>
+
 #include "gridlabd.h"
 #include "market.h"
 #include "bid.h"

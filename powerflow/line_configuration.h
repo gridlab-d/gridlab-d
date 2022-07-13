@@ -17,15 +17,15 @@ public:
 	OBJECT *phaseC_conductor;
 	OBJECT *phaseN_conductor;
 	OBJECT *line_spacing;
-	complex impedance11;	// Used when defining the z-bus matrix explicitely.
-	complex impedance12;	// For ABC phasing, 1-A, 2-B, 3-C; For triplex 1-ph1, 2-ph2, 3-0
-	complex impedance13;
-	complex impedance21;
-	complex impedance22;
-	complex impedance23;
-	complex impedance31;
-	complex impedance32;
-	complex impedance33;
+	gld::complex impedance11;	// Used when defining the z-bus matrix explicitely.
+	gld::complex impedance12;	// For ABC phasing, 1-A, 2-B, 3-C; For triplex 1-ph1, 2-ph2, 3-0
+	gld::complex impedance13;
+	gld::complex impedance21;
+	gld::complex impedance22;
+	gld::complex impedance23;
+	gld::complex impedance31;
+	gld::complex impedance32;
+	gld::complex impedance33;
 	double  capacitance11;	// Used when defining the y-bus matrix explicitely.
 	double  capacitance12;	// For ABC phasing, 1-A, 2-B, 3-C; For triplex 1-ph1, 2-ph2, 3-0
 	double  capacitance13;

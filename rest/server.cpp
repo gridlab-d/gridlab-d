@@ -20,13 +20,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
-
-#include "server.h"
-#include "mongoose.h"
 #include <string>
 #include <sstream>
 #include <iostream>
 #include <iomanip>
+
+#include "server.h"
+#include "mongoose.h"
 
 CLASS *server::oclass = NULL;
 server *server::defaults = NULL;
