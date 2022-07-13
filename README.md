@@ -10,20 +10,19 @@ g++ or Clang
 
 ### Git
 
-Clone the git repository for GridLAB-D, and update submodules:
+Clone the git repository for GridLAB-D and update submodules:
 
 ```shell script
 git clone https://github.com/gridlab-d/gridlab-d.git
+cd gridlab-d
 git submodule update --init
 ```
 
 ### Prepare out-of-source build directory
 
-Change directory into folder, and create build directory. Change to build directory and invoke `cmake` as described
-below:
+Create build directory and move into it:
 
 ```shell script 
-cd gridlab-d
 mkdir cmake-build
 cd cmake-build
 ```
