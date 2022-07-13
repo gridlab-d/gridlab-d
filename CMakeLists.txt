@@ -13,6 +13,7 @@ set(CMAKE_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/lib/${GLD_PACKAGE}" CACHE PATH
 set(CMAKE_INSTALL_DATADIR "${CMAKE_INSTALL_PREFIX}/share/${GLD_PACKAGE}" CACHE PATH "" FORCE)
 
 option(CMAKE_VERBOSE_MAKEFILE "CMake outputs all build instructions" OFF)
+option(GLD_DO_CLEANUP "Automatically removes files from old GridLAB-D build processes" OFF)
 #SET(CMAKE_VERBOSE_MAKEFILE ON)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
@@ -24,6 +25,7 @@ include(CheckSymbolExists)
 include(CMakeDependentOption)
 
 # Setup Gridlab-d Version information.
+include(cmake/Cleanup.cmake)
 include(cmake/SetVersion.cmake)
 # Perform dependency checks
 include(cmake/CheckDependancies.cmake)

@@ -56,14 +56,15 @@ cmake --build . -j8 --target install
 The following variables affect the build process and can be changed using the `-D` flag at build generation or by
 updating the cache using ccmake or cmake-gui (default values are shown).
 
-| Variable             | Valid Values                                       | Description                                                       | Linux/Mac Default | Windows Default |
-|----------------------|----------------------------------------------------|-------------------------------------------------------------------|-------------------|-----------------|
-| CMAKE_BUILD_TYPE     | 'Debug', 'RelWithDebInfo', 'MinSizeRel', 'Release' | Compiler optimizer configuration                                  | Debug             | Debug           |
-| CMAKE_INSTALL_PREFIX | Any path                                           | Install location                                                  | /usr/local        | %ProgramFiles%  |
-| GLD_USE_HELICS       | ON/OFF                                             | Enables detection and use of HELICS                               | OFF               | OFF             |
-| HELICS_DIR           | Any path                                           | Hint indicating HELICS install directory                          |                   |                 |
-| GLD_USE_MYSQL        | ON/OFF                                             | Enables detection and use of MySQL                                | OFF               | OFF             |
-| MYSQL_DIR            | Any path                                           | Hint indicating MySQL install directory                           |                   |                 |
+| Variable             | Valid Values                                       | Description                                     | Linux/Mac Default | Windows Default |
+|----------------------|----------------------------------------------------|-------------------------------------------------|-------------------|-----------------|
+| CMAKE_BUILD_TYPE     | 'Debug', 'RelWithDebInfo', 'MinSizeRel', 'Release' | Compiler optimizer configuration                | Debug             | Debug           |
+| CMAKE_INSTALL_PREFIX | Any path                                           | Install location                                | /usr/local        | %ProgramFiles%  |
+| GLD_USE_HELICS       | ON/OFF                                             | Enables detection and use of HELICS             | OFF               | OFF             |
+| HELICS_DIR           | Any path                                           | Hint indicating HELICS install directory        |                   |                 |
+| GLD_USE_MYSQL        | ON/OFF                                             | Enables detection and use of MySQL              | OFF               | OFF             |
+| MYSQL_DIR            | Any path                                           | Hint indicating MySQL install directory         |                   |                 |
+| GLD_DO_CLEANUP       | ON/OFF                                             | Remove files from old GridLAB-D build processes | OFF               | OFF             |
 
 ### Enable building with HELICS
 
