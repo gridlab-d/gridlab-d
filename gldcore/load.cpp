@@ -774,7 +774,7 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 			if (!use_msvc)
 			{
 #define DEFAULT_CXX "g++"
-#define DEFAULT_CXXFLAGS ""
+#define DEFAULT_CXXFLAGS "-fPIC"
 #define DEFAULT_LDFLAGS ""
 				char execstr[1024];
 				char ldstr[1024];

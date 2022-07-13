@@ -18,9 +18,9 @@ else
 fi
 
 if test "x$TERM" = "xcygwin"; then
-  export CXXFLAGS="-I${pkgdatadir} $CXXFLAGS"
+  export CXXFLAGS="-I${pkgdatadir} -fPIC $CXXFLAGS"
 else
-  export CXXFLAGS="-I$pkgdatadir $CXXFLAGS"
+  export CXXFLAGS="-I$pkgdatadir -fPIC $CXXFLAGS"
 fi
 
 if test "x@FOUND_WINDOWS@" != "xyes"; then # Generated test for WIN32
