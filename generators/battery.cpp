@@ -277,7 +277,7 @@ int battery::init(OBJECT *parent)
 		}
 	}
 
-	if(use_internal_battery_model == FALSE)
+	if(use_internal_battery_model == false)
 	{
 		// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
 		if (parent!=NULL)
@@ -784,7 +784,7 @@ TIMESTAMP battery::presync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	gld_wlock *test_rlock;
 
-	if(use_internal_battery_model == TRUE){
+	if(use_internal_battery_model == true){
 			double dt;
 		if(t0 != 0){
 
@@ -902,7 +902,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 		return t1; //Force us to reiterate one
 	}//End first timestep
 
-	if(use_internal_battery_model == FALSE){
+	if(use_internal_battery_model == false){
 		if (gen_mode_v == GM_POWER_DRIVEN || gen_mode_v == GM_POWER_VOLTAGE_HYBRID) 
 		{
 			if (number_of_phases_out == 3)
@@ -2165,7 +2165,7 @@ TIMESTAMP battery::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	double temp_double_value;
 
-	if(use_internal_battery_model == FALSE){
+	if(use_internal_battery_model == false){
 		TIMESTAMP result;
 
 		Iteration_Toggle = !Iteration_Toggle;
@@ -2188,7 +2188,7 @@ TIMESTAMP battery::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			return result;
 		else
 			return TS_NEVER;
-	} else {//use_internal_battery_model is TRUE
+	} else {//use_internal_battery_model is true
 		//Pull the load
 		temp_double_value = pBatteryLoad->get_double();
 		bat_load = -temp_double_value;
@@ -2368,7 +2368,7 @@ SIMULATIONMODE battery::inter_deltaupdate(unsigned int64 delta_time, unsigned lo
 	//Get timestep value
 	deltat = (double)dt/(double)DT_SECOND;
 
-	if(enableDelta == TRUE){
+	if(enableDelta == true){
 
 		// Initialization - update the soc based on inverter output before entering the delta mode
 		if ((delta_time==0) && (iteration_count_val==0))	//First run of new delta call

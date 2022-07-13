@@ -624,18 +624,18 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 			const char *name;
 			int optional;
 		} map[] = {
-			{&c->create,"create",FALSE},
-			{&c->init,"init",TRUE},
-			{&c->precommit,"precommit",TRUE},
-			{&c->sync,"sync",TRUE},
-			{&c->commit,"commit",TRUE},
-			{&c->finalize,"finalize",TRUE},
-			{&c->notify,"notify",TRUE},
-			{&c->isa,"isa",TRUE},
-			{&c->plc,"plc",TRUE},
-			{&c->recalc,"recalc",TRUE},
-			{&c->update,"update",TRUE},
-			{&c->heartbeat,"heartbeat",TRUE},
+			{&c->create,"create",       false},
+			{&c->init,"init",           true},
+			{&c->precommit,"precommit", true},
+			{&c->sync,"sync",           true},
+			{&c->commit,"commit",       true},
+			{&c->finalize,"finalize",   true},
+			{&c->notify,"notify",       true},
+			{&c->isa,"isa",             true},
+			{&c->plc,"plc",             true},
+			{&c->recalc,"recalc",       true},
+			{&c->update,"update",       true},
+			{&c->heartbeat,"heartbeat",true},
 		};
 		int i;
 		for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
@@ -2321,7 +2321,7 @@ void sched_signal(int sig)
 		/* stop processing */
 		sched_stop = 1;
 #ifdef _WIN32
-		return TRUE;
+		return true;
 	}
 	return FALSE;
 #endif
@@ -2340,8 +2340,8 @@ void sched_continuous(void)
 	initscr();
 	cbreak();
 	echo();
-	intrflush(stdscr,TRUE);
-	keypad(stdscr,TRUE);
+	intrflush(stdscr,true);
+	keypad(stdscr,true);
 	refresh();
 	halfdelay(1);
 
@@ -2436,7 +2436,7 @@ void sched_controller(void)
 
 	global_suppress_repeat_messages = 0;
 #ifdef _WIN32
-	if ( !SetConsoleCtrlHandler(sched_signal,TRUE) )
+	if ( !SetConsoleCtrlHandler(sched_signal,true) )
 		output_warning("unable to suppress console Ctrl-C handler");
 #else
 	signal(SIGINT,sched_signal);

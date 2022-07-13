@@ -201,7 +201,7 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
 	}
 
 	/* do module dumps */
-	if (global_dumpall!=FALSE)
+	if (global_dumpall!=false)
 	{
 		output_verbose("dumping module data");
 		module_dumpall();

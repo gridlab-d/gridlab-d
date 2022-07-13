@@ -402,8 +402,8 @@ int inverter::create(void)
 	last_current[0] = last_current[1] = last_current[2] = last_current[3] = 0.0;
 	last_power[0] = last_power[1] = last_power[2] = last_power[3] = 0.0;
 
-	islanded = FALSE;
-	use_multipoint_efficiency = FALSE;
+	islanded = false;
+	use_multipoint_efficiency = false;
 	p_dco = -1;
 	p_so = -1;
 	v_dco = -1;
@@ -1239,7 +1239,7 @@ int inverter::init(OBJECT *parent)
 				bp_rated = 3*p_rated/inv_eta;
 			}
 			//Ab : p_rated per phase; p_max for entire inverter	
-			if(use_multipoint_efficiency == FALSE){ 
+			if(use_multipoint_efficiency == false){
 				if(p_max == -1){
 					p_max = bp_rated*inv_eta;
 				}
@@ -1594,7 +1594,7 @@ int inverter::init(OBJECT *parent)
 	}
 
 	//seting up defaults for multipoint efficiency
-	if(use_multipoint_efficiency == TRUE){
+	if(use_multipoint_efficiency == true){
 		switch(inverter_manufacturer){//all manufacturer defaults use the CEC parameters
 			case NONE:
 				if(p_dco < 0){
@@ -2656,7 +2656,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					P_In = V_In * I_In; //DC
 
 					// need to differentiate between different pulses...
-					if(use_multipoint_efficiency == FALSE){
+					if(use_multipoint_efficiency == false){
 						VA_Out = P_In * efficiency;
 					} else {
 						if(P_In <= p_so){

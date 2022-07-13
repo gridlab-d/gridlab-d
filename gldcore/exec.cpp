@@ -1201,7 +1201,7 @@ static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2)
 {
 	static int n_commits = -1;
 	static MTI *mti[] = {NULL,NULL};
-	static int init_tried = FALSE;
+	static int init_tried = false;
 	MTIDATA input = (MTIDATA)&t0;
 	MTIDATA output = (MTIDATA)&t2;
 	TIMESTAMP result = TS_NEVER;
@@ -1233,7 +1233,7 @@ static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2)
 					if ( mti[pc]==NULL )
 					{
 						output_warning("commit_all multi-threaded iterator initialization failed - using single-threaded iterator as fallback");
-						init_tried = TRUE;
+						init_tried = true;
 					}
 				}
 
@@ -2095,7 +2095,7 @@ STATUS exec_start()
 	}
 
 	// global test mode
-	if ( global_test_mode==TRUE )
+	if ( global_test_mode==true )
 		return static_cast<STATUS>(test_exec());
 
 	/* check for a model */
@@ -3099,7 +3099,7 @@ void *slave_node_proc(void *args)
  **/
 void exec_slave_node()
 {
-	static bool node_done = FALSE;
+	static bool node_done = false;
 	static SOCKET sockfd = -1;
 	SOCKET *args[4];
 	struct sockaddr_in server_addr;
@@ -3194,7 +3194,7 @@ void exec_slave_node()
 			{
 				output_error("unable to accept connection");
 				perror("accept()");
-				node_done = TRUE;
+				node_done = true;
 				closesocket(sockfd);
 				return;
 			}
@@ -3208,7 +3208,7 @@ void exec_slave_node()
 			if ( pthread_create(&slave_thread, NULL, slave_node_proc, (void *)args) )
 			{
 				output_error("slavenode unable to thread off connection");
-				node_done = TRUE;
+				node_done = true;
 				closesocket(sockfd);
 				closesocket(*args[2]);
 				return;
@@ -3217,7 +3217,7 @@ void exec_slave_node()
 			if ( pthread_detach(slave_thread) )
 			{
 				output_error("slavenode unable to detach connection thread");
-				node_done = TRUE;
+				node_done = true;
 				closesocket(sockfd);
 				closesocket(*args[2]);
 				return;

@@ -819,7 +819,7 @@ int solar::init(OBJECT *parent)
 			temp_double_div_value_eta = temp_inv_p_rated / temp_p_eta;
 			temp_double_div_value_eff = temp_inv_p_rated / temp_p_efficiency;
 
-			if (temp_bool_val == TRUE)
+			if (temp_bool_val == true)
 			{
 				if (Max_P > temp_double_val)
 				{

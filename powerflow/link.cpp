@@ -560,7 +560,7 @@ int link_object::init(OBJECT *parent)
 	OBJECTDATA(to,node)->k++;
 
 	//See if limits are enabled - if so, populate them
-	if (use_link_limits==TRUE)
+	if (use_link_limits==true)
 	{
 		//See what kind of link we are - if not in this list, ignore it
 		if (gl_object_isa(obj,"transformer","powerflow") || gl_object_isa(obj,"underground_line","powerflow") || gl_object_isa(obj,"overhead_line","powerflow") || gl_object_isa(obj,"triplex_line","powerflow"))	//Default line or xformer

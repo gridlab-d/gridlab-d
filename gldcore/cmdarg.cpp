@@ -445,7 +445,7 @@ static int globaldump(int argc, char *argv[])
 }
 static int relax(int argc, char *argv[])
 {
-	global_strictnames = FALSE;
+	global_strictnames = false;
 	return 0;
 }
 static int pidfile(int argc, char *argv[])
@@ -487,7 +487,7 @@ static int testall(int argc, char *argv[])
 		return CMDERR;
 	}
 	argc--;
-	global_test_mode=TRUE;
+	global_test_mode=true;
 
 	if(fd == NULL)
 	{
@@ -659,7 +659,7 @@ static int modtest(int argc, char *argv[])
 static int test(int argc, char *argv[])
 {
 	int n=0;
-	global_test_mode = TRUE;
+	global_test_mode = true;
 	while (argc>1)
 	{
 		test_request(*++argv);
@@ -673,7 +673,7 @@ static int define(int argc, char *argv[])
 	if (argc>1)
 	{
 		bool namestate = global_strictnames;
-		global_strictnames = FALSE;
+		global_strictnames = false;
 		if (global_setvar(*++argv,NULL)==SUCCESS){
 			argc--;
 		}

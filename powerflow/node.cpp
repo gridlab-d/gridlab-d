@@ -17,7 +17,7 @@
 
 	@par Voltage control
 
-	When the global variable require_voltage_control is set to \p TRUE,
+	When the global variable require_voltage_control is set to \p true,
 	the bus type is used to determine how voltage control is implemented.
 	Voltage control is only performed when the bus has no link that
 	considers it a to node.  When the flag \#NF_HASSOURCE is cleared, then
@@ -2849,7 +2849,7 @@ void node::BOTH_node_postsync_fxn(OBJECT *obj) {
     //Default else -- no in-rush and no deltamode
 
     /* check for voltage control requirement */
-    if (require_voltage_control == TRUE) {
+    if (require_voltage_control == true) {
         /* PQ bus must have a source */
         if ((busflags & NF_HASSOURCE) == 0 && bustype == PQ)
             voltage[0] = voltage[1] = voltage[2] = gld::complex(0, 0);
