@@ -87,7 +87,6 @@
 #include <cctype>
 #include <csignal>
 #include <cstring>
-#include <sys/timeb.h>
 #include <memory>
 #include <thread>
 #ifdef _WIN32
@@ -187,16 +186,18 @@ const char *exec_getexitcodestr(EXITCODE xc)
 /** Elapsed wallclock **/
 int64 exec_clock()
 {
-	static struct timeb t0;
-	struct timeb t1={0,0,0,0};
-	if ( t0.time==0 )
-	{
-		ftime(&t0);
-		t1 = t0;
-	}
-	else
-		ftime(&t1);
-	return (t1.time-t0.time)*CLOCKS_PER_SEC + (t1.millitm-t0.millitm)*CLOCKS_PER_SEC/1000;
+    using std::chrono::system_clock;
+    static bool initialized = false;
+    static std::chrono::time_point<system_clock> nt1;
+    static std::chrono::time_point<system_clock> nt2;
+    if (!initialized) { // [[unlikely]] {
+        nt1 = system_clock::now();
+        nt2 = nt1;
+        initialized = true;
+    } else { // [[likely]] {
+        nt2 = system_clock::now();
+    }
+    return std::chrono::duration_cast<std::chrono::microseconds>(nt2 - nt1).count();
 }
 
 /** The main system initialization sequence
