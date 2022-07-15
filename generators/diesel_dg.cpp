@@ -7,10 +7,10 @@
  @{
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "diesel_dg.h"
 
@@ -23,6 +23,7 @@ static PASSCONFIG clockpass = PC_BOTTOMUP;
 /* Class registration is only called once to register the class with the core */
 diesel_dg::diesel_dg(MODULE *module)
 {
+
 	if (oclass==NULL)
 	{
 		oclass = gl_register_class(module,"diesel_dg",sizeof(diesel_dg),passconfig|PC_AUTOLOCK);
@@ -36,7 +37,7 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_enumeration,"Gen_type",PADDR(Gen_type),
 				PT_KEYWORD,"CONSTANT_PQ",(enumeration)NON_DYN_CONSTANT_PQ,PT_DESCRIPTION,"Non-dynamic mode of diesel generator with constant PQ output as defined",
 				PT_KEYWORD,"DYN_SYNCHRONOUS",(enumeration)DYNAMIC,PT_DESCRIPTION,"Dynamics-capable implementation of synchronous diesel generator",
-		
+
 			PT_double, "pf", PADDR(power_factor),PT_DESCRIPTION,"desired power factor",PT_DEPRECATED,
 
 			//End of synchronous generator inputs
@@ -58,7 +59,7 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double, "reactive_power_out_A[VAr]", PADDR(imag_power_val[0]),PT_DESCRIPTION,"Reactive power output of phase A",
 			PT_double, "reactive_power_out_B[VAr]", PADDR(imag_power_val[1]),PT_DESCRIPTION,"Reactive power output of phase B",
 			PT_double, "reactive_power_out_C[VAr]", PADDR(imag_power_val[2]),PT_DESCRIPTION,"Reactive power output of phase C",
-			
+
 			//Properties for dynamics capabilities (subtransient model)
 			PT_double,"omega_ref[rad/s]",PADDR(omega_ref),PT_DESCRIPTION,"Reference frequency of generator (rad/s)",
 			PT_double,"inertia",PADDR(inertia),PT_DESCRIPTION,"Inertial constant (H) of generator",
@@ -399,7 +400,7 @@ int diesel_dg::isa(char *classname)
 }
 
 /* Object creation is called once for each object that is created by the core */
-int diesel_dg::create(void) 
+int diesel_dg::create(void)
 {
 ////Initialize tracking variables
 	//End of synchronous generator inputs
@@ -416,25 +417,25 @@ int diesel_dg::create(void)
 	//Dynamics generator defaults
 	omega_ref=0.0;  	//Will be pulled from powerflow
 	f_nominal=0.0;	//Will be pulled from powerflow
-	inertia=0.7;              
-	damping=0.0;                
-	number_poles=2;     
-	Ra=0.00625;         
-	Xd=2.06;            
-	Xq=2.5;             
-	Xdp=0.398;          
-	Xqp=0.3;            
-	Xdpp=0.254;         
-	Xqpp=0.254;         
-	Xl=0.1;             
-	Tdp=0.31737;        
-	Tdop=4.45075;       
-	Tqop=3.0;           
-	Tdopp=0.066;        
-	Tqopp=0.075;        
-	Ta=0.03202;         
-	X0=complex(0.005,0.05);
-	X2=complex(0.0072,0.2540);
+	inertia=0.7;
+	damping=0.0;
+	number_poles=2;
+	Ra=0.00625;
+	Xd=2.06;
+	Xq=2.5;
+	Xdp=0.398;
+	Xqp=0.3;
+	Xdpp=0.254;
+	Xqpp=0.254;
+	Xl=0.1;
+	Tdp=0.31737;
+	Tdop=4.45075;
+	Tqop=3.0;
+	Tdopp=0.066;
+	Tqopp=0.075;
+	Ta=0.03202;
+	X0=gld::complex(0.005,0.05);
+	X2=gld::complex(0.0072,0.2540);
 
 	//Input variables are initialized to -99 (since pu) - if left there, the dynamics initialization gets them
 	gen_base_set_vals.wref = -99.0;
@@ -445,34 +446,34 @@ int diesel_dg::create(void)
 	gen_base_set_vals.f_set = -99.0;
 
 	//SEXS Exciter defaults
-	exc_KA=50;              
-	exc_TA=0.01;            
-	exc_TB=2.0;               
-	exc_TC=10;              
-	exc_EMAX=3.0;             
+	exc_KA=50;
+	exc_TA=0.01;
+	exc_TB=2.0;
+	exc_TC=10;
+	exc_EMAX=3.0;
 	exc_EMIN=-3.0;
 
 	mq_QV_Droop=0.05; // Q-V droop slope
 	Vset_QV_droop=1; //Voltage setpoint of QV droop
 
 	//DEGOV1 Governor defaults
-	gov_degov1_R=0.05;             
-	gov_degov1_T1=0.2;             
-	gov_degov1_T2=0.3;             
-	gov_degov1_T3=0.5;             
-	gov_degov1_K=0.8;              
-	gov_degov1_T4=1.0;               
-	gov_degov1_T5=0.1;             
-	gov_degov1_T6=0.2;             
-	gov_degov1_TMAX=1.0;             
-	gov_degov1_TMIN=0.0;             
-	gov_degov1_TD=0.01;            
+	gov_degov1_R=0.05;
+	gov_degov1_T1=0.2;
+	gov_degov1_T2=0.3;
+	gov_degov1_T3=0.5;
+	gov_degov1_K=0.8;
+	gov_degov1_T4=1.0;
+	gov_degov1_T5=0.1;
+	gov_degov1_T6=0.2;
+	gov_degov1_TMAX=1.0;
+	gov_degov1_TMIN=0.0;
+	gov_degov1_TD=0.01;
 
 	//GAST Governor defaults
-//	gov_gast_R=.05;             
+//	gov_gast_R=.05;
 //	gov_gast_T1=0.1;
 //	gov_gast_T2=0.05;
-	gov_gast_R=.05;             
+	gov_gast_R=.05;
 	gov_gast_T1=0.4;
 	gov_gast_T2=0.1;
 	gov_gast_T3=3;
@@ -480,7 +481,7 @@ int diesel_dg::create(void)
 	gov_gast_KT=2;
 	gov_gast_VMAX=1.05;
 	gov_gast_VMIN=-0.05;
-	
+
 	//GGOV1 Governor defaults
 	gov_ggv1_r = 0.04;
 	gov_ggv1_rselect = 1;
@@ -541,20 +542,20 @@ int diesel_dg::create(void)
 	pIGenerated[0] = pIGenerated[1] = pIGenerated[2] = NULL;
 	pbus_full_Y_mat = NULL;
 	pbus_full_Y_all_mat = NULL;
-	generator_admittance[0][0] = generator_admittance[0][1] = generator_admittance[0][2] = complex(0.0,0.0);
-	generator_admittance[1][0] = generator_admittance[1][1] = generator_admittance[1][2] = complex(0.0,0.0);
-	generator_admittance[2][0] = generator_admittance[2][1] = generator_admittance[2][2] = complex(0.0,0.0);
+	generator_admittance[0][0] = generator_admittance[0][1] = generator_admittance[0][2] = gld::complex(0.0,0.0);
+	generator_admittance[1][0] = generator_admittance[1][1] = generator_admittance[1][2] = gld::complex(0.0,0.0);
+	generator_admittance[2][0] = generator_admittance[2][1] = generator_admittance[2][2] = gld::complex(0.0,0.0);
 
-	full_bus_admittance_mat[0][0] = full_bus_admittance_mat[0][1] = full_bus_admittance_mat[0][2] = complex(0.0,0.0);
-	full_bus_admittance_mat[1][0] = full_bus_admittance_mat[1][1] = full_bus_admittance_mat[1][2] = complex(0.0,0.0);
-	full_bus_admittance_mat[2][0] = full_bus_admittance_mat[2][1] = full_bus_admittance_mat[2][2] = complex(0.0,0.0);
-	value_IGenerated[0] = value_IGenerated[1] = value_IGenerated[2] = complex(0.0,0.0);
+	full_bus_admittance_mat[0][0] = full_bus_admittance_mat[0][1] = full_bus_admittance_mat[0][2] = gld::complex(0.0,0.0);
+	full_bus_admittance_mat[1][0] = full_bus_admittance_mat[1][1] = full_bus_admittance_mat[1][2] = gld::complex(0.0,0.0);
+	full_bus_admittance_mat[2][0] = full_bus_admittance_mat[2][1] = full_bus_admittance_mat[2][2] = gld::complex(0.0,0.0);
+	value_IGenerated[0] = value_IGenerated[1] = value_IGenerated[2] = gld::complex(0.0,0.0);
 	Governor_type = NO_GOV;
 	Exciter_type = NO_EXC;
 	SEXS_mode = SEXS_CV;
 
-	power_val[0] = power_val[1] = power_val[2] = complex(0.0,0.0);
-	current_val[0] = current_val[1] = current_val[2] = complex(0.0,0.0);
+	power_val[0] = power_val[1] = power_val[2] = gld::complex(0.0,0.0);
+	current_val[0] = current_val[1] = current_val[2] = gld::complex(0.0,0.0);
 	real_power_val[0] = real_power_val[1] = real_power_val[2] = -1.0;
 	imag_power_val[0] = imag_power_val[1] = imag_power_val[2] = -1.0;
 
@@ -649,11 +650,11 @@ int diesel_dg::create(void)
 	pCircuit_V[0] = pCircuit_V[1] = pCircuit_V[2] = NULL;
 	pLine_I[0] = pLine_I[1] = pLine_I[2] = NULL;
 	pPower[0] = pPower[1] = pPower[2] = NULL;
-	value_Circuit_V[0] = value_Circuit_V[1] = value_Circuit_V[2] = complex(0.0,0.0);
-	value_Line_I[0] = value_Line_I[1] = value_Line_I[2] = complex(0.0,0.0);
-	value_Power[0] = value_Power[1] = value_Power[2] = complex(0.0,0.0);
-	value_prev_Power[0] = value_prev_Power[1] = value_prev_Power[2] = complex(0.0,0.0);
-	
+	value_Circuit_V[0] = value_Circuit_V[1] = value_Circuit_V[2] = gld::complex(0.0,0.0);
+	value_Line_I[0] = value_Line_I[1] = value_Line_I[2] = gld::complex(0.0,0.0);
+	value_Power[0] = value_Power[1] = value_Power[2] = gld::complex(0.0,0.0);
+	value_prev_Power[0] = value_prev_Power[1] = value_prev_Power[2] = gld::complex(0.0,0.0);
+
 	parent_is_powerflow = false;	//By default, we're not a good child
 	attached_bus_type = 0;			//By default, we're basically a PQ bus
 
@@ -685,15 +686,15 @@ int diesel_dg::init(OBJECT *parent)
 	double test_pf;
 	gld_property *Frequency_mapped;
 	gld_property *temp_property_pointer;
-	gld_wlock *test_rlock;
+	gld_wlock *test_rlock = NULL;
 	bool temp_bool_value;
 	double temp_voltage_magnitude;
-	complex temp_complex_value;
+	gld::complex temp_complex_value;
 	complex_array temp_complex_array;
 	gld_property *pNominal_Voltage;
 	double nominal_voltage_value, nom_test_val;
 	set temp_phases;
-	
+
 	//Set the deltamode flag, if desired
 	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)
 	{
@@ -721,7 +722,11 @@ int diesel_dg::init(OBJECT *parent)
 					tmp_obj = parent->parent;
 
 					//See what it is
-					if ((gl_object_isa(tmp_obj,"meter","powerflow") == false) && (gl_object_isa(tmp_obj,"node","powerflow")==false) && (gl_object_isa(tmp_obj,"load","powerflow")==false))
+                    if (
+                        !gl_object_isa(tmp_obj, "meter", "powerflow") &&
+                        !gl_object_isa(tmp_obj, "node", "powerflow") &&
+                        !gl_object_isa(tmp_obj, "load", "powerflow")
+                        )
 					{
 						//Not a wierd map, just use normal parent
 						tmp_obj = parent;
@@ -1008,9 +1013,9 @@ int diesel_dg::init(OBJECT *parent)
 
 			//Form up
 			if (power_val[0].Im()<0.0)
-				power_val[0] = complex((power_base*test_pf),(-1.0*sqrt(1-test_pf*test_pf)*power_base));
+				power_val[0] = gld::complex((power_base*test_pf),(-1.0*sqrt(1-test_pf*test_pf)*power_base));
 			else
-				power_val[0] = complex((power_base*test_pf),(sqrt(1-test_pf*test_pf)*power_base));
+				power_val[0] = gld::complex((power_base*test_pf),(sqrt(1-test_pf*test_pf)*power_base));
 		}//End phase A power limit check
 
 		if (power_val[1].Mag()>power_base)
@@ -1026,9 +1031,9 @@ int diesel_dg::init(OBJECT *parent)
 
 			//Form up
 			if (power_val[1].Im()<0.0)
-				power_val[1] = complex((power_base*test_pf),(-1.0*sqrt(1-test_pf*test_pf)*power_base));
+				power_val[1] = gld::complex((power_base*test_pf),(-1.0*sqrt(1-test_pf*test_pf)*power_base));
 			else
-				power_val[1] = complex((power_base*test_pf),(sqrt(1-test_pf*test_pf)*power_base));
+				power_val[1] = gld::complex((power_base*test_pf),(sqrt(1-test_pf*test_pf)*power_base));
 		}//End phase B power limit check
 
 		if (power_val[2].Mag()>power_base)
@@ -1044,9 +1049,9 @@ int diesel_dg::init(OBJECT *parent)
 
 			//Form up
 			if (power_val[2].Im()<0.0)
-				power_val[2] = complex((power_base*test_pf),(-1.0*sqrt(1-test_pf*test_pf)*power_base));
+				power_val[2] = gld::complex((power_base*test_pf),(-1.0*sqrt(1-test_pf*test_pf)*power_base));
 			else
-				power_val[2] = complex((power_base*test_pf),(sqrt(1-test_pf*test_pf)*power_base));
+				power_val[2] = gld::complex((power_base*test_pf),(sqrt(1-test_pf*test_pf)*power_base));
 		}//End phase C power limit check
 	}
 	else	//Must be dynamic!
@@ -1111,9 +1116,9 @@ int diesel_dg::init(OBJECT *parent)
 		impedance_base = voltage_base / current_base;
 
 		//Scale up the impedances appropriately
-		YS0 = complex(1.0)/(X0*impedance_base);					//Zero sequence impedance - scaled (not p.u.)
-		YS1 = complex(1.0)/(complex(Ra,Xdpp)*impedance_base);	//Positive sequence impedance - scaled (not p.u.)
-		YS2 = complex(1.0)/(X2*impedance_base);					//Negative sequence impedance - scaled (not p.u.)
+		YS0 = gld::complex(1.0)/(X0*impedance_base);					//Zero sequence impedance - scaled (not p.u.)
+		YS1 = gld::complex(1.0)/(gld::complex(Ra,Xdpp)*impedance_base);	//Positive sequence impedance - scaled (not p.u.)
+		YS2 = gld::complex(1.0)/(X2*impedance_base);					//Negative sequence impedance - scaled (not p.u.)
 
 		//Calculate our initial admittance matrix
 		convert_Ypn0_to_Yabc(YS0,YS1,YS2, &generator_admittance[0][0]);
@@ -1138,7 +1143,7 @@ int diesel_dg::init(OBJECT *parent)
 			pbus_full_Y_mat->getp<complex_array>(temp_complex_array,*test_rlock);
 
 			//See if it is valid
-			if (temp_complex_array.is_valid(0,0) != true)
+			if (!temp_complex_array.is_valid(0, 0))
 			{
 				//Create it
 				temp_complex_array.grow_to(3,3);
@@ -1148,7 +1153,7 @@ int diesel_dg::init(OBJECT *parent)
 				{
 					for (temp_idx_y=0; temp_idx_y<3; temp_idx_y++)
 					{
-						temp_complex_array.set_at(temp_idx_x,temp_idx_y,complex(0.0,0.0));
+						temp_complex_array.set_at(temp_idx_x,temp_idx_y,gld::complex(0.0,0.0));
 					}
 				}
 			}
@@ -1223,9 +1228,9 @@ int diesel_dg::init(OBJECT *parent)
 
 			//Form up
 			if (power_val[0].Im()<0.0)
-				power_val[0] = complex((power_base*test_pf),(-1.0*sqrt(1-test_pf*test_pf)*power_base));
+				power_val[0] = gld::complex((power_base*test_pf),(-1.0*sqrt(1-test_pf*test_pf)*power_base));
 			else
-				power_val[0] = complex((power_base*test_pf),(sqrt(1-test_pf*test_pf)*power_base));
+				power_val[0] = gld::complex((power_base*test_pf),(sqrt(1-test_pf*test_pf)*power_base));
 		}//End phase A power limit check
 
 		if (power_val[1].Mag()>power_base)
@@ -1241,9 +1246,9 @@ int diesel_dg::init(OBJECT *parent)
 
 			//Form up
 			if (power_val[1].Im()<0.0)
-				power_val[1] = complex((power_base*test_pf),(-1.0*sqrt(1-test_pf*test_pf)*power_base));
+				power_val[1] = gld::complex((power_base*test_pf),(-1.0*sqrt(1-test_pf*test_pf)*power_base));
 			else
-				power_val[1] = complex((power_base*test_pf),(sqrt(1-test_pf*test_pf)*power_base));
+				power_val[1] = gld::complex((power_base*test_pf),(sqrt(1-test_pf*test_pf)*power_base));
 		}//End phase B power limit check
 
 		if (power_val[2].Mag()>power_base)
@@ -1259,9 +1264,9 @@ int diesel_dg::init(OBJECT *parent)
 
 			//Form up
 			if (power_val[2].Im()<0.0)
-				power_val[2] = complex((power_base*test_pf),(-1.0*sqrt(1-test_pf*test_pf)*power_base));
+				power_val[2] = gld::complex((power_base*test_pf),(-1.0*sqrt(1-test_pf*test_pf)*power_base));
 			else
-				power_val[2] = complex((power_base*test_pf),(sqrt(1-test_pf*test_pf)*power_base));
+				power_val[2] = gld::complex((power_base*test_pf),(sqrt(1-test_pf*test_pf)*power_base));
 		}//End phase C power limit check
 
 		//Check for zeros - if any are zero, 50% them (real generator, arbitrary)
@@ -1274,7 +1279,7 @@ int diesel_dg::init(OBJECT *parent)
 			undesired, please change the value.
 			*/
 
-			power_val[0] = complex(0.5*power_base,0.0);
+			power_val[0] = gld::complex(0.5*power_base,0.0);
 		}
 
 		if (power_val[1].Mag() == 0.0)
@@ -1286,7 +1291,7 @@ int diesel_dg::init(OBJECT *parent)
 			undesired, please change the value.
 			*/
 
-			power_val[1] = complex(0.5*power_base,0.0);
+			power_val[1] = gld::complex(0.5*power_base,0.0);
 		}
 
 		if (power_val[2].Mag() == 0.0)
@@ -1298,7 +1303,7 @@ int diesel_dg::init(OBJECT *parent)
 			undesired, please change the value.
 			*/
 
-			power_val[2] = complex(0.5*power_base,0.0);
+			power_val[2] = gld::complex(0.5*power_base,0.0);
 		}
 
 		if (apply_rotor_speed_convergence == true)
@@ -1457,7 +1462,7 @@ int diesel_dg::init(OBJECT *parent)
 
 			//Pull the value
 			Frequency_mapped->getp<bool>(temp_bool_value,*test_rlock);
-			
+
 			//Check the value - and make sure we're active (don't let the passive generator dictate it)
 			if ((temp_bool_value == false) && (Governor_type != NO_GOV))	//No one has mapped yet, we are volunteered
 			{
@@ -1479,7 +1484,7 @@ int diesel_dg::init(OBJECT *parent)
 
 			//Delete the reference
 			delete Frequency_mapped;
-			
+
 			gen_object_count++;	//Increment the counter
 		}
 	}//End deltamode inclusive
@@ -1541,20 +1546,20 @@ TIMESTAMP diesel_dg::presync(TIMESTAMP t0, TIMESTAMP t1)
 	return TS_NEVER; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
 
-TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1) 
+TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	double tdiff, ang_diff;
-	complex temp_current_val[3];
-	complex temp_voltage_val[3];
-	complex rotate_value;
+	gld::complex temp_current_val[3];
+	gld::complex temp_voltage_val[3];
+	gld::complex rotate_value;
 	TIMESTAMP tret_value;
 	double vdiff;
 	double voltage_mag_curr;
 	double real_diff;     // Temporary variable representing difference between reference real power and actual real power output
 	double reactive_diff; // Temporary variable representing difference between reference reactive power and actual reactive power output
-	complex temp_power_val[3];
-	complex temp_complex_value_power;
+	gld::complex temp_power_val[3];
+	gld::complex temp_complex_value_power;
 	gld_wlock *test_rlock;
 	FUNCTIONADDR test_fxn;
 	STATUS fxn_return_status;
@@ -1637,7 +1642,7 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 					temp_complex_value_power = power_val[0] + power_val[1] + power_val[2];
 
 					//Push it up
-					pPGenerated->setp<complex>(temp_complex_value_power,*test_rlock);
+					pPGenerated->setp<gld::complex>(temp_complex_value_power,*test_rlock);
 
 					//Map the current injection function
 					test_fxn = (FUNCTIONADDR)(gl_get_function(obj->parent,"pwr_current_injection_update_map"));
@@ -1718,7 +1723,7 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 		value_prev_Power[2] = power_val[2];
 
 		//Update the total power output variables
-		complex total_power = power_val[0] + power_val[1] + power_val[2];
+		gld::complex total_power = power_val[0] + power_val[1] + power_val[2];
 		real_power_gen = total_power.Re();
 		imag_power_gen = total_power.Im();
 	}
@@ -1759,9 +1764,9 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 				real_diff = real_diff * Rated_VA;
 
 				//Copy in value
-				temp_power_val[0] = power_val[0] + complex(real_diff, 0.0);
-				temp_power_val[1] = power_val[1] + complex(real_diff, 0.0);
-				temp_power_val[2] = power_val[2] + complex(real_diff, 0.0);
+				temp_power_val[0] = power_val[0] + gld::complex(real_diff, 0.0);
+				temp_power_val[1] = power_val[1] + gld::complex(real_diff, 0.0);
+				temp_power_val[2] = power_val[2] + gld::complex(real_diff, 0.0);
 
 				//Back out the current injection
 				temp_current_val[0] = ~(temp_power_val[0]/value_Circuit_V[0]) + generator_admittance[0][0]*value_Circuit_V[0] + generator_admittance[0][1]*value_Circuit_V[1] + generator_admittance[0][2]*value_Circuit_V[2];
@@ -1798,15 +1803,15 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 					//Copy in value - pull the governor value too, if it was P_CONSTANT
 					if (Governor_type == P_CONSTANT)
 					{
-						temp_power_val[0] = power_val[0] + complex(real_diff,reactive_diff);
-						temp_power_val[1] = power_val[1] + complex(real_diff,reactive_diff);
-						temp_power_val[2] = power_val[2] + complex(real_diff,reactive_diff);
+						temp_power_val[0] = power_val[0] + gld::complex(real_diff,reactive_diff);
+						temp_power_val[1] = power_val[1] + gld::complex(real_diff,reactive_diff);
+						temp_power_val[2] = power_val[2] + gld::complex(real_diff,reactive_diff);
 					}
 					else
 					{
-						temp_power_val[0] = power_val[0] + complex(0.0,reactive_diff);
-						temp_power_val[1] = power_val[1] + complex(0.0,reactive_diff);
-						temp_power_val[2] = power_val[2] + complex(0.0,reactive_diff);
+						temp_power_val[0] = power_val[0] + gld::complex(0.0,reactive_diff);
+						temp_power_val[1] = power_val[1] + gld::complex(0.0,reactive_diff);
+						temp_power_val[2] = power_val[2] + gld::complex(0.0,reactive_diff);
 					}
 
 					//Back out the current injection
@@ -1838,9 +1843,9 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 						reactive_diff = (YS1_Full.Im()*(vdiff*voltage_base)*voltage_base)/3.0;
 
 						//Copy in value
-						temp_power_val[0] = power_val[0] + complex(0.0,reactive_diff);
-						temp_power_val[1] = power_val[1] + complex(0.0,reactive_diff);
-						temp_power_val[2] = power_val[2] + complex(0.0,reactive_diff);
+						temp_power_val[0] = power_val[0] + gld::complex(0.0,reactive_diff);
+						temp_power_val[1] = power_val[1] + gld::complex(0.0,reactive_diff);
+						temp_power_val[2] = power_val[2] + gld::complex(0.0,reactive_diff);
 
 						//Back out the current injection
 						temp_current_val[0] = ~(temp_power_val[0]/value_Circuit_V[0]) + generator_admittance[0][0]*value_Circuit_V[0] + generator_admittance[0][1]*value_Circuit_V[1] + generator_admittance[0][2]*value_Circuit_V[2];
@@ -1879,10 +1884,10 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 /* Postsync is called when the clock needs to advance on the second top-down pass */
 TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
-	complex temp_current_val[3];
+	gld::complex temp_current_val[3];
 	int ret_state;
 	OBJECT *obj = OBJECTHDR(this);
-	complex aval, avalsq;
+	gld::complex aval, avalsq;
 	TIMESTAMP dt;
 	complex_array temp_complex_array;
 	int index_x, index_y;
@@ -1972,7 +1977,7 @@ TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 			//Compute the AVR-related admittance - convert to positive sequence value first
 			//Constants
-			aval = complex(cos(2.0*PI/3.0),sin(2.0*PI/3.0));
+			aval = gld::complex(cos(2.0*PI/3.0),sin(2.0*PI/3.0));
 			avalsq = aval*aval;
 
 			//Pull in the current version of full_Y_all
@@ -2000,7 +2005,7 @@ TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 		}//End "first run" paired
 		//Default else - not dynamics-oriented, deflag
-		
+
 		//Deflag us
 		first_run = false;
 	}
@@ -2009,7 +2014,7 @@ TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 }
 
 //Map Complex value
-gld_property *diesel_dg::map_complex_value(OBJECT *obj, char *name)
+gld_property *diesel_dg::map_complex_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	OBJECT *objhdr = OBJECTHDR(this);
@@ -2032,7 +2037,7 @@ gld_property *diesel_dg::map_complex_value(OBJECT *obj, char *name)
 }
 
 //Map double value
-gld_property *diesel_dg::map_double_value(OBJECT *obj, char *name)
+gld_property *diesel_dg::map_double_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	OBJECT *objhdr = OBJECTHDR(this);
@@ -2082,7 +2087,7 @@ void diesel_dg::pull_powerflow_values(void)
 //Flag to update voltages, since those are usually a pull value (only does that
 void diesel_dg::push_powerflow_values(bool update_voltage)
 {
-	complex temp_complex_val;
+	gld::complex temp_complex_val;
 	gld_wlock *test_rlock;
 	int indexval;
 
@@ -2103,7 +2108,7 @@ void diesel_dg::push_powerflow_values(bool update_voltage)
 				temp_complex_val += value_Power[indexval];
 
 				//Push it back up
-				pPower[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+				pPower[indexval]->setp<gld::complex>(temp_complex_val,*test_rlock);
 			}
 		}
 		else if (Gen_type == DYNAMIC)
@@ -2114,7 +2119,7 @@ void diesel_dg::push_powerflow_values(bool update_voltage)
 				for (indexval=0; indexval<3; indexval++)
 				{
 					//**** push voltage value -- not an accumulator, just force ****/
-					pCircuit_V[indexval]->setp<complex>(value_Circuit_V[indexval],*test_rlock);
+					pCircuit_V[indexval]->setp<gld::complex>(value_Circuit_V[indexval],*test_rlock);
 				}
 			}
 			else	//Standard update
@@ -2130,15 +2135,15 @@ void diesel_dg::push_powerflow_values(bool update_voltage)
 					temp_complex_val += value_Line_I[indexval];
 
 					//Push it back up
-					pLine_I[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+					pLine_I[indexval]->setp<gld::complex>(temp_complex_val,*test_rlock);
 
 					//Update dynamic variables
 					if (deltamode_inclusive == true)
 					{
 						//**** Pre-rotated current injection value ***/
 						//This is a direct write - not an accumulator
-						pIGenerated[indexval]->setp<complex>(value_IGenerated[indexval],*test_rlock);
-					}					
+						pIGenerated[indexval]->setp<gld::complex>(value_IGenerated[indexval],*test_rlock);
+					}
 				}
 			}
 		}//End synchronous
@@ -2156,7 +2161,7 @@ void diesel_dg::reset_powerflow_accumulators(void)
 	for (indexval=0; indexval<3; indexval++)
 	{
 		//pLine_I values
-		value_Line_I[indexval] = complex(0.0,0.0);
+		value_Line_I[indexval] = gld::complex(0.0,0.0);
 	}
 }
 
@@ -2165,13 +2170,13 @@ void diesel_dg::reset_powerflow_accumulators(void)
 //Inputs are Y0 - zero sequence admittance
 //			 Y1 - positive sequence	admittance
 //			 Y2 - negative sequence admittance
-void diesel_dg::convert_Ypn0_to_Yabc(complex Y0, complex Y1, complex Y2, complex *Yabcmat)
+void diesel_dg::convert_Ypn0_to_Yabc(gld::complex Y0, gld::complex Y1, gld::complex Y2, gld::complex *Yabcmat)
 {
-	complex aval, aval_sq;
+	gld::complex aval, aval_sq;
 
 	//Define the "transformation" term (1@120deg)
-	aval = complex(cos(2.0*PI/3.0),sin(2.0*PI/3.0));
-	
+	aval = gld::complex(cos(2.0*PI/3.0),sin(2.0*PI/3.0));
+
 	//Make the square, since we'll need it a few places
 	aval_sq = aval*aval;
 
@@ -2193,13 +2198,13 @@ void diesel_dg::convert_Ypn0_to_Yabc(complex Y0, complex Y1, complex Y2, complex
 //Converts a 3x1 sequence vector to a 3x1 abc vector
 //Xpn0 is formatted [positive, negative, zero]
 //Xabc is formatted [a b c]
-void diesel_dg::convert_pn0_to_abc(complex *Xpn0, complex *Xabc)
+void diesel_dg::convert_pn0_to_abc(gld::complex *Xpn0, gld::complex *Xabc)
 {
-	complex aval, aval_sq;
+	gld::complex aval, aval_sq;
 
 	//Define the "transformation" term (1@120deg)
-	aval = complex(cos(2.0*PI/3.0),sin(2.0*PI/3.0));
-	
+	aval = gld::complex(cos(2.0*PI/3.0),sin(2.0*PI/3.0));
+
 	//Make the square, since we'll need it a few places
 	aval_sq = aval*aval;
 
@@ -2212,13 +2217,13 @@ void diesel_dg::convert_pn0_to_abc(complex *Xpn0, complex *Xabc)
 //Converts a 3x1 abc vector to a 3x1 sequence components vector
 //Xabc is formatted [a b c]
 //Xpn0 is formatted [positive, negative, zero]
-void diesel_dg::convert_abc_to_pn0(complex *Xabc, complex *Xpn0)
+void diesel_dg::convert_abc_to_pn0(gld::complex *Xabc, gld::complex *Xpn0)
 {
-	complex aval, aval_sq;
+	gld::complex aval, aval_sq;
 
 	//Define the "transformation" term (1@120deg)
-	aval = complex(cos(2.0*PI/3.0),sin(2.0*PI/3.0));
-	
+	aval = gld::complex(cos(2.0*PI/3.0),sin(2.0*PI/3.0));
+
 	//Make the square, since we'll need it a few places
 	aval_sq = aval*aval;
 
@@ -2241,9 +2246,9 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 	double deltat, deltath;
 	double omega_pu;
 	double x5a_now;
-	complex temp_rotation;
-	complex temp_complex[3];
-	complex temp_current_val[3];
+	gld::complex temp_rotation;
+	gld::complex temp_complex[3];
+	gld::complex temp_current_val[3];
 	gld_wlock *test_rlock;
 
 	//Create delta_t variable
@@ -2265,9 +2270,9 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 	//Initialization items
 	if ((delta_time==0) && (iteration_count_val==0))	//First run of new delta call
 	{
-		
+
 		//Allocate torque-delay array properly - if neeeded
-		if (Governor_type == DEGOV1) 
+		if (Governor_type == DEGOV1)
 		{
 			//See if we need to free first
 			if (torque_delay!=NULL)
@@ -2329,7 +2334,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		}
 
 		//GGOV1 delay stuff has to go after the init, since it needs a value to initalize
-		if ((Governor_type == GGOV1) || (Governor_type == GGOV1_OLD)) 
+		if ((Governor_type == GGOV1) || (Governor_type == GGOV1_OLD))
 		{
 			//See if we need to free first
 			if (x5a_delayed!=NULL)
@@ -2392,7 +2397,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 	else if (iteration_count_val == 0)	//Not first run, just first run of this timestep
 	{
 		//Update "current" pointer of torque array - if necessary
-		if (Governor_type == DEGOV1) 
+		if (Governor_type == DEGOV1)
 		{
 			//Increment positions
 			torque_delay_write_pos++;
@@ -2499,13 +2504,13 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		next_state.EpRotated = curr_state.EpRotated + predictor_vals.EpRotated*deltat;
 		next_state.rotor_angle = curr_state.rotor_angle + predictor_vals.rotor_angle*deltat;
 		next_state.omega = curr_state.omega + predictor_vals.omega*deltat;
-		
+
 		next_state.VintRotated  = (Xqpp-Xdpp)*curr_state.Irotated.Im();
 		next_state.VintRotated += (Xqpp-Xl)/(Xqp-Xl)*next_state.EpRotated.Re() - (Xqp-Xqpp)/(Xqp-Xl)*next_state.Flux2q;
-		next_state.VintRotated += complex(0.0,1.0)*((Xdpp-Xl)/(Xdp-Xl)*next_state.EpRotated.Im()+(Xdp-Xdpp)/(Xdp-Xl)*next_state.Flux1d);
+		next_state.VintRotated += gld::complex(0.0,1.0)*((Xdpp-Xl)/(Xdp-Xl)*next_state.EpRotated.Im()+(Xdp-Xdpp)/(Xdp-Xl)*next_state.Flux1d);
 
 		//Form rotation multiplier - or demultiplier
-		temp_rotation = complex(0.0,1.0)*complex_exp(-1.0*next_state.rotor_angle);
+		temp_rotation = gld::complex(0.0,1.0)*complex_exp(-1.0*next_state.rotor_angle);
 		temp_complex[0] = next_state.VintRotated/temp_rotation*voltage_base;
 		temp_complex[1] = temp_complex[2] = 0.0;
 
@@ -2953,13 +2958,13 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 		next_state.EpRotated = curr_state.EpRotated + (predictor_vals.EpRotated + corrector_vals.EpRotated)*deltath;
 		next_state.rotor_angle = curr_state.rotor_angle + (predictor_vals.rotor_angle + corrector_vals.rotor_angle)*deltath;
 		next_state.omega = curr_state.omega + (predictor_vals.omega + corrector_vals.omega)*deltath;
-		
+
 		next_state.VintRotated  = (Xqpp-Xdpp)*next_state.Irotated.Im();
 		next_state.VintRotated += (Xqpp-Xl)/(Xqp-Xl)*next_state.EpRotated.Re() - (Xqp-Xqpp)/(Xqp-Xl)*next_state.Flux2q;
-		next_state.VintRotated += complex(0.0,1.0)*((Xdpp-Xl)/(Xdp-Xl)*next_state.EpRotated.Im()+(Xdp-Xdpp)/(Xdp-Xl)*next_state.Flux1d);
+		next_state.VintRotated += gld::complex(0.0,1.0)*((Xdpp-Xl)/(Xdp-Xl)*next_state.EpRotated.Im()+(Xdp-Xdpp)/(Xdp-Xl)*next_state.Flux1d);
 
 		//Form rotation multiplier - or demultiplier
-		temp_rotation = complex(0.0,1.0)*complex_exp(-1.0*next_state.rotor_angle);
+		temp_rotation = gld::complex(0.0,1.0)*complex_exp(-1.0*next_state.rotor_angle);
 		temp_complex[0] = next_state.VintRotated/temp_rotation*voltage_base;
 		temp_complex[1] = temp_complex[2] = 0.0;
 
@@ -3522,7 +3527,7 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 //useful_value is a pointer to a passed in complex value
 //mode_pass 0 is the accumulation call
 //mode_pass 1 is the "update our frequency" call
-STATUS diesel_dg::post_deltaupdate(complex *useful_value, unsigned int mode_pass)
+STATUS diesel_dg::post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass)
 {
 	OBJECT *obj = OBJECTHDR(this);
 
@@ -3574,13 +3579,13 @@ STATUS diesel_dg::post_deltaupdate(complex *useful_value, unsigned int mode_pass
 //curr_delta is the calculated differentials
 STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, double deltaT)
 {
-	complex current_pu[3];
-	complex Ipn0[3];
-	complex temp_complex;
+	gld::complex current_pu[3];
+	gld::complex Ipn0[3];
+	gld::complex temp_complex;
 	double omega_pu;
-	double temp_double_1, temp_double_2, temp_double_3, delomega, x0; 
+	double temp_double_1, temp_double_2, temp_double_3, delomega, x0;
 	double torquenow, x5a_now;
-	complex temp_current_val[3];
+	gld::complex temp_current_val[3];
 	double diff_f, temp_Vfd;
 
 	//Powerflow update values already called before these - just use values directly
@@ -3604,7 +3609,7 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 
 	//Rotate current for current angle
 	temp_complex = complex_exp(-1.0*curr_time->rotor_angle);
-	curr_time->Irotated = temp_complex*complex(0.0,1.0)*Ipn0[0];
+	curr_time->Irotated = temp_complex*gld::complex(0.0,1.0)*Ipn0[0];
 
 	//Get speed update - split for readability
 	temp_double_1 =  -(Xqpp-Xl)/(Xqp-Xl)*curr_time->EpRotated.Re()*curr_time->Irotated.Re();
@@ -3614,7 +3619,7 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 	temp_double_1 -=(Xqpp-Xdpp)*curr_time->Irotated.Re()*curr_time->Irotated.Im();
 	temp_double_3 = Ipn0[1].Mag();
 	temp_double_1 -=0.5*Rr*temp_double_3*temp_double_3;
-	curr_time->torque_elec=-temp_double_1*Rated_VA/omega_ref; 
+	curr_time->torque_elec=-temp_double_1*Rated_VA/omega_ref;
 	temp_double_1 =(curr_time->torque_mech/(Rated_VA/omega_ref)-curr_time->torque_elec/(Rated_VA/omega_ref));
 	temp_double_1 -=damping*(curr_time->omega-omega_ref)/omega_ref;
 
@@ -3699,7 +3704,7 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 
 		//Compute the offset currently
 		temp_double_1 = gen_base_set_vals.wref - curr_time->omega/omega_ref-gov_degov1_R*curr_time->gov_degov1.throttle;
-		
+
 		//Update variables
 		curr_delta->gov_degov1.x2 = (temp_double_1-curr_time->gov_degov1.x1-gov_degov1_T1*curr_time->gov_degov1.x2)/(gov_degov1_T1*gov_degov1_T2);
 		curr_delta->gov_degov1.x1 = curr_time->gov_degov1.x2;
@@ -3748,7 +3753,7 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 		}
 
 		//Compute the offset currently
-		delomega = curr_time->gov_gast.throttle - (curr_time->omega/omega_ref-1)*gov_gast_R; 
+		delomega = curr_time->gov_gast.throttle - (curr_time->omega/omega_ref-1)*gov_gast_R;
 		if (delomega <= gov_gast_AT+gov_gast_KT*(gov_gast_AT-curr_time->gov_gast.x3))
 		{
 			x0=delomega;
@@ -3777,7 +3782,7 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 		temp_current_val[1] = (value_IGenerated[1] - generator_admittance[1][0]*value_Circuit_V[0] - generator_admittance[1][1]*value_Circuit_V[1] - generator_admittance[1][2]*value_Circuit_V[2]);
 		temp_current_val[2] = (value_IGenerated[2] - generator_admittance[2][0]*value_Circuit_V[0] - generator_admittance[2][1]*value_Circuit_V[1] - generator_admittance[2][2]*value_Circuit_V[2]);
 		//Update the output power variable
-		complex pwr_electric_dynamics = value_Circuit_V[0]*~temp_current_val[0] + value_Circuit_V[1]*~temp_current_val[1] + value_Circuit_V[2]*~temp_current_val[2];
+		gld::complex pwr_electric_dynamics = value_Circuit_V[0]*~temp_current_val[0] + value_Circuit_V[1]*~temp_current_val[1] + value_Circuit_V[2]*~temp_current_val[2];
 
 		//1 - Pelec measurement
 		curr_delta->gov_pconstant.x1 = 1.0/pconstant_Tpelec*(pwr_electric_dynamics.Re() / Rated_VA - curr_time->gov_pconstant.x1);
@@ -4040,7 +4045,7 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 			}
 		}
 		//Translate this into the torque model
-		curr_time->torque_mech = curr_time->pwr_mech / curr_time->omega;		
+		curr_time->torque_mech = curr_time->pwr_mech / curr_time->omega;
 
 		//10 - Temp detection LL
 		if (gov_ggv1_Dm < 0.0)
@@ -4254,11 +4259,11 @@ STATUS diesel_dg::apply_dynamics(MAC_STATES *curr_time, MAC_STATES *curr_delta, 
 //curr_time is the initial states/information
 STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 {
-	complex voltage_pu[3];
-	complex current_pu[3];
-	complex Vpn0[3];
-	complex Ipn0[3];
-	complex temp_complex_1, temp_complex_2;
+	gld::complex voltage_pu[3];
+	gld::complex current_pu[3];
+	gld::complex Vpn0[3];
+	gld::complex Ipn0[3];
+	gld::complex temp_complex_1, temp_complex_2;
 	double omega_pu;
 	double temp_double_1, temp_double_2, temp_double_3;
 	unsigned int index_val;
@@ -4283,7 +4288,7 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 	current_val[0]=current_pu[0]*current_base;
 	current_val[1]=current_pu[1]*current_base;
 	current_val[2]=current_pu[2]*current_base;
-	
+
 	//Compute initial power
 	curr_time->pwr_electric = (voltage_pu[0]*~current_pu[0]+voltage_pu[1]*~current_pu[1]+voltage_pu[2]*~current_pu[2])*voltage_base*current_base;
 
@@ -4295,23 +4300,23 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 	convert_abc_to_pn0(&current_pu[0],&Ipn0[0]);
 
 	//Calculate internal voltage for rotor angle
-	temp_complex_1 = Vpn0[0]+complex(Ra,Xq)*Ipn0[0];
+	temp_complex_1 = Vpn0[0]+gld::complex(Ra,Xq)*Ipn0[0];
 	curr_time->rotor_angle = temp_complex_1.Arg();
 
 	//Now figure out the internal voltage based on the subtransient model
-	temp_complex_1 = (Vpn0[0]+complex(Ra,Xdpp)*Ipn0[0])/omega_pu; // /omega_pu to be able to initialize at omega <> 60Hz
+	temp_complex_1 = (Vpn0[0]+gld::complex(Ra,Xdpp)*Ipn0[0])/omega_pu; // /omega_pu to be able to initialize at omega <> 60Hz
 
 	//Figure out the rotation
 	temp_complex_2 = complex_exp(-1.0*curr_time->rotor_angle);
-	curr_time->Irotated = temp_complex_2*complex(0.0,1.0)*Ipn0[0];
-	curr_time->VintRotated = (temp_complex_2*complex(0.0,1.0)*temp_complex_1);
+	curr_time->Irotated = temp_complex_2*gld::complex(0.0,1.0)*Ipn0[0];
+	curr_time->VintRotated = (temp_complex_2*gld::complex(0.0,1.0)*temp_complex_1);
 
 	//Compute vr
-	temp_complex_1 = temp_complex_2*complex(0.0,1.0)*Vpn0[0];
+	temp_complex_1 = temp_complex_2*gld::complex(0.0,1.0)*Vpn0[0];
 
 	//Compute EpRotated initial value - split for readability
 	curr_time->EpRotated = temp_complex_1.Re() + Ra*curr_time->Irotated.Re() - Xqp*curr_time->Irotated.Im();
-	curr_time->EpRotated += complex(0.0,1.0)*(temp_complex_1.Im() + Ra*curr_time->Irotated.Im() + Xdp*curr_time->Irotated.Re());
+	curr_time->EpRotated += gld::complex(0.0,1.0)*(temp_complex_1.Im() + Ra*curr_time->Irotated.Im() + Xdp*curr_time->Irotated.Re());
 
 	//Update flux terms
 	curr_time->Flux1d = curr_time->EpRotated.Im() - (Xdp-Xl)*curr_time->Irotated.Re();
@@ -4325,7 +4330,7 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 	temp_double_3 /= (Xdp-Xl);
 	temp_double_2 -= (Xdp-Xdpp)*temp_double_3;
 	temp_double_1 -= (Xd-Xdp)*temp_double_2;
-	
+
 	//Set field voltage
 	curr_time->Vfd = -1.0*temp_double_1;
 	curr_time->avr.xfd = curr_time->Vfd;
@@ -4445,7 +4450,7 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 			curr_time->gov_ggov1.x5 = curr_time->pwr_mech / Rated_VA;
 		}
 		//Translate this into the torque model
-		curr_time->torque_mech = curr_time->pwr_mech / curr_time->omega;		
+		curr_time->torque_mech = curr_time->pwr_mech / curr_time->omega;
 
 		curr_time->gov_ggov1.x5b = curr_time->gov_ggov1.x5;
 		curr_time->gov_ggov1.x5a = curr_time->gov_ggov1.x5b;
@@ -4545,7 +4550,7 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 			}
 			//Default else -- already initialized or set
 		}
-		
+
 		if (curr_time->gov_ggov1.err2a > gov_ggv1_maxerr)
 		{
 			curr_time->gov_ggov1.err2 = gov_ggv1_maxerr;
@@ -4586,7 +4591,7 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 		curr_time->gov_ggov1.x10b = curr_time->gov_ggov1.x10a;
 		curr_time->gov_ggov1.x10 = (1.0 - gov_ggv1_Tsa/gov_ggv1_Tsb)*curr_time->gov_ggov1.x10b + gov_ggv1_Tsa/gov_ggv1_Tsb*curr_time->gov_ggov1.x10a;
 		curr_time->gov_ggov1.x6 = curr_time->gov_ggov1.x10;
-		
+
 		curr_time->gov_ggov1.x7 = curr_time->gov_ggov1.GovOutPut;
 		curr_time->gov_ggov1.err7 = 0.0;
 		if (gov_ggv1_Kpload > 0.0)
@@ -4793,7 +4798,7 @@ STATUS diesel_dg::updateCurrInjection(int64 iteration_count)
 				if ((Exciter_type == SEXS) && (SEXS_mode == SEXS_CQ))
 				{
 					//Form up the "goal" variable
-					temp_p_setpoint = complex(gen_base_set_vals.Pref,gen_base_set_vals.Qref)*Rated_VA;	
+					temp_p_setpoint = complex(gen_base_set_vals.Pref,gen_base_set_vals.Qref)*Rated_VA;
 				}
 				else	//Just constant P it
 				{
@@ -4803,7 +4808,7 @@ STATUS diesel_dg::updateCurrInjection(int64 iteration_count)
 					//Now set the real portion
 					temp_p_setpoint.SetReal(gen_base_set_vals.Pref*Rated_VA);
 				}
-				
+
 				//Calculate the Norton-shunted power
 				temp_total_power_val[0] = value_Circuit_V[0] * ~(generator_admittance[0][0]*value_Circuit_V[0] + generator_admittance[0][1]*value_Circuit_V[1] + generator_admittance[0][2]*value_Circuit_V[2]);
 				temp_total_power_val[1] = value_Circuit_V[1] * ~(generator_admittance[1][0]*value_Circuit_V[0] + generator_admittance[1][1]*value_Circuit_V[1] + generator_admittance[1][2]*value_Circuit_V[2]);
@@ -4836,12 +4841,12 @@ STATUS diesel_dg::updateCurrInjection(int64 iteration_count)
 
 //Function to perform exp(j*val)
 //Basically a complex rotation
-complex diesel_dg::complex_exp(double angle)
+gld::complex diesel_dg::complex_exp(double angle)
 {
-	complex output_val;
+	gld::complex output_val;
 
 	//exp(jx) = cos(x)+j*sin(x)
-	output_val = complex(cos(angle),sin(angle));
+	output_val = gld::complex(cos(angle),sin(angle));
 
 	return output_val;
 }
@@ -4873,9 +4878,9 @@ void diesel_dg::check_power_output()
 
 		//Form up
 		if (power_val[0].Im()<0.0)
-			power_val[0] = complex((power_base*test_pf),(-1.0*sqrt(1-test_pf*test_pf)*power_base));
+			power_val[0] = gld::complex((power_base*test_pf),(-1.0*sqrt(1-test_pf*test_pf)*power_base));
 		else
-			power_val[0] = complex((power_base*test_pf),(sqrt(1-test_pf*test_pf)*power_base));
+			power_val[0] = gld::complex((power_base*test_pf),(sqrt(1-test_pf*test_pf)*power_base));
 	}//End phase A power limit check
 
 	if (power_val[1].Mag()>power_base)
@@ -4891,9 +4896,9 @@ void diesel_dg::check_power_output()
 
 		//Form up
 		if (power_val[1].Im()<0.0)
-			power_val[1] = complex((power_base*test_pf),(-1.0*sqrt(1-test_pf*test_pf)*power_base));
+			power_val[1] = gld::complex((power_base*test_pf),(-1.0*sqrt(1-test_pf*test_pf)*power_base));
 		else
-			power_val[1] = complex((power_base*test_pf),(sqrt(1-test_pf*test_pf)*power_base));
+			power_val[1] = gld::complex((power_base*test_pf),(sqrt(1-test_pf*test_pf)*power_base));
 	}//End phase B power limit check
 
 	if (power_val[2].Mag()>power_base)
@@ -4909,18 +4914,18 @@ void diesel_dg::check_power_output()
 
 		//Form up
 		if (power_val[2].Im()<0.0)
-			power_val[2] = complex((power_base*test_pf),(-1.0*sqrt(1-test_pf*test_pf)*power_base));
+			power_val[2] = gld::complex((power_base*test_pf),(-1.0*sqrt(1-test_pf*test_pf)*power_base));
 		else
-			power_val[2] = complex((power_base*test_pf),(sqrt(1-test_pf*test_pf)*power_base));
+			power_val[2] = gld::complex((power_base*test_pf),(sqrt(1-test_pf*test_pf)*power_base));
 	}//End phase C power limit check
 }
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
 
-EXPORT int create_diesel_dg(OBJECT **obj, OBJECT *parent) 
+EXPORT int create_diesel_dg(OBJECT **obj, OBJECT *parent)
 {
-	try 
+	try
 	{
 		*obj = gl_create_object(diesel_dg::oclass);
 		if (*obj!=NULL)
@@ -4931,13 +4936,13 @@ EXPORT int create_diesel_dg(OBJECT **obj, OBJECT *parent)
 		}
 		else
 			return 0;
-	} 
+	}
 	CREATE_CATCHALL(diesel_dg);
 }
 
-EXPORT int init_diesel_dg(OBJECT *obj, OBJECT *parent) 
+EXPORT int init_diesel_dg(OBJECT *obj, OBJECT *parent)
 {
-	try 
+	try
 	{
 		if (obj!=NULL)
 			return OBJECTDATA(obj,diesel_dg)->init(parent);
@@ -4968,7 +4973,7 @@ EXPORT TIMESTAMP sync_diesel_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			break;
 		}
 		if (pass==clockpass)
-			obj->clock = t1;		
+			obj->clock = t1;
 	}
 	SYNC_CATCHALL(diesel_dg);
 	return t1;
@@ -5014,7 +5019,7 @@ EXPORT SIMULATIONMODE interupdate_diesel_dg(OBJECT *obj, unsigned int64 delta_ti
 	}
 }
 
-EXPORT STATUS postupdate_diesel_dg(OBJECT *obj, complex *useful_value, unsigned int mode_pass)
+EXPORT STATUS postupdate_diesel_dg(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass)
 {
 	diesel_dg *my = OBJECTDATA(obj,diesel_dg);
 	STATUS status = FAILED;

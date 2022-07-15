@@ -2,10 +2,10 @@
 	Copyright (C) 2009 Battelle Memorial Institute
 **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "fault_check.h"
 
@@ -987,7 +987,8 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 						}
 						else
 						{
-							fprintf(FPOutput,"\nSupported Nodes -- %d Islands detected\n",NR_islands_detected);
+						    //TODO: Review below, added a second matching int argument
+							fprintf(FPOutput,"\nSupported Nodes -- %d Islands detected = %d\n",(NR_islands_detected+1), (NR_islands_detected+1));
 						}
 
 						supportheaderwritten = true;	//Flag intermediate as written too
@@ -1840,7 +1841,7 @@ void fault_check::allocate_alterations_values(bool reliability_mode_bool)
 		}
 
 		//Replicate the above if reliability is running, or we're in mesh mode
-		if ((reliability_mode_bool == true) || (reliability_search_mode == false))
+		if (reliability_mode_bool || !reliability_search_mode)
 		{
 			//Create our node reference vector - one for each bus
 			Alteration_Nodes = (char*)gl_malloc(NR_bus_count*sizeof(char));
@@ -1854,7 +1855,7 @@ void fault_check::allocate_alterations_values(bool reliability_mode_bool)
 			}
 
 			//Populate mesh-based items if necessary too
-			if (reliability_search_mode == false)
+			if (!reliability_search_mode)
 			{
 				Alteration_Links = (char*)gl_malloc(NR_branch_count*sizeof(char));
 

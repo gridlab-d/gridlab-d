@@ -2,10 +2,10 @@
 //	Copyright (C) 2020 Battelle Memorial Institute
 // Implemented the performance-based model from LD1PAC
 
-#include <stdlib.h>	
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>	
 
 #include "performance_motor.h"
 

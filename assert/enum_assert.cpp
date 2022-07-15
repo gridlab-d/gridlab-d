@@ -5,12 +5,12 @@
    the commit function and breaks the simulator out with a failure code.
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
-#include <complex.h>
-#include <string.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <gld_complex.h>
 
 #include "enum_assert.h"
 
@@ -120,10 +120,10 @@ TIMESTAMP enum_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 //Deltamode compatible enumeration assert
 EXPORT SIMULATIONMODE update_enum_assert(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	char buff[64];
-	char dateformat[8]="";
-	char error_output_buff[1024];
-	char datebuff[64];
+	char buff[128];
+	char dateformat[16]="";
+	char error_output_buff[2028];
+	char datebuff[128];
 	enum_assert *da = OBJECTDATA(obj,enum_assert);
 	DATETIME delta_dt_val;
 	double del_clock;

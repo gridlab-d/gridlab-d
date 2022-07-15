@@ -5,11 +5,12 @@
  *      Author: tang526
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
-#include <complex.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+
+#include "gld_complex.h"
 
 #include "controller_dg.h"
 
@@ -151,7 +152,7 @@ int controller_dg::init(OBJECT *parent)
 			// so that the corresponding connected switch can be found
 			pDG[index].parent = obj->parent;
 			pDG[index].obj = obj;
-			
+
 			if(pDG[index].parent == NULL){
 				gl_error("Failed to find diesel_dg parent node object.");
 				return 0;
@@ -537,7 +538,7 @@ SIMULATIONMODE controller_dg::inter_deltaupdate(unsigned int64 delta_time, unsig
 	double deltat, deltath;
 	double temp_double = 0;
 
-	complex vtemp[3];
+	gld::complex vtemp[3];
 	double nominal_voltage;
 	FUNCTIONADDR funadd = NULL;
 	int return_val;
@@ -742,7 +743,7 @@ SIMULATIONMODE controller_dg::inter_deltaupdate(unsigned int64 delta_time, unsig
 	}// End corrector pass
 }
 
-STATUS controller_dg::post_deltaupdate(complex *useful_value, unsigned int mode_pass)
+STATUS controller_dg::post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass)
 {
 	return SUCCESS;	//Allways succeeds right now
 }
@@ -807,7 +808,7 @@ STATUS controller_dg::init_dynamics(CTRL_VARS *curr_time, int index)
 }
 
 //Map Complex value
-gld_property *controller_dg::map_complex_value(OBJECT *obj, char *name)
+gld_property *controller_dg::map_complex_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	OBJECT *objhdr = OBJECTHDR(this);
@@ -830,7 +831,7 @@ gld_property *controller_dg::map_complex_value(OBJECT *obj, char *name)
 }
 
 //Map double value
-gld_property *controller_dg::map_double_value(OBJECT *obj, char *name)
+gld_property *controller_dg::map_double_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	OBJECT *objhdr = OBJECTHDR(this);
@@ -929,7 +930,7 @@ EXPORT SIMULATIONMODE interupdate_controller_dg(OBJECT *obj, unsigned int64 delt
 	}
 }
 
-EXPORT STATUS postupdate_controller_dg(OBJECT *obj, complex *useful_value, unsigned int mode_pass)
+EXPORT STATUS postupdate_controller_dg(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass)
 {
 	controller_dg *my = OBJECTDATA(obj,controller_dg);
 	STATUS status = FAILED;

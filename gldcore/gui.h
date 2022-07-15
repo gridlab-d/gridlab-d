@@ -73,7 +73,7 @@ typedef struct s_guientity {
 } GUIENTITY;
 
 GUIENTITY *gui_create_entity();
-typedef  int (*GUISTREAMFN)(void*,char*,...);
+typedef  int (*GUISTREAMFN)(void*,const char*,...);
 void gui_set_html_stream(void *ref,GUISTREAMFN stream);
 
 void gui_set_srcref(GUIENTITY *entity, char *filename, int linenum);

@@ -10,10 +10,10 @@
  @{
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "plugload.h"
 
@@ -57,7 +57,7 @@ int plugload::create()
 
 	// name of enduse
 	load.name = oclass->name;
-	load.power = load.admittance = load.current = load.total = complex(0,0,J);
+	load.power = load.admittance = load.current = load.total = gld::complex(0,0,J);
 	load.power_fraction = load.current_fraction = load.impedance_fraction = 0;
 	load.heatgain_fraction = 0.90;
 	load.power_factor = 0.90;
@@ -125,7 +125,7 @@ TIMESTAMP plugload::sync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 	}
 	else
-		load.power = load.current = load.admittance = complex(0,0,J);
+		load.power = load.current = load.admittance = gld::complex(0,0,J);
 
 	gl_enduse_sync(&(residential_enduse::load),t1);
 

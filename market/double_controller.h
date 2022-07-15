@@ -10,6 +10,7 @@
 #define _MARKET_DOUBLE_CONTROLLER
 
 #include <stdarg.h>
+
 #include "auction.h"
 #include "gridlabd.h"
 
@@ -91,7 +92,7 @@ public:
 	double price, avg_price, stdev_price;
 private:
 	void cheat();
-	void fetch(double **value, char *name, OBJECT *parent, PROPERTY **prop, char *goal);
+	void fetch(double **value, char *name, OBJECT *parent, PROPERTY **prop, const char *goal);
 
 	TIMESTAMP next_run;
 

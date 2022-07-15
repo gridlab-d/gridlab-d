@@ -18,10 +18,10 @@
  @{
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "clotheswasher.h"
 
@@ -147,7 +147,7 @@ int clotheswasher::create()
 	// name of enduse
 	load.name = oclass->name;
 
-	load.power = load.admittance = load.current = load.total = complex(0,0,J);
+	load.power = load.admittance = load.current = load.total = gld::complex(0,0,J);
 	load.voltage_factor = 1.0;
 	load.power_factor = 0.95;
 	load.power_fraction = 1.0;
@@ -246,7 +246,7 @@ TIMESTAMP clotheswasher::presync(TIMESTAMP t0, TIMESTAMP t1){
 
 TIMESTAMP clotheswasher::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
-	complex temp_complex_value;
+	gld::complex temp_complex_value;
 
 	// compute the seconds in this time step
 	double dt = 0.0;
@@ -710,7 +710,7 @@ double clotheswasher::update_state(double dt)
 	
 	if(state==STOPPED){
 		// nothing running
-		load.power = load.current = load.admittance = complex(0,0,J);		
+		load.power = load.current = load.admittance = gld::complex(0,0,J);
 		// time to next expected state change
 		//dt = (enduse_demand<=0) ? -1 : 	dt = 3600/enduse_demand; 
 		if(0==enduse_demand){
@@ -740,7 +740,7 @@ double clotheswasher::update_state(double dt)
 			cycle_time -=dt;			
 		}		
 		
-		load.power = complex(clothesWasherPower/1000,0,J);		
+		load.power = gld::complex(clothesWasherPower/1000,0,J);
 		load.current = 0;
 		load.admittance =0;
 		

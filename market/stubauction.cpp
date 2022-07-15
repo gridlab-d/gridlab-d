@@ -8,15 +8,15 @@
 
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
+#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
 
 #include "gridlabd.h"
 #include "stubauction.h"
 
-CLASS *stubauction::oclass = NULL;
-stubauction *stubauction::defaults = NULL;
+CLASS *stubauction::oclass = nullptr;
+stubauction *stubauction::defaults = nullptr;
 
 static PASSCONFIG passconfig = PC_PRETOPDOWN|PC_POSTTOPDOWN;
 static PASSCONFIG clockpass = PC_POSTTOPDOWN;
@@ -24,10 +24,10 @@ static PASSCONFIG clockpass = PC_POSTTOPDOWN;
 /* Class registration is only called once to register the class with the core */
 stubauction::stubauction(MODULE *module)
 {
-	if (oclass==NULL)
+	if (oclass== nullptr)
 	{
 		oclass = gl_register_class(module,"stubauction",sizeof(stubauction),passconfig|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass== nullptr)
 			throw "unable to register class stubauction";
 		else
 			oclass->trl = TRL_QUALIFIED;

@@ -18,19 +18,19 @@ void new_metrics_collector_writer(MODULE *mod) {
 
 metrics_collector_writer::metrics_collector_writer(MODULE *mod) {
 	if (oclass == NULL) {
-		oclass = gl_register_class(mod, "metrics_collector_writer", sizeof(metrics_collector_writer), PC_POSTTOPDOWN);
-		if (oclass == NULL)
+		oclass = gl_register_class(mod, const_cast<char *>("metrics_collector_writer"), sizeof(metrics_collector_writer), PC_POSTTOPDOWN);
+		if (oclass==NULL)
 			throw "unable to register class metrics_collector_writer";
 
-		if (gl_publish_variable(oclass, 
-				PT_char256, "filename", PADDR(filename), PT_DESCRIPTION, "the JSON formatted output file name", 
-				PT_char8, "extension", PADDR(extension), PT_DESCRIPTION, "the file formatted type (JSON, H5)", 
-				PT_char8, "alternate", PADDR(alternate), PT_DESCRIPTION, "the alternate file name convention", 
-				PT_char8, "allextensions", PADDR(allextensions), PT_DESCRIPTION, "write all file extensions", 
+		if (gl_publish_variable(oclass,
+				PT_char256, "filename", PADDR(filename), PT_DESCRIPTION, "the JSON formatted output file name",
+				PT_char8, "extension", PADDR(extension), PT_DESCRIPTION, "the file formatted type (JSON, H5)",
+				PT_char8, "alternate", PADDR(alternate), PT_DESCRIPTION, "the alternate file name convention",
+				PT_char8, "allextensions", PADDR(allextensions), PT_DESCRIPTION, "write all file extensions",
 				PT_double, "interim[s]", PADDR(interim_length_dbl), PT_DESCRIPTION, "Interim at which metrics_collector_writer output is written",
 				PT_double, "interval[s]", PADDR(interval_length_dbl), PT_DESCRIPTION, "Interval at which the metrics_collector_writer output is stored in JSON format",
 				NULL) < 1)
-			GL_THROW("unable to publish properties in %s", __FILE__);
+			GL_THROW(const_cast<char *>("unable to publish properties in %s"), __FILE__);
 	}
 }
 
@@ -1428,9 +1428,7 @@ void metrics_collector_writer::hdfEvChargerDetWrite (size_t objs, Json::Value& m
 	hdfWrite(filename_evchargerdet, mtype_evchargerdets, &tbl, 9, idx);
 	metrics.clear();
 }
-
-
-#endif HAVE_HDF5
+#endif // HAVE_HDF5
 
 EXPORT int create_metrics_collector_writer(OBJECT **obj, OBJECT *parent) {
 	int rv = 0;

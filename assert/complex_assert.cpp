@@ -6,11 +6,11 @@
    a failure code.
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
-#include <complex.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <gld_complex.h>
 
 #include "complex_assert.h"
 
@@ -236,10 +236,10 @@ int complex_assert::postnotify(PROPERTY *prop, char *value)
 
 EXPORT SIMULATIONMODE update_complex_assert(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	char buff[64];
-	char dateformat[8]="";
-	char error_output_buff[1024];
-	char datebuff[64];
+	char buff[128];
+	char dateformat[16]="";
+	char error_output_buff[2048];
+	char datebuff[128];
 	complex_assert *da = OBJECTDATA(obj,complex_assert);
 	DATETIME delta_dt_val;
 	double del_clock;

@@ -12,8 +12,9 @@ build-aux/compile
 build-aux/config.guess
 build-aux/config.sub
 build-aux/depcomp
-gldcore/config.h.in
 gldcore/config.h
+gldcore/build.h
+gldcore/version.h
 /configure.scan
 build-aux/install-sh
 build-aux/ltmain.sh
@@ -22,6 +23,7 @@ gldcore/stamp-h1
 gridlabd
 gldcore/gridlabd.sh
 .pydevproject
+.idea
 
 # Prerequisites
 *.d
@@ -95,8 +97,6 @@ m4/ltversion.m4
 m4/lt~obsolete.m4
 m4/lt-obsolete.m4
 */.dirstamp
-gldcore/build.h
-gldcore/config.h.in~
 */*/*/.dirstamp
 */*/.dirstamp
 gridlabd.bin
@@ -108,3 +108,11 @@ validate.txt
 .libs/
 third_party/xerces*/*
 *.xcbkptlist
+CMakeFiles/*
+*/CMakeFiles/*
+*cmake_install.cmake
+*CMakeCache.txt
+*.cbp
+cmake-build*/
+build/
+GLD GridLAB-D build instructions.txt

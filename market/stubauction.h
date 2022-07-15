@@ -11,6 +11,7 @@
 #define _stubauction_H
 
 #include <stdarg.h>
+
 #include "gridlabd.h"
 
 class stubauction : public gld_object {

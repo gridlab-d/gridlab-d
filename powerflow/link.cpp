@@ -87,12 +87,16 @@
 	@{
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+
 #include "link.h"
 #include "node.h"
+#include "gld_complex.h"
+
+using gld::complex;
 
 CLASS* link_object::oclass = NULL;
 CLASS* link_object::pclass = NULL;
@@ -350,7 +354,7 @@ int link_object::init(OBJECT *parent)
 		if (obj->parent==NULL)
 		{
 			/* make 'from' object parent of this object */
-			if (gl_object_isa(from,"node")) 
+			if (gl_object_isa(from,"node"))
 			{
 				if(gl_set_parent(obj, from) < 0)
 					throw "error when setting parent";
@@ -521,7 +525,7 @@ int link_object::init(OBJECT *parent)
 				/*  TROUBLESHOOT
 				A line has been configured to carry a certain set of phases.  Either the input node or output
 				node is not providing a source/sink for these different conductors.  The To and From nodes must
-				have at least the phases of the line connecting them. 
+				have at least the phases of the line connecting them.
 				*/
 		}
 		else	//Must be a switch then
@@ -3488,16 +3492,20 @@ int link_object::kmldump(int (*stream)(const char*,...))
 			"<TH WIDTH=\"25%\" COLSPAN=2 ALIGN=CENTER><NOBR>Phase C</NOBR><HR></TH></TR>\n", get_oclass()->get_name(), get_id());
 
 	int status = 2; // green
-	
-	//Check others - de-"macrotized" so it can do things indirectly
+
 	//No idea why meter and triplex_meter are in a link version - leaving because they were here before
-	if ((gl_object_isa(my(),"switch","powerflow") == true) || (gl_object_isa(my(),"regulator","powerflow") == true) || (gl_object_isa(my(),"triplex_meter","powerflow") == true) || (gl_object_isa(my(),"meter","powerflow") == true))
-	{
-		//Map to the function
+    if (
+        gl_object_isa(my(), "switch", "powerflow") ||
+        gl_object_isa(my(), "regulator", "powerflow") ||
+        gl_object_isa(my(), "triplex_meter", "powerflow") ||
+        gl_object_isa(my(), "meter", "powerflow")
+    )
+    {
+        //Map to the function
 		temp_funadd = (FUNCTIONADDR)(gl_get_function(obj,"pwr_object_kmldata"));
 
 		//See if it was located
-		if (temp_funadd == NULL)
+		if (temp_funadd == nullptr)
 		{
 			GL_THROW("object:%s - failed to map kmldata function",(obj->name?obj->name:"unnamed"));
 			//Defined above
@@ -3513,8 +3521,8 @@ int link_object::kmldump(int (*stream)(const char*,...))
 		node *pFrom = OBJECTDATA(from,node);
 		node *pTo = OBJECTDATA(to,node);
 		int phase[3] = {has_phase(PHASE_A),has_phase(PHASE_B),has_phase(PHASE_C)};
-		complex flow[3];
-		complex current[3];
+		gld::complex flow[3];
+		gld::complex current[3];
 		int i;
 		for (i=0; i<3; i++)
 		{
@@ -3760,7 +3768,7 @@ EXPORT int currentcalculation_link(OBJECT *obj, int nodecall, bool link_fault_mo
 {
 	int status_rv;
 	link_object *my = OBJECTDATA(obj,link_object);
-	
+
 	//Call the current update -- do it as a "self call"
 	status_rv = my->CurrentCalculation(nodecall,link_fault_mode);
 
@@ -5163,7 +5171,7 @@ void link_object::calculate_power()
 }
 
 //Retrieve value of a double
-double *link_object::get_double(OBJECT *obj, char *name)
+double *link_object::get_double(OBJECT *obj, const char *name)
 {
 	PROPERTY *p = gl_get_property(obj,name);
 	if (p==NULL || p->ptype!=PT_double)
@@ -8213,8 +8221,11 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			pf_mesh_fault_values.NodeRefNum = NR_branchdata[NR_branch_reference].to;
 
 			//Call the powerflow/impednace creater
-			pf_resultval = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, pf_solvermode, &pf_mesh_fault_values, &pf_badcompute);
-
+#ifndef GLD_USE_EIGEN
+        pf_resultval = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, pf_solvermode, &pf_mesh_fault_values, &pf_badcompute);
+#else
+        pf_resultval = 0;
+#endif
 			//Check the output
 			if ((pf_badcompute == true) || (pf_mesh_fault_values.return_code != 1) || (pf_resultval <= 0))
 			{

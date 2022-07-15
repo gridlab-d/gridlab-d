@@ -2,7 +2,9 @@
 //
 
 #include "stdafx.h"
+
 #include <time.h>
+
 #include "GldEditor.h"
 
 #include "GldEditorDoc.h"

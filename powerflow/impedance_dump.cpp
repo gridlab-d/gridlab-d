@@ -6,10 +6,10 @@
 	@{
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "impedance_dump.h"
 
@@ -58,12 +58,12 @@ int impedance_dump::init(OBJECT *parent)
 	return 1;
 }
 
-int impedance_dump::isa(char *classname)
+int impedance_dump::isa(const char *classname)
 {
 	return strcmp(classname,"impedance_dump")==0;
 }
 
-complex * impedance_dump::get_complex(OBJECT *obj, char *name)
+complex * impedance_dump::get_complex(OBJECT *obj, const char *name)
 {
 	PROPERTY *p = gl_get_property(obj,name);
 	if (p==NULL || p->ptype!=PT_complex)
@@ -1774,7 +1774,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			//write the transformer configuration
 			//xfmrconfig=gl_get_property(pTransformer[index]->config,"connect_type");
 			fprintf(fn,"\t\t<xfmr_config>%u</xfmr_config>\n",pTransformer[index]->config->connect_type);
-			
+
 			//write the phases
 			if(pTransformer[index]->phases == 0x0001){//A
 				fprintf(fn,"\t\t<phases>A</phases>\n");
@@ -1832,16 +1832,16 @@ int impedance_dump::dump(TIMESTAMP t)
 			}
 
 			//write power rating
-			if(pTransformer[index]->config->kVA_rating!=0){
+			if(pTransformer[index]->config->kVA_rating!= 0.0){
 				fprintf(fn,"\t\t<power_rating>%.6f</power_rating>\n",pTransformer[index]->config->kVA_rating);
 			}
 
 
 			//write impedance
-			if(pTransformer[index]->config->impedance.Re()!=0){
+			if(pTransformer[index]->config->impedance.Re()!=0.0){
 				fprintf(fn,"\t\t<resistance>%.6f</resistance>\n",pTransformer[index]->config->impedance.Re());
 			}
-			if(pTransformer[index]->config->impedance.Im()!=0){
+			if(pTransformer[index]->config->impedance.Im()!=0.0){
 				fprintf(fn,"\t\t<reactance>%.6f</reactance>\n",pTransformer[index]->config->impedance.Im());
 			}
 			//write a_mat
@@ -2121,7 +2121,7 @@ int impedance_dump::dump(TIMESTAMP t)
 
 			//write the from node's voltage
 			if(pUgLine[index]->has_phase(PHASE_A)){
-				node_voltage = get_complex(pUgLine[index]->from,"voltage_A");
+				node_voltage = get_complex(pUgLine[index]->from, "voltage_A");
 			} else if(pUgLine[index]->has_phase(PHASE_B)){
 				node_voltage = get_complex(pUgLine[index]->from,"voltage_B");
 			} else if(pUgLine[index]->has_phase(PHASE_C)){

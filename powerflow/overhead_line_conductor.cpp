@@ -7,10 +7,10 @@
 	@{
 **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
 using namespace std;
 
@@ -21,10 +21,10 @@ CLASS* overhead_line_conductor::pclass = NULL;
 
 overhead_line_conductor::overhead_line_conductor(MODULE *mod) : powerflow_library(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
-		oclass = gl_register_class(mod,"overhead_line_conductor",sizeof(overhead_line_conductor),0x00);
-		if (oclass==NULL)
+		oclass = gl_register_class(mod, "overhead_line_conductor",sizeof(overhead_line_conductor),0x00);
+		if (oclass== nullptr)
 			throw "unable to register class overhead_line_conductor";
 		else
 			oclass->trl = TRL_PROVEN;
