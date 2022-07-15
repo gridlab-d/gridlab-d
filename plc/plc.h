@@ -7,6 +7,7 @@
 #define _PLC_H
 
 #include <stdarg.h>
+
 #include "gridlabd.h"
 
 #include "machine.h"

@@ -24,10 +24,10 @@ public:
 	double phaseA_kVA_rating;     // kVA rating of transformer
 	double phaseB_kVA_rating;     // kVA rating of transformer
 	double phaseC_kVA_rating;     // kVA rating of transformer
-	complex impedance;				// Series impedance
-	complex impedance1;				// Series impedance (only used when you want to define each individual 
-	complex impedance2;				//    winding seperately
-	complex shunt_impedance;		// Shunt impedance - all values are summed and reflected back to the primary
+	gld::complex impedance;				// Series impedance
+	gld::complex impedance1;				// Series impedance (only used when you want to define each individual
+	gld::complex impedance2;				//    winding seperately
+	gld::complex shunt_impedance;		// Shunt impedance - all values are summed and reflected back to the primary
 	double no_load_loss;			// Another method of specifying transformer impedances
 	double full_load_loss;			//  -- both are defined as unit values
 	double RX;						// the reactance to resistance ratio

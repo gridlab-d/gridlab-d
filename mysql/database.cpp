@@ -2,7 +2,7 @@
     DP Chassin
     Copyright (C) 2012 Battelle Memorial Institute
  **/
-
+#include "config.h"
 #ifdef HAVE_MYSQL
 
 #ifdef _WIN32
@@ -15,7 +15,8 @@
 #include <errno.h>
 #include <math.h>
 #include <ctype.h>
-#include <complex.h>
+
+#include "gld_complex.h"
 
 #include "database.h"
 

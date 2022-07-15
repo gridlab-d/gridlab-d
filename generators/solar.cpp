@@ -9,7 +9,7 @@
 1. Photovoltaic Module Thermal/Wind performance: Long-term monitoring and Model development for energy rating , Solar program review meeting 2003, Govindswamy Tamizhmani et al
 2. COMPARISON OF ENERGY PRODUCTION AND PERFORMANCE FROM FLAT-PLATE PHOTOVOLTAIC MODULE TECHNOLOGIES DEPLOYED AT FIXED TILT, J.A. del Cueto
 3. Solar Collectors and Photovoltaic in energyPRO
-4. Calculation of the polycrystalline PV module temperature using a simple method of energy balance 
+4. Calculation of the polycrystalline PV module temperature using a simple method of energy balance
 **/
 
 #include "solar.h"
@@ -48,7 +48,7 @@ solar::solar(MODULE *module)
 		if (gl_publish_variable(oclass,
 			// Flag for Mode Section of Calculating pvc_Pmax
 			PT_bool, "pvc_Pmax_calc_simp_mode", PADDR(pvc_Pmax_calc_simp_mode), PT_DESCRIPTION, "If the simple mode is selected, the pvc_Pmax = pvc_U_m_V * pvc_I_m_A.",
-			
+
 			// Solar PV Panel (under PV_CURVE Mode)
 			PT_double, "t_ref_cels[degC]", PADDR(pvc_t_ref_cels), PT_DESCRIPTION, "The referenced temperature",
 			PT_double, "S_ref_wpm2[W/m^2]", PADDR(pvc_S_ref_wpm2), PT_DESCRIPTION, "The referenced insolation",
@@ -139,7 +139,7 @@ solar::solar(MODULE *module)
 
 			PT_enumeration,"generator_status",PADDR(gen_status_v_deprecated), PT_DEPRECATED, //unused
 				PT_KEYWORD,"OFFLINE",(enumeration)OFFLINE,
-				PT_KEYWORD,"ONLINE",(enumeration)ONLINE,	
+				PT_KEYWORD,"ONLINE",(enumeration)ONLINE,
 
 			PT_enumeration,"power_type",PADDR(power_type_v_deprecated),
 				PT_KEYWORD,"AC",(enumeration)AC,
@@ -381,7 +381,7 @@ int solar::init_climate()
 			pTout = new gld_property(obj, "temperature");
 
 			//Check it
-			if ((pTout->is_valid() != true) || (pTout->is_double() != true))
+			if (!pTout->is_valid() || !pTout->is_double())
 			{
 				GL_THROW("solar:%d - %s - Failed to map outside temperature", hdr->id, (hdr->name ? hdr->name : "Unnamed"));
 				/*  TROUBLESHOOT
@@ -394,7 +394,7 @@ int solar::init_climate()
 			pWindSpeed = new gld_property(obj, "wind_speed");
 
 			//Check tit
-			if ((pWindSpeed->is_valid() != true) || (pWindSpeed->is_double() != true))
+			if (!pWindSpeed->is_valid() || !pWindSpeed->is_double())
 			{
 				GL_THROW("solar:%d - %s - Failed to map wind speed", hdr->id, (hdr->name ? hdr->name : "Unnamed"));
 				/*  TROUBLESHOOT
@@ -404,7 +404,7 @@ int solar::init_climate()
 			}
 
 			//If climate data was found, check other related variables
-			if (fix_angle_lat == true)
+			if (fix_angle_lat)
 			{
 				if (hdr->latitude < 0) //Southern hemisphere
 				{
@@ -616,7 +616,7 @@ int solar::init(OBJECT *parent)
 		Max_P = Rated_Insolation * efficiency * area; // We are calculating the module efficiency which should be less than cell efficiency. What about the sun hours??
 		gl_verbose("solar:%d %s - Max_P was not specified.  Calculating from other defaults.",obj->id,(obj->name?obj->name:"Unnamed"));
 		/* TROUBLESHOOT
-		The relationship between power output and other physical variables is described by Max_P = Rated_Insolation * efficiency * area. Since Max_P 
+		The relationship between power output and other physical variables is described by Max_P = Rated_Insolation * efficiency * area. Since Max_P
 		was not set, using this equation to calculate it.
 		*/
 
@@ -665,13 +665,13 @@ int solar::init(OBJECT *parent)
 	// find parent inverter, if not defined, use a default voltage
 	if (parent != NULL)
 	{
-		if (gl_object_isa(parent, "inverter", "generators") == true) // SOLAR has a PARENT and PARENT is an INVERTER - old-school inverter
+		if (gl_object_isa(parent, "inverter", "generators")) // SOLAR has a PARENT and PARENT is an INVERTER - old-school inverter
 		{
 			//Map the inverter voltage
 			inverter_voltage_property = new gld_property(parent, "V_In");
 
 			//Check it
-			if ((inverter_voltage_property->is_valid() != true) || (inverter_voltage_property->is_double() != true))
+			if (!inverter_voltage_property->is_valid() || !inverter_voltage_property->is_double())
 			{
 				GL_THROW("solar:%d - %s - Unable to map inverter power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
@@ -684,7 +684,7 @@ int solar::init(OBJECT *parent)
 			inverter_current_property = new gld_property(parent, "I_In");
 
 			//Check it
-			if ((inverter_current_property->is_valid() != true) || (inverter_current_property->is_double() != true))
+			if (!inverter_current_property->is_valid() || !inverter_current_property->is_double())
 			{
 				GL_THROW("solar:%d - %s - Unable to map inverter power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -704,7 +704,7 @@ int solar::init(OBJECT *parent)
 			temp_property_pointer = new gld_property(parent, "use_multipoint_efficiency");
 
 			//Check and make sure it is valid
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_bool() != true))
+			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_bool())
 			{
 				GL_THROW("solar:%d - %s - Unable to map inverter property", obj->id, (obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
@@ -723,7 +723,7 @@ int solar::init(OBJECT *parent)
 			temp_property_pointer = new gld_property(parent, "maximum_dc_power");
 
 			//Check it
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_double())
 			{
 				GL_THROW("solar:%d - %s - Unable to map inverter property", obj->id, (obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -739,7 +739,7 @@ int solar::init(OBJECT *parent)
 			temp_property_pointer = new gld_property(parent, "inverter_type");
 
 			//Check it
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_enumeration() != true))
+			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_enumeration())
 			{
 				GL_THROW("solar:%d - %s - Unable to map inverter property", obj->id, (obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -755,7 +755,7 @@ int solar::init(OBJECT *parent)
 			temp_property_pointer = new gld_property(parent, "number_of_phases_out");
 
 			//Check it
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_integer() != true))
+			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_integer())
 			{
 				GL_THROW("solar:%d - %s - Unable to map inverter property", obj->id, (obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -771,7 +771,7 @@ int solar::init(OBJECT *parent)
 			temp_property_pointer = new gld_property(parent, "rated_power");
 
 			//Check it
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_double())
 			{
 				GL_THROW("solar:%d - %s - Unable to map inverter property", obj->id, (obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -787,7 +787,7 @@ int solar::init(OBJECT *parent)
 			temp_property_pointer = new gld_property(parent, "efficiency_value");
 
 			//Check it
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_double())
 			{
 				GL_THROW("solar:%d - %s - Unable to map inverter property", obj->id, (obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -803,7 +803,7 @@ int solar::init(OBJECT *parent)
 			temp_property_pointer = new gld_property(parent, "inverter_efficiency");
 
 			//Check it
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_double())
 			{
 				GL_THROW("solar:%d - %s - Unable to map inverter property", obj->id, (obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -883,7 +883,7 @@ int solar::init(OBJECT *parent)
 			}
 
 			//Map the inverter property pvc_pmax, which indicates the maximum power avaialbe from the PV now
-			char *cur_prop_name = "pvc_Pmax";
+			const char *cur_prop_name = "pvc_Pmax";
 			inverter_pvc_Pmax_property = new gld_property(parent, cur_prop_name);
 
 			//Check it
@@ -922,7 +922,7 @@ int solar::init(OBJECT *parent)
 			{
 				gl_warning("solar:%d - %s - inverter_dyn object only supports PV_CURVE model - forcing that", obj->id, (obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
-				At this time, the inverter_dyn and solar interactions only support the PV_CURVE model.  This may change in the future. 
+				At this time, the inverter_dyn and solar interactions only support the PV_CURVE model.  This may change in the future.
 				*/
 
 				//Force it
@@ -972,7 +972,7 @@ int solar::init(OBJECT *parent)
 		inverter_voltage_property = new gld_property(obj, "default_voltage_variable");
 
 		//Check it
-		if ((inverter_voltage_property->is_valid() != true) || (inverter_voltage_property->is_double() != true))
+		if (!inverter_voltage_property->is_valid() || !inverter_voltage_property->is_double())
 		{
 			GL_THROW("solar:%d - %s - Unable to map a default power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
@@ -985,7 +985,7 @@ int solar::init(OBJECT *parent)
 		inverter_current_property = new gld_property(obj, "default_current_variable");
 
 		//Check it
-		if ((inverter_current_property->is_valid() != true) || (inverter_current_property->is_double() != true))
+		if (!inverter_current_property->is_valid() || !inverter_current_property->is_double())
 		{
 			GL_THROW("solar:%d - %s - Unable to map a default power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
 			//Defined above

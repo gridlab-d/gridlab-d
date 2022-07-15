@@ -32,10 +32,10 @@
 
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "power_metrics.h"
 
@@ -69,15 +69,15 @@ power_metrics::power_metrics(MODULE *mod) : powerflow_library(mod)
 			PT_double, "MAIFI_int", PADDR(MAIFI_int),PT_DESCRIPTION, "Displays MAIFI values over the period specified by base_time_value as per IEEE 1366-2003",
 			PT_double, "base_time_value[s]", PADDR(stat_base_time_value), PT_DESCRIPTION,"time period over which _int values are claculated",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
-			if (gl_publish_function(oclass, "calc_metrics", (FUNCTIONADDR)calc_pfmetrics)==NULL)
+			if (gl_publish_function(oclass, "calc_metrics", (FUNCTIONADDR)calc_pfmetrics)== nullptr)
 				GL_THROW("Unable to publish metrics calculation function");
-			if (gl_publish_function(oclass,	"reset_interval_metrics", (FUNCTIONADDR)reset_pfinterval_metrics)==NULL)
+			if (gl_publish_function(oclass,	"reset_interval_metrics", (FUNCTIONADDR)reset_pfinterval_metrics)==nullptr)
 				GL_THROW("Unable to publish interval metrics reset function");
-			if (gl_publish_function(oclass,	"reset_annual_metrics", (FUNCTIONADDR)reset_pfannual_metrics)==NULL)
+			if (gl_publish_function(oclass,	"reset_annual_metrics", (FUNCTIONADDR)reset_pfannual_metrics)==nullptr)
 				GL_THROW("Unable to publish annual metrics reset function");
-			if (gl_publish_function(oclass,	"init_reliability", (FUNCTIONADDR)init_pf_reliability_extra)==NULL)
+			if (gl_publish_function(oclass,	"init_reliability", (FUNCTIONADDR)init_pf_reliability_extra)==nullptr)
 				GL_THROW("Unable to publish powerflow reliability initialization function");
-			if (gl_publish_function(oclass,	"logfile_extra", (FUNCTIONADDR)logfile_extra)==NULL)
+			if (gl_publish_function(oclass,	"logfile_extra", (FUNCTIONADDR)logfile_extra)==nullptr)
 				GL_THROW("Unable to publish powerflow reliability metrics extra header function");
     }
 }
@@ -319,10 +319,10 @@ void power_metrics::check_fault_check(void)
 			//**Grab the "checking state" property and make sure it is right **//
 
 			//Map that field
-			temporary_property = new gld_property(fault_check_object,"check_mode");
+			temporary_property = new gld_property(fault_check_object, "check_mode");
 
 			//Make sure it worked
-			if ((temporary_property->is_valid() != true) || (temporary_property->is_enumeration() != true))
+			if (!temporary_property->is_valid() || !temporary_property->is_enumeration())
 			{
 				GL_THROW("power_metrics failed to map a property of the fault_check object!");
 				/*  TROUBLESHOOT
@@ -371,7 +371,7 @@ void power_metrics::check_fault_check(void)
 			temporary_property = new gld_property(fault_check_object,"eventgen_object");
 
 			//Make sure it worked
-			if ((temporary_property->is_valid() != true) || (temporary_property->is_objectref() != true))
+			if (!temporary_property->is_valid() || !temporary_property->is_objectref())
 			{
 				GL_THROW("power_metrics failed to map a property of the fault_check object!");
 				//Defined above

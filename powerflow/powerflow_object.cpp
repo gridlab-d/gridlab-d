@@ -77,10 +77,10 @@
 
  @{
  **/
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "powerflow.h"
 #include "node.h"
@@ -148,7 +148,7 @@ powerflow_object::powerflow_object(CLASS *oclass)
 	gl_create_foreign((OBJECT*)this);
 }
 
-int powerflow_object::isa(char *classname)
+int powerflow_object::isa(const char *classname)
 {
 	return strcmp(classname,"powerflow_object")==0;
 }

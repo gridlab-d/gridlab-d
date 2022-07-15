@@ -1,4 +1,5 @@
 #include "group_recorder.h"
+
 #include <sstream>
 
 CLASS *group_recorder::oclass = NULL;
@@ -15,9 +16,9 @@ group_recorder::group_recorder(MODULE *mod){
 #ifdef _DEBUG
 		gl_debug("construction group_recorder class");
 #endif
-		oclass = gl_register_class(mod,"group_recorder",sizeof(group_recorder), PC_POSTTOPDOWN);
+		oclass = gl_register_class(mod, const_cast<char *>("group_recorder"), sizeof(group_recorder), PC_POSTTOPDOWN);
         if(oclass == NULL)
-            GL_THROW("unable to register object class implemented by %s",__FILE__);
+            GL_THROW(const_cast<char *>("unable to register object class implemented by %s"), __FILE__);
         
         if(gl_publish_variable(oclass,
 			PT_char256, "file", PADDR(filename), PT_DESCRIPTION, "output file name",
@@ -40,8 +41,8 @@ group_recorder::group_recorder(MODULE *mod){
 			;//GL_THROW("unable to publish properties in %s",__FILE__);
 		}
 
-		if (gl_publish_function(oclass,"obj_postupdate_fxn",(FUNCTIONADDR)group_recorder_postroutine)==NULL)
-			GL_THROW("Unable to publish deltamode postupdate function for group_recorder");
+		if (gl_publish_function(oclass, const_cast<char *>("obj_postupdate_fxn"), (FUNCTIONADDR)group_recorder_postroutine) == NULL)
+			GL_THROW(const_cast<char *>("Unable to publish deltamode postupdate function for group_recorder"));
 
 		defaults = this;
 		memset(this, 0, sizeof(group_recorder));
@@ -231,8 +232,9 @@ int group_recorder::init(OBJECT *obj){
 	return 1;
 }
 
-TIMESTAMP group_recorder::postsync(TIMESTAMP t0, TIMESTAMP t1){
-	// if we are strict and an error has occured, stop the simulation
+//TIMESTAMP group_recorder::postsync(TIMESTAMP t0, TIMESTAMP t1){
+TIMESTAMP group_recorder::commit(TIMESTAMP t1){
+	// if we are strict and an error has occurred, stop the simulation
 
 	// if eventful interval, read
 	if(0 == write_interval){//
@@ -251,10 +253,12 @@ TIMESTAMP group_recorder::postsync(TIMESTAMP t0, TIMESTAMP t1){
 			next_write = t1 + write_interval;
 		}
 		//Extra check for offnominal time steps (deltamode or minimum_timestep) - make sure it didn't get stuck
-		if (offnominal_time == true)
+		if (offnominal_time)
 		{
+            // TODO: review this if statement, the first check may be redundant
 			//See if we stagnated
-			if ((t0 == t1) && (t1 == next_write))
+//			if ((t0 == t1) && (t1 == next_write))
+			if (t1 == next_write)
 			{
 				//We did, just bump us forward one
 				next_write = next_write + TS_SECOND;
@@ -300,7 +304,7 @@ int group_recorder::commit(TIMESTAMP t1, double t1dbl, bool deltacall){
 	}
 
 	//See if we're deltamode -- if so, just make an update for t1 for the various items
-	if (deltacall==true)
+	if (deltacall)
 	{
 		t1 = (TIMESTAMP)t1dbl;
 	}
@@ -312,7 +316,7 @@ int group_recorder::commit(TIMESTAMP t1, double t1dbl, bool deltacall){
 
 	// if periodic interval, check for write
 	if(write_interval > 0){
-		if(((interval_write==true) && (deltacall==false)) || (deltacall==true)){
+		if((interval_write && !deltacall) || deltacall){
 			if(0 == read_line()){
 				gl_error("group_recorder::commit(): error when reading the values");
 				return 0;
@@ -489,7 +493,7 @@ int group_recorder::read_line(){
 		// GETADDR is a macro defined in object.h
 		if(curr->prop.ptype == PT_complex && complex_part != NONE){
 			double part_value = 0.0;
-			complex *cptr = 0;
+			gld::complex *cptr = 0;
 			// get value as a complex
 			cptr = gl_get_complex(curr->obj, &(curr->prop));
 			if(0 == cptr){
@@ -586,9 +590,9 @@ int group_recorder::write_line(TIMESTAMP t1, double t1dbl, bool deltacall){
 
 	// write time_str
 	// recorder.c uses multiple formats, in the sense of "formatted or not".  This has been fixed to match
-	if (format == false)
+	if (!format)
 	{
-		if (deltacall==false)
+		if (!deltacall)
 		{
 			if(0 == gl_localtime(t1, &dt))
 			{
@@ -753,7 +757,7 @@ EXPORT TIMESTAMP sync_group_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 				rv = TS_NEVER;
 				break;
 			case PC_POSTTOPDOWN:
-				rv = my->postsync(obj->clock, t0);
+				rv = my->commit(obj->clock);
 				obj->clock = t0;
 				break;
 			default:

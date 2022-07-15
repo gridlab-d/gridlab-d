@@ -11,6 +11,7 @@
 #define _SIMPLE_H
 
 #include <stdarg.h>
+
 #include "gridlabd.h"
 #include "optimize.h"
 

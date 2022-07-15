@@ -5,6 +5,7 @@
 #define _enum_assert_H
 
 #include <stdarg.h>
+
 #include "gridlabd.h"
 
 #ifndef _isnan

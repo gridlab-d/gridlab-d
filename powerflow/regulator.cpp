@@ -8,10 +8,10 @@
 	@{
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
 using namespace std;
 
@@ -183,7 +183,7 @@ int regulator::init(OBJECT *parent)
 				//Defined above
 			}
 				
-			RNode_voltage[2] = new gld_property(RemoteNode,"voltage_C");			
+			RNode_voltage[2] = new gld_property(RemoteNode,"voltage_C");
 
 
 
@@ -238,13 +238,13 @@ int regulator::init(OBJECT *parent)
 	}
 
 	// D_mat & W_mat - 3x3 matrix
-	D_mat[0][0] = D_mat[1][1] = D_mat[2][2] = complex(1,0);
-	D_mat[0][1] = D_mat[2][0] = D_mat[1][2] = complex(-1,0);
-	D_mat[0][2] = D_mat[2][1] = D_mat[1][0] = complex(0,0);
+	D_mat[0][0] = D_mat[1][1] = D_mat[2][2] = gld::complex(1,0);
+	D_mat[0][1] = D_mat[2][0] = D_mat[1][2] = gld::complex(-1,0);
+	D_mat[0][2] = D_mat[2][1] = D_mat[1][0] = gld::complex(0,0);
 	
-	W_mat[0][0] = W_mat[1][1] = W_mat[2][2] = complex(2,0);
-	W_mat[0][1] = W_mat[2][0] = W_mat[1][2] = complex(1,0);
-	W_mat[0][2] = W_mat[2][1] = W_mat[1][0] = complex(0,0);
+	W_mat[0][0] = W_mat[1][1] = W_mat[2][2] = gld::complex(2,0);
+	W_mat[0][1] = W_mat[2][0] = W_mat[1][2] = gld::complex(1,0);
+	W_mat[0][2] = W_mat[2][1] = W_mat[1][0] = gld::complex(0,0);
 	
 	multiply(1.0/3.0,W_mat,W_mat);
 	
@@ -259,7 +259,7 @@ int regulator::init(OBJECT *parent)
 		{
 			a_mat[i][j] = b_mat[i][j] = c_mat[i][j] = d_mat[i][j] =
 					A_mat[i][j] = B_mat[i][j] = 0.0;
-			base_admittance_mat[i][j] = complex(0.0,0.0);
+			base_admittance_mat[i][j] = gld::complex(0.0,0.0);
 		}
 	}
 
@@ -279,15 +279,15 @@ int regulator::init(OBJECT *parent)
 			*/
 	}
 
-	complex tmp_mat[3][3] = {{complex(1,0)/a_mat[0][0],complex(0,0),complex(0,0)},
-			                 {complex(0,0), complex(1,0)/a_mat[1][1],complex(0,0)},
-			                 {complex(-1,0)/a_mat[0][0],complex(-1,0)/a_mat[1][1],complex(0,0)}};
-	complex tmp_mat1[3][3];
+	gld::complex tmp_mat[3][3] = {{gld::complex(1,0)/a_mat[0][0],gld::complex(0,0),gld::complex(0,0)},
+			                 {gld::complex(0,0), gld::complex(1,0)/a_mat[1][1],gld::complex(0,0)},
+			                 {gld::complex(-1,0)/a_mat[0][0],gld::complex(-1,0)/a_mat[1][1],gld::complex(0,0)}};
+	gld::complex tmp_mat1[3][3];
 
 	switch (pConfig->connect_type) {
 		case regulator_configuration::WYE_WYE:
 			for (int i = 0; i < 3; i++)
-				d_mat[i][i] = complex(1.0,0) / a_mat[i][i]; 
+				d_mat[i][i] = gld::complex(1.0,0) / a_mat[i][i];
 			inverse(a_mat,A_mat);
 
 			if (solver_method == SM_NR)
@@ -303,29 +303,29 @@ int regulator::init(OBJECT *parent)
 					regulator_resistance = default_resistance;
 				}
 				SpecialLnk = REGULATOR;
-				//complex Izt = complex(1,0) / zt;
+				//gld::complex Izt = gld::complex(1,0) / zt;
 				if (has_phase(PHASE_A))
 				{
-					base_admittance_mat[0][0] = complex(1.0/regulator_resistance,0.0);
+					base_admittance_mat[0][0] = gld::complex(1.0/regulator_resistance,0.0);
 					b_mat[0][0] = regulator_resistance;
 				}
 				if (has_phase(PHASE_B))
 				{
-					base_admittance_mat[1][1] = complex(1.0/regulator_resistance,0.0);
+					base_admittance_mat[1][1] = gld::complex(1.0/regulator_resistance,0.0);
 					b_mat[1][1] = regulator_resistance;
 				}
 				if (has_phase(PHASE_C))
 				{
-					base_admittance_mat[2][2] = complex(1.0/regulator_resistance,0.0);
+					base_admittance_mat[2][2] = gld::complex(1.0/regulator_resistance,0.0);
 					b_mat[2][2] = regulator_resistance;
 				}
 			}
 			break;
 		case regulator_configuration::OPEN_DELTA_ABBC:
-			d_mat[0][0] = complex(1,0) / a_mat[0][0];
-			d_mat[1][0] = complex(-1,0) / a_mat[0][0];
-			d_mat[1][2] = complex(-1,0) / a_mat[1][1];
-			d_mat[2][2] = complex(1,0) / a_mat[1][1];
+			d_mat[0][0] = gld::complex(1,0) / a_mat[0][0];
+			d_mat[1][0] = gld::complex(-1,0) / a_mat[0][0];
+			d_mat[1][2] = gld::complex(-1,0) / a_mat[1][1];
+			d_mat[2][2] = gld::complex(1,0) / a_mat[1][1];
 
 			a_mat[2][0] = -a_mat[0][0];
 			a_mat[2][1] = -a_mat[1][1];
@@ -900,22 +900,22 @@ void regulator::reg_prePre_fxn(double curr_time_value)
 	}
 			
 	//Use 'a' matrix to solve appropriate 'A' & 'd' matrices
-	complex tmp_mat[3][3] = {{complex(1,0)/a_mat[0][0],complex(0,0),complex(0,0)},
-							 {complex(0,0), complex(1,0)/a_mat[1][1],complex(0,0)},
-							 {complex(-1,0)/a_mat[0][0],complex(-1,0)/a_mat[1][1],complex(0,0)}};
-	complex tmp_mat1[3][3];
+	gld::complex tmp_mat[3][3] = {{gld::complex(1,0)/a_mat[0][0],gld::complex(0,0),gld::complex(0,0)},
+							 {gld::complex(0,0), gld::complex(1,0)/a_mat[1][1],gld::complex(0,0)},
+							 {gld::complex(-1,0)/a_mat[0][0],gld::complex(-1,0)/a_mat[1][1],gld::complex(0,0)}};
+	gld::complex tmp_mat1[3][3];
 
 	switch (pConfig->connect_type) {
 		case regulator_configuration::WYE_WYE:
 			for (int i = 0; i < 3; i++)
-			{	d_mat[i][i] = complex(1.0,0) / a_mat[i][i]; }
+			{	d_mat[i][i] = gld::complex(1.0,0) / a_mat[i][i]; }
 			inverse(a_mat,A_mat);
 			break;
 		case regulator_configuration::OPEN_DELTA_ABBC:
-			d_mat[0][0] = complex(1,0) / a_mat[0][0];
-			d_mat[1][0] = complex(-1,0) / a_mat[0][0];
-			d_mat[1][2] = complex(-1,0) / a_mat[1][1];
-			d_mat[2][2] = complex(1,0) / a_mat[1][1];
+			d_mat[0][0] = gld::complex(1,0) / a_mat[0][0];
+			d_mat[1][0] = gld::complex(-1,0) / a_mat[0][0];
+			d_mat[1][2] = gld::complex(-1,0) / a_mat[1][1];
+			d_mat[2][2] = gld::complex(1,0) / a_mat[1][1];
 
 			a_mat[2][0] = -a_mat[0][0];
 			a_mat[2][1] = -a_mat[1][1];
@@ -950,9 +950,9 @@ void regulator::reg_postPre_fxn(void)
 	{
 		//Get matrices for NR
 		int jindex,kindex;
-		complex Ylefttemp[3][3];
-		complex Yto[3][3];
-		complex Yfrom[3][3];
+		gld::complex Ylefttemp[3][3];
+		gld::complex Yto[3][3];
+		gld::complex Yfrom[3][3];
 
 		//Pre-admittancized matrix
 		equalm(base_admittance_mat,Yto);
@@ -968,8 +968,8 @@ void regulator::reg_postPre_fxn(void)
 		
 		for (jindex=0; jindex<3; jindex++)
 		{
-			Ylefttemp[jindex][jindex] = Yto[jindex][jindex] * complex(1,0) / a_mat[jindex][jindex];
-			Yfrom[jindex][jindex]=Ylefttemp[jindex][jindex] * complex(1,0) / a_mat[jindex][jindex];
+			Ylefttemp[jindex][jindex] = Yto[jindex][jindex] * gld::complex(1,0) / a_mat[jindex][jindex];
+			Yfrom[jindex][jindex]=Ylefttemp[jindex][jindex] * gld::complex(1,0) / a_mat[jindex][jindex];
 		}
 
 
@@ -987,7 +987,7 @@ void regulator::reg_postPre_fxn(void)
 
 		for (jindex=0; jindex<3; jindex++)
 		{
-			To_Y[jindex][jindex] = Yto[jindex][jindex] * complex(1,0) / a_mat[jindex][jindex];
+			To_Y[jindex][jindex] = Yto[jindex][jindex] * gld::complex(1,0) / a_mat[jindex][jindex];
 			From_Y[jindex][jindex]=Yfrom[jindex][jindex] * a_mat[jindex][jindex];
 		}
 		//multiply(invratio,Yto,To_Y);		//Incorporate turns ratio information into line's admittance matrix.
@@ -1317,7 +1317,7 @@ void regulator::get_monitored_voltage()
 				if ((double) pConfig->CT_ratio != 0.0)
 				{
 					//Calculate outgoing currents
-					complex tmp_mat2[3][3];
+					gld::complex tmp_mat2[3][3];
 					inverse(d_mat,tmp_mat2);
 
 					curr[0] = tmp_mat2[0][0]*current_in[0]+tmp_mat2[0][1]*current_in[1]+tmp_mat2[0][2]*current_in[2];
@@ -1325,7 +1325,7 @@ void regulator::get_monitored_voltage()
 					curr[2] = tmp_mat2[2][0]*current_in[0]+tmp_mat2[2][1]*current_in[1]+tmp_mat2[2][2]*current_in[2];
 				
 					for (int i = 0; i < 3; i++) 
-						check_voltage[i] = V2[i] - (curr[i] / (double) pConfig->CT_ratio) * complex(pConfig->ldc_R_V[i], pConfig->ldc_X_V[i]);
+						check_voltage[i] = V2[i] - (curr[i] / (double) pConfig->CT_ratio) * gld::complex(pConfig->ldc_R_V[i], pConfig->ldc_X_V[i]);
 				}
 				else 
 				{
@@ -1347,7 +1347,7 @@ void regulator::get_monitored_voltage()
 				if ((double) pConfig->CT_ratio != 0.0)
 				{
 					//Calculate outgoing currents
-					complex tmp_mat2[3][3];
+					gld::complex tmp_mat2[3][3];
 					inverse(d_mat,tmp_mat2);
 
 					curr[0] = tmp_mat2[0][0]*current_in[0]+tmp_mat2[0][1]*current_in[1]+tmp_mat2[0][2]*current_in[2];
@@ -1355,13 +1355,13 @@ void regulator::get_monitored_voltage()
 					curr[2] = tmp_mat2[2][0]*current_in[0]+tmp_mat2[2][1]*current_in[1]+tmp_mat2[2][2]*current_in[2];
 
 					if (pConfig->CT_phase == PHASE_A)
-						check_voltage[0] = check_voltage[1] = check_voltage[2] = V2[0] - (curr[0] / (double) pConfig->CT_ratio) * complex(pConfig->ldc_R_V[0], pConfig->ldc_X_V[0]);
+						check_voltage[0] = check_voltage[1] = check_voltage[2] = V2[0] - (curr[0] / (double) pConfig->CT_ratio) * gld::complex(pConfig->ldc_R_V[0], pConfig->ldc_X_V[0]);
 	
 					else if (pConfig->CT_phase == PHASE_B)
-						check_voltage[0] = check_voltage[1] = check_voltage[2] = V2[0] - (curr[1] / (double) pConfig->CT_ratio) * complex(pConfig->ldc_R_V[1], pConfig->ldc_X_V[1]);
+						check_voltage[0] = check_voltage[1] = check_voltage[2] = V2[0] - (curr[1] / (double) pConfig->CT_ratio) * gld::complex(pConfig->ldc_R_V[1], pConfig->ldc_X_V[1]);
 	
 					else if (pConfig->CT_phase == PHASE_C)
-						check_voltage[0] = check_voltage[1] = check_voltage[2] = V2[0] - (curr[2] / (double) pConfig->CT_ratio) * complex(pConfig->ldc_R_V[2], pConfig->ldc_X_V[2]);
+						check_voltage[0] = check_voltage[1] = check_voltage[2] = V2[0] - (curr[2] / (double) pConfig->CT_ratio) * gld::complex(pConfig->ldc_R_V[2], pConfig->ldc_X_V[2]);
 	
 				}
 				else 

@@ -3,7 +3,8 @@
 // Implements the server connection mode
 //
 
-#include <string.h>
+#include <cstring>
+
 #include "server.h"
 
 extern CONNECTIONSECURITY connection_security;

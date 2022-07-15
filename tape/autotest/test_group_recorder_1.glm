@@ -1,0 +1,226 @@
+// Simple model with three loads for testing group_recorder
+#set profiler=1
+
+module tape;
+module powerflow {
+	solver_method NR;
+};
+
+clock {
+	timezone PST+8PDT;
+	starttime '2001-01-01 00:00:00';
+	stoptime '2001-01-02 00:00:00';
+}
+
+// swing node
+object meter {
+	name substation_node;
+	phases ABCN;
+	nominal_voltage 7200;
+	bustype SWING;
+}
+
+// line configuration objects
+object line_configuration {
+    name overhead_line_1;
+    conductor_A overhead_line_conductor_1;
+    conductor_B overhead_line_conductor_1;
+    conductor_C overhead_line_conductor_1;
+    conductor_N overhead_line_conductor_1;
+    spacing line_spacing_1;
+}
+
+object line_spacing {
+    name line_spacing_1;
+    distance_AB 4;
+    distance_BC 4;
+    distance_AC 4;
+    distance_AN 3;
+    distance_BN 3;
+    distance_CN 3;
+}
+
+object overhead_line_conductor {
+    name overhead_line_conductor_1;
+    geometric_mean_radius 0.0271;
+    resistance 0.0369;
+}
+
+// Line, load, and meter 1
+object overhead_line {
+    name ol_1;
+    phases ABCN;
+    from substation_node;
+    to meter_1;
+    length 606.04;
+    configuration overhead_line_1;
+}
+
+object load {
+	phases ABCN;
+	name load_1;
+	parent meter_1;
+	base_power_A 120000;
+	base_power_B 130000;
+	base_power_C 110000;
+	power_pf_A 0.98;
+	current_pf_A 0.92;
+	impedance_pf_A 0.95;
+	power_fraction_A 0.8;
+	current_fraction_A 0.15;
+	impedance_fraction_A 0.05;
+	power_pf_B 0.98;
+	current_pf_B 0.92;
+	impedance_pf_B 0.95;
+	power_fraction_B 0.1;
+	current_fraction_B 0.3;
+	impedance_fraction_B 0.6;
+	power_pf_C 0.98;
+	current_pf_C 0.92;
+	impedance_pf_C 0.95;
+	power_fraction_C 0.5;
+	current_fraction_C 0.1;
+	impedance_fraction_C 0.4;
+	nominal_voltage 7200;
+}
+
+object meter {
+	name meter_1;
+	phases ABCN;
+	nominal_voltage 7200;
+	groupid meter_group;
+}
+
+// Line, load, and meter 2
+object overhead_line {
+    name ol_2;
+    phases ABCN;
+    from substation_node;
+    to meter_2;
+    length 1606.04;
+    configuration overhead_line_1;
+}
+
+object load {
+	phases ABCN;
+	name load_2;
+	parent meter_2;
+	base_power_A 130000;
+	base_power_B 110000;
+	base_power_C 120000;
+	power_pf_A 0.98;
+	current_pf_A 0.92;
+	impedance_pf_A 0.95;
+	power_fraction_A 0.8;
+	current_fraction_A 0.15;
+	impedance_fraction_A 0.05;
+	power_pf_B 0.98;
+	current_pf_B 0.92;
+	impedance_pf_B 0.95;
+	power_fraction_B 0.1;
+	current_fraction_B 0.3;
+	impedance_fraction_B 0.6;
+	power_pf_C 0.98;
+	current_pf_C 0.92;
+	impedance_pf_C 0.95;
+	power_fraction_C 0.5;
+	current_fraction_C 0.1;
+	impedance_fraction_C 0.4;
+	nominal_voltage 7200;
+}
+
+object meter {
+	name meter_2;
+	phases ABCN;
+	nominal_voltage 7200;
+	groupid meter_group;
+}
+
+// Line, load, and meter 3
+object overhead_line {
+    name ol_3;
+    phases ABCN;
+    from substation_node;
+    to meter_3;
+    length 66.04;
+    configuration overhead_line_1;
+}
+
+object load {
+	phases ABCN;
+	name load_3;
+	parent meter_3;
+	base_power_A 110000;
+	base_power_B 120000;
+	base_power_C 130000;
+	power_pf_A 0.98;
+	current_pf_A 0.92;
+	impedance_pf_A 0.95;
+	power_fraction_A 0.8;
+	current_fraction_A 0.15;
+	impedance_fraction_A 0.05;
+	power_pf_B 0.98;
+	current_pf_B 0.92;
+	impedance_pf_B 0.95;
+	power_fraction_B 0.1;
+	current_fraction_B 0.3;
+	impedance_fraction_B 0.6;
+	power_pf_C 0.98;
+	current_pf_C 0.92;
+	impedance_pf_C 0.95;
+	power_fraction_C 0.5;
+	current_fraction_C 0.1;
+	impedance_fraction_C 0.4;
+	nominal_voltage 7200;
+}
+
+object meter {
+	name meter_3;
+	phases ABCN;
+	nominal_voltage 7200;
+	groupid meter_group;
+}
+
+// Group recorders
+// energy
+object group_recorder {
+  interval 3600;
+  group "groupid=meter_group";
+  property measured_real_energy;
+  file energy.csv;
+  flush_interval -1; // This will catch it if anyone removes the unused, but necessary "flush_inverval[s]" variable from code
+  format FALSE; // This will catch it if anyone removes the unused, but necessary "format" variable from code
+};
+// power
+object group_recorder {
+  interval 3600;
+  group "groupid=meter_group";
+  property measured_power;
+  file power.csv;
+  limit 20;
+};
+// voltage
+object group_recorder {
+  interval 3600;
+  group "groupid=meter_group";
+  property measured_voltage_A;
+  file voltage_A.csv;
+};
+// current
+object group_recorder {
+  interval 3600;
+  group "groupid=meter_group";
+  property measured_current_C;
+  file current_C.csv;
+};
+
+// For some reason I don't understand, the group_recorder captures values at the
+//  stoptime, unlike in recorder and multi_recorder objects.
+object group_recorder {
+    name ResidentialMetersEnergy;
+    group  "groupid=meter_group";
+    property measured_real_energy;
+    file "test_group_recorder_epoch.csv";
+    format 1;
+    interval 60;
+}

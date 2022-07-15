@@ -49,10 +49,10 @@
  @{
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "refrigerator.h"
 
@@ -142,7 +142,7 @@ int refrigerator::create()
 	// name of enduse
 	load.name = oclass->name;
 
-	load.power = load.admittance = load.current = load.total = complex(0,0,J);
+	load.power = load.admittance = load.current = load.total = gld::complex(0,0,J);
 	load.voltage_factor = 1.0;
 	load.power_factor = 0.95;
 	load.power_fraction = 1;
@@ -693,8 +693,8 @@ double refrigerator::update_refrigerator_state(double dt0,TIMESTAMP t1)
 	}	
 	
 	load.power.SetPowerFactor(posted_power/1000, load.power_factor);
-	load.admittance = complex(0,0,J); 
-	load.current = complex(0,0,J);		
+	load.admittance = gld::complex(0,0,J);
+	load.current = gld::complex(0,0,J);
 
 	if(true==door_open && true==door_to_open)
 	{

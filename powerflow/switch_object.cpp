@@ -9,10 +9,10 @@
  @{
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "switch_object.h"
 
@@ -29,7 +29,7 @@ switch_object::switch_object(MODULE *mod) : link_object(mod)
 		pclass = link_object::oclass;
 
 		oclass = gl_register_class(mod,"switch",sizeof(switch_object),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass== nullptr)
 			throw "unable to register class switch_object";
 		else
 			oclass->trl = TRL_QUALIFIED;
@@ -61,8 +61,8 @@ switch_object::switch_object(MODULE *mod) : link_object(mod)
 				GL_THROW("Unable to publish fault creation function");
 			if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_switch)==NULL)
 				GL_THROW("Unable to publish fault restoration function");
-			if (gl_publish_function(oclass,	"clear_fault", (FUNCTIONADDR)clear_fault_switch)==NULL)
-				GL_THROW("Unable to publish fault clearing function");
+            if (gl_publish_function(oclass,	"clear_fault", (FUNCTIONADDR)clear_fault_switch)==NULL)
+                GL_THROW("Unable to publish fault clearing function");
 			if (gl_publish_function(oclass,	"change_switch_faults", (FUNCTIONADDR)switch_fault_updates)==NULL)
 				GL_THROW("Unable to publish switch fault correction function");
 			if (gl_publish_function(oclass,	"change_switch_state_toggle", (FUNCTIONADDR)change_switch_state_toggle)==NULL)
@@ -1907,7 +1907,7 @@ void switch_object::set_switch_full_reliability(unsigned char desired_status)
 }
 
 //Retrieve the address of an object
-OBJECT **switch_object::get_object(OBJECT *obj, char *name)
+OBJECT **switch_object::get_object(OBJECT *obj, const char *name)
 {
 	PROPERTY *p = gl_get_property(obj,name);
 	if (p==NULL || p->ptype!=PT_object)

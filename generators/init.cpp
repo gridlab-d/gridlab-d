@@ -1,10 +1,11 @@
 // $Id$
 // Copyright (C) 2020 Battelle Memorial Institute
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+
 #include "gridlabd.h"
 
 #define _GENERATORS_GLOBALS
@@ -326,7 +327,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 	unsigned int64 seconds_advance, temp_time;
 	int curr_object_number;
 	STATUS function_status;
-	complex temp_complex;
+	gld::complex temp_complex;
 	double *extracted_freq;
 
 	if (enable_subsecond_models == true)
@@ -371,7 +372,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 		}
 
 		//Apply the frequency value to the passing variable
-		temp_complex = complex(*extracted_freq*2.0*PI,0.0);
+		temp_complex = gld::complex(*extracted_freq*2.0*PI,0.0);
 
 		//Loop through delta objects and update the execution times and frequency values - only does "0" pass
 		for (curr_object_number=0; curr_object_number<gen_object_count; curr_object_number++)
@@ -383,7 +384,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 				if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
 				{
 					//Call the actual function
-					function_status = ((STATUS (*)(OBJECT *, complex *, unsigned int))(*post_delta_functions[curr_object_number]))(delta_objects[curr_object_number],&temp_complex,0);
+					function_status = ((STATUS (*)(OBJECT *, gld::complex *, unsigned int))(*post_delta_functions[curr_object_number]))(delta_objects[curr_object_number],&temp_complex,0);
 				}
 				else //Not in service
 					function_status = SUCCESS;

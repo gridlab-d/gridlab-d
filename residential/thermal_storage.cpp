@@ -11,10 +11,11 @@
  @{
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+
 #include "residential.h"
 #include "house_e.h"
 #include "thermal_storage.h"
@@ -23,8 +24,8 @@
 // Default schedules - enacted if not driven externall
 //////////////////////////////////////////////////////////////////////////
 struct s_thermal_default_schedule_list {
-	char *schedule_name;
-	char *schedule_definition;
+	const char *schedule_name;
+	const char *schedule_definition;
 } thermal_default_schedule_list[] =
 {
 	{	"thermal_storage_discharge_default", 
