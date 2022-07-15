@@ -45,7 +45,10 @@ if (CMAKE_USE_PTHREADS_INIT)
     option(HAVE_PTHREADS "pthreads library is present on the platform" ON)
 endif ()
 
-find_package(XercesC 3.2.0 REQUIRED)
+find_package(XercesC 3.2.0)
+if (NOT XercesC_FOUND)
+    message(STATUS "XercesC library could not be located on the platform. XML Loading is disabled.")
+endif ()
 
 # TODO: retire curses
 find_package(Curses)

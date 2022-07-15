@@ -211,7 +211,7 @@ int xml::postnotify(PROPERTY *p,char *v)
 	return native::postnotify(p,v);
 }
 
-int xml::finalize(void)
+int xml::finalize()
 {
 	return native::finalize();
 }

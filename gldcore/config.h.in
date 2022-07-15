@@ -73,8 +73,11 @@
 /* Define to 1 if you have the `floor' function. */
 #cmakedefine HAVE_FLOOR 1
 
-/* whether FNCS was found */
-#cmakedefine01 HAVE_FNCS
+///* whether FNCS was found */
+//#cmakedefine01 HAVE_FNCS
+
+/* whether XERCES was found */
+#cmakedefine HAVE_XERCES 1
 
 /* Define to 1 if you have the `ftime' function. */
 #cmakedefine HAVE_FTIME 1
