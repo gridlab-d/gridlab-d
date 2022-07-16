@@ -34,17 +34,20 @@ object csv_reader {
 	filename "../Standard_Weather.csv";
 }
 
-object overhead_line_conductor:100 {
+object overhead_line_conductor {
+	name olc100;
 	geometric_mean_radius 0.0244;
 	resistance 0.306;
 }
 
-object overhead_line_conductor:101 {
+object overhead_line_conductor {
+	name olc101;
 	geometric_mean_radius 0.00814;
 	resistance 0.592;
 }
 
-object line_spacing:200 {
+object line_spacing {
+	name ls200;
 	distance_AB 2.5;
 	distance_BC 4.5;
 	distance_AC 7.0;
@@ -53,15 +56,17 @@ object line_spacing:200 {
 	distance_CN 5.0;
 }
 
-object line_configuration:300 {
-	conductor_A overhead_line_conductor:100;
-	conductor_B overhead_line_conductor:100;
-	conductor_C overhead_line_conductor:100;
-	conductor_N overhead_line_conductor:101;
-	spacing line_spacing:200;
+object line_configuration {
+	name lc300;
+	conductor_A olc100;
+	conductor_B olc100;
+	conductor_C olc100;
+	conductor_N olc101;
+	spacing ls200;
 }
 
-object transformer_configuration:400 {
+object transformer_configuration {
+	name tc400;
 	connect_type WYE_WYE;
 	power_rating 6000;
 	primary_voltage 12470;
@@ -71,7 +76,8 @@ object transformer_configuration:400 {
 	install_type PADMOUNT;
 }
 
-object node:1 {
+object node {
+	name node1;
 	phases "ABCN";
 	bustype SWING;
 	voltage_A +7199.558+0.000j;
@@ -80,15 +86,17 @@ object node:1 {
 	nominal_voltage 7200;
 }
 
-object overhead_line:12 {
+object overhead_line {
+	name ohl12;
 	phases "ABCN";
-	from node:1;
-	to node:2;
+	from node1;
+	to node2;
 	length 2000;
-	configuration line_configuration:300;
+	configuration lc300;
 }
 
-object node:2 {
+object node {
+	name node2;
 	phases "ABCN";
 	voltage_A +7199.558+0.000j;
 	voltage_B -3599.779-6235.000j;
@@ -96,11 +104,11 @@ object node:2 {
 	nominal_voltage 7200;
 }
 
-object transformer:23 {
+object transformer {
 	phases "ABCN";
-	from node:2;
-	to node:3;
-	configuration transformer_configuration:400;
+	from node2;
+	to node3;
+	configuration tc400;
 	name transformer23;
 	object double_assert {
 		object player {
@@ -119,7 +127,8 @@ object transformer:23 {
 	};
 }
 
-object node:3 {
+object node {
+	name node3;
 	phases "ABCN";
 	voltage_A +2401.777+0.000j;
 	voltage_B -1200.889-2080.000j;
@@ -127,15 +136,17 @@ object node:3 {
 	nominal_voltage 2400;
 }
 
-object overhead_line:34 {
+object overhead_line {
+	name ohl34;
 	phases "ABCN";
-	from node:3;
-	to load:4;
+	from node3;
+	to load4;
 	length 2500;
-	configuration line_configuration:300;
+	configuration lc300;
 }
 
-object load:4 {
+object load {
+	name load4;
 	phases "ABCN";
 	voltage_A +2401.777+0.000j;
 	voltage_B -1200.889-2080.000j;
@@ -148,7 +159,8 @@ object load:4 {
 }
 
 // Add Vestas wind turbine
-object transformer_configuration:500 {
+object transformer_configuration {
+	name tc500;
 	connect_type WYE_WYE;
 	power_rating 3000;
 	primary_voltage 4160;
@@ -159,10 +171,11 @@ object transformer_configuration:500 {
 }
 
 object transformer {
+	name l4mmy1;
 	phases "ABCN";
-	from load:4;
+	from load4;
 	to my_meter1;
-	configuration transformer_configuration:500;
+	configuration tc500;
 }
 
 object meter {
@@ -187,7 +200,8 @@ object windturb_dg {
 }
 
 // Add GE wind turbine
-object transformer_configuration:600 {
+object transformer_configuration {
+	name tc600;
 	connect_type WYE_WYE;
 	power_rating 3000;
 	primary_voltage 4160;
@@ -198,10 +212,11 @@ object transformer_configuration:600 {
 }
 
 object transformer {
+	name tcl4tomym2;
 	phases "ABCN";
-	from load:4;
+	from load4;
 	to my_meter2;
-	configuration transformer_configuration:600;
+	configuration tc600;
 }
 
 object meter {
