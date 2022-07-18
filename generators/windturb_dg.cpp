@@ -219,6 +219,10 @@ int windturb_dg::create(void)
 
 	parent_is_valid = false;
 	parent_is_triplex = false;
+	parent_is_inverter = false;
+	
+	inverter_power_property = NULL;
+	inverter_flag_property = NULL;
 
 
     pPress = NULL;
@@ -776,6 +780,7 @@ int windturb_dg::init(OBJECT *parent)
 			//Flag properly
 			parent_is_valid = true;
 			parent_is_triplex = false;
+			parent_is_inverter = false;
 
 			//Map the solver method and see if we're NR-oriented
 			temp_property_pointer = new gld_property("powerflow::solver_method");
@@ -935,6 +940,7 @@ int windturb_dg::init(OBJECT *parent)
 			//Set flags
 			parent_is_valid = true;
 			parent_is_triplex = true;
+			parent_is_inverter = false;
 
 			//Map the variables
 			pCircuit_V[0] = map_complex_value(parent,"voltage_12");
@@ -992,7 +998,8 @@ int windturb_dg::init(OBJECT *parent)
 			//Set the "pull flag"
 			parent_is_valid = true;
 			parent_is_triplex = false;
-
+			parent_is_inverter = false;
+			
 			number_of_phases_out = 3;
 
 			//Map the voltages
@@ -1032,6 +1039,67 @@ int windturb_dg::init(OBJECT *parent)
 			pLine_I[0] = map_complex_value(parent,"current_A");
 			pLine_I[1] = map_complex_value(parent,"current_B");
 			pLine_I[2] = map_complex_value(parent,"current_C");
+		}
+		else if (gl_object_isa(parent,"inverter","generators") == true)
+		{
+			//if wind turbine implementation is not power curve-based, throw an error
+			if (Turbine_implementation != POWER_CURVE){
+				GL_THROW("windturb_dg (id:%d): Inverter parent is only supported for power curve-based wind turbine implementation",obj->id);
+			}
+			//Set flags
+			parent_is_valid = true;
+			parent_is_triplex = false;
+			parent_is_inverter = true;
+			
+			//Map the solver method and see if we're NR-oriented
+			temp_property_pointer = new gld_property("powerflow::solver_method");
+
+			//Make sure it worked
+			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_enumeration() != true))
+			{
+				GL_THROW("windturb_dg:%d %s failed to map the nominal_frequency property", obj->id, (obj->name ? obj->name : "Unnamed"));
+				/*  TROUBLESHOOT
+				While attempting to map the powerflow:solver_method property, an error occurred.  Please try again.
+				If the error persists, please submit your GLM and a bug report to the ticketing system.
+				*/
+			}
+
+			//Must be valid, read it
+			temp_enum = temp_property_pointer->get_enumeration();
+
+			//Remove the link
+			delete temp_property_pointer;
+
+			//Check which method we are - NR=2
+			if (temp_enum == 2)
+			{
+				//Set NR first run flag
+				NR_first_run = true;
+			}
+			else	//Other methods - should already be set, but be explicit
+			{
+				NR_first_run = false;
+			}
+			
+			//Map the flag that indicates that this wind turbine is the child of the upstream inverter
+			inverter_flag_property = new gld_property(parent, "WT_is_connected");
+
+			//Check it
+			if ((inverter_flag_property->is_valid() != true) || (inverter_flag_property->is_bool() != true))
+			{
+				GL_THROW("wind turbine:%d - %s - Unable to map inverter property", obj->id, (obj->name ? obj->name : "Unnamed"));
+				//Defined above
+			}
+			
+			//Map the inverter power value
+			inverter_power_property = new gld_property(parent, "VA_Out");
+
+			//Check it
+			if ((inverter_power_property->is_valid() != true) || (inverter_power_property->is_complex() != true))
+			{
+				GL_THROW("wind turbine:%d - %s - Unable to map inverter power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
+				//Defined above
+			}
 		}
 		else
 		{
@@ -1164,7 +1232,7 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	//Map the current injection routine to our parent bus, if needed
 	if (NR_first_run == true)
 	{
-		if (parent_is_valid == true)
+		if ((parent_is_valid == true)&&(parent_is_inverter == false))
 		{
 			//Map the current injection function
 			test_fxn = (FUNCTIONADDR)(gl_get_function(obj->parent, "pwr_current_injection_update_map"));
@@ -1350,9 +1418,12 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 			break;
 		case POWER_CURVE:
-
-			compute_current_injection_pc();
-
+			if (parent_is_inverter == false){
+				compute_current_injection_pc();
+			}else{
+				compute_power_injection_pc();
+			}
+			
 			break;
 	}
 
@@ -1387,7 +1458,9 @@ TIMESTAMP windturb_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	//Push up the powerflow interface
 	if (parent_is_valid == true)
 	{
-		push_complex_powerflow_values();
+		if (parent_is_inverter == false){
+			push_complex_powerflow_values();
+		}
 	}
 
 	//Re-zero the tracker, or the next iteration will have issues
@@ -1813,6 +1886,29 @@ void windturb_dg::compute_current_injection_pc(void){
 	}
 }
 
+void windturb_dg::compute_power_injection_pc(void){
+	double Power_calc;
+	double Q;  					//reactive power assumed to be zero.
+	Q = 0;
+	
+	if (WSadj <= Power_Curve[0][0]) {	
+		Power_calc = 0;	
+	} else if (WSadj >= Power_Curve[0][number_of_points-1]){
+		Power_calc = 0;
+	} else {	  
+		for (int i=0; i<(number_of_points-1); i++){
+			if (WSadj >= Power_Curve[0][i] && WSadj <= Power_Curve[0][i+1]){
+
+				Power_calc = Power_Curve[1][i] + ((Power_Curve[1][i+1] - Power_Curve[1][i]) * ((WSadj - Power_Curve[0][i]) / (Power_Curve[0][i+1] - Power_Curve[0][i])));
+			}
+		}
+	}
+	//now publish Power_calc to inverter parent
+	if (parent_is_valid == true){
+		push_complex_power_values(complex((Power_calc*Rated_VA),Q));
+	}
+}
+
 //Map Complex value
 gld_property *windturb_dg::map_complex_value(OBJECT *obj, const char *name)
 {
@@ -1906,6 +2002,20 @@ void windturb_dg::push_complex_powerflow_values(void)
 	}
 }
 
+void windturb_dg::push_complex_power_values(complex inv_P)
+{
+	//complex temp_complex_val;
+	gld_wlock *test_rlock;
+	bool WT_conn_flag = true;
+	//int indexval;
+	
+	if (parent_is_inverter == true) {
+		//Push the changes
+		inverter_power_property->setp<complex>(inv_P, *test_rlock);
+		inverter_flag_property->setp<bool>(WT_conn_flag, *test_rlock);
+	}
+}
+
 // Function to update current injection value
 STATUS windturb_dg::updateCurrInjection(int64 iteration_count)
 {
@@ -1916,7 +2026,11 @@ STATUS windturb_dg::updateCurrInjection(int64 iteration_count)
 			break;
 
 		case POWER_CURVE:
-			compute_current_injection_pc();
+			if (parent_is_inverter == false){
+				compute_current_injection_pc();
+			}else{
+				compute_power_injection_pc();
+			}
 			break;
 	}
 
