@@ -2175,6 +2175,10 @@ STATUS exec_start()
 			/* operate delta mode if necessary (but only when event mode is active, e.g., not right after init) */
 			/* note that delta mode cannot be supported for realtime simulation */
 			global_deltaclock = 0;
+
+			/* Update the "double-precision" clock (usually for deltamode) for consistency */
+			global_delta_curr_clock = (double)global_clock;
+
 			/* determine whether any modules seek delta mode */
 			DELTAMODEFLAGS flags=DMF_NONE;
 			DT delta_dt = delta_modedesired(&flags);
