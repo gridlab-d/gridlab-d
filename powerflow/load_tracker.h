@@ -9,7 +9,7 @@ private:
 	typedef union
 	{
 		double*	 d;
-		complex* c;
+		gld::complex* c;
 		int16*   i16;
 		int32*   i32;
 		int64*   i64;

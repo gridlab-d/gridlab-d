@@ -10,7 +10,6 @@
 
 #include "property.h"
 #include "timestamp.h"
-#include "pthread.h"
 #include "linkage.h"
 #include "lock.h"
 
@@ -172,6 +171,6 @@ STATUS linkage_init(instance *inst, linkage *lnk);
 STATUS linkage_master_to_slave(char *buffer, linkage *lnk);
 STATUS linkage_slave_to_master(char *buffer, linkage *lnk);
 
-void printcontent(unsigned char *data, size_t len);
+void printcontent(char *data, size_t len);
 
 #endif

@@ -5,10 +5,12 @@
  *      Author: mark.eberlein@pnnl.gov
  */
 
+#include "config.h"
 #ifdef HAVE_MYSQL
 
 #include <sstream>
 #include <vector>
+
 #include "query_engine.h"
 using namespace std;
 

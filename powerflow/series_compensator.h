@@ -90,8 +90,8 @@ private:
 	gld_property *FromNode_voltage[3];
 	gld_property *FromNode_frequency;
 	double prev_turns_ratio[3];
-	complex val_ToNode_voltage[3];
-	complex val_FromNode_voltage[3];
+	gld::complex val_ToNode_voltage[3];
+	gld::complex val_FromNode_voltage[3];
 	double val_ToNode_voltage_pu[3];
 	double val_FromNode_voltage_pu[3];
 	double val_FromNode_nominal_voltage;

@@ -5,11 +5,11 @@
    a failure code.
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
-#include <complex.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <gld_complex.h>
 
 #include "double_assert.h"
 
@@ -74,7 +74,7 @@ int double_assert::create(void)
 
 int double_assert::init(OBJECT *parent)
 {
-	char *msg = "A non-positive value has been specified for within.";
+	const char *msg = "A non-positive value has been specified for within.";
 	if (within <= 0.0)
 		throw msg;
 		/*  TROUBLESHOOT
@@ -180,10 +180,10 @@ int double_assert::postnotify(PROPERTY *prop, char *value)
 //EXPORT for object-level call (as opposed to module-level)
 EXPORT SIMULATIONMODE update_double_assert(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
-	char buff[64];
-	char dateformat[8]="";
-	char error_output_buff[1024];
-	char datebuff[64];
+	char buff[128];
+	char dateformat[16]="";
+	char error_output_buff[2028];
+	char datebuff[128];
 	double_assert *da = OBJECTDATA(obj,double_assert);
 	DATETIME delta_dt_val;
 	double del_clock;

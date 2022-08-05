@@ -12,19 +12,19 @@ using namespace std;
 
 #include "series_compensator.h"
 
-CLASS* series_compensator::oclass = NULL;
-CLASS* series_compensator::pclass = NULL;
+CLASS* series_compensator::oclass = nullptr;
+CLASS* series_compensator::pclass = nullptr;
 
 series_compensator::series_compensator(MODULE *mod) : link_object(mod)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// link to parent class (used by isa)
 		pclass = link_object::oclass;
 
 		// register the class definition
 		oclass = gl_register_class(mod,"series_compensator",sizeof(series_compensator),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class series_compensator";
 		else
 			oclass->trl = TRL_DEMONSTRATED;
@@ -113,15 +113,15 @@ series_compensator::series_compensator(MODULE *mod) : link_object(mod)
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_series_compensator)==NULL)
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_series_compensator)==nullptr)
 			GL_THROW("Unable to publish series_compensator deltamode function");
 
 		//Publish restoration-related function (current update)
-		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==nullptr)
 			GL_THROW("Unable to publish series_compensator external power calculation function");
-		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==nullptr)
 			GL_THROW("Unable to publish series_compensator external power limit calculation function");
-		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==NULL)
+		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==nullptr)
 			GL_THROW("Unable to publish series_compensator external current calculation function");
 	}
 }
@@ -196,14 +196,14 @@ int series_compensator::create()
 	prev_turns_ratio[0] = prev_turns_ratio[1] = prev_turns_ratio[2] = 0.0;	//Set different, so it forces an update
 
 	//Null the voltage pointers
-	ToNode_voltage[0] = ToNode_voltage[1] = ToNode_voltage[2] = NULL;
-	FromNode_voltage[0]=FromNode_voltage[1]=FromNode_voltage[2]=NULL;
-	FromNode_frequency = NULL;
+	ToNode_voltage[0] = ToNode_voltage[1] = ToNode_voltage[2] = nullptr;
+	FromNode_voltage[0]=FromNode_voltage[1]=FromNode_voltage[2]=nullptr;
+	FromNode_frequency = nullptr;
 
 	//Zero the values
-	val_ToNode_voltage[0] = val_ToNode_voltage[1] = val_ToNode_voltage[2] = complex(0.0,0.0);
+	val_ToNode_voltage[0] = val_ToNode_voltage[1] = val_ToNode_voltage[2] = gld::complex(0.0,0.0);
 	val_ToNode_voltage_pu[0] = val_ToNode_voltage_pu[1] = val_ToNode_voltage_pu[2] = 0.0;
-	val_FromNode_voltage[0] = val_FromNode_voltage[1] = val_FromNode_voltage[2] = complex(0.0,0.0);
+	val_FromNode_voltage[0] = val_FromNode_voltage[1] = val_FromNode_voltage[2] = gld::complex(0.0,0.0);
 	val_FromNode_voltage_pu[0] = val_FromNode_voltage_pu[1] = val_FromNode_voltage_pu[2] = 0.0;
 
 	vset_value[0] = vset_value[1] = vset_value[2] = 1.0;	//Start out set to unity voltage
@@ -234,13 +234,13 @@ int series_compensator::init(OBJECT *parent)
 	{
 		for (jindex=0; jindex<3; jindex++)
 		{
-			a_mat[iindex][jindex] = complex(0.0,0.0);
-			b_mat[iindex][jindex] = complex(0.0,0.0);
-			c_mat[iindex][jindex] = complex(0.0,0.0);
-			d_mat[iindex][jindex] = complex(0.0,0.0);
-			A_mat[iindex][jindex] = complex(0.0,0.0);
-			B_mat[iindex][jindex] = complex(0.0,0.0);
-			base_admittance_mat[iindex][jindex] = complex(0.0,0.0);
+			a_mat[iindex][jindex] = gld::complex(0.0,0.0);
+			b_mat[iindex][jindex] = gld::complex(0.0,0.0);
+			c_mat[iindex][jindex] = gld::complex(0.0,0.0);
+			d_mat[iindex][jindex] = gld::complex(0.0,0.0);
+			A_mat[iindex][jindex] = gld::complex(0.0,0.0);
+			B_mat[iindex][jindex] = gld::complex(0.0,0.0);
+			base_admittance_mat[iindex][jindex] = gld::complex(0.0,0.0);
 		}
 	}
 
@@ -249,7 +249,7 @@ int series_compensator::init(OBJECT *parent)
 	series_compensator_start_time = gl_globalclock;
 
 	//Make sure it worked
-	if ((FromNode_frequency->is_valid() != true) || (FromNode_frequency->is_double() != true))
+	if (!FromNode_frequency->is_valid() || !FromNode_frequency->is_double())
 	{
 		GL_THROW("series_compensator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
 		//Defined elsewhere
@@ -268,23 +268,23 @@ int series_compensator::init(OBJECT *parent)
 
 
 		//Make sure it worked
-		if ((ToNode_voltage[0]->is_valid() != true) || (ToNode_voltage[0]->is_complex() != true))
+		if (!ToNode_voltage[0]->is_valid() || !ToNode_voltage[0]->is_complex())
 		{
 			GL_THROW("series_compensator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined elsewhere
 		}
 
 		//Make sure it worked
-		if ((FromNode_voltage[0]->is_valid() != true) || (FromNode_voltage[0]->is_complex() != true))
+		if (!FromNode_voltage[0]->is_valid() || !FromNode_voltage[0]->is_complex())
 		{
 			GL_THROW("series_compensator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined elsewhere
 		}
 
 		//Set the appropriate turns ratio matrices
-		d_mat[0][0] = complex(turns_ratio[0],0.0);
-		a_mat[0][0] = complex(1.0/turns_ratio[0],0.0);
-		A_mat[0][0] = complex(turns_ratio[0],0.0);
+		d_mat[0][0] = gld::complex(turns_ratio[0],0.0);
+		a_mat[0][0] = gld::complex(1.0/turns_ratio[0],0.0);
+		A_mat[0][0] = gld::complex(turns_ratio[0],0.0);
 
 		//Now phase 2
 		//Map to the property of interest - voltage_2
@@ -292,23 +292,23 @@ int series_compensator::init(OBJECT *parent)
 		FromNode_voltage[1] = new gld_property(from,"voltage_2");
 
 		//Make sure it worked
-		if ((ToNode_voltage[1]->is_valid() != true) || (ToNode_voltage[1]->is_complex() != true))
+		if (!ToNode_voltage[1]->is_valid() || !ToNode_voltage[1]->is_complex())
 		{
 			GL_THROW("series_compensator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined elsewhere
 		}
 
 		//Make sure it worked
-		if ((FromNode_voltage[1]->is_valid() != true) || (FromNode_voltage[1]->is_complex() != true))
+		if (!FromNode_voltage[1]->is_valid() || !FromNode_voltage[1]->is_complex())
 		{
 			GL_THROW("series_compensator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined elsewhere
 		}
 
 		//Set the appropriate turns ratio matrices
-		d_mat[1][1] = complex(turns_ratio[1],0.0);
-		a_mat[1][1] = complex(1.0/turns_ratio[1],0.0);
-		A_mat[1][1] = complex(turns_ratio[1],0.0);
+		d_mat[1][1] = gld::complex(turns_ratio[1],0.0);
+		a_mat[1][1] = gld::complex(1.0/turns_ratio[1],0.0);
+		A_mat[1][1] = gld::complex(turns_ratio[1],0.0);
 
 	}//End triplex
 	else	//Must be some variant of three-phase
@@ -321,7 +321,7 @@ int series_compensator::init(OBJECT *parent)
 			FromNode_voltage[0] = new gld_property(from,"voltage_A");
 
 			//Make sure it worked
-			if ((ToNode_voltage[0]->is_valid() != true) || (ToNode_voltage[0]->is_complex() != true))
+			if (!ToNode_voltage[0]->is_valid() || !ToNode_voltage[0]->is_complex())
 			{
 				GL_THROW("series_compensator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
 				/* TROUBLESHOOT
@@ -331,7 +331,7 @@ int series_compensator::init(OBJECT *parent)
 			}
 
 			//Make sure it worked
-			if ((FromNode_voltage[0]->is_valid() != true) || (FromNode_voltage[0]->is_complex() != true))
+			if (!FromNode_voltage[0]->is_valid() || !FromNode_voltage[0]->is_complex())
 			{
 				GL_THROW("series_compensator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
 				/* TROUBLESHOOT
@@ -342,13 +342,13 @@ int series_compensator::init(OBJECT *parent)
 
 
 			//Set the appropriate turns ratio matrices
-			d_mat[0][0] = complex(turns_ratio[0],0.0);
-			a_mat[0][0] = complex(1.0/turns_ratio[0],0.0);
-			A_mat[0][0] = complex(turns_ratio[0],0.0);
+			d_mat[0][0] = gld::complex(turns_ratio[0],0.0);
+			a_mat[0][0] = gld::complex(1.0/turns_ratio[0],0.0);
+			A_mat[0][0] = gld::complex(turns_ratio[0],0.0);
 		}
 		else	//Nope
 		{
-			ToNode_voltage[0] = NULL;	//Null it -- should already be done, but be paranoid
+			ToNode_voltage[0] = nullptr;	//Null it -- should already be done, but be paranoid
 
 			//Set the per-unit setpoint too -- otherwise we'll have issues later
 			vset_value[0] = 0.0;
@@ -363,27 +363,27 @@ int series_compensator::init(OBJECT *parent)
 			FromNode_voltage[1] = new gld_property(from,"voltage_B");
 
 			//Make sure it worked
-			if ((ToNode_voltage[1]->is_valid() != true) || (ToNode_voltage[1]->is_complex() != true))
+			if (!ToNode_voltage[1]->is_valid() || !ToNode_voltage[1]->is_complex())
 			{
 				GL_THROW("series_compensator:%d - %s - Unable to map property for TO node",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
 			}
 
 			//Make sure it worked
-			if ((FromNode_voltage[1]->is_valid() != true) || (FromNode_voltage[1]->is_complex() != true))
+			if (!FromNode_voltage[1]->is_valid() || !FromNode_voltage[1]->is_complex())
 			{
 				GL_THROW("series_compensator:%d - %s - Unable to map property for TO node",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
 			}
 
 			//Set the appropriate turns ratio matrices
-			d_mat[1][1] = complex(turns_ratio[1],0.0);
-			a_mat[1][1] = complex(1.0/turns_ratio[1],0.0);
-			A_mat[1][1] = complex(turns_ratio[1],0.0);
+			d_mat[1][1] = gld::complex(turns_ratio[1],0.0);
+			a_mat[1][1] = gld::complex(1.0/turns_ratio[1],0.0);
+			A_mat[1][1] = gld::complex(turns_ratio[1],0.0);
 		}
 		else	//Not here
 		{
-			ToNode_voltage[1] = NULL;	//Null for paranoia
+			ToNode_voltage[1] = nullptr;	//Null for paranoia
 
 			//Set the per-unit setpoint too -- otherwise we'll have issues later
 			vset_value[1] = 0.0;
@@ -398,27 +398,27 @@ int series_compensator::init(OBJECT *parent)
 			FromNode_voltage[2] = new gld_property(from,"voltage_C");
 
 			//Make sure it worked
-			if ((ToNode_voltage[2]->is_valid() != true) || (ToNode_voltage[2]->is_complex() != true))
+			if (!ToNode_voltage[2]->is_valid() || !ToNode_voltage[2]->is_complex())
 			{
 				GL_THROW("series_compensator:%d - %s - Unable to map property for TO node",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
 			}
 
 			//Make sure it worked
-			if ((FromNode_voltage[2]->is_valid() != true) || (FromNode_voltage[2]->is_complex() != true))
+			if (!FromNode_voltage[2]->is_valid() || !FromNode_voltage[2]->is_complex())
 			{
 				GL_THROW("series_compensator:%d - %s - Unable to map property for TO node",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
 			}
 
 			//Set the appropriate turns ratio matrices
-			d_mat[2][2] = complex(turns_ratio[2],0.0);
-			a_mat[2][2] = complex(1.0/turns_ratio[2],0.0);
-			A_mat[2][2] = complex(turns_ratio[2],0.0);
+			d_mat[2][2] = gld::complex(turns_ratio[2],0.0);
+			a_mat[2][2] = gld::complex(1.0/turns_ratio[2],0.0);
+			A_mat[2][2] = gld::complex(turns_ratio[2],0.0);
 		}
 		else	//Nope
 		{
-			ToNode_voltage[2] = NULL;
+			ToNode_voltage[2] = nullptr;
 
 			//Set the per-unit setpoint too -- otherwise we'll have issues later
 			vset_value[2] = 0.0;
@@ -430,7 +430,7 @@ int series_compensator::init(OBJECT *parent)
 	temp_volt_prop = new gld_property(from,"nominal_voltage");
 
 	//Make sure it worked
-	if ((temp_volt_prop->is_valid() != true) || (temp_volt_prop->is_double() != true))
+	if (!temp_volt_prop->is_valid() || !temp_volt_prop->is_double())
 	{
 		GL_THROW("series_compensator:%d - %s - Unable to map nominal_voltage of FROM node",obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
@@ -465,11 +465,11 @@ int series_compensator::init(OBJECT *parent)
 		if (has_phase(PHASE_S))
 		{
 			//Phase 1 parts
-			base_admittance_mat[0][0] = complex(1.0/series_compensator_resistance,0.0);
+			base_admittance_mat[0][0] = gld::complex(1.0/series_compensator_resistance,0.0);
 			b_mat[0][0] = series_compensator_resistance;
 
 			//Phase 2 parts
-			base_admittance_mat[1][1] = complex(1.0/series_compensator_resistance,0.0);
+			base_admittance_mat[1][1] = gld::complex(1.0/series_compensator_resistance,0.0);
 			b_mat[1][1] = series_compensator_resistance;
 		}//end triplex
 		else	//Three-phase of some sort
@@ -477,17 +477,17 @@ int series_compensator::init(OBJECT *parent)
 			//Set the baseline impedance values
 			if (has_phase(PHASE_A))
 			{
-				base_admittance_mat[0][0] = complex(1.0/series_compensator_resistance,0.0);
+				base_admittance_mat[0][0] = gld::complex(1.0/series_compensator_resistance,0.0);
 				b_mat[0][0] = series_compensator_resistance;
 			}
 			if (has_phase(PHASE_B))
 			{
-				base_admittance_mat[1][1] = complex(1.0/series_compensator_resistance,0.0);
+				base_admittance_mat[1][1] = gld::complex(1.0/series_compensator_resistance,0.0);
 				b_mat[1][1] = series_compensator_resistance;
 			}
 			if (has_phase(PHASE_C))
 			{
-				base_admittance_mat[2][2] = complex(1.0/series_compensator_resistance,0.0);
+				base_admittance_mat[2][2] = gld::complex(1.0/series_compensator_resistance,0.0);
 				b_mat[2][2] = series_compensator_resistance;
 			}
 		}//End three-phase
@@ -533,7 +533,7 @@ TIMESTAMP series_compensator::postsync(TIMESTAMP t0)
 		series_compensator_first_step = false;
 	}
 
-	if (series_compensator_first_step == true)
+	if (series_compensator_first_step)
 	{
 
 		if (has_phase(PHASE_S))
@@ -591,9 +591,9 @@ TIMESTAMP series_compensator::postsync(TIMESTAMP t0)
 			else
 			{
 				//Zero everything
-				val_ToNode_voltage[0] = complex(0.0,0.0);
+				val_ToNode_voltage[0] = gld::complex(0.0,0.0);
 				val_ToNode_voltage_pu[0] = 0.0;
-				val_FromNode_voltage[0] = complex(0.0,0.0);
+				val_FromNode_voltage[0] = gld::complex(0.0,0.0);
 				val_FromNode_voltage_pu[0] = 0.0;
 			}
 
@@ -620,9 +620,9 @@ TIMESTAMP series_compensator::postsync(TIMESTAMP t0)
 			else
 			{
 				//Zero everything
-				val_ToNode_voltage[1] = complex(0.0,0.0);
+				val_ToNode_voltage[1] = gld::complex(0.0,0.0);
 				val_ToNode_voltage_pu[1] = 0.0;
-				val_FromNode_voltage[1] = complex(0.0,0.0);
+				val_FromNode_voltage[1] = gld::complex(0.0,0.0);
 				val_FromNode_voltage_pu[1] = 0.0;
 
 			}
@@ -649,9 +649,9 @@ TIMESTAMP series_compensator::postsync(TIMESTAMP t0)
 			else
 			{
 				//Zero everything
-				val_ToNode_voltage[2] = complex(0.0,0.0);
+				val_ToNode_voltage[2] = gld::complex(0.0,0.0);
 				val_ToNode_voltage_pu[2] = 0.0;
-				val_FromNode_voltage[2] = complex(0.0,0.0);
+				val_FromNode_voltage[2] = gld::complex(0.0,0.0);
 				val_FromNode_voltage_pu[2] = 0.0;
 
 			}
@@ -663,7 +663,7 @@ TIMESTAMP series_compensator::postsync(TIMESTAMP t0)
 
 	function_return_val = sercom_postPost_fxn(0,0);	//Just give it an arbitary value -- used mostly for delta flagging
 
-	if (iterate == true)
+	if (iterate)
 	{
 		//If this changes, re-evaluate this code
 		return t0;
@@ -694,37 +694,37 @@ void series_compensator::sercom_prePre_fxn(void)
 	{
 		//Update turns ratio for various phases
 		//Phase 1
-		d_mat[0][0] = complex(turns_ratio[0],0.0);
-		a_mat[0][0] = complex(1.0/turns_ratio[0],0.0);
-		A_mat[0][0] = complex(turns_ratio[0],0.0);
+		d_mat[0][0] = gld::complex(turns_ratio[0],0.0);
+		a_mat[0][0] = gld::complex(1.0/turns_ratio[0],0.0);
+		A_mat[0][0] = gld::complex(turns_ratio[0],0.0);
 
 		//Phase 2
-		d_mat[1][1] = complex(turns_ratio[1],0.0);
-		a_mat[1][1] = complex(1.0/turns_ratio[1],0.0);
-		A_mat[1][1] = complex(turns_ratio[1],0.0);
+		d_mat[1][1] = gld::complex(turns_ratio[1],0.0);
+		a_mat[1][1] = gld::complex(1.0/turns_ratio[1],0.0);
+		A_mat[1][1] = gld::complex(turns_ratio[1],0.0);
 	}
 	else	//Nope, normal three-phase
 	{
 		//Update turns ratio for various phases
 		if (has_phase(PHASE_A))
 		{
-			d_mat[0][0] = complex(turns_ratio[0],0.0);
-			a_mat[0][0] = complex(1.0/turns_ratio[0],0.0);
-			A_mat[0][0] = complex(turns_ratio[0],0.0);
+			d_mat[0][0] = gld::complex(turns_ratio[0],0.0);
+			a_mat[0][0] = gld::complex(1.0/turns_ratio[0],0.0);
+			A_mat[0][0] = gld::complex(turns_ratio[0],0.0);
 		}
 
 		if (has_phase(PHASE_B))
 		{
-			d_mat[1][1] = complex(turns_ratio[1],0.0);
-			a_mat[1][1] = complex(1.0/turns_ratio[1],0.0);
-			A_mat[1][1] = complex(turns_ratio[1],0.0);
+			d_mat[1][1] = gld::complex(turns_ratio[1],0.0);
+			a_mat[1][1] = gld::complex(1.0/turns_ratio[1],0.0);
+			A_mat[1][1] = gld::complex(turns_ratio[1],0.0);
 		}
 
 		if (has_phase(PHASE_C))
 		{
-			d_mat[2][2] = complex(turns_ratio[2],0.0);
-			a_mat[2][2] = complex(1.0/turns_ratio[2],0.0);
-			A_mat[2][2] = complex(turns_ratio[2],0.0);
+			d_mat[2][2] = gld::complex(turns_ratio[2],0.0);
+			a_mat[2][2] = gld::complex(1.0/turns_ratio[2],0.0);
+			A_mat[2][2] = gld::complex(turns_ratio[2],0.0);
 		}
 	}
 }
@@ -734,10 +734,10 @@ void series_compensator::sercom_postPre_fxn(void)
 {
 	char phaseWarn;
 	int jindex,kindex;
-	complex Ylefttemp[3][3];
-	complex Yto[3][3];
-	complex Yfrom[3][3];
-	complex invratio[3];
+	gld::complex Ylefttemp[3][3];
+	gld::complex Yto[3][3];
+	gld::complex Yfrom[3][3];
+	gld::complex invratio[3];
 
 	if (solver_method == SM_NR)
 	{
@@ -752,48 +752,48 @@ void series_compensator::sercom_postPre_fxn(void)
 				//Now see if we're active
 				if ((NR_branchdata[NR_branch_reference].phases & 0x80) == 0x80)
 				{
-					invratio[0] = complex(1.0,0.0) / a_mat[0][0];
-					invratio[1] = complex(1.0,0.0) / a_mat[1][1];
+					invratio[0] = gld::complex(1.0,0.0) / a_mat[0][0];
+					invratio[1] = gld::complex(1.0,0.0) / a_mat[1][1];
 				}
 				else
 				{
-					invratio[0] = complex(0.0,0.0);
-					invratio[1] = complex(0.0,0.0);
+					invratio[0] = gld::complex(0.0,0.0);
+					invratio[1] = gld::complex(0.0,0.0);
 				}
 
 				//Zero the third one, just because
-				invratio[2] = complex(0.0,0.0);
+				invratio[2] = gld::complex(0.0,0.0);
 			}
 			else	//Do a three-phase check, though it may be disconnected completely
 			{
 				//Compute the inverse ratio - A
 				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)
 				{
-					invratio[0] = complex(1.0,0.0) / a_mat[0][0];
+					invratio[0] = gld::complex(1.0,0.0) / a_mat[0][0];
 				}
 				else
 				{
-					invratio[0] = complex(0.0,0.0);
+					invratio[0] = gld::complex(0.0,0.0);
 				}
 
 				//Compute the inverse ratio - B
 				if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)
 				{
-					invratio[1] = complex(1.0,0.0) / a_mat[1][1];
+					invratio[1] = gld::complex(1.0,0.0) / a_mat[1][1];
 				}
 				else
 				{
-					invratio[1] = complex(0.0,0.0);
+					invratio[1] = gld::complex(0.0,0.0);
 				}
 
 				//Compute the inverse ratio - C
 				if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)
 				{
-					invratio[2] = complex(1.0,0.0) / a_mat[2][2];
+					invratio[2] = gld::complex(1.0,0.0) / a_mat[2][2];
 				}
 				else
 				{
-					invratio[2] = complex(0.0,0.0);
+					invratio[2] = gld::complex(0.0,0.0);
 				}
 			}//End three-phase
 
@@ -878,9 +878,9 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 		val_FromNode_voltage_pu[1] = val_FromNode_voltage[1].Mag() / val_FromNode_nominal_voltage;
 
 		//Just set the third to zero, for paranoia sake
-		val_ToNode_voltage[2] = complex(0.0,0.0);
+		val_ToNode_voltage[2] = gld::complex(0.0,0.0);
 		val_ToNode_voltage_pu[2] = 0.0;
-		val_FromNode_voltage[2] = complex(0.0,0.0);
+		val_FromNode_voltage[2] = gld::complex(0.0,0.0);
 		val_FromNode_voltage_pu[2] = 0.0;
 
 	}//end triplex
@@ -900,9 +900,9 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 		else
 		{
 			//Zero everything
-			val_ToNode_voltage[0] = complex(0.0,0.0);
+			val_ToNode_voltage[0] = gld::complex(0.0,0.0);
 			val_ToNode_voltage_pu[0] = 0.0;
-			val_FromNode_voltage[0] = complex(0.0,0.0);
+			val_FromNode_voltage[0] = gld::complex(0.0,0.0);
 			val_FromNode_voltage_pu[0] = 0.0;
 		}
 
@@ -920,9 +920,9 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 		else
 		{
 			//Zero everything
-			val_ToNode_voltage[1] = complex(0.0,0.0);
+			val_ToNode_voltage[1] = gld::complex(0.0,0.0);
 			val_ToNode_voltage_pu[1] = 0.0;
-			val_FromNode_voltage[1] = complex(0.0,0.0);
+			val_FromNode_voltage[1] = gld::complex(0.0,0.0);
 			val_FromNode_voltage_pu[1] = 0.0;
 
 		}
@@ -941,9 +941,9 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 		else
 		{
 			//Zero everything
-			val_ToNode_voltage[2] = complex(0.0,0.0);
+			val_ToNode_voltage[2] = gld::complex(0.0,0.0);
 			val_ToNode_voltage_pu[2] = 0.0;
-			val_FromNode_voltage[2] = complex(0.0,0.0);
+			val_FromNode_voltage[2] = gld::complex(0.0,0.0);
 			val_FromNode_voltage_pu[2] = 0.0;
 
 		}
@@ -994,7 +994,7 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 			{
 
 				// Under-frequency event
-				if (t_recover_low_flag == true) // voltage gradually goes back to nominal value
+				if (t_recover_low_flag) // voltage gradually goes back to nominal value
 				{
 					t_hold_low_flag = false;
 					t_delay_low_flag = false;
@@ -1006,7 +1006,7 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 					}
 				}
 
-				else if (t_hold_low_flag == true)  // voltage stays on hold for t_hold time
+				else if (t_hold_low_flag)  // voltage stays on hold for t_hold time
 				{
 					delta_V = delta_Vmin;
 					t_count_low_hold += deltat;
@@ -1022,7 +1022,7 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 					}
 				}
 
-				else if ((val_FromNode_frequency < frequency_low) && (t_hold_low_flag == false) && (t_recover_low_flag == false) && (t_delay_high_flag == false) && (t_hold_high_flag == false) && (t_recover_high_flag == false))
+				else if ((val_FromNode_frequency < frequency_low) && !t_hold_low_flag && !t_recover_low_flag && !t_delay_high_flag && !t_hold_high_flag && !t_recover_high_flag)
 				{
 					t_delay_low_flag = true;
 					t_count_low_delay += deltat;
@@ -1047,7 +1047,7 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 				}
 
 				// Over-frequency event
-				if (t_recover_high_flag == true) // voltage gradually goes back to nominal value
+				if (t_recover_high_flag) // voltage gradually goes back to nominal value
 				{
 					t_hold_high_flag = false;
 					t_delay_high_flag = false;
@@ -1059,7 +1059,7 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 					}
 				}
 
-				else if (t_hold_high_flag == true)  // voltage stays on hold for t_hold time
+				else if (t_hold_high_flag)  // voltage stays on hold for t_hold time
 				{
 					delta_V = delta_Vmax;
 					t_count_high_hold += deltat;
@@ -1075,7 +1075,7 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 					}
 				}
 
-				else if ((val_FromNode_frequency > frequency_high) && (t_hold_high_flag == false) && (t_recover_high_flag == false) && (t_delay_low_flag == false) && (t_hold_low_flag == false) && (t_recover_low_flag == false) ) // t_delay status
+				else if ((val_FromNode_frequency > frequency_high) && !t_hold_high_flag && !t_recover_high_flag && !t_delay_low_flag && !t_hold_low_flag && !t_recover_low_flag) // t_delay status
 				{
 					t_delay_high_flag = true;
 					t_count_high_delay += deltat;
@@ -1321,7 +1321,7 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 						}
 
 						//Update the state
-						if (bypass_initiated == true)
+						if (bypass_initiated)
 						{
 							phase_states[index_val] = ST_BYPASS;
 						}
@@ -1406,7 +1406,7 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 						next_state.n_ini_StateVal[index_val] = curr_state.n_ini_StateVal[index_val] + (pred_state.dn_ini_StateVal[index_val] + next_state.dn_ini_StateVal[index_val]) * deltat/2;
 
 						//Update the state
-						if (bypass_initiated == true)
+						if (bypass_initiated)
 						{
 							phase_states[index_val] = ST_BYPASS;
 						}
@@ -1521,7 +1521,7 @@ SIMULATIONMODE series_compensator::inter_deltaupdate_series_compensator(unsigned
 	//Get the current time
 	curr_time_value = gl_globaldeltaclock;
 
-	if (interupdate_pos == false)	//Before powerflow call
+	if (!interupdate_pos)	//Before powerflow call
 	{
 		//Replicate presync behavior
 
@@ -1583,7 +1583,7 @@ EXPORT int create_series_compensator(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(series_compensator::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			series_compensator *my = OBJECTDATA(*obj,series_compensator);
 			gl_set_parent(*obj,parent);

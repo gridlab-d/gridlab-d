@@ -15,8 +15,8 @@ public:
 protected:
 
 private:
-	complex TF[16];
-	complex ITF[16];
+	gld::complex TF[16];
+	gld::complex ITF[16];
 	double last_cycle;
 	double curr_delta_time;
 	bool triplex_connected;
@@ -36,8 +36,8 @@ private:
 	void SPIMUpdateProtection(double delta_time); // function to update the protection of the motor
 	void SPIMSteadyState(TIMESTAMP t1); // steady state model for the SPIM motor
 	void SPIMDynamic(double curr_delta_time, double dTime); // dynamic phasor model for the SPIM motor
-	complex complex_exp(double angle);
-	int invertMatrix(complex TF[16], complex ITF[16]);
+	gld::complex complex_exp(double angle);
+	int invertMatrix(gld::complex TF[16], gld::complex ITF[16]);
 
 	//TPIM functions
 	void TPIMupdateVars(); // function to update the previous values for the motor model
@@ -122,16 +122,16 @@ private:
 	double trip;
 	double reconnect;
 	bool motor_trip;
-	complex psi_b;
-    complex psi_f;
-    complex psi_dr; 
-    complex psi_qr; 
-    complex Ids;
-    complex Iqs;  
-    complex If;
-    complex Ib;
-    complex Is;
-    complex motor_elec_power;
+	gld::complex psi_b;
+    gld::complex psi_f;
+    gld::complex psi_dr; 
+    gld::complex psi_qr; 
+    gld::complex Ids;
+    gld::complex Iqs;  
+    gld::complex If;
+    gld::complex Ib;
+    gld::complex Is;
+    gld::complex motor_elec_power;
     double Telec;
 	double Tmech;
 	double Tmech_eff;
@@ -141,16 +141,16 @@ private:
 	double trip_prev;
 	double reconnect_prev;
 	int	motor_trip_prev;
-	complex psi_b_prev;
-    complex psi_f_prev;
-    complex psi_dr_prev; 
-    complex psi_qr_prev; 
-    complex Ids_prev;
-    complex Iqs_prev;  
-    complex If_prev;
-    complex Ib_prev;
-    complex Is_prev;
-    complex motor_elec_power_prev;
+	gld::complex psi_b_prev;
+    gld::complex psi_f_prev;
+    gld::complex psi_dr_prev; 
+    gld::complex psi_qr_prev; 
+    gld::complex Ids_prev;
+    gld::complex Iqs_prev;  
+    gld::complex If_prev;
+    gld::complex Ib_prev;
+    gld::complex Is_prev;
+    gld::complex motor_elec_power_prev;
     double Telec_prev;
 	double Tmech_prev;
     double wr_prev;
@@ -177,7 +177,7 @@ private:
     double contactor_open_Vmin;
     double contactor_close_Vmax;
 
-	complex Vs;
+	gld::complex Vs;
 	double ws;
 	int connected_phase;
 
@@ -193,35 +193,35 @@ private:
 	double llr;
 	double TL_pu;  // actually applied mechanical torque
 	double Kfric;
-	complex phips;
-	complex phins_cj;
-	complex phipr;
-	complex phinr_cj;
+	gld::complex phips;
+	gld::complex phins_cj;
+	gld::complex phipr;
+	gld::complex phinr_cj;
 	double wr_pu;
-	complex Ias;
-	complex Ibs;
-	complex Ics;
-	complex Vas;
-	complex Vbs;
-	complex Vcs;
-	complex Ips;
-	complex Ipr;
-	complex Ins_cj;
-	complex Inr_cj;
+	gld::complex Ias;
+	gld::complex Ibs;
+	gld::complex Ics;
+	gld::complex Vas;
+	gld::complex Vbs;
+	gld::complex Vcs;
+	gld::complex Ips;
+	gld::complex Ipr;
+	gld::complex Ins_cj;
+	gld::complex Inr_cj;
 	double Ls;
 	double Lr;
 	double sigma1;
 	double sigma2;
 
-	complex phips_prev;
-	complex phins_cj_prev;
-	complex phipr_prev;
-	complex phinr_cj_prev;
+	gld::complex phips_prev;
+	gld::complex phins_cj_prev;
+	gld::complex phipr_prev;
+	gld::complex phinr_cj_prev;
 	double wr_pu_prev;
-	complex Ips_prev;
-	complex Ipr_prev;
-	complex Ins_cj_prev;
-	complex Inr_cj_prev;
+	gld::complex Ips_prev;
+	gld::complex Ipr_prev;
+	gld::complex Ins_cj_prev;
+	gld::complex Inr_cj_prev;
 
 public:
 	int create(void);

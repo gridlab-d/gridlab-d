@@ -7,11 +7,11 @@
 	
 	@{
 */
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
-#include <float.h>
+#include <cerrno>
+#include <cfloat>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "histogram.h"
 
@@ -180,7 +180,7 @@ int parse_bin_enum(char *cptr, BIN *bin, PROPERTY *prop){
 		}
 	}
 	
-	gl_error("parse_bin_enum error: unable to find property \'%s\'", pos);
+	gl_error("parse_bin_enum error: unable to find property '%s'", pos);
 	return 0;
 }
 
@@ -199,7 +199,7 @@ void histogram::test_for_complex(char *tprop, char *tpart){
 		else if(0 == memcmp(tpart, "ang", 3)){comp_part = ANG;}
 		else {
 			comp_part = NONE;
-			throw("Unable to resolve complex part for \'%s\'", property.get_string());
+			throw("Unable to resolve complex part for '%s'", property.get_string());
 			return;
 		}
 		strtok(property, "."); /* "quickly" replaces the dot with a space */
@@ -226,7 +226,7 @@ int histogram::init(OBJECT *parent)
 	{
 		OBJECT *group_obj = NULL;
 		CLASS *oclass = NULL;
-		if(group[0] == 0){
+		if(group[0] == static_cast<char>(0)){
 			gl_error("Histogram has no parent and no group");
 			return 0;
 		}
@@ -333,7 +333,7 @@ int histogram::init(OBJECT *parent)
 		if(prop->ptype == PT_complex || prop->ptype == PT_double || prop->ptype == PT_int16 || prop->ptype == PT_int32 || prop->ptype == PT_int64 || prop->ptype == PT_float || prop->ptype == PT_real){
 			for(i = 0; i < bin_count && cptr != NULL; ++i){
 				if(parse_bin_val(cptr, bin_list+i) == 0){
-					gl_error("Histogram unable to parse \'%s\' in %s", cptr, obj->name ? obj->name : "(unnamed histogram)");
+					gl_error("Histogram unable to parse '%s' in %s", cptr, obj->name ? obj->name : "(unnamed histogram)");
 					return 0;
 				}
 				cptr = strtok(NULL, ",\t\r\n\0"); /* minor efficiency gain to use the incremented pointer from parse_bin */
@@ -341,7 +341,7 @@ int histogram::init(OBJECT *parent)
 		} else if (prop->ptype == PT_enumeration || prop->ptype == PT_set){
 			for(i = 0; i < bin_count && cptr != NULL; ++i){
 				if(parse_bin_enum(cptr, bin_list+i, prop) == 0){
-					gl_error("Histogram unable to parse \'%s\' in %s", cptr, obj->name ? obj->name : "(unnamed histogram)");
+					gl_error("Histogram unable to parse '%s' in %s", cptr, obj->name ? obj->name : "(unnamed histogram)");
 					return 0;
 				}
 				cptr = strtok(NULL, ",\t\r\n\0"); /* minor efficiency gain to use the incremented pointer from parse_bin */
@@ -385,7 +385,7 @@ int histogram::init(OBJECT *parent)
 
 int histogram::feed_bins(OBJECT *obj){
 	double value = 0.0;
-	complex cval = 0.0; //gl_get_complex(obj, ;
+	gld::complex cval = 0.0; //gl_get_complex(obj, ;
 	int64 ival = 0;
 	int i = 0;
 

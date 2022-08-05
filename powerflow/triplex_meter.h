@@ -15,8 +15,8 @@ EXPORT int triplex_meter_kmldata(OBJECT *obj,int (*stream)(const char*,...));
 class triplex_meter : public triplex_node
 {
 public:
-	complex measured_voltage[3];	///< measured voltage
-	complex measured_current[3];	///< measured current
+	gld::complex measured_voltage[3];	///< measured voltage
+	gld::complex measured_current[3];	///< measured current
 	double measured_real_energy;	///< metered real energy consumption
 	double measured_real_energy_delta;	///< metered real energy consumption over last interval
 	double measured_reactive_energy;///< metered reactive energy consumption
@@ -35,14 +35,14 @@ public:
 	double measured_min_max_avg_timestep; // Period of timestep for min/max/average calculations
 	
     double measured_energy_delta_timestep; // Period of timestep for real and reactive delta energy calculation
-	complex measured_power;			///< metered power
-	complex indiv_measured_power[3]; ///< individual phase power
+	gld::complex measured_power;			///< metered power
+	gld::complex indiv_measured_power[3]; ///< individual phase power
 	double measured_demand;			///< metered demand (peak of power)
 	double measured_real_power;		///< metered real power
 	double last_measured_real_power; ///< previous instance's metered real power
 	double measured_reactive_power; ///< metered reactive power
 	double last_measured_reactive_power; ///< previously measured reactive power
-	complex tpmeter_power_consumption; ///< power consumed by meter operation
+	gld::complex tpmeter_power_consumption; ///< power consumed by meter operation
 	bool tpmeter_interrupted;		///< Reliability flag - goes active if the customer is in an "interrupted" state
 	bool tpmeter_interrupted_secondary;	///< Reliability flag - goes active if the customer is in a "secondary interrupted" state - i.e., momentary
 	TIMESTAMP next_time;
@@ -55,7 +55,7 @@ public:
 	int16 total_count;		///< reliability total event counter
 	int16 s_flag;			///< reliability flag that gets set if the meter experienced more than n sustained interruptions
 	int16 t_flag;			///< reliability flage that gets set if the meter experienced more than n events total
-	complex pre_load;		///< the load prior to being interrupted
+	gld::complex pre_load;		///< the load prior to being interrupted
 #endif
 
 	double hourly_acc;
@@ -88,9 +88,9 @@ private:
 	double previous_energy_total;  ///< Used to track what the meter reading was the previous month
     double last_measured_real_energy;
     double last_measured_reactive_energy;
-    complex last_measured_voltage[3];
-    complex last_measured_max_voltage[3];
-    complex last_measured_min_voltage[3];
+    gld::complex last_measured_voltage[3];
+    gld::complex last_measured_max_voltage[3];
+    gld::complex last_measured_min_voltage[3];
 	double last_measured_max_real_power;
 	double last_measured_min_real_power;
 	double last_measured_max_reactive_power;

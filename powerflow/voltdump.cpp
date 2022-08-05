@@ -4,10 +4,10 @@
 	@{
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "voltdump.h"
 
@@ -15,15 +15,15 @@
 // voltdump CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 
-CLASS* voltdump::oclass = NULL;
+CLASS* voltdump::oclass = nullptr;
 
 voltdump::voltdump(MODULE *mod)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		oclass = gl_register_class(mod,"voltdump",sizeof(voltdump),PC_BOTTOMUP|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class voltdump";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -64,14 +64,14 @@ int voltdump::isa(char *classname)
 }
 
 void voltdump::dump(TIMESTAMP t){
-	char namestr[64];
-	char timestr[64];
-	FINDLIST *nodes = NULL;
-	OBJECT *obj = NULL;
-	FILE *outfile = NULL;
+	char namestr[128];
+	char timestr[128];
+	FINDLIST *nodes = nullptr;
+	OBJECT *obj = nullptr;
+	FILE *outfile = nullptr;
 
 	gld_property *node_voltage_value_link[3];
-	complex node_voltage_values[3];
+	gld::complex node_voltage_values[3];
 
 	//Find the objects - note that "FT_CLASS" requires an explicit match (not parent classing), so
 	//this would have to be replicated for all different node types to get it to work.
@@ -81,13 +81,13 @@ void voltdump::dump(TIMESTAMP t){
 		nodes = gl_find_objects(FL_NEW,FT_MODULE,SAME,"powerflow",AND,FT_GROUPID,SAME,group.get_string(),FT_END);
 	}
 
-	if(nodes == NULL){
+	if(nodes == nullptr){
 		gl_warning("no nodes were found to dump");
 		return;
 	}
 
 	outfile = fopen(filename, "w");
-	if(outfile == NULL){
+	if(outfile == nullptr){
 		gl_error("voltdump unable to open %s for output", filename.get_string());
 		return;
 	}
@@ -113,7 +113,7 @@ void voltdump::dump(TIMESTAMP t){
 			node_voltage_value_link[0] = new gld_property(obj,"voltage_1");
 
 			//Check it
-			if ((node_voltage_value_link[0]->is_valid() != true) || (node_voltage_value_link[0]->is_complex() != true))
+			if (!node_voltage_value_link[0]->is_valid() || !node_voltage_value_link[0]->is_complex())
 			{
 				GL_THROW("voltdump - Unable to map voltage property of triplex_node:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
@@ -126,7 +126,7 @@ void voltdump::dump(TIMESTAMP t){
 			node_voltage_value_link[1] = new gld_property(obj,"voltage_2");
 
 			//Check it
-			if ((node_voltage_value_link[1]->is_valid() != true) || (node_voltage_value_link[1]->is_complex() != true))
+			if (!node_voltage_value_link[1]->is_valid() || !node_voltage_value_link[1]->is_complex())
 			{
 				GL_THROW("voltdump - Unable to map voltage property of triplex_node:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -136,7 +136,7 @@ void voltdump::dump(TIMESTAMP t){
 			node_voltage_value_link[2] = new gld_property(obj,"voltage_N");
 
 			//Check it
-			if ((node_voltage_value_link[2]->is_valid() != true) || (node_voltage_value_link[2]->is_complex() != true))
+			if (!node_voltage_value_link[2]->is_valid() || !node_voltage_value_link[2]->is_complex())
 			{
 				GL_THROW("voltdump - Unable to map voltage property of triplex_node:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -148,7 +148,7 @@ void voltdump::dump(TIMESTAMP t){
 			node_voltage_value_link[0] = new gld_property(obj,"voltage_A");
 
 			//Check it
-			if ((node_voltage_value_link[0]->is_valid() != true) || (node_voltage_value_link[0]->is_complex() != true))
+			if (!node_voltage_value_link[0]->is_valid() || !node_voltage_value_link[0]->is_complex())
 			{
 				GL_THROW("voltdump - Unable to map voltage property of node:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
@@ -161,7 +161,7 @@ void voltdump::dump(TIMESTAMP t){
 			node_voltage_value_link[1] = new gld_property(obj,"voltage_B");
 
 			//Check it
-			if ((node_voltage_value_link[1]->is_valid() != true) || (node_voltage_value_link[1]->is_complex() != true))
+			if (!node_voltage_value_link[1]->is_valid() || !node_voltage_value_link[1]->is_complex())
 			{
 				GL_THROW("voltdump - Unable to map voltage property of node:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -171,7 +171,7 @@ void voltdump::dump(TIMESTAMP t){
 			node_voltage_value_link[2] = new gld_property(obj,"voltage_C");
 
 			//Check it
-			if ((node_voltage_value_link[2]->is_valid() != true) || (node_voltage_value_link[2]->is_complex() != true))
+			if (!node_voltage_value_link[2]->is_valid() || !node_voltage_value_link[2]->is_complex())
 			{
 				GL_THROW("voltdump - Unable to map voltage property of node:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -188,7 +188,7 @@ void voltdump::dump(TIMESTAMP t){
 		node_voltage_values[1] = node_voltage_value_link[1]->get_complex();
 		node_voltage_values[2] = node_voltage_value_link[2]->get_complex();
 
-		if(obj->name == NULL){
+		if(obj->name == nullptr){
 			sprintf(namestr, "%s:%i", obj->oclass->name, obj->id);
 		}
 		if(mode == VDM_RECT){
@@ -237,7 +237,7 @@ EXPORT int create_voltdump(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(voltdump::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			voltdump *my = OBJECTDATA(*obj,voltdump);
 			gl_set_parent(*obj,parent);

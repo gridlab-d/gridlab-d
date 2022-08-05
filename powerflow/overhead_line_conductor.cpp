@@ -7,24 +7,24 @@
 	@{
 **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
 using namespace std;
 
 #include "line.h"
 
-CLASS* overhead_line_conductor::oclass = NULL;
-CLASS* overhead_line_conductor::pclass = NULL;
+CLASS* overhead_line_conductor::oclass = nullptr;
+CLASS* overhead_line_conductor::pclass = nullptr;
 
 overhead_line_conductor::overhead_line_conductor(MODULE *mod) : powerflow_library(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
-		oclass = gl_register_class(mod,"overhead_line_conductor",sizeof(overhead_line_conductor),0x00);
-		if (oclass==NULL)
+		oclass = gl_register_class(mod, "overhead_line_conductor",sizeof(overhead_line_conductor),0x00);
+		if (oclass== nullptr)
 			throw "unable to register class overhead_line_conductor";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -101,7 +101,7 @@ EXPORT int create_overhead_line_conductor(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(overhead_line_conductor::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			overhead_line_conductor *my = OBJECTDATA(*obj,overhead_line_conductor);
 			gl_set_parent(*obj,parent);

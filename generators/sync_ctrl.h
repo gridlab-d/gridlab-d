@@ -33,15 +33,15 @@ public:
 private: //Member Funcs: Utilities
     /* Get property pointer */
     template <class T>
-    gld_property *get_prop_ptr(T *, char *, bool (gld_property::*)(), bool (gld_property::*)());
+    gld_property *get_prop_ptr(T *, const char *, bool (gld_property::*)(), bool (gld_property::*)());
 
     /* Get property value */
     template <class T, class T1>
-    T get_prop_value(T1 *, char *, bool (gld_property::*)(), bool (gld_property::*)(), T (gld_property::*)());
+    T get_prop_value(T1 *, const char *, bool (gld_property::*)(), bool (gld_property::*)(), T (gld_property::*)());
     template <class T, class T1>
-    T *get_prop_value(T1 *, char *, bool (gld_property::*)(), bool (gld_property::*)(), T *(gld_property::*)());
+    T *get_prop_value(T1 *, const char *, bool (gld_property::*)(), bool (gld_property::*)(), T *(gld_property::*)());
     template <class T>
-    T get_prop_value(char *, bool (gld_property::*)(), bool (gld_property::*)(), T (gld_property::*)());
+    T get_prop_value(const char *, bool (gld_property::*)(), bool (gld_property::*)(), T (gld_property::*)());
     template <class T>
     T get_prop_value(gld_property *, T (gld_property::*)(), bool = true);
     template <class T>

@@ -9,24 +9,24 @@
 	@{
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "load.h"
 
-CLASS* load::oclass = NULL;
-CLASS* load::pclass = NULL;
+CLASS* load::oclass = nullptr;
+CLASS* load::pclass = nullptr;
 
 load::load(MODULE *mod) : node(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		pclass = node::oclass;
 		
 		oclass = gl_register_class(mod,"load",sizeof(load),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class load";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -179,23 +179,23 @@ load::load(MODULE *mod) : node(mod)
          	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_load)==NULL)
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_load)==nullptr)
 			GL_THROW("Unable to publish load deltamode function");
-		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
+		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==nullptr)
 			GL_THROW("Unable to publish load swing-swapping function");
-		if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==NULL)
+		if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==nullptr)
 			GL_THROW("Unable to publish load current injection update mapping function");
-		if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
+		if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==nullptr)
 			GL_THROW("Unable to publish load VFD attachment function");
-		if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
+		if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == nullptr)
 			GL_THROW("Unable to publish load island-status-reset function");
-		if (gl_publish_function(oclass, "pwr_object_load_update", (FUNCTIONADDR)update_load_values) == NULL)
+		if (gl_publish_function(oclass, "pwr_object_load_update", (FUNCTIONADDR)update_load_values) == nullptr)
 			GL_THROW("Unable to publish load impedance-conversion/update function");
-		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
+		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == nullptr)
 			GL_THROW("Unable to publish load swing-status check function");
-		if (gl_publish_function(oclass, "pwr_object_shunt_update", (FUNCTIONADDR)node_update_shunt_values) == NULL)
+		if (gl_publish_function(oclass, "pwr_object_shunt_update", (FUNCTIONADDR)node_update_shunt_values) == nullptr)
 			GL_THROW("Unable to publish load shunt update function");
-		if (gl_publish_function(oclass, "pwr_object_kmldata", (FUNCTIONADDR)load_kmldata) == NULL)
+		if (gl_publish_function(oclass, "pwr_object_kmldata", (FUNCTIONADDR)load_kmldata) == nullptr)
 			GL_THROW("Unable to publish load kmldata function");
     }
 }
@@ -222,27 +222,27 @@ int load::create(void)
 	three_phase_protect = false;	//By default, let all three phases go
 
 	//Zero all loads (get the ones missed above)
-	constant_power[0] = constant_power[1] = constant_power[2] = complex(0.0,0.0);
-	constant_current[0] = constant_current[1] = constant_current[2] = complex(0.0,0.0);
-	constant_impedance[0] = constant_impedance[1] = constant_impedance[2] = complex(0.0,0.0);
+	constant_power[0] = constant_power[1] = constant_power[2] = gld::complex(0.0,0.0);
+	constant_current[0] = constant_current[1] = constant_current[2] = gld::complex(0.0,0.0);
+	constant_impedance[0] = constant_impedance[1] = constant_impedance[2] = gld::complex(0.0,0.0);
 
-	constant_power_dy[0] = constant_power_dy[1] = constant_power_dy[2] = complex(0.0,0.0);
-	constant_current_dy[0] = constant_current_dy[1] = constant_current_dy[2] = complex(0.0,0.0);
-	constant_impedance_dy[0] = constant_impedance_dy[1] = constant_impedance_dy[2] = complex(0.0,0.0);
+	constant_power_dy[0] = constant_power_dy[1] = constant_power_dy[2] = gld::complex(0.0,0.0);
+	constant_current_dy[0] = constant_current_dy[1] = constant_current_dy[2] = gld::complex(0.0,0.0);
+	constant_impedance_dy[0] = constant_impedance_dy[1] = constant_impedance_dy[2] = gld::complex(0.0,0.0);
 
-	constant_power_dy[3] = constant_power_dy[4] = constant_power_dy[5] = complex(0.0,0.0);
-	constant_current_dy[3] = constant_current_dy[4] = constant_current_dy[5] = complex(0.0,0.0);
-	constant_impedance_dy[3] = constant_impedance_dy[4] = constant_impedance_dy[5] = complex(0.0,0.0);
+	constant_power_dy[3] = constant_power_dy[4] = constant_power_dy[5] = gld::complex(0.0,0.0);
+	constant_current_dy[3] = constant_current_dy[4] = constant_current_dy[5] = gld::complex(0.0,0.0);
+	constant_impedance_dy[3] = constant_impedance_dy[4] = constant_impedance_dy[5] = gld::complex(0.0,0.0);
 
 	//Initialize the tracking variables - do it as a loop (complex mucks things up)
 	for (index_x=0; index_x<3; index_x++)
 	{
 		for (index_y=0; index_y<3; index_y++)
 		{
-			prev_load_values[index_x][index_y] = complex(0.0,0.0);
+			prev_load_values[index_x][index_y] = gld::complex(0.0,0.0);
 
-			prev_load_values_dy[index_x][index_y] = complex(0.0,0.0);
-			prev_load_values_dy[index_x][index_y+3] = complex(0.0,0.0);
+			prev_load_values_dy[index_x][index_y] = gld::complex(0.0,0.0);
+			prev_load_values_dy[index_x][index_y+3] = gld::complex(0.0,0.0);
 		}
 	}
 
@@ -250,7 +250,7 @@ int load::create(void)
 	node_type = LOAD_NODE;
 
 	//in-rush related zeroing
-	prev_shunt[0] = prev_shunt[1] = prev_shunt[2] = complex(0.0,0.0);
+	prev_shunt[0] = prev_shunt[1] = prev_shunt[2] = gld::complex(0.0,0.0);
 
 	//ZIP fraction tracking
 	base_load_val_was_nonzero[0] = base_load_val_was_nonzero[1] = base_load_val_was_nonzero[2] = false;
@@ -288,10 +288,10 @@ int load::init(OBJECT *parent)
 		if (solver_method == SM_NR)
 		{
 			//Allocate the storage vector
-			prev_power_value = (complex *)gl_malloc(3*sizeof(complex));
+			prev_power_value = (gld::complex *)gl_malloc(3*sizeof(gld::complex));
 
 			//Check it
-			if (prev_power_value==NULL)
+			if (prev_power_value==nullptr)
 			{
 				GL_THROW("Failure to allocate memory for power tracking array");
 				/*  TROUBLESHOOT
@@ -303,9 +303,9 @@ int load::init(OBJECT *parent)
 			}
 
 			//Populate it with zeros for now, just cause - init sets voltages in node
-			prev_power_value[0] = complex(0.0,0.0);
-			prev_power_value[1] = complex(0.0,0.0);
-			prev_power_value[2] = complex(0.0,0.0);
+			prev_power_value[0] = gld::complex(0.0,0.0);
+			prev_power_value[1] = gld::complex(0.0,0.0);
+			prev_power_value[2] = gld::complex(0.0,0.0);
 		}
 	}
 
@@ -315,7 +315,7 @@ int load::init(OBJECT *parent)
 	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)	//Deltamode warning check
 	{
 		//See if we're going to be "in-rushy" or not
-		if (enable_inrush_calculations==true)
+		if (enable_inrush_calculations)
 		{
 			//Figure out if we need our integration method updated - inductance
 			if (inrush_int_method_inductance == IRM_UNDEFINED)
@@ -333,10 +333,10 @@ int load::init(OBJECT *parent)
 
 			//Allocate all of the terms - inductive and capacitive, just in case
 			//Allocate ahrl - inductive term
-			ahrlloadstore = (complex *)gl_malloc(3*sizeof(complex));
+			ahrlloadstore = (gld::complex *)gl_malloc(3*sizeof(gld::complex));
 
 			//Check it
-			if (ahrlloadstore == NULL)
+			if (ahrlloadstore == nullptr)
 			{
 				GL_THROW("load:%d-%s - failed to allocate memory for in-rush calculations",obj->id, obj->name ? obj->name : "unnamed");
 				/*  TROUBLESHOOT
@@ -346,55 +346,55 @@ int load::init(OBJECT *parent)
 			}
 
 			//bhrl inductive term
-			bhrlloadstore = (complex *)gl_malloc(3*sizeof(complex));
+			bhrlloadstore = (gld::complex *)gl_malloc(3*sizeof(gld::complex));
 
 			//Check it
-			if (bhrlloadstore == NULL)
+			if (bhrlloadstore == nullptr)
 			{
 				GL_THROW("load:%d-%s - failed to allocate memory for in-rush calculations",obj->id, obj->name ? obj->name : "unnamed");
 				//Defined above
 			}
 
 			//chrc - capacitive term
-			chrcloadstore = (complex *)gl_malloc(3*sizeof(complex));
+			chrcloadstore = (gld::complex *)gl_malloc(3*sizeof(gld::complex));
 
 			//Check it
-			if (chrcloadstore == NULL)
+			if (chrcloadstore == nullptr)
 			{
 				GL_THROW("load:%d-%s - failed to allocate memory for in-rush calculations",obj->id, obj->name ? obj->name : "unnamed");
 				//Defined above
 			}
 
 			//LoadHistTermL - history term for inductive
-			LoadHistTermL = (complex *)gl_malloc(6*sizeof(complex));
+			LoadHistTermL = (gld::complex *)gl_malloc(6*sizeof(gld::complex));
 
 			//Check it
-			if (LoadHistTermL == NULL)
+			if (LoadHistTermL == nullptr)
 			{
 				GL_THROW("load:%d-%s - failed to allocate memory for in-rush calculations",obj->id, obj->name ? obj->name : "unnamed");
 				//Defined above
 			}
 
 			//LoadHistTermC - history term for capacitive
-			LoadHistTermC = (complex *)gl_malloc(6*sizeof(complex));
+			LoadHistTermC = (gld::complex *)gl_malloc(6*sizeof(gld::complex));
 
 			//Check it
-			if (LoadHistTermC == NULL)
+			if (LoadHistTermC == nullptr)
 			{
 				GL_THROW("load:%d-%s - failed to allocate memory for in-rush calculations",obj->id, obj->name ? obj->name : "unnamed");
 				//Defined above
 			}
 
 			//Now zero them all, for good measure
-			ahrlloadstore[0] = ahrlloadstore[1] = ahrlloadstore[2] = complex(0.0,0.0);
-			bhrlloadstore[0] = bhrlloadstore[1] = bhrlloadstore[2] = complex(0.0,0.0);
-			chrcloadstore[0] = chrcloadstore[1] = chrcloadstore[2] = complex(0.0,0.0);
+			ahrlloadstore[0] = ahrlloadstore[1] = ahrlloadstore[2] = gld::complex(0.0,0.0);
+			bhrlloadstore[0] = bhrlloadstore[1] = bhrlloadstore[2] = gld::complex(0.0,0.0);
+			chrcloadstore[0] = chrcloadstore[1] = chrcloadstore[2] = gld::complex(0.0,0.0);
 
-			LoadHistTermL[0] = LoadHistTermL[1] = LoadHistTermL[2] = complex(0.0,0.0);
-			LoadHistTermL[3] = LoadHistTermL[4] = LoadHistTermL[5] = complex(0.0,0.0);
+			LoadHistTermL[0] = LoadHistTermL[1] = LoadHistTermL[2] = gld::complex(0.0,0.0);
+			LoadHistTermL[3] = LoadHistTermL[4] = LoadHistTermL[5] = gld::complex(0.0,0.0);
 
-			LoadHistTermC[0] = LoadHistTermC[1] = LoadHistTermC[2] = complex(0.0,0.0);
-			LoadHistTermC[3] = LoadHistTermC[4] = LoadHistTermC[5] = complex(0.0,0.0);
+			LoadHistTermC[0] = LoadHistTermC[1] = LoadHistTermC[2] = gld::complex(0.0,0.0);
+			LoadHistTermC[3] = LoadHistTermC[4] = LoadHistTermC[5] = gld::complex(0.0,0.0);
 
 			//full_Y_load inited in node
 		}
@@ -490,39 +490,39 @@ void load::load_update_fxn(void)
 {
 	bool fault_mode;
 	bool all_three_phases, transf_from_stdy_state;
-	complex intermed_impedance[3];
-	complex intermed_impedance_dy[6];
+	gld::complex intermed_impedance[3];
+	gld::complex intermed_impedance_dy[6];
 	int index_var, extract_node_ref;
 	bool volt_below_thresh;
 	double voltage_base_val;
 	double voltage_pu_vals[3];
-	complex nominal_voltage_value;
+	gld::complex nominal_voltage_value;
 	int node_reference_value;
 	double curr_delta_time;
 	bool require_inrush_update, local_shunt_update;
-	complex working_impedance_value, working_data_value, working_admittance_value;
+	gld::complex working_impedance_value, working_data_value, working_admittance_value;
 	double workingvalue;
-	OBJECT *obj;
+	OBJECT *obj = nullptr;
 	double baseangles[3];
-	node *temp_par_node = NULL;
-	complex adjusted_FBS_current[6];
-	complex adjust_FBS_temp_nominal_voltage[6];
+	node *temp_par_node = nullptr;
+	gld::complex adjusted_FBS_current[6];
+	gld::complex adjust_FBS_temp_nominal_voltage[6];
 	double adjust_FBS_temp_voltage_mag[6];
 	double adjust_FBS_nominal_voltage_val[6];
-	complex adjust_FBS_voltage_val[6];
+	gld::complex adjust_FBS_voltage_val[6];
 
 	//See if we're reliability-enabled
-	if (fault_check_object == NULL)
+	if (fault_check_object == nullptr)
 		fault_mode = false;
 	else
 		fault_mode = true;
 
 	//Roll GFA check into here, so current loads updates are handled properly
 	//See if GFA functionality is enabled
-	if (GFA_enable == true)
+	if (GFA_enable)
 	{
 		//See if we're enabled - just skipping the load update should be enough, if we are not
-		if (GFA_status == false)
+		if (!GFA_status)
 		{
 			//Remove any load contributions
 			load_delete_update_fxn();
@@ -551,17 +551,17 @@ void load::load_update_fxn(void)
 		power_dy[index_var+3] -= prev_load_values_dy[2][index_var+3];
 
 		//Zero the trackers too
-		prev_load_values[0][index_var] = complex(0.0,0.0);
-		prev_load_values[1][index_var] = complex(0.0,0.0);
-		prev_load_values[2][index_var] = complex(0.0,0.0);
+		prev_load_values[0][index_var] = gld::complex(0.0,0.0);
+		prev_load_values[1][index_var] = gld::complex(0.0,0.0);
+		prev_load_values[2][index_var] = gld::complex(0.0,0.0);
 
 		//Zero the explicit trackers
-		prev_load_values_dy[0][index_var] = complex(0.0,0.0);
-		prev_load_values_dy[1][index_var] = complex(0.0,0.0);
-		prev_load_values_dy[2][index_var] = complex(0.0,0.0);
-		prev_load_values_dy[0][index_var+3] = complex(0.0,0.0);
-		prev_load_values_dy[1][index_var+3] = complex(0.0,0.0);
-		prev_load_values_dy[2][index_var+3] = complex(0.0,0.0);
+		prev_load_values_dy[0][index_var] = gld::complex(0.0,0.0);
+		prev_load_values_dy[1][index_var] = gld::complex(0.0,0.0);
+		prev_load_values_dy[2][index_var] = gld::complex(0.0,0.0);
+		prev_load_values_dy[0][index_var+3] = gld::complex(0.0,0.0);
+		prev_load_values_dy[1][index_var+3] = gld::complex(0.0,0.0);
+		prev_load_values_dy[2][index_var+3] = gld::complex(0.0,0.0);
 	}
 
 	//Set base angles for ZIP calculations below
@@ -615,18 +615,18 @@ void load::load_update_fxn(void)
 				{
 					imag_power *= -1.0;	//Adjust imaginary portion for negative PF
 				}
-				constant_power[index] = complex(real_power,imag_power);
+				constant_power[index] = gld::complex(real_power,imag_power);
 			}
 			else
 			{
-				constant_power[index] = complex(0,0);
+				constant_power[index] = gld::complex(0,0);
 			}
 		
 			// Put in the constant current portion and adjust the angle
 			if (current_fraction[index] != 0.0)
 			{
 				double real_power,imag_power,temp_angle;
-				complex temp_curr;
+				gld::complex temp_curr;
 
 				if (current_pf[index] == 0.0)
 				{				
@@ -646,10 +646,10 @@ void load::load_update_fxn(void)
 				
 				// Calculate then shift the constant current to use the posted voltage as the reference angle
 				if (has_phase(PHASE_D)) {
-				  temp_curr = ~complex(real_power,imag_power) / complex(sqrt(3.0)*nominal_voltage,0);
+				  temp_curr = ~gld::complex(real_power,imag_power) / gld::complex(sqrt(3.0)*nominal_voltage,0);
 				  temp_angle = temp_curr.Arg() + baseangles[index] + PI/6.0;
 				} else {
-				  temp_curr = ~complex(real_power,imag_power) / complex(nominal_voltage,0);
+				  temp_curr = ~gld::complex(real_power,imag_power) / gld::complex(nominal_voltage,0);
 				  temp_angle = temp_curr.Arg() + baseangles[index];
 				}
 
@@ -660,7 +660,7 @@ void load::load_update_fxn(void)
 			}
 			else
 			{
-				constant_current[index] = complex(0,0);
+				constant_current[index] = gld::complex(0,0);
 			}
 
 			// Put in the constant impedance portion
@@ -686,22 +686,22 @@ void load::load_update_fxn(void)
 
 				//Compute the impedance value - adjust for delta-connection, as necessary
 				if (has_phase(PHASE_D)) {
-				  constant_impedance[index] = ~( complex(3.0 * nominal_voltage * nominal_voltage, 0) / complex(real_power,imag_power) );
+				  constant_impedance[index] = ~( gld::complex(3.0 * nominal_voltage * nominal_voltage, 0) / gld::complex(real_power,imag_power) );
 				} else {
-				  constant_impedance[index] = ~( complex(nominal_voltage * nominal_voltage, 0) / complex(real_power,imag_power) );
+				  constant_impedance[index] = ~( gld::complex(nominal_voltage * nominal_voltage, 0) / gld::complex(real_power,imag_power) );
 				}
 			}
 			else
 			{
-				constant_impedance[index] = complex(0,0);
+				constant_impedance[index] = gld::complex(0,0);
 			}
 		}
-		else if (base_load_val_was_nonzero[index] == true)	//Zero case, be sure to re-zero it
+		else if (base_load_val_was_nonzero[index])	//Zero case, be sure to re-zero it
 		{
 			//zero all components
-			constant_power[index] = complex(0.0,0.0);
-			constant_current[index] = complex(0.0,0.0);
-			constant_impedance[index] = complex(0.0,0.0);
+			constant_power[index] = gld::complex(0.0,0.0);
+			constant_current[index] = gld::complex(0.0,0.0);
+			constant_impedance[index] = gld::complex(0.0,0.0);
 
 			//Deflag us
 			base_load_val_was_nonzero[index] = false;
@@ -709,12 +709,12 @@ void load::load_update_fxn(void)
 	}
 
 	//Perform the intermediate impedance calculations, if necessary
-	if (enable_frequency_dependence == true)
+	if (enable_frequency_dependence)
 	{
 		//Check impedance values for normal connections
 		for (index_var=0; index_var<3; index_var++)
 		{
-			if ((constant_impedance[index_var].IsZero()) == false)
+			if (!constant_impedance[index_var].IsZero())
 			{
 				//Assign real part
 				intermed_impedance[index_var].SetReal(constant_impedance[index_var].Re());
@@ -738,7 +738,7 @@ void load::load_update_fxn(void)
 		//Check impedance values for explicit delta/wye connections
 		for (index_var=0; index_var<6; index_var++)
 		{
-			if ((constant_impedance_dy[index_var].IsZero()) == false)
+			if (!constant_impedance_dy[index_var].IsZero())
 			{
 				//Assign real part
 				intermed_impedance_dy[index_var].SetReal(constant_impedance_dy[index_var].Re());
@@ -772,33 +772,33 @@ void load::load_update_fxn(void)
 		}
 	}
 
-	if ((fault_mode == false) && (enable_impedance_conversion==false))	//Not reliability mode - normal mode
+	if (!fault_mode && !enable_impedance_conversion)	//Not reliability mode - normal mode
 	{
 		if(!intermed_impedance[0].IsZero())
 		{
 			//Accumulator
-			shunt[0] += complex(1.0)/intermed_impedance[0];
+			shunt[0] += gld::complex(1.0)/intermed_impedance[0];
 
 			//Tracker
-			prev_load_values[0][0] += complex(1.0,0.0)/intermed_impedance[0];
+			prev_load_values[0][0] += gld::complex(1.0,0.0)/intermed_impedance[0];
 		}
 
 		if(!intermed_impedance[1].IsZero())
 		{
 			//Accumulator
-			shunt[1] += complex(1.0)/intermed_impedance[1];
+			shunt[1] += gld::complex(1.0)/intermed_impedance[1];
 
 			//Tracker
-			prev_load_values[0][1] += complex(1.0,0.0)/intermed_impedance[1];
+			prev_load_values[0][1] += gld::complex(1.0,0.0)/intermed_impedance[1];
 		}
 		
 		if(!intermed_impedance[2].IsZero())
 		{
 			//Accumulator
-			shunt[2] += complex(1.0)/intermed_impedance[2];
+			shunt[2] += gld::complex(1.0)/intermed_impedance[2];
 
 			//Tracker
-			prev_load_values[0][2] += complex(1.0,0.0)/intermed_impedance[2];
+			prev_load_values[0][2] += gld::complex(1.0,0.0)/intermed_impedance[2];
 		}
 		
 		//Power and current accumulators
@@ -853,7 +853,7 @@ void load::load_update_fxn(void)
 				}
 				else
 				{
-					adjusted_FBS_current[0] = complex(0.0,0.0);
+					adjusted_FBS_current[0] = gld::complex(0.0,0.0);
 				}
 
 				//Start adjustments - BC
@@ -864,7 +864,7 @@ void load::load_update_fxn(void)
 				}
 				else
 				{
-					adjusted_FBS_current[1] = complex(0.0,0.0);
+					adjusted_FBS_current[1] = gld::complex(0.0,0.0);
 				}
 
 				//Start adjustments - CA
@@ -875,7 +875,7 @@ void load::load_update_fxn(void)
 				}
 				else
 				{
-					adjusted_FBS_current[2] = complex(0.0,0.0);
+					adjusted_FBS_current[2] = gld::complex(0.0,0.0);
 				}
 			}
 			else	//Wye
@@ -888,7 +888,7 @@ void load::load_update_fxn(void)
 				}
 				else
 				{
-					adjusted_FBS_current[0] = complex(0.0,0.0);
+					adjusted_FBS_current[0] = gld::complex(0.0,0.0);
 				}
 
 				//Start adjustments - B
@@ -899,7 +899,7 @@ void load::load_update_fxn(void)
 				}
 				else
 				{
-					adjusted_FBS_current[1] = complex(0.0,0.0);
+					adjusted_FBS_current[1] = gld::complex(0.0,0.0);
 				}
 
 				//Start adjustments - C
@@ -910,7 +910,7 @@ void load::load_update_fxn(void)
 				}
 				else
 				{
-					adjusted_FBS_current[2] = complex(0.0,0.0);
+					adjusted_FBS_current[2] = gld::complex(0.0,0.0);
 				}
 			}
 
@@ -947,10 +947,10 @@ void load::load_update_fxn(void)
 			if (!intermed_impedance_dy[index_var].IsZero())
 			{
 				//Accumulator
-				shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
+				shunt_dy[index_var] += gld::complex(1.0)/intermed_impedance_dy[index_var];
 
 				//Tracker
-				prev_load_values_dy[0][index_var] += complex(1.0,0.0)/intermed_impedance_dy[index_var];
+				prev_load_values_dy[0][index_var] += gld::complex(1.0,0.0)/intermed_impedance_dy[index_var];
 			}
 
 			power_dy[index_var] += constant_power_dy[index_var];
@@ -966,7 +966,7 @@ void load::load_update_fxn(void)
 				}
 				else
 				{
-					adjusted_FBS_current[index_var] = complex(0.0,0.0);
+					adjusted_FBS_current[index_var] = gld::complex(0.0,0.0);
 				}
 
 				//Accumulate into the variable
@@ -993,7 +993,7 @@ void load::load_update_fxn(void)
 		all_three_phases = true;	//By default, handle all the phases
 
 		//Check and see if we're a "protected" load
-		if (three_phase_protect == true)
+		if (three_phase_protect)
 		{
 			if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 			{
@@ -1015,14 +1015,14 @@ void load::load_update_fxn(void)
 			}
 		}
 
-		if (all_three_phases == true)	//Handle all phases correctly
+		if (all_three_phases)	//Handle all phases correctly
 		{
 			if ((solver_method!=SM_FBS) && ((SubNode & (SNT_PARENT | SNT_DIFF_PARENT)) != 0))	//Need to do something slightly different with GS/NR and parented load
 			{													//associated with change due to player methods
 				if ((SubNode & SNT_PARENT) == SNT_PARENT)	//Normal parents need this
 				{
 					//See if in-rush is enabled - only makes sense in reliability situations
-					if ((enable_inrush_calculations == true) || (enable_impedance_conversion == true))
+					if (enable_inrush_calculations || enable_impedance_conversion)
 					{
 						//Reset variable
 						volt_below_thresh = false;
@@ -1085,7 +1085,7 @@ void load::load_update_fxn(void)
 						}
 
 						//See if tripped
-						if (volt_below_thresh == true)
+						if (volt_below_thresh)
 						{
 							//Convert all loads to an impedance-equivalent
 							if (has_phase(PHASE_D))	//Delta-connected
@@ -1100,7 +1100,7 @@ void load::load_update_fxn(void)
 									if (!(constant_power[0].IsZero()))
 									{
 										//Set nominal voltage - |V|^2
-										nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+										nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 										//Compute the value
 										intermed_impedance[0] += ~(nominal_voltage_value/constant_power[0]);
@@ -1124,7 +1124,7 @@ void load::load_update_fxn(void)
 									if (!(constant_power[1].IsZero()))
 									{
 										//Set nominal voltage - |V|^2
-										nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+										nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 										//Compute the value
 										intermed_impedance[1] += ~(nominal_voltage_value/constant_power[1]);
@@ -1148,7 +1148,7 @@ void load::load_update_fxn(void)
 									if (!(constant_power[2].IsZero()))
 									{
 										//Set nominal voltage - |V|^2
-										nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+										nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 										//Compute the value
 										intermed_impedance[2] += ~(nominal_voltage_value/constant_power[2]);
@@ -1177,7 +1177,7 @@ void load::load_update_fxn(void)
 									if (!(constant_power[0].IsZero()))
 									{
 										//Set nominal voltage - |V|^2
-										nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+										nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 										//Compute the value
 										intermed_impedance[0] += ~(nominal_voltage_value/constant_power[0]);
@@ -1187,7 +1187,7 @@ void load::load_update_fxn(void)
 									if (!(constant_current[0].IsZero()))
 									{
 										//Set nominal voltage - actual angle
-										nominal_voltage_value = complex(voltage_base_val,0.0);
+										nominal_voltage_value = gld::complex(voltage_base_val,0.0);
 
 										//Compute the value
 										intermed_impedance[0] += nominal_voltage_value/constant_current[0];
@@ -1201,7 +1201,7 @@ void load::load_update_fxn(void)
 									if (!(constant_power[1].IsZero()))
 									{
 										//Set nominal voltage - |V|^2
-										nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+										nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 										//Compute the value
 										intermed_impedance[1] += ~(nominal_voltage_value/constant_power[1]);
@@ -1225,7 +1225,7 @@ void load::load_update_fxn(void)
 									if (!(constant_power[2].IsZero()))
 									{
 										//Set nominal voltage - |V|^2
-										nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+										nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 										//Compute the value
 										intermed_impedance[2] += ~(nominal_voltage_value/constant_power[2]);
@@ -1247,28 +1247,28 @@ void load::load_update_fxn(void)
 							if (!(intermed_impedance[0].IsZero()))
 							{
 								//Accumulator
-								shunt[0] += complex(1.0)/intermed_impedance[0];
+								shunt[0] += gld::complex(1.0)/intermed_impedance[0];
 
 								//Tracker
-								prev_load_values[0][0] += complex(1.0,0.0)/intermed_impedance[0];
+								prev_load_values[0][0] += gld::complex(1.0,0.0)/intermed_impedance[0];
 							}
 
 							if (!(intermed_impedance[1].IsZero()))
 							{
 								//Accumulator
-								shunt[1] += complex(1.0)/intermed_impedance[1];
+								shunt[1] += gld::complex(1.0)/intermed_impedance[1];
 
 								//Tracker
-								prev_load_values[0][1] += complex(1.0,0.0)/intermed_impedance[1];
+								prev_load_values[0][1] += gld::complex(1.0,0.0)/intermed_impedance[1];
 							}
 							
 							if (!(intermed_impedance[2].IsZero()))
 							{
 								//Accumulator
-								shunt[2] += complex(1.0)/intermed_impedance[2];
+								shunt[2] += gld::complex(1.0)/intermed_impedance[2];
 
 								//Tracker
-								prev_load_values[0][2] += complex(1.0,0.0)/intermed_impedance[2];
+								prev_load_values[0][2] += gld::complex(1.0,0.0)/intermed_impedance[2];
 							}
 
 							//Power and current remain zero
@@ -1286,7 +1286,7 @@ void load::load_update_fxn(void)
 								if (!(constant_power_dy[0].IsZero()))
 								{
 									//Set nominal voltage - |V|^2
-									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+									nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 									//Compute the value
 									intermed_impedance_dy[0] += ~(nominal_voltage_value/constant_power_dy[0]);
@@ -1310,7 +1310,7 @@ void load::load_update_fxn(void)
 								if (!(constant_power_dy[1].IsZero()))
 								{
 									//Set nominal voltage - |V|^2
-									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+									nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 									//Compute the value
 									intermed_impedance_dy[1] += ~(nominal_voltage_value/constant_power_dy[1]);
@@ -1334,7 +1334,7 @@ void load::load_update_fxn(void)
 								if (!(constant_power_dy[2].IsZero()))
 								{
 									//Set nominal voltage - |V|^2
-									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+									nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 									//Compute the value
 									intermed_impedance_dy[2] += ~(nominal_voltage_value/constant_power_dy[2]);
@@ -1362,7 +1362,7 @@ void load::load_update_fxn(void)
 								if (!(constant_power_dy[3].IsZero()))
 								{
 									//Set nominal voltage - |V|^2
-									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+									nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 									//Compute the value
 									intermed_impedance_dy[3] += ~(nominal_voltage_value/constant_power_dy[3]);
@@ -1372,7 +1372,7 @@ void load::load_update_fxn(void)
 								if (!(constant_current_dy[3].IsZero()))
 								{
 									//Set nominal voltage - actual angle
-									nominal_voltage_value = complex(voltage_base_val,0.0);
+									nominal_voltage_value = gld::complex(voltage_base_val,0.0);
 
 									//Compute the value
 									intermed_impedance_dy[3] += nominal_voltage_value/constant_current_dy[3];
@@ -1386,7 +1386,7 @@ void load::load_update_fxn(void)
 								if (!(constant_power_dy[4].IsZero()))
 								{
 									//Set nominal voltage - |V|^2
-									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+									nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 									//Compute the value
 									intermed_impedance_dy[4] += ~(nominal_voltage_value/constant_power_dy[4]);
@@ -1410,7 +1410,7 @@ void load::load_update_fxn(void)
 								if (!(constant_power_dy[5].IsZero()))
 								{
 									//Set nominal voltage - |V|^2
-									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+									nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 									//Compute the value
 									intermed_impedance_dy[5] += ~(nominal_voltage_value/constant_power_dy[5]);
@@ -1433,10 +1433,10 @@ void load::load_update_fxn(void)
 								if (!intermed_impedance_dy[index_var].IsZero())
 								{
 									//Accumulator
-									shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
+									shunt_dy[index_var] += gld::complex(1.0)/intermed_impedance_dy[index_var];
 
 									//Tracker
-									prev_load_values_dy[0][index_var] += complex(1.0,0.0)/intermed_impedance_dy[index_var];
+									prev_load_values_dy[0][index_var] += gld::complex(1.0,0.0)/intermed_impedance_dy[index_var];
 								}
 							}
 						}//End below thresh - convert
@@ -1445,28 +1445,28 @@ void load::load_update_fxn(void)
 							if (!(intermed_impedance[0].IsZero()))
 							{
 								//Accumulator
-								shunt[0] += complex(1.0)/intermed_impedance[0];
+								shunt[0] += gld::complex(1.0)/intermed_impedance[0];
 
 								//Tracker
-								prev_load_values[0][0] += complex(1.0,0.0)/intermed_impedance[0];
+								prev_load_values[0][0] += gld::complex(1.0,0.0)/intermed_impedance[0];
 							}
 
 							if (!(intermed_impedance[1].IsZero()))
 							{
 								//Accumulator
-								shunt[1] += complex(1.0)/intermed_impedance[1];
+								shunt[1] += gld::complex(1.0)/intermed_impedance[1];
 
 								//Tracker
-								prev_load_values[0][1] += complex(1.0,0.0)/intermed_impedance[1];
+								prev_load_values[0][1] += gld::complex(1.0,0.0)/intermed_impedance[1];
 							}
 							
 							if (!(intermed_impedance[2].IsZero()))
 							{
 								//Accumulator
-								shunt[2] += complex(1.0)/intermed_impedance[2];
+								shunt[2] += gld::complex(1.0)/intermed_impedance[2];
 
 								//Tracker
-								prev_load_values[0][2] += complex(1.0,0.0)/intermed_impedance[2];
+								prev_load_values[0][2] += gld::complex(1.0,0.0)/intermed_impedance[2];
 							}
 							
 							//Current and power accumulators
@@ -1493,10 +1493,10 @@ void load::load_update_fxn(void)
 								if (!intermed_impedance_dy[index_var].IsZero())
 								{
 									//Accumulator
-									shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
+									shunt_dy[index_var] += gld::complex(1.0)/intermed_impedance_dy[index_var];
 
 									//Tracker
-									prev_load_values_dy[0][index_var] += complex(1.0,0.0)/intermed_impedance_dy[index_var];
+									prev_load_values_dy[0][index_var] += gld::complex(1.0,0.0)/intermed_impedance_dy[index_var];
 								}
 
 								power_dy[index_var] += constant_power_dy[index_var];
@@ -1513,28 +1513,28 @@ void load::load_update_fxn(void)
 						if (!(intermed_impedance[0].IsZero()))
 						{
 							//Accumulator
-							shunt[0] += complex(1.0)/intermed_impedance[0];
+							shunt[0] += gld::complex(1.0)/intermed_impedance[0];
 
 							//Tracker
-							prev_load_values[0][0] += complex(1.0,0.0)/intermed_impedance[0];
+							prev_load_values[0][0] += gld::complex(1.0,0.0)/intermed_impedance[0];
 						}
 
 						if (!(intermed_impedance[1].IsZero()))
 						{
 							//Accumulator
-							shunt[1] += complex(1.0)/intermed_impedance[1];
+							shunt[1] += gld::complex(1.0)/intermed_impedance[1];
 
 							//Tracker
-							prev_load_values[0][1] += complex(1.0,0.0)/intermed_impedance[1];
+							prev_load_values[0][1] += gld::complex(1.0,0.0)/intermed_impedance[1];
 						}
 						
 						if (!(intermed_impedance[2].IsZero()))
 						{
 							//Accumulator
-							shunt[2] += complex(1.0)/intermed_impedance[2];
+							shunt[2] += gld::complex(1.0)/intermed_impedance[2];
 
 							//Tracker
-							prev_load_values[0][2] += complex(1.0,0.0)/intermed_impedance[2];
+							prev_load_values[0][2] += gld::complex(1.0,0.0)/intermed_impedance[2];
 						}
 						
 						//Current and power accumulators
@@ -1561,10 +1561,10 @@ void load::load_update_fxn(void)
 							if (!intermed_impedance_dy[index_var].IsZero())
 							{
 								//Accumulator
-								shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
+								shunt_dy[index_var] += gld::complex(1.0)/intermed_impedance_dy[index_var];
 
 								//Tracker
-								prev_load_values_dy[0][index_var] += complex(1.0,0.0)/intermed_impedance_dy[index_var];
+								prev_load_values_dy[0][index_var] += gld::complex(1.0,0.0)/intermed_impedance_dy[index_var];
 							}
 
 							power_dy[index_var] += constant_power_dy[index_var];
@@ -1579,7 +1579,7 @@ void load::load_update_fxn(void)
 				else //DIFF_PARENT
 				{
 					//See if in-rush is enabled - only makes sense in reliability situations
-					if ((enable_inrush_calculations == true) || (enable_impedance_conversion==true))
+					if (enable_inrush_calculations || enable_impedance_conversion)
 					{
 						//Reset variable
 						volt_below_thresh = false;
@@ -1642,7 +1642,7 @@ void load::load_update_fxn(void)
 						}
 
 						//See if tripped
-						if (volt_below_thresh == true)
+						if (volt_below_thresh)
 						{
 							//Convert all loads to an impedance-equivalent
 							if (has_phase(PHASE_D))	//Delta-connected
@@ -1657,7 +1657,7 @@ void load::load_update_fxn(void)
 									if (!(constant_power[0].IsZero()))
 									{
 										//Set nominal voltage - |V|^2
-										nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+										nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 										//Compute the value
 										intermed_impedance[0] += ~(nominal_voltage_value/constant_power[0]);
@@ -1681,7 +1681,7 @@ void load::load_update_fxn(void)
 									if (!(constant_power[1].IsZero()))
 									{
 										//Set nominal voltage - |V|^2
-										nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+										nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 										//Compute the value
 										intermed_impedance[1] += ~(nominal_voltage_value/constant_power[1]);
@@ -1705,7 +1705,7 @@ void load::load_update_fxn(void)
 									if (!(constant_power[2].IsZero()))
 									{
 										//Set nominal voltage - |V|^2
-										nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+										nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 										//Compute the value
 										intermed_impedance[2] += ~(nominal_voltage_value/constant_power[2]);
@@ -1734,7 +1734,7 @@ void load::load_update_fxn(void)
 									if (!(constant_power[0].IsZero()))
 									{
 										//Set nominal voltage - |V|^2
-										nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+										nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 										//Compute the value
 										intermed_impedance[0] += ~(nominal_voltage_value/constant_power[0]);
@@ -1744,7 +1744,7 @@ void load::load_update_fxn(void)
 									if (!(constant_current[0].IsZero()))
 									{
 										//Set nominal voltage - actual angle
-										nominal_voltage_value = complex(voltage_base_val,0.0);
+										nominal_voltage_value = gld::complex(voltage_base_val,0.0);
 
 										//Compute the value
 										intermed_impedance[0] += nominal_voltage_value/constant_current[0];
@@ -1758,7 +1758,7 @@ void load::load_update_fxn(void)
 									if (!(constant_power[1].IsZero()))
 									{
 										//Set nominal voltage - |V|^2
-										nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+										nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 										//Compute the value
 										intermed_impedance[1] += ~(nominal_voltage_value/constant_power[1]);
@@ -1782,7 +1782,7 @@ void load::load_update_fxn(void)
 									if (!(constant_power[2].IsZero()))
 									{
 										//Set nominal voltage - |V|^2
-										nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+										nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 										//Compute the value
 										intermed_impedance[2] += ~(nominal_voltage_value/constant_power[2]);
@@ -1804,28 +1804,28 @@ void load::load_update_fxn(void)
 							if (!(intermed_impedance[0].IsZero()))
 							{
 								//Accumulator
-								shunt[0] += complex(1.0)/intermed_impedance[0];
+								shunt[0] += gld::complex(1.0)/intermed_impedance[0];
 
 								//Tracker
-								prev_load_values[0][0] += complex(1.0,0.0)/intermed_impedance[0];
+								prev_load_values[0][0] += gld::complex(1.0,0.0)/intermed_impedance[0];
 							}
 
 							if (!(intermed_impedance[1].IsZero()))
 							{
 								//Accumulator
-								shunt[1] += complex(1.0)/intermed_impedance[1];
+								shunt[1] += gld::complex(1.0)/intermed_impedance[1];
 
 								//Tracker
-								prev_load_values[0][1] += complex(1.0,0.0)/intermed_impedance[1];
+								prev_load_values[0][1] += gld::complex(1.0,0.0)/intermed_impedance[1];
 							}
 							
 							if (!(intermed_impedance[2].IsZero()))
 							{
 								//Accumulator
-								shunt[2] += complex(1.0)/intermed_impedance[2];
+								shunt[2] += gld::complex(1.0)/intermed_impedance[2];
 
 								//Tracker
-								prev_load_values[0][2] += complex(1.0,0.0)/intermed_impedance[2];
+								prev_load_values[0][2] += gld::complex(1.0,0.0)/intermed_impedance[2];
 							}
 
 							//Power and current remain zero
@@ -1843,7 +1843,7 @@ void load::load_update_fxn(void)
 								if (!(constant_power_dy[0].IsZero()))
 								{
 									//Set nominal voltage - |V|^2
-									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+									nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 									//Compute the value
 									intermed_impedance_dy[0] += ~(nominal_voltage_value/constant_power_dy[0]);
@@ -1867,7 +1867,7 @@ void load::load_update_fxn(void)
 								if (!(constant_power_dy[1].IsZero()))
 								{
 									//Set nominal voltage - |V|^2
-									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+									nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 									//Compute the value
 									intermed_impedance_dy[1] += ~(nominal_voltage_value/constant_power_dy[1]);
@@ -1891,7 +1891,7 @@ void load::load_update_fxn(void)
 								if (!(constant_power_dy[2].IsZero()))
 								{
 									//Set nominal voltage - |V|^2
-									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+									nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 									//Compute the value
 									intermed_impedance_dy[2] += ~(nominal_voltage_value/constant_power_dy[2]);
@@ -1919,7 +1919,7 @@ void load::load_update_fxn(void)
 								if (!(constant_power_dy[3].IsZero()))
 								{
 									//Set nominal voltage - |V|^2
-									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+									nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 									//Compute the value
 									intermed_impedance_dy[3] += ~(nominal_voltage_value/constant_power_dy[3]);
@@ -1929,7 +1929,7 @@ void load::load_update_fxn(void)
 								if (!(constant_current_dy[3].IsZero()))
 								{
 									//Set nominal voltage - actual angle
-									nominal_voltage_value = complex(voltage_base_val,0.0);
+									nominal_voltage_value = gld::complex(voltage_base_val,0.0);
 
 									//Compute the value
 									intermed_impedance_dy[3] += nominal_voltage_value/constant_current_dy[3];
@@ -1943,7 +1943,7 @@ void load::load_update_fxn(void)
 								if (!(constant_power_dy[4].IsZero()))
 								{
 									//Set nominal voltage - |V|^2
-									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+									nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 									//Compute the value
 									intermed_impedance_dy[4] += ~(nominal_voltage_value/constant_power_dy[4]);
@@ -1967,7 +1967,7 @@ void load::load_update_fxn(void)
 								if (!(constant_power_dy[5].IsZero()))
 								{
 									//Set nominal voltage - |V|^2
-									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+									nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 									//Compute the value
 									intermed_impedance_dy[5] += ~(nominal_voltage_value/constant_power_dy[5]);
@@ -1990,10 +1990,10 @@ void load::load_update_fxn(void)
 								if (!intermed_impedance_dy[index_var].IsZero())
 								{
 									//Accumulator
-									shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
+									shunt_dy[index_var] += gld::complex(1.0)/intermed_impedance_dy[index_var];
 
 									//Tracker
-									prev_load_values_dy[0][index_var] += complex(1.0,0.0)/intermed_impedance_dy[index_var];
+									prev_load_values_dy[0][index_var] += gld::complex(1.0,0.0)/intermed_impedance_dy[index_var];
 								}
 							}
 						}//End below thresh - convert
@@ -2003,28 +2003,28 @@ void load::load_update_fxn(void)
 							if (!(intermed_impedance[0].IsZero()))
 							{
 								//Accumulator
-								shunt[0] += complex(1.0)/intermed_impedance[0];
+								shunt[0] += gld::complex(1.0)/intermed_impedance[0];
 
 								//Tracker
-								prev_load_values[0][0] += complex(1.0,0.0)/intermed_impedance[0];
+								prev_load_values[0][0] += gld::complex(1.0,0.0)/intermed_impedance[0];
 							}
 
 							if (!(intermed_impedance[1].IsZero()))
 							{
 								//Accumulator
-								shunt[1] += complex(1.0)/intermed_impedance[1];
+								shunt[1] += gld::complex(1.0)/intermed_impedance[1];
 
 								//Tracker
-								prev_load_values[0][1] += complex(1.0,0.0)/intermed_impedance[1];
+								prev_load_values[0][1] += gld::complex(1.0,0.0)/intermed_impedance[1];
 							}
 							
 							if (!(intermed_impedance[2].IsZero()))
 							{
 								//Accumulator
-								shunt[2] += complex(1.0)/intermed_impedance[2];
+								shunt[2] += gld::complex(1.0)/intermed_impedance[2];
 
 								//Tracker
-								prev_load_values[0][2] += complex(1.0,0.0)/intermed_impedance[2];
+								prev_load_values[0][2] += gld::complex(1.0,0.0)/intermed_impedance[2];
 							}
 							
 							//Current and power accumulators
@@ -2051,10 +2051,10 @@ void load::load_update_fxn(void)
 								if (!intermed_impedance_dy[index_var].IsZero())
 								{
 									//Accumulator
-									shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
+									shunt_dy[index_var] += gld::complex(1.0)/intermed_impedance_dy[index_var];
 
 									//Tracker
-									prev_load_values_dy[0][index_var] += complex(1.0,0.0)/intermed_impedance_dy[index_var];
+									prev_load_values_dy[0][index_var] += gld::complex(1.0,0.0)/intermed_impedance_dy[index_var];
 								}
 
 								power_dy[index_var] += constant_power_dy[index_var];
@@ -2072,28 +2072,28 @@ void load::load_update_fxn(void)
 						if (!(intermed_impedance[0].IsZero()))
 						{
 							//Accumulator
-							shunt[0] += complex(1.0)/intermed_impedance[0];
+							shunt[0] += gld::complex(1.0)/intermed_impedance[0];
 
 							//Tracker
-							prev_load_values[0][0] += complex(1.0,0.0)/intermed_impedance[0];
+							prev_load_values[0][0] += gld::complex(1.0,0.0)/intermed_impedance[0];
 						}
 
 						if (!(intermed_impedance[1].IsZero()))
 						{
 							//Accumulator
-							shunt[1] += complex(1.0)/intermed_impedance[1];
+							shunt[1] += gld::complex(1.0)/intermed_impedance[1];
 
 							//Tracker
-							prev_load_values[0][1] += complex(1.0,0.0)/intermed_impedance[1];
+							prev_load_values[0][1] += gld::complex(1.0,0.0)/intermed_impedance[1];
 						}
 						
 						if (!(intermed_impedance[2].IsZero()))
 						{
 							//Accumulator
-							shunt[2] += complex(1.0)/intermed_impedance[2];
+							shunt[2] += gld::complex(1.0)/intermed_impedance[2];
 
 							//Tracker
-							prev_load_values[0][2] += complex(1.0,0.0)/intermed_impedance[2];
+							prev_load_values[0][2] += gld::complex(1.0,0.0)/intermed_impedance[2];
 						}
 						
 						//Current and power accumulators
@@ -2120,10 +2120,10 @@ void load::load_update_fxn(void)
 							if (!intermed_impedance_dy[index_var].IsZero())
 							{
 								//Accumulator
-								shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
+								shunt_dy[index_var] += gld::complex(1.0)/intermed_impedance_dy[index_var];
 
 								//Tracker
-								prev_load_values_dy[0][index_var] += complex(1.0,0.0)/intermed_impedance_dy[index_var];
+								prev_load_values_dy[0][index_var] += gld::complex(1.0,0.0)/intermed_impedance_dy[index_var];
 							}
 
 							power_dy[index_var] += constant_power_dy[index_var];
@@ -2139,7 +2139,7 @@ void load::load_update_fxn(void)
 			else	//Basically, not a NR parent
 			{
 				//See if in-rush is enabled - only makes sense in reliability situations
-				if ((enable_inrush_calculations == true) || (enable_impedance_conversion==true))
+				if (enable_inrush_calculations || enable_impedance_conversion)
 				{
 					//See if we're a child or not
 					if (NR_node_reference == -99)	//Child or other special object
@@ -2226,7 +2226,7 @@ void load::load_update_fxn(void)
 					}
 
 					//See if tripped
-					if (volt_below_thresh == true)
+					if (volt_below_thresh)
 					{
 						//Current and power would be zeroed here - basically, we'll ignore them later
 
@@ -2243,7 +2243,7 @@ void load::load_update_fxn(void)
 								if (!(constant_power[0].IsZero()))
 								{
 									//Set nominal voltage - |V|^2
-									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+									nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 									//Compute the value
 									intermed_impedance[0] += ~(nominal_voltage_value/constant_power[0]);
@@ -2267,7 +2267,7 @@ void load::load_update_fxn(void)
 								if (!(constant_power[1].IsZero()))
 								{
 									//Set nominal voltage - |V|^2
-									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+									nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 									//Compute the value
 									intermed_impedance[1] += ~(nominal_voltage_value/constant_power[1]);
@@ -2291,7 +2291,7 @@ void load::load_update_fxn(void)
 								if (!(constant_power[2].IsZero()))
 								{
 									//Set nominal voltage - |V|^2
-									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+									nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 									//Compute the value
 									intermed_impedance[2] += ~(nominal_voltage_value/constant_power[2]);
@@ -2320,7 +2320,7 @@ void load::load_update_fxn(void)
 								if (!(constant_power[0].IsZero()))
 								{
 									//Set nominal voltage - |V|^2
-									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+									nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 									//Compute the value
 									intermed_impedance[0] += ~(nominal_voltage_value/constant_power[0]);
@@ -2330,7 +2330,7 @@ void load::load_update_fxn(void)
 								if (!(constant_current[0].IsZero()))
 								{
 									//Set nominal voltage - actual angle
-									nominal_voltage_value = complex(voltage_base_val,0.0);
+									nominal_voltage_value = gld::complex(voltage_base_val,0.0);
 
 									//Compute the value
 									intermed_impedance[0] += nominal_voltage_value/constant_current[0];
@@ -2344,7 +2344,7 @@ void load::load_update_fxn(void)
 								if (!(constant_power[1].IsZero()))
 								{
 									//Set nominal voltage - |V|^2
-									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+									nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 									//Compute the value
 									intermed_impedance[1] += ~(nominal_voltage_value/constant_power[1]);
@@ -2368,7 +2368,7 @@ void load::load_update_fxn(void)
 								if (!(constant_power[2].IsZero()))
 								{
 									//Set nominal voltage - |V|^2
-									nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+									nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 									//Compute the value
 									intermed_impedance[2] += ~(nominal_voltage_value/constant_power[2]);
@@ -2390,28 +2390,28 @@ void load::load_update_fxn(void)
 						if (!(intermed_impedance[0].IsZero()))
 						{
 							//Accumulator
-							shunt[0] += complex(1.0)/intermed_impedance[0];
+							shunt[0] += gld::complex(1.0)/intermed_impedance[0];
 
 							//Tracker
-							prev_load_values[0][0] += complex(1.0,0.0)/intermed_impedance[0];
+							prev_load_values[0][0] += gld::complex(1.0,0.0)/intermed_impedance[0];
 						}
 
 						if (!(intermed_impedance[1].IsZero()))
 						{
 							//Accumulator
-							shunt[1] += complex(1.0)/intermed_impedance[1];
+							shunt[1] += gld::complex(1.0)/intermed_impedance[1];
 
 							//Tracker
-							prev_load_values[0][1] += complex(1.0,0.0)/intermed_impedance[1];
+							prev_load_values[0][1] += gld::complex(1.0,0.0)/intermed_impedance[1];
 						}
 						
 						if (!(intermed_impedance[2].IsZero()))
 						{
 							//Accumulator
-							shunt[2] += complex(1.0)/intermed_impedance[2];
+							shunt[2] += gld::complex(1.0)/intermed_impedance[2];
 
 							//Tracker
-							prev_load_values[0][2] += complex(1.0,0.0)/intermed_impedance[2];
+							prev_load_values[0][2] += gld::complex(1.0,0.0)/intermed_impedance[2];
 						}
 
 						//Power and current remain zero
@@ -2429,7 +2429,7 @@ void load::load_update_fxn(void)
 							if (!(constant_power_dy[0].IsZero()))
 							{
 								//Set nominal voltage - |V|^2
-								nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+								nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 								//Compute the value
 								intermed_impedance_dy[0] += ~(nominal_voltage_value/constant_power_dy[0]);
@@ -2453,7 +2453,7 @@ void load::load_update_fxn(void)
 							if (!(constant_power_dy[1].IsZero()))
 							{
 								//Set nominal voltage - |V|^2
-								nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+								nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 								//Compute the value
 								intermed_impedance_dy[1] += ~(nominal_voltage_value/constant_power_dy[1]);
@@ -2477,7 +2477,7 @@ void load::load_update_fxn(void)
 							if (!(constant_power_dy[2].IsZero()))
 							{
 								//Set nominal voltage - |V|^2
-								nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+								nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 								//Compute the value
 								intermed_impedance_dy[2] += ~(nominal_voltage_value/constant_power_dy[2]);
@@ -2505,7 +2505,7 @@ void load::load_update_fxn(void)
 							if (!(constant_power_dy[3].IsZero()))
 							{
 								//Set nominal voltage - |V|^2
-								nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+								nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 								//Compute the value
 								intermed_impedance_dy[3] += ~(nominal_voltage_value/constant_power_dy[3]);
@@ -2515,7 +2515,7 @@ void load::load_update_fxn(void)
 							if (!(constant_current_dy[3].IsZero()))
 							{
 								//Set nominal voltage - actual angle
-								nominal_voltage_value = complex(voltage_base_val,0.0);
+								nominal_voltage_value = gld::complex(voltage_base_val,0.0);
 
 								//Compute the value
 								intermed_impedance_dy[3] += nominal_voltage_value/constant_current_dy[3];
@@ -2529,7 +2529,7 @@ void load::load_update_fxn(void)
 							if (!(constant_power_dy[4].IsZero()))
 							{
 								//Set nominal voltage - |V|^2
-								nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+								nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 								//Compute the value
 								intermed_impedance_dy[4] += ~(nominal_voltage_value/constant_power_dy[4]);
@@ -2553,7 +2553,7 @@ void load::load_update_fxn(void)
 							if (!(constant_power_dy[5].IsZero()))
 							{
 								//Set nominal voltage - |V|^2
-								nominal_voltage_value = complex(voltage_base_val*voltage_base_val,0);
+								nominal_voltage_value = gld::complex(voltage_base_val*voltage_base_val,0);
 
 								//Compute the value
 								intermed_impedance_dy[5] += ~(nominal_voltage_value/constant_power_dy[5]);
@@ -2576,10 +2576,10 @@ void load::load_update_fxn(void)
 							if (!intermed_impedance_dy[index_var].IsZero())
 							{
 								//Accumulator
-								shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
+								shunt_dy[index_var] += gld::complex(1.0)/intermed_impedance_dy[index_var];
 
 								//Tracker
-								prev_load_values_dy[0][index_var] += complex(1.0,0.0)/intermed_impedance_dy[index_var];
+								prev_load_values_dy[0][index_var] += gld::complex(1.0,0.0)/intermed_impedance_dy[index_var];
 							}
 						}
 					}//End below thresh - convert
@@ -2589,28 +2589,28 @@ void load::load_update_fxn(void)
 						if (!(intermed_impedance[0].IsZero()))
 						{
 							//Accumulator
-							shunt[0] += complex(1.0)/intermed_impedance[0];
+							shunt[0] += gld::complex(1.0)/intermed_impedance[0];
 
 							//Tracker
-							prev_load_values[0][0] += complex(1.0,0.0)/intermed_impedance[0];
+							prev_load_values[0][0] += gld::complex(1.0,0.0)/intermed_impedance[0];
 						}
 
 						if (!(intermed_impedance[1].IsZero()))
 						{
 							//Accumulator
-							shunt[1] += complex(1.0)/intermed_impedance[1];
+							shunt[1] += gld::complex(1.0)/intermed_impedance[1];
 
 							//Tracker
-							prev_load_values[0][1] += complex(1.0,0.0)/intermed_impedance[1];
+							prev_load_values[0][1] += gld::complex(1.0,0.0)/intermed_impedance[1];
 						}
 						
 						if (!(intermed_impedance[2].IsZero()))
 						{
 							//Accumulator
-							shunt[2] += complex(1.0)/intermed_impedance[2];
+							shunt[2] += gld::complex(1.0)/intermed_impedance[2];
 
 							//Tracker
-							prev_load_values[0][2] += complex(1.0,0.0)/intermed_impedance[2];
+							prev_load_values[0][2] += gld::complex(1.0,0.0)/intermed_impedance[2];
 						}
 						
 						//Current and power accumulators
@@ -2636,10 +2636,10 @@ void load::load_update_fxn(void)
 							if (!intermed_impedance_dy[index_var].IsZero())
 							{
 								//Accumulator
-								shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
+								shunt_dy[index_var] += gld::complex(1.0)/intermed_impedance_dy[index_var];
 
 								//Tracker
-								prev_load_values_dy[0][index_var] += complex(1.0,0.0)/intermed_impedance_dy[index_var];
+								prev_load_values_dy[0][index_var] += gld::complex(1.0,0.0)/intermed_impedance_dy[index_var];
 							}
 
 							power_dy[index_var] += constant_power_dy[index_var];
@@ -2657,28 +2657,28 @@ void load::load_update_fxn(void)
 					if (!(intermed_impedance[0].IsZero()))
 					{
 						//Accumulator
-						shunt[0] += complex(1.0)/intermed_impedance[0];
+						shunt[0] += gld::complex(1.0)/intermed_impedance[0];
 
 						//Tracker
-						prev_load_values[0][0] += complex(1.0,0.0)/intermed_impedance[0];
+						prev_load_values[0][0] += gld::complex(1.0,0.0)/intermed_impedance[0];
 					}
 
 					if (!(intermed_impedance[1].IsZero()))
 					{
 						//Accumulator
-						shunt[1] += complex(1.0)/intermed_impedance[1];
+						shunt[1] += gld::complex(1.0)/intermed_impedance[1];
 
 						//Tracker
-						prev_load_values[0][1] += complex(1.0,0.0)/intermed_impedance[1];
+						prev_load_values[0][1] += gld::complex(1.0,0.0)/intermed_impedance[1];
 					}
 					
 					if (!(intermed_impedance[2].IsZero()))
 					{
 						//Accumulator
-						shunt[2] += complex(1.0)/intermed_impedance[2];
+						shunt[2] += gld::complex(1.0)/intermed_impedance[2];
 
 						//Tracker
-						prev_load_values[0][2] += complex(1.0,0.0)/intermed_impedance[2];
+						prev_load_values[0][2] += gld::complex(1.0,0.0)/intermed_impedance[2];
 					}
 					
 					//Current and power accumulators
@@ -2704,10 +2704,10 @@ void load::load_update_fxn(void)
 						if (!intermed_impedance_dy[index_var].IsZero())
 						{
 							//Accumulator
-							shunt_dy[index_var] += complex(1.0)/intermed_impedance_dy[index_var];
+							shunt_dy[index_var] += gld::complex(1.0)/intermed_impedance_dy[index_var];
 
 							//Tracker
-							prev_load_values_dy[0][index_var] += complex(1.0,0.0)/intermed_impedance_dy[index_var];
+							prev_load_values_dy[0][index_var] += gld::complex(1.0,0.0)/intermed_impedance_dy[index_var];
 						}
 
 						power_dy[index_var] += constant_power_dy[index_var];
@@ -2726,7 +2726,7 @@ void load::load_update_fxn(void)
 	//In-rush update information - incorporate the latest "impedance" values
 	//Put at bottom to ensure it gets the "converted impedance final result"
 	//Deltamode catch and check
-	if (enable_inrush_calculations == true)
+	if (enable_inrush_calculations)
 	{
 		if (deltatimestep_running > 0)	//In deltamode
 		{
@@ -2770,19 +2770,19 @@ void load::load_update_fxn(void)
 					//Default else, already were running, so unneeded
 
 					//See if we came from steady state
-					if (transf_from_stdy_state == true)
+					if (transf_from_stdy_state)
 					{
 						//Check and see what type of load this is -- Phase A
 						//Use intermediate variable to only get our load parts (not any underlying contributions)
 						if (prev_load_values[0][index_var].Im()>0.0)	//Capacitve
 						{
 							//Zero all inductive terms, just because
-							LoadHistTermL[index_var] = complex(0.0,0.0);
-							LoadHistTermL[index_var+3] = complex(0.0,0.0);
+							LoadHistTermL[index_var] = gld::complex(0.0,0.0);
+							LoadHistTermL[index_var+3] = gld::complex(0.0,0.0);
 
 							//Zero the two inductive constant terms
-							ahrlloadstore[index_var] = complex(0.0,0.0);
-							bhrlloadstore[index_var] = complex(0.0,0.0);
+							ahrlloadstore[index_var] = gld::complex(0.0,0.0);
+							bhrlloadstore[index_var] = gld::complex(0.0,0.0);
 
 							//Update capacitive history terms
 							LoadHistTermC[index_var+3] = LoadHistTermC[index_var];
@@ -2800,11 +2800,11 @@ void load::load_update_fxn(void)
 								//Do a parent check
 								if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 								{
-									LoadHistTermC[index_var] = NR_busdata[NR_node_reference].V[index_var] * chrcloadstore[index_var] / complex(2.0,0.0);
+									LoadHistTermC[index_var] = NR_busdata[NR_node_reference].V[index_var] * chrcloadstore[index_var] / gld::complex(2.0,0.0);
 								}
 								else	//Childed - get parent values
 								{
-									LoadHistTermC[index_var] = NR_busdata[*NR_subnode_reference].V[index_var] * chrcloadstore[index_var] / complex(2.0,0.0);
+									LoadHistTermC[index_var] = NR_busdata[*NR_subnode_reference].V[index_var] * chrcloadstore[index_var] / gld::complex(2.0,0.0);
 								}
 							}
 							else if (inrush_int_method_capacitance == IRM_BACKEULER)
@@ -2834,18 +2834,18 @@ void load::load_update_fxn(void)
 						else if (prev_load_values[0][index_var].Im()<0.0) //Inductive - again use tracking variable
 						{
 							//Zero all capacitive terms, just because
-							LoadHistTermC[index_var] = complex(0.0,0.0);
-							LoadHistTermC[index_var+3] = complex(0.0,0.0);
+							LoadHistTermC[index_var] = gld::complex(0.0,0.0);
+							LoadHistTermC[index_var+3] = gld::complex(0.0,0.0);
 
 							//Zero the capacitive term
-							chrcloadstore[index_var] = complex(0.0,0.0);
+							chrcloadstore[index_var] = gld::complex(0.0,0.0);
 
 							//Update inductive history terms
 							LoadHistTermL[index_var+3] = LoadHistTermL[index_var];
 
 							//Copied from below - update
 							//Form the equivalent impedance value
-							working_impedance_value = complex(1.0,0.0) / prev_load_values[0][index_var];
+							working_impedance_value = gld::complex(1.0,0.0) / prev_load_values[0][index_var];
 
 							if (inrush_int_method_inductance == IRM_TRAPEZOIDAL)
 							{
@@ -2853,7 +2853,7 @@ void load::load_update_fxn(void)
 								workingvalue = working_impedance_value.Im() / (PI * current_frequency * deltatimestep_running);
 
 								//Put into the other working matrix (zh)
-								working_data_value = working_impedance_value - complex(workingvalue,0.0);
+								working_data_value = working_impedance_value - gld::complex(workingvalue,0.0);
 							}
 							else if (inrush_int_method_inductance == IRM_BACKEULER)
 							{
@@ -2861,21 +2861,21 @@ void load::load_update_fxn(void)
 								workingvalue = working_impedance_value.Im() / (2.0 * PI * current_frequency * deltatimestep_running);
 
 								//Put into the other working matrix (zh)
-								working_data_value = complex(-1.0 * workingvalue,0.0);
+								working_data_value = gld::complex(-1.0 * workingvalue,0.0);
 							}
 							//Default else -- should never get here
 
 							//Put back into "real" impedance value to make Y (Znew)
-							working_impedance_value += complex(workingvalue,0.0);
+							working_impedance_value += gld::complex(workingvalue,0.0);
 
 							//Make it an admittance again, for the update - Y
-							if (working_impedance_value.IsZero() != true)
+							if (!working_impedance_value.IsZero())
 							{
-								working_admittance_value = complex(1.0,0.0) / working_impedance_value;
+								working_admittance_value = gld::complex(1.0,0.0) / working_impedance_value;
 							}
 							else
 							{
-								working_admittance_value = complex(0.0,0.0);
+								working_admittance_value = gld::complex(0.0,0.0);
 							}
 
 							//Form the bhrl term - Y*Zh = bhrl
@@ -2884,7 +2884,7 @@ void load::load_update_fxn(void)
 							if (inrush_int_method_inductance == IRM_TRAPEZOIDAL)
 							{
 								//Compute the ahrl term - Y(Zh*Y - I)
-								ahrlloadstore[index_var] = working_admittance_value*(working_data_value * working_admittance_value - complex(1.0,0.0));
+								ahrlloadstore[index_var] = working_admittance_value*(working_data_value * working_admittance_value - gld::complex(1.0,0.0));
 							}
 							else if (inrush_int_method_inductance == IRM_BACKEULER)
 							{
@@ -2901,28 +2901,28 @@ void load::load_update_fxn(void)
 							if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 							{
 								LoadHistTermL[index_var] = NR_busdata[NR_node_reference].V[index_var] * ahrlloadstore[index_var] /
-														   (complex(1.0,0.0) + bhrlloadstore[index_var]);
+														   (gld::complex(1.0,0.0) + bhrlloadstore[index_var]);
 							}
 							else	//Childed, steal our parent's values
 							{
 								LoadHistTermL[index_var] = NR_busdata[*NR_subnode_reference].V[index_var] * ahrlloadstore[index_var] /
-														   (complex(1.0,0.0) + bhrlloadstore[index_var]);
+														   (gld::complex(1.0,0.0) + bhrlloadstore[index_var]);
 							}
 						}
 						else	//Must be zero -- purely resistive, or something
 						{
 							//Zero both sets of terms
-							ahrlloadstore[index_var] = complex(0.0,0.0);
-							bhrlloadstore[index_var] = complex(0.0,0.0);
+							ahrlloadstore[index_var] = gld::complex(0.0,0.0);
+							bhrlloadstore[index_var] = gld::complex(0.0,0.0);
 
-							chrcloadstore[index_var] = complex(0.0,0.0);
+							chrcloadstore[index_var] = gld::complex(0.0,0.0);
 
 							//Zero everything on principle
-							LoadHistTermL[index_var] = complex(0.0,0.0);
-							LoadHistTermL[index_var+3] = complex(0.0,0.0);
+							LoadHistTermL[index_var] = gld::complex(0.0,0.0);
+							LoadHistTermL[index_var+3] = gld::complex(0.0,0.0);
 
-							LoadHistTermC[index_var] = complex(0.0,0.0);
-							LoadHistTermC[index_var+3] = complex(0.0,0.0);
+							LoadHistTermC[index_var] = gld::complex(0.0,0.0);
+							LoadHistTermC[index_var+3] = gld::complex(0.0,0.0);
 						}
 					}//End transitioned from steady state
 					else	//Normal update
@@ -2931,8 +2931,8 @@ void load::load_update_fxn(void)
 						if (prev_load_values[0][index_var].Im()>0.0)	//Capacitve - use intermediate variable
 						{
 							//Zero all inductive terms, just because
-							LoadHistTermL[index_var] = complex(0.0,0.0);
-							LoadHistTermL[index_var+3] = complex(0.0,0.0);
+							LoadHistTermL[index_var] = gld::complex(0.0,0.0);
+							LoadHistTermL[index_var+3] = gld::complex(0.0,0.0);
 
 							//Update capacitive history terms
 							LoadHistTermC[index_var+3] = LoadHistTermC[index_var];
@@ -2971,8 +2971,8 @@ void load::load_update_fxn(void)
 						else if (prev_load_values[0][index_var].Im()<0.0) //Inductive - use intermediate variable
 						{
 							//Zero all capacitive terms, just because
-							LoadHistTermC[index_var] = complex(0.0,0.0);
-							LoadHistTermC[index_var+3] = complex(0.0,0.0);
+							LoadHistTermC[index_var] = gld::complex(0.0,0.0);
+							LoadHistTermC[index_var+3] = gld::complex(0.0,0.0);
 
 							//Update inductive history terms
 							LoadHistTermL[index_var+3] = LoadHistTermL[index_var];
@@ -2994,11 +2994,11 @@ void load::load_update_fxn(void)
 						else	//Must be zero -- purely resistive, or something
 						{
 							//Zero everything on principle
-							LoadHistTermL[index_var] = complex(0.0,0.0);
-							LoadHistTermL[index_var+3] = complex(0.0,0.0);
+							LoadHistTermL[index_var] = gld::complex(0.0,0.0);
+							LoadHistTermL[index_var+3] = gld::complex(0.0,0.0);
 
-							LoadHistTermC[index_var] = complex(0.0,0.0);
-							LoadHistTermC[index_var+3] = complex(0.0,0.0);
+							LoadHistTermC[index_var] = gld::complex(0.0,0.0);
+							LoadHistTermC[index_var+3] = gld::complex(0.0,0.0);
 						}
 					}//End normal update (deltamode running or we started "off"
 
@@ -3024,58 +3024,58 @@ void load::load_update_fxn(void)
 			require_inrush_update = false;
 
 			//Zero everything on principle
-			LoadHistTermL[0] = complex(0.0,0.0);
-			LoadHistTermL[1] = complex(0.0,0.0);
-			LoadHistTermL[2] = complex(0.0,0.0);
-			LoadHistTermL[3] = complex(0.0,0.0);
-			LoadHistTermL[4] = complex(0.0,0.0);
-			LoadHistTermL[5] = complex(0.0,0.0);
+			LoadHistTermL[0] = gld::complex(0.0,0.0);
+			LoadHistTermL[1] = gld::complex(0.0,0.0);
+			LoadHistTermL[2] = gld::complex(0.0,0.0);
+			LoadHistTermL[3] = gld::complex(0.0,0.0);
+			LoadHistTermL[4] = gld::complex(0.0,0.0);
+			LoadHistTermL[5] = gld::complex(0.0,0.0);
 
-			LoadHistTermC[0] = complex(0.0,0.0);
-			LoadHistTermC[1] = complex(0.0,0.0);
-			LoadHistTermC[2] = complex(0.0,0.0);
-			LoadHistTermC[3] = complex(0.0,0.0);
-			LoadHistTermC[4] = complex(0.0,0.0);
-			LoadHistTermC[5] = complex(0.0,0.0);
+			LoadHistTermC[0] = gld::complex(0.0,0.0);
+			LoadHistTermC[1] = gld::complex(0.0,0.0);
+			LoadHistTermC[2] = gld::complex(0.0,0.0);
+			LoadHistTermC[3] = gld::complex(0.0,0.0);
+			LoadHistTermC[4] = gld::complex(0.0,0.0);
+			LoadHistTermC[5] = gld::complex(0.0,0.0);
 
 			//Zero our full load component too
 			//See if we're a parented load or not -- zero us as well (assumes nothing is in delta)
 			if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 			{
 				//Compute the values and post them to our bus term
-				NR_busdata[NR_node_reference].BusHistTerm[0] = complex(0.0,0.0);
-				NR_busdata[NR_node_reference].BusHistTerm[1] = complex(0.0,0.0);
-				NR_busdata[NR_node_reference].BusHistTerm[2] = complex(0.0,0.0);
+				NR_busdata[NR_node_reference].BusHistTerm[0] = gld::complex(0.0,0.0);
+				NR_busdata[NR_node_reference].BusHistTerm[1] = gld::complex(0.0,0.0);
+				NR_busdata[NR_node_reference].BusHistTerm[2] = gld::complex(0.0,0.0);
 
 				//@FPIM - see if this needs revisiting - may not even need to be zeroed for TCIM
 				if (NR_solver_algorithm == NRM_TCIM)
 				{
 					//Add this into the main admittance matrix (handled directly)
-					NR_busdata[NR_node_reference].full_Y_load[0] = complex(0.0,0.0);
-					NR_busdata[NR_node_reference].full_Y_load[4] = complex(0.0,0.0);
-					NR_busdata[NR_node_reference].full_Y_load[8] = complex(0.0,0.0);
+					NR_busdata[NR_node_reference].full_Y_load[0] = gld::complex(0.0,0.0);
+					NR_busdata[NR_node_reference].full_Y_load[4] = gld::complex(0.0,0.0);
+					NR_busdata[NR_node_reference].full_Y_load[8] = gld::complex(0.0,0.0);
 				}
 			}
 			else	//It is a child - look at parent
 			{
 				//Compute the values and post them to our bus term
-				NR_busdata[*NR_subnode_reference].BusHistTerm[0] = complex(0.0,0.0);
-				NR_busdata[*NR_subnode_reference].BusHistTerm[1] = complex(0.0,0.0);
-				NR_busdata[*NR_subnode_reference].BusHistTerm[2] = complex(0.0,0.0);
+				NR_busdata[*NR_subnode_reference].BusHistTerm[0] = gld::complex(0.0,0.0);
+				NR_busdata[*NR_subnode_reference].BusHistTerm[1] = gld::complex(0.0,0.0);
+				NR_busdata[*NR_subnode_reference].BusHistTerm[2] = gld::complex(0.0,0.0);
 
 				//@FPIM - see if this needs revisiting - may not even need to be zeroed for TCIM
 				if (NR_solver_algorithm == NRM_TCIM)
 				{
-					NR_busdata[*NR_subnode_reference].full_Y_load[0] = complex(0.0,0.0);
-					NR_busdata[*NR_subnode_reference].full_Y_load[4] = complex(0.0,0.0);
-					NR_busdata[*NR_subnode_reference].full_Y_load[8] = complex(0.0,0.0);
+					NR_busdata[*NR_subnode_reference].full_Y_load[0] = gld::complex(0.0,0.0);
+					NR_busdata[*NR_subnode_reference].full_Y_load[4] = gld::complex(0.0,0.0);
+					NR_busdata[*NR_subnode_reference].full_Y_load[8] = gld::complex(0.0,0.0);
 				}
 			}
 
 			//Zero previous shunt values, just because
-			prev_shunt[0] = complex(0.0,0.0);
-			prev_shunt[1] = complex(0.0,0.0);
-			prev_shunt[2] = complex(0.0,0.0);
+			prev_shunt[0] = gld::complex(0.0,0.0);
+			prev_shunt[1] = gld::complex(0.0,0.0);
+			prev_shunt[2] = gld::complex(0.0,0.0);
 		}
 	}
 	else	//Not in in-rush or deltamode - flag to not
@@ -3084,7 +3084,7 @@ void load::load_update_fxn(void)
 	}
 
 	//Update the impedance terms
-	if (require_inrush_update==true)
+	if (require_inrush_update)
 	{
 		//Loop the whole set - all phases
 		for (index_var=0; index_var<3; index_var++)
@@ -3093,8 +3093,8 @@ void load::load_update_fxn(void)
 			if (prev_load_values[0][index_var].Im()>0.0)	//Capacitve - use intermediate variable
 			{
 				//Zero the two inductive terms
-				ahrlloadstore[index_var] = complex(0.0,0.0);
-				bhrlloadstore[index_var] = complex(0.0,0.0);
+				ahrlloadstore[index_var] = gld::complex(0.0,0.0);
+				bhrlloadstore[index_var] = gld::complex(0.0,0.0);
 
 				if (inrush_int_method_capacitance == IRM_TRAPEZOIDAL)
 				{
@@ -3115,18 +3115,18 @@ void load::load_update_fxn(void)
 				//Future else
 
 				//Put into the "shunt" admittance value
-				shunt[index_var] += complex(workingvalue,0.0);
+				shunt[index_var] += gld::complex(workingvalue,0.0);
 
 				//Update the tracker
-				prev_load_values[0][index_var] += complex(workingvalue,0.0);
+				prev_load_values[0][index_var] += gld::complex(workingvalue,0.0);
 			}//End capacitve term update
 			else if (prev_load_values[0][index_var].Im()<0.0) //Inductive
 			{
 				//Zero the capacitive term
-				chrcloadstore[index_var] = complex(0.0,0.0);
+				chrcloadstore[index_var] = gld::complex(0.0,0.0);
 
 				//Form the equivalent impedance value
-				working_impedance_value = complex(1.0,0.0) / prev_load_values[0][index_var];
+				working_impedance_value = gld::complex(1.0,0.0) / prev_load_values[0][index_var];
 
 				if (inrush_int_method_inductance == IRM_TRAPEZOIDAL)
 				{
@@ -3134,7 +3134,7 @@ void load::load_update_fxn(void)
 					workingvalue = working_impedance_value.Im() / (PI * current_frequency * deltatimestep_running);
 
 					//Put into the other working matrix (zh)
-					working_data_value = working_impedance_value - complex(workingvalue,0.0);
+					working_data_value = working_impedance_value - gld::complex(workingvalue,0.0);
 				}
 				else if (inrush_int_method_inductance == IRM_BACKEULER)
 				{
@@ -3142,21 +3142,21 @@ void load::load_update_fxn(void)
 					workingvalue = working_impedance_value.Im() / (2.0 * PI * current_frequency * deltatimestep_running);
 
 					//Put into the other working matrix (zh)
-					working_data_value = complex(-1.0 * workingvalue,0.0);
+					working_data_value = gld::complex(-1.0 * workingvalue,0.0);
 				}
 				//future ones
 
 				//Put back into "real" impedance value to make Y (Znew)
-				working_impedance_value += complex(workingvalue,0.0);
+				working_impedance_value += gld::complex(workingvalue,0.0);
 
 				//Make it an admittance again, for the update - Y
-				if (working_impedance_value.IsZero() != true)
+				if (!working_impedance_value.IsZero())
 				{
-					working_admittance_value = complex(1.0,0.0) / working_impedance_value;
+					working_admittance_value = gld::complex(1.0,0.0) / working_impedance_value;
 				}
 				else
 				{
-					working_admittance_value = complex(0.0,0.0);
+					working_admittance_value = gld::complex(0.0,0.0);
 				}
 
 				//Form the bhrl term - Y*Zh = bhrl
@@ -3165,7 +3165,7 @@ void load::load_update_fxn(void)
 				if (inrush_int_method_inductance == IRM_TRAPEZOIDAL)
 				{
 					//Compute the ahrl term - Y(Zh*Y - I)
-					ahrlloadstore[index_var] = working_admittance_value*(working_data_value * working_admittance_value - complex(1.0,0.0));
+					ahrlloadstore[index_var] = working_admittance_value*(working_data_value * working_admittance_value - gld::complex(1.0,0.0));
 				}
 				else if (inrush_int_method_inductance == IRM_BACKEULER)
 				{
@@ -3183,10 +3183,10 @@ void load::load_update_fxn(void)
 			else	//Must be zero -- purely resistive, or something
 			{
 				//Zero both sets of terms
-				ahrlloadstore[index_var] = complex(0.0,0.0);
-				bhrlloadstore[index_var] = complex(0.0,0.0);
+				ahrlloadstore[index_var] = gld::complex(0.0,0.0);
+				bhrlloadstore[index_var] = gld::complex(0.0,0.0);
 
-				chrcloadstore[index_var] = complex(0.0,0.0);
+				chrcloadstore[index_var] = gld::complex(0.0,0.0);
 			}//End something else term update
 
 			//FPI already dumps straight ot full_Y_load, so let it handle that
@@ -3211,7 +3211,7 @@ void load::load_update_fxn(void)
 				shunt[index_var] -= prev_load_values[0][index_var];
 				
 				//Zero the tracker
-				prev_load_values[0][index_var] = complex(0.0,0.0);
+				prev_load_values[0][index_var] = gld::complex(0.0,0.0);
 			}
 			else
 			{
@@ -3295,9 +3295,9 @@ void load::load_delete_update_fxn(void)
 		power[index_var] -= prev_load_values[2][index_var];
 
 		//Clear the trackers
-		prev_load_values[0][index_var] = complex(0.0,0.0);
-		prev_load_values[1][index_var] = complex(0.0,0.0);
-		prev_load_values[2][index_var] = complex(0.0,0.0);
+		prev_load_values[0][index_var] = gld::complex(0.0,0.0);
+		prev_load_values[1][index_var] = gld::complex(0.0,0.0);
+		prev_load_values[2][index_var] = gld::complex(0.0,0.0);
 	}
 
 	//Now do again for the explicit connections
@@ -3309,9 +3309,9 @@ void load::load_delete_update_fxn(void)
 		power_dy[index_var] -= prev_load_values_dy[2][index_var];
 
 		//Clear the trackers
-		prev_load_values_dy[0][index_var] = complex(0.0,0.0);
-		prev_load_values_dy[1][index_var] = complex(0.0,0.0);
-		prev_load_values_dy[2][index_var] = complex(0.0,0.0);
+		prev_load_values_dy[0][index_var] = gld::complex(0.0,0.0);
+		prev_load_values_dy[1][index_var] = gld::complex(0.0,0.0);
+		prev_load_values_dy[2][index_var] = gld::complex(0.0,0.0);
 	}
 }
 
@@ -3321,13 +3321,13 @@ void load::load_delete_update_fxn(void)
 //Second NOTE: This function doesn't incorporate the newer explicit delta/wye connected load structure (TODO)
 int load::notify(int update_mode, PROPERTY *prop, char *value)
 {
-	complex diff_val;
+	gld::complex diff_val;
 	double power_tolerance;
 
 	if (solver_method == SM_NR)
 	{
 		//See if it was a power update - if it was populated
-		if (prev_power_value != NULL)
+		if (prev_power_value != nullptr)
 		{
 			//See if there is a power update - phase A
 			if (strcmp(prop->name,"constant_power_A")==0)
@@ -3419,7 +3419,7 @@ SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned 
 	deltat = (double)dt/(double)DT_SECOND;
 
 	//Update time tracking variable - mostly for GFA functionality calls
-	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
+	if ((iteration_count_val==0) && !interupdate_pos) //Only update timestamp tracker on first iteration
 	{
 		//Update tracking variable
 		prev_time_dbl = gl_globaldeltaclock;
@@ -3442,13 +3442,13 @@ SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned 
 	}
 	
 	//Perform the GFA update, if enabled
-	if ((GFA_enable == true) && (iteration_count_val == 0) && (interupdate_pos == false))	//Always just do on the first pass
+	if (GFA_enable && (iteration_count_val == 0) && !interupdate_pos)	//Always just do on the first pass
 	{
 		//Do the checks
 		GFA_Update_time = perform_GFA_checks(deltat);
 	}
 
-	if (interupdate_pos == false)	//Before powerflow call
+	if (!interupdate_pos)	//Before powerflow call
 	{
 		//Call presync-equivalent items
 		NR_node_presync_fxn(0);
@@ -3494,7 +3494,7 @@ SIMULATIONMODE load::inter_deltaupdate_load(unsigned int64 delta_time, unsigned 
 		measured_total_power = measured_power[0] + measured_power[1] + measured_power[2];
 
 		//See if GFA functionality is required, since it may require iterations or "continance"
-		if (GFA_enable == true)
+		if (GFA_enable)
 		{
 			//See if our return is value
 			if ((GFA_Update_time > 0.0) && (GFA_Update_time < 1.7))
@@ -3531,7 +3531,7 @@ EXPORT int create_load(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(load::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			load *my = OBJECTDATA(*obj,load);
 			gl_set_parent(*obj,parent);

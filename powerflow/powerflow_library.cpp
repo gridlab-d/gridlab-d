@@ -9,10 +9,10 @@
 
  @{
  **/
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "powerflow.h"
 #include "powerflow_library.h"
@@ -20,15 +20,15 @@
 //////////////////////////////////////////////////////////////////////////
 // powerflow_library CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* powerflow_library::oclass = NULL;
-CLASS* powerflow_library::pclass = NULL;
+CLASS* powerflow_library::oclass = nullptr;
+CLASS* powerflow_library::pclass = nullptr;
 
 powerflow_library::powerflow_library(MODULE *mod)
-{	
-	if (oclass==NULL)
+{
+	if (oclass== nullptr)
 	{
 		oclass = gl_register_class(mod,"powerflow_library",sizeof(powerflow_library),PC_NOSYNC);
-		if (oclass==NULL)
+		if (oclass== nullptr)
 			throw "unable to register class powerflow_library";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -71,7 +71,7 @@ EXPORT int create_powerflow_library(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(powerflow_library::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			powerflow_library *my = OBJECTDATA(*obj,powerflow_library);
 			gl_set_parent(*obj,parent);

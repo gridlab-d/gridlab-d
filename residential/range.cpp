@@ -10,10 +10,10 @@
 	@{
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "range.h"
 
@@ -810,7 +810,7 @@ case CT_STAGE_3_ONLY:
 	case CT_STOPPED: 
 		
 		// nothing running
-		load.power = load.current = load.admittance = complex(0,0,J);
+		load.power = load.current = load.admittance = gld::complex(0,0,J);
 		
 		// time to next expected state_cooktop change
 		//dt = (enduse_demand_cooktop<=0) ? -1 : 	dt = 3600/enduse_demand_cooktop; 
@@ -823,8 +823,8 @@ case CT_STAGE_3_ONLY:
 		//motor_on_off = motor_coil_on_off = both_coils_on_off = 1;
 		cycle_time_cooktop -= dt1;
 
-		load.power = load.current = complex(0,0,J);
-		load.admittance = complex((cooktop_coil_power[0])/1000,0,J);
+		load.power = load.current = gld::complex(0,0,J);
+		load.admittance = gld::complex((cooktop_coil_power[0])/1000,0,J);
 
 		dt1 = cycle_time_cooktop;
 		break;
@@ -834,8 +834,8 @@ case CT_STAGE_3_ONLY:
 	//motor_on_off = motor_coil_on_off = both_coils_on_off = 1;
 	cycle_time_cooktop -= dt1;
 
-	load.power = load.current = complex(0,0,J);
-	load.admittance = complex((cooktop_coil_power[1])/1000,0,J);
+	load.power = load.current = gld::complex(0,0,J);
+	load.admittance = gld::complex((cooktop_coil_power[1])/1000,0,J);
 
 	dt1 = cycle_time_cooktop;
 	break;
@@ -845,8 +845,8 @@ case CT_STAGE_3_ONLY:
 	//motor_on_off = motor_coil_on_off = both_coils_on_off = 1;
 	cycle_time_cooktop -= dt1;
 
-	load.power = load.current = complex(0,0,J);
-	load.admittance = complex((cooktop_coil_power[2])/1000,0,J);
+	load.power = load.current = gld::complex(0,0,J);
+	load.admittance = gld::complex((cooktop_coil_power[2])/1000,0,J);
 
 	dt1 = cycle_time_cooktop;
 	break;
@@ -854,8 +854,8 @@ case CT_STAGE_3_ONLY:
 	case CT_STALLED:
 
 		// running in constant impedance mode
-		load.power = load.current = complex(0,0,J);
-		load.admittance = complex(1)/stall_impedance;
+		load.power = load.current = gld::complex(0,0,J);
+		load.admittance = gld::complex(1)/stall_impedance;
 
 		// time to trip
 		dt1 = trip_delay;
@@ -865,7 +865,7 @@ case CT_STAGE_3_ONLY:
 	case CT_TRIPPED:
 
 		// nothing running
-		load.power = load.current = load.admittance = complex(0,0,J);
+		load.power = load.current = load.admittance = gld::complex(0,0,J);
 		
 		// time to next expected state change
 		dt1 = reset_delay; 
@@ -1226,14 +1226,14 @@ double range::get_Tambient(enumeration loc)
 	//return pHouse->get_Tair()*ratio + pHouse->get_Tout()*(1-ratio);
 	return *pTair * ratio + *pTout *(1-ratio);
 }
-
-void range::wrong_model(enumeration msg)
-{
-	char *errtxt[] = {"model is not one-zone","model is not two-zone"};
-	OBJECT *obj = OBJECTHDR(this);
-	gl_warning("%s (range:%d): %s", obj->name?obj->name:"(anonymous object)", obj->id, errtxt[msg]);
-	throw msg; // this must be caught by the range code, not by the core
-}
+//TODO: Take a look at this to see if it's needed.
+//void range::wrong_model(enumeration msg)
+//{
+//	char *errtxt[] = {"model is not one-zone","model is not two-zone"};
+//	OBJECT *obj = OBJECTHDR(this);
+//	gl_warning("%s (range:%d): %s", obj->name?obj->name:"(anonymous object)", obj->id, errtxt[msg]);
+//	throw msg; // this must be caught by the range code, not by the core
+//}
 
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE

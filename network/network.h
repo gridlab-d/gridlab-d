@@ -6,6 +6,7 @@
 #define _NETWORK_H
 
 #include <stdarg.h>
+
 #include "gridlabd.h"
 
 #ifdef _NETWORK_GLOBALS

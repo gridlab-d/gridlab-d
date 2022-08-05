@@ -7,24 +7,24 @@
 	@{
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "triplex_node.h"
 
-CLASS* triplex_node::oclass = NULL;
-CLASS* triplex_node::pclass = NULL;
+CLASS* triplex_node::oclass = nullptr;
+CLASS* triplex_node::pclass = nullptr;
 
 triplex_node::triplex_node(MODULE *mod) : node(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		pclass = node::oclass;
 		
 		oclass = gl_register_class(mod,"triplex_node",sizeof(triplex_node),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class triplex_node";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -198,17 +198,17 @@ triplex_node::triplex_node(MODULE *mod) : node(mod)
          	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_triplex_node)==NULL)
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_triplex_node)==nullptr)
 			GL_THROW("Unable to publish triplex_node deltamode function");
-		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
+		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==nullptr)
 			GL_THROW("Unable to publish triplex_node swing-swapping function");
-		if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==NULL)
+		if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==nullptr)
 			GL_THROW("Unable to publish triplex_node current injection update mapping function");
-		if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
+		if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==nullptr)
 			GL_THROW("Unable to publish triplex_node VFD attachment function");
-		if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
+		if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == nullptr)
 			GL_THROW("Unable to publish triplex_node island-status-reset function");
-		if (gl_publish_function(oclass, "pwr_object_shunt_update", (FUNCTIONADDR)node_update_shunt_values) == NULL)
+		if (gl_publish_function(oclass, "pwr_object_shunt_update", (FUNCTIONADDR)node_update_shunt_values) == nullptr)
 			GL_THROW("Unable to publish triplex_node shunt update function");
     }
 }
@@ -224,15 +224,15 @@ int triplex_node::create(void)
 	maximum_voltage_error = 0;
 
 	//**************** NOTE - Code that can probably be deleted when deprecated node properties removed ******************//
-	pub_shunt[0] = pub_shunt[1] = pub_shunt[2] = complex(0.0,0.0);
-	impedance[0] = impedance[1] = impedance[2] = complex(0.0,0.0);
-	pub_current[0] = pub_current[1] = pub_current[2] = pub_current[3] = complex(0.0,0.0);
-	pub_power[0] = pub_power[1] = pub_power[2] = complex(0.0,0.0);
+	pub_shunt[0] = pub_shunt[1] = pub_shunt[2] = gld::complex(0.0,0.0);
+	impedance[0] = impedance[1] = impedance[2] = gld::complex(0.0,0.0);
+	pub_current[0] = pub_current[1] = pub_current[2] = pub_current[3] = gld::complex(0.0,0.0);
+	pub_power[0] = pub_power[1] = pub_power[2] = gld::complex(0.0,0.0);
 
 	//Accumulators
-	prev_node_load_values[0][0] = prev_node_load_values[0][1] = prev_node_load_values[0][2] = complex(0.0,0.0);
-	prev_node_load_values[1][0] = prev_node_load_values[1][1] = prev_node_load_values[1][2] = complex(0.0,0.0);
-	prev_node_load_current_values[0] = prev_node_load_current_values[1] = prev_node_load_current_values[2] = prev_node_load_current_values[3] = complex(0.0,0.0);
+	prev_node_load_values[0][0] = prev_node_load_values[0][1] = prev_node_load_values[0][2] = gld::complex(0.0,0.0);
+	prev_node_load_values[1][0] = prev_node_load_values[1][1] = prev_node_load_values[1][2] = gld::complex(0.0,0.0);
+	prev_node_load_current_values[0] = prev_node_load_current_values[1] = prev_node_load_current_values[2] = prev_node_load_current_values[3] = gld::complex(0.0,0.0);
 
 	//********************* END Deprecated delete section **************************//
 
@@ -286,25 +286,25 @@ void triplex_node::BOTH_triplex_node_sync_fxn(void)
 	//Zero the accumulators
 	for (index_var=0; index_var<3; index_var++)
 	{
-		prev_node_load_values[0][index_var] = complex(0.0,0.0);
-		prev_node_load_values[1][index_var] = complex(0.0,0.0);
+		prev_node_load_values[0][index_var] = gld::complex(0.0,0.0);
+		prev_node_load_values[1][index_var] = gld::complex(0.0,0.0);
 	}
 
 	//Do the current (bigger, so different index)
-	prev_node_load_current_values[0] = complex(0.0,0.0);
-	prev_node_load_current_values[1] = complex(0.0,0.0);
-	prev_node_load_current_values[2] = complex(0.0,0.0);
-	prev_node_load_current_values[3] = complex(0.0,0.0);
+	prev_node_load_current_values[0] = gld::complex(0.0,0.0);
+	prev_node_load_current_values[1] = gld::complex(0.0,0.0);
+	prev_node_load_current_values[2] = gld::complex(0.0,0.0);
+	prev_node_load_current_values[3] = gld::complex(0.0,0.0);
 
 	//See how to accumulate the various values
 	//Prioritizes shunt over impedance
 	if ((pub_shunt[0].IsZero()) && (!impedance[0].IsZero()))	//Impedance specified
 	{
 		//Accumulator
-		shunt[0] += complex(1.0,0.0)/impedance[0];
+		shunt[0] += gld::complex(1.0,0.0)/impedance[0];
 
 		//Tracker
-		prev_node_load_values[0][0] += complex(1.0,0.0)/impedance[0];
+		prev_node_load_values[0][0] += gld::complex(1.0,0.0)/impedance[0];
 	}
 	else											//Shunt specified (impedance ignored)
 	{
@@ -318,10 +318,10 @@ void triplex_node::BOTH_triplex_node_sync_fxn(void)
 	if ((pub_shunt[1].IsZero()) && (!impedance[1].IsZero()))	//Impedance specified
 	{
 		//Accumulator
-		shunt[1] += complex(1.0,0.0)/impedance[1];
+		shunt[1] += gld::complex(1.0,0.0)/impedance[1];
 
 		//Tracker
-		prev_node_load_values[0][1] += complex(1.0,0.0)/impedance[1];
+		prev_node_load_values[0][1] += gld::complex(1.0,0.0)/impedance[1];
 	}
 	else											//Shunt specified (impedance ignored)
 	{
@@ -335,10 +335,10 @@ void triplex_node::BOTH_triplex_node_sync_fxn(void)
 	if ((pub_shunt[2].IsZero()) && (!impedance[2].IsZero()))	//Impedance specified
 	{
 		//Accumulator
-		shunt[2] += complex(1.0,0.0)/impedance[2];
+		shunt[2] += gld::complex(1.0,0.0)/impedance[2];
 
 		//Tracker
-		prev_node_load_values[0][2] += complex(1.0,0.0)/impedance[2];
+		prev_node_load_values[0][2] += gld::complex(1.0,0.0)/impedance[2];
 	}
 	else											//Shunt specified (impedance ignored)
 	{
@@ -399,7 +399,7 @@ SIMULATIONMODE triplex_node::inter_deltaupdate_triplex_node(unsigned int64 delta
 	deltat = (double)dt/(double)DT_SECOND;
 
 	//Update time tracking variable - mostly for GFA functionality calls
-	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
+	if ((iteration_count_val==0) && !interupdate_pos) //Only update timestamp tracker on first iteration
 	{
 		//Update tracking variable
 		prev_time_dbl = gl_globaldeltaclock;
@@ -422,13 +422,13 @@ SIMULATIONMODE triplex_node::inter_deltaupdate_triplex_node(unsigned int64 delta
 	}
 
 	//Perform the GFA update, if enabled
-	if ((GFA_enable == true) && (iteration_count_val == 0) && (interupdate_pos == false))	//Always just do on the first pass
+	if (GFA_enable && (iteration_count_val == 0) && !interupdate_pos)	//Always just do on the first pass
 	{
 		//Do the checks
 		GFA_Update_time = perform_GFA_checks(deltat);
 	}
 
-	if (interupdate_pos == false)	//Before powerflow call
+	if (!interupdate_pos)	//Before powerflow call
 	{
 		//Call node presync-equivalent items
 		NR_node_presync_fxn(0);
@@ -463,7 +463,7 @@ SIMULATIONMODE triplex_node::inter_deltaupdate_triplex_node(unsigned int64 delta
 		//Default else -- don't calculate it
 
 		//See if GFA functionality is required, since it may require iterations or "continance"
-		if (GFA_enable == true)
+		if (GFA_enable)
 		{
 			//See if our return is value
 			if ((GFA_Update_time > 0.0) && (GFA_Update_time < 1.7))
@@ -499,7 +499,7 @@ EXPORT int create_triplex_node(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(triplex_node::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			triplex_node *my = OBJECTDATA(*obj,triplex_node);
 			gl_set_parent(*obj,parent);

@@ -10,8 +10,10 @@
 #define _gen_cost_H
 
 #include <stdarg.h>
-#include "gridlabd.h"
 #include <string>
+
+#include "gridlabd.h"
+
 using namespace std;
 
 #define MAX_NODE 10000

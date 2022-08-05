@@ -32,7 +32,7 @@ private:
 	} MOTOR_OPERATION_MODE;
 	enumeration motor_op_mode;
 
-    complex PowerVal;
+    gld::complex PowerVal;
 
     double delta_f_val;
 
@@ -56,7 +56,7 @@ private:
     double CmpKpf;
     double CmpKqf;
     double CompPF;
-    complex stall_impedance_pu;
+    gld::complex stall_impedance_pu;
     double Tstall;
     double reconnect_time;
 
@@ -68,7 +68,7 @@ private:
 
     double P_base;
 
-    complex stall_admittance;
+    gld::complex stall_admittance;
 
     void update_motor_equations(void);
 

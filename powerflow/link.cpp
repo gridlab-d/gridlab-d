@@ -87,15 +87,19 @@
 	@{
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+
 #include "link.h"
 #include "node.h"
+#include "gld_complex.h"
 
-CLASS* link_object::oclass = NULL;
-CLASS* link_object::pclass = NULL;
+using gld::complex;
+
+CLASS* link_object::oclass = nullptr;
+CLASS* link_object::pclass = nullptr;
 
 /**
 * constructor.  Class registration is only called once to register the class with the core.
@@ -104,11 +108,11 @@ CLASS* link_object::pclass = NULL;
 link_object::link_object(MODULE *mod) : powerflow_object(mod)
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		pclass = powerflow_object::oclass;
 		oclass = gl_register_class(mod,"link",sizeof(link_object),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class link";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -191,15 +195,15 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
 			NULL) < 1 && errno) GL_THROW("unable to publish link properties in %s",__FILE__);
 
 			//Publish deltamode functions
-			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
+			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==nullptr)
 				GL_THROW("Unable to publish link deltamode function");
 			
 			//Publish restoration-related function (current update)
-			if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+			if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==nullptr)
 				GL_THROW("Unable to publish link external power calculation function");
-			if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+			if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==nullptr)
 				GL_THROW("Unable to publish link external power limit calculation function");
-			if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==NULL)
+			if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==nullptr)
 				GL_THROW("Unable to publish link external current calculation function");
 	}
 }
@@ -217,8 +221,8 @@ int link_object::create(void)
 	condition=OC_NORMAL;
 #endif
 	
-	from = NULL;
-	to = NULL;
+	from = nullptr;
+	to = nullptr;
 	status = LS_CLOSED;
 	prev_status = LS_OPEN;	//Set different to status so it performs a calculation on the first run
 	power_in = 0;
@@ -232,12 +236,12 @@ int link_object::create(void)
 	SpecialLnk = NORMAL;
 	prev_LTime=0;
 	NR_branch_reference=-1;
-	If_in[0] = If_in[1] = If_in[2] = complex(0,0);
-	If_out[0] = If_out[1] = If_out[2] = complex(0,0);
+	If_in[0] = If_in[1] = If_in[2] = gld::complex(0,0);
+	If_out[0] = If_out[1] = If_out[2] = gld::complex(0,0);
 
 	protect_locations[0] = protect_locations[1] = protect_locations[2] = -1;	//Initalize cleared
 
-	current_in[0] = current_in[1] = current_in[2] = complex(0,0);
+	current_in[0] = current_in[1] = current_in[2] = gld::complex(0,0);
 
 	link_limits[0][0] = link_limits[0][1] = link_limits[0][2] = link_limits[1][0] = link_limits[1][1] = link_limits[1][2] = 0;
 	
@@ -252,20 +256,20 @@ int link_object::create(void)
 
 	deltamode_inclusive = false;	//By default, we don't support deltamode
 
-	link_recalc_fxn = NULL;	//Initialize frequency dependence calculation
+	link_recalc_fxn = nullptr;	//Initialize frequency dependence calculation
 
-	ahrlstore = NULL;	//Initialize history terms
-	bhrlstore = NULL;
-	ahmstore = NULL;
-	bhmstore = NULL;
-	chrcstore = NULL;
-	LinkHistTermL = NULL;
-	LinkHistTermCf = NULL;
-	LinkHistTermCt = NULL;
-	LinkCapShuntTerm = NULL;	/******* DEBUG NOTE - Consider deleting this and useing YBase_Pri and YBase_Sec linked to it for LinkCap */
-	YBase_Full = NULL;
-	YBase_Pri = NULL;
-	YBase_Sec = NULL;
+	ahrlstore = nullptr;	//Initialize history terms
+	bhrlstore = nullptr;
+	ahmstore = nullptr;
+	bhmstore = nullptr;
+	chrcstore = nullptr;
+	LinkHistTermL = nullptr;
+	LinkHistTermCf = nullptr;
+	LinkHistTermCt = nullptr;
+	LinkCapShuntTerm = nullptr;	/******* DEBUG NOTE - Consider deleting this and useing YBase_Pri and YBase_Sec linked to it for LinkCap */
+	YBase_Full = nullptr;
+	YBase_Pri = nullptr;
+	YBase_Sec = nullptr;
 	inrush_computations_needed = false;	//By default, we behave like an ordinary deltamode link
 	inrush_vdiffmag_prev[0] = inrush_vdiffmag_prev[1] = inrush_vdiffmag_prev[2] = 0.0;
 	deltamode_prev_time = -1.0; 
@@ -273,10 +277,10 @@ int link_object::create(void)
 
 	//Saturation-based items -- probably need to be moved, but putting here since me=lazy
 	D_sat = 0.0;
-	A_phi = complex(0.0,0.0);
-	B_phi = complex(0.0,0.0);
-	hphi = NULL;
-	saturation_calculated_vals = NULL;
+	A_phi = gld::complex(0.0,0.0);
+	B_phi = gld::complex(0.0,0.0);
+	hphi = nullptr;
+	saturation_calculated_vals = nullptr;
 
 	//Set defaults to see if anyone changes the integration methods
 	inrush_int_method_inductance = IRM_UNDEFINED;
@@ -290,12 +294,12 @@ int link_object::init(OBJECT *parent)
 	OBJECT *obj = GETOBJECT(this);
 
 	/* check link from node */
-	if (from==NULL)
+	if (from==nullptr)
 		throw "link from node is not specified";
 		/*  TROUBLESHOOT
 		The from node for a line or link is not connected to anything.
 		*/
-	if (to==NULL)
+	if (to==nullptr)
 		throw "link to node is not specified";
 		/*  TROUBLESHOOT
 		The to node for a line or link is not connected to anything.
@@ -305,7 +309,7 @@ int link_object::init(OBJECT *parent)
 	if (solver_method == SM_NR)
 	{
 		//See if the from/to nodes have parents
-		if ((from->parent != NULL) || (to->parent != NULL))
+		if ((from->parent != nullptr) || (to->parent != nullptr))
 		{
 			if	(((from->flags & OF_INIT) != OF_INIT) || ((to->flags & OF_INIT) != OF_INIT))
 			{
@@ -347,10 +351,10 @@ int link_object::init(OBJECT *parent)
 	/* adjust ranks according to method in use */
 	switch (solver_method) {
 	case SM_FBS: /* forward backsweep method only */
-		if (obj->parent==NULL)
+		if (obj->parent==nullptr)
 		{
 			/* make 'from' object parent of this object */
-			if (gl_object_isa(from,"node")) 
+			if (gl_object_isa(from,"node"))
 			{
 				if(gl_set_parent(obj, from) < 0)
 					throw "error when setting parent";
@@ -370,7 +374,7 @@ int link_object::init(OBJECT *parent)
 			/* promote 'from' object if necessary */
 			gl_set_rank(from,obj->rank+1);
 		
-		if (to->parent==NULL)
+		if (to->parent==nullptr)
 		{
 			/* make this object parent to 'to' object */
 			if (gl_object_isa(to,"node"))
@@ -521,7 +525,7 @@ int link_object::init(OBJECT *parent)
 				/*  TROUBLESHOOT
 				A line has been configured to carry a certain set of phases.  Either the input node or output
 				node is not providing a source/sink for these different conductors.  The To and From nodes must
-				have at least the phases of the line connecting them. 
+				have at least the phases of the line connecting them.
 				*/
 		}
 		else	//Must be a switch then
@@ -556,7 +560,7 @@ int link_object::init(OBJECT *parent)
 	OBJECTDATA(to,node)->k++;
 
 	//See if limits are enabled - if so, populate them
-	if (use_link_limits==TRUE)
+	if (use_link_limits)
 	{
 		//See what kind of link we are - if not in this list, ignore it
 		if (gl_object_isa(obj,"transformer","powerflow") || gl_object_isa(obj,"underground_line","powerflow") || gl_object_isa(obj,"overhead_line","powerflow") || gl_object_isa(obj,"triplex_line","powerflow"))	//Default line or xformer
@@ -612,7 +616,7 @@ int link_object::init(OBJECT *parent)
 		pwr_object_count++;
 
 		//Check for in-rush capabilities
-		if (enable_inrush_calculations==true)
+		if (enable_inrush_calculations)
 		{
 			//See if we're a normal line
 			if (SpecialLnk == NORMAL)
@@ -632,10 +636,10 @@ int link_object::init(OBJECT *parent)
 				}
 
 				//Allocate the terms -- Inductance -- fully allocate, to stay consistent
-				LinkHistTermL = (complex *)gl_malloc(6*sizeof(complex));
+				LinkHistTermL = (gld::complex *)gl_malloc(6*sizeof(gld::complex));
 
 				//Check it
-				if (LinkHistTermL == NULL)
+				if (LinkHistTermL == nullptr)
 				{
 					GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 					/*  TROUBLESHOOT
@@ -646,113 +650,113 @@ int link_object::init(OBJECT *parent)
 				}
 
 				//Zero everything, to be safe
-				LinkHistTermL[0] = complex(0.0,0.0);
-				LinkHistTermL[1] = complex(0.0,0.0);
-				LinkHistTermL[2] = complex(0.0,0.0);
-				LinkHistTermL[3] = complex(0.0,0.0);
-				LinkHistTermL[4] = complex(0.0,0.0);
-				LinkHistTermL[5] = complex(0.0,0.0);
+				LinkHistTermL[0] = gld::complex(0.0,0.0);
+				LinkHistTermL[1] = gld::complex(0.0,0.0);
+				LinkHistTermL[2] = gld::complex(0.0,0.0);
+				LinkHistTermL[3] = gld::complex(0.0,0.0);
+				LinkHistTermL[4] = gld::complex(0.0,0.0);
+				LinkHistTermL[5] = gld::complex(0.0,0.0);
 
 				//Allocate the "constant" terms
 				//Ahrl
 				//Allocate the terms -- inductance ahrl constant
-				ahrlstore = (complex *)gl_malloc(9*sizeof(complex));
+				ahrlstore = (gld::complex *)gl_malloc(9*sizeof(gld::complex));
 
 				//Check it
-				if (ahrlstore == NULL)
+				if (ahrlstore == nullptr)
 				{
 					GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 					//Defined above
 				}
 
 				//Zero everything, to be safe -- from side
-				ahrlstore[0] = complex(0.0,0.0);
-				ahrlstore[1] = complex(0.0,0.0);
-				ahrlstore[2] = complex(0.0,0.0);
-				ahrlstore[3] = complex(0.0,0.0);
-				ahrlstore[4] = complex(0.0,0.0);
-				ahrlstore[5] = complex(0.0,0.0);
-				ahrlstore[6] = complex(0.0,0.0);
-				ahrlstore[7] = complex(0.0,0.0);
-				ahrlstore[8] = complex(0.0,0.0);
+				ahrlstore[0] = gld::complex(0.0,0.0);
+				ahrlstore[1] = gld::complex(0.0,0.0);
+				ahrlstore[2] = gld::complex(0.0,0.0);
+				ahrlstore[3] = gld::complex(0.0,0.0);
+				ahrlstore[4] = gld::complex(0.0,0.0);
+				ahrlstore[5] = gld::complex(0.0,0.0);
+				ahrlstore[6] = gld::complex(0.0,0.0);
+				ahrlstore[7] = gld::complex(0.0,0.0);
+				ahrlstore[8] = gld::complex(0.0,0.0);
 
 				//Bhrl
 				//Allocate the terms -- inductance bhrl constant
-				bhrlstore = (complex *)gl_malloc(9*sizeof(complex));
+				bhrlstore = (gld::complex *)gl_malloc(9*sizeof(gld::complex));
 
 				//Check it
-				if (bhrlstore == NULL)
+				if (bhrlstore == nullptr)
 				{
 					GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 					//Defined above
 				}
 
 				//Zero everything, to be safe -- from side
-				bhrlstore[0] = complex(0.0,0.0);
-				bhrlstore[1] = complex(0.0,0.0);
-				bhrlstore[2] = complex(0.0,0.0);
-				bhrlstore[3] = complex(0.0,0.0);
-				bhrlstore[4] = complex(0.0,0.0);
-				bhrlstore[5] = complex(0.0,0.0);
-				bhrlstore[6] = complex(0.0,0.0);
-				bhrlstore[7] = complex(0.0,0.0);
-				bhrlstore[8] = complex(0.0,0.0);
+				bhrlstore[0] = gld::complex(0.0,0.0);
+				bhrlstore[1] = gld::complex(0.0,0.0);
+				bhrlstore[2] = gld::complex(0.0,0.0);
+				bhrlstore[3] = gld::complex(0.0,0.0);
+				bhrlstore[4] = gld::complex(0.0,0.0);
+				bhrlstore[5] = gld::complex(0.0,0.0);
+				bhrlstore[6] = gld::complex(0.0,0.0);
+				bhrlstore[7] = gld::complex(0.0,0.0);
+				bhrlstore[8] = gld::complex(0.0,0.0);
 
 				//Allocate the capacitance history term -- if it is enabled
-				if (use_line_cap == true)	//Capacitance enabled
+				if (use_line_cap)	//Capacitance enabled
 				{
 					//Allocate the terms -- Capacitance -- fully allocate, to stay consistent -- from side
-					LinkHistTermCf = (complex *)gl_malloc(6*sizeof(complex));
+					LinkHistTermCf = (gld::complex *)gl_malloc(6*sizeof(gld::complex));
 
 					//Check it
-					if (LinkHistTermCf == NULL)
+					if (LinkHistTermCf == nullptr)
 					{
 						GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 						//Defined above
 					}
 
 					//Allocate the terms -- Capacitance -- fully allocate, to stay consistent -- to side
-					LinkHistTermCt = (complex *)gl_malloc(6*sizeof(complex));
+					LinkHistTermCt = (gld::complex *)gl_malloc(6*sizeof(gld::complex));
 
 					//Check it
-					if (LinkHistTermCt == NULL)
+					if (LinkHistTermCt == nullptr)
 					{
 						GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 						//Defined above
 					}
 
 					//Zero everything, to be safe -- from side
-					LinkHistTermCf[0] = complex(0.0,0.0);
-					LinkHistTermCf[1] = complex(0.0,0.0);
-					LinkHistTermCf[2] = complex(0.0,0.0);
-					LinkHistTermCf[3] = complex(0.0,0.0);
-					LinkHistTermCf[4] = complex(0.0,0.0);
-					LinkHistTermCf[5] = complex(0.0,0.0);
+					LinkHistTermCf[0] = gld::complex(0.0,0.0);
+					LinkHistTermCf[1] = gld::complex(0.0,0.0);
+					LinkHistTermCf[2] = gld::complex(0.0,0.0);
+					LinkHistTermCf[3] = gld::complex(0.0,0.0);
+					LinkHistTermCf[4] = gld::complex(0.0,0.0);
+					LinkHistTermCf[5] = gld::complex(0.0,0.0);
 
 					//Zero everything, to be safe -- to side
-					LinkHistTermCt[0] = complex(0.0,0.0);
-					LinkHistTermCt[1] = complex(0.0,0.0);
-					LinkHistTermCt[2] = complex(0.0,0.0);
-					LinkHistTermCt[3] = complex(0.0,0.0);
-					LinkHistTermCt[4] = complex(0.0,0.0);
-					LinkHistTermCt[5] = complex(0.0,0.0);
+					LinkHistTermCt[0] = gld::complex(0.0,0.0);
+					LinkHistTermCt[1] = gld::complex(0.0,0.0);
+					LinkHistTermCt[2] = gld::complex(0.0,0.0);
+					LinkHistTermCt[3] = gld::complex(0.0,0.0);
+					LinkHistTermCt[4] = gld::complex(0.0,0.0);
+					LinkHistTermCt[5] = gld::complex(0.0,0.0);
 
 					//Chrc
 					//Allocate the terms -- capacitance chrc constant
 					chrcstore = (double *)gl_malloc(9*sizeof(double));
 
 					//Check it
-					if (chrcstore == NULL)
+					if (chrcstore == nullptr)
 					{
 						GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 						//Defined above
 					}
 
 					//Allocate the current calculation term
-					LinkCapShuntTerm = (complex *)gl_malloc(9*sizeof(complex));
+					LinkCapShuntTerm = (gld::complex *)gl_malloc(9*sizeof(gld::complex));
 
 					//Check it
-					if (LinkCapShuntTerm == NULL)
+					if (LinkCapShuntTerm == nullptr)
 					{
 						GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 						//Defined above
@@ -769,134 +773,134 @@ int link_object::init(OBJECT *parent)
 					chrcstore[7] = 0.0;
 					chrcstore[8] = 0.0;
 
-					LinkCapShuntTerm[0] = complex(0.0,0.0);
-					LinkCapShuntTerm[1] = complex(0.0,0.0);
-					LinkCapShuntTerm[2] = complex(0.0,0.0);
-					LinkCapShuntTerm[3] = complex(0.0,0.0);
-					LinkCapShuntTerm[4] = complex(0.0,0.0);
-					LinkCapShuntTerm[5] = complex(0.0,0.0);
-					LinkCapShuntTerm[6] = complex(0.0,0.0);
-					LinkCapShuntTerm[7] = complex(0.0,0.0);
-					LinkCapShuntTerm[8] = complex(0.0,0.0);
+					LinkCapShuntTerm[0] = gld::complex(0.0,0.0);
+					LinkCapShuntTerm[1] = gld::complex(0.0,0.0);
+					LinkCapShuntTerm[2] = gld::complex(0.0,0.0);
+					LinkCapShuntTerm[3] = gld::complex(0.0,0.0);
+					LinkCapShuntTerm[4] = gld::complex(0.0,0.0);
+					LinkCapShuntTerm[5] = gld::complex(0.0,0.0);
+					LinkCapShuntTerm[6] = gld::complex(0.0,0.0);
+					LinkCapShuntTerm[7] = gld::complex(0.0,0.0);
+					LinkCapShuntTerm[8] = gld::complex(0.0,0.0);
 				}
 				//Default else -- capacitance not enabled
 			}//End "normal" (so a line
 			else if (SpecialLnk == WYEWYE)	//Wye-wye transformer
 			{
 				//Allocate the terms -- Main transformer -- fully allocate, to stay consistent
-				LinkHistTermL = (complex *)gl_malloc(12*sizeof(complex));
+				LinkHistTermL = (gld::complex *)gl_malloc(12*sizeof(gld::complex));
 
 				//Check it
-				if (LinkHistTermL == NULL)
+				if (LinkHistTermL == nullptr)
 				{
 					GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 					//Defined above
 				}
 
 				//Zero everything, to be safe
-				LinkHistTermL[0] = complex(0.0,0.0);
-				LinkHistTermL[1] = complex(0.0,0.0);
-				LinkHistTermL[2] = complex(0.0,0.0);
-				LinkHistTermL[3] = complex(0.0,0.0);
-				LinkHistTermL[4] = complex(0.0,0.0);
-				LinkHistTermL[5] = complex(0.0,0.0);
-				LinkHistTermL[6] = complex(0.0,0.0);
-				LinkHistTermL[7] = complex(0.0,0.0);
-				LinkHistTermL[8] = complex(0.0,0.0);
-				LinkHistTermL[9] = complex(0.0,0.0);
-				LinkHistTermL[10] = complex(0.0,0.0);
-				LinkHistTermL[11] = complex(0.0,0.0);
+				LinkHistTermL[0] = gld::complex(0.0,0.0);
+				LinkHistTermL[1] = gld::complex(0.0,0.0);
+				LinkHistTermL[2] = gld::complex(0.0,0.0);
+				LinkHistTermL[3] = gld::complex(0.0,0.0);
+				LinkHistTermL[4] = gld::complex(0.0,0.0);
+				LinkHistTermL[5] = gld::complex(0.0,0.0);
+				LinkHistTermL[6] = gld::complex(0.0,0.0);
+				LinkHistTermL[7] = gld::complex(0.0,0.0);
+				LinkHistTermL[8] = gld::complex(0.0,0.0);
+				LinkHistTermL[9] = gld::complex(0.0,0.0);
+				LinkHistTermL[10] = gld::complex(0.0,0.0);
+				LinkHistTermL[11] = gld::complex(0.0,0.0);
 
 				//"C" terms (magnetization) will be allocated within transformer
 
 				//Allocate the "constant" terms
 				//Ahrl
 				//Allocate the terms -- inductance ahrl constant
-				ahrlstore = (complex *)gl_malloc(36*sizeof(complex));
+				ahrlstore = (gld::complex *)gl_malloc(36*sizeof(gld::complex));
 
 				//Check it
-				if (ahrlstore == NULL)
+				if (ahrlstore == nullptr)
 				{
 					GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 					//Defined above
 				}
 
 				//Zero everything, to be safe -- from side
-				ahrlstore[0] = ahrlstore[9]  = ahrlstore[18] = ahrlstore[27] = complex(0.0,0.0);
-				ahrlstore[1] = ahrlstore[10] = ahrlstore[19] = ahrlstore[28] = complex(0.0,0.0);
-				ahrlstore[2] = ahrlstore[11] = ahrlstore[20] = ahrlstore[29] = complex(0.0,0.0);
-				ahrlstore[3] = ahrlstore[12] = ahrlstore[21] = ahrlstore[30] = complex(0.0,0.0);
-				ahrlstore[4] = ahrlstore[13] = ahrlstore[22] = ahrlstore[31] = complex(0.0,0.0);
-				ahrlstore[5] = ahrlstore[14] = ahrlstore[23] = ahrlstore[32] = complex(0.0,0.0);
-				ahrlstore[6] = ahrlstore[15] = ahrlstore[24] = ahrlstore[33] = complex(0.0,0.0);
-				ahrlstore[7] = ahrlstore[16] = ahrlstore[25] = ahrlstore[34] = complex(0.0,0.0);
-				ahrlstore[8] = ahrlstore[17] = ahrlstore[26] = ahrlstore[35] = complex(0.0,0.0);
+				ahrlstore[0] = ahrlstore[9]  = ahrlstore[18] = ahrlstore[27] = gld::complex(0.0,0.0);
+				ahrlstore[1] = ahrlstore[10] = ahrlstore[19] = ahrlstore[28] = gld::complex(0.0,0.0);
+				ahrlstore[2] = ahrlstore[11] = ahrlstore[20] = ahrlstore[29] = gld::complex(0.0,0.0);
+				ahrlstore[3] = ahrlstore[12] = ahrlstore[21] = ahrlstore[30] = gld::complex(0.0,0.0);
+				ahrlstore[4] = ahrlstore[13] = ahrlstore[22] = ahrlstore[31] = gld::complex(0.0,0.0);
+				ahrlstore[5] = ahrlstore[14] = ahrlstore[23] = ahrlstore[32] = gld::complex(0.0,0.0);
+				ahrlstore[6] = ahrlstore[15] = ahrlstore[24] = ahrlstore[33] = gld::complex(0.0,0.0);
+				ahrlstore[7] = ahrlstore[16] = ahrlstore[25] = ahrlstore[34] = gld::complex(0.0,0.0);
+				ahrlstore[8] = ahrlstore[17] = ahrlstore[26] = ahrlstore[35] = gld::complex(0.0,0.0);
 				
 				//Bhrl
 				//Allocate the terms -- inductance bhrl constant
-				bhrlstore = (complex *)gl_malloc(36*sizeof(complex));
+				bhrlstore = (gld::complex *)gl_malloc(36*sizeof(gld::complex));
 
 				//Check it
-				if (bhrlstore == NULL)
+				if (bhrlstore == nullptr)
 				{
 					GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 					//Defined above
 				}
 
 				//Zero everything, to be safe
-				bhrlstore[0] = bhrlstore[9]  = bhrlstore[18] = bhrlstore[27] = complex(0.0,0.0);
-				bhrlstore[1] = bhrlstore[10] = bhrlstore[19] = bhrlstore[28] = complex(0.0,0.0);
-				bhrlstore[2] = bhrlstore[11] = bhrlstore[20] = bhrlstore[29] = complex(0.0,0.0);
-				bhrlstore[3] = bhrlstore[12] = bhrlstore[21] = bhrlstore[30] = complex(0.0,0.0);
-				bhrlstore[4] = bhrlstore[13] = bhrlstore[22] = bhrlstore[31] = complex(0.0,0.0);
-				bhrlstore[5] = bhrlstore[14] = bhrlstore[23] = bhrlstore[32] = complex(0.0,0.0);
-				bhrlstore[6] = bhrlstore[15] = bhrlstore[24] = bhrlstore[33] = complex(0.0,0.0);
-				bhrlstore[7] = bhrlstore[16] = bhrlstore[25] = bhrlstore[34] = complex(0.0,0.0);
-				bhrlstore[8] = bhrlstore[17] = bhrlstore[26] = bhrlstore[35] = complex(0.0,0.0);
+				bhrlstore[0] = bhrlstore[9]  = bhrlstore[18] = bhrlstore[27] = gld::complex(0.0,0.0);
+				bhrlstore[1] = bhrlstore[10] = bhrlstore[19] = bhrlstore[28] = gld::complex(0.0,0.0);
+				bhrlstore[2] = bhrlstore[11] = bhrlstore[20] = bhrlstore[29] = gld::complex(0.0,0.0);
+				bhrlstore[3] = bhrlstore[12] = bhrlstore[21] = bhrlstore[30] = gld::complex(0.0,0.0);
+				bhrlstore[4] = bhrlstore[13] = bhrlstore[22] = bhrlstore[31] = gld::complex(0.0,0.0);
+				bhrlstore[5] = bhrlstore[14] = bhrlstore[23] = bhrlstore[32] = gld::complex(0.0,0.0);
+				bhrlstore[6] = bhrlstore[15] = bhrlstore[24] = bhrlstore[33] = gld::complex(0.0,0.0);
+				bhrlstore[7] = bhrlstore[16] = bhrlstore[25] = bhrlstore[34] = gld::complex(0.0,0.0);
+				bhrlstore[8] = bhrlstore[17] = bhrlstore[26] = bhrlstore[35] = gld::complex(0.0,0.0);
 
 				//Ahm
 				//Allocate the terms -- inductance ahrl constant
-				ahmstore = (complex *)gl_malloc(18*sizeof(complex));
+				ahmstore = (gld::complex *)gl_malloc(18*sizeof(gld::complex));
 
 				//Check it
-				if (ahmstore == NULL)
+				if (ahmstore == nullptr)
 				{
 					GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 					//Defined above
 				}
 
 				//Zero everything, to be safe -- from side
-				ahmstore[0] = ahmstore[9]  = complex(0.0,0.0);
-				ahmstore[1] = ahmstore[10] = complex(0.0,0.0);
-				ahmstore[2] = ahmstore[11] = complex(0.0,0.0);
-				ahmstore[3] = ahmstore[12] = complex(0.0,0.0);
-				ahmstore[4] = ahmstore[13] = complex(0.0,0.0);
-				ahmstore[5] = ahmstore[14] = complex(0.0,0.0);
-				ahmstore[6] = ahmstore[15] = complex(0.0,0.0);
-				ahmstore[7] = ahmstore[16] = complex(0.0,0.0);
-				ahmstore[8] = ahmstore[17] = complex(0.0,0.0);
+				ahmstore[0] = ahmstore[9]  = gld::complex(0.0,0.0);
+				ahmstore[1] = ahmstore[10] = gld::complex(0.0,0.0);
+				ahmstore[2] = ahmstore[11] = gld::complex(0.0,0.0);
+				ahmstore[3] = ahmstore[12] = gld::complex(0.0,0.0);
+				ahmstore[4] = ahmstore[13] = gld::complex(0.0,0.0);
+				ahmstore[5] = ahmstore[14] = gld::complex(0.0,0.0);
+				ahmstore[6] = ahmstore[15] = gld::complex(0.0,0.0);
+				ahmstore[7] = ahmstore[16] = gld::complex(0.0,0.0);
+				ahmstore[8] = ahmstore[17] = gld::complex(0.0,0.0);
 				
 				//Bhrl
 				//Allocate the terms -- inductance bhrl constant
-				bhmstore = (complex *)gl_malloc(18*sizeof(complex));
+				bhmstore = (gld::complex *)gl_malloc(18*sizeof(gld::complex));
 
 				//Check it
-				if (bhmstore == NULL)
+				if (bhmstore == nullptr)
 				{
 					GL_THROW("Link:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 					//Defined above
 				}
 
 				//Zero everything, to be safe
-				bhmstore[0] = bhmstore[9]  = complex(0.0,0.0);
-				bhmstore[1] = bhmstore[10] = complex(0.0,0.0);
-				bhmstore[2] = bhmstore[11] = complex(0.0,0.0);
-				bhmstore[3] = bhmstore[12] = complex(0.0,0.0);
-				bhmstore[4] = bhmstore[13] = complex(0.0,0.0);
-				bhmstore[5] = bhmstore[14] = complex(0.0,0.0);
-				bhmstore[6] = bhmstore[15] = complex(0.0,0.0);
-				bhmstore[7] = bhmstore[16] = complex(0.0,0.0);
-				bhmstore[8] = bhmstore[17] = complex(0.0,0.0);
+				bhmstore[0] = bhmstore[9]  = gld::complex(0.0,0.0);
+				bhmstore[1] = bhmstore[10] = gld::complex(0.0,0.0);
+				bhmstore[2] = bhmstore[11] = gld::complex(0.0,0.0);
+				bhmstore[3] = bhmstore[12] = gld::complex(0.0,0.0);
+				bhmstore[4] = bhmstore[13] = gld::complex(0.0,0.0);
+				bhmstore[5] = bhmstore[14] = gld::complex(0.0,0.0);
+				bhmstore[6] = bhmstore[15] = gld::complex(0.0,0.0);
+				bhmstore[7] = bhmstore[16] = gld::complex(0.0,0.0);
+				bhmstore[8] = bhmstore[17] = gld::complex(0.0,0.0);
 			}//End transformer WYE-WYE
 			//Default else - something we don't support
 		}
@@ -904,7 +908,7 @@ int link_object::init(OBJECT *parent)
 	}	//End deltamode items -- like in-rush
 
 	//If frequency dependence is enabled, try to map the recalc function
-	if (enable_frequency_dependence == true)
+	if (enable_frequency_dependence)
 	{
 		//Try to map the function.  If it fails, just assume it has no frequency dependence
 		link_recalc_fxn = (FUNCTIONADDR)(gl_get_function(obj,"recalc_distribution_line"));
@@ -920,13 +924,13 @@ int link_object::init(OBJECT *parent)
 node *link_object::get_from(void) const
 {
 	node *from;
-	get_flow(&from,NULL);
+	get_flow(&from,nullptr);
 	return from;
 }
 node *link_object::get_to(void) const
 {
 	node *to;
-	get_flow(NULL,&to);
+	get_flow(nullptr,&to);
 	return to;
 }
 set link_object::get_flow(node **fn, node **tn) const
@@ -937,8 +941,8 @@ set link_object::get_flow(node **fn, node **tn) const
 	reverse |= (f->voltage[0].Mag()<t->voltage[0].Mag())?PHASE_A:0;
 	reverse |= (f->voltage[1].Mag()<t->voltage[1].Mag())?PHASE_B:0;
 	reverse |= (f->voltage[2].Mag()<t->voltage[2].Mag())?PHASE_C:0;
-	if (fn!=NULL) *fn=f;
-	if (tn!=NULL) *tn=t;
+	if (fn!=nullptr) *fn=f;
+	if (tn!=nullptr) *tn=t;
 	/* someday perhaps, reversal will be supported */
 	return reverse;
 }
@@ -951,19 +955,19 @@ void link_object::NR_link_presync_fxn(void)
 	bool force_link_update;
 	double curr_delta_time;
 	bool require_inrush_update, transf_from_stdy_state;
-	complex work_matrix_A[6][6], work_matrix_B[6][6], work_matrix_C[6][6];
-	complex work_matrix_D[3][3],work_matrix_E[3][3],work_matrix_F[3][3];
-	complex work_matrix_G[6][6], work_matrix_H[6][6], work_matrix_I[6][6];
-	complex work_vector_A[6], work_vector_B[6], work_vector_C[6];
-	complex work_vector_D[3];
-	complex temp_value_A, temp_value_B;
+	gld::complex work_matrix_A[6][6], work_matrix_B[6][6], work_matrix_C[6][6];
+	gld::complex work_matrix_D[3][3],work_matrix_E[3][3],work_matrix_F[3][3];
+	gld::complex work_matrix_G[6][6], work_matrix_H[6][6], work_matrix_I[6][6];
+	gld::complex work_vector_A[6], work_vector_B[6], work_vector_C[6];
+	gld::complex work_vector_D[3];
+	gld::complex temp_value_A, temp_value_B;
 	char jindex, kindex;
 	FUNCTIONADDR transformer_calc_function;	
 
 	//See if a frequency dependence is desired -- if so, update it
-	if (enable_frequency_dependence == true)
+	if (enable_frequency_dependence)
 	{
-		if (link_recalc_fxn != NULL)	//See if a function was mapped -- perform an update
+		if (link_recalc_fxn != nullptr)	//See if a function was mapped -- perform an update
 		{
 			//Make the call to update impedance values
 			ret_value = ((int (*)(OBJECT *))(*link_recalc_fxn))(obj);
@@ -996,7 +1000,7 @@ void link_object::NR_link_presync_fxn(void)
 	}
 	
 	//Deltamode catch and check
-	if ((enable_inrush_calculations == true) && ((SpecialLnk==NORMAL) || (SpecialLnk==WYEWYE)))	//Lines are only supported at the moment -- maybe flag this different in the future?
+	if (enable_inrush_calculations && ((SpecialLnk==NORMAL) || (SpecialLnk==WYEWYE)))	//Lines are only supported at the moment -- maybe flag this different in the future?
 	{
 		//See if we're in deltamode or not
 		if (deltatimestep_running > 0)
@@ -1067,7 +1071,7 @@ void link_object::NR_link_presync_fxn(void)
 					LinkHistTermL[4] = LinkHistTermL[1];
 					LinkHistTermL[5] = LinkHistTermL[2];
 
-					if (use_line_cap == true)	//Only enable if capacitance is on
+					if (use_line_cap)	//Only enable if capacitance is on
 					{
 						// Both do this, but backward-Euler probably doesn't need this
 						LinkHistTermCf[3] = LinkHistTermCf[0];	//"from" capacitance
@@ -1080,7 +1084,7 @@ void link_object::NR_link_presync_fxn(void)
 					}
 
 					//Determine how we are calculating values
-					if (transf_from_stdy_state == false)	//"normal" update
+					if (!transf_from_stdy_state)	//"normal" update
 					{
 						//Calculate the updated history terms - hrl = ahrl*(vfromprev-vtoprev)-bhrl*hrlprev
 						//Cheating references to voltages
@@ -1105,7 +1109,7 @@ void link_object::NR_link_presync_fxn(void)
 										   bhrlstore[7] * LinkHistTermL[4] -
 										   bhrlstore[8] * LinkHistTermL[5];
 
-						if (use_line_cap == true)	//Only do if capacitance is enabled
+						if (use_line_cap)	//Only do if capacitance is enabled
 						{
 							//See which method we're using
 							if (inrush_int_method_capacitance == IRM_TRAPEZOIDAL)
@@ -1184,7 +1188,7 @@ void link_object::NR_link_presync_fxn(void)
 							{
 								if (jindex==kindex)
 								{
-									work_matrix_D[jindex][kindex] = complex(1.0,0.0) + bhrlstore[jindex*3+kindex];
+									work_matrix_D[jindex][kindex] = gld::complex(1.0,0.0) + bhrlstore[jindex*3+kindex];
 								}
 								else
 								{
@@ -1208,7 +1212,7 @@ void link_object::NR_link_presync_fxn(void)
 						lmatrix_vmult(&work_matrix_F[0][0],&work_vector_D[0],LinkHistTermL,3);
 
 						//Update capacitance terms
-						if (use_line_cap == true)	//Only do if capacitance is enabled
+						if (use_line_cap)	//Only do if capacitance is enabled
 						{
 							//See which method we are
 							if (inrush_int_method_capacitance == IRM_TRAPEZOIDAL)
@@ -1216,28 +1220,28 @@ void link_object::NR_link_presync_fxn(void)
 								//Calculate the updated history terms - hrcf = chrc*vfromprev/2.0
 								LinkHistTermCf[0] = (NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[0] +
 													NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[1] +
-													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[2]) / complex(2.0,0.0);
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[2]) / gld::complex(2.0,0.0);
 
 								LinkHistTermCf[1] = (NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[3] +
 													NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[4] +
-													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[5]) / complex(2.0,0.0);
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[5]) / gld::complex(2.0,0.0);
 
 								LinkHistTermCf[2] = (NR_busdata[NR_branchdata[NR_branch_reference].from].V[0] * chrcstore[6] +
 													NR_busdata[NR_branchdata[NR_branch_reference].from].V[1] * chrcstore[7] +
-													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[8]) / complex(2.0,0.0);
+													NR_busdata[NR_branchdata[NR_branch_reference].from].V[2] * chrcstore[8]) / gld::complex(2.0,0.0);
 
 								//Calculate the updated history terms - hrcf = chrc*vfromprev - hrcfprev
 								LinkHistTermCt[0] = (NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[0] +
 													NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[1] +
-													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[2]) / complex(2.0,0.0);
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[2]) / gld::complex(2.0,0.0);
 
 								LinkHistTermCt[1] = (NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[3] +
 													NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[4] +
-													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[5]) / complex(2.0,0.0);
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[5]) / gld::complex(2.0,0.0);
 
 								LinkHistTermCt[2] = (NR_busdata[NR_branchdata[NR_branch_reference].to].V[0] * chrcstore[6] +
 													NR_busdata[NR_branchdata[NR_branch_reference].to].V[1] * chrcstore[7] +
-													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[8]) / complex(2.0,0.0);
+													NR_busdata[NR_branchdata[NR_branch_reference].to].V[2] * chrcstore[8]) / gld::complex(2.0,0.0);
 							}
 							else if (inrush_int_method_capacitance == IRM_BACKEULER)
 							{
@@ -1272,7 +1276,7 @@ void link_object::NR_link_presync_fxn(void)
 					}//End first run of in-rush from steady-state
 
 					//See how we're applying the update
-					if (use_line_cap == true)	//Only do if capacitance is enabled
+					if (use_line_cap)	//Only do if capacitance is enabled
 					{
 						//Compute the values and post them to the appropriate nodes
 						NR_busdata[NR_branchdata[NR_branch_reference].from].BusHistTerm[0] += LinkHistTermL[0] + LinkHistTermCf[0];
@@ -1345,13 +1349,13 @@ void link_object::NR_link_presync_fxn(void)
 						//No phase C
 
 						//Null it first, for giggles
-						transformer_calc_function = NULL;
+						transformer_calc_function = nullptr;
 
 						//Find the transformer function
 						transformer_calc_function = (FUNCTIONADDR)(gl_get_function(obj,"recalc_transformer_matrices"));
 
 						//See if it worked
-						if (transformer_calc_function == NULL)
+						if (transformer_calc_function == nullptr)
 						{
 							GL_THROW("Link:%s - failed to map transformer update function", obj->name ? obj->name : "Unnamed");
 							//Below
@@ -1385,7 +1389,7 @@ void link_object::NR_link_presync_fxn(void)
 					LinkHistTermL[11] = LinkHistTermL[5];
 
 					//Copy the old history terms for the primary magnetization - if applicable
-					if (LinkHistTermCf != NULL)
+					if (LinkHistTermCf != nullptr)
 					{
 						LinkHistTermCf[3] = LinkHistTermCf[0];
 						LinkHistTermCf[4] = LinkHistTermCf[1];
@@ -1393,7 +1397,7 @@ void link_object::NR_link_presync_fxn(void)
 					}
 
 					//Copy the old history terms for the secondary magnetization - if applicable
-					if (LinkHistTermCt != NULL)
+					if (LinkHistTermCt != nullptr)
 					{
 						LinkHistTermCt[3] = LinkHistTermCt[0];
 						LinkHistTermCt[4] = LinkHistTermCt[1];
@@ -1401,7 +1405,7 @@ void link_object::NR_link_presync_fxn(void)
 					}
 
 					//Update the phi term too, if appropriate
-					if (hphi != NULL)
+					if (hphi != nullptr)
 					{
 						hphi[6] = hphi[0];
 						hphi[7] = hphi[1];
@@ -1421,7 +1425,7 @@ void link_object::NR_link_presync_fxn(void)
 					work_vector_A[4] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[1];
 					work_vector_A[5] = NR_busdata[NR_branchdata[NR_branch_reference].to].V[2];
 
-					if (transf_from_stdy_state == false)
+					if (!transf_from_stdy_state)
 					{
 						//Perform the multiply of ahrl*vprev - put into LinkHistTerm first parts
 						lmatrix_vmult(ahrlstore, &work_vector_A[0], LinkHistTermL, 6);
@@ -1436,7 +1440,7 @@ void link_object::NR_link_presync_fxn(void)
 						}
 
 						//Calculate the updated history terms - htr_pri = ahtrm*vpri_prev-bhtrm*htr_pri_prev - if applicable
-						if (LinkHistTermCf != NULL)
+						if (LinkHistTermCf != nullptr)
 						{
 							//Perform the multiply of ahtrm*vpri_prev - put into LinkHistTerm first parts
 							lmatrix_vmult(ahmstore, &work_vector_A[0], LinkHistTermCf, 3);
@@ -1452,7 +1456,7 @@ void link_object::NR_link_presync_fxn(void)
 						}
 
 						//Calculate the updated history terms - htr_sec = ahtrm*vsec_prev-bhtrm*htr_sec_prev - if applicable
-						if (LinkHistTermCt != NULL)
+						if (LinkHistTermCt != nullptr)
 						{
 							//Perform the multiply of ahtrm*vsec_prev - put into LinkHistTerm first parts
 							lmatrix_vmult(&ahmstore[9], &work_vector_A[3], LinkHistTermCt, 3);
@@ -1468,10 +1472,10 @@ void link_object::NR_link_presync_fxn(void)
 						}
 
 						//Update phi history term, if appropriate
-						if (hphi != NULL)
+						if (hphi != nullptr)
 						{
 							//Compute the "constant" first -- save some multiplies
-							temp_value_A = complex(1.0,0.0) + B_phi;
+							temp_value_A = gld::complex(1.0,0.0) + B_phi;
 							temp_value_A = temp_value_A * A_phi;
 
 							//hphi = A_phi*I(8)*Voltage_vals + B_phi*I(8)*phi_prev;
@@ -1492,7 +1496,7 @@ void link_object::NR_link_presync_fxn(void)
 							{
 								if (jindex==kindex)
 								{
-									work_matrix_A[jindex][kindex] = complex(1.0,0.0) + bhrlstore[jindex*6+kindex];
+									work_matrix_A[jindex][kindex] = gld::complex(1.0,0.0) + bhrlstore[jindex*6+kindex];
 								}
 								else
 								{
@@ -1512,7 +1516,7 @@ void link_object::NR_link_presync_fxn(void)
 
 						//Do the "from/primary" multiply, if relevant
 						//htr_pri = inv(I + bhtr)*ahtr*vpri
-						if (LinkHistTermCf != NULL)
+						if (LinkHistTermCf != nullptr)
 						{
 							//Form up the initial "I+bhtr" portion
 							for (jindex=0; jindex<3; jindex++)
@@ -1521,7 +1525,7 @@ void link_object::NR_link_presync_fxn(void)
 								{
 									if (jindex==kindex)	//Diagonal, add I
 									{
-										work_matrix_D[jindex][kindex] = complex(1.0,0.0) + bhmstore[jindex*3+kindex];
+										work_matrix_D[jindex][kindex] = gld::complex(1.0,0.0) + bhmstore[jindex*3+kindex];
 									}
 									else	//Normal "copy"
 									{
@@ -1542,7 +1546,7 @@ void link_object::NR_link_presync_fxn(void)
 
 						//Do the "to/secondary" multiply, if relevant
 						//htr_sec = inv(I + bhtr)*ahtr*vsec
-						if (LinkHistTermCt != NULL)
+						if (LinkHistTermCt != nullptr)
 						{
 							//Form up the initial "I+bhtr" portion
 							for (jindex=0; jindex<3; jindex++)
@@ -1551,7 +1555,7 @@ void link_object::NR_link_presync_fxn(void)
 								{
 									if (jindex==kindex)	//Diagonal, add I
 									{
-										work_matrix_D[jindex][kindex] = complex(1.0,0.0) + bhmstore[jindex*3+kindex+9];
+										work_matrix_D[jindex][kindex] = gld::complex(1.0,0.0) + bhmstore[jindex*3+kindex+9];
 									}
 									else	//Normal "copy"
 									{
@@ -1572,11 +1576,11 @@ void link_object::NR_link_presync_fxn(void)
 
 						//Update phi history term, if appropriate
 						//hphi = A_phi*(1+B_phi)/(1-B_phi)*Voltage_vals
-						if (hphi != NULL)
+						if (hphi != nullptr)
 						{
 							//Compute the "constant" first -- save some multiplies
-							temp_value_A = complex(1.0,0.0) + B_phi;
-							temp_value_B = complex(1.0,0.0) - B_phi;
+							temp_value_A = gld::complex(1.0,0.0) + B_phi;
+							temp_value_B = gld::complex(1.0,0.0) - B_phi;
 							temp_value_A = temp_value_A / temp_value_B * A_phi;
 
 							//hphi = A_phi*(1+B_phi)/(1-B_phi)*I(8)*Voltage_vals;
@@ -1597,7 +1601,7 @@ void link_object::NR_link_presync_fxn(void)
 					NR_busdata[NR_branchdata[NR_branch_reference].to].BusHistTerm[2] += LinkHistTermL[5];
 
 					//Now apply any appropriate magentization values -- depends on how they were set up (if present)
-					if (LinkHistTermCf != NULL)	//Primary needs accumulated
+					if (LinkHistTermCf != nullptr)	//Primary needs accumulated
 					{
 						NR_busdata[NR_branchdata[NR_branch_reference].from].BusHistTerm[0] += LinkHistTermCf[0];
 						NR_busdata[NR_branchdata[NR_branch_reference].from].BusHistTerm[1] += LinkHistTermCf[1];
@@ -1605,7 +1609,7 @@ void link_object::NR_link_presync_fxn(void)
 					}
 					//Default else -- no primary
 
-					if (LinkHistTermCt != NULL)	//Secondary needs accumulated
+					if (LinkHistTermCt != nullptr)	//Secondary needs accumulated
 					{
 						NR_busdata[NR_branchdata[NR_branch_reference].to].BusHistTerm[0] += LinkHistTermCt[0];
 						NR_busdata[NR_branchdata[NR_branch_reference].to].BusHistTerm[1] += LinkHistTermCt[1];
@@ -1631,29 +1635,29 @@ void link_object::NR_link_presync_fxn(void)
 			{
 				//Zero the various working matrices, on priniciple
 				/********** TODO - Like loads, this may be something that postupdate can do ********************/
-				LinkHistTermL[0] = complex(0.0,0.0);
-				LinkHistTermL[1] = complex(0.0,0.0);
-				LinkHistTermL[2] = complex(0.0,0.0);
-				LinkHistTermL[3] = complex(0.0,0.0);
-				LinkHistTermL[4] = complex(0.0,0.0);
-				LinkHistTermL[5] = complex(0.0,0.0);
+				LinkHistTermL[0] = gld::complex(0.0,0.0);
+				LinkHistTermL[1] = gld::complex(0.0,0.0);
+				LinkHistTermL[2] = gld::complex(0.0,0.0);
+				LinkHistTermL[3] = gld::complex(0.0,0.0);
+				LinkHistTermL[4] = gld::complex(0.0,0.0);
+				LinkHistTermL[5] = gld::complex(0.0,0.0);
 
 				//Zero capacitance, if they exist
-				if (use_line_cap == true)
+				if (use_line_cap)
 				{
-					LinkHistTermCf[0] = complex(0.0,0.0);
-					LinkHistTermCf[1] = complex(0.0,0.0);
-					LinkHistTermCf[2] = complex(0.0,0.0);
-					LinkHistTermCf[3] = complex(0.0,0.0);
-					LinkHistTermCf[4] = complex(0.0,0.0);
-					LinkHistTermCf[5] = complex(0.0,0.0);
+					LinkHistTermCf[0] = gld::complex(0.0,0.0);
+					LinkHistTermCf[1] = gld::complex(0.0,0.0);
+					LinkHistTermCf[2] = gld::complex(0.0,0.0);
+					LinkHistTermCf[3] = gld::complex(0.0,0.0);
+					LinkHistTermCf[4] = gld::complex(0.0,0.0);
+					LinkHistTermCf[5] = gld::complex(0.0,0.0);
 
-					LinkHistTermCt[0] = complex(0.0,0.0);
-					LinkHistTermCt[1] = complex(0.0,0.0);
-					LinkHistTermCt[2] = complex(0.0,0.0);
-					LinkHistTermCt[3] = complex(0.0,0.0);
-					LinkHistTermCt[4] = complex(0.0,0.0);
-					LinkHistTermCt[5] = complex(0.0,0.0);
+					LinkHistTermCt[0] = gld::complex(0.0,0.0);
+					LinkHistTermCt[1] = gld::complex(0.0,0.0);
+					LinkHistTermCt[2] = gld::complex(0.0,0.0);
+					LinkHistTermCt[3] = gld::complex(0.0,0.0);
+					LinkHistTermCt[4] = gld::complex(0.0,0.0);
+					LinkHistTermCt[5] = gld::complex(0.0,0.0);
 				}
 				//Default else -- no capacitance
 			}
@@ -1661,73 +1665,73 @@ void link_object::NR_link_presync_fxn(void)
 			{
 				//Zero the various working matrices, on priniciple
 				/********** TODO - Like loads, this may be something that postupdate can do ********************/
-				LinkHistTermL[0] = complex(0.0,0.0);
-				LinkHistTermL[1] = complex(0.0,0.0);
-				LinkHistTermL[2] = complex(0.0,0.0);
-				LinkHistTermL[3] = complex(0.0,0.0);
-				LinkHistTermL[4] = complex(0.0,0.0);
-				LinkHistTermL[5] = complex(0.0,0.0);
-				LinkHistTermL[6] = complex(0.0,0.0);
-				LinkHistTermL[7] = complex(0.0,0.0);
-				LinkHistTermL[8] = complex(0.0,0.0);
-				LinkHistTermL[9] = complex(0.0,0.0);
-				LinkHistTermL[10] = complex(0.0,0.0);
-				LinkHistTermL[11] = complex(0.0,0.0);
+				LinkHistTermL[0] = gld::complex(0.0,0.0);
+				LinkHistTermL[1] = gld::complex(0.0,0.0);
+				LinkHistTermL[2] = gld::complex(0.0,0.0);
+				LinkHistTermL[3] = gld::complex(0.0,0.0);
+				LinkHistTermL[4] = gld::complex(0.0,0.0);
+				LinkHistTermL[5] = gld::complex(0.0,0.0);
+				LinkHistTermL[6] = gld::complex(0.0,0.0);
+				LinkHistTermL[7] = gld::complex(0.0,0.0);
+				LinkHistTermL[8] = gld::complex(0.0,0.0);
+				LinkHistTermL[9] = gld::complex(0.0,0.0);
+				LinkHistTermL[10] = gld::complex(0.0,0.0);
+				LinkHistTermL[11] = gld::complex(0.0,0.0);
 
 				//Zero primary and secondary magnetization history terms
-				if (LinkHistTermCf != NULL)
+				if (LinkHistTermCf != nullptr)
 				{
-					LinkHistTermCf[0] = complex(0.0,0.0);
-					LinkHistTermCf[1] = complex(0.0,0.0);
-					LinkHistTermCf[2] = complex(0.0,0.0);
-					LinkHistTermCf[3] = complex(0.0,0.0);
-					LinkHistTermCf[4] = complex(0.0,0.0);
-					LinkHistTermCf[5] = complex(0.0,0.0);
+					LinkHistTermCf[0] = gld::complex(0.0,0.0);
+					LinkHistTermCf[1] = gld::complex(0.0,0.0);
+					LinkHistTermCf[2] = gld::complex(0.0,0.0);
+					LinkHistTermCf[3] = gld::complex(0.0,0.0);
+					LinkHistTermCf[4] = gld::complex(0.0,0.0);
+					LinkHistTermCf[5] = gld::complex(0.0,0.0);
 				}
 
-				if (LinkHistTermCt != NULL)
+				if (LinkHistTermCt != nullptr)
 				{
-					LinkHistTermCt[0] = complex(0.0,0.0);
-					LinkHistTermCt[1] = complex(0.0,0.0);
-					LinkHistTermCt[2] = complex(0.0,0.0);
-					LinkHistTermCt[3] = complex(0.0,0.0);
-					LinkHistTermCt[4] = complex(0.0,0.0);
-					LinkHistTermCt[5] = complex(0.0,0.0);
+					LinkHistTermCt[0] = gld::complex(0.0,0.0);
+					LinkHistTermCt[1] = gld::complex(0.0,0.0);
+					LinkHistTermCt[2] = gld::complex(0.0,0.0);
+					LinkHistTermCt[3] = gld::complex(0.0,0.0);
+					LinkHistTermCt[4] = gld::complex(0.0,0.0);
+					LinkHistTermCt[5] = gld::complex(0.0,0.0);
 				}
 
 				//Phi as well
-				if (hphi != NULL)
+				if (hphi != nullptr)
 				{
 					for (jindex=0; jindex<12; jindex++)
 					{
-						hphi[jindex] = complex(0.0,0.0);
+						hphi[jindex] = gld::complex(0.0,0.0);
 					}
 				}
 			}
 			//Default else -- shouldn't ever get here anyways, but just zero stuffs
 
 			//Compute the values and post them to the appropriate nodes
-			NR_busdata[NR_branchdata[NR_branch_reference].from].BusHistTerm[0] = complex(0.0,0.0);
-			NR_busdata[NR_branchdata[NR_branch_reference].from].BusHistTerm[1] = complex(0.0,0.0);
-			NR_busdata[NR_branchdata[NR_branch_reference].from].BusHistTerm[2] = complex(0.0,0.0);
+			NR_busdata[NR_branchdata[NR_branch_reference].from].BusHistTerm[0] = gld::complex(0.0,0.0);
+			NR_busdata[NR_branchdata[NR_branch_reference].from].BusHistTerm[1] = gld::complex(0.0,0.0);
+			NR_busdata[NR_branchdata[NR_branch_reference].from].BusHistTerm[2] = gld::complex(0.0,0.0);
 
-			NR_busdata[NR_branchdata[NR_branch_reference].to].BusHistTerm[0] = complex(0.0,0.0);
-			NR_busdata[NR_branchdata[NR_branch_reference].to].BusHistTerm[1] = complex(0.0,0.0);
-			NR_busdata[NR_branchdata[NR_branch_reference].to].BusHistTerm[2] = complex(0.0,0.0);
+			NR_busdata[NR_branchdata[NR_branch_reference].to].BusHistTerm[0] = gld::complex(0.0,0.0);
+			NR_busdata[NR_branchdata[NR_branch_reference].to].BusHistTerm[1] = gld::complex(0.0,0.0);
+			NR_busdata[NR_branchdata[NR_branch_reference].to].BusHistTerm[2] = gld::complex(0.0,0.0);
 
 			//Clear the saturation terms too, if they exist - may get duplicated, but meh
-			if (NR_busdata[NR_branchdata[NR_branch_reference].from].BusSatTerm != NULL)	//From side
+			if (NR_busdata[NR_branchdata[NR_branch_reference].from].BusSatTerm != nullptr)	//From side
 			{
-				NR_busdata[NR_branchdata[NR_branch_reference].from].BusSatTerm[0] = complex(0.0,0.0);
-				NR_busdata[NR_branchdata[NR_branch_reference].from].BusSatTerm[1] = complex(0.0,0.0);
-				NR_busdata[NR_branchdata[NR_branch_reference].from].BusSatTerm[2] = complex(0.0,0.0);
+				NR_busdata[NR_branchdata[NR_branch_reference].from].BusSatTerm[0] = gld::complex(0.0,0.0);
+				NR_busdata[NR_branchdata[NR_branch_reference].from].BusSatTerm[1] = gld::complex(0.0,0.0);
+				NR_busdata[NR_branchdata[NR_branch_reference].from].BusSatTerm[2] = gld::complex(0.0,0.0);
 			}
 
-			if (NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm != NULL)	//To side
+			if (NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm != nullptr)	//To side
 			{
-				NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm[0] = complex(0.0,0.0);
-				NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm[1] = complex(0.0,0.0);
-				NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm[2] = complex(0.0,0.0);
+				NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm[0] = gld::complex(0.0,0.0);
+				NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm[1] = gld::complex(0.0,0.0);
+				NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm[2] = gld::complex(0.0,0.0);
 			}
 		}//End deltamode not active
 	}//End inrush enabled
@@ -1738,14 +1742,14 @@ void link_object::NR_link_presync_fxn(void)
 
 	current_accumulated = false;	//Reset the flag
 
-	if ((status != prev_status) || (force_link_update == true))	//Something's changed, update us
+	if ((status != prev_status) || force_link_update)	//Something's changed, update us
 	{
-		complex Ylinecharge[3][3];
-		complex Y[3][3];
-		complex Yc[3][3];
-		complex Ylefttemp[3][3];
-		complex Yto[3][3];
-		complex Yfrom[3][3];
+		gld::complex Ylinecharge[3][3];
+		gld::complex Y[3][3];
+		gld::complex Yc[3][3];
+		gld::complex Ylefttemp[3][3];
+		gld::complex Yto[3][3];
+		gld::complex Yfrom[3][3];
 		double invratio, workingvalue;
 
 		//Create initial admittance matrix - use code from GS below - store in From_Y (for now)
@@ -1761,7 +1765,7 @@ void link_object::NR_link_presync_fxn(void)
 		else if (has_phase(PHASE_S)) //Triplexy
 		{
 			//Find the determinant
-			complex detvalue = b_mat[0][0]*b_mat[1][1] - b_mat[0][1]*b_mat[1][0];
+			gld::complex detvalue = b_mat[0][0]*b_mat[1][1] - b_mat[0][1]*b_mat[1][0];
 
 			//Store the value/compute the inversion
 			Y[0][0] = b_mat[1][1] / detvalue;
@@ -1769,19 +1773,19 @@ void link_object::NR_link_presync_fxn(void)
 			Y[1][0] = b_mat[1][0] * -1.0 / detvalue;
 			Y[1][1] = b_mat[0][0] / detvalue;
 		}
-		else if ((SpecialLnk==NORMAL) && (require_inrush_update == true))
+		else if ((SpecialLnk==NORMAL) && require_inrush_update)
 		{
 			;	//Skip us as well -- impedance matrix is manipulated, so no sense inverting it twice
 		}
 		else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
-			Y[0][0] = complex(1.0) / b_mat[0][0];
+			Y[0][0] = gld::complex(1.0) / b_mat[0][0];
 		else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //only B
-			Y[1][1] = complex(1.0) / b_mat[1][1];
+			Y[1][1] = gld::complex(1.0) / b_mat[1][1];
 		else if (!has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //only C
-			Y[2][2] = complex(1.0) / b_mat[2][2];
+			Y[2][2] = gld::complex(1.0) / b_mat[2][2];
 		else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //has A & C
 		{
-			complex detvalue = b_mat[0][0]*b_mat[2][2] - b_mat[0][2]*b_mat[2][0];
+			gld::complex detvalue = b_mat[0][0]*b_mat[2][2] - b_mat[0][2]*b_mat[2][0];
 
 			Y[0][0] = b_mat[2][2] / detvalue;
 			Y[0][2] = b_mat[0][2] * -1.0 / detvalue;
@@ -1790,7 +1794,7 @@ void link_object::NR_link_presync_fxn(void)
 		}
 		else if (has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //has A & B
 		{
-			complex detvalue = b_mat[0][0]*b_mat[1][1] - b_mat[0][1]*b_mat[1][0];
+			gld::complex detvalue = b_mat[0][0]*b_mat[1][1] - b_mat[0][1]*b_mat[1][0];
 
 			Y[0][0] = b_mat[1][1] / detvalue;
 			Y[0][1] = b_mat[0][1] * -1.0 / detvalue;
@@ -1799,7 +1803,7 @@ void link_object::NR_link_presync_fxn(void)
 		}
 		else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C))	//has B & C
 		{
-			complex detvalue = b_mat[1][1]*b_mat[2][2] - b_mat[1][2]*b_mat[2][1];
+			gld::complex detvalue = b_mat[1][1]*b_mat[2][2] - b_mat[1][2]*b_mat[2][1];
 
 			Y[1][1] = b_mat[2][2] / detvalue;
 			Y[1][2] = b_mat[1][2] * -1.0 / detvalue;
@@ -1816,7 +1820,7 @@ void link_object::NR_link_presync_fxn(void)
 
 			if (SpecialLnk==DELTAGWYE)	//Delta-Gwye implementation
 			{
-				complex tempImped;
+				gld::complex tempImped;
 
 				//Pre-admittancized matrix
 				equalm(base_admittance_mat,Yto);
@@ -1931,16 +1935,16 @@ void link_object::NR_link_presync_fxn(void)
 			else	//Other xformers
 			{
 				//Check to see if in-rush is enabled and WYEWYE
-				if ((enable_inrush_calculations == true) && (SpecialLnk == WYEWYE))
+				if (enable_inrush_calculations && (SpecialLnk == WYEWYE))
 				{
 					//Null it first, for giggles
-					transformer_calc_function = NULL;
+					transformer_calc_function = nullptr;
 
 					//Find the transformer function
 					transformer_calc_function = (FUNCTIONADDR)(gl_get_function(obj,"recalc_transformer_matrices"));
 
 					//See if it worked
-					if (transformer_calc_function == NULL)
+					if (transformer_calc_function == nullptr)
 					{
 						GL_THROW("Link:%s - failed to map transformer update function", obj->name ? obj->name : "Unnamed");
 						/*  TROUBLESHOOT
@@ -1997,21 +2001,21 @@ void link_object::NR_link_presync_fxn(void)
 		else 				//Simple lines
 		{
 			//Compute the inductance portions for inrush
-			if ((enable_inrush_calculations == true) && (require_inrush_update==true))
+			if (enable_inrush_calculations && require_inrush_update)
 			{
 				//Zero working matrices - reuse existing, just to annoy later coders
 				for (jindex=0; jindex<3; jindex++)
 				{
 					for (kindex=0; kindex<3; kindex++)
 					{
-						Ylefttemp[jindex][kindex] = complex(0.0,0.0);
-						Yfrom[jindex][kindex] = complex(0.0,0.0);
-						Yto[jindex][kindex] = complex(0.0,0.0);
+						Ylefttemp[jindex][kindex] = gld::complex(0.0,0.0);
+						Yfrom[jindex][kindex] = gld::complex(0.0,0.0);
+						Yto[jindex][kindex] = gld::complex(0.0,0.0);
 					}
 				}
 
 				//If capacitance is enabled, copy the original b_mat before we break it
-				if (use_line_cap == true)
+				if (use_line_cap)
 				{
 					equalm(b_mat,Yc);	//Copy to Yc temporarily
 				}
@@ -2027,7 +2031,7 @@ void link_object::NR_link_presync_fxn(void)
 							workingvalue = b_mat[jindex][kindex].Im() / (PI * current_frequency * deltatimestep_running);
 
 							//Put into the other working matrix (zh)
-							Ylefttemp[jindex][kindex] = b_mat[jindex][kindex] - complex(workingvalue,0.0);
+							Ylefttemp[jindex][kindex] = b_mat[jindex][kindex] - gld::complex(workingvalue,0.0);
 						}
 						else if (inrush_int_method_inductance == IRM_BACKEULER)
 						{
@@ -2035,25 +2039,25 @@ void link_object::NR_link_presync_fxn(void)
 							workingvalue = b_mat[jindex][kindex].Im() / (2.0 * PI * current_frequency * deltatimestep_running);
 
 							//Put into the other working matrix (zh)
-							Ylefttemp[jindex][kindex] = complex(-1.0 * workingvalue,0.0);
+							Ylefttemp[jindex][kindex] = gld::complex(-1.0 * workingvalue,0.0);
 						}
 						//Default else -- better not get here
 
 						//Put back into the impedance matrix
-						b_mat[jindex][kindex] += complex(workingvalue,0.0);
+						b_mat[jindex][kindex] += gld::complex(workingvalue,0.0);
 					}
 				}
 
 				//Inversion sequence to get Y (admittance)
 				if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
-					Y[0][0] = complex(1.0) / b_mat[0][0];
+					Y[0][0] = gld::complex(1.0) / b_mat[0][0];
 				else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //only B
-					Y[1][1] = complex(1.0) / b_mat[1][1];
+					Y[1][1] = gld::complex(1.0) / b_mat[1][1];
 				else if (!has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //only C
-					Y[2][2] = complex(1.0) / b_mat[2][2];
+					Y[2][2] = gld::complex(1.0) / b_mat[2][2];
 				else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //has A & C
 				{
-					complex detvalue = b_mat[0][0]*b_mat[2][2] - b_mat[0][2]*b_mat[2][0];
+					gld::complex detvalue = b_mat[0][0]*b_mat[2][2] - b_mat[0][2]*b_mat[2][0];
 
 					Y[0][0] = b_mat[2][2] / detvalue;
 					Y[0][2] = b_mat[0][2] * -1.0 / detvalue;
@@ -2062,7 +2066,7 @@ void link_object::NR_link_presync_fxn(void)
 				}
 				else if (has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //has A & B
 				{
-					complex detvalue = b_mat[0][0]*b_mat[1][1] - b_mat[0][1]*b_mat[1][0];
+					gld::complex detvalue = b_mat[0][0]*b_mat[1][1] - b_mat[0][1]*b_mat[1][0];
 
 					Y[0][0] = b_mat[1][1] / detvalue;
 					Y[0][1] = b_mat[0][1] * -1.0 / detvalue;
@@ -2071,7 +2075,7 @@ void link_object::NR_link_presync_fxn(void)
 				}
 				else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C))	//has B & C
 				{
-					complex detvalue = b_mat[1][1]*b_mat[2][2] - b_mat[1][2]*b_mat[2][1];
+					gld::complex detvalue = b_mat[1][1]*b_mat[2][2] - b_mat[1][2]*b_mat[2][1];
 
 					Y[1][1] = b_mat[2][2] / detvalue;
 					Y[1][2] = b_mat[1][2] * -1.0 / detvalue;
@@ -2114,13 +2118,13 @@ void link_object::NR_link_presync_fxn(void)
 				}
 
 				//Restore b_mat for capacitance
-				if (use_line_cap == true)
+				if (use_line_cap)
 				{
 					equalm(Yc,b_mat);
 				}
 			}//End in-rush-enabled calculation updates -- impedance/inductance portion
 
-			if (use_line_cap == true)	//Capacitance included
+			if (use_line_cap)	//Capacitance included
 			{
 				if (has_phase(PHASE_S))	//Triplex exclusion
 				{
@@ -2146,21 +2150,21 @@ void link_object::NR_link_presync_fxn(void)
 					{
 						for (kindex=0; kindex<3; kindex++)
 						{
-							Y[jindex][kindex]=complex(0.0,0.0);
+							Y[jindex][kindex]=gld::complex(0.0,0.0);
 						}
 					}
 
 					//Replicate the inversion, again, but with the "less modified" version - Stored from Yc=b_mat earlier
 					//Inversion sequence to get Y (admittance)
 					if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
-						Y[0][0] = complex(1.0) / b_mat[0][0];
+						Y[0][0] = gld::complex(1.0) / b_mat[0][0];
 					else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //only B
-						Y[1][1] = complex(1.0) / b_mat[1][1];
+						Y[1][1] = gld::complex(1.0) / b_mat[1][1];
 					else if (!has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //only C
-						Y[2][2] = complex(1.0) / b_mat[2][2];
+						Y[2][2] = gld::complex(1.0) / b_mat[2][2];
 					else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //has A & C
 					{
-						complex detvalue = b_mat[0][0]*b_mat[2][2] - b_mat[0][2]*b_mat[2][0];
+						gld::complex detvalue = b_mat[0][0]*b_mat[2][2] - b_mat[0][2]*b_mat[2][0];
 
 						Y[0][0] = b_mat[2][2] / detvalue;
 						Y[0][2] = b_mat[0][2] * -1.0 / detvalue;
@@ -2169,7 +2173,7 @@ void link_object::NR_link_presync_fxn(void)
 					}
 					else if (has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //has A & B
 					{
-						complex detvalue = b_mat[0][0]*b_mat[1][1] - b_mat[0][1]*b_mat[1][0];
+						gld::complex detvalue = b_mat[0][0]*b_mat[1][1] - b_mat[0][1]*b_mat[1][0];
 
 						Y[0][0] = b_mat[1][1] / detvalue;
 						Y[0][1] = b_mat[0][1] * -1.0 / detvalue;
@@ -2178,7 +2182,7 @@ void link_object::NR_link_presync_fxn(void)
 					}
 					else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C))	//has B & C
 					{
-						complex detvalue = b_mat[1][1]*b_mat[2][2] - b_mat[1][2]*b_mat[2][1];
+						gld::complex detvalue = b_mat[1][1]*b_mat[2][2] - b_mat[1][2]*b_mat[2][1];
 
 						Y[1][1] = b_mat[2][2] / detvalue;
 						Y[1][2] = b_mat[1][2] * -1.0 / detvalue;
@@ -2201,7 +2205,7 @@ void link_object::NR_link_presync_fxn(void)
 					multiply(0.5,Ylinecharge,Ylefttemp);
 
 					//See how this is being handled
-					if ((enable_inrush_calculations == true) && (require_inrush_update == true))
+					if (enable_inrush_calculations && require_inrush_update)
 					{
 						//Update constant terms - shunt is the same for capacitance
 						for (jindex=0; jindex<3; jindex++)
@@ -2227,7 +2231,7 @@ void link_object::NR_link_presync_fxn(void)
 								//Default else
 
 								//Put into the "shunt" matrix
-								Ylefttemp[jindex][kindex] += complex(workingvalue,0.0);
+								Ylefttemp[jindex][kindex] += gld::complex(workingvalue,0.0);
 
 								//Copy this value into the final storage matrix too
 								LinkCapShuntTerm[jindex*3+kindex] = Ylefttemp[jindex][kindex];
@@ -2272,7 +2276,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 		{
 			node *fnode = OBJECTDATA(from,node);
 			node *tnode = OBJECTDATA(to,node);
-			unsigned int *LinkTableLoc = NULL;
+			unsigned int *LinkTableLoc = nullptr;
 			unsigned int TempTableIndex;
 			unsigned char working_phase;
 			char *temp_phase;
@@ -2281,7 +2285,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 			bool *temp_empty;
 			OBJECT *obj = OBJECTHDR(this);
 
-			if (fnode==NULL || tnode==NULL)
+			if (fnode==nullptr || tnode==nullptr)
 				return TS_NEVER;
 
 			if ((NR_curr_bus!=-1) && (NR_curr_branch!=-1))	//Ensure we've been initialized
@@ -2367,8 +2371,8 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					else
 					{
 						//Create them
-						YSfrom = (complex *)gl_malloc(9*sizeof(complex));
-						if (YSfrom == NULL)
+						YSfrom = (gld::complex *)gl_malloc(9*sizeof(gld::complex));
+						if (YSfrom == nullptr)
 							GL_THROW("NR: Memory allocation failure for transformer matrices.");
 							/*  TROUBLESHOOT
 							This is a bug.  Newton-Raphson tries to allocate memory for two other
@@ -2376,8 +2380,8 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 							your code and a bug report on the trac site.
 							*/
 
-						YSto = (complex *)gl_malloc(9*sizeof(complex));
-						if (YSto == NULL)
+						YSto = (gld::complex *)gl_malloc(9*sizeof(gld::complex));
+						if (YSto == nullptr)
 							GL_THROW("NR: Memory allocation failure for transformer matrices.");
 							//defined above
 
@@ -2390,11 +2394,11 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				else						//Simple line, they are all the same anyways
 				{
 					//See if capacitance is enabled, map a secondary matrix
-					if (use_line_cap == true)
+					if (use_line_cap)
 					{
 						//Allocate a matrix to store the secondary information (could use To_Y, but the may be confusing)
-						YSfrom = (complex *)gl_malloc(9*sizeof(complex));
-						if (YSfrom == NULL)
+						YSfrom = (gld::complex *)gl_malloc(9*sizeof(gld::complex));
+						if (YSfrom == nullptr)
 						{
 							GL_THROW("NR: Memory allocation failure for line matrix.");
 							/*  TROUBLESHOOT
@@ -2430,7 +2434,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				NR_branchdata[NR_branch_reference].limit_check = (FUNCTIONADDR)(gl_get_function(obj,"check_limits_pwr_object"));
 
 				//Make sure it worked, for now
-				if (NR_branchdata[NR_branch_reference].limit_check == NULL)
+				if (NR_branchdata[NR_branch_reference].limit_check == nullptr)
 				{
 					GL_THROW("Unable to map limit checking function for link:%s",obj->name ? obj->name : "Unnamed");
 					/*  TROUBLESHOOT
@@ -2647,7 +2651,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 
 			//See if we were flagged as a special type switch, and if we're in "strictly radial" mode, and "the only one attached"
 			//Note that this may have issues with "multiple-single-phase-switches" connecting to something, but that's a very particular use case (just use mesh checking then)
-			if ((SpecialLnk == SWITCH) && (meshed_fault_checking_enabled == false) && NR_busdata[NR_branchdata[NR_branch_reference].to].Link_Table_Size == 1)
+			if ((SpecialLnk == SWITCH) && !meshed_fault_checking_enabled && NR_busdata[NR_branchdata[NR_branch_reference].to].Link_Table_Size == 1)
 			{
 				//Update according to our "status"
 				working_phase = ~((NR_branchdata[NR_branch_reference].phases ^ NR_branchdata[NR_branch_reference].origphases) & 0x07);
@@ -2691,7 +2695,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 
 			//Link up the deltamode functions
 			//Populate individual object references into deltamode, if needed
-			if ((deltamode_inclusive==true) && (enable_subsecond_models == true))
+			if (deltamode_inclusive && enable_subsecond_models)
 			{
 				int temp_pwr_object_current;
 
@@ -2725,7 +2729,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				delta_functions[temp_pwr_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"interupdate_pwr_object"));
 
 				//Make sure it worked
-				if (delta_functions[temp_pwr_object_current] == NULL)
+				if (delta_functions[temp_pwr_object_current] == nullptr)
 				{
 					gl_warning("Failure to map deltamode function for device:%s",obj->name);
 					/*  TROUBLESHOOT
@@ -2742,13 +2746,13 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				//No null check, since this one just may not work (post update may not exist)
 
 				//See if we're an appropriate transformer and in-rush enabled
-				if ((enable_inrush_calculations == true) && (gl_object_isa(obj,"transformer","powerflow")))
+				if (enable_inrush_calculations && (gl_object_isa(obj,"transformer","powerflow")))
 				{
 					//Map the function for the transformer
 					NR_branchdata[NR_branch_reference].ExtraDeltaModeFunc = (FUNCTIONADDR)(gl_get_function(obj,"recalc_deltamode_saturation"));
 
 					//Make sure it worked
-					if (NR_branchdata[NR_branch_reference].ExtraDeltaModeFunc == NULL)
+					if (NR_branchdata[NR_branch_reference].ExtraDeltaModeFunc == nullptr)
 					{
 						gl_warning("Failure to map deltamode saturation function for device:%s",obj->name ? obj->name : "Unnamed");
 						/*  TROUBLESHOOT
@@ -2759,7 +2763,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					}
 
 					//Set "flag"
-					temp_empty = NULL;
+					temp_empty = nullptr;
 
 					//Call the function once, right now
 					resultval = ((int (*)(OBJECT *,bool *))(*NR_branchdata[NR_branch_reference].ExtraDeltaModeFunc))(obj,temp_empty);
@@ -2768,7 +2772,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					if (resultval == -1)	//Not a supported transformer type
 					{
 						//Null the function to prevent it from being called
-						NR_branchdata[NR_branch_reference].ExtraDeltaModeFunc = NULL;
+						NR_branchdata[NR_branch_reference].ExtraDeltaModeFunc = nullptr;
 					}
 					else if (resultval > 0)	//Successful init and saturation needed - allocate some vectors
 					{
@@ -2776,13 +2780,13 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 						if ((resultval == 1) || (resultval == 3))	//Primary winding needed -- allocate node value
 						{
 							//See if it has already been allocated
-							if (NR_busdata[NR_branchdata[NR_branch_reference].from].BusSatTerm == NULL)
+							if (NR_busdata[NR_branchdata[NR_branch_reference].from].BusSatTerm == nullptr)
 							{
 								//Allocate three spots -- always assume three for now
-								NR_busdata[NR_branchdata[NR_branch_reference].from].BusSatTerm = (complex *)gl_malloc(3*sizeof(complex));
+								NR_busdata[NR_branchdata[NR_branch_reference].from].BusSatTerm = (gld::complex *)gl_malloc(3*sizeof(gld::complex));
 
 								//Check it
-								if (NR_busdata[NR_branchdata[NR_branch_reference].from].BusSatTerm == NULL)
+								if (NR_busdata[NR_branchdata[NR_branch_reference].from].BusSatTerm == nullptr)
 								{
 									GL_THROW("Failed to allocate saturation current vector in %s",from->name ? from->name : "Unnamed");
 									/*  TROUBLESHOOT
@@ -2792,9 +2796,9 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 								}
 								else	//Must have worked -- zero them
 								{
-									NR_busdata[NR_branchdata[NR_branch_reference].from].BusSatTerm[0] = complex(0.0,0.0);
-									NR_busdata[NR_branchdata[NR_branch_reference].from].BusSatTerm[1] = complex(0.0,0.0);
-									NR_busdata[NR_branchdata[NR_branch_reference].from].BusSatTerm[2] = complex(0.0,0.0);
+									NR_busdata[NR_branchdata[NR_branch_reference].from].BusSatTerm[0] = gld::complex(0.0,0.0);
+									NR_busdata[NR_branchdata[NR_branch_reference].from].BusSatTerm[1] = gld::complex(0.0,0.0);
+									NR_busdata[NR_branchdata[NR_branch_reference].from].BusSatTerm[2] = gld::complex(0.0,0.0);
 								}
 							}//End allocation routine
 							//Default else -- assume someone else go to it
@@ -2803,22 +2807,22 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 						if ((resultval == 2) || (resultval == 3))	//Secondary winding needed, allocate
 						{
 							//See if it has already been allocated
-							if (NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm == NULL)
+							if (NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm == nullptr)
 							{
 								//Allocate three spots -- always assume three for now
-								NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm = (complex *)gl_malloc(3*sizeof(complex));
+								NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm = (gld::complex *)gl_malloc(3*sizeof(gld::complex));
 
 								//Check it
-								if (NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm == NULL)
+								if (NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm == nullptr)
 								{
 									GL_THROW("Failed to allocate saturation current vector in %s",to->name ? to->name : "Unnamed");
 									//Defined above
 								}
 								else	//Must have worked -- zero them
 								{
-									NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm[0] = complex(0.0,0.0);
-									NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm[1] = complex(0.0,0.0);
-									NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm[2] = complex(0.0,0.0);
+									NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm[0] = gld::complex(0.0,0.0);
+									NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm[1] = gld::complex(0.0,0.0);
+									NR_busdata[NR_branchdata[NR_branch_reference].to].BusSatTerm[2] = gld::complex(0.0,0.0);
 								}
 							}//End allocation routine
 							//Default else -- assume someone else go to it
@@ -2836,12 +2840,12 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				}//End in-rush and "special"
 				else	//Nope, just null it
 				{
-					NR_branchdata[NR_branch_reference].ExtraDeltaModeFunc = NULL;
+					NR_branchdata[NR_branch_reference].ExtraDeltaModeFunc = nullptr;
 				}
 			}//End deltamode populations
 			else	//Not deltamode - null out things not used
 			{
-				NR_branchdata[NR_branch_reference].ExtraDeltaModeFunc = NULL;
+				NR_branchdata[NR_branch_reference].ExtraDeltaModeFunc = nullptr;
 			}
 		}//End init loop
 
@@ -2891,10 +2895,10 @@ TIMESTAMP link_object::sync(TIMESTAMP t0)
 #endif
 			/* compute currents */
 			READLOCK_OBJECT(to);
-			complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
+			gld::complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
 			READUNLOCK_OBJECT(to);
 
-			complex i0, i1, i2;
+			gld::complex i0, i1, i2;
 
 			current_in[0] = i0 = 
 				c_mat[0][0] * t->voltage[0] +
@@ -2997,7 +3001,7 @@ bool link_object::perform_limit_checks(double *over_limit_value, bool *over_limi
 	temp_power_check = 0.0;
 
 	//Check to see if limits need to be checked
-	if ((use_link_limits==true) && (check_link_limits==true))
+	if (use_link_limits && check_link_limits)
 	{
 		//See what we are - if we're a transformer, we're looking at power
 		if ((SpecialLnk != NORMAL) && (SpecialLnk != SWITCH) && (SpecialLnk != REGULATOR))
@@ -3242,7 +3246,7 @@ TIMESTAMP link_object::postsync(TIMESTAMP t0)
 
 		// update published current_out values;
 		READLOCK_OBJECT(to);
-		complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
+		gld::complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
 		READUNLOCK_OBJECT(to);
 
 		read_I_out[0] = tc[0];
@@ -3256,21 +3260,21 @@ TIMESTAMP link_object::postsync(TIMESTAMP t0)
 		if (!is_open())
 		{
 			/* compute and update voltages */
-			complex v0 = 
+			gld::complex v0 = 
 				A_mat[0][0] * f->voltage[0] +
 				A_mat[0][1] * f->voltage[1] + // 
 				A_mat[0][2] * f->voltage[2] - //@todo current inj; flowing from t node
 				B_mat[0][0] * tc[0] - // current injection put into link from end mode
 				B_mat[0][1] * tc[1] -
 				B_mat[0][2] * tc[2];
-			complex v1 = 
+			gld::complex v1 = 
 				A_mat[1][0] * f->voltage[0] +
 				A_mat[1][1] * f->voltage[1] +
 				A_mat[1][2] * f->voltage[2] -
 				B_mat[1][0] * tc[0] -
 				B_mat[1][1] * tc[1] -
 				B_mat[1][2] * tc[2];
-			complex v2 = 
+			gld::complex v2 = 
 				A_mat[2][0] * f->voltage[0] +
 				A_mat[2][1] * f->voltage[1] +
 				A_mat[2][2] * f->voltage[2] -
@@ -3369,7 +3373,7 @@ int link_object::kmlinit(int (*stream)(const char*,...))
 int link_object::kmldump(int (*stream)(const char*,...))
 {
 	OBJECT *obj = OBJECTHDR(this);
-	FUNCTIONADDR temp_funadd = NULL;
+	FUNCTIONADDR temp_funadd = nullptr;
 
 	stream("    <Placemark>\n");
 	if (obj->name)
@@ -3385,16 +3389,20 @@ int link_object::kmldump(int (*stream)(const char*,...))
 			"<TH WIDTH=\"25%\" COLSPAN=2 ALIGN=CENTER><NOBR>Phase C</NOBR><HR></TH></TR>\n", get_oclass()->get_name(), get_id());
 
 	int status = 2; // green
-	
-	//Check others - de-"macrotized" so it can do things indirectly
+
 	//No idea why meter and triplex_meter are in a link version - leaving because they were here before
-	if ((gl_object_isa(my(),"switch","powerflow") == true) || (gl_object_isa(my(),"regulator","powerflow") == true) || (gl_object_isa(my(),"triplex_meter","powerflow") == true) || (gl_object_isa(my(),"meter","powerflow") == true))
-	{
-		//Map to the function
+    if (
+        gl_object_isa(my(), "switch", "powerflow") ||
+        gl_object_isa(my(), "regulator", "powerflow") ||
+        gl_object_isa(my(), "triplex_meter", "powerflow") ||
+        gl_object_isa(my(), "meter", "powerflow")
+    )
+    {
+        //Map to the function
 		temp_funadd = (FUNCTIONADDR)(gl_get_function(obj,"pwr_object_kmldata"));
 
 		//See if it was located
-		if (temp_funadd == NULL)
+		if (temp_funadd == nullptr)
 		{
 			GL_THROW("object:%s - failed to map kmldata function",(obj->name?obj->name:"unnamed"));
 			//Defined above
@@ -3410,8 +3418,8 @@ int link_object::kmldump(int (*stream)(const char*,...))
 		node *pFrom = OBJECTDATA(from,node);
 		node *pTo = OBJECTDATA(to,node);
 		int phase[3] = {has_phase(PHASE_A),has_phase(PHASE_B),has_phase(PHASE_C)};
-		complex flow[3];
-		complex current[3];
+		gld::complex flow[3];
+		gld::complex current[3];
 		int i;
 		for (i=0; i<3; i++)
 		{
@@ -3531,7 +3539,7 @@ EXPORT int create_link(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(link_object::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			link_object *my = OBJECTDATA(*obj,link_object);
 			gl_set_parent(*obj,parent);
@@ -3636,7 +3644,7 @@ EXPORT int calculate_overlimit_link(OBJECT *obj, double *overload_value, bool *o
 	*overloaded = false;
 	
 	//Do another overall line limits check -- restoration does this, but just in case something else does, as well
-	if (use_link_limits == true)
+	if (use_link_limits)
 	{
 		//Call the current update -- do it as a "self call"
 		my->CurrentCalculation(-1,false);
@@ -3657,7 +3665,7 @@ EXPORT int currentcalculation_link(OBJECT *obj, int nodecall, bool link_fault_mo
 {
 	int status_rv;
 	link_object *my = OBJECTDATA(obj,link_object);
-	
+
 	//Call the current update -- do it as a "self call"
 	status_rv = my->CurrentCalculation(nodecall,link_fault_mode);
 
@@ -3676,8 +3684,8 @@ EXPORT int currentcalculation_link(OBJECT *obj, int nodecall, bool link_fault_mo
 */
 int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 {
-	complex *current_pointer_in;
-	complex *current_pointer_out;
+	gld::complex *current_pointer_in;
+	gld::complex *current_pointer_out;
 
 	//If we're FBS, just get out - assume success - mainly from API-directed-type calls
 	if (solver_method == SM_FBS)
@@ -3686,12 +3694,12 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 	}
 	//Default else -- NR, which is mostly how this gets called
 
-	if (current_accumulated==false)	//Only update if we haven't done so yet
+	if (!current_accumulated)	//Only update if we haven't done so yet
 	{
 		//Reset the deltamode-oriented flag, just because - will stay by exception
 		inrush_computations_needed = false;
 
-		if (link_fault_mode == true)
+		if (link_fault_mode)
 		{
 			current_pointer_in = &If_in[0];
 			current_pointer_out = &If_out[0];
@@ -3705,17 +3713,17 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 		if (is_closed())	//Only compute this if the overall link is "in service"
 		{
 			//Solve current equations to get current injections
-			node *fnode = NULL;
-			node *tnode = NULL;
-			node *ofnode = NULL;
-			OBJECT *fobjval = NULL;
-			OBJECT *tobjval = NULL;
-			complex vtemp[6];
-			complex itemp[3];
+			node *fnode = nullptr;
+			node *tnode = nullptr;
+			node *ofnode = nullptr;
+			OBJECT *fobjval = nullptr;
+			OBJECT *tobjval = nullptr;
+			gld::complex vtemp[6];
+			gld::complex itemp[3];
 			double vmagtemp[3];
-			complex current_temp[6];
-			complex shunt_current_val[6];
-			complex invsquared;
+			gld::complex current_temp[6];
+			gld::complex shunt_current_val[6];
+			gld::complex invsquared;
 			int jindex;
 			bool flock;	//Flags to know if from side needs locking
 
@@ -3761,7 +3769,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 			else if ((SpecialLnk == DELTADELTA) || (SpecialLnk == WYEWYE))
 			{
 				//See if we're in deltamode and in-rush enabled
-				if ((deltatimestep_running > 0) && (enable_inrush_calculations == true) && (SpecialLnk == WYEWYE))
+				if ((deltatimestep_running > 0) && enable_inrush_calculations && (SpecialLnk == WYEWYE))
 				{
 					//Pull in the voltages
 					vtemp[0] = fnode->voltage[0];
@@ -3782,7 +3790,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 
 					//Calcualte "shunt" components, as necessary
 					//From side
-					if (LinkHistTermCf != NULL)
+					if (LinkHistTermCf != nullptr)
 					{
 						//Perform ishunt_f = YMfrom*V-hfrom
 						lmatrix_vmult(YBase_Pri, &vtemp[0], &shunt_current_val[0], 3);
@@ -3795,13 +3803,13 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 					}
 					else	//Not there, just zero
 					{
-						shunt_current_val[0] = complex(0.0,0.0);
-						shunt_current_val[1] = complex(0.0,0.0);
-						shunt_current_val[2] = complex(0.0,0.0);
+						shunt_current_val[0] = gld::complex(0.0,0.0);
+						shunt_current_val[1] = gld::complex(0.0,0.0);
+						shunt_current_val[2] = gld::complex(0.0,0.0);
 					}
 
 					//To side
-					if (LinkHistTermCt != NULL)
+					if (LinkHistTermCt != nullptr)
 					{
 						//Perform ishunt_t = YMTo*V-hTo
 						lmatrix_vmult(YBase_Sec, &vtemp[3], &shunt_current_val[3], 3);
@@ -3814,13 +3822,13 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 					}
 					else	//Not there, just zero
 					{
-						shunt_current_val[3] = complex(0.0,0.0);
-						shunt_current_val[4] = complex(0.0,0.0);
-						shunt_current_val[5] = complex(0.0,0.0);
+						shunt_current_val[3] = gld::complex(0.0,0.0);
+						shunt_current_val[4] = gld::complex(0.0,0.0);
+						shunt_current_val[5] = gld::complex(0.0,0.0);
 					}
 
 					//See if saturation exists
-					if (saturation_calculated_vals != NULL)
+					if (saturation_calculated_vals != nullptr)
 					{
 						//Add in appropriate areas
 						for (jindex=0; jindex<6; jindex++)
@@ -3971,7 +3979,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 					}
 
 					//Check to see which mode we're in
-					if (link_fault_mode == false)
+					if (!link_fault_mode)
 					{
 						//Current in is just the same
 						ofnode->current_inj[0] += current_pointer_in[0];
@@ -4068,7 +4076,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 				}
 
 				//Check to see which mode we're in
-				if (link_fault_mode == false)
+				if (!link_fault_mode)
 				{
 					//Current in is just the same
 					ofnode->current_inj[0] += current_pointer_in[0];
@@ -4139,7 +4147,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 				}
 
 				//Check to see which mode we're in
-				if (link_fault_mode == false)
+				if (!link_fault_mode)
 				{
 					//Current in is just the same
 					ofnode->current_inj[0] += current_pointer_in[0];
@@ -4171,7 +4179,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 					}
 
 					//Check to see which mode we're in
-					if (link_fault_mode == false)
+					if (!link_fault_mode)
 					{
 						//Accumulate injection
 						ofnode->current_inj[0] += itemp[0];
@@ -4208,7 +4216,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 					}
 
 					//Check to see which mode we're in
-					if (link_fault_mode == false)
+					if (!link_fault_mode)
 					{
 						//Accumulate the injection
 						ofnode->current_inj[1] += itemp[0];
@@ -4246,7 +4254,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 					}
 
 					//Check to see which mode we're in
-					if (link_fault_mode == false)
+					if (!link_fault_mode)
 					{
 						//Accumulate the injection
 						ofnode->current_inj[2] += itemp[0];
@@ -4324,7 +4332,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 				}
 
 				//Check to see which mode we're in
-				if (link_fault_mode == false)
+				if (!link_fault_mode)
 				{
 					//Current in values go to the injection
 					ofnode->current_inj[0] += current_pointer_in[0];
@@ -4341,7 +4349,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 			else
 			{
 				//See if we're in deltamode and in-rush enabled
-				if ((deltatimestep_running > 0) && (enable_inrush_calculations == true) && (SpecialLnk == NORMAL))
+				if ((deltatimestep_running > 0) && enable_inrush_calculations && (SpecialLnk == NORMAL))
 				{
 					//(-a*Vout+Vin)
 					vtemp[0] = fnode->voltage[0]-
@@ -4360,7 +4368,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 							   a_mat[2][2]*tnode->voltage[2];
 
 					//See if line capacitance is enabled
-					if (use_line_cap == true)
+					if (use_line_cap)
 					{
 						//Compute shunt current values
 						if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
@@ -4377,8 +4385,8 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 						}
 						else	//Nope, zero these
 						{
-							shunt_current_val[0] = complex(0.0,0.0);
-							shunt_current_val[3] = complex(0.0,0.0);
+							shunt_current_val[0] = gld::complex(0.0,0.0);
+							shunt_current_val[3] = gld::complex(0.0,0.0);
 						}
 
 						//Compute shunt current values
@@ -4396,8 +4404,8 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 						}
 						else	//Nope, zero these
 						{
-							shunt_current_val[1] = complex(0.0,0.0);
-							shunt_current_val[4] = complex(0.0,0.0);
+							shunt_current_val[1] = gld::complex(0.0,0.0);
+							shunt_current_val[4] = gld::complex(0.0,0.0);
 						}
 
 						//Compute shunt current values
@@ -4415,14 +4423,14 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 						}
 						else	//Nope, zero these
 						{
-							shunt_current_val[2] = complex(0.0,0.0);
-							shunt_current_val[5] = complex(0.0,0.0);
+							shunt_current_val[2] = gld::complex(0.0,0.0);
+							shunt_current_val[5] = gld::complex(0.0,0.0);
 						}
 					}
 					else	//Just zero the values out - 0-2 = from, 3-5 = to
 					{
-						shunt_current_val[0] = shunt_current_val[1] = shunt_current_val[2] = complex(0.0,0.0);
-						shunt_current_val[3] = shunt_current_val[4] = shunt_current_val[5] = complex(0.0,0.0);
+						shunt_current_val[0] = shunt_current_val[1] = shunt_current_val[2] = gld::complex(0.0,0.0);
+						shunt_current_val[3] = shunt_current_val[4] = shunt_current_val[5] = gld::complex(0.0,0.0);
 					}
 
 					//See if phases are valid
@@ -4579,7 +4587,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 				}
 
 				//Check to see which mode we're in
-				if (link_fault_mode == false)
+				if (!link_fault_mode)
 				{
 					//Current in is just the same
 					ofnode->current_inj[0] += current_pointer_in[0];
@@ -4622,7 +4630,7 @@ SIMULATIONMODE link_object::inter_deltaupdate_link(unsigned int64 delta_time, un
 {
 	//OBJECT *hdr = OBJECTHDR(this);
 
-	if (interupdate_pos == false)	//Before powerflow call
+	if (!interupdate_pos)	//Before powerflow call
 	{
 		//Link presync stuff
 		NR_link_presync_fxn();
@@ -4635,10 +4643,10 @@ SIMULATIONMODE link_object::inter_deltaupdate_link(unsigned int64 delta_time, un
 		BOTH_link_postsync_fxn();
 
 		//See if we're in-rush-desired.  If so, check that we're ready to leave
-		if (enable_inrush_calculations == true)
+		if (enable_inrush_calculations)
 		{
 			//See if we lack confidence to exit
-			if (inrush_computations_needed == false)	//We're happy/don't care, onward!
+			if (!inrush_computations_needed)	//We're happy/don't care, onward!
 			{
 				return SM_EVENT;
 			}
@@ -4671,11 +4679,11 @@ void link_object::calculate_power_splitphase()
 				
 			//Follows convention of three phase calculations below
 			indiv_power_in[0] = f->voltage[0]*~current_in[0];
-			indiv_power_in[1] = complex(-1.0) * f->voltage[1]*~current_in[1];
+			indiv_power_in[1] = gld::complex(-1.0) * f->voltage[1]*~current_in[1];
 			indiv_power_in[2] = f->voltage[2]*~current_in[2];
 
 			indiv_power_out[0] = t->voltage[0]*~current_out[0];
-			indiv_power_out[1] = complex(-1.0) * t->voltage[1]*~current_out[1];
+			indiv_power_out[1] = gld::complex(-1.0) * t->voltage[1]*~current_out[1];
 			indiv_power_out[2] = t->voltage[2]*~current_out[2];
 		}
 		else  
@@ -4689,7 +4697,7 @@ void link_object::calculate_power_splitphase()
 			indiv_power_in[2] = f->voltage[2]*~current_in[2];
 
 			indiv_power_out[0] = t->voltage[0]*~current_out[0];
-			indiv_power_out[1] = complex(-1.0) * t->voltage[1]*~current_out[1];
+			indiv_power_out[1] = gld::complex(-1.0) * t->voltage[1]*~current_out[1];
 			indiv_power_out[2] = t->voltage[2]*~current_out[2];
 
 		}
@@ -4697,7 +4705,7 @@ void link_object::calculate_power_splitphase()
 	else
 	{
 		READLOCK_OBJECT(to);
-		complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
+		gld::complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
 		READUNLOCK_OBJECT(to);
 
 		if (SpecialLnk!=SPLITPHASE) 
@@ -4708,11 +4716,11 @@ void link_object::calculate_power_splitphase()
 				
 			//Follows convention of three phase calculations below
 			indiv_power_in[0] = f->voltage[0]*~current_in[0];
-			indiv_power_in[1] = complex(-1.0) * f->voltage[1]*~current_in[1];
+			indiv_power_in[1] = gld::complex(-1.0) * f->voltage[1]*~current_in[1];
 			indiv_power_in[2] = f->voltage[2]*~current_in[2];
 
 			indiv_power_out[0] = t->voltage[0]*~tc[0];
-			indiv_power_out[1] = complex(-1.0) * t->voltage[1]*~tc[1];
+			indiv_power_out[1] = gld::complex(-1.0) * t->voltage[1]*~tc[1];
 			indiv_power_out[2] = t->voltage[2]*~tc[2];
 		}
 		else  
@@ -4726,7 +4734,7 @@ void link_object::calculate_power_splitphase()
 			indiv_power_in[2] = f->voltage[2]*~current_in[2];
 
 			indiv_power_out[0] = t->voltage[0]*~tc[0];
-			indiv_power_out[1] = complex(-1.0) * t->voltage[1]*~tc[1];
+			indiv_power_out[1] = gld::complex(-1.0) * t->voltage[1]*~tc[1];
 			indiv_power_out[2] = t->voltage[2]*~tc[2];
 		}
 	}
@@ -4765,7 +4773,7 @@ void link_object::calculate_power_splitphase()
 					indiv_power_loss[i].Re() = -indiv_power_loss[i].Re();
 			}
 			else
-				indiv_power_loss[i] = complex(0,0);
+				indiv_power_loss[i] = gld::complex(0,0);
 		}
 	}
 	//Calculate overall losses
@@ -4836,7 +4844,7 @@ void link_object::calculate_power()
 			indiv_power_in[2] = f->voltage[2]*~current_in[2];
 
 			READLOCK_OBJECT(to);
-			complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
+			gld::complex tc[] = {t->current_inj[0], t->current_inj[1], t->current_inj[2]};
 			READUNLOCK_OBJECT(to);
 
 			indiv_power_out[0] = t->voltage[0]*~tc[0];
@@ -4876,11 +4884,11 @@ void link_object::calculate_power()
 }
 
 //Retrieve value of a double
-double *link_object::get_double(OBJECT *obj, char *name)
+double *link_object::get_double(OBJECT *obj, const char *name)
 {
 	PROPERTY *p = gl_get_property(obj,name);
-	if (p==NULL || p->ptype!=PT_double)
-		return NULL;
+	if (p==nullptr || p->ptype!=PT_double)
+		return nullptr;
 	return (double*)GETADDR(obj,p);
 }
 
@@ -4932,34 +4940,34 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 	unsigned int temp_table_loc;
 	OBJECT *objhdr = OBJECTHDR(this);
 	OBJECT *tmpobj;
-	FUNCTIONADDR funadd = NULL;
+	FUNCTIONADDR funadd = nullptr;
 	double type_fault;
 	bool switch_val;
-	complex C_mat[7][7];
+	gld::complex C_mat[7][7];
 	int64 pf_resultval;
 	bool pf_badcompute;
 	NR_MESHFAULT_IMPEDANCE pf_mesh_fault_values;
 	NRSOLVERMODE pf_solvermode;
-	complex pf_mesh_fault_impedance_matrix[3][3];
-	complex CI_mat[3][3];
-	complex CV_mat[3][3];
+	gld::complex pf_mesh_fault_impedance_matrix[3][3];
+	gld::complex CI_mat[3][3];
+	gld::complex CV_mat[3][3];
 
 	//Check to see which mode we are in
-	if (meshed_fault_checking_enabled == false)	//"Normal" mode
+	if (!meshed_fault_checking_enabled)	//"Normal" mode
 	{
 		// set defaults for C_mat
 		for(int n=0; n<7; n++){
 			for(int m=0; m<7; m++) {
-				C_mat[n][m]=complex(0,0);
+				C_mat[n][m]=gld::complex(0,0);
 			}
 		}
-		C_mat[0][0]=C_mat[1][1]=C_mat[2][2]=complex(1,0);
+		C_mat[0][0]=C_mat[1][1]=C_mat[2][2]=gld::complex(1,0);
 		
 		//Default switch_val - special case
 		switch_val = false;
 
 		//Protective device set to NULL (should already be this way, but just in case)
-		*protect_obj = NULL;
+		*protect_obj = nullptr;
 
 		//Default repair time is non-existant
 		*repair_time = 0;
@@ -6038,7 +6046,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		else if ((fault_type[0] == 'S') && (fault_type[1] == 'W') && (fault_type[2] == '-'))	//Switch operations - event or user induced (no random - so handled slightly different)
 		{
 			//See if we're in mesh-searching mode or not
-			if (meshed_fault_checking_enabled == true)
+			if (meshed_fault_checking_enabled)
 			{
 				//Determine which scenario we're in
 				if ((fault_type[3] == 'A') && (fault_type[4] == '\0'))	//Phase A occurance
@@ -7059,47 +7067,47 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 			//set up the remaining 4 fault specific equations in C_mat before calculating the fault current
 			if(*implemented_fault == 1){ //SLG-A -> Ifb=Ifc=Vax=Vxg=0
-				C_mat[3][1]=C_mat[4][2]=C_mat[5][3]=C_mat[6][6]=complex(1,0);
+				C_mat[3][1]=C_mat[4][2]=C_mat[5][3]=C_mat[6][6]=gld::complex(1,0);
 				type_fault = 1;
 				fault_current_calc(C_mat, phase_remove, type_fault);
 			} else if(*implemented_fault == 2){ //SLG-B -> Ifa=Ifc=Vbx=Vxg=0
-				C_mat[3][0]=C_mat[4][2]=C_mat[5][4]=C_mat[6][6]=complex(1,0);
+				C_mat[3][0]=C_mat[4][2]=C_mat[5][4]=C_mat[6][6]=gld::complex(1,0);
 				type_fault = 2;
 				fault_current_calc(C_mat, phase_remove, type_fault);
 			} else if(*implemented_fault == 3){ //SLG-C -> Ifa=Ifb=Vcx=Vxg=0
-				C_mat[3][0]=C_mat[4][1]=C_mat[5][5]=C_mat[6][6]=complex(1,0);
+				C_mat[3][0]=C_mat[4][1]=C_mat[5][5]=C_mat[6][6]=gld::complex(1,0);
 				type_fault = 3;
 				fault_current_calc(C_mat, phase_remove, type_fault);
 			} else if(*implemented_fault == 4){ //DLG-AB -> Ifc=Vax=Vbx=Vxg=0
-				C_mat[3][2]=C_mat[4][3]=C_mat[5][4]=C_mat[6][6]=complex(1,0);
+				C_mat[3][2]=C_mat[4][3]=C_mat[5][4]=C_mat[6][6]=gld::complex(1,0);
 				type_fault = 4;
 				fault_current_calc(C_mat, phase_remove, type_fault);
 			} else if(*implemented_fault == 5){ //DLG-BC -> Ifa=Vbx=Vcx=Vxg=0
-				C_mat[3][0]=C_mat[4][4]=C_mat[5][5]=C_mat[6][6]=complex(1,0);
+				C_mat[3][0]=C_mat[4][4]=C_mat[5][5]=C_mat[6][6]=gld::complex(1,0);
 				type_fault = 5;
 				fault_current_calc(C_mat, phase_remove, type_fault);
 			} else if(*implemented_fault == 6){ //DLG-CA -> Ifb=Vax=Vcx=Vxg=0
-				C_mat[3][1]=C_mat[4][3]=C_mat[5][5]=C_mat[6][6]=complex(1,0);
+				C_mat[3][1]=C_mat[4][3]=C_mat[5][5]=C_mat[6][6]=gld::complex(1,0);
 				type_fault = 6;
 				fault_current_calc(C_mat, phase_remove, type_fault);
 			} else if(*implemented_fault == 7){ //LL-AB -> Ifa+Ifb=Ifc=Vax=Vbx=0
-				C_mat[3][0]=C_mat[3][1]=C_mat[4][2]=C_mat[5][3]=C_mat[6][4]=complex(1,0);
+				C_mat[3][0]=C_mat[3][1]=C_mat[4][2]=C_mat[5][3]=C_mat[6][4]=gld::complex(1,0);
 				type_fault = 7;
 				fault_current_calc(C_mat, phase_remove, type_fault);
 			} else if(*implemented_fault == 8){ //LL-BC -> Ifb+Ifc=Ifa=Vbx=Vcx=0
-				C_mat[3][1]=C_mat[3][2]=C_mat[4][0]=C_mat[5][4]=C_mat[6][5]=complex(1,0);
+				C_mat[3][1]=C_mat[3][2]=C_mat[4][0]=C_mat[5][4]=C_mat[6][5]=gld::complex(1,0);
 				type_fault = 8;
 				fault_current_calc(C_mat, phase_remove, type_fault);
 			} else if(*implemented_fault == 9){ //LL-CA -> Ifa+Ifc=Ifb=Vax=Vcx=0
-				C_mat[3][0]=C_mat[3][2]=C_mat[4][1]=C_mat[5][3]=C_mat[6][5]=complex(1,0);
+				C_mat[3][0]=C_mat[3][2]=C_mat[4][1]=C_mat[5][3]=C_mat[6][5]=gld::complex(1,0);
 				type_fault = 9;
 				fault_current_calc(C_mat, phase_remove, type_fault);
 			} else if(*implemented_fault == 10){ //TLG-ABC -> Vax=Vbx=Vcx=Vxg=0
-				C_mat[3][3]=C_mat[4][4]=C_mat[5][5]=C_mat[6][6]=complex(1,0);
+				C_mat[3][3]=C_mat[4][4]=C_mat[5][5]=C_mat[6][6]=gld::complex(1,0);
 				type_fault = 10;
 				fault_current_calc(C_mat, phase_remove, type_fault);
 			} else if(*implemented_fault == 32){ //TLL-ABC -> Ifa+Ifb+Ifc=Vax=Vbx=Vcx=0
-				C_mat[3][0]=C_mat[3][1]=C_mat[3][2]=C_mat[4][3]=C_mat[5][4]=C_mat[6][5]=complex(1,0);
+				C_mat[3][0]=C_mat[3][1]=C_mat[3][2]=C_mat[4][3]=C_mat[5][4]=C_mat[6][5]=gld::complex(1,0);
 				type_fault = 11;
 				fault_current_calc(C_mat, phase_remove, type_fault);
 			}
@@ -7118,7 +7126,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Get the fuse
 				tmpobj = NR_branchdata[NR_branch_reference].obj;
 
-				if (tmpobj == NULL)
+				if (tmpobj == nullptr)
 				{
 					GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[NR_branch_reference].name);
 					/*  TROUBLESHOOT
@@ -7130,7 +7138,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
 				
 				//Make sure it was found
-				if (funadd == NULL)
+				if (funadd == nullptr)
 				{
 					GL_THROW("Unable to change fuse state on %s",tmpobj->name);
 					/*  TROUBLESHOOT
@@ -7153,7 +7161,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 				//See if it worked
-				if (temp_double_val == NULL)
+				if (temp_double_val == nullptr)
 				{
 					gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
 					/*  TROUBLESHOOT
@@ -7198,7 +7206,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Get the recloser
 				tmpobj = NR_branchdata[NR_branch_reference].obj;
 
-				if (tmpobj == NULL)
+				if (tmpobj == nullptr)
 				{
 					GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[NR_branch_reference].name);
 					/*  TROUBLESHOOT
@@ -7210,7 +7218,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_state"));
 				
 				//Make sure it was found
-				if (funadd == NULL)
+				if (funadd == nullptr)
 				{
 					GL_THROW("Unable to change recloser state on %s",tmpobj->name);
 					/*  TROUBLESHOOT
@@ -7233,7 +7241,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 				//See if it worked
-				if (temp_double_val == NULL)
+				if (temp_double_val == nullptr)
 				{
 					gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
 					//Defined above
@@ -7278,7 +7286,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Get the switch
 				tmpobj = NR_branchdata[NR_branch_reference].obj;
 
-				if (tmpobj == NULL)
+				if (tmpobj == nullptr)
 				{
 					GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[NR_branch_reference].name);
 					/*  TROUBLESHOOT
@@ -7290,7 +7298,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_state"));
 				
 				//Make sure it was found
-				if (funadd == NULL)
+				if (funadd == nullptr)
 				{
 					GL_THROW("Unable to change switch state on %s",tmpobj->name);
 					/*  TROUBLESHOOT
@@ -7313,7 +7321,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 				//See if it worked
-				if (temp_double_val == NULL)
+				if (temp_double_val == nullptr)
 				{
 					gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
 					//Defined above
@@ -7354,7 +7362,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			//Start up the loop - populate initial variable
 			temp_branch = NR_branch_reference;
 
-			while (safety_hit != true)
+			while (!safety_hit)
 			{
 				//Pull from bus of current link
 				temp_node = NR_branchdata[temp_branch].from;
@@ -7376,7 +7384,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					//Get the swing bus value
 					tmpobj = NR_busdata[temp_node].obj;
 
-					if (tmpobj == NULL)
+					if (tmpobj == nullptr)
 					{
 						GL_THROW("An attempt to find the swing node %s failed.",NR_busdata[temp_node].name);
 						/*  TROUBLESHOOT
@@ -7389,7 +7397,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 					//See if it worked
-					if (temp_double_val == NULL)
+					if (temp_double_val == nullptr)
 					{
 						gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
 						//Defined above
@@ -7426,7 +7434,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Get the recloser
 								tmpobj = NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].obj;
 
-								if (tmpobj == NULL)
+								if (tmpobj == nullptr)
 								{
 									GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
 									/*  TROUBLESHOOT
@@ -7438,7 +7446,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_state"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change recloser state on %s",tmpobj->name);
 									/*  TROUBLESHOOT
@@ -7461,7 +7469,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 								//See if it worked
-								if (temp_double_val == NULL)
+								if (temp_double_val == nullptr)
 								{
 									gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
 									//Defined above
@@ -7508,7 +7516,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Get the switch
 								tmpobj = NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].obj;
 
-								if (tmpobj == NULL)
+								if (tmpobj == nullptr)
 								{
 									GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
 									/*  TROUBLESHOOT
@@ -7520,7 +7528,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_state"));
 
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change switch state on %s",tmpobj->name);
 									/*  TROUBLESHOOT
@@ -7543,7 +7551,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 								//See if it worked
-								if (temp_double_val == NULL)
+								if (temp_double_val == nullptr)
 								{
 									gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
 									//Defined above
@@ -7582,7 +7590,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Get the sectionalizer
 								tmpobj = NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].obj;
 
-								if (tmpobj == NULL)
+								if (tmpobj == nullptr)
 								{
 									GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
 									/*  TROUBLESHOOT
@@ -7594,7 +7602,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_state"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
 									/*  TROUBLESHOOT
@@ -7625,7 +7633,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 									temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 									//See if it worked
-									if (temp_double_val == NULL)
+									if (temp_double_val == nullptr)
 									{
 										gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
 										//Defined above
@@ -7671,7 +7679,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Get the fuse
 								tmpobj = NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].obj;
 
-								if (tmpobj == NULL)
+								if (tmpobj == nullptr)
 								{
 									GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
 									/*  TROUBLESHOOT
@@ -7683,7 +7691,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
 									/*  TROUBLESHOOT
@@ -7706,7 +7714,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 								//See if it worked
-								if (temp_double_val == NULL)
+								if (temp_double_val == nullptr)
 								{
 									gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
 									//Defined above
@@ -7748,7 +7756,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Get the transformer
 								tmpobj = NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].obj;
 
-								if (tmpobj == NULL)
+								if (tmpobj == nullptr)
 								{
 									GL_THROW("An attempt to alter transformer %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
 									/*  TROUBLESHOOT
@@ -7770,7 +7778,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 								//See if it worked
-								if (temp_double_val == NULL)
+								if (temp_double_val == nullptr)
 								{
 									gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
 									//Defined above
@@ -7824,7 +7832,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			funadd = (FUNCTIONADDR)(gl_get_function(fault_check_object,"reliability_alterations"));
 			
 			//Make sure it was found
-			if (funadd == NULL)
+			if (funadd == nullptr)
 			{
 				GL_THROW("Unable to update objects for reliability effects");
 				/*  TROUBLESHOOT
@@ -7877,24 +7885,24 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		// set defaults for C_mat
 		for(int n=0; n<7; n++){
 			for(int m=0; m<7; m++) {
-				C_mat[n][m]=complex(0,0);
+				C_mat[n][m]=gld::complex(0,0);
 			}
 		}
 
 		for(int n=0; n<3; n++){
 			for(int m=0; m<3; m++) {
-				CI_mat[n][m]=complex(0,0);
-				CV_mat[n][m]=complex(0,0);
+				CI_mat[n][m]=gld::complex(0,0);
+				CV_mat[n][m]=gld::complex(0,0);
 			}
 		}
 
-		C_mat[0][0]=C_mat[1][1]=C_mat[2][2]=complex(1,0);
+		C_mat[0][0]=C_mat[1][1]=C_mat[2][2]=gld::complex(1,0);
 		
 		//Default switch_val - special case
 		switch_val = false;
 
 		//Protective device set to NULL (should already be this way, but just in case)
-		*protect_obj = NULL;
+		*protect_obj = nullptr;
 
 		//Default repair time is non-existant
 		*repair_time = 0;
@@ -7911,7 +7919,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 		//Call the solver for the impedance grab - do this prior to the code below removing phases
 		//******************* NOTE -- This may have issues with "non-eventgen" items, like switch opens or fuse blows -- test! *****/
-		if ((enable_mesh_fault_current == true) && (prev_LTime != 0))	//Make sure we're in mesh mode and not the first timestep
+		if (enable_mesh_fault_current && (prev_LTime != 0))	//Make sure we're in mesh mode and not the first timestep
 		{
 			//Init variables
 			pf_badcompute = false;
@@ -7926,10 +7934,13 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			pf_mesh_fault_values.NodeRefNum = NR_branchdata[NR_branch_reference].to;
 
 			//Call the powerflow/impednace creater
-			pf_resultval = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, pf_solvermode, &pf_mesh_fault_values, &pf_badcompute);
-
+#ifndef GLD_USE_EIGEN
+        pf_resultval = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, pf_solvermode, &pf_mesh_fault_values, &pf_badcompute);
+#else
+        pf_resultval = 0;
+#endif
 			//Check the output
-			if ((pf_badcompute == true) || (pf_mesh_fault_values.return_code != 1) || (pf_resultval <= 0))
+			if (pf_badcompute || (pf_mesh_fault_values.return_code != 1) || (pf_resultval <= 0))
 			{
 				GL_THROW("link:%d - %s -- Mesh-based fault impedance update failure",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 				/*  TROUBLESHOOT
@@ -9727,203 +9738,203 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			UNLOCK_OBJECT(NR_swing_bus);	//Release us
 
 			//See which fault current mode we are leveraging
-			if (enable_mesh_fault_current == true)	//Mesh fault current
+			if (enable_mesh_fault_current)	//Mesh fault current
 			{
 				if (prev_LTime != 0)	//Make sure we're not the very first pass of a timestep - theoretically, the old method hates this too
 				{
 					//set up the remaining 4 fault specific equations in C_mat before calculating the fault current
 					if(*implemented_fault == 1){ //SLG-A -> Ifb=Ifc=Vax=Vxg=0
 						if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x03) { //three-phase: ABC. check if BC is in phases
-							CI_mat[1][1] = CI_mat[2][2]=complex(1,0);
+							CI_mat[1][1] = CI_mat[2][2]=gld::complex(1,0);
 							CI_mat[0][0] = fault_Z*-1.0;
-							CV_mat[0][0] = complex(1,0);
+							CV_mat[0][0] = gld::complex(1,0);
 							type_fault = 133;
 						}
 						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x02) { //two phase: AB. Check for B phases
-							CI_mat[0][1] = complex(1,0);
+							CI_mat[0][1] = gld::complex(1,0);
 							CI_mat[1][0] = fault_Z*-1.0;
-							CV_mat[1][0] = complex(1,0);
+							CV_mat[1][0] = gld::complex(1,0);
 							type_fault = 1221;
 						}
 						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x01) { //two phase: AC. Check for C in phases
-							CI_mat[0][1] = complex(1,0);
+							CI_mat[0][1] = gld::complex(1,0);
 							CI_mat[1][0] = fault_Z*-1.0;
-							CV_mat[1][0] = complex(1,0);
+							CV_mat[1][0] = gld::complex(1,0);
 							type_fault = 1222;
 						}
 						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x00) { //single-phase: only A. There should be nothing in phases
 							CI_mat[0][0] = fault_Z*-1.0;
-							CV_mat[0][0] = complex(1,0);
+							CV_mat[0][0] = gld::complex(1,0);
 							type_fault = 111;
 						}
 						mesh_fault_current_calc(pf_mesh_fault_impedance_matrix,CV_mat,CI_mat,NR_busdata[NR_swing_bus_reference].V,type_fault);
 
 					} else if(*implemented_fault == 2){ //SLG-B -> Ifa=Ifc=Vbx=Vxg=0
 						if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x05) { //three-phase: ABC. check if AC is in phases
-							CI_mat[0][0] = CI_mat[2][2]=complex(1,0);
+							CI_mat[0][0] = CI_mat[2][2]=gld::complex(1,0);
 							CI_mat[1][1] = fault_Z*-1.0;
-							CV_mat[1][1] = complex(1,0);
+							CV_mat[1][1] = gld::complex(1,0);
 							type_fault = 233;
 						}
 						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x04) { //two phase: AB. Check for A in phases
-							CI_mat[0][1] = complex(1,0);
+							CI_mat[0][1] = gld::complex(1,0);
 							CI_mat[1][0] = fault_Z*-1.0;
-							CV_mat[1][0] = complex(1,0);
+							CV_mat[1][0] = gld::complex(1,0);
 							type_fault = 2221;
 						}
 						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x01) { //two phase: BC. Check for C in phases
-							CI_mat[0][1] = complex(1,0);
+							CI_mat[0][1] = gld::complex(1,0);
 							CI_mat[1][0] = fault_Z*-1.0;
-							CV_mat[1][0] = complex(1,0);
+							CV_mat[1][0] = gld::complex(1,0);
 							type_fault = 2222;
 						}
 						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x00) { //single-phase: only B. There should be nothing in phases
 							CI_mat[0][0] = fault_Z*-1.0;
-							CV_mat[0][0] = complex(1,0);
+							CV_mat[0][0] = gld::complex(1,0);
 							type_fault = 211;
 						}
 						mesh_fault_current_calc(pf_mesh_fault_impedance_matrix,CV_mat,CI_mat,NR_busdata[NR_swing_bus_reference].V,type_fault);
 
 					} else if(*implemented_fault == 3){ //SLG-C -> Ifa=Ifb=Vcx=Vxg=0
 						if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x06) { //three-phase: ABC. check if AB is in phases
-							CI_mat[0][0] = CI_mat[1][1]=complex(1,0);
+							CI_mat[0][0] = CI_mat[1][1]=gld::complex(1,0);
 							CI_mat[2][2] = fault_Z*-1.0;
-							CV_mat[2][2] = complex(1,0);
+							CV_mat[2][2] = gld::complex(1,0);
 							type_fault = 333;
 						}
 						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x04) { //two phase: AC. Check for A in phases
-							CI_mat[0][1] = complex(1,0);
+							CI_mat[0][1] = gld::complex(1,0);
 							CI_mat[1][0] = fault_Z*-1.0;
-							CV_mat[1][0] = complex(1,0);
+							CV_mat[1][0] = gld::complex(1,0);
 							type_fault = 3221;
 						}
 						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x02) { //two phase: BC. Check for B in phases
-							CI_mat[0][1] = complex(1,0);
+							CI_mat[0][1] = gld::complex(1,0);
 							CI_mat[1][0] = fault_Z*-1.0;
-							CV_mat[1][0] = complex(1,0);
+							CV_mat[1][0] = gld::complex(1,0);
 							type_fault = 3222;
 						}
 						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x00) { //single-phase: only C. There should be nothing in phases
 							CI_mat[0][0] = fault_Z*-1.0;
-							CV_mat[0][0] = complex(1,0);
+							CV_mat[0][0] = gld::complex(1,0);
 							type_fault = 311;
 						}
 						mesh_fault_current_calc(pf_mesh_fault_impedance_matrix,CV_mat,CI_mat,NR_busdata[NR_swing_bus_reference].V,type_fault);
 
 					} else if(*implemented_fault == 4){ //DLG-AB -> Ifc=Vax=Vbx=Vxg=0
 						if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x01) { //three-phase: ABC. check if C is in phases
-							CI_mat[0][2] = complex(1,0);
+							CI_mat[0][2] = gld::complex(1,0);
 							CI_mat[1][0] = CI_mat[2][1] = (fault_Z + ground_Z)*-1.0;
 							CI_mat[1][1] = CI_mat[2][0] = ground_Z*-1.0;
-							CV_mat[1][0] = CV_mat[2][1] = complex(1,0);
+							CV_mat[1][0] = CV_mat[2][1] = gld::complex(1,0);
 							type_fault = 433;
 						}
 						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x00) { //two phase: AB. There shold be nothing in phases
 							CI_mat[0][0] = CI_mat[1][1] =  (fault_Z + ground_Z)*-1.0;
 							CI_mat[0][1] = CI_mat[1][0] =  ground_Z*-1.0;
-							CV_mat[0][0] = CV_mat[1][1] = complex(1,0);
+							CV_mat[0][0] = CV_mat[1][1] = gld::complex(1,0);
 							type_fault = 422;
 						}
 						mesh_fault_current_calc(pf_mesh_fault_impedance_matrix,CV_mat,CI_mat,NR_busdata[NR_swing_bus_reference].V,type_fault);
 
 					} else if(*implemented_fault == 5){ //DLG-BC -> Ifa=Vbx=Vcx=Vxg=0
 						if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x04) { //three-phase: ABC. check if A is in phases
-							CI_mat[0][0] = complex(1,0);
+							CI_mat[0][0] = gld::complex(1,0);
 							CI_mat[1][1] = CI_mat[2][2] = (fault_Z + ground_Z)*-1.0;
 							CI_mat[1][2] = CI_mat[2][1] = ground_Z*-1.0;
-							CV_mat[1][1] = CV_mat[2][2] = complex(1,0);
+							CV_mat[1][1] = CV_mat[2][2] = gld::complex(1,0);
 							type_fault = 533;
 						}
 						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x00) { //two phase: BC. There shold be nothing in phases
 							CI_mat[0][0] = CI_mat[1][1] =  (fault_Z + ground_Z)*-1.0;
 							CI_mat[0][1] = CI_mat[1][0] =  ground_Z*-1.0;
-							CV_mat[0][0] = CV_mat[1][1] = complex(1,0);
+							CV_mat[0][0] = CV_mat[1][1] = gld::complex(1,0);
 							type_fault = 522;
 						}
 						mesh_fault_current_calc(pf_mesh_fault_impedance_matrix,CV_mat,CI_mat,NR_busdata[NR_swing_bus_reference].V,type_fault);
 						
 					} else if(*implemented_fault == 6){ //DLG-CA -> Ifb=Vax=Vcx=Vxg=0
 						if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x02) { //three-phase: ABC. check if B is in phases
-							CI_mat[0][1] = complex(1,0);
+							CI_mat[0][1] = gld::complex(1,0);
 							CI_mat[1][2] = CI_mat[2][0] = (fault_Z + ground_Z)*-1.0;
 							CI_mat[1][0] = CI_mat[2][2] = ground_Z*-1.0;
-							CV_mat[1][2] = CV_mat[2][0] = complex(1,0);
+							CV_mat[1][2] = CV_mat[2][0] = gld::complex(1,0);
 							type_fault = 633;
 						}
 						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x00) { //two phase: CA. There shold be nothing in phases
 							CI_mat[0][0] = CI_mat[1][1] =  (fault_Z + ground_Z)*-1.0;
 							CI_mat[0][1] = CI_mat[1][0] =  ground_Z*-1.0;
-							CV_mat[0][0] = CV_mat[1][1] = complex(1,0);
+							CV_mat[0][0] = CV_mat[1][1] = gld::complex(1,0);
 							type_fault = 622;
 						}
 						mesh_fault_current_calc(pf_mesh_fault_impedance_matrix,CV_mat,CI_mat,NR_busdata[NR_swing_bus_reference].V,type_fault);
 						
 					} else if(*implemented_fault == 7){ //LL-AB -> Ifa+Ifb=Ifc=Vax=Vbx=0
 						if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x01) { //three-phase: ABC. check if C is in phases
-							CI_mat[0][2] = CI_mat[1][0] = CI_mat[1][1]=complex(1,0);
+							CI_mat[0][2] = CI_mat[1][0] = CI_mat[1][1]=gld::complex(1,0);
 							CI_mat[2][0] = fault_Z*-1.0;
-							CV_mat[2][0] = complex(1,0);
-							CV_mat[2][1] = complex(-1,0);
+							CV_mat[2][0] = gld::complex(1,0);
+							CV_mat[2][1] = gld::complex(-1,0);
 							type_fault = 733;
 						}
 						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x00) { //two phase: AB. There shold be nothing in phases
-							CI_mat[0][0] = CI_mat[0][1] =  complex(1,0);
+							CI_mat[0][0] = CI_mat[0][1] =  gld::complex(1,0);
 							CI_mat[1][0] = fault_Z*-1.0;
-							CV_mat[1][0] = complex(1,0);
-							CV_mat[1][1] = complex(-1,0);
+							CV_mat[1][0] = gld::complex(1,0);
+							CV_mat[1][1] = gld::complex(-1,0);
 							type_fault = 722;
 						}
 						mesh_fault_current_calc(pf_mesh_fault_impedance_matrix,CV_mat,CI_mat,NR_busdata[NR_swing_bus_reference].V,type_fault);
 						
 					} else if(*implemented_fault == 8){ //LL-BC -> Ifb+Ifc=Ifa=Vbx=Vcx=0
 						if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x04) { //three-phase: ABC. check if A is in phases
-							CI_mat[0][0] = CI_mat[1][1] = CI_mat[1][2]=complex(1,0);
+							CI_mat[0][0] = CI_mat[1][1] = CI_mat[1][2]=gld::complex(1,0);
 							CI_mat[2][1] = fault_Z*-1.0;
-							CV_mat[2][1] = complex(1,0);
-							CV_mat[2][2] = complex(-1,0);
+							CV_mat[2][1] = gld::complex(1,0);
+							CV_mat[2][2] = gld::complex(-1,0);
 							type_fault = 833;
 						}
 						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x00) { //two phase: BC. There shold be nothing in phases
-							CI_mat[0][0] = CI_mat[0][1] =  complex(1,0);
+							CI_mat[0][0] = CI_mat[0][1] =  gld::complex(1,0);
 							CI_mat[1][0] = fault_Z*-1.0;
-							CV_mat[1][0] = complex(1,0);
-							CV_mat[1][1] = complex(-1,0);
+							CV_mat[1][0] = gld::complex(1,0);
+							CV_mat[1][1] = gld::complex(-1,0);
 							type_fault = 822;
 						}
 						mesh_fault_current_calc(pf_mesh_fault_impedance_matrix,CV_mat,CI_mat,NR_busdata[NR_swing_bus_reference].V,type_fault);
 						
 					} else if(*implemented_fault == 9){ //LL-CA -> Ifa+Ifc=Ifb=Vax=Vcx=0
 						if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x02) { //three-phase: ABC. check if B is in phases
-							CI_mat[0][1] = CI_mat[1][0] = CI_mat[1][2]=complex(1,0);
+							CI_mat[0][1] = CI_mat[1][0] = CI_mat[1][2]=gld::complex(1,0);
 							CI_mat[2][2] = fault_Z*-1.0;
-							CV_mat[2][2] = complex(1,0);
-							CV_mat[2][0] = complex(-1,0);
+							CV_mat[2][2] = gld::complex(1,0);
+							CV_mat[2][0] = gld::complex(-1,0);
 							type_fault = 933;
 						}
 						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x00) { //two phase: CA. There shold be nothing in phases
-							CI_mat[0][0] = CI_mat[0][1] =  complex(1,0);
+							CI_mat[0][0] = CI_mat[0][1] =  gld::complex(1,0);
 							CI_mat[1][0] = fault_Z*-1.0;
-							CV_mat[1][0] = complex(1,0);
-							CV_mat[1][1] = complex(-1,0);
+							CV_mat[1][0] = gld::complex(1,0);
+							CV_mat[1][1] = gld::complex(-1,0);
 							type_fault = 922;
 						}
 						mesh_fault_current_calc(pf_mesh_fault_impedance_matrix,CV_mat,CI_mat,NR_busdata[NR_swing_bus_reference].V,type_fault);
 						
 					} else if(*implemented_fault == 10){ //TLG-ABC -> Vax=Vbx=Vcx=Vxg=0
-						//C_mat[3][3]=C_mat[4][4]=C_mat[5][5]=C_mat[6][6]=complex(1,0);
+						//C_mat[3][3]=C_mat[4][4]=C_mat[5][5]=C_mat[6][6]=gld::complex(1,0);
 						CI_mat[0][0] = CI_mat[1][1] = CI_mat[2][2] = (fault_Z + ground_Z)*-1.0;
 						CI_mat[0][1] = CI_mat[0][2] = CI_mat[1][0] = CI_mat[1][2] = CI_mat[2][0] = CI_mat[2][1] = ground_Z*-1.0;
-						CV_mat[0][0] = CV_mat[1][1] = CV_mat[2][2] = complex(1,0);
+						CV_mat[0][0] = CV_mat[1][1] = CV_mat[2][2] = gld::complex(1,0);
 						type_fault = 1033;
 						mesh_fault_current_calc(pf_mesh_fault_impedance_matrix,CV_mat,CI_mat,NR_busdata[NR_swing_bus_reference].V,type_fault);
 						//fault_current_calc(C_mat, phase_remove, type_fault);
 					} else if(*implemented_fault == 32){ //TLL-ABC -> Ifa+Ifb+Ifc=Vax=Vbx=Vcx=0
-						//C_mat[3][0]=C_mat[3][1]=C_mat[3][2]=C_mat[4][3]=C_mat[5][4]=C_mat[6][5]=complex(1,0);
-						CI_mat[0][0] = CI_mat[0][1] = CI_mat[0][2] = complex(1,0);
+						//C_mat[3][0]=C_mat[3][1]=C_mat[3][2]=C_mat[4][3]=C_mat[5][4]=C_mat[6][5]=gld::complex(1,0);
+						CI_mat[0][0] = CI_mat[0][1] = CI_mat[0][2] = gld::complex(1,0);
 						CI_mat[1][0] = CI_mat[2][1] = fault_Z*-1.0;
 						CI_mat[1][1] = CI_mat[2][2] = fault_Z;
-						CV_mat[1][0] = CV_mat[2][1] = complex(1,0);
-						CV_mat[1][1] = CV_mat[2][2] = complex(-1,0);
+						CV_mat[1][0] = CV_mat[2][1] = gld::complex(1,0);
+						CV_mat[1][1] = CV_mat[2][2] = gld::complex(-1,0);
 						type_fault = 1133;
 						mesh_fault_current_calc(pf_mesh_fault_impedance_matrix,CV_mat,CI_mat,NR_busdata[NR_swing_bus_reference].V,type_fault);
 						//fault_current_calc(C_mat, phase_remove, type_fault);
@@ -9942,47 +9953,47 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			{
 				//set up the remaining 4 fault specific equations in C_mat before calculating the fault current
 				if(*implemented_fault == 1){ //SLG-A -> Ifb=Ifc=Vax=Vxg=0
-					C_mat[3][1]=C_mat[4][2]=C_mat[5][3]=C_mat[6][6]=complex(1,0);
+					C_mat[3][1]=C_mat[4][2]=C_mat[5][3]=C_mat[6][6]=gld::complex(1,0);
 					type_fault = 1;
 					fault_current_calc(C_mat, phase_remove, type_fault);
 				} else if(*implemented_fault == 2){ //SLG-B -> Ifa=Ifc=Vbx=Vxg=0
-					C_mat[3][0]=C_mat[4][2]=C_mat[5][4]=C_mat[6][6]=complex(1,0);
+					C_mat[3][0]=C_mat[4][2]=C_mat[5][4]=C_mat[6][6]=gld::complex(1,0);
 					type_fault = 2;
 					fault_current_calc(C_mat, phase_remove, type_fault);
 				} else if(*implemented_fault == 3){ //SLG-C -> Ifa=Ifb=Vcx=Vxg=0
-					C_mat[3][0]=C_mat[4][1]=C_mat[5][5]=C_mat[6][6]=complex(1,0);
+					C_mat[3][0]=C_mat[4][1]=C_mat[5][5]=C_mat[6][6]=gld::complex(1,0);
 					type_fault = 3;
 					fault_current_calc(C_mat, phase_remove, type_fault);
 				} else if(*implemented_fault == 4){ //DLG-AB -> Ifc=Vax=Vbx=Vxg=0
-					C_mat[3][2]=C_mat[4][3]=C_mat[5][4]=C_mat[6][6]=complex(1,0);
+					C_mat[3][2]=C_mat[4][3]=C_mat[5][4]=C_mat[6][6]=gld::complex(1,0);
 					type_fault = 4;
 					fault_current_calc(C_mat, phase_remove, type_fault);
 				} else if(*implemented_fault == 5){ //DLG-BC -> Ifa=Vbx=Vcx=Vxg=0
-					C_mat[3][0]=C_mat[4][4]=C_mat[5][5]=C_mat[6][6]=complex(1,0);
+					C_mat[3][0]=C_mat[4][4]=C_mat[5][5]=C_mat[6][6]=gld::complex(1,0);
 					type_fault = 5;
 					fault_current_calc(C_mat, phase_remove, type_fault);
 				} else if(*implemented_fault == 6){ //DLG-CA -> Ifb=Vax=Vcx=Vxg=0
-					C_mat[3][1]=C_mat[4][3]=C_mat[5][5]=C_mat[6][6]=complex(1,0);
+					C_mat[3][1]=C_mat[4][3]=C_mat[5][5]=C_mat[6][6]=gld::complex(1,0);
 					type_fault = 6;
 					fault_current_calc(C_mat, phase_remove, type_fault);
 				} else if(*implemented_fault == 7){ //LL-AB -> Ifa+Ifb=Ifc=Vax=Vbx=0
-					C_mat[3][0]=C_mat[3][1]=C_mat[4][2]=C_mat[5][3]=C_mat[6][4]=complex(1,0);
+					C_mat[3][0]=C_mat[3][1]=C_mat[4][2]=C_mat[5][3]=C_mat[6][4]=gld::complex(1,0);
 					type_fault = 7;
 					fault_current_calc(C_mat, phase_remove, type_fault);
 				} else if(*implemented_fault == 8){ //LL-BC -> Ifb+Ifc=Ifa=Vbx=Vcx=0
-					C_mat[3][1]=C_mat[3][2]=C_mat[4][0]=C_mat[5][4]=C_mat[6][5]=complex(1,0);
+					C_mat[3][1]=C_mat[3][2]=C_mat[4][0]=C_mat[5][4]=C_mat[6][5]=gld::complex(1,0);
 					type_fault = 8;
 					fault_current_calc(C_mat, phase_remove, type_fault);
 				} else if(*implemented_fault == 9){ //LL-CA -> Ifa+Ifc=Ifb=Vax=Vcx=0
-					C_mat[3][0]=C_mat[3][2]=C_mat[4][1]=C_mat[5][3]=C_mat[6][5]=complex(1,0);
+					C_mat[3][0]=C_mat[3][2]=C_mat[4][1]=C_mat[5][3]=C_mat[6][5]=gld::complex(1,0);
 					type_fault = 9;
 					fault_current_calc(C_mat, phase_remove, type_fault);
 				} else if(*implemented_fault == 10){ //TLG-ABC -> Vax=Vbx=Vcx=Vxg=0
-					C_mat[3][3]=C_mat[4][4]=C_mat[5][5]=C_mat[6][6]=complex(1,0);
+					C_mat[3][3]=C_mat[4][4]=C_mat[5][5]=C_mat[6][6]=gld::complex(1,0);
 					type_fault = 10;
 					fault_current_calc(C_mat, phase_remove, type_fault);
 				} else if(*implemented_fault == 32){ //TLL-ABC -> Ifa+Ifb+Ifc=Vax=Vbx=Vcx=0
-					C_mat[3][0]=C_mat[3][1]=C_mat[3][2]=C_mat[4][3]=C_mat[5][4]=C_mat[6][5]=complex(1,0);
+					C_mat[3][0]=C_mat[3][1]=C_mat[3][2]=C_mat[4][3]=C_mat[5][4]=C_mat[6][5]=gld::complex(1,0);
 					type_fault = 11;
 					fault_current_calc(C_mat, phase_remove, type_fault);
 				}
@@ -10000,7 +10011,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Get the fuse
 				tmpobj = NR_branchdata[NR_branch_reference].obj;
 
-				if (tmpobj == NULL)
+				if (tmpobj == nullptr)
 				{
 					GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[NR_branch_reference].name);
 					/*  TROUBLESHOOT
@@ -10012,7 +10023,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
 				
 				//Make sure it was found
-				if (funadd == NULL)
+				if (funadd == nullptr)
 				{
 					GL_THROW("Unable to change fuse state on %s",tmpobj->name);
 					/*  TROUBLESHOOT
@@ -10035,7 +10046,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 				//See if it worked
-				if (temp_double_val == NULL)
+				if (temp_double_val == nullptr)
 				{
 					gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
 					/*  TROUBLESHOOT
@@ -10080,7 +10091,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Get the recloser
 				tmpobj = NR_branchdata[NR_branch_reference].obj;
 
-				if (tmpobj == NULL)
+				if (tmpobj == nullptr)
 				{
 					GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[NR_branch_reference].name);
 					/*  TROUBLESHOOT
@@ -10092,7 +10103,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_state"));
 				
 				//Make sure it was found
-				if (funadd == NULL)
+				if (funadd == nullptr)
 				{
 					GL_THROW("Unable to change recloser state on %s",tmpobj->name);
 					/*  TROUBLESHOOT
@@ -10115,7 +10126,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 				//See if it worked
-				if (temp_double_val == NULL)
+				if (temp_double_val == nullptr)
 				{
 					gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
 					//Defined above
@@ -10160,7 +10171,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Get the switch
 				tmpobj = NR_branchdata[NR_branch_reference].obj;
 
-				if (tmpobj == NULL)
+				if (tmpobj == nullptr)
 				{
 					GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[NR_branch_reference].name);
 					/*  TROUBLESHOOT
@@ -10172,7 +10183,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_state"));
 				
 				//Make sure it was found
-				if (funadd == NULL)
+				if (funadd == nullptr)
 				{
 					GL_THROW("Unable to change switch state on %s",tmpobj->name);
 					/*  TROUBLESHOOT
@@ -10195,7 +10206,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 				//See if it worked
-				if (temp_double_val == NULL)
+				if (temp_double_val == nullptr)
 				{
 					gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
 					//Defined above
@@ -10236,7 +10247,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			//Start up the loop - populate initial variable
 			temp_branch = NR_branch_reference;
 
-			while (safety_hit != true)
+			while (!safety_hit)
 			{
 				//Pull from bus of current link
 				temp_node = NR_branchdata[temp_branch].from;
@@ -10258,7 +10269,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					//Get the swing bus value
 					tmpobj = NR_busdata[temp_node].obj;
 
-					if (tmpobj == NULL)
+					if (tmpobj == nullptr)
 					{
 						GL_THROW("An attempt to find the swing node %s failed.",NR_busdata[temp_node].name);
 						/*  TROUBLESHOOT
@@ -10271,7 +10282,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 					//See if it worked
-					if (temp_double_val == NULL)
+					if (temp_double_val == nullptr)
 					{
 						gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
 						//Defined above
@@ -10308,7 +10319,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Get the recloser
 								tmpobj = NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].obj;
 
-								if (tmpobj == NULL)
+								if (tmpobj == nullptr)
 								{
 									GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
 									/*  TROUBLESHOOT
@@ -10320,7 +10331,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_state"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change recloser state on %s",tmpobj->name);
 									/*  TROUBLESHOOT
@@ -10343,7 +10354,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 								//See if it worked
-								if (temp_double_val == NULL)
+								if (temp_double_val == nullptr)
 								{
 									gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
 									//Defined above
@@ -10390,7 +10401,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Get the switch
 								tmpobj = NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].obj;
 
-								if (tmpobj == NULL)
+								if (tmpobj == nullptr)
 								{
 									GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
 									/*  TROUBLESHOOT
@@ -10402,7 +10413,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_state"));
 
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change switch state on %s",tmpobj->name);
 									/*  TROUBLESHOOT
@@ -10425,7 +10436,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 								//See if it worked
-								if (temp_double_val == NULL)
+								if (temp_double_val == nullptr)
 								{
 									gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
 									//Defined above
@@ -10464,7 +10475,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Get the sectionalizer
 								tmpobj = NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].obj;
 
-								if (tmpobj == NULL)
+								if (tmpobj == nullptr)
 								{
 									GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
 									/*  TROUBLESHOOT
@@ -10476,7 +10487,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_state"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
 									/*  TROUBLESHOOT
@@ -10507,7 +10518,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 									temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 									//See if it worked
-									if (temp_double_val == NULL)
+									if (temp_double_val == nullptr)
 									{
 										gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
 										//Defined above
@@ -10553,7 +10564,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Get the fuse
 								tmpobj = NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].obj;
 
-								if (tmpobj == NULL)
+								if (tmpobj == nullptr)
 								{
 									GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
 									/*  TROUBLESHOOT
@@ -10565,7 +10576,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
 									/*  TROUBLESHOOT
@@ -10588,7 +10599,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 								//See if it worked
-								if (temp_double_val == NULL)
+								if (temp_double_val == nullptr)
 								{
 									gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
 									//Defined above
@@ -10630,7 +10641,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Get the transformer
 								tmpobj = NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].obj;
 
-								if (tmpobj == NULL)
+								if (tmpobj == nullptr)
 								{
 									GL_THROW("An attempt to alter transformer %s failed.",NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].name);
 									/*  TROUBLESHOOT
@@ -10652,7 +10663,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								temp_double_val = get_double(tmpobj,"mean_repair_time");
 
 								//See if it worked
-								if (temp_double_val == NULL)
+								if (temp_double_val == nullptr)
 								{
 									gl_warning("Unable to map mean_repair_time from object:%s",tmpobj->name);
 									//Defined above
@@ -10706,7 +10717,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			funadd = (FUNCTIONADDR)(gl_get_function(fault_check_object,"reliability_alterations"));
 			
 			//Make sure it was found
-			if (funadd == NULL)
+			if (funadd == nullptr)
 			{
 				GL_THROW("Unable to update objects for reliability effects");
 				/*  TROUBLESHOOT
@@ -10766,11 +10777,11 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 	double ext_result_dbl;
 	OBJECT *objhdr = OBJECTHDR(this);
 	OBJECT *tmpobj;
-	FUNCTIONADDR funadd = NULL;
+	FUNCTIONADDR funadd = nullptr;
 	bool switch_val;
 
 	//Check our operations mode
-	if (meshed_fault_checking_enabled == false)	//Normal mode
+	if (!meshed_fault_checking_enabled)	//Normal mode
 	{
 		//Set up default switch variable - used to indicate special cases
 		switch_val = false;
@@ -11139,7 +11150,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							//Get the switch
 							tmpobj = NR_branchdata[protect_locations[phaseidx]].obj;
 
-							if (tmpobj == NULL)
+							if (tmpobj == nullptr)
 							{
 								GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 								//Defined above
@@ -11154,7 +11165,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_state"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change switch state on %s",tmpobj->name);
 									//Defined above
@@ -11180,7 +11191,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_faults"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change switch state on %s",tmpobj->name);
 									//Defined above - despite being slightly different
@@ -11201,7 +11212,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_state"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change switch state on %s",tmpobj->name);
 									//Defined above
@@ -11224,7 +11235,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_faults"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change switch state on %s",tmpobj->name);
 									//Defined above - despite being slightly different
@@ -11242,7 +11253,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							}
 
 							//Modify our phases as appropriate
-							if (meshed_fault_checking_enabled == true)
+							if (meshed_fault_checking_enabled)
 							{
 								if ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07) != 0x00)
 								{
@@ -11284,7 +11295,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							//Get the recloser
 							tmpobj = NR_branchdata[protect_locations[phaseidx]].obj;
 
-							if (tmpobj == NULL)
+							if (tmpobj == nullptr)
 							{
 								GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 								//Defined above
@@ -11299,7 +11310,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_state"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change recloser state on %s",tmpobj->name);
 									//Defined above
@@ -11325,7 +11336,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_faults"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change recloser state on %s",tmpobj->name);
 									//Defined above - despite being slightly different
@@ -11346,7 +11357,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_state"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change recloser state on %s",tmpobj->name);
 									//Defined above
@@ -11369,7 +11380,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_faults"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change sectionalizer recloser on %s",tmpobj->name);
 									//Defined above - despite being slightly different
@@ -11414,7 +11425,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							//Get the sectionalizer
 							tmpobj = NR_branchdata[protect_locations[phaseidx]].obj;
 
-							if (tmpobj == NULL)
+							if (tmpobj == nullptr)
 							{
 								GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 								//Defined above
@@ -11429,7 +11440,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_state"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
 									//Defined above
@@ -11455,7 +11466,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_faults"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
 									//Defined above - despite being slightly different
@@ -11476,7 +11487,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_state"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
 									//Defined above
@@ -11499,7 +11510,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_faults"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
 									//Defined above - despite being slightly different
@@ -11544,7 +11555,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							//Get the fuse
 							tmpobj = NR_branchdata[protect_locations[phaseidx]].obj;
 
-							if (tmpobj == NULL)
+							if (tmpobj == nullptr)
 							{
 								GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 								//Defined above
@@ -11559,7 +11570,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
 									//Defined above
@@ -11585,7 +11596,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_faults"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
 									//Defined above - despite being slightly different
@@ -11606,7 +11617,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
 									//Defined above
@@ -11629,7 +11640,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_faults"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
 									//Defined above - despite being slightly different
@@ -11739,7 +11750,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 			funadd = (FUNCTIONADDR)(gl_get_function(fault_check_object,"reliability_alterations"));
 			
 			//Make sure it was found
-			if (funadd == NULL)
+			if (funadd == nullptr)
 			{
 				GL_THROW("Unable to update objects for reliability effects");
 				//Defined above
@@ -12148,7 +12159,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							//Get the switch
 							tmpobj = NR_branchdata[protect_locations[phaseidx]].obj;
 
-							if (tmpobj == NULL)
+							if (tmpobj == nullptr)
 							{
 								GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 								//Defined above
@@ -12160,7 +12171,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_switch_state"));
 							
 							//Make sure it was found
-							if (funadd == NULL)
+							if (funadd == nullptr)
 							{
 								GL_THROW("Unable to change switch state on %s",tmpobj->name);
 								//Defined above
@@ -12213,7 +12224,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							//Get the recloser
 							tmpobj = NR_branchdata[protect_locations[phaseidx]].obj;
 
-							if (tmpobj == NULL)
+							if (tmpobj == nullptr)
 							{
 								GL_THROW("An attempt to alter recloser %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 								//Defined above
@@ -12228,7 +12239,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_state"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change recloser state on %s",tmpobj->name);
 									//Defined above
@@ -12254,7 +12265,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_faults"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change recloser state on %s",tmpobj->name);
 									//Defined above - despite being slightly different
@@ -12275,7 +12286,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_state"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change recloser state on %s",tmpobj->name);
 									//Defined above
@@ -12298,7 +12309,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_recloser_faults"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change sectionalizer recloser on %s",tmpobj->name);
 									//Defined above - despite being slightly different
@@ -12343,7 +12354,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							//Get the sectionalizer
 							tmpobj = NR_branchdata[protect_locations[phaseidx]].obj;
 
-							if (tmpobj == NULL)
+							if (tmpobj == nullptr)
 							{
 								GL_THROW("An attempt to alter sectionalizer %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 								//Defined above
@@ -12358,7 +12369,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_state"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
 									//Defined above
@@ -12384,7 +12395,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_faults"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
 									//Defined above - despite being slightly different
@@ -12405,7 +12416,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_state"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
 									//Defined above
@@ -12428,7 +12439,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_sectionalizer_faults"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change sectionalizer state on %s",tmpobj->name);
 									//Defined above - despite being slightly different
@@ -12473,7 +12484,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							//Get the fuse
 							tmpobj = NR_branchdata[protect_locations[phaseidx]].obj;
 
-							if (tmpobj == NULL)
+							if (tmpobj == nullptr)
 							{
 								GL_THROW("An attempt to alter fuse %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 								//Defined above
@@ -12488,7 +12499,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
 									//Defined above
@@ -12514,7 +12525,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_faults"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
 									//Defined above - despite being slightly different
@@ -12535,7 +12546,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_state"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
 									//Defined above
@@ -12558,7 +12569,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								funadd = (FUNCTIONADDR)(gl_get_function(tmpobj,"change_fuse_faults"));
 								
 								//Make sure it was found
-								if (funadd == NULL)
+								if (funadd == nullptr)
 								{
 									GL_THROW("Unable to change fuse state on %s",tmpobj->name);
 									//Defined above - despite being slightly different
@@ -12668,7 +12679,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 			funadd = (FUNCTIONADDR)(gl_get_function(fault_check_object,"reliability_alterations"));
 			
 			//Make sure it was found
-			if (funadd == NULL)
+			if (funadd == nullptr)
 			{
 				GL_THROW("Unable to update objects for reliability effects");
 				//Defined above
@@ -12718,11 +12729,11 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 	double ext_result_dbl;
 	OBJECT *objhdr = OBJECTHDR(this);
 	OBJECT *tmpobj;
-	FUNCTIONADDR funadd = NULL;
+	FUNCTIONADDR funadd = nullptr;
 	bool switch_val;
 
 	//Check our operations mode
-	if (meshed_fault_checking_enabled == false)	//Normal mode
+	if (!meshed_fault_checking_enabled)	//Normal mode
 	{
 		//Set up default switch variable - used to indicate special cases
 		switch_val = false;
@@ -13091,7 +13102,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 							//Get the switch
 							tmpobj = NR_branchdata[protect_locations[phaseidx]].obj;
 
-							if (tmpobj == NULL)
+							if (tmpobj == nullptr)
 							{
 								GL_THROW("An attempt to alter switch %s failed.",NR_branchdata[protect_locations[phaseidx]].name);
 								//Defined above
@@ -13804,7 +13815,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 	//VSth = Swing-node voltage. It is a 3x1 matrix
 	//fault_type = Currently it is not used but it might come to some good use when adding all faults.
 
-void link_object::mesh_fault_current_calc(complex Zth[3][3],complex CV[3][3],complex CI[3][3],complex *VSth,double fault_type)
+void link_object::mesh_fault_current_calc(gld::complex Zth[3][3],gld::complex CV[3][3],gld::complex CI[3][3],gld::complex *VSth,double fault_type)
 	{
 		int phaseCheck;
 		phaseCheck = 0;
@@ -13823,10 +13834,10 @@ void link_object::mesh_fault_current_calc(complex Zth[3][3],complex CV[3][3],com
 		//populate CF[0-2][3-5] with Identity matrix
 		//populate CF[3-5][0-2] with CI matrix
 		//populate CF[3-5][3-5] with CV matrix
-		//CF[0][4] = CF[0][5] = CF[1][3] = CF[1][5] = CF[2][3] = CF[2][4] = complex(0,0) since they are the zeroes of identity
+		//CF[0][4] = CF[0][5] = CF[1][3] = CF[1][5] = CF[2][3] = CF[2][4] = gld::complex(0,0) since they are the zeroes of identity
 		if (phaseCheck == 1)
 			{
-				complex CF[2][2];
+				gld::complex CF[2][2];
                                 if (fault_type == 111) {
 					CF[0][0] = Zth[0][0]; //Zth
 				} else if (fault_type == 211) {
@@ -13834,19 +13845,19 @@ void link_object::mesh_fault_current_calc(complex Zth[3][3],complex CV[3][3],com
 				} else if (fault_type == 311) {
 					CF[0][0] = Zth[2][2]; //Zth
 				}
-				CF[0][1] = complex(1,0); //I
+				CF[0][1] = gld::complex(1,0); //I
 				CF[1][0] = CI[0][0]; //CI
 				CF[1][1] = CV[0][0]; //CV
 
 				//Populate VFrhs[0-2][0] with Swing-node/thevenin voltage
-				complex VFrhs[2];
+				gld::complex VFrhs[2];
 				VFrhs[0] = VSth[0];
-				VFrhs[1] = complex(0,0);
+				VFrhs[1] = gld::complex(0,0);
 
 				//calculate the fault current and fault voltage
 				//invert CF matrix and save the output to CFinv
-				complex CFinv[2][2];
-				complex IVf[2];
+				gld::complex CFinv[2][2];
+				gld::complex IVf[2];
 				lu_matrix_inverse(&CF[0][0],&CFinv[0][0],2);
 
 				//Following the formula: IVf (Fault current, voltage matrix) = CFinv*VFrhs.
@@ -13874,10 +13885,10 @@ void link_object::mesh_fault_current_calc(complex Zth[3][3],complex CV[3][3],com
 			}
 		else if (phaseCheck == 2)
 			{
-				complex CF[4][4];
+				gld::complex CF[4][4];
 
-				CF[0][2] = complex(1,0); //I
-				CF[1][3] = complex(1,0); //I
+				CF[0][2] = gld::complex(1,0); //I
+				CF[1][3] = gld::complex(1,0); //I
 
 				CF[2][0] = CI[0][0]; //CI
 				CF[2][1] = CI[0][1]; //CI
@@ -13890,7 +13901,7 @@ void link_object::mesh_fault_current_calc(complex Zth[3][3],complex CV[3][3],com
 				CF[3][3] = CV[1][1]; //CV
 
 				//Populate VFrhs[0-2][0] with Swing-node/thevenin voltage
-				complex VFrhs[4];
+				gld::complex VFrhs[4];
 				if ((fault_type == 422) || (fault_type == 722) || (fault_type == 1221) || (fault_type == 2221)) //AB
 					{
 						CF[0][0] = Zth[0][0]; //Zth
@@ -13921,13 +13932,13 @@ void link_object::mesh_fault_current_calc(complex Zth[3][3],complex CV[3][3],com
 						VFrhs[0] = VSth[0];
 						VFrhs[1] = VSth[2];
 					}
-				VFrhs[2] = complex(0,0);
-				VFrhs[3] = complex(0,0);
+				VFrhs[2] = gld::complex(0,0);
+				VFrhs[3] = gld::complex(0,0);
 
 				//calculate the fault current and fault voltage
 				//invert CF matrix and save the output to CFinv
-				complex CFinv[4][4];
-				complex IVf[4];
+				gld::complex CFinv[4][4];
+				gld::complex IVf[4];
 				lu_matrix_inverse(&CF[0][0],&CFinv[0][0],4);
 
 				//Following the formula: IVf (Fault current, voltage matrix) = CFinv*VFrhs.
@@ -13968,7 +13979,7 @@ void link_object::mesh_fault_current_calc(complex Zth[3][3],complex CV[3][3],com
 			}
 		else if (phaseCheck == 3)
 			{
-				complex CF[6][6];
+				gld::complex CF[6][6];
 
 				CF[0][0] = Zth[0][0]; //Zth
 				CF[0][1] = Zth[0][1]; //Zth
@@ -13980,9 +13991,9 @@ void link_object::mesh_fault_current_calc(complex Zth[3][3],complex CV[3][3],com
 				CF[2][1] = Zth[2][1]; //Zth
 				CF[2][2] = Zth[2][2]; //Zth
 
-				CF[0][3] = complex(1,0); //I
-				CF[1][4] = complex(1,0); //I
-				CF[2][5] = complex(1,0); //I
+				CF[0][3] = gld::complex(1,0); //I
+				CF[1][4] = gld::complex(1,0); //I
+				CF[2][5] = gld::complex(1,0); //I
 
 				CF[3][0] = CI[0][0]; //CI
 				CF[3][1] = CI[0][1]; //CI
@@ -14005,18 +14016,18 @@ void link_object::mesh_fault_current_calc(complex Zth[3][3],complex CV[3][3],com
 				CF[5][5] = CV[2][2]; //CV
 
 				//Populate VFrhs[0-2][0] with Swing-node/thevenin voltage
-				complex VFrhs[6];
+				gld::complex VFrhs[6];
 				VFrhs[0] = VSth[0];
 				VFrhs[1] = VSth[1];
 				VFrhs[2] = VSth[2];
-				VFrhs[3] = complex(0,0);
-				VFrhs[4] = complex(0,0);
-				VFrhs[5] = complex(0,0);
+				VFrhs[3] = gld::complex(0,0);
+				VFrhs[4] = gld::complex(0,0);
+				VFrhs[5] = gld::complex(0,0);
 
 				//calculate the fault current and fault voltage
 				//invert CF matrix and save the output to CFinv
-				complex CFinv[6][6];
-				complex IVf[6];
+				gld::complex CFinv[6][6];
+				gld::complex IVf[6];
 				lu_matrix_inverse(&CF[0][0],&CFinv[0][0],6);
 
 				//Following the formula: IVf (Fault current, voltage matrix) = CFinv*VFrhs.
@@ -14041,7 +14052,7 @@ void link_object::mesh_fault_current_calc(complex Zth[3][3],complex CV[3][3],com
 			}
 }
 
-void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase, double fault_type)
+void link_object::fault_current_calc(gld::complex C[7][7],unsigned int removed_phase, double fault_type)
 {
 	int temp_branch_fc, temp_node, current_branch, temp_connection_type;;
 	unsigned int temp_table_loc;
@@ -14050,23 +14061,23 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 	OBJECT *temp_transformer, **temp_transformer_configuration;
 	PROPERTY *temp_trans_config, *temp_con_typ;
 	double temp_v_ratio;
-	complex double_phase_det;
-	complex V_sb[3];
-	complex V_sys[3];
-	complex Z_thevenin[3][3];
-	complex Z_sys[3][3];
-	complex Y_thevenin[3][3];
-	complex Y_temp[3][3];
-	complex Z_temp[3][3];
-	complex C_inv[7][7];
-	complex A_t[3][3];
-    complex d_t[3][3];
-	complex IP[7];
-	complex L[7][7];
-	complex U[7][7];
-	complex zz[7];
-	complex xx[7];
-	complex det;
+	gld::complex double_phase_det;
+	gld::complex V_sb[3];
+	gld::complex V_sys[3];
+	gld::complex Z_thevenin[3][3];
+	gld::complex Z_sys[3][3];
+	gld::complex Y_thevenin[3][3];
+	gld::complex Y_temp[3][3];
+	gld::complex Z_temp[3][3];
+	gld::complex C_inv[7][7];
+	gld::complex A_t[3][3];
+    gld::complex d_t[3][3];
+	gld::complex IP[7];
+	gld::complex L[7][7];
+	gld::complex U[7][7];
+	gld::complex zz[7];
+	gld::complex xx[7];
+	gld::complex det;
 
 	// zero Z_thevenin !
 	Z_thevenin[0][0]=Z_thevenin[0][1]=Z_thevenin[0][2]=Z_thevenin[1][0]=Z_thevenin[1][1]=Z_thevenin[1][2]=Z_thevenin[2][0]=Z_thevenin[2][1]=Z_thevenin[2][2]=0;
@@ -14154,11 +14165,11 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 						Z_temp[2][1] = -NR_branchdata[temp_branch_fc].YSto[7]/double_phase_det;
 						Z_temp[2][2] = NR_branchdata[temp_branch_fc].YSto[4]/double_phase_det;
 					} else if(temp_branch_phases == 0x04){//has phase A
-						Z_temp[0][0] = complex(1,0)/NR_branchdata[temp_branch_fc].YSto[0];
+						Z_temp[0][0] = gld::complex(1,0)/NR_branchdata[temp_branch_fc].YSto[0];
 					} else if(temp_branch_phases == 0x02){//has phase B
-						Z_temp[1][1] = complex(1,0)/NR_branchdata[temp_branch_fc].YSto[4];
+						Z_temp[1][1] = gld::complex(1,0)/NR_branchdata[temp_branch_fc].YSto[4];
 					} else if(temp_branch_phases == 0x01){//has phase C
-						Z_temp[2][2] = complex(1,0)/NR_branchdata[temp_branch_fc].YSto[8];
+						Z_temp[2][2] = gld::complex(1,0)/NR_branchdata[temp_branch_fc].YSto[8];
 					}
 					A_t[0][0] = A_t[1][1] = A_t[2][2] = d_t[0][0] = d_t[1][1] = d_t[2][2] = 1/NR_branchdata[temp_branch_fc].v_ratio;//calculate the transfer matrix A_t such that Z_low = A_t * Z_high * d_t
 
@@ -14253,11 +14264,11 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 				Z_temp[2][1] = -NR_branchdata[temp_branch_fc].YSto[7]/double_phase_det;
 				Z_temp[2][2] = NR_branchdata[temp_branch_fc].YSto[4]/double_phase_det;
 			} else if(temp_branch_phases == 0x04){//has phase A
-				Z_temp[0][0] = complex(1,0)/NR_branchdata[temp_branch_fc].YSto[0];
+				Z_temp[0][0] = gld::complex(1,0)/NR_branchdata[temp_branch_fc].YSto[0];
 			} else if(temp_branch_phases == 0x02){//has phase B
-				Z_temp[1][1] = complex(1,0)/NR_branchdata[temp_branch_fc].YSto[4];
+				Z_temp[1][1] = gld::complex(1,0)/NR_branchdata[temp_branch_fc].YSto[4];
 			} else if(temp_branch_phases == 0x01){//has phase C
-				Z_temp[2][2] = complex(1,0)/NR_branchdata[temp_branch_fc].YSto[8];
+				Z_temp[2][2] = gld::complex(1,0)/NR_branchdata[temp_branch_fc].YSto[8];
 			}
 			addition(Z_thevenin,Z_temp,Z_thevenin);
 		}
@@ -14305,11 +14316,11 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 					Z_temp[2][1] = -NR_branchdata[temp_branch_fc].YSto[7]/double_phase_det;
 					Z_temp[2][2] = NR_branchdata[temp_branch_fc].YSto[4]/double_phase_det;
 				} else if(temp_branch_phases == 0x04){//has phase A
-					Z_temp[0][0] = complex(1,0)/NR_branchdata[temp_branch_fc].YSto[0];
+					Z_temp[0][0] = gld::complex(1,0)/NR_branchdata[temp_branch_fc].YSto[0];
 				} else if(temp_branch_phases == 0x02){//has phase B
-					Z_temp[1][1] = complex(1,0)/NR_branchdata[temp_branch_fc].YSto[4];
+					Z_temp[1][1] = gld::complex(1,0)/NR_branchdata[temp_branch_fc].YSto[4];
 				} else if(temp_branch_phases == 0x01){//has phase C
-					Z_temp[2][2] = complex(1,0)/NR_branchdata[temp_branch_fc].YSto[8];
+					Z_temp[2][2] = gld::complex(1,0)/NR_branchdata[temp_branch_fc].YSto[8];
 				}
 				A_t[0][0] = A_t[1][1] = A_t[2][2] = d_t[0][0] = d_t[1][1] = d_t[2][2] = 1/NR_branchdata[temp_branch_fc].v_ratio;//calculate the transfer matrix A_t such that Z_low = A_t * Z_high * d_t
 
@@ -14404,11 +14415,11 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 			Z_temp[2][1] = -NR_branchdata[temp_branch_fc].YSto[7]/double_phase_det;
 			Z_temp[2][2] = NR_branchdata[temp_branch_fc].YSto[4]/double_phase_det;
 		} else if(temp_branch_phases == 0x04){//has phase A
-			Z_temp[0][0] = complex(1,0)/NR_branchdata[temp_branch_fc].YSto[0];
+			Z_temp[0][0] = gld::complex(1,0)/NR_branchdata[temp_branch_fc].YSto[0];
 		} else if(temp_branch_phases == 0x02){//has phase B
-			Z_temp[1][1] = complex(1,0)/NR_branchdata[temp_branch_fc].YSto[4];
+			Z_temp[1][1] = gld::complex(1,0)/NR_branchdata[temp_branch_fc].YSto[4];
 		} else if(temp_branch_phases == 0x01){//has phase C
-			Z_temp[2][2] = complex(1,0)/NR_branchdata[temp_branch_fc].YSto[8];
+			Z_temp[2][2] = gld::complex(1,0)/NR_branchdata[temp_branch_fc].YSto[8];
 		}
 		addition(Z_thevenin,Z_temp,Z_thevenin);
 	}
@@ -14439,46 +14450,46 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 		det = C[1][4]*C[2][5] - C[1][5]*C[1][5];
 		if(det.Mag() <= 1e-4)
 			GL_THROW("Distribution system is singular. Unable to solve for SC current.");
-		C_inv[0][0] = complex(1,0);
+		C_inv[0][0] = gld::complex(1,0);
 		C_inv[0][1] = (C[0][5]*C[1][5] - C[0][4]*C[2][5])/det;
 		C_inv[0][2] = (C[0][4]*C[1][5] - C[0][5]*C[1][4])/det;
 	} else if(fault_type == 2){//SLG-B
 		det = C[0][3]*C[2][5] - C[0][5]*C[0][5];
 		if(det.Mag() <= 1e-4)
 			GL_THROW("Distribution system is singular. Unable to solve for SC current.");
-		C_inv[1][1] = complex(1,0);
+		C_inv[1][1] = gld::complex(1,0);
 		C_inv[1][0] = (C[0][5]*C[1][5] - C[0][4]*C[2][5])/det;
 		C_inv[1][2] = (C[0][4]*C[0][5] - C[0][3]*C[1][5])/det;
 	} else if(fault_type == 3){//SLG-C
 		det = C[0][3]*C[1][4] - C[0][4]*C[0][4];
 		if(det.Mag() <= 1e-4)
 			GL_THROW("Distribution system is singular. Unable to solve for SC current.");
-		C_inv[2][2] = complex(1,0);
+		C_inv[2][2] = gld::complex(1,0);
 		C_inv[2][0] = (C[0][4]*C[1][5] - C[0][5]*C[1][4])/det;
 		C_inv[2][1] = (C[0][4]*C[0][5] - C[0][3]*C[1][5])/det;
 	} else if(fault_type == 4){//DLG-AB
 		det = C[2][5];
 		if(det.Mag() <= 1e-4)
 			GL_THROW("Distribution system is singular. Unable to solve for SC current.");
-		C_inv[0][0] = C_inv[1][1] = complex(1,0);
+		C_inv[0][0] = C_inv[1][1] = gld::complex(1,0);
 		C_inv[0][2] = -C[0][5]/det;
 		C_inv[1][2] = -C[1][5]/det;
 	} else if(fault_type == 5){//DLG-BC
 		det = C[0][3];
 		if(det.Mag() <= 1e-4)
 			GL_THROW("Distribution system is singular. Unable to solve for SC current.");
-		C_inv[1][1] = C_inv[2][2] = complex(1,0);
+		C_inv[1][1] = C_inv[2][2] = gld::complex(1,0);
 		C_inv[1][0] = -C[0][4]/det;
 		C_inv[2][0] = -C[0][5]/det;
 	} else if(fault_type == 6){//DLG-CA
 		det = C[1][4];
 		if(det.Mag() <= 1e-4)
 			GL_THROW("Distribution system is singular. Unable to solve for SC current.");
-		C_inv[0][0] = C_inv[2][2] = complex(1,0);
+		C_inv[0][0] = C_inv[2][2] = gld::complex(1,0);
 		C_inv[0][1] = -C[0][4]/det;
 		C_inv[2][1] = -C[1][5]/det;
 	} else if(fault_type == 7){//LL-AB
-		det= C[0][5]*C[0][5] + complex(2,0)*C[0][5]*C[1][5] + C[1][5]*C[1][5] - C[0][3]*C[2][5] - complex(2,0)*C[0][4]*C[2][5] - C[1][4]*C[2][5];
+		det= C[0][5]*C[0][5] + gld::complex(2,0)*C[0][5]*C[1][5] + C[1][5]*C[1][5] - C[0][3]*C[2][5] - gld::complex(2,0)*C[0][4]*C[2][5] - C[1][4]*C[2][5];
 		if(det.Mag() <= 1e-4)
 			GL_THROW("Distribution system is singular. Unable to solve for SC current.");
 		C_inv[0][0] = (C[1][5]*C[1][5] + C[0][5]*C[1][5] - C[0][4]*C[2][5] - C[1][4]*C[2][5])/det;
@@ -14488,7 +14499,7 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 		C_inv[1][2] = -C_inv[0][2];
 		C_inv[1][0] = -C_inv[0][0];
 	} else if(fault_type == 8){//LL-BC
-		det= C[0][4]*C[0][4] + complex(2,0)*C[0][4]*C[0][5] + C[0][5]*C[0][5] - C[0][3]*C[1][4] - complex(2,0)*C[0][3]*C[1][5] - C[0][3]*C[2][5];
+		det= C[0][4]*C[0][4] + gld::complex(2,0)*C[0][4]*C[0][5] + C[0][5]*C[0][5] - C[0][3]*C[1][4] - gld::complex(2,0)*C[0][3]*C[1][5] - C[0][3]*C[2][5];
 		if(det.Mag() <= 1e-4)
 			GL_THROW("Distribution system is singular. Unable to solve for SC current.");
 		C_inv[1][0] = (C[0][4]*C[1][5] - C[0][5]*C[1][4] - C[0][5]*C[1][5] + C[0][4]*C[2][5])/det;
@@ -14498,7 +14509,7 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 		C_inv[2][2] = -C_inv[1][2];
 		C_inv[2][1] = -C_inv[1][1];
 	} else if(fault_type == 9){//LL-CA
-		det= -(C[0][4]*C[0][4] + complex(2,0)*C[0][4]*C[1][5] + C[1][5]*C[1][5] - C[0][3]*C[1][4] - complex(2,0)*C[0][5]*C[1][4] - C[1][4]*C[2][5]);
+		det= -(C[0][4]*C[0][4] + gld::complex(2,0)*C[0][4]*C[1][5] + C[1][5]*C[1][5] - C[0][3]*C[1][4] - gld::complex(2,0)*C[0][5]*C[1][4] - C[1][4]*C[2][5]);
 		if(det.Mag() <= 1e-4)
 			GL_THROW("Distribution system is singular. Unable to solve for SC current.");
 		C_inv[0][0] = -(C[1][5]*C[1][5] + C[0][4]*C[1][5] - C[0][5]*C[1][4] - C[1][4]*C[2][5])/det;
@@ -14508,17 +14519,17 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 		C_inv[2][2] = -C_inv[0][2];
 		C_inv[2][0] = -C_inv[0][0];
 	} else if(fault_type == 10){//TLG
-		C_inv[0][0] = C_inv[1][1] = C_inv[2][2] = complex(1,0);
+		C_inv[0][0] = C_inv[1][1] = C_inv[2][2] = gld::complex(1,0);
 	} else if(fault_type == 11){//TLL
-		det = C[0][3] + complex(2,0)*C[0][4] + complex(2,0)*C[0][5] + C[1][4] + complex(2,0)*C[1][5] + C[2][5];
+		det = C[0][3] + gld::complex(2,0)*C[0][4] + gld::complex(2,0)*C[0][5] + C[1][4] + gld::complex(2,0)*C[1][5] + C[2][5];
 		if(det.Mag() <= 1e-4)
 			GL_THROW("Distribution system is singular. Unable to solve for SC current.");
-		C_inv[0][0] = (C[0][4] + C[0][5] + C[1][4] + complex(2,0)*C[1][5] + C[2][5])/det;
+		C_inv[0][0] = (C[0][4] + C[0][5] + C[1][4] + gld::complex(2,0)*C[1][5] + C[2][5])/det;
 		C_inv[0][1] = C_inv[0][2] = -C[0][6]/det;
 		C_inv[1][0] = C_inv[1][2] = -C[1][6]/det;
-		C_inv[1][1] = (C[0][3] + C[0][4] + complex(2,0)*C[0][5] + C[1][5] + C[2][5])/det;
+		C_inv[1][1] = (C[0][3] + C[0][4] + gld::complex(2,0)*C[0][5] + C[1][5] + C[2][5])/det;
 		C_inv[2][0] = C_inv[2][1] = -C[2][6]/det;
-		C_inv[2][2] = (C[0][3] + complex(2,0)*C[0][4] + C[0][5] + C[1][4] + C[1][5])/det;
+		C_inv[2][2] = (C[0][3] + gld::complex(2,0)*C[0][4] + C[0][5] + C[1][4] + C[1][5])/det;
 	}
 	//decompose the C matrix
 //	lu_decomp(C, L, U);
@@ -14666,14 +14677,14 @@ void link_object::fault_current_calc(complex C[7][7],unsigned int removed_phase,
 //Performs a general matrix addition for square matrices of size "size"
 //Computes matrix_in_A + matrix_in_B = matrix_out
 //Insure all matrices are preallocated
-void link_object::lmatrix_add(complex *matrix_in_A, complex *matrix_in_B, complex *matrix_out, int matsize)
+void link_object::lmatrix_add(gld::complex *matrix_in_A, gld::complex *matrix_in_B, gld::complex *matrix_out, int matsize)
 {
 	//Variables
 	int jindex, kindex;
 	OBJECT *obj = OBJECTHDR(this);
 
 	//Initial check - make sure nothing NULL has been passed
-	if ((matrix_in_A == NULL) || (matrix_in_B == NULL) || (matrix_out == NULL))
+	if ((matrix_in_A == nullptr) || (matrix_in_B == nullptr) || (matrix_out == nullptr))
 	{
 		GL_THROW("link:%d-%s attempted to do a large matrix operation with an unallocated input or output matrix",obj->id,(obj->name ? obj->name : "unnamed"));
 		//Defined above
@@ -14702,14 +14713,14 @@ void link_object::lmatrix_add(complex *matrix_in_A, complex *matrix_in_B, comple
 //Performs a general matrix multiplication for square matrices of size "size"
 //Computes matrix_in_A * matrix_in_B = matrix_out
 //Insure all matrices are preallocated
-void link_object::lmatrix_mult(complex *matrix_in_A, complex *matrix_in_B, complex *matrix_out, int matsize)
+void link_object::lmatrix_mult(gld::complex *matrix_in_A, gld::complex *matrix_in_B, gld::complex *matrix_out, int matsize)
 {
 	//Variables
 	int jindex, kindex, lindex;
 	OBJECT *obj = OBJECTHDR(this);
 
 	//Initial check - make sure nothing NULL has been passed
-	if ((matrix_in_A == NULL) || (matrix_in_B == NULL) || (matrix_out == NULL))
+	if ((matrix_in_A == nullptr) || (matrix_in_B == nullptr) || (matrix_out == nullptr))
 	{
 		GL_THROW("link:%d-%s attempted to do a large matrix operation with an unallocated input or output matrix",obj->id,(obj->name ? obj->name : "unnamed"));
 		//Defined above
@@ -14731,7 +14742,7 @@ void link_object::lmatrix_mult(complex *matrix_in_A, complex *matrix_in_B, compl
 		for (kindex=0; kindex<matsize; kindex++)
 		{
 			//Zero the entry, since we'll accumulate into it
-			matrix_out[jindex*matsize+kindex] = complex(0.0,0.0);
+			matrix_out[jindex*matsize+kindex] = gld::complex(0.0,0.0);
 
 			for (lindex=0; lindex<matsize; lindex++)
 			{
@@ -14744,14 +14755,14 @@ void link_object::lmatrix_mult(complex *matrix_in_A, complex *matrix_in_B, compl
 //Performs a general matrix-vector multiplication for square matrices of size "matsize"
 //Computes matrix_in * vector_in = vector_out
 //Insure all matrices/vector are preallocated
-void link_object::lmatrix_vmult(complex *matrix_in, complex *vector_in, complex *vector_out, int matsize)
+void link_object::lmatrix_vmult(gld::complex *matrix_in, gld::complex *vector_in, gld::complex *vector_out, int matsize)
 {
 	//Variables
 	int jindex, kindex;
 	OBJECT *obj = OBJECTHDR(this);
 
 	//Initial check - make sure nothing NULL has been passed
-	if ((matrix_in == NULL) || (vector_in == NULL) || (vector_out == NULL))
+	if ((matrix_in == nullptr) || (vector_in == nullptr) || (vector_out == nullptr))
 	{
 		GL_THROW("link:%d-%s attempted to do a large matrix operation with an unallocated input or output matrix",obj->id,(obj->name ? obj->name : "unnamed"));
 		//Defined above
@@ -14768,7 +14779,7 @@ void link_object::lmatrix_vmult(complex *matrix_in, complex *vector_in, complex 
 	for (jindex=0; jindex<matsize; jindex++)
 	{
 		//Zero the entry, since we'll accumulate into it
-		vector_out[jindex] = complex(0.0,0.0);
+		vector_out[jindex] = gld::complex(0.0,0.0);
 
 		//Multiply across the columns/rows
 		for (kindex=0; kindex<matsize; kindex++)
@@ -14782,9 +14793,9 @@ void link_object::lmatrix_vmult(complex *matrix_in, complex *vector_in, complex 
 // MATRIX OPS FOR LINKS
 //////////////////////////////////////////////////////////////////////////
 
-void inverse(complex in[3][3], complex out[3][3])
+void inverse(gld::complex in[3][3], gld::complex out[3][3])
 {
-	complex x = complex(1.0) / (in[0][0] * in[1][1] * in[2][2] -
+	gld::complex x = gld::complex(1.0) / (in[0][0] * in[1][1] * in[2][2] -
                                in[0][0] * in[1][2] * in[2][1] -
                                in[0][1] * in[1][0] * in[2][2] +
                                in[0][1] * in[1][2] * in[2][0] +
@@ -14802,7 +14813,7 @@ void inverse(complex in[3][3], complex out[3][3])
 	out[2][2] = x * (in[0][0] * in[1][1] - in[0][1] * in[1][0]);
 }
 
-void multiply(double a, complex b[3][3], complex c[3][3])
+void multiply(double a, gld::complex b[3][3], gld::complex c[3][3])
 {
 	#define MUL(i, j) c[i][j] = b[i][j] * a
 	MUL(0, 0); MUL(0, 1); MUL(0, 2);
@@ -14811,7 +14822,7 @@ void multiply(double a, complex b[3][3], complex c[3][3])
 	#undef MUL
 }
 
-void multiply(complex a[3][3], complex b[3][3], complex c[3][3])
+void multiply(gld::complex a[3][3], gld::complex b[3][3], gld::complex c[3][3])
 {
 	#define MUL(i, j) c[i][j] = a[i][0] * b[0][j] + a[i][1] * b[1][j] + a[i][2] * b[2][j]
 	MUL(0, 0); MUL(0, 1); MUL(0, 2);
@@ -14820,7 +14831,7 @@ void multiply(complex a[3][3], complex b[3][3], complex c[3][3])
 	#undef MUL
 }
 
-void subtract(complex a[3][3], complex b[3][3], complex c[3][3])
+void subtract(gld::complex a[3][3], gld::complex b[3][3], gld::complex c[3][3])
 {
 	#define SUB(i, j) c[i][j] = a[i][j] - b[i][j]
 	SUB(0, 0); SUB(0, 1); SUB(0, 2);
@@ -14829,7 +14840,7 @@ void subtract(complex a[3][3], complex b[3][3], complex c[3][3])
 	#undef SUB
 }
 
-void addition(complex a[3][3], complex b[3][3], complex c[3][3])
+void addition(gld::complex a[3][3], gld::complex b[3][3], gld::complex c[3][3])
 {
 	#define ADD(i, j) c[i][j] = a[i][j] + b[i][j]
 	ADD(0, 0); ADD(0, 1); ADD(0, 2);
@@ -14838,7 +14849,7 @@ void addition(complex a[3][3], complex b[3][3], complex c[3][3])
 	#undef ADD
 }
 
-void equalm(complex a[3][3], complex b[3][3])
+void equalm(gld::complex a[3][3], gld::complex b[3][3])
 {
 	#define MEQ(i, j) b[i][j] = a[i][j]
 	MEQ(0, 0); MEQ(0, 1); MEQ(0, 2);
@@ -14848,25 +14859,25 @@ void equalm(complex a[3][3], complex b[3][3])
 }
 
 //Perform LU decomposition
-void lu_decomp(complex *a, complex *l, complex *u, int size_val)
+void lu_decomp(gld::complex *a, gld::complex *l, gld::complex *u, int size_val)
 {
 	int k, n, m, s;
-	complex sum;
+	gld::complex sum;
 	// make sure L and U contain zeroes
 	for(n=0; n<size_val; n++){
 		for(m=0;m<size_val;m++){
-			l[n*size_val+m] = complex(0,0);
-			u[n*size_val+m] = complex(0,0);
+			l[n*size_val+m] = gld::complex(0,0);
+			u[n*size_val+m] = gld::complex(0,0);
 		}
 	}
 	// for loop to decompose a in to lower triangular matrix l and upper triangular matrix u
 	for(k=0; k<size_val; k++){
-		l[k*size_val+k] = complex(1,0);
+		l[k*size_val+k] = gld::complex(1,0);
 		for(m=k; m<size_val; m++){
 			if(k==0){
 				u[k*size_val+m] = a[k*size_val+m];
 			}else{
-				sum = complex(0,0);
+				sum = gld::complex(0,0);
 				for(s=0; s<k; s++){
 					sum += l[k*size_val+s]*u[s*size_val+m];
 				}
@@ -14877,7 +14888,7 @@ void lu_decomp(complex *a, complex *l, complex *u, int size_val)
 			if(k==0){
 				l[n*size_val+k] = a[n*size_val+k]/u[k*size_val+k];
 			}else{
-				sum = complex(0,0);
+				sum = gld::complex(0,0);
 				for(s=0; s<k; s++){
 					sum += l[n*size_val+s]*u[s*size_val+k];
 				}
@@ -14888,7 +14899,7 @@ void lu_decomp(complex *a, complex *l, complex *u, int size_val)
 }
 
 //Performs forward substitution for LU decomp inversion method
-void forward_sub(complex *l, complex *b, complex *z, int size_val)// inputs l and b compute output z
+void forward_sub(gld::complex *l, gld::complex *b, gld::complex *z, int size_val)// inputs l and b compute output z
 {
 	int n, m;
 	z[0] = b[0];
@@ -14901,7 +14912,7 @@ void forward_sub(complex *l, complex *b, complex *z, int size_val)// inputs l an
 }
 
 //Performs backward substitution for LU decomp inversion method
-void back_sub(complex *u, complex *z, complex *x, int size_val)// inputs u and z comput output x
+void back_sub(gld::complex *u, gld::complex *z, gld::complex *x, int size_val)// inputs u and z comput output x
 {
 	int n, m;
 	x[(size_val-1)] = z[(size_val-1)]/u[(size_val*size_val-1)];
@@ -14917,19 +14928,19 @@ void back_sub(complex *u, complex *z, complex *x, int size_val)// inputs u and z
 //Assumes all matrices prealloced in advance
 //output_mat = inv(input_mat)
 //size_val represents the square dimension -- 6x6 matrix = 6
-void lu_matrix_inverse(complex *input_mat, complex *output_mat, int size_val)
+void lu_matrix_inverse(gld::complex *input_mat, gld::complex *output_mat, int size_val)
 {
-	complex *l_mat, *u_mat, *b_vec, *z_vec, *x_vec;
+	gld::complex *l_mat, *u_mat, *b_vec, *z_vec, *x_vec;
 	int sq_size,loop_val_x, loop_val_y;
 
 	//Get overall size (save a multiply, save something)
 	sq_size = size_val*size_val;
 
 	//Allocate them on the heap, for now
-	l_mat = (complex *)gl_malloc(sq_size*sizeof(complex));
+	l_mat = (gld::complex *)gl_malloc(sq_size*sizeof(gld::complex));
 
 	//Check it
-	if (l_mat == NULL)
+	if (l_mat == nullptr)
 	{
 		GL_THROW("link: error allocated space for LU matrix inversion");
 		/*  TROUBLESHOOT
@@ -14939,37 +14950,37 @@ void lu_matrix_inverse(complex *input_mat, complex *output_mat, int size_val)
 		*/
 	}
 
-	u_mat = (complex *)gl_malloc(sq_size*sizeof(complex));
+	u_mat = (gld::complex *)gl_malloc(sq_size*sizeof(gld::complex));
 
 	//Check it
-	if (u_mat == NULL)
+	if (u_mat == nullptr)
 	{
 		GL_THROW("link: error allocated space for LU matrix inversion");
 		//Defined above
 	}
 
-	b_vec = (complex *)gl_malloc(size_val*sizeof(complex));
+	b_vec = (gld::complex *)gl_malloc(size_val*sizeof(gld::complex));
 
 	//Check it
-	if (b_vec == NULL)
+	if (b_vec == nullptr)
 	{
 		GL_THROW("link: error allocated space for LU matrix inversion");
 		//Defined above
 	}
 
-	z_vec = (complex *)gl_malloc(size_val*sizeof(complex));
+	z_vec = (gld::complex *)gl_malloc(size_val*sizeof(gld::complex));
 
 	//Check it
-	if (z_vec == NULL)
+	if (z_vec == nullptr)
 	{
 		GL_THROW("link: error allocated space for LU matrix inversion");
 		//Defined above
 	}
 
-	x_vec = (complex *)gl_malloc(size_val*sizeof(complex));
+	x_vec = (gld::complex *)gl_malloc(size_val*sizeof(gld::complex));
 
 	//Check it
-	if (x_vec == NULL)
+	if (x_vec == nullptr)
 	{
 		GL_THROW("link: error allocated space for LU matrix inversion");
 		//Defined above
@@ -14986,11 +14997,11 @@ void lu_matrix_inverse(complex *input_mat, complex *output_mat, int size_val)
 		{
 			if (loop_val_x == loop_val_y)
 			{
-				b_vec[loop_val_y] = complex(1.0,0.0);
+				b_vec[loop_val_y] = gld::complex(1.0,0.0);
 			}
 			else
 			{
-				b_vec[loop_val_y] = complex(0.0,0.0);
+				b_vec[loop_val_y] = gld::complex(0.0,0.0);
 			}
 		}//End solution vector formulation
 

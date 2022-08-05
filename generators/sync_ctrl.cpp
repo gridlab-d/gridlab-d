@@ -72,7 +72,7 @@ sync_ctrl::sync_ctrl(MODULE *mod)
                                 PT_DESCRIPTION, "The output of the PI controller that adjusts the frequency difference (i.e., the control variable, which is denoted as u(t) in usual).",
                                 PT_enumeration, "mode_status", PADDR(mode_status), PT_ACCESS, PA_HIDDEN,
                                 PT_DESCRIPTION, "The current working mode status.",
-                                nullptr) < 1)
+                                NULL) < 1)
             GL_THROW("unable to publish properties in %s", __FILE__);
 
         if (gl_publish_function(oclass, "interupdate_controller_object", (FUNCTIONADDR)interupdate_sync_ctrl) == nullptr)
@@ -516,20 +516,20 @@ void sync_ctrl::init_vars() // Init local variables with default settings
 template <class T>
 void sync_ctrl::set_prop(gld_property *prop_ptr, T prop_value)
 {
-    gld_wlock *rlock;
+    gld_wlock *rlock = nullptr;
     prop_ptr->setp<T>(prop_value, *rlock);
 }
 /* Get */
 template <class T>
 void sync_ctrl::get_prop(gld_property *prop_ptr, T prop_value)
 {
-    gld_wlock *rlock;
+    gld_wlock *rlock = nullptr;
     prop_ptr->getp<T>(prop_value, *rlock);
 }
 
 /* Get Prop Value*/
 template <class T, class T1>
-T sync_ctrl::get_prop_value(T1 *obj_ptr, char *prop_name_char_ptr, bool (gld_property::*fp_is_valid)(), bool (gld_property::*fp_is_type)(), T (gld_property::*fp_get_type)())
+T sync_ctrl::get_prop_value(T1 *obj_ptr, const char *prop_name_char_ptr, bool (gld_property::*fp_is_valid)(), bool (gld_property::*fp_is_type)(), T (gld_property::*fp_get_type)())
 {
     // Get the property pointer
     gld_property *prop_ptr = get_prop_ptr<T1>(obj_ptr, prop_name_char_ptr, fp_is_valid, fp_is_type);
@@ -538,7 +538,7 @@ T sync_ctrl::get_prop_value(T1 *obj_ptr, char *prop_name_char_ptr, bool (gld_pro
 }
 
 template <class T, class T1>
-T *sync_ctrl::get_prop_value(T1 *obj_ptr, char *prop_name_char_ptr, bool (gld_property::*fp_is_valid)(), bool (gld_property::*fp_is_type)(), T *(gld_property::*fp_get_type)())
+T *sync_ctrl::get_prop_value(T1 *obj_ptr, const char *prop_name_char_ptr, bool (gld_property::*fp_is_valid)(), bool (gld_property::*fp_is_type)(), T *(gld_property::*fp_get_type)())
 {
     // Get the property pointer
     gld_property *prop_ptr = get_prop_ptr<T1>(obj_ptr, prop_name_char_ptr, fp_is_valid, fp_is_type);
@@ -547,10 +547,10 @@ T *sync_ctrl::get_prop_value(T1 *obj_ptr, char *prop_name_char_ptr, bool (gld_pr
 }
 
 template <class T>
-T sync_ctrl::get_prop_value(char *prop_name_char_ptr, bool (gld_property::*fp_is_valid)(), bool (gld_property::*fp_is_type)(), T (gld_property::*fp_get_type)())
+T sync_ctrl::get_prop_value(const char *prop_name_char_ptr, bool (gld_property::*fp_is_valid)(), bool (gld_property::*fp_is_type)(), T (gld_property::*fp_get_type)())
 {
     // Get the property pointer
-    gld_property *prop_ptr = get_prop_ptr<char>(nullptr, prop_name_char_ptr, fp_is_valid, fp_is_type);
+    gld_property *prop_ptr = get_prop_ptr<const char>(nullptr, prop_name_char_ptr, fp_is_valid, fp_is_type);
 
     return get_prop_value(prop_ptr, fp_get_type);
 }
@@ -584,7 +584,7 @@ T *sync_ctrl::get_prop_value(gld_property *prop_ptr, T *(gld_property::*fp_get_t
 }
 
 template <class T>
-gld_property *sync_ctrl::get_prop_ptr(T *obj_ptr, char *prop_name_char_ptr, bool (gld_property::*fp_is_valid)(), bool (gld_property::*fp_is_type)())
+gld_property *sync_ctrl::get_prop_ptr(T *obj_ptr, const char *prop_name_char_ptr, bool (gld_property::*fp_is_valid)(), bool (gld_property::*fp_is_type)())
 {
     OBJECT *obj = OBJECTHDR(this);
 
@@ -597,7 +597,7 @@ gld_property *sync_ctrl::get_prop_ptr(T *obj_ptr, char *prop_name_char_ptr, bool
         temp_prop_ptr = new gld_property(obj_ptr, prop_name_char_ptr);
 
     // Check the validity and type of the property pointer
-    if (((temp_prop_ptr->*fp_is_valid)() != true) || ((temp_prop_ptr->*fp_is_type)() != true))
+    if (!(temp_prop_ptr->*fp_is_valid)() || !(temp_prop_ptr->*fp_is_type)())
     {
         GL_THROW("%s:%d %s failed to map the property: '%s'",
                  STR(sync_ctrl), obj->id, (obj->name ? obj->name : "Unnamed"), prop_name_char_ptr);

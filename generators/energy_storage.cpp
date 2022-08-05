@@ -7,8 +7,8 @@
 using namespace std;
 
 /* Framework */
-CLASS *energy_storage::oclass = NULL;
-energy_storage *energy_storage::defaults = NULL;
+CLASS *energy_storage::oclass = nullptr;
+energy_storage *energy_storage::defaults = nullptr;
 
 static PASSCONFIG passconfig = PC_BOTTOMUP;
 static PASSCONFIG clockpass = PC_BOTTOMUP;
@@ -16,10 +16,10 @@ static PASSCONFIG clockpass = PC_BOTTOMUP;
 /* Class registration is only called once to register the class with the core */
 energy_storage::energy_storage(MODULE *module)
 {
-	if (oclass == NULL)
+	if (oclass == nullptr)
 	{
 		oclass = gl_register_class(module, "energy_storage", sizeof(energy_storage), passconfig | PC_AUTOLOCK);
-		if (oclass == NULL)
+		if (oclass == nullptr)
 			throw "unable to register class energy_storage";
 		else
 			oclass->trl = TRL_PROOF;
@@ -53,9 +53,9 @@ energy_storage::energy_storage(MODULE *module)
 				GL_THROW("unable to publish properties in %s", __FILE__);
 
 		//Deltamode linkage
-		if (gl_publish_function(oclass, "interupdate_gen_object", (FUNCTIONADDR)interupdate_energy_storage) == NULL)
+		if (gl_publish_function(oclass, "interupdate_gen_object", (FUNCTIONADDR)interupdate_energy_storage) == nullptr)
 			GL_THROW("Unable to publish energy_storage deltamode function");
-		if (gl_publish_function(oclass, "DC_gen_object_update", (FUNCTIONADDR)dc_object_update_energy_storage) == NULL)
+		if (gl_publish_function(oclass, "DC_gen_object_update", (FUNCTIONADDR)dc_object_update_energy_storage) == nullptr)
 			GL_THROW("Unable to publish energy_storage DC object update function");
 	}
 }
@@ -84,9 +84,9 @@ int energy_storage::create(void)
 	first_sync_delta_enabled = false;
 
 	//Inverter pointers
-	inverter_voltage_property = NULL;
-	inverter_current_property = NULL;
-	inverter_power_property = NULL;
+	inverter_voltage_property = nullptr;
+	inverter_current_property = nullptr;
+	inverter_power_property = nullptr;
 
 	//Default versions
 	default_voltage_array = 0.0;
@@ -104,7 +104,7 @@ int energy_storage::init(OBJECT *parent)
 	STATUS fxn_return_status;
 
 
-	if (parent != NULL)
+	if (parent != nullptr)
 	{
 		if ((parent->flags & OF_INIT) != OF_INIT)
 		{
@@ -129,9 +129,9 @@ int energy_storage::init(OBJECT *parent)
 
 
 	// find parent inverter, if not defined, use a default voltage
-	if (parent != NULL)
+	if (parent != nullptr)
 	{
-		if (gl_object_isa(parent, "inverter", "generators") == true) // energy_storage has a PARENT and PARENT is an INVERTER - old-school inverter
+		if (gl_object_isa(parent, "inverter", "generators")) // energy_storage has a PARENT and PARENT is an INVERTER - old-school inverter
 		{
 			//Throw an error for now - we'll have to think if we want to support old school inverters or not
 			GL_THROW("energy_storage:%d - %s - Only inverter_dyn objects are supported at this time", obj->id, (obj->name ? obj->name : "Unnamed"));
@@ -139,13 +139,13 @@ int energy_storage::init(OBJECT *parent)
 			The energy_storage object only supports connections to inverter_dyn right now.  Older inverter functionality may be added in the future.
 			*/
 		}
-		else if (gl_object_isa(parent, "inverter_dyn", "generators") == true) // energy_storage has a PARENT and PARENT is an inverter_dyn object
+		else if (gl_object_isa(parent, "inverter_dyn", "generators")) // energy_storage has a PARENT and PARENT is an inverter_dyn object
 		{
 			//Map the inverter voltage
 			inverter_voltage_property = new gld_property(parent, "V_In");
 
 			//Check it
-			if ((inverter_voltage_property->is_valid() != true) || (inverter_voltage_property->is_double() != true))
+			if (!inverter_voltage_property->is_valid() || !inverter_voltage_property->is_double())
 			{
 				GL_THROW("energy_storage:%d - %s - Unable to map inverter power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
@@ -158,7 +158,7 @@ int energy_storage::init(OBJECT *parent)
 			inverter_current_property = new gld_property(parent, "I_In");
 
 			//Check it
-			if ((inverter_current_property->is_valid() != true) || (inverter_current_property->is_double() != true))
+			if (!inverter_current_property->is_valid() || !inverter_current_property->is_double())
 			{
 				GL_THROW("energy_storage:%d - %s - Unable to map inverter power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -168,7 +168,7 @@ int energy_storage::init(OBJECT *parent)
 			inverter_power_property = new gld_property(parent, "P_In");
 
 			//Check it
-			if ((inverter_power_property->is_valid() != true) || (inverter_power_property->is_double() != true))
+			if (!inverter_power_property->is_valid() || !inverter_power_property->is_double())
 			{
 				GL_THROW("energy_storage:%d - %s - Unable to map inverter power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -180,7 +180,7 @@ int energy_storage::init(OBJECT *parent)
 			temp_fxn = (FUNCTIONADDR)(gl_get_function(parent, "register_gen_DC_object"));
 
 			//See if it was located
-			if (temp_fxn == NULL)
+			if (temp_fxn == nullptr)
 			{
 				GL_THROW("energy_storage:%d - %s - failed to map additional current injection mapping for inverter_dyn:%d - %s", obj->id, (obj->name ? obj->name : "unnamed"), parent->id, (parent->name ? parent->name : "unnamed"));
 				/*  TROUBLESHOOT
@@ -217,7 +217,7 @@ int energy_storage::init(OBJECT *parent)
 		inverter_voltage_property = new gld_property(obj, "default_voltage_variable");
 
 		//Check it
-		if ((inverter_voltage_property->is_valid() != true) || (inverter_voltage_property->is_double() != true))
+		if (!inverter_voltage_property->is_valid() || !inverter_voltage_property->is_double())
 		{
 			GL_THROW("energy_storage:%d - %s - Unable to map a default power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
@@ -230,7 +230,7 @@ int energy_storage::init(OBJECT *parent)
 		inverter_current_property = new gld_property(obj, "default_current_variable");
 
 		//Check it
-		if ((inverter_current_property->is_valid() != true) || (inverter_current_property->is_double() != true))
+		if (!inverter_current_property->is_valid() || !inverter_current_property->is_double())
 		{
 			GL_THROW("energy_storage:%d - %s - Unable to map a default power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
 			//Defined above
@@ -240,7 +240,7 @@ int energy_storage::init(OBJECT *parent)
 		inverter_power_property = new gld_property(obj, "default_power_variable");
 
 		//Check it
-		if ((inverter_power_property->is_valid() != true) || (inverter_power_property->is_double() != true))
+		if (!inverter_power_property->is_valid() || !inverter_power_property->is_double())
 		{
 			GL_THROW("energy_storage:%d - %s - Unable to map a default power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
 			//Defined above
@@ -256,10 +256,10 @@ int energy_storage::init(OBJECT *parent)
 		deltamode_inclusive = true; //Set the flag and off we go
 	}
 
-	if (deltamode_inclusive == true)
+	if (deltamode_inclusive)
 	{
 		//Check global, for giggles
-		if (enable_subsecond_models != true)
+		if (!enable_subsecond_models)
 		{
 			gl_warning("energy_storage:%s indicates it wants to run deltamode, but the module-level flag is not set!", obj->name ? obj->name : "unnamed");
 			/*  TROUBLESHOOT
@@ -274,7 +274,7 @@ int energy_storage::init(OBJECT *parent)
 		}
 
 		//Make sure our parent is an inverter_dyn and deltamode enabled (otherwise this is dumb)
-		if (gl_object_isa(parent, "inverter_dyn", "generators") == true)
+		if (gl_object_isa(parent, "inverter_dyn", "generators"))
 		{
 			//Make sure our parent has the flag set
 			if ((parent->flags & OF_DELTAMODE) != OF_DELTAMODE)
@@ -297,7 +297,7 @@ int energy_storage::init(OBJECT *parent)
 	}	 //End deltamode inclusive
 	else //This particular model isn't enabled
 	{
-		if (enable_subsecond_models == true)
+		if (enable_subsecond_models)
 		{
 			gl_warning("energy_storage:%d %s - Deltamode is enabled for the module, but not this energy_storage array!", obj->id, (obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
@@ -318,12 +318,12 @@ TIMESTAMP energy_storage::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	OBJECT *obj = OBJECTHDR(this);
 
-	if (first_sync_delta_enabled == true) //Deltamode first pass
+	if (first_sync_delta_enabled) //Deltamode first pass
 	{
 		//TODO: LOCKING!
-		if ((deltamode_inclusive == true) && (enable_subsecond_models == true)) //We want deltamode - see if it's populated yet
+		if (deltamode_inclusive && enable_subsecond_models) //We want deltamode - see if it's populated yet
 		{
-			if ((gen_object_current == -1) || (delta_objects == NULL))
+			if ((gen_object_current == -1) || (delta_objects == nullptr))
 			{
 				//Call the allocation routine
 				allocate_deltamode_arrays();
@@ -347,7 +347,7 @@ TIMESTAMP energy_storage::sync(TIMESTAMP t0, TIMESTAMP t1)
 			delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "interupdate_gen_object"));
 
 			//Make sure it worked
-			if (delta_functions[gen_object_current] == NULL)
+			if (delta_functions[gen_object_current] == nullptr)
 			{
 				GL_THROW("Failure to map deltamode function for device:%s", obj->name);
 				/*  TROUBLESHOOT
@@ -358,10 +358,10 @@ TIMESTAMP energy_storage::sync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 
 			//Map up the function for postupdate
-			post_delta_functions[gen_object_current] = NULL; //No post-update function for us
+			post_delta_functions[gen_object_current] = nullptr; //No post-update function for us
 
 			//Map up the function for preupdate
-			delta_preupdate_functions[gen_object_current] = NULL;	//Not one of these either
+			delta_preupdate_functions[gen_object_current] = nullptr;	//Not one of these either
 
 			//Update pointer
 			gen_object_current++;
@@ -428,12 +428,12 @@ SIMULATIONMODE energy_storage::inter_deltaupdate(unsigned int64 delta_time, unsi
 //DC update function
 STATUS energy_storage::energy_storage_dc_update(OBJECT *calling_obj, bool init_mode)
 {
-	gld_wlock *test_rlock;
+	gld_wlock *test_rlock = nullptr;
 	STATUS temp_status = SUCCESS;
 	//double  P_ES_pu;
 
 
-	if (init_mode == true) //Initialization - if needed
+	if (init_mode) //Initialization - if needed
 	{
 		//Pull P_In from the inverter - for now, this is singular (may need to be adjusted when multiple objects exist)
 		ES_DC_Power_Val = inverter_power_property->get_double();
@@ -494,7 +494,7 @@ EXPORT int create_energy_storage(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(energy_storage::oclass);
-		if (*obj != NULL)
+		if (*obj != nullptr)
 		{
 			energy_storage *my = OBJECTDATA(*obj, energy_storage);
 			gl_set_parent(*obj, parent);
@@ -510,7 +510,7 @@ EXPORT int init_energy_storage(OBJECT *obj, OBJECT *parent)
 {
 	try
 	{
-		if (obj != NULL)
+		if (obj != nullptr)
 			return OBJECTDATA(obj, energy_storage)->init(parent);
 		else
 			return 0;

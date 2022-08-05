@@ -77,10 +77,10 @@
 
  @{
  **/
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "powerflow.h"
 #include "node.h"
@@ -89,19 +89,19 @@
 //////////////////////////////////////////////////////////////////////////
 // powerflow_object CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* powerflow_object::oclass = NULL;
-CLASS* powerflow_object::pclass = NULL;
+CLASS* powerflow_object::oclass = nullptr;
+CLASS* powerflow_object::pclass = nullptr;
 
 powerflow_object::powerflow_object(MODULE *mod)
 {	
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 #ifdef SUPPORT_OUTAGES
 		oclass = gl_register_class(mod,"powerflow_object",sizeof(powerflow_object),PC_ABSTRACTONLY|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
 #else
 		oclass = gl_register_class(mod,"powerflow_object",sizeof(powerflow_object),PC_ABSTRACTONLY|PC_NOSYNC|PC_AUTOLOCK);
 #endif
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class powerflow_object";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -148,7 +148,7 @@ powerflow_object::powerflow_object(CLASS *oclass)
 	gl_create_foreign((OBJECT*)this);
 }
 
-int powerflow_object::isa(char *classname)
+int powerflow_object::isa(const char *classname)
 {
 	return strcmp(classname,"powerflow_object")==0;
 }
@@ -160,7 +160,7 @@ int powerflow_object::create(void)
 	nominal_voltage = 0.0;
 
 	//Deltamode override flag
-	if (all_powerflow_delta == true)
+	if (all_powerflow_delta)
 		obj->flags |= OF_DELTAMODE;
 	
 	//Set a default for inrush integration - overarching (can be overridden)
@@ -275,7 +275,7 @@ EXPORT int create_powerflow_object(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(powerflow_object::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			powerflow_object *my = OBJECTDATA(*obj,powerflow_object);
 			gl_set_parent(*obj,parent);

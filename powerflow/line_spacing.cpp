@@ -7,24 +7,24 @@
 	@{
 **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
 using namespace std;
 
 #include "line.h"
 
-CLASS* line_spacing::oclass = NULL;
-CLASS* line_spacing::pclass = NULL;
+CLASS* line_spacing::oclass = nullptr;
+CLASS* line_spacing::pclass = nullptr;
 
 line_spacing::line_spacing(MODULE *mod) : powerflow_library(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		oclass = gl_register_class(mod,"line_spacing",sizeof(line_spacing),0x00);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class line_spacing";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -83,7 +83,7 @@ EXPORT int create_line_spacing(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(line_spacing::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			line_spacing *my = OBJECTDATA(*obj,line_spacing);
 			gl_set_parent(*obj,parent);

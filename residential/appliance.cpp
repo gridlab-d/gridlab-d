@@ -19,7 +19,7 @@ appliance::appliance(MODULE *module) : residential_enduse(module)
 	if ( oclass==NULL )
 	{
 		pclass = residential_enduse::oclass;
-		oclass = gl_register_class(module,"appliance",sizeof(appliance),PC_PRETOPDOWN|PC_AUTOLOCK);
+		oclass = gl_register_class(module, "appliance",sizeof(appliance),PC_PRETOPDOWN|PC_AUTOLOCK);
 		if ( oclass==NULL )
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 		if ( gl_publish_variable(oclass,
@@ -68,7 +68,7 @@ int appliance::init(OBJECT *parent)
 	if ( impedance.is_empty() )
 	{
 		impedance.grow_to(0,n_states-1);
-		complex zero(0);
+		gld::complex zero(0);
 		impedance = zero;
 	}
 	if ( impedance.get_rows()!=1 || impedance.get_cols()!=n_states )
@@ -78,7 +78,7 @@ int appliance::init(OBJECT *parent)
 	if ( current.is_empty() )
 	{
 		current.grow_to(0,n_states-1);
-		complex zero(0);
+		gld::complex zero(0);
 		current = zero;
 	}
 	if ( current.get_rows()!=1 || current.get_cols()!=n_states )
@@ -88,7 +88,7 @@ int appliance::init(OBJECT *parent)
 	if ( power.is_empty() )
 	{
 		power.grow_to(0,n_states-1);
-		complex zero(0);
+		gld::complex zero(0);
 		power = zero;
 	}
 	if ( power.get_rows()!=1 || power.get_cols()!=n_states )
@@ -136,8 +136,8 @@ void appliance::update_next_t(void)
 }
 void appliance::update_power(void)
 {
-	complex Z = impedance.get_at(0,state);
-	load.admittance = Z.Mag()==0  ? complex(0) : complex(1)/Z;
+	gld::complex Z = impedance.get_at(0,state);
+	load.admittance = Z.Mag()==0  ? gld::complex(0) : gld::complex(1)/Z;
 	load.current = current.get_at(0,state);
 	load.power = power.get_at(0,state);
 	load.heatgain = heatgain.get_at(0,state);

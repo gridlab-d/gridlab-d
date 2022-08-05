@@ -11,22 +11,27 @@
 #define _POWERFLOW_H
 
 #include "gridlabd.h"
+#ifndef GLD_USE_EIGEN
 #include "solver_nr.h"
-
+#else
+#include "solver_nr_eigen.h"
+#endif
 #ifdef _POWERFLOW_CPP
 #define GLOBAL
 #define INIT(A) = (A)
 #else
+#undef GLOBAL
 #define GLOBAL extern
+#undef INIT
 #define INIT(A)
 #endif
 
 #ifdef _DEBUG
-void print_matrix(complex mat[3][3]);
+void print_matrix(gld::complex mat[3][3]);
 #endif
 
 #define GETOBJECT(obj) ((OBJECT *) obj - 1)
-#define IMPORT_CLASS(name) extern CLASS *name##_class
+//#define IMPORT_CLASS(name) extern CLASS *name##_class
 
 //Deltamode use
 #define TSNVRDBL 9223372036854775808.0
@@ -112,8 +117,8 @@ GLOBAL double warning_overvoltage INIT(1.2);		/**< voltage magnitude (per unit) 
 GLOBAL double warning_voltageangle INIT(2.0);		/**< voltage angle (over link) above which a warning is posted */
 GLOBAL bool require_voltage_control INIT(false);	/**< flag to enable voltage control source requirement */
 GLOBAL double geographic_degree INIT(0.0);			/**< topological degree factor */
-GLOBAL complex fault_Z INIT(complex(1e-6,0));		/**< fault impedance */
-GLOBAL complex ground_Z INIT(complex(1e-6,0));		/**< ground impedance */
+GLOBAL gld::complex fault_Z INIT(gld::complex(1e-6,0));		/**< fault impedance */
+GLOBAL gld::complex ground_Z INIT(gld::complex(1e-6,0));		/**< ground impedance */
 GLOBAL double default_maximum_voltage_error INIT(1e-6);	/**< default sync voltage convergence limit [puV] */
 GLOBAL double default_maximum_power_error INIT(0.0001);	/**< default power convergence limit for multirun */
 GLOBAL OBJECT *restoration_object INIT(NULL);		/**< restoration object of the system */

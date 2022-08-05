@@ -5,6 +5,7 @@
 #define DLMAIN
 
 #include <stdlib.h>
+
 #include "gridlabd.h"
 
 #ifdef _WIN32
@@ -25,6 +26,7 @@ int load_library(char *name, PLCCODE *code, PLCINIT *init, PLCDATA *data)
 
 #else // !WIN32
 #include "machine.h"
+
 #include <dlfcn.h>
 int load_library(char *name, PLCCODE *code, PLCINIT *init, PLCDATA *data)
 {

@@ -10,6 +10,7 @@
 #define _baseMVA_H
 
 #include <stdarg.h>
+
 #include "gridlabd.h"
 
 class baseMVA {

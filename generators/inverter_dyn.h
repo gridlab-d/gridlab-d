@@ -8,7 +8,7 @@
 EXPORT int isa_inverter_dyn(OBJECT *obj, char *classname);
 EXPORT STATUS preupdate_inverter_dyn(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_time);
 EXPORT SIMULATIONMODE interupdate_inverter_dyn(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
-EXPORT STATUS postupdate_inverter_dyn(OBJECT *obj, complex *useful_value, unsigned int mode_pass);
+EXPORT STATUS postupdate_inverter_dyn(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass);
 EXPORT STATUS inverter_dyn_NR_current_injection_update(OBJECT *obj, int64 iteration_count, bool *converged_failure);
 EXPORT STATUS inverter_dyn_DC_object_register(OBJECT *this_obj, OBJECT *DC_obj);
 
@@ -118,10 +118,10 @@ private:
 	INV_DYN_STATE next_state; ///< The next state of the inverter in delamode
 
 	gld_property *pIGenerated[3];		//Link to direct current injections to powerflow at bus-level
-	complex generator_admittance[3][3]; //Generator admittance matrix converted from sequence values
-	complex filter_admittance;			//Filter admittance value - mostly separate to make single-phase easier
-	complex value_IGenerated[3];		//Value/accumulator for IGenerated values
-	complex prev_value_IGenerated[3];	//Tracking variable for grid following "QSTS exit"
+	gld::complex generator_admittance[3][3]; //Generator admittance matrix converted from sequence values
+	gld::complex filter_admittance;			//Filter admittance value - mostly separate to make single-phase easier
+	gld::complex value_IGenerated[3];		//Value/accumulator for IGenerated values
+	gld::complex prev_value_IGenerated[3];	//Tracking variable for grid following "QSTS exit"
 
 	//Comaptibility variables - used to be in power_electronics
 	bool parent_is_a_meter;		 //Boolean to indicate if the parent object is a meter/triplex_meter
@@ -140,12 +140,12 @@ private:
 
 
 	//Default or "connecting point" values for powerflow interactions
-	complex value_Circuit_V[3];	   ///< value holder for the three L-N voltage fields
-	complex value_Line_I[3];	   ///< value holder for the three current fields
-	complex value_Line_unrotI[3];  ///< value holder for the three pre-rotated current fields
-	complex value_Power[3];		   ///< value holder for power value on meter parent
+	gld::complex value_Circuit_V[3];	   ///< value holder for the three L-N voltage fields
+	gld::complex value_Line_I[3];	   ///< value holder for the three current fields
+	gld::complex value_Line_unrotI[3];  ///< value holder for the three pre-rotated current fields
+	gld::complex value_Power[3];		   ///< value holder for power value on meter parent
 	enumeration value_MeterStatus; ///< value holder for service_status variable on meter parent
-	complex value_Meter_I[3];	   ///< value holder for meter measured current on three lines
+	gld::complex value_Meter_I[3];	   ///< value holder for meter measured current on three lines
 
 	gld_property *pbus_full_Y_mat; //Link to the full_Y bus variable -- used for Norton equivalents
 	gld_property *pGenerated;	   //Link to pGenerated value - used for Norton equivalents
@@ -164,11 +164,11 @@ private:
 	double pvc_Pmax;
 
 	//Convergence check item for grid-forming voltage
-	complex e_droop_prev[3];
+	gld::complex e_droop_prev[3];
 
 	//Map functions
-	gld_property *map_complex_value(OBJECT *obj, char *name);
-	gld_property *map_double_value(OBJECT *obj, char *name);
+	gld_property *map_complex_value(OBJECT *obj, const char *name);
+	gld_property *map_double_value(OBJECT *obj, const char *name);
 	void pull_complex_powerflow_values(void);
 	void reset_complex_powerflow_accumulators(void);
 	void push_complex_powerflow_values(bool update_voltage);
@@ -177,7 +177,7 @@ private:
 	void check_and_update_VA_Out(OBJECT *obj);
 
 	// Update current func
-	void update_iGen(complex);
+	void update_iGen(gld::complex);
 
 	//*** IEEE 1547 functionality ***//
 	bool Reconnect_Warn_Flag;		//Flag to warn on a 1547 recovery that the behavior is not fully validated
@@ -220,7 +220,7 @@ private:
 	double IEEE1547_over_voltage_low_viol_time;				//Lowest high voltage threshold violation accumulator
 	double IEEE1547_over_voltage_high_viol_time;			//Highest high voltage threshold violation accumulator
 
-	typedef enum {
+	enum IEEE1547TRIPSTATUS {
 		IEEE_1547_NOTRIP=0,		/**< No trip reason */
 		IEEE_1547_HIGH_OF=1,	/**< High over-frequency level trip */
 		IEEE_1547_LOW_OF=2,		/**< Low over-frequency level trip */
@@ -276,8 +276,8 @@ public:
 	enumeration P_f_droop_setting_mode; //
 
 
-	complex terminal_current_val[3];
-	complex terminal_current_val_pu[3];
+	gld::complex terminal_current_val[3];
+	gld::complex terminal_current_val_pu[3];
 	TIMESTAMP inverter_start_time;
 	bool inverter_first_step;
 	bool first_deltamode_init;
@@ -290,12 +290,12 @@ public:
 	INV_DYN_STATE curr_state; ///< The current state of the inverter in deltamode
 
 
-	complex I_out_PU_temp[3];  //This is mainly used for current limiting function of a grid-forming inverter
+	gld::complex I_out_PU_temp[3];  //This is mainly used for current limiting function of a grid-forming inverter
 
-	complex power_val[3];		   //power
-	complex VA_Out;				   // complex output power
-	complex value_Circuit_V_PS;	   // Positive sequence voltage of three phase terminal voltages
-	complex value_Circuit_I_PS[3]; // Positive sequence current of three phase terminal currents, assume no negative or zero sequence, Phase A equals to positive sequence
+	gld::complex power_val[3];		   //power
+	gld::complex VA_Out;				   // complex output power
+	gld::complex value_Circuit_V_PS;	   // Positive sequence voltage of three phase terminal voltages
+	gld::complex value_Circuit_I_PS[3]; // Positive sequence current of three phase terminal currents, assume no negative or zero sequence, Phase A equals to positive sequence
 
 	double node_nominal_voltage; // Nominal voltage
 
@@ -377,13 +377,13 @@ public:
 	double w_ref;		 // w_ref is the rated frequency, usually 376.99 rad/s
 	double f_nominal;	 // rated frequency, 60 Hz
 	double Angle[3];	 // Phase angle of the internal voltage
-	complex e_source[3]; // e_source[i] is the complex value of internal voltage
-	complex e_source_pu[3]; // e_source[i] is the complex per-unit value of internal voltage
-	complex e_droop[3]; // e_droop is the complex value of the inverter internal voltage given by the grid-forming droop control
-	complex e_droop_pu[3]; // e_droop is the complex value of the inverter internal voltage given by the grid-forming droop control
+	gld::complex e_source[3]; // e_source[i] is the complex value of internal voltage
+	gld::complex e_source_pu[3]; // e_source[i] is the complex per-unit value of internal voltage
+	gld::complex e_droop[3]; // e_droop is the complex value of the inverter internal voltage given by the grid-forming droop control
+	gld::complex e_droop_pu[3]; // e_droop is the complex value of the inverter internal voltage given by the grid-forming droop control
 	double e_source_Re[3];
 	double e_source_Im[3];
-	complex I_source[3]; // I_source[i] is the complex value when using current source representation
+	gld::complex I_source[3]; // I_source[i] is the complex value when using current source representation
 	double I_source_Re[3];
 	double I_source_Im[3];
 	double pCircuit_V_Avg_pu; //pCircuit_V_Avg_pu refers to the average value of three phase voltages, it is per-unit value
@@ -444,7 +444,7 @@ public:
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 	STATUS pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time);
 	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
-	STATUS post_deltaupdate(complex *useful_value, unsigned int mode_pass);
+	STATUS post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass);
 	STATUS updateCurrInjection(int64 iteration_count,bool *converged_failure);
 	STATUS init_dynamics(INV_DYN_STATE *curr_time);
 	STATUS DC_object_register(OBJECT *DC_object);

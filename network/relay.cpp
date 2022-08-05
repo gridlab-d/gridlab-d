@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
+
 #include "network.h"
 
 /* Coefficient				U1			U2			U3			U4			U5		*/

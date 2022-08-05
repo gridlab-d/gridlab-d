@@ -37,7 +37,7 @@ public:
 	capacitor **pCapacitor;
 	TIMESTAMP runtime;
 	int32 runcount;
-	complex *node_voltage;
+	gld::complex *node_voltage;
 public:
 	static CLASS *oclass;
 public:
@@ -45,9 +45,9 @@ public:
 	int create(void);
 	int init(OBJECT *parent);
 	TIMESTAMP commit(TIMESTAMP t);
-	int isa(char *classname);
+	static int isa(const char *classname);
 	int dump(TIMESTAMP t);
-	complex *get_complex(OBJECT *obj, char *name);
+	static gld::complex *get_complex(OBJECT *obj, const char *name);
 };
 
 #endif // _impedance_dump_H

@@ -32,26 +32,26 @@
 
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "power_metrics.h"
 
 //////////////////////////////////////////////////////////////////////////
 // power_metrics CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* power_metrics::oclass = NULL;
+CLASS* power_metrics::oclass = nullptr;
 
-CLASS* power_metrics::pclass = NULL;
+CLASS* power_metrics::pclass = nullptr;
 
 power_metrics::power_metrics(MODULE *mod) : powerflow_library(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		oclass = gl_register_class(mod,"power_metrics",sizeof(power_metrics),0x00);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class power_metrics";
 		else
 			oclass->trl = TRL_QUALIFIED;
@@ -69,15 +69,15 @@ power_metrics::power_metrics(MODULE *mod) : powerflow_library(mod)
 			PT_double, "MAIFI_int", PADDR(MAIFI_int),PT_DESCRIPTION, "Displays MAIFI values over the period specified by base_time_value as per IEEE 1366-2003",
 			PT_double, "base_time_value[s]", PADDR(stat_base_time_value), PT_DESCRIPTION,"time period over which _int values are claculated",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
-			if (gl_publish_function(oclass, "calc_metrics", (FUNCTIONADDR)calc_pfmetrics)==NULL)
+			if (gl_publish_function(oclass, "calc_metrics", (FUNCTIONADDR)calc_pfmetrics)== nullptr)
 				GL_THROW("Unable to publish metrics calculation function");
-			if (gl_publish_function(oclass,	"reset_interval_metrics", (FUNCTIONADDR)reset_pfinterval_metrics)==NULL)
+			if (gl_publish_function(oclass,	"reset_interval_metrics", (FUNCTIONADDR)reset_pfinterval_metrics)==nullptr)
 				GL_THROW("Unable to publish interval metrics reset function");
-			if (gl_publish_function(oclass,	"reset_annual_metrics", (FUNCTIONADDR)reset_pfannual_metrics)==NULL)
+			if (gl_publish_function(oclass,	"reset_annual_metrics", (FUNCTIONADDR)reset_pfannual_metrics)==nullptr)
 				GL_THROW("Unable to publish annual metrics reset function");
-			if (gl_publish_function(oclass,	"init_reliability", (FUNCTIONADDR)init_pf_reliability_extra)==NULL)
+			if (gl_publish_function(oclass,	"init_reliability", (FUNCTIONADDR)init_pf_reliability_extra)==nullptr)
 				GL_THROW("Unable to publish powerflow reliability initialization function");
-			if (gl_publish_function(oclass,	"logfile_extra", (FUNCTIONADDR)logfile_extra)==NULL)
+			if (gl_publish_function(oclass,	"logfile_extra", (FUNCTIONADDR)logfile_extra)==nullptr)
 				GL_THROW("Unable to publish powerflow reliability metrics extra header function");
     }
 }
@@ -122,7 +122,7 @@ int power_metrics::create(void)
 	MAIFI_num_int = 0.0;
 
 	//Mapping variables
-	rel_metrics = NULL;
+	rel_metrics = nullptr;
 
 	//Checking variable
 	is_fault_check_tested = false;
@@ -284,7 +284,7 @@ void power_metrics::reset_metrics_variables(bool annual_metrics)
 	MAIFI_int = 0.0;
 	
 	//Now check annual
-	if (annual_metrics == true)	//ASAI for whole simulation should really be reset here as well, but no rolling window implemented
+	if (annual_metrics)	//ASAI for whole simulation should really be reset here as well, but no rolling window implemented
 	{
 		ASAI_num_int = 0.0;	//Default ASAI to perfect reliability (no interruptions)
 	}
@@ -298,12 +298,12 @@ void power_metrics::check_fault_check(void)
 	enumeration temp_enum_value;
 	bool temp_bool_value;
 	gld_object *temp_object_value;
-	gld_wlock *test_rlock;
+	gld_wlock *test_rlock = nullptr;
 
-	if (is_fault_check_tested == false)
+	if (!is_fault_check_tested)
 	{
 		//See if a "master powerflow" object has been mapped
-		if (fault_check_object == NULL)
+		if (fault_check_object == nullptr)
 		{
 			GL_THROW("power_metrics failed to map fault_check object - ensure it is near the top of the GLM!");
 			/*  TROUBLESHOOT
@@ -319,10 +319,10 @@ void power_metrics::check_fault_check(void)
 			//**Grab the "checking state" property and make sure it is right **//
 
 			//Map that field
-			temporary_property = new gld_property(fault_check_object,"check_mode");
+			temporary_property = new gld_property(fault_check_object, "check_mode");
 
 			//Make sure it worked
-			if ((temporary_property->is_valid() != true) || (temporary_property->is_enumeration() != true))
+			if (!temporary_property->is_valid() || !temporary_property->is_enumeration())
 			{
 				GL_THROW("power_metrics failed to map a property of the fault_check object!");
 				/*  TROUBLESHOOT
@@ -354,7 +354,7 @@ void power_metrics::check_fault_check(void)
 			temporary_property = new gld_property(fault_check_object,"reliability_mode");
 
 			//Make sure it worked
-			if ((temporary_property->is_valid() != true) || (temporary_property->is_bool() != true))
+			if (!temporary_property->is_valid() || !temporary_property->is_bool())
 			{
 				GL_THROW("power_metrics failed to map a property of the fault_check object!");
 				//Defined above
@@ -371,7 +371,7 @@ void power_metrics::check_fault_check(void)
 			temporary_property = new gld_property(fault_check_object,"eventgen_object");
 
 			//Make sure it worked
-			if ((temporary_property->is_valid() != true) || (temporary_property->is_objectref() != true))
+			if (!temporary_property->is_valid() || !temporary_property->is_objectref())
 			{
 				GL_THROW("power_metrics failed to map a property of the fault_check object!");
 				//Defined above
@@ -381,7 +381,7 @@ void power_metrics::check_fault_check(void)
 			temp_object_value = temporary_property->get_objectref();
 
 			//See if it is populated
-			if (temp_object_value == NULL)
+			if (temp_object_value == nullptr)
 			{
 				gl_warning("No eventgen object mapped up to %s, unscheduled faults are not allowed",fault_check_object->name);
 				/*  TROUBLESHOOT
@@ -504,7 +504,7 @@ EXPORT int create_power_metrics(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(power_metrics::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			power_metrics *my = OBJECTDATA(*obj,power_metrics);
 			gl_set_parent(*obj,parent);

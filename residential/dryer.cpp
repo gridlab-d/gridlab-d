@@ -18,10 +18,10 @@
  @{
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "house_e.h"
 #include "dryer.h"
@@ -131,7 +131,7 @@ int dryer::create()
 	// name of enduse
 	load.name = oclass->name;
 
-	load.power = load.admittance = load.current = load.total = complex(0,0,J);
+	load.power = load.admittance = load.current = load.total = gld::complex(0,0,J);
 	load.voltage_factor = 1.0;
 	load.power_factor = 0.95;
 	load.power_fraction = 1;
@@ -767,7 +767,7 @@ case DRYER_MOTOR_COIL_ONLY:
 		motor_on_off = motor_coil_on_off = 0;
 
 		// nothing running
-		load.power = load.current = load.admittance = complex(0,0,J);
+		load.power = load.current = load.admittance = gld::complex(0,0,J);
 
 		dt = ((enduse_queue>=1) || (enduse_queue==0)) ? 0 : ((1-enduse_queue)*3600)/(enduse_queue*24); 				
 
@@ -779,8 +779,8 @@ case DRYER_MOTOR_COIL_ONLY:
 		cycle_time -= dt;
 		// running in constant power mode with intermittent coil
 		load.power.SetPowerFactor(motor_power/1000, load.power_factor);
-		load.admittance = complex((coil_power[0])/1000,0,J); //assume pure resistance
-		load.current = complex(0,0,J);
+		load.admittance = gld::complex((coil_power[0])/1000,0,J); //assume pure resistance
+		load.current = gld::complex(0,0,J);
 
 		dt = cycle_time;
 		break;
@@ -798,8 +798,8 @@ case DRYER_MOTOR_COIL_ONLY:
 		}
 
 		// running in constant power mode with intermittent coil
-		load.power = load.current = complex(0,0,J);
-		load.admittance = complex(controls_power/1000,0,J);
+		load.power = load.current = gld::complex(0,0,J);
+		load.admittance = gld::complex(controls_power/1000,0,J);
 
 		dt = cycle_time;
 		break;
@@ -807,8 +807,8 @@ case DRYER_MOTOR_COIL_ONLY:
 	case DRYER_STALLED:
 
 		// running in constant impedance mode
-		load.power = load.current = complex(0,0,J);
-		load.admittance = complex(1)/stall_impedance;
+		load.power = load.current = gld::complex(0,0,J);
+		load.admittance = gld::complex(1)/stall_impedance;
 
 		// time to trip
 		dt = trip_delay;
@@ -818,7 +818,7 @@ case DRYER_MOTOR_COIL_ONLY:
 	case DRYER_TRIPPED:
 
 		// nothing running
-		load.power = load.current = load.admittance = complex(0,0,J);
+		load.power = load.current = load.admittance = gld::complex(0,0,J);
 		
 		// time to next expected state change
 		dt = reset_delay; 
@@ -832,8 +832,8 @@ case DRYER_MOTOR_COIL_ONLY:
 
 		// running in constant power mode with intermittent coil
 		load.power.SetPowerFactor(motor_power/1000, load.power_factor);
-		load.admittance = complex(0,0,J); //assume pure resistance
-		load.current = complex(0,0,J);
+		load.admittance = gld::complex(0,0,J); //assume pure resistance
+		load.current = gld::complex(0,0,J);
 
 		dt = cycle_time;
 		break;
