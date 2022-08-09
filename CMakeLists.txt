@@ -1,13 +1,34 @@
 cmake_minimum_required(VERSION 3.6)
 project(GridLAB-D)
 
-OPTION(GLD_WARNING_WORK "Make warnings errors and more pedantic" OFF)
+OPTION(GLD_WARNING_WORK "Make warnings more pedantic" OFF)
 if (GLD_WARNING_WORK)
     if (MSVC)
-        SET(GLD_COMPILE_OPTIONS "/W4" "/WX" CACHE INTERNAL "GLD_COMPILE_OPTIONS")
+        SET(GLD_COMPILE_OPTIONS
+                "/W4"
+                "/WX"
+                CACHE INTERNAL
+                "GLD_COMPILE_OPTIONS"
+                )
     else ()
-#        SET(GLD_COMPILE_OPTIONS "-Wall" "-Wextra" "-pedantic" "-Werror" CACHE INTERNAL "GLD_COMPILE_OPTIONS")
-        SET(GLD_COMPILE_OPTIONS "-Werror" CACHE INTERNAL "GLD_COMPILE_OPTIONS")
+        SET(GLD_COMPILE_OPTIONS
+                "-Wall"
+                "-Wextra"
+                "-pedantic"
+                CACHE INTERNAL
+                "GLD_COMPILE_OPTIONS"
+                )
+    endif ()
+else ()
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        # TODO: resolve these warnings and un-supress them
+        SET(GLD_COMPILE_OPTIONS
+                "-Wno-format-overflow"
+                "-Wno-format-truncation"
+                "-Wno-stringop-overflow"
+                CACHE INTERNAL
+                "GLD_COMPILE_OPTIONS"
+                )
     endif ()
 endif ()
 

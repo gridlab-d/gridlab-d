@@ -3928,7 +3928,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						m = 2*powerflow_values->island_matrix_values[island_loop_index].total_variables;
 
 						//Print the size - should be the matrix size, but put here for ease of use
-						fprintf(FPoutVal,"Matrix RHS Information - %lld elements\n",m);
+						fprintf(FPoutVal,"Matrix RHS Information - %u elements\n",m);
 
 						//Print a header - row information isn't really needed, but include, just for ease of viewing
 						fprintf(FPoutVal,"RHS Information - row, value\n");
@@ -3936,7 +3936,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						//Loop through and output the RHS values
 						for (jindexer=0; jindexer<m; jindexer++)
 						{
-							fprintf(FPoutVal,"%lld,%f\n",jindexer,powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[jindexer]);
+							fprintf(FPoutVal,"%u,%f\n",jindexer,powerflow_values->island_matrix_values[island_loop_index].deltaI_NR[jindexer]);
 						}//End output RHS
 
 						//Print an extra line, just for spacing for ALL/PERCALL

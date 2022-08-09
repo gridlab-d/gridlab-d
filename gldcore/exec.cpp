@@ -2138,11 +2138,11 @@ STATUS exec_start()
                 static bool initialized = false;
                 static std::chrono::time_point<system_clock, std::chrono::duration<long, std::ratio<1, 1000000000>>> t1;
                 static std::chrono::time_point<system_clock, std::chrono::duration<long, std::ratio<1, 1000000000>>> t2;
-                if (!initialized) [[unlikely]] {
+                if (!initialized) { //[[unlikely]] {
                     t1 = system_clock::now();
                     t2 = t1 + 1s;
                     initialized = true;
-                } else [[likely]] {
+                } else { //[[likely]] {
                     t1 = t2;
                     t2 += 1s; // One second from last time step
                 }
@@ -2158,7 +2158,7 @@ STATUS exec_start()
                     fall_behind++;
                 }
 
-                if (fall_behind > 5) [[unlikely]] {
+                if (fall_behind > 5) {// [[unlikely]] {
                     output_fatal("simulation fell behind realtime for more than 5 consecutive cycles");
                 }
 
