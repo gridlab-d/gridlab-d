@@ -37,6 +37,8 @@ option(GLD_USE_EIGEN "[NOT YET SUPPORTED] - Use Eigen package for LU Decompositi
 option(GLD_USE_SUPERLU "Use SuperLU package for LU Decomposition in Powerflow" ON)
 option(GLD_USE_HELICS "Link with HELICS" OFF)
 option(GLD_USE_MYSQL "Link with MySQL" OFF)
+set(GLD_HELICS_DIR "" CACHE PATH "Search path for HELICS library")
+set(GLD_MYSQL_DIR "" CACHE PATH "Search path for MySQL library")
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON) # TODO: only required for SuperLU_MT support with Clang. Future removal recommended.
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
