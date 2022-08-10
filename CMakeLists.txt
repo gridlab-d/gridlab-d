@@ -1,11 +1,9 @@
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.13)
 project(GridLAB-D)
 
 set(COMPILE_FLAGS "${WARNING_FLAGS}")
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-#TODO: detect dlfcn and xerces
 
 set(GLD_PACKAGE gridlabd)
 set(CMAKE_INSTALL_BINDIR "${CMAKE_INSTALL_PREFIX}/bin" CACHE PATH "" FORCE)
@@ -98,7 +96,7 @@ if (WIN32 OR MSYS OR MINGW OR CYGWIN)
     if (DLFCN)
         SET(DL_NAME dl)
     else()
-        add_subdirectory(third_party/dlfcn-win32)
+        add_subdirectory(third_party/dlfcn-win32 EXCLUDE_FROM_ALL)
         find_package(dlfcn-win32 REQUIRED)
         SET(DL_NAME dlfcn-win32::dl)
     endif ()
@@ -256,21 +254,13 @@ set(GLD_SHARE
         ${CMAKE_SOURCE_DIR}/gldcore/gridlabd.htm
         )
 
-set(FILE_PERMISSIONS PERMISSIONS
-        OWNER_EXECUTE OWNER_READ OWNER_WRITE
-        GROUP_EXECUTE GROUP_READ
-        WORLD_EXECUTE WORLD_READ)
-
-# Load module directories. When adding new module, add it here.
-include_directories(gldcore)
-
 #include_directories(third_party/dlfcn-win32)
 
 if (GLD_USE_SUPERLU)
     set(THIRD_PARTY_PATH ${CMAKE_SOURCE_DIR}/third_party)
     #    include(third_party/superLU_MT/CMakeLists.txt)
 
-    add_subdirectory(third_party/superLU_MT)
+    add_subdirectory(third_party/superLU_MT  EXCLUDE_FROM_ALL)
 
     #    list(APPEND CMAKE_MODULE_PATH
     #            ${CMAKE_BINARY_DIR}/third_party/SuperLU/SRC
@@ -283,11 +273,12 @@ if (GLD_USE_SUPERLU)
 endif ()
 
 option(JSONCPP_WITH_TESTS "Build the JSON CPP test suite" OFF)
-set(BUILD_SHARED_CACHE ${BUILD_SHARED_LIBS} CACHE INTERNAL "Store BUILD_SHARED_LIBS value temporarily")
-set(BUILD_SHARED_LIBS OFF)
-include_directories(third_party/jsoncpp_lib/include)
-add_subdirectory(third_party/jsoncpp_lib)
+#include_directories(third_party/jsoncpp_lib/include)
+add_subdirectory(third_party/jsoncpp_lib EXCLUDE_FROM_ALL)
+get_target_property(JSON_INC_PATH jsoncpp_lib INTERFACE_INCLUDE_DIRECTORIES)
+include_directories(${JSON_INC_PATH})
 set(BUILD_SHARED_LIBS ${BUILD_SHARED_CACHE})
+#find_package(jsoncpp REQUIRED) # Conan
 
 if (GLD_USE_EIGEN)
     message(FATAL_ERROR "Eigen implementation is not complete, and should not be used at this time.")
@@ -326,19 +317,50 @@ mark_as_advanced(FORCE
         GLD_SHARE
         )
 
+
+set(FILE_PERMISSIONS PERMISSIONS
+        OWNER_EXECUTE OWNER_READ OWNER_WRITE
+        GROUP_EXECUTE GROUP_READ
+        WORLD_EXECUTE WORLD_READ
+        )
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.sh
         ${FILE_PERMISSIONS}
-        DESTINATION ${CMAKE_INSTALL_BINDIR}
+        DESTINATION bin
         )
-
 install(FILES ${HEADER_FILE_NAMES}
         ${FILE_PERMISSIONS}
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${GLD_PACKAGE}
+        DESTINATION include/${GLD_PACKAGE}
         )
-
 install(FILES ${GLD_SHARE}
         ${FILE_PERMISSIONS}
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${GLD_PACKAGE})
+        DESTINATION share/${GLD_PACKAGE}
+        )
 install(FILES COPYRIGHT LICENSE
         ${FILE_PERMISSIONS}
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/share/doc/${GLD_PACKAGE})
+        DESTINATION share/doc/${GLD_PACKAGE}
+        )
+install(TARGETS
+        assert
+        climate
+        commercial
+        connection
+        generators
+        market
+        mysql
+        optimize
+        powerflow
+        reliability
+        residential
+        tape
+        tape_file
+        tape_plot
+        glsolvers
+        glxengine
+        gridlabd
+
+        ${FILE_PERMISSIONS}
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib)
+# Generate CPack config
+include(cmake/CPackConfig.cmake)

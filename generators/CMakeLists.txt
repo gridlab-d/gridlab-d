@@ -1,6 +1,6 @@
-project(generators)
+SET(GLD_MODULE_NAME generators)
 
-add_library(${PROJECT_NAME}
+add_library(${GLD_MODULE_NAME}
         battery.cpp
         battery.h
         central_dg_control.cpp
@@ -26,39 +26,32 @@ add_library(${PROJECT_NAME}
         controller_dg.h
         )
 
-set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
+set_target_properties(${GLD_MODULE_NAME} PROPERTIES PREFIX "")
 
 
 if (GLD_USE_EIGEN)
-    target_include_directories(${PROJECT_NAME} PRIVATE
+    target_include_directories(${GLD_MODULE_NAME} PRIVATE
             "${CMAKE_SOURCE_DIR}/third_party/Eigen"
             )
-    target_link_libraries(${PROJECT_NAME} PRIVATE
+    target_link_libraries(${GLD_MODULE_NAME} PRIVATE
             Eigen3::Eigen
             )
 else ()
-    target_include_directories(${PROJECT_NAME} PRIVATE
+    target_include_directories(${GLD_MODULE_NAME} PRIVATE
             #            "${CMAKE_SOURCE_DIR}/third_party/SuperLU/SRC"
             "${CMAKE_SOURCE_DIR}/third_party/superLU_MT"
             )
-    target_link_libraries(${PROJECT_NAME} PRIVATE
+    target_link_libraries(${GLD_MODULE_NAME} PRIVATE
             #            superlu
             superlu_lib
             )
 endif ()
 
-target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
-target_link_libraries(${PROJECT_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
-
-install(TARGETS ${PROJECT_NAME}
-        ${FILE_PERMISSIONS}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        COMPONENT Libraries)
+target_include_directories(${GLD_MODULE_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
+target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
 
 if (GLD_USE_CLANG_TIDY)
-    set_target_properties(${PROJECT_NAME} PROPERTIES
+    set_target_properties(${GLD_MODULE_NAME} PROPERTIES
             CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}"
             )
 endif ()
