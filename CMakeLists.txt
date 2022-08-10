@@ -1,11 +1,9 @@
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.13)
 project(GridLAB-D)
 
 set(COMPILE_FLAGS "${WARNING_FLAGS}")
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
-#TODO: detect dlfcn and xerces
 
 set(GLD_PACKAGE gridlabd)
 set(CMAKE_INSTALL_BINDIR "${CMAKE_INSTALL_PREFIX}/bin" CACHE PATH "" FORCE)
@@ -23,14 +21,15 @@ include(CheckIncludeFiles)
 include(CheckFunctionExists)
 include(CheckSymbolExists)
 include(CMakeDependentOption)
+include(FetchContent)
 
 # Setup Gridlab-d Version information.
 include(cmake/Cleanup.cmake)
 include(cmake/SetVersion.cmake)
 # Perform dependency checks
-include(cmake/CheckDependancies.cmake)
+include(cmake/CheckDependencies.cmake)
 # Generate current build number
-include(cmake/Build_number.cmake)
+include(cmake/BuildNumber.cmake)
 include(cmake/SanitizePaths.cmake)
 
 option(GLD_USE_EIGEN "[NOT YET SUPPORTED] - Use Eigen package for LU Decomposition in Powerflow" OFF)
@@ -44,6 +43,9 @@ set(GLD_FNCS_DIR "" CACHE PATH "Search path for FNCS library")
 set(GLD_ZeroMQ_DIR "" CACHE PATH "Search path for ZeroMQ library (FNCS dependency)")
 set(GLD_CZMQ_DIR "" CACHE PATH "Search path for CZMQ library (FNCS dependency)")
 
+# Tell CMake to place libraries in build directory
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib/static)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON) # TODO: only required for SuperLU_MT support with Clang. Future removal recommended.
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads REQUIRED)
@@ -56,7 +58,6 @@ if (NOT XercesC_FOUND)
     message(STATUS "XercesC library could not be located on the platform. XML Loading is disabled.")
 endif ()
 
-# TODO: retire curses
 find_package(Curses)
 if (CURSES_FOUND)
     option(HAVE_CURSES "Curses library is present on the platform" ON)
@@ -94,19 +95,19 @@ add_compile_options(${FORCE_ERROR} ${DISABLED_OPTIMIZATIONS})
 
 ## Set up platform specific library linking and platform identification
 if (WIN32 OR MSYS OR MINGW OR CYGWIN)
-    find_library(DLFCN NAMES dl libdl dlfcn dlfcn-win32)
-    if (DLFCN)
-        SET(DL_NAME dl)
-    else()
-        add_subdirectory(third_party/dlfcn-win32)
-        find_package(dlfcn-win32 REQUIRED)
-        SET(DL_NAME dlfcn-win32::dl)
-    endif ()
+    FetchContent_Declare(
+            dlfcn-win32
+            GIT_REPOSITORY https://github.com/dlfcn-win32/dlfcn-win32.git
+            GIT_TAG        v1.3.1
+    )
+    FetchContent_MakeAvailable(dlfcn-win32)
+    include_directories(${dlfcn-win32_SOURCE_DIR}/src)
+    set(DL_NAME dl)
+    set(DL_LIB dl)
 
     set(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 ${DL_NAME} m)
     set(FOUND_WINDOWS yes CACHE INTERNAL "Tell script generator we're Windows")
-elseif (LINUX)
-    set(OS_SPECIFIC_LIBRARIES ${CMAKE_DL_LIBS})
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++")
 elseif (APPLE)
     set(OS_SPECIFIC_LIBRARIES ${CMAKE_DL_LIBS})
     set(FOUND_MACOS yes CACHE INTERNAL "Tell script generator we're MacOS")
@@ -130,6 +131,7 @@ configure_file(cmake/gridlabd.sh.in ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PAC
 find_program(
         GLD_CLANG_TIDY_EXE
         NAMES
+        "clang-tidy"
         "clang-tidy-9"
         "clang-tidy-10"
         "clang-tidy-11"
@@ -179,7 +181,9 @@ set(HEADER_FILE_NAMES
         ${CMAKE_SOURCE_DIR}/gldcore/property.h
         ${CMAKE_SOURCE_DIR}/gldcore/schedule.h
         ${CMAKE_SOURCE_DIR}/gldcore/test.h
-
+        )
+file(COPY ${HEADER_FILE_NAMES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/headers)
+list(APPEND HEADER_FILE_NAMES
         ${CMAKE_CURRENT_BINARY_DIR}/headers/build.h
         ${CMAKE_CURRENT_BINARY_DIR}/headers/version.h
         )
@@ -256,13 +260,7 @@ set(GLD_SHARE
         ${CMAKE_SOURCE_DIR}/gldcore/gridlabd.htm
         )
 
-set(FILE_PERMISSIONS PERMISSIONS
-        OWNER_EXECUTE OWNER_READ OWNER_WRITE
-        GROUP_EXECUTE GROUP_READ
-        WORLD_EXECUTE WORLD_READ)
-
-# Load module directories. When adding new module, add it here.
-include_directories(gldcore)
+file(COPY ${GLD_SHARE} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/share)
 
 #include_directories(third_party/dlfcn-win32)
 
@@ -270,7 +268,8 @@ if (GLD_USE_SUPERLU)
     set(THIRD_PARTY_PATH ${CMAKE_SOURCE_DIR}/third_party)
     #    include(third_party/superLU_MT/CMakeLists.txt)
 
-    add_subdirectory(third_party/superLU_MT)
+    add_subdirectory(third_party/superLU_MT EXCLUDE_FROM_ALL)
+    set(SUPERLU_LIB superlu_lib)
 
     #    list(APPEND CMAKE_MODULE_PATH
     #            ${CMAKE_BINARY_DIR}/third_party/SuperLU/SRC
@@ -278,16 +277,17 @@ if (GLD_USE_SUPERLU)
     #            )
     #    include_directories(third_party/SuperLU/SRC)
     #    add_subdirectory(third_party/SuperLU)
-
-    #    find_package(SuperLU REQUIRED)
+    #    set(SUPERLU_LIB superlu)
 endif ()
 
-option(JSONCPP_WITH_TESTS "Build the JSON CPP test suite" OFF)
-set(BUILD_SHARED_CACHE ${BUILD_SHARED_LIBS} CACHE INTERNAL "Store BUILD_SHARED_LIBS value temporarily")
-set(BUILD_SHARED_LIBS OFF)
-include_directories(third_party/jsoncpp_lib/include)
-add_subdirectory(third_party/jsoncpp_lib)
-set(BUILD_SHARED_LIBS ${BUILD_SHARED_CACHE})
+    option(JSONCPP_WITH_TESTS "Build the JSON CPP test suite" OFF)
+    set(BUILD_SHARED_CACHE ${BUILD_SHARED_LIBS} CACHE INTERNAL "Cache the shared library state")
+    SET(BUILD_SHARED_LIBS OFF)
+    add_subdirectory(third_party/jsoncpp_lib EXCLUDE_FROM_ALL)
+    get_target_property(JSON_INC_PATH jsoncpp_lib INTERFACE_INCLUDE_DIRECTORIES)
+    include_directories(${JSON_INC_PATH})
+    set(BUILD_SHARED_LIBS ${BUILD_SHARED_CACHE})
+    set(JSONCPP_LIB jsoncpp_lib)
 
 if (GLD_USE_EIGEN)
     message(FATAL_ERROR "Eigen implementation is not complete, and should not be used at this time.")
@@ -295,8 +295,6 @@ if (GLD_USE_EIGEN)
     include_directories(third_party/Eigen)
     find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 endif ()
-
-#find_package(superlu)
 
 # Configure module targets
 add_subdirectory(assert)
@@ -317,6 +315,31 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/gldcore/solvers)
 add_subdirectory(${CMAKE_SOURCE_DIR}/gldcore/link/engine)
 add_subdirectory(gldcore)
 
+set(GLD_BINARIES gridlabd)
+set(GLD_LIBS
+        assert
+        climate
+        commercial
+        connection
+        generators
+        market
+        mysql
+        optimize
+        powerflow
+        reliability
+        residential
+        tape
+        tape_file
+        tape_plot
+        glsolvers
+        glxengine
+        )
+set(GLD_DEPS
+        ${SUPERLU_LIB}
+        ${JSONCPP_LIB}
+        ${DL_LIB}
+        )
+
 mark_as_advanced(FORCE
         OS_SPECIFIC_LIBRARIES
         DISABLED_OPTIMIZATIONS
@@ -326,19 +349,44 @@ mark_as_advanced(FORCE
         GLD_SHARE
         )
 
+
+set(FILE_PERMISSIONS PERMISSIONS
+        OWNER_EXECUTE OWNER_READ OWNER_WRITE
+        GROUP_EXECUTE GROUP_READ
+        WORLD_EXECUTE WORLD_READ
+        )
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.sh
         ${FILE_PERMISSIONS}
-        DESTINATION ${CMAKE_INSTALL_BINDIR}
+        DESTINATION bin
+        COMPONENT Runtime
         )
-
 install(FILES ${HEADER_FILE_NAMES}
         ${FILE_PERMISSIONS}
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/include/${GLD_PACKAGE}
+        DESTINATION include
+        COMPONENT Runtime
         )
-
 install(FILES ${GLD_SHARE}
         ${FILE_PERMISSIONS}
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/share/${GLD_PACKAGE})
+        DESTINATION share
+        COMPONENT Runtime
+        )
 install(FILES COPYRIGHT LICENSE
         ${FILE_PERMISSIONS}
-        DESTINATION ${CMAKE_INSTALL_PREFIX}/share/doc/${GLD_PACKAGE})
+        DESTINATION share/doc
+        COMPONENT Runtime
+        )
+install(TARGETS
+        ${GLD_LIBS}
+        ${GLD_BINARIES}
+        ${GLD_DEPS}
+
+        ${FILE_PERMISSIONS}
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin
+#        BUNDLE DESTINATION bundle
+        COMPONENT Runtime
+        ARCHIVE DESTINATION lib/static
+        COMPONENT Development
+        )
+
+include(cmake/CPackConfig.cmake)

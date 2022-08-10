@@ -774,7 +774,6 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 			if (!use_msvc)
 			{
 #define DEFAULT_CXX "g++"
-#define DEFAULT_CXXFLAGS "-fPIC"
 #define DEFAULT_LDFLAGS ""
 				char execstr[1024];
 				char ldstr[1024];
@@ -785,12 +784,15 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 				libs = "";
 #endif
 
+                auto cxx_flags = std::string("-I\"") + global_gl_include.string() + "\"" +
+                        " -I\"" + global_gl_share.string() + "\"" +
+                        " -fPIC";
 				sprintf(execstr, R"(%s %s %s %s %s -c "%s" -o "%s")",
 						getenv("CXX")?getenv("CXX"):DEFAULT_CXX,
 						global_warn_mode?"-w":"",
-						global_debug_output?"-g -O0":"-O0",
+						global_debug_output?"-g -O0":"-O2",
 						mopt,
-						getenv("CXXFLAGS")?getenv("CXXFLAGS"):DEFAULT_CXXFLAGS,
+                        cxx_flags.c_str(),
 						cfile, ofile);
 				output_verbose("compile command: [%s]", execstr);
 				if(exec_cmd(execstr)==FAILED)
@@ -804,10 +806,10 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 
 				/* link new runtime module */
 				output_verbose("linking inline code from '%s'", ofile);
-				sprintf(ldstr, "%s %s %s %s -shared -Wl,\"%s\" -o \"%s\" %s",
+				sprintf(ldstr, R"(%s %s %s %s -shared -Wl,"%s" -o "%s" %s)",
 						getenv("CXX")?getenv("CXX"):DEFAULT_CXX,
 						mopt,
-						global_debug_output?"-g -O0":"",
+						global_debug_output?"-g -O0":"-O2",
 						getenv("LDFLAGS")?getenv("LDFLAGS"):DEFAULT_LDFLAGS,
 						ofile, afile, libs);
 				output_verbose("link command: [%s]", ldstr);
@@ -6175,7 +6177,7 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 	}
 
 	/* open file */
-	fp = find_file(incname,NULL,R_OK,ff,sizeof(ff)) ? fopen(ff, "rt") : NULL;
+	fp = find_file(incname,nullptr,R_OK,ff,sizeof(ff)) ? fopen(ff, "rt") : NULL;
 	
 	if(fp == NULL){
 		output_error_raw("%s(%d): include file open failed: %s", incname, _linenum, errno?strerror(errno):"(no details)");

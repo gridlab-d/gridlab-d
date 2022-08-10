@@ -1,0 +1,7 @@
+GridLAB-D™ is an open source project to develop the next generation power system simulation technology. It was initiated
+in 2004 by the US Department of Energy's Office of Electricity Delivery and Energy Reliability at the Pacific Northwest
+National Laboratory, and has been continued since in collaboration with industry and academia.
+
+GridLAB-D incorporates advanced load modeling techniques, with high-performance solution algorithms to deliver end-use
+load modeling, coupled with power system models, market models, distribution automation models, and software integration
+tools for users of many power system analysis tools.
