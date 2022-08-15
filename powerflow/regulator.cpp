@@ -1489,8 +1489,8 @@ SIMULATIONMODE regulator::inter_deltaupdate_regulator(unsigned int64 delta_time,
 		//Call the pre-presync regulator code
 		reg_prePre_fxn(curr_time_value);
 
-		//Link presync stuff
-		NR_link_presync_fxn();
+		//Link sync stuff
+		NR_link_sync_fxn();
 		
 		//Call the post-presync regulator code
 		reg_postPre_fxn();

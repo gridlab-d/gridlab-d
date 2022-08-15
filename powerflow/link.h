@@ -132,7 +132,7 @@ public:
 	//Current injection calculation function - so it can be called remotely
 	int CurrentCalculation(int nodecall, bool link_fault_mode);
 
-	void NR_link_presync_fxn(void);
+	void NR_link_sync_fxn(void);
 	void BOTH_link_postsync_fxn(void);
 	bool perform_limit_checks(double *over_limit_value, bool *over_limits);
 	double inrush_tol_value;	///< Tolerance value (of vdiff on the line ends) before "inrush convergence" is accepted
