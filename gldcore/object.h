@@ -231,7 +231,7 @@ public:
 		void (*write)(unsigned int *);
 	} lock, unlock;
 	struct {
-		char *(*find_file)(const char *name, char *path, int mode, char *buffer, int len);
+		char *(*find_file)(const char *name, const char *path, int mode, char *buffer, int len);
 	} file;
 	struct s_objvar_struct {
 		bool *(*bool_var)(OBJECT *obj, PROPERTY *prop);

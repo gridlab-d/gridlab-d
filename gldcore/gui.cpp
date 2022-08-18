@@ -879,7 +879,7 @@ void gui_html_output_children(GUIENTITY *entity)
 void gui_include_element(const char *tag, const char *options, const char *file)
 {
 	char path[1024];
-	if (!find_file(file,NULL,R_OK,path,sizeof(path)))
+	if (!find_file(file,nullptr,R_OK,path,sizeof(path)))
 		output_error("unable to find '%s'", file);
 	else
 	{

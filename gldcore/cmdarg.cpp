@@ -216,7 +216,7 @@ static int help(int argc, char *argv[]);
 static STATUS no_cmdargs()
 {
 	char htmlfile[1024];
-	if ( global_autostartgui && find_file("gridlabd.htm",NULL,R_OK,htmlfile,sizeof(htmlfile)-1)!=NULL )
+	if ( global_autostartgui && find_file("gridlabd.htm",nullptr,R_OK,htmlfile,sizeof(htmlfile)-1)!=NULL )
 	{
 		char cmd[1024];
 

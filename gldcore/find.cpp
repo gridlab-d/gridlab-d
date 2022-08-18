@@ -11,6 +11,9 @@
 #include <cctype>
 #include <cstdio>
 #include <cstdlib>
+
+#include "globals.h"
+
 #if defined(_WIN32) && !defined(__MINGW__)
 #include <io.h>
 #	define snprintf _snprintf
@@ -1307,7 +1310,7 @@ FINDPGM *find_mkpgm(char *search)
 	having the desired access mode
  **/
 char *find_file(const char *name, /**< the name of the file to find */
-				char *path, /**< the path to search (or NULL to search the GLPATH environment) */
+				const char *path, /**< the path to search (or NULL to search the GLPATH environment) */
 				int mode, /**< the file access mode to use, see access() for valid modes */
 				char *buffer, /**< the buffer into which the full path is written */
 				int len) /**< the len of the buffer */
@@ -1315,19 +1318,11 @@ char *find_file(const char *name, /**< the name of the file to find */
 	char filepath[1024];
 	char tempfp[1024];
 	char envbuf[1024];
-	char *glpath;
+	const char *glpath;
 	char *dir;
 
-#ifdef _WIN32
-#	define delim ";"
-#	define pathsep "\\"
-#else
-#	define delim ":"
-#	define pathsep "/"
-#endif
-
-	if(path == 0){
-		glpath = getenv("GLPATH");
+	if(path == nullptr){
+        glpath = global_gl_path.c_str();
 	} else {
 		glpath = path;
 	}
@@ -1347,18 +1342,18 @@ char *find_file(const char *name, /**< the name of the file to find */
 	}
 
 	/* locate unit file on GLPATH if not found locally */
-	if(glpath != 0){
+	if(glpath != nullptr){
 		strncpy(envbuf, glpath, sizeof(envbuf));
-		dir = strtok(envbuf, delim);
+		dir = strtok(envbuf, env_delim);
 		while (dir)
 		{
-			snprintf(filepath, sizeof(filepath), "%s%s%s", dir, pathsep, name);
+			snprintf(filepath, sizeof(filepath), "%s%s%s", dir, env_pathsep, name);
 			if (!access(filepath,mode))
 			{
 				strncpy(buffer,filepath,len);
 				return buffer;
 			}
-			dir = strtok(NULL, delim);
+			dir = strtok(NULL, env_delim);
 		}
 	}
 

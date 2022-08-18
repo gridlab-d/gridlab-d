@@ -238,7 +238,7 @@ static bool run_job(char *file, double *elapsed_time=NULL)
 #ifdef _WIN32
 		_pgmptr,
 #else
-		"gridlabd",
+        global_gl_executable.c_str(),
 #endif
 		job_cmdargs, name);
 	dt = exec_clock() - dt;

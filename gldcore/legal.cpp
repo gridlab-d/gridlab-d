@@ -86,7 +86,7 @@ STATUS legal_notice(void)
 	{
 		*end = ' ';
 	}
-	if (find_file(copyright,NULL,R_OK,path,sizeof(path))==NULL)
+	if (find_file(copyright,nullptr,R_OK,path,sizeof(path))==NULL)
 	{
 		output_message("GridLAB-D %d.%d.%d-%d (%s) %d-bit %s %s\n%s", 
 			global_version_major, global_version_minor, global_version_patch, global_version_build, 
