@@ -2,7 +2,8 @@ cmake_minimum_required(VERSION 3.13)
 project(GridLAB-D)
 
 set(COMPILE_FLAGS "${WARNING_FLAGS}")
-set(CMAKE_CXX_STANDARD 14)
+#set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(GLD_PACKAGE gridlabd)
@@ -42,6 +43,9 @@ set(GLD_FNCS_DIR "" CACHE PATH "Search path for FNCS library")
 set(GLD_ZeroMQ_DIR "" CACHE PATH "Search path for ZeroMQ library (FNCS dependency)")
 set(GLD_CZMQ_DIR "" CACHE PATH "Search path for CZMQ library (FNCS dependency)")
 
+# Tell CMake to place libraries in build directory
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib/static)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON) # TODO: only required for SuperLU_MT support with Clang. Future removal recommended.
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads REQUIRED)
@@ -95,16 +99,14 @@ if (WIN32 OR MSYS OR MINGW OR CYGWIN)
     find_library(DLFCN NAMES dl libdl dlfcn dlfcn-win32)
     if (DLFCN)
         SET(DL_NAME dl)
-    else()
+    else ()
         add_subdirectory(third_party/dlfcn-win32 EXCLUDE_FROM_ALL)
-        find_package(dlfcn-win32 REQUIRED)
-        SET(DL_NAME dlfcn-win32::dl)
+        get_target_property(DL_INC_PATH dl INTERFACE_INCLUDE_DIRECTORIES)
+        SET(DL_NAME dl)
     endif ()
 
     set(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 ${DL_NAME} m)
     set(FOUND_WINDOWS yes CACHE INTERNAL "Tell script generator we're Windows")
-elseif (LINUX)
-    set(OS_SPECIFIC_LIBRARIES ${CMAKE_DL_LIBS})
 elseif (APPLE)
     set(OS_SPECIFIC_LIBRARIES ${CMAKE_DL_LIBS})
     set(FOUND_MACOS yes CACHE INTERNAL "Tell script generator we're MacOS")
@@ -128,6 +130,7 @@ configure_file(cmake/gridlabd.sh.in ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PAC
 find_program(
         GLD_CLANG_TIDY_EXE
         NAMES
+        "clang-tidy"
         "clang-tidy-9"
         "clang-tidy-10"
         "clang-tidy-11"
@@ -177,7 +180,9 @@ set(HEADER_FILE_NAMES
         ${CMAKE_SOURCE_DIR}/gldcore/property.h
         ${CMAKE_SOURCE_DIR}/gldcore/schedule.h
         ${CMAKE_SOURCE_DIR}/gldcore/test.h
-
+        )
+file(COPY ${HEADER_FILE_NAMES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/headers)
+list(APPEND HEADER_FILE_NAMES
         ${CMAKE_CURRENT_BINARY_DIR}/headers/build.h
         ${CMAKE_CURRENT_BINARY_DIR}/headers/version.h
         )
@@ -254,13 +259,15 @@ set(GLD_SHARE
         ${CMAKE_SOURCE_DIR}/gldcore/gridlabd.htm
         )
 
+file(COPY ${GLD_SHARE} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/share)
+
 #include_directories(third_party/dlfcn-win32)
 
 if (GLD_USE_SUPERLU)
     set(THIRD_PARTY_PATH ${CMAKE_SOURCE_DIR}/third_party)
     #    include(third_party/superLU_MT/CMakeLists.txt)
 
-    add_subdirectory(third_party/superLU_MT  EXCLUDE_FROM_ALL)
+    add_subdirectory(third_party/superLU_MT EXCLUDE_FROM_ALL)
 
     #    list(APPEND CMAKE_MODULE_PATH
     #            ${CMAKE_BINARY_DIR}/third_party/SuperLU/SRC
@@ -273,6 +280,8 @@ if (GLD_USE_SUPERLU)
 endif ()
 
 option(JSONCPP_WITH_TESTS "Build the JSON CPP test suite" OFF)
+set(BUILD_SHARED_CACHE ${BUILD_SHARED_LIBS} CACHE INTERNAL "Cache the shared library state")
+SET(BUILD_SHARED_LIBS OFF)
 #include_directories(third_party/jsoncpp_lib/include)
 add_subdirectory(third_party/jsoncpp_lib EXCLUDE_FROM_ALL)
 get_target_property(JSON_INC_PATH jsoncpp_lib INTERFACE_INCLUDE_DIRECTORIES)
@@ -326,18 +335,22 @@ set(FILE_PERMISSIONS PERMISSIONS
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.sh
         ${FILE_PERMISSIONS}
         DESTINATION bin
+        COMPONENT Runtime
         )
 install(FILES ${HEADER_FILE_NAMES}
         ${FILE_PERMISSIONS}
-        DESTINATION include/${GLD_PACKAGE}
+        DESTINATION include
+        COMPONENT Runtime
         )
 install(FILES ${GLD_SHARE}
         ${FILE_PERMISSIONS}
-        DESTINATION share/${GLD_PACKAGE}
+        DESTINATION share
+        COMPONENT Runtime
         )
 install(FILES COPYRIGHT LICENSE
         ${FILE_PERMISSIONS}
-        DESTINATION share/doc/${GLD_PACKAGE}
+        DESTINATION share/doc
+        COMPONENT Runtime
         )
 install(TARGETS
         assert
@@ -359,8 +372,11 @@ install(TARGETS
         gridlabd
 
         ${FILE_PERMISSIONS}
-        RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib)
+        RUNTIME DESTINATION bin
+        COMPONENT Runtime
+        ARCHIVE DESTINATION lib/static
+        COMPONENT Development
+        )
 # Generate CPack config
 include(cmake/CPackConfig.cmake)

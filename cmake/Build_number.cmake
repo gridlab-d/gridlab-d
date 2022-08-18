@@ -2,20 +2,22 @@ cmake_minimum_required(VERSION 2.8.12)
 
 SET(GIT_OUTPUT git_out_${CMAKE_BUILD_TYPE})
 
+FILE(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/build_number)
+
 EXECUTE_PROCESS(
         COMMAND ${GIT_EXECUTABLE} remote -v
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/cmake
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/build_number
         OUTPUT_FILE ${GIT_OUTPUT}_remote.tmp
         OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 EXECUTE_PROCESS(
         COMMAND ${GIT_EXECUTABLE} status -s
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/cmake
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/build_number
         OUTPUT_FILE ${GIT_OUTPUT}_status.tmp
         OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 EXECUTE_PROCESS(COMMAND ${GIT_EXECUTABLE} log --max-count=1 --format=%ad --date=raw
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/cmake
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/build_number
         OUTPUT_FILE ${GIT_OUTPUT}_build.tmp
         OUTPUT_STRIP_TRAILING_WHITESPACE
         )
@@ -24,7 +26,7 @@ IF (WIN32)
     SET(COMMAND_SCRIPT ".\\BuildInfo.ps1")
     MESSAGE(STATUS "Using Powershell to detect build data.")
     EXECUTE_PROCESS(
-            COMMAND powershell -noprofile -ExecutionPolicy Bypass -nologo -file ${COMMAND_SCRIPT} ${GIT_OUTPUT}_remote.tmp --remote
+            COMMAND powershell -noprofile -ExecutionPolicy Bypass -nologo -file ${COMMAND_SCRIPT} ${CMAKE_CURRENT_BINARY_DIR}/build_number/${GIT_OUTPUT}_remote.tmp --remote
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/cmake
             OUTPUT_VARIABLE BUILD_DIR
             OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -32,7 +34,7 @@ IF (WIN32)
     #    MESSAGE(STATUS "BUILD_DIR: ${BUILD_DIR}")
 
     EXECUTE_PROCESS(
-            COMMAND powershell -noprofile -ExecutionPolicy Bypass -nologo -file ${COMMAND_SCRIPT} ${GIT_OUTPUT}_status.tmp --status
+            COMMAND powershell -noprofile -ExecutionPolicy Bypass -nologo -file ${COMMAND_SCRIPT} ${CMAKE_CURRENT_BINARY_DIR}/build_number/${GIT_OUTPUT}_status.tmp --status
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/cmake
             OUTPUT_VARIABLE MODIFY_STATUS
             OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -40,7 +42,7 @@ IF (WIN32)
     #    MESSAGE(STATUS "MODIFY_STATUS: ${MODIFY_STATUS}")
 
     EXECUTE_PROCESS(
-            COMMAND powershell -noprofile -ExecutionPolicy Bypass -nologo -file ${COMMAND_SCRIPT} ${GIT_OUTPUT}_build.tmp --build
+            COMMAND powershell -noprofile -ExecutionPolicy Bypass -nologo -file ${COMMAND_SCRIPT} ${CMAKE_CURRENT_BINARY_DIR}/build_number/${GIT_OUTPUT}_build.tmp --build
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/cmake
             OUTPUT_VARIABLE BUILD_NUM
             OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -53,21 +55,21 @@ ELSE ()
     SET(COMMAND_SCRIPT "./BuildInfo.sh")
     #    MESSAGE(STATUS "Using bash to detect build data.")
     EXECUTE_PROCESS(
-            COMMAND bash "-c" "${COMMAND_SCRIPT} ${GIT_OUTPUT}_remote.tmp --remote"
+            COMMAND bash "-c" "${COMMAND_SCRIPT} ${CMAKE_CURRENT_BINARY_DIR}/build_number/${GIT_OUTPUT}_remote.tmp --remote"
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/cmake
             OUTPUT_VARIABLE BUILD_DIR
             OUTPUT_STRIP_TRAILING_WHITESPACE
     )
 #    MESSAGE(STATUS "BUILD_DIR: ${BUILD_DIR}")
 
-    EXECUTE_PROCESS(COMMAND bash "-c" "${COMMAND_SCRIPT} ${GIT_OUTPUT}_status.tmp --status"
+    EXECUTE_PROCESS(COMMAND bash "-c" "${COMMAND_SCRIPT} ${CMAKE_CURRENT_BINARY_DIR}/build_number/${GIT_OUTPUT}_status.tmp --status"
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/cmake
             OUTPUT_VARIABLE MODIFY_STATUS
             OUTPUT_STRIP_TRAILING_WHITESPACE
             )
 #    MESSAGE(STATUS "MODIFY_STATUS: ${MODIFY_STATUS}")
 
-    EXECUTE_PROCESS(COMMAND bash "-c" "${COMMAND_SCRIPT} ${GIT_OUTPUT}_build.tmp --build"
+    EXECUTE_PROCESS(COMMAND bash "-c" "${COMMAND_SCRIPT} ${CMAKE_CURRENT_BINARY_DIR}/build_number/${GIT_OUTPUT}_build.tmp --build"
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/cmake
             OUTPUT_VARIABLE BUILD_NUM
             OUTPUT_STRIP_TRAILING_WHITESPACE
@@ -77,10 +79,6 @@ ELSE ()
     endif ()
 #    MESSAGE(STATUS "BUILD_NUM: ${BUILD_NUM}")
 ENDIF (WIN32)
-
-FILE(REMOVE ${CMAKE_SOURCE_DIR}/cmake/${GIT_OUTPUT}_remote.tmp)
-FILE(REMOVE ${CMAKE_SOURCE_DIR}/cmake/${GIT_OUTPUT}_status.tmp)
-FILE(REMOVE ${CMAKE_SOURCE_DIR}/cmake/${GIT_OUTPUT}_build.tmp)
 
 IF ("" STREQUAL "${MODIFY_STATUS}" OR "??" STREQUAL "${MODIFY_STATUS}")
     SET(BRANCH "${GIT_COMMIT_HASH}:${GIT_BRANCH}")
