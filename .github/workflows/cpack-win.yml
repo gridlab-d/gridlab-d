@@ -34,9 +34,11 @@ jobs:
           install: >-
             base-devel
             git
+            cmake
+            mingw-w64-x86_64-nsis
 
-      - name: makensis
-        uses: joncloud/makensis-action@v3.7
+#      - name: makensis
+#        uses: joncloud/makensis-action@v3.7
 
       - name: Checkout Repo
         uses: actions/checkout@v3
