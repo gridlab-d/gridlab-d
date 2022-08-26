@@ -1,4 +1,4 @@
-# GLD_FLAG_PARSE(ARG, VAR_LIBS, VAR_LDFLAGS, VAR_CPPFLAGS)
+# GLD_FLAG_PARSE(ARG, VAR_LIBS, VAR_LDFLAGS, VAR_CPPFLAGS, VAR_LIB_DIR)
 # --------------------------------------------------------
 # Parse whitespace-separated ARG into appropriate LIBS, LDFLAGS, and
 # CPPFLAGS variables.
@@ -16,13 +16,13 @@ for arg in $$1 ; do
         [-I*],          [$4="$$4 $arg"],
         [*.a],          [$2="$$2 $arg"],
         [*.so],         [$2="$$2 $arg"],
-        [*lib],         [AS_IF([test -d $arg], [$3="$$3 -L$arg"],
+        [*lib],         [AS_IF([test -d $arg], [$3="$$3 -L$arg"; $5="$$5$arg"],
                             [AC_MSG_WARN([$arg of $1 not parsed])])],
-        [*lib/],        [AS_IF([test -d $arg], [$3="$$3 -L$arg"],
+        [*lib/],        [AS_IF([test -d $arg], [$3="$$3 -L$arg"; $5="$$5$arg"],
                             [AC_MSG_WARN([$arg of $1 not parsed])])],
-        [*lib64],       [AS_IF([test -d $arg], [$3="$$3 -L$arg"],
+        [*lib64],       [AS_IF([test -d $arg], [$3="$$3 -L$arg"; $5="$$5$arg"],
                             [AC_MSG_WARN([$arg of $1 not parsed])])],
-        [*lib64/],      [AS_IF([test -d $arg], [$3="$$3 -L$arg"],
+        [*lib64/],      [AS_IF([test -d $arg], [$3="$$3 -L$arg"; $5="$$5$arg"],
                             [AC_MSG_WARN([$arg of $1 not parsed])])],
         [*include],     [AS_IF([test -d $arg], [$4="$$4 -I$arg"],
                             [AC_MSG_WARN([$arg of $1 not parsed])])],
@@ -37,16 +37,23 @@ for arg in $$1 ; do
 # check for subdirectories e.g. lib,include
     AS_IF([test "x$gld_flag_parse_ok" = xno],
         [AS_IF([test "x$gld_flag_parse_sizeof_voidp" = x8],
-            [AS_IF([test -d $arg/lib64],    [$3="$$3 -L$arg/lib64"; gld_flag_parse_ok=yes],
-                   [test -d $arg/lib],      [$3="$$3 -L$arg/lib"; gld_flag_parse_ok=yes])
+            [AS_IF([test -d $arg/lib64],    [$3="$$3 -L$arg/lib64"; $5="$$5$arg/lib64"; gld_flag_parse_ok=yes],
+                   [test -d $arg/lib],      [$3="$$3 -L$arg/lib"; $5="$$5$arg/lib"; gld_flag_parse_ok=yes])
              AS_IF([test -d $arg/include64],[$4="$$4 -I$arg/include64"; gld_flag_parse_ok=yes],
                    [test -d $arg/include],  [$4="$$4 -I$arg/include"; gld_flag_parse_ok=yes])],
-            [AS_IF([test -d $arg/lib],      [$3="$$3 -L$arg/lib"; gld_flag_parse_ok=yes])
+            [AS_IF([test -d $arg/lib],      [$3="$$3 -L$arg/lib"; $5="$$5$arg/lib"; gld_flag_parse_ok=yes])
              AS_IF([test -d $arg/include],  [$4="$$4 -I$arg/include"; gld_flag_parse_ok=yes])])])
+#    [AS_CASE([$platform],
+#    [*darwin*], [
+#        rpath_linker_flag="-Wl,-rpath="
+#        AS_IF([test -d $arg/lib64],    [$3="$$3 -L$arg/lib64"],
+#              [test -d $arg/lib],      [$3="$$3 -L$arg/lib"])
+#   ])]
+#    )
 # $arg still unknown, look for "lib" and "include" anywhere...
     AS_IF([test "x$gld_flag_parse_ok" = xno],
         [AS_CASE([$arg],
-            [*lib*],    [AS_IF([test -d $arg], [$3="$$3 -L$arg"; gld_flag_parse_ok=yes])],
+            [*lib*],    [AS_IF([test -d $arg], [$3="$$3 -L$arg"; $5="$$5$arg"; gld_flag_parse_ok=yes])],
             [*include*],[AS_IF([test -d $arg], [$4="$$4 -I$arg"; gld_flag_parse_ok=yes])])])
 # warn user that $arg fell through
      AS_IF([test "x$gld_flag_parse_ok" = xno],

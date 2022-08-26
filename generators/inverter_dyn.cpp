@@ -3887,7 +3887,7 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 // }
 
 //Map Complex value
-gld_property *inverter_dyn::map_complex_value(OBJECT *obj, char *name)
+gld_property *inverter_dyn::map_complex_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	OBJECT *objhdr = OBJECTHDR(this);
@@ -3910,7 +3910,7 @@ gld_property *inverter_dyn::map_complex_value(OBJECT *obj, char *name)
 }
 
 //Map double value
-gld_property *inverter_dyn::map_double_value(OBJECT *obj, char *name)
+gld_property *inverter_dyn::map_double_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	OBJECT *objhdr = OBJECTHDR(this);

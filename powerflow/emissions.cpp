@@ -12,10 +12,10 @@
 @{
 **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
 
 using namespace std;
@@ -314,7 +314,7 @@ int emissions::init(OBJECT *parent)
 			parent_meter_total_power = new gld_property(parent,"measured_power");
 
 			//Make sure it worked
-			if ((parent_meter_total_power->is_valid() != true) || (parent_meter_total_power->is_complex() != true))
+			if (!parent_meter_total_power->is_valid() || !parent_meter_total_power->is_complex())
 			{
 				GL_THROW("emissions:%d - %s - Unable to map parent object's power value",obj->id,(obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
@@ -442,8 +442,8 @@ int emissions::init(OBJECT *parent)
 TIMESTAMP emissions::postsync(TIMESTAMP t0)
 {
 	double temp_energy, dispatch_order;;
-	complex temp_power;
-	complex energy_for_calc;
+	gld::complex temp_power;
+	gld::complex energy_for_calc;
 	bool energy_requirement;
 	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP tret = powerflow_object::postsync(t0);

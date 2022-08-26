@@ -4,10 +4,10 @@
 	@{
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "voltdump.h"
 
@@ -64,8 +64,8 @@ int voltdump::isa(char *classname)
 }
 
 void voltdump::dump(TIMESTAMP t){
-	char namestr[64];
-	char timestr[64];
+	char namestr[128];
+	char timestr[128];
 	FINDLIST *nodes = NULL;
 	OBJECT *obj = NULL;
 	FILE *outfile = NULL;

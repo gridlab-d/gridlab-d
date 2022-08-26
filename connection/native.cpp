@@ -3,7 +3,8 @@
 /// @ingroup connection
 /// Native class implementation
 
-#include <stdlib.h>
+#include <cstdlib>
+
 #include "native.h"
 
 EXPORT_CREATE(native);
@@ -22,7 +23,20 @@ native *native::defaults = NULL;
 
 native::VARMAPINDEX native::get_varmapindex(const char *name)
 {
-	static char *varmapname[] = {"","allow","forbid","init","precommit","presync","sync","postsync","commit","prenotify","postnotify","finalize","plc","term"};
+	static const char *varmapname[] = {"",
+							  "allow",
+							  "forbid",
+							  "init",
+							  "precommit",
+							  "presync",
+							  "sync",
+							  "postsync",
+							  "commit",
+							  "prenotify",
+							  "postnotify",
+							  "finalize",
+							  "plc",
+							  "term"};
 	VARMAPINDEX n;
 	for ( n=ALLOW ; n<_NUMVMI ; n=(VARMAPINDEX)((int)n+1) )
 	{
@@ -117,10 +131,11 @@ native::native(MODULE *module)
 			NULL)<1)
 				throw "connection/native::native(MODULE*): unable to publish properties of connection:native";
 
-		if ( !gl_publish_loadmethod(oclass,"link",loadmethod_native_link) )
+		if ( !gl_publish_loadmethod(oclass, "link", reinterpret_cast<int (*)(void *, char *)>(loadmethod_native_link)) )
 			throw "connection/native::native(MODULE*): unable to publish link method of connection:native";
-		if ( !gl_publish_loadmethod(oclass,"option",loadmethod_native_option) )
-			throw "connection/native::native(MODULE*): unable to publish option method of connection:native";
+		if ( !gl_publish_loadmethod(oclass, "option",
+									reinterpret_cast<int (*)(void *, char *)>(loadmethod_native_option)) )
+			throw std::runtime_error("connection/native::native(MODULE*): unable to publish option method of connection:native");
 		mode = 0;
 		transport = 0;
 		memset(map,0,sizeof(map));
@@ -252,7 +267,7 @@ int native::precommit(TIMESTAMP t, TRANSLATOR *xlate)
 
 TIMESTAMP native::presync(TIMESTAMP t, TRANSLATOR *xlate)
 {
-	if ( get_connection()->update(map[PRESYNC],"presync",xlate)<0 ) 
+	if ( get_connection()->update(map[PRESYNC],"presync",xlate)<0 )
 	{
 		gl_error("connection/native::presync(TIMESTAMP t=%lld, TRANSLATOR *xltr=%p): update failed", t,xlate);
 		return TS_ZERO;
@@ -263,7 +278,7 @@ TIMESTAMP native::presync(TIMESTAMP t, TRANSLATOR *xlate)
 
 TIMESTAMP native::sync(TIMESTAMP t, TRANSLATOR *xlate)
 {
-	if ( get_connection()->update(map[SYNC],"sync",xlate)<0 ) 
+	if ( get_connection()->update(map[SYNC],"sync",xlate)<0 )
 	{
 		gl_error("connection/native::sync(TIMESTAMP t=%lld, TRANSLATOR *xltr=%p): update failed", t,xlate);
 		return TS_ZERO;
@@ -372,6 +387,7 @@ static char unhex(char h)
 		return h-'A'+10;
 	else if ( h>='a' && h<='f' )
 		return h-'a'+10;
+	return h-' ';
 }
 static size_t convert_to_hex(char *out, size_t max, const char *in, size_t len)
 {

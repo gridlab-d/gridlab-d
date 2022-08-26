@@ -8,9 +8,9 @@
 
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
+#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
 
 #include "gridlabd.h"
 #include "auction.h"
@@ -76,7 +76,7 @@ auction::auction(MODULE *module)
 {
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"auction",sizeof(auction),passconfig|PC_AUTOLOCK);
+		oclass = gl_register_class(module, "auction",sizeof(auction),passconfig|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class auction";
 		else
@@ -1452,14 +1452,14 @@ void auction::clear_market(void)
 
 void auction::record_bid(char *from, double quantity, double real_price, BIDDERSTATE state){
 	char name_buffer[256];
-	char *unkState = "unknown";
-	char *offState = "off";
-	char *onState = "on";
-	char *unk = "unknown time";
+	const char *unkState = "unknown";
+	const char *offState = "off";
+	const char *onState = "on";
+	const char *unk = "unknown time";
 	char buffer[256];
 	char bigbuffer[1024];
-	char *pState;
-	char *tStr;
+	const char *pState;
+	const char *tStr;
 	DATETIME dt;
 	TIMESTAMP submit_time = gl_globalclock;
 	if(trans_file){ // copied from version below

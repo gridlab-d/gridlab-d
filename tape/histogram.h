@@ -60,7 +60,7 @@ public:
 
 	BIN *bin_list;
 public:
-	histogram(MODULE *mod);
+	explicit histogram(MODULE *mod);
 	int create(void);
 	int init(OBJECT *parent);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);

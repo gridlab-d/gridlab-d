@@ -7,10 +7,10 @@
  @{
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 //Delte me -- just put in for compiling
 #include "battery.h"
@@ -38,7 +38,7 @@ central_dg_control::central_dg_control(MODULE *module)
 			throw "unable to register class central_dg_control";
 		else
 			oclass->trl = TRL_PROOF;
-		
+
 		if (gl_publish_variable(oclass,
 			PT_char32,"controlled_dgs", PADDR(controlled_objects), PT_DESCRIPTION, "the group ID of the dg objects the controller controls.",
 			PT_object,"feederhead_meter", PADDR(feederhead_meter), PT_DESCRIPTION, "the name of the meter.",
@@ -267,13 +267,13 @@ int central_dg_control::init(OBJECT *parent)
 	if (feederhead_meter != NULL)
 	{
 		//Make sure it is a meter
-		if (gl_object_isa(feederhead_meter,"meter","powerflow") == true)
+		if (gl_object_isa(feederhead_meter, "meter", "powerflow"))
 		{
 			//Map up the values
 			pPower_Meas[0] = new gld_property(feederhead_meter,"measured_power_A");
 
 			//Check it
-			if ((pPower_Meas[0]->is_valid() != true) || (pPower_Meas[0]->is_complex() != true))
+			if (!pPower_Meas[0]->is_valid() || !pPower_Meas[0]->is_complex())
 			{
 				GL_THROW("central_dg_control:%d - %s - failed to map feaderhead_meter power property!",thisobj->id,(thisobj->name ? thisobj->name : "Unnamed"));
 				/*  TROUBLESHOOT
@@ -286,7 +286,7 @@ int central_dg_control::init(OBJECT *parent)
 			pPower_Meas[1] = new gld_property(feederhead_meter,"measured_power_B");
 
 			//Check it
-			if ((pPower_Meas[1]->is_valid() != true) || (pPower_Meas[1]->is_complex() != true))
+			if (!pPower_Meas[1]->is_valid() || !pPower_Meas[1]->is_complex())
 			{
 				GL_THROW("central_dg_control:%d - %s - failed to map feaderhead_meter power property!",thisobj->id,(thisobj->name ? thisobj->name : "Unnamed"));
 				//Defined above
@@ -296,7 +296,7 @@ int central_dg_control::init(OBJECT *parent)
 			pPower_Meas[2] = new gld_property(feederhead_meter,"measured_power_C");
 
 			//Check it
-			if ((pPower_Meas[2]->is_valid() != true) || (pPower_Meas[2]->is_complex() != true))
+			if (!pPower_Meas[2]->is_valid() || !pPower_Meas[2]->is_complex())
 			{
 				GL_THROW("central_dg_control:%d - %s - failed to map feaderhead_meter power property!",thisobj->id,(thisobj->name ? thisobj->name : "Unnamed"));
 				//Defined above
@@ -348,7 +348,7 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	//Need information on power flow for this time step so let it run once 
 	//without any central control and then reiterate
-	complex temp_complex_array[3];
+	gld::complex temp_complex_array[3];
 
 	if (t0!=t1) {
 		return t1;
@@ -370,7 +370,7 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 	Q[2] = temp_complex_array[2].Im();
 	P_3p = P[0] + P[1] + P[2];
 	Q_3p = Q[0] + Q[1] + Q[2];
-	S_3p = complex(P_3p, Q_3p);
+	S_3p = gld::complex(P_3p, Q_3p);
 	double potential_pf = 0.0;
 	double Q_disp_so_far = 0.0;
 	double total_avail_soc = 0.0;
@@ -523,7 +523,7 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 								//Q dispatch portion calculated using ratio of this inverter's capacity factor to total capacity factor.
 								this_Q = (inverter_set[n])->p_rated*3.0*sin(acos((inverter_set[n])->VA_Out.Re()/((inverter_set[n])->p_rated)*3.0))/Q_avail_3p*Q_disp_3p;
 								//Calculate and correctly sign corresponding power factor.
-								(inverter_set[n])->power_factor = -(this_Q/fabs(this_Q))*fabs((inverter_set[n])->VA_Out.Re())/complex((inverter_set[n])->VA_Out.Re(),this_Q).Mag();
+								(inverter_set[n])->power_factor = -(this_Q/fabs(this_Q))*fabs((inverter_set[n])->VA_Out.Re())/gld::complex((inverter_set[n])->VA_Out.Re(),this_Q).Mag();
 							}
 							//Dispatch to battery inverters (those in constant PQ mode)
 							else if ((inverter_set[n])->four_quadrant_control_mode==1)
@@ -539,7 +539,7 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 							if ((inverter_set[n])->four_quadrant_control_mode==2 && (inverter_set[n])->VA_Out.Re() > 0.0) {
 								//This inverter QRef = (This inverter available Q/total Available Q)*Q to be dispatched
 								this_Q = (inverter_set[n])->p_rated*3.0*sin(acos((inverter_set[n])->VA_Out.Re()/((inverter_set[n])->p_rated)*3.0));
-								(inverter_set[n])->power_factor = -(this_Q/fabs(this_Q))*fabs((inverter_set[n])->VA_Out.Re())/complex((inverter_set[n])->VA_Out.Re(),this_Q).Mag();
+								(inverter_set[n])->power_factor = -(this_Q/fabs(this_Q))*fabs((inverter_set[n])->VA_Out.Re())/gld::complex((inverter_set[n])->VA_Out.Re(),this_Q).Mag();
 							}
 							else if ((inverter_set[n])->four_quadrant_control_mode==1)
 							{

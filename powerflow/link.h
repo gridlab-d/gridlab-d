@@ -43,18 +43,18 @@ typedef enum {
 class link_object : public powerflow_object
 {
 public: /// @todo make this private and create interfaces to control values
-	complex a_mat[3][3];				// a_mat - 3x3 matrix, 'a' matrix
-	complex b_mat[3][3];				// b_mat - 3x3 matrix, 'b' matrix
-	complex c_mat[3][3];				// c_mat - 3x3 matrix, 'c' matrix
-	complex d_mat[3][3];				// d_mat - 3x3 matrix, 'd' matrix
-	complex A_mat[3][3];				// A_mat - 3x3 matrix, 'A' matrix
-	complex B_mat[3][3];				// B_mat - 3x3 matrix, 'B' matrix
-	complex tn[3];						// Used to calculate return current
-	complex base_admittance_mat[3][3];	// 3x3 matrix as "pre-inverted" matrix for NR - mostly for transformers
-	complex To_Y[3][3];					// To_Y  - 3x3 matrix, object transition to admittance
-	complex From_Y[3][3];				// From_Y - 3x3 matrix, object transition from admittance
-	complex *YSfrom;					// YSfrom - Pointer to 3x3 matrix representing admittance seen from "from" side (transformers)
-	complex *YSto;						// YSto - Pointer to 3x3 matrix representing admittance seen from "to" side (transformers)
+	gld::complex a_mat[3][3];				// a_mat - 3x3 matrix, 'a' matrix
+	gld::complex b_mat[3][3];				// b_mat - 3x3 matrix, 'b' matrix
+	gld::complex c_mat[3][3];				// c_mat - 3x3 matrix, 'c' matrix
+	gld::complex d_mat[3][3];				// d_mat - 3x3 matrix, 'd' matrix
+	gld::complex A_mat[3][3];				// A_mat - 3x3 matrix, 'A' matrix
+	gld::complex B_mat[3][3];				// B_mat - 3x3 matrix, 'B' matrix
+	gld::complex tn[3];						// Used to calculate return current
+	gld::complex base_admittance_mat[3][3];	// 3x3 matrix as "pre-inverted" matrix for NR - mostly for transformers
+	gld::complex To_Y[3][3];					// To_Y  - 3x3 matrix, object transition to admittance
+	gld::complex From_Y[3][3];				// From_Y - 3x3 matrix, object transition from admittance
+	gld::complex *YSfrom;					// YSfrom - Pointer to 3x3 matrix representing admittance seen from "from" side (transformers)
+	gld::complex *YSto;						// YSto - Pointer to 3x3 matrix representing admittance seen from "to" side (transformers)
 	double voltage_ratio;				// voltage ratio (normally 1.0)
 	int NR_branch_reference;			//Index of NR_branchdata this link is contained in
 	SPECIAL_LINK SpecialLnk;			//Flag for exceptions to the normal handling
@@ -68,7 +68,7 @@ public: /// @todo make this private and create interfaces to control values
 	double mean_repair_time;
 	double *link_limits[2][3];		/**< pointers for line limits (emergency vs. continuous) for link objects and by phase - pointered for variation */
 	double link_rating[2][3];		/**< Values for current line rating - gives individual segments the ability to set */
-	double *get_double(OBJECT *obj, char *name);	/**< Gets address of double - mainly for mean_repair_time */
+	double *get_double(OBJECT *obj, const char *name);	/**< Gets address of double - mainly for mean_repair_time */
 	bool overloaded_status;
 public:
 	enumeration status;	///< link status (open disconnect nodes)
@@ -78,19 +78,19 @@ public:
 	bool check_link_limits;	///< Flag to see if this particular link needs limits checked
 	OBJECT *from;			///< from_node - source node
 	OBJECT *to;				///< to_node - load node
-	complex current_in[3];		///< current flow to link (w.r.t from node)
-	complex current_out[3];	///< current flow out of link (w.r.t. to node)
-	complex read_I_in[3];	///< published current flow to link (w.r.t from node)
-	complex read_I_out[3];  ///< published current flow out of link (w.r.t to node)
-	complex If_in[3];		///< fault current flowing in 
-	complex If_out[3];		///< fault current flowing out
-	complex Vf_out[3];
-	complex power_in;		///< power flow in (w.r.t from node)
-	complex power_out;		///< power flow out (w.r.t to node)
-	complex power_loss;		///< power losses 
-	complex indiv_power_in[3];	///< power flow in (w.r.t. from node) - individual quantities
-	complex indiv_power_out[3];	///< power flow out (w.r.t. to node) - individual quantities
-	complex indiv_power_loss[3];///< power losses - individual quantities
+	gld::complex current_in[3];		///< current flow to link (w.r.t from node)
+	gld::complex current_out[3];	///< current flow out of link (w.r.t. to node)
+	gld::complex read_I_in[3];	///< published current flow to link (w.r.t from node)
+	gld::complex read_I_out[3];  ///< published current flow out of link (w.r.t to node)
+	gld::complex If_in[3];		///< fault current flowing in
+	gld::complex If_out[3];		///< fault current flowing out
+	gld::complex Vf_out[3];
+	gld::complex power_in;		///< power flow in (w.r.t from node)
+	gld::complex power_out;		///< power flow out (w.r.t to node)
+	gld::complex power_loss;		///< power losses
+	gld::complex indiv_power_in[3];	///< power flow in (w.r.t. from node) - individual quantities
+	gld::complex indiv_power_out[3];	///< power flow out (w.r.t. to node) - individual quantities
+	gld::complex indiv_power_loss[3];///< power losses - individual quantities
 	int protect_locations[3];	///< Links to protection object for different phase faults - part of reliability
 	FUNCTIONADDR link_recalc_fxn;	///< Function address for link recalculation function - frequency dependence
 
@@ -132,7 +132,7 @@ public:
 	//Current injection calculation function - so it can be called remotely
 	int CurrentCalculation(int nodecall, bool link_fault_mode);
 
-	void NR_link_presync_fxn(void);
+	void NR_link_sync_fxn(void);
 	void BOTH_link_postsync_fxn(void);
 	bool perform_limit_checks(double *over_limit_value, bool *over_limits);
 	double inrush_tol_value;	///< Tolerance value (of vdiff on the line ends) before "inrush convergence" is accepted
@@ -140,14 +140,14 @@ public:
 	INRUSHINTMETHOD inrush_int_method_capacitance;
 
 	//New matrix functions associated with transformer inrush (bigger)
-	void lmatrix_add(complex *matrix_in_A, complex *matrix_in_B, complex *matrix_out, int matsize);
-	void lmatrix_mult(complex *matrix_in_A, complex *matrix_in_B, complex *matrix_out, int matsize);
-	void lmatrix_vmult(complex *matrix_in, complex *vector_in, complex *vector_out, int matsize);
+	void lmatrix_add(gld::complex *matrix_in_A, gld::complex *matrix_in_B, gld::complex *matrix_out, int matsize);
+	void lmatrix_mult(gld::complex *matrix_in_A, gld::complex *matrix_in_B, gld::complex *matrix_out, int matsize);
+	void lmatrix_vmult(gld::complex *matrix_in, gld::complex *vector_in, gld::complex *vector_out, int matsize);
 
 	// Fault current calculation functions
-	void fault_current_calc(complex C[7][7], unsigned int removed_phase, double fault_type); // function traces up from fault to swing bus summing up the link objects' impedances
+	void fault_current_calc(gld::complex C[7][7], unsigned int removed_phase, double fault_type); // function traces up from fault to swing bus summing up the link objects' impedances
 											  // then calculates the fault current then passes that value back down to the faulted link objects.
-	void mesh_fault_current_calc(complex Zth[3][3],complex CV[3][3],complex CI[3][3],complex *VSth,double fault_type);
+	void mesh_fault_current_calc(gld::complex Zth[3][3],gld::complex CV[3][3],gld::complex CI[3][3],gld::complex *VSth,double fault_type);
 	SIMULATIONMODE inter_deltaupdate_link(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
 private:
@@ -157,43 +157,43 @@ private:
 	double deltamode_prev_time;	///< Tracking variable to tell when new deltamode timesteps have occurred (in-rush)
 
 public:
-	complex *ahrlstore;			///< Pointer for array used to store line history constant ahrl -- associated with inductance
-	complex *bhrlstore;			///< Pointer for array used to store line history constant bhrl -- associated with inductance
-	complex *ahmstore;			///< Pointer for array used to store magnetic history constant ahtr -- associated with transformers
-	complex *bhmstore;			///< Pointer for array used to store magnetic history constant bhtr -- associated with transformers
+	gld::complex *ahrlstore;			///< Pointer for array used to store line history constant ahrl -- associated with inductance
+	gld::complex *bhrlstore;			///< Pointer for array used to store line history constant bhrl -- associated with inductance
+	gld::complex *ahmstore;			///< Pointer for array used to store magnetic history constant ahtr -- associated with transformers
+	gld::complex *bhmstore;			///< Pointer for array used to store magnetic history constant bhtr -- associated with transformers
 	double *chrcstore;			///< Pointer for array used to store line history constant chrc -- associated with capacitance
-	complex *LinkCapShuntTerm;	///< Pointer for array used to store line history shunt capacitance term -- associated with getting currents out of the in-rush later
-	complex *LinkHistTermL;		///< Pointer for array used to store line history value for deltamode-based in-rush computations -- Inductive terms
-	complex *LinkHistTermCf;	///< Pointer for array used to store line history value for deltamode-based in-rush computations -- Shunt capacitance or transformer "from" terms
-	complex *LinkHistTermCt;	///< Pointer for array used to store line history value for deltamode-based in-rush computations -- Shunt capacitance or transformer "to" terms
-	complex *YBase_Full;		///< Pointer for array used to store "base admittance" for deltamode-based in-rush compuations -- Transformer in-rush
-	complex *YBase_Pri;			///< Pointer for array used to store "base primary admittance" for deltamode-based in-rush computations -- Transformer in-rush
-	complex *YBase_Sec;			///< Pointer for array used to store "base secondary admittance" for deltamode-based in-rush computations -- Transformer in-rush
+	gld::complex *LinkCapShuntTerm;	///< Pointer for array used to store line history shunt capacitance term -- associated with getting currents out of the in-rush later
+	gld::complex *LinkHistTermL;		///< Pointer for array used to store line history value for deltamode-based in-rush computations -- Inductive terms
+	gld::complex *LinkHistTermCf;	///< Pointer for array used to store line history value for deltamode-based in-rush computations -- Shunt capacitance or transformer "from" terms
+	gld::complex *LinkHistTermCt;	///< Pointer for array used to store line history value for deltamode-based in-rush computations -- Shunt capacitance or transformer "to" terms
+	gld::complex *YBase_Full;		///< Pointer for array used to store "base admittance" for deltamode-based in-rush compuations -- Transformer in-rush
+	gld::complex *YBase_Pri;			///< Pointer for array used to store "base primary admittance" for deltamode-based in-rush computations -- Transformer in-rush
+	gld::complex *YBase_Sec;			///< Pointer for array used to store "base secondary admittance" for deltamode-based in-rush computations -- Transformer in-rush
 
 	//******************* MOVE THESE? *******************************/
 	//Saturation-based items -- probably need to be moved, but putting here since me=lazy
 	double D_sat;
-	complex A_phi;				
-	complex B_phi;
-	complex *hphi;	//History term for phi
-	complex *saturation_calculated_vals;
+	gld::complex A_phi;
+	gld::complex B_phi;
+	gld::complex *hphi;	//History term for phi
+	gld::complex *saturation_calculated_vals;
 
 	//******************** Create a function from solver_nr to calculate Isat
 
 };
 
 //Macros
-void inverse(complex in[3][3], complex out[3][3]);
-void multiply(double a, complex b[3][3], complex c[3][3]);
-void multiply(complex a[3][3], complex b[3][3], complex c[3][3]);
-void subtract(complex a[3][3], complex b[3][3], complex c[3][3]);
-void addition(complex a[3][3], complex b[3][3], complex c[3][3]);
-void equalm(complex a[3][3], complex b[3][3]);
+void inverse(gld::complex in[3][3], gld::complex out[3][3]);
+void multiply(double a, gld::complex b[3][3], gld::complex c[3][3]);
+void multiply(gld::complex a[3][3], gld::complex b[3][3], gld::complex c[3][3]);
+void subtract(gld::complex a[3][3], gld::complex b[3][3], gld::complex c[3][3]);
+void addition(gld::complex a[3][3], gld::complex b[3][3], gld::complex c[3][3]);
+void equalm(gld::complex a[3][3], gld::complex b[3][3]);
 
 //LU Decomp stuff
-void lu_decomp(complex *a, complex *l, complex *u, int size_val); //lu decomposition function for a generic square matrix
-void forward_sub(complex *l, complex *b, complex *z, int size_val); //backwards substitution  algorithm for a generic square system 
-void back_sub(complex *u, complex *z, complex *x, int size_val); // forwards substitution algorithm for a generic square system
-void lu_matrix_inverse(complex *input_mat, complex *output_mat, int size_val);	//matrix inversion calculated by LU decomp method
+void lu_decomp(gld::complex *a, gld::complex *l, gld::complex *u, int size_val); //lu decomposition function for a generic square matrix
+void forward_sub(gld::complex *l, gld::complex *b, gld::complex *z, int size_val); //backwards substitution  algorithm for a generic square system
+void back_sub(gld::complex *u, gld::complex *z, gld::complex *x, int size_val); // forwards substitution algorithm for a generic square system
+void lu_matrix_inverse(gld::complex *input_mat, gld::complex *output_mat, int size_val);	//matrix inversion calculated by LU decomp method
 #endif // _LINK_H
 

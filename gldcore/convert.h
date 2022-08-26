@@ -9,7 +9,7 @@
 #define _CONVERT_H
 
 #include "class.h"
-#include "complex.h"
+#include "gld_complex.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -52,8 +52,8 @@ int convert_to_double_array(const char *buffer, void *data, PROPERTY *prop);
 int convert_from_complex_array(char *buffer, int size, void *data, PROPERTY *prop);
 int convert_to_complex_array(const char *buffer, void *data, PROPERTY *prop);
 
-int convert_unit_double(char *buffer,char *unit, double *data);
-int convert_unit_complex(char *buffer,char *unit, complex *data);
+int convert_unit_double(char *buffer,const char *unit, double *data);
+int convert_unit_complex(char *buffer,char *unit, gld::complex *data);
 
 int convert_from_real(char *a, int b, void *c, PROPERTY *d);
 int convert_to_real(const char *a, void *b, PROPERTY *c);

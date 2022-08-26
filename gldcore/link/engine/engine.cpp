@@ -1,7 +1,7 @@
 // $Id: engine.cpp
 // Copyright (C) 2012 Battelle Memorial Institute
 
-#include <stdlib.h>
+#include <cstdlib>
 
 #include "engine.h"
 
@@ -126,7 +126,7 @@ int engine_recv(ENGINELINK *engine, char *buffer, int maxlen)
 }
 
 int engine_send(ENGINELINK *engine, char *buffer,int len){
-      
+
       if(engine->sd->type==UDP)
 		  return sendUDPSocket(engine,buffer,len);
 	  return -1;
@@ -145,7 +145,7 @@ bool recv_status(ENGINELINK *engine, ENGINELINKSTATUS *status, char *msg=NULL, i
 		return false;
 	}
 	char *tag = strchr(buffer,' ');
-	if ( strcmp(buffer,"INIT")==0 ) 
+	if ( strcmp(buffer,"INIT")==0 )
 	{
 		if ( msg!=NULL && tag!=NULL && maxlen>1) strncpy(msg,tag+1,maxlen-1);
 		*status = ELS_INIT;
@@ -198,7 +198,7 @@ bool send_init(ENGINELINK *engine)
 {
 	char buffer[1500];
 	int len=sprintf(buffer,"GRIDLABD %d.%d.%d (%s)",REV_MAJOR,REV_MINOR,REV_PATCH,BRANCH);
-	
+
 	return engine_send(engine,buffer,len+1) > 0;
 }
 
@@ -219,7 +219,7 @@ bool send_cachesize(ENGINELINK *engine)
 	if ( engine->cachesize==0 ) recalc_cachesize(engine);
 	char buffer[1500];
 	int len=sprintf(buffer,"CACHESIZE %d", engine->cachesize);
-	
+
 	return engine_send(engine,buffer,len+1) > 0;
 }
 
@@ -234,7 +234,7 @@ bool send_status(ENGINELINK *engine, ENGINELINKSTATUS status,char *msg=NULL)
 {
 	char buffer[1500];
 	int len;
-	
+
 	if ( msg==NULL ){
 		len = sprintf(buffer,"%s", enginelinkstatus[status]);
 		return engine_send(engine,buffer,len+1) > 0;
@@ -301,7 +301,7 @@ bool recv_imports(ENGINELINK *engine)
 		unsigned int index;
 		char value[1025];
 		if ( !engine_recv(engine,buffer,1500)){
-		
+
 		  return false;
 		}
 		if ( sscanf(buffer,"%d %1024[^\n]",&index,value) < 2)
@@ -374,7 +374,7 @@ bool add_export(ENGINELINK *engine, unsigned int index, OBJECTPROPERTY *objprop)
 		(PROPERTYTYPE)prop->get_type(), // TODO convert this to text
 		prop->get_size(),buffname, prop->get_name(), prop->get_string().get_buffer());
 	return engine_send(engine,buffer,len+1) > 0;
-	
+
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
@@ -422,7 +422,7 @@ EXPORT bool glx_init(glxlink *mod)
 		gl_error("unable to send engine timeout info");
 		return false;
 	}
-	
+
 	// construct and send globals lists
 	unsigned int index = 0;
 	LINKLIST *item;
@@ -459,7 +459,7 @@ EXPORT bool glx_init(glxlink *mod)
 	}
 
 	// send done message
-	if ( !engine_send(engine,"DONE",5) )
+	if ( !engine_send(engine, const_cast<char*>("DONE"),5) )
 	{
 		gl_error("unable to send exports DONE message");
 		return false;
@@ -502,7 +502,7 @@ EXPORT TIMESTAMP glx_sync(glxlink* mod,TIMESTAMP t0)
 	        printf("sending expo\n");
 		return TS_INVALID; // error
 	}
-	
+
 	if ( !send_status(engine,ELS_OK) ){
 		printf("sending okk\n");
 		return TS_INVALID; // error
@@ -519,7 +519,7 @@ EXPORT TIMESTAMP glx_sync(glxlink* mod,TIMESTAMP t0)
 	ENGINELINKSTATUS status;
 	if ( !recv_status(engine,&status) )
 		return TS_INVALID; // error
-	
+
 	return status==ELS_OK ? t1 : TS_INVALID;
 }
 

@@ -11,6 +11,7 @@
 #define _multizone_H
 
 #include <stdarg.h>
+
 #include "gridlabd.h"
 
 class multizone {

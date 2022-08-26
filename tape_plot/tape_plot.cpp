@@ -12,15 +12,21 @@
 @{
 **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <ctype.h>
-#include <time.h>
+#include <cctype>
+#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
 
 #include "gridlabd.h"
 #include "../tape/tape.h"
 #include "tape_plot.h"
+
+#include "../tape/collector.h"
+#include "../tape/player.h"
+#include "../tape/recorder.h"
+#include "../tape/shaper.h"
+
 #define MAXCOLUMNS 50
 
 /*******************************************************************
@@ -484,9 +490,9 @@ EXPORT void close_recorder(struct recorder *my)
 {
 	char gnuplot[1024];
 #ifdef _WIN32
-	char *plotcmd = "start wgnuplot";
+	const char *plotcmd = "start wgnuplot";
 #else
-	char *plotcmd = "gnuplot";
+	const char *plotcmd = "gnuplot";
 #endif
 	if(my->output == SCREEN)
 		sprintf(gnuplot,"%s -persist", plotcmd);
@@ -495,7 +501,7 @@ EXPORT void close_recorder(struct recorder *my)
 	char fname[sizeof(char32)];
 	char type[sizeof(char32)];
 	char command[sizeof(char1024)];
-
+	int result;
 	my->status = TS_DONE;
 
 	if (my->fp == NULL)
@@ -507,7 +513,7 @@ EXPORT void close_recorder(struct recorder *my)
 		fclose(my->fp);
 		sscanf(my->file,"%32[^:]:%32[^:]",type,fname);
 		sprintf(command,"%s %s", gnuplot, fname);
-		system( command );
+		result = system( command );
 	}
  	my->fp = NULL;
 }
@@ -661,12 +667,12 @@ EXPORT void close_collector(struct collector *my)
 	strcpy(gnuplot,"wgnuplot ");
 	_putenv("PATH=%PATH%;C:\\wgnuplot");
 #else
-	char *gnuplot = "gnuplot ";
+	const char *gnuplot = "gnuplot ";
 #endif
 	char fname[sizeof(char32)];
 	char type[sizeof(char32)];
 	char command[sizeof(char1024)];
-
+	int result;
 	my->status = TS_DONE;
 
 	if (my->fp == NULL)
@@ -678,7 +684,7 @@ EXPORT void close_collector(struct collector *my)
 		fclose(my->fp);
 		sscanf(my->file,"%32[^:]:%32[^:]",type,fname);
 		sprintf(command,"%s %s", gnuplot, fname);
-		system( command );
+		result = system( command );
 	}
  	my->fp = NULL;
 }

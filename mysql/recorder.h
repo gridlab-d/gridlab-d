@@ -3,6 +3,8 @@
  * Copyright (C) 2012 Battelle Memorial Institute
  */
 
+#ifdef HAVE_MYSQL
+
 #ifndef _RECORDER_H
 #define _RECORDER_H
 
@@ -99,5 +101,7 @@ public:
 	static CLASS *oclass;
 	static recorder *defaults;
 };
+
+#endif
 
 #endif

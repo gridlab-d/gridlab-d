@@ -7,10 +7,10 @@
  @{
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "battery.h"
 
@@ -25,6 +25,7 @@ static PASSCONFIG clockpass = PC_BOTTOMUP;
 /* Class registration is only called once to register the class with the core */
 battery::battery(MODULE *module)
 {
+
 	if (oclass==NULL)
 	{
 		oclass = gl_register_class(module,"battery",sizeof(battery),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
@@ -204,9 +205,9 @@ int battery::create(void)
 	peff = NULL;
 	pinverter_VA_Out = NULL;
 
-	value_Circuit_V[0] = value_Circuit_V[1] = value_Circuit_V[2] = complex(0.0,0.0);
-	value_Line_I[0] = value_Line_I[1] = value_Line_I[2] = complex(0.0,0.0);
-	value_Line12 = complex(0.0,0.0);
+	value_Circuit_V[0] = value_Circuit_V[1] = value_Circuit_V[2] = gld::complex(0.0,0.0);
+	value_Line_I[0] = value_Line_I[1] = value_Line_I[2] = gld::complex(0.0,0.0);
+	value_Line12 = gld::complex(0.0,0.0);
 
 	value_Tout = 0.0;
 
@@ -277,7 +278,7 @@ int battery::init(OBJECT *parent)
 		// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
 		if (parent!=NULL)
 		{
-			if (gl_object_isa(parent,"meter","powerflow") == true)
+			if (gl_object_isa(parent, "meter", "powerflow"))
 			{
 				//Set the flags
 				parent_is_meter = true;
@@ -301,7 +302,7 @@ int battery::init(OBJECT *parent)
 				temp_property_pointer = new gld_property(parent,"phases");
 
 				//Make sure ti worked
-				if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_set() != true))
+				if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_set())
 				{
 					GL_THROW("Unable to map phases property - ensure the parent is a meter or triplex_meter");
 					/*  TROUBLESHOOT
@@ -349,7 +350,7 @@ int battery::init(OBJECT *parent)
 				value_Circuit_V[1] = pCircuit_V[1]->get_complex();
 				value_Circuit_V[2] = pCircuit_V[2]->get_complex();
 			}
-			else if (gl_object_isa(parent,"triplex_meter","powerflow") == true)
+			else if (gl_object_isa(parent, "triplex_meter", "powerflow"))
 			{
 				//Set flags
 				parent_is_meter = true;
@@ -366,14 +367,13 @@ int battery::init(OBJECT *parent)
 				pLine_I[2] = map_complex_value(parent,"current_N");
 				pLine12 = map_complex_value(parent,"current_12");
 
-
 				pPower = map_complex_value(parent,"measured_power");
 
 				//Map and pull the phases
 				temp_property_pointer = new gld_property(parent,"phases");
 
 				//Make sure ti worked
-				if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_set() != true))
+				if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_set())
 				{
 					GL_THROW("Unable to map phases property - ensure the parent is a meter or triplex_meter");
 					//Defined above
@@ -392,7 +392,7 @@ int battery::init(OBJECT *parent)
 				value_Circuit_V[1] = pCircuit_V[1]->get_complex();
 				value_Circuit_V[2] = pCircuit_V[2]->get_complex();
 			}
-			else if (gl_object_isa(parent,"inverter","generators") == true)
+			else if (gl_object_isa(parent, "inverter", "generators"))
 			{
 				//Set flags
 				parent_is_meter = true;
@@ -604,7 +604,7 @@ int battery::init(OBJECT *parent)
 			to an inverter to work.  If this is not done, the code will fail.
 			*/
 		}
-		else if (gl_object_isa(parent,"inverter","generators") == false)
+		else if (!gl_object_isa(parent, "inverter", "generators"))
 		{
 			GL_THROW("Battery must have an inverter as it's parent");
 			//Defined above
@@ -680,7 +680,7 @@ int battery::init(OBJECT *parent)
 		temp_property_pointer = new gld_property(parent,"four_quadrant_control_mode");
 
 		//Make sure it is proper
-		if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_enumeration() != true))
+		if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_enumeration())
 		{
 			GL_THROW("battery:%d - %s - Unable to map the parent inverter four_quadrant_control_mode",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
@@ -729,11 +729,11 @@ int battery::init(OBJECT *parent)
 }
 
 
-complex battery::calculate_v_terminal(complex v, complex i){
+gld::complex battery::calculate_v_terminal(gld::complex v, gld::complex i){
 	return v - (i * Rinternal);
 }
 
-TIMESTAMP battery::rfb_event_time(TIMESTAMP t0, complex power, double e){
+TIMESTAMP battery::rfb_event_time(TIMESTAMP t0, gld::complex power, double e){
 	if((e < margin) && (power < 0)){
 		return TS_NEVER;
 	}
@@ -756,7 +756,7 @@ TIMESTAMP battery::rfb_event_time(TIMESTAMP t0, complex power, double e){
 }
 
 
-double battery::calculate_efficiency(complex voltage, complex current){
+double battery::calculate_efficiency(gld::complex voltage, gld::complex current){
 	if(voltage.Mag() == 0 || current.Mag() == 0){
 		return 1;
 	}
@@ -815,7 +815,7 @@ TIMESTAMP battery::presync(TIMESTAMP t0, TIMESTAMP t1)
 /* Sync is called when the clock needs to advance on the bottom-up pass */
 TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
-	complex temp_complex_value;
+	gld::complex temp_complex_value;
 	OBJECT *obj = OBJECTHDR(this);
 
 	//First run allocation
@@ -905,7 +905,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 				if (gen_mode_v == GM_POWER_VOLTAGE_HYBRID)
 					GL_THROW("generator_mode POWER_VOLTAGE_HYBRID is not supported in 3-phase yet (only split phase is supported");
 
-				complex volt[3];
+				gld::complex volt[3];
 				TIMESTAMP dt,t_energy_limit;
 
 				for (int i=0;i<3;i++)
@@ -1145,7 +1145,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 			} //End three phase GM_POWER_DRIVEN and HYBRID
 			else if ( ((phases & 0x0010) == 0x0010) && (number_of_phases_out == 1) ) // Split-phase
 			{
-				complex volt;
+				gld::complex volt;
 				TIMESTAMP dt,t_energy_limit;
 
 				volt = pCircuit_V[0]->get_complex(); // 240-V circuit (we're assuming it can only be hooked here now
@@ -1518,7 +1518,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 		{
 			if (number_of_phases_out == 3) //Three phase meter
 			{
-				complex volt[3];
+				gld::complex volt[3];
 				double high_voltage = 0, low_voltage = 999999999;
 				TIMESTAMP dt,t_energy_limit;
 
@@ -1648,7 +1648,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 							prev_state = 0;
 
 							VA_Out = power_transferred = 0.0;
-							last_current[0] = last_current[1] = last_current[2] = complex(0,0);
+							last_current[0] = last_current[1] = last_current[2] = gld::complex(0,0);
 							return TS_NEVER;
 						}
 						else if (Energy >= E_Max)
@@ -1726,7 +1726,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 			}// End 3-phase meter
 			else if ( ((phases & 0x0010) == 0x0010) && (number_of_phases_out == 1) ) // Split-phase
 			{
-				complex volt;
+				gld::complex volt;
 				TIMESTAMP dt,t_energy_limit;
 
 				if ((parent_is_meter == true) && (parent_is_triplex == true))
@@ -1838,7 +1838,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 							prev_state = 0;
 
 							VA_Out = power_transferred = 0.0;
-							last_current[0] = complex(0,0);
+							last_current[0] = gld::complex(0,0);
 							return TS_NEVER;
 						}
 						else if (Energy >= E_Max)
@@ -2023,7 +2023,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 				if(fabs((double)VA_Out.Re()) > fabs((double)Max_P)){
 					//gl_verbose("battery sync: VA_Out exceeded allowable VA_Out, setting to max");
-					VA_Out = complex(Max_P , 0);
+					VA_Out = gld::complex(Max_P , 0);
 					VA_Internal = VA_Out - (I_Out * I_Out * Rinternal);
 				}
 
@@ -2037,12 +2037,12 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 					//gl_verbose("battery sync: battery is empty!");
 					// if(connected){//Connected was always true
 						//gl_verbose("battery sync: empty BUT it is connected, passing request onward");
-						I_In = I_Max + complex(fabs(I_Out.Re()), fabs(I_Out.Im())); //power was asked for to discharge but battery is empty, forward request along the line
+						I_In = I_Max + gld::complex(fabs(I_Out.Re()), fabs(I_Out.Im())); //power was asked for to discharge but battery is empty, forward request along the line
 						I_Prev = I_Max / efficiency;
 						//Get as much as you can from the microturbine --> the load asked for as well as the max
 						recalculate = false;
-						E_Next = Energy + (((I_In - complex(fabs(I_Out.Re()), fabs(I_Out.Im()))) * V_Internal / efficiency) * t2).Re();  // the energy level at t1
-						TIMESTAMP t3 = rfb_event_time(t0, (I_In - complex(fabs(I_Out.Re()), fabs(I_Out.Im()))) * V_Internal / efficiency, Energy);
+						E_Next = Energy + (((I_In - gld::complex(fabs(I_Out.Re()), fabs(I_Out.Im()))) * V_Internal / efficiency) * t2).Re();  // the energy level at t1
+						TIMESTAMP t3 = rfb_event_time(t0, (I_In - gld::complex(fabs(I_Out.Re()), fabs(I_Out.Im()))) * V_Internal / efficiency, Energy);
 						return t3;
 					// }
 					// else{
@@ -2061,18 +2061,18 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 					//gl_verbose("battery sync: battery is headed to empty");
 					// if(connected){//Connected was always true
 						//gl_verbose("battery sync: BUT battery is connected, so pass request onward");
-						I_In = I_Max + complex(fabs(I_Out.Re()), fabs(I_Out.Im())); //this won't let the battery go empty... change course 
+						I_In = I_Max + gld::complex(fabs(I_Out.Re()), fabs(I_Out.Im())); //this won't let the battery go empty... change course
 						I_Prev = I_Max / efficiency;
 						//if the battery is connected to something which serves the load and charges the battery
 						E_Next = margin;
 						recalculate = false;
-						TIMESTAMP t3 = rfb_event_time(t0, (I_In - complex(fabs(I_Out.Re()), fabs(I_Out.Im()))) * V_Internal / efficiency, Energy);
+						TIMESTAMP t3 = rfb_event_time(t0, (I_In - gld::complex(fabs(I_Out.Re()), fabs(I_Out.Im()))) * V_Internal / efficiency, Energy);
 						return t3;
 					// }else{
 					// 	//gl_verbose("battery sync: battery is about to be empty with nothing connected!!");
 					// 	TIMESTAMP t3 = rfb_event_time(t0, VA_Internal, Energy);
 					// 	E_Next = 0; //expecting return when time is empty
-					// 	I_In = 0; 
+					// 	I_In = 0;
 					// 	I_Prev = 0;
 					// 	recalculate = false;
 					// 	return t3;
@@ -2232,7 +2232,7 @@ TIMESTAMP battery::postsync(TIMESTAMP t0, TIMESTAMP t1)
 }
 
 //Map Complex value
-gld_property *battery::map_complex_value(OBJECT *obj, char *name)
+gld_property *battery::map_complex_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	OBJECT *objhdr = OBJECTHDR(this);
@@ -2255,7 +2255,7 @@ gld_property *battery::map_complex_value(OBJECT *obj, char *name)
 }
 
 //Map double value
-gld_property *battery::map_double_value(OBJECT *obj, char *name)
+gld_property *battery::map_double_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	OBJECT *objhdr = OBJECTHDR(this);
@@ -2281,7 +2281,7 @@ gld_property *battery::map_double_value(OBJECT *obj, char *name)
 //Unlike other objects, meter checks are inside (mostly for copy-paste laziness above)
 void battery::push_powerflow_currents(void)
 {
-	complex temp_complex_val;
+	gld::complex temp_complex_val;
 	gld_wlock *test_rlock;
 	int indexval;
 
@@ -2301,7 +2301,7 @@ void battery::push_powerflow_currents(void)
 				temp_complex_val += value_Line12;
 
 				//Push it back up
-				pLine12->setp<complex>(temp_complex_val,*test_rlock);
+				pLine12->setp<gld::complex>(temp_complex_val,*test_rlock);
 			}//End pLine_I valid
 			//Default else -- it's null, so skip it
 		}//End is triplex
@@ -2320,7 +2320,7 @@ void battery::push_powerflow_currents(void)
 					temp_complex_val += value_Line_I[indexval];
 
 					//Push it back up
-					pLine_I[indexval]->setp<complex>(temp_complex_val,*test_rlock);
+					pLine_I[indexval]->setp<gld::complex>(temp_complex_val,*test_rlock);
 				}//End pLine_I valid
 				//Default else -- it's null, so skip it
 			}
@@ -2428,7 +2428,7 @@ void battery::update_soc(unsigned int64 delta_time)
 double battery::check_state_change_time_delta(unsigned int64 delta_time, unsigned long dt)
 {
 	double time_return;
-	complex inv_VA_out_value;
+	gld::complex inv_VA_out_value;
 	double inv_eff_value;
 
 	//Retrieve the inverter properties
@@ -2501,7 +2501,7 @@ double battery::check_state_change_time_delta(unsigned int64 delta_time, unsigne
 
 }
 
-STATUS battery::post_deltaupdate(complex *useful_value, unsigned int mode_pass)
+STATUS battery::post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass)
 {
 	return SUCCESS;	//Always succeeds right now
 }
@@ -2599,7 +2599,7 @@ EXPORT SIMULATIONMODE interupdate_battery(OBJECT *obj, unsigned int64 delta_time
 	}
 }
 
-EXPORT STATUS postupdate_battery(OBJECT *obj, complex *useful_value, unsigned int mode_pass)
+EXPORT STATUS postupdate_battery(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass)
 {
 	battery *my = OBJECTDATA(obj,battery);
 	STATUS status = FAILED;

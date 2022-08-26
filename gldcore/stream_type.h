@@ -1,3 +1,5 @@
+using namespace gld;
+
 stream_type(double);
 stream_type(complex);
 stream_type(enumeration);
@@ -18,7 +20,7 @@ stream_type(float);
 stream_type(real);
 stream_type(loadshape);
 stream_type(enduse);
-stream_type(randomvar);
+stream_type(randomvar_struct);
 
 stream_type(TOKEN);
 stream_type(uint);

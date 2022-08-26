@@ -2,13 +2,16 @@
 #define _generators_H
 
 #include <stdarg.h>
+
 #include "gridlabd.h"
 
 #ifdef _GENERATORS_GLOBALS
 #define GLOBAL
 #define INIT(A) = (A)
 #else
+#undef GLOBAL
 #define GLOBAL extern
+#undef INIT
 #define INIT(A)
 #endif
 
