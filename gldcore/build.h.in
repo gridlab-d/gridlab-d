@@ -1,0 +1,4 @@
+
+#define BUILDNUM @BUILD_NUM@
+#define BRANCH "@BRANCH@"
+#define REV_YEAR @BUILD_YEAR@

@@ -194,7 +194,7 @@ int generator_controller::init(OBJECT *parent)
 		}
 
 		//Get the address
-		power_link = (complex *)GETADDR(parent,ptemp);
+		power_link = (gld::complex *)GETADDR(parent,ptemp);
 
 		//Check this as well
 		if (power_link == NULL)
@@ -261,7 +261,7 @@ int generator_controller::init(OBJECT *parent)
 		}
 
 		//Get the address
-		power_link = (complex *)GETADDR(parent,ptemp);
+		power_link = (gld::complex *)GETADDR(parent,ptemp);
 
 		//Check this as well
 		if (power_link == NULL)
@@ -1047,7 +1047,7 @@ TIMESTAMP generator_controller::sync(TIMESTAMP t0, TIMESTAMP t1)
 					} else {
 						controller_bid.state = BS_OFF;
 					}
-					((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(obj, ctrname, 1024), (char *)gl_name(market_object, mktname, 1024), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+					((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(obj, ctrname, 1024), (char *)gl_name(market_object, mktname, 1024), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 					if(controller_bid.bid_accepted == false){
 						return TS_INVALID;
 					}
@@ -1087,7 +1087,7 @@ TIMESTAMP generator_controller::sync(TIMESTAMP t0, TIMESTAMP t1)
 					} else {
 						controller_bid.state = BS_OFF;
 					}
-					((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(obj, ctrname, 1024), (char *)gl_name(market_object, mktname, 1024), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+					((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(obj, ctrname, 1024), (char *)gl_name(market_object, mktname, 1024), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 					if(controller_bid.bid_accepted == false){
 						return TS_INVALID;
 					}

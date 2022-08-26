@@ -30,6 +30,7 @@ MODULE:wholesale
 //#define MINOR 0
 
 #include <stdlib.h>
+
 #include "gridlabd.h"
 
 EXPORT int do_kill(void*);

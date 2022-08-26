@@ -10,10 +10,8 @@
 #ifndef _METRICS_COLLECTOR_WRITER_H_
 #define _METRICS_COLLECTOR_WRITER_H_
 
-#include "tape.h"
-#include "metrics_collector.h"
-#include <json/json.h> //jsoncpp library
 
+#include <json/json.h> //jsoncpp library
 #include <iostream>
 #include <fstream>
 #include <cstring>
@@ -21,8 +19,10 @@
 #include <algorithm>
 #include <memory>
 
+#include "tape.h"
+#include "metrics_collector.h"
+
 #ifdef HAVE_HDF5
-#include <memory>
 #include "H5Cpp.h"
 #endif
 
@@ -291,7 +291,7 @@ public:
 	static metrics_collector_writer *defaults;
 	static CLASS *oclass, *pclass;
 
-	metrics_collector_writer(MODULE *);
+	explicit metrics_collector_writer(MODULE *);
 	int create();
 	int init(OBJECT *);
 	int isa(char *);

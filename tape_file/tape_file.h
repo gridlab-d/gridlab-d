@@ -4,6 +4,8 @@
 #ifndef _TAPE_FILE_H
 #define _TAPE_FILE_H
 
+#include "../tape/tape.h"
+
 EXPORT int open_player(struct player *my, char *fname, char *flags);
 EXPORT char *read_player(struct player *my,char *buffer,unsigned int size);
 EXPORT int rewind_player(struct player *my);

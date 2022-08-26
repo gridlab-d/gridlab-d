@@ -8,6 +8,7 @@
 
 #include "gridlabd.h"
 #include "connection.h"
+
 #include <pthread.h>
 
 class RemoteSocket : public Socket {

@@ -2,16 +2,18 @@
 /**	Copyright (C) 2017 Battelle Memorial Institute
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
-#include <string.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 
 #include <iostream>
 #include <fstream>
 #include <cstring>
 #include <json/json.h> //jsoncpp library
+#include <string>
+#include <sstream>
 using namespace std;
 
 #include "jsondump.h"
@@ -29,7 +31,8 @@ jsondump::jsondump(MODULE *mod)
 	{
 		// register the class definition
 		oclass = gl_register_class(mod,"jsondump",sizeof(jsondump),PC_AUTOLOCK);
-		if (oclass==NULL)
+
+		if (oclass == nullptr)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 
 		// publish the class properties
@@ -116,24 +119,24 @@ STATUS jsondump::dump_system(void)
 	int index = 0;
 	int phaseCount;
 	double per_unit_base, temp_impedance_base, temp_voltage_base, temp_de_pu_base;
-	complex temp_complex_voltage_value[3];
-	complex temp_complex_power_value[3];
+	gld::complex temp_complex_voltage_value[3];
+	gld::complex temp_complex_power_value[3];
 	double temp_voltage_output_value;
 	int indexA, indexB, indexC;
-	complex *b_mat_pu;
+	gld::complex *b_mat_pu;
 	bool *b_mat_defined;
-	complex *b_mat_tp_pu;
+	gld::complex *b_mat_tp_pu;
 	bool  *b_mat_tp_defined;
-	complex *b_mat_trans_pu;
+	gld::complex *b_mat_trans_pu;
 	bool *b_mat_trans_defined;
 	int *trans_phase_count;
-	complex *b_mat_reg_pu;
+	gld::complex *b_mat_reg_pu;
 	bool *b_mat_reg_defined;
 	int *reg_phase_count;
-	complex b_mat_switch_pu[9];
+	gld::complex b_mat_switch_pu[9];
 	bool b_mat_switch_defined;
 	int switch_phase_count;
-	complex b_mat_fuse_pu[9];
+	gld::complex b_mat_fuse_pu[9];
 	bool b_mat_fuse_defined;
 	int fuse_phase_count;
 	set temp_set_value;
@@ -219,7 +222,7 @@ STATUS jsondump::dump_system(void)
 		pLineConf = (OBJECT **)gl_malloc((lineConfs->hit_count)*sizeof(OBJECT*));
 
 		//Check it
-		if (pLineConf == NULL)
+		if (pLineConf == nullptr)
 		{
 			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			/*  TROUBLESHOOT
@@ -229,11 +232,12 @@ STATUS jsondump::dump_system(void)
 			*/
 		}
 
+
 		//Define b_mat_pu
-		b_mat_pu = (complex *)gl_malloc((lineConfs->hit_count)*9*sizeof(complex));
+		b_mat_pu = (gld::complex *)gl_malloc((lineConfs->hit_count)*9*sizeof(gld::complex));
 
 		//Check it
-		if (b_mat_pu == NULL)
+		if (b_mat_pu == nullptr)
 		{
 			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
@@ -243,7 +247,7 @@ STATUS jsondump::dump_system(void)
 		b_mat_defined = (bool *)gl_malloc((lineConfs->hit_count)*sizeof(bool));
 
 		//Check it
-		if (b_mat_defined == NULL)
+		if (b_mat_defined == nullptr)
 		{
 			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
@@ -252,12 +256,12 @@ STATUS jsondump::dump_system(void)
 		//Loop through and zero everything, just because
 		for (indexA=0; indexA < (lineConfs->hit_count); indexA++)
 		{
-			pLineConf[indexA] = NULL;
+			pLineConf[indexA] = nullptr;
 			b_mat_defined[indexA] = false;
 
 			for (indexB=0; indexB<9; indexB++)
 			{
-				b_mat_pu[indexA*9+indexB] = complex(0.0,0.0);
+				b_mat_pu[indexA*9+indexB] = gld::complex(0.0,0.0);
 			}
 		}
 
@@ -268,7 +272,7 @@ STATUS jsondump::dump_system(void)
 		index = 0;
 		
 		//Loop
-		while (obj_lineConf != NULL)
+		while (obj_lineConf != nullptr)
 		{
 			pLineConf[index] = obj_lineConf;
 
@@ -299,7 +303,7 @@ STATUS jsondump::dump_system(void)
 		}
 
 		//Define b_mat_tp_pu
-		b_mat_tp_pu = (complex *)gl_malloc((tpLineConfs->hit_count)*9*sizeof(complex));
+		b_mat_tp_pu = (gld::complex *)gl_malloc((tpLineConfs->hit_count)*9*sizeof(gld::complex));
 
 		//Check it
 		if (b_mat_tp_pu == NULL)
@@ -327,7 +331,7 @@ STATUS jsondump::dump_system(void)
 
 			for (indexB=0; indexB<9; indexB++)
 			{
-				b_mat_tp_pu[indexA*9+indexB] = complex(0.0,0.0);
+				b_mat_tp_pu[indexA*9+indexB] = gld::complex(0.0,0.0);
 			}
 		}
 
@@ -371,7 +375,7 @@ STATUS jsondump::dump_system(void)
 		}
 
 		//Define b_mat_trans_pu
-		b_mat_trans_pu = (complex *)gl_malloc((TransConfsList->hit_count)*9*sizeof(complex));
+		b_mat_trans_pu = (gld::complex *)gl_malloc((TransConfsList->hit_count)*9*sizeof(gld::complex));
 
 		//Check it
 		if (b_mat_trans_pu == NULL)
@@ -383,7 +387,7 @@ STATUS jsondump::dump_system(void)
 		//Zero it, to be safe
 		for (indexA=0; indexA < (TransConfsList->hit_count*9); indexA++)
 		{
-			b_mat_trans_pu[indexA] = complex(0.0,0.0);
+			b_mat_trans_pu[indexA] = gld::complex(0.0,0.0);
 		}
 
 		//Define b_mat_trans_defined
@@ -454,7 +458,7 @@ STATUS jsondump::dump_system(void)
 		}
 
 		//Define b_mat_trans_pu
-		b_mat_reg_pu = (complex *)gl_malloc((regConfs->hit_count)*9*sizeof(complex));
+		b_mat_reg_pu = (gld::complex *)gl_malloc((regConfs->hit_count)*9*sizeof(gld::complex));
 
 		//Check it
 		if (b_mat_reg_pu == NULL)
@@ -466,7 +470,7 @@ STATUS jsondump::dump_system(void)
 		//Zero it, to be safe
 		for (indexA=0; indexA < (regConfs->hit_count*9); indexA++)
 		{
-			b_mat_reg_pu[indexA] = complex(0.0,0.0);
+			b_mat_reg_pu[indexA] = gld::complex(0.0,0.0);
 		}
 
 		//Define b_mat_trans_defined
@@ -608,7 +612,7 @@ STATUS jsondump::dump_system(void)
 			temp_complex_power_value[2] = get_complex_value(obj,"power_C");
 
 			//See if we need to be per-unitized
-			if (write_per_unit == true)
+			if (write_per_unit)
 			{
 				temp_complex_power_value[0] /= (system_VA_base / 3.0);
 				temp_complex_power_value[1] /= (system_VA_base / 3.0);
@@ -735,7 +739,7 @@ STATUS jsondump::dump_system(void)
 			temp_complex_power_value[2] = get_complex_value(obj,"power_out_C");
 
 			//See if we need to be per-unitized
-			if (write_per_unit == true)
+			if (write_per_unit)
 			{
 				temp_complex_power_value[0] /= (system_VA_base / 3.0);
 				temp_complex_power_value[1] /= (system_VA_base / 3.0);
@@ -799,7 +803,7 @@ STATUS jsondump::dump_system(void)
 		while (obj != NULL)
 		{
 			//If per-unit - adjust the values
-			if (write_per_unit == true)
+			if (write_per_unit)
 			{
 				temp_voltage_base = get_double_value(obj,"nominal_voltage");
 				temp_de_pu_base = 1.0;	//Don't need to "de-per-unit it"
@@ -1025,7 +1029,7 @@ STATUS jsondump::dump_system(void)
 		while (obj != NULL)
 		{
 			//If per-unit - adjust the values
-			if (write_per_unit == true)
+			if (write_per_unit)
 			{
 				temp_voltage_base = get_double_value(obj,"nominal_voltage");
 				temp_de_pu_base = 1.0;	//Don't need to "de-per-unit it"
@@ -1146,7 +1150,7 @@ STATUS jsondump::dump_system(void)
 			temp_complex_power_value[2] = get_complex_value(obj,"constant_power_C");
 
 			//See if we need to be per-unitized
-			if (write_per_unit == true)
+			if (write_per_unit)
 			{
 				temp_complex_power_value[0] /= (system_VA_base / 3.0);
 				temp_complex_power_value[1] /= (system_VA_base / 3.0);
@@ -1338,7 +1342,7 @@ STATUS jsondump::dump_system(void)
 			line_object["is_transformer"] = true;
 
 			//If per-unit - adjust the values
-			if (write_per_unit == true)
+			if (write_per_unit)
 			{
 				//Compute the per-unit base - use the nominal value off of the secondary
 				per_unit_base = get_double_value(pTransformer[index]->to,"nominal_voltage");
@@ -1364,9 +1368,9 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//See if it worked - if so, store us
-			if (found_match_config == true)
+			if (found_match_config)
 			{
-				if (b_mat_trans_defined[indexA] != true)
+				if (!b_mat_trans_defined[indexA])
 				{
 					for (indexB = 0; indexB < 3; indexB++)
 					{
@@ -1755,7 +1759,7 @@ STATUS jsondump::dump_system(void)
 			line_object["is_transformer"] = false;
 
 			//If per-unit - adjust the values
-			if (write_per_unit == true)
+			if (write_per_unit)
 			{
 				//Compute the per-unit base - use the nominal value off of the secondary
 				per_unit_base = get_double_value(pOhLine[index]->to,"nominal_voltage");
@@ -1781,9 +1785,9 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//See if it worked - if so, store us
-			if (found_match_config == true)
+			if (found_match_config)
 			{
-				if (b_mat_defined[indexA] != true)
+				if (!b_mat_defined[indexA])
 				{
 					for (indexB = 0; indexB < 3; indexB++)
 					{
@@ -2323,7 +2327,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//Pull the phases and figure out those
-			temp_set_value = get_set_value(obj,"phases");
+			temp_set_value = get_set_value(obj, "phases");
 			
 			//Clear the output array
 			jsonArray2.clear();
@@ -3466,7 +3470,11 @@ STATUS jsondump::dump_reliability(void)
 	sectionalizer *secData;
 	capacitor *capData;
 	regulator *regData;
-	char* indices1366[] = {"SAIFI", "SAIDI", "CAIDI", "ASAI", "MAIFI", NULL};
+	char* indices1366[] = {const_cast<char*>("SAIFI"),
+						const_cast<char*>("SAIDI"),
+						const_cast<char*>("CAIDI"),
+						const_cast<char*>("ASAI"),
+						const_cast<char*>("MAIFI"), NULL};
 	int index1366;
 	double *temp_double;
 	enumeration *temp_emu;
@@ -3552,15 +3560,15 @@ STATUS jsondump::dump_reliability(void)
 			// Write device opening status
 			// Append opening status to array
 			if ((fuseData->phases & 0x04) == 0x04) {
-				sprintf(buffer, "%s", ((fuseData->phase_A_state == 1)? true:false));
+				sprintf(buffer, "%d", (fuseData->phase_A_state == 1)? true:false);
 				jsonArray.append(buffer);
 			}
 			if ((fuseData->phases & 0x02) == 0x02) {
-				sprintf(buffer, "%s", ((fuseData->phase_B_state == 1)? true:false));
+				sprintf(buffer, "%d", ((fuseData->phase_B_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
 			if ((fuseData->phases & 0x01) == 0x01) {
-				sprintf(buffer, "%s", ((fuseData->phase_C_state == 1)? true:false));
+				sprintf(buffer, "%d", ((fuseData->phase_C_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
 
@@ -3598,15 +3606,15 @@ STATUS jsondump::dump_reliability(void)
 			// Write device opening status
 			// Append opening status to array
 			if ((reclData->phases & 0x04) == 0x04) {
-				sprintf(buffer, "%s", ((reclData->phase_A_state == 1)? true:false));
+				sprintf(buffer, "%d", ((reclData->phase_A_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
 			if ((reclData->phases & 0x02) == 0x02) {
-				sprintf(buffer, "%s", ((reclData->phase_B_state == 1)? true:false));
+				sprintf(buffer, "%d", ((reclData->phase_B_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
 			if ((reclData->phases & 0x01) == 0x01) {
-				sprintf(buffer, "%s", ((reclData->phase_C_state == 1)? true:false));
+				sprintf(buffer, "%d", ((reclData->phase_C_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
 
@@ -3644,15 +3652,15 @@ STATUS jsondump::dump_reliability(void)
 			// Write device opening status
 			// Append opening status to array
 			if ((secData->phases & 0x04) == 0x04) {
-				sprintf(buffer, "%s", ((secData->phase_A_state == 1)? true:false));
+				sprintf(buffer, "%d", ((secData->phase_A_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
 			if ((secData->phases & 0x02) == 0x02) {
-				sprintf(buffer, "%s", ((secData->phase_B_state == 1)? true:false));
+				sprintf(buffer, "%d", ((secData->phase_B_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
 			if ((secData->phases & 0x01) == 0x01) {
-				sprintf(buffer, "%s", ((secData->phase_C_state == 1)? true:false));
+				sprintf(buffer, "%d", ((secData->phase_C_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
 
@@ -3697,15 +3705,15 @@ STATUS jsondump::dump_reliability(void)
 			// Write device opening status
 			// Append opening status to array
 			if ((capData->pt_phase & 0x04) == 0x04) {
-				sprintf(buffer, "%s", ((capData->switchA_state == 1)? true:false));
+				sprintf(buffer, "%d", ((capData->switchA_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
 			if ((capData->pt_phase & 0x02) == 0x02) {
-				sprintf(buffer, "%s", ((capData->switchB_state == 1)? true:false));
+				sprintf(buffer, "%d", ((capData->switchB_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
 			if ((capData->pt_phase & 0x01) == 0x01) {
-				sprintf(buffer, "%s", ((capData->switchC_state == 1)? true:false));
+				sprintf(buffer, "%d", ((capData->switchC_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
 
@@ -3798,7 +3806,7 @@ TIMESTAMP jsondump::commit(TIMESTAMP t){
 	if(runtime == 0){
 		runtime = t;
 	}
-	if((write_system == true) && ((t == runtime) || (runtime == TS_NEVER)) && (runcount < 1)){
+	if(write_system && ((t == runtime) || (runtime == TS_NEVER)) && (runcount < 1)){
 		/* dump */
 		rv = dump_system();
 		++runcount;
@@ -3818,7 +3826,7 @@ TIMESTAMP jsondump::commit(TIMESTAMP t){
 STATUS jsondump::finalize(){
 	STATUS rv;
 
-	if (write_reliability == true) {
+	if (write_reliability) {
 
 		rv = dump_reliability();
 
@@ -3839,7 +3847,7 @@ int jsondump::isa(char *classname)
 
 //New API value pulls -- functionalized to make it easier to use
 //Double value
-double jsondump::get_double_value(OBJECT *obj, char *name)
+double jsondump::get_double_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	double output_value;
@@ -3849,7 +3857,7 @@ double jsondump::get_double_value(OBJECT *obj, char *name)
 	pQuantity = new gld_property(obj,name);
 
 	//Make sure it worked
-	if ((pQuantity->is_valid() != true) || (pQuantity->is_double() != true))
+	if (!pQuantity->is_valid() || !pQuantity->is_double())
 	{
 		GL_THROW("jsdondump:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
@@ -3869,17 +3877,17 @@ double jsondump::get_double_value(OBJECT *obj, char *name)
 }
 
 //Complex value
-complex jsondump::get_complex_value(OBJECT *obj, char *name)
+gld::complex jsondump::get_complex_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
-	complex output_value;
+	gld::complex output_value;
 	OBJECT *objhdr = OBJECTHDR(this);
 
 	//Map to the property of interest
 	pQuantity = new gld_property(obj,name);
 
 	//Make sure it worked
-	if ((pQuantity->is_valid() != true) || (pQuantity->is_complex() != true))
+	if (!pQuantity->is_valid() || !pQuantity->is_complex())
 	{
 		GL_THROW("jsdondump:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
 		//Defined above
@@ -3896,7 +3904,7 @@ complex jsondump::get_complex_value(OBJECT *obj, char *name)
 }
 
 //Sets value
-set jsondump::get_set_value(OBJECT *obj, char *name)
+set jsondump::get_set_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	set output_value;
@@ -3906,7 +3914,7 @@ set jsondump::get_set_value(OBJECT *obj, char *name)
 	pQuantity = new gld_property(obj,name);
 
 	//Make sure it worked
-	if ((pQuantity->is_valid() != true) || (pQuantity->is_set() != true))
+	if (!pQuantity->is_valid() || !pQuantity->is_set())
 	{
 		GL_THROW("jsdondump:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
 		//Defined above
@@ -3923,7 +3931,7 @@ set jsondump::get_set_value(OBJECT *obj, char *name)
 }
 
 //Enumeration value
-enumeration jsondump::get_enum_value(OBJECT *obj, char *name)
+enumeration jsondump::get_enum_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	enumeration output_value;
@@ -3933,7 +3941,7 @@ enumeration jsondump::get_enum_value(OBJECT *obj, char *name)
 	pQuantity = new gld_property(obj,name);
 
 	//Make sure it worked
-	if ((pQuantity->is_valid() != true) || (pQuantity->is_enumeration() != true))
+	if (!pQuantity->is_valid() || !pQuantity->is_enumeration())
 	{
 		GL_THROW("jsdondump:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
 		//Defined above
@@ -3950,7 +3958,7 @@ enumeration jsondump::get_enum_value(OBJECT *obj, char *name)
 }
 
 //Object pointers
-OBJECT *jsondump::get_object_value(OBJECT *obj,char *name)
+OBJECT *jsondump::get_object_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	gld_rlock *test_rlock;
@@ -3961,7 +3969,7 @@ OBJECT *jsondump::get_object_value(OBJECT *obj,char *name)
 	pQuantity = new gld_property(obj,name);
 
 	//Make sure it worked
-	if ((pQuantity->is_valid() != true) || (pQuantity->is_objectref() != true))
+	if (!pQuantity->is_valid() || !pQuantity->is_objectref())
 	{
 		GL_THROW("jsdondump:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
 		//Defined above

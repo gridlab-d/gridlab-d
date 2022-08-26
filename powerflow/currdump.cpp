@@ -6,10 +6,10 @@
 	@{
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "currdump.h"
 
@@ -63,7 +63,7 @@ int currdump::isa(char *classname)
 }
 
 void currdump::dump(TIMESTAMP t){
-	char namestr[64];
+	char namestr[128];
 	char timestr[64];
 	FINDLIST *links = NULL;
 	OBJECT *obj = NULL;
@@ -109,7 +109,7 @@ void currdump::dump(TIMESTAMP t){
 			link_current_value_link[0] = new gld_property(obj,"current_in_A");
 
 			//Check it
-			if ((link_current_value_link[0]->is_valid() != true) || (link_current_value_link[0]->is_complex() != true))
+			if (!link_current_value_link[0]->is_valid() || !link_current_value_link[0]->is_complex())
 			{
 				GL_THROW("currdump - Unable to map current property of link:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
@@ -122,9 +122,9 @@ void currdump::dump(TIMESTAMP t){
 			link_current_value_link[1] = new gld_property(obj,"current_in_B");
 
 			//Check it
-			if ((link_current_value_link[1]->is_valid() != true) || (link_current_value_link[1]->is_complex() != true))
+			if (!link_current_value_link[1]->is_valid() || !link_current_value_link[1]->is_complex())
 			{
-				GL_THROW("currdump - Unable to map current property of link:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW(const_cast<char*>("currdump - Unable to map current property of link:%d - %s"),obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
 			}
 
@@ -132,9 +132,9 @@ void currdump::dump(TIMESTAMP t){
 			link_current_value_link[2] = new gld_property(obj,"current_in_C");
 
 			//Check it
-			if ((link_current_value_link[2]->is_valid() != true) || (link_current_value_link[2]->is_complex() != true))
+			if (!link_current_value_link[2]->is_valid() || !link_current_value_link[2]->is_complex())
 			{
-				GL_THROW("currdump - Unable to map current property of link:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
+				GL_THROW(const_cast<char*>("currdump - Unable to map current property of link:%d - %s"),obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
 			}
 

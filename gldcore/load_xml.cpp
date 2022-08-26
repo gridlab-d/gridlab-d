@@ -26,14 +26,6 @@
 
 #include "load_xml_handle.h"
 
-#ifdef __cplusplus
-extern "C" {
-	int loadall_xml(char *file);
-}
-#else
-//int loadall_xml(char *file);
-#endif
-
 // Other include files, declarations, and non-Xerces-C++ initializations.
 XERCES_CPP_NAMESPACE_USE 
   
@@ -43,15 +35,15 @@ XERCES_CPP_NAMESPACE_USE
 	return loadall_xml(xmlFile);
 }*/
 
-int loadall_xml(char *filename){
+STATUS loadall_xml(const char *filename){
 	if(filename == NULL)
-		return 0;
+		return FAILED;
 	try{
 		XMLPlatformUtils::Initialize();
 	} catch(const XMLException& /*toCatch*/){
 		output_error("Load_XML: Xerces Initialization failed.");
 		output_debug(" * something really spectacularly nasty happened inside Xerces and outside our control.");
-		return 0;
+		return FAILED;
 	}
 
 	SAX2XMLReader* parser = XMLReaderFactory::createXMLReader();
@@ -59,7 +51,7 @@ int loadall_xml(char *filename){
 	//parser->setFeature(XMLUni::fgSAX2CoreValidation, true);   
 	//parser->setFeature(XMLUni::fgSAX2CoreNameSpaces, true);   // optional
 
-	gld_loadHndl *defaultHandler = new gld_loadHndl();
+	auto *defaultHandler = new gld_loadHndl();
 	parser->setContentHandler(defaultHandler);
 	parser->setErrorHandler(defaultHandler);
 	
@@ -69,23 +61,23 @@ int loadall_xml(char *filename){
 		char* message = XMLString::transcode(toCatch.getMessage());
 		output_error("Load_XML: XMLException from Xerces: %s", message);
 		XMLString::release(&message);
-		return 0;
+		return FAILED;
 	} catch (const SAXParseException& toCatch){
 		char* message = XMLString::transcode(toCatch.getMessage());
 		output_error("Load_XML: SAXParseException from Xerces: %s", message);
 		XMLString::release(&message);
-		return 0;
+		return FAILED;
 	} catch (...) {
 		output_error("Load_XML: unexpected exception from Xerces.");
-		return 0;
+		return FAILED;
 	}
 	if(!defaultHandler->did_load()){
 		output_error("Load_XML: loading failed.");
-		return 0;
+		return FAILED;
 	}
 	delete parser;
 	delete defaultHandler;
-	return 1;
+	return SUCCESS;
 }
 
 #endif /* HAVE_XERCES */

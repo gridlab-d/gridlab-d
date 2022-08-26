@@ -66,7 +66,8 @@ int udp::option(char *command)
 				set_hostname(value);
 			else if ( strcmp(param,"uri")==0 )
 				set_uri("%s",value);
-			else if ( strcmp(param,"debug_level")==0 )
+			else if ( strcmp(param,"de"
+						  "bug_level")==0 )
 				set_debug_level(atoi(value));
 			else if ( strcmp(param,"on_error")==0 )
 			{
@@ -191,7 +192,7 @@ size_t udp::send(const char *msg, size_t len)
 	char temp[256];
 	int tlim = (int)ceil((double)timeout.tv_usec/1000.0) + (int)timeout.tv_sec;
 	if ( tlim>0 ) tlim=9; else if ( tlim<1 ) tlim=1;
-	sprintf(temp,"%-1d %-3d %-7lu %-5.5s %-3.1f %-1d %-3d   ", 
+	sprintf(temp,"%-1d %-3d %-7lu %-5.5s %-3.1f %-1d %-3d   ",
 		header_version, header_size, len, message_format, message_version, tlim, 0);
 	if ( len>1500-strlen(temp) )
 	{
@@ -373,7 +374,7 @@ void udp::set_header_size(unsigned int n)
 {
 	header_size = n;
 }
-void udp::set_message_format(char *s)
+void udp::set_message_format(const char *s)
 {
 	strcpy(message_format,s);
 }
@@ -391,7 +392,7 @@ void udp::set_timeout(unsigned int n)
 		timeout.tv_usec = n;
 	}
 }
-void udp::set_hostname(char *s)
+void udp::set_hostname(const char *s)
 {
 	strcpy(hostname,s);
 }
@@ -399,14 +400,14 @@ void udp::set_portnum(unsigned int n)
 {
 	portnum = n;
 }
-void udp::set_uri(char *fmt, ...)
+void udp::set_uri(const char *fmt, ...)
 {
 	va_list ptr;
 	va_start(ptr,fmt);
 	vsprintf(uri,fmt,ptr);
 	va_end(ptr);
 }
-void udp::set_errormsg(char *fmt, ...)
+void udp::set_errormsg(const char *fmt, ...)
 {
 	va_list ptr;
 	va_start(ptr,fmt);
@@ -421,14 +422,14 @@ void udp::set_sockdata(struct sockaddr_in *p, size_t n)
 {
 	// TODO
 }
-void udp::set_output(char *fmt, ...)
+void udp::set_output(const char *fmt, ...)
 {
 	va_list ptr;
 	va_start(ptr,fmt);
 	position = vsprintf(output,fmt,ptr);
 	va_end(ptr);
 }
-void udp::add_output(char *fmt, ...)
+void udp::add_output(const char *fmt, ...)
 {
 	va_list ptr;
 	va_start(ptr,fmt);

@@ -17,7 +17,7 @@ Initial Checklist prior to submitting the issue. Check the bellow boxes to the b
 
 
 
-## Please provide the exact error/warnining/failure message printed on the console.
+## Please provide the exact error/warning/failure message printed on the console.
 
 
 

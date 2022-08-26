@@ -7,10 +7,10 @@ Copyright (C) 2008 Battelle Memorial Institute
 @{
 **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "rectifier.h"
 
@@ -25,10 +25,10 @@ static PASSCONFIG clockpass = PC_BOTTOMUP;
 
 /* Class registration is only called once to register the class with the core */
 rectifier::rectifier(MODULE *module)
-{	
+{
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"rectifier",sizeof(rectifier),PC_BOTTOMUP|PC_AUTOLOCK);
+		oclass = gl_register_class(module, "rectifier",sizeof(rectifier),PC_BOTTOMUP|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class rectifier";
 		else
@@ -103,7 +103,7 @@ int rectifier::init(OBJECT *parent)
 		pCircuit_V = new gld_property(parent,"V_In");
 
 		//Make sure it worked
-		if ((pCircuit_V->is_valid() != true) || (pCircuit_V->is_double() != true))
+		if (!pCircuit_V->is_valid() || !pCircuit_V->is_double())
 		{
 			GL_THROW("rectifier:%d - %s - Unable to map parent inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
@@ -116,7 +116,7 @@ int rectifier::init(OBJECT *parent)
 		pLine_I = new gld_property(parent,"I_In");
 
 		//Make sure it worked
-		if ((pLine_I->is_valid() != true) || (pLine_I->is_double() != true))
+		if (!pLine_I->is_valid() || !pLine_I->is_double())
 		{
 			GL_THROW("rectifier:%d - %s - Unable to map parent inverter property",obj->id,(obj->name ? obj->name : "Unnamed"));
 			//Defined above

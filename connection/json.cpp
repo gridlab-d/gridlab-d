@@ -4,11 +4,11 @@
 
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
-#include <complex.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <gld_complex.h>
 
 #include "json.h"
 
@@ -99,9 +99,9 @@ json::json(MODULE *module) : native(module)
 		NULL)<1)
 			throw "connection/json::json(MODULE*): unable to publish properties of connection:json";
 
-	if ( !gl_publish_loadmethod(oclass,"link",loadmethod_json_link) )
+	if ( !gl_publish_loadmethod(oclass, "link", reinterpret_cast<int (*)(void *, char *)>(loadmethod_json_link)) )
 		throw "connection/json::json(MODULE*): unable to publish link method of connection:json";
-	if ( !gl_publish_loadmethod(oclass,"option",loadmethod_json_option) )
+	if ( !gl_publish_loadmethod(oclass, "option", reinterpret_cast<int (*)(void *, char *)>(loadmethod_json_option)) )
 		throw "connection/json::json(MODULE*): unable to publish option method of connection:json";
 }
 
@@ -144,7 +144,7 @@ int json_export(connection_transport *transport,
 			return -1; // refuse to overrun output buffer
 		}
 		else if (options&ETO_QUOTES)
-			return transport->message_append("\"%s\": \"%s\"", tag, v);
+			return transport->message_append(R"("%s": "%s")", tag, v);
 		else
 			return transport->message_append("\"%s\": %s", tag, v);
 	}

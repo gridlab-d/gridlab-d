@@ -14,9 +14,9 @@
 
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
+#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
 
 #include "office.h"
 #include "multizone.h"
@@ -26,6 +26,7 @@ multizone *multizone::defaults = NULL;
 
 static PASSCONFIG passconfig = PC_BOTTOMUP;
 static PASSCONFIG clockpass = PC_BOTTOMUP;
+
 
 /* Class registration is only called once to register the class with the core */
 multizone::multizone(MODULE *module)

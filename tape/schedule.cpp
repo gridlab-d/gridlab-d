@@ -14,7 +14,7 @@
 #include <math.h>
 #include <cctype>
 
-#include "../tape/schedule.h"
+#include "schedule.h"
 
 
 /*	cron_part takes the individual schedule pattern and returns a

@@ -87,12 +87,16 @@
 	@{
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+
 #include "link.h"
 #include "node.h"
+#include "gld_complex.h"
+
+using gld::complex;
 
 CLASS* link_object::oclass = NULL;
 CLASS* link_object::pclass = NULL;
@@ -220,7 +224,7 @@ int link_object::create(void)
 	from = NULL;
 	to = NULL;
 	status = LS_CLOSED;
-	prev_status = LS_OPEN;	//Set different to status so it performs a calculation on the first run
+	prev_status = LS_INIT;	//Set different to status so it performs a calculation on the first run
 	power_in = 0;
 	power_out = 0;
 	power_loss = 0;
@@ -350,7 +354,7 @@ int link_object::init(OBJECT *parent)
 		if (obj->parent==NULL)
 		{
 			/* make 'from' object parent of this object */
-			if (gl_object_isa(from,"node")) 
+			if (gl_object_isa(from,"node"))
 			{
 				if(gl_set_parent(obj, from) < 0)
 					throw "error when setting parent";
@@ -521,7 +525,7 @@ int link_object::init(OBJECT *parent)
 				/*  TROUBLESHOOT
 				A line has been configured to carry a certain set of phases.  Either the input node or output
 				node is not providing a source/sink for these different conductors.  The To and From nodes must
-				have at least the phases of the line connecting them. 
+				have at least the phases of the line connecting them.
 				*/
 		}
 		else	//Must be a switch then
@@ -944,7 +948,7 @@ set link_object::get_flow(node **fn, node **tn) const
 }
 
 //Presync portion of NR code - functionalized for deltamode
-void link_object::NR_link_presync_fxn(void)
+void link_object::NR_link_sync_fxn(void)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	int ret_value;
@@ -958,7 +962,9 @@ void link_object::NR_link_presync_fxn(void)
 	complex work_vector_D[3];
 	complex temp_value_A, temp_value_B;
 	char jindex, kindex;
-	FUNCTIONADDR transformer_calc_function;	
+	FUNCTIONADDR transformer_calc_function;
+	FUNCTIONADDR topo_update_function;
+	STATUS temp_status_variable;	
 
 	//See if a frequency dependence is desired -- if so, update it
 	if (enable_frequency_dependence == true)
@@ -1814,6 +1820,27 @@ void link_object::NR_link_presync_fxn(void)
 		{
 			invratio=1.0/voltage_ratio;
 
+			//Do a phase update - but ignore switch-type devices (they are handled elsewhere)
+			if (SpecialLnk!=SWITCH)
+			{
+				//Do a phase update
+				if (status == LS_CLOSED)
+				{
+					//See if we changed
+					if (status != prev_status)
+					{
+						//Assume original - theoretically, fault_check will remove any that shouldn't be here
+						NR_branchdata[NR_branch_reference].phases = NR_branchdata[NR_branch_reference].origphases;
+					}
+					//Default else - don't play with phases, since fault_check should handle that
+				}
+				else	//Flag as empty
+				{
+					NR_branchdata[NR_branch_reference].phases = 0x00;
+				}
+			}
+			//Default else - SWITCH, which is done in its own code
+
 			if (SpecialLnk==DELTAGWYE)	//Delta-Gwye implementation
 			{
 				complex tempImped;
@@ -2254,10 +2281,73 @@ void link_object::NR_link_presync_fxn(void)
 				//Just post the admittance straight in - line charging doesn't exist anyways
 				equalm(Y,From_Y);
 			}
+
+			//Do a phase update
+			if (status == LS_CLOSED)
+			{
+				//See if we changed
+				if (status != prev_status)
+				{
+					//Assume original - theoretically, fault_check will remove any that shouldn't be here
+					NR_branchdata[NR_branch_reference].phases = NR_branchdata[NR_branch_reference].origphases;
+				}
+				//Default else - don't play with phases, since fault_check should handle that
+			}
+			else	//Flag as empty
+			{
+				NR_branchdata[NR_branch_reference].phases = 0x00;
+			}
 		}
-		
-		//Update status variable
-		//prev_status = status;
+
+		//Force flag an update if we got here (may have already been set above)
+		NR_admit_change = true;
+
+		if (SpecialLnk != SWITCH)
+		{
+			//See if a status change occurred
+			if (status != prev_status)
+			{
+				//See if we're deltamode and a fault_check object exists
+				if (fault_check_object != NULL)
+				{
+					if (deltatimestep_running > 0)
+					{
+						//Map a topology check and call it
+						topo_update_function = gl_get_function(fault_check_object,"rescan_topology");
+
+						//Make sure it worked
+						if (topo_update_function == NULL)
+						{
+							GL_THROW("link:%d - %s - failed to map fault_check rescan_topology function",obj->id,(obj->name?obj->name:"Unnamed"));
+							/*  TROUBLESHOOT
+							While attempting to map the topology rescan function in fault_check, an error occurred.
+							Please try again.  If the error persists, please submit an item to the issues tracker.
+							*/
+						}
+
+						//Call it - jsut call on the swing node
+						temp_status_variable = ((STATUS (*)(OBJECT *,int))(*topo_update_function))(obj,0);
+
+						//Make sure it worked
+						if (temp_status_variable == FAILED)
+						{
+							GL_THROW("link:%d - %s - failed to execute fault_check rescan_topology function",obj->id,(obj->name?obj->name:"Unnamed"));
+							/*  TROUBLESHOOT
+							While attempting to execute the topology rescan function in fault_check, an error occurred.
+							Please try again.  If the error persists, please submit an item to the issues tracker.
+							*/
+						}
+						//Succeeded - onward
+					}
+					//Deltamode not running - normal sequence will get it
+				}
+				//No fault check object, so no topology change to update
+			}
+			//Status not changed, so theoretically no issue!
+
+			//Update status variable
+			prev_status = status;
+		}
 	}
 }
 
@@ -2360,9 +2450,6 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 						NR_branchdata[NR_branch_reference].Yto = &From_Y[0][0];
 						NR_branchdata[NR_branch_reference].YSfrom = &From_Y[0][0];
 						NR_branchdata[NR_branch_reference].YSto = &From_Y[0][0];
-
-						//Populate the status variable while we are in here
-						NR_branchdata[NR_branch_reference].status = &status;
 					}
 					else
 					{
@@ -2420,6 +2507,9 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					}
 				}
 
+				//Populate the status variable while we are in here
+				NR_branchdata[NR_branch_reference].status = &status;
+
 				//Link the name
 				NR_branchdata[NR_branch_reference].name = obj->name;
 
@@ -2440,11 +2530,18 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 					*/
 				}
 
-				//Populate phases property
-				NR_branchdata[NR_branch_reference].phases = 128*has_phase(PHASE_S) + 4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
-				
 				//Populate original phases property
-				NR_branchdata[NR_branch_reference].origphases = NR_branchdata[NR_branch_reference].phases;
+				NR_branchdata[NR_branch_reference].origphases = 128*has_phase(PHASE_S) + 4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
+				
+				//Populate phases property - check status
+				if (status == LS_CLOSED)
+				{
+					NR_branchdata[NR_branch_reference].phases = NR_branchdata[NR_branch_reference].origphases;
+				}
+				else
+				{
+					NR_branchdata[NR_branch_reference].phases = 0x00;
+				}
 
 				//Zero fault phases - presumably nothing is broken right now
 				NR_branchdata[NR_branch_reference].faultphases = 0x00;
@@ -2843,10 +2940,12 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 			{
 				NR_branchdata[NR_branch_reference].ExtraDeltaModeFunc = NULL;
 			}
+
+			//Do one call of NR_link_sync_fxn (used to be NR_link_presyc_fxn) here - mainly for islanded nodes/open-switch-nodes to initialize properly
+			NR_link_sync_fxn();
 		}//End init loop
 
-		//Call the presync items that are common to deltamode implementations
-		NR_link_presync_fxn();
+		//NR_link_presync_fxn used to be here - moved to NR_link_sync_fxn (same function)
 
 		//Update time variable if necessary
 		if (prev_LTime != t0)
@@ -2948,6 +3047,14 @@ TIMESTAMP link_object::sync(TIMESTAMP t0)
 
 
 #endif
+
+	//Call NR updates for the solver
+	if (solver_method == SM_NR)
+	{
+		//Call the sync items that are common - was for deltamode.
+		//NOTE: This used to be a presync item - may have inrush implications
+		NR_link_sync_fxn();
+	}
 
 	return TS_NEVER;
 }
@@ -3385,16 +3492,20 @@ int link_object::kmldump(int (*stream)(const char*,...))
 			"<TH WIDTH=\"25%\" COLSPAN=2 ALIGN=CENTER><NOBR>Phase C</NOBR><HR></TH></TR>\n", get_oclass()->get_name(), get_id());
 
 	int status = 2; // green
-	
-	//Check others - de-"macrotized" so it can do things indirectly
+
 	//No idea why meter and triplex_meter are in a link version - leaving because they were here before
-	if ((gl_object_isa(my(),"switch","powerflow") == true) || (gl_object_isa(my(),"regulator","powerflow") == true) || (gl_object_isa(my(),"triplex_meter","powerflow") == true) || (gl_object_isa(my(),"meter","powerflow") == true))
-	{
-		//Map to the function
+    if (
+        gl_object_isa(my(), "switch", "powerflow") ||
+        gl_object_isa(my(), "regulator", "powerflow") ||
+        gl_object_isa(my(), "triplex_meter", "powerflow") ||
+        gl_object_isa(my(), "meter", "powerflow")
+    )
+    {
+        //Map to the function
 		temp_funadd = (FUNCTIONADDR)(gl_get_function(obj,"pwr_object_kmldata"));
 
 		//See if it was located
-		if (temp_funadd == NULL)
+		if (temp_funadd == nullptr)
 		{
 			GL_THROW("object:%s - failed to map kmldata function",(obj->name?obj->name:"unnamed"));
 			//Defined above
@@ -3410,8 +3521,8 @@ int link_object::kmldump(int (*stream)(const char*,...))
 		node *pFrom = OBJECTDATA(from,node);
 		node *pTo = OBJECTDATA(to,node);
 		int phase[3] = {has_phase(PHASE_A),has_phase(PHASE_B),has_phase(PHASE_C)};
-		complex flow[3];
-		complex current[3];
+		gld::complex flow[3];
+		gld::complex current[3];
 		int i;
 		for (i=0; i<3; i++)
 		{
@@ -3657,7 +3768,7 @@ EXPORT int currentcalculation_link(OBJECT *obj, int nodecall, bool link_fault_mo
 {
 	int status_rv;
 	link_object *my = OBJECTDATA(obj,link_object);
-	
+
 	//Call the current update -- do it as a "self call"
 	status_rv = my->CurrentCalculation(nodecall,link_fault_mode);
 
@@ -4808,8 +4919,8 @@ SIMULATIONMODE link_object::inter_deltaupdate_link(unsigned int64 delta_time, un
 
 	if (interupdate_pos == false)	//Before powerflow call
 	{
-		//Link presync stuff
-		NR_link_presync_fxn();
+		//Link sync/status update stuff
+		NR_link_sync_fxn();
 		
 		return SM_DELTA;	//Just return something other than SM_ERROR for this call
 	}
@@ -4933,7 +5044,7 @@ void link_object::calculate_power_splitphase()
 	{
 		// A little different for split-phase transformers since it goes from one phase to three indiv. powers
 		// We'll treat "power losses" in the ABC sense, not phase 123.
-		int j;
+		int j = -1;
 		if (has_phase(PHASE_A))
 			j = 0;
 		else if (has_phase(PHASE_B))
@@ -5060,7 +5171,7 @@ void link_object::calculate_power()
 }
 
 //Retrieve value of a double
-double *link_object::get_double(OBJECT *obj, char *name)
+double *link_object::get_double(OBJECT *obj, const char *name)
 {
 	PROPERTY *p = gl_get_property(obj,name);
 	if (p==NULL || p->ptype!=PT_double)
@@ -8110,8 +8221,11 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			pf_mesh_fault_values.NodeRefNum = NR_branchdata[NR_branch_reference].to;
 
 			//Call the powerflow/impednace creater
-			pf_resultval = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, pf_solvermode, &pf_mesh_fault_values, &pf_badcompute);
-
+#ifndef GLD_USE_EIGEN
+        pf_resultval = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, pf_solvermode, &pf_mesh_fault_values, &pf_badcompute);
+#else
+        pf_resultval = 0;
+#endif
 			//Check the output
 			if ((pf_badcompute == true) || (pf_mesh_fault_values.return_code != 1) || (pf_resultval <= 0))
 			{
