@@ -958,8 +958,8 @@ SIMULATIONMODE vfd::inter_deltaupdate_vfd(unsigned int64 delta_time, unsigned lo
 	//Most of these items were copied from link.cpp's interupdate (need to replicate)
 	if (!interupdate_pos)	//Before powerflow call
 	{
-		//Link presync stuff	
-		NR_link_presync_fxn();
+		//Link sync stuff	
+		NR_link_sync_fxn();
 
 		return SM_DELTA;	//Just return something other than SM_ERROR for this call
 	}

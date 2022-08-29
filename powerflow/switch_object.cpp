@@ -1965,11 +1965,11 @@ SIMULATIONMODE switch_object::inter_deltaupdate_switch(unsigned int64 delta_time
 
 	if (!interupdate_pos)	//Before powerflow call
 	{
-		//Link presync stuff
-		NR_link_presync_fxn();
-
 		//Switch sync item - pre-items
 		BOTH_switch_sync_pre(&work_phases_pre,&work_phases_post);
+
+		//Link sync/status update stuff
+		NR_link_sync_fxn();
 
 		//Switch sync item - post items
 		NR_switch_sync_post(&work_phases_pre,&work_phases_post,hdr,&t0_val,&t2_val);

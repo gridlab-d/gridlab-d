@@ -972,7 +972,7 @@ void house_e::set_thermal_integrity(){
 		case TI_NORMAL:
 			if(Rroof <= 0.0) Rroof = 30;
 			if(Rwall <= 0.0) Rwall = 11;
-			if(Rfloor <= 0.0) Rfloor = 19;
+			if(Rfloor <= 0.0) Rfloor = 11;
 			if(Rdoors <= 0.0) Rdoors = 3;
 			if(Rwindows <= 0.0) Rwindows = 1/0.6;
 			if(airchange_per_hour < 0.0) airchange_per_hour = 1.0;
@@ -980,7 +980,7 @@ void house_e::set_thermal_integrity(){
 		case TI_ABOVE_NORMAL:
 			if(Rroof <= 0.0) Rroof = 30;
 			if(Rwall <= 0.0) Rwall = 19;
-			if(Rfloor <= 0.0) Rfloor = 11;
+			if(Rfloor <= 0.0) Rfloor = 19;
 			if(Rdoors <= 0.0) Rdoors = 3;
 			if(Rwindows <= 0.0) Rwindows = 1/0.6;
 			if(airchange_per_hour < 0.0) airchange_per_hour = 1.0;

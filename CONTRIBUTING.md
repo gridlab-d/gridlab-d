@@ -12,14 +12,14 @@
 4. [Coding Practices and Standards](#codingQA)
 
 ## Welcome! <a name="welcome"></a>
-Hello user and/or contributor of GridLAB-D. Your patronage to the GridLAB-D project is welcome. This page is here to provide you with some guide lines for submitting bugs and features you have found as well as offering your own code to be included in the source. These guidelines are here to help both you, the contributor, and us, the project stewards, to avoid unnecessary hiccups in working together to present a grade A class product to the GridLAB-D community. Therefore, I urge you to read and adhere to these guidelines.
+Hello user and/or contributor of GridLAB-D. Your patronage to the GridLAB-D project is welcome. This page is here to provide you with some guide lines for submitting bugs and features you have found as well as offering your own code to be included in the source. These guidelines are here to help both you, the contributor, and us, the project stewards, to avoid unnecessary hiccups in working together to present a grade-A class product to the GridLAB-D community.
 
 ## What Should I Know First? <a name="starting"></a>
-GridLAB-D's main page is found [here](http://www.gridlabd.org/). It's in a current state of construction due to our change to using GitHub as our main repository. So while it is under construction I'd like to point you to a couple links.
+GridLAB-D's main page is found [here](http://www.gridlabd.org/); here are a few pertinent links.
 
-* [GridLAB-D's Wiki](http://gridlab-d.sourceforge.net/wiki/index.php/Main_Page) contains just about everything you need to know about building, using, and developing GridLAB-D.
-* There is a new [biginner's guide](http://gridlab-d.sourceforge.net/wiki/index.php/Chapter_0_-_Introduction) for GridLAB-D! If you are wondering about how to do something or how to use the plethora of models contained in GridLAB-D start with  this guide.
-* If you wish to develop something new inside of GridLAB-D. We have a [developer's guide](http://gridlab-d.sourceforge.net/wiki/index.php/Guide_to_Programming_GridLAB-D).
+* [GridLAB-D's Wiki](http://gridlab-d.shoutwiki.com/wiki/Quick_links) contains just about everything you need to know about building, using, and developing GridLAB-D.
+* There is a new [beginner's guide](http://gridlab-d.shoutwiki.com/wiki/Chapter_0_-_Introduction) for GridLAB-D! If you are wondering about how to do something or how to use the plethora of models contained in GridLAB-D start with  this guide.
+* If you wish to develop something new inside of GridLAB-D. We have a [developer's guide](http://gridlab-d.shoutwiki.com/wiki/Guide_to_Programming_GridLAB-D).
 * If the links above have failed to help you solve your problem check the [forum page](https://sourceforge.net/p/gridlab-d/discussion/?source=navbar).
 
 ## How Can I Contribute? <a name="contribution"></a>
@@ -41,12 +41,12 @@ Bugs are tracked as [GitHub Issues](https://guides.github.com/features/issues/).
 * Provide links to documentation you followed.
 * Provide all model, input, and output files used/generated when encountering the problem. Due to GitHub's limited file type support for attachments it would be easiest to supply your files in a tar/zip folder.
 * Provide system and software information like the OS and GridLAB-D version you are using.
-* Give descritpions of the expected behavior and the observed behavior.
+* Give descriptions of the expected behavior and the observed behavior.
 
 ### Suggesting Enhancements: <a name="enhancements"></a>
 This section guides you through submitting an enhancement suggestion for GridLAB-D. This includes request for better/clearer documentation to proposing completely new features and improvements to existing functionality. Following these guideline helps maintainers and the community understand your suggestion.
 
-Before creating an enhancement suggestion, check [this list](#enhancementCheckList) as you might find out that you don't need to create one. Please [include as many details as possible](#enhancementDetails) when creating an enhancment suggestion.
+Before creating an enhancement suggestion, check [this list](#enhancementCheckList) as you might find out that you don't need to create one. Please [include as many details as possible](#enhancementDetails) when creating an enhancement suggestion.
 
 #### Before Submitting An Enhancement Suggestion! <a name="enhancementCheckList"></a>
 * Visit the links provided in the [What Should I Know First?](#starting). The majority of the time you'll find the answer to your problem/question in the wiki or the forums.
@@ -60,16 +60,15 @@ Enhancement suggestions are tracked as [GitHub Issues](https://guides.github.com
 * Explain why the enhancement would be useful.
 * List some applications where this enhancement exists if applicable.
 * Provide system and software information like the OS and GridLAB-D version you are using.
-* Give descritpions of the current behavior and the expected behavior.
+* Give descriptions of the current behavior and the expected behavior.
 
 ### Submitting Code: <a name="codeSubmittal"></a>
 This section will guide you through the process for submitting code to the project source. here are the "Thou Shalt Do's and Don'ts" for code submittal.
 * All code gets submitted to the source through [GitHub Pull Requests](https://help.github.com/articles/creating-a-pull-request/).
 * When creating a pull request, the base repository will be the develop branch.
 * Any third party libraries used must not corrupt the GridLAB-D License.
-* Currently code must be able to compile under -std=c90 for C and -std=c\++98 for C\++. We are looking into supporting c\++11.
-* Whenever possible, an unit test must be created for validating the new functionality/bugfix. This unit test should be added to the autotest folder for the specific module the work was done in. 
-* Post the validation script results of your build in the pull request. To run the validation script simpley run <pre><code>gridlabd \--validate</code></pre>
+* Whenever possible, a unit test must be created for validating the new functionality/bugfix. This unit test should be added to the autotest folder for the specific module the work was done in. 
+* Post the validation script results of your build in the pull request. To run the validation script simply run <pre><code>gridlabd \--validate</code></pre>
 * There must be no failed tests from the validation script in order for your pull request to be accepted.
 
 ## Coding Practices and Standards: <a name="codingQA"></a>
