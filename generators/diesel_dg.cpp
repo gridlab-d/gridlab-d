@@ -1904,7 +1904,7 @@ TIMESTAMP diesel_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		if (deltamode_endtime != TS_NEVER)
 		{
 			deltamode_endtime = TS_NEVER;
-			deltamode_endtime_dbl = TSNVRDBL;
+			deltamode_endtime_dbl = TS_NEVER_DBL;
 		}
 
 		//Update the powerflow variables

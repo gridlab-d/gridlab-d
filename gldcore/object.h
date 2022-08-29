@@ -323,7 +323,7 @@ public:
 		TRANSFORM *(*getnext)(TRANSFORM*);
 		int (*add_linear)(TRANSFORMSOURCE,double*,void*,double,double,OBJECT*,PROPERTY*,SCHEDULE*);
 		int (*add_external)(OBJECT*,PROPERTY*,const char*,OBJECT*,PROPERTY*);
-		int64 (*apply)(TIMESTAMP,TRANSFORM*,double*);
+		int64 (*apply)(TIMESTAMP,TRANSFORM*,double*,double*);
 	} transform;
 	struct {
 		randomvar_struct *(*getnext)(randomvar_struct*);

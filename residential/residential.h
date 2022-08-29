@@ -30,7 +30,6 @@
 
 const double pi = 3.1415926535897931;
 const double Cp = 1;					// Btu/lbm-F
-#define TSNVRDBL 9223372036854775808.0	//TS_NEVER in double form - for deltamode
 
 /* approximate tests */
 #define AEQ(A,B,C) (fabs(A-B)<C)

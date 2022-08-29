@@ -341,7 +341,7 @@ int inverter_dyn::create(void)
 	desired_simulation_mode = SM_EVENT;
 
 	//Tracking variable
-	last_QSTS_GF_Update = TSNVRDBL;
+	last_QSTS_GF_Update = TS_NEVER_DBL;
 
 	//Clear the DC interface list - paranoia
 	dc_interface_objects.clear();

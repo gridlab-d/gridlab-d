@@ -2898,7 +2898,7 @@ TIMESTAMP house_e::sync(TIMESTAMP t0, TIMESTAMP t1)
 	tpan_ret = sync_panel(t0_dbl,t1_dbl);
 
 	//Cast to a timestamp
-	if (tpan_ret != TSNVRDBL)
+	if (tpan_ret != TS_NEVER_DBL)
 	{
 		t = TIMESTAMP(ceil(tpan_ret));
 	}
@@ -3382,7 +3382,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 
 double house_e::sync_panel(double t0_dbl, double t1_dbl)
 {
-	double t2_dbl = TSNVRDBL;
+	double t2_dbl = TS_NEVER_DBL;
 	OBJECT *obj = OBJECTHDR(this);
 	bool perform_impedance_conversion;
 
@@ -3418,7 +3418,7 @@ double house_e::sync_panel(double t0_dbl, double t1_dbl)
 		if (c->status==BRK_OPEN && t1_dbl>=c->reclose)
 		{
 			c->status = BRK_CLOSED;
-			c->reclose = TSNVRDBL;
+			c->reclose = TS_NEVER_DBL;
 			t2_dbl = t1_dbl; // must immediately reevaluate devices affected
 			gl_verbose("house_e:%d - %s - panel breaker %d (enduse %s) closed", obj->id, (obj->name?obj->name:"Unnamed"),c->id,c->pLoad->name);
 		}
@@ -3463,7 +3463,7 @@ double house_e::sync_panel(double t0_dbl, double t1_dbl)
 				else
 				{
 					c->status = BRK_FAULT;
-					c->reclose = TSNVRDBL;
+					c->reclose = TS_NEVER_DBL;
 					gl_warning("house_e:%d, %s circuit breaker %d failed - enduse %s is no longer running", obj->id, (obj->name?obj->name:"Unnamed"), c->id, c->pLoad->name);
 				}
 
@@ -3551,7 +3551,7 @@ double house_e::sync_panel(double t0_dbl, double t1_dbl)
 				if(((t0_dbl != 0) && (t1_dbl > t0_dbl)) || (!heat_start)){
 					total.heatgain += c->pLoad->heatgain;
 				}
-				c->reclose = TSNVRDBL;
+				c->reclose = TS_NEVER_DBL;
 			}
 		}
 

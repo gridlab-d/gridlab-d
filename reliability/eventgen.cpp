@@ -34,9 +34,6 @@ using namespace::std;
 
 EXPORT_PRECOMMIT(eventgen);
 
-
-#define TSNVRDBL 9223372036854775808.0
-
 CLASS *eventgen::oclass = NULL;			/**< a pointer to the CLASS definition in GridLAB-D's core */
 eventgen *eventgen::defaults = NULL;	/**< a pointer to the default values used when creating new objects */
 
@@ -613,7 +610,7 @@ int eventgen::init(OBJECT *parent)
 				//Restoration gets TS_NEVERed for now
 				UnreliableObjs[index].rest_time = TS_NEVER;
 				UnreliableObjs[index].rest_time_ns = 0;
-				UnreliableObjs[index].rest_time_dbl = TSNVRDBL;
+				UnreliableObjs[index].rest_time_dbl = TS_NEVER_DBL;
 
 				//Populate the initial lengths though - could do later, but meh
 				gen_random_time(failure_dist,fail_dist_params[0],fail_dist_params[1],&UnreliableObjs[index].fail_length,&UnreliableObjs[index].fail_length_ns,&UnreliableObjs[index].fail_length_dbl);
@@ -742,7 +739,7 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 		{
 			//Make next_event_time REALLY big
 			next_event_time = TS_NEVER;
-			next_event_time_dbl = TSNVRDBL;
+			next_event_time_dbl = TS_NEVER_DBL;
 
 			//Loop through and update timevalues
 			for (index=0; index<UnreliableObjCount; index++)
@@ -1377,7 +1374,7 @@ int eventgen::add_unhandled_event(OBJECT *obj_to_fault, const char *event_type, 
 	if ((fault_state == false) && (rest_length == TS_NEVER))
 	{
 		rest_time = TS_NEVER;
-		rest_time_dbl = TSNVRDBL;
+		rest_time_dbl = TS_NEVER_DBL;
 	}
 	else
 	{
@@ -1402,7 +1399,7 @@ int eventgen::add_unhandled_event(OBJECT *obj_to_fault, const char *event_type, 
 	new_struct->objdetails.rest_time_dbl = rest_time_dbl;
 	new_struct->objdetails.rest_time_ns = 0;
 	new_struct->objdetails.fail_length = TS_NEVER;
-	new_struct->objdetails.fail_length_dbl = TSNVRDBL;
+	new_struct->objdetails.fail_length_dbl = TS_NEVER_DBL;
 	new_struct->objdetails.fail_length_ns = 0;
 	new_struct->objdetails.rest_length = rest_length;
 	new_struct->objdetails.rest_length_dbl = (double)(rest_length);
@@ -1482,7 +1479,7 @@ void eventgen::regen_events(TIMESTAMP t1_ts, double t1_dbl){
 		
 		//Reset event timer as well, since it may be invalid now
 		next_event_time = TS_NEVER;
-		next_event_time_dbl = TSNVRDBL;
+		next_event_time_dbl = TS_NEVER_DBL;
 
 		for (index=0; index<UnreliableObjCount; index++)
 		{
@@ -1539,7 +1536,7 @@ void eventgen::regen_events(TIMESTAMP t1_ts, double t1_dbl){
 				//Flag restoration time
 				UnreliableObjs[index].rest_time = TS_NEVER;
 				UnreliableObjs[index].rest_time_ns = 0;
-				UnreliableObjs[index].rest_time_dbl = TSNVRDBL;
+				UnreliableObjs[index].rest_time_dbl = TS_NEVER_DBL;
 
 				//De-flag the update
 				UnreliableObjs[index].in_fault = false;
@@ -1585,7 +1582,7 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 
 	//Reset next event time - we'll find the new one in here
 	next_event_time = TS_NEVER;
-	next_event_time_dbl = TSNVRDBL;
+	next_event_time_dbl = TS_NEVER_DBL;
 
 	//Loop through and find events that are next
 	for (index=0; index<UnreliableObjCount; index++)
@@ -1775,11 +1772,11 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 
 					//Set values to TS_NEVER so they never go off
 					UnreliableObjs[index].rest_time = TS_NEVER;
-					UnreliableObjs[index].rest_time_dbl = TSNVRDBL;
+					UnreliableObjs[index].rest_time_dbl = TS_NEVER_DBL;
 					UnreliableObjs[index].rest_length_ns = 0;
 					
 					UnreliableObjs[index].fail_time = TS_NEVER;
-					UnreliableObjs[index].fail_time_dbl = TSNVRDBL;
+					UnreliableObjs[index].fail_time_dbl = TS_NEVER_DBL;
 					UnreliableObjs[index].fail_time_ns = 0;
 				}
 			}
@@ -1904,17 +1901,17 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 				//Flag restoration time
 				UnreliableObjs[index].rest_time = TS_NEVER;
 				UnreliableObjs[index].rest_time_ns = 0;
-				UnreliableObjs[index].rest_time_dbl = TSNVRDBL;
+				UnreliableObjs[index].rest_time_dbl = TS_NEVER_DBL;
 
 			}
 			else	//Manual mode - put both to TS_NEVER so we never come back in
 			{
 				UnreliableObjs[index].fail_time = TS_NEVER;
-				UnreliableObjs[index].fail_time_dbl = TSNVRDBL;
+				UnreliableObjs[index].fail_time_dbl = TS_NEVER_DBL;
 				UnreliableObjs[index].fail_time_ns = 0;
 
 				UnreliableObjs[index].rest_time = TS_NEVER;
-				UnreliableObjs[index].rest_time_dbl = TSNVRDBL;
+				UnreliableObjs[index].rest_time_dbl = TS_NEVER_DBL;
 				UnreliableObjs[index].rest_time_ns = 0;
 			}
 

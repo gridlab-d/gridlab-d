@@ -253,6 +253,7 @@ int transform_add_filter(OBJECT *target_obj,		/* pointer to the target object (l
 	xform->tf = tf;
 	xform->y = static_cast<double *>(object_get_addr(target_obj, target_prop->name));
 	xform->t2 = (int64)(global_starttime/tf->timestep)*tf->timestep + tf->timeskew;
+	xform->t2_dbl = floor((double)global_starttime/tf->timestep)*tf->timestep + tf->timeskew;
 	xform->next = schedule_xformlist;
 	schedule_xformlist = xform;
 
@@ -363,7 +364,8 @@ TIMESTAMP apply_filter(TRANSFERFUNCTION *f,	///< transfer function
 					   double *u,			///< input vector
 					   double *x,			///< state vector
 					   double *y,			///< output vector
-					   TIMESTAMP t1)		///< current time value
+					   TIMESTAMP t1,		///< current time value
+					   double *dm_time)		///< deltamode time interaction
 {
 	unsigned int n = f->n-1;
 	unsigned int m = f->m;
@@ -371,6 +373,7 @@ TIMESTAMP apply_filter(TRANSFERFUNCTION *f,	///< transfer function
 	double *b = f->b;
 	double dx[64];
 	unsigned int i;
+	double curr_dbl_time = *dm_time;
 
 	// observable form
 	if ( n>sizeof(dx)/sizeof(double) ) throw_exception(const_cast<char *>("transfer function %s order too high"), f->name);
@@ -385,16 +388,21 @@ TIMESTAMP apply_filter(TRANSFERFUNCTION *f,	///< transfer function
 	}
 	memcpy(x,dx,sizeof(double)*n);
 	*y = x[n-1]; // output
+
+	// Get the double time update
+	*dm_time = curr_dbl_time + f->timestep + f->timeskew;
+
 	return ((int64)(t1/f->timestep)+1)*f->timestep + f->timeskew;
 }
 
 /** apply the transform, source is optional and xform.source is used when source is NULL 
-    @return timestamp for next update, TS_NEVER for none, TS_ZERO for error
+    @return timestamp for next update, TS_NEVER for none, TS_INVALID for error
 **/
-TIMESTAMP transform_apply(TIMESTAMP t1, TRANSFORM *xform, double *source)
+TIMESTAMP transform_apply(TIMESTAMP t1, TRANSFORM *xform, double *source, double *dm_time)
 {
 	char buffer[1024];
 	TIMESTAMP t2;
+	double curr_dbl_time = *dm_time;
 	switch (xform->function_type) {
 	case XT_LINEAR:
 #ifdef _DEBUG
@@ -402,6 +410,7 @@ TIMESTAMP transform_apply(TIMESTAMP t1, TRANSFORM *xform, double *source)
 #endif
 		cast_from_double(xform->target_prop->ptype, xform->target, (source?(*source):(*(xform->source))) * xform->scale + xform->bias);
 		t2 = TS_NEVER;
+		*dm_time = TS_NEVER_DBL;
 		break;
 	case XT_EXTERNAL:
 #ifdef _DEBUG
@@ -409,39 +418,76 @@ TIMESTAMP transform_apply(TIMESTAMP t1, TRANSFORM *xform, double *source)
 #endif
 		xform->retval = (*xform->function)(xform->nlhs, xform->plhs, xform->nrhs, xform->prhs);
 		if ( xform->retval==-1 ) /* error */
-			t2 = TS_ZERO;
+		{
+			t2 = TS_INVALID;
+		}
 		else if ( xform->retval==0 ) /* no timer */
+		{
 			t2 = TS_NEVER;
+			*dm_time = TS_NEVER_DBL;
+		}
 		else
+		{
 			t2 = t1 + xform->retval; /* timer given */
+			*dm_time = (double)t2;	/* simple recast */
+		}
 		break;
 	case XT_FILTER:
 #ifdef _DEBUG
 		output_debug("running filter transform for %s:%s", object_name(xform->target_obj,buffer,sizeof(buffer)), xform->target_prop->name);
 #endif
 		if ( xform->t2 <= t1 )
-			xform->t2 = apply_filter(xform->tf,xform->source,xform->x,xform->y,t1);
+			xform->t2 = apply_filter(xform->tf,xform->source,xform->x,xform->y,t1,dm_time);
 		t2 = xform->t2;
+		*dm_time = xform->t2_dbl;
 		break;
 	default:
 		output_error("transform_apply(): invalid function type %d", xform->function_type);
-		t2 = TS_ZERO;
+		t2 = TS_INVALID;
 		break;
 	}
 	return t2;
 }
 
 clock_t transform_synctime = 0;
-TIMESTAMP transform_syncall(TIMESTAMP t1, TRANSFORMSOURCE source)
+TIMESTAMP transform_syncall(TIMESTAMP t1, TRANSFORMSOURCE source, double *t1_dbl)
 {
 	TRANSFORM *xform;
 	clock_t start = (clock_t)exec_clock();
 	TIMESTAMP t2 = TS_NEVER;
 	TIMESTAMP tskew, tSkewSince, tSkewNext, t;
+	double t_delta_var_time;
+	double t1_dbl_store;
+	double t2_dbl_time = TS_NEVER_DBL;
+
+	//Convert the deltamode time to an integer (in case we've been in deltamode longer)
+	if (t1_dbl != nullptr)
+	{
+		t1_dbl_store = floor(*t1_dbl);
+
+		if (t1_dbl_store > (double)t1)
+		{
+			t1 = (TIMESTAMP)t1_dbl_store;
+		}
+	}
+	//Default else - standard mode, so no care
+
+	//Store the value
+	if (t1_dbl != nullptr)
+	{
+		t1_dbl_store = *t1_dbl;
+	}
+	else
+	{
+		t1_dbl_store = -1.0;
+	}
 
 	/* process the schedule transformations */
 	for (xform=schedule_xformlist; xform!=NULL; xform=xform->next)
 	{	
+		//Update deltamode tracker variable
+		t_delta_var_time = t1_dbl_store;
+
 		if (xform->source_type&source){
 			if((xform->source_type == XS_SCHEDULE) && (xform->target_obj->schedule_skew != 0)){
 			    tskew = t1 - xform->target_obj->schedule_skew; // subtract so the +12 is 'twelve seconds later', not earlier
@@ -449,23 +495,98 @@ TIMESTAMP transform_syncall(TIMESTAMP t1, TRANSFORMSOURCE source)
 			    int32 dtnext = schedule_dtnext(xform->source_schedule,index)*60;
 			    double value = schedule_value(xform->source_schedule,index);
 			    t = (dtnext == 0 ? TS_NEVER : t1 + dtnext - (tskew % 60));
-			    if ( t < t2 ) t2 = t;
+			    if ( t < t2 )
+				{
+					t2 = t;
+
+					//Deltamode update, if needed
+					if (t1_dbl_store > 0.0)
+					{
+						//Cast double
+						t_delta_var_time = (double)t2;
+
+						//See if the return time needs updating
+						if (t_delta_var_time < t2_dbl_time)
+						{
+							t2_dbl_time = t_delta_var_time;
+						}
+
+						//Reset the variable, in case there's a skew
+						t_delta_var_time = t1_dbl_store;
+					}
+				}
+				
 				if((tskew <= xform->source_schedule->since) || (tskew >= xform->source_schedule->next_t)){
-					t = transform_apply(t1,xform,&value);
+					t = transform_apply(t1,xform,&value,&t_delta_var_time);
+
+					//Error check
+					if (t==TS_INVALID)
+						return TS_INVALID;
+
+					//Update return time	
 					if ( t<t2 ) t2=t;
+
+					//Deltamode update, if needed
+					if (t1_dbl_store > 0.0)
+					{
+						//See if the return time needs updating
+						if (t_delta_var_time < t2_dbl_time)
+						{
+							t2_dbl_time = t_delta_var_time;
+						}
+					}
 				} 
 				else 
 				{
-					t = transform_apply(t1,xform,NULL);
+					t = transform_apply(t1,xform,NULL,&t_delta_var_time);
+
+					//Error check
+					if (t==TS_INVALID)
+						return TS_INVALID;
+
+					//Update return time	
 					if ( t<t2 ) t2=t;
+
+					//Deltamode update, if needed
+					if (t1_dbl_store > 0.0)
+					{
+						//See if the return time needs updating
+						if (t_delta_var_time < t2_dbl_time)
+						{
+							t2_dbl_time = t_delta_var_time;
+						}
+					}
 				}
 			} else {
-				t = transform_apply(t1,xform,NULL);
+				t = transform_apply(t1,xform,NULL,&t_delta_var_time);
+
+				//Error check
+				if (t==TS_INVALID)
+					return TS_INVALID;
+
+				//Update return time	
 				if ( t<t2 ) t2=t;
+
+				//Deltamode update, if needed
+				if (t1_dbl_store > 0.0)
+				{
+					//See if the return time needs updating
+					if (t_delta_var_time < t2_dbl_time)
+					{
+						t2_dbl_time = t_delta_var_time;
+					}
+				}
 			}
 		}
 	}
 	transform_synctime += (clock_t)exec_clock() - start;
+
+	//Store the deltamode value
+	if (t1_dbl != nullptr)
+	{
+		*t1_dbl = t2_dbl_time;
+	}
+
 	return t2;
 }
 

@@ -418,6 +418,8 @@ DT delta_update(void)
 	double dbl_curr_clk_time;
 	OBJECT *d_obj = NULL;
 	CLASS *d_oclass = NULL;
+	TIMESTAMP xsync_ret_time, t1_val;
+	double xform_temp_time;
 
 	/* send preupdate messages */
 	timestep=delta_preupdate();
@@ -466,6 +468,27 @@ DT delta_update(void)
 
 		/* time context - so messages look proper */
 		output_set_delta_time_context(global_clock,global_deltaclock);
+
+		//Create an integer clock value and update the temporary variable for transforms
+		t1_val = (TIMESTAMP)(floor(global_delta_curr_clock));
+		xform_temp_time = global_delta_curr_clock;
+
+		//Call transform updates
+		xsync_ret_time=transform_syncall(t1_val,static_cast<TRANSFORMSOURCE>(XS_DOUBLE|XS_COMPLEX|XS_ENDUSE|XS_SCHEDULE|XS_LOADSHAPE),&xform_temp_time);
+
+		//Error check
+		if (xsync_ret_time == TS_INVALID)
+		{
+			//Error return
+			return DT_INVALID;
+		}
+		//Update checks not really needed - xforms shouldn't drive deltamode
+
+		//Call some "internals" - replicate what was in exec - done after the transform to sequence properly
+		xsync_ret_time=randomvar_syncall(t1_val);
+		xsync_ret_time=schedule_syncall(t1_val);
+		xsync_ret_time=loadshape_syncall(t1_val);
+		xsync_ret_time=enduse_syncall(t1_val);
 
 		/* Federation reiteration loop */
 		while (delta_federation_iteration_remaining > 0)

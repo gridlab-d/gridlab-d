@@ -606,6 +606,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 		if (index_item->obj_type == PLAYER)
 		{
 			OBJECT *obj = index_item->obj;
+			OBJECT *temp_obj = nullptr;
 			struct player *my = OBJECTDATA(obj,struct player);
 			int y=0,m=0,d=0,H=0,M=0,S=0,ms=0, n=0;
 			char *fmt = const_cast<char *>("%d/%d/%d %d:%d:%d.%d,%*s");
@@ -688,7 +689,11 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 					/* Behave similar to "supersecond" players */
 					while ( t<=clock_val )
 					{
-						ret_value = gl_set_value(obj->parent,GETADDR(obj->parent,my->target),my->next.value,my->target); /* pointer => int64 */
+						//Figure out the reference - for value transforms (not parent)
+						temp_obj = obj->parent ? obj->parent : obj;
+
+						//Set the value
+						ret_value = gl_set_value(temp_obj,GETADDR(temp_obj,my->target),my->next.value,my->target); /* pointer => int64 */
 
 						if (ret_value == 0)
 						{

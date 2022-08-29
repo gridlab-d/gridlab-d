@@ -1186,7 +1186,7 @@ TIMESTAMP evcharger_det::sync(TIMESTAMP t0, TIMESTAMP t1)
 		//Do some initial checks to set a return value
 		if (t_J2894_ret_dbl < 0.0)	//Inifinite, so no check
 		{
-			t_J2894_ret_dbl = TSNVRDBL;
+			t_J2894_ret_dbl = TS_NEVER_DBL;
 		}
 		else if (t_J2894_ret_dbl == 0.0)	//Trip now!
 		{
@@ -1199,22 +1199,22 @@ TIMESTAMP evcharger_det::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 	else	//Not enabled
 	{
-		t_J2894_ret_dbl = TSNVRDBL;	//Just return never
+		t_J2894_ret_dbl = TS_NEVER_DBL;	//Just return never
 	}
 
 	//Pull the next state transition
 	tret_dbl = sync_ev_function(t1_dbl);
 
 	//Check see what the proper return time should be
-	if ((tret_dbl == TSNVRDBL) && (t_J2894_ret_dbl == TSNVRDBL))
+	if ((tret_dbl == TS_NEVER_DBL) && (t_J2894_ret_dbl == TS_NEVER_DBL))
 	{
 		tret = TS_NEVER;
 	}
-	else if ((tret_dbl == TSNVRDBL) && (t_J2894_ret_dbl != TSNVRDBL))
+	else if ((tret_dbl == TS_NEVER_DBL) && (t_J2894_ret_dbl != TS_NEVER_DBL))
 	{
 		tret = (TIMESTAMP)t_J2894_ret_dbl;
 	}
-	else if ((tret_dbl != TSNVRDBL) && (t_J2894_ret_dbl == TSNVRDBL))
+	else if ((tret_dbl != TS_NEVER_DBL) && (t_J2894_ret_dbl == TS_NEVER_DBL))
 	{
 		tret = (TIMESTAMP)tret_dbl;
 	}

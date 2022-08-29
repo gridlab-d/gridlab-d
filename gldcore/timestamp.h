@@ -42,6 +42,7 @@ typedef unsigned long DT; /**< stores incremental delta time values in ns */
 #define TS_MAX (32482080000LL) /* roughly 3000 CE, any date beyond this should be interpreted as TS_NEVER */
 #define TS_INVALID ((int64)-1)
 #define TS_NEVER ((int64)(((UINT_MAX)-1)>>1))
+#define TS_NEVER_DBL 9223372036854775808.0	/* Double represenation of the TS_NEVER integer - deltamode usage */
 #define MINYEAR 1970
 #define MAXYEAR 2969
 #define ISLEAPYEAR(Y) ((Y)%4==0 && ((Y)%100!=0 || (Y)%400==0))
