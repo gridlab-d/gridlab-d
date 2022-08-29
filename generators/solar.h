@@ -15,18 +15,6 @@ private:
 	bool first_sync_delta_enabled;
 
 	/* DEPRECATED - properties that will be deleted in the next version */
-	enum GENERATOR_MODE_deprecated {CONSTANT_V=1, CONSTANT_PQ=2, CONSTANT_PF=4, SUPPLY_DRIVEN=5};
-	enumeration gen_mode_v_deprecated;
-	enum GENERATOR_STATUS_deprecated {OFFLINE=1, ONLINE=2};
-	enumeration gen_status_v_deprecated;
-	enum POWER_TYPE_deprecated{DC=1, AC=2};
-	enumeration power_type_v_deprecated;
-    enum INSTALLATION_TYPE_deprecated {ROOF_MOUNTED=1, GROUND_MOUNTED=2};
-	enumeration installation_type_v_deprecated;
-
-	complex VA_Out_deprecated;
-	set phases_deprecated;
-
 	/* END DEPRECATED */
 protected:
 public: /* Published Variables & Other Funcs For 'PV_CURVE' Mode */

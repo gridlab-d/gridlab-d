@@ -109,7 +109,6 @@ private:
 	SIMULATIONMODE desired_simulation_mode;	//deltamode desired simulation mode after corrector pass - prevents starting iterations again
 
 	/* DEPRECATED: delete these - only here so old models work long enough to be yelled at */
-	complex VA_In_deprecated;
 	/* DEPRECATED END */
 
 protected:
