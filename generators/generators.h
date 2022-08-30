@@ -33,6 +33,7 @@
 #define TSNVRDBL 9223372036854775808.0
 
 GLOBAL bool enable_subsecond_models INIT(false); /* normally not operating in delta mode */
+GLOBAL bool all_generator_delta INIT(false);			/* Flag to make all generator objects participate in deltamode (that are capable) -- otherwise is individually flagged per object */
 GLOBAL unsigned long deltamode_timestep INIT(10000000); /* 10 ms timestep */
 GLOBAL double deltamode_timestep_publish INIT(10000000.0); /* 10 ms timestep */
 GLOBAL OBJECT **delta_objects INIT(nullptr);				/* Array pointer objects that need deltamode interupdate calls */
