@@ -157,20 +157,6 @@ int triplex_node::create(void)
 {
 	int result = node::create();
 	maximum_voltage_error = 0;
-
-	//**************** NOTE - Code that can probably be deleted when deprecated node properties removed ******************//
-	pub_shunt[0] = pub_shunt[1] = pub_shunt[2] = complex(0.0,0.0);
-	impedance[0] = impedance[1] = impedance[2] = complex(0.0,0.0);
-	pub_current[0] = pub_current[1] = pub_current[2] = pub_current[3] = complex(0.0,0.0);
-	pub_power[0] = pub_power[1] = pub_power[2] = complex(0.0,0.0);
-
-	//Accumulators
-	prev_node_load_values[0][0] = prev_node_load_values[0][1] = prev_node_load_values[0][2] = complex(0.0,0.0);
-	prev_node_load_values[1][0] = prev_node_load_values[1][1] = prev_node_load_values[1][2] = complex(0.0,0.0);
-	prev_node_load_current_values[0] = prev_node_load_current_values[1] = prev_node_load_current_values[2] = prev_node_load_current_values[3] = complex(0.0,0.0);
-
-	//********************* END Deprecated delete section **************************//
-
 	service_status = ND_IN_SERVICE;
 	return result;
 }
@@ -200,110 +186,6 @@ TIMESTAMP triplex_node::presync(TIMESTAMP t0)
 //For external calls
 void triplex_node::BOTH_triplex_node_sync_fxn(void)
 {
-	//**************** NOTE - Code that can probably be deleted when deprecated node properties removed ******************//
-	//Replicates triplex_load behavior for "published" load properties
-	int index_var;
-
-	//Remove prior contributions and zero the accumulators
-	shunt[0] -= prev_node_load_values[0][0];
-	shunt[1] -= prev_node_load_values[0][1];
-	shunt[2] -= prev_node_load_values[0][2];
-
-	power[0] -= prev_node_load_values[1][0];
-	power[1] -= prev_node_load_values[1][1];
-	power[2] -= prev_node_load_values[1][2];
-
-	current[0] -= prev_node_load_current_values[0];
-	current[1] -= prev_node_load_current_values[1];
-	current[2] -= prev_node_load_current_values[2];
-	current12 -= prev_node_load_current_values[3];
-
-	//Zero the accumulators
-	for (index_var=0; index_var<3; index_var++)
-	{
-		prev_node_load_values[0][index_var] = complex(0.0,0.0);
-		prev_node_load_values[1][index_var] = complex(0.0,0.0);
-	}
-
-	//Do the current (bigger, so different index)
-	prev_node_load_current_values[0] = complex(0.0,0.0);
-	prev_node_load_current_values[1] = complex(0.0,0.0);
-	prev_node_load_current_values[2] = complex(0.0,0.0);
-	prev_node_load_current_values[3] = complex(0.0,0.0);
-
-	//See how to accumulate the various values
-	//Prioritizes shunt over impedance
-	if ((pub_shunt[0].IsZero()) && (!impedance[0].IsZero()))	//Impedance specified
-	{
-		//Accumulator
-		shunt[0] += complex(1.0,0.0)/impedance[0];
-
-		//Tracker
-		prev_node_load_values[0][0] += complex(1.0,0.0)/impedance[0];
-	}
-	else											//Shunt specified (impedance ignored)
-	{
-		//Accumulator
-		shunt[0] += pub_shunt[0];
-
-		//Tracker
-		prev_node_load_values[0][0] += pub_shunt[0];
-	}
-
-	if ((pub_shunt[1].IsZero()) && (!impedance[1].IsZero()))	//Impedance specified
-	{
-		//Accumulator
-		shunt[1] += complex(1.0,0.0)/impedance[1];
-
-		//Tracker
-		prev_node_load_values[0][1] += complex(1.0,0.0)/impedance[1];
-	}
-	else											//Shunt specified (impedance ignored)
-	{
-		//Accumulator
-		shunt[1] += pub_shunt[1];
-
-		//Tracker
-		prev_node_load_values[0][1] += pub_shunt[1];
-	}
-
-	if ((pub_shunt[2].IsZero()) && (!impedance[2].IsZero()))	//Impedance specified
-	{
-		//Accumulator
-		shunt[2] += complex(1.0,0.0)/impedance[2];
-
-		//Tracker
-		prev_node_load_values[0][2] += complex(1.0,0.0)/impedance[2];
-	}
-	else											//Shunt specified (impedance ignored)
-	{
-		//Accumulator
-		shunt[2] += pub_shunt[2];
-
-		//Tracker
-		prev_node_load_values[0][2] += pub_shunt[2];
-	}
-	
-	//Power and current accumulators
-	power[0] += pub_power[0];
-	power[1] += pub_power[1];	
-	power[2] += pub_power[2];
-
-	current[0] += pub_current[0];
-	current[1] += pub_current[1];
-	current[2] += pub_current[2];
-	current12 += pub_current[3];
-
-	//Power and current trackers
-	prev_node_load_current_values[0] += pub_current[0];
-	prev_node_load_current_values[1] += pub_current[1];
-	prev_node_load_current_values[2] += pub_current[2];
-	prev_node_load_current_values[3] += pub_current[3];
-	prev_node_load_values[1][0] += pub_power[0];
-	prev_node_load_values[1][1] += pub_power[1];
-	prev_node_load_values[1][2] += pub_power[2];
-
-	//************** End Depecrated delete - BOTH_triplex_node_sync_fxn may not even be needed after deprecated code removed ***********//
 }
 
 TIMESTAMP triplex_node::sync(TIMESTAMP t0)
