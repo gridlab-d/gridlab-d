@@ -695,6 +695,12 @@ int diesel_dg::init(OBJECT *parent)
 	double nominal_voltage_value, nom_test_val;
 	set temp_phases;
 
+	//See if the global flag is set - if so, add the object flag
+	if (all_generator_delta)
+	{
+		obj->flags |= OF_DELTAMODE;
+	}
+
 	//Set the deltamode flag, if desired
 	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)
 	{
