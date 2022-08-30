@@ -182,17 +182,8 @@ TIMESTAMP triplex_node::presync(TIMESTAMP t0)
 	return node::presync(t0);
 }
 
-//Functionalized sync routine
-//For external calls
-void triplex_node::BOTH_triplex_node_sync_fxn(void)
-{
-}
-
 TIMESTAMP triplex_node::sync(TIMESTAMP t0)
 {
-	//Call the functionalized version
-	BOTH_triplex_node_sync_fxn();
-
 	return node::sync(t0);
 }
 
@@ -249,9 +240,6 @@ SIMULATIONMODE triplex_node::inter_deltaupdate_triplex_node(unsigned int64 delta
 	{
 		//Call node presync-equivalent items
 		NR_node_presync_fxn(0);
-
-		//Call sync-equivalent of triplex portion first
-		BOTH_triplex_node_sync_fxn();
 
 		//Call node sync-equivalent items (solver occurs at end of sync)
 		NR_node_sync_fxn(hdr);
