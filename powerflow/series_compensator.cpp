@@ -1529,7 +1529,7 @@ SIMULATIONMODE series_compensator::inter_deltaupdate_series_compensator(unsigned
 		sercom_prePre_fxn();
 
 		//Link presync stuff
-		NR_link_presync_fxn();
+		NR_link_sync_fxn();
 		
 		//Call the post-presync regulator code
 		sercom_postPre_fxn();
