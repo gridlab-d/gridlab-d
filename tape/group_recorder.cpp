@@ -232,9 +232,8 @@ int group_recorder::init(OBJECT *obj){
 	return 1;
 }
 
-//TIMESTAMP group_recorder::postsync(TIMESTAMP t0, TIMESTAMP t1){
-TIMESTAMP group_recorder::commit(TIMESTAMP t1){
-	// if we are strict and an error has occurred, stop the simulation
+TIMESTAMP group_recorder::postsync(TIMESTAMP t0, TIMESTAMP t1){
+	// if we are strict and an error has occured, stop the simulation
 
 	// if eventful interval, read
 	if(0 == write_interval){//
@@ -255,10 +254,8 @@ TIMESTAMP group_recorder::commit(TIMESTAMP t1){
 		//Extra check for offnominal time steps (deltamode or minimum_timestep) - make sure it didn't get stuck
 		if (offnominal_time)
 		{
-            // TODO: review this if statement, the first check may be redundant
 			//See if we stagnated
-//			if ((t0 == t1) && (t1 == next_write))
-			if (t1 == next_write)
+			if ((t0 == t1) && (t1 == next_write))
 			{
 				//We did, just bump us forward one
 				next_write = next_write + TS_SECOND;
@@ -303,15 +300,34 @@ int group_recorder::commit(TIMESTAMP t1, double t1dbl, bool deltacall){
 		return 0;
 	}
 
+	// short-circuit if not open
+	if(TS_OPEN != tape_status){
+		return 1;
+	}
+
 	//See if we're deltamode -- if so, just make an update for t1 for the various items
 	if (deltacall)
 	{
 		t1 = (TIMESTAMP)t1dbl;
-	}
 
-	// short-circuit if not open
-	if(TS_OPEN != tape_status){
-		return 1;
+		// if eventful interval, read
+		if(0 == write_interval){//
+			if(0 == read_line()){
+				gl_error("group_recorder::sync");
+				/* TROUBLESHOOT
+					Placeholder.
+				*/
+				return 0;
+			}
+
+			if(0 == write_line(t1,t1dbl,deltacall) ){
+				gl_error("group_recorder::sync(): error when writing the values to the file");
+				/* TROUBLESHOOT
+					Placeholder.
+				*/
+				return 0;
+			}
+		}
 	}
 
 	// if periodic interval, check for write
@@ -335,18 +351,15 @@ int group_recorder::commit(TIMESTAMP t1, double t1dbl, bool deltacall){
 	//	* if different, write
 	if(-1 == write_interval){
 		if(0 == read_line()){
-			if(0 == read_line()){
-				gl_error("group_recorder::commit(): error when reading the values");
+			gl_error("group_recorder::commit(): error when reading the values");
+			return 0;
+		}
+		if(0 != strcmp(line_buffer, prev_line_buffer) ){
+			if(0 == write_line(t1,t1dbl,deltacall)){
+				gl_error("group_recorder::commit(): error when writing the values to the file");
 				return 0;
 			}
-			if(0 != strcmp(line_buffer, prev_line_buffer) ){
-				if(0 == write_line(t1,t1dbl,deltacall)){
-					gl_error("group_recorder::commit(): error when writing the values to the file");
-					return 0;
-				}
-			}
 		}
-
 	}
 
 	// if periodic flush, check for flush
@@ -757,7 +770,7 @@ EXPORT TIMESTAMP sync_group_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 				rv = TS_NEVER;
 				break;
 			case PC_POSTTOPDOWN:
-				rv = my->commit(obj->clock);
+				rv = my->postsync(obj->clock, t0);
 				obj->clock = t0;
 				break;
 			default:
@@ -801,7 +814,7 @@ EXPORT SIMULATIONMODE update_group_recorder(OBJECT *obj, TIMESTAMP t0, unsigned 
 	group_recorder *thisrcdr = OBJECTDATA(obj,group_recorder);
 
 	//See if we're the first call
-	if ((iteration_count_val == 0) && (delta_time != 0))
+	if (((iteration_count_val == 0) && (delta_time != 0) && (thisrcdr->write_interval != 0)) || (thisrcdr->write_interval == 0))
 	{
 		//Get decimal timestamp value - always previous value
 		dblincrement = ((double)delta_time-(double)dt)/(double)DT_SECOND; 
