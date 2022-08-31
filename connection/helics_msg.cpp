@@ -404,7 +404,7 @@ int helics_msg::init(OBJECT *parent){
 						config_info_temp = string(pub.getInfo());
 						const int config_length = static_cast<int>(config_info_temp.size());
 						const std::unique_ptr<Json::CharReader> jReader(json_builder.newCharReader());
-						if(jReader->parse(config_info_temp.c_str(),config_info_temp.c_str() + config_length, &config_info, &parse_err)){
+						if(jReader->parse(config_info_temp.c_str(),config_info_temp.c_str() + config_length, &(json_gld_pub->objectPropertyBundle), &parse_err)){
 							json_publication *gldProperty = nullptr;
 							for(Json::ValueIterator it = json_gld_pub->objectPropertyBundle.begin(); it != json_gld_pub->objectPropertyBundle.end(); it++){
 								const string gldObjName = it.name();
@@ -443,7 +443,7 @@ int helics_msg::init(OBJECT *parent){
 							config_info_temp = string(ep.getInfo());
 							const int config_length = static_cast<int>(config_info_temp.size());
 							const std::unique_ptr<Json::CharReader> jReader(json_builder.newCharReader());
-							if(jReader->parse(config_info_temp.c_str(),config_info_temp.c_str() + config_length, &config_info, &parse_err)){
+							if(jReader->parse(config_info_temp.c_str(),config_info_temp.c_str() + config_length, &(json_gld_ep_pub->objectPropertyBundle), &parse_err)){
 								json_publication *gldProperty = nullptr;
 								for(Json::ValueIterator it = json_gld_ep_pub->objectPropertyBundle.begin(); it != json_gld_ep_pub->objectPropertyBundle.end(); it++){
 									const string gldObjName = it.name();
@@ -1497,7 +1497,7 @@ int helics_msg::subscribeJsonVariables(){
 				mesg = (*sub)->HelicsSubscriptionEndpoint.getMessage();
 			}
 			const string message_buffer = string(mesg.c_str());
-			const int message_length = static_cast<int>(value.size());
+			const int message_length = static_cast<int>(message_buffer.size());
 			const std::unique_ptr<Json::CharReader> jReader(jsonReaderBuilder.newCharReader());
 			if(jReader->parse(message_buffer.c_str(),message_buffer.c_str() + message_length, &jsonMessage, &parse_err)){
 				if(!jsonMessage.isMember(simName.c_str())){
