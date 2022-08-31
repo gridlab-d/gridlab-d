@@ -83,6 +83,7 @@ jobs:
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-ninja
             mingw-w64-x86_64-nsis
+            mingw-w64-x86_64-dlfcn
 
       - name: Checkout Repo
         uses: actions/checkout@v3
