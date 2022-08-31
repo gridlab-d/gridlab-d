@@ -69,9 +69,7 @@ jobs:
     runs-on: windows-latest
     defaults:
       run:
-        shell: |
-          powershell -command "[System.Environment]::SetEnvironmentVariable('GITHUB_SCRIPT', ('{0}' -replace '\\','\\')); [System.Environment]::SetEnvironmentVariable('PKG_CONFIG_PATH_MSYS', $Env:PKG_CONFIG_PATH); [System.Environment]::SetEnvironmentVariable('PATH_MSYS', $Env:Path);"
-          msys2 -c 'if [[ -v MSYSTEM ]]; then sed -i 1d $(cygpath $GITHUB_SCRIPT); sed -i \$d $(cygpath $GITHUB_SCRIPT); if [[ -v PKG_CONFIG_PATH_MSYS ]]; then export PKG_CONFIG_PATH=$PKG_CONFIG_PATH_MSYS; fi; if [[ -v PATH_MSYS && ! ( $PATH_MSYS =~ ^D:\\\\a\\\\_temp\\\\msys\\;C:\\\\Users ) ]]; then export PATH=$(echo $PATH_MSYS | sed s/D:\\\\\\\\a\\\\\\\\_temp\\\\\\\\msys\;// | sed s/\;/:/g); fi; fi; source $(cygpath $GITHUB_SCRIPT)'
+        shell: msys2 {0}
 
     steps:
       - uses: msys2/setup-msys2@v2
@@ -94,16 +92,16 @@ jobs:
       - name: Configure CMake
         # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
         # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-        run: cmake -G "Ninja" -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
+        run: cmake -G "Ninja" -B build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
 
       - name: Build
         # Build your program with the given configuration
         run: |
           threads=`nproc`
-          cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel $threads
+          cmake --build build --config ${{env.BUILD_TYPE}} --parallel $threads
 
       - name: Package
-        working-directory: ${{github.workspace}}/build
+        working-directory: build
         # Execute tests defined by the CMake configuration.
         # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
         run: cpack CPackConfig.cmake
