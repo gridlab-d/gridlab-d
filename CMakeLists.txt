@@ -268,6 +268,7 @@ if (GLD_USE_SUPERLU)
     #    include(third_party/superLU_MT/CMakeLists.txt)
 
     add_subdirectory(third_party/superLU_MT EXCLUDE_FROM_ALL)
+    set(SUPERLU_LIB superlu_lib)
 
     #    list(APPEND CMAKE_MODULE_PATH
     #            ${CMAKE_BINARY_DIR}/third_party/SuperLU/SRC
@@ -275,8 +276,7 @@ if (GLD_USE_SUPERLU)
     #            )
     #    include_directories(third_party/SuperLU/SRC)
     #    add_subdirectory(third_party/SuperLU)
-
-    #    find_package(SuperLU REQUIRED)
+    #    set(SUPERLU_LIB superlu)
 endif ()
 
 option(JSONCPP_WITH_TESTS "Build the JSON CPP test suite" OFF)
@@ -287,6 +287,8 @@ add_subdirectory(third_party/jsoncpp_lib EXCLUDE_FROM_ALL)
 get_target_property(JSON_INC_PATH jsoncpp_lib INTERFACE_INCLUDE_DIRECTORIES)
 include_directories(${JSON_INC_PATH})
 set(BUILD_SHARED_LIBS ${BUILD_SHARED_CACHE})
+set(JSONCPP_LIB jsoncpp_lib)
+#set(JSONCPP_LIB jsoncpp::jsoncpp)
 #find_package(jsoncpp REQUIRED) # Conan
 
 if (GLD_USE_EIGEN)
@@ -295,8 +297,6 @@ if (GLD_USE_EIGEN)
     include_directories(third_party/Eigen)
     find_package(Eigen3 3.3 REQUIRED NO_MODULE)
 endif ()
-
-#find_package(superlu)
 
 # Configure module targets
 add_subdirectory(assert)
@@ -316,6 +316,30 @@ add_subdirectory(tape_plot)
 add_subdirectory(${CMAKE_SOURCE_DIR}/gldcore/solvers)
 add_subdirectory(${CMAKE_SOURCE_DIR}/gldcore/link/engine)
 add_subdirectory(gldcore)
+
+set(GLD_BINARIES gridlabd)
+set(GLD_LIBS
+        assert
+        climate
+        commercial
+        connection
+        generators
+        market
+        mysql
+        optimize
+        powerflow
+        reliability
+        residential
+        tape
+        tape_file
+        tape_plot
+        glsolvers
+        glxengine
+        )
+set(GLD_DEPS
+        ${SUPERLU_LIB}
+        ${JSONCPP_LIB}
+        )
 
 mark_as_advanced(FORCE
         OS_SPECIFIC_LIBRARIES
@@ -353,23 +377,8 @@ install(FILES COPYRIGHT LICENSE
         COMPONENT Runtime
         )
 install(TARGETS
-        assert
-        climate
-        commercial
-        connection
-        generators
-        market
-        mysql
-        optimize
-        powerflow
-        reliability
-        residential
-        tape
-        tape_file
-        tape_plot
-        glsolvers
-        glxengine
-        gridlabd
+        ${GLD_LIBS}
+        ${GLD_BINARIES}
 
         ${FILE_PERMISSIONS}
         LIBRARY DESTINATION lib
@@ -378,5 +387,9 @@ install(TARGETS
         ARCHIVE DESTINATION lib/static
         COMPONENT Development
         )
+
+if (APPLE)
+    install(SCRIPT cmake/mac_bundle.cmake)
+endif ()
 # Generate CPack config
 include(cmake/CPackConfig.cmake)

@@ -10,8 +10,7 @@ add_library(${GLD_MODULE_NAME}
         reliability.h
 )
 
-#target_link_libraries(${GLD_MODULE_NAME} PRIVATE jsoncpp::jsoncpp) # Conan
-target_link_libraries(${GLD_MODULE_NAME} PRIVATE jsoncpp_lib)
+target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${JSONCPP_LIB})
 
 set_target_properties(${GLD_MODULE_NAME} PROPERTIES PREFIX "")
 target_include_directories(${GLD_MODULE_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
