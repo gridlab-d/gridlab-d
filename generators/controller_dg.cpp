@@ -92,6 +92,12 @@ int controller_dg::init(OBJECT *parent)
 	gld_property *temp_prop;
 	gld_object *temp_from, *temp_to;
 
+	//See if the global flag is set - if so, add the object flag
+	if (all_generator_delta)
+	{
+		obj->flags |= OF_DELTAMODE;
+	}
+
 	//Set the deltamode flag, if desired
 	if ((thisobj->flags & OF_DELTAMODE) == OF_DELTAMODE)
 	{

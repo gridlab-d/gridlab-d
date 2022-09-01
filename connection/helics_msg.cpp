@@ -404,7 +404,7 @@ int helics_msg::init(OBJECT *parent){
 						config_info_temp = string(pub.getInfo());
 						const int config_length = static_cast<int>(config_info_temp.size());
 						const std::unique_ptr<Json::CharReader> jReader(json_builder.newCharReader());
-						if(jReader->parse(config_info_temp.c_str(),config_info_temp.c_str() + config_length, &config_info, &parse_err)){
+						if(jReader->parse(config_info_temp.c_str(),config_info_temp.c_str() + config_length, &(json_gld_pub->objectPropertyBundle), &parse_err)){
 							json_publication *gldProperty = nullptr;
 							for(Json::ValueIterator it = json_gld_pub->objectPropertyBundle.begin(); it != json_gld_pub->objectPropertyBundle.end(); it++){
 								const string gldObjName = it.name();
@@ -443,7 +443,7 @@ int helics_msg::init(OBJECT *parent){
 							config_info_temp = string(ep.getInfo());
 							const int config_length = static_cast<int>(config_info_temp.size());
 							const std::unique_ptr<Json::CharReader> jReader(json_builder.newCharReader());
-							if(jReader->parse(config_info_temp.c_str(),config_info_temp.c_str() + config_length, &config_info, &parse_err)){
+							if(jReader->parse(config_info_temp.c_str(),config_info_temp.c_str() + config_length, &(json_gld_ep_pub->objectPropertyBundle), &parse_err)){
 								json_publication *gldProperty = nullptr;
 								for(Json::ValueIterator it = json_gld_ep_pub->objectPropertyBundle.begin(); it != json_gld_ep_pub->objectPropertyBundle.end(); it++){
 									const string gldObjName = it.name();
@@ -1108,8 +1108,17 @@ int helics_msg::subscribeVariables(){
 					}
 				} else if((*sub)->pObjectProperty->is_integer()) {
 					gl_verbose("helics_msg: Calling getInteger on subscription %s",(*sub)->target.c_str());
+					gld_type property_type = (*sub)->pObjectProperty->get_type();
 					integer_temp = (*sub)->HelicsSubscription.getInteger();
-					(*sub)->pObjectProperty->setp(integer_temp);
+					if(property_type == PT_int64){
+						(*sub)->pObjectProperty->setp(integer_temp);
+					} else if(property_type == PT_int32){
+						int32_t int32_temp = static_cast<int32_t>(integer_temp);
+						(*sub)->pObjectProperty->setp(int32_temp);
+					}else if(property_type == PT_int16){
+						int16_t int16_temp = static_cast<int16_t>(integer_temp);
+						(*sub)->pObjectProperty->setp(int16_temp);
+					}
 				} else if((*sub)->pObjectProperty->is_double()) {
 					gl_verbose("helics_msg: Calling getDouble on subscription %s",(*sub)->target.c_str());
 					double_temp = (*sub)->HelicsSubscription.getDouble();
@@ -1183,8 +1192,17 @@ int helics_msg::subscribeVariables(){
 						gldProperty = new gld_property(bufObj, bufProp);
 						if(gldProperty->is_valid()){
 							if(gldProperty->is_integer()){
-								int64_t itmp = jsonMessage[objectName][propertyName].asInt();
-								gldProperty->setp(itmp);
+								int64_t itmp = jsonMessage[objectName][propertyName].asInt64();
+								gld_type property_type = gldProperty->get_type();
+								if(property_type == PT_int64){
+									gldProperty->setp(itmp);
+								} else if(property_type == PT_int32){
+									int32_t int32_temp = static_cast<int32_t>(itmp);
+									gldProperty->setp(int32_temp);
+								}else if(property_type == PT_int16){
+									int16_t int16_temp = static_cast<int16_t>(itmp);
+									gldProperty->setp(int16_temp);
+								}
 							} else if(gldProperty->is_double()){
 								double dtmp = jsonMessage[objectName][propertyName].asDouble();
 								gldProperty->setp(dtmp);
@@ -1232,8 +1250,17 @@ int helics_msg::subscribeVariables(){
 						gldProperty = new gld_property(bufObj, bufProp);
 						if(gldProperty->is_valid()){
 							if(gldProperty->is_integer()){
-								int64_t itmp = jsonMessage[objectName][propertyName].asInt();
-								gldProperty->setp(itmp);
+								int64_t itmp = jsonMessage[objectName][propertyName].asInt64();
+								gld_type property_type = gldProperty->get_type();
+								if(property_type == PT_int64){
+									gldProperty->setp(itmp);
+								} else if(property_type == PT_int32){
+									int32_t int32_temp = static_cast<int32_t>(itmp);
+									gldProperty->setp(int32_temp);
+								}else if(property_type == PT_int16){
+									int16_t int16_temp = static_cast<int16_t>(itmp);
+									gldProperty->setp(int16_temp);
+								}
 							} else if(gldProperty->is_double()){
 								double dtmp = jsonMessage[objectName][propertyName].asDouble();
 								gldProperty->setp(dtmp);
@@ -1392,8 +1419,17 @@ int helics_msg::subscribeJsonVariables(){
 							gldProperty = new gld_property(bufObj, bufProp);
 							if(gldProperty->is_valid()){
 								if(gldProperty->is_integer()){
-									int itmp = jsonData[objectName][propertyName].asInt();
-									gldProperty->setp(itmp);
+									int64_t itmp = jsonData[objectName][propertyName].asInt64();
+									gld_type property_type = gldProperty->get_type();
+									if(property_type == PT_int64){
+										gldProperty->setp(itmp);
+									} else if(property_type == PT_int32){
+										int32_t int32_temp = static_cast<int32_t>(itmp);
+										gldProperty->setp(int32_temp);
+									}else if(property_type == PT_int16){
+										int16_t int16_temp = static_cast<int16_t>(itmp);
+										gldProperty->setp(int16_temp);
+									}
 								} else if(gldProperty->is_double()){
 									double dtmp = jsonData[objectName][propertyName].asDouble();
 									gldProperty->setp(dtmp);
@@ -1422,8 +1458,17 @@ int helics_msg::subscribeJsonVariables(){
 							gldProperty = new gld_property(bufObj, bufProp);
 							if(gldProperty->is_valid()){
 								if(gldProperty->is_integer()){
-									int itmp = jsonData[objectName][propertyName].asInt();
-									gldProperty->setp(itmp);
+									int64_t itmp = jsonData[objectName][propertyName].asInt64();
+									gld_type property_type = gldProperty->get_type();
+									if(property_type == PT_int64){
+										gldProperty->setp(itmp);
+									} else if(property_type == PT_int32){
+										int32_t int32_temp = static_cast<int32_t>(itmp);
+										gldProperty->setp(int32_temp);
+									}else if(property_type == PT_int16){
+										int16_t int16_temp = static_cast<int16_t>(itmp);
+										gldProperty->setp(int16_temp);
+									}
 								} else if(gldProperty->is_double()){
 									double dtmp = jsonData[objectName][propertyName].asDouble();
 									gldProperty->setp(dtmp);
@@ -1452,7 +1497,7 @@ int helics_msg::subscribeJsonVariables(){
 				mesg = (*sub)->HelicsSubscriptionEndpoint.getMessage();
 			}
 			const string message_buffer = string(mesg.c_str());
-			const int message_length = static_cast<int>(value.size());
+			const int message_length = static_cast<int>(message_buffer.size());
 			const std::unique_ptr<Json::CharReader> jReader(jsonReaderBuilder.newCharReader());
 			if(jReader->parse(message_buffer.c_str(),message_buffer.c_str() + message_length, &jsonMessage, &parse_err)){
 				if(!jsonMessage.isMember(simName.c_str())){
@@ -1470,8 +1515,17 @@ int helics_msg::subscribeJsonVariables(){
 							gldProperty = new gld_property(bufObj, bufProp);
 							if(gldProperty->is_valid()){
 								if(gldProperty->is_integer()){
-									int itmp = jsonData[objectName][propertyName].asInt();
-									gldProperty->setp(itmp);
+									int64_t itmp = jsonData[objectName][propertyName].asInt64();
+									gld_type property_type = gldProperty->get_type();
+									if(property_type == PT_int64){
+										gldProperty->setp(itmp);
+									} else if(property_type == PT_int32){
+										int32_t int32_temp = static_cast<int32_t>(itmp);
+										gldProperty->setp(int32_temp);
+									}else if(property_type == PT_int16){
+										int16_t int16_temp = static_cast<int16_t>(itmp);
+										gldProperty->setp(int16_temp);
+									}
 								} else if(gldProperty->is_double()){
 									double dtmp = jsonData[objectName][propertyName].asDouble();
 									gldProperty->setp(dtmp);
@@ -1500,8 +1554,17 @@ int helics_msg::subscribeJsonVariables(){
 							gldProperty = new gld_property(bufObj, bufProp);
 							if(gldProperty->is_valid()){
 								if(gldProperty->is_integer()){
-									int itmp = jsonData[objectName][propertyName].asInt();
-									gldProperty->setp(itmp);
+									int64_t itmp = jsonData[objectName][propertyName].asInt64();
+									gld_type property_type = gldProperty->get_type();
+									if(property_type == PT_int64){
+										gldProperty->setp(itmp);
+									} else if(property_type == PT_int32){
+										int32_t int32_temp = static_cast<int32_t>(itmp);
+										gldProperty->setp(int32_temp);
+									}else if(property_type == PT_int16){
+										int16_t int16_temp = static_cast<int16_t>(itmp);
+										gldProperty->setp(int16_temp);
+									}
 								} else if(gldProperty->is_double()){
 									double dtmp = jsonData[objectName][propertyName].asDouble();
 									gldProperty->setp(dtmp);
