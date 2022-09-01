@@ -991,6 +991,8 @@ void waterheater::sync_energytake()
 			* ET as function of TIME
 			- use when (in sync?): Toff > Tw_hp >= Ton
 	*/
+
+	/* Model created by Portland State - Midrar Adham submitted under PR #1355 */
 	actual_kW();
 	
 
@@ -1152,6 +1154,9 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 			internal_gain = A_bottom*U_val*(T_layers[1][0] - Tamb) + A_top*U_val*(T_layers[10][0] - Tamb);
 			for(int i=2; i<=9; i++) {
 				internal_gain += A_layer*U_val*(T_layers[i][0] - Tamb);
+			}
+			if(heat_mode == HEAT_PUMP) {
+				internal_gain -= (actual_kW() * (HP_COP - 1) * BTUPHPKW);
 			}
 		} else {
 			internal_gain = 0;
@@ -1426,7 +1431,6 @@ enumeration waterheater::set_current_model_and_load_state(void)
 		case FULL:
 			// If the tank is full, a negative dh/dt means we're depleting, so
 			// we'll also be switching to the 2-zone model...
-			
 			if (dhdt_full < 0)
 			{
 				// overriding the plc code ignoring thermostat logic
