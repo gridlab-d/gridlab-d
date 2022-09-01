@@ -1,68 +1,104 @@
-#ifndef GLD_GENERATORS_energy_storage_H_
-#define GLD_GENERATORS_energy_storage_H_
+/** $Id: energy_storage.h,v 1.0 2008/07/18
+	Copyright (C) 2008 Battelle Memorial Institute
+	@file energy_storage.h
+	@addtogroup energy_storage
+
+ @{  
+ **/
+
+#ifndef _energy_storage_H
+#define _energy_storage_H
+
+#include <stdarg.h>
 
 #include "generators.h"
-
-EXPORT SIMULATIONMODE interupdate_energy_storage(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
-EXPORT STATUS dc_object_update_energy_storage(OBJECT *us_obj, OBJECT *calling_obj, bool init_mode);
 
 class energy_storage : public gld_object
 {
 private:
-	bool deltamode_inclusive; //Boolean for deltamode calls - pulled from object flags
-	bool first_sync_delta_enabled;
 
-	//Inverter connections
-	gld_property *inverter_voltage_property;
-	gld_property *inverter_current_property;
-	gld_property *inverter_power_property;
+protected:
+	/* TODO: put unpublished but inherited variables */
+public:
+	/* TODO: put published variables here */
+	set phases;	/**< device phases (see PHASE codes) */
+	enum GENERATOR_MODE {CONSTANT_V=1, CONSTANT_PQ, CONSTANT_PF, SUPPLY_DRIVEN};
+	enumeration gen_mode_v;  //operating mode of the generator 
+	//note energy_storage panel will always operate under the SUPPLY_DRIVEN generator mode
+	enum GENERATOR_STATUS {OFFLINE=1, ONLINE=2};
+	enumeration gen_status_v;
+	enum POWER_TYPE{DC=0, AC=1};
+	enumeration power_type_v;
 
-	//Default voltage and current values, if ran "headless"
-	double default_voltage_array;
-	double default_current_array;
-	double default_power_array;
+	gld::complex V_Max;
+	gld::complex I_Max;
+	double E_Max;
+	double Energy;
+	bool recalculate;
+	double margin;
+	
+	double Max_P;//< maximum real power capacity in kW
+    double Min_P;//< minimus real power capacity in kW
+	
+	double Rated_kVA; //< nominal capacity in kVA
+	
+	double efficiency;
 
-	double prev_time;
+	TIMESTAMP prev_time;
+	double E_Next;
+	
+	
+	gld::complex V_In;
+	gld::complex I_In;
+	gld::complex V_Internal;
+	double Rinternal;
+	gld::complex VA_Internal;
+	gld::complex I_Prev;
+	gld::complex I_Internal;
+	double base_efficiency;
+
+	gld::complex V_Out;
+	
+	gld::complex I_Out;
+
+	gld::complex VA_Out;
+
+	gld::complex *pCircuit_V;		//< pointer to the three voltages on three lines
+	gld::complex *pLine_I;			//< pointer to the three current on three lines
+	bool connected; // true if conencted to another item down the line, false if this is the only item on the bus
 
 public:
-	//Example published/keeper values - can be changed
-	double ES_DC_Voltage;  // unit V
-	double ES_DC_Current;  // unit A
-	double ES_DC_Power_Val; // unit w
-
-	double Vbase_ES;  // Rated voltage of ES, unit V
-	double Sbase_ES;  // Rated rating of ES, unit VA
-	double Qbase_ES;  // Rated capacity of ES, unit Wh
-	double SOC_0_ES;  // Initial state of charge
-	double SOC_ES;    // State of charge
-    double Q_ES;      // Energy of ES, unit Wh
-
-
-	double E_ES_pu;   // No-load voltage, per unit
-	double E0_ES_pu;  // Battery constant voltage, per unit
-	double K_ES_pu;   // Polarisation voltage, per unit
-    double A_ES_pu;   // Exponential zone amplitude, per unit
-    double B_ES_pu;   // Exponential zone time constant inverse, per unit
-    double V_ES_pu;   // ES terminal voltage, per unit
-    double I_ES_pu;   // ES output current, per unit
-    double R_ES_pu;   // ES internal resitance, per unit
-    double P_ES_pu;   // ES ouptut active power, per unit
-
-
-
 	/* required implementations */
+	energy_storage(void);
 	energy_storage(MODULE *module);
 	int create(void);
 	int init(OBJECT *parent);
+	
+	//this should be overridden by a customized method in child classes
+	double calculate_efficiency(gld::complex voltage, gld::complex current);
 
+	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
+	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 
-	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
-	STATUS energy_storage_dc_update(OBJECT *calling_obj, bool init_mode);
+	gld::complex calculate_v_terminal(gld::complex v, gld::complex i);
 
 public:
 	static CLASS *oclass;
 	static energy_storage *defaults;
+#ifdef OPTIONAL
+	static CLASS *pclass; /**< defines the parent class */
+	TIMESTAMP plc(TIMESTAMP t0, TIMESTAMP t1); /**< defines the default PLC code */
+#endif
 };
 
-#endif // GLD_GENERATORS_energy_storage_H_
+#endif
+
+/**@}*/
+/** $Id: energy_storage.h,v 1.0 2008/07/18
+	@file energy_storage.h
+	@addtogroup energy_storage
+	@ingroup MODULENAME
+
+ @{  
+ **/
