@@ -347,7 +347,7 @@ TIMESTAMP player_read(OBJECT *obj) {
                 t1 = (TIMESTAMP) gl_mktime(&dt);
                 if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)    /* Only request deltamode if we're explicitly enabled */
 				{
-					if (my->all_events_delta == true)
+					if (my->all_events_delta)
 					{
 						if (my->sim_start_time < t1)
 						{
@@ -395,7 +395,7 @@ TIMESTAMP player_read(OBJECT *obj) {
                 t1 = (TIMESTAMP) gl_mktime(&dt);
                 if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)    /* Only request deltamode if we're explicitly enabled */
                 {
-                    if (my->all_events_delta == true)
+                    if (my->all_events_delta)
                     {
                         if (my->sim_start_time < t1)
                         {
@@ -455,7 +455,7 @@ TIMESTAMP player_read(OBJECT *obj) {
                     my->next.ns = (unsigned int) (1e9 * (S - my->next.ts));
                     if ((obj->flags & OF_DELTAMODE)==OF_DELTAMODE)	/* Only request deltamode if we're explicitly enabled */
                     {
-                        if (my->all_events_delta == true)
+                        if (my->all_events_delta)
                         {
                             if (my->sim_start_time < t1)
                             {
