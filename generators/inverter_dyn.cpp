@@ -449,7 +449,7 @@ int inverter_dyn::create(void)
 
 	//DC Bus items
 	P_DC = 0.0;
-	V_DC = 0.0; //Vdc_base;
+	V_DC = Vdc_base;
 	I_DC = 0.0;
 
 	//1547 parameters
@@ -2026,7 +2026,7 @@ void inverter_dyn::check_and_update_VA_Out(OBJECT *obj)
 			{
 				//DC object, calling object (us), init mode (true/false)
 				//False at end now, because not initialization
-				fxn_return_status = ((STATUS(*)(OBJECT *, OBJECT *, bool))(*dc_interface_objects[temp_idx].fxn_address))(dc_interface_objects[temp_idx].dc_object, obj, true);
+				fxn_return_status = ((STATUS(*)(OBJECT *, OBJECT *, bool))(*dc_interface_objects[temp_idx].fxn_address))(dc_interface_objects[temp_idx].dc_object, obj, false);
 
 				//Make sure it worked
 				if (fxn_return_status == FAILED)
@@ -6632,7 +6632,7 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count,bool *converged_f
 				terminal_current_val_pu[0] = terminal_current_val[0]/I_base;
 
 				//Compare it
-				if (terminal_current_val_pu[0].Mag() > Imax)
+				if ((terminal_current_val_pu[0].Mag() > Imax) && running_in_delta)	//Current limit only gets applied when controls valid (deltamode)
 				{
 					//Compute the limited value - pu
 					intermed_curr_calc[0].SetPolar(Imax,terminal_current_val_pu[0].Arg());
@@ -6675,7 +6675,7 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count,bool *converged_f
 					terminal_current_val_pu[loop_var] = terminal_current_val[loop_var]/I_base;
 
 					//Compare it
-					if (terminal_current_val_pu[loop_var].Mag() > Imax)
+					if ((terminal_current_val_pu[loop_var].Mag() > Imax) && running_in_delta)	//Current limit only gets applied when controls valid (deltamode)
 					{
 						//Compute the limited value - pu
 						intermed_curr_calc[loop_var].SetPolar(Imax,terminal_current_val_pu[loop_var].Arg());
