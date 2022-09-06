@@ -724,7 +724,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 					if ((t>=clock_val) && (t<(clock_val+1.0)))
 					{
 						/* determine whether deltamode remains necessary */
-						if ((my->next.ns!=0) || (my->all_events_delta == true))
+						if ((my->next.ns!=0) || my->all_events_delta)
 						{
 							mode = SM_DELTA;
 							gl_verbose("Tape object:%d - %s - requested deltamode to continue",obj->id,(obj->name ? obj->name : "Unnamed"));
@@ -900,7 +900,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 			/* See if we're in service */
 			if ((obj->in_svc_double <= gl_globaldeltaclock) && (obj->out_svc_double >= gl_globaldeltaclock))
 			{
-				if ((( myplayer->next.ns!=0 ) && (myplayer->next.ts != t0)) || ((myplayer->next.ts != t0) && (myplayer->all_events_delta == true)))	/* See if we need to go back into deltamode, but make sure we aren't stuck! */
+				if ((( myplayer->next.ns!=0 ) && (myplayer->next.ts != t0)) || ((myplayer->next.ts != t0) && myplayer->all_events_delta))	/* See if we need to go back into deltamode, but make sure we aren't stuck! */
 					enable_deltamode(myplayer->next.ts);
 			}
 		}
