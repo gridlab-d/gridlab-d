@@ -39,13 +39,13 @@ object node {
 	nominal_voltage 2401.7771;
 }
 
-object triplex_node {
+object triplex_load {
 	phases BS;
 	name forward_3;
 	nominal_voltage 120.0;
 }
 
-object triplex_node {
+object triplex_load {
 	phases BS;
 	name forward_4;
 	nominal_voltage 120.0;
@@ -117,13 +117,13 @@ object node {
 	nominal_voltage 2401.7771;
 }
 
-object triplex_node {
+object triplex_load {
 	phases BS;
 	name reverse_3;
 	nominal_voltage 120.0;
 }
 
-object triplex_node {
+object triplex_load {
 	phases BS;
 	name reverse_4;
 	nominal_voltage 120.0;

@@ -71,7 +71,7 @@ object transformer {
 	configuration IEEE13_SPCT_CONFIG;
 }
 
-object triplex_node {
+object triplex_load {
 	name IEEE13_671_tn;
 	phases AS;
 	nominal_voltage 124;

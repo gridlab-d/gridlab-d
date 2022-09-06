@@ -61,7 +61,7 @@ object transformer {
 // zero-impedance node to link up the transformer with the 100 ft
 // triplex secondary line
 // recorders used for reference
-object triplex_node {
+object triplex_load {
 	name trip_node;
      phases AS;
      nominal_voltage 120.00;
@@ -100,7 +100,7 @@ object triplex_meter {
 	name load_node;
      phases AS;
      nominal_voltage 120.00;
-	//triplex_node asserts
+	//triplex_load asserts
 	object complex_assert {
 		target voltage_1;
 		value 115.4-.14d;		

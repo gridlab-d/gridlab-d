@@ -45,7 +45,7 @@ object triplex_meter {
       voltage_N 0;     
       nominal_voltage 120;     
 } 
-object triplex_node {     
+object triplex_load {     
       name R1-12-47-1_tn_619;     
       phases AS;     
       parent R1-12-47-1_tm_21;     

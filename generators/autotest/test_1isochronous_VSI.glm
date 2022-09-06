@@ -2329,7 +2329,7 @@ object load:35 {
 	 voltage_A 2401.7771;
      voltage_B -1200.8886-2080.000j;
      voltage_C -1200.8886+2080.000j;
-     base_power_A 134164.0787; // 3 * 44721.35955 to fix #1312
+     base_power_A 44721.35955;
 	impedance_fraction_A 1.0;
 	impedance_pf_A 0.894427191;
      nominal_voltage 2401.7771;

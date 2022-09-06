@@ -1067,7 +1067,7 @@ object load {
 }
 
 //Triplex nodes/meters/loads
-object triplex_node {
+object triplex_load {
 	name spct_node;
 	phases BS;
 	nominal_voltage 120.0;

@@ -1273,7 +1273,7 @@ object transformer {
 
 // zero-impedance node to link up the transformer with the 100 ft
 // triplex secondary line
-object triplex_node {
+object triplex_load {
 	name trip_node;
      phases AS;
      nominal_voltage 120.00;

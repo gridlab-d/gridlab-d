@@ -12,7 +12,7 @@ module powerflow;
 module tape;
 
 object triplex_meter:0 {
-	parent triplex_node:1;
+	parent triplex_load:1;
 	name "Meter 1";
 	phases "AS";
 	nominal_voltage 120.0 V;
@@ -21,14 +21,14 @@ object triplex_meter:0 {
 	voltage_2 120 V;
 }
 
-object triplex_node:1 {
-	name triplex_node:1;
+object triplex_load:1 {
+	name triplex_load:1;
 	phases "AS";
 	nominal_voltage 120.0 V;
 }
 
 object player:2 {
-	parent triplex_node:1;
+	parent triplex_load:1;
 	property voltage_1;
 	file player_1.csv;
 	loop 10;

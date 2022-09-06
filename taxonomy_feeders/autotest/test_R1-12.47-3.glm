@@ -1,7 +1,7 @@
 // $Id: R1-12.47-3.glm 
 // 12.47 kV feeder
 //*********************************************
-// validates voltages with FBS at selected load, node, meter, triplex_node, and
+// validates voltages with FBS at selected load, node, meter, triplex_load, and
 // triplex_meter objects
 // also validates power_in,power_out, and power_losses at overhead_line
 // objects
@@ -2297,7 +2297,7 @@ object triplex_meter:109 {
 }
 
 
-object triplex_node:107 {
+object triplex_load:107 {
 	name R1-12-47-3_tn_1;
 	phases BS;
 	voltage_1 -60-103.92j;
@@ -2322,7 +2322,7 @@ object triplex_node:107 {
 	};
 }
 
-object triplex_node:108 {
+object triplex_load:108 {
 	name R1-12-47-3_tn_2;
 	phases BS;
 	parent R1-12-47-3_tm_1;

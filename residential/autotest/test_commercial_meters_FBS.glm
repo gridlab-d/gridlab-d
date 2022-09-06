@@ -346,7 +346,7 @@ object triplex_meter {
 	};
 }	
 	
-object triplex_node {
+object triplex_load {
 	name tp_node_208;
 	parent tp_node_208_parent;
 	phases BS;
@@ -492,13 +492,13 @@ object triplex_load {
 	nominal_voltage 120.0;
 }
 
-object triplex_node {
+object triplex_load {
 	name extra_tp_node_208;
 	phases BS;
 	nominal_voltage 120.0;
 }	
 
-object triplex_node {
+object triplex_load {
 	name extra_tp_meter_208;
 	phases BS;
 	nominal_voltage 120.0;

@@ -726,91 +726,91 @@ object transformer {
 	configuration CS_config;
 }
 
-object triplex_node {
+object triplex_load {
 	name trip_node1; 
 	phases CS; 
 	nominal_voltage 120;        
 }
 
-object triplex_node {
+object triplex_load {
 	name trip_node2; 
 	phases AS; 
 	nominal_voltage 120;
 }
 
-object triplex_node {
+object triplex_load {
 	name trip_node3; 
 	phases BS; 
 	nominal_voltage 120;
 }
 
-object triplex_node {
+object triplex_load {
 	name trip_node4; 
 	phases CS; 
 	nominal_voltage 120;
 }
 
-object triplex_node {
+object triplex_load {
 	name trip_node5; 
 	phases BS; 
 	nominal_voltage 120;
 }
 
-object triplex_node {
+object triplex_load {
 	name trip_node6; 
 	phases CS; 
 	nominal_voltage 120;
 }
 
-object triplex_node {
+object triplex_load {
 	name trip_node7; 
 	phases BS; 
 	nominal_voltage 120;
 }
 
-object triplex_node {
+object triplex_load {
 	name trip_node8; 
 	phases CS; 
 	nominal_voltage 120;
 }
 
-object triplex_node {
+object triplex_load {
 	name trip_node9; 
 	phases AS; 
 	nominal_voltage 120;
 }
 
-object triplex_node {
+object triplex_load {
 	name trip_node10; 
 	phases AS; 
 	nominal_voltage 120;
 }
 
-object triplex_node {
+object triplex_load {
 	name trip_node11; 
 	phases BS; 
 	nominal_voltage 120;
 }
 
-object triplex_node {
+object triplex_load {
 	name trip_node12; 
 	phases CS; 
 	nominal_voltage 120;
 }
 
-object triplex_node {
+object triplex_load {
 	name trip_node13; 
 	phases AS; 
 	nominal_voltage 120;
 }
 
-object triplex_node {
+object triplex_load {
 	name trip_node14; 
 	phases BS; 
 	nominal_voltage 120;
 }
 
-object triplex_node {
+object triplex_load {
 	name trip_node15; 
 	phases CS; 
 	nominal_voltage 120;

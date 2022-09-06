@@ -183,7 +183,7 @@ object transformer {
 	to triplexload_meter;
 	configuration IEEE13_SPCT_CONFIG;
 }
-object triplex_node {
+object triplex_load {
 	name triplexLoad;
 	phases "AS";
 	nominal_voltage 120.0;

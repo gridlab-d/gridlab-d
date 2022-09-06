@@ -116,7 +116,7 @@ object transformer {
      name _center_tap_transformer_A;
      phases AS;
      from _transformer_meter;
-     to _triplex_node_A;
+     to _triplex_load_A;
      configuration default_transformer_A;
 }
 
@@ -124,7 +124,7 @@ object transformer {
      name _center_tap_transformer_B;
      phases BS;
      from _transformer_meter;
-     to _triplex_node_B;
+     to _triplex_load_B;
      configuration default_transformer_B;
 }
 
@@ -132,30 +132,30 @@ object transformer {
      name _center_tap_transformer_C;
      phases CS;
      from _transformer_meter;
-     to _triplex_node_C;
+     to _triplex_load_C;
      configuration default_transformer_C;
 }
 
 object triplex_meter {
-     name _triplex_node_A;
+     name _triplex_load_A;
      phases AS;
      nominal_voltage 124.00;
 }
 
 object triplex_meter {
-     name _triplex_node_B;
+     name _triplex_load_B;
      phases BS;
      nominal_voltage 124.00;
 }
 
 object triplex_meter {
-     name _triplex_node_C;
+     name _triplex_load_C;
      phases CS;
      nominal_voltage 124.00;
 }
 
 object triplex_line {
-     from _triplex_node_A;
+     from _triplex_load_A;
      to _tpm_flatrate_A1;
      groupid _Triplex_Line;
      phases AS;
@@ -205,7 +205,7 @@ object house {
 }
 
 object triplex_line {
-     from _triplex_node_B;
+     from _triplex_load_B;
      to _tpm_flatrate_B2;
      groupid _Triplex_Line;
      phases BS;
@@ -255,7 +255,7 @@ object house {
 }
 
 object triplex_line {
-     from _triplex_node_B;
+     from _triplex_load_B;
      to _tpm_flatrate_B3;
      groupid _Triplex_Line;
      phases BS;
@@ -305,7 +305,7 @@ object house {
 }
 
 object triplex_line {
-     from _triplex_node_C;
+     from _triplex_load_C;
      to _tpm_flatrate_C4;
      groupid _Triplex_Line;
      phases CS;
@@ -355,7 +355,7 @@ object house {
 }
 
 object triplex_line {
-     from _triplex_node_C;
+     from _triplex_load_C;
      to _tpm_flatrate_C5;
      groupid _Triplex_Line;
      phases CS;

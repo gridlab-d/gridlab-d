@@ -77,7 +77,7 @@ object triplex_meter {
 	nominal_voltage 120.0;
 }
 
-object triplex_node {
+object triplex_load {
 	name node2;
 	phases CS;
 	nominal_voltage 120.0;

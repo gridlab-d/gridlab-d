@@ -1196,7 +1196,7 @@ object transformer {
       to R1-12-47-1_tn_21;     
       configuration transformer_configuration_3084;     
 }    
-object triplex_node {     
+object triplex_load {     
       name R1-12-47-1_tn_21;     
       phases AS;     
       voltage_1 120;     
@@ -1221,7 +1221,7 @@ object triplex_meter {
       voltage_N 0;     
       nominal_voltage 120;     
 } 
-object triplex_node {     
+object triplex_load {     
       name R1-12-47-1_tn_619;     
       phases AS;     
       parent R1-12-47-1_tm_21;     

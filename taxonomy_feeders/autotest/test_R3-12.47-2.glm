@@ -1,7 +1,7 @@
 // $Id: R3-12.47-2.glm 
 // 12.47 kV feeder
 //*********************************************
-// validates voltages with FBS at selected load, node, meter, and triplex_node/meter
+// validates voltages with FBS at selected load, node, meter, and triplex_load/meter
 // objects
 //
 // also validates power_in,power_out and power losses at selected

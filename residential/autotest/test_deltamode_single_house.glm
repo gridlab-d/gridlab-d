@@ -104,13 +104,13 @@ object triplex_meter {
 	phases BS;
 }
 
-object triplex_node {
+object triplex_load {
 	name middle_node;
 	nominal_voltage 120.0;
 	phases BS;
 }
 
-object triplex_node {
+object triplex_load {
 	name next_middle_node;
 	nominal_voltage 120.0;
 	phases BS;

@@ -152,12 +152,12 @@ object transformer {
      name center_tap_transformer_A;
      phases AS;
      from transformer_meter;
-     to triplex_node_A;
+     to triplex_load_A;
      configuration default_transformer_A;
 }
 
 object triplex_meter {
-	name triplex_node_A;
+	name triplex_load_A;
 	phases AS;
 	nominal_voltage 124.00;
 	bill_day 1;

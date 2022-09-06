@@ -190,7 +190,7 @@ object transformer {
 	};
 }
 
-object triplex_node {
+object triplex_load {
 	name trip_node1; 
 	phases AS; 
 	nominal_voltage 120;
