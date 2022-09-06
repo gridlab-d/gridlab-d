@@ -41,7 +41,7 @@ public:
 	int create();
 	int init(OBJECT *);
 	int isa(char *);
-	TIMESTAMP commit(TIMESTAMP);
+	TIMESTAMP postsync(TIMESTAMP, TIMESTAMP);
 
 	int commit(TIMESTAMP t1, double t1dbl, bool deltacall);
 
@@ -57,6 +57,8 @@ public:
     GL_ATOMIC(double, dInterval)
     GL_ATOMIC(double, dFlush_interval)
 
+	//Public this property, so it can access itself in scope
+	TIMESTAMP write_interval;
 private:
 	int write_header();
 	int read_line();
@@ -73,7 +75,6 @@ private:
 	TIMESTAMP next_write;
 	TIMESTAMP last_write;
 	TIMESTAMP last_flush;
-	TIMESTAMP write_interval;
 	TIMESTAMP flush_interval;
 	int32 write_ct;
 	TAPESTATUS tape_status; // TS_INIT/OPEN/DONE/ERROR
