@@ -17,8 +17,8 @@
 //////////////////////////////////////////////////////////////////////////
 // capacitor CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* capacitor::oclass = NULL;
-CLASS* capacitor::pclass = NULL;
+CLASS* capacitor::oclass = nullptr;
+CLASS* capacitor::pclass = nullptr;
 
 
 /**
@@ -29,12 +29,12 @@ CLASS* capacitor::pclass = NULL;
 */
 capacitor::capacitor(MODULE *mod):node(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		pclass = node::oclass;
 		
 		oclass = gl_register_class(mod, "capacitor",sizeof(capacitor),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class capacitor";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -98,13 +98,15 @@ capacitor::capacitor(MODULE *mod):node(mod)
          	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_capacitor)==NULL)
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_capacitor)==nullptr)
 			GL_THROW("Unable to publish capacitor deltamode function");
-		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
+		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==nullptr)
 			GL_THROW("Unable to publish capacitor swing-swapping function");
-		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
+		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == nullptr)
 			GL_THROW("Unable to publish capacitor swing-status check function");
-		if (gl_publish_function(oclass, "pwr_object_kmldata", (FUNCTIONADDR)capacitor_kmldata) == NULL)
+		if (gl_publish_function(oclass, "pwr_object_shunt_update", (FUNCTIONADDR)node_update_shunt_values) == nullptr)
+			GL_THROW("Unable to publish capacitor shunt update function");
+		if (gl_publish_function(oclass, "pwr_object_kmldata", (FUNCTIONADDR)capacitor_kmldata) == nullptr)
 			GL_THROW("Unable to publish capacitor kmldata function");
     }
 }
@@ -147,10 +149,10 @@ int capacitor::create()
 	lockout_time_left_C = 0.0;
 	last_time = 0.0;
 	cap_nominal_voltage = 0.0;
-	RemoteSensor = NULL;
-	SecondaryRemote=NULL;
-	RNode = NULL;
-	RLink = NULL;
+	RemoteSensor = nullptr;
+	SecondaryRemote=nullptr;
+	RNode = nullptr;
+	RLink = nullptr;
 	VArVals[0] = VArVals[1] = VArVals[2] = 0.0;
 	CurrentVals[0] = CurrentVals[1] = CurrentVals[2] = 0.0;
 	voltage_center = -1.0;
@@ -166,28 +168,28 @@ int capacitor::create()
 	deltamode_reiter_request = false;	//By default deltamode is considered to not be running
 
 	//API/mapping variables
-	RNode_voltage[0] = RNode_voltage[1] = RNode_voltage[2] = NULL;
-	RNode_voltaged[0] = RNode_voltaged[1] = RNode_voltaged[2] = NULL;
-	RLink_indiv_power_in[0] = RLink_indiv_power_in[1] = RLink_indiv_power_in[2] = NULL;
-	RLink_current_in[0] = RLink_current_in[1] = RLink_current_in[2] = NULL;
-	RLink_calculate_power_fxn = NULL;
+	RNode_voltage[0] = RNode_voltage[1] = RNode_voltage[2] = nullptr;
+	RNode_voltaged[0] = RNode_voltaged[1] = RNode_voltaged[2] = nullptr;
+	RLink_indiv_power_in[0] = RLink_indiv_power_in[1] = RLink_indiv_power_in[2] = nullptr;
+	RLink_current_in[0] = RLink_current_in[1] = RLink_current_in[2] = nullptr;
+	RLink_calculate_power_fxn = nullptr;
 
 	return result;
 }
 
 int capacitor::init(OBJECT *parent)
 {
-	gld_property *pTempProperty;
-	gld_wlock *test_rlock;
+	gld_property *pTempProperty = nullptr;
+	gld_wlock *test_rlock = nullptr;
 	set temp_phases;
-	OBJECT *temp_obj_link;
+	OBJECT *temp_obj_link = nullptr;
 	int result = node::init();
 
 	OBJECT *obj = OBJECTHDR(this);
 
-	if ((control == VARVOLT) && (SecondaryRemote!=NULL))	//Something set in the secondary sensor location & VARVOLT scheme
+	if ((control == VARVOLT) && (SecondaryRemote!=nullptr))	//Something set in the secondary sensor location & VARVOLT scheme
 	{
-		if (RemoteSensor==NULL)	//But nothing in the first
+		if (RemoteSensor==nullptr)	//But nothing in the first
 		{
 			GL_THROW("Please set the remote sensing location on capacitor:%d under \"remote_sense\"",obj->id);
 			/*  TROUBLESHOOT
@@ -223,11 +225,11 @@ int capacitor::init(OBJECT *parent)
 			}
 		}
 	}
-	else if (((control==VARVOLT) || (control==CURRENT)) && (SecondaryRemote==NULL) && (RemoteSensor != NULL) && (gl_object_isa(RemoteSensor,"link","powerflow") || gl_object_isa(RemoteSensor,"network_interface")))	//VAR-VOLT scheme, one sensor defined
+	else if (((control==VARVOLT) || (control==CURRENT)) && (SecondaryRemote==nullptr) && (RemoteSensor != nullptr) && (gl_object_isa(RemoteSensor,"link","powerflow") || gl_object_isa(RemoteSensor,"network_interface")))	//VAR-VOLT scheme, one sensor defined
 	{
 		RLink = RemoteSensor;
 	}
-	else if (SecondaryRemote != NULL)	//Should only be populated for VARVOLT scheme,
+	else if (SecondaryRemote != nullptr)	//Should only be populated for VARVOLT scheme,
 	{
 		gl_warning("Capacitor:%d has a secondary sensor specified, but is not in VARVOLT control.  This will be ignored.",obj->id);
 		/*  TROUBLESHOOT
@@ -236,7 +238,7 @@ int capacitor::init(OBJECT *parent)
 		*/
 	}
 
-	if ((RemoteSensor != NULL) && (control != VARVOLT))	//Something is specified
+	if ((RemoteSensor != nullptr) && (control != VARVOLT))	//Something is specified
 	{
 		if (gl_object_isa(RemoteSensor,"node","powerflow"))
 		{
@@ -260,21 +262,21 @@ int capacitor::init(OBJECT *parent)
 		}
 	}
 
-	if ((RLink == NULL) && (control != VARVOLT))
+	if ((RLink == nullptr) && (control != VARVOLT))
 	{
-		if (parent != NULL) {
+		if (parent != nullptr) {
 			RLink = parent;
 		}
 	}
 
 	//If RLink is assigned, make sure we aren't the "TO" end
-	if ((RLink != NULL) && (gl_object_isa(RLink,"link","powerflow")) && (control != MANUAL) && (control != VOLT))
+	if ((RLink != nullptr) && (gl_object_isa(RLink,"link","powerflow")) && (control != MANUAL) && (control != VOLT))
 	{
 		//Double check that the RLink->to isn't us - this will cause some issues with FBS
 		pTempProperty = new gld_property(RLink,"to");
 
 		//Make sure it is valid
-		if ((pTempProperty->is_valid() != true) || (pTempProperty->is_objectref() != true))
+		if (!pTempProperty->is_valid() || !pTempProperty->is_objectref())
 		{
 			GL_THROW("capacitor:%d - %s - Failed to map remote_sense object properties for checks",obj->id,(obj->name?obj->name:"Unnamed"));
 			/*  TROUBLESHOOT
@@ -321,9 +323,9 @@ int capacitor::init(OBJECT *parent)
 		*/
 
 	//Calculate capacitor values as admittance - handling of Delta - Wye conversion will be handled later (if needed)
-	cap_value[0] = complex(0,capacitor_A/(cap_nominal_voltage * cap_nominal_voltage));
-	cap_value[1] = complex(0,capacitor_B/(cap_nominal_voltage * cap_nominal_voltage));
-	cap_value[2] = complex(0,capacitor_C/(cap_nominal_voltage * cap_nominal_voltage));
+	cap_value[0] = gld::complex(0,capacitor_A/(cap_nominal_voltage * cap_nominal_voltage));
+	cap_value[1] = gld::complex(0,capacitor_B/(cap_nominal_voltage * cap_nominal_voltage));
+	cap_value[2] = gld::complex(0,capacitor_C/(cap_nominal_voltage * cap_nominal_voltage));
 
 	if ((control == VOLT) && ((voltage_set_high == 0) || (voltage_set_low == 0)))
 		gl_warning("Capacitor:%d does not have one or both of its voltage set points set.",obj->id);
@@ -353,7 +355,7 @@ int capacitor::init(OBJECT *parent)
 		the capacitor will not function and will effectively perform no action.
 		*/
 
-	if (((control == VAR) || (control == VARVOLT) || (control==CURRENT)) && (RLink == NULL))
+	if (((control == VAR) || (control == VARVOLT) || (control==CURRENT)) && (RLink == nullptr))
 		GL_THROW("VAR, VARVOLT, or CURRENT control on capacitor:%d requires a remote link to monitor.",obj->id);
 		/*  TROUBLESHOOT
 		For VAR, VARVOLT, or CURRENT control to work on the capacitor, a remote line must be specified to monitor reactive power flow.  Without this, no operations will
@@ -429,7 +431,7 @@ int capacitor::init(OBJECT *parent)
 		pTempProperty = new gld_property(RLink,"phases");
 
 		//Make sure it worked
-		if ((pTempProperty->is_valid() != true) || (pTempProperty->is_set() != true))
+		if (!pTempProperty->is_valid() || !pTempProperty->is_set())
 		{
 			GL_THROW("Capacitor:%d - %s - Unable to map phases for remote link object",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/* TROUBLESHOOT
@@ -455,7 +457,7 @@ int capacitor::init(OBJECT *parent)
 			*/
 		}
 	}
-	else if (((control==VOLT) || (control==VARVOLT)) && (RNode != NULL))	//RNode check
+	else if (((control==VOLT) || (control==VARVOLT)) && (RNode != nullptr))	//RNode check
 	{
 		//Pull the RNode phases to check
 		pTempProperty = new gld_property(RNode,"phases");
@@ -487,7 +489,7 @@ int capacitor::init(OBJECT *parent)
 			*/
 		}
 	}
-	else if (((control==VOLT) || (control==VARVOLT)) && (RNode == NULL) && ((phases & pt_phase) != pt_phase))	//Self node check
+	else if (((control==VOLT) || (control==VARVOLT)) && (RNode == nullptr) && ((phases & pt_phase) != pt_phase))	//Self node check
 	{
 		GL_THROW("One of the monitored node phases for capacitor:%d does not exist",obj->id);
 		/*  TROUBLESHOOT
@@ -504,7 +506,7 @@ int capacitor::init(OBJECT *parent)
 		RLink_calculate_power_fxn = (FUNCTIONADDR)(gl_get_function(RLink,"update_power_pwr_object"));
 
 		//Check it
-		if (RLink_calculate_power_fxn == NULL)
+		if (RLink_calculate_power_fxn == nullptr)
 		{
 			GL_THROW("Capacitor:%d - %s - Unable to map link power calculation function",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
@@ -516,7 +518,7 @@ int capacitor::init(OBJECT *parent)
 	//Default else -- it should already be nulled
 
 	//Map sub-object properties, if they exist
-	if (RLink != NULL)
+	if (RLink != nullptr)
 	{
 		//Map to the property of interest - power_in_A
 		if (gl_object_isa(RLink, "link", "powerflow")) {
@@ -608,7 +610,7 @@ int capacitor::init(OBJECT *parent)
 	//Default else - not need to map it
 
 	//Do the same for the RNode
-	if (RNode != NULL)
+	if (RNode != nullptr)
 	{
 		//Map to the property of interest - voltage_A
 		RNode_voltage[0] = new gld_property(RNode,"voltage_A");
@@ -724,7 +726,7 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 		}//End time_to_change check
 		else;
 
-		if (NotFirstIteration==false)	//Force a reiteration on the very first pass, no matter what
+		if (!NotFirstIteration)	//Force a reiteration on the very first pass, no matter what
 		{
 			result = t0;
 			time_to_change = -1;
@@ -732,9 +734,9 @@ TIMESTAMP capacitor::sync(TIMESTAMP t0)
 		}
 		//Defaulted else, not the first iteration
 
-		if ((solver_method == SM_NR) && (Phase_Mismatch == true))	//Kludgy test to get to reiteratte - DELETE ME OR FIX ME!
+		if ((solver_method == SM_NR) && Phase_Mismatch)	//Kludgy test to get to reiteratte - DELETE ME OR FIX ME!
 		{
-			if ((Iteration_Toggle == true) && (NR_cycle_cap == true))
+			if (Iteration_Toggle && NR_cycle_cap)
 			{
 				result = t0;
 				NR_cycle_cap = false;
@@ -784,8 +786,8 @@ bool capacitor::cap_sync_fxn(double time_value)
 	//Check by status
 	if (service_status == ND_IN_SERVICE)
 	{
-		complex VoltVals[3];
-		complex temp_shunt[3];
+		gld::complex VoltVals[3];
+		gld::complex temp_shunt[3];
 
 		//Update time trackers
 		time_to_change -= (time_value - last_time);
@@ -861,7 +863,7 @@ bool capacitor::cap_sync_fxn(double time_value)
 			{
 				if ((pt_phase & PHASE_D) != (PHASE_D))	//See if we are interested in L-N or L-L voltages
 				{
-					if (RNode == NULL)	//L-N voltages
+					if (RNode == nullptr)	//L-N voltages
 					{
 						VoltVals[0] = voltage[0];
 						VoltVals[1] = voltage[1];
@@ -876,7 +878,7 @@ bool capacitor::cap_sync_fxn(double time_value)
 				}
 				else				//L-L voltages
 				{
-					if (RNode == NULL)
+					if (RNode == nullptr)
 					{
 						VoltVals[0] = voltaged[0];
 						VoltVals[1] = voltaged[1];
@@ -1027,13 +1029,13 @@ bool capacitor::cap_sync_fxn(double time_value)
 							}
 							else if ((control_level == INDIVIDUAL) && (lockout_state_change[0] | lockout_state_change[1] | lockout_state_change[2]))	//Individual control
 							{
-								if (lockout_state_change[0]==true)
+								if (lockout_state_change[0])
 									lockout_time_left_A = lockout_time;
 
-								if (lockout_state_change[1]==true)
+								if (lockout_state_change[1])
 									lockout_time_left_B = lockout_time;
 
-								if (lockout_state_change[2]==true)
+								if (lockout_state_change[2])
 									lockout_time_left_C = lockout_time;
 							}
 							else;
@@ -1171,7 +1173,7 @@ bool capacitor::cap_sync_fxn(double time_value)
 
 				if (control==MANUAL)
 				{
-					if ((bank_A | bank_B | bank_C) == true)
+					if (bank_A | bank_B | bank_C)
 						switchA_state_Next = switchB_state_Next = switchC_state_Next = CLOSED;	//Bank control, close them all
 					else
 						switchA_state_Next = switchB_state_Next = switchC_state_Next = OPEN;	//Bank control, open them all (this should never be an issue)
@@ -1182,7 +1184,7 @@ bool capacitor::cap_sync_fxn(double time_value)
 				}
 				else	//Other
 				{
-					if ((bank_A | bank_B | bank_C) == true)
+					if (bank_A | bank_B | bank_C)
 						switchA_state_Next = switchB_state_Next = switchC_state_Next = CLOSED;	//Bank control, close them all
 					else
 						switchA_state_Next = switchB_state_Next = switchC_state_Next = OPEN;	//Bank control, open them all (this should never be an issue)
@@ -1218,8 +1220,8 @@ bool capacitor::cap_sync_fxn(double time_value)
 		}
 		else if (((phases_connected & PHASE_D) == PHASE_D) && ((phases & PHASE_D) != PHASE_D))	//Wye connected node, but Delta connected Cap
 		{
-			complex cap_temp[3];
-			complex numer;
+			gld::complex cap_temp[3];
+			gld::complex numer;
 
 			cap_temp[0] = cap_temp[1] = cap_temp[2] = 0.0;
 
@@ -1247,7 +1249,7 @@ bool capacitor::cap_sync_fxn(double time_value)
 			a bug report with your code.
 			*/
 
-		if (Phase_Mismatch==true)	//On/offs are handled above, all must be turned on for here! (Delta-Wye/Wye-Delta type conversions)
+		if (Phase_Mismatch)	//On/offs are handled above, all must be turned on for here! (Delta-Wye/Wye-Delta type conversions)
 		{
 			shunt[0] = temp_shunt[0];
 			shunt[1] = temp_shunt[1];
@@ -1257,13 +1259,13 @@ bool capacitor::cap_sync_fxn(double time_value)
 		{
 			//Perform actual switching operation
 			if ((phases_connected & (PHASE_A)) == PHASE_A)
-				shunt[0] = switchA_state==CLOSED ? temp_shunt[0] : complex(0.0);
+				shunt[0] = switchA_state==CLOSED ? temp_shunt[0] : gld::complex(0.0);
 				
 			if ((phases_connected & (PHASE_B)) == PHASE_B)
-				shunt[1] = switchB_state==CLOSED ? temp_shunt[1] : complex(0.0);
+				shunt[1] = switchB_state==CLOSED ? temp_shunt[1] : gld::complex(0.0);
 
 			if ((phases_connected & (PHASE_C)) == PHASE_C)
-				shunt[2] = switchC_state==CLOSED ? temp_shunt[2] : complex(0.0);
+				shunt[2] = switchC_state==CLOSED ? temp_shunt[2] : gld::complex(0.0);
 		}
 	}//End in service
 	else //Out-of-service
@@ -1279,13 +1281,13 @@ bool capacitor::cap_sync_fxn(double time_value)
 
 		//Perform actual switching operation
 		if ((phases_connected & (PHASE_A)) == PHASE_A)
-			shunt[0] = complex(0.0);
+			shunt[0] = gld::complex(0.0);
 			
 		if ((phases_connected & (PHASE_B)) == PHASE_B)
-			shunt[1] = complex(0.0);
+			shunt[1] = gld::complex(0.0);
 
 		if ((phases_connected & (PHASE_C)) == PHASE_C)
-			shunt[2] = complex(0.0);
+			shunt[2] = gld::complex(0.0);
 	}//End Out of service
 
 	//Return a status-type flag
@@ -1449,7 +1451,7 @@ int capacitor::cap_prePost_fxn(double time_value)
 double capacitor::cap_postPost_fxn(double result, double time_value)
 {
 	CAPSWITCH cap_A_test_state, cap_B_test_state, cap_C_test_state;
-	complex VoltVals[3];
+	gld::complex VoltVals[3];
 	int return_status;
 	OBJECT *obj = OBJECTHDR(this);
 
@@ -1458,7 +1460,7 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 		READLOCK_OBJECT(RLink);
 
 		//Force the link to do an update (will be ignored first run anyways (zero))
-		if (RLink_calculate_power_fxn != NULL) {
+		if (RLink_calculate_power_fxn != nullptr) {
 			return_status = ((int (*)(OBJECT *))(*RLink_calculate_power_fxn))(RLink);
 		} else {
 			return_status = 1;
@@ -1521,13 +1523,13 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 			}
 
 			//Check and see if anything changed.  If so, reiterate.
-			if ((Iteration_Toggle == false) && (switchA_state_Req_Next != cap_A_test_state))
+			if (!Iteration_Toggle && (switchA_state_Req_Next != cap_A_test_state))
 				result = time_value;
 
-			if ((Iteration_Toggle == false) && (switchB_state_Req_Next != cap_B_test_state))
+			if (!Iteration_Toggle && (switchB_state_Req_Next != cap_B_test_state))
 				result = time_value;
 
-			if ((Iteration_Toggle == false) && (switchC_state_Req_Next != cap_C_test_state))
+			if (!Iteration_Toggle && (switchC_state_Req_Next != cap_C_test_state))
 				result = time_value;
 
 			//See if we've already requested a reiteration
@@ -1536,7 +1538,7 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 				//Update voltage values
 				if ((pt_phase & PHASE_D) != (PHASE_D))	//See if we are interested in L-N or L-L voltages
 				{
-					if (RNode == NULL)	//L-N voltages
+					if (RNode == nullptr)	//L-N voltages
 					{
 						VoltVals[0] = voltage[0];
 						VoltVals[1] = voltage[1];
@@ -1551,7 +1553,7 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 				}
 				else				//L-L voltages
 				{
-					if (RNode == NULL)
+					if (RNode == nullptr)
 					{
 						VoltVals[0] = voltaged[0];
 						VoltVals[1] = voltaged[1];
@@ -1654,13 +1656,13 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 				}
 
 				//Check VARVOLT updates to see if a reiteration is needed
-				if ((Iteration_Toggle == false) && (switchA_state_Req_Next != cap_A_test_state))
+				if (!Iteration_Toggle && (switchA_state_Req_Next != cap_A_test_state))
 					result = time_value;
 
-				if ((Iteration_Toggle == false) && (switchB_state_Req_Next != cap_B_test_state))
+				if (!Iteration_Toggle && (switchB_state_Req_Next != cap_B_test_state))
 					result = time_value;
 
-				if ((Iteration_Toggle == false) && (switchC_state_Req_Next != cap_C_test_state))
+				if (!Iteration_Toggle && (switchC_state_Req_Next != cap_C_test_state))
 					result = time_value;
 
 			}//end VARVOLT mode extra logic
@@ -1710,13 +1712,13 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 			}
 
 			//Check capacitor changes - see if a reiteration is needed
-			if ((Iteration_Toggle == false) && (switchA_state_Req_Next != cap_A_test_state))
+			if (!Iteration_Toggle && (switchA_state_Req_Next != cap_A_test_state))
 				result = time_value;
 
-			if ((Iteration_Toggle == false) && (switchB_state_Req_Next != cap_B_test_state))
+			if (!Iteration_Toggle && (switchB_state_Req_Next != cap_B_test_state))
 				result = time_value;
 
-			if ((Iteration_Toggle == false) && (switchC_state_Req_Next != cap_C_test_state))
+			if (!Iteration_Toggle && (switchC_state_Req_Next != cap_C_test_state))
 				result = time_value;
 		}
 		//Defaulted else - FBS seems to behave okay (forces an iteration anyways)
@@ -1731,7 +1733,7 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 		//Update voltage values
 		if ((pt_phase & PHASE_D) != (PHASE_D))	//See if we are interested in L-N or L-L voltages
 		{
-			if (RNode == NULL)	//L-N voltages
+			if (RNode == nullptr)	//L-N voltages
 			{
 				VoltVals[0] = voltage[0];
 				VoltVals[1] = voltage[1];
@@ -1746,7 +1748,7 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 		}
 		else				//L-L voltages
 		{
-			if (RNode == NULL)
+			if (RNode == nullptr)
 			{
 				VoltVals[0] = voltaged[0];
 				VoltVals[1] = voltaged[1];
@@ -1820,13 +1822,13 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 		}
 
 		//Check to see if the voltage update needs a reiteration
-		if ((Iteration_Toggle == false) && (switchA_state_Req_Next != cap_A_test_state))
+		if (!Iteration_Toggle && (switchA_state_Req_Next != cap_A_test_state))
 			result = time_value;
 
-		if ((Iteration_Toggle == false) && (switchB_state_Req_Next != cap_B_test_state))
+		if (!Iteration_Toggle && (switchB_state_Req_Next != cap_B_test_state))
 			result = time_value;
 
-		if ((Iteration_Toggle == false) && (switchC_state_Req_Next != cap_C_test_state))
+		if (!Iteration_Toggle && (switchC_state_Req_Next != cap_C_test_state))
 			result = time_value;
 
 	}	//End VOLT mode under NR extra logic
@@ -1839,7 +1841,7 @@ double capacitor::cap_postPost_fxn(double result, double time_value)
 //Used by VVC to bypass private variable restrictions, as well as capacitor internal delays
 void capacitor::toggle_bank_status(bool des_status){
 
-	if (des_status==true)	//We want to go to a closed state
+	if (des_status)	//We want to go to a closed state
 	{
 		if ((phases_connected & PHASE_A)  == PHASE_A)
 		{
@@ -1904,7 +1906,7 @@ SIMULATIONMODE capacitor::inter_deltaupdate_capacitor(unsigned int64 delta_time,
 	curr_time_value = gl_globaldeltaclock;
 
 	//Update time tracking variable - mostly for GFA functionality calls
-	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
+	if ((iteration_count_val==0) && !interupdate_pos) //Only update timestamp tracker on first iteration
 	{
 		//Update tracking variable
 		prev_time_dbl = gl_globaldeltaclock;
@@ -1927,13 +1929,13 @@ SIMULATIONMODE capacitor::inter_deltaupdate_capacitor(unsigned int64 delta_time,
 	}
 
 	//Perform the GFA update, if enabled
-	if ((GFA_enable == true) && (iteration_count_val == 0) && (interupdate_pos == false))	//Always just do on the first pass
+	if (GFA_enable && (iteration_count_val == 0) && !interupdate_pos)	//Always just do on the first pass
 	{
 		//Do the checks
 		GFA_Update_time = perform_GFA_checks(deltat);
 	}
 
-	if (interupdate_pos == false)	//Before powerflow call
+	if (!interupdate_pos)	//Before powerflow call
 	{
 		//Call presync-equivalent items
 		NR_node_presync_fxn(0);
@@ -1947,9 +1949,9 @@ SIMULATIONMODE capacitor::inter_deltaupdate_capacitor(unsigned int64 delta_time,
 		//Perform appropriate updates - appears to be associated with action counting
 		if (service_status == ND_IN_SERVICE)
 		{
-			if (Phase_Mismatch == true)	//Kludgy test to get to reiterate
+			if (Phase_Mismatch)	//Kludgy test to get to reiterate
 			{
-				if ((Iteration_Toggle == true) && (NR_cycle_cap == true))
+				if (Iteration_Toggle && NR_cycle_cap)
 				{
 					deltamode_reiter_request = true;	//Was a return t0 here -- force a reiteration to match behavior
 					NR_cycle_cap = false;
@@ -1998,7 +2000,7 @@ SIMULATIONMODE capacitor::inter_deltaupdate_capacitor(unsigned int64 delta_time,
 		result_dbl = cap_postPost_fxn(result_dbl,curr_time_value);
 
 		//See what kind of exit it was -- if we need to reiterate or not (to match QSTS behavior)
-		if ((result_dbl == curr_time_value) || (deltamode_reiter_request == true))
+		if ((result_dbl == curr_time_value) || deltamode_reiter_request)
 		{
 			//Set the tracking flag to false, just in case
 			deltamode_reiter_request = false;
@@ -2009,7 +2011,7 @@ SIMULATIONMODE capacitor::inter_deltaupdate_capacitor(unsigned int64 delta_time,
 
 		//See if GFA functionality is required, since it may require iterations or "continance"
 		//Not sure this really is needed in capacitors, but whatever
-		if (GFA_enable == true)
+		if (GFA_enable)
 		{
 			//See if our return is value
 			if ((GFA_Update_time > 0.0) && (GFA_Update_time < 1.7))
@@ -2045,7 +2047,7 @@ EXPORT int create_capacitor(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(capacitor::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			capacitor *my = OBJECTDATA(*obj,capacitor);
 			gl_set_parent(*obj,parent);

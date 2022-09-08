@@ -54,9 +54,9 @@ typedef struct {
 	gld_property *voltage_A_prop;
 	gld_property *voltage_B_prop;
 	gld_property *voltage_C_prop;
-	complex voltage_A;
-	complex voltage_B;
-	complex voltage_C;
+	gld::complex voltage_A;
+	gld::complex voltage_B;
+	gld::complex voltage_C;
 	double nominal_voltage;
 } NODE_VARS;
 
@@ -68,10 +68,10 @@ typedef struct {
 	gld_property *power_out_A_prop;
 	gld_property *power_out_B_prop;
 	gld_property *power_out_C_prop;
-	complex power_in;
-	complex power_out_A;
-	complex power_out_B;
-	complex power_out_C;
+	gld::complex power_in;
+	gld::complex power_out_A;
+	gld::complex power_out_B;
+	gld::complex power_out_C;
 	enumeration status_val;
 } SWITCH_VARS;
 

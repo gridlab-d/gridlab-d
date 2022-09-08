@@ -175,30 +175,26 @@ public:
 	double efficiency;
 
 	double Max_P;//< maximum real power capacity in kW
-	complex V_Max;
-	complex I_Max;
+	gld::complex V_Max;
+	gld::complex I_Max;
 	double E_Max;
 
 	double base_efficiency;
 
-	complex V_Out;
-	complex I_Out;
-	complex VA_Out;
-	complex I_In;
-	complex V_Internal;
-	complex I_Internal;
-	complex VA_Internal;
-	complex I_Prev;
+	gld::complex V_Out;
+	gld::complex I_Out;
+	gld::complex VA_Out;
+	gld::complex I_In;
+	gld::complex V_Internal;
+	gld::complex I_Internal;
+	gld::complex VA_Internal;
+	gld::complex I_Prev;
 	double margin;
 	double E_Next;
 
 	bool recalculate;
 
 	//*** End LEGACY model parameters ***//
-
-	//********** DEPRECATED variables - Remove on next release ****************//
-	double Rated_kVA; //< nominal capacity in kVA
-	complex V_In;
 
 public:
 	/* required implementations */

@@ -12,16 +12,16 @@
 //////////////////////////////////////////////////////////////////////////
 // fault_check CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* fault_check::oclass = NULL;
-CLASS* fault_check::pclass = NULL;
+CLASS* fault_check::oclass = nullptr;
+CLASS* fault_check::pclass = nullptr;
 
 fault_check::fault_check(MODULE *mod) : powerflow_object(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		pclass = powerflow_object::oclass;
 		oclass = gl_register_class(mod,"fault_check",sizeof(fault_check),PC_BOTTOMUP|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class fault_check";
 		else
 			oclass->trl = TRL_DEMONSTRATED;
@@ -40,13 +40,13 @@ fault_check::fault_check(MODULE *mod) : powerflow_object(mod)
 			PT_bool,"grid_association",PADDR(grid_association_mode),PT_DESCRIPTION,"Flag to indicate if multiple, distinct grids are allowed in a GLM, or if anything not attached to the master swing is removed",
 			PT_object,"eventgen_object",PADDR(rel_eventgen),PT_DESCRIPTION,"Link to generic eventgen object to handle unexpected faults",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
-			if (gl_publish_function(oclass,"reliability_alterations",(FUNCTIONADDR)powerflow_alterations)==NULL)
+			if (gl_publish_function(oclass,"reliability_alterations",(FUNCTIONADDR)powerflow_alterations)==nullptr)
 				GL_THROW("Unable to publish remove from service function");
-			if (gl_publish_function(oclass,"handle_sectionalizer",(FUNCTIONADDR)handle_sectionalizer)==NULL)
+			if (gl_publish_function(oclass,"handle_sectionalizer",(FUNCTIONADDR)handle_sectionalizer)==nullptr)
 				GL_THROW("Unable to publish sectionalizer special function");
-			if (gl_publish_function(oclass,"island_removal_function",(FUNCTIONADDR)powerflow_disable_island)==NULL)
+			if (gl_publish_function(oclass,"island_removal_function",(FUNCTIONADDR)powerflow_disable_island)==nullptr)
 				GL_THROW("Unable to publish island deletion function");
-			if (gl_publish_function(oclass,"rescan_topology",(FUNCTIONADDR)powerflow_rescan_topo)==NULL)
+			if (gl_publish_function(oclass,"rescan_topology",(FUNCTIONADDR)powerflow_rescan_topo)==nullptr)
 				GL_THROW("Unable to publish the topology rescan function");
     }
 }
@@ -71,9 +71,9 @@ int fault_check::create(void)
 
 	reliability_search_mode = true;	//By default (and for speed), assumes the system is truly, strictly radial
 
-	rel_eventgen = NULL;		//No object linked by default
+	rel_eventgen = nullptr;		//No object linked by default
 
-	restoration_fxn = NULL;		//No restoration function mapped by default
+	restoration_fxn = nullptr;		//No restoration function mapped by default
 
 	grid_association_mode = false;	//By default, we go to normal "Highlander" grid (there can be only one!)
 
@@ -87,10 +87,37 @@ int fault_check::init(OBJECT *parent)
 	OBJECT *obj = OBJECTHDR(this);
 	FILE *FPoint;
 
+	//Register us in the global - so faults know who they gonna call
+	if (fault_check_object == nullptr)	//Make sure we're the only one
+	{
+		fault_check_object = obj;	//Link us up!
+	}
+	else
+	{
+		//Make sure the existing one is not us - just in case the deferred init fired
+		if (fault_check_object != obj)
+		{
+			GL_THROW("Only one fault_check object is supported at this time");
+			/*  TROUBLESHOOT
+			At this time, a .GLM file can only contain one fault_check object.  Future implementations
+			may change this.  Please restrict yourself to one fault_check object in the mean time.
+			*/
+		}
+		//Default else - it's set and it is us, so just proceed.
+	}
+
 	if (solver_method == SM_NR)
 	{
-		//Set the rank to be 1 below swing - lets it execute before NR on synch
-		gl_set_rank(obj,5);	//swing-1
+		//Swing tracking variable - we have to be one below the SWING, so make sure it settled
+		if (NR_swing_rank_set)
+		{
+			gl_set_rank(obj,(NR_expected_swing_rank-1));	//swing-1
+		}
+		else
+		{
+			//Not set yet, deferred init
+			return 2;
+		}
 	}
 	else
 	{
@@ -101,23 +128,8 @@ int fault_check::init(OBJECT *parent)
 		*/
 	}
 
-	//Register us in the global - so faults know who they gonna call
-	if (fault_check_object == NULL)	//Make sure we're the only one
-	{
-		fault_check_object = obj;	//Link us up!
-	}
-	else
-	{
-		GL_THROW("Only one fault_check object is supported at this time");
-		/*  TROUBLESHOOT
-		At this time, a .GLM file can only contain one fault_check object.  Future implementations
-		may change this.  Please restrict yourself to one fault_check object in the mean time.
-		*/
-	}
-	
-
 	//Make sure the eventgen_object is an actual eventgen object.
-	if(rel_eventgen != NULL){
+	if(rel_eventgen != nullptr){
 		if(!gl_object_isa(rel_eventgen,"eventgen")){
 			gl_error("fault_check:%s %s is not an eventgen object. Please specify the name of an eventgen object.",obj->name,rel_eventgen->name);
 			return 0;
@@ -139,9 +151,9 @@ int fault_check::init(OBJECT *parent)
 	}
 
 	//See if grid association is on - if so, force teh mesh searching method
-	if (grid_association_mode == true)
+	if (grid_association_mode)
 	{
-		if (reliability_search_mode == true)
+		if (reliability_search_mode)
 		{
 			gl_warning("fault_check:%s was forced into meshed search mode due to multiple grids being desired",obj->name ? obj->name : "Unnamed");
 			/*  TROUBLESHOOT
@@ -154,7 +166,7 @@ int fault_check::init(OBJECT *parent)
 	}
 
 	//Do a powerflow multi_island check
-	if ((NR_island_fail_method == true) && (grid_association_mode == false))
+	if (NR_island_fail_method && !grid_association_mode)
 	{
 		gl_error("fault_check:%s - powerflow::NR_island_fail_method is set, but grid_association is not!",(obj->name?obj->name:"Unnamed"));
 		/*  TROUBLESHOOT
@@ -165,7 +177,7 @@ int fault_check::init(OBJECT *parent)
 	}
 
 	//Set powerflow global flag for checking things
-	if (reliability_search_mode == false)
+	if (!reliability_search_mode)
 	{
 		meshed_fault_checking_enabled = true;	//Let other powerflow objects know we're a mesh-based check
 	}
@@ -194,9 +206,12 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 	if (prev_time == 0)	//First run - see if restoration exists (we need it for now)
 	{
 		allocate_alterations_values(reliability_mode);
+
+		//Override tret to force a reiteration - mostly to catch "initially islanded nodes" in single runs
+		tret = t0;
 	}
 
-	if (fault_check_override_mode == true)	//Special mode -- do a single topology check and then fail
+	if (fault_check_override_mode)	//Special mode -- do a single topology check and then fail
 	{
 		perform_check = true;
 	}
@@ -204,11 +219,11 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 	{
 		perform_check = true;	//Flag for a check
 	}//end single check
-	else if ((fcheck_state == ONCHANGE) && (NR_admit_change == true))	//Admittance change has been flagged
+	else if ((fcheck_state == ONCHANGE) && NR_admit_change)	//Admittance change has been flagged
 	{
 		perform_check = true;	//Flag the check
 	}//end onchange check
-	else if ((fcheck_state == SWITCHING) && (NR_admit_change == true))	//Admittance change has been flagged
+	else if ((fcheck_state == SWITCHING) && NR_admit_change)	//Admittance change has been flagged
 	{
 		perform_check = true;
 	}
@@ -216,7 +231,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 	{
 		perform_check = true;	//Flag the check
 	}
-	else if (force_reassociation == true)
+	else if (force_reassociation)
 	{
 		perform_check = true;	//Flag the check - easist way to force the reassociation
 	}
@@ -228,16 +243,16 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 	if (perform_check)	//Each "check" is identical - split out here to avoid 3x replication
 	{
 		//See if restoration is present - if not, proceed without it
-		if ((restoration_object != NULL) && (fault_check_override_mode == false))
+		if ((restoration_object != nullptr) && !fault_check_override_mode)
 		{
 			//See if we've linked our function yet or not
-			if (restoration_fxn == NULL)
+			if (restoration_fxn == nullptr)
 			{
 				//Map it
 				restoration_fxn = (FUNCTIONADDR)(gl_get_function(restoration_object,"perform_restoration"));
 
 				//Check it
-				if (restoration_fxn == NULL)
+				if (restoration_fxn == nullptr)
 				{
 					GL_THROW("Unable to map restoration function");
 					/*  TROUBLESHOOT
@@ -248,7 +263,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 			}//End restoration function map
 
 			//Mandate "mesh mode" for this, just because I say so
-			if (reliability_search_mode == true)	//Radial
+			if (reliability_search_mode)	//Radial
 			{
 				gl_warning("fault_check interaction with restoration requires meshed checking mode - enabling this now");
 				/*  TROUBLESHOOT
@@ -277,7 +292,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 		}//End restoration object not null
 
 		//Perform the appropriate check -- occurs one more time after restoration (if it was called)
-		if (reliability_search_mode == true)
+		if (reliability_search_mode)
 		{
 			//Call the connectivity check
 			support_check(0);
@@ -294,7 +309,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 						}
 
 						//See what mode we are in - only check reliability mode if we aren't in grid association
-						if ((reliability_mode == false) && (fault_check_override_mode == false) && (grid_association_mode == false))
+						if (!reliability_mode && !fault_check_override_mode && !grid_association_mode)
 						{
 							GL_THROW("Unsupported phase on node %s",NR_busdata[index].name);
 							/*  TROUBLESHOOT
@@ -319,7 +334,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 		{
 			//Do the grid association check (if needed)
 			//****************** NOTE - is there a better way to do this with islands now -- need to do twice (pre/post) to catch stragglers! ****//
-			if (grid_association_mode == true)
+			if (grid_association_mode)
 			{
 				associate_grids();
 			}
@@ -345,7 +360,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 			support_search_links_mesh();
 
 			//Do the grid association check (if needed)
-			if (grid_association_mode == true)
+			if (grid_association_mode)
 			{
 				associate_grids();
 			}
@@ -353,10 +368,10 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 			override_output = output_check_supported_mesh();	//See if anything changed
 
 			//If full output, do an initial dump
-			if ((prev_time == 0) && (full_print_output == true) && (fcheck_state != SWITCHING))
+			if ((prev_time == 0) && full_print_output && (fcheck_state != SWITCHING))
 			{
 				//Do a write if one wasn't going to happen - don't override the flag
-				if ((override_output == false) && (output_filename[0] != '\0'))
+				if (!override_output && (output_filename[0] != '\0'))
 				{
 					write_output_file(t0,0);	//Write it
 				}
@@ -365,7 +380,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 			//Default else - not a first timestep or the mode of interest, so just go like normal
 
 			//See if anything broke
-			if (override_output == true && fcheck_state != SWITCHING)
+			if (override_output && fcheck_state != SWITCHING)
 			{
 				if (output_filename[0] != '\0')	//See if there's an output
 				{
@@ -373,7 +388,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 				}
 
 				//See what mode we are in - only "fail" if standard/legacy checking
-				if ((reliability_mode == false) && (fault_check_override_mode == false) && (grid_association_mode == false))
+				if (!reliability_mode && !fault_check_override_mode && !grid_association_mode)
 				{
 					GL_THROW("Unsupported phase on a possibly meshed node");
 					/*  TROUBLESHOOT
@@ -397,7 +412,7 @@ TIMESTAMP fault_check::sync(TIMESTAMP t0)
 	prev_time = t0;
 
 	//See if we were super-special mode
-	if (fault_check_override_mode == true)
+	if (fault_check_override_mode)
 	{
 		gl_error("fault_check:%d %s -- Special debug mode utilized, simulation terminating",obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
@@ -456,7 +471,7 @@ void fault_check::search_links(int node_int)
 						both_handled=true;
 
 					//If not handled, proceed with logic-ness
-					if (both_handled==false)
+					if (!both_handled)
 					{
 						//Figure out the indexing so we can tell what we are
 						if (from_val)	//From end
@@ -512,7 +527,7 @@ void fault_check::search_links_mesh(int node_int)
 
 	gl_verbose ("  fault_check::search_links_mesh:%s", NR_busdata[node_int].name);
 	//Check our entry mode -- if grid association mode, do this as a recursion
-	if (grid_association_mode == false)	//Nope, do "normally"
+	if (!grid_association_mode)	//Nope, do "normally"
 	{
 		//Loop through our connected nodes
 		for (index=0; index<NR_busdata[node_int].Link_Table_Size; index++)
@@ -706,7 +721,7 @@ void fault_check::support_check_mesh(void)
 	//Reset the node status list
 	reset_support_check();
 
-	if (grid_association_mode == false)	//Not needing to do grid association, use normal, inefficient method
+	if (!grid_association_mode)	//Not needing to do grid association, use normal, inefficient method
 	{
 		//Swing node has support - if the phase exists (changed for complete faults)
 		valid_phases[0] = NR_busdata[0].phases & 0x07;
@@ -728,7 +743,7 @@ void fault_check::support_check_mesh(void)
 		for (indexa=0; indexa<NR_bus_count; indexa++)
 		{
 			//See if we're a SWING node
-			if ((NR_busdata[indexa].type == 2) || ((NR_busdata[indexa].type == 3) && (NR_busdata[indexa].swing_functions_enabled == true)) || ((*NR_busdata[indexa].busflag & NF_ISSOURCE) == NF_ISSOURCE))	//SWING node, of some form
+			if ((NR_busdata[indexa].type == 2) || ((NR_busdata[indexa].type == 3) && NR_busdata[indexa].swing_functions_enabled) || ((*NR_busdata[indexa].busflag & NF_ISSOURCE) == NF_ISSOURCE))	//SWING node, of some form
 			{
 				//Check and see if we've apparently been "sourced" before
 				if ((NR_busdata[indexa].phases & 0x07) != valid_phases[indexa])	//We don't match, so something came to us, but not the other way
@@ -754,7 +769,7 @@ void fault_check::reset_support_check(void)
 	//Reset the node - 0 = unsupported, 1 = supported (not populated here), 2 = N/A (no phase there)
 	for (index=0; index<NR_bus_count; index++)
 	{
-		if (reliability_search_mode == true)	//Strictly radial
+		if (reliability_search_mode)	//Strictly radial
 		{
 			if ((NR_busdata[index].origphases & 0x04) == 0x04)	//Phase A
 			{
@@ -817,7 +832,7 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 
 	for (index=0; index<NR_bus_count; index++)	//Loop through all bus values - find the unsupported section
 	{
-		if (reliability_search_mode == true)
+		if (reliability_search_mode)
 		{
 			//Put the phases into an easier to read format
 			phase_outs = 0x00;
@@ -839,11 +854,11 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 		if (phase_outs != 0x00)	//Anything unsupported?
 		{
 			//See if the header's been written
-			if (headerwritten == false)
+			if (!headerwritten)
 			{
-				if (fault_check_override_mode == false)
+				if (!fault_check_override_mode)
 				{
-					if (deltamodeflag == true)
+					if (deltamodeflag)
 					{
 						//Convert the current time to an output
 						ret_value = gl_printtimedelta(tval_delta,deltaprint_buffer,64);
@@ -919,13 +934,13 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 	}//end bus traversion
 
 	//See if we made it here without writing a header -- if we're in special mode, indicate as much
-	if ((headerwritten == false) && (fault_check_override_mode == true))
+	if (!headerwritten && fault_check_override_mode)
 	{
 		fprintf(FPOutput,"Special debug topology check -- phase checks bypassed -- No unsupported nodes found\n\n");
 	}
 
 	//Check and see if we want supported nodes too
-	if (full_print_output == true)
+	if (full_print_output)
 	{
 		for (index=0; index<NR_bus_count; index++)	//Loop through all bus values - find the unsupported section
 		{
@@ -934,12 +949,12 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 			if (phase_outs != 0x00)	//Supported
 			{
 				//See which mode we are in
-				if (fault_check_override_mode == false)	//Standard mode
+				if (!fault_check_override_mode)	//Standard mode
 				{
 					//See if the header's been written
-					if (headerwritten == false)
+					if (!headerwritten)
 					{
-						if (deltamodeflag == true)
+						if (deltamodeflag)
 						{
 							//Convert the current time to an output
 							ret_value = gl_printtimedelta(tval_delta,deltaprint_buffer,64);
@@ -948,7 +963,7 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 							fprintf(FPOutput,"Supported at timestamp %0.9f - %s =\n",tval_delta,deltaprint_buffer);
 
 							//Check the mode -- see if we need an island summary
-							if (grid_association_mode == false)
+							if (!grid_association_mode)
 							{
 								fprintf(FPOutput,"\n");	//Extra line break
 							}
@@ -965,7 +980,7 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 
 							fprintf(FPOutput,"Supported at timestamp %lld - %04d-%02d-%02d %02d:%02d:%02d =\n",tval,temp_time.year,temp_time.month,temp_time.day,temp_time.hour,temp_time.minute,temp_time.second);
 
-							if (grid_association_mode == false)
+							if (!grid_association_mode)
 							{
 								fprintf(FPOutput,"\n");	//Extra line break
 							}
@@ -979,16 +994,15 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 						headerwritten = true;	//Flag it as written
 						supportheaderwritten = true;	//Flag intermediate as written too
 					}
-					else if (supportheaderwritten == false)	//Tiemstamp written, but not second header
+					else if (!supportheaderwritten)	//Tiemstamp written, but not second header
 					{
-						if (grid_association_mode == false)
+						if (!grid_association_mode)
 						{
 							fprintf(FPOutput,"\nSupported Nodes\n");
 						}
 						else
 						{
-						    //TODO: Review below, added a second matching int argument
-							fprintf(FPOutput,"\nSupported Nodes -- %d Islands detected = %d\n",(NR_islands_detected+1), (NR_islands_detected+1));
+							fprintf(FPOutput,"\nSupported Nodes -- %d Islands detected\n",NR_islands_detected);
 						}
 
 						supportheaderwritten = true;	//Flag intermediate as written too
@@ -997,9 +1011,9 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 				else	//Special debug mode
 				{
 					//See if anything is written
-					if (headerwritten == false)
+					if (!headerwritten)
 					{
-						if (grid_association_mode == false)
+						if (!grid_association_mode)
 						{
 							//Write it
 							fprintf(FPOutput,"Special debug topology check -- phase checks bypassed -- Supported nodes list\n\n");
@@ -1014,9 +1028,9 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 						headerwritten = true;
 						supportheaderwritten = true;
 					}
-					else if (supportheaderwritten == false)
+					else if (!supportheaderwritten)
 					{
-						if (grid_association_mode == false)
+						if (!grid_association_mode)
 						{
 							fprintf(FPOutput,"\nSupported Nodes\n");
 						}
@@ -1080,13 +1094,13 @@ void fault_check::write_output_file(TIMESTAMP tval, double tval_delta)
 
 				//Common write portions
 				//Print extra information, if needed
-				if (grid_association_mode == true)
+				if (grid_association_mode)
 				{
 					fprintf(FPOutput," - Island %d",(NR_busdata[index].island_number+1));
 				}
 
 				//See if we're a SWING-enabled bus
-				if (NR_busdata[index].swing_functions_enabled == true)
+				if (NR_busdata[index].swing_functions_enabled)
 				{
 					fprintf(FPOutput," - SWING-enabled\n");
 				}
@@ -1117,7 +1131,7 @@ void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 	}
 
 	//Check the mode
-	if (reliability_search_mode == true)	//Strictly radial assumption, continue as always
+	if (reliability_search_mode)	//Strictly radial assumption, continue as always
 	{
 		//See if the "faulting branch" is the swing node
 		if ((baselink_int == -99) || (baselink_int == -77))	//Swing or initial-type fault
@@ -1129,7 +1143,7 @@ void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 			base_bus_val = NR_branchdata[baselink_int].to;
 
 			//Assuming radial, now make the system happy by removing/restoring unsupported phases
-			if (rest_mode == true)	//Restoration
+			if (rest_mode)	//Restoration
 				NR_busdata[base_bus_val].phases |= (NR_branchdata[baselink_int].phases & 0x07);
 			else	//Removal mode
 				NR_busdata[base_bus_val].phases &= (NR_branchdata[baselink_int].phases & 0x07);
@@ -1142,7 +1156,7 @@ void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 		Alteration_Nodes[base_bus_val] = 1;
 
 		//See if the FROM side of our newly restored greatness is supported.  If it isn't, there's no point in proceeding
-		if (rest_mode == true)	//Restoration
+		if (rest_mode)	//Restoration
 		{
 			gl_verbose("fault_check: alterations support check called restoration on bus %s with phases %d",NR_busdata[base_bus_val].name, int(NR_busdata[base_bus_val].phases));
 
@@ -1165,10 +1179,10 @@ void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 	else	//Not assumed to be strictly radial, or just being safe -- check EVERYTHING
 	{
 		//See if we should even go in first
-		if (restoration_checks_active == false)
+		if (!restoration_checks_active)
 		{
 			//Now see if the restoration object and function are mapped
-			if ((restoration_object != NULL) && (restoration_fxn != NULL))
+			if ((restoration_object != nullptr) && (restoration_fxn != nullptr))
 			{
 				//Call restoration -- fault_checks will occur as part of this
 				return_val = ((int (*)(OBJECT *,int))(*restoration_fxn))(restoration_object,baselink_int);
@@ -1192,7 +1206,7 @@ void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 
 		//Do the grid association check (if needed)
 		//****************** NOTE - is there a better way to do this with islands now -- need to do twice (pre/post) to catch stragglers! ****//
-		if (grid_association_mode == true)
+		if (grid_association_mode)
 		{
 			associate_grids();
 		}
@@ -1205,14 +1219,14 @@ void fault_check::support_check_alterations(int baselink_int, bool rest_mode)
 		support_search_links_mesh();
 
 		//Do the grid association check (if needed)
-		if (grid_association_mode == true)
+		if (grid_association_mode)
 		{
 			associate_grids();
 		}
 	}//End not strictly radial assumption
 
 	//Determine if an output is desired and if we're not in restoration check mode (otherwise, it may flood the output log)
-	if ((restoration_checks_active == false) && (output_filename[0] != '\0'))
+	if (!restoration_checks_active && (output_filename[0] != '\0'))
 	{
 		//See if we're a deltamode write or not
 		if (deltatimestep_running > 0.0)
@@ -1337,12 +1351,12 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 {
 	int return_val;
 	unsigned char temp_phases;
-	OBJECT *temp_obj;
-	FUNCTIONADDR funadd = NULL;
+	OBJECT *temp_obj = nullptr;
+	FUNCTIONADDR funadd = nullptr;
 
 	gl_verbose ("  fault_check::special_object_alteration_handle:%s", NR_branchdata[branch_idx].name);
 	//See which mode we're in -- bypass if needed (might be always)
-	if (meshed_fault_checking_enabled == false)
+	if (!meshed_fault_checking_enabled)
 	{
 		//See if we're a switch - if so, call the appropriate function
 		if (NR_branchdata[branch_idx].lnk_type == 4)
@@ -1351,7 +1365,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 			temp_obj = NR_branchdata[branch_idx].obj;
 
 			//Make sure it worked
-			if (temp_obj == NULL)
+			if (temp_obj == nullptr)
 			{
 				GL_THROW("Failed to find switch object:%s for reliability manipulation",NR_branchdata[branch_idx].name);
 				/*  TROUBLESHOOT
@@ -1364,7 +1378,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 			funadd = (FUNCTIONADDR)(gl_get_function(temp_obj,"reliability_operation"));
 
 			//make sure it worked
-			if (funadd==NULL)
+			if (funadd==nullptr)
 			{
 				GL_THROW("Failed to find reliability manipulation method on object %s",NR_branchdata[branch_idx].name);
 				/*  TROUBLESHOOT
@@ -1393,7 +1407,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 			temp_obj = NR_branchdata[branch_idx].obj;
 
 			//Make sure it worked
-			if (temp_obj == NULL)
+			if (temp_obj == nullptr)
 			{
 				GL_THROW("Failed to find fuse object:%s for reliability manipulation",NR_branchdata[branch_idx].name);
 				/*  TROUBLESHOOT
@@ -1406,7 +1420,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 			funadd = (FUNCTIONADDR)(gl_get_function(temp_obj,"reliability_operation"));
 
 			//make sure it worked
-			if (funadd==NULL)
+			if (funadd==nullptr)
 			{
 				GL_THROW("Failed to find reliability manipulation method on object %s",NR_branchdata[branch_idx].name);
 				/*  TROUBLESHOOT
@@ -1435,7 +1449,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 			temp_obj = NR_branchdata[branch_idx].obj;
 
 			//Make sure it worked
-			if (temp_obj == NULL)
+			if (temp_obj == nullptr)
 			{
 				GL_THROW("Failed to find recloser object:%s for reliability manipulation",NR_branchdata[branch_idx].name);
 				/*  TROUBLESHOOT
@@ -1448,7 +1462,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 			funadd = (FUNCTIONADDR)(gl_get_function(temp_obj,"recloser_reliability_operation"));
 
 			//make sure it worked
-			if (funadd==NULL)
+			if (funadd==nullptr)
 			{
 				GL_THROW("Failed to find reliability manipulation method on object %s",NR_branchdata[branch_idx].name);
 				//defined above
@@ -1470,7 +1484,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 			temp_obj = NR_branchdata[branch_idx].obj;
 
 			//Make sure it worked
-			if (temp_obj == NULL)
+			if (temp_obj == nullptr)
 			{
 				GL_THROW("Failed to find sectionalizer object:%s for reliability manipulation",NR_branchdata[branch_idx].name);
 				/*  TROUBLESHOOT
@@ -1483,7 +1497,7 @@ void fault_check::special_object_alteration_handle(int branch_idx)
 			funadd = (FUNCTIONADDR)(gl_get_function(temp_obj,"sectionalizer_reliability_operation"));
 
 			//make sure it worked
-			if (funadd==NULL)
+			if (funadd==nullptr)
 			{
 				GL_THROW("Failed to find reliability manipulation method on object %s",NR_branchdata[branch_idx].name);
 				//Defined above
@@ -1530,7 +1544,7 @@ void fault_check::support_search_links(int node_int, int node_start, bool impact
 			from_val = false;	//Flag us as the to end (so we don't have to check it again later)
 		}
 
-		if ((node_int == node_start) && (from_val == false))	//We're the TO side of the base node, Oh Noes!
+		if ((node_int == node_start) && !from_val)	//We're the TO side of the base node, Oh Noes!
 		{
 			Alteration_Nodes[temp_branch.from] = 1;	//Flag us to prevent future issues (not sure how they'd happen)
 			continue;	//Nothing to do with this link, so I hereby render this iteration useless and proceed to skip it
@@ -1543,14 +1557,14 @@ void fault_check::support_search_links(int node_int, int node_start, bool impact
 		}
 
 		//If not handled, proceed with logic-ness
-		if (both_handled==false)
+		if (!both_handled)
 		{
 			//Figure out the indexing so we can tell what we are
 			if (from_val)	//From end
 			{
 				branch_val = temp_branch.to;
 
-				if (impact_mode == false)	//Removal time
+				if (!impact_mode)	//Removal time
 				{
 					//Make sure our FROM end is valid first - just in case
 					if (Alteration_Nodes[temp_branch.from] == 1)
@@ -1659,7 +1673,7 @@ void fault_check::support_search_links(int node_int, int node_start, bool impact
 			{
 				branch_val = temp_branch.from;
 
-				if (impact_mode == false)	//Removal time
+				if (!impact_mode)	//Removal time
 				{
 					//Make sure our TO end is valid first - just in case
 					if (Alteration_Nodes[temp_branch.to] == 1)	//Implies TO is done, but not FROM.  Basically indicates reverse flow or a mesh - not necessarily good (solver won't care)
@@ -1776,7 +1790,7 @@ void fault_check::reset_alterations_check(void)
 
 	gl_verbose ("  fault_check::reset_alterations_check");
 	//Do a check for initialization
-	if (Alteration_Nodes == NULL)
+	if (Alteration_Nodes == nullptr)
 	{
 		allocate_alterations_values(true);
 	}
@@ -1788,7 +1802,7 @@ void fault_check::reset_alterations_check(void)
 	}
 
 	//If we're in "special" mode, reset the branches too
-	if (reliability_search_mode == false)
+	if (!reliability_search_mode)
 	{
 		for (index=0; index<NR_branch_count; index++)
 		{
@@ -1805,9 +1819,9 @@ void fault_check::allocate_alterations_values(bool reliability_mode_bool)
 	
 	gl_verbose ("  fault_check::allocate_alterations_values:%d", reliability_mode_bool);
 	//Make sure we haven't been allocated before
-	if (Supported_Nodes == NULL)
+	if (Supported_Nodes == nullptr)
 	{
-		if (restoration_object==NULL && fcheck_state != SWITCHING)
+		if (restoration_object==nullptr && fcheck_state != SWITCHING)
 		{
 			gl_verbose("Restoration object not detected!");	//Put down here because the variable may not be populated in time for init
 			/*  TROUBLESHOOT
@@ -1819,7 +1833,7 @@ void fault_check::allocate_alterations_values(bool reliability_mode_bool)
 		//Create our node reference vector - one for each bus
 		Supported_Nodes = (unsigned int**)gl_malloc(NR_bus_count*sizeof(unsigned int*));
 		
-		if (Supported_Nodes == NULL)
+		if (Supported_Nodes == nullptr)
 		{
 			GL_THROW("fault_check: node status vector allocation failure");
 			/*  TROUBLESHOOT
@@ -1833,7 +1847,7 @@ void fault_check::allocate_alterations_values(bool reliability_mode_bool)
 		{
 			Supported_Nodes[index] = (unsigned int*)gl_malloc(3*sizeof(unsigned int));
 
-			if (Supported_Nodes[index] == NULL)
+			if (Supported_Nodes[index] == nullptr)
 			{
 				GL_THROW("fault_check: node status vector allocation failure");
 				//Defined above
@@ -1845,7 +1859,7 @@ void fault_check::allocate_alterations_values(bool reliability_mode_bool)
 		{
 			//Create our node reference vector - one for each bus
 			Alteration_Nodes = (char*)gl_malloc(NR_bus_count*sizeof(char));
-			if (Alteration_Nodes == NULL)
+			if (Alteration_Nodes == nullptr)
 			{
 				GL_THROW("fault_check: node alteration status vector allocation failure");
 				/*  TROUBLESHOOT
@@ -1860,7 +1874,7 @@ void fault_check::allocate_alterations_values(bool reliability_mode_bool)
 				Alteration_Links = (char*)gl_malloc(NR_branch_count*sizeof(char));
 
 				//Check it
-				if (Alteration_Links == NULL)
+				if (Alteration_Links == nullptr)
 				{
 					GL_THROW("fault_check: link alteration status vector allocation failure");
 					/*  TROUBLESHOOT
@@ -1874,7 +1888,7 @@ void fault_check::allocate_alterations_values(bool reliability_mode_bool)
 			valid_phases = (unsigned char*)gl_malloc(NR_bus_count*sizeof(unsigned char));
 
 			//Check it
-			if (valid_phases == NULL)
+			if (valid_phases == nullptr)
 			{
 				GL_THROW("fault_check: node alteration status vector allocation failure");
 				//Defined above
@@ -1898,7 +1912,7 @@ void fault_check::momentary_activation(int node_int)
 	tmp_obj = NR_busdata[node_int].obj;
 
 	//Make sure it worked
-	if (tmp_obj == NULL)
+	if (tmp_obj == nullptr)
 	{
 		GL_THROW("Failed to map node:%s during momentary interruption!",NR_busdata[node_int].name);
 		/*  TROUBLESHOOT
@@ -1915,7 +1929,7 @@ void fault_check::momentary_activation(int node_int)
 		pval = gl_get_property(tmp_obj,"customer_interrupted_secondary");
 
 		//Make sure it worked
-		if (pval == NULL)
+		if (pval == nullptr)
 		{
 			GL_THROW("Failed to map momentary outage flag on node:%s",tmp_obj->name);
 			/*  TROUBLESHOOT
@@ -2088,7 +2102,7 @@ void fault_check::associate_grids(void)
 	if (NR_islands_detected != grid_counter)
 	{
 		//See if we need to free anything first - basically, see if it already exists
-		if ((NR_powerflow.island_matrix_values != NULL) && (NR_islands_detected != 0))
+		if ((NR_powerflow.island_matrix_values != nullptr) && (NR_islands_detected != 0))
 		{
 			stat_return_val = NR_array_structure_free(&NR_powerflow,NR_islands_detected);
 
@@ -2215,7 +2229,7 @@ STATUS fault_check::disable_island(int island_number)
 	bool deltamodeflag;
 
 	//Preliminary check - see if we're even in the right mode
-	if (grid_association_mode == false)
+	if (!grid_association_mode)
 	{
 		gl_error("fault_check: an island removal call was made, but grid_association is set to false!");
 		/*  TROUBLESHOOT
@@ -2321,7 +2335,7 @@ STATUS fault_check::disable_island(int island_number)
 STATUS fault_check::rescan_topology(int bus_that_called_reset)
 {
 	//Make sure this wasn't somehow called while solver_NR is working
-	if (NR_solver_working == true)
+	if (NR_solver_working)
 	{
 		//If it was, just return a failure -- let the calling object deal with it
 		return FAILED;
@@ -2351,7 +2365,7 @@ EXPORT int create_fault_check(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(fault_check::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			fault_check *my = OBJECTDATA(*obj,fault_check);
 			gl_set_parent(*obj,parent);
@@ -2436,7 +2450,7 @@ EXPORT double handle_sectionalizer(OBJECT *thisobj, int sectionalizer_number)
 	loop_complete = false;
 
 	//Big loop
-	while (loop_complete == false)
+	while (!loop_complete)
 	{
 		//set tracking flag
 		proper_exit = false;
@@ -2457,7 +2471,7 @@ EXPORT double handle_sectionalizer(OBJECT *thisobj, int sectionalizer_number)
 					tmp_obj = NR_branchdata[branch_val].obj;
 
 					//Make sure it worked
-					if (tmp_obj == NULL)
+					if (tmp_obj == nullptr)
 					{
 						GL_THROW("Failure to map recloser object %s during sectionalizer handling",NR_branchdata[branch_val].name);
 						/*  TROUBLESHOOT
@@ -2471,7 +2485,7 @@ EXPORT double handle_sectionalizer(OBJECT *thisobj, int sectionalizer_number)
 					Pval = gl_get_property(tmp_obj,"number_of_tries");
 
 					//Make sure it worked
-					if (Pval == NULL)
+					if (Pval == nullptr)
 					{
 						GL_THROW("Failed to map recloser:%s retry count!",NR_branchdata[branch_val].name);
 						/*  TROUBLESHOOT
@@ -2512,7 +2526,7 @@ EXPORT double handle_sectionalizer(OBJECT *thisobj, int sectionalizer_number)
 					node_val = NR_branchdata[branch_val].from;
 
 					//Make sure the from node isn't a SWING - if it is, we're done
-					if ((NR_busdata[node_val].type == 2) || ((NR_busdata[node_val].type == 3) && (NR_busdata[node_val].swing_functions_enabled == true)))
+					if ((NR_busdata[node_val].type == 2) || ((NR_busdata[node_val].type == 3) && NR_busdata[node_val].swing_functions_enabled))
 					{
 						result_val = -1.0;		//Flag that a swing was found - failure :(
 						loop_complete = true;	//No more looping
@@ -2533,7 +2547,7 @@ EXPORT double handle_sectionalizer(OBJECT *thisobj, int sectionalizer_number)
 		}//end for loop
 		
 		//Generic check at end of FOR
-		if ((index>NR_busdata[node_val].Link_Table_Size) && (proper_exit==false))	//Full traversion - then failure
+		if ((index>NR_busdata[node_val].Link_Table_Size) && !proper_exit)	//Full traversion - then failure
 		{
 			result_val = 0.0;		//Encode as a failure
 			loop_complete = true;	//Flag loop as over

@@ -1,0 +1,45 @@
+//File passes an invalid property to a multi_recorder, to make sure it is a blocking fail.
+//Addresses issue in #1362
+
+clock {
+     timezone MST+7MDT;
+     starttime '2009-08-01 00:00:00';
+     stoptime '2009-08-01 00:30:00';
+}
+//#set profiler=1;
+
+module tape;
+module residential {
+     implicit_enduses NONE;
+};
+
+object house {
+    name house1;
+	floor_area 2500;
+	number_of_stories 1;
+}
+
+object house {
+    name house2;
+	floor_area 2500;
+	number_of_stories 1;
+}
+
+object house {
+    name house3;
+	floor_area 2500;
+	number_of_stories 1;
+}
+
+object house {
+    name house4;
+	floor_area 2500;
+	number_of_stories 1;
+}
+
+object multi_recorder {
+    name house1_recorder;
+    file "house1_data.csv";
+    interval 60;
+    property "house1:outdoor_temperature,house2:air_temperature,house3:hvac_load,house4:bad_property";	//bad property
+}

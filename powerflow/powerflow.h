@@ -34,6 +34,7 @@ void print_matrix(gld::complex mat[3][3]);
 //#define IMPORT_CLASS(name) extern CLASS *name##_class
 
 typedef enum {SM_FBS=0, SM_GS=1, SM_NR=2} SOLVERMETHOD;		/**< powerflow solver methodology */
+typedef enum {NRM_TCIM=0, NRM_FPI=1} NRSOLVERALG;		/**< NR solver underlying appraoch */
 typedef enum {MM_SUPERLU=0, MM_EXTERN=1} MATRIXSOLVERMETHOD;	/**< NR matrix solver methodlogy */
 typedef enum {
 	MD_NONE=0,			///< No matrix dump desired
@@ -73,6 +74,7 @@ typedef struct s_ext_fxn {
 GLOBAL char256 LUSolverName INIT("KLU");				/**< filename for external LU solver */
 GLOBAL EXT_LU_FXN_CALLS LUSolverFcns;				/**< links to external LU solver functions */
 GLOBAL SOLVERMETHOD solver_method INIT(SM_FBS);		/**< powerflow solver methodology */
+GLOBAL NRSOLVERALG NR_solver_algorithm INIT(NRM_TCIM);	/**< NR underlying algorithm */
 GLOBAL char256 MDFileName INIT("");					/**< filename for matrix dump */
 GLOBAL MATRIXDUMPMETHOD NRMatDumpMethod INIT(MD_NONE);	/**< NR-based matrix output method */
 GLOBAL bool NRMatReferences INIT(false);			/**< Flag to indicate if the decoding information for the matrix is dumped - row/col to bus */
@@ -93,9 +95,13 @@ GLOBAL int NR_curr_branch INIT(-1);					/**< Newton-Raphson current branch indic
 GLOBAL int64 NR_iteration_limit INIT(500);			/**< Newton-Raphson iteration limit (per GridLAB-D iteration) */
 GLOBAL bool NR_dyn_first_run INIT(true);			/**< Newton-Raphson first run indicator - used by deltamode functionality for initialization powerflow */
 GLOBAL bool NR_admit_change INIT(true);				/**< Newton-Raphson admittance matrix change detector - used to prevent complete recalculation of admittance at every timestep */
+GLOBAL bool NR_FPI_imp_load_change INIT(true);		/**< Newton-Raphson Fixed-Point-Iterative - flag to indicate if impedance load changed (for admittance reform) */
 GLOBAL int NR_superLU_procs INIT(1);				/**< Newton-Raphson related - superLU MT processor count to request - separate from thread_count */
 GLOBAL TIMESTAMP NR_retval INIT(TS_NEVER);			/**< Newton-Raphson current return value - if t0 objects know we aren't going anywhere */
 GLOBAL OBJECT *NR_swing_bus INIT(NULL);				/**< Newton-Raphson swing bus */
+GLOBAL int NR_expected_swing_rank INIT(6);			/**< Newton-Raphson expected master swing bus rank - for multi-gen children compatibility */
+GLOBAL bool NR_swing_deferred_pass INIT(false);		/**< Newton-Raphson toggle for deferred init - for multi-gen children compatibility */
+GLOBAL bool NR_swing_rank_set INIT(false);			/**< Newton-Raphson check to see if SWING has set its rank (mostly for other objects) */
 GLOBAL int NR_swing_bus_reference INIT(-1);			/**< Newton-Raphson swing bus index reference in NR_busdata */
 GLOBAL int64 NR_delta_iteration_limit INIT(10);		/**< Newton-Raphson iteration limit (per deltamode timestep) */
 GLOBAL bool FBS_swing_set INIT(false);				/**< Forward-Back Sweep swing assignment variable */
@@ -125,6 +131,7 @@ GLOBAL bool all_powerflow_delta INIT(false);			/* Flag to make all powerflow obj
 GLOBAL FREQMEASDEFAULT all_powerflow_freq_measure_method INIT(FMM_NONE);		/* Flag to enable all capable powerflow objects to do frequency measurements */
 GLOBAL unsigned long deltamode_timestep INIT(10000000); /* deltamode timestep value - 10 ms timestep, at first - internal */
 GLOBAL double deltamode_timestep_publish INIT(10000000.0); /* deltamode module-published 10 ms timestep, at first -- module property version, to be converted*/
+GLOBAL int delta_initialize_iterations INIT(0);			/* deltamode - extra powerflow iterations on first timestep - useful for initialization */
 GLOBAL OBJECT **delta_objects INIT(NULL);				/* Array pointer objects that need deltamode interupdate calls */
 GLOBAL FUNCTIONADDR *delta_functions INIT(NULL);	/* Array pointer functions for objects that need deltamode interupdate calls */
 GLOBAL FUNCTIONADDR *post_delta_functions INIT(NULL);		/* Array pointer functions for objects that need deltamode postupdate calls */

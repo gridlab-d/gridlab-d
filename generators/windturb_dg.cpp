@@ -20,16 +20,16 @@ Copyright (C) 2008 Battelle Memorial Institute
 
 #include "windturb_dg.h"
 
-CLASS *windturb_dg::oclass = NULL;
-windturb_dg *windturb_dg::defaults = NULL;
+CLASS *windturb_dg::oclass = nullptr;
+windturb_dg *windturb_dg::defaults = nullptr;
 
 windturb_dg::windturb_dg(MODULE *module)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register to receive notice for first top down. bottom up, and second top down synchronizations
 		oclass = gl_register_class(module,"windturb_dg",sizeof(windturb_dg),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class windturb_dg";
 		else
 			oclass->trl = TRL_PROOF;
@@ -160,7 +160,7 @@ windturb_dg::windturb_dg(MODULE *module)
 			PT_KEYWORD, "N",(set)PHASE_N,
 			PT_KEYWORD, "S",(set)PHASE_S,
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
-            if (gl_publish_function(oclass, "current_injection_update", (FUNCTIONADDR)windturb_dg_NR_current_injection_update) == NULL)
+            if (gl_publish_function(oclass, "current_injection_update", (FUNCTIONADDR)windturb_dg_NR_current_injection_update) == nullptr)
 				GL_THROW("Unable to publish wind turbine current injection update function");
 	}
 }
@@ -210,9 +210,9 @@ int windturb_dg::create(void)
 
 	strcpy(power_curve_csv,"");      //initializing string to null
 
-	pCircuit_V[0] = pCircuit_V[1] = pCircuit_V[2] = NULL;
-	pLine_I[0] = pLine_I[1] = pLine_I[2] = NULL;
-	pLine12 = NULL;
+	pCircuit_V[0] = pCircuit_V[1] = pCircuit_V[2] = nullptr;
+	pLine_I[0] = pLine_I[1] = pLine_I[2] = nullptr;
+	pLine12 = nullptr;
 	value_Circuit_V[0] = value_Circuit_V[1] = value_Circuit_V[2] = gld::complex(0.0,0.0);
 	value_Line_I[0] = value_Line_I[1] = value_Line_I[2] = gld::complex(0.0,0.0);
 	value_Line12 = gld::complex(0.0,0.0);
@@ -221,13 +221,13 @@ int windturb_dg::create(void)
 	parent_is_triplex = false;
 	parent_is_inverter = false;
 	
-	inverter_power_property = NULL;
-	inverter_flag_property = NULL;
+	inverter_power_property = nullptr;
+	inverter_flag_property = nullptr;
 
 
-    pPress = NULL;
-	pTemp = NULL;
-	pWS = NULL;
+    pPress = nullptr;
+	pTemp = nullptr;
+	pWS = nullptr;
     value_Press = 0.0;
 	value_Temp = 0.0;
 	value_WS = 0.0;
@@ -252,10 +252,10 @@ int windturb_dg::init_climate()
 	OBJECT *hdr = OBJECTHDR(this);
 
 	// link to climate data
-	FINDLIST *climates = NULL;
+	FINDLIST *climates = nullptr;
 
 	climates = gl_find_objects(FL_NEW,FT_CLASS,SAME,"climate",FT_END);
-	if (climates==NULL)
+	if (climates==nullptr)
 	{
 		//Flag as not found
 		climate_is_valid = false;
@@ -272,7 +272,7 @@ int windturb_dg::init_climate()
 		gl_verbose("windturb_dg: %d climates found, using first one defined", climates->hit_count);
 	}
 	// }
-	if (climates!=NULL)
+	if (climates!=nullptr)
 	{
 		if (climates->hit_count==0)
 		{
@@ -303,7 +303,7 @@ int windturb_dg::init_climate()
 		}
 	}
 	if (Wind_speed_source == DEFAULT){
-		if (climate_is_valid == true){
+		if (climate_is_valid){
 			Wind_speed_source = CLIMATE_DATA;
 		}else{
 			Wind_speed_source = BUILT_IN;
@@ -768,7 +768,7 @@ int windturb_dg::init(OBJECT *parent)
 	}
 
 	// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
-	if (parent!=NULL)
+	if (parent!=nullptr)
 	{
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
@@ -786,7 +786,7 @@ int windturb_dg::init(OBJECT *parent)
 			temp_property_pointer = new gld_property("powerflow::solver_method");
 
 			//Make sure it worked
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_enumeration() != true))
+			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_enumeration())
 			{
 				GL_THROW("windturb_dg:%d %s failed to map the nominal_frequency property", obj->id, (obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
@@ -817,7 +817,7 @@ int windturb_dg::init(OBJECT *parent)
 			temp_property_pointer = new gld_property(parent,"phases");
 
 			//Make sure ti worked
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_set() != true))
+			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_set())
 			{
 				GL_THROW("Unable to map phases property - ensure the parent is a meter or a node or a load");
 				/*  TROUBLESHOOT
@@ -885,7 +885,7 @@ int windturb_dg::init(OBJECT *parent)
 			pCircuit_V[2] = map_complex_value(parent,"voltage_C");
 
 			//If we're NR, map a different field to avoid the rotation
-			if (NR_first_run == true)
+			if (NR_first_run)
 			{
 				pLine_I[0] = map_complex_value(parent,"prerotated_current_A");
 				pLine_I[1] = map_complex_value(parent,"prerotated_current_B");
@@ -899,7 +899,7 @@ int windturb_dg::init(OBJECT *parent)
 			}
 
 			//Null the triplex interface point, just in case
-			pLine12 = NULL;
+			pLine12 = nullptr;
 		}
 		else if (gl_object_isa(parent,"triplex_meter","powerflow"))
 		{
@@ -907,7 +907,7 @@ int windturb_dg::init(OBJECT *parent)
 			temp_property_pointer = new gld_property("powerflow::solver_method");
 
 			//Make sure it worked
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_enumeration() != true))
+			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_enumeration())
 			{
 				GL_THROW("windturb_dg:%d %s failed to map the nominal_frequency property", obj->id, (obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
@@ -948,28 +948,21 @@ int windturb_dg::init(OBJECT *parent)
 			pCircuit_V[2] = map_complex_value(parent,"voltage_2N");
 
 			//If we're NR, map a different field to avoid the rotation
-			if (NR_first_run == true)
+			if (NR_first_run)
 			{
 				pLine_I[0] = map_complex_value(parent,"prerotated_current_1");
 				pLine_I[1] = map_complex_value(parent,"prerotated_current_2");
-				pLine_I[2] = map_complex_value(parent,"acc_temp_current_N");
+				pLine_I[2] = map_complex_value(parent,"current_N");
 
 				pLine12 = map_complex_value(parent,"prerotated_current_12");
 			}
 			else
 			{
-				// NOTE - Commented code will replace the pLine_I and pLine12 once the triplex_node "deprecated properties" are removed
-				// pLine_I[0] = map_complex_value(parent,"current_1");
-				// pLine_I[1] = map_complex_value(parent,"current_2");
-				// pLine_I[2] = map_complex_value(parent,"current_N");
+				pLine_I[0] = map_complex_value(parent,"current_1");
+				pLine_I[1] = map_complex_value(parent,"current_2");
+				pLine_I[2] = map_complex_value(parent,"current_N");
 
-				// pLine12 = map_complex_value(parent,"current_12");
-
-				pLine_I[0] = map_complex_value(parent,"acc_temp_current_1");
-				pLine_I[1] = map_complex_value(parent,"acc_temp_current_2");
-				pLine_I[2] = map_complex_value(parent,"acc_temp_current_N");
-
-				pLine12 = map_complex_value(parent,"acc_temp_current_12");
+				pLine12 = map_complex_value(parent,"current_12");
 			}
 
 			//pPower = map_complex_value(parent,"measured_power");
@@ -978,7 +971,7 @@ int windturb_dg::init(OBJECT *parent)
 			temp_property_pointer = new gld_property(parent,"phases");
 
 			//Make sure ti worked
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_set() != true))
+			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_set())
 			{
 				GL_THROW("Unable to map phases property - ensure the parent is a meter or triplex_meter");
 				//Defined above
@@ -1040,7 +1033,7 @@ int windturb_dg::init(OBJECT *parent)
 			pLine_I[1] = map_complex_value(parent,"current_B");
 			pLine_I[2] = map_complex_value(parent,"current_C");
 		}
-		else if (gl_object_isa(parent,"inverter","generators") == true)
+		else if (gl_object_isa(parent,"inverter","generators"))
 		{
 			//if wind turbine implementation is not power curve-based, throw an error
 			if (Turbine_implementation != POWER_CURVE){
@@ -1055,7 +1048,7 @@ int windturb_dg::init(OBJECT *parent)
 			temp_property_pointer = new gld_property("powerflow::solver_method");
 
 			//Make sure it worked
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_enumeration() != true))
+			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_enumeration())
 			{
 				GL_THROW("windturb_dg:%d %s failed to map the nominal_frequency property", obj->id, (obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
@@ -1085,7 +1078,7 @@ int windturb_dg::init(OBJECT *parent)
 			inverter_flag_property = new gld_property(parent, "WT_is_connected");
 
 			//Check it
-			if ((inverter_flag_property->is_valid() != true) || (inverter_flag_property->is_bool() != true))
+			if (!inverter_flag_property->is_valid() || !inverter_flag_property->is_bool())
 			{
 				GL_THROW("wind turbine:%d - %s - Unable to map inverter property", obj->id, (obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -1095,7 +1088,7 @@ int windturb_dg::init(OBJECT *parent)
 			inverter_power_property = new gld_property(parent, "VA_Out");
 
 			//Check it
-			if ((inverter_power_property->is_valid() != true) || (inverter_power_property->is_complex() != true))
+			if (!inverter_power_property->is_valid() || !inverter_power_property->is_complex())
 			{
 				GL_THROW("wind turbine:%d - %s - Unable to map inverter power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -1111,7 +1104,7 @@ int windturb_dg::init(OBJECT *parent)
 	}
 	else
 	{
-		gl_warning("windturb_dg:%d %s", obj->id, parent==NULL?"has no parent meter defined":"parent is not a meter");	
+		gl_warning("windturb_dg:%d %s", obj->id, parent==nullptr?"has no parent meter defined":"parent is not a meter");	
 
 		//Set the flag
 		parent_is_valid = false;
@@ -1230,15 +1223,15 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	store_last_current = current_A.Mag() + current_B.Mag() + current_C.Mag();
 
 	//Map the current injection routine to our parent bus, if needed
-	if (NR_first_run == true)
+	if (NR_first_run)
 	{
-		if ((parent_is_valid == true)&&(parent_is_inverter == false))
+		if (parent_is_valid && !parent_is_inverter)
 		{
 			//Map the current injection function
 			test_fxn = (FUNCTIONADDR)(gl_get_function(obj->parent, "pwr_current_injection_update_map"));
 
 			//See if it was located
-			if (test_fxn == NULL)
+			if (test_fxn == nullptr)
 			{
 				GL_THROW("windturb_dg:%s - failed to map additional current injection mapping for node:%s", (obj->name ? obj->name : "unnamed"), (obj->parent->name ? obj->parent->name : "unnamed"));
 				/*  TROUBLESHOOT
@@ -1267,7 +1260,7 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	//Default else - FBS or not first run
 
 	//Pull the updates, if needed
-	if (climate_is_valid == true)
+	if (climate_is_valid)
 	{
 		value_Press = pPress->get_double() * 100;       // in Pa; climate is in mbar
 		value_Temp = (pTemp->get_double() - 32) * 5/9;  // in degC; climate is in degF
@@ -1297,7 +1290,7 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 		case CLIMATE_DATA:
 			double climate_ws=0;
-			if (climate_is_valid == true){
+			if (climate_is_valid){
 				climate_ws = pWS->get_double() * 0.44704;       //mph to m/s conversion
 			}else{
 				climate_ws = avg_ws;
@@ -1418,7 +1411,7 @@ TIMESTAMP windturb_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 			break;
 		case POWER_CURVE:
-			if (parent_is_inverter == false){
+			if (!parent_is_inverter){
 				compute_current_injection_pc();
 			}else{
 				compute_power_injection_pc();
@@ -1441,7 +1434,7 @@ TIMESTAMP windturb_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	TIMESTAMP t2 = TS_NEVER;
 	// Handling for NR || FBS
 
-	if (!parent_is_triplex == true){
+	if (!parent_is_triplex){
 		//Remove our parent contributions (so XMLs look proper)
 		value_Line_I[0] = -prev_current[0];
 		value_Line_I[1] = -prev_current[1];
@@ -1456,9 +1449,9 @@ TIMESTAMP windturb_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	prev_current12 = complex(0.0,0.0);
 
 	//Push up the powerflow interface
-	if (parent_is_valid == true)
+	if (parent_is_valid)
 	{
-		if (parent_is_inverter == false){
+		if (!parent_is_inverter){
 			push_complex_powerflow_values();
 		}
 	}
@@ -1479,7 +1472,7 @@ void windturb_dg::compute_current_injection(void)
 		int k;
 
 		//Pull the voltage values
-		if (parent_is_valid == true)
+		if (parent_is_valid)
 		{
 			value_Circuit_V[0] = pCircuit_V[0]->get_complex();
 			value_Circuit_V[1] = pCircuit_V[1]->get_complex();
@@ -1752,7 +1745,7 @@ void windturb_dg::compute_current_injection(void)
 	value_Line_I[2] = current_C;
 
 	//Powerflow post-it
-	if (parent_is_valid == true)
+	if (parent_is_valid)
 	{
 		push_complex_powerflow_values();
 	}
@@ -1762,7 +1755,7 @@ void windturb_dg::compute_current_injection(void)
 void windturb_dg::compute_current_injection_pc(void){
 	double Power_calc;
 
-	if (parent_is_valid == true)
+	if (parent_is_valid)
 	{
 		value_Circuit_V[0] = pCircuit_V[0]->get_complex();
 		value_Circuit_V[1] = pCircuit_V[1]->get_complex();
@@ -1794,7 +1787,7 @@ void windturb_dg::compute_current_injection_pc(void){
 		QC = 0;
 
 		if(strstr(power_curve_csv, ".csv")){  //user provided power curve .csv file
-			if (power_curve_pu == true){      //p.u. power curve provided, uses turbine capacity
+			if (power_curve_pu){      //p.u. power curve provided, uses turbine capacity
 				power_A = complex((Power_calc*Rated_VA)/3,QA);
 				power_B = complex((Power_calc*Rated_VA)/3,QB);
 				power_C = complex((Power_calc*Rated_VA)/3,QC);
@@ -1840,7 +1833,7 @@ void windturb_dg::compute_current_injection_pc(void){
 		value_Line_I[2] = current_C;
 
 		//Powerflow post-it
-		if (parent_is_valid == true)
+		if (parent_is_valid)
 		{
 			push_complex_powerflow_values();
 		}
@@ -1850,7 +1843,7 @@ void windturb_dg::compute_current_injection_pc(void){
 		QA = 0;
 
 		if(strstr(power_curve_csv, ".csv")){       //user provided power curve .csv file
-			if (power_curve_pu == true){           //p.u. power curve provided, uses turbine capacity
+			if (power_curve_pu){           //p.u. power curve provided, uses turbine capacity
 				power_A = complex((Power_calc*Rated_VA),QA);
 			} else {                               //power curve in watts provided, ignores capacity even if it is specified
 				power_A = complex((Power_calc),QA);
@@ -1904,7 +1897,7 @@ void windturb_dg::compute_power_injection_pc(void){
 		}
 	}
 	//now publish Power_calc to inverter parent
-	if (parent_is_valid == true){
+	if (parent_is_valid){
 		push_complex_power_values(complex((Power_calc*Rated_VA),Q));
 	}
 }
@@ -1942,7 +1935,7 @@ gld_property *windturb_dg::map_double_value(OBJECT *obj, const char *name)
 	pQuantity = new gld_property(obj,name);
 
 	//Make sure it worked
-	if ((pQuantity->is_valid() != true) || (pQuantity->is_double() != true))
+	if (!pQuantity->is_valid() || !pQuantity->is_double())
 	{
 		GL_THROW("windturb_dg:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
@@ -1959,13 +1952,13 @@ gld_property *windturb_dg::map_double_value(OBJECT *obj, const char *name)
 void windturb_dg::push_complex_powerflow_values(void)
 {
 	gld::complex temp_complex_val;
-	gld_wlock *test_rlock;
+	gld_wlock *test_rlock = nullptr;
 	int indexval;
 
-	if (parent_is_triplex == true)
+	if (parent_is_triplex)
 	{
 		//Shouldn't need to NULL check this one, but do it anyways, for consistency
-		if (pLine12 != NULL)
+		if (pLine12 != nullptr)
 		{
 			//**** Current value ***/
 			//Pull current value again, just in case
@@ -2005,11 +1998,11 @@ void windturb_dg::push_complex_powerflow_values(void)
 void windturb_dg::push_complex_power_values(complex inv_P)
 {
 	//complex temp_complex_val;
-	gld_wlock *test_rlock;
+	gld_wlock *test_rlock = nullptr;
 	bool WT_conn_flag = true;
 	//int indexval;
 	
-	if (parent_is_inverter == true) {
+	if (parent_is_inverter) {
 		//Push the changes
 		inverter_power_property->setp<complex>(inv_P, *test_rlock);
 		inverter_flag_property->setp<bool>(WT_conn_flag, *test_rlock);
@@ -2017,8 +2010,11 @@ void windturb_dg::push_complex_power_values(complex inv_P)
 }
 
 // Function to update current injection value
-STATUS windturb_dg::updateCurrInjection(int64 iteration_count)
+STATUS windturb_dg::updateCurrInjection(int64 iteration_count,bool *converged_failure)
 {
+	//Assume no convergence failure - mostly for deltamode/Norton-equivalent initialization
+	*converged_failure = false;
+	
 	//Call the current updating function
 	switch (Turbine_implementation){
 		case COEFF_OF_PERFORMANCE:
@@ -2026,7 +2022,7 @@ STATUS windturb_dg::updateCurrInjection(int64 iteration_count)
 			break;
 
 		case POWER_CURVE:
-			if (parent_is_inverter == false){
+			if (!parent_is_inverter){
 				compute_current_injection_pc();
 			}else{
 				compute_power_injection_pc();
@@ -2084,7 +2080,7 @@ EXPORT int create_windturb_dg(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(windturb_dg::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			windturb_dg *my = OBJECTDATA(*obj,windturb_dg);
 			gl_set_parent(*obj,parent);
@@ -2102,7 +2098,7 @@ EXPORT int init_windturb_dg(OBJECT *obj, OBJECT *parent)
 {
 	try 
 	{
-		if (obj!=NULL)
+		if (obj!=nullptr)
 			return OBJECTDATA(obj,windturb_dg)->init(parent);
 		else
 			return 0;
@@ -2136,7 +2132,7 @@ EXPORT TIMESTAMP sync_windturb_dg(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 }
 
 //Current injection exposed function
-EXPORT STATUS windturb_dg_NR_current_injection_update(OBJECT *obj, int64 iteration_count)
+EXPORT STATUS windturb_dg_NR_current_injection_update(OBJECT *obj, int64 iteration_count, bool *converged_failure)
 {
 	STATUS temp_status;
 
@@ -2144,7 +2140,7 @@ EXPORT STATUS windturb_dg_NR_current_injection_update(OBJECT *obj, int64 iterati
 	windturb_dg *my = OBJECTDATA(obj, windturb_dg);
 
 	//Call the function, where we can update the current injection
-	temp_status = my->updateCurrInjection(iteration_count);
+	temp_status = my->updateCurrInjection(iteration_count,converged_failure);
 
 	//Return what the sub function said we were
 	return temp_status;

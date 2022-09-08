@@ -16,17 +16,17 @@ using namespace std;
 
 #include "line.h"
 
-CLASS* underground_line::oclass = NULL;
-CLASS* underground_line::pclass = NULL;
+CLASS* underground_line::oclass = nullptr;
+CLASS* underground_line::pclass = nullptr;
 
 underground_line::underground_line(MODULE *mod) : line(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		pclass = line::oclass;
 		
 		oclass = gl_register_class(mod,"underground_line",sizeof(underground_line),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class underground_line";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -34,25 +34,25 @@ underground_line::underground_line(MODULE *mod) : line(mod)
         if(gl_publish_variable(oclass,
 			PT_INHERIT, "line",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
-		if (gl_publish_function(oclass,	"create_fault", (FUNCTIONADDR)create_fault_ugline)==NULL)
+		if (gl_publish_function(oclass,	"create_fault", (FUNCTIONADDR)create_fault_ugline)==nullptr)
 			GL_THROW("Unable to publish fault creation function");
-		if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_ugline)==NULL)
+		if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_ugline)==nullptr)
 			GL_THROW("Unable to publish fault restoration function");
-        if (gl_publish_function(oclass,	"clear_fault", (FUNCTIONADDR)clear_fault_ugline)==NULL)
+        if (gl_publish_function(oclass,	"clear_fault", (FUNCTIONADDR)clear_fault_ugline)==nullptr)
             GL_THROW("Unable to publish fault clearing function");
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==nullptr)
 			GL_THROW("Unable to publish underground line deltamode function");
-		if (gl_publish_function(oclass,	"recalc_distribution_line", (FUNCTIONADDR)recalc_underground_line)==NULL)
+		if (gl_publish_function(oclass,	"recalc_distribution_line", (FUNCTIONADDR)recalc_underground_line)==nullptr)
 			GL_THROW("Unable to publish underground line recalc function");
 
 		//Publish restoration-related function (current update)
-		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==nullptr)
 			GL_THROW("Unable to publish underground line external power calculation function");
-		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==nullptr)
 			GL_THROW("Unable to publish underground line external power limit calculation function");
-		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==NULL)
+		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==nullptr)
 			GL_THROW("Unable to publish underground line external current calculation function");
     }
 }
@@ -66,7 +66,7 @@ int underground_line::create(void)
 
 int underground_line::init(OBJECT *parent)
 {
-	double *temp_rating_value = NULL;
+	double *temp_rating_value = nullptr;
 	double temp_rating_continuous = 10000.0;
 	double temp_rating_emergency = 20000.0;
 	char index;
@@ -106,13 +106,13 @@ int underground_line::init(OBJECT *parent)
 	//Figure out how many conductors we expected
 	cond_present = 0;
 	
-	if (config->phaseA_conductor != NULL)
+	if (config->phaseA_conductor != nullptr)
 		cond_present++;
 
-	if (config->phaseB_conductor != NULL)
+	if (config->phaseB_conductor != nullptr)
 		cond_present++;
 
-	if (config->phaseC_conductor != NULL)
+	if (config->phaseC_conductor != nullptr)
 		cond_present++;
 
 	//Form the cable-types value (add up tests)
@@ -141,7 +141,7 @@ int underground_line::init(OBJECT *parent)
 	recalc();
 
 	//Values are populated now - populate link ratings parameter
-	if (config->phaseA_conductor != NULL || config->phaseB_conductor != NULL || config->phaseC_conductor != NULL) {
+	if (config->phaseA_conductor != nullptr || config->phaseB_conductor != nullptr || config->phaseC_conductor != nullptr) {
 		for (index=0; index<3; index++)
 		{
 			if (index==0)
@@ -158,13 +158,13 @@ int underground_line::init(OBJECT *parent)
 			}
 
 			//See if Phase exists
-			if (temp_obj != NULL)
+			if (temp_obj != nullptr)
 			{
 				//Get continuous - summer
 				temp_rating_value = get_double(temp_obj,"rating.summer.continuous");
 
 				//Check if NULL
-				if (temp_rating_value != NULL)
+				if (temp_rating_value != nullptr)
 				{
 					//Update - if necessary
 					if (temp_rating_continuous > *temp_rating_value)
@@ -177,7 +177,7 @@ int underground_line::init(OBJECT *parent)
 				temp_rating_value = get_double(temp_obj,"rating.winter.continuous");
 
 				//Check if NULL
-				if (temp_rating_value != NULL)
+				if (temp_rating_value != nullptr)
 				{
 					//Update - if necessary
 					if (temp_rating_continuous > *temp_rating_value)
@@ -190,7 +190,7 @@ int underground_line::init(OBJECT *parent)
 				temp_rating_value = get_double(temp_obj,"rating.summer.emergency");
 
 				//Check if NULL
-				if (temp_rating_value != NULL)
+				if (temp_rating_value != nullptr)
 				{
 					//Update - if necessary
 					if (temp_rating_emergency > *temp_rating_value)
@@ -203,7 +203,7 @@ int underground_line::init(OBJECT *parent)
 				temp_rating_value = get_double(temp_obj,"rating.winter.emergency");
 
 				//Check if NULL
-				if (temp_rating_value != NULL)
+				if (temp_rating_value != nullptr)
 				{
 					//Update - if necessary
 					if (temp_rating_emergency > *temp_rating_value)
@@ -221,13 +221,13 @@ int underground_line::init(OBJECT *parent)
 	else {
 		temp_obj = configuration;
 		//See if configuration exists
-		if (temp_obj != NULL)
+		if (temp_obj != nullptr)
 		{
 			//Get continuous - summer
 			temp_rating_value = get_double(temp_obj,"rating.summer.continuous");
 
 			//Check if NULL
-			if (temp_rating_value != NULL)
+			if (temp_rating_value != nullptr)
 			{
 				//Update - if necessary
 				if (temp_rating_continuous > *temp_rating_value)
@@ -240,7 +240,7 @@ int underground_line::init(OBJECT *parent)
 			temp_rating_value = get_double(temp_obj,"rating.winter.continuous");
 
 			//Check if NULL
-			if (temp_rating_value != NULL)
+			if (temp_rating_value != nullptr)
 			{
 				//Update - if necessary
 				if (temp_rating_continuous > *temp_rating_value)
@@ -253,7 +253,7 @@ int underground_line::init(OBJECT *parent)
 			temp_rating_value = get_double(temp_obj,"rating.summer.emergency");
 
 			//Check if NULL
-			if (temp_rating_value != NULL)
+			if (temp_rating_value != nullptr)
 			{
 				//Update - if necessary
 				if (temp_rating_emergency > *temp_rating_value)
@@ -266,7 +266,7 @@ int underground_line::init(OBJECT *parent)
 			temp_rating_value = get_double(temp_obj,"rating.winter.emergency");
 
 			//Check if NULL
-			if (temp_rating_value != NULL)
+			if (temp_rating_value != nullptr)
 			{
 				//Update - if necessary
 				if (temp_rating_emergency > *temp_rating_value)
@@ -356,7 +356,7 @@ void underground_line::recalc(void)
 
 		//Calculate coefficients for self and mutual impedance - incorporates frequency values
 		//Per Kersting (4.39) and (4.40) - coefficients end up same as OHLs
-		if (enable_frequency_dependence == true)	//See which frequency to use
+		if (enable_frequency_dependence)	//See which frequency to use
 		{
 			freq_coeff_real = 0.00158836*current_frequency;
 			freq_coeff_imag = 0.00202237*current_frequency;
@@ -468,7 +468,7 @@ void underground_line::recalc(void)
 			}
 		}
 		//Capacitance stuff, if desired
-		if (use_line_cap == true && not_TS_CN == false)
+		if (use_line_cap && !not_TS_CN)
 		{
 			//Extract relative permitivitty
 			perm_A = UG_GET(A, insulation_rel_permitivitty);
@@ -476,7 +476,7 @@ void underground_line::recalc(void)
 			perm_C = UG_GET(C, insulation_rel_permitivitty);
 
 			//Define the scaling constant for frequency, distance, and microS
-			if (enable_frequency_dependence == true)	//See which frequency to use
+			if (enable_frequency_dependence)	//See which frequency to use
 			{
 				cap_freq_coeff = gld::complex(0,(2.0*PI*current_frequency*0.000001*miles));
 			}
@@ -542,7 +542,7 @@ void underground_line::recalc(void)
 		#undef DIA
 		#undef UG_GET
 
-		 if (is_CN_ug_line == true) {
+		 if (is_CN_ug_line) {
 			#define Z_GMR(i) (GMR(i) == 0.0 ? gld::complex(0.0) : gld::complex(freq_coeff_real + RES(i), freq_coeff_imag * (log(1.0 / GMR(i)) + freq_additive_term)))
 			#define Z_GMRCN(i) (GMRCN(i) == 0.0 ? gld::complex(0.0) : gld::complex(freq_coeff_real + RCN(i), freq_coeff_imag * (log(1.0 / GMRCN(i)) + freq_additive_term)))
 			#define Z_GMR_S(i) (GMR_S(i) == 0.0 ? gld::complex(0.0) : gld::complex(freq_coeff_real + RES_S(i), freq_coeff_imag*(log(1.0/GMR_S(i)) + freq_additive_term)))
@@ -633,8 +633,8 @@ void underground_line::recalc(void)
 		#undef Z_DIST
 		#undef Z_GMR_S
 		
-		if (not_TS_CN == false){			
-			if (is_CN_ug_line == true) {
+		if (!not_TS_CN){			
+			if (is_CN_ug_line) {
 				gld::complex z_ij_cn[3][3] = {{Z(1, 1), Z(1, 2), Z(1, 3)},
 									  {Z(2, 1), Z(2, 2), Z(2, 3)},
 									  {Z(3, 1), Z(3, 2), Z(3, 3)}};
@@ -820,10 +820,10 @@ void underground_line::recalc(void)
 #undef Z
 
 
-		if ((use_line_cap == true) && (not_TS_CN == false))
+		if (use_line_cap && !not_TS_CN)
 		{
 			//Concentric neutral code 
-			if (is_CN_ug_line == true)
+			if (is_CN_ug_line)
 
 
 			{
@@ -1133,7 +1133,7 @@ void underground_line::recalc(void)
 		}
 	}
 	
-	if(neg_res == true){
+	if(neg_res){
 		gl_warning("INIT: underground_line:%s has a negative resistance in it's impedance matrix. This will result in unusual behavior. Please check the line's geometry and cable parameters.", obj->name);
 		/*  TROUBLESHOOT
 		A negative resistance value was found for one or more the real parts of the underground_line's impedance matrix.
@@ -1202,7 +1202,7 @@ int underground_line::test_phases(line_configuration *config, const char ph)
 			condNotPres = ((!config->phaseA_conductor) && has_phase(PHASE_A));
 
 			//Check to see what kind of conductor this is - if it exists
-			if ((config->phaseA_conductor != NULL) && (condCheck == false))
+			if ((config->phaseA_conductor != nullptr) && !condCheck)
 			{
 				//Get the values
 				get_cable_values(config->phaseA_conductor,&temp_shield_gmr_val,&temp_neutral_gmr_val);
@@ -1238,7 +1238,7 @@ int underground_line::test_phases(line_configuration *config, const char ph)
 			condNotPres = ((!config->phaseB_conductor) && has_phase(PHASE_B));
 
 			//Check to see what kind of conductor this is - if it exists
-			if ((config->phaseB_conductor != NULL) && (condCheck == false))
+			if ((config->phaseB_conductor != nullptr) && !condCheck)
 			{
 				//Get the values
 				get_cable_values(config->phaseB_conductor,&temp_shield_gmr_val,&temp_neutral_gmr_val);
@@ -1274,7 +1274,7 @@ int underground_line::test_phases(line_configuration *config, const char ph)
 			condNotPres = ((!config->phaseC_conductor) && has_phase(PHASE_C));
 
 			//Check to see what kind of conductor this is - if it exists
-			if ((config->phaseC_conductor != NULL) && (condCheck == false))
+			if ((config->phaseC_conductor != nullptr) && !condCheck)
 			{
 				//Get the values
 				get_cable_values(config->phaseC_conductor,&temp_shield_gmr_val,&temp_neutral_gmr_val);
@@ -1310,7 +1310,7 @@ int underground_line::test_phases(line_configuration *config, const char ph)
 			condNotPres = ((!config->phaseN_conductor) && has_phase(PHASE_N));
 
 			//Check to see what kind of conductor this is - if it exists
-			if ((config->phaseN_conductor != NULL) && (condCheck == false))
+			if ((config->phaseN_conductor != nullptr) && !condCheck)
 			{
 				//Get the values
 				get_cable_values(config->phaseN_conductor,&temp_shield_gmr_val,&temp_neutral_gmr_val);
@@ -1335,11 +1335,11 @@ int underground_line::test_phases(line_configuration *config, const char ph)
 	}
 	//Nothing else down here.  Should never get anything besides ABCN to check
 
-	if (condCheck==true)
+	if (condCheck)
 		GL_THROW("invalid conductor for phase %c of underground line",ph,obj->name);
 		/*	TROUBLESHOOT  The conductor specified for the indicated phase is not necessarily an underground line conductor, it may be an overhead or triplex-line only conductor. */
 
-	if (condNotPres==true)
+	if (condNotPres)
 		GL_THROW("missing conductor for phase %c of underground line",ph,obj->name);
 		/*  TROUBLESHOOT
 		The object specified as the configuration for the underground line is not a valid
@@ -1360,7 +1360,7 @@ void underground_line::get_cable_values(OBJECT *line_conductor, double *sh_gmr, 
 	temp_prop_A = new gld_property(line_conductor,"shield_gmr");
 
 	//Make sure it worked properly
-	if ((temp_prop_A->is_valid() != true) || (temp_prop_A->is_double() != true))
+	if (!temp_prop_A->is_valid() || !temp_prop_A->is_double())
 	{
 		GL_THROW("Underground_line:%d %s - conductor %s lacks desired property!",obj->id,(obj->name ? obj->name : "Unnamed"),(line_conductor->name ? line_conductor->name : "Unnamed"));
 		/*  TROUBLESHOOT
@@ -1379,7 +1379,7 @@ void underground_line::get_cable_values(OBJECT *line_conductor, double *sh_gmr, 
 	temp_prop_A = new gld_property(line_conductor,"neutral_gmr");
 
 	//Make sure it worked properly
-	if ((temp_prop_A->is_valid() != true) || (temp_prop_A->is_double() != true))
+	if (!temp_prop_A->is_valid() || !temp_prop_A->is_double())
 	{
 		GL_THROW("Underground_line:%d %s - conductor %s lacks desired property!",obj->id,(obj->name ? obj->name : "Unnamed"),(line_conductor->name ? line_conductor->name : "Unnamed"));
 		//Defined above
@@ -1424,7 +1424,7 @@ EXPORT int create_underground_line(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(underground_line::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			underground_line *my = OBJECTDATA(*obj,underground_line);
 			gl_set_parent(*obj,parent);

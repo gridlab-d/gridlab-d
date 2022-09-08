@@ -25,15 +25,15 @@ public:
 private:
 	//************* NOTE - these can probably be deleted/removed when
 	//deprecated properties of triplex_node are removed  ***************//
-	complex impedance[3];	///< impedance load value
-	complex pub_shunt[3];	///< shunt impedance load value
+	gld::complex impedance[3];	///< impedance load value
+	gld::complex pub_shunt[3];	///< shunt impedance load value
 	
-	complex pub_power[3];	//< power load value - published (replaced by triplex_load)
-	complex pub_current[4];	//< current load value - published (replaced by triplex_load)
+	gld::complex pub_power[3];	//< power load value - published (replaced by triplex_load)
+	gld::complex pub_current[4];	//< current load value - published (replaced by triplex_load)
 
 	//Tracker - works like triplex_load code, but will be irrelevant once deprecated code removed
-	complex prev_node_load_values[2][3];		//Current handled separately
-	complex prev_node_load_current_values[4];	//Current is bigger
+	gld::complex prev_node_load_values[2][3];		//Current handled separately
+	gld::complex prev_node_load_current_values[4];	//Current is bigger
 
 	//************ End deprecated note region *****************//
 public:

@@ -32,4 +32,5 @@ generators_generators_la_SOURCES += generators/windturb_dg.cpp
 generators_generators_la_SOURCES += generators/windturb_dg.h
 generators_generators_la_SOURCES += generators/controller_dg.cpp
 generators_generators_la_SOURCES += generators/controller_dg.h
-
+generators_generators_la_SOURCES += generators/sync_ctrl.cpp
+generators_generators_la_SOURCES += generators/sync_ctrl.h

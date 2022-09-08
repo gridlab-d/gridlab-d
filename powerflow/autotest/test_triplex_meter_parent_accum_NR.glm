@@ -2,6 +2,8 @@
 //are populating/propagating properly
 //Test is theoretically identical between FBS and NR
 //Test the three triplex meters individually, because
+//Add in some loads for FPI testing
+//Also add three-phase section for SPCT check (odd configuration, but still tests it)
 
 clock {
 	timezone EST+5EDT;
@@ -10,19 +12,29 @@ clock {
 }
 
 #set minimum_timestep=60;
-//#set profiler=1;
+#set profiler=1;
+#set complex_output_format=RECT
 
-//#define recorder_filename="data_triplex_parent_test"
+//#define FPI=1
 
 module tape;
 module assert;
 module residential {
 	implicit_enduses NONE;
-};
+}
+
+#ifdef FPI
+#define recorder_filename="data_triplex_parent_test_FPI"
 module powerflow {
 	solver_method NR;
-};
-
+	NR_solver_algorithm FPI;
+}
+#else
+#define recorder_filename="data_triplex_parent_test_TCIM"
+module powerflow {
+	solver_method NR;
+}
+#endif
 
 object triplex_line_conductor {     
 	name triplex_4/0 AA;    
@@ -39,15 +51,114 @@ object triplex_line_configuration {
 	diameter 0.522;     
 }         
 
-object triplex_meter {     
+object meter {
+	phases CN;
+	name three_phase_swing_intermed;
+	nominal_voltage 7200.0;
+	// object recorder {
+		// property "voltage_A,voltage_B,voltage_C";
+		// interval -1;
+		// file ${recorder_filename}_test_new_meter_voltage.csv;
+	// };
+}
+
+object transformer_configuration {
+	name trip_xform_example;
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	power_rating 6000;
+	powerC_rating 6000;
+	primary_voltage 7200.0;
+	secondary_voltage 120.0;
+	resistance 0.01;
+	reactance 0.06;
+}
+
+object transformer {
+	name triplex_transformer;
+	phases CS;
+	from three_phase_swing_intermed;
+	to trip_swing;
+	configuration trip_xform_example;
+}
+
+object transformer {
+	name triplex_transformer_to_second;
+	phases CS;
+	from three_phase_swing_intermed;
+	to trip_node_second;
+	configuration trip_xform_example;
+	// object recorder {
+		// property "power_out";
+		// interval -1;
+		// file data_triplex_parent_test_secondxformer.csv;
+	// };
+	object complex_assert {
+		target power_out;
+		value +2242.13+1127.71j;
+		within 0.1;
+	};
+}
+
+object triplex_load {
+	name trip_node_second;     
+	phases CS;     
+	nominal_voltage 120;
+	groupid voltdumper;
+	base_power_1 750.0 VA;
+	base_power_2 775.0 VA;
+	base_power_12 1000.0 VA;
+	impedance_pf_1 0.85;
+	impedance_pf_2 0.85;
+	impedance_pf_12 0.85;
+	power_pf_1 0.95;
+	power_pf_2 0.95;
+	power_pf_12 0.95;
+	current_pf_1 0.87;
+	current_pf_2 0.87;
+	current_pf_12 0.87;
+	power_fraction_1 0.35;
+	impedance_fraction_1 0.5;
+	current_fraction_1 0.15;
+	power_fraction_2 0.35;
+	impedance_fraction_2 0.5;
+	current_fraction_2 0.15;
+	power_fraction_12 0.35;
+	impedance_fraction_12 0.5;
+	current_fraction_12 0.15;
+}
+
+object triplex_load {
 	name trip_swing;     
 	phases CS;     
 	bustype SWING;
 	nominal_voltage 120;
+	groupid voltdumper;
+	base_power_1 750.0 VA;
+	base_power_2 775.0 VA;
+	base_power_12 1000.0 VA;
+	impedance_pf_1 0.85;
+	impedance_pf_2 0.85;
+	impedance_pf_12 0.85;
+	power_pf_1 0.95;
+	power_pf_2 0.95;
+	power_pf_12 0.95;
+	current_pf_1 0.87;
+	current_pf_2 0.87;
+	current_pf_12 0.87;
+	power_fraction_1 0.35;
+	impedance_fraction_1 0.5;
+	current_fraction_1 0.15;
+	power_fraction_2 0.35;
+	impedance_fraction_2 0.5;
+	current_fraction_2 0.15;
+	power_fraction_12 0.35;
+	impedance_fraction_12 0.5;
+	current_fraction_12 0.15;
+		
 	// object recorder {
 		// property "measured_power";
 		// interval -1;
-		// file ${recorder_filename}_swingbus_out.csv;
+		// file data_triplex_parent_test_swingbus.csv;
 	// };
 	object complex_assert {
 		target measured_power;
@@ -62,19 +173,22 @@ object triplex_meter {
 object triplex_line {
 	groupid Triplex_Line;
 	phases CS;
+	name trip_line_object;
 	from trip_swing;
 	to trip_parent_meter;
 	length 10;
 	configuration triplex_line_configuration_1;
 }
+
 object triplex_meter {
 	name trip_parent_meter;
 	phases CS;
+	groupid voltdumper;
 	nominal_voltage 120;
 	// object recorder {
 		// property "measured_power";
 		// interval -1;
-		// file ${recorder_filename}_parentbus_out.csv;
+		// file data_triplex_parent_test_parentbus.csv;
 	// };
 	object complex_assert {
 		target measured_power;
@@ -86,15 +200,46 @@ object triplex_meter {
 	};
 }
 
+object triplex_load {
+	name trip_child_load;     
+	phases CS;     
+	groupid voltdumper;
+	parent trip_parent_meter;
+	nominal_voltage 120;
+	base_power_1 750.0 VA;
+	base_power_2 775.0 VA;
+	base_power_12 1000.0 VA;
+	impedance_pf_1 0.85;
+	impedance_pf_2 0.85;
+	impedance_pf_12 0.85;
+	power_pf_1 0.95;
+	power_pf_2 0.95;
+	power_pf_12 0.95;
+	current_pf_1 0.87;
+	current_pf_2 0.87;
+	current_pf_12 0.87;
+	power_fraction_1 0.35;
+	impedance_fraction_1 0.5;
+	current_fraction_1 0.15;
+	power_fraction_2 0.35;
+	impedance_fraction_2 0.5;
+	current_fraction_2 0.15;
+	power_fraction_12 0.35;
+	impedance_fraction_12 0.5;
+	current_fraction_12 0.15;
+}
+
+
 object triplex_meter {
 	name house_meter;
 	parent trip_parent_meter;
 	phases CS;
+	groupid voltdumper;
 	nominal_voltage 120;
 	// object recorder {
 		// property "measured_power";
 		// interval -1;
-		// file ${recorder_filename}_housebus_out.csv;
+		// file data_triplex_parent_test_housebus.csv;
 	// };
 	object complex_assert {
 		target measured_power;
@@ -179,3 +324,52 @@ object house {
 	};
 }
 
+
+// object recorder {
+	// parent trip_line_object;
+	// property "power_in,power_out";
+	// interval -1;
+	// file ${recorder_filename}_tripline.csv;
+// }
+
+// object group_recorder {
+	// property "voltage_1";
+	// group "groupid=voltdumper";
+	// interval 120;
+	// file ${recorder_filename}_test_voltage_1.csv;
+// }
+
+// object group_recorder {
+	// property "voltage_2";
+	// group "groupid=voltdumper";
+	// interval 120;
+	// file ${recorder_filename}_test_voltage_2.csv;
+// }
+
+// object group_recorder {
+	// property "voltage_12";
+	// group "groupid=voltdumper";
+	// interval 120;
+	// file ${recorder_filename}_test_voltage_12.csv;
+// }
+
+// object group_recorder {
+	// group "class=triplex_load";
+	// property "measured_power";
+	// interval 120;
+	// file ${recorder_filename}_swingbus_out.csv;
+// }
+
+// object group_recorder {
+	// group "class=triplex_meter";
+	// property "measured_power";
+	// interval 120;
+	// file ${recorder_filename}_triplex_meter_out.csv;
+// }
+
+// object group_recorder {
+	// group "class=transformer";
+	// property "power_out";
+	// interval 120;
+	// file ${recorder_filename}_transformer_power.csv;
+// }

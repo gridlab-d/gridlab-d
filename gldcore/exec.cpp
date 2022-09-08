@@ -707,7 +707,7 @@ static int init_by_deferral_retry(OBJECT **def_array, int def_ct)
 	OBJECT **next_arr, **tarray;
 	int rv = SUCCESS;
 	char b[64];
-	int retry = 1, tries = 0;
+	int retry = 1, tries = 0, exit_check = 0;
 	tarray = NULL;
 
 	//Split out the malloc so it can be checked
@@ -775,8 +775,11 @@ static int init_by_deferral_retry(OBJECT **def_array, int def_ct)
 			rv = FAILED;
 			retry = 0;
 
-			//See if we iterated
-			if (tries > 0)
+			//See which iteration we exited on - multi-swap messes up pointers alternatingly
+			exit_check = tries % 2;
+
+			//Determine how to handle that iteration
+			if (exit_check == 1)
 			{
 				//Yes - fix the pointers before leaving, otherwise we'll double-free things!
 				tarray = def_array;
@@ -790,8 +793,11 @@ static int init_by_deferral_retry(OBJECT **def_array, int def_ct)
 			rv = SUCCESS;
 			retry = 0;
 
-			//See if we iterated
-			if (tries > 0)
+			//See which iteration we exited on - multi-swap messes up pointers alternatingly
+			exit_check = tries % 2;
+
+			//Determine how to handle that iteration
+			if (exit_check == 1)
 			{
 				//Yes - fix the pointers before leaving, otherwise we'll double-free things!
 				tarray = def_array;
