@@ -784,8 +784,8 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 				libs = "";
 #endif
 
-                auto cxx_flags = std::string("-I") + global_gl_include.string() +
-                        " -I" + global_gl_share.string() +
+                auto cxx_flags = std::string("-I\"") + global_gl_include.string() + "\"" +
+                        " -I\"" + global_gl_share.string() + "\"" +
                         " -fPIC";
 				sprintf(execstr, R"(%s %s %s %s %s -c "%s" -o "%s")",
 						getenv("CXX")?getenv("CXX"):DEFAULT_CXX,

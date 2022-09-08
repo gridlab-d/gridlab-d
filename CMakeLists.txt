@@ -22,12 +22,13 @@ include(CheckIncludeFiles)
 include(CheckFunctionExists)
 include(CheckSymbolExists)
 include(CMakeDependentOption)
+include(FetchContent)
 
 # Setup Gridlab-d Version information.
 include(cmake/Cleanup.cmake)
 include(cmake/SetVersion.cmake)
 # Perform dependency checks
-include(cmake/CheckDependancies.cmake)
+include(cmake/CheckDependencies.cmake)
 # Generate current build number
 include(cmake/Build_number.cmake)
 include(cmake/SanitizePaths.cmake)
@@ -58,7 +59,6 @@ if (NOT XercesC_FOUND)
     message(STATUS "XercesC library could not be located on the platform. XML Loading is disabled.")
 endif ()
 
-# TODO: retire curses
 find_package(Curses)
 if (CURSES_FOUND)
     option(HAVE_CURSES "Curses library is present on the platform" ON)
@@ -96,17 +96,19 @@ add_compile_options(${FORCE_ERROR} ${DISABLED_OPTIMIZATIONS})
 
 ## Set up platform specific library linking and platform identification
 if (WIN32 OR MSYS OR MINGW OR CYGWIN)
-    find_library(DLFCN NAMES dl libdl dlfcn dlfcn-win32)
-    if (DLFCN)
-        SET(DL_NAME dl)
-    else ()
-        add_subdirectory(third_party/dlfcn-win32 EXCLUDE_FROM_ALL)
-        get_target_property(DL_INC_PATH dl INTERFACE_INCLUDE_DIRECTORIES)
-        SET(DL_NAME dl)
-    endif ()
+    FetchContent_Declare(
+            dlfcn
+            GIT_REPOSITORY https://github.com/dlfcn-win32/dlfcn-win32.git
+            GIT_TAG        v1.3.1
+    )
+    FetchContent_MakeAvailable(dlfcn)
+
+    find_package(dlfcn-win32 REQUIRED)
+    set(DL_NAME dlfcn-win32::dl)
 
     set(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 ${DL_NAME} m)
     set(FOUND_WINDOWS yes CACHE INTERNAL "Tell script generator we're Windows")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++")
 elseif (APPLE)
     set(OS_SPECIFIC_LIBRARIES ${CMAKE_DL_LIBS})
     set(FOUND_MACOS yes CACHE INTERNAL "Tell script generator we're MacOS")

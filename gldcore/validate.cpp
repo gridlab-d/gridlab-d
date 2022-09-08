@@ -476,7 +476,7 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 	}
 	int64 dt = exec_clock();
 	result.inc_files(file);
-	unsigned int code = vsystem("%s -W %s %s %s.glm ", 
+	unsigned int code = vsystem("\"%s\" -W %s %s %s.glm ",
 #ifdef _WIN32
 		_pgmptr,
 #else

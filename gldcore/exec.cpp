@@ -3081,7 +3081,7 @@ void *slave_node_proc(void *args)
 	output_debug("filepath = %s", filepath);
 	sprintf(ippath, "--slave %s:%d", addrstr, mtr_port);
 	output_debug("ippath = %s", ippath);
-	sprintf(cmd, "%s%sgridlabd.exe %s --id %" FMT_INT64 "d %s %s",
+	sprintf(cmd, "\"%s%sgridlabd.exe\" %s --id %" FMT_INT64 "d %s %s",
 		(global_execdir[0] ? global_execdir : ""), (global_execdir[0] ? "\\" : ""), params, id, ippath, filepath);//addrstr, mtr_port, filepath);//,
 	output_debug("system(\"%s\")", cmd);
 
