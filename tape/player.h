@@ -19,6 +19,7 @@ class player : public gld_object {
     char256 mode;
     char256 property; //< the target property
     int32 loop; //< the number of time to replay the tape
+	bool all_events_delta;	/**< Flag to force any player update to trigger deltamode */
 
   public: // Should these be private class members?
     union {
@@ -29,6 +30,7 @@ class player : public gld_object {
     };
     char lasterr[1024];
     FILETYPE type;
+    TIMESTAMP sim_start_time;
     TAPESTATUS status;
     int32 loopnum;
     struct {

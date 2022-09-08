@@ -17,8 +17,8 @@ Copyright (C) 2008 Battelle Memorial Institute
 #define DEFAULT 1.0;
 
 //CLASS *rectifier::plcass = power_electronics;
-CLASS *rectifier::oclass = NULL;
-rectifier *rectifier::defaults = NULL;
+CLASS *rectifier::oclass = nullptr;
+rectifier *rectifier::defaults = nullptr;
 
 static PASSCONFIG passconfig = PC_BOTTOMUP;
 static PASSCONFIG clockpass = PC_BOTTOMUP;
@@ -26,10 +26,10 @@ static PASSCONFIG clockpass = PC_BOTTOMUP;
 /* Class registration is only called once to register the class with the core */
 rectifier::rectifier(MODULE *module)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		oclass = gl_register_class(module, "rectifier",sizeof(rectifier),PC_BOTTOMUP|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class rectifier";
 		else
 			oclass->trl = TRL_PROOF;
@@ -97,7 +97,7 @@ int rectifier::init(OBJECT *parent)
 
 	V_Rated = 360;
 
-	if (parent!=NULL && gl_object_isa(parent,"inverter"))
+	if (parent!=nullptr && gl_object_isa(parent,"inverter"))
 	{
 		//Map the V_In property
 		pCircuit_V = new gld_property(parent,"V_In");
@@ -183,7 +183,7 @@ TIMESTAMP rectifier::presync(TIMESTAMP t0, TIMESTAMP t1)
 /* Sync is called when the clock needs to advance on the bottom-up pass */
 TIMESTAMP rectifier::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {	
-	gld_wlock *test_rlock;
+	gld_wlock *test_rlock = nullptr;
 
 	V_Out = V_Rated;
 
@@ -248,7 +248,7 @@ EXPORT int create_rectifier(OBJECT **obj, OBJECT *parent)
 	try 
 	{
 		*obj = gl_create_object(rectifier::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			rectifier *my = OBJECTDATA(*obj,rectifier);
 			gl_set_parent(*obj,parent);
@@ -264,7 +264,7 @@ EXPORT int init_rectifier(OBJECT *obj, OBJECT *parent)
 {
 	try 
 	{
-		if (obj!=NULL)
+		if (obj!=nullptr)
 			return OBJECTDATA(obj,rectifier)->init(parent);
 		else
 			return 0;

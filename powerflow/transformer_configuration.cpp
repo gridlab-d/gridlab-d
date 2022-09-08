@@ -33,15 +33,15 @@ using namespace std;
 //////////////////////////////////////////////////////////////////////////
 // transformer_configuration CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* transformer_configuration::oclass = NULL;
-CLASS* transformer_configuration::pclass = NULL;
+CLASS* transformer_configuration::oclass = nullptr;
+CLASS* transformer_configuration::pclass = nullptr;
 
 transformer_configuration::transformer_configuration(MODULE *mod) : powerflow_library(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		oclass = gl_register_class(mod,"transformer_configuration",sizeof(transformer_configuration),0);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class transformer_configuration";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -316,7 +316,7 @@ EXPORT int create_transformer_configuration(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(transformer_configuration::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			transformer_configuration *my = OBJECTDATA(*obj,transformer_configuration);
 			gl_set_parent(*obj,parent);

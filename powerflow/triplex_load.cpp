@@ -16,17 +16,17 @@
 
 #include "triplex_load.h"
 
-CLASS* triplex_load::oclass = NULL;
-CLASS* triplex_load::pclass = NULL;
+CLASS* triplex_load::oclass = nullptr;
+CLASS* triplex_load::pclass = nullptr;
 
 triplex_load::triplex_load(MODULE *mod) : triplex_node(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		pclass = triplex_node::oclass;
 		
 		oclass = gl_register_class(mod,"triplex_load",sizeof(triplex_load),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class triplex_load";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -106,20 +106,22 @@ triplex_load::triplex_load(MODULE *mod) : triplex_node(mod)
          	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 			//Publish deltamode functions
-			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_triplex_load)==NULL)
+			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_triplex_load)==nullptr)
 				GL_THROW("Unable to publish triplex_load deltamode function");
-			if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
+			if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==nullptr)
 				GL_THROW("Unable to publish triplex_load swing-swapping function");
-			if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==NULL)
+			if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==nullptr)
 				GL_THROW("Unable to publish triplex_load current injection update mapping function");
-			if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
+			if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==nullptr)
 				GL_THROW("Unable to publish triplex_load VFD attachment function");
-			if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
+			if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == nullptr)
 				GL_THROW("Unable to publish triplex_load island-status-reset function");
-			if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
+			if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == nullptr)
 				GL_THROW("Unable to publish triplex_load swing-status check function");
-			if (gl_publish_function(oclass, "pwr_object_load_update", (FUNCTIONADDR)update_triplex_load_values) == NULL)
+			if (gl_publish_function(oclass, "pwr_object_load_update", (FUNCTIONADDR)update_triplex_load_values) == nullptr)
 				GL_THROW("Unable to publish triplex_load impedance-conversion/update function");
+			if (gl_publish_function(oclass, "pwr_object_shunt_update", (FUNCTIONADDR)node_update_shunt_values) == nullptr)
+				GL_THROW("Unable to publish triplex_load shunt update function");
     }
 }
 
@@ -145,9 +147,9 @@ int triplex_load::create(void)
 	base_load_val_was_nonzero[0] = base_load_val_was_nonzero[1] = base_load_val_was_nonzero[2] = false;	//Start deflagged
 	ZIP_constant_current[0] = ZIP_constant_current[1] = ZIP_constant_current[2] = false;				//Start assuming not touched
 
-	prev_load_values[0][0] = prev_load_values[0][1] = prev_load_values[0][2] = complex(0.0,0.0);
-	prev_load_values[1][0] = prev_load_values[1][1] = prev_load_values[1][2] = complex(0.0,0.0);
-	prev_load_values[2][0] = prev_load_values[2][1] = prev_load_values[2][2] = complex(0.0,0.0);
+	prev_load_values[0][0] = prev_load_values[0][1] = prev_load_values[0][2] = gld::complex(0.0,0.0);
+	prev_load_values[1][0] = prev_load_values[1][1] = prev_load_values[1][2] = gld::complex(0.0,0.0);
+	prev_load_values[2][0] = prev_load_values[2][1] = prev_load_values[2][2] = gld::complex(0.0,0.0);
 
     return res;
 }
@@ -215,20 +217,21 @@ TIMESTAMP triplex_load::postsync(TIMESTAMP t0)
 //Here primarily so deltamode players can actually influence things, as well as constant current rotations
 void triplex_load::triplex_load_update_fxn(void)
 {
-	complex intermed_impedance[3];
+	gld::complex intermed_impedance[3];
 	int index_var;
-	complex adjusted_current[3];
-	complex adjust_temp_nominal_voltage[3];
+	gld::complex adjusted_current[3];
+	gld::complex adjust_temp_nominal_voltage[3];
 	double adjust_temp_voltage_mag[3];
 	double adjust_nominal_voltage_val[3];
-	complex adjust_voltage_val[3];
+	gld::complex adjust_voltage_val[3];
+	gld::complex working_impedance_value;
 
 	//Roll GFA check into here, so current loads updates are handled properly
 	//See if GFA functionality is enabled
-	if (GFA_enable == true)
+	if (GFA_enable)
 	{
 		//See if we're enabled - just skipping the load update should be enough, if we are not
-		if (GFA_status == false)
+		if (!GFA_status)
 		{
 			//Remove any load contributions
 			triplex_load_delete_update_fxn();
@@ -258,9 +261,9 @@ void triplex_load::triplex_load_update_fxn(void)
 	//Zero the accumulators
 	for (index_var=0; index_var<3; index_var++)
 	{
-		prev_load_values[0][index_var] = complex(0.0,0.0);
-		prev_load_values[1][index_var] = complex(0.0,0.0);
-		prev_load_values[2][index_var] = complex(0.0,0.0);
+		prev_load_values[0][index_var] = gld::complex(0.0,0.0);
+		prev_load_values[1][index_var] = gld::complex(0.0,0.0);
+		prev_load_values[2][index_var] = gld::complex(0.0,0.0);
 	}
 
 	if(base_power[0] != 0.0){// Phase 1
@@ -297,14 +300,14 @@ void triplex_load::triplex_load_update_fxn(void)
 				imag_power *= -1.0;
 			}
 
-			constant_power[0] = complex(real_power,imag_power);
+			constant_power[0] = gld::complex(real_power,imag_power);
 		} else {
-			constant_power[0] = complex(0, 0);
+			constant_power[0] = gld::complex(0, 0);
 		}
 		// Put in the constant current portion and adjust the angle
 		if(current_fraction[0] != 0.0){
 			double real_power, imag_power, temp_angle;
-			complex temp_curr;
+			gld::complex temp_curr;
 
 			if(current_pf[0] == 0.0){				
 				real_power = 0.0;
@@ -319,7 +322,7 @@ void triplex_load::triplex_load_update_fxn(void)
 			}
 			
 			// Calculate then shift the constant current to use the posted voltage as the reference angle
-			temp_curr = ~complex(real_power, imag_power)/complex(nominal_voltage, 0);
+			temp_curr = ~gld::complex(real_power, imag_power)/gld::complex(nominal_voltage, 0);
 			temp_angle = temp_curr.Arg() + voltage1.Arg();
 			temp_curr.SetPolar(temp_curr.Mag(), temp_angle);
 
@@ -328,7 +331,7 @@ void triplex_load::triplex_load_update_fxn(void)
 			//Set the flag
 			ZIP_constant_current[0] = true;
 		} else {
-			constant_current[0] = complex(0, 0);
+			constant_current[0] = gld::complex(0, 0);
 		}
 		// Put in the constant impedance portion
 		if(impedance_fraction[0] != 0.0){
@@ -350,17 +353,17 @@ void triplex_load::triplex_load_update_fxn(void)
 				imag_power *= -1.0;	//Adjust imaginary portion for negative PF
 			}
 
-			constant_impedance[0] = ~(complex(nominal_voltage*nominal_voltage, 0)/complex(real_power, imag_power));
+			constant_impedance[0] = ~(gld::complex(nominal_voltage*nominal_voltage, 0)/gld::complex(real_power, imag_power));
 		} else {
-			constant_impedance[0] = complex(0, 0);
+			constant_impedance[0] = gld::complex(0, 0);
 		}
 	}
-	else if (base_load_val_was_nonzero[0] == true)	//Zero case, be sure to re-zero it
+	else if (base_load_val_was_nonzero[0])	//Zero case, be sure to re-zero it
 	{
 		//zero all components
-		constant_power[0] = complex(0.0,0.0);
-		constant_current[0] = complex(0.0,0.0);
-		constant_impedance[0] = complex(0.0,0.0);
+		constant_power[0] = gld::complex(0.0,0.0);
+		constant_current[0] = gld::complex(0.0,0.0);
+		constant_impedance[0] = gld::complex(0.0,0.0);
 
 		//Deflag us
 		base_load_val_was_nonzero[0] = false;
@@ -398,14 +401,14 @@ void triplex_load::triplex_load_update_fxn(void)
 				imag_power *= -1.0;
 			}
 
-			constant_power[1] = complex(real_power,imag_power);
+			constant_power[1] = gld::complex(real_power,imag_power);
 		} else {
-			constant_power[1] = complex(0, 0);
+			constant_power[1] = gld::complex(0, 0);
 		}
 		// Put in the constant current portion and adjust the angle
 		if(current_fraction[1] != 0.0){
 			double real_power, imag_power, temp_angle;
-			complex temp_curr;
+			gld::complex temp_curr;
 
 			if(current_pf[1] == 0.0){				
 				real_power = 0.0;
@@ -420,7 +423,7 @@ void triplex_load::triplex_load_update_fxn(void)
 			}
 			
 			// Calculate then shift the constant current to use the posted voltage as the reference angle
-			temp_curr = ~complex(real_power, imag_power)/complex(nominal_voltage, 0);
+			temp_curr = ~gld::complex(real_power, imag_power)/gld::complex(nominal_voltage, 0);
 			temp_angle = temp_curr.Arg() + voltage2.Arg();
 			temp_curr.SetPolar(temp_curr.Mag(), temp_angle);
 
@@ -429,7 +432,7 @@ void triplex_load::triplex_load_update_fxn(void)
 			//Set the flag
 			ZIP_constant_current[1] = true;
 		} else {
-			constant_current[1] = complex(0, 0);
+			constant_current[1] = gld::complex(0, 0);
 		}
 		// Put in the constant impedance portion
 		if(impedance_fraction[1] != 0.0){
@@ -451,17 +454,17 @@ void triplex_load::triplex_load_update_fxn(void)
 				imag_power *= -1.0;	//Adjust imaginary portion for negative PF
 			}
 
-			constant_impedance[1] = ~(complex(nominal_voltage*nominal_voltage, 0)/complex(real_power, imag_power));
+			constant_impedance[1] = ~(gld::complex(nominal_voltage*nominal_voltage, 0)/gld::complex(real_power, imag_power));
 		} else {
-			constant_impedance[1] = complex(0, 0);
+			constant_impedance[1] = gld::complex(0, 0);
 		}
 	}
-	else if (base_load_val_was_nonzero[1] == true)	//Zero case, be sure to re-zero it
+	else if (base_load_val_was_nonzero[1])	//Zero case, be sure to re-zero it
 	{
 		//zero all components
-		constant_power[1] = complex(0.0,0.0);
-		constant_current[1] = complex(0.0,0.0);
-		constant_impedance[1] = complex(0.0,0.0);
+		constant_power[1] = gld::complex(0.0,0.0);
+		constant_current[1] = gld::complex(0.0,0.0);
+		constant_impedance[1] = gld::complex(0.0,0.0);
 
 		//Deflag us
 		base_load_val_was_nonzero[1] = false;
@@ -499,14 +502,14 @@ void triplex_load::triplex_load_update_fxn(void)
 				imag_power *= -1.0;
 			}
 
-			constant_power[2] = complex(real_power,imag_power);
+			constant_power[2] = gld::complex(real_power,imag_power);
 		} else {
-			constant_power[2] = complex(0, 0);
+			constant_power[2] = gld::complex(0, 0);
 		}
 		// Put in the constant current portion and adjust the angle
 		if(current_fraction[2] != 0.0){
 			double real_power, imag_power, temp_angle;
-			complex temp_curr;
+			gld::complex temp_curr;
 
 			if(current_pf[2] == 0.0){				
 				real_power = 0.0;
@@ -522,7 +525,7 @@ void triplex_load::triplex_load_update_fxn(void)
 			
 			// Calculate then shift the constant current to use the posted voltage as the reference angle
 			//Note that the 2*nominal_voltage is to account for the 240 V connection
-			temp_curr = ~complex(real_power, imag_power)/complex(2.0*nominal_voltage, 0);
+			temp_curr = ~gld::complex(real_power, imag_power)/gld::complex(2.0*nominal_voltage, 0);
 			temp_angle = temp_curr.Arg() + voltage12.Arg();
 			temp_curr.SetPolar(temp_curr.Mag(), temp_angle);
 
@@ -531,7 +534,7 @@ void triplex_load::triplex_load_update_fxn(void)
 			//Set the flag
 			ZIP_constant_current[2] = true;
 		} else {
-			constant_current[2] = complex(0, 0);
+			constant_current[2] = gld::complex(0, 0);
 		}
 		// Put in the constant impedance portion
 		if(impedance_fraction[2] != 0.0){
@@ -554,17 +557,17 @@ void triplex_load::triplex_load_update_fxn(void)
 			}
 
 			//Note that nominal_voltage is 120, so need to double for 240, the 4 is 2^2
-			constant_impedance[2] = ~(complex(4*nominal_voltage*nominal_voltage, 0)/complex(real_power, imag_power));
+			constant_impedance[2] = ~(gld::complex(4*nominal_voltage*nominal_voltage, 0)/gld::complex(real_power, imag_power));
 		} else {
-			constant_impedance[2] = complex(0, 0);
+			constant_impedance[2] = gld::complex(0, 0);
 		}
 	}
-	else if (base_load_val_was_nonzero[2] == true)	//Zero case, be sure to re-zero it
+	else if (base_load_val_was_nonzero[2])	//Zero case, be sure to re-zero it
 	{
 		//zero all components
-		constant_power[2] = complex(0.0,0.0);
-		constant_current[2] = complex(0.0,0.0);
-		constant_impedance[2] = complex(0.0,0.0);
+		constant_power[2] = gld::complex(0.0,0.0);
+		constant_current[2] = gld::complex(0.0,0.0);
+		constant_impedance[2] = gld::complex(0.0,0.0);
 
 		//Deflag us
 		base_load_val_was_nonzero[2] = false;
@@ -572,12 +575,12 @@ void triplex_load::triplex_load_update_fxn(void)
 
 	//Apply any frequency dependencies, if relevant
 	//Perform the intermediate impedance calculations, if necessary
-	if (enable_frequency_dependence == true)
+	if (enable_frequency_dependence)
 	{
 		//Check impedance values for normal connections - 1,2,12
 		for (index_var=0; index_var<3; index_var++)
 		{
-			if ((constant_impedance[index_var].IsZero()) == false)
+			if (!constant_impedance[index_var].IsZero())
 			{
 				//Assign real part
 				intermed_impedance[index_var].SetReal(constant_impedance[index_var].Re());
@@ -610,28 +613,28 @@ void triplex_load::triplex_load_update_fxn(void)
 	if(!intermed_impedance[0].IsZero())
 	{
 		//Accumulator
-		shunt[0] += complex(1.0)/intermed_impedance[0];
+		shunt[0] += gld::complex(1.0)/intermed_impedance[0];
 
 		//Tracker
-		prev_load_values[0][0] += complex(1.0,0.0)/intermed_impedance[0];
+		prev_load_values[0][0] += gld::complex(1.0,0.0)/intermed_impedance[0];
 	}
 
 	if(!intermed_impedance[1].IsZero())
 	{
 		//Accumulator
-		shunt[1] += complex(1.0)/intermed_impedance[1];
+		shunt[1] += gld::complex(1.0)/intermed_impedance[1];
 
 		//Tracker
-		prev_load_values[0][1] += complex(1.0,0.0)/intermed_impedance[1];
+		prev_load_values[0][1] += gld::complex(1.0,0.0)/intermed_impedance[1];
 	}
 	
 	if(!intermed_impedance[2].IsZero())
 	{
 		//Accumulator
-		shunt[2] += complex(1.0)/intermed_impedance[2];
+		shunt[2] += gld::complex(1.0)/intermed_impedance[2];
 
 		//Tracker
-		prev_load_values[0][2] += complex(1.0,0.0)/intermed_impedance[2];
+		prev_load_values[0][2] += gld::complex(1.0,0.0)/intermed_impedance[2];
 	}
 	
 	//Power and current accumulators
@@ -665,16 +668,16 @@ void triplex_load::triplex_load_update_fxn(void)
 	//Start adjustments - loop them
 	for (index_var=0; index_var<3; index_var++)
 	{
-		if ((constant_current[index_var] != 0.0) && (adjust_temp_voltage_mag[index_var] != 0.0) && (ZIP_constant_current[index_var] == false))
+		if ((constant_current[index_var] != 0.0) && (adjust_temp_voltage_mag[index_var] != 0.0) && !ZIP_constant_current[index_var])
 		{
 			//calculate new value
 			adjusted_current[index_var] = ~(adjust_temp_nominal_voltage[index_var] * ~constant_current[index_var] * adjust_temp_voltage_mag[index_var] / (adjust_voltage_val[index_var] * adjust_nominal_voltage_val[index_var]));
 		}
 		else
 		{
-			if (ZIP_constant_current[index_var] == false)
+			if (!ZIP_constant_current[index_var])
 			{
-				adjusted_current[index_var] = complex(0.0,0.0);
+				adjusted_current[index_var] = gld::complex(0.0,0.0);
 			}
 			else
 			{
@@ -702,7 +705,29 @@ void triplex_load::triplex_load_update_fxn(void)
 //Function to appropriately zero load - make sure we don't get too heavy handed
 void triplex_load::triplex_load_delete_update_fxn(void)
 {
-	int index_var;
+	int index_var, extract_node_ref;
+
+	//If FPI, remove the shunt portions
+	if (NR_solver_algorithm == NRM_FPI)
+	{
+		//See if we're a parented load or not - not sure how we'd ever be a "different child", but copy paste!
+		if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
+		{
+			extract_node_ref = NR_node_reference;
+		}
+		else	//It is a child - look at parent
+		{
+			extract_node_ref = *NR_subnode_reference;
+		}
+
+		//Remove the components
+		NR_busdata[extract_node_ref].full_Y_load[0] -= prev_load_values[0][0];
+		NR_busdata[extract_node_ref].full_Y_load[4] -= prev_load_values[0][1];
+		NR_busdata[extract_node_ref].full_Y_load[8] -= prev_load_values[0][2];
+
+		//Flag the FPI change
+		NR_FPI_imp_load_change = true;
+	}//End FPI
 
 	//Loop and clear
 	for (index_var=0; index_var<3; index_var++)
@@ -720,9 +745,9 @@ void triplex_load::triplex_load_delete_update_fxn(void)
 	//Zero the accumulators
 	for (index_var=0; index_var<3; index_var++)
 	{
-		prev_load_values[0][index_var] = complex(0.0,0.0);
-		prev_load_values[1][index_var] = complex(0.0,0.0);
-		prev_load_values[2][index_var] = complex(0.0,0.0);
+		prev_load_values[0][index_var] = gld::complex(0.0,0.0);
+		prev_load_values[1][index_var] = gld::complex(0.0,0.0);
+		prev_load_values[2][index_var] = gld::complex(0.0,0.0);
 	}
 }
 
@@ -740,7 +765,7 @@ SIMULATIONMODE triplex_load::inter_deltaupdate_triplex_load(unsigned int64 delta
 	deltat = (double)dt/(double)DT_SECOND;
 
 	//Update time tracking variable - mostly for GFA functionality calls
-	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
+	if ((iteration_count_val==0) && !interupdate_pos) //Only update timestamp tracker on first iteration
 	{
 		//Update tracking variable
 		prev_time_dbl = gl_globaldeltaclock;
@@ -763,13 +788,13 @@ SIMULATIONMODE triplex_load::inter_deltaupdate_triplex_load(unsigned int64 delta
 	}
 
 	//Perform the GFA update, if enabled
-	if ((GFA_enable == true) && (iteration_count_val == 0) && (interupdate_pos == false))	//Always just do on the first pass
+	if (GFA_enable && (iteration_count_val == 0) && !interupdate_pos)	//Always just do on the first pass
 	{
 		//Do the checks
 		GFA_Update_time = perform_GFA_checks(deltat);
 	}
 
-	if (interupdate_pos == false)	//Before powerflow call
+	if (!interupdate_pos)	//Before powerflow call
 	{
 		//Call node presync-equivalent items
 		NR_node_presync_fxn(0);
@@ -815,7 +840,7 @@ SIMULATIONMODE triplex_load::inter_deltaupdate_triplex_load(unsigned int64 delta
 		//Default else -- don't calculate it
 
 		//See if GFA functionality is required, since it may require iterations or "continance"
-		if (GFA_enable == true)
+		if (GFA_enable)
 		{
 			//See if our return is value
 			if ((GFA_Update_time > 0.0) && (GFA_Update_time < 1.7))
@@ -851,7 +876,7 @@ EXPORT int create_triplex_load(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(triplex_load::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			triplex_load *my = OBJECTDATA(*obj,triplex_load);
 			gl_set_parent(*obj,parent);

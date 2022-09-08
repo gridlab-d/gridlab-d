@@ -20,25 +20,6 @@
  **/
 #include "waterheater.h"
 
-#include <cstdlib>
-#include <cstdio>
-#include <cerrno>
-#include <cmath>
-
-#include <chrono>
-#include <iostream>
-#include <exception>
-#include <algorithm>
-#include <limits>
-#include <sstream>
-#include <string>
-#include <fstream>
-#include <memory>
-
-using std::stringstream;
-using std::ofstream;
-using std::string;
-
 #define TSTAT_PRECISION 0.01
 #define HEIGHT_PRECISION 0.01
 /*

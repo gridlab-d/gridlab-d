@@ -1,0 +1,273 @@
+// Modified IEEE 4-node system
+// Tests transformer saturation/inrush - FPI
+
+clock {
+	timezone "PST+8PDT";
+	starttime '2001-01-01 00:00:00 PST';
+	stoptime '2001-01-01 00:00:03 PST';
+}
+
+//#set pauseatexit=1;
+#set profiler=1
+#define rotor_convergence=0.0
+//#set dateformat=US
+#set double_format=%+.12lg
+#set complex_format=%+.12lg%+.12lg%c
+#set complex_output_format=RECT
+
+//Deltamode declarations - global values
+#set deltamode_maximumtime=5000000000000	//2 minutes
+#set deltamode_iteration_limit=10		//Iteration limit
+
+module assert;
+module tape;
+module reliability {
+	enable_subsecond_models TRUE;
+	maximum_event_length 18000;	//Maximum length of events in seconds (manual events are excluded from this limit)
+	report_event_log true;
+}
+
+module powerflow {
+	enable_subsecond_models true;
+	deltamode_timestep 0.5 ms;
+	all_powerflow_delta true;
+	solver_method NR;
+	enable_inrush true;
+	low_voltage_impedance_level 0.95;
+	inrush_integration BACKWARD_EULER;
+}
+
+//Fault check stuff
+//General fault_check object to remove things that aren't supported
+object fault_check {
+	name base_fault_check_object;
+	flags DELTAMODE;
+	check_mode ONCHANGE;
+	strictly_radial false;
+	grid_association true;
+	eventgen_object testgendevB;   //This needs to link to the eventgen object
+	full_output_file true;	//Prints both supported and unsupported
+	output_filename testout.txt;
+}
+
+object eventgen {	//Closes in primary of secondary transformer
+	name testgendevB;
+	flags DELTAMODE;
+	fault_type "SW-ABC";     //Type of fault for the object to induce
+	manual_outages "in_rush_switch,2001-01-01 00:00:00,2001-01-01 00:00:01.01";
+}
+
+object line_configuration {
+	name line_config_4_wire;
+	z11 0.4576+1.0780j;
+	z12 0.1559+0.5017j;
+	z13 0.1535+0.3849j;
+	z21 0.1559+0.5017j;
+	z22 0.4666+1.0482j;
+	z23 0.1580+0.4236j;
+	z31 0.1535+0.3849j;
+	z32 0.1580+0.4236j;
+	z33 0.4615+1.0651j;
+}
+
+object transformer_configuration {
+	name wye_wye_stepdown;
+	connect_type WYE_WYE;
+	power_rating 12000;
+	powerA_rating 4000;
+	powerB_rating 4000;
+	powerC_rating 4000;
+	primary_voltage 12470;
+	secondary_voltage 480.0;
+	resistance 0.007;
+	reactance 0.07;
+	magnetization_location SECONDARY;
+	inrush_saturation_enabled true;
+	L_A 0.2;
+	phi_K 1.17;
+	phi_M 1.0;
+	I_M 0.01;
+	T_D 0.5;
+}
+
+
+object node {
+	name node_1_swing;
+	phases "ABCN";
+	voltage_A +7199.558+0.000j;
+	voltage_B -3599.779-6235.000j;
+	voltage_C -3599.779+6235.000j;
+	bustype SWING;
+	nominal_voltage 7199.558;
+}
+
+object switch {
+	name in_rush_switch;
+	phases ABCN;
+	from node_1_swing;
+	to node_1;
+}
+
+object node {
+	name node_1;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+}
+
+object overhead_line {
+	phases "ABCN";
+	name line_12;
+	from node_1;
+	to node_2;
+	length 2000;
+	configuration line_config_4_wire;
+	// object recorder {
+		// flags DELTAMODE;
+		// property "current_out_A,current_out_B,current_out_C";
+		// file primary_current.csv;
+		// interval 1;
+	// };
+}
+
+object node {
+	name node_2;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	// object recorder {
+		// flags DELTAMODE;
+		// property "voltage_A,voltage_B,voltage_C";
+		// file node_2_voltages.csv;
+		// interval 1;
+	// };
+}
+
+object node {
+	name node_21b;
+	phases ABCN;
+	nominal_voltage 7199.558;
+}
+
+object overhead_line {
+	phases "ABCN";
+	name line_21b;
+	from node_2;
+	to node_21b;
+	length 2000;
+	configuration line_config_4_wire;
+	// object recorder {
+		// flags DELTAMODE;
+		// property "current_in_A,current_in_B,current_in_C,current_out_A,current_out_B,current_out_C";
+		// file primary_line_current.csv;
+		// interval 1;
+	// };
+}
+
+object transformer {
+	phases "ABCN";
+	name xform_23;
+	from node_21b;
+	to node_3;
+	configuration wye_wye_stepdown;
+	object recorder {
+		flags DELTAMODE;
+		property "current_in_A,current_in_B,current_in_C,current_out_A,current_out_B,current_out_C";
+		file transformer_currents.csv;
+		interval 1;
+	};
+	// object recorder {
+		// flags DELTAMODE;
+		// property "current_in_A";
+		// file data_transformer_inrush_currents_A.csv;
+		// interval 1;
+	// };
+	// object recorder {
+		// flags DELTAMODE;
+		// property "current_in_B";
+		// file data_transformer_inrush_currents_B.csv;
+		// interval 1;
+	// };
+	// object recorder {
+		// flags DELTAMODE;
+		// property "current_in_C";
+		// file data_transformer_inrush_currents_C.csv;
+		// interval 1;
+	// };
+	object complex_assert {
+		flags DELTAMODE;
+		target "current_in_A";
+		within 0.1;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file "../data_transformer_inrush_currents_A.csv";
+		};
+	};
+	object complex_assert {
+		flags DELTAMODE;
+		target "current_in_B";
+		within 0.1;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file "../data_transformer_inrush_currents_B.csv";
+		};
+	};
+	object complex_assert {
+		flags DELTAMODE;
+		target "current_in_C";
+		within 0.1;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file "../data_transformer_inrush_currents_C.csv";
+		};
+	};
+}
+
+object node {
+	name node_3;
+	phases "ABCN";
+	nominal_voltage 277.0;
+	// object recorder {
+		// flags DELTAMODE;
+		// property "voltage_A,voltage_B,voltage_C";
+		// file node_3_voltages.csv;
+		// interval 1;
+	// };
+}
+
+object overhead_line {
+	phases "ABCN";
+	name line_34;
+	from node_3;
+	to load_4;
+	length 2500;
+	configuration line_config_4_wire;
+	// object recorder {
+		// flags DELTAMODE;
+		// property "current_in_A,current_in_B,current_in_C";
+		// file secondary_current.csv;
+		// interval 1;
+	// };
+}
+
+object load {
+	name load_4;
+	phases "ABCN";
+	constant_impedance_A 11.7113+7.258012j;	//Adjusted test values
+	constant_impedance_B 9.30015+4.504268j;
+	constant_impedance_C 7.85346+2.581307j;
+	nominal_voltage 277.0;
+	// object recorder {
+		// flags DELTAMODE;
+		// property "voltage_A,voltage_B,voltage_C";
+		// file node_4_voltages.csv;
+		// interval 1;
+	// };
+	//Junk deltamode player
+	// object player {
+		// flags DELTAMODE;
+		// property nominal_voltage;
+		// file data_noload_nominal.csv;
+	// };
+}

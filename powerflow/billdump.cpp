@@ -17,15 +17,15 @@
 // billdump CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 
-CLASS* billdump::oclass = NULL;
+CLASS* billdump::oclass = nullptr;
 
 billdump::billdump(MODULE *mod)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		oclass = gl_register_class(mod,"billdump",sizeof(billdump),PC_BOTTOMUP|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class billdump";
 		else
 			oclass->trl = TRL_QUALIFIED;
@@ -68,14 +68,14 @@ int billdump::isa(char *classname)
 void billdump::dump(TIMESTAMP t){
 	char namestr[128];
 	char timestr[128];
-	FINDLIST *nodes = NULL;
-	OBJECT *obj = NULL;
-	FILE *outfile = NULL;
+	FINDLIST *nodes = nullptr;
+	OBJECT *obj = nullptr;
+	FILE *outfile = nullptr;
 	gld_property *node_monthly_bill;
 	gld_property *node_monthly_energy;
 	double node_prev_monthly_bill, node_prev_monthly_energy;
 	
-//	CLASS *nodeclass = NULL;
+//	CLASS *nodeclass = nullptr;
 //	PROPERTY *vA, *vB, *vC;
 
 	if (meter_type == METER_TP)
@@ -95,13 +95,13 @@ void billdump::dump(TIMESTAMP t){
 		}
 	}
 
-	if(nodes == NULL){
+	if(nodes == nullptr){
 		gl_warning("no nodes were found to dump");
 		return;
 	}
 
 	outfile = fopen(filename, "w");
-	if(outfile == NULL){
+	if(outfile == nullptr){
 		gl_error("billdump unable to open %s for output", filename.get_string());
 		return;
 	}
@@ -122,7 +122,7 @@ void billdump::dump(TIMESTAMP t){
 				node_monthly_bill = new gld_property(obj,"previous_monthly_bill");
 
 				//Check it
-				if ((node_monthly_bill->is_valid() != true) || (node_monthly_bill->is_double() != true))
+				if (!node_monthly_bill->is_valid() || !node_monthly_bill->is_double())
 				{
 					GL_THROW("billdump - Unable to map billing property of triplex_meter:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
 					/*  TROUBLESHOOT
@@ -135,7 +135,7 @@ void billdump::dump(TIMESTAMP t){
 				node_monthly_energy = new gld_property(obj,"previous_monthly_energy");
 
 				//Check it
-				if ((node_monthly_energy->is_valid() != true) || (node_monthly_energy->is_double() != true))
+				if (!node_monthly_energy->is_valid() || !node_monthly_energy->is_double())
 				{
 					GL_THROW("billdump - Unable to map billing property of triplex_meter:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
 					//Defined above
@@ -145,7 +145,7 @@ void billdump::dump(TIMESTAMP t){
 				node_prev_monthly_bill = node_monthly_bill->get_double();
 				node_prev_monthly_energy = node_monthly_energy->get_double();
 
-				if(obj->name == NULL){
+				if(obj->name == nullptr){
 					sprintf(namestr, "%s:%i", obj->oclass->name, obj->id);
 				}
 				fprintf(outfile,"%s,%f,%f\n",(obj->name ? obj->name : namestr),node_prev_monthly_bill,node_prev_monthly_energy);
@@ -169,7 +169,7 @@ void billdump::dump(TIMESTAMP t){
 				node_monthly_bill = new gld_property(obj,"previous_monthly_bill");
 
 				//Check it
-				if ((node_monthly_bill->is_valid() != true) || (node_monthly_bill->is_double() != true))
+				if (!node_monthly_bill->is_valid() || !node_monthly_bill->is_double())
 				{
 					GL_THROW("billdump - Unable to map billing property of meter:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
 					/*  TROUBLESHOOT
@@ -182,7 +182,7 @@ void billdump::dump(TIMESTAMP t){
 				node_monthly_energy = new gld_property(obj,"previous_monthly_energy");
 
 				//Check it
-				if ((node_monthly_energy->is_valid() != true) || (node_monthly_energy->is_double() != true))
+				if (!node_monthly_energy->is_valid() || !node_monthly_energy->is_double())
 				{
 					GL_THROW("billdump - Unable to map billing property of meter:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
 					//Defined above
@@ -192,7 +192,7 @@ void billdump::dump(TIMESTAMP t){
 				node_prev_monthly_bill = node_monthly_bill->get_double();
 				node_prev_monthly_energy = node_monthly_energy->get_double();
 
-				if(obj->name == NULL){
+				if(obj->name == nullptr){
 					sprintf(namestr, "%s:%i", obj->oclass->name, obj->id);
 				}
 				fprintf(outfile,"%s,%f,%f\n",(obj->name ? obj->name : namestr),node_prev_monthly_bill,node_prev_monthly_energy);
@@ -237,7 +237,7 @@ EXPORT int create_billdump(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(billdump::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			billdump *my = OBJECTDATA(*obj,billdump);
 			gl_set_parent(*obj,parent);

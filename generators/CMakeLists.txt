@@ -5,6 +5,8 @@ add_library(${PROJECT_NAME}
         battery.h
         central_dg_control.cpp
         central_dg_control.h
+        controller_dg.cpp
+        controller_dg.h
         diesel_dg.cpp
         diesel_dg.h
         energy_storage.cpp
@@ -20,10 +22,10 @@ add_library(${PROJECT_NAME}
         rectifier.h
         solar.cpp
         solar.h
+        sync_ctrl.cpp
+        sync_ctrl.h
         windturb_dg.cpp
         windturb_dg.h
-        controller_dg.cpp
-        controller_dg.h
         )
 
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")

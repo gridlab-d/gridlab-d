@@ -1,0 +1,253 @@
+//IEEE 4-node unbalanced Y-Y stepdown file
+//Grandchild (or greater) connections and testing
+//Has all the asserts from the base file still in place, so if "descendants" fail, the answers will be wrong
+
+#set double_format=%+.12lg
+#set complex_format=%+.12lg%+.12lg%c
+#set complex_output_format=RECT
+//#set savefile=test.xml
+
+clock {
+	timezone EST+5EDT;
+	starttime '2000-01-01 0:00:00';
+	stoptime '2000-01-01 0:00:01';
+}
+
+module powerflow {
+	solver_method NR;
+}
+module assert;
+module tape;
+
+object overhead_line_conductor {
+	name olc100;
+	geometric_mean_radius 0.0244 ft;
+	resistance 0.306 Ohm/mile;
+}
+
+object overhead_line_conductor {
+	name olc101;
+	geometric_mean_radius 0.00814 ft;
+	resistance 0.592 Ohm/mile;
+}
+
+object line_spacing {
+	name ls200;
+	distance_AB 2.5 ft;
+	distance_BC 4.5 ft;
+	distance_AC 7.0 ft;
+	distance_AN 5.656854 ft; 
+	distance_BN 4.272002 ft;
+	distance_CN 5.0 ft;
+}
+
+object line_configuration {
+	name lc300;
+	conductor_A olc100;
+	conductor_B olc100;
+	conductor_C olc100;
+	conductor_N olc101;
+	spacing ls200;
+}
+
+object transformer_configuration {
+	name tc400;
+	connect_type WYE_WYE;
+	power_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 4160;
+	resistance 0.01;
+	reactance 0.06;
+}
+
+object meter {
+	name node1;
+	phases "ABCN";
+	bustype SWING;
+	nominal_voltage 7199.558;
+}
+
+object overhead_line {
+	name ohl12;
+	phases "ABCN";
+	from node1;
+	to node2;
+	length 2000 ft;
+	configuration lc300;
+	object complex_assert {
+		target current_in_A;
+		within 10;
+		value 230.1-35.9d;
+	};
+	object complex_assert {
+		target current_in_B;
+		within 10;
+		value 345.7-152.6d;
+	};
+	object complex_assert {
+		target current_in_C;
+		within 10;
+		value 455.1+84.7d;
+	};
+}
+
+object node {
+	name node2;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+	object complex_assert {
+		target voltage_A;
+		within 5;
+		value 7164-.1d;
+	};
+	object complex_assert {
+		target voltage_B;
+		within 5;
+		value 7110-120.2d;
+	};
+	object complex_assert {
+		target voltage_C;
+		within 5;
+		value 7082+119.3d;
+	};
+}
+
+object transformer {
+	name xformer23;
+	phases "ABCN";
+	from node2;
+	to node_3_base;
+	configuration tc400;
+}
+
+object node {
+	phases "ABCN";
+	name node_3_base;
+	nominal_voltage 2401.777;
+	object complex_assert {
+		target voltage_A;
+		within 5;
+		value 2305-2.3d;
+	};
+	object complex_assert {
+		target voltage_B;
+		within 5;
+		value 2255-123.6d;
+	};
+	object complex_assert {
+		target voltage_C;
+		within 5;
+		value 2203+114.8d;
+	};
+}
+
+object meter {
+	name child_node_3;
+	parent node_3_base;
+	nominal_voltage 2401.777;
+}
+
+object meter {
+	name grandchild_node_3;
+	parent child_node_3;
+	nominal_voltage 2401.777;
+}
+
+object meter {
+	name great_grandchild_node_3;
+	parent grandchild_node_3;
+	nominal_voltage 2401.777;
+}
+
+object overhead_line {
+	name ohl34;
+	phases "ABCN";
+	from great_grandchild_node_3;
+	to load4;
+	length 2500 ft;
+	configuration lc300;
+	object complex_assert {
+		target current_in_A;
+		within 10;
+		value 689.7-35.9d;
+	};
+	object complex_assert {
+		target current_in_B;
+		within 10;
+		value 1036.0-152.6d;
+	};
+	object complex_assert {
+		target current_in_C;
+		within 10;
+		value 1364.0+84.7d;
+	};
+	// object recorder {
+		// property "current_in_A,current_in_B,current_in_C,current_out_A,current_out_B,current_out_C";
+		// interval -1;
+		// file ohl_current.csv;
+	// };
+}
+
+object load {
+	name load4;
+	phases "ABCN";
+	//Original power - split across descendants for an amusing test
+	// constant_power_A +1275000.000+790174.031j;
+	// constant_power_B +1800000.000+871779.789j;
+	// constant_power_C +2375000.000+780624.750j;
+	nominal_voltage 2401.777;
+	object complex_assert {
+		target voltage_A;
+		within 5;
+		value 2175-4.1d;
+	};
+	object complex_assert {
+		target voltage_B;
+		within 5;
+		value 1930-126.8d;
+	};
+	object complex_assert {
+		target voltage_C;
+		within 5;
+		value 1833+102.8d;
+	};
+}
+
+object load {
+	phases ABCN;
+	name load4_child;
+	parent load4;
+	constant_power_A +1275000.000+790174.031j;
+	nominal_voltage 2401.777;
+}	
+
+object load {
+	phases ABCN;
+	name load4_grandchild;
+	parent load4_child;
+	constant_power_B +1800000.000+871779.789j;
+	nominal_voltage 2401.777;
+}	
+
+object load {
+	phases ABCN;
+	name load4_greatgrandchild;
+	parent load4_grandchild;
+	constant_power_C +2375000.000+780624.750j;
+	nominal_voltage 2401.777;
+}	
+
+// //Check the cascade
+// object group_recorder {
+	// group "class=load";
+	// property "measured_power";
+	// interval 1;
+	// file load_measured_power.csv;
+// }
+
+// object group_recorder {
+	// group "class=meter";
+	// property "measured_power";
+	// interval 1;
+	// file meter_measured_power.csv;
+// }
