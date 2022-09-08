@@ -95,7 +95,7 @@ capacitor::capacitor(MODULE *mod):node(mod)
 			PT_enumeration, "control_level", PADDR(control_level),PT_DESCRIPTION,"define bank or individual control",
 				PT_KEYWORD, "BANK", (enumeration)BANK,
 				PT_KEYWORD, "INDIVIDUAL", (enumeration)INDIVIDUAL, 
-         	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+         	nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_capacitor)==nullptr)
@@ -1317,7 +1317,7 @@ TIMESTAMP capacitor::postsync(TIMESTAMP t0)
 	//Cast it - but check
 	if (result == TS_NEVER)
 	{
-		result_dbl = TSNVRDBL;
+		result_dbl = TS_NEVER_DBL;
 	}
 	else
 	{
@@ -1328,7 +1328,7 @@ TIMESTAMP capacitor::postsync(TIMESTAMP t0)
 	result_dbl = cap_postPost_fxn(result_dbl,t0_dbl);
 
 	//Now check and see how to return
-	if (result_dbl != TSNVRDBL)
+	if (result_dbl != TS_NEVER_DBL)
 	{
 		result = (TIMESTAMP)result_dbl;
 	}
@@ -1994,7 +1994,7 @@ SIMULATIONMODE capacitor::inter_deltaupdate_capacitor(unsigned int64 delta_time,
 		//Default else -- don't calculate it
 
 		//Always assume node wants to go forever (faking this out)
-		result_dbl = TSNVRDBL;
+		result_dbl = TS_NEVER_DBL;
 
 		//Call the functionalized postsync
 		result_dbl = cap_postPost_fxn(result_dbl,curr_time_value);
