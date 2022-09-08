@@ -39,7 +39,7 @@ controller_dg::controller_dg(MODULE *mod)
 			PT_double,"ki_QV", PADDR(ki_QV), PT_DESCRIPTION, "parameter of the propotional control for secondary voltage control",
 			PT_double,"kp_QV", PADDR(kp_QV), PT_DESCRIPTION, "parameter of the integral control for secondary voltage control",
 			PT_double,"gain_QV", PADDR(gain_QV), PT_DESCRIPTION, "Gain of the controller for secondary voltage control",
-			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		defaults = this;
 

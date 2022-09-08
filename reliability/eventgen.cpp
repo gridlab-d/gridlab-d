@@ -34,16 +34,16 @@ using namespace::std;
 
 EXPORT_PRECOMMIT(eventgen);
 
-CLASS *eventgen::oclass = NULL;			/**< a pointer to the CLASS definition in GridLAB-D's core */
-eventgen *eventgen::defaults = NULL;	/**< a pointer to the default values used when creating new objects */
+CLASS *eventgen::oclass = nullptr;			/**< a pointer to the CLASS definition in GridLAB-D's core */
+eventgen *eventgen::defaults = nullptr;	/**< a pointer to the default values used when creating new objects */
 
 /* Class registration is only called once to register the class with the core */
 eventgen::eventgen(MODULE *module)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		oclass = gl_register_class(module, "eventgen",sizeof(eventgen),PC_PRETOPDOWN|PC_POSTTOPDOWN|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class eventgen";
 		else
 			oclass->trl = TRL_DEMONSTRATED;
@@ -86,10 +86,10 @@ eventgen::eventgen(MODULE *module)
 			PT_int32, "switch_state", PADDR(switch_state),PT_DESCRIPTION,"Current state (1=closed, 0=open) for the controlled switch",
 			PT_char1024, "external_fault_event", PADDR(external_fault_event),PT_DESCRIPTION,"This variable is populated from external programs with a fault they would like to add/remove to the system.",
 			PT_bool, "use_external_faults", PADDR(use_external_faults),PT_DESCRIPTION,"Boolean to let the object know to check for faults messages from an external source.",
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
-			if (gl_publish_function(oclass,	"add_event", (FUNCTIONADDR)add_event)==NULL)
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			if (gl_publish_function(oclass,	"add_event", (FUNCTIONADDR)add_event)==nullptr)
 				GL_THROW("Unable to publish reliability event adding function");
-			if (gl_publish_function(oclass,	"interupdate_event_object", (FUNCTIONADDR)interupdate_eventgen)==NULL)
+			if (gl_publish_function(oclass,	"interupdate_event_object", (FUNCTIONADDR)interupdate_eventgen)==nullptr)
 				GL_THROW("Unable to publish reliability deltamode function");
 	}
 }
@@ -117,10 +117,10 @@ int eventgen::create(void)
 	rest_dist_params[0] = 1.0;				//Minimum value parameter - Pareto
 	rest_dist_params[1] = 1.00027785496;	//1 hour mean time to restore - shape
 
-	UnreliableObjs = NULL;
+	UnreliableObjs = nullptr;
 	UnreliableObjCount = 0;
 
-	metrics_obj_hdr = NULL;
+	metrics_obj_hdr = nullptr;
 
 	max_outage_length_dbl = 432000.0;	//5 day maximum outage by default
 
@@ -136,11 +136,11 @@ int eventgen::create(void)
 	curr_time_interrupted_sec = 0;
 	diff_count_needed = false;
 
-	secondary_interruption_cnt = NULL;
+	secondary_interruption_cnt = nullptr;
 
 	//linked list starts empty
-	Unhandled_Events.prev = NULL;
-	Unhandled_Events.next = NULL;
+	Unhandled_Events.prev = nullptr;
+	Unhandled_Events.next = nullptr;
 
 	//minimum timestep junk
 	glob_min_timestep = 0.0;
@@ -149,10 +149,10 @@ int eventgen::create(void)
 	//Delta-related items
 	deltamode_inclusive=false;		//Not in deltamode by default
 
-	metrics_object_event_ended = NULL;
-	metrics_object_event_ended_sec = NULL;
-	metrics_get_interrupted_count = NULL;
-	metrics_get_interrupted_count_sec = NULL;
+	metrics_object_event_ended = nullptr;
+	metrics_object_event_ended_sec = nullptr;
+	metrics_get_interrupted_count = nullptr;
+	metrics_get_interrupted_count_sec = nullptr;
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -255,7 +255,7 @@ int eventgen::init(OBJECT *parent)
 	}
 
 	//Map the metrics object
-	if (hdr->parent == NULL)	//No parent :(
+	if (hdr->parent == nullptr)	//No parent :(
 	{
 		gl_warning("event_gen:%s does not have a metrics object as a parent -- metrics are not calculated.",hdr->name);
 		/*  TROUBLESHOOT
@@ -264,9 +264,9 @@ int eventgen::init(OBJECT *parent)
 		object if reliability metrics are desired.
 		*/
 
-		//Set the metrics object related pointers to NULL
-		metrics_obj_hdr = NULL;
-		secondary_interruption_cnt = NULL;
+		//Set the metrics object related pointers to nullptr
+		metrics_obj_hdr = nullptr;
+		secondary_interruption_cnt = nullptr;
 	}
 	else
 	{
@@ -281,7 +281,7 @@ int eventgen::init(OBJECT *parent)
 			metrics_object_event_ended = (FUNCTIONADDR)(gl_get_function(metrics_obj_hdr,"metrics_event_ended"));
 
 			//Check it
-			if (metrics_object_event_ended == NULL)
+			if (metrics_object_event_ended == nullptr)
 			{
 				GL_THROW("Eventgen:%d - %s - Unable to map link power calculation function",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
 				/*  TROUBLESHOOT
@@ -294,7 +294,7 @@ int eventgen::init(OBJECT *parent)
 			metrics_object_event_ended_sec = (FUNCTIONADDR)(gl_get_function(metrics_obj_hdr,"metrics_event_ended_secondary"));
 
 			//Check it
-			if (metrics_object_event_ended_sec == NULL)
+			if (metrics_object_event_ended_sec == nullptr)
 			{
 				GL_THROW("Eventgen:%d - %s - Unable to map link power calculation function",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
 				//Defined above
@@ -304,7 +304,7 @@ int eventgen::init(OBJECT *parent)
 			metrics_get_interrupted_count = (FUNCTIONADDR)(gl_get_function(metrics_obj_hdr,"metrics_get_interrupted_count"));
 
 			//Check it
-			if (metrics_get_interrupted_count == NULL)
+			if (metrics_get_interrupted_count == nullptr)
 			{
 				GL_THROW("Eventgen:%d - %s - Unable to map link power calculation function",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
 				//Defined above
@@ -314,7 +314,7 @@ int eventgen::init(OBJECT *parent)
 			metrics_get_interrupted_count_sec = (FUNCTIONADDR)(gl_get_function(metrics_obj_hdr,"metrics_get_interrupted_count_secondary"));
 
 			//Check it
-			if (metrics_get_interrupted_count_sec == NULL)
+			if (metrics_get_interrupted_count_sec == nullptr)
 			{
 				GL_THROW("Eventgen:%d - %s - Unable to map link power calculation function",hdr->id,(hdr->name ? hdr->name : "Unnamed"));
 				//Defined above
@@ -394,7 +394,7 @@ int eventgen::init(OBJECT *parent)
 			UnreliableObjs = (OBJEVENTDETAILS*)gl_malloc(UnreliableObjCount * sizeof(OBJEVENTDETAILS));
 
 			//Make sure it worked
-			if (UnreliableObjs==NULL)
+			if (UnreliableObjs==nullptr)
 			{
 				GL_THROW("Failed to allocate memory for object list in %s",hdr->name);
 				/*  TROUBLESHOOT
@@ -412,9 +412,9 @@ int eventgen::init(OBJECT *parent)
 				token_a1 = obj_token(token_a, &temp_obj);
 
 				//Make sure it is valid
-				if (temp_obj == NULL)
+				if (temp_obj == nullptr)
 				{
-					if (token_a1 != NULL)
+					if (token_a1 != nullptr)
 					{
 						//Remove the comma from the list
 						*--token_a1 = '\0';
@@ -445,8 +445,8 @@ int eventgen::init(OBJECT *parent)
 				//Store the object
 				UnreliableObjs[index].obj_of_int = temp_obj;
 
-				//Ensure the link to the protective device is NULLed
-				UnreliableObjs[index].obj_made_int = NULL;
+				//Ensure the link to the protective device is nullptred
+				UnreliableObjs[index].obj_made_int = nullptr;
 
 				//Check to make sure failures start AFTER the simulation has started
 				if (temp_time_A >= globStartTimeVal)
@@ -552,7 +552,7 @@ int eventgen::init(OBJECT *parent)
 		{
 
 			ObjListVals = gl_find_objects(FL_GROUP,target_group.get_string());
-			if (ObjListVals==NULL)
+			if (ObjListVals==nullptr)
 			{
 				GL_THROW("Failure to find devices for %s specified as: %s",hdr->name,target_group.get_string());
 				/*  TROUBLESHOOT
@@ -576,20 +576,20 @@ int eventgen::init(OBJECT *parent)
 			UnreliableObjs = (OBJEVENTDETAILS*)gl_malloc(UnreliableObjCount * sizeof(OBJEVENTDETAILS));
 
 			//Make sure it worked
-			if (UnreliableObjs==NULL)
+			if (UnreliableObjs==nullptr)
 			{
 				GL_THROW("Failed to allocate memory for object list in %s",hdr->name);
 				//Defined above
 			}
 
 			//Loop through and init them - can't compute exact time, but can populate array
-			temp_obj = NULL;
+			temp_obj = nullptr;
 			for (index=0; index<UnreliableObjCount; index++)
 			{
 				//Find the object
 				temp_obj = gl_find_next(ObjListVals, temp_obj);
 
-				if (temp_obj == NULL)
+				if (temp_obj == nullptr)
 				{
 					GL_THROW("Failed to populate object list in eventgen: %s",hdr->name);
 					/*  TROUBLESHOOT
@@ -601,8 +601,8 @@ int eventgen::init(OBJECT *parent)
 
 				UnreliableObjs[index].obj_of_int = temp_obj;
 
-				//Just set object causing an action to NULL for now
-				UnreliableObjs[index].obj_made_int = NULL;
+				//Just set object causing an action to nullptr for now
+				UnreliableObjs[index].obj_made_int = nullptr;
 
 				//Zero time for now - will get updated on next run
 				UnreliableObjs[index].fail_time = 0;
@@ -659,7 +659,7 @@ int eventgen::init(OBJECT *parent)
 	}
 
 	//Check simultaneous fault value
-	if (((max_simult_faults == -1) || (max_simult_faults > 1)) && (metrics_obj_hdr != NULL))	//infinite or more than 1 - and metrics are on, so we care
+	if (((max_simult_faults == -1) || (max_simult_faults > 1)) && (metrics_obj_hdr != nullptr))	//infinite or more than 1 - and metrics are on, so we care
 	{
 		gl_warning("event_gen:%s has the ability to generate more than 1 simultaneous fault - metrics may not be accurate",hdr->name);
 		/*  TROUBLESHOOT
@@ -772,13 +772,13 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 			//Linked list is ignored on this first run - it will get caught as part of the normal routine
 			if (deltamode_inclusive && enable_subsecond_models)	//We want deltamode - see if it's populated yet
 			{
-				if ((eventgen_object_current == -1) || (delta_objects==NULL))
+				if ((eventgen_object_current == -1) || (delta_objects==nullptr))
 				{
 					//Allocate the deltamode object array
 					delta_objects = (OBJECT**)gl_malloc(eventgen_object_count*sizeof(OBJECT*));
 
 					//Make sure it worked
-					if (delta_objects == NULL)
+					if (delta_objects == nullptr)
 					{
 						GL_THROW("Failed to allocate deltamode objects array for reliability module!");
 						/*  TROUBLESHOOT
@@ -792,7 +792,7 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 					delta_functions = (FUNCTIONADDR*)gl_malloc(eventgen_object_count*sizeof(FUNCTIONADDR));
 
 					//Make sure it worked
-					if (delta_functions == NULL)
+					if (delta_functions == nullptr)
 					{
 						GL_THROW("Failed to allocate deltamode objects function array for reliability module!");
 						/*  TROUBLESHOOT
@@ -824,7 +824,7 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 				delta_functions[eventgen_object_current] = (FUNCTIONADDR)(gl_get_function(hdr,"interupdate_event_object"));
 
 				//Make sure it worked
-				if (delta_functions[eventgen_object_current] == NULL)
+				if (delta_functions[eventgen_object_current] == nullptr)
 				{
 					GL_THROW("Failure to map deltamode function for device:%s",hdr->name);
 					/*  TROUBLESHOOT
@@ -887,7 +887,7 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 	} else {
 		TIMESTAMP mean_repair_time;
 		char impl_fault[257];
-		FUNCTIONADDR funadd = NULL;
+		FUNCTIONADDR funadd = nullptr;
 		int returnval;
 		if(use_external_faults && external_fault_event[0] != '\0') {
 			parse_external_fault_events((char *)external_fault_event);
@@ -903,7 +903,7 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 					funadd = (FUNCTIONADDR)(gl_get_function((*i)->fault_object,"create_fault"));
 
 					//Make sure it was found
-					if (funadd == NULL)
+					if (funadd == nullptr)
 					{
 						GL_THROW("Unable to induce event on %s",(*i)->fault_object->name);
 					}
@@ -921,7 +921,7 @@ TIMESTAMP eventgen::presync(TIMESTAMP t0, TIMESTAMP t1)
 					funadd = (FUNCTIONADDR)(gl_get_function((*i)->fault_object,"clear_fault"));
 
 					//Make sure it was found
-					if (funadd == NULL)
+					if (funadd == nullptr)
 					{
 						GL_THROW("Unable to induce event on %s",(*i)->fault_object->name);
 						//Defined above
@@ -979,7 +979,7 @@ TIMESTAMP eventgen::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	OBJECT *hdr = OBJECTHDR(this);
 
 	//See if we need a "post-fault" count - assumes all customers will determine their outage state by either presync or sync (or before this in postsync)
-	if ((diff_count_needed == true) && (metrics_obj_hdr != NULL))
+	if ((diff_count_needed == true) && (metrics_obj_hdr != nullptr))
 	{
 		//Read the boolean
 		secondary_interruption_cnt->getp<bool>(temp_bool,*test_rlock);
@@ -1050,13 +1050,13 @@ TIMESTAMP eventgen::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 
 			//Check the linked list as well
-			if (Unhandled_Events.next != NULL)	//Something is in there!
+			if (Unhandled_Events.next != nullptr)	//Something is in there!
 			{
 				//Copy the pointer
 				temp_struct = &Unhandled_Events;
 
 				//Inward we go
-				while (temp_struct->next != NULL)
+				while (temp_struct->next != nullptr)
 				{
 					//Inward
 					temp_struct = temp_struct->next;
@@ -1104,13 +1104,13 @@ TIMESTAMP eventgen::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 
 			//Check the linked list as well
-			if (Unhandled_Events.next != NULL)	//Something is in there!
+			if (Unhandled_Events.next != nullptr)	//Something is in there!
 			{
 				//Copy the pointer
 				temp_struct = &Unhandled_Events;
 
 				//Inward we go
-				while (temp_struct->next != NULL)
+				while (temp_struct->next != nullptr)
 				{
 					//Inward
 					temp_struct = temp_struct->next;
@@ -1260,14 +1260,14 @@ char *eventgen::time_token(char *start_token, TIMESTAMP *time_val, unsigned int 
 	//Look for a comma in the input value
 	outIndex = strchr(start_token,',');	//Look for commas, or none
 
-	if (outIndex == NULL)	//No commas found
+	if (outIndex == nullptr)	//No commas found
 	{
 		while (*start_token != '\0')
 		{
 			*workIndex++ = *start_token++;
 		}
 
-		end_token = NULL;
+		end_token = nullptr;
 	}
 	else	//Comma found, but we only want to go just before it
 	{
@@ -1306,14 +1306,14 @@ char *eventgen::obj_token(char *start_token, OBJECT **obj_val)
 	//Look for a comma in the input value
 	outIndex = strchr(start_token,',');	//Look for commas, or none
 
-	if (outIndex == NULL)	//No commas found
+	if (outIndex == nullptr)	//No commas found
 	{
 		while (*start_token != '\0')
 		{
 			*workIndex++ = *start_token++;
 		}
 
-		end_token = NULL;
+		end_token = nullptr;
 	}
 	else	//Comma found, but we only want to go just before it
 	{
@@ -1347,7 +1347,7 @@ int eventgen::add_unhandled_event(OBJECT *obj_to_fault, const char *event_type, 
 	new_struct = (RELEVANTSTRUCT*)gl_malloc(sizeof(RELEVANTSTRUCT));
 
 	//Make sure it worked
-	if (new_struct == NULL)
+	if (new_struct == nullptr)
 	{
 		GL_THROW("Eventgen:%s - Failed to allocate memory for new reliability event!",obj->name);
 		/*  TROUBLESHOOT
@@ -1391,7 +1391,7 @@ int eventgen::add_unhandled_event(OBJECT *obj_to_fault, const char *event_type, 
 	//Populate the details - no real supersecond support now, just populate
 	memcpy(new_struct->event_type,event_type,33*sizeof(char));
 	new_struct->objdetails.obj_of_int = obj_to_fault;
-	new_struct->objdetails.obj_made_int = NULL;
+	new_struct->objdetails.obj_made_int = nullptr;
 	new_struct->objdetails.fail_time = fail_time;
 	new_struct->objdetails.fail_time_dbl = fail_time_dbl;
 	new_struct->objdetails.fail_length_ns = 0;
@@ -1572,7 +1572,7 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 	double temp_time_A_dbl;
 	unsigned int temp_time_A_nano;
 	TIMESTAMP mean_repair_time;
-	FUNCTIONADDR funadd = NULL;
+	FUNCTIONADDR funadd = nullptr;
 	int returnval, index;
 	char impl_fault[257];
 	RELEVANTSTRUCT *temp_struct, *temp_struct_b;
@@ -1594,7 +1594,7 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 			if ((faults_in_prog < max_simult_faults) || (max_simult_faults == -1))	//Room to fault or infinite amount
 			{
 				//See if something else has already asked for a count update
-				if ((diff_count_needed == false) && (metrics_obj_hdr != NULL))
+				if ((diff_count_needed == false) && (metrics_obj_hdr != nullptr))
 				{
 					//Read the boolean
 					secondary_interruption_cnt->getp<bool>(temp_bool,*test_rlock);
@@ -1640,7 +1640,7 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 				funadd = (FUNCTIONADDR)(gl_get_function(UnreliableObjs[index].obj_of_int,"create_fault"));
 				
 				//Make sure it was found
-				if (funadd == NULL)
+				if (funadd == nullptr)
 				{
 					GL_THROW("Unable to induce event on %s",UnreliableObjs[index].obj_of_int->name);
 					/*  TROUBLESHOOT
@@ -1653,7 +1653,7 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 				//Lock the object of interest
 				wlock(UnreliableObjs[index].obj_of_int);
 
-				if (metrics_obj_hdr != NULL)
+				if (metrics_obj_hdr != nullptr)
 				{
 					returnval = ((int (*)(OBJECT *, OBJECT **, char *, int *, TIMESTAMP *))(*funadd))(UnreliableObjs[index].obj_of_int,&UnreliableObjs[index].obj_made_int,fault_type.get_string(),&UnreliableObjs[index].implemented_fault,&mean_repair_time);
 				}
@@ -1787,7 +1787,7 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 			funadd = (FUNCTIONADDR)(gl_get_function(UnreliableObjs[index].obj_of_int,"fix_fault"));
 			
 			//Make sure it was found
-			if (funadd == NULL)
+			if (funadd == nullptr)
 			{
 				GL_THROW("Unable to induce event on %s",UnreliableObjs[index].obj_of_int->name);
 				//Defined above
@@ -1796,7 +1796,7 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 			//Lock the object
 			wlock(UnreliableObjs[index].obj_of_int);
 
-			if (metrics_obj_hdr != NULL)
+			if (metrics_obj_hdr != nullptr)
 			{
 				returnval = ((int (*)(OBJECT *, int *, char *))(*funadd))(UnreliableObjs[index].obj_of_int,&UnreliableObjs[index].implemented_fault,impl_fault);
 			}
@@ -1818,7 +1818,7 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 				*/
 			}
 
-			if (metrics_obj_hdr != NULL)
+			if (metrics_obj_hdr != nullptr)
 			{
 				//Read the boolean
 				secondary_interruption_cnt->getp<bool>(temp_bool,*test_rlock);
@@ -1963,13 +1963,13 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 	}//End object loop traversion
 
 	//Traverse the linked list - if anything is in it
-	if (Unhandled_Events.next != NULL)	//Something is in there!
+	if (Unhandled_Events.next != nullptr)	//Something is in there!
 	{
 		//Copy the pointer
 		temp_struct = &Unhandled_Events;
 
 		//Inward we go
-		while (temp_struct->next != NULL)
+		while (temp_struct->next != nullptr)
 		{
 			//Proceed in
 			temp_struct = temp_struct->next;
@@ -1981,7 +1981,7 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 			{
 				//"Random" events are always allowed to happen
 				//See if something else has already asked for a count update
-				if ((diff_count_needed == false) && (metrics_obj_hdr != NULL))
+				if ((diff_count_needed == false) && (metrics_obj_hdr != nullptr))
 				{
 					//Read the boolean
 					secondary_interruption_cnt->getp<bool>(temp_bool,*test_rlock);
@@ -2027,7 +2027,7 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 				funadd = (FUNCTIONADDR)(gl_get_function(temp_struct->objdetails.obj_of_int,"create_fault"));
 				
 				//Make sure it was found
-				if (funadd == NULL)
+				if (funadd == nullptr)
 				{
 					GL_THROW("Unable to induce event on %s",temp_struct->objdetails.obj_of_int->name);
 					//Defined above
@@ -2036,7 +2036,7 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 				//Lock the object of interest
 				wlock(temp_struct->objdetails.obj_of_int);
 
-				if (metrics_obj_hdr != NULL)
+				if (metrics_obj_hdr != nullptr)
 				{
 					returnval = ((int (*)(OBJECT *, OBJECT **, char *, int *, TIMESTAMP *))(*funadd))(temp_struct->objdetails.obj_of_int,&temp_struct->objdetails.obj_made_int,temp_struct->event_type,&temp_struct->objdetails.implemented_fault,&mean_repair_time);
 				}
@@ -2106,7 +2106,7 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 					gl_free(temp_struct);
 
 					//Now assign back - if there is more in the list
-					if (temp_struct_b->next != NULL)
+					if (temp_struct_b->next != nullptr)
 						temp_struct = temp_struct_b->next;
 					else	//Just put us back in
 						temp_struct = temp_struct_b;
@@ -2118,7 +2118,7 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 				funadd = (FUNCTIONADDR)(gl_get_function(temp_struct->objdetails.obj_of_int,"fix_fault"));
 				
 				//Make sure it was found
-				if (funadd == NULL)
+				if (funadd == nullptr)
 				{
 					GL_THROW("Unable to induce event on %s",temp_struct->objdetails.obj_of_int->name);
 					//Defined above
@@ -2127,7 +2127,7 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 				//Lock the object of interst
 				wlock(temp_struct->objdetails.obj_of_int);
 
-				if (metrics_obj_hdr != NULL)
+				if (metrics_obj_hdr != nullptr)
 				{
 					returnval = ((int (*)(OBJECT *, int *, char *))(*funadd))(temp_struct->objdetails.obj_of_int,&temp_struct->objdetails.implemented_fault,impl_fault);
 				}
@@ -2145,7 +2145,7 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 					//Defined above
 				}
 
-				if (metrics_obj_hdr != NULL)
+				if (metrics_obj_hdr != nullptr)
 				{
 					//Read the boolean
 					secondary_interruption_cnt->getp<bool>(temp_bool,*test_rlock);
@@ -2187,7 +2187,7 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 				faults_in_prog--;
 
 				//Now assign back - if there is more in the list
-				if (temp_struct_b->next != NULL)
+				if (temp_struct_b->next != nullptr)
 					temp_struct = temp_struct_b->next;
 				else	//Just put us back in
 					temp_struct = temp_struct_b;
@@ -2246,13 +2246,13 @@ void eventgen::do_event(TIMESTAMP t1_ts, double t1_dbl, bool entry_type)
 	}
 
 	//Loop through the linked-list and do the same
-	if (Unhandled_Events.next != NULL)	//Something is in there!
+	if (Unhandled_Events.next != nullptr)	//Something is in there!
 	{
 		//Copy the pointer
 		temp_struct = &Unhandled_Events;
 
 		//Inward we go
-		while (temp_struct->next != NULL)
+		while (temp_struct->next != nullptr)
 		{
 			//Inward
 			temp_struct = temp_struct->next;
@@ -2337,13 +2337,13 @@ void eventgen::parse_external_fault_events(char *events_char)
 				new_event->enable_event = true;
 				new_event->disable_event = false;
 				new_event->event_enabled = false;
-				new_event->effected_safety_device = NULL;
+				new_event->effected_safety_device = nullptr;
 				new_event->implemented_fault = 0;
 				std::string obj_name_str = json_event["fault_object"].asString();
 				char *name_c = new char[obj_name_str.length() + 1];
 				strcpy(name_c, obj_name_str.c_str());
 				new_event->fault_object = gl_get_object(name_c);
-				if(new_event->fault_object != NULL) {
+				if(new_event->fault_object != nullptr) {
 					external_events.push_back(new_event);
 				} else {
 					gl_warning("eventgen::parse_external_fault_event: no object with name %s was found. Ignoring fault event.", obj_name_str.c_str());
@@ -2364,7 +2364,7 @@ EXPORT int create_eventgen(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(eventgen::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			eventgen *my = OBJECTDATA(*obj,eventgen);
 			gl_set_parent(*obj,parent);
@@ -2380,7 +2380,7 @@ EXPORT int init_eventgen(OBJECT *obj, OBJECT *parent)
 {
 	try
 	{
-		if (obj!=NULL)
+		if (obj!=nullptr)
 			return OBJECTDATA(obj,eventgen)->init(parent);
 		else
 			return 0;

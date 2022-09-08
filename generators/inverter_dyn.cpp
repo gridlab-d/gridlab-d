@@ -271,7 +271,7 @@ inverter_dyn::inverter_dyn(MODULE *module)
 				PT_KEYWORD, "OVER_VOLTAGE_LOW",(enumeration)IEEE_1547_LOW_OV, PT_DESCRIPTION, "Low over-voltage level trip",
 				PT_KEYWORD, "OVER_VOLTAGE_HIGH",(enumeration)IEEE_1547_HIGH_OV, PT_DESCRIPTION, "High over-voltage level trip",
 
-			NULL) < 1)
+			nullptr) < 1)
 				GL_THROW("unable to publish properties in %s", __FILE__);
 
 		defaults = this;

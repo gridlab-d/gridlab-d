@@ -168,10 +168,10 @@ EXPORT CIRCUIT *attach_enduse_house_e(OBJECT *obj, enduse *target, double breake
 	house_e *pHouse = 0;
 	CIRCUIT *c = 0;
 
-	if(obj == NULL){
+	if(obj == nullptr){
 		GL_THROW("attach_house_e: null object reference");
 	}
-	if(target == NULL){
+	if(target == nullptr){
 		GL_THROW("attach_house_e: null enduse target data");
 	}
 	if(breaker_amps < 0 || breaker_amps > 1000){ /* at 3kA, we're looking into substation power levels, not enduses */
@@ -185,8 +185,8 @@ EXPORT CIRCUIT *attach_enduse_house_e(OBJECT *obj, enduse *target, double breake
 //////////////////////////////////////////////////////////////////////////
 // house_e CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* house_e::oclass = NULL;
-CLASS* house_e::pclass = NULL;
+CLASS* house_e::oclass = nullptr;
+CLASS* house_e::pclass = nullptr;
 
 double house_e::warn_low_temp = 55; // degF
 double house_e::warn_high_temp = 95; // degF
@@ -199,11 +199,11 @@ Sets default randomized values for published variables.
 house_e::house_e(MODULE *mod) : residential_enduse(mod)
 {
 	// first time init
-	if (oclass==NULL)  
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		oclass = gl_register_class(mod,"house",sizeof(house_e),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class house";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -509,7 +509,7 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 				PT_KEYWORD, "BAND", (enumeration)TC_BAND, // T<mode>{On,Off} control HVAC (setpoints/deadband are ignored)
 				PT_KEYWORD, "NONE", (enumeration)TC_NONE, // system_mode controls HVAC (setpoints/deadband and T<mode>{On,Off} are ignored)
 			PT_bool,"dump_house_initialization_parameters",PADDR(dump_house_parameters), PT_DESCRIPTION, "bool to dump the house initialization parameters to <house object name>_parameters_dump.txt",
-			NULL)<1)
+			nullptr)<1)
 			GL_THROW("unable to publish properties in %s",__FILE__);			
 
 		gl_publish_function(oclass,	"attach_enduse", (FUNCTIONADDR)attach_enduse_house_e);
@@ -528,32 +528,32 @@ house_e::house_e(MODULE *mod) : residential_enduse(mod)
 			PT_KEYWORD, "DRYER", (set)IEU_DRYER,
 			PT_KEYWORD, "NONE", (set)0,
 			PT_DESCRIPTION, "list of implicit enduses that are active in houses",
-			NULL);
+			nullptr);
 		gl_global_create("residential::implicit_enduse_source",PT_enumeration,&implicit_enduse_source,
 			PT_KEYWORD,"ELCAP1990", (enumeration)IES_ELCAP1990,
 			PT_KEYWORD,"ELCAP2010", (enumeration)IES_ELCAP2010,
 			PT_KEYWORD,"RBSA2014", (enumeration)IES_RBSA2014,
-			NULL);
+			nullptr);
 		gl_global_create("residential::house_low_temperature_warning[degF]",PT_double,&warn_low_temp,
 			PT_DESCRIPTION, "the low house indoor temperature at which a warning will be generated",
-			NULL);
+			nullptr);
 		gl_global_create("residential::house_high_temperature_warning[degF]",PT_double,&warn_high_temp,
 			PT_DESCRIPTION, "the high house indoor temperature at which a warning will be generated",
-			NULL);
+			nullptr);
 		gl_global_create("residential::thermostat_control_warning",PT_double,&warn_control,
 			PT_DESCRIPTION, "boolean to indicate whether a warning is generated when indoor temperature is out of control limits",
-			NULL);
+			nullptr);
 		gl_global_create("residential::system_dwell_time[s]",PT_double,&system_dwell_time,
 			PT_DESCRIPTION, "the heating/cooling system dwell time interval for changing system state",
-			NULL);
+			nullptr);
 	}	
 		gl_global_create("residential::aux_cutin_temperature[degF]",PT_double,&aux_cutin_temperature,
 			PT_DESCRIPTION, "the outdoor air temperature below which AUX heating is used",
-			NULL);
+			nullptr);
 
-		if (gl_publish_function(oclass,	"interupdate_res_object", (FUNCTIONADDR)interupdate_house_e)==NULL)
+		if (gl_publish_function(oclass,	"interupdate_res_object", (FUNCTIONADDR)interupdate_house_e)==nullptr)
 			GL_THROW("Unable to publish house_e deltamode function");
-		if (gl_publish_function(oclass,	"postupdate_res_object", (FUNCTIONADDR)postupdate_house_e)==NULL)
+		if (gl_publish_function(oclass,	"postupdate_res_object", (FUNCTIONADDR)postupdate_house_e)==nullptr)
 			GL_THROW("Unable to publish house_e deltamode function");
 
 }
@@ -563,7 +563,7 @@ int house_e::create()
 	int result=SUCCESS;
 	char active_enduses[1025];
 	gl_global_getvar("residential::implicit_enduses",active_enduses,sizeof(active_enduses));
-	char *token = NULL;
+	char *token = nullptr;
 	error_flag = 0;
 
 	//glazing_shgc = 0.65; // assuming generic double glazing
@@ -607,17 +607,17 @@ int house_e::create()
 	thermal_storage_inuse = false;
 
 	//Null out circuit pointer
-	pHVAC_EnduseLoad = NULL;
+	pHVAC_EnduseLoad = nullptr;
 
 	// set up implicit enduse list
-	implicit_enduse_list = NULL;
+	implicit_enduse_list = nullptr;
 	if (strcmp(active_enduses,"NONE")!=0)
 	{
 		char *eulist[64];
 		char n_eu=0;
 
 		// extract the implicit_enduse list
-		while ((token=strtok(token?NULL:active_enduses,"|"))!=NULL)
+		while ((token=strtok(token?nullptr:active_enduses,"|"))!=nullptr)
 			eulist[n_eu++] = token;
 
 		while (n_eu-->0)
@@ -626,7 +626,7 @@ int house_e::create()
 			_strlwr(euname);
 			
 			// find the implicit enduse description
-			struct s_implicit_enduse_list *eu = NULL;
+			struct s_implicit_enduse_list *eu = nullptr;
 			int found=0;
 			switch ( implicit_enduse_source ) {
 			case IES_ELCAP1990:
@@ -645,7 +645,7 @@ int house_e::create()
 				eu = elcap1990;
 				break;
 			}
-			for ( ; eu->implicit_name!=NULL ; eu++)
+			for ( ; eu->implicit_name!=nullptr ; eu++)
 			{
 				char name[64];
 				sprintf(name,"residential-%s-default",euname);
@@ -653,10 +653,10 @@ int house_e::create()
 				if (strcmp(eu->schedule_name,name)==0)
 				{
 					SCHEDULE *sched = gl_schedule_find(name);
-					if (sched==NULL){
+					if (sched==nullptr){
 						sched = gl_schedule_create(strdup(eu->schedule_name),strdup(eu->schedule_definition));
 					}
-					if(sched == NULL){
+					if(sched == nullptr){
 						gl_error("error creating schedule for enduse \'%s\'", eu->schedule_name);
 						return FAILED;
 					}
@@ -780,14 +780,14 @@ int house_e::create()
 	deltamode_registered = false;
 	
 	//Powerflow pointers
-	pCircuit_V[0] = pCircuit_V[1] = pCircuit_V[2] = NULL;
-	pLine_I[0] = pLine_I[1] = pLine_I[2] = NULL;
-	pShunt[0] = pShunt[1] = pShunt[2] = NULL;
-	pPower[0] = pPower[1] = pPower[2] = NULL;
-	pMeterStatus = NULL;
-	pFrequency = NULL;
-	pNominalVoltage = NULL;
-	pPhases = NULL;
+	pCircuit_V[0] = pCircuit_V[1] = pCircuit_V[2] = nullptr;
+	pLine_I[0] = pLine_I[1] = pLine_I[2] = nullptr;
+	pShunt[0] = pShunt[1] = pShunt[2] = nullptr;
+	pPower[0] = pPower[1] = pPower[2] = nullptr;
+	pMeterStatus = nullptr;
+	pFrequency = nullptr;
+	pNominalVoltage = nullptr;
+	pPhases = nullptr;
 	externalPhases = 0;
 	numPhases = 0;
 
@@ -810,10 +810,10 @@ int house_e::create()
 	proper_climate_found = false;	//By default, assume we don't know what climate is doing
 
 	//Weather defaults
-	pTout = NULL;
-	pRhout = NULL;
-	pSolar[0] = pSolar[1] = pSolar[2] = pSolar[3] = pSolar[4] = NULL;
-	pSolar[5] = pSolar[6] = pSolar[7] = pSolar[8] = NULL;
+	pTout = nullptr;
+	pRhout = nullptr;
+	pSolar[0] = pSolar[1] = pSolar[2] = pSolar[3] = pSolar[4] = nullptr;
+	pSolar[5] = pSolar[6] = pSolar[7] = pSolar[8] = nullptr;
 
 	//Values for the weather information
 	value_Tout = 74.0;
@@ -840,16 +840,16 @@ then Tout will be set to 74 degF, RHout is set to 75% and solar flux will be set
 **/
 int house_e::init_climate()
 {
-	gld_property *temp_property = NULL;
+	gld_property *temp_property = nullptr;
 	OBJECT *hdr = OBJECTHDR(this);
 
 	// link to climate data
-	FINDLIST *climates = NULL;
+	FINDLIST *climates = nullptr;
 	int not_found = 0;
-	if (climates==NULL && not_found==0) 
+	if (climates==nullptr && not_found==0)
 	{
 		climates = gl_find_objects(FL_NEW,FT_CLASS,SAME,"climate",FT_END);
-		if (climates==NULL)
+		if (climates==nullptr)
 		{
 			not_found = 1;
 			gl_warning("house_e: no climate data found, using static data");
@@ -867,7 +867,7 @@ int house_e::init_climate()
 			gl_warning("house_e: %d climates found, using first one defined", climates->hit_count);
 		}
 	}
-	if (climates!=NULL)
+	if (climates!=nullptr)
 	{
 		if (climates->hit_count==0)
 		{
@@ -884,9 +884,9 @@ int house_e::init_climate()
 		else //climate data was found
 		{
 			// force rank of object w.r.t climate
-			OBJECT *obj = NULL;
-			if(weather == NULL){
-				obj  = gl_find_next(climates,NULL);
+			OBJECT *obj = nullptr;
+			if(weather == nullptr){
+				obj  = gl_find_next(climates,nullptr);
 				weather = obj;
 			} else {
 				obj = weather;
@@ -1342,7 +1342,7 @@ int house_e::init(OBJECT *parent)
 	gld_wlock *test_rlock;
 	bool temp_bool_val;
 
-	if(parent != NULL){
+	if(parent != nullptr){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
 			gl_verbose("house::init(): deferring initialization on %s", gl_name(parent, objname, 255));
@@ -1357,7 +1357,7 @@ int house_e::init(OBJECT *parent)
 	// find parent meter, if not defined, use a default meter (using static variable 'default_meter')
 	OBJECT *obj = OBJECTHDR(this);
 
-	if (parent!=NULL && (gl_object_isa(parent,"triplex_meter","powerflow") || gl_object_isa(obj->parent,"triplex_node","powerflow") || gl_object_isa(parent,"triplex_load","powerflow")))	// for single-phase houses
+	if (parent!=nullptr && (gl_object_isa(parent,"triplex_meter","powerflow") || gl_object_isa(obj->parent,"triplex_node","powerflow") || gl_object_isa(parent,"triplex_load","powerflow")))	// for single-phase houses
 	{
 		//Map to the triplex variable for houses
 		temp_gld_property = new gld_property(parent,"house_present");
@@ -1495,7 +1495,7 @@ int house_e::init(OBJECT *parent)
 		//Delete the link
 		delete temp_gld_property;
 	}
-	else if (parent!=NULL && (gl_object_isa(parent,"meter","powerflow") || gl_object_isa(obj->parent,"node","powerflow") || gl_object_isa(obj->parent,"load","powerflow"))) // for three-phase commercial zone-houses
+	else if (parent!=nullptr && (gl_object_isa(parent,"meter","powerflow") || gl_object_isa(obj->parent,"node","powerflow") || gl_object_isa(obj->parent,"load","powerflow"))) // for three-phase commercial zone-houses
 	{
 		//Map to the triplex variable for houses
 		temp_gld_property = new gld_property(parent,"house_present");
@@ -1645,7 +1645,7 @@ int house_e::init(OBJECT *parent)
 	else
 	{
 		if (external_pf_mode == XPFV_NONE) {
-			gl_warning("house_e:%d %s; using static voltages", obj->id, parent==NULL?"has no parent triplex_meter defined":"parent is not a triplex_meter");
+			gl_warning("house_e:%d %s; using static voltages", obj->id, parent==nullptr?"has no parent triplex_meter defined":"parent is not a triplex_meter");
 		}
 
 		//Set the default voltage to the global - others are already "mapped", so we just leave them be
@@ -2062,8 +2062,8 @@ int house_e::init(OBJECT *parent)
 void house_e::attach_implicit_enduses()
 {
 	IMPLICITENDUSE *item;
-	for (item=implicit_enduse_list; item!=NULL; item=item->next){
-		attach(NULL,item->amps,item->is220,&(item->load));
+	for (item=implicit_enduse_list; item!=nullptr; item=item->next){
+		attach(nullptr,item->amps,item->is220,&(item->load));
 		if (item->is220)
 			item->load.config |= EUC_IS220;
 	}
@@ -2082,7 +2082,7 @@ CIRCUIT *house_e::attach(OBJECT *obj, ///< object to attach
 {
 	// construct and id the new circuit
 	CIRCUIT *c = new CIRCUIT;
-	if (c==NULL)
+	if (c==nullptr)
 	{
 		gl_error("memory allocation failure");
 		return 0;
@@ -2101,7 +2101,7 @@ CIRCUIT *house_e::attach(OBJECT *obj, ///< object to attach
 	else if (obj)
 	{
 		c->pLoad = (enduse*)gl_get_addr(obj,"enduse_load");
-		if (c->pLoad==NULL)
+		if (c->pLoad==nullptr)
 			GL_THROW("end-use load %s couldn't be connected because it does not publish 'enduse_load' property", c->pLoad->name);
 	}
 	else
@@ -2791,7 +2791,7 @@ TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1)
 		//Overall call -- only do this on the first run
 		if (deltamode_registered == false)
 		{
-			if ((res_object_current == -1) && (delta_objects==NULL) && (enable_subsecond_models==true))
+			if ((res_object_current == -1) && (delta_objects==nullptr) && (enable_subsecond_models==true))
 			{
 				//Call the allocation routine
 				allocate_deltamode_arrays();
@@ -2815,7 +2815,7 @@ TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1)
 			delta_functions[res_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"interupdate_res_object"));
 
 			//Make sure it worked
-			if (delta_functions[res_object_current] == NULL)
+			if (delta_functions[res_object_current] == nullptr)
 			{
 				GL_THROW("Failure to map deltamode function for device:%s",obj->name);
 				/*  TROUBLESHOOT
@@ -2829,7 +2829,7 @@ TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1)
 			post_delta_functions[res_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"postupdate_res_object"));
 
 			//Make sure it worked
-			if (post_delta_functions[res_object_current] == NULL)
+			if (post_delta_functions[res_object_current] == nullptr)
 			{
 				GL_THROW("Failure to map post-deltamode function for device:%s",obj->name);
 				/*  TROUBLESHOOT
@@ -3407,7 +3407,7 @@ double house_e::sync_panel(double t0_dbl, double t1_dbl)
 
 	// gather load power and compute current for each circuit
 	CIRCUIT *c;
-	for (c=panel.circuits; c!=NULL; c=c->next)
+	for (c=panel.circuits; c!=nullptr; c=c->next)
 	{
 		// get circuit type
 		int n = (int)c->type;
@@ -3581,7 +3581,7 @@ TIMESTAMP house_e::sync_enduses(TIMESTAMP t0, TIMESTAMP t1)
 	IMPLICITENDUSE *eu;
 	//OBJECT *obj = OBJECTHDR(this);
 	//char one[128], two[128];
-	for (eu=implicit_enduse_list; eu!=NULL; eu=eu->next)
+	for (eu=implicit_enduse_list; eu!=nullptr; eu=eu->next)
 	{
 		TIMESTAMP t = 0;
 		t = gl_enduse_sync(&(eu->load),t1);
@@ -3641,7 +3641,7 @@ void house_e::check_controls()
 		{
 			char mode_buffer[1024];
 			gl_warning("house_e:%d (%s) possible control problem (system_mode %s) -- Tevent-Tair mismatch with dTair (Tevent=%.1f, Tair=%.1f, dTair=%.1f) at %s", 
-				obj->id, obj->name?obj->name:"anonymous", gl_getvalue(obj,"system_mode", mode_buffer, 1023)==NULL?"ERR":mode_buffer, Tevent, Tair, dTair, gl_strftime(obj->clock, buffer, 255));
+				obj->id, obj->name?obj->name:"anonymous", gl_getvalue(obj,"system_mode", mode_buffer, 1023)==nullptr?"ERR":mode_buffer, Tevent, Tair, dTair, gl_strftime(obj->clock, buffer, 255));
 		}
 	}
 }
@@ -3903,7 +3903,7 @@ void house_e::circuit_voltage_factor_update()
 	OBJECT *obj = OBJECTHDR(this);
 	CIRCUIT *c;
 
-	for (c=panel.circuits; c!=NULL; c=c->next)
+	for (c=panel.circuits; c!=nullptr; c=c->next)
 	{
 		// get circuit type
 		int n = (int)c->type;
@@ -4143,7 +4143,7 @@ EXPORT int create_house(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(house_e::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			house_e *my = OBJECTDATA(*obj,house_e);;
 			gl_set_parent(*obj,parent);

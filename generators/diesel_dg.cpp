@@ -366,7 +366,7 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double,"reactive_power_generation[VAr]",PADDR(imag_power_gen),PT_DESCRIPTION,"The total reactive power generation",
 
 			//-- This hides from modehelp -- PT_double,"TD[s]",PADDR(gov_TD),PT_DESCRIPTION,"Governor combustion delay (s)",PT_ACCESS,PA_HIDDEN,
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		defaults = this;
 

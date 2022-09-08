@@ -19,21 +19,21 @@
 #include "module.h"
 #include "exec.h"
 
-static TRANSFORM *schedule_xformlist=NULL;
+static TRANSFORM *schedule_xformlist=nullptr;
 
 /****************************************************************
  * GridLAB-D Variable Handling for transform functions
  ****************************************************************/
 GLDVAR *gldvar_create(unsigned int dim)
 {
-	GLDVAR *vars = NULL;
+	GLDVAR *vars = nullptr;
 	vars = (GLDVAR*)malloc(sizeof(GLDVAR)*dim);
 	memset(vars,0,sizeof(GLDVAR)*dim);
 	return vars;
 }
 int gldvar_isset(GLDVAR *var, unsigned int n)
 {
-	return var[n].addr!=NULL;
+	return var[n].addr!=nullptr;
 }
 void gldvar_set(GLDVAR *var, unsigned int n, void *addr, PROPERTY *prop)
 {
@@ -42,7 +42,7 @@ void gldvar_set(GLDVAR *var, unsigned int n, void *addr, PROPERTY *prop)
 }
 void gldvar_unset(GLDVAR *var, unsigned int n)
 {
-	var[n].addr = var[n].prop = NULL;
+	var[n].addr = var[n].prop = nullptr;
 }
 void *gldvar_getaddr(GLDVAR *var, unsigned int n)
 {
@@ -76,7 +76,7 @@ UNIT *gldvar_getunits(GLDVAR *var, unsigned int n)
 	if ( gldvar_isset(var,n) )
 		return var[n].prop->unit;
 	else
-		return NULL;
+		return nullptr;
 }
 
 /****************************************************************
@@ -87,7 +87,7 @@ TRANSFORM *transform_getnext(TRANSFORM *xform)
 	return xform?xform->next:schedule_xformlist;
 }
 
-TRANSFERFUNCTION *tflist = NULL; ///< transfer function list
+TRANSFERFUNCTION *tflist = nullptr; ///< transfer function list
 int write_term(char *buffer,double a,char *x,int n,bool first)
 {
 	int len = 0;
@@ -125,7 +125,7 @@ int transfer_function_add(char *name,		///< transfer function name
 						  double *b)			///< numerator coefficients
 {
 	TRANSFERFUNCTION *tf = (TRANSFERFUNCTION*)malloc(sizeof(TRANSFERFUNCTION));
-	if ( tf == NULL )
+	if ( tf == nullptr )
 	{
 		output_error("transfer_function_add(): memory allocation failure");
 		return 0;
@@ -137,7 +137,7 @@ int transfer_function_add(char *name,		///< transfer function name
 	tf->timeskew = timeskew;
 	tf->n = n;
 	tf->a = (double*)malloc(sizeof(double)*n);
-	if ( tf->a == NULL )
+	if ( tf->a == nullptr )
 	{
 		output_error("transfer_function_add(): memory allocation failure");
 		return 0;
@@ -145,7 +145,7 @@ int transfer_function_add(char *name,		///< transfer function name
 	memcpy(tf->a,a,sizeof(double)*n);
 	tf->m = m;
 	tf->b = (double*)malloc(sizeof(double)*m);
-	if ( tf->b == NULL )
+	if ( tf->b == nullptr )
 	{
 		output_error("transfer_function_add(): memory allocation failure");
 		return 0;
@@ -183,12 +183,12 @@ int transfer_function_add(char *name,		///< transfer function name
 TRANSFERFUNCTION *find_filter(char *name)
 {
 	TRANSFERFUNCTION *tf;
-	for ( tf = tflist ; tf != NULL ; tf = tf->next )
+	for ( tf = tflist ; tf != nullptr ; tf = tf->next )
 	{
 		if ( strcmp(tf->name,name)==0 )
 			return tf;
 	}
-	return NULL;
+	return nullptr;
 }
 int get_source_type(PROPERTY *prop)
 {
@@ -219,7 +219,7 @@ int transform_add_filter(OBJECT *target_obj,		/* pointer to the target object (l
 
 	// find the filter
 	tf = find_filter(filter);
-	if ( tf == NULL )
+	if ( tf == nullptr )
 	{
 		output_error("transform_add_filter(source='%s:%s',filter='%s',target='%s:%s'): transfer function not defined",
 			object_name(target_obj,buffer1,sizeof(buffer1)),target_prop->name,filter, object_name(source_obj,buffer2,sizeof(buffer2)),source_prop->name);
@@ -228,14 +228,14 @@ int transform_add_filter(OBJECT *target_obj,		/* pointer to the target object (l
 
 	// allocate memory for the transform
 	xform = (TRANSFORM*)malloc(sizeof(TRANSFORM));
-	if ( xform == NULL )
+	if ( xform == nullptr )
 	{
 		output_error("transform_add_filter(source='%s:%s',filter='%s',target='%s:%s'): memory allocation failure",
 			object_name(target_obj,buffer1,sizeof(buffer1)),target_prop->name,filter, object_name(source_obj,buffer2,sizeof(buffer2)),source_prop->name);
 		return 0;
 	}
 	xform->x = (double*)malloc(sizeof(double)*(tf->n-1));
-	if ( xform->x == NULL )
+	if ( xform->x == nullptr )
 	{
 		output_error("transform_add_filter(source='%s:%s',filter='%s',target='%s:%s'): memory allocation failure",
 			object_name(target_obj,buffer1,sizeof(buffer1)),target_prop->name,filter, object_name(source_obj,buffer2,sizeof(buffer2)),source_prop->name);
@@ -274,9 +274,9 @@ int transform_add_external(	OBJECT *target_obj,		/* pointer to the target object
 {
 	char buffer1[1024], buffer2[1024];
 	TRANSFORM *xform = (TRANSFORM*)malloc(sizeof(TRANSFORM));
-	if (xform==NULL)
+	if (xform==nullptr)
 		return 0;
-	if ( (xform->function = module_get_transform_function(function))==NULL )
+	if ( (xform->function = module_get_transform_function(function))==nullptr )
 	{
 		output_error("transform_add_external(source='%s:%s',function='%s',target='%s:%s'): function is not defined (probably a missing or invalid extern directive)", 
 			object_name(target_obj,buffer1,sizeof(buffer1)),target_prop->name,function, object_name(source_obj,buffer2,sizeof(buffer2)),source_prop->name);
@@ -319,7 +319,7 @@ int transform_add_linear(	TRANSFORMSOURCE stype,	/* specifies the type of source
 {
 	char buffer[1024];
 	TRANSFORM *xform = (TRANSFORM*)malloc(sizeof(TRANSFORM));
-	if (xform==NULL)
+	if (xform==nullptr)
 		return 0;
 	xform->source_type = stype;
 	xform->source = source;
@@ -483,7 +483,7 @@ TIMESTAMP transform_syncall(TIMESTAMP t1, TRANSFORMSOURCE source, double *t1_dbl
 	}
 
 	/* process the schedule transformations */
-	for (xform=schedule_xformlist; xform!=NULL; xform=xform->next)
+	for (xform=schedule_xformlist; xform!=nullptr; xform=xform->next)
 	{	
 		//Update deltamode tracker variable
 		t_delta_var_time = t1_dbl_store;
@@ -538,7 +538,7 @@ TIMESTAMP transform_syncall(TIMESTAMP t1, TRANSFORMSOURCE source, double *t1_dbl
 				} 
 				else 
 				{
-					t = transform_apply(t1,xform,NULL,&t_delta_var_time);
+					t = transform_apply(t1,xform,nullptr,&t_delta_var_time);
 
 					//Error check
 					if (t==TS_INVALID)
@@ -558,7 +558,7 @@ TIMESTAMP transform_syncall(TIMESTAMP t1, TRANSFORMSOURCE source, double *t1_dbl
 					}
 				}
 			} else {
-				t = transform_apply(t1,xform,NULL,&t_delta_var_time);
+				t = transform_apply(t1,xform,nullptr,&t_delta_var_time);
 
 				//Error check
 				if (t==TS_INVALID)
@@ -594,7 +594,7 @@ int transform_saveall(FILE *fp)
 {
 	int count = 0;
 	TRANSFORM *xform;
-	for (xform=schedule_xformlist; xform!=NULL; xform=xform->next)
+	for (xform=schedule_xformlist; xform!=nullptr; xform=xform->next)
 	{
 		// TODO write conversion from transform/filter to string definition
 		OBJECT *obj = xform->target_obj;

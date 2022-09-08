@@ -95,7 +95,7 @@ capacitor::capacitor(MODULE *mod):node(mod)
 			PT_enumeration, "control_level", PADDR(control_level),PT_DESCRIPTION,"define bank or individual control",
 				PT_KEYWORD, "BANK", (enumeration)BANK,
 				PT_KEYWORD, "INDIVIDUAL", (enumeration)INDIVIDUAL, 
-         	NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+         	nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_capacitor)==nullptr)

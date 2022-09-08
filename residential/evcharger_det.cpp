@@ -12,17 +12,17 @@
 //////////////////////////////////////////////////////////////////////////
 // evcharger_det CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* evcharger_det::oclass = NULL;
-CLASS* evcharger_det::pclass = NULL;
+CLASS* evcharger_det::oclass = nullptr;
+CLASS* evcharger_det::pclass = nullptr;
 
 evcharger_det::evcharger_det(MODULE *module) : residential_enduse(module)
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		oclass = gl_register_class(module,"evcharger_det",sizeof(evcharger_det),PC_BOTTOMUP|PC_POSTTOPDOWN);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class evcharger_det";
 
 		// publish the class properties
@@ -92,10 +92,10 @@ evcharger_det::evcharger_det(MODULE *module) : residential_enduse(module)
 
 			PT_double, "J2894_outage_disconnect_interval[s]", PADDR(J2894_off_threshold), PT_DESCRIPTION, "J2894-suggested outage length, when criterion has been exceeded",
 
-			NULL)<1)
+			nullptr)<1)
 			GL_THROW("unable to publish properties in %s",__FILE__);
 
-			if (gl_publish_function(oclass,	"interupdate_res_object", (FUNCTIONADDR)interupdate_evcharger_det)==NULL)
+			if (gl_publish_function(oclass,	"interupdate_res_object", (FUNCTIONADDR)interupdate_evcharger_det)==nullptr)
 				GL_THROW("Unable to publish evcharger_det deltamode function");
 	}
 }
@@ -110,7 +110,7 @@ int evcharger_det::create()
 	load.power_factor = 0.99;	//Based on Brusa NLG5 specifications
 	load.heatgain_fraction = 0.0;	//Assumed to be "in the garage" or outside - so not contributing to internal heat gains
 
-	load.shape = NULL;		//No loadshape - forces it to use direct updates
+	load.shape = nullptr;		//No loadshape - forces it to use direct updates
 
 	//Set the enduse properties, even though we're just using them as placeholder
 	load.power_fraction = 1.0;
@@ -191,7 +191,7 @@ int evcharger_det::create()
 
 int evcharger_det::init(OBJECT *parent)
 {
-	if(parent != NULL){
+	if(parent != nullptr){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
 			gl_verbose("evcharger_det::init(): deferring initialization on %s", gl_name(parent, objname, 255));
@@ -216,7 +216,7 @@ int evcharger_det::init(OBJECT *parent)
 	int32 temp_int_val;
 
 	//Map the minimum timestep
-	temp_property = NULL;
+	temp_property = nullptr;
 
 	//Get linking to checker variable
 	temp_property = new gld_property("minimum_timestep");
@@ -329,7 +329,7 @@ int evcharger_det::init(OBJECT *parent)
 			FPTemp = fopen(NHTSDataFile,"rt");
 
 			//Make sure it worked
-			if (FPTemp == NULL)
+			if (FPTemp == nullptr)
 			{
 				gl_warning("NHTS data file not found, using defaults");
 				/*  TROUBLESHOOT
@@ -1121,7 +1121,7 @@ TIMESTAMP evcharger_det::sync(TIMESTAMP t0, TIMESTAMP t1)
 		//Overall call -- only do this on the first run
 		if (deltamode_registered == false)
 		{
-			if ((res_object_current == -1) && (delta_objects==NULL) && (enable_subsecond_models==true))
+			if ((res_object_current == -1) && (delta_objects==nullptr) && (enable_subsecond_models==true))
 			{
 				//Call the allocation routine
 				allocate_deltamode_arrays();
@@ -1145,7 +1145,7 @@ TIMESTAMP evcharger_det::sync(TIMESTAMP t0, TIMESTAMP t1)
 			delta_functions[res_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"interupdate_res_object"));
 
 			//Make sure it worked
-			if (delta_functions[res_object_current] == NULL)
+			if (delta_functions[res_object_current] == nullptr)
 			{
 				GL_THROW("Failure to map deltamode function for device:%s",obj->name);
 				/*  TROUBLESHOOT
@@ -1156,7 +1156,7 @@ TIMESTAMP evcharger_det::sync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 
 			// Populate post-delta
-			post_delta_functions[res_object_current] = NULL;
+			post_delta_functions[res_object_current] = nullptr;
 
 			//Update pointer
 			res_object_current++;
@@ -2312,7 +2312,7 @@ EXPORT int create_evcharger_det(OBJECT **obj, OBJECT *parent)
 	{
 		*obj = gl_create_object(evcharger_det::oclass);
 
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			evcharger_det *my = OBJECTDATA(*obj,evcharger_det);
 			gl_set_parent(*obj,parent);
