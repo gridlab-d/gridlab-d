@@ -97,14 +97,13 @@ add_compile_options(${FORCE_ERROR} ${DISABLED_OPTIMIZATIONS})
 ## Set up platform specific library linking and platform identification
 if (WIN32 OR MSYS OR MINGW OR CYGWIN)
     FetchContent_Declare(
-            dlfcn
+            dlfcn-win32
             GIT_REPOSITORY https://github.com/dlfcn-win32/dlfcn-win32.git
             GIT_TAG        v1.3.1
     )
-    FetchContent_MakeAvailable(dlfcn)
-
-    find_package(dlfcn-win32 REQUIRED)
-    set(DL_NAME dlfcn-win32::dl)
+    FetchContent_MakeAvailable(dlfcn-win32)
+    set(DL_NAME dl)
+    set(DL_LIB dl)
 
     set(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 ${DL_NAME} m)
     set(FOUND_WINDOWS yes CACHE INTERNAL "Tell script generator we're Windows")
@@ -341,6 +340,7 @@ set(GLD_LIBS
 set(GLD_DEPS
         ${SUPERLU_LIB}
         ${JSONCPP_LIB}
+        ${DL_LIB}
         )
 
 mark_as_advanced(FORCE
@@ -381,6 +381,7 @@ install(FILES COPYRIGHT LICENSE
 install(TARGETS
         ${GLD_LIBS}
         ${GLD_BINARIES}
+        ${GLD_DEPS}
 
         ${FILE_PERMISSIONS}
         LIBRARY DESTINATION lib
