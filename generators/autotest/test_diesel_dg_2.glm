@@ -1,4 +1,4 @@
-// $Id: test_diesel_dg_2.glm
+// $Id: test_diesel_dg.glm
 
 //#set profiler=1
 
@@ -14,7 +14,7 @@ module powerflow{
 }
 
 module generators;
-module tape;
+//module tape;
 module assert;
 
 
@@ -26,15 +26,15 @@ object meter {
 	nominal_voltage 2401.7771;
 	bustype SWING;
 	object complex_assert {
-		value -729.669-355.478j;
+		value -479.669-235.478j;
 		target measured_power;
 		within 0.01;
 	};
-	//object recorder {
-	//	property "measured_power.real,measured_power.imag";
-	//	interval -1;
-	//	file testout.csv;
-	//};
+	// object recorder {
+		// property "measured_power.real,measured_power.imag";
+		// interval -1;
+		// file testout.csv;
+	// };
 }
 
 object transformer_configuration {               
@@ -71,7 +71,7 @@ object transformer {
 	configuration IEEE13_SPCT_CONFIG;
 }
 
-object triplex_load {
+object triplex_node {
 	name IEEE13_671_tn;
 	phases AS;
 	nominal_voltage 124;
@@ -95,25 +95,11 @@ object triplex_meter {
 object diesel_dg {
 	name Imadiesel;
 	parent meter671;
-	phases ABC;
+	phases AS;
 	Gen_type CONSTANT_PQ;
 	Rated_VA 5.0 kVA;
-	real_power_out_A 250.0;
-	reactive_power_out_A 120.0;
-	real_power_out_B 250.0;
-	reactive_power_out_B 120.0;
-	real_power_out_C 250.0;
-	reactive_power_out_C 120.0;
-	object double_assert {
-		target real_power_generation;
-		value 750.0;
-		within 0.001;
-	};
-	object double_assert {
-		target reactive_power_generation;
-		value 360.0;
-		within 0.001;
-	};
+	power_out_A 250.0+120.0j;	//1
+	power_out_B 250.0+120.0j;	//2
   }
        
     
