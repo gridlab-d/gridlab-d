@@ -39,21 +39,21 @@ EXPORT int64 triplex_meter_reset(OBJECT *obj)
 // triplex_meter CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 // class management data
-CLASS* triplex_meter::oclass = NULL;
-CLASS* triplex_meter::pclass = NULL;
+CLASS* triplex_meter::oclass = nullptr;
+CLASS* triplex_meter::pclass = nullptr;
 
 // the constructor registers the class and properties and sets the defaults
 triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// link to parent class (used by isa)
 		pclass = triplex_node::oclass;
 
 		// register the class definition
 		oclass = gl_register_class(mod,"triplex_meter",sizeof(triplex_meter),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class triplex_meter";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -148,19 +148,21 @@ triplex_meter::triplex_meter(MODULE *mod) : triplex_node(mod)
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 			//Deltamode functions
-			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_triplex_meter)==NULL)
+			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_triplex_meter)==nullptr)
 				GL_THROW("Unable to publish triplex_meter deltamode function");
-			if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
+			if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==nullptr)
 				GL_THROW("Unable to publish triplex_meter swing-swapping function");
-			if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==NULL)
+			if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==nullptr)
 				GL_THROW("Unable to publish triplex_meter current injection update mapping function");
-			if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
+			if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==nullptr)
 				GL_THROW("Unable to publish triplex_meter VFD attachment function");
-			if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
+			if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == nullptr)
 				GL_THROW("Unable to publish triplex_meter island-status-reset function");
-			if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
+			if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == nullptr)
 				GL_THROW("Unable to publish triplex_meter swing-status check function");
-			if (gl_publish_function(oclass, "pwr_object_kmldata", (FUNCTIONADDR)triplex_meter_kmldata) == NULL)
+			if (gl_publish_function(oclass, "pwr_object_shunt_update", (FUNCTIONADDR)node_update_shunt_values) == nullptr)
+				GL_THROW("Unable to publish triplex_meter shunt update function");
+			if (gl_publish_function(oclass, "pwr_object_kmldata", (FUNCTIONADDR)triplex_meter_kmldata) == nullptr)
 				GL_THROW("Unable to publish triplex_meter kmldata function");
 		}
 }
@@ -204,7 +206,7 @@ int triplex_meter::create()
 	last_tier_price[1] = 0;
 	last_tier_price[2] = 0;
 	last_price_base = 0;
-	tpmeter_power_consumption = complex(0,0);
+	tpmeter_power_consumption = gld::complex(0,0);
 
 	tpmeter_interrupted = false;	//Assumes we start as "uninterrupted"
 	tpmeter_interrupted_secondary = false;	//Assumes start with no momentary interruptions
@@ -327,11 +329,11 @@ int triplex_meter::check_prices(){
 }
 TIMESTAMP triplex_meter::presync(TIMESTAMP t0)
 {
-	if (tpmeter_power_consumption != complex(0,0))
+	if (tpmeter_power_consumption != gld::complex(0,0))
 		power[0] = power[1] = 0.0;
 
 	//Reliability addition - clear momentary flag if set
-	if (tpmeter_interrupted_secondary == true)
+	if (tpmeter_interrupted_secondary)
 		tpmeter_interrupted_secondary = false;
 
     // Capturing first timestamp of simulation for use in delta energy measurements.
@@ -358,7 +360,7 @@ TIMESTAMP triplex_meter::sync(TIMESTAMP t0)
 	}
 
 	//Reliability check
-	if ((fault_check_object != NULL) && (solver_method == SM_NR))	//proper solver fault_check is present (so might need to set flag
+	if ((fault_check_object != nullptr) && (solver_method == SM_NR))	//proper solver fault_check is present (so might need to set flag
 	{
 		if (NR_node_reference==-99)	//Childed
 		{
@@ -398,7 +400,7 @@ TIMESTAMP triplex_meter::sync(TIMESTAMP t0)
 			tpmeter_interrupted = true;	//Someone is out of service, they just may not know it
 
 			//See if we were "momentary" as well - if so, clear us.
-			if (tpmeter_interrupted_secondary == true)
+			if (tpmeter_interrupted_secondary)
 				tpmeter_interrupted_secondary = false;
 		}
 		else
@@ -407,7 +409,7 @@ TIMESTAMP triplex_meter::sync(TIMESTAMP t0)
 		}
 	}
 
-	if (tpmeter_power_consumption != complex(0,0))
+	if (tpmeter_power_consumption != gld::complex(0,0))
 	{
 		power[0] += tpmeter_power_consumption/2;
 		power[1] += tpmeter_power_consumption/2;
@@ -458,7 +460,7 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	indiv_measured_power[0] = measured_voltage[0]*(~measured_current[0]);
-	indiv_measured_power[1] = complex(-1,0) * measured_voltage[1]*(~measured_current[1]);
+	indiv_measured_power[1] = gld::complex(-1,0) * measured_voltage[1]*(~measured_current[1]);
 	indiv_measured_power[2] = measured_voltage[2]*(~measured_current[2]);
 
 	measured_power = indiv_measured_power[0] + indiv_measured_power[1] + indiv_measured_power[2];
@@ -738,7 +740,7 @@ TIMESTAMP triplex_meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 
 		// Now that we've accumulated the bill for the last time period, update to the new price (if using the market)
-		if (bill_mode != BM_TIERED_TOU && power_market != NULL && price_prop != NULL)
+		if (bill_mode != BM_TIERED_TOU && power_market != nullptr && price_prop != nullptr)
 		{
 			double *pprice = (gl_get_double(power_market, price_prop));
 			last_price = price = *pprice;
@@ -846,7 +848,7 @@ SIMULATIONMODE triplex_meter::inter_deltaupdate_triplex_meter(unsigned int64 del
 	deltat = (double)dt/(double)DT_SECOND;
 
 	//Update time tracking variable - mostly for GFA functionality calls
-	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
+	if ((iteration_count_val==0) && !interupdate_pos) //Only update timestamp tracker on first iteration
 	{
 		//Update tracking variable
 		prev_time_dbl = gl_globaldeltaclock;
@@ -869,20 +871,20 @@ SIMULATIONMODE triplex_meter::inter_deltaupdate_triplex_meter(unsigned int64 del
 	}
 
 	//Perform the GFA update, if enabled
-	if ((GFA_enable == true) && (iteration_count_val == 0) && (interupdate_pos == false))	//Always just do on the first pass
+	if (GFA_enable && (iteration_count_val == 0) && !interupdate_pos)	//Always just do on the first pass
 	{
 		//Do the checks
 		GFA_Update_time = perform_GFA_checks(deltat);
 	}
 
-	if (interupdate_pos == false)	//Before powerflow call
+	if (!interupdate_pos)	//Before powerflow call
 	{
 		//Triplex meter presync items
-			if (tpmeter_power_consumption != complex(0,0))
+			if (tpmeter_power_consumption != gld::complex(0,0))
 				power[0] = power[1] = 0.0;
 
 			//Reliability addition - clear momentary flag if set
-			if (tpmeter_interrupted_secondary == true)
+			if (tpmeter_interrupted_secondary)
 				tpmeter_interrupted_secondary = false;
 
 		//Call node presync-equivalent items
@@ -890,7 +892,7 @@ SIMULATIONMODE triplex_meter::inter_deltaupdate_triplex_meter(unsigned int64 del
 
 		//Triplex-meter specific sync items
 			//Reliability check
-			if ((fault_check_object != NULL) && (solver_method == SM_NR))	//proper solver fault_check is present (so might need to set flag
+			if ((fault_check_object != nullptr) && (solver_method == SM_NR))	//proper solver fault_check is present (so might need to set flag
 			{
 				if (NR_node_reference==-99)	//Childed
 				{
@@ -909,7 +911,7 @@ SIMULATIONMODE triplex_meter::inter_deltaupdate_triplex_meter(unsigned int64 del
 					tpmeter_interrupted = true;	//Someone is out of service, they just may not know it
 
 					//See if we were "momentary" as well - if so, clear us.
-					if (tpmeter_interrupted_secondary == true)
+					if (tpmeter_interrupted_secondary)
 						tpmeter_interrupted_secondary = false;
 				}
 				else
@@ -918,7 +920,7 @@ SIMULATIONMODE triplex_meter::inter_deltaupdate_triplex_meter(unsigned int64 del
 				}
 			}
 
-			if (tpmeter_power_consumption != complex(0,0))
+			if (tpmeter_power_consumption != gld::complex(0,0))
 			{
 				power[0] += tpmeter_power_consumption/2;
 				power[1] += tpmeter_power_consumption/2;
@@ -944,7 +946,7 @@ SIMULATIONMODE triplex_meter::inter_deltaupdate_triplex_meter(unsigned int64 del
 			measured_current[2] = -(measured_current[1]+measured_current[0]);
 
 			indiv_measured_power[0] = measured_voltage[0]*(~measured_current[0]);
-			indiv_measured_power[1] = complex(-1,0) * measured_voltage[1]*(~measured_current[1]);
+			indiv_measured_power[1] = gld::complex(-1,0) * measured_voltage[1]*(~measured_current[1]);
 			indiv_measured_power[2] = measured_voltage[2]*(~measured_current[2]);
 
 			measured_power = indiv_measured_power[0] + indiv_measured_power[1] + indiv_measured_power[2];
@@ -974,7 +976,7 @@ SIMULATIONMODE triplex_meter::inter_deltaupdate_triplex_meter(unsigned int64 del
 		//Default else -- don't calculate it
 
 		//See if GFA functionality is required, since it may require iterations or "continance"
-		if (GFA_enable == true)
+		if (GFA_enable)
 		{
 			//See if our return is value
 			if ((GFA_Update_time > 0.0) && (GFA_Update_time < 1.7))
@@ -1008,7 +1010,7 @@ EXPORT int create_triplex_meter(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(triplex_meter::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			triplex_meter *my = OBJECTDATA(*obj,triplex_meter);
 			gl_set_parent(*obj,parent);

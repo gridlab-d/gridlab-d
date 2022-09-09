@@ -24,15 +24,15 @@ using namespace std;
 
 #include "transformer.h"
 
-CLASS* transformer::oclass = NULL;
-CLASS* transformer::pclass = NULL;
+CLASS* transformer::oclass = nullptr;
+CLASS* transformer::pclass = nullptr;
 
 //Default temperature for thermal aging calculations
 double default_outdoor_temperature = 74;
 
 transformer::transformer(MODULE *mod) : link_object(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		pclass = link_object::oclass;
 		
@@ -63,25 +63,25 @@ transformer::transformer(MODULE *mod) : link_object(mod)
 			PT_double, "phase_C_secondary_flux_value[Wb]", PADDR(flux_vals_inst[5]), PT_DESCRIPTION, "instantaneous magnetic flux in phase C on the secondary side of the transformer during saturation calculations",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
-			if (gl_publish_function(oclass,"power_calculation",(FUNCTIONADDR)power_calculation)==NULL)
+			if (gl_publish_function(oclass,"power_calculation",(FUNCTIONADDR)power_calculation)==nullptr)
 					GL_THROW("Unable to publish fuse state change function");
 
 			//Publish deltamode functions
-			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
+			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==nullptr)
 				GL_THROW("Unable to publish transformer deltamode function");
 
 			//Publish in-rush functions
-			if (gl_publish_function(oclass,	"recalc_transformer_matrices", (FUNCTIONADDR)recalc_transformer_mat)==NULL)
+			if (gl_publish_function(oclass,	"recalc_transformer_matrices", (FUNCTIONADDR)recalc_transformer_mat)==nullptr)
 				GL_THROW("Unable to publish transformer in-rush update function");
-			if (gl_publish_function(oclass,	"recalc_deltamode_saturation", (FUNCTIONADDR)recalc_deltamode_saturation)==NULL)
+			if (gl_publish_function(oclass,	"recalc_deltamode_saturation", (FUNCTIONADDR)recalc_deltamode_saturation)==nullptr)
 				GL_THROW("Unable to publish transformer in-rush powerflow update function");
 
 			//Publish restoration-related function (current update)
-			if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+			if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==nullptr)
 				GL_THROW("Unable to publish transformer external power calculation function");
-			if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+			if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==nullptr)
 				GL_THROW("Unable to publish transformer external power limit calculation function");
-			if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==NULL)
+			if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==nullptr)
 				GL_THROW("Unable to publish transformer external current calculation function");
     }
 }
@@ -94,8 +94,8 @@ int transformer::isa(char *classname)
 int transformer::create()
 {
 	int result = link_object::create();
-	configuration = NULL;
-	ptheta_A = NULL;
+	configuration = nullptr;
+	ptheta_A = nullptr;
 	transformer_replacements = 0;
 	phi_base_Pri = 0.0;
 	phi_base_Sec = 0.0;
@@ -116,7 +116,7 @@ int transformer::create()
 void transformer::fetch_double(double **prop, const char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
 	*prop = gl_get_double_by_name(parent, name);
-	if(*prop == NULL){
+	if(*prop == nullptr){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
@@ -155,7 +155,7 @@ int transformer::init(OBJECT *parent)
 	double sa_base;
 	double nt, nt_a, nt_b, nt_c, inv_nt_a, inv_nt_b, inv_nt_c;
 	gld::complex zt, zt_a, zt_b, zt_c, z0, z1, z2, zc;
-	FINDLIST *climate_list = NULL;
+	FINDLIST *climate_list = nullptr;
 
 	config = OBJECTDATA(configuration,transformer_configuration);
 
@@ -280,7 +280,7 @@ int transformer::init(OBJECT *parent)
 				gld::complex Izt = gld::complex(1,0) / zt;
 				
 				//In-rush capability stuff -- allocations
-				if (enable_inrush_calculations == true)
+				if (enable_inrush_calculations)
 				{
 					//"Main" allocation is done in link.cpp -- this depends on where we want windings, so done here
 					//"Main" allocation already done, via link::init above
@@ -289,7 +289,7 @@ int transformer::init(OBJECT *parent)
 					YBase_Full = (gld::complex *)gl_malloc(36*sizeof(gld::complex));
 
 					//Check it
-					if (YBase_Full == NULL)
+					if (YBase_Full == nullptr)
 					{
 						GL_THROW("Transformer:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 						/*  TROUBLESHOOT
@@ -312,7 +312,7 @@ int transformer::init(OBJECT *parent)
 						LinkHistTermCf = (gld::complex *)gl_malloc(6*sizeof(gld::complex));
 
 						//Check it
-						if (LinkHistTermCf == NULL)
+						if (LinkHistTermCf == nullptr)
 						{
 							GL_THROW("Transformer:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 							//Defined above
@@ -330,7 +330,7 @@ int transformer::init(OBJECT *parent)
 						YBase_Pri = (gld::complex *)gl_malloc(9*sizeof(gld::complex));
 
 						//Check it
-						if (YBase_Pri == NULL)
+						if (YBase_Pri == nullptr)
 						{
 							GL_THROW("Transformer:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 							//Defined above
@@ -345,8 +345,8 @@ int transformer::init(OBJECT *parent)
 					else
 					{
 						//Null it, for good measure (should be done already)
-						LinkHistTermCf = NULL;
-						YBase_Pri = NULL;
+						LinkHistTermCf = nullptr;
+						YBase_Pri = nullptr;
 					}
 
 					if ((config->magnetization_location == config->SEC_MAG) || (config->magnetization_location == config->BOTH_MAG))	//Secondary needed (to)
@@ -355,7 +355,7 @@ int transformer::init(OBJECT *parent)
 						LinkHistTermCt = (gld::complex *)gl_malloc(6*sizeof(gld::complex));
 
 						//Check it
-						if (LinkHistTermCt == NULL)
+						if (LinkHistTermCt == nullptr)
 						{
 							GL_THROW("Transformer:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 							//Defined above
@@ -373,7 +373,7 @@ int transformer::init(OBJECT *parent)
 						YBase_Sec = (gld::complex *)gl_malloc(9*sizeof(gld::complex));
 
 						//Check it
-						if (YBase_Sec == NULL)
+						if (YBase_Sec == nullptr)
 						{
 							GL_THROW("Transformer:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 							//Defined above
@@ -388,18 +388,18 @@ int transformer::init(OBJECT *parent)
 					else
 					{
 						//Null it, for good measure (should be done already)
-						LinkHistTermCt = NULL;
-						YBase_Sec = NULL;
+						LinkHistTermCt = nullptr;
+						YBase_Sec = nullptr;
 					}
 
 					//See if saturation is enabled
-					if (config->model_inrush_saturation == true)
+					if (config->model_inrush_saturation)
 					{
 						//Allocate it - stacked of curr/hist
 						hphi = (gld::complex *)gl_malloc(12*sizeof(gld::complex));
 
 						//Make sure it worked
-						if (hphi == NULL)
+						if (hphi == nullptr)
 						{
 							GL_THROW("Transformer:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 							//Defined above
@@ -413,7 +413,7 @@ int transformer::init(OBJECT *parent)
 					}
 					else	//Null it, to be safe
 					{
-						hphi = NULL;
+						hphi = nullptr;
 					}
 				}//End in-rush allocations
 
@@ -1061,11 +1061,11 @@ int transformer::init(OBJECT *parent)
 			}
 
 			// fetch the climate data
-			if(climate==NULL){
+			if(climate==nullptr){
 				//See if a climate object exists
 				climate_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"climate",FT_END);
 
-				if (climate_list==NULL)
+				if (climate_list==nullptr)
 				{
 					//Warn
 					gl_warning("No climate data found - using static temperature");
@@ -1081,10 +1081,10 @@ int transformer::init(OBJECT *parent)
 				else if (climate_list->hit_count >= 1)
 				{
 					//Link up
-					climate = gl_find_next(climate_list,NULL);
+					climate = gl_find_next(climate_list,nullptr);
 
 					//Make sure it worked
-					if (climate==NULL)
+					if (climate==nullptr)
 					{
 						//Warn
 						gl_warning("No climate data found - using static temperature");
@@ -1103,7 +1103,7 @@ int transformer::init(OBJECT *parent)
 						fetch_double(&ptheta_A, "temperature", climate);
 
 						//Make sure it worked
-						if (ptheta_A == NULL)
+						if (ptheta_A == nullptr)
 						{
 							//Warn
 							gl_warning("No climate data found - using static temperature");
@@ -1136,7 +1136,7 @@ int transformer::init(OBJECT *parent)
 				fetch_double(&ptheta_A, "temperature", climate);
 
 				//Make sure it worked
-				if (ptheta_A == NULL)
+				if (ptheta_A == nullptr)
 				{
 					//Warn
 					gl_warning("No climate data found - using static temperature");
@@ -1398,7 +1398,7 @@ int transformer::transformer_inrush_mat_update(void)
 		D_sat = (-1.0*B_sat - sqrt((B_sat*B_sat - 4.0*A_sat*C_sat)))/(2.0*A_sat);
 
 	//Compute the base values for saturation
-	if (config->model_inrush_saturation == true)
+	if (config->model_inrush_saturation)
 	{
 		//Calculate values
 		phi_base_Pri = config->V_primary / (sqrt(3.0) * 2.0 * PI * nominal_frequency);
@@ -1732,16 +1732,16 @@ int transformer::transformer_saturation_update(bool *deltaIsat)
 	double diff_val, max_diff, global_time_dbl_val;
 	TIMESTAMP global_time_int_val;
 
-	if ((config->connect_type == config->WYE_WYE) && (enable_inrush_calculations==true) && (config->model_inrush_saturation == true))
+	if ((config->connect_type == config->WYE_WYE) && enable_inrush_calculations && config->model_inrush_saturation)
 	{
 		//See if we're in "init mode" or some form of "skip"
-		if (deltaIsat == NULL)	//Init mode
+		if (deltaIsat == nullptr)	//Init mode
 		{
 			//Allocate the storage matrix - 12 always (just zero others)
 			saturation_calculated_vals = (gld::complex *)gl_malloc(12*sizeof(gld::complex));
 
 			//Make sure it worked
-			if (saturation_calculated_vals == NULL)
+			if (saturation_calculated_vals == nullptr)
 			{
 				GL_THROW("Transformer:%d %s failed to allocate memory for inrush saturation tracking",obj->id,obj->name ? obj->name : "Unnamed");
 				/*  TROUBLESHOOT
@@ -1953,7 +1953,7 @@ int transformer::transformer_saturation_update(bool *deltaIsat)
 			if (max_diff > inrush_tol_value)	//Technically voltage, but meh
 			{
 				//See if it is set already
-				if (*deltaIsat == false)	//Nope, set it
+				if (!*deltaIsat)	//Nope, set it
 				{
 					*deltaIsat = true;
 				}
@@ -2004,7 +2004,7 @@ EXPORT int create_transformer(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(transformer::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			transformer *my = OBJECTDATA(*obj,transformer);
 			gl_set_parent(*obj,parent);

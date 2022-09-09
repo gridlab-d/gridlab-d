@@ -16,7 +16,7 @@
 EXPORT int isa_diesel_dg(OBJECT *obj, char *classname);
 EXPORT SIMULATIONMODE interupdate_diesel_dg(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 EXPORT STATUS postupdate_diesel_dg(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass);
-EXPORT STATUS diesel_dg_NR_current_injection_update(OBJECT *obj,int64 iteration_count);
+EXPORT STATUS diesel_dg_NR_current_injection_update(OBJECT *obj,int64 iteration_count, bool *converged_failure);
 
 //AVR state variable structure
 typedef struct {
@@ -178,6 +178,7 @@ private:
 	gld_property *pPGenerated;			//Link to bus PGenerated field - mainly used for SWING generator
 	gld_property *pIGenerated[3];		//Link to direct current injections to powerflow at bus-level (prerot current)
 	gld::complex value_IGenerated[3];		//Accumulator/holding variable for direct current injections at bus-level (pre-rotated current)
+	gld::complex prev_value_IGenerated[3];	//Tracking variable - mostly for initial powerflow convergence of Norton equivalent
 	gld::complex generator_admittance[3][3];	//Generator admittance matrix converted from sequence values
 	gld::complex full_bus_admittance_mat[3][3];	//Full self-admittance of Ybus form - pulled from node connection
 	double power_base;					//Per-phase basis (divide by 3)
@@ -218,11 +219,6 @@ private:
 protected:
 	/* TODO: put unpublished but inherited variables */
 public:
-	/* TODO: Deprecated properties to be deleted on next version */
-	double power_factor;
-	set phases;	/**< device phases (see PHASE codes) */
-	//******** END DEPRECATED **************//
-
 	/* TODO: put published variables here */
 	enum {DYNAMIC=1, NON_DYN_CONSTANT_PQ};
 	enumeration Gen_type;
@@ -269,6 +265,7 @@ public:
 	//Convergence criteria (ion right now)
 	double rotor_speed_convergence_criterion;
 	double voltage_convergence_criterion;
+	double current_convergence_criterion;
 
 	//Which convergence to apply
 	bool apply_rotor_speed_convergence;
@@ -327,8 +324,6 @@ public:
 	double kw_cvr;	 				// Gain for feedback loop in CVR control
 	bool CVR_PI;					// Flag indicating CVR implementation is using PI controller
 	bool CVR_PID;					// Flag indicating CVR implementation is using PID controller
-	double vset_EMAX;				// Vset uppper limit
-	double vset_EMIN;				// Vset lower limit
 	double Vref;					// vset initial value before entering transient
 	double Kd1;						// Parameter of second order transfer function
 	double Kd2;						// Parameter of second order transfer function
@@ -413,7 +408,6 @@ public:
 	double pconstant_Teng;			//Transport lag time constant for diesel engine
 	double pconstant_ropen;			//Maximum valve opening rate, p.u./sec.
 	double pconstant_rclose;		//Minimum valve closing rate, p.u./sec.
-	double pconstant_Kimw;			//Power controller (reset) gain
 	unsigned int pconstant_Flag;	//Switch for fuel source characteristic, = 0 for fuel flow independent of speed, = 1 fuel flow proportional to speed
 
 	// Fuel useage and emmisions
@@ -455,7 +449,7 @@ public:
 	//STATUS deltaupdate(unsigned int64 dt, unsigned int iteration_count_val);
 	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
 	STATUS post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass);
-	STATUS updateCurrInjection(int64 iteration_count);
+	STATUS updateCurrInjection(int64 iteration_count, bool *converged_failure);
 public:
 	static CLASS *oclass;
 	static diesel_dg *defaults;

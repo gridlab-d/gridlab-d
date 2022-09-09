@@ -14,8 +14,6 @@ private:
 	bool deltamode_inclusive; //Boolean for deltamode calls - pulled from object flags
 	bool first_sync_delta_enabled;
 
-	/* DEPRECATED - properties that will be deleted in the next version */
-	/* END DEPRECATED */
 protected:
 public: /* Published Variables & Other Funcs For 'PV_CURVE' Mode */
 	// Published Variables for N-R Solver (under the mode 'PV_CURVE')
@@ -168,6 +166,9 @@ private:
 	gld_property *inverter_current_property;
 	gld_property *inverter_power_property;
 	gld_property *inverter_pvc_Pmax_property;
+
+	gld_property *inverter_rated_power_va_property;
+	gld_property *inverter_rated_dc_voltage;
 
 	//Default voltage and current values, if ran "headless"
 	double default_voltage_array;

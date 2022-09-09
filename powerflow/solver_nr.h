@@ -43,6 +43,7 @@ typedef struct  {
 	double Jacob_B[3];		// Element b in equation (38), which is used to update the Jacobian matrix at each iteration
 	double Jacob_C[3];		// Element c in equation (39), which is used to update the Jacobian matrix at each iteration
 	double Jacob_D[3];		// Element d in equation (40), which is used to update the Jacobian matrix at each iteration
+	gld::complex FPI_current[3];	// Current for  FPI RHS
 	unsigned int Matrix_Loc;// Starting index of this object's place in all matrices/equations
 	double max_volt_error;	///< Maximum voltage error specified for that node
 	char *name;				///< original name
@@ -50,6 +51,7 @@ typedef struct  {
 	FUNCTIONADDR ExtraCurrentInjFunc;	///< Link to extra functions of current injection updates -- mostly VSI current updates
 	OBJECT *ExtraCurrentInjFuncObject;	///< Link to the object that mapped the current injection function - needed for function calls
 	FUNCTIONADDR LoadUpdateFxn;			///< Link to load update function for load objects -- for impedance conversion (inrush or forced)
+	FUNCTIONADDR ShuntUpdateFxn;		///< Link to node shunt update function - for FPI - fixes sequence issue in deltamode
 	int island_number;		///< Numerical designation for which island this bus belongs to
 } BUSDATA;
 
@@ -86,6 +88,7 @@ typedef struct {
 	int row_ind;  ///< row location of the element in n*n bus admittance matrix in NR solver
 	int	col_ind;  ///< column location of the element in n*n bus admittance matrix in NR solver
     gld::complex Y[3][3]; ///< complex value of elements in bus admittance matrix in NR solver
+	gld::complex Yload[3][3];	///< complex value of elements in load portion of bus admittance matrix
 	char size;		///< size of the admittance diagonal - assumed square, useful for smaller size
 } Bus_admit;
 
@@ -118,7 +121,7 @@ typedef struct {
 } SPARSE;
 
 typedef struct {
-	double *deltaI_NR;					/// Storage array for current injection
+	double *current_RHS_NR;					/// Storage array for current injection/RHS materials
 	unsigned int size_offdiag_PQ;		/// Number of fixed off-diagonal matrix elements
 	unsigned int size_diag_fixed;		/// Number of fixed diagonal matrix elements
 	unsigned int total_variables;		/// Total number of phases to be calculating (size of matrices)
@@ -144,6 +147,7 @@ typedef struct {
 	bool swing_converged;				///Flag to indicate if the swing imbalance has been resolved -- deltamode-oriented
 	bool swing_is_a_swing;				///Flag to indicate if swing buses should still be in that mode or not -- deltamode-oriented
 	bool SaturationMismatchPresent;		///Flag to indicate if any saturation-based calculations haven't coded
+	bool NortonCurrentMismatchPresent;	///Flag to indicate if any Norton-equivalent currents are changing in magnitude too much
 	int solver_info;					///Status return value for LU solver -- put into the array for tracking
 	int64 return_code;					///Specific return value - just to replicate previous functionality
 	double max_mismatch_converge;		///Current difference for convergence checks
@@ -169,6 +173,7 @@ typedef struct {
 
 int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count, BRANCHDATA *branch, NR_SOLVER_STRUCT *powerflow_values, NRSOLVERMODE powerflow_type , NR_MESHFAULT_IMPEDANCE *mesh_imped_vals, bool *bad_computations);
 void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT *powerflow_values, bool jacobian_pass, int island_number);
+void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count, BRANCHDATA *branch, NR_SOLVER_STRUCT *powerflow_values, NRSOLVERMODE powerflow_type);
 
 //Newton-Raphson solver array handlers
 STATUS NR_array_structure_free(NR_SOLVER_STRUCT *struct_of_interest,int number_of_islands);		/* Handles freeing NR_SOLVER_STRUCT arrays */

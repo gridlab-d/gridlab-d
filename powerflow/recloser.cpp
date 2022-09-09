@@ -16,17 +16,17 @@
 
 #include "recloser.h"
 
-CLASS* recloser::oclass = NULL;
-CLASS* recloser::pclass = NULL;
+CLASS* recloser::oclass = nullptr;
+CLASS* recloser::pclass = nullptr;
 
 recloser::recloser(MODULE *mod) : switch_object(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		pclass = link_object::oclass;
 
 		oclass = gl_register_class(mod,"recloser",sizeof(recloser),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-        if(oclass == NULL)
+        if(oclass == nullptr)
             GL_THROW("unable to register object class implemented by %s",__FILE__);
 
         if(gl_publish_variable(oclass,
@@ -36,25 +36,25 @@ recloser::recloser(MODULE *mod) : switch_object(mod)
 			PT_double, "number_of_tries", PADDR(curr_tries), PT_DESCRIPTION, "Current number of tries recloser has attempted",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
-		if (gl_publish_function(oclass,"change_recloser_state",(FUNCTIONADDR)change_recloser_state)==NULL)
+		if (gl_publish_function(oclass,"change_recloser_state",(FUNCTIONADDR)change_recloser_state)==nullptr)
 			GL_THROW("Unable to publish recloser state change function");
-		if (gl_publish_function(oclass,"recloser_reliability_operation",(FUNCTIONADDR)recloser_reliability_operation)==NULL)
+		if (gl_publish_function(oclass,"recloser_reliability_operation",(FUNCTIONADDR)recloser_reliability_operation)==nullptr)
 			GL_THROW("Unable to publish recloser reliability operation function");
-		if (gl_publish_function(oclass,	"change_recloser_faults", (FUNCTIONADDR)recloser_fault_updates)==NULL)
+		if (gl_publish_function(oclass,	"change_recloser_faults", (FUNCTIONADDR)recloser_fault_updates)==nullptr)
 			GL_THROW("Unable to publish recloser fault correction function");
-        if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_switch)==NULL)
+        if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_switch)==nullptr)
             GL_THROW("Unable to publish recloser fault restoration function");
 
         //Publish deltamode functions -- replicate switch
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_switch)==NULL)
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_switch)==nullptr)
 			GL_THROW("Unable to publish recloser deltamode function");
 
 		//Publish restoration-related function (current update)
-		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==nullptr)
 			GL_THROW("Unable to publish recloser external power calculation function");
-		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==nullptr)
 			GL_THROW("Unable to publish recloser external power limit calculation function");
-		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==NULL)
+		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==nullptr)
 			GL_THROW("Unable to publish recloser external current calculation function");
     }
 }
@@ -146,7 +146,7 @@ EXPORT int create_recloser(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(recloser::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			recloser *my = OBJECTDATA(*obj,recloser);
 			gl_set_parent(*obj,parent);
@@ -207,7 +207,7 @@ EXPORT double change_recloser_state(OBJECT *thisobj, unsigned char phase_change,
 	char desA, desB, desC;
 	recloser *reclobj;
 	switch_object *swtchobj;
-	FUNCTIONADDR funadd = NULL;
+	FUNCTIONADDR funadd = nullptr;
 
 	//Init
 	count_values = 0.0;
@@ -216,7 +216,7 @@ EXPORT double change_recloser_state(OBJECT *thisobj, unsigned char phase_change,
 	reclobj = OBJECTDATA(thisobj,recloser);
 
 	//Set count
-	if (state == false)
+	if (!state)
 		count_values = reclobj->ntries;	//Opening, so must have "tried" all times
 	else
 		count_values = 1.0;	//Just a non-zero value
@@ -224,7 +224,7 @@ EXPORT double change_recloser_state(OBJECT *thisobj, unsigned char phase_change,
 	//Map the switch
 	swtchobj = OBJECTDATA(thisobj,switch_object);
 
-	if ((swtchobj->switch_banked_mode == switch_object::BANKED_SW) || (meshed_fault_checking_enabled == true))
+	if ((swtchobj->switch_banked_mode == switch_object::BANKED_SW) || meshed_fault_checking_enabled)
 	{
 		swtchobj->set_switch(state);
 	}
@@ -233,7 +233,7 @@ EXPORT double change_recloser_state(OBJECT *thisobj, unsigned char phase_change,
 		//Figure out what we need to call
 		if ((phase_change & 0x04) == 0x04)
 		{
-			if (state==true)
+			if (state)
 				desA=1;	//Close it
 			else
 				desA=0;	//Open it
@@ -244,7 +244,7 @@ EXPORT double change_recloser_state(OBJECT *thisobj, unsigned char phase_change,
 		//Phase B
 		if ((phase_change & 0x02) == 0x02)
 		{
-			if (state==true)
+			if (state)
 				desB=1;	//Close it
 			else
 				desB=0;	//Open it
@@ -255,7 +255,7 @@ EXPORT double change_recloser_state(OBJECT *thisobj, unsigned char phase_change,
 		//Phase C
 		if ((phase_change & 0x01) == 0x01)
 		{
-			if (state==true)
+			if (state)
 				desC=1;	//Close it
 			else
 				desC=0;	//Open it

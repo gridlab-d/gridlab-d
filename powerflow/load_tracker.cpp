@@ -1,16 +1,16 @@
 #include "load_tracker.h"
 #include "powerflow.h"
 
-CLASS* load_tracker::oclass = NULL;
+CLASS* load_tracker::oclass = nullptr;
 
 load_tracker::load_tracker(MODULE *mod)
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		oclass = gl_register_class(mod,"load_tracker",sizeof(load_tracker),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 		else
 			oclass->trl = TRL_PROVEN;
@@ -50,7 +50,7 @@ int load_tracker::create()
 int load_tracker::init(OBJECT *parent)
 {
 	// Make sure we have a target object
-	if (target==NULL)
+	if (target==nullptr)
 	{
 		GL_THROW("Target object not set");
 		/* TROUBLESHOOT
@@ -60,7 +60,7 @@ int load_tracker::init(OBJECT *parent)
 
 	// Make sure we have a target property
 	PROPERTY* target_property = gl_get_property(target,target_prop.get_string());
-	if (target_property==NULL)
+	if (target_property==nullptr)
 	{
 		GL_THROW("Unable to find property \"%s\" in object %s", target_prop.get_string(), target->name);
 		/* TROUBLESHOOT
@@ -106,7 +106,7 @@ int load_tracker::init(OBJECT *parent)
 	}
 
 	// The VALUEPOINTER is a union of pointers so we only need to check one of them....
-	if (pointer.d == NULL)
+	if (pointer.d == nullptr)
 	{
 		GL_THROW("Unable to bind to property \"%s\" in object %s", target_prop.get_string(), target->name);
 		/* TROUBLESHOOT
@@ -249,7 +249,7 @@ TIMESTAMP load_tracker::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	// After both the powerflow solve has completed and the
 	// measurments have been updated we check the output error
 	// and see if we need to trigger another iteration.
-	if ((solver_method == SM_FBS) || (solver_method == SM_NR && NR_admit_change == false))
+	if ((solver_method == SM_FBS) || (solver_method == SM_NR && !NR_admit_change))
 	{
 		update_feedback_variable();
 
@@ -287,7 +287,7 @@ EXPORT int create_load_tracker(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(load_tracker::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			load_tracker *my = OBJECTDATA(*obj,load_tracker);
 			gl_set_parent(*obj,parent);

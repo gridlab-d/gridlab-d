@@ -227,6 +227,18 @@ public:
 	double Tw;						///< water temperature [F]
 	double Tw_old;					///< previous water temperature, for internal_gains
 	double Tcontrol;
+	
+	// Heat pump water heater update
+	double energytake;		///< The amount of energy available in the tank to heat the water to the setpoint temperaute.
+	double compressor_max_threshold;
+	double compressor_min_threshold;
+	double heating_element_min_threshold;
+	bool heating_element_on;
+
+	double time_step = 0.0;
+	int interval;
+	bool turn_fan_on;
+	// Heat pump water heater update
 
 	// Convenience values (some pre-computed here and there for efficiency)...
 	bool heat_needed;				///< need to maintain this bit of state because of Tstat deadband...
@@ -401,6 +413,8 @@ public:
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP commit();
 
+	// Energy estimation routine for heatpump model
+	void sync_energytake();
 
 public:
 	enumeration current_model;				///< Discerns which water heater model we need to use

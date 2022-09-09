@@ -18,9 +18,9 @@
 #include "output.h"
 #include "realtime.h"
 
-static OBJECT **delta_objectlist = NULL; /* qualified object list */
+static OBJECT **delta_objectlist = nullptr; /* qualified object list */
 static int delta_objectcount = 0; /* qualified object count */
-static MODULE **delta_modulelist = NULL; /* qualified module list */
+static MODULE **delta_modulelist = nullptr; /* qualified module list */
 static int delta_modulecount = 0; /* qualified module count */
 
 /* profile data structure */
@@ -50,6 +50,7 @@ STATUS delta_init(void)
 		MODULE *tape_mod;
 		MODULE *connection_mod;
 		MODULE *reliability_mod;
+		MODULE *residential_mod;
 		MODULE *powerflow_mod;
 	} MODFOUNDSTRUCT;
 	MODFOUNDSTRUCT modules_found;
@@ -58,11 +59,12 @@ STATUS delta_init(void)
 	size_t mod_count = module_getcount(); 
 
 	/* Ordered module initialization - just because */
-	modules_found.tape_mod = NULL;
-	modules_found.connection_mod = NULL;
-	modules_found.reliability_mod = NULL;
-	modules_found.powerflow_mod = NULL;
-	ordered_module = NULL;
+	modules_found.tape_mod = nullptr;
+	modules_found.connection_mod = nullptr;
+	modules_found.reliability_mod = nullptr;
+	modules_found.residential_mod = nullptr;
+	modules_found.powerflow_mod = nullptr;
+	ordered_module = nullptr;
 
 	/* Preallocate the tracking array, if in the "preferred sort" mode */
 	if (global_deltamode_force_preferred_order == true)
@@ -70,7 +72,7 @@ STATUS delta_init(void)
 		ordered_module = (bool *)malloc(mod_count*sizeof(bool));
 
 		// Make sure it worked
-		if (ordered_module == NULL)
+		if (ordered_module == nullptr)
 		{
 			output_error("deltamode: unable to allocate memory for module order tracking");
 			/*  TROUBLESHOOT
@@ -92,7 +94,7 @@ STATUS delta_init(void)
 	n = 0;
 
 	/* count qualified modules - populate "special" ones, if necessary */
-	for ( module=module_get_first() ; module!=NULL ; module=module_get_next(module) )
+	for ( module=module_get_first() ; module!=nullptr ; module=module_get_next(module) )
 	{
 		if ( 0 != module->deltadesired ){
 			// this could probably be counted in module_init()...
@@ -128,6 +130,14 @@ STATUS delta_init(void)
 					//Flag
 					ordered_module[n] = true;
 				}
+				else if (strcmp(module->name,"residential") == 0)
+				{
+					//Store
+					modules_found.residential_mod = module;
+
+					//Flag
+					ordered_module[n] = true;
+				}
 				else if (strcmp(module->name,"powerflow") == 0)
 				{
 					//Store
@@ -149,7 +159,7 @@ STATUS delta_init(void)
 	/* if none, stop here */
 	if ( delta_modulecount==0 ){
 		//De-allocate the tracking array, if it was used
-		if (ordered_module != NULL)
+		if (ordered_module != nullptr)
 		{
 			free(ordered_module);
 		}
@@ -175,7 +185,7 @@ STATUS delta_init(void)
 	if (global_deltamode_force_preferred_order == true)
 	{
 		//Check the individual ones - tape
-		if (modules_found.tape_mod != NULL)
+		if (modules_found.tape_mod != nullptr)
 		{
 			//Assumes it is first - put in the string
 			strcat(global_deltamode_updateorder,modules_found.tape_mod->name);
@@ -185,7 +195,7 @@ STATUS delta_init(void)
 		}
 
 		//Connection
-		if (modules_found.connection_mod != NULL)
+		if (modules_found.connection_mod != nullptr)
 		{
 			//Add to the string list
 			if ( delta_modulecount>0 )
@@ -197,7 +207,7 @@ STATUS delta_init(void)
 		}
 
 		//Reliability
-		if (modules_found.reliability_mod != NULL)
+		if (modules_found.reliability_mod != nullptr)
 		{
 			//Add to the string list
 			if ( delta_modulecount>0 )
@@ -208,8 +218,20 @@ STATUS delta_init(void)
 			delta_modulelist[delta_modulecount++] = modules_found.reliability_mod;
 		}
 
+		//Residential
+		if (modules_found.residential_mod != nullptr)
+		{
+			//Add to the string list
+			if ( delta_modulecount>0 )
+				strcat(global_deltamode_updateorder,",");
+			strcat(global_deltamode_updateorder,modules_found.residential_mod->name);
+
+			//Add to the main list
+			delta_modulelist[delta_modulecount++] = modules_found.residential_mod;
+		}
+
 		//Powerflow
-		if (modules_found.powerflow_mod != NULL)
+		if (modules_found.powerflow_mod != nullptr)
 		{
 			//Add to the string list
 			if ( delta_modulecount>0 )
@@ -226,7 +248,7 @@ STATUS delta_init(void)
 	n=0;
 
 	//Loop through the modules and populate them
-	for ( module=module_get_first() ; module!=NULL ; module=module_get_next(module) )
+	for ( module=module_get_first() ; module!=nullptr ; module=module_get_next(module) )
 	{
 		//See which mode we're in
 		if (global_deltamode_force_preferred_order == true)
@@ -249,13 +271,13 @@ STATUS delta_init(void)
 	}
 
 	//Free up the malloced array, if done (since not needed anymore)
-	if (ordered_module != NULL)
+	if (ordered_module != nullptr)
 	{
 		free(ordered_module);
 	}
 
 	/* count qualified objects */
-	for ( obj=object_get_first() ; obj!=NULL ; obj=object_get_next(obj) )
+	for ( obj=object_get_first() ; obj!=nullptr ; obj=object_get_next(obj) )
 	{
 		if ( obj->flags&OF_DELTAMODE )
 		{
@@ -275,7 +297,7 @@ STATUS delta_init(void)
 
 	/* allocate final object list */
 	delta_objectlist = (OBJECT**)malloc(sizeof(OBJECT*)*delta_objectcount);
-	if ( delta_objectlist==NULL)
+	if ( delta_objectlist==nullptr)
 	{
 		output_error("unable to allocate memory for deltamode object list");
 		/* TROUBLESHOOT
@@ -310,7 +332,7 @@ STATUS delta_init(void)
 	memset(rankcount,0,sizeof(int)*(toprank+1));
 
 	/* count qualified objects in each rank */
-	for ( obj=object_get_first() ; obj!=NULL ; obj=object_get_next(obj) )
+	for ( obj=object_get_first() ; obj!=nullptr ; obj=object_get_next(obj) )
 	{
 		if ( obj->flags&OF_DELTAMODE ){
 			rankcount[obj->rank]++;
@@ -334,11 +356,11 @@ STATUS delta_init(void)
 			rankcount[n] = 0; /* clear for index recount */
 		}
 		else
-			ranklist[n] = NULL;
+			ranklist[n] = nullptr;
 	}
 
 	/* assign qualified objects to rank lists */
-	for ( obj=object_get_first() ; obj!=NULL ; obj=object_get_next(obj) )
+	for ( obj=object_get_first() ; obj!=nullptr ; obj=object_get_next(obj) )
 	{
 		if ( obj->flags&OF_DELTAMODE ){
 			ranklist[obj->rank][rankcount[obj->rank]++] = obj;
@@ -353,17 +375,17 @@ STATUS delta_init(void)
 		for ( m=0 ; m<rankcount[n] ; m++ ){
 			*pObj++ = ranklist[n][m];
 		}
-		if ( ranklist[n]!=NULL ){
+		if ( ranklist[n]!=nullptr ){
 			free(ranklist[n]);
-			ranklist[n] = NULL;
+			ranklist[n] = nullptr;
 		}
 	}
 
 	/* release memory */
 	free(rankcount);
-	rankcount = NULL;
+	rankcount = nullptr;
 	free(ranklist);
-	ranklist = NULL;
+	ranklist = nullptr;
 Success:
 	profile.t_init += clock() - t;
 	return SUCCESS;
@@ -416,8 +438,10 @@ DT delta_update(void)
 	int n;
 	double dbl_stop_time;
 	double dbl_curr_clk_time;
-	OBJECT *d_obj = NULL;
-	CLASS *d_oclass = NULL;
+	OBJECT *d_obj = nullptr;
+	CLASS *d_oclass = nullptr;
+	TIMESTAMP xsync_ret_time, t1_val;
+	double xform_temp_time;
 
 	/* send preupdate messages */
 	timestep=delta_preupdate();
@@ -467,6 +491,27 @@ DT delta_update(void)
 		/* time context - so messages look proper */
 		output_set_delta_time_context(global_clock,global_deltaclock);
 
+		//Create an integer clock value and update the temporary variable for transforms
+		t1_val = (TIMESTAMP)(floor(global_delta_curr_clock));
+		xform_temp_time = global_delta_curr_clock;
+
+		//Call transform updates
+		xsync_ret_time=transform_syncall(t1_val,static_cast<TRANSFORMSOURCE>(XS_DOUBLE|XS_COMPLEX|XS_ENDUSE|XS_SCHEDULE|XS_LOADSHAPE),&xform_temp_time);
+
+		//Error check
+		if (xsync_ret_time == TS_INVALID)
+		{
+			//Error return
+			return DT_INVALID;
+		}
+		//Update checks not really needed - xforms shouldn't drive deltamode
+
+		//Call some "internals" - replicate what was in exec - done after the transform to sequence properly
+		xsync_ret_time=randomvar_syncall(t1_val);
+		xsync_ret_time=schedule_syncall(t1_val);
+		xsync_ret_time=loadshape_syncall(t1_val);
+		xsync_ret_time=enduse_syncall(t1_val);
+
 		/* Federation reiteration loop */
 		while (delta_federation_iteration_remaining > 0)
 		{
@@ -484,7 +529,7 @@ DT delta_update(void)
 				/* Loop through objects with their individual updates */
 				for ( n=0 ; n<delta_objectcount ; n++ )
 				{
-					d_obj = delta_objectlist[n];	/* Shouldn't need NULL checks, since they were done above */
+					d_obj = delta_objectlist[n];	/* Shouldn't need nullptr checks, since they were done above */
 					d_oclass = d_obj->oclass;
 
 					/* See if the object is in service or not */
@@ -783,7 +828,7 @@ static SIMULATIONMODE delta_clockupdate(DT timestep, SIMULATIONMODE interupdate_
 		nextTime = global_delta_curr_clock + ((double)timestep)/((double)DT_SECOND);
 		for(module=delta_modulelist; module < (delta_modulelist + delta_modulecount); module++)
 		{
-			if((*module)->deltaClockUpdate != NULL)
+			if((*module)->deltaClockUpdate != nullptr)
 			{
 				result = (*module)->deltaClockUpdate(*module, nextTime, timestep, interupdate_result);
 				switch ( result )
@@ -814,7 +859,7 @@ static SIMULATIONMODE delta_clockupdate(DT timestep, SIMULATIONMODE interupdate_
 		exitDeltaTimestep = nextTimeNano - currTimeNano;
 		for(module=delta_modulelist; module < (delta_modulelist + delta_modulecount); module++)
 		{
-			if((*module)->deltaClockUpdate != NULL)
+			if((*module)->deltaClockUpdate != nullptr)
 			{
 				result = (*module)->deltaClockUpdate(*module, nextTime, exitDeltaTimestep, interupdate_result);
 				switch ( result )

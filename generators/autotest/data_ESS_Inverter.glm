@@ -1,0 +1,147 @@
+
+
+object inverter_dyn {
+	name VSI1;
+	parent Node1;
+	flags DELTAMODE;
+	control_mode GRID_FORMING;
+	grid_forming_mode DYNAMIC_DC_BUS;
+	rated_DC_Voltage 850 V; // 480*1.414*1.2, it should be the PV panel MPP voltage	
+	rated_power 0.1 MVA;	// 
+	//GridForming_convergence_criterion 1e-6;
+
+	Pref 0.06 MW; //1270000; //300000;
+	Qref 0.001 MW;
+	
+
+	Vdc_min_pu 0.1; // 1pu
+	
+	E_max 1.2;
+	
+    Rfilter 0.0076;
+	Xfilter 0.1163;
+	
+	mp 3.77;  // 3.77 represents 1% droop.
+    kppmax 3;
+	kipmax 60;
+	Pmax 1;
+	Pmin -1;
+	
+	mq 0.05; // 0.05 represents 5% droop
+	
+	//Pset 0.5;
+	//Vset 1;
+	
+	C_pu 0.1;  // e.g., 10mf C, Cpu = C*ZB = 0.01 * 2.3 = 0.023
+	
+	kpVdc 35 ;
+	kiVdc 350 ;
+	//kdVdc 0.1;
+	//mdc 1.5;
+	
+	object player {
+		property Vset;
+		flags DELTAMODE;
+		file ../data_ESS_Inv_Vset_droop.player;
+	};	
+	
+	
+	object player {
+		property Pset;
+		flags DELTAMODE;
+		file ../data_ESS_Pset1.player;
+	};	
+	
+	
+	 // object recorder {
+		// file Inverter_1_meter.csv;
+		// flags DELTAMODE;
+		// property "power_A.real,power_A.imag,power_A, power_B.real,power_B.imag,power_B, power_C.real,power_C.imag, power_C, VA_Out.real, VA_Out.imag, VA_Out, Pset";
+		// interval 1;
+	// };
+
+	 // object recorder {
+		// file Inverter_1_esource.csv;
+		// flags DELTAMODE;
+		// property "e_source_A.real,e_source_A.imag,e_source_B.real,e_source_B.imag,e_source_C.real,e_source_C.imag,V_angle_A,V_angle_B,V_angle_C,pCircuit_V_Avg_pu";
+		// interval 1;
+	// };
+	
+		// object recorder {
+		// flags DELTAMODE;
+		// property "freq";
+		// interval 1;
+		// file Inverter_1_freq.csv;
+	// };	 	
+	
+	
+	 // object recorder {
+		// file Vdc.csv;
+		// flags DELTAMODE;
+		// property "Vdc_pu";
+		// interval 1;
+	// };
+	
+	 // object recorder {
+		// file E_mag.csv;
+		// flags DELTAMODE;
+		// property "E_mag";
+		// interval 1;
+	// };
+	
+};
+
+object energy_storage {
+    name ESS_01;
+    parent VSI1;
+	flags DELTAMODE;
+  
+    Vbase_ES 850 V;
+	Sbase_ES 0.1 MW;
+	Qbase_ES 0.1 MWh;
+	SOC_0_ES 0.05;
+	
+	
+	 object recorder {
+		file SOC_ES.csv;
+		flags DELTAMODE;
+		property "SOC_ES";
+		interval 1;
+	};	
+	
+	object double_assert {
+		flags DELTAMODE;
+		target SOC_ES;
+		within 0.002;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file ../data_ESS_SOC.csv;
+		};
+    };	
+	
+	
+	 // object recorder {
+		// file E_ES_pu.csv;
+		// flags DELTAMODE;
+		// property "E_ES_pu";
+		// interval 1;
+	// };		
+	
+	
+	 // object recorder {
+		// file V_ES_pu.csv;
+		// flags DELTAMODE;
+		// property "V_ES_pu";
+		// interval 1;
+	// };			
+  
+ 	 // object recorder {
+		// file I_ES_pu.csv;
+		// flags DELTAMODE;
+		// property "I_ES_pu";
+		// interval 1;
+	// };		 
+  
+}
+

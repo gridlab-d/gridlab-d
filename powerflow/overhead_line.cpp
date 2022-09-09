@@ -16,17 +16,17 @@ using namespace std;
 
 #include "line.h"
 
-CLASS* overhead_line::oclass = NULL;
-CLASS* overhead_line::pclass = NULL;
+CLASS* overhead_line::oclass = nullptr;
+CLASS* overhead_line::pclass = nullptr;
 
 overhead_line::overhead_line(MODULE *mod) : line(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		pclass = line::oclass;
 		
 		oclass = gl_register_class(mod,"overhead_line",sizeof(overhead_line),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class overhead_line";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -35,25 +35,25 @@ overhead_line::overhead_line(MODULE *mod) : line(mod)
 			PT_INHERIT, "line",
 			NULL) < 1) GL_THROW("unable to publish overhead_line properties in %s",__FILE__);
 
-		if (gl_publish_function(oclass,	"create_fault", (FUNCTIONADDR)create_fault_ohline)==NULL)
+		if (gl_publish_function(oclass,	"create_fault", (FUNCTIONADDR)create_fault_ohline)==nullptr)
 			GL_THROW("Unable to publish fault creation function");
-		if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_ohline)==NULL)
+		if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_ohline)==nullptr)
 			GL_THROW("Unable to publish fault restoration function");
-        if (gl_publish_function(oclass,	"clear_fault", (FUNCTIONADDR)clear_fault_ohline)==NULL)
+        if (gl_publish_function(oclass,	"clear_fault", (FUNCTIONADDR)clear_fault_ohline)==nullptr)
             GL_THROW("Unable to publish fault clearing function");
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==nullptr)
 			GL_THROW("Unable to publish overhead line deltamode function");
-		if (gl_publish_function(oclass,	"recalc_distribution_line", (FUNCTIONADDR)recalc_overhead_line)==NULL)
+		if (gl_publish_function(oclass,	"recalc_distribution_line", (FUNCTIONADDR)recalc_overhead_line)==nullptr)
 			GL_THROW("Unable to publish overhead line recalc function");
 
 		//Publish restoration-related function (current update)
-		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==nullptr)
 			GL_THROW("Unable to publish overhead line external power calculation function");
-		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==nullptr)
 			GL_THROW("Unable to publish overhead line external power limit calculation function");
-		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==NULL)
+		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==nullptr)
 			GL_THROW("Unable to publish overhead line external current calculation function");
 	}
 }
@@ -67,7 +67,7 @@ int overhead_line::create(void)
 
 int overhead_line::init(OBJECT *parent)
 {
-	double *temp_rating_value = NULL;
+	double *temp_rating_value = nullptr;
 	double temp_rating_continuous = 10000.0;
 	double temp_rating_emergency = 20000.0;
 	char index;
@@ -110,7 +110,7 @@ int overhead_line::init(OBJECT *parent)
 	recalc();
 
 	//Values are populated now - populate link ratings parameter
-	if (config->phaseA_conductor != NULL || config->phaseB_conductor != NULL || config->phaseC_conductor != NULL) {
+	if (config->phaseA_conductor != nullptr || config->phaseB_conductor != nullptr || config->phaseC_conductor != nullptr) {
 		for (index=0; index<3; index++)
 		{
 			if (index==0)
@@ -127,13 +127,13 @@ int overhead_line::init(OBJECT *parent)
 			}
 
 			//See if Phase exists
-			if (temp_obj != NULL)
+			if (temp_obj != nullptr)
 			{
 				//Get continuous - summer
 				temp_rating_value = get_double(temp_obj,"rating.summer.continuous");
 
 				//Check if NULL
-				if (temp_rating_value != NULL)
+				if (temp_rating_value != nullptr)
 				{
 					//Update - if necessary
 					if (temp_rating_continuous > *temp_rating_value)
@@ -146,7 +146,7 @@ int overhead_line::init(OBJECT *parent)
 				temp_rating_value = get_double(temp_obj,"rating.winter.continuous");
 
 				//Check if NULL
-				if (temp_rating_value != NULL)
+				if (temp_rating_value != nullptr)
 				{
 					//Update - if necessary
 					if (temp_rating_continuous > *temp_rating_value)
@@ -159,7 +159,7 @@ int overhead_line::init(OBJECT *parent)
 				temp_rating_value = get_double(temp_obj,"rating.summer.emergency");
 
 				//Check if NULL
-				if (temp_rating_value != NULL)
+				if (temp_rating_value != nullptr)
 				{
 					//Update - if necessary
 					if (temp_rating_emergency > *temp_rating_value)
@@ -172,7 +172,7 @@ int overhead_line::init(OBJECT *parent)
 				temp_rating_value = get_double(temp_obj,"rating.winter.emergency");
 
 				//Check if NULL
-				if (temp_rating_value != NULL)
+				if (temp_rating_value != nullptr)
 				{
 					//Update - if necessary
 					if (temp_rating_emergency > *temp_rating_value)
@@ -190,13 +190,13 @@ int overhead_line::init(OBJECT *parent)
 	else {
 		temp_obj = configuration;
 		//See if configuration exists
-		if (temp_obj != NULL)
+		if (temp_obj != nullptr)
 		{
 			//Get continuous - summer
 			temp_rating_value = get_double(temp_obj,"rating.summer.continuous");
 
 			//Check if NULL
-			if (temp_rating_value != NULL)
+			if (temp_rating_value != nullptr)
 			{
 				//Update - if necessary
 				if (temp_rating_continuous > *temp_rating_value)
@@ -209,7 +209,7 @@ int overhead_line::init(OBJECT *parent)
 			temp_rating_value = get_double(temp_obj,"rating.winter.continuous");
 
 			//Check if NULL
-			if (temp_rating_value != NULL)
+			if (temp_rating_value != nullptr)
 			{
 				//Update - if necessary
 				if (temp_rating_continuous > *temp_rating_value)
@@ -222,7 +222,7 @@ int overhead_line::init(OBJECT *parent)
 			temp_rating_value = get_double(temp_obj,"rating.summer.emergency");
 
 			//Check if NULL
-			if (temp_rating_value != NULL)
+			if (temp_rating_value != nullptr)
 			{
 				//Update - if necessary
 				if (temp_rating_emergency > *temp_rating_value)
@@ -235,7 +235,7 @@ int overhead_line::init(OBJECT *parent)
 			temp_rating_value = get_double(temp_obj,"rating.winter.emergency");
 
 			//Check if NULL
-			if (temp_rating_value != NULL)
+			if (temp_rating_value != nullptr)
 			{
 				//Update - if necessary
 				if (temp_rating_emergency > *temp_rating_value)
@@ -317,14 +317,14 @@ void overhead_line::recalc(void)
 		gld::complex P_mat[3][3];
 		bool valid_capacitance = false;	//Assume capacitance is invalid by default
 		double freq_coeff_real, freq_coeff_imag, freq_additive_term;
-		line_spacing *spacing_val = NULL;
+		line_spacing *spacing_val = nullptr;
 		double miles = length / 5280.0;
 		double cap_coeff;
 		gld::complex cap_freq_mult;
 		
 		//Calculate coefficients for self and mutual impedance - incorporates frequency values
 		//Per Kersting (4.39) and (4.40)
-		if (enable_frequency_dependence == true)	//See if we may be updating due to frequency changes
+		if (enable_frequency_dependence)	//See if we may be updating due to frequency changes
 		{
 			freq_coeff_real = 0.00158836*current_frequency;
 			freq_coeff_imag = 0.00202237*current_frequency;
@@ -375,13 +375,13 @@ void overhead_line::recalc(void)
 		#undef DIST
 		#undef DIAM
 
-		if (use_line_cap == true)
+		if (use_line_cap)
 		{
 			//If capacitance calculations desired, compute overall coefficient
 			cap_coeff = 1.0/(PERMITIVITTY_AIR*2.0*PI);
 
 			//Set capacitor frequency/distance/scaling factor (rad/s*S)
-			if (enable_frequency_dependence == true)	//See which frequency to use
+			if (enable_frequency_dependence)	//See which frequency to use
 			{
 				cap_freq_mult = gld::complex(0,(2.0*PI*current_frequency*0.000001*miles));
 			}
@@ -394,7 +394,7 @@ void overhead_line::recalc(void)
 			spacing_val = OBJECTDATA(config->line_spacing, line_spacing);
 
 			//Make sure it worked
-			if (spacing_val == NULL)
+			if (spacing_val == nullptr)
 			{
 				GL_THROW("Line spacing not found, capacitance calculations failed!");
 				/*  TROUBLESHOOT
@@ -428,7 +428,7 @@ void overhead_line::recalc(void)
 				z_an = 0.0;
 
 			//capacitance equations
-			if (use_line_cap == true)
+			if (use_line_cap)
 			{
 				if ((diamA > 0.0) && (spacing_val->distance_AtoE > 0.0))
 				{
@@ -532,7 +532,7 @@ void overhead_line::recalc(void)
 				z_bn = 0.0;
 
 			//capacitance equations
-			if (use_line_cap == true)
+			if (use_line_cap)
 			{
 				if ((diamB > 0.0) && (spacing_val->distance_BtoE > 0.0))
 				{
@@ -609,7 +609,7 @@ void overhead_line::recalc(void)
 				z_cn = 0.0;
 
 			//capacitance equations
-			if (use_line_cap == true)
+			if (use_line_cap)
 			{
 				if ((diamC > 0.0) && (spacing_val->distance_CtoE > 0.0))
 				{
@@ -660,7 +660,7 @@ void overhead_line::recalc(void)
 			z_nn_inv = z_nn^(-1.0);
 
 			//capacitance equations
-			if (use_line_cap == true)
+			if (use_line_cap)
 			{
 				if ((diamN > 0.0) && (spacing_val->distance_NtoE > 0.0))
 				{
@@ -700,7 +700,7 @@ void overhead_line::recalc(void)
 		// If we have valid capacitance values and line capacitance is turned on then
 		// calculate Yabc_mat otherwise just leave is zeroed out.
 
-		if (valid_capacitance == true && use_line_cap == true)
+		if (valid_capacitance && use_line_cap)
 		{
 			if (p_nn != 0.0)
 			{
@@ -836,7 +836,7 @@ void overhead_line::recalc(void)
 		}
 	}
 	
-	if(neg_res == true){
+	if(neg_res){
 		gl_warning("INIT: overhead_line:%s has a negative resistance in it's impedance matrix. This will result in unusual behavior. Please check the line's geometry and cable parameters.", obj->name);
 		/*  TROUBLESHOOT
 		A negative resistance value was found for one or more the real parts of the overhead_line's impedance matrix.
@@ -942,11 +942,11 @@ void overhead_line::test_phases(line_configuration *config, const char ph)
 	}
 	//Nothing else down here.  Should never get anything besides ABCN to check
 
-	if (condCheck==true)
+	if (condCheck)
 		GL_THROW("invalid conductor for phase %c of overhead line %s",ph,obj->name);
 		/*	TROUBLESHOOT  The conductor specified for the indicated phase is not necessarily an overhead line conductor, it may be an underground or triplex-line only conductor */
 
-	if (condNotPres==true)
+	if (condNotPres)
 		GL_THROW("missing conductor for phase %c of overhead line %s",ph,obj->name);
 		/*  TROUBLESHOOT
 		The conductor specified for the indicated phase for the overhead line is missing
@@ -1013,7 +1013,7 @@ EXPORT int create_overhead_line(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(overhead_line::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			overhead_line *my = OBJECTDATA(*obj,overhead_line);
 			gl_set_parent(*obj,parent);

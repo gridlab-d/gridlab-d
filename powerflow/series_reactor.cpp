@@ -22,17 +22,17 @@
 //////////////////////////////////////////////////////////////////////////
 // series_reactor CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* series_reactor::oclass = NULL;
-CLASS* series_reactor::pclass = NULL;
+CLASS* series_reactor::oclass = nullptr;
+CLASS* series_reactor::pclass = nullptr;
 
 series_reactor::series_reactor(MODULE *mod) : link_object(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		pclass = link_object::oclass;
 
 		oclass = gl_register_class(mod,"series_reactor",sizeof(series_reactor),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class series_reactor";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -52,15 +52,15 @@ series_reactor::series_reactor(MODULE *mod) : link_object(mod)
             NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==nullptr)
 			GL_THROW("Unable to publish series reactor deltamode function");
 
 		//Publish restoration-related function (current update)
-		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==nullptr)
 			GL_THROW("Unable to publish series reactor external power calculation function");
-		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==nullptr)
 			GL_THROW("Unable to publish series reactor external power limit calculation function");
-		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==NULL)
+		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==nullptr)
 			GL_THROW("Unable to publish series reactor external current calculation function");
     }
 }
@@ -116,9 +116,9 @@ int series_reactor::init(OBJECT *parent)
 		if (has_phase(PHASE_A))
 		{
 			if (phase_A_impedance==0.0)
-				From_Y[0][0] = complex(1e4,1e4);
+				From_Y[0][0] = gld::complex(1e4,1e4);
 			else
-				From_Y[0][0] = complex(1.0,0.0)/phase_A_impedance;
+				From_Y[0][0] = gld::complex(1.0,0.0)/phase_A_impedance;
 		}
 		else
 			From_Y[0][0] = 0.0;		//Should already be 0, but let's be paranoid
@@ -126,9 +126,9 @@ int series_reactor::init(OBJECT *parent)
 		if (has_phase(PHASE_B))
 		{
 			if (phase_B_impedance==0.0)
-				From_Y[1][1] = complex(1e4,1e4);
+				From_Y[1][1] = gld::complex(1e4,1e4);
 			else
-				From_Y[1][1] = complex(1.0,0.0)/phase_B_impedance;
+				From_Y[1][1] = gld::complex(1.0,0.0)/phase_B_impedance;
 		}
 		else
 			From_Y[1][1] = 0.0;		//Should already be 0, but let's be paranoid
@@ -136,9 +136,9 @@ int series_reactor::init(OBJECT *parent)
 		if (has_phase(PHASE_C))
 		{
 			if (phase_C_impedance==0.0)
-				From_Y[2][2] = complex(1e4,1e4);
+				From_Y[2][2] = gld::complex(1e4,1e4);
 			else
-				From_Y[2][2] = complex(1.0,0.0)/phase_C_impedance;
+				From_Y[2][2] = gld::complex(1.0,0.0)/phase_C_impedance;
 		}
 		else
 			From_Y[2][2] = 0.0;		//Should already be 0, but let's be paranoid
@@ -172,7 +172,7 @@ EXPORT int create_series_reactor(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(series_reactor::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			series_reactor *my = OBJECTDATA(*obj,series_reactor);
 			gl_set_parent(*obj,parent);

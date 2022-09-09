@@ -22,16 +22,16 @@ using namespace std;
 //////////////////////////////////////////////////////////////////////////
 // sync_check CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS *sync_check::oclass = NULL;
-CLASS *sync_check::pclass = NULL;
+CLASS *sync_check::oclass = nullptr;
+CLASS *sync_check::pclass = nullptr;
 
 sync_check::sync_check(MODULE *mod) : powerflow_object(mod)
 {
-	if (oclass == NULL)
+	if (oclass == nullptr)
 	{
 		pclass = powerflow_object::oclass;
 		oclass = gl_register_class(mod, "sync_check", sizeof(sync_check), PC_PRETOPDOWN | PC_BOTTOMUP | PC_POSTTOPDOWN | PC_AUTOLOCK);
-		if (oclass == NULL)
+		if (oclass == nullptr)
 			GL_THROW("unable to register object class implemented by %s", __FILE__);
 		if (gl_publish_variable(oclass,
 								PT_bool, "armed", PADDR(sc_enabled_flag), PT_DESCRIPTION, "Flag to arm the synchronization close",
@@ -71,7 +71,7 @@ sync_check::sync_check(MODULE *mod) : powerflow_object(mod)
 								NULL) < 1)
 			GL_THROW("unable to publish properties in %s", __FILE__);
 
-		if (gl_publish_function(oclass, "interupdate_pwr_object", (FUNCTIONADDR)interupdate_sync_check) == NULL)
+		if (gl_publish_function(oclass, "interupdate_pwr_object", (FUNCTIONADDR)interupdate_sync_check) == nullptr)
 			GL_THROW("Unable to publish sync_check deltamode function");
 	}
 }
@@ -95,7 +95,7 @@ int sync_check::init(OBJECT *parent)
 	int retval = powerflow_object::init(parent);
 
 	// Check if the parent is a switch_object object
-	if (parent == NULL)
+	if (parent == nullptr)
 	{
 		GL_THROW("sync_check:%d %s the parent property must be specified!",
 				 obj->id, (obj->name ? obj->name : "Unnamed"));
@@ -106,7 +106,7 @@ int sync_check::init(OBJECT *parent)
 	}
 	else
 	{
-		if (gl_object_isa(parent, "switch", "powerflow") == false)
+		if (!gl_object_isa(parent, "switch", "powerflow"))
 		{
 			GL_THROW("sync_check:%d %s the parent object must be a powerflow switch object!",
 					 obj->id, (obj->name ? obj->name : "Unnamed"));
@@ -156,14 +156,14 @@ TIMESTAMP sync_check::postsync(TIMESTAMP t0)
 		//Update the timing tracker - set it one second up (just because)
 		next_trigger_update_time = t0 + 1;
 
-		if (sc_enabled_flag == true)
+		if (sc_enabled_flag)
 		{
 			//Update measurements and check
 			update_measurements();
 			check_metrics(false);
 
 			//Check if we were flagged
-			if (deltamode_trigger_keep_flag == true)
+			if (deltamode_trigger_keep_flag)
 			{
 				//Request deltamode
 				schedule_deltamode_start(t0);
@@ -194,7 +194,7 @@ void sync_check::init_sensors(OBJECT *par)
 	temp_property_pointer = new gld_property(par, "phases");
 
 	// Validate
-	if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_set() != true))
+	if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_set())
 	{
 		GL_THROW("Unable to map phases property - ensure the parent is a switch");
 		/*  TROUBLESHOOT
@@ -222,7 +222,7 @@ void sync_check::init_sensors(OBJECT *par)
 	prop_fm_node_freq = new gld_property(swt_fm_node, "measured_frequency");
 
 	// Double check the validity of the 'from' node frequency property
-	if ((prop_fm_node_freq->is_valid() != true) || (prop_fm_node_freq->is_double() != true))
+	if (!prop_fm_node_freq->is_valid() || !prop_fm_node_freq->is_double())
 	{
 		GL_THROW("sync_check:%d %s failed to map the frequency property of the 'from' node of its parent switch_object.",
 				 obj->id, (obj->name ? obj->name : "Unnamed"));
@@ -236,7 +236,7 @@ void sync_check::init_sensors(OBJECT *par)
 	prop_to_node_freq = new gld_property(swt_to_node, "measured_frequency");
 
 	// Double check the validity of the 'to' node frequency property
-	if ((prop_to_node_freq->is_valid() != true) || (prop_to_node_freq->is_double() != true))
+	if (!prop_to_node_freq->is_valid() || !prop_to_node_freq->is_double())
 	{
 		GL_THROW("sync_check:%d %s failed to map the frequency property of the 'to' node of its parent switch_object.",
 				 obj->id, (obj->name ? obj->name : "Unnamed"));
@@ -250,7 +250,7 @@ void sync_check::init_sensors(OBJECT *par)
 	prop_fm_node_volt_A = new gld_property(swt_fm_node, "voltage_A");
 
 	// Double check the validity of the 'from' node voltage A property
-	if ((prop_fm_node_volt_A->is_valid() != true) || (prop_fm_node_volt_A->is_complex() != true))
+	if (!prop_fm_node_volt_A->is_valid() || !prop_fm_node_volt_A->is_complex())
 	{
 		GL_THROW("sync_check:%d %s failed to map the voltage_A property of the 'from' node of its parent switch_object.",
 				 obj->id, (obj->name ? obj->name : "Unnamed"));
@@ -263,7 +263,7 @@ void sync_check::init_sensors(OBJECT *par)
 	prop_fm_node_volt_B = new gld_property(swt_fm_node, "voltage_B");
 
 	// Double check the validity of the 'from' node voltage B property
-	if ((prop_fm_node_volt_B->is_valid() != true) || (prop_fm_node_volt_B->is_complex() != true))
+	if (!prop_fm_node_volt_B->is_valid() || !prop_fm_node_volt_B->is_complex())
 	{
 		GL_THROW("sync_check:%d %s failed to map the voltage_B property of the 'from' node of its parent switch_object.",
 				 obj->id, (obj->name ? obj->name : "Unnamed"));
@@ -276,7 +276,7 @@ void sync_check::init_sensors(OBJECT *par)
 	prop_fm_node_volt_C = new gld_property(swt_fm_node, "voltage_C");
 
 	// Double check the validity of the 'from' node voltage C property
-	if ((prop_fm_node_volt_C->is_valid() != true) || (prop_fm_node_volt_C->is_complex() != true))
+	if (!prop_fm_node_volt_C->is_valid() || !prop_fm_node_volt_C->is_complex())
 	{
 		GL_THROW("sync_check:%d %s failed to map the voltage_C property of the 'from' node of its parent switch_object.",
 				 obj->id, (obj->name ? obj->name : "Unnamed"));
@@ -290,7 +290,7 @@ void sync_check::init_sensors(OBJECT *par)
 	prop_to_node_volt_A = new gld_property(swt_to_node, "voltage_A");
 
 	// Double check the validity of the 'to' node voltage A property
-	if ((prop_to_node_volt_A->is_valid() != true) || (prop_to_node_volt_A->is_complex() != true))
+	if (!prop_to_node_volt_A->is_valid() || !prop_to_node_volt_A->is_complex())
 	{
 		GL_THROW("sync_check:%d %s failed to map the voltage_A property of the 'to' node of its parent switch_object.",
 				 obj->id, (obj->name ? obj->name : "Unnamed"));
@@ -303,7 +303,7 @@ void sync_check::init_sensors(OBJECT *par)
 	prop_to_node_volt_B = new gld_property(swt_to_node, "voltage_B");
 
 	// Double check the validity of the 'to' node voltage B property
-	if ((prop_to_node_volt_B->is_valid() != true) || (prop_to_node_volt_B->is_complex() != true))
+	if (!prop_to_node_volt_B->is_valid() || !prop_to_node_volt_B->is_complex())
 	{
 		GL_THROW("sync_check:%d %s failed to map the voltage_B property of the 'to' node of its parent switch_object.",
 				 obj->id, (obj->name ? obj->name : "Unnamed"));
@@ -316,7 +316,7 @@ void sync_check::init_sensors(OBJECT *par)
 	prop_to_node_volt_C = new gld_property(swt_to_node, "voltage_C");
 
 	// Double check the validity of the 'to' node voltage C property
-	if ((prop_to_node_volt_C->is_valid() != true) || (prop_to_node_volt_C->is_complex() != true))
+	if (!prop_to_node_volt_C->is_valid() || !prop_to_node_volt_C->is_complex())
 	{
 		GL_THROW("sync_check:%d %s failed to map the voltage_C property of the 'to' node of its parent switch_object.",
 				 obj->id, (obj->name ? obj->name : "Unnamed"));
@@ -364,7 +364,7 @@ void sync_check::init_vars()
 	metrics_flag = false;
 	t_sat = 0;
 
-	temp_property_pointer = NULL;
+	temp_property_pointer = nullptr;
 
 	/* init some published properties that have the default value */
 	sc_enabled_flag = false; //Unarmed
@@ -372,32 +372,32 @@ void sync_check::init_vars()
 	/* init measurements, gld objs, & Nominal Values*/
 	volt_norm = 0;
 
-	swt_fm_node = NULL;
-	swt_to_node = NULL;
+	swt_fm_node = nullptr;
+	swt_to_node = nullptr;
 
 	swt_fm_node_freq = 0;
 	swt_to_node_freq = 0;
 
-	prop_fm_node_freq = NULL;
-	prop_to_node_freq = NULL;
+	prop_fm_node_freq = nullptr;
+	prop_to_node_freq = nullptr;
 
-	swt_fm_volt_A = complex(0, 0);
-	swt_fm_volt_B = complex(0, 0);
-	swt_fm_volt_C = complex(0, 0);
+	swt_fm_volt_A = gld::complex(0, 0);
+	swt_fm_volt_B = gld::complex(0, 0);
+	swt_fm_volt_C = gld::complex(0, 0);
 
-	prop_fm_node_volt_A = NULL;
-	prop_fm_node_volt_B = NULL;
-	prop_fm_node_volt_C = NULL;
+	prop_fm_node_volt_A = nullptr;
+	prop_fm_node_volt_B = nullptr;
+	prop_fm_node_volt_C = nullptr;
 
-	swt_to_volt_A = complex(0, 0);
-	swt_to_volt_B = complex(0, 0);
-	swt_to_volt_C = complex(0, 0);
+	swt_to_volt_A = gld::complex(0, 0);
+	swt_to_volt_B = gld::complex(0, 0);
+	swt_to_volt_C = gld::complex(0, 0);
 
-	prop_to_node_volt_A = NULL;
-	prop_to_node_volt_B = NULL;
-	prop_to_node_volt_C = NULL;
+	prop_to_node_volt_A = nullptr;
+	prop_to_node_volt_B = nullptr;
+	prop_to_node_volt_C = nullptr;
 
-	swt_prop_status = NULL;
+	swt_prop_status = nullptr;
 
 	swt_phases = 0;
 	swt_ph_A_flag = false;
@@ -409,7 +409,7 @@ void sync_check::init_vars()
 	temp_property_pointer = new gld_property("powerflow::nominal_frequency");
 
 	// Double check the validity of the nominal frequency property
-	if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+	if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_double())
 	{
 		GL_THROW("sync_check:%d %s failed to map the nominal_frequency property", obj->id, (obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
@@ -450,7 +450,7 @@ void sync_check::data_sanity_check(OBJECT *par)
 	swt_prop_status = new gld_property(par, "status");
 
 	// Double check the validity of the nominal frequency property
-	if ((swt_prop_status->is_valid() != true) || (swt_prop_status->is_enumeration() != true))
+	if (!swt_prop_status->is_valid() || !swt_prop_status->is_enumeration())
 	{
 		GL_THROW("sync_check:%d %s failed to map the swtich status property",
 				 obj->id, (obj->name ? obj->name : "Unnamed"));
@@ -482,7 +482,7 @@ void sync_check::data_sanity_check(OBJECT *par)
 		temp_property_pointer = new gld_property("powerflow::nominal_frequency");
 
 		// Double check the validity of the nominal frequency property
-		if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+		if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_double())
 		{
 			GL_THROW("sync_check:%d %s failed to map the nominal_frequency property", obj->id, (obj->name ? obj->name : "Unnamed"));
 			//Defined above
@@ -607,7 +607,7 @@ void sync_check::reg_deltamode_check()
 	// Check the module deltamode flag & the object deltamode flag for consistency
 	if (enable_subsecond_models)
 	{
-		if (deltamode_inclusive != true)
+		if (!deltamode_inclusive)
 		{
 			gl_warning("sync_check:%d %s - Deltamode is enabled for the powerflow module, but not this sync_check object!",
 					   obj->id, (obj->name ? obj->name : "Unnamed"));
@@ -625,7 +625,7 @@ void sync_check::reg_deltamode_check()
 	}
 	else
 	{
-		if (deltamode_inclusive == true)
+		if (deltamode_inclusive)
 		{
 			gl_warning("sync_check:%d %s - Deltamode is enabled for the sync_check object, but not this powerflow module!",
 					   obj->id, (obj->name ? obj->name : "Unnamed"));
@@ -667,7 +667,7 @@ void sync_check::reg_deltamode()
 		delta_functions[pwr_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "interupdate_pwr_object"));
 
 		// Dobule check the mapped function
-		if (delta_functions[pwr_object_current] == NULL)
+		if (delta_functions[pwr_object_current] == nullptr)
 		{
 			gl_warning("Failure to map deltamode function for this device: %s", obj->name);
 			/*  TROUBLESHOOT
@@ -679,7 +679,7 @@ void sync_check::reg_deltamode()
 		}
 
 		// Set the post delta function to NULL, thus it does not need to be checked
-		post_delta_functions[pwr_object_current] = NULL;
+		post_delta_functions[pwr_object_current] = nullptr;
 
 		//Increment
 		pwr_object_current++;
@@ -694,7 +694,7 @@ void sync_check::init_norm_values(OBJECT *par)
 	/* Get the from node */
 	temp_property_pointer = new gld_property(par, "from");
 	// Double check the validity
-	if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_objectref() != true))
+	if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_objectref())
 	{
 		GL_THROW("sync_check:%d %s Failed to map the switch property 'from'!",
 				 obj->id, (obj->name ? obj->name : "Unnamed"));
@@ -710,7 +710,7 @@ void sync_check::init_norm_values(OBJECT *par)
 	/* Get the to node */
 	temp_property_pointer = new gld_property(par, "to");
 	// Double check the validity
-	if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_objectref() != true))
+	if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_objectref())
 	{
 		GL_THROW("sync_check:%d %s Failed to map the switch property 'to'!",
 				 obj->id, (obj->name ? obj->name : "Unnamed"));
@@ -727,7 +727,7 @@ void sync_check::init_norm_values(OBJECT *par)
 	// 'From' node voltage
 	temp_property_pointer = new gld_property(swt_fm_node, "nominal_voltage");
 	// Double check the validity of the nominal frequency property
-	if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+	if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_double())
 	{
 		GL_THROW("sync_check:%d %s failed to map the nominal_voltage property",
 				 obj->id, (obj->name ? obj->name : "Unnamed"));
@@ -742,7 +742,7 @@ void sync_check::init_norm_values(OBJECT *par)
 	// 'To' node voltage
 	temp_property_pointer = new gld_property(swt_to_node, "nominal_voltage");
 	// Double check the validity of the nominal frequency property
-	if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_double() != true))
+	if (!temp_property_pointer->is_valid() ||!temp_property_pointer->is_double())
 	{
 		GL_THROW("sync_check:%d %s failed to map the nominal_voltage property",
 				 obj->id, (obj->name ? obj->name : "Unnamed"));
@@ -882,7 +882,7 @@ void sync_check::check_metrics(bool deltamode_run)
 		}
 
 		//See if we're in deltamode - in that case, do the standard "closure" check
-		if (deltamode_run == true)
+		if (deltamode_run)
 		{
 			if ((freq_diff_hz <= frequency_tolerance_hz) && (volt_A_diff_pu <= voltage_tolerance_pu) &&
 				(volt_B_diff_pu <= voltage_tolerance_pu) && (volt_C_diff_pu <= voltage_tolerance_pu))
@@ -920,7 +920,7 @@ void sync_check::check_metrics(bool deltamode_run)
 		}
 
 		//See if we're in deltamode - in that case, do the standard "closure" check
-		if (deltamode_run == true)
+		if (deltamode_run)
 		{
 			if ((freq_diff_hz <= frequency_tolerance_hz) &&
 				(volt_A_mag_diff_pu <= voltage_magnitude_tolerance_pu) &&
@@ -953,7 +953,7 @@ void sync_check::check_excitation(unsigned long dt)
 
 	if (t_sat >= metrics_period_sec)
 	{
-		gld_wlock *test_rlock;
+		gld_wlock *test_rlock = nullptr;
 		enumeration swt_cmd = LS_CLOSED;
 		swt_prop_status->setp<enumeration>(swt_cmd, *test_rlock); // Close the switch for parallelling
 		reset_after_excitation();
@@ -986,7 +986,7 @@ SIMULATIONMODE sync_check::inter_deltaupdate_sync_check(unsigned int64 delta_tim
 			check_metrics(true);
 
 			//See how to proceed
-			if (deltamode_trigger_keep_flag == true) //In bounds, track!
+			if (deltamode_trigger_keep_flag) //In bounds, track!
 			{
 				deltamode_check_return_val = SM_DELTA;
 			}
@@ -1031,7 +1031,7 @@ EXPORT int create_sync_check(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(sync_check::oclass);
-		if (*obj != NULL)
+		if (*obj != nullptr)
 		{
 			sync_check *my = OBJECTDATA(*obj, sync_check);
 			gl_set_parent(*obj, parent);

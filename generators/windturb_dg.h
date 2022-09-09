@@ -16,8 +16,7 @@
 
 #include "generators.h"
 
-
-EXPORT STATUS windturb_dg_NR_current_injection_update(OBJECT *obj, int64 iteration_count);
+EXPORT STATUS windturb_dg_NR_current_injection_update(OBJECT *obj, int64 iteration_count, bool *converged_failure);
 
 class windturb_dg : public gld_object
 {
@@ -188,12 +187,12 @@ public:
 	void compute_current_injection(void);
 	void compute_current_injection_pc(void);
 	void compute_power_injection_pc(void);
-	STATUS updateCurrInjection(int64 iteration_count);
+	STATUS updateCurrInjection(int64 iteration_count, bool *converged_failure);
 
 	gld_property *map_complex_value(OBJECT *obj, const char *name);
 	gld_property *map_double_value(OBJECT *obj, const char *name);
 	void push_complex_powerflow_values(void);
-	void push_complex_power_values(complex inv_P);
+	void push_complex_power_values(gld::complex inv_P);
 	
 	std::vector<std::string> readCSVRow(const std::string &row);
 	std::vector<std::vector<std::string>> readCSV(std::istream &in);
