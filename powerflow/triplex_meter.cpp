@@ -926,9 +926,6 @@ SIMULATIONMODE triplex_meter::inter_deltaupdate_triplex_meter(unsigned int64 del
 				power[1] += tpmeter_power_consumption/2;
 			}
 
-		//Call sync-equivalent of triplex portion first
-		BOTH_triplex_node_sync_fxn();
-
 		//Call node sync-equivalent items (solver occurs at end of sync)
 		NR_node_sync_fxn(hdr);
 
