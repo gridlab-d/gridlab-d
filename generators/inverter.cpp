@@ -337,7 +337,7 @@ inverter::inverter(MODULE *module)
 			//Hidden variables for wind turbine checks
 			PT_bool, "WT_is_connected", PADDR(WT_is_connected), PT_DESCRIPTION, "Internal flag that indicates a wind turbine child is connected",
 			
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 			defaults = this;
 
@@ -799,7 +799,6 @@ int inverter::init(OBJECT *parent)
 
 				//Get 12
 				pLine12 = map_complex_value(tmp_obj,"current_12");
-
 				pPower12 = map_complex_value(tmp_obj,"power_12");
 
 				//Individual ones not used

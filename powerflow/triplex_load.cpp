@@ -802,9 +802,6 @@ SIMULATIONMODE triplex_load::inter_deltaupdate_triplex_load(unsigned int64 delta
 		//Functionalized load updates - so deltamode can parttake
 		triplex_load_update_fxn();
 
-		//Call sync-equivalent of triplex portion first
-		BOTH_triplex_node_sync_fxn();
-
 		//Call node sync-equivalent items (solver occurs at end of sync)
 		NR_node_sync_fxn(hdr);
 

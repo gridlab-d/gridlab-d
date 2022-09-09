@@ -1952,7 +1952,6 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//gl_verbose("battery sync: V_Out from parent is: (%f , %f)", V_Out.Re(), V_Out.Im());
 			//gl_verbose("battery sync: I_Out from parent is: (%f , %f)", I_Out.Re(), V_Out.Im());
 
-
 			V_Internal = calculate_v_terminal(V_Out, I_Out);
 			//V_Out = V_internal;
 

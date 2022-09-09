@@ -961,7 +961,6 @@ int windturb_dg::init(OBJECT *parent)
 				pLine_I[0] = map_complex_value(parent,"current_1");
 				pLine_I[1] = map_complex_value(parent,"current_2");
 				pLine_I[2] = map_complex_value(parent,"current_N");
-
 				pLine12 = map_complex_value(parent,"current_12");
 			}
 

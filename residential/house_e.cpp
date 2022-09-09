@@ -1391,26 +1391,16 @@ int house_e::init(OBJECT *parent)
 		pLine_I[1] = map_complex_value(parent,"residential_nominal_current_2");
 		pLine_I[2] = map_complex_value(parent,"residential_nominal_current_12");
 
-		// NOTE - Commented code will replace the pShunt and pPower once the triplex_node "deprecated properties" are removed
-		// //Shunt
-		// pShunt[0] = map_complex_value(parent,"shunt_1");
-		// pShunt[1] = map_complex_value(parent,"shunt_2");
-		// pShunt[2] = map_complex_value(parent,"shunt_12");
-
-		// //Power
-		// pPower[0] = map_complex_value(parent,"power_1");
-		// pPower[1] = map_complex_value(parent,"power_2");
-		// pPower[2] = map_complex_value(parent,"power_12");
-
 		//Shunt
-		pShunt[0] = map_complex_value(parent,"acc_temp_shunt_1");
-		pShunt[1] = map_complex_value(parent,"acc_temp_shunt_2");
-		pShunt[2] = map_complex_value(parent,"acc_temp_shunt_12");
+		pShunt[0] = map_complex_value(parent,"shunt_1");
+		pShunt[1] = map_complex_value(parent,"shunt_2");
+		pShunt[2] = map_complex_value(parent,"shunt_12");
 
 		//Power
-		pPower[0] = map_complex_value(parent,"acc_temp_power_1");
-		pPower[1] = map_complex_value(parent,"acc_temp_power_2");
-		pPower[2] = map_complex_value(parent,"acc_temp_power_12");
+		pPower[0] = map_complex_value(parent,"power_1");
+		pPower[1] = map_complex_value(parent,"power_2");
+		pPower[2] = map_complex_value(parent,"power_12");
+
 
 		//Map the status
 		pMeterStatus = new gld_property(parent,"service_status");
