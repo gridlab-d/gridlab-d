@@ -30,7 +30,6 @@
 
 const double pi = 3.1415926535897931;
 const double Cp = 1;					// Btu/lbm-F
-#define TSNVRDBL 9223372036854775808.0	//TS_NEVER in double form - for deltamode
 
 /* approximate tests */
 #define AEQ(A,B,C) (fabs(A-B)<C)
@@ -91,9 +90,9 @@ GLOBAL double deltamode_timestep_publish INIT(10000000.0); 	/* 10 ms timestep */
 GLOBAL unsigned long deltamode_timestep INIT(10000000);		/* 10 ms timestep */
 GLOBAL TIMESTAMP deltamode_starttime INIT(TS_NEVER);			/* Tracking variable for next desired instance of deltamode */
 GLOBAL double deltatimestep_running INIT(-1.0);				/* Flagging variable - starts indicating QSTS */
-GLOBAL OBJECT **delta_objects INIT(NULL);						/* Array pointer objects that need deltamode interupdate calls */
-GLOBAL FUNCTIONADDR *delta_functions INIT(NULL);				/* Array pointer functions for objects that need deltamode interupdate calls */
-GLOBAL FUNCTIONADDR *post_delta_functions INIT(NULL);			/* Array pointer functions for objects that need deltamode postupdate calls */
+GLOBAL OBJECT **delta_objects INIT(nullptr);						/* Array pointer objects that need deltamode interupdate calls */
+GLOBAL FUNCTIONADDR *delta_functions INIT(nullptr);				/* Array pointer functions for objects that need deltamode interupdate calls */
+GLOBAL FUNCTIONADDR *post_delta_functions INIT(nullptr);			/* Array pointer functions for objects that need deltamode postupdate calls */
 GLOBAL int res_object_count INIT(0);							/* deltamode object count */
 GLOBAL int res_object_current INIT(-1);						/* Index of current deltamode object */
 

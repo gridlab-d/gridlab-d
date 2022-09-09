@@ -49,17 +49,17 @@ using namespace std;
 
 #include "line.h"
 
-CLASS* line::oclass = NULL;
-CLASS* line::pclass = NULL;
-CLASS *line_class = NULL;
+CLASS* line::oclass = nullptr;
+CLASS* line::pclass = nullptr;
+CLASS *line_class = nullptr;
 
 line::line(MODULE *mod) : link_object(mod) {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		pclass = link_object::oclass;
 		
 		line_class = oclass = gl_register_class(mod,"line",sizeof(line),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class line";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -71,15 +71,15 @@ line::line(MODULE *mod) : link_object(mod) {
 			NULL) < 1) GL_THROW("unable to publish line properties in %s",__FILE__);
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==nullptr)
 			GL_THROW("Unable to publish line deltamode function");
 
 		//Publish restoration-related function (current update)
-		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==nullptr)
 			GL_THROW("Unable to publish line external power calculation function");
-		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==nullptr)
 			GL_THROW("Unable to publish line external power limit calculation function");
-		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==NULL)
+		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==nullptr)
 			GL_THROW("Unable to publish line external current calculation function");
 	}
 }
@@ -88,7 +88,7 @@ int line::create()
 {
 	int result = link_object::create();
 
-	configuration = NULL;
+	configuration = nullptr;
 	length = 0;
 
 	return result;
@@ -99,7 +99,7 @@ int line::init(OBJECT *parent)
 	OBJECT *obj = OBJECTHDR(this);
 	gld_property *fNode_nominal, *tNode_nominal;
 	double f_nominal_voltage, t_nominal_voltage;
-	complex Zabc_mat_temp[3][3], Yabc_mat_temp[3][3];
+	gld::complex Zabc_mat_temp[3][3], Yabc_mat_temp[3][3];
 
 	int result = link_object::init(parent);
 
@@ -155,7 +155,7 @@ int line::init(OBJECT *parent)
 		*/
 
 		//Make sure a configuration was actually specified
-		if ((configuration == NULL) || (!gl_object_isa(configuration,"line_configuration","powerflow")))
+		if ((configuration == nullptr) || (!gl_object_isa(configuration,"line_configuration","powerflow")))
 		{
 			GL_THROW("line:%d - %s - configuration object either doesn't exist, or is not a valid configuration object!",obj->id,(obj->name?obj->name:"Unnamed"));
 			/*  TROUBLESHOOT
@@ -413,7 +413,7 @@ EXPORT int create_line(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(line::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			line *my = OBJECTDATA(*obj,line);
 			gl_set_parent(*obj,parent);

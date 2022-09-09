@@ -22,12 +22,12 @@ using namespace std;
 // jsondump CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 
-CLASS* jsondump::oclass = NULL;
+CLASS* jsondump::oclass = nullptr;
 
 
 jsondump::jsondump(MODULE *mod)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		oclass = gl_register_class(mod,"jsondump",sizeof(jsondump),PC_AUTOLOCK);
@@ -75,17 +75,17 @@ int jsondump::init(OBJECT *parent)
 	OBJECT *hdr = OBJECTHDR(this);
 
 	// Check if we need to dump line and line configuration to JSON file
-	if ((filename_dump_system[0] == '\0') && (write_system == true)){
+	if ((filename_dump_system[0] == '\0') && write_system){
 		filename_dump_system = "JSON_dump_line.json";
 	}
 
 	// Check if we need to dump reliability to JSON file
-	if ((filename_dump_reliability[0] == '\0') && (write_reliability == true)){
+	if ((filename_dump_reliability[0] == '\0') && write_reliability){
 		filename_dump_reliability = "JSON_dump_reliability.json";
 	}
 
 	//Check per-unitization
-	if ((filename_dump_system[0] != '\0') && (write_system == true) && (write_per_unit == true))
+	if ((filename_dump_system[0] != '\0') && write_system && write_per_unit)
 	{
 		//Make sure the base value is proper
 		if (system_VA_base <= 0.0)
@@ -111,11 +111,11 @@ STATUS jsondump::dump_system(void)
 	FINDLIST *ohlines, *tplines, *uglines, *switches, *regulators, *regConfs, *lineConfs, *tpLineConfs, *TransformerList, *TransConfsList, *nodes, *meters, *loads, *inverters, *diesels, *fuses;
 	FINDLIST *reclosers, *sectionalizers;
 	OBJECT *objhdr = OBJECTHDR(this);
-	OBJECT *obj = NULL;
-	OBJECT *obj_lineConf = NULL;
-	OBJECT *obj_tplineConf = NULL;
+	OBJECT *obj = nullptr;
+	OBJECT *obj_lineConf = nullptr;
+	OBJECT *obj_tplineConf = nullptr;
 	char buffer[1024];
-	FILE *fn = NULL;
+	FILE *fn = nullptr;
 	int index = 0;
 	int phaseCount;
 	double per_unit_base, temp_impedance_base, temp_voltage_base, temp_de_pu_base;
@@ -285,9 +285,9 @@ STATUS jsondump::dump_system(void)
 	}
 	else
 	{
-		pLineConf = NULL;
-		b_mat_defined = NULL;
-		b_mat_pu = NULL;
+		pLineConf = nullptr;
+		b_mat_defined = nullptr;
+		b_mat_pu = nullptr;
 	}
 
 	// Triplex line configurations
@@ -296,7 +296,7 @@ STATUS jsondump::dump_system(void)
 		pTpLineConf = (OBJECT **)gl_malloc((tpLineConfs->hit_count)*sizeof(OBJECT*));
 
 		//Check it
-		if (pTpLineConf == NULL)
+		if (pTpLineConf == nullptr)
 		{
 			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
@@ -306,7 +306,7 @@ STATUS jsondump::dump_system(void)
 		b_mat_tp_pu = (gld::complex *)gl_malloc((tpLineConfs->hit_count)*9*sizeof(gld::complex));
 
 		//Check it
-		if (b_mat_tp_pu == NULL)
+		if (b_mat_tp_pu == nullptr)
 		{
 			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
@@ -316,7 +316,7 @@ STATUS jsondump::dump_system(void)
 		b_mat_tp_defined = (bool *)gl_malloc((tpLineConfs->hit_count)*sizeof(bool));
 
 		//Check it
-		if (b_mat_tp_defined == NULL)
+		if (b_mat_tp_defined == nullptr)
 		{
 			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
@@ -326,7 +326,7 @@ STATUS jsondump::dump_system(void)
 		//Loop through and zero everything, just because
 		for (indexA=0; indexA < (tpLineConfs->hit_count); indexA++)
 		{
-			pTpLineConf[indexA] = NULL;
+			pTpLineConf[indexA] = nullptr;
 			b_mat_tp_defined[indexA] = false;
 
 			for (indexB=0; indexB<9; indexB++)
@@ -342,7 +342,7 @@ STATUS jsondump::dump_system(void)
 		index = 0;
 		
 		//Loop
-		while (obj_lineConf != NULL)
+		while (obj_lineConf != nullptr)
 		{
 			pTpLineConf[index] = obj_lineConf;
 
@@ -355,9 +355,9 @@ STATUS jsondump::dump_system(void)
 	}
 	else
 	{
-		pTpLineConf = NULL;
-		b_mat_tp_defined = NULL;
-		b_mat_tp_pu = NULL;
+		pTpLineConf = nullptr;
+		b_mat_tp_defined = nullptr;
+		b_mat_tp_pu = nullptr;
 	}
 
 	//Transformer configurations
@@ -368,7 +368,7 @@ STATUS jsondump::dump_system(void)
 		pTransConf = (OBJECT **)gl_malloc((TransConfsList->hit_count)*sizeof(OBJECT*));
 
 		//Check it
-		if (pTransConf == NULL)
+		if (pTransConf == nullptr)
 		{
 			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
@@ -378,7 +378,7 @@ STATUS jsondump::dump_system(void)
 		b_mat_trans_pu = (gld::complex *)gl_malloc((TransConfsList->hit_count)*9*sizeof(gld::complex));
 
 		//Check it
-		if (b_mat_trans_pu == NULL)
+		if (b_mat_trans_pu == nullptr)
 		{
 			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
@@ -394,7 +394,7 @@ STATUS jsondump::dump_system(void)
 		b_mat_trans_defined = (bool *)gl_malloc((TransConfsList->hit_count)*sizeof(bool));
 
 		//Check it
-		if (b_mat_trans_defined == NULL)
+		if (b_mat_trans_defined == nullptr)
 		{
 			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
@@ -410,7 +410,7 @@ STATUS jsondump::dump_system(void)
 		trans_phase_count = (int *)gl_malloc((TransConfsList->hit_count)*sizeof(int));
 
 		//Make sure it worked
-		if (trans_phase_count == NULL)
+		if (trans_phase_count == nullptr)
 		{
 			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
@@ -426,7 +426,7 @@ STATUS jsondump::dump_system(void)
 		obj_lineConf = gl_find_next(TransConfsList,NULL);
 
 		index=0;
-		while(obj_lineConf != NULL)
+		while(obj_lineConf != nullptr)
 		{
 			pTransConf[index] = obj_lineConf;
 			index++;
@@ -437,10 +437,10 @@ STATUS jsondump::dump_system(void)
 	}
 	else //No transformers, just NULL everything
 	{
-		pTransConf = NULL;
-		b_mat_trans_pu = NULL;
-		b_mat_trans_defined = NULL;
-		trans_phase_count = NULL;
+		pTransConf = nullptr;
+		b_mat_trans_pu = nullptr;
+		b_mat_trans_defined = nullptr;
+		trans_phase_count = nullptr;
 	}
 
 	//Regulator configurations
@@ -451,7 +451,7 @@ STATUS jsondump::dump_system(void)
 		pRegConf = (OBJECT **)gl_malloc((regConfs->hit_count)*sizeof(OBJECT*));
 
 		//Check it
-		if (pRegConf == NULL)
+		if (pRegConf == nullptr)
 		{
 			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
@@ -461,7 +461,7 @@ STATUS jsondump::dump_system(void)
 		b_mat_reg_pu = (gld::complex *)gl_malloc((regConfs->hit_count)*9*sizeof(gld::complex));
 
 		//Check it
-		if (b_mat_reg_pu == NULL)
+		if (b_mat_reg_pu == nullptr)
 		{
 			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
@@ -477,7 +477,7 @@ STATUS jsondump::dump_system(void)
 		b_mat_reg_defined = (bool *)gl_malloc((regConfs->hit_count)*sizeof(bool));
 
 		//Check it
-		if (b_mat_reg_defined == NULL)
+		if (b_mat_reg_defined == nullptr)
 		{
 			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
@@ -493,7 +493,7 @@ STATUS jsondump::dump_system(void)
 		reg_phase_count = (int *)gl_malloc((regConfs->hit_count)*sizeof(int));
 
 		//Make sure it worked
-		if (reg_phase_count == NULL)
+		if (reg_phase_count == nullptr)
 		{
 			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
@@ -509,7 +509,7 @@ STATUS jsondump::dump_system(void)
 		obj_lineConf = gl_find_next(regConfs,NULL);
 
 		index=0;
-		while(obj_lineConf != NULL)
+		while(obj_lineConf != nullptr)
 		{
 			pRegConf[index] = obj_lineConf;
 			index++;
@@ -520,10 +520,10 @@ STATUS jsondump::dump_system(void)
 	}
 	else //No transformers, just NULL everything
 	{
-		pRegConf = NULL;
-		b_mat_reg_pu = NULL;
-		b_mat_reg_defined = NULL;
-		reg_phase_count = NULL;
+		pRegConf = nullptr;
+		b_mat_reg_pu = nullptr;
+		b_mat_reg_defined = nullptr;
+		reg_phase_count = nullptr;
 	}
 
 	// clear jsonArray - just in case
@@ -539,10 +539,10 @@ STATUS jsondump::dump_system(void)
 		obj = gl_find_next(inverters,NULL);
 
 		//Loop until done
-		while (obj != NULL)
+		while (obj != nullptr)
 		{
 			//Write out the name
-			if (obj->name != NULL)
+			if (obj->name != nullptr)
 			{
 				node_object["id"] = obj->name;
 			}
@@ -554,7 +554,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//Write out our connection's name
-			if (obj->parent->name != NULL)
+			if (obj->parent->name != nullptr)
 			{
 				node_object["node_id"] = obj->parent->name;
 			}
@@ -666,10 +666,10 @@ STATUS jsondump::dump_system(void)
 		obj = gl_find_next(diesels,NULL);
 
 		//Loop until done
-		while (obj != NULL)
+		while (obj != nullptr)
 		{
 			//Write out the name
-			if (obj->name != NULL)
+			if (obj->name != nullptr)
 			{
 				node_object["id"] = obj->name;
 			}
@@ -681,7 +681,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//Write out our connection's name
-			if (obj->parent->name != NULL)
+			if (obj->parent->name != nullptr)
 			{
 				node_object["node_id"] = obj->parent->name;
 			}
@@ -800,7 +800,7 @@ STATUS jsondump::dump_system(void)
 		obj = gl_find_next(nodes,NULL);
 
 		//Loop through nodes list
-		while (obj != NULL)
+		while (obj != nullptr)
 		{
 			//If per-unit - adjust the values
 			if (write_per_unit)
@@ -815,7 +815,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//Write out the name
-			if (obj->name != NULL)
+			if (obj->name != nullptr)
 			{
 				node_object["id"] = obj->name;
 			}
@@ -911,10 +911,10 @@ STATUS jsondump::dump_system(void)
 		obj = gl_find_next(meters,NULL);
 
 		//Loop through meters list
-		while (obj != NULL)
+		while (obj != nullptr)
 		{
 			//If per-unit - adjust the values
-			if (write_per_unit == true)
+			if (write_per_unit)
 			{
 				temp_voltage_base = get_double_value(obj,"nominal_voltage");
 				temp_de_pu_base = 1.0;	//Don't need to "de-per-unit it"
@@ -926,7 +926,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//Write out the name
-			if (obj->name != NULL)
+			if (obj->name != nullptr)
 			{
 				node_object["id"] = obj->name;
 			}
@@ -1026,7 +1026,7 @@ STATUS jsondump::dump_system(void)
 		obj = gl_find_next(loads,NULL);
 
 		//Loop through loads list
-		while (obj != NULL)
+		while (obj != nullptr)
 		{
 			//If per-unit - adjust the values
 			if (write_per_unit)
@@ -1041,7 +1041,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//Write out the name
-			if (obj->name != NULL)
+			if (obj->name != nullptr)
 			{
 				node_object["id"] = obj->name;
 
@@ -1222,7 +1222,7 @@ STATUS jsondump::dump_system(void)
 		pTransformer = (transformer **)gl_malloc(TransformerList->hit_count*sizeof(transformer*));
 
 		//Check it
-		if (pTransformer == NULL)
+		if (pTransformer == nullptr)
 		{
 			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
@@ -1234,21 +1234,21 @@ STATUS jsondump::dump_system(void)
 		//Zero the index
 		index = 0;
 
-		while(obj != NULL)
+		while(obj != nullptr)
 		{
 			if(index >= TransformerList->hit_count){
 				break;
 			}
 
 			pTransformer[index] = OBJECTDATA(obj,transformer);
-			if(pTransformer[index] == NULL){
+			if(pTransformer[index] == nullptr){
 				gl_error("Unable to map object as transformer object.");
 				return FAILED;
 			}
 
 			// Write the transformer metrics
 			// Write the name (not id) - if it exists
-			if (obj->name != NULL)
+			if (obj->name != nullptr)
 			{
 				line_object["id"] = obj->name;
 			}
@@ -1260,7 +1260,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//write from node name
-			if (pTransformer[index]->from->name != NULL)
+			if (pTransformer[index]->from->name != nullptr)
 			{
 				line_object["node1_id"] = pTransformer[index]->from->name;
 			}
@@ -1272,7 +1272,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//write to node name
-			if (pTransformer[index]->to->name != NULL)
+			if (pTransformer[index]->to->name != nullptr)
 			{
 				line_object["node2_id"] = pTransformer[index]->to->name;
 			}
@@ -1385,7 +1385,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//write line_code
-			if (pTransformer[index]->configuration->name == NULL)
+			if (pTransformer[index]->configuration->name == nullptr)
 			{
 				sprintf(buffer,"trans_config:%d",pTransformer[index]->configuration->id);
 				line_object["line_code"] = buffer;
@@ -1431,7 +1431,7 @@ STATUS jsondump::dump_system(void)
 		pRegulator = (regulator **)gl_malloc(regulators->hit_count*sizeof(regulator*));
 
 		//Check it
-		if (pRegulator == NULL)
+		if (pRegulator == nullptr)
 		{
 			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
@@ -1443,21 +1443,21 @@ STATUS jsondump::dump_system(void)
 		//Zero the index
 		index = 0;
 
-		while(obj != NULL)
+		while(obj != nullptr)
 		{
 			if(index >= regulators->hit_count){
 				break;
 			}
 
 			pRegulator[index] = OBJECTDATA(obj,regulator);
-			if(pRegulator[index] == NULL){
+			if(pRegulator[index] == nullptr){
 				gl_error("Unable to map object as regulator object.");
 				return FAILED;
 			}
 
 			// Write the regulator metrics
 			// Write the name (not id) - if it exists
-			if (obj->name != NULL)
+			if (obj->name != nullptr)
 			{
 				line_object["id"] = obj->name;
 			}
@@ -1469,7 +1469,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//write from node name
-			if (pRegulator[index]->from->name != NULL)
+			if (pRegulator[index]->from->name != nullptr)
 			{
 				line_object["node1_id"] = pRegulator[index]->from->name;
 			}
@@ -1481,7 +1481,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//write to node name
-			if (pRegulator[index]->to->name != NULL)
+			if (pRegulator[index]->to->name != nullptr)
 			{
 				line_object["node2_id"] = pRegulator[index]->to->name;
 			}
@@ -1551,7 +1551,7 @@ STATUS jsondump::dump_system(void)
 			line_object["is_transformer"] = true;
 
 			//If per-unit - adjust the values
-			if (write_per_unit == true)
+			if (write_per_unit)
 			{
 				//Compute the per-unit base - use the nominal value off of the secondary
 				per_unit_base = get_double_value(pRegulator[index]->to,"nominal_voltage");
@@ -1577,9 +1577,9 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//See if it worked - if so, store us
-			if (found_match_config == true)
+			if (found_match_config)
 			{
-				if (b_mat_reg_defined[indexA] != true)
+				if (!b_mat_reg_defined[indexA])
 				{
 					for (indexB = 0; indexB < 3; indexB++)
 					{
@@ -1594,7 +1594,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//write line_code
-			if (pRegulator[index]->configuration->name == NULL)
+			if (pRegulator[index]->configuration->name == nullptr)
 			{
 				sprintf(buffer,"reg_config:%d",pRegulator[index]->configuration->id);
 				line_object["line_code"] = buffer;
@@ -1639,7 +1639,7 @@ STATUS jsondump::dump_system(void)
 		pOhLine = (line **)gl_malloc(ohlines->hit_count*sizeof(line*));
 
 		//Check it
-		if (pOhLine == NULL)
+		if (pOhLine == nullptr)
 		{
 			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
@@ -1651,21 +1651,21 @@ STATUS jsondump::dump_system(void)
 		//Zero the index
 		index = 0;
 
-		while(obj != NULL)
+		while(obj != nullptr)
 		{
 			if(index >= ohlines->hit_count){
 				break;
 			}
 
 			pOhLine[index] = OBJECTDATA(obj,line);
-			if(pOhLine[index] == NULL){
+			if(pOhLine[index] == nullptr){
 				gl_error("Unable to map object as overhead_line object.");
 				return FAILED;
 			}
 
 			// Write the overhead_line metrics
 			// Write the name (not id) - if it exists
-			if (obj->name != NULL)
+			if (obj->name != nullptr)
 			{
 				line_object["id"] = obj->name;
 			}
@@ -1677,7 +1677,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//write from node name
-			if (pOhLine[index]->from->name != NULL)
+			if (pOhLine[index]->from->name != nullptr)
 			{
 				line_object["node1_id"] = pOhLine[index]->from->name;
 			}
@@ -1689,7 +1689,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//write to node name
-			if (pOhLine[index]->to->name != NULL)
+			if (pOhLine[index]->to->name != nullptr)
 			{
 				line_object["node2_id"] = pOhLine[index]->to->name;
 			}
@@ -1801,7 +1801,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//write line_code
-			if (pOhLine[index]->configuration->name == NULL)
+			if (pOhLine[index]->configuration->name == nullptr)
 			{
 				sprintf(buffer,"line_config:%d",pOhLine[index]->configuration->id);
 				line_object["line_code"] = buffer;
@@ -1846,7 +1846,7 @@ STATUS jsondump::dump_system(void)
 		pUgLine = (line **)gl_malloc(uglines->hit_count*sizeof(line*));
 
 		//Check it
-		if (pUgLine == NULL)
+		if (pUgLine == nullptr)
 		{
 			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
@@ -1858,21 +1858,21 @@ STATUS jsondump::dump_system(void)
 		//Zero the index
 		index = 0;
 
-		while(obj != NULL)
+		while(obj != nullptr)
 		{
 			if(index >= uglines->hit_count){
 				break;
 			}
 
 			pUgLine[index] = OBJECTDATA(obj,line);
-			if(pUgLine[index] == NULL){
+			if(pUgLine[index] == nullptr){
 				gl_error("Unable to map object as underground_line object.");
 				return FAILED;
 			}
 
 			// Write the underground_line metrics
 			// Write the name (not id) - if it exists
-			if (obj->name != NULL)
+			if (obj->name != nullptr)
 			{
 				line_object["id"] = obj->name;
 			}
@@ -1884,7 +1884,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//write from node name
-			if (pUgLine[index]->from->name != NULL)
+			if (pUgLine[index]->from->name != nullptr)
 			{
 				line_object["node1_id"] = pUgLine[index]->from->name;
 			}
@@ -1896,7 +1896,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//write to node name
-			if (pUgLine[index]->to->name != NULL)
+			if (pUgLine[index]->to->name != nullptr)
 			{
 				line_object["node2_id"] = pUgLine[index]->to->name;
 			}
@@ -1966,7 +1966,7 @@ STATUS jsondump::dump_system(void)
 			line_object["is_transformer"] = false;
 
 			//If per-unit - adjust the values
-			if (write_per_unit == true)
+			if (write_per_unit)
 			{
 				//Compute the per-unit base - use the nominal value off of the secondary
 				per_unit_base = get_double_value(pUgLine[index]->to,"nominal_voltage");
@@ -1992,9 +1992,9 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//See if it worked - if so, store us
-			if (found_match_config == true)
+			if (found_match_config)
 			{
-				if (b_mat_defined[indexA] != true)
+				if (!b_mat_defined[indexA])
 				{
 					for (indexB = 0; indexB < 3; indexB++)
 					{
@@ -2008,7 +2008,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//write line_code
-			if (pUgLine[index]->configuration->name == NULL)
+			if (pUgLine[index]->configuration->name == nullptr)
 			{
 				sprintf(buffer,"line_config:%d",pUgLine[index]->configuration->id);
 				line_object["line_code"] = buffer;
@@ -2053,7 +2053,7 @@ STATUS jsondump::dump_system(void)
 		pTpLine = (line **)gl_malloc(tplines->hit_count*sizeof(line*));
 
 		//Check it
-		if (pTpLine == NULL)
+		if (pTpLine == nullptr)
 		{
 			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
@@ -2065,21 +2065,21 @@ STATUS jsondump::dump_system(void)
 		//Zero the index
 		index = 0;
 
-		while(obj != NULL)
+		while(obj != nullptr)
 		{
 			if(index >= tplines->hit_count){
 				break;
 			}
 
 			pTpLine[index] = OBJECTDATA(obj,line);
-			if(pTpLine[index] == NULL){
+			if(pTpLine[index] == nullptr){
 				gl_error("Unable to map object as triplex_line object.");
 				return FAILED;
 			}
 
 			// Write the triplex_line metrics
 			// Write the name (not id) - if it exists
-			if (obj->name != NULL)
+			if (obj->name != nullptr)
 			{
 				line_object["id"] = obj->name;
 			}
@@ -2091,7 +2091,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//write from node name
-			if (pTpLine[index]->from->name != NULL)
+			if (pTpLine[index]->from->name != nullptr)
 			{
 				line_object["node1_id"] = pTpLine[index]->from->name;
 			}
@@ -2103,7 +2103,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//write to node name
-			if (pTpLine[index]->to->name != NULL)
+			if (pTpLine[index]->to->name != nullptr)
 			{
 				line_object["node2_id"] = pTpLine[index]->to->name;
 			}
@@ -2173,7 +2173,7 @@ STATUS jsondump::dump_system(void)
 			line_object["is_transformer"] = false;
 
 			//If per-unit - adjust the values
-			if (write_per_unit == true)
+			if (write_per_unit)
 			{
 				//Compute the per-unit base - use the nominal value off of the secondary
 				per_unit_base = get_double_value(pTpLine[index]->to,"nominal_voltage");
@@ -2199,9 +2199,9 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//See if it worked - if so, store us
-			if (found_match_config == true)
+			if (found_match_config)
 			{
-				if (b_mat_tp_defined[indexA] != true)
+				if (!b_mat_tp_defined[indexA])
 				{
 					for (indexB = 0; indexB < 3; indexB++)
 					{
@@ -2215,7 +2215,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//write line_code
-			if (pTpLine[index]->configuration->name == NULL)
+			if (pTpLine[index]->configuration->name == nullptr)
 			{
 				sprintf(buffer,"line_config:%d",pTpLine[index]->configuration->id);
 				line_object["line_code"] = buffer;
@@ -2265,7 +2265,7 @@ STATUS jsondump::dump_system(void)
 		pSwitch = (switch_object **)gl_malloc(switches->hit_count*sizeof(switch_object*));
 
 		//Check it
-		if (pSwitch == NULL)
+		if (pSwitch == nullptr)
 		{
 			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
@@ -2277,21 +2277,21 @@ STATUS jsondump::dump_system(void)
 		//Zero the index
 		index = 0;
 
-		while(obj != NULL)
+		while(obj != nullptr)
 		{
 			if(index >= switches->hit_count){
 				break;
 			}
 
 			pSwitch[index] = OBJECTDATA(obj,switch_object);
-			if(pSwitch[index] == NULL){
+			if(pSwitch[index] == nullptr){
 				gl_error("Unable to map object as switch object.");
 				return FAILED;
 			}
 
 			// Write the switch metrics
 			// Write the name (not id) - if it exists
-			if (obj->name != NULL)
+			if (obj->name != nullptr)
 			{
 				line_object["id"] = obj->name;
 			}
@@ -2303,7 +2303,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//write from node name
-			if (pSwitch[index]->from->name != NULL)
+			if (pSwitch[index]->from->name != nullptr)
 			{
 				line_object["node1_id"] = pSwitch[index]->from->name;
 			}
@@ -2315,7 +2315,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//write to node name
-			if (pSwitch[index]->to->name != NULL)
+			if (pSwitch[index]->to->name != nullptr)
 			{
 				line_object["node2_id"] = pSwitch[index]->to->name;
 			}
@@ -2385,7 +2385,7 @@ STATUS jsondump::dump_system(void)
 			line_object["is_transformer"] = false;
 
 			//If per-unit - adjust the values
-			if (write_per_unit == true)
+			if (write_per_unit)
 			{
 				//Compute the per-unit base - use the nominal value off of the secondary
 				per_unit_base = get_double_value(pSwitch[index]->to,"nominal_voltage");
@@ -2399,7 +2399,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//write line configuration, if we're unique
-			if (b_mat_switch_defined==false)
+			if (!b_mat_switch_defined)
 			{
 				for (indexB = 0; indexB < 3; indexB++)
 				{
@@ -2451,7 +2451,7 @@ STATUS jsondump::dump_system(void)
 		pSectionalizer = (sectionalizer **)gl_malloc(sectionalizers->hit_count*sizeof(sectionalizer*));
 
 		//Check it
-		if (pSectionalizer == NULL)
+		if (pSectionalizer == nullptr)
 		{
 			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
@@ -2463,21 +2463,21 @@ STATUS jsondump::dump_system(void)
 		//Zero the index
 		index = 0;
 
-		while(obj != NULL)
+		while(obj != nullptr)
 		{
 			if(index >= sectionalizers->hit_count){
 				break;
 			}
 
 			pSectionalizer[index] = OBJECTDATA(obj,sectionalizer);
-			if(pSectionalizer[index] == NULL){
+			if(pSectionalizer[index] == nullptr){
 				gl_error("Unable to map object as sectionalizer object.");
 				return FAILED;
 			}
 
 			// Write the sectionalizer metrics
 			// Write the name (not id) - if it exists
-			if (obj->name != NULL)
+			if (obj->name != nullptr)
 			{
 				line_object["id"] = obj->name;
 			}
@@ -2489,7 +2489,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//write from node name
-			if (pSectionalizer[index]->from->name != NULL)
+			if (pSectionalizer[index]->from->name != nullptr)
 			{
 				line_object["node1_id"] = pSectionalizer[index]->from->name;
 			}
@@ -2501,7 +2501,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//write to node name
-			if (pSectionalizer[index]->to->name != NULL)
+			if (pSectionalizer[index]->to->name != nullptr)
 			{
 				line_object["node2_id"] = pSectionalizer[index]->to->name;
 			}
@@ -2571,7 +2571,7 @@ STATUS jsondump::dump_system(void)
 			line_object["is_transformer"] = false;
 
 			//If per-unit - adjust the values
-			if (write_per_unit == true)
+			if (write_per_unit)
 			{
 				//Compute the per-unit base - use the nominal value off of the secondary
 				per_unit_base = get_double_value(pSectionalizer[index]->to,"nominal_voltage");
@@ -2585,7 +2585,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//write line configuration, if we're unique
-			if (b_mat_switch_defined==false)
+			if (!b_mat_switch_defined)
 			{
 				for (indexB = 0; indexB < 3; indexB++)
 				{
@@ -2638,7 +2638,7 @@ STATUS jsondump::dump_system(void)
 		pRecloser = (recloser **)gl_malloc(reclosers->hit_count*sizeof(recloser*));
 
 		//Check it
-		if (pRecloser == NULL)
+		if (pRecloser == nullptr)
 		{
 			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
@@ -2650,21 +2650,21 @@ STATUS jsondump::dump_system(void)
 		//Zero the index
 		index = 0;
 
-		while(obj != NULL)
+		while(obj != nullptr)
 		{
 			if(index >= reclosers->hit_count){
 				break;
 			}
 
 			pRecloser[index] = OBJECTDATA(obj,recloser);
-			if(pRecloser[index] == NULL){
+			if(pRecloser[index] == nullptr){
 				gl_error("Unable to map object as recloser object.");
 				return FAILED;
 			}
 
 			// Write the recloser metrics
 			// Write the name (not id) - if it exists
-			if (obj->name != NULL)
+			if (obj->name != nullptr)
 			{
 				line_object["id"] = obj->name;
 			}
@@ -2676,7 +2676,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//write from node name
-			if (pRecloser[index]->from->name != NULL)
+			if (pRecloser[index]->from->name != nullptr)
 			{
 				line_object["node1_id"] = pRecloser[index]->from->name;
 			}
@@ -2688,7 +2688,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//write to node name
-			if (pRecloser[index]->to->name != NULL)
+			if (pRecloser[index]->to->name != nullptr)
 			{
 				line_object["node2_id"] = pRecloser[index]->to->name;
 			}
@@ -2758,7 +2758,7 @@ STATUS jsondump::dump_system(void)
 			line_object["is_transformer"] = false;
 
 			//If per-unit - adjust the values
-			if (write_per_unit == true)
+			if (write_per_unit)
 			{
 				//Compute the per-unit base - use the nominal value off of the secondary
 				per_unit_base = get_double_value(pRecloser[index]->to,"nominal_voltage");
@@ -2772,7 +2772,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//write line configuration, if we're unique
-			if (b_mat_switch_defined==false)
+			if (!b_mat_switch_defined)
 			{
 				for (indexB = 0; indexB < 3; indexB++)
 				{
@@ -2828,7 +2828,7 @@ STATUS jsondump::dump_system(void)
 		pFuse = (fuse **)gl_malloc(fuses->hit_count*sizeof(fuse*));
 
 		//Check it
-		if (pFuse == NULL)
+		if (pFuse == nullptr)
 		{
 			GL_THROW("jsdondump:%d %s - Unable to allocate memory",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"));
 			//Defined above
@@ -2840,21 +2840,21 @@ STATUS jsondump::dump_system(void)
 		//Zero the index
 		index = 0;
 
-		while(obj != NULL)
+		while(obj != nullptr)
 		{
 			if(index >= fuses->hit_count){
 				break;
 			}
 
 			pFuse[index] = OBJECTDATA(obj,fuse);
-			if(pFuse[index] == NULL){
+			if(pFuse[index] == nullptr){
 				gl_error("Unable to map object as fuse object.");
 				return FAILED;
 			}
 
 			// Write the fuse metrics
 			// Write the name (not id) - if it exists
-			if (obj->name != NULL)
+			if (obj->name != nullptr)
 			{
 				line_object["id"] = obj->name;
 			}
@@ -2866,7 +2866,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//write from node name
-			if (pFuse[index]->from->name != NULL)
+			if (pFuse[index]->from->name != nullptr)
 			{
 				line_object["node1_id"] = pFuse[index]->from->name;
 			}
@@ -2878,7 +2878,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//write to node name
-			if (pFuse[index]->to->name != NULL)
+			if (pFuse[index]->to->name != nullptr)
 			{
 				line_object["node2_id"] = pFuse[index]->to->name;
 			}
@@ -2948,7 +2948,7 @@ STATUS jsondump::dump_system(void)
 			line_object["is_transformer"] = false;
 
 			//If per-unit - adjust the values
-			if (write_per_unit == true)
+			if (write_per_unit)
 			{
 				//Compute the per-unit base - use the nominal value off of the secondary
 				per_unit_base = get_double_value(pFuse[index]->to,"nominal_voltage");
@@ -2962,7 +2962,7 @@ STATUS jsondump::dump_system(void)
 			}
 
 			//write line configuration, if we're unique
-			if (b_mat_fuse_defined==false)
+			if (!b_mat_fuse_defined)
 			{
 				for (indexB = 0; indexB < 3; indexB++)
 				{
@@ -3113,11 +3113,11 @@ STATUS jsondump::dump_system(void)
 		for (index=0; index<lineConfs->hit_count; index++)
 		{
 			//See if it is valid - just ignore the ones that aren't
-			if (b_mat_defined[index] == true)
+			if (b_mat_defined[index])
 			{
 				//write each line configuration data
 				// write line_code
-				if (pLineConf[index]->name == NULL)
+				if (pLineConf[index]->name == nullptr)
 				{
 					sprintf(buffer,"line_config:%d",pLineConf[index]->id);
 					line_configuration_object["line_code"] = buffer;
@@ -3132,21 +3132,21 @@ STATUS jsondump::dump_system(void)
 
 				obj = get_object_value(pLineConf[index],"conductor_A");
 
-				if (obj != NULL)
+				if (obj != nullptr)
 				{
 					phaseCount++;
 				}
 
 				obj = get_object_value(pLineConf[index],"conductor_B");
 
-				if (obj != NULL)
+				if (obj != nullptr)
 				{
 					phaseCount++;
 				}
 
 				obj = get_object_value(pLineConf[index],"conductor_C");
 
-				if (obj != NULL)
+				if (obj != nullptr)
 				{
 					phaseCount++;
 				}
@@ -3200,11 +3200,11 @@ STATUS jsondump::dump_system(void)
 		for (index=0; index<tpLineConfs->hit_count; index++)
 		{
 			//See if it is valid - just ignore the ones that aren't
-			if (b_mat_tp_defined[index] == true)
+			if (b_mat_tp_defined[index])
 			{
 				//write each line configuration data
 				// write line_code
-				if (pTpLineConf[index]->name == NULL)
+				if (pTpLineConf[index]->name == nullptr)
 				{
 					sprintf(buffer,"line_config:%d",pTpLineConf[index]->id);
 					line_configuration_object["line_code"] = buffer;
@@ -3219,14 +3219,14 @@ STATUS jsondump::dump_system(void)
 
 				obj = get_object_value(pTpLineConf[index],"conductor_1");
 
-				if (obj != NULL)
+				if (obj != nullptr)
 				{
 					phaseCount++;
 				}
 
 				obj = get_object_value(pTpLineConf[index],"conductor_2");
 
-				if (obj != NULL)
+				if (obj != nullptr)
 				{
 					phaseCount++;
 				}
@@ -3280,11 +3280,11 @@ STATUS jsondump::dump_system(void)
 		for (index=0; index<TransConfsList->hit_count; index++)
 		{
 			//See if it is valid - just ignore the ones that aren't
-			if (b_mat_trans_defined[index] == true)
+			if (b_mat_trans_defined[index])
 			{
 				// write each line configuration data
 				// write line_code
-				if (pTransConf[index]->name == NULL)
+				if (pTransConf[index]->name == nullptr)
 				{
 					sprintf(buffer,"trans_config:%d",pTransConf[index]->id);
 					line_configuration_object["line_code"] = buffer;
@@ -3344,11 +3344,11 @@ STATUS jsondump::dump_system(void)
 		for (index=0; index<regConfs->hit_count; index++)
 		{
 			//See if it is valid - just ignore the ones that aren't
-			if (b_mat_reg_defined[index] == true)
+			if (b_mat_reg_defined[index])
 			{
 				// write each line configuration data
 				// write line_code
-				if (pRegConf[index]->name == NULL)
+				if (pRegConf[index]->name == nullptr)
 				{
 					sprintf(buffer,"reg_config:%d",pRegConf[index]->id);
 					line_configuration_object["line_code"] = buffer;
@@ -3478,9 +3478,9 @@ STATUS jsondump::dump_reliability(void)
 	int index1366;
 	double *temp_double;
 	enumeration *temp_emu;
-	OBJECT *obj = NULL;
+	OBJECT *obj = nullptr;
 	char buffer[1024];
-	FILE *fn = NULL;
+	FILE *fn = nullptr;
 	int index = 0;
 
 	// metrics JSON value
@@ -3509,7 +3509,7 @@ STATUS jsondump::dump_reliability(void)
 
 	// Write powermetrics data
 	index = 0;
-	if(powermetrics != NULL){
+	if(powermetrics != nullptr){
 
 		while(obj = gl_find_next(powermetrics,obj)){
 
@@ -3525,7 +3525,7 @@ STATUS jsondump::dump_reliability(void)
 
 				temp_double = gl_get_double_by_name(obj, indices1366[index1366]);
 
-				if(temp_double == NULL){
+				if(temp_double == nullptr){
 					gl_error("Unable to to find property for %s: %s is NULL", obj->name, indices1366[index1366]);
 					return FAILED;
 				}
@@ -3544,7 +3544,7 @@ STATUS jsondump::dump_reliability(void)
 	// Write the protective device data
 	// Fuses
 	index = 0;
-	if(fuses != NULL){
+	if(fuses != nullptr){
 
 		while(obj = gl_find_next(fuses,obj)){
 			if(index >= fuses->hit_count){
@@ -3590,7 +3590,7 @@ STATUS jsondump::dump_reliability(void)
 
 	// Reclosers
 	index = 0;
-	if(reclosers != NULL){
+	if(reclosers != nullptr){
 
 		while(obj = gl_find_next(reclosers,obj)){
 			if(index >= reclosers->hit_count){
@@ -3636,7 +3636,7 @@ STATUS jsondump::dump_reliability(void)
 
 	// Sectionalizer
 	index = 0;
-	if(sectionalizers != NULL){
+	if(sectionalizers != nullptr){
 
 		while(obj = gl_find_next(sectionalizers,obj)){
 			if(index >= sectionalizers->hit_count){
@@ -3689,7 +3689,7 @@ STATUS jsondump::dump_reliability(void)
 	// Write the capacitor and regulator device data
 	// Capacitors
 	index = 0;
-	if(capacitors != NULL){
+	if(capacitors != nullptr){
 
 		while(obj = gl_find_next(capacitors,obj)){
 			if(index >= capacitors->hit_count){
@@ -3735,7 +3735,7 @@ STATUS jsondump::dump_reliability(void)
 
 	// Regulators
 	index = 0;
-	if(regulators != NULL){
+	if(regulators != nullptr){
 
 		while(obj = gl_find_next(regulators,obj)){
 			if(index >= regulators->hit_count){
@@ -4002,7 +4002,7 @@ EXPORT int create_jsondump(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(jsondump::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			jsondump *my = OBJECTDATA(*obj,jsondump);
 			gl_set_parent(*obj,parent);
@@ -4056,7 +4056,7 @@ EXPORT STATUS finalize_jsondump(OBJECT *obj)
 	jsondump *my = OBJECTDATA(obj,jsondump);
 
 	try {
-			return obj!=NULL ? my->finalize() : FAILED;
+			return obj!=nullptr ? my->finalize() : FAILED;
 		}
 		catch (char *msg) {
 			gl_error("finalize_jsondump" "(obj=%d;%s): %s", obj->id, obj->name?obj->name:"unnamed", msg);

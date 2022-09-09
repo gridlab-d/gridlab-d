@@ -3317,7 +3317,6 @@ object diesel_dg {
 	GGOV1_Dm 0.0; // Speed sensitivity coefficient, p.u.
 	GGOV1_ropen 050; // Maximum valve opening rate, p.u./sec.
 	GGOV1_rclose -050; // Minimum valve closing rate, p.u./sec.
-	GGOV1_Kimw 0.0;//0.002; // Power controller (reset) gain
 	GGOV1_Pmwset 3000000; // Power controller setpoint, MW
 	GGOV1_aset 0.01; // Acceleration limiter setpoint, p.u./sec.
 	GGOV1_Ka 10.0; // Acceleration limiter Gain
@@ -3373,7 +3372,6 @@ object diesel_dg {
 	P_CONSTANT_Teng 0.0; // Transport lag time constant for diesel engine
 	P_CONSTANT_ropen 050; // Maximum valve opening rate, p.u./sec.
 	P_CONSTANT_rclose -050; // Minimum valve closing rate, p.u./sec.
-	P_CONSTANT_Kimw 0.0;//0.002; // Power controller (reset) gain
 	
 	inertia 2.5;
 

@@ -41,7 +41,7 @@
 #define MAP_DOUBLE(X,LO,HI) {#X,VT_DOUBLE,&X,LO,HI}
 #define MAP_INTEGER(X,LO,HI) {#X,VT_INTEGER,&X,LO,HI}
 #define MAP_STRING(X) {#X,VT_STRING,X,sizeof(X),0}
-#define MAP_END {NULL}
+#define MAP_END {nullptr}
 
 VARMAP varmap[] = {
 	/* add module variables you want to be available using module_setvar in core */
@@ -91,7 +91,7 @@ char* strtok_t(char *str, const char *delim, char **nextp)
 {
 	char *ret;
 
-	if (str == NULL)
+	if (str == nullptr)
 	{
 		str = *nextp;
 	}
@@ -100,7 +100,7 @@ char* strtok_t(char *str, const char *delim, char **nextp)
 
 	if (*str == '\0')
 	{
-		return NULL;
+		return nullptr;
 	}
 
 	ret = str;
@@ -121,13 +121,13 @@ char* strtok_t(char *str, const char *delim, char **nextp)
 #endif
 #endif
 
-static TAPEFUNCS *funcs = NULL;
+static TAPEFUNCS *funcs = nullptr;
 static char1024 tape_gnuplot_path;
 int32 flush_interval = 0;
 int csv_data_only = 0; /* enable this option to suppress addition of lines starting with # in CSV */
 int csv_keep_clean = 0; /* enable this option to keep data flushed at end of line */
-void (*update_csv_data_only)(void)=NULL;
-void (*update_csv_keep_clean)(void)=NULL;
+void (*update_csv_data_only)(void)=nullptr;
+void (*update_csv_keep_clean)(void)=nullptr;
 
 void set_csv_options(void)
 {
@@ -150,32 +150,32 @@ TAPEFUNCS *get_ftable(char *mode){
 	/* check what we've already loaded */
 	char256 modname;
 	TAPEFUNCS *fptr = funcs;
-	TAPEOPS *ops = NULL;
-	void *lib = NULL;
-	CALLBACKS **c = NULL;
+	TAPEOPS *ops = nullptr;
+	void *lib = nullptr;
+	CALLBACKS **c = nullptr;
 	char tpath[1024];
-	while(fptr != NULL){
+	while(fptr != nullptr){
 		if(strcmp(fptr->mode, mode) == 0)
 			return fptr;
 		fptr = fptr->next;
 	}
-	/* fptr = NULL */
+	/* fptr = nullptr */
 	fptr = static_cast<TAPEFUNCS *>(malloc(sizeof(TAPEFUNCS)));
-	if(fptr == NULL)
+	if(fptr == nullptr)
 	{
 		gl_error("get_ftable(char *mode='%s'): out of memory", mode);
-		return NULL; /* out of memory */
+		return nullptr; /* out of memory */
 	}
 	snprintf(modname, sizeof(modname), "tape_%s" DLEXT, mode);
 
-	if(gl_findfile(modname, NULL, 0|4, tpath,sizeof(tpath)) == NULL){
+	if(gl_findfile(modname, nullptr, 0|4, tpath,sizeof(tpath)) == nullptr){
 		gl_error("unable to locate %s", modname.get_string());
-		return NULL;
+		return nullptr;
 	}
 	lib = fptr->hLib = DLLOAD(tpath);
-	if(fptr->hLib == NULL){
+	if(fptr->hLib == nullptr){
 		gl_error("tape module: unable to load DLL for %s", modname.get_string());
-		return NULL;
+		return nullptr;
 	}
 	c = (CALLBACKS **)DLSYM(lib, "callback");
 	if(c)
@@ -185,9 +185,9 @@ TAPEFUNCS *get_ftable(char *mode){
 	ops = fptr->collector = static_cast<TAPEOPS *>(malloc(sizeof(TAPEOPS)));
 	memset(ops,0,sizeof(TAPEOPS));
 	ops->open = (OPENFUNC)DLSYM(lib, "open_collector");
-	ops->read = NULL;
+	ops->read = nullptr;
 	ops->write = (WRITEFUNC)DLSYM(lib, "write_collector");
-	ops->rewind = NULL;
+	ops->rewind = nullptr;
 	ops->close = (CLOSEFUNC)DLSYM(lib, "close_collector");
 	ops->flush = (FLUSHFUNC)DLSYM(lib, "flush_collector");
 
@@ -195,26 +195,26 @@ TAPEFUNCS *get_ftable(char *mode){
 	memset(ops,0,sizeof(TAPEOPS));
 	ops->open = (OPENFUNC)DLSYM(lib, "open_player");
 	ops->read = (READFUNC)DLSYM(lib, "read_player");
-	ops->write = NULL;
+	ops->write = nullptr;
 	ops->rewind = (REWINDFUNC)DLSYM(lib, "rewind_player");
 	ops->close = (CLOSEFUNC)DLSYM(lib, "close_player");
-	ops->flush = NULL;
+	ops->flush = nullptr;
 
 	ops = fptr->recorder = static_cast<TAPEOPS *>(malloc(sizeof(TAPEOPS)));
 	memset(ops,0,sizeof(TAPEOPS));
 	ops->open = (OPENFUNC)DLSYM(lib, "open_recorder");
-	ops->read = NULL;
+	ops->read = nullptr;
 	ops->write = (WRITEFUNC)DLSYM(lib, "write_recorder");
-	ops->rewind = NULL;
+	ops->rewind = nullptr;
 	ops->close = (CLOSEFUNC)DLSYM(lib, "close_recorder");
 	ops->flush = (FLUSHFUNC)DLSYM(lib, "flush_recorder");
 
 	ops = fptr->histogram = static_cast<TAPEOPS *>(malloc(sizeof(TAPEOPS)));
 	memset(ops,0,sizeof(TAPEOPS));
 	ops->open = (OPENFUNC)DLSYM(lib, "open_histogram");
-	ops->read = NULL;
+	ops->read = nullptr;
 	ops->write = (WRITEFUNC)DLSYM(lib, "write_histogram");
-	ops->rewind = NULL;
+	ops->rewind = nullptr;
 	ops->close = (CLOSEFUNC)DLSYM(lib, "close_histogram");
 	ops->flush = (FLUSHFUNC)DLSYM(lib, "flush_histogram");
 
@@ -222,7 +222,7 @@ TAPEFUNCS *get_ftable(char *mode){
 	memset(ops,0,sizeof(TAPEOPS));
 	ops->open = (OPENFUNC)DLSYM(lib, "open_shaper");
 	ops->read = (READFUNC)DLSYM(lib, "read_shaper");
-	ops->write = NULL;
+	ops->write = nullptr;
 	ops->rewind = (REWINDFUNC)DLSYM(lib, "rewind_shaper");
 	ops->close = (CLOSEFUNC)DLSYM(lib, "close_shaper");
 
@@ -239,10 +239,10 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	struct recorder my;
 	struct collector my2;
 
-	if (set_callback(fntable)==NULL)
+	if (set_callback(fntable)==nullptr)
 	{
 		errno = EINVAL;
-		return NULL;
+		return nullptr;
 	}
 
 	/* globals for the tape module*/
@@ -251,13 +251,13 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 #else
 	sprintf(tape_gnuplot_path,"/usr/bin/gnuplot");
 #endif
-	gl_global_create(const_cast<char *>("tape::gnuplot_path"), PT_char1024, &tape_gnuplot_path, NULL);
-	gl_global_create(const_cast<char *>("tape::flush_interval"), PT_int32, &flush_interval, NULL);
-	gl_global_create(const_cast<char *>("tape::csv_data_only"), PT_int32, &csv_data_only, NULL);
-	gl_global_create(const_cast<char *>("tape::csv_keep_clean"), PT_int32, &csv_keep_clean, NULL);
+	gl_global_create(const_cast<char *>("tape::gnuplot_path"), PT_char1024, &tape_gnuplot_path, nullptr);
+	gl_global_create(const_cast<char *>("tape::flush_interval"), PT_int32, &flush_interval, nullptr);
+	gl_global_create(const_cast<char *>("tape::csv_data_only"), PT_int32, &csv_data_only, nullptr);
+	gl_global_create(const_cast<char *>("tape::csv_keep_clean"), PT_int32, &csv_keep_clean, nullptr);
 
 	/* control delta mode */
-	gl_global_create(const_cast<char *>("tape::delta_mode_needed"), PT_timestamp, &delta_mode_needed, NULL);
+	gl_global_create(const_cast<char *>("tape::delta_mode_needed"), PT_timestamp, &delta_mode_needed, nullptr);
 
 	/* register the first class implemented, use SHARE to reveal variables */
 	player_class = gl_register_class(module, const_cast<char *>("player"), sizeof(struct player), PC_PRETOPDOWN);
@@ -267,6 +267,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	PUBLISH_STRUCT(player,char8,filetype);
 	PUBLISH_STRUCT(player,char32,mode);
 	PUBLISH_STRUCT(player,int32,loop);
+	PUBLISH_STRUCT(player,bool,all_events_delta);
 
 	/* register the first class implemented, use SHARE to reveal variables */
 	shaper_class = gl_register_class(module, const_cast<char *>("shaper"), sizeof(struct shaper), PC_PRETOPDOWN);
@@ -314,7 +315,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 			PT_KEYWORD, "DEFAULT", LU_DEFAULT,
 			PT_KEYWORD, "ALL", LU_ALL,
 			PT_KEYWORD, "NONE", LU_NONE,
-			NULL) < 1)
+			nullptr) < 1)
 		GL_THROW(const_cast<char *>("Could not publish property output for recorder"));
 
 		/* register the other classes as needed, */
@@ -349,7 +350,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 			PT_KEYWORD, "DEFAULT", LU_DEFAULT,
 			PT_KEYWORD, "ALL", LU_ALL,
 			PT_KEYWORD, "NONE", LU_NONE,
-			NULL) < 1)
+			nullptr) < 1)
 		GL_THROW(const_cast<char *>("Could not publish property output for multi_recorder"));
 
 	/* register the other classes as needed, */
@@ -364,7 +365,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	PUBLISH_STRUCT(collector,int32,flush);
 	if(gl_publish_variable(collector_class,
 		PT_double, "interval[s]", ((char*)&(my2.dInterval) - (char *)&my2),
-			NULL) < 1)
+			nullptr) < 1)
 		GL_THROW(const_cast<char *>("Could not publish property output for collector"));
 
 	/* new histogram() */
@@ -397,12 +398,12 @@ EXPORT int check(void)
 	unsigned int errcount=0;
 	char fpath[1024];
 	/* check players */
-	{	OBJECT *obj=NULL;
+	{	OBJECT *obj=nullptr;
 		FINDLIST *players = gl_find_objects(FL_NEW,FT_CLASS,SAME,"tape",FT_END);
-		while ((obj=gl_find_next(players,obj))!=NULL)
+		while ((obj=gl_find_next(players,obj))!=nullptr)
 		{
 			struct player *pData = OBJECTDATA(obj,struct player);
-			if (gl_findfile(pData->file,NULL,F_OK,fpath,sizeof(fpath))==NULL)
+			if (gl_findfile(pData->file,nullptr,F_OK,fpath,sizeof(fpath))==nullptr)
 			{
 				errcount++;
 				gl_error("player %s (id=%d) uses the file '%s', which cannot be found", obj->name?obj->name:"(unnamed)", obj->id, pData->file.get_string());
@@ -411,12 +412,12 @@ EXPORT int check(void)
 	}
 
 	/* check shapers */
-	{	OBJECT *obj=NULL;
+	{	OBJECT *obj=nullptr;
 		FINDLIST *shapers = gl_find_objects(FL_NEW,FT_CLASS,SAME,"shaper",FT_END);
-		while ((obj=gl_find_next(shapers,obj))!=NULL)
+		while ((obj=gl_find_next(shapers,obj))!=nullptr)
 		{
 			struct shaper *pData = OBJECTDATA(obj,struct shaper);
-			if (gl_findfile(pData->file,NULL,F_OK,fpath,sizeof(fpath))==NULL)
+			if (gl_findfile(pData->file,nullptr,F_OK,fpath,sizeof(fpath))==nullptr)
 			{
 				errcount++;
 				gl_error("shaper %s (id=%d) uses the file '%s', which cannot be found", obj->name?obj->name:"(unnamed)", obj->id, pData->file.get_string());
@@ -437,7 +438,7 @@ EXPORT int check(void)
  */
 
 double recorder_delta_clock = 0.0;
-DELTAOBJ_LIST *delta_tape_objects = NULL;
+DELTAOBJ_LIST *delta_tape_objects = nullptr;
 
 /* Function to add a tape module object into a deltamode list */
 int delta_add_tape_device(OBJECT *obj, DELTATAPEOBJ tape_type)
@@ -448,7 +449,7 @@ int delta_add_tape_device(OBJECT *obj, DELTATAPEOBJ tape_type)
 	temp_ll_item = (DELTAOBJ_LIST*)gl_malloc(sizeof(DELTAOBJ_LIST));
 
 	/* Make sure it worked */
-	if (temp_ll_item == NULL)
+	if (temp_ll_item == nullptr)
 	{
 		gl_error("tape object:%d - unable to allocate space for deltamode",obj->id);
 		/*  TROUBLESHOOT
@@ -461,15 +462,15 @@ int delta_add_tape_device(OBJECT *obj, DELTATAPEOBJ tape_type)
 	/* Populate it */
 	temp_ll_item->obj = obj;
 	temp_ll_item->obj_type = tape_type;
-	temp_ll_item->next = NULL;
+	temp_ll_item->next = nullptr;
 
 	/* Find the place */
-	if (delta_tape_objects != NULL)
+	if (delta_tape_objects != nullptr)
 	{
 		/* Get initial value */
 		index_item = delta_tape_objects;
 
-		while (index_item->next != NULL)
+		while (index_item->next != nullptr)
 		{
 			index_item = index_item->next;
 		}
@@ -485,7 +486,6 @@ int delta_add_tape_device(OBJECT *obj, DELTATAPEOBJ tape_type)
 	/* If we made it this far, must be successful */
 	return SUCCESS;
 }
-
 
 void enable_deltamode(TIMESTAMP t)
 {
@@ -555,7 +555,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 			index_item = delta_tape_objects;
 
 			/* Loop through and find a recorder */
-			while (index_item != NULL)
+			while (index_item != nullptr)
 			{
 				if (index_item->obj_type == RECORDER)
 				{
@@ -601,11 +601,12 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 	index_item = delta_tape_objects;
 
 	/* Loop through and find a recorder */
-	while (index_item != NULL)
+	while (index_item != nullptr)
 	{
 		if (index_item->obj_type == PLAYER)
 		{
 			OBJECT *obj = index_item->obj;
+			OBJECT *temp_obj = nullptr;
 			struct player *my = OBJECTDATA(obj,struct player);
 			int y=0,m=0,d=0,H=0,M=0,S=0,ms=0, n=0;
 			char *fmt = const_cast<char *>("%d/%d/%d %d:%d:%d.%d,%*s");
@@ -625,7 +626,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 					//extern TIMESTAMP player_read(OBJECT *obj);
 
 					/* Check to make sure we've be initialized -- if a deltamode timestep is first, it may be before this was initialized */
-					if (my->target == NULL)	/* Not set yet */
+					if (my->target == nullptr)	/* Not set yet */
 					{
 						/*  This fails on Mac builds under 4.0 for some odd reason.  Commenting code and putting an error for now.
 						Will be investigated further for 4.1 release.
@@ -661,7 +662,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 						my->target = player_link_properties(my, obj->parent, my->property);
 
 						*** Make sure it worked ***
-						if (my->target==NULL){
+						if (my->target==nullptr){
 							gl_error("deltamode player: Unable to find property '%s' in object %s", my->property, obj->name?obj->name:"(anon)");
 							***  TROUBLESHOOT
 							While attempting to link up the property of a player in deltamode, the property could not be found.  Make sure the object
@@ -672,7 +673,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 						}
 
 						*** Do an initialization of it ***
-						if (my->target!=NULL)
+						if (my->target!=nullptr)
 						{
 							OBJECT *target = obj->parent ? obj->parent : obj; *** target myself if no parent ***
 							player_write_properties(my, obj, target, my->target, my->next.value);
@@ -688,7 +689,11 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 					/* Behave similar to "supersecond" players */
 					while ( t<=clock_val )
 					{
-						ret_value = gl_set_value(obj->parent,GETADDR(obj->parent,my->target),my->next.value,my->target); /* pointer => int64 */
+						//Figure out the reference - for value transforms (not parent)
+						temp_obj = obj->parent ? obj->parent : obj;
+
+						//Set the value
+						ret_value = gl_set_value(temp_obj,GETADDR(temp_obj,my->target),my->next.value,my->target); /* pointer => int64 */
 
 						if (ret_value == 0)
 						{
@@ -724,7 +729,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 					if ((t>=clock_val) && (t<(clock_val+1.0)))
 					{
 						/* determine whether deltamode remains necessary */
-						if (my->next.ns!=0)
+						if ((my->next.ns!=0) || my->all_events_delta)
 						{
 							mode = SM_DELTA;
 							gl_verbose("Tape object:%d - %s - requested deltamode to continue",obj->id,(obj->name ? obj->name : "Unnamed"));
@@ -752,9 +757,9 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 {
 	DELTAOBJ_LIST *index_item;
-	OBJECT *obj = NULL;
-	struct recorder *myrec = NULL;
-	struct player *myplayer = NULL;
+	OBJECT *obj = nullptr;
+	struct recorder *myrec = nullptr;
+	struct player *myplayer = nullptr;
 	FUNCTIONADDR temp_fxn;
 	char value[1024];
 
@@ -774,7 +779,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 
 	/* Loop through objects and look for recorder */
 	/* Only look for recorders first -- ensures they pull the last value before a player overwrites it */
-	while (index_item != NULL)
+	while (index_item != nullptr)
 	{
 		if (index_item->obj_type == RECORDER)
 		{
@@ -840,7 +845,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 			/* Map up function - have to do a modified version (C call), which is why this looks odd*/
 			temp_fxn = (FUNCTIONADDR)(gl_get_function(obj,"obj_postupdate_fxn"));
 
-			if (temp_fxn == NULL)
+			if (temp_fxn == nullptr)
 			{
 				gl_error("Unable to map group_recorder postupdate function");
 				/*  TROUBLESHOOT
@@ -868,7 +873,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 			}
 
 			/* Renull the function */
-			temp_fxn = NULL;
+			temp_fxn = nullptr;
 		}
 		/* Default else - not a recorder */
 
@@ -880,7 +885,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 	if (recorder_init_items)
 	{
 		/* flush the output streams */
-		fflush(NULL);
+		fflush(nullptr);
 	}
 
 	/* check if any players still need delta mode */
@@ -889,7 +894,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 	index_item = delta_tape_objects;
 
 	/* Loop through objects and look for players */
-	while (index_item != NULL)
+	while (index_item != nullptr)
 	{
 		/* See if it is a player */
 		if (index_item->obj_type == PLAYER)
@@ -900,7 +905,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 			/* See if we're in service */
 			if ((obj->in_svc_double <= gl_globaldeltaclock) && (obj->out_svc_double >= gl_globaldeltaclock))
 			{
-				if (( myplayer->next.ns!=0 ) && (myplayer->next.ts != t0))	/* See if we need to go back into deltamode, but make sure we aren't stuck! */
+				if ((( myplayer->next.ns!=0 ) && (myplayer->next.ts != t0)) || ((myplayer->next.ts != t0) && myplayer->all_events_delta))	/* See if we need to go back into deltamode, but make sure we aren't stuck! */
 					enable_deltamode(myplayer->next.ts);
 			}
 		}

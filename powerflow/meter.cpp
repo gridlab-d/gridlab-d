@@ -37,21 +37,21 @@ EXPORT int64 meter_reset(OBJECT *obj)
 // meter CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 // class management data
-CLASS* meter::oclass = NULL;
-CLASS* meter::pclass = NULL;
+CLASS* meter::oclass = nullptr;
+CLASS* meter::pclass = nullptr;
 
 // the constructor registers the class and properties and sets the defaults
 meter::meter(MODULE *mod) : node(mod)
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// link to parent class (used by isa)
 		pclass = node::oclass;
 
 		// register the class definition
 		oclass = gl_register_class(mod,"meter",sizeof(meter),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class meter";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -187,23 +187,25 @@ meter::meter(MODULE *mod) : node(mod)
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		// publish meter reset function
-		if (gl_publish_function(oclass,"reset",(FUNCTIONADDR)meter_reset)==NULL)
+		if (gl_publish_function(oclass,"reset",(FUNCTIONADDR)meter_reset)==nullptr)
 			GL_THROW("unable to publish meter_reset function in %s",__FILE__);
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_meter)==NULL)
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_meter)==nullptr)
 			GL_THROW("Unable to publish meter deltamode function");
-		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
+		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==nullptr)
 			GL_THROW("Unable to publish meter swing-swapping function");
-		if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==NULL)
+		if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==nullptr)
 			GL_THROW("Unable to publish meter current injection update mapping function");
-		if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
+		if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==nullptr)
 			GL_THROW("Unable to publish meter VFD attachment function");
-		if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
+		if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == nullptr)
 			GL_THROW("Unable to publish meter island-status-reset function");
-		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
+		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == nullptr)
 			GL_THROW("Unable to publish meter swing-status check function");
-		if (gl_publish_function(oclass, "pwr_object_kmldata", (FUNCTIONADDR)meter_kmldata) == NULL)
+		if (gl_publish_function(oclass, "pwr_object_shunt_update", (FUNCTIONADDR)node_update_shunt_values) == nullptr)
+			GL_THROW("Unable to publish meter shunt update function");
+		if (gl_publish_function(oclass, "pwr_object_kmldata", (FUNCTIONADDR)meter_kmldata) == nullptr)
 			GL_THROW("Unable to publish meter kmldata function");
 		}
 }
@@ -227,8 +229,8 @@ int meter::create()
 	pre_load=0;
 #endif
 
-	measured_voltage[0] = measured_voltage[1] = measured_voltage[2] = complex(0,0,A);
-	measured_voltageD[0] = measured_voltageD[1] = measured_voltageD[2] = complex(0,0,A);
+	measured_voltage[0] = measured_voltage[1] = measured_voltage[2] = gld::complex(0,0,A);
+	measured_voltageD[0] = measured_voltageD[1] = measured_voltageD[2] = gld::complex(0,0,A);
 	measured_real_max_voltage_in_interval[0] = measured_real_max_voltage_in_interval[1] = measured_real_max_voltage_in_interval[2] = 0.0;
 	measured_reactive_max_voltage_in_interval[0] = measured_reactive_max_voltage_in_interval[1] = measured_reactive_max_voltage_in_interval[2] = 0.0;
 	measured_real_max_voltageD_in_interval[0] = measured_real_max_voltageD_in_interval[1] = measured_real_max_voltageD_in_interval[2] = 0.0;
@@ -238,23 +240,23 @@ int meter::create()
 	measured_real_min_voltageD_in_interval[0] = measured_real_min_voltageD_in_interval[1] = measured_real_min_voltageD_in_interval[2] = 0.0;
 	measured_reactive_min_voltageD_in_interval[0] = measured_reactive_min_voltageD_in_interval[1] = measured_reactive_min_voltageD_in_interval[2] = 0.0;
 	measured_avg_voltage_mag_in_interval[0] = measured_avg_voltage_mag_in_interval[1] = measured_avg_voltage_mag_in_interval[2] = 0.0;
-	measured_current[0] = measured_current[1] = measured_current[2] = complex(0,0,J);
+	measured_current[0] = measured_current[1] = measured_current[2] = gld::complex(0,0,J);
 	measured_real_energy = measured_reactive_energy = 0.0;
     measured_real_energy_delta = measured_reactive_energy_delta = 0;
-    last_measured_voltage[0] = last_measured_voltage[1] = last_measured_voltage[2] = complex(0,0,A);
-    last_measured_voltageD[0] = last_measured_voltageD[1] = last_measured_voltageD[2] = complex(0,0,A);
+    last_measured_voltage[0] = last_measured_voltage[1] = last_measured_voltage[2] = gld::complex(0,0,A);
+    last_measured_voltageD[0] = last_measured_voltageD[1] = last_measured_voltageD[2] = gld::complex(0,0,A);
     last_measured_real_energy = last_measured_reactive_energy = 0;
     last_measured_real_power = last_measured_reactive_power = 0.0;
     last_measured_real_power_3ph[0] = last_measured_real_power_3ph[1] = last_measured_real_power_3ph[2] = 0.0;
     last_measured_reactive_power_3ph[0] = last_measured_reactive_power_3ph[1] = last_measured_reactive_power_3ph[2] = 0.0;
 	measured_energy_delta_timestep = -1;
 	measured_min_max_avg_timestep = -1;
-	measured_power = complex(0,0,J);
+	measured_power = gld::complex(0,0,J);
 	measured_demand = 0.0;
 	measured_real_power = 0.0;
 	measured_reactive_power = 0.0;
 
-	indiv_measured_power[0] = indiv_measured_power[1] = indiv_measured_power[2] = complex(0.0,0.0);
+	indiv_measured_power[0] = indiv_measured_power[1] = indiv_measured_power[2] = gld::complex(0.0,0.0);
 
 	meter_interrupted = false;	//We default to being in service
 	meter_interrupted_secondary = false;	//Default to no momentary interruptions
@@ -276,7 +278,7 @@ int meter::create()
 	last_tier_price[1] = 0;
 	last_tier_price[2] = 0;
 	last_price_base = 0;
-	meter_power_consumption = complex(0,0);
+	meter_power_consumption = gld::complex(0,0);
 
 	//Flag us as a meter
 	node_type = METER_NODE;
@@ -359,7 +361,7 @@ int meter::init(OBJECT *parent)
 	}
 
 	// Count the number of phases...for use with meter_power_consumption
-	if (meter_power_consumption != complex(0,0))
+	if (meter_power_consumption != gld::complex(0,0))
 	{
 		no_phases = 0;
 		if (has_phase(PHASE_A))
@@ -385,10 +387,10 @@ int meter::init(OBJECT *parent)
 			meter_NR_servered = true;	//Set this flag for later use
 
 			//Allocate the storage vector
-			prev_voltage_value = (complex *)gl_malloc(3*sizeof(complex));
+			prev_voltage_value = (gld::complex *)gl_malloc(3*sizeof(gld::complex));
 
 			//Check it
-			if (prev_voltage_value==NULL)
+			if (prev_voltage_value==nullptr)
 			{
 				GL_THROW("Failure to allocate memory for voltage tracking array");
 				/*  TROUBLESHOOT
@@ -400,9 +402,9 @@ int meter::init(OBJECT *parent)
 			}
 
 			//Populate it with zeros for now, just cause - init sets voltages in node
-			prev_voltage_value[0] = complex(0.0,0.0);
-			prev_voltage_value[1] = complex(0.0,0.0);
-			prev_voltage_value[2] = complex(0.0,0.0);
+			prev_voltage_value[0] = gld::complex(0.0,0.0);
+			prev_voltage_value[1] = gld::complex(0.0,0.0);
+			prev_voltage_value[2] = gld::complex(0.0,0.0);
 		}
 	}
 
@@ -476,11 +478,11 @@ int meter::check_prices(){
 }
 TIMESTAMP meter::presync(TIMESTAMP t0)
 {
-	if (meter_power_consumption != complex(0,0))
+	if (meter_power_consumption != gld::complex(0,0))
 		power[0] = power[1] = power[2] = 0.0;
 
 	//Reliability addition - if momentary flag set - clear it
-	if (meter_interrupted_secondary == true)
+	if (meter_interrupted_secondary)
 		meter_interrupted_secondary = false;
     
     // Capturing first timestamp of simulation for use in delta energy measurements.
@@ -497,7 +499,7 @@ void meter::BOTH_meter_sync_fxn()
 	OBJECT *obj = OBJECTHDR(this);
 
 	//Reliability check
-	if ((fault_check_object != NULL) && (solver_method == SM_NR))	//proper solver and fault_object isn't null - may need to set a flag
+	if ((fault_check_object != nullptr) && (solver_method == SM_NR))	//proper solver and fault_object isn't null - may need to set a flag
 	{
 		if (NR_node_reference==-99)	//Childed
 		{
@@ -537,7 +539,7 @@ void meter::BOTH_meter_sync_fxn()
 			meter_interrupted = true;	//Someone is out of service, they just may not know it
 
 			//See if we're flagged for a momentary as well - if we are, clear it
-			if (meter_interrupted_secondary == true)
+			if (meter_interrupted_secondary)
 				meter_interrupted_secondary = false;
 		}
 		else
@@ -546,7 +548,7 @@ void meter::BOTH_meter_sync_fxn()
 		}
 	}
 
-	if (meter_power_consumption != complex(0,0))
+	if (meter_power_consumption != gld::complex(0,0))
 	{
 		if (has_phase(PHASE_A))
 			power[0] += meter_power_consumption / no_phases;
@@ -568,7 +570,7 @@ TIMESTAMP meter::sync(TIMESTAMP t0)
 TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	OBJECT *obj = OBJECTHDR(this);
-	complex temp_current;
+	gld::complex temp_current;
 	TIMESTAMP tretval;
 
 	//Perform node update - do it now, otherwise current_inj isn't populated
@@ -1172,7 +1174,7 @@ TIMESTAMP meter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 
 			// Now that we've accumulated the bill for the last time period, update to the new price (if using the market)
-			if (bill_mode != BM_TIERED_TOU && power_market != NULL && price_prop != NULL)
+			if (bill_mode != BM_TIERED_TOU && power_market != nullptr && price_prop != nullptr)
 			{
 				double *pprice = (gl_get_double(power_market, price_prop));
 				last_price = price = *pprice;
@@ -1299,7 +1301,7 @@ SIMULATIONMODE meter::inter_deltaupdate_meter(unsigned int64 delta_time, unsigne
 	deltat = (double)dt/(double)DT_SECOND;
 
 	//Update time tracking variable - mostly for GFA functionality calls
-	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
+	if ((iteration_count_val==0) && !interupdate_pos) //Only update timestamp tracker on first iteration
 	{
 		//Update tracking variable
 		prev_time_dbl = gl_globaldeltaclock;
@@ -1322,20 +1324,20 @@ SIMULATIONMODE meter::inter_deltaupdate_meter(unsigned int64 delta_time, unsigne
 	}
 
 	//Perform the GFA update, if enabled
-	if ((GFA_enable == true) && (iteration_count_val == 0) && (interupdate_pos == false))	//Always just do on the first pass
+	if (GFA_enable && (iteration_count_val == 0) && !interupdate_pos)	//Always just do on the first pass
 	{
 		//Do the checks
 		GFA_Update_time = perform_GFA_checks(deltat);
 	}
 
-	if (interupdate_pos == false)	//Before powerflow call
+	if (!interupdate_pos)	//Before powerflow call
 	{
 		//Meter-specific presync items
-		if (meter_power_consumption != complex(0,0))
+		if (meter_power_consumption != gld::complex(0,0))
 			power[0] = power[1] = power[2] = 0.0;
 
 		//Reliability addition - if momentary flag set - clear it
-		if (meter_interrupted_secondary == true)
+		if (meter_interrupted_secondary)
 			meter_interrupted_secondary = false;
 
 		//Call presync-equivalent items
@@ -1400,7 +1402,7 @@ SIMULATIONMODE meter::inter_deltaupdate_meter(unsigned int64 delta_time, unsigne
 			measured_demand = measured_real_power;
 
 		//See if GFA functionality is required, since it may require iterations or "continance"
-		if (GFA_enable == true)
+		if (GFA_enable)
 		{
 			//See if our return is value
 			if ((GFA_Update_time > 0.0) && (GFA_Update_time < 1.7))
@@ -1434,7 +1436,7 @@ EXPORT int create_meter(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(meter::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			meter *my = OBJECTDATA(*obj,meter);
 			gl_set_parent(*obj,parent);

@@ -11,8 +11,8 @@
 #include "vfd.h"
 
 //initialize pointers
-CLASS* vfd::oclass = NULL;
-CLASS* vfd::pclass = NULL;
+CLASS* vfd::oclass = nullptr;
+CLASS* vfd::pclass = nullptr;
 
 //////////////////////////////////////////////////////////////////////////
 // vfd CLASS FUNCTIONS
@@ -20,12 +20,12 @@ CLASS* vfd::pclass = NULL;
 
 vfd::vfd(MODULE *mod) : link_object(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		pclass = link_object::oclass;
 		
 		oclass = gl_register_class(mod,"vfd",sizeof(vfd),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class vfd";
 		else
 			oclass->trl = TRL_PROTOTYPE;
@@ -54,21 +54,21 @@ vfd::vfd(MODULE *mod) : link_object(mod)
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_vfd)==NULL)
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_vfd)==nullptr)
 			GL_THROW("Unable to publish VFD deltamode function");
-		if (gl_publish_function(oclass,	"postupdate_pwr_object", (FUNCTIONADDR)postupdate_vfd)==NULL)
+		if (gl_publish_function(oclass,	"postupdate_pwr_object", (FUNCTIONADDR)postupdate_vfd)==nullptr)
 			GL_THROW("Unable to publish VFD deltamode function");
 
 		//Publish restoration-related function (current update)
-		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==nullptr)
 			GL_THROW("Unable to publish VFD external power calculation function");
-		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==nullptr)
 			GL_THROW("Unable to publish VFD external power limit calculation function");
-		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==NULL)
+		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==nullptr)
 			GL_THROW("Unable to publish VFD external current calculation function");
 
 		//Publish external VFD interfacing function
-		if (gl_publish_function(oclass,	"vfd_current_injection_update", (FUNCTIONADDR)current_injection_update_VFD)==NULL)
+		if (gl_publish_function(oclass,	"vfd_current_injection_update", (FUNCTIONADDR)current_injection_update_VFD)==nullptr)
 			GL_THROW("Unable to publish VFD external current injection calculation function");
     }
 }
@@ -102,7 +102,7 @@ int vfd::create()
 	prev_time_value = 0.0;
 
 	//Null the array pointers, just because
-	settleFreq = NULL;
+	settleFreq = nullptr;
 	settleFreq_length = 0;
 	curr_array_position = 0;
 	force_array_realloc = false;
@@ -112,8 +112,8 @@ int vfd::create()
 	HPbyF = 0.0;
 
 	//Null node pointers
-	fNode = NULL;
-	tNode = NULL;
+	fNode = nullptr;
+	tNode = nullptr;
 	
 	//Populate the efficiency curve coefficients
 	//Backwards fill - index = z^index
@@ -130,9 +130,9 @@ int vfd::create()
 	efficiency_coeffs[7] = 3.497;
 
 	//Initialize other tracking variables
-	prev_power[0] = complex(0.0,0.0);
-	prev_power[1] = complex(0.0,0.0);
-	prev_power[2] = complex(0.0,0.0);
+	prev_power[0] = gld::complex(0.0,0.0);
+	prev_power[1] = gld::complex(0.0,0.0);
+	prev_power[2] = gld::complex(0.0,0.0);
 
 	//Flag this as a VFD
 	SpecialLnk=VFD;
@@ -256,7 +256,7 @@ int vfd::init(OBJECT *parent)
 	}
 
 	//Make sure we're three-phase, since that's all that works right now
-	if ((has_phase(PHASE_A) & has_phase(PHASE_B) & has_phase(PHASE_C)) != true)
+	if (!(has_phase(PHASE_A) & has_phase(PHASE_B) & has_phase(PHASE_C)))
 	{
 		GL_THROW("VFD:%d - %s - Must be three-phase!",obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
@@ -313,7 +313,7 @@ int vfd::init(OBJECT *parent)
 	temp_fxn = (FUNCTIONADDR)(gl_get_function(to,"attach_vfd_to_pwr_object"));
 
 	//Make sure it worked
-	if (temp_fxn == NULL)
+	if (temp_fxn == nullptr)
 	{
 		GL_THROW("VFD:%d - %s -- Failed to map TO-node flag function",obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
@@ -389,11 +389,11 @@ void vfd::CheckParameters()
 //Function to perform the current update - called by a node object, after they've updated (so current is accurate)
 STATUS vfd::VFD_current_injection(void)
 {
-	complex currRat, lossCurr[3];
+	gld::complex currRat, lossCurr[3];
 	int index_val, index_val_inner, index_new_limit;
 	double z_val, driveCurrPower, temp_coeff, settleVolt, avg_freq_value;
-	complex temp_power_val, powerOutElectrical, powerInElectrical;
-	complex settleVoltOut[3];
+	gld::complex temp_power_val, powerOutElectrical, powerInElectrical;
+	gld::complex settleVoltOut[3];
 	bool desiredChange;
 	int tdiff_value;
 	double diff_time_value;
@@ -505,7 +505,7 @@ STATUS vfd::VFD_current_injection(void)
 		if (vfdState == VFD_CHANGING)	//We're mid-adjust
 		{
 			//See if we've changed values or not
-			if ((prev_vfdState == VFD_CHANGING) && (desiredChange == true))
+			if ((prev_vfdState == VFD_CHANGING) && desiredChange)
 			{
 				//Pre-empt the array with just our current value
 				for (index_val=0; index_val<settleFreq_length; index_val++)
@@ -609,9 +609,9 @@ STATUS vfd::VFD_current_injection(void)
 	settleVolt = VbyF*currentFrequency;
 
 	//Temporary variable
-	settleVoltOut[0] = complex(settleVolt,0)*complex_exp(phasorVal[0]);
-	settleVoltOut[1] = complex(settleVolt,0)*complex_exp(phasorVal[1]);
-	settleVoltOut[2] = complex(settleVolt,0)*complex_exp(phasorVal[2]);
+	settleVoltOut[0] = gld::complex(settleVolt,0)*complex_exp(phasorVal[0]);
+	settleVoltOut[1] = gld::complex(settleVolt,0)*complex_exp(phasorVal[1]);
+	settleVoltOut[2] = gld::complex(settleVolt,0)*complex_exp(phasorVal[2]);
 	
 	//Check the current state -- if we're off, disconnect things
 	if (vfdState == VFD_OFF)
@@ -623,21 +623,21 @@ STATUS vfd::VFD_current_injection(void)
 		for (index_val=0; index_val<3; index_val++)
 		{
 			//Set output voltage to zero
-			tNode->voltage[index_val] = complex(0.0,0.0);
+			tNode->voltage[index_val] = gld::complex(0.0,0.0);
 
 			//Force output and input currents to zero
-			current_out[index_val] = complex(0.0,0.0);
-			current_in[index_val] = complex(0.0,0.0);
+			current_out[index_val] = gld::complex(0.0,0.0);
+			current_in[index_val] = gld::complex(0.0,0.0);
 
 			//Do the same for power
-			indiv_power_in[index_val] = complex(0.0,0.0);
-			indiv_power_out[index_val] = complex(0.0,0.0);
+			indiv_power_in[index_val] = gld::complex(0.0,0.0);
+			indiv_power_out[index_val] = gld::complex(0.0,0.0);
 
 			//Update the input power posting
 			fNode->power[index_val] -= prev_power[index_val];
 
 			//Update the tracking variable
-			prev_power[index_val] = complex(0.0,0.0);
+			prev_power[index_val] = gld::complex(0.0,0.0);
 
 		}//end phase loop
 	}//End VFD off
@@ -679,7 +679,7 @@ STATUS vfd::VFD_current_injection(void)
 		}//End efficiency FOR loop
 
 		//Accumulate the output power
-		powerOutElectrical = complex(0.0,0.0);
+		powerOutElectrical = gld::complex(0.0,0.0);
 
 		for (index_val=0; index_val<3; index_val++)
 		{
@@ -701,8 +701,8 @@ STATUS vfd::VFD_current_injection(void)
 		if (currEfficiency == 0.0)
 		{
 			//Zero both - power isn't coming from nowhere!
-			powerOutElectrical = complex(0.0,0.0);
-			powerInElectrical = complex(0.0,0.0);
+			powerOutElectrical = gld::complex(0.0,0.0);
+			powerInElectrical = gld::complex(0.0,0.0);
 		}
 		else
 		{
@@ -724,7 +724,7 @@ STATUS vfd::VFD_current_injection(void)
 			//Compute the amount and apply it to the input
 			if (fNode->voltage[index_val].Mag() == 0.0)
 			{
-				current_in[index_val] = complex(0.0,0.0);
+				current_in[index_val] = gld::complex(0.0,0.0);
 			}
 			else
 			{
@@ -824,9 +824,9 @@ TIMESTAMP vfd::postsync(TIMESTAMP t0)
 
 //Function to perform exp(j*val)
 //Basically a complex rotation
-complex vfd::complex_exp(double angle)
+gld::complex vfd::complex_exp(double angle)
 {
-	complex output_val;
+	gld::complex output_val;
 	double temp_angle, new_angle;
 	int even_amount;
 
@@ -847,7 +847,7 @@ complex vfd::complex_exp(double angle)
 	}
 
 	//exp(jx) = cos(x)+j*sin(x)
-	output_val = complex(cos(angle),sin(angle));
+	output_val = gld::complex(cos(angle),sin(angle));
 
 	return output_val;
 }
@@ -859,10 +859,10 @@ STATUS vfd::alloc_freq_arrays(double delta_t_val)
 	int a_index;
 	
 	//See if we were commanded to reallocate -- this would be done on a zero-th pass of interupdate, most likely (or in postupdate, when transitioning out)
-	if (force_array_realloc == true)
+	if (force_array_realloc)
 	{
 		//Make sure we actually are allocated first
-		if (settleFreq != NULL)
+		if (settleFreq != nullptr)
 		{
 			//Free the allocation
 			gl_free(settleFreq);
@@ -876,11 +876,11 @@ STATUS vfd::alloc_freq_arrays(double delta_t_val)
 		force_array_realloc = false;
 		
 		//NULL the pointer, for giggles - put out here, just to be paranoid
-		settleFreq = NULL;
+		settleFreq = nullptr;
 	}
 	
 	//See if we need to be allocated
-	if (settleFreq == NULL)
+	if (settleFreq == nullptr)
 	{
 		//Determine the size of our array
 		settleFreq_length = (int)(stableTime/delta_t_val + 0.5);
@@ -900,7 +900,7 @@ STATUS vfd::alloc_freq_arrays(double delta_t_val)
 		settleFreq = (double *)gl_malloc(settleFreq_length*sizeof(double));
 		
 		//Make sure it worked
-		if (settleFreq == NULL)
+		if (settleFreq == nullptr)
 		{
 			//Bit duplicative to the "function failure message", but meh
 			gl_error("vfd:%d %s -- failed to allocate dynamic array",obj->id,(obj->name ? obj->name : "Unnamed"));
@@ -937,7 +937,7 @@ SIMULATIONMODE vfd::inter_deltaupdate_vfd(unsigned int64 delta_time, unsigned lo
 	STATUS ret_value;
 
 	//See if we're the very first pass/etc
-	if ((delta_time == 0) && (iteration_count_val == 0) && (interupdate_pos == false))	//First deltamode call
+	if ((delta_time == 0) && (iteration_count_val == 0) && !interupdate_pos)	//First deltamode call
 	{
 		//Compute the timestep as a double
 		dt_value = (double)dt/(double)DT_SECOND;
@@ -956,7 +956,7 @@ SIMULATIONMODE vfd::inter_deltaupdate_vfd(unsigned int64 delta_time, unsigned lo
 	}
 
 	//Most of these items were copied from link.cpp's interupdate (need to replicate)
-	if (interupdate_pos == false)	//Before powerflow call
+	if (!interupdate_pos)	//Before powerflow call
 	{
 		//Link sync stuff	
 		NR_link_sync_fxn();
@@ -1014,7 +1014,7 @@ EXPORT int create_vfd(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(vfd::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			vfd *my = OBJECTDATA(*obj,vfd);
 			gl_set_parent(*obj,parent);
