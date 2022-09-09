@@ -110,7 +110,7 @@ series_compensator::series_compensator(MODULE *mod) : link_object(mod)
 				PT_KEYWORD, "BYPASS", (enumeration)ST_BYPASS,
 
 			PT_double, "series_compensator_resistance[Ohm]", PADDR(series_compensator_resistance), PT_DESCRIPTION, "Baseline resistance for the series compensator device - needed for NR",
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_series_compensator)==nullptr)
@@ -509,7 +509,7 @@ TIMESTAMP series_compensator::presync(TIMESTAMP t0)
 	//Call the post-presync regulator code
 	sercom_postPre_fxn();
 
-	if (t1 != TSNVRDBL)
+	if (t1 != TS_NEVER_DBL)
 		return -t1; 	//Soft return
 	else
 		return TS_NEVER;

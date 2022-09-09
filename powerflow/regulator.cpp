@@ -52,7 +52,7 @@ regulator::regulator(MODULE *mod) : link_object(mod)
 			PT_double, "tap_C_change_count",PADDR(tap_C_change_count),PT_DESCRIPTION,"count of all physical tap changes on phase C since beginning of simulation (plus initial value)",
 			PT_object,"sense_node",PADDR(RemoteNode),PT_DESCRIPTION,"Node to be monitored for voltage control in remote sense mode",
 			PT_double,"regulator_resistance[Ohm]",PADDR(regulator_resistance), PT_DESCRIPTION,"The resistance value of the regulator when it is not blown.",
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
 		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_regulator)==nullptr)
@@ -371,8 +371,8 @@ int regulator::init(OBJECT *parent)
 			break;
 	}
 
-	mech_t_next[0] = mech_t_next[1] = mech_t_next[2] = TSNVRDBL;
-	dwell_t_next[0] = dwell_t_next[1] = dwell_t_next[2] = TSNVRDBL;
+	mech_t_next[0] = mech_t_next[1] = mech_t_next[2] = TS_NEVER_DBL;
+	dwell_t_next[0] = dwell_t_next[1] = dwell_t_next[2] = TS_NEVER_DBL;
 
 	//Now set first_run_flag appropriately
 	for (jindex=0;jindex<3;jindex++)
@@ -477,7 +477,7 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 
 	if ((first_run_flag[0] < 1) || (first_run_flag[1] < 1) || (first_run_flag[2] < 1)) return t1;
 	else if (t1_dbl <= next_time) return t1;
-	else if (next_time != TSNVRDBL) return -next_time; //soft return to next tap change
+	else if (next_time != TS_NEVER_DBL) return -next_time; //soft return to next tap change
 	else return TS_NEVER;
 }
 
@@ -526,7 +526,7 @@ void regulator::reg_prePre_fxn(double curr_time_value)
 				*/
 			}
 		}
-		next_time = TSNVRDBL;
+		next_time = TS_NEVER_DBL;
 	}
 	else if (iteration_flag)
 	{
@@ -666,7 +666,7 @@ void regulator::reg_prePre_fxn(double curr_time_value)
 					//more changes unless system changes
 					else 
 					{	
-						dwell_t_next[i] = mech_t_next[i] = TSNVRDBL;
+						dwell_t_next[i] = mech_t_next[i] = TS_NEVER_DBL;
 						//if (pConfig->dwell_time == 0)
 						//	dwell_flag[i] = 1;
 						//else
@@ -708,7 +708,7 @@ void regulator::reg_prePre_fxn(double curr_time_value)
 					next_time = nt[2];
 
 				if (next_time <= curr_time_value)
-					next_time = TSNVRDBL;
+					next_time = TS_NEVER_DBL;
 			}
 			else
 				GL_THROW("Specified connect type is not supported in automatic modes at this time.");
@@ -855,7 +855,7 @@ void regulator::reg_prePre_fxn(double curr_time_value)
 				//more changes unless system changes
 				else 
 				{	
-					dwell_t_next[0] = mech_t_next[0] = TSNVRDBL;
+					dwell_t_next[0] = mech_t_next[0] = TS_NEVER_DBL;
 					dwell_flag[0] = 0;
 					mech_flag[0] = 0;
 				}
@@ -887,7 +887,7 @@ void regulator::reg_prePre_fxn(double curr_time_value)
 					next_time = nt[0];
 
 				if (next_time <= curr_time_value)
-					next_time = TSNVRDBL;
+					next_time = TS_NEVER_DBL;
 			}
 			else
 				GL_THROW("Specified connect type is not supported in automatic modes at this time.");

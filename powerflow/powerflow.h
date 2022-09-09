@@ -33,9 +33,6 @@ void print_matrix(gld::complex mat[3][3]);
 #define GETOBJECT(obj) ((OBJECT *) obj - 1)
 //#define IMPORT_CLASS(name) extern CLASS *name##_class
 
-//Deltamode use
-#define TSNVRDBL 9223372036854775808.0
-
 typedef enum {SM_FBS=0, SM_GS=1, SM_NR=2} SOLVERMETHOD;		/**< powerflow solver methodology */
 typedef enum {NRM_TCIM=0, NRM_FPI=1} NRSOLVERALG;		/**< NR solver underlying appraoch */
 typedef enum {MM_SUPERLU=0, MM_EXTERN=1} MATRIXSOLVERMETHOD;	/**< NR matrix solver methodlogy */
@@ -87,8 +84,8 @@ GLOBAL bool use_link_limits INIT(true);				/**< Flag to include line/transformer
 GLOBAL MATRIXSOLVERMETHOD matrix_solver_method INIT(MM_SUPERLU);	/**< Newton-Raphson uses superLU as the default solver */
 GLOBAL unsigned int NR_bus_count INIT(0);			/**< Newton-Raphson bus count - used for determining size of bus vector */
 GLOBAL unsigned int NR_branch_count INIT(0);		/**< Newton-Raphson branch count - used for determining size of branch vector */
-GLOBAL BUSDATA *NR_busdata INIT(NULL);				/**< Newton-Raphson bus data pointer array */
-GLOBAL BRANCHDATA *NR_branchdata INIT(NULL);		/**< Newton-Raphson branch data pointer array */
+GLOBAL BUSDATA *NR_busdata INIT(nullptr);				/**< Newton-Raphson bus data pointer array */
+GLOBAL BRANCHDATA *NR_branchdata INIT(nullptr);		/**< Newton-Raphson branch data pointer array */
 GLOBAL NR_SOLVER_STRUCT NR_powerflow;				/**< Newton-Raphson solver pointer working variables - one per island detected */
 GLOBAL int NR_islands_detected INIT(0);				/**< Newton-Raphson solver island count (from fault_check) - determines the array size of NR_powerflow */
 GLOBAL bool NR_island_fail_method INIT(false);		/**< Newton-Raphson multiple islands - determine how individual island failure may determined */
@@ -101,7 +98,7 @@ GLOBAL bool NR_admit_change INIT(true);				/**< Newton-Raphson admittance matrix
 GLOBAL bool NR_FPI_imp_load_change INIT(true);		/**< Newton-Raphson Fixed-Point-Iterative - flag to indicate if impedance load changed (for admittance reform) */
 GLOBAL int NR_superLU_procs INIT(1);				/**< Newton-Raphson related - superLU MT processor count to request - separate from thread_count */
 GLOBAL TIMESTAMP NR_retval INIT(TS_NEVER);			/**< Newton-Raphson current return value - if t0 objects know we aren't going anywhere */
-GLOBAL OBJECT *NR_swing_bus INIT(NULL);				/**< Newton-Raphson swing bus */
+GLOBAL OBJECT *NR_swing_bus INIT(nullptr);				/**< Newton-Raphson swing bus */
 GLOBAL int NR_expected_swing_rank INIT(6);			/**< Newton-Raphson expected master swing bus rank - for multi-gen children compatibility */
 GLOBAL bool NR_swing_deferred_pass INIT(false);		/**< Newton-Raphson toggle for deferred init - for multi-gen children compatibility */
 GLOBAL bool NR_swing_rank_set INIT(false);			/**< Newton-Raphson check to see if SWING has set its rank (mostly for other objects) */
@@ -122,8 +119,8 @@ GLOBAL gld::complex fault_Z INIT(gld::complex(1e-6,0));		/**< fault impedance */
 GLOBAL gld::complex ground_Z INIT(gld::complex(1e-6,0));		/**< ground impedance */
 GLOBAL double default_maximum_voltage_error INIT(1e-6);	/**< default sync voltage convergence limit [puV] */
 GLOBAL double default_maximum_power_error INIT(0.0001);	/**< default power convergence limit for multirun */
-GLOBAL OBJECT *restoration_object INIT(NULL);		/**< restoration object of the system */
-GLOBAL OBJECT *fault_check_object INIT(NULL);		/**< fault_check object of the system */
+GLOBAL OBJECT *restoration_object INIT(nullptr);		/**< restoration object of the system */
+GLOBAL OBJECT *fault_check_object INIT(nullptr);		/**< fault_check object of the system */
 GLOBAL bool fault_check_override_mode INIT(false);	/**< Mode designator for fault_check -- overrides errors and prevents powerflow -- meant for debug */
 GLOBAL bool meshed_fault_checking_enabled INIT(false);	/*** fault_check object flag for possible meshing -- adjusts how reliability-related code runs */
 GLOBAL bool restoration_checks_active INIT(false);	/***< Overall flag for when reconfigurations are occurring - special actions in devices */
@@ -135,14 +132,14 @@ GLOBAL FREQMEASDEFAULT all_powerflow_freq_measure_method INIT(FMM_NONE);		/* Fla
 GLOBAL unsigned long deltamode_timestep INIT(10000000); /* deltamode timestep value - 10 ms timestep, at first - internal */
 GLOBAL double deltamode_timestep_publish INIT(10000000.0); /* deltamode module-published 10 ms timestep, at first -- module property version, to be converted*/
 GLOBAL int delta_initialize_iterations INIT(0);			/* deltamode - extra powerflow iterations on first timestep - useful for initialization */
-GLOBAL OBJECT **delta_objects INIT(NULL);				/* Array pointer objects that need deltamode interupdate calls */
-GLOBAL FUNCTIONADDR *delta_functions INIT(NULL);	/* Array pointer functions for objects that need deltamode interupdate calls */
-GLOBAL FUNCTIONADDR *post_delta_functions INIT(NULL);		/* Array pointer functions for objects that need deltamode postupdate calls */
+GLOBAL OBJECT **delta_objects INIT(nullptr);				/* Array pointer objects that need deltamode interupdate calls */
+GLOBAL FUNCTIONADDR *delta_functions INIT(nullptr);	/* Array pointer functions for objects that need deltamode interupdate calls */
+GLOBAL FUNCTIONADDR *post_delta_functions INIT(nullptr);		/* Array pointer functions for objects that need deltamode postupdate calls */
 GLOBAL int pwr_object_count INIT(0);				/* deltamode object count */
 GLOBAL int pwr_object_current INIT(-1);				/* Index of current deltamode object */
 GLOBAL TIMESTAMP deltamode_starttime INIT(TS_NEVER);	/* Tracking variable for next desired instance of deltamode */
 GLOBAL TIMESTAMP deltamode_endtime INIT(TS_NEVER);		/* Tracking variable to see when deltamode ended - so differential calculations don't get messed up */
-GLOBAL double deltamode_endtime_dbl INIT(TSNVRDBL);		/* Tracking variable to see when deltamode ended - double valued for explicit movement calculations */
+GLOBAL double deltamode_endtime_dbl INIT(TS_NEVER_DBL);		/* Tracking variable to see when deltamode ended - double valued for explicit movement calculations */
 GLOBAL TIMESTAMP deltamode_supersec_endtime INIT(TS_NEVER);	/* Tracking variable to indicate the "floored" time of detamode_endtime */
 GLOBAL double current_frequency INIT(60.0);			/**< Current operating frequency of the system - used by deltamode stuff */
 GLOBAL bool master_frequency_update INIT(false);	/**< Whether a generator has designated itself "keeper of frequency" -- temporary deltamode override */

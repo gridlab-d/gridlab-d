@@ -185,6 +185,16 @@ int powerflow_object::init(OBJECT *parent)
 			phases = pParent->phases;
 	}
 
+	//General warning, just in case
+	if (enable_subsecond_models && ((obj->flags & OF_DELTAMODE) != OF_DELTAMODE))
+	{
+		gl_warning("object:%d - %s - Deltamode is enabled for the module, but not this object - is all_power_delta set?",obj->id,(obj->name ? obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		The enable_subsecond_models flag is set for powerflow, but this specific object is not deltamode flagged.  If this is unintentional,
+		individually flag it, or set all_power_delta to continue.  If this is a desired behavior, ignore this message.
+		*/
+	}
+
 	/* no phase info */
 	if (phases==0)
 		throw "phases not specified";
