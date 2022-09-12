@@ -267,6 +267,18 @@ int node::create(void)
 
 	n++;
 
+	//DEBUG - Manual admittance values (have to zero it)
+	full_Y_matrix.grow_to(3,3);
+	full_Y_matrix.set_at(0,0,0.0);
+	full_Y_matrix.set_at(0,1,0.0);
+	full_Y_matrix.set_at(0,2,0.0);
+	full_Y_matrix.set_at(1,0,0.0);
+	full_Y_matrix.set_at(1,1,0.0);
+	full_Y_matrix.set_at(1,2,0.0);
+	full_Y_matrix.set_at(2,0,0.0);
+	full_Y_matrix.set_at(2,1,0.0);
+	full_Y_matrix.set_at(2,2,0.0);
+
 	bustype = PQ;
 	busflags = NF_HASSOURCE;
 	busphasesIn = 0;
