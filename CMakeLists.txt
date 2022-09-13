@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.13)
 project(GridLAB-D)
 
 set(COMPILE_FLAGS "${WARNING_FLAGS}")
-#set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -102,6 +101,7 @@ if (WIN32 OR MSYS OR MINGW OR CYGWIN)
             GIT_TAG        v1.3.1
     )
     FetchContent_MakeAvailable(dlfcn-win32)
+    include_directories(dlfcn-win32_SOURCE_DIR)
     set(DL_NAME dl)
     set(DL_LIB dl)
 
