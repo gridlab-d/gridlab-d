@@ -101,7 +101,7 @@ if (WIN32 OR MSYS OR MINGW OR CYGWIN)
             GIT_TAG        v1.3.1
     )
     FetchContent_MakeAvailable(dlfcn-win32)
-    include_directories(dlfcn-win32_SOURCE_DIR)
+    include_directories(${dlfcn-win32_SOURCE_DIR}/src)
     set(DL_NAME dl)
     set(DL_LIB dl)
 
