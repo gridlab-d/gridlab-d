@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
+
 #include "network.h"
 
 int generator_state_from_string(void *addr, char *value)

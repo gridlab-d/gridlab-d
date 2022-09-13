@@ -1,11 +1,11 @@
 /** $Id: solvers.cpp 4738 2014-07-03 00:55:39Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 **/
-#include <stdlib.h>
-#include <stdio.h>
-#include <float.h>
-#include <math.h>
-#include <time.h>
+#include <cfloat>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <ctime>
 
 #include "gridlabd.h"
 #include "solvers.h"

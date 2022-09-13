@@ -15,6 +15,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <errno.h>
+#include <math.h>
+#include <iostream>
+
 #include "matpower.h"
 #include "bus.h"
 #include "gen.h"
@@ -22,12 +25,6 @@
 //#include "gen_cost.h"
 #include "areas.h"
 #include "baseMVA.h"
-#include <math.h>
-
-#include <iostream>
-
-
-
 
 //#include "libopf.h"
 //#include <stdlib.h>

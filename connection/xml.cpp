@@ -4,7 +4,8 @@
 
  **/
 
-#include <stdlib.h>
+#include <cstdlib>
+
 #include "xml.h"
 
 EXPORT_CREATE(xml);
@@ -98,9 +99,9 @@ xml::xml(MODULE *module) : native(module)
 		NULL)<1)
 			throw "connection/xml::xml(MODULE*): unable to publish properties of connection:xml";
 
-	if ( !gl_publish_loadmethod(oclass,"link",loadmethod_xml_link) )
+	if ( !gl_publish_loadmethod(oclass, "link", reinterpret_cast<int (*)(void *, char *)>(loadmethod_xml_link)) )
 		throw "connection/xml::xml(MODULE*): unable to publish link method of connection:xml";
-	if ( !gl_publish_loadmethod(oclass,"option",loadmethod_xml_option) )
+	if ( !gl_publish_loadmethod(oclass, "option", reinterpret_cast<int (*)(void *, char *)>(loadmethod_xml_option)) )
 		throw "connection/xml::xml(MODULE*): unable to publish option method of connection:xml";
 	encoding = UTF8;
 }
@@ -210,7 +211,7 @@ int xml::postnotify(PROPERTY *p,char *v)
 	return native::postnotify(p,v);
 }
 
-int xml::finalize(void)
+int xml::finalize()
 {
 	return native::finalize();
 }

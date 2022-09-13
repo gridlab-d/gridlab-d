@@ -8,10 +8,10 @@
 	@{
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
 using namespace std;
 
@@ -21,16 +21,16 @@ using namespace std;
 // regulator_configuration CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 
-CLASS* regulator_configuration::oclass = NULL;
-CLASS* regulator_configuration::pclass = NULL;
+CLASS* regulator_configuration::oclass = nullptr;
+CLASS* regulator_configuration::pclass = nullptr;
 
 regulator_configuration::regulator_configuration(MODULE *mod) : powerflow_library(mod)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		oclass = gl_register_class(mod,"regulator_configuration",sizeof(regulator_configuration),0x00);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class regulator_configuration";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -199,7 +199,7 @@ EXPORT int create_regulator_configuration(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(regulator_configuration::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			regulator_configuration *my = OBJECTDATA(*obj,regulator_configuration);
 			gl_set_parent(*obj,parent);

@@ -81,14 +81,21 @@ object meter {
 	nominal_voltage 1200.0;
 }
 
-object triplex_meter {
+object triplex_load {
 	name tripmeterval;
 	phases AS;
-	power_12_real load_value*10500;
-	power_12_reac 3300;
 	nominal_voltage 120.0;
 }
 
+
+object triplex_load {
+	name trip_load;
+	parent tripmeterval;
+	phases AS;
+	constant_power_12_real load_value*10500;
+	constant_power_12_reac 3300;
+	nominal_voltage 120.0;
+}
 
 object transformer_configuration {
 	name stepdownconfig;

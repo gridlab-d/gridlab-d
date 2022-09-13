@@ -7,10 +7,10 @@
  @{
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 //Delte me -- just put in for compiling
 #include "battery.h"
@@ -22,8 +22,8 @@
 
 #define DEFAULT 1.0;
 
-CLASS *central_dg_control::oclass = NULL;
-central_dg_control *central_dg_control::defaults = NULL;
+CLASS *central_dg_control::oclass = nullptr;
+central_dg_control *central_dg_control::defaults = nullptr;
 
 static PASSCONFIG passconfig = PC_BOTTOMUP|PC_POSTTOPDOWN;
 static PASSCONFIG clockpass = PC_BOTTOMUP;
@@ -31,14 +31,14 @@ static PASSCONFIG clockpass = PC_BOTTOMUP;
 /* Class registration is only called once to register the class with the core */
 central_dg_control::central_dg_control(MODULE *module)
 {	
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		oclass = gl_register_class(module,"central_dg_control",sizeof(central_dg_control),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class central_dg_control";
 		else
 			oclass->trl = TRL_PROOF;
-		
+
 		if (gl_publish_variable(oclass,
 			PT_char32,"controlled_dgs", PADDR(controlled_objects), PT_DESCRIPTION, "the group ID of the dg objects the controller controls.",
 			PT_object,"feederhead_meter", PADDR(feederhead_meter), PT_DESCRIPTION, "the name of the meter.",
@@ -83,7 +83,7 @@ int central_dg_control::create(void)
 	control_mode_setting[1] = control_mode_setting[2] = control_mode_setting[3] = NO_SETTING;
 
 	//Null properties
-	pPower_Meas[0] = pPower_Meas[1] = pPower_Meas[2] = NULL;
+	pPower_Meas[0] = pPower_Meas[1] = pPower_Meas[2] = nullptr;
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -112,7 +112,7 @@ int central_dg_control::init(OBJECT *parent)
 	}
 	//Find all inverters with controller group id
 	inverter_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"inverter",AND,FT_GROUPID,SAME,controlled_objects.get_string(),FT_END);
-	if(inverter_list == NULL){
+	if(inverter_list == nullptr){
 		gl_error("No inverters with given group id found.");
 		/*  TROUBLESHOOT
 		While trying to put together a list of all inverter objects with the specified controller groupid, no such inverter objects were found.
@@ -122,7 +122,7 @@ int central_dg_control::init(OBJECT *parent)
 	}
 	//Find all batteries whose parents are inverters with controller group id
 	battery_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"battery",AND,FT_PARENT,FT_CLASS,SAME,"inverter",AND,FT_PARENT,FT_GROUPID,SAME,controlled_objects.get_string(),FT_END);
-	if(battery_list == NULL){
+	if(battery_list == nullptr){
 		gl_error("No batteries with inverter parents with given group id found.");
 		/*  TROUBLESHOOT
 		While trying to put together a list of all battery objects with parent inverter objects with the specified controller groupid, no such battery objects were found.
@@ -131,7 +131,7 @@ int central_dg_control::init(OBJECT *parent)
 	}
 	//Find all solars whose parents are inverters with controller group id
 	solar_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"solar",AND,FT_PARENT,FT_CLASS,SAME,"inverter",AND,FT_PARENT,FT_GROUPID,SAME,controlled_objects.get_string(),FT_END);
-	if(solar_list == NULL){
+	if(solar_list == nullptr){
 		gl_error("no solars with inverter parents with given group id found.");
 		/*  TROUBLESHOOT
 		While trying to put together a list of all solar objects with parent inverter objects with the specified controller groupid, no such solar objects were found.
@@ -141,7 +141,7 @@ int central_dg_control::init(OBJECT *parent)
 
 	//Allocate pointer array for all inverters which for now includes those with battery and solar children
 	inverter_set = (inverter **)gl_malloc((battery_list->hit_count*sizeof(battery*))+(solar_list->hit_count*sizeof(solar*)));
-	if(inverter_set == NULL){
+	if(inverter_set == nullptr){
 		gl_error("Failed to allocate inverter array.");
 		/*  TROUBLESHOOT
 		While trying to allocate the array of pointers to the controlled inverters, the pointer array came back null.
@@ -150,7 +150,7 @@ int central_dg_control::init(OBJECT *parent)
 	}
 	//Allocate battery pointer array
 	battery_set = (battery **)gl_malloc(battery_list->hit_count*sizeof(battery*));
-	if(battery_set == NULL){
+	if(battery_set == nullptr){
 		gl_error("Failed to allocate battery array.");
 		/*  TROUBLESHOOT
 		While trying to allocate the array of pointers to the controlled batteries, the pointer array came back null.		
@@ -159,7 +159,7 @@ int central_dg_control::init(OBJECT *parent)
 	}
 	//Allocate solar pointer array
 	solar_set = (solar **)gl_malloc(solar_list->hit_count*sizeof(solar*));
-	if(solar_set == NULL){
+	if(solar_set == nullptr){
 		gl_error("Failed to allocate solar array.");
 		/*  TROUBLESHOOT
 		While trying to allocate the array of pointers to the controlled solars, the pointer array came back null.
@@ -168,7 +168,7 @@ int central_dg_control::init(OBJECT *parent)
 	}
 	//Allocate pointer array for inverters with battery children
 	battery_inverter_set = (inverter ***)gl_malloc(battery_list->hit_count*sizeof(inverter**));
-	if(battery_inverter_set == NULL){
+	if(battery_inverter_set == nullptr){
 		gl_error("Failed to allocate battery array.");
 		/*  TROUBLESHOOT
 		While trying to allocate the array of pointers to the controlled inverters with battery children, the pointer array came back null.
@@ -177,7 +177,7 @@ int central_dg_control::init(OBJECT *parent)
 	}
 	//Allocate pointer array for inverters with solar children
 	solar_inverter_set = (inverter ***)gl_malloc(solar_list->hit_count*sizeof(inverter**));
-	if(solar_inverter_set == NULL){
+	if(solar_inverter_set == nullptr){
 		gl_error("Failed to allocate solar array.");
 		/*  TROUBLESHOOT
 		While trying to allocate the array of pointers to the controlled inverters with solar children, the pointer array came back null.
@@ -195,7 +195,7 @@ int central_dg_control::init(OBJECT *parent)
 			break;
 		}
 		battery_set[index] = OBJECTDATA(obj,battery);
-		if(battery_set[index] == NULL){
+		if(battery_set[index] == nullptr){
 			gl_error("Unable to map object as battery.");
 			/*  TROUBLESHOOT
 			While trying to map a battery from the list as a battery object, a null pointer was returned.
@@ -203,7 +203,7 @@ int central_dg_control::init(OBJECT *parent)
 			return 0;
 		}
 		inverter_set[inverter_filled_to + 1] = OBJECTDATA(obj->parent, inverter);
-		if(inverter_set[inverter_filled_to + 1] == NULL){
+		if(inverter_set[inverter_filled_to + 1] == nullptr){
 			gl_error("Unable to map object as inverter.");
 			/*  TROUBLESHOOT
 			While trying to map an inverter from the list as an inveter object, a null pointer was returned.
@@ -212,7 +212,7 @@ int central_dg_control::init(OBJECT *parent)
 		}
 		inverter_filled_to++;
 		battery_inverter_set[index] = &inverter_set[inverter_filled_to];
-		if (battery_inverter_set[index] == NULL) {
+		if (battery_inverter_set[index] == nullptr) {
 			gl_error("Unable to map battery parent object as inverter.");
 			/*  TROUBLESHOOT
 			While trying to map an inverter from the listof inverters with battery children as an inverter object, a null pointer was returned.
@@ -231,7 +231,7 @@ int central_dg_control::init(OBJECT *parent)
 			break;
 		}
 		solar_set[index] = OBJECTDATA(obj,solar);
-		if(solar_set[index] == NULL){
+		if(solar_set[index] == nullptr){
 			gl_error("Unable to map object as solar.");
 			/*  TROUBLESHOOT
 			While trying to map a solar from the list as a solar object, a null pointer was returned.
@@ -239,7 +239,7 @@ int central_dg_control::init(OBJECT *parent)
 			return 0;
 		}
 		inverter_set[inverter_filled_to + 1] = OBJECTDATA(obj->parent, inverter);
-		if(inverter_set[inverter_filled_to + 1] == NULL){
+		if(inverter_set[inverter_filled_to + 1] == nullptr){
 			gl_error("Unable to map object as inverter.");
 			/*  TROUBLESHOOT
 			While trying to map an inverter from the listof inverters an inverter object, a null pointer was returned.
@@ -248,7 +248,7 @@ int central_dg_control::init(OBJECT *parent)
 		}
 		inverter_filled_to++;
 		solar_inverter_set[index] = &inverter_set[inverter_filled_to];
-		if (solar_inverter_set[index] == NULL) {
+		if (solar_inverter_set[index] == nullptr) {
 			gl_error("Unable to map solar parent object as inverter.");
 			/*  TROUBLESHOOT
 			While trying to map an inverter from the listof inverters with solar children as an inverter object, a null pointer was returned.
@@ -264,16 +264,16 @@ int central_dg_control::init(OBJECT *parent)
 	all_inverter_S_rated = all_solar_S_rated + all_battery_S_rated;
 
 	//Map the feeder meter
-	if (feederhead_meter != NULL)
+	if (feederhead_meter != nullptr)
 	{
 		//Make sure it is a meter
-		if (gl_object_isa(feederhead_meter,"meter","powerflow") == true)
+		if (gl_object_isa(feederhead_meter, "meter", "powerflow"))
 		{
 			//Map up the values
 			pPower_Meas[0] = new gld_property(feederhead_meter,"measured_power_A");
 
 			//Check it
-			if ((pPower_Meas[0]->is_valid() != true) || (pPower_Meas[0]->is_complex() != true))
+			if (!pPower_Meas[0]->is_valid() || !pPower_Meas[0]->is_complex())
 			{
 				GL_THROW("central_dg_control:%d - %s - failed to map feaderhead_meter power property!",thisobj->id,(thisobj->name ? thisobj->name : "Unnamed"));
 				/*  TROUBLESHOOT
@@ -286,7 +286,7 @@ int central_dg_control::init(OBJECT *parent)
 			pPower_Meas[1] = new gld_property(feederhead_meter,"measured_power_B");
 
 			//Check it
-			if ((pPower_Meas[1]->is_valid() != true) || (pPower_Meas[1]->is_complex() != true))
+			if (!pPower_Meas[1]->is_valid() || !pPower_Meas[1]->is_complex())
 			{
 				GL_THROW("central_dg_control:%d - %s - failed to map feaderhead_meter power property!",thisobj->id,(thisobj->name ? thisobj->name : "Unnamed"));
 				//Defined above
@@ -296,7 +296,7 @@ int central_dg_control::init(OBJECT *parent)
 			pPower_Meas[2] = new gld_property(feederhead_meter,"measured_power_C");
 
 			//Check it
-			if ((pPower_Meas[2]->is_valid() != true) || (pPower_Meas[2]->is_complex() != true))
+			if (!pPower_Meas[2]->is_valid() || !pPower_Meas[2]->is_complex())
 			{
 				GL_THROW("central_dg_control:%d - %s - failed to map feaderhead_meter power property!",thisobj->id,(thisobj->name ? thisobj->name : "Unnamed"));
 				//Defined above
@@ -348,7 +348,7 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	//Need information on power flow for this time step so let it run once 
 	//without any central control and then reiterate
-	complex temp_complex_array[3];
+	gld::complex temp_complex_array[3];
 
 	if (t0!=t1) {
 		return t1;
@@ -370,7 +370,7 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 	Q[2] = temp_complex_array[2].Im();
 	P_3p = P[0] + P[1] + P[2];
 	Q_3p = Q[0] + Q[1] + Q[2];
-	S_3p = complex(P_3p, Q_3p);
+	S_3p = gld::complex(P_3p, Q_3p);
 	double potential_pf = 0.0;
 	double Q_disp_so_far = 0.0;
 	double total_avail_soc = 0.0;
@@ -523,7 +523,7 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 								//Q dispatch portion calculated using ratio of this inverter's capacity factor to total capacity factor.
 								this_Q = (inverter_set[n])->p_rated*3.0*sin(acos((inverter_set[n])->VA_Out.Re()/((inverter_set[n])->p_rated)*3.0))/Q_avail_3p*Q_disp_3p;
 								//Calculate and correctly sign corresponding power factor.
-								(inverter_set[n])->power_factor = -(this_Q/fabs(this_Q))*fabs((inverter_set[n])->VA_Out.Re())/complex((inverter_set[n])->VA_Out.Re(),this_Q).Mag();
+								(inverter_set[n])->power_factor = -(this_Q/fabs(this_Q))*fabs((inverter_set[n])->VA_Out.Re())/gld::complex((inverter_set[n])->VA_Out.Re(),this_Q).Mag();
 							}
 							//Dispatch to battery inverters (those in constant PQ mode)
 							else if ((inverter_set[n])->four_quadrant_control_mode==1)
@@ -539,7 +539,7 @@ TIMESTAMP central_dg_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 							if ((inverter_set[n])->four_quadrant_control_mode==2 && (inverter_set[n])->VA_Out.Re() > 0.0) {
 								//This inverter QRef = (This inverter available Q/total Available Q)*Q to be dispatched
 								this_Q = (inverter_set[n])->p_rated*3.0*sin(acos((inverter_set[n])->VA_Out.Re()/((inverter_set[n])->p_rated)*3.0));
-								(inverter_set[n])->power_factor = -(this_Q/fabs(this_Q))*fabs((inverter_set[n])->VA_Out.Re())/complex((inverter_set[n])->VA_Out.Re(),this_Q).Mag();
+								(inverter_set[n])->power_factor = -(this_Q/fabs(this_Q))*fabs((inverter_set[n])->VA_Out.Re())/gld::complex((inverter_set[n])->VA_Out.Re(),this_Q).Mag();
 							}
 							else if ((inverter_set[n])->four_quadrant_control_mode==1)
 							{
@@ -597,7 +597,7 @@ EXPORT int create_central_dg_control(OBJECT **obj, OBJECT *parent)
 	try 
 	{
 		*obj = gl_create_object(central_dg_control::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			central_dg_control *my = OBJECTDATA(*obj,central_dg_control);
 			gl_set_parent(*obj,parent);
@@ -613,7 +613,7 @@ EXPORT int init_central_dg_control(OBJECT *obj, OBJECT *parent)
 {
 	try 
 	{
-		if (obj!=NULL)
+		if (obj!=nullptr)
 			return OBJECTDATA(obj,central_dg_control)->init(parent);
 		else
 			return 0;

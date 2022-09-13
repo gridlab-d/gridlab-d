@@ -1,6 +1,7 @@
 // This is the main DLL file.
 
 #include "glengine.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -174,10 +175,10 @@ void glengine::startGLD(const char *gldexecpath,const char **args){
 	}
 	debug(1,"GLD started");
 #else
-	string exec(gldexecpath);
-	exec += "//gridlabd";
+	string exec_string(gldexecpath);
+	exec_string += "//gridlabd";
 	vector<const char *> args;
-	argv.push_back(exec.c_str());
+	argv.push_back(exec_string.c_str());
 	int i=0;
 	while(args[i]!=NULL)
 		argv.push_back(args[i++]);

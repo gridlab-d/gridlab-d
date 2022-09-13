@@ -129,6 +129,18 @@ object node {
 		property voltage_C;
 		file ../data_swing_pq_voltage_player_C.csv;
 	};
+	object assert {
+		target behaving_as_swing;
+		object player {
+			property value;
+			file "../data_multi_island_SWING_status.csv";
+		};
+	};
+	// object recorder {
+		// property behaving_as_swing;
+		// interval -1;
+		// file data_multi_island_SWING_status.csv;
+	// };
 }
 
 object overhead_line {

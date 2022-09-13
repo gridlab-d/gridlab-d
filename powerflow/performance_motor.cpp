@@ -2,17 +2,17 @@
 //	Copyright (C) 2020 Battelle Memorial Institute
 // Implemented the performance-based model from LD1PAC
 
-#include <stdlib.h>	
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>	
 
 #include "performance_motor.h"
 
 //@TODO: Still needs to have the stalling and reconnecting portion done.  Right now, will return to service immediately
 
-CLASS* performance_motor::oclass = NULL;
-CLASS* performance_motor::pclass = NULL;
+CLASS* performance_motor::oclass = nullptr;
+CLASS* performance_motor::pclass = nullptr;
 
 static PASSCONFIG passconfig = PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN;
 static PASSCONFIG clockpass = PC_BOTTOMUP;
@@ -20,12 +20,12 @@ static PASSCONFIG clockpass = PC_BOTTOMUP;
 
 performance_motor::performance_motor(MODULE *mod):node(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		pclass = node::oclass;
 		
 		oclass = gl_register_class(mod,"performance_motor",sizeof(performance_motor),passconfig|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class performance_motor";
 		else
 			oclass->trl = TRL_PROOF;
@@ -74,7 +74,7 @@ performance_motor::performance_motor(MODULE *mod):node(mod)
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_performance_motor)==NULL)
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_performance_motor)==nullptr)
 			GL_THROW("Unable to publish performance_motor deltamode function");
     }
 }
@@ -86,7 +86,7 @@ int performance_motor::create()
 	last_time_val = 0.0;
 	curr_time_val = 0.0;
 
-    PowerVal = complex(0.0,0.0);
+    PowerVal = gld::complex(0.0,0.0);
 
 	//Most default parameters taken from WECC Air Conditioner Motor Model Test Report
 	//https://www.wecc.org/Reliability/WECC%20Air%20Conditioner%20Motor%20Model%20Test%20Report--%20Final.pdf
@@ -114,7 +114,7 @@ int performance_motor::create()
     N_q2 = 2.5;
     CmpKpf = 1.0;
     CmpKqf = -3.3;
-    stall_impedance_pu = complex(0.124,0.114);
+    stall_impedance_pu = gld::complex(0.124,0.114);
     Tstall = 0.033;
     reconnect_time = 0.4;
 
@@ -126,7 +126,7 @@ int performance_motor::create()
     reconnect_time_tracker = 0.0;
 
     P_base = 2690;  //Watts
-    stall_admittance = complex(0.0,0.0);
+    stall_admittance = gld::complex(0.0,0.0);
 
 	return result;
 }
@@ -137,20 +137,20 @@ int performance_motor::init(OBJECT *parent)
 	int result;
     double Z_base;
 	gld_property *temp_gld_property;
-	gld_wlock *test_rlock;
+	gld_wlock *test_rlock = nullptr;
 
 	//Now run node init, as necessary
 	result = node::init(parent);
 
 	// Check what phases are connected on this motor
 	int num_phases = 0;
-	if (has_phase(PHASE_A)==true)
+	if (has_phase(PHASE_A))
 		num_phases++;
 
-	if (has_phase(PHASE_B)==true)
+	if (has_phase(PHASE_B))
 		num_phases++;
 
-	if (has_phase(PHASE_C)==true)
+	if (has_phase(PHASE_C))
 		num_phases++;
 	
 	// error out if we have more than one phase
@@ -181,7 +181,7 @@ int performance_motor::init(OBJECT *parent)
     }
 
     //Convert the impedance to an admittance and call it good
-    stall_admittance = complex(1.0,0.0)/(stall_impedance_pu * Z_base);
+    stall_admittance = gld::complex(1.0,0.0)/(stall_impedance_pu * Z_base);
 
     //Compute the initial values
     P_0 = Pinit - K_p1*pow((Vinit - Vbrk),N_p1);
@@ -202,8 +202,8 @@ int performance_motor::isa(char *classname)
 TIMESTAMP performance_motor::presync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	//Zero our accumulators, just because
-    shunt[0] = shunt[1] = shunt[2] = complex(0.0,0.0);
-    power[0] = power[1] = power[2] = complex(0.0,0.0);
+    shunt[0] = shunt[1] = shunt[2] = gld::complex(0.0,0.0);
+    power[0] = power[1] = power[2] = gld::complex(0.0,0.0);
 
 	//Must be at the bottom, or the new values will be calculated after the fact
 	TIMESTAMP result = node::presync(t1);
@@ -239,7 +239,7 @@ SIMULATIONMODE performance_motor::inter_deltaupdate(unsigned int64 delta_time, u
 	OBJECT *hdr = OBJECTHDR(this);
 	STATUS return_status_val;
 	bool temp_house_motor_state;
-	gld_wlock *test_rlock;
+	gld_wlock *test_rlock = nullptr;
 
 	// make sure to capture the current time
 	curr_time_val = gl_globaldeltaclock;
@@ -248,7 +248,7 @@ SIMULATIONMODE performance_motor::inter_deltaupdate(unsigned int64 delta_time, u
 	deltat = (double)dt/(double)DT_SECOND;
 
 	//Update time tracking variable - mostly for GFA functionality calls
-	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
+	if ((iteration_count_val==0) && !interupdate_pos) //Only update timestamp tracker on first iteration
 	{
 		//Update tracking variable
 		prev_time_dbl = gl_globaldeltaclock;
@@ -270,11 +270,11 @@ SIMULATIONMODE performance_motor::inter_deltaupdate(unsigned int64 delta_time, u
 		}
 	}
 
-	if (interupdate_pos == false)	//Before powerflow call
+	if (!interupdate_pos)	//Before powerflow call
 	{
 		//Zero all the accumulators
-		shunt[0] = shunt[1] = shunt[2] = complex(0.0,0.0);
-		power[0] = power[1] = power[2] = complex(0.0,0.0);
+		shunt[0] = shunt[1] = shunt[2] = gld::complex(0.0,0.0);
+		power[0] = power[1] = power[2] = gld::complex(0.0,0.0);
 
 		//Call presync-equivalent items
 		NR_node_presync_fxn(0);
@@ -329,7 +329,7 @@ void performance_motor::update_motor_equations(void)
     //Zero the current output, just because
     P_val = 0.0;
     Q_val = 0.0;
-    PowerVal = complex(0.0,0.0);
+    PowerVal = gld::complex(0.0,0.0);
 
     //Check our state
     if (motor_status == statusRUNNING)
@@ -369,7 +369,7 @@ void performance_motor::update_motor_equations(void)
 
         //General post here, just because (better than duplicating)
         //Convert the values into power values - posting it that way "just because"
-        PowerVal = complex(P_val,Q_val) * P_base;
+        PowerVal = gld::complex(P_val,Q_val) * P_base;
 
         //Post it, as appropriate
         if (motor_op_mode == modeSPIM)
@@ -433,7 +433,7 @@ EXPORT int create_performance_motor(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(performance_motor::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			performance_motor *my = OBJECTDATA(*obj,performance_motor);
 			gl_set_parent(*obj,parent);

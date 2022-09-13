@@ -1,10 +1,10 @@
 // $Id: motor.cpp 1182 2016-08-15 jhansen $
 //	Copyright (C) 2008 Battelle Memorial Institute
 
-#include <stdlib.h>	
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>	
 
 #include <iostream>
 
@@ -13,8 +13,8 @@
 //////////////////////////////////////////////////////////////////////////
 // capacitor CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* motor::oclass = NULL;
-CLASS* motor::pclass = NULL;
+CLASS* motor::oclass = nullptr;
+CLASS* motor::pclass = nullptr;
 
 /**
 * constructor.  Class registration is only called once to 
@@ -29,12 +29,12 @@ static PASSCONFIG clockpass = PC_BOTTOMUP;
 
 motor::motor(MODULE *mod):node(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		pclass = node::oclass;
 		
 		oclass = gl_register_class(mod,"motor",sizeof(motor),passconfig|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class motor";
 		else
 			oclass->trl = TRL_PRINCIPLE;
@@ -158,14 +158,16 @@ motor::motor(MODULE *mod):node(mod)
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_motor)==NULL)
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_motor)==nullptr)
 			GL_THROW("Unable to publish motor deltamode function");
-		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
+		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==nullptr)
 			GL_THROW("Unable to publish motor swing-swapping function");
-		if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
+		if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==nullptr)
 			GL_THROW("Unable to publish motor VFD attachment function");
-		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
+		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == nullptr)
 			GL_THROW("Unable to publish motor swing-status check function");
+		if (gl_publish_function(oclass, "pwr_object_shunt_update", (FUNCTIONADDR)node_update_shunt_values) == nullptr)
+			GL_THROW("Unable to publish motor shunt update function");
     }
 }
 
@@ -212,16 +214,16 @@ int motor::create()
 	// initial parameter for internal model
 	trip = 0;
 	reconnect = 0;
-	psi_b = complex(0.0,0.0);
-    psi_f = complex(0.0,0.0);
-    psi_dr = complex(0.0,0.0); 
-    psi_qr = complex(0.0,0.0); 
-    Ids = complex(0.0,0.0);
-    Iqs = complex(0.0,0.0);  
-    If = complex(0.0,0.0);
-    Ib = complex(0.0,0.0);
-    Is = complex(0.0,0.0);
-    motor_elec_power = complex(0.0,0.0);
+	psi_b = gld::complex(0.0,0.0);
+    psi_f = gld::complex(0.0,0.0);
+    psi_dr = gld::complex(0.0,0.0); 
+    psi_qr = gld::complex(0.0,0.0); 
+    Ids = gld::complex(0.0,0.0);
+    Iqs = gld::complex(0.0,0.0);  
+    If = gld::complex(0.0,0.0);
+    Ib = gld::complex(0.0,0.0);
+    Is = gld::complex(0.0,0.0);
+    motor_elec_power = gld::complex(0.0,0.0);
     Telec = 0; 
     wr = 0;
     
@@ -242,8 +244,8 @@ int motor::create()
     motor_op_mode = modeSPIM; // share the variable with TPIM
 
 	//House connection capability
-	mtr_house_pointer = NULL;
-	mtr_house_state_pointer = NULL;
+	mtr_house_pointer = nullptr;
+	mtr_house_state_pointer = nullptr;
 
 	//Set to none initially - if this isn't set, this will just get ignored
 	connected_house_assumed_mode = house_mode_NONE;
@@ -260,21 +262,21 @@ int motor::create()
 
     // Parameters are for 3000 W motor
     Kfric = 0.0;  // pu
-	phips = complex(0.0,0.0); // pu
-	phins_cj = complex(0.0,0.0); // pu
-	phipr = complex(0.0,0.0); // pu
-	phinr_cj = complex(0.0,0.0); // pu
+	phips = gld::complex(0.0,0.0); // pu
+	phins_cj = gld::complex(0.0,0.0); // pu
+	phipr = gld::complex(0.0,0.0); // pu
+	phinr_cj = gld::complex(0.0,0.0); // pu
 	wr_pu = 0.97; // pu
-	Ias = complex(0.0,0.0); // pu
-	Ibs = complex(0.0,0.0); // pu
-	Ics = complex(0.0,0.0); // pu
-	Vas = complex(0.0,0.0); // pu
-	Vbs = complex(0.0,0.0); // pu
-	Vcs = complex(0.0,0.0); // pu
-	Ips = complex(0.0,0.0); // pu
-	Ipr = complex(0.0,0.0); // pu
-	Ins_cj = complex(0.0,0.0); // pu
-	Inr_cj = complex(0.0,0.0); // pu
+	Ias = gld::complex(0.0,0.0); // pu
+	Ibs = gld::complex(0.0,0.0); // pu
+	Ics = gld::complex(0.0,0.0); // pu
+	Vas = gld::complex(0.0,0.0); // pu
+	Vbs = gld::complex(0.0,0.0); // pu
+	Vcs = gld::complex(0.0,0.0); // pu
+	Ips = gld::complex(0.0,0.0); // pu
+	Ipr = gld::complex(0.0,0.0); // pu
+	Ins_cj = gld::complex(0.0,0.0); // pu
+	Inr_cj = gld::complex(0.0,0.0); // pu
 	Ls = 0.0; // pu
 	Lr = 0.0; // pu
 	sigma1 = 0.0; // pu
@@ -298,10 +300,10 @@ int motor::init(OBJECT *parent)
 	double temp_house_capacity_info, temp_house_cop;
 	enumeration temp_house_type;
 	gld_property *temp_gld_property;
-	gld_wlock *test_rlock;
+	gld_wlock *test_rlock = nullptr;
 
 	//See if we have a house connection defined -- if so, do this after that initializes (to get data)
-	if (mtr_house_pointer != NULL)
+	if (mtr_house_pointer != nullptr)
 	{
 		//Check it's status
 		if ((mtr_house_pointer->flags & OF_INIT) != OF_INIT)
@@ -317,13 +319,13 @@ int motor::init(OBJECT *parent)
 
 	// Check what phases are connected on this motor
 	int num_phases = 0;
-	if (has_phase(PHASE_A)==true)
+	if (has_phase(PHASE_A))
 		num_phases++;
 
-	if (has_phase(PHASE_B)==true)
+	if (has_phase(PHASE_B))
 		num_phases++;
 
-	if (has_phase(PHASE_C)==true)
+	if (has_phase(PHASE_C))
 		num_phases++;
 	
 	// error out if we have more than one phase
@@ -370,10 +372,10 @@ int motor::init(OBJECT *parent)
 	//Default else -- three-phase diagnostics (none needed right now)
 
 	//Map the connected house
-	if (mtr_house_pointer != NULL)
+	if (mtr_house_pointer != nullptr)
 	{
 		//Make sure it is a house first, just for giggles
-		if (gl_object_isa(mtr_house_pointer,"house","residential") != true)
+		if (!gl_object_isa(mtr_house_pointer,"house","residential"))
 		{
 			GL_THROW("motor:%s -- connected_house must point toward a residential:house object",(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
@@ -382,7 +384,7 @@ int motor::init(OBJECT *parent)
 		}
 
 		//Make sure our mode is SPIM and triplexy - if not, failure
-		if (triplex_connected != true)
+		if (!triplex_connected)
 		{
 			GL_THROW("motor:%s -- When using the house-connected mode, the motor must be a triplex device",(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
@@ -408,7 +410,7 @@ int motor::init(OBJECT *parent)
 			temp_gld_property = new gld_property(mtr_house_pointer,"cooling_system_type");
 
 			//Make sure it worked
-			if ((temp_gld_property->is_valid() != true) || (temp_gld_property->is_enumeration() != true))
+			if (!temp_gld_property->is_valid() || !temp_gld_property->is_enumeration())
 			{
 				GL_THROW("motor:%s -- Unable to map house property",(obj->name ? obj->name : "Unnamed"));
 				//Defined below
@@ -435,7 +437,7 @@ int motor::init(OBJECT *parent)
 			temp_gld_property = new gld_property(mtr_house_pointer,"design_cooling_capacity");
 
 			//Make sure it worked
-			if ((temp_gld_property->is_valid() != true) || (temp_gld_property->is_double() != true))
+			if (!temp_gld_property->is_valid() || !temp_gld_property->is_double())
 			{
 				GL_THROW("motor:%s -- Unable to map house property",(obj->name ? obj->name : "Unnamed"));
 				//Defined below
@@ -451,7 +453,7 @@ int motor::init(OBJECT *parent)
 			temp_gld_property = new gld_property(mtr_house_pointer,"cooling_COP");
 
 			//Make sure it worked
-			if ((temp_gld_property->is_valid() != true) || (temp_gld_property->is_double() != true))
+			if (!temp_gld_property->is_valid() || !temp_gld_property->is_double())
 			{
 				GL_THROW("motor:%s -- Unable to map house property",(obj->name ? obj->name : "Unnamed"));
 				//Defined below
@@ -469,7 +471,7 @@ int motor::init(OBJECT *parent)
 			temp_gld_property = new gld_property(mtr_house_pointer,"heating_system_type");
 
 			//Make sure it worked
-			if ((temp_gld_property->is_valid() != true) || (temp_gld_property->is_enumeration() != true))
+			if (!temp_gld_property->is_valid() || !temp_gld_property->is_enumeration())
 			{
 				GL_THROW("motor:%s -- Unable to map house property",(obj->name ? obj->name : "Unnamed"));
 				//Defined below
@@ -492,7 +494,7 @@ int motor::init(OBJECT *parent)
 			temp_gld_property = new gld_property(mtr_house_pointer,"design_heating_capacity");
 
 			//Make sure it worked
-			if ((temp_gld_property->is_valid() != true) || (temp_gld_property->is_double() != true))
+			if (!temp_gld_property->is_valid() || !temp_gld_property->is_double())
 			{
 				GL_THROW("motor:%s -- Unable to map house property",(obj->name ? obj->name : "Unnamed"));
 				//Defined below
@@ -508,7 +510,7 @@ int motor::init(OBJECT *parent)
 			temp_gld_property = new gld_property(mtr_house_pointer,"heating_COP");
 
 			//Make sure it worked
-			if ((temp_gld_property->is_valid() != true) || (temp_gld_property->is_double() != true))
+			if (!temp_gld_property->is_valid() || !temp_gld_property->is_double())
 			{
 				GL_THROW("motor:%s -- Unable to map house property",(obj->name ? obj->name : "Unnamed"));
 				//Defined below
@@ -530,7 +532,7 @@ int motor::init(OBJECT *parent)
 		temp_gld_property = new gld_property(mtr_house_pointer,"external_motor_attached");
 
 		//Make sure it worked
-		if ((temp_gld_property->is_valid() != true) || (temp_gld_property->is_bool() != true))
+		if (!temp_gld_property->is_valid() || !temp_gld_property->is_bool())
 		{
 			GL_THROW("motor:%s -- Unable to map house external motor property",(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
@@ -550,7 +552,7 @@ int motor::init(OBJECT *parent)
 		mtr_house_state_pointer = new gld_property(mtr_house_pointer,"compressor_on");
 
 		//Make sure it worked
-		if ((mtr_house_state_pointer->is_valid() != true) || (mtr_house_state_pointer->is_bool() != true))
+		if (!mtr_house_state_pointer->is_valid() || !mtr_house_state_pointer->is_bool())
 		{
 			GL_THROW("motor:%s -- Unable to map house property",(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
@@ -563,7 +565,7 @@ int motor::init(OBJECT *parent)
 		mtr_house_state_pointer->getp<bool>(temp_house_motor_state,*test_rlock);
 
 		//Determine our state
-		if (temp_house_motor_state == true)
+		if (temp_house_motor_state)
 		{
 			motor_override = overrideON;
 		}
@@ -711,7 +713,7 @@ int motor::init(OBJECT *parent)
 	//Parameters
 	if (motor_op_mode == modeSPIM)
 	{
-		if ((triplex_connected == true) && (triplex_connection_type == TPNconnected12))
+		if (triplex_connected && (triplex_connection_type == TPNconnected12))
 		{
 			Ibase = Pbase/(2.0*nominal_voltage);	//To reflect LL connection
 		}
@@ -789,7 +791,7 @@ TIMESTAMP motor::presync(TIMESTAMP t0, TIMESTAMP t1)
 TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	bool temp_house_motor_state;
-	gld_wlock *test_rlock;
+	gld_wlock *test_rlock = nullptr;
 
 	// update voltage and frequency
 	updateFreqVolt();
@@ -797,13 +799,13 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 	if (motor_op_mode == modeSPIM)
 	{
 		//See if we're in "house-check mode"
-		if (mtr_house_state_pointer != NULL)
+		if (mtr_house_state_pointer != nullptr)
 		{
 			//Pull the updated state
 			mtr_house_state_pointer->getp<bool>(temp_house_motor_state,*test_rlock);
 
 			//Set the motor state
-			if (temp_house_motor_state == true)
+			if (temp_house_motor_state)
 			{
 				motor_override = overrideON;
 			}
@@ -831,7 +833,7 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 			SPIMSteadyState(t1);
 
 			// update current draw
-			if (triplex_connected==true)
+			if (triplex_connected)
 			{
 				//See which type of triplex
 				if (triplex_connection_type == TPNconnected1N)
@@ -853,20 +855,20 @@ TIMESTAMP motor::sync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 		}
 		else { // motor is currently disconnected
-			if (triplex_connected==true)
+			if (triplex_connected)
 			{
 				//See which type of triplex
 				if (triplex_connection_type == TPNconnected1N)
 				{
-					pre_rotated_current[0] = complex(0.0,0.0);
+					pre_rotated_current[0] = gld::complex(0.0,0.0);
 				}
 				else if (triplex_connection_type == TPNconnected2N)
 				{
-					pre_rotated_current[1] = complex(0.0,0.0);
+					pre_rotated_current[1] = gld::complex(0.0,0.0);
 				}
 				else	//Assume it is 12 now
 				{
-					pre_rotated_current[2] = complex(0.0,0.0);
+					pre_rotated_current[2] = gld::complex(0.0,0.0);
 				}
 
 				//Set off
@@ -988,7 +990,7 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 	OBJECT *hdr = OBJECTHDR(this);
 	STATUS return_status_val;
 	bool temp_house_motor_state;
-	gld_wlock *test_rlock;
+	gld_wlock *test_rlock = nullptr;
 	double deltat;
 
 	// make sure to capture the current time
@@ -998,7 +1000,7 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 	deltat = (double)dt/(double)DT_SECOND;
 
 	//Update time tracking variable - mostly for GFA functionality calls
-	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
+	if ((iteration_count_val==0) && !interupdate_pos) //Only update timestamp tracker on first iteration
 	{
 		//Update tracking variable
 		prev_time_dbl = gl_globaldeltaclock;
@@ -1021,7 +1023,7 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 	}
 
 	//In the first call we need to initilize the dynamic model
-	if ((delta_time==0) && (iteration_count_val==0) && (interupdate_pos == false))	//First run of new delta call
+	if ((delta_time==0) && (iteration_count_val==0) && !interupdate_pos)	//First run of new delta call
 	{
 		//Call presync-equivalent items
 		NR_node_presync_fxn(0);
@@ -1029,13 +1031,13 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 		if (motor_op_mode == modeSPIM)
 		{
 			//See if we're in "house-check mode"
-			if (mtr_house_state_pointer != NULL)
+			if (mtr_house_state_pointer != nullptr)
 			{
 				//Pull the updated state
 				mtr_house_state_pointer->getp<bool>(temp_house_motor_state,*test_rlock);
 
 				//Set the motor state
-				if (temp_house_motor_state == true)
+				if (temp_house_motor_state)
 				{
 					motor_override = overrideON;
 				}
@@ -1072,7 +1074,7 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 		}
 	}//End first pass and timestep of deltamode (initial condition stuff)
 
-	if (interupdate_pos == false)	//Before powerflow call
+	if (!interupdate_pos)	//Before powerflow call
 	{
 		//Call presync-equivalent items
 		if (delta_time>0) {
@@ -1085,13 +1087,13 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 		if (motor_op_mode == modeSPIM)
 		{
 			//See if we're in "house-check mode"
-			if (mtr_house_state_pointer != NULL)
+			if (mtr_house_state_pointer != nullptr)
 			{
 				//Pull the updated state
 				mtr_house_state_pointer->getp<bool>(temp_house_motor_state,*test_rlock);
 
 				//Set the motor state
-				if (temp_house_motor_state == true)
+				if (temp_house_motor_state)
 				{
 					motor_override = overrideON;
 				}
@@ -1126,7 +1128,7 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 				SPIMDynamic(curr_delta_time, deltat);
 
 				// update current draw
-				if (triplex_connected == true)
+				if (triplex_connected)
 				{
 					//See which type of triplex
 					if (triplex_connection_type == TPNconnected1N)
@@ -1148,20 +1150,20 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 				}
 			}
 			else { // motor is currently disconnected
-				if (triplex_connected == true)
+				if (triplex_connected)
 				{
 					//See which type of triplex
 					if (triplex_connection_type == TPNconnected1N)
 					{
-						pre_rotated_current[0] = complex(0.0,0.0);
+						pre_rotated_current[0] = gld::complex(0.0,0.0);
 					}
 					else if (triplex_connection_type == TPNconnected2N)
 					{
-						pre_rotated_current[1] = complex(0.0,0.0);
+						pre_rotated_current[1] = gld::complex(0.0,0.0);
 					}
 					else	//Assume it is 12 now
 					{
-						pre_rotated_current[2] = complex(0.0,0.0);
+						pre_rotated_current[2] = gld::complex(0.0,0.0);
 					}
 
 					//Set off
@@ -1294,10 +1296,10 @@ void motor::updateFreqVolt() {
 	// update voltage and frequency
 	if (motor_op_mode == modeSPIM)
 	{
-		if ( (SubNode == CHILD) || (SubNode == DIFF_CHILD) ) // if we have a parent, reference the voltage and frequency of the parent
+		if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) != 0) // if we have a parent, reference the voltage and frequency of the parent
 		{
 			node *parNode = OBJECTDATA(SubNodeParent,node);
-			if (triplex_connected == true)
+			if (triplex_connected)
 			{
 				//See which type of triplex
 				if (triplex_connection_type == TPNconnected1N)
@@ -1324,7 +1326,7 @@ void motor::updateFreqVolt() {
 		}
 		else // No parent, use our own voltage
 		{
-			if (triplex_connected == true)
+			if (triplex_connected)
 			{
 				//See which type of triplex
 				if (triplex_connection_type == TPNconnected1N)
@@ -1355,7 +1357,7 @@ void motor::updateFreqVolt() {
 	}
 	else //TPIM model
 	{
-		if ( (SubNode == CHILD) || (SubNode == DIFF_CHILD) ) // if we have a parent, reference the voltage and frequency of the parent
+		if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) != 0) // if we have a parent, reference the voltage and frequency of the parent
 		{
 			node *parNode = OBJECTDATA(SubNodeParent,node);
 			// obtain 3-phase voltages
@@ -1611,16 +1613,16 @@ void motor::TPIMUpdateProtection(double delta_time) {
 
 // function to ensure that internal model states are zeros when the motor is OFF
 void motor::SPIMStateOFF() {
-	psi_b = complex(0.0,0.0);
-    psi_f = complex(0.0,0.0);
-    psi_dr = complex(0.0,0.0); 
-    psi_qr = complex(0.0,0.0); 
-    Ids = complex(0.0,0.0);
-    Iqs = complex(0.0,0.0);  
-    If = complex(0.0,0.0);
-    Ib = complex(0.0,0.0);
-    Is = complex(0.0,0.0);
-    motor_elec_power = complex(0.0,0.0);
+	psi_b = gld::complex(0.0,0.0);
+    psi_f = gld::complex(0.0,0.0);
+    psi_dr = gld::complex(0.0,0.0); 
+    psi_qr = gld::complex(0.0,0.0); 
+    Ids = gld::complex(0.0,0.0);
+    Iqs = gld::complex(0.0,0.0);  
+    If = gld::complex(0.0,0.0);
+    Ib = gld::complex(0.0,0.0);
+    Is = gld::complex(0.0,0.0);
+    motor_elec_power = gld::complex(0.0,0.0);
     Telec = 0.0; 
     wr = 0.0;
 	wr_pu = 0.0;
@@ -1628,17 +1630,17 @@ void motor::SPIMStateOFF() {
 
 //TPIM "zero-stating" item
 void motor::TPIMStateOFF() {
-	phips = complex(0.0,0.0);
-	phins_cj = complex(0.0,0.0);
-	phipr = complex(0.0,0.0);
-	phinr_cj = complex(0.0,0.0);
+	phips = gld::complex(0.0,0.0);
+	phins_cj = gld::complex(0.0,0.0);
+	phipr = gld::complex(0.0,0.0);
+	phinr_cj = gld::complex(0.0,0.0);
 	wr = 0.0;
 	wr_pu = 0.0;
-	Ips = complex(0.0,0.0);
-	Ipr = complex(0.0,0.0);
-	Ins_cj = complex(0.0,0.0);
-	Inr_cj = complex(0.0,0.0);
-	motor_elec_power = complex(0.0,0.0);
+	Ips = gld::complex(0.0,0.0);
+	Ipr = gld::complex(0.0,0.0);
+	Ins_cj = gld::complex(0.0,0.0);
+	Inr_cj = gld::complex(0.0,0.0);
+	motor_elec_power = gld::complex(0.0,0.0);
 	Telec = 0.0;
 	Tmech_eff = 0.0;
 }
@@ -1662,22 +1664,22 @@ void motor::SPIMSteadyState(TIMESTAMP t1) {
            Xc = Xc1; 
 		}
 
-		TF[0] = (complex(0.0,1.0)*Xd_prime*ws_pu) + Rds; 
+		TF[0] = (gld::complex(0.0,1.0)*Xd_prime*ws_pu) + Rds; 
 		TF[1] = 0;
-		TF[2] = (complex(0.0,1.0)*Xm*ws_pu)/Xr;
-		TF[3] = (complex(0.0,1.0)*Xm*ws_pu)/Xr;
+		TF[2] = (gld::complex(0.0,1.0)*Xm*ws_pu)/Xr;
+		TF[3] = (gld::complex(0.0,1.0)*Xm*ws_pu)/Xr;
 		TF[4] = 0;
-		TF[5] = (complex(0.0,1.0)*Xc)/ws_pu + (complex(0.0,1.0)*Xq_prime*ws_pu) + Rqs;
+		TF[5] = (gld::complex(0.0,1.0)*Xc)/ws_pu + (gld::complex(0.0,1.0)*Xq_prime*ws_pu) + Rqs;
 		TF[6] = -(Xm*n*ws_pu)/Xr;
 		TF[7] = (Xm*n*ws_pu)/Xr;
 		TF[8] = Xm/2;
-		TF[9] =  -(complex(0.0,1.0)*Xm*n)/2;
-		TF[10] = (complex(0.0,1.0)*wr - complex(0.0,1.0)*ws)*To_prime -psi_sat;
+		TF[9] =  -(gld::complex(0.0,1.0)*Xm*n)/2;
+		TF[10] = (gld::complex(0.0,1.0)*wr - gld::complex(0.0,1.0)*ws)*To_prime -psi_sat;
 		TF[11] = 0;
 		TF[12] = Xm/2;
-		TF[13] = (complex(0.0,1.0)*Xm*n)/2;
+		TF[13] = (gld::complex(0.0,1.0)*Xm*n)/2;
 		TF[14] = 0;
-		TF[15] = (complex(0.0,1.0)*wr + complex(0.0,1.0)*ws)*-To_prime -psi_sat ;
+		TF[15] = (gld::complex(0.0,1.0)*wr + gld::complex(0.0,1.0)*ws)*-To_prime -psi_sat ;
 
 		// big matrix solving winding currents and fluxes
 		invertMatrix(TF,ITF);
@@ -1685,8 +1687,8 @@ void motor::SPIMSteadyState(TIMESTAMP t1) {
 		Iqs = ITF[4]*Vs.Mag() + ITF[5]*Vs.Mag();
 		psi_f = ITF[8]*Vs.Mag() + ITF[9]*Vs.Mag();
 		psi_b = ITF[12]*Vs.Mag() + ITF[13]*Vs.Mag();
-		If = (Ids-(complex(0.0,1.0)*n*Iqs))*0.5;
-		Ib = (Ids+(complex(0.0,1.0)*n*Iqs))*0.5;
+		If = (Ids-(gld::complex(0.0,1.0)*n*Iqs))*0.5;
+		Ib = (Ids+(gld::complex(0.0,1.0)*n*Iqs))*0.5;
 
         //electrical torque 
 		Telec = (Xm/Xr)*2.0*(If.Im()*psi_f.Re() - If.Re()*psi_f.Im() - Ib.Im()*psi_b.Re() + Ib.Re()*psi_b.Im()); 
@@ -1723,7 +1725,7 @@ void motor::SPIMSteadyState(TIMESTAMP t1) {
 	}
     
     psi_dr = psi_f + psi_b;
-    psi_qr = complex(0.0,1.0)*psi_f + complex(0,-1)*psi_b;
+    psi_qr = gld::complex(0.0,1.0)*psi_f + gld::complex(0,-1)*psi_b;
     // system current and power equations
     Is = (Ids + Iqs)*complex_exp(Vs.Arg());
     motor_elec_power = (Vs*~Is) * Pbase;
@@ -1734,15 +1736,15 @@ void motor::SPIMSteadyState(TIMESTAMP t1) {
 void motor::TPIMSteadyState(TIMESTAMP t1) {
 		double omgr0_delta = 1;
 		int32 count = 1;
-		complex alpha = complex(0.0,0.0);
-		complex A1, A2, A3, A4;
-		complex B1, B2, B3, B4;
-		complex C1, C2, C3, C4;
-		complex D1, D2, D3, D4;
-		complex E1, E2, E3, E4;
-		complex Vap;
-		complex Van;
-		// complex Vaz;
+		gld::complex alpha = gld::complex(0.0,0.0);
+		gld::complex A1, A2, A3, A4;
+		gld::complex B1, B2, B3, B4;
+		gld::complex C1, C2, C3, C4;
+		gld::complex D1, D2, D3, D4;
+		gld::complex E1, E2, E3, E4;
+		gld::complex Vap;
+		gld::complex Van;
+		// gld::complex Vaz;
 
 		alpha = complex_exp(2.0/3.0 * PI);
 
@@ -1758,28 +1760,28 @@ void motor::TPIMSteadyState(TIMESTAMP t1) {
 				count++;
 
 				// pre-calculate complex coefficients of the 4 linear equations associated with flux state variables
-				A1 = -(complex(0.0,1.0) * ws_pu + rs_pu / sigma1) ;
+				A1 = -(gld::complex(0.0,1.0) * ws_pu + rs_pu / sigma1) ;
 				B1 =  0.0 ;
 				C1 =  rs_pu / sigma1 * lm / Lr ;
 				D1 =  0.0 ;
 				E1 = Vap ;
 
 				A2 = 0.0;
-				B2 = -(complex(0.0,-1.0) * ws_pu + rs_pu / sigma1) ;
+				B2 = -(gld::complex(0.0,-1.0) * ws_pu + rs_pu / sigma1) ;
 				C2 = 0.0 ;
 				D2 = rs_pu / sigma1 * lm / Lr ;
 				E2 = ~Van ;
 
 				A3 = rr_pu / sigma2 * lm / Ls ;
 				B3 =  0.0 ;
-				C3 =  -(complex(0.0,1.0) * (ws_pu - wr_pu) + rr_pu / sigma2) ;
+				C3 =  -(gld::complex(0.0,1.0) * (ws_pu - wr_pu) + rr_pu / sigma2) ;
 				D3 =  0.0 ;
 				E3 =  0.0 ;
 
 				A4 = 0.0 ;
 				B4 =  rr_pu / sigma2 * lm / Ls ;
 				C4 = 0.0 ;
-				D4 = -(complex(0.0,1.0) * (-ws_pu - wr_pu) + rr_pu / sigma2) ;
+				D4 = -(gld::complex(0.0,1.0) * (-ws_pu - wr_pu) + rr_pu / sigma2) ;
 				E4 =  0.0 ;
 
 				// solve the 4 linear equations to obtain 4 flux state variables
@@ -1867,28 +1869,28 @@ void motor::TPIMSteadyState(TIMESTAMP t1) {
 			wr = 0.0;
 
 			// pre-calculate complex coefficients of the 4 linear equations associated with flux state variables
-			A1 = -(complex(0.0,1.0) * ws_pu + rs_pu / sigma1) ;
+			A1 = -(gld::complex(0.0,1.0) * ws_pu + rs_pu / sigma1) ;
 			B1 =  0.0 ;
 			C1 =  rs_pu / sigma1 * lm / Lr ;
 			D1 =  0.0 ;
 			E1 = Vap ;
 
 			A2 = 0.0;
-			B2 = -(complex(0.0,-1.0) * ws_pu + rs_pu / sigma1) ;
+			B2 = -(gld::complex(0.0,-1.0) * ws_pu + rs_pu / sigma1) ;
 			C2 = 0.0 ;
 			D2 = rs_pu / sigma1 * lm / Lr ;
 			E2 = ~Van ;
 
 			A3 = rr_pu / sigma2 * lm / Ls ;
 			B3 =  0.0 ;
-			C3 =  -(complex(0.0,1.0) * (ws_pu - wr_pu) + rr_pu / sigma2) ;
+			C3 =  -(gld::complex(0.0,1.0) * (ws_pu - wr_pu) + rr_pu / sigma2) ;
 			D3 =  0.0 ;
 			E3 =  0.0 ;
 
 			A4 = 0.0 ;
 			B4 =  rr_pu / sigma2 * lm / Ls ;
 			C4 = 0.0 ;
-			D4 = -(complex(0.0,1.0) * (-ws_pu - wr_pu) + rr_pu / sigma2) ;
+			D4 = -(gld::complex(0.0,1.0) * (-ws_pu - wr_pu) + rr_pu / sigma2) ;
 			E4 =  0.0 ;
 
 			// solve the 4 linear equations to obtain 4 flux state variables
@@ -1966,8 +1968,8 @@ void motor::SPIMDynamic(double curr_delta_time, double dTime) {
 	}
 
     // Flux equation
-	psi_b = (Ib*Xm) / ((complex(0.0,1.0)*(ws+wr)*To_prime)+psi_sat);
-	psi_f = psi_f + ( If*(Xm/To_prime) - (complex(0.0,1.0)*(ws-wr) + psi_sat/To_prime)*psi_f )*dTime;   
+	psi_b = (Ib*Xm) / ((gld::complex(0.0,1.0)*(ws+wr)*To_prime)+psi_sat);
+	psi_f = psi_f + ( If*(Xm/To_prime) - (gld::complex(0.0,1.0)*(ws-wr) + psi_sat/To_prime)*psi_f )*dTime;   
 
     //Calculate saturated flux
 	psi = sqrt(psi_f.Re()*psi_f.Re() + psi_f.Im()*psi_f.Im() + psi_b.Re()*psi_b.Re() + psi_b.Im()*psi_b.Im());
@@ -1980,15 +1982,15 @@ void motor::SPIMDynamic(double curr_delta_time, double dTime) {
 
 	// Calculate d and q axis fluxes
 	psi_dr = psi_f + psi_b;
-	psi_qr = complex(0.0,1.0)*psi_f + complex(0,-1)*psi_b;
+	psi_qr = gld::complex(0.0,1.0)*psi_f + gld::complex(0,-1)*psi_b;
 
 	// d and q-axis current equations
-	Ids = (-(complex(0.0,1.0)*ws_pu*(Xm/Xr)*psi_dr) + Vs.Mag()) / ((complex(0.0,1.0)*ws_pu*Xd_prime)+Rds);  
-	Iqs = (-(complex(0.0,1.0)*ws_pu*(n*Xm/Xr)*psi_qr) + Vs.Mag()) / ((complex(0.0,1.0)*ws_pu*Xq_prime)+(complex(0.0,1.0)/ws_pu*Xc)+Rqs); 
+	Ids = (-(gld::complex(0.0,1.0)*ws_pu*(Xm/Xr)*psi_dr) + Vs.Mag()) / ((gld::complex(0.0,1.0)*ws_pu*Xd_prime)+Rds);  
+	Iqs = (-(gld::complex(0.0,1.0)*ws_pu*(n*Xm/Xr)*psi_qr) + Vs.Mag()) / ((gld::complex(0.0,1.0)*ws_pu*Xq_prime)+(gld::complex(0.0,1.0)/ws_pu*Xc)+Rqs); 
 
 	// f and b current equations
-	If = (Ids-(complex(0.0,1.0)*n*Iqs))*0.5;
-	Ib = (Ids+(complex(0.0,1.0)*n*Iqs))*0.5;
+	If = (Ids-(gld::complex(0.0,1.0)*n*Iqs))*0.5;
+	Ib = (Ids+(gld::complex(0.0,1.0)*n*Iqs))*0.5;
 
 	// system current and power equations
 	Is = (Ids + Iqs)*complex_exp(Vs.Arg());
@@ -2019,31 +2021,31 @@ void motor::SPIMDynamic(double curr_delta_time, double dTime) {
 
 //Dynamic updates for TPIM
 void motor::TPIMDynamic(double curr_delta_time, double dTime) {
-	complex alpha = complex(0.0,0.0);
-	complex Vap;
-	complex Van;
+	gld::complex alpha = gld::complex(0.0,0.0);
+	gld::complex Vap;
+	gld::complex Van;
 
 	// variables related to predictor step
-	complex A1p, C1p;
-	complex B2p, D2p;
-	complex A3p, C3p;
-	complex B4p, D4p;
-	complex dphips_prev_dt ;
-	complex dphins_cj_prev_dt ;
-	complex dphipr_prev_dt ;
-	complex dphinr_cj_prev_dt ;
-	complex domgr0_prev_dt ;
+	gld::complex A1p, C1p;
+	gld::complex B2p, D2p;
+	gld::complex A3p, C3p;
+	gld::complex B4p, D4p;
+	gld::complex dphips_prev_dt ;
+	gld::complex dphins_cj_prev_dt ;
+	gld::complex dphipr_prev_dt ;
+	gld::complex dphinr_cj_prev_dt ;
+	gld::complex domgr0_prev_dt ;
 
 	// variables related to corrector step
-	complex A1c, C1c;
-	complex B2c, D2c;
-	complex A3c, C3c;
-	complex B4c, D4c;
-	complex dphips_dt ;
-	complex dphins_cj_dt ;
-	complex dphipr_dt ;
-	complex dphinr_cj_dt ;
-	complex domgr0_dt ;
+	gld::complex A1c, C1c;
+	gld::complex B2c, D2c;
+	gld::complex A3c, C3c;
+	gld::complex B4c, D4c;
+	gld::complex dphips_dt ;
+	gld::complex dphins_cj_dt ;
+	gld::complex dphipr_dt ;
+	gld::complex dphinr_cj_dt ;
+	gld::complex domgr0_dt ;
 
 	alpha = complex_exp(2.0/3.0 * PI);
 
@@ -2072,17 +2074,17 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
 
     //*** Predictor Step ***//
     // predictor step 1 - calculate coefficients
-    A1p = -(complex(0.0,1.0) * ws_pu + rs_pu / sigma1) ;
+    A1p = -(gld::complex(0.0,1.0) * ws_pu + rs_pu / sigma1) ;
     C1p =  rs_pu / sigma1 * lm / Lr ;
 
-    B2p = -(complex(0.0,-1.0) * ws_pu + rs_pu / sigma1) ;
+    B2p = -(gld::complex(0.0,-1.0) * ws_pu + rs_pu / sigma1) ;
     D2p = rs_pu / sigma1 *lm / Lr ;
 
     A3p = rr_pu / sigma2 * lm / Ls ;
-    C3p =  -(complex(0.0,1.0) * (ws_pu - wr_pu_prev) + rr_pu / sigma2) ;
+    C3p =  -(gld::complex(0.0,1.0) * (ws_pu - wr_pu_prev) + rr_pu / sigma2) ;
 
     B4p =  rr_pu / sigma2 * lm / Ls ;
-    D4p = -(complex(0.0,1.0) * (-ws_pu - wr_pu_prev) + rr_pu / sigma2) ;
+    D4p = -(gld::complex(0.0,1.0) * (-ws_pu - wr_pu_prev) + rr_pu / sigma2) ;
 
     // predictor step 2 - calculate derivatives
     dphips_prev_dt =  ( Vap + A1p * phips_prev + C1p * phipr_prev ) * wbase;  // pu/s
@@ -2112,17 +2114,17 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
     // so predictor and corrector steps are placed in the same class function
 
     // corrector step 1 - calculate coefficients using predicted state variables
-    A1c = -(complex(0.0,1.0) * ws_pu + rs_pu / sigma1) ;
+    A1c = -(gld::complex(0.0,1.0) * ws_pu + rs_pu / sigma1) ;
     C1c =  rs_pu / sigma1 * lm / Lr ;
 
-    B2c = -(complex(0.0,-1.0) * ws_pu + rs_pu / sigma1) ;
+    B2c = -(gld::complex(0.0,-1.0) * ws_pu + rs_pu / sigma1) ;
     D2c = rs_pu / sigma1 *lm / Lr ;
 
     A3c = rr_pu / sigma2 * lm / Ls ;
-    C3c =  -(complex(0.0,1.0) * (ws_pu - wr_pu) + rr_pu / sigma2) ;  // This coeff. is different from predictor
+    C3c =  -(gld::complex(0.0,1.0) * (ws_pu - wr_pu) + rr_pu / sigma2) ;  // This coeff. is different from predictor
 
     B4c =  rr_pu / sigma2 * lm / Ls ;
-    D4c = -(complex(0.0,1.0) * (-ws_pu - wr_pu) + rr_pu / sigma2) ; // This coeff. is different from predictor
+    D4c = -(gld::complex(0.0,1.0) * (-ws_pu - wr_pu) + rr_pu / sigma2) ; // This coeff. is different from predictor
 
     // corrector step 2 - calculate derivatives
     dphips_dt =  ( Vap + A1c * phips + C1c * phipr ) * wbase;
@@ -2161,20 +2163,20 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
 }
 
 //Function to perform exp(j*val) (basically a complex rotation)
-complex motor::complex_exp(double angle)
+gld::complex motor::complex_exp(double angle)
 {
-	complex output_val;
+	gld::complex output_val;
 
 	//exp(jx) = cos(x)+j*sin(x)
-	output_val = complex(cos(angle),sin(angle));
+	output_val = gld::complex(cos(angle),sin(angle));
 
 	return output_val;
 }
 
 // Function to do the inverse of a 4x4 matrix
-int motor::invertMatrix(complex TF[16], complex ITF[16])
+int motor::invertMatrix(gld::complex TF[16], gld::complex ITF[16])
 {
-    complex inv[16], det;
+    gld::complex inv[16], det;
     int i;
 
     inv[0] = TF[5]  * TF[10] * TF[15] - TF[5]  * TF[11] * TF[14] - TF[9]  * TF[6]  * TF[15] + TF[9]  * TF[7]  * TF[14] +TF[13] * TF[6]  * TF[11] - TF[13] * TF[7]  * TF[10];
@@ -2199,7 +2201,7 @@ int motor::invertMatrix(complex TF[16], complex ITF[16])
     if (det == 0)
         return 0;
 
-    det = complex(1,0) / det;
+    det = gld::complex(1,0) / det;
 
     for (i = 0; i < 16; i++)
         ITF[i] = inv[i] * det;
@@ -2223,7 +2225,7 @@ EXPORT int create_motor(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(motor::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			motor *my = OBJECTDATA(*obj,motor);
 			gl_set_parent(*obj,parent);

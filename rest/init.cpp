@@ -4,9 +4,10 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
+
 #include "gridlabd.h"
 #include "rest.h"
-#include "server.h"^M
+#include "server.h"
 #include "mongoose.h"
 
 //NEWCLASSINC

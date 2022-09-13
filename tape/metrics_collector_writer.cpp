@@ -18,19 +18,19 @@ void new_metrics_collector_writer(MODULE *mod) {
 
 metrics_collector_writer::metrics_collector_writer(MODULE *mod) {
 	if (oclass == NULL) {
-		oclass = gl_register_class(mod, "metrics_collector_writer", sizeof(metrics_collector_writer), PC_POSTTOPDOWN);
-		if (oclass == NULL)
+		oclass = gl_register_class(mod, const_cast<char *>("metrics_collector_writer"), sizeof(metrics_collector_writer), PC_POSTTOPDOWN);
+		if (oclass==NULL)
 			throw "unable to register class metrics_collector_writer";
 
-		if (gl_publish_variable(oclass, 
-				PT_char256, "filename", PADDR(filename), PT_DESCRIPTION, "the JSON formatted output file name", 
-				PT_char8, "extension", PADDR(extension), PT_DESCRIPTION, "the file formatted type (JSON, H5)", 
-				PT_char8, "alternate", PADDR(alternate), PT_DESCRIPTION, "the alternate file name convention", 
-				PT_char8, "allextensions", PADDR(allextensions), PT_DESCRIPTION, "write all file extensions", 
+		if (gl_publish_variable(oclass,
+				PT_char256, "filename", PADDR(filename), PT_DESCRIPTION, "the JSON formatted output file name",
+				PT_char8, "extension", PADDR(extension), PT_DESCRIPTION, "the file formatted type (JSON, H5)",
+				PT_char8, "alternate", PADDR(alternate), PT_DESCRIPTION, "the alternate file name convention",
+				PT_char8, "allextensions", PADDR(allextensions), PT_DESCRIPTION, "write all file extensions",
 				PT_double, "interim[s]", PADDR(interim_length_dbl), PT_DESCRIPTION, "Interim at which metrics_collector_writer output is written",
 				PT_double, "interval[s]", PADDR(interval_length_dbl), PT_DESCRIPTION, "Interval at which the metrics_collector_writer output is stored in JSON format",
 				NULL) < 1)
-			GL_THROW("unable to publish properties in %s", __FILE__);
+			GL_THROW(const_cast<char *>("unable to publish properties in %s"), __FILE__);
 	}
 }
 
@@ -179,52 +179,26 @@ int metrics_collector_writer::init(OBJECT *parent) {
 	// Write separate json files for meters, triplex_meters, inverters, capacitors, regulators, houses, feeders, transformers, lines, evchargers:
 
 	if (strcmp(alternate, "no") == 0) {
-		filename_billing_meter = m_billing_meter.c_str();
-		strcat(filename_billing_meter, "_");
-		strcat(filename_billing_meter, filename);
-		filename_inverter = m_inverter.c_str();
-		strcat(filename_inverter, "_");
-		strcat(filename_inverter, filename);
-		filename_capacitor = m_capacitor.c_str();
-		strcat(filename_capacitor, "_");
-		strcat(filename_capacitor, filename);
-		filename_regulator = m_regulator.c_str();
-		strcat(filename_regulator, "_");
-		strcat(filename_regulator, filename);
-		filename_house = m_house.c_str();
-		strcat(filename_house, "_");
-		strcat(filename_house, filename);
-		filename_feeder = m_feeder.c_str();
-		strcat(filename_feeder, "_");
-		strcat(filename_feeder, filename);
-		filename_transformer = m_transformer.c_str();
-		strcat(filename_transformer, "_");
-		strcat(filename_transformer, filename);
-		filename_line = m_line.c_str();
-		strcat(filename_line, "_");
-		strcat(filename_line, filename);
-		filename_evchargerdet = m_evchargerdet.c_str();
-		strcat(filename_evchargerdet, "_");
-		strcat(filename_evchargerdet, filename);
+		snprintf(filename_billing_meter, sizeof(filename_billing_meter)-1, "%s_%s", m_billing_meter.c_str(), filename.get_string());
+		snprintf(filename_inverter, sizeof(filename_inverter)-1, "%s_%s", m_inverter.c_str(), filename.get_string());
+		snprintf(filename_capacitor, sizeof(filename_capacitor)-1, "%s_%s", m_capacitor.c_str(), filename.get_string());
+		snprintf(filename_regulator, sizeof(filename_regulator)-1, "%s_%s", m_regulator.c_str(), filename.get_string());
+		snprintf(filename_house, sizeof(filename_house)-1, "%s_%s", m_house.c_str(), filename.get_string());
+		snprintf(filename_feeder, sizeof(filename_feeder)-1, "%s_%s", m_feeder.c_str(), filename.get_string());
+		snprintf(filename_transformer, sizeof(filename_transformer)-1, "%s_%s", m_transformer.c_str(), filename.get_string());
+		snprintf(filename_line, sizeof(filename_line)-1, "%s_%s", m_line.c_str(), filename.get_string());
+		snprintf(filename_evchargerdet, sizeof(filename_evchargerdet)-1, "%s_%s", m_evchargerdet.c_str(), filename.get_string());
+
 	} else {
-		strcat(filename_billing_meter, filename);
-		strcat(filename_billing_meter, m_billing_meter.c_str());
-		strcat(filename_inverter, filename);
-		strcat(filename_inverter, m_inverter.c_str());
-		strcat(filename_capacitor, filename);
-		strcat(filename_capacitor, m_capacitor.c_str());
-		strcat(filename_regulator, filename);
-		strcat(filename_regulator, m_regulator.c_str());
-		strcat(filename_house, filename);
-		strcat(filename_house, m_house.c_str());
-		strcat(filename_feeder, filename);
-		strcat(filename_feeder, m_feeder.c_str());
-		strcat(filename_transformer, filename);
-		strcat(filename_transformer, m_transformer.c_str());
-		strcat(filename_line, filename);
-		strcat(filename_line, m_line.c_str());
-		strcat(filename_evchargerdet, filename);
-		strcat(filename_evchargerdet, m_evchargerdet.c_str());
+		snprintf(filename_billing_meter, sizeof(filename_billing_meter)-1, "%s%s", filename.get_string(), m_billing_meter.c_str());
+		snprintf(filename_inverter, sizeof(filename_inverter)-1, "%s%s", filename.get_string(), m_inverter.c_str());
+		snprintf(filename_capacitor, sizeof(filename_capacitor)-1, "%s%s", filename.get_string(), m_capacitor.c_str());
+		snprintf(filename_regulator, sizeof(filename_regulator)-1, "%s%s", filename.get_string(), m_regulator.c_str());
+		snprintf(filename_house, sizeof(filename_house)-1, "%s%s", filename.get_string(), m_house.c_str());
+		snprintf(filename_feeder, sizeof(filename_feeder)-1, "%s%s", filename.get_string(), m_feeder.c_str());
+		snprintf(filename_transformer, sizeof(filename_transformer)-1, "%s%s", filename.get_string(), m_transformer.c_str());
+		snprintf(filename_line, sizeof(filename_line)-1, "%s%s", filename.get_string(), m_line.c_str());
+		snprintf(filename_evchargerdet, sizeof(filename_evchargerdet)-1, "%s%s", filename.get_string(), m_evchargerdet.c_str());
 	}
 #ifdef HAVE_HDF5
 	//prepare dataset for HDF5 if needed
@@ -1454,9 +1428,7 @@ void metrics_collector_writer::hdfEvChargerDetWrite (size_t objs, Json::Value& m
 	hdfWrite(filename_evchargerdet, mtype_evchargerdets, &tbl, 9, idx);
 	metrics.clear();
 }
-
-
-#endif HAVE_HDF5
+#endif // HAVE_HDF5
 
 EXPORT int create_metrics_collector_writer(OBJECT **obj, OBJECT *parent) {
 	int rv = 0;

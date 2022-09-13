@@ -7,6 +7,7 @@
 #ifndef _NO_CPPUNIT
 
 #include <stdio.h>
+
 #include "object.h"
 #include "class.h"
 #include "globals.h"

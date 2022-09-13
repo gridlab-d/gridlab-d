@@ -6,28 +6,28 @@
  @{
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "sectionalizer.h"
 
 //Class management
-CLASS* sectionalizer::oclass = NULL;
-CLASS* sectionalizer::pclass = NULL;
+CLASS* sectionalizer::oclass = nullptr;
+CLASS* sectionalizer::pclass = nullptr;
 
 sectionalizer::sectionalizer(MODULE *mod) : switch_object(mod)
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// link to parent class (used by isa)
 		pclass = link_object::oclass;
 
 		// register the class definition
 		oclass = gl_register_class(mod,"sectionalizer",sizeof(sectionalizer),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-        if(oclass == NULL)
+        if(oclass == nullptr)
             GL_THROW("unable to register object class implemented by %s",__FILE__);
 
 		// publish the class properties
@@ -35,23 +35,23 @@ sectionalizer::sectionalizer(MODULE *mod) : switch_object(mod)
 			PT_INHERIT, "switch",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
-		if (gl_publish_function(oclass,"change_sectionalizer_state",(FUNCTIONADDR)change_sectionalizer_state)==NULL)
+		if (gl_publish_function(oclass,"change_sectionalizer_state",(FUNCTIONADDR)change_sectionalizer_state)==nullptr)
 			GL_THROW("Unable to publish sectionalizer state change function");
-		if (gl_publish_function(oclass,"sectionalizer_reliability_operation",(FUNCTIONADDR)sectionalizer_reliability_operation)==NULL)
+		if (gl_publish_function(oclass,"sectionalizer_reliability_operation",(FUNCTIONADDR)sectionalizer_reliability_operation)==nullptr)
 			GL_THROW("Unable to publish sectionalizer reliability operation function");
-		if (gl_publish_function(oclass,	"change_sectionalizer_faults", (FUNCTIONADDR)sectionalizer_fault_updates)==NULL)
+		if (gl_publish_function(oclass,	"change_sectionalizer_faults", (FUNCTIONADDR)sectionalizer_fault_updates)==nullptr)
 			GL_THROW("Unable to publish sectionalizer fault correction function");
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_switch)==NULL)
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_switch)==nullptr)
 			GL_THROW("Unable to publish sectionalizer deltamode function");
 
 		//Publish restoration-related function (current update)
-		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==nullptr)
 			GL_THROW("Unable to publish sectionalizer external power calculation function");
-		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==nullptr)
 			GL_THROW("Unable to publish sectionalizer external power limit calculation function");
-		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==NULL)
+		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==nullptr)
 			GL_THROW("Unable to publish sectionalizer external current calculation function");
     }
 }
@@ -96,7 +96,7 @@ EXPORT int create_sectionalizer(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(sectionalizer::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			sectionalizer *my = OBJECTDATA(*obj,sectionalizer);
 			gl_set_parent(*obj,parent);
@@ -145,19 +145,19 @@ EXPORT double change_sectionalizer_state(OBJECT *thisobj, unsigned char phase_ch
 	char desA, desB, desC;
 	switch_object *swtchobj;
 	sectionalizer *sectionobj;
-	FUNCTIONADDR funadd = NULL;
+	FUNCTIONADDR funadd = nullptr;
 	bool perform_operation;
 
 	//Init
 	count_values = 0.0;
 
-	if ((state == false) && (restoration_checks_active == false))	//Check routine to find a recloser (or we're in reconfiguration mode)
+	if (!state && !restoration_checks_active)	//Check routine to find a recloser (or we're in reconfiguration mode)
 	{
 		//Map us up as a proper object
 		sectionobj = OBJECTDATA(thisobj,sectionalizer);
 
 		//Call to see if a recloser is present
-		if (fault_check_object == NULL)
+		if (fault_check_object == nullptr)
 		{
 			GL_THROW("Reliability call made without fault_check object present!");
 			/*  TROUBLESHOOT
@@ -171,7 +171,7 @@ EXPORT double change_sectionalizer_state(OBJECT *thisobj, unsigned char phase_ch
 		funadd = (FUNCTIONADDR)(gl_get_function(fault_check_object,"handle_sectionalizer"));
 
 		//make sure it worked
-		if (funadd==NULL)
+		if (funadd==nullptr)
 		{
 			GL_THROW("Failed to find sectionalizer checking method on object %s",fault_check_object->name);
 			/*  TROUBLESHOOT
@@ -212,12 +212,12 @@ EXPORT double change_sectionalizer_state(OBJECT *thisobj, unsigned char phase_ch
 		count_values = 1.0;			//Arbitrary non-zero value so fail check doesn't go off
 	}
 
-	if (perform_operation==true)	//Either is a "replace" or a recloser was found - operation is a go
+	if (perform_operation)	//Either is a "replace" or a recloser was found - operation is a go
 	{
 		//Map the switch
 		swtchobj = OBJECTDATA(thisobj,switch_object);
 
-		if ((swtchobj->switch_banked_mode == switch_object::BANKED_SW) || (meshed_fault_checking_enabled == true))
+		if ((swtchobj->switch_banked_mode == switch_object::BANKED_SW) || meshed_fault_checking_enabled)
 		{
 			swtchobj->set_switch(state);
 		}
@@ -226,7 +226,7 @@ EXPORT double change_sectionalizer_state(OBJECT *thisobj, unsigned char phase_ch
 			//Figure out what we need to call
 			if ((phase_change & 0x04) == 0x04)
 			{
-				if (state==true)
+				if (state)
 					desA=1;	//Close it
 				else
 					desA=0;	//Open it
@@ -237,7 +237,7 @@ EXPORT double change_sectionalizer_state(OBJECT *thisobj, unsigned char phase_ch
 			//Phase B
 			if ((phase_change & 0x02) == 0x02)
 			{
-				if (state==true)
+				if (state)
 					desB=1;	//Close it
 				else
 					desB=0;	//Open it
@@ -248,7 +248,7 @@ EXPORT double change_sectionalizer_state(OBJECT *thisobj, unsigned char phase_ch
 			//Phase C
 			if ((phase_change & 0x01) == 0x01)
 			{
-				if (state==true)
+				if (state)
 					desC=1;	//Close it
 				else
 					desC=0;	//Open it

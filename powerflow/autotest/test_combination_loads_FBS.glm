@@ -74,17 +74,17 @@ object node {
 	//All others tree, so if node2 is right, all should be right
 	object complex_assert {
 		target voltage_A;
-		value 6998.818058-81.612657j;
+		value 6998.888-81.08j;
 		within 0.1;
 	};
 	object complex_assert {
 		target voltage_B;
-		value -3610.063217-6021.688427j;
+		value -3609.22-6021.75j;
 		within 0.1;
 	};
 	object complex_assert {
 		target voltage_C;
-		value -3391.120135+6068.370027j;
+		value -3391.47+6067.85j;
 		within 0.1;
 	};
 }
@@ -139,17 +139,17 @@ object load {
 	nominal_voltage 7200.0;
 	object complex_assert {
 		target voltage_A;
-		value 6990.471535-83.418643j;
+		value 6990.542-82.87j;
 		within 0.1;
 	};
 	object complex_assert {
 		target voltage_B;
-		value -3610.875357-6012.799288j;
+		value -3610.01-6012.86j;
 		within 0.1;
 	};
 	object complex_assert {
 		target voltage_C;
-		value -3383.267444+6062.201317j;
+		value -3383.64+6061.67j;
 		within 0.1;
 	};
 }
@@ -255,17 +255,17 @@ object load {
 	nominal_voltage 7200.0;
 	object complex_assert {
 		target voltage_A;
-		value 6996.383689-84.183184j;
+		value 6996.46-83.65j;
 		within 0.1;
 	};
 	object complex_assert {
 		target voltage_B;
-		value -3609.793448-6019.126658j;
+		value -3608.93-6019.18j;
 		within 0.1;
 	};
 	object complex_assert {
 		target voltage_C;
-		value -3387.777046+6065.589144j;
+		value -3388.12+6065.06j;
 		within 0.1;
 	};
 }
@@ -550,17 +550,17 @@ object load {
 	//All of these child tests should be at the same voltage, so check a random one
 	object complex_assert {
 		target voltage_A;
-		value 6988.041350-85.983562j;
+		value 6988.12-85.43j;
 		within 0.1;
 	};
 	object complex_assert {
 		target voltage_B;
-		value -3610.601426-6010.241324j;
+		value -3609.71-6010.3j;
 		within 0.1;
 	};
 	object complex_assert {
 		target voltage_C;
-		value -3379.931721+6059.423583j;
+		value -3380.3+6058.88j;
 		within 0.1;
 	};
 }

@@ -9,6 +9,7 @@
 // transformers)
 //
 // written by alek332
+#set profiler=1
 
 clock{
 	timezone EST+8EDT;
@@ -16,7 +17,6 @@ clock{
 	stoptime '2000-01-01 1:00:00';
 }
 
- //#set profiler=1
  //*********************************************
  // modules
  module assert;

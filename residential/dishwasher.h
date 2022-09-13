@@ -16,7 +16,7 @@
 class dishwasher : public residential_enduse
 {
 public:
-	typedef enum {	dishwasher_STOPPED=0,		///< motor is stopped
+	enum {	dishwasher_STOPPED=0,		///< motor is stopped
 			dishwasher_STALLED=1,						///< motor is stalled
 			dishwasher_TRIPPED=2,						///< motor is tripped
 			dishwasher_COIL_ONLY=3,				//<only the coil and motor are operating
@@ -104,7 +104,7 @@ public:
 
 	double stall_voltage;				///< voltage at which the motor stalls
 	double start_voltage;				///< voltage at which motor can start
-	complex stall_impedance;			///< impedance of motor when stalled
+	gld::complex stall_impedance;			///< impedance of motor when stalled
 	double trip_delay;					///< stalled time before thermal trip
 	double reset_delay;					///< trip time before thermal reset and restart
 	double heat_fraction;				///< internal gain fraction of installed power

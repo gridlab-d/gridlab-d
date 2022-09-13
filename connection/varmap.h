@@ -7,6 +7,7 @@
 #define _VARMAP_H
 
 #include "gridlabd.h"
+
 #include <string>
 #include <memory>
 #include <variant>

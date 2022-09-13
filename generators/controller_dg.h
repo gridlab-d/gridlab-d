@@ -14,7 +14,7 @@
 #include "generators.h"
 
 EXPORT SIMULATIONMODE interupdate_controller_dg(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
-EXPORT STATUS postupdate_controller_dg(OBJECT *obj, complex *useful_value, unsigned int mode_pass);
+EXPORT STATUS postupdate_controller_dg(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass);
 
 //controller state variable structure
 typedef struct {
@@ -54,9 +54,9 @@ typedef struct {
 	gld_property *voltage_A_prop;
 	gld_property *voltage_B_prop;
 	gld_property *voltage_C_prop;
-	complex voltage_A;
-	complex voltage_B;
-	complex voltage_C;
+	gld::complex voltage_A;
+	gld::complex voltage_B;
+	gld::complex voltage_C;
 	double nominal_voltage;
 } NODE_VARS;
 
@@ -68,10 +68,10 @@ typedef struct {
 	gld_property *power_out_A_prop;
 	gld_property *power_out_B_prop;
 	gld_property *power_out_C_prop;
-	complex power_in;
-	complex power_out_A;
-	complex power_out_B;
-	complex power_out_C;
+	gld::complex power_in;
+	gld::complex power_out_A;
+	gld::complex power_out_B;
+	gld::complex power_out_C;
 	enumeration status_val;
 } SWITCH_VARS;
 
@@ -103,8 +103,8 @@ private:
 	bool deltamode_inclusive;	   //Boolean for deltamode calls - pulled from object flags
 	double *mapped_freq_variable;  //Mapping to frequency variable in powerflow module - deltamode updates
 
-	gld_property *map_complex_value(OBJECT *obj, char *name);
-	gld_property *map_double_value(OBJECT *obj, char *name);
+	gld_property *map_complex_value(OBJECT *obj, const char *name);
+	gld_property *map_double_value(OBJECT *obj, const char *name);
 public:
 	char32 controlled_dgs;
 
@@ -138,7 +138,7 @@ public:
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 	//STATUS deltaupdate(unsigned int64 dt, unsigned int iteration_count_val);
 	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
-	STATUS post_deltaupdate(complex *useful_value, unsigned int mode_pass);
+	STATUS post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass);
 
 };
 

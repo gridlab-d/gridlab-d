@@ -5,26 +5,27 @@
  *      Author: tang526
  */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
-#include <complex.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+
+#include "gld_complex.h"
 
 #include "controller_dg.h"
 
-CLASS* controller_dg::oclass = NULL;
-controller_dg *controller_dg::defaults = NULL;
+CLASS* controller_dg::oclass = nullptr;
+controller_dg *controller_dg::defaults = nullptr;
 
 static PASSCONFIG passconfig = PC_BOTTOMUP|PC_POSTTOPDOWN;
 static PASSCONFIG clockpass = PC_BOTTOMUP;
 
 controller_dg::controller_dg(MODULE *mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		oclass = gl_register_class(mod,"controller_dg",sizeof(controller_dg),passconfig|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class controller_dg";
 		else
 			oclass->trl = TRL_PROOF;
@@ -38,15 +39,15 @@ controller_dg::controller_dg(MODULE *mod)
 			PT_double,"ki_QV", PADDR(ki_QV), PT_DESCRIPTION, "parameter of the propotional control for secondary voltage control",
 			PT_double,"kp_QV", PADDR(kp_QV), PT_DESCRIPTION, "parameter of the integral control for secondary voltage control",
 			PT_double,"gain_QV", PADDR(gain_QV), PT_DESCRIPTION, "Gain of the controller for secondary voltage control",
-			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		defaults = this;
 
 		memset(this,0,sizeof(controller_dg));
 
-		if (gl_publish_function(oclass,	"interupdate_controller_object", (FUNCTIONADDR)interupdate_controller_dg)==NULL)
+		if (gl_publish_function(oclass,	"interupdate_controller_object", (FUNCTIONADDR)interupdate_controller_dg)==nullptr)
 			GL_THROW("Unable to publish controller_dg deltamode function");
-		if (gl_publish_function(oclass,	"postupdate_controller_object", (FUNCTIONADDR)postupdate_controller_dg)==NULL)
+		if (gl_publish_function(oclass,	"postupdate_controller_object", (FUNCTIONADDR)postupdate_controller_dg)==nullptr)
 			GL_THROW("Unable to publish controller_dg deltamode function");
 
     }
@@ -58,7 +59,7 @@ int controller_dg::create(void)
 	omega_ref=2*PI*60;
 
 	deltamode_inclusive = false;
-	mapped_freq_variable = NULL;
+	mapped_freq_variable = nullptr;
 
 	dgswitchFound = 0;
 
@@ -75,10 +76,10 @@ int controller_dg::create(void)
 
 	controlTime = 0;
 
-	pDG = NULL;
-	GenPobj = NULL;
-	Switch_Froms = NULL;
-	pSwitchObjs = NULL;
+	pDG = nullptr;
+	GenPobj = nullptr;
+	Switch_Froms = nullptr;
+	pSwitchObjs = nullptr;
 
 	return 1;
 }
@@ -91,6 +92,12 @@ int controller_dg::init(OBJECT *parent)
 	gld_property *temp_prop;
 	gld_object *temp_from, *temp_to;
 
+	//See if the global flag is set - if so, add the object flag
+	if (all_generator_delta)
+	{
+		obj->flags |= OF_DELTAMODE;
+	}
+
 	//Set the deltamode flag, if desired
 	if ((thisobj->flags & OF_DELTAMODE) == OF_DELTAMODE)
 	{
@@ -100,7 +107,7 @@ int controller_dg::init(OBJECT *parent)
 	// Obtain the pointer to the diesel_dg objects
 	if(controlled_dgs[0] == '\0'){
 		dgs = gl_find_objects(FL_NEW,FT_CLASS,SAME,"diesel_dg",FT_END);
-		if(dgs == NULL){
+		if(dgs == nullptr){
 			gl_error("No diesel_dg objects were found.");
 			return 0;
 			/* TROUBLESHOOT
@@ -111,7 +118,7 @@ int controller_dg::init(OBJECT *parent)
 	else {
 		//Find all dgs with the controller group id
 		dgs = gl_find_objects(FL_NEW,FT_CLASS,SAME,"diesel_dg",AND,FT_GROUPID,SAME,controlled_dgs.get_string(),FT_END);
-		if(dgs == NULL){
+		if(dgs == nullptr){
 			gl_error("Although controller given group id, no dgs with given group id found.");
 			/*  TROUBLESHOOT
 			While trying to put together a list of all dg objects with the specified controller groupid, no such dg objects were found.
@@ -122,11 +129,11 @@ int controller_dg::init(OBJECT *parent)
 	}
 
 	// Creat controller for each generator
-	obj = NULL;
+	obj = nullptr;
 	int index = 0;
-	if(dgs != NULL){
+	if(dgs != nullptr){
 		pDG = (DG_VARS *)gl_malloc(dgs->hit_count*sizeof(DG_VARS));
-		if(pDG == NULL){
+		if(pDG == nullptr){
 			gl_error("Failed to allocate diesel_dg array.");
 			return TS_NEVER;
 		}
@@ -136,7 +143,7 @@ int controller_dg::init(OBJECT *parent)
 		while(obj = gl_find_next(dgs,obj)){
 
 			//Verify it is a proper object
-			if (gl_object_isa(obj,"diesel_dg","generators") == false)
+			if (!gl_object_isa(obj,"diesel_dg","generators"))
 			{
 				gl_error("Invalid diesel_dg object");
 				return 0;
@@ -151,8 +158,8 @@ int controller_dg::init(OBJECT *parent)
 			// so that the corresponding connected switch can be found
 			pDG[index].parent = obj->parent;
 			pDG[index].obj = obj;
-			
-			if(pDG[index].parent == NULL){
+
+			if(pDG[index].parent == nullptr){
 				gl_error("Failed to find diesel_dg parent node object.");
 				return 0;
 			}
@@ -201,7 +208,7 @@ int controller_dg::init(OBJECT *parent)
 		prev_Vset_val = (double*)gl_malloc(dgs->hit_count*sizeof(double));
 
 		//See if it worked
-		if (ctrlGen == NULL || prev_Pref_val == NULL)
+		if (ctrlGen == nullptr || prev_Pref_val == nullptr)
 		{
 			GL_THROW("Restoration:Failed to allocate new chain");
 			//Defined above
@@ -211,7 +218,7 @@ int controller_dg::init(OBJECT *parent)
 		for (int i = 0; i < dgs->hit_count; i++) {
 			ctrlGen[i] = (CTRL_Gen *)gl_malloc(sizeof(CTRL_Gen));
 			//See if it worked
-			if (ctrlGen[i] == NULL)
+			if (ctrlGen[i] == nullptr)
 			{
 				GL_THROW("Restoration:Failed to allocate new chain");
 				//Defined above
@@ -228,9 +235,9 @@ int controller_dg::init(OBJECT *parent)
 	}
 
 	// Obtain the pointer to the switch objects
-	obj = NULL;
+	obj = nullptr;
 	switches = gl_find_objects(FL_NEW,FT_CLASS,SAME,"switch",FT_END);
-	if(switches == NULL){
+	if(switches == nullptr){
 		gl_error("No switch objects were found.");
 		return 0;
 		/* TROUBLESHOOT
@@ -238,18 +245,18 @@ int controller_dg::init(OBJECT *parent)
 		*/
 	}
 	index = 0;
-	if(switches != NULL){
+	if(switches != nullptr){
 
 		//Allocate switch "from" node items
 		Switch_Froms = (NODE_VARS *)gl_malloc(dgs->hit_count*sizeof(NODE_VARS));
-		if (Switch_Froms == NULL)
+		if (Switch_Froms == nullptr)
 		{
 			gl_error("Failed to allocate switch array.");
 			return 0;
 		}
 
 		pSwitchObjs = (SWITCH_VARS *)gl_malloc(dgs->hit_count*sizeof(pSwitchObjs));
-		if (pSwitchObjs == NULL)
+		if (pSwitchObjs == nullptr)
 		{
 			gl_error("Failed to allocate switch array");
 			return 0;
@@ -266,7 +273,7 @@ int controller_dg::init(OBJECT *parent)
 			/* Get the from node */
 			temp_prop = new gld_property(obj, "from");
 			// Double check the validity
-			if ((temp_prop->is_valid() != true) || (temp_prop->is_objectref() != true))
+			if (!temp_prop->is_valid() || !temp_prop->is_objectref())
 			{
 				GL_THROW("controller_dg:%d %s Failed to map the switch property 'from'!",thisobj->id, (thisobj->name ? thisobj->name : "Unnamed"));
 				/*  TROUBLESHOOT
@@ -281,7 +288,7 @@ int controller_dg::init(OBJECT *parent)
 			/* Get the from node */
 			temp_prop = new gld_property(obj, "to");
 			// Double check the validity
-			if ((temp_prop->is_valid() != true) || (temp_prop->is_objectref() != true))
+			if (!temp_prop->is_valid() || !temp_prop->is_objectref())
 			{
 				GL_THROW("controller_dg:%d %s Failed to map the switch property 'to'!",thisobj->id, (thisobj->name ? thisobj->name : "Unnamed"));
 				/*  TROUBLESHOOT
@@ -294,7 +301,7 @@ int controller_dg::init(OBJECT *parent)
 			delete temp_prop;
 
 			bool found = false;
-			OBJECT *fnd_obj = NULL;
+			OBJECT *fnd_obj = nullptr;
 			for (int i = 0; i < dgs->hit_count; i++) {
 				if (strcmp(temp_from->get_name(), pDG[i].parent->name) == 0 || strcmp(temp_to->get_name(), pDG[i].parent->name) == 0) {
 					found = true;
@@ -302,7 +309,7 @@ int controller_dg::init(OBJECT *parent)
 					break;
 				}
 			}
-			if (found == true) {
+			if (found) {
 				// Store the switches that connected to the generatos
 				//Get node properties
 				Switch_Froms[dgswitchFound].obj = fnd_obj;
@@ -331,7 +338,7 @@ int controller_dg::init(OBJECT *parent)
 				pSwitchObjs[dgswitchFound].status_prop = new gld_property(obj,"status");
 
 				//Check it
-				if ((pSwitchObjs[dgswitchFound].status_prop->is_valid() != true) || (pSwitchObjs[dgswitchFound].status_prop->is_enumeration() != true))
+				if (!pSwitchObjs[dgswitchFound].status_prop->is_valid() || !pSwitchObjs[dgswitchFound].status_prop->is_enumeration())
 				{
 					GL_THROW("controller_dg:%d %s Failed to map the switch property 'status'!",thisobj->id, (thisobj->name ? thisobj->name : "Unnamed"));
 					/*  TROUBLESHOOT
@@ -358,7 +365,7 @@ int controller_dg::init(OBJECT *parent)
 	if (deltamode_inclusive)
 	{
 		//Check global, for giggles
-		if (enable_subsecond_models!=true)
+		if (!enable_subsecond_models)
 		{
 			gl_warning("diesel_dg:%s indicates it wants to run deltamode, but the module-level flag is not set!",obj->name?obj->name:"unnamed");
 			/*  TROUBLESHOOT
@@ -372,7 +379,7 @@ int controller_dg::init(OBJECT *parent)
 			mapped_freq_variable = (double *)gl_get_module_var(gl_find_module("powerflow"),"current_frequency");
 
 			//Make sure it isn't empty
-			if (mapped_freq_variable == NULL)
+			if (mapped_freq_variable == nullptr)
 			{
 				GL_THROW("controller_dg:%s - Failed to map frequency checking variable from powerflow for deltamode",obj->name?obj->name:"unnamed");
 				//Defined above
@@ -383,7 +390,7 @@ int controller_dg::init(OBJECT *parent)
 	}//End deltamode inclusive
 	else	//Not enabled for this model
 	{
-		if (enable_subsecond_models == true)
+		if (enable_subsecond_models)
 		{
 			gl_warning("diesel_dg:%d %s - Deltamode is enabled for the module, but not this generator!",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
@@ -418,12 +425,12 @@ TIMESTAMP controller_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 	tret_value = TS_NEVER;
 
 	//First run allocation - in diesel_dg for now, but may need to move elsewhere
-	if (first_run == true)	//First run
+	if (first_run)	//First run
 	{
 		//TODO: LOCKING!
 		if (deltamode_inclusive && enable_subsecond_models )	//We want deltamode - see if it's populated yet
 		{
-			if (((gen_object_current == -1) || (delta_objects==NULL)) && (enable_subsecond_models == true))
+			if (((gen_object_current == -1) || (delta_objects==nullptr)) && enable_subsecond_models)
 			{
 				//Call the allocation routine
 				allocate_deltamode_arrays();
@@ -447,7 +454,7 @@ TIMESTAMP controller_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"interupdate_controller_object"));
 
 			//Make sure it worked
-			if (delta_functions[gen_object_current] == NULL)
+			if (delta_functions[gen_object_current] == nullptr)
 			{
 				GL_THROW("Failure to map deltamode function for device:%s",obj->name);
 				/*  TROUBLESHOOT
@@ -461,7 +468,7 @@ TIMESTAMP controller_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 			post_delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"postupdate_controller_object"));
 
 			//Make sure it worked
-			if (post_delta_functions[gen_object_current] == NULL)
+			if (post_delta_functions[gen_object_current] == nullptr)
 			{
 				GL_THROW("Failure to map post-deltamode function for device:%s",obj->name);
 				/*  TROUBLESHOOT
@@ -494,11 +501,11 @@ TIMESTAMP controller_dg::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	if (deltamode_endtime != TS_NEVER)
 	{
 		deltamode_endtime = TS_NEVER;
-		deltamode_endtime_dbl = TSNVRDBL;
+		deltamode_endtime_dbl = TS_NEVER_DBL;
 	}
 
 	//
-	if (first_run == true)	//Final init items - namely deltamode supersecond exciter
+	if (first_run)	//Final init items - namely deltamode supersecond exciter
 	{
 		if (deltamode_inclusive && enable_subsecond_models) //Still "first run", but at least one powerflow has completed (call init dyn now)
 		{
@@ -537,17 +544,17 @@ SIMULATIONMODE controller_dg::inter_deltaupdate(unsigned int64 delta_time, unsig
 	double deltat, deltath;
 	double temp_double = 0;
 
-	complex vtemp[3];
+	gld::complex vtemp[3];
 	double nominal_voltage;
-	FUNCTIONADDR funadd = NULL;
+	FUNCTIONADDR funadd = nullptr;
 	int return_val;
-	gld_wlock *test_rlock;
+	gld_wlock *test_rlock = nullptr;
 	unsigned char openPhases[] = {0x04, 0x02, 0x01};
 
 	// Control of the generator switch
 	// Detect abnormal feeder frequency, switch terminal voltage, and reverse real power flow from generators (absorbing real power)
 	// Switch will be turned off. Delay has been added to avoid simultaneously turning off all switches
-	OBJECT *obj = NULL;
+	OBJECT *obj = nullptr;
 	for (int index = 0; index < dgswitchFound; index++) {
 
 		// Obtain the switch object so that function can be called
@@ -596,13 +603,13 @@ SIMULATIONMODE controller_dg::inter_deltaupdate(unsigned int64 delta_time, unsig
 			(phase_A_P > 0 || phase_B_P > 0 || phase_C_P > 0))
 		{
 
-			if ((flag_switchOn == false) || (controlTime == delta_time)) {
+			if (!flag_switchOn || (controlTime == delta_time)) {
 
 				//map the function
 				funadd = (FUNCTIONADDR)(gl_get_function(obj,"change_switch_state"));
 
 				//make sure it worked
-				if (funadd==NULL)
+				if (funadd==nullptr)
 				{
 					GL_THROW("Failed to find reliability manipulation method on object %s",obj->name);
 					/*  TROUBLESHOOT
@@ -626,7 +633,7 @@ SIMULATIONMODE controller_dg::inter_deltaupdate(unsigned int64 delta_time, unsig
 				}
 
 				// Set up flags and time control time every time the switch status is changed
-				if (flag_switchOn == false) {
+				if (!flag_switchOn) {
 					flag_switchOn = true;
 				}
 
@@ -742,7 +749,7 @@ SIMULATIONMODE controller_dg::inter_deltaupdate(unsigned int64 delta_time, unsig
 	}// End corrector pass
 }
 
-STATUS controller_dg::post_deltaupdate(complex *useful_value, unsigned int mode_pass)
+STATUS controller_dg::post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass)
 {
 	return SUCCESS;	//Allways succeeds right now
 }
@@ -775,7 +782,7 @@ STATUS controller_dg::apply_dynamics(CTRL_VARS *curr_time, CTRL_VARS *curr_delta
 //curr_time is the initial states/information
 STATUS controller_dg::init_dynamics(CTRL_VARS *curr_time, int index)
 {
-	OBJECT *obj = NULL;
+	OBJECT *obj = nullptr;
 	double omega = *mapped_freq_variable*2*PI; // not used here since speed of each generator deirectly used
 
 	//Get current frequency
@@ -807,7 +814,7 @@ STATUS controller_dg::init_dynamics(CTRL_VARS *curr_time, int index)
 }
 
 //Map Complex value
-gld_property *controller_dg::map_complex_value(OBJECT *obj, char *name)
+gld_property *controller_dg::map_complex_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	OBJECT *objhdr = OBJECTHDR(this);
@@ -816,7 +823,7 @@ gld_property *controller_dg::map_complex_value(OBJECT *obj, char *name)
 	pQuantity = new gld_property(obj,name);
 
 	//Make sure it worked
-	if ((pQuantity->is_valid() != true) || (pQuantity->is_complex() != true))
+	if (!pQuantity->is_valid() || !pQuantity->is_complex())
 	{
 		GL_THROW("controller_dg:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
@@ -830,7 +837,7 @@ gld_property *controller_dg::map_complex_value(OBJECT *obj, char *name)
 }
 
 //Map double value
-gld_property *controller_dg::map_double_value(OBJECT *obj, char *name)
+gld_property *controller_dg::map_double_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	OBJECT *objhdr = OBJECTHDR(this);
@@ -839,7 +846,7 @@ gld_property *controller_dg::map_double_value(OBJECT *obj, char *name)
 	pQuantity = new gld_property(obj,name);
 
 	//Make sure it worked
-	if ((pQuantity->is_valid() != true) || (pQuantity->is_double() != true))
+	if (!pQuantity->is_valid() || !pQuantity->is_double())
 	{
 		GL_THROW("controller_dg:%d %s - Unable to map property %s from object:%d %s",objhdr->id,(objhdr->name ? objhdr->name : "Unnamed"),name,obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
@@ -862,7 +869,7 @@ EXPORT int create_controller_dg(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(controller_dg::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			controller_dg *my = OBJECTDATA(*obj,controller_dg);
 			gl_set_parent(*obj,parent);
@@ -878,7 +885,7 @@ EXPORT int init_controller_dg(OBJECT *obj, OBJECT *parent)
 {
 	try
 	{
-		if (obj!=NULL)
+		if (obj!=nullptr)
 			return OBJECTDATA(obj,controller_dg)->init(parent);
 		else
 			return 0;
@@ -929,7 +936,7 @@ EXPORT SIMULATIONMODE interupdate_controller_dg(OBJECT *obj, unsigned int64 delt
 	}
 }
 
-EXPORT STATUS postupdate_controller_dg(OBJECT *obj, complex *useful_value, unsigned int mode_pass)
+EXPORT STATUS postupdate_controller_dg(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass)
 {
 	controller_dg *my = OBJECTDATA(obj,controller_dg);
 	STATUS status = FAILED;

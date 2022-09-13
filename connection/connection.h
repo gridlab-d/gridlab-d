@@ -11,6 +11,7 @@
 #define _CONNECTION_H
 
 #include <stdarg.h>
+
 #include "gridlabd.h"
 #include "cache.h"
 #include "transport.h"
@@ -72,9 +73,9 @@ typedef enum {
 class connection_mode {
 public:
 	// message handlers for child class
-	virtual void error(char *fmt, ...);
-	virtual void warning(char *fmt, ...);
-	virtual void info(char *fmt, ...);
+	virtual void error(const char *fmt, ...);
+	virtual void warning(const char *fmt, ...);
+	virtual void info(const char *fmt, ...);
 	virtual void debug(int level, const char *fmt, ...);
 	virtual void exception(const char *fmt, ...);
 
@@ -107,7 +108,7 @@ public:
 	inline connection_transport *get_transport(void) { return transport;};
 	void set_transport(const char *s); ///< change transport
 	int update(VARMAP *var, DATAEXCHANGEDIRECTION dir, TRANSLATOR *xltr=NULL);
-	int update(varmap *var, char *tag, TRANSLATOR *xltr=NULL);
+	int update(varmap *var, const char *tag, TRANSLATOR *xltr=NULL);
 	int option(char *target, char *command);
 
 	void set_translators(EXCHANGETRANSLATOR *out, EXCHANGETRANSLATOR *in, TRANSLATOR *data);

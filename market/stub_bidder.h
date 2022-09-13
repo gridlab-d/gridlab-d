@@ -2,6 +2,7 @@
 #define _stub_bidder_h
 
 #include <stdarg.h>
+
 #include "gridlabd.h"
 #include "auction.h"
 

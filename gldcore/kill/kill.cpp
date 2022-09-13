@@ -6,7 +6,7 @@
 
 extern "C" {
 #define KILLONLY
-#include "kill.c"
+#include "kill.cpp"
 }
 
 int main(int argc, char* argv[])

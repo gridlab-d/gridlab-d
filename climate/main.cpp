@@ -3,7 +3,8 @@
 
 #define DLMAIN
 
-#include <stdlib.h>
+#include <cstdlib>
+
 #include "gridlabd.h"
 
 

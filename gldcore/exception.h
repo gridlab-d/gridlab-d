@@ -13,16 +13,21 @@
 #include <stdarg.h>
 #include <setjmp.h>
 
-#ifndef __cplusplus
-#define TRY { EXCEPTIONHANDLER *_handler = create_exception_handler(); if (_handler==NULL) output_error("%s(%d): core exception handler creation failed",__FILE__,__LINE__); else if (setjmp(_handler->buf)==0) {
-/* TROUBLESHOOT
-	This error is caused when the system is unable to implement an exception handler for the core. 
-	This is an internal error and should be reported to the core development team.
- */
-#define THROW(...) throw_exception(__VA_ARGS__);
-#define CATCH(X) } else {X = exception_msg();
-#define ENDCATCH } delete_exception_handler(_handler);}
-#endif
+#define TRY  try
+#define THROW(...) throw(__VA_ARGS__);
+#define CATCH(X) catch(const char* e) {X = e;
+#define ENDCATCH }
+
+//#ifndef __cplusplus
+//#define TRY { EXCEPTIONHANDLER *_handler = create_exception_handler(); if (_handler==NULL) output_error("%s(%d): core exception handler creation failed",__FILE__,__LINE__); else if (setjmp(_handler->buf)==0) {
+///* TROUBLESHOOT
+//	This error is caused when the system is unable to implement an exception handler for the core.
+//	This is an internal error and should be reported to the core development team.
+// */
+//#define THROW(...) throw_exception(__VA_ARGS__);
+//#define CATCH(X) } else {X = exception_msg();
+//#define ENDCATCH } delete_exception_handler(_handler);}
+//#endif
 
 typedef struct s_exception_handler {
 	int id; /**< the exception handler id */
@@ -37,7 +42,7 @@ extern "C" {
 
 	EXCEPTIONHANDLER *create_exception_handler();
 	void delete_exception_handler(EXCEPTIONHANDLER *ptr);
-	void throw_exception(char *msg, ...);
+	void throw_exception(const char *msg, ...);
 	char *exception_msg(void);
 
 #ifdef __cplusplus

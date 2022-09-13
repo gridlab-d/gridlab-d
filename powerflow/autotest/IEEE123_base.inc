@@ -1394,7 +1394,7 @@ object node {
   object complex_assert { // SW1-SW6 closed at beginning
     target voltage_A;
     operation REAL;
-    value 2424.08;
+    value 2411.63;
     within 0.1;
     once ONCE_TRUE;
     in '2000-01-01 0:30:00';
@@ -1418,7 +1418,7 @@ object node {
   object complex_assert { // SW3 open
     target voltage_A;
     operation REAL;
-    value 2449.72;
+    value 2438.94;
     within 0.1;
     once ONCE_TRUE;
     in '2000-01-01 5:30:00';
@@ -1442,7 +1442,7 @@ object node {
   object complex_assert { // SW6 open, disconnects no load
     target voltage_A;
     operation REAL;
-    value 2424.08;
+    value 2411.63;
     within 0.1;
     once ONCE_TRUE;
     in '2000-01-01 11:30:00';
@@ -1450,7 +1450,7 @@ object node {
   object complex_assert { // SW1-SW6 closed at end
     target voltage_A;
     operation REAL;
-    value 2424.08;
+    value 2411.63;
     within 0.1;
     once ONCE_TRUE;
     in '2000-01-01 16:30:00';
@@ -1901,7 +1901,7 @@ object node {
   object complex_assert { // SW1-SW6 closed at beginning
     target voltage_A;
     operation REAL;
-    value 2297.49;
+    value 2290.91;
     within 0.1;
     once ONCE_TRUE;
     in '2000-01-01 0:30:00';
@@ -1917,7 +1917,7 @@ object node {
   object complex_assert { // SW2 open
     target voltage_A;
     operation REAL;
-    value 2334.11;
+    value 2332.52;
     within 0.1;
     once ONCE_TRUE;
     in '2000-01-01 3:30:00';
@@ -1933,7 +1933,7 @@ object node {
   object complex_assert { // SW4 open
     target voltage_A;
     operation REAL;
-    value 2322.15;
+    value 2319.94;
     within 0.1;
     once ONCE_TRUE;
     in '2000-01-01 7:30:00';
@@ -1941,7 +1941,7 @@ object node {
   object complex_assert { // SW5 open
     target voltage_A;
     operation REAL;
-    value 2308.01;
+    value 2302.86;
     within 0.1;
     once ONCE_TRUE;
     in '2000-01-01 9:30:00';
@@ -1949,7 +1949,7 @@ object node {
   object complex_assert { // SW6 open, disconnects no load
     target voltage_A;
     operation REAL;
-    value 2297.49;
+    value 2290.91;
     within 0.1;
     once ONCE_TRUE;
     in '2000-01-01 11:30:00';
@@ -1957,7 +1957,7 @@ object node {
   object complex_assert { // SW1-SW6 closed at end
     target voltage_A;
     operation REAL;
-    value 2297.49;
+    value 2290.91;
     within 0.1;
     once ONCE_TRUE;
     in '2000-01-01 16:30:00';
@@ -2347,7 +2347,7 @@ object substation {
   object complex_assert { // SW1-SW6 closed at beginning
     target distribution_load;
     operation REAL;
-    value 3.60568e+06;
+    value 3512730;
     within 0.01e+06;
     once ONCE_TRUE;
     in '2000-01-01 0:30:00';
@@ -2363,7 +2363,7 @@ object substation {
   object complex_assert { // SW2 open
     target distribution_load;
     operation REAL;
-    value 1.51552e+06;
+    value 1502030;
     within 0.01e+06;
     once ONCE_TRUE;
     in '2000-01-01 3:30:00';
@@ -2371,7 +2371,7 @@ object substation {
   object complex_assert { // SW3 open
     target distribution_load;
     operation REAL;
-    value 2.84671e+06;
+    value 2778930;
     within 0.01e+06;
     once ONCE_TRUE;
     in '2000-01-01 5:30:00';
@@ -2379,7 +2379,7 @@ object substation {
   object complex_assert { // SW4 open
     target distribution_load;
     operation REAL;
-    value 2.06553e+06;
+    value 2043960;
     within 0.01e+06;
     once ONCE_TRUE;
     in '2000-01-01 7:30:00';
@@ -2387,7 +2387,7 @@ object substation {
   object complex_assert { // SW5 open
     target distribution_load;
     operation REAL;
-    value 3.26534e+06;
+    value 3191610;
     within 0.01e+06;
     once ONCE_TRUE;
     in '2000-01-01 9:30:00';
@@ -2395,7 +2395,7 @@ object substation {
   object complex_assert { // SW6 open, disconnects no load
     target distribution_load;
     operation REAL;
-    value 3.60568e+06;
+    value 3512730;
     within 0.01e+06;
     once ONCE_TRUE;
     in '2000-01-01 11:30:00';
@@ -2403,7 +2403,7 @@ object substation {
   object complex_assert { // SW1-SW6 closed at end
     target distribution_load;
     operation REAL;
-    value 3.60568e+06;
+    value 3512730;
     within 0.01e+06;
     once ONCE_TRUE;
     in '2000-01-01 16:30:00';
@@ -2421,7 +2421,7 @@ object node {
   object complex_assert { // SW1-SW6 closed at beginning
     target voltage_A;
     operation REAL;
-    value 2324.73;
+    value 2319.13;
     within 0.1;
     once ONCE_TRUE;
     in '2000-01-01 0:30:00';
@@ -2445,7 +2445,7 @@ object node {
   object complex_assert { // SW3 open
     target voltage_A;
     operation REAL;
-    value 2348.2;
+    value 2343.84;
     within 0.1;
     once ONCE_TRUE;
     in '2000-01-01 5:30:00';
@@ -2453,7 +2453,7 @@ object node {
   object complex_assert { // SW4 open
     target voltage_A;
     operation REAL;
-    value 2349.4;
+    value 2347.84;
     within 0.1;
     once ONCE_TRUE;
     in '2000-01-01 7:30:00';
@@ -2461,7 +2461,7 @@ object node {
   object complex_assert { // SW5 open
     target voltage_A;
     operation REAL;
-    value 2335.25;
+    value 2331.02;
     within 0.1;
     once ONCE_TRUE;
     in '2000-01-01 9:30:00';
@@ -2469,7 +2469,7 @@ object node {
   object complex_assert { // SW6 open, disconnects no load
     target voltage_A;
     operation REAL;
-    value 2324.73;
+    value 2319.13;
     within 0.1;
     once ONCE_TRUE;
     in '2000-01-01 11:30:00';
@@ -2477,7 +2477,7 @@ object node {
   object complex_assert { // SW1-SW6 closed at end
     target voltage_A;
     operation REAL;
-    value 2324.73;
+    value 2319.13;
     within 0.1;
     once ONCE_TRUE;
     in '2000-01-01 16:30:00';
@@ -2598,70 +2598,70 @@ object node {
   name "n160"; // downstream of SW4
   phases ABCN;
   nominal_voltage 2401.78;
-  object complex_assert { // SW1-SW6 closed at beginning
-    target voltage_A;
-    operation REAL;
-    value 2282.12;
-    within 0.1;
-    once ONCE_TRUE;
-    in '2000-01-01 0:30:00';
-  };
-  object complex_assert { // SW1 open
-    target voltage_A;
-    operation REAL;
-    value 0.0;
-    within 0.1;
-    once ONCE_TRUE;
-    in '2000-01-01 1:30:00';
-  };
-  object complex_assert { // SW2 open
-    target voltage_A;
-    operation REAL;
-    value 0.0;
-    within 0.1;
-    once ONCE_TRUE;
-    in '2000-01-01 3:30:00';
-  };
-  object complex_assert { // SW3 open
-    target voltage_A;
-    operation REAL;
-    value 2306.08;
-    within 0.1;
-    once ONCE_TRUE;
-    in '2000-01-01 5:30:00';
-  };
-  object complex_assert { // SW4 open
-    target voltage_A;
-    operation REAL;
-    value 0.0;
-    within 0.1;
-    once ONCE_TRUE;
-    in '2000-01-01 7:30:00';
-  };
-  object complex_assert { // SW5 open
-    target voltage_A;
-    operation REAL;
-    value 2307.95;
-    within 0.1;
-    once ONCE_TRUE;
-    in '2000-01-01 9:30:00';
-  };
-  object complex_assert { // SW6 open, disconnects no load
-    target voltage_A;
-    operation REAL;
-    value 2282.12;
-    within 0.1;
-    once ONCE_TRUE;
-    in '2000-01-01 11:30:00';
-  };
-  object complex_assert { // SW1-SW6 closed at end
-    target voltage_A;
-    operation REAL;
-    value 2282.12;
-    within 0.1;
-    once ONCE_TRUE;
-    in '2000-01-01 16:30:00';
-  };
+ object complex_assert { // SW1-SW6 closed at beginning
+   target voltage_A;
+   operation REAL;
+   value 2271.33;
+   within 0.1;
+   once ONCE_TRUE;
+   in '2000-01-01 0:30:00';
+ };
+ object complex_assert { // SW1 open
+   target voltage_A;
+   operation REAL;
+   value 0.0;
+   within 0.1;
+   once ONCE_TRUE;
+   in '2000-01-01 1:30:00';
+ };
+ object complex_assert { // SW2 open
+   target voltage_A;
+   operation REAL;
+   value 0.0;
+   within 0.1;
+   once ONCE_TRUE;
+   in '2000-01-01 3:30:00';
+ };
+ object complex_assert { // SW3 open
+   target voltage_A;
+   operation REAL;
+   value 2296.8;
+   within 0.1;
+   once ONCE_TRUE;
+   in '2000-01-01 5:30:00';
+ };
+ object complex_assert { // SW4 open
+   target voltage_A;
+   operation REAL;
+   value 0.0;
+   within 0.1;
+   once ONCE_TRUE;
+   in '2000-01-01 7:30:00';
+ };
+ object complex_assert { // SW5 open
+   target voltage_A;
+   operation REAL;
+   value 2300.29;
+   within 0.1;
+   once ONCE_TRUE;
+   in '2000-01-01 9:30:00';
+ };
+ object complex_assert { // SW6 open, disconnects no load
+   target voltage_A;
+   operation REAL;
+   value 2271.33;
+   within 0.1;
+   once ONCE_TRUE;
+   in '2000-01-01 11:30:00';
+ };
+ object complex_assert { // SW1-SW6 closed at end
+   target voltage_A;
+   operation REAL;
+   value 2271.33;
+   within 0.1;
+   once ONCE_TRUE;
+   in '2000-01-01 16:30:00';
+ };
 }
 object meter {
   name "n60";
@@ -2780,70 +2780,70 @@ object node {
   name "n610"; // downstream of SW6
   phases ABCN;
   nominal_voltage 277.13;
-  object complex_assert { // SW1-SW6 closed at beginning
-    target voltage_A;
-    operation REAL;
-    value 263.23;
-    within 0.1;
-    once ONCE_TRUE;
-    in '2000-01-01 0:30:00';
-  };
-  object complex_assert { // SW1 open
-    target voltage_A;
-    operation REAL;
-    value 0.0;
-    within 0.1;
-    once ONCE_TRUE;
-    in '2000-01-01 1:30:00';
-  };
-  object complex_assert { // SW2 open
-    target voltage_A;
-    operation REAL;
-    value 0.0;
-    within 0.1;
-    once ONCE_TRUE;
-    in '2000-01-01 3:30:00';
-  };
-  object complex_assert { // SW3 open
-    target voltage_A;
-    operation REAL;
-    value 266.087;
-    within 0.1;
-    once ONCE_TRUE;
-    in '2000-01-01 5:30:00';
-  };
-  object complex_assert { // SW4 open
-    target voltage_A;
-    operation REAL;
-    value 270.338;
-    within 0.1;
-    once ONCE_TRUE;
-    in '2000-01-01 7:30:00';
-  };
-  object complex_assert { // SW5 open
-    target voltage_A;
-    operation REAL;
-    value 266.303;
-    within 0.1;
-    once ONCE_TRUE;
-    in '2000-01-01 9:30:00';
-  };
-  object complex_assert { // SW6 open, disconnects no load
-    target voltage_A;
-    operation REAL;
-    value 0.0;
-    within 0.1;
-    once ONCE_TRUE;
-    in '2000-01-01 11:30:00';
-  };
-  object complex_assert { // SW1-SW6 closed at end
-    target voltage_A;
-    operation REAL;
-    value 263.23;
-    within 0.1;
-    once ONCE_TRUE;
-    in '2000-01-01 16:30:00';
-  };
+ object complex_assert { // SW1-SW6 closed at beginning
+   target voltage_A;
+   operation REAL;
+   value 262.077;
+   within 0.1;
+   once ONCE_TRUE;
+   in '2000-01-01 0:30:00';
+ };
+ object complex_assert { // SW1 open
+   target voltage_A;
+   operation REAL;
+   value 0.0;
+   within 0.1;
+   once ONCE_TRUE;
+   in '2000-01-01 1:30:00';
+ };
+ object complex_assert { // SW2 open
+   target voltage_A;
+   operation REAL;
+   value 0.0;
+   within 0.1;
+   once ONCE_TRUE;
+   in '2000-01-01 3:30:00';
+ };
+ object complex_assert { // SW3 open
+   target voltage_A;
+   operation REAL;
+   value 265.017;
+   within 0.1;
+   once ONCE_TRUE;
+   in '2000-01-01 5:30:00';
+ };
+ object complex_assert { // SW4 open
+   target voltage_A;
+   operation REAL;
+   value 270.118;
+   within 0.1;
+   once ONCE_TRUE;
+   in '2000-01-01 7:30:00';
+ };
+ object complex_assert { // SW5 open
+   target voltage_A;
+   operation REAL;
+   value 265.419;
+   within 0.1;
+   once ONCE_TRUE;
+   in '2000-01-01 9:30:00';
+ };
+ object complex_assert { // SW6 open, disconnects no load
+   target voltage_A;
+   operation REAL;
+   value 0.0;
+   within 0.1;
+   once ONCE_TRUE;
+   in '2000-01-01 11:30:00';
+ };
+ object complex_assert { // SW1-SW6 closed at end
+   target voltage_A;
+   operation REAL;
+   value 262.077;
+   within 0.1;
+   once ONCE_TRUE;
+   in '2000-01-01 16:30:00';
+ };
 }
 object meter {
   name "n70";

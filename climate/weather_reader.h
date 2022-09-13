@@ -10,6 +10,7 @@
 #define CLIMATE_WEATHER_READER_
 
 #include <stdio.h>
+
 #include "gridlabd.h"
 #include "weather.h"
 

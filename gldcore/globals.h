@@ -35,7 +35,7 @@ typedef struct s_globalvar {
 	PROPERTY *prop;
 	struct s_globalvar *next;
 	uint32 flags;
-	void (*callback)(char *); // this function will be called whenever the globalvar is set
+	void (*callback)(const char *); // this function will be called whenever the globalvar is set
 	unsigned int lock;
 } GLOBALVAR;
 
@@ -59,11 +59,11 @@ typedef int EXITCODE;
 
 STATUS global_init(void);
 GLOBALVAR *global_getnext(GLOBALVAR *previous);
-GLOBALVAR *global_find(char *name);
-GLOBALVAR *global_create(char *name, ...);
-STATUS global_setvar(char *def,...);
-char *global_getvar(char *name, char *buffer, int size);
-int global_isdefined(char *name);
+GLOBALVAR *global_find(const char *name);
+GLOBALVAR *global_create(const char *name, ...);
+STATUS global_setvar(const char *def,...);
+char *global_getvar(const char *name, char *buffer, int size);
+int global_isdefined(const char *name);
 void global_dump(void);
 size_t global_getcount(void);
 
@@ -72,7 +72,7 @@ GLOBAL unsigned global_version_major INIT(REV_MAJOR); /**< The software's major 
 GLOBAL unsigned global_version_minor INIT(REV_MINOR); /**< The software's minor version */
 GLOBAL unsigned global_version_patch INIT(REV_PATCH); /**< The software's patch version */
 GLOBAL unsigned global_version_build INIT(0); /**< The software's build number */
-GLOBAL char global_version_branch[32] INIT(""); /**< The software's branch designator */
+GLOBAL char global_version_branch[256] INIT(""); /**< The software's branch designator */
 
 GLOBAL char global_command_line[1024]; /**< The current command-line */
 GLOBAL char global_environment[1024] INIT("batch"); /**< The processing environment in use */

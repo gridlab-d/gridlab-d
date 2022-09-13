@@ -10,16 +10,16 @@
 	
 	@{
 */
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "fuse.h"
 
 //initialize pointers
-CLASS* fuse::oclass = NULL;
-CLASS* fuse::pclass = NULL;
+CLASS* fuse::oclass = nullptr;
+CLASS* fuse::pclass = nullptr;
 
 //////////////////////////////////////////////////////////////////////////
 // fuse CLASS FUNCTIONS
@@ -27,12 +27,12 @@ CLASS* fuse::pclass = NULL;
 
 fuse::fuse(MODULE *mod) : link_object(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		pclass = link_object::oclass;
 		
 		oclass = gl_register_class(mod,"fuse",sizeof(fuse),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class fuse";
 		else
 			oclass->trl = TRL_QUALIFIED;
@@ -56,29 +56,29 @@ fuse::fuse(MODULE *mod) : link_object(mod)
 			PT_double, "fuse_resistance[Ohm]",PADDR(fuse_resistance), PT_DESCRIPTION,"The resistance value of the fuse when it is not blown.",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
-		if (gl_publish_function(oclass,"change_fuse_state",(FUNCTIONADDR)change_fuse_state)==NULL)
+		if (gl_publish_function(oclass,"change_fuse_state",(FUNCTIONADDR)change_fuse_state)==nullptr)
 			GL_THROW("Unable to publish fuse state change function");
-		if (gl_publish_function(oclass,"reliability_operation",(FUNCTIONADDR)fuse_reliability_operation)==NULL)
+		if (gl_publish_function(oclass,"reliability_operation",(FUNCTIONADDR)fuse_reliability_operation)==nullptr)
 			GL_THROW("Unable to publish fuse reliability operation function");
-		if (gl_publish_function(oclass,	"create_fault", (FUNCTIONADDR)create_fault_fuse)==NULL)
+		if (gl_publish_function(oclass,	"create_fault", (FUNCTIONADDR)create_fault_fuse)==nullptr)
 			GL_THROW("Unable to publish fault creation function");
-		if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_fuse)==NULL)
+		if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_fuse)==nullptr)
 			GL_THROW("Unable to publish fault restoration function");
-		if (gl_publish_function(oclass,	"clear_fault", (FUNCTIONADDR)clear_fault_fuse)==NULL)
-			GL_THROW("Unable to publish fault clearing function");
-		if (gl_publish_function(oclass,	"change_fuse_faults", (FUNCTIONADDR)fuse_fault_updates)==NULL)
+        if (gl_publish_function(oclass,	"clear_fault", (FUNCTIONADDR)clear_fault_fuse)==nullptr)
+            GL_THROW("Unable to publish fault clearing function");
+		if (gl_publish_function(oclass,	"change_fuse_faults", (FUNCTIONADDR)fuse_fault_updates)==nullptr)
 			GL_THROW("Unable to publish fuse fault correction function");
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==nullptr)
 			GL_THROW("Unable to publish fuse deltamode function");
 
 		//Publish restoration-related function (current update)
-		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==nullptr)
 			GL_THROW("Unable to publish fuse external power calculation function");
-		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==nullptr)
 			GL_THROW("Unable to publish fuse external power limit calculation function");
-		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==NULL)
+		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==nullptr)
 			GL_THROW("Unable to publish fuse external current calculation function");
     }
 }
@@ -112,8 +112,8 @@ int fuse::create()
 
 	prev_fuse_time = 0;	//Init tracker
 
-	event_schedule = NULL;
-	eventgen_obj = NULL;
+	event_schedule = nullptr;
+	eventgen_obj = nullptr;
 	event_schedule_map_attempt = false;	//Haven't tried to map yet
 
 	fuse_resistance = -1.0;
@@ -242,13 +242,13 @@ int fuse::init(OBJECT *parent)
 
 		if (status==LS_OPEN)	//Take this as all should be open
 		{
-			From_Y[0][0] = complex(0.0,0.0);
-			From_Y[1][1] = complex(0.0,0.0);
-			From_Y[2][2] = complex(0.0,0.0);
+			From_Y[0][0] = gld::complex(0.0,0.0);
+			From_Y[1][1] = gld::complex(0.0,0.0);
+			From_Y[2][2] = gld::complex(0.0,0.0);
 
-			b_mat[0][0] = complex(0.0,0.0);
-			b_mat[1][1] = complex(0.0,0.0);
-			b_mat[2][2] = complex(0.0,0.0);
+			b_mat[0][0] = gld::complex(0.0,0.0);
+			b_mat[1][1] = gld::complex(0.0,0.0);
+			b_mat[2][2] = gld::complex(0.0,0.0);
 
 			phase_A_state = phase_B_state = phase_C_state = BLOWN;	//All open
 			phased_fuse_status = 0x00;								//Confirm here
@@ -259,14 +259,14 @@ int fuse::init(OBJECT *parent)
 			{
 				if (phase_A_state == GOOD)
 				{
-					From_Y[0][0] = complex(1.0/fuse_resistance,1.0/fuse_resistance);
-					b_mat[0][0] = complex(fuse_resistance,fuse_resistance);
+					From_Y[0][0] = gld::complex(1.0/fuse_resistance,1.0/fuse_resistance);
+					b_mat[0][0] = gld::complex(fuse_resistance,fuse_resistance);
 					phased_fuse_status |= 0x04;
 				}
 				else	//Must be open
 				{
-					From_Y[0][0] = complex(0.0,0.0);
-					b_mat[0][0] = complex(0.0,0.0);
+					From_Y[0][0] = gld::complex(0.0,0.0);
+					b_mat[0][0] = gld::complex(0.0,0.0);
 					phased_fuse_status &=0xFB;
 				}
 			}
@@ -275,14 +275,14 @@ int fuse::init(OBJECT *parent)
 			{
 				if (phase_B_state == GOOD)
 				{
-					From_Y[1][1] = complex(1.0/fuse_resistance,1.0/fuse_resistance);
-					b_mat[1][1] = complex(fuse_resistance,fuse_resistance);
+					From_Y[1][1] = gld::complex(1.0/fuse_resistance,1.0/fuse_resistance);
+					b_mat[1][1] = gld::complex(fuse_resistance,fuse_resistance);
 					phased_fuse_status |= 0x02;
 				}
 				else	//Must be open
 				{
-					From_Y[1][1] = complex(0.0,0.0);
-					b_mat[1][1] = complex(0.0,0.0);
+					From_Y[1][1] = gld::complex(0.0,0.0);
+					b_mat[1][1] = gld::complex(0.0,0.0);
 					phased_fuse_status &=0xFD;
 				}
 			}
@@ -291,14 +291,14 @@ int fuse::init(OBJECT *parent)
 			{
 				if (phase_C_state == GOOD)
 				{
-					From_Y[2][2] = complex(1.0/fuse_resistance,1.0/fuse_resistance);
-					b_mat[2][2] = complex(fuse_resistance,fuse_resistance);
+					From_Y[2][2] = gld::complex(1.0/fuse_resistance,1.0/fuse_resistance);
+					b_mat[2][2] = gld::complex(fuse_resistance,fuse_resistance);
 					phased_fuse_status |= 0x01;
 				}
 				else	//Must be open
 				{
-					From_Y[2][2] = complex(0.0,0.0);
-					b_mat[2][2] = complex(0.0,0.0);
+					From_Y[2][2] = gld::complex(0.0,0.0);
+					b_mat[2][2] = gld::complex(0.0,0.0);
 					phased_fuse_status &=0xFE;
 				}
 			}
@@ -329,22 +329,22 @@ TIMESTAMP fuse::sync(TIMESTAMP t0)
 	int result_val;
 
 	//Try to map the event_schedule function address, if we haven't tried yet
-	if (event_schedule_map_attempt == false)
+	if (!event_schedule_map_attempt)
 	{
 		//First check to see if a fault_check object even exists
-		if (fault_check_object != NULL)
+		if (fault_check_object != nullptr)
 		{
 			//It exists, good start! - now see if the proper variable is populated!
 			eventgen_obj = get_object(fault_check_object, "eventgen_object");
 
 			//See if it worked - if not, assume it doesn't exist
-			if (*eventgen_obj != NULL)
+			if (*eventgen_obj != nullptr)
 			{
 				//It's not null, map up the scheduler function
 				event_schedule = (FUNCTIONADDR)(gl_get_function(*eventgen_obj,"add_event"));
 								
 				//Make sure it was found
-				if (event_schedule == NULL)
+				if (event_schedule == nullptr)
 				{
 					gl_warning("Unable to map add_event function in eventgen:%s",*(*eventgen_obj)->name);
 					/*  TROUBLESHOOT
@@ -371,7 +371,7 @@ TIMESTAMP fuse::sync(TIMESTAMP t0)
 	if (solver_method == SM_NR)
 	{
 		//Put any fuses back in service, if they're ready
-		if (((fix_time[0] <= t0) || (fix_time[1] <= t0) || (fix_time[2] <= t0)) && (event_schedule == NULL))	//Only needs to be done if reliability isn't present
+		if (((fix_time[0] <= t0) || (fix_time[1] <= t0) || (fix_time[2] <= t0)) && (event_schedule == nullptr))	//Only needs to be done if reliability isn't present
 		{
 			//Bring the phases back that are necessary
 			if ((fix_time[0] <= t0) && ((NR_branchdata[NR_branch_reference].origphases & 0x04) == 0x04))	//Phase A ready and had a phase A
@@ -540,7 +540,7 @@ TIMESTAMP fuse::sync(TIMESTAMP t0)
 			//Else is leave as is - either blown, or reliability hit it
 		}
 
-		if (fuse_blew == true)
+		if (fuse_blew)
 		{
 			//Set up fault type
 			fault_val[0] = 'F';
@@ -609,7 +609,7 @@ TIMESTAMP fuse::sync(TIMESTAMP t0)
 				//Defined above
 			}//End switch
 
-			if (event_schedule != NULL)	//Function was mapped - go for it!
+			if (event_schedule != nullptr)	//Function was mapped - go for it!
 			{
 				//Call the function
 				result_val = ((int (*)(OBJECT *, OBJECT *, char *, TIMESTAMP, TIMESTAMP, int, bool))(*event_schedule))(*eventgen_obj,obj,fault_val,t0,0,-1,false);
@@ -750,13 +750,13 @@ void fuse::fuse_change_status_function(void)
 	{
 		if (status == LS_OPEN)	//Fully opened means all go open
 		{
-			From_Y[0][0] = complex(0.0,0.0);
-			From_Y[1][1] = complex(0.0,0.0);
-			From_Y[2][2] = complex(0.0,0.0);
+			From_Y[0][0] = gld::complex(0.0,0.0);
+			From_Y[1][1] = gld::complex(0.0,0.0);
+			From_Y[2][2] = gld::complex(0.0,0.0);
 
-			b_mat[0][0] = complex(0.0,0.0);
-			b_mat[1][1] = complex(0.0,0.0);
-			b_mat[2][2] = complex(0.0,0.0);
+			b_mat[0][0] = gld::complex(0.0,0.0);
+			b_mat[1][1] = gld::complex(0.0,0.0);
+			b_mat[2][2] = gld::complex(0.0,0.0);
 
 			a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = 0.0;
 			a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = 0.0;
@@ -765,7 +765,7 @@ void fuse::fuse_change_status_function(void)
 			phase_A_state = phase_B_state = phase_C_state = BLOWN;	//All open
 
 			NR_branchdata[NR_branch_reference].phases &= 0xF0;		//Remove all our phases
-			if (meshed_fault_checking_enabled==true)	//Different operating mode
+			if (meshed_fault_checking_enabled)	//Different operating mode
 			{
 				NR_branchdata[NR_branch_reference].faultphases = NR_branchdata[NR_branch_reference].origphases & 0x07;
 			}
@@ -777,23 +777,23 @@ void fuse::fuse_change_status_function(void)
 			{
 				if (phase_A_state == GOOD)
 				{
-					From_Y[0][0] = complex(1.0/fuse_resistance,1.0/fuse_resistance);
-					b_mat[0][0] = complex(fuse_resistance,fuse_resistance);
+					From_Y[0][0] = gld::complex(1.0/fuse_resistance,1.0/fuse_resistance);
+					b_mat[0][0] = gld::complex(fuse_resistance,fuse_resistance);
 					a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = 1.0;
 					pres_status |= 0x04;
 					NR_branchdata[NR_branch_reference].phases |= 0x04;	//Ensure we're set
-					if (meshed_fault_checking_enabled==true)	//Different operating mode
+					if (meshed_fault_checking_enabled)	//Different operating mode
 					{
 						NR_branchdata[NR_branch_reference].faultphases &= 0xFB;	//Make sure we're NOT set
 					}
 				}
 				else	//Must be open
 				{
-					From_Y[0][0] = complex(0.0,0.0);
-					b_mat[0][0] = complex(0.0,0.0);
+					From_Y[0][0] = gld::complex(0.0,0.0);
+					b_mat[0][0] = gld::complex(0.0,0.0);
 					a_mat[0][0] = d_mat[0][0] = A_mat[0][0] = 0.0;
 					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Make sure we're removed
-					if (meshed_fault_checking_enabled==true)	//Different operating mode
+					if (meshed_fault_checking_enabled)	//Different operating mode
 					{
 						NR_branchdata[NR_branch_reference].faultphases |= 0x04;	//Make sure fault condition is set
 					}
@@ -804,23 +804,23 @@ void fuse::fuse_change_status_function(void)
 			{
 				if (phase_B_state == GOOD)
 				{
-					From_Y[1][1] = complex(1.0/fuse_resistance,1.0/fuse_resistance);
-					b_mat[1][1] = complex(fuse_resistance,fuse_resistance);
+					From_Y[1][1] = gld::complex(1.0/fuse_resistance,1.0/fuse_resistance);
+					b_mat[1][1] = gld::complex(fuse_resistance,fuse_resistance);
 					a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = 1.0;
 					pres_status |= 0x02;
 					NR_branchdata[NR_branch_reference].phases |= 0x02;	//Ensure we're set
-					if (meshed_fault_checking_enabled==true)	//Different operating mode
+					if (meshed_fault_checking_enabled)	//Different operating mode
 					{
 						NR_branchdata[NR_branch_reference].faultphases &= 0xFD;	//Make sure we're NOT set
 					}
 				}
 				else	//Must be open
 				{
-					From_Y[1][1] = complex(0.0,0.0);
-					b_mat[1][1] = complex(0.0,0.0);
+					From_Y[1][1] = gld::complex(0.0,0.0);
+					b_mat[1][1] = gld::complex(0.0,0.0);
 					a_mat[1][1] = d_mat[1][1] = A_mat[1][1] = 0.0;
 					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Make sure we're removed
-					if (meshed_fault_checking_enabled==true)	//Different operating mode
+					if (meshed_fault_checking_enabled)	//Different operating mode
 					{
 						NR_branchdata[NR_branch_reference].faultphases |= 0x02;	//Make sure fault condition is set
 					}
@@ -831,23 +831,23 @@ void fuse::fuse_change_status_function(void)
 			{
 				if (phase_C_state == GOOD)
 				{
-					From_Y[2][2] = complex(1.0/fuse_resistance,1.0/fuse_resistance);
-					b_mat[2][2] = complex(fuse_resistance,fuse_resistance);
+					From_Y[2][2] = gld::complex(1.0/fuse_resistance,1.0/fuse_resistance);
+					b_mat[2][2] = gld::complex(fuse_resistance,fuse_resistance);
 					a_mat[2][2] = d_mat[2][2] = A_mat[2][2] = 1.0;
 					pres_status |= 0x01;
 					NR_branchdata[NR_branch_reference].phases |= 0x01;	//Ensure we're set
-					if (meshed_fault_checking_enabled==true)	//Different operating mode
+					if (meshed_fault_checking_enabled)	//Different operating mode
 					{
 						NR_branchdata[NR_branch_reference].faultphases &= 0xFE;	//Make sure we're NOT set
 					}
 				}
 				else	//Must be open
 				{
-					From_Y[2][2] = complex(0.0,0.0);
-					b_mat[2][2] = complex(0.0,0.0);
+					From_Y[2][2] = gld::complex(0.0,0.0);
+					b_mat[2][2] = gld::complex(0.0,0.0);
 					a_mat[2][2] = d_mat[2][2] = A_mat[2][2] = 0.0;
 					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Make sure we're removed
-					if (meshed_fault_checking_enabled==true)	//Different operating mode
+					if (meshed_fault_checking_enabled)	//Different operating mode
 					{
 						NR_branchdata[NR_branch_reference].faultphases |= 0x01;	//Make sure fault condition is set
 					}
@@ -885,13 +885,13 @@ void fuse::fuse_sync_function(void)
 
 		if (status == LS_OPEN)	//Fully opened means all go open
 		{
-			From_Y[0][0] = complex(0.0,0.0);
-			From_Y[1][1] = complex(0.0,0.0);
-			From_Y[2][2] = complex(0.0,0.0);
+			From_Y[0][0] = gld::complex(0.0,0.0);
+			From_Y[1][1] = gld::complex(0.0,0.0);
+			From_Y[2][2] = gld::complex(0.0,0.0);
 
-			b_mat[0][0] = complex(0.0,0.0);
-			b_mat[1][1] = complex(0.0,0.0);
-			b_mat[2][2] = complex(0.0,0.0);
+			b_mat[0][0] = gld::complex(0.0,0.0);
+			b_mat[1][1] = gld::complex(0.0,0.0);
+			b_mat[2][2] = gld::complex(0.0,0.0);
 
 			phase_A_state = phase_B_state = phase_C_state = BLOWN;	//All open
 			NR_branchdata[NR_branch_reference].phases &= 0xF0;		//Remove all our phases
@@ -902,8 +902,8 @@ void fuse::fuse_sync_function(void)
 			{
 				if (phase_A_state == GOOD)
 				{
-					From_Y[0][0] = complex(1.0/fuse_resistance,1.0/fuse_resistance);
-					b_mat[0][0] = complex(fuse_resistance,fuse_resistance);
+					From_Y[0][0] = gld::complex(1.0/fuse_resistance,1.0/fuse_resistance);
+					b_mat[0][0] = gld::complex(fuse_resistance,fuse_resistance);
 					pres_status |= 0x04;
 
 					//See if this changed from expectations - this prevents fuse from overriding fault_check/reliability
@@ -914,8 +914,8 @@ void fuse::fuse_sync_function(void)
 				}
 				else	//Must be open
 				{
-					From_Y[0][0] = complex(0.0,0.0);
-					b_mat[0][0] = complex(0.0,0.0);
+					From_Y[0][0] = gld::complex(0.0,0.0);
+					b_mat[0][0] = gld::complex(0.0,0.0);
 
 					//See if this changed from expectations - this prevents fuse from overriding fault_check/reliability
 					if ((prev_full_status & 0x04) != 0x00)
@@ -929,8 +929,8 @@ void fuse::fuse_sync_function(void)
 			{
 				if (phase_B_state == GOOD)
 				{
-					From_Y[1][1] = complex(1.0/fuse_resistance,1.0/fuse_resistance);
-					b_mat[1][1] = complex(fuse_resistance,fuse_resistance);
+					From_Y[1][1] = gld::complex(1.0/fuse_resistance,1.0/fuse_resistance);
+					b_mat[1][1] = gld::complex(fuse_resistance,fuse_resistance);
 					pres_status |= 0x02;
 
 					//See if this changed from expectations - this prevents fuse from overriding fault_check/reliability
@@ -941,8 +941,8 @@ void fuse::fuse_sync_function(void)
 				}
 				else	//Must be open
 				{
-					From_Y[1][1] = complex(0.0,0.0);
-					b_mat[1][1] = complex(0.0,0.0);
+					From_Y[1][1] = gld::complex(0.0,0.0);
+					b_mat[1][1] = gld::complex(0.0,0.0);
 
 					//See if this changed from expectations - this prevents fuse from overriding fault_check/reliability
 					if ((prev_full_status & 0x02) != 0x00)
@@ -956,8 +956,8 @@ void fuse::fuse_sync_function(void)
 			{
 				if (phase_C_state == GOOD)
 				{
-					From_Y[2][2] = complex(1.0/fuse_resistance,1.0/fuse_resistance);
-					b_mat[2][2] = complex(fuse_resistance,fuse_resistance);
+					From_Y[2][2] = gld::complex(1.0/fuse_resistance,1.0/fuse_resistance);
+					b_mat[2][2] = gld::complex(fuse_resistance,fuse_resistance);
 					pres_status |= 0x01;
 
 					//See if this changed from expectations - this prevents fuse from overriding fault_check/reliability
@@ -968,8 +968,8 @@ void fuse::fuse_sync_function(void)
 				}
 				else	//Must be open
 				{
-					From_Y[2][2] = complex(0.0,0.0);
-					b_mat[2][2] = complex(0.0,0.0);
+					From_Y[2][2] = gld::complex(0.0,0.0);
+					b_mat[2][2] = gld::complex(0.0,0.0);
 
 					//See if this changed from expectations - this prevents fuse from overriding fault_check/reliability
 					if ((prev_full_status & 0x01) != 0x00)
@@ -1142,11 +1142,11 @@ void fuse::set_fuse_full_reliability(unsigned char desired_status)
 }
 
 //Retrieve the address of an object
-OBJECT **fuse::get_object(OBJECT *obj, char *name)
+OBJECT **fuse::get_object(OBJECT *obj, const char *name)
 {
 	PROPERTY *p = gl_get_property(obj,name);
-	if (p==NULL || p->ptype!=PT_object)
-		return NULL;
+	if (p==nullptr || p->ptype!=PT_object)
+		return nullptr;
 	return (OBJECT**)GETADDR(obj,p);
 }
 
@@ -1166,7 +1166,7 @@ void fuse::set_fuse_faulted_phases(unsigned char desired_status)
 * @param phase_to_check - the current phase to check fusing action for
 * @param fcurr - array of from (line input) currents
 */
-void fuse::fuse_check(set phase_to_check, complex *fcurr)
+void fuse::fuse_check(set phase_to_check, gld::complex *fcurr)
 {
 	char indexval;
 	char phase_verbose;
@@ -1287,7 +1287,7 @@ EXPORT int create_fuse(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(fuse::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			fuse *my = OBJECTDATA(*obj,fuse);
 			gl_set_parent(*obj,parent);
@@ -1376,7 +1376,7 @@ EXPORT int change_fuse_state(OBJECT *thisobj, unsigned char phase_change, bool s
 	//Figure out what we need to call
 	if ((phase_change & 0x04) == 0x04)
 	{
-		if (state==true)
+		if (state)
 			desA=1;	//Close it
 		else
 			desA=0;	//Open it
@@ -1387,7 +1387,7 @@ EXPORT int change_fuse_state(OBJECT *thisobj, unsigned char phase_change, bool s
 	//Phase B
 	if ((phase_change & 0x02) == 0x02)
 	{
-		if (state==true)
+		if (state)
 			desB=1;	//Close it
 		else
 			desB=0;	//Open it
@@ -1398,7 +1398,7 @@ EXPORT int change_fuse_state(OBJECT *thisobj, unsigned char phase_change, bool s
 	//Phase C
 	if ((phase_change & 0x01) == 0x01)
 	{
-		if (state==true)
+		if (state)
 			desC=1;	//Close it
 		else
 			desC=0;	//Open it

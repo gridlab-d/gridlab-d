@@ -17,7 +17,7 @@ CLASS *passive_controller::oclass = NULL;
 *   written: 29-Jan-04
 ***************************/
 
-#include <math.h>
+#include <cmath>
 
 
 static const double rel_error= 1E-14;        //calculate 12^N^N 14 significant figures
@@ -97,24 +97,15 @@ passive_controller::passive_controller(MODULE *mod)
 			PT_double,"stdev_observation",PADDR(obs_stdev),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the observed standard deviation value",
 			PT_double,"expectation",PADDR(expectation),PT_ACCESS,PA_REFERENCE,PT_DESCRIPTION,"the observed expected value",
 			// inputs
-/**/		PT_double,"sensitivity",PADDR(sensitivity),PT_DEPRECATED,PT_DESCRIPTION,"the sensitivity of the control actuator to observation deviations",
 			PT_double,"period[s]",PADDR(dPeriod),PT_DESCRIPTION,"the cycle period for the controller logic",
-/**/		PT_char32,"expectation_prop",PADDR(expectation_propname),PT_DEPRECATED,PT_DESCRIPTION,"the name of the property to observe for the expected value",
-/**/		PT_object,"expectation_obj",PADDR(expectation_object),PT_DEPRECATED,PT_DESCRIPTION,"the object to watch for the expectation property",
 			PT_char32,"expectation_property",PADDR(expectation_propname),PT_DESCRIPTION,"the name of the property to observe for the expected value",
 			PT_object,"expectation_object",PADDR(expectation_object),PT_DESCRIPTION,"the object to watch for the expectation property",
-/**/		PT_char32,"setpoint_prop",PADDR(output_setpoint_propname),PT_DEPRECATED,PT_DESCRIPTION,"the name of the setpoint property in the parent object",
 			PT_char32,"setpoint",PADDR(output_setpoint_propname),PT_DESCRIPTION,"the name of the setpoint property in the parent object",
-/**/		PT_char32,"state_prop",PADDR(output_state_propname),PT_DEPRECATED,PT_DESCRIPTION,"the name of the actuator property in the parent object",
 			PT_char32,"state_property",PADDR(output_state_propname),PT_DESCRIPTION,"the name of the actuator property in the parent object",
-/**/		PT_object,"observation_obj",PADDR(observation_object),PT_DEPRECATED,PT_DESCRIPTION,"the object to observe",
-/**/		PT_char32,"observation_prop",PADDR(observation_propname),PT_DEPRECATED,PT_DESCRIPTION,"the name of the observation property",
 			PT_object,"observation_object",PADDR(observation_object),PT_DESCRIPTION,"the object to observe",
 			PT_char32,"observation_property",PADDR(observation_propname),PT_DESCRIPTION,"the name of the observation property",
-/**/		PT_char32,"mean_observation_prop",PADDR(observation_mean_propname),PT_DEPRECATED,PT_DESCRIPTION,"the name of the mean observation property",
-			PT_char32,"stdev_observation_prop",PADDR(observation_stdev_propname),PT_DEPRECATED,PT_DESCRIPTION,"the name of the standard deviation observation property",
+/**/		PT_char32,"mean_observation_property",PADDR(observation_mean_propname),PT_DESCRIPTION,"the name of the mean observation property",
 			PT_char32,"stdev_observation_property",PADDR(observation_stdev_propname),PT_DESCRIPTION,"the name of the standard deviation observation property",
-/**/		PT_int32,"cycle_length",PADDR(cycle_length),PT_DEPRECATED,PT_DESCRIPTION,"length of time between processing cycles",
 			PT_double,"base_setpoint",PADDR(base_setpoint),PT_DESCRIPTION,"the base setpoint to base control off of",
 			PT_double,"critical_day",PADDR(critical_day),PT_DESCRIPTION,"used to switch between TOU and CPP days, 1 is CPP, 0 is TOU",
 			PT_bool,"two_tier_cpp",PADDR(check_two_tier_cpp),			
@@ -205,41 +196,40 @@ passive_controller::passive_controller(MODULE *mod)
 	}
 }
 
-void passive_controller::fetch_double(double **prop, char *name, OBJECT *parent){
+void passive_controller::fetch_double(double **prop, const char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
 	*prop = gl_get_double_by_name(parent, name);
-	if(*prop == NULL){
+	if(*prop == nullptr){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "passive_controller:%i", hdr->id);
-		if(*name == 0)
+		if(*name == static_cast<char>(0))
 			sprintf(msg, "%s: passive_controller unable to find property: name is NULL", namestr);
 		else
 			sprintf(msg, "%s: passive_controller unable to find %s", namestr, name);
-		throw(msg);
+		throw(std::runtime_error(msg));
 	}
 }
 
-void passive_controller::fetch_int(int **prop, char *name, OBJECT *parent){
+void passive_controller::fetch_int(int **prop, const char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
 	*prop = gl_get_int32_by_name(parent, name);
-	if(*prop == NULL){
+	if(*prop == nullptr){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "passive_controller:%i", hdr->id);
-		if(*name == 0)
+		if(*name == static_cast<char>(0))
 			sprintf(msg, "%s: passive_controller unable to find property: name is NULL", namestr);
 		else
 			sprintf(msg, "%s: passive_controller unable to find %s", namestr, name);
-		throw(msg);
+		throw(std::runtime_error(msg));
 	}
 }
 
 int passive_controller::create(){
 	memset(this, 0, sizeof(passive_controller));
-	sensitivity = 1.0;
 	comfort_level = 1.0;
 	zipLoadParent = false;
 	pool_pump_model = false;
@@ -795,7 +785,7 @@ TIMESTAMP passive_controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 			} else {
 				controller_bid.state = BS_OFF;
 			}
-			submit_bid_state((char *)gl_name(hdr, ctrname, 1024),(char *)gl_name(observation_object, spvrname, 1024), "submit_bid_state", "supervisor", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+			submit_bid_state((char *)gl_name(hdr, ctrname, 1024),(char *)gl_name(observation_object, spvrname, 1024), const_cast<char*>("submit_bid_state"), const_cast<char*>("supervisor"), (void *)&controller_bid, (size_t)sizeof(controller_bid));
 			controller_bid.rebid = true;
 			if(!controller_bid.bid_accepted) {
 				return TS_INVALID;

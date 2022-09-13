@@ -2,7 +2,9 @@
 //
 
 #include "stdafx.h"
+
 #include <direct.h>
+
 #include "GldEditor.h"
 
 #include "GldEditorDoc.h"

@@ -25,8 +25,8 @@ typedef enum {
 } EUELECTRONICTYPE;
 
 typedef struct s_motor {
-	complex power;		/**< motor power when running */
-	complex impedance;	/**< motor impedance when stalled */
+	gld::complex power;		/**< motor power when running */
+	gld::complex impedance;	/**< motor impedance when stalled */
 	double inertia;		/**< motor inertia in seconds */
 	double v_stall;		/**< motor stall voltage (pu) */
 	double v_start;		/**< motor start voltage (pu) */
@@ -35,7 +35,7 @@ typedef struct s_motor {
 	/* TODO add slip data (0 for synchronous motors) */
 } EUMOTOR;
 typedef struct s_electronic {
-	complex power;		/**< load power when running */
+	gld::complex power;		/**< load power when running */
 	double inertia;		/**< load "inertia" */
 	double v_trip;		/**< load "trip" voltage (pu) */
 	double v_start;		/**< load "start" voltage (pu) */
@@ -44,18 +44,18 @@ typedef struct s_electronic {
 typedef struct s_enduse {
 	/* the output value must be first for transform to stream */
 	/* meter values */
-	complex total;				/* total power in kW */
-	complex energy;				/* total energy in kWh */
-	complex demand;				/* maximum power in kW (can be reset) */
+	gld::complex total;				/* total power in kW */
+	gld::complex energy;				/* total energy in kWh */
+	gld::complex demand;				/* maximum power in kW (can be reset) */
 
 	/* circuit configuration */	
 	set config;					/* end-use configuration */
 	double breaker_amps;		/* breaker limit (if any) */
 
 	/* zip values */
-	complex admittance;			/* constant impedance oprtion of load in kW */
-	complex current;			/* constant current portion of load in kW */
-	complex power;				/* constant power portion of load in kW */
+	gld::complex admittance;			/* constant impedance oprtion of load in kW */
+	gld::complex current;			/* constant current portion of load in kW */
+	gld::complex power;				/* constant power portion of load in kW */
 
 	/* composite load data */
 	EUMOTOR motor[_EUMT_COUNT];				/* motor loads (A-D) */
@@ -74,7 +74,7 @@ typedef struct s_enduse {
 	double heatgain_fraction;	/* fraction of power that goes to internal heat (pu Btu/h) */
 
 	/* misc info */
-	char *name;
+	const char *name;
 	loadshape *shape;
 	TIMESTAMP t_last;			/* last time of update */
 
@@ -98,6 +98,6 @@ int convert_from_enduse(char *string,int size,void *data, PROPERTY *prop);
 int enduse_publish(CLASS *oclass, PROPERTYADDR struct_address, char *prefix);
 int enduse_test(void);
 
-double enduse_get_part(void *c, char *name);
+double enduse_get_part(void *c, const char *name);
 
 #endif

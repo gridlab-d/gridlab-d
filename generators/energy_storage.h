@@ -10,6 +10,7 @@
 #define _energy_storage_H
 
 #include <stdarg.h>
+
 #include "generators.h"
 
 class energy_storage : public gld_object
@@ -29,8 +30,8 @@ public:
 	enum POWER_TYPE{DC=0, AC=1};
 	enumeration power_type_v;
 
-	complex V_Max;
-	complex I_Max;
+	gld::complex V_Max;
+	gld::complex I_Max;
 	double E_Max;
 	double Energy;
 	bool recalculate;
@@ -47,23 +48,23 @@ public:
 	double E_Next;
 	
 	
-	complex V_In;
-	complex I_In;
-	complex V_Internal;
+	gld::complex V_In;
+	gld::complex I_In;
+	gld::complex V_Internal;
 	double Rinternal;
-	complex VA_Internal;
-	complex I_Prev;
-	complex I_Internal;
+	gld::complex VA_Internal;
+	gld::complex I_Prev;
+	gld::complex I_Internal;
 	double base_efficiency;
 
-	complex V_Out;
+	gld::complex V_Out;
 	
-	complex I_Out;
+	gld::complex I_Out;
 
-	complex VA_Out;
+	gld::complex VA_Out;
 
-	complex *pCircuit_V;		//< pointer to the three voltages on three lines
-	complex *pLine_I;			//< pointer to the three current on three lines
+	gld::complex *pCircuit_V;		//< pointer to the three voltages on three lines
+	gld::complex *pLine_I;			//< pointer to the three current on three lines
 	bool connected; // true if conencted to another item down the line, false if this is the only item on the bus
 
 public:
@@ -74,13 +75,13 @@ public:
 	int init(OBJECT *parent);
 	
 	//this should be overridden by a customized method in child classes
-	double calculate_efficiency(complex voltage, complex current);
+	double calculate_efficiency(gld::complex voltage, gld::complex current);
 
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 
-	complex calculate_v_terminal(complex v, complex i);
+	gld::complex calculate_v_terminal(gld::complex v, gld::complex i);
 
 public:
 	static CLASS *oclass;

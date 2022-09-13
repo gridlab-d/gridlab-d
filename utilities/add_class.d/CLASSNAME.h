@@ -10,6 +10,7 @@
 #define _CLASSNAME_H
 
 #include <stdarg.h>
+
 #include "gridlabd.h"
 
 class CLASSNAME {

@@ -1,4 +1,5 @@
 #include <stdarg.h>
+
 #include "gridlabd.h"
 #include "market.h"
 #include "auction.h"
@@ -44,7 +45,7 @@ typedef struct s_bid_info {
 typedef struct s_bid BID;
 
 /** Bid structure for markets */
-EXPORT void submit_bid_state(char *from, char *to, char *function_name, char *function_class, void *bidding_buffer, size_t bid_len);
+EXPORT void submit_bid_state(char *from, char *to, const char *function_name, const char *function_class, void *bidding_buffer, size_t bid_len);
 
 EXPORT int64 submit_bid(OBJECT *obj, OBJECT *from, double quantity, double price, KEY bid_id);
 

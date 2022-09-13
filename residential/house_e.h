@@ -11,7 +11,7 @@
 #define _HOUSE_E_H
 
 #include "residential.h"
-#include "complex.h"
+#include "gld_complex.h"
 #include "enduse.h"
 #include "loadshape.h"
 #include "residential_enduse.h"
@@ -208,7 +208,7 @@ public:
 	// current hvac properties
 	double system_rated_power;		///< rated power of the system
 	double system_rated_capacity;	///< rated capacity of the system
-	complex hvac_power;				///< actual power draw of the hvac system (includes fan and motor where applicable)
+	gld::complex hvac_power;				///< actual power draw of the hvac system (includes fan and motor where applicable)
 
 	/* inherited res_enduse::load is hvac system load */
 	double hvac_load;
@@ -399,6 +399,7 @@ public:
 		TM_COOL = 3,
 	}THERMOSTATMODE;
 	enumeration thermostat_mode;
+	bool dump_house_parameters;
 
 private:
 	TIMESTAMP simulation_beginning_time;
@@ -436,10 +437,10 @@ private:
 	gld_property *pFrequency;						///< pointer to frequency value on triplex parent
 
 	//Default or "connecting point" values for powerflow interactions
-	complex value_Circuit_V[3];					///< value holder for the three voltages on three lines
-	complex value_Line_I[3];					///< value holder for the three current on three lines
-	complex value_Shunt[3];						///< value holder for shunt value on triplex parent
-	complex value_Power[3];						///< value holder for power value on triplex parent
+	gld::complex value_Circuit_V[3];					///< value holder for the three voltages on three lines
+	gld::complex value_Line_I[3];					///< value holder for the three current on three lines
+	gld::complex value_Shunt[3];						///< value holder for shunt value on triplex parent
+	gld::complex value_Power[3];						///< value holder for power value on triplex parent
 	enumeration value_MeterStatus;				///< value holder for service_status variable on triplex parent
 	double value_Frequency;						///< value holder for measured frequency on triplex parent
 	typedef enum {	
@@ -479,6 +480,7 @@ private:
 	void powerflow_accumulator_remover(void);	///<Functioanlized item that removes current accumulator values from powerflow (mostly for XML stuff)
 	//Circuit pointer for HVAC - used for breaker checks
 	CIRCUIT *pHVAC_EnduseLoad;
+	void dump_house_parameters_function(void);
 
 public:
 	int error_flag;
@@ -512,8 +514,8 @@ public:
 // access methods
 public:
 	//Map function
-	gld_property *map_complex_value(OBJECT *obj, char *name);
-	gld_property *map_double_value(OBJECT *obj, char *name);
+	gld_property *map_complex_value(OBJECT *obj, const char *name);
+	gld_property *map_double_value(OBJECT *obj, const char *name);
 	void pull_climate_values(void);
 };
 

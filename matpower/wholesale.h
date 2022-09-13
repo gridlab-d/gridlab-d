@@ -4,14 +4,14 @@
 #define _wholesale_H
 
 #include <stdarg.h>
+#include <vector>
+#include <string>
+
 #include "gridlabd.h"
 #include "matrix.h"
 #include "libopf.h"
 
-#include <vector>
 using std::vector;
-
-#include <string>
 using std::string;
 
 #ifndef ATTR_NUM

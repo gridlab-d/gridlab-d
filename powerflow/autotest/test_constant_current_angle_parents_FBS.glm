@@ -1,0 +1,712 @@
+//File to test different constant_current implementations with parent/child relationships
+//Configurations:
+//Radial 1 - short line
+//Radial 2 - parent/child
+//Radial 3 - short line, explicit Delta-Wye load
+//Radial 4 - parent/child, explicit Delta-Wye load
+//Radial 5 - short line - triplex
+//Radial 6 - parent/child - triplex
+//Radial 7 - double short line - triplex
+//Radial 8 - childed house - triplex
+//Radial 9 - childed house - double-childed - triplex
+
+clock {
+	timezone EST+5EDT;
+	starttime '2000-01-01 0:00:00';
+	stoptime '2000-01-01 0:00:01';
+};
+
+#set profiler=1
+#set complex_output_format=POLAR_DEG
+#set double_format=%+.12lg
+#set complex_format=%+.12lg%+.12lg%c
+
+module powerflow {
+	solver_method FBS;
+};
+
+module tape;
+module residential {
+	implicit_enduses NONE;
+}
+
+module assert;
+
+//Configurations
+object transformer_configuration {
+	name "dgw_xfmr_cfg";
+	connect_type DELTA_GWYE;
+	primary_voltage 115000.000;
+	secondary_voltage 4160.000;
+	power_rating 7000.000;
+	resistance 0.000010;
+	reactance 0.000100;
+}
+
+object transformer_configuration {
+    name "tplex_xmfr_config";
+    connect_type SINGLE_PHASE_CENTER_TAPPED;
+    install_type POLETOP;
+    primary_voltage 66395.281 V;
+    secondary_voltage 120.0 V;
+    power_rating 150.0 kVA;
+    powerB_rating 150.0 kVA;
+    impedance 0.006000+0.013600j;
+    impedance1 0.012000+0.006800j;
+    impedance2 0.012000+0.006800j;
+    shunt_impedance 1728000+691200j;
+}
+
+object triplex_line_conductor {     
+	name "triplex_4/0 AA";    
+	resistance 0.48;     
+	geometric_mean_radius 0.0158;     
+}       
+
+object triplex_line_configuration {     
+	name "tplex_line_config";     
+	conductor_1 "triplex_4/0 AA";    
+	conductor_2 "triplex_4/0 AA";    
+	conductor_N "triplex_4/0 AA";    
+	insulation_thickness 0.08;     
+	diameter 0.522;     
+} 
+
+//Overhead line configs - stolen from an IEEE feeder
+// Phase Conductor for 601: 556,500 26/7 ACSR
+object overhead_line_conductor {
+	name olc6010;
+	geometric_mean_radius 0.031300;
+	diameter 0.927 in;
+	resistance 0.185900;
+}
+
+// Phase Conductor for 602: 4/0 6/1 ACSR
+object overhead_line_conductor {
+	name olc6020;
+	geometric_mean_radius 0.00814;
+	diameter 0.56 in;
+	resistance 0.592000;
+}
+
+// Overhead line configurations
+object line_spacing {
+	name ls500601;
+	distance_AB 2.5;
+	distance_AC 4.5;
+	distance_BC 7.0;
+	distance_BN 5.656854;
+	distance_AN 4.272002;
+	distance_CN 5.0;
+	distance_AE 28.0;
+	distance_BE 28.0;
+	distance_CE 28.0;
+	distance_NE 24.0;
+}
+
+object line_configuration {
+	name lc601;
+	conductor_A olc6010;
+	conductor_B olc6010;
+	conductor_C olc6010;
+	conductor_N olc6020;
+	spacing ls500601;
+}
+
+
+object meter {
+	name "sourcebus";
+	bustype SWING;
+	phases ABCN;
+	nominal_voltage 66395.28;
+	object complex_assert {
+		target measured_power_A;
+		value +7204436.37847+6.74460794198d;
+		within 3;
+	};
+	object complex_assert {
+		target measured_power_B;
+		value +12166070.7243+23.5005936999d;
+		within 3;
+	};
+	object complex_assert {
+		target measured_power_C;
+		value +8495710.78237+47.9798410155d;
+		within 3;
+	};
+}
+
+//Radial 1 - short line
+object transformer {
+	phases ABCN;
+	name "rad_1_xfrmer";
+	from "sourcebus";
+	to "rad_1_meter";
+	configuration "dgw_xfmr_cfg";
+}
+
+object meter {
+	phases ABCN;
+	groupid "downstream_threephase";
+	name "rad_1_meter";
+	nominal_voltage 2401.7771;
+	object complex_assert {
+	  target measured_power_A;
+	  value +999995.69783+0.0104880555216d;
+	  within 3;
+	};
+	object complex_assert {
+	  target measured_power_B;
+	  value +2235952.927+26.5679289697d;
+	  within 3;
+	};
+	object complex_assert {
+	  target measured_power_C;
+	  value +3605195.3702+33.7345366537d;
+	  within 3;
+	};
+}
+
+object overhead_line {
+	phases ABCN;
+	name "ohl_rad_1";
+	from "rad_1_meter";
+	to "rad_1_load";
+	length 10 ft;
+	configuration "lc601";
+}
+
+object load {
+	name "rad_1_load";
+	phases ABCN;
+	nominal_voltage 2401.7771;
+	constant_current_A  416.35837+0.0j;   		// 1+j0 === 1.0000+00.0000d MVA
+	constant_current_B -776.93529-512.97466j;		// 2+j1 === 2.2361+26.5651d MVA
+	constant_current_C 96.616295+1498.0891j;		// 3+j2 === 3.6056+33.6901d MVA
+}
+
+//Radial 2 - parent/child
+object transformer {
+	phases ABCN;
+	name "rad_2_xfrmer";
+	from "sourcebus";
+	to "rad_2_meter";
+	configuration "dgw_xfmr_cfg";
+}
+
+object meter {
+	phases ABCN;
+	groupid "downstream_threephase";
+	name "rad_2_meter";
+	nominal_voltage 2401.7771;
+	object complex_assert {
+	  target measured_power_A;
+	  value +999995.705672+0d;
+	  within 5;
+	};
+	object complex_assert {
+	  target measured_power_B;
+	  value +2235952.93614+26.5650512986d;
+	  within 5;
+	};
+	object complex_assert {
+	  target measured_power_C;
+	  value +3605195.70584+33.6900676022d;
+	  within 5;
+	};
+}
+
+object load {
+	name "rad_2_load";
+	parent "rad_2_meter";
+	phases ABCN;
+	nominal_voltage 2401.7771;
+	constant_current_A  416.35837+0.0j;   		// 1+j0 === 1.0000+00.0000d MVA
+	constant_current_B -776.93529-512.97466j;		// 2+j1 === 2.2361+26.5651d MVA
+	constant_current_C 96.616295+1498.0891j;		// 3+j2 === 3.6056+33.6901d MVA
+}
+
+//Radial 3 - short line, explicit Delta-Wye load
+object transformer {
+	phases ABCN;
+	name "rad_3_xfrmer";
+	from "sourcebus";
+	to "rad_3_meter";
+	configuration "dgw_xfmr_cfg";
+}
+
+object meter {
+	phases ABCN;
+	groupid "downstream_threephase";
+	name "rad_3_meter";
+	nominal_voltage 2401.7771;
+	object complex_assert {
+	  target measured_power_A;
+	  value +999995.69783+0.0104880555216d;
+	  within 3;
+	};
+	object complex_assert {
+	  target measured_power_B;
+	  value +2235952.927+26.5679289697d;
+	  within 3;
+	};
+	object complex_assert {
+	  target measured_power_C;
+	  value +3605195.3702+33.7345366537d;
+	  within 3;
+	};
+}
+
+object overhead_line {
+	phases ABCN;
+	name "ohl_rad_3";
+	from "rad_3_meter";
+	to "rad_3_load";
+	length 10 ft;
+	configuration "lc601";
+}
+
+object load {
+	name "rad_3_load";
+	phases ABCN;
+	nominal_voltage 2401.7771;
+	constant_current_AN  416.35837+0.0j;   		// 1+j0 === 1.0000+00.0000d MVA
+	constant_current_BN -776.93529-512.97466j;		// 2+j1 === 2.2361+26.5651d MVA
+	constant_current_CN 96.616295+1498.0891j;		// 3+j2 === 3.6056+33.6901d MVA
+}
+
+//Radial 4 - parent/child, explicit Delta-Wye load
+object transformer {
+	phases ABCN;
+	name "rad_4_xfrmer";
+	from "sourcebus";
+	to "rad_4_meter";
+	configuration "dgw_xfmr_cfg";
+}
+
+object meter {
+	phases ABCN;
+	groupid "downstream_threephase";
+	name "rad_4_meter";
+	nominal_voltage 2401.7771;
+	object complex_assert {
+	  target measured_power_A;
+	  value +999995.705672+0d;
+	  within 5;
+	};
+	object complex_assert {
+	  target measured_power_B;
+	  value +2235952.93614+26.5650512986d;
+	  within 5;
+	};
+	object complex_assert {
+	  target measured_power_C;
+	  value +3605195.70584+33.6900676022d;
+	  within 5;
+	};
+}
+
+object load {
+	name "rad_4_load";
+	parent "rad_4_meter";
+	phases ABCN;
+	nominal_voltage 2401.7771;
+	constant_current_AN  416.35837+0.0j;   		// 1+j0 === 1.0000+00.0000d MVA
+	constant_current_BN -776.93529-512.97466j;		// 2+j1 === 2.2361+26.5651d MVA
+	constant_current_CN 96.616295+1498.0891j;		// 3+j2 === 3.6056+33.6901d MVA
+}
+
+//Radial 5 - short line - triplex
+object transformer {
+	phases BS;
+	name "rad_5_xfrmer";
+	from "sourcebus";
+	to "rad_5_meter";
+	configuration "tplex_xmfr_config";
+}
+
+object triplex_meter {
+	phases BS;
+	groupid "downstream_singlephase";
+	name "rad_5_meter";
+	nominal_voltage 120.0;
+	object complex_assert {
+	  target indiv_measured_power_1;
+	  value +269.237526816+21.8011823691d;
+	  within 3;
+	};
+	object complex_assert {
+	  target indiv_measured_power_2;
+	  value +403.080296224+29.7442300522d;
+	  within 3;
+	};
+}
+
+object triplex_line {
+	phases BS;
+	name "triplex_5_line";
+	from "rad_5_meter";
+	to "rad_5_load";
+	length 10 ft;
+	configuration "tplex_line_config";
+}
+
+object triplex_load {
+	name "rad_5_load";
+	phases BS;
+	nominal_voltage 120.0;
+	constant_current_1 0.83333+0.0j;		// 1+j0 === 1.0000+00.0000d dVA
+	constant_current_2 1.6667-0.83333j;	// 2+j1 === 2.2361+26.5651d dVA
+	constant_current_12 1.25-0.83333j;	// 3+j2 === 3.6056+33.6901d dVA
+}
+
+//Radial 6 - parent/child - triplex
+object transformer {
+	phases BS;
+	name "rad_6_xfrmer";
+	from "sourcebus";
+	to "rad_6_meter";
+	configuration "tplex_xmfr_config";
+}
+
+object triplex_meter {
+	phases BS;
+	groupid "downstream_singlephase";
+	name "rad_6_meter";
+	nominal_voltage 120.0;
+	object complex_assert {
+	  target indiv_measured_power_1;
+	  value +269.237526816+21.8011823691d;
+	  within 3;
+	};
+	object complex_assert {
+	  target indiv_measured_power_2;
+	  value +403.080296224+29.7442300522d;
+	  within 3;
+	};
+}
+
+object triplex_load {
+	name "rad_6_load";
+	parent "rad_6_meter";
+	phases BS;
+	nominal_voltage 120.0;
+	constant_current_1 0.83333+0.0j;		// 1+j0 === 1.0000+00.0000d dVA
+	// base_power_1 100.0;
+	// current_pf_1 1.0;
+	// current_fraction_1 1.0;
+	// power_fraction_1 0.0;
+	// impedance_fraction_1 0.0;
+	constant_current_2 1.6667-0.83333j;	// 2+j1 === 2.2361+26.5651d dVA
+	// base_power_2 223.6068;
+	// current_pf_2 0.8944;
+	// current_fraction_2 1.0;
+	// power_fraction_2 0.0;
+	// impedance_fraction_2 0.0;
+	constant_current_12 1.25-0.83333j;	// 3+j2 === 3.6056+33.6901d dVA
+}
+		
+
+//Radial 7 - double short line - triplex
+object transformer {
+	phases BS;
+	name "rad_7_xfrmer";
+	from "sourcebus";
+	to "rad_7_meter";
+	configuration "tplex_xmfr_config";
+}
+
+object triplex_meter {
+	phases BS;
+	groupid "downstream_singlephase";
+	name "rad_7_meter";
+	nominal_voltage 120.0;
+	object complex_assert {
+	  target indiv_measured_power_1;
+	  value +269.237526816+21.8011823691d;
+	  within 3;
+	};
+	object complex_assert {
+	  target indiv_measured_power_2;
+	  value +403.080296224+29.7442300522d;
+	  within 3;
+	};
+}
+
+object triplex_line {
+	phases BS;
+	name "triplex_7_line_A";
+	from "rad_7_meter";
+	to "rad_7_meter_B";
+	length 10 ft;
+	configuration "tplex_line_config";
+}
+
+object triplex_meter {
+	phases BS;
+	groupid "downstream_singlephase";
+	name "rad_7_meter_B";
+	nominal_voltage 120.0;
+	object complex_assert {
+	  target indiv_measured_power_1;
+	  value +269.237526816+21.8011823691d;
+	  within 3;
+	};
+	object complex_assert {
+	  target indiv_measured_power_2;
+	  value +403.080296224+29.7442300522d;
+	  within 3;
+	};
+}
+
+object triplex_line {
+	phases BS;
+	name "triplex_7_line_B";
+	from "rad_7_meter_B";
+	to "rad_7_load";
+	length 10 ft;
+	configuration "tplex_line_config";
+}
+
+object triplex_load {
+	name "rad_7_load";
+	phases BS;
+	nominal_voltage 120.0;
+	constant_current_1 0.83333+0.0j;		// 1+j0 === 1.0000+00.0000d dVA
+	constant_current_2 1.6667-0.83333j;	// 2+j1 === 2.2361+26.5651d dVA
+	constant_current_12 1.25-0.83333j;	// 3+j2 === 3.6056+33.6901d dVA
+}
+
+//Radial 8 - childed house - triplex
+object transformer {
+	phases BS;
+	name "rad_8_xfrmer";
+	from "sourcebus";
+	to "rad_8_meter";
+	configuration "tplex_xmfr_config";
+}
+
+object triplex_meter {
+	phases BS;
+	groupid "downstream_singlephase";
+	name "rad_8_meter";
+	nominal_voltage 120.0;
+	object complex_assert {
+	  target indiv_measured_power_1;
+	  value +269.237526816+21.8011823691d;
+	  within 3;
+	};
+	object complex_assert {
+	  target indiv_measured_power_2;
+	  value +403.080296224+29.7442300522d;
+	  within 3;
+	};
+}
+
+object house {
+	parent "rad_8_meter";
+	name "rad_8_house";
+	object ZIPload {
+		// constant_current_1 0.83333+0.0j;		// 1+j0 === 1.0000+00.0000d dVA
+		base_power 100.0 W;
+		current_pf 1.0;
+		current_fraction 1.0;
+		power_fraction 0.0;
+		impedance_fraction 0.0;
+		configuration IS110;
+	};
+	object ZIPload {
+		//constant_current_2 1.6667-0.83333j;	// 2+j1 === 2.2361+26.5651d dVA
+		base_power 200.0 W;
+		current_pf 0.8944;
+		current_fraction 1.0;
+		power_fraction 0.0;
+		impedance_fraction 0.0;
+		configuration IS110;
+	};
+	object ZIPload {
+		//constant_current_12 1.25-0.83333j;	// 3+j2 === 3.6056+33.6901d dVA
+		base_power 300.0 W;
+		current_pf 0.8321;
+		current_fraction 1.0;
+		power_fraction 0.0;
+		impedance_fraction 0.0;
+		configuration IS220;
+	};
+}
+
+//Radial 9 - childed house - double-childed - triplex
+object transformer {
+	phases BS;
+	name "rad_9_xfrmer";
+	from "sourcebus";
+	to "rad_9_meter";
+	configuration "tplex_xmfr_config";
+}
+
+object triplex_meter {
+	phases BS;
+	groupid "downstream_singlephase";
+	name "rad_9_meter";
+	nominal_voltage 120.0;
+	object complex_assert {
+	  target indiv_measured_power_1;
+	  value +269.237526816+21.8011823691d;
+	  within 3;
+	};
+	object complex_assert {
+	  target indiv_measured_power_2;
+	  value +403.080296224+29.7442300522d;
+	  within 3;
+	};
+}
+
+object triplex_meter {
+	phases BS;
+	groupid "downstream_singlephase";
+	parent "rad_9_meter";
+	name "rad_9_meter_B";
+	nominal_voltage 120.0;
+	object complex_assert {
+	  target indiv_measured_power_1;
+	  value +269.237526816+21.8011823691d;
+	  within 3;
+	};
+	object complex_assert {
+	  target indiv_measured_power_2;
+	  value +403.080296224+29.7442300522d;
+	  within 3;
+	};
+}
+
+object house {
+	parent "rad_9_meter_B";
+	name "rad_9_house";
+	object ZIPload {
+		// constant_current_1 0.83333+0.0j;		// 1+j0 === 1.0000+00.0000d dVA
+		base_power 100.0 W;
+		current_pf 1.0;
+		current_fraction 1.0;
+		power_fraction 0.0;
+		impedance_fraction 0.0;
+		configuration IS110;
+	};
+	object ZIPload {
+		//constant_current_2 1.6667-0.83333j;	// 2+j1 === 2.2361+26.5651d dVA
+		base_power 200.0 W;
+		current_pf 0.8944;
+		current_fraction 1.0;
+		power_fraction 0.0;
+		impedance_fraction 0.0;
+		configuration IS110;
+	};
+	object ZIPload {
+		//constant_current_12 1.25-0.83333j;	// 3+j2 === 3.6056+33.6901d dVA
+		base_power 300.0 W;
+		current_pf 0.8321;
+		current_fraction 1.0;
+		power_fraction 0.0;
+		impedance_fraction 0.0;
+		configuration IS220;
+	};
+}
+
+//Substation recorder
+object recorder {
+	parent "sourcebus";
+	property "measured_power_A,measured_power_B,measured_power_C";
+	interval 1;
+	file "source_measured_power.csv";
+}
+
+// //Group_recorder - power
+// object group_recorder {
+	// name "power_A_vals";
+	// group "groupid=downstream_threephase";
+	// property "measured_power_A";
+	// interval 1;
+	// file phase_A_powers.csv;
+// }
+
+// object group_recorder {
+	// name "power_B_vals";
+	// group "groupid=downstream_threephase";
+	// property "measured_power_B";
+	// interval 1;
+	// file phase_B_powers.csv;
+// }
+
+// object group_recorder {
+	// name "power_C_vals";
+	// group "groupid=downstream_threephase";
+	// property "measured_power_C";
+	// interval 1;
+	// file phase_C_powers.csv;
+// }
+
+// //Current values
+// object group_recorder {
+	// name "current_A_vals";
+	// group "groupid=downstream_threephase";
+	// property "measured_current_A";
+	// interval 1;
+	// file phase_A_current.csv;
+// }
+
+// object group_recorder {
+	// name "current_B_vals";
+	// group "groupid=downstream_threephase";
+	// property "measured_current_B";
+	// interval 1;
+	// file phase_B_current.csv;
+// }
+
+// object group_recorder {
+	// name "current_C_vals";
+	// group "groupid=downstream_threephase";
+	// property "measured_current_C";
+	// interval 1;
+	// file phase_C_current.csv;
+// }
+
+// //Group_recorder - power
+// object group_recorder {
+	// name "power_1_vals";
+	// group "groupid=downstream_singlephase";
+	// property "indiv_measured_power_1";
+	// interval 1;
+	// file phase_1_powers.csv;
+// }
+
+// object group_recorder {
+	// name "power_2_vals";
+	// group "groupid=downstream_singlephase";
+	// property "indiv_measured_power_2";
+	// interval 1;
+	// file phase_2_powers.csv;
+// }
+
+// object group_recorder {
+	// name "power_12_vals";
+	// group "groupid=downstream_singlephase";
+	// property "measured_power";
+	// interval 1;
+	// file phase_12_powers.csv;
+// }
+
+// //Current values
+// object group_recorder {
+	// name "current_1_vals";
+	// group "groupid=downstream_singlephase";
+	// property "measured_current_1";
+	// interval 1;
+	// file phase_1_current.csv;
+// }
+
+// object group_recorder {
+	// name "current_2_vals";
+	// group "groupid=downstream_singlephase";
+	// property "measured_current_2";
+	// interval 1;
+	// file phase_2_current.csv;
+// }

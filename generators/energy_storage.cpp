@@ -7,10 +7,10 @@
  @{
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "energy_storage.h"
 
@@ -110,12 +110,12 @@ int energy_storage::init(OBJECT *parent)
 }
 
 
-double energy_storage::calculate_efficiency(complex voltage, complex current){
+double energy_storage::calculate_efficiency(gld::complex voltage, gld::complex current){
 	return 1;
 }
 
 
-complex energy_storage::calculate_v_terminal(complex v, complex i){
+gld::complex energy_storage::calculate_v_terminal(gld::complex v, gld::complex i){
 	return v - (i * Rinternal);
 }
 

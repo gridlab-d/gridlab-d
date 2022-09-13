@@ -10,6 +10,7 @@
 #define _rectifier_H
 
 #include <stdarg.h>
+
 #include "generators.h"
 
 class rectifier: public gld_object

@@ -15,7 +15,7 @@
 
 EXPORT STATUS preupdate_battery(OBJECT *obj,TIMESTAMP t0, unsigned int64 delta_time);
 EXPORT SIMULATIONMODE interupdate_battery(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
-EXPORT STATUS postupdate_battery(OBJECT *obj, complex *useful_value, unsigned int mode_pass);
+EXPORT STATUS postupdate_battery(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass);
 
 
 class battery : public gld_object
@@ -53,9 +53,9 @@ private:
 	gld_property *peff; // parent inverter efficiency
 	gld_property *pinverter_VA_Out; // inverter AC power output
 
-	complex value_Circuit_V[3];
-	complex value_Line_I[3];
-	complex value_Line12;
+	gld::complex value_Circuit_V[3];
+	gld::complex value_Line_I[3];
+	gld::complex value_Line12;
 
 	double value_Tout;
 
@@ -133,7 +133,7 @@ public:
 	double check_power;
 	double pf;
 
-	complex last_current[3];
+	gld::complex last_current[3];
 	double no_of_cycles;
 	bool Iteration_Toggle;			// "Off" iteration tracker
 	double parasitic_power_draw;
@@ -175,20 +175,20 @@ public:
 	double efficiency;
 
 	double Max_P;//< maximum real power capacity in kW
-	complex V_Max;
-	complex I_Max;
+	gld::complex V_Max;
+	gld::complex I_Max;
 	double E_Max;
 
 	double base_efficiency;
 
-	complex V_Out;
-	complex I_Out;
-	complex VA_Out;
-	complex I_In;
-	complex V_Internal;
-	complex I_Internal;
-	complex VA_Internal;
-	complex I_Prev;
+	gld::complex V_Out;
+	gld::complex I_Out;
+	gld::complex VA_Out;
+	gld::complex I_In;
+	gld::complex V_Internal;
+	gld::complex I_Internal;
+	gld::complex VA_Internal;
+	gld::complex I_Prev;
 	double margin;
 	double E_Next;
 
@@ -196,32 +196,28 @@ public:
 
 	//*** End LEGACY model parameters ***//
 
-	//********** DEPRECATED variables - Remove on next release ****************//
-	double Rated_kVA; //< nominal capacity in kVA
-	complex V_In;
-
 public:
 	/* required implementations */
 	battery(MODULE *module);
 	int create(void);
 	int init(OBJECT *parent);
 	//double timestamp_to_hours(TIMESTAMP t);
-	TIMESTAMP rfb_event_time(TIMESTAMP t0, complex power, double e);
+	TIMESTAMP rfb_event_time(TIMESTAMP t0, gld::complex power, double e);
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 
 	STATUS pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time);
 	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
-	STATUS post_deltaupdate(complex *useful_value, unsigned int mode_pass);
+	STATUS post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass);
 	void update_soc(unsigned int64 delta_time);
 	double check_state_change_time_delta(unsigned int64 delta_time, unsigned long dt);
 
-	double calculate_efficiency(complex voltage, complex current);
-	complex calculate_v_terminal(complex v, complex i);
+	double calculate_efficiency(gld::complex voltage, gld::complex current);
+	gld::complex calculate_v_terminal(gld::complex v, gld::complex i);
 
-	gld_property *map_complex_value(OBJECT *obj, char *name);
-	gld_property *map_double_value(OBJECT *obj, char *name);
+	gld_property *map_complex_value(OBJECT *obj, const char *name);
+	gld_property *map_double_value(OBJECT *obj, const char *name);
 public:
 	static CLASS *oclass;
 	static battery *defaults;

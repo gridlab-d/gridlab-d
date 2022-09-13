@@ -13,6 +13,7 @@
 #define _server_H
 
 #include <stdarg.h>
+
 #include "gridlabd.h"
 
 class server {

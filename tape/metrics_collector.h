@@ -139,7 +139,7 @@ public:
 	static metrics_collector *defaults;
 	static CLASS *oclass, *pclass;
 
-	metrics_collector(MODULE *);
+	explicit metrics_collector(MODULE *);
 	int create();
 	int init(OBJECT *);
 	int isa(char *);

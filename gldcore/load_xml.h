@@ -19,18 +19,20 @@
 #ifndef _XML_LOAD_H_
 #define _XML_LOAD_H_
 
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cstring>
+#include <cstdio>
+#include <cstdlib>
+
+#include "globals.h"
 
 #ifdef __cplusplus
 extern "C" {
 	#include "output.h"
 
-	int loadall_xml(char *file);
+	STATUS loadall_xml(const char *file);
 }
 #else
-int loadall_xml(char *file);
+STATUS loadall_xml(const char *file);
 #endif
 
 #endif

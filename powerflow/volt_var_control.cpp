@@ -11,26 +11,26 @@
 	Copyright (C) 2010 Battelle Memorial Institute
 **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "volt_var_control.h"
 
 //////////////////////////////////////////////////////////////////////////
 // volt_var_control CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* volt_var_control::oclass = NULL;
-CLASS* volt_var_control::pclass = NULL;
+CLASS* volt_var_control::oclass = nullptr;
+CLASS* volt_var_control::pclass = nullptr;
 
 volt_var_control::volt_var_control(MODULE *mod) : powerflow_object(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		pclass = powerflow_object::oclass;
 		oclass = gl_register_class(mod,"volt_var_control",sizeof(volt_var_control),PC_PRETOPDOWN|PC_POSTTOPDOWN|PC_AUTOLOCK);
-		if(oclass == NULL)
+		if(oclass == nullptr)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 		if(gl_publish_variable(oclass,
 			PT_enumeration, "control_method", PADDR(control_method),PT_DESCRIPTION,"IVVC activated or in standby",
@@ -78,29 +78,29 @@ int volt_var_control::create(void)
 	desired_pf = 0.98;
 	d_min = 0.3;				//Chosen from Borozan paper defaults
 	d_max = 0.6;				//Chosen from Borozan paper defaults
-	substation_lnk_obj = NULL;
-	pRegulator_list = NULL;
-	pRegulator_configs = NULL;
-	pCapacitor_list = NULL;
-	Capacitor_size = NULL;
-	pMeasurement_list = NULL;
-	minimum_voltage = NULL;		
-	maximum_voltage = NULL;		
-	desired_voltage = NULL;		
-	max_vdrop = NULL;			
+	substation_lnk_obj = nullptr;
+	pRegulator_list = nullptr;
+	pRegulator_configs = nullptr;
+	pCapacitor_list = nullptr;
+	Capacitor_size = nullptr;
+	pMeasurement_list = nullptr;
+	minimum_voltage = nullptr;		
+	maximum_voltage = nullptr;		
+	desired_voltage = nullptr;		
+	max_vdrop = nullptr;			
 
-	vbw_low = NULL;				
-	vbw_high = NULL;
+	vbw_low = nullptr;				
+	vbw_high = nullptr;
 
 	num_regs = 1;				//Default to 1 for parsing.  Will update in init
 	num_caps = 1;				//Default to 1 for parsing.  Will update in init
 	
-	num_meas = NULL;
+	num_meas = nullptr;
 	
 	Regulator_Change = false;	//Start by assuming no regulator change is occurring
-	TRegUpdate = NULL;
-	RegUpdateTimes = NULL;
-	CapUpdateTimes = NULL;
+	TRegUpdate = nullptr;
+	RegUpdateTimes = nullptr;
+	CapUpdateTimes = nullptr;
 	TCapUpdate = 0;
 	TUpdateStatus = false;		//Flag for control_method transitions
 	pf_phase = 0;				//No phases monitored by default - will drop to link if unpopulated
@@ -110,7 +110,7 @@ int volt_var_control::create(void)
 
 	prev_time = 0;
 
-	PrevRegState = NULL;
+	PrevRegState = nullptr;
 
 
 	return result;
@@ -137,7 +137,7 @@ int volt_var_control::init(OBJECT *parent)
 	OBJECT *obj = OBJECTHDR(this);
 
 	//General error checks
-	if (pf_signed==true)
+	if (pf_signed)
 	{
 		if ((d_max <= 0.0) || (d_max > 1.0))
 		{
@@ -348,7 +348,7 @@ int volt_var_control::init(OBJECT *parent)
 	{
 		temp_obj = gl_get_object((char *)regulator_list);
 
-		if (temp_obj == NULL)	//Not really an object, must be no controllable capacitors
+		if (temp_obj == nullptr)	//Not really an object, must be no controllable capacitors
 			num_regs = 0;
 	}
 
@@ -357,7 +357,7 @@ int volt_var_control::init(OBJECT *parent)
 		//Allocate the relevant variables - lots of them - single allocs are probably pretty silly, but meh
 			pRegulator_list = (regulator **)gl_malloc(num_regs*sizeof(regulator*));
 			
-			if (pRegulator_list == NULL)
+			if (pRegulator_list == nullptr)
 			{
 				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				/*  TROUBLESHOOT
@@ -369,7 +369,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			pRegulator_configs = (regulator_configuration **)gl_malloc(num_regs*sizeof(regulator_configuration*));
 
-			if (pRegulator_configs == NULL)
+			if (pRegulator_configs == nullptr)
 			{
 				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
@@ -377,7 +377,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			PrevRegState = (regulator_configuration::Control_enum*)gl_malloc(num_regs*sizeof(regulator_configuration::Control_enum));
 
-			if (PrevRegState == NULL)
+			if (PrevRegState == nullptr)
 			{
 				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
@@ -385,14 +385,14 @@ int volt_var_control::init(OBJECT *parent)
 
 			//Allocate measurement pointers
 			pMeasurement_list = (node***)gl_malloc(num_regs*sizeof(node**));
-			if (pMeasurement_list == NULL)
+			if (pMeasurement_list == nullptr)
 			{
 				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
 			}
 
 			num_meas = (int*)gl_malloc(num_regs*sizeof(int));
-			if (num_meas == NULL)
+			if (num_meas == nullptr)
 			{
 				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
@@ -400,7 +400,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			TRegUpdate = (TIMESTAMP *)gl_malloc(num_regs*sizeof(TIMESTAMP));
 
-			if (TRegUpdate == NULL)
+			if (TRegUpdate == nullptr)
 			{
 				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
@@ -414,7 +414,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			RegUpdateTimes = (double*)gl_malloc(num_regs*sizeof(double));
 
-			if (RegUpdateTimes == NULL)
+			if (RegUpdateTimes == nullptr)
 			{
 				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
@@ -422,7 +422,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			reg_step_up = (double*)gl_malloc(num_regs*sizeof(double));
 
-			if (reg_step_up == NULL)
+			if (reg_step_up == nullptr)
 			{
 				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
@@ -430,7 +430,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			reg_step_down = (double*)gl_malloc(num_regs*sizeof(double));
 			
-			if (reg_step_down == NULL)
+			if (reg_step_down == nullptr)
 			{
 				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
@@ -438,7 +438,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			RegToNodes = (node**)gl_malloc(num_regs*sizeof(node*));
 
-			if (RegToNodes == NULL)
+			if (RegToNodes == nullptr)
 			{
 				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
@@ -446,7 +446,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			vbw_high = (double*)gl_malloc(num_regs*sizeof(double));
 
-			if (vbw_high == NULL)
+			if (vbw_high == nullptr)
 			{
 				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
@@ -454,7 +454,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			vbw_low = (double*)gl_malloc(num_regs*sizeof(double));
 
-			if (vbw_low == NULL)
+			if (vbw_low == nullptr)
 			{
 				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
@@ -462,7 +462,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			max_vdrop = (double*)gl_malloc(num_regs*sizeof(double));
 
-			if (max_vdrop == NULL)
+			if (max_vdrop == nullptr)
 			{
 				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
@@ -470,7 +470,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			desired_voltage = (double*)gl_malloc(num_regs*sizeof(double));
 
-			if (desired_voltage == NULL)
+			if (desired_voltage == nullptr)
 			{
 				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
@@ -478,7 +478,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			maximum_voltage = (double*)gl_malloc(num_regs*sizeof(double));
 
-			if (maximum_voltage == NULL)
+			if (maximum_voltage == nullptr)
 			{
 				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
@@ -486,7 +486,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			minimum_voltage = (double*)gl_malloc(num_regs*sizeof(double));
 
-			if (minimum_voltage == NULL)
+			if (minimum_voltage == nullptr)
 			{
 				GL_THROW("volt_var_control %s: regulator storage allocation failed",obj->name);
 				//defined above
@@ -500,7 +500,7 @@ int volt_var_control::init(OBJECT *parent)
 				//Extract the object information
 				token_a1 = obj_token(token_a, &temp_obj);
 				
-				if (temp_obj != NULL)	//Valid object!
+				if (temp_obj != nullptr)	//Valid object!
 				{
 					pRegulator_list[index] = OBJECTDATA(temp_obj, regulator);	//Store the regulator
 
@@ -524,7 +524,7 @@ int volt_var_control::init(OBJECT *parent)
 				}//end valid object 
 				else	//General catch
 				{
-					if (token_a1 != NULL)
+					if (token_a1 != nullptr)
 					{
 						//Remove the comma from the list
 						*--token_a1 = '\0';
@@ -804,7 +804,7 @@ int volt_var_control::init(OBJECT *parent)
 		prev_mode = STANDBY;
 	}
 
-	if (substation_lnk_obj == NULL)	//If nothing specified, just use the first feeder regulator
+	if (substation_lnk_obj == nullptr)	//If nothing specified, just use the first feeder regulator
 	{
 		gl_warning("volt_var_control %s: A link to monitor power-factor was not specified, using first regulator.",obj->name);
 		/*  TROUBLESHOOT
@@ -841,7 +841,7 @@ int volt_var_control::init(OBJECT *parent)
 	{
 		temp_obj = gl_get_object((char *)capacitor_list);
 
-		if (temp_obj == NULL)	//Not really an object, must be no controllable capacitors
+		if (temp_obj == nullptr)	//Not really an object, must be no controllable capacitors
 			num_caps = 0;
 	}
 
@@ -852,7 +852,7 @@ int volt_var_control::init(OBJECT *parent)
 			//malloc the list (there is only 1, so this pretty stupid, but meh)
 			pCapacitor_list = (capacitor **)gl_malloc(sizeof(capacitor*));
 
-			if (pCapacitor_list == NULL)
+			if (pCapacitor_list == nullptr)
 			{
 				GL_THROW("volt_var_control %s: Failed to allocate capacitor memory",obj->name);
 				/*  TROUBLESHOOT
@@ -865,7 +865,7 @@ int volt_var_control::init(OBJECT *parent)
 			//malloc the size (there is only 1, so this again pretty stupid, but meh)
 			Capacitor_size = (double*)gl_malloc(sizeof(double));
 
-			if (Capacitor_size == NULL)
+			if (Capacitor_size == nullptr)
 			{
 				GL_THROW("volt_var_control %s: Failed to allocate capacitor memory",obj->name);
 				//Defined above
@@ -874,7 +874,7 @@ int volt_var_control::init(OBJECT *parent)
 			//malloc the update time vector (there is only 1 again, but consistency is key)
 			CapUpdateTimes = (double *)gl_malloc(sizeof(double));
 
-			if (CapUpdateTimes == NULL)
+			if (CapUpdateTimes == nullptr)
 			{
 				GL_THROW("volt_var_control %s: Failed to allocate capacitor memory",obj->name);
 				//Defined above
@@ -885,7 +885,7 @@ int volt_var_control::init(OBJECT *parent)
 
 			temp_obj = gl_get_object(token_a);
 				
-			if (temp_obj != NULL)	//Valid object!
+			if (temp_obj != nullptr)	//Valid object!
 			{
 				pCapacitor_list[0] = OBJECTDATA(temp_obj,capacitor);	//Store it as a capacitor
 
@@ -934,7 +934,7 @@ int volt_var_control::init(OBJECT *parent)
 			//malloc the temp list
 			pCapacitor_list_temp = (capacitor **)gl_malloc(num_caps*sizeof(capacitor*));
 
-			if (pCapacitor_list_temp == NULL)
+			if (pCapacitor_list_temp == nullptr)
 			{
 				GL_THROW("volt_var_control %s: Failed to allocate capacitor memory",obj->name);
 				//Defined above
@@ -943,7 +943,7 @@ int volt_var_control::init(OBJECT *parent)
 			//malloc the actual list
 			pCapacitor_list = (capacitor **)gl_malloc(num_caps*sizeof(capacitor*));
 
-			if (pCapacitor_list == NULL)
+			if (pCapacitor_list == nullptr)
 			{
 				GL_THROW("volt_var_control %s: Failed to allocate capacitor memory",obj->name);
 				//Defined above
@@ -952,7 +952,7 @@ int volt_var_control::init(OBJECT *parent)
 			//Malloc the update times
 			CapUpdateTimes = (double *)gl_malloc(num_caps*sizeof(double));
 
-			if (CapUpdateTimes == NULL)
+			if (CapUpdateTimes == nullptr)
 			{
 				GL_THROW("volt_var_control %s: Failed to allocate capacitor memory",obj->name);
 				//Defined above
@@ -961,7 +961,7 @@ int volt_var_control::init(OBJECT *parent)
 			//malloc the temp index
 			temp_cap_idx = (int*)gl_malloc(num_caps*sizeof(int));
 
-			if (temp_cap_idx == NULL)
+			if (temp_cap_idx == nullptr)
 			{
 				GL_THROW("volt_var_control %s: Failed to allocate capacitor memory",obj->name);
 				//Defined above
@@ -970,7 +970,7 @@ int volt_var_control::init(OBJECT *parent)
 			//malloc the temp work index
 			temp_cap_idx_work = (int*)gl_malloc(num_caps*sizeof(int));
 
-			if (temp_cap_idx_work == NULL)
+			if (temp_cap_idx_work == nullptr)
 			{
 				GL_THROW("volt_var_control %s: Failed to allocate capacitor memory",obj->name);
 				//Defined above
@@ -979,7 +979,7 @@ int volt_var_control::init(OBJECT *parent)
 			//malloc the temp size
 			temp_cap_size = (double*)gl_malloc(num_caps*sizeof(double));
 
-			if (temp_cap_size == NULL)
+			if (temp_cap_size == nullptr)
 			{
 				GL_THROW("volt_var_control %s: Failed to allocate capacitor memory",obj->name);
 				//Defined above
@@ -988,7 +988,7 @@ int volt_var_control::init(OBJECT *parent)
 			//malloc the actual size
 			Capacitor_size = (double*)gl_malloc(num_caps*sizeof(double));
 
-			if (Capacitor_size == NULL)
+			if (Capacitor_size == nullptr)
 			{
 				GL_THROW("volt_var_control %s: Failed to allocate capacitor memory",obj->name);
 				//Defined above
@@ -1001,7 +1001,7 @@ int volt_var_control::init(OBJECT *parent)
 				//Extract the object information
 				token_a1 = obj_token(token_a, &temp_obj);
 				
-				if (temp_obj != NULL)	//Valid object!
+				if (temp_obj != nullptr)	//Valid object!
 				{
 					pCapacitor_list_temp[index] = OBJECTDATA(temp_obj,capacitor);	//Store it as a capacitor
 					temp_cap_idx[index] = index;	//Store the index
@@ -1038,7 +1038,7 @@ int volt_var_control::init(OBJECT *parent)
 				}
 				else	//General catch
 				{
-					if (token_a1 != NULL)
+					if (token_a1 != nullptr)
 					{
 						//Remove the comma from the list
 						*--token_a1 = '\0';
@@ -1075,7 +1075,7 @@ int volt_var_control::init(OBJECT *parent)
 		//Populate the "state holder"
 		PrevCapState = (capacitor::CAPCONTROL*)gl_malloc(num_caps*sizeof(capacitor::CAPCONTROL));
 		
-		if (PrevCapState == NULL)
+		if (PrevCapState == nullptr)
 		{
 			GL_THROW("volt_var_control %s: capacitor previous state allocation failure",obj->name);
 			/*  TROUBLESHOOT
@@ -1187,7 +1187,7 @@ int volt_var_control::init(OBJECT *parent)
 		//Reference the storage array
 		token_b = tempchar;
 
-		if (token_a == NULL)	//Only two items in the list
+		if (token_a == nullptr)	//Only two items in the list
 		{
 			//Copy in the value
 			while (*token_b1 != '\0')
@@ -1209,7 +1209,7 @@ int volt_var_control::init(OBJECT *parent)
 		//See if #2 is an object or a number
 		temp_obj = gl_get_object(token_b1);
 
-		if (temp_obj != NULL)	//It's real, so we are just an object list
+		if (temp_obj != nullptr)	//It's real, so we are just an object list
 		{
 			reg_list_type=false;	//Arbitrary flagging 
 		}
@@ -1226,7 +1226,7 @@ int volt_var_control::init(OBJECT *parent)
 		//Extract the object information
 		token_a1 = obj_token(token_a, &temp_obj);
 		
-		if (temp_obj == NULL)	//Not a valid object, error!
+		if (temp_obj == nullptr)	//Not a valid object, error!
 		{
 			GL_THROW("volt_var_control %s: Measurement %s is not a valid node!",obj->name,token_a);
 			/*  TROUBLESHOOT
@@ -1240,7 +1240,7 @@ int volt_var_control::init(OBJECT *parent)
 	//Else implies no measurements and/or num_regs > 1 - those will be caught separately below
 
 	//Make sure we found an even number if there is more than one regulator attached - otherwise it is mismatched
-	if ((num_regs > 1) || (reg_list_type == true))	//more than one regulator, or we're a standard list
+	if ((num_regs > 1) || reg_list_type)	//more than one regulator, or we're a standard list
 	{
 		index = total_meas >> 1;
 		temp_double = total_meas - ((double)(index << 1));
@@ -1335,7 +1335,7 @@ int volt_var_control::init(OBJECT *parent)
 
 		//Allocate working index
 		temp_meas_idx = (int*)gl_malloc(num_regs*sizeof(int));
-		if (temp_meas_idx == NULL)
+		if (temp_meas_idx == nullptr)
 		{
 			GL_THROW("volt_var_control %s: measurement list allocation failure",obj->name);
 			//Defined below
@@ -1353,7 +1353,7 @@ int volt_var_control::init(OBJECT *parent)
 				pMeasurement_list[index] = (node**)gl_malloc(num_meas[index]*sizeof(node*));
 			}
 			
-			if (pMeasurement_list[index] == NULL)
+			if (pMeasurement_list[index] == nullptr)
 			{
 				GL_THROW("volt_var_control %s: measurement list allocation failure",obj->name);
 				/*  TROUBLESHOOT
@@ -1374,9 +1374,9 @@ int volt_var_control::init(OBJECT *parent)
 			token_a1 = obj_token(token_a, &temp_obj);
 			
 			//Make sure it is valid
-			if (temp_obj == NULL)
+			if (temp_obj == nullptr)
 			{
-				if (token_a1 != NULL)
+				if (token_a1 != nullptr)
 				{
 					//Remove the comma from the list
 					*--token_a1 = '\0';
@@ -1432,7 +1432,7 @@ int volt_var_control::init(OBJECT *parent)
 			//Allocate space
 			pMeasurement_list[0] = (node**)gl_malloc(total_meas*sizeof(node*));
 
-			if (pMeasurement_list[0] == NULL)
+			if (pMeasurement_list[0] == nullptr)
 			{
 				GL_THROW("volt_var_control %s: measurement list allocation failure",obj->name);
 				//Defined above
@@ -1449,9 +1449,9 @@ int volt_var_control::init(OBJECT *parent)
 				token_a1 = obj_token(token_a, &temp_obj);
 				
 				//Make sure it is valid
-				if (temp_obj == NULL)
+				if (temp_obj == nullptr)
 				{
-					if (token_a1 != NULL)
+					if (token_a1 != nullptr)
 					{
 						//Remove the comma from the list
 						*--token_a1 = '\0';
@@ -1482,7 +1482,7 @@ int volt_var_control::init(OBJECT *parent)
 			//Allocate space
 			pMeasurement_list[0] = (node**)gl_malloc(sizeof(node*));
 
-			if (pMeasurement_list[0] == NULL)
+			if (pMeasurement_list[0] == nullptr)
 			{
 				GL_THROW("volt_var_control %s: measurement list allocation failure",obj->name);
 				//Defined above
@@ -1581,7 +1581,7 @@ TIMESTAMP volt_var_control::presync(TIMESTAMP t0)
 	}
 
 	//Secondary check - see if we're "recovering" from a transition
-	if (TUpdateStatus == true)
+	if (TUpdateStatus)
 	{
 		//Old logic checked for TRegUpdate <= t0 as well - if we have TUpdateStatus true, all times should be t0 anyways
 		TUpdateStatus = false;			//Clear the flag
@@ -2254,7 +2254,7 @@ TIMESTAMP volt_var_control::presync(TIMESTAMP t0)
 							limit_hit = true;											//Flag that a limit was hit
 						}
 
-						if (limit_hit == false)	//We can still proceed
+						if (!limit_hit)	//We can still proceed
 						{
 							pRegulator_list[reg_index]->tap[0]++;	//Increment them all
 							pRegulator_list[reg_index]->tap[1]++;
@@ -2286,7 +2286,7 @@ TIMESTAMP volt_var_control::presync(TIMESTAMP t0)
 							limit_hit = true;											//Flag that a limit was hit
 						}
 
-						if (limit_hit == false)	//We can still proceed
+						if (!limit_hit)	//We can still proceed
 						{
 							pRegulator_list[reg_index]->tap[0]--;	//Decrement them all
 							pRegulator_list[reg_index]->tap[1]--;
@@ -2330,7 +2330,7 @@ TIMESTAMP volt_var_control::postsync(TIMESTAMP t0)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	TIMESTAMP tret = powerflow_object::postsync(t0);
-	complex link_power_vals;
+	gld::complex link_power_vals;
 	int index;
 	bool change_requested;
 	bool allow_change;
@@ -2340,9 +2340,9 @@ TIMESTAMP volt_var_control::postsync(TIMESTAMP t0)
 	bool pf_add_capacitor, pf_check;	
 
 	//Grab power values and all of those related calculations
-	if ((control_method == ACTIVE) && (Regulator_Change == false))	//no regulator changes in progress and we're active
+	if ((control_method == ACTIVE) && !Regulator_Change)	//no regulator changes in progress and we're active
 	{
-		link_power_vals = complex(0.0,0.0);	//Zero the power
+		link_power_vals = gld::complex(0.0,0.0);	//Zero the power
 
 		if (solver_method == SM_NR)
 		{
@@ -2364,7 +2364,7 @@ TIMESTAMP volt_var_control::postsync(TIMESTAMP t0)
 		//Populate the variables of interest
 		react_pwr = link_power_vals.Im();						//Pull in reactive power
 
-		if (pf_signed==true)
+		if (pf_signed)
 		{
 			curr_pf_temp = fabs(link_power_vals.Re())/link_power_vals.Mag();	//Pull in power factor
 
@@ -2380,12 +2380,12 @@ TIMESTAMP volt_var_control::postsync(TIMESTAMP t0)
 		}
 
 		//Update "proceeding" variable
-		if (((solver_method == SM_NR) && (first_cycle==true)) || ((solver_method == SM_FBS) && (first_cycle == false)))
+		if (((solver_method == SM_NR) && first_cycle) || ((solver_method == SM_FBS) && !first_cycle))
 			allow_change = true;	//Intermediate assignment since FBS likes to mess up power calculations on the first cycle
 		else
 			allow_change = false;
 
-		if (pf_signed==true)	//Consider "signing" on the power factor
+		if (pf_signed)	//Consider "signing" on the power factor
 		{
 			//Figure out the reactive part "desired" for current load
 			des_react_pwr_temp = fabs(link_power_vals.Re()*sqrt(1/(desired_pf*desired_pf)-1));
@@ -2461,7 +2461,7 @@ TIMESTAMP volt_var_control::postsync(TIMESTAMP t0)
 		}
 
 		//Now check to see if this is a first pass or not - always "attempt" a change for positive/negative pf - just may be no candidates
-		if ((pf_check==true) && (allow_change==true) && (TCapUpdate <= t0))
+		if (pf_check && allow_change && (TCapUpdate <= t0))
 		{
 			change_requested = false;	//Start out assuming no change
 
@@ -2476,10 +2476,10 @@ TIMESTAMP volt_var_control::postsync(TIMESTAMP t0)
 				else	//Must be C, right?
 					bank_status = (capacitor::CAPSWITCH)pCapacitor_list[index]->switchC_state;
 
-				if (pf_signed==true)	//Consider the sign in switching operations
+				if (pf_signed)	//Consider the sign in switching operations
 				{
 					//Now perform logic based on where it is
-					if ((bank_status == capacitor::CLOSED) && (pf_add_capacitor==false))	//We are on and need to remove someone
+					if ((bank_status == capacitor::CLOSED) && !pf_add_capacitor)	//We are on and need to remove someone
 					{
 						temp_size = Capacitor_size[index] * d_max; //min;
 
@@ -2490,7 +2490,7 @@ TIMESTAMP volt_var_control::postsync(TIMESTAMP t0)
 							break;	//No more loop, only one control per loop
 						}
 					}//end cap was on
-					else if ((bank_status == capacitor::OPEN) && (pf_add_capacitor==true))	//We're off and want to turn someone on
+					else if ((bank_status == capacitor::OPEN) && pf_add_capacitor)	//We're off and want to turn someone on
 					{
 						temp_size = Capacitor_size[index] * d_max;
 
@@ -2532,7 +2532,7 @@ TIMESTAMP volt_var_control::postsync(TIMESTAMP t0)
 			}//End capacitor list traversion
 
 			//If we are outside our pf range and nothing went off, see if a smaller capacitor can be "prompted" to get us back in range
-			if ((change_requested == false) && (pf_signed==true))
+			if (!change_requested && pf_signed)
 			{
 				//See if we're needing a capacitor action to get back in range, or just looking for more adjustments
 				if (((curr_pf > 0) && (curr_pf < -desired_pf)) || ((curr_pf < 0) && (curr_pf < desired_pf)))
@@ -2549,13 +2549,13 @@ TIMESTAMP volt_var_control::postsync(TIMESTAMP t0)
 							bank_status =(capacitor::CAPSWITCH) pCapacitor_list[index]->switchC_state;
 
 						//Now perform logic based on where it is - if anything is found to "fit" the criterion, just enact it
-						if ((bank_status == capacitor::CLOSED) && (pf_add_capacitor==false))	//We are on and need to remove someone
+						if ((bank_status == capacitor::CLOSED) && !pf_add_capacitor)	//We are on and need to remove someone
 						{
 							pCapacitor_list[index]->toggle_bank_status(false);	//Turn all off
 							change_requested = true;							//Flag a change
 							break;	//No more loop, only one control per loop
 						}//end cap was on
-						else if ((bank_status == capacitor::OPEN) && (pf_add_capacitor==true))	//We're off and want to turn someone on
+						else if ((bank_status == capacitor::OPEN) && pf_add_capacitor)	//We're off and want to turn someone on
 						{
 							pCapacitor_list[index]->toggle_bank_status(true);	//Turn all on
 							change_requested = true;							//Flag a change
@@ -2567,7 +2567,7 @@ TIMESTAMP volt_var_control::postsync(TIMESTAMP t0)
 			}//end change still requested
 			//Default else - change must have been requested
 
-			if (change_requested == true)	//Something changed
+			if (change_requested)	//Something changed
 			{
 				TCapUpdate = t0 + (TIMESTAMP)CapUpdateTimes[index];	//Figure out where we want to go
 
@@ -2641,14 +2641,14 @@ char *volt_var_control::dbl_token(char *start_token, double *dbl_val)
 	//Look for a comma in the input value
 	outIndex = strchr(start_token,',');	//Look for commas, or none
 
-	if (outIndex == NULL)	//No commas found
+	if (outIndex == nullptr)	//No commas found
 	{
 		while (*start_token != '\0')
 		{
 			*workIndex++ = *start_token++;
 		}
 
-		end_token = NULL;
+		end_token = nullptr;
 	}
 	else	//Comma found, but we only want to go just before it
 	{
@@ -2687,14 +2687,14 @@ char *volt_var_control::obj_token(char *start_token, OBJECT **obj_val)
 	//Look for a comma in the input value
 	outIndex = strchr(start_token,',');	//Look for commas, or none
 
-	if (outIndex == NULL)	//No commas found
+	if (outIndex == nullptr)	//No commas found
 	{
 		while (*start_token != '\0')
 		{
 			*workIndex++ = *start_token++;
 		}
 
-		end_token = NULL;
+		end_token = nullptr;
 	}
 	else	//Comma found, but we only want to go just before it
 	{
@@ -2799,7 +2799,7 @@ EXPORT int create_volt_var_control(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(volt_var_control::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			volt_var_control *my = OBJECTDATA(*obj,volt_var_control);
 			gl_set_parent(*obj,parent);

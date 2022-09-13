@@ -2,7 +2,9 @@
  */
 
 #include "gridlabd.h"
-#include <stdio.h>
+
+#include <cstdio>
+
 #include "platform.h"
 #include "output.h"
 #include "find.h"

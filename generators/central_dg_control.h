@@ -10,9 +10,10 @@
 #define _central_dg_control_H
 
 #include <stdarg.h>
+
 #include "generators.h"
 
-EXPORT STATUS postupdate_central_dg_control(OBJECT *obj, complex *useful_value, unsigned int mode_pass);
+EXPORT STATUS postupdate_central_dg_control(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass);
 
 //Inverter state variable structure
 
@@ -48,7 +49,7 @@ public:
 	double P_3p;
 	double Q[3];
 	double Q_3p;
-	complex S_3p;
+	gld::complex S_3p;
 	double P_disp_3p;
 	double Q_disp_3p;
 	double P_gen[3];

@@ -3,6 +3,7 @@
  General purpose assert objects
 
  **/
+#ifdef HAVE_MYSQL
 
 #ifndef _DATABASE_H
 #define _DATABASE_H
@@ -28,7 +29,7 @@
 
 #include <mysql.h>
 #ifdef MYSQL_VERSION_ID
-#if MYSQL_VERSION_ID > 80000
+#if !defined(MARIADB_VERSION_ID) && MYSQL_VERSION_ID > 80000
 typedef bool my_bool;
 #endif
 #endif
@@ -141,3 +142,5 @@ EXTERN database *last_database INIT(NULL);
 #include "collector.h"
 
 #endif // _ASSERT_H
+
+#endif

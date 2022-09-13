@@ -1,0 +1,166 @@
+
+//Conductors
+object overhead_line_conductor {
+	name olcnum2;	//#2 ACSR
+	geometric_mean_radius 0.00418;
+	resistance 1.69;
+	diameter 0.316;
+}
+
+object overhead_line_conductor {
+	name olcnum4;	//#4 ACSR
+	geometric_mean_radius 0.00452;
+	resistance 2.55;
+	diameter 0.257;
+}
+
+object overhead_line_conductor {
+	name olc10;	//1/0 ACSR
+	geometric_mean_radius 0.004460;
+	resistance 1.120000;
+	diameter 0.398;
+}
+
+
+//Line spacings
+//BACN
+object line_spacing {
+	name ls500300301;
+	distance_AB 2.5;
+	distance_AC 4.5;
+	distance_BC 7.0;
+	distance_CN 5.0;
+	distance_AN 4.27200187266;
+	distance_BN 5.65685424949;
+	distance_AE 28.0;
+	distance_BE 28.0;
+	distance_CE 28.0;
+	distance_NE 24.0;
+}
+
+//AN
+object line_spacing {
+	name ls510302;
+	distance_AN 5.024937811;
+	distance_AE 28.0;
+	distance_NE 24.0;
+}
+
+//BN
+object line_spacing {
+	name ls510303304;
+	distance_BN 5.024937811;
+	distance_BE 28.0;
+	distance_NE 24.0;
+}
+
+
+//Line configurations
+//BACN
+object line_configuration {
+	name lc300;
+	conductor_A olc10;
+	conductor_B olc10;
+	conductor_C olc10;
+	conductor_N olc10;
+	spacing ls500300301;
+}
+
+//BACN
+object line_configuration {
+	name lc301;
+	conductor_A olcnum2;
+	conductor_B olcnum2;
+	conductor_C olcnum2;
+	conductor_N olcnum2;
+	spacing ls500300301;
+}
+
+//AN
+object line_configuration {
+	name lc302;
+	conductor_A olcnum4;
+	conductor_N olcnum4;
+	spacing ls510302;
+}
+
+//BN
+object line_configuration {
+	name lc303;
+	conductor_B olcnum4;
+	conductor_N olcnum4;
+	spacing ls510303304;
+}
+
+//BN
+object line_configuration {
+	name lc304;
+	conductor_B olcnum2;
+	conductor_N olcnum2;
+	spacing ls510303304;
+}
+
+//Transformer configurations
+object transformer_configuration {
+	name tc500;
+	connect_type WYE_WYE;
+	install_type PADMOUNT;
+	power_rating 500.0 kVA;
+	primary_voltage 24900.0;
+	secondary_voltage 4160.0;
+	resistance 0.019;
+	reactance 0.0408;
+}
+
+// Regulator configs
+object regulator_configuration {
+	name rc501;
+	connect_type 1;
+	band_center 122.000;
+	band_width 2.0;
+	time_delay 30.0;
+	raise_taps 16;
+	lower_taps 16;
+	current_transducer_ratio 100;
+	power_transducer_ratio 120;
+	compensator_r_setting_A 2.7;
+	compensator_x_setting_A 1.6;
+	compensator_r_setting_B 2.7;
+	compensator_x_setting_B 1.6;
+	compensator_r_setting_C 2.7;
+	compensator_x_setting_C 1.6;
+	CT_phase "ABC";
+	PT_phase "ABC";
+	regulation 0.10;
+	Control MANUAL;
+	Type A;
+	tap_pos_A 12;
+	tap_pos_B 5;
+	tap_pos_C 5;
+}
+
+object regulator_configuration {
+	name rc502;
+	connect_type 1;
+	band_center 124.000;
+	band_width 2.0;
+	time_delay 30.0;
+	raise_taps 16;
+	lower_taps 16;
+	current_transducer_ratio 100;
+	power_transducer_ratio 120;
+	compensator_r_setting_A 2.5;
+	compensator_x_setting_A 1.5;
+	compensator_r_setting_B 2.5;
+	compensator_x_setting_B 1.5;
+	compensator_r_setting_C 2.5;
+	compensator_x_setting_C 1.5;
+	CT_phase "ABC";
+	PT_phase "ABC";
+	regulation 0.10;
+	Control MANUAL;
+	Type A;
+	tap_pos_A 13;
+	tap_pos_B 11;
+	tap_pos_C 12;
+}

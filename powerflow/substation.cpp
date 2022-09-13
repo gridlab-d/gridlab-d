@@ -16,10 +16,12 @@
 	@{
  **/
 //Built from meter object
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <exception>
+#include <stdexcept>
 
 #include "substation.h"
 #include "timestamp.h"
@@ -28,21 +30,21 @@
 // SUBSTATION CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 // class management data
-CLASS* substation::oclass = NULL;
-CLASS* substation::pclass = NULL;
+CLASS* substation::oclass = nullptr;
+CLASS* substation::pclass = nullptr;
 
 // the constructor registers the class and properties and sets the defaults
 substation::substation(MODULE *mod) : node(mod)
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// link to parent class (used by isa)
 		pclass = node::oclass;
 
 		// register the class definition
 		oclass = gl_register_class(mod,"substation",sizeof(substation),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class substation";
 		else
 			oclass->trl = TRL_PROTOTYPE;
@@ -80,20 +82,22 @@ substation::substation(MODULE *mod) : node(mod)
 			//PT_double, "measured_reactive[kVar]", PADDR(measured_reactive), has not implemented yet
 			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_substation)==NULL)
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_substation)==nullptr)
 			GL_THROW("Unable to publish substation deltamode function");
-		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
+		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==nullptr)
 			GL_THROW("Unable to publish substation swing-swapping function");
-		if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==NULL)
+		if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==nullptr)
 			GL_THROW("Unable to publish substation current injection update mapping function");
-		if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
+		if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == nullptr)
 			GL_THROW("Unable to publish substation island-status-reset function");
-		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
+		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == nullptr)
 			GL_THROW("Unable to publish substation swing-status check function");
+		if (gl_publish_function(oclass, "pwr_object_shunt_update", (FUNCTIONADDR)node_update_shunt_values) == nullptr)
+			GL_THROW("Unable to publish substation shunt update function");
 	}
 }
 
-int substation::isa(char *classname)
+int substation::isa(const char *classname)
 {
 	return strcmp(classname,"substation")==0 || node::isa(classname);
 }
@@ -112,19 +116,19 @@ int substation::create()
 	volt_C = 0;
 	base_power = 0;
 	power_convergence_value = 0.0;
-	pTransNominalVoltage = NULL;
+	pTransNominalVoltage = nullptr;
 	return result;
 }
 
-void substation::fetch_complex(complex **prop, char *name, OBJECT *parent){
+void substation::fetch_complex(gld::complex **prop, const char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
 	*prop = gl_get_complex_by_name(parent, name);
-	if(*prop == NULL){
+	if(*prop == nullptr){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "substation:%i", hdr->id);
-		if(*name == 0)
+		if(name == nullptr || name[0] == '\0')
 			sprintf(msg, "%s: substation unable to find property: name is NULL", namestr);
 		else
 			sprintf(msg, "%s: substation unable to find %s", namestr, name);
@@ -132,19 +136,19 @@ void substation::fetch_complex(complex **prop, char *name, OBJECT *parent){
 	}
 }
 
-void substation::fetch_double(double **prop, char *name, OBJECT *parent){
+void substation::fetch_double(double **prop, const char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
 	*prop = gl_get_double_by_name(parent, name);
-	if(*prop == NULL){
+	if(*prop == nullptr){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "substation:%i", hdr->id);
-		if(*name == 0)
-			sprintf(msg, "%s: substation unable to find property: name is NULL", namestr);
+		if(name == nullptr || name[0] == '\0')
+			sprintf(msg, "%s: substation unable to find property: name is not defined", namestr);
 		else
 			sprintf(msg, "%s: substation unable to find %s", namestr, name);
-		throw(msg);
+		throw std::runtime_error(msg);
 	}
 }
 
@@ -174,9 +178,9 @@ int substation::init(OBJECT *parent)
 	}//End convergence value check
 
 	//Check to see if it has a parent (no sense to ISAs if it is empty)
-	if (parent != NULL)
+	if (parent != nullptr)
 	{
-		if (gl_object_isa(parent,"pw_load","network"))
+		if (gl_object_isa(parent, "pw_load","network"))
 		{
 			//Make sure it is done, otherwise defer
 			if((parent->flags & OF_INIT) != OF_INIT){
@@ -349,7 +353,7 @@ TIMESTAMP substation::sync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 	}
 
-	if((solver_method == SM_NR && NR_admit_change == false) || solver_method == SM_FBS){
+	if((solver_method == SM_NR && !NR_admit_change) || solver_method == SM_FBS){
 		distribution_power_A = voltageA * (~current_inj[0]);
 		distribution_power_B = voltageB * (~current_inj[1]);
 		distribution_power_C = voltageC * (~current_inj[2]);
@@ -369,7 +373,7 @@ TIMESTAMP substation::sync(TIMESTAMP t0, TIMESTAMP t1)
 				//Built on three-phase assumption, otherwise sequence components method falls apart - convert these to all use nominal!
 				*pConstantCurrentLoad = ((~average_transmission_current_load) * (*pTransNominalVoltage)) / 1000000;
 				if(average_transmission_impedance_load.Mag() > 0){
-					*pConstantImpedanceLoad = (complex((*pTransNominalVoltage * (*pTransNominalVoltage))) / (~average_transmission_impedance_load) / 1000000);
+					*pConstantImpedanceLoad = (gld::complex((*pTransNominalVoltage * (*pTransNominalVoltage))) / (~average_transmission_impedance_load) / 1000000);
 				} else {
 					*pConstantImpedanceLoad = 0;
 				}
@@ -387,7 +391,7 @@ SIMULATIONMODE substation::inter_deltaupdate_substation(unsigned int64 delta_tim
 	double dist_power_A_diff = 0;
 	double dist_power_B_diff = 0;
 	double dist_power_C_diff = 0;
-	if (interupdate_pos == false)	//Before powerflow call
+	if (!interupdate_pos)	//Before powerflow call
 	{
 		//Call presync-equivalent items
 		//calculate the energy used
@@ -424,7 +428,7 @@ SIMULATIONMODE substation::inter_deltaupdate_substation(unsigned int64 delta_tim
 		//Perform postsync-like updates on the values
 		BOTH_node_postsync_fxn(obj);
 
-		if((solver_method == SM_NR && NR_admit_change == false) || solver_method == SM_FBS){
+		if((solver_method == SM_NR && !NR_admit_change) || solver_method == SM_FBS){
 			distribution_power_A = voltageA * (~current_inj[0]);
 			distribution_power_B = voltageB * (~current_inj[1]);
 			distribution_power_C = voltageC * (~current_inj[2]);
@@ -444,7 +448,7 @@ SIMULATIONMODE substation::inter_deltaupdate_substation(unsigned int64 delta_tim
 					//Built on three-phase assumption, otherwise sequence components method falls apart - convert these to all use nominal!
 					*pConstantCurrentLoad = ((~average_transmission_current_load) * (*pTransNominalVoltage)) / 1000000;
 					if(average_transmission_impedance_load.Mag() > 0){
-						*pConstantImpedanceLoad = (complex((*pTransNominalVoltage * (*pTransNominalVoltage))) / (~average_transmission_impedance_load) / 1000000);
+						*pConstantImpedanceLoad = (gld::complex((*pTransNominalVoltage * (*pTransNominalVoltage))) / (~average_transmission_impedance_load) / 1000000);
 					} else {
 						*pConstantImpedanceLoad = 0;
 					}
@@ -469,7 +473,7 @@ EXPORT int create_substation(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(substation::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			substation *my = OBJECTDATA(*obj,substation);
 			gl_set_parent(*obj,parent);
@@ -508,8 +512,23 @@ EXPORT TIMESTAMP sync_substation(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			throw "invalid pass request";
 		}
 		throw "invalid pass request";
-	} 
-	SYNC_CATCHALL(substation);
+	}
+
+//    catch (char *msg) {
+//        gl_error("sync_substation(obj=%d;%s): %s", obj->id, obj->name ? obj->name : "unnamed", msg);
+//        return TS_INVALID;
+//    } catch (const char *msg) {
+//        gl_error("sync_substation(obj=%d;%s): %s", obj->id, obj->name ? obj->name : "unnamed", msg);
+//        return TS_INVALID;
+//    }
+//    catch(const std::exception& ex) {
+//        gl_error("sync_substation(obj=%d;%s): unhandled exception", obj->id, obj->name ? obj->name : "unnamed");
+//        gl_error(ex.what());
+//        return TS_INVALID;
+//    }
+//    return TS_INVALID;
+
+    SYNC_CATCHALL(substation);
 }
 
 EXPORT int notify_substation(OBJECT *obj, int update_mode, PROPERTY *prop, char *value){

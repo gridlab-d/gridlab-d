@@ -10,7 +10,9 @@
 #define _TIMESTAMP_H
 
 #include "platform.h"
+
 #include <time.h>
+#include <climits>
 
 #define NORMALRES /* use this to control default timestamp resolution */
 
@@ -39,7 +41,8 @@ typedef unsigned long DT; /**< stores incremental delta time values in ns */
 #define TS_ZERO ((int64)0)
 #define TS_MAX (32482080000LL) /* roughly 3000 CE, any date beyond this should be interpreted as TS_NEVER */
 #define TS_INVALID ((int64)-1)
-#define TS_NEVER ((int64)(((unsigned int64)-1)>>1))
+#define TS_NEVER ((int64)(((UINT_MAX)-1)>>1))
+#define TS_NEVER_DBL 9223372036854775808.0	/* Double represenation of the TS_NEVER integer - deltamode usage */
 #define MINYEAR 1970
 #define MAXYEAR 2969
 #define ISLEAPYEAR(Y) ((Y)%4==0 && ((Y)%100!=0 || (Y)%400==0))
@@ -49,14 +52,14 @@ typedef unsigned long DT; /**< stores incremental delta time values in ns */
 #define DT_SECOND 1000000000
 
 typedef struct s_datetime {
-	unsigned short year; /**< year (1970 to 2970 is allowed) */
-	unsigned short month; /**< month (1-12) */
-	unsigned short day; /**< day (1 to 28/29/30/31) */
-	unsigned short hour; /**< hour (0-23) */
-	unsigned short minute; /**< minute (0-59) */
-	unsigned short second; /**< second (0-59) */
-	unsigned int nanosecond; /**< usecond (0-999999999) */
-	unsigned short is_dst; /**< 0=std, 1=dst */
+	short year; /**< year (1970 to 2970 is allowed) */
+	short month; /**< month (1-12) */
+	short day; /**< day (1 to 28/29/30/31) */
+	short hour; /**< hour (0-23) */
+	short minute; /**< minute (0-59) */
+	short second; /**< second (0-59) */
+	int nanosecond; /**< usecond (0-999999999) */
+	short is_dst; /**< 0=std, 1=dst */
 	char tz[5]; /**< ptr to tzspec timezone id */
 	unsigned short weekday; /**< 0=Sunday */
 	unsigned short yearday; /**< 0=Jan 1 */
@@ -92,7 +95,7 @@ time_t timestamp_to_local(TIMESTAMP t);
 
 int local_tzoffset(TIMESTAMP t);
 
-double timestamp_get_part(void *x, char *name);
+double timestamp_get_part(void *x, const char *name);
 TIMESTAMP earliest_timestamp(TIMESTAMP t, ...);
 TIMESTAMP absolute_timestamp(TIMESTAMP t);
 int is_soft_timestamp(TIMESTAMP t);

@@ -14,10 +14,11 @@
  @{
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+
 #include "residential.h"
 #include "lights.h"
 
@@ -54,7 +55,7 @@ lights::lights(MODULE *mod)
 		pclass = residential_enduse::oclass;
 
 		// register the class definition
-		oclass = gl_register_class(mod,"lights",sizeof(lights),PC_BOTTOMUP|PC_AUTOLOCK);
+		oclass = gl_register_class(mod, "lights",sizeof(lights),PC_BOTTOMUP|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class lights";
 			/* TROUBLESHOOT
@@ -97,7 +98,7 @@ int lights::create(void)
 	// name of enduse
 	load.name = oclass->name;
 	load.power_fraction = load.current_fraction = load.impedance_fraction = 0;
-	load.power = load.admittance = load.current = load.total = complex(0,0,J);
+	load.power = load.admittance = load.current = load.total = gld::complex(0,0,J);
 	load.voltage_factor = 1.0;
 	//load.power_factor = 0.95; commenting out this line means a default power factor of 1.00
 	load.breaker_amps = 0;

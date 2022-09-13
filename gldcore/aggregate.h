@@ -28,16 +28,16 @@ typedef struct s_aggregate {
 	struct s_aggregate *next; /**< the next aggregation in the core's list of aggregators */
 } AGGREGATION; /**< the aggregation type */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+//#ifdef __cplusplus
+//extern "C" {
+//#endif
 
 AGGREGATION *aggregate_mkgroup(char *aggregator, char *group_expression);
 double aggregate_value(AGGREGATION *aggregate);
 
-#ifdef __cplusplus
-}
-#endif
+//#ifdef __cplusplus
+//}
+//#endif
 
 #endif
 

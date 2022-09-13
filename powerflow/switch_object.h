@@ -44,7 +44,7 @@ public:
 	void set_switch_faulted_phases(unsigned char desired_status);
 	void switch_sync_function(void);			//Functionalized since it exists in two spots - no sense having to update two pieces of code
 	unsigned char switch_expected_sync_function(void);	//Function to determined expected results of sync - used for reliability
-	OBJECT **get_object(OBJECT *obj, char *name);	//Function to pull object property - reliability use
+	static OBJECT **get_object(OBJECT *obj, const char *name);	//Function to pull object property - reliability use
 
 	void BOTH_switch_sync_pre(unsigned char *work_phases_pre, unsigned char *work_phases_post);
 	void NR_switch_sync_post(unsigned char *work_phases_pre, unsigned char *work_phases_post, OBJECT *obj, TIMESTAMP *t0, TIMESTAMP *t2);
@@ -71,8 +71,8 @@ private:
 	FUNCTIONADDR fault_handle_call;			//Reliability-type variable - calls topology reconfiguration after switch changes state
 	bool event_schedule_map_attempt;		//Flag to see if we've tried to map the event_schedule variable, or not
 
-	complex switch_impedance_value;			//Used for closed-switch value
-	complex switch_admittance_value;		//Admittance version - save some divides
+	gld::complex switch_impedance_value;			//Used for closed-switch value
+	gld::complex switch_admittance_value;		//Admittance version - save some divides
 
 	set node_phase_information(OBJECT *obj);
 };

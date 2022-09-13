@@ -7,24 +7,24 @@
 	@{
 **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
 using namespace std;
 
 #include "line.h"
 
-CLASS* triplex_line_conductor::oclass = NULL;
-CLASS* triplex_line_conductor::pclass = NULL;
+CLASS* triplex_line_conductor::oclass = nullptr;
+CLASS* triplex_line_conductor::pclass = nullptr;
 
 triplex_line_conductor::triplex_line_conductor(MODULE *mod) : powerflow_library(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		oclass = gl_register_class(mod,"triplex_line_conductor",sizeof(triplex_line_conductor),0x00);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class triplex_line_conductor";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -100,7 +100,7 @@ EXPORT int create_triplex_line_conductor(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(triplex_line_conductor::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			triplex_line_conductor *my = OBJECTDATA(*obj,triplex_line_conductor);
 			gl_set_parent(*obj,parent);

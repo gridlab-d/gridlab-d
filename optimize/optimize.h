@@ -5,6 +5,7 @@
 #define _OPTIMIZE_H
 
 #include <stdarg.h>
+
 #include "gridlabd.h"
 
 /*** DO NOT DELETE THE NEXT LINE ***/

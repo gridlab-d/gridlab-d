@@ -62,8 +62,8 @@ struct s_schedule {
 #ifdef _DEBUG
 	unsigned int magic1;	/* values between magic1 and magic2 should never change once compiled */
 #endif
-	char *name;							/**< the name of the schedule */
-	char *definition;					/**< the definition string of the schedule */
+	const char *name;							/**< the name of the schedule */
+	const char *definition;					/**< the definition string of the schedule */
 	char *blockname[MAXBLOCKS];			/**< the name of each block */
 	char *blockdef[MAXBLOCKS];			/**< the definition of each block */
 	unsigned char block;				/**< the last block used (4 max) */
@@ -102,8 +102,8 @@ extern "C" {
 #endif
 
 SCHEDULE *schedule_getnext(SCHEDULE *sch);
-SCHEDULE *schedule_find_byname(char *name);
-SCHEDULE *schedule_create(char *name, char *definition);
+SCHEDULE *schedule_find_byname(const char *name);
+SCHEDULE *schedule_create(const char *name, const char *definition);
 SCHEDULE *schedule_new(void);
 void schedule_free(SCHEDULE *sch);
 void schedule_add(SCHEDULE *sch);

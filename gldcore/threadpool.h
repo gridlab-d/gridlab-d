@@ -45,6 +45,7 @@ An example of how this is done is implemented in exec.c for commit_all().
 
 #include "platform.h"
 #include "timestamp.h"
+
 #include <pthread.h>
 
 typedef struct s_mtiteratorlist MTI;

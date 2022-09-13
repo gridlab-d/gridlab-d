@@ -2,7 +2,7 @@
  * DP Chassin - July 2012
  * Copyright (C) 2012 Battelle Memorial Institute
  */
-
+#ifdef HAVE_MYSQL
 #ifndef _PLAYER_H
 #define _PLAYER_H
 
@@ -38,5 +38,5 @@ public:
 	static CLASS *oclass;
 	static player *defaults;
 };
-
+#endif
 #endif

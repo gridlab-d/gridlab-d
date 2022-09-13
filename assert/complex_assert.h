@@ -5,6 +5,7 @@
 #define _complex_assert_H
 
 #include <stdarg.h>
+
 #include "gridlabd.h"
 using gld::complex;
 

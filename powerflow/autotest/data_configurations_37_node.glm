@@ -1,0 +1,126 @@
+// Phase Conductor for 721: 1,000,000 AA,CN
+object underground_line_conductor { 
+	name ulc7210;
+	outer_diameter 1.980000;
+	conductor_gmr 0.036800;
+	conductor_diameter 1.150000;
+	conductor_resistance 0.105000;
+	neutral_gmr 0.003310;
+	neutral_resistance 5.903000;
+	neutral_diameter 0.102000;
+	neutral_strands 20.000000;
+}
+
+// Phase Conductor for 722: 500,000 AA,CN
+object underground_line_conductor { 
+	name ulc7220;
+	outer_diameter 1.560000;
+	conductor_gmr 0.026000;
+	conductor_diameter 0.813000;
+	conductor_resistance 0.206000;
+	neutral_gmr 0.002620;
+	neutral_resistance 9.375000;
+	neutral_diameter 0.081000;
+	neutral_strands 16.000000;
+}
+
+// Phase Conductor for 723: 2/0 AA,CN
+object underground_line_conductor { 
+	name ulc7230;
+	outer_diameter 1.100000;
+	conductor_gmr 0.012500;
+	conductor_diameter 0.414000;
+	conductor_resistance 0.769000;
+	neutral_gmr 0.002080;
+	neutral_resistance 14.872000;
+	neutral_diameter 0.064000;
+	neutral_strands 7.000000;
+}
+
+// Phase Conductor for 724: //2 AA,CN
+object underground_line_conductor { 
+	name ulc7240;
+	outer_diameter 0.980000;
+	conductor_gmr 0.008830;
+	conductor_diameter 0.292000;
+	conductor_resistance 1.540000;
+	neutral_gmr 0.002080;
+	neutral_resistance 14.872000;
+	neutral_diameter 0.064000;
+	neutral_strands 6.000000;
+}
+
+// underground line spacing: spacing id 515 
+object line_spacing {
+	name ls515;
+	distance_AB 0.500000;
+	distance_BC 0.500000;
+	distance_AC 1.000000;
+}
+
+//line configurations:
+object line_configuration {
+	name lc721;
+	conductor_A ulc7210;
+	conductor_B ulc7210;
+	conductor_C ulc7210;
+	spacing ls515;
+}
+
+object line_configuration {
+	name lc722;
+	conductor_A ulc7220;
+	conductor_B ulc7220;
+	conductor_C ulc7220;
+	spacing ls515;
+}
+
+object line_configuration {
+	name lc723;
+	conductor_A ulc7230;
+	conductor_B ulc7230;
+	conductor_C ulc7230;
+	spacing ls515;
+}
+
+object line_configuration {
+	name lc724;
+	conductor_A ulc7240;
+	conductor_B ulc7240;
+	conductor_C ulc7240;
+	spacing ls515;
+}
+
+object regulator_configuration {
+	name rc500;
+	connect_type 1; //Should be 2, but NR balks, even if not being used
+	band_center 122.000;
+	band_width 2.0;
+	time_delay 30.0;
+	raise_taps 16;
+	lower_taps 16;
+	current_transducer_ratio 350;
+	power_transducer_ratio 40;
+	compensator_r_setting_A 1.5;
+	compensator_x_setting_A 3.0;
+	compensator_r_setting_B 1.5;
+	compensator_x_setting_B 3.0;
+	CT_phase "ABC";
+	PT_phase "ABC";
+	regulation 0.10;
+	Control MANUAL;
+	Type A;
+	tap_pos_A 7;
+	tap_pos_B 4;
+}
+
+object transformer_configuration {
+	name tc400;
+	connect_type 2;
+	install_type PADMOUNT;
+	power_rating 500;
+	primary_voltage 4800;
+	secondary_voltage 480;
+	resistance 0.0009;
+	reactance 0.0181;
+}

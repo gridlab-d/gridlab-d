@@ -40,26 +40,26 @@
 	@{
 **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
 using namespace std;
 
 #include "line.h"
 
-CLASS* line::oclass = NULL;
-CLASS* line::pclass = NULL;
-CLASS *line_class = NULL;
+CLASS* line::oclass = nullptr;
+CLASS* line::pclass = nullptr;
+CLASS *line_class = nullptr;
 
 line::line(MODULE *mod) : link_object(mod) {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		pclass = link_object::oclass;
 		
 		line_class = oclass = gl_register_class(mod,"line",sizeof(line),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class line";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -71,15 +71,15 @@ line::line(MODULE *mod) : link_object(mod) {
 			NULL) < 1) GL_THROW("unable to publish line properties in %s",__FILE__);
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==nullptr)
 			GL_THROW("Unable to publish line deltamode function");
 
 		//Publish restoration-related function (current update)
-		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==nullptr)
 			GL_THROW("Unable to publish line external power calculation function");
-		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==nullptr)
 			GL_THROW("Unable to publish line external power limit calculation function");
-		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==NULL)
+		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==nullptr)
 			GL_THROW("Unable to publish line external current calculation function");
 	}
 }
@@ -88,7 +88,7 @@ int line::create()
 {
 	int result = link_object::create();
 
-	configuration = NULL;
+	configuration = nullptr;
 	length = 0;
 
 	return result;
@@ -99,7 +99,7 @@ int line::init(OBJECT *parent)
 	OBJECT *obj = OBJECTHDR(this);
 	gld_property *fNode_nominal, *tNode_nominal;
 	double f_nominal_voltage, t_nominal_voltage;
-	complex Zabc_mat_temp[3][3], Yabc_mat_temp[3][3];
+	gld::complex Zabc_mat_temp[3][3], Yabc_mat_temp[3][3];
 
 	int result = link_object::init(parent);
 
@@ -111,7 +111,7 @@ int line::init(OBJECT *parent)
 	fNode_nominal = new gld_property(from,"nominal_voltage");
 
 	//Check it
-	if ((fNode_nominal->is_valid() != true) || (fNode_nominal->is_double() != true))
+	if (!fNode_nominal->is_valid() || !fNode_nominal->is_double())
 	{
 		GL_THROW("line:%d - %s - Unable to map nominal_voltage from connected node!",obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBESHOOT
@@ -124,7 +124,7 @@ int line::init(OBJECT *parent)
 	tNode_nominal = new gld_property(to,"nominal_voltage");
 
 	//Check it
-	if ((tNode_nominal->is_valid() != true) || (tNode_nominal->is_double() != true))
+	if (!tNode_nominal->is_valid() || !tNode_nominal->is_double())
 	{
 		GL_THROW("line:%d - %s - Unable to map nominal_voltage from connected node!",obj->id,(obj->name ? obj->name : "Unnamed"));
 		//Defined above
@@ -155,7 +155,7 @@ int line::init(OBJECT *parent)
 		*/
 
 		//Make sure a configuration was actually specified
-		if ((configuration == NULL) || (!gl_object_isa(configuration,"line_configuration","powerflow")))
+		if ((configuration == nullptr) || (!gl_object_isa(configuration,"line_configuration","powerflow")))
 		{
 			GL_THROW("line:%d - %s - configuration object either doesn't exist, or is not a valid configuration object!",obj->id,(obj->name?obj->name:"Unnamed"));
 			/*  TROUBLESHOOT
@@ -178,11 +178,11 @@ int line::isa(char *classname)
 	return strcmp(classname,"line")==0 || link_object::isa(classname);
 }
 
-void line::load_matrix_based_configuration(complex Zabc_mat[3][3], complex Yabc_mat[3][3])
+void line::load_matrix_based_configuration(gld::complex Zabc_mat[3][3], gld::complex Yabc_mat[3][3])
 {
 	line_configuration *config = OBJECTDATA(configuration, line_configuration);
 	double miles;
-	complex cap_freq_mult;
+	gld::complex cap_freq_mult;
 
 	// ft -> miles as z-matrix and c-matrix values are specified in Ohms / nF per mile.
 	miles = length / 5280.0;
@@ -190,7 +190,7 @@ void line::load_matrix_based_configuration(complex Zabc_mat[3][3], complex Yabc_
 	//Set capacitor frequency/distance/scaling factor (rad/s*S)
 	//scale factor allows for the fact that the internal representation of the C matrix
 	//is specified in nF/mile and converts back to Siemens
-	cap_freq_mult = complex(0,(2.0*PI*nominal_frequency*0.000000001*miles));
+	cap_freq_mult = gld::complex(0,(2.0*PI*nominal_frequency*0.000000001*miles));
 
 	// Setting Zabc_mat based on the z-matrix configuration parameters
 	// Setting Yabc_mat based on the c-matrix configuration parameters and the application of Kersting (5.15)
@@ -240,7 +240,7 @@ void line::load_matrix_based_configuration(complex Zabc_mat[3][3], complex Yabc_
 	// the user and zero out Yabc_mat as otherwise the powerflow engine will give quirky results.
 	if (config->capacitance11 != 0 || config->capacitance22 != 0 || config->capacitance33 != 0)
 	{
-		if (use_line_cap == false)
+		if (!use_line_cap)
 		{
 			gl_warning("Shunt capacitance of line:%s specified without setting powerflow::line_capacitance = TRUE. Shunt capacitance will be ignored.",OBJECTHDR(this)->name);
 
@@ -255,9 +255,9 @@ void line::load_matrix_based_configuration(complex Zabc_mat[3][3], complex Yabc_
 	}
 }
 
-void line::recalc_line_matricies(complex Zabc_mat[3][3], complex Yabc_mat[3][3])
+void line::recalc_line_matricies(gld::complex Zabc_mat[3][3], gld::complex Yabc_mat[3][3])
 {
-	complex U_mat[3][3], temp_mat[3][3];
+	gld::complex U_mat[3][3], temp_mat[3][3];
 
 	//Do an initial zero
 	U_mat[0][0] = U_mat[0][1] = U_mat[0][2] = 0.0;
@@ -321,21 +321,21 @@ void line::recalc_line_matricies(complex Zabc_mat[3][3], complex Yabc_mat[3][3])
 	if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
 	{
 		//Inverted value
-		A_mat[0][0] = complex(1.0) / a_mat[0][0];
+		A_mat[0][0] = gld::complex(1.0) / a_mat[0][0];
 	}
 	else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //only B
 	{
 		//Inverted value
-		A_mat[1][1] = complex(1.0) / a_mat[1][1];
+		A_mat[1][1] = gld::complex(1.0) / a_mat[1][1];
 	}
 	else if (!has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //only C
 	{
 		//Inverted value
-		A_mat[2][2] = complex(1.0) / a_mat[2][2];
+		A_mat[2][2] = gld::complex(1.0) / a_mat[2][2];
 	}
 	else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //has A & C
 	{
-		complex detvalue = a_mat[0][0]*a_mat[2][2] - a_mat[0][2]*a_mat[2][0];
+		gld::complex detvalue = a_mat[0][0]*a_mat[2][2] - a_mat[0][2]*a_mat[2][0];
 
 		//Inverted value
 		A_mat[0][0] = a_mat[2][2] / detvalue;
@@ -345,7 +345,7 @@ void line::recalc_line_matricies(complex Zabc_mat[3][3], complex Yabc_mat[3][3])
 	}
 	else if (has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //has A & B
 	{
-		complex detvalue = a_mat[0][0]*a_mat[1][1] - a_mat[0][1]*a_mat[1][0];
+		gld::complex detvalue = a_mat[0][0]*a_mat[1][1] - a_mat[0][1]*a_mat[1][0];
 
 		//Inverted value
 		A_mat[0][0] = a_mat[1][1] / detvalue;
@@ -355,7 +355,7 @@ void line::recalc_line_matricies(complex Zabc_mat[3][3], complex Yabc_mat[3][3])
 	}
 	else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C))	//has B & C
 	{
-		complex detvalue = a_mat[1][1]*a_mat[2][2] - a_mat[1][2]*a_mat[2][1];
+		gld::complex detvalue = a_mat[1][1]*a_mat[2][2] - a_mat[1][2]*a_mat[2][1];
 
 		//Inverted value
 		A_mat[1][1] = a_mat[2][2] / detvalue;
@@ -365,7 +365,7 @@ void line::recalc_line_matricies(complex Zabc_mat[3][3], complex Yabc_mat[3][3])
 	}
 	else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
 	{
-		complex detvalue = a_mat[0][0]*a_mat[1][1]*a_mat[2][2] - a_mat[0][0]*a_mat[1][2]*a_mat[2][1] - a_mat[0][1]*a_mat[1][0]*a_mat[2][2] + a_mat[0][1]*a_mat[2][0]*a_mat[1][2] + a_mat[1][0]*a_mat[0][2]*a_mat[2][1] - a_mat[0][2]*a_mat[1][1]*a_mat[2][0];
+		gld::complex detvalue = a_mat[0][0]*a_mat[1][1]*a_mat[2][2] - a_mat[0][0]*a_mat[1][2]*a_mat[2][1] - a_mat[0][1]*a_mat[1][0]*a_mat[2][2] + a_mat[0][1]*a_mat[2][0]*a_mat[1][2] + a_mat[1][0]*a_mat[0][2]*a_mat[2][1] - a_mat[0][2]*a_mat[1][1]*a_mat[2][0];
 
 		//Invert it
 		A_mat[0][0] = (a_mat[1][1]*a_mat[2][2] - a_mat[1][2]*a_mat[2][1]) / detvalue;
@@ -413,7 +413,7 @@ EXPORT int create_line(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(line::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			line *my = OBJECTDATA(*obj,line);
 			gl_set_parent(*obj,parent);

@@ -10,11 +10,13 @@
 #define _CLIMATE_H
 
 #include <stdarg.h>
+#include <vector>
+
 #include "gridlabd.h"
 #include "solar_angles.h"
 #include "weather_reader.h"
 #include "csv_reader.h"
-#include <vector>
+
 
 typedef enum{
 	CP_H    = 0,
@@ -29,13 +31,13 @@ typedef enum{
 	CP_LAST = 9
 } COMPASS_PTS;
 
-typedef enum{
+enum{
 	CI_NONE = 0,
 	CI_LINEAR,
 	CI_QUADRATIC
 } CI;
 
-typedef enum{
+enum{
 	CM_NONE = 0,
 	CM_CUMULUS = 1
 } CLOUDMODEL;
@@ -168,7 +170,7 @@ typedef struct {
 	double solar;
 } CLIMATERECORD;
 
-typedef	enum {
+enum {
 		RT_NONE,
 		RT_TMY2,
 		RT_CSV,

@@ -21,7 +21,7 @@ public:
 	double impedance_pf;		///< power factor of constant impedance load
 	bool is_240;				///< load connected at 220 
 	double breaker_val;			///< Amperage limit for connected breaker
-	complex actual_power;		///< Actual load after adjusted for voltage factors
+	gld::complex actual_power;		///< Actual load after adjusted for voltage factors
 
 	bool demand_response_mode;	///< Activates equilibrium dynamic representation of demand response 
 	int64 N;					///< Number of devices to model - base power is per device 

@@ -1,9 +1,12 @@
+#include "config.h"
 #ifdef HAVE_MYSQL
 
 #include "group_recorder.h"
+
 #include <sstream>
 #include <iostream>
 #include <algorithm>
+
 #include "database.h"
 #include "query_engine.h"
 
@@ -300,7 +303,7 @@ int group_recorder::write_header() {
 	grc->set_table_root(get_table());
 	grc->init_tables(recordid_fieldname, datetime_fieldname, false);
 	// check for table existence and create if not found
-	if (get_property_name() > 0) {
+	if (get_property_name() != NULL) {
 		stringstream property_list;
 
 		char buffer[1024];

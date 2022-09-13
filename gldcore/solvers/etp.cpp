@@ -2,7 +2,8 @@
 // Copyright (C) 2012 Battelle Memorial Institute
 // DP Chassin
 
-#include <stdlib.h>
+#include <cstdlib>
+
 #include "gridlabd.h"
 
 static unsigned int version = 1;

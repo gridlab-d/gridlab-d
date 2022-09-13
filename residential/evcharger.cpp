@@ -73,11 +73,11 @@
  @{
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
-#include <ctype.h>
+#include <cctype>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include <gridlabd.h>
 
@@ -318,7 +318,7 @@ int evcharger::create()
 
 	// name of enduse
 	load.name = oclass->name;
-	load.power = load.admittance = load.current = load.total = complex(0,0,J);
+	load.power = load.admittance = load.current = load.total = gld::complex(0,0,J);
 	vehicle_type = VT_HYBRID;
 
 	charging_efficiency = 1.0;	//Assumed 100% Efficient charging at first
@@ -533,20 +533,20 @@ double evcharger::update_state(double dt /* seconds */)
 		}
 		else
 		{
-			load.power = complex(0,0,J);
+			load.power = gld::complex(0,0,J);
 			dt = -1; // never
 		}
 		break;
 	case VS_WORK:
-		load.power = complex(0,0,J);
+		load.power = gld::complex(0,0,J);
 		dt = -1; // never
 		break;
 	// these are not yet supported
 	//case SHORTTRIP:
-	//	load.power = complex(0,0,J);
+	//	load.power = gld::complex(0,0,J);
 	//	break;
 	//case LONGTRIP:
-	//	load.power = complex(0,0,J);
+	//	load.power = gld::complex(0,0,J);
 	//	break;
 	default:
 		GL_THROW( "invalid state" );

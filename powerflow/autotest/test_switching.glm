@@ -75,7 +75,7 @@ object meter {
     object complex_assert {
 	  target measured_voltage_A;
 	  operation REAL;
-	  value 2366.01;
+	  value 2365.51;
 	  within 0.1;
 	  once ONCE_TRUE;
 	  in '2000-01-01 0:30:00';
@@ -91,7 +91,7 @@ object meter {
     object complex_assert {
 	  target measured_voltage_A;
 	  operation REAL;
-	  value 2366.01;
+	  value 2365.51;
 	  within 0.1;
 	  once ONCE_TRUE;
 	  in '2000-01-01 2:30:00';
@@ -99,7 +99,7 @@ object meter {
     object complex_assert {
 	  target measured_voltage_A;
 	  operation REAL;
-	  value 2395.3;
+	  value 2394.7;
 	  within 0.1;
 	  once ONCE_TRUE;
 	  in '2000-01-01 3:30:00';
@@ -107,7 +107,7 @@ object meter {
     object complex_assert {
 	  target measured_voltage_A;
 	  operation REAL;
-	  value 2366.01;
+	  value 2365.51;
 	  within 0.1;
 	  once ONCE_TRUE;
 	  in '2000-01-01 4:30:00';
@@ -115,7 +115,7 @@ object meter {
     object complex_assert {
 	  target measured_voltage_A;
 	  operation REAL;
-	  value 2299.46;
+	  value 2301.83;
 	  within 0.1;
 	  once ONCE_TRUE;
 	  in '2000-01-01 5:30:00';
@@ -123,7 +123,7 @@ object meter {
     object complex_assert {
 	  target measured_voltage_A;
 	  operation REAL;
-	  value 2366.01;
+	  value 2365.51;
 	  within 0.1;
 	  once ONCE_TRUE;
 	  in '2000-01-01 6:30:00';
@@ -139,7 +139,7 @@ object meter {
     object complex_assert {
 	  target measured_voltage_A;
 	  operation REAL;
-	  value 2366.01;
+	  value 2365.51;
 	  within 0.1;
 	  once ONCE_TRUE;
 	  in '2000-01-01 8:30:00';
@@ -503,7 +503,7 @@ object substation {
   object complex_assert {
 	target distribution_load;
 	operation REAL;
-	value 3.59447e+06;
+	value 3.57673e+06;
 	within 0.01e+06;
 	once ONCE_TRUE;
 	in '2000-01-01 0:30:00';
@@ -511,7 +511,7 @@ object substation {
   object complex_assert {
 	target distribution_load;
 	operation REAL;
-	value 3.04427e+06;
+	value 2.99959e+06;
 	within 0.01e+06;
 	once ONCE_TRUE;
 	in '2000-01-01 1:30:00';
@@ -519,7 +519,7 @@ object substation {
   object complex_assert {
 	target distribution_load;
 	operation REAL;
-	value 3.59447e+06;
+	value 3.57673e+06;
 	within 0.01e+06;
 	once ONCE_TRUE;
 	in '2000-01-01 2:30:00';
@@ -527,7 +527,7 @@ object substation {
   object complex_assert {
 	target distribution_load;
 	operation REAL;
-	value 3.52786e+06;
+	value 3.50965e+06;
 	within 0.01e+06;
 	once ONCE_TRUE;
 	in '2000-01-01 3:30:00';
@@ -535,7 +535,7 @@ object substation {
   object complex_assert {
 	target distribution_load;
 	operation REAL;
-	value 3.59447e+06;
+	value 3.57673e+06;
 	within 0.01e+06;
 	once ONCE_TRUE;
 	in '2000-01-01 4:30:00';
@@ -543,7 +543,7 @@ object substation {
   object complex_assert {
 	target distribution_load;
 	operation REAL;
-	value 3.15289e+06;
+	value 3.19755e+06;
 	within 0.01e+06;
 	once ONCE_TRUE;
 	in '2000-01-01 5:30:00';
@@ -551,7 +551,7 @@ object substation {
   object complex_assert {
 	target distribution_load;
 	operation REAL;
-	value 3.59447e+06;
+	value 3.57673e+06;
 	within 0.01e+06;
 	once ONCE_TRUE;
 	in '2000-01-01 6:30:00';
@@ -559,7 +559,7 @@ object substation {
   object complex_assert {
 	target distribution_load;
 	operation REAL;
-	value 2.52816e+06;
+	value 2.52323e+06;
 	within 0.01e+06;
 	once ONCE_TRUE;
 	in '2000-01-01 7:30:00';
@@ -567,7 +567,7 @@ object substation {
   object complex_assert {
 	target distribution_load;
 	operation REAL;
-	value 3.59447e+06;
+	value 3.57673e+06;
 	within 0.01e+06;
 	once ONCE_TRUE;
 	in '2000-01-01 8:30:00';

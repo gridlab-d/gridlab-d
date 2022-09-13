@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
-#include <complex.h>
+#include <gld_complex.h>
 #include <signal.h>
 
 #define CONSOLE /* enables console/curses support */
@@ -784,7 +784,7 @@ typedef enum {WH_PANE, WH_HBAR, WH_VBAR} CONSOLEHIGHLIGHT;
 
 typedef struct {
 	unsigned int height, width;
-	unsigned int hpos, vpos;
+	int hpos, vpos;
 	unsigned int n_panes, pane;
 	unsigned int tabstops; // bit mask of panes that are tab stops
 	CONSOLEHIGHLIGHT highlight;
