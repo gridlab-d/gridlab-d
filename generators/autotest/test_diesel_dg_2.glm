@@ -1,0 +1,119 @@
+// $Id: test_diesel_dg_2.glm
+
+//#set profiler=1
+
+clock {
+	timezone EST+5EDT;
+	timestamp '2010-01-01 0:00:00';
+	stoptime '2010-01-28 0:00:00';
+}
+
+module powerflow{
+	solver_method NR;
+	default_maximum_voltage_error 1e-9;
+}
+
+module generators;
+module tape;
+module assert;
+
+
+
+// Create node objects
+object meter {
+	name meter671;
+	phases "ABCN";
+	nominal_voltage 2401.7771;
+	bustype SWING;
+	object complex_assert {
+		value -729.669-355.478j;
+		target measured_power;
+		within 0.01;
+	};
+	//object recorder {
+	//	property "measured_power.real,measured_power.imag";
+	//	interval -1;
+	//	file testout.csv;
+	//};
+}
+
+object transformer_configuration {               
+	name IEEE13_SPCT_CONFIG;                
+	connect_type SINGLE_PHASE_CENTER_TAPPED;               
+	install_type PADMOUNT;                
+	primary_voltage 2401.7771 V;               
+	secondary_voltage 124 V;               
+	power_rating 25.0;                //KVA rating
+	impedance 0.01924+0.08658j;                
+	shunt_impedance 409.8361+1844.2624j;                
+}   
+
+object triplex_line_conductor {               
+	name IEEE13-1/0 AA triplex;              
+	resistance 0.97;                
+	geometric_mean_radius 0.0111;                
+}   
+
+object triplex_line_configuration {               
+	name IEEE13_TLCFG;                
+	conductor_1 IEEE13-1/0 AA triplex;              
+	conductor_2 IEEE13-1/0 AA triplex;              
+	conductor_N IEEE13-1/0 AA triplex;              
+	insulation_thickness 0.08;                
+	diameter 0.368;                
+} 
+
+object transformer {
+	name IEEE13_SPCT_1;
+	phases AS;
+	from meter671;
+	to IEEE13_671_tn;
+	configuration IEEE13_SPCT_CONFIG;
+}
+
+object triplex_node {
+	name IEEE13_671_tn;
+	phases AS;
+	nominal_voltage 124;
+}
+
+object triplex_line {
+	name tplex_671_TL;
+	phases AS;
+	from IEEE13_671_tn;
+	to IEEE13_671_A_tm;
+	length 10.00;
+	configuration IEEE13_TLCFG;
+}
+
+object triplex_meter {
+	name IEEE13_671_A_tm;
+	phases AS;
+	nominal_voltage 124;
+}
+	
+object diesel_dg {
+	name Imadiesel;
+	parent meter671;
+	Gen_type CONSTANT_PQ;
+	Rated_VA 5.0 kVA;
+	real_power_out_A 250.0;
+	reactive_power_out_A 120.0;
+	real_power_out_B 250.0;
+	reactive_power_out_B 120.0;
+	real_power_out_C 250.0;
+	reactive_power_out_C 120.0;
+	object double_assert {
+		target real_power_generation;
+		value 750.0;
+		within 0.001;
+	};
+	object double_assert {
+		target reactive_power_generation;
+		value 360.0;
+		within 0.001;
+	};
+  }
+       
+    
+	
