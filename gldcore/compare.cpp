@@ -38,13 +38,13 @@
 
 #define COMPAREOPS(T) COMPARE_SEQ(T) COMPARE_SLE(T) COMPARE_SGE(T) COMPARE_SNE(T) COMPARE_SLT(T) COMPARE_SGT(T) COMPARE_SIN(T) COMPARE_SNI(T)
 #define COMPARE_SEQ(T) int compare_tc_##T##_eq(void* x,void* a,void* b) { return strcmp((char*)x,(char*)a)==0; }
-#define COMPARE_SLE(T) int compare_tc_##T##_le(void* x,void* a,void* b) { return strcmp((char*)x,(char*)a)!=1; }
-#define COMPARE_SGE(T) int compare_tc_##T##_ge(void* x,void* a,void* b) { return strcmp((char*)x,(char*)a)!=-1; }
+#define COMPARE_SLE(T) int compare_tc_##T##_le(void* x,void* a,void* b) { return strcmp((char*)x,(char*)a)<=0; }
+#define COMPARE_SGE(T) int compare_tc_##T##_ge(void* x,void* a,void* b) { return strcmp((char*)x,(char*)a)>=0; }
 #define COMPARE_SNE(T) int compare_tc_##T##_ne(void* x,void* a,void* b) { return strcmp((char*)x,(char*)a)!=0; }
-#define COMPARE_SLT(T) int compare_tc_##T##_lt(void* x,void* a,void* b) { return strcmp((char*)x,(char*)a)==-1; }
-#define COMPARE_SGT(T) int compare_tc_##T##_gt(void* x,void* a,void* b) { return strcmp((char*)x,(char*)a)==1; }
-#define COMPARE_SIN(T) int compare_tc_##T##_in(void* x,void* a,void* b) { return strcmp((char*)x,(char*)a)!=-1 && b!=NULL && strcmp((char*)x,(char*)b)!=1; }
-#define COMPARE_SNI(T) int compare_tc_##T##_ni(void* x,void* a,void* b) { return !(strcmp((char*)x,(char*)a)!=-1 && b!=NULL && strcmp((char*)x,(char*)b)!=1); }
+#define COMPARE_SLT(T) int compare_tc_##T##_lt(void* x,void* a,void* b) { return strcmp((char*)x,(char*)a)<0; }
+#define COMPARE_SGT(T) int compare_tc_##T##_gt(void* x,void* a,void* b) { return strcmp((char*)x,(char*)a)>0; }
+#define COMPARE_SIN(T) int compare_tc_##T##_in(void* x,void* a,void* b) { return strcmp((char*)x,(char*)a)>=0 && b!=NULL && strcmp((char*)x,(char*)b)<=0; }
+#define COMPARE_SNI(T) int compare_tc_##T##_ni(void* x,void* a,void* b) { return !(strcmp((char*)x,(char*)a)>=0 && b!=NULL && strcmp((char*)x,(char*)b)<=0); }
 
 /* basic ops */
 COMPAREOPF(double)
