@@ -2322,11 +2322,11 @@ object triplex_node:107 {
 	};
 }
 
-object triplex_node:108 {
+object triplex_load:108 {
 	name R1-12-47-3_tn_2;
 	phases BS;
 	parent R1-12-47-3_tm_1;
-	power_1 175181.0364+5512.8881j;
+	constant_power_1 175181.0364+5512.8881j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
