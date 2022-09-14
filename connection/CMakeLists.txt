@@ -66,7 +66,6 @@ add_library(${PROJECT_NAME}
 
 if (FNCS_FOUND)
     target_link_libraries(${PROJECT_NAME} PRIVATE
-            fncs
             ${GLD_FNCS_LIBRARIES}
             )
     target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_FNCS)
