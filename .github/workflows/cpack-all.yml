@@ -68,25 +68,19 @@ jobs:
           key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.boost-ref }}
           restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.boost-ref }}
 
-      - if: ${{ matrix.boost_arch == 'arm' }}
-        id: arch-test
-        run: echo "::set-output name=arch_string::'architecture=arm address-model=64 abi=AAPCS binary-format=MACH-O'"
-
       - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' && matrix.boost_arch == 'arm' }}
         name: Build Boost for ARM
         working-directory: ${{ github.workspace }}/boost-build
         run: |
-          threads=`nproc`
           ./bootstrap.sh --prefix=~/.cache/boost
-          ./b2 architecture=arm address-model=64 abi=AAPCS binary-format=MACH-O
+          ./b2 release architecture=arm address-model=64 abi=AAPCS binary-format=MACH-O
 
       - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' && matrix.boost_arch != 'arm' }}
         name: Build Boost for x86
         working-directory: ${{ github.workspace }}/boost-build
         run: |
-          threads=`nproc`
           ./bootstrap.sh --prefix=~/.cache/boost
-          ./b2
+          ./b2 release
 
   build-helics:
     needs: [ build-boost ]
@@ -138,7 +132,7 @@ jobs:
           -DBoost_INCLUDE_DIR=${{env.BOOST_ROOT}}/include \
           -DBoost_LIBRARY_DIRS=${{env.BOOST_ROOT}}/lib \
           -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}}
-          cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads --target install
+          cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel 2 --target install
 
   linux-build:
     needs: [ build-helics ]
