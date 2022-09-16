@@ -19,7 +19,8 @@ env:
   BUILD_TYPE: Release
 
 jobs:
-  build-helics:
+  build-boost:
+    needs: [build-boost]
     strategy:
       matrix:
         include:
@@ -37,18 +38,12 @@ jobs:
             boost_arch: aarch64
     runs-on: ubuntu-latest
     steps:
-      - name: Setup boost
-        uses: MarkusJx/install-boost@v2.3.1
-        id: install-boost
-        with:
-          boost_version: 1.71.0
-          arch: ${{ matrix.boost_arch }}
-          boost_install_dir: ~/.cache/boost
       - uses: actions/checkout@v3
         with:
-          repository: 'GMLC-TDC/HELICS.git'
-          ref: 'v3.3.0'
+          repository: 'boostorg/boost.git'
+          ref: 'boost-1.73.0'
           submodules: 'recursive'
+          fetch-depth: 0
 
       - name: Get Git Ref
         id: git-ref
@@ -64,9 +59,59 @@ jobs:
         env:
           cache-name: cache-helics-lib
         with:
-          path: |
-            ~/.cache/boost
-            ~/.cache/HELICS
+          path: ~/.cache/boost
+          key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ steps.git-ref.outputs.sha_short }}
+          restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ steps.git-ref.outputs.sha_short }}
+
+      - if: ${{ steps.cache-helics-lib.outputs.cache-hit != 'true' }}
+        name: Build Boost
+        run: |
+          threads=`nproc`
+          ./bootstrap.sh --prefix=~/.cache/boost
+          ./b2
+
+  build-helics:
+    needs: [build-boost]
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: x86_64
+            boost_arch: x86
+          - os: windows-latest
+            arch: x86_64
+            boost_arch: x86
+          - os: macos-latest
+            arch: x86_64
+            boost_arch: x86
+          - os: macos-latest
+            arch: arm64
+            boost_arch: aarch64
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: 'GMLC-TDC/HELICS.git'
+          ref: 'v3.3.0'
+          submodules: 'recursive'
+          fetch-depth: 0
+
+      - name: Get Git Ref
+        id: git-ref
+        working-directory: ${{ github.workspace }}
+        run: | 
+          git_ref=`git rev-parse --short HEAD`
+          echo "ref is $git_ref"
+          echo "::set-output name=sha_short::$git_ref"
+
+      - name: Build HELICS Cache
+        id: cache-helics
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-helics-lib
+          BOOST_ROOT: ~/.cache/boost
+        with:
+          path: ~/.cache/HELICS
           key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ steps.git-ref.outputs.sha_short }}
           restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ steps.git-ref.outputs.sha_short }}
 
@@ -76,12 +121,10 @@ jobs:
           threads=`nproc`
           cmake -B ${{github.workspace}}/helics-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
           -DHELICS_ZMQ_SUBPROJECT=ON \
-          -DBoost_INCLUDE_DIR=${{steps.install-boost.outputs.BOOST_ROOT}}/include \
-          -DBoost_LIBRARY_DIRS=${{steps.install-boost.outputs.BOOST_ROOT}}/lib \
+          -DBoost_INCLUDE_DIR=${{env.BOOST_ROOT}}/include \
+          -DBoost_LIBRARY_DIRS=${{env.BOOST_ROOT}}/lib \
           -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}}
           cmake --build ${{github.workspace}}/helics-build --config ${{env.BUILD_TYPE}} --parallel $threads --target install
-        env:
-          BOOST_ROOT: ${{ steps.install-boost.outputs.BOOST_ROOT }}
   linux-build:
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
     # You can convert this to a matrix build if you need cross-platform coverage.
