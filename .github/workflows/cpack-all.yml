@@ -69,13 +69,22 @@ jobs:
         run: echo "::set-output name=arch_string::'architecture=arm address-model=64 abi=AAPCS binary-format=MACH-O'"
 #          echo "::set-output name=arch_found::true"
 
-      - if: ${{ steps.cache-boost.outputs.cache-hit != 'true'}}
-        name: Build Boost
+
+      - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' && matrix.boost_arch == 'arm' }}
+        name: Build Boost for ARM
         working-directory: ${{ github.workspace }}/boost-build
         run: |
           threads=`nproc`
           ./bootstrap.sh --prefix=~/.cache/boost
-          ./b2 ${{ steps.arch-test.arch_string }}
+          ./b2 architecture=arm address-model=64 abi=AAPCS binary-format=MACH-O
+
+      - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' && matrix.boost_arch != 'arm' }}
+        name: Build Boost for x86
+        working-directory: ${{ github.workspace }}/boost-build
+        run: |
+          threads=`nproc`
+          ./bootstrap.sh --prefix=~/.cache/boost
+          ./b2
 
   build-helics:
     needs: [ build-boost ]
