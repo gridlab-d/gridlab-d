@@ -169,7 +169,8 @@ jobs:
           threads=`nproc`
           cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
           -DHELICS_ZMQ_SUBPROJECT=ON \
-          cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads --target install
+          cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads
+          cmake --install ${{github.workspace}}/helics-build/build
 
       - name: Checkout GridLAB-D
         uses: actions/checkout@v3
@@ -251,7 +252,8 @@ jobs:
           threads=`nproc`
           cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
           -DHELICS_ZMQ_SUBPROJECT=ON \
-          cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads --target install   
+          cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads
+          cmake --install ${{github.workspace}}/helics-build/build
 
       - name: Checkout Repo
         uses: actions/checkout@v3
@@ -335,7 +337,8 @@ jobs:
           threads=`nproc`
           cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
           -DHELICS_ZMQ_SUBPROJECT=ON \
-          cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads --target install
+          cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads
+          cmake --install ${{github.workspace}}/helics-build/build
 
       - name: Checkout Repo
         uses: actions/checkout@v3
