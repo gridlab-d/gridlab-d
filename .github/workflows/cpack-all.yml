@@ -3,7 +3,11 @@ name: GridLAB-D Build
 on:
   push:
     branches: [ "master" ]
-#  workflow_dispatch:
+#    branches:
+#      - 'release/*'
+    tags:
+      - 'v*'
+      #  workflow_dispatch:
 #    # Inputs the workflow accepts.
 #    inputs:
 #      name:
