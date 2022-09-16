@@ -34,7 +34,7 @@ jobs:
             boost_arch: x86_64
           - os: macos-latest
             arch: arm64
-            boost_arch: aarch64
+            boost_arch: arm
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -64,13 +64,20 @@ jobs:
           key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ steps.boost-git-ref.outputs.sha_short }}
           restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ steps.boost-git-ref.outputs.sha_short }}
 
+      - if: ${{ matrix.boost_arch == 'arm' }}
+        id: arch-test
+        run: echo "::set-output name=arch_string::'architecture=arm address-model=64 abi=AAPCS binary-format=MACH-O'
+      - if: ${{ matrix.boost_arch != 'arm' }}
+        id: arch-test
+        run: echo "::set-output name=arch_string::''
+
       - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' }}
         name: Build Boost
         working-directory: ${{ github.workspace }}/boost-build
         run: |
           threads=`nproc`
           ./bootstrap.sh --prefix=~/.cache/boost
-          ./b2 architecture=${{matrix.boost_arch}}
+          ./b2 ${{ steps.arch-test.arch_string }}
 
   build-helics:
     needs: [ build-boost ]
