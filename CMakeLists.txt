@@ -29,7 +29,7 @@ include(cmake/SetVersion.cmake)
 # Perform dependency checks
 include(cmake/CheckDependencies.cmake)
 # Generate current build number
-include(cmake/Build_number.cmake)
+include(cmake/BuildNumber.cmake)
 include(cmake/SanitizePaths.cmake)
 
 option(GLD_USE_EIGEN "[NOT YET SUPPORTED] - Use Eigen package for LU Decomposition in Powerflow" OFF)
@@ -386,13 +386,10 @@ install(TARGETS
         ${FILE_PERMISSIONS}
         LIBRARY DESTINATION lib
         RUNTIME DESTINATION bin
+#        BUNDLE DESTINATION bundle
         COMPONENT Runtime
         ARCHIVE DESTINATION lib/static
         COMPONENT Development
         )
 
-if (APPLE)
-    install(SCRIPT cmake/mac_bundle.cmake)
-endif ()
-# Generate CPack config
 include(cmake/CPackConfig.cmake)

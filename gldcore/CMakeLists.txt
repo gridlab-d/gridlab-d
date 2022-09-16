@@ -1,7 +1,7 @@
 SET(GLD_MODULE_NAME gridlabd)
 
 # Load and link C/C++ files for the executeable
-add_executable(${GLD_MODULE_NAME}
+set(SOURCE_LIST
         gridlabd.h
         globals.cpp
         globals.h
@@ -128,6 +128,17 @@ add_executable(${GLD_MODULE_NAME}
         #        xcore.cpp
         #        xcore.h
         )
+
+#if(NOT APPLE)
+add_executable(${GLD_MODULE_NAME} ${SOURCE_LIST})
+#else()
+#    add_executable(${GLD_MODULE_NAME} MACOSX_BUNDLE ${SOURCE_LIST})
+#    set_target_properties(${GLD_MODULE_NAME} PROPERTIES
+#            BUNDLE True
+#            MACOSX_BUNDLE_GUI_IDENTIFIER gov.pnnl.gridlabd
+#            MACOSX_BUNDLE_NAME ${GLD_MODULE_NAME}
+#            )
+#endif()
 
 target_link_libraries(${GLD_MODULE_NAME} PUBLIC ${GL_MODULES})
 target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${CMAKE_THREAD_LIBS_INIT})
