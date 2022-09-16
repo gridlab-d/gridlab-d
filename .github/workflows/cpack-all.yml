@@ -70,7 +70,7 @@ jobs:
         name: Build HELICS
         run: |
           threads=`nproc`
-          cmake -B ${{github.workspace}}/helics-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS -DHELICS_ZMQ_SUBPROJECT=ON -DBOOST_INSTALL_PATH=${{ steps.install-boost.outputs.BOOST_ROOT }} -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}}
+          cmake -B ${{github.workspace}}/helics-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS -DHELICS_ZMQ_SUBPROJECT=ON -DBOOST_ROOT=${{ steps.install-boost.outputs.BOOST_ROOT }} -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}}
           cmake --build ${{github.workspace}}/helics-build --config ${{env.BUILD_TYPE}} --parallel $threads --target install
 
   linux-build:
