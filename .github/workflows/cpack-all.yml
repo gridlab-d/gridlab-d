@@ -51,6 +51,7 @@ jobs:
           submodules: 'recursive'
 
       - name: Get Git Ref
+        id: git-ref
         working-directory: ${{ github.workspace }}
         run: | 
           git_ref=`git rev-parse --short HEAD`
@@ -66,8 +67,8 @@ jobs:
           path: |
             ~/.cache/boost
             ~/.cache/HELICS
-          key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ steps.vars.outputs.sha_short }}
-          restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ steps.vars.outputs.sha_short }}
+          key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ steps.git-ref.outputs.sha_short }}
+          restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ steps.git-ref.outputs.sha_short }}
 
       - if: ${{ steps.cache-helics-lib.outputs.cache-hit != 'true' }}
         name: Build HELICS
