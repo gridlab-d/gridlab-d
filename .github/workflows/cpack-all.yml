@@ -20,7 +20,6 @@ env:
 
 jobs:
   build-boost:
-    needs: [build-boost]
     strategy:
       matrix:
         include:
