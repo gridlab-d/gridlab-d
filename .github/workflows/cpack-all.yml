@@ -3,8 +3,8 @@ name: GridLAB-D Build
 on:
   push:
     branches: [ "master" ]
-#    branches:
-#      - 'release/*'
+    #    branches:
+    #      - 'release/*'
     tags:
       - 'v*'
       #  workflow_dispatch:
@@ -25,21 +25,17 @@ env:
 
 jobs:
   linux-build:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            arch: x86_64
+    runs-on: ${{matrix.os}}
     steps:
       - name: Install Dependencies
-        run: | 
+        run: |
           sudo apt update
           sudo apt install -yq libboost1.71-all-dev
-
-      - name: Checkout HELICS
-        uses: actions/checkout@v3
-        with:
-          repository: 'GMLC-TDC/HELICS'
-          ref: ${{ env.helics-ref }}
-          submodules: 'recursive'
-          fetch-depth: 0
-          path: helics-build
 
       - name: Build HELICS Cache
         id: cache-helics
@@ -50,6 +46,16 @@ jobs:
           path: ~/.cache/HELICS
           key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
           restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
+
+      - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
+        name: Checkout HELICS
+        uses: actions/checkout@v3
+        with:
+          repository: 'GMLC-TDC/HELICS'
+          ref: ${{ env.helics-ref }}
+          submodules: 'recursive'
+          fetch-depth: 0
+          path: helics-build
 
       - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
         name: Build HELICS
@@ -66,12 +72,10 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Configure CMake
-        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS
-
-      - name: Build
+      - name: Build GridLAB-D
         run: |
           threads=`nproc`
+          cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS
           cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel $threads
 
       - name: Package
@@ -82,12 +86,17 @@ jobs:
         uses: actions/upload-artifact@v3.1.0
         with:
           name: Linux Package
-          path: | 
+          path: |
             ${{github.workspace}}/build/packages
             !${{github.workspace}}/build/packages/_CPack_Packages
 
   win-build:
-    runs-on: windows-latest
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            arch: x86_64
+    runs-on: ${{matrix.os}}
     defaults:
       run:
         shell: msys2 {0}
@@ -105,15 +114,6 @@ jobs:
             mingw-w64-x86_64-nsis
             mingw-w64-x86_64-boost
 
-      - name: Checkout HELICS
-        uses: actions/checkout@v3
-        with:
-          repository: 'GMLC-TDC/HELICS'
-          ref: ${{ env.helics-ref }}
-          submodules: 'recursive'
-          fetch-depth: 0
-          path: helics-build
-
       - name: Build HELICS Cache
         id: cache-helics
         uses: actions/cache@v3
@@ -125,11 +125,21 @@ jobs:
           restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
 
       - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
+        name: Checkout HELICS
+        uses: actions/checkout@v3
+        with:
+          repository: 'GMLC-TDC/HELICS'
+          ref: ${{ env.helics-ref }}
+          submodules: 'recursive'
+          fetch-depth: 0
+          path: helics-build
+
+      - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
         name: Build HELICS
         working-directory: ${{github.workspace}}/helics-build
         run: |
           threads=`nproc`
-          cmake -G "Ninja -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
+          cmake -G "Ninja" -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
            -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DHELICS_ZMQ_SUBPROJECT=ON
           cmake --build ./build --config ${{env.BUILD_TYPE}} --parallel $threads
           cmake --install ./build
@@ -139,14 +149,11 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Configure CMake
-        working-directory: ${{github.workspace}}
-        run: cmake -G "Ninja" -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
-
-      - name: Build
+      - name: Build GridLAB-D
         working-directory: ${{github.workspace}}
         run: |
           threads=`nproc`
+          cmake -G "Ninja" -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
           cmake --build ./build --config ${{env.BUILD_TYPE}} --parallel $threads
 
       - name: Package
@@ -176,15 +183,6 @@ jobs:
           brew update --preinstall
           env HOMEBREW_NO_AUTO_UPDATE=1 brew install boost
 
-      - name: Checkout HELICS
-        uses: actions/checkout@v3
-        with:
-          repository: 'GMLC-TDC/HELICS'
-          ref: ${{ env.helics-ref }}
-          submodules: 'recursive'
-          fetch-depth: 0
-          path: helics-build
-
       - name: Build HELICS Cache
         id: cache-helics
         uses: actions/cache@v3
@@ -194,6 +192,16 @@ jobs:
           path: ~/.cache/HELICS
           key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
           restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
+
+      - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
+        name: Checkout HELICS
+        uses: actions/checkout@v3
+        with:
+          repository: 'GMLC-TDC/HELICS'
+          ref: ${{ env.helics-ref }}
+          submodules: 'recursive'
+          fetch-depth: 0
+          path: helics-build
 
       - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
         name: Build HELICS
@@ -210,12 +218,10 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Configure CMake
-        run: cmake -B ${{github.workspace}}/build-${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}}
-
-      - name: Build
+      - name: Build GridLAB-D
         run: |
           threads=`sysctl -n hw.logicalcpu`
+          cmake -B ${{github.workspace}}/build-${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}}
           cmake --build ${{github.workspace}}/build-${{matrix.arch}} --config ${{env.BUILD_TYPE}} --parallel $threads
 
       - name: Package
