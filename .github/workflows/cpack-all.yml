@@ -73,7 +73,7 @@ jobs:
         working-directory: ${{ github.workspace }}/boost-build
         run: |
           ./bootstrap.sh --prefix=~/.cache/boost
-          ./b2 release architecture=arm address-model=64 abi=AAPCS binary-format=MACH-O
+          ./b2 release architecture=arm address-model=64 abi=aapcs binary-format=MACH-O
 
       - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' && matrix.boost_arch != 'arm' }}
         name: Build Boost for x86
