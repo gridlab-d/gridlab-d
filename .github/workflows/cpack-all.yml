@@ -168,7 +168,7 @@ jobs:
         run: |
           threads=`nproc`
           cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
-          -DHELICS_ZMQ_SUBPROJECT=ON \
+          -DHELICS_ZMQ_SUBPROJECT=ON
           cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads
           cmake --install ${{github.workspace}}/helics-build/build
 
@@ -251,7 +251,7 @@ jobs:
         run: |
           threads=`nproc`
           cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
-          -DHELICS_ZMQ_SUBPROJECT=ON \
+          -DHELICS_ZMQ_SUBPROJECT=ON
           cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads
           cmake --install ${{github.workspace}}/helics-build/build
 
@@ -336,7 +336,7 @@ jobs:
         run: |
           threads=`nproc`
           cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
-          -DHELICS_ZMQ_SUBPROJECT=ON \
+          -DHELICS_ZMQ_SUBPROJECT=ON
           cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads
           cmake --install ${{github.workspace}}/helics-build/build
 
