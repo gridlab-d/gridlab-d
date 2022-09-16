@@ -17,6 +17,7 @@ on:
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
+  helics-ref: 'v3.3.0'
 
 jobs:
 #  build-boost:
@@ -136,8 +137,6 @@ jobs:
 
   linux-build:
     runs-on: ubuntu-latest
-    env:
-      helics-ref: 'v3.3.0'
     steps:
       - name: Install Dependencies
         run: | 
@@ -204,12 +203,6 @@ jobs:
   #            ${{github.workspace}}/build/*-Linux.deb
 
   win-build:
-#    needs: [ build-helics ]
-#    strategy:
-#      matrix:
-#        include:
-#          - os: windows-latest
-#            arch: x86_64
     runs-on: windows-latest
     defaults:
       run:
@@ -286,7 +279,6 @@ jobs:
   #            ${{github.workspace}}/build/*-Windows.exe
 
   mac-build:
-#    needs: [ build-helics ]
     strategy:
       matrix:
         include:
