@@ -66,12 +66,10 @@ jobs:
 
       - if: ${{ matrix.boost_arch == 'arm' }}
         id: arch-test
-        run: echo "::set-output name=arch_string::'architecture=arm address-model=64 abi=AAPCS binary-format=MACH-O'
-      - if: ${{ matrix.boost_arch != 'arm' }}
-        id: arch-test
-        run: echo "::set-output name=arch_string::''
+        run: echo "::set-output name=arch_string::'architecture=arm address-model=64 abi=AAPCS binary-format=MACH-O'"
+#          echo "::set-output name=arch_found::true"
 
-      - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' }}
+      - if: ${{ steps.cache-boost.outputs.cache-hit != 'true'}}
         name: Build Boost
         working-directory: ${{ github.workspace }}/boost-build
         run: |
