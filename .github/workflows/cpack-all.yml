@@ -41,7 +41,7 @@ jobs:
         uses: MarkusJx/install-boost@v2.3.1
         id: install-boost
         with:
-          boost_version: 1.73.0
+          boost_version: 1.71.0
           arch: ${{ matrix.boost_arch }}
           boost_install_dir: ~/.cache/boost
       - uses: actions/checkout@v3
@@ -51,7 +51,11 @@ jobs:
           submodules: 'recursive'
 
       - name: Get Git Ref
-        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+        working-directory: ${{ github.workspace }}
+        run: | 
+          git_ref=`git rev-parse --short HEAD`
+          echo "ref is $git_ref"
+          echo "::set-output name=sha_short::$git_ref"
 
       - name: Build HELICS Cache
         id: cache-helics
@@ -59,7 +63,6 @@ jobs:
         env:
           cache-name: cache-helics-lib
         with:
-          # npm cache files are stored in `~/.npm` on Linux/macOS
           path: |
             ~/.cache/boost
             ~/.cache/HELICS
