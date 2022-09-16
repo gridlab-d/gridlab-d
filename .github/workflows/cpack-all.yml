@@ -142,7 +142,7 @@ jobs:
       - name: Install Dependencies
         run: | 
           sudo apt update
-          sudo apt install -yq libboost1.17-all-dev
+          sudo apt install -yq libboost1.71-all-dev
 
       - uses: actions/checkout@v3
         with:
@@ -297,17 +297,18 @@ jobs:
         run: |
           brew update --preinstall
           cat "$(brew --repository)/Library/Taps/homebrew/homebrew-core/Formula/foo.rb" > .github/brew-formulae
-          - name: Configure Homebrew cache
-            uses: actions/cache@v2
-            with:
-              path: |
-                ~/Library/Caches/Homebrew/foo--*
-                ~/Library/Caches/Homebrew/downloads/*--foo-*
-              key: brew-${{ hashFiles('.github/brew-formulae') }}
-              restore-keys: brew-
-          - name: Install Homebrew dependencies
-            run: |
-              env HOMEBREW_NO_AUTO_UPDATE=1 brew install boost
+
+      - name: Configure Homebrew cache
+        uses: actions/cache@v2
+        with:
+          path: |
+            ~/Library/Caches/Homebrew/foo--*
+            ~/Library/Caches/Homebrew/downloads/*--foo-*
+          key: brew-${{ hashFiles('.github/brew-formulae') }}
+          restore-keys: brew-
+      - name: Install Homebrew dependencies
+        run: |
+          env HOMEBREW_NO_AUTO_UPDATE=1 brew install boost
 
       - uses: actions/checkout@v3
         with:
