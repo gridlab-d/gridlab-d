@@ -20,6 +20,8 @@ env:
 
 jobs:
   build-boost:
+    env:
+      boost-ref: 'boost-1.73.0'
     strategy:
       matrix:
         include:
@@ -35,24 +37,26 @@ jobs:
           - os: macos-latest
             arch: arm64
             boost_arch: arm
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - name: Build Boost Git Cache
+        id: cache-boost-git
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-boost-git
+        with:
+          path: ${{ github.workspace }}/boost-build
+          key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.boost_ref }}
+          restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.boost_ref }}
+
+      - if: ${{ steps.cache-boost-git.outputs.cache-hit != 'true' }}
+        uses: actions/checkout@v3
         with:
           repository: 'boostorg/boost.git'
           ref: 'boost-1.73.0'
           submodules: 'recursive'
           fetch-depth: 0
           path: boost-build
-
-
-      - name: Get Git Ref
-        id: boost-git-ref
-        working-directory: ${{ github.workspace }}/boost-build
-        run: |
-          git_ref=`git rev-parse --short HEAD`
-          echo "ref is $git_ref"
-          echo "::set-output name=sha_short::$git_ref"
 
       - name: Build Boost Cache
         id: cache-boost
@@ -61,14 +65,12 @@ jobs:
           cache-name: cache-boost
         with:
           path: ~/.cache/boost
-          key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ steps.boost-git-ref.outputs.sha_short }}
-          restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ steps.boost-git-ref.outputs.sha_short }}
+          key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.boost_ref }}
+          restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.boost_ref }}
 
       - if: ${{ matrix.boost_arch == 'arm' }}
         id: arch-test
         run: echo "::set-output name=arch_string::'architecture=arm address-model=64 abi=AAPCS binary-format=MACH-O'"
-#          echo "::set-output name=arch_found::true"
-
 
       - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' && matrix.boost_arch == 'arm' }}
         name: Build Boost for ARM
@@ -88,6 +90,8 @@ jobs:
 
   build-helics:
     needs: [ build-boost ]
+    env:
+      helics-ref: 'v3.3.0'
     strategy:
       matrix:
         include:
@@ -103,23 +107,15 @@ jobs:
           - os: macos-latest
             arch: arm64
             boost_arch: aarch64
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
         with:
           repository: 'GMLC-TDC/HELICS.git'
-          ref: 'v3.3.0'
+          ref: ${{ env.helics_ref }}
           submodules: 'recursive'
           fetch-depth: 0
           path: helics-build
-
-      - name: Get Git Ref
-        id: helics-git-ref
-        working-directory: ${{ github.workspace }}/helics-build
-        run: |
-          git_ref=`git rev-parse --short HEAD`
-          echo "ref is $git_ref"
-          echo "::set-output name=sha_short::$git_ref"
 
       - name: Build HELICS Cache
         id: cache-helics
@@ -129,8 +125,8 @@ jobs:
           BOOST_ROOT: ~/.cache/boost
         with:
           path: ~/.cache/HELICS
-          key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ steps.helics-git-ref.outputs.sha_short }}
-          restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ steps.helics-git-ref.outputs.sha_short }}
+          key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics_ref }}
+          restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics_ref }}
 
       - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
         name: Build HELICS
@@ -143,6 +139,7 @@ jobs:
           -DBoost_LIBRARY_DIRS=${{env.BOOST_ROOT}}/lib \
           -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}}
           cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads --target install
+
   linux-build:
     needs: [ build-helics ]
     strategy:
