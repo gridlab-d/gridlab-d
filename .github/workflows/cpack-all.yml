@@ -324,9 +324,9 @@ jobs:
         name: Build HELICS
         working-directory: ${{github.workspace}}/helics-build
         run: |
-          threads=`nproc`
+          threads=`sysctl -n hw.logicalcpu`
           cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
-          -DHELICS_ZMQ_SUBPROJECT=ON
+          -DHELICS_ZMQ_SUBPROJECT=ON -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}}
           cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads
           cmake --install ${{github.workspace}}/helics-build/build
 
