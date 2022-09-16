@@ -25,13 +25,13 @@ jobs:
         include:
           - os: ubuntu-latest
             arch: x86_64
-            boost_arch: x86
+            boost_arch: x86_64
           - os: windows-latest
             arch: x86_64
-            boost_arch: x86
+            boost_arch: x86_64
           - os: macos-latest
             arch: x86_64
-            boost_arch: x86
+            boost_arch: x86_64
           - os: macos-latest
             arch: arm64
             boost_arch: aarch64
@@ -67,7 +67,7 @@ jobs:
         run: |
           threads=`nproc`
           ./bootstrap.sh --prefix=~/.cache/boost
-          ./b2
+          ./b2 architecture=${{matrix.boost_arch}}
 
   build-helics:
     needs: [build-boost]
