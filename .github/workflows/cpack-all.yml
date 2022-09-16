@@ -19,90 +19,131 @@ env:
   BUILD_TYPE: Release
 
 jobs:
-  build-boost:
-    env:
-      boost-ref: 'boost-1.73.0'
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            arch: x86_64
-            boost_arch: x86_64
-          - os: windows-latest
-            arch: x86_64
-            boost_arch: x86_64
-          - os: macos-latest
-            arch: x86_64
-            boost_arch: x86_64
-          - os: macos-latest
-            arch: arm64
-            boost_arch: arm
-    runs-on: ${{ matrix.os }}
-    steps:
-      - name: Build Boost Git Cache
-        id: cache-boost-git
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-boost-git
-        with:
-          path: ${{ github.workspace }}/boost-build
-          key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.boost-ref }}
-          restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.boost-ref }}
+#  build-boost:
+#    env:
+#      boost-ref: 'boost-1.73.0'
+#    strategy:
+#      matrix:
+#        include:
+#          - os: ubuntu-latest
+#            arch: x86_64
+#            boost_arch: x86_64
+#          - os: windows-latest
+#            arch: x86_64
+#            boost_arch: x86_64
+#          - os: macos-latest
+#            arch: x86_64
+#            boost_arch: x86_64
+#          - os: macos-latest
+#            arch: arm64
+#            boost_arch: arm
+#    runs-on: ${{ matrix.os }}
+#    steps:
+#      - name: Build Boost Git Cache
+#        id: cache-boost-git
+#        uses: actions/cache@v3
+#        env:
+#          cache-name: cache-boost-git
+#        with:
+#          path: ${{ github.workspace }}/boost-build
+#          key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.boost-ref }}
+#          restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.boost-ref }}
+#
+#      - if: ${{ steps.cache-boost-git.outputs.cache-hit != 'true' }}
+#        uses: actions/checkout@v3
+#        with:
+#          repository: 'boostorg/boost.git'
+#          ref: 'boost-1.73.0'
+#          submodules: 'recursive'
+#          fetch-depth: 0
+#          path: boost-build
+#
+#      - name: Build Boost Cache
+#        id: cache-boost
+#        uses: actions/cache@v3
+#        env:
+#          cache-name: cache-boost
+#        with:
+#          path: ~/.cache/boost
+#          key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.boost-ref }}
+#          restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.boost-ref }}
+#
+#      - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' && matrix.boost_arch == 'arm' }}
+#        name: Build Boost for ARM
+#        working-directory: ${{ github.workspace }}/boost-build
+#        run: |
+#          ./bootstrap.sh --prefix=~/.cache/boost
+#          ./b2 release architecture=arm address-model=64 abi=aapcs binary-format=MACH-O
+#
+#      - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' && matrix.boost_arch != 'arm' }}
+#        name: Build Boost for x86
+#        working-directory: ${{ github.workspace }}/boost-build
+#        run: |
+#          ./bootstrap.sh --prefix=~/.cache/boost
+#          ./b2 release
 
-      - if: ${{ steps.cache-boost-git.outputs.cache-hit != 'true' }}
-        uses: actions/checkout@v3
-        with:
-          repository: 'boostorg/boost.git'
-          ref: 'boost-1.73.0'
-          submodules: 'recursive'
-          fetch-depth: 0
-          path: boost-build
+#  build-helics:
+#    needs: [ build-boost ]
+#    env:
+#      helics-ref: 'v3.3.0'
+#    strategy:
+#      matrix:
+#        include:
+#          - os: ubuntu-latest
+#            arch: x86_64
+#            boost_arch: x86
+#          - os: windows-latest
+#            arch: x86_64
+#            boost_arch: x86
+#          - os: macos-latest
+#            arch: x86_64
+#            boost_arch: x86
+#          - os: macos-latest
+#            arch: arm64
+#            boost_arch: aarch64
+#    runs-on: ${{ matrix.os }}
+#    steps:
+#      - uses: actions/checkout@v3
+#        with:
+#          repository: 'GMLC-TDC/HELICS.git'
+#          ref: ${{ env.helics-ref }}
+#          submodules: 'recursive'
+#          fetch-depth: 0
+#          path: helics-build
+#
+#      - name: Build HELICS Cache
+#        id: cache-helics
+#        uses: actions/cache@v3
+#        env:
+#          cache-name: cache-helics
+#          BOOST_ROOT: ~/.cache/boost
+#        with:
+#          path: ~/.cache/HELICS
+#          key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
+#          restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
+#
+#      - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
+#        name: Build HELICS
+#        working-directory: ${{github.workspace}}/helics-build
+#        run: |
+#          threads=`nproc`
+#          cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
+#          -DHELICS_ZMQ_SUBPROJECT=ON \
+#          -DBoost_INCLUDE_DIR=${{env.BOOST_ROOT}}/include \
+#          -DBoost_LIBRARY_DIRS=${{env.BOOST_ROOT}}/lib \
+#          -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}}
+#          cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel 2 --target install
 
-      - name: Build Boost Cache
-        id: cache-boost
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-boost
-        with:
-          path: ~/.cache/boost
-          key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.boost-ref }}
-          restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.boost-ref }}
-
-      - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' && matrix.boost_arch == 'arm' }}
-        name: Build Boost for ARM
-        working-directory: ${{ github.workspace }}/boost-build
-        run: |
-          ./bootstrap.sh --prefix=~/.cache/boost
-          ./b2 release architecture=arm address-model=64 abi=aapcs binary-format=MACH-O
-
-      - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' && matrix.boost_arch != 'arm' }}
-        name: Build Boost for x86
-        working-directory: ${{ github.workspace }}/boost-build
-        run: |
-          ./bootstrap.sh --prefix=~/.cache/boost
-          ./b2 release
-
-  build-helics:
-    needs: [ build-boost ]
+  linux-build:
+    runs-on: ubuntu-latest
     env:
       helics-ref: 'v3.3.0'
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            arch: x86_64
-            boost_arch: x86
-          - os: windows-latest
-            arch: x86_64
-            boost_arch: x86
-          - os: macos-latest
-            arch: x86_64
-            boost_arch: x86
-          - os: macos-latest
-            arch: arm64
-            boost_arch: aarch64
-    runs-on: ${{ matrix.os }}
     steps:
+      - name: Install Dependencies
+        run: | 
+          sudo apt update
+          sudo apt install -yq libboost1.17-all-dev
+
       - uses: actions/checkout@v3
         with:
           repository: 'GMLC-TDC/HELICS.git'
@@ -116,7 +157,6 @@ jobs:
         uses: actions/cache@v3
         env:
           cache-name: cache-helics
-          BOOST_ROOT: ~/.cache/boost
         with:
           path: ~/.cache/HELICS
           key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
@@ -129,22 +169,9 @@ jobs:
           threads=`nproc`
           cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
           -DHELICS_ZMQ_SUBPROJECT=ON \
-          -DBoost_INCLUDE_DIR=${{env.BOOST_ROOT}}/include \
-          -DBoost_LIBRARY_DIRS=${{env.BOOST_ROOT}}/lib \
-          -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}}
-          cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel 2 --target install
+          cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads --target install
 
-  linux-build:
-    needs: [ build-helics ]
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            arch: x86_64
-    runs-on: ${{matrix.os}}
-
-    steps:
-      - name: Checkout Repo
+      - name: Checkout GridLAB-D
         uses: actions/checkout@v3
         with:
           submodules: recursive
@@ -175,13 +202,13 @@ jobs:
   #            ${{github.workspace}}/build/*-Linux.deb
 
   win-build:
-    needs: [ build-helics ]
-    strategy:
-      matrix:
-        include:
-          - os: windows-latest
-            arch: x86_64
-    runs-on: ${{matrix.os}}
+#    needs: [ build-helics ]
+#    strategy:
+#      matrix:
+#        include:
+#          - os: windows-latest
+#            arch: x86_64
+    runs-on: windows-latest
     defaults:
       run:
         shell: msys2 {0}
@@ -197,6 +224,34 @@ jobs:
             mingw-w64-x86_64-gcc
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-nsis
+            mingw-w64-x86_64-boost
+
+      - uses: actions/checkout@v3
+        with:
+          repository: 'GMLC-TDC/HELICS.git'
+          ref: ${{ env.helics-ref }}
+          submodules: 'recursive'
+          fetch-depth: 0
+          path: helics-build
+
+      - name: Build HELICS Cache
+        id: cache-helics
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-helics
+        with:
+          path: ~/.cache/HELICS
+          key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
+          restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
+
+      - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
+        name: Build HELICS
+        working-directory: ${{github.workspace}}/helics-build
+        run: |
+          threads=`nproc`
+          cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
+          -DHELICS_ZMQ_SUBPROJECT=ON \
+          cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads --target install   
 
       - name: Checkout Repo
         uses: actions/checkout@v3
@@ -227,7 +282,7 @@ jobs:
   #            ${{github.workspace}}/build/*-Windows.exe
 
   mac-build:
-    needs: [ build-helics ]
+#    needs: [ build-helics ]
     strategy:
       matrix:
         include:
@@ -237,6 +292,50 @@ jobs:
             arch: arm64
     runs-on: ${{matrix.os}}
     steps:
+
+      - name: Update Homebrew
+        run: |
+          brew update --preinstall
+          cat "$(brew --repository)/Library/Taps/homebrew/homebrew-core/Formula/foo.rb" > .github/brew-formulae
+          - name: Configure Homebrew cache
+            uses: actions/cache@v2
+            with:
+              path: |
+                ~/Library/Caches/Homebrew/foo--*
+                ~/Library/Caches/Homebrew/downloads/*--foo-*
+              key: brew-${{ hashFiles('.github/brew-formulae') }}
+              restore-keys: brew-
+          - name: Install Homebrew dependencies
+            run: |
+              env HOMEBREW_NO_AUTO_UPDATE=1 brew install boost
+
+      - uses: actions/checkout@v3
+        with:
+          repository: 'GMLC-TDC/HELICS.git'
+          ref: ${{ env.helics-ref }}
+          submodules: 'recursive'
+          fetch-depth: 0
+          path: helics-build
+
+      - name: Build HELICS Cache
+        id: cache-helics
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-helics
+        with:
+          path: ~/.cache/HELICS
+          key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
+          restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
+
+      - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
+        name: Build HELICS
+        working-directory: ${{github.workspace}}/helics-build
+        run: |
+          threads=`nproc`
+          cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
+          -DHELICS_ZMQ_SUBPROJECT=ON \
+          cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads --target install
+
       - name: Checkout Repo
         uses: actions/checkout@v3
         with:
