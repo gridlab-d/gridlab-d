@@ -105,7 +105,7 @@ jobs:
 #    steps:
 #      - uses: actions/checkout@v3
 #        with:
-#          repository: 'GMLC-TDC/HELICS.git'
+#          repository: 'GMLC-TDC/HELICS'
 #          ref: ${{ env.helics-ref }}
 #          submodules: 'recursive'
 #          fetch-depth: 0
@@ -144,9 +144,10 @@ jobs:
           sudo apt update
           sudo apt install -yq libboost1.71-all-dev
 
-      - uses: actions/checkout@v3
+      - name: Checkout HELICS
+        uses: actions/checkout@v3
         with:
-          repository: 'GMLC-TDC/HELICS.git'
+          repository: 'GMLC-TDC/HELICS'
           ref: ${{ env.helics-ref }}
           submodules: 'recursive'
           fetch-depth: 0
@@ -227,9 +228,10 @@ jobs:
             mingw-w64-x86_64-nsis
             mingw-w64-x86_64-boost
 
-      - uses: actions/checkout@v3
+      - name: Checkout HELICS
+        uses: actions/checkout@v3
         with:
-          repository: 'GMLC-TDC/HELICS.git'
+          repository: 'GMLC-TDC/HELICS'
           ref: ${{ env.helics-ref }}
           submodules: 'recursive'
           fetch-depth: 0
@@ -255,7 +257,7 @@ jobs:
           cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads
           cmake --install ${{github.workspace}}/helics-build/build
 
-      - name: Checkout Repo
+      - name: Checkout GridLAB-D
         uses: actions/checkout@v3
         with:
           submodules: recursive
@@ -299,9 +301,10 @@ jobs:
           brew update --preinstall
           env HOMEBREW_NO_AUTO_UPDATE=1 brew install boost
 
-      - uses: actions/checkout@v3
+      - name: Checkout HELICS
+        uses: actions/checkout@v3
         with:
-          repository: 'GMLC-TDC/HELICS.git'
+          repository: 'GMLC-TDC/HELICS'
           ref: ${{ env.helics-ref }}
           submodules: 'recursive'
           fetch-depth: 0
@@ -327,7 +330,7 @@ jobs:
           cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads
           cmake --install ${{github.workspace}}/helics-build/build
 
-      - name: Checkout Repo
+      - name: Checkout GridLAB-D
         uses: actions/checkout@v3
         with:
           submodules: recursive
