@@ -33,6 +33,13 @@ jobs:
             arch: arm64
     runs-on: ubuntu-latest
     steps:
+      - name: Setup boost
+        uses: MarkusJx/install-boost@v2.3.1
+        id: install-boost
+        with:
+          boost_version: 1.73.0
+          arch: ${{ matrix.arch }}
+          boost_install_dir: ~/.cache/boost
       - uses: actions/checkout@v3
         with:
           repository: 'GMLC-TDC/HELICS.git'
@@ -49,7 +56,9 @@ jobs:
           cache-name: cache-helics-lib
         with:
           # npm cache files are stored in `~/.npm` on Linux/macOS
-          path: ~/.cache/HELICS
+          path: |
+            ~/.cache/boost
+            ~/.cache/HELICS
           key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ steps.vars.outputs.sha_short }}
           restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ steps.vars.outputs.sha_short }}
 
@@ -57,7 +66,7 @@ jobs:
         name: Build HELICS
         run: |
           threads=`nproc`
-          cmake -B ${{github.workspace}}/helics-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS -DHELICS_ZMQ_SUBPROJECT=ON -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}}
+          cmake -B ${{github.workspace}}/helics-build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS -DHELICS_ZMQ_SUBPROJECT=ON -DBOOST_INSTALL_PATH=${{ steps.install-boost.outputs.BOOST_ROOT }} -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}}
           cmake --build ${{github.workspace}}/helics-build --config ${{env.BUILD_TYPE}} --parallel $threads --target install
 
   linux-build:
