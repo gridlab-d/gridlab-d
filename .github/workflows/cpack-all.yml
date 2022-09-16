@@ -24,121 +24,6 @@ env:
   helics-ref: 'v3.3.0'
 
 jobs:
-#  build-boost:
-#    env:
-#      boost-ref: 'boost-1.73.0'
-#    strategy:
-#      matrix:
-#        include:
-#          - os: ubuntu-latest
-#            arch: x86_64
-#            boost_arch: x86_64
-#          - os: windows-latest
-#            arch: x86_64
-#            boost_arch: x86_64
-#          - os: macos-latest
-#            arch: x86_64
-#            boost_arch: x86_64
-#          - os: macos-latest
-#            arch: arm64
-#            boost_arch: arm
-#    runs-on: ${{ matrix.os }}
-#    steps:
-#      - name: Build Boost Git Cache
-#        id: cache-boost-git
-#        uses: actions/cache@v3
-#        env:
-#          cache-name: cache-boost-git
-#        with:
-#          path: ${{ github.workspace }}/boost-build
-#          key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.boost-ref }}
-#          restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.boost-ref }}
-#
-#      - if: ${{ steps.cache-boost-git.outputs.cache-hit != 'true' }}
-#        uses: actions/checkout@v3
-#        with:
-#          repository: 'boostorg/boost.git'
-#          ref: 'boost-1.73.0'
-#          submodules: 'recursive'
-#          fetch-depth: 0
-#          path: boost-build
-#
-#      - name: Build Boost Cache
-#        id: cache-boost
-#        uses: actions/cache@v3
-#        env:
-#          cache-name: cache-boost
-#        with:
-#          path: ~/.cache/boost
-#          key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.boost-ref }}
-#          restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.boost-ref }}
-#
-#      - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' && matrix.boost_arch == 'arm' }}
-#        name: Build Boost for ARM
-#        working-directory: ${{ github.workspace }}/boost-build
-#        run: |
-#          ./bootstrap.sh --prefix=~/.cache/boost
-#          ./b2 release architecture=arm address-model=64 abi=aapcs binary-format=MACH-O
-#
-#      - if: ${{ steps.cache-boost.outputs.cache-hit != 'true' && matrix.boost_arch != 'arm' }}
-#        name: Build Boost for x86
-#        working-directory: ${{ github.workspace }}/boost-build
-#        run: |
-#          ./bootstrap.sh --prefix=~/.cache/boost
-#          ./b2 release
-
-#  build-helics:
-#    needs: [ build-boost ]
-#    env:
-#      helics-ref: 'v3.3.0'
-#    strategy:
-#      matrix:
-#        include:
-#          - os: ubuntu-latest
-#            arch: x86_64
-#            boost_arch: x86
-#          - os: windows-latest
-#            arch: x86_64
-#            boost_arch: x86
-#          - os: macos-latest
-#            arch: x86_64
-#            boost_arch: x86
-#          - os: macos-latest
-#            arch: arm64
-#            boost_arch: aarch64
-#    runs-on: ${{ matrix.os }}
-#    steps:
-#      - uses: actions/checkout@v3
-#        with:
-#          repository: 'GMLC-TDC/HELICS'
-#          ref: ${{ env.helics-ref }}
-#          submodules: 'recursive'
-#          fetch-depth: 0
-#          path: helics-build
-#
-#      - name: Build HELICS Cache
-#        id: cache-helics
-#        uses: actions/cache@v3
-#        env:
-#          cache-name: cache-helics
-#          BOOST_ROOT: ~/.cache/boost
-#        with:
-#          path: ~/.cache/HELICS
-#          key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
-#          restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
-#
-#      - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
-#        name: Build HELICS
-#        working-directory: ${{github.workspace}}/helics-build
-#        run: |
-#          threads=`nproc`
-#          cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
-#          -DHELICS_ZMQ_SUBPROJECT=ON \
-#          -DBoost_INCLUDE_DIR=${{env.BOOST_ROOT}}/include \
-#          -DBoost_LIBRARY_DIRS=${{env.BOOST_ROOT}}/lib \
-#          -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}}
-#          cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel 2 --target install
-
   linux-build:
     runs-on: ubuntu-latest
     steps:
@@ -171,7 +56,7 @@ jobs:
         working-directory: ${{github.workspace}}/helics-build
         run: |
           threads=`nproc`
-          cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
+          cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
           -DHELICS_ZMQ_SUBPROJECT=ON
           cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads
           cmake --install ${{github.workspace}}/helics-build/build
@@ -197,14 +82,9 @@ jobs:
         uses: actions/upload-artifact@v3.1.0
         with:
           name: Linux Package
-          path: ${{github.workspace}}/build/packages
-  #          |
-  #            ${{github.workspace}}/build/*-Linux.tar.gz
-  #            ${{github.workspace}}/build/*-Linux.tar.Z
-  #            ${{github.workspace}}/build/*-Linux.zip
-  #            ${{github.workspace}}/build/*-Linux.sh
-  #            ${{github.workspace}}/build/*-Linux.rpm
-  #            ${{github.workspace}}/build/*-Linux.deb
+          path: | 
+            ${{github.workspace}}/build/packages
+            !${{github.workspace}}/build/packages/_CPack_Packages
 
   win-build:
     runs-on: windows-latest
@@ -249,10 +129,10 @@ jobs:
         working-directory: ${{github.workspace}}/helics-build
         run: |
           threads=`nproc`
-          cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
-          -DHELICS_ZMQ_SUBPROJECT=ON
-          cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads
-          cmake --install ${{github.workspace}}/helics-build/build
+          cmake -G "Ninja -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
+           -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DHELICS_ZMQ_SUBPROJECT=ON
+          cmake --build ./build --config ${{env.BUILD_TYPE}} --parallel $threads
+          cmake --install ./build
 
       - name: Checkout GridLAB-D
         uses: actions/checkout@v3
@@ -277,10 +157,9 @@ jobs:
         uses: actions/upload-artifact@v3.1.0
         with:
           name: Windows Package
-          path: ${{github.workspace}}/build/packages
-  #          |
-  #            ${{github.workspace}}/build/*-Windows.zip
-  #            ${{github.workspace}}/build/*-Windows.exe
+          path: |
+            ${{github.workspace}}/build/packages
+            !${{github.workspace}}/build/packages/_CPack_Packages
 
   mac-build:
     strategy:
@@ -321,7 +200,7 @@ jobs:
         working-directory: ${{github.workspace}}/helics-build
         run: |
           threads=`sysctl -n hw.logicalcpu`
-          cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
+          cmake -B ${{github.workspace}}/helics-build/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
           -DHELICS_ZMQ_SUBPROJECT=ON -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}}
           cmake --build ${{github.workspace}}/helics-build/build --config ${{env.BUILD_TYPE}} --parallel $threads
           cmake --install ${{github.workspace}}/helics-build/build
@@ -347,9 +226,6 @@ jobs:
         uses: actions/upload-artifact@v3.1.0
         with:
           name: Mac ${{matrix.arch}} Package
-          path: ${{github.workspace}}/build-${{matrix.arch}}/packages
-      #           |
-      #            ${{github.workspace}}/build-${{matrix.arch}}/*-MacOS.tar.gz
-      #            ${{github.workspace}}/build-${{matrix.arch}}/*-MacOS.zip
-      #            ${{github.workspace}}/build-${{matrix.arch}}/*-MacOS.pkg
-      #            ${{github.workspace}}/build-${{matrix.arch}}/*-MacOS.dmg
+          path: |
+            ${{github.workspace}}/build-${{matrix.arch}}/packages
+            !${{github.workspace}}/build-${{matrix.arch}}/packages/_CPack_Packages
