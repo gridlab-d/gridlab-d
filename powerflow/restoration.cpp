@@ -4010,11 +4010,11 @@ bool Chain::isempty(void)
 
 	if (first == nullptr)
 	{
-		flag = TRUE;
+		flag = true;
 	}
 	else
 	{
-		flag = FALSE;
+		flag = false;
 	}
 
 	return flag;
@@ -4075,7 +4075,7 @@ bool Chain::modify(int oldData, int newData)
 	CHAINNODE *currentNode;
 	bool flag;
 
-	flag = FALSE;
+	flag = false;
 	currentNode = first;
 
 	while (currentNode != nullptr)
@@ -4096,7 +4096,7 @@ bool Chain::modify(int oldData, int newData)
 		if (currentNode->data == oldData)
 		{
 			currentNode->data = newData;
-			flag = TRUE;
+			flag = true;
 		}
 		//Default else -- leave it false
 	}
@@ -4104,7 +4104,7 @@ bool Chain::modify(int oldData, int newData)
 	//if oldData is not found:
 	if (currentNode == nullptr)
 	{
-		flag = FALSE;
+		flag = false;
 	}
 
 	return flag;

@@ -24,7 +24,7 @@
 
 static SCHEDULE *schedule_list = NULL;
 static uint32 n_schedules = 0;
-static int interpolated_schedules = FALSE;
+static int interpolated_schedules = false;
 
 #ifdef _DEBUG
 unsigned int schedule_checksum(SCHEDULE *sch)
@@ -331,7 +331,7 @@ int schedule_compile_block(SCHEDULE *sch, unsigned char block, const char *block
 		}
 		else if ( strcmp(token,"interpolated")==0 ) {
 			sch->flags |= SN_INTERPOLATED;
-			interpolated_schedules = TRUE;
+			interpolated_schedules = true;
 			continue;
 		}
 
@@ -805,7 +805,7 @@ int schedule_compile(SCHEDULE *sch)
 				else if (strcmp(blockname,"interpolated")==0)
 				{
 					sch->flags |= SN_INTERPOLATED;
-					interpolated_schedules = TRUE;
+					interpolated_schedules = true;
 				}
 				else
 					output_error("schedule %s: block option '%s' is not recognized", sch->name, blockname);

@@ -17,7 +17,7 @@
 
 	@par Voltage control
 
-	When the global variable require_voltage_control is set to \p TRUE,
+	When the global variable require_voltage_control is set to \p true,
 	the bus type is used to determine how voltage control is implemented.
 	Voltage control is only performed when the bus has no link that
 	considers it a to node.  When the flag \#NF_HASSOURCE is cleared, then
@@ -588,12 +588,12 @@ int node::init(OBJECT *parent)
 		}
 
 		//Check for parents to see if they are a parent/childed load
-		if (obj->parent!=nullptr) 	//Has a parent, let's see if it is a node and link it up 
+		if (obj->parent!=nullptr) 	//Has a parent, let's see if it is a node and link it up
 		{						//(this will break anything intentionally done this way - e.g. switch between two nodes)
 			if (!(gl_object_isa(obj->parent,"node","powerflow")))	//All others alias up to isa:node eventually
 				GL_THROW("NR: Parent is not a node-based object!");
 				/*  TROUBLESHOOT
-				A Newton-Raphson parent-child connection was attempted on a non-node.  The parent object must be a node, load, or meter object in the 
+				A Newton-Raphson parent-child connection was attempted on a non-node.  The parent object must be a node, load, or meter object in the
 				powerflow module for this connection to be successful.
 				*/
 
@@ -902,7 +902,7 @@ int node::init(OBJECT *parent)
 				NR_swing_rank_set = true;
 			}
 			else	//Normal nodes and rival swing buses end up starting in the same rank
-			{	
+			{
 				if (obj->rank<4)
 				{
 					gl_set_rank(obj,4);
@@ -956,7 +956,7 @@ int node::init(OBJECT *parent)
 						the libary specifications.  superLU is being used instead.  Please check the library file and
 						try again.
 						*/
-						
+
 						//Set to superLU
 						matrix_solver_method = MM_SUPERLU;
 					}
@@ -967,14 +967,14 @@ int node::init(OBJECT *parent)
 
 						//Link the callback
 						cbackval = (CALLBACKS **)DLSYM(LUSolverFcns.dllLink, "callback");
-						
+
 						//I don't know what this does
 						if(cbackval)
 							*cbackval = callback;
-						
+
 						//Now link functions - Init
 						LUSolverFcns.ext_init = DLSYM(LUSolverFcns.dllLink,"LU_init");
-						
+
 						//Make sure it worked
 						if (LUSolverFcns.ext_init == nullptr)
 						{
@@ -1425,7 +1425,7 @@ int node::init(OBJECT *parent)
 			}
 		}
 
-		//update GFA-type 
+		//update GFA-type
 		prev_time_dbl = (double)gl_globalclock;
 	}
 
@@ -1549,7 +1549,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 	unsigned int index_val;
 	FILE *NRFileDump;
 	OBJECT *obj = OBJECTHDR(this);
-	TIMESTAMP t1 = powerflow_object::presync(t0); 
+	TIMESTAMP t1 = powerflow_object::presync(t0);
 	TIMESTAMP temp_time_value, temp_t1_value;
 	node *temp_par_node = nullptr;
 	gld_property *temp_complex_property = nullptr;
@@ -1638,7 +1638,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			A node has more phases present than it has sources coming in.  This scenario implies an unconnected
 			phases between the from and to nodes of a connected line.  Please adjust the phases appropriately.  Also
 			be sure no open switches are the sole connection for a phase, else this will fail as well.  In a few NR
-			circumstances, this can also be seen if the "from" and "to" nodes are in reverse order - the "from" node 
+			circumstances, this can also be seen if the "from" and "to" nodes are in reverse order - the "from" node
 			of a link object should be nearest the SWING node, or the node with the most phases - this error check
 			will be updated in future versions.
 			*/
@@ -2032,7 +2032,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			frequency = pRef->frequency;
 		}
 	}
-	
+
 	return t1;
 }
 
@@ -2057,7 +2057,7 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 		}
 		//Default else -- our current state is acceptable
 
-		
+
 		//Phase check/voltage zero - mostly so fuses behave properly (postsync one captures most items, but restored fuses
 		//break things here)
 		//Make sure we're a real boy - if we're not, do nothing (we'll steal mommy's or daddy's voltages in postsync)
@@ -2482,7 +2482,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 #endif
 			gld::complex d1 = (voltage1.IsZero() || (power1.IsZero() && shunt1.IsZero())) ? (current1 + temp_curr_val[0]) : (current1 + ~(power1/voltage1) + voltage1*shunt1 + temp_curr_val[0]);
 			gld::complex d2 = ((voltage1+voltage2).IsZero() || (power12.IsZero() && shunt12.IsZero())) ? (current12 + temp_curr_val[2]) : (current12 + ~(power12/(voltage1+voltage2)) + (voltage1+voltage2)*shunt12 + temp_curr_val[2]);
-			
+
 			current_inj[0] += d1;
 			temp_inj[0] = current_inj[0];
 			current_inj[0] += d2;
@@ -2506,7 +2506,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			current_inj[1] += d1;
 			temp_inj[1] = current_inj[1];
 			current_inj[1] += d2;
-			
+
 #ifdef SUPPORT_OUTAGES
 			}
 			else
@@ -2638,7 +2638,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			current_inj[2] += temp_current_val[2];
 #endif
 		}
-		else 
+		else
 		{	// 'WYE' connected load
 
 #ifdef SUPPORT_OUTAGES
@@ -2705,7 +2705,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			dy_curr_accum[0] += (voltageA.IsZero() || (power_dy[3].IsZero() && shunt_dy[3].IsZero())) ? current_dy[3] : current_dy[3] + ~(power_dy[3]/voltageA) + voltageA*shunt_dy[3];
 			dy_curr_accum[1] += (voltageB.IsZero() || (power_dy[4].IsZero() && shunt_dy[4].IsZero())) ? current_dy[4] : current_dy[4] + ~(power_dy[4]/voltageB) + voltageB*shunt_dy[4];
 			dy_curr_accum[2] += (voltageC.IsZero() || (power_dy[5].IsZero() && shunt_dy[5].IsZero())) ? current_dy[5] : current_dy[5] + ~(power_dy[5]/voltageC) + voltageC*shunt_dy[5];
-				
+
 			//Accumulate in to final portion
 			current_inj[0] += dy_curr_accum[0];
 			current_inj[1] += dy_curr_accum[1];
@@ -2789,7 +2789,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		{
 			//Call NR sync function items
 			NR_node_sync_fxn(obj);
-			
+
 #ifdef GLD_USE_EIGEN
 			static auto NR_Solver = std::make_unique<NR_Solver_Eigen>();
 #endif
@@ -2798,7 +2798,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			{
 				bool bad_computation=false;
 				NRSOLVERMODE powerflow_type;
-				
+
 				//See if we're the special fault_check mode
 				if (fault_check_override_mode)
 				{
@@ -3186,7 +3186,7 @@ void node::BOTH_node_postsync_fxn(OBJECT *obj)
 		voltaged[1] = voltage[1] - voltage[2];	//BC
 		voltaged[2] = voltage[2] - voltage[0];	//CA
 	}
-	
+
 	//This code performs the new "flattened" NR calculations.
 	if (solver_method == SM_NR)
 	{
@@ -3281,7 +3281,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 
 			//Re-update our Delta or single-phase equivalents since we now have a new voltage
 			//Update appropriate "other" voltages
-			if (phases&PHASE_S) 
+			if (phases&PHASE_S)
 			{	// split-tap voltage diffs are different
 				voltage12 = voltage1 + voltage2;
 				voltage1N = voltage1 - voltageN;
@@ -3326,7 +3326,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 	{
 		/* compute the sync voltage change */
 		double sync_V = (last_voltage[0]-voltage[0]).Mag() + (last_voltage[1]-voltage[1]).Mag() + (last_voltage[2]-voltage[2]).Mag();
-		
+
 		/* if the sync voltage limit is defined and the sync voltage is larger */
 		if (sync_V > maximum_voltage_error){
 
@@ -3608,14 +3608,14 @@ EXPORT TIMESTAMP commit_node(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 			}
 			else
 				pNode->voltage[2] = gld::complex(0,0);
-			
+
 		}
 		return TS_NEVER;
 	}
 	catch (char *msg)
 	{
 		gl_error("%s (node:%d): %s", pNode->get_name(), pNode->get_id(), msg);
-		return 0; 
+		return 0;
 	}
 
 }
@@ -3832,7 +3832,7 @@ int node::NR_populate(void)
 
 	//Populate voltage
 	NR_busdata[NR_node_reference].V = &voltage[0];
-	
+
 	//Populate power
 	NR_busdata[NR_node_reference].S = &power[0];
 
@@ -4158,7 +4158,7 @@ int node::NR_current_update(bool parentcall)
 
 				//Extract the function address
 				temp_funadd = (FUNCTIONADDR)(gl_get_function(tmp_obj,"perform_current_calculation_pwr_link"));
-				
+
 				//Make sure it worked
 				if (temp_funadd == nullptr)
 				{
@@ -4293,7 +4293,7 @@ int node::NR_current_update(bool parentcall)
 			//Do the same for the prerorated stuff
 			last_child_power[3][0] = last_child_power[3][1] = last_child_power[3][2] = gld::complex(0.0,0.0);
 		}
-		else if ((SubNode & SNT_DIFF_CHILD)==SNT_DIFF_CHILD)	//Differently connected 
+		else if ((SubNode & SNT_DIFF_CHILD)==SNT_DIFF_CHILD)	//Differently connected
 		{
 			node *ParToLoad = OBJECTDATA(SubNodeParent,node);
 
@@ -4469,7 +4469,7 @@ int node::NR_current_update(bool parentcall)
 			{
 				/* normally the calc would not be inside the lock, but it's reflexive so that's ok */
 				temp_current_inj[2] = ((voltage1.IsZero() || (power1.IsZero() && shunt1.IsZero())) ||
-								   (voltage2.IsZero() || (power2.IsZero() && shunt2.IsZero()))) 
+								   (voltage2.IsZero() || (power2.IsZero() && shunt2.IsZero())))
 									? currentN : -((temp_current_inj[0]-temp_current[2])+(temp_current_inj[1]-temp_current[2]));
 			}
 		}
@@ -5075,7 +5075,7 @@ void node::init_freq_dynamics(double deltat)
 
 			//Calculate the associated angle offset - negative, for past
 			angle_offset = -1.0 * frequency_offset_val * deltat;
-			
+
 			//Translate it into a multiplier
 			//exp(jx) = cos(x)+j*sin(x)
 			angle_rotate_value = gld::complex(cos(angle_offset),sin(angle_offset));
@@ -5589,7 +5589,7 @@ STATUS node::reset_node_island_condition(void)
 
 	//Then call the reset
 	temp_status = ((STATUS (*)(OBJECT *,int))(temp_fxn_val))(fault_check_object,node_calling_reference);
-	
+
 	//Just pass its result
 	return temp_status;
 }
@@ -5737,7 +5737,7 @@ double node::compute_angle_diff(double angle_B, double angle_A)
 
 	//Compute the raw difference
 	diff_val = fmod((angle_B - angle_A + PI), two_PI);
-   
+
    //See if we need to wrap it around
    if (diff_val < 0.0)
    {
@@ -5971,9 +5971,9 @@ EXPORT int isa_node(OBJECT *obj, char *classname)
 EXPORT int notify_node(OBJECT *obj, int update_mode, PROPERTY *prop, char *value){
 	node *n = OBJECTDATA(obj, node);
 	int rv = 1;
-	
+
 	rv = n->notify(update_mode, prop, value);
-	
+
 	return rv;
 }
 

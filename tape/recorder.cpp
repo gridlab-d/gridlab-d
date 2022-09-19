@@ -626,7 +626,7 @@ TIMESTAMP sync_recorder(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass) {
 
     if (obj->parent == NULL) {
         char tb[32];
-        sprintf(buffer, "'%s' lacks a parent object %i ",
+        sprintf(buffer, "'%s' lacks a parent object",
                 obj->name ? obj->name : (sprintf(tb, "recorder:%i", obj->id), tb));
         close_recorder(my);
         my->status = TS_ERROR;

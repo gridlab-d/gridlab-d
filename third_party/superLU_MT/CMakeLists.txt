@@ -225,6 +225,12 @@ add_library(${PROJECT_NAME} STATIC
         ${THIRD_PARTY_PATH}/superLU_MT/zsp_blas3.c
         )
 
+if (MSVC)
+    target_compile_options(${PROJECT_NAME} PRIVATE /w)
+else ()
+    target_compile_options(${PROJECT_NAME} PRIVATE -w)
+endif ()
+
 set_target_properties(${PROJECT_NAME}
         PROPERTIES
         PREFIX ""

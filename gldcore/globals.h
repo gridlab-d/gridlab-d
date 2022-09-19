@@ -24,12 +24,9 @@
 extern "C" {
 #endif
 
-#ifndef FALSE
-#define FALSE (0)
-#define TRUE (!FALSE)
-#endif
 
-typedef enum {FAILED=FALSE, SUCCESS=TRUE} STATUS;
+
+typedef enum {FAILED=false, SUCCESS=true} STATUS;
 
 typedef struct s_globalvar {
 	PROPERTY *prop;
@@ -76,21 +73,21 @@ GLOBAL char global_version_branch[256] INIT(""); /**< The software's branch desi
 
 GLOBAL char global_command_line[1024]; /**< The current command-line */
 GLOBAL char global_environment[1024] INIT("batch"); /**< The processing environment in use */
-GLOBAL int global_quiet_mode INIT(FALSE); /**< The quiet mode flag */
-GLOBAL int global_warn_mode INIT(TRUE); /**< The warning mode flag */
-GLOBAL int global_debug_mode INIT(FALSE); /**< Enables the debugger */
-GLOBAL int global_test_mode INIT(FALSE); /**< The test mode flag */
-GLOBAL int global_verbose_mode INIT(FALSE); /**< The verbose mode flag */
-GLOBAL int global_debug_output INIT(FALSE); /**< Enables debug output */
-GLOBAL int global_keep_progress INIT(FALSE); /**< Flag to keep progress reports */
+GLOBAL int global_quiet_mode INIT(false); /**< The quiet mode flag */
+GLOBAL int global_warn_mode INIT(true); /**< The warning mode flag */
+GLOBAL int global_debug_mode INIT(false); /**< Enables the debugger */
+GLOBAL int global_test_mode INIT(false); /**< The test mode flag */
+GLOBAL int global_verbose_mode INIT(false); /**< The verbose mode flag */
+GLOBAL int global_debug_output INIT(false); /**< Enables debug output */
+GLOBAL int global_keep_progress INIT(false); /**< Flag to keep progress reports */
 GLOBAL unsigned global_iteration_limit INIT(100); /**< The global iteration limit */
 GLOBAL bool global_federation_reiteration INIT(false); /**< enforce a hard reiteration for all modules due to a external federation reiteration. */
 GLOBAL char global_workdir[1024] INIT("."); /**< The current working directory */
 GLOBAL char global_dumpfile[1024] INIT("gridlabd.xml"); /**< The dump file name */
 GLOBAL char global_savefile[1024] INIT(""); /**< The save file name */
-GLOBAL int global_lock_enabled INIT(TRUE); /**Disable locks*/
-GLOBAL int global_dumpall INIT(FALSE);	/**< Flags all modules to dump data after run complete */
-GLOBAL int global_runchecks INIT(FALSE); /**< Flags module check code to be called after initialization */
+GLOBAL int global_lock_enabled INIT(true); /**Disable locks*/
+GLOBAL int global_dumpall INIT(false);	/**< Flags all modules to dump data after run complete */
+GLOBAL int global_runchecks INIT(false); /**< Flags module check code to be called after initialization */
 /** @todo Set the threadcount to zero to automatically use the maximum system resources (tickets 180) */
 GLOBAL int global_threadcount INIT(1); /**< the maximum thread limit, zero means automagically determine best thread count */
 GLOBAL int global_profiler INIT(0); /**< Flags the profiler to process class performance data */
@@ -98,7 +95,7 @@ GLOBAL int global_pauseatexit INIT(0); /**< Enable a pause for user input after 
 GLOBAL char global_testoutputfile[1024] INIT("test.txt"); /**< Specifies the test output file */
 GLOBAL int global_xml_encoding INIT(8);  /**< Specifies XML encoding (default is 8) */
 GLOBAL char global_pidfile[1024] INIT(""); /**< Specifies that a process id file should be created */
-GLOBAL unsigned char global_no_balance INIT(FALSE);
+GLOBAL unsigned char global_no_balance INIT(false);
 GLOBAL char global_kmlfile[1024] INIT(""); /**< Specifies KML file to dump */
 GLOBAL char global_modelname[1024] INIT(""); /**< Name of the current model */
 GLOBAL char global_execdir[1024] INIT(""); /**< Path to folder containing installed application files */

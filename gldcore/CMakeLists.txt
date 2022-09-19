@@ -139,6 +139,8 @@ if (XercesC_FOUND)
     target_link_libraries(${PROJECT_NAME} PRIVATE ${XercesC_LIBRARIES})
 endif ()
 
+target_compile_options(${PROJECT_NAME} PRIVATE ${GLD_COMPILE_OPTIONS})
+set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
 target_link_libraries(${PROJECT_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
 target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/headers)
 

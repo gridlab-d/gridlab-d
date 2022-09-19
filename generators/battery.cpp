@@ -473,7 +473,7 @@ int battery::init(OBJECT *parent)
 
 			climates = gl_find_objects(FL_NEW,FT_CLASS,SAME,"climate",FT_END);
 
-			if (climates==nullptr) 
+			if (climates==nullptr)
 			{
 				climate_object_found = false;
 
@@ -2185,7 +2185,7 @@ TIMESTAMP battery::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			return result;
 		else
 			return TS_NEVER;
-	} else {//use_internal_battery_model is TRUE
+	} else {//use_internal_battery_model is true
 		//Pull the load
 		temp_double_value = pBatteryLoad->get_double();
 		bat_load = -temp_double_value;
