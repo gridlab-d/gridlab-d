@@ -1,7 +1,37 @@
 cmake_minimum_required(VERSION 3.13)
 project(GridLAB-D)
 
-set(COMPILE_FLAGS "${WARNING_FLAGS}")
+OPTION(GLD_WARNING_WORK "Make warnings more pedantic" OFF)
+if (GLD_WARNING_WORK)
+    if (MSVC)
+        SET(GLD_COMPILE_OPTIONS
+                "/W4"
+                "/WX"
+                CACHE INTERNAL
+                "GLD_COMPILE_OPTIONS"
+                )
+    else ()
+        SET(GLD_COMPILE_OPTIONS
+                "-Wall"
+                "-Wextra"
+                "-pedantic"
+                CACHE INTERNAL
+                "GLD_COMPILE_OPTIONS"
+                )
+    endif ()
+else ()
+    if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        # TODO: resolve these warnings and un-supress them
+        SET(GLD_COMPILE_OPTIONS
+                "-Wno-format-overflow"
+                "-Wno-format-truncation"
+                "-Wno-stringop-overflow"
+                CACHE INTERNAL
+                "GLD_COMPILE_OPTIONS"
+                )
+    endif ()
+endif ()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -12,7 +42,6 @@ set(CMAKE_INSTALL_DATADIR "${CMAKE_INSTALL_PREFIX}/share/${GLD_PACKAGE}" CACHE P
 
 option(CMAKE_VERBOSE_MAKEFILE "CMake outputs all build instructions" OFF)
 option(GLD_DO_CLEANUP "Automatically removes files from old GridLAB-D build processes" OFF)
-#SET(CMAKE_VERBOSE_MAKEFILE ON)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
@@ -23,8 +52,9 @@ include(CheckSymbolExists)
 include(CMakeDependentOption)
 include(FetchContent)
 
-# Setup Gridlab-d Version information.
+# Clean up remnant files from the old autotools build system
 include(cmake/Cleanup.cmake)
+# Setup Gridlab-d Version information.
 include(cmake/SetVersion.cmake)
 # Perform dependency checks
 include(cmake/CheckDependencies.cmake)

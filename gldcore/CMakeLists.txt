@@ -149,8 +149,16 @@ if (XercesC_FOUND)
     target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${XercesC_LIBRARIES})
 endif ()
 
+target_compile_options(${GLD_MODULE_NAME} PRIVATE ${GLD_COMPILE_OPTIONS})
+set_target_properties(${GLD_MODULE_NAME} PROPERTIES PREFIX "")
 target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
 target_include_directories(${GLD_MODULE_NAME} PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/headers)
+
+install(TARGETS ${GLD_MODULE_NAME}
+        ${FILE_PERMISSIONS}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+        COMPONENT Runtime
+        )
 
 if (GLD_USE_CLANG_TIDY)
     set_target_properties(${GLD_MODULE_NAME} PROPERTIES

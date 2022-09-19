@@ -594,7 +594,7 @@ int solar::init(OBJECT *parent)
 			Max_P = Rated_Insolation * efficiency * area; // We are calculating the module efficiency which should be less than cell efficiency. What about the sun hours??
 			gl_verbose("solar:%d %s - Max_P was not specified.  Calculating from other defaults.",obj->id,(obj->name?obj->name:"Unnamed"));
 			/* TROUBLESHOOT
-			The relationship between power output and other physical variables is described by Max_P = Rated_Insolation * efficiency * area. Since Max_P 
+			The relationship between power output and other physical variables is described by Max_P = Rated_Insolation * efficiency * area. Since Max_P
 			was not set, using this equation to calculate it.
 			*/
 
@@ -1519,7 +1519,7 @@ void solar::init_pub_vars_pvcurve_mode()
 			pvc_U_m_V = inv_rated_dc_volt_v;
 
 			pvc_I_m_A = Max_P / pvc_U_m_V;
-			
+
 			pvc_I_sc_A = pvc_I_m_A * PV_CURVE_PARAM_RATIO;
 			pvc_U_oc_V = pvc_U_m_V * PV_CURVE_PARAM_RATIO;
 		}

@@ -764,7 +764,7 @@ int house_e::create()
 	house_content_heat_transfer_coeff = 0;
 
 	// Window openings
-	window_openings = FALSE;
+	window_openings = false;
 	window_open = 0;			
 	window_low_temp = 60;		
 	window_high_temp = 80;		
@@ -1993,7 +1993,7 @@ int house_e::init(OBJECT *parent)
 	}
 	update_model();
 	
-	if(include_fan_heatgain == TRUE){
+	if(include_fan_heatgain == true){
 		fan_heatgain_fraction = 1;
 	} else {
 		fan_heatgain_fraction = 0;
@@ -2500,7 +2500,7 @@ void house_e::update_system(double dt)
 					{
 						//cooling_demand = cooling_capacity_adj / cooling_cop_adj * KWPBTUPH;
 						// DPC: the latent_load_fraction is not as great counted when humidity is low
-						if(use_latent_heat == TRUE){
+						if(use_latent_heat == true){
 							system_rated_capacity = -cooling_capacity_adj / (1 + 0.1 + latent_load_fraction/(1 + exp(4-10*value_Rhout)))*voltage_adj + fan_power*BTUPHPKW*fan_heatgain_fraction;
 							Qlatent = -cooling_capacity_adj*voltage_adj*((1/(1 + 0.1 + latent_load_fraction/(1 + exp(4-10*value_Rhout))))-1);
 						} else {
@@ -2533,7 +2533,7 @@ void house_e::update_system(double dt)
 		}
 
 		/* calculate the power consumption */
-		if(include_fan_heatgain == TRUE){
+		if(include_fan_heatgain == true){
 			load.total = system_rated_power + fan_power;
 		} else {
 			load.total = system_rated_power;
@@ -2671,7 +2671,7 @@ TIMESTAMP house_e::presync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 	}
 
-	if (window_openings == TRUE) 
+	if (window_openings == true)
 	{
 		if (window_high_temp <= window_low_temp)
 		{
@@ -3112,7 +3112,7 @@ TIMESTAMP house_e::sync_thermostat(TIMESTAMP t0, TIMESTAMP t1)
 		}
 	}
 
-	if (window_openings == TRUE) 
+	if (window_openings == true)
 	{
 		if (window_open == 1)
 		{

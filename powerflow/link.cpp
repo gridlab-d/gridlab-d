@@ -964,7 +964,7 @@ void link_object::NR_link_sync_fxn(void)
 	char jindex, kindex;
 	FUNCTIONADDR transformer_calc_function;
 	FUNCTIONADDR topo_update_function;
-	STATUS temp_status_variable;	
+	STATUS temp_status_variable;
 
 	//See if a frequency dependence is desired -- if so, update it
 	if (enable_frequency_dependence)
@@ -2532,7 +2532,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 
 				//Populate original phases property
 				NR_branchdata[NR_branch_reference].origphases = 128*has_phase(PHASE_S) + 4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
-				
+
 				//Populate phases property - check status
 				if (status == LS_CLOSED)
 				{
@@ -3363,21 +3363,21 @@ TIMESTAMP link_object::postsync(TIMESTAMP t0)
 		if (!is_open())
 		{
 			/* compute and update voltages */
-			gld::complex v0 = 
+			gld::complex v0 =
 				A_mat[0][0] * f->voltage[0] +
 				A_mat[0][1] * f->voltage[1] + // 
 				A_mat[0][2] * f->voltage[2] - //@todo current inj; flowing from t node
 				B_mat[0][0] * tc[0] - // current injection put into link from end mode
 				B_mat[0][1] * tc[1] -
 				B_mat[0][2] * tc[2];
-			gld::complex v1 = 
+			gld::complex v1 =
 				A_mat[1][0] * f->voltage[0] +
 				A_mat[1][1] * f->voltage[1] +
 				A_mat[1][2] * f->voltage[2] -
 				B_mat[1][0] * tc[0] -
 				B_mat[1][1] * tc[1] -
 				B_mat[1][2] * tc[2];
-			gld::complex v2 = 
+			gld::complex v2 =
 				A_mat[2][0] * f->voltage[0] +
 				A_mat[2][1] * f->voltage[1] +
 				A_mat[2][2] * f->voltage[2] -

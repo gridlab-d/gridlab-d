@@ -110,7 +110,7 @@ static MTICODE iterator_proc(MTIPROC *tp)
 
 		/* process each item in the list */
 		mti_debug(mti,"iterator %d started", tp->id);
-		tp->active = TRUE;
+		tp->active = true;
 		for ( n=0 ; n<tp->n_items ; n++ )
 		{
 			/* reset the itermediate result */
@@ -122,7 +122,7 @@ static MTICODE iterator_proc(MTIPROC *tp)
 			/* gather result */
 			mti->fn->gather(final,result);
 		}
-		tp->active = FALSE;
+		tp->active = false;
 		mti_debug(mti,"iterator %d completed", tp->id);
 
 		/* update the current data */
@@ -233,7 +233,7 @@ MTI *mti_init(const char *name, MTIFUNCTIONS *fn, size_t minitems)
 		{
 			MTIPROC *proc = &mti->process[p];
 			proc->mti = mti;
-			proc->active = FALSE;
+			proc->active = false;
 			proc->data = fn->set(NULL,NULL);
 			proc->item = (MTIITEM*)malloc(sizeof(MTIITEM)*items_per_process);
 			proc->n_items = 0;

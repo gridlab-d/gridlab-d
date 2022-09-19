@@ -87,7 +87,6 @@
 #include <cctype>
 #include <csignal>
 #include <cstring>
-#include <sys/timeb.h>
 #include <memory>
 #include <thread>
 #ifdef _WIN32
@@ -187,16 +186,18 @@ const char *exec_getexitcodestr(EXITCODE xc)
 /** Elapsed wallclock **/
 int64 exec_clock()
 {
-	static struct timeb t0;
-	struct timeb t1={0,0,0,0};
-	if ( t0.time==0 )
-	{
-		ftime(&t0);
-		t1 = t0;
-	}
-	else
-		ftime(&t1);
-	return (t1.time-t0.time)*CLOCKS_PER_SEC + (t1.millitm-t0.millitm)*CLOCKS_PER_SEC/1000;
+    using std::chrono::system_clock;
+    static bool initialized = false;
+    static std::chrono::time_point<system_clock> nt1;
+    static std::chrono::time_point<system_clock> nt2;
+    if (!initialized) { // [[unlikely]] {
+        nt1 = system_clock::now();
+        nt2 = nt1;
+        initialized = true;
+    } else { // [[likely]] {
+        nt2 = system_clock::now();
+    }
+    return std::chrono::duration_cast<std::chrono::microseconds>(nt2 - nt1).count();
 }
 
 /** The main system initialization sequence
@@ -1207,7 +1208,7 @@ static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2)
 {
 	static int n_commits = -1;
 	static MTI *mti[] = {nullptr,nullptr};
-	static int init_tried = FALSE;
+	static int init_tried = false;
 	MTIDATA input = (MTIDATA)&t0;
 	MTIDATA output = (MTIDATA)&t2;
 	TIMESTAMP result = TS_NEVER;
@@ -1239,7 +1240,7 @@ static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2)
 					if ( mti[pc]==nullptr )
 					{
 						output_warning("commit_all multi-threaded iterator initialization failed - using single-threaded iterator as fallback");
-						init_tried = TRUE;
+						init_tried = true;
 					}
 				}
 
@@ -2105,7 +2106,7 @@ STATUS exec_start()
 	}
 
 	// global test mode
-	if ( global_test_mode==TRUE )
+	if ( global_test_mode==true )
 		return static_cast<STATUS>(test_exec());
 
 	/* check for a model */
@@ -2147,11 +2148,11 @@ STATUS exec_start()
                 static bool initialized = false;
                 static std::chrono::time_point<system_clock, std::chrono::duration<long, std::ratio<1, 1000000000>>> t1;
                 static std::chrono::time_point<system_clock, std::chrono::duration<long, std::ratio<1, 1000000000>>> t2;
-                if (!initialized) [[unlikely]] {
+                if (!initialized) { //[[unlikely]] {
                     t1 = system_clock::now();
                     t2 = t1 + 1s;
                     initialized = true;
-                } else [[likely]] {
+                } else { //[[likely]] {
                     t1 = t2;
                     t2 += 1s; // One second from last time step
                 }
@@ -2167,7 +2168,7 @@ STATUS exec_start()
                     fall_behind++;
                 }
 
-                if (fall_behind > 5) [[unlikely]] {
+                if (fall_behind > 5) {// [[unlikely]] {
                     output_fatal("simulation fell behind realtime for more than 5 consecutive cycles");
                 }
 
@@ -3113,7 +3114,7 @@ void *slave_node_proc(void *args)
  **/
 void exec_slave_node()
 {
-	static bool node_done = FALSE;
+	static bool node_done = false;
 	static SOCKET sockfd = -1;
 	SOCKET *args[4];
 	struct sockaddr_in server_addr;
@@ -3208,7 +3209,7 @@ void exec_slave_node()
 			{
 				output_error("unable to accept connection");
 				perror("accept()");
-				node_done = TRUE;
+				node_done = true;
 				closesocket(sockfd);
 				return;
 			}
@@ -3222,7 +3223,7 @@ void exec_slave_node()
 			if ( pthread_create(&slave_thread, nullptr, slave_node_proc, (void *)args) )
 			{
 				output_error("slavenode unable to thread off connection");
-				node_done = TRUE;
+				node_done = true;
 				closesocket(sockfd);
 				closesocket(*args[2]);
 				return;
@@ -3231,7 +3232,7 @@ void exec_slave_node()
 			if ( pthread_detach(slave_thread) )
 			{
 				output_error("slavenode unable to detach connection thread");
-				node_done = TRUE;
+				node_done = true;
 				closesocket(sockfd);
 				closesocket(*args[2]);
 				return;
