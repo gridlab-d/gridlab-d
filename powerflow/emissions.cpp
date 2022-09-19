@@ -25,16 +25,16 @@ using namespace std;
 //////////////////////////////////////////////////////////////////////////
 // fault_check CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* emissions::oclass = NULL;
-CLASS* emissions::pclass = NULL;
+CLASS* emissions::oclass = nullptr;
+CLASS* emissions::pclass = nullptr;
 
 emissions::emissions(MODULE *mod) : powerflow_object(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		pclass = powerflow_object::oclass;
 		oclass = gl_register_class(mod,"emissions",sizeof(emissions),PC_POSTTOPDOWN|PC_AUTOLOCK);
-		if(oclass == NULL)
+		if(oclass == nullptr)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 		
 		if(gl_publish_variable(oclass,
@@ -171,7 +171,7 @@ int emissions::create(void)
 	
 	phases = PHASE_A;	//Populate a phase to make powerflow happy
 
-	parent_meter_total_power = NULL;
+	parent_meter_total_power = nullptr;
 
 	//Initialize tracking variables
 	cycle_interval_TS = 0;
@@ -305,7 +305,7 @@ int emissions::init(OBJECT *parent)
 	rval = powerflow_object::init(parent);
  
 	//Make sure we have a meter
-	if (parent!=NULL)
+	if (parent!=nullptr)
 	{
 		//Make sure our parent is a meter
 		if (gl_object_isa(parent,"meter","powerflow"))
@@ -513,7 +513,7 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 
 			if (dispatch_order == Nuclear_Order)
 			{
-				if ((Nuclear_Max_Out < energy_for_calc.Mag() && energy_requirement == true) && (dispatch_order != 0))
+				if ((Nuclear_Max_Out < energy_for_calc.Mag() && energy_requirement) && (dispatch_order != 0))
 
 				{
 					Nuclear_Out = Nuclear_Max_Out;
@@ -524,7 +524,7 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 
 					energy_for_calc = energy_for_calc - Nuclear_Max_Out;
 				}
-				else if ((energy_requirement == true) && (dispatch_order != 0))
+				else if (energy_requirement && (dispatch_order != 0))
 				{
 					Nuclear_Out = energy_for_calc.Mag();
 
@@ -550,7 +550,7 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 			
 			if (dispatch_order == Hydroelectric_Order)
 			{
-				if ((Hydroelectric_Max_Out < energy_for_calc.Mag() && energy_requirement == true) && (dispatch_order != 0))
+				if ((Hydroelectric_Max_Out < energy_for_calc.Mag() && energy_requirement) && (dispatch_order != 0))
 				{
 					Hydroelectric_Out = Hydroelectric_Max_Out;
 
@@ -560,7 +560,7 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 
 					energy_for_calc = energy_for_calc - Hydroelectric_Max_Out;
 				}
-				else if ((energy_requirement == true) && (dispatch_order != 0))
+				else if (energy_requirement && (dispatch_order != 0))
 				{
 					Hydroelectric_Out = energy_for_calc.Mag();
 
@@ -586,7 +586,7 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 
 			if (dispatch_order == Solarthermal_Order)
 			{
-				if ((Solarthermal_Max_Out < energy_for_calc.Mag() && energy_requirement == true) && (dispatch_order != 0))
+				if ((Solarthermal_Max_Out < energy_for_calc.Mag() && energy_requirement) && (dispatch_order != 0))
 				{
 					Solarthermal_Out = Solarthermal_Max_Out;
 
@@ -596,7 +596,7 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 
 					energy_for_calc = energy_for_calc - Solarthermal_Max_Out;
 				}
-				else if ((energy_requirement == true) && (dispatch_order != 0))
+				else if (energy_requirement && (dispatch_order != 0))
 				{
 					Solarthermal_Out = energy_for_calc.Mag();
 
@@ -620,7 +620,7 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 
 			if (dispatch_order == Biomass_Order)
 			{
-				if ((Biomass_Max_Out < energy_for_calc.Mag() && energy_requirement == true) && (dispatch_order != 0))
+				if ((Biomass_Max_Out < energy_for_calc.Mag() && energy_requirement) && (dispatch_order != 0))
 				{
 					Biomass_Out = Biomass_Max_Out ;
 
@@ -630,7 +630,7 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 
 					energy_for_calc = energy_for_calc - Biomass_Max_Out;
 				}
-				else if ((energy_requirement == true) && (dispatch_order != 0))
+				else if (energy_requirement && (dispatch_order != 0))
 				{
 					Biomass_Out = energy_for_calc.Mag();
 
@@ -656,7 +656,7 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 
 			if (dispatch_order == Wind_Order)
 			{
-				if ((Wind_Max_Out < energy_for_calc.Mag() && energy_requirement == true) && (dispatch_order != 0))
+				if ((Wind_Max_Out < energy_for_calc.Mag() && energy_requirement) && (dispatch_order != 0))
 				{
 					Wind_Out = Wind_Max_Out;
 
@@ -666,7 +666,7 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 
 					energy_for_calc = energy_for_calc - Wind_Max_Out;
 				}
-				else if ((energy_requirement == true) && (dispatch_order != 0))
+				else if (energy_requirement && (dispatch_order != 0))
 				{
 					Wind_Out = energy_for_calc.Mag();
 
@@ -692,7 +692,7 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 
 			if (dispatch_order == Coal_Order)
 			{
-				if ((Coal_Max_Out < energy_for_calc.Mag() && energy_requirement == true) && (dispatch_order != 0))
+				if ((Coal_Max_Out < energy_for_calc.Mag() && energy_requirement) && (dispatch_order != 0))
 				{
 					Coal_Out = Coal_Max_Out;
 
@@ -702,7 +702,7 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 
 					energy_for_calc = energy_for_calc - Coal_Max_Out; 
 				}
-				else if ((energy_requirement == true) && (dispatch_order != 0))
+				else if (energy_requirement && (dispatch_order != 0))
 				{
 					Coal_Out = energy_for_calc.Mag();
 
@@ -729,7 +729,7 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 			
 			if (dispatch_order == Naturalgas_Order)
 			{
-				if ((Naturalgas_Max_Out < energy_for_calc.Mag()) && (energy_requirement == true) && (dispatch_order != 0))
+				if ((Naturalgas_Max_Out < energy_for_calc.Mag()) && energy_requirement && (dispatch_order != 0))
 				{
 					Naturalgas_Out = Naturalgas_Max_Out;
 
@@ -739,7 +739,7 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 
 					energy_for_calc = energy_for_calc - Naturalgas_Max_Out;
 				}
-				else if ((energy_requirement == true) && (dispatch_order != 0))
+				else if (energy_requirement && (dispatch_order != 0))
 				{
 					Naturalgas_Out = energy_for_calc.Mag();
 
@@ -765,7 +765,7 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 
 			if (dispatch_order == Geothermal_Order)
 			{
-				if ((Geothermal_Max_Out < energy_for_calc.Mag() && energy_requirement == true) && (dispatch_order != 0))
+				if ((Geothermal_Max_Out < energy_for_calc.Mag() && energy_requirement) && (dispatch_order != 0))
 				{
 					Geothermal_Out = Geothermal_Max_Out;
 
@@ -775,7 +775,7 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 
 					energy_for_calc = energy_for_calc - Geothermal_Max_Out;
 				}
-				else if ((energy_requirement == true) && (dispatch_order != 0))
+				else if (energy_requirement && (dispatch_order != 0))
 				{
 					Geothermal_Out = energy_for_calc.Mag();
 
@@ -801,7 +801,7 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 
 			if (dispatch_order == Petroleum_Order)
 			{
-				if ((Petroleum_Max_Out < energy_for_calc.Mag() && energy_requirement == true) && (dispatch_order != 0))
+				if ((Petroleum_Max_Out < energy_for_calc.Mag() && energy_requirement) && (dispatch_order != 0))
 				{
 					Petroleum_Out = Petroleum_Max_Out;
 
@@ -811,7 +811,7 @@ TIMESTAMP emissions::postsync(TIMESTAMP t0)
 
 					energy_for_calc = energy_for_calc - Petroleum_Max_Out;
 				}
-				else if ((energy_requirement == true) && (dispatch_order != 0))
+				else if (energy_requirement && (dispatch_order != 0))
 				{
 					Petroleum_Out = energy_for_calc.Mag();
 
@@ -888,7 +888,7 @@ EXPORT int create_emissions(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(emissions::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			emissions *my = OBJECTDATA(*obj,emissions);
 			gl_set_parent(*obj,parent);

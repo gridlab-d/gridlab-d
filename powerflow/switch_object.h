@@ -71,8 +71,8 @@ private:
 	FUNCTIONADDR fault_handle_call;			//Reliability-type variable - calls topology reconfiguration after switch changes state
 	bool event_schedule_map_attempt;		//Flag to see if we've tried to map the event_schedule variable, or not
 
-	complex switch_impedance_value;			//Used for closed-switch value
-	complex switch_admittance_value;		//Admittance version - save some divides
+	gld::complex switch_impedance_value;			//Used for closed-switch value
+	gld::complex switch_admittance_value;		//Admittance version - save some divides
 
 	set node_phase_information(OBJECT *obj);
 };

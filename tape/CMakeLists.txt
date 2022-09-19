@@ -1,5 +1,9 @@
 SET(GLD_MODULE_NAME tape)
 
+if (GLD_USE_HDF5)
+    FIND_PACKAGE (HDF5 REQUIRED COMPONENTS CXX)
+endif ()
+
 add_library(${GLD_MODULE_NAME}
         collector.cpp
         collector.h
@@ -54,9 +58,22 @@ target_include_directories(${GLD_MODULE_NAME} PRIVATE
         )
 target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${JSONCPP_LIB})
 
+if (HDF5_FOUND)
+    target_link_libraries(${GLD_MODULE_NAME} PUBLIC ${HDF5_LIBRARIES})
+    target_include_directories(${GLD_MODULE_NAME} PUBLIC ${HDF5_INCLUDE_DIRS})
+    target_compile_definitions(${GLD_MODULE_NAME} PRIVATE HAVE_HDF5)
+endif ()
+
 set_target_properties(${GLD_MODULE_NAME} PROPERTIES PREFIX "")
 target_include_directories(${GLD_MODULE_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
 target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
+
+install(TARGETS ${GLD_MODULE_NAME}
+        ${FILE_PERMISSIONS}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        COMPONENT Libraries)
 
 if (GLD_USE_CLANG_TIDY)
     set_target_properties(${GLD_MODULE_NAME} PROPERTIES

@@ -66,7 +66,6 @@ add_library(${GLD_MODULE_NAME}
 
 if (FNCS_FOUND)
     target_link_libraries(${GLD_MODULE_NAME} PRIVATE
-            fncs
             ${GLD_FNCS_LIBRARIES}
             )
     target_compile_definitions(${GLD_MODULE_NAME} PRIVATE HAVE_FNCS)

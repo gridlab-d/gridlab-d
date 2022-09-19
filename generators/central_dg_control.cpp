@@ -22,8 +22,8 @@
 
 #define DEFAULT 1.0;
 
-CLASS *central_dg_control::oclass = NULL;
-central_dg_control *central_dg_control::defaults = NULL;
+CLASS *central_dg_control::oclass = nullptr;
+central_dg_control *central_dg_control::defaults = nullptr;
 
 static PASSCONFIG passconfig = PC_BOTTOMUP|PC_POSTTOPDOWN;
 static PASSCONFIG clockpass = PC_BOTTOMUP;
@@ -31,10 +31,10 @@ static PASSCONFIG clockpass = PC_BOTTOMUP;
 /* Class registration is only called once to register the class with the core */
 central_dg_control::central_dg_control(MODULE *module)
 {	
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		oclass = gl_register_class(module,"central_dg_control",sizeof(central_dg_control),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class central_dg_control";
 		else
 			oclass->trl = TRL_PROOF;
@@ -83,7 +83,7 @@ int central_dg_control::create(void)
 	control_mode_setting[1] = control_mode_setting[2] = control_mode_setting[3] = NO_SETTING;
 
 	//Null properties
-	pPower_Meas[0] = pPower_Meas[1] = pPower_Meas[2] = NULL;
+	pPower_Meas[0] = pPower_Meas[1] = pPower_Meas[2] = nullptr;
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -112,7 +112,7 @@ int central_dg_control::init(OBJECT *parent)
 	}
 	//Find all inverters with controller group id
 	inverter_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"inverter",AND,FT_GROUPID,SAME,controlled_objects.get_string(),FT_END);
-	if(inverter_list == NULL){
+	if(inverter_list == nullptr){
 		gl_error("No inverters with given group id found.");
 		/*  TROUBLESHOOT
 		While trying to put together a list of all inverter objects with the specified controller groupid, no such inverter objects were found.
@@ -122,7 +122,7 @@ int central_dg_control::init(OBJECT *parent)
 	}
 	//Find all batteries whose parents are inverters with controller group id
 	battery_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"battery",AND,FT_PARENT,FT_CLASS,SAME,"inverter",AND,FT_PARENT,FT_GROUPID,SAME,controlled_objects.get_string(),FT_END);
-	if(battery_list == NULL){
+	if(battery_list == nullptr){
 		gl_error("No batteries with inverter parents with given group id found.");
 		/*  TROUBLESHOOT
 		While trying to put together a list of all battery objects with parent inverter objects with the specified controller groupid, no such battery objects were found.
@@ -131,7 +131,7 @@ int central_dg_control::init(OBJECT *parent)
 	}
 	//Find all solars whose parents are inverters with controller group id
 	solar_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"solar",AND,FT_PARENT,FT_CLASS,SAME,"inverter",AND,FT_PARENT,FT_GROUPID,SAME,controlled_objects.get_string(),FT_END);
-	if(solar_list == NULL){
+	if(solar_list == nullptr){
 		gl_error("no solars with inverter parents with given group id found.");
 		/*  TROUBLESHOOT
 		While trying to put together a list of all solar objects with parent inverter objects with the specified controller groupid, no such solar objects were found.
@@ -141,7 +141,7 @@ int central_dg_control::init(OBJECT *parent)
 
 	//Allocate pointer array for all inverters which for now includes those with battery and solar children
 	inverter_set = (inverter **)gl_malloc((battery_list->hit_count*sizeof(battery*))+(solar_list->hit_count*sizeof(solar*)));
-	if(inverter_set == NULL){
+	if(inverter_set == nullptr){
 		gl_error("Failed to allocate inverter array.");
 		/*  TROUBLESHOOT
 		While trying to allocate the array of pointers to the controlled inverters, the pointer array came back null.
@@ -150,7 +150,7 @@ int central_dg_control::init(OBJECT *parent)
 	}
 	//Allocate battery pointer array
 	battery_set = (battery **)gl_malloc(battery_list->hit_count*sizeof(battery*));
-	if(battery_set == NULL){
+	if(battery_set == nullptr){
 		gl_error("Failed to allocate battery array.");
 		/*  TROUBLESHOOT
 		While trying to allocate the array of pointers to the controlled batteries, the pointer array came back null.		
@@ -159,7 +159,7 @@ int central_dg_control::init(OBJECT *parent)
 	}
 	//Allocate solar pointer array
 	solar_set = (solar **)gl_malloc(solar_list->hit_count*sizeof(solar*));
-	if(solar_set == NULL){
+	if(solar_set == nullptr){
 		gl_error("Failed to allocate solar array.");
 		/*  TROUBLESHOOT
 		While trying to allocate the array of pointers to the controlled solars, the pointer array came back null.
@@ -168,7 +168,7 @@ int central_dg_control::init(OBJECT *parent)
 	}
 	//Allocate pointer array for inverters with battery children
 	battery_inverter_set = (inverter ***)gl_malloc(battery_list->hit_count*sizeof(inverter**));
-	if(battery_inverter_set == NULL){
+	if(battery_inverter_set == nullptr){
 		gl_error("Failed to allocate battery array.");
 		/*  TROUBLESHOOT
 		While trying to allocate the array of pointers to the controlled inverters with battery children, the pointer array came back null.
@@ -177,7 +177,7 @@ int central_dg_control::init(OBJECT *parent)
 	}
 	//Allocate pointer array for inverters with solar children
 	solar_inverter_set = (inverter ***)gl_malloc(solar_list->hit_count*sizeof(inverter**));
-	if(solar_inverter_set == NULL){
+	if(solar_inverter_set == nullptr){
 		gl_error("Failed to allocate solar array.");
 		/*  TROUBLESHOOT
 		While trying to allocate the array of pointers to the controlled inverters with solar children, the pointer array came back null.
@@ -195,7 +195,7 @@ int central_dg_control::init(OBJECT *parent)
 			break;
 		}
 		battery_set[index] = OBJECTDATA(obj,battery);
-		if(battery_set[index] == NULL){
+		if(battery_set[index] == nullptr){
 			gl_error("Unable to map object as battery.");
 			/*  TROUBLESHOOT
 			While trying to map a battery from the list as a battery object, a null pointer was returned.
@@ -203,7 +203,7 @@ int central_dg_control::init(OBJECT *parent)
 			return 0;
 		}
 		inverter_set[inverter_filled_to + 1] = OBJECTDATA(obj->parent, inverter);
-		if(inverter_set[inverter_filled_to + 1] == NULL){
+		if(inverter_set[inverter_filled_to + 1] == nullptr){
 			gl_error("Unable to map object as inverter.");
 			/*  TROUBLESHOOT
 			While trying to map an inverter from the list as an inveter object, a null pointer was returned.
@@ -212,7 +212,7 @@ int central_dg_control::init(OBJECT *parent)
 		}
 		inverter_filled_to++;
 		battery_inverter_set[index] = &inverter_set[inverter_filled_to];
-		if (battery_inverter_set[index] == NULL) {
+		if (battery_inverter_set[index] == nullptr) {
 			gl_error("Unable to map battery parent object as inverter.");
 			/*  TROUBLESHOOT
 			While trying to map an inverter from the listof inverters with battery children as an inverter object, a null pointer was returned.
@@ -231,7 +231,7 @@ int central_dg_control::init(OBJECT *parent)
 			break;
 		}
 		solar_set[index] = OBJECTDATA(obj,solar);
-		if(solar_set[index] == NULL){
+		if(solar_set[index] == nullptr){
 			gl_error("Unable to map object as solar.");
 			/*  TROUBLESHOOT
 			While trying to map a solar from the list as a solar object, a null pointer was returned.
@@ -239,7 +239,7 @@ int central_dg_control::init(OBJECT *parent)
 			return 0;
 		}
 		inverter_set[inverter_filled_to + 1] = OBJECTDATA(obj->parent, inverter);
-		if(inverter_set[inverter_filled_to + 1] == NULL){
+		if(inverter_set[inverter_filled_to + 1] == nullptr){
 			gl_error("Unable to map object as inverter.");
 			/*  TROUBLESHOOT
 			While trying to map an inverter from the listof inverters an inverter object, a null pointer was returned.
@@ -248,7 +248,7 @@ int central_dg_control::init(OBJECT *parent)
 		}
 		inverter_filled_to++;
 		solar_inverter_set[index] = &inverter_set[inverter_filled_to];
-		if (solar_inverter_set[index] == NULL) {
+		if (solar_inverter_set[index] == nullptr) {
 			gl_error("Unable to map solar parent object as inverter.");
 			/*  TROUBLESHOOT
 			While trying to map an inverter from the listof inverters with solar children as an inverter object, a null pointer was returned.
@@ -264,7 +264,7 @@ int central_dg_control::init(OBJECT *parent)
 	all_inverter_S_rated = all_solar_S_rated + all_battery_S_rated;
 
 	//Map the feeder meter
-	if (feederhead_meter != NULL)
+	if (feederhead_meter != nullptr)
 	{
 		//Make sure it is a meter
 		if (gl_object_isa(feederhead_meter, "meter", "powerflow"))
@@ -597,7 +597,7 @@ EXPORT int create_central_dg_control(OBJECT **obj, OBJECT *parent)
 	try 
 	{
 		*obj = gl_create_object(central_dg_control::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			central_dg_control *my = OBJECTDATA(*obj,central_dg_control);
 			gl_set_parent(*obj,parent);
@@ -613,7 +613,7 @@ EXPORT int init_central_dg_control(OBJECT *obj, OBJECT *parent)
 {
 	try 
 	{
-		if (obj!=NULL)
+		if (obj!=nullptr)
 			return OBJECTDATA(obj,central_dg_control)->init(parent);
 		else
 			return 0;

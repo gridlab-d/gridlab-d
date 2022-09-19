@@ -1,0 +1,274 @@
+//Simple autotest to confirm behavior of triplex-connect GFM device is the same in both
+//TCIM NR and FPI NR
+//******** NOTE *******************
+//This behavior is untested (and appears lacking)
+//This is mostly just to make sure the two solvers are consistent.
+
+clock {
+	timezone "PST+8PDT";
+	starttime '2001-08-01 12:00:00 PDT';
+	stoptime '2001-08-01 12:00:35 PDT';
+}
+
+#set suppress_repeat_messages=1
+#set profiler=1
+// #set pauseatexit=1
+#set double_format=%+.12lg
+#set complex_format=%+.12lg%+.12lg%c
+#set complex_output_format=RECT
+
+//Deltamode declarations - global values
+#set deltamode_timestep=100000000		//100 ms
+#set deltamode_maximumtime=60000000000	//1 minute
+#set deltamode_iteration_limit=10		//Iteration limit
+//#set deltamode_forced_always=true
+
+//#define FPI=1
+
+module assert;
+module tape;
+module reliability {
+	enable_subsecond_models true;
+	maximum_event_length 1800000;
+	report_event_log true;
+}
+
+#ifdef FPI
+#define recorder_filename="data_FPI"
+module powerflow {
+	enable_subsecond_models true;
+	line_limits false;
+	deltamode_timestep 1 ms;
+	solver_method NR;
+	all_powerflow_delta true;
+	NR_island_failure_handled true;
+	lu_solver "KLU";
+	NR_solver_algorithm FPI;
+}
+#else
+#define recorder_filename="data_TCIM"
+module powerflow {
+	enable_subsecond_models true;
+	line_limits false;
+	deltamode_timestep 1 ms;
+	solver_method NR;
+	all_powerflow_delta true;
+	NR_island_failure_handled true;
+	lu_solver "KLU";
+}
+#endif
+
+
+module generators {
+	enable_subsecond_models true;
+	deltamode_timestep 1 ms;
+}
+
+//Fault check object
+object fault_check {
+	name fault_checker;
+	check_mode ONCHANGE;
+	strictly_radial false;
+	grid_association true;
+	output_filename test_topo.txt;
+	full_output_file true;
+	eventgen_object main_grid_disconnect;
+}
+
+//Islands the system from the main grid
+object eventgen {
+	flags DELTAMODE;
+	name main_grid_disconnect;
+	fault_type "SW-C";
+	// manual_outages "grid_switch,2001-08-01 12:00:04.001 PDT,2001-08-01 12:00:31.003 PDT";	//Original "bad" synchronization time
+	manual_outages "grid_switch,2001-08-01 12:00:04.001 PDT,2001-08-01 12:00:25.268 PDT";	//Better close time - good synchronization
+}
+
+object triplex_line_conductor {     
+	name triplex_4/0 AA;    
+	resistance 0.48;     
+	geometric_mean_radius 0.0158;     
+}       
+
+object triplex_line_configuration {     
+	name triplex_line_configuration_1;     
+	conductor_1 triplex_4/0 AA;    
+	conductor_2 triplex_4/0 AA;    
+	conductor_N triplex_4/0 AA;    
+	insulation_thickness 0.08;     
+	diameter 0.522;     
+}         
+
+object transformer_configuration {
+	name trip_xform_example;
+	connect_type SINGLE_PHASE_CENTER_TAPPED;
+	power_rating 6000;
+	powerC_rating 6000;
+	primary_voltage 240.0;
+	secondary_voltage 120.0;
+	resistance 0.01;
+	reactance 0.06;
+}
+
+//Nodes
+object load {
+	phases CN;
+	name Grid_Connection;
+	nominal_voltage 240.0;
+	constant_power_C 1200.0+700.0j;
+}
+
+object meter {
+	phases CN;
+	name other_side_of_switch;
+	nominal_voltage 240.0;
+	frequency_measure_type PLL;
+	// object recorder {
+		// property "measured_frequency";
+		// interval 1;
+		// flags DELTAMODE;
+		// file "${recorder_filename}_frequency_out.csv";
+	// };
+}
+
+object triplex_meter {
+	phases CS;
+	nominal_voltage 120.0;
+	name trip_meter_stepdown;
+	frequency_measure_type PLL;
+	
+}
+
+object triplex_load {
+	phases CS;
+	nominal_voltage 120.0;
+	name trip_load_object;
+	base_power_1 750.0 VA;
+	base_power_2 775.0 VA;
+	base_power_12 1000.0 VA;
+	impedance_pf_1 0.85;
+	impedance_pf_2 0.85;
+	impedance_pf_12 0.85;
+	power_pf_1 0.95;
+	power_pf_2 0.95;
+	power_pf_12 0.95;
+	current_pf_1 0.87;
+	current_pf_2 0.87;
+	current_pf_12 0.87;
+	power_fraction_1 0.35;
+	impedance_fraction_1 0.5;
+	current_fraction_1 0.15;
+	power_fraction_2 0.35;
+	impedance_fraction_2 0.5;
+	current_fraction_2 0.15;
+	power_fraction_12 0.35;
+	impedance_fraction_12 0.5;
+	current_fraction_12 0.15;
+}
+
+object triplex_meter {
+	phases CS;
+	nominal_voltage 120.0;
+	name grid_form_PV_connect;
+	bustype SWING_PQ;
+	frequency_measure_type PLL;
+	// object recorder {
+		// flags DELTAMODE;
+		// property voltage_12;
+		// interval 1;
+		// file "${recorder_filename}_trip_freq.csv";
+	// };
+}
+
+//Transformer to triplex
+object transformer {
+	phases CS;
+	name tplex_xformer;
+	from other_side_of_switch;
+	to trip_meter_stepdown;
+	configuration trip_xform_example;
+}
+
+//Triplex lines
+object triplex_line {
+	phases CS;
+	name first_tplex_line;
+	from trip_meter_stepdown;
+	to trip_load_object;
+	length 500.0;
+	configuration triplex_line_configuration_1;
+}
+
+object triplex_line {
+	phases CS;
+	name second_tplex_line;
+	from trip_load_object;
+	to grid_form_PV_connect;
+	length 300.0;
+	configuration triplex_line_configuration_1;
+}
+
+//Switch to main grid
+object switch {
+	name grid_switch;
+	phases CN;
+	from Grid_Connection;
+	to other_side_of_switch;
+}
+
+
+//Grid forming inverter
+object inverter_dyn {
+	flags DELTAMODE;
+	name GFM_Inverter;
+	parent grid_form_PV_connect;
+	control_mode GRID_FORMING;
+	rated_power 100 kW;
+	frequency_convergence_criterion 1e-9;
+	//Pref 3.0 kW;			//Real power reference/setpoint
+	//Qref 1.0 kW;			//Reactive power reference/setpoint
+	E_max 1.2;				//Maximum voltage output
+    Rfilter 0.0076;			//Real portion of inverter filter (pu)
+	Xfilter 0.1163;			//Reactive portion of inverter filter (pu)
+	mp 3.14;  				//P-f droop gain, in rad/s/pu - 3.77 represents 1% droop.
+    kppmax 3;				//Proportional gain for P_Max controller
+	kipmax 60;				//Integral gain fo P_Max controller
+	Pmax 20;				//Maximum power controller can deliver (pu, transient)
+	Pmin 0;					//Minimum power controller can deliver (pu, transient)
+	mq 0.05; 				//Q-V droop gain -  0.05 represents 5% droop
+	
+	// object recorder {
+		// flags DELTAMODE;
+		// property freq;
+		// //file data_inverter_tplex_assert_inverter_frequency.csv;
+		// file "${recorder_filename}_inverter_tplex_assert_inverter_frequency.csv";
+		// interval 1;
+	// };
+	// object recorder {
+		// flags DELTAMODE;
+		// property VA_Out;
+		// file data_inverter_tplex_assert_inverter_VA_Out.csv;
+		// //file "${recorder_filename}_inverter_tplex_assert_inverter_VA_Out.csv";
+		// interval 1;
+	// };
+
+	object complex_assert {
+		flags DELTAMODE;
+		target VA_Out;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file "../data_inverter_tplex_assert_inverter_VA_Out.csv";
+		};
+		within 0.5;
+	};
+}
+
+//Deltamode trigger player - since QSTS transition doesn't work right
+object player {
+	name trigger_player;
+	parent Grid_Connection;
+	property nominal_voltage;
+	flags DELTAMODE;
+	file ../data_inverter_dyn_grid_trigger.player;
+}

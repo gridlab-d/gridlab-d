@@ -17,15 +17,15 @@
 // currdump CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 
-CLASS* currdump::oclass = NULL;
+CLASS* currdump::oclass = nullptr;
 
 currdump::currdump(MODULE *mod)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		oclass = gl_register_class(mod,"currdump",sizeof(currdump),PC_BOTTOMUP|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 
 		// publish the class properties
@@ -65,12 +65,12 @@ int currdump::isa(char *classname)
 void currdump::dump(TIMESTAMP t){
 	char namestr[128];
 	char timestr[64];
-	FINDLIST *links = NULL;
-	OBJECT *obj = NULL;
-	FILE *outfile = NULL;
+	FINDLIST *links = nullptr;
+	OBJECT *obj = nullptr;
+	FILE *outfile = nullptr;
 
 	gld_property *link_current_value_link[3];
-	complex link_current_values[3];
+	gld::complex link_current_values[3];
 
 	if(group[0] == 0){
 		links = gl_find_objects(FL_NEW,FT_MODULE,SAME,"powerflow",FT_END);
@@ -78,13 +78,13 @@ void currdump::dump(TIMESTAMP t){
 		links = gl_find_objects(FL_NEW,FT_MODULE,SAME,"powerflow",AND,FT_GROUPID,SAME,group.get_string(),FT_END);
 	}
 
-	if(links == NULL){
+	if(links == nullptr){
 		gl_warning("no links were found to dump");
 		return;
 	}
 
 	outfile = fopen(filename, "w");
-	if(outfile == NULL){
+	if(outfile == nullptr){
 		gl_error("currdump unable to open %s for output", filename.get_string());
 		return;
 	}
@@ -143,7 +143,7 @@ void currdump::dump(TIMESTAMP t){
 			link_current_values[1] = link_current_value_link[1]->get_complex();
 			link_current_values[2] = link_current_value_link[2]->get_complex();
 
-			if(obj->name == NULL){
+			if(obj->name == nullptr){
 				sprintf(namestr, "%s:%i", obj->oclass->name, obj->id);
 			}
 			if(mode == CDM_RECT){
@@ -192,7 +192,7 @@ EXPORT int create_currdump(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(currdump::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			currdump *my = OBJECTDATA(*obj,currdump);
 			gl_set_parent(*obj,parent);

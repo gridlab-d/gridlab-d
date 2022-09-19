@@ -16,17 +16,17 @@ using namespace std;
 
 #include "line.h"
 
-CLASS* triplex_line_configuration::oclass = NULL;
-CLASS* triplex_line_configuration::pclass = NULL;
+CLASS* triplex_line_configuration::oclass = nullptr;
+CLASS* triplex_line_configuration::pclass = nullptr;
 
 triplex_line_configuration::triplex_line_configuration(MODULE *mod) : line_configuration(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		pclass = line_configuration::oclass;
 		
 		oclass = gl_register_class(mod,"triplex_line_configuration",sizeof(triplex_line_configuration),0x00);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class triplex_line_configuration";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -53,13 +53,13 @@ triplex_line_configuration::triplex_line_configuration(MODULE *mod) : line_confi
 int triplex_line_configuration::create(void)
 {
 	int result = line_configuration::create();
-    phaseA_conductor = NULL; 
-	phaseB_conductor = NULL;
-	phaseC_conductor = NULL;
-	phaseN_conductor = NULL;
+    phaseA_conductor = nullptr; 
+	phaseB_conductor = nullptr;
+	phaseC_conductor = nullptr;
+	phaseN_conductor = nullptr;
 	ins_thickness = 0.0;
 	diameter  = 0.0;
-	line_spacing = NULL;
+	line_spacing = nullptr;
 	summer.continuous = winter.continuous = 1000;
 	summer.emergency = winter.emergency = 2000;
 	return result;
@@ -85,7 +85,7 @@ EXPORT int create_triplex_line_configuration(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(triplex_line_configuration::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			triplex_line_configuration *my = OBJECTDATA(*obj,triplex_line_configuration);
 			gl_set_parent(*obj,parent);

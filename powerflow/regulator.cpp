@@ -17,19 +17,19 @@ using namespace std;
 
 #include "regulator.h"
 
-CLASS* regulator::oclass = NULL;
-CLASS* regulator::pclass = NULL;
+CLASS* regulator::oclass = nullptr;
+CLASS* regulator::pclass = nullptr;
 
 regulator::regulator(MODULE *mod) : link_object(mod)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// link to parent class (used by isa)
 		pclass = link_object::oclass;
 
 		// register the class definition
 		oclass = gl_register_class(mod,"regulator",sizeof(regulator),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class regulator";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -52,22 +52,22 @@ regulator::regulator(MODULE *mod) : link_object(mod)
 			PT_double, "tap_C_change_count",PADDR(tap_C_change_count),PT_DESCRIPTION,"count of all physical tap changes on phase C since beginning of simulation (plus initial value)",
 			PT_object,"sense_node",PADDR(RemoteNode),PT_DESCRIPTION,"Node to be monitored for voltage control in remote sense mode",
 			PT_double,"regulator_resistance[Ohm]",PADDR(regulator_resistance), PT_DESCRIPTION,"The resistance value of the regulator when it is not blown.",
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_regulator)==NULL)
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_regulator)==nullptr)
 			GL_THROW("Unable to publish regulator deltamode function");
 
 		//Publish restoration-related function (current update)
-		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==nullptr)
 			GL_THROW("Unable to publish regulator external power calculation function");
-		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==nullptr)
 			GL_THROW("Unable to publish regulator external power limit calculation function");
-		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==NULL)
+		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==nullptr)
 			GL_THROW("Unable to publish regulator external current calculation function");
 		
 		//Other
-		if (gl_publish_function(oclass, "pwr_object_kmldata", (FUNCTIONADDR)regulator_kmldata) == NULL)
+		if (gl_publish_function(oclass, "pwr_object_kmldata", (FUNCTIONADDR)regulator_kmldata) == nullptr)
 			GL_THROW("Unable to publish regulator kmldata function");
 	}
 }
@@ -80,7 +80,7 @@ int regulator::isa(char *classname)
 int regulator::create()
 {
 	int result = link_object::create();
-	configuration = NULL;
+	configuration = nullptr;
 	tap[0] = tap[1] = tap[2] = -999;
 	offnominal_time = false;
 	tap_A_change_count = -1;
@@ -92,8 +92,8 @@ int regulator::create()
 	msgmode = msg_INTERNAL;
 	check_voltage[0] = check_voltage[1] = check_voltage[2] = 0.0;
 
-	RNode_voltage[0] = RNode_voltage[1] = RNode_voltage[2] = NULL;
-	ToNode_voltage[0] = ToNode_voltage[1] = ToNode_voltage[2] = NULL;
+	RNode_voltage[0] = RNode_voltage[1] = RNode_voltage[2] = nullptr;
+	ToNode_voltage[0] = ToNode_voltage[1] = ToNode_voltage[2] = nullptr;
 
 	return result;
 }
@@ -145,7 +145,7 @@ int regulator::init(OBJECT *parent)
 
 	if (pConfig->Control == pConfig->REMOTE_NODE) 
 	{
-		if (RemoteNode == NULL)
+		if (RemoteNode == nullptr)
 		{
 			GL_THROW("Remote sensing node not found on regulator:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/* TROUBLESHOOT
@@ -153,7 +153,7 @@ int regulator::init(OBJECT *parent)
 			object.  Otherwise, change your Control method.
 			*/
 		}
-		else if ((gl_object_isa(RemoteNode,"node","powerflow") != true) && (gl_object_isa(RemoteNode,"network_interface") != true))
+		else if (!gl_object_isa(RemoteNode,"node","powerflow") && !gl_object_isa(RemoteNode,"network_interface"))
 		{
 			GL_THROW("Remote sensing node is not a valid object in regulator:%d - %s",obj->id,(obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
@@ -166,7 +166,7 @@ int regulator::init(OBJECT *parent)
 	   {
 			RNode_voltage[0] = new gld_property(RemoteNode,"voltage_A");
 			//Make sure it worked
-			if ((RNode_voltage[0]->is_valid() != true) || (RNode_voltage[0]->is_complex() != true))
+			if (!RNode_voltage[0]->is_valid() || !RNode_voltage[0]->is_complex())
 			{
 				GL_THROW("Regulator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
 				/* TROUBLESHOOT
@@ -177,7 +177,7 @@ int regulator::init(OBJECT *parent)
 			}
 			RNode_voltage[1] = new gld_property(RemoteNode,"voltage_B");
 			//Make sure it worked
-			if ((RNode_voltage[1]->is_valid() != true) || (RNode_voltage[1]->is_complex() != true))
+			if (!RNode_voltage[1]->is_valid() || !RNode_voltage[1]->is_complex())
 			{
 				GL_THROW("Regulator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -196,7 +196,7 @@ int regulator::init(OBJECT *parent)
 
 			//Make sure it worked
 
-			if ((RNode_voltage[2]->is_valid() != true) || (RNode_voltage[2]->is_complex() != true))
+			if (!RNode_voltage[2]->is_valid() || !RNode_voltage[2]->is_complex())
 			{
 
 				GL_THROW("Regulator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
@@ -211,7 +211,7 @@ int regulator::init(OBJECT *parent)
 	ToNode_voltage[0] = new gld_property(to,"voltage_A");
 
 	//Make sure it worked
-	if ((ToNode_voltage[0]->is_valid() != true) || (ToNode_voltage[0]->is_complex() != true))
+	if (!ToNode_voltage[0]->is_valid() || !ToNode_voltage[0]->is_complex())
 	{
 		GL_THROW("Regulator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
 		//Defined above
@@ -221,7 +221,7 @@ int regulator::init(OBJECT *parent)
 	ToNode_voltage[1] = new gld_property(to,"voltage_B");
 
 	//Make sure it worked
-	if ((ToNode_voltage[1]->is_valid() != true) || (ToNode_voltage[1]->is_complex() != true))
+	if (!ToNode_voltage[1]->is_valid() || !ToNode_voltage[1]->is_complex())
 	{
 		GL_THROW("Regulator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
 		//Defined above
@@ -231,7 +231,7 @@ int regulator::init(OBJECT *parent)
 	ToNode_voltage[2] = new gld_property(to,"voltage_C");
 
 	//Make sure it worked
-	if ((ToNode_voltage[2]->is_valid() != true) || (ToNode_voltage[2]->is_complex() != true))
+	if (!ToNode_voltage[2]->is_valid() || !ToNode_voltage[2]->is_complex())
 	{
 		GL_THROW("Regulator:%d - %s - Unable to map property for remote object",obj->id,(obj->name ? obj->name : "Unnamed"));
 		//Defined above
@@ -371,13 +371,13 @@ int regulator::init(OBJECT *parent)
 			break;
 	}
 
-	mech_t_next[0] = mech_t_next[1] = mech_t_next[2] = TSNVRDBL;
-	dwell_t_next[0] = dwell_t_next[1] = dwell_t_next[2] = TSNVRDBL;
+	mech_t_next[0] = mech_t_next[1] = mech_t_next[2] = TS_NEVER_DBL;
+	dwell_t_next[0] = dwell_t_next[1] = dwell_t_next[2] = TS_NEVER_DBL;
 
 	//Now set first_run_flag appropriately
 	for (jindex=0;jindex<3;jindex++)
 	{
-		if (TapInitialValue[jindex] == false)
+		if (!TapInitialValue[jindex])
 		{
 			if (solver_method == SM_NR)
 				first_run_flag[jindex] = -2;
@@ -470,14 +470,14 @@ TIMESTAMP regulator::presync(TIMESTAMP t0)
 	}
 
 	//Force a "reiteration" if we're checking voltage - consequence of this previously being in true pass of NR
-	if ((solver_method == SM_NR) && ((pConfig->Control == pConfig->OUTPUT_VOLTAGE) || (pConfig->Control == pConfig->REMOTE_NODE)) && (iteration_flag==false))
+	if ((solver_method == SM_NR) && ((pConfig->Control == pConfig->OUTPUT_VOLTAGE) || (pConfig->Control == pConfig->REMOTE_NODE)) && !iteration_flag)
 	{
 		return t0;
 	}
 
 	if ((first_run_flag[0] < 1) || (first_run_flag[1] < 1) || (first_run_flag[2] < 1)) return t1;
 	else if (t1_dbl <= next_time) return t1;
-	else if (next_time != TSNVRDBL) return -next_time; //soft return to next tap change
+	else if (next_time != TS_NEVER_DBL) return -next_time; //soft return to next tap change
 	else return TS_NEVER;
 }
 
@@ -526,9 +526,9 @@ void regulator::reg_prePre_fxn(double curr_time_value)
 				*/
 			}
 		}
-		next_time = TSNVRDBL;
+		next_time = TS_NEVER_DBL;
 	}
-	else if (iteration_flag==true)
+	else if (iteration_flag)
 	{
 		if (pConfig->control_level == pConfig->INDIVIDUAL)
 		{
@@ -666,7 +666,7 @@ void regulator::reg_prePre_fxn(double curr_time_value)
 					//more changes unless system changes
 					else 
 					{	
-						dwell_t_next[i] = mech_t_next[i] = TSNVRDBL;
+						dwell_t_next[i] = mech_t_next[i] = TS_NEVER_DBL;
 						//if (pConfig->dwell_time == 0)
 						//	dwell_flag[i] = 1;
 						//else
@@ -708,7 +708,7 @@ void regulator::reg_prePre_fxn(double curr_time_value)
 					next_time = nt[2];
 
 				if (next_time <= curr_time_value)
-					next_time = TSNVRDBL;
+					next_time = TS_NEVER_DBL;
 			}
 			else
 				GL_THROW("Specified connect type is not supported in automatic modes at this time.");
@@ -855,7 +855,7 @@ void regulator::reg_prePre_fxn(double curr_time_value)
 				//more changes unless system changes
 				else 
 				{	
-					dwell_t_next[0] = mech_t_next[0] = TSNVRDBL;
+					dwell_t_next[0] = mech_t_next[0] = TS_NEVER_DBL;
 					dwell_flag[0] = 0;
 					mech_flag[0] = 0;
 				}
@@ -887,7 +887,7 @@ void regulator::reg_prePre_fxn(double curr_time_value)
 					next_time = nt[0];
 
 				if (next_time <= curr_time_value)
-					next_time = TSNVRDBL;
+					next_time = TS_NEVER_DBL;
 			}
 			else
 				GL_THROW("Specified connect type is not supported in automatic modes at this time.");
@@ -1071,7 +1071,7 @@ double regulator::reg_postPost_fxn(double curr_time_value)
 	regulator_configuration *pConfig = OBJECTDATA(configuration, regulator_configuration);
 
 	//Copied from postsync
-	if (iteration_flag==true)
+	if (iteration_flag)
 	{		
 		if(prev_time < curr_time_value){
 			prev_time = curr_time_value;
@@ -1269,23 +1269,23 @@ double regulator::reg_postPost_fxn(double curr_time_value)
 					return curr_time_value;
 				if (dwell_flag[i] == 1 && mech_flag[i] == 1)
 				{			
-					if (check_voltage[i].Mag() < Vlow && tap[i] != pConfig->lower_taps && new_reverse_flow_action[i] == false) {
-						if (pConfig->control_level == pConfig->INDIVIDUAL && toggle_reverse_flow[i] == false) {
+					if (check_voltage[i].Mag() < Vlow && tap[i] != pConfig->lower_taps && !new_reverse_flow_action[i]) {
+						if (pConfig->control_level == pConfig->INDIVIDUAL && !toggle_reverse_flow[i]) {
 							return curr_time_value;
-						} else if (pConfig->control_level == pConfig->BANK && toggle_reverse_flow_banked == false) {
+						} else if (pConfig->control_level == pConfig->BANK && !toggle_reverse_flow_banked) {
 							return curr_time_value;
 						}
 					}
 
-					if (check_voltage[i].Mag() > Vhigh && tap[i] != -pConfig->raise_taps && new_reverse_flow_action[i] == false) {
-						if (pConfig->control_level == pConfig->INDIVIDUAL && toggle_reverse_flow[i] == false) {
+					if (check_voltage[i].Mag() > Vhigh && tap[i] != -pConfig->raise_taps && !new_reverse_flow_action[i]) {
+						if (pConfig->control_level == pConfig->INDIVIDUAL && !toggle_reverse_flow[i]) {
 							return curr_time_value;
-						} else if (pConfig->control_level == pConfig->BANK && toggle_reverse_flow_banked == false) {
+						} else if (pConfig->control_level == pConfig->BANK && !toggle_reverse_flow_banked) {
 							return curr_time_value;
 						}
 					}
 				}
-				if (new_reverse_flow_action[i] == true && (toggle_reverse_flow[i] == true || toggle_reverse_flow_banked == true))
+				if (new_reverse_flow_action[i] && (toggle_reverse_flow[i] || toggle_reverse_flow_banked))
 					return curr_time_value;
 			}
 		}
@@ -1479,7 +1479,7 @@ SIMULATIONMODE regulator::inter_deltaupdate_regulator(unsigned int64 delta_time,
 	//Get the current time
 	curr_time_value = gl_globaldeltaclock;
 
-	if (interupdate_pos == false)	//Before powerflow call
+	if (!interupdate_pos)	//Before powerflow call
 	{
 		//Replicate presync behavior
 		//Toggle the iteration variable -- only for voltage-type adjustments (since it's in presync now)
@@ -1489,14 +1489,14 @@ SIMULATIONMODE regulator::inter_deltaupdate_regulator(unsigned int64 delta_time,
 		//Call the pre-presync regulator code
 		reg_prePre_fxn(curr_time_value);
 
-		//Link presync stuff
-		NR_link_presync_fxn();
+		//Link sync stuff
+		NR_link_sync_fxn();
 		
 		//Call the post-presync regulator code
 		reg_postPre_fxn();
 
 		//Force a "reiteration" if we're checking voltage - consequence of this previously being in true pass of NR
-		if (((pConfig->Control == pConfig->OUTPUT_VOLTAGE) || (pConfig->Control == pConfig->REMOTE_NODE)) && (iteration_flag==false))
+		if (((pConfig->Control == pConfig->OUTPUT_VOLTAGE) || (pConfig->Control == pConfig->REMOTE_NODE)) && !iteration_flag)
 		{
 			deltamode_reiter_request = true;	//Flag us for a reiter
 		}
@@ -1516,7 +1516,7 @@ SIMULATIONMODE regulator::inter_deltaupdate_regulator(unsigned int64 delta_time,
 		{
 			return SM_ERROR;
 		}
-		else if ((temp_time == curr_time_value) || (deltamode_reiter_request==true))	//See if this requested a reiter, or if above did
+		else if ((temp_time == curr_time_value) || deltamode_reiter_request)	//See if this requested a reiter, or if above did
 		{
 			//Clear the flag, regardless
 			deltamode_reiter_request = false;
@@ -1562,7 +1562,7 @@ EXPORT int create_regulator(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(regulator::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			regulator *my = OBJECTDATA(*obj,regulator);
 			gl_set_parent(*obj,parent);

@@ -34,7 +34,7 @@ object auction {
 	warmup 0;
 	latency 0;
 	verbose TRUE;
-	pricecap 9999;
+	price_cap 9999;
 	special_mode BUYERS_ONLY;
 	fixed_price 10;
 	init_price 13;
