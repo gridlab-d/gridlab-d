@@ -497,7 +497,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	/* locate the module */
 	snprintf(pathname, sizeof(pathname), "%s" DLEXT, file);
 
-	if(find_file(pathname, NULL, X_OK|R_OK, tpath,sizeof(tpath)) == NULL)
+	if(find_file(pathname, nullptr, X_OK|R_OK, tpath,sizeof(tpath)) == NULL)
 	{
 		output_verbose("unable to locate %s in GLPATH, using library loader instead", pathname);
 		strncpy(tpath,pathname,sizeof(tpath));

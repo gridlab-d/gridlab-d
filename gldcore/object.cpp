@@ -1419,7 +1419,7 @@ TIMESTAMP _object_sync(OBJECT *obj, /**< the object to synchronize */
 					  PASSCONFIG pass) /**< the pass configuration */
 {
 	CLASS *oclass = obj->oclass;
-	register TIMESTAMP plc_time=TS_NEVER, sync_time;
+	TIMESTAMP plc_time=TS_NEVER, sync_time;
 	TIMESTAMP effective_valid_to = std::min(obj->clock+global_skipsafe,obj->valid_to);
 	int autolock = obj->oclass->passconfig&PC_AUTOLOCK;
 

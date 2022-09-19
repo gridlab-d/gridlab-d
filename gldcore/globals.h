@@ -7,6 +7,9 @@
 #ifndef _GLOBALS_H
 #define _GLOBALS_H
 
+#include <string>
+#include <filesystem>
+
 #include "version.h"
 #include "class.h"
 #include "validate.h"
@@ -25,6 +28,13 @@ extern "C" {
 #endif
 
 
+#ifdef _WIN32
+#	define env_delim ";"
+#	define env_pathsep "\\"
+#else
+#	define env_delim ":"
+#	define env_pathsep "/"
+#endif
 
 typedef enum {FAILED=false, SUCCESS=true} STATUS;
 
@@ -327,6 +337,14 @@ GLOBAL char1024 global_svnroot INIT("http://gridlab-d.svn.sourceforge.net/svnroo
 GLOBAL char1024 global_wget_options INIT("maxsize:100MB;update:newer"); /**< maximum size of wget request */
 
 GLOBAL bool global_reinclude INIT(false); /**< allow the same include file to be included multiple times */
+
+GLOBAL std::filesystem::path global_gl_executable;
+GLOBAL std::filesystem::path global_gl_share;
+GLOBAL std::filesystem::path global_gl_include;
+GLOBAL std::filesystem::path global_gl_bin;
+GLOBAL std::filesystem::path global_gl_lib;
+GLOBAL std::string global_gl_path;
+
 #ifdef __cplusplus
 }
 #endif

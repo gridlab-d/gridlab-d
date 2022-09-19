@@ -1,16 +1,16 @@
-project(tape_plot)
+SET(GLD_MODULE_NAME tape_plot)
 
-add_library(${PROJECT_NAME}
+add_library(${GLD_MODULE_NAME}
         tape_plot.cpp
         tape_plot.h
         )
 
-target_compile_options(${PROJECT_NAME} PRIVATE ${GLD_COMPILE_OPTIONS})
-set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
-target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
-target_link_libraries(${PROJECT_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
+target_compile_options(${GLD_MODULE_NAME} PRIVATE ${GLD_COMPILE_OPTIONS})
+set_target_properties(${GLD_MODULE_NAME} PROPERTIES PREFIX "")
+target_include_directories(${GLD_MODULE_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
+target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
 
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${GLD_MODULE_NAME}
         ${FILE_PERMISSIONS}
         RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -18,7 +18,7 @@ install(TARGETS ${PROJECT_NAME}
         COMPONENT Libraries)
 
 if (GLD_USE_CLANG_TIDY)
-    set_target_properties(${PROJECT_NAME} PROPERTIES
+    set_target_properties(${GLD_MODULE_NAME} PROPERTIES
             CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}"
             )
 endif ()

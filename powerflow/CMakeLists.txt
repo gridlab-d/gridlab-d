@@ -1,4 +1,4 @@
-project(powerflow)
+SET(GLD_MODULE_NAME powerflow)
 
 if (GLD_USE_EIGEN)
     SET(NR_SOLVER solver_nr_eigen.cpp solver_nr_eigen.h)
@@ -6,7 +6,7 @@ else ()
     SET(NR_SOLVER solver_nr.cpp solver_nr.h)
 endif ()
 
-add_library(${PROJECT_NAME}
+add_library(${GLD_MODULE_NAME}
         billdump.cpp
         billdump.h
         capacitor.cpp
@@ -118,43 +118,43 @@ add_library(${PROJECT_NAME}
 
 if (GLD_USE_EIGEN)
     find_package(KLU)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE GLD_USE_EIGEN)
+    target_compile_definitions(${GLD_MODULE_NAME} PRIVATE GLD_USE_EIGEN)
     if (KLU_FOUND)
-        target_compile_definitions(${PROJECT_NAME} PRIVATE GLD_USE_KLU)
+        target_compile_definitions(${GLD_MODULE_NAME} PRIVATE GLD_USE_KLU)
     endif ()
-    target_include_directories(${PROJECT_NAME} PRIVATE
+    target_include_directories(${GLD_MODULE_NAME} PRIVATE
             "${CMAKE_SOURCE_DIR}/third_party/Eigen"
             "${KLU_INCLUDES}"
             )
-    target_link_libraries(${PROJECT_NAME} PRIVATE
+    target_link_libraries(${GLD_MODULE_NAME} PRIVATE
             Eigen3::Eigen
             ${KLU_LIBRARIES}
             )
 else ()
-    target_include_directories(${PROJECT_NAME} PRIVATE
+    target_include_directories(${GLD_MODULE_NAME} PRIVATE
             #            "${CMAKE_SOURCE_DIR}/third_party/SuperLU/SRC"
             "${CMAKE_SOURCE_DIR}/third_party/superLU_MT"
             )
-    target_link_libraries(${PROJECT_NAME} PRIVATE
+    target_link_libraries(${GLD_MODULE_NAME} PRIVATE
             #            superlu
             superlu_lib
             )
 endif ()
 
-target_include_directories(${PROJECT_NAME} PRIVATE
+target_include_directories(${GLD_MODULE_NAME} PRIVATE
         "${CMAKE_SOURCE_DIR}/third_party/jsoncpp/include"
         )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE
+target_link_libraries(${GLD_MODULE_NAME} PRIVATE
         jsoncpp_lib
         )
 
-target_compile_options(${PROJECT_NAME} PRIVATE ${GLD_COMPILE_OPTIONS})
-set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
-target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
-target_link_libraries(${PROJECT_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
+target_compile_options(${GLD_MODULE_NAME} PRIVATE ${GLD_COMPILE_OPTIONS})
+set_target_properties(${GLD_MODULE_NAME} PROPERTIES PREFIX "")
+target_include_directories(${GLD_MODULE_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
+target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
 
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${GLD_MODULE_NAME}
         ${FILE_PERMISSIONS}
         RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
@@ -162,7 +162,7 @@ install(TARGETS ${PROJECT_NAME}
         COMPONENT Libraries)
 
 if (GLD_USE_CLANG_TIDY)
-    set_target_properties(${PROJECT_NAME} PROPERTIES
+    set_target_properties(${GLD_MODULE_NAME} PROPERTIES
             CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}"
             )
 endif ()
