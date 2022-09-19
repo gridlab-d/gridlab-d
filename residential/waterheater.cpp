@@ -985,7 +985,7 @@ void waterheater::sync_energytake()
 	
 		energytake = log(70 / (get_Tambient(location) * 0.39) ) * time_step; // Constants are based on trial and error to get the most appropraite behavior similar to the physical unit.
 		Tw = (tank_setpoint - (energytake/(tank_volume * 2.44)))+ 1.00034;
-		heat_needed = FALSE;
+		heat_needed = false;
 		current_model = ONENODE;
 
 		
@@ -1010,7 +1010,7 @@ void waterheater::sync_energytake()
 					Tw_temp = ((((tank_volume_post_draw)* tank_setpoint) + (water_demand * 60))/(tank_volume)) + water_demand * 0.65;
 				// ----------------------------------------------------------
 
-				heat_needed = TRUE;
+				heat_needed = false;
 				if ((water_demand - water_demand_old) > 0)
 				{
 					energy_increment_value = energytake;
