@@ -120,7 +120,7 @@ jobs:
         env:
           cache-name: cache-helics
         with:
-          path: ~/.cache/HELICS
+          path: ${{github.workspace}}/.cache/HELICS
           key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
           restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
 
@@ -139,7 +139,7 @@ jobs:
         working-directory: ${{github.workspace}}/helics-build
         run: |
           threads=`nproc`
-          cmake -G "Ninja" -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=~/.cache/HELICS \
+          cmake -G "Ninja" -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=../.cache/HELICS \
            -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DHELICS_ZMQ_SUBPROJECT=ON
           cmake --build ./build --config ${{env.BUILD_TYPE}} --parallel $threads
           cmake --install ./build
@@ -148,16 +148,17 @@ jobs:
         uses: actions/checkout@v3
         with:
           submodules: recursive
+          path: gridlab-build
 
       - name: Build GridLAB-D
-        working-directory: ${{github.workspace}}
+        working-directory: ${{github.workspace}}/gridlab-build
         run: |
           threads=`nproc`
-          cmake -G "Ninja" -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
+          cmake -G "Ninja" -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=../.cache/HELICS -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
           cmake --build ./build --config ${{env.BUILD_TYPE}} --parallel $threads
 
       - name: Package
-        working-directory: ${{github.workspace}}/build
+        working-directory: ${{github.workspace}}/gridlab-build/build
         run: cpack CPackConfig.cmake
 
       - name: Upload a Build Artifact
@@ -165,8 +166,8 @@ jobs:
         with:
           name: Windows Package
           path: |
-            ${{github.workspace}}/build/packages
-            !${{github.workspace}}/build/packages/_CPack_Packages
+            ${{github.workspace}}/gridlab-build/build/packages
+            !${{github.workspace}}/gridlab-build/build/packages/_CPack_Packages
 
   mac-build:
     strategy:
@@ -174,8 +175,8 @@ jobs:
         include:
           - os: macos-latest
             arch: x86_64
-          - os: macos-latest
-            arch: arm64
+#          - os: macos-latest
+#            arch: arm64
     runs-on: ${{matrix.os}}
     steps:
       - name: Install Homebrew dependencies
