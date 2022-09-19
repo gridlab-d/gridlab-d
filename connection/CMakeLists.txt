@@ -1,7 +1,32 @@
 project(connection)
 
+if (GLD_USE_FNCS)
+    find_library(GLD_ZMQ_LIBRARY NAMES zmq REQUIRED PATHS ${GLD_ZeroMQ_DIR} $ENV{GLD_ZeroMQ_DIR})
+    find_library(GLD_CZMQ_LIBRARY NAMES czmq REQUIRED PATHS ${GLD_CZMQ_DIR} $ENV{GLD_CZMQ_DIR})
+    find_library(GLD_FNCS_LIBRARY NAMES fncs REQUIRED PATHS ${GLD_FNCS_DIR} $ENV{GLD_FNCS_DIR})
+
+    set(GLD_FNCS_LIBRARIES
+            ${GLD_FNCS_LIBRARY}
+            ${GLD_CZMQ_LIBRARY}
+            ${GLD_ZMQ_LIBRARY}
+            )
+    if (GLD_ZMQ_LIBRARY AND GLD_CZMQ_LIBRARY AND GLD_FNCS_LIBRARY)
+        option(FNCS_FOUND "FNCS library found" ON)
+        set(FNCS_CONNECTION fncs_msg.cpp fncs_msg.h)
+    else ()
+        option(FNCS_FOUND "FNCS library found" OFF)
+        set(FNCS_CONNECTION)
+        message(WARNING "One of the required FNCS libraries could not be located. Check your configuration for "
+                "GLD_ZeroMQ_DIR, "
+                "GLD_CZMQ_DIR, "
+                "and GLD_FNCS_DIR.")
+    endif ()
+else ()
+    set(FNCS_CONNECTION)
+endif ()
+
 if (GLD_USE_HELICS)
-    FIND_PACKAGE(HELICS 3 REQUIRED CONFIG HINTS ${HELICS_DIR} $ENV{HELICS_DIR})
+    FIND_PACKAGE(HELICS 3 REQUIRED CONFIG HINTS ${GLD_HELICS_DIR} ${HELICS_DIR} $ENV{GLD_HELICS_DIR} $ENV{HELICS_DIR})
     set(HELICS_CONNECTION helics_msg.cpp helics_msg.h)
 else ()
     set(HELICS_CONNECTION)
@@ -35,8 +60,16 @@ add_library(${PROJECT_NAME}
         varmap.h
         init.cpp
         main.cpp
+        ${FNCS_CONNECTION}
         ${HELICS_CONNECTION}
         )
+
+if (FNCS_FOUND)
+    target_link_libraries(${PROJECT_NAME} PRIVATE
+            ${GLD_FNCS_LIBRARIES}
+            )
+    target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_FNCS)
+endif ()
 
 if (HELICS_FOUND)
     target_link_libraries(${PROJECT_NAME} PRIVATE HELICS::helics)

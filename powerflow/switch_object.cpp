@@ -19,12 +19,12 @@
 //////////////////////////////////////////////////////////////////////////
 // switch_object CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* switch_object::oclass = NULL;
-CLASS* switch_object::pclass = NULL;
+CLASS* switch_object::oclass = nullptr;
+CLASS* switch_object::pclass = nullptr;
 
 switch_object::switch_object(MODULE *mod) : link_object(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		pclass = link_object::oclass;
 
@@ -53,35 +53,35 @@ switch_object::switch_object(MODULE *mod) : link_object(mod)
 			PT_double, "switch_reactance[Ohm]", PADDR(switch_impedance_value.Im()), PT_DESCRIPTION, "Reactance portion of impedance value of the switch when it is closed.",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
-			if (gl_publish_function(oclass,"change_switch_state",(FUNCTIONADDR)change_switch_state)==NULL)
+			if (gl_publish_function(oclass,"change_switch_state",(FUNCTIONADDR)change_switch_state)==nullptr)
 				GL_THROW("Unable to publish switch state change function");
-			if (gl_publish_function(oclass,"reliability_operation",(FUNCTIONADDR)reliability_operation)==NULL)
+			if (gl_publish_function(oclass,"reliability_operation",(FUNCTIONADDR)reliability_operation)==nullptr)
 				GL_THROW("Unable to publish switch reliability operation function");
-			if (gl_publish_function(oclass,	"create_fault", (FUNCTIONADDR)create_fault_switch)==NULL)
+			if (gl_publish_function(oclass,	"create_fault", (FUNCTIONADDR)create_fault_switch)==nullptr)
 				GL_THROW("Unable to publish fault creation function");
-			if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_switch)==NULL)
+			if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_switch)==nullptr)
 				GL_THROW("Unable to publish fault restoration function");
-            if (gl_publish_function(oclass,	"clear_fault", (FUNCTIONADDR)clear_fault_switch)==NULL)
+            if (gl_publish_function(oclass,	"clear_fault", (FUNCTIONADDR)clear_fault_switch)==nullptr)
                 GL_THROW("Unable to publish fault clearing function");
-			if (gl_publish_function(oclass,	"change_switch_faults", (FUNCTIONADDR)switch_fault_updates)==NULL)
+			if (gl_publish_function(oclass,	"change_switch_faults", (FUNCTIONADDR)switch_fault_updates)==nullptr)
 				GL_THROW("Unable to publish switch fault correction function");
-			if (gl_publish_function(oclass,	"change_switch_state_toggle", (FUNCTIONADDR)change_switch_state_toggle)==NULL)
+			if (gl_publish_function(oclass,	"change_switch_state_toggle", (FUNCTIONADDR)change_switch_state_toggle)==nullptr)
 				GL_THROW("Unable to publish switch toggle function");
 
 			//Publish deltamode functions
-			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_switch)==NULL)
+			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_switch)==nullptr)
 				GL_THROW("Unable to publish switch deltamode function");
 
 			//Publish restoration-related function (current update)
-			if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+			if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==nullptr)
 				GL_THROW("Unable to publish switch external power calculation function");
-			if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+			if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==nullptr)
 				GL_THROW("Unable to publish switch external power limit calculation function");
-			if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==NULL)
+			if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==nullptr)
 				GL_THROW("Unable to publish switch external current calculation function");
 
 			//Other
-			if (gl_publish_function(oclass, "pwr_object_kmldata", (FUNCTIONADDR)switch_object_kmldata) == NULL)
+			if (gl_publish_function(oclass, "pwr_object_kmldata", (FUNCTIONADDR)switch_object_kmldata) == nullptr)
 				GL_THROW("Unable to publish switch kmldata function");
     }
 }
@@ -107,15 +107,15 @@ int switch_object::create()
 	faulted_switch_phases = 0x00;	//No faults at onset
 	prefault_banked = false;		//Condition of the switch prior to a fault - individual mode has to be enacted for reliability
 
-	event_schedule = NULL;
-	eventgen_obj = NULL;
-	fault_handle_call = NULL;
+	event_schedule = nullptr;
+	eventgen_obj = nullptr;
+	fault_handle_call = nullptr;
 	local_switching = false;
 	event_schedule_map_attempt = false;	//Haven't tried to map yet
 	
 	//Simplification variables
-	switch_impedance_value = complex(-1.0,-1.0);
-	switch_admittance_value = complex(0.0,0.0);
+	switch_impedance_value = gld::complex(-1.0,-1.0);
+	switch_admittance_value = gld::complex(0.0,0.0);
 
 	return result;
 }
@@ -239,7 +239,7 @@ int switch_object::init(OBJECT *parent)
 		}
 
 		//Calculate the admittance
-		switch_admittance_value = complex(1.0,0.0)/switch_impedance_value;
+		switch_admittance_value = gld::complex(1.0,0.0)/switch_impedance_value;
 	}
 	else
 	{
@@ -314,41 +314,41 @@ int switch_object::init(OBJECT *parent)
 		{
 			if (solver_method == SM_NR)
 			{
-				From_Y[0][0] = complex(0.0,0.0);
-				From_Y[1][1] = complex(0.0,0.0);
-				From_Y[2][2] = complex(0.0,0.0);
+				From_Y[0][0] = gld::complex(0.0,0.0);
+				From_Y[1][1] = gld::complex(0.0,0.0);
+				From_Y[2][2] = gld::complex(0.0,0.0);
 
 				//Impedance, just because (used in some secondary calculations)
-				b_mat[0][0] = complex(0.0,0.0);
-				b_mat[1][1] = complex(0.0,0.0);
-				b_mat[2][2] = complex(0.0,0.0);
+				b_mat[0][0] = gld::complex(0.0,0.0);
+				b_mat[1][1] = gld::complex(0.0,0.0);
+				b_mat[2][2] = gld::complex(0.0,0.0);
 
 				//Confirm a_mat is zerod too, just for portability
-				a_mat[0][0] = complex(0.0,0.0);
-				a_mat[1][1] = complex(0.0,0.0);
-				a_mat[2][2] = complex(0.0,0.0);
+				a_mat[0][0] = gld::complex(0.0,0.0);
+				a_mat[1][1] = gld::complex(0.0,0.0);
+				a_mat[2][2] = gld::complex(0.0,0.0);
 
-				d_mat[0][0] = complex(0.0,0.0);
-				d_mat[1][1] = complex(0.0,0.0);
-				d_mat[2][2] = complex(0.0,0.0);
+				d_mat[0][0] = gld::complex(0.0,0.0);
+				d_mat[1][1] = gld::complex(0.0,0.0);
+				d_mat[2][2] = gld::complex(0.0,0.0);
 			}
 			else	//Assumed FBS (GS not considered)
 			{
-				A_mat[0][0] = complex(0.0,0.0);
-				A_mat[1][1] = complex(0.0,0.0);
-				A_mat[2][2] = complex(0.0,0.0);
+				A_mat[0][0] = gld::complex(0.0,0.0);
+				A_mat[1][1] = gld::complex(0.0,0.0);
+				A_mat[2][2] = gld::complex(0.0,0.0);
 
-				d_mat[0][0] = complex(0.0,0.0);
-				d_mat[1][1] = complex(0.0,0.0);
-				d_mat[2][2] = complex(0.0,0.0);
+				d_mat[0][0] = gld::complex(0.0,0.0);
+				d_mat[1][1] = gld::complex(0.0,0.0);
+				d_mat[2][2] = gld::complex(0.0,0.0);
 
-				B_mat[0][0] = complex(0.0,0.0);
-				B_mat[1][1] = complex(0.0,0.0);
-				B_mat[2][2] = complex(0.0,0.0);
+				B_mat[0][0] = gld::complex(0.0,0.0);
+				B_mat[1][1] = gld::complex(0.0,0.0);
+				B_mat[2][2] = gld::complex(0.0,0.0);
 
-				b_mat[0][0] = complex(0.0,0.0);
-				b_mat[1][1] = complex(0.0,0.0);
-				b_mat[2][2] = complex(0.0,0.0);
+				b_mat[0][0] = gld::complex(0.0,0.0);
+				b_mat[1][1] = gld::complex(0.0,0.0);
+				b_mat[2][2] = gld::complex(0.0,0.0);
 			}
 
 			phase_A_state = phase_B_state = phase_C_state = SW_OPEN;	//All open
@@ -426,14 +426,14 @@ int switch_object::init(OBJECT *parent)
 		{
 			if (solver_method == SM_NR)
 			{
-				From_Y[0][0] = complex(0.0,0.0);
-				From_Y[1][1] = complex(0.0,0.0);
-				From_Y[2][2] = complex(0.0,0.0);
+				From_Y[0][0] = gld::complex(0.0,0.0);
+				From_Y[1][1] = gld::complex(0.0,0.0);
+				From_Y[2][2] = gld::complex(0.0,0.0);
 
 				//Impedance, just because
-				b_mat[0][0] = complex(0.0,0.0);
-				b_mat[1][1] = complex(0.0,0.0);
-				b_mat[2][2] = complex(0.0,0.0);
+				b_mat[0][0] = gld::complex(0.0,0.0);
+				b_mat[1][1] = gld::complex(0.0,0.0);
+				b_mat[2][2] = gld::complex(0.0,0.0);
 
 				//Ensure voltage ratio set too (technically not needed)
 				a_mat[0][0] = 0.0;
@@ -446,21 +446,21 @@ int switch_object::init(OBJECT *parent)
 			}
 			else	//Assumed FBS (GS not considered)
 			{
-				A_mat[0][0] = complex(0.0,0.0);
-				A_mat[1][1] = complex(0.0,0.0);
-				A_mat[2][2] = complex(0.0,0.0);
+				A_mat[0][0] = gld::complex(0.0,0.0);
+				A_mat[1][1] = gld::complex(0.0,0.0);
+				A_mat[2][2] = gld::complex(0.0,0.0);
 
-				d_mat[0][0] = complex(0.0,0.0);
-				d_mat[1][1] = complex(0.0,0.0);
-				d_mat[2][2] = complex(0.0,0.0);
+				d_mat[0][0] = gld::complex(0.0,0.0);
+				d_mat[1][1] = gld::complex(0.0,0.0);
+				d_mat[2][2] = gld::complex(0.0,0.0);
 
-				B_mat[0][0] = complex(0.0,0.0);
-				B_mat[1][1] = complex(0.0,0.0);
-				B_mat[2][2] = complex(0.0,0.0);
+				B_mat[0][0] = gld::complex(0.0,0.0);
+				B_mat[1][1] = gld::complex(0.0,0.0);
+				B_mat[2][2] = gld::complex(0.0,0.0);
 
-				b_mat[0][0] = complex(0.0,0.0);
-				b_mat[1][1] = complex(0.0,0.0);
-				b_mat[2][2] = complex(0.0,0.0);
+				b_mat[0][0] = gld::complex(0.0,0.0);
+				b_mat[1][1] = gld::complex(0.0,0.0);
+				b_mat[2][2] = gld::complex(0.0,0.0);
 			}
 
 			phase_A_state = phase_B_state = phase_C_state = SW_OPEN;	//All open
@@ -492,17 +492,17 @@ int switch_object::init(OBJECT *parent)
 				{
 					if (solver_method == SM_NR)
 					{
-						From_Y[0][0] = complex(0.0,0.0);
-						b_mat[0][0] = complex(0.0,0.0);
-						a_mat[0][0] = complex(0.0,0.0);
-						d_mat[0][0] = complex(0.0,0.0);
+						From_Y[0][0] = gld::complex(0.0,0.0);
+						b_mat[0][0] = gld::complex(0.0,0.0);
+						a_mat[0][0] = gld::complex(0.0,0.0);
+						d_mat[0][0] = gld::complex(0.0,0.0);
 					}
 					else
 					{
-						A_mat[0][0] = complex(0.0,0.0);
-						d_mat[0][0] = complex(0.0,0.0);
-						B_mat[0][0] = complex(0.0,0.0);
-						b_mat[0][0] = complex(0.0,0.0);
+						A_mat[0][0] = gld::complex(0.0,0.0);
+						d_mat[0][0] = gld::complex(0.0,0.0);
+						B_mat[0][0] = gld::complex(0.0,0.0);
+						b_mat[0][0] = gld::complex(0.0,0.0);
 					}
 					prev_full_status &=0xFB;
 				}
@@ -532,17 +532,17 @@ int switch_object::init(OBJECT *parent)
 				{
 					if (solver_method == SM_NR)
 					{
-						From_Y[1][1] = complex(0.0,0.0);
-						b_mat[1][1] = complex(0.0,0.0);
-						a_mat[1][1] = complex(0.0,0.0);
-						d_mat[1][1] = complex(0.0,0.0);
+						From_Y[1][1] = gld::complex(0.0,0.0);
+						b_mat[1][1] = gld::complex(0.0,0.0);
+						a_mat[1][1] = gld::complex(0.0,0.0);
+						d_mat[1][1] = gld::complex(0.0,0.0);
 					}
 					else
 					{
-						A_mat[1][1] = complex(0.0,0.0);
-						d_mat[1][1] = complex(0.0,0.0);
-						B_mat[1][1] = complex(0.0,0.0);
-						b_mat[1][1] = complex(0.0,0.0);
+						A_mat[1][1] = gld::complex(0.0,0.0);
+						d_mat[1][1] = gld::complex(0.0,0.0);
+						B_mat[1][1] = gld::complex(0.0,0.0);
+						b_mat[1][1] = gld::complex(0.0,0.0);
 					}
 					prev_full_status &=0xFD;
 				}
@@ -572,17 +572,17 @@ int switch_object::init(OBJECT *parent)
 				{
 					if (solver_method == SM_NR)
 					{
-						From_Y[2][2] = complex(0.0,0.0);
-						b_mat[2][2] = complex(0.0,0.0);
-						a_mat[2][2] = complex(0.0,0.0);
-						d_mat[2][2] = complex(0.0,0.0);
+						From_Y[2][2] = gld::complex(0.0,0.0);
+						b_mat[2][2] = gld::complex(0.0,0.0);
+						a_mat[2][2] = gld::complex(0.0,0.0);
+						d_mat[2][2] = gld::complex(0.0,0.0);
 					}
 					else
 					{
-						A_mat[2][2] = complex(0.0,0.0);
-						d_mat[2][2] = complex(0.0,0.0);
-						B_mat[2][2] = complex(0.0,0.0);
-						b_mat[2][2] = complex(0.0,0.0);
+						A_mat[2][2] = gld::complex(0.0,0.0);
+						d_mat[2][2] = gld::complex(0.0,0.0);
+						B_mat[2][2] = gld::complex(0.0,0.0);
+						b_mat[2][2] = gld::complex(0.0,0.0);
 					}
 					prev_full_status &=0xFE;
 				}
@@ -600,9 +600,9 @@ int switch_object::init(OBJECT *parent)
 //Functionalized switch sync call -- before link call -- for deltamode functionality
 void switch_object::BOTH_switch_sync_pre(unsigned char *work_phases_pre, unsigned char *work_phases_post)
 {
-	if ((solver_method == SM_NR) && (event_schedule != NULL))	//NR-reliability-related stuff
+	if ((solver_method == SM_NR) && (event_schedule != nullptr))	//NR-reliability-related stuff
 	{
-		if (meshed_fault_checking_enabled == false)
+		if (!meshed_fault_checking_enabled)
 		{
 			//Store our phases going in
 			*work_phases_pre = NR_branchdata[NR_branch_reference].phases & 0x07;
@@ -646,7 +646,7 @@ void switch_object::NR_switch_sync_post(unsigned char *work_phases_pre, unsigned
 
 	gl_verbose ("  NR_switch_sync_post:%s:%s", work_phases_pre, work_phases_post);
 	//Overall encompassing check -- meshed handled differently
-	if (meshed_fault_checking_enabled == false)
+	if (!meshed_fault_checking_enabled)
 	{
 		//See if we're in the proper cycle - NR only for now
 		if (*work_phases_pre != *work_phases_post)
@@ -751,7 +751,7 @@ void switch_object::NR_switch_sync_post(unsigned char *work_phases_pre, unsigned
 			}//End switch
 
 			//See if we're a close an not in any previous faulting
-			if (fault_mode == true)
+			if (fault_mode)
 			{
 				//Loop through the phases
 				for (indexval=0; indexval<3; indexval++)
@@ -765,10 +765,10 @@ void switch_object::NR_switch_sync_post(unsigned char *work_phases_pre, unsigned
 				}
 			}
 
-			if (event_schedule != NULL)	//Function was mapped - go for it!
+			if (event_schedule != nullptr)	//Function was mapped - go for it!
 			{
 				//Call the function
-				if (fault_mode == true)	//Restoration - make fail time in the past
+				if (fault_mode)	//Restoration - make fail time in the past
 				{
 					if (mean_repair_time != 0)
 						temp_time = 50 + (TIMESTAMP)(mean_repair_time);
@@ -819,10 +819,10 @@ TIMESTAMP switch_object::presync(TIMESTAMP t0)
 	char256 fault_type;
 	bool closing = true;
 	TIMESTAMP repair_time = TS_NEVER;
-	OBJECT *protect_obj = NULL;
+	OBJECT *protect_obj = nullptr;
 	unsigned char phase_changes = 0x00;
 
-	if (local_switching == true) {
+	if (local_switching) {
 		if (switch_banked_mode == BANKED_SW) { // if any phase state has changed, they all follow the leader
 			if (phase_A_state != (prev_full_status & 0x04)) {
 				phase_B_state = phase_C_state = phase_A_state;
@@ -884,22 +884,22 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 	unsigned char work_phases_pre, work_phases_post;
 	gl_verbose ("switch_object::sync:%s:%ld:%d:%d:%d", get_name(), t0, phase_A_state, phase_B_state, phase_C_state);
 	//Try to map the event_schedule function address, if we haven't tried yet
-	if (event_schedule_map_attempt == false)
+	if (!event_schedule_map_attempt)
 	{
 		//First check to see if a fault_check object even exists
-		if (fault_check_object != NULL)
+		if (fault_check_object != nullptr)
 		{
 			//It exists, good start! - now see if the proper variable is populated!
 			eventgen_obj = get_object(fault_check_object, "eventgen_object");
 
 			//See if it worked - if not, assume it doesn't exist
-			if (*eventgen_obj != NULL)
+			if (*eventgen_obj != nullptr)
 			{
 				//It's not null, map up the scheduler function
 				event_schedule = (FUNCTIONADDR)(gl_get_function(*eventgen_obj,"add_event"));
 								
 				//Make sure it was found
-				if (event_schedule == NULL)
+				if (event_schedule == nullptr)
 				{
 					gl_warning("Unable to map add_event function in eventgen:%s",*(*eventgen_obj)->name);
 					/*  TROUBLESHOOT
@@ -915,7 +915,7 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 
 				flt_chk_property = new gld_property(fault_check_object,"check_mode");
 
-				if ((flt_chk_property->is_valid() != true) || (flt_chk_property->is_enumeration() != true))
+				if (!flt_chk_property->is_valid() || !flt_chk_property->is_enumeration())
 				{
 					GL_THROW("switch:%d - %s - Failure to map fault_check property",obj->id,(obj->name?obj->name:"Unnamed"));
 					/*  TROUBLESHOOT
@@ -975,7 +975,7 @@ void switch_object::switch_sync_function(void)
 	pres_status = 0x00;	//Reset individual status indicator - assumes all start open
 
 	//See which mode we are operating in
-	if (meshed_fault_checking_enabled == false)	//"Normal" mode
+	if (!meshed_fault_checking_enabled)	//"Normal" mode
 	{
 		if (switch_banked_mode == BANKED_SW)	//Banked mode
 		{
@@ -1035,18 +1035,18 @@ void switch_object::switch_sync_function(void)
 				{
 					if (solver_method == SM_NR)
 					{
-						From_Y[0][0] = complex(0.0,0.0);	//Update admittance
-						b_mat[0][0] = complex(0.0,0.0);
+						From_Y[0][0] = gld::complex(0.0,0.0);	//Update admittance
+						b_mat[0][0] = gld::complex(0.0,0.0);
 						a_mat[0][0] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
 						d_mat[0][0] = 0.0;	
 						NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove this bit
 					}
 					else	//Assume FBS
 					{
-						A_mat[0][0] = complex(0.0,0.0);
-						d_mat[0][0] = complex(0.0,0.0);
-						B_mat[0][0] = complex(0.0,0.0);
-						b_mat[0][0] = complex(0.0,0.0);
+						A_mat[0][0] = gld::complex(0.0,0.0);
+						d_mat[0][0] = gld::complex(0.0,0.0);
+						B_mat[0][0] = gld::complex(0.0,0.0);
+						b_mat[0][0] = gld::complex(0.0,0.0);
 					}
 				}
 
@@ -1054,18 +1054,18 @@ void switch_object::switch_sync_function(void)
 				{
 					if (solver_method == SM_NR)
 					{
-						From_Y[1][1] = complex(0.0,0.0);	//Update admittance
-						b_mat[1][1] = complex(0.0,0.0);
+						From_Y[1][1] = gld::complex(0.0,0.0);	//Update admittance
+						b_mat[1][1] = gld::complex(0.0,0.0);
 						a_mat[1][1] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
 						d_mat[1][1] = 0.0;	
 						NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove this bit
 					}
 					else
 					{
-						A_mat[1][1] = complex(0.0,0.0);
-						d_mat[1][1] = complex(0.0,0.0);
-						B_mat[1][1] = complex(0.0,0.0);
-						b_mat[1][1] = complex(0.0,0.0);
+						A_mat[1][1] = gld::complex(0.0,0.0);
+						d_mat[1][1] = gld::complex(0.0,0.0);
+						B_mat[1][1] = gld::complex(0.0,0.0);
+						b_mat[1][1] = gld::complex(0.0,0.0);
 					}
 				}
 
@@ -1073,18 +1073,18 @@ void switch_object::switch_sync_function(void)
 				{
 					if (solver_method == SM_NR)
 					{
-						From_Y[2][2] = complex(0.0,0.0);	//Update admittance
-						b_mat[2][2] = complex(0.0,0.0);
+						From_Y[2][2] = gld::complex(0.0,0.0);	//Update admittance
+						b_mat[2][2] = gld::complex(0.0,0.0);
 						a_mat[2][2] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
 						d_mat[2][2] = 0.0;
 						NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove this bit
 					}
 					else
 					{
-						A_mat[2][2] = complex(0.0,0.0);
-						d_mat[2][2] = complex(0.0,0.0);
-						B_mat[2][2] = complex(0.0,0.0);
-						b_mat[2][2] = complex(0.0,0.0);
+						A_mat[2][2] = gld::complex(0.0,0.0);
+						d_mat[2][2] = gld::complex(0.0,0.0);
+						B_mat[2][2] = gld::complex(0.0,0.0);
+						b_mat[2][2] = gld::complex(0.0,0.0);
 					}
 				}
 			}//end open
@@ -1162,41 +1162,41 @@ void switch_object::switch_sync_function(void)
 
 				if (solver_method == SM_NR)
 				{
-					From_Y[0][0] = complex(0.0,0.0);
-					From_Y[1][1] = complex(0.0,0.0);
-					From_Y[2][2] = complex(0.0,0.0);
+					From_Y[0][0] = gld::complex(0.0,0.0);
+					From_Y[1][1] = gld::complex(0.0,0.0);
+					From_Y[2][2] = gld::complex(0.0,0.0);
 
-					b_mat[0][0] = complex(0.0,0.0);
-					b_mat[1][1] = complex(0.0,0.0);
-					b_mat[2][2] = complex(0.0,0.0);
+					b_mat[0][0] = gld::complex(0.0,0.0);
+					b_mat[1][1] = gld::complex(0.0,0.0);
+					b_mat[2][2] = gld::complex(0.0,0.0);
 
-					a_mat[0][0] = complex(0.0,0.0);
-					a_mat[1][1] = complex(0.0,0.0);
-					a_mat[2][2] = complex(0.0,0.0);
+					a_mat[0][0] = gld::complex(0.0,0.0);
+					a_mat[1][1] = gld::complex(0.0,0.0);
+					a_mat[2][2] = gld::complex(0.0,0.0);
 
-					d_mat[0][0] = complex(0.0,0.0);
-					d_mat[1][1] = complex(0.0,0.0);
-					d_mat[2][2] = complex(0.0,0.0);
+					d_mat[0][0] = gld::complex(0.0,0.0);
+					d_mat[1][1] = gld::complex(0.0,0.0);
+					d_mat[2][2] = gld::complex(0.0,0.0);
 		
 					NR_branchdata[NR_branch_reference].phases &= 0xF0;		//Remove all our phases
 				}
 				else //Assumed FBS
 				{
-					A_mat[0][0] = complex(0.0,0.0);
-					A_mat[1][1] = complex(0.0,0.0);
-					A_mat[2][2] = complex(0.0,0.0);
+					A_mat[0][0] = gld::complex(0.0,0.0);
+					A_mat[1][1] = gld::complex(0.0,0.0);
+					A_mat[2][2] = gld::complex(0.0,0.0);
 
-					d_mat[0][0] = complex(0.0,0.0);
-					d_mat[1][1] = complex(0.0,0.0);
-					d_mat[2][2] = complex(0.0,0.0);
+					d_mat[0][0] = gld::complex(0.0,0.0);
+					d_mat[1][1] = gld::complex(0.0,0.0);
+					d_mat[2][2] = gld::complex(0.0,0.0);
 
-					B_mat[0][0] = complex(0.0,0.0);
-					B_mat[1][1] = complex(0.0,0.0);
-					B_mat[2][2] = complex(0.0,0.0);
+					B_mat[0][0] = gld::complex(0.0,0.0);
+					B_mat[1][1] = gld::complex(0.0,0.0);
+					B_mat[2][2] = gld::complex(0.0,0.0);
 
-					b_mat[0][0] = complex(0.0,0.0);
-					b_mat[1][1] = complex(0.0,0.0);
-					b_mat[2][2] = complex(0.0,0.0);
+					b_mat[0][0] = gld::complex(0.0,0.0);
+					b_mat[1][1] = gld::complex(0.0,0.0);
+					b_mat[2][2] = gld::complex(0.0,0.0);
 				}
 			}
 			else	//Closed means a phase-by-phase basis
@@ -1227,18 +1227,18 @@ void switch_object::switch_sync_function(void)
 					{
 						if (solver_method == SM_NR)
 						{
-							From_Y[0][0] = complex(0.0,0.0);
-							b_mat[0][0] = complex(0.0,0.0);
+							From_Y[0][0] = gld::complex(0.0,0.0);
+							b_mat[0][0] = gld::complex(0.0,0.0);
 							NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Make sure we're removed
 							a_mat[0][0] = 0.0;
 							d_mat[0][0] = 0.0;
 						}
 						else
 						{
-							A_mat[0][0] = complex(0.0,0.0);
-							d_mat[0][0] = complex(0.0,0.0);
-							B_mat[0][0] = complex(0.0,0.0);
-							b_mat[0][0] = complex(0.0,0.0);
+							A_mat[0][0] = gld::complex(0.0,0.0);
+							d_mat[0][0] = gld::complex(0.0,0.0);
+							B_mat[0][0] = gld::complex(0.0,0.0);
+							b_mat[0][0] = gld::complex(0.0,0.0);
 						}
 					}
 				}
@@ -1269,18 +1269,18 @@ void switch_object::switch_sync_function(void)
 					{
 						if (solver_method == SM_NR)
 						{
-							From_Y[1][1] = complex(0.0,0.0);
-							b_mat[1][1] = complex(0.0,0.0);
+							From_Y[1][1] = gld::complex(0.0,0.0);
+							b_mat[1][1] = gld::complex(0.0,0.0);
 							NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Make sure we're removed
 							a_mat[1][1] = 0.0;
 							d_mat[1][1] = 0.0;
 						}
 						else
 						{
-							A_mat[1][1] = complex(0.0,0.0);
-							d_mat[1][1] = complex(0.0,0.0);
-							B_mat[1][1] = complex(0.0,0.0);
-							b_mat[1][1] = complex(0.0,0.0);
+							A_mat[1][1] = gld::complex(0.0,0.0);
+							d_mat[1][1] = gld::complex(0.0,0.0);
+							B_mat[1][1] = gld::complex(0.0,0.0);
+							b_mat[1][1] = gld::complex(0.0,0.0);
 						}
 					}
 				}
@@ -1311,18 +1311,18 @@ void switch_object::switch_sync_function(void)
 					{
 						if (solver_method == SM_NR)
 						{
-							From_Y[2][2] = complex(0.0,0.0);
-							b_mat[2][2] = complex(0.0,0.0);
+							From_Y[2][2] = gld::complex(0.0,0.0);
+							b_mat[2][2] = gld::complex(0.0,0.0);
 							NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Make sure we're removed
 							a_mat[2][2] = 0.0;
 							d_mat[2][2] = 0.0;
 						}
 						else
 						{
-							A_mat[2][2] = complex(0.0,0.0);
-							d_mat[2][2] = complex(0.0,0.0);
-							B_mat[2][2] = complex(0.0,0.0);
-							b_mat[2][2] = complex(0.0,0.0);
+							A_mat[2][2] = gld::complex(0.0,0.0);
+							d_mat[2][2] = gld::complex(0.0,0.0);
+							B_mat[2][2] = gld::complex(0.0,0.0);
+							b_mat[2][2] = gld::complex(0.0,0.0);
 						}
 					}
 				}
@@ -1348,16 +1348,16 @@ void switch_object::switch_sync_function(void)
 		if (status != prev_status)
 		{
 			//Check and see if we've mapped the function first
-			if (fault_handle_call == NULL)
+			if (fault_handle_call == nullptr)
 			{
 				//Make sure a fault_check object exists
-				if (fault_check_object != NULL)
+				if (fault_check_object != nullptr)
 				{
 					//Get the link
 					fault_handle_call = (FUNCTIONADDR)(gl_get_function(fault_check_object,"reliability_alterations"));
 
 					//Make sure it worked
-					if (fault_handle_call == NULL)
+					if (fault_handle_call == nullptr)
 					{
 						GL_THROW("switch:%d - %s - Failed to map the topology update function!",obj->id,(obj->name ? obj->name : "Unnamed"));
 						/*  TROUBLESHOOT
@@ -1406,7 +1406,7 @@ void switch_object::switch_sync_function(void)
 				}
 
 				//Call the reconfiguration function
-				if (fault_handle_call != NULL)
+				if (fault_handle_call != nullptr)
 				{
 					//Call the topology update
 					result_val = ((int (*)(OBJECT *, int, bool))(*fault_handle_call))(fault_check_object,NR_branch_reference,true);
@@ -1429,25 +1429,25 @@ void switch_object::switch_sync_function(void)
 				NR_branchdata[NR_branch_reference].phases &= 0xF8;
 
 				//Zero it all, just because
-				From_Y[0][0] = complex(0.0,0.0);
-				From_Y[1][1] = complex(0.0,0.0);
-				From_Y[2][2] = complex(0.0,0.0);
+				From_Y[0][0] = gld::complex(0.0,0.0);
+				From_Y[1][1] = gld::complex(0.0,0.0);
+				From_Y[2][2] = gld::complex(0.0,0.0);
 
-				b_mat[0][0] = complex(0.0,0.0);
-				b_mat[1][1] = complex(0.0,0.0);
-				b_mat[2][2] = complex(0.0,0.0);
+				b_mat[0][0] = gld::complex(0.0,0.0);
+				b_mat[1][1] = gld::complex(0.0,0.0);
+				b_mat[2][2] = gld::complex(0.0,0.0);
 	
-				a_mat[0][0] = complex(0.0,0.0);
-				a_mat[1][1] = complex(0.0,0.0);
-				a_mat[2][2] = complex(0.0,0.0);
+				a_mat[0][0] = gld::complex(0.0,0.0);
+				a_mat[1][1] = gld::complex(0.0,0.0);
+				a_mat[2][2] = gld::complex(0.0,0.0);
 
-				d_mat[0][0] = complex(0.0,0.0);
-				d_mat[1][1] = complex(0.0,0.0);
-				d_mat[2][2] = complex(0.0,0.0);
+				d_mat[0][0] = gld::complex(0.0,0.0);
+				d_mat[1][1] = gld::complex(0.0,0.0);
+				d_mat[2][2] = gld::complex(0.0,0.0);
 
 				//Call the reconfiguration function
 				//Call the reconfiguration function
-				if (fault_handle_call != NULL)
+				if (fault_handle_call != nullptr)
 				{
 					//Call the topology update
 					result_val = ((int (*)(OBJECT *, int, bool))(*fault_handle_call))(fault_check_object,NR_branch_reference,false);
@@ -1650,8 +1650,8 @@ void switch_object::set_switch(bool desired_status)
 			{
 				if (has_phase(PHASE_A))
 				{
-					From_Y[0][0] = complex(0.0,0.0);	//Update admittance
-					b_mat[0][0] = complex(0.0,0.0);
+					From_Y[0][0] = gld::complex(0.0,0.0);	//Update admittance
+					b_mat[0][0] = gld::complex(0.0,0.0);
 					a_mat[0][0] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
 					d_mat[0][0] = 0.0;
 					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Ensure we're not set
@@ -1660,8 +1660,8 @@ void switch_object::set_switch(bool desired_status)
 
 				if (has_phase(PHASE_B))
 				{
-					From_Y[1][1] = complex(0.0,0.0);	//Update admittance
-					b_mat[1][1] = complex(0.0,0.0);
+					From_Y[1][1] = gld::complex(0.0,0.0);	//Update admittance
+					b_mat[1][1] = gld::complex(0.0,0.0);
 					a_mat[1][1] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
 					d_mat[1][1] = 0.0;
 					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Ensure we're not set
@@ -1670,8 +1670,8 @@ void switch_object::set_switch(bool desired_status)
 
 				if (has_phase(PHASE_C))
 				{
-					From_Y[2][2] = complex(0.0,0.0);	//Update admittance
-					b_mat[2][2] = complex(0.0,0.0);
+					From_Y[2][2] = gld::complex(0.0,0.0);	//Update admittance
+					b_mat[2][2] = gld::complex(0.0,0.0);
 					a_mat[2][2] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
 					d_mat[2][2] = 0.0;
 					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Ensure we're not set
@@ -1884,15 +1884,15 @@ void switch_object::set_switch_full_reliability(unsigned char desired_status)
 		desC=2;	//indifferent - no change
 
 	//Kludge
-	if (meshed_fault_checking_enabled == false)
+	if (!meshed_fault_checking_enabled)
 	{
 		//If a fault is present and we are banked, make sure we aren't any more
-		if ((faulted_switch_phases != 0x00) && (prefault_banked == true) && (switch_banked_mode == BANKED_SW))
+		if ((faulted_switch_phases != 0x00) && prefault_banked && (switch_banked_mode == BANKED_SW))
 		{
 			//Put into individual mode
 			switch_banked_mode = INDIVIDUAL_SW;
 		}
-		else if ((faulted_switch_phases == 0x00) && (prefault_banked == true) && (switch_banked_mode == INDIVIDUAL_SW))
+		else if ((faulted_switch_phases == 0x00) && prefault_banked && (switch_banked_mode == INDIVIDUAL_SW))
 		{
 			//Put back into banked mode
 			switch_banked_mode = BANKED_SW;
@@ -1910,8 +1910,8 @@ void switch_object::set_switch_full_reliability(unsigned char desired_status)
 OBJECT **switch_object::get_object(OBJECT *obj, const char *name)
 {
 	PROPERTY *p = gl_get_property(obj,name);
-	if (p==NULL || p->ptype!=PT_object)
-		return NULL;
+	if (p==nullptr || p->ptype!=PT_object)
+		return nullptr;
 	return (OBJECT**)GETADDR(obj,p);
 }
 
@@ -1933,7 +1933,7 @@ set switch_object::node_phase_information(OBJECT *obj)
 	temp_phase_property = new gld_property(obj,"phases");
 
 	//Make sure it worked
-	if ((temp_phase_property->is_valid() != true) || (temp_phase_property->is_set() != true))
+	if (!temp_phase_property->is_valid() || !temp_phase_property->is_set())
 	{
 		GL_THROW("switch:%d - %s - unable to map phase property of connecting node",get_id(),get_name());
 		/*  TROUBLESHOOT
@@ -1963,13 +1963,13 @@ SIMULATIONMODE switch_object::inter_deltaupdate_switch(unsigned int64 delta_time
 	t0_val = TS_NEVER;
 	t2_val = TS_NEVER;
 
-	if (interupdate_pos == false)	//Before powerflow call
+	if (!interupdate_pos)	//Before powerflow call
 	{
-		//Link presync stuff
-		NR_link_presync_fxn();
-
 		//Switch sync item - pre-items
 		BOTH_switch_sync_pre(&work_phases_pre,&work_phases_post);
+
+		//Link sync/status update stuff
+		NR_link_sync_fxn();
 
 		//Switch sync item - post items
 		NR_switch_sync_post(&work_phases_pre,&work_phases_post,hdr,&t0_val,&t2_val);
@@ -2010,7 +2010,7 @@ EXPORT int create_switch(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(switch_object::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			switch_object *my = OBJECTDATA(*obj,switch_object);
 			gl_set_parent(*obj,parent);
@@ -2080,7 +2080,7 @@ EXPORT int change_switch_state(OBJECT *thisobj, unsigned char phase_change, bool
 	switch_object *swtchobj = OBJECTDATA(thisobj,switch_object);
 	gl_verbose ("  change_switch_state:%d:%d:%d", phase_change, state, swtchobj->switch_banked_mode);
 
-	if ((swtchobj->switch_banked_mode == switch_object::BANKED_SW) || (meshed_fault_checking_enabled == true))	//Banked mode - all become "state", just cause
+	if ((swtchobj->switch_banked_mode == switch_object::BANKED_SW) || meshed_fault_checking_enabled)	//Banked mode - all become "state", just cause
 	{
 		swtchobj->set_switch(state);
 	}
@@ -2089,7 +2089,7 @@ EXPORT int change_switch_state(OBJECT *thisobj, unsigned char phase_change, bool
 		//Figure out what we need to call
 		if ((phase_change & 0x04) == 0x04)
 		{
-			if (state==true)
+			if (state)
 				desA=1;	//Close it
 			else
 				desA=0;	//Open it
@@ -2100,7 +2100,7 @@ EXPORT int change_switch_state(OBJECT *thisobj, unsigned char phase_change, bool
 		//Phase B
 		if ((phase_change & 0x02) == 0x02)
 		{
-			if (state==true)
+			if (state)
 				desB=1;	//Close it
 			else
 				desB=0;	//Open it
@@ -2111,7 +2111,7 @@ EXPORT int change_switch_state(OBJECT *thisobj, unsigned char phase_change, bool
 		//Phase C
 		if ((phase_change & 0x01) == 0x01)
 		{
-			if (state==true)
+			if (state)
 				desC=1;	//Close it
 			else
 				desC=0;	//Open it
@@ -2129,7 +2129,7 @@ EXPORT int change_switch_state(OBJECT *thisobj, unsigned char phase_change, bool
 //Function to change switch states
 EXPORT int change_switch_state_toggle(OBJECT *thisobj)
 {
-	FUNCTIONADDR funadd = NULL;
+	FUNCTIONADDR funadd = nullptr;
 	int ext_result;
 
 	gl_verbose ("  change_switch_state_toggle");
@@ -2152,7 +2152,7 @@ EXPORT int change_switch_state_toggle(OBJECT *thisobj)
 	funadd = (FUNCTIONADDR)(gl_get_function(fault_check_object,"reliability_alterations"));
 
 	//Make sure it was found
-	if (funadd == NULL)
+	if (funadd == nullptr)
 	{
 		gl_error("Unable to update topology for switching action");
 		/*  TROUBLESHOOT

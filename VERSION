@@ -1,6 +1,5 @@
-# $Id: VERSION 858 2008-08-28 21:06:13Z d3g637 $
-MAJOR=3
+MAJOR=5
 MINOR=0
 PATCH=0
-NAME=Hassayampa
+NAME=Ostrander
 

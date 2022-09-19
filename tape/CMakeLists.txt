@@ -1,5 +1,9 @@
 project(tape)
 
+if (GLD_USE_HDF5)
+    FIND_PACKAGE (HDF5 REQUIRED COMPONENTS CXX)
+endif ()
+
 add_library(${PROJECT_NAME}
         collector.cpp
         collector.h
@@ -58,6 +62,12 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 target_link_libraries(${PROJECT_NAME} PRIVATE
         jsoncpp_lib
         )
+
+if (HDF5_FOUND)
+    target_link_libraries(${PROJECT_NAME} PUBLIC ${HDF5_LIBRARIES})
+    target_include_directories(${PROJECT_NAME} PUBLIC ${HDF5_INCLUDE_DIRS})
+    target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_HDF5)
+endif ()
 
 target_compile_options(${PROJECT_NAME} PRIVATE ${GLD_COMPILE_OPTIONS})
 set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")

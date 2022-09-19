@@ -16,17 +16,17 @@ using namespace std;
 
 #include "line.h"
 
-CLASS* triplex_line::oclass = NULL;
-CLASS* triplex_line::pclass = NULL;
+CLASS* triplex_line::oclass = nullptr;
+CLASS* triplex_line::pclass = nullptr;
 
 triplex_line::triplex_line(MODULE *mod) : line(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		pclass = line::oclass;
 		
 		oclass = gl_register_class(mod,"triplex_line",sizeof(triplex_line),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class triplex_line";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -36,17 +36,17 @@ triplex_line::triplex_line(MODULE *mod) : line(mod)
             NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==nullptr)
 			GL_THROW("Unable to publish triplex line deltamode function");
-		if (gl_publish_function(oclass,	"recalc_distribution_line", (FUNCTIONADDR)recalc_triplex_line)==NULL)
+		if (gl_publish_function(oclass,	"recalc_distribution_line", (FUNCTIONADDR)recalc_triplex_line)==nullptr)
 			GL_THROW("Unable to publish triplex line recalc function");
 
 		//Publish restoration-related function (current update)
-		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==nullptr)
 			GL_THROW("Unable to publish triplex line external power calculation function");
-		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==nullptr)
 			GL_THROW("Unable to publish triplex line external power limit calculation function");
-		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==NULL)
+		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==nullptr)
 			GL_THROW("Unable to publish triplex line external current calculation function");
     }
 }
@@ -64,13 +64,13 @@ int triplex_line::isa(char *classname)
 
 int triplex_line::init(OBJECT *parent)
 {
-	double *temp_rating_value = NULL;
+	double *temp_rating_value = nullptr;
 	double temp_rating_continuous = 10000.0;
 	double temp_rating_emergency = 20000.0;
 	char index;
 	OBJECT *temp_obj;
 	OBJECT *obj = OBJECTHDR(this);
-	triplex_line_configuration *temp_config = NULL;
+	triplex_line_configuration *temp_config = nullptr;
 	
 	int result = line::init(parent);
 
@@ -94,7 +94,7 @@ int triplex_line::init(OBJECT *parent)
 	temp_config = OBJECTDATA(configuration,triplex_line_configuration);
 
 	//Values are populated now - populate link ratings parameter
-	if (temp_config->phaseA_conductor != NULL || temp_config->phaseB_conductor != NULL) {
+	if (temp_config->phaseA_conductor != nullptr || temp_config->phaseB_conductor != nullptr) {
 		for (index=0; index<2; index++)
 		{
 			if (index==0)
@@ -107,13 +107,13 @@ int triplex_line::init(OBJECT *parent)
 			}
 
 			//See if Phase exists
-			if (temp_obj != NULL)
+			if (temp_obj != nullptr)
 			{
 				//Get continuous - summer
 				temp_rating_value = get_double(temp_obj,"rating.summer.continuous");
 
 				//Check if NULL
-				if (temp_rating_value != NULL)
+				if (temp_rating_value != nullptr)
 				{
 					//Update - if necessary
 					if (temp_rating_continuous > *temp_rating_value)
@@ -126,7 +126,7 @@ int triplex_line::init(OBJECT *parent)
 				temp_rating_value = get_double(temp_obj,"rating.winter.continuous");
 
 				//Check if NULL
-				if (temp_rating_value != NULL)
+				if (temp_rating_value != nullptr)
 				{
 					//Update - if necessary
 					if (temp_rating_continuous > *temp_rating_value)
@@ -139,7 +139,7 @@ int triplex_line::init(OBJECT *parent)
 				temp_rating_value = get_double(temp_obj,"rating.summer.emergency");
 
 				//Check if NULL
-				if (temp_rating_value != NULL)
+				if (temp_rating_value != nullptr)
 				{
 					//Update - if necessary
 					if (temp_rating_emergency > *temp_rating_value)
@@ -152,7 +152,7 @@ int triplex_line::init(OBJECT *parent)
 				temp_rating_value = get_double(temp_obj,"rating.winter.emergency");
 
 				//Check if NULL
-				if (temp_rating_value != NULL)
+				if (temp_rating_value != nullptr)
 				{
 					//Update - if necessary
 					if (temp_rating_emergency > *temp_rating_value)
@@ -170,13 +170,13 @@ int triplex_line::init(OBJECT *parent)
 	else {
 		temp_obj = configuration;
 		//See if configuration exists
-		if (temp_obj != NULL)
+		if (temp_obj != nullptr)
 		{
 			//Get continuous - summer
 			temp_rating_value = get_double(temp_obj,"rating.summer.continuous");
 
 			//Check if NULL
-			if (temp_rating_value != NULL)
+			if (temp_rating_value != nullptr)
 			{
 				//Update - if necessary
 				if (temp_rating_continuous > *temp_rating_value)
@@ -189,7 +189,7 @@ int triplex_line::init(OBJECT *parent)
 			temp_rating_value = get_double(temp_obj,"rating.winter.continuous");
 
 			//Check if NULL
-			if (temp_rating_value != NULL)
+			if (temp_rating_value != nullptr)
 			{
 				//Update - if necessary
 				if (temp_rating_continuous > *temp_rating_value)
@@ -202,7 +202,7 @@ int triplex_line::init(OBJECT *parent)
 			temp_rating_value = get_double(temp_obj,"rating.summer.emergency");
 
 			//Check if NULL
-			if (temp_rating_value != NULL)
+			if (temp_rating_value != nullptr)
 			{
 				//Update - if necessary
 				if (temp_rating_emergency > *temp_rating_value)
@@ -215,7 +215,7 @@ int triplex_line::init(OBJECT *parent)
 			temp_rating_value = get_double(temp_obj,"rating.winter.emergency");
 
 			//Check if NULL
-			if (temp_rating_value != NULL)
+			if (temp_rating_value != nullptr)
 			{
 				//Update - if necessary
 				if (temp_rating_emergency > *temp_rating_value)
@@ -243,7 +243,7 @@ void triplex_line::phase_conductor_checks(void)
 	if ((line_config->impedance11 == 0.0) && (line_config->impedance22 == 0.0))
 	{
 		//Check all three conductors -- make sure they're triplex
-		if (line_config->phaseA_conductor != NULL)	//1
+		if (line_config->phaseA_conductor != nullptr)	//1
 		{
 			//Make sure it is a valid conductor
 			if (!gl_object_isa(line_config->phaseA_conductor, "triplex_line_conductor", "powerflow"))
@@ -264,7 +264,7 @@ void triplex_line::phase_conductor_checks(void)
 			 */
 		}
 
-		if (line_config->phaseB_conductor != NULL)	//2
+		if (line_config->phaseB_conductor != nullptr)	//2
 		{
 			//Make sure it is a valid conductor
 			if (!gl_object_isa(line_config->phaseB_conductor, "triplex_line_conductor", "powerflow"))
@@ -280,7 +280,7 @@ void triplex_line::phase_conductor_checks(void)
 			//Defined above
 		}
 
-		if (line_config->phaseC_conductor != NULL)	//N
+		if (line_config->phaseC_conductor != nullptr)	//N
 		{
 			//Make sure it is a valid conductor
 			if (!gl_object_isa(line_config->phaseC_conductor, "triplex_line_conductor", "powerflow"))
@@ -341,7 +341,7 @@ void triplex_line::recalc(void)
 
 		//Calculate coefficients for self and mutual impedance - incorporates frequency values
 		//Per Kersting (4.39) and (4.40) - coefficients end up same as OHLs
-		if (enable_frequency_dependence == true)	//See which frequency to use
+		if (enable_frequency_dependence)	//See which frequency to use
 		{
 			freq_coeff_real = 0.00158836*current_frequency;
 			freq_coeff_imag = 0.00202237*current_frequency;
@@ -362,7 +362,7 @@ void triplex_line::recalc(void)
 		triplex_line_conductor *l2 = OBJECTDATA(line_config->phaseB_conductor,triplex_line_conductor);
 		triplex_line_conductor *lN = OBJECTDATA(line_config->phaseC_conductor,triplex_line_conductor);
 
-		if (l1 == NULL || l2 == NULL || lN == NULL)
+		if (l1 == nullptr || l2 == nullptr || lN == nullptr)
 		{
 			GL_THROW("triplex_line_configuration:%d (%s) is missing a conductor specification.",line_config->get_id(),line_config->get_name());
 			/* TROUBLESHOOT
@@ -442,7 +442,7 @@ void triplex_line::recalc(void)
 		}
 	}
 	
-	if(neg_res == true){
+	if(neg_res){
 		gl_warning("INIT: triplex_line:%s has a negative resistance in it's impedance matrix. This will result in unusual behavior. Please check the line's geometry and cable parameters.", obj->name);
 		/*  TROUBLESHOOT
 		A negative resistance value was found for one or more the real parts of the triplex_line's impedance matrix.
@@ -547,7 +547,7 @@ EXPORT int create_triplex_line(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(triplex_line::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			triplex_line *my = OBJECTDATA(*obj,triplex_line);
 			gl_set_parent(*obj,parent);

@@ -1,7 +1,7 @@
 project(mysql)
 
 if (GLD_USE_MYSQL)
-    find_package(MySQL REQUIRED HINTS ${MYSQL_DIR} $ENV{MYSQL_DIR})
+    find_package(MySQL REQUIRED HINTS ${GLD_MYSQL_DIR} ${MYSQL_DIR} $ENV{GLD_MYSQL_DIR} $ENV{MYSQL_DIR})
 endif ()
 
 add_library(${PROJECT_NAME}

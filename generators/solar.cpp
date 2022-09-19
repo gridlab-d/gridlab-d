@@ -27,9 +27,11 @@ using namespace std;
 #define FAHR_TO_CELS(x) (x - 32.0) * 5.0 / 9.0
 #define CELS_TO_FAHR(x) x * 9.0 / 5.0 + 32.0
 
+#define PV_CURVE_PARAM_RATIO 1.2
+
 /* Framework */
-CLASS *solar::oclass = NULL;
-solar *solar::defaults = NULL;
+CLASS *solar::oclass = nullptr;
+solar *solar::defaults = nullptr;
 
 static PASSCONFIG passconfig = PC_BOTTOMUP | PC_POSTTOPDOWN;
 static PASSCONFIG clockpass = PC_BOTTOMUP;
@@ -37,10 +39,10 @@ static PASSCONFIG clockpass = PC_BOTTOMUP;
 /* Class registration is only called once to register the class with the core */
 solar::solar(MODULE *module)
 {
-	if (oclass == NULL)
+	if (oclass == nullptr)
 	{
 		oclass = gl_register_class(module, "solar", sizeof(solar), PC_PRETOPDOWN | PC_BOTTOMUP | PC_POSTTOPDOWN | PC_AUTOLOCK);
-		if (oclass == NULL)
+		if (oclass == nullptr)
 			throw "unable to register class solar";
 		else
 			oclass->trl = TRL_PROOF;
@@ -128,44 +130,13 @@ solar::solar(MODULE *module)
 			//PT_KEYWORD, "ONE_AXIS", ONE_AXIS,			//To be implemented later
 			//PT_KEYWORD, "TWO_AXIS", TWO_AXIS,			//To be implemented later
 			//PT_KEYWORD, "AZIMUTH_AXIS", AZIMUTH_AXIS,	//To be implemented later
-
-			/* DEPRECATED properties - delete in next version */
-			PT_enumeration,"generator_mode",PADDR(gen_mode_v_deprecated),PT_DEPRECATED,	//Unused
-				PT_KEYWORD,"UNKNOWN",(enumeration)UNKNOWN,
-				PT_KEYWORD,"CONSTANT_V",(enumeration)CONSTANT_V,
-				PT_KEYWORD,"CONSTANT_PQ",(enumeration)CONSTANT_PQ,
-				PT_KEYWORD,"CONSTANT_PF",(enumeration)CONSTANT_PF,
-				PT_KEYWORD,"SUPPLY_DRIVEN",(enumeration)SUPPLY_DRIVEN,
-
-			PT_enumeration,"generator_status",PADDR(gen_status_v_deprecated), PT_DEPRECATED, //unused
-				PT_KEYWORD,"OFFLINE",(enumeration)OFFLINE,
-				PT_KEYWORD,"ONLINE",(enumeration)ONLINE,
-
-			PT_enumeration,"power_type",PADDR(power_type_v_deprecated),
-				PT_KEYWORD,"AC",(enumeration)AC,
-				PT_KEYWORD,"DC",(enumeration)DC,
-
-			PT_enumeration, "INSTALLATION_TYPE", PADDR(installation_type_v_deprecated), PT_DEPRECATED, //unused
-			   PT_KEYWORD, "ROOF_MOUNTED", (enumeration)ROOF_MOUNTED,
-               PT_KEYWORD, "GROUND_MOUNTED",(enumeration)GROUND_MOUNTED,
-
-			PT_complex, "VA_Out[VA]", PADDR(VA_Out_deprecated), PT_DEPRECATED, //unused
-
-			PT_set, "phases", PADDR(phases_deprecated), PT_DEPRECATED, //unused
-				PT_KEYWORD, "A",(set)PHASE_A,
-				PT_KEYWORD, "B",(set)PHASE_B,
-				PT_KEYWORD, "C",(set)PHASE_C,
-				PT_KEYWORD, "N",(set)PHASE_N,
-				PT_KEYWORD, "S",(set)PHASE_S,
-			/* END Deprecated */
-
 			NULL) < 1)
 				GL_THROW("unable to publish properties in %s", __FILE__);
 
 		//Deltamode linkage
-		if (gl_publish_function(oclass, "interupdate_gen_object", (FUNCTIONADDR)interupdate_solar) == NULL)
+		if (gl_publish_function(oclass, "interupdate_gen_object", (FUNCTIONADDR)interupdate_solar) == nullptr)
 			GL_THROW("Unable to publish solar deltamode function");
-		if (gl_publish_function(oclass, "DC_gen_object_update", (FUNCTIONADDR)dc_object_update_solar) == NULL)
+		if (gl_publish_function(oclass, "DC_gen_object_update", (FUNCTIONADDR)dc_object_update_solar) == nullptr)
 			GL_THROW("Unable to publish solar DC object update function");
 
 		defaults = this;
@@ -202,8 +173,8 @@ int solar::create(void)
 	Voc_temp_coeff = 0.0;
 
 	//Property values - NULL out
-	pTout = NULL;
-	pWindSpeed = NULL;
+	pTout = nullptr;
+	pWindSpeed = nullptr;
 
 	module_acoeff = -2.81;	 //Coefficients from Sandia database - represents
 	module_bcoeff = -0.0455; //glass/cell/polymer sheet insulated back, raised structure mounting
@@ -224,16 +195,18 @@ int solar::create(void)
 	solar_power_model = BASEEFFICIENT; //Use older power output calculation model - unsure where it came from
 
 	//Null out the function pointers
-	calc_solar_radiation = NULL;
+	calc_solar_radiation = nullptr;
 
 	//Deltamode flags
 	deltamode_inclusive = false;
 	first_sync_delta_enabled = false;
 
 	//Inverter pointers
-	inverter_voltage_property = NULL;
-	inverter_current_property = NULL;
-	inverter_power_property = NULL;
+	inverter_voltage_property = nullptr;
+	inverter_current_property = nullptr;
+	inverter_power_property = nullptr;
+	inverter_rated_power_va_property = nullptr;
+	inverter_rated_dc_voltage = nullptr;
 
 	//Default versions
 	default_voltage_array = 0.0;
@@ -252,10 +225,13 @@ int solar::create(void)
 	pvc_S_ref_wpm2 = 1e3; //Unit: w/m^2
 	pvc_a1 = 0;
 	pvc_b1 = 0;
-	pvc_U_oc_V = 1005;
-	pvc_I_sc_A = 1e2;
-	pvc_U_m_V = 750;
-	pvc_I_m_A = 84;
+	pvc_U_oc_V = 0; //1005;
+	pvc_I_sc_A = 0; //1e2;
+	pvc_U_m_V = 0; //750;
+	pvc_I_m_A = 0; //84;
+
+	//Init rated_power
+	Max_P = 0;
 
 	return 1; /* return 1 on success, 0 on failure */
 }
@@ -267,14 +243,14 @@ then Tout will be set to 59 degF, RHout is set to 75% and solar flux will be set
 int solar::init_climate()
 {
 	OBJECT *hdr = OBJECTHDR(this);
-	OBJECT *obj = NULL;
+	OBJECT *obj = nullptr;
 
 	// link to climate data
-	FINDLIST *climates = NULL;
+	FINDLIST *climates = nullptr;
 
 	if (solar_model_tilt != PLAYERVAL)
 	{
-		if (weather != NULL)
+		if (weather != nullptr)
 		{
 			if (!gl_object_isa(weather, "climate"))
 			{
@@ -292,15 +268,15 @@ int solar::init_climate()
 		else //No weather specified, search
 		{
 			climates = gl_find_objects(FL_NEW, FT_CLASS, SAME, "climate", FT_END);
-			if (climates == NULL)
+			if (climates == nullptr)
 			{
 				//Ensure weather is set to NULL - catch below
-				weather = NULL;
+				weather = nullptr;
 			}
 			else if (climates->hit_count == 0)
 			{
 				//Ensure weather is set to NULL - catch below
-				weather = NULL;
+				weather = nullptr;
 			}
 			else //climate data must have been found
 			{
@@ -323,7 +299,7 @@ int solar::init_climate()
 		}
 
 		//Make sure it actually found one
-		if (weather == NULL)
+		if (weather == nullptr)
 		{
 			//Replicate above warning
 			gl_warning("solarpanel: no climate data found, using static data");
@@ -458,7 +434,7 @@ int solar::init_climate()
 				}
 
 				//Make sure it was found
-				if (calc_solar_radiation == NULL)
+				if (calc_solar_radiation == nullptr)
 				{
 					GL_THROW("Unable to map solar radiation function on %s in %s", obj->name, hdr->name);
 					/*  TROUBLESHOOT
@@ -543,17 +519,17 @@ int solar::init(OBJECT *parent)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	int climate_result;
-	gld_property *temp_property_pointer;
-	gld_wlock *test_rlock;
+	gld_property *temp_property_pointer = nullptr;
+	gld_wlock *test_rlock = nullptr;
 	bool temp_bool_val;
 	double temp_double_val, temp_inv_p_rated, temp_p_efficiency, temp_p_eta;
 	double temp_double_div_value_eta, temp_double_div_value_eff;
 	enumeration temp_enum_val;
 	int32 temp_phase_count_val;
-	FUNCTIONADDR temp_fxn;
+	FUNCTIONADDR temp_fxn = nullptr;
 	STATUS fxn_return_status;
 
-	if (parent != NULL)
+	if (parent != nullptr)
 	{
 		if ((parent->flags & OF_INIT) != OF_INIT)
 		{
@@ -611,25 +587,27 @@ int solar::init(OBJECT *parent)
 	//efficiency dictates how much of the rate insolation the panel can capture and
 	//turn into electricity
 	//Rated power output
-	if (Max_P == 0)
+	if (solar_power_model != PV_CURVE) //Get rid of the warning when PV_CURVE mode is used
 	{
-		Max_P = Rated_Insolation * efficiency * area; // We are calculating the module efficiency which should be less than cell efficiency. What about the sun hours??
-		gl_verbose("solar:%d %s - Max_P was not specified.  Calculating from other defaults.",obj->id,(obj->name?obj->name:"Unnamed"));
-		/* TROUBLESHOOT
-		The relationship between power output and other physical variables is described by Max_P = Rated_Insolation * efficiency * area. Since Max_P
-		was not set, using this equation to calculate it.
-		*/
-
 		if (Max_P == 0)
 		{
-			gl_warning("solar:%d %s - Max_P and {area or Rated_Insolation or effiency} were not specified or specified as zero.  Leads to maximum power output of 0.",obj->id,(obj->name?obj->name:"Unnamed"));
+			Max_P = Rated_Insolation * efficiency * area; // We are calculating the module efficiency which should be less than cell efficiency. What about the sun hours??
+			gl_verbose("solar:%d %s - Max_P was not specified.  Calculating from other defaults.",obj->id,(obj->name?obj->name:"Unnamed"));
 			/* TROUBLESHOOT
 			The relationship between power output and other physical variables is described by Max_P = Rated_Insolation * efficiency * area. Since Max_P
-			was not specified and this equation leads to a value of zero, the output of the model is likely to be no power at all times.
+			was not set, using this equation to calculate it.
 			*/
+
+			if (Max_P == 0)
+			{
+				gl_warning("solar:%d %s - Max_P and {area or Rated_Insolation or effiency} were not specified or specified as zero.  Leads to maximum power output of 0.",obj->id,(obj->name?obj->name:"Unnamed"));
+				/* TROUBLESHOOT
+				The relationship between power output and other physical variables is described by Max_P = Rated_Insolation * efficiency * area. Since Max_P
+				was not specified and this equation leads to a value of zero, the output of the model is likely to be no power at all times.
+				*/
+			}
 		}
-	}
-	else
+		else
 	{
 		if (efficiency != 0 && area != 0 && Rated_Insolation != 0)
 		{
@@ -647,6 +625,7 @@ int solar::init(OBJECT *parent)
 			}
 		}
 	}
+	}
 
 	if (Rated_Insolation == 0)
 	{
@@ -663,7 +642,7 @@ int solar::init(OBJECT *parent)
 	}
 
 	// find parent inverter, if not defined, use a default voltage
-	if (parent != NULL)
+	if (parent != nullptr)
 	{
 		if (gl_object_isa(parent, "inverter", "generators")) // SOLAR has a PARENT and PARENT is an INVERTER - old-school inverter
 		{
@@ -694,7 +673,7 @@ int solar::init(OBJECT *parent)
 			inverter_power_property = new gld_property(parent, "P_In");
 
 			//Check it
-			if ((inverter_power_property->is_valid() != true) || (inverter_power_property->is_double() != true))
+			if (!inverter_power_property->is_valid() || !inverter_power_property->is_double())
 			{
 				GL_THROW("solar:%d - %s - Unable to map inverter power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -819,7 +798,7 @@ int solar::init(OBJECT *parent)
 			temp_double_div_value_eta = temp_inv_p_rated / temp_p_eta;
 			temp_double_div_value_eff = temp_inv_p_rated / temp_p_efficiency;
 
-			if (temp_bool_val == true)
+			if (temp_bool_val)
 			{
 				if (Max_P > temp_double_val)
 				{
@@ -870,13 +849,13 @@ int solar::init(OBJECT *parent)
 			}
 			//gl_verbose("Max_P is : %f", Max_P);
 		}
-		else if (gl_object_isa(parent, "inverter_dyn", "generators") == true) // SOLAR has a PARENT and PARENT is an inverter_dyn object
+		else if (gl_object_isa(parent, "inverter_dyn", "generators")) // SOLAR has a PARENT and PARENT is an inverter_dyn object
 		{
 			//Map the inverter voltage
 			inverter_voltage_property = new gld_property(parent, "V_In");
 
 			//Check it
-			if ((inverter_voltage_property->is_valid() != true) || (inverter_voltage_property->is_double() != true))
+			if (!inverter_voltage_property->is_valid() || !inverter_voltage_property->is_double())
 			{
 				GL_THROW("solar:%d - %s - Unable to map inverter power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -887,7 +866,7 @@ int solar::init(OBJECT *parent)
 			inverter_pvc_Pmax_property = new gld_property(parent, cur_prop_name);
 
 			//Check it
-			if ((inverter_pvc_Pmax_property->is_valid() != true) || (inverter_pvc_Pmax_property->is_double() != true))
+			if (!inverter_pvc_Pmax_property->is_valid() || !inverter_pvc_Pmax_property->is_double())
 			{
 				GL_THROW("solar:%d - %s - Unable to map a default power interface field '%s'", obj->id, (obj->name ? obj->name : "Unnamed"), cur_prop_name);
 				/*  TROUBLESHOOT
@@ -900,7 +879,7 @@ int solar::init(OBJECT *parent)
 			inverter_current_property = new gld_property(parent, "I_In");
 
 			//Check it
-			if ((inverter_current_property->is_valid() != true) || (inverter_current_property->is_double() != true))
+			if (!inverter_current_property->is_valid() || !inverter_current_property->is_double())
 			{
 				GL_THROW("solar:%d - %s - Unable to map inverter power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
 				//Defined above
@@ -910,9 +889,29 @@ int solar::init(OBJECT *parent)
 			inverter_power_property = new gld_property(parent, "P_In");
 
 			//Check it
-			if ((inverter_power_property->is_valid() != true) || (inverter_power_property->is_double() != true))
+			if (!inverter_power_property->is_valid() || !inverter_power_property->is_double())
 			{
 				GL_THROW("solar:%d - %s - Unable to map inverter power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
+				//Defined above
+			}
+
+			//Map the inverter rated power value
+			inverter_rated_power_va_property = new gld_property(parent, "rated_power");
+
+			//Check it
+			if (!inverter_rated_power_va_property->is_valid() || !inverter_rated_power_va_property->is_double())
+			{
+				GL_THROW("solar:%d - %s - Unable to map inverter rated power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
+				//Defined above
+			}
+
+			//Map the inverter dc voltage
+			inverter_rated_dc_voltage = new gld_property(parent, "rated_DC_Voltage");
+
+			//Check it
+			if (!inverter_rated_dc_voltage->is_valid() || !inverter_rated_dc_voltage->is_double())
+			{
+				GL_THROW("solar:%d - %s - Unable to map inverter rated DC voltage interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
 				//Defined above
 			}
 
@@ -935,7 +934,7 @@ int solar::init(OBJECT *parent)
 			temp_fxn = (FUNCTIONADDR)(gl_get_function(parent, "register_gen_DC_object"));
 
 			//See if it was located
-			if (temp_fxn == NULL)
+			if (temp_fxn == nullptr)
 			{
 				GL_THROW("solar:%d - %s - failed to map additional current injection mapping for inverter_dyn:%d - %s", obj->id, (obj->name ? obj->name : "unnamed"), parent->id, (parent->name ? parent->name : "unnamed"));
 				/*  TROUBLESHOOT
@@ -995,7 +994,7 @@ int solar::init(OBJECT *parent)
 		inverter_power_property = new gld_property(obj, "default_power_variable");
 
 		//Check it
-		if ((inverter_power_property->is_valid() != true) || (inverter_power_property->is_double() != true))
+		if (!inverter_power_property->is_valid() || !inverter_power_property->is_double())
 		{
 			GL_THROW("solar:%d - %s - Unable to map a default power interface field", obj->id, (obj->name ? obj->name : "Unnamed"));
 			//Defined above
@@ -1028,16 +1027,22 @@ int solar::init(OBJECT *parent)
 		*/
 	}
 
+	//See if the global flag is set - if so, add the object flag
+	if (all_generator_delta)
+	{
+		obj->flags |= OF_DELTAMODE;
+	}
+
 	//Set the deltamode flag, if desired
 	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)
 	{
 		deltamode_inclusive = true; //Set the flag and off we go
 	}
 
-	if (deltamode_inclusive == true)
+	if (deltamode_inclusive)
 	{
 		//Check global, for giggles
-		if (enable_subsecond_models != true)
+		if (!enable_subsecond_models)
 		{
 			gl_warning("solar:%s indicates it wants to run deltamode, but the module-level flag is not set!", obj->name ? obj->name : "unnamed");
 			/*  TROUBLESHOOT
@@ -1052,7 +1057,7 @@ int solar::init(OBJECT *parent)
 		}
 
 		//Make sure our parent is an inverter and deltamode enabled (otherwise this is dumb)
-		if ((gl_object_isa(parent, "inverter", "generators") == true) || (gl_object_isa(parent, "inverter_dyn", "generators") == true))
+		if (gl_object_isa(parent, "inverter", "generators") || gl_object_isa(parent, "inverter_dyn", "generators"))
 		{
 			//Make sure our parent has the flag set
 			if ((parent->flags & OF_DELTAMODE) != OF_DELTAMODE)
@@ -1075,7 +1080,7 @@ int solar::init(OBJECT *parent)
 	}	 //End deltamode inclusive
 	else //This particular model isn't enabled
 	{
-		if (enable_subsecond_models == true)
+		if (enable_subsecond_models)
 		{
 			gl_warning("solar:%d %s - Deltamode is enabled for the module, but not this solar array!", obj->id, (obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
@@ -1108,14 +1113,14 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 	int64 ret_value;
 	OBJECT *obj = OBJECTHDR(this);
 	double insolwmsq, corrwindspeed, Tback, Ftempcorr;
-	gld_wlock *test_rlock;
+	gld_wlock *test_rlock = nullptr;
 
-	if (first_sync_delta_enabled == true) //Deltamode first pass
+	if (first_sync_delta_enabled) //Deltamode first pass
 	{
 		//TODO: LOCKING!
-		if ((deltamode_inclusive == true) && (enable_subsecond_models == true)) //We want deltamode - see if it's populated yet
+		if (deltamode_inclusive && enable_subsecond_models) //We want deltamode - see if it's populated yet
 		{
-			if ((gen_object_current == -1) || (delta_objects == NULL))
+			if ((gen_object_current == -1) || (delta_objects == nullptr))
 			{
 				//Call the allocation routine
 				allocate_deltamode_arrays();
@@ -1139,7 +1144,7 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 			delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "interupdate_gen_object"));
 
 			//Make sure it worked
-			if (delta_functions[gen_object_current] == NULL)
+			if (delta_functions[gen_object_current] == nullptr)
 			{
 				GL_THROW("Failure to map deltamode function for device:%s", obj->name);
 				/*  TROUBLESHOOT
@@ -1150,10 +1155,10 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 
 			//Map up the function for postupdate
-			post_delta_functions[gen_object_current] = NULL; //No post-update function for us
+			post_delta_functions[gen_object_current] = nullptr; //No post-update function for us
 
 			//Map up the function for preupdate
-			delta_preupdate_functions[gen_object_current] = NULL;
+			delta_preupdate_functions[gen_object_current] = nullptr;
 
 			//Update pointer
 			gen_object_current++;
@@ -1181,7 +1186,7 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 	if (solar_model_tilt != PLAYERVAL)
 	{
 		//Update windspeed - since it's being read and has a variable
-		if (weather != NULL)
+		if (weather != nullptr)
 		{
 			wind_speed = pWindSpeed->get_double();
 			Tamb = pTout->get_double();
@@ -1193,7 +1198,7 @@ TIMESTAMP solar::sync(TIMESTAMP t0, TIMESTAMP t1)
 		{
 		case DEFAULT:
 		{
-			if (weather == NULL)
+			if (weather == nullptr)
 			{
 				//If no weather, just assume this is the Rated_Insolation (defaults to 1000 W/m^2) by the shading factor.
 				Insolation = Rated_Insolation * shading_factor;
@@ -1378,7 +1383,7 @@ SIMULATIONMODE solar::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 //DC update function
 STATUS solar::solar_dc_update(OBJECT *calling_obj, bool init_mode)
 {
-	gld_wlock *test_rlock;
+	gld_wlock *test_rlock = nullptr;
 	STATUS temp_status = SUCCESS;
 	double inv_I, inv_P;
 
@@ -1386,7 +1391,7 @@ STATUS solar::solar_dc_update(OBJECT *calling_obj, bool init_mode)
 	//Tamb and Insolation were theoretically updated in the sync call (either as exec or in interupdate)
 	update_cur_t_and_S();
 
-	if (init_mode == true) //Initialization - first runs
+	if (init_mode) //Initialization - first runs
 	{
 		//Pull P_In from the inverter - for now, this is singular (may need to be adjusted when multiple objects exist)
 		inv_P = inverter_power_property->get_double();
@@ -1441,13 +1446,6 @@ void solar::init_pub_vars_pvcurve_mode()
 {
 	OBJECT *obj = OBJECTHDR(this);
 
-	// Data Sanity Check
-	if (Max_P < 0)
-	{
-		Max_P = 0;
-		gl_warning("solar:%d %s - 'PV_CURVE', the rated_power of PV cannot be negative - set as %f [W].",obj->id,(obj->name?obj->name:"Unnamed"),Max_P);
-	}
-
 	// Init with Reference Temperature & Insolation
 	pvc_cur_S_wpm2 = pvc_S_ref_wpm2;
 	pvc_cur_t_cels = pvc_t_ref_cels;
@@ -1496,28 +1494,67 @@ void solar::init_pub_vars_pvcurve_mode()
 		gl_warning("solar:%d %s - pvc_b1 was specified as a negative value - set to 0 (1/Celsius).",obj->id,(obj->name?obj->name:"Unnamed"));
 	}
 
-	if (pvc_U_oc_V <= 0)
+	// Data Sanity Check
+	if (Max_P <= 0)
 	{
-		pvc_U_oc_V = 1005;
-		gl_warning("solar:%d %s - pvc_U_oc_V was not a valid value - set to 1005 (V).",obj->id,(obj->name?obj->name:"Unnamed"));
-	}
+		if ((pvc_U_m_V > 0) && (pvc_I_m_A > 0))
+		{
+			Max_P = pvc_U_m_V * pvc_I_m_A;
 
-	if (pvc_I_sc_A <= 0)
-	{
-		pvc_I_sc_A = 1e2;
-		gl_warning("solar:%d %s - pvc_I_sc_A was not a valid value - set to 1e2 (A).",obj->id,(obj->name?obj->name:"Unnamed"));
-	}
+			if(pvc_I_sc_A <= 0)
+			{
+				pvc_I_sc_A = pvc_I_m_A * PV_CURVE_PARAM_RATIO;
+			}
+			if(pvc_U_oc_V <= 0)
+			{
+				pvc_U_oc_V = pvc_U_m_V * PV_CURVE_PARAM_RATIO;
+			}
+		}
+		else
+		{
+			double inv_rated_power_va = inverter_rated_power_va_property->get_double();
+			Max_P = inv_rated_power_va;
 
-	if (pvc_U_m_V <= 0)
-	{
-		pvc_U_m_V = 750;
-		gl_warning("solar:%d %s - pvc_U_m_V was not a valid value, set to 750 (V).",obj->id,(obj->name?obj->name:"Unnamed"));
-	}
+			double inv_rated_dc_volt_v = inverter_rated_dc_voltage->get_double();
+			pvc_U_m_V = inv_rated_dc_volt_v;
 
-	if (pvc_I_m_A <= 0)
+			pvc_I_m_A = Max_P / pvc_U_m_V;
+
+			pvc_I_sc_A = pvc_I_m_A * PV_CURVE_PARAM_RATIO;
+			pvc_U_oc_V = pvc_U_m_V * PV_CURVE_PARAM_RATIO;
+		}
+
+		gl_warning("solar:%d %s - Max power not set. Using inverter defaults for pv curve parameters",obj->id,(obj->name?obj->name:"Unnamed"));
+		/*  TROUBLESHOOT
+		The rated_power as not set for the solar object.  The rated_power for the inverter is taken instead, and all characteristics of the
+		PV curve are computed from assumed defaults.  If this is not desired, direclty populate the values.
+		*/
+	}
+	else
 	{
-		pvc_I_m_A = 84;
-		gl_warning("solar:%d %s - pvc_I_m_A was not a valid value, set to 84 (V).",obj->id,(obj->name?obj->name:"Unnamed"));
+		if (pvc_U_m_V <= 0)
+		{
+			double inv_rated_dc_volt_v = inverter_rated_dc_voltage->get_double();
+			pvc_U_m_V = inv_rated_dc_volt_v;
+		}
+		if (pvc_I_m_A <= 0)
+		{
+			pvc_I_m_A = Max_P / pvc_U_m_V;
+		}
+		if (pvc_I_sc_A <= 0)
+		{
+			pvc_I_sc_A = pvc_I_m_A * PV_CURVE_PARAM_RATIO;
+		}
+		if (pvc_U_oc_V <= 0)
+		{
+			pvc_U_oc_V = pvc_U_m_V * PV_CURVE_PARAM_RATIO;
+		}
+
+		gl_warning("solar:%d %s - PV curve specification incomplete - defaults calcualted",obj->id,(obj->name?obj->name:"Unnamed"));
+		/*  TROUBLESHOOT
+		One or more of the four PV curve characteristics were not specified, so they were computed from an assumed default.  If this is
+		undesired, explicitly specify the parameters.
+		*/
 	}
 
 	// Calc C1 & C2 using other PVC params
@@ -1668,7 +1705,7 @@ EXPORT int create_solar(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(solar::oclass);
-		if (*obj != NULL)
+		if (*obj != nullptr)
 		{
 			solar *my = OBJECTDATA(*obj, solar);
 			gl_set_parent(*obj, parent);
@@ -1684,7 +1721,7 @@ EXPORT int init_solar(OBJECT *obj, OBJECT *parent)
 {
 	try
 	{
-		if (obj != NULL)
+		if (obj != nullptr)
 			return OBJECTDATA(obj, solar)->init(parent);
 		else
 			return 0;

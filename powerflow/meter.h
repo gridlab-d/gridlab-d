@@ -15,8 +15,8 @@ EXPORT int meter_kmldata(OBJECT *obj,int (*stream)(const char*,...));
 class meter : public node
 {
 public:
-	complex measured_voltage[3];	///< measured voltage
-	complex measured_voltageD[3];	///< measured voltage - Line-to-Line
+	gld::complex measured_voltage[3];	///< measured voltage
+	gld::complex measured_voltageD[3];	///< measured voltage - Line-to-Line
 	double measured_real_max_voltage_in_interval[3];	///< measured real max voltage in a time interval
 	double measured_real_max_voltageD_in_interval[3];	///< measured real max voltage in a time interval - Line-to-Line
 	double measured_real_min_voltage_in_interval[3];	///< measured real min voltage in a time interval
@@ -41,13 +41,13 @@ public:
     double measured_reactive_min_power_in_interval_3ph[3];	///< minimum real power over the last interval
 	double measured_min_max_avg_timestep; // Period of timestep for min/max/average calculations
 
-	complex measured_current[3];	///< measured current
+	gld::complex measured_current[3];	///< measured current
 	double measured_real_energy;	///< metered real energy consumption
 	double measured_real_energy_delta;	///< metered real energy consumption over last interval
 	double measured_reactive_energy;///< metered reactive energy consumption
 	double measured_reactive_energy_delta;///< metered reactive energy consumption over last interval
     double measured_energy_delta_timestep; // Period of timestep for real and reactive delta energy calculation
-	complex measured_power;			///< metered power
+	gld::complex measured_power;			///< metered power
 	double measured_demand;			///< metered demand (peak of power)
 	double measured_real_power;		///< metered real power
 	double last_measured_real_power; ///< previous metered real power
@@ -55,7 +55,7 @@ public:
 	double measured_reactive_power; ///< metered reactive power
 	double last_measured_reactive_power; ///< previously measured reactive power
 	double last_measured_reactive_power_3ph[3]; ///< previously measured reactive power, all three phases
-	complex indiv_measured_power[3];///< metered power on each phase
+	gld::complex indiv_measured_power[3];///< metered power on each phase
 	bool meter_interrupted;			///< Reliability flag - goes active if the customer is in an "interrupted" state
 	bool meter_interrupted_secondary;	///< Reliability flag - goes active if the customer is in an "secondary interrupted" state - i.e., momentary
 	bool meter_NR_servered;			///< Flag for NR solver, server mode (not standalone), and SWING designation
@@ -69,7 +69,7 @@ public:
 	int16 total_count;		//reliability total event counter
 	int16 s_flag;			//reliability flag that gets set if the meter experienced more than n sustained interruptions
 	int16 t_flag;			//reliability flage that gets set if the meter experienced more than n events total
-	complex pre_load;		//the load prior to being interrupted
+	gld::complex pre_load;		//the load prior to being interrupted
 #endif
 
 	double hourly_acc;
@@ -78,7 +78,7 @@ public:
 	double monthly_bill;			//Accumulator for the current month's bill
 	double monthly_fee;				//Once a month flat fee for customer hook-up
 	double monthly_energy;			//Accumulator for the current month's energy
-	complex meter_power_consumption; //Represents standby power or losses assosciated with electric meters
+	gld::complex meter_power_consumption; //Represents standby power or losses assosciated with electric meters
 	int16 no_phases;
 
 	typedef enum {
@@ -110,12 +110,12 @@ private:
 	double previous_energy_total;  // Used to track what the meter reading was the previous month
     double last_measured_real_energy;
     double last_measured_reactive_energy;
-    complex last_measured_max_voltage_mag[3];
-    complex last_measured_max_voltageD_mag[3];
-    complex last_measured_min_voltage_mag[3];
-    complex last_measured_min_voltageD_mag[3];
-    complex last_measured_voltage[3];
-    complex last_measured_voltageD[3];
+    gld::complex last_measured_max_voltage_mag[3];
+    gld::complex last_measured_max_voltageD_mag[3];
+    gld::complex last_measured_min_voltage_mag[3];
+    gld::complex last_measured_min_voltageD_mag[3];
+    gld::complex last_measured_voltage[3];
+    gld::complex last_measured_voltageD[3];
     double last_measured_avg_voltage_mag[3];
     double last_measured_avg_voltageD_mag[3];
 

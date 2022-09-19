@@ -1,0 +1,275 @@
+//4-node-esque system to test multiple islands/solutions approach
+//Makes sure that "initially islanded node" has zero voltage at beginning
+
+clock {
+	timezone EST+5EDT;
+	starttime '2000-01-01 0:00:00';
+	stoptime '2000-01-01 0:00:05';
+}
+
+module powerflow {
+	solver_method NR;
+	line_limits false;
+}
+
+module assert;
+
+object overhead_line_conductor {
+	name olc100;
+	geometric_mean_radius 0.0244 ft;
+	resistance 0.306 Ohm/mile;
+}
+
+object overhead_line_conductor {
+	name olc101;
+	geometric_mean_radius 0.00814 ft;
+	resistance 0.592 Ohm/mile;
+}
+
+object line_spacing {
+	name ls200;
+	distance_AB 2.5 ft;
+	distance_BC 4.5 ft;
+	distance_AC 7.0 ft;
+	distance_AN 5.656854 ft; 
+	distance_BN 4.272002 ft;
+	distance_CN 5.0 ft;
+}
+
+object line_configuration {
+	name lc300;
+	conductor_A olc100;
+	conductor_B olc100;
+	conductor_C olc100;
+	conductor_N olc101;
+	spacing ls200;
+}
+
+object transformer_configuration {
+	name tc400;
+	connect_type WYE_WYE;
+	power_rating 6000;
+	primary_voltage 12470;
+	secondary_voltage 4160;
+	resistance 0.01;
+	reactance 0.06;
+}
+
+//Fault check option
+object fault_check {
+	name base_fault_check_object;
+	check_mode ONCHANGE;
+	strictly_radial false;
+	grid_association true;	//Flag to ensure non-monolithic islands
+}
+
+//Added switch item - Open switch - tests the condition
+object load {
+	name I_Should_Disconnect;
+	phases ABCN;
+	nominal_voltage 2401.777;
+	object complex_assert {
+		target voltage_A;
+		value 0.0;
+		within 0.01;
+	};
+	object complex_assert {
+		target voltage_B;
+		value 0.0;
+		within 0.01;
+	};
+	object complex_assert {
+		target voltage_C;
+		value 0.0;
+		within 0.01;
+	};
+}
+
+object switch {
+	phases ABCN;
+	name "I_better_not_Fail";
+	from node2B;
+	to I_Should_Disconnect;
+	status OPEN;
+}
+
+//Switches, that would presumably make this three systems, eventually
+object switch {
+	name switch3_3B;
+	phases ABCN;
+	from node3;
+	to node3B;
+	status CLOSED;
+}
+
+object switch {
+	name switch2B_2C;
+	phases ABCN;
+	from node2B;
+	to node2C;
+	status CLOSED;
+}
+
+//First system
+object node {
+	name node1;
+	phases "ABCN";
+	bustype SWING;
+	nominal_voltage 7199.558;
+}
+
+object overhead_line {
+	name ol12;
+	phases "ABCN";
+	from node1;
+	to node2;
+	length 2000;
+	configuration lc300;
+}
+
+object node {
+	name node2;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+}
+
+object transformer {
+	name tran23;
+	phases "ABCN";
+	from node2;
+	to node3;
+	configuration tc400;
+}
+
+object node {
+	name node3;
+	phases "ABCN";
+	nominal_voltage 2401.777;
+}
+
+
+object overhead_line {
+	name ol34;
+	phases "ABCN";
+	from node3;
+	to load4;
+	length 2500;
+	configuration lc300;
+}
+
+object load {
+	name load4;
+	phases "ABCN";
+	constant_power_A +12750.000+7901.031j;
+	constant_power_B +18000.000+8717.789j;
+	constant_power_C +23750.000+7806.750j;
+	nominal_voltage 2401.777;
+}
+
+//Duplicate B
+object node {
+	name node1B;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+}
+
+object overhead_line {
+	name ol12B;
+	phases "ABCN";
+	from node1B;
+	to node2B;
+	length 2000;
+	configuration lc300;
+}
+
+object node {
+	name node2B;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+}
+
+object transformer {
+	name tran23B;
+	phases "ABCN";
+	from node2B;
+	to node3B;
+	configuration tc400;
+}
+
+object node {
+	name node3B;
+	phases "ABCN";
+	nominal_voltage 2401.777;
+}
+
+object overhead_line {
+	name ol34B;
+	phases "ABCN";
+	from node3B;
+	to load4B;
+	length 2500;
+	configuration lc300;
+}
+
+object load {
+	name load4B;
+	phases "ABCN";
+	constant_power_A +10750.000+7901.031j;
+	constant_power_B +18005.000+8717.789j;
+	constant_power_C +20750.000+7806.750j;
+	nominal_voltage 2401.777;
+}
+
+//Duplicate C
+object node {
+	name node1C;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+}
+
+object overhead_line {
+	name ol12C;
+	phases "ABCN";
+	from node1C;
+	to node2C;
+	length 2000;
+	configuration lc300;
+}
+
+object node {
+	name node2C;
+	phases "ABCN";
+	nominal_voltage 7199.558;
+}
+
+object transformer {
+	name tran23C;
+	phases "ABCN";
+	from node2C;
+	to node3C;
+	configuration tc400;
+}
+
+object node {
+	name node3C;
+	phases "ABCN";
+	nominal_voltage 2401.777;
+}
+
+object overhead_line {
+	name ol34C;
+	phases "ABCN";
+	from node3C;
+	to load4C;
+	length 2500;
+	configuration lc300;
+}
+
+object load {
+	name load4C;
+	phases "ABCN";
+	constant_power_A +8750.000+7901.031j;
+	constant_power_B +8010.000+8717.789j;
+	constant_power_C +16050.000+7806.750j;
+	nominal_voltage 2401.777;
+}

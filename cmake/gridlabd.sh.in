@@ -8,8 +8,13 @@ export CXX="@CMAKE_CXX_COMPILER_SANITIZED@"
 bindir="@CMAKE_INSTALL_BINDIR_SANITIZED@"
 pkgdatadir="@CMAKE_INSTALL_DATADIR_SANITIZED@"
 pkglibdir="@CMAKE_INSTALL_LIBDIR_SANITIZED@"
-export DYLD_LIBRARY_PATH=$pkglibdir
 HAS_MINGW="@FOUND_WINDOWS@"
+IS_MAC="@FOUND_MACOS@"
+
+if test "x$IS_MAC" = "xyes"; then
+  export DYLD_LIBRARY_PATH=$pkglibdir
+  export SDKROOT="$(xcrun --show-sdk-path)"
+fi
 
 if test "x$GLPATH" = x; then
   export GLPATH="$pkglibdir:$pkgdatadir"
@@ -18,9 +23,9 @@ else
 fi
 
 if test "x$TERM" = "xcygwin"; then
-  export CXXFLAGS="-I${pkgdatadir} $CXXFLAGS"
+  export CXXFLAGS="-I${pkgdatadir} -fPIC $CXXFLAGS"
 else
-  export CXXFLAGS="-I$pkgdatadir $CXXFLAGS"
+  export CXXFLAGS="-I$pkgdatadir -fPIC $CXXFLAGS"
 fi
 
 if test "x@FOUND_WINDOWS@" != "xyes"; then # Generated test for WIN32

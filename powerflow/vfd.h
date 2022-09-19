@@ -33,7 +33,7 @@ public:
 
 	STATUS alloc_freq_arrays(double delta_t_val);
 	void CheckParameters(void);
-	complex complex_exp(double angle);
+	gld::complex complex_exp(double angle);
 	STATUS VFD_current_injection(void);
 	
 	SIMULATIONMODE inter_deltaupdate_vfd(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
@@ -75,7 +75,7 @@ private:
 	double HPbyF;
 
 	double phasorVal[3];
-	complex prev_power[3];
+	gld::complex prev_power[3];
 	double prev_desiredRPM;
 	double efficiency_coeffs[8];
 	double curr_time_value;

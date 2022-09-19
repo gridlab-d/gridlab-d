@@ -14,20 +14,6 @@ private:
 	bool deltamode_inclusive; //Boolean for deltamode calls - pulled from object flags
 	bool first_sync_delta_enabled;
 
-	/* DEPRECATED - properties that will be deleted in the next version */
-	enum GENERATOR_MODE_deprecated {CONSTANT_V=1, CONSTANT_PQ=2, CONSTANT_PF=4, SUPPLY_DRIVEN=5};
-	enumeration gen_mode_v_deprecated;
-	enum GENERATOR_STATUS_deprecated {OFFLINE=1, ONLINE=2};
-	enumeration gen_status_v_deprecated;
-	enum POWER_TYPE_deprecated{DC=1, AC=2};
-	enumeration power_type_v_deprecated;
-    enum INSTALLATION_TYPE_deprecated {ROOF_MOUNTED=1, GROUND_MOUNTED=2};
-	enumeration installation_type_v_deprecated;
-
-	complex VA_Out_deprecated;
-	set phases_deprecated;
-
-	/* END DEPRECATED */
 protected:
 public: /* Published Variables & Other Funcs For 'PV_CURVE' Mode */
 	// Published Variables for N-R Solver (under the mode 'PV_CURVE')
@@ -180,6 +166,9 @@ private:
 	gld_property *inverter_current_property;
 	gld_property *inverter_power_property;
 	gld_property *inverter_pvc_Pmax_property;
+
+	gld_property *inverter_rated_power_va_property;
+	gld_property *inverter_rated_dc_voltage;
 
 	//Default voltage and current values, if ran "headless"
 	double default_voltage_array;

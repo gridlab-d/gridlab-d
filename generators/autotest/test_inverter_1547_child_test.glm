@@ -1,0 +1,146 @@
+//Test inverter 1547 functionality
+//Basically look for childed responses
+//Checks issue stated in #1318
+
+clock {
+	timezone "PST+8PDT";
+	starttime '2001-08-01 12:00:00 PDT';
+	stoptime '2001-08-01 12:00:05 PDT';
+}
+
+#set suppress_repeat_messages=1
+#set profiler=1
+#set double_format=%+.12lg
+#set complex_format=%+.12lg%+.12lg%c
+#set complex_output_format=RECT
+
+module tape;
+module assert;
+module powerflow {
+	enable_subsecond_models true;
+	deltamode_timestep 1 ms;
+	solver_method NR;
+	all_powerflow_delta true;
+	all_frequency_measure_default PLL;
+}
+
+module generators {
+	enable_subsecond_models true;
+	deltamode_timestep 1 ms;
+}
+
+object line_configuration {
+	z11 1.1349574926666666+1.200063532333333j;
+	z12 0.2481072636666666+0.47157912833333315j;
+	z13 0.24810726366666663+0.4715791283333332j;
+	z21 0.24810726366666652+0.4715791283333331j;
+	z22 1.1349574926666666+1.2000635323333333j;
+	z23 0.24810726366666658+0.4715791283333332j;
+	z31 0.24810726366666636+0.4715791283333331j;
+	z32 0.2481072636666667+0.47157912833333326j;
+	z33 1.1349574926666666+1.2000635323333333j;
+	name olcABCN;
+}
+
+object meter {
+	name subtation_bus;
+	phases "ABCN";
+	bustype SWING;
+	nominal_voltage 7200.0;
+	object player {
+		file "../data_inverter_freq_player_A.csv";
+		property voltage_A;
+		flags DELTAMODE;
+	};
+	object player {
+		file "../data_inverter_freq_player_B.csv";
+		property voltage_B;
+		flags DELTAMODE;
+	};
+	object player {
+		file "../data_inverter_freq_player_C.csv";
+		property voltage_C;
+		flags DELTAMODE;
+	};
+}
+
+object overhead_line  {
+	phases "ABCN";
+	name intermed_line;
+	from subtation_bus;
+	to feeder_head;
+	length 100;
+	configuration olcABCN;
+}
+
+object meter {
+	name feeder_head;
+	nominal_voltage 7200;
+	phases ABCN;
+}
+
+object overhead_line  {
+	phases "ABCN";
+	name next_intermed_line;
+	from feeder_head;
+	to inverter_connection;
+	length 100;
+	configuration olcABCN;
+}
+
+object meter {
+	name inverter_connection;
+	nominal_voltage 7200;
+	phases ABCN;
+}
+
+object meter {
+	name inverter_connection_child;
+	parent inverter_connection;
+	nominal_voltage 7200;
+	phases ABCN;
+}
+
+object meter {
+	name inverter_connection_grandchild;
+	parent inverter_connection_child;
+	nominal_voltage 7200;
+	phases ABCN;
+}
+
+object meter {
+	name inverter_connection_greatgrandchild;
+	parent inverter_connection_grandchild;
+	nominal_voltage 7200;
+	phases ABCN;
+}
+
+object inverter_dyn {
+	name inverter_top_greatgrand;
+	parent inverter_connection_greatgrandchild;
+	rated_power 9000.0;
+	flags DELTAMODE;
+	control_mode GFL_CURRENT_SOURCE;
+	grid_following_mode POSITIVE_SEQUENCE;
+	enable_1547_checks true;
+	IEEE_1547_version IEEE1547A_2014;
+	object enum_assert {
+		flags DELTAMODE;
+		target IEEE_1547_trip_method;
+		value 0;
+		object player {
+			flags DELTAMODE;
+			property value;
+			file "../data_inverter_freq_1547_trip.csv";
+		};
+	};
+}
+
+object recorder {
+	flags DELTAMODE;
+	parent "inverter_top_greatgrand";
+	property IEEE_1547_trip_method;
+	interval 1;
+	file inverter_top_trip_method.csv;
+}
+

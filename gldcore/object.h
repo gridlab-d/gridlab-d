@@ -52,9 +52,9 @@ typedef struct s_forecast {
 	int n_values; /**< number of values in the forecast */
 	TIMESTAMP starttime; /**< the start time of the forecast */
 	int32 timestep; /**< number of seconds per forecast timestep */
-	double *values; /**< values of the forecast (NULL if no forecast) */
+	double *values; /**< values of the forecast (nullptr if no forecast) */
 	TIMESTAMP (*external)(void *obj, void *fc); /**< external forecast update call */
-	struct s_forecast *next; /**< next forecast data block (NULL for last) */
+	struct s_forecast *next; /**< next forecast data block (nullptr for last) */
 } FORECAST; /**< Forecast data block */
 
 typedef enum {
@@ -323,7 +323,7 @@ public:
 		TRANSFORM *(*getnext)(TRANSFORM*);
 		int (*add_linear)(TRANSFORMSOURCE,double*,void*,double,double,OBJECT*,PROPERTY*,SCHEDULE*);
 		int (*add_external)(OBJECT*,PROPERTY*,const char*,OBJECT*,PROPERTY*);
-		int64 (*apply)(TIMESTAMP,TRANSFORM*,double*);
+		int64 (*apply)(TIMESTAMP,TRANSFORM*,double*,double*);
 	} transform;
 	struct {
 		randomvar_struct *(*getnext)(randomvar_struct*);
@@ -453,12 +453,12 @@ int object_loadmethod(OBJECT *obj, char *name, char *value);
 
 #define object_size(X) ((X)?(X)->size:-1) /**< get the size of the object X */
 #define object_id(X) ((X)?(X)->id:-1) /**< get the id of the object X */
-#define object_parent(X) ((X)?(X)->parent:NULL) /**< get the parent of the object */
+#define object_parent(X) ((X)?(X)->parent:nullptr) /**< get the parent of the object */
 #define object_rank(X) ((X)?(X)->name:-1) /**< get the rank of the object */
 
-#define OBJECTDATA(X,T) ((T*)((X)?((X)+1):NULL)) /**< get the object data structure */
-#define GETADDR(O,P) ((O)?((void*)((char*)((O)+1)+(unsigned int64)((P)->addr))):NULL) /**< get the addr of an object's property */
-#define OBJECTHDR(X) ((X)?(((OBJECT*)X)-1):NULL) /**< get the header from the object's data structure */
+#define OBJECTDATA(X,T) ((T*)((X)?((X)+1):nullptr)) /**< get the object data structure */
+#define GETADDR(O,P) ((O)?((void*)((char*)((O)+1)+(unsigned int64)((P)->addr))):nullptr) /**< get the addr of an object's property */
+#define OBJECTHDR(X) ((X)?(((OBJECT*)X)-1):nullptr) /**< get the header from the object's data structure */
 
 #define MY (((OBJECT*)this)-1)
 #define MYPARENT (MY->parent) /**< get the parent from the object's data structure */

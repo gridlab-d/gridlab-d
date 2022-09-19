@@ -49,17 +49,17 @@ private: /* Measurements, actuator, gld objs, & Nominal Values */
 	gld_property *prop_fm_node_freq;
 	gld_property *prop_to_node_freq;
 
-	complex swt_fm_volt_A;
-	complex swt_fm_volt_B;
-	complex swt_fm_volt_C;
+	gld::complex swt_fm_volt_A;
+	gld::complex swt_fm_volt_B;
+	gld::complex swt_fm_volt_C;
 
 	gld_property *prop_fm_node_volt_A;
 	gld_property *prop_fm_node_volt_B;
 	gld_property *prop_fm_node_volt_C;
 
-	complex swt_to_volt_A;
-	complex swt_to_volt_B;
-	complex swt_to_volt_C;
+	gld::complex swt_to_volt_A;
+	gld::complex swt_to_volt_B;
+	gld::complex swt_to_volt_C;
 
 	gld_property *prop_to_node_volt_A;
 	gld_property *prop_to_node_volt_B;

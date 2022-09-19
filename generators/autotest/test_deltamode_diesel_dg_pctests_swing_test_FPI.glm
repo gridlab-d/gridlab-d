@@ -1,0 +1,308 @@
+// $Id$
+// Basic deltamode test
+// Does parented devices - one is connected to a SWING node
+// This autotest is mainly to make sure when a diesel is connected to a node
+// connected to a SWING node, that propagates through.
+// Adapted from test_deltamode_diesel_dg_pctests_meter_values, though asserts are wrong now
+// If not set up properly, powerflow diverges (and fails)
+// Fixed-point-iterative variant of test
+
+#set suppress_repeat_messages=0
+//#set profiler=1
+#set dateformat=US
+#define rotor_convergence=0.0001
+// #set verbose=1
+
+#set double_format=%+.12lg
+#set complex_format=%+.12lg%+.12lg%c
+#set complex_output_format=RECT
+
+clock {
+	timezone "PST+8PDT";
+	starttime '2001-01-01 00:00:00 PST';
+	stoptime '2001-01-01 00:00:30 PST';
+}
+
+module tape;
+module powerflow {
+	enable_subsecond_models true;
+	all_powerflow_delta true;
+	deltamode_timestep 10.0 ms;	//10 ms
+	solver_method NR;
+	NR_solver_algorithm FPI;
+};
+module generators {
+	enable_subsecond_models TRUE;
+	deltamode_timestep 10000.0 us;	//10 ms
+}
+
+//Reference line type
+object line_configuration {
+	name OHL_config;
+	z11 0.3465+1.0179j;	//Ohms/mile
+	z12 0.1560+0.5017j;
+	z13 0.1580+0.4236j;
+	z21 0.1560+0.5017j;
+	z22 0.3375+1.0478j;
+	z23 0.1535+0.3849j;
+	z31 0.1580+0.4236j;
+	z32 0.1535+0.3849j;
+	z33 0.3414+1.0348j;
+}
+
+//Power system
+object meter {
+	phases ABC;
+	name BUS_1;
+	bustype SWING;
+	nominal_voltage 8660.254;
+	flags DELTAMODE;
+	// object recorder {
+		// file bus_1_output_recorder.csv;
+		// property voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag;
+		// flags DELTAMODE;
+		// //interval -1;
+		// interval 1;
+	// };
+	// object recorder {
+		// property "measured_power.real,measured_power.imag,measured_power_A.real,measured_power_A.imag,measured_power_B.real,measured_power_B.imag,measured_power_C.real,measured_power_C.imag";
+		// interval 1;
+		// flags DELTAMODE;
+		// file "bus_1_rec_power.csv";
+	// };
+}
+
+object meter {
+	phases ABC;
+	name BUS_1_p;
+	parent BUS_1;
+	nominal_voltage 8660.254;
+	flags DELTAMODE;
+	// object recorder {
+		// property "measured_power.real,measured_power.imag,measured_power_A.real,measured_power_A.imag,measured_power_B.real,measured_power_B.imag,measured_power_C.real,measured_power_C.imag";
+		// interval 1;
+		// flags DELTAMODE;
+		// file "bus_1_p_rec_power.csv";
+	// };
+	// object recorder {
+		// property "measured_power";
+		// interval 1;
+		// flags DELTAMODE;
+		// file "data_diesel_meter_accum_bus_1_p_total_power.csv";
+	// };
+	// object recorder {
+		// property "measured_power_A";
+		// interval 1;
+		// flags DELTAMODE;
+		// file "data_diesel_meter_accum_bus_1_p_phase_A_power.csv";
+	// };
+	// object recorder {
+		// property "measured_power_B";
+		// interval 1;
+		// flags DELTAMODE;
+		// file "data_diesel_meter_accum_bus_1_p_phase_B_power.csv";
+	// };
+	// object recorder {
+		// property "measured_power_C";
+		// interval 1;
+		// flags DELTAMODE;
+		// file "data_diesel_meter_accum_bus_1_p_phase_C_power.csv";
+	// };
+}
+
+object meter {
+	phases ABC;
+	name BUS_2;
+	nominal_voltage 8660.254;
+	flags DELTAMODE;
+	// object recorder {
+		// property "measured_power.real,measured_power.imag,measured_power_A.real,measured_power_A.imag,measured_power_B.real,measured_power_B.imag,measured_power_C.real,measured_power_C.imag";
+		// interval 1;
+		// flags DELTAMODE;
+		// file "bus_2_rec_power.csv";
+	// };
+}
+
+
+object meter {
+	phases ABC;
+	name BUS_2_OHL;
+	nominal_voltage 8660.254;
+	flags DELTAMODE;
+	// object recorder {
+		// file bus_2_output_recorder.csv;
+		// property voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag;
+		// flags DELTAMODE;
+		// interval 1;
+	// };
+	// object recorder {
+		// property "measured_power.real,measured_power.imag,measured_power_A.real,measured_power_A.imag,measured_power_B.real,measured_power_B.imag,measured_power_C.real,measured_power_C.imag";
+		// interval 1;
+		// flags DELTAMODE;
+		// file "bus_2_OHL_rec_power.csv";
+	// };
+}
+
+//Parented to bus to SWING
+object diesel_dg {
+	parent BUS_1_p;
+	name Gen_Bus_1;
+	Rated_V 15000.0;
+	flags DELTAMODE;
+	Gen_type DYN_SYNCHRONOUS;
+	rotor_speed_convergence ${rotor_convergence};
+	//temp properties - sync with example
+	power_out_A 437500.0+287500.0j;
+	power_out_B 375000.0+287500.0j;
+	power_out_C 412500.0+287500.0j;
+	Exciter_type SEXS;
+	Governor_type DEGOV1;
+	DEGOV1_R 0.01;
+	object recorder {
+		property rotor_speed,rotor_angle,flux1d,flux2q,EpRotated,VintRotated,Eint_A,Eint_B,Eint_C,Irotated,pwr_electric.real,pwr_electric.imag,pwr_mech;
+		flags DELTAMODE;
+		//interval -1;
+		interval 1;
+		file "Gen_1_Speed.csv";
+	};
+	// object recorder {
+		// flags DELTAMODE;
+		// property "power_out_A.real,power_out_A.imag,power_out_B.real,power_out_B.imag,power_out_C.real,power_out_C.imag";
+		// file Gen1PowerOut.csv;
+		// interval 1;
+	// };
+}
+	
+object diesel_dg {
+	parent BUS_2_OHL;
+	name Gen_Bus_2;
+	Rated_V 15000.0;
+	flags DELTAMODE;
+	Gen_type DYN_SYNCHRONOUS;
+	rotor_speed_convergence ${rotor_convergence};
+	//temp properties - sync with example
+	power_out_A 437500.0+287500.0j;
+	power_out_B 375000.0+287500.0j;
+	power_out_C 412500.0+287500.0j;
+	Exciter_type NO_EXC;
+	Governor_type NO_GOV;
+	// object recorder {
+		// property rotor_speed,rotor_angle,flux1d,flux2q,EpRotated,VintRotated,Eint_A,Eint_B,Eint_C,Irotated,pwr_electric.real,pwr_electric.imag,pwr_mech;
+		// flags DELTAMODE;
+		// //interval -1;
+		// interval 1;
+		// file "Gen_2_Speed.csv";
+	// };
+	// object recorder {
+		// flags DELTAMODE;
+		// property "power_out_A.real,power_out_A.imag,power_out_B.real,power_out_B.imag,power_out_C.real,power_out_C.imag";
+		// file Gen2PowerOut.csv;
+		// interval 1;
+	// };
+}
+
+object meter {
+	phases ABC;
+	name LOAD_1;
+	nominal_voltage 8660.254;
+	flags DELTAMODE;
+	// object recorder {
+		// property "measured_power.real,measured_power.imag,measured_power_A.real,measured_power_A.imag,measured_power_B.real,measured_power_B.imag,measured_power_C.real,measured_power_C.imag";
+		// interval 1;
+		// flags DELTAMODE;
+		// file "load_1_rec_power.csv";
+	// };
+}
+
+object load {
+	phases ABC;
+	name LOAD_1_p;
+	parent LOAD_1;
+	nominal_voltage 8660.254;
+	constant_power_A 875000.0+575000.0j;
+	constant_power_B 750000.0+575000.0j;
+	constant_power_C 825000.0+575000.0j;
+	flags DELTAMODE;
+	object player {
+		file "../diesel_deltamode_load_player_A.csv";
+		property constant_power_A;
+		flags DELTAMODE;
+	};
+	object player {
+		file "../diesel_deltamode_load_player_B.csv";
+		property constant_power_B;
+		flags DELTAMODE;
+	};
+	object player {
+		file "../diesel_deltamode_load_player_C.csv";
+		property constant_power_C;
+		flags DELTAMODE;
+	};
+	// object recorder {
+		// file load_output_recorder.csv;
+		// property "voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag,constant_power_A.real,constant_power_A.imag,constant_power_B.real,constant_power_B.imag,constant_power_C.real,constant_power_C.imag";
+		// flags DELTAMODE;
+		// interval -1;
+	// };
+}
+
+//Create overhead lines
+object overhead_line {
+	phases ABC;
+	name BUS_1_to_BUS_2;
+	from BUS_1;
+	to BUS_2;
+	length 3500.0 ft;
+	configuration OHL_config;
+	// object recorder {
+		// property "power_in.real,power_in.imag,power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_out.real,power_out.imag,power_out_A.real,power_out_A.imag,power_out_B.real,power_out_B.imag,power_out_C.real,power_out_C.imag";
+		// interval 1;
+		// flags DELTAMODE;
+		// file "ohl_1_2_rec_power.csv";
+	// };
+}
+
+object overhead_line {
+	phases ABC;
+	name BUS_2_to_BUS_2_OHL;
+	from BUS_2;
+	to BUS_2_OHL;
+	length 3500.0 ft;
+	configuration OHL_config;
+	// object recorder {
+		// property "power_in.real,power_in.imag,power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_out.real,power_out.imag,power_out_A.real,power_out_A.imag,power_out_B.real,power_out_B.imag,power_out_C.real,power_out_C.imag";
+		// interval 1;
+		// flags DELTAMODE;
+		// file "ohl_2_2OHL_rec_power.csv";
+	// };
+}
+
+object overhead_line {
+	phases ABC;
+	name BUS_1_to_LOAD_1;
+	from BUS_1;
+	to LOAD_1;
+	length 1000.0 ft;
+	configuration OHL_config;
+	// object recorder {
+		// property "power_in.real,power_in.imag,power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_out.real,power_out.imag,power_out_A.real,power_out_A.imag,power_out_B.real,power_out_B.imag,power_out_C.real,power_out_C.imag";
+		// interval 1;
+		// flags DELTAMODE;
+		// file "ohl_1_load_rec_power.csv";
+	// };
+}
+
+object overhead_line {
+	phases ABC;
+	name BUS_2_to_LOAD_1;
+	from BUS_2;
+	to LOAD_1;
+	length 2500.0 ft;
+	configuration OHL_config;
+	// object recorder {
+		// property "power_in.real,power_in.imag,power_in_A.real,power_in_A.imag,power_in_B.real,power_in_B.imag,power_in_C.real,power_in_C.imag,power_out.real,power_out.imag,power_out_A.real,power_out_A.imag,power_out_B.real,power_out_B.imag,power_out_C.real,power_out_C.imag";
+		// interval 1;
+		// flags DELTAMODE;
+		// file "ohl_2_load_rec_power.csv";
+	// };
+}

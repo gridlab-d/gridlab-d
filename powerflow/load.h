@@ -18,28 +18,28 @@ public:
 	static CLASS *oclass;
 	static CLASS *pclass;
 private:
-	complex prev_shunt[3];
+	gld::complex prev_shunt[3];
 
 	bool base_load_val_was_nonzero[3];		///< Tracking variable to make ZIP-fraction loads check for zero conditions (but not already zeroed)
 
-	complex prev_load_values[3][3];			///< Tracking variable for accumulators - make loads behave more like nodes
-	complex prev_load_values_dy[3][6];		///< Tracking varaible for accumulators - full connection - make loads behave more like nodes.
+	gld::complex prev_load_values[3][3];			///< Tracking variable for accumulators - make loads behave more like nodes
+	gld::complex prev_load_values_dy[3][6];		///< Tracking variable for accumulators - full connection - make loads behave more like nodes.
 
 public:
-	complex measured_voltage_A;	///< measured voltage
-	complex measured_voltage_B;
-	complex measured_voltage_C;
-	complex measured_voltage_AB;	
-	complex measured_voltage_BC;
-	complex measured_voltage_CA;
-	complex measured_total_power;
-	complex measured_power[3];
-	complex constant_power[3];		// power load
-	complex constant_current[3];	// current load
-	complex constant_impedance[3];	// impedance load
-	complex constant_power_dy[6];		// Power load, explicitly specified wye and delta -- delta first, then wye
-	complex constant_current_dy[6];	// Current load, explicitly specified wye and delta -- delta first, then wye
-	complex constant_impedance_dy[6];	// Impedance load, explicitly specified wye and delta -- delta first, then wye
+	gld::complex measured_voltage_A;	///< measured voltage
+	gld::complex measured_voltage_B;
+	gld::complex measured_voltage_C;
+	gld::complex measured_voltage_AB;	
+	gld::complex measured_voltage_BC;
+	gld::complex measured_voltage_CA;
+	gld::complex measured_total_power;
+	gld::complex measured_power[3];
+	gld::complex constant_power[3];		// power load
+	gld::complex constant_current[3];	// current load
+	gld::complex constant_impedance[3];	// impedance load
+	gld::complex constant_power_dy[6];		// Power load, explicitly specified wye and delta -- delta first, then wye
+	gld::complex constant_current_dy[6];	// Current load, explicitly specified wye and delta -- delta first, then wye
+	gld::complex constant_impedance_dy[6];	// Impedance load, explicitly specified wye and delta -- delta first, then wye
 	INRUSHINTMETHOD inrush_int_method_inductance;	//Individual mode selection
 	INRUSHINTMETHOD inrush_int_method_capacitance;
 

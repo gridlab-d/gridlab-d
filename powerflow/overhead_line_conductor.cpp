@@ -16,8 +16,8 @@ using namespace std;
 
 #include "line.h"
 
-CLASS* overhead_line_conductor::oclass = NULL;
-CLASS* overhead_line_conductor::pclass = NULL;
+CLASS* overhead_line_conductor::oclass = nullptr;
+CLASS* overhead_line_conductor::pclass = nullptr;
 
 overhead_line_conductor::overhead_line_conductor(MODULE *mod) : powerflow_library(mod)
 {
@@ -101,7 +101,7 @@ EXPORT int create_overhead_line_conductor(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(overhead_line_conductor::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			overhead_line_conductor *my = OBJECTDATA(*obj,overhead_line_conductor);
 			gl_set_parent(*obj,parent);

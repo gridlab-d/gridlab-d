@@ -15,8 +15,8 @@
 #include "inverter.h"
 
 //CLASS *inverter::plcass = power_electronics;
-CLASS *inverter::oclass = NULL;
-inverter *inverter::defaults = NULL;
+CLASS *inverter::oclass = nullptr;
+inverter *inverter::defaults = nullptr;
 
 static PASSCONFIG passconfig = PC_BOTTOMUP|PC_POSTTOPDOWN;
 static PASSCONFIG clockpass = PC_BOTTOMUP;
@@ -24,10 +24,10 @@ static PASSCONFIG clockpass = PC_BOTTOMUP;
 /* Class registration is only called once to register the class with the core */
 inverter::inverter(MODULE *module)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		oclass = gl_register_class(module,"inverter",sizeof(inverter),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class inverter";
 		else
 			oclass->trl = TRL_PROOF;
@@ -70,6 +70,7 @@ inverter::inverter(MODULE *module)
 				PT_KEYWORD,"SUPPLY_DRIVEN",(enumeration)SUPPLY_DRIVEN,
 			
 			PT_double, "inverter_convergence_criterion",PADDR(inverter_convergence_criterion), PT_DESCRIPTION, "The maximum change in error threshold for exitting deltamode.",
+			PT_double,"current_convergence[A]",PADDR(current_convergence_criterion),PT_DESCRIPTION,"Convergence criterion for current changes on first timestep - basically initialization of system",
 			PT_double, "V_In[V]",PADDR(V_In), PT_DESCRIPTION, "DC voltage",
 			PT_double, "I_In[A]",PADDR(I_In), PT_DESCRIPTION, "DC current",
 			PT_double, "P_In[W]", PADDR(P_In), PT_DESCRIPTION, "DC power",
@@ -216,6 +217,8 @@ inverter::inverter(MODULE *module)
 				PT_KEYWORD, "NONE", (enumeration)IEEE_NONE,
 				PT_KEYWORD, "IEEE1547", (enumeration)IEEE1547,
 				PT_KEYWORD, "IEEE1547A", (enumeration)IEEE1547A,
+				PT_KEYWORD, "IEEE1547_2003", (enumeration)IEEE1547,	//Duplicated to reflect inverter_dyn changes and make the same
+				PT_KEYWORD, "IEEE1547A_2014", (enumeration)IEEE1547A,
 
 			//Frequency bands of 1547a checks
 			PT_double, "over_freq_high_cutout[Hz]", PADDR(over_freq_high_band_setpoint),PT_DESCRIPTION,"DELTAMODE: OF2 set point for IEEE 1547a",
@@ -331,23 +334,22 @@ inverter::inverter(MODULE *module)
 			PT_double,"VW_P1[pu]", PADDR(VW_P1), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Power limit at VW_P1 (e.g. 1). Used in VOLT_WATT control mode.",
 			PT_double,"VW_P2[pu]", PADDR(VW_P2), PT_DESCRIPTION, "FOUR QUADRANT MODEL: Power limit at VW_P2 (e.g. 0). Used in VOLT_WATT control mode.",
 
-			/* DEPRECATED properties - will be deleted in next version */
-			PT_complex, "VA_In", PADDR(VA_In_deprecated), PT_DEPRECATED, PT_DESCRIPTION, "Deprecated input for inverter - use P_In instead",
-			/* END DEPRECATED */
+			//Hidden variables for wind turbine checks
+			PT_bool, "WT_is_connected", PADDR(WT_is_connected), PT_DESCRIPTION, "Internal flag that indicates a wind turbine child is connected",
 
-			NULL)<1) GL_THROW("unable to publish properties in %s",__FILE__);
+			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 			defaults = this;
 
 			memset(this,0,sizeof(inverter));
 
-			if (gl_publish_function(oclass,	"preupdate_gen_object", (FUNCTIONADDR)preupdate_inverter)==NULL)
+			if (gl_publish_function(oclass,	"preupdate_gen_object", (FUNCTIONADDR)preupdate_inverter)==nullptr)
 				GL_THROW("Unable to publish inverter deltamode function");
-			if (gl_publish_function(oclass,	"interupdate_gen_object", (FUNCTIONADDR)interupdate_inverter)==NULL)
+			if (gl_publish_function(oclass,	"interupdate_gen_object", (FUNCTIONADDR)interupdate_inverter)==nullptr)
 				GL_THROW("Unable to publish inverter deltamode function");
-			if (gl_publish_function(oclass,	"postupdate_gen_object", (FUNCTIONADDR)postupdate_inverter)==NULL)
+			if (gl_publish_function(oclass,	"postupdate_gen_object", (FUNCTIONADDR)postupdate_inverter)==nullptr)
 				GL_THROW("Unable to publish inverter deltamode function");
-			if (gl_publish_function(oclass, "current_injection_update", (FUNCTIONADDR)inverter_NR_current_injection_update)==NULL)
+			if (gl_publish_function(oclass, "current_injection_update", (FUNCTIONADDR)inverter_NR_current_injection_update)==nullptr)
 				GL_THROW("Unable to publish inverter current injection update function");
 	}
 }
@@ -412,20 +414,20 @@ int inverter::create(void)
 	c_2 = -1;
 	c_3 = -1;
 	p_max = -1;
-	pMeterStatus = NULL;
+	pMeterStatus = nullptr;
 	efficiency = 0;
 	inv_eta = 0.0;	//Not sure why there's two of these...
 
-	sense_object = NULL;
+	sense_object = nullptr;
 	max_charge_rate = 0;
 	max_discharge_rate = 0;
 	charge_on_threshold = 0;
 	charge_off_threshold = 0;
 	discharge_on_threshold = 0;
 	discharge_off_threshold = 0;
-	powerCalc = NULL;
+	powerCalc = nullptr;
 	sense_is_link = false;
-	sense_power = NULL;
+	sense_power = nullptr;
 
 	pf_reg = EXCLUDED;
 	pf_reg_activate = -2;
@@ -464,6 +466,7 @@ int inverter::create(void)
 	deltamode_inclusive = false;	//By default, don't be included in deltamode simulations
 	first_run = true;
 	inverter_convergence_criterion = 1e-3;
+	current_convergence_criterion = 1e-3;
 
 	//Default PID controller variables -- no output by default
 	kpd = 0.0;
@@ -488,7 +491,7 @@ int inverter::create(void)
 	inverter_1547_status = true;		//Not in a violation, by default
 	out_of_violation_time_total = 0.0;	//Not in a violation, so not tracking 'recovery'
 	ieee_1547_double = -1.0;			//Flag as not an issue
-	pFrequency = NULL;				//No mapping, by default
+	pFrequency = nullptr;				//No mapping, by default
 	value_Frequency = 60.0;			//Default value
 	prev_time = 0;						//Tracking variable
 	prev_time_dbl = 0.0;				//Tracking variable
@@ -509,7 +512,7 @@ int inverter::create(void)
 	under_freq_high_band_setpoint = 59.5;	//UF2 set point for IEEE 1547a
 	under_freq_high_band_delay = 2.0;		//UF2 clearing time for IEEE1547a
 	under_freq_high_band_viol_time = 0.0;	//Accumulator for IEEE1547a UF high-band violation time
-	under_freq_low_band_setpoint = 57;		//UF1 set point for IEEE 1547a
+	under_freq_low_band_setpoint = 57.0;		//UF1 set point for IEEE 1547a
 	under_freq_low_band_delay = 0.16;		//UF1 clearing time for IEEE 1547a
 	under_freq_low_band_viol_time = 0.0;	//Accumulator for IEEE1547a UF low-band violation time
 
@@ -545,7 +548,7 @@ int inverter::create(void)
 	vv_lockout = -1;
 
 	// Feeder frequency
-	mapped_freq_variable = NULL;
+	mapped_freq_variable = nullptr;
 	VSI_freq = 60;	// Set default VSI frequency as 60 HZ
 
 	// Default values for VSI parameters
@@ -584,18 +587,18 @@ int inverter::create(void)
 	parent_is_triplex = false;		//By default, we're not triplex
 	attached_bus_type = 0;			//By default, we're basically a PQ bus
 
-	swing_test_fxn = NULL;			//By default, no mapping
+	swing_test_fxn = nullptr;			//By default, no mapping
 
-	pCircuit_V[0] = pCircuit_V[1] = pCircuit_V[2] = NULL;
-	pLine_I[0] = pLine_I[1] = pLine_I[2] = NULL;
-	pLine_unrotI[0] = pLine_unrotI[1] = pLine_unrotI[2] = NULL;
-	pPower[0] = pPower[1] = pPower[2] = NULL;
-	pIGenerated[0] = pIGenerated[1] = pIGenerated[2] = NULL;
-	pLine12 = NULL;
-	pPower12 = NULL;
-	pMeterStatus = NULL;
-	pbus_full_Y_mat = NULL;
-	pGenerated = NULL;
+	pCircuit_V[0] = pCircuit_V[1] = pCircuit_V[2] = nullptr;
+	pLine_I[0] = pLine_I[1] = pLine_I[2] = nullptr;
+	pLine_unrotI[0] = pLine_unrotI[1] = pLine_unrotI[2] = nullptr;
+	pPower[0] = pPower[1] = pPower[2] = nullptr;
+	pIGenerated[0] = pIGenerated[1] = pIGenerated[2] = nullptr;
+	pLine12 = nullptr;
+	pPower12 = nullptr;
+	pMeterStatus = nullptr;
+	pbus_full_Y_mat = nullptr;
+	pGenerated = nullptr;
 
 	//Zero the accumulators
 	value_Circuit_V[0] = value_Circuit_V[1] = value_Circuit_V[2] = gld::complex(0.0,0.0);
@@ -603,6 +606,7 @@ int inverter::create(void)
 	value_Line_unrotI[0] = value_Line_unrotI[1] = value_Line_unrotI[2] = gld::complex(0.0,0.0);
 	value_Power[0] = value_Power[1] = value_Power[2] = gld::complex(0.0,0.0);
 	value_IGenerated[0] = value_IGenerated[1] = value_IGenerated[2] = gld::complex(0.0,0.0);
+	prev_value_IGenerated[0] = prev_value_IGenerated[1] = prev_value_IGenerated[2] = gld::complex(0.0,0.0);
 	value_Line12 = gld::complex(0.0,0.0);
 	value_Power12 = gld::complex(0.0,0.0);
 	value_MeterStatus = 1;	//Connected, by default
@@ -624,29 +628,32 @@ int inverter::create(void)
 int inverter::init(OBJECT *parent)
 {
 	OBJECT *obj = OBJECTHDR(this);
-	PROPERTY *pval;
+	PROPERTY *pval = nullptr;
 	bool *dyn_gen_posting;
 	unsigned iindex, jindex;
 	gld::complex filter_impedance;
 	double *nominal_voltage;
 	double *ptemp_double;
 	double temp_double_high, temp_double_low, tdiff, ang_diff;
-	FINDLIST *batteries;
-	OBJECT *objBattery = NULL;
+	FINDLIST *batteries = nullptr;
+	OBJECT *objBattery = nullptr;
 	int index = 0;
 	STATUS return_value_init;
 	double temp_volt_mag;
-	gld_property *temp_property_pointer;
-	gld_property *Frequency_mapped;
-	gld_wlock *test_rlock;
+	gld_property *temp_property_pointer = nullptr;
+	gld_property *Frequency_mapped = nullptr;
+	gld_wlock *test_rlock = nullptr;
 	bool temp_bool_value;
 	int temp_idx_x, temp_idx_y;
 	gld::complex temp_complex_value;
-	complex_array temp_complex_array;
+	complex_array temp_complex_array, temp_child_complex_array;;
 	set parent_phases;
-	OBJECT *tmp_obj = NULL;
+	OBJECT *tmp_obj = nullptr;
+	gld_object *tmp_gld_obj = nullptr;
+	bool childed_connection = false;
+	WT_is_connected = false;
 
-	if(parent != NULL){
+	if(parent != nullptr){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
 			gl_verbose("inverter::init(): deferring initialization on %s", gl_name(parent, objname, 255));
@@ -657,6 +664,12 @@ int inverter::init(OBJECT *parent)
 	std::string tempV, tempQ, tempf, tempP;
 	std::string VoltVArSchedInput, freq_pwrSchedInput;
 
+	//See if the global flag is set - if so, add the object flag
+	if (all_generator_delta)
+	{
+		obj->flags |= OF_DELTAMODE;
+	}
+
 	//Set the deltamode flag, if desired
 	if ((obj->flags & OF_DELTAMODE) == OF_DELTAMODE)
 	{
@@ -665,7 +678,7 @@ int inverter::init(OBJECT *parent)
 
 	// find parent meter or triplex_meter, if not defined, use default voltages, and if
 	// the parent is not a meter throw an exception
-	if (parent!=NULL)
+	if (parent!=nullptr)
 	{
 		//See what kind of parent we are
 		if (gl_object_isa(parent,"meter","powerflow") || gl_object_isa(parent,"node","powerflow") || gl_object_isa(parent,"load","powerflow") ||
@@ -676,10 +689,26 @@ int inverter::init(OBJECT *parent)
 			if (deltamode_inclusive && (four_quadrant_control_mode == FQM_VSI))
 			{
 				//See if this attached node is a child or not
-				if (parent->parent != NULL)
+				if (parent->parent != nullptr)
 				{
-					//Map parent
-					tmp_obj = parent->parent;
+					//Map parent - wherever it may be
+					temp_property_pointer = new gld_property(parent,"NR_powerflow_parent");
+
+					//Make sure it worked
+					if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_objectref())
+					{
+						GL_THROW("inverter:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
+						//Defined elsewhere
+					}
+
+					//Pull the mapping - gld_object
+					tmp_gld_obj = temp_property_pointer->get_objectref();
+
+					//Pull the proper object reference
+					tmp_obj = tmp_gld_obj->my();
+
+					//free the property
+					delete temp_property_pointer;
 
 					//See what it is
 					if (!gl_object_isa(tmp_obj, "meter", "powerflow") &&
@@ -694,18 +723,38 @@ int inverter::init(OBJECT *parent)
 					}
 					else	//Implies it is a powerflow parent
 					{
+						//Set flag
+						childed_connection = true;
+
 						//See if we are deltamode-enabled -- if so, flag our parent while we're here
 						//Map our deltamode flag and set it (parent will be done below)
 						temp_property_pointer = new gld_property(parent,"Norton_dynamic");
 
 						//Make sure it worked
-						if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_bool() != true))
+						if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_bool())
 						{
 							GL_THROW("inverter:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
 							/*  TROUBLESHOOT
 							While attempting to set up the deltamode interfaces and calculations with powerflow, the required interface could not be mapped.
 							Please check your GLM and try again.  If the error persists, please submit a trac ticket with your code.
 							*/
+						}
+
+						//Flag it to true
+						temp_bool_value = true;
+						temp_property_pointer->setp<bool>(temp_bool_value,*test_rlock);
+
+						//Remove it
+						delete temp_property_pointer;
+
+						//Set the child accumulator flag too
+						temp_property_pointer = new gld_property(tmp_obj,"Norton_dynamic_child");
+
+						//Make sure it worked
+						if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_bool())
+						{
+							GL_THROW("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
+							//Defined elsewhere
 						}
 
 						//Flag it to true
@@ -744,34 +793,27 @@ int inverter::init(OBJECT *parent)
 				pCircuit_V[2] = map_complex_value(tmp_obj,"voltage_2N");
 
 				//Null these -- not used
-				pLine_I[0] = NULL;
-				pLine_I[1] = NULL;
-				pLine_I[2] = NULL;
-
-				// NOTE - Commented code will replace the pLine12 and pPower12 once the triplex_node "deprecated properties" are removed
-				// //Get 12
-				// pLine12 = map_complex_value(tmp_obj,"current_12");
-
-				// pPower12 = map_complex_value(tmp_obj,"power_12");
+				pLine_I[0] = nullptr;
+				pLine_I[1] = nullptr;
+				pLine_I[2] = nullptr;
 
 				//Get 12
-				pLine12 = map_complex_value(tmp_obj,"acc_temp_current_12");
-
-				pPower12 = map_complex_value(tmp_obj,"acc_temp_power_12");
+				pLine12 = map_complex_value(tmp_obj,"current_12");
+				pPower12 = map_complex_value(tmp_obj,"power_12");
 
 				//Individual ones not used
-				pPower[0] = NULL;	//Not used
-				pPower[1] = NULL;	//Not used
-				pPower[2] = NULL;	//Not used
+				pPower[0] = nullptr;	//Not used
+				pPower[1] = nullptr;	//Not used
+				pPower[2] = nullptr;	//Not used
 
 				pLine_unrotI[0] = map_complex_value(tmp_obj,"prerotated_current_12");
-				pLine_unrotI[1] = NULL;	//Not used
-				pLine_unrotI[2] = NULL;	//Not used
+				pLine_unrotI[1] = nullptr;	//Not used
+				pLine_unrotI[2] = nullptr;	//Not used
 
 				//Map IGenerated, even though triplex can't really use this yet (just for the sake of doing so)
 				pIGenerated[0] = map_complex_value(tmp_obj,"deltamode_generator_current_12");
-				pIGenerated[1] = NULL;
-				pIGenerated[2] = NULL;
+				pIGenerated[1] = nullptr;
+				pIGenerated[2] = nullptr;
 			}//End triplex parent
 			else if (gl_object_isa(tmp_obj, "meter", "powerflow") ||
 					 gl_object_isa(tmp_obj, "node", "powerflow") ||
@@ -830,7 +872,7 @@ int inverter::init(OBJECT *parent)
 				//Map like the diesel generators -- one VSI will be the "master of overall frequency"
 				//Perform the mapping check for frequency variable -- if no one has elected yet, we become master of frequency
 				//Temporary deltamode workarond until elec_frequency object is complete
-				Frequency_mapped = NULL;
+				Frequency_mapped = nullptr;
 
 				//Get linking to checker variable
 				Frequency_mapped = new gld_property("powerflow::master_frequency_update");
@@ -889,7 +931,14 @@ int inverter::init(OBJECT *parent)
 				//Default else, it worked
 
 				//Copy that value out
-				node_nominal_voltage = temp_property_pointer->get_double();
+				if (parent_is_triplex)
+				{
+					node_nominal_voltage = 2.0 * temp_property_pointer->get_double();	//Adjust for 240 V
+				}
+				else
+				{
+					node_nominal_voltage = temp_property_pointer->get_double();
+				}
 
 				//Remove the property pointer
 				delete temp_property_pointer;
@@ -956,6 +1005,47 @@ int inverter::init(OBJECT *parent)
 					//Default else -- right size
 				}
 
+				//See if we were connected to a powerflow child
+				if (childed_connection == true)
+				{
+					temp_property_pointer = new gld_property(parent,"deltamode_full_Y_matrix");
+
+					//Check it
+					if (!temp_property_pointer->is_valid() || (temp_property_pointer->is_complex_array() != true))
+					{
+						GL_THROW("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
+						//Defined above
+					}
+
+					//Pull down the variable
+					temp_property_pointer->getp<complex_array>(temp_child_complex_array,*test_rlock);
+
+					//See if it is valid
+					if (!temp_child_complex_array.is_valid(0,0))
+					{
+						//Create it
+						temp_child_complex_array.grow_to(3,3);
+
+						//Zero it, by default
+						for (temp_idx_x=0; temp_idx_x<3; temp_idx_x++)
+						{
+							for (temp_idx_y=0; temp_idx_y<3; temp_idx_y++)
+							{
+								temp_child_complex_array.set_at(temp_idx_x,temp_idx_y,gld::complex(0.0,0.0));
+							}
+						}
+					}
+					else	//Already populated, make sure it is the right size!
+					{
+						if ((temp_child_complex_array.get_rows() != 3) && (temp_child_complex_array.get_cols() != 3))
+						{
+							GL_THROW("diesel_dg:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
+							//Defined above
+						}
+						//Default else -- right size
+					}
+				}//End childed powerflow parent
+
 				//Loop through and store the values
 				for (temp_idx_x=0; temp_idx_x<3; temp_idx_x++)
 				{
@@ -969,11 +1059,33 @@ int inverter::init(OBJECT *parent)
 
 						//Store it
 						temp_complex_array.set_at(temp_idx_x,temp_idx_y,temp_complex_value);
+
+						//Do the childed object, if exists
+						if (childed_connection)
+						{
+							//Read the existing value
+							temp_complex_value = temp_child_complex_array.get_at(temp_idx_x,temp_idx_y);
+
+							//Accumulate into it
+							temp_complex_value += generator_admittance[temp_idx_x][temp_idx_y];
+
+							//Store it
+							temp_child_complex_array.set_at(temp_idx_x,temp_idx_y,temp_complex_value);
+						}
 					}
 				}
 
 				//Push it back up
 				pbus_full_Y_mat->setp<complex_array>(temp_complex_array,*test_rlock);
+
+				//See if the childed powerflow exists
+				if (childed_connection)
+				{
+					temp_property_pointer->setp<complex_array>(temp_child_complex_array,*test_rlock);
+
+					//Clear it
+					delete temp_property_pointer;
+				}
 
 				//Map the power variable
 				pGenerated = map_complex_value(tmp_obj,"deltamode_PGenTotal");
@@ -981,7 +1093,7 @@ int inverter::init(OBJECT *parent)
 				// Find if a battery is attached to VSI, if not, give warning
 				// Find all batteries
 				batteries = gl_find_objects(FL_NEW, FT_CLASS, SAME, "battery", FT_END);
-				if(batteries == NULL || batteries->hit_count == 0){
+				if(batteries == nullptr || batteries->hit_count == 0){
 					gl_warning("No battery objects were found, but the VSI object exists. Now assume the VSI is attached with infinite input power.");
 					/* TROUBLESHOOT
 					No battery object attached to VSI. In reality, a battery is required for VSI to output enough power.
@@ -1039,7 +1151,7 @@ int inverter::init(OBJECT *parent)
 			temp_property_pointer = new gld_property(tmp_obj, "bustype");
 
 			//Make sure it worked
-			if ((temp_property_pointer->is_valid() != true) || (temp_property_pointer->is_enumeration() != true))
+			if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_enumeration())
 			{
 				GL_THROW("inverter:%s failed to map bustype variable from %s", obj->name ? obj->name : "unnamed", obj->parent->name ? obj->parent->name : "unnamed");
 				/*  TROUBLESHOOT
@@ -1239,7 +1351,7 @@ int inverter::init(OBJECT *parent)
 				bp_rated = 3*p_rated/inv_eta;
 			}
 			//Ab : p_rated per phase; p_max for entire inverter	
-			if(use_multipoint_efficiency == false){
+			if(!use_multipoint_efficiency){
 				if(p_max == -1){
 					p_max = bp_rated*inv_eta;
 				}
@@ -1340,9 +1452,9 @@ int inverter::init(OBJECT *parent)
 			if(four_quadrant_control_mode == FQM_LOAD_FOLLOWING || pf_reg == INCLUDED || four_quadrant_control_mode == FQM_GROUP_LF )
 			{
 				//Make sure we have an appropriate object to look at, if null, steal our parent
-				if (sense_object == NULL)
+				if (sense_object == nullptr)
 				{
-					if (parent!=NULL)
+					if (parent!=nullptr)
 					{
 						//Put the parent in there
 						sense_object = parent;
@@ -1420,7 +1532,7 @@ int inverter::init(OBJECT *parent)
 						powerCalc = (FUNCTIONADDR)(gl_get_function(sense_object,"power_calculation"));
 
 						//Make sure it worked
-						if (powerCalc==NULL)
+						if (powerCalc==nullptr)
 						{
 							gl_error("inverter:%s - inverter failed to map power calculation function of transformer!",obj->name);
 							/*  TROUBLESHOOT
@@ -1435,7 +1547,7 @@ int inverter::init(OBJECT *parent)
 						sense_power = new gld_property(sense_object,"power_out");
 
 						//Make sure it worked
-						if ((sense_power->is_valid() != true) || (sense_power->is_complex() != true))
+						if (!sense_power->is_valid() || !sense_power->is_complex())
 						{
 							gl_error("inverter:%s - an error occurred while mapping the sense_object power measurement!",obj->name);
 							//Defined above
@@ -1567,7 +1679,7 @@ int inverter::init(OBJECT *parent)
 			} else if(number_of_phases_out == 3){
 				bp_rated = 3*p_rated/inv_eta;
 			}
-			if(use_multipoint_efficiency == FALSE){ 
+			if(!use_multipoint_efficiency){
 				if(p_max == -1){
 					p_max = bp_rated*inv_eta;
 				}
@@ -1594,7 +1706,7 @@ int inverter::init(OBJECT *parent)
 	}
 
 	//seting up defaults for multipoint efficiency
-	if(use_multipoint_efficiency == true){
+	if(use_multipoint_efficiency){
 		switch(inverter_manufacturer){//all manufacturer defaults use the CEC parameters
 			case NONE:
 				if(p_dco < 0){
@@ -1907,7 +2019,7 @@ int inverter::init(OBJECT *parent)
 	if (deltamode_inclusive)
 	{
 		//Check global, for giggles
-		if (enable_subsecond_models!=true)
+		if (!enable_subsecond_models)
 		{
 			gl_warning("inverter:%s indicates it wants to run deltamode, but the module-level flag is not set!",obj->name?obj->name:"unnamed");
 			/*  TROUBLESHOOT
@@ -1922,7 +2034,7 @@ int inverter::init(OBJECT *parent)
 		}
 
 		//Check for frequency 
-		if (enable_1547_compliance == true)
+		if (enable_1547_compliance)
 		{
 			return_value_init = initalize_IEEE_1547_checks(parent);
 
@@ -1940,7 +2052,7 @@ int inverter::init(OBJECT *parent)
 	}//End deltamode inclusive
 	else	//This particular model isn't enabled
 	{
-		if (enable_subsecond_models == true)
+		if (enable_subsecond_models)
 		{
 			gl_warning("inverter:%d %s - Deltamode is enabled for the module, but not this inverter!",obj->id, (obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
@@ -1949,7 +2061,7 @@ int inverter::init(OBJECT *parent)
 			It is recommended all objects that support deltamode enable it.
 			*/
 		}
-		else if (enable_1547_compliance == true)
+		else if (enable_1547_compliance)
 		{
 			//Initalize it
 			return_value_init = initalize_IEEE_1547_checks(parent);
@@ -2004,7 +2116,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 	OBJECT *obj = OBJECTHDR(this);
 
 	//If we have a meter, reset the accumulators
-	if (parent_is_a_meter == true)
+	if (parent_is_a_meter)
 	{
 		//Reset
 		reset_complex_powerflow_accumulators();
@@ -2241,7 +2353,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 
 			//Sync the values, if needed
-			if (parent_is_a_meter == true)
+			if (parent_is_a_meter)
 			{
 				push_complex_powerflow_values();
 			}
@@ -2308,7 +2420,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 			} //t1 != t0
 		}// End FQM_GROUP_LF
 		
-		if((deltamode_inclusive == true) && (enable_subsecond_models==true) && (inverter_dyn_mode == PI_CONTROLLER)) {
+		if(deltamode_inclusive && enable_subsecond_models && (inverter_dyn_mode == PI_CONTROLLER)) {
 			// Only execute at the first time step of simulation, or the first ieration of the next time steps
 			if ((t1 == start_time) || (t1 != t0)) {
 				last_I_In = I_In;
@@ -2339,7 +2451,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 	double ieee_1547_return_value;
 	TIMESTAMP new_ret_value;
 	FUNCTIONADDR test_fxn;
-	bool *gen_dynamic_flag;
+	bool *gen_dynamic_flag = nullptr;
 	STATUS fxn_return_status;
 	char tmp_index_val;
 
@@ -2349,13 +2461,13 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 	gld::complex temp_power_val[3];
 
 	gld::complex temp_complex_value;
-	gld_wlock *test_rlock;
+	gld_wlock *test_rlock = nullptr;
 
 	//Assume always want TS_NEVER
 	tret_value = TS_NEVER;
 
 	//If we have a meter, reset the accumulators
-	if (parent_is_a_meter == true)
+	if (parent_is_a_meter)
 	{
 		//Reset
 		reset_complex_powerflow_accumulators();
@@ -2391,7 +2503,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 		}
 
 		//Sync the powerflow variables
-		if (parent_is_a_meter == true)
+		if (parent_is_a_meter)
 		{
 			push_complex_powerflow_values();
 		}
@@ -2399,15 +2511,15 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 		return tret_value;
 	}
 
-	if (first_sync_delta_enabled == true)	//Deltamode first pass
+	if (first_sync_delta_enabled)	//Deltamode first pass
 	{
 		//TODO: LOCKING!
-		if ((deltamode_inclusive == true) && (enable_subsecond_models == true))	//We want deltamode - see if it's populated yet
+		if (deltamode_inclusive && enable_subsecond_models)	//We want deltamode - see if it's populated yet
 		{
 			//Very first run
 			if (first_iter_counter == 0)
 			{
-				if (((gen_object_current == -1) || (delta_objects==NULL)) && (enable_subsecond_models == true))
+				if (((gen_object_current == -1) || (delta_objects==nullptr)) && enable_subsecond_models)
 				{
 					//Call the allocation routine
 					allocate_deltamode_arrays();
@@ -2431,7 +2543,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"interupdate_gen_object"));
 
 				//Make sure it worked
-				if (delta_functions[gen_object_current] == NULL)
+				if (delta_functions[gen_object_current] == nullptr)
 				{
 					GL_THROW("Failure to map deltamode function for device:%s",obj->name);
 					/*  TROUBLESHOOT
@@ -2445,7 +2557,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				post_delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"postupdate_gen_object"));
 
 				//Make sure it worked
-				if (post_delta_functions[gen_object_current] == NULL)
+				if (post_delta_functions[gen_object_current] == nullptr)
 				{
 					GL_THROW("Failure to map post-deltamode function for device:%s",obj->name);
 					/*  TROUBLESHOOT
@@ -2459,7 +2571,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				delta_preupdate_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"preupdate_gen_object"));
 				
 				//Make sure it worked
-				if (delta_preupdate_functions[gen_object_current] == NULL)
+				if (delta_preupdate_functions[gen_object_current] == nullptr)
 				{
 					GL_THROW("Failure to map pre-deltamode function for device:%s",obj->name);
 					/*  TROUBLESHOOT
@@ -2480,7 +2592,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					test_fxn = (FUNCTIONADDR)(gl_get_function(obj->parent,"pwr_current_injection_update_map"));
 
 					//See if it was located
-					if (test_fxn == NULL)
+					if (test_fxn == nullptr)
 					{
 						GL_THROW("PQ_CONSTANT inverter:%s - failed to map additional current injection mapping for node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
 						/*  TROUBLESHOOT
@@ -2504,7 +2616,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				if (four_quadrant_control_mode == FQM_VSI)
 				{
 					//See if we're attached to a node-esque object
-					if (obj->parent != NULL)
+					if (obj->parent != nullptr)
 					{
 						if (gl_object_isa(obj->parent,"meter","powerflow") ||
 						gl_object_isa(obj->parent,"load","powerflow") ||
@@ -2521,7 +2633,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 							test_fxn = (FUNCTIONADDR)(gl_get_function(obj->parent,"pwr_current_injection_update_map"));
 
 							//See if it was located
-							if (test_fxn == NULL)
+							if (test_fxn == nullptr)
 							{
 								GL_THROW("Voltage source inverter:%s - failed to map additional current injection mapping for node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
 								/*  TROUBLESHOOT
@@ -2575,7 +2687,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 	//default else - either not deltamode, or not the first timestep
 
 	//Other models (QSTS - first step check) - force a reiteration
-	if ((deltamode_inclusive==false) && (inverter_first_step==true))
+	if (!deltamode_inclusive && inverter_first_step)
 	{
 		//General counter to force an additional reiteration - help converge the current values
 		first_iter_counter++;
@@ -2596,7 +2708,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	//Perform 1547 checks, if appropriate
-	if (enable_1547_compliance == true)
+	if (enable_1547_compliance)
 	{
 		//Extract the current timestamp, as a double
 		curr_ts_dbl = (double)gl_globalclock;
@@ -2617,7 +2729,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 			if (ieee_1547_return_value > 0.0)
 			{
 				//See which mode we're in
-				if (deltamode_inclusive == true)
+				if (deltamode_inclusive)
 				{
 					new_ret_value = t1 + (TIMESTAMP)(floor(ieee_1547_return_value));
 
@@ -2642,7 +2754,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 	//Default else - 1547 checks are not enabled
 	
-	if ((value_MeterStatus==1) && (inverter_1547_status == true))	//Make sure the meter is in service
+	if ((value_MeterStatus==1) && inverter_1547_status)	//Make sure the meter is in service
 	{
 		phaseA_V_Out = value_Circuit_V[0];	//Syncs the meter parent to the generator.
 		phaseB_V_Out = value_Circuit_V[1];
@@ -2656,19 +2768,23 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					P_In = V_In * I_In; //DC
 
 					// need to differentiate between different pulses...
-					if(use_multipoint_efficiency == false){
-						VA_Out = P_In * efficiency;
-					} else {
-						if(P_In <= p_so){
-							VA_Out = 0;
+
+					//Note: if WT_is_connected is true, the VA_Out is written directly by wind turbine
+					if (!WT_is_connected){
+						if(!use_multipoint_efficiency){
+							VA_Out = P_In * efficiency;
 						} else {
-							if(V_In > v_dco){
-								gl_warning("The dc voltage is greater than the specified maximum for the inverter. Efficiency model may be inaccurate.");
+							if(P_In <= p_so){
+								VA_Out = 0;
+							} else {
+								if(V_In > v_dco){
+									gl_warning("The dc voltage is greater than the specified maximum for the inverter. Efficiency model may be inaccurate.");
+								}
+								C1 = p_dco*(1+c_1*(V_In-v_dco));
+								C2 = p_so*(1+c_2*(V_In-v_dco));
+								C3 = c_o*(1+c_3*(V_In-v_dco));
+								VA_Out.SetReal((((p_max/(C1-C2))-C3*(C1-C2))*(P_In-C2)+C3*(P_In-C2)*(P_In-C2)));
 							}
-							C1 = p_dco*(1+c_1*(V_In-v_dco));
-							C2 = p_so*(1+c_2*(V_In-v_dco));
-							C3 = c_o*(1+c_3*(V_In-v_dco));
-							VA_Out.SetReal((((p_max/(C1-C2))-C3*(C1-C2))*(P_In-C2)+C3*(P_In-C2)*(P_In-C2)));
 						}
 					}
 
@@ -2798,7 +2914,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					*/
 					gl_verbose("inverter sync: constant pq");
 
-					if(parent_is_a_meter == true)
+					if(parent_is_a_meter)
 					{
 						VA_Out = gld::complex(P_Out,Q_Out);
 					}
@@ -3151,7 +3267,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 				}
 				//Determine how to efficiency weight it
-				if(use_multipoint_efficiency == false)
+				if(!use_multipoint_efficiency)
 				{
 					//Normal scaling
 					VA_Efficiency = P_In * efficiency;
@@ -3258,39 +3374,43 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 				//Compute power in
 				P_In = V_In * I_In;
-				//Determine how to efficiency weight it
-				if(use_multipoint_efficiency == false)
-				{
-					//Normal scaling
-					VA_Efficiency = P_In * efficiency;
-				}
-				else
-				{
-					//See if above minimum DC power input
-					if(P_In <= p_so)
+				if (!WT_is_connected){
+					//Determine how to efficiency weight it
+					if(!use_multipoint_efficiency)
 					{
-						VA_Efficiency = 0.0;	//Nope, no output
+						//Normal scaling
+						VA_Efficiency = P_In * efficiency;
 					}
-					else	//Yes, apply effiency change
+					else
 					{
-						//Make sure voltage isn't too low
-						if(fabs(V_In) > v_dco)
+						//See if above minimum DC power input
+						if(P_In <= p_so)
 						{
-							gl_warning("The dc voltage is greater than the specified maximum for the inverter. Efficiency model may be inaccurate.");
-							/*  TROUBLESHOOT
-							The DC voltage at the input to the inverter is less than the maximum voltage supported by the inverter.  As a result, the
-							multipoint efficiency model may not provide a proper result.
-							*/
+							VA_Efficiency = 0.0;	//Nope, no output
 						}
+						else	//Yes, apply effiency change
+						{
+							//Make sure voltage isn't too low
+							if(fabs(V_In) > v_dco)
+							{
+								gl_warning("The dc voltage is greater than the specified maximum for the inverter. Efficiency model may be inaccurate.");
+								/*  TROUBLESHOOT
+								The DC voltage at the input to the inverter is less than the maximum voltage supported by the inverter.  As a result, the
+								multipoint efficiency model may not provide a proper result.
+								*/
+							}
 
-						//Compute coefficients for multipoint efficiency
-						C1 = p_dco*(1+c_1*(V_In-v_dco));
-						C2 = p_so*(1+c_2*(V_In-v_dco));
-						C3 = c_o*(1+c_3*(V_In-v_dco));
+							//Compute coefficients for multipoint efficiency
+							C1 = p_dco*(1+c_1*(V_In-v_dco));
+							C2 = p_so*(1+c_2*(V_In-v_dco));
+							C3 = c_o*(1+c_3*(V_In-v_dco));
 
-						//Apply this to the output
-						VA_Efficiency = (((p_max/(C1-C2))-C3*(C1-C2))*(P_In-C2)+C3*(P_In-C2)*(P_In-C2));
+							//Apply this to the output
+							VA_Efficiency = (((p_max/(C1-C2))-C3*(C1-C2))*(P_In-C2)+C3*(P_In-C2)*(P_In-C2));
+						}
 					}
+				}else{
+					VA_Efficiency = VA_Out.Re();
 				}
 				if ((phases & 0x10) == 0x10){
 					power_val[0].SetReal(VA_Efficiency);
@@ -3521,7 +3641,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 				// For VSI, the VA_Out values are determined after the first time step of power flow
 				// Therefore, only set battery p values accordingly after that
-				if (first_run == true) {
+				if (first_run) {
 					p_in = 0;
 				}
 				else {
@@ -3609,7 +3729,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 				//TODO : add lookup for power for frequency regulation P_Out_fr
 
-				if((P_In == 0.0) && (disable_volt_var_if_no_input_power == true))
+				if((P_In == 0.0) && disable_volt_var_if_no_input_power)
 					VA_Out = gld::complex(0,0);
 				else
 				{
@@ -3747,7 +3867,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				if (four_quadrant_control_mode == FQM_VSI && VSI_mode == VSI_DROOP) {
 
 					//Only do updates if this is a new timestep
-					if ((prev_time < t1) && (first_run == false))
+					if ((prev_time < t1) && !first_run)
 					{
 						// Adjust VSI (not on SWING bus) current injection and e_source values only at the first iteration of each time step
 						if ((phases & 0x10) == 0x10) // split phase
@@ -3818,7 +3938,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 									}
 									else
 									{
-										temp_current_val[tmp_index_val] = complex(0.0,0.0);
+										temp_current_val[tmp_index_val] = gld::complex(0.0,0.0);
 									}
 								}
 
@@ -3865,7 +3985,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						}
 
 						if (four_quadrant_control_mode != FQM_VSI) {
-							if (deltamode_inclusive == true)
+							if (deltamode_inclusive)
 							{
 								last_current[3] = -I_Out[0];
 								value_Line_unrotI[0] = last_current[3];
@@ -3898,7 +4018,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 							}
 
 							if (four_quadrant_control_mode != FQM_VSI) {
-								if (deltamode_inclusive == true)
+								if (deltamode_inclusive)
 								{
 									last_current[0] = -I_Out[0];
 									value_Line_unrotI[0] = last_current[0];
@@ -3925,7 +4045,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 							}
 
 							if (four_quadrant_control_mode != FQM_VSI) {
-								if (deltamode_inclusive == true)
+								if (deltamode_inclusive)
 								{
 									last_current[1] = -I_Out[1];
 									value_Line_unrotI[1] = last_current[1];
@@ -3953,7 +4073,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 							}
 
 							if (four_quadrant_control_mode != FQM_VSI) {
-								if (deltamode_inclusive == true)
+								if (deltamode_inclusive)
 								{
 									last_current[2] = -I_Out[2];
 									value_Line_unrotI[2] = last_current[2];
@@ -4106,7 +4226,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 	else
 	{
 		//Check to see if we're accumulating or out of service
-		if ((value_MeterStatus==1) && (inverter_1547_status==true))
+		if ((value_MeterStatus==1) && inverter_1547_status)
 		{
 			if (inverter_type_v != FOUR_QUADRANT)
 			{
@@ -4121,7 +4241,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					else	//Must be disconnected, but 1547 hasn't kicked in
 					{
 						//Do like disconnect below
-						last_current[3] = complex(0.0,0.0);
+						last_current[3] = gld::complex(0.0,0.0);
 					}
 				}
 				else
@@ -4136,9 +4256,9 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					else	//Must be disconnected, but 1547 hasn't kicked in
 					{
 						//Do like disconnect below
-						last_current[0] = complex(0.0,0.0);
-						last_current[1] = complex(0.0,0.0);
-						last_current[2] = complex(0.0,0.0);
+						last_current[0] = gld::complex(0.0,0.0);
+						last_current[1] = gld::complex(0.0,0.0);
+						last_current[2] = gld::complex(0.0,0.0);
 					}
 				}
 			}
@@ -4155,7 +4275,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					else
 					{
 						//Do like disconnect below
-						last_power[3] = complex(0.0,0.0);
+						last_power[3] = gld::complex(0.0,0.0);
 					}
 				}
 				else
@@ -4170,9 +4290,9 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					else	//Must be disconnected, but 1547 hasn't kicked in
 					{
 						//Do like disconnect below
-						last_power[0] = complex(0.0,0.0);
-						last_power[1] = complex(0.0,0.0);
-						last_power[2] = complex(0.0,0.0);
+						last_power[0] = gld::complex(0.0,0.0);
+						last_power[1] = gld::complex(0.0,0.0);
+						last_power[2] = gld::complex(0.0,0.0);
 					}
 				}
 			}
@@ -4194,7 +4314,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	//Sync the powerflow variables
-	if (parent_is_a_meter == true)
+	if (parent_is_a_meter)
 	{
 		push_complex_powerflow_values();
 	}
@@ -4226,7 +4346,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	gld::complex temp_complex_value;
 
 	//If we have a meter, reset the accumulators
-	if (parent_is_a_meter == true)
+	if (parent_is_a_meter)
 	{
 		reset_complex_powerflow_accumulators();
 
@@ -4235,7 +4355,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	//Check and see if we need to redispatch
-	if ((inverter_type_v == FOUR_QUADRANT) && (four_quadrant_control_mode == FQM_LOAD_FOLLOWING) && (lf_dispatch_change_allowed==true))
+	if ((inverter_type_v == FOUR_QUADRANT) && (four_quadrant_control_mode == FQM_LOAD_FOLLOWING) && lf_dispatch_change_allowed)
 	{
 		//See what the sense_object is and determine if we need to update
 		if (sense_is_link)
@@ -4481,7 +4601,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 	//***************************************************************************************
 	// Group load-following mode using a (more or less) uncoordinated but decentralized control
-	if (inverter_type_v == FOUR_QUADRANT && four_quadrant_control_mode == FQM_GROUP_LF && lf_dispatch_change_allowed==true)
+	if (inverter_type_v == FOUR_QUADRANT && four_quadrant_control_mode == FQM_GROUP_LF && lf_dispatch_change_allowed)
 	{
 		//See what the sense_object is and determine if we need to update
 		if (sense_is_link)
@@ -4810,7 +4930,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 	//***************************************************************************************
 	//Power-factor regulation, modifying VA_Out to use any available VAs for power-factor regulation
-	if ((inverter_type_v == FOUR_QUADRANT) && (pf_reg != EXCLUDED) && (pf_reg_dispatch_change_allowed==true))
+	if ((inverter_type_v == FOUR_QUADRANT) && (pf_reg != EXCLUDED) && pf_reg_dispatch_change_allowed)
 	{
 		//Need to modify dispatch from load following and/or adjust the reactive power output of the inverter to meet power factor regulation needs.
 		//See what the sense_object is and determine if we need to update
@@ -5193,7 +5313,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		if ((four_quadrant_control_mode != FQM_VOLT_VAR) && (four_quadrant_control_mode != FQM_VSI) && (four_quadrant_control_mode != FQM_VOLT_WATT)) {
 			if ((phases & 0x10) == 0x10)	//Triplex
 			{
-				if (deltamode_inclusive == true)
+				if (deltamode_inclusive)
 				{
 					value_Line_unrotI[0] = -last_current[3];
 				}
@@ -5204,7 +5324,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 			else	//Variation of three-phase
 			{
-				if (deltamode_inclusive == true)
+				if (deltamode_inclusive)
 				{
 					value_Line_unrotI[0] = -last_current[0];
 					value_Line_unrotI[1] = -last_current[1];
@@ -5248,7 +5368,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				VA_Out = power_val[0] + power_val[1] + power_val[2];
 			}
 
-			if (first_run == true)	//Final init items - namely deltamode supersecond exciter
+			if (first_run)	//Final init items - namely deltamode supersecond exciter
 			{
 				// Only update after the first iteration of the power flow (VA_Out != 0.0 + j0.0)
 				if (value_IGenerated[0] != gld::complex(0.0,0.0)) {
@@ -5261,7 +5381,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 						first_run = false;
 					}
 
-					if (VSI_esource_init == false) {
+					if (!VSI_esource_init) {
 						VSI_esource_init = true; // Finish initializing the VSI e_source after first power flow solutions
 					}
 				}
@@ -5279,7 +5399,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	//Sync the powerflow variables
-	if (parent_is_a_meter == true)
+	if (parent_is_a_meter)
 	{
 		push_complex_powerflow_values();
 	}
@@ -5294,7 +5414,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 STATUS inverter::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 {
 	STATUS stat_val;
-	FUNCTIONADDR funadd = NULL;
+	FUNCTIONADDR funadd = nullptr;
 	OBJECT *hdr = OBJECTHDR(this);
 
 	//See which method we are
@@ -5331,7 +5451,7 @@ STATUS inverter::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 		funadd = (FUNCTIONADDR)(gl_get_function(hdr->parent,"pwr_object_swing_swapper"));
 
 		//make sure it worked
-		if (funadd==NULL)
+		if (funadd==nullptr)
 		{
 			gl_error("inverter:%s -- Failed to find node swing swapper function",(hdr->name ? hdr->name : "Unnamed"));
 			/*  TROUBLESHOOT
@@ -5379,14 +5499,14 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 	int i;
 
 	double inputPower;
-	gld_wlock *test_rlock;
+	gld_wlock *test_rlock = nullptr;
 
 	OBJECT *obj = OBJECTHDR(this);
 
 	SIMULATIONMODE simmode_return_value = SM_EVENT;
 
 	//If we have a meter, reset the accumulators
-	if (parent_is_a_meter == true)
+	if (parent_is_a_meter)
 	{
 		reset_complex_powerflow_accumulators();
 
@@ -5404,14 +5524,14 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 	}
 	
 	//Perform the 1547 update, if enabled
-	if ((enable_1547_compliance == true) && (iteration_count_val == 0))	//Always just do on the first pass
+	if (enable_1547_compliance && (iteration_count_val == 0))	//Always just do on the first pass
 	{
 		//Do the checks
 		ieee_1547_double = perform_1547_checks(deltat);
 	}
 
 	//See if we are actually enabled
-	if (inverter_1547_status == true)
+	if (inverter_1547_status)
 	{
 		//See which mode we're in
 		if (inverter_dyn_mode == PI_CONTROLLER)
@@ -5587,7 +5707,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 								value_IGenerated[i] = e_source[i]/(gld::complex(Rfilter,Xfilter) * Zbase);
 
 								//See how this aligns with the real and reactive power ramp rate, if necessary
-								if (checkRampRate_real == true || checkRampRate_reactive == true)
+								if (checkRampRate_real || checkRampRate_reactive)
 								{
 									//Deflag
 									ramp_change = false;
@@ -5599,7 +5719,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 									power_val[i] = value_Circuit_V[i]*~temp_current_val[i];
 
 									//See which way we are
-									if (checkRampRate_real == true) {
+									if (checkRampRate_real) {
 
 										//Compute the difference - real part
 										power_diff_val = (power_val[i].Re() - prev_VA_out[i].Re()) / deltat;
@@ -5629,7 +5749,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 											//Default else - was okay
 										}
 									}
-									if (checkRampRate_reactive == true) {
+									if (checkRampRate_reactive) {
 
 										//Compute the difference - reactive part
 										power_diff_val = (power_val[i].Im() - prev_VA_out[i].Im()) / deltat;
@@ -5661,7 +5781,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 									}
 
 									//Now "extrapolate" this back to a current value, if needed
-									if (ramp_change == true)
+									if (ramp_change)
 									{
 										//Compute a "new current" value
 										if (value_Circuit_V[i].Mag() > 0.0)
@@ -5670,7 +5790,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 										}
 										else
 										{
-											temp_current_val[i] = complex(0.0,0.0);
+											temp_current_val[i] = gld::complex(0.0,0.0);
 										}
 
 										//Adjust it to IGenerated
@@ -5774,7 +5894,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 								value_IGenerated[i] = e_source[i]/(gld::complex(Rfilter,Xfilter) * Zbase);
 
 								//See how this aligns with the ramp rate, if necessary
-								if (checkRampRate_real == true || checkRampRate_reactive == true)
+								if (checkRampRate_real || checkRampRate_reactive)
 								{
 									//Deflag
 									ramp_change = false;
@@ -5785,7 +5905,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 									//Update power output variables, just so we can see what is going on
 									power_val[i] = value_Circuit_V[i]*~temp_current_val[i];
 
-									if (checkRampRate_real == true) {
+									if (checkRampRate_real) {
 
 										//Compute the difference - real part
 										power_diff_val = (power_val[i].Re() - prev_VA_out[i].Re()) / deltat;
@@ -5818,7 +5938,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 									}
 
-									if (checkRampRate_reactive == true) {
+									if (checkRampRate_reactive) {
 
 										//Compute the difference - reactive part
 										power_diff_val = (power_val[i].Im() - prev_VA_out[i].Im()) / deltat;
@@ -5851,7 +5971,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 
 									//Now "extrapolate" this back to a current value, if needed
-									if (ramp_change == true)
+									if (ramp_change)
 									{
 										//Compute a "new current" value
 										if (value_Circuit_V[i].Mag() > 0.0)
@@ -5860,7 +5980,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 										}
 										else
 										{
-											temp_current_val[i] = complex(0.0,0.0);
+											temp_current_val[i] = gld::complex(0.0,0.0);
 										}
 
 										//Adjust it to IGenerated
@@ -5916,7 +6036,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 						next_state.q_mea_delayed = curr_state.q_mea_delayed + (deltat * next_state.dq_mea_delayed);
 
 						// Update the system frequency
-						if (mapped_freq_variable!=NULL)
+						if (mapped_freq_variable!=nullptr)
 						{
 							mapped_freq_variable->setp<double>(VSI_freq,*test_rlock);
 						}
@@ -6037,7 +6157,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 						next_state.q_mea_delayed = curr_state.q_mea_delayed + (deltat * next_state.dq_mea_delayed);
 
 						// Update the system frequency
-						if (mapped_freq_variable!=NULL)
+						if (mapped_freq_variable!=nullptr)
 						{
 							mapped_freq_variable->setp<double>(VSI_freq,*test_rlock);
 						}
@@ -6053,7 +6173,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 								value_IGenerated[i] = e_source[i]/(gld::complex(Rfilter,Xfilter) * Zbase);
 
 								//See how this aligns with the real and reactive ramp rate, if necessary
-								if (checkRampRate_real == true || checkRampRate_reactive == true)
+								if (checkRampRate_real || checkRampRate_reactive)
 								{
 									//Deflag
 									ramp_change = false;
@@ -6065,7 +6185,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 									power_val[i] = value_Circuit_V[i]*~temp_current_val[i];
 
 									//See which way we are
-									if (checkRampRate_real == true) {
+									if (checkRampRate_real) {
 
 										//Compute the difference - real part
 										power_diff_val = (power_val[i].Re() - prev_VA_out[i].Re()) / deltat;
@@ -6095,7 +6215,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 											//Default else - was okay
 										}
 									}
-									if (checkRampRate_reactive == true) {
+									if (checkRampRate_reactive) {
 
 										//Compute the difference - real part
 										power_diff_val = (power_val[i].Im() - prev_VA_out[i].Im()) / deltat;
@@ -6127,7 +6247,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 									}
 
 									//Now "extrapolate" this back to a current value, if needed
-									if (ramp_change == true)
+									if (ramp_change)
 									{
 										//Compute a "new current" value
 										if (value_Circuit_V[i].Mag() > 0.0)
@@ -6136,7 +6256,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 										}
 										else
 										{
-											temp_current_val[i] = complex(0.0,0.0);
+											temp_current_val[i] = gld::complex(0.0,0.0);
 										}
 
 										//Adjust it to IGenerated
@@ -6236,7 +6356,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 								value_IGenerated[i] = e_source[i]/(gld::complex(Rfilter,Xfilter) * Zbase);
 
 								//See how this aligns with the ramp rate, if necessary
-								if (checkRampRate_real == true || checkRampRate_reactive == true)
+								if (checkRampRate_real || checkRampRate_reactive)
 								{
 									//Deflag
 									ramp_change = false;
@@ -6247,7 +6367,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 									//Update power output variables, just so we can see what is going on
 									power_val[i] = value_Circuit_V[i]*~temp_current_val[i];
 
-									if (checkRampRate_real == true) {
+									if (checkRampRate_real) {
 										//Compute the difference - just real part for now (probably need to expand this)
 										power_diff_val = (power_val[i].Re() - prev_VA_out[i].Re()) / deltat;
 
@@ -6279,7 +6399,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 									}
 
-									if (checkRampRate_reactive == true) {
+									if (checkRampRate_reactive) {
 
 										//Compute the difference - reactive part
 										power_diff_val = (power_val[i].Im() - prev_VA_out[i].Im()) / deltat;
@@ -6311,7 +6431,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 									}
 
 									//Now "extrapolate" this back to a current value, if needed
-									if (ramp_change == true)
+									if (ramp_change)
 									{
 										//Compute a "new current" value
 										if (value_Circuit_V[i].Mag() > 0.0)
@@ -6320,7 +6440,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 										}
 										else
 										{
-											temp_current_val[i] = complex(0.0,0.0);
+											temp_current_val[i] = gld::complex(0.0,0.0);
 										}
 
 										//Adjust it to IGenerated
@@ -6387,7 +6507,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 								}
 								else
 								{
-									curr_state.Iac[0] = complex(0.0,0.0);
+									curr_state.Iac[0] = gld::complex(0.0,0.0);
 								}
 
 								I_Out[0]= curr_state.Iac[0];
@@ -6481,11 +6601,8 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 							}
 							else
 							{
-								curr_state.ed[0] = ((~(complex(Pref, Qref_PI[0])/(value_Circuit_V[0]))) - (~(complex(curr_state.P_Out[0],curr_state.Q_Out[0])/(value_Circuit_V[0])))).Re();
-								curr_state.eq[0] = ((~(complex(Pref, Qref_PI[0])/(value_Circuit_V[0]))) - (~(complex(curr_state.P_Out[0],curr_state.Q_Out[0])/(value_Circuit_V[0])))).Im();
-
-
-
+								curr_state.ed[0] = ((~(gld::complex(Pref, Qref_PI[0])/(value_Circuit_V[0]))) - (~(gld::complex(curr_state.P_Out[0],curr_state.Q_Out[0])/(value_Circuit_V[0])))).Re();
+								curr_state.eq[0] = ((~(gld::complex(Pref, Qref_PI[0])/(value_Circuit_V[0]))) - (~(gld::complex(curr_state.P_Out[0],curr_state.Q_Out[0])/(value_Circuit_V[0])))).Im();
 							}
 
 							curr_state.ded[0] = curr_state.ed[0] / deltat;
@@ -6573,7 +6690,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 						// Calculate Pref based on the droop curve
 						double delta_Pref = ((pred_state.f_mea_delayed - freq_ref)/freq_ref) * (1 / R_fp) * p_rated * 3;
 						power_diff_val = Pref_prev - (Pref0 - delta_Pref);
-						if (checkRampRate_real == true) {
+						if (checkRampRate_real) {
 							if (power_diff_val > 0 && (power_diff_val > rampDownRate_real*3)) {
 								Pref = Pref_prev - rampDownRate_real*3;
 							}
@@ -6607,7 +6724,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 							pred_state.V_mea_delayed[0] = curr_state.V_mea_delayed[0] + (deltat * curr_state.dV_mea_delayed[0]);
 							delta_Qref = (pred_state.V_mea_delayed[0] - V_ref[0]) / node_nominal_voltage * (1.0 / R_vq) * p_rated;
 							power_diff_val = Qref_prev[0] - (Qref0[0] - delta_Qref);
-							if (checkRampRate_reactive == true) {
+							if (checkRampRate_reactive) {
 								if (power_diff_val > 0 && (power_diff_val > rampDownRate_reactive)) {
 									Qref_PI[0] = Qref_prev[0] - rampDownRate_reactive;
 								}
@@ -6634,7 +6751,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 								pred_state.V_mea_delayed[i] = curr_state.V_mea_delayed[i] + (deltat * curr_state.dV_mea_delayed[i]);
 								delta_Qref[i] = (pred_state.V_mea_delayed[i] - V_ref[i]) / node_nominal_voltage * (1.0 / R_vq) * p_rated;
 								power_diff_val = Qref_prev[i] - (Qref0[i] - delta_Qref[i]);
-								if (checkRampRate_reactive == true) {
+								if (checkRampRate_reactive) {
 									if (power_diff_val > 0 && (power_diff_val > rampDownRate_reactive)) {
 										Qref_PI[i] = Qref_prev[i] - rampDownRate_reactive;
 									}
@@ -6654,7 +6771,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 					}
 
 					// Store the prev_VA_out values for comparison
-					if (checkRampRate_real ||  checkRampRate_reactive == true)
+					if (checkRampRate_real ||  checkRampRate_reactive)
 					{
 						//See which one we are
 						if ((phases & 0x10) == 0x10)
@@ -6757,17 +6874,17 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 						}
 						else	//Zero it
 						{
-							pred_state.Iac[0] = complex(0.0,0.0);
-							power_val[0] = complex(0.0,0.0);
+							pred_state.Iac[0] = gld::complex(0.0,0.0);
+							power_val[0] = gld::complex(0.0,0.0);
 						}
 
 						//See if either method is enabled and update the power-reference
-						if ((checkRampRate_real == true) || (checkRampRate_reactive == true ))
+						if (checkRampRate_real || checkRampRate_reactive)
 						{
 							//Deflag the variable
 							ramp_change = false;
 
-							if (checkRampRate_real == true) {
+							if (checkRampRate_real) {
 
 								//Compute the difference - real part
 								power_diff_val = (power_val[0].Re() - prev_VA_out[0].Re()) / deltat;
@@ -6798,7 +6915,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 								}
 							}
 
-							if (checkRampRate_reactive == true) {
+							if (checkRampRate_reactive) {
 
 								//Compute the difference - reactive part
 								power_diff_val = (power_val[0].Im() - prev_VA_out[0].Im()) / deltat;
@@ -6830,7 +6947,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 							}
 
 							//Now "extrapolate" this back to a current value, if needed
-							if (ramp_change == true)
+							if (ramp_change)
 							{
 								//Compute a "new current" value
 								if (value_Circuit_V[0].Mag() > 0.0)
@@ -6839,7 +6956,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 								}
 								else
 								{
-									temp_current_val[0] = complex(0.0,0.0);
+									temp_current_val[0] = gld::complex(0.0,0.0);
 								}
 
 								// Update the output current values, as well as the current multipliers
@@ -6857,7 +6974,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 						// Before updating pLine_unrotI and Iout, need to check inverter real power output:
 						// If not attached to the battery, need to check if real power < 0 or > rating
-						gld::complex VA_Out_temp = value_Circuit_V[0] * ~(pred_state.Iac[0]);
+						VA_Out = value_Circuit_V[0] * ~(pred_state.Iac[0]);
 
 						// Then continue update current
 						value_Line_unrotI[0] += I_Out[0];
@@ -6880,17 +6997,17 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 							}
 							else	//Zero it
 							{
-								pred_state.Iac[i] = complex(0.0,0.0);
-								power_val[i] = complex(0.0,0.0);
+								pred_state.Iac[i] = gld::complex(0.0,0.0);
+								power_val[i] = gld::complex(0.0,0.0);
 							}
 
 							//See if either method is enabled and update the power-reference
-							if ((checkRampRate_real == true) || (checkRampRate_reactive == true ))
+							if (checkRampRate_real || checkRampRate_reactive)
 							{
 								//Deflag the variable
 								ramp_change = false;
 								
-								if (checkRampRate_real == true) {
+								if (checkRampRate_real) {
 
 									//Compute the difference - real part
 									power_diff_val = (power_val[i].Re() - prev_VA_out[i].Re()) / deltat;
@@ -6921,7 +7038,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 									}
 								}
 
-								if (checkRampRate_reactive == true) {
+								if (checkRampRate_reactive) {
 
 									//Compute the difference - reactive part
 									power_diff_val = (power_val[i].Im() - prev_VA_out[i].Im()) / deltat;
@@ -6953,7 +7070,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 								}
 
 								//Now "extrapolate" this back to a current value, if needed
-								if (ramp_change == true)
+								if (ramp_change)
 								{
 									//Compute a "new current" value
 									if (value_Circuit_V[i].Mag() > 0.0)
@@ -6962,7 +7079,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 									}
 									else
 									{
-										temp_current_val[i] = complex(0.0,0.0);
+										temp_current_val[i] = gld::complex(0.0,0.0);
 									}
 
 									// Update the output current values, as well as the current multipliers
@@ -6981,7 +7098,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 						// Before updating pLine_unrotI and Iout, need to check inverter real power output:
 						// If not attached to the battery, need to check if real power < 0 or > rating
-						gld::complex VA_Out_temp = (value_Circuit_V[0] * ~(pred_state.Iac[0])) + (value_Circuit_V[1] * ~(pred_state.Iac[1])) + (value_Circuit_V[2] * ~(pred_state.Iac[2]));
+						VA_Out = (value_Circuit_V[0] * ~(pred_state.Iac[0])) + (value_Circuit_V[1] * ~(pred_state.Iac[1])) + (value_Circuit_V[2] * ~(pred_state.Iac[2]));
 
 						for (int i = 0; i< 3; i++) {
 							//if ((b_soc == -1 && VA_Out_temp.Re() < 0) || Pref == 0) {
@@ -7009,7 +7126,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 						// Calculate Pref based on teh droop curve
 						double delta_Pref = ((curr_state.f_mea_delayed - freq_ref)/freq_ref) * (1 / R_fp) * p_rated * 3;
 						power_diff_val = Pref_prev - (Pref0 - delta_Pref);
-						if (checkRampRate_real == true) {
+						if (checkRampRate_real) {
 							if (power_diff_val > 0 && (power_diff_val > rampDownRate_real*3)) {
 								Pref = Pref_prev - rampDownRate_real*3;
 							}
@@ -7043,7 +7160,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 							double delta_Qref;
 							delta_Qref = (curr_state.V_mea_delayed[0] - V_ref[0]) / node_nominal_voltage * (1.0 / R_vq) * p_rated;
 							power_diff_val = Qref_prev[0] - (Qref0[0] - delta_Qref);
-							if (checkRampRate_reactive == true) {
+							if (checkRampRate_reactive) {
 								if (power_diff_val > 0 && (power_diff_val > rampDownRate_reactive)) {
 									Qref_PI[0] = Qref_prev[0] - rampDownRate_reactive;
 								}
@@ -7071,7 +7188,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 							for(i = 0; i < 3; i++) {
 								delta_Qref[i] = (curr_state.V_mea_delayed[i] - V_ref[i]) / node_nominal_voltage * (1.0 / R_vq) * p_rated;
 								power_diff_val = Qref_prev[i] - (Qref0[i] - delta_Qref[i]);
-								if (checkRampRate_reactive == true) {
+								if (checkRampRate_reactive) {
 									if (power_diff_val > 0 && (power_diff_val > rampDownRate_reactive)) {
 										Qref_PI[i] = Qref_prev[i] - rampDownRate_reactive;
 									}
@@ -7132,17 +7249,17 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 						else
 						{
 							//Zero them
-							curr_state.Iac[0] = complex(0.0,0.0);
-							power_val[0] = complex(0.0,0.0);
+							curr_state.Iac[0] = gld::complex(0.0,0.0);
+							power_val[0] = gld::complex(0.0,0.0);
 						}
 
 						//See if either method is enabled and update the power-reference
-						if ((checkRampRate_real == true) || (checkRampRate_reactive == true ))
+						if (checkRampRate_real || checkRampRate_reactive)
 						{
 							//Deflag the variable
 							ramp_change = false;
 
-							if (checkRampRate_real == true) {
+							if (checkRampRate_real) {
 
 								//Compute the difference - real part
 								power_diff_val = (power_val[0].Re() - prev_VA_out[0].Re()) / deltat;
@@ -7173,7 +7290,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 								}
 							}
 
-							if (checkRampRate_reactive == true) {
+							if (checkRampRate_reactive) {
 
 								//Compute the difference - reactive part
 								power_diff_val = (power_val[0].Im() - prev_VA_out[0].Im()) / deltat;
@@ -7206,7 +7323,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 
 							//Now "extrapolate" this back to a current value, if needed
-							if (ramp_change == true)
+							if (ramp_change)
 							{
 								//Compute a "new current" value
 								if (value_Circuit_V[0].Mag() > 0.0)
@@ -7215,7 +7332,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 								}
 								else
 								{
-									temp_current_val[0] = complex(0.0,0.0);
+									temp_current_val[0] = gld::complex(0.0,0.0);
 								}
 
 								// Update the output current values, as well as the current multipliers
@@ -7234,7 +7351,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 						// Before updating pLine_unrotI and Iout, need to check inverter real power output:
 						// If not attached to the battery, need to check if real power < 0 or > rating
-						gld::complex VA_Out_temp = value_Circuit_V[0] * ~(curr_state.Iac[0]);
+						VA_Out = value_Circuit_V[0] * ~(curr_state.Iac[0]);
 
 						// Then continue update current
 						value_Line_unrotI[0] += I_Out[0];
@@ -7282,17 +7399,17 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 							else
 							{
 								//Zero them
-								curr_state.Iac[i] = complex(0.0,0.0);
-								power_val[i] = complex(0.0,0.0);
+								curr_state.Iac[i] = gld::complex(0.0,0.0);
+								power_val[i] = gld::complex(0.0,0.0);
 							}
 
 							//See if either method is enabled and update the power-reference
-							if ((checkRampRate_real == true) || (checkRampRate_reactive == true ))
+							if (checkRampRate_real || checkRampRate_reactive)
 							{
 								//Deflag the variable
 								ramp_change = false;
 
-								if (checkRampRate_real == true) {
+								if (checkRampRate_real) {
 
 									//Compute the difference - real part
 									power_diff_val = (power_val[i].Re() - prev_VA_out[i].Re()) / deltat;
@@ -7323,7 +7440,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 									}
 								}
 
-								if (checkRampRate_reactive == true) {
+								if (checkRampRate_reactive) {
 
 									//Compute the difference - reactive part
 									power_diff_val = (power_val[i].Im() - prev_VA_out[i].Im()) / deltat;
@@ -7356,7 +7473,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 
 								//Now "extrapolate" this back to a current value, if needed
-								if (ramp_change == true)
+								if (ramp_change)
 								{
 									//Compute a "new current" value
 									if (value_Circuit_V[i].Mag() > 0.0)
@@ -7365,7 +7482,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 									}
 									else
 									{
-										temp_current_val[i] = complex(0.0,0.0);
+										temp_current_val[i] = gld::complex(0.0,0.0);
 									}
 
 									// Update the output current values, as well as the current multipliers
@@ -7384,7 +7501,8 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 						// Before updating pLine_unrotI and Iout, need to check inverter real power output:
 						// If not attached to the battery, need to check if real power < 0 or > rating
-						gld::complex VA_Out_temp = (value_Circuit_V[0] * ~(curr_state.Iac[0])) + (value_Circuit_V[1] * ~(curr_state.Iac[1])) + (value_Circuit_V[2] * ~(curr_state.Iac[2]));
+						VA_Out = (value_Circuit_V[0] * ~(curr_state.Iac[0])) + (value_Circuit_V[1] * ~(curr_state.Iac[1])) + (value_Circuit_V[2] * ~(curr_state.Iac[2]));
+
 						for (int i = 0; i< 3; i++) {
 
 							value_Line_unrotI[i] += I_Out[i];
@@ -7537,6 +7655,9 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 				//Compute the error
 				curr_PID_state.max_error_val = curr_PID_state.error[0].Mag();
 
+				//Update VA out
+				VA_Out = -(value_Circuit_V[0]*~curr_PID_state.current_vals[0]);
+
 			}//End Triplex
 			else	//Three-phase
 			{
@@ -7596,6 +7717,10 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 						curr_PID_state.max_error_val = curr_PID_state.error[indexval].Mag();
 					}
 				}
+
+				//Update VA_Out
+				VA_Out = -(value_Circuit_V[0]*~curr_PID_state.current_vals[0] + value_Circuit_V[1]* ~curr_PID_state.current_vals[1] + value_Circuit_V[2]*~curr_PID_state.current_vals[2]);
+
 			}//End three-phase
 
 			//Check the error
@@ -7674,18 +7799,21 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 		}
 		//Default else, who knows
 
+		//Zero the output variable too - for giggles
+		VA_Out = complex(0.0,0.0);
+
 		//We're disabled - unless something else wants deltamode, we're done
 		simmode_return_value = SM_EVENT;
 	}//End Inverter disabled
 
 	//Sync the powerflow variables
-	if (parent_is_a_meter == true)
+	if (parent_is_a_meter)
 	{
 		push_complex_powerflow_values();
 	}
 
 	//Perform a check to determine how to go forward
-	if (enable_1547_compliance == true)
+	if (enable_1547_compliance)
 	{
 		//See if our return is value
 		if ((ieee_1547_double > 0.0) && (ieee_1547_double < 1.7) && (simmode_return_value == SM_EVENT))
@@ -7719,7 +7847,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 STATUS inverter::post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass)
 {
 	//If we have a meter, reset the accumulators
-	if (parent_is_a_meter == true)
+	if (parent_is_a_meter)
 	{
 		reset_complex_powerflow_accumulators();
 	}
@@ -7764,7 +7892,7 @@ STATUS inverter::post_deltaupdate(gld::complex *useful_value, unsigned int mode_
 	if ((inverter_dyn_mode == PI_CONTROLLER) || (inverter_dyn_mode == PID_CONTROLLER))
 	{
 		//Should have a parent, but be paranoid
-		if (parent_is_a_meter == true)
+		if (parent_is_a_meter)
 		{
 			push_complex_powerflow_values();
 		}
@@ -7781,7 +7909,7 @@ STATUS inverter::init_PI_dynamics(INV_STATE *curr_time)
 	gld::complex prev_Idq[3];
 
 	//Pull the powerflow values
-	if (parent_is_a_meter == true)
+	if (parent_is_a_meter)
 	{
 		reset_complex_powerflow_accumulators();
 
@@ -7857,7 +7985,7 @@ STATUS inverter::init_PI_dynamics(INV_STATE *curr_time)
 		}
 
 		//Take care of the ramp rate items, if needed
-		if (checkRampRate_real == true || checkRampRate_reactive == true)
+		if (checkRampRate_real || checkRampRate_reactive)
 		{
 			if ((phases & 0x10) == 0x10)
 			{
@@ -7929,7 +8057,7 @@ STATUS inverter::init_PI_dynamics(INV_STATE *curr_time)
 			VA_Out = value_Circuit_V[0]*~temp_current_val[0];
 
 			//Take care of the ramp rate items, if needed
-			if (checkRampRate_real == true || checkRampRate_reactive == true)
+			if (checkRampRate_real || checkRampRate_reactive)
 			{
 				curr_VA_out[0] = VA_Out;
 
@@ -7969,7 +8097,7 @@ STATUS inverter::init_PI_dynamics(INV_STATE *curr_time)
 			VA_Out = power_val[0] + power_val[1] + power_val[2];
 
 			//Take care of the ramp rate items, if needed
-			if (checkRampRate_real == true || checkRampRate_reactive == true)
+			if (checkRampRate_real || checkRampRate_reactive)
 			{
 				curr_VA_out[0] = power_val[0];
 				curr_VA_out[1] = power_val[1];
@@ -8012,7 +8140,7 @@ STATUS inverter::init_PI_dynamics(INV_STATE *curr_time)
 	}
 
 	//Sync the powerflow variables
-	if (parent_is_a_meter == true)
+	if (parent_is_a_meter)
 	{
 		push_complex_powerflow_values();
 	}
@@ -8031,7 +8159,7 @@ STATUS inverter::init_PID_dynamics(void)
 	int indexx;
 
 	//Pull the powerflow values, if needed
-	if (parent_is_a_meter == true)
+	if (parent_is_a_meter)
 	{
 		reset_complex_powerflow_accumulators();
 
@@ -8053,7 +8181,7 @@ STATUS inverter::init_PID_dynamics(void)
 		curr_PID_state.phase_Qref = VA_Out.Im();
 
 		//If ramp tracking, save the value
-		if (checkRampRate_real == true)
+		if (checkRampRate_real)
 		{
 			curr_VA_out[0] = VA_Out;
 
@@ -8112,7 +8240,7 @@ STATUS inverter::init_PID_dynamics(void)
 		curr_PID_state.phase_Qref = VA_Out.Im() / 3.0;
 
 		//If ramp tracking, save the value
-		if (checkRampRate_real == true)
+		if (checkRampRate_real)
 		{
 			curr_VA_out[0] = gld::complex(curr_PID_state.phase_Pref,curr_PID_state.phase_Qref);
 			curr_VA_out[1] = gld::complex(curr_PID_state.phase_Pref,curr_PID_state.phase_Qref);
@@ -8171,7 +8299,7 @@ STATUS inverter::init_PID_dynamics(void)
 	}
 
 	//Sync the powerflow variables
-	if (parent_is_a_meter == true)
+	if (parent_is_a_meter)
 	{
 		push_complex_powerflow_values();
 	}
@@ -8196,7 +8324,7 @@ void inverter::update_control_references(void)
 	P_In = V_In * I_In;
 
 	//Determine how to efficiency weight it
-	if(use_multipoint_efficiency == false)
+	if(!use_multipoint_efficiency)
 	{
 		//Normal scaling
 		VA_Efficiency = P_In * efficiency;
@@ -8398,7 +8526,7 @@ void inverter::update_control_references(void)
 	Qref = VA_Outref.Im();
 
 	// Update Qref for PI control mode if VA_outref is changed due to limitations
-	if (VA_changed == true) {
+	if (VA_changed) {
 		if((phases & 0x10) == 0x10) {
 			Qref_PI[0] = VA_Outref.Im();
 			Qref_PI[1] = 0;
@@ -8474,7 +8602,7 @@ STATUS inverter::initalize_IEEE_1547_checks(OBJECT *parent)
 				under_freq_low_band_delay = 0.16;		//Same value as low frequency, since this band doesn't technically exist
 			}
 
-			//Set the voltage values as well - basically, the under votlage has an extra category
+			//Set the voltage values as well - basically, the under voltage has an extra category
 			under_voltage_lowest_voltage_setpoint = 0.40;	//Lower than range before, so just duplicate disconnect value
 			under_voltage_middle_voltage_setpoint = 0.50;	//Lower limit of 1547
 			under_voltage_high_voltage_setpoint = 0.88;		//Low area threshold for 1547
@@ -8519,7 +8647,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 	return_value = -1.0;
 
 	//Pull the powerflow values, if needed
-	if (parent_is_a_meter == true)
+	if (parent_is_a_meter)
 	{
 		reset_complex_powerflow_accumulators();
 		
@@ -8546,7 +8674,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 			under_freq_high_band_viol_time = 0.0;
 			under_freq_low_band_viol_time = 0.0;
 
-			if (over_freq_high_band_viol_time >= over_freq_high_band_delay)
+			if (over_freq_high_band_viol_time > over_freq_high_band_delay)
 			{
 				trigger_disconnect = true;
 				return_time_freq = reconnect_time;
@@ -8554,7 +8682,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 				//Flag us as high over-frequency violation
 				ieee_1547_trip_method = IEEE_1547_HIGH_OF;
 			}
-			else if (over_freq_low_band_viol_time >= over_freq_low_band_delay)	//Triggered existing band
+			else if (over_freq_low_band_viol_time > over_freq_low_band_delay)	//Triggered existing band
 			{
 				trigger_disconnect = true;
 				return_time_freq = reconnect_time;
@@ -8587,7 +8715,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 			over_freq_high_band_viol_time = 0.0;
 			over_freq_low_band_viol_time = 0.0;
 
-			if (under_freq_low_band_viol_time >= under_freq_low_band_delay)
+			if (under_freq_low_band_viol_time > under_freq_low_band_delay)
 			{
 				trigger_disconnect = true;
 				return_time_freq = reconnect_time;
@@ -8595,7 +8723,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 				//Flag us as the low under-frequency violation
 				ieee_1547_trip_method = IEEE_1547_LOW_UF;
 			}
-			else if (under_freq_high_band_viol_time >= under_freq_high_band_delay)	//Other band trigger
+			else if (under_freq_high_band_viol_time > under_freq_high_band_delay)	//Other band trigger
 			{
 				trigger_disconnect = true;
 				return_time_freq = reconnect_time;
@@ -8630,7 +8758,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 			over_freq_high_band_viol_time = 0.0;
 			over_freq_low_band_viol_time = 0.0;
 
-			if (under_freq_high_band_viol_time >= under_freq_high_band_delay)
+			if (under_freq_high_band_viol_time > under_freq_high_band_delay)
 			{
 				trigger_disconnect = true;
 				return_time_freq = reconnect_time;
@@ -8656,7 +8784,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 			under_freq_high_band_viol_time = 0.0;
 			under_freq_low_band_viol_time = 0.0;
 
-			if (over_freq_low_band_viol_time >= over_freq_low_band_delay)
+			if (over_freq_low_band_viol_time > over_freq_low_band_delay)
 			{
 				trigger_disconnect = true;
 				return_time_freq = reconnect_time;
@@ -8713,7 +8841,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 		if ((phases & PHASE_S) == PHASE_S)	//Triplex
 		{
 			//See if we're te proper index
-			if (indexval < 2)
+			if (indexval == 0)	//Only need to check 240 V here
 			{
 				check_phase = true;
 			}
@@ -8759,7 +8887,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 				if (temp_pu_voltage < under_voltage_lowest_voltage_setpoint)
 				{
 					//See if we've accumulated yet
-					if (uv_low_hit == false)
+					if (!uv_low_hit)
 					{
 						under_voltage_lowest_viol_time += timestepvalue;
 						uv_low_hit = true;
@@ -8770,7 +8898,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 				{
 
 					//See if we've accumulated yet
-					if (uv_mid_hit == false)
+					if (!uv_mid_hit)
 					{
 						under_voltage_middle_viol_time += timestepvalue;
 						uv_mid_hit = true;
@@ -8780,7 +8908,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 				else if ((temp_pu_voltage >= under_voltage_middle_voltage_setpoint) && (temp_pu_voltage < under_voltage_high_voltage_setpoint))
 				{
 					//See if we've accumulated yet
-					if (uv_high_hit == false)
+					if (!uv_high_hit)
 					{
 						under_voltage_high_viol_time += timestepvalue;
 						uv_high_hit = true;
@@ -8790,7 +8918,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 				else if ((temp_pu_voltage > over_voltage_low_setpoint) && (temp_pu_voltage < over_voltage_high_setpoint))
 				{
 					//See if we've accumulated yet
-					if (ov_low_hit == false)
+					if (!ov_low_hit)
 					{
 						over_voltage_low_viol_time += timestepvalue;
 						ov_low_hit = true;
@@ -8800,7 +8928,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 				else if (temp_pu_voltage >= over_voltage_high_setpoint)
 				{
 					//See if we've accumulated yet
-					if (ov_high_hit == false)
+					if (!ov_high_hit)
 					{
 						over_voltage_high_viol_time += timestepvalue;
 						ov_high_hit = true;
@@ -8821,12 +8949,12 @@ double inverter::perform_1547_checks(double timestepvalue)
 	}//End phase loop
 	
 	//See if anything was hit - if so, reconcile it
-	if (voltage_violation == true)
+	if (voltage_violation)
 	{
 		//Reconcile the violation times and see how we need to break
-		if (uv_low_hit == true)
+		if (uv_low_hit)
 		{
-			if (under_voltage_lowest_viol_time >= under_voltage_lowest_delay)
+			if (under_voltage_lowest_viol_time > under_voltage_lowest_delay)
 			{
 				trigger_disconnect = true;
 				return_time_volt = reconnect_time;
@@ -8834,7 +8962,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 				//Flag us as the lowest under voltage violation
 				ieee_1547_trip_method = IEEE_1547_LOWEST_UV;
 			}
-			else if (under_voltage_middle_viol_time >= under_voltage_middle_delay)	//Check other ranges
+			else if (under_voltage_middle_viol_time > under_voltage_middle_delay)	//Check other ranges
 			{
 				trigger_disconnect = true;
 				return_time_volt = reconnect_time;
@@ -8843,7 +8971,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 				ieee_1547_trip_method = IEEE_1547_MIDDLE_UV;
 			}
 
-			else if (under_voltage_high_viol_time >= under_voltage_high_delay)
+			else if (under_voltage_high_viol_time > under_voltage_high_delay)
 			{
 				trigger_disconnect = true;
 				return_time_volt = reconnect_time;
@@ -8857,9 +8985,9 @@ double inverter::perform_1547_checks(double timestepvalue)
 				return_time_volt = under_voltage_lowest_delay - under_voltage_lowest_viol_time;
 			}
 		}
-		else if (uv_mid_hit == true)
+		else if (uv_mid_hit)
 		{
-			if (under_voltage_middle_viol_time >= under_voltage_middle_delay)
+			if (under_voltage_middle_viol_time > under_voltage_middle_delay)
 			{
 				trigger_disconnect = true;
 				return_time_volt = reconnect_time;
@@ -8867,7 +8995,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 				//Flag us as the middle under voltage violation
 				ieee_1547_trip_method = IEEE_1547_MIDDLE_UV;
 			}
-			else if (under_voltage_high_viol_time >= under_voltage_high_delay)	//Check higher bands
+			else if (under_voltage_high_viol_time > under_voltage_high_delay)	//Check higher bands
 			{
 				trigger_disconnect = true;
 				return_time_volt = reconnect_time;
@@ -8881,9 +9009,9 @@ double inverter::perform_1547_checks(double timestepvalue)
 				return_time_volt = under_voltage_middle_delay - under_voltage_middle_viol_time;
 			}
 		}
-		else if (uv_high_hit == true)
+		else if (uv_high_hit)
 		{
-			if (under_voltage_high_viol_time >= under_voltage_high_delay)
+			if (under_voltage_high_viol_time > under_voltage_high_delay)
 			{
 				trigger_disconnect = true;
 				return_time_volt = reconnect_time;
@@ -8897,9 +9025,9 @@ double inverter::perform_1547_checks(double timestepvalue)
 				return_time_volt = under_voltage_high_delay - under_voltage_high_viol_time;
 			}
 		}
-		else if (ov_low_hit == true)
+		else if (ov_low_hit)
 		{
-			if (over_voltage_low_viol_time >= over_voltage_low_delay)
+			if (over_voltage_low_viol_time > over_voltage_low_delay)
 			{
 				trigger_disconnect = true;
 				return_time_volt = reconnect_time;
@@ -8913,9 +9041,9 @@ double inverter::perform_1547_checks(double timestepvalue)
 				return_time_volt = over_voltage_low_delay - over_voltage_low_viol_time;
 			}
 		}
-		else if (ov_high_hit == true)
+		else if (ov_high_hit)
 		{
-			if (over_voltage_high_viol_time >= over_voltage_high_delay)
+			if (over_voltage_high_viol_time > over_voltage_high_delay)
 			{
 				trigger_disconnect = true;
 				return_time_volt = reconnect_time;
@@ -8923,7 +9051,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 				//Flag us as the high over voltage violation
 				ieee_1547_trip_method = IEEE_1547_HIGH_OV;
 			}
-			else if (over_voltage_low_viol_time >= over_voltage_low_delay)	//Lower band overlap
+			else if (over_voltage_low_viol_time > over_voltage_low_delay)	//Lower band overlap
 			{
 				trigger_disconnect = true;
 				return_time_volt = reconnect_time;
@@ -8982,7 +9110,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 	}
 
 	//Check voltage values first
-	if ((frequency_violation == true) || (voltage_violation == true))
+	if (frequency_violation || voltage_violation)
 	{
 		//Reset the out of violation time
 		out_of_violation_time_total = 0.0;
@@ -8994,9 +9122,9 @@ double inverter::perform_1547_checks(double timestepvalue)
 	}
 
 	//See what we are - if we're out of service, see if we can be restored
-	if (inverter_1547_status == false)
+	if (!inverter_1547_status)
 	{
-		if (out_of_violation_time_total >= reconnect_time)
+		if (out_of_violation_time_total > reconnect_time)
 		{
 			//Set us back into service
 			inverter_1547_status = true;
@@ -9020,7 +9148,7 @@ double inverter::perform_1547_checks(double timestepvalue)
 	}
 	else	//We're true, see if we need to not be
 	{
-		if (trigger_disconnect == true)
+		if (trigger_disconnect)
 		{
 			inverter_1547_status = false;	//Trigger
 
@@ -9113,7 +9241,7 @@ void inverter::pull_complex_powerflow_values(void)
 	if (VSI_mode == VSI_ISOCHRONOUS || VSI_mode == VSI_DROOP)
 	{
 		//Update IGenerated, in case the powerflow is overriding it
-		if (parent_is_triplex == true)
+		if (parent_is_triplex)
 		{
 			value_IGenerated[0] = pIGenerated[0]->get_complex();
 		}
@@ -9132,7 +9260,7 @@ void inverter::reset_complex_powerflow_accumulators(void)
 	int indexval;
 
 	//See which one we are, since that will impact things
-	if (parent_is_triplex == false)	//Three-phase
+	if (!parent_is_triplex)	//Three-phase
 	{
 		//Loop through the three-phases/accumulators
 		for (indexval=0; indexval<3; indexval++)
@@ -9166,11 +9294,11 @@ void inverter::reset_complex_powerflow_accumulators(void)
 void inverter::push_complex_powerflow_values(void)
 {
 	gld::complex temp_complex_val;
-	gld_wlock *test_rlock;
+	gld_wlock *test_rlock = nullptr;
 	int indexval;
 
 	//See which one we are, since that will impact things
-	if (parent_is_triplex == false)	//Three-phase
+	if (!parent_is_triplex)	//Three-phase
 	{
 		//Loop through the three-phases/accumulators
 		for (indexval=0; indexval<3; indexval++)
@@ -9266,17 +9394,21 @@ double inverter::lin_eq_volt(double volt, double m, double b)
 }
 
 // Function to update current injection IGenerated for VSI
-STATUS inverter::updateCurrInjection(int64 iteration_count)
+STATUS inverter::updateCurrInjection(int64 iteration_count, bool *converged_failure)
 {
 	double power_diff_val;
 	bool ramp_change;
 	double deltat, temp_time;
 	char idx;
 	OBJECT *obj = OBJECTHDR(this);
-	complex temp_VA;
+	gld::complex temp_VA;
 	bool bus_is_a_swing, bus_is_swing_pq_entry;
 	STATUS temp_status_val;
-	gld_property *temp_property_pointer;
+	gld_property *temp_property_pointer = nullptr;
+	double mag_diff_value[3];
+
+	//Start with assuming convergence (not a failure)
+	*converged_failure = false;
 
 	if (deltatimestep_running > 0.0)	//Deltamode call
 	{
@@ -9290,7 +9422,7 @@ STATUS inverter::updateCurrInjection(int64 iteration_count)
 	}
 
 	//Pull the current powerflow values
-	if (parent_is_a_meter == true)
+	if (parent_is_a_meter)
 	{
 		//Reset the accumulators, just in case
 		reset_complex_powerflow_accumulators();
@@ -9307,7 +9439,7 @@ STATUS inverter::updateCurrInjection(int64 iteration_count)
 
 		//Copy the values
 		//Update power tracking variables, if ramp-rate checking is enabled
-		if ((four_quadrant_control_mode == FQM_VSI) && (checkRampRate_real == true || checkRampRate_reactive == true))
+		if ((four_quadrant_control_mode == FQM_VSI) && (checkRampRate_real || checkRampRate_reactive))
 		{
 			//See which one we are
 			if ((phases & 0x10) == 0x10)
@@ -9340,7 +9472,7 @@ STATUS inverter::updateCurrInjection(int64 iteration_count)
 	}
 
 	//See if we're a meter
-	if (parent_is_a_meter == true)
+	if (parent_is_a_meter)
 	{
 		//By default, assume we're not a SWING
 		bus_is_a_swing = false;
@@ -9349,13 +9481,13 @@ STATUS inverter::updateCurrInjection(int64 iteration_count)
 		if (attached_bus_type > 1)	//SWING or SWING_PQ
 		{
 			//See if it has been mapped already
-			if (swing_test_fxn==NULL)
+			if (swing_test_fxn==nullptr)
 			{
 				//Map the swing status check function
 				swing_test_fxn = (FUNCTIONADDR)(gl_get_function(obj->parent,"pwr_object_swing_status_check"));
 
 				//See if it was located
-				if (swing_test_fxn == NULL)
+				if (swing_test_fxn == nullptr)
 				{
 					GL_THROW("inverter:%s - failed to map swing-checking for node:%s",(obj->name?obj->name:"unnamed"),(obj->parent->name?obj->parent->name:"unnamed"));
 					/*  TROUBLESHOOT
@@ -9390,7 +9522,7 @@ STATUS inverter::updateCurrInjection(int64 iteration_count)
 				//Update the iteration counter
 				first_iteration_current_injection = iteration_count;
 			}
-			else if ((first_iteration_current_injection != 0) || (bus_is_swing_pq_entry==true))	//We didn't enter on the first iteration
+			else if ((first_iteration_current_injection != 0) || bus_is_swing_pq_entry)	//We didn't enter on the first iteration
 			{
 				//Just override the indication - this only happens if we were a SWING or a SWING_PQ that was "demoted"
 				bus_is_a_swing = true;
@@ -9407,23 +9539,23 @@ STATUS inverter::updateCurrInjection(int64 iteration_count)
 	}
 
 	// Adjust VSI (not on SWING bus) current injection and e_source values only at the first iteration of each time step
-	if (inverter_first_step == true)
+	if (inverter_first_step)
 	{
 		//Set target
-		temp_VA = complex(P_Out,Q_Out);
+		temp_VA = gld::complex(P_Out,Q_Out);
 
 		if (four_quadrant_control_mode == FQM_VSI)
 		{
-			if (bus_is_a_swing == false)
+			if (!bus_is_a_swing)
 			{
 				//Balance voltage and satisfy power
-				complex aval, avalsq;
-				complex temp_total_power_val[3];
-				complex temp_total_power_internal;
-				complex temp_pos_voltage, temp_pos_current;
+				gld::complex aval, avalsq;
+				gld::complex temp_total_power_val[3];
+				gld::complex temp_total_power_internal;
+				gld::complex temp_pos_voltage, temp_pos_current;
 
 				//Conversion variables - 1@120-deg
-				aval = complex(-0.5,(sqrt(3.0)/2.0));
+				aval = gld::complex(-0.5,(sqrt(3.0)/2.0));
 				avalsq = aval*aval;	//squared value is used a couple places too
 
 
@@ -9445,7 +9577,7 @@ STATUS inverter::updateCurrInjection(int64 iteration_count)
 				}
 				else	//Zero it, to avoid a NAN
 				{
-					temp_pos_current = complex(0.0,0.0);
+					temp_pos_current = gld::complex(0.0,0.0);
 				}
 
 				//Now populate this into the output
@@ -9453,6 +9585,22 @@ STATUS inverter::updateCurrInjection(int64 iteration_count)
 				value_IGenerated[1] = temp_pos_current*avalsq;
 				value_IGenerated[2] = temp_pos_current*aval;
 
+				//Get the magnitude of the difference
+				mag_diff_value[0] = (value_IGenerated[0] - prev_value_IGenerated[0]).Mag();
+				mag_diff_value[1] = (value_IGenerated[1] - prev_value_IGenerated[1]).Mag();
+				mag_diff_value[2] = (value_IGenerated[2] - prev_value_IGenerated[2]).Mag();
+
+				//Update trackers
+				prev_value_IGenerated[0] = value_IGenerated[0];
+				prev_value_IGenerated[1] = value_IGenerated[1];
+				prev_value_IGenerated[2] = value_IGenerated[2];
+
+				//Convergence check
+				if ((mag_diff_value[0] > current_convergence_criterion) || (mag_diff_value[1] > current_convergence_criterion) || (mag_diff_value[2] > current_convergence_criterion))
+				{
+					//Flag for failure
+					*converged_failure = true;
+				}
 			}
 			//If it is a swing, this is all handled internally to solver_nr (though it is similar)
 		}
@@ -9463,7 +9611,7 @@ STATUS inverter::updateCurrInjection(int64 iteration_count)
 	//Copy-pasted from above
 	// VSI isochronous mode keeps the voltage angle constant always
 	//TODO: Probably needs to be extended to other modes
-	if ((four_quadrant_control_mode == FQM_VSI) && (checkRampRate_real == true || checkRampRate_reactive == true))
+	if ((four_quadrant_control_mode == FQM_VSI) && (checkRampRate_real || checkRampRate_reactive))
 	{
 		//See what our phasing condition is at
 		if ((phases & 0x10) == 0x10)	//Triplex
@@ -9483,7 +9631,7 @@ STATUS inverter::updateCurrInjection(int64 iteration_count)
 			for(idx = 0; idx < 3; idx++)
 			{
 				//See how this aligns with the ramp rate, if necessary
-				if (checkRampRate_real == true || checkRampRate_reactive == true)
+				if (checkRampRate_real || checkRampRate_reactive)
 				{
 					//Deflag
 					ramp_change = false;
@@ -9495,7 +9643,7 @@ STATUS inverter::updateCurrInjection(int64 iteration_count)
 					power_val[idx] = value_Circuit_V[idx]*~temp_current_val[idx];
 
 					//See which way we are
-					if (checkRampRate_real == true) {
+					if (checkRampRate_real) {
 
 						//Compute the difference - real part
 						power_diff_val = (power_val[idx].Re() - prev_VA_out[idx].Re()) / deltat;
@@ -9528,7 +9676,7 @@ STATUS inverter::updateCurrInjection(int64 iteration_count)
 					}
 
 					//Now "extrapolate" this back to a current value, if needed
-					if (ramp_change == true)
+					if (ramp_change)
 					{
 						//Compute a "new current" value
 						if (value_Circuit_V[idx].Mag() > 0.0)
@@ -9537,7 +9685,7 @@ STATUS inverter::updateCurrInjection(int64 iteration_count)
 						}
 						else
 						{
-							temp_current_val[idx] = complex(0.0,0.0);
+							temp_current_val[idx] = gld::complex(0.0,0.0);
 						}
 
 						//Adjust it to IGenerated
@@ -9558,7 +9706,7 @@ STATUS inverter::updateCurrInjection(int64 iteration_count)
 	}
 
 	//Push the changes up
-	if (parent_is_a_meter == true)
+	if (parent_is_a_meter)
 	{
 		push_complex_powerflow_values();
 	}
@@ -9577,7 +9725,7 @@ EXPORT int create_inverter(OBJECT **obj, OBJECT *parent)
 	try 
 	{
 		*obj = gl_create_object(inverter::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			inverter *my = OBJECTDATA(*obj,inverter);
 			gl_set_parent(*obj,parent);
@@ -9593,7 +9741,7 @@ EXPORT int init_inverter(OBJECT *obj, OBJECT *parent)
 {
 	try 
 	{
-		if (obj!=NULL)
+		if (obj!=nullptr)
 			return OBJECTDATA(obj,inverter)->init(parent);
 		else
 			return 0;
@@ -9683,7 +9831,7 @@ EXPORT STATUS postupdate_inverter(OBJECT *obj, gld::complex *useful_value, unsig
 }
 
 // Define export function that update the VIS current injection IGenerated to the grid
-EXPORT STATUS inverter_NR_current_injection_update(OBJECT *obj, int64 iteration_count)
+EXPORT STATUS inverter_NR_current_injection_update(OBJECT *obj, int64 iteration_count, bool *converged_failure)
 {
 	STATUS temp_status;
 
@@ -9691,7 +9839,7 @@ EXPORT STATUS inverter_NR_current_injection_update(OBJECT *obj, int64 iteration_
 	inverter *my = OBJECTDATA(obj,inverter);
 
 	//Call the function, where we can update the IGenerated injection
-	temp_status = my->updateCurrInjection(iteration_count);
+	temp_status = my->updateCurrInjection(iteration_count,converged_failure);
 
 	//Return what the sub function said we were
 	return temp_status;

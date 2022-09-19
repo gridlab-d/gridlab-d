@@ -12014,25 +12014,25 @@ object triplex_node {
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_194;     
       phases AS;     
       parent C1_R2-12-47-2_tm_2;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 120;     
       voltage_2 120;     
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_195;     
       phases BS;     
       parent C1_R2-12-47-2_tm_3;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 -60-103.92j;     
       voltage_2 -60-103.92j;     
       voltage_N 0;     
@@ -12155,13 +12155,13 @@ object triplex_node {
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_209;     
       phases CS;     
       parent C1_R2-12-47-2_tm_17;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 -60+103.92j;     
       voltage_2 -60+103.92j;     
       voltage_N 0;     
@@ -12176,25 +12176,25 @@ object triplex_node {
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_211;     
       phases AS;     
       parent C1_R2-12-47-2_tm_19;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 120;     
       voltage_2 120;     
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_212;     
       phases BS;     
       parent C1_R2-12-47-2_tm_20;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 -60-103.92j;     
       voltage_2 -60-103.92j;     
       voltage_N 0;     
@@ -12380,13 +12380,13 @@ object triplex_node {
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_233;     
       phases AS;     
       parent C1_R2-12-47-2_tm_41;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 120;     
       voltage_2 120;     
       voltage_N 0;     
@@ -12401,13 +12401,13 @@ object triplex_node {
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_235;     
       phases CS;     
       parent C1_R2-12-47-2_tm_43;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 -60+103.92j;     
       voltage_2 -60+103.92j;     
       voltage_N 0;     
@@ -12485,25 +12485,25 @@ object triplex_node {
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_244;     
       phases AS;     
       parent C1_R2-12-47-2_tm_52;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 120;     
       voltage_2 120;     
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_245;     
       phases BS;     
       parent C1_R2-12-47-2_tm_53;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 -60-103.92j;     
       voltage_2 -60-103.92j;     
       voltage_N 0;     
@@ -12536,13 +12536,13 @@ object triplex_node {
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_249;     
       phases CS;     
       parent C1_R2-12-47-2_tm_57;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 -60+103.92j;     
       voltage_2 -60+103.92j;     
       voltage_N 0;     
@@ -12566,25 +12566,25 @@ object triplex_node {
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_252;     
       phases BS;     
       parent C1_R2-12-47-2_tm_60;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 -60-103.92j;     
       voltage_2 -60-103.92j;     
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_253;     
       phases CS;     
       parent C1_R2-12-47-2_tm_61;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 -60+103.92j;     
       voltage_2 -60+103.92j;     
       voltage_N 0;     
@@ -12671,25 +12671,25 @@ object triplex_node {
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_263;     
       phases BS;     
       parent C1_R2-12-47-2_tm_71;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 -60-103.92j;     
       voltage_2 -60-103.92j;     
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_264;     
       phases CS;     
       parent C1_R2-12-47-2_tm_72;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 -60+103.92j;     
       voltage_2 -60+103.92j;     
       voltage_N 0;     
@@ -12848,25 +12848,25 @@ object triplex_node {
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_282;     
       phases BS;     
       parent C1_R2-12-47-2_tm_90;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 -60-103.92j;     
       voltage_2 -60-103.92j;     
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_283;     
       phases CS;     
       parent C1_R2-12-47-2_tm_91;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 -60+103.92j;     
       voltage_2 -60+103.92j;     
       voltage_N 0;     
@@ -12908,13 +12908,13 @@ object triplex_node {
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_288;     
       phases CS;     
       parent C1_R2-12-47-2_tm_96;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 -60+103.92j;     
       voltage_2 -60+103.92j;     
       voltage_N 0;     
@@ -13046,25 +13046,25 @@ object triplex_node {
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_303;     
       phases BS;     
       parent C1_R2-12-47-2_tm_111;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 -60-103.92j;     
       voltage_2 -60-103.92j;     
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_304;     
       phases CS;     
       parent C1_R2-12-47-2_tm_112;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 -60+103.92j;     
       voltage_2 -60+103.92j;     
       voltage_N 0;     
@@ -13124,25 +13124,25 @@ object triplex_node {
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_311;     
       phases AS;     
       parent C1_R2-12-47-2_tm_119;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 120;     
       voltage_2 120;     
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_312;     
       phases BS;     
       parent C1_R2-12-47-2_tm_120;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 -60-103.92j;     
       voltage_2 -60-103.92j;     
       voltage_N 0;     
@@ -13301,13 +13301,13 @@ object triplex_node {
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_330;     
       phases AS;     
       parent C1_R2-12-47-2_tm_138;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 120;     
       voltage_2 120;     
       voltage_N 0;     
@@ -13322,13 +13322,13 @@ object triplex_node {
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_332;     
       phases CS;     
       parent C1_R2-12-47-2_tm_140;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 -60+103.92j;     
       voltage_2 -60+103.92j;     
       voltage_N 0;     
@@ -13388,25 +13388,25 @@ object triplex_node {
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_339;     
       phases BS;     
       parent C1_R2-12-47-2_tm_147;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 -60-103.92j;     
       voltage_2 -60-103.92j;     
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_340;     
       phases CS;     
       parent C1_R2-12-47-2_tm_148;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 -60+103.92j;     
       voltage_2 -60+103.92j;     
       voltage_N 0;     
@@ -13484,25 +13484,25 @@ object triplex_node {
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_349;     
       phases AS;     
       parent C1_R2-12-47-2_tm_157;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 120;     
       voltage_2 120;     
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_350;     
       phases BS;     
       parent C1_R2-12-47-2_tm_158;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 -60-103.92j;     
       voltage_2 -60-103.92j;     
       voltage_N 0;     
@@ -13652,13 +13652,13 @@ object triplex_node {
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_367;     
       phases AS;     
       parent C1_R2-12-47-2_tm_175;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 120;     
       voltage_2 120;     
       voltage_N 0;     
@@ -13772,37 +13772,37 @@ object triplex_node {
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_380;     
       phases AS;     
       parent C1_R2-12-47-2_tm_188;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 120;     
       voltage_2 120;     
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_381;     
       phases BS;     
       parent C1_R2-12-47-2_tm_189;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 -60-103.92j;     
       voltage_2 -60-103.92j;     
       voltage_N 0;     
       nominal_voltage 120;     
 }       
-object triplex_node {     
+object triplex_load {     
       name C1_R2-12-47-2_tn_382;     
       phases CS;     
       parent C1_R2-12-47-2_tm_190;     
       // Load was too small to convert to a house (less than 1/2 avg_house)
-      power_12_real 2300.0000;
-      power_12_reac 1200.0000;
+      constant_power_12_real 2300.0000;
+      constant_power_12_reac 1200.0000;
       voltage_1 -60+103.92j;     
       voltage_2 -60+103.92j;     
       voltage_N 0;     
