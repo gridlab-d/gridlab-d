@@ -1411,11 +1411,6 @@ int diesel_dg::init(OBJECT *parent)
 			partake in the powerflow.  It is being arbitrarily set to 50% of the per-phase rating.  If this is
 			undesired, please change the value.
 			*/
-<<<<<<< HEAD
-
-			power_val[0] = gld::complex(0.5*power_base,0.0);
-=======
->>>>>>> a79d84ae (Allow diesel_dg to initialize to zero)
 		}
 
 		if (power_val[1].Mag() == 0.0)
@@ -1426,11 +1421,6 @@ int diesel_dg::init(OBJECT *parent)
 			partake in the powerflow.  It is being arbitrarily set to 50% of the per-phase rating.  If this is
 			undesired, please change the value.
 			*/
-<<<<<<< HEAD
-
-			power_val[1] = gld::complex(0.5*power_base,0.0);
-=======
->>>>>>> a79d84ae (Allow diesel_dg to initialize to zero)
 		}
 
 		if (power_val[2].Mag() == 0.0)
@@ -1441,11 +1431,6 @@ int diesel_dg::init(OBJECT *parent)
 			partake in the powerflow.  It is being arbitrarily set to 50% of the per-phase rating.  If this is
 			undesired, please change the value.
 			*/
-<<<<<<< HEAD
-
-			power_val[2] = gld::complex(0.5*power_base,0.0);
-=======
->>>>>>> a79d84ae (Allow diesel_dg to initialize to zero)
 		}
 
 		if (apply_rotor_speed_convergence)
