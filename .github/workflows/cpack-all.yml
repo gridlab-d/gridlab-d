@@ -64,7 +64,7 @@ jobs:
       - name: Build GridLAB-D
         run: |
           threads=`nproc`
-          cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS
+          cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=~/.temp/GridLAB-D -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS
           cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel $threads
 
       - name: Package
@@ -143,7 +143,7 @@ jobs:
         working-directory: ${{github.workspace}}/gridlab-build
         run: |
           threads=`nproc`
-          cmake -G "Ninja" -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=../.cache/HELICS -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
+          cmake -G "Ninja" -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=../.temp/GridLAB-D -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=../.cache/HELICS -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
           cmake --build ./build --config ${{env.BUILD_TYPE}} --parallel $threads
 
       - name: Package
@@ -211,7 +211,7 @@ jobs:
       - name: Build GridLAB-D
         run: |
           threads=`sysctl -n hw.logicalcpu`
-          cmake -B ${{github.workspace}}/build-${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}}
+          cmake -B ${{github.workspace}}/build-${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=~/.temp/GridLAB-D -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}}
           cmake --build ${{github.workspace}}/build-${{matrix.arch}} --config ${{env.BUILD_TYPE}} --parallel $threads
 
       - name: Package
