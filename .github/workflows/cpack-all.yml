@@ -128,7 +128,8 @@ jobs:
         working-directory: ${{github.workspace}}/helics-build
         run: |
           threads=`nproc`
-          cmake -G "Ninja" -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=../.cache/HELICS \
+          workspace="$(cygpath ${{github.workspace}})"
+          cmake -G "Ninja" -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX="$workspace/.cache/HELICS" \
            -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DHELICS_ZMQ_SUBPROJECT=ON
           cmake --build ./build --config ${{env.BUILD_TYPE}} --parallel $threads
           cmake --install ./build
@@ -143,7 +144,8 @@ jobs:
         working-directory: ${{github.workspace}}/gridlab-build
         run: |
           threads=`nproc`
-          cmake -G "Ninja" -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=../.temp/GridLAB-D -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=../.cache/HELICS -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
+          workspace="$(cygpath ${{github.workspace}})"
+          cmake -G "Ninja" -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX="$workspace/.temp/GridLAB-D" -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR="$workspace/.cache/HELICS" -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
           cmake --build ./build --config ${{env.BUILD_TYPE}} --parallel $threads
 
       - name: Package
