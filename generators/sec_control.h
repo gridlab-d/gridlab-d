@@ -128,13 +128,13 @@ public:
 	SEC_CNTRL_STATE next_state; //next state variables
 	
 	/* utility functions */
-	gld_property *map_complex_value(OBJECT *obj, char *name);
-	gld_property *map_double_value(OBJECT *obj, char *name);
-	gld_property *map_enum_value(OBJECT *obj, char *name);
+	gld_property *map_complex_value(OBJECT *obj, const char *name);
+	gld_property *map_double_value(OBJECT *obj, const char *name);
+	gld_property *map_enum_value(OBJECT *obj, const char *name);
 
-	complex get_complex_value(OBJECT *obj, char *name);
-	double get_double_value(OBJECT *obj, char *name);
-	enumeration get_enum_value(OBJECT *obj, char *name);
+	complex get_complex_value(OBJECT *obj, const char *name);
+	double get_double_value(OBJECT *obj, const char *name);
+	enumeration get_enum_value(OBJECT *obj, const char *name);
 	
 	void init_check(double&, double, double);
 	void participant_tlp_check(SEC_CNTRL_PARTICIPANT *);

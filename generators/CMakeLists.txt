@@ -20,6 +20,8 @@ add_library(${PROJECT_NAME}
         main.cpp
         rectifier.cpp
         rectifier.h
+        sec_control.cpp
+        sec_control.h
         solar.cpp
         solar.h
         sync_ctrl.cpp

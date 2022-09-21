@@ -780,7 +780,7 @@ STATUS sec_control::post_deltaupdate(complex *useful_value, unsigned int mode_pa
 }
 
 //Map Complex value
-gld_property *sec_control::map_complex_value(OBJECT *obj, char *name)
+gld_property *sec_control::map_complex_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	OBJECT *objhdr = OBJECTHDR(this);
@@ -802,7 +802,7 @@ gld_property *sec_control::map_complex_value(OBJECT *obj, char *name)
 	return pQuantity;
 }
 
-complex sec_control::get_complex_value(OBJECT *obj, char *name)
+complex sec_control::get_complex_value(OBJECT *obj, const char *name)
 {
 	complex val;
 	gld_property *ptr = map_complex_value(obj, name);
@@ -812,7 +812,7 @@ complex sec_control::get_complex_value(OBJECT *obj, char *name)
 }
 
 //Map double value
-gld_property *sec_control::map_double_value(OBJECT *obj, char *name)
+gld_property *sec_control::map_double_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	OBJECT *objhdr = OBJECTHDR(this);
@@ -835,7 +835,7 @@ gld_property *sec_control::map_double_value(OBJECT *obj, char *name)
 }
 
 //Get gld_property double value
-double sec_control::get_double_value(OBJECT *obj, char *name)
+double sec_control::get_double_value(OBJECT *obj, const char *name)
 {
 	double val;
 	gld_property * ptr;
@@ -846,7 +846,7 @@ double sec_control::get_double_value(OBJECT *obj, char *name)
 }
 
 //Map enumeration value
-gld_property *sec_control::map_enum_value(OBJECT *obj, char *name)
+gld_property *sec_control::map_enum_value(OBJECT *obj, const char *name)
 {
 	gld_property *pQuantity;
 	OBJECT *objhdr = OBJECTHDR(this);
@@ -869,7 +869,7 @@ gld_property *sec_control::map_enum_value(OBJECT *obj, char *name)
 }
 
 // Get an enumberation value
-enumeration sec_control::get_enum_value(OBJECT *obj, char *name)
+enumeration sec_control::get_enum_value(OBJECT *obj, const char *name)
 {
 	enumeration val;
 	gld_property *ptr = map_enum_value(obj, name);
