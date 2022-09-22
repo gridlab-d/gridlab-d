@@ -1216,7 +1216,7 @@ void class_profiles(void)
 		cl = index[i];
 		if (cl->profiler.clocks>0)
 		{
-			double ts = (double)cl->profiler.clocks/CLOCKS_PER_SEC;
+			double ts = (double)cl->profiler.clocks/global_ms_per_second;
 			double tp = (double)cl->profiler.clocks/total*100;
 			double mt = ts/cl->profiler.numobjs*1000;
 			output_profile("%-16.16s %7.3f %8.1f%% %8.1f", cl->name, ts,tp,mt);
@@ -1228,7 +1228,7 @@ void class_profiles(void)
 	index = NULL;
 	output_profile("================ ======== ======== ========");
 	output_profile("%-16.16s %7.3f %8.1f%% %8.1f\n",
-		"Total", (double)total/CLOCKS_PER_SEC,100.0,1000*(double)total/CLOCKS_PER_SEC/object_get_count());
+		"Total", (double)total/global_ms_per_second,100.0,1000*(double)total/global_ms_per_second/object_get_count());
 
 }
 

@@ -2698,9 +2698,9 @@ STATUS exec_start()
 		double delta_runtime = 0, delta_simtime = 0;
 		if (global_threadcount==0) global_threadcount=1;
 		for (cl=class_get_first_class(); cl!=nullptr; cl=cl->next)
-			sync_time += ((double)cl->profiler.clocks)/CLOCKS_PER_SEC;
+			sync_time += ((double)cl->profiler.clocks)/global_ms_per_second;
 		sync_time /= global_threadcount;
-		delta_runtime = dp->t_count>0 ? (dp->t_preupdate+dp->t_update+dp->t_postupdate)/CLOCKS_PER_SEC : 0;
+		delta_runtime = dp->t_count>0 ? (dp->t_preupdate+dp->t_update+dp->t_postupdate)/global_ms_per_second : 0;
 		delta_simtime = dp->t_count*(double)dp->t_delta/(double)dp->t_count/1e9;
 
 		output_profile("\nCore profiler results");
@@ -2709,13 +2709,13 @@ STATUS exec_start()
 		output_profile("Parallelism             %8d thread%s", global_threadcount,global_threadcount>1?"s":"");
 		output_profile("Total time              %8.1f seconds", elapsed_wall);
 		output_profile("  Core time             %8.1f seconds (%.1f%%)", (elapsed_wall-sync_time-delta_runtime),(elapsed_wall-sync_time-delta_runtime)/elapsed_wall*100);
-		output_profile("    Compiler            %8.1f seconds (%.1f%%)", (double)loader_time/CLOCKS_PER_SEC,((double)loader_time/CLOCKS_PER_SEC)/elapsed_wall*100);
-		output_profile("    Instances           %8.1f seconds (%.1f%%)", (double)instance_synctime/CLOCKS_PER_SEC,((double)instance_synctime/CLOCKS_PER_SEC)/elapsed_wall*100);
-		output_profile("    Random variables    %8.1f seconds (%.1f%%)", (double)randomvar_synctime/CLOCKS_PER_SEC,((double)randomvar_synctime/CLOCKS_PER_SEC)/elapsed_wall*100);
-		output_profile("    Schedules           %8.1f seconds (%.1f%%)", (double)schedule_synctime/CLOCKS_PER_SEC,((double)schedule_synctime/CLOCKS_PER_SEC)/elapsed_wall*100);
-		output_profile("    Loadshapes          %8.1f seconds (%.1f%%)", (double)loadshape_synctime/CLOCKS_PER_SEC,((double)loadshape_synctime/CLOCKS_PER_SEC)/elapsed_wall*100);
-		output_profile("    Enduses             %8.1f seconds (%.1f%%)", (double)enduse_synctime/CLOCKS_PER_SEC,((double)enduse_synctime/CLOCKS_PER_SEC)/elapsed_wall*100);
-		output_profile("    Transforms          %8.1f seconds (%.1f%%)", (double)transform_synctime/CLOCKS_PER_SEC,((double)transform_synctime/CLOCKS_PER_SEC)/elapsed_wall*100);
+		output_profile("    Compiler            %8.1f seconds (%.1f%%)", (double)loader_time/global_ms_per_second,((double)loader_time/global_ms_per_second)/elapsed_wall*100);
+		output_profile("    Instances           %8.1f seconds (%.1f%%)", (double)instance_synctime/global_ms_per_second,((double)instance_synctime/global_ms_per_second)/elapsed_wall*100);
+		output_profile("    Random variables    %8.1f seconds (%.1f%%)", (double)randomvar_synctime/global_ms_per_second,((double)randomvar_synctime/global_ms_per_second)/elapsed_wall*100);
+		output_profile("    Schedules           %8.1f seconds (%.1f%%)", (double)schedule_synctime/global_ms_per_second,((double)schedule_synctime/global_ms_per_second)/elapsed_wall*100);
+		output_profile("    Loadshapes          %8.1f seconds (%.1f%%)", (double)loadshape_synctime/global_ms_per_second,((double)loadshape_synctime/global_ms_per_second)/elapsed_wall*100);
+		output_profile("    Enduses             %8.1f seconds (%.1f%%)", (double)enduse_synctime/global_ms_per_second,((double)enduse_synctime/global_ms_per_second)/elapsed_wall*100);
+		output_profile("    Transforms          %8.1f seconds (%.1f%%)", (double)transform_synctime/global_ms_per_second,((double)transform_synctime/global_ms_per_second)/elapsed_wall*100);
 		output_profile("  Model time            %8.1f seconds/thread (%.1f%%)", sync_time,sync_time/elapsed_wall*100);
 		if ( dp->t_count>0 )
 			output_profile("  Deltamode time        %8.1f seconds/thread (%.1f%%)", delta_runtime,delta_runtime/elapsed_wall*100);
@@ -2741,16 +2741,16 @@ STATUS exec_start()
 			output_profile("\nDelta mode profiler results");
 			output_profile("===========================\n");
 			output_profile("Active modules          %s", dp->module_list);
-			output_profile("Initialization time     %8.1lf seconds", (double)(dp->t_init)/(double)CLOCKS_PER_SEC);
+			output_profile("Initialization time     %8.1lf seconds", (double)(dp->t_init)/(double)global_ms_per_second);
 			output_profile("Number of updates       %8" FMT_INT64 "u", dp->t_count);
 			output_profile("Average update timestep %8.4lf ms", (double)dp->t_delta/(double)dp->t_count/1e6);
 			output_profile("Minumum update timestep %8.4lf ms", dp->t_min/1e6);
 			output_profile("Maximum update timestep %8.4lf ms", dp->t_max/1e6);
 			output_profile("Total deltamode simtime %8.1lf s", delta_simtime/1000);
-			output_profile("Preupdate time          %8.1lf s (%.1f%%)", (double)(dp->t_preupdate)/(double)CLOCKS_PER_SEC, (double)(dp->t_preupdate)/total*100);
-			output_profile("Object update time      %8.1lf s (%.1f%%)", (double)(dp->t_update)/(double)CLOCKS_PER_SEC, (double)(dp->t_update)/total*100);
-			output_profile("Interupdate time        %8.1lf s (%.1f%%)", (double)(dp->t_interupdate)/(double)CLOCKS_PER_SEC, (double)(dp->t_interupdate)/total*100);
-			output_profile("Postupdate time         %8.1lf s (%.1f%%)", (double)(dp->t_postupdate)/(double)CLOCKS_PER_SEC, (double)(dp->t_postupdate)/total*100);
+			output_profile("Preupdate time          %8.1lf s (%.1f%%)", (double)(dp->t_preupdate)/(double)global_ms_per_second, (double)(dp->t_preupdate)/total*100);
+			output_profile("Object update time      %8.1lf s (%.1f%%)", (double)(dp->t_update)/(double)global_ms_per_second, (double)(dp->t_update)/total*100);
+			output_profile("Interupdate time        %8.1lf s (%.1f%%)", (double)(dp->t_interupdate)/(double)global_ms_per_second, (double)(dp->t_interupdate)/total*100);
+			output_profile("Postupdate time         %8.1lf s (%.1f%%)", (double)(dp->t_postupdate)/(double)global_ms_per_second, (double)(dp->t_postupdate)/total*100);
 			output_profile("Total deltamode runtime %8.1lf s (100%%)", delta_runtime);
 			output_profile("Simulation rate         %8.1lf x realtime", delta_simtime/delta_runtime/1000);
 		}

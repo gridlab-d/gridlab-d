@@ -338,6 +338,8 @@ GLOBAL char1024 global_wget_options INIT("maxsize:100MB;update:newer"); /**< max
 
 GLOBAL bool global_reinclude INIT(false); /**< allow the same include file to be included multiple times */
 
+GLOBAL double global_ms_per_second INIT(1e+6);
+
 GLOBAL std::filesystem::path global_gl_executable;
 GLOBAL std::filesystem::path global_gl_share;
 GLOBAL std::filesystem::path global_gl_include;
