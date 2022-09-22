@@ -230,12 +230,26 @@ jobs:
 
 
   create-release:
-#    if: github.reftype == 'tag'
+    if: github.ref_type == 'tag'
     runs-on: ubuntu-latest
     needs: [linux-build, win-build, mac-build]
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/download-artifact@v3
+      - name: Install Dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y jq
 
-      - run: ls -la
+      - uses: actions/checkout@v2
+
+      - uses: actions/download-artifact@v3
+        with:
+          path: ${{github.workspace}}/artifacts
+
+      - name: "Create Release and Upload Assets"
+        run: bash ../.github/scripts/upload_release_assets.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GLD_GITHUB_URL: ${{github.api_url}}/repos/${{ github.repository }}
+          GLD_TAG:  ${{ github.ref_name }}
+        working-directory: ${{github.workspace}}/artifacts
 
