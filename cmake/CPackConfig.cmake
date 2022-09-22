@@ -26,6 +26,7 @@ IF(WIN32 OR MSYS OR MINGW OR CYGWIN)
     set(CPACK_NSIS_MODIFY_PATH "OFF") # TODO: fix the path-too-long error this flag can cause
     set(CPACK_BINARY_ZIP "ON")
     set(CPACK_BINARY_NSIS "ON")
+    set(CPACK_NSIS_MODIFY_PATH "ON")
 #    set(CPACK_BINARY_WIX "ON")
     set(CPACK_CMAKE_GENERATOR "Ninja")
     set(CPACK_SOURCE_GENERATOR "ZIP")
