@@ -58,7 +58,7 @@ include(cmake/SetVersion.cmake)
 include(cmake/CheckDependencies.cmake)
 # Generate current build number
 include(cmake/BuildNumber.cmake)
-#include(cmake/SanitizePaths.cmake)
+include(cmake/SanitizePaths.cmake)
 
 option(GLD_USE_EIGEN "[NOT YET SUPPORTED] - Use Eigen package for LU Decomposition in Powerflow" OFF)
 option(GLD_USE_SUPERLU "Use SuperLU package for LU Decomposition in Powerflow" ON)
