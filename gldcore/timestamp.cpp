@@ -38,7 +38,7 @@
 #include "globals.h"
 #include "lock.h"
 
-#ifndef WIN32
+#ifndef _WIN32
 	#define _tzname tzname
 	#define _timezone timezone
 	#define _daylight daylight
@@ -723,7 +723,7 @@ char *tz_locale(char *country, char *province, char *city)
 	int len = sprintf(target,"%s/%s/%s",country,province,city);
 
 	if(find_file(TZFILE, nullptr, R_OK,filepath,sizeof(filepath)) == NULL){
-		throw_exception(const_cast<char *>("timezone specification file %s not found in GLPATH=%s: %s"), TZFILE, getenv("GLPATH"), strerror(errno));
+		throw_exception(const_cast<char *>("timezone specification file %s not found in GLPATH=%s: %s"), TZFILE, global_gl_path.c_str(), strerror(errno));
 		/* TROUBLESHOOT
 			The system could not locate the timezone file <code>tzinfo.txt</code>.
 			Check that the <code>etc</code> folder is included in the '''GLPATH''' environment variable and try again.
@@ -879,7 +879,7 @@ void load_tzspecs(char *tz){
 	strncpy(tzdst, tz_dst(current_tzname), sizeof(tzdst));
 
 	if(find_file(TZFILE, nullptr, R_OK,filepath,sizeof(filepath)) == NULL){
-		throw_exception(const_cast<char *>("timezone specification file %s not found in GLPATH=%s: %s"), TZFILE, getenv("GLPATH"), strerror(errno));
+		throw_exception(const_cast<char *>("timezone specification file %s not found in GLPATH=%s: %s"), TZFILE, global_gl_path.c_str(), strerror(errno));
 		/* TROUBLESHOOT
 			The system could not locate the timezone file <code>tzinfo.txt</code>.
 			Check that the <code>etc</code> folder is included in the '''GLPATH''' environment variable and try again.
@@ -978,23 +978,26 @@ void load_tzspecs(char *tz){
  **/
 char *timestamp_set_tz(char *tz_name)
 {
-	if (tz_name == NULL){
-		tz_name=getenv("TZ");
-	}
+	if (tz_name == nullptr){
+        auto env_tz = getenv("TZ");
+		tz_name = env_tz != nullptr ? env_tz : const_cast<char*>("UTC0");
+    }
 
-	if(tz_name == NULL)
+    // TODO: makes timezones work reliably
+	/*
+    if(tz_name == nullptr || strlen(tz_name) == 0)
 	{
 		static char guess[64];
 		static unsigned int tzlock=0;
 
 		if (strcmp(_tzname[0], "") == 0){
 			throw_exception(const_cast<char *>("timezone not identified"));
-			/* TROUBLESHOOT
+			*//* TROUBLESHOOT
 				An attempt to use timezones was made before the timezome has been specified.  Try adding or moving the
 				timezone spec to the top of the <code>clock</code> directive and try again.  Alternatively, you can set the '''TZ''' environment
 				variable.
 
-			 */
+			 *//*
 		}
 
 		wlock(&tzlock);
@@ -1009,6 +1012,7 @@ char *timestamp_set_tz(char *tz_name)
 			tz_name = guess;
 		wunlock(&tzlock);
 	}
+    */
 
 	load_tzspecs(tz_name);
 
