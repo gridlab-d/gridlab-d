@@ -29,11 +29,13 @@ extern "C" {
 
 
 #ifdef _WIN32
-#	define env_delim ";"
-#	define env_pathsep "\\"
+#define env_delim ";"
+#define env_delim_char ';'
+#define env_pathsep "\\"
 #else
-#	define env_delim ":"
-#	define env_pathsep "/"
+#define env_delim ":"
+#define env_delim_char ':'
+#define env_pathsep "/"
 #endif
 
 typedef enum {FAILED=false, SUCCESS=true} STATUS;
