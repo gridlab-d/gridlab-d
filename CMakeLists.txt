@@ -40,6 +40,7 @@ set(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION OFF) # This shouldn't be needed,
 
 option(CMAKE_VERBOSE_MAKEFILE "CMake outputs all build instructions" OFF)
 option(GLD_DO_CLEANUP "Automatically removes files from old GridLAB-D build processes" OFF)
+option(GLD_CI_BUILD "Build is being performed by a CI platform" OFF)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
@@ -133,6 +134,7 @@ if (WIN32 OR MSYS OR MINGW OR CYGWIN)
 
     set(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 ${DL_NAME} m)
     set(FOUND_WINDOWS yes CACHE INTERNAL "Tell script generator we're Windows")
+    add_compile_options(-static-libgcc -static-libstdc++ -static)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++ -static")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++ -static")
 elseif (APPLE)
@@ -152,8 +154,6 @@ set(GENFILE_WARNING
         CACHE INTERNAL
         "Warn user that gridlabd.sh is a generated file."
         )
-
-configure_file(cmake/gridlabd.sh.in ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.sh @ONLY)
 
 find_program(
         GLD_CLANG_TIDY_EXE
@@ -342,6 +342,11 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/gldcore/solvers)
 add_subdirectory(${CMAKE_SOURCE_DIR}/gldcore/link/engine)
 add_subdirectory(gldcore)
 
+get_target_property(GLD_COMPILE_OPTIONS gridlabd COMPILE_OPTIONS)
+string(JOIN " " GLD_COMPILE_OPTIONS ${GLD_COMPILE_OPTIONS})
+configure_file(cmake/gridlabd.sh.in ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.sh @ONLY)
+configure_file(cmake/gridlabd.bat.in ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.bat @ONLY)
+
 set(GLD_BINARIES gridlabd)
 set(GLD_LIBS
         assert
@@ -374,6 +379,7 @@ mark_as_advanced(FORCE
         GLD_MODULES
         HEADER_FILE_NAMES
         GLD_SHARE
+        GLD_CI_BUILD
         )
 
 
@@ -382,7 +388,9 @@ set(FILE_PERMISSIONS PERMISSIONS
         GROUP_EXECUTE GROUP_READ
         WORLD_EXECUTE WORLD_READ
         )
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.sh
+install(FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.sh
+        ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.bat
         ${FILE_PERMISSIONS}
         DESTINATION bin
         COMPONENT Runtime

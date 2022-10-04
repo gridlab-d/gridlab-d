@@ -1,0 +1,19 @@
+@echo off
+
+REM @GENFILE_WARNING@
+
+REM local variables
+SETLOCAL
+
+set CXXFLAGS="@GLD_COMPILE_OPTIONS@"
+
+IF "%1"=="" GOTO NO_ARGS
+
+gridlabd.exe %*
+pause
+goto :eof
+
+:NO_ARGS
+    REM run a command window
+    start "GridLAB-D"
+    goto :eof
