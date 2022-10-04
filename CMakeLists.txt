@@ -125,7 +125,7 @@ if (WIN32 OR MSYS OR MINGW OR CYGWIN)
     FetchContent_Declare(
             dlfcn-win32
             GIT_REPOSITORY https://github.com/dlfcn-win32/dlfcn-win32.git
-            GIT_TAG        v1.3.1
+            GIT_TAG v1.3.1
     )
     FetchContent_MakeAvailable(dlfcn-win32)
     include_directories(${dlfcn-win32_SOURCE_DIR}/src)
@@ -307,14 +307,14 @@ if (GLD_USE_SUPERLU)
     #    set(SUPERLU_LIB superlu)
 endif ()
 
-    option(JSONCPP_WITH_TESTS "Build the JSON CPP test suite" OFF)
-    set(BUILD_SHARED_CACHE ${BUILD_SHARED_LIBS} CACHE INTERNAL "Cache the shared library state")
-    SET(BUILD_SHARED_LIBS OFF)
-    add_subdirectory(third_party/jsoncpp_lib EXCLUDE_FROM_ALL)
-    get_target_property(JSON_INC_PATH jsoncpp_lib INTERFACE_INCLUDE_DIRECTORIES)
-    include_directories(${JSON_INC_PATH})
-    set(BUILD_SHARED_LIBS ${BUILD_SHARED_CACHE})
-    set(JSONCPP_LIB jsoncpp_lib)
+option(JSONCPP_WITH_TESTS "Build the JSON CPP test suite" OFF)
+set(BUILD_SHARED_CACHE ${BUILD_SHARED_LIBS} CACHE INTERNAL "Cache the shared library state")
+SET(BUILD_SHARED_LIBS OFF)
+add_subdirectory(third_party/jsoncpp_lib EXCLUDE_FROM_ALL)
+get_target_property(JSON_INC_PATH jsoncpp_lib INTERFACE_INCLUDE_DIRECTORIES)
+include_directories(${JSON_INC_PATH})
+set(BUILD_SHARED_LIBS ${BUILD_SHARED_CACHE})
+set(JSONCPP_LIB jsoncpp_lib)
 
 if (GLD_USE_EIGEN)
     message(FATAL_ERROR "Eigen implementation is not complete, and should not be used at this time.")
@@ -345,7 +345,9 @@ add_subdirectory(gldcore)
 get_target_property(GLD_COMPILE_OPTIONS gridlabd COMPILE_OPTIONS)
 string(JOIN " " GLD_COMPILE_OPTIONS ${GLD_COMPILE_OPTIONS})
 configure_file(cmake/gridlabd.sh.in ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.sh @ONLY)
-configure_file(cmake/gridlabd.bat.in ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.bat @ONLY)
+if (WIN32 OR MSYS OR MINGW OR CYGWIN)
+    configure_file(cmake/gridlabd.bat.in ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.bat @ONLY)
+endif ()
 
 set(GLD_BINARIES gridlabd)
 set(GLD_LIBS
@@ -418,7 +420,7 @@ install(TARGETS
         ${FILE_PERMISSIONS}
         LIBRARY DESTINATION lib
         RUNTIME DESTINATION bin
-#        BUNDLE DESTINATION bundle
+        #        BUNDLE DESTINATION bundle
         COMPONENT Runtime
         ARCHIVE DESTINATION lib/static
         COMPONENT Development
