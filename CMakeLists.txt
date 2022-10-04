@@ -392,11 +392,18 @@ set(FILE_PERMISSIONS PERMISSIONS
         )
 install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.sh
-        ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.bat
         ${FILE_PERMISSIONS}
         DESTINATION bin
         COMPONENT Runtime
         )
+if (WIN32 OR MSYS OR MINGW OR CYGWIN)
+    install(FILES
+            ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.bat
+            ${FILE_PERMISSIONS}
+            DESTINATION bin
+            COMPONENT Runtime
+            )
+endif ()
 install(FILES ${HEADER_FILE_NAMES}
         ${FILE_PERMISSIONS}
         DESTINATION include
