@@ -484,7 +484,7 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 #endif
 		dir,validate_cmdargs, name);
 	dt = exec_clock() - dt;
-	double t = (double)dt/(double)CLOCKS_PER_SEC;
+	double t = (double)dt/(double)global_ms_per_second;
 	if ( elapsed_time!=NULL ) *elapsed_time = t;
 //#ifdef _WIN32
 // 	if ( code>256 )
@@ -856,7 +856,7 @@ int validate(int argc, char *argv[])
 	}
 	delete [] pid;
 	final.print();
-	double dt = (double)exec_clock()/(double)CLOCKS_PER_SEC;
+	double dt = (double)exec_clock()/global_ms_per_second;
 	output_message("Total validation elapsed time: %.1f seconds", dt);
 	if ( report_fp ) output_message("See '%s/%s' for details", global_workdir, report_file);
 	if ( final.get_nerrors()==0 )

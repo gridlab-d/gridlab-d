@@ -2547,7 +2547,7 @@ public:
 	{
 		char path[1024];
 		errno = 0;
-		if ( callback->file.find_file(lib,NULL,X_OK,path,sizeof(path))!=NULL )
+		if ( callback->file.find_file(lib,NULL,X_OK|R_OK,path,sizeof(path))!=NULL )
 		{
 			errno = 0;
 			void* handle = DLLOAD(path);

@@ -1593,9 +1593,9 @@ void module_profiles(void)
 			for ( r=0 ; r<n_ranks ; r++ )
 			{
 				struct s_rankdata *rank = &rankdata[r];
-				rank->total = rank->n_presync==0 ? 0 : (double)rank->t_presync/(double)CLOCKS_PER_SEC/(double)rank->n_presync * (double)( rank->n_presync/n + rank->n_presync%n );
-				rank->total += rank->n_sync==0 ? 0 : (double)rank->t_sync/(double)CLOCKS_PER_SEC/(double)rank->n_sync * (double)( rank->n_sync/n + rank->n_sync%n );
-				rank->total += rank->n_postsync==0 ? 0 : (double)rank->t_postsync/(double)CLOCKS_PER_SEC/(double)rank->n_postsync * (double)( rank->n_postsync/n + rank->n_postsync%n );
+				rank->total = rank->n_presync==0 ? 0 : (double)rank->t_presync/(double)global_ms_per_second/(double)rank->n_presync * (double)( rank->n_presync/n + rank->n_presync%n );
+				rank->total += rank->n_sync==0 ? 0 : (double)rank->t_sync/(double)global_ms_per_second/(double)rank->n_sync * (double)( rank->n_sync/n + rank->n_sync%n );
+				rank->total += rank->n_postsync==0 ? 0 : (double)rank->t_postsync/(double)global_ms_per_second/(double)rank->n_postsync * (double)( rank->n_postsync/n + rank->n_postsync%n );
 				total += rank->total;
 			}
 			if ( n==1 ) 

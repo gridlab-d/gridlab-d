@@ -366,7 +366,7 @@ bool glxlink::set_target(char *name)
 	char libname[1024];
 	char path[1024];
 	sprintf(libname,PREFIX "glx%s" DLEXT,name);
-	if ( find_file(libname,nullptr,X_OK,path,sizeof(path))!=NULL )
+	if ( find_file(libname,nullptr,X_OK|R_OK,path,sizeof(path))!=NULL )
 	{
 		// load library
 		handle = DLLOAD(path);

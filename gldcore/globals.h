@@ -29,11 +29,13 @@ extern "C" {
 
 
 #ifdef _WIN32
-#	define env_delim ";"
-#	define env_pathsep "\\"
+#define env_delim ";"
+#define env_delim_char ';'
+#define env_pathsep "\\"
 #else
-#	define env_delim ":"
-#	define env_pathsep "/"
+#define env_delim ":"
+#define env_delim_char ':'
+#define env_pathsep "/"
 #endif
 
 typedef enum {FAILED=false, SUCCESS=true} STATUS;
@@ -337,6 +339,8 @@ GLOBAL char1024 global_svnroot INIT("http://gridlab-d.svn.sourceforge.net/svnroo
 GLOBAL char1024 global_wget_options INIT("maxsize:100MB;update:newer"); /**< maximum size of wget request */
 
 GLOBAL bool global_reinclude INIT(false); /**< allow the same include file to be included multiple times */
+
+GLOBAL double global_ms_per_second INIT(1e+6);
 
 GLOBAL std::filesystem::path global_gl_executable;
 GLOBAL std::filesystem::path global_gl_share;

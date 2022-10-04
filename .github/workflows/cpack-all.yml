@@ -64,7 +64,9 @@ jobs:
       - name: Build GridLAB-D
         run: |
           threads=`nproc`
-          cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS
+          cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=~/.temp/GridLAB-D \
+          -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS \
+          -DGLD_CI_BUILD=ON
           cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} --parallel $threads
 
       - name: Package
@@ -128,7 +130,8 @@ jobs:
         working-directory: ${{github.workspace}}/helics-build
         run: |
           threads=`nproc`
-          cmake -G "Ninja" -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=../.cache/HELICS \
+          workspace="$(cygpath -u '${{github.workspace}}')"
+          cmake -G "Ninja" -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX="$workspace/.cache/HELICS" \
            -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DHELICS_ZMQ_SUBPROJECT=ON
           cmake --build ./build --config ${{env.BUILD_TYPE}} --parallel $threads
           cmake --install ./build
@@ -143,7 +146,10 @@ jobs:
         working-directory: ${{github.workspace}}/gridlab-build
         run: |
           threads=`nproc`
-          cmake -G "Ninja" -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=../.cache/HELICS -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++
+          workspace="$(cygpath -u '${{github.workspace}}')"
+          cmake -G "Ninja" -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX="$workspace/.temp/GridLAB-D" \
+          -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR="$workspace/.cache/HELICS" -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ \
+          -DGLD_CI_BUILD=ON
           cmake --build ./build --config ${{env.BUILD_TYPE}} --parallel $threads
 
       - name: Package
@@ -211,7 +217,9 @@ jobs:
       - name: Build GridLAB-D
         run: |
           threads=`sysctl -n hw.logicalcpu`
-          cmake -B ${{github.workspace}}/build-${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}}
+          cmake -B ${{github.workspace}}/build-${{matrix.arch}} -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=~/.temp/GridLAB-D \
+          -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR=~/.cache/HELICS -DCMAKE_APPLE_SILICON_PROCESSOR=${{matrix.arch}} \
+          -DGLD_CI_BUILD=ON
           cmake --build ${{github.workspace}}/build-${{matrix.arch}} --config ${{env.BUILD_TYPE}} --parallel $threads
 
       - name: Package
@@ -225,3 +233,29 @@ jobs:
           path: |
             ${{github.workspace}}/build-${{matrix.arch}}/packages
             !${{github.workspace}}/build-${{matrix.arch}}/packages/_CPack_Packages
+
+
+  create-release:
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    needs: [linux-build, win-build, mac-build]
+    steps:
+      - name: Install Dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y jq
+
+      - uses: actions/checkout@v2
+
+      - uses: actions/download-artifact@v3
+        with:
+          path: ${{github.workspace}}/artifacts
+
+      - name: "Create Release and Upload Assets"
+        run: bash ../.github/scripts/upload_release_assets.sh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GLD_GITHUB_URL: ${{github.api_url}}/repos/${{ github.repository }}
+          GLD_TAG:  ${{ github.ref_name }}
+        working-directory: ${{github.workspace}}/artifacts
+

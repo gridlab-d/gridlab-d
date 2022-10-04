@@ -36,12 +36,11 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(GLD_PACKAGE gridlabd)
-set(CMAKE_INSTALL_BINDIR "${CMAKE_INSTALL_PREFIX}/bin" CACHE PATH "" FORCE)
-set(CMAKE_INSTALL_LIBDIR "${CMAKE_INSTALL_PREFIX}/lib/${GLD_PACKAGE}" CACHE PATH "" FORCE)
-set(CMAKE_INSTALL_DATADIR "${CMAKE_INSTALL_PREFIX}/share/${GLD_PACKAGE}" CACHE PATH "" FORCE)
+set(CMAKE_ERROR_ON_ABSOLUTE_INSTALL_DESTINATION OFF) # This shouldn't be needed, but seems to fix issues
 
 option(CMAKE_VERBOSE_MAKEFILE "CMake outputs all build instructions" OFF)
 option(GLD_DO_CLEANUP "Automatically removes files from old GridLAB-D build processes" OFF)
+option(GLD_CI_BUILD "Build is being performed by a CI platform" OFF)
 
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 
@@ -74,9 +73,6 @@ set(GLD_FNCS_DIR "" CACHE PATH "Search path for FNCS library")
 set(GLD_ZeroMQ_DIR "" CACHE PATH "Search path for ZeroMQ library (FNCS dependency)")
 set(GLD_CZMQ_DIR "" CACHE PATH "Search path for CZMQ library (FNCS dependency)")
 
-# Tell CMake to place libraries in build directory
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/lib/static)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON) # TODO: only required for SuperLU_MT support with Clang. Future removal recommended.
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads REQUIRED)
@@ -129,7 +125,7 @@ if (WIN32 OR MSYS OR MINGW OR CYGWIN)
     FetchContent_Declare(
             dlfcn-win32
             GIT_REPOSITORY https://github.com/dlfcn-win32/dlfcn-win32.git
-            GIT_TAG        v1.3.1
+            GIT_TAG v1.3.1
     )
     FetchContent_MakeAvailable(dlfcn-win32)
     include_directories(${dlfcn-win32_SOURCE_DIR}/src)
@@ -138,7 +134,9 @@ if (WIN32 OR MSYS OR MINGW OR CYGWIN)
 
     set(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 ${DL_NAME} m)
     set(FOUND_WINDOWS yes CACHE INTERNAL "Tell script generator we're Windows")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++")
+    add_compile_options(-static-libgcc -static-libstdc++ -static)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++ -static")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++ -static")
 elseif (APPLE)
     set(OS_SPECIFIC_LIBRARIES ${CMAKE_DL_LIBS})
     set(FOUND_MACOS yes CACHE INTERNAL "Tell script generator we're MacOS")
@@ -156,8 +154,6 @@ set(GENFILE_WARNING
         CACHE INTERNAL
         "Warn user that gridlabd.sh is a generated file."
         )
-
-configure_file(cmake/gridlabd.sh.in ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.sh @ONLY)
 
 find_program(
         GLD_CLANG_TIDY_EXE
@@ -311,14 +307,14 @@ if (GLD_USE_SUPERLU)
     #    set(SUPERLU_LIB superlu)
 endif ()
 
-    option(JSONCPP_WITH_TESTS "Build the JSON CPP test suite" OFF)
-    set(BUILD_SHARED_CACHE ${BUILD_SHARED_LIBS} CACHE INTERNAL "Cache the shared library state")
-    SET(BUILD_SHARED_LIBS OFF)
-    add_subdirectory(third_party/jsoncpp_lib EXCLUDE_FROM_ALL)
-    get_target_property(JSON_INC_PATH jsoncpp_lib INTERFACE_INCLUDE_DIRECTORIES)
-    include_directories(${JSON_INC_PATH})
-    set(BUILD_SHARED_LIBS ${BUILD_SHARED_CACHE})
-    set(JSONCPP_LIB jsoncpp_lib)
+option(JSONCPP_WITH_TESTS "Build the JSON CPP test suite" OFF)
+set(BUILD_SHARED_CACHE ${BUILD_SHARED_LIBS} CACHE INTERNAL "Cache the shared library state")
+SET(BUILD_SHARED_LIBS OFF)
+add_subdirectory(third_party/jsoncpp_lib EXCLUDE_FROM_ALL)
+get_target_property(JSON_INC_PATH jsoncpp_lib INTERFACE_INCLUDE_DIRECTORIES)
+include_directories(${JSON_INC_PATH})
+set(BUILD_SHARED_LIBS ${BUILD_SHARED_CACHE})
+set(JSONCPP_LIB jsoncpp_lib)
 
 if (GLD_USE_EIGEN)
     message(FATAL_ERROR "Eigen implementation is not complete, and should not be used at this time.")
@@ -345,6 +341,13 @@ add_subdirectory(tape_plot)
 add_subdirectory(${CMAKE_SOURCE_DIR}/gldcore/solvers)
 add_subdirectory(${CMAKE_SOURCE_DIR}/gldcore/link/engine)
 add_subdirectory(gldcore)
+
+get_target_property(GLD_COMPILE_OPTIONS gridlabd COMPILE_OPTIONS)
+string(JOIN " " GLD_COMPILE_OPTIONS ${GLD_COMPILE_OPTIONS})
+configure_file(cmake/gridlabd.sh.in ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.sh @ONLY)
+if (WIN32 OR MSYS OR MINGW OR CYGWIN)
+    configure_file(cmake/gridlabd.bat.in ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.bat @ONLY)
+endif ()
 
 set(GLD_BINARIES gridlabd)
 set(GLD_LIBS
@@ -378,6 +381,7 @@ mark_as_advanced(FORCE
         GLD_MODULES
         HEADER_FILE_NAMES
         GLD_SHARE
+        GLD_CI_BUILD
         )
 
 
@@ -386,11 +390,20 @@ set(FILE_PERMISSIONS PERMISSIONS
         GROUP_EXECUTE GROUP_READ
         WORLD_EXECUTE WORLD_READ
         )
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.sh
+install(FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.sh
         ${FILE_PERMISSIONS}
         DESTINATION bin
         COMPONENT Runtime
         )
+if (WIN32 OR MSYS OR MINGW OR CYGWIN)
+    install(FILES
+            ${CMAKE_CURRENT_BINARY_DIR}/script/${GLD_PACKAGE}.bat
+            ${FILE_PERMISSIONS}
+            DESTINATION bin
+            COMPONENT Runtime
+            )
+endif ()
 install(FILES ${HEADER_FILE_NAMES}
         ${FILE_PERMISSIONS}
         DESTINATION include
@@ -414,7 +427,7 @@ install(TARGETS
         ${FILE_PERMISSIONS}
         LIBRARY DESTINATION lib
         RUNTIME DESTINATION bin
-#        BUNDLE DESTINATION bundle
+        #        BUNDLE DESTINATION bundle
         COMPONENT Runtime
         ARCHIVE DESTINATION lib/static
         COMPONENT Development

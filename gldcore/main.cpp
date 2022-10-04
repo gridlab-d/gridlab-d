@@ -16,8 +16,10 @@
 #include "globals.h"
 
 #ifdef _WIN32
+
 #include <direct.h>
 #include <process.h>
+
 #else
 
 #include <unistd.h>
@@ -51,33 +53,55 @@ void pause_at_exit(void)
 }
 #endif
 
+namespace fs = std::filesystem;
+
 void delete_pidfile(void) {
     unlink(global_pidfile);
 }
 
-std::filesystem::path
+std::vector<std::string> split_path(const std::string& path, char sep){
+    std::vector<std::string> tokens;
+    std::size_t start = 0, end;
+    while ((end = path.find(sep, start)) != std::string::npos) {
+        tokens.push_back(path.substr(start, end - start));
+        start = end + 1;
+    }
+    tokens.push_back(path.substr(start));
+    return tokens;
+}
+
+fs::path
 findExecutable(const std::string &name, const std::string &execName, const std::string &pathString) {
-    std::filesystem::path execPath(execName);
+    fs::path execPath(execName);
     if (execPath.is_absolute()) {
         return execPath;
     } else if (execPath.is_relative() && execName.front() == '.') {
-        return std::filesystem::absolute(execPath);
+        return fs::absolute(execPath);
     } else {
-        auto sys_path = std::string(std::getenv("PATH"));
-        std::string delimiter = env_delim;
+        auto sys_path = pathString;
         size_t pos;
         std::string path_token;
-        while ((pos = sys_path.find(delimiter)) != std::string::npos) {
-            path_token = sys_path.substr(0, pos);
-            sys_path.erase(0, pos + delimiter.length());
 
-            auto gldpath = std::filesystem::path(path_token) / name;
-            if (std::filesystem::exists(gldpath)) {
+        auto check_exists = [](fs::path gldpath, fs::path gldpath_exe) {
+            if (fs::exists(gldpath)) {
                 return gldpath;
+            } else if (fs::exists(gldpath_exe)) {
+                return gldpath_exe;
+            }
+            return fs::path();
+        };
+
+        auto splitPath = split_path(sys_path, env_delim_char);
+
+        for(const auto& path : splitPath){
+            auto gldpath = fs::path(path) / name;
+            auto gldpath_exe = fs::path(path) / (name + ".exe");
+            auto check_path = check_exists(gldpath, gldpath_exe);
+            if (!check_path.empty()) {
+                return check_path;
             }
         }
     }
-    std::cout << "\n" << execName << "\n" << getenv("PATH") << std::endl;
     throw std::runtime_error("Unable to determine GridLAB-D executable path");
 }
 

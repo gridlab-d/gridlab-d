@@ -242,7 +242,7 @@ static bool run_job(char *file, double *elapsed_time=NULL)
 #endif
 		job_cmdargs, name);
 	dt = exec_clock() - dt;
-	double t = (double)dt/(double)CLOCKS_PER_SEC;
+	double t = (double)dt/(double)global_ms_per_second;
 	if ( elapsed_time!=NULL ) *elapsed_time = t;
 	if ( code!=0 )
 	{
@@ -367,7 +367,7 @@ extern "C" int job(int argc, char *argv[])
 	}
 	delete [] pid;
 
-	double dt = (double)exec_clock()/(double)CLOCKS_PER_SEC;
+	double dt = (double)exec_clock()/(double)global_ms_per_second;
 	output_message("Total job elapsed time: %.1f seconds", dt);
 	if ( final_result==0 )
 		exec_setexitcode(XC_SUCCESS);
