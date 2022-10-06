@@ -44,6 +44,7 @@
 #include "jsondump.h"
 #include "performance_motor.h"
 #include "sync_check.h"
+#include "b2b_converter.h"
 
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {

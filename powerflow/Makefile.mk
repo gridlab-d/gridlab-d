@@ -16,6 +16,8 @@ powerflow_powerflow_la_LIBADD += $(PTHREAD_CFLAGS)
 powerflow_powerflow_la_LIBADD += $(PTHREAD_LIBS)
 
 powerflow_powerflow_la_SOURCES =
+powerflow_powerflow_la_SOURCES += powerflow/b2b_converter.cpp
+powerflow_powerflow_la_SOURCES += powerflow/b2b_converter.h
 powerflow_powerflow_la_SOURCES += powerflow/billdump.cpp
 powerflow_powerflow_la_SOURCES += powerflow/billdump.h
 powerflow_powerflow_la_SOURCES += powerflow/capacitor.cpp
