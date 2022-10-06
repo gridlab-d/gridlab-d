@@ -206,7 +206,7 @@ void *instance_runproc(void *ptr)
 		case CI_MMAP:
 #ifdef _WIN32
 			/* run new instance */
-			sprintf(cmd,"%s/gridlabd %s %s --slave %s:%" FMT_INT64 "x %s &", global_execdir, global_verbose_mode?"--verbose":"", global_debug_output?"--debug":"", global_hostname,inst->cacheid, inst->model);
+			sprintf(cmd,"\"%s/gridlabd.exe\" %s %s --slave %s:%" FMT_INT64 "x %s &", global_execdir, global_verbose_mode?"--verbose":"", global_debug_output?"--debug":"", global_hostname,inst->cacheid, inst->model);
 			output_verbose("starting new instance with command '%s'", cmd.get_string());
 			rc = system(cmd);
 			break;

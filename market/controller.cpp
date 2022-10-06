@@ -188,7 +188,7 @@ int controller::create(){
 	use_override = OU_OFF;
 	period = 0;
 	period2 = 0;
-	use_predictive_bidding = FALSE;
+	use_predictive_bidding = false;
 	controller_bid.bid_id = -1;
 	controller_bid.market_id = -1;
 	controller_bid.price = 0;
@@ -587,7 +587,7 @@ int controller::init(OBJECT *parent){
 	if(demand[0] == 0 && (control_mode == CN_RAMP || control_mode == CN_DOUBLE_PRICE)){
 		GL_THROW("controller: %i, demand property not specified", hdr->id);
 	}
-	if(deadband[0] == 0 && (use_predictive_bidding == TRUE && (control_mode == CN_RAMP || control_mode == CN_DOUBLE_PRICE))){
+	if(deadband[0] == 0 && (use_predictive_bidding == true && (control_mode == CN_RAMP || control_mode == CN_DOUBLE_PRICE))){
 		GL_THROW("controller: %i, deadband property not specified", hdr->id);
 	}
 	
@@ -607,7 +607,7 @@ int controller::init(OBJECT *parent){
 		GL_THROW("controller: %i, demand property not specified", hdr->id);
 	}
 
-	if(deadband[0] == 0 && use_predictive_bidding == TRUE && control_mode == CN_DEV_LEVEL){
+	if(deadband[0] == 0 && use_predictive_bidding == true && control_mode == CN_DEV_LEVEL){
 		GL_THROW("controller: %i, deadband property not specified", hdr->id);
 	}
 
@@ -652,7 +652,7 @@ int controller::init(OBJECT *parent){
 		if(fetch_property(&pLoad, (char *)(&load), parent) == 0) {
 			return 0;
 		}
-		if(use_predictive_bidding == TRUE){
+		if(use_predictive_bidding == true){
 			if(fetch_property(&pDeadband, (char *)(&deadband), parent) == 0) {
 				return 0;
 			}
@@ -1066,7 +1066,7 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 			clear_price = clrP;
 			controller_bid.rebid = false;
 
-			if(use_predictive_bidding == TRUE){
+			if(use_predictive_bidding == true){
 				if((dir > 0 && clear_price < last_p) || (dir < 0 && clear_price > last_p)){
 					shift_direction = -1;
 				} else if((dir > 0 && clear_price >= last_p) || (dir < 0 && clear_price <= last_p)){
@@ -1226,7 +1226,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		powerstate_prop.getp(ps);
 	if((t1 < next_run) && (marketId == lastmkt_id)){
 		if(t1 <= next_run - bid_delay){
-			if(use_predictive_bidding == TRUE && (((control_mode == CN_RAMP || control_mode == CN_DOUBLE_PRICE) && last_setpoint != setpoint0) || (control_mode == CN_DOUBLE_RAMP && (last_heating_setpoint != heating_setpoint0 || last_cooling_setpoint != cooling_setpoint0)))) {
+			if(use_predictive_bidding == true && (((control_mode == CN_RAMP || control_mode == CN_DOUBLE_PRICE) && last_setpoint != setpoint0) || (control_mode == CN_DOUBLE_RAMP && (last_heating_setpoint != heating_setpoint0 || last_cooling_setpoint != cooling_setpoint0)))) {
 				; // do nothing
 			} else if(use_override == OU_ON && t1 == next_run - bid_delay){
 				;
@@ -1255,7 +1255,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 
 		if((t1 < next_run) && (market2Id == lastmkt_id2)){
 			if(t1 <= next_run - bid_delay2){
-				if(use_predictive_bidding == TRUE && (control_mode == CN_DEV_LEVEL && last_setpoint != setpoint0)) {
+				if(use_predictive_bidding == true && (control_mode == CN_DEV_LEVEL && last_setpoint != setpoint0)) {
 					;
 				} else {// check to see if we have changed states
 					if(!powerstate_prop.is_valid()){
@@ -1270,7 +1270,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		}
 	}
 	
-	if(use_predictive_bidding == TRUE){
+	if(use_predictive_bidding == true){
 		deadband_shift = dBand * 0.5;
 	}
 
@@ -1285,7 +1285,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			clear_price = clrP;
 			controller_bid.rebid = false;
 
-			if(use_predictive_bidding == TRUE){
+			if(use_predictive_bidding == true){
 				if((dir > 0 && clear_price < last_p) || (dir < 0 && clear_price > last_p)){
 					shift_direction = -1;
 				} else if((dir > 0 && clear_price >= last_p) || (dir < 0 && clear_price <= last_p)){
@@ -1327,7 +1327,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		}
 
 		if(dir > 0){
-			if(use_predictive_bidding == TRUE){
+			if(use_predictive_bidding == true){
 				if ( ps == *PS_OFF && monitor > (max - deadband_shift)){
 					bid = pCap;
 				}
@@ -1351,7 +1351,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				}
 			}
 		} else if(dir < 0){
-			if(use_predictive_bidding == TRUE){
+			if(use_predictive_bidding == true){
 				if ( ps==*PS_OFF && monitor < (min + deadband_shift) )
 				{
 					bid = pCap;
@@ -1379,7 +1379,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				}
 			}
 		} else if(dir == 0){
-			if(use_predictive_bidding == TRUE){
+			if(use_predictive_bidding == true){
 				if(direction == 0.0) {
 					gl_error("the variable direction did not get set correctly.");
 				}
@@ -1577,7 +1577,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				engaged = 0;
 			}
 
-			if(use_predictive_bidding == TRUE){
+			if(use_predictive_bidding == true){
 				if((dir > 0 && clear_price < last_p) || (dir < 0 && clear_price > last_p)){
 					shift_direction = -1;
 				} else if((dir > 0 && clear_price >= last_p) || (dir < 0 && clear_price <= last_p)){
@@ -1589,7 +1589,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		}
 
 		if(dir > 0){
-			if(use_predictive_bidding == TRUE){
+			if(use_predictive_bidding == true){
 				if(ps == *PS_OFF && monitor > (max - deadband_shift)){
 					bid = pCap;
 				} else if(ps != *PS_OFF && monitor < (min + deadband_shift)){
@@ -1610,7 +1610,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				}
 			}
 		} else if(dir < 0){
-			if(use_predictive_bidding == TRUE){
+			if(use_predictive_bidding == true){
 				if(ps == *PS_OFF && monitor < (min + deadband_shift)){
 					bid = pCap;
 				} else if(ps != *PS_OFF && monitor > (max - deadband_shift)){
@@ -1631,7 +1631,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				}
 			}
 		} else if(dir == 0){
-			if(use_predictive_bidding == TRUE){
+			if(use_predictive_bidding == true){
 				if(direction == 0.0) {
 					gl_error("the variable direction did not get set correctly.");
 				} else if((monitor > max + deadband_shift || (ps != *PS_OFF && monitor > min - deadband_shift)) && direction > 0){
@@ -1836,7 +1836,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 						break;
 				}
 			}
-			if(use_predictive_bidding == TRUE){
+			if(use_predictive_bidding == true){
 				if((thermostat_mode == TM_COOL && clear_price < last_p) || (thermostat_mode == TM_HEAT && clear_price > last_p)){
 					shift_direction = -1;
 				} else if((thermostat_mode == TM_COOL && clear_price >= last_p) || (thermostat_mode == TM_HEAT && clear_price <= last_p)){
@@ -2091,7 +2091,7 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 			monitor = (doubleTemp[0]+doubleTemp[1])/2;
 			
 			if(dir > 0){
-				if(use_predictive_bidding == TRUE){
+				if(use_predictive_bidding == true){
 					if ( ps == *PS_OFF && monitor > (max - deadband_shift)){
 						bid = pCap;
 					}
@@ -2115,7 +2115,7 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 					}
 				}
 			} else if(dir < 0){
-				if(use_predictive_bidding == TRUE){
+				if(use_predictive_bidding == true){
 					if ( ps==*PS_OFF && monitor < (min + deadband_shift) )
 					{
 						bid = pCap;
@@ -2143,7 +2143,7 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 					}
 				}
 			} else if(dir == 0){
-				if(use_predictive_bidding == TRUE){
+				if(use_predictive_bidding == true){
 					if(direction == 0.0) {
 						gl_error("the variable direction did not get set correctly.");
 					}

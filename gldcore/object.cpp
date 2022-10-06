@@ -1305,7 +1305,7 @@ static unsigned int _set_rankx(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 }
 static unsigned int set_rank(OBJECT *obj, OBJECTRANK rank, OBJECT *first)
 {
-	return global_bigranks==TRUE ? _set_rankx(obj,rank,NULL) : _set_rank(obj,rank,NULL);
+	return global_bigranks==true ? _set_rankx(obj,rank,NULL) : _set_rank(obj,rank,NULL);
 }
 
 /** Set the rank of an object but forcing it's parent
@@ -1419,7 +1419,7 @@ TIMESTAMP _object_sync(OBJECT *obj, /**< the object to synchronize */
 					  PASSCONFIG pass) /**< the pass configuration */
 {
 	CLASS *oclass = obj->oclass;
-	register TIMESTAMP plc_time=TS_NEVER, sync_time;
+	TIMESTAMP plc_time=TS_NEVER, sync_time;
 	TIMESTAMP effective_valid_to = std::min(obj->clock+global_skipsafe,obj->valid_to);
 	int autolock = obj->oclass->passconfig&PC_AUTOLOCK;
 

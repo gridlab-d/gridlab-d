@@ -1,8 +1,7 @@
-cmake_minimum_required(VERSION 3.6)
-project(gridlabd)
+SET(GLD_MODULE_NAME gridlabd)
 
 # Load and link C/C++ files for the executeable
-add_executable(${PROJECT_NAME}
+set(SOURCE_LIST
         gridlabd.h
         globals.cpp
         globals.h
@@ -130,27 +129,39 @@ add_executable(${PROJECT_NAME}
         #        xcore.h
         )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE ${GL_MODULES})
-target_link_libraries(${PROJECT_NAME} PRIVATE ${CMAKE_THREAD_LIBS_INIT})
+#if(NOT APPLE)
+add_executable(${GLD_MODULE_NAME} ${SOURCE_LIST})
+#else()
+#    add_executable(${GLD_MODULE_NAME} MACOSX_BUNDLE ${SOURCE_LIST})
+#    set_target_properties(${GLD_MODULE_NAME} PROPERTIES
+#            BUNDLE True
+#            MACOSX_BUNDLE_GUI_IDENTIFIER gov.pnnl.gridlabd
+#            MACOSX_BUNDLE_NAME ${GLD_MODULE_NAME}
+#            )
+#endif()
+
+target_link_libraries(${GLD_MODULE_NAME} PUBLIC ${GL_MODULES})
+target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${CMAKE_THREAD_LIBS_INIT})
 if (CURSES_FOUND)
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${CURSES_LIBRARIES})
+    target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${CURSES_LIBRARIES})
 endif ()
 if (XercesC_FOUND)
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${XercesC_LIBRARIES})
+    target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${XercesC_LIBRARIES})
 endif ()
 
-target_link_libraries(${PROJECT_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
-target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/headers)
+target_compile_options(${GLD_MODULE_NAME} PRIVATE ${GLD_COMPILE_OPTIONS})
+set_target_properties(${GLD_MODULE_NAME} PROPERTIES PREFIX "")
+target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
+target_include_directories(${GLD_MODULE_NAME} PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/headers)
 
-install(TARGETS ${PROJECT_NAME}
+install(TARGETS ${GLD_MODULE_NAME}
         ${FILE_PERMISSIONS}
         RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         COMPONENT Runtime
         )
 
 if (GLD_USE_CLANG_TIDY)
-    set_target_properties(${PROJECT_NAME} PROPERTIES
+    set_target_properties(${GLD_MODULE_NAME} PROPERTIES
             CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}"
             )
 endif ()
-

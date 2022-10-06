@@ -1131,7 +1131,7 @@ inline char *gl_strftime(TIMESTAMP ts, char *buffer, int size)
 }
 /** Calculate the next power of 2 greater than a number
  **/
-inline size_t nextpow2(register size_t x)
+inline size_t nextpow2(size_t x)
 {
 	if (x<0) return 0;
 	x--;
@@ -2547,7 +2547,7 @@ public:
 	{
 		char path[1024];
 		errno = 0;
-		if ( callback->file.find_file(lib,NULL,X_OK,path,sizeof(path))!=NULL )
+		if ( callback->file.find_file(lib,NULL,X_OK|R_OK,path,sizeof(path))!=NULL )
 		{
 			errno = 0;
 			void* handle = DLLOAD(path);

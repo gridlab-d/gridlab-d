@@ -497,7 +497,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 	/* locate the module */
 	snprintf(pathname, sizeof(pathname), "%s" DLEXT, file);
 
-	if(find_file(pathname, NULL, X_OK|R_OK, tpath,sizeof(tpath)) == NULL)
+	if(find_file(pathname, nullptr, X_OK|R_OK, tpath,sizeof(tpath)) == NULL)
 	{
 		output_verbose("unable to locate %s in GLPATH, using library loader instead", pathname);
 		strncpy(tpath,pathname,sizeof(tpath));
@@ -624,18 +624,18 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 			const char *name;
 			int optional;
 		} map[] = {
-			{&c->create,"create",FALSE},
-			{&c->init,"init",TRUE},
-			{&c->precommit,"precommit",TRUE},
-			{&c->sync,"sync",TRUE},
-			{&c->commit,"commit",TRUE},
-			{&c->finalize,"finalize",TRUE},
-			{&c->notify,"notify",TRUE},
-			{&c->isa,"isa",TRUE},
-			{&c->plc,"plc",TRUE},
-			{&c->recalc,"recalc",TRUE},
-			{&c->update,"update",TRUE},
-			{&c->heartbeat,"heartbeat",TRUE},
+			{&c->create,"create",       false},
+			{&c->init,"init",           true},
+			{&c->precommit,"precommit", true},
+			{&c->sync,"sync",           true},
+			{&c->commit,"commit",       true},
+			{&c->finalize,"finalize",   true},
+			{&c->notify,"notify",       true},
+			{&c->isa,"isa",             true},
+			{&c->plc,"plc",             true},
+			{&c->recalc,"recalc",       true},
+			{&c->update,"update",       true},
+			{&c->heartbeat,"heartbeat",true},
 		};
 		int i;
 		for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
@@ -1593,9 +1593,9 @@ void module_profiles(void)
 			for ( r=0 ; r<n_ranks ; r++ )
 			{
 				struct s_rankdata *rank = &rankdata[r];
-				rank->total = rank->n_presync==0 ? 0 : (double)rank->t_presync/(double)CLOCKS_PER_SEC/(double)rank->n_presync * (double)( rank->n_presync/n + rank->n_presync%n );
-				rank->total += rank->n_sync==0 ? 0 : (double)rank->t_sync/(double)CLOCKS_PER_SEC/(double)rank->n_sync * (double)( rank->n_sync/n + rank->n_sync%n );
-				rank->total += rank->n_postsync==0 ? 0 : (double)rank->t_postsync/(double)CLOCKS_PER_SEC/(double)rank->n_postsync * (double)( rank->n_postsync/n + rank->n_postsync%n );
+				rank->total = rank->n_presync==0 ? 0 : (double)rank->t_presync/(double)global_ms_per_second/(double)rank->n_presync * (double)( rank->n_presync/n + rank->n_presync%n );
+				rank->total += rank->n_sync==0 ? 0 : (double)rank->t_sync/(double)global_ms_per_second/(double)rank->n_sync * (double)( rank->n_sync/n + rank->n_sync%n );
+				rank->total += rank->n_postsync==0 ? 0 : (double)rank->t_postsync/(double)global_ms_per_second/(double)rank->n_postsync * (double)( rank->n_postsync/n + rank->n_postsync%n );
 				total += rank->total;
 			}
 			if ( n==1 ) 
@@ -2321,7 +2321,7 @@ void sched_signal(int sig)
 		/* stop processing */
 		sched_stop = 1;
 #ifdef _WIN32
-		return TRUE;
+		return true;
 	}
 	return FALSE;
 #endif
@@ -2340,8 +2340,8 @@ void sched_continuous(void)
 	initscr();
 	cbreak();
 	echo();
-	intrflush(stdscr,TRUE);
-	keypad(stdscr,TRUE);
+	intrflush(stdscr,true);
+	keypad(stdscr,true);
 	refresh();
 	halfdelay(1);
 
@@ -2436,7 +2436,7 @@ void sched_controller(void)
 
 	global_suppress_repeat_messages = 0;
 #ifdef _WIN32
-	if ( !SetConsoleCtrlHandler(sched_signal,TRUE) )
+	if ( !SetConsoleCtrlHandler(sched_signal,true) )
 		output_warning("unable to suppress console Ctrl-C handler");
 #else
 	signal(SIGINT,sched_signal);

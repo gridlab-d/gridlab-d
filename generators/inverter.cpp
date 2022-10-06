@@ -336,7 +336,7 @@ inverter::inverter(MODULE *module)
 
 			//Hidden variables for wind turbine checks
 			PT_bool, "WT_is_connected", PADDR(WT_is_connected), PT_DESCRIPTION, "Internal flag that indicates a wind turbine child is connected",
-			
+
 			nullptr)<1) GL_THROW("unable to publish properties in %s",__FILE__);
 
 			defaults = this;
@@ -404,8 +404,8 @@ int inverter::create(void)
 	last_current[0] = last_current[1] = last_current[2] = last_current[3] = 0.0;
 	last_power[0] = last_power[1] = last_power[2] = last_power[3] = 0.0;
 
-	islanded = FALSE;
-	use_multipoint_efficiency = FALSE;
+	islanded = false;
+	use_multipoint_efficiency = false;
 	p_dco = -1;
 	p_so = -1;
 	v_dco = -1;
@@ -725,7 +725,7 @@ int inverter::init(OBJECT *parent)
 					{
 						//Set flag
 						childed_connection = true;
-						
+
 						//See if we are deltamode-enabled -- if so, flag our parent while we're here
 						//Map our deltamode flag and set it (parent will be done below)
 						temp_property_pointer = new gld_property(parent,"Norton_dynamic");
@@ -1351,7 +1351,7 @@ int inverter::init(OBJECT *parent)
 				bp_rated = 3*p_rated/inv_eta;
 			}
 			//Ab : p_rated per phase; p_max for entire inverter	
-			if(!use_multipoint_efficiency){ 
+			if(!use_multipoint_efficiency){
 				if(p_max == -1){
 					p_max = bp_rated*inv_eta;
 				}
@@ -1679,7 +1679,7 @@ int inverter::init(OBJECT *parent)
 			} else if(number_of_phases_out == 3){
 				bp_rated = 3*p_rated/inv_eta;
 			}
-			if(!use_multipoint_efficiency){ 
+			if(!use_multipoint_efficiency){
 				if(p_max == -1){
 					p_max = bp_rated*inv_eta;
 				}
@@ -2768,7 +2768,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					P_In = V_In * I_In; //DC
 
 					// need to differentiate between different pulses...
-					
+
 					//Note: if WT_is_connected is true, the VA_Out is written directly by wind turbine
 					if (!WT_is_connected){
 						if(!use_multipoint_efficiency){
@@ -7502,7 +7502,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 						// Before updating pLine_unrotI and Iout, need to check inverter real power output:
 						// If not attached to the battery, need to check if real power < 0 or > rating
 						VA_Out = (value_Circuit_V[0] * ~(curr_state.Iac[0])) + (value_Circuit_V[1] * ~(curr_state.Iac[1])) + (value_Circuit_V[2] * ~(curr_state.Iac[2]));
-						
+
 						for (int i = 0; i< 3; i++) {
 
 							value_Line_unrotI[i] += I_Out[i];

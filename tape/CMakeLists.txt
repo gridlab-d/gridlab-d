@@ -1,6 +1,10 @@
-project(tape)
+SET(GLD_MODULE_NAME tape)
 
-add_library(${PROJECT_NAME}
+if (GLD_USE_HDF5)
+    FIND_PACKAGE (HDF5 REQUIRED COMPONENTS CXX)
+endif ()
+
+add_library(${GLD_MODULE_NAME}
         collector.cpp
         collector.h
         file.cpp
@@ -35,43 +39,37 @@ add_library(${PROJECT_NAME}
         )
 
 if (GLD_USE_EIGEN)
-    target_include_directories(${PROJECT_NAME} PRIVATE
+    target_include_directories(${GLD_MODULE_NAME} PRIVATE
             "${CMAKE_SOURCE_DIR}/third_party/Eigen"
             )
-    target_link_libraries(${PROJECT_NAME} PRIVATE
+    target_link_libraries(${GLD_MODULE_NAME} PRIVATE
             Eigen3::Eigen
             )
 else ()
-    target_include_directories(${PROJECT_NAME} PRIVATE
+    target_include_directories(${GLD_MODULE_NAME} PRIVATE
             #            "${CMAKE_SOURCE_DIR}/third_party/SuperLU/SRC"
             "${CMAKE_SOURCE_DIR}/third_party/superLU_MT"
             )
-    target_link_libraries(${PROJECT_NAME} PRIVATE
-            #            superlu
-            superlu_lib
-            )
+    target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${SUPERLU_LIB})
 endif ()
 
-target_include_directories(${PROJECT_NAME} PRIVATE
+target_include_directories(${GLD_MODULE_NAME} PRIVATE
         "${CMAKE_SOURCE_DIR}/third_party/jsonCpp"
         )
-target_link_libraries(${PROJECT_NAME} PRIVATE
-        jsoncpp_lib
-        )
+target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${JSONCPP_LIB})
 
-set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
-target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
-target_link_libraries(${PROJECT_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
+if (HDF5_FOUND)
+    target_link_libraries(${GLD_MODULE_NAME} PUBLIC ${HDF5_LIBRARIES})
+    target_include_directories(${GLD_MODULE_NAME} PUBLIC ${HDF5_INCLUDE_DIRS})
+    target_compile_definitions(${GLD_MODULE_NAME} PRIVATE HAVE_HDF5)
+endif ()
 
-install(TARGETS ${PROJECT_NAME}
-        ${FILE_PERMISSIONS}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        COMPONENT Libraries)
-
+target_compile_options(${GLD_MODULE_NAME} PRIVATE ${GLD_COMPILE_OPTIONS})
+set_target_properties(${GLD_MODULE_NAME} PROPERTIES PREFIX "")
+target_include_directories(${GLD_MODULE_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
+target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
 if (GLD_USE_CLANG_TIDY)
-    set_target_properties(${PROJECT_NAME} PROPERTIES
+    set_target_properties(${GLD_MODULE_NAME} PROPERTIES
             CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}"
             )
 endif ()

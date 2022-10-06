@@ -774,7 +774,6 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 			if (!use_msvc)
 			{
 #define DEFAULT_CXX "g++"
-#define DEFAULT_CXXFLAGS "-fPIC"
 #define DEFAULT_LDFLAGS ""
 				char execstr[1024];
 				char ldstr[1024];
@@ -785,12 +784,15 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 				libs = "";
 #endif
 
+                auto cxx_flags = std::string("-I\"") + global_gl_include.string() + "\"" +
+                        " -I\"" + global_gl_share.string() + "\"" +
+                        " -fPIC";
 				sprintf(execstr, R"(%s %s %s %s %s -c "%s" -o "%s")",
 						getenv("CXX")?getenv("CXX"):DEFAULT_CXX,
 						global_warn_mode?"-w":"",
-						global_debug_output?"-g -O0":"-O0",
+						global_debug_output?"-g -O0":"-O2",
 						mopt,
-						getenv("CXXFLAGS")?getenv("CXXFLAGS"):DEFAULT_CXXFLAGS,
+                        cxx_flags.c_str(),
 						cfile, ofile);
 				output_verbose("compile command: [%s]", execstr);
 				if(exec_cmd(execstr)==FAILED)
@@ -804,10 +806,10 @@ static STATUS compile_code(CLASS *oclass, int64 functions)
 
 				/* link new runtime module */
 				output_verbose("linking inline code from '%s'", ofile);
-				sprintf(ldstr, "%s %s %s %s -shared -Wl,\"%s\" -o \"%s\" %s",
+				sprintf(ldstr, R"(%s %s %s %s -shared -Wl,"%s" -o "%s" %s)",
 						getenv("CXX")?getenv("CXX"):DEFAULT_CXX,
 						mopt,
-						global_debug_output?"-g -O0":"",
+						global_debug_output?"-g -O0":"-O2",
 						getenv("LDFLAGS")?getenv("LDFLAGS"):DEFAULT_LDFLAGS,
 						ofile, afile, libs);
 				output_verbose("link command: [%s]", ldstr);
@@ -5902,7 +5904,7 @@ Unterminated:
 static int suppress = 0;
 static int nesting = 0;
 static int macro_line[64];
-static int process_macro(char *line, int size, char *filename, int linenum);
+static bool process_macro(char *line, int size, char *filename, int linenum);
 static int buffer_read(FILE *fp, char *buffer, char *filename, int size)
 {
 	char line[65536];
@@ -5945,7 +5947,7 @@ static int buffer_read(FILE *fp, char *buffer, char *filename, int size)
 		if (strncmp(line,MACRO,strlen(MACRO))==0)
 		{
 			/* macro disables reading */
-			if (process_macro(line,sizeof(line),filename,linenum)==FALSE)
+			if (process_macro(line,sizeof(line),filename,linenum)==false)
 				return 0;
 			len = (int)strlen(line);
 			strcat(buffer,line);
@@ -6048,7 +6050,7 @@ static int buffer_read_alt(FILE *fp, char *buffer, char *filename, int size)
 		if (strncmp(line,MACRO,strlen(MACRO))==0)
 		{
 			/* macro disables reading */
-			if (process_macro(line,sizeof(line),filename,linenum + _linenum - 1)==FALSE){
+			if (process_macro(line,sizeof(line),filename,linenum + _linenum - 1)==false){
 				return 0;
 			} else {
 				++hassc;
@@ -6175,7 +6177,7 @@ static int include_file(char *incname, char *buffer, int size, int _linenum)
 	}
 
 	/* open file */
-	fp = find_file(incname,NULL,R_OK,ff,sizeof(ff)) ? fopen(ff, "rt") : NULL;
+	fp = find_file(incname,nullptr,R_OK,ff,sizeof(ff)) ? fopen(ff, "rt") : NULL;
 	
 	if(fp == NULL){
 		output_error_raw("%s(%d): include file open failed: %s", incname, _linenum, errno?strerror(errno):"(no details)");
@@ -6357,7 +6359,7 @@ char *strsep(char **from, const char *delim) {
 #endif
 
 /** @return TRUE/SUCCESS for a successful macro read, FALSE/FAILED on parse error (which halts the loader) */
-static int process_macro(char *line, int size, char *_filename, int linenum)
+static bool process_macro(char *line, int size, char *_filename, int linenum)
 {
 #ifndef WIN32
 	char *var, *val, *save;	// used by *nix
@@ -6377,7 +6379,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		}
 		strcpy(line,"\n");
 
-		return TRUE;
+		return true;
 	}
 	else if (strncmp(line,MACRO "else",5)==0)
 	{
@@ -6396,10 +6398,10 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		if(strlen(term)!=0)
 		{
 			output_error_raw("%s(%d): %selse macro should not contain any terms",filename,linenum,MACRO);
-			return FALSE;
+			return false;
 		}
 		strcpy(line,"\n");
-		return TRUE;
+		return true;
 	}
 	else if (strncmp(line,MACRO "ifdef",6)==0)
 	{
@@ -6408,7 +6410,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		if (term==NULL)
 		{
 			output_error_raw("%s(%d): %sifdef macro missing term",filename,linenum,MACRO);
-			return FALSE;
+			return false;
 		}
 		//if (sscanf(term+1,"%[^\n\r]",value)==1 && global_getvar(value, buffer, 63)==NULL && getenv(value)==NULL)
 		strcpy(value, strip_right_white(term+1));
@@ -6420,7 +6422,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		// @TODO push 'if' context
 
 		strcpy(line,"\n");
-		return TRUE;
+		return true;
 	}
 	else if (strncmp(line,MACRO "ifexist",8)==0)
 	{
@@ -6430,7 +6432,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		if (term==NULL)
 		{
 			output_error_raw("%s(%d): %sifexist macro missing term",filename,linenum,MACRO);
-			return FALSE;
+			return false;
 		}
 		while(isspace((unsigned char)(*term)))
 			++term;
@@ -6447,7 +6449,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		nesting++;
 		// @TODO push 'file' context
 		strcpy(line,"\n");
-		return TRUE;
+		return true;
 	}
 	else if (strncmp(line,MACRO "ifndef",7)==0)
 	{
@@ -6456,7 +6458,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		if (term==NULL)
 		{
 			output_error_raw("%s(%d): %sifndef macro missing term",filename,linenum,MACRO);
-			return FALSE;
+			return false;
 		}
 		//if (sscanf(term+1,"%[^\n\r]",value)==1 && global_getvar(value, buffer, 63)!=NULL || getenv(value)!=NULL))
 		strcpy(value, strip_right_white(term+1));
@@ -6467,7 +6469,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		nesting++;
 		// @TODO push 'if' context
 		strcpy(line,"\n");
-		return TRUE;
+		return true;
 	}
 	else if (strncmp(line,MACRO "if",3)==0)
 	{
@@ -6477,14 +6479,14 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		{
 			output_error_raw("%s(%d): %sif macro statement syntax error", filename,linenum,MACRO);
 			strcpy(line,"\n");
-			return FALSE;
+			return false;
 		}
 		value = global_getvar(var, buffer, 63);
 		if (value==NULL)
 		{
 			output_error_raw("%s(%d): %s is not defined", filename,linenum,var);
 			strcpy(line,"\n");
-			return FALSE;
+			return false;
 		}
 		if (strcmp(op,"<")==0) { if (!(strcmp(value,val)<0)) suppress|=(1<<nesting); }
 		else if (strcmp(op,">")==0) { if (!(strcmp(value,val)>0)) suppress|=(1<<nesting); }
@@ -6496,20 +6498,20 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		{
 			output_error_raw("%s(%d): operator %s is not recognized", filename,linenum,op);
 			strcpy(line,"\n");
-			return FALSE;
+			return false;
 		}
 		macro_line[nesting] = linenum;
 		nesting++;
 		// @TODO push 'if' context
 		strcpy(line,"\n");
-		return TRUE;
+		return true;
 	}
 
 	/* handles suppressed macros */
 	if (suppress!=0)
 	{
 		strcpy(line,"\n");
-		return TRUE;
+		return true;
 	}
 
 	/* these macros can be suppressed */
@@ -6522,7 +6524,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		{
 			output_error_raw("%s(%d): %sinclude macro missing term",filename,linenum,MACRO);
 			strcpy(line,"\n");
-			return FALSE;
+			return false;
 		}
 		while(isspace((unsigned char)(*term)))
 			++term;
@@ -6533,11 +6535,11 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			while ( (token=strsep(&string, ",")) != NULL)
 			{
 				int old_strictnames = global_strictnames;
-				global_strictnames = FALSE;
+				global_strictnames = false;
 				if ( global_setvar(token)==FAILED )
 					output_error_raw("%s(%d): unabled to set global %s", filename, linenum, token);
 				global_strictnames = old_strictnames;
-				global_reinclude = TRUE; // must enable reinclude for this to work more than once
+				global_reinclude = true; // must enable reinclude for this to work more than once
 			}
 			term+=strlen(value)+7;
 		}
@@ -6557,7 +6559,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 				output_error_raw("%s(%d): #include failed",filename,linenum);
 				include_fail = 1;
 				strcpy(line,"\n");
-				return FALSE;
+				return false;
 			}
 			else
 			{
@@ -6573,7 +6575,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			output_verbose("added C include for \"%s\"", value);
 			append_code("#include <%s>\n",value);
 			strcpy(line,"\n");
-			return TRUE;
+			return true;
 		}
 		else if ( sscanf(term, "[%[^]]]", value)==1 )
 		{
@@ -6586,7 +6588,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			if ( http==NULL )
 			{
 				output_error("%s(%d): unable to include [%s]", filename, linenum, value);
-				return FALSE;
+				return false;
 			}
 			
 			/* local cache file name */
@@ -6606,7 +6608,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 				if ( fp==NULL )
 				{
 					output_error("%s(%d): unable to write temp file '%s'", filename, linenum, tmpname);
-					return FALSE;
+					return false;
 				}
 				fwrite(http->body.data,1,http->body.size,fp);
 				fclose(fp);
@@ -6620,12 +6622,12 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			if ( len<0 )
 			{
 				output_error("%s(%d): unable to include load [%s] from temp file '%s'", filename, linenum, value,tmpname);
-				return FALSE;
+				return false;
 			}
 			else
 			{
 				sprintf(line+len,"@%s;%d\n",filename,linenum);
-				return TRUE;
+				return true;
 			}
 		}
 		else
@@ -6634,7 +6636,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			if ( *eol == '\n' ) *eol = '\0';
 			output_error_raw("%s(%d): '#include %s' failed",filename,linenum, term);
 			strcpy(line,"\n");
-			return FALSE;
+			return false;
 		}
 	}
 	else if (strncmp(line,MACRO "setenv",7)==0)
@@ -6645,7 +6647,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		{
 			output_error_raw("%s(%d): %ssetenv macro missing term",filename,linenum,MACRO);
 			strcpy(line,"\n");
-			return FALSE;
+			return false;
 		}
 		//if (sscanf(term+1,"%[^\n\r]",value)==1)
 		strcpy(value, strip_right_white(term+1));
@@ -6664,7 +6666,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		{
 			output_error_raw("%s(%d): %ssetenv term missing or invalid",filename,linenum,MACRO);
 			strcpy(line,"\n");
-			return FALSE;
+			return false;
 		}
 	}
 	else if (strncmp(line,MACRO "set",4)==0)
@@ -6675,7 +6677,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		{
 			output_error_raw("%s(%d): %sset macro missing term",filename,linenum,MACRO);
 			strcpy(line,"\n");
-			return FALSE;
+			return false;
 		}
 		//if (sscanf(term+1,"%[^\n\r]",value)==1)
 		strcpy(value, strip_right_white(term+1));
@@ -6689,7 +6691,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			else
 			{
 				int oldstrict = global_strictnames;
-				global_strictnames = TRUE;
+				global_strictnames = true;
 				result = global_setvar(value);
 				global_strictnames = strncmp(value,"strictnames=",12)==0 ? global_strictnames : oldstrict;
 				if (result==FAILED)
@@ -6702,23 +6704,23 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		{
 			output_error_raw("%s(%d): %sset term missing or invalid",filename,linenum,MACRO);
 			strcpy(line,"\n");
-			return FALSE;
+			return false;
 		}
 	}
 	else if (strncmp(line,MACRO "binpath",8)==0)
 	{
 		output_error("#binpath is no longer supported, use PATH environment variable instead");
-		return FALSE;
+		return false;
 	}
 	else if (strncmp(line,MACRO "libpath",8)==0)
 	{
 		output_error("#libpath is no longer supported, use LDFLAGS environment variable instead");
-		return FALSE;
+		return false;
 	}
 	else if (strncmp(line,MACRO "incpath",8)==0)
 	{
 		output_error("#incpath is no longer supported, use CXXFLAGS environment variable instead");
-		return FALSE;
+		return false;
 	}
 	else if (strncmp(line,MACRO "define",7)==0)
 	{
@@ -6728,7 +6730,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		{
 			output_error_raw("%s(%d): %sdefine macro missing term",filename,linenum, MACRO);
 			strcpy(line,"\n");
-			return FALSE;
+			return false;
 		}
 		//if (sscanf(term+1,"%[^\n\r]",value)==1)
 		strcpy(value, strip_right_white(term+1));
@@ -6737,7 +6739,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			int oldstrict = global_strictnames;
 			if (strchr(value,'=')==NULL)
 				strcat(value,"="); // void entry
-			global_strictnames = FALSE;
+			global_strictnames = false;
 			result = global_setvar(value,"\"\""); // extra "" is used in case value is term is empty string
 			global_strictnames = oldstrict;
 			if (result==FAILED)
@@ -6749,7 +6751,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		{
 			output_error_raw("%s(%d): %sdefine missing expression",filename,linenum,MACRO);
 			strcpy(line,"\n");
-			return FALSE;
+			return false;
 		}
 	}
 	else if (strncmp(line,MACRO "print",6)==0)
@@ -6760,20 +6762,20 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		{
 			output_error_raw("%s(%d): %sprint missing message text",filename,linenum,MACRO);
 			strcpy(line,"\n");
-			return FALSE;
+			return false;
 		}
 		//if (sscanf(term+1,"%[^\n\r]",value)==1)
 		strcpy(value, strip_right_white(term+1));
 		if(1){
 			output_message("%s(%d): %s", filename, linenum, value);
 			strcpy(line,"\n");
-			return TRUE;
+			return true;
 		}
 		else
 		{
 			output_error_raw("%s(%d): %sprint term not found",filename,linenum,MACRO);
 			strcpy(line,"\n");
-			return FALSE;
+			return false;
 		}
 	}
 	else if (strncmp(line,MACRO "error",6)==0)
@@ -6784,7 +6786,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		{
 			output_error_raw("%s(%d): %serror missing expression",filename,linenum,MACRO);
 			strcpy(line,"\n");
-			return FALSE;
+			return false;
 		}
 		//if (sscanf(term+1,"%[^\n\r]",value)==1)
 		strcpy(value, strip_right_white(term+1));
@@ -6792,13 +6794,13 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			//output_message("%s(%d): ERROR - %s", filename, linenum, value);
 			output_error_raw("%s(%d):\t%s", filename, linenum, value);
 			strcpy(line,"\n");
-			return FALSE;
+			return false;
 		}
 		else
 		{
 			output_error_raw("%s(%d): %serror missing message text",filename,linenum,MACRO);
 			strcpy(line,"\n");
-			return FALSE;
+			return false;
 		}
 	}
 	else if (strncmp(line,MACRO "warning",8)==0)
@@ -6809,20 +6811,20 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		{
 			output_error_raw("%s(%d): %swarning missing message text",filename,linenum,MACRO);
 			strcpy(line,"\n");
-			return FALSE;
+			return false;
 		}
 		//if (sscanf(term+1,"%[^\n\r]",value)==1)
 		strcpy(value, strip_right_white(term+1));
 		if(1){
 			output_warning("%s(%d): %s", filename, linenum, value);
 			strcpy(line,"\n");
-			return TRUE;
+			return true;
 		}
 		else
 		{
 			output_error_raw("%s(%d): %swarning missing expression",filename,linenum,MACRO);
 			strcpy(line,"\n");
-			return FALSE;
+			return false;
 		}
 	}
 	else if (strncmp(line,MACRO "debug",6)==0)
@@ -6833,20 +6835,20 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		{
 			output_error_raw("%s(%d): %sdebug missing message text",filename,linenum,MACRO);
 			strcpy(line,"\n");
-			return FALSE;
+			return false;
 		}
 		//if (sscanf(term+1,"%[^\n\r]",value)==1)
 		strcpy(value, strip_right_white(term+1));
 		if(1){
 			output_debug("%s(%d): %s", filename, linenum, value);
 			strcpy(line,"\n");
-			return TRUE;
+			return true;
 		}
 		else
 		{
 			output_error_raw("%s(%d): %swarning missing expression",filename,linenum,MACRO);
 			strcpy(line,"\n");
-			return FALSE;
+			return false;
 		}
 	}
 	else if (strncmp(line,MACRO "system",7)==0)
@@ -6857,7 +6859,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		{
 			output_error_raw("%s(%d): %ssystem missing system call",filename,linenum,MACRO);
 			strcpy(line,"\n");
-			return FALSE;
+			return false;
 		}
 		strcpy(value, strip_right_white(term+1));
 		output_debug("%s(%d): executing system(char *cmd='%s')", filename, linenum, value);
@@ -6866,12 +6868,12 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		{
 			output_error_raw("%s(%d): ERROR unable to execute '%s' (status=%d)", filename, linenum, value, global_return_code);
 			strcpy(line,"\n");
-			return FALSE;
+			return false;
 		}
 		else
 		{
 			strcpy(line,"\n");
-			return TRUE;
+			return true;
 		}
 	}
 	else if (strncmp(line,MACRO "start",6)==0)
@@ -6882,7 +6884,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		{
 			output_error_raw("%s(%d): %sstart missing system call",filename,linenum,MACRO);
 			strcpy(line,"\n");
-			return FALSE;
+			return false;
 		}
 		strcpy(value, strip_right_white(term+1));
 		output_debug("%s(%d): executing system(char *cmd='%s')", filename, linenum, value);
@@ -6890,12 +6892,12 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		{
 			output_error_raw("%s(%d): ERROR unable to start '%s'", filename, linenum, value);
 			strcpy(line,"\n");
-			return FALSE;
+			return false;
 		}
 		else
 		{
 			strcpy(line,"\n");
-			return TRUE;
+			return true;
 		}
 	}
 	else if ( strncmp(line,MACRO "option",7)==0 )
@@ -6906,7 +6908,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		{
 			output_error_raw("%s(%d): %soption missing command option name",filename,linenum,MACRO);
 			strcpy(line,"\n");
-			return FALSE;
+			return false;
 		}
 		strcpy(value, strip_right_white(term+1));
 		strcpy(line,"\n");
@@ -6921,7 +6923,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		if ( n<1 )
 		{
 			output_error_raw("%s(%d): %swget missing url", filename, linenum, MACRO);
-			return FALSE;
+			return false;
 		}
 		else if ( n==1 )
 		{
@@ -6929,16 +6931,16 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 			if ( basename==NULL )
 			{
 				output_error_raw("%s(%d): unable to extract basename of URL '%s'", filename, linenum, url);
-				return FALSE;
+				return false;
 			}
 			strncpy(file,basename+1,sizeof(file)-1);
 		}
 		if ( http_saveas(url,file)==0 )
 		{
 			output_error_raw("%s(%d): unable to save URL '%s' as '%s'", filename, linenum, url, file);
-			return FALSE;
+			return false;
 		}
-		return TRUE;
+		return true;
 	}
 	else if ( strncmp(line,MACRO "sleep",6)==0 )
 	{
@@ -6946,7 +6948,7 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		output_debug("sleeping %.3f seconds...",msec/1000.0);
 		exec_sleep(msec*1000);
 		strcpy(line,"\n");
-		return TRUE;
+		return true;
 	}
 	else
 	{
@@ -6962,11 +6964,11 @@ static int process_macro(char *line, int size, char *_filename, int linenum)
 		}
 		output_error_raw("%s(%d): macro command '%s' is not recognized", filename,linenum,tmp);
 		strcpy(line,"\n");
-		return FALSE;
+		return false;
 	}
 
 	output_error_raw("%s(%d): macro fell out of logic tree", filename, linenum);
-	return FALSE;
+	return false;
 }
 
 STATUS loadall_glm(char *file) /**< a pointer to the first character in the file name string */

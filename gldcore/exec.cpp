@@ -87,7 +87,6 @@
 #include <cctype>
 #include <csignal>
 #include <cstring>
-#include <sys/timeb.h>
 #include <memory>
 #include <thread>
 #ifdef _WIN32
@@ -187,16 +186,18 @@ const char *exec_getexitcodestr(EXITCODE xc)
 /** Elapsed wallclock **/
 int64 exec_clock()
 {
-	static struct timeb t0;
-	struct timeb t1={0,0,0,0};
-	if ( t0.time==0 )
-	{
-		ftime(&t0);
-		t1 = t0;
-	}
-	else
-		ftime(&t1);
-	return (t1.time-t0.time)*CLOCKS_PER_SEC + (t1.millitm-t0.millitm)*CLOCKS_PER_SEC/1000;
+    using std::chrono::system_clock;
+    static bool initialized = false;
+    static std::chrono::time_point<system_clock> nt1;
+    static std::chrono::time_point<system_clock> nt2;
+    if (!initialized) { // [[unlikely]] {
+        nt1 = system_clock::now();
+        nt2 = nt1;
+        initialized = true;
+    } else { // [[likely]] {
+        nt2 = system_clock::now();
+    }
+    return std::chrono::duration_cast<std::chrono::microseconds>(nt2 - nt1).count();
 }
 
 /** The main system initialization sequence
@@ -1207,7 +1208,7 @@ static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2)
 {
 	static int n_commits = -1;
 	static MTI *mti[] = {nullptr,nullptr};
-	static int init_tried = FALSE;
+	static int init_tried = false;
 	MTIDATA input = (MTIDATA)&t0;
 	MTIDATA output = (MTIDATA)&t2;
 	TIMESTAMP result = TS_NEVER;
@@ -1239,7 +1240,7 @@ static TIMESTAMP commit_all(TIMESTAMP t0, TIMESTAMP t2)
 					if ( mti[pc]==nullptr )
 					{
 						output_warning("commit_all multi-threaded iterator initialization failed - using single-threaded iterator as fallback");
-						init_tried = TRUE;
+						init_tried = true;
 					}
 				}
 
@@ -2105,7 +2106,7 @@ STATUS exec_start()
 	}
 
 	// global test mode
-	if ( global_test_mode==TRUE )
+	if ( global_test_mode==true )
 		return static_cast<STATUS>(test_exec());
 
 	/* check for a model */
@@ -2147,11 +2148,11 @@ STATUS exec_start()
                 static bool initialized = false;
                 static std::chrono::time_point<system_clock, std::chrono::duration<long, std::ratio<1, 1000000000>>> t1;
                 static std::chrono::time_point<system_clock, std::chrono::duration<long, std::ratio<1, 1000000000>>> t2;
-                if (!initialized) [[unlikely]] {
+                if (!initialized) { //[[unlikely]] {
                     t1 = system_clock::now();
                     t2 = t1 + 1s;
                     initialized = true;
-                } else [[likely]] {
+                } else { //[[likely]] {
                     t1 = t2;
                     t2 += 1s; // One second from last time step
                 }
@@ -2167,7 +2168,7 @@ STATUS exec_start()
                     fall_behind++;
                 }
 
-                if (fall_behind > 5) [[unlikely]] {
+                if (fall_behind > 5) {// [[unlikely]] {
                     output_fatal("simulation fell behind realtime for more than 5 consecutive cycles");
                 }
 
@@ -2697,9 +2698,9 @@ STATUS exec_start()
 		double delta_runtime = 0, delta_simtime = 0;
 		if (global_threadcount==0) global_threadcount=1;
 		for (cl=class_get_first_class(); cl!=nullptr; cl=cl->next)
-			sync_time += ((double)cl->profiler.clocks)/CLOCKS_PER_SEC;
+			sync_time += ((double)cl->profiler.clocks)/global_ms_per_second;
 		sync_time /= global_threadcount;
-		delta_runtime = dp->t_count>0 ? (dp->t_preupdate+dp->t_update+dp->t_postupdate)/CLOCKS_PER_SEC : 0;
+		delta_runtime = dp->t_count>0 ? (dp->t_preupdate+dp->t_update+dp->t_postupdate)/global_ms_per_second : 0;
 		delta_simtime = dp->t_count*(double)dp->t_delta/(double)dp->t_count/1e9;
 
 		output_profile("\nCore profiler results");
@@ -2708,13 +2709,13 @@ STATUS exec_start()
 		output_profile("Parallelism             %8d thread%s", global_threadcount,global_threadcount>1?"s":"");
 		output_profile("Total time              %8.1f seconds", elapsed_wall);
 		output_profile("  Core time             %8.1f seconds (%.1f%%)", (elapsed_wall-sync_time-delta_runtime),(elapsed_wall-sync_time-delta_runtime)/elapsed_wall*100);
-		output_profile("    Compiler            %8.1f seconds (%.1f%%)", (double)loader_time/CLOCKS_PER_SEC,((double)loader_time/CLOCKS_PER_SEC)/elapsed_wall*100);
-		output_profile("    Instances           %8.1f seconds (%.1f%%)", (double)instance_synctime/CLOCKS_PER_SEC,((double)instance_synctime/CLOCKS_PER_SEC)/elapsed_wall*100);
-		output_profile("    Random variables    %8.1f seconds (%.1f%%)", (double)randomvar_synctime/CLOCKS_PER_SEC,((double)randomvar_synctime/CLOCKS_PER_SEC)/elapsed_wall*100);
-		output_profile("    Schedules           %8.1f seconds (%.1f%%)", (double)schedule_synctime/CLOCKS_PER_SEC,((double)schedule_synctime/CLOCKS_PER_SEC)/elapsed_wall*100);
-		output_profile("    Loadshapes          %8.1f seconds (%.1f%%)", (double)loadshape_synctime/CLOCKS_PER_SEC,((double)loadshape_synctime/CLOCKS_PER_SEC)/elapsed_wall*100);
-		output_profile("    Enduses             %8.1f seconds (%.1f%%)", (double)enduse_synctime/CLOCKS_PER_SEC,((double)enduse_synctime/CLOCKS_PER_SEC)/elapsed_wall*100);
-		output_profile("    Transforms          %8.1f seconds (%.1f%%)", (double)transform_synctime/CLOCKS_PER_SEC,((double)transform_synctime/CLOCKS_PER_SEC)/elapsed_wall*100);
+		output_profile("    Compiler            %8.1f seconds (%.1f%%)", (double)loader_time/global_ms_per_second,((double)loader_time/global_ms_per_second)/elapsed_wall*100);
+		output_profile("    Instances           %8.1f seconds (%.1f%%)", (double)instance_synctime/global_ms_per_second,((double)instance_synctime/global_ms_per_second)/elapsed_wall*100);
+		output_profile("    Random variables    %8.1f seconds (%.1f%%)", (double)randomvar_synctime/global_ms_per_second,((double)randomvar_synctime/global_ms_per_second)/elapsed_wall*100);
+		output_profile("    Schedules           %8.1f seconds (%.1f%%)", (double)schedule_synctime/global_ms_per_second,((double)schedule_synctime/global_ms_per_second)/elapsed_wall*100);
+		output_profile("    Loadshapes          %8.1f seconds (%.1f%%)", (double)loadshape_synctime/global_ms_per_second,((double)loadshape_synctime/global_ms_per_second)/elapsed_wall*100);
+		output_profile("    Enduses             %8.1f seconds (%.1f%%)", (double)enduse_synctime/global_ms_per_second,((double)enduse_synctime/global_ms_per_second)/elapsed_wall*100);
+		output_profile("    Transforms          %8.1f seconds (%.1f%%)", (double)transform_synctime/global_ms_per_second,((double)transform_synctime/global_ms_per_second)/elapsed_wall*100);
 		output_profile("  Model time            %8.1f seconds/thread (%.1f%%)", sync_time,sync_time/elapsed_wall*100);
 		if ( dp->t_count>0 )
 			output_profile("  Deltamode time        %8.1f seconds/thread (%.1f%%)", delta_runtime,delta_runtime/elapsed_wall*100);
@@ -2740,16 +2741,16 @@ STATUS exec_start()
 			output_profile("\nDelta mode profiler results");
 			output_profile("===========================\n");
 			output_profile("Active modules          %s", dp->module_list);
-			output_profile("Initialization time     %8.1lf seconds", (double)(dp->t_init)/(double)CLOCKS_PER_SEC);
+			output_profile("Initialization time     %8.1lf seconds", (double)(dp->t_init)/(double)global_ms_per_second);
 			output_profile("Number of updates       %8" FMT_INT64 "u", dp->t_count);
 			output_profile("Average update timestep %8.4lf ms", (double)dp->t_delta/(double)dp->t_count/1e6);
 			output_profile("Minumum update timestep %8.4lf ms", dp->t_min/1e6);
 			output_profile("Maximum update timestep %8.4lf ms", dp->t_max/1e6);
 			output_profile("Total deltamode simtime %8.1lf s", delta_simtime/1000);
-			output_profile("Preupdate time          %8.1lf s (%.1f%%)", (double)(dp->t_preupdate)/(double)CLOCKS_PER_SEC, (double)(dp->t_preupdate)/total*100);
-			output_profile("Object update time      %8.1lf s (%.1f%%)", (double)(dp->t_update)/(double)CLOCKS_PER_SEC, (double)(dp->t_update)/total*100);
-			output_profile("Interupdate time        %8.1lf s (%.1f%%)", (double)(dp->t_interupdate)/(double)CLOCKS_PER_SEC, (double)(dp->t_interupdate)/total*100);
-			output_profile("Postupdate time         %8.1lf s (%.1f%%)", (double)(dp->t_postupdate)/(double)CLOCKS_PER_SEC, (double)(dp->t_postupdate)/total*100);
+			output_profile("Preupdate time          %8.1lf s (%.1f%%)", (double)(dp->t_preupdate)/(double)global_ms_per_second, (double)(dp->t_preupdate)/total*100);
+			output_profile("Object update time      %8.1lf s (%.1f%%)", (double)(dp->t_update)/(double)global_ms_per_second, (double)(dp->t_update)/total*100);
+			output_profile("Interupdate time        %8.1lf s (%.1f%%)", (double)(dp->t_interupdate)/(double)global_ms_per_second, (double)(dp->t_interupdate)/total*100);
+			output_profile("Postupdate time         %8.1lf s (%.1f%%)", (double)(dp->t_postupdate)/(double)global_ms_per_second, (double)(dp->t_postupdate)/total*100);
 			output_profile("Total deltamode runtime %8.1lf s (100%%)", delta_runtime);
 			output_profile("Simulation rate         %8.1lf x realtime", delta_simtime/delta_runtime/1000);
 		}
@@ -3091,7 +3092,7 @@ void *slave_node_proc(void *args)
 	output_debug("filepath = %s", filepath);
 	sprintf(ippath, "--slave %s:%d", addrstr, mtr_port);
 	output_debug("ippath = %s", ippath);
-	sprintf(cmd, "%s%sgridlabd.exe %s --id %" FMT_INT64 "d %s %s",
+	sprintf(cmd, "\"%s%sgridlabd.exe\" %s --id %" FMT_INT64 "d %s %s",
 		(global_execdir[0] ? global_execdir : ""), (global_execdir[0] ? "\\" : ""), params, id, ippath, filepath);//addrstr, mtr_port, filepath);//,
 	output_debug("system(\"%s\")", cmd);
 
@@ -3113,7 +3114,7 @@ void *slave_node_proc(void *args)
  **/
 void exec_slave_node()
 {
-	static bool node_done = FALSE;
+	static bool node_done = false;
 	static SOCKET sockfd = -1;
 	SOCKET *args[4];
 	struct sockaddr_in server_addr;
@@ -3208,7 +3209,7 @@ void exec_slave_node()
 			{
 				output_error("unable to accept connection");
 				perror("accept()");
-				node_done = TRUE;
+				node_done = true;
 				closesocket(sockfd);
 				return;
 			}
@@ -3222,7 +3223,7 @@ void exec_slave_node()
 			if ( pthread_create(&slave_thread, nullptr, slave_node_proc, (void *)args) )
 			{
 				output_error("slavenode unable to thread off connection");
-				node_done = TRUE;
+				node_done = true;
 				closesocket(sockfd);
 				closesocket(*args[2]);
 				return;
@@ -3231,7 +3232,7 @@ void exec_slave_node()
 			if ( pthread_detach(slave_thread) )
 			{
 				output_error("slavenode unable to detach connection thread");
-				node_done = TRUE;
+				node_done = true;
 				closesocket(sockfd);
 				closesocket(*args[2]);
 				return;

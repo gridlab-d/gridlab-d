@@ -182,7 +182,7 @@ int waterheater::create()
 	Tinlet = 60.0;		// default set here, but published by the model for users to set this value
 	water_demand = 0.0;	// in gpm
 	heating_element_capacity = 0.0;
-	heat_needed = FALSE;
+	heat_needed = false;
 	location = GARAGE;
 	heat_mode = ELECTRIC;
 	tank_setpoint = 0.0;
@@ -790,9 +790,9 @@ void waterheater::thermostat(TIMESTAMP t0, TIMESTAMP t1){
 	switch(tank_status){
 		case FULL:
 			if(Tw-TSTAT_PRECISION < Ton){
-				heat_needed = TRUE;
+				heat_needed = true;
 			} else if (Tw+TSTAT_PRECISION > Toff){
-				heat_needed = FALSE;
+				heat_needed = false;
 			} else {
 				; // no change
 			}
@@ -800,18 +800,18 @@ void waterheater::thermostat(TIMESTAMP t0, TIMESTAMP t1){
 		case PARTIAL:
 			if (heat_mode == HEAT_PUMP) {
 				if(Tcontrol-TSTAT_PRECISION < Ton){
-					heat_needed = TRUE;
+					heat_needed = true;
 				} else if (Tcontrol+TSTAT_PRECISION > Toff){
-					heat_needed = FALSE;
+					heat_needed = false;
 				} else {
 					; // no change
 				}
 			} else {
-				heat_needed = TRUE; // if we aren't full, fill 'er up!
+				heat_needed = true; // if we aren't full, fill 'er up!
 			}
 			break;
 		case EMPTY:
-			heat_needed = TRUE; // if we aren't full, fill 'er up!
+			heat_needed = true; // if we aren't full, fill 'er up!
 			break;
 		default:
 			GL_THROW("waterheater thermostat() detected that the water heater tank is in an unknown state");
@@ -865,9 +865,9 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 		control_switch_1 = control_lower[idx];
 		control_switch_2 = control_upper[idx];
 		if(control_upper[idx] == 1.0 || control_lower[idx] == 1.0) {
-			heat_needed = TRUE;
+			heat_needed = true;
 		} else {
-			heat_needed = FALSE;
+			heat_needed = false;
 		}
 	}
 	if(current_model != FORTRAN && current_model != MULTILAYER){
@@ -985,7 +985,7 @@ void waterheater::sync_energytake()
 	
 		energytake = log(70 / (get_Tambient(location) * 0.39) ) * time_step; // Constants are based on trial and error to get the most appropraite behavior similar to the physical unit.
 		Tw = (tank_setpoint - (energytake/(tank_volume * 2.44)))+ 1.00034;
-		heat_needed = FALSE;
+		heat_needed = false;
 		current_model = ONENODE;
 
 		
@@ -1010,7 +1010,7 @@ void waterheater::sync_energytake()
 					Tw_temp = ((((tank_volume_post_draw)* tank_setpoint) + (water_demand * 60))/(tank_volume)) + water_demand * 0.65;
 				// ----------------------------------------------------------
 
-				heat_needed = TRUE;
+				heat_needed = false;
 				if ((water_demand - water_demand_old) > 0)
 				{
 					energy_increment_value = energytake;
@@ -1062,13 +1062,13 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	// runs after thermostat() but before "the usual" calculations
 	if(current_model != FORTRAN){
 		if(re_override == OV_ON){
-			heat_needed = TRUE;
+			heat_needed = true;
 			if(current_model == MULTILAYER) {
 				control_upper[0] = 1.0;
 				control_lower[0] = 0.0;
 			}
 		} else if(re_override == OV_OFF){
-			heat_needed = FALSE;
+			heat_needed = false;
 			if(current_model == MULTILAYER) {
 				control_upper[0] = 0.0;
 				control_lower[0] = 0.0;
@@ -1077,11 +1077,11 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	if(Tw > 212.0 - thermostat_deadband){ // if it's trying boil, turn it off!
-		heat_needed = FALSE;
+		heat_needed = false;
 		is_waterheater_on = 0;
 	}
 	if(Tw_1 > 212.0 - (deadband_1/2.0)) {
-		heat_needed = FALSE;
+		heat_needed = false;
 		control_upper[0] = 0.0;
 		control_lower[0] = 0.0;
 	}
@@ -1219,7 +1219,7 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 	if(current_model != FORTRAN){
 		// determine the power used
-		if (heat_needed == TRUE){
+		if (heat_needed == true){
 			/* power_kw */ load.total = (heat_mode == GASHEAT ? gas_fan_power : heating_element_capacity);
 			is_waterheater_on = 1;
 		} else {
@@ -1327,7 +1327,7 @@ void waterheater::set_time_to_transition(void)
 
 	switch (current_model) {
 		case ONENODE:
-			if (heat_needed == FALSE)
+			if (heat_needed == false)
 				time_to_transition = new_time_1node(Tw, Ton);
 			else if (load_state == RECOVERING)
 				time_to_transition = new_time_1node(Tw, Toff);
@@ -1401,7 +1401,7 @@ enumeration waterheater::set_current_model_and_load_state(void)
 			{
 				// overriding the plc code ignoring thermostat logic
 				// heating will always be on while in two zone model
-				heat_needed = TRUE;
+				heat_needed = true;
 				current_model = TWONODE;
 				load_state = RECOVERING;
 			}
@@ -1420,16 +1420,16 @@ enumeration waterheater::set_current_model_and_load_state(void)
 
 				if (heat_mode == HEAT_PUMP) {
 					if(Tcontrol-TSTAT_PRECISION < Ton){
-						heat_needed = TRUE;
+						heat_needed = true;
 					} else if (Tcontrol+TSTAT_PRECISION > Toff){
-						heat_needed = FALSE;
+						heat_needed = false;
 					} else {
 						; // no change
 					}
 				} else {
 					// overriding the plc code ignoring thermostat logic
 					// heating will always be on while in two zone model					
-					heat_needed = TRUE;					
+					heat_needed = true;
 				}
 
 				double dhdt_full_temp = dhdt(height);
@@ -1437,7 +1437,7 @@ enumeration waterheater::set_current_model_and_load_state(void)
 				if (dhdt_full_temp < 0)
 				{
 					if (heat_mode == HEAT_PUMP) {
-						if (heat_needed == TRUE) {
+						if (heat_needed == true) {
 							current_model = TWONODE;
 							load_state = DEPLETING;
 						} else {
@@ -1460,7 +1460,7 @@ enumeration waterheater::set_current_model_and_load_state(void)
 				if (re_override == OV_OFF)
 				{
 					load_state = DEPLETING;
-					heat_needed = FALSE;
+					heat_needed = false;
 					if (water_demand > 0 || h < (tank_height-HEIGHT_PRECISION))
 						current_model = TWONODE;
 					else
@@ -1485,7 +1485,7 @@ enumeration waterheater::set_current_model_and_load_state(void)
 
 				if (re_override == OV_OFF)
 				{
-					heat_needed = FALSE;
+					heat_needed = false;
 					load_state = DEPLETING;
 				}
 			}
@@ -1493,17 +1493,17 @@ enumeration waterheater::set_current_model_and_load_state(void)
 				load_state = STABLE;
 
 				if (re_override == OV_OFF)
-					heat_needed = FALSE;
+					heat_needed = false;
 			}
 			break;
 
 		case PARTIAL:
 			if (heat_mode == HEAT_PUMP) {
-				if(Tcontrol-TSTAT_PRECISION < Ton || heat_needed == TRUE){
-					heat_needed = TRUE;
+				if(Tcontrol-TSTAT_PRECISION < Ton || heat_needed == true){
+					heat_needed = true;
 					current_model = TWONODE;
 				} else if (Tcontrol+TSTAT_PRECISION > Toff){
-					heat_needed = FALSE;
+					heat_needed = false;
 					current_model = ONENODE;
 				} else {
 				; // no change
@@ -1522,7 +1522,7 @@ enumeration waterheater::set_current_model_and_load_state(void)
 
 				if (re_override == OV_OFF)
 				{
-					heat_needed = FALSE;
+					heat_needed = false;
 					if (water_demand > 0 || h < (tank_height-HEIGHT_PRECISION))
 						current_model = TWONODE;
 					else
@@ -1534,7 +1534,7 @@ enumeration waterheater::set_current_model_and_load_state(void)
 				current_model = TWONODE;
 				// overriding the plc code ignoring thermostat logic
 				// heating will always be on while in two zone model
-				heat_needed = TRUE;
+				heat_needed = true;
 
 				if (dhdt_now < 0 && (dhdt_now * dhdt_empty) >= 0)
 					load_state = DEPLETING;
@@ -1549,7 +1549,7 @@ enumeration waterheater::set_current_model_and_load_state(void)
 
 				if (re_override == OV_OFF)
 				{
-					heat_needed = FALSE;
+					heat_needed = false;
 					if (water_demand > 0 || h < (tank_height-HEIGHT_PRECISION))
 						current_model = TWONODE;
 					else
@@ -1592,7 +1592,7 @@ SingleZone:
 		case TWONODE:
 			// overriding the plc code ignoring thermostat logic
 			// heating will always be on while in two zone model
-			heat_needed = TRUE;
+			heat_needed = true;
 			switch (load_state) 
 			{
 				case STABLE:
@@ -1649,7 +1649,7 @@ SingleZone:
 			break;
 	}
 
-	if (heat_needed == TRUE)
+	if (heat_needed == true)
 		power_state = PS_ON;
 	else
 		power_state = PS_OFF;

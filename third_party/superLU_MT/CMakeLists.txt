@@ -225,6 +225,12 @@ add_library(${PROJECT_NAME} STATIC
         ${THIRD_PARTY_PATH}/superLU_MT/zsp_blas3.c
         )
 
+if (MSVC)
+    target_compile_options(${PROJECT_NAME} PRIVATE /w)
+else ()
+    target_compile_options(${PROJECT_NAME} PRIVATE -w)
+endif ()
+
 set_target_properties(${PROJECT_NAME}
         PROPERTIES
         PREFIX ""
@@ -248,7 +254,7 @@ endif ()
 
 install(TARGETS ${PROJECT_NAME}
         ${FILE_PERMISSIONS}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
+        RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
         COMPONENT Libraries)

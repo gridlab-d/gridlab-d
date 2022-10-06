@@ -1,6 +1,6 @@
-project(optimize)
+SET(GLD_MODULE_NAME optimize)
 
-add_library(${PROJECT_NAME}
+add_library(${GLD_MODULE_NAME}
         init.cpp
         main.cpp
         optimize.h
@@ -8,19 +8,12 @@ add_library(${PROJECT_NAME}
         simple.h
 )
 
-set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
-target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
-target_link_libraries(${PROJECT_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
-
-install(TARGETS ${PROJECT_NAME}
-        ${FILE_PERMISSIONS}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        COMPONENT Libraries)
-
+target_compile_options(${GLD_MODULE_NAME} PRIVATE ${GLD_COMPILE_OPTIONS})
+set_target_properties(${GLD_MODULE_NAME} PROPERTIES PREFIX "")
+target_include_directories(${GLD_MODULE_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
+target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
 if (GLD_USE_CLANG_TIDY)
-    set_target_properties(${PROJECT_NAME} PROPERTIES
+    set_target_properties(${GLD_MODULE_NAME} PROPERTIES
             CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}"
             )
 endif ()

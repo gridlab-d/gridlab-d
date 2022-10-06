@@ -1,4 +1,4 @@
-project(connection)
+SET(GLD_MODULE_NAME connection)
 
 if (GLD_USE_FNCS)
     find_library(GLD_ZMQ_LIBRARY NAMES zmq REQUIRED PATHS ${GLD_ZeroMQ_DIR} $ENV{GLD_ZeroMQ_DIR})
@@ -32,7 +32,7 @@ else ()
     set(HELICS_CONNECTION)
 endif ()
 
-add_library(${PROJECT_NAME}
+add_library(${GLD_MODULE_NAME}
         connection.cpp
         connection.h
         socket.cpp
@@ -65,37 +65,29 @@ add_library(${PROJECT_NAME}
         )
 
 if (FNCS_FOUND)
-    target_link_libraries(${PROJECT_NAME} PRIVATE
-            fncs
+    target_link_libraries(${GLD_MODULE_NAME} PRIVATE
             ${GLD_FNCS_LIBRARIES}
             )
-    target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_FNCS)
+    target_compile_definitions(${GLD_MODULE_NAME} PRIVATE HAVE_FNCS)
 endif ()
 
 if (HELICS_FOUND)
-    target_link_libraries(${PROJECT_NAME} PRIVATE HELICS::helics)
-    target_compile_definitions(${PROJECT_NAME} PRIVATE HAVE_HELICS)
+    target_link_libraries(${GLD_MODULE_NAME} PRIVATE HELICS::helics)
+    target_compile_definitions(${GLD_MODULE_NAME} PRIVATE HAVE_HELICS)
 endif ()
 
-target_include_directories(${PROJECT_NAME} PRIVATE
+target_include_directories(${GLD_MODULE_NAME} PRIVATE
         "${CMAKE_SOURCE_DIR}/third_party/jsoncpp/include"
         )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE jsoncpp_lib)
+target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${JSONCPP_LIB})
 
-set_target_properties(${PROJECT_NAME} PROPERTIES PREFIX "")
-target_include_directories(${PROJECT_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
-target_link_libraries(${PROJECT_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
-
-install(TARGETS ${PROJECT_NAME}
-        ${FILE_PERMISSIONS}
-        RUNTIME DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-        COMPONENT Libraries)
-
+target_compile_options(${GLD_MODULE_NAME} PRIVATE ${GLD_COMPILE_OPTIONS})
+set_target_properties(${GLD_MODULE_NAME} PROPERTIES PREFIX "")
+target_include_directories(${GLD_MODULE_NAME} PRIVATE "${CMAKE_SOURCE_DIR}/gldcore")
+target_link_libraries(${GLD_MODULE_NAME} PRIVATE ${OS_SPECIFIC_LIBRARIES})
 if (GLD_USE_CLANG_TIDY)
-    set_target_properties(${PROJECT_NAME} PROPERTIES
+    set_target_properties(${GLD_MODULE_NAME} PROPERTIES
             CXX_CLANG_TIDY "${CMAKE_CXX_CLANG_TIDY}"
             )
 endif ()
