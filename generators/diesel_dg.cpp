@@ -665,7 +665,7 @@ int diesel_dg::create(void)
 	//Set up the deltamode "next state" tracking variable
 	desired_simulation_mode = SM_EVENT;
 
-	//Deltamode-only changes variables
+	//Deltamode-only changes variables    
 	only_first_init = true;
 	first_init_status = true;
 
