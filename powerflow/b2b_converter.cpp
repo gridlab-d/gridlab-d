@@ -35,7 +35,7 @@ b2bc::b2bc(MODULE *mod) : link_object(mod)
 
 			//PT_double, "rated_motor_speed[1/min]", PADDR(ratedRPM), PT_DESCRIPTION, "Rated speed of the b2bc in RPM. Default = 1800 RPM",
 			//PT_double, "desired_motor_speed[1/min]", PADDR(desiredRPM), PT_DESCRIPTION, "Desired speed of the b2bc In ROM. Default = 1800 RPM (max)",
-			//PT_double, "motor_poles", PADDR(motorPoles), PT_DESCRIPTION, "Number of Motor Poles. Default = 4",
+			//PT_double, "motor_poles", PADDR(motorPoles), PT_DESCRIPTION, "Number of Motor Poles. Default = 4",   
 			PT_double, "rated_output_voltage[V]", PADDR(voltageLLRating), PT_DESCRIPTION, "Line to Line Voltage - b2bc Rated voltage. Default to TO node nominal_voltage",
 			//PT_double, "rated_horse_power[hp]", PADDR(horsePowerRatedb2bc), PT_DESCRIPTION, "Rated Horse Power of the b2bc. Default = 75 HP",
 			PT_double, "nominal_output_frequency[Hz]", PADDR(nominal_output_frequency), PT_DESCRIPTION, "Nominal b2bc output frequency. Default = 60 Hz",
