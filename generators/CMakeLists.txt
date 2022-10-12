@@ -16,7 +16,9 @@ add_library(${GLD_MODULE_NAME}
         inverter.cpp
         inverter.h
         inverter_dyn.cpp
+	inverter_dyn2.cpp
         inverter_dyn.h
+	inverter_dyn2.h
         main.cpp
         rectifier.cpp
         rectifier.h
@@ -26,6 +28,8 @@ add_library(${GLD_MODULE_NAME}
         sync_ctrl.h
         windturb_dg.cpp
         windturb_dg.h
+	cblock.cpp
+	cblock.h
         )
 
 set_target_properties(${GLD_MODULE_NAME} PROPERTIES PREFIX "")

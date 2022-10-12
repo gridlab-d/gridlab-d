@@ -849,7 +849,7 @@ int solar::init(OBJECT *parent)
 			}
 			//gl_verbose("Max_P is : %f", Max_P);
 		}
-		else if (gl_object_isa(parent, "inverter_dyn", "generators")) // SOLAR has a PARENT and PARENT is an inverter_dyn object
+		else if (gl_object_isa(parent, "inverter_dyn", "generators") || gl_object_isa(parent, "inverter_dyn2", "generators")) // SOLAR has a PARENT and PARENT is an inverter_dyn object
 		{
 			//Map the inverter voltage
 			inverter_voltage_property = new gld_property(parent, "V_In");
@@ -1057,7 +1057,7 @@ int solar::init(OBJECT *parent)
 		}
 
 		//Make sure our parent is an inverter and deltamode enabled (otherwise this is dumb)
-		if (gl_object_isa(parent, "inverter", "generators") || gl_object_isa(parent, "inverter_dyn", "generators"))
+		if (gl_object_isa(parent, "inverter", "generators") || gl_object_isa(parent, "inverter_dyn", "generators") || gl_object_isa(parent, "inverter_dyn2", "generators"))
 		{
 			//Make sure our parent has the flag set
 			if ((parent->flags & OF_DELTAMODE) != OF_DELTAMODE)
