@@ -104,7 +104,7 @@ public:
 	double underfrequency_limit; //Maximum positive input limit to PID controller is f0 - underfreuqnecy_limit
 	double overfrequency_limit; // Maximum negative input limit to PID controller is f0 - overfrequency_limit 
 	double deadband; //Deadband for PID controller input in Hz
-
+	double tieline_tol; // Generic tie-line error tolerance in MW
 	double frequency_delta_default; //default delta to nominal frequency
 
 	double B; //frequency bias in MW/Hz

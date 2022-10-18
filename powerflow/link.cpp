@@ -150,6 +150,9 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
 			PT_complex, "fault_current_out_B[A]", PADDR(If_out[1]),PT_DESCRIPTION,"fault current flowing out, phase B",
 			PT_complex, "fault_current_out_C[A]", PADDR(If_out[2]),PT_DESCRIPTION,"fault current flowing out, phase C",
 
+			PT_double, "pdispatch[W]",PADDR(pdispatch.pdispatch),PT_DESCRIPTION,"Scheduled flow from->to in W",
+			PT_double, "pdispatch_offset[W]",PADDR(pdispatch.pdispatch_offset),PT_DESCRIPTION,"Offset to scheduled flow from->to in W",
+
 			PT_complex, "fault_voltage_A[A]", PADDR(Vf_out[0]),PT_DESCRIPTION,"fault voltage, phase A",
 			PT_complex, "fault_voltage_B[A]", PADDR(Vf_out[1]),PT_DESCRIPTION,"fault voltage, phase B",
 			PT_complex, "fault_voltage_C[A]", PADDR(Vf_out[2]),PT_DESCRIPTION,"fault voltage, phase C",
@@ -238,6 +241,9 @@ int link_object::create(void)
 	NR_branch_reference=-1;
 	If_in[0] = If_in[1] = If_in[2] = gld::complex(0,0);
 	If_out[0] = If_out[1] = If_out[2] = gld::complex(0,0);
+
+	pdispatch.pdispatch = 0;
+	pdispatch.pdispatch_offset = 0;
 
 	protect_locations[0] = protect_locations[1] = protect_locations[2] = -1;	//Initalize cleared
 
