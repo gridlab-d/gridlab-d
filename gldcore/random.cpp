@@ -875,7 +875,7 @@ int random_test(void)
 	for (i=0; i<count; i++)
 	{
 		sample[i] = random_degenerate(NULL,a);
-		if (!finite(sample[i]))
+		if (!isfinite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
 	errorcount+=report(NULL,0,0,0);
@@ -893,7 +893,7 @@ int random_test(void)
 	for (i=0; i<count; i++)
 	{
 		sample[i] = random_uniform(NULL,a,b);
-		if (!finite(sample[i]))
+		if (!isfinite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
 	errorcount+=report(NULL,0,0,0);
@@ -910,7 +910,7 @@ int random_test(void)
 	for (i=0; i<count; i++)
 	{
 		sample[i] = random_bernoulli(NULL,a);
-		if (!finite(sample[i]))
+		if (!isfinite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
 	errorcount+=report(NULL,0,0,0.01);
@@ -928,7 +928,7 @@ int random_test(void)
 	for (i=0; i<count; i++)
 	{
 		sample[i] = random_normal(NULL,a,b);
-		if (!finite(sample[i]))
+		if (!isfinite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
 	errorcount+=report(NULL,0,0,0.01);
@@ -943,7 +943,7 @@ int random_test(void)
 	for (i=0; i<count; i++)
 	{
 		sample[i] = random_exponential(NULL,a);
-		if (!finite(sample[i]))
+		if (!isfinite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
 	errorcount+=report(NULL,0,0,0.01);
@@ -960,7 +960,7 @@ int random_test(void)
 	for (i=0; i<count; i++)
 	{
 		sample[i] = random_lognormal(NULL,a,b);
-		if (!finite(sample[i]))
+		if (!isfinite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
 	errorcount+=report(NULL,0,0,0.01);
@@ -977,7 +977,7 @@ int random_test(void)
 	for (i=0; i<count; i++)
 	{
 		sample[i] = random_pareto(NULL,a,b);
-		if (!finite(sample[i]))
+		if (!isfinite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
 	errorcount+=report(NULL,0,0,0.01);
@@ -994,7 +994,7 @@ int random_test(void)
 	for (i=0; i<count; i++)
 	{
 		sample[i] = random_rayleigh(NULL,a);
-		if (!finite(sample[i]))
+		if (!isfinite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
 	errorcount+=report(NULL,0,0,0.01);
@@ -1010,7 +1010,7 @@ int random_test(void)
 	for (i=0; i<count; i++)
 	{
 		sample[i] = random_beta(NULL,a,b);
-		if (!finite(sample[i]))
+		if (!isfinite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
 	errorcount+=report(NULL,0,0,0.01);
@@ -1026,7 +1026,7 @@ int random_test(void)
 	for (i=0; i<count; i++)
 	{
 		sample[i] = random_gamma(NULL,a,b);
-		if (!finite(sample[i]))
+		if (!isfinite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
 	errorcount+=report(NULL,0,0,0.01);
@@ -1042,7 +1042,7 @@ int random_test(void)
 	for (i=0; i<count; i++)
 	{
 		sample[i] = random_triangle(NULL,a,b);
-		if (!finite(sample[i]))
+		if (!isfinite(sample[i]))
 			output_test("Sample %d is not a finite number!",i--);
 	}
 	errorcount+=report(NULL,0,0,0.01);
@@ -1057,7 +1057,7 @@ int random_test(void)
 	{
 		double set[10]={0,1,2,3,4,5,6,7,8,9};
 		sample[i] = random_sampled(NULL,10,set);
-		if (!finite(sample[i]))
+		if (!isfinite(sample[i]))
 			failed++,output_test("Sample %d is not a finite number!",i--);
 	}
 	errorcount+=report(NULL,0,0,0.01);
