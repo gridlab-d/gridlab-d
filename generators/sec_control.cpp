@@ -41,14 +41,19 @@ sec_control::sec_control(MODULE *module)
 
 			//
 			PT_double, "Ts[s]", PADDR(Ts), PT_DESCRIPTION, "Secondary controller sampling period in sec.",
+			PT_double, "Ts_P[s]", PADDR(Ts_P), PT_DESCRIPTION, "Secondary controller input sampling period in sec for unit/tie-line errors.",
+			PT_double, "Ts_f[s]", PADDR(Ts_f), PT_DESCRIPTION, "Secondary controller input sampling period in sec for frequency.",
 			PT_double, "Tlp[s]", PADDR(Tlp_default), PT_DESCRIPTION, "Default low pass time constant for participants in sec. Default is 0, meaning no low pass filter.",
 			//
-			PT_double, "alpha_tol", PADDR(alpha_tol), PT_DESCRIPTION, "Tolerance for participation values not summing to exactly one.",
-			//
 			PT_bool, "sampleflag", PADDR(sampleflag), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Boolean flag whether output should be published or not by secondary controller",
+			PT_bool, "sampleflag_P", PADDR(sampleflag_P), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Boolean flag whether unit error inputs should be sampled",
+			PT_bool, "sampleflag_f", PADDR(sampleflag_f), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Boolean flag whether frequency should be sampled",
 			PT_double, "sample_time", PADDR(sample_time), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Next update time for the secondary controller",
+			PT_double, "sample_P", PADDR(sample_P), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Next update time for sampling unit error values",
+			PT_double, "sample_f", PADDR(sample_f), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Next update time for sampling frequency error",
 			PT_bool, "deadbandflag", PADDR(deadbandflag), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "false=frequency within deadband, true=frequency outside of deadband",
 			PT_bool, "tielineflag", PADDR(tielineflag), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "false=all tie lines within tolerance, true=some tielines outside of tolerance",
+			PT_double, "deltat_pid", PADDR(deltat_pid), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Integration step for PID controller. Minimum of Ts_p and Ts_f",
 			//States
 			PT_double, "perr(t)[MW]", PADDR(curr_state.perr[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Power error in current iteration [MW]",
 			PT_double, "perr(t-1)[MW]", PADDR(curr_state.perr[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Power error in previous timestep [MW]",
@@ -99,7 +104,6 @@ int sec_control::create(void)
 	//flag vlaues to be checked later in init.
 	// These are intended to be IMPOSSIBLE values so that there is no way they
 	// would be set as such via glm
-	alpha_tol = -1.0; //Note: should actually be > 0
 	dp_dn_default = -1.0;  //Note: should actually be > 0
 	dp_up_default = -1.0; //Note: should actually be > 0
 	Tlp_default = -1.0; //Note: should actually be >= dt which is > 0 (or 0 to indicate no low pass filter [default])
@@ -114,6 +118,8 @@ int sec_control::create(void)
 	kiPID = -1.0; //Note: should actually be >= 0
 	kdPID = -1.0; //Note: should actually be >= 0
 	Ts = -1.0; //Note: should actually be >= dt which is > 0
+	Ts_P = -1.0; //Note: should actually be >= dt which is > 0
+	Ts_f = -1.0; //Note: should actually be >= dt which is > 0
 
 	curr_dt = -1.0; // indicates that deltat is not available.
 	anti_windup = FEEDBACK_PIDOUT; //default anti-windup is back-calculation
@@ -204,11 +210,10 @@ int sec_control::init(OBJECT *parent)
 	}
 
 
-	//Ts is not altered here.
+	//Ts,Ts_P, and Ts_f are not altered here.
 	//Reason is, that the default value should be dt, which is not known at this point.
 	//Keeping at -1 is an indication for later that they should be adjusted.
 	//Similarly for dp_dn_default and dp_up_default, we'd like to pick those on an object by object basis, e.g. rating
-	init_check(alpha_tol, -1.0, 0.001);
 	init_check(Tlp_default, -1.0, 0); // zero indicates that it will be ignored
 	init_check(f0, -1.0, 60); 
 	init_check(underfrequency_limit, -1.0, 57.0); 
@@ -234,6 +239,35 @@ void sec_control::init_check(double &var, double ck, double def)
 	if (var == ck) // Not set in GLM so apply default
 	{
 		var = def;
+	}
+}
+
+//Check if sampling time ts is less than dt and if it is set it to another default
+void sec_control::ts_lb_check(double &ts, double dt, double def, const char *name)
+{
+	if (ts < dt)
+	{
+		gl_warning("sec_control: %s = %0.5f < dt = %0.5f. Setting %s = %0.5f", name, ts, dt, name, def);
+		ts = def;
+	}
+}
+
+
+//Determine wheter to pass set point changes on this timestep or not
+// Note: passing changes in this iteration means that those changes will be
+// reflected in curr_time = curr_timestamp_dbl + deltat.
+// For example with t=0 and dt = 0.01 then by the end of this step we will reach t=0.01.
+// If we want to sample at t=0.01 then we need to sample in this pass i.e. at cur_timestamp_dbl+deltat 
+void sec_control::sample_time_update(bool &flag, double &time, double curr_time, double ts)
+{
+	if ((curr_time) >= time)
+	{
+		flag = true;  //sample on this timestep
+		time += ts;   // set next timestep to sample
+	}
+	else
+	{
+		flag = false;
 	}
 }
 
@@ -448,17 +482,25 @@ SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigne
 	if (iteration_count_val == 0) // Predictor pass
 	{
 		// verify the that the sampling timeconstant is set and makes sense
-		init_check(Ts, -1, deltat);
-		if (Ts < deltat) // Ts was specified but is too small
-		{
-			gl_warning("sec_control: Ts = %0.5f < dt = %0.5f. Setting Ts = dt", Ts, deltat);
-			Ts = deltat;
-		}
+		init_check(Ts, -1, deltat); //default sampling is deltat
+		ts_lb_check(Ts, deltat, deltat, "Ts");
+		init_check(Ts_P, -1, Ts); //default for unit error sampling is Ts
+		ts_lb_check(Ts_P, deltat, Ts, "Ts_P"); 
+		init_check(Ts_f, -1, deltat); // default for frequency sampling is deltat
+		ts_lb_check(Ts_f, deltat, deltat, "Ts_f");
+		
+		// get deltat for pid integration, this is the minimum of Ts_f and Ts_P
+		// since this is the rate at which data is updated in the controller
+		deltat_pid = std::min(Ts_f, Ts_P);
+		deltath_pid = deltat_pid/2.0;
+
 		if (delta_time == 0)
 		{
 			// Some initialization on first deltamode pass
 			// These are done here because in pre_deltaupdate we don't have deltat yet.
 			sample_time = curr_timestamp_dbl + Ts;
+			sample_P = curr_timestamp_dbl + Ts_P;
+			sample_f = curr_timestamp_dbl + Ts_f;
 
 			//check participant Tlps
 			for (auto & obj : part_obj)
@@ -470,53 +512,46 @@ SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigne
 		// check whether participation has been altered in any way
 		parse_praticipant_input(participant_input);
 		
-		
-		//Determine wheter to pass set point changes on this timestep or not
-		// Note: passing changes in this iteration means that those changes will be
-		// reflected in time curr_timestamp_dbl + deltat.
-		// For example with t=0 and dt = 0.01 then by the end of this step we will reach t=0.01.
-		// If we want to sample at t=0.01 then we need to sample in this pass i.e. at cur_timestamp_dbl+deltat 
-		if ((curr_timestamp_dbl + deltat) >= sample_time)
-		{
-			sampleflag = true; 	//sample output on this timestep
-			sample_time += Ts;  // set next timestep to sample
-		}
-		else
-		{
-			sampleflag = false;
-		}
+		sample_time_update(sampleflag, sample_time, curr_timestamp_dbl+deltat, Ts); //update output sampling
+		sample_time_update(sampleflag_P, sample_P, curr_timestamp_dbl+deltat, Ts_P);//update unit error sampling
+		sample_time_update(sampleflag_f, sample_f, curr_timestamp_dbl+deltat, Ts_f); //update frequency sampling
 
-		// Get power error (sets curr_state.perr[0], deadbandflag,and tielineflag)
-		get_perr();
-
-		// === PID Controller
-		curr_state.dxi = kiPID*curr_state.perr[0];
-		next_state.xi = curr_state.xi + deltat*curr_state.dxi;
-		switch (anti_windup)
+		// Only process error signals and PID controller if one of the inputs is being sampled
+		if (sampleflag_f || sampleflag_P)
 		{
-		case ZERO_IN_DEADBAND:
-			if (!deadbandflag && !tielineflag)
+			// Get power error (sets curr_state.perr[0], deadbandflag,and tielineflag)
+			get_perr();
+
+			// === PID Controller
+			curr_state.dxi = kiPID*curr_state.perr[0];
+			next_state.xi = curr_state.xi + deltat_pid*curr_state.dxi;
+			switch (anti_windup)
 			{
-				// if frequency is within deadband, reset the integrator
-				next_state.xi = 0;
+			case ZERO_IN_DEADBAND:
+				if (!deadbandflag && !tielineflag)
+				{
+					// if frequency is within deadband, reset the integrator
+					next_state.xi = 0;
+				}
+				break;
+			case FEEDBACK_PIDOUT:
+				// feedback difference between PIDout and actual "actuated" output = PIDout when not sampling and 0 otherwise
+				curr_state.dxi += curr_state.PIDout*(sampleflag * (deadbandflag || tielineflag) - 1);
+				next_state.xi = curr_state.xi + deltat_pid*curr_state.dxi;
+				break;
+			case FEEDBACK_INTEGRATOR:
+				// feedback difference between PIDout and actual "actuated" output (neglecting proportional and derivative paths)
+				curr_state.dxi += curr_state.xi*(sampleflag * (deadbandflag || tielineflag) - 1);
+				next_state.xi = curr_state.xi + deltat_pid*curr_state.dxi;
+				break;
+			default:
+				break;
 			}
-			break;
-		case FEEDBACK_PIDOUT:
-			// feedback difference between PIDout and actual "actuated" output = PIDout when not sampling and 0 otherwise
-			curr_state.dxi += curr_state.PIDout*(sampleflag * (deadbandflag || tielineflag) - 1);
-			next_state.xi = curr_state.xi + deltat*curr_state.dxi;
-			break;
-		case FEEDBACK_INTEGRATOR:
-			// feedback difference between PIDout and actual "actuated" output (neglecting proportional and derivative paths)
-			curr_state.dxi += curr_state.xi*(sampleflag * (deadbandflag || tielineflag) - 1);
-			next_state.xi = curr_state.xi + deltat*curr_state.dxi;
-			break;
-		default:
-			break;
+			next_state.PIDout = next_state.xi + (kpPID + kdPID/deltat_pid)*curr_state.perr[0] - kdPID/deltat_pid*curr_state.perr[1];
+			//=== End PID controller
 		}
-		next_state.PIDout = next_state.xi + (kpPID + kdPID/deltat)*curr_state.perr[0] - kdPID/deltat*curr_state.perr[1];
-		//=== End PID controller
 		
+		// Output sampling
 		if (sampleflag && (deadbandflag || tielineflag))
 		{
 			next_state.dP = next_state.PIDout; // Update output to participants
@@ -559,38 +594,43 @@ SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigne
 	}
 	else if (iteration_count_val == 1) // corrector pass
 	{
-		// Get power error (sets curr_state.perr[0] and deadbandflag)
-		get_perr();
-		
-		//=== PID Controller
-		next_state.dxi = kiPID*curr_state.perr[0];
-		next_state.xi = curr_state.xi + deltath*(curr_state.dxi + next_state.dxi);
-		switch (anti_windup)
+		// Only process error signals and PID controller if one of the inputs is being sampled
+		if (sampleflag_f || sampleflag_P)
 		{
-		case ZERO_IN_DEADBAND:
-			if (!deadbandflag && !tielineflag)
+			// Get power error (sets curr_state.perr[0] and deadbandflag)
+			get_perr();
+			
+			//=== PID Controller
+			next_state.dxi = kiPID*curr_state.perr[0];
+			next_state.xi = curr_state.xi + deltath_pid*(curr_state.dxi + next_state.dxi);
+			switch (anti_windup)
 			{
-				// if frequency is within deadband, reset the integrator
-				next_state.xi = 0;
+			case ZERO_IN_DEADBAND:
+				if (!deadbandflag && !tielineflag)
+				{
+					// if frequency is within deadband, reset the integrator
+					next_state.xi = 0;
+				}
+				break;
+			case FEEDBACK_PIDOUT:
+				// feedback difference between PIDout and actual "actuated" output
+				next_state.dxi += curr_state.PIDout*(sampleflag * (deadbandflag || tielineflag) - 1);
+				next_state.xi = curr_state.xi + deltath_pid*(curr_state.dxi + next_state.dxi);
+				break;
+			case FEEDBACK_INTEGRATOR:
+				// feedback difference between PIDout and actual "actuated" output (neglecting proportional and derivative paths)
+				next_state.dxi += curr_state.xi*(sampleflag * (deadbandflag || tielineflag) - 1);
+				next_state.xi = curr_state.xi + deltath_pid*(curr_state.dxi + next_state.dxi);
+				break;
+			default:
+				break;
 			}
-			break;
-		case FEEDBACK_PIDOUT:
-			// feedback difference between PIDout and actual "actuated" output
-			next_state.dxi += curr_state.PIDout*(sampleflag * (deadbandflag || tielineflag) - 1);
-			next_state.xi = curr_state.xi + deltath*(curr_state.dxi + next_state.dxi);
-			break;
-		case FEEDBACK_INTEGRATOR:
-			// feedback difference between PIDout and actual "actuated" output (neglecting proportional and derivative paths)
-			next_state.dxi += curr_state.xi*(sampleflag * (deadbandflag || tielineflag) - 1);
-			next_state.xi = curr_state.xi + deltath*(curr_state.dxi + next_state.dxi);
-			break;
-		default:
-			break;
+			next_state.PIDout = next_state.xi + (kpPID + kdPID/deltat_pid)*curr_state.perr[0] - kdPID/deltat_pid*curr_state.perr[1];
+			//=== End PID controller
 		}
-		next_state.PIDout = next_state.xi + (kpPID + kdPID/deltat)*curr_state.perr[0] - kdPID/deltat*curr_state.perr[1];
-		//=== End PID controller
-		
-		if (sampleflag && deadbandflag)
+
+		// Output sampling
+		if (sampleflag && (deadbandflag || tielineflag))
 		{
 			next_state.dP = next_state.PIDout;
 		}
@@ -658,9 +698,20 @@ SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigne
 		// store in case of further iterations
 		prev_simmode_return_value = simmode_return_value;
 
-		// State update for next timestep
-		next_state.perr[1] = curr_state.perr[0]; //cycle power error state values
-		memcpy(&curr_state, &next_state, sizeof(SEC_CNTRL_STATE));
+		// only update state on input sampling instances, othewise, state is not updated.
+		if (sampleflag_f || sampleflag_P)
+		{
+			// State update for next timestep
+			next_state.perr[1] = curr_state.perr[0]; //cycle power error state values
+			memcpy(&curr_state, &next_state, sizeof(SEC_CNTRL_STATE));
+		}
+		else if (sampleflag)
+		{
+			// in case output and input sample don't align we need to make sure
+			// that the output signal, dP, remains consistant
+			curr_state.dP = next_state.dP;
+		}
+		
 	}
 	else
 	{
@@ -723,55 +774,60 @@ void sec_control::update_pdisp(SEC_CNTRL_PARTICIPANT & obj, double val)
 // Functinalized since identical for any pass.
 void sec_control::get_perr(void)
 {
-	if (overfrequency_limit < f0)
+	if (sampleflag_f) //only update delta f if sampling
 	{
-		gl_warning("sec_control: overfrequency_limit (%0.3f Hz) is SMALLER than nominal (%0.3f Hz). Setting to default (%0.3f Hz)", overfrequency_limit, f0, f0+frequency_delta_default);
-		overfrequency_limit = f0 + frequency_delta_default;
-	}
-	if (underfrequency_limit > f0)
-	{
-		gl_warning("sec_control: under (%0.3f Hz) is GREATER than nominal (%0.3f Hz). Setting to default (%0.3f Hz)", overfrequency_limit, f0, f0-frequency_delta_default);
-		overfrequency_limit = f0 - frequency_delta_default;
-	}
-	
-	fmeas = pFrequency->get_double(); //pull current frequency from parent node
-	double deltaf = f0 - fmeas; // frequency error [Hz] 
-	if (deltaf > (f0 - underfrequency_limit)) // limit maximum positive deviation (underfrequency)
-	{
-		deltaf = f0 - underfrequency_limit;
-	}
-	else if (deltaf < (f0 - overfrequency_limit)) //limit maximum negative deviation (overfrequency)
-	{
-		deltaf = f0 - overfrequency_limit;
-	}
-	else if (abs(deltaf) < deadband) //frequency is within deadband
-	{
-		deltaf = 0;
-	}
-	deadbandflag = abs(deltaf) > deadband;
-
-	double uniterr = 0;
-	double pset = 0;
-	double pout = 0;
-	tielineflag = false; //initialize to no tie-line violations
-	// iterate over participating objects and calculate difference 
-	// between desired output and current output
-	for (auto & obj : part_obj){
-		if (gl_object_isa(obj.ptr, "link_object", "powerflow"))
+		if (overfrequency_limit < f0)
 		{
-			uniterr += get_tieline_error(obj);
+			gl_warning("sec_control: overfrequency_limit (%0.3f Hz) is SMALLER than nominal (%0.3f Hz). Setting to default (%0.3f Hz)", overfrequency_limit, f0, f0+frequency_delta_default);
+			overfrequency_limit = f0 + frequency_delta_default;
 		}
-		else
+		if (underfrequency_limit > f0)
 		{
-			pset = (obj.pdisp->get_double() + obj.poffset->get_double())*obj.rate; // get current set point in units!
-			pout = get_pelec(obj); // get current output
-			uniterr += (pset - pout);
+			gl_warning("sec_control: under (%0.3f Hz) is GREATER than nominal (%0.3f Hz). Setting to default (%0.3f Hz)", overfrequency_limit, f0, f0-frequency_delta_default);
+			overfrequency_limit = f0 - frequency_delta_default;
 		}
+		
+		fmeas = pFrequency->get_double(); //pull current frequency from parent node
+		double deltaf = f0 - fmeas; // frequency error [Hz] 
+		if (deltaf > (f0 - underfrequency_limit)) // limit maximum positive deviation (underfrequency)
+		{
+			deltaf = f0 - underfrequency_limit;
+		}
+		else if (deltaf < (f0 - overfrequency_limit)) //limit maximum negative deviation (overfrequency)
+		{
+			deltaf = f0 - overfrequency_limit;
+		}
+		else if (abs(deltaf) < deadband) //frequency is within deadband
+		{
+			deltaf = 0;
+		}
+		deadbandflag = abs(deltaf) > deadband;
+		next_state.deltaf = deltaf;  //saving in case sample_P and sample_f don't coincide
 	}
-	next_state.uniterr = uniterr; //saving, mainly for debugging reasons
-	next_state.deltaf = deltaf;  //saving, mainly for debugging reasons
+	if (sampleflag_P) //only update unit error if sampling
+	{
+		double uniterr = 0;
+		double pset = 0;
+		double pout = 0;
+		tielineflag = false; //initialize to no tie-line violations
+		// iterate over participating objects and calculate difference 
+		// between desired output and current output
+		for (auto & obj : part_obj){
+			if (gl_object_isa(obj.ptr, "link_object", "powerflow"))
+			{
+				uniterr += get_tieline_error(obj);
+			}
+			else
+			{
+				pset = (obj.pdisp->get_double() + obj.poffset->get_double())*obj.rate; // get current set point in units!
+				pout = get_pelec(obj); // get current output
+				uniterr += (pset - pout);
+			}
+		}
+		next_state.uniterr = uniterr; //saving in case sample_P and sample_f don't coincide
+	}
 	//the power error is the frequency error times bias *minus* the total production error.
-	curr_state.perr[0] = deltaf*B - uniterr;
+	curr_state.perr[0] = next_state.deltaf*B - next_state.uniterr;
 }
 
 //Get the flow error on tie-lines considering allowable tolerances
@@ -779,7 +835,7 @@ double sec_control::get_tieline_error(SEC_CNTRL_PARTICIPANT &obj)
 {
 	double pset = (obj.pdisp->get_double() + obj.poffset->get_double()) * 1e-6; //set point in MW
 	double pout = get_pelec(obj); //current flow in MW (avg of in and out)
-	double d = pset != 0 ? pset : pout; // denominator is pset unless that is 0, then we use pout
+	double d = (pset != 0) ? pset : pout; // denominator is pset unless that is 0, then we use pout
 	double out;
 	if (((pset - pout) <= (obj.pmax*d)) && ((pset - pout) >= (obj.pmin*d)))
 	{
@@ -795,23 +851,6 @@ double sec_control::get_tieline_error(SEC_CNTRL_PARTICIPANT &obj)
 	}
 	return out;
 }
-
-//Verify that participation factors sum to 1.
-STATUS sec_control::check_alpha(void)
-{	
-	double asum = 0; //alpha accumulator
-	for (auto & obj : part_obj){
-		asum += obj.alpha;
-	}
-	if (abs(asum - 1) <= alpha_tol)
-	{
-		return SUCCESS; // alphas sum to 1 (within tolerance)
-	}
-	else
-	{
-		return FAILED;
-	}
-} 
 
 
 //Module-level post update call
@@ -1074,15 +1113,15 @@ void sec_control::add_obj(std::vector<std::string> &vals)
 		// ==== tie-line options ========
 		tmp.rate = 1; //not uses for links. 1 so that any units-to-pu conversions will not do anything
 		// pmax/dp_up and pmin/dp_dn are used as deadband values for the tie-lines.
-		tmp.pmax = tieline_tol; // upper tolerance in p.u. (pset-pactual)/pset <= pmax
-		tmp.pmin = -tieline_tol; // lower tolerance in p.u. (pset - pactual)/pset >= pmin
-		//calculate initial dp_up/dp_dn but we won't really use them
-		tmp.dp_dn = tmp.pmin * (obj.pdisp->get_double() + obj.poffset->get_double()) * 1e-6; //Tie line tolerance in MW, lower magnitude
-		tmp.dp_up = tmp.pmax * (obj.pdisp->get_double() + obj.poffset->get_double()) * 1e-6; //Tie line tolerance in MW, higher magnitude
+		tmp.pmax = tieline_tol; // positive tolerance in p.u. (pset-pactual)/pset <= pmax
+		tmp.pmin = -tieline_tol; // negative tolerance in p.u. (pset - pactual)/pset >= pmin
+		//calculate initial dp_up/dp_dn. these are currently NOT USED!!!
+		tmp.dp_dn = tmp.pmin * (tmp.pdisp->get_double() + tmp.poffset->get_double()) * 1e-6; //Tie line tolerance in MW, lower magnitude
+		tmp.dp_up = tmp.pmax * (tmp.pdisp->get_double() + tmp.poffset->get_double()) * 1e-6; //Tie line tolerance in MW, higher magnitude
 	}// END link_object specific
 	else
 	{
-		GL_THROW("sec_control: currently only diesel_dg and inverter_dyn objects supported. For object %s.", tmp.ptr->name);
+		GL_THROW("sec_control: currently only diesel_dg, inverter_dyn and link_object objects supported. For object %s.", tmp.ptr->name);
 		/*  TROUBLESHOOT
 		The secondary controller object is currently only able to interact with generator objects
 		of type diese_dg and inverter_dyn. More objects might be added in the future.

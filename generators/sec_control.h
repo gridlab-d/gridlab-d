@@ -83,9 +83,14 @@ private:
 	
 	// Sampling
 	bool sampleflag; //Boolean flag whether outputs should be published or not
+	bool sampleflag_P; //Boolean flag whether unit error inputs should be sampled
+	bool sampleflag_f; //Boolean flag whether frequency should be sampled
 	double sample_time; //Secondary control should post a new update at this time
+	double sample_P; //Secondary control should sample unit error values at this time
+	double sample_f; //Secondary control should sample frequency at this time
 	bool deadbandflag; // false=frequency within deadband, true=frequency outside of deadband 
-
+	bool tielineflag; // false=all tie lines within tolerance, true=some tielines outside of tolerance
+	
 	double curr_dt; //Stores current deltamode deltat value OR -1 if not available
 	double qsts_time; //if the current time is greater than this time then we can switch to delta mode. -1 indicates unset.
 	bool deltaf_flag; // indicates that a non zero deltaf has been detedted at some poin in this deltamode run.
@@ -97,14 +102,12 @@ public:
 	double dp_up_default; // Default maximum allowable change to setpoint - upward direction
 	double Tlp_default; // Default low pass time filter time constant in sec.
 
-	double alpha_tol; //tolerance for participations values not summing to one.
-
 	/* Input to PID controller */
 	double f0; // Nominal frequency in Hz (default is 60 Hz)
 	double underfrequency_limit; //Maximum positive input limit to PID controller is f0 - underfreuqnecy_limit
 	double overfrequency_limit; // Maximum negative input limit to PID controller is f0 - overfrequency_limit 
 	double deadband; //Deadband for PID controller input in Hz
-	double tieline_tol; // Generic tie-line error tolerance in MW
+	double tieline_tol; // Generic tie-line error tolerance in p.u. (w.r.t set-point)
 	double frequency_delta_default; //default delta to nominal frequency
 
 	double B; //frequency bias in MW/Hz
@@ -123,7 +126,10 @@ public:
 	enumeration anti_windup; //windup handling for integrator
 
 	double Ts; //Sampling interval in sec (should be >= dt)
-
+	double Ts_P; //Sampling interval in sec for unit/tie-line errors (should be >= dt)
+	double Ts_f; //Sampling interval in sec for frequency (should be >= dt)
+	double deltat_pid; //Minimum of Ts_p and Ts_f in seconds. Integration step for PID contorller.
+	double deltath_pid; //deltat_pid/2 for corrector pass.
 	SEC_CNTRL_STATE curr_state; //current state variables
 	SEC_CNTRL_STATE next_state; //next state variables
 	
@@ -140,9 +146,11 @@ public:
 	void participant_tlp_check(SEC_CNTRL_PARTICIPANT *);
 	void participant_tlp_check(SEC_CNTRL_PARTICIPANT &);
 	void get_perr(void);
-	STATUS check_alpha(void);
+	void ts_lb_check(double&, double, double, const char *name);
+	void sample_time_update(bool&, double&, double, double);
 	void update_pdisp(SEC_CNTRL_PARTICIPANT &, double);
 	double get_pelec(SEC_CNTRL_PARTICIPANT &obj);
+	double get_tieline_error(SEC_CNTRL_PARTICIPANT &obj);
 
 
 	/* parsing functions */
