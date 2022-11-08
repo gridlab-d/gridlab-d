@@ -45,7 +45,7 @@ double Cblock::getderivative(double x, double u)
   return p_A[0]*x + p_B[0]*u;
 }
 
-double Cblock::updatestate(double u,double dt,double xmin,double xmax,DeltaModeStage stage)
+double Cblock::updatestate(double u,double dt,double xmin,double xmax,Deltamodestage stage)
 {
   double xout,dx_dt;
 
@@ -66,7 +66,7 @@ double Cblock::updatestate(double u,double dt,double xmin,double xmax,DeltaModeS
   return xout;
 }
 
-double Cblock::updatestate(double u,double dt,DeltaModeStage stage)
+double Cblock::updatestate(double u,double dt,Deltamodestage stage)
 {
   double xout;
 
@@ -75,7 +75,7 @@ double Cblock::updatestate(double u,double dt,DeltaModeStage stage)
   return xout;
 }
 
-double Cblock::getoutput(double u,double dt,double xmin,double xmax,double ymin,double ymax,DeltaModeStage stage)
+double Cblock::getoutput(double u,double dt,double xmin,double xmax,double ymin,double ymax,Deltamodestage stage)
 {
   double x,y;
 
@@ -88,7 +88,7 @@ double Cblock::getoutput(double u,double dt,double xmin,double xmax,double ymin,
   return y;
 }
 
-double Cblock::getoutput(double u,double dt,DeltaModeStage stage)
+double Cblock::getoutput(double u,double dt,Deltamodestage stage)
 {
   double y;
 
@@ -107,7 +107,34 @@ void Cblock::init(double u, double y)
   }
 }
 
-double Cblock::getstate(DeltaModeStage stage)
+double Cblock::init_given_u(double u)
+{
+  double y;
+  if(fabs(p_B[0]) < 1e-10) {
+    x[0] = 0;
+    y = p_C[0]*x[0] + p_D[0]*u;
+  } else {
+    x[0] = -p_B[0]/p_A[0]*u;
+    y    = p_C[0]*x[0] + p_D[0]*u;
+  }
+  return y;
+}
+
+double Cblock::init_given_y(double y)
+{
+  double u;
+  if(fabs(p_A[0]) < 1e-10) {
+    u = 0;
+    x[0] = y;
+  } else {
+    u = y/(p_D[0] - p_C[0]*p_B[0]/p_A[0]);
+    x[0] = -p_B[0]/p_A[0]*u;
+  }
+  return u;
+}
+
+
+double Cblock::getstate(Deltamodestage stage)
 {
   double xout;
   if(stage == PREDICTOR) xout = p_xhat[0];
@@ -160,18 +187,18 @@ Filter::Filter(void)
   setylimits(-1000.0,1000.0);
 }
 
-void Filter::setparams(double T)
+void Filter::setparams(double K,double T)
 {
   double a[2],b[2];
 
   // Parameters for state-space representation
   // Transfer funtion is
-  // 1/(1 + sT)
+  // K/(1 + sT)
   // In standard form, this will be
-  // (s*0 + 1)/(sT + 1)
+  // (s*0 + K)/(sT + 1)
 
   b[0] = 0;
-  b[1] = 1;
+  b[1] = K;
   a[0] = T;
   a[1] = 1;
 
@@ -180,12 +207,61 @@ void Filter::setparams(double T)
   setylimits(-1000.0,1000.0);
 }
 
-void Filter::setparams(double T,double xmin,double xmax,double ymin,double ymax)
+void Filter::setparams(double T)
 {
-  setparams(T);
+  setparams(1.0,T);
+}
+
+void Filter::setparams(double K,double T,double xmin,double xmax,double ymin,double ymax)
+{
+  setparams(K,T);
   setxlimits(xmin,xmax);
   setylimits(ymin,ymax);
 }
+
+void Filter::setparams(double T,double xmin,double xmax,double ymin,double ymax)
+{
+  setparams(1.0,T);
+  setxlimits(xmin,xmax);
+  setylimits(ymin,ymax);
+}
+
+
+// ------------------------------------
+// Lead lag
+// ------------------------------------
+
+LeadLag::LeadLag(void)
+{
+  setxlimits(-1000.0,1000.0);
+  setylimits(-1000.0,1000.0);
+}
+
+void LeadLag::setparams(double TA,double TB)
+{
+  double a[2],b[2];
+
+  // Parameters for state-space representation
+  // Transfer funtion is
+  // (1 + sTA)/(1 + sTB)
+
+  b[0] = TA;
+  b[1] = 1;
+  a[0] = TB;
+  a[1] = 1;
+
+  setcoeffs(a,b);
+  setxlimits(-1000.0,1000.0);
+  setylimits(-1000.0,1000.0);
+}
+
+void LeadLag::setparams(double TA,double TB,double xmin,double xmax,double ymin,double ymax)
+{
+  setparams(TA,TB);
+  setxlimits(xmin,xmax);
+  setylimits(ymin,ymax);
+}
+
 
 // ------------------------------------
 // Integrator

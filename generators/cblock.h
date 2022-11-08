@@ -11,14 +11,14 @@
 #include <algorithm>
 
 /**
-  DELTAMODESTAGE - Stage in Delta mode calculation
+  DELTAMODESTAGE - Stage in integration
 
-  Enum to specify delta mode calculation stage.
+  Enum to specify Integration calculation stage.
 */
 typedef enum {
   PREDICTOR, // Predictor update
   CORRECTOR  // Corrector update
-}DeltaModeStage;
+}Deltamodestage;
 
 
 /*
@@ -90,7 +90,7 @@ class Cblock
      Inputs:
        u               Input to the control block
        dt              Integration time-step
-       DeltaModeStage  Stage of delta mode calculation, PREDICTOR or CORRECTOR
+       Deltamodestage  Stage of integration mode calculation, PREDICTOR or CORRECTOR
 
      Output:
        x               Control state variable
@@ -110,7 +110,7 @@ class Cblock
     Note here that GridLab-D does a network solve after every predictor/corrector
     call. So, during the corrector stage the input u is updated (u_{n+1}) 
   **/
-  double updatestate(double u, double dt,DeltaModeStage stage);
+  double updatestate(double u, double dt,Deltamodestage stage);
 
   /**
      UPDATESTATE - Update linear control block state variable enforcing limits
@@ -120,7 +120,7 @@ class Cblock
        dt              Integration time-step
        xmin            Min. limiter for state x
        xmax            Max. limiter for state x
-       DeltaModeStage  Stage of delta mode calculation, PREDICTOR or CORRECTOR
+       Deltamodestage  Stage of integration mode calculation, PREDICTOR or CORRECTOR
 
      Output:
        x               Control state variable
@@ -143,7 +143,7 @@ class Cblock
     Note here that GridLab-D does a network solve after every predictor/corrector
     call. So, during the corrector stage the input u is updated (u_{n+1}) 
   **/
-  double updatestate(double u, double dt,double xmin, double xmax, DeltaModeStage stage);
+  double updatestate(double u, double dt,double xmin, double xmax, Deltamodestage stage);
 
   /**
      GETDERIVATIVE - Returns the time derivative of the linear control block state variable
@@ -213,12 +213,32 @@ class Cblock
   void init(double u, double y);
 
   /**
+     INIT_GIVEN_U - Initializes the control block - calculates x[0] given input u
+
+     Inputs:
+       u           Control block input u
+     Outputs:
+       y           Expected output for the control block given the input u
+  **/
+  double init_given_u(double u);
+
+  /**
+     INIT_GIVEN_Y - Initializes the control block - calculates x[0] given output y
+
+     Inputs:
+       y           Control block output y
+     Outputs:
+       u           Expected input for the control block given the output y
+  **/
+  double init_given_y(double y);
+
+  /**
      GETOUPUT - Returns output y of the control block
 
      Inputs:
        u               Input to the control block
        dt              Integration time-step
-       DeltaModeStage  Stage of delta mode calculation, PREDICTOR or CORRECTOR
+       Deltamodestage  Stage of integration mode calculation, PREDICTOR or CORRECTOR
 
      Output:
        y               Control block output
@@ -234,7 +254,7 @@ class Cblock
     Note here that GridLab-D does a network solve after every predictor/corrector
     call. So, during the corrector stage the input u is updated (u_{n+1}) 
   **/
-  double getoutput(double u,double dt,DeltaModeStage stage);
+  double getoutput(double u,double dt,Deltamodestage stage);
 
   /**
      GETOUTPUT - Returns control block output y enforcing limits on state and output.
@@ -246,7 +266,7 @@ class Cblock
        xmax            Max. limit for state variable
        ymin            Min. limit for output y
        ymax            Max. limit for output y
-       DeltaModeStage  Stage of delta mode calculation, PREDICTOR or CORRECTOR
+       Deltamodestage  Stage of integration mode calculation, PREDICTOR or CORRECTOR
 
      Output:
        y               Control block output
@@ -266,18 +286,18 @@ class Cblock
     Note here that GridLab-D does a network solve after every predictor/corrector
     call. So, during the corrector stage the input u is updated (u_{n+1}) 
   **/
-  double getoutput(double u,double dt,double xmin, double xmax, double ymin, double ymax, DeltaModeStage stage);
+  double getoutput(double u,double dt,double xmin, double xmax, double ymin, double ymax, Deltamodestage stage);
 
   /**
      GETSTATE - Returns the internal state variable x for the control block
 
      Input:
-       stage          Stage of delta mode calculation, PREDICTOR or CORRECTOR
+       stage          Stage of integration mode calculation, PREDICTOR or CORRECTOR
 
      Output:
        x              Control block state variable
   **/
-  double getstate(DeltaModeStage stage);
+  double getstate(Deltamodestage stage);
 
   ~Cblock(void);
 };
@@ -338,6 +358,62 @@ class PIControl: public Cblock
 };
 
 /*
+  Lead lag control block:
+  input  : u 
+  output : y
+  state  : x (integrator)
+      
+                 xmax
+                ----
+               /             ymax
+              /             -----
+        -------------      /
+        | 1 + sTA   |     /
+  u ----| --------  |----------- y
+        | 1 + sTB   |    /
+        -------------   /
+             /       ---
+            /        ymin
+        ----
+        xmin
+
+   Differential equation:
+       dx_dt = (-1/TB)*x + (1 - TA)*u/TB
+
+   Output:
+    y = x + TA/TB*u,  ymin <= y <= ymax
+
+*/
+class LeadLag: public Cblock
+{
+ public:
+  LeadLag();
+
+  /**
+     SETPARAMS - Set the lead lag time constants
+
+     INPUTS:
+       TA         Denominator time constant
+       TB         Numerator time constant
+  **/
+  void setparams(double TA, double TB);
+
+  /**
+     SETPARAMS - Set the Lead lag controller gains and limits
+
+     INPUTS:
+       TA         Denominator time constant
+       TB         Numerator time constant
+       xmin       Min. limit for state variable
+       xmax       Max. limit for state variable
+       ymin       Min. limit for output y
+       ymax       Max. limit for output y
+  **/
+  void setparams(double TA, double TB,double xmin,double xmax,double ymin,double ymax);
+};
+
+
+/*
   Filter block:
   input  : u 
   output : y
@@ -348,7 +424,7 @@ class PIControl: public Cblock
                /             ymax
               /             -----
         -------------      /
-        |    1      |     /
+        |    K      |     /
   u ----| -------   |----------- y
         |  1 + sT   |    /
         -------------   /
@@ -358,7 +434,7 @@ class PIControl: public Cblock
         xmin
 
    Differential equation:
-       dx_dt = (u - x)/T
+       dx_dt = (Ku - x)/T
 
    Output:
     y = x,  ymin <= y <= ymax
@@ -368,8 +444,8 @@ class Filter: public Cblock
 {
  public:
   Filter();
-  Filter(double T);
-  Filter(double T, double xmin, double xmax,double ymin, double ymax);
+  Filter(double K,double T);
+  Filter(double K,double T, double xmin, double xmax,double ymin, double ymax);
 
   /**
      SETPARAMS - Set the filter time constant
@@ -378,6 +454,28 @@ class Filter: public Cblock
        T         Filter time constant
   **/
   void setparams(double T);
+
+  /**
+     SETPARAMS - Set the filter gain and time constant
+
+     INPUTS:
+       K         Filter time constant
+       T         Filter time constant
+  **/
+  void setparams(double K, double T);
+
+  /**
+     SETPARAMS - Set the filter gain, time constant and limits
+
+     INPUTS:
+       K          Filter gain
+       T          Filter time constant
+       xmin       Min. limit for state variable
+       xmax       Max. limit for state variable
+       ymin       Min. limit for output y
+       ymax       Max. limit for output y
+  **/
+  void setparams(double K,double T,double xmin,double xmax,double ymin,double ymax);
 
   /**
      SETPARAMS - Set the filter time constant and limits
@@ -391,6 +489,7 @@ class Filter: public Cblock
   **/
   void setparams(double T,double xmin,double xmax,double ymin,double ymax);
 };
+
 
 /*
   Integrator block:
