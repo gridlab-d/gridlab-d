@@ -271,6 +271,27 @@ Integrator::Integrator(void)
 {
 }
 
+void Integrator::setparams(double T,double xmin, double xmax,double ymin, double ymax)
+{
+  double a[2],b[2];
+
+  // Parameters for state-space representation
+  // Transfer funtion is
+  // 1/(sT)
+  // In standard form, this will be
+  // (s*0 + 1)/(sT + 0)
+
+  b[0] = 0;
+  b[1] = 1;
+  a[0] = T;
+  a[1] = 0;
+
+  setcoeffs(a,b);
+  setxlimits(xmin,xmax);
+  setylimits(ymin,ymax);
+}
+
+
 void Integrator::setparams(double T)
 {
   double a[2],b[2];
@@ -290,5 +311,7 @@ void Integrator::setparams(double T)
   setxlimits(-1000.0,1000.0);
   setylimits(-1000.0,1000.0);
 }
+
+
 
 

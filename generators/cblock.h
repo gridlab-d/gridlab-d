@@ -497,13 +497,20 @@ class Filter: public Cblock
   output : y
   state  : x
                          
-                           
-        -------------      
-        |    1      |     
+
+                 xmax
+                ----
+               /             ymax
+              /             -----
+        -------------      /
+        |    1      |     /
   u ----| -------   |----------- y
-        |   sT      |    
-        -------------   
-             
+        |    sT     |    /
+        -------------   /
+             /       ---
+            /        ymin
+        ----
+        xmin
               
    Differential equation:
        dx_dt = u
@@ -524,6 +531,19 @@ class Integrator: public Cblock
        T         Integrator time constant
   **/
   void setparams(double T);
+
+  /**
+     SETPARAMS - Set the filter time constant and limits
+
+     INPUTS:
+       T          Filter time constant
+       xmin       Min. limit for state variable
+       xmax       Max. limit for state variable
+       ymin       Min. limit for output y
+       ymax       Max. limit for output y
+  **/
+  void setparams(double T,double xmin,double xmax,double ymin,double ymax);
+
 };
 
 
