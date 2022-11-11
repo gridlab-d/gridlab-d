@@ -16,9 +16,7 @@ add_library(${GLD_MODULE_NAME}
         inverter.cpp
         inverter.h
         inverter_dyn.cpp
-	inverter_dyn2.cpp
         inverter_dyn.h
-	inverter_dyn2.h
         main.cpp
         rectifier.cpp
         rectifier.h
