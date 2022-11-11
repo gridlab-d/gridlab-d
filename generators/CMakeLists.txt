@@ -26,6 +26,8 @@ add_library(${GLD_MODULE_NAME}
         sync_ctrl.h
         windturb_dg.cpp
         windturb_dg.h
+	cblock.cpp
+	cblock.h
         )
 
 set_target_properties(${GLD_MODULE_NAME} PROPERTIES PREFIX "")
