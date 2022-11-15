@@ -5,6 +5,9 @@ REM @GENFILE_WARNING@
 REM local variables
 SETLOCAL
 
+set bat_path=%~dp0
+set PATH=%PATH%;%bat_path%
+
 set CXXFLAGS="@GLD_COMPILE_OPTIONS@"
 
 IF "%1"=="" GOTO NO_ARGS
