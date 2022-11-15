@@ -549,7 +549,7 @@ static int modhelp(int argc, char *argv[])
 						KEYWORD *key;
 						printf("\t%s {", proptype);
 						for (key=prop->keywords; key!=NULL; key=key->next)
-							printf("%s=%ld%s", key->name, key->value, key->next==NULL?"":", ");
+							printf("%s=%lld%s", key->name, key->value, key->next==NULL?"":", ");
 						printf("} %s;", strrchr(prop->name,':')+1);
 					} 
 					else 

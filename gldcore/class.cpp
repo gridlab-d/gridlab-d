@@ -262,7 +262,7 @@ PROPERTY *class_add_extended_property(CLASS *oclass,      /**< the class to whic
 		if (unit)
 			pUnit = unit_find(unit);
 	} catch (char *msg) {
-		// will get picked up later
+        output_warning("An error occurred while adding extended property %s to class %s, error: %s", name, oclass->name, msg);
 	};
 
 	if (prop==NULL)

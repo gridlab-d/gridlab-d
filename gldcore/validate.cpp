@@ -843,18 +843,13 @@ int validate(int argc, char *argv[])
 	int n_procs = global_threadcount;
 	if ( n_procs==0 ) n_procs = processor_count();
 	n_procs = fmin(final.get_tested(),(unsigned)n_procs);
-	pthread_t *pid = new pthread_t[n_procs];
+    auto threadpool = std::make_unique<cpp_threadpool>(n_procs);
 	output_debug("starting validation with cmdargs '%s' using %d threads", validate_cmdargs, n_procs);
 	for ( i=0 ; i<n_procs ; i++ )
-		pthread_create(&pid[i],NULL,run_test_proc,(void*)i);
+        threadpool->add_job([i]() -> void { run_test_proc((void *) i); });
 	void *rc;
 	output_debug("begin waiting process");
-	for ( i=0 ; i<n_procs ; i++ )
-	{
-		pthread_join(pid[i],&rc);
-		output_debug("process %d done", i);
-	}
-	delete [] pid;
+    threadpool->await();
 	final.print();
 	double dt = (double)exec_clock()/global_ms_per_second;
 	output_message("Total validation elapsed time: %.1f seconds", dt);

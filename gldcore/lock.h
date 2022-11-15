@@ -9,6 +9,11 @@
 extern "C" {
 #endif
 
+extern unsigned long long rlock_count;
+extern unsigned long long rlock_spin;
+extern unsigned long long wlock_count;
+extern unsigned long long wlock_spin;
+
 void rlock(unsigned int *lock);
 void wlock(unsigned int *lock);
 void runlock(unsigned int *lock);

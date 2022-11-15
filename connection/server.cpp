@@ -100,20 +100,24 @@ int server::init(void)
 			status = READY;
 
 		// start handler
-		if ( pthread_create(&handler,NULL,tcp_handler,(void*)this)!=0 )
-		{
+        try {
+            handler = std::thread(tcp_handler, (void*)this);
+        }
+        catch (std::system_error &ex) {
 			gl_error("%s: unable to start tcp handler", local.get_saddr());
-			return 0;
-		}
+            return 0;
+        }
 	}
 	else if ( type==SOCK_DGRAM )
 	{
 		status = READY;
-		if ( pthread_create(&handler,NULL,udp_handler,(void*)this)!=0 )
-		{
-			gl_error("%s: unable to start udp handler", local.get_saddr());
-			return 0;
-		}
+        try {
+            handler = std::thread(udp_handler, (void*)this);
+        }
+        catch (std::system_error &ex) {
+            gl_error("%s: unable to start udp handler", local.get_saddr());
+            return 0;
+        }
 	}
 
 	return 1;
@@ -127,8 +131,15 @@ void server::accept_tcp(void)
 	if ( client->accept(local) )
 	{
 		// process incoming messages as they arrive
-		if ( pthread_create(client->get_proc(),NULL,msg_handler,(void*)client)!=0 )
+        try {
+            std::thread proc{msg_handler, (void*)client};
+            client->set_proc(proc);
+        }
+        catch (std::system_error &ex) {
 			gl_error("%s: unable to start stream handler for %s", local.get_saddr(), client->get_saddr());
+        }
+//		if ( pthread_create(client->get_proc(),NULL,msg_handler,(void*)client)!=0 )
+//			gl_error("%s: unable to start stream handler for %s", local.get_saddr(), client->get_saddr());
 	}
 
 	// only an error if not interrupted
@@ -151,8 +162,13 @@ void server::accept_udp(void)
 		break;
 	default:
 		// begin processing incoming messages as they arrive
-		if ( pthread_create(client->get_proc(),NULL,msg_handler,(void*)client)!=0 )
+        try {
+            std::thread proc{msg_handler, (void*)client};
+            client->set_proc(proc);
+        }
+        catch (std::system_error &ex) {
 			gl_error("%s: unable to start datagram handler", local.get_saddr());
+        }
 		break;
 	}
 	return;
@@ -171,7 +187,7 @@ void server::process_msg(Socket &client)
 
 void server::set_type(int t)
 {
-	if ( type!=0 ) throw "server::set_type(int): unable to set socket type after server is created";
+	if ( type!=0 ) throw std::runtime_error("server::set_type(int): unable to set socket type after server is created");
 	type = t;
 }
 

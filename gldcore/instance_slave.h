@@ -12,12 +12,7 @@
 #define _WIN32_WINNT 0x0400
 #include <winsock2.h>
 #include <windows.h>
-
 #endif
-
-
-#include <pthread.h>
-
 
 #include "property.h"
 #include "timestamp.h"

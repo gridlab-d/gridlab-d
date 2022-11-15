@@ -31,13 +31,13 @@ typedef enum{
 	CP_LAST = 9
 } COMPASS_PTS;
 
-enum{
+typedef enum{
 	CI_NONE = 0,
 	CI_LINEAR,
 	CI_QUADRATIC
 } CI;
 
-enum{
+typedef enum{
 	CM_NONE = 0,
 	CM_CUMULUS = 1
 } CLOUDMODEL;
@@ -170,7 +170,7 @@ typedef struct {
 	double solar;
 } CLIMATERECORD;
 
-enum {
+typedef enum {
 		RT_NONE,
 		RT_TMY2,
 		RT_CSV,

@@ -15,6 +15,9 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <array>
+#include <thread>
+
 #include <sys/stat.h>
 
 #include "globals.h"
@@ -354,18 +357,17 @@ extern "C" int job(int argc, char *argv[])
 	
 	unsigned int n_procs = global_threadcount;
 	if ( n_procs==0 ) n_procs = processor_count();
-	pthread_t *pid = new pthread_t[n_procs];
+    std::vector<std::thread> pids(n_procs);
 	output_debug("starting job with cmdargs '%s' using %d threads", job_cmdargs, n_procs);
 	for ( i=0 ; i<fmin(count,n_procs) ; i++ )
-		pthread_create(&pid[i],NULL,run_job_proc,(void*)i);
+        pids[i] = std::thread(run_job_proc, (void*)i);
 	void *rc;
 	output_debug("begin waiting process");
 	for ( i=0 ; i<fmin(count,n_procs) ; i++ )
 	{
-		pthread_join(pid[i],&rc);
+        pids[i].join();
 		output_debug("process %d done", i);
 	}
-	delete [] pid;
 
 	double dt = (double)exec_clock()/(double)global_ms_per_second;
 	output_message("Total job elapsed time: %.1f seconds", dt);

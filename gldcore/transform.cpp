@@ -1,14 +1,10 @@
 /* transform.c
  */
 
-#include <cctype>
 #include <cfloat>
-#include <cmath>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <iostream>
-#include <pthread.h>
 
 #include "platform.h"
 #include "object.h"

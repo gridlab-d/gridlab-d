@@ -9,17 +9,17 @@
 #include "gridlabd.h"
 #include "connection.h"
 
-#include <pthread.h>
+#include <thread>
 
 class RemoteSocket : public Socket {
 private:
 	class server *svr;
-	pthread_t proc;
+    std::thread proc;
 public:
 	inline RemoteSocket(class server*s) : svr(s) { };
 	inline class server *get_server(void) { return svr; };
-	inline void set_proc(pthread_t p) { proc=p;};
-	inline pthread_t *get_proc(void) { return &proc; };
+	inline void set_proc(std::thread& p) { proc=std::move(p);};
+	inline std::thread *get_proc(void) { return &proc; };
 };
 
 class server : public connection_mode {
@@ -31,7 +31,7 @@ private:
 	int type; ///< socket type (SOCK_DGRAM or SOCK_STREAM)
 	int maxclients; ///< maximum clients allowed
 	int numactive; ///< number of active clients
-	pthread_t handler;
+    std::thread handler;
 
 public:
 	/* required implementations */

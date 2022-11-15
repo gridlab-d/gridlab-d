@@ -169,11 +169,9 @@ STATUS legal_license(void)
 
  **************************************************************************************/
 #include <cctype>
-#include <pthread.h>
+#include <thread>
 
 #include "http_client.h"
-
-static pthread_t check_version_thread_id;
 
 #define CV_NOINFO 0x0001
 #define CV_BADURL 0x0002
@@ -258,12 +256,18 @@ Done:
 
 void check_version(int mt)
 {
+    if(mt == 0)
+    {
+        check_version_proc(NULL);
+    }
 	/* start version check thread */
-	if ( mt==0 || pthread_create(&check_version_thread_id,NULL,check_version_proc,NULL)!=0 )
-	{
-		/* unable to create a thread to do this so just do it inline (much slower) */
-		check_version_proc(NULL);
-	}
+    try {
+        std::thread check_version_thread{check_version_proc, nullptr};
+        check_version_thread.join();
+    }
+    catch (std::system_error &ex) {
+        output_error("check_version() encountered a threading error in multithread mode");
+    }
 }
 
 /**@}*/

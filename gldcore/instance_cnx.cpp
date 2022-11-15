@@ -1,7 +1,5 @@
 #include "instance_cnx.h"
 
-//extern pthread_mutex_t inst_sock_lock;
-extern pthread_cond_t inst_sock_signal;
 extern int sock_created;
 
 STATUS instance_cnx_mmap(instance *inst){
@@ -472,32 +470,7 @@ STATUS instance_cnx_socket(instance *inst){
 	//  done at done()?
 
 	/* NOTICE: any data recv'ed from inst->sockfd may actually be stdio from the slave */
-
-	// init socket lock & condition
-	rv = pthread_mutex_init(&inst->sock_lock,NULL);
-	if(rv != 0){
-		output_error("error with pthread_mutex_init() in instance_cnx_socket()");
-		return FAILED;
-	}
-	rv = pthread_cond_init(&inst->sock_signal,NULL);
-	if(rv != 0){
-		output_error("error with pthread_cond_init() in instance_cnx_socket()");
-		return FAILED;
-	}
-	sock_created = 1;
-
-	rv = pthread_mutex_init(&inst->wait_lock,NULL);
-	if(rv != 0){
-		output_error("error with pthread_mutex_init() in instance_cnx_socket()");
-		return FAILED;
-	}
-	rv = pthread_cond_init(&inst->wait_signal,NULL);
-	if(rv != 0){
-		output_error("error with pthread_cond_init() in instance_cnx_socket()");
-		return FAILED;
-	}
-
-	output_debug("end of instance_cnx_socket()");
+    output_debug("end of instance_cnx_socket()");
 	return SUCCESS;
 }
 

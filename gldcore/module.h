@@ -92,10 +92,10 @@ extern "C" {
 	void sched_clear(void);
 	void sched_print(int flags);
 	void sched_update(TIMESTAMP clock, enumeration status);
-	void sched_pkill(pid_t pid);
+	void sched_pkill(int pid);
 	void sched_controller(void);
 	unsigned short sched_get_cpuid(unsigned short n);
-	pid_t sched_get_procid();
+	int sched_get_procid();
 //#endif
 
 	int module_load_function_list(char *libname, char *fnclist);

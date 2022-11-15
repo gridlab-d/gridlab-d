@@ -8,7 +8,9 @@
 #include <cmath>
 #include <cstdarg>
 #include <cstdlib>
-#include <pthread.h>
+#include <thread>
+#include <condition_variable>
+#include <mutex>
 
 #include "platform.h"
 #include "output.h"
@@ -195,7 +197,7 @@ TIMESTAMP enduse_sync(enduse *e, PASSCONFIG pass, TIMESTAMP t1)
 
 typedef struct s_endusesyncdata {
 	unsigned int n;
-	pthread_t pt;
+    std::thread::id pt;
 	bool ok;
 	enduse *e;
 	unsigned int ne;
@@ -203,10 +205,10 @@ typedef struct s_endusesyncdata {
 	unsigned int ran;
 } ENDUSESYNCDATA;
 
-static pthread_cond_t start_ed = PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t startlock_ed = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t done_ed = PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t donelock_ed = PTHREAD_MUTEX_INITIALIZER;
+static std::condition_variable start_ed;
+static std::mutex startlock_ed;
+static std::condition_variable done_ed;
+static std::mutex donelock_ed;
 static TIMESTAMP next_t1_ed, next_t2_ed;
 static unsigned int donecount_ed;
 static unsigned int run = 0;
@@ -221,17 +223,17 @@ void *enduse_syncproc(void *ptr)
 	TIMESTAMP t2;
 
 	// begin processing loop
-	while (data->ok) 
+	while (data->ok)
 	{
 		// lock access to start condition
-		pthread_mutex_lock(&startlock_ed);
+        std::unique_lock startlock{startlock_ed};
 
 		// wait for thread start condition
-		while (data->t0==next_t1_ed && data->ran==run) 
-			pthread_cond_wait(&start_ed,&startlock_ed);
-		
+		while (data->t0==next_t1_ed && data->ran==run)
+            start_ed.wait(startlock);
+
 		// unlock access to start count
-		pthread_mutex_unlock(&startlock_ed);
+        startlock.unlock();
 
 		// process the list for this thread
 		t2 = TS_NEVER;
@@ -246,20 +248,19 @@ void *enduse_syncproc(void *ptr)
 		data->ran++;
 
 		// lock access to done condition
-		pthread_mutex_lock(&donelock_ed);
+        std::unique_lock donelock{donelock_ed};
 
 		// signal thread is done for now
 		donecount_ed--;
 		if ( t2<next_t2_ed ) next_t2_ed = t2;
 
 		// signal change in done condition
-		pthread_cond_broadcast(&done_ed);
+        done_ed.notify_all();
 
 		// unlock access to done count
-		pthread_mutex_unlock(&donelock_ed);
+        donelock.unlock();
 	}
-	pthread_exit((void*)0);
-	return (void*)0;
+	return nullptr;
 }
 
 TIMESTAMP enduse_syncall(TIMESTAMP t1)
@@ -320,13 +321,15 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1)
 			for (n=0; n<n_threads_ed; n++)
 			{
 				thread_ed[n].ok = true;
-				if (pthread_create(&(thread_ed[n].pt),NULL,enduse_syncproc,&(thread_ed[n]))!=0)
-				{
+                try {
+                    std::thread instance_thread{enduse_syncproc, &(thread_ed[n])};
+                    thread_ed[n].pt = instance_thread.get_id();
+					thread_ed[n].n = n;
+                }
+                catch (std::system_error &ex) {
 					output_fatal("enduse_sync thread creation failed");
 					thread_ed[n].ok = false;
-				}
-				else 
-					thread_ed[n].n = n;
+                }
 			}
 		}
 	}
@@ -346,13 +349,13 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1)
 	else 
 	{
 		// lock access to done count
-		pthread_mutex_lock(&donelock_ed);
+        std::unique_lock donelock{donelock_ed};
 
 		// initialize wait count
 		donecount_ed = n_threads_ed;
 
 		// lock access to start condition
-		pthread_mutex_lock(&startlock_ed);
+        std::unique_lock startlock{startlock_ed};
 
 		// update start condition
 		next_t1_ed = t1;
@@ -360,18 +363,18 @@ TIMESTAMP enduse_syncall(TIMESTAMP t1)
 		run++;
 
 		// signal all the threads
-		pthread_cond_broadcast(&start_ed);
+        start_ed.notify_all();
 
 		// unlock access to start count
-		pthread_mutex_unlock(&startlock_ed);
+        startlock.unlock();
 
 		// begin wait 
 		while (donecount_ed>0)
-			pthread_cond_wait(&done_ed,&donelock_ed);
+            done_ed.wait(donelock);
 		output_debug("passed donecount==0 condition");
 
 		// unclock done count
-		pthread_mutex_unlock(&donelock_ed);
+        donelock.unlock();
 
 		// process results from all threads
 		if (next_t2_ed<t2) t2=next_t2_ed;

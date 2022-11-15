@@ -30,7 +30,9 @@
 #include <cctype>
 #include <cstdarg>
 #include <cstdlib>
-#include <pthread.h>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 #include "platform.h"
 #include "output.h"
@@ -867,7 +869,7 @@ TIMESTAMP loadshape_sync(loadshape *ls, TIMESTAMP t1)
 
 typedef struct s_loadshapesyncdata {
 	unsigned int n;
-	pthread_t pt;
+	std::thread::id pt;
 	bool ok;
 	loadshape *ls;
 	unsigned int ns;
@@ -875,10 +877,10 @@ typedef struct s_loadshapesyncdata {
 	unsigned int ran;
 } LOADSHAPESYNCDATA;
 
-static pthread_cond_t start_ls = PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t startlock_ls = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t done_ls = PTHREAD_COND_INITIALIZER;
-static pthread_mutex_t donelock_ls = PTHREAD_MUTEX_INITIALIZER;
+static std::condition_variable start_ls;
+static std::mutex startlock_ls;
+static std::condition_variable done_ls;
+static std::mutex donelock_ls;
 static TIMESTAMP next_t1_ls, next_t2_ls;
 static unsigned int run = 0;
 static unsigned int donecount_ls;
@@ -896,14 +898,13 @@ void *loadshape_syncproc(void *ptr)
 	while ( data->ok )
 	{
 		// lock access to start condition
-		pthread_mutex_lock(&startlock_ls);
+        std::unique_lock startlock{startlock_ls};
 
 		// wait for thread start condition
-		while ( data->t0==next_t1_ls && data->ran==run ) 
-			pthread_cond_wait(&start_ls,&startlock_ls);
-		
+		while ( data->t0==next_t1_ls && data->ran==run )
+		    start_ls.wait(startlock);
 		// unlock access to start count
-		pthread_mutex_unlock(&startlock_ls);
+        startlock.unlock();
 
 		// process the list for this thread
 		t2 = TS_NEVER;
@@ -918,7 +919,7 @@ void *loadshape_syncproc(void *ptr)
 		data->ran++;
 
 		// lock access to done condition
-		pthread_mutex_lock(&donelock_ls);
+        std::unique_lock donelock {donelock_ls};
 
 		// signal thread is done for now
 		donecount_ls--;
@@ -926,13 +927,12 @@ void *loadshape_syncproc(void *ptr)
 		if ( t2<next_t2_ls ) next_t2_ls = t2;
 
 		// signal change in done condition
-		pthread_cond_broadcast(&done_ls);
+        done_ls.notify_all();
 
 		// unlock access to done count
-		pthread_mutex_unlock(&donelock_ls);
+        donelock.unlock();
 	}
-	pthread_exit((void*)0);
-	return (void*)0;
+	return nullptr;
 }
 TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 {
@@ -992,13 +992,15 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 			for (n=0; n<n_threads_ls; n++)
 			{
 				thread_ls[n].ok = true;
-				if ( pthread_create(&(thread_ls[n].pt),NULL,loadshape_syncproc,&(thread_ls[n]))!=0 )
-				{
-					output_fatal("loadshape_sync thread creation failed");
-					thread_ls[n].ok = false;
-				}
-				else
-					thread_ls[n].n = n;
+                try {
+                    std::thread loadshape_thread{loadshape_syncproc, &(thread_ls[n])};
+                    thread_ls[n].pt = loadshape_thread.get_id();
+                    thread_ls[n].n = n;
+                }
+                catch (std::system_error &ex) {
+                    output_fatal("loadshape_sync thread creation failed");
+                    thread_ls[n].ok = false;
+                }
 			}
 		}
 	}
@@ -1022,13 +1024,13 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 	else
 	{
 		// lock access to done count
-		pthread_mutex_lock(&donelock_ls);
+        std::unique_lock donelock{donelock_ls};
 
 		// initialize wait count
 		donecount_ls = n_threads_ls;
 
 		// lock access to start condition
-		pthread_mutex_lock(&startlock_ls);
+        std::unique_lock startlock{startlock_ls};
 
 		// update start condition
 		next_t1_ls = t1;
@@ -1036,21 +1038,21 @@ TIMESTAMP loadshape_syncall(TIMESTAMP t1)
 		run++;
 
 		// signal all the threads
-		pthread_cond_broadcast(&start_ls);
+        start_ls.notify_all();
 
 		// unlock access to start count
-		pthread_mutex_unlock(&startlock_ls);
+        startlock.unlock();
 
 		// begin wait
 		while (donecount_ls>0) {
 			///printf("status: donecount_ls-- = %d\n", donecount_ls);
 			///printf("thread_ls.ok=%d\n",thread_ls->ok);
-			pthread_cond_wait(&done_ls,&donelock_ls);
+            done_ls.wait(donelock);
 		}
 		output_debug("passed donecount==0 condition");
 
 		// unlock done count
-		pthread_mutex_unlock(&donelock_ls);
+        donelock.unlock();
 
 		// process results from all threads
 		if (next_t2_ls<t2) t2=next_t2_ls;

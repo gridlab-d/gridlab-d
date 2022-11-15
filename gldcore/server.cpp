@@ -25,8 +25,14 @@
 #include <cerrno>
 #include <cstring>
 #include <memory.h>
-#include <pthread.h>
+#include <thread>
+#include <future>
+#include <mutex>
+#include <condition_variable>
+#ifndef _WIN32
 #include <unistd.h>
+#endif
+
 
 #include "server.h"
 #include "output.h"
@@ -41,6 +47,8 @@
 
 #include "gui.h"
 #include "kml.h"
+
+using namespace std::literals;
 
 #define SET_MYCONTEXT(X)
 #define IN_MYCONTEXT
@@ -118,15 +126,15 @@ int client_allowed(char *saddr)
     @returns a pointer to the status flag
  **/
 static unsigned int n_threads = 0;
-static pthread_t thread_id;
-static void *server_routine(void *arg)
+static std::thread server_thread;
+static STATUS server_routine(void *arg)
 {
-	static int status = 0;
+	static STATUS status = SUCCESS;
 	static int started = 0;
 	if (started)
 	{
 		output_error("server routine is already running");
-		return NULL;
+		return FAILED;
 	}
 	started = 1;
 	sockfd = *reinterpret_cast<SOCKET*>(arg);
@@ -150,7 +158,7 @@ static void *server_routine(void *arg)
 		newsockfd = accept(sockfd, (struct sockaddr *)&cli_addr, &clilen);
 		if ((int)newsockfd<0 && errno!=EINTR)
 		{
-			status = GetLastError();
+			status = static_cast<STATUS>(GetLastError());
 			output_warning("server accept failed on socket %d: code %d", sockfd, status);
 			//goto Done;
 		}
@@ -165,9 +173,15 @@ static void *server_routine(void *arg)
 			}
 			IN_MYCONTEXT output_verbose("accepting connection from %s on port %d",saddr, cli_addr.sin_port);
 			if ( active )
-				pthread_join(thread_id,&result);
-			if ( pthread_create(&thread_id,NULL, http_response,reinterpret_cast<int*>(newsockfd))!=0 )
+                if(server_thread.joinable())
+                    server_thread.join();
+            try {
+                server_thread = std::thread(http_response, reinterpret_cast<int*>(newsockfd));
+            }
+            catch (std::system_error &ex) {
 				output_error("unable to start http response thread");
+            }
+
 			if (global_server_quit_on_close)
 				shutdown_now();
 			else
@@ -178,14 +192,14 @@ static void *server_routine(void *arg)
 	IN_MYCONTEXT output_verbose("server shutdown");
 Done:
 	started = 0;
-	return (void*)&status;
+	return status;
 }
 
 /** Start accepting incoming connections on the designated server socket
 	@returns SUCCESS/FAILED status code
  **/
 #define DEFAULT_PORTNUM 6267
-static pthread_t startup_thread;
+static std::future<STATUS> startup_thread;
 STATUS server_startup(int argc, char *argv[])
 {
 	static int started = 0;
@@ -269,30 +283,29 @@ Retry:
 	global_server_portnum = portNumber;
 
 	/* join the old thread and wait if it hasn't finished yet */
-	if ( started ) {
-		pthread_join(startup_thread,&result);
-	}
 
 	/* start the new thread */
-	if (pthread_create(&startup_thread,NULL,server_routine, reinterpret_cast<int*>(sockfd)))
-	{
+    try {
+        startup_thread = std::async(server_routine, reinterpret_cast<int*>(sockfd));
+    }
+    catch (std::system_error &ex) {
 		output_error("server thread startup failed: %s",strerror(GetLastError()));
-		return FAILED;
-	}
+        return FAILED;
+    }
+
 
 	started = 1;
 	return SUCCESS;
 }
-STATUS server_join(void)
-{
-	void *result;
-	if (pthread_join(startup_thread,&result)==0)
-		return *static_cast<STATUS*>(result);
-	else
-	{
-		output_error("server thread join failed: %s", strerror(GetLastError()));
-		return FAILED;
-	}
+
+STATUS server_join(void) {
+    STATUS result;
+    if (startup_thread.valid())
+        return startup_thread.get();
+
+    output_error("server thread join failed: %s", strerror(GetLastError()));
+    return FAILED;
+
 }
 
 /********************************************************
@@ -1827,8 +1840,9 @@ int http_control_request(HTTPCNX *http, char *action)
 		exec_mls_resume(global_clock);
 		output_verbose("waiting for pause");
 		while ( global_mainloopstate!=MLS_PAUSED )
-			usleep(100000);
-		return 1;
+            std::this_thread::sleep_for(100ms);
+
+        return 1;
 	}
 	else if ( sscanf(action,"pauseat=%[-0-9%:A-Za-z ]",buffer)==1 )
 	{

@@ -21,8 +21,6 @@
 #include <unistd.h>
 #endif
 
-#include <pthread.h>
-
 #include "property.h"
 #include "timestamp.h"
 #include "linkage.h"

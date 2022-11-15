@@ -519,7 +519,7 @@ typedef unsigned long PASSCONFIG; /**< the pass configuration */
 #define TRUE (!FALSE)
 #endif
 
-typedef enum {FAILED=FALSE, SUCCESS=TRUE} STATUS;
+typedef enum {FAILED=false, SUCCESS=true} STATUS;
 
 typedef struct s_globalvar {
 	PROPERTY *prop;

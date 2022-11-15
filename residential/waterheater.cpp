@@ -229,14 +229,14 @@ int waterheater::create()
 	gas_fan_power = -1.0;
 	gas_standby_power = -1.0;
 
-	// Heat Pump water heater 
+	// Heat Pump water heater
 	energytake = 0.0;
 	compressor_max_threshold = 2000; // Heating element replaces compressor when EnergyTake hits this threshold
 	compressor_min_threshold = ((thermostat_deadband/2) * 2.44 * tank_volume); // Compressor turns on when it hits this threshold
 	heating_element_min_threshold = 1100; // compressor replaces heating element when it hits this threshold.
 	interval = 0;
 	// =================================
-	
+
 	dr_signal = 1;
 	return res;
 	last_water_demand = -1.0;
@@ -966,7 +966,7 @@ void waterheater::sync_energytake()
 	When HPWH is in idle mode (losing heat over time), energytake increases. Further, energytake drops significantly if a water draw occurs.
 	*/
 
-	
+
 	/*
 	* idle losses calc
 			* ET as function of TIME
@@ -975,32 +975,32 @@ void waterheater::sync_energytake()
 
 	/* Model created by Portland State - Midrar Adham submitted under PR #1355 */
 	actual_kW();
-	
+
 
 	if (interval == 60 && (water_demand > 0) && turn_fan_on)
 		heating_element_capacity = nominal_voltage * 0.000171; 							// rated fan current is 0.000171.
 
 	if ((Toff >= Tw) && (Tw >= Ton)  && (heating_element_capacity == 0)) 				// when energy take is between setpoints, HPWH is in idle mode.
 	{
-	
+
 		energytake = log(70 / (get_Tambient(location) * 0.39) ) * time_step; // Constants are based on trial and error to get the most appropraite behavior similar to the physical unit.
 		Tw = (tank_setpoint - (energytake/(tank_volume * 2.44)))+ 1.00034;
 		heat_needed = false;
 		current_model = ONENODE;
 
-		
+
 	}
 	else // when energy take is not between setpoints (i.e. waterheater is on)
 	{
-					
+
 		if (Tw <= Ton || heating_element_capacity != 0)
 		{
 			time_step = 0;
-			
+
 
 			if (water_demand > 0)
 			{
-				// HPWH behavior differ depending on the amount of water demand. 
+				// HPWH behavior differ depending on the amount of water demand.
 				// If water demand is less than 10, the +2 factor will get the model to behave as the physical unit.
 				// Otherwise, a correction factor (0.65 * water demand) is needed to get the model to behave nearly the same as the physical unit
 				double tank_volume_post_draw = tank_volume - water_demand;
@@ -1021,32 +1021,32 @@ void waterheater::sync_energytake()
 				}
 				energytake =  ((tank_setpoint - Tw_temp) * tank_volume * 2.44) + energy_increment_value;
 			}
-			
+
 			if (heating_element_capacity <= 0.42) // compressor operation. The resistive heating element should not trigger when the compressor is ON and Energytake within compressor's limits.
-			{	
+			{
 				energytake -= (heating_element_capacity - 0.447)/(-( get_Tambient(location)/ pow(get_Tambient(location),2.4)));
-			}	
+			}
 			if (heating_element_capacity  > 0.42)
 			{
 				energytake -= (heating_element_capacity - 4.872)/(-0.0014); // The 4.87 is the operation of the heating element. The -0.0014 is the result of the line fit equation.
 			}
-		}	
+		}
 		if (energytake <= heating_element_min_threshold)
 			heating_element_on = false;
-		
+
 		Tw = tank_setpoint - ((energytake)/(tank_volume * 2.44));
 	}
 	if (energytake<=0){
-		
+
 		energytake = 0;
 		heating_element_capacity = 0;
-	}	
+	}
 	return;
-				
+
 }
 
 
-TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1) 
+TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	double internal_gain = 0.0;
 	double nHours = (gl_tohours(t1) - gl_tohours(t0))/TS_SECOND;
@@ -1107,7 +1107,7 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	if (location == INSIDE){
 		if (heat_mode ==HEAT_PUMP)
 			this->current_model = ONENODE;
-	
+
 		if(this->current_model == ONENODE)
 		{
 
@@ -1115,11 +1115,11 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 			//Subtract Heat drawn in from Heat pump
 			if(heat_mode == HEAT_PUMP)
 			{
-				
+
 				internal_gain -= (actual_kW() * (HP_COP - 1) * BTUPHPKW);
-				
+
 			}
-		} 
+		}
 		else if(this->current_model == TWONODE)
 		{
 			internal_gain = tank_UA * (Tw - Tamb) * h / height;
@@ -1129,7 +1129,7 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 			{
 				internal_gain -= (actual_kW() * (HP_COP - 1) * BTUPHPKW);
 			}
-			
+
 		} else if(this->current_model == MULTILAYER) {
 			//TODO: update internal gain from all layers in the tank.
 			internal_gain = A_bottom*U_val*(T_layers[1][0] - Tamb) + A_top*U_val*(T_layers[10][0] - Tamb);
@@ -1287,12 +1287,12 @@ TIMESTAMP waterheater::postsync(TIMESTAMP t0, TIMESTAMP t1){
 	{
 		if((water_demand- water_demand_old)>0)
 			turn_fan_on = true;
-		
+
 		sync_energytake();
-		
+
 		if (turn_fan_on)
 			turn_fan_on = false;
-	}	
+	}
 	return TS_NEVER;
 }
 
@@ -1585,7 +1585,7 @@ void waterheater::update_T_and_or_h(double nHours)
 SingleZone:
 			Tw = new_temp_1node(Tw, nHours);
 			/*Tupper*/ Tw = Tw;
-			
+
 			Tlower = Tinlet;
 			break;
 
@@ -1676,7 +1676,7 @@ double waterheater::dhdt(double h)
         return 0.0; //Possible only when /*Tupper*/ Tw and Tlower are very close, and the difference is negligible
 
 	double cA;
-	if (heat_mode == HEAT_PUMP) 
+	if (heat_mode == HEAT_PUMP)
 	{
 		// @TODO: These values were created from HPWH project; need to make them more accessible
 		HP_COP = (1.04 + (1.21 - 1.04) * (get_Tambient(location) - 50) / (70 - 50)) * (5.259 - 0.0255 * Tw); // Added by GLD folks
@@ -1726,11 +1726,11 @@ double waterheater::actual_kW(void)
         }
 		double test;
 
-		if (heat_mode == ELECTRIC) 
+		if (heat_mode == ELECTRIC)
 		{
 			test = heating_element_capacity * (actual_voltage*actual_voltage) / (nominal_voltage*nominal_voltage);
-		} 
-		else 
+		}
+		else
 		{
 			if (heat_mode == HEAT_PUMP)
 			{
@@ -1743,18 +1743,18 @@ double waterheater::actual_kW(void)
 				else if ((energytake >= heating_element_min_threshold) && !turn_fan_on)
 				{
 					// 4.8
-					heating_element_capacity = (nominal_voltage * 0.020);// Threshold for the compressor 
+					heating_element_capacity = (nominal_voltage * 0.020);// Threshold for the compressor
 					heating_element_on = true;
 				}
 				else{
 					heating_element_capacity = 0;
 				}
 			}
-			test = heating_element_capacity;			
+			test = heating_element_capacity;
 		}
 			// @TODO: We don't have a voltage dependence for the heat pump yet...but we should
-			//   Using variables from HPWH project...should be pulled out at some point			
-		return test;		
+			//   Using variables from HPWH project...should be pulled out at some point
+		return test;
     }
 	else
 		return 0.0;

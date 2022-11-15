@@ -159,7 +159,6 @@ extern "C" void rlock(unsigned int *lock)
 	if(global_lock_enabled){
 		unsigned int timeout = MAXSPIN;
 		unsigned int value;
-		extern unsigned int rlock_count, rlock_spin;
 		check_lock(lock,false,false);
 		atomic_increment(&rlock_count);
 		do {
@@ -177,7 +176,6 @@ extern "C" void wlock(unsigned int *lock)
 	if(global_lock_enabled){
 		unsigned int timeout = MAXSPIN;
 		unsigned int value;
-		extern unsigned int wlock_count, wlock_spin;
 		check_lock(lock,true,false);
 		atomic_increment(&wlock_count);
 		do {

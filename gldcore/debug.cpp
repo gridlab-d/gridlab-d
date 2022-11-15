@@ -230,8 +230,8 @@
 #endif
 
 /* these are defined in exec.c */
-extern const PASSCONFIG passtype[];
-extern int iteration_counter;
+//extern const PASSCONFIG passtype[];
+//extern int iteration_counter;
 
 /* these are the signals that will trigger the debugger to start */
 int siglist[] = {SIGABRT, SIGINT, SIGFPE, SIGSEGV, SIGTERM};

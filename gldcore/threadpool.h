@@ -46,7 +46,8 @@ An example of how this is done is implemented in exec.c for commit_all().
 #include "platform.h"
 #include "timestamp.h"
 
-#include <pthread.h>
+#include <thread>
+#include <condition_variable>
 
 typedef struct s_mtiteratorlist MTI;
 
@@ -104,7 +105,7 @@ typedef struct s_mtifunctions
 typedef struct s_mtiterator {
     unsigned int id;            /**< id given to iterator */
     MTI *mti;                   /**< pointer to MTI that controls this iterator */
-    pthread_t thread_id;        /**< pthread handle/id */
+    std::thread::id thread_id;  /**< pthread handle/id */
     int enabled;                /**< flag indicating thread is enabled */
     int active;                 /**< flag indicating thread is active */
     MTIITEM *item;              /**< pointer to array of items */
@@ -116,8 +117,8 @@ typedef struct s_mtiterator {
 struct s_mtiteratorlist {
     const char *name;           /**< name given to iterator */
     struct {
-        pthread_cond_t *cond;   /**< condition variable */    
-        pthread_mutex_t *lock;  /**< mutex object */
+        std::condition_variable cond;
+        std::mutex lock;  /**< mutex object */
         unsigned int count;     /**< start/stop counter */
     } start, stop;              /**< start and stop cond/mutex */
     MTIDATA input;              /**< iterator input data */

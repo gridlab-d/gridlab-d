@@ -12,7 +12,7 @@
 #ifndef _PLATFORM_H
 	#define _PLATFORM_H
 	#define __STDC_FORMAT_MACROS
-	#include <inttypes.h>
+	#include <cinttypes>
 	#ifdef HAVE_CONFIG_H
 		#include "config.h"
 	#else
@@ -30,7 +30,7 @@
 	#else
 		#define __WORDSIZE__ __WORDSIZE
 	#endif
-	#include <sys/unistd.h>
+//	#include <sys/unistd.h>
 	#if __WORDSIZE__ == 64
 		#define X64
 		#define int64 long long /**< standard 64-bit integers on 64-bit machines */
@@ -42,7 +42,19 @@
 	#define atoi64 atoll	/**< standard version of 64-bit atoi */
 	#define stricmp strcasecmp	/**< deprecated stricmp */
 	#define strnicmp strncasecmp /**< deprecated strnicmp */
-	#define strtok_s strtok_r
+
+#ifdef _WIN32
+#define strtok_r strtok_s
+#else
+#define strtok_s strtok_r
+#endif
+
+#ifdef _MSC_VER
+//not #if defined(_WIN32) || defined(_WIN64) because we have strncasecmp in mingw
+#define strncasecmp _strnicmp
+#define strcasecmp _stricmp
+#endif
+
 	#ifdef X64
 		#define NATIVE int64	/**< native integer size */
 	#else

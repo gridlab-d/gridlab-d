@@ -16,8 +16,9 @@
 #endif
 
 #include "version.h"
+#include "platform.h"
 
-#if defined WIN32
+#ifdef _WIN32
 #include <io.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -29,6 +30,7 @@
 #include <dirent.h>
 #endif
 #include <cmath>
+#include <cstring>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -45,7 +47,7 @@
 #endif
 #define DLLOAD(P) LoadLibrary(P)
 #define DLSYM(H,S) (void *)GetProcAddress((HINSTANCE)H,S)
-#define snprintf _snprintf
+//#define snprintf _snprintf
 #else /* ANSI */
 #include "dlfcn.h"
 #ifndef DLEXT
@@ -635,7 +637,7 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 			{&c->plc,"plc",             true},
 			{&c->recalc,"recalc",       true},
 			{&c->update,"update",       true},
-			{&c->heartbeat,"heartbeat",true},
+			{&c->heartbeat,"heartbeat", true},
 		};
 		int i;
 		for (i=0; i<sizeof(map)/sizeof(map[0]); i++)
@@ -679,6 +681,8 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 
 #ifdef _WIN32
 #include <winnt.h>
+#include <cstring>
+
 static bool _checkimg(const char *fname)
 {
 	FILE *fh = fopen(fname,"r");
@@ -2077,7 +2081,7 @@ void sched_init(int readonly)
 	mapsize = sizeof(GLDPROCINFO)*n_procs;
 
 	/* get global process map */
-	hMap = OpenFileMapping(FILE_MAP_ALL_ACCESS, FALSE, MAPNAME);
+	hMap = OpenFileMapping(FILE_MAP_ALL_ACCESS, false, MAPNAME);
 	if ( hMap==NULL ) 
 	{
 		/** @todo implement locking before creating the global process map */

@@ -21,7 +21,8 @@
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
-#include <sys/time.h>
+#include <random>
+//#include <sys/time.h>
 
 #include "gldrandom.h"
 #include "find.h"
@@ -77,14 +78,17 @@ char* strtok_t(char *str, const char *delim, char **nextp)
 
 static unsigned int *ur_state = NULL;
 
-unsigned entropy_source(void)
+unsigned entropy_source()
 {
-	struct timeval t;
-	gettimeofday(&t,NULL);
-	return (unsigned)(getpid()*t.tv_usec);
+    static std::random_device rd;
+//    struct timeval t;
+//	gettimeofday(&t,NULL);
+//	return (unsigned)(getpid()*t.tv_usec);
+    return rd();
 }
 
-int random_init(void)
+// TODO: make this do rand better
+int random_init()
 {
 	/* randomizes the random number generator start value */
 	if (global_randomseed==0)

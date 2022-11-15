@@ -84,7 +84,7 @@ TIMESTAMP delta_mode_needed = TS_NEVER; /* the time at which delta mode needs to
 #endif
 
 #ifndef WIN32
-#define strtok_s strtok_r
+#define strtok_r strtok_s
 #else
 #ifdef __MINGW32__
 char* strtok_t(char *str, const char *delim, char **nextp)

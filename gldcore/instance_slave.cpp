@@ -4,8 +4,8 @@
 extern clock_t instance_synctime;
 
 // only used for passing control between slaveproc and main threads
-extern pthread_mutex_t mls_inst_lock;
-extern pthread_cond_t mls_inst_signal;
+extern std::mutex mls_inst_lock;
+extern std::condition_variable  mls_inst_signal;
 extern int inst_created;
 
 #define MSGALLOCSZ 1024
@@ -15,7 +15,7 @@ extern int inst_created;
 
 static MESSAGE *slave_cache;
 unsigned int slave_id;
-pthread_t slave_tid;
+std::thread::id slave_tid;
 static instance local_inst;
 
 STATUS instance_slave_get_data(void *buffer, size_t offset, size_t sz){
@@ -449,9 +449,9 @@ void *instance_slaveproc(void *ptr)
 	STATUS rv = SUCCESS;
 	output_verbose("instance_slaveproc(): slave %d controller startup in progress", slave_id);
 
-	pthread_mutex_lock(&mls_inst_lock);
-	pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
-	pthread_mutex_unlock(&mls_inst_lock);
+    std::unique_lock instance_lock{mls_inst_lock};
+    mls_inst_signal.wait(instance_lock);
+    instance_lock.unlock();
 
 	rv = instance_slave_link_properties();
 
@@ -465,7 +465,7 @@ void *instance_slaveproc(void *ptr)
 			/* stop the main loop and exit the slave controller */
 			output_error("instance_slaveproc(): slave %d controller wait failure, thread stopping", slave_id);
 			exec_setexitcode(XC_PRCERR);
-			pthread_cond_broadcast(&mls_inst_signal);
+            mls_inst_signal.notify_all();
 			break;
 		}
 
@@ -487,18 +487,18 @@ void *instance_slaveproc(void *ptr)
 		output_debug("slave %d controller setting step_to %lli to cache->ts %lli", local_inst.cache->id, exec_sync_get(NULL), local_inst.cache->ts);
 		exec_sync_merge(NULL, reinterpret_cast<struct sync_data *>(&local_inst.cache));
 
-		pthread_cond_broadcast(&mls_inst_signal);
+        mls_inst_signal.notify_all();
 
-		if(local_inst.cache->ts == TS_NEVER){
+        if(local_inst.cache->ts == TS_NEVER){
 			break;
 		}
 
 		/* wait for main loop to pause */
 		output_verbose("slave %d controller waiting for main to complete", slave_id);
 
-		pthread_mutex_lock(&mls_inst_lock);
-		pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
-		pthread_mutex_unlock(&mls_inst_lock);
+        instance_lock.lock();
+        mls_inst_signal.wait(instance_lock);
+        instance_lock.unlock();
 
 		/* @todo copy output linkages */
 		output_debug("slave %d controller writing links", slave_id);
@@ -519,8 +519,7 @@ void *instance_slaveproc(void *ptr)
 		instance_slave_done();
 	} while (global_clock != TS_NEVER && rv == SUCCESS);
 	output_verbose("slave %" FMT_INT64 " completion state reached", local_inst.cacheid);
-	pthread_exit(NULL);
-	return NULL;
+	return nullptr;
 }
 
 
@@ -819,34 +818,17 @@ STATUS instance_slave_init_socket(){
 /** do docx here
  **/
 STATUS instance_slave_init_pthreads(){
-	int rv = 0;
-	//	global_mainloopstate = MLS_PAUSED;
-	rv = pthread_mutex_init(&mls_inst_lock,NULL);
-	if(rv != 0){
-		output_error("error with pthread_mutex_init() in instance_slave_init_pthreads()");
-		return FAILED;
-	}
-	rv = pthread_cond_init(&mls_inst_signal,NULL);
-	if(rv != 0){
-		output_error("error with pthread_cond_init() in instance_slave_init_pthreads()");
-		return FAILED;
-	}
-	output_verbose("opened slave end of master-slave comm channel for slave %d", slave_id);
-
-//	exec_mls_create(); // need to do this before we start the thread
-
 	/* start the slave controller */
-	// !!! &local_inst.pid causes a warning, pthread_t * -> us*__w64, but pt_t is a struct with [void * + uint], bad recast
-	if ( pthread_create(&(local_inst.threadid), NULL, instance_slaveproc, NULL) )
-	{
-		output_error("unable to start slave controller for slave %d", slave_id);
-		return FAILED;
-	}
-	else
-	{
-		output_verbose("started slave controller for slave %d", slave_id);
-	}
-	return SUCCESS;
+    try {
+        std::thread instance_thread{instance_slaveproc, nullptr};
+        local_inst.threadid = instance_thread.get_id();
+    }
+    catch (std::system_error &ex) {
+        output_error("unable to start slave controller for slave %d", slave_id);
+        return FAILED;
+    }
+    output_verbose("started slave controller for slave %d", slave_id);
+    return SUCCESS;
 }
 
 /** instance_slave_init

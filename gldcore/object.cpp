@@ -26,12 +26,13 @@
  **/
 //#pragma GCC push_options
 //#pragma GCC optimize ("O0")
+#ifndef _WIN32
+#include <unistd.h>
+#endif
 
 #include <cctype>
 #include <cerrno>
-#include <cfloat>
 #include <cmath>
-#include <unistd.h>
 
 #include "object.h"
 #include "convert.h"
@@ -1481,7 +1482,7 @@ TIMESTAMP _object_sync(OBJECT *obj, /**< the object to synchronize */
 	else
 		obj->valid_to = sync_time; // NOTE, this can be negative
 
-#if !defined(WIN32) && defined(HAVE_ALARM)
+#if !defined(_WIN32) && defined(HAVE_ALARM)
 	/* clear lockup alarm */
 	alarm(0);
 #endif

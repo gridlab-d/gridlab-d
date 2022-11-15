@@ -24,7 +24,9 @@
 #define closesocket close
 #endif
 
-#include <pthread.h>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 #include "instance.h"
 #include "instance_cnx.h"
@@ -37,8 +39,8 @@
 clock_t instance_synctime = 0;
 
 // only used for passing control between slaveproc and main threads
-pthread_mutex_t mls_inst_lock;
-pthread_cond_t mls_inst_signal;
+std::mutex mls_inst_lock;
+std::condition_variable mls_inst_signal;
 int inst_created = 0;
 
 // used to balance control between instance_master_wait_socket and instance_runproc
@@ -141,7 +143,7 @@ void *instance_runproc_socket(void *ptr){
 			output_error("instance_runproc_socket(): error receiving data");
 			running = 0;
 		}
-		pthread_mutex_lock(&inst->sock_lock);
+        std::unique_lock socket_lock{inst->sock_lock};
 		if(0 == memcmp(inst->buffer, MSG_DATA, strlen(MSG_DATA))){
 			got_data = 1;
 //			wlock(&inst->has_data_lock);
@@ -163,20 +165,11 @@ void *instance_runproc_socket(void *ptr){
 		memcpy(inst->message->data_buffer, inst->buffer+strlen(MSG_DATA)+sizeof(MESSAGE), inst->prop_size);
 
 		/* copy to inst->somewhere */
-		//output_debug("i_rp_s(): waiting to send broadcast %d", inst->sock_signal);
-		//pthread_mutex_lock(&inst->wait_lock);
-//		pthread_mutex_lock(&inst->sock_lock);
-//		pthread_cond_wait(&inst->wait_signal, &inst->wait_lock);
-//		pthread_cond_wait(&inst->wait_signal, &inst->sock_lock);
 		output_debug("inst %d sending signal 0x%x", inst->id, &(inst->sock_signal));
-		pthread_cond_broadcast(&(inst->sock_signal));
-//		pthread_mutex_unlock(&inst->wait_lock);
-		pthread_mutex_unlock(&inst->sock_lock);
-		//output_debug("i_rp_s(): sending broadcast %d", inst->sock_signal);
-		
-		
+        inst->sock_signal.notify_all();
+        inst->sock_lock.unlock();
 	}
-	pthread_cond_broadcast(&inst->sock_signal);
+    inst->sock_signal.notify_all();
 	sock_created = 0;
 	return 0;
 }
@@ -354,27 +347,18 @@ int instance_master_wait_socket(instance *inst){
 	if(sock_created){
 		// wait for message
 //		wlock(&inst->has_data_lock);
-		pthread_mutex_lock(&inst->sock_lock);
+        std::unique_lock socket_lock{inst->sock_lock};
 		if(inst->has_data > 0){ // maybe 'while' this?
-//			wunlock(&inst->has_data_lock);
 			output_debug("instance_master_wait_socket(): already has data for %d", inst->id);
 		} else {
-			//wunlock(&inst->has_data_lock);
-			//output_debug("instance_master_wait_socket(): requesting unwait on %d", inst->sock_signal);
 			output_debug("instance_master_wait_socket(): inst %d waiting on %x", inst->id, &inst->sock_signal);
-			//pthread_cond_broadcast(&inst->wait_signal);
-			
-//			pthread_mutex_lock(&inst->sock_lock);
-//			pthread_cond_broadcast(&inst->wait_signal);
+
 			output_debug("inst %d waiting on signal 0x%x", inst->id, &(inst->sock_signal));
-			pthread_cond_wait(&inst->sock_signal, &inst->sock_lock);
-			pthread_mutex_unlock(&inst->sock_lock);
-			
+            inst->sock_signal.wait(socket_lock);
+			socket_lock.unlock();
 		}
-//		wlock(&inst->has_data_lock);
 		inst->has_data -= 1;
-//		wunlock(&inst->has_data_lock);
-		pthread_mutex_unlock(&inst->sock_lock);
+        socket_lock.unlock();
 	} else {
 		output_debug("instance_master_wait_socket(): no socket mutexes");
 		return 0;
@@ -622,12 +606,14 @@ STATUS instance_init(instance *inst)
 	}
 	// start instance_proc thread
 	/* start the slave instance */
-	if ( pthread_create(&(inst->threadid), NULL, instance_runproc, (void*)inst) )
-	{
-		output_error("instance_init(): unable to starte instance slave %d", inst->id);
-		return FAILED;
-	}
-
+    try {
+        std::thread instance_thread {instance_runproc, (void*)inst};
+        inst->threadid = instance_thread.get_id();
+    }
+    catch (std::system_error &ex) {
+        output_error("instance_init(): unable to start instance slave %d", inst->id);
+        return FAILED;
+    }
 	output_verbose("instance_init(): started instance for slave %d", inst->id);
 	instances_count++;
 	return SUCCESS;
@@ -649,8 +635,8 @@ STATUS instance_initall(void)
 		global_multirun_mode = MRM_MASTER;
 		output_verbose("entering multirun mode");
 		output_prefix_enable();
-		pthread_mutex_lock(&mls_inst_lock);
-		pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
+        std::unique_lock instance_lock{mls_inst_lock};
+        mls_inst_signal.wait(instance_lock);
 		
 	} else {
 		return SUCCESS;

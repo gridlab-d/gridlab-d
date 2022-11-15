@@ -261,12 +261,14 @@ int iteration_counter = 0;   /* number of redos completed */
 int federation_iteration_counter = 0; /* number of federate redos completed */
 
 #ifndef NOLOCKS
-int64 rlock_count = 0, rlock_spin = 0;
-int64 wlock_count = 0, wlock_spin = 0;
+unsigned long long rlock_count = 0;
+unsigned long long rlock_spin = 0;
+unsigned long long wlock_count = 0;
+unsigned long long wlock_spin = 0;
 #endif
 
-extern pthread_mutex_t mls_inst_lock;
-extern pthread_cond_t mls_inst_signal;
+extern std::mutex mls_inst_lock;
+extern std::condition_variable mls_inst_signal;
 
 //sjin: struct for pthread_create arguments
 struct arg_data {
@@ -1502,7 +1504,7 @@ void exec_sleep(unsigned int usec)
 
 typedef struct s_objsyncdata {
 	unsigned int n; // thread id 0~n_threads for this object rank list
-	pthread_t pt;
+	std::thread::id pt;
 	bool ok;
 	//void *item;
 	LISTITEM *ls;
@@ -1510,11 +1512,6 @@ typedef struct s_objsyncdata {
 	unsigned int t0;
 	int i; // index of mutex or cond this object rank list uses
 } OBJSYNCDATA;
-
-//static pthread_mutex_t *startlock;
-//static pthread_mutex_t *donelock;
-//static pthread_cond_t *start;
-//static pthread_cond_t *done;
 
 static std::vector<std::unique_ptr<std::mutex>> startlock, donelock;
 static std::vector<std::unique_ptr<std::condition_variable>> start, done;
@@ -1579,35 +1576,11 @@ static unsigned int *n_threads; //number of thread used in the threadpool of an 
 
 /** MAIN LOOP CONTROL ******************************************************************/
 
-/*static*/ pthread_mutex_t mls_svr_lock;
-/*static*/ pthread_cond_t mls_svr_signal;
-int mls_created = 0;
-
-void exec_mls_create()
-{
-	int rv = 0;
-
-	mls_created = 1;
-
-	output_debug("exec_mls_create()");
-	rv = pthread_mutex_init(&mls_svr_lock,nullptr);
-	if (rv != 0)
-	{
-		output_error("error with pthread_mutex_init() in exec_mls_init()");
-	}
-	rv = pthread_cond_init(&mls_svr_signal,nullptr);
-	if (rv != 0)
-	{
-		output_error("error with pthread_cond_init() in exec_mls_init()");
-	}
-}
+/*static*/ std::mutex mls_svr_lock;
+/*static*/ std::condition_variable mls_svr_signal;
 
 void exec_mls_init()
 {
-	if (mls_created == 0)
-	{
-		exec_mls_create();
-	}
 	if (global_mainloopstate==MLS_PAUSED)
 		exec_mls_suspend();
 	else
@@ -1621,12 +1594,8 @@ void exec_mls_suspend()
 	output_debug("pausing simulation");
 	if ( global_multirun_mode==MRM_STANDALONE && strcmp(global_environment,"server")!=0 )
 		output_warning("suspending simulation with no server/multirun active to control mainloop state");
-	output_debug("lock_ (%x->%x)", &mls_svr_lock, mls_svr_lock);
-	rv = pthread_mutex_lock(&mls_svr_lock);
-	if (0 != rv)
-	{
-		output_error("error with pthread_mutex_lock() in exec_mls_suspend()");
-	}
+    std::unique_lock server_lock{mls_svr_lock};
+
 	output_debug("sched update_");
 	sched_update(global_clock,global_mainloopstate=MLS_PAUSED);
 	output_debug("wait loop_");
@@ -1635,56 +1604,33 @@ void exec_mls_suspend()
 		{
 			output_debug(" * tick (%i)", --loopctr);
 		}
-		rv = pthread_cond_wait(&mls_svr_signal, &mls_svr_lock);
-		if (rv != 0)
-		{
-			output_error("error with pthread_cond_wait() in exec_mls_suspend()");
-		}
+        mls_svr_signal.wait(server_lock);
 	}
 	output_debug("sched update_");
 	sched_update(global_clock,global_mainloopstate=MLS_RUNNING);
 	output_debug("unlock_");
-	rv = pthread_mutex_unlock(&mls_svr_lock);
-	if (rv != 0)
-	{
-		output_error("error with pthread_mutex_unlock() in exec_mls_suspend()");
-	}
+    server_lock.unlock();
 }
 
 void exec_mls_resume(TIMESTAMP ts)
 {
 	int rv = 0;
-	rv = pthread_mutex_lock(&mls_svr_lock);
-	if (rv != 0)
-	{
-		output_error("error in pthread_mutex_lock() in exec_mls_resume() (error %i)", rv);
-	}
+    std::unique_lock server_lock{mls_svr_lock};
 	global_mainlooppauseat = ts;
-	rv = pthread_mutex_unlock(&mls_svr_lock);
-	if (rv != 0)
-	{
-		output_error("error in pthread_mutex_unlock() in exec_mls_resume()");
-	}
-	rv = pthread_cond_broadcast(&mls_svr_signal);
-	if (rv != 0)
-	{
-		output_error("error in pthread_cond_broadcast() in exec_mls_resume()");
-	}
+    server_lock.unlock();
+    mls_svr_signal.notify_all();
 }
 
-void exec_mls_statewait(unsigned states)
+[[maybe_unused]] void exec_mls_statewait(unsigned states)
 {
-	pthread_mutex_lock(&mls_svr_lock);
+    std::unique_lock server_lock{mls_svr_lock};
 	while ( ((global_mainloopstate&states)|states)==0 )
-		pthread_cond_wait(&mls_svr_signal, &mls_svr_lock);
-	pthread_mutex_unlock(&mls_svr_lock);
+        mls_svr_signal.wait(server_lock);
 }
 
 void exec_mls_done()
 {
 	sched_update(global_clock,global_mainloopstate=MLS_DONE);
-	pthread_mutex_destroy(&mls_svr_lock);
-	pthread_cond_destroy(&mls_svr_signal);
 }
 
 /******************************************************************
@@ -2020,11 +1966,10 @@ STATUS exec_start()
 	/*** GET FIRST SIGNAL FROM MASTER HERE ****/
 	if (global_multirun_mode == MRM_SLAVE)
 	{
-		pthread_cond_broadcast(&mls_inst_signal); // tell slaveproc() it's time to get rolling
+        mls_inst_signal.notify_all();
 		output_debug("exec_start(), slave waiting for first time signal");
-		pthread_mutex_lock(&mls_inst_lock);
-		pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
-		pthread_mutex_unlock(&mls_inst_lock);
+        std::unique_lock instance_lock{mls_inst_lock};
+        mls_inst_signal.wait(instance_lock);
 		// will have copied data down and updated step_to with slave_cache
 		//global_clock = exec_sync_get(nullptr); // copy time signal to gc
 		output_debug("exec_start(), slave received first time signal of %lli", global_clock);
@@ -2434,15 +2379,13 @@ STATUS exec_start()
 //                            }
 
                             // lock access to done count
-                            std::unique_lock<std::mutex> lock_done(*donelock[iObjRankList]);
-//							pthread_mutex_lock(&donelock[iObjRankList]);
+                            std::unique_lock<std::mutex> lock_done{*donelock[iObjRankList]};
 
                             // initialize wait count
                             donecount[iObjRankList] = n_threads[iObjRankList];
 
                             // lock access to start condition
-                            std::unique_lock<std::mutex> lock_start(*startlock[iObjRankList]);
-//							pthread_mutex_lock(&startlock[iObjRankList]);
+                            std::unique_lock<std::mutex> lock_start{*startlock[iObjRankList]};
 
                             // update start condition
                             next_t1[iObjRankList]++;
@@ -2450,18 +2393,14 @@ STATUS exec_start()
                             // signal all the threads
                             start[iObjRankList]->notify_all();
 
-//                            pthread_cond_broadcast(&start[iObjRankList]);
                             // unlock access to start count
-//							pthread_mutex_unlock(&startlock[iObjRankList]);
                             startlock[iObjRankList]->unlock();
 
                             // begin wait
                             while (donecount[iObjRankList] > 0)
                                 done[iObjRankList]->wait_for(lock_done, std::chrono::milliseconds(100));
-//								pthread_cond_wait(&done[iObjRankList],&donelock[iObjRankList]);
 
                             // unlock done count
-//							pthread_mutex_unlock(&donelock[iObjRankList]);
                             donelock[iObjRankList]->unlock();
                         }
                         threadpool->await();
@@ -2506,11 +2445,10 @@ STATUS exec_start()
 				output_debug("step_to = %lli", exec_sync_get(nullptr));
 				output_debug("exec_start(), slave waiting for looped time signal");
 
-				pthread_cond_broadcast(&mls_inst_signal);
+                mls_inst_signal.notify_all();
 
-				pthread_mutex_lock(&mls_inst_lock);
-				pthread_cond_wait(&mls_inst_signal, &mls_inst_lock);
-				pthread_mutex_unlock(&mls_inst_lock);
+                std::unique_lock instance_lock{mls_inst_lock};
+                mls_inst_signal.wait(instance_lock);
 
 				output_debug("exec_start(), slave received looped time signal (%lli)", exec_sync_get(nullptr));
 			}
@@ -3121,7 +3059,7 @@ void exec_slave_node()
 	struct sockaddr_in *inaddr;
 	fd_set reader_fdset, master_fdset;
 	struct timeval timer;
-	pthread_t slave_thread;
+	std::thread::id slave_thread;
 	int rct;
 #ifdef _WIN32
 	static WSADATA wsaData;
@@ -3220,24 +3158,17 @@ void exec_slave_node()
 			//	* detatch, since we don't care about it after we start it
 			//	! I have no idea if the reuse of slave_thread will fly. Change
 			//	!  this if strange things start to happen.
-			if ( pthread_create(&slave_thread, nullptr, slave_node_proc, (void *)args) )
-			{
-				output_error("slavenode unable to thread off connection");
-				node_done = true;
-				closesocket(sockfd);
-				closesocket(*args[2]);
-				return;
-			}
-			//output_debug("esn(): thread created");
-			if ( pthread_detach(slave_thread) )
-			{
-				output_error("slavenode unable to detach connection thread");
-				node_done = true;
-				closesocket(sockfd);
-				closesocket(*args[2]);
-				return;
-			}
-			//output_debug("esn(): thread detached");
+            try {
+                std::thread instance_thread{slave_node_proc, (void *)args};
+                instance_thread.detach();
+            }
+            catch (std::system_error &ex) {
+                output_error("slavenode thread failed with error: %s", ex.what());
+                node_done = false;
+                closesocket(sockfd);
+                closesocket(*args[2]);
+                return;
+            }
 		} // end if rct
 	} // end while
 }

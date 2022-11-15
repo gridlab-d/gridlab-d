@@ -633,6 +633,7 @@ STATUS global_setvar(const char *def, ...) /**< the definition */
 }
 
 static int guid_first=1;
+// TODO: make this maybe not use rand which isn't particularly rand.
 char *global_guid(char *buffer, int size)
 {
 	if ( size>36 )

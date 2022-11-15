@@ -3676,7 +3676,7 @@ void restoration::printResult(int IdxSW)
 		fprintf(FPOutput, "The optimal switching sequence is as follows \n");
 		printSOs(FPOutput,IdxSW);
 	}
-	else if (candidateSwOpe.data_6 != nullptr) // Partial restoration                
+	else if (candidateSwOpe.data_6 != nullptr) // Partial restoration
 	{
 		//Find the minimum value - start with first value
 		IdxSW = 0;

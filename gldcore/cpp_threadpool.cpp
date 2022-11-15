@@ -9,16 +9,17 @@
 
 #include "cpp_threadpool.h"
 
-cpp_threadpool::cpp_threadpool(int num_threads) {
+//template<class T>
+cpp_threadpool::cpp_threadpool(unsigned num_threads) {
     if (num_threads == 0) {
         num_threads = std::thread::hardware_concurrency();
     }
 
     sync_mode.store(false); // Default to parallel
 
-    std::thread local_thread(&cpp_threadpool::sync_wait_on_queue, this);
-    sync_id = local_thread.get_id();
-    Threads.push_back(std::move(local_thread));
+    std::thread sync_thread(&cpp_threadpool::sync_wait_on_queue, this);
+    sync_id = sync_thread.get_id();
+    Threads.push_back(std::move(sync_thread));
 
     for (int index = 0; index < num_threads; index++) {
         std::thread local_thread(&cpp_threadpool::wait_on_queue, this);
@@ -26,6 +27,7 @@ cpp_threadpool::cpp_threadpool(int num_threads) {
     }
 }
 
+//template<class T>
 cpp_threadpool::~cpp_threadpool() {
     exiting.store(true); // = true;
 
@@ -48,10 +50,11 @@ cpp_threadpool::~cpp_threadpool() {
 }
 
 // This is a special single-threaded queue handler, for when sync mode is active.
+//template<class T>
 void cpp_threadpool::sync_wait_on_queue() {
 
     std::function<void()> Job;
-    std::unique_lock<std::mutex> lock(queue_lock);
+    std::unique_lock<std::mutex> lock{queue_lock};
 
     while (!exiting.load()) {
         if (!lock.owns_lock()) lock.lock();
@@ -71,17 +74,18 @@ void cpp_threadpool::sync_wait_on_queue() {
     }
 }
 
+//template<class T>
 void cpp_threadpool::wait_on_queue() {
 
     std::function<void()> Job;
-    std::unique_lock<std::mutex> lock(queue_lock);
+    std::unique_lock<std::mutex> lock{queue_lock};
 
     while (!exiting.load() && !(std::this_thread::get_id() == shutdown_id)) {
         if (!lock.owns_lock()) lock.lock();
         condition.wait(lock,
                        [=] { return !job_queue.empty(); });
 
-        std::unique_lock<std::mutex> parallel_lock(sync_mode_lock);
+        std::unique_lock<std::mutex> parallel_lock{sync_mode_lock};
         if (job_queue.empty()) {
             continue;
         } else {
@@ -97,8 +101,10 @@ void cpp_threadpool::wait_on_queue() {
     }
 }
 
+//template<class T>
+//bool cpp_threadpool::add_job(std::function<T> job) {
 bool cpp_threadpool::add_job(std::function<void()> job) {
-    std::unique_lock<std::mutex> lock(queue_lock);
+    std::unique_lock<std::mutex> lock{queue_lock};
     try {
         running_threads++;
         job_queue.push(job);
@@ -114,7 +120,8 @@ bool cpp_threadpool::add_job(std::function<void()> job) {
     }
 }
 
+//template<class T>
 void cpp_threadpool::await() {
-    std::unique_lock<std::mutex> lock(wait_lock);
+    std::unique_lock<std::mutex> lock{wait_lock};
     wait_condition.wait_for(lock, std::chrono::milliseconds(50), [=] { return running_threads.load() <= 0; });
 }

@@ -14,6 +14,15 @@
 #include "match.h"
 #include "convert.h"
 
+/* Values for the second argument to access.
+   These may be OR'd together.  */
+#ifndef R_OK // WIN32 or other platform lacking file IO definitions from unistd
+#define	R_OK	4		/* Test for read permission.  */
+#define	W_OK	2		/* Test for write permission.  */
+#define	X_OK	1		/* Test for execute permission.  */
+#define	F_OK	0		/* Test for existence.  */
+#endif
+
 struct s_object_list;
 
 /* the values are important because they're used to index lookups in find.c */

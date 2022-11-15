@@ -18,6 +18,9 @@
 #include "index.h"
 #include "cpp_threadpool.h"
 
+extern PASSCONFIG passtype[];
+extern int iteration_counter;
+
 struct sync_data {
 	TIMESTAMP step_to; /**< time to advance to */
 	unsigned int hard_event; /**< non-zero for hard events that can effect the advance step-to */
@@ -57,7 +60,8 @@ void exec_mls_init(void);
 void exec_mls_suspend(void);
 void exec_mls_resume(TIMESTAMP next_pause);
 void exec_mls_done(void);
-void exec_mls_statewait(unsigned states);
+
+[[maybe_unused]] void exec_mls_statewait(unsigned states);
 void exec_slave_node();
 int exec_run_createscripts(void);
 

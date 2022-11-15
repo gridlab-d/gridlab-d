@@ -141,6 +141,9 @@ object <class>[:<spec>] { // spec may be <id>, or <startid>..<endid>, or ..<coun
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <thread>
+#include <future>
+
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -6270,62 +6273,41 @@ int is_autodef(char *value)
 
 /* started processes */
 #include "threadpool.h"
+#include "cpp_threadpool.h"
 #include <csignal>
+
 struct s_threadlist {
-	pthread_t *data;
-	struct s_threadlist *next;
-} *threadlist = NULL;
-void kill_processes(void)
-{
-	while ( threadlist!=NULL )
-	{
-		void *ptr;
-		struct s_threadlist *next = threadlist->next;
-		int sig = SIGTERM;
-		int rc = pthread_kill(*(threadlist->data),sig);
-		switch ( rc ) {
-		case 0:
-			output_debug("killing thread %p", threadlist->data);
-			break;
-		case ESRCH:
-			output_error("unable to kill thread %p (no such thread)", threadlist->data);
-			break;
-		case EINVAL:
-			output_error("unable to kill thread %p (signal %d invalid/ignored)", threadlist->data, sig);
-			break;
-		default:
-			output_error("unable to kill thread %p (unknown return code %d)", threadlist->data, rc);
-			break;
-		}
-		free(threadlist->data);
-		threadlist=next;
-	}
+//	pthread_t *data;
+    std::unique_ptr<std::thread> data;
+    struct s_threadlist *next;
+};
+std::vector<std::thread> threadlist;
+
+void kill_processes() {
+    for (auto &thread: threadlist) {
+        if (thread.joinable())
+            thread.join();
+    }
 }
 
 /** @return -1 on failure, thread_id on success **/
-void* start_process(const char *cmd)
+int start_process(const char *cmd)
 {
 	static bool first = true;
-	pthread_t *pThreadInfo = (pthread_t*)malloc(sizeof(pthread_t));
-	struct s_threadlist *thread = (struct s_threadlist*)malloc(sizeof(struct s_threadlist));
     char *args = static_cast<char *>(malloc(strlen(cmd) + 1));
 	strcpy(args,cmd);
-	if ( thread==NULL || pThreadInfo==NULL || pthread_create(pThreadInfo,NULL,(void*(*)(void*))system,args)!=0 )
-	{
-		output_error_raw("%s(%d): unable to create thread to start '%s'", filename, linenum, cmd);
-		return NULL;
-	}
-	else
-		output_debug("creating thread %p for process '%s'", pThreadInfo, cmd);
-	thread->data = pThreadInfo;
-	thread->next = threadlist;
-	threadlist = thread;
+    try{
+
+    threadlist.emplace_back(system,args);
 	if ( first )
 	{
 		atexit(kill_processes);
 		first = false;
 	}
-	return threadlist;
+    } catch (std::system_error &ex){
+	    return FAILED;
+    }
+    return SUCCESS;
 }
 
 #ifdef _WIN32
@@ -6888,7 +6870,7 @@ static bool process_macro(char *line, int size, char *_filename, int linenum)
 		}
 		strcpy(value, strip_right_white(term+1));
 		output_debug("%s(%d): executing system(char *cmd='%s')", filename, linenum, value);
-		if( start_process(value)==NULL )
+		if( start_process(value)==FAILED )
 		{
 			output_error_raw("%s(%d): ERROR unable to start '%s'", filename, linenum, value);
 			strcpy(line,"\n");

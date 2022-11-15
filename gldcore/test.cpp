@@ -4,6 +4,7 @@
  */
 
 #include <cstdlib>
+#include <thread>
 
 #include "globals.h"
 #include "cmdarg.h"
@@ -127,7 +128,7 @@ int test_lock(void)
 {
 	if(global_lock_enabled){
 		int n, sum=0;
-	
+
 		count = (unsigned int*)malloc(sizeof(unsigned int*)*global_threadcount);
 		if ( !count )
 		{
@@ -137,16 +138,16 @@ int test_lock(void)
 
 		output_test("*** Begin memory locking test for %d threads", global_threadcount);
 		wlock(&key);
-		for ( n=0 ; n<global_threadcount ; n++ )
-		{
-			pthread_t pt;
-			count[n] = 0;
-			if ( pthread_create(&pt,NULL,test_lock_proc,(void*)&n)!=0 )
-			{
-				output_test("thread creation failed");
-				return FAILED;
-			}
-		}
+        for (n = 0; n < global_threadcount; n++) {
+            count[n] = 0;
+            try {
+                std::thread test_thread{test_lock_proc, (void *) &n};
+            }
+            catch (std::system_error &ex) {
+                output_test("thread creation failed");
+                return FAILED;
+            }
+        }
 		wunlock(&key);
 		global_suppress_repeat_messages = 0;
 		for ( n=0 ; n<global_threadcount ; n++ )

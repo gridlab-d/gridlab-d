@@ -95,15 +95,15 @@ static MTICODE iterator_proc(MTIPROC *tp)
 		MTIDATA result = mti->fn->set(NULL,NULL);
 		
 		/* lock access to the start condition */
-		pthread_mutex_lock(mti->start.lock);
+        std::unique_lock start_lock{mti->start.lock};
 
 		/* wait for the start condition to be satisfied */
 		mti_debug(mti,"iterator %d waiting for start condition",tp->id);
 		while ( mti->fn->compare(tp->data,mti->input)==0 )
-			pthread_cond_wait(mti->start.cond,mti->start.lock);
+            mti->start.cond.wait(start_lock);
 
 		/* unlock access to the start condition */
-		pthread_mutex_unlock(mti->start.lock);
+        start_lock.unlock();
 
 		/* reset the final result */
 		mti->fn->set(final,NULL);
@@ -129,19 +129,20 @@ static MTICODE iterator_proc(MTIPROC *tp)
 		mti->fn->set(tp->data,mti->input);
 
 		/* lock the stop condition */
-		pthread_mutex_lock(mti->stop.lock);
+        std::unique_lock stop_lock{mti->stop.lock};
 
-		/* decrement the stop counter */
+
+        /* decrement the stop counter */
 		mti->stop.count--;
 
 		/* gather output */
 		mti->fn->gather(mti->output,final);
 
 		/* notify all of stop condition */
-		pthread_cond_broadcast(mti->stop.cond);
+        mti->stop.cond.notify_all();
 
 		/* unlock stop condition */
-		pthread_mutex_unlock(mti->stop.lock);
+        stop_lock.unlock();
 
 		/* free the itermediate result */
 		free(result);
@@ -156,8 +157,6 @@ static MTICODE iterator_proc(MTIPROC *tp)
 
 MTI *mti_init(const char *name, MTIFUNCTIONS *fn, size_t minitems)
 {
-	pthread_cond_t new_cond = PTHREAD_COND_INITIALIZER;
-	pthread_mutex_t new_mutex = PTHREAD_MUTEX_INITIALIZER;
 	MTI *mti = NULL;
 	size_t nitems=0, items_per_process=0;
 	MTIITEM item = NULL;
@@ -179,15 +178,7 @@ MTI *mti_init(const char *name, MTIFUNCTIONS *fn, size_t minitems)
 	mti = (MTI*)malloc(sizeof(MTI));
 	if ( mti==NULL ) return NULL;
 	mti->name = name;
-	mti->start.cond = (pthread_cond_t*)malloc(sizeof(pthread_cond_t));
-	memcpy(mti->start.cond,&new_cond,sizeof(new_cond));
-	mti->start.lock = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
-	memcpy(mti->start.lock,&new_mutex,sizeof(new_mutex));
 	mti->start.count = 0;
-	mti->stop.cond = (pthread_cond_t*)malloc(sizeof(pthread_cond_t));
-	memcpy(mti->stop.cond,&new_cond,sizeof(new_cond));
-	mti->stop.lock = (pthread_mutex_t*)malloc(sizeof(pthread_mutex_t));
-	memcpy(mti->stop.lock,&new_mutex,sizeof(new_mutex));
 	mti->stop.count = 0;
 	mti->input = fn->set(NULL,NULL);
 	mti->output = fn->set(NULL,NULL);
@@ -247,7 +238,9 @@ MTI *mti_init(const char *name, MTIFUNCTIONS *fn, size_t minitems)
 			}
 
 			/* create thread to handle the list */
-			proc->enabled  = ( pthread_create(&proc->thread_id,NULL,(void*(*)(void*))iterator_proc,proc)==0 );
+            std::thread thread_start((void*(*)(void*))iterator_proc,proc);
+			proc->thread_id = thread_start.get_id();
+            proc->enabled = true;
 			mti_debug(mti,"proc=%d; enabled=%d, nitems=%d", p, proc->enabled, proc->n_items);
 		}
 	}
@@ -283,30 +276,30 @@ int mti_run(MTIDATA result, MTI *mti, MTIDATA input)
 		mti_debug(mti,"starting %d iterators", mti->n_processes);
 
 		/* lock access to stop condition */
-		pthread_mutex_lock(mti->stop.lock);
+        std::unique_lock stop_lock{mti->stop.lock};
 
 		/* reset the stop condition */
 		mti->stop.count = mti->n_processes;
 
 		/* lock access to the start condition */
-		pthread_mutex_lock(mti->start.lock);
+        std::unique_lock start_lock{mti->start.lock};
 
 		/* set start condition */
 		mti->fn->set(mti->input,input);
 		mti->fn->set(mti->output,NULL);
 
 		/* broadcast start condition */
-		pthread_cond_broadcast(mti->start.cond);
+        mti->start.cond.notify_all();
 
 		/* unlock access to start condition */
-		pthread_mutex_unlock(mti->start.lock);
+        start_lock.unlock();
 
 		/* wait for stop condition */
 		while ( mti->stop.count>0 )
-			pthread_cond_wait(mti->stop.cond,mti->stop.lock);
+            mti->stop.cond.wait(stop_lock);
 
 		/* unlock access to stop condition */
-		pthread_mutex_unlock(mti->stop.lock);
+        stop_lock.unlock();
 
 		/* gather result */
 		mti->fn->gather(result,mti->output);
