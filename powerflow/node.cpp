@@ -738,23 +738,14 @@ int node::init(OBJECT *parent)
 			//Do same for child
 			if ((phases & PHASE_D) == PHASE_D)
 			{
-				//Delta-connected - technically represents "two phases"
-				if ((phases & PHASE_A) == PHASE_A)
-				{
-					//AD = AB
-					c_phase_to_check |= (PHASE_A | PHASE_B);
-				}
-
-				if ((phases & PHASE_B) == PHASE_B)
-				{
-					//BD = BC
-					c_phase_to_check |= (PHASE_B | PHASE_C);
-				}
-
-				if ((phases & PHASE_C) == PHASE_C)
-				{
-					//CD = CA
-					c_phase_to_check |= (PHASE_A | PHASE_C);
+				if ((phases & PHASE_ABC) == PHASE_ABC) { // all three phases, or one pair of two phases
+					c_phase_to_check = PHASE_ABC;
+				} else if ((phases & (PHASE_A | PHASE_B)) == (PHASE_A | PHASE_B)) {
+					c_phase_to_check = (PHASE_A | PHASE_B);
+				} else if ((phases & (PHASE_B | PHASE_C)) == (PHASE_B | PHASE_C)) {
+					c_phase_to_check = (PHASE_B | PHASE_C);
+				} else if ((phases & (PHASE_C | PHASE_A)) == (PHASE_C | PHASE_A)) {
+					c_phase_to_check = (PHASE_C | PHASE_A);
 				}
 			}
 			else
