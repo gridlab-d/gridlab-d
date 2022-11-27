@@ -22,7 +22,7 @@ Cblock::~Cblock(void)
 void Cblock::setcoeffs(double *a,double *b)
 {
   p_A[0] = -a[1]/a[0];
-  p_B[0] = (b[1] - a[1]*b[0])/a[0];
+  p_B[0] = b[1]/a[0] - a[1]*b[0]/(a[0]*a[0]);
   p_C[0] = 1.0;
   p_D[0] = b[0]/a[0];
 }
