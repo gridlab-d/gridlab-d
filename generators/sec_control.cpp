@@ -562,7 +562,7 @@ SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigne
 		}
 		//iterate over participating objects
 		for (auto & obj : part_obj){
-			if (gl_object_isa(obj.ptr, "link_object", "powerflow"))
+			if (gl_object_isa(obj.ptr, "link", "powerflow"))
 			{
 				// no set point changes to tie-line objects
 				continue;
@@ -640,7 +640,7 @@ SIMULATIONMODE sec_control::inter_deltaupdate(unsigned int64 delta_time, unsigne
 		}
 		//iterate over participating objects
 		for (auto & obj : part_obj){
-			if (gl_object_isa(obj.ptr, "link_object", "powerflow"))
+			if (gl_object_isa(obj.ptr, "link", "powerflow"))
 			{
 				// no set point changes to tie-line objects
 				continue;
@@ -813,7 +813,7 @@ void sec_control::get_perr(void)
 		// iterate over participating objects and calculate difference 
 		// between desired output and current output
 		for (auto & obj : part_obj){
-			if (gl_object_isa(obj.ptr, "link_object", "powerflow"))
+			if (gl_object_isa(obj.ptr, "link", "powerflow"))
 			{
 				uniterr += get_tieline_error(obj);
 			}
@@ -1044,7 +1044,7 @@ double sec_control::get_pelec(SEC_CNTRL_PARTICIPANT &obj)
 	{
 		out = (get_complex_value(obj.ptr, "VA_Out")).Re() * 1e-6;
 	}
-	else if (gl_object_isa(obj.ptr, "link_object", "powerflow"))
+	else if (gl_object_isa(obj.ptr, "link", "powerflow"))
 	{
 		// Average is taken to get the same value for both regions.
 		out = (get_complex_value(obj.ptr, "power_in").Re() + get_complex_value(obj.ptr, "power_out").Re())/2.0 * 1e-6;
@@ -1108,7 +1108,7 @@ void sec_control::add_obj(std::vector<std::string> &vals)
 		tmp.dp_dn = (dp_dn_default < 0) ? ((tmp.pmax - tmp.pmin)*tmp.rate) : dp_dn_default;
 		tmp.dp_up = (dp_up_default < 0) ? ((tmp.pmax - tmp.pmin)*tmp.rate) : dp_up_default;
 	}// END Inverter_dyn specific
-	else if (gl_object_isa(tmp.ptr, "link_object", "powerflow"))
+	else if (gl_object_isa(tmp.ptr, "link", "powerflow"))
 	{
 		// ==== tie-line options ========
 		tmp.rate = 1; //not uses for links. 1 so that any units-to-pu conversions will not do anything

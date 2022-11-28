@@ -102,7 +102,10 @@ public:
 	}PDISPATCH;
 
 	PDISPATCH pdispatch; //Scheduled flow from->to in W  
-
+	bool set_pdispatch; //trigger to set pdispatch equal to (power_in + power_out)/2
+	bool set_pdispatch_internal; //internal flag to help manage pdispatch setting
+	double set_pdispatch_time; //timestamp when pdispatch was set
+	
 	int create(void);
 	int init(OBJECT *parent);
 	TIMESTAMP prev_LTime;
