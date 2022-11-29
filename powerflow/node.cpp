@@ -709,49 +709,10 @@ int node::init(OBJECT *parent)
 			}
 
 			//Create base phase set for parent
-			if ((parNode->phases & PHASE_D) == PHASE_D)
-			{
-				//Delta-connected - technically represents "two phases"
-				if ((parNode->phases & PHASE_A) == PHASE_A)
-				{
-					//AD = AB
-					p_phase_to_check |= (PHASE_A | PHASE_B);
-				}
-
-				if ((parNode->phases & PHASE_B) == PHASE_B)
-				{
-					//BD = BC
-					p_phase_to_check |= (PHASE_B | PHASE_C);
-				}
-
-				if ((parNode->phases & PHASE_C) == PHASE_C)
-				{
-					//CD = CA
-					p_phase_to_check |= (PHASE_A | PHASE_C);
-				}
-			}
-			else
-			{
-				p_phase_to_check = (parNode->phases & PHASE_ABC);
-			}
+			p_phase_to_check = (parNode->phases & PHASE_ABC);
 
 			//Do same for child
-			if ((phases & PHASE_D) == PHASE_D)
-			{
-				if ((phases & PHASE_ABC) == PHASE_ABC) { // all three phases, or one pair of two phases
-					c_phase_to_check = PHASE_ABC;
-				} else if ((phases & (PHASE_A | PHASE_B)) == (PHASE_A | PHASE_B)) {
-					c_phase_to_check = (PHASE_A | PHASE_B);
-				} else if ((phases & (PHASE_B | PHASE_C)) == (PHASE_B | PHASE_C)) {
-					c_phase_to_check = (PHASE_B | PHASE_C);
-				} else if ((phases & (PHASE_C | PHASE_A)) == (PHASE_C | PHASE_A)) {
-					c_phase_to_check = (PHASE_C | PHASE_A);
-				}
-			}
-			else
-			{
-				c_phase_to_check = (parNode->phases & PHASE_ABC);
-			}
+			c_phase_to_check = (phases & PHASE_ABC);
 
 			//Fundamental check - see if we're even base compatible
 			if ((p_phase_to_check & c_phase_to_check) != c_phase_to_check)	//Our parent is lacking, fail
