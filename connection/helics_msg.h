@@ -166,6 +166,30 @@ public:
 	string name;
 	helicscpp::Endpoint HelicsSubscriptionEndpoint;
 };
+
+class helics_domain_publication{
+public:
+	helics_domain_publication(){}
+	string id;
+	string domain_type;
+	string domain_property;
+	string data_type;
+	string units;
+	vector<string> phases;
+	helicscpp::Publication helicsPublication;
+};
+
+class helics_domain_input{
+public:
+	helics_domain_input(){}
+	string id;
+	string domain_type;
+	string domain_property;
+	string data_type;
+	string units;
+	vector<string> phases;
+	helicscpp::Input helicsInput;
+};
 #endif
 
 typedef enum {
@@ -188,18 +212,27 @@ private:
 	vector<json_helics_value_publication*> json_helics_value_publications;
 	vector<json_helics_endpoint_subscription*> json_helics_endpoint_subscriptions;
 	vector<json_helics_endpoint_publication*> json_helics_endpoint_publications;
+	vector<helics_domain_publication*> helics_domain_publications;
+	vector<helics_domain_input*> helics_domain_inputs;
 #endif
 	vector<string> *inFunctionTopics;
 	varmap *vmap[14];
 #if HAVE_HELICS
 	helicscpp::CombinationFederate *gld_helics_federate;
 #endif
+	void registerHelicsDomainOutputs(Json::Value domainOutput);
+	void registerHelicsDomainInputs(Json::Value domainInput);
+	int checkDomainInputs();
+	int publishDomainOutputs();
+	static gld::complex getConstantImpedance(gld::complex V, gld::complex S);
+	static gld::complex getConstantCurrent(gld::complex V, gld::complex S);
 	TIMESTAMP last_approved_helics_time;
 	TIMESTAMP initial_sim_time;
 	TIMESTAMP publish_time;
 	double last_delta_helics_time;
 	bool exitDeltamode;
 	string *federate_configuration_file;
+	Json::Value federate_domain_config;
 	// TODO add other properties here as needed.
 
 public:

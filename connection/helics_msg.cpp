@@ -75,6 +75,9 @@ int helics_msg::create(){
 	register_object_deltaclockupdate((void *)this, dClockupdate);
 	message_type = HMT_GENERAL;
 	publish_period = 0;
+#ifdef HAVE_HELICS
+	gld_helics_federate = nullptr;
+#endif
 	return 1;
 }
 
@@ -82,11 +85,19 @@ int helics_msg::configure(char *value)
 {
 	int rv = 1;
 	char1024 configFile;
+	std::ifstream helicsDomainStream;
+	Json::CharReaderBuilder helicsDomainJsonBuilder;
+	string jsonParseErrors = "";
 	strcpy(configFile, value);
 	if (strcmp(configFile, "") != 0) {
 		federate_configuration_file = new string(configFile);
+		helicsDomainStream.open(federate_configuration_file->c_str());
+		if(!parseFromStream(helicsDomainJsonBuilder, helicsDomainStream, &federate_domain_config, &jsonParseErrors)) {
+			gl_error("helics_msg::configure(): Unable to parse helics configuration file %s.\nErrors:%s", federate_configuration_file->c_str(), jsonParseErrors.c_str());
+			rv = 0;
+		}
 	} else {
-		gl_error("helics_msg::configure(): No configuration file was give. Please provide a configuration file!");
+		gl_error("helics_msg::configure(): No configuration file was given. Please provide a configuration file!");
 		rv = 0;
 	}
 
@@ -173,6 +184,7 @@ int helics_msg::init(OBJECT *parent){
 			Json::CharReaderBuilder json_builder;
 			Json::Value config_info;
 			Json::String parse_err;
+
 			if(message_type == HMT_GENERAL){
 				for( idx = 0; idx < pub_count; idx++ ) {
 					helicscpp::Publication pub = gld_helics_federate->getPublication(idx);
@@ -471,6 +483,18 @@ int helics_msg::init(OBJECT *parent){
 					}
 				}
 			}
+			if(federate_domain_config.isMember("domain_outputs")) {
+				int numberOfOutputs = federate_domain_config["domain_outputs"].size();
+				for(int i = 0; i < numberOfOutputs; ++i) {
+					registerHelicsDomainOutputs(federate_domain_config["domain_outputs"][i]);
+				}
+			}
+			if(federate_domain_config.isMember("domain_inputs")) {
+				int numberOfInputs = federate_domain_config["domain_inputs"].size();
+				for(int i = 0; i < numberOfInputs; ++i) {
+					registerHelicsDomainInputs(federate_domain_config["domain_Inputs"][i]);
+				}
+			}
 		} catch(const std::exception &e) {
 			gl_error("helics_msg::init: an unexpected error occurred when trying to create a CombinationFederate using the configuration string: \n%s\nThis is the error that was caught:\n%s",federate_configuration_file->c_str(), e.what());
 			return 0;
@@ -727,6 +751,10 @@ int helics_msg::precommit(TIMESTAMP t1){
 		if(result == 0){
 			return result;
 		}
+		result = checkDomainInputs();
+		if(result == 0){
+			return result;
+		}
 	}
 	return 1;
 }
@@ -770,6 +798,10 @@ SIMULATIONMODE helics_msg::deltaInterUpdate(unsigned int delta_iteration_counter
 			if(result == 0){
 				return SM_ERROR;
 			}
+			result = checkDomainInputs();
+			if(result == 0){
+				return SM_ERROR;
+			}
 			return SM_DELTA_ITER;
 		}
 
@@ -792,6 +824,10 @@ SIMULATIONMODE helics_msg::deltaInterUpdate(unsigned int delta_iteration_counter
 		{
 			//post_sync: publish variables
 			result = publishVariables();
+			if(result == 0){
+				return SM_ERROR;
+			}
+			result = publishDomainOutputs();
 			if(result == 0){
 				return SM_ERROR;
 			}
@@ -870,6 +906,10 @@ TIMESTAMP helics_msg::clk_update(TIMESTAMP t1)
 					publish_time = t1 + (TIMESTAMP)publish_period;
 				}
 				result = publishVariables();
+				if(result == 0){
+					return TS_INVALID;
+				}
+				result = publishDomainOutputs();
 				if(result == 0){
 					return TS_INVALID;
 				}
@@ -1586,6 +1626,981 @@ int helics_msg::subscribeJsonVariables(){
 	}
 #endif
 	return 1;
+}
+
+void helics_msg::registerHelicsDomainOutputs(Json::Value domainOutput) {
+	helics_domain_publication *pub = nullptr;
+	string type = domainOutput["type"].asString();
+	string id = domainOutput["id"].asString();
+	string output_type = domainOutput["output_type"].asString();
+	string output_property = domainOutput["output_property"].asString();
+	string data_type = domainOutput["data_type"].asString();
+	string units = domainOutput["units"].asString();
+	Json::Value phases_temp = domainOutput["phases"];
+	vector<string> phases;
+	for (Json::ValueIterator p = phases_temp.begin(); p != phases_temp.end(); p++) {
+		phases.push_back(p.name());
+	}
+	if (type == "value") {
+		pub = new helics_domain_publication();
+		pub->id = id;
+		pub->domain_type = output_type;
+		pub->domain_property = output_property;
+		pub->data_type = data_type;
+		pub->units = units;
+		pub->phases = phases;
+		pub->helicsPublication = gld_helics_federate->registerGlobalPublication(id, data_type, units);
+		helics_domain_publications.push_back(pub);
+	}
+}
+
+void helics_msg::registerHelicsDomainInputs(Json::Value domainInput) {
+	helics_domain_input *sub = nullptr;
+	string type = domainInput["type"].asString();
+	string id = domainInput["id"].asString();
+	string output_type = domainInput["output_type"].asString();
+	string output_property = domainInput["output_property"].asString();
+	string data_type = domainInput["data_type"].asString();
+	string units = domainInput["units"].asString();
+	Json::Value phases_temp = domainInput["phases"];
+	vector<string> phases;
+	for (Json::ValueIterator p = phases_temp.begin(); p != phases_temp.end(); p++) {
+		phases.push_back(p.name());
+	}
+	if (type == "value") {
+		sub = new helics_domain_input();
+		sub->id = id;
+		sub->domain_type = output_type;
+		sub->domain_property = output_property;
+		sub->data_type = data_type;
+		sub->units = units;
+		sub->phases = phases;
+		sub->helicsInput = gld_helics_federate->registerSubscription(id, units);
+		helics_domain_inputs.push_back(sub);
+	}
+}
+
+int helics_msg::publishDomainOutputs() {
+	int rv = 1;
+	string objectName;
+	char buffer[32];
+	int bufferSize = 0;
+	memset(static_cast<void*>(&buffer[0]), '\0', sizeof(buffer));
+	string stringVal = "";
+	gld_property *prop = nullptr;
+	vector<std::complex<double>> complexPayload;
+	vector<double> doublePayload;
+	std::complex<double> complexVal = {0.0,0.0};
+	double doubleVal = 0.0;
+	int64 integerVal = 0;
+	string phases = "";
+	for (auto &pub : helics_domain_publications) {
+		objectName = pub->id;
+		for(auto &phase : pub->phases) {
+			phases += phase;
+		}
+		if (pub->domain_type == "pcc"){//point of common coupling so id should refer to a substation transformer
+			if (pub->domain_property == "VA") {
+				if (phases.find("A") != string::npos) {
+					prop = new gld_property(pub->id.c_str(), "distribution_power_A");
+				    if (prop->is_valid()) {
+				    	complexVal = {prop->get_part("real")/1.0e6, prop->get_part("imag")/1.0e6};
+				    	complexPayload.push_back(complexVal);
+				    } else {
+				    	gl_error("helics_msg::publishDomainOutputs(): An error occurred when trying to find (object,property) pair (%s,distribution_power_A). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+				    	rv = 0;
+				    	break;
+				    }
+				    delete prop;
+				    prop = nullptr;
+				}
+				if (phases.find("B") != string::npos) {
+					prop = new gld_property(pub->id.c_str(), "distribution_power_B");
+					if (prop->is_valid()) {
+						complexVal = {prop->get_part("real")/1.0e6, prop->get_part("imag")/1.0e6};
+						complexPayload.push_back(complexVal);
+					} else {
+				    	gl_error("helics_msg::publishDomainOutputs(): An error occurred when trying to find (object,property) pair (%s,distribution_power_B). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+				    	rv = 0;
+				    	break;
+				    }
+					delete prop;
+					prop = nullptr;
+				}
+				if (phases.find("C") != string::npos) {
+					prop = new gld_property(pub->id.c_str(), "distribution_power_C");
+					if (prop->is_valid()) {
+						complexVal = {prop->get_part("real")/1.0e6, prop->get_part("imag")/1.0e6};
+						complexPayload.push_back(complexVal);
+					} else {
+				    	gl_error("helics_msg::publishDomainOutputs(): An error occurred when trying to find (object,property) pair (%s,distribution_power_C). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+				    	rv = 0;
+				    	break;
+				    }
+					delete prop;
+					prop = nullptr;
+				}
+				pub->helicsPublication.publish(complexPayload);
+				complexPayload.clear();
+			} else {
+				gl_error("helics_msg::publishDomainOutputs(): An unsupported domain property, %s, was encountered for a pcc output. The only valid property is VA currently.", pub->domain_property.c_str());
+				rv = 0;
+				break;
+			}
+		} else if (pub->domain_type == "connectivitynode"){//should be node/triplex_node type object
+			if (pub->domain_property == "PNV") {
+				if (phases.find("A") != string::npos) {
+					prop = new gld_property(pub->id.c_str(), "voltage_A");
+					if (prop->is_valid()) {
+						complexVal = {prop->get_part("real"), prop->get_part("imag")};
+						complexPayload.push_back(complexVal);
+					} else {
+				    	gl_error("helics_msg::publishDomainOutputs(): An error occurred when trying to find (object,property) pair (%s,voltage_A). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+				    	rv = 0;
+				    	break;
+				    }
+					delete prop;
+					prop = nullptr;
+				}
+				if (phases.find("B") != string::npos) {
+					prop = new gld_property(pub->id.c_str(), "voltage_B");
+					if (prop->is_valid()) {
+						complexVal = {prop->get_part("real"), prop->get_part("imag")};
+						complexPayload.push_back(complexVal);
+					} else {
+				    	gl_error("helics_msg::publishDomainOutputs(): An error occurred when trying to find (object,property) pair (%s,voltage_B). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+				    	rv = 0;
+				    	break;
+				    }
+					delete prop;
+					prop = nullptr;
+				}
+				if (phases.find("C") != string::npos) {
+					prop = new gld_property(pub->id.c_str(), "voltage_C");
+					if (prop->is_valid()) {
+						complexVal = {prop->get_part("real"), prop->get_part("imag")};
+						complexPayload.push_back(complexVal);
+					} else {
+				    	gl_error("helics_msg::publishDomainOutputs(): An error occurred when trying to find (object,property) pair (%s,voltage_C). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+				    	rv = 0;
+				    	break;
+				    }
+					delete prop;
+					prop = nullptr;
+				}
+				if (phases.find("s1") != string::npos) {
+					prop = new gld_property(pub->id.c_str(), "voltage_1");
+					if (prop->is_valid()) {
+						complexVal = {prop->get_part("real"), prop->get_part("imag")};
+						complexPayload.push_back(complexVal);
+					} else {
+				    	gl_error("helics_msg::publishDomainOutputs(): An error occurred when trying to find (object,property) pair (%s,voltage_1). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+				    	rv = 0;
+				    	break;
+				    }
+					delete prop;
+					prop = nullptr;
+				}
+				if (phases.find("s2") != string::npos) {
+					prop = new gld_property(pub->id.c_str(), "voltage_2");
+					if (prop->is_valid()) {
+						complexVal = {prop->get_part("real"), prop->get_part("imag")};
+						complexPayload.push_back(complexVal);
+					} else {
+				    	gl_error("helics_msg::publishDomainOutputs(): An error occurred when trying to find (object,property) pair (%s,voltage_2). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+				    	rv = 0;
+				    	break;
+				    }
+					delete prop;
+					prop = nullptr;
+				}
+				pub->helicsPublication.publish(complexPayload);
+				complexPayload.clear();
+			} else {
+				gl_error("helics_msg::publishDomainOutputs(): An unsupported domain property, %s, was encountered for a connectivitynode output. The only valid property is PNV currently.", pub->domain_property.c_str());
+				rv = 0;
+				break;
+			}
+		} else if (pub->domain_type == "aclinesegment"){//should be node/triplex_node type object
+			if (pub->domain_property == "A") {
+				if (phases.find("A") != string::npos) {
+					prop = new gld_property(pub->id.c_str(), "current_out_A");
+					if (prop->is_valid()) {
+						complexVal = {prop->get_part("real"), prop->get_part("imag")};
+						complexPayload.push_back(complexVal);
+					} else {
+				    	gl_error("helics_msg::publishDomainOutputs(): An error occurred when trying to find (object,property) pair (%s,current_out_A). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+				    	rv = 0;
+				    	break;
+				    }
+					delete prop;
+					prop = nullptr;
+				}
+				if (phases.find("B") != string::npos) {
+					prop = new gld_property(pub->id.c_str(), "current_out_B");
+					if (prop->is_valid()) {
+						complexVal = {prop->get_part("real"), prop->get_part("imag")};
+						complexPayload.push_back(complexVal);
+					} else {
+				    	gl_error("helics_msg::publishDomainOutputs(): An error occurred when trying to find (object,property) pair (%s,current_out_B). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+				    	rv = 0;
+				    	break;
+				    }
+					delete prop;
+					prop = nullptr;
+				}
+				if (phases.find("C") != string::npos) {
+					prop = new gld_property(pub->id.c_str(), "current_out_C");
+					if (prop->is_valid()) {
+						complexVal = {prop->get_part("real"), prop->get_part("imag")};
+						complexPayload.push_back(complexVal);
+					} else {
+				    	gl_error("helics_msg::publishDomainOutputs(): An error occurred when trying to find (object,property) pair (%s,current_out_C). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+				    	rv = 0;
+				    	break;
+				    }
+					delete prop;
+					prop = nullptr;
+				}
+				if (phases.find("s1") != string::npos) {
+					prop = new gld_property(pub->id.c_str(), "current_out_A");
+					if (prop->is_valid()) {
+						complexVal = {prop->get_part("real"), prop->get_part("imag")};
+						complexPayload.push_back(complexVal);
+					} else {
+				    	gl_error("helics_msg::publishDomainOutputs(): An error occurred when trying to find (object,property) pair (%s,current_out_A). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+				    	rv = 0;
+				    	break;
+				    }
+					delete prop;
+					prop = nullptr;
+				}
+				if (phases.find("s2") != string::npos) {
+					prop = new gld_property(pub->id.c_str(), "current_out_B");
+					if (prop->is_valid()) {
+						complexVal = {prop->get_part("real"), prop->get_part("imag")};
+						complexPayload.push_back(complexVal);
+					} else {
+				    	gl_error("helics_msg::publishDomainOutputs(): An error occurred when trying to find (object,property) pair (%s,current_out_B). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+				    	rv = 0;
+				    	break;
+				    }
+					delete prop;
+					prop = nullptr;
+				}
+				pub->helicsPublication.publish(complexPayload);
+				complexPayload.clear();
+			} else {
+				gl_error("helics_msg::publishDomainOutputs(): An unsupported domain property, %s, was encountered for a aclinesegment output. The only valid property is A currently.", pub->domain_property.c_str());
+				rv = 0;
+				break;
+			}
+		} else if (pub->domain_type == "energyconsumer"){//should be node/triplex_node type object
+			if (pub->domain_property == "VA") {
+				if (phases.find("A") != string::npos) {
+					prop = new gld_property(pub->id.c_str(), "measured_power_A");
+					if (prop->is_valid()) {
+						complexVal = {prop->get_part("real"), prop->get_part("imag")};
+						complexPayload.push_back(complexVal);
+					} else {
+				    	gl_error("helics_msg::publishDomainOutputs(): An error occurred when trying to find (object,property) pair (%s,measured_power_A). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+				    	rv = 0;
+				    	break;
+				    }
+					delete prop;
+					prop = nullptr;
+				}
+				if (phases.find("B") != string::npos) {
+					prop = new gld_property(pub->id.c_str(), "measured_power_B");
+					if (prop->is_valid()) {
+						complexVal = {prop->get_part("real"), prop->get_part("imag")};
+						complexPayload.push_back(complexVal);
+					} else {
+				    	gl_error("helics_msg::publishDomainOutputs(): An error occurred when trying to find (object,property) pair (%s,measured_power_B). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+				    	rv = 0;
+				    	break;
+				    }
+					delete prop;
+					prop = nullptr;
+				}
+				if (phases.find("C") != string::npos) {
+					prop = new gld_property(pub->id.c_str(), "measured_power_C");
+					if (prop->is_valid()) {
+						complexVal = {prop->get_part("real"), prop->get_part("imag")};
+						complexPayload.push_back(complexVal);
+					} else {
+				    	gl_error("helics_msg::publishDomainOutputs(): An error occurred when trying to find (object,property) pair (%s,measured_power_C). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+				    	rv = 0;
+				    	break;
+				    }
+					delete prop;
+					prop = nullptr;
+				}
+				if (phases.find("s1") != string::npos) {
+					prop = new gld_property(pub->id.c_str(), "indiv_measured_power_1");
+					if (prop->is_valid()) {
+						complexVal = {prop->get_part("real"), prop->get_part("imag")};
+						complexPayload.push_back(complexVal);
+					} else {
+				    	gl_error("helics_msg::publishDomainOutputs(): An error occurred when trying to find (object,property) pair (%s,indiv_measured_power_1). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+				    	rv = 0;
+				    	break;
+				    }
+					delete prop;
+					prop = nullptr;
+				}
+				if (phases.find("s2") != string::npos) {
+					prop = new gld_property(pub->id.c_str(), "indiv_measured_power_2");
+					if (prop->is_valid()) {
+						complexVal = {prop->get_part("real"), prop->get_part("imag")};
+						complexPayload.push_back(complexVal);
+					} else {
+				    	gl_error("helics_msg::publishDomainOutputs(): An error occurred when trying to find (object,property) pair (%s,indiv_measured_power_2). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+				    	rv = 0;
+				    	break;
+				    }
+					delete prop;
+					prop = nullptr;
+				}
+				pub->helicsPublication.publish(complexPayload);
+				complexPayload.clear();
+			} else {
+				gl_error("helics_msg::publishDomainOutputs(): An unsupported domain property, %s, was encountered for a energyconsumer output. The only valid property is VA currently.", pub->domain_property.c_str());
+				rv = 0;
+				break;
+			}
+		} else if (pub->domain_type == "ratiotapchanger"){//point of common coupling so id should refer to a substation transformer
+			if (pub->domain_property == "POS") {
+				if (phases.find("A") != string::npos) {
+					prop = new gld_property(pub->id.c_str(), "tap_A");
+				    if (prop->is_valid()) {
+				    	integerVal = prop->get_integer();
+				    	doublePayload.push_back(static_cast<double>(integerVal));
+				    } else {
+				    	gl_error("helics_msg::publishDomainOutputs(): An error occurred when trying to find (object,property) pair (%s,tap_A). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+				    	rv = 0;
+				    	break;
+				    }
+				    delete prop;
+				    prop = nullptr;
+				}
+				if (phases.find("B") != string::npos) {
+					prop = new gld_property(pub->id.c_str(), "tap_B");
+					if (prop->is_valid()) {
+						integerVal = prop->get_integer();
+						doublePayload.push_back(static_cast<double>(integerVal));
+					} else {
+				    	gl_error("helics_msg::publishDomainOutputs(): An error occurred when trying to find (object,property) pair (%s,tap_B). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+				    	rv = 0;
+				    	break;
+				    }
+					delete prop;
+					prop = nullptr;
+				}
+				if (phases.find("C") != string::npos) {
+					prop = new gld_property(pub->id.c_str(), "tap_C");
+					if (prop->is_valid()) {
+						integerVal = prop->get_integer();
+						doublePayload.push_back(static_cast<double>(integerVal));
+					} else {
+				    	gl_error("helics_msg::publishDomainOutputs(): An error occurred when trying to find (object,property) pair (%s,tap_C). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+				    	rv = 0;
+				    	break;
+				    }
+					delete prop;
+					prop = nullptr;
+				}
+				pub->helicsPublication.publish(doublePayload);
+				doublePayload.clear();
+			} else {
+				gl_error("helics_msg::publishDomainOutputs(): An unsupported domain property, %s, was encountered for a ratiotapchanger output. The only valid property is POS currently.", pub->domain_property.c_str());
+				rv = 0;
+				break;
+			}
+		} else if (pub->domain_type == "shuntcompensator"){//point of common coupling so id should refer to a substation transformer
+			if (pub->domain_property == "POS") {
+				if (phases.find("A") != string::npos) {
+					prop = new gld_property(pub->id.c_str(), "switchA");
+				    if (prop->is_valid()) {
+				    	bufferSize = prop->to_string(&buffer[0], sizeof(buffer));
+				    	if (bufferSize > 0) {
+				    		stringVal.clear();
+				    		stringVal.assign(static_cast<const char*>(&buffer[0]));
+				    		if(stringVal == "CLOSED") {
+				    			doublePayload.push_back(1.0);
+				    		} else {
+				    			doublePayload.push_back(0.0);
+				    		}
+				    	}
+				    	memset(static_cast<void*>(&buffer[0]), '\0', sizeof(buffer));
+				    } else {
+				    	gl_error("helics_msg::publishDomainOutputs(): An error occurred when trying to find (object,property) pair (%s,switchA). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+				    	rv = 0;
+				    	break;
+				    }
+				    delete prop;
+				    prop = nullptr;
+				}
+				if (phases.find("B") != string::npos) {
+					prop = new gld_property(pub->id.c_str(), "switchB");
+					if (prop->is_valid()) {
+						bufferSize = prop->to_string(&buffer[0], sizeof(buffer));
+						if (bufferSize > 0) {
+							stringVal.clear();
+							stringVal.assign(static_cast<const char*>(&buffer[0]));
+							if(stringVal == "CLOSED") {
+								doublePayload.push_back(1.0);
+							} else {
+								doublePayload.push_back(0.0);
+							}
+						}
+						memset(static_cast<void*>(&buffer[0]), '\0', sizeof(buffer));
+					} else {
+				    	gl_error("helics_msg::publishDomainOutputs(): An error occurred when trying to find (object,property) pair (%s,switchB). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+				    	rv = 0;
+				    	break;
+				    }
+					delete prop;
+					prop = nullptr;
+				}
+				if (phases.find("C") != string::npos) {
+					prop = new gld_property(pub->id.c_str(), "switchC");
+					if (prop->is_valid()) {
+						bufferSize = prop->to_string(&buffer[0], sizeof(buffer));
+						if (bufferSize > 0) {
+							stringVal.clear();
+							stringVal.assign(static_cast<const char*>(&buffer[0]));
+							if(stringVal == "CLOSED") {
+								doublePayload.push_back(1.0);
+							} else {
+								doublePayload.push_back(0.0);
+							}
+						}
+						memset(static_cast<void*>(&buffer[0]), '\0', sizeof(buffer));
+					} else {
+				    	gl_error("helics_msg::publishDomainOutputs(): An error occurred when trying to find (object,property) pair (%s,switchB). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+				    	rv = 0;
+				    	break;
+				    }
+					delete prop;
+					prop = nullptr;
+				}
+				pub->helicsPublication.publish(doublePayload);
+				doublePayload.clear();
+			} else {
+				gl_error("helics_msg::publishDomainOutputs(): An unsupported domain property, %s, was encountered for a shuntcompensator output. The only valid property is POS currently.", pub->domain_property.c_str());
+				rv = 0;
+				break;
+			}
+		} else if (pub->domain_type == "switch"){//point of common coupling so id should refer to a substation transformer
+			if (pub->domain_property == "POS") {
+				if (phases.find("A") != string::npos) {
+					prop = new gld_property(pub->id.c_str(), "phase_A_state");
+				    if (prop->is_valid()) {
+				    	bufferSize = prop->to_string(&buffer[0], sizeof(buffer));
+				    	if (bufferSize > 0) {
+				    		stringVal.clear();
+				    		stringVal.assign(static_cast<const char*>(&buffer[0]));
+				    		if(stringVal == "CLOSED") {
+				    			doublePayload.push_back(0.0);
+				    		} else {
+				    			doublePayload.push_back(1.0);
+				    		}
+				    	}
+				    	memset(static_cast<void*>(&buffer[0]), '\0', sizeof(buffer));
+				    } else {
+				    	gl_error("helics_msg::publishDomainOutputs(): An error occurred when trying to find (object,property) pair (%s,phase_A_state). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+				    	rv = 0;
+				    	break;
+				    }
+				    delete prop;
+				    prop = nullptr;
+				}
+				if (phases.find("B") != string::npos) {
+					prop = new gld_property(pub->id.c_str(), "phase_B_state");
+					if (prop->is_valid()) {
+						bufferSize = prop->to_string(&buffer[0], sizeof(buffer));
+						if (bufferSize > 0) {
+							stringVal.clear();
+							stringVal.assign(static_cast<const char*>(&buffer[0]));
+							if(stringVal == "CLOSED") {
+								doublePayload.push_back(0.0);
+							} else {
+								doublePayload.push_back(1.0);
+							}
+						}
+						memset(static_cast<void*>(&buffer[0]), '\0', sizeof(buffer));
+					} else {
+				    	gl_error("helics_msg::publishDomainOutputs(): An error occurred when trying to find (object,property) pair (%s,phase_B_state). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+				    	rv = 0;
+				    	break;
+				    }
+					delete prop;
+					prop = nullptr;
+				}
+				if (phases.find("C") != string::npos) {
+					prop = new gld_property(pub->id.c_str(), "phase_C_state");
+					if (prop->is_valid()) {
+						bufferSize = prop->to_string(&buffer[0], sizeof(buffer));
+						if (bufferSize > 0) {
+							stringVal.clear();
+							stringVal.assign(static_cast<const char*>(&buffer[0]));
+							if(stringVal == "CLOSED") {
+								doublePayload.push_back(0.0);
+							} else {
+								doublePayload.push_back(1.0);
+							}
+						}
+						memset(static_cast<void*>(&buffer[0]), '\0', sizeof(buffer));
+					} else {
+				    	gl_error("helics_msg::publishDomainOutputs(): An error occurred when trying to find (object,property) pair (%s,phase_C_state). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+				    	rv = 0;
+				    	break;
+				    }
+					delete prop;
+					prop = nullptr;
+				}
+				pub->helicsPublication.publish(doublePayload);
+				doublePayload.clear();
+			} else {
+				gl_error("helics_msg::publishDomainOutputs(): An unsupported domain property, %s, was encountered for a switch output. The only valid property is VA currently.", pub->domain_property.c_str());
+				rv = 0;
+				break;
+			}
+		} else {
+			gl_error("helics_msg:publishDomainOutputs(): An unsupported domain type, %s, was encountered for a distribution simulator.", pub->domain_type.c_str());
+			rv = 0;
+			break;
+		}
+		phases.erase();
+	}
+	return rv;
+}
+
+int helics_msg::checkDomainInputs() {
+	int rv = 1;
+	string objectName;
+	char buffer[32];
+	int bufferSize = 0;
+	memset(static_cast<void*>(&buffer[0]), '\0', sizeof(buffer));
+	string stringVal = "";
+	gld_property *prop = nullptr;
+	gld_property *voltage_prop = nullptr;
+	vector<std::complex<double>> complexPayload;
+	vector<double> doublePayload;
+	gld::complex complexVal(0.0,0.0);
+	gld::complex complexV(0.0,0.0);
+	gld::complex complexS(0.0,0.0);
+	double doubleVal = 0.0;
+	int16_t integerVal = 0;
+	for (auto &ipt : helics_domain_inputs) {
+		if (ipt->domain_type == "pcc"){//should be node/triplex_node type object
+			if (ipt->domain_property == "PNV") {
+				ipt->helicsInput.getComplexVector(complexPayload);
+				if (complexPayload.size() == 3) {
+					prop = new gld_property(ipt->id.c_str(), "zero_sequence_voltage");
+					if (prop->is_valid()) {
+						complexVal.SetReal(complexPayload[0].real());
+						complexVal.SetImag(complexPayload[0].imag());
+						prop->setp(complexVal);
+					} else {
+						gl_error("helics_msg::checkDomainInputs(): An error occurred when trying to find (object,property) pair (%s,zero_sequence_voltage). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+						rv = 0;
+						break;
+					}
+					delete prop;
+					prop = nullptr;
+					prop = new gld_property(ipt->id.c_str(), "positive_sequence_voltage");
+					if (prop->is_valid()) {
+						complexVal.SetReal(complexPayload[1].real());
+						complexVal.SetImag(complexPayload[1].imag());
+						prop->setp(complexVal);
+					} else {
+						gl_error("helics_msg::checkDomainInputs(): An error occurred when trying to find (object,property) pair (%s,positive_sequence_voltage). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+						rv = 0;
+						break;
+					}
+					delete prop;
+					prop = nullptr;
+					prop = new gld_property(ipt->id.c_str(), "negative_sequence_voltage");
+					if (prop->is_valid()) {
+						complexVal.SetReal(complexPayload[1].real());
+						complexVal.SetImag(complexPayload[1].imag());
+						prop->setp(complexVal);
+					} else {
+						gl_error("helics_msg::checkDomainInputs(): An error occurred when trying to find (object,property) pair (%s,negative_sequence_voltage). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+						rv = 0;
+						break;
+					}
+					delete prop;
+					prop = nullptr;
+					complexPayload.clear();
+				}
+			} else {
+				gl_error("helics_msg::checkDomainInputs(): An unsupported domain property, %s, was encountered for a PCC output. The only valid property is PNV currently.", ipt->domain_property.c_str());
+				rv = 0;
+				break;
+			}
+		} else if (ipt->domain_type == "energyconsumer"){//should be node/triplex_node type object
+			if (ipt->domain_property == "VA") {
+				ipt->helicsInput.getComplexVector(complexPayload);
+				for (int i = 0; i < ipt->phases.size(); ++i) {
+					if(ipt->phases[i] == "A-p") {
+						prop = new gld_property(ipt->id.c_str(), "constant_power_A");
+						if (prop->is_valid()) {
+							complexVal.SetReal(complexPayload[i].real());
+							complexVal.SetImag(complexPayload[i].imag());
+							prop->setp(complexVal);
+						} else {
+							gl_error("helics_msg::checkDomainInputs(): An error occurred when trying to find (object,property) pair (%s,constant_power_A). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+							rv = 0;
+							break;
+						}
+						delete prop;
+						prop = nullptr;
+					}
+					if(ipt->phases[i] == "B-p") {
+						prop = new gld_property(ipt->id.c_str(), "constant_power_B");
+						if (prop->is_valid()) {
+							complexVal.SetReal(complexPayload[i].real());
+							complexVal.SetImag(complexPayload[i].imag());
+							prop->setp(complexVal);
+						} else {
+							gl_error("helics_msg::checkDomainInputs(): An error occurred when trying to find (object,property) pair (%s,constant_power_B). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+							rv = 0;
+							break;
+						}
+						delete prop;
+						prop = nullptr;
+					}
+					if(ipt->phases[i] == "C-p") {
+						prop = new gld_property(ipt->id.c_str(), "constant_power_C");
+						if (prop->is_valid()) {
+							complexVal.SetReal(complexPayload[i].real());
+							complexVal.SetImag(complexPayload[i].imag());
+							prop->setp(complexVal);
+						} else {
+							gl_error("helics_msg::checkDomainInputs(): An error occurred when trying to find (object,property) pair (%s,constant_power_C). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+							rv = 0;
+							break;
+						}
+						delete prop;
+						prop = nullptr;
+					}
+					if(ipt->phases[i] == "A-i") {
+						voltage_prop = new gld_property(ipt->id.c_str(), "voltage_A");
+						prop = new gld_property(ipt->id.c_str(), "constant_current_A");
+						if (prop->is_valid()) {
+							complexS.SetReal(complexPayload[i].real());
+							complexS.SetImag(complexPayload[i].imag());
+							complexV = voltage_prop->get_complex();
+							complexVal = getConstantCurrent(complexV, complexS);
+							prop->setp(complexVal);
+						} else {
+							gl_error("helics_msg::checkDomainInputs(): An error occurred when trying to find (object,property) pair (%s,constant_current_A). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+							rv = 0;
+							break;
+						}
+						delete prop;
+						delete voltage_prop;
+						prop = nullptr;
+						voltage_prop = nullptr;
+					}
+					if(ipt->phases[i] == "B-i") {
+						voltage_prop = new gld_property(ipt->id.c_str(), "voltage_B");
+						prop = new gld_property(ipt->id.c_str(), "constant_current_B");
+						if (prop->is_valid()) {
+							complexS.SetReal(complexPayload[i].real());
+							complexS.SetImag(complexPayload[i].imag());
+							complexV = voltage_prop->get_complex();
+							complexVal = getConstantCurrent(complexV, complexS);
+							prop->setp(complexVal);
+						} else {
+							gl_error("helics_msg::checkDomainInputs(): An error occurred when trying to find (object,property) pair (%s,constant_current_B). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+							rv = 0;
+							break;
+						}
+						delete prop;
+						delete voltage_prop;
+						prop = nullptr;
+						voltage_prop = nullptr;
+					}
+					if(ipt->phases[i] == "C-i") {
+						voltage_prop = new gld_property(ipt->id.c_str(), "voltage_C");
+						prop = new gld_property(ipt->id.c_str(), "constant_current_C");
+						if (prop->is_valid()) {
+							complexS.SetReal(complexPayload[i].real());
+							complexS.SetImag(complexPayload[i].imag());
+							complexV = voltage_prop->get_complex();
+							complexVal = getConstantCurrent(complexV, complexS);
+							prop->setp(complexVal);
+						} else {
+							gl_error("helics_msg::checkDomainInputs(): An error occurred when trying to find (object,property) pair (%s,constant_current_C). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+							rv = 0;
+							break;
+						}
+						delete prop;
+						delete voltage_prop;
+						prop = nullptr;
+						voltage_prop = nullptr;
+					}
+					if(ipt->phases[i] == "A-z") {
+						voltage_prop = new gld_property(ipt->id.c_str(), "voltage_A");
+						prop = new gld_property(ipt->id.c_str(), "constant_impedance_A");
+						if (prop->is_valid()) {
+							complexS.SetReal(complexPayload[i].real());
+							complexS.SetImag(complexPayload[i].imag());
+							complexV = voltage_prop->get_complex();
+							complexVal = getConstantImpedance(complexV, complexS);
+							prop->setp(complexVal);
+						} else {
+							gl_error("helics_msg::checkDomainInputs(): An error occurred when trying to find (object,property) pair (%s,constant_impedance_A). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+							rv = 0;
+							break;
+						}
+						delete prop;
+						delete voltage_prop;
+						prop = nullptr;
+						voltage_prop = nullptr;
+					}
+					if(ipt->phases[i] == "B-z") {
+						voltage_prop = new gld_property(ipt->id.c_str(), "voltage_B");
+						prop = new gld_property(ipt->id.c_str(), "constant_impedance_B");
+						if (prop->is_valid()) {
+							complexS.SetReal(complexPayload[i].real());
+							complexS.SetImag(complexPayload[i].imag());
+							complexV = voltage_prop->get_complex();
+							complexVal = getConstantImpedance(complexV, complexS);
+							prop->setp(complexVal);
+						} else {
+							gl_error("helics_msg::checkDomainInputs(): An error occurred when trying to find (object,property) pair (%s,constant_impedance_B). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+							rv = 0;
+							break;
+						}
+						delete prop;
+						delete voltage_prop;
+						prop = nullptr;
+						voltage_prop = nullptr;
+					}
+					if(ipt->phases[i] == "C-z") {
+						voltage_prop = new gld_property(ipt->id.c_str(), "voltage_C");
+						prop = new gld_property(ipt->id.c_str(), "constant_impedance_C");
+						if (prop->is_valid()) {
+							complexS.SetReal(complexPayload[i].real());
+							complexS.SetImag(complexPayload[i].imag());
+							complexV = voltage_prop->get_complex();
+							complexVal = getConstantImpedance(complexV, complexS);
+							prop->setp(complexVal);
+						} else {
+							gl_error("helics_msg::checkDomainInputs(): An error occurred when trying to find (object,property) pair (%s,constant_impedance_C). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+							rv = 0;
+							break;
+						}
+						delete prop;
+						delete voltage_prop;
+						prop = nullptr;
+						voltage_prop = nullptr;
+					}
+				}
+				complexPayload.clear();
+			} else {
+				gl_error("helics_msg::checkDomainInputs(): An unsupported domain property, %s, was encountered for a energyconsumer output. The only valid property is VA currently.", ipt->domain_property.c_str());
+				rv = 0;
+				break;
+			}
+		} else if (ipt->domain_type == "regulatingcontrol"){//should be node/triplex_node type object
+			if (ipt->domain_property == "POS") {
+				ipt->helicsInput.getVector(doublePayload);
+				for (int i = 0; i < ipt->phases.size(); ++i) {
+					if(ipt->phases[i] == "A") {
+						prop = new gld_property(ipt->id.c_str(), "tap_A");
+						if (prop->is_valid()) {
+							integerVal = static_cast<int16_t>(doublePayload[i]);
+							prop->setp(integerVal);
+						} else {
+							gl_error("helics_msg::checkDomainInputs(): An error occurred when trying to find (object,property) pair (%s,tap_A). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+							rv = 0;
+							break;
+						}
+						delete prop;
+						prop = nullptr;
+					}
+					if(ipt->phases[i] == "B") {
+						prop = new gld_property(ipt->id.c_str(), "tap_B");
+						if (prop->is_valid()) {
+							integerVal = static_cast<int16_t>(doublePayload[i]);
+							prop->setp(integerVal);
+						} else {
+							gl_error("helics_msg::checkDomainInputs(): An error occurred when trying to find (object,property) pair (%s,tap_B). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+							rv = 0;
+							break;
+						}
+						delete prop;
+						prop = nullptr;
+					}
+					if(ipt->phases[i] == "C") {
+						prop = new gld_property(ipt->id.c_str(), "tap_C");
+						if (prop->is_valid()) {
+							integerVal = static_cast<int16_t>(doublePayload[i]);
+							prop->setp(integerVal);
+						} else {
+							gl_error("helics_msg::checkDomainInputs(): An error occurred when trying to find (object,property) pair (%s,tap_C). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+							rv = 0;
+							break;
+						}
+						delete prop;
+						prop = nullptr;
+					}
+				}
+				doublePayload.clear();
+			} else {
+				gl_error("helics_msg::checkDomainInputs(): An unsupported domain property, %s, was encountered for a PCC output. The only valid property is POS currently.", ipt->domain_property.c_str());
+				rv = 0;
+				break;
+			}
+		} else if (ipt->domain_type == "ShuntCompensator"){//should be node/triplex_node type object
+			if (ipt->domain_property == "POS") {
+				ipt->helicsInput.getVector(doublePayload);
+				for (int i = 0; i < ipt->phases.size(); ++i) {
+					if(ipt->phases[i] == "A") {
+						prop = new gld_property(ipt->id.c_str(), "switchA");
+						if (prop->is_valid()) {
+							if (doublePayload[i] == 1.0) {
+								prop->from_string(const_cast<char *>(string("CLOSED").c_str()));
+							} else {
+								prop->from_string(const_cast<char *>(string("OPEN").c_str()));
+							}
+						} else {
+							gl_error("helics_msg::checkDomainInputs(): An error occurred when trying to find (object,property) pair (%s,switchA). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+							rv = 0;
+							break;
+						}
+						delete prop;
+						prop = nullptr;
+					}
+					if(ipt->phases[i] == "B") {
+						prop = new gld_property(ipt->id.c_str(), "switchB");
+						if (prop->is_valid()) {
+							if (doublePayload[i] == 1.0) {
+								prop->from_string(const_cast<char *>(string("CLOSED").c_str()));
+							} else {
+								prop->from_string(const_cast<char *>(string("OPEN").c_str()));
+							}
+						} else {
+							gl_error("helics_msg::checkDomainInputs(): An error occurred when trying to find (object,property) pair (%s,switchB). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+							rv = 0;
+							break;
+						}
+						delete prop;
+						prop = nullptr;
+					}
+					if(ipt->phases[i] == "C") {
+						prop = new gld_property(ipt->id.c_str(), "switchC");
+						if (prop->is_valid()) {
+							if (doublePayload[i] == 1.0) {
+								prop->from_string(const_cast<char *>(string("CLOSED").c_str()));
+							} else {
+								prop->from_string(const_cast<char *>(string("OPEN").c_str()));
+							}
+						} else {
+							gl_error("helics_msg::checkDomainInputs(): An error occurred when trying to find (object,property) pair (%s,switchC). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+							rv = 0;
+							break;
+						}
+						delete prop;
+						prop = nullptr;
+					}
+				}
+				doublePayload.clear();
+			} else {
+				gl_error("helics_msg::checkDomainInputs(): An unsupported domain property, %s, was encountered for a PCC output. The only valid property is POS currently.", ipt->domain_property.c_str());
+				rv = 0;
+				break;
+			}
+		} else if (ipt->domain_type == "ShuntCompensator"){//should be node/triplex_node type object
+			if (ipt->domain_property == "POS") {
+				ipt->helicsInput.getVector(doublePayload);
+				for (int i = 0; i < ipt->phases.size(); ++i) {
+					if(ipt->phases[i] == "A") {
+						prop = new gld_property(ipt->id.c_str(), "phase_A_state");
+						if (prop->is_valid()) {
+							if (doublePayload[i] == 0.0) {
+								prop->from_string(const_cast<char *>(string("CLOSED").c_str()));
+							} else {
+								prop->from_string(const_cast<char *>(string("OPEN").c_str()));
+							}
+						} else {
+							gl_error("helics_msg::checkDomainInputs(): An error occurred when trying to find (object,property) pair (%s,phase_A_state). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+							rv = 0;
+							break;
+						}
+						delete prop;
+						prop = nullptr;
+					}
+					if(ipt->phases[i] == "B") {
+						prop = new gld_property(ipt->id.c_str(), "phase_B_state");
+						if (prop->is_valid()) {
+							if (doublePayload[i] == 0.0) {
+								prop->from_string(const_cast<char *>(string("CLOSED").c_str()));
+							} else {
+								prop->from_string(const_cast<char *>(string("OPEN").c_str()));
+							}
+						} else {
+							gl_error("helics_msg::checkDomainInputs(): An error occurred when trying to find (object,property) pair (%s,phase_B_state). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+							rv = 0;
+							break;
+						}
+						delete prop;
+						prop = nullptr;
+					}
+					if(ipt->phases[i] == "C") {
+						prop = new gld_property(ipt->id.c_str(), "phase_C_state");
+						if (prop->is_valid()) {
+							if (doublePayload[i] == 0.0) {
+								prop->from_string(const_cast<char *>(string("CLOSED").c_str()));
+							} else {
+								prop->from_string(const_cast<char *>(string("OPEN").c_str()));
+							}
+						} else {
+							gl_error("helics_msg::checkDomainInputs(): An error occurred when trying to find (object,property) pair (%s,phase_C_state). No such pairing exists in the model. Please check your model and HELICS configuration files.",objectName.c_str());
+							rv = 0;
+							break;
+						}
+						delete prop;
+						prop = nullptr;
+					}
+				}
+				doublePayload.clear();
+			} else {
+				gl_error("helics_msg::checkDomainInputs(): An unsupported domain property, %s, was encountered for a PCC output. The only valid property is POS currently.", ipt->domain_property.c_str());
+				rv = 0;
+				break;
+			}
+		}
+	}
+	return rv;
+}
+
+static gld::complex getConstantImpedance(gld::complex V, gld::complex S){
+	gld::complex Z(0.0,0.0);
+	double vMag = V.Mag();
+	double sMag = S.Mag();
+	double sArg = S.Arg();
+	double zMag = pow(vMag, 2) / sMag;
+	Z.SetPolar(zMag, sArg);
+	return Z;
+}
+
+static gld::complex getConstantCurrent(gld::complex V, gld::complex S) {
+	gld::complex I(0.0,0.0);
+	double vMag = V.Mag();
+	double vArg = V.Arg();
+	double sMag = S.Mag();
+	double sArg = S.Arg();
+	double iMag = sMag / vMag;
+	double iArg = vArg - sArg;
+	I.SetPolar(iMag, iArg);
+	return I;
 }
 
 /*static char helics_hex(char c)
