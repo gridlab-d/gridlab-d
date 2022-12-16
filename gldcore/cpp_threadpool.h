@@ -36,7 +36,7 @@ private:
     std::queue<std::function<void()>> job_queue;
     std::thread::id sync_id, shutdown_id;
 
-    std::atomic_bool sync_mode; // false for parallel mode, true for synchronous mode
+    std::atomic_bool sync_mode{false}; // false for parallel mode, true for synchronous mode
 
     void sync_wait_on_queue();
 
@@ -70,6 +70,8 @@ public:
     * Threadpool barrier. Blocks until all threads have completed all pending tasks and entered a ready state.
     */
     void await();
+
+    void exit();
 
     /**
      *

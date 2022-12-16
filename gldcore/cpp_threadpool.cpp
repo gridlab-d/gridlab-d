@@ -125,3 +125,9 @@ void cpp_threadpool::await() {
     std::unique_lock<std::mutex> lock{wait_lock};
     wait_condition.wait_for(lock, std::chrono::milliseconds(50), [=] { return running_threads.load() <= 0; });
 }
+
+void cpp_threadpool::exit() {
+    std::queue<std::function<void()>> empty;
+    std::swap( job_queue, empty );
+    exiting.store(true);
+}

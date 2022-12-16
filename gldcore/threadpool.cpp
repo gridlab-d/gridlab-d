@@ -50,34 +50,7 @@ int mti_debug(MTI *mti, const char *fmt, ...)
 	return 0;
 }
 
-#ifdef HAVE_GET_NPROCS
-#include <sys/sysinfo.h>
-int processor_count(void) { return get_nprocs(); }
-#elif defined(__MACH__)
-#include <sys/param.h>
-#include <sys/sysctl.h>
-int processor_count(void)
-{
-	int count;
-	size_t size = sizeof(count);
-	if (sysctlbyname("hw.ncpu", &count, &size, NULL, 0))
-		return 1;
-	return count;
-}
-#else
-int processor_count(void)
-{
-#ifdef _WIN32
-	SYSTEM_INFO sysinfo;
-	GetSystemInfo(&sysinfo);
-	return sysinfo.dwNumberOfProcessors;
-#else
-	char *proc_count = getenv("NUMBER_OF_PROCESSORS");
-	int count = proc_count ? atoi(proc_count) : 0;
-	return count ? count : 1;
-#endif /* WIN32 */
-}
-#endif /* HAVE_GET_NPROCS */
+int processor_count(void) { return std::thread::hardware_concurrency(); }
 
 static MTICODE iterator_proc(MTIPROC *tp)
 {

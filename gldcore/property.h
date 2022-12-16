@@ -52,13 +52,14 @@ std::ostream& operator<<(std::ostream& os, const charbuf<S>& buffer)
 	return os;
 }
 
-template<size_t size> class charbuf {
+template<size_t size>
+class charbuf {
 private:
 	char buffer[size];
 public:
-	inline charbuf<size>(void) { erase(); };
+	inline charbuf<size>() { erase(); };
 	inline charbuf<size>(const char *s) { copy_from(s); };
-	inline ~charbuf<size>(void) = default;
+	inline ~charbuf(void) = default;
 	inline size_t get_size(void) { return size; };
 	inline size_t get_length(void) { return strlen(buffer); };
 	inline char *get_string(void) { return buffer; };

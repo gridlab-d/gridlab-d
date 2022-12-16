@@ -32,7 +32,7 @@ else ()
     endif ()
 endif ()
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(GLD_PACKAGE gridlabd)
@@ -132,11 +132,17 @@ if (WIN32 OR MSYS OR MINGW OR CYGWIN)
     set(DL_NAME dl)
     set(DL_LIB dl)
 
-    set(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 ${DL_NAME} m)
     set(FOUND_WINDOWS yes CACHE INTERNAL "Tell script generator we're Windows")
-    add_compile_options(-static-libgcc -static-libstdc++ -static)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++ -static")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++ -static")
+    if (MSVC)
+        # Native MSVC does not support the math library as an external dependency
+        set(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 ${DL_NAME})
+        add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+    else ()
+        set(OS_SPECIFIC_LIBRARIES ws2_32 wsock32 ${DL_NAME} m)
+        add_compile_options(-static-libgcc -static-libstdc++ -static)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++ -static")
+        set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static-libgcc -static-libstdc++ -static")
+    endif ()
 elseif (APPLE)
     set(OS_SPECIFIC_LIBRARIES ${CMAKE_DL_LIBS})
     set(FOUND_MACOS yes CACHE INTERNAL "Tell script generator we're MacOS")
@@ -295,16 +301,16 @@ if (GLD_USE_SUPERLU)
     set(THIRD_PARTY_PATH ${CMAKE_SOURCE_DIR}/third_party)
     #    include(third_party/superLU_MT/CMakeLists.txt)
 
-    add_subdirectory(third_party/superLU_MT EXCLUDE_FROM_ALL)
-    set(SUPERLU_LIB superlu_lib)
+#    add_subdirectory(third_party/superLU_MT EXCLUDE_FROM_ALL)
+#    set(SUPERLU_LIB superlu_lib)
 
-    #    list(APPEND CMAKE_MODULE_PATH
-    #            ${CMAKE_BINARY_DIR}/third_party/SuperLU/SRC
-    #            ${CMAKE_BINARY_DIR}/third_party/SuperLU/CBLAS
-    #            )
-    #    include_directories(third_party/SuperLU/SRC)
-    #    add_subdirectory(third_party/SuperLU)
-    #    set(SUPERLU_LIB superlu)
+        list(APPEND CMAKE_MODULE_PATH
+                ${CMAKE_BINARY_DIR}/third_party/SuperLU/SRC
+                ${CMAKE_BINARY_DIR}/third_party/SuperLU/CBLAS
+                )
+        include_directories(third_party/SuperLU/SRC)
+        add_subdirectory(third_party/SuperLU)
+        set(SUPERLU_LIB superlu)
 endif ()
 
 option(JSONCPP_WITH_TESTS "Build the JSON CPP test suite" OFF)
