@@ -66,7 +66,7 @@ int sectionalizer::create()
 {
 	int result = switch_object::create();
 
-	prev_full_status = 0x00;		//Flag as all open initially
+	prev_full_status = NO_PHASE;		//Flag as all open initially
 	switch_banked_mode = BANKED_SW;	//Sectionalizer starts with all three phases open
 	phase_A_state = SW_CLOSED;			//All switches closed by default
 	phase_B_state = SW_CLOSED;
@@ -139,7 +139,7 @@ EXPORT TIMESTAMP sync_sectionalizer(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 }
 
 //Function to change sectionalizer states - just call underlying switch routine
-EXPORT double change_sectionalizer_state(OBJECT *thisobj, unsigned char phase_change, bool state)
+EXPORT double change_sectionalizer_state(OBJECT *thisobj, set phase_change, bool state)
 {
 	double count_values, recloser_count;
 	char desA, desB, desC;
@@ -224,7 +224,7 @@ EXPORT double change_sectionalizer_state(OBJECT *thisobj, unsigned char phase_ch
 		else	//Must be individual
 		{
 			//Figure out what we need to call
-			if ((phase_change & 0x04) == 0x04)
+			if ((phase_change & PHASE_A) == PHASE_A)
 			{
 				if (state)
 					desA=1;	//Close it
@@ -235,7 +235,7 @@ EXPORT double change_sectionalizer_state(OBJECT *thisobj, unsigned char phase_ch
 				desA=2;		//I don't care
 
 			//Phase B
-			if ((phase_change & 0x02) == 0x02)
+			if ((phase_change & PHASE_B) == PHASE_B)
 			{
 				if (state)
 					desB=1;	//Close it
@@ -246,7 +246,7 @@ EXPORT double change_sectionalizer_state(OBJECT *thisobj, unsigned char phase_ch
 				desB=2;		//I don't care
 
 			//Phase C
-			if ((phase_change & 0x01) == 0x01)
+			if ((phase_change & PHASE_C) == PHASE_C)
 			{
 				if (state)
 					desC=1;	//Close it
@@ -265,7 +265,7 @@ EXPORT double change_sectionalizer_state(OBJECT *thisobj, unsigned char phase_ch
 }
 
 //Reliability interface - calls underlying switch routine
-EXPORT int sectionalizer_reliability_operation(OBJECT *thisobj, unsigned char desired_phases)
+EXPORT int sectionalizer_reliability_operation(OBJECT *thisobj, set desired_phases)
 {
 	//Map the switch
 	switch_object *swtchobj = OBJECTDATA(thisobj,switch_object);
@@ -275,7 +275,7 @@ EXPORT int sectionalizer_reliability_operation(OBJECT *thisobj, unsigned char de
 	return 1;	//This will always succeed...because I say so!
 }
 
-EXPORT int sectionalizer_fault_updates(OBJECT *thisobj, unsigned char restoration_phases)
+EXPORT int sectionalizer_fault_updates(OBJECT *thisobj, set restoration_phases)
 {
 	//Link to ourselves
 	switch_object *thisswitch = OBJECTDATA(thisobj,switch_object);

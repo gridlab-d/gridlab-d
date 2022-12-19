@@ -28,7 +28,7 @@ public:
 public:
 	typedef enum {SW_OPEN=0, SW_CLOSED=1} SWITCHSTATE;
 	typedef enum {INDIVIDUAL_SW=0, BANKED_SW=1} SWITCHBANK;
-	unsigned char prev_full_status;	///Fully resolved status (ABC) - used for reliability and recalculation detection
+	set prev_full_status;	///Fully resolved status (ABC) - used for reliability and recalculation detection
 
 	int create(void);
 	int init(OBJECT *parent);
@@ -40,14 +40,14 @@ public:
 
 	void set_switch(bool desired_status);
 	void set_switch_full(char desired_status_A, char desired_status_B, char desired_status_C);	//Used to set individual phases - 0 = open, 1 = closed, 2 = don't care (retain current)
-	void set_switch_full_reliability(unsigned char desired_status);
-	void set_switch_faulted_phases(unsigned char desired_status);
+	void set_switch_full_reliability(set desired_status);
+	void set_switch_faulted_phases(set desired_status);
 	void switch_sync_function(void);			//Functionalized since it exists in two spots - no sense having to update two pieces of code
-	unsigned char switch_expected_sync_function(void);	//Function to determined expected results of sync - used for reliability
+	set switch_expected_sync_function(void);	//Function to determined expected results of sync - used for reliability
 	static OBJECT **get_object(OBJECT *obj, const char *name);	//Function to pull object property - reliability use
 
-	void BOTH_switch_sync_pre(unsigned char *work_phases_pre, unsigned char *work_phases_post);
-	void NR_switch_sync_post(unsigned char *work_phases_pre, unsigned char *work_phases_post, OBJECT *obj, TIMESTAMP *t0, TIMESTAMP *t2);
+	void BOTH_switch_sync_pre(set *work_phases_pre, set *work_phases_post);
+	void NR_switch_sync_post(set *work_phases_pre, set *work_phases_post, OBJECT *obj, TIMESTAMP *t0, TIMESTAMP *t2);
 
 	//Deltamode call
 	SIMULATIONMODE inter_deltaupdate_switch(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
@@ -55,8 +55,8 @@ public:
 	enumeration switch_banked_mode;
 	TIMESTAMP prev_SW_time;	//Used to track switch opens/closes in NR.  Zeros end voltage on first run for other
 
-	unsigned char phased_switch_status;	//Used to track individual phase switch position - mainly for reliability - use LSB - x0_XABC
-	unsigned char faulted_switch_phases;	//Used for phase faulting tracking - mainly for reliabiilty - replicated NR functionality so FBS can use it later
+	set phased_switch_status;	//Used to track individual phase switch position - mainly for reliability - use LSB - x0_XABC
+	set faulted_switch_phases;	//Used for phase faulting tracking - mainly for reliabiilty - replicated NR functionality so FBS can use it later
 	bool prefault_banked;				//Flag used to indicate if a switch was in banked mode pre-fault.  Needs to be swapped out to properly work
 	enumeration phase_A_state;				///< Defines the current state of the phase A switch
 	enumeration phase_B_state;				///< Defines the current state of the phase B switch
@@ -77,12 +77,12 @@ private:
 	set node_phase_information(OBJECT *obj);
 };
 
-EXPORT int change_switch_state(OBJECT *thisobj, unsigned char phase_change, bool state);
-EXPORT int reliability_operation(OBJECT *thisobj, unsigned char desired_phases);
+EXPORT int change_switch_state(OBJECT *thisobj, set phase_change, bool state);
+EXPORT int reliability_operation(OBJECT *thisobj, set desired_phases);
 EXPORT int create_fault_switch(OBJECT *thisobj, OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time);
 EXPORT int fix_fault_switch(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name);
 EXPORT int clear_fault_switch(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name);
-EXPORT int switch_fault_updates(OBJECT *thisobj, unsigned char restoration_phases);
+EXPORT int switch_fault_updates(OBJECT *thisobj, set restoration_phases);
 EXPORT int change_switch_state_toggle(OBJECT *thisobj);
 
 #endif // SWITCH_OBJECT_H

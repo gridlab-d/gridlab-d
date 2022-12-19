@@ -68,7 +68,7 @@ int recloser::create()
 {
 	int result = switch_object::create();
 
-	prev_full_status = 0x00;		//Flag as all open initially
+	prev_full_status = NO_PHASE;		//Flag as all open initially
 	switch_banked_mode = BANKED_SW;	//Assume operates in banked mode normally
 	phase_A_state = SW_CLOSED;			//All switches closed by default
 	phase_B_state = SW_CLOSED;
@@ -201,7 +201,7 @@ EXPORT int isa_recloser(OBJECT *obj, char *classname)
 }
 
 //Function to change recloser states - just call underlying switch routine
-EXPORT double change_recloser_state(OBJECT *thisobj, unsigned char phase_change, bool state)
+EXPORT double change_recloser_state(OBJECT *thisobj, set phase_change, bool state)
 {
 	double count_values;
 	char desA, desB, desC;
@@ -231,7 +231,7 @@ EXPORT double change_recloser_state(OBJECT *thisobj, unsigned char phase_change,
 	else	//Must be individual
 	{
 		//Figure out what we need to call
-		if ((phase_change & 0x04) == 0x04)
+		if ((phase_change & PHASE_A) == PHASE_A)
 		{
 			if (state)
 				desA=1;	//Close it
@@ -242,7 +242,7 @@ EXPORT double change_recloser_state(OBJECT *thisobj, unsigned char phase_change,
 			desA=2;		//I don't care
 
 		//Phase B
-		if ((phase_change & 0x02) == 0x02)
+		if ((phase_change & PHASE_B) == PHASE_B)
 		{
 			if (state)
 				desB=1;	//Close it
@@ -253,7 +253,7 @@ EXPORT double change_recloser_state(OBJECT *thisobj, unsigned char phase_change,
 			desB=2;		//I don't care
 
 		//Phase C
-		if ((phase_change & 0x01) == 0x01)
+		if ((phase_change & PHASE_C) == PHASE_C)
 		{
 			if (state)
 				desC=1;	//Close it
@@ -271,7 +271,7 @@ EXPORT double change_recloser_state(OBJECT *thisobj, unsigned char phase_change,
 }
 
 //Reliability interface - calls underlying switch routine
-EXPORT int recloser_reliability_operation(OBJECT *thisobj, unsigned char desired_phases)
+EXPORT int recloser_reliability_operation(OBJECT *thisobj, set desired_phases)
 {
 	//Map the switch
 	switch_object *swtchobj = OBJECTDATA(thisobj,switch_object);
@@ -281,7 +281,7 @@ EXPORT int recloser_reliability_operation(OBJECT *thisobj, unsigned char desired
 	return 1;	//This will always succeed...because I say so!
 }
 
-EXPORT int recloser_fault_updates(OBJECT *thisobj, unsigned char restoration_phases)
+EXPORT int recloser_fault_updates(OBJECT *thisobj, set restoration_phases)
 {
 	//Link to ourselves
 	switch_object *thisswitch = OBJECTDATA(thisobj,switch_object);

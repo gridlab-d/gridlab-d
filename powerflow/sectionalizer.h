@@ -23,9 +23,9 @@ public:
 	int isa(char *classname);
 };
 
-EXPORT double change_sectionalizer_state(OBJECT *thisobj, unsigned char phase_change, bool state);
-EXPORT int sectionalizer_reliability_operation(OBJECT *thisobj, unsigned char desired_phases);
-EXPORT int sectionalizer_fault_updates(OBJECT *thisobj, unsigned char restoration_phases);
+EXPORT double change_sectionalizer_state(OBJECT *thisobj, set phase_change, bool state);
+EXPORT int sectionalizer_reliability_operation(OBJECT *thisobj, set desired_phases);
+EXPORT int sectionalizer_fault_updates(OBJECT *thisobj, set restoration_phases);
 
 #endif // SECTIONALIZER_H
 /**@}**/

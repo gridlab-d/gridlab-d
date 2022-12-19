@@ -1562,9 +1562,9 @@ int house_e::init(OBJECT *parent)
 
 		//See which ones are present
 		numPhases = 0;
-		if (externalPhases & 1) numPhases += 1;
-		if (externalPhases & 2) numPhases += 1;
-		if (externalPhases & 4) numPhases += 1;
+		if (externalPhases & PHASE_A) numPhases += 1;
+		if (externalPhases & PHASE_B) numPhases += 1;
+		if (externalPhases & PHASE_C) numPhases += 1;
 //		gl_output ("house: %s is commercial with turns ratio %g and %d phases, set = %d",
 //				   obj->name, internalTurnsRatio, numPhases, externalPhases);
 
@@ -3706,13 +3706,13 @@ void house_e::pull_complex_powerflow_values()
 		} else if (numPhases == 2) {
 			complex v1;
 			complex v2;
-			if (!(externalPhases & 1)) { // phases B and C
+			if (!(externalPhases & PHASE_A)) { // phases B and C
 				v1 = pCircuit_V[1]->get_complex();
 				v2 = pCircuit_V[2]->get_complex();
-			} else if (!(externalPhases & 2)) { // phases A and C
+			} else if (!(externalPhases & PHASE_B)) { // phases A and C
 				v1 = pCircuit_V[0]->get_complex();
 				v2 = pCircuit_V[2]->get_complex();
-			} else if (!(externalPhases & 4)) { // phases A and B
+			} else if (!(externalPhases & PHASE_C)) { // phases A and B
 				v1 = pCircuit_V[0]->get_complex();
 				v2 = pCircuit_V[1]->get_complex();
 			}
@@ -3720,11 +3720,11 @@ void house_e::pull_complex_powerflow_values()
 			v1.Mag(vavg);
 			value_Circuit_V[1] = v1;
 		} else if (numPhases == 1) { // V1n = positive-sequence voltage
-			if (externalPhases & 1) {
+			if (externalPhases & PHASE_A) {
 				value_Circuit_V[1] = pCircuit_V[0]->get_complex();
-			} else if (externalPhases & 2) {
+			} else if (externalPhases & PHASE_B) {
 				value_Circuit_V[1] = pCircuit_V[1]->get_complex();
-			} else if (externalPhases & 4) {
+			} else if (externalPhases & PHASE_C) {
 				value_Circuit_V[1] = pCircuit_V[2]->get_complex();
 			}
 		}
@@ -3803,9 +3803,9 @@ void house_e::push_complex_powerflow_values()
 //			gl_output ("house: %s commercial per-phase I=[%g @ %g]", obj->name, balCurrent.Mag(), balCurrent.Arg());
 		}
 		// now push this building's power onto the parent load phases that are actually present
-		int mask = 1;
+		set mask[] = {PHASE_A, PHASE_B, PHASE_C};
 		for (indexval = 0; indexval < 3; indexval++) {
-			if (externalPhases & mask) {
+			if (externalPhases & mask[indexval]) {
 				if (insertP > 0) {
 					temp_complex_val = pPower[indexval]->get_complex();
 //					gl_output ("  adding P to [%g +j%g] on phase mask %d",
@@ -3832,7 +3832,6 @@ void house_e::push_complex_powerflow_values()
 					pLine_I[indexval]->setp<complex>(temp_complex_val,*test_rlock);
 				}
 			}
-			mask *= 2;
 		}
 	} else {
 		for (indexval=0; indexval<3; indexval++) {

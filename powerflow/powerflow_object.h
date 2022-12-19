@@ -54,12 +54,22 @@
  **/
 #define NO_PHASE	0x0000		/**< no phase info */
 /* three phase configurations */
-#define PHASE_A		0x0001		/**< A phase connection */
+#define PHASE_C		0x0001		/**< C phase connection */
 #define PHASE_B		0x0002		/**< B phase connection */
-#define PHASE_C		0x0004		/**< C phase connection */
+#define PHASE_BC	0x0003		/**< BC phase connection - pre-ORed */
+#define PHASE_A		0x0004		/**< A phase connection */
+#define PHASE_AC	0x0005		/**< AC phase connection - pre-ORed */
+#define PHASE_AB	0x0006		/**< AB phase connection - pre-ORed */
 #define PHASE_ABC	0x0007		/**< three phases connection */
 #define PHASE_N		0x0008		/**< N phase connected */
-#define PHASE_ABCN	0x000f		/**< three phases neutral connection */
+#define PHASE_CN	0x0009		/**< CN phase connection - pre-ORed */
+#define PHASE_BN	0x000A		/**< BN phase connection - pre-ORed */
+#define PHASE_BCN	0x000B		/**< BCN phase connection - pre-ORed */
+#define PHASE_AN	0x000C		/**< AN phase connection - pre-ORed */
+#define PHASE_ACN	0x000D		/**< ACN phase connection - pre-ORed */
+#define PHASE_ABN	0x000E		/**< ABN phase connection - pre-ORed */
+
+#define PHASE_ABCN	0x000F		/**< three phases neutral connection */
 /* split phase configurations */
 #define PHASE_S1	0x0010		/**< split line 1 connection */
 #define PHASE_S2	0x0020		/**< split line 2 connection */
@@ -69,7 +79,12 @@
 /* delta configuration */
 #define PHASE_D		0x0100		/**< delta connection (requires ABCN) */
 /* phase info mask */
-#define PHASE_INFO	0x01ff		/**< all phase info */
+#define PHASE_INFO	0x01FF		/**< all phase info */
+
+/* NR-oriented flag variables - not really phase, but included here */
+#define PHASE_DIFF_CHILD	0x1000	/**< NR - Parent/child connection is a mix of Wye/Delta */
+#define PHASE_TO_SPCT		0x2000	/**< NR - Bus is the to side of an SPCT - used for Kerstin sign conventions */
+#define PHASE_HOUSE_PRESENT	0x4000	/**< NR - Bus has a house present, so use some additional accumulators */
 
 /** Powerflow solution mode indicators
 	The solution modes are used to indicate the solution needed for the powerflow

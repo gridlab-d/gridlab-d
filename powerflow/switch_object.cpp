@@ -95,7 +95,7 @@ int switch_object::create()
 {
 	int result = link_object::create();
 
-	prev_full_status = 0x00;		//Flag as all open initially
+	prev_full_status = NO_PHASE;		//Flag as all open initially
 	switch_banked_mode = BANKED_SW;	//Assume operates in banked mode normally
 	phase_A_state = SW_CLOSED;			//All switches closed by default
 	phase_B_state = SW_CLOSED;
@@ -103,8 +103,8 @@ int switch_object::create()
 
 	prev_SW_time = 0;
 
-	phased_switch_status = 0x00;	//Reset variable
-	faulted_switch_phases = 0x00;	//No faults at onset
+	phased_switch_status = NO_PHASE;	//Reset variable
+	faulted_switch_phases = NO_PHASE;	//No faults at onset
 	prefault_banked = false;		//Condition of the switch prior to a fault - individual mode has to be enacted for reliability
 
 	event_schedule = nullptr;
@@ -352,7 +352,7 @@ int switch_object::init(OBJECT *parent)
 			}
 
 			phase_A_state = phase_B_state = phase_C_state = SW_OPEN;	//All open
-			prev_full_status = 0x00;								//Confirm here
+			prev_full_status = NO_PHASE;								//Confirm here
 		}
 		else
 		{
@@ -374,7 +374,7 @@ int switch_object::init(OBJECT *parent)
 				}
 
 				phase_A_state = SW_CLOSED;							//Flag as closed
-				prev_full_status |= 0x04;
+				prev_full_status |= PHASE_A;
 			}
 
 			if (has_phase(PHASE_B))
@@ -395,7 +395,7 @@ int switch_object::init(OBJECT *parent)
 				}
 
 				phase_B_state = SW_CLOSED;							//Flag as closed
-				prev_full_status |= 0x02;
+				prev_full_status |= PHASE_B;
 			}
 
 			if (has_phase(PHASE_C))
@@ -416,7 +416,7 @@ int switch_object::init(OBJECT *parent)
 				}
 
 				phase_C_state = SW_CLOSED;							//Flag as closed
-				prev_full_status |= 0x01;
+				prev_full_status |= PHASE_C;
 			}
 		}
 	}//End banked mode
@@ -464,7 +464,7 @@ int switch_object::init(OBJECT *parent)
 			}
 
 			phase_A_state = phase_B_state = phase_C_state = SW_OPEN;	//All open
-			prev_full_status = 0x00;								//Confirm here
+			prev_full_status = NO_PHASE;								//Confirm here
 		}
 		else	//LS_CLOSED - handle individually
 		{
@@ -486,7 +486,7 @@ int switch_object::init(OBJECT *parent)
 						B_mat[0][0] = switch_impedance_value;
 						b_mat[0][0] = switch_impedance_value;
 					}
-					prev_full_status |= 0x04;
+					prev_full_status |= PHASE_A;
 				}
 				else	//Must be open
 				{
@@ -504,7 +504,7 @@ int switch_object::init(OBJECT *parent)
 						B_mat[0][0] = gld::complex(0.0,0.0);
 						b_mat[0][0] = gld::complex(0.0,0.0);
 					}
-					prev_full_status &=0xFB;
+					prev_full_status &=~PHASE_A;
 				}
 			}
 
@@ -526,7 +526,7 @@ int switch_object::init(OBJECT *parent)
 						B_mat[1][1] = switch_impedance_value;
 						b_mat[1][1] = switch_impedance_value;
 					}
-					prev_full_status |= 0x02;
+					prev_full_status |= PHASE_B;
 				}
 				else	//Must be open
 				{
@@ -544,7 +544,7 @@ int switch_object::init(OBJECT *parent)
 						B_mat[1][1] = gld::complex(0.0,0.0);
 						b_mat[1][1] = gld::complex(0.0,0.0);
 					}
-					prev_full_status &=0xFD;
+					prev_full_status &=~PHASE_B;
 				}
 			}
 
@@ -566,7 +566,7 @@ int switch_object::init(OBJECT *parent)
 						B_mat[2][2] = switch_impedance_value;
 						b_mat[2][2] = switch_impedance_value;
 					}
-					prev_full_status |= 0x01;
+					prev_full_status |= PHASE_C;
 				}
 				else	//Must be open
 				{
@@ -584,7 +584,7 @@ int switch_object::init(OBJECT *parent)
 						B_mat[2][2] = gld::complex(0.0,0.0);
 						b_mat[2][2] = gld::complex(0.0,0.0);
 					}
-					prev_full_status &=0xFE;
+					prev_full_status &=~PHASE_C;
 				}
 			}
 		}
@@ -598,20 +598,20 @@ int switch_object::init(OBJECT *parent)
 }
 
 //Functionalized switch sync call -- before link call -- for deltamode functionality
-void switch_object::BOTH_switch_sync_pre(unsigned char *work_phases_pre, unsigned char *work_phases_post)
+void switch_object::BOTH_switch_sync_pre(set *work_phases_pre, set *work_phases_post)
 {
 	if ((solver_method == SM_NR) && (event_schedule != nullptr))	//NR-reliability-related stuff
 	{
 		if (!meshed_fault_checking_enabled)
 		{
 			//Store our phases going in
-			*work_phases_pre = NR_branchdata[NR_branch_reference].phases & 0x07;
+			*work_phases_pre = NR_branchdata[NR_branch_reference].phases & PHASE_ABC;
 		
 			//Call syncing function
 			*work_phases_post = switch_expected_sync_function();
 
 			//Store our phases going out
-			*work_phases_post &= 0x07;
+			*work_phases_post &= PHASE_ABC;
 		}
 		else	//Meshed checking, simplified operations
 		{
@@ -628,16 +628,16 @@ void switch_object::BOTH_switch_sync_pre(unsigned char *work_phases_pre, unsigne
 		switch_sync_function();
 
 		//Set phases the same
-		*work_phases_pre = 0x00;
-		*work_phases_post = 0x00;
+		*work_phases_pre = NO_PHASE;
+		*work_phases_post = NO_PHASE;
 	}
 	gl_verbose ("  BOTH_switch_sync_pre leaving:%s:%s", work_phases_pre, work_phases_post);
 }
 
 //Functionalized switch sync call -- after link call -- for deltamode functionality
-void switch_object::NR_switch_sync_post(unsigned char *work_phases_pre, unsigned char *work_phases_post, OBJECT *obj, TIMESTAMP *t0, TIMESTAMP *t2)
+void switch_object::NR_switch_sync_post(set *work_phases_pre, set *work_phases_post, OBJECT *obj, TIMESTAMP *t0, TIMESTAMP *t2)
 {
-	unsigned char work_phases, work_phases_closed; //work_phases_pre, work_phases_post, work_phases_closed;
+	set work_phases, work_phases_closed; //work_phases_pre, work_phases_post, work_phases_closed;
 	char fault_val[9];
 	int working_protect_phases[3];
 	int result_val, impl_fault, indexval;
@@ -657,7 +657,7 @@ void switch_object::NR_switch_sync_post(unsigned char *work_phases_pre, unsigned
 			working_protect_phases[2] = 0;
 
 			//Find out what changed
-			work_phases = (*work_phases_pre ^ *work_phases_post) & 0x07;
+			work_phases = (*work_phases_pre ^ *work_phases_post) & PHASE_ABC;
 
 			//See if this transition is a "fault-open" or a "fault-close"
 			work_phases_closed = work_phases & *work_phases_post;
@@ -666,7 +666,7 @@ void switch_object::NR_switch_sync_post(unsigned char *work_phases_pre, unsigned
 			if (work_phases_closed == work_phases)	//It's a close
 			{
 				fault_mode = true;
-				//work_phases = (~work_phases) & 0x07;
+				//work_phases = (~work_phases) & PHASE_ABC;
 			}
 			else	//It's an open
 			{
@@ -685,7 +685,7 @@ void switch_object::NR_switch_sync_post(unsigned char *work_phases_pre, unsigned
 			//Determine who opened and store the time
 			switch (work_phases)
 			{
-			case 0x00:	//No switches opened !??
+			case NO_PHASE:	//No switches opened !??
 				GL_THROW("switch:%s supposedly opened, but doesn't register the right phases",obj->name);
 				/*  TROUBLESHOOT
 				A switch reported changing to an open status.  However, it did not appear to fully propogate this
@@ -693,19 +693,19 @@ void switch_object::NR_switch_sync_post(unsigned char *work_phases_pre, unsigned
 				via the trac website.
 				*/
 				break;
-			case 0x01:	//Phase C action
+			case PHASE_C:	//Phase C action
 				fault_val[3] = 'C';
 				fault_val[4] = '\0';
 				impl_fault = 20;
 				working_protect_phases[2] = 1;
 				break;
-			case 0x02:	//Phase B action
+			case PHASE_B:	//Phase B action
 				fault_val[3] = 'B';
 				fault_val[4] = '\0';
 				impl_fault = 19;
 				working_protect_phases[1] = 1;
 				break;
-			case 0x03:	//Phase B and C action
+			case PHASE_BC:	//Phase B and C action
 				fault_val[3] = 'B';
 				fault_val[4] = 'C';
 				fault_val[5] = '\0';
@@ -713,13 +713,13 @@ void switch_object::NR_switch_sync_post(unsigned char *work_phases_pre, unsigned
 				working_protect_phases[1] = 1;
 				working_protect_phases[2] = 1;
 				break;
-			case 0x04:	//Phase A action
+			case PHASE_A:	//Phase A action
 				fault_val[3] = 'A';
 				fault_val[4] = '\0';
 				impl_fault = 18;
 				working_protect_phases[0] = 1;
 				break;
-			case 0x05:	//Phase A and C action
+			case PHASE_AC:	//Phase A and C action
 				fault_val[3] = 'A';
 				fault_val[4] = 'C';
 				fault_val[5] = '\0';
@@ -727,7 +727,7 @@ void switch_object::NR_switch_sync_post(unsigned char *work_phases_pre, unsigned
 				working_protect_phases[0] = 1;
 				working_protect_phases[2] = 1;
 				break;
-			case 0x06:	//Phase A and B action
+			case PHASE_AB:	//Phase A and B action
 				fault_val[3] = 'A';
 				fault_val[4] = 'B';
 				fault_val[5] = '\0';
@@ -735,7 +735,7 @@ void switch_object::NR_switch_sync_post(unsigned char *work_phases_pre, unsigned
 				working_protect_phases[0] = 1;
 				working_protect_phases[1] = 1;
 				break;
-			case 0x07:	//All three went
+			case PHASE_ABC:	//All three went
 				fault_val[3] = 'A';
 				fault_val[4] = 'B';
 				fault_val[5] = 'C';
@@ -820,46 +820,46 @@ TIMESTAMP switch_object::presync(TIMESTAMP t0)
 	bool closing = true;
 	TIMESTAMP repair_time = TS_NEVER;
 	OBJECT *protect_obj = nullptr;
-	unsigned char phase_changes = 0x00;
+	set phase_changes = NO_PHASE;
 
 	if (local_switching) {
 		if (switch_banked_mode == BANKED_SW) { // if any phase state has changed, they all follow the leader
-			if (phase_A_state != (prev_full_status & 0x04)) {
+			if (phase_A_state != (prev_full_status & PHASE_A)) {
 				phase_B_state = phase_C_state = phase_A_state;
-			} else if (phase_B_state != (prev_full_status & 0x02)) {
+			} else if (phase_B_state != (prev_full_status & PHASE_B)) {
 				phase_A_state = phase_C_state = phase_B_state;
 			}
-			if (phase_C_state != (prev_full_status & 0x01)) {
+			if (phase_C_state != (prev_full_status & PHASE_C)) {
 				phase_A_state = phase_B_state = phase_C_state;
 			}
 		}
-		phased_switch_status = 0x00;
-		if (phase_A_state == SW_CLOSED) phased_switch_status |= 0x04;
-		if (phase_B_state == SW_CLOSED) phased_switch_status |= 0x02;
-		if (phase_C_state == SW_CLOSED) phased_switch_status |= 0x01;
+		phased_switch_status = NO_PHASE;
+		if (phase_A_state == SW_CLOSED) phased_switch_status |= PHASE_A;
+		if (phase_B_state == SW_CLOSED) phased_switch_status |= PHASE_B;
+		if (phase_C_state == SW_CLOSED) phased_switch_status |= PHASE_C;
 		phase_changes = phased_switch_status ^ prev_full_status;
 		gl_verbose ("switch_object::presync:%s:%ld:%d:%d:%d", get_name(), t0, prev_full_status, phased_switch_status, phase_changes);
 		if (phased_switch_status != prev_full_status)	{
 			if (phased_switch_status < prev_full_status) closing = false;
-			if (phase_changes == 0x04)	{
+			if (phase_changes == PHASE_A)	{
 				strcpy (fault_type, "SW-A");
 				implemented_fault = 18;
-			} else if (phase_changes == 0x02) {
+			} else if (phase_changes == PHASE_B) {
 				strcpy (fault_type, "SW-B");
 				implemented_fault = 19;
-			} else if (phase_changes == 0x01) {
+			} else if (phase_changes == PHASE_C) {
 				strcpy (fault_type, "SW-C");
 				implemented_fault = 20;
-			} else if (phase_changes == 0x06) {
+			} else if (phase_changes == PHASE_AB) {
 				strcpy (fault_type, "SW-AB");
 				implemented_fault = 21;
-			} else if (phase_changes == 0x03) {
+			} else if (phase_changes == PHASE_BC) {
 				strcpy (fault_type, "SW-BC");
 				implemented_fault = 22;
-			} else if (phase_changes == 0x05) {
+			} else if (phase_changes == PHASE_AC) {
 				strcpy (fault_type, "SW-AC");
 				implemented_fault = 23;
-			} else if (phase_changes == 0x07) {
+			} else if (phase_changes == PHASE_ABC) {
 				strcpy (fault_type, "SW-ABC");
 				implemented_fault = 24;
 			} else {
@@ -881,7 +881,7 @@ TIMESTAMP switch_object::presync(TIMESTAMP t0)
 TIMESTAMP switch_object::sync(TIMESTAMP t0)
 {
 	OBJECT *obj = OBJECTHDR(this);
-	unsigned char work_phases_pre, work_phases_post;
+	set work_phases_pre, work_phases_post;
 	gl_verbose ("switch_object::sync:%s:%ld:%d:%d:%d", get_name(), t0, phase_A_state, phase_B_state, phase_C_state);
 	//Try to map the event_schedule function address, if we haven't tried yet
 	if (!event_schedule_map_attempt)
@@ -966,13 +966,13 @@ TIMESTAMP switch_object::sync(TIMESTAMP t0)
 //reliability calls as well, so need to make sure the two call points are consistent
 void switch_object::switch_sync_function(void)
 {
-	unsigned char pres_status;
+	set pres_status;
 	double phase_total, switch_total;
 	OBJECT *obj = OBJECTHDR(this);
 	int result_val;
 
 	gl_verbose ("  switch_sync_function:%s:%d:%d:%d:%d:%d", get_name(), status, prev_status, phase_A_state, phase_B_state, phase_C_state);
-	pres_status = 0x00;	//Reset individual status indicator - assumes all start open
+	pres_status = NO_PHASE;	//Reset individual status indicator - assumes all start open
 
 	//See which mode we are operating in
 	if (!meshed_fault_checking_enabled)	//"Normal" mode
@@ -1039,7 +1039,7 @@ void switch_object::switch_sync_function(void)
 						b_mat[0][0] = gld::complex(0.0,0.0);
 						a_mat[0][0] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
 						d_mat[0][0] = 0.0;	
-						NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove this bit
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove this bit
 					}
 					else	//Assume FBS
 					{
@@ -1058,7 +1058,7 @@ void switch_object::switch_sync_function(void)
 						b_mat[1][1] = gld::complex(0.0,0.0);
 						a_mat[1][1] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
 						d_mat[1][1] = 0.0;	
-						NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove this bit
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove this bit
 					}
 					else
 					{
@@ -1077,7 +1077,7 @@ void switch_object::switch_sync_function(void)
 						b_mat[2][2] = gld::complex(0.0,0.0);
 						a_mat[2][2] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
 						d_mat[2][2] = 0.0;
-						NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove this bit
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove this bit
 					}
 					else
 					{
@@ -1092,7 +1092,7 @@ void switch_object::switch_sync_function(void)
 			{
 				if (has_phase(PHASE_A))
 				{
-					pres_status |= 0x04;				//Flag as closed
+					pres_status |= PHASE_A;				//Flag as closed
 
 					if (solver_method == SM_NR)
 					{
@@ -1100,7 +1100,7 @@ void switch_object::switch_sync_function(void)
 						b_mat[0][0] = switch_impedance_value;
 						a_mat[0][0] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 						d_mat[0][0] = 1.0;
-						NR_branchdata[NR_branch_reference].phases |= 0x04;	//Ensure we're set
+						NR_branchdata[NR_branch_reference].phases |= PHASE_A;	//Ensure we're set
 					}
 					else	//Assumed FBS
 					{
@@ -1113,7 +1113,7 @@ void switch_object::switch_sync_function(void)
 
 				if (has_phase(PHASE_B))
 				{
-					pres_status |= 0x02;				//Flag as closed
+					pres_status |= PHASE_B;				//Flag as closed
 
 					if (solver_method == SM_NR)
 					{
@@ -1121,7 +1121,7 @@ void switch_object::switch_sync_function(void)
 						b_mat[1][1] = switch_impedance_value;
 						a_mat[1][1] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 						d_mat[1][1] = 1.0;
-						NR_branchdata[NR_branch_reference].phases |= 0x02;	//Ensure we're set
+						NR_branchdata[NR_branch_reference].phases |= PHASE_B;	//Ensure we're set
 					}
 					else
 					{
@@ -1134,7 +1134,7 @@ void switch_object::switch_sync_function(void)
 
 				if (has_phase(PHASE_C))
 				{
-					pres_status |= 0x01;				//Flag as closed
+					pres_status |= PHASE_C;				//Flag as closed
 
 					if (solver_method == SM_NR)
 					{
@@ -1142,7 +1142,7 @@ void switch_object::switch_sync_function(void)
 						b_mat[2][2] = switch_impedance_value;
 						a_mat[2][2] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 						d_mat[2][2] = 1.0;
-						NR_branchdata[NR_branch_reference].phases |= 0x01;	//Ensure we're set
+						NR_branchdata[NR_branch_reference].phases |= PHASE_C;	//Ensure we're set
 					}
 					else
 					{
@@ -1205,13 +1205,13 @@ void switch_object::switch_sync_function(void)
 				{
 					if (phase_A_state == SW_CLOSED)
 					{
-						pres_status |= 0x04;
+						pres_status |= PHASE_A;
 
 						if (solver_method == SM_NR)
 						{
 							From_Y[0][0] = switch_admittance_value;
 							b_mat[0][0] = switch_impedance_value;
-							NR_branchdata[NR_branch_reference].phases |= 0x04;	//Ensure we're set
+							NR_branchdata[NR_branch_reference].phases |= PHASE_A;	//Ensure we're set
 							a_mat[0][0] = 1.0;
 							d_mat[0][0] = 1.0;
 						}
@@ -1229,7 +1229,7 @@ void switch_object::switch_sync_function(void)
 						{
 							From_Y[0][0] = gld::complex(0.0,0.0);
 							b_mat[0][0] = gld::complex(0.0,0.0);
-							NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Make sure we're removed
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Make sure we're removed
 							a_mat[0][0] = 0.0;
 							d_mat[0][0] = 0.0;
 						}
@@ -1247,13 +1247,13 @@ void switch_object::switch_sync_function(void)
 				{
 					if (phase_B_state == SW_CLOSED)
 					{
-						pres_status |= 0x02;
+						pres_status |= PHASE_B;
 
 						if (solver_method == SM_NR)
 						{
 							From_Y[1][1] = switch_admittance_value;
 							b_mat[1][1] = switch_impedance_value;
-							NR_branchdata[NR_branch_reference].phases |= 0x02;	//Ensure we're set
+							NR_branchdata[NR_branch_reference].phases |= PHASE_B;	//Ensure we're set
 							a_mat[1][1] = 1.0;
 							d_mat[1][1] = 1.0;
 						}
@@ -1271,7 +1271,7 @@ void switch_object::switch_sync_function(void)
 						{
 							From_Y[1][1] = gld::complex(0.0,0.0);
 							b_mat[1][1] = gld::complex(0.0,0.0);
-							NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Make sure we're removed
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Make sure we're removed
 							a_mat[1][1] = 0.0;
 							d_mat[1][1] = 0.0;
 						}
@@ -1289,13 +1289,13 @@ void switch_object::switch_sync_function(void)
 				{
 					if (phase_C_state == SW_CLOSED)
 					{
-						pres_status |= 0x01;
+						pres_status |= PHASE_C;
 
 						if (solver_method == SM_NR)
 						{
 							From_Y[2][2] = switch_admittance_value;
 							b_mat[2][2] = switch_impedance_value;
-							NR_branchdata[NR_branch_reference].phases |= 0x01;	//Ensure we're set
+							NR_branchdata[NR_branch_reference].phases |= PHASE_C;	//Ensure we're set
 							a_mat[2][2] = 1.0;
 							d_mat[2][2] = 1.0;
 						}
@@ -1313,7 +1313,7 @@ void switch_object::switch_sync_function(void)
 						{
 							From_Y[2][2] = gld::complex(0.0,0.0);
 							b_mat[2][2] = gld::complex(0.0,0.0);
-							NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Make sure we're removed
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Make sure we're removed
 							a_mat[2][2] = 0.0;
 							d_mat[2][2] = 0.0;
 						}
@@ -1377,7 +1377,7 @@ void switch_object::switch_sync_function(void)
 				if (has_phase(PHASE_A))
 				{
 					//Handle the phase - theoretically done elsewhere, but double check
-					NR_branchdata[NR_branch_reference].phases |= 0x04;
+					NR_branchdata[NR_branch_reference].phases |= PHASE_A;
 					From_Y[0][0] = switch_admittance_value;
 					b_mat[0][0] = switch_impedance_value;
 					a_mat[0][0] = 1.0;
@@ -1387,7 +1387,7 @@ void switch_object::switch_sync_function(void)
 
 				if (has_phase(PHASE_B))
 				{
-					NR_branchdata[NR_branch_reference].phases |= 0x02;
+					NR_branchdata[NR_branch_reference].phases |= PHASE_B;
 					From_Y[1][1] = switch_admittance_value;
 					b_mat[1][1] = switch_impedance_value;
 					a_mat[1][1] = 1.0;
@@ -1397,7 +1397,7 @@ void switch_object::switch_sync_function(void)
 
 				if (has_phase(PHASE_C))
 				{
-					NR_branchdata[NR_branch_reference].phases |= 0x01;
+					NR_branchdata[NR_branch_reference].phases |= PHASE_C;
 					From_Y[2][2] = switch_admittance_value;
 					b_mat[2][2] = switch_impedance_value;
 					a_mat[2][2] = 1.0;
@@ -1478,9 +1478,9 @@ void switch_object::switch_sync_function(void)
 }
 
 //Function to replicate sync_switch_function, but not call anything (just for reliability checks)
-unsigned char switch_object::switch_expected_sync_function(void)
+set switch_object::switch_expected_sync_function(void)
 {
-	unsigned char phases_out;
+	set phases_out;
 	double phase_total, switch_total;
 	SWITCHSTATE temp_A_state, temp_B_state, temp_C_state;
 	enumeration temp_status;
@@ -1551,34 +1551,34 @@ unsigned char switch_object::switch_expected_sync_function(void)
 			{
 				if (has_phase(PHASE_A))
 				{
-					phases_out &= 0xFB;	//Remove this bit
+					phases_out &= ~PHASE_A;	//Remove this bit
 				}
 
 				if (has_phase(PHASE_B))
 				{
-					phases_out &= 0xFD;	//Remove this bit
+					phases_out &= ~PHASE_B;	//Remove this bit
 				}
 
 				if (has_phase(PHASE_C))
 				{
-					phases_out &= 0xFE;	//Remove this bit
+					phases_out &= ~PHASE_C;	//Remove this bit
 				}
 			}//end open
 			else					//Must be closed then
 			{
 				if (has_phase(PHASE_A))
 				{
-					phases_out |= 0x04;	//Ensure we're set
+					phases_out |= PHASE_A;	//Ensure we're set
 				}
 
 				if (has_phase(PHASE_B))
 				{
-					phases_out |= 0x02;	//Ensure we're set
+					phases_out |= PHASE_B;	//Ensure we're set
 				}
 
 				if (has_phase(PHASE_C))
 				{
-					phases_out |= 0x01;	//Ensure we're set
+					phases_out |= PHASE_C;	//Ensure we're set
 				}
 			}//end closed
 		}//End banked mode
@@ -1595,11 +1595,11 @@ unsigned char switch_object::switch_expected_sync_function(void)
 				{
 					if (temp_A_state == SW_CLOSED)
 					{
-						phases_out |= 0x04;	//Ensure we're set
+						phases_out |= PHASE_A;	//Ensure we're set
 					}
 					else	//Must be open
 					{
-						phases_out &= 0xFB;	//Make sure we're removed
+						phases_out &= ~PHASE_A;	//Make sure we're removed
 					}
 				}
 
@@ -1607,11 +1607,11 @@ unsigned char switch_object::switch_expected_sync_function(void)
 				{
 					if (temp_B_state == SW_CLOSED)
 					{
-						phases_out |= 0x02;	//Ensure we're set
+						phases_out |= PHASE_B;	//Ensure we're set
 					}
 					else	//Must be open
 					{
-						phases_out &= 0xFD;	//Make sure we're removed
+						phases_out &= ~PHASE_B;	//Make sure we're removed
 					}
 				}
 
@@ -1619,11 +1619,11 @@ unsigned char switch_object::switch_expected_sync_function(void)
 				{
 					if (temp_C_state == SW_CLOSED)
 					{
-						phases_out |= 0x01;	//Ensure we're set
+						phases_out |= PHASE_C;	//Ensure we're set
 					}
 					else	//Must be open
 					{
-						phases_out &= 0xFE;	//Make sure we're removed
+						phases_out &= ~PHASE_C;	//Make sure we're removed
 					}
 				}
 			}
@@ -1654,7 +1654,7 @@ void switch_object::set_switch(bool desired_status)
 					b_mat[0][0] = gld::complex(0.0,0.0);
 					a_mat[0][0] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
 					d_mat[0][0] = 0.0;
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Ensure we're not set
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Ensure we're not set
 					phase_A_state = SW_OPEN;				//Open this phase
 				}
 
@@ -1664,7 +1664,7 @@ void switch_object::set_switch(bool desired_status)
 					b_mat[1][1] = gld::complex(0.0,0.0);
 					a_mat[1][1] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
 					d_mat[1][1] = 0.0;
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Ensure we're not set
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Ensure we're not set
 					phase_B_state = SW_OPEN;				//Open this phase
 				}
 
@@ -1674,7 +1674,7 @@ void switch_object::set_switch(bool desired_status)
 					b_mat[2][2] = gld::complex(0.0,0.0);
 					a_mat[2][2] = 0.0;					//Update the voltage ratio matrix as well (for power calcs)
 					d_mat[2][2] = 0.0;
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Ensure we're not set
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Ensure we're not set
 					phase_C_state = SW_OPEN;				//Open this phase
 				}
 			}//end open
@@ -1686,7 +1686,7 @@ void switch_object::set_switch(bool desired_status)
 					b_mat[0][0] = switch_impedance_value;
 					a_mat[0][0] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 					d_mat[0][0] = 1.0;
-					NR_branchdata[NR_branch_reference].phases |= 0x04;	//Ensure we're set
+					NR_branchdata[NR_branch_reference].phases |= PHASE_A;	//Ensure we're set
 					phase_A_state = SW_CLOSED;				//Close this phase
 				}
 
@@ -1696,7 +1696,7 @@ void switch_object::set_switch(bool desired_status)
 					b_mat[1][1] = switch_impedance_value;
 					a_mat[1][1] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 					d_mat[1][1] = 1.0;
-					NR_branchdata[NR_branch_reference].phases |= 0x02;	//Ensure we're set
+					NR_branchdata[NR_branch_reference].phases |= PHASE_B;	//Ensure we're set
 					phase_B_state = SW_CLOSED;				//Close this phase
 				}
 
@@ -1706,7 +1706,7 @@ void switch_object::set_switch(bool desired_status)
 					b_mat[2][2] = switch_impedance_value;
 					a_mat[2][2] = 1.0;					//Update the voltage ratio matrix as well (for power calcs)
 					d_mat[2][2] = 1.0;
-					NR_branchdata[NR_branch_reference].phases |= 0x01;	//Ensure we're set
+					NR_branchdata[NR_branch_reference].phases |= PHASE_C;	//Ensure we're set
 					phase_C_state = SW_CLOSED;				//Close this phase
 				}
 			}//end closed
@@ -1768,9 +1768,9 @@ void switch_object::set_switch_full(char desired_status_A, char desired_status_B
 //Function to externally set switch status - mainly for "out of step" updates under NR solver
 //where admittance needs to be updated - this function tracks switching position for reliability faults
 //Prevents system from magically "turning back on" a single islanded switch when removed as a downstream element
-void switch_object::set_switch_full_reliability(unsigned char desired_status)
+void switch_object::set_switch_full_reliability(set desired_status)
 {
-	unsigned char desA, desB, desC, phase_change;
+	set desA, desB, desC, phase_change;
 
 	gl_verbose ("set_switch_full_reliability:%s:%d:%d:%d", get_name(), phased_switch_status, int(desired_status), local_switching);
 
@@ -1778,13 +1778,13 @@ void switch_object::set_switch_full_reliability(unsigned char desired_status)
 	phase_change = desired_status ^ (~faulted_switch_phases);
 
 	//Figure out what phase configuration we want to change
-	if ((phase_change & 0x04) == 0x04)	//Phase A
+	if ((phase_change & PHASE_A) == PHASE_A)	//Phase A
 	{
 		//Determine change direction
-		if ((desired_status & 0x04) == 0x04)	//Putting it back in
+		if ((desired_status & PHASE_A) == PHASE_A)	//Putting it back in
 		{
 			//Switch A desired on - set it appropriately
-			if ((phased_switch_status & 0x04) == 0x04)	//Switch A was on when this was faulted
+			if ((phased_switch_status & PHASE_A) == PHASE_A)	//Switch A was on when this was faulted
 			{
 				desA=1;	//Desired a close - close it
 			}
@@ -1793,33 +1793,33 @@ void switch_object::set_switch_full_reliability(unsigned char desired_status)
 				desA=0;	//Desired open
 			}
 
-			faulted_switch_phases &= 0xFB;	//Remove it from the "fault-removed" phasing
+			faulted_switch_phases &= ~PHASE_A;	//Remove it from the "fault-removed" phasing
 		}
 		else	//Removing it (faulting it)
 		{
 			if (phase_A_state == SW_CLOSED)
 			{
-				phased_switch_status |= 0x04;	//Flag it as being "was closed"
+				phased_switch_status |= PHASE_A;	//Flag it as being "was closed"
 			}
 			else	//Must be open
 			{
-				phased_switch_status &= 0xFB;	//Ensure it is flagged as such
+				phased_switch_status &= ~PHASE_A;	//Ensure it is flagged as such
 			}
 
 			desA=0;	//Desired an open - open it
-			faulted_switch_phases |= 0x04;	//Add it into the "fault-removed" phasing
+			faulted_switch_phases |= PHASE_A;	//Add it into the "fault-removed" phasing
 		}
 	}
 	else
 		desA=2;	//indifferent - no change
 	
-	if ((phase_change & 0x02) == 0x02)	//Phase B
+	if ((phase_change & PHASE_B) == PHASE_B)	//Phase B
 	{
 		//Determine change direction
-		if ((desired_status & 0x02) == 0x02)	//Putting it back in
+		if ((desired_status & PHASE_B) == PHASE_B)	//Putting it back in
 		{
 			//Switch B desired on - set it appropriately
-			if ((phased_switch_status & 0x02) == 0x02)	//Switch B was on when this was faulted
+			if ((phased_switch_status & PHASE_B) == PHASE_B)	//Switch B was on when this was faulted
 			{
 				desB=1;	//Desired a close - close it
 			}
@@ -1828,33 +1828,33 @@ void switch_object::set_switch_full_reliability(unsigned char desired_status)
 				desB=0;	//Desired open
 			}
 
-			faulted_switch_phases &= 0xFD;	//Remove it from the "fault-removed" phasing
+			faulted_switch_phases &= ~PHASE_B;	//Remove it from the "fault-removed" phasing
 		}
 		else	//Removing it (faulting it)
 		{
 			if (phase_B_state == SW_CLOSED)
 			{
-				phased_switch_status |= 0x02;	//Flag it as being "was closed"
+				phased_switch_status |= PHASE_B;	//Flag it as being "was closed"
 			}
 			else	//Must be open
 			{
-				phased_switch_status &= 0xFD;	//Ensure it is flagged as such
+				phased_switch_status &= ~PHASE_B;	//Ensure it is flagged as such
 			}
 
 			desB=0;	//Desired an open - open it
-			faulted_switch_phases |= 0x02;	//Add it into the "fault-removed" phasing
+			faulted_switch_phases |= PHASE_B;	//Add it into the "fault-removed" phasing
 		}
 	}
 	else
 		desB=2;	//indifferent - no change
 
-	if ((phase_change & 0x01) == 0x01)	//Phase C
+	if ((phase_change & PHASE_C) == PHASE_C)	//Phase C
 	{
 		//Determine change direction
-		if ((desired_status & 0x01) == 0x01)	//Putting it back in
+		if ((desired_status & PHASE_C) == PHASE_C)	//Putting it back in
 		{
 			//Switch C desired on - set it appropriately
-			if ((phased_switch_status & 0x01) == 0x01)	//Switch C was on when this was faulted
+			if ((phased_switch_status & PHASE_C) == PHASE_C)	//Switch C was on when this was faulted
 			{
 				desC=1;	//Desired a close - close it
 			}
@@ -1863,21 +1863,21 @@ void switch_object::set_switch_full_reliability(unsigned char desired_status)
 				desC=0;	//Desired open
 			}
 
-			faulted_switch_phases &= 0xFE;	//Remove it from the "fault-removed" phasing
+			faulted_switch_phases &= ~PHASE_C;	//Remove it from the "fault-removed" phasing
 		}
 		else	//Removing it (faulting it)
 		{
 			if (phase_C_state == SW_CLOSED)
 			{
-				phased_switch_status |= 0x01;	//Flag it as being "was closed"
+				phased_switch_status |= PHASE_C;	//Flag it as being "was closed"
 			}
 			else	//Must be open
 			{
-				phased_switch_status &= 0xFE;	//Ensure it is flagged as such
+				phased_switch_status &= ~PHASE_C;	//Ensure it is flagged as such
 			}
 
 			desC=0;	//Desired an open - open it
-			faulted_switch_phases |= 0x01;	//Add it into the "fault-removed" phasing
+			faulted_switch_phases |= PHASE_C;	//Add it into the "fault-removed" phasing
 		}
 	}
 	else
@@ -1887,12 +1887,12 @@ void switch_object::set_switch_full_reliability(unsigned char desired_status)
 	if (!meshed_fault_checking_enabled)
 	{
 		//If a fault is present and we are banked, make sure we aren't any more
-		if ((faulted_switch_phases != 0x00) && prefault_banked && (switch_banked_mode == BANKED_SW))
+		if ((faulted_switch_phases != NO_PHASE) && prefault_banked && (switch_banked_mode == BANKED_SW))
 		{
 			//Put into individual mode
 			switch_banked_mode = INDIVIDUAL_SW;
 		}
-		else if ((faulted_switch_phases == 0x00) && prefault_banked && (switch_banked_mode == INDIVIDUAL_SW))
+		else if ((faulted_switch_phases == NO_PHASE) && prefault_banked && (switch_banked_mode == INDIVIDUAL_SW))
 		{
 			//Put back into banked mode
 			switch_banked_mode = BANKED_SW;
@@ -1916,7 +1916,7 @@ OBJECT **switch_object::get_object(OBJECT *obj, const char *name)
 }
 
 //Function to adjust "faulted phases" block - in case something has tried to restore itself
-void switch_object::set_switch_faulted_phases(unsigned char desired_status)
+void switch_object::set_switch_faulted_phases(set desired_status)
 {
 	gl_verbose ("set_switch_faulted_phases:%d", desired_status);
 	//Remove from the fault tracker
@@ -1957,7 +1957,7 @@ SIMULATIONMODE switch_object::inter_deltaupdate_switch(unsigned int64 delta_time
 {
 	OBJECT *hdr = OBJECTHDR(this);
 	TIMESTAMP t0_val, t2_val;
-	unsigned char work_phases_pre, work_phases_post;
+	set work_phases_pre, work_phases_post;
 
 	//Initialize - just set to random values, not used here
 	t0_val = TS_NEVER;
@@ -2072,7 +2072,7 @@ EXPORT int isa_switch(OBJECT *obj, char *classname)
 }
 
 //Function to change switch states
-EXPORT int change_switch_state(OBJECT *thisobj, unsigned char phase_change, bool state)
+EXPORT int change_switch_state(OBJECT *thisobj, set phase_change, bool state)
 {
 	char desA, desB, desC;
 
@@ -2087,7 +2087,7 @@ EXPORT int change_switch_state(OBJECT *thisobj, unsigned char phase_change, bool
 	else	//Must be individual
 	{
 		//Figure out what we need to call
-		if ((phase_change & 0x04) == 0x04)
+		if ((phase_change & PHASE_A) == PHASE_A)
 		{
 			if (state)
 				desA=1;	//Close it
@@ -2098,7 +2098,7 @@ EXPORT int change_switch_state(OBJECT *thisobj, unsigned char phase_change, bool
 			desA=2;		//I don't care
 
 		//Phase B
-		if ((phase_change & 0x02) == 0x02)
+		if ((phase_change & PHASE_B) == PHASE_B)
 		{
 			if (state)
 				desB=1;	//Close it
@@ -2109,7 +2109,7 @@ EXPORT int change_switch_state(OBJECT *thisobj, unsigned char phase_change, bool
 			desB=2;		//I don't care
 
 		//Phase C
-		if ((phase_change & 0x01) == 0x01)
+		if ((phase_change & PHASE_C) == PHASE_C)
 		{
 			if (state)
 				desC=1;	//Close it
@@ -2180,7 +2180,7 @@ EXPORT int change_switch_state_toggle(OBJECT *thisobj)
 }
 
 //Reliability interface - generalized switch operation so switches and other opjects can be similarly
-EXPORT int reliability_operation(OBJECT *thisobj, unsigned char desired_phases)
+EXPORT int reliability_operation(OBJECT *thisobj, set desired_phases)
 {
 	//Map the switch
 	switch_object *swtchobj = OBJECTDATA(thisobj,switch_object);
@@ -2234,7 +2234,7 @@ EXPORT int clear_fault_switch(OBJECT *thisobj, int *implemented_fault, char *imp
 	return retval;
 }
 
-EXPORT int switch_fault_updates(OBJECT *thisobj, unsigned char restoration_phases)
+EXPORT int switch_fault_updates(OBJECT *thisobj, set restoration_phases)
 {
 	gl_verbose ("  switch_fault_updates:%d", int(restoration_phases));
 	//Link to ourselves

@@ -337,7 +337,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 	STATUS call_return_status;
 
 	//Phase collapser variable
-	unsigned char phase_worka, phase_workb, phase_workc, phase_workd, phase_worke;
+	set phase_worka;
 
 	//Temporary calculation variables
 	double tempIcalcReal, tempIcalcImag;
@@ -688,7 +688,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					if (*bus[indexer].dynamics_enabled && (bus[indexer].full_Y != nullptr) && (bus[indexer].DynCurrent != nullptr))
 					{
 						//See if we're three phase or triplex
-						if ((bus[indexer].phases & 0x07) == 0x07)
+						if ((bus[indexer].phases & PHASE_ABC) == PHASE_ABC)
 						{
 							//Form denominator term of Ii, since it won't change
 							temp_complex_1 = (~bus[indexer].V[0]) + (~bus[indexer].V[1])*avalsq + (~bus[indexer].V[2])*aval;
@@ -713,7 +713,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								*bus[indexer].PGenTotal = gld::complex(0.0,0.0);
 							}
 						}
-						else if ((bus[indexer].phases & 0x80) == 0x80)	//Triplex
+						else if ((bus[indexer].phases & PHASE_S) == PHASE_S)	//Triplex
 						{
 							//Get the "delta voltage" for use here
 							temp_complex_4 = bus[indexer].V[0] + bus[indexer].V[1];
@@ -734,7 +734,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								*bus[indexer].PGenTotal = -temp_complex_3;	//Gets piecemeal removed from three-phase, just all at once here!
 							}
 						}
-						else if ((bus[indexer].phases & 0x07) == 0x00)	//No phases
+						else if ((bus[indexer].phases & PHASE_ABC) == NO_PHASE)	//No phases
 						{
 							temp_complex_1 = gld::complex(0.0,0.0);
 							temp_complex_0 = gld::complex(0.0,0.0);
@@ -761,11 +761,11 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				{
 					tempIcalcReal = tempIcalcImag = 0;   
 
-					if ((bus[indexer].phases & 0x80) == 0x80)	//Split phase - triplex bus
+					if ((bus[indexer].phases & PHASE_S) == PHASE_S)	//Split phase - triplex bus
 					{
 						//Two states of triplex bus - To node of SPCT transformer needs to be different
 						//First different - Delta-I and diagonal contributions
-						if ((bus[indexer].phases & 0x20) == 0x20)	//We're the To bus
+						if ((bus[indexer].phases & PHASE_TO_SPCT) == PHASE_TO_SPCT)	//We're the To bus
 						{
 							//Pre-negated due to the nature of how it's calculated (V1 compared to I1)
 							tempPbus =  bus[indexer].PL[jindex];	//Copy load amounts in
@@ -818,7 +818,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 							if (branch[jindexer].from == indexer)	//We're the from bus
 							{
-								if ((bus[indexer].phases & 0x20) == 0x20)	//SPCT from bus - needs different signage
+								if ((bus[indexer].phases & PHASE_TO_SPCT) == PHASE_TO_SPCT)	//SPCT from bus - needs different signage
 								{
 									if (NR_solver_algorithm == NRM_TCIM)
 									{
@@ -934,15 +934,15 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								if (branch[jindexer].v_ratio != 1.0)	//Transformer
 								{
 									//Only a single contributor on the from side - figure out how to get to it
-									if ((branch[jindexer].phases & 0x01) == 0x01)	//C
+									if ((branch[jindexer].phases & PHASE_C) == PHASE_C)	//C
 									{
 										temp_index=2;
 									}
-									else if ((branch[jindexer].phases & 0x02) == 0x02)	//B
+									else if ((branch[jindexer].phases & PHASE_B) == PHASE_B)	//B
 									{
 										temp_index=1;
 									}
-									else if ((branch[jindexer].phases & 0x04) == 0x04)	//A
+									else if ((branch[jindexer].phases & PHASE_A) == PHASE_A)	//A
 									{
 										temp_index=0;
 									}
@@ -990,7 +990,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								}//end transformer
 								else									//Must be a normal line then
 								{
-									if ((bus[indexer].phases & 0x20) == 0x20)	//SPCT from bus - needs different signage
+									if ((bus[indexer].phases & PHASE_TO_SPCT) == PHASE_TO_SPCT)	//SPCT from bus - needs different signage
 									{
 										if (NR_solver_algorithm == NRM_TCIM)
 										{
@@ -1221,51 +1221,51 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						{
 							//Determine our indices, based on phase information
 							temp_index = -1;
-							switch(bus[indexer].phases & 0x07) {
-								case 0x01:	//C
+							switch(bus[indexer].phases & PHASE_ABC) {
+								case PHASE_C:	//C
 									{
 										temp_index=2;
 										break;
-									}//end 0x01
-								case 0x02:	//B
+									}//end PHASE_C
+								case PHASE_B:	//B
 									{
 										temp_index=1;
 										break;
-									}//end 0x02
-								case 0x03:	//BC
+									}//end PHASE_B
+								case PHASE_BC:	//BC
 									{
 										if (kindex==0)	//B
 											temp_index=1;
 										else	//C
 											temp_index=2;
 										break;
-									}//end 0x03
-								case 0x04:	//A
+									}//end PHASE_BC
+								case PHASE_A:	//A
 									{
 										temp_index=0;
 										break;
-									}//end 0x04
-								case 0x05:	//AC
+									}//end PHASE_A
+								case PHASE_AC:	//AC
 									{
 										if (kindex==0)	//A
 											temp_index=0;
 										else			//C
 											temp_index=2;
 										break;
-									}//end 0x05
-								case 0x06:	//AB
+									}//end PHASE_AC
+								case PHASE_AB:	//AB
 									{
 										if (kindex==0)	//A
 											temp_index=0;
 										else			//B
 											temp_index=1;
 										break;
-									}//end 0x06
-								case 0x07:	//ABC
+									}//end PHASE_AB
+								case PHASE_ABC:	//ABC
 									{
 										temp_index = kindex;	//Will loop all 3
 										break;
-									}//end 0x07
+									}//end PHASE_ABC
 							}//End switch/case
 
 							if (temp_index==-1)	//Error check
@@ -1309,51 +1309,51 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							//Off diagonal contributions
 							//Need another variable to handle the rows
 							temp_index_b = -1;
-							switch(bus[indexer].phases & 0x07) {
-								case 0x01:	//C
+							switch(bus[indexer].phases & PHASE_ABC) {
+								case PHASE_C:	//C
 									{
 										temp_index_b=2;
 										break;
-									}//end 0x01
-								case 0x02:	//B
+									}//end PHASE_C
+								case PHASE_B:	//B
 									{
 										temp_index_b=1;
 										break;
-									}//end 0x02
-								case 0x03:	//BC
+									}//end PHASE_B
+								case PHASE_BC:	//BC
 									{
 										if (jindex==0)	//B
 											temp_index_b=1;
 										else	//C
 											temp_index_b=2;
 										break;
-									}//end 0x03
-								case 0x04:	//A
+									}//end PHASE_BC
+								case PHASE_A:	//A
 									{
 										temp_index_b=0;
 										break;
-									}//end 0x04
-								case 0x05:	//AC
+									}//end PHASE_A
+								case PHASE_AC:	//AC
 									{
 										if (jindex==0)	//A
 											temp_index_b=0;
 										else			//C
 											temp_index_b=2;
 										break;
-									}//end 0x05
-								case 0x06:	//AB
+									}//end PHASE_AC
+								case PHASE_AB:	//AB
 									{
 										if (jindex==0)	//A
 											temp_index_b=0;
 										else			//B
 											temp_index_b=1;
 										break;
-									}//end 0x06
-								case 0x07:	//ABC
+									}//end PHASE_AB
+								case PHASE_ABC:	//ABC
 									{
 										temp_index_b = jindex;	//Will loop all 3
 										break;
-									}//end 0x07
+									}//end PHASE_ABC
 							}//End switch/case
 
 							if (temp_index_b==-1)	//Error check
@@ -1369,64 +1369,64 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								if (branch[jindexer].from == indexer) 
 								{
 									//See if we're a triplex transformer (will only occur on the from side)
-									if ((branch[jindexer].phases & 0x80) == 0x80)	//Triplexy
+									if ((branch[jindexer].phases & PHASE_S) == PHASE_S)	//Triplexy
 									{
 										proceed_flag = false;
-										phase_worka = branch[jindexer].phases & 0x07;
+										phase_worka = branch[jindexer].phases & PHASE_ABC;
 
 										if (kindex==0)	//All of this will only occur the first column iteration
 										{
-											switch (bus[indexer].phases & 0x07)	{
-												case 0x01:	//C
+											switch (bus[indexer].phases & PHASE_ABC)	{
+												case PHASE_C:	//C
 													{
-														if (phase_worka==0x01)
+														if (phase_worka==PHASE_C)
 															proceed_flag=true;
 														break;
-													}//end 0x01
-												case 0x02:	//B
+													}//end PHASE_C
+												case PHASE_B:	//B
 													{
-														if (phase_worka==0x02)
+														if (phase_worka==PHASE_B)
 															proceed_flag=true;
 														break;
-													}//end 0x02
-												case 0x03:	//BC
+													}//end PHASE_B
+												case PHASE_BC:	//BC
 													{
-														if ((jindex==0) && (phase_worka==0x02))	//First row and is a B
+														if ((jindex==0) && (phase_worka==PHASE_B))	//First row and is a B
 															proceed_flag=true;
-														else if ((jindex==1) && (phase_worka==0x01))	//Second row and is a C
+														else if ((jindex==1) && (phase_worka==PHASE_C))	//Second row and is a C
 															proceed_flag=true;
 														else
 															;
 														break;
-													}//end 0x03
-												case 0x04:	//A
+													}//end PHASE_BC
+												case PHASE_A:	//A
 													{
-														if (phase_worka==0x04)
+														if (phase_worka==PHASE_A)
 															proceed_flag=true;
 														break;
-													}//end 0x04
-												case 0x05:	//AC
+													}//end PHASE_A
+												case PHASE_AC:	//AC
 													{
-														if ((jindex==0) && (phase_worka==0x04))	//First row and is a A
+														if ((jindex==0) && (phase_worka==PHASE_A))	//First row and is a A
 															proceed_flag=true;
-														else if ((jindex==1) && (phase_worka==0x01))	//Second row and is a C
+														else if ((jindex==1) && (phase_worka==PHASE_C))	//Second row and is a C
 															proceed_flag=true;
 														else
 															;
 														break;
-													}//end 0x05
-												case 0x06:	//AB - shares with ABC
-												case 0x07:	//ABC 
+													}//end PHASE_AC
+												case PHASE_AB:	//AB - shares with ABC
+												case PHASE_ABC:	//ABC 
 													{
-														if ((jindex==0) && (phase_worka==0x04))	//A & first row
+														if ((jindex==0) && (phase_worka==PHASE_A))	//A & first row
 															proceed_flag=true;
-														else if ((jindex==1) && (phase_worka==0x02))	//B & second row
+														else if ((jindex==1) && (phase_worka==PHASE_B))	//B & second row
 															proceed_flag=true;
-														else if ((jindex==2) && (phase_worka==0x01))	//C & third row
+														else if ((jindex==2) && (phase_worka==PHASE_C))	//C & third row
 															proceed_flag=true;
 														else;
 														break;
-													}//end 0x07
+													}//end PHASE_ABC
 											}//end switch
 										}//End if kindex==0
 
@@ -1762,7 +1762,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 						//See if we're a Norton-equivalent generator
 						if (bus[indexer].full_Y != nullptr)
 						{
-							if ((bus[indexer].phases & 0x07) == 0x07)	//Make sure is three-phase
+							if ((bus[indexer].phases & PHASE_ABC) == PHASE_ABC)	//Make sure is three-phase
 							{
 								//Only update in particular mode - SWING bus values should still be treated as such
 								if (powerflow_values->island_matrix_values[island_loop_index].swing_is_a_swing && (powerflow_type == PF_DYNINIT) && (bus[indexer].type > 1) && bus[indexer].swing_functions_enabled)	//Really only true for PF_DYNINIT anyways
@@ -1802,7 +1802,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								}
 								//Defaulted else - leave as they were
 							}//End three-phase
-							else if ((bus[indexer].phases & 0x80) == 0x80)	//Triplex
+							else if ((bus[indexer].phases & PHASE_S) == PHASE_S)	//Triplex
 							{
 								//Duplicate of the three-phase code, just tweaked for triplex implementaiton
 
@@ -1830,7 +1830,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								if ((bus[indexer].type == 0) || ((bus[indexer].type>1) && !bus[indexer].swing_functions_enabled))
 								{
 									//See what kind of triplex we are
-									if ((bus[indexer].phases & 0x20) == 0x20)	//SPCT "exception"
+									if ((bus[indexer].phases & PHASE_TO_SPCT) == PHASE_TO_SPCT)	//SPCT "exception"
 									{
 										//Add these into the system - added because "generation" - assumption is it is a flow between 1 and 2
 										powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] -= bus[indexer].DynCurrent[0].Re();		//Phase 1
@@ -1851,7 +1851,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								}
 								//Defaulted else - leave as they were
 							}
-							else if ((bus[indexer].phases & 0x07) != 0x00)	//Some type of phasing
+							else if ((bus[indexer].phases & PHASE_ABC) != NO_PHASE)	//Some type of phasing
 							{
 								//SWING update functionality is not in here, just "normal"
 								//Don't get added in as part of "normal swing" routine
@@ -1859,22 +1859,22 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 								{
 									//Figure out "where/what" to add
 									//Case it out by phases
-									switch (bus[indexer].phases & 0x07)	{
-										case 0x01:	//C
+									switch (bus[indexer].phases & PHASE_ABC)	{
+										case PHASE_C:	//C
 											{
 												//Add these into the system - added because "generation"
 												powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[2].Re();		//Phase C
 												powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc] += bus[indexer].DynCurrent[2].Im();		//Phase C
 												break;
-											}//end 0x01
-										case 0x02:	//B
+											}//end PHASE_C
+										case PHASE_B:	//B
 											{
 												//Add these into the system - added because "generation"
 												powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[1].Re();		//Phase B
 												powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc] += bus[indexer].DynCurrent[1].Im();		//Phase B
 												break;
 											}
-										case 0x03:	//BC
+										case PHASE_BC:	//BC
 											{
 												//Add these into the system - added because "generation"
 												powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[1].Re();		//Phase C
@@ -1884,14 +1884,14 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 												powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc + 1] += bus[indexer].DynCurrent[2].Im();	//Phase C
 												break;
 											}
-										case 0x04:	//A
+										case PHASE_A:	//A
 											{
 												//Add these into the system - added because "generation"
 												powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[0].Re();		//Phase A
 												powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc] += bus[indexer].DynCurrent[0].Im();		//Phase A
 												break;
 											}
-										case 0x05:	//AC
+										case PHASE_AC:	//AC
 											{
 												//Add these into the system - added because "generation"
 												powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[0].Re();		//Phase A
@@ -1901,7 +1901,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 												powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc + 1] += bus[indexer].DynCurrent[2].Im();	//Phase C
 												break;
 											}
-										case 0x06:	//AB
+										case PHASE_AB:	//AB
 											{
 												//Add these into the system - added because "generation"
 												powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[0].Re();		//Phase A
@@ -1928,12 +1928,12 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							else	//Not any of the above
 							{
 								//See if we ever were (reliability call)
-								if ((bus[indexer].origphases & 0x80) == 0x80)
+								if ((bus[indexer].origphases & PHASE_S) == PHASE_S)
 								{
 									//Zero the only one that should be being used
 									bus[indexer].DynCurrent[0] = gld::complex(0.0,0.0);
 								}
-								else if ((bus[indexer].origphases & 0x07) != 0x00)	//Non-zero original phases, s just zero all
+								else if ((bus[indexer].origphases & PHASE_ABC) != NO_PHASE)	//Non-zero original phases, s just zero all
 								{
 									//Just zero it
 									bus[indexer].DynCurrent[0] = gld::complex(0.0,0.0);
@@ -1959,7 +1959,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							if ((bus[indexer].type == 0) || ((bus[indexer].type>1) && !bus[indexer].swing_functions_enabled))
 							{
 								//Check for three-phase
-								if ((bus[indexer].phases & 0x07) == 0x07)
+								if ((bus[indexer].phases & PHASE_ABC) == PHASE_ABC)
 								{
 									//Add these into the system - added because "generation"
 									powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[0].Re();		//Phase A
@@ -1970,13 +1970,13 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 									powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc + 1] += bus[indexer].DynCurrent[1].Im();	//Phase B
 									powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc + 2] += bus[indexer].DynCurrent[2].Im();	//Phase C
 								}
-								else if ((bus[indexer].phases & 0x80) == 0x80)
+								else if ((bus[indexer].phases & PHASE_S) == PHASE_S)
 								{
 									//Add these into the system - added because "generation"
 									//Assume is a 1-2 connection (1 flowing into 2)
 
 									//See what kind of triplex we are
-									if ((bus[indexer].phases & 0x20) == 0x20) //SPCT "special"
+									if ((bus[indexer].phases & PHASE_TO_SPCT) == PHASE_TO_SPCT) //SPCT "special"
 									{
 										powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] -= bus[indexer].DynCurrent[0].Re();		//Phase 1
 										powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size + 1] += bus[indexer].DynCurrent[0].Re();	//Phase 2
@@ -1993,7 +1993,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 										powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc + 1] -= bus[indexer].DynCurrent[0].Im();	//Phase 2
 									}
 								}
-								else if ((bus[indexer].phases & 0x07) != 0x00)	//It has something on it
+								else if ((bus[indexer].phases & PHASE_ABC) != NO_PHASE)	//It has something on it
 									{
 									//SWING update functionality is not in here, just "normal"
 									//Don't get added in as part of "normal swing" routine
@@ -2001,22 +2001,22 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 									{
 										//Figure out "where/what" to add
 										//Case it out by phases
-										switch (bus[indexer].phases & 0x07)	{
-											case 0x01:	//C
+										switch (bus[indexer].phases & PHASE_ABC)	{
+											case PHASE_C:	//C
 												{
 													//Add these into the system - added because "generation"
 													powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[2].Re();		//Phase C
 													powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc] += bus[indexer].DynCurrent[2].Im();		//Phase C
 													break;
-												}//end 0x01
-											case 0x02:	//B
+												}//end PHASE_C
+											case PHASE_B:	//B
 												{
 													//Add these into the system - added because "generation"
 													powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[1].Re();		//Phase B
 													powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc] += bus[indexer].DynCurrent[1].Im();		//Phase B
 													break;
 												}
-											case 0x03:	//BC
+											case PHASE_BC:	//BC
 												{
 													//Add these into the system - added because "generation"
 													powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[1].Re();		//Phase C
@@ -2026,14 +2026,14 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 													powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc + 1] += bus[indexer].DynCurrent[2].Im();	//Phase C
 													break;
 												}
-											case 0x04:	//A
+											case PHASE_A:	//A
 												{
 													//Add these into the system - added because "generation"
 													powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[0].Re();		//Phase A
 													powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc] += bus[indexer].DynCurrent[0].Im();		//Phase A
 													break;
 												}
-											case 0x05:	//AC
+											case PHASE_AC:	//AC
 												{
 													//Add these into the system - added because "generation"
 													powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[0].Re();		//Phase A
@@ -2043,7 +2043,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 													powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc + 1] += bus[indexer].DynCurrent[2].Im();	//Phase C
 													break;
 												}
-											case 0x06:	//AB
+											case PHASE_AB:	//AB
 												{
 													//Add these into the system - added because "generation"
 													powerflow_values->island_matrix_values[island_loop_index].current_RHS_NR[2*bus[indexer].Matrix_Loc+powerflow_values->BA_diag[indexer].size] += bus[indexer].DynCurrent[0].Re();		//Phase A
@@ -2816,18 +2816,18 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				}//End "phase loop" - impedance components are ready
 
 				//Extract the values - do with a massive case/switch, just because
-				switch(bus[mesh_imped_vals->NodeRefNum].phases & 0x07) {
-					case 0x01:	//C
+				switch(bus[mesh_imped_vals->NodeRefNum].phases & PHASE_ABC) {
+					case PHASE_C:	//C
 						{
 							mesh_imped_vals->z_matrix[8] = gld::complex(temp_z_store[1][0],temp_z_store[1][1]);
 							break;
 						}
-					case 0x02:	//B
+					case PHASE_B:	//B
 						{
 							mesh_imped_vals->z_matrix[4] = gld::complex(temp_z_store[1][0],temp_z_store[1][1]);
 							break;
 						}
-					case 0x03:	//BC
+					case PHASE_BC:	//BC
 						{
 							//BB and BC portion
 							mesh_imped_vals->z_matrix[4] = gld::complex(temp_z_store[2][0],temp_z_store[2][2]);
@@ -2838,12 +2838,12 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							mesh_imped_vals->z_matrix[8] = gld::complex(temp_z_store[3][1],temp_z_store[3][3]);
 							break;
 						}
-					case 0x04:	//A
+					case PHASE_A:	//A
 						{
 							mesh_imped_vals->z_matrix[0] = gld::complex(temp_z_store[1][0],temp_z_store[1][1]);
 							break;
 						}
-					case 0x05:	//AC
+					case PHASE_AC:	//AC
 						{
 							//AA and AC portion
 							mesh_imped_vals->z_matrix[0] = gld::complex(temp_z_store[2][0],temp_z_store[2][2]);
@@ -2854,7 +2854,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							mesh_imped_vals->z_matrix[8] = gld::complex(temp_z_store[3][1],temp_z_store[3][3]);
 							break;
 						}
-					case 0x06:	//AB
+					case PHASE_AB:	//AB
 						{
 							//AA and AB portion
 							mesh_imped_vals->z_matrix[0] = gld::complex(temp_z_store[2][0],temp_z_store[2][2]);
@@ -2865,7 +2865,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							mesh_imped_vals->z_matrix[4] = gld::complex(temp_z_store[3][1],temp_z_store[3][3]);
 							break;
 						}
-					case 0x07:	//ABC
+					case PHASE_ABC:	//ABC
 						{
 							//A row
 							mesh_imped_vals->z_matrix[0] = gld::complex(temp_z_store[3][0],temp_z_store[3][3]);
@@ -2989,7 +2989,7 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 				if ((bus[indexer].type == 0) || ((bus[indexer].type > 1) && !bus[indexer].swing_functions_enabled))
 				{
 					//Figure out the offset we need to be for each phase
-					if ((bus[indexer].phases & 0x80) == 0x80)	//Split phase
+					if ((bus[indexer].phases & PHASE_S) == PHASE_S)	//Split phase
 					{
 						//TCIM convergence check
 						if (NR_solver_algorithm == NRM_TCIM)
@@ -3035,20 +3035,20 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 					{
 						for (jindex=0; jindex<powerflow_values->BA_diag[indexer].size; jindex++)	//parse through the phases
 						{
-							switch(bus[indexer].phases & 0x07) {
-								case 0x01:	//C
+							switch(bus[indexer].phases & PHASE_ABC) {
+								case PHASE_C:	//C
 									{
 										temp_index=0;
 										temp_index_b=2;
 										break;
 									}
-								case 0x02:	//B
+								case PHASE_B:	//B
 									{
 										temp_index=0;
 										temp_index_b=1;
 										break;
 									}
-								case 0x03:	//BC
+								case PHASE_BC:	//BC
 									{
 										if (jindex==0)	//B
 										{
@@ -3063,13 +3063,13 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 
 										break;
 									}
-								case 0x04:	//A
+								case PHASE_A:	//A
 									{
 										temp_index=0;
 										temp_index_b=0;
 										break;
 									}
-								case 0x05:	//AC
+								case PHASE_AC:	//AC
 									{
 										if (jindex==0)	//A
 										{
@@ -3083,8 +3083,8 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 										}
 										break;
 									}
-								case 0x06:	//AB
-								case 0x07:	//ABC
+								case PHASE_AB:	//AB
+								case PHASE_ABC:	//ABC
 									{
 										temp_index = jindex;
 										temp_index_b = jindex;
@@ -3566,13 +3566,14 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 	gld::complex tempY[3][3];
 	gld::complex Temp_Ad_A[3][3];
 	gld::complex Temp_Ad_B[3][3];
-	unsigned char phase_worka, phase_workb, phase_workc, phase_workd, phase_worke;
+	set phase_worka, phase_workb, phase_workc, phase_workd, phase_worke;
+	char phase_count_a, phase_count_b;
 	char temp_index, temp_index_b;
 	bool Full_Mat_A, Full_Mat_B;
 	char temp_size, temp_size_b, temp_size_c;
 	char mat_temp_index;
 	STATUS call_return_status;
-
+	set phase_check_vals[] = {PHASE_A, PHASE_B, PHASE_C};
 
 	if (NR_admit_change)	//If an admittance update was detected, fix it
 	{
@@ -3614,16 +3615,17 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 			}
 
 			//Determine the size we need
-			if ((bus[indexer].phases & 0x80) == 0x80)	//Split phase
+			if ((bus[indexer].phases & PHASE_S) == PHASE_S)	//Split phase
 				powerflow_values->BA_diag[indexer].size = 2;
 			else										//Other cases, figure out how big they are
 			{
-				phase_worka = 0;
+				phase_count_a = 0;
 				for (jindex=0; jindex<3; jindex++)		//Accumulate number of phases
 				{
-					phase_worka += ((bus[indexer].phases & (0x01 << jindex)) >> jindex);
+					if ((bus[indexer].phases & phase_check_vals[jindex]) == phase_check_vals[jindex])
+						phase_count_a++;
 				}
-				powerflow_values->BA_diag[indexer].size = phase_worka;
+				powerflow_values->BA_diag[indexer].size = phase_count_a;
 			}
 
 			//Ensure the admittance matrix is zeroed
@@ -3640,25 +3642,25 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 			if ((powerflow_type!=PF_NORMAL) && (bus[indexer].full_Y != nullptr))
 			{
 				//Not triplex
-				if ((bus[indexer].phases & 0x80) != 0x80)
+				if ((bus[indexer].phases & PHASE_S) != PHASE_S)
 				{
 					//Figure out what our casing looks like - populate based on this (in case some were children)
-					switch(bus[indexer].phases & 0x07) {
-						case 0x00:	//No phases
+					switch(bus[indexer].phases & PHASE_ABC) {
+						case NO_PHASE:	//No phases
 						{
 							break;	//Just get us out
 						}
-						case 0x01:	//Phase C
+						case PHASE_C:	//Phase C
 						{
 							tempY[0][0] = bus[indexer].full_Y[8];
 							break;
 						}
-						case 0x02:	//Phase B
+						case PHASE_B:	//Phase B
 						{
 							tempY[0][0] = bus[indexer].full_Y[4];
 							break;
 						}
-						case 0x03:	//Phase BC
+						case PHASE_BC:	//Phase BC
 						{
 							tempY[0][0] = bus[indexer].full_Y[4];
 							tempY[0][1] = bus[indexer].full_Y[5];
@@ -3666,12 +3668,12 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 							tempY[1][1] = bus[indexer].full_Y[8];
 							break;
 						}
-						case 0x04:	//Phase A
+						case PHASE_A:	//Phase A
 						{
 							tempY[0][0] = bus[indexer].full_Y[0];
 							break;
 						}
-						case 0x05:	//Phase AC
+						case PHASE_AC:	//Phase AC
 						{
 							tempY[0][0] = bus[indexer].full_Y[0];
 							tempY[0][1] = bus[indexer].full_Y[2];
@@ -3679,7 +3681,7 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 							tempY[1][1] = bus[indexer].full_Y[8];
 							break;
 						}
-						case 0x06:	//Phase AB
+						case PHASE_AB:	//Phase AB
 						{
 							tempY[0][0] = bus[indexer].full_Y[0];
 							tempY[0][1] = bus[indexer].full_Y[1];
@@ -3687,7 +3689,7 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 							tempY[1][1] = bus[indexer].full_Y[4];
 							break;
 						}
-						case 0x07:	//Phase ABC
+						case PHASE_ABC:	//Phase ABC
 						{
 							//Loop and add all in
 							for (jindex=0; jindex<3; jindex++)
@@ -3713,7 +3715,7 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 				else  //Must be Triplex - add the "12" combination for the shunt
 				{
 					//See if we're the stupid "backwards notation" bus or not
-					if ((bus[indexer].phases & 0x20) == 0x20)	//Special case
+					if ((bus[indexer].phases & PHASE_TO_SPCT) == PHASE_TO_SPCT)	//Special case
 					{
 						//Need to be negated, due to crazy conventions
 						tempY[0][0] = -bus[indexer].full_Y[0];
@@ -3739,19 +3741,19 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 
 				if ((branch[jindexer].from == indexer) || (branch[jindexer].to == indexer))	//Bus is the from or to side of things - not sure how it would be in link table otherwise, but meh
 				{
-					if ((bus[indexer].phases & 0x07) == 0x07)		//Full three phase
+					if ((bus[indexer].phases & PHASE_ABC) == PHASE_ABC)		//Full three phase
 					{
 						for (jindex=0; jindex<3; jindex++)	//Add in all three phase values
 						{
 							//See if this phase is valid
-							phase_workb = 0x04 >> jindex;
+							phase_workb = phase_check_vals[jindex];
 
 							if ((phase_workb & branch[jindexer].phases) == phase_workb)
 							{
 								for (kindex=0; kindex<3; kindex++)
 								{
 									//Check phase
-									phase_workd = 0x04 >> kindex;
+									phase_workd = phase_check_vals[kindex];
 
 									if ((phase_workd & branch[jindexer].phases) == phase_workd)
 									{
@@ -3768,12 +3770,12 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 							}//End valid row phase
 						}
 					}
-					else if ((bus[indexer].phases & 0x80) == 0x80)	//Split phase - add in 2x2 element to upper left 2x2
+					else if ((bus[indexer].phases & PHASE_S) == PHASE_S)	//Split phase - add in 2x2 element to upper left 2x2
 					{
 						if (branch[jindexer].from == indexer)	//From branch
 						{
 							//End of SPCT transformer requires slightly different Diagonal components (so when it's the To bus of SPCT and from for other triplex
-							if ((bus[indexer].phases & 0x20) == 0x20)	//Special case
+							if ((bus[indexer].phases & PHASE_TO_SPCT) == PHASE_TO_SPCT)	//Special case
 							{
 								//Other triplexes need to be negated to match sign conventions
 								tempY[0][0] -= branch[jindexer].YSfrom[0];
@@ -3793,7 +3795,7 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 						{
 							//Replicate the above for SPCT test, in case people put lines in backwards
 							//End of SPCT transformer requires slightly different Diagonal components (so when it's the To bus of SPCT and from for other triplex
-							if (((bus[indexer].phases & 0x20) == 0x20) && (branch[jindexer].lnk_type == 1))	//Special case, but make sure we're not the transformer
+							if (((bus[indexer].phases & PHASE_TO_SPCT) == PHASE_TO_SPCT) && (branch[jindexer].lnk_type == 1))	//Special case, but make sure we're not the transformer
 							{
 								tempY[0][0] -= branch[jindexer].YSto[0];
 								tempY[0][1] -= branch[jindexer].YSto[1];
@@ -3811,14 +3813,14 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 					}
 					else	//We must be a single or two-phase line - always populate the upper left portion of matrix (easier for later)
 					{
-						switch(bus[indexer].phases & 0x07) {
-							case 0x00:	//No phases (we've been faulted out
+						switch(bus[indexer].phases & PHASE_ABC) {
+							case NO_PHASE:	//No phases (we've been faulted out
 								{
 									break;	//Just get us outta here
 								}
-							case 0x01:	//Only C
+							case PHASE_C:	//Only C
 								{
-									if ((branch[jindexer].phases & 0x01) == 0x01)	//Phase C valid on branch
+									if ((branch[jindexer].phases & PHASE_C) == PHASE_C)	//Phase C valid on branch
 									{
 										if (branch[jindexer].from == indexer)	//From branch
 										{
@@ -3831,9 +3833,9 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 									}//End valid phase C
 									break;
 								}
-							case 0x02:	//Only B
+							case PHASE_B:	//Only B
 								{
-									if ((branch[jindexer].phases & 0x02) == 0x02)	//Phase B valid on branch
+									if ((branch[jindexer].phases & PHASE_B) == PHASE_B)	//Phase B valid on branch
 									{
 										if (branch[jindexer].from == indexer)	//From branch
 										{
@@ -3846,11 +3848,11 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 									}//End valid phase B
 									break;
 								}
-							case 0x03:	//B & C
+							case PHASE_BC:	//B & C
 								{
-									phase_worka = (branch[jindexer].phases & 0x03);	//Extract branch phases
+									phase_worka = (branch[jindexer].phases & PHASE_BC);	//Extract branch phases
 
-									if (phase_worka == 0x03)	//Full B & C
+									if (phase_worka == PHASE_BC)	//Full B & C
 									{
 										if (branch[jindexer].from == indexer)	//From branch
 										{
@@ -3867,7 +3869,7 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 											tempY[1][1] += branch[jindexer].YSto[8];
 										}
 									}//End valid B & C
-									else if (phase_worka == 0x01)	//Only C branch
+									else if (phase_worka == PHASE_C)	//Only C branch
 									{
 										if (branch[jindexer].from == indexer)	//From branch
 										{
@@ -3878,7 +3880,7 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 											tempY[1][1] += branch[jindexer].YSto[8];
 										}
 									}//end valid C
-									else if (phase_worka == 0x02)	//Only B branch
+									else if (phase_worka == PHASE_B)	//Only B branch
 									{
 										if (branch[jindexer].from == indexer)	//From branch
 										{
@@ -3893,9 +3895,9 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 										;
 									break;
 								}
-							case 0x04:	//Only A
+							case PHASE_A:	//Only A
 								{
-									if ((branch[jindexer].phases & 0x04) == 0x04)	//Phase A is valid
+									if ((branch[jindexer].phases & PHASE_A) == PHASE_A)	//Phase A is valid
 									{
 										if (branch[jindexer].from == indexer)	//From branch
 										{
@@ -3908,11 +3910,11 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 									}//end valid phase A
 									break;
 								}
-							case 0x05:	//A & C
+							case PHASE_AC:	//A & C
 								{
-									phase_worka = branch[jindexer].phases & 0x05;	//Extract phases
+									phase_worka = branch[jindexer].phases & PHASE_AC;	//Extract phases
 
-									if (phase_worka == 0x05)	//Both A & C valid
+									if (phase_worka == PHASE_AC)	//Both A & C valid
 									{
 										if (branch[jindexer].from == indexer)	//From branch
 										{
@@ -3929,7 +3931,7 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 											tempY[1][1] += branch[jindexer].YSto[8];
 										}
 									}//End A & C valid
-									else if (phase_worka == 0x04)	//Only A valid
+									else if (phase_worka == PHASE_A)	//Only A valid
 									{
 										if (branch[jindexer].from == indexer)	//From branch
 										{
@@ -3940,7 +3942,7 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 											tempY[0][0] += branch[jindexer].YSto[0];
 										}
 									}//end only A valid
-									else if (phase_worka == 0x01)	//Only C valid
+									else if (phase_worka == PHASE_C)	//Only C valid
 									{
 										if (branch[jindexer].from == indexer)	//From branch
 										{
@@ -3955,11 +3957,11 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 										;
 									break;
 								}
-							case 0x06:	//A & B
+							case PHASE_AB:	//A & B
 								{
-									phase_worka = branch[jindexer].phases & 0x06;	//Extract phases
+									phase_worka = branch[jindexer].phases & PHASE_AB;	//Extract phases
 
-									if (phase_worka == 0x06)	//Valid A & B phase
+									if (phase_worka == PHASE_AB)	//Valid A & B phase
 									{
 										if (branch[jindexer].from == indexer)	//From branch
 										{
@@ -3976,7 +3978,7 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 											tempY[1][1] += branch[jindexer].YSto[4];
 										}
 									}//End valid A & B
-									else if (phase_worka == 0x04)	//Only valid A
+									else if (phase_worka == PHASE_A)	//Only valid A
 									{
 										if (branch[jindexer].from == indexer)	//From branch
 										{
@@ -3987,7 +3989,7 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 											tempY[0][0] += branch[jindexer].YSto[0];
 										}
 									}//end valid A
-									else if (phase_worka == 0x02)	//Only valid B
+									else if (phase_worka == PHASE_B)	//Only valid B
 									{
 										if (branch[jindexer].from == indexer)	//From branch
 										{
@@ -4148,7 +4150,7 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 				*/
 			}
 
-			if (((branch[jindexer].phases & 0x80) == 0x80) && (branch[jindexer].v_ratio==1.0))	//Triplex, but not SPCT
+			if (((branch[jindexer].phases & PHASE_S) == PHASE_S) && (branch[jindexer].v_ratio==1.0))	//Triplex, but not SPCT
 			{
 				for (jindex=0; jindex<2; jindex++)			//rows
 				{
@@ -4171,19 +4173,19 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 			else											//Three phase or some variety
 			{
 				//Make sure we aren't SPCT, otherwise things get jacked
-				if ((branch[jindexer].phases & 0x80) != 0x80)	//SPCT, but v_ratio not = 1
+				if ((branch[jindexer].phases & PHASE_S) != PHASE_S)	//SPCT, but v_ratio not = 1
 				{
 					for (jindex=0; jindex<3; jindex++)			//rows
 					{
 						//See if this phase is valid
-						phase_workb = 0x04 >> jindex;
+						phase_workb = phase_check_vals[jindex];
 
 						if ((phase_workb & branch[jindexer].phases) == phase_workb)	//Row check
 						{
 							for (kindex=0; kindex<3; kindex++)		//columns
 							{
 								//Check this phase as well
-								phase_workd = 0x04 >> kindex;
+								phase_workd = phase_check_vals[kindex];
 
 								if ((phase_workd & branch[jindexer].phases) == phase_workd)	//Column validity check
 								{
@@ -4208,7 +4210,7 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 					for (jindex=0; jindex<3; jindex++)			//rows
 					{
 						//See if this phase is valid
-						phase_workb = 0x04 >> jindex;
+						phase_workb = phase_check_vals[jindex];
 
 						if ((phase_workb & branch[jindexer].phases) == phase_workb)	//Row check
 						{
@@ -4301,27 +4303,30 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 				continue;
 			}
 
-			phase_worka = 0;
-			phase_workb = 0;
+			phase_count_a = 0;
+			phase_count_b = 0;
 			for (jindex=0; jindex<3; jindex++)		//Accumulate number of phases
 			{
-				phase_worka += ((bus[tempa].phases & (0x01 << jindex)) >> jindex);
-				phase_workb += ((bus[tempb].phases & (0x01 << jindex)) >> jindex);
+				if ((bus[tempa].phases & phase_check_vals[jindex]) == phase_check_vals[jindex])
+					phase_count_a++;
+				
+				if ((bus[tempb].phases & phase_check_vals[jindex]) == phase_check_vals[jindex])
+					phase_count_b++;
 			}
 
-			if ((phase_worka==3) && (phase_workb==3))	//Both ends are full three phase, normal operations
+			if ((phase_count_a==3) && (phase_count_b==3))	//Both ends are full three phase, normal operations
 			{
 				for (jindex=0; jindex<3; jindex++)		//Loop through rows of admittance matrices
 				{
 					//See if this row is valid for this branch
-					phase_workd = 0x04 >> jindex;
+					phase_workd = phase_check_vals[jindex];
 
 					if ((branch[jindexer].phases & phase_workd) == phase_workd)	//Validity check
 					{
 						for (kindex=0; kindex<3; kindex++)	//Loop through columns of admittance matrices
 						{
 							//Extract column information
-							phase_worke = 0x04 >> kindex;
+							phase_worke = phase_check_vals[kindex];
 
 							if ((branch[jindexer].phases & phase_worke) == phase_worke)	//Valid column too!
 							{
@@ -4383,16 +4388,16 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 					}//End valid row
 				}//row end
 			}//if all 3 end
-			else if (((bus[tempa].phases & 0x80) == 0x80) || ((bus[tempb].phases & 0x80) == 0x80))	//Someone's a triplex
+			else if (((bus[tempa].phases & PHASE_S) == PHASE_S) || ((bus[tempb].phases & PHASE_S) == PHASE_S))	//Someone's a triplex
 			{
-				if (((bus[tempa].phases & 0x80) == 0x80) && ((bus[tempb].phases & 0x80) == 0x80))	//Both are triplex, easy case
+				if (((bus[tempa].phases & PHASE_S) == PHASE_S) && ((bus[tempb].phases & PHASE_S) == PHASE_S))	//Both are triplex, easy case
 				{
 					for (jindex=0; jindex<2; jindex++)		//Loop through rows of admittance matrices (only 2x2)
 					{
 						for (kindex=0; kindex<2; kindex++)	//Loop through columns of admittance matrices (only 2x2)
 						{
 							//Make sure one end of us isn't a SPCT transformer To node (they are different)
-							if (((bus[tempa].phases & 0x20) & (bus[tempb].phases & 0x20)) == 0x20)	//Both ends are SPCT tos
+							if (((bus[tempa].phases & PHASE_TO_SPCT) & (bus[tempb].phases & PHASE_TO_SPCT)) == PHASE_TO_SPCT)	//Both ends are SPCT tos
 							{
 								GL_THROW("NR: SPCT to SPCT via triplex connections are unsupported at this time.");
 								/*  TROUBLESHOOT
@@ -4401,7 +4406,7 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 								in the future.
 								*/
 							}//end both ends SPCT to
-							else if ((bus[tempa].phases & 0x20) == 0x20)	//From end is a SPCT to
+							else if ((bus[tempa].phases & PHASE_TO_SPCT) == PHASE_TO_SPCT)	//From end is a SPCT to
 							{
 								//Indices counted out from Self admittance above.  needs doubling due to complex separation
 
@@ -4457,7 +4462,7 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 									powerflow_values->island_matrix_values[island_index_val].indexer += 1;
 								}
 							}//end From end SPCT to
-							else if ((bus[tempb].phases & 0x20) == 0x20)	//To end is a SPCT to
+							else if ((bus[tempb].phases & PHASE_TO_SPCT) == PHASE_TO_SPCT)	//To end is a SPCT to
 							{
 								//Indices counted out from Self admittance above.  needs doubling due to complex separation
 
@@ -4632,7 +4637,7 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 						}//column end
 					}//row end
 				}//end both triplexy
-				else if ((bus[tempa].phases & 0x80) == 0x80)	//From is the triplex - this implies transformer with or something, we don't support this
+				else if ((bus[tempa].phases & PHASE_S) == PHASE_S)	//From is the triplex - this implies transformer with or something, we don't support this
 				{
 					GL_THROW("NR does not support triplex to 3-phase connections.");
 					/*  TROUBLESHOOT
@@ -4645,25 +4650,25 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 				else	//Only option left is the to must be the triplex - implies SPCT xformer - so only one phase on the three-phase side (we just need to figure out where)
 				{
 					//Extract the line phase
-					phase_workc = (branch[jindexer].phases & 0x07);
+					phase_workc = (branch[jindexer].phases & PHASE_ABC);
 
 					//Reset temp_index and size, just in case
 					temp_index = -1;
 					temp_size = -1;
 
 					//Figure out what the offset on the from side is (how many phases and which one we are)
-					switch(bus[tempa].phases & 0x07)
+					switch(bus[tempa].phases & PHASE_ABC)
 					{
-						case 0x01:	//C
+						case PHASE_C:	//C
 							{
 								temp_size = 1;	//Single phase matrix
 
-								if (phase_workc==0x01)	//Line is phase C
+								if (phase_workc==PHASE_C)	//Line is phase C
 								{
 									//Only C in the node, so no offset
 									temp_index = 0;
 								}
-								else if (phase_workc==0x02)	//Line is phase B
+								else if (phase_workc==PHASE_B)	//Line is phase B
 								{
 									GL_THROW("NR: A center-tapped transformer has an invalid phase matching");
 									/*  TROUBLESHOOT
@@ -4677,13 +4682,13 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 
 								break;
 							}
-						case 0x02:	//B
+						case PHASE_B:	//B
 							{
 								temp_size = 1;	//Single phase matrix
 
-								if (phase_workc==0x01)	//Line is phase C
+								if (phase_workc==PHASE_C)	//Line is phase C
 									GL_THROW("NR: A center-tapped transformer has an invalid phase matching");
-								else if (phase_workc==0x02)	//Line is phase B
+								else if (phase_workc==PHASE_B)	//Line is phase B
 								{
 									//Only B in the node, so no offset
 									temp_index = 0;
@@ -4693,16 +4698,16 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 
 								break;
 							}
-						case 0x03:	//BC
+						case PHASE_BC:	//BC
 							{
 								temp_size = 2;	//Two phase matrix
 
-								if (phase_workc==0x01)	//Line is phase C
+								if (phase_workc==PHASE_C)	//Line is phase C
 								{
 									//BC in the node, so offset by 1
 									temp_index = 1;
 								}
-								else if (phase_workc==0x02)	//Line is phase B
+								else if (phase_workc==PHASE_B)	//Line is phase B
 								{
 									//BC in the node, so offset by 0
 									temp_index = 0;
@@ -4712,13 +4717,13 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 
 								break;
 							}
-						case 0x04:	//A
+						case PHASE_A:	//A
 							{
 								temp_size = 1;	//Single phase matrix
 
-								if (phase_workc==0x01)	//Line is phase C
+								if (phase_workc==PHASE_C)	//Line is phase C
 									GL_THROW("NR: A center-tapped transformer has an invalid phase matching");
-								else if (phase_workc==0x02)	//Line is phase B
+								else if (phase_workc==PHASE_B)	//Line is phase B
 									GL_THROW("NR: A center-tapped transformer has an invalid phase matching");
 								else					//Has to be phase A
 								{
@@ -4728,16 +4733,16 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 
 								break;
 							}
-						case 0x05:	//AC
+						case PHASE_AC:	//AC
 							{
 								temp_size = 2;	//Two phase matrix
 
-								if (phase_workc==0x01)	//Line is phase C
+								if (phase_workc==PHASE_C)	//Line is phase C
 								{
 									//AC in the node, so offset by 1
 									temp_index = 1;
 								}
-								else if (phase_workc==0x02)	//Line is phase B
+								else if (phase_workc==PHASE_B)	//Line is phase B
 									GL_THROW("NR: A center-tapped transformer has an invalid phase matching");
 								else					//Has to be phase A
 								{
@@ -4747,13 +4752,13 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 
 								break;
 							}
-						case 0x06:	//AB
+						case PHASE_AB:	//AB
 							{
 								temp_size = 2;	//Two phase matrix
 
-								if (phase_workc==0x01)	//Line is phase C
+								if (phase_workc==PHASE_C)	//Line is phase C
 									GL_THROW("NR: A center-tapped transformer has an invalid phase matching");
-								else if (phase_workc==0x02)	//Line is phase B
+								else if (phase_workc==PHASE_B)	//Line is phase B
 								{
 									//BC in the node, so offset by 1
 									temp_index = 1;
@@ -4766,16 +4771,16 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 
 								break;
 							}
-						case 0x07:	//ABC
+						case PHASE_ABC:	//ABC
 							{
 								temp_size = 3;	//Three phase matrix
 
-								if (phase_workc==0x01)	//Line is phase C
+								if (phase_workc==PHASE_C)	//Line is phase C
 								{
 									//ABC in the node, so offset by 2
 									temp_index = 2;
 								}
-								else if (phase_workc==0x02)	//Line is phase B
+								else if (phase_workc==PHASE_B)	//Line is phase B
 								{
 									//ABC in the node, so offset by 1
 									temp_index = 1;
@@ -4796,11 +4801,11 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 						GL_THROW("NR: A center-tapped transformer has an invalid phase matching");
 
 					//Determine first index
-					if (phase_workc==0x01)	//Line is phase C
+					if (phase_workc==PHASE_C)	//Line is phase C
 					{
 						jindex=2;
 					}//end line C if
-					else if (phase_workc==0x02)	//Line is phase B
+					else if (phase_workc==PHASE_B)	//Line is phase B
 					{
 						jindex=1;
 					}//end line B if
@@ -4877,27 +4882,27 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 				Full_Mat_A = Full_Mat_B = false;
 
 				//Intermediate store the admittance matrices so they can be directly indexed later
-				switch(branch[jindexer].phases & 0x07) {
-					case 0x00:	//No phases (open switch or reliability excluded item)
+				switch(branch[jindexer].phases & PHASE_ABC) {
+					case NO_PHASE:	//No phases (open switch or reliability excluded item)
 						{
 							temp_size_c = -99;	//Arbitrary flag
 							break;
 						}
-					case 0x01:	//C only
+					case PHASE_C:	//C only
 						{
 							Temp_Ad_A[0][0] = branch[jindexer].Yfrom[8];
 							Temp_Ad_B[0][0] = branch[jindexer].Yto[8];
 							temp_size_c = 1;
 							break;
 						}
-					case 0x02:	//B only
+					case PHASE_B:	//B only
 						{
 							Temp_Ad_A[0][0] = branch[jindexer].Yfrom[4];
 							Temp_Ad_B[0][0] = branch[jindexer].Yto[4];
 							temp_size_c = 1;
 							break;
 						}
-					case 0x03:	//BC only
+					case PHASE_BC:	//BC only
 						{
 							Temp_Ad_A[0][0] = branch[jindexer].Yfrom[4];
 							Temp_Ad_A[0][1] = branch[jindexer].Yfrom[5];
@@ -4912,14 +4917,14 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 							temp_size_c = 2;
 							break;
 						}
-					case 0x04:	//A only
+					case PHASE_A:	//A only
 						{
 							Temp_Ad_A[0][0] = branch[jindexer].Yfrom[0];
 							Temp_Ad_B[0][0] = branch[jindexer].Yto[0];
 							temp_size_c = 1;
 							break;
 						}
-					case 0x05:	//AC only
+					case PHASE_AC:	//AC only
 						{
 							Temp_Ad_A[0][0] = branch[jindexer].Yfrom[0];
 							Temp_Ad_A[0][1] = branch[jindexer].Yfrom[2];
@@ -4934,7 +4939,7 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 							temp_size_c = 2;
 							break;
 						}
-					case 0x06:	//AB only
+					case PHASE_AB:	//AB only
 						{
 							Temp_Ad_A[0][0] = branch[jindexer].Yfrom[0];
 							Temp_Ad_A[0][1] = branch[jindexer].Yfrom[1];
@@ -4972,10 +4977,10 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 				}
 
 				//Check the from side and get all appropriate offsets
-				switch(bus[tempa].phases & 0x07) {
-					case 0x01:	//C
+				switch(bus[tempa].phases & PHASE_ABC) {
+					case PHASE_C:	//C
 						{
-							if ((branch[jindexer].phases & 0x07) == 0x01)	//C
+							if ((branch[jindexer].phases & PHASE_ABC) == PHASE_C)	//C
 							{
 								temp_size = 1;		//Single size
 								temp_index = 0;		//No offset (only 1 big)
@@ -4990,10 +4995,10 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 								*/
 							}
 							break;
-						}//end 0x01
-					case 0x02:	//B
+						}//end PHASE_C
+					case PHASE_B:	//B
 						{
-							if ((branch[jindexer].phases & 0x07) == 0x02)	//B
+							if ((branch[jindexer].phases & PHASE_ABC) == PHASE_B)	//B
 							{
 								temp_size = 1;		//Single size
 								temp_index = 0;		//No offset (only 1 big)
@@ -5003,19 +5008,19 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 								GL_THROW("NR: One of the lines has invalid phase parameters");
 							}
 							break;
-						}//end 0x02
-					case 0x03:	//BC
+						}//end PHASE_B
+					case PHASE_BC:	//BC
 						{
 							temp_size = 2;	//Size of this matrix's admittance
-							if ((branch[jindexer].phases & 0x07) == 0x01)	//C
+							if ((branch[jindexer].phases & PHASE_ABC) == PHASE_C)	//C
 							{
 								temp_index = 1;		//offset
 							}
-							else if ((branch[jindexer].phases & 0x07) == 0x02)	//B
+							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_B)	//B
 							{
 								temp_index = 0;		//offset
 							}
-							else if ((branch[jindexer].phases & 0x07) == 0x03)	//BC
+							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_BC)	//BC
 							{
 								temp_index = 0;
 							}
@@ -5024,10 +5029,10 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 								GL_THROW("NR: One of the lines has invalid phase parameters");
 							}
 							break;
-						}//end 0x03
-					case 0x04:	//A
+						}//end PHASE_BC
+					case PHASE_A:	//A
 						{
-							if ((branch[jindexer].phases & 0x07) == 0x04)	//A
+							if ((branch[jindexer].phases & PHASE_ABC) == PHASE_A)	//A
 							{
 								temp_size = 1;		//Single size
 								temp_index = 0;		//No offset (only 1 big)
@@ -5037,19 +5042,19 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 								GL_THROW("NR: One of the lines has invalid phase parameters");
 							}
 							break;
-						}//end 0x04
-					case 0x05:	//AC
+						}//end PHASE_A
+					case PHASE_AC:	//AC
 						{
 							temp_size = 2;	//Size of this matrix's admittance
-							if ((branch[jindexer].phases & 0x07) == 0x01)	//C
+							if ((branch[jindexer].phases & PHASE_ABC) == PHASE_C)	//C
 							{
 								temp_index = 1;		//offset
 							}
-							else if ((branch[jindexer].phases & 0x07) == 0x04)	//A
+							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_A)	//A
 							{
 								temp_index = 0;		//offset
 							}
-							else if ((branch[jindexer].phases & 0x07) == 0x05)	//AC
+							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_AC)	//AC
 							{
 								temp_index = 0;
 							}
@@ -5058,19 +5063,19 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 								GL_THROW("NR: One of the lines has invalid phase parameters");
 							}
 							break;
-						}//end 0x05
-					case 0x06:	//AB
+						}//end PHASE_AC
+					case PHASE_AB:	//AB
 						{
 							temp_size = 2;	//Size of this matrix's admittance
-							if ((branch[jindexer].phases & 0x07) == 0x02)	//B
+							if ((branch[jindexer].phases & PHASE_ABC) == PHASE_B)	//B
 							{
 								temp_index = 1;		//offset
 							}
-							else if ((branch[jindexer].phases & 0x07) == 0x04)	//A
+							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_A)	//A
 							{
 								temp_index = 0;		//offset
 							}
-							else if ((branch[jindexer].phases & 0x07) == 0x06)	//AB
+							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_AB)	//AB
 							{
 								temp_index = 0;
 							}
@@ -5079,32 +5084,32 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 								GL_THROW("NR: One of the lines has invalid phase parameters");
 							}
 							break;
-						}//end 0x06
-					case 0x07:	//ABC
+						}//end PHASE_AB
+					case PHASE_ABC:	//ABC
 						{
 							temp_size = 3;	//Size of this matrix's admittance
-							if ((branch[jindexer].phases & 0x07) == 0x01)	//C
+							if ((branch[jindexer].phases & PHASE_ABC) == PHASE_C)	//C
 							{
 								temp_index = 2;		//offset
 							}
-							else if ((branch[jindexer].phases & 0x07) == 0x02)	//B
+							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_B)	//B
 							{
 								temp_index = 1;		//offset
 							}
-							else if ((branch[jindexer].phases & 0x07) == 0x03)	//BC
+							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_BC)	//BC
 							{
 								temp_index = 1;
 							}
-							else if ((branch[jindexer].phases & 0x07) == 0x04)	//A
+							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_A)	//A
 							{
 								temp_index = 0;		//offset
 							}
-							else if ((branch[jindexer].phases & 0x07) == 0x05)	//AC
+							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_AC)	//AC
 							{
 								temp_index = 0;
 								Full_Mat_A = true;		//Flag so we know C needs to be gapped
 							}
-							else if ((branch[jindexer].phases & 0x07) == 0x06)	//AB
+							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_AB)	//AB
 							{
 								temp_index = 0;
 							}
@@ -5113,7 +5118,7 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 								GL_THROW("NR: One of the lines has invalid phase parameters");
 							}
 							break;
-						}//end 0x07
+						}//end PHASE_ABC
 					default:
 						{
 							break;
@@ -5121,10 +5126,10 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 				}//End switch/case for from
 
 				//Check the to side and get all appropriate offsets
-				switch(bus[tempb].phases & 0x07) {
-					case 0x01:	//C
+				switch(bus[tempb].phases & PHASE_ABC) {
+					case PHASE_C:	//C
 						{
-							if ((branch[jindexer].phases & 0x07) == 0x01)	//C
+							if ((branch[jindexer].phases & PHASE_ABC) == PHASE_C)	//C
 							{
 								temp_size_b = 1;		//Single size
 								temp_index_b = 0;		//No offset (only 1 big)
@@ -5139,10 +5144,10 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 								*/
 							}
 							break;
-						}//end 0x01
-					case 0x02:	//B
+						}//end PHASE_C
+					case PHASE_B:	//B
 						{
-							if ((branch[jindexer].phases & 0x07) == 0x02)	//B
+							if ((branch[jindexer].phases & PHASE_ABC) == PHASE_B)	//B
 							{
 								temp_size_b = 1;		//Single size
 								temp_index_b = 0;		//No offset (only 1 big)
@@ -5152,19 +5157,19 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 								GL_THROW("NR: One of the lines has invalid phase parameters");
 							}
 							break;
-						}//end 0x02
-					case 0x03:	//BC
+						}//end PHASE_B
+					case PHASE_BC:	//BC
 						{
 							temp_size_b = 2;	//Size of this matrix's admittance
-							if ((branch[jindexer].phases & 0x07) == 0x01)	//C
+							if ((branch[jindexer].phases & PHASE_ABC) == PHASE_C)	//C
 							{
 								temp_index_b = 1;		//offset
 							}
-							else if ((branch[jindexer].phases & 0x07) == 0x02)	//B
+							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_B)	//B
 							{
 								temp_index_b = 0;		//offset
 							}
-							else if ((branch[jindexer].phases & 0x07) == 0x03)	//BC
+							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_BC)	//BC
 							{
 								temp_index_b = 0;
 							}
@@ -5173,10 +5178,10 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 								GL_THROW("NR: One of the lines has invalid phase parameters");
 							}
 							break;
-						}//end 0x03
-					case 0x04:	//A
+						}//end PHASE_BC
+					case PHASE_A:	//A
 						{
-							if ((branch[jindexer].phases & 0x07) == 0x04)	//A
+							if ((branch[jindexer].phases & PHASE_ABC) == PHASE_A)	//A
 							{
 								temp_size_b = 1;		//Single size
 								temp_index_b = 0;		//No offset (only 1 big)
@@ -5186,19 +5191,19 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 								GL_THROW("NR: One of the lines has invalid phase parameters");
 							}
 							break;
-						}//end 0x04
-					case 0x05:	//AC
+						}//end PHASE_A
+					case PHASE_AC:	//AC
 						{
 							temp_size_b = 2;	//Size of this matrix's admittance
-							if ((branch[jindexer].phases & 0x07) == 0x01)	//C
+							if ((branch[jindexer].phases & PHASE_ABC) == PHASE_C)	//C
 							{
 								temp_index_b = 1;		//offset
 							}
-							else if ((branch[jindexer].phases & 0x07) == 0x04)	//A
+							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_A)	//A
 							{
 								temp_index_b = 0;		//offset
 							}
-							else if ((branch[jindexer].phases & 0x07) == 0x05)	//AC
+							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_AC)	//AC
 							{
 								temp_index_b = 0;
 							}
@@ -5207,19 +5212,19 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 								GL_THROW("NR: One of the lines has invalid phase parameters");
 							}
 							break;
-						}//end 0x05
-					case 0x06:	//AB
+						}//end PHASE_AC
+					case PHASE_AB:	//AB
 						{
 							temp_size_b = 2;	//Size of this matrix's admittance
-							if ((branch[jindexer].phases & 0x07) == 0x02)	//B
+							if ((branch[jindexer].phases & PHASE_ABC) == PHASE_B)	//B
 							{
 								temp_index_b = 1;		//offset
 							}
-							else if ((branch[jindexer].phases & 0x07) == 0x04)	//A
+							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_A)	//A
 							{
 								temp_index_b = 0;		//offset
 							}
-							else if ((branch[jindexer].phases & 0x07) == 0x06)	//AB
+							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_AB)	//AB
 							{
 								temp_index_b = 0;
 							}
@@ -5228,32 +5233,32 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 								GL_THROW("NR: One of the lines has invalid phase parameters");
 							}
 							break;
-						}//end 0x06
-					case 0x07:	//ABC
+						}//end PHASE_AB
+					case PHASE_ABC:	//ABC
 						{
 							temp_size_b = 3;	//Size of this matrix's admittance
-							if ((branch[jindexer].phases & 0x07) == 0x01)	//C
+							if ((branch[jindexer].phases & PHASE_ABC) == PHASE_C)	//C
 							{
 								temp_index_b = 2;		//offset
 							}
-							else if ((branch[jindexer].phases & 0x07) == 0x02)	//B
+							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_B)	//B
 							{
 								temp_index_b = 1;		//offset
 							}
-							else if ((branch[jindexer].phases & 0x07) == 0x03)	//BC
+							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_BC)	//BC
 							{
 								temp_index_b = 1;
 							}
-							else if ((branch[jindexer].phases & 0x07) == 0x04)	//A
+							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_A)	//A
 							{
 								temp_index_b = 0;		//offset
 							}
-							else if ((branch[jindexer].phases & 0x07) == 0x05)	//AC
+							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_AC)	//AC
 							{
 								temp_index_b = 0;
 								Full_Mat_B = true;		//Flag so we know C needs to be gapped
 							}
-							else if ((branch[jindexer].phases & 0x07) == 0x06)	//AB
+							else if ((branch[jindexer].phases & PHASE_ABC) == PHASE_AB)	//AB
 							{
 								temp_index_b = 0;
 							}
@@ -5262,7 +5267,7 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 								GL_THROW("NR: One of the lines has invalid phase parameters");
 							}
 							break;
-						}//end 0x07
+						}//end PHASE_ABC
 					default:
 						{
 							break;
@@ -5512,25 +5517,25 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 					if (bus[jindexer].full_Y_load != nullptr)
 					{
 						//Not triplex
-						if ((bus[jindexer].phases & 0x80) != 0x80)
+						if ((bus[jindexer].phases & PHASE_S) != PHASE_S)
 						{
 							//Figure out what our casing looks like - populate based on this (in case some were children)
-							switch(bus[jindexer].phases & 0x07) {
-								case 0x00:	//No phases
+							switch(bus[jindexer].phases & PHASE_ABC) {
+								case NO_PHASE:	//No phases
 								{
 									break;	//Just get us out
 								}
-								case 0x01:	//Phase C
+								case PHASE_C:	//Phase C
 								{
 									powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[8];
 									break;
 								}
-								case 0x02:	//Phase B
+								case PHASE_B:	//Phase B
 								{
 									powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[4];
 									break;
 								}
-								case 0x03:	//Phase BC
+								case PHASE_BC:	//Phase BC
 								{
 									powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[4];
 									powerflow_values->BA_diag[jindexer].Yload[0][1] = bus[jindexer].full_Y_load[5];
@@ -5538,12 +5543,12 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 									powerflow_values->BA_diag[jindexer].Yload[1][1] = bus[jindexer].full_Y_load[8];
 									break;
 								}
-								case 0x04:	//Phase A
+								case PHASE_A:	//Phase A
 								{
 									powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[0];
 									break;
 								}
-								case 0x05:	//Phase AC
+								case PHASE_AC:	//Phase AC
 								{
 									powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[0];
 									powerflow_values->BA_diag[jindexer].Yload[0][1] = bus[jindexer].full_Y_load[2];
@@ -5551,7 +5556,7 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 									powerflow_values->BA_diag[jindexer].Yload[1][1] = bus[jindexer].full_Y_load[8];
 									break;
 								}
-								case 0x06:	//Phase AB
+								case PHASE_AB:	//Phase AB
 								{
 									powerflow_values->BA_diag[jindexer].Yload[0][0] = bus[jindexer].full_Y_load[0];
 									powerflow_values->BA_diag[jindexer].Yload[0][1] = bus[jindexer].full_Y_load[1];
@@ -5559,7 +5564,7 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 									powerflow_values->BA_diag[jindexer].Yload[1][1] = bus[jindexer].full_Y_load[4];
 									break;
 								}
-								case 0x07:	//Phase ABC
+								case PHASE_ABC:	//Phase ABC
 								{
 									//Loop and add all in
 									for (jindex=0; jindex<3; jindex++)
@@ -5585,7 +5590,7 @@ void NR_admittance_update(unsigned int bus_count, BUSDATA *bus, unsigned int bra
 						else  //Must be Triplex - add the "12" combination for the shunt
 						{
 							//See if we're the stupid "backwards notation" bus or not
-							if ((bus[jindexer].phases & 0x20) == 0x20)	//Special case
+							if ((bus[jindexer].phases & PHASE_TO_SPCT) == PHASE_TO_SPCT)	//Special case
 							{
 								//Need to be negated, due to crazy conventions
 								powerflow_values->BA_diag[jindexer].Yload[0][0] = -bus[jindexer].full_Y_load[0];
@@ -5815,7 +5820,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 				//Default else - it worked
 			}
 
-			if ((bus[indexer].phases & 0x08) == 0x08)	//Delta connected node
+			if ((bus[indexer].phases & PHASE_D) == PHASE_D)	//Delta connected node
 			{
 				//Populate the values for constant current -- adjusted to maintain PF (used to be deltamode-only)
 				//Create nominal magnitudes
@@ -5870,7 +5875,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 				}
 
 				//See if we have any "different children"
-				if ((bus[indexer].phases & 0x10) == 0x10)
+				if ((bus[indexer].phases & PHASE_DIFF_CHILD) == PHASE_DIFF_CHILD)
 				{
 					//Create nominal magnitudes
 					adjust_nominal_voltage_val = bus[indexer].volt_base;
@@ -5927,7 +5932,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 				}
 
 				//Delta components - populate according to what is there
-				if ((bus[indexer].phases & 0x06) == 0x06)	//Check for AB
+				if ((bus[indexer].phases & PHASE_AB) == PHASE_AB)	//Check for AB
 				{
 					//Voltage calculations
 					voltageDel[0] = bus[indexer].V[0] - bus[indexer].V[1];
@@ -5948,7 +5953,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					delta_current[0] = gld::complex(0.0,0.0);
 				}
 
-				if ((bus[indexer].phases & 0x03) == 0x03)	//Check for BC
+				if ((bus[indexer].phases & PHASE_BC) == PHASE_BC)	//Check for BC
 				{
 					//Voltage calculations
 					voltageDel[1] = bus[indexer].V[1] - bus[indexer].V[2];
@@ -5969,7 +5974,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					delta_current[1] = gld::complex(0.0,0.0);
 				}
 
-				if ((bus[indexer].phases & 0x05) == 0x05)	//Check for CA
+				if ((bus[indexer].phases & PHASE_AC) == PHASE_AC)	//Check for CA
 				{
 					//Voltage calculations
 					voltageDel[2] = bus[indexer].V[2] - bus[indexer].V[0];
@@ -5992,12 +5997,12 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 
 				//Convert delta-current into a phase current, where appropriate - reuse temp variable
 				//Everything will be accumulated into the "current" field for ease (including differents)
-				if ((bus[indexer].phases & 0x04) == 0x04)	//Has a phase A
+				if ((bus[indexer].phases & PHASE_A) == PHASE_A)	//Has a phase A
 				{
 					undeltacurr[0]=(adjusted_constant_current[0]+delta_current[0])-(adjusted_constant_current[2]+delta_current[2]);
 
 					//Check for "different" children and apply them, as well
-					if ((bus[indexer].phases & 0x10) == 0x10)	//We do, so they must be Wye-connected
+					if ((bus[indexer].phases & PHASE_DIFF_CHILD) == PHASE_DIFF_CHILD)	//We do, so they must be Wye-connected
 					{
 						//Power values
 						undeltacurr[0] += (bus[indexer].V[0] == 0) ? 0 : ~(bus[indexer].extra_var[0]/bus[indexer].V[0]);
@@ -6019,12 +6024,12 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					undeltacurr[0] = gld::complex(0.0,0.0);
 				}
 
-				if ((bus[indexer].phases & 0x02) == 0x02)	//Has a phase B
+				if ((bus[indexer].phases & PHASE_B) == PHASE_B)	//Has a phase B
 				{
 					undeltacurr[1]=(adjusted_constant_current[1]+delta_current[1])-(adjusted_constant_current[0]+delta_current[0]);
 
 					//Check for "different" children and apply them, as well
-					if ((bus[indexer].phases & 0x10) == 0x10)	//We do, so they must be Wye-connected
+					if ((bus[indexer].phases & PHASE_DIFF_CHILD) == PHASE_DIFF_CHILD)	//We do, so they must be Wye-connected
 					{
 						//Power values
 						undeltacurr[1] += (bus[indexer].V[1] == 0) ? 0 : ~(bus[indexer].extra_var[1]/bus[indexer].V[1]);
@@ -6046,12 +6051,12 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					undeltacurr[1] = gld::complex(0.0,0.0);
 				}
 
-				if ((bus[indexer].phases & 0x01) == 0x01)	//Has a phase C
+				if ((bus[indexer].phases & PHASE_C) == PHASE_C)	//Has a phase C
 				{
 					undeltacurr[2]=(adjusted_constant_current[2]+delta_current[2])-(adjusted_constant_current[1]+delta_current[1]);
 
 					//Check for "different" children and apply them, as well
-					if ((bus[indexer].phases & 0x10) == 0x10)		//We do, so they must be Wye-connected
+					if ((bus[indexer].phases & PHASE_DIFF_CHILD) == PHASE_DIFF_CHILD)		//We do, so they must be Wye-connected
 					{
 						//Power values
 						undeltacurr[2] += (bus[indexer].V[2] == 0) ? 0 : ~(bus[indexer].extra_var[2]/bus[indexer].V[2]);
@@ -6080,20 +6085,20 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 
 				for (jindex=0; jindex<powerflow_values->BA_diag[indexer].size; jindex++)
 				{
-					switch(bus[indexer].phases & 0x07) {
-						case 0x01:	//C
+					switch(bus[indexer].phases & PHASE_ABC) {
+						case PHASE_C:	//C
 							{
 								temp_index=0;
 								temp_index_b=2;
 								break;
 							}
-						case 0x02:	//B
+						case PHASE_B:	//B
 							{
 								temp_index=0;
 								temp_index_b=1;
 								break;
 							}
-						case 0x03:	//BC
+						case PHASE_BC:	//BC
 							{
 								if (jindex==0)	//B
 								{
@@ -6107,13 +6112,13 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 								}
 								break;
 							}
-						case 0x04:	//A
+						case PHASE_A:	//A
 							{
 								temp_index=0;
 								temp_index_b=0;
 								break;
 							}
-						case 0x05:	//AC
+						case PHASE_AC:	//AC
 							{
 								if (jindex==0)	//A
 								{
@@ -6127,8 +6132,8 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 								}
 								break;
 							}
-						case 0x06:	//AB
-						case 0x07:	//ABC
+						case PHASE_AB:	//AB
+						case PHASE_ABC:	//ABC
 							{
 								temp_index=jindex;
 								temp_index_b=jindex;
@@ -6194,7 +6199,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					}
 				}//End phase traversion
 			}//end delta-connected load
-			else if	((bus[indexer].phases & 0x80) == 0x80)	//Split phase computations
+			else if	((bus[indexer].phases & PHASE_S) == PHASE_S)	//Split phase computations
 			{
 				//Convert it all back to current (easiest to handle)
 				//Get V12 first
@@ -6230,7 +6235,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 				}
 
 				//See if we are a house-connected node, if so, adjust and add in those values as well
-				if ((bus[indexer].phases & 0x40) == 0x40)
+				if ((bus[indexer].phases & PHASE_HOUSE_PRESENT) == PHASE_HOUSE_PRESENT)
 				{
 					//Update phase adjustments
 					temp_store[0].SetPolar(1.0,bus[indexer].V[0].Arg());	//Pull phase of V1
@@ -6301,7 +6306,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					temp_store[1] = (-temp_current[1] - temp_current[2]);
 
 					//SPCT end node and its wonkiness makes this different in FPI
-					if ((bus[indexer].phases & 0x20) == 0x20)
+					if ((bus[indexer].phases & PHASE_TO_SPCT) == PHASE_TO_SPCT)
 					{
 						//Store update - negated for wonky current convention
 						bus[indexer].FPI_current[0] = -temp_store[0];
@@ -6374,7 +6379,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					adjusted_constant_current[2] += bus[indexer].prerot_I[2];
 
 				//See if we have any "different children"
-				if ((bus[indexer].phases & 0x10) == 0x10)
+				if ((bus[indexer].phases & PHASE_DIFF_CHILD) == PHASE_DIFF_CHILD)
 				{
 					//Create nominal magnitudes
 					adjust_nominal_voltage_val = bus[indexer].volt_base * sqrt(3.0);
@@ -6439,10 +6444,10 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 				temp_index = -1;
 				temp_index_b = -1;
 
-				if ((bus[indexer].phases & 0x10) == 0x10)	//"Different" child load - in this case it must be delta - also must be three phase (just because that's how I forced it to be implemented)
+				if ((bus[indexer].phases & PHASE_DIFF_CHILD) == PHASE_DIFF_CHILD)	//"Different" child load - in this case it must be delta - also must be three phase (just because that's how I forced it to be implemented)
 				{											//Calculate all the deltas to wyes in advance (otherwise they'll get repeated)
 					//Make sure phase combinations exist
-					if ((bus[indexer].phases & 0x06) == 0x06)	//Has A-B
+					if ((bus[indexer].phases & PHASE_AB) == PHASE_AB)	//Has A-B
 					{
 						//Delta voltages
 						voltageDel[0] = bus[indexer].V[0] - bus[indexer].V[1];
@@ -6465,7 +6470,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					}
 
 					//Check for BC
-					if ((bus[indexer].phases & 0x03) == 0x03)	//Has B-C
+					if ((bus[indexer].phases & PHASE_BC) == PHASE_BC)	//Has B-C
 					{
 						//Delta voltages
 						voltageDel[1] = bus[indexer].V[1] - bus[indexer].V[2];
@@ -6488,7 +6493,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					}
 
 					//Check for CA
-					if ((bus[indexer].phases & 0x05) == 0x05)	//Has C-A
+					if ((bus[indexer].phases & PHASE_AC) == PHASE_AC)	//Has C-A
 					{
 						//Delta voltages
 						voltageDel[2] = bus[indexer].V[2] - bus[indexer].V[0];
@@ -6522,20 +6527,20 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 
 				for (jindex=0; jindex<powerflow_values->BA_diag[indexer].size; jindex++)
 				{
-					switch(bus[indexer].phases & 0x07) {
-						case 0x01:	//C
+					switch(bus[indexer].phases & PHASE_ABC) {
+						case PHASE_C:	//C
 							{
 								temp_index=0;
 								temp_index_b=2;
 								break;
 							}
-						case 0x02:	//B
+						case PHASE_B:	//B
 							{
 								temp_index=0;
 								temp_index_b=1;
 								break;
 							}
-						case 0x03:	//BC
+						case PHASE_BC:	//BC
 							{
 								if (jindex==0)	//B
 								{
@@ -6549,13 +6554,13 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 								}
 								break;
 							}
-						case 0x04:	//A
+						case PHASE_A:	//A
 							{
 								temp_index=0;
 								temp_index_b=0;
 								break;
 							}
-						case 0x05:	//AC
+						case PHASE_AC:	//AC
 							{
 								if (jindex==0)	//A
 								{
@@ -6569,8 +6574,8 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 								}
 								break;
 							}
-						case 0x06:	//AB
-						case 0x07:	//ABC
+						case PHASE_AB:	//AB
+						case PHASE_ABC:	//ABC
 							{
 								temp_index=jindex;
 								temp_index_b=jindex;
@@ -6669,10 +6674,10 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 			}//End wye-connected load
 
 			//Perform delta/wye explicit load updates -- no triplex
-			if ((bus[indexer].phases & 0x80) != 0x80)	//Not triplex
+			if ((bus[indexer].phases & PHASE_S) != PHASE_S)	//Not triplex
 			{
 				//Delta components - populate according to what is there
-				if ((bus[indexer].phases & 0x06) == 0x06)	//Check for AB
+				if ((bus[indexer].phases & PHASE_AB) == PHASE_AB)	//Check for AB
 				{
 					//Voltage calculations
 					voltageDel[0] = bus[indexer].V[0] - bus[indexer].V[1];
@@ -6694,7 +6699,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					delta_current[0] = gld::complex(0.0,0.0);
 				}
 
-				if ((bus[indexer].phases & 0x03) == 0x03)	//Check for BC
+				if ((bus[indexer].phases & PHASE_BC) == PHASE_BC)	//Check for BC
 				{
 					//Voltage calculations
 					voltageDel[1] = bus[indexer].V[1] - bus[indexer].V[2];
@@ -6716,7 +6721,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					delta_current[1] = gld::complex(0.0,0.0);
 				}
 
-				if ((bus[indexer].phases & 0x05) == 0x05)	//Check for CA
+				if ((bus[indexer].phases & PHASE_AC) == PHASE_AC)	//Check for CA
 				{
 					//Voltage calculations
 					voltageDel[2] = bus[indexer].V[2] - bus[indexer].V[0];
@@ -6833,7 +6838,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 				//Convert delta-current into a phase current, where appropriate - reuse temp variable
 				//Everything will be accumulated into the "current" field for ease (including differents)
 				//Also handle wye currents in here (was a differently connected child code before)
-				if ((bus[indexer].phases & 0x04) == 0x04)	//Has a phase A
+				if ((bus[indexer].phases & PHASE_A) == PHASE_A)	//Has a phase A
 				{
 					undeltacurr[0]=(adjusted_constant_current[0]+delta_current[0])-(adjusted_constant_current[2]+delta_current[2]);
 
@@ -6853,7 +6858,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					undeltacurr[0] += adjusted_constant_current[3];
 
 					//Add any three-phase/non-triplex house contributions, if they exist
-					if ((bus[indexer].phases & 0x40) == 0x40)
+					if ((bus[indexer].phases & PHASE_HOUSE_PRESENT) == PHASE_HOUSE_PRESENT)
 					{
 						//Update phase adjustments - use the temp array (not really needed)
 						temp_store[0].SetPolar(1.0,bus[indexer].V[0].Arg());
@@ -6868,7 +6873,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					undeltacurr[0] = gld::complex(0.0,0.0);
 				}
 
-				if ((bus[indexer].phases & 0x02) == 0x02)	//Has a phase B
+				if ((bus[indexer].phases & PHASE_B) == PHASE_B)	//Has a phase B
 				{
 					undeltacurr[1]=(adjusted_constant_current[1]+delta_current[1])-(adjusted_constant_current[0]+delta_current[0]);
 
@@ -6888,7 +6893,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					undeltacurr[1] += adjusted_constant_current[4];
 
 					//Add any three-phase/non-triplex house contributions, if they exist
-					if ((bus[indexer].phases & 0x40) == 0x40)
+					if ((bus[indexer].phases & PHASE_HOUSE_PRESENT) == PHASE_HOUSE_PRESENT)
 					{
 						//Update phase adjustments - use the temp array (not really needed)
 						temp_store[1].SetPolar(1.0,bus[indexer].V[1].Arg());
@@ -6903,7 +6908,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					undeltacurr[1] = gld::complex(0.0,0.0);
 				}
 
-				if ((bus[indexer].phases & 0x01) == 0x01)	//Has a phase C
+				if ((bus[indexer].phases & PHASE_C) == PHASE_C)	//Has a phase C
 				{
 					undeltacurr[2]=(adjusted_constant_current[2]+delta_current[2])-(adjusted_constant_current[1]+delta_current[1]);
 
@@ -6923,7 +6928,7 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 					undeltacurr[2] += adjusted_constant_current[5];
 
 					//Add any three-phase/non-triplex house contributions, if they exist
-					if ((bus[indexer].phases & 0x40) == 0x40)
+					if ((bus[indexer].phases & PHASE_HOUSE_PRESENT) == PHASE_HOUSE_PRESENT)
 					{
 						//Update phase adjustments - use the temp array (not really needed)
 						temp_store[2].SetPolar(1.0,bus[indexer].V[2].Arg());
@@ -6945,20 +6950,20 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 
 				for (jindex=0; jindex<powerflow_values->BA_diag[indexer].size; jindex++)
 				{
-					switch(bus[indexer].phases & 0x07) {
-						case 0x01:	//C
+					switch(bus[indexer].phases & PHASE_ABC) {
+						case PHASE_C:	//C
 							{
 								temp_index=0;
 								temp_index_b=2;
 								break;
 							}
-						case 0x02:	//B
+						case PHASE_B:	//B
 							{
 								temp_index=0;
 								temp_index_b=1;
 								break;
 							}
-						case 0x03:	//BC
+						case PHASE_BC:	//BC
 							{
 								if (jindex==0)	//B
 								{
@@ -6972,13 +6977,13 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 								}
 								break;
 							}
-						case 0x04:	//A
+						case PHASE_A:	//A
 							{
 								temp_index=0;
 								temp_index_b=0;
 								break;
 							}
-						case 0x05:	//AC
+						case PHASE_AC:	//AC
 							{
 								if (jindex==0)	//A
 								{
@@ -6992,8 +6997,8 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 								}
 								break;
 							}
-						case 0x06:	//AB
-						case 0x07:	//ABC
+						case PHASE_AB:	//AB
+						case PHASE_ABC:	//ABC
 							{
 								temp_index=jindex;
 								temp_index_b=jindex;
@@ -7074,20 +7079,20 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 
 					for (jindex=0; jindex<powerflow_values->BA_diag[indexer].size; jindex++)
 					{
-						switch(bus[indexer].phases & 0x07) {
-							case 0x01:	//C
+						switch(bus[indexer].phases & PHASE_ABC) {
+							case PHASE_C:	//C
 								{
 									temp_index=0;
 									temp_index_b=8;
 									break;
 								}
-							case 0x02:	//B
+							case PHASE_B:	//B
 								{
 									temp_index=0;
 									temp_index_b=4;
 									break;
 								}
-							case 0x03:	//BC
+							case PHASE_BC:	//BC
 								{
 									if (jindex==0)	//B
 									{
@@ -7101,13 +7106,13 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 									}
 									break;
 								}
-							case 0x04:	//A
+							case PHASE_A:	//A
 								{
 									temp_index=0;
 									temp_index_b=0;
 									break;
 								}
-							case 0x05:	//AC
+							case PHASE_AC:	//AC
 								{
 									if (jindex==0)	//A
 									{
@@ -7121,8 +7126,8 @@ void compute_load_values(unsigned int bus_count, BUSDATA *bus, NR_SOLVER_STRUCT 
 									}
 									break;
 								}
-							case 0x06:	//AB
-							case 0x07:	//ABC
+							case PHASE_AB:	//AB
+							case PHASE_ABC:	//ABC
 								{
 									temp_index=jindex;
 									temp_index_b=(jindex*3+jindex);

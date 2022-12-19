@@ -1027,7 +1027,7 @@ void link_object::NR_link_sync_fxn(void)
 						transf_from_stdy_state = false;
 
 						//Check phases - see if we have voltages - Phase A
-						if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)
+						if ((NR_branchdata[NR_branch_reference].phases & PHASE_A) == PHASE_A)
 						{
 							if ((NR_busdata[NR_branchdata[NR_branch_reference].from].V[0].Mag() > 0.0) && (NR_busdata[NR_branchdata[NR_branch_reference].to].V[0].Mag() > 0.0))
 							{
@@ -1038,7 +1038,7 @@ void link_object::NR_link_sync_fxn(void)
 						//No phase A
 
 						//Check phases - see if we have voltages - Phase B
-						if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)
+						if ((NR_branchdata[NR_branch_reference].phases & PHASE_B) == PHASE_B)
 						{
 							if ((NR_busdata[NR_branchdata[NR_branch_reference].from].V[1].Mag() > 0.0) && (NR_busdata[NR_branchdata[NR_branch_reference].to].V[1].Mag() > 0.0))
 							{
@@ -1049,7 +1049,7 @@ void link_object::NR_link_sync_fxn(void)
 						//No phase B
 
 						//Check phases - see if we have voltages - Phase C
-						if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)
+						if ((NR_branchdata[NR_branch_reference].phases & PHASE_C) == PHASE_C)
 						{
 							if ((NR_busdata[NR_branchdata[NR_branch_reference].from].V[2].Mag() > 0.0) && (NR_busdata[NR_branchdata[NR_branch_reference].to].V[2].Mag() > 0.0))
 							{
@@ -1318,7 +1318,7 @@ void link_object::NR_link_sync_fxn(void)
 						transf_from_stdy_state = false;
 
 						//Check phases - see if we have voltages - Phase A
-						if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)
+						if ((NR_branchdata[NR_branch_reference].phases & PHASE_A) == PHASE_A)
 						{
 							if ((NR_busdata[NR_branchdata[NR_branch_reference].from].V[0].Mag() > 0.0) && (NR_busdata[NR_branchdata[NR_branch_reference].to].V[0].Mag() > 0.0))
 							{
@@ -1329,7 +1329,7 @@ void link_object::NR_link_sync_fxn(void)
 						//No phase A
 
 						//Check phases - see if we have voltages - Phase B
-						if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)
+						if ((NR_branchdata[NR_branch_reference].phases & PHASE_B) == PHASE_B)
 						{
 							if ((NR_busdata[NR_branchdata[NR_branch_reference].from].V[1].Mag() > 0.0) && (NR_busdata[NR_branchdata[NR_branch_reference].to].V[1].Mag() > 0.0))
 							{
@@ -1340,7 +1340,7 @@ void link_object::NR_link_sync_fxn(void)
 						//No phase B
 
 						//Check phases - see if we have voltages - Phase C
-						if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)
+						if ((NR_branchdata[NR_branch_reference].phases & PHASE_C) == PHASE_C)
 						{
 							if ((NR_busdata[NR_branchdata[NR_branch_reference].from].V[2].Mag() > 0.0) && (NR_busdata[NR_branchdata[NR_branch_reference].to].V[2].Mag() > 0.0))
 							{
@@ -1836,7 +1836,7 @@ void link_object::NR_link_sync_fxn(void)
 				}
 				else	//Flag as empty
 				{
-					NR_branchdata[NR_branch_reference].phases = 0x00;
+					NR_branchdata[NR_branch_reference].phases = NO_PHASE;
 				}
 			}
 			//Default else - SWITCH, which is done in its own code
@@ -2295,7 +2295,7 @@ void link_object::NR_link_sync_fxn(void)
 			}
 			else	//Flag as empty
 			{
-				NR_branchdata[NR_branch_reference].phases = 0x00;
+				NR_branchdata[NR_branch_reference].phases = NO_PHASE;
 			}
 		}
 
@@ -2364,7 +2364,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 			node *tnode = OBJECTDATA(to,node);
 			unsigned int *LinkTableLoc = nullptr;
 			unsigned int TempTableIndex;
-			unsigned char working_phase;
+			set working_phase;
 			char *temp_phase;
 			int IndVal = 0;
 			int resultval;
@@ -2531,7 +2531,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				}
 
 				//Populate original phases property
-				NR_branchdata[NR_branch_reference].origphases = 128*has_phase(PHASE_S) + 4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
+				NR_branchdata[NR_branch_reference].origphases = phases & PHASE_INFO;;
 
 				//Populate phases property - check status
 				if (status == LS_CLOSED)
@@ -2540,11 +2540,11 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				}
 				else
 				{
-					NR_branchdata[NR_branch_reference].phases = 0x00;
+					NR_branchdata[NR_branch_reference].phases = NO_PHASE;
 				}
 
 				//Zero fault phases - presumably nothing is broken right now
-				NR_branchdata[NR_branch_reference].faultphases = 0x00;
+				NR_branchdata[NR_branch_reference].faultphases = NO_PHASE;
 				
 				//link If_in and If_out
 				NR_branchdata[NR_branch_reference].If_from = &If_in[0];
@@ -2552,7 +2552,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 
 				if (SpecialLnk == SWITCH)	//If we're a fuse or switch, make sure our "open" phases are correct
 				{
-					working_phase = 0xF0;	//Start with mask for all USB
+					working_phase = ~PHASE_INFO;	//Start with mask for all USB
 
 					//Update initial stati as necessary as well - do for fuses and switches (both encoded the same SpecialLnk)
 					if (gl_object_isa(obj,"switch","powerflow"))
@@ -2560,37 +2560,37 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_A_state"));
 
 						if (*temp_phase == 1)
-							working_phase |= 0x04;
+							working_phase |= PHASE_A;
 
 						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_B_state"));
 
 						if (*temp_phase == 1)
-							working_phase |= 0x02;
+							working_phase |= PHASE_B;
 
 						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_C_state"));
 
 						if (*temp_phase == 1)
-							working_phase |= 0x01;
+							working_phase |= PHASE_C;
 					}
 					else if (gl_object_isa(obj,"fuse","powerflow"))
 					{
 						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_A_status"));
 
 						if (*temp_phase == 1)
-							working_phase |= 0x04;
+							working_phase |= PHASE_A;
 
 						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_B_status"));
 
 						if (*temp_phase == 1)
-							working_phase |= 0x02;
+							working_phase |= PHASE_B;
 
 						temp_phase = (char*)GETADDR(obj,gl_get_property(obj,"phase_C_status"));
 
 						if (*temp_phase == 1)
-							working_phase |= 0x01;
+							working_phase |= PHASE_C;
 					}
 					else	//Not sure how we'll get here, just make normal phase
-						working_phase |= 0x0F;
+						working_phase |= (PHASE_D | PHASE_ABC);
 
 					//Update phase value
 					NR_branchdata[NR_branch_reference].phases &= working_phase;
@@ -2600,7 +2600,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 				if (SpecialLnk==SPLITPHASE)
 				{
 					//Set the branch phases
-					NR_branchdata[NR_branch_reference].phases |= 0x20;
+					NR_branchdata[NR_branch_reference].phases |= PHASE_TO_SPCT;
 
 					if (tnode->NR_node_reference == -99)	//To node is a child
 					{
@@ -2608,8 +2608,8 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 						//Lock the to node
 						LOCK_OBJECT(tnode->SubNodeParent);
 
-						NR_busdata[*tnode->NR_subnode_reference].phases |= 0x20;
-						NR_busdata[*tnode->NR_subnode_reference].origphases |= 0x20;	//Make sure reliability gets updated right too!
+						NR_busdata[*tnode->NR_subnode_reference].phases |= PHASE_TO_SPCT;
+						NR_busdata[*tnode->NR_subnode_reference].origphases |= PHASE_TO_SPCT;	//Make sure reliability gets updated right too!
 
 						//Unlock to node
 						UNLOCK_OBJECT(tnode->SubNodeParent);
@@ -2621,8 +2621,8 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 						//Lock the to node
 						LOCK_OBJECT(to);
 
-						NR_busdata[tnode->NR_node_reference].phases |= 0x20;
-						NR_busdata[tnode->NR_node_reference].origphases |= 0x20;	//Make sure reliability gets updated right too!
+						NR_busdata[tnode->NR_node_reference].phases |= PHASE_TO_SPCT;
+						NR_busdata[tnode->NR_node_reference].origphases |= PHASE_TO_SPCT;	//Make sure reliability gets updated right too!
 
 						//Unlock to node
 						UNLOCK_OBJECT(to);
@@ -2747,7 +2747,7 @@ TIMESTAMP link_object::presync(TIMESTAMP t0)
 			if ((SpecialLnk == SWITCH) && !meshed_fault_checking_enabled && NR_busdata[NR_branchdata[NR_branch_reference].to].Link_Table_Size == 1)
 			{
 				//Update according to our "status"
-				working_phase = ~((NR_branchdata[NR_branch_reference].phases ^ NR_branchdata[NR_branch_reference].origphases) & 0x07);
+				working_phase = ~((NR_branchdata[NR_branch_reference].phases ^ NR_branchdata[NR_branch_reference].origphases) & PHASE_ABC);
 
 				//Mask it off
 				NR_busdata[NR_branchdata[NR_branch_reference].to].phases &= working_phase;
@@ -4013,23 +4013,23 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 
 					//Scale the "base_admittance_mat" value by the inverse (make it high-side impedance)
 					//Post values based on phases (reliability related)
-					if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_A) == PHASE_A)	//A
 						current_pointer_in[0] = itemp[0]*invsquared;
 					else
 						current_pointer_in[0] = 0.0;
 
-					if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_B) == PHASE_B)	//B
 						current_pointer_in[1] = itemp[1]*invsquared;
 					else
 						current_pointer_in[1] = 0.0;
 
-					if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_C) == PHASE_C)	//C
 						current_pointer_in[2] = itemp[2]*invsquared;
 					else
 						current_pointer_in[2] = 0.0;
 
 					//Calculate current out
-					if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_A) == PHASE_A)	//A
 					{
 						current_pointer_out[0] = A_mat[0][0]*current_pointer_in[0]+
 										 	 	 A_mat[0][1]*current_pointer_in[1]+
@@ -4044,7 +4044,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 					else
 						current_pointer_out[0] = 0.0;
 
-					if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_B) == PHASE_B)	//B
 					{
 						current_pointer_out[1] = A_mat[1][0]*current_pointer_in[0]+
 										 	 	 A_mat[1][1]*current_pointer_in[1]+
@@ -4059,7 +4059,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 					else
 						current_pointer_out[1] = 0.0;
 
-					if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_C) == PHASE_C)	//C
 					{
 						current_pointer_out[2] = A_mat[2][0]*current_pointer_in[0]+
 										 	 	 A_mat[2][1]*current_pointer_in[1]+
@@ -4116,7 +4116,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 						   a_mat[2][1]*tnode->voltage[1]-
 						   a_mat[2][2]*tnode->voltage[2];
 
-				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
+				if ((NR_branchdata[NR_branch_reference].phases & PHASE_A) == PHASE_A)	//A
 				{
 					current_pointer_out[0] = From_Y[0][0]*vtemp[0]+
 									 From_Y[0][1]*vtemp[1]+
@@ -4125,7 +4125,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 				else
 					current_pointer_out[0] = 0.0;
 
-				if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
+				if ((NR_branchdata[NR_branch_reference].phases & PHASE_B) == PHASE_B)	//B
 				{
 					current_pointer_out[1] = From_Y[1][0]*vtemp[0]+
 									 	 	 From_Y[1][1]*vtemp[1]+
@@ -4134,7 +4134,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 				else
 					current_pointer_out[1] = 0.0;
 
-				if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
+				if ((NR_branchdata[NR_branch_reference].phases & PHASE_C) == PHASE_C)	//C
 				{
 					current_pointer_out[2] = From_Y[2][0]*vtemp[0]+
 											 From_Y[2][1]*vtemp[1]+
@@ -4144,7 +4144,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 					current_pointer_out[2] = 0.0;
 
 				//Calculate current_in based on current_out (backwards, isn't it?)
-				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
+				if ((NR_branchdata[NR_branch_reference].phases & PHASE_A) == PHASE_A)	//A
 				{
 					current_pointer_in[0] = d_mat[0][0]*current_pointer_out[0]+
 											d_mat[0][1]*current_pointer_out[1]+
@@ -4153,7 +4153,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 				else
 					current_pointer_in[0] = 0.0;
 
-				if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
+				if ((NR_branchdata[NR_branch_reference].phases & PHASE_B) == PHASE_B)	//B
 				{
 					current_pointer_in[1] = d_mat[1][0]*current_pointer_out[0]+
 											d_mat[1][1]*current_pointer_out[1]+
@@ -4162,7 +4162,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 				else
 					current_pointer_in[1] = 0.0;
 
-				if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
+				if ((NR_branchdata[NR_branch_reference].phases & PHASE_C) == PHASE_C)	//C
 				{
 					current_pointer_in[2] = d_mat[2][0]*current_pointer_out[0]+
 											d_mat[2][1]*current_pointer_out[1]+
@@ -4212,7 +4212,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 						 tnode->voltage[2];
 
 				//Get low side current (current out) - for now, oh grand creator (me) mandates D-GWye are three phase or nothing
-				if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x07)	//ABC
+				if ((NR_branchdata[NR_branch_reference].phases & PHASE_ABC) == PHASE_ABC)	//ABC
 				{
 					current_pointer_out[0] = vtemp[0] * base_admittance_mat[0][0];
 					current_pointer_out[1] = vtemp[1] * base_admittance_mat[1][1];
@@ -4267,7 +4267,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 			}//end delta-GWYE
 			else if (SpecialLnk == SPLITPHASE)	//Split phase, center tapped xformer
 			{
-				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
+				if ((NR_branchdata[NR_branch_reference].phases & PHASE_A) == PHASE_A)	//A
 				{
 					current_pointer_in[0] = itemp[0] =
 											fnode->voltage[0]*base_admittance_mat[2][2]+
@@ -4304,7 +4304,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 											 tnode->voltage[0]*base_admittance_mat[1][0]+
 											 tnode->voltage[1]*base_admittance_mat[1][1];
 				}
-				else if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
+				else if ((NR_branchdata[NR_branch_reference].phases & PHASE_B) == PHASE_B)	//B
 				{
 					current_pointer_in[1] = itemp[0] =
 											fnode->voltage[1]*base_admittance_mat[2][2] +
@@ -4342,7 +4342,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 											 tnode->voltage[1]*base_admittance_mat[1][1];
 
 				}
-				else if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
+				else if ((NR_branchdata[NR_branch_reference].phases & PHASE_C) == PHASE_C)	//C
 				{
 					current_pointer_in[2] = itemp[0] =
 											fnode->voltage[2]*base_admittance_mat[2][2] +
@@ -4395,7 +4395,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 			}//end split-phase, center tapped xformer
 			else if (has_phase(PHASE_S))	//Split-phase line
 			{
-				if ((NR_branchdata[NR_branch_reference].phases & 0x80) == 0x80)	//Split-phase valid
+				if ((NR_branchdata[NR_branch_reference].phases & PHASE_S) == PHASE_S)	//Split-phase valid
 				{
 					//(-a*Vout+Vin)
 					vtemp[0] = fnode->voltage[0]-
@@ -4474,7 +4474,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 					if (use_line_cap)
 					{
 						//Compute shunt current values
-						if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
+						if ((NR_branchdata[NR_branch_reference].phases & PHASE_A) == PHASE_A)	//A
 						{
 							shunt_current_val[0] = LinkCapShuntTerm[0] * fnode->voltage[0] + 
 												   LinkCapShuntTerm[1] * fnode->voltage[1] + 
@@ -4493,7 +4493,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 						}
 
 						//Compute shunt current values
-						if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
+						if ((NR_branchdata[NR_branch_reference].phases & PHASE_B) == PHASE_B)	//B
 						{
 							shunt_current_val[1] = LinkCapShuntTerm[3] * fnode->voltage[0] + 
 												   LinkCapShuntTerm[4] * fnode->voltage[1] + 
@@ -4512,7 +4512,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 						}
 
 						//Compute shunt current values
-						if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
+						if ((NR_branchdata[NR_branch_reference].phases & PHASE_C) == PHASE_C)	//C
 						{
 							shunt_current_val[2] = LinkCapShuntTerm[6] * fnode->voltage[0] + 
 												   LinkCapShuntTerm[7] * fnode->voltage[1] + 
@@ -4537,7 +4537,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 					}
 
 					//See if phases are valid
-					if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_A) == PHASE_A)	//A
 					{
 						current_pointer_out[0] = From_Y[0][0]*vtemp[0]+
 												 From_Y[0][1]*vtemp[1]+
@@ -4553,7 +4553,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 						vmagtemp[0] = 0.0;
 					}
 
-					if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_B) == PHASE_B)	//B
 					{
 						current_pointer_out[1] = From_Y[1][0]*vtemp[0]+
 												 From_Y[1][1]*vtemp[1]+
@@ -4569,7 +4569,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 						vmagtemp[1] = 0.0;
 					}
 
-					if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_C) == PHASE_C)	//C
 					{
 						current_pointer_out[2] = From_Y[2][0]*vtemp[0]+
 												 From_Y[2][1]*vtemp[1]+
@@ -4632,7 +4632,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 							   a_mat[2][2]*tnode->voltage[2];
 
 					//See if phases are valid
-					if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//A
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_A) == PHASE_A)	//A
 					{
 						current_pointer_out[0] = From_Y[0][0]*vtemp[0]+
 												 From_Y[0][1]*vtemp[1]+
@@ -4641,7 +4641,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 					else
 						current_pointer_out[0] = 0.0;
 
-					if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//B
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_B) == PHASE_B)	//B
 					{
 						current_pointer_out[1] = From_Y[1][0]*vtemp[0]+
 												 From_Y[1][1]*vtemp[1]+
@@ -4650,7 +4650,7 @@ int link_object::CurrentCalculation(int nodecall, bool link_fault_mode)
 					else
 						current_pointer_out[1] = 0.0;
 
-					if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//C
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_C) == PHASE_C)	//C
 					{
 						current_pointer_out[2] = From_Y[2][0]*vtemp[0]+
 												 From_Y[2][1]*vtemp[1]+
@@ -5032,8 +5032,8 @@ double *link_object::get_double(OBJECT *obj, const char *name)
 // 32 - TLL - all lines fault - phases A, B, and C
 int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time)
 {
-	unsigned char phase_remove = 0x00;	//Default is no phases removed
-	unsigned char rand_phases,temp_phases, work_phases;			//Working variable
+	set phase_remove = NO_PHASE;	//Default is no phases removed
+	set rand_phases,temp_phases, work_phases;			//Working variable
 	char numphase, phaseidx;
 	double randval, ext_result_dbl;
 	double tempphase[3];
@@ -5054,6 +5054,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 	gld::complex pf_mesh_fault_impedance_matrix[3][3];
 	gld::complex CI_mat[3][3];
 	gld::complex CV_mat[3][3];
+	set phase_values[] = {PHASE_A, PHASE_B, PHASE_C};
 
 	//Check to see which mode we are in
 	if (!meshed_fault_checking_enabled)	//"Normal" mode
@@ -5117,22 +5118,22 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
 
 				//Put it back into proper format
-				rand_phases = (unsigned char)(randval);
+				rand_phases = (set)(randval);
 			}
 			else	//Not a random - clear the variable, just in case
-				rand_phases = 0x00;
+				rand_phases = NO_PHASE;
 
-			if ((fault_type[4] == 'A') || (rand_phases == 0x04))
+			if ((fault_type[4] == 'A') || (rand_phases == PHASE_A))
 			{
 				if (has_phase(PHASE_A))
 				{
-					if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//make sure phase A is active (no previous fault)
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_A) == PHASE_A)	//make sure phase A is active (no previous fault)
 					{
 						//Remove phase A
-						NR_branchdata[NR_branch_reference].phases &= 0xFB;
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;
 
 						//Flag which phase we've removed
-						phase_remove = 0x04;
+						phase_remove = PHASE_A;
 
 						//Flag the fault type
 						*implemented_fault = 1;
@@ -5151,17 +5152,17 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*/
 				}
 			}//End A fault
-			else if ((fault_type[4] == 'B') || (rand_phases == 0x02))
+			else if ((fault_type[4] == 'B') || (rand_phases == PHASE_B))
 			{
 				if (has_phase(PHASE_B))
 				{
-					if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//make sure phase B is active (no previous fault)
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_B) == PHASE_B)	//make sure phase B is active (no previous fault)
 					{
 						//Remove phase B
-						NR_branchdata[NR_branch_reference].phases &= 0xFD;
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;
 
 						//Flag which phase we've removed
-						phase_remove = 0x02;
+						phase_remove = PHASE_B;
 
 						//Flag the fault type
 						*implemented_fault = 2;
@@ -5180,17 +5181,17 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*/
 				}
 			}
-			else if ((fault_type[4] == 'C') || (rand_phases == 0x01))
+			else if ((fault_type[4] == 'C') || (rand_phases == PHASE_C))
 			{
 				if (has_phase(PHASE_C))
 				{
-					if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//make sure phase C is active (no previous fault)
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_C) == PHASE_C)	//make sure phase C is active (no previous fault)
 					{
 						//Remove phase C
-						NR_branchdata[NR_branch_reference].phases &= 0xFE;
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;
 
 						//Flag which phase we've removed
-						phase_remove = 0x01;
+						phase_remove = PHASE_C;
 
 						//Flag the fault type
 						*implemented_fault = 3;
@@ -5221,19 +5222,19 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		else if ((fault_type[0] == 'D') && (fault_type[1] == 'L') && (fault_type[2] == 'G'))	//DLG - double-line-ground fault
 		{
 			//Figure out who we want to alter - assume [3] is a -, so check [4]+
-			work_phases = 0x00;
+			work_phases = NO_PHASE;
 
 			if (fault_type[4] == 'X')	//Random, flag as such
-				work_phases |= 0x08;
+				work_phases |= PHASE_D;
 			
 			if ((fault_type[4] == 'A') || (fault_type[5] == 'A'))	//A is desired
-				work_phases |= 0x04;
+				work_phases |= PHASE_A;
 
 			if ((fault_type[4] == 'B') || (fault_type[5] == 'B'))	//B is desired
-				work_phases |= 0x02;
+				work_phases |= PHASE_B;
 
 			if ((fault_type[4] == 'C') || (fault_type[5] == 'C'))	//C is desired
-				work_phases |= 0x01;
+				work_phases |= PHASE_C;
 
 			//See how many phases we have to deal with
 			numphase = 0;
@@ -5254,7 +5255,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}
 
 			//Pull out what phases we have to play with
-			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+			temp_phases = NR_branchdata[NR_branch_reference].phases & PHASE_ABC;
 
 			if (numphase == 0)
 			{
@@ -5268,26 +5269,26 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			else if (numphase < 2)	//Single phase line (no zero phase this way)
 			{
 				//Refine our criteria
-				if ((work_phases & 0x08) != 0x08)	//Not random case
+				if ((work_phases & PHASE_D) != PHASE_D)	//Not random case
 					temp_phases &= work_phases;
 
 				//defaulted else - if random case, only getting one phase out of this anywho (leave temp_phases as is)
 
 				switch (temp_phases)
 				{
-				case 0x00:	//No phases available - something must have faulted
+				case NO_PHASE:	//No phases available - something must have faulted
 					*implemented_fault = 0;	//Flag as such
 					break;
-				case 0x01:	//Phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				case PHASE_C:	//Phase C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 					*implemented_fault = 3;								//Flag as a C SLG fault
 					break;
-				case 0x02:	//Phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				case PHASE_B:	//Phase B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 					*implemented_fault = 2;								//Flag as a B SLG fault
 					break;
-				case 0x04:	//Phase A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				case PHASE_A:	//Phase A
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 					*implemented_fault = 1;								//Flag as a A SLG fault
 					break;
 				default:	//No other cases should exist
@@ -5302,38 +5303,38 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			else if (numphase == 2)	//Only two phases present
 			{
 				//See how the two present coincide with the two we're asking for
-				if ((work_phases & 0x08) != 0x08)	//Not random case, see what we have
+				if ((work_phases & PHASE_D) != PHASE_D)	//Not random case, see what we have
 					temp_phases &= work_phases;
 				//Defaulted else - if random, only 1 choice exists, which is temp_phases (leave temp_phases as is)
 
 				//Implement the appropriate fault
 				switch (temp_phases)
 				{
-				case 0x00:	//No phases!
+				case NO_PHASE:	//No phases!
 					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 					break;
-				case 0x01:	//Only phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				case PHASE_C:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 					*implemented_fault = 3;								//Flag as a C SLG fault
 					break;
-				case 0x02:	//Only phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				case PHASE_B:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 					*implemented_fault = 2;								//Flag as a B SLG fault
 					break;
-				case 0x03:	//B and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+				case PHASE_BC:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 					*implemented_fault = 5;								//Flag as a B & C fault
 					break;
-				case 0x04:	//Only A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				case PHASE_A:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 					*implemented_fault = 1;								//Flag as a A SLG fault
 					break;
-				case 0x05:	//A and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+				case PHASE_AC:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 					*implemented_fault = 6;								//Flag as A and C fault
 					break;
-				case 0x06:	//A and B
-					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+				case PHASE_AB:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 					*implemented_fault = 4;								//Flag as A and B fault
 					break;
 				default:	//Not sure how we'd ever get here
@@ -5351,32 +5352,32 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}//end 2 phases present
 			else if (numphase == 3)	//All phases present
 			{
-				if ((work_phases & 0x08) == 0x08)	//Random condition
+				if ((work_phases & PHASE_D) == PHASE_D)	//Random condition
 				{
 					//See if we have all three available to fault (if one or more is already faulted, we won't care)
 					rand_phases = 0;
 
 					//Check and populate random array as well
-					if ((temp_phases & 0x01) == 0x01)	//Check for C availability
+					if ((temp_phases & PHASE_C) == PHASE_C)	//Check for C availability
 					{
 						tempphase[rand_phases] = 1;
 						rand_phases++;
 					}
 
-					if ((temp_phases & 0x02) == 0x02)	//Check for B availability
+					if ((temp_phases & PHASE_B) == PHASE_B)	//Check for B availability
 					{
 						tempphase[rand_phases] = 2;
 						rand_phases++;
 					}
 
-					if ((temp_phases & 0x04) == 0x04)	//Check for A availability
+					if ((temp_phases & PHASE_A) == PHASE_A)	//Check for A availability
 					{
 						tempphase[rand_phases] = 4;
 						rand_phases++;
 					}
 
 					if (rand_phases <= 2)	//Two or fewer available, just mask us out
-						work_phases = 0x07;	//This will pull the appropriate phase
+						work_phases = PHASE_ABC;	//This will pull the appropriate phase
 					else	//Must be 3, right?
 					{
 						//Pick a random phase - this will be the one we DON'T fault
@@ -5384,11 +5385,11 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 						//Set temp_phases appropriate
 						if (randval == 1)	//Leave phase C
-							work_phases = 0x06;	//A and B fault
+							work_phases = PHASE_AB;	//A and B fault
 						else if (randval == 2)	//Leave phase B
-							work_phases = 0x05;	//A and C fault
+							work_phases = PHASE_AC;	//A and C fault
 						else	//Must be 4	- leave phase A
-							work_phases = 0x03;	//B and C fault
+							work_phases = PHASE_BC;	//B and C fault
 					}//end must be 3
 				}//end random condition
 				//Defaulted else - not random, so just use as normal mask
@@ -5399,31 +5400,31 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Implement the appropriate fault
 				switch (temp_phases)
 				{
-				case 0x00:	//No phases!
+				case NO_PHASE:	//No phases!
 					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 					break;
-				case 0x01:	//Only phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				case PHASE_C:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 					*implemented_fault = 3;								//Flag as a C SLG fault
 					break;
-				case 0x02:	//Only phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				case PHASE_B:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 					*implemented_fault = 2;								//Flag as a B SLG fault
 					break;
-				case 0x03:	//B and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+				case PHASE_BC:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 					*implemented_fault = 5;								//Flag as a B & C fault
 					break;
-				case 0x04:	//Only A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				case PHASE_A:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 					*implemented_fault = 1;								//Flag as a A SLG fault
 					break;
-				case 0x05:	//A and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+				case PHASE_AC:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 					*implemented_fault = 6;								//Flag as A and C fault
 					break;
-				case 0x06:	//A and B
-					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+				case PHASE_AB:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 					*implemented_fault = 4;								//Flag as A and B fault
 					break;
 				default:	//Not sure how we'd ever get here
@@ -5447,40 +5448,40 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		else if ((fault_type[0] == 'T') && (fault_type[1] == 'L') && (fault_type[2] == 'G'))	//TLG - triple-line-ground fault
 		{
 			//Let's see what phases we have to play with
-			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+			temp_phases = NR_branchdata[NR_branch_reference].phases & PHASE_ABC;
 
 			//Case it out - if we want TLG, but don't have all three phases, just trip whatever we have
 			switch (temp_phases)
 			{
-			case 0x00:	//No phases!
+			case NO_PHASE:	//No phases!
 				*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 				break;
-			case 0x01:	//Only phase C
-				NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+			case PHASE_C:	//Only phase C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 				*implemented_fault = 3;								//Flag as a C only fault
 				break;
-			case 0x02:	//Only phase B
-				NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+			case PHASE_B:	//Only phase B
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 				*implemented_fault = 2;								//Flag as a B only fault
 				break;
-			case 0x03:	//B and C
-				NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+			case PHASE_BC:	//B and C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 				*implemented_fault = 5;								//Flag as a B & C fault
 				break;
-			case 0x04:	//Only A
-				NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+			case PHASE_A:	//Only A
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 				*implemented_fault = 1;								//Flag as a A only fault
 				break;
-			case 0x05:	//A and C
-				NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+			case PHASE_AC:	//A and C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 				*implemented_fault = 6;								//Flag as A and C fault
 				break;
-			case 0x06:	//A and B
-				NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+			case PHASE_AB:	//A and B
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 				*implemented_fault = 4;								//Flag as A and B fault
 				break;
-			case 0x07:	//A, B, and C
-				NR_branchdata[NR_branch_reference].phases &= 0xF8;	//Remove A, B, and C
+			case PHASE_ABC:	//A, B, and C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_ABC;	//Remove A, B, and C
 				*implemented_fault = 10;							//Flag as all three fault
 				break;
 			default:	//Not sure how we'd ever get here
@@ -5499,40 +5500,40 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		else if ((fault_type[0] == 'T') && (fault_type[1] == 'L') && (fault_type[2] == 'L'))	//TLL - triple-line-line fault
 		{
 			//Let's see what phases we have to play with
-			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+			temp_phases = NR_branchdata[NR_branch_reference].phases & PHASE_ABC;
 
 			//Case it out - if we want TLG, but don't have all three phases, just trip whatever we have
 			switch (temp_phases)
 			{
-			case 0x00:	//No phases!
+			case NO_PHASE:	//No phases!
 				*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 				break;
-			case 0x01:	//Only phase C
-				NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+			case PHASE_C:	//Only phase C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 				*implemented_fault = 13;							//Flag as a C only OC fault
 				break;
-			case 0x02:	//Only phase B
-				NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+			case PHASE_B:	//Only phase B
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 				*implemented_fault = 12;							//Flag as a B only OC fault
 				break;
-			case 0x03:	//B and C
-				NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+			case PHASE_BC:	//B and C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 				*implemented_fault = 8;								//Flag as a B & C LL fault
 				break;
-			case 0x04:	//Only A
-				NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+			case PHASE_A:	//Only A
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 				*implemented_fault = 11;							//Flag as a A only OC fault
 				break;
-			case 0x05:	//A and C
-				NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+			case PHASE_AC:	//A and C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 				*implemented_fault = 9;								//Flag as A and C LL fault
 				break;
-			case 0x06:	//A and B
-				NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+			case PHASE_AB:	//A and B
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 				*implemented_fault = 7;								//Flag as A and B LL fault
 				break;
-			case 0x07:	//A, B, and C
-				NR_branchdata[NR_branch_reference].phases &= 0xF8;	//Remove A, B, and C
+			case PHASE_ABC:	//A, B, and C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_ABC;	//Remove A, B, and C
 				*implemented_fault = 32;							//Flag as all three fault
 				break;
 			default:	//Not sure how we'd ever get here
@@ -5547,19 +5548,19 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		else if ((fault_type[0] == 'L') && (fault_type[1] == 'L'))	//Line-line fault
 		{
 			//Figure out who we want to alter - assume [2] is a -, so check [3]+
-			work_phases = 0x00;
+			work_phases = NO_PHASE;
 
 			if (fault_type[3] == 'X')	//Random, flag as such
-				work_phases |= 0x08;
+				work_phases |= PHASE_D;
 			
 			if ((fault_type[3] == 'A') || (fault_type[4] == 'A'))	//A is desired
-				work_phases |= 0x04;
+				work_phases |= PHASE_A;
 
 			if ((fault_type[3] == 'B') || (fault_type[4] == 'B'))	//B is desired
-				work_phases |= 0x02;
+				work_phases |= PHASE_B;
 
 			if ((fault_type[3] == 'C') || (fault_type[4] == 'C'))	//C is desired
-				work_phases |= 0x01;
+				work_phases |= PHASE_C;
 
 			//See how many phases we have to deal with
 			numphase = 0;
@@ -5580,7 +5581,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}
 
 			//Pull out what phases we have to play with
-			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+			temp_phases = NR_branchdata[NR_branch_reference].phases & PHASE_ABC;
 
 			if (numphase == 0)
 			{
@@ -5590,26 +5591,26 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			else if (numphase < 2)	//Single phase line (no zero phase this way)
 			{
 				//Refine our criteria
-				if ((work_phases & 0x08) != 0x08)	//Not random case
+				if ((work_phases & PHASE_D) != PHASE_D)	//Not random case
 					temp_phases &= work_phases;
 
 				//defaulted else - if random case, only getting one phase out of this anywho (leave temp_phases as is)
 
 				switch (temp_phases)
 				{
-				case 0x00:	//No phases available - something must have faulted
+				case NO_PHASE:	//No phases available - something must have faulted
 					*implemented_fault = 0;	//Flag as such
 					break;
-				case 0x01:	//Phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				case PHASE_C:	//Phase C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 					*implemented_fault = 13;							//Flag as a C OC fault
 					break;
-				case 0x02:	//Phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				case PHASE_B:	//Phase B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 					*implemented_fault = 12;							//Flag as a B OC fault
 					break;
-				case 0x04:	//Phase A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				case PHASE_A:	//Phase A
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 					*implemented_fault = 11;							//Flag as a A OC fault
 					break;
 				default:	//No other cases should exist
@@ -5623,38 +5624,38 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			else if (numphase == 2)	//Only two phases present
 			{
 				//See how the two present coincide with the two we're asking for
-				if ((work_phases & 0x08) != 0x08)	//Not random case, see what we have
+				if ((work_phases & PHASE_D) != PHASE_D)	//Not random case, see what we have
 					temp_phases &= work_phases;
 				//Defaulted else - if random, only 1 choice exists, which is temp_phases (leave temp_phases as is)
 
 				//Implement the appropriate fault
 				switch (temp_phases)
 				{
-				case 0x00:	//No phases!
+				case NO_PHASE:	//No phases!
 					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 					break;
-				case 0x01:	//Only phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				case PHASE_C:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 					*implemented_fault = 13;							//Flag as a C OC fault
 					break;
-				case 0x02:	//Only phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				case PHASE_B:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 					*implemented_fault = 12;							//Flag as a B OC fault
 					break;
-				case 0x03:	//B and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+				case PHASE_BC:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 					*implemented_fault = 8;								//Flag as a B & C fault
 					break;
-				case 0x04:	//Only A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				case PHASE_A:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 					*implemented_fault = 11;							//Flag as a A OC fault
 					break;
-				case 0x05:	//A and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+				case PHASE_AC:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 					*implemented_fault = 9;								//Flag as A and C fault
 					break;
-				case 0x06:	//A and B
-					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+				case PHASE_AB:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 					*implemented_fault = 7;								//Flag as A and B fault
 					break;
 				default:	//Not sure how we'd ever get here
@@ -5668,32 +5669,32 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}//end 2 phases present
 			else if (numphase == 3)	//All phases present
 			{
-				if ((work_phases & 0x08) == 0x08)	//Random condition
+				if ((work_phases & PHASE_D) == PHASE_D)	//Random condition
 				{
 					//See if we have all three available to fault (if one or more is already faulted, we won't care)
 					rand_phases = 0;
 
 					//Check and populate random array as well
-					if ((temp_phases & 0x01) == 0x01)	//Check for C availability
+					if ((temp_phases & PHASE_C) == PHASE_C)	//Check for C availability
 					{
 						tempphase[rand_phases] = 1;
 						rand_phases++;
 					}
 
-					if ((temp_phases & 0x02) == 0x02)	//Check for B availability
+					if ((temp_phases & PHASE_B) == PHASE_B)	//Check for B availability
 					{
 						tempphase[rand_phases] = 2;
 						rand_phases++;
 					}
 
-					if ((temp_phases & 0x04) == 0x04)	//Check for A availability
+					if ((temp_phases & PHASE_A) == PHASE_A)	//Check for A availability
 					{
 						tempphase[rand_phases] = 4;
 						rand_phases++;
 					}
 
 					if (rand_phases <= 2)	//Two or fewer available, just mask us out
-						work_phases = 0x07;	//This will pull the appropriate phase
+						work_phases = PHASE_ABC;	//This will pull the appropriate phase
 					else	//Must be 3, right?
 					{
 						//Pick a random phase - this will be the one we DON'T fault
@@ -5701,11 +5702,11 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 						//Set temp_phases appropriate
 						if (randval == 1)	//Leave phase C
-							work_phases = 0x06;	//A and B fault
+							work_phases = PHASE_AB;	//A and B fault
 						else if (randval == 2)	//Leave phase B
-							work_phases = 0x05;	//A and C fault
+							work_phases = PHASE_AC;	//A and C fault
 						else	//Must be 4	- leave phase A
-							work_phases = 0x03;	//B and C fault
+							work_phases = PHASE_BC;	//B and C fault
 					}//end must be 3
 				}//end random condition
 				//Defaulted else - not random, so just use as normal mask
@@ -5716,31 +5717,31 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Implement the appropriate fault
 				switch (temp_phases)
 				{
-				case 0x00:	//No phases!
+				case NO_PHASE:	//No phases!
 					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 					break;
-				case 0x01:	//Only phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				case PHASE_C:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 					*implemented_fault = 13;							//Flag as a C OC fault
 					break;
-				case 0x02:	//Only phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				case PHASE_B:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 					*implemented_fault = 12;							//Flag as a B OC fault
 					break;
-				case 0x03:	//B and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+				case PHASE_BC:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 					*implemented_fault = 8;								//Flag as a B & C fault
 					break;
-				case 0x04:	//Only A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				case PHASE_A:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 					*implemented_fault = 11;							//Flag as an A OC fault
 					break;
-				case 0x05:	//A and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+				case PHASE_AC:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 					*implemented_fault = 9;								//Flag as A and C fault
 					break;
-				case 0x06:	//A and B
-					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+				case PHASE_AB:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 					*implemented_fault = 7;								//Flag as A and B fault
 					break;
 				default:	//Not sure how we'd ever get here
@@ -5795,21 +5796,21 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
 
 				//Put it back into proper format
-				rand_phases = (unsigned char)(randval);
+				rand_phases = (set)(randval);
 			}
 			else	//Not a random - clear the variable, just in case
-				rand_phases = 0x00;
+				rand_phases = NO_PHASE;
 
-			if ((fault_type[phaseidx] == 'A') || (rand_phases == 0x04))
+			if ((fault_type[phaseidx] == 'A') || (rand_phases == PHASE_A))
 			{
 				if (has_phase(PHASE_A))
 				{
-					if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//make sure phase A is active (no previous fault)
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_A) == PHASE_A)	//make sure phase A is active (no previous fault)
 					{
 						//Remove phase A
-						NR_branchdata[NR_branch_reference].phases &= 0xFB;
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;
 
-						phase_remove = 0x04;	//Flag phase being removed
+						phase_remove = PHASE_A;	//Flag phase being removed
 
 						//Flag the fault type
 						*implemented_fault = 11;
@@ -5825,17 +5826,17 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					//Defined above
 				}
 			}//End A fault
-			else if ((fault_type[phaseidx] == 'B') || (rand_phases == 0x02))
+			else if ((fault_type[phaseidx] == 'B') || (rand_phases == PHASE_B))
 			{
 				if (has_phase(PHASE_B))
 				{
-					if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//make sure phase B is active (no previous fault)
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_B) == PHASE_B)	//make sure phase B is active (no previous fault)
 					{
 						//Remove phase B
-						NR_branchdata[NR_branch_reference].phases &= 0xFD;
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;
 
 						//Flag phase being removed
-						phase_remove = 0x02;
+						phase_remove = PHASE_B;
 
 						//Flag the fault type
 						*implemented_fault = 12;
@@ -5851,17 +5852,17 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					//Defined above
 				}
 			}
-			else if ((fault_type[phaseidx] == 'C') || (rand_phases == 0x01))
+			else if ((fault_type[phaseidx] == 'C') || (rand_phases == PHASE_C))
 			{
 				if (has_phase(PHASE_C))
 				{
-					if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//make sure phase C is active (no previous fault)
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_C) == PHASE_C)	//make sure phase C is active (no previous fault)
 					{
 						//Remove phase C
-						NR_branchdata[NR_branch_reference].phases &= 0xFE;
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;
 
 						//Flag phase being removed
-						phase_remove = 0x01;
+						phase_remove = PHASE_C;
 
 						//Flag the fault type
 						*implemented_fault = 13;
@@ -5886,19 +5887,19 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		else if ((fault_type[0] == 'O') && (fault_type[1] == 'C') && (fault_type[2] == '2'))	//Double open-conductor fault
 		{
 			//Figure out who we want to alter - assume [3] is a -, so check [4]+
-			work_phases = 0x00;
+			work_phases = NO_PHASE;
 
 			if (fault_type[4] == 'X')	//Random, flag as such
-				work_phases |= 0x08;
+				work_phases |= PHASE_D;
 			
 			if ((fault_type[4] == 'A') || (fault_type[5] == 'A'))	//A is desired
-				work_phases |= 0x04;
+				work_phases |= PHASE_A;
 
 			if ((fault_type[4] == 'B') || (fault_type[5] == 'B'))	//B is desired
-				work_phases |= 0x02;
+				work_phases |= PHASE_B;
 
 			if ((fault_type[4] == 'C') || (fault_type[5] == 'C'))	//C is desired
-				work_phases |= 0x01;
+				work_phases |= PHASE_C;
 
 			//See how many phases we have to deal with
 			numphase = 0;
@@ -5919,7 +5920,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}
 
 			//Pull out what phases we have to play with
-			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+			temp_phases = NR_branchdata[NR_branch_reference].phases & PHASE_ABC;
 
 			if (numphase == 0)
 			{
@@ -5929,26 +5930,26 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			else if (numphase < 2)	//Single phase line (no zero phase this way)
 			{
 				//Refine our criteria
-				if ((work_phases & 0x08) != 0x08)	//Not random case
+				if ((work_phases & PHASE_D) != PHASE_D)	//Not random case
 					temp_phases &= work_phases;
 
 				//defaulted else - if random case, only getting one phase out of this anywho (leave temp_phases as is)
 
 				switch (temp_phases)
 				{
-				case 0x00:	//No phases available - something must have faulted
+				case NO_PHASE:	//No phases available - something must have faulted
 					*implemented_fault = 0;	//Flag as such
 					break;
-				case 0x01:	//Phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				case PHASE_C:	//Phase C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 					*implemented_fault = 13;							//Flag as a C OC fault
 					break;
-				case 0x02:	//Phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				case PHASE_B:	//Phase B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 					*implemented_fault = 12;							//Flag as a B OC fault
 					break;
-				case 0x04:	//Phase A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				case PHASE_A:	//Phase A
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 					*implemented_fault = 11;							//Flag as a A OC fault
 					break;
 				default:	//No other cases should exist
@@ -5963,38 +5964,38 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			else if (numphase == 2)	//Only two phases present
 			{
 				//See how the two present coincide with the two we're asking for
-				if ((work_phases & 0x08) != 0x08)	//Not random case, see what we have
+				if ((work_phases & PHASE_D) != PHASE_D)	//Not random case, see what we have
 					temp_phases &= work_phases;
 				//Defaulted else - if random, only 1 choice exists, which is temp_phases (leave temp_phases as is)
 
 				//Implement the appropriate fault
 				switch (temp_phases)
 				{
-				case 0x00:	//No phases!
+				case NO_PHASE:	//No phases!
 					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 					break;
-				case 0x01:	//Only phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				case PHASE_C:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 					*implemented_fault = 13;							//Flag as a C OC fault
 					break;
-				case 0x02:	//Only phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				case PHASE_B:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 					*implemented_fault = 12;							//Flag as a B OC fault
 					break;
-				case 0x03:	//B and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+				case PHASE_BC:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 					*implemented_fault = 15;							//Flag as a B & C fault
 					break;
-				case 0x04:	//Only A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				case PHASE_A:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 					*implemented_fault = 11;							//Flag as a A OC fault
 					break;
-				case 0x05:	//A and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+				case PHASE_AC:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 					*implemented_fault = 16;							//Flag as A and C fault
 					break;
-				case 0x06:	//A and B
-					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+				case PHASE_AB:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 					*implemented_fault = 14;							//Flag as A and B fault
 					break;
 				default:	//Not sure how we'd ever get here
@@ -6008,32 +6009,32 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}//end 2 phases present
 			else if (numphase == 3)	//All phases present
 			{
-				if ((work_phases & 0x08) == 0x08)	//Random condition
+				if ((work_phases & PHASE_D) == PHASE_D)	//Random condition
 				{
 					//See if we have all three available to fault (if one or more is already faulted, we won't care)
 					rand_phases = 0;
 
 					//Check and populate random array as well
-					if ((temp_phases & 0x01) == 0x01)	//Check for C availability
+					if ((temp_phases & PHASE_C) == PHASE_C)	//Check for C availability
 					{
 						tempphase[rand_phases] = 1;
 						rand_phases++;
 					}
 
-					if ((temp_phases & 0x02) == 0x02)	//Check for B availability
+					if ((temp_phases & PHASE_B) == PHASE_B)	//Check for B availability
 					{
 						tempphase[rand_phases] = 2;
 						rand_phases++;
 					}
 
-					if ((temp_phases & 0x04) == 0x04)	//Check for A availability
+					if ((temp_phases & PHASE_A) == PHASE_A)	//Check for A availability
 					{
 						tempphase[rand_phases] = 4;
 						rand_phases++;
 					}
 
 					if (rand_phases <= 2)	//Two or fewer available, just mask us out
-						work_phases = 0x07;	//This will pull the appropriate phase
+						work_phases = PHASE_ABC;	//This will pull the appropriate phase
 					else	//Must be 3, right?
 					{
 						//Pick a random phase - this will be the one we DON'T fault
@@ -6041,11 +6042,11 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 						//Set temp_phases appropriate
 						if (randval == 1)	//Leave phase C
-							work_phases = 0x06;	//A and B fault
+							work_phases = PHASE_AB;	//A and B fault
 						else if (randval == 2)	//Leave phase B
-							work_phases = 0x05;	//A and C fault
+							work_phases = PHASE_AC;	//A and C fault
 						else	//Must be 4	- leave phase A
-							work_phases = 0x03;	//B and C fault
+							work_phases = PHASE_BC;	//B and C fault
 					}//end must be 3
 				}//end random condition
 				//Defaulted else - not random, so just use as normal mask
@@ -6056,31 +6057,31 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Implement the appropriate fault
 				switch (temp_phases)
 				{
-				case 0x00:	//No phases!
+				case NO_PHASE:	//No phases!
 					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 					break;
-				case 0x01:	//Only phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				case PHASE_C:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 					*implemented_fault = 13;							//Flag as a C OC fault
 					break;
-				case 0x02:	//Only phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				case PHASE_B:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 					*implemented_fault = 12;							//Flag as a B OC fault
 					break;
-				case 0x03:	//B and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+				case PHASE_BC:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 					*implemented_fault = 15;							//Flag as a B & C fault
 					break;
-				case 0x04:	//Only A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				case PHASE_A:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 					*implemented_fault = 11;							//Flag as a A OC fault
 					break;
-				case 0x05:	//A and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+				case PHASE_AC:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 					*implemented_fault = 16;							//Flag as A and C fault
 					break;
-				case 0x06:	//A and B
-					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+				case PHASE_AB:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 					*implemented_fault = 14;							//Flag as A and B fault
 					break;
 				default:	//Not sure how we'd ever get here
@@ -6101,40 +6102,40 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		else if ((fault_type[0] == 'O') && (fault_type[1] == 'C') && (fault_type[2] == '3'))	//Triple open-conductor fault
 		{
 			//Let's see what phases we have to play with
-			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+			temp_phases = NR_branchdata[NR_branch_reference].phases & PHASE_ABC;
 
 			//Case it out - if we want TLG, but don't have all three phases, just trip whatever we have
 			switch (temp_phases)
 			{
-			case 0x00:	//No phases!
+			case NO_PHASE:	//No phases!
 				*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 				break;
-			case 0x01:	//Only phase C
-				NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+			case PHASE_C:	//Only phase C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 				*implemented_fault = 13;							//Flag as a C only fault
 				break;
-			case 0x02:	//Only phase B
-				NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+			case PHASE_B:	//Only phase B
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 				*implemented_fault = 12;							//Flag as a B only fault
 				break;
-			case 0x03:	//B and C
-				NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+			case PHASE_BC:	//B and C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 				*implemented_fault = 15;							//Flag as a B & C fault
 				break;
-			case 0x04:	//Only A
-				NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+			case PHASE_A:	//Only A
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 				*implemented_fault = 11;							//Flag as a A only fault
 				break;
-			case 0x05:	//A and C
-				NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+			case PHASE_AC:	//A and C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 				*implemented_fault = 16;							//Flag as A and C fault
 				break;
-			case 0x06:	//A and B
-				NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+			case PHASE_AB:	//A and B
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 				*implemented_fault = 14;							//Flag as A and B fault
 				break;
-			case 0x07:	//A, B, and C
-				NR_branchdata[NR_branch_reference].phases &= 0xF8;	//Remove A, B, and C
+			case PHASE_ABC:	//A, B, and C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_ABC;	//Remove A, B, and C
 				*implemented_fault = 17;							//Flag as all three fault
 				break;
 			default:	//Not sure how we'd ever get here
@@ -6156,12 +6157,12 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				{
 					if (has_phase(PHASE_A))
 					{
-						if ((NR_branchdata[NR_branch_reference].origphases & 0x04) == 0x04)	//make sure phase A is active (no previous fault)
+						if ((NR_branchdata[NR_branch_reference].origphases & PHASE_A) == PHASE_A)	//make sure phase A is active (no previous fault)
 						{
 							//Remove phase A
-							NR_branchdata[NR_branch_reference].phases &= 0xFB;
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;
 
-							phase_remove = 0x04;	//Flag phase being removed
+							phase_remove = PHASE_A;	//Flag phase being removed
 
 							//Flag the fault type
 							*implemented_fault = 18;
@@ -6181,12 +6182,12 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				{
 					if (has_phase(PHASE_B))
 					{
-						if ((NR_branchdata[NR_branch_reference].origphases & 0x02) == 0x02)	//make sure phase B is active (no previous fault)
+						if ((NR_branchdata[NR_branch_reference].origphases & PHASE_B) == PHASE_B)	//make sure phase B is active (no previous fault)
 						{
 							//Remove phase B
-							NR_branchdata[NR_branch_reference].phases &= 0xFD;
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;
 
-							phase_remove = 0x02;	//Flag phase being removed
+							phase_remove = PHASE_B;	//Flag phase being removed
 
 							//Flag the fault type
 							*implemented_fault = 19;
@@ -6206,12 +6207,12 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				{
 					if (has_phase(PHASE_C))
 					{
-						if ((NR_branchdata[NR_branch_reference].origphases & 0x01) == 0x01)	//make sure phase C is active (no previous fault)
+						if ((NR_branchdata[NR_branch_reference].origphases & PHASE_C) == PHASE_C)	//make sure phase C is active (no previous fault)
 						{
 							//Remove phase C
-							NR_branchdata[NR_branch_reference].phases &= 0xFE;
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;
 
-							phase_remove = 0x01;	//Flag phase being removed
+							phase_remove = PHASE_C;	//Flag phase being removed
 
 							//Flag the fault type
 							*implemented_fault = 20;
@@ -6230,16 +6231,16 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				else if (fault_type[5] == '\0')	//Two Phase occurance
 				{
 					//Figure out who we want to alter - assume [2] is a -, so check [3]+
-					work_phases = 0x00;
+					work_phases = NO_PHASE;
 
 					if ((fault_type[3] == 'A') || (fault_type[4] == 'A'))	//A is desired
-						work_phases |= 0x04;
+						work_phases |= PHASE_A;
 
 					if ((fault_type[3] == 'B') || (fault_type[4] == 'B'))	//B is desired
-						work_phases |= 0x02;
+						work_phases |= PHASE_B;
 
 					if ((fault_type[3] == 'C') || (fault_type[4] == 'C'))	//C is desired
-						work_phases |= 0x01;
+						work_phases |= PHASE_C;
 
 					//See how many phases we have to deal with
 					numphase = 0;
@@ -6260,7 +6261,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					}
 
 					//Pull out what phases we have to play with
-					temp_phases = NR_branchdata[NR_branch_reference].origphases & 0x07;
+					temp_phases = NR_branchdata[NR_branch_reference].origphases & PHASE_ABC;
 
 					if (numphase == 0)
 					{
@@ -6275,19 +6276,19 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 						//Figure out what is going on
 						switch (temp_phases)
 						{
-						case 0x00:	//No phases available - something must have faulted
+						case NO_PHASE:	//No phases available - something must have faulted
 							*implemented_fault = 0;	//Flag as such
 							break;
-						case 0x01:	//Phase C
-							NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+						case PHASE_C:	//Phase C
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 							*implemented_fault = 20;							//Flag as a C switching
 							break;
-						case 0x02:	//Phase B
-							NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+						case PHASE_B:	//Phase B
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 							*implemented_fault = 19;							//Flag as a B switching
 							break;
-						case 0x04:	//Phase A
-							NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+						case PHASE_A:	//Phase A
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 							*implemented_fault = 18;							//Flag as a A switching
 							break;
 						default:	//No other cases should exist
@@ -6307,31 +6308,31 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 						//Implement the appropriate fault
 						switch (temp_phases)
 						{
-						case 0x00:	//No phases!
+						case NO_PHASE:	//No phases!
 							*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 							break;
-						case 0x01:	//Only phase C
-							NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+						case PHASE_C:	//Only phase C
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 							*implemented_fault = 20;							//Flag as a C switching
 							break;
-						case 0x02:	//Only phase B
-							NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+						case PHASE_B:	//Only phase B
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 							*implemented_fault = 19;							//Flag as a B switching
 							break;
-						case 0x03:	//B and C
-							NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+						case PHASE_BC:	//B and C
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 							*implemented_fault = 22;							//Flag as a B & C switching
 							break;
-						case 0x04:	//Only A
-							NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+						case PHASE_A:	//Only A
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 							*implemented_fault = 18;							//Flag as a A switching
 							break;
-						case 0x05:	//A and C
-							NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+						case PHASE_AC:	//A and C
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 							*implemented_fault = 23;							//Flag as A and C switching
 							break;
-						case 0x06:	//A and B
-							NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+						case PHASE_AB:	//A and B
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 							*implemented_fault = 21;							//Flag as A and B switching
 							break;
 						default:	//Not sure how we'd ever get here
@@ -6351,31 +6352,31 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 						//Implement the appropriate fault
 						switch (temp_phases)
 						{
-						case 0x00:	//No phases!
+						case NO_PHASE:	//No phases!
 							*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 							break;
-						case 0x01:	//Only phase C
-							NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+						case PHASE_C:	//Only phase C
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 							*implemented_fault = 20;							//Flag as a C switching
 							break;
-						case 0x02:	//Only phase B
-							NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+						case PHASE_B:	//Only phase B
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 							*implemented_fault = 19;							//Flag as a B switching
 							break;
-						case 0x03:	//B and C
-							NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+						case PHASE_BC:	//B and C
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 							*implemented_fault = 22;							//Flag as a B & C fault
 							break;
-						case 0x04:	//Only A
-							NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+						case PHASE_A:	//Only A
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 							*implemented_fault = 18;							//Flag as a A switching
 							break;
-						case 0x05:	//A and C
-							NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+						case PHASE_AC:	//A and C
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 							*implemented_fault = 23;							//Flag as A and C switching
 							break;
-						case 0x06:	//A and B
-							NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+						case PHASE_AB:	//A and B
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 							*implemented_fault = 21;							//Flag as A and B switching
 							break;
 						default:	//Not sure how we'd ever get here
@@ -6396,40 +6397,40 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				else if (fault_type[6] == '\0')	//Three Phase occurance
 				{
 					//Let's see what phases we have to play with
-					temp_phases = NR_branchdata[NR_branch_reference].origphases & 0x07;
+					temp_phases = NR_branchdata[NR_branch_reference].origphases & PHASE_ABC;
 
 					//Case it out - if we want three-phase switching, but don't have all three phases, just switch whatever we have
 					switch (temp_phases)
 					{
-					case 0x00:	//No phases!
+					case NO_PHASE:	//No phases!
 						*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 						break;
-					case 0x01:	//Only phase C
-						NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+					case PHASE_C:	//Only phase C
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 						*implemented_fault = 20;							//Flag as a C only switching
 						break;
-					case 0x02:	//Only phase B
-						NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+					case PHASE_B:	//Only phase B
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 						*implemented_fault = 19;							//Flag as a B only switching
 						break;
-					case 0x03:	//B and C
-						NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+					case PHASE_BC:	//B and C
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 						*implemented_fault = 22;							//Flag as a B & C switching
 						break;
-					case 0x04:	//Only A
-						NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+					case PHASE_A:	//Only A
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 						*implemented_fault = 18;							//Flag as a A only switching
 						break;
-					case 0x05:	//A and C
-						NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+					case PHASE_AC:	//A and C
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 						*implemented_fault = 23;							//Flag as A and C switching
 						break;
-					case 0x06:	//A and B
-						NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+					case PHASE_AB:	//A and B
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 						*implemented_fault = 21;							//Flag as A and B switching
 						break;
-					case 0x07:	//A, B, and C
-						NR_branchdata[NR_branch_reference].phases &= 0xF8;	//Remove A, B, and C
+					case PHASE_ABC:	//A, B, and C
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_ABC;	//Remove A, B, and C
 						*implemented_fault = 24;							//Flag as all three switching
 						break;
 					default:	//Not sure how we'd ever get here
@@ -6448,12 +6449,12 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				{
 					if (has_phase(PHASE_A))
 					{
-						if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//make sure phase A is active (no previous fault)
+						if ((NR_branchdata[NR_branch_reference].phases & PHASE_A) == PHASE_A)	//make sure phase A is active (no previous fault)
 						{
 							//Remove phase A
-							NR_branchdata[NR_branch_reference].phases &= 0xFB;
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;
 
-							phase_remove = 0x04;	//Flag phase being removed
+							phase_remove = PHASE_A;	//Flag phase being removed
 
 							//Flag the fault type
 							*implemented_fault = 18;
@@ -6473,12 +6474,12 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				{
 					if (has_phase(PHASE_B))
 					{
-						if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//make sure phase B is active (no previous fault)
+						if ((NR_branchdata[NR_branch_reference].phases & PHASE_B) == PHASE_B)	//make sure phase B is active (no previous fault)
 						{
 							//Remove phase B
-							NR_branchdata[NR_branch_reference].phases &= 0xFD;
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;
 
-							phase_remove = 0x02;	//Flag phase being removed
+							phase_remove = PHASE_B;	//Flag phase being removed
 
 							//Flag the fault type
 							*implemented_fault = 19;
@@ -6498,12 +6499,12 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				{
 					if (has_phase(PHASE_C))
 					{
-						if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//make sure phase C is active (no previous fault)
+						if ((NR_branchdata[NR_branch_reference].phases & PHASE_C) == PHASE_C)	//make sure phase C is active (no previous fault)
 						{
 							//Remove phase C
-							NR_branchdata[NR_branch_reference].phases &= 0xFE;
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;
 
-							phase_remove = 0x01;	//Flag phase being removed
+							phase_remove = PHASE_C;	//Flag phase being removed
 
 							//Flag the fault type
 							*implemented_fault = 20;
@@ -6522,16 +6523,16 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				else if (fault_type[5] == '\0')	//Two Phase occurance
 				{
 					//Figure out who we want to alter - assume [2] is a -, so check [3]+
-					work_phases = 0x00;
+					work_phases = NO_PHASE;
 
 					if ((fault_type[3] == 'A') || (fault_type[4] == 'A'))	//A is desired
-						work_phases |= 0x04;
+						work_phases |= PHASE_A;
 
 					if ((fault_type[3] == 'B') || (fault_type[4] == 'B'))	//B is desired
-						work_phases |= 0x02;
+						work_phases |= PHASE_B;
 
 					if ((fault_type[3] == 'C') || (fault_type[4] == 'C'))	//C is desired
-						work_phases |= 0x01;
+						work_phases |= PHASE_C;
 
 					//See how many phases we have to deal with
 					numphase = 0;
@@ -6552,7 +6553,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					}
 
 					//Pull out what phases we have to play with
-					temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+					temp_phases = NR_branchdata[NR_branch_reference].phases & PHASE_ABC;
 
 					if (numphase == 0)
 					{
@@ -6567,19 +6568,19 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 						//Figure out what is going on
 						switch (temp_phases)
 						{
-						case 0x00:	//No phases available - something must have faulted
+						case NO_PHASE:	//No phases available - something must have faulted
 							*implemented_fault = 0;	//Flag as such
 							break;
-						case 0x01:	//Phase C
-							NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+						case PHASE_C:	//Phase C
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 							*implemented_fault = 20;							//Flag as a C switching
 							break;
-						case 0x02:	//Phase B
-							NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+						case PHASE_B:	//Phase B
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 							*implemented_fault = 19;							//Flag as a B switching
 							break;
-						case 0x04:	//Phase A
-							NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+						case PHASE_A:	//Phase A
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 							*implemented_fault = 18;							//Flag as a A switching
 							break;
 						default:	//No other cases should exist
@@ -6599,31 +6600,31 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 						//Implement the appropriate fault
 						switch (temp_phases)
 						{
-						case 0x00:	//No phases!
+						case NO_PHASE:	//No phases!
 							*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 							break;
-						case 0x01:	//Only phase C
-							NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+						case PHASE_C:	//Only phase C
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 							*implemented_fault = 20;							//Flag as a C switching
 							break;
-						case 0x02:	//Only phase B
-							NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+						case PHASE_B:	//Only phase B
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 							*implemented_fault = 19;							//Flag as a B switching
 							break;
-						case 0x03:	//B and C
-							NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+						case PHASE_BC:	//B and C
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 							*implemented_fault = 22;							//Flag as a B & C switching
 							break;
-						case 0x04:	//Only A
-							NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+						case PHASE_A:	//Only A
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 							*implemented_fault = 18;							//Flag as a A switching
 							break;
-						case 0x05:	//A and C
-							NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+						case PHASE_AC:	//A and C
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 							*implemented_fault = 23;							//Flag as A and C switching
 							break;
-						case 0x06:	//A and B
-							NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+						case PHASE_AB:	//A and B
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 							*implemented_fault = 21;							//Flag as A and B switching
 							break;
 						default:	//Not sure how we'd ever get here
@@ -6643,31 +6644,31 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 						//Implement the appropriate fault
 						switch (temp_phases)
 						{
-						case 0x00:	//No phases!
+						case NO_PHASE:	//No phases!
 							*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 							break;
-						case 0x01:	//Only phase C
-							NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+						case PHASE_C:	//Only phase C
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 							*implemented_fault = 20;							//Flag as a C switching
 							break;
-						case 0x02:	//Only phase B
-							NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+						case PHASE_B:	//Only phase B
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 							*implemented_fault = 19;							//Flag as a B switching
 							break;
-						case 0x03:	//B and C
-							NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+						case PHASE_BC:	//B and C
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 							*implemented_fault = 22;							//Flag as a B & C fault
 							break;
-						case 0x04:	//Only A
-							NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+						case PHASE_A:	//Only A
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 							*implemented_fault = 18;							//Flag as a A switching
 							break;
-						case 0x05:	//A and C
-							NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+						case PHASE_AC:	//A and C
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 							*implemented_fault = 23;							//Flag as A and C switching
 							break;
-						case 0x06:	//A and B
-							NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+						case PHASE_AB:	//A and B
+							NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 							*implemented_fault = 21;							//Flag as A and B switching
 							break;
 						default:	//Not sure how we'd ever get here
@@ -6688,40 +6689,40 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				else if (fault_type[6] == '\0')	//Three Phase occurance
 				{
 					//Let's see what phases we have to play with
-					temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+					temp_phases = NR_branchdata[NR_branch_reference].phases & PHASE_ABC;
 
 					//Case it out - if we want three-phase switching, but don't have all three phases, just switch whatever we have
 					switch (temp_phases)
 					{
-					case 0x00:	//No phases!
+					case NO_PHASE:	//No phases!
 						*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 						break;
-					case 0x01:	//Only phase C
-						NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+					case PHASE_C:	//Only phase C
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 						*implemented_fault = 20;							//Flag as a C only switching
 						break;
-					case 0x02:	//Only phase B
-						NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+					case PHASE_B:	//Only phase B
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 						*implemented_fault = 19;							//Flag as a B only switching
 						break;
-					case 0x03:	//B and C
-						NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+					case PHASE_BC:	//B and C
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 						*implemented_fault = 22;							//Flag as a B & C switching
 						break;
-					case 0x04:	//Only A
-						NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+					case PHASE_A:	//Only A
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 						*implemented_fault = 18;							//Flag as a A only switching
 						break;
-					case 0x05:	//A and C
-						NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+					case PHASE_AC:	//A and C
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 						*implemented_fault = 23;							//Flag as A and C switching
 						break;
-					case 0x06:	//A and B
-						NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+					case PHASE_AB:	//A and B
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 						*implemented_fault = 21;							//Flag as A and B switching
 						break;
-					case 0x07:	//A, B, and C
-						NR_branchdata[NR_branch_reference].phases &= 0xF8;	//Remove A, B, and C
+					case PHASE_ABC:	//A, B, and C
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_ABC;	//Remove A, B, and C
 						*implemented_fault = 24;							//Flag as all three switching
 						break;
 					default:	//Not sure how we'd ever get here
@@ -6769,21 +6770,21 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
 
 				//Put it back into proper format
-				rand_phases = (unsigned char)(randval);
+				rand_phases = (set)(randval);
 			}
 			else	//Not a random - clear the variable, just in case
-				rand_phases = 0x00;
+				rand_phases = NO_PHASE;
 
-			if ((fault_type[4] == 'A') || (rand_phases == 0x04))
+			if ((fault_type[4] == 'A') || (rand_phases == PHASE_A))
 			{
 				if (has_phase(PHASE_A))
 				{
-					if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//make sure phase A is active (no previous fault)
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_A) == PHASE_A)	//make sure phase A is active (no previous fault)
 					{
 						//Remove phase A
-						NR_branchdata[NR_branch_reference].phases &= 0xFB;
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;
 
-						phase_remove = 0x04;	//Flag phase being removed
+						phase_remove = PHASE_A;	//Flag phase being removed
 
 						//Flag the fault type
 						*implemented_fault = 25;
@@ -6799,17 +6800,17 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					//Defined above
 				}
 			}//End A fault
-			else if ((fault_type[4] == 'B') || (rand_phases == 0x02))
+			else if ((fault_type[4] == 'B') || (rand_phases == PHASE_B))
 			{
 				if (has_phase(PHASE_B))
 				{
-					if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//make sure phase B is active (no previous fault)
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_B) == PHASE_B)	//make sure phase B is active (no previous fault)
 					{
 						//Remove phase B
-						NR_branchdata[NR_branch_reference].phases &= 0xFD;
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;
 
 						//Flag phase being removed
-						phase_remove = 0x02;
+						phase_remove = PHASE_B;
 
 						//Flag the fault type
 						*implemented_fault = 26;
@@ -6825,17 +6826,17 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					//Defined above
 				}
 			}
-			else if ((fault_type[4] == 'C') || (rand_phases == 0x01))
+			else if ((fault_type[4] == 'C') || (rand_phases == PHASE_C))
 			{
 				if (has_phase(PHASE_C))
 				{
-					if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//make sure phase C is active (no previous fault)
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_C) == PHASE_C)	//make sure phase C is active (no previous fault)
 					{
 						//Remove phase C
-						NR_branchdata[NR_branch_reference].phases &= 0xFE;
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;
 
 						//Flag phase being removed
-						phase_remove = 0x01;
+						phase_remove = PHASE_C;
 
 						//Flag the fault type
 						*implemented_fault = 27;
@@ -6860,19 +6861,19 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		else if ((fault_type[0] == 'F') && (fault_type[1] == 'U') && (fault_type[2] == 'S') && (fault_type[3] == '-') && (fault_type[6] == '\0'))	//Double fuse fault
 		{
 			//Figure out who we want to alter - assume [3] is a -, so check [4]+
-			work_phases = 0x00;
+			work_phases = NO_PHASE;
 
 			if (fault_type[4] == 'X')	//Random, flag as such
-				work_phases |= 0x08;
+				work_phases |= PHASE_D;
 			
 			if ((fault_type[4] == 'A') || (fault_type[5] == 'A'))	//A is desired
-				work_phases |= 0x04;
+				work_phases |= PHASE_A;
 
 			if ((fault_type[4] == 'B') || (fault_type[5] == 'B'))	//B is desired
-				work_phases |= 0x02;
+				work_phases |= PHASE_B;
 
 			if ((fault_type[4] == 'C') || (fault_type[5] == 'C'))	//C is desired
-				work_phases |= 0x01;
+				work_phases |= PHASE_C;
 
 			//See how many phases we have to deal with
 			numphase = 0;
@@ -6893,7 +6894,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}
 
 			//Pull out what phases we have to play with
-			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+			temp_phases = NR_branchdata[NR_branch_reference].phases & PHASE_ABC;
 
 			if (numphase == 0)
 			{
@@ -6903,26 +6904,26 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			else if (numphase < 2)	//Single phase line (no zero phase this way)
 			{
 				//Refine our criteria
-				if ((work_phases & 0x08) != 0x08)	//Not random case
+				if ((work_phases & PHASE_D) != PHASE_D)	//Not random case
 					temp_phases &= work_phases;
 
 				//defaulted else - if random case, only getting one phase out of this anywho (leave temp_phases as is)
 
 				switch (temp_phases)
 				{
-				case 0x00:	//No phases available - something must have faulted
+				case NO_PHASE:	//No phases available - something must have faulted
 					*implemented_fault = 0;	//Flag as such
 					break;
-				case 0x01:	//Phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				case PHASE_C:	//Phase C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 					*implemented_fault = 27;							//Flag as a C fuse fault
 					break;
-				case 0x02:	//Phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				case PHASE_B:	//Phase B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 					*implemented_fault = 26;							//Flag as a B fuse fault
 					break;
-				case 0x04:	//Phase A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				case PHASE_A:	//Phase A
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 					*implemented_fault = 25;							//Flag as a A fuse fault
 					break;
 				default:	//No other cases should exist
@@ -6937,38 +6938,38 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			else if (numphase == 2)	//Only two phases present
 			{
 				//See how the two present coincide with the two we're asking for
-				if ((work_phases & 0x08) != 0x08)	//Not random case, see what we have
+				if ((work_phases & PHASE_D) != PHASE_D)	//Not random case, see what we have
 					temp_phases &= work_phases;
 				//Defaulted else - if random, only 1 choice exists, which is temp_phases (leave temp_phases as is)
 
 				//Implement the appropriate fault
 				switch (temp_phases)
 				{
-				case 0x00:	//No phases!
+				case NO_PHASE:	//No phases!
 					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 					break;
-				case 0x01:	//Only phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				case PHASE_C:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 					*implemented_fault = 27;							//Flag as a C fuse fault
 					break;
-				case 0x02:	//Only phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				case PHASE_B:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 					*implemented_fault = 26;							//Flag as a B fuse fault
 					break;
-				case 0x03:	//B and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+				case PHASE_BC:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 					*implemented_fault = 29;							//Flag as a B & C fuse fault
 					break;
-				case 0x04:	//Only A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				case PHASE_A:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 					*implemented_fault = 25;							//Flag as a A fuse fault
 					break;
-				case 0x05:	//A and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+				case PHASE_AC:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 					*implemented_fault = 30;							//Flag as A and C fuse fault
 					break;
-				case 0x06:	//A and B
-					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+				case PHASE_AB:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 					*implemented_fault = 28;							//Flag as A and B fuse fault
 					break;
 				default:	//Not sure how we'd ever get here
@@ -6982,32 +6983,32 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}//end 2 phases present
 			else if (numphase == 3)	//All phases present
 			{
-				if ((work_phases & 0x08) == 0x08)	//Random condition
+				if ((work_phases & PHASE_D) == PHASE_D)	//Random condition
 				{
 					//See if we have all three available to fault (if one or more is already faulted, we won't care)
 					rand_phases = 0;
 
 					//Check and populate random array as well
-					if ((temp_phases & 0x01) == 0x01)	//Check for C availability
+					if ((temp_phases & PHASE_C) == PHASE_C)	//Check for C availability
 					{
 						tempphase[rand_phases] = 1;
 						rand_phases++;
 					}
 
-					if ((temp_phases & 0x02) == 0x02)	//Check for B availability
+					if ((temp_phases & PHASE_B) == PHASE_B)	//Check for B availability
 					{
 						tempphase[rand_phases] = 2;
 						rand_phases++;
 					}
 
-					if ((temp_phases & 0x04) == 0x04)	//Check for A availability
+					if ((temp_phases & PHASE_A) == PHASE_A)	//Check for A availability
 					{
 						tempphase[rand_phases] = 4;
 						rand_phases++;
 					}
 
 					if (rand_phases <= 2)	//Two or fewer available, just mask us out
-						work_phases = 0x07;	//This will pull the appropriate phase
+						work_phases = PHASE_ABC;	//This will pull the appropriate phase
 					else	//Must be 3, right?
 					{
 						//Pick a random phase - this will be the one we DON'T fault
@@ -7015,11 +7016,11 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 						//Set temp_phases appropriate
 						if (randval == 1)	//Leave phase C
-							work_phases = 0x06;	//A and B fuse fault
+							work_phases = PHASE_AB;	//A and B fuse fault
 						else if (randval == 2)	//Leave phase B
-							work_phases = 0x05;	//A and C fuse fault
+							work_phases = PHASE_AC;	//A and C fuse fault
 						else	//Must be 4	- leave phase A
-							work_phases = 0x03;	//B and C fuse fault
+							work_phases = PHASE_BC;	//B and C fuse fault
 					}//end must be 3
 				}//end random condition
 				//Defaulted else - not random, so just use as normal mask
@@ -7030,31 +7031,31 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Implement the appropriate fault
 				switch (temp_phases)
 				{
-				case 0x00:	//No phases!
+				case NO_PHASE:	//No phases!
 					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 					break;
-				case 0x01:	//Only phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				case PHASE_C:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 					*implemented_fault = 27;							//Flag as a C fuse fault
 					break;
-				case 0x02:	//Only phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				case PHASE_B:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 					*implemented_fault = 26;							//Flag as a B fuse fault
 					break;
-				case 0x03:	//B and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+				case PHASE_BC:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 					*implemented_fault = 29;							//Flag as a B & C fuse fault
 					break;
-				case 0x04:	//Only A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				case PHASE_A:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 					*implemented_fault = 25;							//Flag as a A fuse fault
 					break;
-				case 0x05:	//A and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+				case PHASE_AC:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 					*implemented_fault = 30;							//Flag as A and C fuse fault
 					break;
-				case 0x06:	//A and B
-					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+				case PHASE_AB:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 					*implemented_fault = 28;							//Flag as A and B fuse fault
 					break;
 				default:	//Not sure how we'd ever get here
@@ -7075,40 +7076,40 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		else if ((fault_type[0] == 'F') && (fault_type[1] == 'U') && (fault_type[2] == 'S') && (fault_type[3] == '-') && (fault_type[7] == '\0'))	//Three-phase fuse pop
 		{
 			//Let's see what phases we have to play with
-			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+			temp_phases = NR_branchdata[NR_branch_reference].phases & PHASE_ABC;
 
 			//Case it out - if we want TLG, but don't have all three phases, just trip whatever we have
 			switch (temp_phases)
 			{
-			case 0x00:	//No phases!
+			case NO_PHASE:	//No phases!
 				*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 				break;
-			case 0x01:	//Only phase C
-				NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+			case PHASE_C:	//Only phase C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 				*implemented_fault = 27;							//Flag as a C only fuse fault
 				break;
-			case 0x02:	//Only phase B
-				NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+			case PHASE_B:	//Only phase B
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 				*implemented_fault = 26;							//Flag as a B only fuse fault
 				break;
-			case 0x03:	//B and C
-				NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+			case PHASE_BC:	//B and C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 				*implemented_fault = 29;							//Flag as a B & C fuse fault
 				break;
-			case 0x04:	//Only A
-				NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+			case PHASE_A:	//Only A
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 				*implemented_fault = 25;							//Flag as a A only fuse fault
 				break;
-			case 0x05:	//A and C
-				NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+			case PHASE_AC:	//A and C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 				*implemented_fault = 30;							//Flag as A and C fuse fault
 				break;
-			case 0x06:	//A and B
-				NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+			case PHASE_AB:	//A and B
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 				*implemented_fault = 28;							//Flag as A and B fuse fault
 				break;
-			case 0x07:	//A, B, and C
-				NR_branchdata[NR_branch_reference].phases &= 0xF8;	//Remove A, B, and C
+			case PHASE_ABC:	//A, B, and C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_ABC;	//Remove A, B, and C
 				*implemented_fault = 31;							//Flag as all three fuse fault
 				break;
 			default:	//Not sure how we'd ever get here
@@ -7251,7 +7252,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}
 
 				//Update the fuse statii
-				ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+				ext_result = ((int (*)(OBJECT *, set, bool))(*funadd))(tmpobj,phase_remove,false);
 
 				//Make sure it worked
 				if (ext_result != 1)
@@ -7283,7 +7284,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Store the branch as an index in appropriate phases
 				for (phaseidx=0; phaseidx < 3; phaseidx++)
 				{
-					temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+					temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 					if ((phase_remove & temp_phases) == temp_phases)
 					{
@@ -7331,7 +7332,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}
 
 				//Update the recloser statii - return is the number of attempts (max attempts in this case)
-				ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+				ext_result_dbl = ((double (*)(OBJECT *, set, bool))(*funadd))(tmpobj,phase_remove,false);
 
 				//Make sure it worked
 				if (ext_result_dbl == 0)
@@ -7361,7 +7362,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Store the branch as an index in appropriate phases
 				for (phaseidx=0; phaseidx < 3; phaseidx++)
 				{
-					temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+					temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 					if ((phase_remove & temp_phases) == temp_phases)
 					{
@@ -7411,7 +7412,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}
 
 				//Update the switch statii
-				ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+				ext_result = ((int (*)(OBJECT *, set, bool))(*funadd))(tmpobj,phase_remove,false);
 
 				//Make sure it worked
 				if (ext_result != 1)
@@ -7438,7 +7439,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Store ourselves as our protective device
 				for (phaseidx=0; phaseidx < 3; phaseidx++)
 				{
-					temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+					temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 					if ((phase_remove & temp_phases) == temp_phases)
 					{
@@ -7476,7 +7477,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					//Store the swing as an index in appropriate phases
 					for (phaseidx=0; phaseidx < 3; phaseidx++)
 					{
-						temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+						temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 						if ((phase_remove & temp_phases) == temp_phases)
 						{
@@ -7559,7 +7560,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								}
 
 								//Update the recloser statii - return is the number of attempts (max attempts in this case)
-								ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+								ext_result_dbl = ((double (*)(OBJECT *, set, bool))(*funadd))(tmpobj,phase_remove,false);
 
 								//Make sure it worked
 								if (ext_result_dbl == 0)
@@ -7589,7 +7590,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Store the branch as an index in appropriate phases
 								for (phaseidx=0; phaseidx < 3; phaseidx++)
 								{
-									temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+									temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 									if ((phase_remove & temp_phases) == temp_phases)
 									{
@@ -7641,7 +7642,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								}
 
 								//Update the switch statii
-								ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+								ext_result = ((int (*)(OBJECT *, set, bool))(*funadd))(tmpobj,phase_remove,false);
 
 								//Make sure it worked
 								if (ext_result != 1)
@@ -7668,7 +7669,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Store ourselves as our protective device
 								for (phaseidx=0; phaseidx < 3; phaseidx++)
 								{
-									temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+									temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 									if ((phase_remove & temp_phases) == temp_phases)
 									{
@@ -7715,7 +7716,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								}
 
 								//Update the sectionalizer statii
-								ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+								ext_result_dbl = ((double (*)(OBJECT *, set, bool))(*funadd))(tmpobj,phase_remove,false);
 
 								//Make sure it worked
 								if (ext_result_dbl == 0)
@@ -7753,7 +7754,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 									//Store the branch as an index in appropriate phases
 									for (phaseidx=0; phaseidx < 3; phaseidx++)
 									{
-										temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+										temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 										if ((phase_remove & temp_phases) == temp_phases)
 										{
@@ -7804,7 +7805,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								}
 
 								//Update the fuse statii
-								ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+								ext_result = ((int (*)(OBJECT *, set, bool))(*funadd))(tmpobj,phase_remove,false);
 
 								//Make sure it worked
 								if (ext_result != 1)
@@ -7831,7 +7832,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Store the branch as an index in appropriate phases
 								for (phaseidx=0; phaseidx < 3; phaseidx++)
 								{
-									temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+									temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 									if ((phase_remove & temp_phases) == temp_phases)
 									{
@@ -7869,7 +7870,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								}
 
 								//Transformers are magical "all phases removed" devices - basically we're assuming catastrophic failure
-								NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].phases &= 0xF0;
+								NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].phases &= ~PHASE_INFO;
 
 								//Store the branch as an index in appropriate phases - transformer becomes all, not matter what
 								for (phaseidx=0; phaseidx < 3; phaseidx++)
@@ -7893,7 +7894,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								}
 
 								//Flag remote transformer phases - all of them by default
-								NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].faultphases = 0x07;
+								NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].faultphases = PHASE_ABC;
 
 								//Update our fault phases so we aren't restored
 								NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
@@ -7947,7 +7948,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			//Update the device - find a valid phase
 			for (phaseidx=0; phaseidx < 3; phaseidx++)
 			{
-				temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+				temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 				if ((phase_remove & temp_phases) == temp_phases)
 				{
@@ -8085,22 +8086,22 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
 
 				//Put it back into proper format
-				rand_phases = (unsigned char)(randval);
+				rand_phases = (set)(randval);
 			}
 			else	//Not a random - clear the variable, just in case
-				rand_phases = 0x00;
+				rand_phases = NO_PHASE;
 
-			if ((fault_type[4] == 'A') || (rand_phases == 0x04))
+			if ((fault_type[4] == 'A') || (rand_phases == PHASE_A))
 			{
 				if (has_phase(PHASE_A))
 				{
-					if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//make sure phase A is active (no previous fault)
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_A) == PHASE_A)	//make sure phase A is active (no previous fault)
 					{
 						//Remove phase A
-						NR_branchdata[NR_branch_reference].phases &= 0xFB;
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;
 
 						//Flag which phase we've removed
-						phase_remove = 0x04;
+						phase_remove = PHASE_A;
 
 						//Flag the fault type
 						*implemented_fault = 1;
@@ -8119,17 +8120,17 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*/
 				}
 			}//End A fault
-			else if ((fault_type[4] == 'B') || (rand_phases == 0x02))
+			else if ((fault_type[4] == 'B') || (rand_phases == PHASE_B))
 			{
 				if (has_phase(PHASE_B))
 				{
-					if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//make sure phase B is active (no previous fault)
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_B) == PHASE_B)	//make sure phase B is active (no previous fault)
 					{
 						//Remove phase B
-						NR_branchdata[NR_branch_reference].phases &= 0xFD;
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;
 
 						//Flag which phase we've removed
-						phase_remove = 0x02;
+						phase_remove = PHASE_B;
 
 						//Flag the fault type
 						*implemented_fault = 2;
@@ -8148,17 +8149,17 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					*/
 				}
 			}
-			else if ((fault_type[4] == 'C') || (rand_phases == 0x01))
+			else if ((fault_type[4] == 'C') || (rand_phases == PHASE_C))
 			{
 				if (has_phase(PHASE_C))
 				{
-					if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//make sure phase C is active (no previous fault)
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_C) == PHASE_C)	//make sure phase C is active (no previous fault)
 					{
 						//Remove phase C
-						NR_branchdata[NR_branch_reference].phases &= 0xFE;
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;
 
 						//Flag which phase we've removed
-						phase_remove = 0x01;
+						phase_remove = PHASE_C;
 
 						//Flag the fault type
 						*implemented_fault = 3;
@@ -8189,19 +8190,19 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		else if ((fault_type[0] == 'D') && (fault_type[1] == 'L') && (fault_type[2] == 'G'))	//DLG - double-line-ground fault
 		{
 			//Figure out who we want to alter - assume [3] is a -, so check [4]+
-			work_phases = 0x00;
+			work_phases = NO_PHASE;
 
 			if (fault_type[4] == 'X')	//Random, flag as such
-				work_phases |= 0x08;
+				work_phases |= PHASE_D;
 			
 			if ((fault_type[4] == 'A') || (fault_type[5] == 'A'))	//A is desired
-				work_phases |= 0x04;
+				work_phases |= PHASE_A;
 
 			if ((fault_type[4] == 'B') || (fault_type[5] == 'B'))	//B is desired
-				work_phases |= 0x02;
+				work_phases |= PHASE_B;
 
 			if ((fault_type[4] == 'C') || (fault_type[5] == 'C'))	//C is desired
-				work_phases |= 0x01;
+				work_phases |= PHASE_C;
 
 			//See how many phases we have to deal with
 			numphase = 0;
@@ -8222,7 +8223,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}
 
 			//Pull out what phases we have to play with
-			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+			temp_phases = NR_branchdata[NR_branch_reference].phases & PHASE_ABC;
 
 			if (numphase == 0)
 			{
@@ -8236,26 +8237,26 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			else if (numphase < 2)	//Single phase line (no zero phase this way)
 			{
 				//Refine our criteria
-				if ((work_phases & 0x08) != 0x08)	//Not random case
+				if ((work_phases & PHASE_D) != PHASE_D)	//Not random case
 					temp_phases &= work_phases;
 
 				//defaulted else - if random case, only getting one phase out of this anywho (leave temp_phases as is)
 
 				switch (temp_phases)
 				{
-				case 0x00:	//No phases available - something must have faulted
+				case NO_PHASE:	//No phases available - something must have faulted
 					*implemented_fault = 0;	//Flag as such
 					break;
-				case 0x01:	//Phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				case PHASE_C:	//Phase C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 					*implemented_fault = 3;								//Flag as a C SLG fault
 					break;
-				case 0x02:	//Phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				case PHASE_B:	//Phase B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 					*implemented_fault = 2;								//Flag as a B SLG fault
 					break;
-				case 0x04:	//Phase A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				case PHASE_A:	//Phase A
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 					*implemented_fault = 1;								//Flag as a A SLG fault
 					break;
 				default:	//No other cases should exist
@@ -8270,38 +8271,38 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			else if (numphase == 2)	//Only two phases present
 			{
 				//See how the two present coincide with the two we're asking for
-				if ((work_phases & 0x08) != 0x08)	//Not random case, see what we have
+				if ((work_phases & PHASE_D) != PHASE_D)	//Not random case, see what we have
 					temp_phases &= work_phases;
 				//Defaulted else - if random, only 1 choice exists, which is temp_phases (leave temp_phases as is)
 
 				//Implement the appropriate fault
 				switch (temp_phases)
 				{
-				case 0x00:	//No phases!
+				case NO_PHASE:	//No phases!
 					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 					break;
-				case 0x01:	//Only phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				case PHASE_C:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 					*implemented_fault = 3;								//Flag as a C SLG fault
 					break;
-				case 0x02:	//Only phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				case PHASE_B:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 					*implemented_fault = 2;								//Flag as a B SLG fault
 					break;
-				case 0x03:	//B and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+				case PHASE_BC:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 					*implemented_fault = 5;								//Flag as a B & C fault
 					break;
-				case 0x04:	//Only A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				case PHASE_A:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 					*implemented_fault = 1;								//Flag as a A SLG fault
 					break;
-				case 0x05:	//A and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+				case PHASE_AC:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 					*implemented_fault = 6;								//Flag as A and C fault
 					break;
-				case 0x06:	//A and B
-					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+				case PHASE_AB:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 					*implemented_fault = 4;								//Flag as A and B fault
 					break;
 				default:	//Not sure how we'd ever get here
@@ -8319,32 +8320,32 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}//end 2 phases present
 			else if (numphase == 3)	//All phases present
 			{
-				if ((work_phases & 0x08) == 0x08)	//Random condition
+				if ((work_phases & PHASE_D) == PHASE_D)	//Random condition
 				{
 					//See if we have all three available to fault (if one or more is already faulted, we won't care)
 					rand_phases = 0;
 
 					//Check and populate random array as well
-					if ((temp_phases & 0x01) == 0x01)	//Check for C availability
+					if ((temp_phases & PHASE_C) == PHASE_C)	//Check for C availability
 					{
 						tempphase[rand_phases] = 1;
 						rand_phases++;
 					}
 
-					if ((temp_phases & 0x02) == 0x02)	//Check for B availability
+					if ((temp_phases & PHASE_B) == PHASE_B)	//Check for B availability
 					{
 						tempphase[rand_phases] = 2;
 						rand_phases++;
 					}
 
-					if ((temp_phases & 0x04) == 0x04)	//Check for A availability
+					if ((temp_phases & PHASE_A) == PHASE_A)	//Check for A availability
 					{
 						tempphase[rand_phases] = 4;
 						rand_phases++;
 					}
 
 					if (rand_phases <= 2)	//Two or fewer available, just mask us out
-						work_phases = 0x07;	//This will pull the appropriate phase
+						work_phases = PHASE_ABC;	//This will pull the appropriate phase
 					else	//Must be 3, right?
 					{
 						//Pick a random phase - this will be the one we DON'T fault
@@ -8352,11 +8353,11 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 						//Set temp_phases appropriate
 						if (randval == 1)	//Leave phase C
-							work_phases = 0x06;	//A and B fault
+							work_phases = PHASE_AB;	//A and B fault
 						else if (randval == 2)	//Leave phase B
-							work_phases = 0x05;	//A and C fault
+							work_phases = PHASE_AC;	//A and C fault
 						else	//Must be 4	- leave phase A
-							work_phases = 0x03;	//B and C fault
+							work_phases = PHASE_BC;	//B and C fault
 					}//end must be 3
 				}//end random condition
 				//Defaulted else - not random, so just use as normal mask
@@ -8367,31 +8368,31 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Implement the appropriate fault
 				switch (temp_phases)
 				{
-				case 0x00:	//No phases!
+				case NO_PHASE:	//No phases!
 					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 					break;
-				case 0x01:	//Only phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				case PHASE_C:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 					*implemented_fault = 3;								//Flag as a C SLG fault
 					break;
-				case 0x02:	//Only phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				case PHASE_B:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 					*implemented_fault = 2;								//Flag as a B SLG fault
 					break;
-				case 0x03:	//B and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+				case PHASE_BC:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 					*implemented_fault = 5;								//Flag as a B & C fault
 					break;
-				case 0x04:	//Only A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				case PHASE_A:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 					*implemented_fault = 1;								//Flag as a A SLG fault
 					break;
-				case 0x05:	//A and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+				case PHASE_AC:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 					*implemented_fault = 6;								//Flag as A and C fault
 					break;
-				case 0x06:	//A and B
-					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+				case PHASE_AB:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 					*implemented_fault = 4;								//Flag as A and B fault
 					break;
 				default:	//Not sure how we'd ever get here
@@ -8415,40 +8416,40 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		else if ((fault_type[0] == 'T') && (fault_type[1] == 'L') && (fault_type[2] == 'G'))	//TLG - triple-line-ground fault
 		{
 			//Let's see what phases we have to play with
-			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+			temp_phases = NR_branchdata[NR_branch_reference].phases & PHASE_ABC;
 
 			//Case it out - if we want TLG, but don't have all three phases, just trip whatever we have
 			switch (temp_phases)
 			{
-			case 0x00:	//No phases!
+			case NO_PHASE:	//No phases!
 				*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 				break;
-			case 0x01:	//Only phase C
-				NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+			case PHASE_C:	//Only phase C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 				*implemented_fault = 3;								//Flag as a C only fault
 				break;
-			case 0x02:	//Only phase B
-				NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+			case PHASE_B:	//Only phase B
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 				*implemented_fault = 2;								//Flag as a B only fault
 				break;
-			case 0x03:	//B and C
-				NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+			case PHASE_BC:	//B and C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 				*implemented_fault = 5;								//Flag as a B & C fault
 				break;
-			case 0x04:	//Only A
-				NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+			case PHASE_A:	//Only A
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 				*implemented_fault = 1;								//Flag as a A only fault
 				break;
-			case 0x05:	//A and C
-				NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+			case PHASE_AC:	//A and C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 				*implemented_fault = 6;								//Flag as A and C fault
 				break;
-			case 0x06:	//A and B
-				NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+			case PHASE_AB:	//A and B
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 				*implemented_fault = 4;								//Flag as A and B fault
 				break;
-			case 0x07:	//A, B, and C
-				NR_branchdata[NR_branch_reference].phases &= 0xF8;	//Remove A, B, and C
+			case PHASE_ABC:	//A, B, and C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_ABC;	//Remove A, B, and C
 				*implemented_fault = 10;							//Flag as all three fault
 				break;
 			default:	//Not sure how we'd ever get here
@@ -8467,40 +8468,40 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		else if ((fault_type[0] == 'T') && (fault_type[1] == 'L') && (fault_type[2] == 'L'))	//TLL - triple-line-line fault
 		{
 			//Let's see what phases we have to play with
-			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+			temp_phases = NR_branchdata[NR_branch_reference].phases & PHASE_ABC;
 
 			//Case it out - if we want TLG, but don't have all three phases, just trip whatever we have
 			switch (temp_phases)
 			{
-			case 0x00:	//No phases!
+			case NO_PHASE:	//No phases!
 				*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 				break;
-			case 0x01:	//Only phase C
-				NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+			case PHASE_C:	//Only phase C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 				*implemented_fault = 13;							//Flag as a C only OC fault
 				break;
-			case 0x02:	//Only phase B
-				NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+			case PHASE_B:	//Only phase B
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 				*implemented_fault = 12;							//Flag as a B only OC fault
 				break;
-			case 0x03:	//B and C
-				NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+			case PHASE_BC:	//B and C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 				*implemented_fault = 8;								//Flag as a B & C LL fault
 				break;
-			case 0x04:	//Only A
-				NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+			case PHASE_A:	//Only A
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 				*implemented_fault = 11;							//Flag as a A only OC fault
 				break;
-			case 0x05:	//A and C
-				NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+			case PHASE_AC:	//A and C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 				*implemented_fault = 9;								//Flag as A and C LL fault
 				break;
-			case 0x06:	//A and B
-				NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+			case PHASE_AB:	//A and B
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 				*implemented_fault = 7;								//Flag as A and B LL fault
 				break;
-			case 0x07:	//A, B, and C
-				NR_branchdata[NR_branch_reference].phases &= 0xF8;	//Remove A, B, and C
+			case PHASE_ABC:	//A, B, and C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_ABC;	//Remove A, B, and C
 				*implemented_fault = 32;							//Flag as all three fault
 				break;
 			default:	//Not sure how we'd ever get here
@@ -8515,19 +8516,19 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		else if ((fault_type[0] == 'L') && (fault_type[1] == 'L'))	//Line-line fault
 		{
 			//Figure out who we want to alter - assume [2] is a -, so check [3]+
-			work_phases = 0x00;
+			work_phases = NO_PHASE;
 
 			if (fault_type[3] == 'X')	//Random, flag as such
-				work_phases |= 0x08;
+				work_phases |= PHASE_D;
 			
 			if ((fault_type[3] == 'A') || (fault_type[4] == 'A'))	//A is desired
-				work_phases |= 0x04;
+				work_phases |= PHASE_A;
 
 			if ((fault_type[3] == 'B') || (fault_type[4] == 'B'))	//B is desired
-				work_phases |= 0x02;
+				work_phases |= PHASE_B;
 
 			if ((fault_type[3] == 'C') || (fault_type[4] == 'C'))	//C is desired
-				work_phases |= 0x01;
+				work_phases |= PHASE_C;
 
 			//See how many phases we have to deal with
 			numphase = 0;
@@ -8548,7 +8549,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}
 
 			//Pull out what phases we have to play with
-			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+			temp_phases = NR_branchdata[NR_branch_reference].phases & PHASE_ABC;
 
 			if (numphase == 0)
 			{
@@ -8558,26 +8559,26 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			else if (numphase < 2)	//Single phase line (no zero phase this way)
 			{
 				//Refine our criteria
-				if ((work_phases & 0x08) != 0x08)	//Not random case
+				if ((work_phases & PHASE_D) != PHASE_D)	//Not random case
 					temp_phases &= work_phases;
 
 				//defaulted else - if random case, only getting one phase out of this anywho (leave temp_phases as is)
 
 				switch (temp_phases)
 				{
-				case 0x00:	//No phases available - something must have faulted
+				case NO_PHASE:	//No phases available - something must have faulted
 					*implemented_fault = 0;	//Flag as such
 					break;
-				case 0x01:	//Phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				case PHASE_C:	//Phase C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 					*implemented_fault = 13;							//Flag as a C OC fault
 					break;
-				case 0x02:	//Phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				case PHASE_B:	//Phase B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 					*implemented_fault = 12;							//Flag as a B OC fault
 					break;
-				case 0x04:	//Phase A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				case PHASE_A:	//Phase A
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 					*implemented_fault = 11;							//Flag as a A OC fault
 					break;
 				default:	//No other cases should exist
@@ -8591,38 +8592,38 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			else if (numphase == 2)	//Only two phases present
 			{
 				//See how the two present coincide with the two we're asking for
-				if ((work_phases & 0x08) != 0x08)	//Not random case, see what we have
+				if ((work_phases & PHASE_D) != PHASE_D)	//Not random case, see what we have
 					temp_phases &= work_phases;
 				//Defaulted else - if random, only 1 choice exists, which is temp_phases (leave temp_phases as is)
 
 				//Implement the appropriate fault
 				switch (temp_phases)
 				{
-				case 0x00:	//No phases!
+				case NO_PHASE:	//No phases!
 					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 					break;
-				case 0x01:	//Only phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				case PHASE_C:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 					*implemented_fault = 13;							//Flag as a C OC fault
 					break;
-				case 0x02:	//Only phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				case PHASE_B:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 					*implemented_fault = 12;							//Flag as a B OC fault
 					break;
-				case 0x03:	//B and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+				case PHASE_BC:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 					*implemented_fault = 8;								//Flag as a B & C fault
 					break;
-				case 0x04:	//Only A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				case PHASE_A:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 					*implemented_fault = 11;							//Flag as a A OC fault
 					break;
-				case 0x05:	//A and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+				case PHASE_AC:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 					*implemented_fault = 9;								//Flag as A and C fault
 					break;
-				case 0x06:	//A and B
-					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+				case PHASE_AB:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 					*implemented_fault = 7;								//Flag as A and B fault
 					break;
 				default:	//Not sure how we'd ever get here
@@ -8636,32 +8637,32 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}//end 2 phases present
 			else if (numphase == 3)	//All phases present
 			{
-				if ((work_phases & 0x08) == 0x08)	//Random condition
+				if ((work_phases & PHASE_D) == PHASE_D)	//Random condition
 				{
 					//See if we have all three available to fault (if one or more is already faulted, we won't care)
 					rand_phases = 0;
 
 					//Check and populate random array as well
-					if ((temp_phases & 0x01) == 0x01)	//Check for C availability
+					if ((temp_phases & PHASE_C) == PHASE_C)	//Check for C availability
 					{
 						tempphase[rand_phases] = 1;
 						rand_phases++;
 					}
 
-					if ((temp_phases & 0x02) == 0x02)	//Check for B availability
+					if ((temp_phases & PHASE_B) == PHASE_B)	//Check for B availability
 					{
 						tempphase[rand_phases] = 2;
 						rand_phases++;
 					}
 
-					if ((temp_phases & 0x04) == 0x04)	//Check for A availability
+					if ((temp_phases & PHASE_A) == PHASE_A)	//Check for A availability
 					{
 						tempphase[rand_phases] = 4;
 						rand_phases++;
 					}
 
 					if (rand_phases <= 2)	//Two or fewer available, just mask us out
-						work_phases = 0x07;	//This will pull the appropriate phase
+						work_phases = PHASE_ABC;	//This will pull the appropriate phase
 					else	//Must be 3, right?
 					{
 						//Pick a random phase - this will be the one we DON'T fault
@@ -8669,11 +8670,11 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 						//Set temp_phases appropriate
 						if (randval == 1)	//Leave phase C
-							work_phases = 0x06;	//A and B fault
+							work_phases = PHASE_AB;	//A and B fault
 						else if (randval == 2)	//Leave phase B
-							work_phases = 0x05;	//A and C fault
+							work_phases = PHASE_AC;	//A and C fault
 						else	//Must be 4	- leave phase A
-							work_phases = 0x03;	//B and C fault
+							work_phases = PHASE_BC;	//B and C fault
 					}//end must be 3
 				}//end random condition
 				//Defaulted else - not random, so just use as normal mask
@@ -8684,31 +8685,31 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Implement the appropriate fault
 				switch (temp_phases)
 				{
-				case 0x00:	//No phases!
+				case NO_PHASE:	//No phases!
 					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 					break;
-				case 0x01:	//Only phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				case PHASE_C:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 					*implemented_fault = 13;							//Flag as a C OC fault
 					break;
-				case 0x02:	//Only phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				case PHASE_B:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 					*implemented_fault = 12;							//Flag as a B OC fault
 					break;
-				case 0x03:	//B and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+				case PHASE_BC:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 					*implemented_fault = 8;								//Flag as a B & C fault
 					break;
-				case 0x04:	//Only A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				case PHASE_A:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 					*implemented_fault = 11;							//Flag as an A OC fault
 					break;
-				case 0x05:	//A and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+				case PHASE_AC:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 					*implemented_fault = 9;								//Flag as A and C fault
 					break;
-				case 0x06:	//A and B
-					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+				case PHASE_AB:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 					*implemented_fault = 7;								//Flag as A and B fault
 					break;
 				default:	//Not sure how we'd ever get here
@@ -8763,21 +8764,21 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
 
 				//Put it back into proper format
-				rand_phases = (unsigned char)(randval);
+				rand_phases = (set)(randval);
 			}
 			else	//Not a random - clear the variable, just in case
-				rand_phases = 0x00;
+				rand_phases = NO_PHASE;
 
-			if ((fault_type[phaseidx] == 'A') || (rand_phases == 0x04))
+			if ((fault_type[phaseidx] == 'A') || (rand_phases == PHASE_A))
 			{
 				if (has_phase(PHASE_A))
 				{
-					if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//make sure phase A is active (no previous fault)
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_A) == PHASE_A)	//make sure phase A is active (no previous fault)
 					{
 						//Remove phase A
-						NR_branchdata[NR_branch_reference].phases &= 0xFB;
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;
 
-						phase_remove = 0x04;	//Flag phase being removed
+						phase_remove = PHASE_A;	//Flag phase being removed
 
 						//Flag the fault type
 						*implemented_fault = 11;
@@ -8793,17 +8794,17 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					//Defined above
 				}
 			}//End A fault
-			else if ((fault_type[phaseidx] == 'B') || (rand_phases == 0x02))
+			else if ((fault_type[phaseidx] == 'B') || (rand_phases == PHASE_B))
 			{
 				if (has_phase(PHASE_B))
 				{
-					if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//make sure phase B is active (no previous fault)
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_B) == PHASE_B)	//make sure phase B is active (no previous fault)
 					{
 						//Remove phase B
-						NR_branchdata[NR_branch_reference].phases &= 0xFD;
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;
 
 						//Flag phase being removed
-						phase_remove = 0x02;
+						phase_remove = PHASE_B;
 
 						//Flag the fault type
 						*implemented_fault = 12;
@@ -8819,17 +8820,17 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					//Defined above
 				}
 			}
-			else if ((fault_type[phaseidx] == 'C') || (rand_phases == 0x01))
+			else if ((fault_type[phaseidx] == 'C') || (rand_phases == PHASE_C))
 			{
 				if (has_phase(PHASE_C))
 				{
-					if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//make sure phase C is active (no previous fault)
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_C) == PHASE_C)	//make sure phase C is active (no previous fault)
 					{
 						//Remove phase C
-						NR_branchdata[NR_branch_reference].phases &= 0xFE;
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;
 
 						//Flag phase being removed
-						phase_remove = 0x01;
+						phase_remove = PHASE_C;
 
 						//Flag the fault type
 						*implemented_fault = 13;
@@ -8854,19 +8855,19 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		else if ((fault_type[0] == 'O') && (fault_type[1] == 'C') && (fault_type[2] == '2'))	//Double open-conductor fault
 		{
 			//Figure out who we want to alter - assume [3] is a -, so check [4]+
-			work_phases = 0x00;
+			work_phases = NO_PHASE;
 
 			if (fault_type[4] == 'X')	//Random, flag as such
-				work_phases |= 0x08;
+				work_phases |= PHASE_D;
 			
 			if ((fault_type[4] == 'A') || (fault_type[5] == 'A'))	//A is desired
-				work_phases |= 0x04;
+				work_phases |= PHASE_A;
 
 			if ((fault_type[4] == 'B') || (fault_type[5] == 'B'))	//B is desired
-				work_phases |= 0x02;
+				work_phases |= PHASE_B;
 
 			if ((fault_type[4] == 'C') || (fault_type[5] == 'C'))	//C is desired
-				work_phases |= 0x01;
+				work_phases |= PHASE_C;
 
 			//See how many phases we have to deal with
 			numphase = 0;
@@ -8887,7 +8888,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}
 
 			//Pull out what phases we have to play with
-			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+			temp_phases = NR_branchdata[NR_branch_reference].phases & PHASE_ABC;
 
 			if (numphase == 0)
 			{
@@ -8897,26 +8898,26 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			else if (numphase < 2)	//Single phase line (no zero phase this way)
 			{
 				//Refine our criteria
-				if ((work_phases & 0x08) != 0x08)	//Not random case
+				if ((work_phases & PHASE_D) != PHASE_D)	//Not random case
 					temp_phases &= work_phases;
 
 				//defaulted else - if random case, only getting one phase out of this anywho (leave temp_phases as is)
 
 				switch (temp_phases)
 				{
-				case 0x00:	//No phases available - something must have faulted
+				case NO_PHASE:	//No phases available - something must have faulted
 					*implemented_fault = 0;	//Flag as such
 					break;
-				case 0x01:	//Phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				case PHASE_C:	//Phase C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 					*implemented_fault = 13;							//Flag as a C OC fault
 					break;
-				case 0x02:	//Phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				case PHASE_B:	//Phase B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 					*implemented_fault = 12;							//Flag as a B OC fault
 					break;
-				case 0x04:	//Phase A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				case PHASE_A:	//Phase A
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 					*implemented_fault = 11;							//Flag as a A OC fault
 					break;
 				default:	//No other cases should exist
@@ -8931,38 +8932,38 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			else if (numphase == 2)	//Only two phases present
 			{
 				//See how the two present coincide with the two we're asking for
-				if ((work_phases & 0x08) != 0x08)	//Not random case, see what we have
+				if ((work_phases & PHASE_D) != PHASE_D)	//Not random case, see what we have
 					temp_phases &= work_phases;
 				//Defaulted else - if random, only 1 choice exists, which is temp_phases (leave temp_phases as is)
 
 				//Implement the appropriate fault
 				switch (temp_phases)
 				{
-				case 0x00:	//No phases!
+				case NO_PHASE:	//No phases!
 					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 					break;
-				case 0x01:	//Only phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				case PHASE_C:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 					*implemented_fault = 13;							//Flag as a C OC fault
 					break;
-				case 0x02:	//Only phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				case PHASE_B:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 					*implemented_fault = 12;							//Flag as a B OC fault
 					break;
-				case 0x03:	//B and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+				case PHASE_BC:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 					*implemented_fault = 15;							//Flag as a B & C fault
 					break;
-				case 0x04:	//Only A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				case PHASE_A:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 					*implemented_fault = 11;							//Flag as a A OC fault
 					break;
-				case 0x05:	//A and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+				case PHASE_AC:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 					*implemented_fault = 16;							//Flag as A and C fault
 					break;
-				case 0x06:	//A and B
-					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+				case PHASE_AB:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 					*implemented_fault = 14;							//Flag as A and B fault
 					break;
 				default:	//Not sure how we'd ever get here
@@ -8976,32 +8977,32 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}//end 2 phases present
 			else if (numphase == 3)	//All phases present
 			{
-				if ((work_phases & 0x08) == 0x08)	//Random condition
+				if ((work_phases & PHASE_D) == PHASE_D)	//Random condition
 				{
 					//See if we have all three available to fault (if one or more is already faulted, we won't care)
 					rand_phases = 0;
 
 					//Check and populate random array as well
-					if ((temp_phases & 0x01) == 0x01)	//Check for C availability
+					if ((temp_phases & PHASE_C) == PHASE_C)	//Check for C availability
 					{
 						tempphase[rand_phases] = 1;
 						rand_phases++;
 					}
 
-					if ((temp_phases & 0x02) == 0x02)	//Check for B availability
+					if ((temp_phases & PHASE_B) == PHASE_B)	//Check for B availability
 					{
 						tempphase[rand_phases] = 2;
 						rand_phases++;
 					}
 
-					if ((temp_phases & 0x04) == 0x04)	//Check for A availability
+					if ((temp_phases & PHASE_A) == PHASE_A)	//Check for A availability
 					{
 						tempphase[rand_phases] = 4;
 						rand_phases++;
 					}
 
 					if (rand_phases <= 2)	//Two or fewer available, just mask us out
-						work_phases = 0x07;	//This will pull the appropriate phase
+						work_phases = PHASE_ABC;	//This will pull the appropriate phase
 					else	//Must be 3, right?
 					{
 						//Pick a random phase - this will be the one we DON'T fault
@@ -9009,11 +9010,11 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 						//Set temp_phases appropriate
 						if (randval == 1)	//Leave phase C
-							work_phases = 0x06;	//A and B fault
+							work_phases = PHASE_AB;	//A and B fault
 						else if (randval == 2)	//Leave phase B
-							work_phases = 0x05;	//A and C fault
+							work_phases = PHASE_AC;	//A and C fault
 						else	//Must be 4	- leave phase A
-							work_phases = 0x03;	//B and C fault
+							work_phases = PHASE_BC;	//B and C fault
 					}//end must be 3
 				}//end random condition
 				//Defaulted else - not random, so just use as normal mask
@@ -9024,31 +9025,31 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Implement the appropriate fault
 				switch (temp_phases)
 				{
-				case 0x00:	//No phases!
+				case NO_PHASE:	//No phases!
 					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 					break;
-				case 0x01:	//Only phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				case PHASE_C:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 					*implemented_fault = 13;							//Flag as a C OC fault
 					break;
-				case 0x02:	//Only phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				case PHASE_B:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 					*implemented_fault = 12;							//Flag as a B OC fault
 					break;
-				case 0x03:	//B and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+				case PHASE_BC:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 					*implemented_fault = 15;							//Flag as a B & C fault
 					break;
-				case 0x04:	//Only A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				case PHASE_A:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 					*implemented_fault = 11;							//Flag as a A OC fault
 					break;
-				case 0x05:	//A and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+				case PHASE_AC:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 					*implemented_fault = 16;							//Flag as A and C fault
 					break;
-				case 0x06:	//A and B
-					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+				case PHASE_AB:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 					*implemented_fault = 14;							//Flag as A and B fault
 					break;
 				default:	//Not sure how we'd ever get here
@@ -9069,40 +9070,40 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		else if ((fault_type[0] == 'O') && (fault_type[1] == 'C') && (fault_type[2] == '3'))	//Triple open-conductor fault
 		{
 			//Let's see what phases we have to play with
-			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+			temp_phases = NR_branchdata[NR_branch_reference].phases & PHASE_ABC;
 
 			//Case it out - if we want TLG, but don't have all three phases, just trip whatever we have
 			switch (temp_phases)
 			{
-			case 0x00:	//No phases!
+			case NO_PHASE:	//No phases!
 				*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 				break;
-			case 0x01:	//Only phase C
-				NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+			case PHASE_C:	//Only phase C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 				*implemented_fault = 13;							//Flag as a C only fault
 				break;
-			case 0x02:	//Only phase B
-				NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+			case PHASE_B:	//Only phase B
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 				*implemented_fault = 12;							//Flag as a B only fault
 				break;
-			case 0x03:	//B and C
-				NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+			case PHASE_BC:	//B and C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 				*implemented_fault = 15;							//Flag as a B & C fault
 				break;
-			case 0x04:	//Only A
-				NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+			case PHASE_A:	//Only A
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 				*implemented_fault = 11;							//Flag as a A only fault
 				break;
-			case 0x05:	//A and C
-				NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+			case PHASE_AC:	//A and C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 				*implemented_fault = 16;							//Flag as A and C fault
 				break;
-			case 0x06:	//A and B
-				NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+			case PHASE_AB:	//A and B
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 				*implemented_fault = 14;							//Flag as A and B fault
 				break;
-			case 0x07:	//A, B, and C
-				NR_branchdata[NR_branch_reference].phases &= 0xF8;	//Remove A, B, and C
+			case PHASE_ABC:	//A, B, and C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_ABC;	//Remove A, B, and C
 				*implemented_fault = 17;							//Flag as all three fault
 				break;
 			default:	//Not sure how we'd ever get here
@@ -9121,12 +9122,12 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			{
 				if (has_phase(PHASE_A))
 				{
-					if ((NR_branchdata[NR_branch_reference].origphases & 0x04) == 0x04)	//make sure phase A is active (no previous fault)
+					if ((NR_branchdata[NR_branch_reference].origphases & PHASE_A) == PHASE_A)	//make sure phase A is active (no previous fault)
 					{
 						//Remove phase A
-						NR_branchdata[NR_branch_reference].phases &= 0xFB;
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;
 
-						phase_remove = 0x04;	//Flag phase being removed
+						phase_remove = PHASE_A;	//Flag phase being removed
 
 						//Flag the fault type
 						*implemented_fault = 18;
@@ -9146,12 +9147,12 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			{
 				if (has_phase(PHASE_B))
 				{
-					if ((NR_branchdata[NR_branch_reference].origphases & 0x02) == 0x02)	//make sure phase B is active (no previous fault)
+					if ((NR_branchdata[NR_branch_reference].origphases & PHASE_B) == PHASE_B)	//make sure phase B is active (no previous fault)
 					{
 						//Remove phase B
-						NR_branchdata[NR_branch_reference].phases &= 0xFD;
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;
 
-						phase_remove = 0x02;	//Flag phase being removed
+						phase_remove = PHASE_B;	//Flag phase being removed
 
 						//Flag the fault type
 						*implemented_fault = 19;
@@ -9171,12 +9172,12 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			{
 				if (has_phase(PHASE_C))
 				{
-					if ((NR_branchdata[NR_branch_reference].origphases & 0x01) == 0x01)	//make sure phase C is active (no previous fault)
+					if ((NR_branchdata[NR_branch_reference].origphases & PHASE_C) == PHASE_C)	//make sure phase C is active (no previous fault)
 					{
 						//Remove phase C
-						NR_branchdata[NR_branch_reference].phases &= 0xFE;
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;
 
-						phase_remove = 0x01;	//Flag phase being removed
+						phase_remove = PHASE_C;	//Flag phase being removed
 
 						//Flag the fault type
 						*implemented_fault = 20;
@@ -9195,16 +9196,16 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			else if (fault_type[5] == '\0')	//Two Phase occurance
 			{
 				//Figure out who we want to alter - assume [2] is a -, so check [3]+
-				work_phases = 0x00;
+				work_phases = NO_PHASE;
 
 				if ((fault_type[3] == 'A') || (fault_type[4] == 'A'))	//A is desired
-					work_phases |= 0x04;
+					work_phases |= PHASE_A;
 
 				if ((fault_type[3] == 'B') || (fault_type[4] == 'B'))	//B is desired
-					work_phases |= 0x02;
+					work_phases |= PHASE_B;
 
 				if ((fault_type[3] == 'C') || (fault_type[4] == 'C'))	//C is desired
-					work_phases |= 0x01;
+					work_phases |= PHASE_C;
 
 				//See how many phases we have to deal with
 				numphase = 0;
@@ -9225,7 +9226,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}
 
 				//Pull out what phases we have to play with
-				temp_phases = NR_branchdata[NR_branch_reference].origphases & 0x07;
+				temp_phases = NR_branchdata[NR_branch_reference].origphases & PHASE_ABC;
 
 				if (numphase == 0)
 				{
@@ -9240,19 +9241,19 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					//Figure out what is going on
 					switch (temp_phases)
 					{
-					case 0x00:	//No phases available - something must have faulted
+					case NO_PHASE:	//No phases available - something must have faulted
 						*implemented_fault = 0;	//Flag as such
 						break;
-					case 0x01:	//Phase C
-						NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+					case PHASE_C:	//Phase C
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 						*implemented_fault = 20;							//Flag as a C switching
 						break;
-					case 0x02:	//Phase B
-						NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+					case PHASE_B:	//Phase B
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 						*implemented_fault = 19;							//Flag as a B switching
 						break;
-					case 0x04:	//Phase A
-						NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+					case PHASE_A:	//Phase A
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 						*implemented_fault = 18;							//Flag as a A switching
 						break;
 					default:	//No other cases should exist
@@ -9272,31 +9273,31 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					//Implement the appropriate fault
 					switch (temp_phases)
 					{
-					case 0x00:	//No phases!
+					case NO_PHASE:	//No phases!
 						*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 						break;
-					case 0x01:	//Only phase C
-						NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+					case PHASE_C:	//Only phase C
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 						*implemented_fault = 20;							//Flag as a C switching
 						break;
-					case 0x02:	//Only phase B
-						NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+					case PHASE_B:	//Only phase B
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 						*implemented_fault = 19;							//Flag as a B switching
 						break;
-					case 0x03:	//B and C
-						NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+					case PHASE_BC:	//B and C
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 						*implemented_fault = 22;							//Flag as a B & C switching
 						break;
-					case 0x04:	//Only A
-						NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+					case PHASE_A:	//Only A
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 						*implemented_fault = 18;							//Flag as a A switching
 						break;
-					case 0x05:	//A and C
-						NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+					case PHASE_AC:	//A and C
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 						*implemented_fault = 23;							//Flag as A and C switching
 						break;
-					case 0x06:	//A and B
-						NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+					case PHASE_AB:	//A and B
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 						*implemented_fault = 21;							//Flag as A and B switching
 						break;
 					default:	//Not sure how we'd ever get here
@@ -9316,31 +9317,31 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					//Implement the appropriate fault
 					switch (temp_phases)
 					{
-					case 0x00:	//No phases!
+					case NO_PHASE:	//No phases!
 						*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 						break;
-					case 0x01:	//Only phase C
-						NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+					case PHASE_C:	//Only phase C
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 						*implemented_fault = 20;							//Flag as a C switching
 						break;
-					case 0x02:	//Only phase B
-						NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+					case PHASE_B:	//Only phase B
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 						*implemented_fault = 19;							//Flag as a B switching
 						break;
-					case 0x03:	//B and C
-						NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+					case PHASE_BC:	//B and C
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 						*implemented_fault = 22;							//Flag as a B & C fault
 						break;
-					case 0x04:	//Only A
-						NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+					case PHASE_A:	//Only A
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 						*implemented_fault = 18;							//Flag as a A switching
 						break;
-					case 0x05:	//A and C
-						NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+					case PHASE_AC:	//A and C
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 						*implemented_fault = 23;							//Flag as A and C switching
 						break;
-					case 0x06:	//A and B
-						NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+					case PHASE_AB:	//A and B
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 						*implemented_fault = 21;							//Flag as A and B switching
 						break;
 					default:	//Not sure how we'd ever get here
@@ -9361,40 +9362,40 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			else if (fault_type[6] == '\0')	//Three Phase occurance
 			{
 				//Let's see what phases we have to play with
-				temp_phases = NR_branchdata[NR_branch_reference].origphases & 0x07;
+				temp_phases = NR_branchdata[NR_branch_reference].origphases & PHASE_ABC;
 
 				//Case it out - if we want three-phase switching, but don't have all three phases, just switch whatever we have
 				switch (temp_phases)
 				{
-				case 0x00:	//No phases!
+				case NO_PHASE:	//No phases!
 					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 					break;
-				case 0x01:	//Only phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				case PHASE_C:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 					*implemented_fault = 20;							//Flag as a C only switching
 					break;
-				case 0x02:	//Only phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				case PHASE_B:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 					*implemented_fault = 19;							//Flag as a B only switching
 					break;
-				case 0x03:	//B and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+				case PHASE_BC:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 					*implemented_fault = 22;							//Flag as a B & C switching
 					break;
-				case 0x04:	//Only A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				case PHASE_A:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 					*implemented_fault = 18;							//Flag as a A only switching
 					break;
-				case 0x05:	//A and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+				case PHASE_AC:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 					*implemented_fault = 23;							//Flag as A and C switching
 					break;
-				case 0x06:	//A and B
-					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+				case PHASE_AB:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 					*implemented_fault = 21;							//Flag as A and B switching
 					break;
-				case 0x07:	//A, B, and C
-					NR_branchdata[NR_branch_reference].phases &= 0xF8;	//Remove A, B, and C
+				case PHASE_ABC:	//A, B, and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_ABC;	//Remove A, B, and C
 					*implemented_fault = 24;							//Flag as all three switching
 					break;
 				default:	//Not sure how we'd ever get here
@@ -9441,21 +9442,21 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				randval = gl_random_sampled(RNGSTATE,numphase,tempphase);
 
 				//Put it back into proper format
-				rand_phases = (unsigned char)(randval);
+				rand_phases = (set)(randval);
 			}
 			else	//Not a random - clear the variable, just in case
-				rand_phases = 0x00;
+				rand_phases = NO_PHASE;
 
-			if ((fault_type[4] == 'A') || (rand_phases == 0x04))
+			if ((fault_type[4] == 'A') || (rand_phases == PHASE_A))
 			{
 				if (has_phase(PHASE_A))
 				{
-					if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)	//make sure phase A is active (no previous fault)
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_A) == PHASE_A)	//make sure phase A is active (no previous fault)
 					{
 						//Remove phase A
-						NR_branchdata[NR_branch_reference].phases &= 0xFB;
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;
 
-						phase_remove = 0x04;	//Flag phase being removed
+						phase_remove = PHASE_A;	//Flag phase being removed
 
 						//Flag the fault type
 						*implemented_fault = 25;
@@ -9471,17 +9472,17 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					//Defined above
 				}
 			}//End A fault
-			else if ((fault_type[4] == 'B') || (rand_phases == 0x02))
+			else if ((fault_type[4] == 'B') || (rand_phases == PHASE_B))
 			{
 				if (has_phase(PHASE_B))
 				{
-					if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)	//make sure phase B is active (no previous fault)
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_B) == PHASE_B)	//make sure phase B is active (no previous fault)
 					{
 						//Remove phase B
-						NR_branchdata[NR_branch_reference].phases &= 0xFD;
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;
 
 						//Flag phase being removed
-						phase_remove = 0x02;
+						phase_remove = PHASE_B;
 
 						//Flag the fault type
 						*implemented_fault = 26;
@@ -9497,17 +9498,17 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					//Defined above
 				}
 			}
-			else if ((fault_type[4] == 'C') || (rand_phases == 0x01))
+			else if ((fault_type[4] == 'C') || (rand_phases == PHASE_C))
 			{
 				if (has_phase(PHASE_C))
 				{
-					if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)	//make sure phase C is active (no previous fault)
+					if ((NR_branchdata[NR_branch_reference].phases & PHASE_C) == PHASE_C)	//make sure phase C is active (no previous fault)
 					{
 						//Remove phase C
-						NR_branchdata[NR_branch_reference].phases &= 0xFE;
+						NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;
 
 						//Flag phase being removed
-						phase_remove = 0x01;
+						phase_remove = PHASE_C;
 
 						//Flag the fault type
 						*implemented_fault = 27;
@@ -9532,19 +9533,19 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		else if ((fault_type[0] == 'F') && (fault_type[1] == 'U') && (fault_type[2] == 'S') && (fault_type[3] == '-') && (fault_type[6] == '\0'))	//Double fuse fault
 		{
 			//Figure out who we want to alter - assume [3] is a -, so check [4]+
-			work_phases = 0x00;
+			work_phases = NO_PHASE;
 
 			if (fault_type[4] == 'X')	//Random, flag as such
-				work_phases |= 0x08;
+				work_phases |= PHASE_D;
 			
 			if ((fault_type[4] == 'A') || (fault_type[5] == 'A'))	//A is desired
-				work_phases |= 0x04;
+				work_phases |= PHASE_A;
 
 			if ((fault_type[4] == 'B') || (fault_type[5] == 'B'))	//B is desired
-				work_phases |= 0x02;
+				work_phases |= PHASE_B;
 
 			if ((fault_type[4] == 'C') || (fault_type[5] == 'C'))	//C is desired
-				work_phases |= 0x01;
+				work_phases |= PHASE_C;
 
 			//See how many phases we have to deal with
 			numphase = 0;
@@ -9565,7 +9566,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}
 
 			//Pull out what phases we have to play with
-			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+			temp_phases = NR_branchdata[NR_branch_reference].phases & PHASE_ABC;
 
 			if (numphase == 0)
 			{
@@ -9575,26 +9576,26 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			else if (numphase < 2)	//Single phase line (no zero phase this way)
 			{
 				//Refine our criteria
-				if ((work_phases & 0x08) != 0x08)	//Not random case
+				if ((work_phases & PHASE_D) != PHASE_D)	//Not random case
 					temp_phases &= work_phases;
 
 				//defaulted else - if random case, only getting one phase out of this anywho (leave temp_phases as is)
 
 				switch (temp_phases)
 				{
-				case 0x00:	//No phases available - something must have faulted
+				case NO_PHASE:	//No phases available - something must have faulted
 					*implemented_fault = 0;	//Flag as such
 					break;
-				case 0x01:	//Phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				case PHASE_C:	//Phase C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 					*implemented_fault = 27;							//Flag as a C fuse fault
 					break;
-				case 0x02:	//Phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				case PHASE_B:	//Phase B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 					*implemented_fault = 26;							//Flag as a B fuse fault
 					break;
-				case 0x04:	//Phase A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				case PHASE_A:	//Phase A
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 					*implemented_fault = 25;							//Flag as a A fuse fault
 					break;
 				default:	//No other cases should exist
@@ -9609,38 +9610,38 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			else if (numphase == 2)	//Only two phases present
 			{
 				//See how the two present coincide with the two we're asking for
-				if ((work_phases & 0x08) != 0x08)	//Not random case, see what we have
+				if ((work_phases & PHASE_D) != PHASE_D)	//Not random case, see what we have
 					temp_phases &= work_phases;
 				//Defaulted else - if random, only 1 choice exists, which is temp_phases (leave temp_phases as is)
 
 				//Implement the appropriate fault
 				switch (temp_phases)
 				{
-				case 0x00:	//No phases!
+				case NO_PHASE:	//No phases!
 					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 					break;
-				case 0x01:	//Only phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				case PHASE_C:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 					*implemented_fault = 27;							//Flag as a C fuse fault
 					break;
-				case 0x02:	//Only phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				case PHASE_B:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 					*implemented_fault = 26;							//Flag as a B fuse fault
 					break;
-				case 0x03:	//B and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+				case PHASE_BC:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 					*implemented_fault = 29;							//Flag as a B & C fuse fault
 					break;
-				case 0x04:	//Only A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				case PHASE_A:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 					*implemented_fault = 25;							//Flag as a A fuse fault
 					break;
-				case 0x05:	//A and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+				case PHASE_AC:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 					*implemented_fault = 30;							//Flag as A and C fuse fault
 					break;
-				case 0x06:	//A and B
-					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+				case PHASE_AB:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 					*implemented_fault = 28;							//Flag as A and B fuse fault
 					break;
 				default:	//Not sure how we'd ever get here
@@ -9654,32 +9655,32 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			}//end 2 phases present
 			else if (numphase == 3)	//All phases present
 			{
-				if ((work_phases & 0x08) == 0x08)	//Random condition
+				if ((work_phases & PHASE_D) == PHASE_D)	//Random condition
 				{
 					//See if we have all three available to fault (if one or more is already faulted, we won't care)
 					rand_phases = 0;
 
 					//Check and populate random array as well
-					if ((temp_phases & 0x01) == 0x01)	//Check for C availability
+					if ((temp_phases & PHASE_C) == PHASE_C)	//Check for C availability
 					{
 						tempphase[rand_phases] = 1;
 						rand_phases++;
 					}
 
-					if ((temp_phases & 0x02) == 0x02)	//Check for B availability
+					if ((temp_phases & PHASE_B) == PHASE_B)	//Check for B availability
 					{
 						tempphase[rand_phases] = 2;
 						rand_phases++;
 					}
 
-					if ((temp_phases & 0x04) == 0x04)	//Check for A availability
+					if ((temp_phases & PHASE_A) == PHASE_A)	//Check for A availability
 					{
 						tempphase[rand_phases] = 4;
 						rand_phases++;
 					}
 
 					if (rand_phases <= 2)	//Two or fewer available, just mask us out
-						work_phases = 0x07;	//This will pull the appropriate phase
+						work_phases = PHASE_ABC;	//This will pull the appropriate phase
 					else	//Must be 3, right?
 					{
 						//Pick a random phase - this will be the one we DON'T fault
@@ -9687,11 +9688,11 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 
 						//Set temp_phases appropriate
 						if (randval == 1)	//Leave phase C
-							work_phases = 0x06;	//A and B fuse fault
+							work_phases = PHASE_AB;	//A and B fuse fault
 						else if (randval == 2)	//Leave phase B
-							work_phases = 0x05;	//A and C fuse fault
+							work_phases = PHASE_AC;	//A and C fuse fault
 						else	//Must be 4	- leave phase A
-							work_phases = 0x03;	//B and C fuse fault
+							work_phases = PHASE_BC;	//B and C fuse fault
 					}//end must be 3
 				}//end random condition
 				//Defaulted else - not random, so just use as normal mask
@@ -9702,31 +9703,31 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Implement the appropriate fault
 				switch (temp_phases)
 				{
-				case 0x00:	//No phases!
+				case NO_PHASE:	//No phases!
 					*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 					break;
-				case 0x01:	//Only phase C
-					NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+				case PHASE_C:	//Only phase C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 					*implemented_fault = 27;							//Flag as a C fuse fault
 					break;
-				case 0x02:	//Only phase B
-					NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+				case PHASE_B:	//Only phase B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 					*implemented_fault = 26;							//Flag as a B fuse fault
 					break;
-				case 0x03:	//B and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+				case PHASE_BC:	//B and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 					*implemented_fault = 29;							//Flag as a B & C fuse fault
 					break;
-				case 0x04:	//Only A
-					NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+				case PHASE_A:	//Only A
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 					*implemented_fault = 25;							//Flag as a A fuse fault
 					break;
-				case 0x05:	//A and C
-					NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+				case PHASE_AC:	//A and C
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 					*implemented_fault = 30;							//Flag as A and C fuse fault
 					break;
-				case 0x06:	//A and B
-					NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+				case PHASE_AB:	//A and B
+					NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 					*implemented_fault = 28;							//Flag as A and B fuse fault
 					break;
 				default:	//Not sure how we'd ever get here
@@ -9747,40 +9748,40 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 		else if ((fault_type[0] == 'F') && (fault_type[1] == 'U') && (fault_type[2] == 'S') && (fault_type[3] == '-') && (fault_type[7] == '\0'))	//Three-phase fuse pop
 		{
 			//Let's see what phases we have to play with
-			temp_phases = NR_branchdata[NR_branch_reference].phases & 0x07;
+			temp_phases = NR_branchdata[NR_branch_reference].phases & PHASE_ABC;
 
 			//Case it out - if we want TLG, but don't have all three phases, just trip whatever we have
 			switch (temp_phases)
 			{
-			case 0x00:	//No phases!
+			case NO_PHASE:	//No phases!
 				*implemented_fault = 0;	//No fault - just get us out (something has already failed us)
 				break;
-			case 0x01:	//Only phase C
-				NR_branchdata[NR_branch_reference].phases &= 0xFE;	//Remove C
+			case PHASE_C:	//Only phase C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_C;	//Remove C
 				*implemented_fault = 27;							//Flag as a C only fuse fault
 				break;
-			case 0x02:	//Only phase B
-				NR_branchdata[NR_branch_reference].phases &= 0xFD;	//Remove B
+			case PHASE_B:	//Only phase B
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_B;	//Remove B
 				*implemented_fault = 26;							//Flag as a B only fuse fault
 				break;
-			case 0x03:	//B and C
-				NR_branchdata[NR_branch_reference].phases &= 0xFC;	//Remove B and C
+			case PHASE_BC:	//B and C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_BC;	//Remove B and C
 				*implemented_fault = 29;							//Flag as a B & C fuse fault
 				break;
-			case 0x04:	//Only A
-				NR_branchdata[NR_branch_reference].phases &= 0xFB;	//Remove A
+			case PHASE_A:	//Only A
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_A;	//Remove A
 				*implemented_fault = 25;							//Flag as a A only fuse fault
 				break;
-			case 0x05:	//A and C
-				NR_branchdata[NR_branch_reference].phases &= 0xFA;	//Remove A and C
+			case PHASE_AC:	//A and C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_AC;	//Remove A and C
 				*implemented_fault = 30;							//Flag as A and C fuse fault
 				break;
-			case 0x06:	//A and B
-				NR_branchdata[NR_branch_reference].phases &= 0xF9;	//Remove A and B
+			case PHASE_AB:	//A and B
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_AB;	//Remove A and B
 				*implemented_fault = 28;							//Flag as A and B fuse fault
 				break;
-			case 0x07:	//A, B, and C
-				NR_branchdata[NR_branch_reference].phases &= 0xF8;	//Remove A, B, and C
+			case PHASE_ABC:	//A, B, and C
+				NR_branchdata[NR_branch_reference].phases &= ~PHASE_ABC;	//Remove A, B, and C
 				*implemented_fault = 31;							//Flag as all three fuse fault
 				break;
 			default:	//Not sure how we'd ever get here
@@ -9847,25 +9848,25 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				{
 					//set up the remaining 4 fault specific equations in C_mat before calculating the fault current
 					if(*implemented_fault == 1){ //SLG-A -> Ifb=Ifc=Vax=Vxg=0
-						if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x03) { //three-phase: ABC. check if BC is in phases
+						if ((NR_branchdata[NR_branch_reference].phases & PHASE_ABC) == PHASE_BC) { //three-phase: ABC. check if BC is in phases
 							CI_mat[1][1] = CI_mat[2][2]=gld::complex(1,0);
 							CI_mat[0][0] = fault_Z*-1.0;
 							CV_mat[0][0] = gld::complex(1,0);
 							type_fault = 133;
 						}
-						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x02) { //two phase: AB. Check for B phases
+						else if ((NR_branchdata[NR_branch_reference].phases & PHASE_ABC) == PHASE_B) { //two phase: AB. Check for B phases
 							CI_mat[0][1] = gld::complex(1,0);
 							CI_mat[1][0] = fault_Z*-1.0;
 							CV_mat[1][0] = gld::complex(1,0);
 							type_fault = 1221;
 						}
-						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x01) { //two phase: AC. Check for C in phases
+						else if ((NR_branchdata[NR_branch_reference].phases & PHASE_ABC) == PHASE_C) { //two phase: AC. Check for C in phases
 							CI_mat[0][1] = gld::complex(1,0);
 							CI_mat[1][0] = fault_Z*-1.0;
 							CV_mat[1][0] = gld::complex(1,0);
 							type_fault = 1222;
 						}
-						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x00) { //single-phase: only A. There should be nothing in phases
+						else if ((NR_branchdata[NR_branch_reference].phases & PHASE_ABC) == NO_PHASE) { //single-phase: only A. There should be nothing in phases
 							CI_mat[0][0] = fault_Z*-1.0;
 							CV_mat[0][0] = gld::complex(1,0);
 							type_fault = 111;
@@ -9873,25 +9874,25 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 						mesh_fault_current_calc(pf_mesh_fault_impedance_matrix,CV_mat,CI_mat,NR_busdata[NR_swing_bus_reference].V,type_fault);
 
 					} else if(*implemented_fault == 2){ //SLG-B -> Ifa=Ifc=Vbx=Vxg=0
-						if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x05) { //three-phase: ABC. check if AC is in phases
+						if ((NR_branchdata[NR_branch_reference].phases & PHASE_ABC) == PHASE_AC) { //three-phase: ABC. check if AC is in phases
 							CI_mat[0][0] = CI_mat[2][2]=gld::complex(1,0);
 							CI_mat[1][1] = fault_Z*-1.0;
 							CV_mat[1][1] = gld::complex(1,0);
 							type_fault = 233;
 						}
-						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x04) { //two phase: AB. Check for A in phases
+						else if ((NR_branchdata[NR_branch_reference].phases & PHASE_ABC) == PHASE_A) { //two phase: AB. Check for A in phases
 							CI_mat[0][1] = gld::complex(1,0);
 							CI_mat[1][0] = fault_Z*-1.0;
 							CV_mat[1][0] = gld::complex(1,0);
 							type_fault = 2221;
 						}
-						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x01) { //two phase: BC. Check for C in phases
+						else if ((NR_branchdata[NR_branch_reference].phases & PHASE_ABC) == PHASE_C) { //two phase: BC. Check for C in phases
 							CI_mat[0][1] = gld::complex(1,0);
 							CI_mat[1][0] = fault_Z*-1.0;
 							CV_mat[1][0] = gld::complex(1,0);
 							type_fault = 2222;
 						}
-						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x00) { //single-phase: only B. There should be nothing in phases
+						else if ((NR_branchdata[NR_branch_reference].phases & PHASE_ABC) == NO_PHASE) { //single-phase: only B. There should be nothing in phases
 							CI_mat[0][0] = fault_Z*-1.0;
 							CV_mat[0][0] = gld::complex(1,0);
 							type_fault = 211;
@@ -9899,25 +9900,25 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 						mesh_fault_current_calc(pf_mesh_fault_impedance_matrix,CV_mat,CI_mat,NR_busdata[NR_swing_bus_reference].V,type_fault);
 
 					} else if(*implemented_fault == 3){ //SLG-C -> Ifa=Ifb=Vcx=Vxg=0
-						if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x06) { //three-phase: ABC. check if AB is in phases
+						if ((NR_branchdata[NR_branch_reference].phases & PHASE_ABC) == PHASE_AB) { //three-phase: ABC. check if AB is in phases
 							CI_mat[0][0] = CI_mat[1][1]=gld::complex(1,0);
 							CI_mat[2][2] = fault_Z*-1.0;
 							CV_mat[2][2] = gld::complex(1,0);
 							type_fault = 333;
 						}
-						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x04) { //two phase: AC. Check for A in phases
+						else if ((NR_branchdata[NR_branch_reference].phases & PHASE_ABC) == PHASE_A) { //two phase: AC. Check for A in phases
 							CI_mat[0][1] = gld::complex(1,0);
 							CI_mat[1][0] = fault_Z*-1.0;
 							CV_mat[1][0] = gld::complex(1,0);
 							type_fault = 3221;
 						}
-						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x02) { //two phase: BC. Check for B in phases
+						else if ((NR_branchdata[NR_branch_reference].phases & PHASE_ABC) == PHASE_B) { //two phase: BC. Check for B in phases
 							CI_mat[0][1] = gld::complex(1,0);
 							CI_mat[1][0] = fault_Z*-1.0;
 							CV_mat[1][0] = gld::complex(1,0);
 							type_fault = 3222;
 						}
-						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x00) { //single-phase: only C. There should be nothing in phases
+						else if ((NR_branchdata[NR_branch_reference].phases & PHASE_ABC) == NO_PHASE) { //single-phase: only C. There should be nothing in phases
 							CI_mat[0][0] = fault_Z*-1.0;
 							CV_mat[0][0] = gld::complex(1,0);
 							type_fault = 311;
@@ -9925,14 +9926,14 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 						mesh_fault_current_calc(pf_mesh_fault_impedance_matrix,CV_mat,CI_mat,NR_busdata[NR_swing_bus_reference].V,type_fault);
 
 					} else if(*implemented_fault == 4){ //DLG-AB -> Ifc=Vax=Vbx=Vxg=0
-						if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x01) { //three-phase: ABC. check if C is in phases
+						if ((NR_branchdata[NR_branch_reference].phases & PHASE_ABC) == PHASE_C) { //three-phase: ABC. check if C is in phases
 							CI_mat[0][2] = gld::complex(1,0);
 							CI_mat[1][0] = CI_mat[2][1] = (fault_Z + ground_Z)*-1.0;
 							CI_mat[1][1] = CI_mat[2][0] = ground_Z*-1.0;
 							CV_mat[1][0] = CV_mat[2][1] = gld::complex(1,0);
 							type_fault = 433;
 						}
-						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x00) { //two phase: AB. There shold be nothing in phases
+						else if ((NR_branchdata[NR_branch_reference].phases & PHASE_ABC) == NO_PHASE) { //two phase: AB. There shold be nothing in phases
 							CI_mat[0][0] = CI_mat[1][1] =  (fault_Z + ground_Z)*-1.0;
 							CI_mat[0][1] = CI_mat[1][0] =  ground_Z*-1.0;
 							CV_mat[0][0] = CV_mat[1][1] = gld::complex(1,0);
@@ -9941,14 +9942,14 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 						mesh_fault_current_calc(pf_mesh_fault_impedance_matrix,CV_mat,CI_mat,NR_busdata[NR_swing_bus_reference].V,type_fault);
 
 					} else if(*implemented_fault == 5){ //DLG-BC -> Ifa=Vbx=Vcx=Vxg=0
-						if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x04) { //three-phase: ABC. check if A is in phases
+						if ((NR_branchdata[NR_branch_reference].phases & PHASE_ABC) == PHASE_A) { //three-phase: ABC. check if A is in phases
 							CI_mat[0][0] = gld::complex(1,0);
 							CI_mat[1][1] = CI_mat[2][2] = (fault_Z + ground_Z)*-1.0;
 							CI_mat[1][2] = CI_mat[2][1] = ground_Z*-1.0;
 							CV_mat[1][1] = CV_mat[2][2] = gld::complex(1,0);
 							type_fault = 533;
 						}
-						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x00) { //two phase: BC. There shold be nothing in phases
+						else if ((NR_branchdata[NR_branch_reference].phases & PHASE_ABC) == NO_PHASE) { //two phase: BC. There shold be nothing in phases
 							CI_mat[0][0] = CI_mat[1][1] =  (fault_Z + ground_Z)*-1.0;
 							CI_mat[0][1] = CI_mat[1][0] =  ground_Z*-1.0;
 							CV_mat[0][0] = CV_mat[1][1] = gld::complex(1,0);
@@ -9957,14 +9958,14 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 						mesh_fault_current_calc(pf_mesh_fault_impedance_matrix,CV_mat,CI_mat,NR_busdata[NR_swing_bus_reference].V,type_fault);
 						
 					} else if(*implemented_fault == 6){ //DLG-CA -> Ifb=Vax=Vcx=Vxg=0
-						if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x02) { //three-phase: ABC. check if B is in phases
+						if ((NR_branchdata[NR_branch_reference].phases & PHASE_ABC) == PHASE_B) { //three-phase: ABC. check if B is in phases
 							CI_mat[0][1] = gld::complex(1,0);
 							CI_mat[1][2] = CI_mat[2][0] = (fault_Z + ground_Z)*-1.0;
 							CI_mat[1][0] = CI_mat[2][2] = ground_Z*-1.0;
 							CV_mat[1][2] = CV_mat[2][0] = gld::complex(1,0);
 							type_fault = 633;
 						}
-						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x00) { //two phase: CA. There shold be nothing in phases
+						else if ((NR_branchdata[NR_branch_reference].phases & PHASE_ABC) == NO_PHASE) { //two phase: CA. There shold be nothing in phases
 							CI_mat[0][0] = CI_mat[1][1] =  (fault_Z + ground_Z)*-1.0;
 							CI_mat[0][1] = CI_mat[1][0] =  ground_Z*-1.0;
 							CV_mat[0][0] = CV_mat[1][1] = gld::complex(1,0);
@@ -9973,14 +9974,14 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 						mesh_fault_current_calc(pf_mesh_fault_impedance_matrix,CV_mat,CI_mat,NR_busdata[NR_swing_bus_reference].V,type_fault);
 						
 					} else if(*implemented_fault == 7){ //LL-AB -> Ifa+Ifb=Ifc=Vax=Vbx=0
-						if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x01) { //three-phase: ABC. check if C is in phases
+						if ((NR_branchdata[NR_branch_reference].phases & PHASE_ABC) == PHASE_C) { //three-phase: ABC. check if C is in phases
 							CI_mat[0][2] = CI_mat[1][0] = CI_mat[1][1]=gld::complex(1,0);
 							CI_mat[2][0] = fault_Z*-1.0;
 							CV_mat[2][0] = gld::complex(1,0);
 							CV_mat[2][1] = gld::complex(-1,0);
 							type_fault = 733;
 						}
-						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x00) { //two phase: AB. There shold be nothing in phases
+						else if ((NR_branchdata[NR_branch_reference].phases & PHASE_ABC) == NO_PHASE) { //two phase: AB. There shold be nothing in phases
 							CI_mat[0][0] = CI_mat[0][1] =  gld::complex(1,0);
 							CI_mat[1][0] = fault_Z*-1.0;
 							CV_mat[1][0] = gld::complex(1,0);
@@ -9990,14 +9991,14 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 						mesh_fault_current_calc(pf_mesh_fault_impedance_matrix,CV_mat,CI_mat,NR_busdata[NR_swing_bus_reference].V,type_fault);
 						
 					} else if(*implemented_fault == 8){ //LL-BC -> Ifb+Ifc=Ifa=Vbx=Vcx=0
-						if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x04) { //three-phase: ABC. check if A is in phases
+						if ((NR_branchdata[NR_branch_reference].phases & PHASE_ABC) == PHASE_A) { //three-phase: ABC. check if A is in phases
 							CI_mat[0][0] = CI_mat[1][1] = CI_mat[1][2]=gld::complex(1,0);
 							CI_mat[2][1] = fault_Z*-1.0;
 							CV_mat[2][1] = gld::complex(1,0);
 							CV_mat[2][2] = gld::complex(-1,0);
 							type_fault = 833;
 						}
-						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x00) { //two phase: BC. There shold be nothing in phases
+						else if ((NR_branchdata[NR_branch_reference].phases & PHASE_ABC) == NO_PHASE) { //two phase: BC. There shold be nothing in phases
 							CI_mat[0][0] = CI_mat[0][1] =  gld::complex(1,0);
 							CI_mat[1][0] = fault_Z*-1.0;
 							CV_mat[1][0] = gld::complex(1,0);
@@ -10007,14 +10008,14 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 						mesh_fault_current_calc(pf_mesh_fault_impedance_matrix,CV_mat,CI_mat,NR_busdata[NR_swing_bus_reference].V,type_fault);
 						
 					} else if(*implemented_fault == 9){ //LL-CA -> Ifa+Ifc=Ifb=Vax=Vcx=0
-						if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x02) { //three-phase: ABC. check if B is in phases
+						if ((NR_branchdata[NR_branch_reference].phases & PHASE_ABC) == PHASE_B) { //three-phase: ABC. check if B is in phases
 							CI_mat[0][1] = CI_mat[1][0] = CI_mat[1][2]=gld::complex(1,0);
 							CI_mat[2][2] = fault_Z*-1.0;
 							CV_mat[2][2] = gld::complex(1,0);
 							CV_mat[2][0] = gld::complex(-1,0);
 							type_fault = 933;
 						}
-						else if ((NR_branchdata[NR_branch_reference].phases & 0x07) == 0x00) { //two phase: CA. There shold be nothing in phases
+						else if ((NR_branchdata[NR_branch_reference].phases & PHASE_ABC) == NO_PHASE) { //two phase: CA. There shold be nothing in phases
 							CI_mat[0][0] = CI_mat[0][1] =  gld::complex(1,0);
 							CI_mat[1][0] = fault_Z*-1.0;
 							CV_mat[1][0] = gld::complex(1,0);
@@ -10136,7 +10137,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}
 
 				//Update the fuse statii
-				ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+				ext_result = ((int (*)(OBJECT *, set, bool))(*funadd))(tmpobj,phase_remove,false);
 
 				//Make sure it worked
 				if (ext_result != 1)
@@ -10168,7 +10169,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Store the branch as an index in appropriate phases
 				for (phaseidx=0; phaseidx < 3; phaseidx++)
 				{
-					temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+					temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 					if ((phase_remove & temp_phases) == temp_phases)
 					{
@@ -10216,7 +10217,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}
 
 				//Update the recloser statii - return is the number of attempts (max attempts in this case)
-				ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+				ext_result_dbl = ((double (*)(OBJECT *, set, bool))(*funadd))(tmpobj,phase_remove,false);
 
 				//Make sure it worked
 				if (ext_result_dbl == 0)
@@ -10246,7 +10247,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Store the branch as an index in appropriate phases
 				for (phaseidx=0; phaseidx < 3; phaseidx++)
 				{
-					temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+					temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 					if ((phase_remove & temp_phases) == temp_phases)
 					{
@@ -10296,7 +10297,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				}
 
 				//Update the switch statii
-				ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+				ext_result = ((int (*)(OBJECT *, set, bool))(*funadd))(tmpobj,phase_remove,false);
 
 				//Make sure it worked
 				if (ext_result != 1)
@@ -10323,7 +10324,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 				//Store ourselves as our protective device
 				for (phaseidx=0; phaseidx < 3; phaseidx++)
 				{
-					temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+					temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 					if ((phase_remove & temp_phases) == temp_phases)
 					{
@@ -10361,7 +10362,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 					//Store the swing as an index in appropriate phases
 					for (phaseidx=0; phaseidx < 3; phaseidx++)
 					{
-						temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+						temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 						if ((phase_remove & temp_phases) == temp_phases)
 						{
@@ -10444,7 +10445,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								}
 
 								//Update the recloser statii - return is the number of attempts (max attempts in this case)
-								ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+								ext_result_dbl = ((double (*)(OBJECT *, set, bool))(*funadd))(tmpobj,phase_remove,false);
 
 								//Make sure it worked
 								if (ext_result_dbl == 0)
@@ -10474,7 +10475,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Store the branch as an index in appropriate phases
 								for (phaseidx=0; phaseidx < 3; phaseidx++)
 								{
-									temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+									temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 									if ((phase_remove & temp_phases) == temp_phases)
 									{
@@ -10526,7 +10527,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								}
 
 								//Update the switch statii
-								ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+								ext_result = ((int (*)(OBJECT *, set, bool))(*funadd))(tmpobj,phase_remove,false);
 
 								//Make sure it worked
 								if (ext_result != 1)
@@ -10553,7 +10554,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Store ourselves as our protective device
 								for (phaseidx=0; phaseidx < 3; phaseidx++)
 								{
-									temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+									temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 									if ((phase_remove & temp_phases) == temp_phases)
 									{
@@ -10600,7 +10601,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								}
 
 								//Update the sectionalizer statii
-								ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+								ext_result_dbl = ((double (*)(OBJECT *, set, bool))(*funadd))(tmpobj,phase_remove,false);
 
 								//Make sure it worked
 								if (ext_result_dbl == 0)
@@ -10638,7 +10639,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 									//Store the branch as an index in appropriate phases
 									for (phaseidx=0; phaseidx < 3; phaseidx++)
 									{
-										temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+										temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 										if ((phase_remove & temp_phases) == temp_phases)
 										{
@@ -10689,7 +10690,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								}
 
 								//Update the fuse statii
-								ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_remove,false);
+								ext_result = ((int (*)(OBJECT *, set, bool))(*funadd))(tmpobj,phase_remove,false);
 
 								//Make sure it worked
 								if (ext_result != 1)
@@ -10716,7 +10717,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								//Store the branch as an index in appropriate phases
 								for (phaseidx=0; phaseidx < 3; phaseidx++)
 								{
-									temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+									temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 									if ((phase_remove & temp_phases) == temp_phases)
 									{
@@ -10754,7 +10755,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								}
 
 								//Transformers are magical "all phases removed" devices - basically we're assuming catastrophic failure
-								NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].phases &= 0xF0;
+								NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].phases &= ~PHASE_INFO;
 
 								//Store the branch as an index in appropriate phases - transformer becomes all, not matter what
 								for (phaseidx=0; phaseidx < 3; phaseidx++)
@@ -10778,7 +10779,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 								}
 
 								//Flag remote transformer phases - all of them by default
-								NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].faultphases = 0x07;
+								NR_branchdata[NR_busdata[temp_node].Link_Table[temp_table_loc]].faultphases = PHASE_ABC;
 
 								//Update our fault phases so we aren't restored
 								NR_branchdata[NR_branch_reference].faultphases |= phase_remove;
@@ -10832,7 +10833,7 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 			//Update the device - find a valid phase
 			for (phaseidx=0; phaseidx < 3; phaseidx++)
 			{
-				temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+				temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 				if ((phase_remove & temp_phases) == temp_phases)
 				{
@@ -10873,8 +10874,8 @@ int link_object::link_fault_on(OBJECT **protect_obj, char *fault_type, int *impl
 //Function to remove enacted fault on link - use same list as above (link_fault_on)
 int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 {
-	unsigned char phase_restore = 0x00;	//Default is no phases restored
-	unsigned char temp_phases, temp_phases_B, work_phases;			//Working variable
+	set phase_restore = NO_PHASE;	//Default is no phases restored
+	set temp_phases, temp_phases_B, work_phases;			//Working variable
 	char phaseidx, indexval;
 	int temp_node, ext_result;
 	double ext_result_dbl;
@@ -10882,6 +10883,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 	OBJECT *tmpobj;
 	FUNCTIONADDR funadd = nullptr;
 	bool switch_val;
+	set phase_values[] = {PHASE_A, PHASE_B, PHASE_C};
 
 	//Check our operations mode
 	if (!meshed_fault_checking_enabled)	//Normal mode
@@ -10906,7 +10908,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[3] = '-';
 				imp_fault_name[4] = 'A';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x04;	//Put A back in service
+				phase_restore = PHASE_A;	//Put A back in service
 				break;
 			case 2:	//SLG-B
 				imp_fault_name[0] = 'S';
@@ -10915,7 +10917,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[3] = '-';
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x02;	//Put B back in service
+				phase_restore = PHASE_B;	//Put B back in service
 				break;
 			case 3:	//SLG-C
 				imp_fault_name[0] = 'S';
@@ -10924,7 +10926,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[3] = '-';
 				imp_fault_name[4] = 'C';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x01;	//Put C back in service
+				phase_restore = PHASE_C;	//Put C back in service
 				break;
 			case 4:	//DLG-AB
 				imp_fault_name[0] = 'D';
@@ -10934,7 +10936,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[4] = 'A';
 				imp_fault_name[5] = 'B';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x06;	//Put A and B back in service
+				phase_restore = PHASE_AB;	//Put A and B back in service
 				break;
 			case 5:	//DLG-BC
 				imp_fault_name[0] = 'D';
@@ -10944,7 +10946,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = 'C';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x03;	//Put B and C back in service
+				phase_restore = PHASE_BC;	//Put B and C back in service
 				break;
 			case 6:	//DLG-CA
 				imp_fault_name[0] = 'D';
@@ -10954,7 +10956,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[4] = 'C';
 				imp_fault_name[5] = 'A';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x05;	//Put C and A back in service
+				phase_restore = PHASE_AC;	//Put C and A back in service
 				break;
 			case 7:	//LL-AB
 				imp_fault_name[0] = 'L';
@@ -10963,7 +10965,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[3] = 'A';
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x06;	//Put A and B back in service
+				phase_restore = PHASE_AB;	//Put A and B back in service
 				break;
 			case 8:	//LL-BC
 				imp_fault_name[0] = 'L';
@@ -10972,7 +10974,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[3] = 'B';
 				imp_fault_name[4] = 'C';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x03;	//Put B and C back in service
+				phase_restore = PHASE_BC;	//Put B and C back in service
 				break;
 			case 9:	//LL-CA
 				imp_fault_name[0] = 'L';
@@ -10981,14 +10983,14 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[3] = 'C';
 				imp_fault_name[4] = 'A';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x05;	//Put C and A back in service
+				phase_restore = PHASE_AC;	//Put C and A back in service
 				break;
 			case 10:	//TLG
 				imp_fault_name[0] = 'T';
 				imp_fault_name[1] = 'L';
 				imp_fault_name[2] = 'G';
 				imp_fault_name[3] = '\0';
-				phase_restore = 0x07;	//Put A, B, and C back in service
+				phase_restore = PHASE_ABC;	//Put A, B, and C back in service
 				break;
 			case 11:	//OC-A
 				imp_fault_name[0] = 'O';
@@ -10996,7 +10998,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[2] = '-';
 				imp_fault_name[3] = 'A';
 				imp_fault_name[4] = '\0';
-				phase_restore = 0x04;	//Put A back in service
+				phase_restore = PHASE_A;	//Put A back in service
 				break;
 			case 12:	//OC-B
 				imp_fault_name[0] = 'O';
@@ -11004,7 +11006,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[2] = '-';
 				imp_fault_name[3] = 'B';
 				imp_fault_name[4] = '\0';
-				phase_restore = 0x02;	//Put B back in service
+				phase_restore = PHASE_B;	//Put B back in service
 				break;
 			case 13:	//OC-C
 				imp_fault_name[0] = 'O';
@@ -11012,7 +11014,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[2] = '-';
 				imp_fault_name[3] = 'C';
 				imp_fault_name[4] = '\0';
-				phase_restore = 0x01;	//Put C back in service
+				phase_restore = PHASE_C;	//Put C back in service
 				break;
 			case 14:	//OC2-AB
 				imp_fault_name[0] = 'O';
@@ -11022,7 +11024,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[4] = 'A';
 				imp_fault_name[5] = 'B';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x06;	//Put A and B back in service
+				phase_restore = PHASE_AB;	//Put A and B back in service
 				break;
 			case 15:	//OC2-BC
 				imp_fault_name[0] = 'O';
@@ -11032,7 +11034,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = 'C';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x03;	//Put B and C back in service
+				phase_restore = PHASE_BC;	//Put B and C back in service
 				break;
 			case 16:	//OC2-CA
 				imp_fault_name[0] = 'O';
@@ -11042,14 +11044,14 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[4] = 'C';
 				imp_fault_name[5] = 'A';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x05;	//Put C and A back in service
+				phase_restore = PHASE_AC;	//Put C and A back in service
 				break;
 			case 17:	//OC3
 				imp_fault_name[0] = 'O';
 				imp_fault_name[1] = 'C';
 				imp_fault_name[2] = '3';
 				imp_fault_name[3] = '\0';
-				phase_restore = 0x07;	//Put A, B, and C back in service
+				phase_restore = PHASE_ABC;	//Put A, B, and C back in service
 				break;
 			case 18:	//SW-A
 				imp_fault_name[0] = 'S';
@@ -11057,7 +11059,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[2] = '-';
 				imp_fault_name[3] = 'A';
 				imp_fault_name[4] = '\0';
-				phase_restore = 0x04;	//Put A back in service
+				phase_restore = PHASE_A;	//Put A back in service
 				switch_val = true;		//Flag as a switch action
 				break;
 			case 19:	//SW-B
@@ -11066,7 +11068,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[2] = '-';
 				imp_fault_name[3] = 'B';
 				imp_fault_name[4] = '\0';
-				phase_restore = 0x02;	//Put B back in service
+				phase_restore = PHASE_B;	//Put B back in service
 				switch_val = true;		//Flag as a switch action
 				break;
 			case 20:	//SW-C
@@ -11075,7 +11077,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[2] = '-';
 				imp_fault_name[3] = 'C';
 				imp_fault_name[4] = '\0';
-				phase_restore = 0x01;	//Put C back in service
+				phase_restore = PHASE_C;	//Put C back in service
 				switch_val = true;		//Flag as a switch action
 				break;
 			case 21:	//SW-AB
@@ -11085,7 +11087,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[3] = 'A';
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x06;	//Put A and B back in service
+				phase_restore = PHASE_AB;	//Put A and B back in service
 				switch_val = true;		//Flag as a switch action
 				break;
 			case 22:	//SW-BC
@@ -11095,7 +11097,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[3] = 'B';
 				imp_fault_name[4] = 'C';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x03;	//Put B and C back in service
+				phase_restore = PHASE_BC;	//Put B and C back in service
 				switch_val = true;		//Flag as a switch action
 				break;
 			case 23:	//SW-CA
@@ -11105,7 +11107,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[3] = 'C';
 				imp_fault_name[4] = 'A';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x05;	//Put C and A back in service
+				phase_restore = PHASE_AC;	//Put C and A back in service
 				switch_val = true;		//Flag as a switch action
 				break;
 			case 24:	//SW-ABC
@@ -11116,7 +11118,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = 'C';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x07;	//Put A, B, and C back in service
+				phase_restore = PHASE_ABC;	//Put A, B, and C back in service
 				switch_val = true;		//Flag as a switch action
 				break;
 			case 25:	//FUS-A
@@ -11126,7 +11128,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[3] = '-';
 				imp_fault_name[4] = 'A';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x04;	//Put A back in service
+				phase_restore = PHASE_A;	//Put A back in service
 				break;
 			case 26:	//FUS-B
 				imp_fault_name[0] = 'F';
@@ -11135,7 +11137,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[3] = '-';
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x02;	//Put B back in service
+				phase_restore = PHASE_B;	//Put B back in service
 				break;
 			case 27:	//FUS-C
 				imp_fault_name[0] = 'F';
@@ -11144,7 +11146,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[3] = '-';
 				imp_fault_name[4] = 'C';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x01;	//Put C back in service
+				phase_restore = PHASE_C;	//Put C back in service
 				break;
 			case 28:	//FUS-AB
 				imp_fault_name[0] = 'F';
@@ -11154,7 +11156,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[4] = 'A';
 				imp_fault_name[5] = 'B';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x06;	//Put A and B back in service
+				phase_restore = PHASE_AB;	//Put A and B back in service
 				break;
 			case 29:	//FUS-BC
 				imp_fault_name[0] = 'F';
@@ -11164,7 +11166,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = 'C';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x03;	//Put B and C back in service
+				phase_restore = PHASE_BC;	//Put B and C back in service
 				break;
 			case 30:	//FUS-CA
 				imp_fault_name[0] = 'F';
@@ -11174,7 +11176,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[4] = 'C';
 				imp_fault_name[5] = 'A';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x05;	//Put C and A back in service
+				phase_restore = PHASE_AC;	//Put C and A back in service
 				break;
 			case 31:	//FUS-ABC
 				imp_fault_name[0] = 'F';
@@ -11185,14 +11187,14 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[5] = 'B';
 				imp_fault_name[6] = 'C';
 				imp_fault_name[7] = '\0';
-				phase_restore = 0x07;	//Put A, B, and C back in service
+				phase_restore = PHASE_ABC;	//Put A, B, and C back in service
 				break;
 			case 32:	//TLL
 				imp_fault_name[0] = 'T';
 				imp_fault_name[1] = 'L';
 				imp_fault_name[2] = 'L';
 				imp_fault_name[3] = '\0';
-				phase_restore = 0x07;	//Put A, B, and C back in service
+				phase_restore = PHASE_ABC;	//Put A, B, and C back in service
 				break;
 			default:	//Should never get here
 				GL_THROW("%s - attempted to recover from unsupported fault!",objhdr->name);
@@ -11211,7 +11213,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 			//Remove our restrictions for these phases
 			for (phaseidx=0; phaseidx<3; phaseidx++)
 			{
-				work_phases = 0x04 >> phaseidx;	//Get check
+				work_phases = phase_values[phaseidx];	//Get check
 
 				if ((phase_restore & work_phases) == work_phases)	//Valid phase to restore
 				{
@@ -11260,7 +11262,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							}
 
 							//Check and see what the supporting nodes are doing - if a switch is already in a fault, this causes issues
-							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & PHASE_ABC);
 
 							if ((phase_restore & temp_phases) == phase_restore)	//Support is available, one way or another
 							{
@@ -11275,7 +11277,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								}
 
 								//Update the fuse statii
-								ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_restore,true);
+								ext_result = ((int (*)(OBJECT *, set, bool))(*funadd))(tmpobj,phase_restore,true);
 
 								//Make sure it worked
 								if (ext_result != 1)
@@ -11284,7 +11286,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 									//defined above
 								}
 							}
-							else if ((phase_restore & temp_phases) != 0x00)	//Some support is available
+							else if ((phase_restore & temp_phases) != NO_PHASE)	//Some support is available
 							{
 								//Update fault phases
 								temp_phases_B = (phase_restore & temp_phases);		//these are the phases to restore
@@ -11301,7 +11303,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								}
 
 								//Update the switch statii
-								ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,temp_phases);
+								ext_result = ((int (*)(OBJECT *, set))(*funadd))(tmpobj,temp_phases);
 
 								//Make sure it worked
 								if (ext_result != 1)
@@ -11322,7 +11324,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								}
 
 								//Update the fuse statii
-								ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,temp_phases_B,true);
+								ext_result = ((int (*)(OBJECT *, set, bool))(*funadd))(tmpobj,temp_phases_B,true);
 
 								//Make sure it worked
 								if (ext_result != 1)
@@ -11345,7 +11347,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								}
 
 								//Update the switch statii
-								ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,phase_restore);
+								ext_result = ((int (*)(OBJECT *, set))(*funadd))(tmpobj,phase_restore);
 
 								//Make sure it worked
 								if (ext_result != 1)
@@ -11358,19 +11360,19 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							//Modify our phases as appropriate
 							if (meshed_fault_checking_enabled)
 							{
-								if ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07) != 0x00)
+								if ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & PHASE_ABC) != NO_PHASE)
 								{
-									NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07);
+									NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & PHASE_ABC);
 								}
-								else if ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases & 0x07) != 0x00)
+								else if ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases & PHASE_ABC) != NO_PHASE)
 								{
-									NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases & 0x07);
+									NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases & PHASE_ABC);
 								}
 								//Default else, busted
 							}
 							else	//Normal, radial mode
 							{
-								NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07);
+								NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & PHASE_ABC);
 							}
 
 							//Flag the remote object's appropriate phases
@@ -11379,7 +11381,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							//Remove the branch as an index in appropriate phases
 							for (phaseidx=0; phaseidx < 3; phaseidx++)
 							{
-								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+								temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 								if ((phase_restore & temp_phases) == temp_phases)
 								{
@@ -11405,7 +11407,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							}
 
 							//Check and see what the supporting nodes are doing - if a recloser is already in a fault, this causes issues
-							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & PHASE_ABC);
 
 							if ((phase_restore & temp_phases) == phase_restore)	//Support is available, one way or another
 							{
@@ -11420,7 +11422,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								}
 
 								//Update the recloser statii
-								ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_restore,true);
+								ext_result_dbl = ((double (*)(OBJECT *, set, bool))(*funadd))(tmpobj,phase_restore,true);
 
 								//Make sure it worked
 								if (ext_result_dbl != 1.0)
@@ -11429,7 +11431,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 									//defined above
 								}
 							}
-							else if ((phase_restore & temp_phases) != 0x00)	//Some support is available
+							else if ((phase_restore & temp_phases) != NO_PHASE)	//Some support is available
 							{
 								//Update fault phases
 								temp_phases_B = (phase_restore & temp_phases);		//these are the phases to restore
@@ -11446,7 +11448,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								}
 
 								//Update the sectionalizer statii
-								ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,temp_phases);
+								ext_result = ((int (*)(OBJECT *, set))(*funadd))(tmpobj,temp_phases);
 
 								//Make sure it worked
 								if (ext_result != 1)
@@ -11467,7 +11469,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								}
 
 								//Update the recloser statii
-								ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_restore,true);
+								ext_result_dbl = ((double (*)(OBJECT *, set, bool))(*funadd))(tmpobj,phase_restore,true);
 
 								//Make sure it worked
 								if (ext_result_dbl != 1.0)
@@ -11490,7 +11492,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								}
 
 								//Update the sectionalizer statii
-								ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,phase_restore);
+								ext_result = ((int (*)(OBJECT *, set))(*funadd))(tmpobj,phase_restore);
 
 								//Make sure it worked
 								if (ext_result != 1)
@@ -11501,7 +11503,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							}
 
 							//Modify our phases as appropriate
-							NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07);
+							NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & PHASE_ABC);
 
 							//Flag the remote object's appropriate phases
 							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
@@ -11509,7 +11511,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							//Remove the branch as an index in appropriate phases
 							for (phaseidx=0; phaseidx < 3; phaseidx++)
 							{
-								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+								temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 								if ((phase_restore & temp_phases) == temp_phases)
 								{
@@ -11535,7 +11537,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							}
 
 							//Check and see what the supporting nodes are doing - if a sectionalizer is already in a fault, this causes issues
-							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & PHASE_ABC);
 
 							if ((phase_restore & temp_phases) == phase_restore)	//Support is available, one way or another
 							{
@@ -11550,7 +11552,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								}
 
 								//Update the sectionalizer statii
-								ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_restore,true);
+								ext_result_dbl = ((double (*)(OBJECT *, set, bool))(*funadd))(tmpobj,phase_restore,true);
 
 								//Make sure it worked
 								if (ext_result_dbl != 1.0)
@@ -11559,7 +11561,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 									//defined above
 								}
 							}
-							else if ((phase_restore & temp_phases) != 0x00)	//Some support is available
+							else if ((phase_restore & temp_phases) != NO_PHASE)	//Some support is available
 							{
 								//Update fault phases
 								temp_phases_B = (phase_restore & temp_phases);		//these are the phases to restore
@@ -11576,7 +11578,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								}
 
 								//Update the sectionalizer statii
-								ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,temp_phases);
+								ext_result = ((int (*)(OBJECT *, set))(*funadd))(tmpobj,temp_phases);
 
 								//Make sure it worked
 								if (ext_result != 1)
@@ -11597,7 +11599,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								}
 
 								//Update the sectionalizer statii
-								ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_restore,true);
+								ext_result_dbl = ((double (*)(OBJECT *, set, bool))(*funadd))(tmpobj,phase_restore,true);
 
 								//Make sure it worked
 								if (ext_result_dbl != 1.0)
@@ -11620,7 +11622,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								}
 
 								//Update the sectionalizer statii
-								ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,phase_restore);
+								ext_result = ((int (*)(OBJECT *, set))(*funadd))(tmpobj,phase_restore);
 
 								//Make sure it worked
 								if (ext_result != 1)
@@ -11631,7 +11633,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							}
 							
 							//Modify our phases as appropriate
-							NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07);
+							NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & PHASE_ABC);
 
 							//Flag the remote object's appropriate phases
 							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
@@ -11639,7 +11641,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							//Remove the branch as an index in appropriate phases
 							for (phaseidx=0; phaseidx < 3; phaseidx++)
 							{
-								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+								temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 								if ((phase_restore & temp_phases) == temp_phases)
 								{
@@ -11665,7 +11667,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							}
 
 							//Check and see what the supporting nodes are doing - if a fuse is already in a fault, this causes issues
-							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & PHASE_ABC);
 
 							if ((phase_restore & temp_phases) == phase_restore)	//Support is available, one way or another
 							{
@@ -11680,7 +11682,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								}
 
 								//Update the fuse statii
-								ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_restore,true);
+								ext_result = ((int (*)(OBJECT *, set, bool))(*funadd))(tmpobj,phase_restore,true);
 
 								//Make sure it worked
 								if (ext_result != 1)
@@ -11689,7 +11691,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 									//defined above
 								}
 							}
-							else if ((phase_restore & temp_phases) != 0x00)	//Some support is available
+							else if ((phase_restore & temp_phases) != NO_PHASE)	//Some support is available
 							{
 								//Update fault phases
 								temp_phases_B = (phase_restore & temp_phases);		//these are the phases to restore
@@ -11706,7 +11708,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								}
 
 								//Update the fuse statii
-								ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,temp_phases);
+								ext_result = ((int (*)(OBJECT *, set))(*funadd))(tmpobj,temp_phases);
 
 								//Make sure it worked
 								if (ext_result != 1)
@@ -11727,7 +11729,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								}
 
 								//Update the fuse statii
-								ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,temp_phases_B,true);
+								ext_result = ((int (*)(OBJECT *, set, bool))(*funadd))(tmpobj,temp_phases_B,true);
 
 								//Make sure it worked
 								if (ext_result != 1)
@@ -11750,7 +11752,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								}
 
 								//Update the fuse statii
-								ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,phase_restore);
+								ext_result = ((int (*)(OBJECT *, set))(*funadd))(tmpobj,phase_restore);
 
 								//Make sure it worked
 								if (ext_result != 1)
@@ -11761,7 +11763,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							}
 
 							//Modify our phases as appropriate
-							NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07);
+							NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & PHASE_ABC);
 
 							//Flag the remote object's appropriate phases
 							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
@@ -11769,7 +11771,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							//Remove the branch as an index in appropriate phases
 							for (phaseidx=0; phaseidx < 3; phaseidx++)
 							{
-								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+								temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 								if ((phase_restore & temp_phases) == temp_phases)
 								{
@@ -11786,7 +11788,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 2)	//Transformer
 						{
 							//Transformers are special case - if the source is supported, all three phases are reinstated
-							temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & 0x07;
+							temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & PHASE_ABC;
 
 							//Make sure we match
 							if ((temp_phases & NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases) == temp_phases)
@@ -11795,9 +11797,9 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(temp_phases);
 
 								//Check for SPCT rating
-								if ((NR_branchdata[protect_locations[phaseidx]].origphases & 0x80) == 0x80)	//SPCT
+								if ((NR_branchdata[protect_locations[phaseidx]].origphases & PHASE_S) == PHASE_S)	//SPCT
 								{
-									temp_phases |= 0x80;	//Apply SPCT flag
+									temp_phases |= PHASE_S;	//Apply SPCT flag
 								}
 								//Defaulted else - normal xformer
 
@@ -11810,15 +11812,15 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							}
 
 							//Remove our fault for the appropriate phases
-							temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & 0x07;
+							temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & PHASE_ABC;
 							NR_branchdata[NR_branch_reference].faultphases &= ~(temp_phases);
 
 							//Remove fault indices - loop through transformer phases
 							for (indexval=0; indexval<3; indexval++)
 							{
-								temp_phases = 0x04 >> indexval;
+								temp_phases = phase_values[indexval];
 
-								if ((temp_phases & NR_branchdata[NR_branch_reference].faultphases) == 0x00)	//No fault here
+								if ((temp_phases & NR_branchdata[NR_branch_reference].faultphases) == NO_PHASE)	//No fault here
 									protect_locations[indexval] = -1;	//Clear flag
 							}
 
@@ -11915,7 +11917,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[3] = '-';
 				imp_fault_name[4] = 'A';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x04;	//Put A back in service
+				phase_restore = PHASE_A;	//Put A back in service
 				break;
 			case 2:	//SLG-B
 				imp_fault_name[0] = 'S';
@@ -11924,7 +11926,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[3] = '-';
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x02;	//Put B back in service
+				phase_restore = PHASE_B;	//Put B back in service
 				break;
 			case 3:	//SLG-C
 				imp_fault_name[0] = 'S';
@@ -11933,7 +11935,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[3] = '-';
 				imp_fault_name[4] = 'C';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x01;	//Put C back in service
+				phase_restore = PHASE_C;	//Put C back in service
 				break;
 			case 4:	//DLG-AB
 				imp_fault_name[0] = 'D';
@@ -11943,7 +11945,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[4] = 'A';
 				imp_fault_name[5] = 'B';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x06;	//Put A and B back in service
+				phase_restore = PHASE_AB;	//Put A and B back in service
 				break;
 			case 5:	//DLG-BC
 				imp_fault_name[0] = 'D';
@@ -11953,7 +11955,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = 'C';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x03;	//Put B and C back in service
+				phase_restore = PHASE_BC;	//Put B and C back in service
 				break;
 			case 6:	//DLG-CA
 				imp_fault_name[0] = 'D';
@@ -11963,7 +11965,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[4] = 'C';
 				imp_fault_name[5] = 'A';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x05;	//Put C and A back in service
+				phase_restore = PHASE_AC;	//Put C and A back in service
 				break;
 			case 7:	//LL-AB
 				imp_fault_name[0] = 'L';
@@ -11972,7 +11974,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[3] = 'A';
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x06;	//Put A and B back in service
+				phase_restore = PHASE_AB;	//Put A and B back in service
 				break;
 			case 8:	//LL-BC
 				imp_fault_name[0] = 'L';
@@ -11981,7 +11983,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[3] = 'B';
 				imp_fault_name[4] = 'C';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x03;	//Put B and C back in service
+				phase_restore = PHASE_BC;	//Put B and C back in service
 				break;
 			case 9:	//LL-CA
 				imp_fault_name[0] = 'L';
@@ -11990,14 +11992,14 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[3] = 'C';
 				imp_fault_name[4] = 'A';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x05;	//Put C and A back in service
+				phase_restore = PHASE_AC;	//Put C and A back in service
 				break;
 			case 10:	//TLG
 				imp_fault_name[0] = 'T';
 				imp_fault_name[1] = 'L';
 				imp_fault_name[2] = 'G';
 				imp_fault_name[3] = '\0';
-				phase_restore = 0x07;	//Put A, B, and C back in service
+				phase_restore = PHASE_ABC;	//Put A, B, and C back in service
 				break;
 			case 11:	//OC-A
 				imp_fault_name[0] = 'O';
@@ -12005,7 +12007,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[2] = '-';
 				imp_fault_name[3] = 'A';
 				imp_fault_name[4] = '\0';
-				phase_restore = 0x04;	//Put A back in service
+				phase_restore = PHASE_A;	//Put A back in service
 				break;
 			case 12:	//OC-B
 				imp_fault_name[0] = 'O';
@@ -12013,7 +12015,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[2] = '-';
 				imp_fault_name[3] = 'B';
 				imp_fault_name[4] = '\0';
-				phase_restore = 0x02;	//Put B back in service
+				phase_restore = PHASE_B;	//Put B back in service
 				break;
 			case 13:	//OC-C
 				imp_fault_name[0] = 'O';
@@ -12021,7 +12023,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[2] = '-';
 				imp_fault_name[3] = 'C';
 				imp_fault_name[4] = '\0';
-				phase_restore = 0x01;	//Put C back in service
+				phase_restore = PHASE_C;	//Put C back in service
 				break;
 			case 14:	//OC2-AB
 				imp_fault_name[0] = 'O';
@@ -12031,7 +12033,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[4] = 'A';
 				imp_fault_name[5] = 'B';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x06;	//Put A and B back in service
+				phase_restore = PHASE_AB;	//Put A and B back in service
 				break;
 			case 15:	//OC2-BC
 				imp_fault_name[0] = 'O';
@@ -12041,7 +12043,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = 'C';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x03;	//Put B and C back in service
+				phase_restore = PHASE_BC;	//Put B and C back in service
 				break;
 			case 16:	//OC2-CA
 				imp_fault_name[0] = 'O';
@@ -12051,14 +12053,14 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[4] = 'C';
 				imp_fault_name[5] = 'A';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x05;	//Put C and A back in service
+				phase_restore = PHASE_AC;	//Put C and A back in service
 				break;
 			case 17:	//OC3
 				imp_fault_name[0] = 'O';
 				imp_fault_name[1] = 'C';
 				imp_fault_name[2] = '3';
 				imp_fault_name[3] = '\0';
-				phase_restore = 0x07;	//Put A, B, and C back in service
+				phase_restore = PHASE_ABC;	//Put A, B, and C back in service
 				break;
 			case 18:	//SW-A
 				imp_fault_name[0] = 'S';
@@ -12066,7 +12068,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[2] = '-';
 				imp_fault_name[3] = 'A';
 				imp_fault_name[4] = '\0';
-				phase_restore = 0x04;	//Put A back in service
+				phase_restore = PHASE_A;	//Put A back in service
 				switch_val = true;		//Flag as a switch action
 				break;
 			case 19:	//SW-B
@@ -12075,7 +12077,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[2] = '-';
 				imp_fault_name[3] = 'B';
 				imp_fault_name[4] = '\0';
-				phase_restore = 0x02;	//Put B back in service
+				phase_restore = PHASE_B;	//Put B back in service
 				switch_val = true;		//Flag as a switch action
 				break;
 			case 20:	//SW-C
@@ -12084,7 +12086,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[2] = '-';
 				imp_fault_name[3] = 'C';
 				imp_fault_name[4] = '\0';
-				phase_restore = 0x01;	//Put C back in service
+				phase_restore = PHASE_C;	//Put C back in service
 				switch_val = true;		//Flag as a switch action
 				break;
 			case 21:	//SW-AB
@@ -12094,7 +12096,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[3] = 'A';
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x06;	//Put A and B back in service
+				phase_restore = PHASE_AB;	//Put A and B back in service
 				switch_val = true;		//Flag as a switch action
 				break;
 			case 22:	//SW-BC
@@ -12104,7 +12106,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[3] = 'B';
 				imp_fault_name[4] = 'C';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x03;	//Put B and C back in service
+				phase_restore = PHASE_BC;	//Put B and C back in service
 				switch_val = true;		//Flag as a switch action
 				break;
 			case 23:	//SW-CA
@@ -12114,7 +12116,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[3] = 'C';
 				imp_fault_name[4] = 'A';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x05;	//Put C and A back in service
+				phase_restore = PHASE_AC;	//Put C and A back in service
 				switch_val = true;		//Flag as a switch action
 				break;
 			case 24:	//SW-ABC
@@ -12125,7 +12127,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = 'C';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x07;	//Put A, B, and C back in service
+				phase_restore = PHASE_ABC;	//Put A, B, and C back in service
 				switch_val = true;		//Flag as a switch action
 				break;
 			case 25:	//FUS-A
@@ -12135,7 +12137,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[3] = '-';
 				imp_fault_name[4] = 'A';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x04;	//Put A back in service
+				phase_restore = PHASE_A;	//Put A back in service
 				break;
 			case 26:	//FUS-B
 				imp_fault_name[0] = 'F';
@@ -12144,7 +12146,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[3] = '-';
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x02;	//Put B back in service
+				phase_restore = PHASE_B;	//Put B back in service
 				break;
 			case 27:	//FUS-C
 				imp_fault_name[0] = 'F';
@@ -12153,7 +12155,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[3] = '-';
 				imp_fault_name[4] = 'C';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x01;	//Put C back in service
+				phase_restore = PHASE_C;	//Put C back in service
 				break;
 			case 28:	//FUS-AB
 				imp_fault_name[0] = 'F';
@@ -12163,7 +12165,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[4] = 'A';
 				imp_fault_name[5] = 'B';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x06;	//Put A and B back in service
+				phase_restore = PHASE_AB;	//Put A and B back in service
 				break;
 			case 29:	//FUS-BC
 				imp_fault_name[0] = 'F';
@@ -12173,7 +12175,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = 'C';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x03;	//Put B and C back in service
+				phase_restore = PHASE_BC;	//Put B and C back in service
 				break;
 			case 30:	//FUS-CA
 				imp_fault_name[0] = 'F';
@@ -12183,7 +12185,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[4] = 'C';
 				imp_fault_name[5] = 'A';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x05;	//Put C and A back in service
+				phase_restore = PHASE_AC;	//Put C and A back in service
 				break;
 			case 31:	//FUS-ABC
 				imp_fault_name[0] = 'F';
@@ -12194,14 +12196,14 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 				imp_fault_name[5] = 'B';
 				imp_fault_name[6] = 'C';
 				imp_fault_name[7] = '\0';
-				phase_restore = 0x07;	//Put A, B, and C back in service
+				phase_restore = PHASE_ABC;	//Put A, B, and C back in service
 				break;
 			case 32:	//TLL
 				imp_fault_name[0] = 'T';
 				imp_fault_name[1] = 'L';
 				imp_fault_name[2] = 'L';
 				imp_fault_name[3] = '\0';
-				phase_restore = 0x07;	//Put A, B, and C back in service
+				phase_restore = PHASE_ABC;	//Put A, B, and C back in service
 				break;
 			default:	//Should never get here
 				GL_THROW("%s - attempted to recover from unsupported fault!",objhdr->name);
@@ -12220,7 +12222,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 			//Remove our restrictions for these phases
 			for (phaseidx=0; phaseidx<3; phaseidx++)
 			{
-				work_phases = 0x04 >> phaseidx;	//Get check
+				work_phases = phase_values[phaseidx];	//Get check
 
 				if ((phase_restore & work_phases) == work_phases)	//Valid phase to restore
 				{
@@ -12281,7 +12283,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							}
 
 							//Update the fuse statii
-							ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_restore,true);
+							ext_result = ((int (*)(OBJECT *, set, bool))(*funadd))(tmpobj,phase_restore,true);
 
 							//Make sure it worked
 							if (ext_result != 1)
@@ -12292,13 +12294,13 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 
 							//Shouldn't even need to alter the flags
 							////Flag one of our ends as active, just in case
-							//if ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07) != 0x00)
+							//if ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & PHASE_ABC) != NO_PHASE)
 							//{
-							//	NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07);
+							//	NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & PHASE_ABC);
 							//}
-							//else if ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases & 0x07) != 0x00)
+							//else if ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases & PHASE_ABC) != NO_PHASE)
 							//{
-							//	NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases & 0x07);
+							//	NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases & PHASE_ABC);
 							//}
 							////Default else, busted
 
@@ -12308,7 +12310,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							//Remove the branch as an index in appropriate phases
 							for (phaseidx=0; phaseidx < 3; phaseidx++)
 							{
-								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+								temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 								if ((phase_restore & temp_phases) == temp_phases)
 								{
@@ -12334,7 +12336,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							}
 
 							//Check and see what the supporting nodes are doing - if a recloser is already in a fault, this causes issues
-							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & PHASE_ABC);
 
 							if ((phase_restore & temp_phases) == phase_restore)	//Support is available, one way or another
 							{
@@ -12349,7 +12351,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								}
 
 								//Update the recloser statii
-								ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_restore,true);
+								ext_result_dbl = ((double (*)(OBJECT *, set, bool))(*funadd))(tmpobj,phase_restore,true);
 
 								//Make sure it worked
 								if (ext_result_dbl != 1.0)
@@ -12358,7 +12360,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 									//defined above
 								}
 							}
-							else if ((phase_restore & temp_phases) != 0x00)	//Some support is available
+							else if ((phase_restore & temp_phases) != NO_PHASE)	//Some support is available
 							{
 								//Update fault phases
 								temp_phases_B = (phase_restore & temp_phases);		//these are the phases to restore
@@ -12375,7 +12377,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								}
 
 								//Update the sectionalizer statii
-								ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,temp_phases);
+								ext_result = ((int (*)(OBJECT *, set))(*funadd))(tmpobj,temp_phases);
 
 								//Make sure it worked
 								if (ext_result != 1)
@@ -12396,7 +12398,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								}
 
 								//Update the recloser statii
-								ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_restore,true);
+								ext_result_dbl = ((double (*)(OBJECT *, set, bool))(*funadd))(tmpobj,phase_restore,true);
 
 								//Make sure it worked
 								if (ext_result_dbl != 1.0)
@@ -12419,7 +12421,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								}
 
 								//Update the sectionalizer statii
-								ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,phase_restore);
+								ext_result = ((int (*)(OBJECT *, set))(*funadd))(tmpobj,phase_restore);
 
 								//Make sure it worked
 								if (ext_result != 1)
@@ -12430,7 +12432,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							}
 
 							//Modify our phases as appropriate
-							NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07);
+							NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & PHASE_ABC);
 
 							//Flag the remote object's appropriate phases
 							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
@@ -12438,7 +12440,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							//Remove the branch as an index in appropriate phases
 							for (phaseidx=0; phaseidx < 3; phaseidx++)
 							{
-								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+								temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 								if ((phase_restore & temp_phases) == temp_phases)
 								{
@@ -12464,7 +12466,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							}
 
 							//Check and see what the supporting nodes are doing - if a sectionalizer is already in a fault, this causes issues
-							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & PHASE_ABC);
 
 							if ((phase_restore & temp_phases) == phase_restore)	//Support is available, one way or another
 							{
@@ -12479,7 +12481,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								}
 
 								//Update the sectionalizer statii
-								ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_restore,true);
+								ext_result_dbl = ((double (*)(OBJECT *, set, bool))(*funadd))(tmpobj,phase_restore,true);
 
 								//Make sure it worked
 								if (ext_result_dbl != 1.0)
@@ -12488,7 +12490,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 									//defined above
 								}
 							}
-							else if ((phase_restore & temp_phases) != 0x00)	//Some support is available
+							else if ((phase_restore & temp_phases) != NO_PHASE)	//Some support is available
 							{
 								//Update fault phases
 								temp_phases_B = (phase_restore & temp_phases);		//these are the phases to restore
@@ -12505,7 +12507,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								}
 
 								//Update the sectionalizer statii
-								ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,temp_phases);
+								ext_result = ((int (*)(OBJECT *, set))(*funadd))(tmpobj,temp_phases);
 
 								//Make sure it worked
 								if (ext_result != 1)
@@ -12526,7 +12528,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								}
 
 								//Update the sectionalizer statii
-								ext_result_dbl = ((double (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_restore,true);
+								ext_result_dbl = ((double (*)(OBJECT *, set, bool))(*funadd))(tmpobj,phase_restore,true);
 
 								//Make sure it worked
 								if (ext_result_dbl != 1.0)
@@ -12549,7 +12551,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								}
 
 								//Update the sectionalizer statii
-								ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,phase_restore);
+								ext_result = ((int (*)(OBJECT *, set))(*funadd))(tmpobj,phase_restore);
 
 								//Make sure it worked
 								if (ext_result != 1)
@@ -12560,7 +12562,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							}
 							
 							//Modify our phases as appropriate
-							NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07);
+							NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & PHASE_ABC);
 
 							//Flag the remote object's appropriate phases
 							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
@@ -12568,7 +12570,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							//Remove the branch as an index in appropriate phases
 							for (phaseidx=0; phaseidx < 3; phaseidx++)
 							{
-								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+								temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 								if ((phase_restore & temp_phases) == temp_phases)
 								{
@@ -12594,7 +12596,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							}
 
 							//Check and see what the supporting nodes are doing - if a fuse is already in a fault, this causes issues
-							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & PHASE_ABC);
 
 							if ((phase_restore & temp_phases) == phase_restore)	//Support is available, one way or another
 							{
@@ -12609,7 +12611,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								}
 
 								//Update the fuse statii
-								ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,phase_restore,true);
+								ext_result = ((int (*)(OBJECT *, set, bool))(*funadd))(tmpobj,phase_restore,true);
 
 								//Make sure it worked
 								if (ext_result != 1)
@@ -12618,7 +12620,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 									//defined above
 								}
 							}
-							else if ((phase_restore & temp_phases) != 0x00)	//Some support is available
+							else if ((phase_restore & temp_phases) != NO_PHASE)	//Some support is available
 							{
 								//Update fault phases
 								temp_phases_B = (phase_restore & temp_phases);		//these are the phases to restore
@@ -12635,7 +12637,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								}
 
 								//Update the fuse statii
-								ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,temp_phases);
+								ext_result = ((int (*)(OBJECT *, set))(*funadd))(tmpobj,temp_phases);
 
 								//Make sure it worked
 								if (ext_result != 1)
@@ -12656,7 +12658,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								}
 
 								//Update the fuse statii
-								ext_result = ((int (*)(OBJECT *, unsigned char, bool))(*funadd))(tmpobj,temp_phases_B,true);
+								ext_result = ((int (*)(OBJECT *, set, bool))(*funadd))(tmpobj,temp_phases_B,true);
 
 								//Make sure it worked
 								if (ext_result != 1)
@@ -12679,7 +12681,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								}
 
 								//Update the fuse statii
-								ext_result = ((int (*)(OBJECT *, unsigned char))(*funadd))(tmpobj,phase_restore);
+								ext_result = ((int (*)(OBJECT *, set))(*funadd))(tmpobj,phase_restore);
 
 								//Make sure it worked
 								if (ext_result != 1)
@@ -12690,7 +12692,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							}
 
 							//Modify our phases as appropriate
-							NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & 0x07);
+							NR_branchdata[protect_locations[phaseidx]].phases &= (NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases & PHASE_ABC);
 
 							//Flag the remote object's appropriate phases
 							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
@@ -12698,7 +12700,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							//Remove the branch as an index in appropriate phases
 							for (phaseidx=0; phaseidx < 3; phaseidx++)
 							{
-								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+								temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 								if ((phase_restore & temp_phases) == temp_phases)
 								{
@@ -12715,7 +12717,7 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 2)	//Transformer
 						{
 							//Transformers are special case - if the source is supported, all three phases are reinstated
-							temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & 0x07;
+							temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & PHASE_ABC;
 
 							//Make sure we match
 							if ((temp_phases & NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases) == temp_phases)
@@ -12724,9 +12726,9 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 								NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(temp_phases);
 
 								//Check for SPCT rating
-								if ((NR_branchdata[protect_locations[phaseidx]].origphases & 0x80) == 0x80)	//SPCT
+								if ((NR_branchdata[protect_locations[phaseidx]].origphases & PHASE_S) == PHASE_S)	//SPCT
 								{
-									temp_phases |= 0x80;	//Apply SPCT flag
+									temp_phases |= PHASE_S;	//Apply SPCT flag
 								}
 								//Defaulted else - normal xformer
 
@@ -12739,15 +12741,15 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 							}
 
 							//Remove our fault for the appropriate phases
-							temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & 0x07;
+							temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & PHASE_ABC;
 							NR_branchdata[NR_branch_reference].faultphases &= ~(temp_phases);
 
 							//Remove fault indices - loop through transformer phases
 							for (indexval=0; indexval<3; indexval++)
 							{
-								temp_phases = 0x04 >> indexval;
+								temp_phases = phase_values[indexval];
 
-								if ((temp_phases & NR_branchdata[NR_branch_reference].faultphases) == 0x00)	//No fault here
+								if ((temp_phases & NR_branchdata[NR_branch_reference].faultphases) == NO_PHASE)	//No fault here
 									protect_locations[indexval] = -1;	//Clear flag
 							}
 
@@ -12825,8 +12827,8 @@ int link_object::link_fault_off(int *implemented_fault, char *imp_fault_name)
 }
 //Function to remove enacted fault on link but not restore the system.
 int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) {
-	unsigned char phase_restore = 0x00;	//Default is no phases restored
-	unsigned char temp_phases, temp_phases_B, work_phases;			//Working variable
+	set phase_restore = NO_PHASE;	//Default is no phases restored
+	set temp_phases, temp_phases_B, work_phases;			//Working variable
 	char phaseidx, indexval;
 	int temp_node, ext_result;
 	double ext_result_dbl;
@@ -12834,6 +12836,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 	OBJECT *tmpobj;
 	FUNCTIONADDR funadd = nullptr;
 	bool switch_val;
+	set phase_values[] = {PHASE_A, PHASE_B, PHASE_C};
 
 	//Check our operations mode
 	if (!meshed_fault_checking_enabled)	//Normal mode
@@ -12858,7 +12861,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[3] = '-';
 				imp_fault_name[4] = 'A';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x04;	//Put A back in service
+				phase_restore = PHASE_A;	//Put A back in service
 				break;
 			case 2:	//SLG-B
 				imp_fault_name[0] = 'S';
@@ -12867,7 +12870,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[3] = '-';
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x02;	//Put B back in service
+				phase_restore = PHASE_B;	//Put B back in service
 				break;
 			case 3:	//SLG-C
 				imp_fault_name[0] = 'S';
@@ -12876,7 +12879,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[3] = '-';
 				imp_fault_name[4] = 'C';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x01;	//Put C back in service
+				phase_restore = PHASE_C;	//Put C back in service
 				break;
 			case 4:	//DLG-AB
 				imp_fault_name[0] = 'D';
@@ -12886,7 +12889,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[4] = 'A';
 				imp_fault_name[5] = 'B';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x06;	//Put A and B back in service
+				phase_restore = PHASE_AB;	//Put A and B back in service
 				break;
 			case 5:	//DLG-BC
 				imp_fault_name[0] = 'D';
@@ -12896,7 +12899,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = 'C';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x03;	//Put B and C back in service
+				phase_restore = PHASE_BC;	//Put B and C back in service
 				break;
 			case 6:	//DLG-CA
 				imp_fault_name[0] = 'D';
@@ -12906,7 +12909,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[4] = 'C';
 				imp_fault_name[5] = 'A';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x05;	//Put C and A back in service
+				phase_restore = PHASE_AC;	//Put C and A back in service
 				break;
 			case 7:	//LL-AB
 				imp_fault_name[0] = 'L';
@@ -12915,7 +12918,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[3] = 'A';
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x06;	//Put A and B back in service
+				phase_restore = PHASE_AB;	//Put A and B back in service
 				break;
 			case 8:	//LL-BC
 				imp_fault_name[0] = 'L';
@@ -12924,7 +12927,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[3] = 'B';
 				imp_fault_name[4] = 'C';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x03;	//Put B and C back in service
+				phase_restore = PHASE_BC;	//Put B and C back in service
 				break;
 			case 9:	//LL-CA
 				imp_fault_name[0] = 'L';
@@ -12933,14 +12936,14 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[3] = 'C';
 				imp_fault_name[4] = 'A';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x05;	//Put C and A back in service
+				phase_restore = PHASE_AC;	//Put C and A back in service
 				break;
 			case 10:	//TLG
 				imp_fault_name[0] = 'T';
 				imp_fault_name[1] = 'L';
 				imp_fault_name[2] = 'G';
 				imp_fault_name[3] = '\0';
-				phase_restore = 0x07;	//Put A, B, and C back in service
+				phase_restore = PHASE_ABC;	//Put A, B, and C back in service
 				break;
 			case 11:	//OC-A
 				imp_fault_name[0] = 'O';
@@ -12948,7 +12951,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[2] = '-';
 				imp_fault_name[3] = 'A';
 				imp_fault_name[4] = '\0';
-				phase_restore = 0x04;	//Put A back in service
+				phase_restore = PHASE_A;	//Put A back in service
 				break;
 			case 12:	//OC-B
 				imp_fault_name[0] = 'O';
@@ -12956,7 +12959,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[2] = '-';
 				imp_fault_name[3] = 'B';
 				imp_fault_name[4] = '\0';
-				phase_restore = 0x02;	//Put B back in service
+				phase_restore = PHASE_B;	//Put B back in service
 				break;
 			case 13:	//OC-C
 				imp_fault_name[0] = 'O';
@@ -12964,7 +12967,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[2] = '-';
 				imp_fault_name[3] = 'C';
 				imp_fault_name[4] = '\0';
-				phase_restore = 0x01;	//Put C back in service
+				phase_restore = PHASE_C;	//Put C back in service
 				break;
 			case 14:	//OC2-AB
 				imp_fault_name[0] = 'O';
@@ -12974,7 +12977,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[4] = 'A';
 				imp_fault_name[5] = 'B';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x06;	//Put A and B back in service
+				phase_restore = PHASE_AB;	//Put A and B back in service
 				break;
 			case 15:	//OC2-BC
 				imp_fault_name[0] = 'O';
@@ -12984,7 +12987,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = 'C';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x03;	//Put B and C back in service
+				phase_restore = PHASE_BC;	//Put B and C back in service
 				break;
 			case 16:	//OC2-CA
 				imp_fault_name[0] = 'O';
@@ -12994,14 +12997,14 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[4] = 'C';
 				imp_fault_name[5] = 'A';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x05;	//Put C and A back in service
+				phase_restore = PHASE_AC;	//Put C and A back in service
 				break;
 			case 17:	//OC3
 				imp_fault_name[0] = 'O';
 				imp_fault_name[1] = 'C';
 				imp_fault_name[2] = '3';
 				imp_fault_name[3] = '\0';
-				phase_restore = 0x07;	//Put A, B, and C back in service
+				phase_restore = PHASE_ABC;	//Put A, B, and C back in service
 				break;
 			case 18:	//SW-A
 				imp_fault_name[0] = 'S';
@@ -13009,7 +13012,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[2] = '-';
 				imp_fault_name[3] = 'A';
 				imp_fault_name[4] = '\0';
-				phase_restore = 0x04;	//Put A back in service
+				phase_restore = PHASE_A;	//Put A back in service
 				switch_val = true;		//Flag as a switch action
 				break;
 			case 19:	//SW-B
@@ -13018,7 +13021,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[2] = '-';
 				imp_fault_name[3] = 'B';
 				imp_fault_name[4] = '\0';
-				phase_restore = 0x02;	//Put B back in service
+				phase_restore = PHASE_B;	//Put B back in service
 				switch_val = true;		//Flag as a switch action
 				break;
 			case 20:	//SW-C
@@ -13027,7 +13030,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[2] = '-';
 				imp_fault_name[3] = 'C';
 				imp_fault_name[4] = '\0';
-				phase_restore = 0x01;	//Put C back in service
+				phase_restore = PHASE_C;	//Put C back in service
 				switch_val = true;		//Flag as a switch action
 				break;
 			case 21:	//SW-AB
@@ -13037,7 +13040,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[3] = 'A';
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x06;	//Put A and B back in service
+				phase_restore = PHASE_AB;	//Put A and B back in service
 				switch_val = true;		//Flag as a switch action
 				break;
 			case 22:	//SW-BC
@@ -13047,7 +13050,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[3] = 'B';
 				imp_fault_name[4] = 'C';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x03;	//Put B and C back in service
+				phase_restore = PHASE_BC;	//Put B and C back in service
 				switch_val = true;		//Flag as a switch action
 				break;
 			case 23:	//SW-CA
@@ -13057,7 +13060,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[3] = 'C';
 				imp_fault_name[4] = 'A';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x05;	//Put C and A back in service
+				phase_restore = PHASE_AC;	//Put C and A back in service
 				switch_val = true;		//Flag as a switch action
 				break;
 			case 24:	//SW-ABC
@@ -13068,7 +13071,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = 'C';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x07;	//Put A, B, and C back in service
+				phase_restore = PHASE_ABC;	//Put A, B, and C back in service
 				switch_val = true;		//Flag as a switch action
 				break;
 			case 25:	//FUS-A
@@ -13078,7 +13081,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[3] = '-';
 				imp_fault_name[4] = 'A';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x04;	//Put A back in service
+				phase_restore = PHASE_A;	//Put A back in service
 				break;
 			case 26:	//FUS-B
 				imp_fault_name[0] = 'F';
@@ -13087,7 +13090,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[3] = '-';
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x02;	//Put B back in service
+				phase_restore = PHASE_B;	//Put B back in service
 				break;
 			case 27:	//FUS-C
 				imp_fault_name[0] = 'F';
@@ -13096,7 +13099,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[3] = '-';
 				imp_fault_name[4] = 'C';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x01;	//Put C back in service
+				phase_restore = PHASE_C;	//Put C back in service
 				break;
 			case 28:	//FUS-AB
 				imp_fault_name[0] = 'F';
@@ -13106,7 +13109,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[4] = 'A';
 				imp_fault_name[5] = 'B';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x06;	//Put A and B back in service
+				phase_restore = PHASE_AB;	//Put A and B back in service
 				break;
 			case 29:	//FUS-BC
 				imp_fault_name[0] = 'F';
@@ -13116,7 +13119,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = 'C';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x03;	//Put B and C back in service
+				phase_restore = PHASE_BC;	//Put B and C back in service
 				break;
 			case 30:	//FUS-CA
 				imp_fault_name[0] = 'F';
@@ -13126,7 +13129,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[4] = 'C';
 				imp_fault_name[5] = 'A';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x05;	//Put C and A back in service
+				phase_restore = PHASE_AC;	//Put C and A back in service
 				break;
 			case 31:	//FUS-ABC
 				imp_fault_name[0] = 'F';
@@ -13137,14 +13140,14 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[5] = 'B';
 				imp_fault_name[6] = 'C';
 				imp_fault_name[7] = '\0';
-				phase_restore = 0x07;	//Put A, B, and C back in service
+				phase_restore = PHASE_ABC;	//Put A, B, and C back in service
 				break;
 			case 32:	//TLL
 				imp_fault_name[0] = 'T';
 				imp_fault_name[1] = 'L';
 				imp_fault_name[2] = 'L';
 				imp_fault_name[3] = '\0';
-				phase_restore = 0x07;	//Put A, B, and C back in service
+				phase_restore = PHASE_ABC;	//Put A, B, and C back in service
 				break;
 			default:	//Should never get here
 				GL_THROW("%s - attempted to recover from unsupported fault!",objhdr->name);
@@ -13163,7 +13166,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 			//Remove our restrictions for these phases
 			for (phaseidx=0; phaseidx<3; phaseidx++)
 			{
-				work_phases = 0x04 >> phaseidx;	//Get check
+				work_phases = phase_values[phaseidx];	//Get check
 
 				if ((phase_restore & work_phases) == work_phases)	//Valid phase to restore
 				{
@@ -13212,7 +13215,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 							}
 
 							//Check and see what the supporting nodes are doing - if a switch is already in a fault, this causes issues
-							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & PHASE_ABC);
 
 							//Flag the remote object's appropriate phases
 							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
@@ -13220,7 +13223,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 							//Remove the branch as an index in appropriate phases
 							for (phaseidx=0; phaseidx < 3; phaseidx++)
 							{
-								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+								temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 								if ((phase_restore & temp_phases) == temp_phases)
 								{
@@ -13237,7 +13240,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 6)	//recloser
 						{
 							//Check and see what the supporting nodes are doing - if a recloser is already in a fault, this causes issues
-							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & PHASE_ABC);
 
 							//Flag the remote object's appropriate phases
 							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
@@ -13245,7 +13248,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 							//Remove the branch as an index in appropriate phases
 							for (phaseidx=0; phaseidx < 3; phaseidx++)
 							{
-								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+								temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 								if ((phase_restore & temp_phases) == temp_phases)
 								{
@@ -13262,7 +13265,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 5)	//Sectionalizer
 						{
 							//Check and see what the supporting nodes are doing - if a sectionalizer is already in a fault, this causes issues
-							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & PHASE_ABC);
 
 							//Flag the remote object's appropriate phases
 							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
@@ -13270,7 +13273,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 							//Remove the branch as an index in appropriate phases
 							for (phaseidx=0; phaseidx < 3; phaseidx++)
 							{
-								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+								temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 								if ((phase_restore & temp_phases) == temp_phases)
 								{
@@ -13287,7 +13290,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 3)	//fuse
 						{
 							//Check and see what the supporting nodes are doing - if a fuse is already in a fault, this causes issues
-							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & PHASE_ABC);
 
 							//Flag the remote object's appropriate phases
 							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
@@ -13295,7 +13298,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 							//Remove the branch as an index in appropriate phases
 							for (phaseidx=0; phaseidx < 3; phaseidx++)
 							{
-								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+								temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 								if ((phase_restore & temp_phases) == temp_phases)
 								{
@@ -13312,7 +13315,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 2)	//Transformer
 						{
 							//Transformers are special case - if the source is supported, all three phases are reinstated
-							temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & 0x07;
+							temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & PHASE_ABC;
 
 							//Make sure we match
 							if ((temp_phases & NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases) == temp_phases)
@@ -13321,9 +13324,9 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 								NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(temp_phases);
 
 								//Check for SPCT rating
-								if ((NR_branchdata[protect_locations[phaseidx]].origphases & 0x80) == 0x80)	//SPCT
+								if ((NR_branchdata[protect_locations[phaseidx]].origphases & PHASE_S) == PHASE_S)	//SPCT
 								{
-									temp_phases |= 0x80;	//Apply SPCT flag
+									temp_phases |= PHASE_S;	//Apply SPCT flag
 								}
 								//Defaulted else - normal xformer
 
@@ -13336,15 +13339,15 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 							}
 
 							//Remove our fault for the appropriate phases
-							temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & 0x07;
+							temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & PHASE_ABC;
 							NR_branchdata[NR_branch_reference].faultphases &= ~(temp_phases);
 
 							//Remove fault indices - loop through transformer phases
 							for (indexval=0; indexval<3; indexval++)
 							{
-								temp_phases = 0x04 >> indexval;
+								temp_phases = phase_values[indexval];
 
-								if ((temp_phases & NR_branchdata[NR_branch_reference].faultphases) == 0x00)	//No fault here
+								if ((temp_phases & NR_branchdata[NR_branch_reference].faultphases) == NO_PHASE)	//No fault here
 									protect_locations[indexval] = -1;	//Clear flag
 							}
 
@@ -13399,7 +13402,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[3] = '-';
 				imp_fault_name[4] = 'A';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x04;	//Put A back in service
+				phase_restore = PHASE_A;	//Put A back in service
 				break;
 			case 2:	//SLG-B
 				imp_fault_name[0] = 'S';
@@ -13408,7 +13411,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[3] = '-';
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x02;	//Put B back in service
+				phase_restore = PHASE_B;	//Put B back in service
 				break;
 			case 3:	//SLG-C
 				imp_fault_name[0] = 'S';
@@ -13417,7 +13420,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[3] = '-';
 				imp_fault_name[4] = 'C';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x01;	//Put C back in service
+				phase_restore = PHASE_C;	//Put C back in service
 				break;
 			case 4:	//DLG-AB
 				imp_fault_name[0] = 'D';
@@ -13427,7 +13430,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[4] = 'A';
 				imp_fault_name[5] = 'B';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x06;	//Put A and B back in service
+				phase_restore = PHASE_AB;	//Put A and B back in service
 				break;
 			case 5:	//DLG-BC
 				imp_fault_name[0] = 'D';
@@ -13437,7 +13440,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = 'C';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x03;	//Put B and C back in service
+				phase_restore = PHASE_BC;	//Put B and C back in service
 				break;
 			case 6:	//DLG-CA
 				imp_fault_name[0] = 'D';
@@ -13447,7 +13450,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[4] = 'C';
 				imp_fault_name[5] = 'A';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x05;	//Put C and A back in service
+				phase_restore = PHASE_AC;	//Put C and A back in service
 				break;
 			case 7:	//LL-AB
 				imp_fault_name[0] = 'L';
@@ -13456,7 +13459,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[3] = 'A';
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x06;	//Put A and B back in service
+				phase_restore = PHASE_AB;	//Put A and B back in service
 				break;
 			case 8:	//LL-BC
 				imp_fault_name[0] = 'L';
@@ -13465,7 +13468,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[3] = 'B';
 				imp_fault_name[4] = 'C';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x03;	//Put B and C back in service
+				phase_restore = PHASE_BC;	//Put B and C back in service
 				break;
 			case 9:	//LL-CA
 				imp_fault_name[0] = 'L';
@@ -13474,14 +13477,14 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[3] = 'C';
 				imp_fault_name[4] = 'A';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x05;	//Put C and A back in service
+				phase_restore = PHASE_AC;	//Put C and A back in service
 				break;
 			case 10:	//TLG
 				imp_fault_name[0] = 'T';
 				imp_fault_name[1] = 'L';
 				imp_fault_name[2] = 'G';
 				imp_fault_name[3] = '\0';
-				phase_restore = 0x07;	//Put A, B, and C back in service
+				phase_restore = PHASE_ABC;	//Put A, B, and C back in service
 				break;
 			case 11:	//OC-A
 				imp_fault_name[0] = 'O';
@@ -13489,7 +13492,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[2] = '-';
 				imp_fault_name[3] = 'A';
 				imp_fault_name[4] = '\0';
-				phase_restore = 0x04;	//Put A back in service
+				phase_restore = PHASE_A;	//Put A back in service
 				break;
 			case 12:	//OC-B
 				imp_fault_name[0] = 'O';
@@ -13497,7 +13500,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[2] = '-';
 				imp_fault_name[3] = 'B';
 				imp_fault_name[4] = '\0';
-				phase_restore = 0x02;	//Put B back in service
+				phase_restore = PHASE_B;	//Put B back in service
 				break;
 			case 13:	//OC-C
 				imp_fault_name[0] = 'O';
@@ -13505,7 +13508,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[2] = '-';
 				imp_fault_name[3] = 'C';
 				imp_fault_name[4] = '\0';
-				phase_restore = 0x01;	//Put C back in service
+				phase_restore = PHASE_C;	//Put C back in service
 				break;
 			case 14:	//OC2-AB
 				imp_fault_name[0] = 'O';
@@ -13515,7 +13518,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[4] = 'A';
 				imp_fault_name[5] = 'B';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x06;	//Put A and B back in service
+				phase_restore = PHASE_AB;	//Put A and B back in service
 				break;
 			case 15:	//OC2-BC
 				imp_fault_name[0] = 'O';
@@ -13525,7 +13528,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = 'C';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x03;	//Put B and C back in service
+				phase_restore = PHASE_BC;	//Put B and C back in service
 				break;
 			case 16:	//OC2-CA
 				imp_fault_name[0] = 'O';
@@ -13535,14 +13538,14 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[4] = 'C';
 				imp_fault_name[5] = 'A';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x05;	//Put C and A back in service
+				phase_restore = PHASE_AC;	//Put C and A back in service
 				break;
 			case 17:	//OC3
 				imp_fault_name[0] = 'O';
 				imp_fault_name[1] = 'C';
 				imp_fault_name[2] = '3';
 				imp_fault_name[3] = '\0';
-				phase_restore = 0x07;	//Put A, B, and C back in service
+				phase_restore = PHASE_ABC;	//Put A, B, and C back in service
 				break;
 			case 18:	//SW-A
 				imp_fault_name[0] = 'S';
@@ -13550,7 +13553,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[2] = '-';
 				imp_fault_name[3] = 'A';
 				imp_fault_name[4] = '\0';
-				phase_restore = 0x04;	//Put A back in service
+				phase_restore = PHASE_A;	//Put A back in service
 				switch_val = true;		//Flag as a switch action
 				break;
 			case 19:	//SW-B
@@ -13559,7 +13562,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[2] = '-';
 				imp_fault_name[3] = 'B';
 				imp_fault_name[4] = '\0';
-				phase_restore = 0x02;	//Put B back in service
+				phase_restore = PHASE_B;	//Put B back in service
 				switch_val = true;		//Flag as a switch action
 				break;
 			case 20:	//SW-C
@@ -13568,7 +13571,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[2] = '-';
 				imp_fault_name[3] = 'C';
 				imp_fault_name[4] = '\0';
-				phase_restore = 0x01;	//Put C back in service
+				phase_restore = PHASE_C;	//Put C back in service
 				switch_val = true;		//Flag as a switch action
 				break;
 			case 21:	//SW-AB
@@ -13578,7 +13581,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[3] = 'A';
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x06;	//Put A and B back in service
+				phase_restore = PHASE_AB;	//Put A and B back in service
 				switch_val = true;		//Flag as a switch action
 				break;
 			case 22:	//SW-BC
@@ -13588,7 +13591,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[3] = 'B';
 				imp_fault_name[4] = 'C';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x03;	//Put B and C back in service
+				phase_restore = PHASE_BC;	//Put B and C back in service
 				switch_val = true;		//Flag as a switch action
 				break;
 			case 23:	//SW-CA
@@ -13598,7 +13601,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[3] = 'C';
 				imp_fault_name[4] = 'A';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x05;	//Put C and A back in service
+				phase_restore = PHASE_AC;	//Put C and A back in service
 				switch_val = true;		//Flag as a switch action
 				break;
 			case 24:	//SW-ABC
@@ -13609,7 +13612,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = 'C';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x07;	//Put A, B, and C back in service
+				phase_restore = PHASE_ABC;	//Put A, B, and C back in service
 				switch_val = true;		//Flag as a switch action
 				break;
 			case 25:	//FUS-A
@@ -13619,7 +13622,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[3] = '-';
 				imp_fault_name[4] = 'A';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x04;	//Put A back in service
+				phase_restore = PHASE_A;	//Put A back in service
 				break;
 			case 26:	//FUS-B
 				imp_fault_name[0] = 'F';
@@ -13628,7 +13631,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[3] = '-';
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x02;	//Put B back in service
+				phase_restore = PHASE_B;	//Put B back in service
 				break;
 			case 27:	//FUS-C
 				imp_fault_name[0] = 'F';
@@ -13637,7 +13640,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[3] = '-';
 				imp_fault_name[4] = 'C';
 				imp_fault_name[5] = '\0';
-				phase_restore = 0x01;	//Put C back in service
+				phase_restore = PHASE_C;	//Put C back in service
 				break;
 			case 28:	//FUS-AB
 				imp_fault_name[0] = 'F';
@@ -13647,7 +13650,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[4] = 'A';
 				imp_fault_name[5] = 'B';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x06;	//Put A and B back in service
+				phase_restore = PHASE_AB;	//Put A and B back in service
 				break;
 			case 29:	//FUS-BC
 				imp_fault_name[0] = 'F';
@@ -13657,7 +13660,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[4] = 'B';
 				imp_fault_name[5] = 'C';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x03;	//Put B and C back in service
+				phase_restore = PHASE_BC;	//Put B and C back in service
 				break;
 			case 30:	//FUS-CA
 				imp_fault_name[0] = 'F';
@@ -13667,7 +13670,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[4] = 'C';
 				imp_fault_name[5] = 'A';
 				imp_fault_name[6] = '\0';
-				phase_restore = 0x05;	//Put C and A back in service
+				phase_restore = PHASE_AC;	//Put C and A back in service
 				break;
 			case 31:	//FUS-ABC
 				imp_fault_name[0] = 'F';
@@ -13678,14 +13681,14 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 				imp_fault_name[5] = 'B';
 				imp_fault_name[6] = 'C';
 				imp_fault_name[7] = '\0';
-				phase_restore = 0x07;	//Put A, B, and C back in service
+				phase_restore = PHASE_ABC;	//Put A, B, and C back in service
 				break;
 			case 32:	//TLL
 				imp_fault_name[0] = 'T';
 				imp_fault_name[1] = 'L';
 				imp_fault_name[2] = 'L';
 				imp_fault_name[3] = '\0';
-				phase_restore = 0x07;	//Put A, B, and C back in service
+				phase_restore = PHASE_ABC;	//Put A, B, and C back in service
 				break;
 			default:	//Should never get here
 				GL_THROW("%s - attempted to recover from unsupported fault!",objhdr->name);
@@ -13704,7 +13707,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 			//Remove our restrictions for these phases
 			for (phaseidx=0; phaseidx<3; phaseidx++)
 			{
-				work_phases = 0x04 >> phaseidx;	//Get check
+				work_phases = phase_values[phaseidx];	//Get check
 
 				if ((phase_restore & work_phases) == work_phases)	//Valid phase to restore
 				{
@@ -13749,7 +13752,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 							//Remove the branch as an index in appropriate phases
 							for (phaseidx=0; phaseidx < 3; phaseidx++)
 							{
-								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+								temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 								if ((phase_restore & temp_phases) == temp_phases)
 								{
@@ -13766,7 +13769,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 6)	//recloser
 						{
 							//Check and see what the supporting nodes are doing - if a recloser is already in a fault, this causes issues
-							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & PHASE_ABC);
 
 							//Flag the remote object's appropriate phases
 							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
@@ -13774,7 +13777,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 							//Remove the branch as an index in appropriate phases
 							for (phaseidx=0; phaseidx < 3; phaseidx++)
 							{
-								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+								temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 								if ((phase_restore & temp_phases) == temp_phases)
 								{
@@ -13791,7 +13794,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 5)	//Sectionalizer
 						{
 							//Check and see what the supporting nodes are doing - if a sectionalizer is already in a fault, this causes issues
-							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & PHASE_ABC);
 
 							//Flag the remote object's appropriate phases
 							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
@@ -13799,7 +13802,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 							//Remove the branch as an index in appropriate phases
 							for (phaseidx=0; phaseidx < 3; phaseidx++)
 							{
-								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+								temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 								if ((phase_restore & temp_phases) == temp_phases)
 								{
@@ -13816,7 +13819,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 3)	//fuse
 						{
 							//Check and see what the supporting nodes are doing - if a fuse is already in a fault, this causes issues
-							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & 0x07);
+							temp_phases = ((NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases | NR_busdata[NR_branchdata[protect_locations[phaseidx]].to].phases) & PHASE_ABC);
 
 							//Flag the remote object's appropriate phases
 							NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(phase_restore);
@@ -13824,7 +13827,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 							//Remove the branch as an index in appropriate phases
 							for (phaseidx=0; phaseidx < 3; phaseidx++)
 							{
-								temp_phases = 0x04 >> phaseidx;	//Figure out the phase we are on and if it is valid
+								temp_phases = phase_values[phaseidx];	//Figure out the phase we are on and if it is valid
 
 								if ((phase_restore & temp_phases) == temp_phases)
 								{
@@ -13841,7 +13844,7 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 						else if (NR_branchdata[protect_locations[phaseidx]].lnk_type == 2)	//Transformer
 						{
 							//Transformers are special case - if the source is supported, all three phases are reinstated
-							temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & 0x07;
+							temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & PHASE_ABC;
 
 							//Make sure we match
 							if ((temp_phases & NR_busdata[NR_branchdata[protect_locations[phaseidx]].from].phases) == temp_phases)
@@ -13850,9 +13853,9 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 								NR_branchdata[protect_locations[phaseidx]].faultphases &= ~(temp_phases);
 
 								//Check for SPCT rating
-								if ((NR_branchdata[protect_locations[phaseidx]].origphases & 0x80) == 0x80)	//SPCT
+								if ((NR_branchdata[protect_locations[phaseidx]].origphases & PHASE_S) == PHASE_S)	//SPCT
 								{
-									temp_phases |= 0x80;	//Apply SPCT flag
+									temp_phases |= PHASE_S;	//Apply SPCT flag
 								}
 								//Defaulted else - normal xformer
 
@@ -13865,15 +13868,15 @@ int link_object::clear_fault_only(int *implemented_fault, char *imp_fault_name) 
 							}
 
 							//Remove our fault for the appropriate phases
-							temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & 0x07;
+							temp_phases = NR_branchdata[protect_locations[phaseidx]].origphases & PHASE_ABC;
 							NR_branchdata[NR_branch_reference].faultphases &= ~(temp_phases);
 
 							//Remove fault indices - loop through transformer phases
 							for (indexval=0; indexval<3; indexval++)
 							{
-								temp_phases = 0x04 >> indexval;
+								temp_phases = phase_values[indexval];
 
-								if ((temp_phases & NR_branchdata[NR_branch_reference].faultphases) == 0x00)	//No fault here
+								if ((temp_phases & NR_branchdata[NR_branch_reference].faultphases) == NO_PHASE)	//No fault here
 									protect_locations[indexval] = -1;	//Clear flag
 							}
 
@@ -14159,7 +14162,7 @@ void link_object::fault_current_calc(gld::complex C[7][7],unsigned int removed_p
 {
 	int temp_branch_fc, temp_node, current_branch, temp_connection_type;;
 	unsigned int temp_table_loc;
-	unsigned char temp_branch_phases;
+	set temp_branch_phases;
 	char *temp_branch_name;
 	OBJECT *temp_transformer, **temp_transformer_configuration;
 	PROPERTY *temp_trans_config, *temp_con_typ;
@@ -14228,7 +14231,7 @@ void link_object::fault_current_calc(gld::complex C[7][7],unsigned int removed_p
 
 	//Travel back down to the faulted node adding up all the device impedances in the fault path
 	while(NR_branchdata[temp_branch_fc].fault_link_below != -1){
-		temp_branch_phases = NR_branchdata[temp_branch_fc].phases & 0x07;
+		temp_branch_phases = NR_branchdata[temp_branch_fc].phases & PHASE_ABC;
 		if(NR_branchdata[temp_branch_fc].lnk_type == 2){//transformer
 			temp_branch_name = NR_branchdata[temp_branch_fc].name;//get the name of the transformer object
 			temp_transformer = NR_branchdata[temp_branch_fc].obj;	//get the transformer object
@@ -14238,7 +14241,7 @@ void link_object::fault_current_calc(gld::complex C[7][7],unsigned int removed_p
 				temp_con_typ = gl_get_property(*temp_transformer_configuration, "connect_type");//get pointer to the connection type
 				temp_connection_type = *(int *)gl_get_enum(*temp_transformer_configuration, temp_con_typ);//get connection type
 				if(temp_connection_type == 1){//WYE_WYE or DELTA-DELTA transformer
-					if(temp_branch_phases == 0x07){//has all three phases
+					if(temp_branch_phases == PHASE_ABC){//has all three phases
 						Y_temp[0][0] = NR_branchdata[temp_branch_fc].YSto[0];
 						Y_temp[0][1] = NR_branchdata[temp_branch_fc].YSto[1];
 						Y_temp[0][2] = NR_branchdata[temp_branch_fc].YSto[2];
@@ -14249,29 +14252,29 @@ void link_object::fault_current_calc(gld::complex C[7][7],unsigned int removed_p
 						Y_temp[2][1] = NR_branchdata[temp_branch_fc].YSto[7];
 						Y_temp[2][2] = NR_branchdata[temp_branch_fc].YSto[8];
 						inverse(Y_temp,Z_temp);//Z_temp holds the transformer impedance referenced to the to side
-					} else if(temp_branch_phases == 0x06){//has phases A and B
+					} else if(temp_branch_phases == PHASE_AB){//has phases A and B
 						double_phase_det = (NR_branchdata[temp_branch_fc].YSto[0]*NR_branchdata[temp_branch_fc].YSto[4])-(NR_branchdata[temp_branch_fc].YSto[3]*NR_branchdata[temp_branch_fc].YSto[1]);
 						Z_temp[0][0] = NR_branchdata[temp_branch_fc].YSto[4]/double_phase_det;
 						Z_temp[0][1] = -NR_branchdata[temp_branch_fc].YSto[1]/double_phase_det;
 						Z_temp[1][0] = -NR_branchdata[temp_branch_fc].YSto[3]/double_phase_det;
 						Z_temp[1][1] = NR_branchdata[temp_branch_fc].YSto[0]/double_phase_det;
-					} else if(temp_branch_phases == 0x05){//has phases A and C
+					} else if(temp_branch_phases == PHASE_AC){//has phases A and C
 						double_phase_det = (NR_branchdata[temp_branch_fc].YSto[0]*NR_branchdata[temp_branch_fc].YSto[8])-(NR_branchdata[temp_branch_fc].YSto[6]*NR_branchdata[temp_branch_fc].YSto[2]);
 						Z_temp[0][0] = NR_branchdata[temp_branch_fc].YSto[8]/double_phase_det;
 						Z_temp[0][2] = -NR_branchdata[temp_branch_fc].YSto[2]/double_phase_det;
 						Z_temp[2][0] = -NR_branchdata[temp_branch_fc].YSto[6]/double_phase_det;
 						Z_temp[2][2] = NR_branchdata[temp_branch_fc].YSto[0]/double_phase_det;
-					} else if(temp_branch_phases == 0x03){//has phases B and C
+					} else if(temp_branch_phases == PHASE_BC){//has phases B and C
 						double_phase_det = (NR_branchdata[temp_branch_fc].YSto[4]*NR_branchdata[temp_branch_fc].YSto[8])-(NR_branchdata[temp_branch_fc].YSto[7]*NR_branchdata[temp_branch_fc].YSto[5]);
 						Z_temp[1][1] = NR_branchdata[temp_branch_fc].YSto[8]/double_phase_det;
 						Z_temp[1][2] = -NR_branchdata[temp_branch_fc].YSto[5]/double_phase_det;
 						Z_temp[2][1] = -NR_branchdata[temp_branch_fc].YSto[7]/double_phase_det;
 						Z_temp[2][2] = NR_branchdata[temp_branch_fc].YSto[4]/double_phase_det;
-					} else if(temp_branch_phases == 0x04){//has phase A
+					} else if(temp_branch_phases == PHASE_A){//has phase A
 						Z_temp[0][0] = gld::complex(1,0)/NR_branchdata[temp_branch_fc].YSto[0];
-					} else if(temp_branch_phases == 0x02){//has phase B
+					} else if(temp_branch_phases == PHASE_B){//has phase B
 						Z_temp[1][1] = gld::complex(1,0)/NR_branchdata[temp_branch_fc].YSto[4];
-					} else if(temp_branch_phases == 0x01){//has phase C
+					} else if(temp_branch_phases == PHASE_C){//has phase C
 						Z_temp[2][2] = gld::complex(1,0)/NR_branchdata[temp_branch_fc].YSto[8];
 					}
 					A_t[0][0] = A_t[1][1] = A_t[2][2] = d_t[0][0] = d_t[1][1] = d_t[2][2] = 1/NR_branchdata[temp_branch_fc].v_ratio;//calculate the transfer matrix A_t such that Z_low = A_t * Z_high * d_t
@@ -14285,7 +14288,7 @@ void link_object::fault_current_calc(gld::complex C[7][7],unsigned int removed_p
 					V_sb[1] = V_sb[1]*A_t[1][1];
 					V_sb[2] = V_sb[2]*A_t[2][2];
 				} else if(temp_connection_type == 3){//Delta grounded WYE transformer
-					if(temp_branch_phases == 0x07){
+					if(temp_branch_phases == PHASE_ABC){
 						Y_temp[0][0] = NR_branchdata[temp_branch_fc].YSto[0];
 						Y_temp[0][1] = NR_branchdata[temp_branch_fc].YSto[1];
 						Y_temp[0][2] = NR_branchdata[temp_branch_fc].YSto[2];
@@ -14337,7 +14340,7 @@ void link_object::fault_current_calc(gld::complex C[7][7],unsigned int removed_p
 				GL_THROW("link object is a type 4 but is not a transformer or a regulator!");
 			}
 		} else {//line or safety device
-			if(temp_branch_phases == 0x07){//has all three phases
+			if(temp_branch_phases == PHASE_ABC){//has all three phases
 				Y_temp[0][0] = NR_branchdata[temp_branch_fc].YSto[0];
 				Y_temp[0][1] = NR_branchdata[temp_branch_fc].YSto[1];
 				Y_temp[0][2] = NR_branchdata[temp_branch_fc].YSto[2];
@@ -14348,29 +14351,29 @@ void link_object::fault_current_calc(gld::complex C[7][7],unsigned int removed_p
 				Y_temp[2][1] = NR_branchdata[temp_branch_fc].YSto[7];
 				Y_temp[2][2] = NR_branchdata[temp_branch_fc].YSto[8];
 				inverse(Y_temp,Z_temp);//Z_temp holds the transformer impedance referenced to the to side
-			} else if(temp_branch_phases == 0x06){//has phases A and B
+			} else if(temp_branch_phases == PHASE_AB){//has phases A and B
 				double_phase_det = (NR_branchdata[temp_branch_fc].YSto[0]*NR_branchdata[temp_branch_fc].YSto[4])-(NR_branchdata[temp_branch_fc].YSto[3]*NR_branchdata[temp_branch_fc].YSto[1]);
 				Z_temp[0][0] = NR_branchdata[temp_branch_fc].YSto[4]/double_phase_det;
 				Z_temp[0][1] = -NR_branchdata[temp_branch_fc].YSto[1]/double_phase_det;
 				Z_temp[1][0] = -NR_branchdata[temp_branch_fc].YSto[3]/double_phase_det;
 				Z_temp[1][1] = NR_branchdata[temp_branch_fc].YSto[0]/double_phase_det;
-			} else if(temp_branch_phases == 0x05){//has phases A and C
+			} else if(temp_branch_phases == PHASE_AC){//has phases A and C
 				double_phase_det = (NR_branchdata[temp_branch_fc].YSto[0]*NR_branchdata[temp_branch_fc].YSto[8])-(NR_branchdata[temp_branch_fc].YSto[6]*NR_branchdata[temp_branch_fc].YSto[2]);
 				Z_temp[0][0] = NR_branchdata[temp_branch_fc].YSto[8]/double_phase_det;
 				Z_temp[0][2] = -NR_branchdata[temp_branch_fc].YSto[2]/double_phase_det;
 				Z_temp[2][0] = -NR_branchdata[temp_branch_fc].YSto[6]/double_phase_det;
 				Z_temp[2][2] = NR_branchdata[temp_branch_fc].YSto[0]/double_phase_det;
-			} else if(temp_branch_phases == 0x03){//has phases B and C
+			} else if(temp_branch_phases == PHASE_BC){//has phases B and C
 				double_phase_det = (NR_branchdata[temp_branch_fc].YSto[4]*NR_branchdata[temp_branch_fc].YSto[8])-(NR_branchdata[temp_branch_fc].YSto[7]*NR_branchdata[temp_branch_fc].YSto[5]);
 				Z_temp[1][1] = NR_branchdata[temp_branch_fc].YSto[8]/double_phase_det;
 				Z_temp[1][2] = -NR_branchdata[temp_branch_fc].YSto[5]/double_phase_det;
 				Z_temp[2][1] = -NR_branchdata[temp_branch_fc].YSto[7]/double_phase_det;
 				Z_temp[2][2] = NR_branchdata[temp_branch_fc].YSto[4]/double_phase_det;
-			} else if(temp_branch_phases == 0x04){//has phase A
+			} else if(temp_branch_phases == PHASE_A){//has phase A
 				Z_temp[0][0] = gld::complex(1,0)/NR_branchdata[temp_branch_fc].YSto[0];
-			} else if(temp_branch_phases == 0x02){//has phase B
+			} else if(temp_branch_phases == PHASE_B){//has phase B
 				Z_temp[1][1] = gld::complex(1,0)/NR_branchdata[temp_branch_fc].YSto[4];
-			} else if(temp_branch_phases == 0x01){//has phase C
+			} else if(temp_branch_phases == PHASE_C){//has phase C
 				Z_temp[2][2] = gld::complex(1,0)/NR_branchdata[temp_branch_fc].YSto[8];
 			}
 			addition(Z_thevenin,Z_temp,Z_thevenin);
@@ -14379,7 +14382,7 @@ void link_object::fault_current_calc(gld::complex C[7][7],unsigned int removed_p
 	}
 
 	//include the faulted link's impedance in the equivalent system impedance
-	temp_branch_phases = removed_phase | NR_branchdata[temp_branch_fc].phases;
+	temp_branch_phases = (removed_phase | (NR_branchdata[temp_branch_fc].phases & PHASE_ABC));
 	if(NR_branchdata[temp_branch_fc].lnk_type == 2){//transformer
 		temp_branch_name = NR_branchdata[temp_branch_fc].name;//get the name of the transformer object
 		temp_transformer = NR_branchdata[temp_branch_fc].obj;//get the transformer object
@@ -14389,7 +14392,7 @@ void link_object::fault_current_calc(gld::complex C[7][7],unsigned int removed_p
 			temp_con_typ = gl_get_property(*temp_transformer_configuration, "connect_type");//get pointer to the connection type
 			temp_connection_type = *(int *)gl_get_enum(*temp_transformer_configuration, temp_con_typ);//get connection type
 			if(temp_connection_type == 1 || temp_connection_type == 2){//WYE_WYE or DELTA-DELTA transformer
-				if(temp_branch_phases == 0x07){//has all three phases
+				if(temp_branch_phases == PHASE_ABC){//has all three phases
 					Y_temp[0][0] = NR_branchdata[temp_branch_fc].YSto[0];
 					Y_temp[0][1] = NR_branchdata[temp_branch_fc].YSto[1];
 					Y_temp[0][2] = NR_branchdata[temp_branch_fc].YSto[2];
@@ -14400,29 +14403,29 @@ void link_object::fault_current_calc(gld::complex C[7][7],unsigned int removed_p
 					Y_temp[2][1] = NR_branchdata[temp_branch_fc].YSto[7];
 					Y_temp[2][2] = NR_branchdata[temp_branch_fc].YSto[8];
 					inverse(Y_temp,Z_temp);//Z_temp holds the transformer impedance referenced to the to side
-				} else if(temp_branch_phases == 0x06){//has phases A and B
+				} else if(temp_branch_phases == PHASE_AB){//has phases A and B
 					double_phase_det = (NR_branchdata[temp_branch_fc].YSto[0]*NR_branchdata[temp_branch_fc].YSto[4])-(NR_branchdata[temp_branch_fc].YSto[3]*NR_branchdata[temp_branch_fc].YSto[1]);
 					Z_temp[0][0] = NR_branchdata[temp_branch_fc].YSto[4]/double_phase_det;
 					Z_temp[0][1] = -NR_branchdata[temp_branch_fc].YSto[1]/double_phase_det;
 					Z_temp[1][0] = -NR_branchdata[temp_branch_fc].YSto[3]/double_phase_det;
 					Z_temp[1][1] = NR_branchdata[temp_branch_fc].YSto[0]/double_phase_det;
-				} else if(temp_branch_phases == 0x05){//has phases A and C
+				} else if(temp_branch_phases == PHASE_AC){//has phases A and C
 					double_phase_det = (NR_branchdata[temp_branch_fc].YSto[0]*NR_branchdata[temp_branch_fc].YSto[8])-(NR_branchdata[temp_branch_fc].YSto[6]*NR_branchdata[temp_branch_fc].YSto[2]);
 					Z_temp[0][0] = NR_branchdata[temp_branch_fc].YSto[8]/double_phase_det;
 					Z_temp[0][2] = -NR_branchdata[temp_branch_fc].YSto[2]/double_phase_det;
 					Z_temp[2][0] = -NR_branchdata[temp_branch_fc].YSto[6]/double_phase_det;
 					Z_temp[2][2] = NR_branchdata[temp_branch_fc].YSto[0]/double_phase_det;
-				} else if(temp_branch_phases == 0x03){//has phases B and C
+				} else if(temp_branch_phases == PHASE_BC){//has phases B and C
 					double_phase_det = (NR_branchdata[temp_branch_fc].YSto[4]*NR_branchdata[temp_branch_fc].YSto[8])-(NR_branchdata[temp_branch_fc].YSto[7]*NR_branchdata[temp_branch_fc].YSto[5]);
 					Z_temp[1][1] = NR_branchdata[temp_branch_fc].YSto[8]/double_phase_det;
 					Z_temp[1][2] = -NR_branchdata[temp_branch_fc].YSto[5]/double_phase_det;
 					Z_temp[2][1] = -NR_branchdata[temp_branch_fc].YSto[7]/double_phase_det;
 					Z_temp[2][2] = NR_branchdata[temp_branch_fc].YSto[4]/double_phase_det;
-				} else if(temp_branch_phases == 0x04){//has phase A
+				} else if(temp_branch_phases == PHASE_A){//has phase A
 					Z_temp[0][0] = gld::complex(1,0)/NR_branchdata[temp_branch_fc].YSto[0];
-				} else if(temp_branch_phases == 0x02){//has phase B
+				} else if(temp_branch_phases == PHASE_B){//has phase B
 					Z_temp[1][1] = gld::complex(1,0)/NR_branchdata[temp_branch_fc].YSto[4];
-				} else if(temp_branch_phases == 0x01){//has phase C
+				} else if(temp_branch_phases == PHASE_C){//has phase C
 					Z_temp[2][2] = gld::complex(1,0)/NR_branchdata[temp_branch_fc].YSto[8];
 				}
 				A_t[0][0] = A_t[1][1] = A_t[2][2] = d_t[0][0] = d_t[1][1] = d_t[2][2] = 1/NR_branchdata[temp_branch_fc].v_ratio;//calculate the transfer matrix A_t such that Z_low = A_t * Z_high * d_t
@@ -14436,7 +14439,7 @@ void link_object::fault_current_calc(gld::complex C[7][7],unsigned int removed_p
 				V_sb[1] = V_sb[1]*A_t[1][1];
 				V_sb[2] = V_sb[2]*A_t[2][2];
 			} else if(temp_connection_type == 3){//Delta grounded WYE transformer
-				if(temp_branch_phases == 0x07){
+				if(temp_branch_phases == PHASE_ABC){
 					Y_temp[0][0] = NR_branchdata[temp_branch_fc].YSto[0];
 					Y_temp[0][1] = NR_branchdata[temp_branch_fc].YSto[1];
 					Y_temp[0][2] = NR_branchdata[temp_branch_fc].YSto[2];
@@ -14488,7 +14491,7 @@ void link_object::fault_current_calc(gld::complex C[7][7],unsigned int removed_p
 			GL_THROW("link object is a type 4 but is not a transformer or a regulator!");
 		}
 	} else {//line or safety device
-		if(temp_branch_phases == 0x07){//has all three phases
+		if(temp_branch_phases == PHASE_ABC){//has all three phases
 			Y_temp[0][0] = NR_branchdata[temp_branch_fc].YSto[0];
 			Y_temp[0][1] = NR_branchdata[temp_branch_fc].YSto[1];
 			Y_temp[0][2] = NR_branchdata[temp_branch_fc].YSto[2];
@@ -14499,29 +14502,29 @@ void link_object::fault_current_calc(gld::complex C[7][7],unsigned int removed_p
 			Y_temp[2][1] = NR_branchdata[temp_branch_fc].YSto[7];
 			Y_temp[2][2] = NR_branchdata[temp_branch_fc].YSto[8];
 			inverse(Y_temp,Z_temp);//Z_temp holds the transformer impedance referenced to the to side
-		} else if(temp_branch_phases == 0x06){//has phases A and B
+		} else if(temp_branch_phases == PHASE_AB){//has phases A and B
 			double_phase_det = (NR_branchdata[temp_branch_fc].YSto[0]*NR_branchdata[temp_branch_fc].YSto[4])-(NR_branchdata[temp_branch_fc].YSto[3]*NR_branchdata[temp_branch_fc].YSto[1]);
 			Z_temp[0][0] = NR_branchdata[temp_branch_fc].YSto[4]/double_phase_det;
 			Z_temp[0][1] = -NR_branchdata[temp_branch_fc].YSto[1]/double_phase_det;
 			Z_temp[1][0] = -NR_branchdata[temp_branch_fc].YSto[3]/double_phase_det;
 			Z_temp[1][1] = NR_branchdata[temp_branch_fc].YSto[0]/double_phase_det;
-		} else if(temp_branch_phases == 0x05){//has phases A and C
+		} else if(temp_branch_phases == PHASE_AC){//has phases A and C
 			double_phase_det = (NR_branchdata[temp_branch_fc].YSto[0]*NR_branchdata[temp_branch_fc].YSto[8])-(NR_branchdata[temp_branch_fc].YSto[6]*NR_branchdata[temp_branch_fc].YSto[2]);
 			Z_temp[0][0] = NR_branchdata[temp_branch_fc].YSto[8]/double_phase_det;
 			Z_temp[0][2] = -NR_branchdata[temp_branch_fc].YSto[2]/double_phase_det;
 			Z_temp[2][0] = -NR_branchdata[temp_branch_fc].YSto[6]/double_phase_det;
 			Z_temp[2][2] = NR_branchdata[temp_branch_fc].YSto[0]/double_phase_det;
-		} else if(temp_branch_phases == 0x03){//has phases B and C
+		} else if(temp_branch_phases == PHASE_BC){//has phases B and C
 			double_phase_det = (NR_branchdata[temp_branch_fc].YSto[4]*NR_branchdata[temp_branch_fc].YSto[8])-(NR_branchdata[temp_branch_fc].YSto[7]*NR_branchdata[temp_branch_fc].YSto[5]);
 			Z_temp[1][1] = NR_branchdata[temp_branch_fc].YSto[8]/double_phase_det;
 			Z_temp[1][2] = -NR_branchdata[temp_branch_fc].YSto[5]/double_phase_det;
 			Z_temp[2][1] = -NR_branchdata[temp_branch_fc].YSto[7]/double_phase_det;
 			Z_temp[2][2] = NR_branchdata[temp_branch_fc].YSto[4]/double_phase_det;
-		} else if(temp_branch_phases == 0x04){//has phase A
+		} else if(temp_branch_phases == PHASE_A){//has phase A
 			Z_temp[0][0] = gld::complex(1,0)/NR_branchdata[temp_branch_fc].YSto[0];
-		} else if(temp_branch_phases == 0x02){//has phase B
+		} else if(temp_branch_phases == PHASE_B){//has phase B
 			Z_temp[1][1] = gld::complex(1,0)/NR_branchdata[temp_branch_fc].YSto[4];
-		} else if(temp_branch_phases == 0x01){//has phase C
+		} else if(temp_branch_phases == PHASE_C){//has phase C
 			Z_temp[2][2] = gld::complex(1,0)/NR_branchdata[temp_branch_fc].YSto[8];
 		}
 		addition(Z_thevenin,Z_temp,Z_thevenin);

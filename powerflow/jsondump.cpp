@@ -3559,15 +3559,15 @@ STATUS jsondump::dump_reliability(void)
 
 			// Write device opening status
 			// Append opening status to array
-			if ((fuseData->phases & 0x04) == 0x04) {
+			if ((fuseData->phases & PHASE_A) == PHASE_A) {
 				sprintf(buffer, "%d", (fuseData->phase_A_state == 1)? true:false);
 				jsonArray.append(buffer);
 			}
-			if ((fuseData->phases & 0x02) == 0x02) {
+			if ((fuseData->phases & PHASE_B) == PHASE_B) {
 				sprintf(buffer, "%d", ((fuseData->phase_B_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
-			if ((fuseData->phases & 0x01) == 0x01) {
+			if ((fuseData->phases & PHASE_C) == PHASE_C) {
 				sprintf(buffer, "%d", ((fuseData->phase_C_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
@@ -3605,15 +3605,15 @@ STATUS jsondump::dump_reliability(void)
 
 			// Write device opening status
 			// Append opening status to array
-			if ((reclData->phases & 0x04) == 0x04) {
+			if ((reclData->phases & PHASE_A) == PHASE_A) {
 				sprintf(buffer, "%d", ((reclData->phase_A_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
-			if ((reclData->phases & 0x02) == 0x02) {
+			if ((reclData->phases & PHASE_B) == PHASE_B) {
 				sprintf(buffer, "%d", ((reclData->phase_B_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
-			if ((reclData->phases & 0x01) == 0x01) {
+			if ((reclData->phases & PHASE_C) == PHASE_C) {
 				sprintf(buffer, "%d", ((reclData->phase_C_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
@@ -3651,15 +3651,15 @@ STATUS jsondump::dump_reliability(void)
 
 			// Write device opening status
 			// Append opening status to array
-			if ((secData->phases & 0x04) == 0x04) {
+			if ((secData->phases & PHASE_A) == PHASE_A) {
 				sprintf(buffer, "%d", ((secData->phase_A_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
-			if ((secData->phases & 0x02) == 0x02) {
+			if ((secData->phases & PHASE_B) == PHASE_B) {
 				sprintf(buffer, "%d", ((secData->phase_B_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
-			if ((secData->phases & 0x01) == 0x01) {
+			if ((secData->phases & PHASE_C) == PHASE_C) {
 				sprintf(buffer, "%d", ((secData->phase_C_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
@@ -3704,15 +3704,15 @@ STATUS jsondump::dump_reliability(void)
 
 			// Write device opening status
 			// Append opening status to array
-			if ((capData->pt_phase & 0x04) == 0x04) {
+			if ((capData->pt_phase & PHASE_A) == PHASE_A) {
 				sprintf(buffer, "%d", ((capData->switchA_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
-			if ((capData->pt_phase & 0x02) == 0x02) {
+			if ((capData->pt_phase & PHASE_B) == PHASE_B) {
 				sprintf(buffer, "%d", ((capData->switchB_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
-			if ((capData->pt_phase & 0x01) == 0x01) {
+			if ((capData->pt_phase & PHASE_C) == PHASE_C) {
 				sprintf(buffer, "%d", ((capData->switchC_state == 1)? true:false));
 				jsonArray.append(buffer);
 			}
@@ -3750,13 +3750,13 @@ STATUS jsondump::dump_reliability(void)
 
 			// Write device opening status
 			// Append tap positions to array
-			if ((regData->phases & 0x04) == 0x04) {
+			if ((regData->phases & PHASE_A) == PHASE_A) {
 				jsonArray.append(regData->tap[0]);
 			}
-			if ((regData->phases & 0x02) == 0x02) {
+			if ((regData->phases & PHASE_B) == PHASE_B) {
 				jsonArray.append(regData->tap[1]);
 			}
-			if ((regData->phases & 0x01) == 0x01) {
+			if ((regData->phases & PHASE_C) == PHASE_C) {
 				jsonArray.append(regData->tap[2]);
 			}
 

@@ -292,7 +292,7 @@ int node::create(void)
 	house_present = false;	//House attachment flag
 	nom_res_curr[0] = nom_res_curr[1] = nom_res_curr[2] = 0.0;	//Nominal house current variables
 
-	prev_phases = 0x00;
+	prev_phases = NO_PHASE;
 
 	mean_repair_time = 0.0;
 
@@ -2044,7 +2044,7 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 	STATUS fxn_ret_value;
 
 	//Reliability check - sets and removes voltages (theory being previous answer better than starting at 0)
-	unsigned char phase_checks_var;
+	set phase_checks_var;
 
 	//See if we've been initialized or not
 	if (NR_node_reference!=-1)
@@ -2064,15 +2064,15 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 		if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 		{
 			//Figre out what has changed
-			phase_checks_var = ((NR_busdata[NR_node_reference].phases ^ prev_phases) & 0x8F);
+			phase_checks_var = ((NR_busdata[NR_node_reference].phases ^ prev_phases) & PHASE_INFO);
 
-			if (phase_checks_var != 0x00)	//Something's changed
+			if (phase_checks_var != NO_PHASE)	//Something's changed
 			{
 				//See if it is a triplex
-				if ((NR_busdata[NR_node_reference].origphases & 0x80) == 0x80)
+				if ((NR_busdata[NR_node_reference].origphases & PHASE_S) == PHASE_S)
 				{
 					//See if A, B, or C appeared, or disappeared
-					if ((NR_busdata[NR_node_reference].phases & 0x80) == 0x00)	//No phases means it was just removed
+					if ((NR_busdata[NR_node_reference].phases & PHASE_S) == NO_PHASE)	//No phases means it was just removed
 					{
 						//Store V1 and V2
 						last_voltage[0] = voltage[0];
@@ -2112,10 +2112,10 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 				else	//Nope
 				{
 					//Find out changes, and direction
-					if ((phase_checks_var & 0x04) == 0x04)	//Phase A change
+					if ((phase_checks_var & PHASE_A) == PHASE_A)	//Phase A change
 					{
 						//See which way
-						if ((prev_phases & 0x04) == 0x04)	//Means A just disappeared
+						if ((prev_phases & PHASE_A) == PHASE_A)	//Means A just disappeared
 						{
 							last_voltage[0] = voltage[0];	//Store the last value
 							voltage[0] = 0.0;				//Put us to zero, so volt_dump is happy
@@ -2136,10 +2136,10 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 					}//End Phase A change
 
 					//Find out changes, and direction
-					if ((phase_checks_var & 0x02) == 0x02)	//Phase B change
+					if ((phase_checks_var & PHASE_B) == PHASE_B)	//Phase B change
 					{
 						//See which way
-						if ((prev_phases & 0x02) == 0x02)	//Means B just disappeared
+						if ((prev_phases & PHASE_B) == PHASE_B)	//Means B just disappeared
 						{
 							last_voltage[1] = voltage[1];	//Store the last value
 							voltage[1] = 0.0;				//Put us to zero, so volt_dump is happy
@@ -2160,10 +2160,10 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 					}//End Phase B change
 
 					//Find out changes, and direction
-					if ((phase_checks_var & 0x01) == 0x01)	//Phase C change
+					if ((phase_checks_var & PHASE_C) == PHASE_C)	//Phase C change
 					{
 						//See which way
-						if ((prev_phases & 0x01) == 0x01)	//Means C just disappeared
+						if ((prev_phases & PHASE_C) == PHASE_C)	//Means C just disappeared
 						{
 							last_voltage[2] = voltage[2];	//Store the last value
 							voltage[2] = 0.0;				//Put us to zero, so volt_dump is happy
@@ -2931,7 +2931,7 @@ void node::BOTH_node_postsync_fxn(OBJECT *obj)
 	int index_x_val, index_y_val;
 	gld_property *temp_property = nullptr;
 	gld_wlock *test_rlock = nullptr;
-	unsigned char phase_checks_var;
+	set phase_checks_var;
 
 	//NR-related updates for reliability and making sure "removed" objects have zero voltage
 	//Needs to be in post sync due to when fault_check fires and removes phases
@@ -2944,15 +2944,15 @@ void node::BOTH_node_postsync_fxn(OBJECT *obj)
 			if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 			{
 				//Figre out what has changed
-				phase_checks_var = ((NR_busdata[NR_node_reference].phases ^ prev_phases) & 0x8F);
+				phase_checks_var = ((NR_busdata[NR_node_reference].phases ^ prev_phases) & PHASE_INFO);
 
-				if (phase_checks_var != 0x00)	//Something's changed
+				if (phase_checks_var != NO_PHASE)	//Something's changed
 				{
 					//See if it is a triplex
-					if ((NR_busdata[NR_node_reference].origphases & 0x80) == 0x80)
+					if ((NR_busdata[NR_node_reference].origphases & PHASE_S) == PHASE_S)
 					{
 						//See if A, B, or C appeared, or disappeared
-						if ((NR_busdata[NR_node_reference].phases & 0x80) == 0x00)	//No phases means it was just removed
+						if ((NR_busdata[NR_node_reference].phases & PHASE_S) == NO_PHASE)	//No phases means it was just removed
 						{
 							//Store V1 and V2
 							last_voltage[0] = voltage[0];
@@ -2992,10 +2992,10 @@ void node::BOTH_node_postsync_fxn(OBJECT *obj)
 					else	//Nope
 					{
 						//Find out changes, and direction
-						if ((phase_checks_var & 0x04) == 0x04)	//Phase A change
+						if ((phase_checks_var & PHASE_A) == PHASE_A)	//Phase A change
 						{
 							//See which way
-							if ((prev_phases & 0x04) == 0x04)	//Means A just disappeared
+							if ((prev_phases & PHASE_A) == PHASE_A)	//Means A just disappeared
 							{
 								last_voltage[0] = voltage[0];	//Store the last value
 								voltage[0] = 0.0;				//Put us to zero, so volt_dump is happy
@@ -3016,10 +3016,10 @@ void node::BOTH_node_postsync_fxn(OBJECT *obj)
 						}//End Phase A change
 
 						//Find out changes, and direction
-						if ((phase_checks_var & 0x02) == 0x02)	//Phase B change
+						if ((phase_checks_var & PHASE_B) == PHASE_B)	//Phase B change
 						{
 							//See which way
-							if ((prev_phases & 0x02) == 0x02)	//Means B just disappeared
+							if ((prev_phases & PHASE_B) == PHASE_B)	//Means B just disappeared
 							{
 								last_voltage[1] = voltage[1];	//Store the last value
 								voltage[1] = 0.0;				//Put us to zero, so volt_dump is happy
@@ -3040,10 +3040,10 @@ void node::BOTH_node_postsync_fxn(OBJECT *obj)
 						}//End Phase B change
 
 						//Find out changes, and direction
-						if ((phase_checks_var & 0x01) == 0x01)	//Phase C change
+						if ((phase_checks_var & PHASE_C) == PHASE_C)	//Phase C change
 						{
 							//See which way
-							if ((prev_phases & 0x01) == 0x01)	//Means C just disappeared
+							if ((prev_phases & PHASE_C) == PHASE_C)	//Means C just disappeared
 							{
 								last_voltage[2] = voltage[2];	//Store the last value
 								voltage[2] = 0.0;				//Put us to zero, so volt_dump is happy
@@ -3816,7 +3816,7 @@ int node::NR_populate(void)
 	NR_busdata[NR_node_reference].swing_topology_entry = false;
 
 	//Populate phases
-	NR_busdata[NR_node_reference].phases = 128*has_phase(PHASE_S) + 8*has_phase(PHASE_D) + 4*has_phase(PHASE_A) + 2*has_phase(PHASE_B) + has_phase(PHASE_C);
+	NR_busdata[NR_node_reference].phases = phases & PHASE_INFO;
 
 	//Link our name in
 	NR_busdata[NR_node_reference].name = me->name;
@@ -3876,7 +3876,7 @@ int node::NR_populate(void)
 		if (house_present)	//We're a proud parent of a house!
 		{
 			NR_busdata[NR_node_reference].house_var = &nom_res_curr[0];	//Separate storage area for nominal house currents
-			NR_busdata[NR_node_reference].phases |= 0x40;					//Flag that we are a house-attached node
+			NR_busdata[NR_node_reference].phases |= PHASE_HOUSE_PRESENT;					//Flag that we are a house-attached node
 		}
 
 		NR_busdata[NR_node_reference].extra_var = &current12;	//Stored in a separate variable and this is the easiest way for me to get it
@@ -3886,14 +3886,14 @@ int node::NR_populate(void)
 		if ((SubNode & SNT_DIFF_PARENT)==SNT_DIFF_PARENT)	//Differently connected load/node (only can't be S)
 		{
 			NR_busdata[NR_node_reference].extra_var = Extra_Data;
-			NR_busdata[NR_node_reference].phases |= 0x10;			//Special flag for a phase mismatch being present
+			NR_busdata[NR_node_reference].phases |= PHASE_DIFF_CHILD;			//Special flag for a phase mismatch being present
 		}
 
 		//See if we have any houses of the three-phase/non-triplex variety
 		if (house_present)	//We're a proud parent of a house!
 		{
 			NR_busdata[NR_node_reference].house_var = &nom_res_curr[0];	//Separate storage area for nominal house currents
-			NR_busdata[NR_node_reference].phases |= 0x40;					//Flag that we are a house-attached node
+			NR_busdata[NR_node_reference].phases |= PHASE_HOUSE_PRESENT;					//Flag that we are a house-attached node
 		}
 	}
 
@@ -4764,11 +4764,12 @@ SIMULATIONMODE node::inter_deltaupdate_node(unsigned int64 delta_time, unsigned 
 //for easy copy-paste
 STATUS node::calc_freq_dynamics(double deltat)
 {
-	unsigned char phase_conf, phase_mask;
+	set phase_conf, phase_mask;
 	unsigned int indexval;
 	double dfmeasdt, errorval, deltaom, dxdt, fbus, adiffval;
 	STATUS return_status;
 	bool is_triplex_node;
+	set phase_values[] = {PHASE_A, PHASE_B, PHASE_C};
 
 	//Init for success
 	return_status = SUCCESS;
@@ -4776,27 +4777,27 @@ STATUS node::calc_freq_dynamics(double deltat)
 	//Extract the phases
 	if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 	{
-		if ((NR_busdata[NR_node_reference].phases & 0x80) == 0x80)
+		if ((NR_busdata[NR_node_reference].phases & PHASE_S) == PHASE_S)
 		{
-			phase_conf = 0x80;
+			phase_conf = PHASE_S;
 			is_triplex_node = true;
 		}
 		else
 		{
-			phase_conf=NR_busdata[NR_node_reference].phases & 0x07;
+			phase_conf=NR_busdata[NR_node_reference].phases & PHASE_ABC;
 			is_triplex_node = false;
 		}
 	}
 	else	//It is a child - look at parent
 	{
-		if ((NR_busdata[*NR_subnode_reference].phases & 0x80) == 0x80)
+		if ((NR_busdata[*NR_subnode_reference].phases & PHASE_S) == PHASE_S)
 		{
-			phase_conf = 0x80;
+			phase_conf = PHASE_S;
 			is_triplex_node = true;
 		}
 		else
 		{
-			phase_conf=NR_busdata[*NR_subnode_reference].phases & 0x07;
+			phase_conf=NR_busdata[*NR_subnode_reference].phases & PHASE_ABC;
 			is_triplex_node = false;
 		}
 	}
@@ -4806,12 +4807,12 @@ STATUS node::calc_freq_dynamics(double deltat)
 	{
 		if (is_triplex_node)
 		{
-			phase_mask = 0x80;
+			phase_mask = PHASE_S;
 		}
 		else	//three-phase, of some sort
 		{
 			//Get the mask
-			phase_mask = (1 << (2 - indexval));
+			phase_mask = phase_values[indexval];
 		}
 
 		//Check the phase
@@ -4905,49 +4906,49 @@ STATUS node::calc_freq_dynamics(double deltat)
 
 	//Update the "average" frequency value
 	switch(phase_conf) {
-		case 0x00:	//No phases (we've been faulted out
+		case NO_PHASE:	//No phases (we've been faulted out
 			{
 				curr_freq_state.average_freq = 0.0;
 				break;	//Just get us outta here
 			}
-		case 0x01:	//Only C
+		case PHASE_S:	//Triplex stuff
+			{
+				curr_freq_state.average_freq = curr_freq_state.fmeas[2];	//Just take the 12 value, for now
+				break;
+			}
+		case PHASE_C:	//Only C
 			{
 				curr_freq_state.average_freq = curr_freq_state.fmeas[2];
 				break;
 			}
-		case 0x02:	//Only B
+		case PHASE_B:	//Only B
 			{
 				curr_freq_state.average_freq = curr_freq_state.fmeas[1];
 				break;
 			}
-		case 0x03:	//B & C
+		case PHASE_BC:	//B & C
 			{
 				curr_freq_state.average_freq = (curr_freq_state.fmeas[1] + curr_freq_state.fmeas[2]) / 2.0;
 				break;
 			}
-		case 0x04:	//Only A
+		case PHASE_A:	//Only A
 			{
 				curr_freq_state.average_freq = curr_freq_state.fmeas[0];
 				break;
 			}
-		case 0x05:	//A & C
+		case PHASE_AC:	//A & C
 			{
 				curr_freq_state.average_freq = (curr_freq_state.fmeas[0] + curr_freq_state.fmeas[2]) / 2.0;
 				break;
 			}
-		case 0x06:	//A & B
+		case PHASE_AB:	//A & B
 			{
 				curr_freq_state.average_freq = (curr_freq_state.fmeas[0] + curr_freq_state.fmeas[1]) / 2.0;
 				break;
 			}
-		case 0x07:	//ABC
+		case PHASE_ABC:	//ABC
 			{
 				curr_freq_state.average_freq = (curr_freq_state.fmeas[0] + curr_freq_state.fmeas[1] + curr_freq_state.fmeas[2]) / 3.0;
-				break;
-			}
-		case 0x80:	//Triplex stuff
-			{
-				curr_freq_state.average_freq = curr_freq_state.fmeas[2];	//Just take the 12 value, for now
 				break;
 			}
 		default:	//How'd we get here?
@@ -4972,36 +4973,37 @@ STATUS node::calc_freq_dynamics(double deltat)
 //curr_time is the initial states/information
 void node::init_freq_dynamics(double deltat)
 {
-	unsigned char phase_conf, phase_mask;
+	set phase_conf, phase_mask;
 	int indexval;
 	bool is_triplex_node;
 	double frequency_offset_val, angle_offset;
 	gld::complex angle_rotate_value;
+	set phase_values[] = {PHASE_A, PHASE_B, PHASE_C};
 
 	//Extract the phases
 	if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 	{
-		if ((NR_busdata[NR_node_reference].phases & 0x80) == 0x80)
+		if ((NR_busdata[NR_node_reference].phases & PHASE_S) == PHASE_S)
 		{
-			phase_conf = 0x80;
+			phase_conf = PHASE_S;
 			is_triplex_node = true;
 		}
 		else
 		{
-			phase_conf=NR_busdata[NR_node_reference].phases & 0x07;
+			phase_conf=NR_busdata[NR_node_reference].phases & PHASE_ABC;
 			is_triplex_node = false;
 		}
 	}
 	else	//It is a child - look at parent
 	{
-		if ((NR_busdata[*NR_subnode_reference].phases & 0x80) == 0x80)
+		if ((NR_busdata[*NR_subnode_reference].phases & PHASE_S) == PHASE_S)
 		{
-			phase_conf = 0x80;
+			phase_conf = PHASE_S;
 			is_triplex_node = true;
 		}
 		else
 		{
-			phase_conf=NR_busdata[*NR_subnode_reference].phases & 0x07;
+			phase_conf=NR_busdata[*NR_subnode_reference].phases & PHASE_ABC;
 			is_triplex_node = false;
 		}
 	}
@@ -5011,12 +5013,12 @@ void node::init_freq_dynamics(double deltat)
 	{
 		if (is_triplex_node)
 		{
-			phase_mask = 0x80;
+			phase_mask = PHASE_S;
 		}
 		else	//three-phase, of some sort
 		{
 			//Get the mask
-			phase_mask = (1 << (2 - indexval));
+			phase_mask = phase_values[indexval];
 		}
 
 		//Check the phase
@@ -5138,7 +5140,7 @@ double node::perform_GFA_checks(double timestepvalue)
 	double temp_pu_voltage;
 	double return_time_freq, return_time_volt, return_value;
 	char indexval;
-	unsigned char phasevals;
+	set phasevals;
 	OBJECT *hdr = OBJECTHDR(this);
 
 	//By default, we're subject to the whims of deltamode
@@ -5149,11 +5151,11 @@ double node::perform_GFA_checks(double timestepvalue)
 	//Pull our phasing information
 	if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 	{
-		phasevals = NR_busdata[NR_node_reference].phases & 0x87;
+		phasevals = NR_busdata[NR_node_reference].phases & (PHASE_S | PHASE_ABC);
 	}
 	else	//Must be a child, pull from our parent
 	{
-		phasevals = NR_busdata[*NR_subnode_reference].phases & 0x87;
+		phasevals = NR_busdata[*NR_subnode_reference].phases & (PHASE_S | PHASE_ABC);
 	}
 
 	//Perform frequency check
@@ -5231,7 +5233,7 @@ double node::perform_GFA_checks(double timestepvalue)
 	for (indexval = 0; indexval < 3; indexval++)
 	{
 		//See if this phase exists
-		if ((phasevals & 0x80) == 0x80)	//Triplex check first
+		if ((phasevals & PHASE_S) == PHASE_S)	//Triplex check first
 		{
 			//Make sure we're one of the first two
 			if (indexval < 2)
@@ -5243,15 +5245,15 @@ double node::perform_GFA_checks(double timestepvalue)
 				check_phase = false;
 			}
 		}//end triplex
-		else if ((indexval == 0) && ((phasevals & 0x04) == 0x04))	//A
+		else if ((indexval == 0) && ((phasevals & PHASE_A) == PHASE_A))	//A
 		{
 			check_phase = true;
 		}
-		else if ((indexval == 1) && ((phasevals & 0x02) == 0x02))	//B
+		else if ((indexval == 1) && ((phasevals & PHASE_B) == PHASE_B))	//B
 		{
 			check_phase = true;
 		}
-		else if ((indexval == 2) && ((phasevals & 0x01) == 0x01))	//C
+		else if ((indexval == 2) && ((phasevals & PHASE_C) == PHASE_C))	//C
 		{
 			check_phase = true;
 		}

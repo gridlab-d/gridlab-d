@@ -1038,19 +1038,19 @@ void load::load_update_fxn(void)
 							voltage_pu_vals[2] = voltaged[2].Mag()/voltage_base_val;
 
 							//Check them - Phase AB
-							if (((NR_busdata[NR_node_reference].phases & 0x06) == 0x06) && (voltage_pu_vals[0] < impedance_conversion_low_pu))
+							if (((NR_busdata[NR_node_reference].phases & PHASE_AB) == PHASE_AB) && (voltage_pu_vals[0] < impedance_conversion_low_pu))
 							{
 								volt_below_thresh = true;
 							}
 
 							//Check them - Phase BC
-							if (((NR_busdata[NR_node_reference].phases & 0x03) == 0x03) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
+							if (((NR_busdata[NR_node_reference].phases & PHASE_BC) == PHASE_BC) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
 							{
 								volt_below_thresh = true;
 							}
 
 							//Check them - Phase CA
-							if (((NR_busdata[NR_node_reference].phases & 0x05) == 0x05) && (voltage_pu_vals[2] < impedance_conversion_low_pu))
+							if (((NR_busdata[NR_node_reference].phases & PHASE_AC) == PHASE_AC) && (voltage_pu_vals[2] < impedance_conversion_low_pu))
 							{
 								volt_below_thresh = true;
 							}
@@ -1066,19 +1066,19 @@ void load::load_update_fxn(void)
 							voltage_pu_vals[2] = voltage[2].Mag()/voltage_base_val;
 
 							//Check them - Phase A
-							if (((NR_busdata[NR_node_reference].phases & 0x04) == 0x04) && (voltage_pu_vals[0] < impedance_conversion_low_pu))
+							if (((NR_busdata[NR_node_reference].phases & PHASE_A) == PHASE_A) && (voltage_pu_vals[0] < impedance_conversion_low_pu))
 							{
 								volt_below_thresh = true;
 							}
 
 							//Check them - Phase B
-							if (((NR_busdata[NR_node_reference].phases & 0x02) == 0x02) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
+							if (((NR_busdata[NR_node_reference].phases & PHASE_B) == PHASE_B) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
 							{
 								volt_below_thresh = true;
 							}
 
 							//Check them - Phase C
-							if (((NR_busdata[NR_node_reference].phases & 0x01) == 0x01) && (voltage_pu_vals[2] < impedance_conversion_low_pu))
+							if (((NR_busdata[NR_node_reference].phases & PHASE_C) == PHASE_C) && (voltage_pu_vals[2] < impedance_conversion_low_pu))
 							{
 								volt_below_thresh = true;
 							}
@@ -1094,7 +1094,7 @@ void load::load_update_fxn(void)
 								voltage_base_val = nominal_voltage * sqrt(3.0);
 
 								//Check phases - AB
-								if ((NR_busdata[NR_node_reference].phases & 0x06) == 0x06)
+								if ((NR_busdata[NR_node_reference].phases & PHASE_AB) == PHASE_AB)
 								{
 									//Check power value
 									if (!(constant_power[0].IsZero()))
@@ -1118,7 +1118,7 @@ void load::load_update_fxn(void)
 								}//End AB check
 
 								//Check phases - BC
-								if ((NR_busdata[NR_node_reference].phases & 0x03) == 0x03)
+								if ((NR_busdata[NR_node_reference].phases & PHASE_BC) == PHASE_BC)
 								{
 									//Check power value
 									if (!(constant_power[1].IsZero()))
@@ -1142,7 +1142,7 @@ void load::load_update_fxn(void)
 								}//End BC check
 
 								//Check phases - CA
-								if ((NR_busdata[NR_node_reference].phases & 0x05) == 0x05)
+								if ((NR_busdata[NR_node_reference].phases & PHASE_AC) == PHASE_AC)
 								{
 									//Check power value
 									if (!(constant_power[2].IsZero()))
@@ -1171,7 +1171,7 @@ void load::load_update_fxn(void)
 								voltage_base_val = nominal_voltage;
 
 								//Check phases - A
-								if ((NR_busdata[NR_node_reference].phases & 0x04) == 0x04)
+								if ((NR_busdata[NR_node_reference].phases & PHASE_A) == PHASE_A)
 								{
 									//Check power value
 									if (!(constant_power[0].IsZero()))
@@ -1195,7 +1195,7 @@ void load::load_update_fxn(void)
 								}//End A check
 
 								//Check phases - B
-								if ((NR_busdata[NR_node_reference].phases & 0x02) == 0x02)
+								if ((NR_busdata[NR_node_reference].phases & PHASE_B) == PHASE_B)
 								{
 									//Check power value
 									if (!(constant_power[1].IsZero()))
@@ -1219,7 +1219,7 @@ void load::load_update_fxn(void)
 								}//End B check
 
 								//Check phases - C
-								if ((NR_busdata[NR_node_reference].phases & 0x01) == 0x01)
+								if ((NR_busdata[NR_node_reference].phases & PHASE_C) == PHASE_C)
 								{
 									//Check power value
 									if (!(constant_power[2].IsZero()))
@@ -1280,7 +1280,7 @@ void load::load_update_fxn(void)
 							voltage_base_val = nominal_voltage * sqrt(3.0);
 
 							//Check phases - AB
-							if ((NR_busdata[NR_node_reference].phases & 0x06) == 0x06)
+							if ((NR_busdata[NR_node_reference].phases & PHASE_AB) == PHASE_AB)
 							{
 								//Check power value
 								if (!(constant_power_dy[0].IsZero()))
@@ -1304,7 +1304,7 @@ void load::load_update_fxn(void)
 							}//End AB check
 
 							//Check phases - BC
-							if ((NR_busdata[NR_node_reference].phases & 0x03) == 0x03)
+							if ((NR_busdata[NR_node_reference].phases & PHASE_BC) == PHASE_BC)
 							{
 								//Check power value
 								if (!(constant_power_dy[1].IsZero()))
@@ -1328,7 +1328,7 @@ void load::load_update_fxn(void)
 							}//End BC check
 
 							//Check phases - CA
-							if ((NR_busdata[NR_node_reference].phases & 0x05) == 0x05)
+							if ((NR_busdata[NR_node_reference].phases & PHASE_AC) == PHASE_AC)
 							{
 								//Check power value
 								if (!(constant_power_dy[2].IsZero()))
@@ -1356,7 +1356,7 @@ void load::load_update_fxn(void)
 							voltage_base_val = nominal_voltage;
 
 							//Check phases - A
-							if ((NR_busdata[NR_node_reference].phases & 0x04) == 0x04)
+							if ((NR_busdata[NR_node_reference].phases & PHASE_A) == PHASE_A)
 							{
 								//Check power value
 								if (!(constant_power_dy[3].IsZero()))
@@ -1380,7 +1380,7 @@ void load::load_update_fxn(void)
 							}//End A check
 
 							//Check phases - B
-							if ((NR_busdata[NR_node_reference].phases & 0x02) == 0x02)
+							if ((NR_busdata[NR_node_reference].phases & PHASE_B) == PHASE_B)
 							{
 								//Check power value
 								if (!(constant_power_dy[4].IsZero()))
@@ -1404,7 +1404,7 @@ void load::load_update_fxn(void)
 							}//End B check
 
 							//Check phases - C
-							if ((NR_busdata[NR_node_reference].phases & 0x01) == 0x01)
+							if ((NR_busdata[NR_node_reference].phases & PHASE_C) == PHASE_C)
 							{
 								//Check power value
 								if (!(constant_power_dy[5].IsZero()))
@@ -1595,19 +1595,19 @@ void load::load_update_fxn(void)
 							voltage_pu_vals[2] = voltaged[2].Mag()/voltage_base_val;
 
 							//Check them - Phase AB
-							if (((NR_busdata[NR_node_reference].phases & 0x06) == 0x06) && (voltage_pu_vals[0] < impedance_conversion_low_pu))
+							if (((NR_busdata[NR_node_reference].phases & PHASE_AB) == PHASE_AB) && (voltage_pu_vals[0] < impedance_conversion_low_pu))
 							{
 								volt_below_thresh = true;
 							}
 
 							//Check them - Phase BC
-							if (((NR_busdata[NR_node_reference].phases & 0x03) == 0x03) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
+							if (((NR_busdata[NR_node_reference].phases & PHASE_BC) == PHASE_BC) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
 							{
 								volt_below_thresh = true;
 							}
 
 							//Check them - Phase CA
-							if (((NR_busdata[NR_node_reference].phases & 0x05) == 0x05) && (voltage_pu_vals[2] < impedance_conversion_low_pu))
+							if (((NR_busdata[NR_node_reference].phases & PHASE_AC) == PHASE_AC) && (voltage_pu_vals[2] < impedance_conversion_low_pu))
 							{
 								volt_below_thresh = true;
 							}
@@ -1623,19 +1623,19 @@ void load::load_update_fxn(void)
 							voltage_pu_vals[2] = voltage[2].Mag()/voltage_base_val;
 
 							//Check them - Phase A
-							if (((NR_busdata[NR_node_reference].phases & 0x04) == 0x04) && (voltage_pu_vals[0] < impedance_conversion_low_pu))
+							if (((NR_busdata[NR_node_reference].phases & PHASE_A) == PHASE_A) && (voltage_pu_vals[0] < impedance_conversion_low_pu))
 							{
 								volt_below_thresh = true;
 							}
 
 							//Check them - Phase B
-							if (((NR_busdata[NR_node_reference].phases & 0x02) == 0x02) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
+							if (((NR_busdata[NR_node_reference].phases & PHASE_B) == PHASE_B) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
 							{
 								volt_below_thresh = true;
 							}
 
 							//Check them - Phase C
-							if (((NR_busdata[NR_node_reference].phases & 0x01) == 0x01) && (voltage_pu_vals[2] < impedance_conversion_low_pu))
+							if (((NR_busdata[NR_node_reference].phases & PHASE_C) == PHASE_C) && (voltage_pu_vals[2] < impedance_conversion_low_pu))
 							{
 								volt_below_thresh = true;
 							}
@@ -1651,7 +1651,7 @@ void load::load_update_fxn(void)
 								voltage_base_val = nominal_voltage * sqrt(3.0);
 
 								//Check phases - AB
-								if ((NR_busdata[NR_node_reference].phases & 0x06) == 0x06)
+								if ((NR_busdata[NR_node_reference].phases & PHASE_AB) == PHASE_AB)
 								{
 									//Check power value
 									if (!(constant_power[0].IsZero()))
@@ -1675,7 +1675,7 @@ void load::load_update_fxn(void)
 								}//End AB check
 
 								//Check phases - BC
-								if ((NR_busdata[NR_node_reference].phases & 0x03) == 0x03)
+								if ((NR_busdata[NR_node_reference].phases & PHASE_BC) == PHASE_BC)
 								{
 									//Check power value
 									if (!(constant_power[1].IsZero()))
@@ -1699,7 +1699,7 @@ void load::load_update_fxn(void)
 								}//End BC check
 
 								//Check phases - CA
-								if ((NR_busdata[NR_node_reference].phases & 0x05) == 0x05)
+								if ((NR_busdata[NR_node_reference].phases & PHASE_AC) == PHASE_AC)
 								{
 									//Check power value
 									if (!(constant_power[2].IsZero()))
@@ -1728,7 +1728,7 @@ void load::load_update_fxn(void)
 								voltage_base_val = nominal_voltage;
 
 								//Check phases - A
-								if ((NR_busdata[NR_node_reference].phases & 0x04) == 0x04)
+								if ((NR_busdata[NR_node_reference].phases & PHASE_A) == PHASE_A)
 								{
 									//Check power value
 									if (!(constant_power[0].IsZero()))
@@ -1752,7 +1752,7 @@ void load::load_update_fxn(void)
 								}//End A check
 
 								//Check phases - B
-								if ((NR_busdata[NR_node_reference].phases & 0x02) == 0x02)
+								if ((NR_busdata[NR_node_reference].phases & PHASE_B) == PHASE_B)
 								{
 									//Check power value
 									if (!(constant_power[1].IsZero()))
@@ -1776,7 +1776,7 @@ void load::load_update_fxn(void)
 								}//End B check
 
 								//Check phases - C
-								if ((NR_busdata[NR_node_reference].phases & 0x01) == 0x01)
+								if ((NR_busdata[NR_node_reference].phases & PHASE_C) == PHASE_C)
 								{
 									//Check power value
 									if (!(constant_power[2].IsZero()))
@@ -1837,7 +1837,7 @@ void load::load_update_fxn(void)
 							voltage_base_val = nominal_voltage * sqrt(3.0);
 
 							//Check phases - AB
-							if ((NR_busdata[NR_node_reference].phases & 0x06) == 0x06)
+							if ((NR_busdata[NR_node_reference].phases & PHASE_AB) == PHASE_AB)
 							{
 								//Check power value
 								if (!(constant_power_dy[0].IsZero()))
@@ -1861,7 +1861,7 @@ void load::load_update_fxn(void)
 							}//End AB check
 
 							//Check phases - BC
-							if ((NR_busdata[NR_node_reference].phases & 0x03) == 0x03)
+							if ((NR_busdata[NR_node_reference].phases & PHASE_BC) == PHASE_BC)
 							{
 								//Check power value
 								if (!(constant_power_dy[1].IsZero()))
@@ -1885,7 +1885,7 @@ void load::load_update_fxn(void)
 							}//End BC check
 
 							//Check phases - CA
-							if ((NR_busdata[NR_node_reference].phases & 0x05) == 0x05)
+							if ((NR_busdata[NR_node_reference].phases & PHASE_AC) == PHASE_AC)
 							{
 								//Check power value
 								if (!(constant_power_dy[2].IsZero()))
@@ -1913,7 +1913,7 @@ void load::load_update_fxn(void)
 							voltage_base_val = nominal_voltage;
 
 							//Check phases - A
-							if ((NR_busdata[NR_node_reference].phases & 0x04) == 0x04)
+							if ((NR_busdata[NR_node_reference].phases & PHASE_A) == PHASE_A)
 							{
 								//Check power value
 								if (!(constant_power_dy[3].IsZero()))
@@ -1937,7 +1937,7 @@ void load::load_update_fxn(void)
 							}//End A check
 
 							//Check phases - B
-							if ((NR_busdata[NR_node_reference].phases & 0x02) == 0x02)
+							if ((NR_busdata[NR_node_reference].phases & PHASE_B) == PHASE_B)
 							{
 								//Check power value
 								if (!(constant_power_dy[4].IsZero()))
@@ -1961,7 +1961,7 @@ void load::load_update_fxn(void)
 							}//End B check
 
 							//Check phases - C
-							if ((NR_busdata[NR_node_reference].phases & 0x01) == 0x01)
+							if ((NR_busdata[NR_node_reference].phases & PHASE_C) == PHASE_C)
 							{
 								//Check power value
 								if (!(constant_power_dy[5].IsZero()))
@@ -2179,19 +2179,19 @@ void load::load_update_fxn(void)
 						voltage_pu_vals[2] = voltaged[2].Mag()/voltage_base_val;
 
 						//Check them - Phase AB
-						if (((NR_busdata[node_reference_value].phases & 0x06) == 0x06) && (voltage_pu_vals[0] < impedance_conversion_low_pu))
+						if (((NR_busdata[node_reference_value].phases & PHASE_AB) == PHASE_AB) && (voltage_pu_vals[0] < impedance_conversion_low_pu))
 						{
 							volt_below_thresh = true;
 						}
 
 						//Check them - Phase BC
-						if (((NR_busdata[node_reference_value].phases & 0x03) == 0x03) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
+						if (((NR_busdata[node_reference_value].phases & PHASE_BC) == PHASE_BC) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
 						{
 							volt_below_thresh = true;
 						}
 
 						//Check them - Phase CA
-						if (((NR_busdata[node_reference_value].phases & 0x05) == 0x05) && (voltage_pu_vals[2] < impedance_conversion_low_pu))
+						if (((NR_busdata[node_reference_value].phases & PHASE_AC) == PHASE_AC) && (voltage_pu_vals[2] < impedance_conversion_low_pu))
 						{
 							volt_below_thresh = true;
 						}
@@ -2207,19 +2207,19 @@ void load::load_update_fxn(void)
 						voltage_pu_vals[2] = voltage[2].Mag()/voltage_base_val;
 
 						//Check them - Phase A
-						if (((NR_busdata[node_reference_value].phases & 0x04) == 0x04) && (voltage_pu_vals[0] < impedance_conversion_low_pu))
+						if (((NR_busdata[node_reference_value].phases & PHASE_A) == PHASE_A) && (voltage_pu_vals[0] < impedance_conversion_low_pu))
 						{
 							volt_below_thresh = true;
 						}
 
 						//Check them - Phase B
-						if (((NR_busdata[node_reference_value].phases & 0x02) == 0x02) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
+						if (((NR_busdata[node_reference_value].phases & PHASE_B) == PHASE_B) && (voltage_pu_vals[1] < impedance_conversion_low_pu))
 						{
 							volt_below_thresh = true;
 						}
 
 						//Check them - Phase C
-						if (((NR_busdata[node_reference_value].phases & 0x01) == 0x01) && (voltage_pu_vals[2] < impedance_conversion_low_pu))
+						if (((NR_busdata[node_reference_value].phases & PHASE_C) == PHASE_C) && (voltage_pu_vals[2] < impedance_conversion_low_pu))
 						{
 							volt_below_thresh = true;
 						}
@@ -2237,7 +2237,7 @@ void load::load_update_fxn(void)
 							voltage_base_val = nominal_voltage * sqrt(3.0);
 
 							//Check phases - AB
-							if ((NR_busdata[node_reference_value].phases & 0x06) == 0x06)
+							if ((NR_busdata[node_reference_value].phases & PHASE_AB) == PHASE_AB)
 							{
 								//Check power value
 								if (!(constant_power[0].IsZero()))
@@ -2261,7 +2261,7 @@ void load::load_update_fxn(void)
 							}//End AB check
 
 							//Check phases - BC
-							if ((NR_busdata[node_reference_value].phases & 0x03) == 0x03)
+							if ((NR_busdata[node_reference_value].phases & PHASE_BC) == PHASE_BC)
 							{
 								//Check power value
 								if (!(constant_power[1].IsZero()))
@@ -2285,7 +2285,7 @@ void load::load_update_fxn(void)
 							}//End BC check
 
 							//Check phases - CA
-							if ((NR_busdata[node_reference_value].phases & 0x05) == 0x05)
+							if ((NR_busdata[node_reference_value].phases & PHASE_AC) == PHASE_AC)
 							{
 								//Check power value
 								if (!(constant_power[2].IsZero()))
@@ -2314,7 +2314,7 @@ void load::load_update_fxn(void)
 							voltage_base_val = nominal_voltage;
 
 							//Check phases - A
-							if ((NR_busdata[node_reference_value].phases & 0x04) == 0x04)
+							if ((NR_busdata[node_reference_value].phases & PHASE_A) == PHASE_A)
 							{
 								//Check power value
 								if (!(constant_power[0].IsZero()))
@@ -2338,7 +2338,7 @@ void load::load_update_fxn(void)
 							}//End A check
 
 							//Check phases - B
-							if ((NR_busdata[node_reference_value].phases & 0x02) == 0x02)
+							if ((NR_busdata[node_reference_value].phases & PHASE_B) == PHASE_B)
 							{
 								//Check power value
 								if (!(constant_power[1].IsZero()))
@@ -2362,7 +2362,7 @@ void load::load_update_fxn(void)
 							}//End B check
 
 							//Check phases - C
-							if ((NR_busdata[node_reference_value].phases & 0x01) == 0x01)
+							if ((NR_busdata[node_reference_value].phases & PHASE_C) == PHASE_C)
 							{
 								//Check power value
 								if (!(constant_power[2].IsZero()))
@@ -2423,7 +2423,7 @@ void load::load_update_fxn(void)
 						voltage_base_val = nominal_voltage * sqrt(3.0);
 
 						//Check phases - AB
-						if ((NR_busdata[node_reference_value].phases & 0x06) == 0x06)
+						if ((NR_busdata[node_reference_value].phases & PHASE_AB) == PHASE_AB)
 						{
 							//Check power value
 							if (!(constant_power_dy[0].IsZero()))
@@ -2447,7 +2447,7 @@ void load::load_update_fxn(void)
 						}//End AB check
 
 						//Check phases - BC
-						if ((NR_busdata[node_reference_value].phases & 0x03) == 0x03)
+						if ((NR_busdata[node_reference_value].phases & PHASE_BC) == PHASE_BC)
 						{
 							//Check power value
 							if (!(constant_power_dy[1].IsZero()))
@@ -2471,7 +2471,7 @@ void load::load_update_fxn(void)
 						}//End BC check
 
 						//Check phases - CA
-						if ((NR_busdata[node_reference_value].phases & 0x05) == 0x05)
+						if ((NR_busdata[node_reference_value].phases & PHASE_AC) == PHASE_AC)
 						{
 							//Check power value
 							if (!(constant_power_dy[2].IsZero()))
@@ -2499,7 +2499,7 @@ void load::load_update_fxn(void)
 						voltage_base_val = nominal_voltage;
 
 						//Check phases - A
-						if ((NR_busdata[node_reference_value].phases & 0x04) == 0x04)
+						if ((NR_busdata[node_reference_value].phases & PHASE_A) == PHASE_A)
 						{
 							//Check power value
 							if (!(constant_power_dy[3].IsZero()))
@@ -2523,7 +2523,7 @@ void load::load_update_fxn(void)
 						}//End A check
 
 						//Check phases - B
-						if ((NR_busdata[node_reference_value].phases & 0x02) == 0x02)
+						if ((NR_busdata[node_reference_value].phases & PHASE_B) == PHASE_B)
 						{
 							//Check power value
 							if (!(constant_power_dy[4].IsZero()))
@@ -2547,7 +2547,7 @@ void load::load_update_fxn(void)
 						}//End B check
 
 						//Check phases - C
-						if ((NR_busdata[node_reference_value].phases & 0x01) == 0x01)
+						if ((NR_busdata[node_reference_value].phases & PHASE_C) == PHASE_C)
 						{
 							//Check power value
 							if (!(constant_power_dy[5].IsZero()))

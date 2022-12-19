@@ -956,7 +956,7 @@ int diesel_dg::init(OBJECT *parent)
 		//Clear the temporary pointer
 		delete temp_property_pointer;
 
-		if((temp_phases & 0x0007) != 0x0007){//parent does not have all three phases
+		if((temp_phases & PHASE_ABC) != PHASE_ABC){//parent does not have all three phases
 			GL_THROW("The diesel_dg object must be connected to all three phases. Please make sure the parent object has all three phases.");
 			/* TROUBLESHOOT
 			The diesel_dg object is a three-phase generator. This message occured because the parent object does not have all three phases.

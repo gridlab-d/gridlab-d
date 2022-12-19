@@ -549,7 +549,7 @@ SIMULATIONMODE controller_dg::inter_deltaupdate(unsigned int64 delta_time, unsig
 	FUNCTIONADDR funadd = nullptr;
 	int return_val;
 	gld_wlock *test_rlock = nullptr;
-	unsigned char openPhases[] = {0x04, 0x02, 0x01};
+	set openPhases[] = {PHASE_A, PHASE_B, PHASE_C};
 
 	// Control of the generator switch
 	// Detect abnormal feeder frequency, switch terminal voltage, and reverse real power flow from generators (absorbing real power)

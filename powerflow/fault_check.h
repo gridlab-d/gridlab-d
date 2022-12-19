@@ -26,7 +26,7 @@ public:
 	unsigned int **Supported_Nodes;			//Nodes with source support (connected to swing somehow)
 	char *Alteration_Nodes;					//Similar to Supported_Nodes, but used to track alteration progression (namely, has the side been handled)
 	char *Alteration_Links;					//Similar to Supported_Nodes, but used to track alteration progression in links
-	unsigned char *valid_phases;			//Nodes with source support, specific to individual phases (hex mapped) -- used for mesh-based check
+	set *valid_phases;			//Nodes with source support, specific to individual phases (hex mapped) -- used for mesh-based check
 
 	enumeration fcheck_state;		//Mode variable
 	char1024 output_filename;		//File name to output unconnected bus values

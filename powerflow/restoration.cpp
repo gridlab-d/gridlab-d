@@ -3198,11 +3198,11 @@ void restoration::modifyModel(int counter)
 			//See what our status was, and do the opposite
 			if (*NR_branchdata[locations.data[idx]].status == LS_OPEN)	//Was open, close it
 			{
-				return_val = ((int (*)(OBJECT *,unsigned char,bool))(*switching_fxn))(swobj,0x07,true);
+				return_val = ((int (*)(OBJECT *,set,bool))(*switching_fxn))(swobj,PHASE_ABC,true);
 			}
 			else	//Must be closed, open it
 			{
-				return_val = ((int (*)(OBJECT *,unsigned char,bool))(*switching_fxn))(swobj,0x07,false);
+				return_val = ((int (*)(OBJECT *,set,bool))(*switching_fxn))(swobj,PHASE_ABC,false);
 			}
 		}
 		else	//Double return - reclosers and sectionalizers
@@ -3210,11 +3210,11 @@ void restoration::modifyModel(int counter)
 			//See what our status was, and do the opposite
 			if (*NR_branchdata[locations.data[idx]].status == LS_OPEN)	//Was open, close it
 			{
-				return_val_double = ((double (*)(OBJECT *,unsigned char,bool))(*switching_fxn))(swobj,0x07,true);
+				return_val_double = ((double (*)(OBJECT *,set,bool))(*switching_fxn))(swobj,PHASE_ABC,true);
 			}
 			else	//Must be closed, open it
 			{
-				return_val_double = ((double (*)(OBJECT *,unsigned char,bool))(*switching_fxn))(swobj,0x07,false);
+				return_val_double = ((double (*)(OBJECT *,set,bool))(*switching_fxn))(swobj,PHASE_ABC,false);
 			}
 
 			//Check our values - general error checks
@@ -3391,7 +3391,7 @@ bool restoration::checkVoltage(void)
 	for (index=0; index<NR_bus_count; index++)
 	{
 		//Make sure we aren't triplex first, since that breaks things
-		if ((NR_busdata[index].phases & 0x80) == 0x80)	//Are triples
+		if ((NR_busdata[index].phases & PHASE_S) == PHASE_S)	//Are triples
 		{
 			//Check each leg individually against nominal -- assumes nominal is 120 V (or suitable equivalent based on 1N/2N, not 12)
 			perunitvalue = (NR_busdata[index].V[0].Mag())/NR_busdata[index].volt_base;	//1N
@@ -3417,7 +3417,7 @@ bool restoration::checkVoltage(void)
 		else	//"Normal"
 		{
 			//Check against individual phases -- check as a bit mask so only "in-service" are caught
-			if ((NR_busdata[index].phases & 0x04) == 0x04)	//Has phase A
+			if ((NR_busdata[index].phases & PHASE_A) == PHASE_A)	//Has phase A
 			{
 				//Calculate the perunit value for A
 				perunitvalue = (NR_busdata[index].V[0].Mag())/NR_busdata[index].volt_base;
@@ -3432,7 +3432,7 @@ bool restoration::checkVoltage(void)
 			}//End phase A
 
 			//Check against individual phases -- check as a bit mask so only "in-service" are caught
-			if ((NR_busdata[index].phases & 0x02) == 0x02)	//Has phase B
+			if ((NR_busdata[index].phases & PHASE_B) == PHASE_B)	//Has phase B
 			{
 				//Calculate the perunit value for A
 				perunitvalue = (NR_busdata[index].V[1].Mag())/NR_busdata[index].volt_base;
@@ -3447,7 +3447,7 @@ bool restoration::checkVoltage(void)
 			}//End phase B
 
 			//Check against individual phases -- check as a bit mask so only "in-service" are caught
-			if ((NR_busdata[index].phases & 0x01) == 0x01)	//Has phase C
+			if ((NR_busdata[index].phases & PHASE_C) == PHASE_C)	//Has phase C
 			{
 				//Calculate the perunit value for A
 				perunitvalue = (NR_busdata[index].V[2].Mag())/NR_busdata[index].volt_base;

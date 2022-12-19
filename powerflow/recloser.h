@@ -33,9 +33,9 @@ private:
 	TIMESTAMP prev_rec_time;
 };
 
-EXPORT double change_recloser_state(OBJECT *thisobj, unsigned char phase_change, bool state);
-EXPORT int recloser_reliability_operation(OBJECT *thisobj, unsigned char desired_phases);
-EXPORT int recloser_fault_updates(OBJECT *thisobj, unsigned char restoration_phases);
+EXPORT double change_recloser_state(OBJECT *thisobj, set phase_change, bool state);
+EXPORT int recloser_reliability_operation(OBJECT *thisobj, set desired_phases);
+EXPORT int recloser_fault_updates(OBJECT *thisobj, set restoration_phases);
 
 #endif // RECLOSER_H
 /**@}**/

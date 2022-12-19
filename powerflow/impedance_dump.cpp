@@ -212,58 +212,58 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<to_voltage>%f</to_voltage>\n",node_voltage->Mag());
 
 			//write the phases
-			if(pFuse[index]->phases == 0x0001){//A
+			if(pFuse[index]->phases == PHASE_A){//A
 				fprintf(fn,"\t\t<phases>A</phases>\n");
 			}
-			if(pFuse[index]->phases == 0x0002){//B
+			if(pFuse[index]->phases == PHASE_B){//B
 				fprintf(fn,"\t\t<phases>B</phases>\n");
 			}
-			if(pFuse[index]->phases == 0x0004){//C
+			if(pFuse[index]->phases == PHASE_C){//C
 				fprintf(fn,"\t\t<phases>C</phases>\n");
 			}
-			if(pFuse[index]->phases == 0x0009){//AN
+			if(pFuse[index]->phases == PHASE_AN){//AN
 				fprintf(fn,"\t\t<phases>AN</phases>\n");
 			}
-			if(pFuse[index]->phases == 0x000a){//BN
+			if(pFuse[index]->phases == PHASE_BN){//BN
 				fprintf(fn,"\t\t<phases>BN</phases>\n");
 			}
-			if(pFuse[index]->phases == 0x000c){//CN
+			if(pFuse[index]->phases == PHASE_CN){//CN
 				fprintf(fn,"\t\t<phases>CN</phases>\n");
 			}
-			if(pFuse[index]->phases == 0x0071){//AS
+			if(pFuse[index]->phases == (PHASE_A | PHASE_S)){//AS
 				fprintf(fn,"\t\t<phases>AS</phases>\n");
 			}
-			if(pFuse[index]->phases == 0x0072){//BS
+			if(pFuse[index]->phases == (PHASE_B | PHASE_S)){//BS
 				fprintf(fn,"\t\t<phases>BS</phases>\n");
 			}
-			if(pFuse[index]->phases == 0x0074){//CS
+			if(pFuse[index]->phases == (PHASE_C | PHASE_S)){//CS
 				fprintf(fn,"\t\t<phases>CS</phases>\n");
 			}
-			if(pFuse[index]->phases == 0x0003){//AB
+			if(pFuse[index]->phases == PHASE_AB){//AB
 				fprintf(fn,"\t\t<phases>AB</phases>\n");
 			}
-			if(pFuse[index]->phases == 0x0006){//BC
+			if(pFuse[index]->phases == PHASE_BC){//BC
 				fprintf(fn,"\t\t<phases>BC</phases>\n");
 			}
-			if(pFuse[index]->phases == 0x0005){//AC
+			if(pFuse[index]->phases == PHASE_AC){//AC
 				fprintf(fn,"\t\t<phases>AC</phases>\n");
 			}
-			if(pFuse[index]->phases == 0x000b){//ABN
+			if(pFuse[index]->phases == PHASE_ABN){//ABN
 				fprintf(fn,"\t\t<phases>ABN</phases>\n");
 			}
-			if(pFuse[index]->phases == 0x000e){//BCN
+			if(pFuse[index]->phases == PHASE_BCN){//BCN
 				fprintf(fn,"\t\t<phases>BCN</phases>\n");
 			}
-			if(pFuse[index]->phases == 0x000d){//ACN
+			if(pFuse[index]->phases == PHASE_ACN){//ACN
 				fprintf(fn,"\t\t<phases>ACN</phases>\n");
 			}
-			if(pFuse[index]->phases == 0x0007){//ABC
+			if(pFuse[index]->phases == PHASE_ABC){//ABC
 				fprintf(fn,"\t\t<phases>ABC</phases>\n");
 			}
-			if(pFuse[index]->phases == 0x000f){//ABCN
+			if(pFuse[index]->phases == PHASE_ABCN){//ABCN
 				fprintf(fn,"\t\t<phases>ABCN</phases>\n");
 			}
-			if(pFuse[index]->phases == 0x0107){//ABCD
+			if(pFuse[index]->phases == (PHASE_D | PHASE_ABC)){//ABCD
 				fprintf(fn,"\t\t<phases>ABCD</phases>\n");
 			}
 
@@ -405,58 +405,58 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<to_voltage>%f</to_voltage>\n",node_voltage->Mag());
 
 			//write the phases
-			if(pOhLine[index]->phases == 0x0001){//A
+			if(pOhLine[index]->phases == PHASE_A){//A
 				fprintf(fn,"\t\t<phases>A</phases>\n");
 			}
-			if(pOhLine[index]->phases == 0x0002){//B
+			if(pOhLine[index]->phases == PHASE_B){//B
 				fprintf(fn,"\t\t<phases>B</phases>\n");
 			}
-			if(pOhLine[index]->phases == 0x0004){//C
+			if(pOhLine[index]->phases == PHASE_C){//C
 				fprintf(fn,"\t\t<phases>C</phases>\n");
 			}
-			if(pOhLine[index]->phases == 0x0009){//AN
+			if(pOhLine[index]->phases == PHASE_AN){//AN
 				fprintf(fn,"\t\t<phases>AN</phases>\n");
 			}
-			if(pOhLine[index]->phases == 0x000a){//BN
+			if(pOhLine[index]->phases == PHASE_BN){//BN
 				fprintf(fn,"\t\t<phases>BN</phases>\n");
 			}
-			if(pOhLine[index]->phases == 0x000c){//CN
+			if(pOhLine[index]->phases == PHASE_CN){//CN
 				fprintf(fn,"\t\t<phases>CN</phases>\n");
 			}
-			if(pOhLine[index]->phases == 0x0071){//AS
+			if(pOhLine[index]->phases == (PHASE_A | PHASE_S)){//AS
 				fprintf(fn,"\t\t<phases>AS</phases>\n");
 			}
-			if(pOhLine[index]->phases == 0x0072){//BS
+			if(pOhLine[index]->phases == (PHASE_B | PHASE_S)){//BS
 				fprintf(fn,"\t\t<phases>BS</phases>\n");
 			}
-			if(pOhLine[index]->phases == 0x0074){//CS
+			if(pOhLine[index]->phases == (PHASE_C | PHASE_S)){//CS
 				fprintf(fn,"\t\t<phases>CS</phases>\n");
 			}
-			if(pOhLine[index]->phases == 0x0003){//AB
+			if(pOhLine[index]->phases == PHASE_AB){//AB
 				fprintf(fn,"\t\t<phases>AB</phases>\n");
 			}
-			if(pOhLine[index]->phases == 0x0006){//BC
+			if(pOhLine[index]->phases == PHASE_BC){//BC
 				fprintf(fn,"\t\t<phases>BC</phases>\n");
 			}
-			if(pOhLine[index]->phases == 0x0005){//AC
+			if(pOhLine[index]->phases == PHASE_AC){//AC
 				fprintf(fn,"\t\t<phases>AC</phases>\n");
 			}
-			if(pOhLine[index]->phases == 0x000b){//ABN
+			if(pOhLine[index]->phases == PHASE_ABN){//ABN
 				fprintf(fn,"\t\t<phases>ABN</phases>\n");
 			}
-			if(pOhLine[index]->phases == 0x000e){//BCN
+			if(pOhLine[index]->phases == PHASE_BCN){//BCN
 				fprintf(fn,"\t\t<phases>BCN</phases>\n");
 			}
-			if(pOhLine[index]->phases == 0x000d){//ACN
+			if(pOhLine[index]->phases == PHASE_ACN){//ACN
 				fprintf(fn,"\t\t<phases>ACN</phases>\n");
 			}
-			if(pOhLine[index]->phases == 0x0007){//ABC
+			if(pOhLine[index]->phases == PHASE_ABC){//ABC
 				fprintf(fn,"\t\t<phases>ABC</phases>\n");
 			}
-			if(pOhLine[index]->phases == 0x000f){//ABCN
+			if(pOhLine[index]->phases == PHASE_ABCN){//ABCN
 				fprintf(fn,"\t\t<phases>ABCN</phases>\n");
 			}
-			if(pOhLine[index]->phases == 0x0107){//ABCD
+			if(pOhLine[index]->phases == (PHASE_D | PHASE_ABC)){//ABCD
 				fprintf(fn,"\t\t<phases>ABCD</phases>\n");
 			}
 
@@ -601,58 +601,58 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<to_voltage>%f</to_voltage>\n",node_voltage->Mag());
 
 			//write the phases
-			if(pRecloser[index]->phases == 0x0001){//A
+			if(pRecloser[index]->phases == PHASE_A){//A
 				fprintf(fn,"\t\t<phases>A</phases>\n");
 			}
-			if(pRecloser[index]->phases == 0x0002){//B
+			if(pRecloser[index]->phases == PHASE_B){//B
 				fprintf(fn,"\t\t<phases>B</phases>\n");
 			}
-			if(pRecloser[index]->phases == 0x0004){//C
+			if(pRecloser[index]->phases == PHASE_C){//C
 				fprintf(fn,"\t\t<phases>C</phases>\n");
 			}
-			if(pRecloser[index]->phases == 0x0009){//AN
+			if(pRecloser[index]->phases == PHASE_AN){//AN
 				fprintf(fn,"\t\t<phases>AN</phases>\n");
 			}
-			if(pRecloser[index]->phases == 0x000a){//BN
+			if(pRecloser[index]->phases == PHASE_BN){//BN
 				fprintf(fn,"\t\t<phases>BN</phases>\n");
 			}
-			if(pRecloser[index]->phases == 0x000c){//CN
+			if(pRecloser[index]->phases == PHASE_CN){//CN
 				fprintf(fn,"\t\t<phases>CN</phases>\n");
 			}
-			if(pRecloser[index]->phases == 0x0071){//AS
+			if(pRecloser[index]->phases == (PHASE_A | PHASE_S)){//AS
 				fprintf(fn,"\t\t<phases>AS</phases>\n");
 			}
-			if(pRecloser[index]->phases == 0x0072){//BS
+			if(pRecloser[index]->phases == (PHASE_B | PHASE_S)){//BS
 				fprintf(fn,"\t\t<phases>BS</phases>\n");
 			}
-			if(pRecloser[index]->phases == 0x0074){//CS
+			if(pRecloser[index]->phases == (PHASE_C | PHASE_S)){//CS
 				fprintf(fn,"\t\t<phases>CS</phases>\n");
 			}
-			if(pRecloser[index]->phases == 0x0003){//AB
+			if(pRecloser[index]->phases == PHASE_AB){//AB
 				fprintf(fn,"\t\t<phases>AB</phases>\n");
 			}
-			if(pRecloser[index]->phases == 0x0006){//BC
+			if(pRecloser[index]->phases == PHASE_BC){//BC
 				fprintf(fn,"\t\t<phases>BC</phases>\n");
 			}
-			if(pRecloser[index]->phases == 0x0005){//AC
+			if(pRecloser[index]->phases == PHASE_AC){//AC
 				fprintf(fn,"\t\t<phases>AC</phases>\n");
 			}
-			if(pRecloser[index]->phases == 0x000b){//ABN
+			if(pRecloser[index]->phases == PHASE_ABN){//ABN
 				fprintf(fn,"\t\t<phases>ABN</phases>\n");
 			}
-			if(pRecloser[index]->phases == 0x000e){//BCN
+			if(pRecloser[index]->phases == PHASE_BCN){//BCN
 				fprintf(fn,"\t\t<phases>BCN</phases>\n");
 			}
-			if(pRecloser[index]->phases == 0x000d){//ACN
+			if(pRecloser[index]->phases == PHASE_ACN){//ACN
 				fprintf(fn,"\t\t<phases>ACN</phases>\n");
 			}
-			if(pRecloser[index]->phases == 0x0007){//ABC
+			if(pRecloser[index]->phases == PHASE_ABC){//ABC
 				fprintf(fn,"\t\t<phases>ABC</phases>\n");
 			}
-			if(pRecloser[index]->phases == 0x000f){//ABCN
+			if(pRecloser[index]->phases == PHASE_ABCN){//ABCN
 				fprintf(fn,"\t\t<phases>ABCN</phases>\n");
 			}
-			if(pRecloser[index]->phases == 0x0107){//ABCD
+			if(pRecloser[index]->phases == (PHASE_D | PHASE_ABC)){//ABCD
 				fprintf(fn,"\t\t<phases>ABCD</phases>\n");
 			}
 
@@ -794,58 +794,58 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<to_voltage>%f</to_voltage>\n",node_voltage->Mag());
 
 			//write the phases
-			if(pRegulator[index]->phases == 0x0001){//A
+			if(pRegulator[index]->phases == PHASE_A){//A
 				fprintf(fn,"\t\t<phases>A</phases>\n");
 			}
-			if(pRegulator[index]->phases == 0x0002){//B
+			if(pRegulator[index]->phases == PHASE_B){//B
 				fprintf(fn,"\t\t<phases>B</phases>\n");
 			}
-			if(pRegulator[index]->phases == 0x0004){//C
+			if(pRegulator[index]->phases == PHASE_C){//C
 				fprintf(fn,"\t\t<phases>C</phases>\n");
 			}
-			if(pRegulator[index]->phases == 0x0009){//AN
+			if(pRegulator[index]->phases == PHASE_AN){//AN
 				fprintf(fn,"\t\t<phases>AN</phases>\n");
 			}
-			if(pRegulator[index]->phases == 0x000a){//BN
+			if(pRegulator[index]->phases == PHASE_BN){//BN
 				fprintf(fn,"\t\t<phases>BN</phases>\n");
 			}
-			if(pRegulator[index]->phases == 0x000c){//CN
+			if(pRegulator[index]->phases == PHASE_CN){//CN
 				fprintf(fn,"\t\t<phases>CN</phases>\n");
 			}
-			if(pRegulator[index]->phases == 0x0071){//AS
+			if(pRegulator[index]->phases == (PHASE_A | PHASE_S)){//AS
 				fprintf(fn,"\t\t<phases>AS</phases>\n");
 			}
-			if(pRegulator[index]->phases == 0x0072){//BS
+			if(pRegulator[index]->phases == (PHASE_B | PHASE_S)){//BS
 				fprintf(fn,"\t\t<phases>BS</phases>\n");
 			}
-			if(pRegulator[index]->phases == 0x0074){//CS
+			if(pRegulator[index]->phases == (PHASE_C | PHASE_S)){//CS
 				fprintf(fn,"\t\t<phases>CS</phases>\n");
 			}
-			if(pRegulator[index]->phases == 0x0003){//AB
+			if(pRegulator[index]->phases == PHASE_AB){//AB
 				fprintf(fn,"\t\t<phases>AB</phases>\n");
 			}
-			if(pRegulator[index]->phases == 0x0006){//BC
+			if(pRegulator[index]->phases == PHASE_BC){//BC
 				fprintf(fn,"\t\t<phases>BC</phases>\n");
 			}
-			if(pRegulator[index]->phases == 0x0005){//AC
+			if(pRegulator[index]->phases == PHASE_AC){//AC
 				fprintf(fn,"\t\t<phases>AC</phases>\n");
 			}
-			if(pRegulator[index]->phases == 0x000b){//ABN
+			if(pRegulator[index]->phases == PHASE_ABN){//ABN
 				fprintf(fn,"\t\t<phases>ABN</phases>\n");
 			}
-			if(pRegulator[index]->phases == 0x000e){//BCN
+			if(pRegulator[index]->phases == PHASE_BCN){//BCN
 				fprintf(fn,"\t\t<phases>BCN</phases>\n");
 			}
-			if(pRegulator[index]->phases == 0x000d){//ACN
+			if(pRegulator[index]->phases == PHASE_ACN){//ACN
 				fprintf(fn,"\t\t<phases>ACN</phases>\n");
 			}
-			if(pRegulator[index]->phases == 0x0007){//ABC
+			if(pRegulator[index]->phases == PHASE_ABC){//ABC
 				fprintf(fn,"\t\t<phases>ABC</phases>\n");
 			}
-			if(pRegulator[index]->phases == 0x000f){//ABCN
+			if(pRegulator[index]->phases == PHASE_ABCN){//ABCN
 				fprintf(fn,"\t\t<phases>ABCN</phases>\n");
 			}
-			if(pRegulator[index]->phases == 0x0107){//ABCD
+			if(pRegulator[index]->phases == (PHASE_D | PHASE_ABC)){//ABCD
 				fprintf(fn,"\t\t<phases>ABCD</phases>\n");
 			}
 
@@ -991,58 +991,58 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<to_voltage>%f</to_voltage>\n",node_voltage->Mag());
 
 			//write the phases
-			if(pRelay[index]->phases == 0x0001){//A
+			if(pRelay[index]->phases == PHASE_A){//A
 				fprintf(fn,"\t\t<phases>A</phases>\n");
 			}
-			if(pRelay[index]->phases == 0x0002){//B
+			if(pRelay[index]->phases == PHASE_B){//B
 				fprintf(fn,"\t\t<phases>B</phases>\n");
 			}
-			if(pRelay[index]->phases == 0x0004){//C
+			if(pRelay[index]->phases == PHASE_C){//C
 				fprintf(fn,"\t\t<phases>C</phases>\n");
 			}
-			if(pRelay[index]->phases == 0x0009){//AN
+			if(pRelay[index]->phases == PHASE_AN){//AN
 				fprintf(fn,"\t\t<phases>AN</phases>\n");
 			}
-			if(pRelay[index]->phases == 0x000a){//BN
+			if(pRelay[index]->phases == PHASE_BN){//BN
 				fprintf(fn,"\t\t<phases>BN</phases>\n");
 			}
-			if(pRelay[index]->phases == 0x000c){//CN
+			if(pRelay[index]->phases == PHASE_CN){//CN
 				fprintf(fn,"\t\t<phases>CN</phases>\n");
 			}
-			if(pRelay[index]->phases == 0x0071){//AS
+			if(pRelay[index]->phases == (PHASE_A | PHASE_S)){//AS
 				fprintf(fn,"\t\t<phases>AS</phases>\n");
 			}
-			if(pRelay[index]->phases == 0x0072){//BS
+			if(pRelay[index]->phases == (PHASE_B | PHASE_S)){//BS
 				fprintf(fn,"\t\t<phases>BS</phases>\n");
 			}
-			if(pRelay[index]->phases == 0x0074){//CS
+			if(pRelay[index]->phases == (PHASE_C | PHASE_S)){//CS
 				fprintf(fn,"\t\t<phases>CS</phases>\n");
 			}
-			if(pRelay[index]->phases == 0x0003){//AB
+			if(pRelay[index]->phases == PHASE_AB){//AB
 				fprintf(fn,"\t\t<phases>AB</phases>\n");
 			}
-			if(pRelay[index]->phases == 0x0006){//BC
+			if(pRelay[index]->phases == PHASE_BC){//BC
 				fprintf(fn,"\t\t<phases>BC</phases>\n");
 			}
-			if(pRelay[index]->phases == 0x0005){//AC
+			if(pRelay[index]->phases == PHASE_AC){//AC
 				fprintf(fn,"\t\t<phases>AC</phases>\n");
 			}
-			if(pRelay[index]->phases == 0x000b){//ABN
+			if(pRelay[index]->phases == PHASE_ABN){//ABN
 				fprintf(fn,"\t\t<phases>ABN</phases>\n");
 			}
-			if(pRelay[index]->phases == 0x000e){//BCN
+			if(pRelay[index]->phases == PHASE_BCN){//BCN
 				fprintf(fn,"\t\t<phases>BCN</phases>\n");
 			}
-			if(pRelay[index]->phases == 0x000d){//ACN
+			if(pRelay[index]->phases == PHASE_ACN){//ACN
 				fprintf(fn,"\t\t<phases>ACN</phases>\n");
 			}
-			if(pRelay[index]->phases == 0x0007){//ABC
+			if(pRelay[index]->phases == PHASE_ABC){//ABC
 				fprintf(fn,"\t\t<phases>ABC</phases>\n");
 			}
-			if(pRelay[index]->phases == 0x000f){//ABCN
+			if(pRelay[index]->phases == PHASE_ABCN){//ABCN
 				fprintf(fn,"\t\t<phases>ABCN</phases>\n");
 			}
-			if(pRelay[index]->phases == 0x0107){//ABCD
+			if(pRelay[index]->phases == (PHASE_D | PHASE_ABC)){//ABCD
 				fprintf(fn,"\t\t<phases>ABCD</phases>\n");
 			}
 
@@ -1184,58 +1184,58 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<to_voltage>%f</to_voltage>\n",node_voltage->Mag());
 
 			//write the phases
-			if(pSectionalizer[index]->phases == 0x0001){//A
+			if(pSectionalizer[index]->phases == PHASE_A){//A
 				fprintf(fn,"\t\t<phases>A</phases>\n");
 			}
-			if(pSectionalizer[index]->phases == 0x0002){//B
+			if(pSectionalizer[index]->phases == PHASE_B){//B
 				fprintf(fn,"\t\t<phases>B</phases>\n");
 			}
-			if(pSectionalizer[index]->phases == 0x0004){//C
+			if(pSectionalizer[index]->phases == PHASE_C){//C
 				fprintf(fn,"\t\t<phases>C</phases>\n");
 			}
-			if(pSectionalizer[index]->phases == 0x0009){//AN
+			if(pSectionalizer[index]->phases == PHASE_AN){//AN
 				fprintf(fn,"\t\t<phases>AN</phases>\n");
 			}
-			if(pSectionalizer[index]->phases == 0x000a){//BN
+			if(pSectionalizer[index]->phases == PHASE_BN){//BN
 				fprintf(fn,"\t\t<phases>BN</phases>\n");
 			}
-			if(pSectionalizer[index]->phases == 0x000c){//CN
+			if(pSectionalizer[index]->phases == PHASE_CN){//CN
 				fprintf(fn,"\t\t<phases>CN</phases>\n");
 			}
-			if(pSectionalizer[index]->phases == 0x0071){//AS
+			if(pSectionalizer[index]->phases == (PHASE_A | PHASE_S)){//AS
 				fprintf(fn,"\t\t<phases>AS</phases>\n");
 			}
-			if(pSectionalizer[index]->phases == 0x0072){//BS
+			if(pSectionalizer[index]->phases == (PHASE_B | PHASE_S)){//BS
 				fprintf(fn,"\t\t<phases>BS</phases>\n");
 			}
-			if(pSectionalizer[index]->phases == 0x0074){//CS
+			if(pSectionalizer[index]->phases == (PHASE_C | PHASE_S)){//CS
 				fprintf(fn,"\t\t<phases>CS</phases>\n");
 			}
-			if(pSectionalizer[index]->phases == 0x0003){//AB
+			if(pSectionalizer[index]->phases == PHASE_AB){//AB
 				fprintf(fn,"\t\t<phases>AB</phases>\n");
 			}
-			if(pSectionalizer[index]->phases == 0x0006){//BC
+			if(pSectionalizer[index]->phases == PHASE_BC){//BC
 				fprintf(fn,"\t\t<phases>BC</phases>\n");
 			}
-			if(pSectionalizer[index]->phases == 0x0005){//AC
+			if(pSectionalizer[index]->phases == PHASE_AC){//AC
 				fprintf(fn,"\t\t<phases>AC</phases>\n");
 			}
-			if(pSectionalizer[index]->phases == 0x000b){//ABN
+			if(pSectionalizer[index]->phases == PHASE_ABN){//ABN
 				fprintf(fn,"\t\t<phases>ABN</phases>\n");
 			}
-			if(pSectionalizer[index]->phases == 0x000e){//BCN
+			if(pSectionalizer[index]->phases == PHASE_BCN){//BCN
 				fprintf(fn,"\t\t<phases>BCN</phases>\n");
 			}
-			if(pSectionalizer[index]->phases == 0x000d){//ACN
+			if(pSectionalizer[index]->phases == PHASE_ACN){//ACN
 				fprintf(fn,"\t\t<phases>ACN</phases>\n");
 			}
-			if(pSectionalizer[index]->phases == 0x0007){//ABC
+			if(pSectionalizer[index]->phases == PHASE_ABC){//ABC
 				fprintf(fn,"\t\t<phases>ABC</phases>\n");
 			}
-			if(pSectionalizer[index]->phases == 0x000f){//ABCN
+			if(pSectionalizer[index]->phases == PHASE_ABCN){//ABCN
 				fprintf(fn,"\t\t<phases>ABCN</phases>\n");
 			}
-			if(pSectionalizer[index]->phases == 0x0107){//ABCD
+			if(pSectionalizer[index]->phases == (PHASE_D | PHASE_ABC)){//ABCD
 				fprintf(fn,"\t\t<phases>ABCD</phases>\n");
 			}
 
@@ -1377,58 +1377,58 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<to_voltage>%f</to_voltage>\n",node_voltage->Mag());
 
 			//write the phases
-			if(pSeriesReactor[index]->phases == 0x0001){//A
+			if(pSeriesReactor[index]->phases == PHASE_A){//A
 				fprintf(fn,"\t\t<phases>A</phases>\n");
 			}
-			if(pSeriesReactor[index]->phases == 0x0002){//B
+			if(pSeriesReactor[index]->phases == PHASE_B){//B
 				fprintf(fn,"\t\t<phases>B</phases>\n");
 			}
-			if(pSeriesReactor[index]->phases == 0x0004){//C
+			if(pSeriesReactor[index]->phases == PHASE_C){//C
 				fprintf(fn,"\t\t<phases>C</phases>\n");
 			}
-			if(pSeriesReactor[index]->phases == 0x0009){//AN
+			if(pSeriesReactor[index]->phases == PHASE_AN){//AN
 				fprintf(fn,"\t\t<phases>AN</phases>\n");
 			}
-			if(pSeriesReactor[index]->phases == 0x000a){//BN
+			if(pSeriesReactor[index]->phases == PHASE_BN){//BN
 				fprintf(fn,"\t\t<phases>BN</phases>\n");
 			}
-			if(pSeriesReactor[index]->phases == 0x000c){//CN
+			if(pSeriesReactor[index]->phases == PHASE_CN){//CN
 				fprintf(fn,"\t\t<phases>CN</phases>\n");
 			}
-			if(pSeriesReactor[index]->phases == 0x0071){//AS
+			if(pSeriesReactor[index]->phases == (PHASE_A | PHASE_S)){//AS
 				fprintf(fn,"\t\t<phases>AS</phases>\n");
 			}
-			if(pSeriesReactor[index]->phases == 0x0072){//BS
+			if(pSeriesReactor[index]->phases == (PHASE_B | PHASE_S)){//BS
 				fprintf(fn,"\t\t<phases>BS</phases>\n");
 			}
-			if(pSeriesReactor[index]->phases == 0x0074){//CS
+			if(pSeriesReactor[index]->phases == (PHASE_C | PHASE_S)){//CS
 				fprintf(fn,"\t\t<phases>CS</phases>\n");
 			}
-			if(pSeriesReactor[index]->phases == 0x0003){//AB
+			if(pSeriesReactor[index]->phases == PHASE_AB){//AB
 				fprintf(fn,"\t\t<phases>AB</phases>\n");
 			}
-			if(pSeriesReactor[index]->phases == 0x0006){//BC
+			if(pSeriesReactor[index]->phases == PHASE_BC){//BC
 				fprintf(fn,"\t\t<phases>BC</phases>\n");
 			}
-			if(pSeriesReactor[index]->phases == 0x0005){//AC
+			if(pSeriesReactor[index]->phases == PHASE_AC){//AC
 				fprintf(fn,"\t\t<phases>AC</phases>\n");
 			}
-			if(pSeriesReactor[index]->phases == 0x000b){//ABN
+			if(pSeriesReactor[index]->phases == PHASE_ABN){//ABN
 				fprintf(fn,"\t\t<phases>ABN</phases>\n");
 			}
-			if(pSeriesReactor[index]->phases == 0x000e){//BCN
+			if(pSeriesReactor[index]->phases == PHASE_BCN){//BCN
 				fprintf(fn,"\t\t<phases>BCN</phases>\n");
 			}
-			if(pSeriesReactor[index]->phases == 0x000d){//ACN
+			if(pSeriesReactor[index]->phases == PHASE_ACN){//ACN
 				fprintf(fn,"\t\t<phases>ACN</phases>\n");
 			}
-			if(pSeriesReactor[index]->phases == 0x0007){//ABC
+			if(pSeriesReactor[index]->phases == PHASE_ABC){//ABC
 				fprintf(fn,"\t\t<phases>ABC</phases>\n");
 			}
-			if(pSeriesReactor[index]->phases == 0x000f){//ABCN
+			if(pSeriesReactor[index]->phases == PHASE_ABCN){//ABCN
 				fprintf(fn,"\t\t<phases>ABCN</phases>\n");
 			}
-			if(pSeriesReactor[index]->phases == 0x0107){//ABCD
+			if(pSeriesReactor[index]->phases == (PHASE_D | PHASE_ABC)){//ABCD
 				fprintf(fn,"\t\t<phases>ABCD</phases>\n");
 			}
 
@@ -1571,58 +1571,58 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<to_voltage>%f</to_voltage>\n",node_voltage->Mag());
 
 			//write the phases
-			if(pSwitch[index]->phases == 0x0001){//A
+			if(pSwitch[index]->phases == PHASE_A){//A
 				fprintf(fn,"\t\t<phases>A</phases>\n");
 			}
-			if(pSwitch[index]->phases == 0x0002){//B
+			if(pSwitch[index]->phases == PHASE_B){//B
 				fprintf(fn,"\t\t<phases>B</phases>\n");
 			}
-			if(pSwitch[index]->phases == 0x0004){//C
+			if(pSwitch[index]->phases == PHASE_C){//C
 				fprintf(fn,"\t\t<phases>C</phases>\n");
 			}
-			if(pSwitch[index]->phases == 0x0009){//AN
+			if(pSwitch[index]->phases == PHASE_AN){//AN
 				fprintf(fn,"\t\t<phases>AN</phases>\n");
 			}
-			if(pSwitch[index]->phases == 0x000a){//BN
+			if(pSwitch[index]->phases == PHASE_BN){//BN
 				fprintf(fn,"\t\t<phases>BN</phases>\n");
 			}
-			if(pSwitch[index]->phases == 0x000c){//CN
+			if(pSwitch[index]->phases == PHASE_CN){//CN
 				fprintf(fn,"\t\t<phases>CN</phases>\n");
 			}
-			if(pSwitch[index]->phases == 0x0071){//AS
+			if(pSwitch[index]->phases == (PHASE_A | PHASE_S)){//AS
 				fprintf(fn,"\t\t<phases>AS</phases>\n");
 			}
-			if(pSwitch[index]->phases == 0x0072){//BS
+			if(pSwitch[index]->phases == (PHASE_B | PHASE_S)){//BS
 				fprintf(fn,"\t\t<phases>BS</phases>\n");
 			}
-			if(pSwitch[index]->phases == 0x0074){//CS
+			if(pSwitch[index]->phases == (PHASE_C | PHASE_S)){//CS
 				fprintf(fn,"\t\t<phases>CS</phases>\n");
 			}
-			if(pSwitch[index]->phases == 0x0003){//AB
+			if(pSwitch[index]->phases == PHASE_AB){//AB
 				fprintf(fn,"\t\t<phases>AB</phases>\n");
 			}
-			if(pSwitch[index]->phases == 0x0006){//BC
+			if(pSwitch[index]->phases == PHASE_BC){//BC
 				fprintf(fn,"\t\t<phases>BC</phases>\n");
 			}
-			if(pSwitch[index]->phases == 0x0005){//AC
+			if(pSwitch[index]->phases == PHASE_AC){//AC
 				fprintf(fn,"\t\t<phases>AC</phases>\n");
 			}
-			if(pSwitch[index]->phases == 0x000b){//ABN
+			if(pSwitch[index]->phases == PHASE_ABN){//ABN
 				fprintf(fn,"\t\t<phases>ABN</phases>\n");
 			}
-			if(pSwitch[index]->phases == 0x000e){//BCN
+			if(pSwitch[index]->phases == PHASE_BCN){//BCN
 				fprintf(fn,"\t\t<phases>BCN</phases>\n");
 			}
-			if(pSwitch[index]->phases == 0x000d){//ACN
+			if(pSwitch[index]->phases == PHASE_ACN){//ACN
 				fprintf(fn,"\t\t<phases>ACN</phases>\n");
 			}
-			if(pSwitch[index]->phases == 0x0007){//ABC
+			if(pSwitch[index]->phases == PHASE_ABC){//ABC
 				fprintf(fn,"\t\t<phases>ABC</phases>\n");
 			}
-			if(pSwitch[index]->phases == 0x000f){//ABCN
+			if(pSwitch[index]->phases == PHASE_ABCN){//ABCN
 				fprintf(fn,"\t\t<phases>ABCN</phases>\n");
 			}
-			if(pSwitch[index]->phases == 0x0107){//ABCD
+			if(pSwitch[index]->phases == (PHASE_D | PHASE_ABC)){//ABCD
 				fprintf(fn,"\t\t<phases>ABCD</phases>\n");
 			}
 
@@ -1776,58 +1776,58 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<xfmr_config>%u</xfmr_config>\n",pTransformer[index]->config->connect_type);
 
 			//write the phases
-			if(pTransformer[index]->phases == 0x0001){//A
+			if(pTransformer[index]->phases == PHASE_A){//A
 				fprintf(fn,"\t\t<phases>A</phases>\n");
 			}
-			if(pTransformer[index]->phases == 0x0002){//B
+			if(pTransformer[index]->phases == PHASE_B){//B
 				fprintf(fn,"\t\t<phases>B</phases>\n");
 			}
-			if(pTransformer[index]->phases == 0x0004){//C
+			if(pTransformer[index]->phases == PHASE_C){//C
 				fprintf(fn,"\t\t<phases>C</phases>\n");
 			}
-			if(pTransformer[index]->phases == 0x0009){//AN
+			if(pTransformer[index]->phases == PHASE_AN){//AN
 				fprintf(fn,"\t\t<phases>AN</phases>\n");
 			}
-			if(pTransformer[index]->phases == 0x000a){//BN
+			if(pTransformer[index]->phases == PHASE_BN){//BN
 				fprintf(fn,"\t\t<phases>BN</phases>\n");
 			}
-			if(pTransformer[index]->phases == 0x000c){//CN
+			if(pTransformer[index]->phases == PHASE_CN){//CN
 				fprintf(fn,"\t\t<phases>CN</phases>\n");
 			}
-			if(pTransformer[index]->phases == 0x0071){//AS
+			if(pTransformer[index]->phases == (PHASE_A | PHASE_S)){//AS
 				fprintf(fn,"\t\t<phases>AS</phases>\n");
 			}
-			if(pTransformer[index]->phases == 0x0072){//BS
+			if(pTransformer[index]->phases == (PHASE_B | PHASE_S)){//BS
 				fprintf(fn,"\t\t<phases>BS</phases>\n");
 			}
-			if(pTransformer[index]->phases == 0x0074){//CS
+			if(pTransformer[index]->phases == (PHASE_C | PHASE_S)){//CS
 				fprintf(fn,"\t\t<phases>CS</phases>\n");
 			}
-			if(pTransformer[index]->phases == 0x0003){//AB
+			if(pTransformer[index]->phases == PHASE_AB){//AB
 				fprintf(fn,"\t\t<phases>AB</phases>\n");
 			}
-			if(pTransformer[index]->phases == 0x0006){//BC
+			if(pTransformer[index]->phases == PHASE_BC){//BC
 				fprintf(fn,"\t\t<phases>BC</phases>\n");
 			}
-			if(pTransformer[index]->phases == 0x0005){//AC
+			if(pTransformer[index]->phases == PHASE_AC){//AC
 				fprintf(fn,"\t\t<phases>AC</phases>\n");
 			}
-			if(pTransformer[index]->phases == 0x000b){//ABN
+			if(pTransformer[index]->phases == PHASE_ABN){//ABN
 				fprintf(fn,"\t\t<phases>ABN</phases>\n");
 			}
-			if(pTransformer[index]->phases == 0x000e){//BCN
+			if(pTransformer[index]->phases == PHASE_BCN){//BCN
 				fprintf(fn,"\t\t<phases>BCN</phases>\n");
 			}
-			if(pTransformer[index]->phases == 0x000d){//ACN
+			if(pTransformer[index]->phases == PHASE_ACN){//ACN
 				fprintf(fn,"\t\t<phases>ACN</phases>\n");
 			}
-			if(pTransformer[index]->phases == 0x0007){//ABC
+			if(pTransformer[index]->phases == PHASE_ABC){//ABC
 				fprintf(fn,"\t\t<phases>ABC</phases>\n");
 			}
-			if(pTransformer[index]->phases == 0x000f){//ABCN
+			if(pTransformer[index]->phases == PHASE_ABCN){//ABCN
 				fprintf(fn,"\t\t<phases>ABCN</phases>\n");
 			}
-			if(pTransformer[index]->phases == 0x0107){//ABCD
+			if(pTransformer[index]->phases == (PHASE_D | PHASE_ABC)){//ABCD
 				fprintf(fn,"\t\t<phases>ABCD</phases>\n");
 			}
 
@@ -1956,58 +1956,58 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<to_voltage>%d</to_voltage>\n",120);
 
 			//write the phases
-			if(pTpLine[index]->phases == 0x0001){//A
+			if(pTpLine[index]->phases == PHASE_A){//A
 				fprintf(fn,"\t\t<phases>A</phases>\n");
 			}
-			if(pTpLine[index]->phases == 0x0002){//B
+			if(pTpLine[index]->phases == PHASE_B){//B
 				fprintf(fn,"\t\t<phases>B</phases>\n");
 			}
-			if(pTpLine[index]->phases == 0x0004){//C
+			if(pTpLine[index]->phases == PHASE_C){//C
 				fprintf(fn,"\t\t<phases>C</phases>\n");
 			}
-			if(pTpLine[index]->phases == 0x0009){//AN
+			if(pTpLine[index]->phases == PHASE_AN){//AN
 				fprintf(fn,"\t\t<phases>AN</phases>\n");
 			}
-			if(pTpLine[index]->phases == 0x000a){//BN
+			if(pTpLine[index]->phases == PHASE_BN){//BN
 				fprintf(fn,"\t\t<phases>BN</phases>\n");
 			}
-			if(pTpLine[index]->phases == 0x000c){//CN
+			if(pTpLine[index]->phases == PHASE_CN){//CN
 				fprintf(fn,"\t\t<phases>CN</phases>\n");
 			}
-			if(pTpLine[index]->phases == 0x0071){//AS
+			if(pTpLine[index]->phases == (PHASE_A | PHASE_S)){//AS
 				fprintf(fn,"\t\t<phases>AS</phases>\n");
 			}
-			if(pTpLine[index]->phases == 0x0072){//BS
+			if(pTpLine[index]->phases == (PHASE_B | PHASE_S)){//BS
 				fprintf(fn,"\t\t<phases>BS</phases>\n");
 			}
-			if(pTpLine[index]->phases == 0x0074){//CS
+			if(pTpLine[index]->phases == (PHASE_C | PHASE_S)){//CS
 				fprintf(fn,"\t\t<phases>CS</phases>\n");
 			}
-			if(pTpLine[index]->phases == 0x0003){//AB
+			if(pTpLine[index]->phases == PHASE_AB){//AB
 				fprintf(fn,"\t\t<phases>AB</phases>\n");
 			}
-			if(pTpLine[index]->phases == 0x0006){//BC
+			if(pTpLine[index]->phases == PHASE_BC){//BC
 				fprintf(fn,"\t\t<phases>BC</phases>\n");
 			}
-			if(pTpLine[index]->phases == 0x0005){//AC
+			if(pTpLine[index]->phases == PHASE_AC){//AC
 				fprintf(fn,"\t\t<phases>AC</phases>\n");
 			}
-			if(pTpLine[index]->phases == 0x000b){//ABN
+			if(pTpLine[index]->phases == PHASE_ABN){//ABN
 				fprintf(fn,"\t\t<phases>ABN</phases>\n");
 			}
-			if(pTpLine[index]->phases == 0x000e){//BCN
+			if(pTpLine[index]->phases == PHASE_BCN){//BCN
 				fprintf(fn,"\t\t<phases>BCN</phases>\n");
 			}
-			if(pTpLine[index]->phases == 0x000d){//ACN
+			if(pTpLine[index]->phases == PHASE_ACN){//ACN
 				fprintf(fn,"\t\t<phases>ACN</phases>\n");
 			}
-			if(pTpLine[index]->phases == 0x0007){//ABC
+			if(pTpLine[index]->phases == PHASE_ABC){//ABC
 				fprintf(fn,"\t\t<phases>ABC</phases>\n");
 			}
-			if(pTpLine[index]->phases == 0x000f){//ABCN
+			if(pTpLine[index]->phases == PHASE_ABCN){//ABCN
 				fprintf(fn,"\t\t<phases>ABCN</phases>\n");
 			}
-			if(pTpLine[index]->phases == 0x0107){//ABCD
+			if(pTpLine[index]->phases == (PHASE_D | PHASE_ABC)){//ABCD
 				fprintf(fn,"\t\t<phases>ABCD</phases>\n");
 			}
 
@@ -2152,58 +2152,58 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<to_voltage>%f</to_voltage>\n",node_voltage->Mag());
 
 			//write the phases
-			if(pUgLine[index]->phases == 0x0001){//A
+			if(pUgLine[index]->phases == PHASE_A){//A
 				fprintf(fn,"\t\t<phases>A</phases>\n");
 			}
-			if(pUgLine[index]->phases == 0x0002){//B
+			if(pUgLine[index]->phases == PHASE_B){//B
 				fprintf(fn,"\t\t<phases>B</phases>\n");
 			}
-			if(pUgLine[index]->phases == 0x0004){//C
+			if(pUgLine[index]->phases == PHASE_C){//C
 				fprintf(fn,"\t\t<phases>C</phases>\n");
 			}
-			if(pUgLine[index]->phases == 0x0009){//AN
+			if(pUgLine[index]->phases == PHASE_AN){//AN
 				fprintf(fn,"\t\t<phases>AN</phases>\n");
 			}
-			if(pUgLine[index]->phases == 0x000a){//BN
+			if(pUgLine[index]->phases == PHASE_BN){//BN
 				fprintf(fn,"\t\t<phases>BN</phases>\n");
 			}
-			if(pUgLine[index]->phases == 0x000c){//CN
+			if(pUgLine[index]->phases == PHASE_CN){//CN
 				fprintf(fn,"\t\t<phases>CN</phases>\n");
 			}
-			if(pUgLine[index]->phases == 0x0071){//AS
+			if(pUgLine[index]->phases == (PHASE_A | PHASE_S)){//AS
 				fprintf(fn,"\t\t<phases>AS</phases>\n");
 			}
-			if(pUgLine[index]->phases == 0x0072){//BS
+			if(pUgLine[index]->phases == (PHASE_B | PHASE_S)){//BS
 				fprintf(fn,"\t\t<phases>BS</phases>\n");
 			}
-			if(pUgLine[index]->phases == 0x0074){//CS
+			if(pUgLine[index]->phases == (PHASE_C | PHASE_S)){//CS
 				fprintf(fn,"\t\t<phases>CS</phases>\n");
 			}
-			if(pUgLine[index]->phases == 0x0003){//AB
+			if(pUgLine[index]->phases == PHASE_AB){//AB
 				fprintf(fn,"\t\t<phases>AB</phases>\n");
 			}
-			if(pUgLine[index]->phases == 0x0006){//BC
+			if(pUgLine[index]->phases == PHASE_BC){//BC
 				fprintf(fn,"\t\t<phases>BC</phases>\n");
 			}
-			if(pUgLine[index]->phases == 0x0005){//AC
+			if(pUgLine[index]->phases == PHASE_AC){//AC
 				fprintf(fn,"\t\t<phases>AC</phases>\n");
 			}
-			if(pUgLine[index]->phases == 0x000b){//ABN
+			if(pUgLine[index]->phases == PHASE_ABN){//ABN
 				fprintf(fn,"\t\t<phases>ABN</phases>\n");
 			}
-			if(pUgLine[index]->phases == 0x000e){//BCN
+			if(pUgLine[index]->phases == PHASE_BCN){//BCN
 				fprintf(fn,"\t\t<phases>BCN</phases>\n");
 			}
-			if(pUgLine[index]->phases == 0x000d){//ACN
+			if(pUgLine[index]->phases == PHASE_ACN){//ACN
 				fprintf(fn,"\t\t<phases>ACN</phases>\n");
 			}
-			if(pUgLine[index]->phases == 0x0007){//ABC
+			if(pUgLine[index]->phases == PHASE_ABC){//ABC
 				fprintf(fn,"\t\t<phases>ABC</phases>\n");
 			}
-			if(pUgLine[index]->phases == 0x000f){//ABCN
+			if(pUgLine[index]->phases == PHASE_ABCN){//ABCN
 				fprintf(fn,"\t\t<phases>ABCN</phases>\n");
 			}
-			if(pUgLine[index]->phases == 0x0107){//ABCD
+			if(pUgLine[index]->phases == (PHASE_D | PHASE_ABC)){//ABCD
 				fprintf(fn,"\t\t<phases>ABCD</phases>\n");
 			}
 
@@ -2311,58 +2311,58 @@ int impedance_dump::dump(TIMESTAMP t)
 			
 
 			//write the phases
-			if(pCapacitor[index]->phases == 0x0001){//A
+			if(pCapacitor[index]->phases == PHASE_A){//A
 				fprintf(fn,"\t\t<phases>A</phases>\n");
 			}
-			if(pCapacitor[index]->phases == 0x0002){//B
+			if(pCapacitor[index]->phases == PHASE_B){//B
 				fprintf(fn,"\t\t<phases>B</phases>\n");
 			}
-			if(pCapacitor[index]->phases == 0x0004){//C
+			if(pCapacitor[index]->phases == PHASE_C){//C
 				fprintf(fn,"\t\t<phases>C</phases>\n");
 			}
-			if(pCapacitor[index]->phases == 0x0009){//AN
+			if(pCapacitor[index]->phases == PHASE_AN){//AN
 				fprintf(fn,"\t\t<phases>AN</phases>\n");
 			}
-			if(pCapacitor[index]->phases == 0x000a){//BN
+			if(pCapacitor[index]->phases == PHASE_BN){//BN
 				fprintf(fn,"\t\t<phases>BN</phases>\n");
 			}
-			if(pCapacitor[index]->phases == 0x000c){//CN
+			if(pCapacitor[index]->phases == PHASE_CN){//CN
 				fprintf(fn,"\t\t<phases>CN</phases>\n");
 			}
-			if(pCapacitor[index]->phases == 0x0071){//AS
+			if(pCapacitor[index]->phases == (PHASE_A | PHASE_S)){//AS
 				fprintf(fn,"\t\t<phases>AS</phases>\n");
 			}
-			if(pCapacitor[index]->phases == 0x0072){//BS
+			if(pCapacitor[index]->phases == (PHASE_B | PHASE_S)){//BS
 				fprintf(fn,"\t\t<phases>BS</phases>\n");
 			}
-			if(pCapacitor[index]->phases == 0x0074){//CS
+			if(pCapacitor[index]->phases == (PHASE_C | PHASE_S)){//CS
 				fprintf(fn,"\t\t<phases>CS</phases>\n");
 			}
-			if(pCapacitor[index]->phases == 0x0003){//AB
+			if(pCapacitor[index]->phases == PHASE_AB){//AB
 				fprintf(fn,"\t\t<phases>AB</phases>\n");
 			}
-			if(pCapacitor[index]->phases == 0x0006){//BC
+			if(pCapacitor[index]->phases == PHASE_BC){//BC
 				fprintf(fn,"\t\t<phases>BC</phases>\n");
 			}
-			if(pCapacitor[index]->phases == 0x0005){//AC
+			if(pCapacitor[index]->phases == PHASE_AC){//AC
 				fprintf(fn,"\t\t<phases>AC</phases>\n");
 			}
-			if(pCapacitor[index]->phases == 0x000b){//ABN
+			if(pCapacitor[index]->phases == PHASE_ABN){//ABN
 				fprintf(fn,"\t\t<phases>ABN</phases>\n");
 			}
-			if(pCapacitor[index]->phases == 0x000e){//BCN
+			if(pCapacitor[index]->phases == PHASE_BCN){//BCN
 				fprintf(fn,"\t\t<phases>BCN</phases>\n");
 			}
-			if(pCapacitor[index]->phases == 0x000d){//ACN
+			if(pCapacitor[index]->phases == PHASE_ACN){//ACN
 				fprintf(fn,"\t\t<phases>ACN</phases>\n");
 			}
-			if(pCapacitor[index]->phases == 0x0007){//ABC
+			if(pCapacitor[index]->phases == PHASE_ABC){//ABC
 				fprintf(fn,"\t\t<phases>ABC</phases>\n");
 			}
-			if(pCapacitor[index]->phases == 0x000f){//ABCN
+			if(pCapacitor[index]->phases == PHASE_ABCN){//ABCN
 				fprintf(fn,"\t\t<phases>ABCN</phases>\n");
 			}
-			if(pCapacitor[index]->phases == 0x0107){//ABCD
+			if(pCapacitor[index]->phases == (PHASE_D | PHASE_ABC)){//ABCD
 				fprintf(fn,"\t\t<phases>ABCD</phases>\n");
 			}
 

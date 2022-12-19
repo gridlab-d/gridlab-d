@@ -747,10 +747,10 @@ void series_compensator::sercom_postPre_fxn(void)
 		if ((prev_turns_ratio[0] != turns_ratio[0]) || (prev_turns_ratio[1] != turns_ratio[1]) || (prev_turns_ratio[2] != turns_ratio[2]))	//Change has occurred
 		{
 			//See if we're triplex or not
-			if ((NR_branchdata[NR_branch_reference].origphases & 0x80) == 0x80)
+			if ((NR_branchdata[NR_branch_reference].origphases & PHASE_S) == PHASE_S)
 			{
 				//Now see if we're active
-				if ((NR_branchdata[NR_branch_reference].phases & 0x80) == 0x80)
+				if ((NR_branchdata[NR_branch_reference].phases & PHASE_S) == PHASE_S)
 				{
 					invratio[0] = gld::complex(1.0,0.0) / a_mat[0][0];
 					invratio[1] = gld::complex(1.0,0.0) / a_mat[1][1];
@@ -767,7 +767,7 @@ void series_compensator::sercom_postPre_fxn(void)
 			else	//Do a three-phase check, though it may be disconnected completely
 			{
 				//Compute the inverse ratio - A
-				if ((NR_branchdata[NR_branch_reference].phases & 0x04) == 0x04)
+				if ((NR_branchdata[NR_branch_reference].phases & PHASE_A) == PHASE_A)
 				{
 					invratio[0] = gld::complex(1.0,0.0) / a_mat[0][0];
 				}
@@ -777,7 +777,7 @@ void series_compensator::sercom_postPre_fxn(void)
 				}
 
 				//Compute the inverse ratio - B
-				if ((NR_branchdata[NR_branch_reference].phases & 0x02) == 0x02)
+				if ((NR_branchdata[NR_branch_reference].phases & PHASE_B) == PHASE_B)
 				{
 					invratio[1] = gld::complex(1.0,0.0) / a_mat[1][1];
 				}
@@ -787,7 +787,7 @@ void series_compensator::sercom_postPre_fxn(void)
 				}
 
 				//Compute the inverse ratio - C
-				if ((NR_branchdata[NR_branch_reference].phases & 0x01) == 0x01)
+				if ((NR_branchdata[NR_branch_reference].phases & PHASE_C) == PHASE_C)
 				{
 					invratio[2] = gld::complex(1.0,0.0) / a_mat[2][2];
 				}
@@ -849,13 +849,14 @@ void series_compensator::sercom_postPre_fxn(void)
 //Functionalized "postsyc after link::postsync" items -- mostly for deltamode compatibility
 //Return values -- 0 = no iteration, 1 = reiterate (deltamode or otherwise), 2 = proceed (deltamode)
 //Pass value is for deltamode pass information (currently in modified Euler flagging)
-int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double deltat)
+int series_compensator::sercom_postPost_fxn(unsigned int pass_value, double deltat)
 {
 	char index_val;
-	unsigned char phase_mask;
+	set phase_mask;
 	double temp_diff_val[3];
 	int return_val;
 	bool bypass_initiated;
+	set phase_values[] = {PHASE_A, PHASE_B, PHASE_C};
 
 	//By default, assume we want to exit normal
 	return_val = 0;
@@ -1107,10 +1108,10 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 
 
 			//See if we should be triplex
-			if ((NR_branchdata[NR_branch_reference].origphases & 0x80) == 0x80)
+			if ((NR_branchdata[NR_branch_reference].origphases & PHASE_S) == PHASE_S)
 			{
 				//Now see if we're actually active
-				if ((NR_branchdata[NR_branch_reference].phases & 0x80) == 0x80)
+				if ((NR_branchdata[NR_branch_reference].phases & PHASE_S) == PHASE_S)
 				{
 
 					//Loop it
@@ -1178,7 +1179,7 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 				for (index_val=0; index_val<3; index_val++)
 				{
 					//Get the phase mask
-					phase_mask = (1 << (2 - index_val));
+					phase_mask = phase_values[index_val];
 
 					//Check if it is valid
 					if ((NR_branchdata[NR_branch_reference].phases & phase_mask) == phase_mask)
@@ -1286,10 +1287,10 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 			}
 
 			//Check and see if we're triplex
-			if ((NR_branchdata[NR_branch_reference].origphases & 0x80) == 0x80)
+			if ((NR_branchdata[NR_branch_reference].origphases & PHASE_S) == PHASE_S)
 			{
 				//See if we're actually valid
-				if ((NR_branchdata[NR_branch_reference].phases & 0x80) == 0x80)
+				if ((NR_branchdata[NR_branch_reference].phases & PHASE_S) == PHASE_S)
 				{
 					//Loop the phases
 					for (index_val=0; index_val<2; index_val++)
@@ -1373,7 +1374,7 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 				for (index_val=0; index_val<3; index_val++)
 				{
 					//Get the phase mask
-					phase_mask = (1 << (2 - index_val));
+					phase_mask = phase_values[index_val];
 
 					//Reset the tracking flag
 					bypass_initiated = false;
@@ -1463,10 +1464,10 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 	else
 	{
 		//See if we're triplex
-		if ((NR_branchdata[NR_branch_reference].origphases & 0x80) == 0x80)
+		if ((NR_branchdata[NR_branch_reference].origphases & PHASE_S) == PHASE_S)
 		{
 			//See if we're valid triplex
-			if ((NR_branchdata[NR_branch_reference].phases & 0x80) == 0x80)
+			if ((NR_branchdata[NR_branch_reference].phases & PHASE_S) == PHASE_S)
 			{
 				//Loop it, just because
 				for (index_val=0; index_val<2; index_val++)
@@ -1488,7 +1489,7 @@ int series_compensator::sercom_postPost_fxn(unsigned char pass_value, double del
 			for (index_val=0; index_val<3; index_val++)
 			{
 				//Get the phase mask
-				phase_mask = (1 << (2 - index_val));
+				phase_mask = phase_values[index_val];
 
 				if ((NR_branchdata[NR_branch_reference].phases & phase_mask) == phase_mask)
 				{

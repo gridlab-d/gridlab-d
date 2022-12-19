@@ -1206,7 +1206,7 @@ int inverter::init(OBJECT *parent)
 		*/
 		
 		// Declare all 3 phases
-		parent_phases = 0x07;
+		parent_phases = PHASE_ABC;
 
 		//Powerflow values -- set defaults here -- sets up like three-phase connection - use rated kV, just because
 		//Set that magnitude
@@ -1223,13 +1223,13 @@ int inverter::init(OBJECT *parent)
 	}
 
 	//See if our phases are empty - if so, just snag the parent's
-	if (phases == 0x00)
+	if (phases == NO_PHASE)
 	{
 		phases = parent_phases;
 	}
 
 	//Check the phases with the "parent phases" - make sure it is a valid combination
-	if ((((phases & 0x10) == 0x10) && ((parent_phases & 0x10) != 0x10)) || (((parent_phases & 0x10) == 0x10) && ((phases & 0x10) != 0x10)))
+	if ((((phases & PHASE_S) == PHASE_S) && ((parent_phases & PHASE_S) != PHASE_S)) || (((parent_phases & PHASE_S) == PHASE_S) && ((phases & PHASE_S) != PHASE_S)))
 	{
 		GL_THROW("Inverter:%d %s - Inverter has a triplex-related phase mismatch!",obj->id,(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
@@ -1246,13 +1246,13 @@ int inverter::init(OBJECT *parent)
 	}
 
 	// count the number of phases
-	if ( (phases & 0x10) == 0x10) // split phase
+	if ( (phases & PHASE_S) == PHASE_S) // split phase
 		number_of_phases_out = 1; 
-	else if ( (phases & 0x07) == 0x07 ) // three phase
+	else if ( (phases & PHASE_ABC) == PHASE_ABC ) // three phase
 		number_of_phases_out = 3;
-	else if ( ((phases & 0x03) == 0x03) || ((phases & 0x05) == 0x05) || ((phases & 0x06) == 0x06) ) // two-phase
+	else if ( ((phases & PHASE_AB) == PHASE_AB) || ((phases & PHASE_AC) == PHASE_AC) || ((phases & PHASE_BC) == PHASE_BC) ) // two-phase
 		number_of_phases_out = 2;
-	else if ( ((phases & 0x01) == 0x01) || ((phases & 0x02) == 0x02) || ((phases & 0x04) == 0x04) ) // single phase
+	else if ( ((phases & PHASE_A) == PHASE_A) || ((phases & PHASE_B) == PHASE_B) || ((phases & PHASE_C) == PHASE_C) ) // single phase
 		number_of_phases_out = 1;
 	else
 	{
@@ -2341,7 +2341,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 		} //End LOAD_FOLLOWING checks
 		else if ((four_quadrant_control_mode == FQM_VOLT_VAR) || (four_quadrant_control_mode == FQM_VOLT_WATT))
 		{
-			if ((phases & 0x10) == 0x10)	//Triplex
+			if ((phases & PHASE_S) == PHASE_S)	//Triplex
 			{
 				value_Power12 = -last_power[3];	//Theoretically pPower is mapped to power_12, which already has the [2] offset applied
 			}
@@ -2426,7 +2426,7 @@ TIMESTAMP inverter::presync(TIMESTAMP t0, TIMESTAMP t1)
 				last_I_In = I_In;
 
 				//Determine phasing to check
-				if ((phases & 0x10) == 0x10)	//Triplex
+				if ((phases & PHASE_S) == PHASE_S)	//Triplex
 				{
 					last_I_Out[0] = I_Out[0];
 				}
@@ -2483,20 +2483,20 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 		P_Out = 0;
 		Q_Out = 0;
 		VA_Out = gld::complex(0);
-		if ((phases & 0x10) == 0x10) {
+		if ((phases & PHASE_S) == PHASE_S) {
 			last_power[3] = -power_val[0];
 			value_Power12 = last_power[3];
 		} else {
 			p_in = 0;
-			if ((phases & 0x01) == 0x01) {
+			if ((phases & PHASE_A) == PHASE_A) {
 				last_power[0] = -power_val[0];
 				value_Power[0] = last_power[0];
 			}
-			if ((phases & 0x02) == 0x02) {
+			if ((phases & PHASE_B) == PHASE_B) {
 				last_power[1] = -power_val[1];
 				value_Power[1] = last_power[1];
 			}
-			if ((phases & 0x04) == 0x04) {
+			if ((phases & PHASE_C) == PHASE_C) {
 				last_power[2] = -power_val[2];
 				value_Power[2] = last_power[2];
 			}
@@ -2788,7 +2788,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						}
 					}
 
-					if ((phases & 0x10) == 0x10)  //Triplex-line -> Assume it's only across the 240 V for now.
+					if ((phases & PHASE_S) == PHASE_S)  //Triplex-line -> Assume it's only across the 240 V for now.
 					{
 						power_val[0] = gld::complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
 						if (phaseA_V_Out.Mag() != 0.0)
@@ -2834,7 +2834,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					{
 						OBJECT *obj = OBJECTHDR(this);
 
-						if ( ((phases & 0x01) == 0x01) && phaseA_V_Out.Mag() != 0)
+						if ( ((phases & PHASE_A) == PHASE_A) && phaseA_V_Out.Mag() != 0)
 						{
 							power_val[0] = gld::complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;;
 							phaseA_I_Out = ~(power_val[0] / phaseA_V_Out);
@@ -2842,7 +2842,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						else 
 							phaseA_I_Out = gld::complex(0,0);
 
-						if ( ((phases & 0x02) == 0x02) && phaseB_V_Out.Mag() != 0)
+						if ( ((phases & PHASE_B) == PHASE_B) && phaseB_V_Out.Mag() != 0)
 						{
 							power_val[1] = gld::complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;;
 							phaseB_I_Out = ~(power_val[1] / phaseB_V_Out);
@@ -2850,7 +2850,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						else 
 							phaseB_I_Out = gld::complex(0,0);
 
-						if ( ((phases & 0x04) == 0x04) && phaseC_V_Out.Mag() != 0)
+						if ( ((phases & PHASE_C) == PHASE_C) && phaseC_V_Out.Mag() != 0)
 						{
 							power_val[2] = gld::complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)))/2;;
 							phaseC_I_Out = ~(power_val[2] / phaseC_V_Out);
@@ -2870,21 +2870,21 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 					else // Single phase connection
 					{
-						if( ((phases & 0x01) == 0x01) && phaseA_V_Out.Mag() != 0)
+						if( ((phases & PHASE_A) == PHASE_A) && phaseA_V_Out.Mag() != 0)
 						{
 							power_val[0] = gld::complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
 							phaseA_I_Out = ~(power_val[0] / phaseA_V_Out); 
 							//complex phaseA_V_Internal = filter_voltage_impact_source(phaseA_I_Out, phaseA_V_Out);
 							//phaseA_I_Out = filter_current_impact_out(phaseA_I_Out, phaseA_V_Internal);
 						}
-						else if( ((phases & 0x02) == 0x02) && phaseB_V_Out.Mag() != 0)
+						else if( ((phases & PHASE_B) == PHASE_B) && phaseB_V_Out.Mag() != 0)
 						{
 							power_val[1] = gld::complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
 							phaseB_I_Out = ~(power_val[1] / phaseB_V_Out); 
 							//complex phaseB_V_Internal = filter_voltage_impact_source(phaseB_I_Out, phaseB_V_Out);
 							//phaseB_I_Out = filter_current_impact_out(phaseB_I_Out, phaseB_V_Internal);
 						}
-						else if( ((phases & 0x04) == 0x04) && phaseC_V_Out.Mag() != 0)
+						else if( ((phases & PHASE_C) == PHASE_C) && phaseC_V_Out.Mag() != 0)
 						{
 							power_val[2] = gld::complex(VA_Out.Mag()*fabs(power_factor),power_factor/fabs(power_factor)*VA_Out.Mag()*sin(acos(power_factor)));
 							phaseC_I_Out = ~(power_val[2] / phaseC_V_Out); 
@@ -2931,7 +2931,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						VA_Out = phaseA_V_Out * (~ phaseA_I_Out) + phaseB_V_Out * (~ phaseB_I_Out) + phaseC_V_Out * (~ phaseC_I_Out);
 					}
 
-					if ( (phases & 0x07) == 0x07) // Three phase
+					if ( (phases & PHASE_ABC) == PHASE_ABC) // Three phase
 					{
 						power_val[0] = power_val[1] = power_val[2] = VA_Out /3;
 						phaseA_I_Out = (power_val[0] / phaseA_V_Out); // /sqrt(2.0);
@@ -2943,25 +2943,25 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						phaseC_I_Out = ~ phaseC_I_Out;
 
 					}
-					else if ( (number_of_phases_out == 1) && ((phases & 0x01) == 0x01) ) // Phase A only
+					else if ( (number_of_phases_out == 1) && ((phases & PHASE_A) == PHASE_A) ) // Phase A only
 					{
 						power_val[0] = VA_Out;
 						phaseA_I_Out = (power_val[0] / phaseA_V_Out); // /sqrt(2);
 						phaseA_I_Out = ~ phaseA_I_Out;
 					}
-					else if ( (number_of_phases_out == 1) && ((phases & 0x02) == 0x02) ) // Phase B only
+					else if ( (number_of_phases_out == 1) && ((phases & PHASE_B) == PHASE_B) ) // Phase B only
 					{
 						power_val[1] = VA_Out;
 						phaseB_I_Out = (power_val[1] / phaseB_V_Out);  // /sqrt(2);
 						phaseB_I_Out = ~ phaseB_I_Out;
 					}
-					else if ( (number_of_phases_out == 1) && ((phases & 0x04) == 0x04) ) // Phase C only
+					else if ( (number_of_phases_out == 1) && ((phases & PHASE_C) == PHASE_C) ) // Phase C only
 					{
 						power_val[2] = VA_Out;
 						phaseC_I_Out = (power_val[2] / phaseC_V_Out); // /sqrt(2);
 						phaseC_I_Out = ~ phaseC_I_Out;
 					}
-					else if ( (number_of_phases_out == 1) && ((phases & 0x10) == 0x10))	//Triplex
+					else if ( (number_of_phases_out == 1) && ((phases & PHASE_S) == PHASE_S))	//Triplex
 					{
 						power_val[0] = VA_Out;
 						phaseA_I_Out = (power_val[0] / phaseA_V_Out); // /sqrt(2);
@@ -3005,7 +3005,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					gl_verbose("inverter sync: constant v");
 					bool changed = false;
 					
-					if ((phases & 0x10) == 0x10)	//Triplex
+					if ((phases & PHASE_S) == PHASE_S)	//Triplex
 					{
 						//Use phaseA varieties
 						if (phaseA_V_Out.Re() < (V_Set_A - margin))
@@ -3029,7 +3029,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 					else	//Not triplex
 					{
-						if((phases & 0x01) == 0x01)
+						if((phases & PHASE_A) == PHASE_A)
 						{
 							if (phaseA_V_Out.Re() < (V_Set_A - margin))
 							{
@@ -3046,7 +3046,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 								changed = false;
 							}
 						}
-						if ((phases & 0x02) == 0x02)
+						if ((phases & PHASE_B) == PHASE_B)
 						{
 							if (phaseB_V_Out.Re() < (V_Set_B - margin))
 							{
@@ -3063,7 +3063,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 								changed = false;
 							}
 						}
-						if ((phases & 0x04) == 0x04)
+						if ((phases & PHASE_C) == PHASE_C)
 						{
 							if (phaseC_V_Out.Re() < (V_Set_C - margin))
 							{
@@ -3096,7 +3096,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						changed = false;
 
 						//See if triplex (just because)
-						if ((phases & 0x10) == 0x10)
+						if ((phases & PHASE_S) == PHASE_S)
 						{
 							//Phase A duplication
 							phaseA_I_Out = VA_Out / phaseA_V_Out;
@@ -3106,17 +3106,17 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						}
 						else	//Nope - "normal"
 						{
-							if((phases & 0x01) == 0x01)
+							if((phases & PHASE_A) == PHASE_A)
 							{
 								phaseA_I_Out = VA_Out / phaseA_V_Out;
 								phaseA_I_Out = (~phaseA_I_Out);
 							}
-							if((phases & 0x02) == 0x02)
+							if((phases & PHASE_B) == PHASE_B)
 							{
 								phaseB_I_Out = VA_Out / phaseB_V_Out;
 								phaseB_I_Out = (~phaseB_I_Out);
 							}
-							if((phases & 0x04) == 0x04)
+							if((phases & PHASE_C) == PHASE_C)
 							{
 								phaseC_I_Out = VA_Out / phaseC_V_Out;
 								phaseC_I_Out = (~phaseC_I_Out);
@@ -3157,7 +3157,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					if(changed)
 					{
 						//Triplex check - post it to the right place
-						if ((phases & 0x10) == 0x10)
+						if ((phases & PHASE_S) == PHASE_S)
 						{
 							value_Line12 = phaseA_I_Out;
 							last_current[3] = phaseA_I_Out;
@@ -3192,7 +3192,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					else
 					{
 						//Triplex check
-						if ((phases & 0x10) == 0x10)
+						if ((phases & PHASE_S) == PHASE_S)
 						{
 							//Post
 							value_Line12 = phaseA_I_Out;
@@ -3219,7 +3219,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					break;
 				default:
 					//Triplex check
-					if ((phases & 0x10) == 0x10)
+					if ((phases & PHASE_S) == PHASE_S)
 					{
 						value_Line12 = phaseA_I_Out;
 
@@ -3253,16 +3253,16 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				P_In = V_In * I_In;
 
 				//Compute the power contribution of the battery object
-				if((phases & 0x10) == 0x10){ // split phase
+				if((phases & PHASE_S) == PHASE_S){ // split phase
 					battery_power_out = power_val[0];
 				} else { // three phase
-					if((phases & 0x01) == 0x01){ // has phase A
+					if((phases & PHASE_A) == PHASE_A){ // has phase A
 						battery_power_out += power_val[0];
 					}
-					if((phases & 0x02) == 0x02){ // hase phase B
+					if((phases & PHASE_B) == PHASE_B){ // hase phase B
 						battery_power_out += power_val[1];
 					}
-					if((phases & 0x04) == 0x04){ // has phase C
+					if((phases & PHASE_C) == PHASE_C){ // has phase C
 						battery_power_out += power_val[2];
 					}
 				}
@@ -3412,16 +3412,16 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				}else{
 					VA_Efficiency = VA_Out.Re();
 				}
-				if ((phases & 0x10) == 0x10){
+				if ((phases & PHASE_S) == PHASE_S){
 					power_val[0].SetReal(VA_Efficiency);
 				} else {
-					if ((phases & 0x01) == 0x01) {
+					if ((phases & PHASE_A) == PHASE_A) {
 						power_val[0].SetReal(VA_Efficiency/number_of_phases_out);
 					}
-					if ((phases & 0x02) == 0x02) {
+					if ((phases & PHASE_B) == PHASE_B) {
 						power_val[1].SetReal(VA_Efficiency/number_of_phases_out);
 					}
-					if ((phases & 0x04) == 0x04) {
+					if ((phases & PHASE_C) == PHASE_C) {
 						power_val[2].SetReal(VA_Efficiency/number_of_phases_out);
 					}
 				}
@@ -3609,7 +3609,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				// VSI isochronous mode
 				if (VSI_mode == VSI_ISOCHRONOUS || VSI_mode == VSI_DROOP) {
 					//Calculate power based on measured terminal voltage and currents
-					if ((phases & 0x10) == 0x10) // split phase
+					if ((phases & PHASE_S) == PHASE_S) // split phase
 					{
 						//Update output power
 						//Get current injected
@@ -3870,7 +3870,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					if ((prev_time < t1) && !first_run)
 					{
 						// Adjust VSI (not on SWING bus) current injection and e_source values only at the first iteration of each time step
-						if ((phases & 0x10) == 0x10) // split phase
+						if ((phases & PHASE_S) == PHASE_S) // split phase
 						{
 							if (attached_bus_type != 2) {
 
@@ -3968,7 +3968,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 				else if (four_quadrant_control_mode != FQM_VSI)
 				{
 					//Calculate power and post it
-					if ((phases & 0x10) == 0x10) // split phase
+					if ((phases & PHASE_S) == PHASE_S) // split phase
 					{
 						//Update last_power variable
 						last_power[3] = -VA_Out;
@@ -4003,7 +4003,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 						//Figure out amount that needs to be posted
 						temp_VA = -VA_Out/number_of_phases_out;
 
-						if ( (phases & 0x01) == 0x01 ) // has phase A
+						if ( (phases & PHASE_A) == PHASE_A ) // has phase A
 						{
 							curr_VA_out[0] = -temp_VA;
 							last_power[0] = temp_VA;	//Store last power
@@ -4030,7 +4030,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 							}
 						}
 
-						if ( (phases & 0x02) == 0x02 ) // has phase B
+						if ( (phases & PHASE_B) == PHASE_B ) // has phase B
 						{
 							curr_VA_out[1] = -temp_VA;
 							last_power[1] = temp_VA;	//Store last power
@@ -4058,7 +4058,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 							}
 						}
 
-						if ( (phases & 0x04) == 0x04 ) // has phase C
+						if ( (phases & PHASE_C) == PHASE_C ) // has phase C
 						{
 							curr_VA_out[2] = -temp_VA;
 							last_power[2] = temp_VA;	//Store last power
@@ -4154,7 +4154,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 				}
 
-				if ((phases & 0x10) == 0x10) {
+				if ((phases & PHASE_S) == PHASE_S) {
 					p_in = power_val[0].Re() / inv_eta;
 					last_power[3] = -power_val[0];
 					value_Power12 = last_power[3];
@@ -4169,7 +4169,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 				} else {
 					p_in = 0;
-					if ((phases & 0x01) == 0x01) {
+					if ((phases & PHASE_A) == PHASE_A) {
 						p_in += power_val[0].Re()/inv_eta;
 						last_power[0] = -power_val[0];
 						value_Power[0] = last_power[0];
@@ -4182,7 +4182,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 							I_Out[0] = gld::complex(0.0,0.0);
 						}
 					}
-					if ((phases & 0x02) == 0x02) {
+					if ((phases & PHASE_B) == PHASE_B) {
 						p_in += power_val[1].Re()/inv_eta;
 						last_power[1] = -power_val[1];
 						value_Power[1] = last_power[1];
@@ -4195,7 +4195,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 							I_Out[1] = gld::complex(0.0,0.0);
 						}
 					}
-					if ((phases & 0x04) == 0x04) {
+					if ((phases & PHASE_C) == PHASE_C) {
 						p_in += power_val[2].Re()/inv_eta;
 						last_power[2] = -power_val[2];
 						value_Power[2] = last_power[2];
@@ -4231,7 +4231,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 			if (inverter_type_v != FOUR_QUADRANT)
 			{
 				//Will only get here on true NR_cycle, if meter is in service
-				if ((phases & 0x10) == 0x10)
+				if ((phases & PHASE_S) == PHASE_S)
 				{
 					//Voltage check
 					if (value_Circuit_V[0].Mag() > 0.0)
@@ -4265,7 +4265,7 @@ TIMESTAMP inverter::sync(TIMESTAMP t0, TIMESTAMP t1)
 			else	//Four-quadrant post as power
 			{
 				//Will only get here on true NR_cycle, if meter is in service
-				if ((phases & 0x10) == 0x10)	//Triplex
+				if ((phases & PHASE_S) == PHASE_S)	//Triplex
 				{
 					//Voltage check
 					if (value_Circuit_V[0].Mag() > 0.0)
@@ -4792,7 +4792,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			{
 				vv_operation = false;
 				last_vv_check = t1;
-				if ((phases & 0x10) == 0x10) {
+				if ((phases & PHASE_S) == PHASE_S) {
 					if((value_Circuit_V[0].Mag() / V_base) <= V1) {
 						power_val[0].SetImag(Q1 * p_rated);
 					} else if ((value_Circuit_V[0].Mag() / V_base) <= V2 && V1 < (value_Circuit_V[0].Mag() / V_base)) {
@@ -4809,7 +4809,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 					VA_Out = power_val[0]; // TEMc
 				} else {
-					if ((phases & 0x01) == 0x01) {
+					if ((phases & PHASE_A) == PHASE_A) {
 						if((value_Circuit_V[0].Mag() / V_base) <= V1) {
 							power_val[0].SetImag(Q1 * p_rated);
 						} else if ((value_Circuit_V[0].Mag() / V_base) <= V2 && V1 < (value_Circuit_V[0].Mag() / V_base)) {
@@ -4825,7 +4825,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 							vv_operation = true;
 						}
 					}
-					if ((phases & 0x02) == 0x02) {
+					if ((phases & PHASE_B) == PHASE_B) {
 						if((value_Circuit_V[1].Mag() / V_base) <= V1) {
 							power_val[1].SetImag(Q1 * p_rated);
 						} else if ((value_Circuit_V[1].Mag() / V_base) <= V2 && V1 < (value_Circuit_V[1].Mag() / V_base)) {
@@ -4841,7 +4841,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 							vv_operation = true;
 						}
 					}
-					if ((phases & 0x04) == 0x04) {
+					if ((phases & PHASE_C) == PHASE_C) {
 						if((value_Circuit_V[2].Mag() / V_base) <= V1) {
 							power_val[2].SetImag(Q1 * p_rated);
 						} else if ((value_Circuit_V[2].Mag() / V_base) <= V2 && V1 < (value_Circuit_V[2].Mag() / V_base)) {
@@ -4873,7 +4873,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 				last_vv_check = t1;
 				double vpu;
 				pa_vw_limited = pb_vw_limited = pc_vw_limited = p_rated;
-				if ((phases & 0x10) == 0x10) {
+				if ((phases & PHASE_S) == PHASE_S) {
 					vpu = value_Circuit_V[0].Mag() / V_base;
 					if (vpu > VW_V1) {
 						pa_vw_limited = p_rated * (1.0 + VW_m * (vpu - VW_V1));
@@ -4885,7 +4885,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 					}
 					VA_Out = power_val[0];
 				} else {
-					if ((phases & 0x01) == 0x01) {
+					if ((phases & PHASE_A) == PHASE_A) {
 						vpu = value_Circuit_V[0].Mag() / V_base;
 						if (vpu > VW_V1) {
 							pa_vw_limited = p_rated * (1.0 + VW_m * (vpu - VW_V1));
@@ -4896,7 +4896,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 							vv_operation = true;
 						}
 					}
-					if ((phases & 0x02) == 0x02) {
+					if ((phases & PHASE_B) == PHASE_B) {
 						vpu = value_Circuit_V[1].Mag() / V_base;
 						if (vpu > VW_V1) {
 							pb_vw_limited = p_rated * (1.0 + VW_m * (vpu - VW_V1));
@@ -4907,7 +4907,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 							vv_operation = true;
 						}
 					}
-					if ((phases & 0x04) == 0x04) {
+					if ((phases & PHASE_C) == PHASE_C) {
 						vpu = value_Circuit_V[2].Mag() / V_base;
 						if (vpu > VW_V1) {
 							pc_vw_limited = p_rated * (1.0 + VW_m * (vpu - VW_V1));
@@ -5296,7 +5296,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 
 	if (inverter_type_v != FOUR_QUADRANT)	//Remove contributions for XML properness
 	{
-		if ((phases & 0x10) == 0x10)	//Triplex
+		if ((phases & PHASE_S) == PHASE_S)	//Triplex
 		{
 			value_Line12 = -last_current[3];	//Remove from current12
 		}
@@ -5311,7 +5311,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	else	//Must be four quadrant (load_following or otherwise)
 	{
 		if ((four_quadrant_control_mode != FQM_VOLT_VAR) && (four_quadrant_control_mode != FQM_VSI) && (four_quadrant_control_mode != FQM_VOLT_WATT)) {
-			if ((phases & 0x10) == 0x10)	//Triplex
+			if ((phases & PHASE_S) == PHASE_S)	//Triplex
 			{
 				if (deltamode_inclusive)
 				{
@@ -5342,7 +5342,7 @@ TIMESTAMP inverter::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		else if (four_quadrant_control_mode == FQM_VSI) {
 
 			// Update power values based on measured terminal voltage and currents
-			if ((phases & 0x10) == 0x10) // split phase
+			if ((phases & PHASE_S) == PHASE_S) // split phase
 			{
 				//Update output power
 				//Get current injected
@@ -5554,7 +5554,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 				if (iteration_count_val==0)	// Predictor pass
 				{
 					// Caluclate injection current based on voltage source magnitude and angle obtained
-					if((phases & 0x10) == 0x10)
+					if((phases & PHASE_S) == PHASE_S)
 					{
 						//Update output power
 						//Get current injected
@@ -5670,7 +5670,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 							value_IGenerated[0] = e_source[0]/(gld::complex(Rfilter,Xfilter) * Zbase);
 						}
 					}//End triplex
-					else if((phases & 0x07) == 0x07)
+					else if((phases & PHASE_ABC) == PHASE_ABC)
 					{
 						//Update output power
 						//Get current injected
@@ -6014,7 +6014,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 				}
 				else if (iteration_count_val == 1)	// Corrector pass
 				{
-					if((phases & 0x10) == 0x10)
+					if((phases & PHASE_S) == PHASE_S)
 					{
 						//Update output power
 						//Get current injected
@@ -6131,7 +6131,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 							value_IGenerated[0] = e_source[0]/(gld::complex(Rfilter,Xfilter) * Zbase);
 						}
 					} // End triplex
-					else if ((phases & 0x07) == 0x07)
+					else if ((phases & PHASE_ABC) == PHASE_ABC)
 					{
 						//Update output power
 						//Get current injected
@@ -6492,7 +6492,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 						// If in CONSTANT_PQ mode for smooth transition, need to calculate current output based on constant PQ and changed terminal voltage
 						if (inverter_type_v == FOUR_QUADRANT && four_quadrant_control_mode == FQM_CONSTANT_PQ) {
-							if((phases & 0x10) == 0x10) {
+							if((phases & PHASE_S) == PHASE_S) {
 
 								power_val[0] = value_Circuit_V[0] * ~(I_Out[0]);
 
@@ -6513,7 +6513,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 								I_Out[0]= curr_state.Iac[0];
 								value_Line_unrotI[0] += -curr_state.Iac[0]; // update the current injection to the circuit
 							}
-							else if ((phases & 0x07) == 0x07) {
+							else if ((phases & PHASE_ABC) == PHASE_ABC) {
 								for(i = 0; i < 3; i++) {
 
 									power_val[i] = value_Circuit_V[i] * ~(I_Out[i]);
@@ -6541,11 +6541,11 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 							// //Initialize dynamics
 							// init_dynamics(&curr_state);
 							//Send Current Injection to parent
-							if((phases & 0x10) == 0x10) {
+							if((phases & PHASE_S) == PHASE_S) {
 								//pLine_unrotI[0] += -curr_state.Iac[0];
 								I_Out[0]= curr_state.Iac[0];
 							}
-							if((phases & 0x07) == 0x07) {
+							if((phases & PHASE_ABC) == PHASE_ABC) {
 								for(int i = 0; i < 3; i++) {
 									//pLine_unrotI[i] += -curr_state.Iac[i];
 									I_Out[i] = curr_state.Iac[i];
@@ -6563,10 +6563,10 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 						}
 						// Calculation for frequency deviation
 						if (inverter_droop_vq) {
-							if((phases & 0x10) == 0x10) {
+							if((phases & PHASE_S) == PHASE_S) {
 								curr_state.dV_mea_delayed[0] = 1.0/Tvol_delay*(value_Circuit_V[0].Mag() - curr_state.V_mea_delayed[0]);
 							}
-							if((phases & 0x07) == 0x07) {
+							if((phases & PHASE_ABC) == PHASE_ABC) {
 								curr_state.dV_mea_delayed[0] = 1.0/Tvol_delay*(value_Circuit_V[0].Mag() - curr_state.V_mea_delayed[0]);
 								curr_state.dV_mea_delayed[1] = 1.0/Tvol_delay*(value_Circuit_V[1].Mag() - curr_state.V_mea_delayed[1]);
 								curr_state.dV_mea_delayed[2] = 1.0/Tvol_delay*(value_Circuit_V[2].Mag() - curr_state.V_mea_delayed[2]);
@@ -6575,11 +6575,11 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 						// Calculate my current power out - not used in CONSTANT_PQ mode for smooth transition
 						if (inverter_type_v == FOUR_QUADRANT && four_quadrant_control_mode != FQM_CONSTANT_PQ) {
-							if((phases & 0x10) == 0x10) {
+							if((phases & PHASE_S) == PHASE_S) {
 								VA_Out = value_Circuit_V[0] * ~(I_Out[0]);
 								curr_state.Q_Out[0] = VA_Out.Im();
 							}
-							if((phases & 0x07) == 0x07) {
+							if((phases & PHASE_ABC) == PHASE_ABC) {
 								VA_Out = (value_Circuit_V[0] * ~(I_Out[0]) + (value_Circuit_V[1] * ~(I_Out[1])) + (value_Circuit_V[2] * ~(I_Out[2])));
 								curr_state.Q_Out[0] = (value_Circuit_V[0] * ~(I_Out[0])).Im();
 								curr_state.Q_Out[1] = (value_Circuit_V[1] * ~(I_Out[1])).Im();
@@ -6588,7 +6588,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 						}
 
 						//calculate my current errors
-						if((phases & 0x10) == 0x10) {
+						if((phases & PHASE_S) == PHASE_S) {
 							power_val[0] = value_Circuit_V[0] * ~(I_Out[0]);
 
 							curr_state.P_Out[0] = power_val[0].Re();
@@ -6618,7 +6618,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 								simmode_return_value = SM_DELTA;
 							}
 						}
-						else if((phases & 0x07) == 0x07) {
+						else if((phases & PHASE_ABC) == PHASE_ABC) {
 							for(i = 0; i < 3; i++) {
 
 								power_val[i] = value_Circuit_V[i] * ~(I_Out[i]);
@@ -6664,13 +6664,13 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 						Pref0 = P_Out;
 					}
 
-					if((phases & 0x10) == 0x10) {
+					if((phases & PHASE_S) == PHASE_S) {
 						if (Q_Out != Qref0[0]) {
 							Qref_PI[0] = Q_Out;
 							Qref0[0] = Q_Out;
 						}
 					}
-					else if((phases & 0x07) == 0x07) {
+					else if((phases & PHASE_ABC) == PHASE_ABC) {
 						if (Q_Out != Qref0[0]+Qref0[1]+Qref0[2]) {
 							for(i = 0; i < 3; i++) {
 								Qref_PI[i] = Q_Out/3;
@@ -6714,7 +6714,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 					// If terminal voltage changes, Qref for each phase is changed from p/f droop
 					if (inverter_droop_vq) {
 						// Calculate Qref based on the droop curve
-						if((phases & 0x10) == 0x10) {
+						if((phases & PHASE_S) == PHASE_S) {
 							double delta_Qref;
 
 							//Update delayed value
@@ -6739,7 +6739,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 								Qref_PI[0] = Qref0[0] - delta_Qref;
 							}
 						}
-						else if((phases & 0x07) == 0x07) {
+						else if((phases & PHASE_ABC) == PHASE_ABC) {
 							double delta_Qref[3];
 
 							for(i = 0; i < 3; i++)
@@ -6774,7 +6774,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 					if (checkRampRate_real ||  checkRampRate_reactive)
 					{
 						//See which one we are
-						if ((phases & 0x10) == 0x10)
+						if ((phases & PHASE_S) == PHASE_S)
 						{
 							prev_VA_out[0] = curr_VA_out[0];
 						}
@@ -6791,7 +6791,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 
 
 					// PI controller parameters updates
-					if((phases & 0x10) == 0x10)
+					if((phases & PHASE_S) == PHASE_S)
 					{
 						VA_Out = (value_Circuit_V[0] * ~(I_Out[0]));
 
@@ -6822,7 +6822,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 						curr_state.deq[0] = (curr_state.eq[0] - prev_error_eq) / deltat;
 						curr_state.dmq[0] = (kpq * curr_state.deq[0]) + (kiq * curr_state.eq[0]);
 
-					} else if ((phases & 0x07) == 0x07) {
+					} else if ((phases & PHASE_ABC) == PHASE_ABC) {
 
 						VA_Out = (value_Circuit_V[0] * ~(I_Out[0])) + (value_Circuit_V[1] * ~(I_Out[1])) + (value_Circuit_V[2] * ~(I_Out[2]));
 
@@ -6858,7 +6858,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 					}
 
 					// PI controller parameters updates
-					if((phases & 0x10) == 0x10) {
+					if((phases & PHASE_S) == PHASE_S) {
 						pred_state.md[0] = curr_state.md[0] + (deltat * curr_state.dmd[0]);
 						pred_state.Idq[0].SetReal(pred_state.md[0] * I_In);
 						pred_state.mq[0] = curr_state.mq[0] + (deltat * curr_state.dmq[0]);
@@ -6981,7 +6981,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 						value_Line_unrotI[0] += -pred_state.Iac[0];
 						I_Out[0] = pred_state.Iac[0]; // update I_Out so that power iteration can use it
 					}
-					else if((phases & 0x07) == 0x07) {
+					else if((phases & PHASE_ABC) == PHASE_ABC) {
 						for(i = 0; i < 3; i++) {
 							pred_state.md[i] = curr_state.md[i] + (deltat * curr_state.dmd[i]);
 							pred_state.Idq[i].SetReal(pred_state.md[i] * I_In);
@@ -7151,7 +7151,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 					}
 					// Calculation for voltage deviation
 					if (inverter_droop_vq) {
-						if((phases & 0x10) == 0x10) {
+						if((phases & PHASE_S) == PHASE_S) {
 							pred_state.dV_mea_delayed[0] = 1.0/Tvol_delay*(value_Circuit_V[0].Mag() - pred_state.V_mea_delayed[0]);
 							// Update current state Vmeasured_delayed
 							curr_state.V_mea_delayed[0] = curr_state.V_mea_delayed[0] + (curr_state.dV_mea_delayed[0] + pred_state.dV_mea_delayed[0]) * deltath;
@@ -7175,7 +7175,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 								Qref_PI[0] = Qref0[0] - delta_Qref;
 							}
 						}
-						else if((phases & 0x07) == 0x07) {
+						else if((phases & PHASE_ABC) == PHASE_ABC) {
 							pred_state.dV_mea_delayed[0] = 1.0/Tvol_delay*(value_Circuit_V[0].Mag() - pred_state.V_mea_delayed[0]);
 							pred_state.dV_mea_delayed[1] = 1.0/Tvol_delay*(value_Circuit_V[1].Mag() - pred_state.V_mea_delayed[1]);
 							pred_state.dV_mea_delayed[2] = 1.0/Tvol_delay*(value_Circuit_V[2].Mag() - pred_state.V_mea_delayed[2]);
@@ -7210,7 +7210,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 					}
 
 					// PI controller variables
-					if ((phases & 0x10) == 0x10) {
+					if ((phases & PHASE_S) == PHASE_S) {
 
 						pred_state.P_Out[0] = (value_Circuit_V[0] * ~(I_Out[0])).Re();
 						pred_state.Q_Out[0] = (value_Circuit_V[0] * ~(I_Out[0])).Im();
@@ -7359,7 +7359,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 						I_Out[0] = curr_state.Iac[0];
 
 					}
-					else if((phases & 0x07) == 0x07) {
+					else if((phases & PHASE_ABC) == PHASE_ABC) {
 						for(i = 0; i < 3; i++) {
 
 							pred_state.P_Out[i] = (value_Circuit_V[i] * ~(I_Out[i])).Re();
@@ -7516,7 +7516,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 					update_control_references();
 
 					//Check phasing
-					if ((phases & 0x10) == 0x10)
+					if ((phases & PHASE_S) == PHASE_S)
 					{
 						//Determine if we're ready to exit or not
 						if ((fabs(curr_state.ded[0]) <= inverter_convergence_criterion) && (fabs(curr_state.deq[0]) <= inverter_convergence_criterion) && (simmode_return_value != SM_DELTA))
@@ -7526,7 +7526,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 							simmode_return_value = SM_DELTA;
 						}
 					}
-					else if ((phases & 0x07) == 0x07)
+					else if ((phases & PHASE_ABC) == PHASE_ABC)
 					{
 						//Determine if we're ready to exit or not
 						for(i = 0; i < 3; i++) {
@@ -7542,7 +7542,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 				else	//Additional iterations - basically just checks convergence
 				{
 					//Check phases
-					if ((phases & 0x10) == 0x10)
+					if ((phases & PHASE_S) == PHASE_S)
 					{
 						//Duplicate the "next stage" check -- only here if something forces us onward
 						if ((fabs(curr_state.ded[0]) <= inverter_convergence_criterion) && (fabs(curr_state.deq[0]) <= inverter_convergence_criterion) && (simmode_return_value != SM_DELTA))
@@ -7552,7 +7552,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 							simmode_return_value = SM_DELTA;
 						}
 					}
-					else if ((phases & 0x07) == 0x07)
+					else if ((phases & PHASE_ABC) == PHASE_ABC)
 					{
 						//Duplicate the "next stage" check -- only here if something forces us onward
 						for(i = 0; i < 3; i++) {
@@ -7575,7 +7575,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 				//Copy the values back
 				prev_PID_state = curr_PID_state;
 
-				if ((phases & 0x10) == 0x10)	//Triplex case
+				if ((phases & PHASE_S) == PHASE_S)	//Triplex case
 				{
 					//Update the references, just in case
 					curr_PID_state.phase_Pref = Pref;	//Real power setpoint
@@ -7603,7 +7603,7 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 			work_power_vals = gld::complex(curr_PID_state.phase_Pref,curr_PID_state.phase_Qref);
 
 			//Determine our path to update
-			if ((phases & 0x10) == 0x10)	//Triplex
+			if ((phases & PHASE_S) == PHASE_S)	//Triplex
 			{
 				if (value_Circuit_V[0].Mag() > 0.0)
 				{
@@ -7745,13 +7745,13 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 		{
 			if (four_quadrant_control_mode == FQM_VSI)	//VSI mode
 			{
-				if((phases & 0x10) == 0x10){
+				if((phases & PHASE_S) == PHASE_S){
 					value_IGenerated[0] = gld::complex(0.0,0.0);
 
 					//Zero the output trackers
 					I_Out[0] = gld::complex(0.0,0.0);
 				}
-				else if((phases & 0x07) == 0x07)
+				else if((phases & PHASE_ABC) == PHASE_ABC)
 				{
 					value_IGenerated[0] = gld::complex(0.0,0.0);
 					value_IGenerated[1] = gld::complex(0.0,0.0);
@@ -7763,12 +7763,12 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 			}
 			else	//Other modes
 			{
-				if((phases & 0x10) == 0x10){
+				if((phases & PHASE_S) == PHASE_S){
 					value_Line_unrotI[0] += I_Out[0];
 					
 					//Zero the output trackers
 					I_Out[0] = gld::complex(0.0,0.0);
-				} else if((phases & 0x07) == 0x07) {
+				} else if((phases & PHASE_ABC) == PHASE_ABC) {
 					value_Line_unrotI[0] += I_Out[0];
 					value_Line_unrotI[1] += I_Out[1];
 					value_Line_unrotI[2] += I_Out[2];
@@ -7780,14 +7780,14 @@ SIMULATIONMODE inverter::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 		}
 		else if (inverter_dyn_mode == PID_CONTROLLER)
 		{
-			if((phases & 0x10) == 0x10)
+			if((phases & PHASE_S) == PHASE_S)
 			{
 				value_Line_unrotI[0] -= last_current[3];
 
 				//Zero the output tracker
 				last_current[3] = gld::complex(0.0,0.0);
 			}
-			else if((phases & 0x07) == 0x07)
+			else if((phases & PHASE_ABC) == PHASE_ABC)
 			{
 				value_Line_unrotI[0] -= last_current[0];
 				value_Line_unrotI[1] -= last_current[1];
@@ -7855,9 +7855,9 @@ STATUS inverter::post_deltaupdate(gld::complex *useful_value, unsigned int mode_
 	if (inverter_dyn_mode == PI_CONTROLLER)
 	{
 		if (four_quadrant_control_mode != FQM_VSI) {
-			if((phases & 0x10) == 0x10){
+			if((phases & PHASE_S) == PHASE_S){
 				value_Line_unrotI[0] = I_Out[0];
-			} else if((phases & 0x07) == 0x07) {
+			} else if((phases & PHASE_ABC) == PHASE_ABC) {
 				value_Line_unrotI[0] = I_Out[0];
 				value_Line_unrotI[1] = I_Out[1];
 				value_Line_unrotI[2] = I_Out[2];
@@ -7878,9 +7878,9 @@ STATUS inverter::post_deltaupdate(gld::complex *useful_value, unsigned int mode_
 	}
 	else if (inverter_dyn_mode == PID_CONTROLLER)
 	{
-		if((phases & 0x10) == 0x10){
+		if((phases & PHASE_S) == PHASE_S){
 			value_Line_unrotI[0] -= last_current[3];
-		} else if((phases & 0x07) == 0x07) {
+		} else if((phases & PHASE_ABC) == PHASE_ABC) {
 			value_Line_unrotI[0] -= last_current[0];
 			value_Line_unrotI[1] -= last_current[1];
 			value_Line_unrotI[2] -= last_current[2];
@@ -7920,7 +7920,7 @@ STATUS inverter::init_PI_dynamics(INV_STATE *curr_time)
 	{
 		//Find the initial state of the inverter
 		//Find the initial error from a steady state modulation value
-		if((phases & 0x10) == 0x10) { //Single Phase
+		if((phases & PHASE_S) == PHASE_S) { //Single Phase
 			Pref = VA_Out.Re();
 			Pref0 = Pref;
 			prev_Idq[0] = last_I_Out[0];
@@ -7950,7 +7950,7 @@ STATUS inverter::init_PI_dynamics(INV_STATE *curr_time)
 				value_IGenerated[0] = -curr_time->Iac[0];
 			}
 
-		} else if((phases & 0x07) == 0x07) { // Three Phase
+		} else if((phases & PHASE_ABC) == PHASE_ABC) { // Three Phase
 			Pref = VA_Out.Re();
 			Qref = VA_Out.Im();
 			Pref0 = Pref;
@@ -7987,14 +7987,14 @@ STATUS inverter::init_PI_dynamics(INV_STATE *curr_time)
 		//Take care of the ramp rate items, if needed
 		if (checkRampRate_real || checkRampRate_reactive)
 		{
-			if ((phases & 0x10) == 0x10)
+			if ((phases & PHASE_S) == PHASE_S)
 			{
 				curr_VA_out[0] = value_Circuit_V[0] * ~(I_Out[0]);
 
 				//Initialize the old one too
 				prev_VA_out[0] = curr_VA_out[0];
 			}
-			else if ((phases & 0x07) == 0x07)
+			else if ((phases & PHASE_ABC) == PHASE_ABC)
 			{
 				curr_VA_out[0] = value_Circuit_V[0] * ~(I_Out[0]);
 				curr_VA_out[1] = value_Circuit_V[1] * ~(I_Out[1]);
@@ -8008,13 +8008,13 @@ STATUS inverter::init_PI_dynamics(INV_STATE *curr_time)
 		}
 
 		// Obtain original Qref values for each phase, so that each phase of voltage can be controlled seperately later
-		if((phases & 0x10) == 0x10) {
+		if((phases & PHASE_S) == PHASE_S) {
 			Qref0[0] = (value_Circuit_V[0] * ~(I_Out[0])).Im();
 			Qref_PI[0] = Qref0[0];
 			Qref_PI[1] = 0;
 			Qref_PI[2] = 0;
 		}
-		if((phases & 0x07) == 0x07) {
+		if((phases & PHASE_ABC) == PHASE_ABC) {
 			Qref0[0] = (value_Circuit_V[0] * ~(I_Out[0])).Im();
 			Qref0[1] = (value_Circuit_V[1] * ~(I_Out[1])).Im();
 			Qref0[2] = (value_Circuit_V[2] * ~(I_Out[2])).Im();
@@ -8034,11 +8034,11 @@ STATUS inverter::init_PI_dynamics(INV_STATE *curr_time)
 		}
 
 		// Set Voltage initial value for v/q droop if adopted
-		if((phases & 0x10) == 0x10) {
+		if((phases & PHASE_S) == PHASE_S) {
 			curr_time->V_mea_delayed[0] = value_Circuit_V[0].Mag();
 			V_ref[0] = value_Circuit_V[0].Mag();
 		}
-		if((phases & 0x07) == 0x07) {
+		if((phases & PHASE_ABC) == PHASE_ABC) {
 			curr_time->V_mea_delayed[0] = value_Circuit_V[0].Mag();
 			curr_time->V_mea_delayed[1] = value_Circuit_V[1].Mag();
 			curr_time->V_mea_delayed[2] = value_Circuit_V[2].Mag();
@@ -8048,7 +8048,7 @@ STATUS inverter::init_PI_dynamics(INV_STATE *curr_time)
 		}
 	}
 	else {
-		if((phases & 0x10) == 0x10) {
+		if((phases & PHASE_S) == PHASE_S) {
 			//Update output power
 			//Get current injected
 			temp_current_val[0] = value_IGenerated[0] - generator_admittance[0][0] * value_Circuit_V[0];
@@ -8082,7 +8082,7 @@ STATUS inverter::init_PI_dynamics(INV_STATE *curr_time)
 				curr_time->e_source_mag[0] = e_source[0].Mag();
 			}
 		}
-		if((phases & 0x07) == 0x07) {
+		if((phases & PHASE_ABC) == PHASE_ABC) {
 			//Update output power
 			//Get current injected
 			temp_current_val[0] = (value_IGenerated[0] - generator_admittance[0][0]*value_Circuit_V[0] - generator_admittance[0][1]*value_Circuit_V[1] - generator_admittance[0][2]*value_Circuit_V[2]);
@@ -8174,7 +8174,7 @@ STATUS inverter::init_PID_dynamics(void)
 	curr_PID_state.I_in = I_In;
 
 	//Check the phases to see how to populate
-	if ( (phases & 0x10) == 0x10 ) // split phase
+	if ( (phases & PHASE_S) == PHASE_S ) // split phase
 	{
 		//Copy in current set point
 		curr_PID_state.phase_Pref = VA_Out.Re();
@@ -8527,12 +8527,12 @@ void inverter::update_control_references(void)
 
 	// Update Qref for PI control mode if VA_outref is changed due to limitations
 	if (VA_changed) {
-		if((phases & 0x10) == 0x10) {
+		if((phases & PHASE_S) == PHASE_S) {
 			Qref_PI[0] = VA_Outref.Im();
 			Qref_PI[1] = 0;
 			Qref_PI[2] = 0;
 		}
-		if((phases & 0x07) == 0x07) {
+		if((phases & PHASE_ABC) == PHASE_ABC) {
 			Qref_PI[0] = VA_Outref.Im()/3;
 			Qref_PI[1] = VA_Outref.Im()/3;
 			Qref_PI[2] = VA_Outref.Im()/3;
@@ -9442,7 +9442,7 @@ STATUS inverter::updateCurrInjection(int64 iteration_count, bool *converged_fail
 		if ((four_quadrant_control_mode == FQM_VSI) && (checkRampRate_real || checkRampRate_reactive))
 		{
 			//See which one we are
-			if ((phases & 0x10) == 0x10)
+			if ((phases & PHASE_S) == PHASE_S)
 			{
 				prev_VA_out[0] = curr_VA_out[0];
 			}
@@ -9614,7 +9614,7 @@ STATUS inverter::updateCurrInjection(int64 iteration_count, bool *converged_fail
 	if ((four_quadrant_control_mode == FQM_VSI) && (checkRampRate_real || checkRampRate_reactive))
 	{
 		//See what our phasing condition is at
-		if ((phases & 0x10) == 0x10)	//Triplex
+		if ((phases & PHASE_S) == PHASE_S)	//Triplex
 		{
 			//Triplex isn't supported in VSI -- messes up the admittance formulation too much, so not allowed - error us
 			GL_THROW("inverter:%d - %s - VSI mode was attempted on a triplex-connected inverter! This is not permitted!",obj->id,(obj->name ? obj->name : "Unnamed"));

@@ -17,6 +17,36 @@
 #define INIT(A)
 #endif
 
+/* Define phase information - stolen from pwoerflow_object.h */
+#define NO_PHASE	0x0000		/**< no phase info */
+/* three phase configurations */
+#define PHASE_C		0x0001		/**< C phase connection */
+#define PHASE_B		0x0002		/**< B phase connection */
+#define PHASE_BC	0x0003		/**< BC phase connection - pre-ORed */
+#define PHASE_A		0x0004		/**< A phase connection */
+#define PHASE_AC	0x0005		/**< AC phase connection - pre-ORed */
+#define PHASE_AB	0x0006		/**< AB phase connection - pre-ORed */
+#define PHASE_ABC	0x0007		/**< three phases connection */
+#define PHASE_N		0x0008		/**< N phase connected */
+#define PHASE_CN	0x0009		/**< CN phase connection - pre-ORed */
+#define PHASE_BN	0x000A		/**< BN phase connection - pre-ORed */
+#define PHASE_BCN	0x000B		/**< BCN phase connection - pre-ORed */
+#define PHASE_AN	0x000C		/**< AN phase connection - pre-ORed */
+#define PHASE_ACN	0x000D		/**< ACN phase connection - pre-ORed */
+#define PHASE_ABN	0x000E		/**< ABN phase connection - pre-ORed */
+
+#define PHASE_ABCN	0x000F		/**< three phases neutral connection */
+/* split phase configurations */
+#define PHASE_S1	0x0010		/**< split line 1 connection */
+#define PHASE_S2	0x0020		/**< split line 2 connection */
+#define PHASE_SN	0x0040		/**< split line neutral connection */
+#define PHASE_S		0x0070		/**< Split phase connection */
+#define GROUND		0x0080		/**< ground line connection */
+/* delta configuration */
+#define PHASE_D		0x0100		/**< delta connection (requires ABCN) */
+/* phase info mask */
+#define PHASE_INFO	0x01FF		/**< all phase info */
+
 /* useful constants */
 #define RHOWATER	(62.4)			// lb/cf
 #define CFPGAL		(0.133681)		// cf/gal

@@ -246,7 +246,7 @@ public:
 
 	int NR_node_reference;		/// Node's reference in NR_busdata
 	int *NR_subnode_reference;	/// Pointer to parent node's reference in NR_busdata - just in case things get inited out of synch
-	unsigned char prev_phases;	/// Phase tracking variable for use in reliability calls
+	set prev_phases;	/// Phase tracking variable for use in reliability calls
 
 	inline bool is_split() {return (phases&PHASE_S)!=0;};
 public:

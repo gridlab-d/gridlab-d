@@ -674,7 +674,7 @@ int inverter_dyn::init(OBJECT *parent)
 			delete temp_property_pointer;
 
 			//Simple initial test - if we aren't three-phase, but are grid-forming, toss a warning
-			if (((phases & 0x07) != 0x07) && (control_mode == GRID_FORMING))
+			if (((phases & PHASE_ABC) != PHASE_ABC) && (control_mode == GRID_FORMING))
 			{
 				gl_warning("inverter_dyn:%s is in grid-forming mode, but is not a three-phase connection.  This is untested and may not behave properly.", obj->name ? obj->name : "unnamed");
 				/*  TROUBLESHOOT
@@ -755,7 +755,7 @@ int inverter_dyn::init(OBJECT *parent)
 			else if (gl_object_isa(tmp_obj, "meter", "powerflow") || gl_object_isa(tmp_obj, "node", "powerflow") || gl_object_isa(tmp_obj, "load", "powerflow"))
 			{
 				//See if we're three-phased
-				if ((phases & 0x07) == 0x07) //We are
+				if ((phases & PHASE_ABC) == PHASE_ABC) //We are
 				{
 					parent_is_a_meter = true;
 					parent_is_single_phase = false;
@@ -806,7 +806,7 @@ int inverter_dyn::init(OBJECT *parent)
 					pIGenerated[1] = nullptr;
 					pIGenerated[2] = nullptr;
 
-					if ((phases & 0x07) == 0x01) //A
+					if ((phases & PHASE_ABC) == PHASE_A) //A
 					{
 						//Map the various powerflow variables
 						pCircuit_V[0] = map_complex_value(tmp_obj, "voltage_A");
@@ -815,7 +815,7 @@ int inverter_dyn::init(OBJECT *parent)
 						pLine_unrotI[0] = map_complex_value(tmp_obj, "prerotated_current_A");
 						pIGenerated[0] = map_complex_value(tmp_obj, "deltamode_generator_current_A");
 					}
-					else if ((phases & 0x07) == 0x02) //B
+					else if ((phases & PHASE_ABC) == PHASE_B) //B
 					{
 						//Map the various powerflow variables
 						pCircuit_V[0] = map_complex_value(tmp_obj, "voltage_B");
@@ -824,7 +824,7 @@ int inverter_dyn::init(OBJECT *parent)
 						pLine_unrotI[0] = map_complex_value(tmp_obj, "prerotated_current_B");
 						pIGenerated[0] = map_complex_value(tmp_obj, "deltamode_generator_current_B");
 					}
-					else if ((phases & 0x07) == 0x04) //C
+					else if ((phases & PHASE_ABC) == PHASE_C) //C
 					{
 						//Map the various powerflow variables
 						pCircuit_V[0] = map_complex_value(tmp_obj, "voltage_C");
@@ -942,7 +942,7 @@ int inverter_dyn::init(OBJECT *parent)
 
 				V_base = node_nominal_voltage;
 
-				if ((phases & 0x07) == 0x07)
+				if ((phases & PHASE_ABC) == PHASE_ABC)
 				{
 					I_base = S_base / V_base / 3.0;
 					Z_base = (node_nominal_voltage * node_nominal_voltage) / (S_base / 3.0); // voltage is phase to ground voltage, S_base is three phase capacity
@@ -992,15 +992,15 @@ int inverter_dyn::init(OBJECT *parent)
 					generator_admittance[2][0] = generator_admittance[2][1] = generator_admittance[2][2] = gld::complex(0.0, 0.0);
 
 					//See which one we are, to figure out where to store the admittance
-					if ((phases & 0x10) == 0x10) //Triplex
+					if ((phases & PHASE_S) == PHASE_S) //Triplex
 					{
 						generator_admittance[0][0] = filter_admittance;
 					}
-					else if ((phases & 0x07) == 0x01) //A
+					else if ((phases & PHASE_ABC) == PHASE_A) //A
 					{
 						generator_admittance[0][0] = filter_admittance;
 					}
-					else if ((phases & 0x07) == 0x02) //B
+					else if ((phases & PHASE_ABC) == PHASE_B) //B
 					{
 						generator_admittance[1][1] = filter_admittance;
 					}
@@ -1235,7 +1235,7 @@ int inverter_dyn::init(OBJECT *parent)
 		*/
 
 		// Declare all 3 phases
-		phases = 0x07;
+		phases = PHASE_ABC;
 
 		//Powerflow values -- set defaults here -- sets up like three-phase connection - use rated kV, just because
 		//Set that magnitude
@@ -5644,7 +5644,7 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 
 		}
 		//  three-phase system
-		if ((phases & 0x07) == 0x07)
+		if ((phases & PHASE_ABC) == PHASE_ABC)
 		{
 
 			//Update output power
@@ -6433,7 +6433,7 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count,bool *converged_f
 			{
 				// **FT Note** Not sure what this code does.  Mapps are to value_circuit_V[0], which should already be 12
 				// //Special exception for triplex (since delta doesn't get updated inside the powerflow)
-				// if ((phases & 0x10) == 0x10)
+				// if ((phases & PHASE_S) == PHASE_S)
 				// {
 				// 	//Pull in other voltages
 				// 	temp_V1 = pCircuit_V[1]->get_complex();

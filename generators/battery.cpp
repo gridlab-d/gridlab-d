@@ -323,17 +323,17 @@ int battery::init(OBJECT *parent)
 				//Clear the temporary pointer
 				delete temp_property_pointer;
 
-				if ( (phases & 0x07) == 0x07 ){ // three phase
+				if ( (phases & PHASE_ABC) == PHASE_ABC ){ // three phase
 					number_of_phases_out = 3;
 				}
-				else if ( ((phases & 0x03) == 0x03) || ((phases & 0x05) == 0x05) || ((phases & 0x06) == 0x06) ){ // two-phase
+				else if ( ((phases & PHASE_AB) == PHASE_AB) || ((phases & PHASE_AC) == PHASE_AC) || ((phases & PHASE_BC) == PHASE_BC) ){ // two-phase
 					number_of_phases_out = 2;
 					GL_THROW("Battery %d: The battery can only be connected to a meter with all three phases. Please check parent meter's phases.",obj->id);
 					/* TROUBLESHOOT
 					The battery's parent is a meter. The battery can only operate correctly when the parent meter is a three-phase meter.
 					*/
 				}
-				else if ( ((phases & 0x01) == 0x01) || ((phases & 0x02) == 0x02) || ((phases & 0x04) == 0x04) ){ // single phase
+				else if ( ((phases & PHASE_A) == PHASE_A) || ((phases & PHASE_B) == PHASE_B) || ((phases & PHASE_C) == PHASE_C) ){ // single phase
 					number_of_phases_out = 1;
 					GL_THROW("Battery %d: The battery can only be connected to a meter with all three phases. Please check parent meter's phases.",obj->id);
 					/* TROUBLESHOOT
@@ -406,7 +406,7 @@ int battery::init(OBJECT *parent)
 				parent_is_inverter = true;
 
 				number_of_phases_out = 0;
-				phases = 0x00;
+				phases = NO_PHASE;
 
 				//Map up the two inverter variabes
 				pCircuit_V[0] = map_double_value(parent,"V_In");
@@ -440,7 +440,7 @@ int battery::init(OBJECT *parent)
 			parent_is_inverter = false;
 
 			number_of_phases_out = 3;
-			phases = 0x07;
+			phases = PHASE_ABC;
 
 			gl_warning("Battery:%d has no parent meter object defined; using static voltages", obj->id);
 
@@ -1149,7 +1149,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 					return TS_NEVER;
 				}
 			} //End three phase GM_POWER_DRIVEN and HYBRID
-			else if ( ((phases & 0x0010) == 0x0010) && (number_of_phases_out == 1) ) // Split-phase
+			else if ( ((phases & PHASE_S) == PHASE_S) && (number_of_phases_out == 1) ) // Split-phase
 			{
 				gld::complex volt;
 				TIMESTAMP dt,t_energy_limit;
@@ -1730,7 +1730,7 @@ TIMESTAMP battery::sync(TIMESTAMP t0, TIMESTAMP t1)
 					return TS_NEVER;
 				}
 			}// End 3-phase meter
-			else if ( ((phases & 0x0010) == 0x0010) && (number_of_phases_out == 1) ) // Split-phase
+			else if ( ((phases & PHASE_S) == PHASE_S) && (number_of_phases_out == 1) ) // Split-phase
 			{
 				gld::complex volt;
 				TIMESTAMP dt,t_energy_limit;
@@ -2172,7 +2172,7 @@ TIMESTAMP battery::postsync(TIMESTAMP t0, TIMESTAMP t1)
 			value_Line_I[1] = -last_current[1];
 			value_Line_I[2] = -last_current[2];
 		}
-		else if ( ((phases & 0x0010) == 0x0010) && (number_of_phases_out == 1) )
+		else if ( ((phases & PHASE_S) == PHASE_S) && (number_of_phases_out == 1) )
 		{
 			value_Line12 = -last_current[0];
 		}

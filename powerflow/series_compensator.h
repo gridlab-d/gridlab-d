@@ -83,7 +83,7 @@ public:
 	SIMULATIONMODE inter_deltaupdate_series_compensator(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 	void sercom_prePre_fxn(void);	//Functionalized "presync before link::presync" calls
 	void sercom_postPre_fxn(void);	//Functionalized "presync after link::presync" calls
-	int sercom_postPost_fxn(unsigned char pass_value, double deltat);	//Functionalized "postsync after link::postsync" calls
+	int sercom_postPost_fxn(unsigned int pass_value, double deltat);	//Functionalized "postsync after link::postsync" calls
 
 private:
 	gld_property *ToNode_voltage[3];	//Pointer for API to map to voltages to read

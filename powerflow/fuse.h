@@ -21,7 +21,7 @@ public:
 	typedef enum {NONE=0, EXPONENTIAL=1} MTTRDIST;
 
 	enumeration restore_dist_type;
-	unsigned char prev_full_status;	///Fully resolved status (ABC) - used for reliability and recalculation detection
+	set prev_full_status;	///Fully resolved status (ABC) - used for reliability and recalculation detection
 
 	int create(void);
 	int init(OBJECT *parent);
@@ -36,15 +36,15 @@ public:
 	
 	void fuse_change_status_function(void);
 	void set_fuse_full(char desired_status_A, char desired_status_B, char desired_status_C);	//Used to set individual phases - 0 = blown, 1 = good, 2 = don't care (retain current)
-	void set_fuse_full_reliability(unsigned char desired_status);
-	void set_fuse_faulted_phases(unsigned char desired_status);
+	void set_fuse_full_reliability(set desired_status);
+	void set_fuse_faulted_phases(set desired_status);
 	void fuse_sync_function(void);	//Functionalized since it exists in two spots - no sense having to update two pieces of code
 	OBJECT **get_object(OBJECT *obj, const char *name);	//Function to pull object property - reliability use
 
 	double current_limit;		//Current limit for fuses blowing
 
-	unsigned char phased_fuse_status;	//Used to track individual phase fuse status - mainly for reliability - use LSB - x0_XABC
-	unsigned char faulted_fuse_phases;	//Used for phase faulting tracking - mainly for reliabiilty - replicated NR functionality so FBS can use it later
+	set phased_fuse_status;	//Used to track individual phase fuse status - mainly for reliability - use LSB - x0_XABC
+	set faulted_fuse_phases;	//Used for phase faulting tracking - mainly for reliabiilty - replicated NR functionality so FBS can use it later
 	enumeration phase_A_state;
 	enumeration phase_B_state;
 	enumeration phase_C_state;
@@ -63,12 +63,12 @@ private:
 	void fuse_check(set phase_to_check, gld::complex *fcurr);
 };
 
-EXPORT int change_fuse_state(OBJECT *thisobj, unsigned char phase_change, bool state);
-EXPORT int fuse_reliability_operation(OBJECT *thisobj, unsigned char desired_phases);
+EXPORT int change_fuse_state(OBJECT *thisobj, set phase_change, bool state);
+EXPORT int fuse_reliability_operation(OBJECT *thisobj, set desired_phases);
 EXPORT int create_fault_fuse(OBJECT *thisobj, OBJECT **protect_obj, char *fault_type, int *implemented_fault, TIMESTAMP *repair_time);
 EXPORT int fix_fault_fuse(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name);
 EXPORT int clear_fault_fuse(OBJECT *thisobj, int *implemented_fault, char *imp_fault_name);
-EXPORT int fuse_fault_updates(OBJECT *thisobj, unsigned char restoration_phases);
+EXPORT int fuse_fault_updates(OBJECT *thisobj, set restoration_phases);
 
 #endif // FUSE_H
 /**@}**/

@@ -10,8 +10,8 @@
 
 typedef struct  {
 	int type;				///< bus type (0=PQ, 1=PV, 2=SWING, 3=SWING_PQ)
-	unsigned char phases;	///< Phases property - used for construction of matrices (skip bad entries) - [Split Phase | House present | To side of SPCT | Diff Phase Child | D | A | B | C]
-	unsigned char origphases;	///< Original phases property - follows same format - used to save what object's original capabilities
+	set phases;				///< Phases property - used for construction of matrices (skip bad entries)
+	set origphases;			///< Original phases property - follows same format - used to save what object's original capabilities
 	set *busflag;			///< Pointer to busflags property - mainly used for reliability checks
 	gld::complex *V;				///< bus voltage
 	gld::complex *S;				///< constant power
@@ -60,9 +60,9 @@ typedef struct {
 	gld::complex *Yto;			///< branch admittance of to side of link
 	gld::complex *YSfrom;		///< self admittance seen on from side
 	gld::complex *YSto;			///< self admittance seen on to side
-	unsigned char phases;	///< Phases property - used for construction of matrices
-	unsigned char origphases;	///< Original phases property - follows same format - used to save what object's original capabilities
-	unsigned char faultphases;	///< Flags for induced faults - used to prevent restoration of objects that should otherwise still be broken
+	set phases;					///< Phases property - used for construction of matrices
+	set origphases;				///< Original phases property - follows same format - used to save what object's original capabilities
+	set faultphases;			///< Flags for induced faults - used to prevent restoration of objects that should otherwise still be broken
 	int from;				///< index into bus data
 	int to;					///< index into bus data
 	int fault_link_below;    ///< index indicating next faulted link object below the current link object
