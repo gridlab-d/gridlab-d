@@ -37,7 +37,7 @@ public:
 	TIMESTAMP commit(TIMESTAMP,TIMESTAMP);
 	int prenotify(PROPERTY*,char*);
 	int postnotify(PROPERTY*,char*);
-	int finalize(void);
+	int finalize();
 	TIMESTAMP plc(TIMESTAMP);
 	int link(char *value);
 	int option(char *value);

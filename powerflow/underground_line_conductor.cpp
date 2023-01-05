@@ -7,24 +7,24 @@
 	@{
 **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
 using namespace std;
 
 #include "line.h"
 
-CLASS* underground_line_conductor::oclass = NULL;
-CLASS* underground_line_conductor::pclass = NULL;
+CLASS* underground_line_conductor::oclass = nullptr;
+CLASS* underground_line_conductor::pclass = nullptr;
 
 underground_line_conductor::underground_line_conductor(MODULE *mod) : powerflow_library(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		oclass = gl_register_class(mod,"underground_line_conductor",sizeof(underground_line_conductor),0x00);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class underground_line_conductor";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -174,7 +174,7 @@ EXPORT int create_underground_line_conductor(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(underground_line_conductor::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			underground_line_conductor *my = OBJECTDATA(*obj,underground_line_conductor);
 			gl_set_parent(*obj,parent);

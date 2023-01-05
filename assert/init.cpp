@@ -2,13 +2,14 @@
 	Copyright (C) 2008 Battelle Memorial Institute
 **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+
 #include "gridlabd.h"
 
-#include "assert.h"
+#include "gld_assert.h"
 #include "double_assert.h"
 #include "complex_assert.h"
 #include "enum_assert.h"

@@ -65,11 +65,12 @@
 
  @{
  **/
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
-#include <ctype.h>
+#include <cctype>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+
 #include "gridlabd.h"
 #include "solvers.h"
 #include "office.h"
@@ -93,7 +94,7 @@ office::office(MODULE *module)
 {
 	if (oclass==NULL)
 	{
-		oclass = gld_class::create(module,"office",sizeof(office),PC_PRETOPDOWN|PC_BOTTOMUP|PC_AUTOLOCK); 
+		oclass = gld_class::create(module,"office",sizeof(office),PC_PRETOPDOWN|PC_BOTTOMUP|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class office";
 		oclass->trl = TRL_DEMONSTRATED;
@@ -200,7 +201,7 @@ office::office(MODULE *module)
 			PT_double, "ACH", PADDR(zone.hvac.minimum_ach),
 
 			NULL)<1) throw("unable to publish properties in " __FILE__);
-    
+
 		memset(defaults,0,sizeof(office));
 
 		/* set default power factors */
@@ -390,7 +391,7 @@ int office::init(OBJECT *parent)
 
 	/* sanity check the initial values (no ticket) */
 	struct {
-		char *desc;
+		const char *desc;
 		bool test;
 	} map[] = {
 		/* list simple tests to be made on data (no ticket) */
@@ -763,11 +764,11 @@ double office::update_hvac()
 	if (Qactive!=0)
 		zone.hvac.enduse.power.SetPowerFactor(Qactive/cop/1000,zone.hvac.enduse.power_factor);
 	else
-		zone.hvac.enduse.power = complex(0,0);
+		zone.hvac.enduse.power = gld::complex(0,0);
 
 	/* add fan power */
 	if (Qvent!=0)
-		zone.hvac.enduse.power += complex(.1,-0.01)/1000 * zone.design.floor_area; /* ~ 1 W/sf */
+		zone.hvac.enduse.power += gld::complex(.1,-0.01)/1000 * zone.design.floor_area; /* ~ 1 W/sf */
 
 	zone.hvac.enduse.energy += zone.hvac.enduse.power; 
 	if (zone.hvac.enduse.power.Re()<0)

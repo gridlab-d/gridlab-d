@@ -1,10 +1,10 @@
 // $Id: init.cpp 1182 2008-12-22 22:08:36Z dchassin $
 //	Copyright (C) 2008 Battelle Memorial Institute
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "gridlabd.h"
 
@@ -42,6 +42,7 @@
 #include "impedance_dump.h"
 #include "vfd.h"
 #include "jsondump.h"
+#include "series_compensator.h"
 #include "performance_motor.h"
 #include "sync_check.h"
 #include "b2b_converter.h"
@@ -50,7 +51,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
 	if (!set_callback(fntable)) {
 		errno = EINVAL;
-		return NULL;
+		return nullptr;
 	}
 
 	/* exported globals */
@@ -71,6 +72,10 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 		PT_KEYWORD,"FBS",SM_FBS,
 		PT_KEYWORD,"GS",SM_GS,
 		PT_KEYWORD,"NR",SM_NR,
+		NULL);
+	gl_global_create("powerflow::NR_solver_algorithm",PT_enumeration,&NR_solver_algorithm,PT_DESCRIPTION,"Underlying algorithm for NR powerflow - TCIM or FPI",
+		PT_KEYWORD,"TCIM", NRM_TCIM,
+		PT_KEYWORD,"FPI", NRM_FPI,
 		NULL);
 	gl_global_create("powerflow::NR_matrix_file",PT_char256,&MDFileName,NULL);
 	gl_global_create("powerflow::NR_matrix_output_interval",PT_enumeration,&NRMatDumpMethod,
@@ -94,6 +99,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	gl_global_create("powerflow::enable_subsecond_models", PT_bool, &enable_subsecond_models,PT_DESCRIPTION,"Enable deltamode capabilities within the powerflow module",NULL);
 	gl_global_create("powerflow::all_powerflow_delta", PT_bool, &all_powerflow_delta,PT_DESCRIPTION,"Forces all powerflow objects that are capable to participate in deltamode",NULL);
 	gl_global_create("powerflow::deltamode_timestep", PT_double, &deltamode_timestep_publish,PT_UNITS,"ns",PT_DESCRIPTION,"Desired minimum timestep for deltamode-related simulations",NULL);
+	gl_global_create("powerflow::delta_initialize_iterations",PT_int32, &delta_initialize_iterations, PT_DESCRIPTION, "Extra iterations to perform on initial powerflow (when deltamode enabled) to help with initialization",NULL);
 	gl_global_create("powerflow::current_frequency",PT_double,&current_frequency,PT_UNITS,"Hz",PT_DESCRIPTION,"Current system-level frequency of the powerflow system",NULL);
 	gl_global_create("powerflow::master_frequency_update",PT_bool,&master_frequency_update,PT_DESCRIPTION,"Tracking variable to see if an object has become the system frequency updater",NULL);
 	gl_global_create("powerflow::enable_frequency_dependence",PT_bool,&enable_frequency_dependence,PT_DESCRIPTION,"Flag to enable frequency-based variations in impedance values of lines and loads",NULL);
@@ -114,16 +120,16 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	gl_global_create("powerflow::enable_mesh_fault_current",PT_bool,&enable_mesh_fault_current,PT_DESCRIPTION,"Flag to enable mesh-based fault current calculations",NULL);
 	gl_global_create("powerflow::market_price_name",PT_char1024,&market_price_name,PT_DESCRIPTION,"Market current price published variable name",NULL);
 
-	// register each object class by creating the default instance
-	new powerflow_object(module);
-	new powerflow_library(module);
-	new node(module);
-	new link_object(module);
-	new capacitor(module);
-	new fuse(module);
-	new meter(module);
-	new line(module);
-	new line_spacing(module);
+    // register each object class by creating the default instance
+    new powerflow_object(module);
+    new powerflow_library(module);
+    new node(module);
+    new link_object(module);
+    new capacitor(module);
+    new fuse(module);
+    new meter(module);
+    new line(module);
+    new line_spacing(module);
     new overhead_line(module);
     new underground_line(module);
     new overhead_line_conductor(module);
@@ -159,31 +165,32 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new impedance_dump(module);
 	new vfd(module);
 	new jsondump(module);
+	new series_compensator(module);
 	new performance_motor(module);
 	new sync_check(module);
 
-	/* always return the first class registered */
-	return node::oclass;
+    /* always return the first class registered */
+    return node::oclass;
 }
 
 //Call function for scheduling deltamode
 void schedule_deltamode_start(TIMESTAMP tstart)
 {
-	if (enable_subsecond_models == true)	//Make sure the overall mode is enabled
-	{
-		if ( (tstart<deltamode_starttime) && ((tstart-gl_globalclock)<0x7fffffff )) // cannot exceed 31 bit integer
-			deltamode_starttime = tstart;	//Smaller and valid, store it
+    if (enable_subsecond_models)    //Make sure the overall mode is enabled
+    {
+        if ((tstart < deltamode_starttime) && ((tstart - gl_globalclock) < 0x7fffffff)) // cannot exceed 31 bit integer
+            deltamode_starttime = tstart;    //Smaller and valid, store it
 	}
 	else
 	{
-		GL_THROW("powerflow: a call was made to deltamode functions, but subsecond models are not enabled!");
-		/*  TROUBLESHOOT
-		The schedule_deltamode_start function was called by an object when powerflow's overall enabled_subsecond_models
-		flag was not set.  The module-level flag indicates that no devices should use deltamode, but one made the call
-		to a deltamode function.  Please check the DELTAMODE flag on all objects.  If deltamode is desired,
-		please set the module-level enable_subsecond_models flag and try again.
-		*/
-	}
+        GL_THROW("powerflow: a call was made to deltamode functions, but subsecond models are not enabled!");
+        /*  TROUBLESHOOT
+        The schedule_deltamode_start function was called by an object when powerflow's overall enabled_subsecond_models
+        flag was not set.  The module-level flag indicates that no devices should use deltamode, but one made the call
+        to a deltamode function.  Please check the DELTAMODE flag on all objects.  If deltamode is desired,
+        please set the module-level enable_subsecond_models flag and try again.
+        */
+    }
 }
 
 //deltamode_desired function
@@ -196,7 +203,7 @@ EXPORT unsigned long deltamode_desired(int *flags)
 {
 	unsigned long dt_val;
 
-	if (enable_subsecond_models == true)	//Make sure we even want to run deltamode
+	if (enable_subsecond_models)	//Make sure we even want to run deltamode
 	{
 		//See if the value is worth storing, or irrelevant at this time
 		if ((deltamode_starttime>=gl_globalclock) && (deltamode_starttime<TS_NEVER))
@@ -228,7 +235,7 @@ EXPORT unsigned long deltamode_desired(int *flags)
 //detamode simulation stepsize
 EXPORT unsigned long preupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 {
-	if (enable_subsecond_models == true)
+	if (enable_subsecond_models)
 	{
 		if (deltamode_timestep_publish<=0.0)
 		{
@@ -270,13 +277,15 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 	int64 pf_result;
 	int64 simple_iter_test, limit_minus_one;
 	bool error_state;
-
+#ifdef GLD_USE_EIGEN
+    static auto NR_Solver = std::make_unique<NR_Solver_Eigen>();
+#endif
 	//Set up iteration variables
 	simple_iter_test = 0;
 	limit_minus_one = NR_delta_iteration_limit - 1;
 	error_state = false;
 
-	if (enable_subsecond_models == true)
+	if (enable_subsecond_models)
 	{
 		//See if this is the first instance -- if so, update the timestep (if in-rush enabled)
 		if (deltatimestep_running < 0.0)
@@ -295,7 +304,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 				//See if we're in service or not
 				if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
 				{
-					if (delta_functions[curr_object_number] != NULL)
+					if (delta_functions[curr_object_number] != nullptr)
 					{
 						//Try/catch for any GL_THROWs that may be called
 						try {
@@ -336,7 +345,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 			}
 
 			//Check for error states -- no sense trying to solve a powerflow if we're already angry
-			if ((error_state == true) || (function_status == SM_ERROR))
+			if (error_state || (function_status == SM_ERROR))
 			{
 				//Break out of this while
 				break;
@@ -347,8 +356,15 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 
 			//Put in try/catch, since GL_THROWs inside solver_nr tend to be a little upsetting
 			try {
-				//Call solver_nr
-				pf_result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, powerflow_type, NULL, &bad_computation);
+                //Call solver_nr
+#ifndef GLD_USE_EIGEN
+                pf_result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow,
+                                      powerflow_type, nullptr, &bad_computation);
+#else
+
+                pf_result = NR_Solver.solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow,
+                                      powerflow_type, nullptr, &bad_computation);;
+#endif
 			}
 			catch (const char *msg)
 			{
@@ -365,7 +381,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 			NR_admit_change = false;
 
 			//Check the status
-			if (bad_computation==true)
+			if (bad_computation)
 			{
 				gl_error("Newton-Raphson method is unable to converge the dynamic powerflow to a solution at this operation point");
 				/*  TROUBLESHOOT
@@ -388,7 +404,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 				error_state = true;
 				break;
 			}
-			else if (error_state == true)	//Some other, unspecified error
+			else if (error_state)	//Some other, unspecified error
 			{
 				break;	//Get out of the while loop
 			}
@@ -399,7 +415,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 				//See if we're in service or not
 				if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
 				{
-					if (delta_functions[curr_object_number] != NULL)
+					if (delta_functions[curr_object_number] != nullptr)
 					{
 						//Try/catch for any GL_THROWs that may be called
 						try {
@@ -458,7 +474,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 			}
 
 			//Check for error states -- blocks the reiteration if something was already angry
-			if ((error_state == true) || (function_status == SM_ERROR))
+			if (error_state || (function_status == SM_ERROR))
 			{
 				//Break out of this while
 				break;
@@ -475,15 +491,15 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 		}//End iteration while
 
 		//See if we got out here due to an error
-		if ((error_state == true) || (function_status == SM_ERROR))
+		if (error_state || (function_status == SM_ERROR))
 		{
 			return SM_ERROR;
 		}
 				
 		//Determine how to exit - event or delta driven
-		if (event_driven == false)
+		if (!event_driven)
 		{
-			if (delta_iter == true)
+			if (delta_iter)
 				return SM_DELTA_ITER;
 			else
 				return SM_DELTA;
@@ -506,7 +522,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 	int curr_object_number;
 	STATUS function_status;
 
-	if (enable_subsecond_models == true)
+	if (enable_subsecond_models)
 	{
 		//Final item of transitioning out is resetting the next timestep so a smaller one can take its place
 		deltamode_starttime = TS_NEVER;
@@ -536,7 +552,7 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 		for (curr_object_number=0; curr_object_number<pwr_object_count; curr_object_number++)
 		{
 			//See if it has a post-update function
-			if (post_delta_functions[curr_object_number] != NULL)
+			if (post_delta_functions[curr_object_number] != nullptr)
 			{
 				//See if we're in service or not
 				if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
@@ -599,7 +615,7 @@ EXPORT int check()
 {
 	/* check each link to make sure it has a node at either end */
 	FINDLIST *list = gl_find_objects(FL_NEW,FT_MODULE,SAME,"powerflow",NULL);
-	OBJECT *obj=NULL;
+	OBJECT *obj=nullptr;
 	int *nodemap,	/* nodemap marks where nodes are */
 		*linkmap,	/* linkmap counts the number of links to/from a given node */
 		*tomap;		/* counts the number of references to any given node */
@@ -608,14 +624,14 @@ EXPORT int check()
 	int queuef = 0, queueb = 0, queuect = 0;
 	int islandct = 0;
 
-	GLOBALVAR *gvroot = NULL;
-	PFLIST anchor, *tlist = NULL;
-	link_object **linklist = NULL,
-		 **linkqueue = NULL;
+	GLOBALVAR *gvroot = nullptr;
+	PFLIST anchor, *tlist = nullptr;
+	link_object **linklist = nullptr,
+		 **linkqueue = nullptr;
 
 	objct = gl_get_object_count();
-	anchor.ptr = NULL;
-	anchor.next = NULL;
+	anchor.ptr = nullptr;
+	anchor.next = nullptr;
 
 	nodemap = (int *)malloc((size_t)(objct*sizeof(int)));
 	linkmap = (int *)malloc((size_t)(objct*sizeof(int)));
@@ -637,12 +653,12 @@ EXPORT int check()
 			/* add to node map */
 			nodemap[obj->id]+=1;
 			/* if no parent, then add to anchor list */
-			if(obj->parent == NULL){
+			if(obj->parent == nullptr){
 				tlist = (PFLIST *)malloc(sizeof(PFLIST));
 				tlist->ptr = obj;
 				tlist->next = anchor.next;
 				anchor.next = tlist;
-				tlist = NULL;
+				tlist = nullptr;
 			}
 		}
 		else if (gl_object_isa(obj,"link"))
@@ -655,7 +671,7 @@ EXPORT int check()
 			/* count 'to' reference */
 			tomap[to->id]++;
 			/* check link connections */
-			if (from==NULL){
+			if (from==nullptr){
 				gl_error("link %s (%s:%d) from object is not specified", pLink->get_name(), pLink->oclass->name, pLink->get_id());
 				++errcount;
 			}
@@ -665,7 +681,7 @@ EXPORT int check()
 			} else { /* is a "from" and it isa(node) */
 				linkmap[from->id]++; /* mark that this node has a link from it */
 			}
-			if (to==NULL){
+			if (to==nullptr){
 				gl_error("link %s (%s:%d) to object is not specified", pLink->get_name(), pLink->oclass->name, pLink->get_id());
 				++errcount;
 			}
@@ -676,7 +692,7 @@ EXPORT int check()
 				linkmap[to->id]++; /* mark that this node has links to it */
 			}
 			/* add link to heap? */
-			if((from != NULL) && (to != NULL) && (linkmap[from->id] > 0) && (linkmap[to->id] > 0)){
+			if((from != nullptr) && (to != nullptr) && (linkmap[from->id] > 0) && (linkmap[to->id] > 0)){
 				linklist[queuect] = pLink;
 				queuect++;
 			}
@@ -731,9 +747,9 @@ EXPORT int check()
 
 	//queueb = 0;
 	//for(i = 0; i < queuect; ++i){
-	//	if(linklist[i] != NULL){ /* consume the next item */
+	//	if(linklist[i] != nullptr){ /* consume the next item */
 	//		linkqueue[queueb] = linklist[i];
-	//		linklist[i] = NULL;
+	//		linklist[i] = nullptr;
 	//		queueb++;
 	//	}
 	//	while(queuef < queueb){
@@ -741,10 +757,10 @@ EXPORT int check()
 	//		linkmap[linkqueue[queuef]->to->id] = linkmap[linkqueue[queuef]->from->id];
 	//		/* capture the adjacent nodes */
 	//		for(j = 0; j < queuect; ++j){
-	//			if(linklist[j] != NULL){
+	//			if(linklist[j] != nullptr){
 	//				if(linklist[j]->from->id == linkqueue[queuef]->to->id){
 	//					linkqueue[queueb] = linklist[j];
-	//					linklist[j] = NULL;
+	//					linklist[j] = nullptr;
 	//					++queueb;
 	//				}
 	//			}
@@ -761,15 +777,15 @@ EXPORT int check()
 	//		}
 	//	}
 	//	if(tomap[i] > 1){
-	//		FINDLIST *cow = gl_find_objects(FL_NEW,FT_ID,SAME,i,NULL);
-	//		OBJECT *moo = gl_find_next(cow, NULL);
+	//		FINDLIST *cow = gl_find_objects(FL_NEW,FT_ID,SAME,i,nullptr);
+	//		OBJECT *moo = gl_find_next(cow, nullptr);
 	//		char grass[64];
 	//		gl_output("object #%i, \'%s\', has more than one link feeding to it (this will diverge)", i, gl_name(moo, grass, 64));
 	//	}
 	//}
 	//gl_output("Found %i islands", islandct);
 	//tlist = anchor.next;
-	//while(tlist != NULL){
+	//while(tlist != nullptr){
 	//	PFLIST *tptr = tlist;
 	//	tlist = tptr->next;
 	//	free(tptr);
@@ -779,13 +795,13 @@ EXPORT int check()
 	 *	if the root node has been defined on the command line.
 	 *	-d3p988 */
 	gvroot = gl_global_find("powerflow::rootnode");
-	if(gvroot != NULL){
-		PFLIST *front=NULL, *back=NULL, *del=NULL; /* node queue */
+	if(gvroot != nullptr){
+		PFLIST *front=nullptr, *back=nullptr, *del=nullptr; /* node queue */
 		OBJECT *_node = gl_get_object((char *)gvroot->prop->addr);
-		OBJECT *_link = NULL;
+		OBJECT *_link = nullptr;
 		int *rankmap = (int *)malloc((size_t)(objct*sizeof(int)));
 		int bct = 0;
-		if(_node == NULL){
+		if(_node == nullptr){
 			gl_error("powerflow check(): Unable to do directionality check, root node name not found.");
 		} else {
 			gl_testmsg("Powerflow Check ~ Backward Links:");
@@ -795,12 +811,12 @@ EXPORT int check()
 		}
 		rankmap[_node->id] = 0;
 		front = (PFLIST *)malloc(sizeof(PFLIST));
-		front->next = NULL;
+		front->next = nullptr;
 		front->ptr = _node;
 		back = front;
-		while(front != NULL){
+		while(front != nullptr){
 			// find all links from the node
-			for(OBJECT *now=gl_find_next(list, NULL); now != NULL; now = gl_find_next(list, now)){
+			for(OBJECT *now=gl_find_next(list, NULL); now != nullptr; now = gl_find_next(list, now)){
 				link_object *l;
 				if(!gl_object_isa(now, "link"))
 					continue;
@@ -822,7 +838,7 @@ EXPORT int check()
 				}
 				// enqueue the "to" node
 				back->next = (PFLIST *)malloc(sizeof(PFLIST));
-				back->next->next = NULL;
+				back->next->next = nullptr;
 				//back->next->ptr = l->to;
 				back = back->next;
 				back->ptr = l->to;

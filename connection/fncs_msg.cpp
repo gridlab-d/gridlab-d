@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
-#include <complex.h>
+#include <gld_complex.h>
 
 #include "fncs_msg.h"
 
@@ -69,15 +69,15 @@ fncs_msg::fncs_msg(MODULE *module)
 		// TODO add published properties here
 		NULL)<1)
 			throw "connection/fncs_msg::fncs_msg(MODULE*): unable to publish properties of connection:fncs_msg";
-	if ( !gl_publish_loadmethod(oclass,"route",loadmethod_fncs_msg_route) )
+	if ( !gl_publish_loadmethod(oclass,"route",(int (*)(void*, char*))loadmethod_fncs_msg_route) )
 		throw "connection/fncs_msg::fncs_msg(MODULE*): unable to publish route method of connection:fncs_msg";
-	if ( !gl_publish_loadmethod(oclass,"option",loadmethod_fncs_msg_option) )
+	if ( !gl_publish_loadmethod(oclass,"option",(int (*)(void*, char*))loadmethod_fncs_msg_option) )
 		throw "connection/fncs_msg::fncs_msg(MODULE*): unable to publish option method of connection:fncs_msg";
-	if ( !gl_publish_loadmethod(oclass,"publish",loadmethod_fncs_msg_publish) )
+	if ( !gl_publish_loadmethod(oclass,"publish",(int (*)(void*, char*))loadmethod_fncs_msg_publish) )
 		throw "connection/fncs_msg::fncs_msg(MODULE*): unable to publish publish method of connection:fncs_msg";
-	if ( !gl_publish_loadmethod(oclass,"subscribe",loadmethod_fncs_msg_subscribe) )
+	if ( !gl_publish_loadmethod(oclass,"subscribe",(int (*)(void*, char*))loadmethod_fncs_msg_subscribe) )
 		throw "connection/fncs_msg::fncs_msg(MODULE*): unable to publish subscribe method of connection:fncs_msg";
-	if ( !gl_publish_loadmethod(oclass,"configure",loadmethod_fncs_msg_configure) )
+	if ( !gl_publish_loadmethod(oclass,"configure",(int (*)(void*, char*))loadmethod_fncs_msg_configure) )
 		throw "connection/fncs_msg::fncs_msg(MODULE*): unable to publish configure method of connection:fncs_msg";
 }
 
@@ -646,6 +646,7 @@ TIMESTAMP fncs_msg::sync(TIMESTAMP t1){
 		t2=t1+1;
 		return t2;
 	}
+	return TS_INVALID;
 }
 
 TIMESTAMP fncs_msg::postsync(TIMESTAMP t1){
@@ -913,7 +914,7 @@ int fncs_msg::finalize(){
 
 int fncs_msg::get_varmapindex(const char *name)
 {
-	char *varmapname[] = {"","allow","forbid","init","precommit","presync","sync","postsync","commit","prenotify","postnotify","finalize","plc","term"};
+	const char *varmapname[] = {"","allow","forbid","init","precommit","presync","sync","postsync","commit","prenotify","postnotify","finalize","plc","term"};
 	int n;
 	for ( n=1 ; n<14 ; n++ )
 	{
@@ -1489,6 +1490,7 @@ static char fncs_unhex(char h)
 		return h-'A'+10;
 	else if ( h>='a' && h<='f' )
 		return h-'a'+10;
+  else return '?';
 }
 
 static size_t fncs_to_hex(char *out, size_t max, const char *in, size_t len)

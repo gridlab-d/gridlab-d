@@ -8,9 +8,9 @@
 
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
+#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
 
 #include "gridlabd.h"
 #include "supervisory_control.h"
@@ -57,16 +57,16 @@ supervisory_control::supervisory_control(MODULE *module) {
 void supervisory_control::fetch_double(double **prop, char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
 	*prop = gl_get_double_by_name(parent, name);
-	if(*prop == NULL){
+	if(*prop == nullptr){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "supervisory_control:%i", hdr->id);
-		if(*name == 0)
+		if(*name == static_cast<char>(0))
 			sprintf(msg, "%s: supervisory_control unable to find property: name is NULL", namestr);
 		else
 			sprintf(msg, "%s: supervisory_control unable to find %s", namestr, name);
-		throw(msg);
+		throw(std::runtime_error(msg));
 	}
 }
 

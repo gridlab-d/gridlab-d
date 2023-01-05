@@ -3,6 +3,7 @@
  General purpose assert objects
 
  **/
+#ifdef HAVE_MYSQL
 
 #ifndef _DATABASE_H
 #define _DATABASE_H
@@ -141,3 +142,5 @@ EXTERN database *last_database INIT(NULL);
 #include "collector.h"
 
 #endif // _ASSERT_H
+
+#endif

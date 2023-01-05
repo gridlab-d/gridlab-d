@@ -10,27 +10,27 @@
 
 
 #include <stdarg.h>
-#include "generators.h"
-
 #include <vector>
 #include <string>
 #include <iostream>
 
-EXPORT STATUS windturb_dg_NR_current_injection_update(OBJECT *obj, int64 iteration_count);
+#include "generators.h"
+
+EXPORT STATUS windturb_dg_NR_current_injection_update(OBJECT *obj, int64 iteration_count, bool *converged_failure);
 
 class windturb_dg : public gld_object
 {
 private:
 	/* TODO: put private variables here */
-	complex AMx[3][3];			//Impedance matrix for Synchronous Generator
-	complex invAMx[3][3];		//Inverse of SG impedance matrix
-	complex IndTPMat[2][2];		//Induction Generator two port matrix
-	complex Vapu;				//Per unit voltage and current for Induction Generator at terminals
-	complex Vbpu;
-	complex Vcpu;
-	complex Iapu;
-	complex	Ibpu;
-	complex	Icpu;
+	gld::complex AMx[3][3];			//Impedance matrix for Synchronous Generator
+	gld::complex invAMx[3][3];		//Inverse of SG impedance matrix
+	gld::complex IndTPMat[2][2];		//Induction Generator two port matrix
+	gld::complex Vapu;				//Per unit voltage and current for Induction Generator at terminals
+	gld::complex Vbpu;
+	gld::complex Vcpu;
+	gld::complex Iapu;
+	gld::complex	Ibpu;
+	gld::complex	Icpu;
 	double air_dens;
 	double Ridealgas;
 	double Molar;
@@ -39,16 +39,17 @@ private:
 	gld_property *pCircuit_V[3];		//< pointer to the three voltages on three lines
 	gld_property *pLine_I[3];			//< pointer to the three current on three lines
 	gld_property *pLine12;			    //< pointer to line current 12, used in triplex metering
-	
-	int number_of_phases_out;           //Used to flag three phase or triplex parent
-	
-	complex value_Circuit_V[3];			//< value holder for voltage values
-	complex value_Line_I[3];			//< value holder for current values
-	complex value_Line12;               //< value holder for line current 12 in triplex metering
 
-	
+	int number_of_phases_out;           //Used to flag three phase or triplex parent
+
+	gld::complex value_Circuit_V[3];			//< value holder for voltage values
+	gld::complex value_Line_I[3];			//< value holder for current values
+	gld::complex value_Line12;               //< value holder for line current 12 in triplex metering
+
+
 	bool parent_is_valid;				//< Flag to pointers
 	bool parent_is_triplex;
+	bool parent_is_inverter;
 	
 	double Power_Curve[2][100];  //Look-up table carrying power curve values. Maximum points limited to 100. Equals default (defined in .cpp) or user defined power curve 
 	int number_of_points;
@@ -66,8 +67,12 @@ private:
 	complex prev_current[3];
 	bool NR_first_run;
 	double internal_model_current_convergence;	//Variable to set convergence/reiteration context (for normal executions)
-	
+
 	complex prev_current12;
+	
+	//Inverter connections
+	gld_property *inverter_power_property;
+	gld_property *inverter_flag_property;
 	
 protected:
 	/* TODO: put unpublished but inherited variables */
@@ -76,9 +81,9 @@ public:
 	/* TODO: put published variables here */
 	set phases;	/**< device phases (see PHASE codes) */
 
-	complex power_A;//power
-	complex power_B;
-	complex power_C;
+	gld::complex power_A;//power
+	gld::complex power_B;
+	gld::complex power_C;
 
 	enum {OFFLINE=1, ONLINE};
 	enumeration Gen_status;
@@ -90,11 +95,11 @@ public:
 	enumeration Turbine_Model;
 	enum {GENERAL_LARGE, GENERAL_MID,GENERAL_SMALL,MANUF_TABLE, CALCULATED, USER_SPECIFY};
 	enumeration CP_Data;
-	enum {POWER_CURVE=1, COEFF_OF_PERFORMANCE}; 
+	enum {POWER_CURVE=1, COEFF_OF_PERFORMANCE};
 	enumeration Turbine_implementation;
 	enum {DEFAULT=1, BUILT_IN, WIND_SPEED, CLIMATE_DATA};
 	enumeration Wind_speed_source;
-	
+
 	double blade_diam;
 	double turbine_height;
 	double roughness_l;
@@ -119,12 +124,12 @@ public:
 
 	unsigned int *n;
 
-	complex voltage_A;			//terminal voltage
-	complex voltage_B;
-	complex voltage_C;
-	complex current_A;			//terminal current
-	complex current_B;
-	complex current_C;
+	gld::complex voltage_A;			//terminal voltage
+	gld::complex voltage_B;
+	gld::complex voltage_C;
+	gld::complex current_A;			//terminal current
+	gld::complex current_B;
+	gld::complex current_C;
 
 	double TotalRealPow;		//Real power supplied by generator - used for testing
 	double TotalReacPow;		//Reactive power supplied - used for testing
@@ -135,9 +140,9 @@ public:
 	double Wind_Speed;
 	
 	//Synchronous Generator
-	complex EfA;				// induced voltage on phase A in V
-	complex EfB;				// |
-	complex EfC;				// |
+	gld::complex EfA;				// induced voltage on phase A in V
+	gld::complex EfB;				// |
+	gld::complex EfC;				// |
 	double Rs;					// internal transient resistance in p.u.
 	double Xs;					// internal transient impedance in p.u.
     double Rg;					// grounding resistance in p.u.
@@ -151,12 +156,12 @@ public:
 	double pf;					// desired power factor - TO DO: implement later use with controller
 
 	//Induction Generator
-	complex Vrotor_A;			// induced "rotor" voltage in pu
-	complex Vrotor_B;			// |
-	complex Vrotor_C;			// |
-	complex Irotor_A;			// "rotor" current generated in pu
-	complex Irotor_B;			// |
-	complex Irotor_C;			// |
+	gld::complex Vrotor_A;			// induced "rotor" voltage in pu
+	gld::complex Vrotor_B;			// |
+	gld::complex Vrotor_C;			// |
+	gld::complex Irotor_A;			// "rotor" current generated in pu
+	gld::complex Irotor_B;			// |
+	gld::complex Irotor_C;			// |
 	double Rst;					// stator internal impedance in p.u.
 	double Xst;					// |
 	double Rr;					// rotor internal impedance in p.u.
@@ -165,7 +170,7 @@ public:
 	double Xm;					// |
 	double Max_Vrotor;			// maximum induced voltage in p.u., e.g. 1.2
     double Min_Vrotor;			// minimum induced voltage in p.u., e.g. 0.8
-	
+
 	char power_curve_csv[1024]; // name of csv file containing the power curve
 	bool power_curve_pu;		// Flag when set indicates that user provided power curve has power values in pu. Defaults to false in .cpp
 
@@ -178,14 +183,16 @@ public:
 	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
-	
+
 	void compute_current_injection(void);
 	void compute_current_injection_pc(void);
-	STATUS updateCurrInjection(int64 iteration_count);
+	void compute_power_injection_pc(void);
+	STATUS updateCurrInjection(int64 iteration_count, bool *converged_failure);
 
-	gld_property *map_complex_value(OBJECT *obj, char *name);
-	gld_property *map_double_value(OBJECT *obj, char *name);
+	gld_property *map_complex_value(OBJECT *obj, const char *name);
+	gld_property *map_double_value(OBJECT *obj, const char *name);
 	void push_complex_powerflow_values(void);
+	void push_complex_power_values(gld::complex inv_P);
 	
 	std::vector<std::string> readCSVRow(const std::string &row);
 	std::vector<std::vector<std::string>> readCSV(std::istream &in);

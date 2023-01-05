@@ -81,6 +81,7 @@ typedef struct s_transform {
 			double *y; ///< y vector
 			double *x; ///< x vector
 			TIMESTAMP t2; ///< next sample time
+			double t2_dbl;	///< next sample time for deltamode simulations
 		};
 	};
 	struct s_transform *next; ///* next item in linked list
@@ -90,11 +91,11 @@ typedef struct s_transform {
 extern "C" {
 #endif
 
-int transform_add_external(struct s_object_list *target_obj, struct s_property_map *target_prop, char *function, struct s_object_list *source_obj, struct s_property_map *source_prop);
+int transform_add_external(struct s_object_list *target_obj, struct s_property_map *target_prop, const char *function, struct s_object_list *source_obj, struct s_property_map *source_prop);
 int transform_add_linear(TRANSFORMSOURCE stype, double *source, void *target, double scale, double bias, struct s_object_list *obj, struct s_property_map *prop, SCHEDULE *s);
 TRANSFORM *transform_getnext(TRANSFORM *xform);
-TIMESTAMP transform_syncall(TIMESTAMP t, TRANSFORMSOURCE source);
-int64 transform_apply(TIMESTAMP t1, TRANSFORM *xform, double *source);
+TIMESTAMP transform_syncall(TIMESTAMP t, TRANSFORMSOURCE source, double *t1_dbl);
+int64 transform_apply(TIMESTAMP t1, TRANSFORM *xform, double *source, double *dm_time);
 
 GLDVAR *gldvar_create(unsigned int dim);
 int gldvar_isset(GLDVAR *var, unsigned int n);

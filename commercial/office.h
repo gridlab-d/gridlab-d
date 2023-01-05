@@ -16,12 +16,12 @@ class multizone;
 /* each electric load must have an enduse member */
 typedef struct s_endusex {
 	double power_factor;		/**< ENDUSE power factor */
-	complex energy;				/**< ENDUSE cumulative energy (Wh) */
-	complex power;				/**< ENDUSE power (W) */
-	complex demand;				/**< ENDUSE peak power demand (W) */
-	complex constant_power;		/**< ENDUSE constant power part*/
-	complex constant_current;	/**< ENDUSE constant current part*/
-	complex constant_admittance;	/**< ENDUSE addmittance part*/
+	gld::complex energy;				/**< ENDUSE cumulative energy (Wh) */
+	gld::complex power;				/**< ENDUSE power (W) */
+	gld::complex demand;				/**< ENDUSE peak power demand (W) */
+	gld::complex constant_power;		/**< ENDUSE constant power part*/
+	gld::complex constant_current;	/**< ENDUSE constant current part*/
+	gld::complex constant_admittance;	/**< ENDUSE addmittance part*/
 	double heatgain;
 	double heatgain_fraction;
 } ENDUSE;
@@ -138,8 +138,8 @@ public:
 #define CLR_OCCUPIED(D,H) (occupied[H]&=~(1<<D))
 #define IS_OCCUPIED(D,H) ((occupied[H]&(1<<D))?1:0)
 	char occupied[24];		/**< internal bitmap buffer for occupancy schedule */
-	complex *pVoltage;
-	complex *pCurrent;
+	gld::complex *pVoltage;
+	gld::complex *pCurrent;
 private:
 	double TcoolOn, TcoolOff; // hvac cooling on, off temperature [degF]
 	double TheatOn, TheatOff; // hvac heating on, off temperature [degF]

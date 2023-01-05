@@ -2,26 +2,27 @@
 	Copyright (C) 2019 Battelle Memorial Institute
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+
 #include "evcharger_det.h"
 
 //////////////////////////////////////////////////////////////////////////
 // evcharger_det CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* evcharger_det::oclass = NULL;
-CLASS* evcharger_det::pclass = NULL;
+CLASS* evcharger_det::oclass = nullptr;
+CLASS* evcharger_det::pclass = nullptr;
 
 evcharger_det::evcharger_det(MODULE *module) : residential_enduse(module)
 {
 	// first time init
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		oclass = gl_register_class(module,"evcharger_det",sizeof(evcharger_det),PC_BOTTOMUP|PC_POSTTOPDOWN);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class evcharger_det";
 
 		// publish the class properties
@@ -91,10 +92,10 @@ evcharger_det::evcharger_det(MODULE *module) : residential_enduse(module)
 
 			PT_double, "J2894_outage_disconnect_interval[s]", PADDR(J2894_off_threshold), PT_DESCRIPTION, "J2894-suggested outage length, when criterion has been exceeded",
 
-			NULL)<1) 
+			nullptr)<1)
 			GL_THROW("unable to publish properties in %s",__FILE__);
 
-			if (gl_publish_function(oclass,	"interupdate_res_object", (FUNCTIONADDR)interupdate_evcharger_det)==NULL)
+			if (gl_publish_function(oclass,	"interupdate_res_object", (FUNCTIONADDR)interupdate_evcharger_det)==nullptr)
 				GL_THROW("Unable to publish evcharger_det deltamode function");
 	}
 }
@@ -108,8 +109,8 @@ int evcharger_det::create()
 	RealizedChargeRate = 0.0;			//Starts off
 	load.power_factor = 0.99;	//Based on Brusa NLG5 specifications
 	load.heatgain_fraction = 0.0;	//Assumed to be "in the garage" or outside - so not contributing to internal heat gains
-	
-	load.shape = NULL;		//No loadshape - forces it to use direct updates
+
+	load.shape = nullptr;		//No loadshape - forces it to use direct updates
 
 	//Set the enduse properties, even though we're just using them as placeholder
 	load.power_fraction = 1.0;
@@ -190,7 +191,7 @@ int evcharger_det::create()
 
 int evcharger_det::init(OBJECT *parent)
 {
-	if(parent != NULL){
+	if(parent != nullptr){
 		if((parent->flags & OF_INIT) != OF_INIT){
 			char objname[256];
 			gl_verbose("evcharger_det::init(): deferring initialization on %s", gl_name(parent, objname, 255));
@@ -213,9 +214,9 @@ int evcharger_det::init(OBJECT *parent)
 	gld_property *temp_property;
 	gld_wlock *test_rlock;
 	int32 temp_int_val;
-	
+
 	//Map the minimum timestep
-	temp_property = NULL;
+	temp_property = nullptr;
 
 	//Get linking to checker variable
 	temp_property = new gld_property("minimum_timestep");
@@ -328,7 +329,7 @@ int evcharger_det::init(OBJECT *parent)
 			FPTemp = fopen(NHTSDataFile,"rt");
 
 			//Make sure it worked
-			if (FPTemp == NULL)
+			if (FPTemp == nullptr)
 			{
 				gl_warning("NHTS data file not found, using defaults");
 				/*  TROUBLESHOOT
@@ -1120,7 +1121,7 @@ TIMESTAMP evcharger_det::sync(TIMESTAMP t0, TIMESTAMP t1)
 		//Overall call -- only do this on the first run
 		if (deltamode_registered == false)
 		{
-			if ((res_object_current == -1) && (delta_objects==NULL) && (enable_subsecond_models==true))
+			if ((res_object_current == -1) && (delta_objects==nullptr) && (enable_subsecond_models==true))
 			{
 				//Call the allocation routine
 				allocate_deltamode_arrays();
@@ -1144,7 +1145,7 @@ TIMESTAMP evcharger_det::sync(TIMESTAMP t0, TIMESTAMP t1)
 			delta_functions[res_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"interupdate_res_object"));
 
 			//Make sure it worked
-			if (delta_functions[res_object_current] == NULL)
+			if (delta_functions[res_object_current] == nullptr)
 			{
 				GL_THROW("Failure to map deltamode function for device:%s",obj->name);
 				/*  TROUBLESHOOT
@@ -1155,7 +1156,7 @@ TIMESTAMP evcharger_det::sync(TIMESTAMP t0, TIMESTAMP t1)
 			}
 
 			// Populate post-delta
-			post_delta_functions[res_object_current] = NULL;
+			post_delta_functions[res_object_current] = nullptr;
 
 			//Update pointer
 			res_object_current++;
@@ -1185,7 +1186,7 @@ TIMESTAMP evcharger_det::sync(TIMESTAMP t0, TIMESTAMP t1)
 		//Do some initial checks to set a return value
 		if (t_J2894_ret_dbl < 0.0)	//Inifinite, so no check
 		{
-			t_J2894_ret_dbl = TSNVRDBL;
+			t_J2894_ret_dbl = TS_NEVER_DBL;
 		}
 		else if (t_J2894_ret_dbl == 0.0)	//Trip now!
 		{
@@ -1198,22 +1199,22 @@ TIMESTAMP evcharger_det::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 	else	//Not enabled
 	{
-		t_J2894_ret_dbl = TSNVRDBL;	//Just return never
+		t_J2894_ret_dbl = TS_NEVER_DBL;	//Just return never
 	}
-	
+
 	//Pull the next state transition
 	tret_dbl = sync_ev_function(t1_dbl);
 
 	//Check see what the proper return time should be
-	if ((tret_dbl == TSNVRDBL) && (t_J2894_ret_dbl == TSNVRDBL))
+	if ((tret_dbl == TS_NEVER_DBL) && (t_J2894_ret_dbl == TS_NEVER_DBL))
 	{
 		tret = TS_NEVER;
 	}
-	else if ((tret_dbl == TSNVRDBL) && (t_J2894_ret_dbl != TSNVRDBL))
+	else if ((tret_dbl == TS_NEVER_DBL) && (t_J2894_ret_dbl != TS_NEVER_DBL))
 	{
 		tret = (TIMESTAMP)t_J2894_ret_dbl;
 	}
-	else if ((tret_dbl != TSNVRDBL) && (t_J2894_ret_dbl == TSNVRDBL))
+	else if ((tret_dbl != TS_NEVER_DBL) && (t_J2894_ret_dbl == TS_NEVER_DBL))
 	{
 		tret = (TIMESTAMP)tret_dbl;
 	}
@@ -1309,7 +1310,7 @@ double evcharger_det::sync_ev_function(double curr_time_dbl)
 	OBJECT *obj = OBJECTHDR(this);
 	double temp_double, charge_out_percent, ramp_temp, ramp_time, temp_voltage;
 	complex temp_current_value, temp_current_calc;
-	complex temp_complex;
+	gld::complex temp_complex;
 	complex actual_power_value;
 	double tdiff;
 	bool in_deltamode;
@@ -1325,7 +1326,7 @@ double evcharger_det::sync_ev_function(double curr_time_dbl)
 	{
 		in_deltamode = true;	//deltamode
 	}
-	
+
 	//Only perform an action if the time has changed
 	if (prev_time_dbl != curr_time_dbl)
 	{
@@ -1474,7 +1475,7 @@ double evcharger_det::sync_ev_function(double curr_time_dbl)
 					RealizedChargeRate = actual_power_value.Re();
 
 					//Update battery capacity with "last time's worth" of charge
-					temp_double = tdiff / 3600.0 * RealizedChargeRate * CarInformation.ChargeEfficiency;	//Convert to kWh 
+					temp_double = tdiff / 3600.0 * RealizedChargeRate * CarInformation.ChargeEfficiency;	//Convert to kWh
 
 					//Accumulate it
 					CarInformation.battery_capacity += temp_double;
@@ -1814,7 +1815,7 @@ double evcharger_det::sync_ev_function(double curr_time_dbl)
 						//No limit
 						ActualChargeRate = DesiredChargeRate;
 					}
-					
+
 					//Update our state change time
 					if ((variation_std_dev > 0.0) || (variation_mean != 0.0))	//Some shiftiness?
 					{
@@ -1957,7 +1958,7 @@ double evcharger_det::check_J2894_values(double diff_time, double tstep_value, b
 	J2894_high_time_to_change_vals[0] = J2894_high_time_to_change_vals[1] = 0.0;
 	J2894_low_time_to_change_vals[0] = J2894_low_time_to_change_vals[1] = 0.0;
 	J2894_off_time_to_change = 0.0;
-	
+
 	//See if we're even enabled - if not, skip this part
 	if (ev_charger_enabled_state == true)
 	{
@@ -2003,7 +2004,7 @@ double evcharger_det::check_J2894_values(double diff_time, double tstep_value, b
 				J2894_voltage_high_state[1] = false;
 				J2894_high_time_to_change_vals[1] = 99999999.0;
 			}
-			
+
 			//Zero the low thresholds - by definition, they can't apply here
 			J2894_voltage_low_accumulators[0] = J2894_voltage_low_accumulators[1] = 0.0;
 			J2894_voltage_low_state[0] = J2894_voltage_low_state[1] = false;
@@ -2090,7 +2091,7 @@ double evcharger_det::check_J2894_values(double diff_time, double tstep_value, b
 				J2894_voltage_low_state[0] = false;
 				J2894_low_time_to_change_vals[0] = 99999999.0;
 			}
-			
+
 			//See if we're in the middle tier
 			if ((load.voltage_factor >= J2894_voltage_low_threshold_values[1][0]) && (load.voltage_factor < 0.9))
 			{
@@ -2104,7 +2105,7 @@ double evcharger_det::check_J2894_values(double diff_time, double tstep_value, b
 				J2894_voltage_low_state[1] = false;
 				J2894_low_time_to_change_vals[1] = 99999999.0;
 			}
-			
+
 			//Zero the high thresholds - by definition, they can't apply here
 			J2894_voltage_high_accumulators[0] = J2894_voltage_high_accumulators[1] = 0.0;
 			J2894_voltage_high_state[0] = J2894_voltage_high_state[1] = false;
@@ -2136,7 +2137,7 @@ double evcharger_det::check_J2894_values(double diff_time, double tstep_value, b
 					//Flag the flooring
 					*floored_trip = true;
 
-					//Nothing else -- maintain 
+					//Nothing else -- maintain
 				}
 				else	//Let it go
 				{
@@ -2311,7 +2312,7 @@ EXPORT int create_evcharger_det(OBJECT **obj, OBJECT *parent)
 	{
 		*obj = gl_create_object(evcharger_det::oclass);
 
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			evcharger_det *my = OBJECTDATA(*obj,evcharger_det);
 			gl_set_parent(*obj,parent);
@@ -2349,7 +2350,7 @@ EXPORT TIMESTAMP sync_evcharger_det(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 	try {
 		evcharger_det *my = OBJECTDATA(obj, evcharger_det);
 		t1 = TS_NEVER;
-		switch (pass) 
+		switch (pass)
 		{
 		case PC_PRETOPDOWN:
 			break;
@@ -2365,7 +2366,7 @@ EXPORT TIMESTAMP sync_evcharger_det(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 			t1 = TS_INVALID; // serious error in exec.c
 		}
 		return t1;
-	} 
+	}
 	SYNC_CATCHALL(evcharger_det);
 }
 

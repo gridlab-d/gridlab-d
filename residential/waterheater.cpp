@@ -20,25 +20,6 @@
  **/
 #include "waterheater.h"
 
-#include <cstdlib>
-#include <cstdio>
-#include <cerrno>
-#include <cmath>
-
-#include <chrono>
-#include <iostream>
-#include <exception>
-#include <algorithm>
-#include <limits>
-#include <sstream>
-#include <string>
-#include <fstream>
-#include <memory>
-
-using std::stringstream;
-using std::ofstream;
-using std::string;
-
 #define TSTAT_PRECISION 0.01
 #define HEIGHT_PRECISION 0.01
 /*
@@ -130,6 +111,7 @@ waterheater::waterheater(MODULE *module) : residential_enduse(module){
 			PT_enumeration,"location",PADDR(location), PT_DESCRIPTION, "whether the water heater is inside or outside",
 				PT_KEYWORD,"INSIDE",(enumeration)INSIDE,
 				PT_KEYWORD,"GARAGE",(enumeration)GARAGE,
+			PT_double,"heatpump_predicted_energy[Wh]",PADDR(energytake), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Amount of energy heat pump predicts to need to reach setpoint - energy increases as water temperature decreases",
 			PT_double,"tank_setpoint[degF]",PADDR(tank_setpoint), PT_DESCRIPTION, "the temperature around which the water heater will heat its contents",
 			PT_double,"thermostat_deadband[degF]",PADDR(thermostat_deadband), PT_DESCRIPTION, "the degree to heat the water tank, when needed",
 			PT_double,"temperature[degF]",PADDR(Tw), PT_DESCRIPTION, "the outlet temperature of the water tank",
@@ -200,7 +182,7 @@ int waterheater::create()
 	Tinlet = 60.0;		// default set here, but published by the model for users to set this value
 	water_demand = 0.0;	// in gpm
 	heating_element_capacity = 0.0;
-	heat_needed = FALSE;
+	heat_needed = false;
 	location = GARAGE;
 	heat_mode = ELECTRIC;
 	tank_setpoint = 0.0;
@@ -247,6 +229,14 @@ int waterheater::create()
 	gas_fan_power = -1.0;
 	gas_standby_power = -1.0;
 
+	// Heat Pump water heater 
+	energytake = 0.0;
+	compressor_max_threshold = 2000; // Heating element replaces compressor when EnergyTake hits this threshold
+	compressor_min_threshold = ((thermostat_deadband/2) * 2.44 * tank_volume); // Compressor turns on when it hits this threshold
+	heating_element_min_threshold = 1100; // compressor replaces heating element when it hits this threshold.
+	interval = 0;
+	// =================================
+	
 	dr_signal = 1;
 	return res;
 	last_water_demand = -1.0;
@@ -800,9 +790,9 @@ void waterheater::thermostat(TIMESTAMP t0, TIMESTAMP t1){
 	switch(tank_status){
 		case FULL:
 			if(Tw-TSTAT_PRECISION < Ton){
-				heat_needed = TRUE;
+				heat_needed = true;
 			} else if (Tw+TSTAT_PRECISION > Toff){
-				heat_needed = FALSE;
+				heat_needed = false;
 			} else {
 				; // no change
 			}
@@ -810,18 +800,18 @@ void waterheater::thermostat(TIMESTAMP t0, TIMESTAMP t1){
 		case PARTIAL:
 			if (heat_mode == HEAT_PUMP) {
 				if(Tcontrol-TSTAT_PRECISION < Ton){
-					heat_needed = TRUE;
+					heat_needed = true;
 				} else if (Tcontrol+TSTAT_PRECISION > Toff){
-					heat_needed = FALSE;
+					heat_needed = false;
 				} else {
 					; // no change
 				}
 			} else {
-				heat_needed = TRUE; // if we aren't full, fill 'er up!
+				heat_needed = true; // if we aren't full, fill 'er up!
 			}
 			break;
 		case EMPTY:
-			heat_needed = TRUE; // if we aren't full, fill 'er up!
+			heat_needed = true; // if we aren't full, fill 'er up!
 			break;
 		default:
 			GL_THROW("waterheater thermostat() detected that the water heater tank is in an unknown state");
@@ -875,9 +865,9 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 		control_switch_1 = control_lower[idx];
 		control_switch_2 = control_upper[idx];
 		if(control_upper[idx] == 1.0 || control_lower[idx] == 1.0) {
-			heat_needed = TRUE;
+			heat_needed = true;
 		} else {
-			heat_needed = FALSE;
+			heat_needed = false;
 		}
 	}
 	if(current_model != FORTRAN && current_model != MULTILAYER){
@@ -964,6 +954,98 @@ TIMESTAMP waterheater::presync(TIMESTAMP t0, TIMESTAMP t1){
 /** Water heater synchronization determines the time to next
 	synchronization state and the power drawn since last synch
  **/
+
+void waterheater::sync_energytake()
+{
+	double energy_increment_value;
+	double Tw_temp;
+	/*
+	Some information about Energytake that might help whoever tries to update or work in the code in the future.
+
+	EnergyTake is the amount of energy that the HPWH would need to consume to heat the water in the tank to the temperature set-point.
+	When HPWH is in idle mode (losing heat over time), energytake increases. Further, energytake drops significantly if a water draw occurs.
+	*/
+
+	
+	/*
+	* idle losses calc
+			* ET as function of TIME
+			- use when (in sync?): Toff > Tw_hp >= Ton
+	*/
+
+	/* Model created by Portland State - Midrar Adham submitted under PR #1355 */
+	actual_kW();
+	
+
+	if (interval == 60 && (water_demand > 0) && turn_fan_on)
+		heating_element_capacity = nominal_voltage * 0.000171; 							// rated fan current is 0.000171.
+
+	if ((Toff >= Tw) && (Tw >= Ton)  && (heating_element_capacity == 0)) 				// when energy take is between setpoints, HPWH is in idle mode.
+	{
+	
+		energytake = log(70 / (get_Tambient(location) * 0.39) ) * time_step; // Constants are based on trial and error to get the most appropraite behavior similar to the physical unit.
+		Tw = (tank_setpoint - (energytake/(tank_volume * 2.44)))+ 1.00034;
+		heat_needed = false;
+		current_model = ONENODE;
+
+		
+	}
+	else // when energy take is not between setpoints (i.e. waterheater is on)
+	{
+					
+		if (Tw <= Ton || heating_element_capacity != 0)
+		{
+			time_step = 0;
+			
+
+			if (water_demand > 0)
+			{
+				// HPWH behavior differ depending on the amount of water demand. 
+				// If water demand is less than 10, the +2 factor will get the model to behave as the physical unit.
+				// Otherwise, a correction factor (0.65 * water demand) is needed to get the model to behave nearly the same as the physical unit
+				double tank_volume_post_draw = tank_volume - water_demand;
+				if (water_demand < 10)
+					Tw_temp = ((((tank_volume_post_draw)* tank_setpoint) + (water_demand * 60))/(tank_volume)) + 2;
+				else
+					Tw_temp = ((((tank_volume_post_draw)* tank_setpoint) + (water_demand * 60))/(tank_volume)) + water_demand * 0.65;
+				// ----------------------------------------------------------
+
+				heat_needed = false;
+				if ((water_demand - water_demand_old) > 0)
+				{
+					energy_increment_value = energytake;
+				}
+				else
+				{
+					energy_increment_value += gl_random_normal(RNGSTATE,60,30);
+				}
+				energytake =  ((tank_setpoint - Tw_temp) * tank_volume * 2.44) + energy_increment_value;
+			}
+			
+			if (heating_element_capacity <= 0.42) // compressor operation. The resistive heating element should not trigger when the compressor is ON and Energytake within compressor's limits.
+			{	
+				energytake -= (heating_element_capacity - 0.447)/(-( get_Tambient(location)/ pow(get_Tambient(location),2.4)));
+			}	
+			if (heating_element_capacity  > 0.42)
+			{
+				energytake -= (heating_element_capacity - 4.872)/(-0.0014); // The 4.87 is the operation of the heating element. The -0.0014 is the result of the line fit equation.
+			}
+		}	
+		if (energytake <= heating_element_min_threshold)
+			heating_element_on = false;
+		
+		Tw = tank_setpoint - ((energytake)/(tank_volume * 2.44));
+	}
+	if (energytake<=0){
+		
+		energytake = 0;
+		heating_element_capacity = 0;
+	}	
+	return;
+				
+}
+
+
 TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1) 
 {
 	double internal_gain = 0.0;
@@ -972,17 +1054,21 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	int multilayer_transition_time = 0;
 	int i = 0;
 	int dt = (int)(t1-t0);
+	if (dt > interval)
+		interval = dt;
+
+	time_step += interval * 0.0083;
 	// use re_override to control heat_needed state
 	// runs after thermostat() but before "the usual" calculations
 	if(current_model != FORTRAN){
 		if(re_override == OV_ON){
-			heat_needed = TRUE;
+			heat_needed = true;
 			if(current_model == MULTILAYER) {
 				control_upper[0] = 1.0;
 				control_lower[0] = 0.0;
 			}
 		} else if(re_override == OV_OFF){
-			heat_needed = FALSE;
+			heat_needed = false;
 			if(current_model == MULTILAYER) {
 				control_upper[0] = 0.0;
 				control_lower[0] = 0.0;
@@ -991,11 +1077,11 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 	if(Tw > 212.0 - thermostat_deadband){ // if it's trying boil, turn it off!
-		heat_needed = FALSE;
+		heat_needed = false;
 		is_waterheater_on = 0;
 	}
 	if(Tw_1 > 212.0 - (deadband_1/2.0)) {
-		heat_needed = FALSE;
+		heat_needed = false;
 		control_upper[0] = 0.0;
 		control_lower[0] = 0.0;
 	}
@@ -1016,21 +1102,34 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 			multilayer_transition_time = last_transition_time - dt;
 		}
 	}
+
 	// determine internal gains
 	if (location == INSIDE){
-		if(this->current_model == ONENODE){
+		if (heat_mode ==HEAT_PUMP)
+			this->current_model = ONENODE;
+	
+		if(this->current_model == ONENODE)
+		{
+
 			internal_gain = tank_UA * (Tw - get_Tambient(location));
 			//Subtract Heat drawn in from Heat pump
-			if(heat_mode == HEAT_PUMP){
+			if(heat_mode == HEAT_PUMP)
+			{
+				
 				internal_gain -= (actual_kW() * (HP_COP - 1) * BTUPHPKW);
+				
 			}
-		} else if(this->current_model == TWONODE){
+		} 
+		else if(this->current_model == TWONODE)
+		{
 			internal_gain = tank_UA * (Tw - Tamb) * h / height;
 			internal_gain += tank_UA * (Tlower - Tamb) * (1 - h / height);
 			//Subtract heat drawn in from heat pump
-			if(heat_mode == HEAT_PUMP){
+			if(heat_mode == HEAT_PUMP)
+			{
 				internal_gain -= (actual_kW() * (HP_COP - 1) * BTUPHPKW);
 			}
+			
 		} else if(this->current_model == MULTILAYER) {
 			//TODO: update internal gain from all layers in the tank.
 			internal_gain = A_bottom*U_val*(T_layers[1][0] - Tamb) + A_top*U_val*(T_layers[10][0] - Tamb);
@@ -1120,7 +1219,7 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 	if(current_model != FORTRAN){
 		// determine the power used
-		if (heat_needed == TRUE){
+		if (heat_needed == true){
 			/* power_kw */ load.total = (heat_mode == GASHEAT ? gas_fan_power : heating_element_capacity);
 			is_waterheater_on = 1;
 		} else {
@@ -1184,6 +1283,16 @@ TIMESTAMP waterheater::sync(TIMESTAMP t0, TIMESTAMP t1)
 }
 
 TIMESTAMP waterheater::postsync(TIMESTAMP t0, TIMESTAMP t1){
+	if (heat_mode == HEAT_PUMP)
+	{
+		if((water_demand- water_demand_old)>0)
+			turn_fan_on = true;
+		
+		sync_energytake();
+		
+		if (turn_fan_on)
+			turn_fan_on = false;
+	}	
 	return TS_NEVER;
 }
 
@@ -1218,7 +1327,7 @@ void waterheater::set_time_to_transition(void)
 
 	switch (current_model) {
 		case ONENODE:
-			if (heat_needed == FALSE)
+			if (heat_needed == false)
 				time_to_transition = new_time_1node(Tw, Ton);
 			else if (load_state == RECOVERING)
 				time_to_transition = new_time_1node(Tw, Toff);
@@ -1292,7 +1401,7 @@ enumeration waterheater::set_current_model_and_load_state(void)
 			{
 				// overriding the plc code ignoring thermostat logic
 				// heating will always be on while in two zone model
-				heat_needed = TRUE;
+				heat_needed = true;
 				current_model = TWONODE;
 				load_state = RECOVERING;
 			}
@@ -1308,18 +1417,19 @@ enumeration waterheater::set_current_model_and_load_state(void)
 				// overriding the plc code ignoring thermostat logic
 				// heating will always be on while in two zone model
 				bool cur_heat_needed = heat_needed;
+
 				if (heat_mode == HEAT_PUMP) {
 					if(Tcontrol-TSTAT_PRECISION < Ton){
-						heat_needed = TRUE;
+						heat_needed = true;
 					} else if (Tcontrol+TSTAT_PRECISION > Toff){
-						heat_needed = FALSE;
+						heat_needed = false;
 					} else {
 						; // no change
 					}
 				} else {
 					// overriding the plc code ignoring thermostat logic
 					// heating will always be on while in two zone model					
-					heat_needed = TRUE;					
+					heat_needed = true;
 				}
 
 				double dhdt_full_temp = dhdt(height);
@@ -1327,7 +1437,7 @@ enumeration waterheater::set_current_model_and_load_state(void)
 				if (dhdt_full_temp < 0)
 				{
 					if (heat_mode == HEAT_PUMP) {
-						if (heat_needed == TRUE) {
+						if (heat_needed == true) {
 							current_model = TWONODE;
 							load_state = DEPLETING;
 						} else {
@@ -1350,7 +1460,7 @@ enumeration waterheater::set_current_model_and_load_state(void)
 				if (re_override == OV_OFF)
 				{
 					load_state = DEPLETING;
-					heat_needed = FALSE;
+					heat_needed = false;
 					if (water_demand > 0 || h < (tank_height-HEIGHT_PRECISION))
 						current_model = TWONODE;
 					else
@@ -1364,7 +1474,6 @@ enumeration waterheater::set_current_model_and_load_state(void)
 				else
 				{
 					current_model = ONENODE;
-					
 					heat_needed = cur_heat_needed;
 					load_state = heat_needed ? RECOVERING : DEPLETING;
 				}
@@ -1376,7 +1485,7 @@ enumeration waterheater::set_current_model_and_load_state(void)
 
 				if (re_override == OV_OFF)
 				{
-					heat_needed = FALSE;
+					heat_needed = false;
 					load_state = DEPLETING;
 				}
 			}
@@ -1384,17 +1493,17 @@ enumeration waterheater::set_current_model_and_load_state(void)
 				load_state = STABLE;
 
 				if (re_override == OV_OFF)
-					heat_needed = FALSE;
+					heat_needed = false;
 			}
 			break;
 
 		case PARTIAL:
 			if (heat_mode == HEAT_PUMP) {
-				if(Tcontrol-TSTAT_PRECISION < Ton || heat_needed == TRUE){
-					heat_needed = TRUE;
+				if(Tcontrol-TSTAT_PRECISION < Ton || heat_needed == true){
+					heat_needed = true;
 					current_model = TWONODE;
 				} else if (Tcontrol+TSTAT_PRECISION > Toff){
-					heat_needed = FALSE;
+					heat_needed = false;
 					current_model = ONENODE;
 				} else {
 				; // no change
@@ -1413,7 +1522,7 @@ enumeration waterheater::set_current_model_and_load_state(void)
 
 				if (re_override == OV_OFF)
 				{
-					heat_needed = FALSE;
+					heat_needed = false;
 					if (water_demand > 0 || h < (tank_height-HEIGHT_PRECISION))
 						current_model = TWONODE;
 					else
@@ -1425,7 +1534,7 @@ enumeration waterheater::set_current_model_and_load_state(void)
 				current_model = TWONODE;
 				// overriding the plc code ignoring thermostat logic
 				// heating will always be on while in two zone model
-				heat_needed = TRUE;
+				heat_needed = true;
 
 				if (dhdt_now < 0 && (dhdt_now * dhdt_empty) >= 0)
 					load_state = DEPLETING;
@@ -1440,7 +1549,7 @@ enumeration waterheater::set_current_model_and_load_state(void)
 
 				if (re_override == OV_OFF)
 				{
-					heat_needed = FALSE;
+					heat_needed = false;
 					if (water_demand > 0 || h < (tank_height-HEIGHT_PRECISION))
 						current_model = TWONODE;
 					else
@@ -1476,13 +1585,14 @@ void waterheater::update_T_and_or_h(double nHours)
 SingleZone:
 			Tw = new_temp_1node(Tw, nHours);
 			/*Tupper*/ Tw = Tw;
+			
 			Tlower = Tinlet;
 			break;
 
 		case TWONODE:
 			// overriding the plc code ignoring thermostat logic
 			// heating will always be on while in two zone model
-			heat_needed = TRUE;
+			heat_needed = true;
 			switch (load_state) 
 			{
 				case STABLE:
@@ -1528,21 +1638,18 @@ SingleZone:
 				Tlower = Tinlet;
 				h = height;
 			} 
-			else 
-			{
+			//Default else - do nothing
 				// Note that as long as h stays between 0 and height, we don't
 				// adjust Tlower, even if the Tinlet has changed.  This avoids
 				// the headache of adjusting h and is of minimal consequence because
 				// Tinlet changes so slowly...
-				/*Tupper*/ Tw = Tw;
-			}
 			break;
 
 		default:
 			break;
 	}
 
-	if (heat_needed == TRUE)
+	if (heat_needed == true)
 		power_state = PS_ON;
 	else
 		power_state = PS_OFF;
@@ -1563,15 +1670,17 @@ double waterheater::dhdt(double h)
 	// Pre-set some algebra just for efficiency...
 	const double mdot = water_demand * 60 * RHOWATER / GALPCF;		// lbm/hr...
     const double c1 = RHOWATER * Cp * area * (/*Tupper*/ Tw - Tlower);	// Btu/ft...
-	
+
     // check c1 before dividing by it
     if (c1 <= ROUNDOFF)
         return 0.0; //Possible only when /*Tupper*/ Tw and Tlower are very close, and the difference is negligible
 
 	double cA;
-	if (heat_mode == HEAT_PUMP) {
+	if (heat_mode == HEAT_PUMP) 
+	{
 		// @TODO: These values were created from HPWH project; need to make them more accessible
-		HP_COP = (1.04 + (1.21 - 1.04) * (get_Tambient(location) - 50) / (70 - 50)) * (5.259 - 0.0255 * Tw);
+		HP_COP = (1.04 + (1.21 - 1.04) * (get_Tambient(location) - 50) / (70 - 50)) * (5.259 - 0.0255 * Tw); // Added by GLD folks
+
 		cA = -mdot / (RHOWATER * area) + (actual_kW() * BTUPHPKW * HP_COP + tank_UA * (get_Tambient(location) - Tlower)) / c1;
 	} else {
 		cA = -mdot / (RHOWATER * area) + (actual_kW() * BTUPHPKW + tank_UA * (get_Tambient(location) - Tlower)) / c1;
@@ -1616,16 +1725,36 @@ double waterheater::actual_kW(void)
                 return 0.0;         // @TODO:  This condition should trip the breaker with a counter
         }
 		double test;
-		if (heat_mode == ELECTRIC) {
-			test = heating_element_capacity * (actual_voltage*actual_voltage) / (nominal_voltage*nominal_voltage);
-		} else { 
-			// @TODO: We don't have a voltage dependence for the heat pump yet...but we should
-			//   Using variables from HPWH project...should be pulled out at some point
-			heating_element_capacity = (1.09 + (1.17 - 1.09) * (get_Tambient(location) - 50) / (70 - 50)) * (0.379 + 0.00364 * Tw);
-			test = heating_element_capacity;
-		}
 
-		return test;
+		if (heat_mode == ELECTRIC) 
+		{
+			test = heating_element_capacity * (actual_voltage*actual_voltage) / (nominal_voltage*nominal_voltage);
+		} 
+		else 
+		{
+			if (heat_mode == HEAT_PUMP)
+			{
+				// compressor should turn on?
+				if ((energytake < compressor_max_threshold) && (energytake > compressor_min_threshold) && !heating_element_on && !turn_fan_on)
+				{
+					// 0.42
+					heating_element_capacity =  nominal_voltage * 0.00175;
+				}
+				else if ((energytake >= heating_element_min_threshold) && !turn_fan_on)
+				{
+					// 4.8
+					heating_element_capacity = (nominal_voltage * 0.020);// Threshold for the compressor 
+					heating_element_on = true;
+				}
+				else{
+					heating_element_capacity = 0;
+				}
+			}
+			test = heating_element_capacity;			
+		}
+			// @TODO: We don't have a voltage dependence for the heat pump yet...but we should
+			//   Using variables from HPWH project...should be pulled out at some point			
+		return test;		
     }
 	else
 		return 0.0;
@@ -1667,15 +1796,15 @@ inline double waterheater::new_temp_1node(double T0, double delta_t)
 	const double c1 = (tank_UA + mdot_Cp) / Cw;
 	double c2;
 	if (heat_mode == HEAT_PUMP) {
+
 		// @TODO: These values were created from HPWH project; need to make them more accessible
 		HP_COP = (1.04 + (1.21 - 1.04) * (get_Tambient(location) - 50) / (70 - 50)) * (5.259 - 0.0255 * Tw);
+
 		c2 = (actual_kW()*BTUPHPKW*HP_COP + mdot_Cp*Tinlet + tank_UA*get_Tambient(location)) / (tank_UA + mdot_Cp);
 	} else {
 		c2 = (actual_kW()*BTUPHPKW + mdot_Cp*Tinlet + tank_UA*get_Tambient(location)) / (tank_UA + mdot_Cp);
 	}
-
-//	return  c2 - (c2 + T0) * exp(c1 * delta_t);	// [F]
-	return  c2 - (c2 - T0) * exp(-c1 * delta_t);	// [F]
+	return  c2 - (c2 - T0) * exp(-c1 * delta_t); // [F]
 }
 
 
@@ -1824,8 +1953,6 @@ int waterheater::multilayer_time_to_transition() {
 	t_return = time_new*(int)discrete_step_size;
 //	auto stop = std::chrono::high_resolution_clock::now();
 //	auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-//	std::cout << "waterheater while loop took: " << duration.count() << " microseconds" << std::endl;
-//	std::cout << "waterheater calculates " << time_new << " seconds to next state changes." << std::endl;
 	return t_return;
 }
 

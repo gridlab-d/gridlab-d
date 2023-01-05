@@ -2,7 +2,8 @@
 // Copyright (C) 2012 Battelle Memorial Institute
 // Modified Euler Integration Method
 
-#include <stdlib.h>
+#include <cstdlib>
+
 #include "gridlabd.h"
 
 static unsigned int mod_eul_solver_version = 1; // change this each time to data structure changes

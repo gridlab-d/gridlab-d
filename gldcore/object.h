@@ -7,7 +7,10 @@
 #ifndef _OBJECT_H
 #define _OBJECT_H
 
-#include "complex.h"
+//#pragma GCC push_options
+//#pragma GCC optimize ("O0")
+
+#include "gld_complex.h"
 #include "timestamp.h"
 #include "class.h"
 #include "aggregate.h"
@@ -22,7 +25,7 @@
 typedef int OBJECTRANK; /**< Object rank number */
 typedef unsigned short OBJECTSIZE; /** Object data size */
 typedef unsigned int OBJECTNUM; /** Object id number */
-typedef char * OBJECTNAME; /** Object name */
+typedef char* OBJECTNAME; /** Object name */
 typedef char FULLNAME[1024]; /** Full object name (including space name) */
 
 /* object flags */
@@ -49,10 +52,11 @@ typedef struct s_forecast {
 	int n_values; /**< number of values in the forecast */
 	TIMESTAMP starttime; /**< the start time of the forecast */
 	int32 timestep; /**< number of seconds per forecast timestep */
-	double *values; /**< values of the forecast (NULL if no forecast) */
+	double *values; /**< values of the forecast (nullptr if no forecast) */
 	TIMESTAMP (*external)(void *obj, void *fc); /**< external forecast update call */
-	struct s_forecast *next; /**< next forecast data block (NULL for last) */
+	struct s_forecast *next; /**< next forecast data block (nullptr for last) */
 } FORECAST; /**< Forecast data block */
+
 typedef enum {
 	OPI_PRESYNC,
 	OPI_SYNC,
@@ -65,6 +69,7 @@ typedef enum {
 	/* add profile items here */
 	_OPI_NUMITEMS,
 } OBJECTPROFILEITEM;
+
 typedef struct s_object_list {
 	OBJECTNUM id; /**< object id number; globally unique */
 	CLASS *oclass; /**< object class; determine structure of object data */
@@ -97,52 +102,58 @@ typedef struct s_object_list {
 /* this is the callback table for modules
  * the table is initialized in module.cpp
  */
-typedef struct s_callbacks {
+//typedef struct s_callbacks {
+typedef class s_callbacks {
+public:
+    s_callbacks() throw();
+
 	TIMESTAMP *global_clock;
 	double *global_delta_curr_clock;
 	TIMESTAMP *global_stoptime;
+    EXITCODE *global_exit_code;
 	int (*output_verbose)(const char *format, ...);
 	int (*output_message)(const char *format, ...);
 	int (*output_warning)(const char *format, ...);
 	int (*output_error)(const char *format, ...);
+	int (*output_fatal)(const char *format, ...);
 	int (*output_debug)(const char *format, ...);
 	int (*output_test)(const char *format, ...);
-	CLASS *(*register_class)(MODULE *,CLASSNAME,unsigned int,PASSCONFIG);
+	CLASS *(*register_class)(MODULE *,const CLASSNAME,unsigned int,PASSCONFIG);
 	struct {
 		OBJECT *(*single)(CLASS*);
 		OBJECT *(*array)(CLASS*,unsigned int);
 		OBJECT *(*foreign)(OBJECT *);
 	} create;
 	int (*define_map)(CLASS*,...);
-	int (*loadmethod)(CLASS*,char*,int (*call)(OBJECT*,char*));
+	int (*loadmethod)(CLASS*,const char*,int (*call)(void*,char*));
 	CLASS *(*class_getfirst)(void);
-	CLASS *(*class_getname)(char*);
+	CLASS *(*class_getname)(const char*);
 	PROPERTY *(*class_add_extended_property)(CLASS *,char *,PROPERTYTYPE,char *);
 	struct {
-		FUNCTION *(*define)(CLASS*,FUNCTIONNAME,FUNCTIONADDR);
-		FUNCTIONADDR (*get)(char*,char*);
+		FUNCTION *(*define)(CLASS*,const FUNCTIONNAME,FUNCTIONADDR);
+		FUNCTIONADDR (*get)(char*,const char*);
 	} function;
-	int (*define_enumeration_member)(CLASS*,char*,char*,enumeration);
-	int (*define_set_member)(CLASS*,char*,char*,unsigned int64);
+	int (*define_enumeration_member)(CLASS*,const char*,const char*,enumeration);
+	int (*define_set_member)(CLASS*,const char*,const char*,unsigned int64);
 	struct {
 		OBJECT *(*get_first)(void);
 		int (*set_dependent)(OBJECT*,OBJECT*);
 		int (*set_parent)(OBJECT*,OBJECT*);
-		int (*set_rank)(OBJECT*,unsigned int);
+		int (*set_rank)(OBJECT*, OBJECTRANK);
 	} object;
 	struct {
-		PROPERTY *(*get_property)(OBJECT*,PROPERTYNAME,PROPERTYSTRUCT*);
+		PROPERTY *(*get_property)(OBJECT*,const PROPERTYNAME,PROPERTYSTRUCT*);
 		int (*set_value_by_addr)(OBJECT *, void*, char*,PROPERTY*);
 		int (*get_value_by_addr)(OBJECT *, void*, char*, int size,PROPERTY*);
 		int (*set_value_by_name)(OBJECT *, char*, char*);
-		int (*get_value_by_name)(OBJECT *, char*, char*, int size);
+		int (*get_value_by_name)(OBJECT *, const char*, char*, int size);
 		OBJECT *(*get_reference)(OBJECT *, char*);
-		char *(*get_unit)(OBJECT *, char *);
-		void *(*get_addr)(OBJECT *, char *);
+		char *(*get_unit)(OBJECT *, const char *);
+		void *(*get_addr)(OBJECT *, const char *);
 		int (*set_value_by_type)(PROPERTYTYPE,void *data,char *);
 		bool (*compare_basic)(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void* x, void* a, void* b, char *part);
 		PROPERTYCOMPAREOP (*get_compare_op)(PROPERTYTYPE ptype, char *opstr);
-		double (*get_part)(OBJECT*,PROPERTY*,char*);
+		double (*get_part)(OBJECT*,PROPERTY*,const char*);
 		PROPERTYSPEC *(*get_spec)(PROPERTYTYPE);
 	} properties;
 	struct {
@@ -153,7 +164,7 @@ typedef struct s_callbacks {
 		void (*del)(struct s_findlist*, OBJECT*);
 		void (*clear)(struct s_findlist*);
 	} find;
-	PROPERTY *(*find_property)(CLASS *, PROPERTYNAME);
+	PROPERTY *(*find_property)(CLASS *, const PROPERTYNAME);
 	void *(*malloc)(size_t);
 	void (*free)(void*);
 	struct {
@@ -161,7 +172,7 @@ typedef struct s_callbacks {
 		double (*refresh)(struct s_aggregate *aggregate);
 	} aggregate;
 	struct {
-		void *(*getvar)(MODULE *module, const char *varname);
+		double *(*getvar)(MODULE *module, const char *varname);
 		MODULE *(*getfirst)(void);
 		int (*depends)(const char *name, unsigned char major, unsigned char minor, unsigned short build);
 		const char *(*find_transform_function)(TRANSFORMFUNCTION function);
@@ -183,7 +194,7 @@ typedef struct s_callbacks {
 		double (*weibull)(unsigned int *rng,double a, double b);
 		double (*rayleigh)(unsigned int *rng,double a);
 	} random;
-	int (*object_isa)(OBJECT *obj, char *type);
+	int (*object_isa)(OBJECT *obj, const char *type);
 	DELEGATEDTYPE* (*register_type)(CLASS *oclass, char *type,int (*from_string)(void*,char*),int (*to_string)(void*,char*,int));
 	int (*define_type)(CLASS*,DELEGATEDTYPE*,...);
 	struct {
@@ -194,37 +205,37 @@ typedef struct s_callbacks {
 		double (*timestamp_to_minutes)(TIMESTAMP t);
 		double (*timestamp_to_seconds)(TIMESTAMP t);
 		int (*local_datetime)(TIMESTAMP ts, DATETIME *dt);
-		int (*local_datetime_delta)(double ts, DATETIME *dt);
-		TIMESTAMP (*convert_to_timestamp)(char *value);
+        int (*local_datetime_delta)(double ts, DATETIME *dt);
+		TIMESTAMP (*convert_to_timestamp)(const char *value);
 		TIMESTAMP (*convert_to_timestamp_delta)(const char *value, unsigned int *microseconds, double *dbl_time_value);
 		int (*convert_from_timestamp)(TIMESTAMP ts, char *buffer, int size);
 		int (*convert_from_deltatime_timestamp)(double ts_v, char *buffer, int size);
 	} time;
-	int (*unit_convert)(char *from, char *to, double *value);
+	int (*unit_convert)(const char *from, const char *to, double *value);
 	int (*unit_convert_ex)(UNIT *pFrom, UNIT *pTo, double *pValue);
-	UNIT *(*unit_find)(char *unit_name);
+	UNIT *(*unit_find)(const char *unit_name);
 	struct {
 		EXCEPTIONHANDLER *(*create_exception_handler)();
 		void (*delete_exception_handler)(EXCEPTIONHANDLER *ptr);
-		void (*throw_exception)(char *msg, ...);
+		void (*throw_exception)(const char *msg, ...);
 		char *(*exception_msg)(void);
 	} exception;
 	struct {
-		GLOBALVAR *(*create)(char *name, ...);
-		STATUS (*setvar)(char *def,...);
-		char *(*getvar)(char *name, char *buffer, int size);
-		GLOBALVAR *(*find)(char *name);
+		GLOBALVAR *(*create)(const char *name, ...);
+		STATUS (*setvar)(const char *def,...);
+		char *(*getvar)(const char *name, char *buffer, int size);
+		GLOBALVAR *(*find)(const char *name);
 	} global;
 	struct {
 		void (*read)(unsigned int *);
 		void (*write)(unsigned int *);
 	} lock, unlock;
 	struct {
-		char *(*find_file)(char *name, char *path, int mode, char *buffer, int len);
+		char *(*find_file)(const char *name, const char *path, int mode, char *buffer, int len);
 	} file;
 	struct s_objvar_struct {
 		bool *(*bool_var)(OBJECT *obj, PROPERTY *prop);
-		complex *(*complex_var)(OBJECT *obj, PROPERTY *prop);
+		gld::complex *(*complex_var)(OBJECT *obj, PROPERTY *prop);
 		enumeration *(*enum_var)(OBJECT *obj, PROPERTY *prop);
 		set *(*set_var)(OBJECT *obj, PROPERTY *prop);
 		int16 *(*int16_var)(OBJECT *obj, PROPERTY *prop);
@@ -235,33 +246,33 @@ typedef struct s_callbacks {
 		OBJECT **(*object_var)(OBJECT *obj, PROPERTY *prop);
 	} objvar;
 	struct s_objvar_name_struct {
-		bool *(*bool_var)(OBJECT *obj, char *name);
-		complex *(*complex_var)(OBJECT *obj, char *name);
-		enumeration *(*enum_var)(OBJECT *obj, char *name);
-		set *(*set_var)(OBJECT *obj, char *name);
-		int16 *(*int16_var)(OBJECT *obj, char *name);
-		int32 *(*int32_var)(OBJECT *obj, char *name);
-		int64 *(*int64_var)(OBJECT *obj, char *name);
-		double *(*double_var)(OBJECT *obj, char *name);
-		char *(*string_var)(OBJECT *obj, char *name);
-		OBJECT **(*object_var)(OBJECT *obj, char *name);
+		bool *(*bool_var)(OBJECT *obj, const char *name);
+		gld::complex *(*complex_var)(OBJECT *obj, const char *name);
+		enumeration *(*enum_var)(OBJECT *obj, const char *name);
+		set *(*set_var)(OBJECT *obj, const char *name);
+		int16 *(*int16_var)(OBJECT *obj, const char *name);
+		int32 *(*int32_var)(OBJECT *obj, const char *name);
+		int64 *(*int64_var)(OBJECT *obj, const char *name);
+		double *(*double_var)(OBJECT *obj, const char *name);
+		char *(*string_var)(OBJECT *obj, const char *name);
+		OBJECT **(*object_var)(OBJECT *obj, const char *name);
 	} objvarname;
 	struct {
 		int (*string_to_property)(PROPERTY *prop, void *addr, char *value);
 		int (*property_to_string)(PROPERTY *prop, void *addr, char *value, int size);
 	} convert;
-	MODULE *(*module_find)(char *name);
-	OBJECT *(*get_object)(char *name);
+	MODULE *(*module_find)(const char *name);
+	OBJECT *(*get_object)(const char *name);
 	OBJECT *(*object_find_by_id)(OBJECTNUM);
 	int (*name_object)(OBJECT *obj, char *buffer, int len);
 	int (*get_oflags)(KEYWORD **extflags);
 	unsigned int (*object_count)(void);
 	struct {
-		SCHEDULE *(*create)(char *name, char *definition);
+		SCHEDULE *(*create)(const char *name, const char *definition);
 		SCHEDULEINDEX (*index)(SCHEDULE *sch, TIMESTAMP ts);
 		double (*value)(SCHEDULE *sch, SCHEDULEINDEX index);
 		int32 (*dtnext)(SCHEDULE *sch, SCHEDULEINDEX index);
-		SCHEDULE *(*find)(char *name);
+		SCHEDULE *(*find)(const char *name);
 		SCHEDULE *(*getfirst)(void);
 	} schedule;
 	struct {
@@ -305,18 +316,18 @@ typedef struct s_callbacks {
 		} latitude, longitude;
 	} geography;
 	struct {
-		void* (*read)(char *url, int maxlen);
+		void* (*read)(const char *url, int maxlen);
 		void (*free)(void *result);
 	} http;
 	struct {
 		TRANSFORM *(*getnext)(TRANSFORM*);
 		int (*add_linear)(TRANSFORMSOURCE,double*,void*,double,double,OBJECT*,PROPERTY*,SCHEDULE*);
 		int (*add_external)(OBJECT*,PROPERTY*,const char*,OBJECT*,PROPERTY*);
-		int64 (*apply)(TIMESTAMP,TRANSFORM*,double*);
+		int64 (*apply)(TIMESTAMP,TRANSFORM*,double*,double*);
 	} transform;
 	struct {
-		randomvar *(*getnext)(randomvar*);
-		size_t (*getspec)(char *, size_t, const randomvar *);
+		randomvar_struct *(*getnext)(randomvar_struct*);
+		size_t (*getspec)(char *, size_t, const randomvar_struct *);
 	} randomvar;
 	struct {
 		unsigned int (*major)(void);
@@ -343,25 +354,23 @@ STATUS object_finalize(OBJECT *obj);
 int object_set_dependent(OBJECT *obj, OBJECT *dependent);
 int object_set_parent(OBJECT *obj, OBJECT *parent);
 unsigned int object_get_child_count(OBJECT *obj);
-void *object_get_addr(OBJECT *obj, char *name);
-PROPERTY *object_get_property(OBJECT *obj, PROPERTYNAME name, PROPERTYSTRUCT *part);
-PROPERTY *object_prop_in_class(OBJECT *obj, PROPERTY *prop);
+void *object_get_addr(OBJECT *obj, const char *name);
+PROPERTY *object_get_property(OBJECT *obj, const PROPERTYNAME name, PROPERTYSTRUCT *part);
+const PROPERTY *object_prop_in_class(OBJECT *obj, const PROPERTY *prop);
 int object_set_value_by_name(OBJECT *obj, PROPERTYNAME name, char *value);
 int object_set_value_by_addr(OBJECT *obj, void *addr, char *value, PROPERTY *prop);
-int object_set_int16_by_name(OBJECT *obj, PROPERTYNAME name, int16 value);
-int object_set_int32_by_name(OBJECT *obj, PROPERTYNAME name, int32 value);
-int object_set_int64_by_name(OBJECT *obj, PROPERTYNAME name, int64 value);
-int object_set_double_by_name(OBJECT *obj, PROPERTYNAME name, double value);
-bool *object_get_bool(OBJECT *obj, PROPERTY *prop);
-bool *object_get_bool_by_name(OBJECT *obj, char *name);
-int object_set_complex_by_name(OBJECT *obj, PROPERTYNAME name, complex value);
-int object_get_value_by_name(OBJECT *obj, PROPERTYNAME name, char *value, int size);
+int object_set_int16_by_name(OBJECT *obj, const PROPERTYNAME name, int16 value);
+int object_set_int32_by_name(OBJECT *obj, const PROPERTYNAME name, int32 value);
+int object_set_int64_by_name(OBJECT *obj, const PROPERTYNAME name, int64 value);
+int object_set_double_by_name(OBJECT *obj, const PROPERTYNAME name, double value);
+int object_set_complex_by_name(OBJECT *obj, const PROPERTYNAME name, gld::complex value);
+int object_get_value_by_name(OBJECT *obj, const PROPERTYNAME name, char *value, int size);
 int object_get_value_by_addr(OBJECT *obj, void *addr, char *value, int size, PROPERTY *prop);
 int object_set_value_by_type(PROPERTYTYPE,void *addr, char *value);
 OBJECT *object_get_reference(OBJECT *obj, char *name);
-int object_isa(OBJECT *obj, char *type);
+int object_isa(OBJECT *obj, const char *type);
 OBJECTNAME object_set_name(OBJECT *obj, OBJECTNAME name);
-OBJECT *object_find_name(OBJECTNAME name);
+OBJECT *object_find_name(const char* name);
 int object_build_name(OBJECT *obj, char *buffer, int len);
 int object_locate_property(void *addr, OBJECT **pObj, PROPERTY **pProp);
 
@@ -369,28 +378,30 @@ int object_get_oflags(KEYWORD **extflags);
 
 TIMESTAMP object_sync(OBJECT *obj, TIMESTAMP to,PASSCONFIG pass);
 OBJECT **object_get_object(OBJECT *obj, PROPERTY *prop);
-OBJECT **object_get_object_by_name(OBJECT *obj, char *name);
+OBJECT **object_get_object_by_name(OBJECT *obj, const char *name);
 enumeration *object_get_enum(OBJECT *obj, PROPERTY *prop);
-enumeration *object_get_enum_by_name(OBJECT *obj, char *name);
+enumeration *object_get_enum_by_name(OBJECT *obj, const char *name);
 set *object_get_set(OBJECT *obj, PROPERTY *prop);
-set *object_get_set_by_name(OBJECT *obj, char *name);
+set *object_get_set_by_name(OBJECT *obj, const char *name);
+bool *object_get_bool(OBJECT *obj, PROPERTY *prop);
+bool *object_get_bool_by_name(OBJECT *obj, const char *name);
 int16 *object_get_int16(OBJECT *obj, PROPERTY *prop);
-int16 *object_get_int16_by_name(OBJECT *obj, char *name);
+int16 *object_get_int16_by_name(OBJECT *obj, const char *name);
 int32 *object_get_int32(OBJECT *obj, PROPERTY *prop);
-int32 *object_get_int32_by_name(OBJECT *obj, char *name);
+int32 *object_get_int32_by_name(OBJECT *obj, const char *name);
 int64 *object_get_int64(OBJECT *obj, PROPERTY *prop);
-int64 *object_get_int64_by_name(OBJECT *obj, char *name);
+int64 *object_get_int64_by_name(OBJECT *obj, const char *name);
 double *object_get_double(OBJECT *pObj, PROPERTY *prop);
-double *object_get_double_by_name(OBJECT *pObj, char *name);
-complex *object_get_complex(OBJECT *pObj, PROPERTY *prop);
-complex *object_get_complex_by_name(OBJECT *pObj, char *name);
+double *object_get_double_by_name(OBJECT *pObj, const char *name);
+gld::complex *object_get_complex(OBJECT *pObj, PROPERTY *prop);
+gld::complex *object_get_complex_by_name(OBJECT *pObj, const char *name);
 double *object_get_double_quick(OBJECT *pObj, PROPERTY *prop);
-complex *object_get_complex_quick(OBJECT *pObj, PROPERTY *prop);
+gld::complex *object_get_complex_quick(OBJECT *pObj, PROPERTY *prop);
 char *object_get_string(OBJECT *pObj, PROPERTY *prop);
-char *object_get_string_by_name(OBJECT *obj, char *name);
+char *object_get_string_by_name(OBJECT *obj, const char *name);
 FUNCTIONADDR object_get_function(CLASSNAME classname, FUNCTIONNAME functionname);
-char *object_property_to_string(OBJECT *obj, char *name, char *buffer, int sz);
-char *object_get_unit(OBJECT *obj, char *name);
+char *object_property_to_string(OBJECT *obj, const char *name, char *buffer, int sz);
+char *object_get_unit(OBJECT *obj, const char *name);
 int object_set_rank(OBJECT *obj, OBJECTRANK rank);
 
 OBJECT *object_find_by_id(OBJECTNUM id);
@@ -404,8 +415,8 @@ int object_saveall_xml(FILE *fp);
 void object_stream_fixup(OBJECT *obj, char *classname, char *objname);
 
 char *object_name(OBJECT *obj, char *, int);
-int convert_from_latitude(double,void*,size_t);
-int convert_from_longitude(double,void*,size_t);
+int convert_from_latitude(double, char *, size_t);
+int convert_from_longitude(double, char *, size_t);
 double convert_to_latitude(char *buffer);
 double convert_to_longitude(char *buffer);
 
@@ -431,7 +442,7 @@ void forecast_save(FORECAST *fc, TIMESTAMP ts, int32 tstep, int n_values, double
 void *object_remote_read(void *local, OBJECT *obj, PROPERTY *prop); /** access remote object data */
 void object_remote_write(void *local, OBJECT *obj, PROPERTY *prop); /** access remote object data */
 
-double object_get_part(void *x, char *name);
+double object_get_part(void *x, const char *name);
 TIMESTAMP object_heartbeat(OBJECT *obj);
 
 int object_loadmethod(OBJECT *obj, char *name, char *value);
@@ -442,18 +453,21 @@ int object_loadmethod(OBJECT *obj, char *name, char *value);
 
 #define object_size(X) ((X)?(X)->size:-1) /**< get the size of the object X */
 #define object_id(X) ((X)?(X)->id:-1) /**< get the id of the object X */
-#define object_parent(X) ((X)?(X)->parent:NULL) /**< get the parent of the object */
+#define object_parent(X) ((X)?(X)->parent:nullptr) /**< get the parent of the object */
 #define object_rank(X) ((X)?(X)->name:-1) /**< get the rank of the object */
 
-#define OBJECTDATA(X,T) ((T*)((X)?((X)+1):NULL)) /**< get the object data structure */
-#define GETADDR(O,P) ((O)?((void*)((char*)((O)+1)+(unsigned int64)((P)->addr))):NULL) /**< get the addr of an object's property */
-#define OBJECTHDR(X) ((X)?(((OBJECT*)X)-1):NULL) /**< get the header from the object's data structure */
+#define OBJECTDATA(X,T) ((T*)((X)?((X)+1):nullptr)) /**< get the object data structure */
+#define GETADDR(O,P) ((O)?((void*)((char*)((O)+1)+(unsigned int64)((P)->addr))):nullptr) /**< get the addr of an object's property */
+#define OBJECTHDR(X) ((X)?(((OBJECT*)X)-1):nullptr) /**< get the header from the object's data structure */
 
 #define MY (((OBJECT*)this)-1)
 #define MYPARENT (MY->parent) /**< get the parent from the object's data structure */
 #define MYCLOCK (MY->clock) /**< get an object's own clock */
 #define MYRANK (MY->rank) /**< get an object's own rank */
 
-#endif
+
+//#pragma GCC pop_options
+
+#endif // _OBJECT_H
 
 /** @} **/

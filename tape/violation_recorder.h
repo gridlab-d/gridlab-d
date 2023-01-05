@@ -7,6 +7,7 @@
 #include "../powerflow/transformer_configuration.h"
 #include "../powerflow/transformer.h"
 #include "../powerflow/line.h"
+
 #include <new>
 
 EXPORT void new_violation_recorder(MODULE *);
@@ -57,9 +58,9 @@ EXPORT void new_violation_recorder(MODULE *);
 #define PHASE_S		0x0070		/**< Split phase connection */
 #define GROUND		0x0080		/**< ground line connection */
 
-#define AR 0x002
-#define BR 0x020
-#define CR 0x200
+#define _AR 0x002
+#define _BR 0x020
+#define _CR 0x200
 
 #define POWER		0x01
 #define CURRENT		0x02
@@ -100,7 +101,9 @@ public:
 			last_s[i] = 0;
 		}
 	}
-	~vobjlist(){if(next != 0) delete next;}
+	~vobjlist(){
+		if(next != 0)
+			delete next;}
 	void tack(OBJECT *o) {
 		if (obj) {
 			if(next){
@@ -111,7 +114,8 @@ public:
 
 				if (next == NULL)
 				{
-					GL_THROW("violation_recorder - Failed to allocate space for object list to check");
+					GL_THROW(
+							const_cast<char *>("violation_recorder - Failed to allocate space for object list to check"));
 					/*  TROUBLESHOOT
 					While attempting to allocate the memory for an object list within the violation recorder, an error occurred.  Please check your
 					file and try again.  If the error persists, please submit you code and a bug report via the ticketing system.
@@ -163,7 +167,9 @@ public:
 		name = n;
 		next = 0;
 	}
-	~uniqueList(){if(next != 0) delete next;}
+	~uniqueList(){
+		if(next != 0)
+			delete next;}
 	void insert(char *n) {
 		if (name && strcmp(name, n) != 0) {
 			if(next){
@@ -174,7 +180,7 @@ public:
 
 				if (next == NULL)
 				{
-					GL_THROW("violation_recorder - Failed to allocate space for unique list");
+					GL_THROW(const_cast<char *>("violation_recorder - Failed to allocate space for unique list"));
 					/*  TROUBLESHOOT
 					While attempting to allocate the memory for a list of unique objects within the violation recorder, an error occurred.  Please check your
 					file and try again.  If the error persists, please submit you code and a bug report via the ticketing system.
@@ -206,7 +212,7 @@ public:
 	static violation_recorder *defaults;
 	static CLASS *oclass, *pclass;
 
-	violation_recorder(MODULE *);
+	explicit violation_recorder(MODULE *);
 	int create();
 	int init(OBJECT *);
 	STATUS finalize(OBJECT *obj);
@@ -263,15 +269,15 @@ private:
 	int check_reverse_flow_violation(TIMESTAMP, int, double, char*);
 	int write_to_stream (TIMESTAMP, bool, char *, ...);
 	double get_observed_double_value(OBJECT *, PROPERTY *);
-	complex get_observed_complex_value(OBJECT *, PROPERTY *);
-	int make_object_list(int, char *, vobjlist *);
+	gld::complex get_observed_complex_value(OBJECT *, PROPERTY *);
+	int make_object_list(int, const char *, vobjlist *);
 	int assoc_meter_w_xfrmr_node(vobjlist *, vobjlist *, vobjlist *);
 	int find_substation_node(char256, vobjlist *);
 	int has_phase(OBJECT *, int);
 	int fails_static_condition (OBJECT *, char *, double, double, double, double *);
 	int fails_static_condition (double, double, double, double, double *);
 	int fails_dynamic_condition (vobjlist *, int, char *, TIMESTAMP, double, double, double, double, double *);
-	int fails_continuous_condition (vobjlist *, int, char *, TIMESTAMP, double, double, double, double, double *);
+	int fails_continuous_condition (vobjlist *, int, const char *, TIMESTAMP, double, double, double, double, double *);
 	int increment_violation (int);
 	int increment_violation (int, int);
 	int get_violation_count(int);

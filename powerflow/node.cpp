@@ -17,7 +17,7 @@
 
 	@par Voltage control
 
-	When the global variable require_voltage_control is set to \p TRUE,
+	When the global variable require_voltage_control is set to \p true,
 	the bus type is used to determine how voltage control is implemented.
 	Voltage control is only performed when the bus has no link that
 	considers it a to node.  When the flag \#NF_HASSOURCE is cleared, then
@@ -47,10 +47,10 @@
 	@{
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "solver_nr.h"
 #include "node.h"
@@ -85,19 +85,19 @@
 
 //******************* TODO SOON -- Check history and saturation mapping for children (probably doesn't work **********//
 
-CLASS *node::oclass = NULL;
-CLASS *node::pclass = NULL;
+CLASS *node::oclass = nullptr;
+CLASS *node::pclass = nullptr;
 
 unsigned int node::n = 0; 
 
 node::node(MODULE *mod) : powerflow_object(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		pclass = powerflow_object::oclass;
 		oclass = gl_register_class(mod,"node",sizeof(node),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
-			throw "unable to register class node";
+		if (oclass==nullptr)
+			throw std::runtime_error("unable to register class node");
 		else
 			oclass->trl = TRL_PROVEN;
 
@@ -142,6 +142,7 @@ node::node(MODULE *mod) : powerflow_object(mod)
 
 			PT_complex_array, "deltamode_full_Y_matrix",  PADDR(full_Y_matrix),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality full_Y matrix exposes so generator objects can interact for Norton equivalents",
 			PT_complex_array, "deltamode_full_Y_all_matrix",  PADDR(full_Y_all_matrix),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"deltamode-functionality full_Y_all matrix exposes so generator objects can interact for Norton equivalents",
+			PT_object, "NR_powerflow_parent",PADDR(SubNodeParent),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"NR powerflow - actual powerflow parent - used by generators accessing child objects",
 
 			PT_complex, "current_inj_A[A]", PADDR(current_inj[0]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
 			PT_complex, "current_inj_B[A]", PADDR(current_inj[1]),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"bus current injection (in = positive), but will not be rotated by powerflow for off-nominal frequency, this an accumulator only, not a output or input variable",
@@ -207,6 +208,7 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_double, "previous_uptime[min]", PADDR(previous_uptime),PT_DESCRIPTION,"Previous time between disconnects of node in minutes",
 			PT_double, "current_uptime[min]", PADDR(current_uptime),PT_DESCRIPTION,"Current time since last disconnect of node in minutes",
 			PT_bool, "Norton_dynamic", PADDR(dynamic_norton),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"Flag to indicate a Norton-equivalent connection -- used for generators and deltamode",
+			PT_bool, "Norton_dynamic_child", PADDR(dynamic_norton_child),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"Flag to indicate a Norton-equivalent connection is made by a childed node object -- used for generators and deltamode",
 			PT_bool, "generator_dynamic", PADDR(dynamic_generator),PT_ACCESS,PA_HIDDEN,PT_DESCRIPTION,"Flag to indicate a voltage-sourcing or swing-type generator is present -- used for generators and deltamode",
 
 			PT_bool, "reset_disabled_island_state", PADDR(reset_island_state), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "Deltamode/multi-island flag -- used to reset disabled status (and reform an island)",
@@ -233,22 +235,24 @@ node::node(MODULE *mod) : powerflow_object(mod)
 			PT_bool, "behaving_as_swing", PADDR(swing_functions_enabled), PT_DESCRIPTION, "Indicator flag for if a bus is behaving as a reference voltage source - valid for a SWING or SWING_PQ",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_node)==NULL)
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_node)==nullptr)
 			GL_THROW("Unable to publish node deltamode function");
-		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==NULL)
+		if (gl_publish_function(oclass,	"pwr_object_swing_swapper", (FUNCTIONADDR)swap_node_swing_status)==nullptr)
 			GL_THROW("Unable to publish node swing-swapping function");
-		if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==NULL)
+		if (gl_publish_function(oclass,	"pwr_current_injection_update_map", (FUNCTIONADDR)node_map_current_update_function)==nullptr)
 			GL_THROW("Unable to publish node current injection update mapping function");
-		if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==NULL)
+		if (gl_publish_function(oclass,	"attach_vfd_to_pwr_object", (FUNCTIONADDR)attach_vfd_to_node)==nullptr)
 			GL_THROW("Unable to publish node VFD attachment function");
-		if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == NULL)
+		if (gl_publish_function(oclass, "pwr_object_reset_disabled_status", (FUNCTIONADDR)node_reset_disabled_status) == nullptr)
 			GL_THROW("Unable to publish node island-status-reset function");
-		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == NULL)
+		if (gl_publish_function(oclass, "pwr_object_swing_status_check", (FUNCTIONADDR)node_swing_status) == nullptr)
 			GL_THROW("Unable to publish node swing-status check function");
+		if (gl_publish_function(oclass, "pwr_object_shunt_update", (FUNCTIONADDR)node_update_shunt_values) == nullptr)
+			GL_THROW("Unable to publish node shunt update function");
 	}
 }
 
-int node::isa(char *classname)
+int node::isa(const char *classname)
 {
 	return strcmp(classname,"node")==0 || powerflow_object::isa(classname);
 }
@@ -267,21 +271,22 @@ int node::create(void)
 	busflags = NF_HASSOURCE;
 	busphasesIn = 0;
 	busphasesOut = 0;
-	reference_bus = NULL;
+	reference_bus = nullptr;
 	nominal_voltage = 0.0;
 	maximum_voltage_error = 0.0;
 	frequency = nominal_frequency;
 	fault_Z = 1e-6;
 	prev_NTime = 0;
-	SubNode = NONE;
-	SubNodeParent = NULL;
-	TopologicalParent = NULL;
-	NR_subnode_reference = NULL;
-	Extra_Data=NULL;
-	NR_link_table = NULL;
+	SubNode = SNT_NONE;
+	SubNodeParent = nullptr;
+	TopologicalParent = nullptr;
+	NR_subnode_reference = nullptr;
+	Extra_Data=nullptr;
+	Extra_Data_Track_FPI = nullptr;
+	NR_link_table = nullptr;
 	NR_connected_links[0] = NR_connected_links[1] = 0;
 	NR_number_child_nodes[0] = NR_number_child_nodes[1] = 0;
-	NR_child_nodes = NULL;
+	NR_child_nodes = nullptr;
 
 	NR_node_reference = -1;	//Newton-Raphson bus index, set to -1 initially
 	house_present = false;	//House attachment flag
@@ -298,18 +303,25 @@ int node::create(void)
 	previous_uptime = -1.0;		///< Flags as not initialized
 	current_uptime = -1.0;		///< Flags as not initialized
 
-	full_Y = NULL;		//Not used by default
-	full_Y_load = NULL;	//Not used by default
-	full_Y_all = NULL;	//Not used by default   **** NOTE -- full_Y_all only appears to be used by diesel QSTS exciter code - it can probably be removed when that is fixed *****
-	BusHistTerm[0] = complex(0.0,0.0);
-	BusHistTerm[1] = complex(0.0,0.0);
-	BusHistTerm[2] = complex(0.0,0.0);
+	full_Y = nullptr;		//Not used by default
+	full_Y_load[0][0] = full_Y_load[0][1] = full_Y_load[0][2] = gld::complex(0.0,0.0);	//Empty, by default
+	full_Y_load[1][0] = full_Y_load[1][1] = full_Y_load[1][2] = gld::complex(0.0,0.0);
+	full_Y_load[2][0] = full_Y_load[2][1] = full_Y_load[2][2] = gld::complex(0.0,0.0);
+	full_Y_all = nullptr;	//Not used by default   **** NOTE -- full_Y_all only appears to be used by diesel QSTS exciter code - it can probably be removed when that is fixed *****
+	BusHistTerm[0] = gld::complex(0.0,0.0);
+	BusHistTerm[1] = gld::complex(0.0,0.0);
+	BusHistTerm[2] = gld::complex(0.0,0.0);
 	prev_delta_time = -1.0;
-	ahrlloadstore = NULL;
-	bhrlloadstore = NULL;
-	chrcloadstore = NULL;
-	LoadHistTermL = NULL;
-	LoadHistTermC = NULL;
+	ahrlloadstore = nullptr;
+	bhrlloadstore = nullptr;
+	chrcloadstore = nullptr;
+	LoadHistTermL = nullptr;
+	LoadHistTermC = nullptr;
+
+	shunt_change_check[0] = shunt_change_check[1] = shunt_change_check[2] = gld::complex (0.0,0.0);
+	shunt_change_check_dy[0] = shunt_change_check_dy[1] = gld::complex (0.0,0.0);
+	shunt_change_check_dy[2] = shunt_change_check_dy[3] = gld::complex (0.0,0.0);
+	shunt_change_check_dy[4] = shunt_change_check_dy[5] = gld::complex (0.0,0.0);
 
 	memset(voltage,0,sizeof(voltage));
 	memset(voltaged,0,sizeof(voltaged));
@@ -318,23 +330,24 @@ int node::create(void)
 	memset(power,0,sizeof(power));
 	memset(shunt,0,sizeof(shunt));
 
-	deltamode_dynamic_current[0] = deltamode_dynamic_current[1] = deltamode_dynamic_current[2] = complex(0.0,0.0);
+	deltamode_dynamic_current[0] = deltamode_dynamic_current[1] = deltamode_dynamic_current[2] = gld::complex(0.0,0.0);
 
-	deltamode_PGenTotal = complex(0.0,0.0);
+	deltamode_PGenTotal = gld::complex(0.0,0.0);
 
-	current_dy[0] = current_dy[1] = current_dy[2] = complex(0.0,0.0);
-	current_dy[3] = current_dy[4] = current_dy[5] = complex(0.0,0.0);
-	power_dy[0] = power_dy[1] = power_dy[2] = complex(0.0,0.0);
-	power_dy[3] = power_dy[4] = power_dy[5] = complex(0.0,0.0);
-	shunt_dy[0] = shunt_dy[1] = shunt_dy[2] = complex(0.0,0.0);
-	shunt_dy[3] = shunt_dy[4] = shunt_dy[5] = complex(0.0,0.0);
+	current_dy[0] = current_dy[1] = current_dy[2] = gld::complex(0.0,0.0);
+	current_dy[3] = current_dy[4] = current_dy[5] = gld::complex(0.0,0.0);
+	power_dy[0] = power_dy[1] = power_dy[2] = gld::complex(0.0,0.0);
+	power_dy[3] = power_dy[4] = power_dy[5] = gld::complex(0.0,0.0);
+	shunt_dy[0] = shunt_dy[1] = shunt_dy[2] = gld::complex(0.0,0.0);
+	shunt_dy[3] = shunt_dy[4] = shunt_dy[5] = gld::complex(0.0,0.0);
 
-	prev_voltage_value = NULL;	//NULL the pointer, just for the sake of doing so
-	prev_power_value = NULL;	//NULL the pointer, again just for the sake of doing so
+	prev_voltage_value = nullptr;	//NULL the pointer, just for the sake of doing so
+	prev_power_value = nullptr;	//NULL the pointer, again just for the sake of doing so
 	node_type = NORMAL_NODE;	//Assume we're nothing special by default
 	current_accumulated = false;
 	deltamode_inclusive = false;	//Begin assuming we aren't delta-enabled
 	dynamic_norton = false;			//By default, no one needs the Norton equivalent posting
+	dynamic_norton_child = false;	//By default, we're assuming we don't have any descendants doing Norton-equivalents
 	dynamic_generator = false;		//By default, we don't have any generator attached
 	swing_functions_enabled = false;	//By default, this bus isn't behaving as a swing
 
@@ -381,14 +394,14 @@ int node::create(void)
 
 	//VFD-related additional functionality
 	VFD_attached = false;	//Not connected to a VFD
-	VFD_updating_function = NULL;	//Make sure is set empty
-	VFD_object = NULL;	//Make empty
+	VFD_updating_function = nullptr;	//Make sure is set empty
+	VFD_object = nullptr;	//Make empty
 
 	//Multi-island tracking
 	reset_island_state = false;	//Reset is disabled, by default
 
 	//Triplex/FBS variable
-	tn_values = NULL;
+	tn_values = nullptr;
 
 	return result;
 }
@@ -396,6 +409,9 @@ int node::create(void)
 int node::init(OBJECT *parent)
 {
 	OBJECT *obj = OBJECTHDR(this);
+	OBJECT *tmp_obj, *tmp_subnode_parent;
+	node *tmp_node, *tmp_par_node;
+	int index_loop_val;
 
 	//Put the phase_S check right on the top, since it will apply to both solvers
 	if (has_phase(PHASE_S))
@@ -416,7 +432,7 @@ int node::init(OBJECT *parent)
 	{
 		char ext_lib_file_name[1025];
 		char extpath[1024];
-		CALLBACKS **cbackval = NULL;
+		CALLBACKS **cbackval = nullptr;
 		bool ExtLinkFailure;
 		STATUS status_ret_value;
 
@@ -424,34 +440,27 @@ int node::init(OBJECT *parent)
 		TopologicalParent = obj->parent;
 
 		//Check for a swing bus if we haven't found one already
-		if (NR_swing_bus == NULL)
+		if (NR_swing_bus == nullptr)
 		{
 			//See if a node is a master swing
 			NR_swing_bus = NR_master_swing_search("node",true);
 
 			//If one hasn't been found, see if there's a substation one
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
 				NR_swing_bus = NR_master_swing_search("substation",true);
 			}
 			//Default else -- one already found, progress through this
 
 			//If one hasn't been found, see if there's a meter one
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
 				NR_swing_bus = NR_master_swing_search("meter",true);
 			}
 			//Default else -- one already found, progress through this
 
-			//If one hasn't been found, see if there's an elec_frequency one
-			if (NR_swing_bus == NULL)
-			{
-				NR_swing_bus = NR_master_swing_search("elec_frequency",true);
-			}
-			//Default else -- one already found, progress through this
-
 			//If one hasn't been found, see if there's a load one
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
 				//Do the same for loads
 				NR_swing_bus = NR_master_swing_search("load",true);
@@ -459,7 +468,7 @@ int node::init(OBJECT *parent)
 			//Default else -- one already found, progress through this
 
 			//If one hasn't been found, see if there's a triplex_node one
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
 				//Do the same for triplex nodes
 				NR_swing_bus = NR_master_swing_search("triplex_node",true);
@@ -467,7 +476,7 @@ int node::init(OBJECT *parent)
 			//Default else -- one already found, progress through this
 
 			//If one hasn't been found, see if there's a triplex_meter one
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
 				//And one more time for triplex meters
 				NR_swing_bus = NR_master_swing_search("triplex_meter",true);
@@ -475,7 +484,7 @@ int node::init(OBJECT *parent)
 			//Default else -- one already found, progress through this
 
 			//If one hasn't been found, see if there's a triplex_load one
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
 				//And one more time for triplex loads
 				NR_swing_bus = NR_master_swing_search("triplex_load",true);
@@ -484,34 +493,27 @@ int node::init(OBJECT *parent)
 
 			//Now repeat this process for SWING_PQ designations
 			//Check nodes
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
 				NR_swing_bus = NR_master_swing_search("node",false);
 			}
 
 			//If one hasn't been found, see if there's a substation one
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
 				NR_swing_bus = NR_master_swing_search("substation",false);
 			}
 			//Default else -- one already found, progress through this
 
 			//If one hasn't been found, see if there's a meter one
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
 				NR_swing_bus = NR_master_swing_search("meter",false);
 			}
 			//Default else -- one already found, progress through this
 
-			//If one hasn't been found, see if there's an elec_frequency one
-			if (NR_swing_bus == NULL)
-			{
-				NR_swing_bus = NR_master_swing_search("elec_frequency",false);
-			}
-			//Default else -- one already found, progress through this
-
 			//If one hasn't been found, see if there's a load one
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
 				//Do the same for loads
 				NR_swing_bus = NR_master_swing_search("load",false);
@@ -519,7 +521,7 @@ int node::init(OBJECT *parent)
 			//Default else -- one already found, progress through this
 
 			//If one hasn't been found, see if there's a triplex_node one
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
 				//Do the same for triplex nodes
 				NR_swing_bus = NR_master_swing_search("triplex_node",false);
@@ -527,7 +529,7 @@ int node::init(OBJECT *parent)
 			//Default else -- one already found, progress through this
 
 			//If one hasn't been found, see if there's a triplex_meter one
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
 				//And one more time for triplex meters
 				NR_swing_bus = NR_master_swing_search("triplex_meter",false);
@@ -535,7 +537,7 @@ int node::init(OBJECT *parent)
 			//Default else -- one already found, progress through this
 
 			//If one hasn't been found, see if there's a triplex_load one
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
 				//And one more time for triplex loads
 				NR_swing_bus = NR_master_swing_search("triplex_load",false);
@@ -543,7 +545,7 @@ int node::init(OBJECT *parent)
 			//Default else -- one already found, progress through this
 
 			//Make sure there is one bus to rule them all, even if it actually has rivals
-			if (NR_swing_bus == NULL)
+			if (NR_swing_bus == nullptr)
 			{
 				GL_THROW("NR: no swing bus found");
 				/*	TROUBLESHOOT
@@ -571,22 +573,27 @@ int node::init(OBJECT *parent)
 			NR_islands_detected = 1;
 		}//end swing bus search
 
+		//SWING check - defer init until we're sure where we go
+		if (obj == NR_swing_bus)
+		{
+			if (!NR_swing_deferred_pass)
+			{
+				//Set the flag - to indicate the deferral has happened
+				NR_swing_deferred_pass = true;
+
+				//Deferred init
+				gl_verbose("node::init(): node:%d - %s - deferring initialization for swing ranking", obj->id,(obj->name?obj->name : "Unnamed"));
+				return 2; // defer
+			}
+		}
+
 		//Check for parents to see if they are a parent/childed load
-		if (obj->parent!=NULL) 	//Has a parent, let's see if it is a node and link it up 
+		if (obj->parent!=nullptr) 	//Has a parent, let's see if it is a node and link it up
 		{						//(this will break anything intentionally done this way - e.g. switch between two nodes)
-			//See if it is a node/load/meter/substation
-			
-			
-			/********************* FIX *******************************/
-			/* TODO: Does this need to be revisited for other types */
-
-
-
-
-			if (!(gl_object_isa(obj->parent,"load","powerflow") | gl_object_isa(obj->parent,"node","powerflow") | gl_object_isa(obj->parent,"meter","powerflow") | gl_object_isa(obj->parent,"substation","powerflow")))
-				GL_THROW("NR: Parent is not a node, load or meter!");
+			if (!(gl_object_isa(obj->parent,"node","powerflow")))	//All others alias up to isa:node eventually
+				GL_THROW("NR: Parent is not a node-based object!");
 				/*  TROUBLESHOOT
-				A Newton-Raphson parent-child connection was attempted on a non-node.  The parent object must be a node, load, or meter object in the 
+				A Newton-Raphson parent-child connection was attempted on a non-node.  The parent object must be a node, load, or meter object in the
 				powerflow module for this connection to be successful.
 				*/
 
@@ -603,160 +610,270 @@ int node::init(OBJECT *parent)
 				*/
 			}
 
+			//Rank the child object (which should propagate upward)
+			gl_set_rank(obj,3);				//Start as below normal nodes (but above links)
+											//This way load postings should propogate during sync (bottom-up)
+
+			//Flag our index as a child as well, as yet another catch
+			NR_node_reference = -99;
+
+			//Child run - now push upward to get SubParentNode and check ranks
+			tmp_obj = obj->parent;
+
+			//Loop to find the top of this chain
+			while (tmp_obj != nullptr)
+			{
+				//Temp track
+				tmp_subnode_parent = tmp_obj;
+
+				//Get node reference to pull phases
+				tmp_node = OBJECTDATA(tmp_obj,node);
+
+				//See if our parent is already initialized (e.g., we are a lower child)
+				if (tmp_node->SubNodeParent == nullptr)
+				{
+					//Grab the next one
+					tmp_obj = tmp_subnode_parent->parent;
+				}
+				else
+				{
+					//Pull it
+					tmp_subnode_parent = tmp_node->SubNodeParent;
+
+					//Manual break
+					tmp_obj = nullptr;
+				}
+			}
+			//Once fails, reached top of parent chain (theoretically)
+
+			//Check ranking
+			if ((tmp_subnode_parent->rank+2) > NR_expected_swing_rank)
+			{
+				//Update the tracker
+				NR_expected_swing_rank = tmp_subnode_parent->rank+2;
+			}
+
+			//Pull the node pointer real quick
+			tmp_par_node = OBJECTDATA(tmp_subnode_parent,node);
+
+			//Update our count
+			tmp_par_node->NR_number_child_nodes[0]++;	//Increment the counter of child nodes - we'll alloc and link them later
+
+			//Set our SubNodeParent
+			SubNodeParent = tmp_subnode_parent;
+
+			//Set our sub_node_reference too
+			NR_subnode_reference = &(tmp_par_node->NR_node_reference);
+
+			//Now loop to populate the subparent and reference property
+			tmp_obj = obj->parent;
+			while (tmp_obj != tmp_subnode_parent)
+			{
+				//Pull the reference
+				tmp_node = OBJECTDATA(tmp_obj,node);
+
+				//See if the SubNodeParent is set
+				if (tmp_node->SubNodeParent == nullptr)
+				{
+					//Set subnodeparent
+					tmp_node->SubNodeParent = tmp_subnode_parent;
+
+					//Set the pointer to parent's NR pointer (so links can go there appropriately)
+					tmp_node->NR_subnode_reference = &(tmp_par_node->NR_node_reference);
+
+					//Get the next object
+					tmp_obj = tmp_obj->parent;
+				}
+				else	//We've caught up to the chain - end
+				{
+					//Assign the while terminating condition
+					tmp_obj = tmp_subnode_parent;
+				}
+			}
+
 			//Phase variable
 			set p_phase_to_check, c_phase_to_check;
 
-			//N-less version
-			p_phase_to_check = (parNode->phases & (~(PHASE_N)));
-			c_phase_to_check = (phases & (~(PHASE_N)));
+			//Initialize
+			p_phase_to_check = NO_PHASE;
+			c_phase_to_check = NO_PHASE;
 
-			//Make sure our phases align, otherwise become angry
-			if ((parNode->phases!=phases) && (p_phase_to_check != c_phase_to_check))
+			//Initial scan (may be elsewhere) - if we're triplex, make sure our parent is triplex!
+			if (((phases & PHASE_S) ^ (parNode->phases & PHASE_S)) == PHASE_S)
 			{
-				//Create D-less and N-less versions of both for later comparisons
-				p_phase_to_check = (parNode->phases & (~(PHASE_D | PHASE_N)));
-				c_phase_to_check = (phases & (~(PHASE_D | PHASE_N)));
+				GL_THROW("NR: Parent and child node phases for nodes %s and %s are not both triplex!",obj->parent->name,obj->name);
+				/*  TROUBLESHOOT
+				A node device with phases S is either parented or childed to another node-device that does not have
+				phases S - this is not allowed.  Correct the model.
+				*/
+			}
 
-				//May not necessarily be a failure, let's investiage
-				if ((p_phase_to_check & c_phase_to_check) != c_phase_to_check)	//Our parent is lacking, fail
+			//Create base phase set for parent
+			if ((parNode->phases & PHASE_D) == PHASE_D)
+			{
+				//Delta-connected - technically represents "two phases"
+				if ((parNode->phases & PHASE_A) == PHASE_A)
 				{
-					GL_THROW("NR: Parent and child node phases for nodes %s and %s do not match!",obj->parent->name,obj->name);
-					//Defined above
+					//AD = AB
+					p_phase_to_check |= (PHASE_A | PHASE_B);
 				}
-				else					//We should be successful, but let's flag ourselves appropriately
-				{	//Essentially a replication of the no-phase section with more check
-					if ((parNode->SubNode==CHILD) | (parNode->SubNode==DIFF_CHILD) | ((obj->parent->parent!=NR_swing_bus) && (obj->parent->parent!=NULL)))	//Our parent is another child
-					{
-						GL_THROW("NR: Grandchildren are not supported at this time!");
-						/*  TROUBLESHOOT
-						Parent-child connections in Newton-Raphson may not go more than one level deep.  Grandchildren
-						(a node parented to a node parented to a node) are unsupported at this time.  Please rearrange your
-						parent-child connections appropriately, figure out a different way of performing the required connection,
-						or, if your system is radial, consider using forward-back sweep.
-						*/
-					}
-					else	//Our parent is unchilded (or has the swing bus as a parent)
-					{
-						//Check and see if the parent or child is a delta - if so, proceed as normal
-						if (((phases & PHASE_D) == PHASE_D) || ((parNode->phases & PHASE_D) == PHASE_D))
-						{
-							//Set appropriate flags (store parent name and flag self & parent)
-							SubNode = DIFF_CHILD;
-							SubNodeParent = obj->parent;
-							
-							parNode->SubNode = DIFF_PARENT;
-							parNode->SubNodeParent = obj;	//This may get overwritten if we have multiple children, so try not to use it anywhere mission critical.
-							parNode->NR_number_child_nodes[0]++;	//Increment the counter of child nodes - we'll alloc and link them later
 
-							//Update the pointer to our parent's NR pointer (so links can go there appropriately)
-							NR_subnode_reference = &(parNode->NR_node_reference);
+				if ((parNode->phases & PHASE_B) == PHASE_B)
+				{
+					//BD = BC
+					p_phase_to_check |= (PHASE_B | PHASE_C);
+				}
 
-							//Allocate and point our properties up to the parent node
-							if (parNode->Extra_Data == NULL)	//Make sure someone else hasn't allocated it for us
-							{
-								parNode->Extra_Data = (complex *)gl_malloc(9*sizeof(complex));
-								if (parNode->Extra_Data == NULL)
-								{
-									GL_THROW("NR: Memory allocation failure for differently connected load.");
-									/*  TROUBLESHOOT
-									This is a bug.  Newton-Raphson tried to allocate memory for other necessary
-									information to handle a parent-child relationship with differently connected loads.
-									Please submit your code and a bug report using the trac website.
-									*/
-								}
-							}
-						}
-						else	//None are delta, so handle partial phasing a little better
-						{
-							//Replicate "normal phasing" code below
-
-							//Parent node check occurred above as part of this logic chain, so forgot from copy below
-							
-							//Set appropriate flags (store parent name and flag self & parent)
-							SubNode = CHILD;
-							SubNodeParent = obj->parent;
-							
-							parNode->SubNode = PARENT;
-							parNode->SubNodeParent = obj;	//This may get overwritten if we have multiple children, so try not to use it anywhere mission critical.
-							parNode->NR_number_child_nodes[0]++;	//Increment the counter of child nodes - we'll alloc and link them later
-
-							//Update the pointer to our parent's NR pointer (so links can go there appropriately)
-							NR_subnode_reference = &(parNode->NR_node_reference);
-
-							//Zero out last child power vector (used for updates)
-							last_child_power[0][0] = last_child_power[0][1] = last_child_power[0][2] = complex(0,0);
-							last_child_power[1][0] = last_child_power[1][1] = last_child_power[1][2] = complex(0,0);
-							last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = complex(0,0);
-							last_child_power[3][0] = last_child_power[3][1] = last_child_power[3][2] = complex(0,0);
-							last_child_current12 = 0.0;
-
-							//Do the same for the delta/wye explicit portions
-							last_child_power_dy[0][0] = last_child_power_dy[0][1] = last_child_power_dy[0][2] = complex(0.0,0.0);
-							last_child_power_dy[1][0] = last_child_power_dy[1][1] = last_child_power_dy[1][2] = complex(0.0,0.0);
-							last_child_power_dy[2][0] = last_child_power_dy[2][1] = last_child_power_dy[2][2] = complex(0.0,0.0);
-							last_child_power_dy[3][0] = last_child_power_dy[3][1] = last_child_power_dy[3][2] = complex(0.0,0.0);
-							last_child_power_dy[4][0] = last_child_power_dy[4][1] = last_child_power_dy[4][2] = complex(0.0,0.0);
-							last_child_power_dy[5][0] = last_child_power_dy[5][1] = last_child_power_dy[5][2] = complex(0.0,0.0);
-						}
-					}
-
-					//Flag our index as a child as well, as yet another catch
-					NR_node_reference = -99;
-
-					//Adjust our rank appropriately
-					//Ranking - similar to GS
-					gl_set_rank(obj,3);				//Put us below normal nodes (but above links)
-													//This way load postings should propogate during sync (bottom-up)
+				if ((parNode->phases & PHASE_C) == PHASE_C)
+				{
+					//CD = CA
+					p_phase_to_check |= (PHASE_A | PHASE_C);
 				}
 			}
-			else		//Phase compatible, no issues
+			else
 			{
-				if ((parNode->SubNode==CHILD) | (parNode->SubNode==DIFF_CHILD) | (obj->parent->parent!=NULL))	//Our parent is another child
-				{
-					GL_THROW("NR: Grandchildren are not supported at this time!");
-					//Defined above
-				}
-				else	//Our parent is unchilded (or has the swing bus as a parent)
-				{
-					//Set appropriate flags (store parent name and flag self & parent)
-					SubNode = CHILD;
-					SubNodeParent = obj->parent;
+				p_phase_to_check = (parNode->phases & PHASE_ABC);
+			}
 
-					//Check our parent -- if it is already differently flagged, don't override it
-					if (parNode->SubNode != DIFF_PARENT)
+			//Do same for child
+			if ((phases & PHASE_D) == PHASE_D)
+			{
+				//Delta-connected - technically represents "two phases"
+				if ((phases & PHASE_A) == PHASE_A)
+				{
+					//AD = AB
+					c_phase_to_check |= (PHASE_A | PHASE_B);
+				}
+
+				if ((phases & PHASE_B) == PHASE_B)
+				{
+					//BD = BC
+					c_phase_to_check |= (PHASE_B | PHASE_C);
+				}
+
+				if ((phases & PHASE_C) == PHASE_C)
+				{
+					//CD = CA
+					c_phase_to_check |= (PHASE_A | PHASE_C);
+				}
+			}
+			else
+			{
+				c_phase_to_check = (parNode->phases & PHASE_ABC);
+			}
+
+			//Fundamental check - see if we're even base compatible
+			if ((p_phase_to_check & c_phase_to_check) != c_phase_to_check)	//Our parent is lacking, fail
+			{
+				//See if we're triplex - that gets "special" checks
+				if ((phases & PHASE_S) == PHASE_S)
+				{
+					//One better be zero, or fail
+					if ((p_phase_to_check != NO_PHASE) && (c_phase_to_check != NO_PHASE))
 					{
-						parNode->SubNode = PARENT;
+						GL_THROW("NR: Parent and child node phases for nodes %s and %s do not match!",obj->parent->name,obj->name);
+						/*  TROUBLESHOOT
+						A childed triplex object and parented triplex object have explicit phases specified that are incompatible.
+						e.g., phases AS and phases BS - phases AS and phases S would be acceptable.
+						Please correct your model and try again.
+						*/
 					}
-					parNode->SubNodeParent = obj;	//This may get overwritten if we have multiple children, so try not to use it anywhere mission critical.
-					parNode->NR_number_child_nodes[0]++;	//Increment the counter of child nodes - we'll alloc and link them later
-
-					//Update the pointer to our parent's NR pointer (so links can go there appropriately)
-					NR_subnode_reference = &(parNode->NR_node_reference);
+					//Default else - one is undefined, which is okay
 				}
+				else	//Nope, we're a failure
+				{
+					GL_THROW("NR: Parent and child node phases for nodes %s and %s do not match!",obj->parent->name,obj->name);
+					/*  TROUBLESHOOT
+					A childed object has more fundamental phases (ABC) than its parent - this is an invalid connection.
+					Please double-check and adjust your model accordingly.
+					*/
+				}
+			}
+			//Default else - phases are compatible
 
-				//Flag our index as a child as well, as yet another catch
-				NR_node_reference = -99;
+			//Determine how to flag our "powerflow solution" parent
+			if (((phases & PHASE_D) ^ (tmp_par_node->phases & PHASE_D)) == PHASE_D)
+			{
+				//Mismatched child/powerflow parent
 
-				//Adjust our rank appropriately
-				//Ranking - similar to GS
-				gl_set_rank(obj,3);				//Put us below normal nodes (but above links)
-												//This way load postings should propogate during sync (bottom-up)
+				//Flag us
+				SubNode |= SNT_DIFF_CHILD;
+
+				//Flag our powerflow parent
+				tmp_par_node->SubNode |= SNT_DIFF_PARENT;
+
+				//Clear off the standard parent flag (if it was set) - it will break things later
+				tmp_par_node->SubNode &= (~SNT_PARENT);
+
+				//Allocate and point our properties up to the parent node
+				if (tmp_par_node->Extra_Data == nullptr)	//Make sure someone else hasn't allocated it for us
+				{
+					tmp_par_node->Extra_Data = (gld::complex *)gl_malloc(9*sizeof(gld::complex));
+					if (tmp_par_node->Extra_Data == nullptr)
+					{
+						GL_THROW("NR: Memory allocation failure for differently connected load.");
+						/*  TROUBLESHOOT
+						This is a bug.  Newton-Raphson tried to allocate memory for other necessary
+						information to handle a parent-child relationship with differently connected loads.
+						Please submit your code and a bug report using the trac website.
+						*/
+					}
+
+					//Zero the entries
+					for (index_loop_val=0; index_loop_val<9; index_loop_val++)
+					{
+						tmp_par_node->Extra_Data[index_loop_val] = gld::complex(0.0,0.0);
+					}
+
+					//If we're FPI, chances are the Extra_Data_Track_FPI needs it too
+					if (NR_solver_algorithm == NRM_FPI)
+					{
+						//Double check
+						if (tmp_par_node->Extra_Data_Track_FPI == nullptr)
+						{
+							//Allocate it
+							tmp_par_node->Extra_Data_Track_FPI = (gld::complex *)gl_malloc(3*sizeof(gld::complex));
+
+							//Check it
+							if (tmp_par_node->Extra_Data_Track_FPI == nullptr)
+							{
+								GL_THROW("NR: Memory allocation failure for differently connected load.");
+								//Defined above
+							}
+
+							//Zero the entries, just to be safe/paranoid
+							for (index_loop_val=0; index_loop_val<3; index_loop_val++)
+							{
+								tmp_par_node->Extra_Data_Track_FPI[index_loop_val] = gld::complex(0.0,0.0);
+							}
+						}//End NULLed Extra_Data_Track_FPI
+					}//End FPI block
+				}//End Extra data alloc
+			}//End phase D check
+			else	//match phases - "standard" child (at least in this case)
+			{
+				//Set flag for us
+				SubNode |= SNT_CHILD;
+
+				//Flag our powerflow parent - make sure it wasn't diff parented first
+				if ((tmp_par_node->SubNode & SNT_DIFF_PARENT) != SNT_DIFF_PARENT)
+					tmp_par_node->SubNode |= SNT_PARENT;
 
 				//Zero out last child power vector (used for updates)
-				last_child_power[0][0] = last_child_power[0][1] = last_child_power[0][2] = complex(0,0);
-				last_child_power[1][0] = last_child_power[1][1] = last_child_power[1][2] = complex(0,0);
-				last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = complex(0,0);
-				last_child_power[3][0] = last_child_power[3][1] = last_child_power[3][2] = complex(0,0);
+				last_child_power[0][0] = last_child_power[0][1] = last_child_power[0][2] = gld::complex(0,0);
+				last_child_power[1][0] = last_child_power[1][1] = last_child_power[1][2] = gld::complex(0,0);
+				last_child_power[2][0] = last_child_power[2][1] = last_child_power[2][2] = gld::complex(0,0);
+				last_child_power[3][0] = last_child_power[3][1] = last_child_power[3][2] = gld::complex(0,0);
 				last_child_current12 = 0.0;
 
 				//Do the same for the delta/wye explicit portions
-				last_child_power_dy[0][0] = last_child_power_dy[0][1] = last_child_power_dy[0][2] = complex(0.0,0.0);
-				last_child_power_dy[1][0] = last_child_power_dy[1][1] = last_child_power_dy[1][2] = complex(0.0,0.0);
-				last_child_power_dy[2][0] = last_child_power_dy[2][1] = last_child_power_dy[2][2] = complex(0.0,0.0);
-				last_child_power_dy[3][0] = last_child_power_dy[3][1] = last_child_power_dy[3][2] = complex(0.0,0.0);
-				last_child_power_dy[4][0] = last_child_power_dy[4][1] = last_child_power_dy[4][2] = complex(0.0,0.0);
-				last_child_power_dy[5][0] = last_child_power_dy[5][1] = last_child_power_dy[5][2] = complex(0.0,0.0);
-			}//end no issues phase
+				last_child_power_dy[0][0] = last_child_power_dy[0][1] = last_child_power_dy[0][2] = gld::complex(0.0,0.0);
+				last_child_power_dy[1][0] = last_child_power_dy[1][1] = last_child_power_dy[1][2] = gld::complex(0.0,0.0);
+				last_child_power_dy[2][0] = last_child_power_dy[2][1] = last_child_power_dy[2][2] = gld::complex(0.0,0.0);
+				last_child_power_dy[3][0] = last_child_power_dy[3][1] = last_child_power_dy[3][2] = gld::complex(0.0,0.0);
+				last_child_power_dy[4][0] = last_child_power_dy[4][1] = last_child_power_dy[4][2] = gld::complex(0.0,0.0);
+				last_child_power_dy[5][0] = last_child_power_dy[5][1] = last_child_power_dy[5][2] = gld::complex(0.0,0.0);
+			}
 
 			//Make sure nominal voltages match
 			if (nominal_voltage != parNode->nominal_voltage)
@@ -778,11 +895,27 @@ int node::init(OBJECT *parent)
 			//Ranking - similar to GS
 			if (obj==NR_swing_bus)	//Make sure we're THE swing bus and not just A swing bus
 			{
-				gl_set_rank(obj,6);
+				//Set the rank
+				gl_set_rank(obj,NR_expected_swing_rank);
+
+				//Flag it
+				NR_swing_rank_set = true;
 			}
-			else	//Normal nodes and rival swing buses end up in the same rank
-			{		
-				gl_set_rank(obj,4);
+			else	//Normal nodes and rival swing buses end up starting in the same rank
+			{
+				if (obj->rank<4)
+				{
+					gl_set_rank(obj,4);
+				}
+				//Default else - means something else set us already
+
+				//Update the SWING tracker
+				if ((obj->rank+2)>NR_expected_swing_rank)
+				{
+					//Update tracker - swing two steps higher than the "rabble" nodes
+					NR_expected_swing_rank = obj->rank+2;
+				}
+				//Default else - it is already here or higher
 			}
 		}
 
@@ -797,11 +930,11 @@ int node::init(OBJECT *parent)
 			else	//Something is there, see if we can find it
 			{
 				//Initialize the global
-				LUSolverFcns.dllLink = NULL;
-				LUSolverFcns.ext_init = NULL;
-				LUSolverFcns.ext_alloc = NULL;
-				LUSolverFcns.ext_solve = NULL;
-				LUSolverFcns.ext_destroy = NULL;
+				LUSolverFcns.dllLink = nullptr;
+				LUSolverFcns.ext_init = nullptr;
+				LUSolverFcns.ext_alloc = nullptr;
+				LUSolverFcns.ext_solve = nullptr;
+				LUSolverFcns.ext_destroy = nullptr;
 
 #ifdef _WIN32
 				snprintf(ext_lib_file_name, 1024, "solver_%s" DLEXT,LUSolverName.get_string());
@@ -809,13 +942,13 @@ int node::init(OBJECT *parent)
 				snprintf(ext_lib_file_name, 1024, "lib_solver_%s" DLEXT,LUSolverName.get_string());
 #endif
 
-				if (gl_findfile(ext_lib_file_name, NULL, 0|4, extpath,sizeof(extpath))!=NULL)	//Link up
+				if (gl_findfile(ext_lib_file_name, nullptr, 0|4, extpath,sizeof(extpath))!=nullptr)	//Link up
 				{
 					//Link to the library
 					LUSolverFcns.dllLink = DLLOAD(extpath);
 
 					//Make sure it worked
-					if (LUSolverFcns.dllLink==NULL)
+					if (LUSolverFcns.dllLink==nullptr)
 					{
 						gl_warning("Failure to load solver_%s as a library, defaulting to superLU",LUSolverName.get_string());
 						/*  TROUBLESHOOT
@@ -823,7 +956,7 @@ int node::init(OBJECT *parent)
 						the libary specifications.  superLU is being used instead.  Please check the library file and
 						try again.
 						*/
-						
+
 						//Set to superLU
 						matrix_solver_method = MM_SUPERLU;
 					}
@@ -834,16 +967,16 @@ int node::init(OBJECT *parent)
 
 						//Link the callback
 						cbackval = (CALLBACKS **)DLSYM(LUSolverFcns.dllLink, "callback");
-						
+
 						//I don't know what this does
 						if(cbackval)
 							*cbackval = callback;
-						
+
 						//Now link functions - Init
 						LUSolverFcns.ext_init = DLSYM(LUSolverFcns.dllLink,"LU_init");
-						
+
 						//Make sure it worked
-						if (LUSolverFcns.ext_init == NULL)
+						if (LUSolverFcns.ext_init == nullptr)
 						{
 							gl_warning("LU_init of external solver solver_%s not found, defaulting to superLU",LUSolverName.get_string());
 							/*  TROUBLESHOOT
@@ -860,7 +993,7 @@ int node::init(OBJECT *parent)
 						LUSolverFcns.ext_alloc = DLSYM(LUSolverFcns.dllLink,"LU_alloc");
 
 						//Make sure it worked
-						if (LUSolverFcns.ext_alloc == NULL)
+						if (LUSolverFcns.ext_alloc == nullptr)
 						{
 							gl_warning("LU_init of external solver solver_%s not found, defaulting to superLU",LUSolverName.get_string());
 							/*  TROUBLESHOOT
@@ -877,7 +1010,7 @@ int node::init(OBJECT *parent)
 						LUSolverFcns.ext_solve = DLSYM(LUSolverFcns.dllLink,"LU_solve");
 
 						//Make sure it worked
-						if (LUSolverFcns.ext_solve == NULL)
+						if (LUSolverFcns.ext_solve == nullptr)
 						{
 							gl_warning("LU_init of external solver solver_%s not found, defaulting to superLU",LUSolverName.get_string());
 							/*  TROUBLESHOOT
@@ -894,9 +1027,9 @@ int node::init(OBJECT *parent)
 						LUSolverFcns.ext_destroy = DLSYM(LUSolverFcns.dllLink,"LU_destroy");
 
 						//Make sure it worked
-						if (LUSolverFcns.ext_destroy == NULL)
+						if (LUSolverFcns.ext_destroy == nullptr)
 						{
-							gl_warning("LU_init of external solver solver_%s not found, defaulting to superLU",LUSolverName.get_string());
+							gl_warning("LU_destroy of external solver solver_%s not found, defaulting to superLU",LUSolverName.get_string());
 							/*  TROUBLESHOOT
 							While attempting to link the LU_init routine of an external LU matrix solver library, the routine
 							failed to be found.  Check the external library and try again.  At this failure, powerflow will revert
@@ -947,7 +1080,7 @@ int node::init(OBJECT *parent)
 			}
 
 			//Check and see if in-rush and impedance conversion are enabled - if so, disable one
-			if ((enable_inrush_calculations == true) && (enable_impedance_conversion == true))
+			if (enable_inrush_calculations && enable_impedance_conversion)
 			{
 				//Turn off impedance conversion, otherwise it breaks in-rush in weird ways
 				enable_impedance_conversion = false;
@@ -989,7 +1122,7 @@ int node::init(OBJECT *parent)
 		// Store the topological parent before anyone overwrites it
 		TopologicalParent = obj->parent;
 
-		if (obj->parent != NULL)
+		if (obj->parent != nullptr)
 		{
 			if((gl_object_isa(obj->parent,"load","powerflow") | gl_object_isa(obj->parent,"node","powerflow") | gl_object_isa(obj->parent,"meter","powerflow") | gl_object_isa(obj->parent,"substation","powerflow")))	//Parent is another node
 			{
@@ -1058,7 +1191,7 @@ int node::init(OBJECT *parent)
 			transformer_config = gl_get_property(parent,"configuration");
 
 			//Check it
-			if (transformer_config == NULL)
+			if (transformer_config == nullptr)
 			{
 				GL_THROW("Error mapping secondary voltage property from transformer:%d %s",parent->id,parent->name?parent->name:"unnamed");
 				/*  TROUBLESHOOT
@@ -1091,7 +1224,7 @@ int node::init(OBJECT *parent)
 			transformer_secondary_voltage = gl_get_property(trans_config_obj,"secondary_voltage");
 
 			//Make sure it worked
-			if (transformer_secondary_voltage == NULL)
+			if (transformer_secondary_voltage == nullptr)
 			{
 				GL_THROW("Error mapping secondary voltage property from transformer:%d %s",parent->id,parent->name?parent->name:"unnamed");
 				//Defined above
@@ -1101,7 +1234,7 @@ int node::init(OBJECT *parent)
 			trans_secondary_voltage_value = gl_get_double(trans_config_obj,transformer_secondary_voltage);
 
 			//Make sure it worked
-			if (trans_secondary_voltage_value == NULL)
+			if (trans_secondary_voltage_value == nullptr)
 			{
 				GL_THROW("Error mapping secondary voltage property from transformer:%d %s",parent->id,parent->name?parent->name:"unnamed");
 				//Defined above
@@ -1210,7 +1343,7 @@ int node::init(OBJECT *parent)
 			}
 		}
 
-		voltage[2] = complex(0,0);	//Ground always assumed it seems
+		voltage[2] = gld::complex(0,0);	//Ground always assumed it seems
 	}
 	else if (has_phase(PHASE_A|PHASE_B|PHASE_C))	//three phase
 	{
@@ -1280,7 +1413,7 @@ int node::init(OBJECT *parent)
 		pwr_object_count++;
 
 		//Check out parent and toss some warnings
-		if (TopologicalParent != NULL)
+		if (TopologicalParent != nullptr)
 		{
 			if ((TopologicalParent->flags & OF_DELTAMODE) != OF_DELTAMODE)
 			{
@@ -1292,7 +1425,7 @@ int node::init(OBJECT *parent)
 			}
 		}
 
-		//update GFA-type 
+		//update GFA-type
 		prev_time_dbl = (double)gl_globalclock;
 	}
 
@@ -1324,7 +1457,7 @@ TIMESTAMP node::NR_node_presync_fxn(TIMESTAMP t0_val)
 	current_accumulated = false;
 
 	//See if in-rush is enabled and we're in deltamode
-	if (enable_inrush_calculations == true)
+	if (enable_inrush_calculations)
 	{
 		if (deltatimestep_running > 0)
 		{
@@ -1335,7 +1468,7 @@ TIMESTAMP node::NR_node_presync_fxn(TIMESTAMP t0_val)
 			if (curr_delta_time != prev_delta_time)
 			{
 				//Zero the accumulators
-				BusHistTerm[0] = BusHistTerm[1] = BusHistTerm[2] = complex(0.0,0.0);
+				BusHistTerm[0] = BusHistTerm[1] = BusHistTerm[2] = gld::complex(0.0,0.0);
 			}
 			//Default else - not a new time, so keep going with same values (no rezero)
 		}//End deltamode running
@@ -1347,7 +1480,7 @@ TIMESTAMP node::NR_node_presync_fxn(TIMESTAMP t0_val)
 	}//End inrush enabled
 	//Defaulted else -- no in-rush or not deltamode
 
-	if ((SubNode==DIFF_PARENT))	//Differently connected parent - zero our accumulators
+	if (((SubNode & SNT_DIFF_PARENT) == SNT_DIFF_PARENT))	//Differently connected parent - zero our accumulators
 	{
 		//Zero them.  Row 1 is power, row 2 is admittance, row 3 is current
 		Extra_Data[0] = Extra_Data[1] = Extra_Data[2] = 0.0;
@@ -1358,7 +1491,7 @@ TIMESTAMP node::NR_node_presync_fxn(TIMESTAMP t0_val)
 	}
 
 	//If we're a parent and "have house", zero our accumulator
-	if ((SubNode==PARENT) && (house_present==true))
+	if (((SubNode & (SNT_PARENT | SNT_DIFF_PARENT)) != 0) && house_present)
 	{
 		nom_res_curr[0] = nom_res_curr[1] = nom_res_curr[2] = 0.0;
 	}
@@ -1367,7 +1500,7 @@ TIMESTAMP node::NR_node_presync_fxn(TIMESTAMP t0_val)
 	//Call the GFA-type functionality, if appropriate
 	//See if it is enabled, and we're not in deltamode
 	//Deltamode handled explicitly elsewhere
-	if ((GFA_enable == true) && (deltatimestep_running < 0))
+	if (GFA_enable && (deltatimestep_running < 0))
 	{
 		//Extract the current timestamp, as a double
 		curr_ts_dbl = (double)t0_val;
@@ -1388,7 +1521,7 @@ TIMESTAMP node::NR_node_presync_fxn(TIMESTAMP t0_val)
 			if (GFA_Update_time > 0.0)
 			{
 				//See which mode we're in
-				if (deltamode_inclusive == true)
+				if (deltamode_inclusive)
 				{
 					tresults_val = t0_val + (TIMESTAMP)(floor(GFA_Update_time));
 
@@ -1416,12 +1549,12 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 	unsigned int index_val;
 	FILE *NRFileDump;
 	OBJECT *obj = OBJECTHDR(this);
-	TIMESTAMP t1 = powerflow_object::presync(t0); 
+	TIMESTAMP t1 = powerflow_object::presync(t0);
 	TIMESTAMP temp_time_value, temp_t1_value;
-	node *temp_par_node = NULL;
-	gld_property *temp_complex_property;
-	gld_wlock *test_rlock;
-	complex temp_complex_value;
+	node *temp_par_node = nullptr;
+	gld_property *temp_complex_property = nullptr;
+	gld_wlock *test_rlock = nullptr;
+	gld::complex temp_complex_value;
 	complex_array temp_complex_array;
 	int temp_idx_x, temp_idx_y;
 
@@ -1505,7 +1638,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			A node has more phases present than it has sources coming in.  This scenario implies an unconnected
 			phases between the from and to nodes of a connected line.  Please adjust the phases appropriately.  Also
 			be sure no open switches are the sole connection for a phase, else this will fail as well.  In a few NR
-			circumstances, this can also be seen if the "from" and "to" nodes are in reverse order - the "from" node 
+			circumstances, this can also be seen if the "from" and "to" nodes are in reverse order - the "from" node
 			of a link object should be nearest the SWING node, or the node with the most phases - this error check
 			will be updated in future versions.
 			*/
@@ -1515,7 +1648,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 		}
 
 		//Deltamode check - let every object do it, for giggles
-		if (enable_subsecond_models == true)
+		if (enable_subsecond_models)
 		{
 			if (solver_method != SM_NR)
 			{
@@ -1528,7 +1661,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 		}
 
 		//Special FBS code
-		if ((solver_method==SM_FBS) && (FBS_swing_set==false))
+		if ((solver_method==SM_FBS) && !FBS_swing_set)
 		{
 			//We're the first one in, we must be the SWING - set us as such
 			bustype=SWING;
@@ -1543,7 +1676,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 		if (prev_NTime==0)	//First run, if we are a child, make sure no one linked us before we knew that
 		{
 			//Make sure an overall SWING bus exists
-			if (NR_swing_bus==NULL)
+			if (NR_swing_bus==nullptr)
 			{
 				GL_THROW("NR: no swing bus found or specified");
 				/*	TROUBLESHOOT
@@ -1553,7 +1686,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 				*/
 			}
 
-			if (((SubNode == CHILD) || (SubNode == DIFF_CHILD)) && (NR_connected_links[0] > 0))
+			if (((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) != 0) && (NR_connected_links[0] > 0))
 			{
 				GL_THROW("NR: node:%d - %s - extra links acquired outside of init routine",obj->id,(obj->name?obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
@@ -1568,7 +1701,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 				NR_child_nodes = (node**)gl_malloc(NR_number_child_nodes[0] * sizeof(node*));
 
 				//Make sure it worked
-				if (NR_child_nodes == NULL)
+				if (NR_child_nodes == nullptr)
 				{
 					GL_THROW("NR: Failed to allocate child node pointing space");
 					/*  TROUBLESHOOT
@@ -1583,7 +1716,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			}
 
 			//Rank wise, children should be firing after the above malloc is done - link them beasties up
-			if ((SubNode == CHILD) || (SubNode == DIFF_CHILD))
+			if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) != 0)
 			{
 				//Link the parental
 				node *parNode = OBJECTDATA(SubNodeParent,node);
@@ -1591,7 +1724,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 				WRITELOCK_OBJECT(SubNodeParent);	//Lock
 
 				//Check and see if we're a house-triplex.  If so, flag our parent so NR works - just draconian write (won't hurt anything)
-				if (house_present==true)
+				if (house_present)
 				{
 					parNode->house_present=true;
 				}
@@ -1622,12 +1755,12 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			}
 		}
 
-		if (NR_busdata==NULL || NR_branchdata==NULL)	//First time any NR in (this should be the swing bus doing this)
+		if (NR_busdata==nullptr || NR_branchdata==nullptr)	//First time any NR in (this should be the swing bus doing this)
 		{
 			if ( NR_swing_bus!=obj) WRITELOCK_OBJECT(NR_swing_bus);	//Lock Swing for flag
 
 			NR_busdata = (BUSDATA *)gl_malloc(NR_bus_count * sizeof(BUSDATA));
-			if (NR_busdata==NULL)
+			if (NR_busdata==nullptr)
 			{
 				gl_error("NR: memory allocation failure for bus table");
 				/*	TROUBLESHOOT
@@ -1647,7 +1780,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 				NR_busdata[index_val].type = -1;
 
 			NR_branchdata = (BRANCHDATA *)gl_malloc(NR_branch_count * sizeof(BRANCHDATA));
-			if (NR_branchdata==NULL)
+			if (NR_branchdata==nullptr)
 			{
 				gl_error("NR: memory allocation failure for branch table");
 				/*	TROUBLESHOOT
@@ -1667,16 +1800,16 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 				NR_branchdata[index_val].from = -1;
 
 			//Allocate deltamode stuff as well
-			if (enable_subsecond_models==true)	//If enabled in powerflow, swing bus rules them all
+			if (enable_subsecond_models)	//If enabled in powerflow, swing bus rules them all
 			{
 				//Make sure no one else has done it yet
-				if ((pwr_object_current == -1) || (delta_objects==NULL))
+				if ((pwr_object_current == -1) || (delta_objects==nullptr))
 				{
 					//Allocate the deltamode object array
 					delta_objects = (OBJECT**)gl_malloc(pwr_object_count*sizeof(OBJECT*));
 
 					//Make sure it worked
-					if (delta_objects == NULL)
+					if (delta_objects == nullptr)
 					{
 						GL_THROW("Failed to allocate deltamode objects array for powerflow module!");
 						/*  TROUBLESHOOT
@@ -1690,7 +1823,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 					delta_functions = (FUNCTIONADDR*)gl_malloc(pwr_object_count*sizeof(FUNCTIONADDR));
 
 					//Make sure it worked
-					if (delta_functions == NULL)
+					if (delta_functions == nullptr)
 					{
 						GL_THROW("Failed to allocate deltamode objects function array for powerflow module!");
 						/*  TROUBLESHOOT
@@ -1704,7 +1837,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 					post_delta_functions = (FUNCTIONADDR*)gl_malloc(pwr_object_count*sizeof(FUNCTIONADDR));
 
 					//Make sure it worked
-					if (post_delta_functions == NULL)
+					if (post_delta_functions == nullptr)
 					{
 						GL_THROW("Failed to allocate deltamode objects function array for powerflow module!");
 						//Defined above
@@ -1715,7 +1848,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 				}
 
 				//See if we are the swing bus AND our flag is enabled, otherwise warn
-				if ((obj == NR_swing_bus) && (deltamode_inclusive == false))
+				if ((obj == NR_swing_bus) && !deltamode_inclusive)
 				{
 					gl_warning("SWING bus:%s is not flagged for deltamode",obj->name);
 					/*  TROUBLESHOOT
@@ -1778,7 +1911,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 		}//End busdata and branchdata null (first in)
 
 		//Populate individual object references into deltamode, if needed
-		if ((deltamode_inclusive==true) && (enable_subsecond_models == true) && (prev_NTime==0))
+		if (deltamode_inclusive && enable_subsecond_models && (prev_NTime==0))
 		{
 			int temp_pwr_object_current;
 
@@ -1812,7 +1945,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			delta_functions[temp_pwr_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"interupdate_pwr_object"));
 
 			//Make sure it worked
-			if (delta_functions[temp_pwr_object_current] == NULL)
+			if (delta_functions[temp_pwr_object_current] == nullptr)
 			{
 				gl_warning("Failure to map deltamode function for device:%s",obj->name);
 				/*  TROUBLESHOOT
@@ -1827,172 +1960,6 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 			post_delta_functions[temp_pwr_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"postupdate_pwr_object"));
 
 			//No null check, since this one just may not work (post update may not exist)
-
-			//Do any additional parent/child mappings for deltamode -- if necessary
-			if (((SubNode==CHILD) || (SubNode==DIFF_CHILD)) && ((dynamic_norton==true) || (dynamic_generator==true)))
-			{
-				//Map our parent
-				temp_par_node = OBJECTDATA(SubNodeParent,node);
-
-				//Make sure it worked, for giggles
-				if (temp_par_node == NULL)
-				{
-					GL_THROW("node:%s - failed to map parent object for childed node",obj->name);
-					/*  TROUBLESHOOT
-					While attempting to link to the parent node, an error occurred.  Please try again.
-					If the error persists, please submit your code and a bug report via the trac website.
-					*/
-				}
-
-				//Lock the parent for all of our shenanigans
-				LOCK_OBJECT(SubNodeParent);
-
-				//See if we're a Norton equivalent
-				if (dynamic_norton==true)
-				{
-					//Flag our parent, just to make sure things work properly
-					temp_par_node->dynamic_norton = true;
-
-					//See if we even have anything to contribute on the full_Y matrix
-					if (full_Y_matrix.is_valid(0,0) == true)
-					{
-						//Make sure it is the right size
-						if ((full_Y_matrix.get_rows() == 3) && (full_Y_matrix.get_cols() == 3))
-						{
-							//Allocate ourself
-							full_Y = (complex *)gl_malloc(9*sizeof(complex));
-
-							//Check it
-							if (full_Y==NULL)
-							{
-								GL_THROW("Node:%s failed to allocate space for the a deltamode variable",(obj->name?obj->name:"Unnamed"));
-								/*  TROUBLESHOOT
-								While attempting to allocate memory for a dynamics-required (deltamode) variable, an error
-								occurred. Please try again.  If the error persists, please submit your code and a bug
-								report via the trac website.
-								*/
-							}
-
-							//Map to the parent property
-							temp_complex_property = new gld_property(SubNodeParent,"deltamode_full_Y_matrix");
-
-							//Check it
-							if ((temp_complex_property->is_valid() != true) || (temp_complex_property->is_complex_array() != true))
-							{
-								GL_THROW("Node:%d - %s - parent deltamode matrix property is not valid!",obj->id,(obj->name ? obj->name : "Unnamed"));
-								/*  TROUBLESHOOT
-								While attempting to map to the exposed deltamode matrix property of a powerflow parent, an error occurred.
-								Please try again.  If the error persists, please submit your model and an issue via the ticketing system.
-								*/
-							}
-
-							//Pull down the variable
-							temp_complex_property->getp<complex_array>(temp_complex_array,*test_rlock);
-
-							//See if it is valid
-							if (temp_complex_array.is_valid(0,0) != true)
-							{
-								//Create it
-								temp_complex_array.grow_to(3,3);
-
-								//Zero it, by default
-								for (temp_idx_x=0; temp_idx_x<3; temp_idx_x++)
-								{
-									for (temp_idx_y=0; temp_idx_y<3; temp_idx_y++)
-									{
-										temp_complex_array.set_at(temp_idx_x,temp_idx_y,complex(0.0,0.0));
-									}
-								}
-							}
-							else	//Already populated, make sure it is the right size!
-							{
-								if ((temp_complex_array.get_rows() != 3) && (temp_complex_array.get_cols() != 3))
-								{
-									GL_THROW("node:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
-									/*  TROUBLESHOOT
-									While mapping to an admittance matrix on the parent node device, it was found it is the wrong size.
-									Please try again.  If the error persists, please submit your code and model via the issue tracking system.
-									*/
-								}
-								//Default else -- right size
-							}
-
-							//Made it this far, just try adding them
-							temp_complex_array += full_Y_matrix;
-
-							//Push it back up
-							temp_complex_property->setp<complex_array>(temp_complex_array,*test_rlock);
-
-							//Loop through and store the local values, while we're at it
-							full_Y[0] = full_Y_matrix.get_at(0,0);
-							full_Y[1] = full_Y_matrix.get_at(0,1);
-							full_Y[2] = full_Y_matrix.get_at(0,2);
-
-							full_Y[3] = full_Y_matrix.get_at(1,0);
-							full_Y[4] = full_Y_matrix.get_at(1,1);
-							full_Y[5] = full_Y_matrix.get_at(1,2);
-
-							full_Y[6] = full_Y_matrix.get_at(2,0);
-							full_Y[7] = full_Y_matrix.get_at(2,1);
-							full_Y[8] = full_Y_matrix.get_at(2,2);
-						}//End size is 3x3
-						else
-						{
-							GL_THROW("Node:%d - %s - Invalid deltamode matrix size!",obj->id,(obj->name ? obj->name : "Unnamed"));
-							/*  TROUBLESHOOT
-							While attempting to link up to one of the deltamode dynamic matrices, an unexpected size was encountered.
-							Please try again.  If the error persists, please submit your code and a bug report via the issue tracker.
-							*/
-						}
-					}//End we have values
-
-					//NULL our overall pointer -- we don't need it
-					full_Y_all = NULL;
-
-					//See if we've somehow already been allocated
-					if (full_Y_all_matrix.is_valid(0,0) == true)
-					{
-						//See if we're the right size already
-						if ((full_Y_all_matrix.get_rows() != 3) && (full_Y_all_matrix.get_cols() != 3))
-						{
-							GL_THROW("node:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
-							//Defined above
-						}
-					}
-					else	//Try allocating it
-					{
-						full_Y_all_matrix.grow_to(3,3);
-					}
-
-					//Now zero it
-					for (temp_idx_x=0; temp_idx_x<3; temp_idx_x++)
-					{
-						for (temp_idx_y=0; temp_idx_y<3; temp_idx_y++)
-						{
-							full_Y_all_matrix.set_at(temp_idx_x,temp_idx_y,complex(0.0,0.0));
-						}
-					}
-				}//End Norton equivalent
-
-				//Now do the other variable
-				if (dynamic_generator==true)
-				{
-					//Flag our parent
-					temp_par_node->dynamic_generator = true;
-				}
-
-				//Unlock our parent
-				UNLOCK_OBJECT(SubNodeParent);
-
-				//NULL the pointers, if necessary (paranoia)
-				if (dynamic_norton!=true)
-				{
-					full_Y = NULL;
-					full_Y_all = NULL;
-				}
-
-				//No need to do NR mappings - we don't get hit anyways
-			}//End child Norton equivalent/dynamic generator postings code
 		}//end deltamode allocations
 
 		//Call NR presync function
@@ -2051,7 +2018,7 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 		}
 #endif
 		/* reset the current accumulator */
-		current_inj[0] = current_inj[1] = current_inj[2] = complex(0,0);
+		current_inj[0] = current_inj[1] = current_inj[2] = gld::complex(0,0);
 
 		/* record the last sync voltage */
 		last_voltage[0] = voltage[0];
@@ -2059,13 +2026,13 @@ TIMESTAMP node::presync(TIMESTAMP t0)
 		last_voltage[2] = voltage[2];
 
 		/* get frequency from reference bus */
-		if (reference_bus!=NULL)
+		if (reference_bus!=nullptr)
 		{
 			node *pRef = OBJECTDATA(reference_bus,node);
 			frequency = pRef->frequency;
 		}
 	}
-	
+
 	return t1;
 }
 
@@ -2083,15 +2050,18 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 	if (NR_node_reference!=-1)
 	{
 		//Do a check to see if we need to be "islanded reset" -- do this to re-enable phases, if needed
-		if ((reset_island_state == true) && (NR_island_fail_method == true))
+		if (reset_island_state && NR_island_fail_method)
 		{
 			//Call the reset function - easier this way -- don't really care about the status here -- warning messages will suffice for this call
 			fxn_ret_value = reset_node_island_condition();
 		}
 		//Default else -- our current state is acceptable
 
+
+		//Phase check/voltage zero - mostly so fuses behave properly (postsync one captures most items, but restored fuses
+		//break things here)
 		//Make sure we're a real boy - if we're not, do nothing (we'll steal mommy's or daddy's voltages in postsync)
-		if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+		if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 		{
 			//Figre out what has changed
 			phase_checks_var = ((NR_busdata[NR_node_reference].phases ^ prev_phases) & 0x8F);
@@ -2117,7 +2087,7 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 					else	//Put back in service
 					{
 						//See if in-rush is enabled or not
-						if (enable_inrush_calculations == false)
+						if (!enable_inrush_calculations)
 						{
 							voltage[0] = last_voltage[0];
 							voltage[1] = last_voltage[1];
@@ -2152,7 +2122,7 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 						}
 						else	//A just came back
 						{
-							if (enable_inrush_calculations == false)
+							if (!enable_inrush_calculations)
 							{
 								voltage[0] = last_voltage[0];	//Read in the previous values
 							}
@@ -2176,7 +2146,7 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 						}
 						else	//B just came back
 						{
-							if (enable_inrush_calculations == false)
+							if (!enable_inrush_calculations)
 							{
 								voltage[1] = last_voltage[1];	//Read in the previous values
 							}
@@ -2200,7 +2170,7 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 						}
 						else	//C just came back
 						{
-							if (enable_inrush_calculations == false)
+							if (!enable_inrush_calculations)
 							{
 								voltage[2] = last_voltage[2];	//Read in the previous values
 							}
@@ -2224,7 +2194,7 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			}//End Phase checks for reliability
 		}//End normal node
 
-		if (SubNode==CHILD)
+		if ((SubNode & SNT_CHILD)==SNT_CHILD)
 		{
 			//Post our loads up to our parent
 			node *ParToLoad = OBJECTDATA(SubNodeParent,node);
@@ -2250,7 +2220,8 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			ParToLoad->pre_rotated_current[2] += pre_rotated_current[2]-last_child_power[3][2];
 
 			//And the deltamode accumulators too -- if deltamode
-			if (deltamode_inclusive == true)
+			//Only do this if we are a dynamic norton child - otherwise may do extra
+			if (deltamode_inclusive && dynamic_norton)
 			{
 				//Pull our parent value down -- everything is being pushed up there anyways
 				//Pulling to keep meters accurate (theoretically)
@@ -2273,7 +2244,7 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			}
 
 			//See if we have a house!
-			if (house_present==true)	//Add our values into our parent's accumulator!
+			if (house_present)	//Add our values into our parent's accumulator!
 			{
 				ParToLoad->nom_res_curr[0] += nom_res_curr[0];
 				ParToLoad->nom_res_curr[1] += nom_res_curr[1];
@@ -2313,7 +2284,7 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 		}
 
 		//Accumulations for "differently connected nodes" is still basically the same for delta/wye combination loads
-		if (SubNode==DIFF_CHILD)
+		if ((SubNode & SNT_DIFF_CHILD)==SNT_DIFF_CHILD)
 		{
 			//Post our loads up to our parent - in the appropriate fashion
 			node *ParToLoad = OBJECTDATA(SubNodeParent,node);
@@ -2340,7 +2311,8 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 			ParToLoad->pre_rotated_current[2] += pre_rotated_current[2];
 
 			//And the deltamode accumulators too -- if deltamode
-			if (deltamode_inclusive == true)
+			//Only do this if we are a dynamic norton child - otherwise may do extra
+			if (deltamode_inclusive && dynamic_norton)
 			{
 				//Pull our parent value down -- everything is being pushed up there anyways
 				//Pulling to keep meters accurate (theoretically)
@@ -2376,7 +2348,7 @@ void node::NR_node_sync_fxn(OBJECT *obj)
 
 		//Call the VFD update, if we need it
 		//Note -- this basically precludes childed nodes from working, which is acceptable (programmer says so)
-		if (VFD_attached == true)
+		if (VFD_attached)
 		{
 			//Call the function - make the VFD move us along
 			fxn_ret_value = ((STATUS (*)(OBJECT *))(*VFD_updating_function))(VFD_object);
@@ -2398,14 +2370,14 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 {
 	TIMESTAMP t1 = powerflow_object::sync(t0);
 	OBJECT *obj = OBJECTHDR(this);
-	complex delta_current[3];
-	complex power_current[3];
-	complex delta_shunt[3];
-	complex delta_shunt_curr[3];
-	complex dy_curr_accum[3];
-	complex temp_current_val[3];
+	gld::complex delta_current[3];
+	gld::complex power_current[3];
+	gld::complex delta_shunt[3];
+	gld::complex delta_shunt_curr[3];
+	gld::complex dy_curr_accum[3];
+	gld::complex temp_current_val[3];
 	char loop_index_val;
-	complex temp_curr_rotate_value, temp_curr_calc_value;
+	gld::complex temp_curr_rotate_value, temp_curr_calc_value;
 	gld_property *temp_property;
 	
 	//Final initialization issue - has to be here, or childed deltamode stuff fails
@@ -2419,7 +2391,56 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			//Call the populate routine
 			NR_populate();
 		}
-	}
+		else	//Initialized, so SWING or child
+		{
+			//Check our status - make sure we're a child
+			if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) != 0)
+			{
+				//Only do admittance allocation if we're a Norton
+				if (dynamic_norton)
+				{
+					//Make sure no pesky children have already allocated us
+					if (full_Y == nullptr)
+					{
+						//Allocate it
+						full_Y = (gld::complex *)gl_malloc(9*sizeof(gld::complex));
+
+						//Check it
+						if (full_Y==nullptr)
+						{
+							GL_THROW("Node:%s failed to allocate space for the a deltamode variable",obj->name);
+							//Defined elsewhere
+						}
+
+						//See if our published matrix has anything in it
+						if ((full_Y_matrix.get_rows() == 3) && (full_Y_matrix.get_cols() == 3))
+						{
+							full_Y[0] = full_Y_matrix.get_at(0,0);
+							full_Y[1] = full_Y_matrix.get_at(0,1);
+							full_Y[2] = full_Y_matrix.get_at(0,2);
+
+							full_Y[3] = full_Y_matrix.get_at(1,0);
+							full_Y[4] = full_Y_matrix.get_at(1,1);
+							full_Y[5] = full_Y_matrix.get_at(1,2);
+
+							full_Y[6] = full_Y_matrix.get_at(2,0);
+							full_Y[7] = full_Y_matrix.get_at(2,1);
+							full_Y[8] = full_Y_matrix.get_at(2,2);
+						}
+						else
+						{
+							//Zero it, just to be safe (gens will accumulate into it)
+							full_Y[0] = full_Y[1] = full_Y[2] = gld::complex(0.0,0.0);
+							full_Y[3] = full_Y[4] = full_Y[5] = gld::complex(0.0,0.0);
+							full_Y[6] = full_Y[7] = full_Y[8] = gld::complex(0.0,0.0);
+						}
+					}
+					//Default else - must somehow already be allocated
+				}//End dynamic Norton
+			}//End is a child
+			//Default else - probably a SWING
+		}//End SWING or child
+	}//First run NR
 
 	//Generic time keeping variable - used for phase checks (GS does this explicitly below)
 	if (t0!=prev_NTime)
@@ -2434,9 +2455,9 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 		{
 		if (phases&PHASE_S)
 		{	// Split phase
-			complex temp_inj[2];
-			complex adjusted_curr[3];
-			complex temp_curr_val[3];
+			gld::complex temp_inj[2];
+			gld::complex adjusted_curr[3];
+			gld::complex temp_curr_val[3];
 
 			if (house_present)
 			{
@@ -2459,9 +2480,9 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			if (voltage[0]!=0.0)
 			{
 #endif
-			complex d1 = (voltage1.IsZero() || (power1.IsZero() && shunt1.IsZero())) ? (current1 + temp_curr_val[0]) : (current1 + ~(power1/voltage1) + voltage1*shunt1 + temp_curr_val[0]);
-			complex d2 = ((voltage1+voltage2).IsZero() || (power12.IsZero() && shunt12.IsZero())) ? (current12 + temp_curr_val[2]) : (current12 + ~(power12/(voltage1+voltage2)) + (voltage1+voltage2)*shunt12 + temp_curr_val[2]);
-			
+			gld::complex d1 = (voltage1.IsZero() || (power1.IsZero() && shunt1.IsZero())) ? (current1 + temp_curr_val[0]) : (current1 + ~(power1/voltage1) + voltage1*shunt1 + temp_curr_val[0]);
+			gld::complex d2 = ((voltage1+voltage2).IsZero() || (power12.IsZero() && shunt12.IsZero())) ? (current12 + temp_curr_val[2]) : (current12 + ~(power12/(voltage1+voltage2)) + (voltage1+voltage2)*shunt12 + temp_curr_val[2]);
+
 			current_inj[0] += d1;
 			temp_inj[0] = current_inj[0];
 			current_inj[0] += d2;
@@ -2485,7 +2506,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			current_inj[1] += d1;
 			temp_inj[1] = current_inj[1];
 			current_inj[1] += d2;
-			
+
 #ifdef SUPPORT_OUTAGES
 			}
 			else
@@ -2497,16 +2518,16 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			}
 #endif
 
-			if (obj->parent!=NULL && gl_object_isa(obj->parent,"triplex_line","powerflow")) {
+			if (obj->parent!=nullptr && gl_object_isa(obj->parent,"triplex_line","powerflow")) {
 
 				//See if we've mapped yet
-				if (tn_values == NULL)
+				if (tn_values == nullptr)
 				{
 					//Allocate space
-					tn_values = (complex *)gl_malloc(2*sizeof(complex));
+					tn_values = (gld::complex *)gl_malloc(2*sizeof(gld::complex));
 
 					//Make sure it worked
-					if (tn_values == NULL)
+					if (tn_values == nullptr)
 					{
 						GL_THROW("node:%d - %s -- Failed to allocate for triplex current data",obj->id,(obj->name ? obj->name : "Unnamed"));
 						/*  TROUBLESHOOT
@@ -2521,7 +2542,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 					temp_property = new gld_property(obj->parent,"triplex_neutral_1_value");
 
 					//Make sure it worked
-					if ((temp_property->is_valid() != true) || (temp_property->is_complex() != true))
+					if (!temp_property->is_valid() || !temp_property->is_complex())
 					{
 						GL_THROW("node:%d - %s -- Failed to map triplex current data",obj->id,(obj->name ? obj->name : "Unnamed"));
 						/* TROUBLESHOOT
@@ -2541,7 +2562,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 					temp_property = new gld_property(obj->parent,"triplex_neutral_2_value");
 
 					//Make sure it worked
-					if ((temp_property->is_valid() != true) || (temp_property->is_complex() != true))
+					if (!temp_property->is_valid() || !temp_property->is_complex())
 					{
 						GL_THROW("node:%d - %s -- Failed to map triplex current data",obj->id,(obj->name ? obj->name : "Unnamed"));
 						//Defined above
@@ -2555,11 +2576,11 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				}
 				//Default else - already mapped, so go forth
 
-				complex d = tn_values[0]*current_inj[0] + tn_values[1]*current_inj[1];
+				gld::complex d = tn_values[0]*current_inj[0] + tn_values[1]*current_inj[1];
 				current_inj[2] += d;
 			}
 			else {
-				complex d = ((voltage1.IsZero() || (power1.IsZero() && shunt1.IsZero())) ||
+				gld::complex d = ((voltage1.IsZero() || (power1.IsZero() && shunt1.IsZero())) ||
 								   (voltage2.IsZero() || (power2.IsZero() && shunt2.IsZero()))) 
 									? currentN : -(temp_inj[0] + temp_inj[1]);
 				current_inj[2] += d;
@@ -2617,7 +2638,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			current_inj[2] += temp_current_val[2];
 #endif
 		}
-		else 
+		else
 		{	// 'WYE' connected load
 
 #ifdef SUPPORT_OUTAGES
@@ -2631,7 +2652,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				}
 				else
 				{
-					complex d = ((voltage[kphase]==0.0) || ((power[kphase] == 0) && shunt[kphase].IsZero())) ? current[kphase] : current[kphase] + ~(power[kphase]/voltage[kphase]) + voltage[kphase]*shunt[kphase];
+					gld::complex d = ((voltage[kphase]==0.0) || ((power[kphase] == 0) && shunt[kphase].IsZero())) ? current[kphase] : current[kphase] + ~(power[kphase]/voltage[kphase]) + voltage[kphase]*shunt[kphase];
 					//WRITELOCK_OBJECT(obj);
 					current_inj[kphase] += d;
 					//UNLOCK_OBJECT(obj);
@@ -2684,7 +2705,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			dy_curr_accum[0] += (voltageA.IsZero() || (power_dy[3].IsZero() && shunt_dy[3].IsZero())) ? current_dy[3] : current_dy[3] + ~(power_dy[3]/voltageA) + voltageA*shunt_dy[3];
 			dy_curr_accum[1] += (voltageB.IsZero() || (power_dy[4].IsZero() && shunt_dy[4].IsZero())) ? current_dy[4] : current_dy[4] + ~(power_dy[4]/voltageB) + voltageB*shunt_dy[4];
 			dy_curr_accum[2] += (voltageC.IsZero() || (power_dy[5].IsZero() && shunt_dy[5].IsZero())) ? current_dy[5] : current_dy[5] + ~(power_dy[5]/voltageC) + voltageC*shunt_dy[5];
-				
+
 			//Accumulate in to final portion
 			current_inj[0] += dy_curr_accum[0];
 			current_inj[1] += dy_curr_accum[1];
@@ -2740,7 +2761,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 #endif
 
 		// if the parent object is another node
-		if (obj->parent!=NULL && gl_object_isa(obj->parent,"node","powerflow"))
+		if (obj->parent!=nullptr && gl_object_isa(obj->parent,"node","powerflow"))
 		{
 			node *pNode = OBJECTDATA(obj->parent,node);
 
@@ -2769,13 +2790,17 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 			//Call NR sync function items
 			NR_node_sync_fxn(obj);
 
+#ifdef GLD_USE_EIGEN
+			static auto NR_Solver = std::make_unique<NR_Solver_Eigen>();
+#endif
+
 			if ((NR_curr_bus==NR_bus_count) && (obj==NR_swing_bus))	//Only run the solver once everything has populated
 			{
 				bool bad_computation=false;
 				NRSOLVERMODE powerflow_type;
-				
+
 				//See if we're the special fault_check mode
-				if (fault_check_override_mode == true)
+				if (fault_check_override_mode)
 				{
 					//Just return a reiteration time -- fault_check will terminate the simulation
 					return t0;
@@ -2784,7 +2809,7 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 				//Depending on operation mode, call solver appropriately
 				if (deltamode_inclusive)	//Dynamics mode, solve the static in a way that generators are handled right
 				{
-					if (NR_dyn_first_run==true)	//If it is the first run, perform the initialization powerflow
+					if (NR_dyn_first_run)	//If it is the first run, perform the initialization powerflow
 					{
 						powerflow_type = PF_DYNINIT;
 						NR_dyn_first_run = false;	//Deflag us for future powerflow solutions
@@ -2799,12 +2824,16 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 					powerflow_type = PF_NORMAL;
 				}
 
-				int64 result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, powerflow_type, NULL, &bad_computation);
+#ifndef GLD_USE_EIGEN
+				int64 result = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, powerflow_type, nullptr, &bad_computation);
+#else
+				long result = NR_Solver.solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, powerflow_type, nullptr, &bad_computation);
+#endif
 
 				//De-flag the change - no contention should occur
 				NR_admit_change = false;
 
-				if (bad_computation==true)
+				if (bad_computation)
 				{
 					GL_THROW("Newton-Raphson method is unable to converge to a solution at this operation point");
 					/*  TROUBLESHOOT
@@ -2823,7 +2852,29 @@ TIMESTAMP node::sync(TIMESTAMP t0)
 					NR_retval=t0;
 				}
 				else
-					NR_retval=t1;
+				{
+					//See if deltamode is enabled
+					if (enable_subsecond_models && deltamode_inclusive)
+					{
+						if (delta_initialize_iterations > 0)	//Reiterate
+						{
+							//Decrement it
+							delta_initialize_iterations--;
+
+							//Reiterate
+							NR_retval = t0;
+						}
+						else
+						{
+							//Continue
+							NR_retval = t1;
+						}
+					}
+					else	//Normal - continue
+					{
+						NR_retval=t1;
+					}
+				}
 
 				//See where we wanted to go
 				return NR_retval;
@@ -2878,20 +2929,164 @@ void node::BOTH_node_postsync_fxn(OBJECT *obj)
 	double curr_delta_time;
 	complex_array temp_complex_array;
 	int index_x_val, index_y_val;
-	gld_property *temp_property;
-	gld_wlock *test_rlock;
+	gld_property *temp_property = nullptr;
+	gld_wlock *test_rlock = nullptr;
+	unsigned char phase_checks_var;
+
+	//NR-related updates for reliability and making sure "removed" objects have zero voltage
+	//Needs to be in post sync due to when fault_check fires and removes phases
+	if (solver_method == SM_NR)
+	{
+		//Make sure not unreferenced
+		if (NR_node_reference!=-1)
+		{
+			//Make sure we're a real boy - if we're not, do nothing (we'll steal mommy's or daddy's voltages in postsync)
+			if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
+			{
+				//Figre out what has changed
+				phase_checks_var = ((NR_busdata[NR_node_reference].phases ^ prev_phases) & 0x8F);
+
+				if (phase_checks_var != 0x00)	//Something's changed
+				{
+					//See if it is a triplex
+					if ((NR_busdata[NR_node_reference].origphases & 0x80) == 0x80)
+					{
+						//See if A, B, or C appeared, or disappeared
+						if ((NR_busdata[NR_node_reference].phases & 0x80) == 0x00)	//No phases means it was just removed
+						{
+							//Store V1 and V2
+							last_voltage[0] = voltage[0];
+							last_voltage[1] = voltage[1];
+							last_voltage[2] = voltage[2];
+
+							//Clear them out
+							voltage[0] = 0.0;
+							voltage[1] = 0.0;
+							voltage[2] = 0.0;
+						}
+						else	//Put back in service
+						{
+							//See if in-rush is enabled or not
+							if (!enable_inrush_calculations)
+							{
+								voltage[0] = last_voltage[0];
+								voltage[1] = last_voltage[1];
+								voltage[2] = last_voltage[2];
+							}
+							else	//When restoring from inrush, a very small term is needed (or nothing happens)
+							{
+								voltage[0] = last_voltage[0] * MULTTERM;
+								voltage[1] = last_voltage[1] * MULTTERM;
+								voltage[2] = last_voltage[2] * MULTTERM;
+							}
+
+							//Default else - leave it be and just leave them to zero (more fun!)
+						}
+
+						//Recalculated V12, V1N, V2N in case a child uses them
+						voltaged[0] = voltage[0] + voltage[1];	//12
+						voltaged[1] = voltage[1] - voltage[2];	//2N
+						voltaged[2] = voltage[0] - voltage[2];	//1N -- unsure why odd
+
+					}//End triplex
+					else	//Nope
+					{
+						//Find out changes, and direction
+						if ((phase_checks_var & 0x04) == 0x04)	//Phase A change
+						{
+							//See which way
+							if ((prev_phases & 0x04) == 0x04)	//Means A just disappeared
+							{
+								last_voltage[0] = voltage[0];	//Store the last value
+								voltage[0] = 0.0;				//Put us to zero, so volt_dump is happy
+							}
+							else	//A just came back
+							{
+								if (!enable_inrush_calculations)
+								{
+									voltage[0] = last_voltage[0];	//Read in the previous values
+								}
+								else	//When restoring from inrush, a very small term is needed (or nothing happens)
+								{
+									voltage[0] = last_voltage[0] * MULTTERM;
+								}
+
+								//Default else -- in-rush enabled, just leave as they were
+							}
+						}//End Phase A change
+
+						//Find out changes, and direction
+						if ((phase_checks_var & 0x02) == 0x02)	//Phase B change
+						{
+							//See which way
+							if ((prev_phases & 0x02) == 0x02)	//Means B just disappeared
+							{
+								last_voltage[1] = voltage[1];	//Store the last value
+								voltage[1] = 0.0;				//Put us to zero, so volt_dump is happy
+							}
+							else	//B just came back
+							{
+								if (!enable_inrush_calculations)
+								{
+									voltage[1] = last_voltage[1];	//Read in the previous values
+								}
+								else	//When restoring from inrush, a very small term is needed (or nothing happens)
+								{
+									voltage[1] = last_voltage[1] * MULTTERM;
+								}
+
+								//Default else - in-rush enabled, we want these to be zero
+							}
+						}//End Phase B change
+
+						//Find out changes, and direction
+						if ((phase_checks_var & 0x01) == 0x01)	//Phase C change
+						{
+							//See which way
+							if ((prev_phases & 0x01) == 0x01)	//Means C just disappeared
+							{
+								last_voltage[2] = voltage[2];	//Store the last value
+								voltage[2] = 0.0;				//Put us to zero, so volt_dump is happy
+							}
+							else	//C just came back
+							{
+								if (!enable_inrush_calculations)
+								{
+									voltage[2] = last_voltage[2];	//Read in the previous values
+								}
+								else	//When restoring from inrush, a very small term is needed (or nothing happens)
+								{
+									voltage[2] = last_voltage[2] * MULTTERM;
+								}
+
+								//Default else - in-rush enabled and want them zero
+							}
+						}//End Phase C change
+
+						//Recalculated VAB, VBC, and VCA, in case a child uses them
+						voltaged[0] = voltage[0] - voltage[1];
+						voltaged[1] = voltage[1] - voltage[2];
+						voltaged[2] = voltage[2] - voltage[0];
+					}//End not triplex
+
+					//Assign current value in
+					prev_phases = NR_busdata[NR_node_reference].phases;
+				}//End Phase checks for reliability
+			}//End normal node
+		}//End NR reference valid
+	}//End NR Check
 
 	//See if we're a generator-attached bus (needs full_Y_all) - if so, update it
-	if ((deltamode_inclusive == true) && (dynamic_norton==true))
+	if (deltamode_inclusive && dynamic_norton)
 	{
 		//See if we're a child or a parent
-		if ((SubNode==CHILD) || (SubNode==DIFF_CHILD))
+		if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) != 0)
 		{
 			//Map to our parent
 			temp_property = new gld_property(SubNodeParent,"deltamode_full_Y_all_matrix");
 
 			//Make sure it worked
-			if ((temp_property->is_valid() != true) || (temp_property->is_complex_array() != true))
+			if (!temp_property->is_valid() || !temp_property->is_complex_array())
 			{
 				GL_THROW("Node:%d - %s - Failed to map deltamode matrix to parent",obj->id,(obj->name ? obj->name : "Unnamed"));
 				/*  TROUBLESHOOT
@@ -2917,7 +3112,7 @@ void node::BOTH_node_postsync_fxn(OBJECT *obj)
 		else	//Parent or stand-alone
 		{
 			//Make sure we're valid and a right size
-			if (full_Y_all_matrix.is_valid(0,0) == true)
+			if (full_Y_all_matrix.is_valid(0,0))
 			{
 				//Make sure it is the right size
 				if ((full_Y_all_matrix.get_rows() != 3) || (full_Y_matrix.get_cols() != 3))
@@ -2932,7 +3127,7 @@ void node::BOTH_node_postsync_fxn(OBJECT *obj)
 			}
 
 			//Make sure it valid, just for giggles
-			if (full_Y_all != NULL)
+			if (full_Y_all != nullptr)
 			{
 				//Copy our values in
 				for (index_x_val=0; index_x_val<3; index_x_val++)
@@ -2956,7 +3151,7 @@ void node::BOTH_node_postsync_fxn(OBJECT *obj)
 	//Default else -- not needing this to be updated
 
 	//Update tracking variables for nodes/loads/meters
-	if ((deltatimestep_running > 0) && (enable_inrush_calculations == true))
+	if ((deltatimestep_running > 0) && enable_inrush_calculations)
 	{
 		//Get current deltamode timestep
 		curr_delta_time = gl_globaldeltaclock;
@@ -2971,11 +3166,11 @@ void node::BOTH_node_postsync_fxn(OBJECT *obj)
 	//Default else -- no in-rush and no deltamode
 
 	/* check for voltage control requirement */
-	if (require_voltage_control==TRUE)
+	if (require_voltage_control)
 	{
 		/* PQ bus must have a source */
 		if ((busflags&NF_HASSOURCE)==0 && bustype==PQ)
-			voltage[0] = voltage[1] = voltage[2] = complex(0,0);
+			voltage[0] = voltage[1] = voltage[2] = gld::complex(0,0);
 	}
 
 	//Update appropriate "other" voltages
@@ -2991,12 +3186,12 @@ void node::BOTH_node_postsync_fxn(OBJECT *obj)
 		voltaged[1] = voltage[1] - voltage[2];	//BC
 		voltaged[2] = voltage[2] - voltage[0];	//CA
 	}
-	
+
 	//This code performs the new "flattened" NR calculations.
 	if (solver_method == SM_NR)
 	{
 		//Update the status flag for a SWING capabilities - only check for non-parented SWING and SWING_PQ nodes
-		if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+		if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 		{
 			//Check for SWING and SWING_PQ
 			if ((bustype == SWING) || (bustype == SWING_PQ))
@@ -3040,9 +3235,9 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 
 	if (is_contact_any())
 	{
-		complex dVAB = voltageA - voltageB;
-		complex dVBC = voltageB - voltageC;
-		complex dVCA = voltageC - voltageA;
+		gld::complex dVAB = voltageA - voltageB;
+		gld::complex dVBC = voltageB - voltageC;
+		gld::complex dVCA = voltageC - voltageA;
 
 		/* phase-phase contact */
 		//WRITELOCK_OBJECT(obj);
@@ -3076,7 +3271,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 	if (solver_method==SM_FBS)
 	{
 		// if the parent object is a node
-		if (obj->parent!=NULL && (gl_object_isa(obj->parent,"node","powerflow")))
+		if (obj->parent!=nullptr && (gl_object_isa(obj->parent,"node","powerflow")))
 		{
 			// copy the voltage from the parent - check for mismatch handled earlier
 			node *pNode = OBJECTDATA(obj->parent,node);
@@ -3086,7 +3281,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 
 			//Re-update our Delta or single-phase equivalents since we now have a new voltage
 			//Update appropriate "other" voltages
-			if (phases&PHASE_S) 
+			if (phases&PHASE_S)
 			{	// split-tap voltage diffs are different
 				voltage12 = voltage1 + voltage2;
 				voltage1N = voltage1 - voltageN;
@@ -3131,7 +3326,7 @@ TIMESTAMP node::postsync(TIMESTAMP t0)
 	{
 		/* compute the sync voltage change */
 		double sync_V = (last_voltage[0]-voltage[0]).Mag() + (last_voltage[1]-voltage[1]).Mag() + (last_voltage[2]-voltage[2]).Mag();
-		
+
 		/* if the sync voltage limit is defined and the sync voltage is larger */
 		if (sync_V > maximum_voltage_error){
 
@@ -3162,7 +3357,7 @@ int node::kmlinit(int (*stream)(const char*,...))
 int node::kmldump(int (*stream)(const char*,...))
 {
 	OBJECT *obj = OBJECTHDR(this);
-	FUNCTIONADDR temp_funadd = NULL;
+	FUNCTIONADDR temp_funadd = nullptr;
 
 	if (isnan(get_latitude()) || isnan(get_longitude()))
 		return 0;
@@ -3180,7 +3375,7 @@ int node::kmldump(int (*stream)(const char*,...))
 		temp_funadd = (FUNCTIONADDR)(gl_get_function(obj,"pwr_object_kmldata"));
 
 		//See if it was located
-		if (temp_funadd == NULL)
+		if (temp_funadd == nullptr)
 		{
 			GL_THROW("object:%s - failed to map kmldata function",(obj->name?obj->name:"unnamed"));
 			/*  TROUBLESHOOT
@@ -3229,13 +3424,13 @@ int node::kmldump(int (*stream)(const char*,...))
 		stream("</TR>\n");
 
 		//Check others - de-"macrotized" so it can do things indirectly
-		if ((gl_object_isa(my(),"load","powerflow") == true) || (gl_object_isa(my(),"capacitor","powerflow") == true))
+		if (gl_object_isa(my(),"load","powerflow") || gl_object_isa(my(),"capacitor","powerflow"))
 		{
 			//Map to the function
 			temp_funadd = (FUNCTIONADDR)(gl_get_function(obj,"pwr_object_kmldata"));
 
 			//See if it was located
-			if (temp_funadd == NULL)
+			if (temp_funadd == nullptr)
 			{
 				GL_THROW("object:%s - failed to map kmldata function",(obj->name?obj->name:"unnamed"));
 				//Defined above
@@ -3284,12 +3479,12 @@ int node::kmldump(int (*stream)(const char*,...))
 //      effectively be like FBS at that point.
 int node::notify(int update_mode, PROPERTY *prop, char *value)
 {
-	complex diff_val;
+	gld::complex diff_val;
 
 	if (solver_method == SM_NR)
 	{
 		//Only even bother with voltage updates if we're properly populated
-		if (prev_voltage_value != NULL)
+		if (prev_voltage_value != nullptr)
 		{
 			//See if there is a voltage update - phase A
 			if (strcmp(prop->name,"voltage_A")==0)
@@ -3376,7 +3571,7 @@ EXPORT int create_node(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(node::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			node *my = OBJECTDATA(*obj,node);
 			gl_set_parent(*obj,parent);
@@ -3400,27 +3595,27 @@ EXPORT TIMESTAMP commit_node(OBJECT *obj, TIMESTAMP t1, TIMESTAMP t2)
 			//leave it
 			}
 			else
-				pNode->voltage[0] = complex(0,0);
+				pNode->voltage[0] = gld::complex(0,0);
 
 			if (pNode->has_phase(PHASE_B)) {
 				//leave it
 			}
 			else
-				pNode->voltage[1] = complex(0,0);
+				pNode->voltage[1] = gld::complex(0,0);
 
 			if (pNode->has_phase(PHASE_C)) {
 				//leave it
 			}
 			else
-				pNode->voltage[2] = complex(0,0);
-			
+				pNode->voltage[2] = gld::complex(0,0);
+
 		}
 		return TS_NEVER;
 	}
 	catch (char *msg)
 	{
 		gl_error("%s (node:%d): %s", pNode->get_name(), pNode->get_id(), msg);
-		return 0; 
+		return 0;
 	}
 
 }
@@ -3475,10 +3670,10 @@ EXPORT TIMESTAMP sync_node(OBJECT *obj, TIMESTAMP t0, PASSCONFIG pass)
 * node_type_value is the class name
 * main_swing determines if we're looking for SWING or SWING_PQ (swing parses first)
 */
-OBJECT *node::NR_master_swing_search(char *node_type_value,bool main_swing)
+OBJECT *node::NR_master_swing_search(const char *node_type_value,bool main_swing)
 {
-	OBJECT *return_val = NULL;
-	OBJECT *temp_obj = NULL;
+	OBJECT *return_val = nullptr;
+	OBJECT *temp_obj = nullptr;
 	node *list_node;
 	FINDLIST *bus_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,node_type_value,FT_END);
 
@@ -3488,7 +3683,7 @@ OBJECT *node::NR_master_swing_search(char *node_type_value,bool main_swing)
 		list_node = OBJECTDATA(temp_obj,node);
 
 		//See which kind we are looking for
-		if (main_swing == true)
+		if (main_swing)
 		{
 			if (list_node->bustype==SWING)
 			{
@@ -3523,9 +3718,9 @@ int node::NR_populate(void)
 {
 	//Object header for names
 	OBJECT *me = OBJECTHDR(this);
-	node *temp_par_node = NULL;
-	gld_property *temp_bool_property;
-	gld_wlock *test_rlock;
+	node *temp_par_node = nullptr;
+	gld_property *temp_bool_property = nullptr;
+	gld_wlock *test_rlock = nullptr;
 	bool temp_bool_val;
 
 	//Lock the SWING for global operations
@@ -3568,7 +3763,7 @@ int node::NR_populate(void)
 		if (bustype == SWING_PQ)
 		{
 			//Check for fault_check
-			if (fault_check_object == NULL)
+			if (fault_check_object == nullptr)
 			{
 				gl_warning("node:%d - %s - Set as a SWING_PQ, but no fault_check present - will be treated as SWING",me->id,(me->name?me->name:"Unnamed"));
 				/*  TROUBLESHOOT
@@ -3581,7 +3776,7 @@ int node::NR_populate(void)
 				temp_bool_property = new gld_property(fault_check_object,"grid_association");
 
 				//Make sure it worked
-				if ((temp_bool_property->is_valid() != true) || (temp_bool_property->is_bool() != true))
+				if (!temp_bool_property->is_valid() || !temp_bool_property->is_bool())
 				{
 					GL_THROW("NR: node:%s failed to map fault_check object property",(me->name?me->name:"Unnamed"));
 					/*  TROUBLESHOOT
@@ -3597,7 +3792,7 @@ int node::NR_populate(void)
 				delete temp_bool_property;
 
 				//Compare the value
-				if (temp_bool_val == false)	//Not in grid_association mode!
+				if (!temp_bool_val)	//Not in grid_association mode!
 				{
 					gl_warning("node:%d - %s - Set as a SWING_PQ, but fault_check in wrong mode - will be treated as SWING",me->id,(me->name?me->name:"Unnamed"));
 					/*  TROUBLESHOOT
@@ -3637,7 +3832,7 @@ int node::NR_populate(void)
 
 	//Populate voltage
 	NR_busdata[NR_node_reference].V = &voltage[0];
-	
+
 	//Populate power
 	NR_busdata[NR_node_reference].S = &power[0];
 
@@ -3662,7 +3857,7 @@ int node::NR_populate(void)
 	//Allocate our link list
 	NR_busdata[NR_node_reference].Link_Table = (int *)gl_malloc(NR_connected_links[0]*sizeof(int));
 	
-	if (NR_busdata[NR_node_reference].Link_Table == NULL)
+	if (NR_busdata[NR_node_reference].Link_Table == nullptr)
 	{
 		GL_THROW("NR: Failed to allocate link table for node:%d",me->id);
 		/*  TROUBLESHOOT
@@ -3688,7 +3883,7 @@ int node::NR_populate(void)
 	}
 	else	//Implies it is non-triplex
 	{
-		if (SubNode==DIFF_PARENT)	//Differently connected load/node (only can't be S)
+		if ((SubNode & SNT_DIFF_PARENT)==SNT_DIFF_PARENT)	//Differently connected load/node (only can't be S)
 		{
 			NR_busdata[NR_node_reference].extra_var = Extra_Data;
 			NR_busdata[NR_node_reference].phases |= 0x10;			//Special flag for a phase mismatch being present
@@ -3719,43 +3914,50 @@ int node::NR_populate(void)
 	NR_busdata[NR_node_reference].dynamics_enabled = &deltamode_inclusive;
 
 	//Check and see if we're in deltamode, and in-rush is enabled to allocation a variable
-	if ((deltamode_inclusive==true) && (enable_inrush_calculations==true))
+	if ((NR_solver_algorithm == NRM_FPI) || ((NR_solver_algorithm == NRM_TCIM) && deltamode_inclusive && enable_inrush_calculations))
+	{
+		//Map the admittance load matrix
+		NR_busdata[NR_node_reference].full_Y_load = &full_Y_load[0][0];
+	}
+	else	//Not deltamode or not FPI
+	{
+		//Null it, just to be safe
+		NR_busdata[NR_node_reference].full_Y_load = nullptr;
+	}
+
+	//Other items
+	if (deltamode_inclusive && enable_inrush_calculations)
 	{
 		//Link up the array (prealloced now, so always exists)
 		NR_busdata[NR_node_reference].BusHistTerm = BusHistTerm;
-
-		//Link our load matrix -- if we're a load, it was done in init
-		//If we're not a load, one of our children will do it later (and this is NULL anyways)
-		NR_busdata[NR_node_reference].full_Y_load = full_Y_load;
 	}
 	else	//One of these isn't true
 	{
 		//Null it, just to be safe - do with both
-		NR_busdata[NR_node_reference].BusHistTerm = NULL;
-		NR_busdata[NR_node_reference].full_Y_load = NULL;
+		NR_busdata[NR_node_reference].BusHistTerm = nullptr;
 	}
 
 	//Always null the saturation term -- if it is needed, the link will populate it
-	NR_busdata[NR_node_reference].BusSatTerm = NULL;
+	NR_busdata[NR_node_reference].BusSatTerm = nullptr;
 
 	//Null the extra function pointer -- the individual object will call to populate this
-	NR_busdata[NR_node_reference].ExtraCurrentInjFunc = NULL;
-	NR_busdata[NR_node_reference].ExtraCurrentInjFuncObject = NULL;
+	NR_busdata[NR_node_reference].ExtraCurrentInjFunc = nullptr;
+	NR_busdata[NR_node_reference].ExtraCurrentInjFuncObject = nullptr;
 
 	//Extra functions - see if we're a load - map update if we're in the right mode
 	//Could potentially flag this in load/triplex_load - it's primarily needed to keep constant_current-based loads properly rotated
 	//Flagging it could improve performance
-	if (((gl_object_isa(me,"load","powerflow")==true) || (gl_object_isa(me,"triplex_load","powerflow")==true)) && (enable_inrush_calculations == false))
+	if ((gl_object_isa(me,"load","powerflow") || gl_object_isa(me,"triplex_load","powerflow")) && !enable_inrush_calculations)
 	{
 		//Map the function
 		NR_busdata[NR_node_reference].LoadUpdateFxn = (FUNCTIONADDR)(gl_get_function(me,"pwr_object_load_update"));
 
 		//Make sure it worked
-		if (NR_busdata[NR_node_reference].LoadUpdateFxn == NULL)
+		if (NR_busdata[NR_node_reference].LoadUpdateFxn == nullptr)
 		{
 			GL_THROW("node:%d - %s - Failed to map load_update",me->id,(me->name ? me->name : "Unnamed"));
 			/*  TROUBLESHOOT
-			The attached node was unable to find the exposed function "current_injection_update" on the calling object.  Be sure
+			The attached node was unable to find the exposed function "load_update" on the calling object.  Be sure
 			it supports this functionality and try again.
 			*/
 		}
@@ -3764,27 +3966,48 @@ int node::NR_populate(void)
 	else
 	{
 		//Not a load
-		NR_busdata[NR_node_reference].LoadUpdateFxn = NULL;
+		NR_busdata[NR_node_reference].LoadUpdateFxn = nullptr;
 	}
-	
+
+	//See if we're FPI (and a parent/stand-alone)
+	if ((NR_solver_algorithm == NRM_FPI) && ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0))
+	{
+		//Map our function
+		NR_busdata[NR_node_reference].ShuntUpdateFxn = (FUNCTIONADDR)(gl_get_function(me,"pwr_object_shunt_update"));
+
+		//Make sure it worked
+		if (NR_busdata[NR_node_reference].ShuntUpdateFxn == nullptr)
+		{
+			GL_THROW("node:%d - %s - Failed to map shunt",me->id,(me->name ? me->name : "Unnamed"));
+			/*  TROUBLESHOOT
+			The attached node was unable to find the exposed function "shunt_update" on the calling object.  Be sure
+			it supports this functionality and try again.
+			*/
+		}
+		//Default else - must have worked
+	}
+	else	//Child or TCIM
+	{
+		NR_busdata[NR_node_reference].ShuntUpdateFxn = nullptr;
+	}
 
 	//Allocate dynamic variables -- only if something has requested it
-	if ((deltamode_inclusive==true) && ((dynamic_norton==true) || (dynamic_generator==true)))
+	if (deltamode_inclusive && (dynamic_norton || dynamic_generator))
 	{
 		//Check our status - shouldn't be necessary, but let's be paranoid
-		if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))	//We're stand-alone or a parent
+		if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)	//We're stand-alone or a parent
 		{
 			//Only do admittance allocation if we're a Norton
-			if (dynamic_norton==true)
+			if (dynamic_norton)
 			{
 				//Make sure no pesky children have already allocated us
-				if (full_Y == NULL)
+				if (full_Y == nullptr)
 				{
 					//Allocate it
-					full_Y = (complex *)gl_malloc(9*sizeof(complex));
+					full_Y = (gld::complex *)gl_malloc(9*sizeof(gld::complex));
 
 					//Check it
-					if (full_Y==NULL)
+					if (full_Y==nullptr)
 					{
 						GL_THROW("Node:%s failed to allocate space for the a deltamode variable",me->name);
 						/*  TROUBLESHOOT
@@ -3812,16 +4035,16 @@ int node::NR_populate(void)
 					else
 					{
 						//Zero it, just to be safe (gens will accumulate into it)
-						full_Y[0] = full_Y[1] = full_Y[2] = complex(0.0,0.0);
-						full_Y[3] = full_Y[4] = full_Y[5] = complex(0.0,0.0);
-						full_Y[6] = full_Y[7] = full_Y[8] = complex(0.0,0.0);
+						full_Y[0] = full_Y[1] = full_Y[2] = gld::complex(0.0,0.0);
+						full_Y[3] = full_Y[4] = full_Y[5] = gld::complex(0.0,0.0);
+						full_Y[6] = full_Y[7] = full_Y[8] = gld::complex(0.0,0.0);
 					}
 
 					//Allocate another matrix for admittance - this will have the full value
-					full_Y_all = (complex *)gl_malloc(9*sizeof(complex));
+					full_Y_all = (gld::complex *)gl_malloc(9*sizeof(gld::complex));
 
 					//Check it
-					if (full_Y_all==NULL)
+					if (full_Y_all==nullptr)
 					{
 						GL_THROW("Node:%s failed to allocate space for the a deltamode variable",me->name);
 						//Defined above
@@ -3848,23 +4071,23 @@ int node::NR_populate(void)
 						full_Y_all_matrix.grow_to(3,3);
 
 						//Zero it, just to be safe (gens will accumulate into it)
-						full_Y_all[0] = full_Y_all[1] = full_Y_all[2] = complex(0.0,0.0);
-						full_Y_all[3] = full_Y_all[4] = full_Y_all[5] = complex(0.0,0.0);
-						full_Y_all[6] = full_Y_all[7] = full_Y_all[8] = complex(0.0,0.0);
+						full_Y_all[0] = full_Y_all[1] = full_Y_all[2] = gld::complex(0.0,0.0);
+						full_Y_all[3] = full_Y_all[4] = full_Y_all[5] = gld::complex(0.0,0.0);
+						full_Y_all[6] = full_Y_all[7] = full_Y_all[8] = gld::complex(0.0,0.0);
 					}
 				}
 				else	//Not needed, make sure we're nulled
 				{
-					full_Y_all = NULL;
+					full_Y_all = nullptr;
 				}
 			}//End Norton equivalent needing admittance
 			else	//Null them out of paranoia
 			{
 				//Null this one too
-				full_Y = NULL;
+				full_Y = nullptr;
 
 				//Null it, just because
-				full_Y_all = NULL;
+				full_Y_all = nullptr;
 			}
 		}//End we're a parent
 
@@ -3876,10 +4099,10 @@ int node::NR_populate(void)
 	}
 	else	//Ensure it is empty
 	{
-		NR_busdata[NR_node_reference].full_Y = NULL;
-		NR_busdata[NR_node_reference].full_Y_all = NULL;
-		NR_busdata[NR_node_reference].DynCurrent = NULL;
-		NR_busdata[NR_node_reference].PGenTotal = NULL;
+		NR_busdata[NR_node_reference].full_Y = nullptr;
+		NR_busdata[NR_node_reference].full_Y_all = nullptr;
+		NR_busdata[NR_node_reference].DynCurrent = nullptr;
+		NR_busdata[NR_node_reference].PGenTotal = nullptr;
 	}
 
 	return 0;
@@ -3890,24 +4113,106 @@ int node::NR_populate(void)
 int node::NR_current_update(bool parentcall)
 {
 	unsigned int table_index;
-	FUNCTIONADDR temp_funadd = NULL;
+	FUNCTIONADDR temp_funadd = nullptr;
 	int temp_result, loop_index;
 	OBJECT *obj = OBJECTHDR(this);
 	OBJECT *tmp_obj;
-	complex temp_current_inj[3];
-	complex temp_current_val[3];
-	complex adjusted_current_val[3];
-	complex delta_shunt[3];
-	complex delta_current[3];
-	complex assumed_nominal_voltage[6];
+	gld::complex temp_current_inj[3];
+	gld::complex temp_current_val[3];
+	gld::complex adjusted_current_val[3];
+	gld::complex delta_shunt[3];
+	gld::complex delta_current[3];
+	gld::complex assumed_nominal_voltage[6];
 	double nominal_voltage_dval;
-	complex house_pres_current[3];
-	complex temp_store[3];
+	gld::complex house_pres_current[3];
+	gld::complex temp_store[3];
 
 	//Don't do anything if we've already been "updated"
-	if (current_accumulated==false)
+	if (!current_accumulated)
 	{
-		if (SubNode==CHILD)	//Remove child contributions
+		//See if we have children - need to copy the voltages
+		if (NR_number_child_nodes[0]>0)	//We have children
+		{
+			//Just loop through - we'll go forward here, just for giggles
+			for (table_index=0; table_index<NR_number_child_nodes[0]; table_index++)
+			{
+				//Propagate our voltages to our children
+				NR_child_nodes[table_index]->voltage[0] = voltage[0];
+				NR_child_nodes[table_index]->voltage[1] = voltage[1];
+				NR_child_nodes[table_index]->voltage[2] = voltage[2];
+
+				//Do the same for delta-voltages - just for giggles (might be needed)
+				NR_child_nodes[table_index]->voltaged[0] = voltaged[0];
+				NR_child_nodes[table_index]->voltaged[1] = voltaged[1];
+				NR_child_nodes[table_index]->voltaged[2] = voltaged[2];
+			}//End FOR child table
+		}//End we have children
+
+		//Handle our links - let's the get posted to the children properly first
+		if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)	//Make sure we aren't children as well, since we'll get NULL pointers and make everyone upset
+		{
+			for (table_index=0; table_index<NR_busdata[NR_node_reference].Link_Table_Size; table_index++)
+			{
+				//Extract the object pointer - just for readability
+				tmp_obj = NR_branchdata[NR_busdata[NR_node_reference].Link_Table[table_index]].obj;
+
+				//Extract the function address
+				temp_funadd = (FUNCTIONADDR)(gl_get_function(tmp_obj,"perform_current_calculation_pwr_link"));
+
+				//Make sure it worked
+				if (temp_funadd == nullptr)
+				{
+					GL_THROW("Attemped to update current for object:%s failed!",(tmp_obj->name?tmp_obj->name:"Unnamed"));
+					/*  TROUBLESHOOT
+					The current node object tried to update the current injections for what it thought was a link object.  This does
+					not appear to be true.  Try your code again.  If the error persists, please submit your GLM and a bug report to the
+					issue tracker.
+					*/
+				}
+
+				//Call a lock on that link - just in case multiple nodes call it at once
+				WRITELOCK_OBJECT(tmp_obj);
+
+				//Call its update - tell it who is asking so it knows what to lock
+				temp_result = ((int (*)(OBJECT *,int, bool))(*temp_funadd))(tmp_obj,NR_node_reference,false);
+
+				//Unlock the link
+				WRITEUNLOCK_OBJECT(tmp_obj);
+
+				//See if it worked, just in case this gets added in the future
+				if (temp_result != 1)
+				{
+					GL_THROW("Attempt to update current on link:%s failed!",NR_branchdata[NR_busdata[NR_node_reference].Link_Table[table_index]].name);
+					/*  TROUBLESHOOT
+					While attempting to update the current on link object, an error was encountered.  Please try again.  If the error persists,
+					please submit your code and a bug report via the trac website.
+					*/
+				}
+			}//End link traversion
+		}//End not children
+
+		//Handle relvant children first
+		if (NR_number_child_nodes[0]>0)	//We have children
+		{
+			//Progress backwards, since lower nodes should have been populated last (lower rank)
+			for (table_index=NR_number_child_nodes[0]; table_index>0; table_index--)
+			{
+				//Call their update - By this call's nature, it is being called by a parent here
+				temp_result = NR_child_nodes[(table_index-1)]->NR_current_update(true);
+
+				//Make sure it worked, just to be thorough
+				if (temp_result != 1)
+				{
+					GL_THROW("Attempt to update current on child of node:%s failed!",obj->name);
+					/*  TROUBLESHOOT
+					While attempting to update the current on a childed node object, an error was encountered.  Please try again.  If the error persists,
+					please submit your code and a bug report via the trac website.
+					*/
+				}
+			}//End FOR child table
+		}//End we have children
+
+		if ((SubNode & SNT_CHILD)==SNT_CHILD)	//Remove child contributions
 		{
 			node *ParToLoad = OBJECTDATA(SubNodeParent,node);
 
@@ -3939,7 +4244,8 @@ int node::NR_current_update(bool parentcall)
 			ParToLoad->pre_rotated_current[2] -= last_child_power[3][2];
 
 			//And the deltamode accumulators too -- if deltamode
-			if (deltamode_inclusive == true)
+			//Only do this if we are a dynamic norton child - otherwise may do extra
+			if (deltamode_inclusive && dynamic_norton)
 			{
 				//Pull our parent value down -- everything is being pushed up there anyways
 				//Pulling to keep meters accurate (theoretically)
@@ -3975,9 +4281,9 @@ int node::NR_current_update(bool parentcall)
 			//Zero the last power accumulators
 			for (loop_index=0; loop_index<6; loop_index++)
 			{
-				last_child_power_dy[loop_index][0] = complex(0.0);	//Power
-				last_child_power_dy[loop_index][1] = complex(0.0);	//Shunt
-				last_child_power_dy[loop_index][2] = complex(0.0);	//Current
+				last_child_power_dy[loop_index][0] = gld::complex(0.0);	//Power
+				last_child_power_dy[loop_index][1] = gld::complex(0.0);	//Shunt
+				last_child_power_dy[loop_index][2] = gld::complex(0.0);	//Current
 			}
 
 			//Current 12 if we are triplex
@@ -3985,9 +4291,9 @@ int node::NR_current_update(bool parentcall)
 				last_child_current12 = 0.0;
 
 			//Do the same for the prerorated stuff
-			last_child_power[3][0] = last_child_power[3][1] = last_child_power[3][2] = complex(0.0,0.0);
+			last_child_power[3][0] = last_child_power[3][1] = last_child_power[3][2] = gld::complex(0.0,0.0);
 		}
-		else if (SubNode==DIFF_CHILD)	//Differently connected 
+		else if ((SubNode & SNT_DIFF_CHILD)==SNT_DIFF_CHILD)	//Differently connected
 		{
 			node *ParToLoad = OBJECTDATA(SubNodeParent,node);
 
@@ -4019,64 +4325,17 @@ int node::NR_current_update(bool parentcall)
 			//Zero the last power accumulators
 			for (loop_index=0; loop_index<6; loop_index++)
 			{
-				last_child_power_dy[loop_index][0] = complex(0.0);	//Power
-				last_child_power_dy[loop_index][1] = complex(0.0);	//Shunt
-				last_child_power_dy[loop_index][2] = complex(0.0);	//Current
+				last_child_power_dy[loop_index][0] = gld::complex(0.0);	//Power
+				last_child_power_dy[loop_index][1] = gld::complex(0.0);	//Shunt
+				last_child_power_dy[loop_index][2] = gld::complex(0.0);	//Current
 			}
 
 			//Now zero the accmulator, just in case
-			last_child_power[3][0] = last_child_power[3][1] = last_child_power[3][2] = complex(0.0,0.0);
+			last_child_power[3][0] = last_child_power[3][1] = last_child_power[3][2] = gld::complex(0.0,0.0);
 		}
-
-		if ((SubNode==CHILD) || (SubNode==DIFF_CHILD))	//Child Voltage Updates
-		{
-			node *ParStealLoad = OBJECTDATA(SubNodeParent,node);
-
-			//Steal our paren't voltages as well
-			//this will either be parent called or a child "no way it can change" rank read - no lock needed
-			voltage[0] = ParStealLoad->voltage[0];
-			voltage[1] = ParStealLoad->voltage[1];
-			voltage[2] = ParStealLoad->voltage[2];
-
-			//Compute "delta" voltages, so current injections upward are correct
-			if (has_phase(PHASE_S))
-			{
-				//Compute the delta voltages
-				voltaged[0] = voltage[0] + voltage[1];	//12
-				voltaged[1] = voltage[1] - voltage[2];	//2N
-				voltaged[2] = voltage[0] - voltage[2];	//1N -- unsure why it is odd
-			}
-			else	//"Normal" three phase - compute normal deltas
-			{
-				//Compute the delta voltages
-				voltaged[0] = voltage[0] - voltage[1];
-				voltaged[1] = voltage[1] - voltage[2];
-				voltaged[2] = voltage[2] - voltage[0];
-			}
-		}
-
-		//Handle relvant children first
-		if (NR_number_child_nodes[0]>0)	//We have children
-		{
-			for (table_index=0; table_index<NR_number_child_nodes[0]; table_index++)
-			{
-				//Call their update - By this call's nature, it is being called by a parent here
-				temp_result = NR_child_nodes[table_index]->NR_current_update(true);
-
-				//Make sure it worked, just to be thorough
-				if (temp_result != 1)
-				{
-					GL_THROW("Attempt to update current on child of node:%s failed!",obj->name);
-					/*  TROUBLESHOOT
-					While attempting to update the current on a childed node object, an error was encountered.  Please try again.  If the error persists,
-					please submit your code and a bug report via the trac website.
-					*/
-				}
-			}//End FOR child table
-		}//End we have children
 
 		//Handle our "self" - do this in a "temporary fashion" for children problems
-		temp_current_inj[0] = temp_current_inj[1] = temp_current_inj[2] = complex(0.0,0.0);
+		temp_current_inj[0] = temp_current_inj[1] = temp_current_inj[2] = gld::complex(0.0,0.0);
 
 		//Set up reference voltage for any accumulator adjustments
 		//See if we're a triplex
@@ -4085,9 +4344,9 @@ int node::NR_current_update(bool parentcall)
 			assumed_nominal_voltage[0].SetPolar(nominal_voltage,0.0);			//1
 			assumed_nominal_voltage[1].SetPolar(nominal_voltage,0.0);			//2
 			assumed_nominal_voltage[2] = assumed_nominal_voltage[0] + assumed_nominal_voltage[1];	//12
-			assumed_nominal_voltage[3] = complex(0.0,0.0);	//Not needed - zero for giggles
-			assumed_nominal_voltage[4] = complex(0.0,0.0);
-			assumed_nominal_voltage[5] = complex(0.0,0.0);
+			assumed_nominal_voltage[3] = gld::complex(0.0,0.0);	//Not needed - zero for giggles
+			assumed_nominal_voltage[4] = gld::complex(0.0,0.0);
+			assumed_nominal_voltage[5] = gld::complex(0.0,0.0);
 
 			//Populate LL value
 			nominal_voltage_dval = 2.0 * nominal_voltage;
@@ -4113,9 +4372,9 @@ int node::NR_current_update(bool parentcall)
 			delta_shunt[2] = voltaged[2]*shunt[2];
 
 			//Convert delta connected power
-			delta_current[0]= (voltaged[0]==0) ? complex(0,0) : ~(power[0]/voltaged[0]);
-			delta_current[1]= (voltaged[1]==0) ? complex(0,0) : ~(power[1]/voltaged[1]);
-			delta_current[2]= (voltaged[2]==0) ? complex(0,0) : ~(power[2]/voltaged[2]);
+			delta_current[0]= (voltaged[0]==0) ? gld::complex(0,0) : ~(power[0]/voltaged[0]);
+			delta_current[1]= (voltaged[1]==0) ? gld::complex(0,0) : ~(power[1]/voltaged[1]);
+			delta_current[2]= (voltaged[2]==0) ? gld::complex(0,0) : ~(power[2]/voltaged[2]);
 
 			//Adjust constant current values, as necessary
 			//Loop through the phases
@@ -4128,7 +4387,7 @@ int node::NR_current_update(bool parentcall)
 				}
 				else
 				{
-					adjusted_current_val[loop_index] = complex(0.0,0.0);
+					adjusted_current_val[loop_index] = gld::complex(0.0,0.0);
 				}
 			}
 
@@ -4143,9 +4402,9 @@ int node::NR_current_update(bool parentcall)
 		}
 		else if (has_phase(PHASE_S))	//Split phase node
 		{
-			complex vdel;
-			complex temp_current[3];
-			complex temp_val[3];
+			gld::complex vdel;
+			gld::complex temp_current[3];
+			gld::complex temp_val[3];
 
 			//Find V12 (just in case)
 			vdel=voltage[0] + voltage[1];
@@ -4201,7 +4460,7 @@ int node::NR_current_update(bool parentcall)
 			temp_current_inj[1] = temp_current_val[1];
 
 			//Get information
-			if ((Triplex_Data != NULL) && ((Triplex_Data[0] != 0.0) || (Triplex_Data[1] != 0.0)))
+			if ((Triplex_Data != nullptr) && ((Triplex_Data[0] != 0.0) || (Triplex_Data[1] != 0.0)))
 			{
 				/* normally the calc would not be inside the lock, but it's reflexive so that's ok */
 				temp_current_inj[2] = Triplex_Data[0]*temp_current_inj[0] + Triplex_Data[1]*temp_current_inj[1];
@@ -4210,7 +4469,7 @@ int node::NR_current_update(bool parentcall)
 			{
 				/* normally the calc would not be inside the lock, but it's reflexive so that's ok */
 				temp_current_inj[2] = ((voltage1.IsZero() || (power1.IsZero() && shunt1.IsZero())) ||
-								   (voltage2.IsZero() || (power2.IsZero() && shunt2.IsZero()))) 
+								   (voltage2.IsZero() || (power2.IsZero() && shunt2.IsZero())))
 									? currentN : -((temp_current_inj[0]-temp_current[2])+(temp_current_inj[1]-temp_current[2]));
 			}
 		}
@@ -4227,16 +4486,16 @@ int node::NR_current_update(bool parentcall)
 				}
 				else
 				{
-					adjusted_current_val[loop_index] = complex(0.0,0.0);
+					adjusted_current_val[loop_index] = gld::complex(0.0,0.0);
 				}
 			}
 
 			//PQP needs power converted to current
 			//PQZ needs load currents calculated as well
 			//Update load current values if PQI
-			temp_current_val[0] = ((voltage[0]==0) ? complex(0,0) : ~(power[0]/voltage[0])) + voltage[0]*shunt[0] + adjusted_current_val[0] + pre_rotated_current[0];
-			temp_current_val[1] = ((voltage[1]==0) ? complex(0,0) : ~(power[1]/voltage[1])) + voltage[1]*shunt[1] + adjusted_current_val[1] + pre_rotated_current[1];
-			temp_current_val[2] = ((voltage[2]==0) ? complex(0,0) : ~(power[2]/voltage[2])) + voltage[2]*shunt[2] + adjusted_current_val[2] + pre_rotated_current[2];
+			temp_current_val[0] = ((voltage[0]==0) ? gld::complex(0,0) : ~(power[0]/voltage[0])) + voltage[0]*shunt[0] + adjusted_current_val[0] + pre_rotated_current[0];
+			temp_current_val[1] = ((voltage[1]==0) ? gld::complex(0,0) : ~(power[1]/voltage[1])) + voltage[1]*shunt[1] + adjusted_current_val[1] + pre_rotated_current[1];
+			temp_current_val[2] = ((voltage[2]==0) ? gld::complex(0,0) : ~(power[2]/voltage[2])) + voltage[2]*shunt[2] + adjusted_current_val[2] + pre_rotated_current[2];
 
 			temp_current_inj[0] = temp_current_val[0];
 			temp_current_inj[1] = temp_current_val[1];
@@ -4254,9 +4513,9 @@ int node::NR_current_update(bool parentcall)
 			delta_shunt[2] = voltaged[2]*shunt_dy[2];
 
 			//Convert delta connected power
-			delta_current[0]= (voltaged[0]==0) ? complex(0,0) : ~(power_dy[0]/voltaged[0]);
-			delta_current[1]= (voltaged[1]==0) ? complex(0,0) : ~(power_dy[1]/voltaged[1]);
-			delta_current[2]= (voltaged[2]==0) ? complex(0,0) : ~(power_dy[2]/voltaged[2]);
+			delta_current[0]= (voltaged[0]==0) ? gld::complex(0,0) : ~(power_dy[0]/voltaged[0]);
+			delta_current[1]= (voltaged[1]==0) ? gld::complex(0,0) : ~(power_dy[1]/voltaged[1]);
+			delta_current[2]= (voltaged[2]==0) ? gld::complex(0,0) : ~(power_dy[2]/voltaged[2]);
 
 			//Adjust constant current values of delta-connected
 			//Loop through the phases
@@ -4269,7 +4528,7 @@ int node::NR_current_update(bool parentcall)
 				}
 				else
 				{
-					adjusted_current_val[loop_index] = complex(0.0,0.0);
+					adjusted_current_val[loop_index] = gld::complex(0.0,0.0);
 				}
 			}
 
@@ -4288,14 +4547,14 @@ int node::NR_current_update(bool parentcall)
 				}
 				else
 				{
-					adjusted_current_val[loop_index] = complex(0.0,0.0);
+					adjusted_current_val[loop_index] = gld::complex(0.0,0.0);
 				}
 			}
 
 			//Now put in Wye components
-			temp_current_inj[0] += ((voltage[0]==0) ? complex(0,0) : ~(power_dy[3]/voltage[0])) + voltage[0]*shunt_dy[3] + adjusted_current_val[0];
-			temp_current_inj[1] += ((voltage[1]==0) ? complex(0,0) : ~(power_dy[4]/voltage[1])) + voltage[1]*shunt_dy[4] + adjusted_current_val[1];
-			temp_current_inj[2] += ((voltage[2]==0) ? complex(0,0) : ~(power_dy[5]/voltage[2])) + voltage[2]*shunt_dy[5] + adjusted_current_val[2];
+			temp_current_inj[0] += ((voltage[0]==0) ? gld::complex(0,0) : ~(power_dy[3]/voltage[0])) + voltage[0]*shunt_dy[3] + adjusted_current_val[0];
+			temp_current_inj[1] += ((voltage[1]==0) ? gld::complex(0,0) : ~(power_dy[4]/voltage[1])) + voltage[1]*shunt_dy[4] + adjusted_current_val[1];
+			temp_current_inj[2] += ((voltage[2]==0) ? gld::complex(0,0) : ~(power_dy[5]/voltage[2])) + voltage[2]*shunt_dy[5] + adjusted_current_val[2];
 
 			//Explicit house inclusion for "non-triplex" houses
 			if (house_present)	//House present
@@ -4313,23 +4572,48 @@ int node::NR_current_update(bool parentcall)
 						house_pres_current[loop_index] = nom_res_curr[loop_index]/(~temp_store[loop_index]);		//Just denominator conjugated to keep math right (rest was conjugated in house)
 
 						//Now add it into the current contributions
-						temp_current_inj[loop_index] += ((voltage[loop_index]==0) ? complex(0,0) : house_pres_current[loop_index]);
+						temp_current_inj[loop_index] += ((voltage[loop_index]==0) ? gld::complex(0,0) : house_pres_current[loop_index]);
 					}
 					//Default else - voltage is zero, do nothing
 				}//End phase loop for houses
 			}//End house-attached not-so-split-phase
 		}//End both delta/wye
 
-		//If we are a child, apply our current injection directly up to our parent - links accumulate afterwards now because they bypass child relationships
-		if ((SubNode==CHILD) || (SubNode==DIFF_CHILD))
-		{
-			node *ParLoadObj=OBJECTDATA(SubNodeParent,node);
+		//Update our accumulator as well, otherwise things break
+		current_inj[0] += temp_current_inj[0];
+		current_inj[1] += temp_current_inj[1];
+		current_inj[2] += temp_current_inj[2];
 
-			if (ParLoadObj->current_accumulated==false)	//Locking not needed here - if parent hasn't accumulated yet, it is the one that called us (rank split)
+		//See if we're delta-enabled and need to accumulate those items
+		//Only do this if we don't have a "greater descendant", since they'll populate it up through current_inj
+		if (deltamode_inclusive && dynamic_norton && !dynamic_norton_child)
+		{
+			//Injections from generators -- always accumulate (may be zero)
+			current_inj[0] -= deltamode_dynamic_current[0];
+			current_inj[1] -= deltamode_dynamic_current[1];
+			current_inj[2] -= deltamode_dynamic_current[2];
+
+			//See if the shunt exists
+			if (full_Y != nullptr)
 			{
-				ParLoadObj->current_inj[0] += temp_current_inj[0];	//This ensures link-related injections are not counted
-				ParLoadObj->current_inj[1] += temp_current_inj[1];
-				ParLoadObj->current_inj[2] += temp_current_inj[2];
+				//This assumes three-phase right now
+				current_inj[0] += full_Y[0]*voltage[0] + full_Y[1]*voltage[1] + full_Y[2]*voltage[2];
+				current_inj[1] += full_Y[3]*voltage[0] + full_Y[4]*voltage[1] + full_Y[5]*voltage[2];
+				current_inj[2] += full_Y[6]*voltage[0] + full_Y[7]*voltage[1] + full_Y[8]*voltage[2];
+			}
+		}
+
+		//If we are a child, apply our current injection directly up to our parent - links accumulate afterwards now because they bypass child relationships
+		if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) != 0)
+		{
+			//Link to our parent
+			node *ParLoadObj=OBJECTDATA(obj->parent,node);
+
+			if (!(ParLoadObj->current_accumulated))	//Locking not needed here - if parent hasn't accumulated yet, it is the one that called us (rank split)
+			{
+				ParLoadObj->current_inj[0] += current_inj[0];
+				ParLoadObj->current_inj[1] += current_inj[1];
+				ParLoadObj->current_inj[2] += current_inj[2];
 
 				//See if we have a house - if we do, we're inadvertently biasing our parent
 				//Not only a house, but a triplex-connected house
@@ -4340,85 +4624,12 @@ int node::NR_current_update(bool parentcall)
 					ParLoadObj->current_inj[1] -= -house_pres_current[1] - house_pres_current[2];
 				}
 			}
-
-			//Update our accumulator as well, otherwise things break
-			current_inj[0] += temp_current_inj[0];
-			current_inj[1] += temp_current_inj[1];
-			current_inj[2] += temp_current_inj[2];
 		}
-		else	//Not a child, just put this in our accumulator - we're already locked, so no need to separately lock
-		{
-			current_inj[0] += temp_current_inj[0];
-			current_inj[1] += temp_current_inj[1];
-			current_inj[2] += temp_current_inj[2];
-		}
-
-		//See if we're delta-enabled and need to accumulate those items
-		//Note that this is done after the parent/child update due to child deltamode objects mapping "through"
-		//To the parent.  If this was above the previous code, deltamode-related postings get counted twice.
-		if ((deltamode_inclusive == true) && (dynamic_norton == true))
-		{
-			//Injections from generators -- always accumulate (may be zero)
-			current_inj[0] -= deltamode_dynamic_current[0];
-			current_inj[1] -= deltamode_dynamic_current[1];
-			current_inj[2] -= deltamode_dynamic_current[2];
-
-			//See if the shunt exists
-			if (full_Y != NULL)
-			{
-				//This assumes three-phase right now
-				current_inj[0] += full_Y[0]*voltage[0] + full_Y[1]*voltage[1] + full_Y[2]*voltage[2];
-				current_inj[1] += full_Y[3]*voltage[0] + full_Y[4]*voltage[1] + full_Y[5]*voltage[2];
-				current_inj[2] += full_Y[6]*voltage[0] + full_Y[7]*voltage[1] + full_Y[8]*voltage[2];
-			}
-		}
-
-		//Handle our links - "child" contributions are bypassed into their parents due to NR structure, so this order works
-		if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))	//Make sure we aren't children as well, since we'll get NULL pointers and make everyone upset
-		{
-			for (table_index=0; table_index<NR_busdata[NR_node_reference].Link_Table_Size; table_index++)
-			{
-				//Extract the object pointer - just for readability
-				tmp_obj = NR_branchdata[NR_busdata[NR_node_reference].Link_Table[table_index]].obj;
-
-				//Extract the function address
-				temp_funadd = (FUNCTIONADDR)(gl_get_function(tmp_obj,"perform_current_calculation_pwr_link"));
-				
-				//Make sure it worked
-				if (temp_funadd == NULL)
-				{
-					GL_THROW("Attemped to update current for object:%s failed!",(tmp_obj->name?tmp_obj->name:"Unnamed"));
-					/*  TROUBLESHOOT
-					The current node object tried to update the current injections for what it thought was a link object.  This does
-					not appear to be true.  Try your code again.  If the error persists, please submit your GLM and a bug report to the
-					issue tracker.
-					*/
-				}
-
-				//Call a lock on that link - just in case multiple nodes call it at once
-				WRITELOCK_OBJECT(tmp_obj);
-
-				//Call its update - tell it who is asking so it knows what to lock
-				temp_result = ((int (*)(OBJECT *,int, bool))(*temp_funadd))(tmp_obj,NR_node_reference,false);
-
-				//Unlock the link
-				WRITEUNLOCK_OBJECT(tmp_obj);
-
-				//See if it worked, just in case this gets added in the future
-				if (temp_result != 1)
-				{
-					GL_THROW("Attempt to update current on link:%s failed!",NR_branchdata[NR_busdata[NR_node_reference].Link_Table[table_index]].name);
-					/*  TROUBLESHOOT
-					While attempting to update the current on link object, an error was encountered.  Please try again.  If the error persists,
-					please submit your code and a bug report via the trac website.
-					*/
-				}
-			}//End link traversion
-		}//End not children
+		//Default else - not a child - no need to propagate
 
 		//Flag us as done
 		current_accumulated = true;
-	}//End current already handled
+	}//End not current already handled
 
 	return 1;	//Always successful
 }
@@ -4441,7 +4652,7 @@ SIMULATIONMODE node::inter_deltaupdate_node(unsigned int64 delta_time, unsigned 
 	deltat = (double)dt/(double)DT_SECOND;
 
 	//Update time tracking variable - mostly for GFA functionality calls
-	if ((iteration_count_val==0) && (interupdate_pos == false)) //Only update timestamp tracker on first iteration
+	if ((iteration_count_val==0) && !interupdate_pos) //Only update timestamp tracker on first iteration
 	{
 		//Update tracking variable
 		prev_time_dbl = gl_globaldeltaclock;
@@ -4464,14 +4675,14 @@ SIMULATIONMODE node::inter_deltaupdate_node(unsigned int64 delta_time, unsigned 
 	}
 
 	//Perform the GFA update, if enabled
-	if ((GFA_enable == true) && (iteration_count_val == 0) && (interupdate_pos == false))	//Always just do on the first pass
+	if (GFA_enable && (iteration_count_val == 0) && !interupdate_pos)	//Always just do on the first pass
 	{
 		//Do the checks
 		GFA_Update_time = perform_GFA_checks(deltat);
 	}
 
 	//Determine what to run
-	if (interupdate_pos == false)	//Before powerflow call
+	if (!interupdate_pos)	//Before powerflow call
 	{
 		//Call presync-equivalent items
 		NR_node_presync_fxn(0);
@@ -4501,7 +4712,7 @@ SIMULATIONMODE node::inter_deltaupdate_node(unsigned int64 delta_time, unsigned 
 		//Default else -- don't calculate it
 
 		//See if GFA functionality is required, since it may require iterations or "continance"
-		if (GFA_enable == true)
+		if (GFA_enable)
 		{
 			//See if our return is value
 			if ((GFA_Update_time > 0.0) && (GFA_Update_time < 1.7))
@@ -4563,7 +4774,7 @@ STATUS node::calc_freq_dynamics(double deltat)
 	return_status = SUCCESS;
 
 	//Extract the phases
-	if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+	if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 	{
 		if ((NR_busdata[NR_node_reference].phases & 0x80) == 0x80)
 		{
@@ -4593,7 +4804,7 @@ STATUS node::calc_freq_dynamics(double deltat)
 	//Pull voltage updates
 	for (indexval=0; indexval<3; indexval++)
 	{
-		if (is_triplex_node == true)
+		if (is_triplex_node)
 		{
 			phase_mask = 0x80;
 		}
@@ -4606,10 +4817,10 @@ STATUS node::calc_freq_dynamics(double deltat)
 		//Check the phase
 		if ((phase_conf & phase_mask) == phase_mask)
 		{
-			//See what our reference is - steal parent voltages
-			if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+			//See if we're a parent or not
+			if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 			{
-				if (is_triplex_node == true)
+				if (is_triplex_node)
 				{
 					if (indexval < 2)
 					{
@@ -4627,7 +4838,7 @@ STATUS node::calc_freq_dynamics(double deltat)
 			}
 			else	//It is a child - look at parent
 			{
-				if (is_triplex_node == true)
+				if (is_triplex_node)
 				{
 					if (indexval < 2)
 					{
@@ -4765,10 +4976,10 @@ void node::init_freq_dynamics(double deltat)
 	int indexval;
 	bool is_triplex_node;
 	double frequency_offset_val, angle_offset;
-	complex angle_rotate_value;
+	gld::complex angle_rotate_value;
 
 	//Extract the phases
-	if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+	if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 	{
 		if ((NR_busdata[NR_node_reference].phases & 0x80) == 0x80)
 		{
@@ -4798,7 +5009,7 @@ void node::init_freq_dynamics(double deltat)
 	//Pull voltage updates
 	for (indexval=0; indexval<3; indexval++)
 	{
-		if (is_triplex_node == true)
+		if (is_triplex_node)
 		{
 			phase_mask = 0x80;
 		}
@@ -4811,10 +5022,10 @@ void node::init_freq_dynamics(double deltat)
 		//Check the phase
 		if ((phase_conf & phase_mask) == phase_mask)
 		{
-			//See what our reference is - steal parent voltages
-			if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+			//See what our reference is - steal parent voltages if needed
+			if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 			{
-				if (is_triplex_node == true)
+				if (is_triplex_node)
 				{
 					if (indexval < 2)
 					{
@@ -4832,7 +5043,7 @@ void node::init_freq_dynamics(double deltat)
 			}
 			else	//It is a child - look at parent
 			{
-				if (is_triplex_node == true)
+				if (is_triplex_node)
 				{
 					if (indexval < 2)
 					{
@@ -4850,7 +5061,7 @@ void node::init_freq_dynamics(double deltat)
 			}
 
 			//See if we're the first start or not
-			if (first_freq_init == true)
+			if (first_freq_init)
 			{
 				//Assume "current" start
 				curr_freq_state.fmeas[indexval] = current_frequency;
@@ -4864,10 +5075,10 @@ void node::init_freq_dynamics(double deltat)
 
 			//Calculate the associated angle offset - negative, for past
 			angle_offset = -1.0 * frequency_offset_val * deltat;
-			
+
 			//Translate it into a multiplier
 			//exp(jx) = cos(x)+j*sin(x)
-			angle_rotate_value = complex(cos(angle_offset),sin(angle_offset));
+			angle_rotate_value = gld::complex(cos(angle_offset),sin(angle_offset));
 
 			//Adjust the previous voltage value by this
 			prev_freq_state.voltage_val[indexval] = curr_freq_state.voltage_val[indexval] * angle_rotate_value;
@@ -4894,7 +5105,7 @@ void node::init_freq_dynamics(double deltat)
 		}//End valid phase
 		else	//Not a valid phase, just zero it all
 		{
-			curr_freq_state.voltage_val[indexval] = complex(0.0,0.0);
+			curr_freq_state.voltage_val[indexval] = gld::complex(0.0,0.0);
 			curr_freq_state.x[indexval] = 0.0;
 			curr_freq_state.anglemeas[indexval] = 0.0;
 			curr_freq_state.fmeas[indexval] = 0.0;
@@ -4903,7 +5114,7 @@ void node::init_freq_dynamics(double deltat)
 			curr_freq_state.cosangmeas[indexval] = 0.0;
 
 			//DO the same for previous state, out of paranoia
-			prev_freq_state.voltage_val[indexval] = complex(0.0,0.0);
+			prev_freq_state.voltage_val[indexval] = gld::complex(0.0,0.0);
 			prev_freq_state.x[indexval] = 0.0;
 			prev_freq_state.anglemeas[indexval] = 0.0;
 			prev_freq_state.fmeas[indexval] = 0.0;
@@ -4914,7 +5125,7 @@ void node::init_freq_dynamics(double deltat)
 	}//End FOR loop
 
 	//Final check for "first run" to deflag us and to update angle calculation
-	if (first_freq_init == true)
+	if (first_freq_init)
 	{
 		first_freq_init = false;
 	}
@@ -4936,7 +5147,7 @@ double node::perform_GFA_checks(double timestepvalue)
 	return_value = -1.0;
 
 	//Pull our phasing information
-	if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+	if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 	{
 		phasevals = NR_busdata[NR_node_reference].phases & 0x87;
 	}
@@ -5050,7 +5261,7 @@ double node::perform_GFA_checks(double timestepvalue)
 		}
 
 		//See if we were valid
-		if (check_phase == true)
+		if (check_phase)
 		{
 			//See if it is a violation
 			temp_pu_voltage = voltage[indexval].Mag()/nominal_voltage;
@@ -5115,7 +5326,7 @@ double node::perform_GFA_checks(double timestepvalue)
 	}//End phase loop
 
 	//See if we detected a voltage violation - if not, reset the counter
-	if (voltage_violation == false)
+	if (!voltage_violation)
 	{
 		volt_violation_time_total = 0.0;
 		return_time_volt = -1.0;	//Set it again, for paranoia
@@ -5148,7 +5359,7 @@ double node::perform_GFA_checks(double timestepvalue)
 	}
 
 	//Check voltage values first
-	if ((frequency_violation == true) || (voltage_violation == true))
+	if (frequency_violation || voltage_violation)
 	{
 		//Reset the out of violation time
 		out_of_violation_time_total = 0.0;
@@ -5160,7 +5371,7 @@ double node::perform_GFA_checks(double timestepvalue)
 	}
 
 	//See what we are - if we're out of service, see if we can be restored
-	if (GFA_status == false)
+	if (!GFA_status)
 	{
 		if (out_of_violation_time_total >= GFA_reconnect_time)
 		{
@@ -5186,7 +5397,7 @@ double node::perform_GFA_checks(double timestepvalue)
 	}
 	else	//We're true, see if we need to not be
 	{
-		if (trigger_disconnect == true)
+		if (trigger_disconnect)
 		{
 			GFA_status = false;	//Trigger
 
@@ -5210,7 +5421,7 @@ STATUS node::NR_swap_swing_status(bool desired_status)
 	OBJECT *hdr = OBJECTHDR(this);
 
 	//See if we're a child or not
-	if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+	if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 	{
 		//Make sure we're a SWING or SWING_PQ first
 		if (NR_busdata[NR_node_reference].type > 1)
@@ -5254,7 +5465,7 @@ void node::NR_swing_status_check(bool *swing_status_check_value, bool *swing_pq_
 	*swing_status_check_value = false;
 
 	//See if we're a child or not
-	if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+	if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 	{
 		//Make sure we're a SWING or SWING_PQ first
 		if (NR_busdata[NR_node_reference].type > 1)
@@ -5310,7 +5521,7 @@ STATUS node::reset_node_island_condition(void)
 	reset_island_state = false;
 
 	//Check and see if this was even something we wanted to do
-	if ((SubNode != CHILD) && (SubNode!=DIFF_CHILD))
+	if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 	{
 		//Check our status
 		if (NR_busdata[NR_node_reference].island_number != -1)
@@ -5348,7 +5559,7 @@ STATUS node::reset_node_island_condition(void)
 
 	//If we made it this far, we've been "re-validated" - call the reset function
 	//Make sure it will even remotely work first
-	if (fault_check_object == NULL)	//Make sure we actually have a fault check object
+	if (fault_check_object == nullptr)	//Make sure we actually have a fault check object
 	{
 		//Hard throw this one -- this can't be ignored
 		GL_THROW("node:%d - %s -- Island condition reset failed - no fault_check object mapped!",obj->id,(obj->name ? obj->name : "Unnamed"));
@@ -5363,7 +5574,7 @@ STATUS node::reset_node_island_condition(void)
 	temp_fxn_val = (FUNCTIONADDR)(gl_get_function(fault_check_object,"rescan_topology"));
 
 	//Make sure it worked
-	if (temp_fxn_val == NULL)
+	if (temp_fxn_val == nullptr)
 	{
 		//Another hard failure
 		GL_THROW("node:%d - %s -- Island condition reset failed - reset function mapping failed!",obj->id,(obj->name ? obj->name : "Unnamed"));
@@ -5378,7 +5589,7 @@ STATUS node::reset_node_island_condition(void)
 
 	//Then call the reset
 	temp_status = ((STATUS (*)(OBJECT *,int))(temp_fxn_val))(fault_check_object,node_calling_reference);
-	
+
 	//Just pass its result
 	return temp_status;
 }
@@ -5388,22 +5599,22 @@ STATUS node::reset_node_island_condition(void)
 STATUS node::NR_map_current_update_function(OBJECT *callObj)
 {
 	OBJECT *hdr = OBJECTHDR(this);
-	OBJECT *phdr = NULL;
+	OBJECT *phdr = nullptr;
 
 	//Do a simple check -- if we're not in NR, this won't do anything anyways
 	if (solver_method == SM_NR)
 	{
 		//See if we're a pesky child
-		if ((SubNode!=CHILD) && (SubNode!=DIFF_CHILD))
+		if ((SubNode & (SNT_CHILD | SNT_DIFF_CHILD)) == 0)
 		{
 			//Make sure no one has mapped us yet
-			if (NR_busdata[NR_node_reference].ExtraCurrentInjFunc == NULL)
+			if (NR_busdata[NR_node_reference].ExtraCurrentInjFunc == nullptr)
 			{
 				//Map the function
 				NR_busdata[NR_node_reference].ExtraCurrentInjFunc = (FUNCTIONADDR)(gl_get_function(callObj,"current_injection_update"));
 
 				//Make sure it worked
-				if (NR_busdata[NR_node_reference].ExtraCurrentInjFunc == NULL)
+				if (NR_busdata[NR_node_reference].ExtraCurrentInjFunc == nullptr)
 				{
 					gl_error("node:%d - %s - Failed to map current_injection_update from calling object:%d - %s",hdr->id,(hdr->name ? hdr->name : "Unnamed"),callObj->id,(callObj->name ? callObj->name : "Unnamed"));
 					/*  TROUBLESHOOT
@@ -5435,13 +5646,13 @@ STATUS node::NR_map_current_update_function(OBJECT *callObj)
 			phdr = NR_busdata[*NR_subnode_reference].obj;
 
 			//Make sure no one has mapped us yet
-			if (NR_busdata[*NR_subnode_reference].ExtraCurrentInjFunc == NULL)
+			if (NR_busdata[*NR_subnode_reference].ExtraCurrentInjFunc == nullptr)
 			{
 				//Map the function
 				NR_busdata[*NR_subnode_reference].ExtraCurrentInjFunc = (FUNCTIONADDR)(gl_get_function(callObj,"current_injection_update"));
 
 				//Make sure it worked
-				if (NR_busdata[*NR_subnode_reference].ExtraCurrentInjFunc == NULL)
+				if (NR_busdata[*NR_subnode_reference].ExtraCurrentInjFunc == nullptr)
 				{
 					gl_error("node:%d - %s - Failed to map current_injection_update from calling object:%d - %s",hdr->id,(hdr->name ? hdr->name : "Unnamed"),callObj->id,(callObj->name ? callObj->name : "Unnamed"));
 					//Defined above
@@ -5493,7 +5704,7 @@ STATUS node::link_VFD_functions(OBJECT *linkVFD)
 	VFD_updating_function = (FUNCTIONADDR)(gl_get_function(linkVFD,"vfd_current_injection_update"));
 
 	//Make sure it worked
-	if (VFD_updating_function == NULL)
+	if (VFD_updating_function == nullptr)
 	{
 		gl_warning("Failure to map VFD current injection update for device:%s",(obj->name ? obj->name : "Unnamed"));
 		/*  TROUBLESHOOT
@@ -5526,7 +5737,7 @@ double node::compute_angle_diff(double angle_B, double angle_A)
 
 	//Compute the raw difference
 	diff_val = fmod((angle_B - angle_A + PI), two_PI);
-   
+
    //See if we need to wrap it around
    if (diff_val < 0.0)
    {
@@ -5535,6 +5746,214 @@ double node::compute_angle_diff(double angle_B, double angle_A)
 
    //Return the result, with the offset removed
    return (diff_val - PI);
+}
+
+//Function to perform the shunt update for FPI
+STATUS node::shunt_update_fxn(void)
+{
+	bool local_shunt_update;
+	int loop_index_var;
+	gld::complex intermed_impedance_dy[6];
+	gld::complex intermed_impedance[3];
+	gld::complex working_impedance_value;
+
+	//FPIM "convergence check" stuff
+	if (NR_solver_algorithm == NRM_FPI)
+	{
+		//Do the explicit Delta-Wye connections first - update flag
+		local_shunt_update = false;
+
+		//Loop through
+		for (loop_index_var=0; loop_index_var<6; loop_index_var++)
+		{
+			intermed_impedance_dy[loop_index_var] = shunt_dy[loop_index_var] - shunt_change_check_dy[loop_index_var];
+
+			//Check it
+			if (intermed_impedance_dy[loop_index_var].Mag() > 0.0)
+			{
+				NR_FPI_imp_load_change = true;
+				local_shunt_update = true;
+			}
+		}
+
+		//See if any updated
+		if (local_shunt_update)
+		{
+			//Update the matrix - both delta and Wye portions
+			NR_busdata[NR_node_reference].full_Y_load[0] += intermed_impedance_dy[0] + intermed_impedance_dy[2] + intermed_impedance_dy[3];
+			NR_busdata[NR_node_reference].full_Y_load[1] -= intermed_impedance_dy[0];
+			NR_busdata[NR_node_reference].full_Y_load[2] -= intermed_impedance_dy[2];
+			NR_busdata[NR_node_reference].full_Y_load[3] -= intermed_impedance_dy[0];
+			NR_busdata[NR_node_reference].full_Y_load[4] += intermed_impedance_dy[1] + intermed_impedance_dy[0] + intermed_impedance_dy[4];
+			NR_busdata[NR_node_reference].full_Y_load[5] -= intermed_impedance_dy[1];
+			NR_busdata[NR_node_reference].full_Y_load[6] -= intermed_impedance_dy[2];
+			NR_busdata[NR_node_reference].full_Y_load[7] -= intermed_impedance_dy[1];
+			NR_busdata[NR_node_reference].full_Y_load[8] += intermed_impedance_dy[2] + intermed_impedance_dy[1] + intermed_impedance_dy[5];
+		}
+
+		if (has_phase(PHASE_D))
+		{
+			//Reset flag
+			local_shunt_update = false;
+
+			//Loop through and check for "differences"
+			for (loop_index_var=0; loop_index_var<3; loop_index_var++)
+			{
+				//Compute the difference
+				intermed_impedance[loop_index_var] = shunt[loop_index_var] - shunt_change_check[loop_index_var];
+
+				//Check it
+				if (intermed_impedance[loop_index_var].Mag() > 0.0)
+				{
+					NR_FPI_imp_load_change = true;
+					local_shunt_update = true;
+				}
+			}
+
+			//Perform the update if we changed - if not, no reason to do so
+			if (local_shunt_update)
+			{
+				//Update the matrix
+				NR_busdata[NR_node_reference].full_Y_load[0] += intermed_impedance[0] + intermed_impedance[2];
+				NR_busdata[NR_node_reference].full_Y_load[1] -= intermed_impedance[0];
+				NR_busdata[NR_node_reference].full_Y_load[2] -= intermed_impedance[2];
+				NR_busdata[NR_node_reference].full_Y_load[3] -= intermed_impedance[0];
+				NR_busdata[NR_node_reference].full_Y_load[4] += intermed_impedance[1] + intermed_impedance[0];
+				NR_busdata[NR_node_reference].full_Y_load[5] -= intermed_impedance[1];
+				NR_busdata[NR_node_reference].full_Y_load[6] -= intermed_impedance[2];
+				NR_busdata[NR_node_reference].full_Y_load[7] -= intermed_impedance[1];
+				NR_busdata[NR_node_reference].full_Y_load[8] += intermed_impedance[2] + intermed_impedance[1];
+			}
+			//Default else - no update, so no need to recalc anything
+
+			//Extra loop, if a different parent
+			if ((SubNode & SNT_DIFF_PARENT) == SNT_DIFF_PARENT)
+			{
+				//Loop through and check for "differences"
+				for (loop_index_var=0; loop_index_var<3; loop_index_var++)
+				{
+					//Compute the difference
+					intermed_impedance[loop_index_var] = Extra_Data[loop_index_var+3] - Extra_Data_Track_FPI[loop_index_var];
+
+					//Check it
+					if (intermed_impedance[loop_index_var].Mag() > 0.0)
+					{
+						NR_FPI_imp_load_change = true;
+
+						//Apply the update - Wye update (since different)
+						NR_busdata[NR_node_reference].full_Y_load[loop_index_var*3+loop_index_var] += intermed_impedance[loop_index_var];
+
+						//Update the tracking value
+						Extra_Data_Track_FPI[loop_index_var] = Extra_Data[loop_index_var+3];
+					}
+				}
+			}//End DIFF_PARENT - Wye on a Delta
+		}//End has D
+		else if (has_phase(PHASE_S))
+		{
+			//Loop through and see if there are any differences
+			for (loop_index_var=0; loop_index_var<3; loop_index_var++)
+			{
+				//Compute the difference
+				working_impedance_value = shunt[loop_index_var] - shunt_change_check[loop_index_var];
+
+				//Check it
+				if (working_impedance_value.Mag() > 0.0)
+				{
+					NR_FPI_imp_load_change = true;
+
+					//See if it is one of the single-phase portions, or the "delta"
+					if (loop_index_var<2)
+					{
+						//Update the matrix
+						NR_busdata[NR_node_reference].full_Y_load[loop_index_var*3+loop_index_var] += working_impedance_value;
+					}
+					else	//12 connection
+					{
+						//Update the matrix
+						NR_busdata[NR_node_reference].full_Y_load[0] += working_impedance_value;
+						NR_busdata[NR_node_reference].full_Y_load[1] += working_impedance_value;
+						NR_busdata[NR_node_reference].full_Y_load[3] += working_impedance_value;
+						NR_busdata[NR_node_reference].full_Y_load[4] += working_impedance_value;
+					}//End 12
+				}
+			}//End of for loop for triplex
+		}
+		else
+		{
+			for (loop_index_var=0; loop_index_var<3; loop_index_var++)
+			{
+				//Compute the difference
+				working_impedance_value = shunt[loop_index_var] - shunt_change_check[loop_index_var];
+
+				//Check it
+				if (working_impedance_value.Mag() > 0.0)
+				{
+					NR_FPI_imp_load_change = true;
+
+					//Update the matrix
+					NR_busdata[NR_node_reference].full_Y_load[loop_index_var*3+loop_index_var] += working_impedance_value;
+				}
+			}//End of for loop for Wye
+
+			//Do different parent routine
+			if ((SubNode & SNT_DIFF_PARENT) == SNT_DIFF_PARENT)
+			{
+				//Reset flag
+				local_shunt_update = false;
+
+				//Loop through and check for "differences"
+				for (loop_index_var=0; loop_index_var<3; loop_index_var++)
+				{
+					//Compute the difference
+					intermed_impedance[loop_index_var] = Extra_Data[loop_index_var+3] - Extra_Data_Track_FPI[loop_index_var];
+
+					//Check it
+					if (intermed_impedance[loop_index_var].Mag() > 0.0)
+					{
+						NR_FPI_imp_load_change = true;
+						local_shunt_update = true;
+
+						//Update the tracker
+						Extra_Data_Track_FPI[loop_index_var] = Extra_Data[loop_index_var+3];
+					}
+				}
+
+				//Perform the update if we changed - if not, no reason to do so
+				if (local_shunt_update)
+				{
+					//Update the matrix
+					NR_busdata[NR_node_reference].full_Y_load[0] += intermed_impedance[0] + intermed_impedance[2];
+					NR_busdata[NR_node_reference].full_Y_load[1] -= intermed_impedance[0];
+					NR_busdata[NR_node_reference].full_Y_load[2] -= intermed_impedance[2];
+					NR_busdata[NR_node_reference].full_Y_load[3] -= intermed_impedance[0];
+					NR_busdata[NR_node_reference].full_Y_load[4] += intermed_impedance[1] + intermed_impedance[0];
+					NR_busdata[NR_node_reference].full_Y_load[5] -= intermed_impedance[1];
+					NR_busdata[NR_node_reference].full_Y_load[6] -= intermed_impedance[2];
+					NR_busdata[NR_node_reference].full_Y_load[7] -= intermed_impedance[1];
+					NR_busdata[NR_node_reference].full_Y_load[8] += intermed_impedance[2] + intermed_impedance[1];
+				}
+				//Default else - no update, so no need to recalc anything
+			}//End DIFF_PARENT - Delta on a Wye
+		}//End no D (Wye)
+
+		//Update accumulator for FPI
+		//Store current shunt values "of interest" to see if it changed for FPIM
+		shunt_change_check[0] = shunt[0];
+		shunt_change_check[1] = shunt[1];
+		shunt_change_check[2] = shunt[2];
+
+		//Capture the explicit Delta-Wye portion too
+		shunt_change_check_dy[0] = shunt_dy[0];	//Delta
+		shunt_change_check_dy[1] = shunt_dy[1];
+		shunt_change_check_dy[2] = shunt_dy[2];
+		shunt_change_check_dy[3] = shunt_dy[3];	//Wye
+		shunt_change_check_dy[4] = shunt_dy[4];
+		shunt_change_check_dy[5] = shunt_dy[5];
+	}//End FPI
+	//TCIM doesn't use this - shouldn't even be called
+
+	return SUCCESS;	//Not sure how this would fail
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -5552,9 +5971,9 @@ EXPORT int isa_node(OBJECT *obj, char *classname)
 EXPORT int notify_node(OBJECT *obj, int update_mode, PROPERTY *prop, char *value){
 	node *n = OBJECTDATA(obj, node);
 	int rv = 1;
-	
+
 	rv = n->notify(update_mode, prop, value);
-	
+
 	return rv;
 }
 
@@ -5638,6 +6057,21 @@ EXPORT STATUS node_reset_disabled_status(OBJECT *nodeObj)
 
 	//Call our local function
 	temp_status = my->reset_node_island_condition();
+
+	//Return
+	return temp_status;
+}
+
+//Exposed function to do shunt update - primarily to get impedance update properly sequenced for FPI in deltamode
+EXPORT STATUS node_update_shunt_values(OBJECT *obj)
+{
+	STATUS temp_status;
+
+	//Map the node
+	node *my = OBJECTDATA(obj,node);
+
+	//Call the update
+	temp_status = my->shunt_update_fxn();
 
 	//Return
 	return temp_status;

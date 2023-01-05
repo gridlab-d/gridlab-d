@@ -3,6 +3,7 @@
 #ifndef _NO_CPPUNIT
 /*#include <stdio.h>
 #include <stdlib.h>
+
 #include "test_framework.h"
 #include "gridlabd.h"
 #include "globals.h"

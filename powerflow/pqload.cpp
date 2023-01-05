@@ -9,10 +9,10 @@
 	@{
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "pqload.h"
 
@@ -24,28 +24,28 @@ SCHED_LIST *new_slist(){
 
 int delete_slist(SCHED_LIST *l){
 	int rv = 0;
-	if(l == NULL){
+	if(l == nullptr){
 		return -1; /* error */
 	}
-	if(l->next != NULL){
+	if(l->next != nullptr){
 		rv = delete_slist(l->next); /* shouldn't be non-negative but check anyway */
 	}
 	gl_free(l);
 	return rv;
 }
 
-CLASS *pqload::oclass = NULL;
-CLASS *pqload::pclass = NULL;
-pqload *pqload::defaults = NULL;
+CLASS *pqload::oclass = nullptr;
+CLASS *pqload::pclass = nullptr;
+pqload *pqload::defaults = nullptr;
 double pqload::zero_F = -459.67; /* absolute zero, give or take */
 
 pqload::pqload(MODULE *mod) : load(mod)
 {
-	if(oclass == NULL){
+	if(oclass == nullptr){
 		pclass = load::oclass;
 
 		oclass = gl_register_class(mod, "pqload", sizeof(pqload), PC_PRETOPDOWN | PC_BOTTOMUP | PC_POSTTOPDOWN | PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class pqload";
 		else
 			oclass->trl = TRL_PROTOTYPE;
@@ -118,11 +118,11 @@ pqload::pqload(MODULE *mod) : load(mod)
     }
 }
 
-int pqload::build_sched(char *instr = NULL, SCHED_LIST *end = NULL){
+int pqload::build_sched(char *instr = nullptr, SCHED_LIST *end = nullptr){
 	char *sc_end = 0;
 	char *start = instr ? instr : schedule.get_string(); /* doesn't copy but doesn't use strtok */
 	int rv = 0, scanct = 0;
-	SCHED_LIST *endptr = NULL;
+	SCHED_LIST *endptr = nullptr;
 
 	/* eat whitespace between schedules */
 	while(*start == ' '){
@@ -135,7 +135,7 @@ int pqload::build_sched(char *instr = NULL, SCHED_LIST *end = NULL){
 	}
 
 	/* extend list */
-	if(sched == NULL){
+	if(sched == nullptr){
 		sched = endptr = new_slist();
 	} else {
 		endptr = new_slist();
@@ -143,7 +143,7 @@ int pqload::build_sched(char *instr = NULL, SCHED_LIST *end = NULL){
 
 	/* find bounds */
 	sc_end = strchr(start, ';');
-	if(sc_end == NULL){
+	if(sc_end == nullptr){
 		gl_error("schedule token \"%s\" not semicolon terminated", start);
 	}
 	char moh_v[257], moh_w[257], hod_v[257], hod_w[257], dom_v[257], dom_w[257], moy_v[257], moy_w[257], dow_v[257], lpu[257], sc[257];
@@ -175,13 +175,13 @@ int pqload::init(OBJECT *parent){
 	int w_rv = 0;
 
 	// init_weather from house_e.cpp:init_weather
-	static FINDLIST *climates = NULL;
+	static FINDLIST *climates = nullptr;
 	OBJECT *hdr = OBJECTHDR(this);
 	int not_found = 0;
-	if (climates==NULL && not_found==0) 
+	if (climates==nullptr && not_found==0) 
 	{
 		climates = gl_find_objects(FL_NEW,FT_CLASS,SAME,"climate",FT_END);
-		if (climates==NULL)
+		if (climates==nullptr)
 		{
 			not_found = 1;
 			gl_warning("pqload: no climate data found");
@@ -191,7 +191,7 @@ int pqload::init(OBJECT *parent){
 			gl_warning("pqload: %d climates found, using first one defined", climates->hit_count);
 		}
 	}
-	if (climates!=NULL)
+	if (climates!=nullptr)
 	{
 		if (climates->hit_count==0)
 		{
@@ -200,9 +200,9 @@ int pqload::init(OBJECT *parent){
 		else //climate data was found
 		{
 			// force rank of object w.r.t climate
-			OBJECT *obj = gl_find_next(climates,NULL);
-			if(weather == NULL){
-				weather = NULL;
+			OBJECT *obj = gl_find_next(climates,nullptr);
+			if(weather == nullptr){
+				weather = nullptr;
 			} else {
 				if (obj->rank<=hdr->rank)
 					gl_set_dependent(obj,hdr);
@@ -212,33 +212,33 @@ int pqload::init(OBJECT *parent){
 	}
 
 	// old check
-	if(weather != NULL){
+	if(weather != nullptr){
 		temperature = gl_get_property(weather, "temperature");
-		if(temperature == NULL){
+		if(temperature == nullptr){
 			gl_error("Unable to find temperature property in weather object!");
 			++w_rv;
 		}
 		
 		humidity = gl_get_property(weather, "humidity");
-		if(humidity == NULL){
+		if(humidity == nullptr){
 			gl_error("Unable to find humidity property in weather object!");
 			++w_rv;
 		}
 
 		solar = gl_get_property(weather, "solar_flux");
-		if(solar == NULL){
+		if(solar == nullptr){
 			gl_error("Unable to find solar_flux property in weather object!");
 			++w_rv;
 		}
 
 		wind = gl_get_property(weather, "wind_speed");
-		if(wind == NULL){
+		if(wind == nullptr){
 			gl_error("Unable to find wind_speed property in weather object!");
 			++w_rv;
 		}
 
 		rain = gl_get_property(weather, "rainfall"); /* not yet implemented in climate */
-		if(rain == NULL){
+		if(rain == nullptr){
 			gl_error("Unable to find rainfall property in weather object!");
 			//++w_rv;
 		}
@@ -267,28 +267,28 @@ TIMESTAMP pqload::sync(TIMESTAMP t0)
 	int i = 0;
 
 	/* must take place in sync in order to let the climate update itself */
-	if(weather != NULL){
-		if(temperature != NULL){
+	if(weather != nullptr){
+		if(temperature != nullptr){
 			input[0] = *gl_get_double(weather, temperature);
 		} else {
 			input[0] = 0.0;
 		}
-		if(humidity != NULL){
+		if(humidity != nullptr){
 			input[1] = *gl_get_double(weather, humidity);
 		} else {
 			input[1] = 0.0;
 		}
-		if(solar != NULL){
+		if(solar != nullptr){
 			input[2] = *gl_get_double(weather, solar);
 		} else {
 			input[2] = 0.0;
 		}
-		if(wind != NULL){
+		if(wind != nullptr){
 			input[3] = *gl_get_double(weather, wind);
 		} else {
 			input[3] = 0.0;
 		}
-		if(rain != NULL){
+		if(rain != nullptr){
 			input[4] = *gl_get_double(weather, rain);
 		} else {
 			input[4] = 0.0;
@@ -352,7 +352,7 @@ EXPORT int create_pqload(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(pqload::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			pqload *my = OBJECTDATA(*obj,pqload);
 			gl_set_parent(*obj,parent);

@@ -5,6 +5,14 @@
 #ifndef _FILE_H
 #define _FILE_H
 
+#ifndef _TAPE_H
+#include "tape.h"
+
+struct player;
+struct shaper;
+struct recorder;
+struct collector;
+
 int file_open_player(struct player *my, char *fname, char *flags);
 char *file_read_player(struct player *my,char *buffer,unsigned int size);
 int file_rewind_player(struct player *my);
@@ -23,4 +31,5 @@ int file_open_collector(struct collector *my, char *fname, char *flags);
 int file_write_collector(struct collector *my, char *timestamp, char *value);
 void file_close_collector(struct collector *my);
 
+#endif
 #endif

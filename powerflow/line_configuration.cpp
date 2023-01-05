@@ -7,10 +7,10 @@
 	@{
 **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
 using namespace std;
 
@@ -21,19 +21,19 @@ using namespace std;
 // line_configuration CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 
-CLASS* line_configuration::oclass = NULL;
-CLASS* line_configuration::pclass = NULL;
+CLASS* line_configuration::oclass = nullptr;
+CLASS* line_configuration::pclass = nullptr;
 
 line_configuration::line_configuration(MODULE *mod) : powerflow_library(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		oclass = oclass = gl_register_class(mod,"line_configuration",sizeof(line_configuration),0x00);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class line_configuration";
 		else
 			oclass->trl = TRL_PROVEN;
-        
+
         if(gl_publish_variable(oclass,
 			PT_object, "conductor_A",PADDR(phaseA_conductor),
 			PT_object, "conductor_B",PADDR(phaseB_conductor),
@@ -69,12 +69,12 @@ line_configuration::line_configuration(MODULE *mod) : powerflow_library(mod)
 int line_configuration::create(void)
 {
     // Set up defaults
-    phaseA_conductor = NULL; 
-	phaseB_conductor = NULL;
-	phaseC_conductor = NULL;
-	phaseN_conductor = NULL;
-	line_spacing = NULL;
-	impedance11 = impedance12 = impedance13 = impedance21 = impedance22 = impedance23 = impedance31 = impedance32 = impedance33 = complex(0,0);
+    phaseA_conductor = nullptr; 
+	phaseB_conductor = nullptr;
+	phaseC_conductor = nullptr;
+	phaseN_conductor = nullptr;
+	line_spacing = nullptr;
+	impedance11 = impedance12 = impedance13 = impedance21 = impedance22 = impedance23 = impedance31 = impedance32 = impedance33 = gld::complex(0,0);
 	capacitance11 = capacitance12 = capacitance13 = capacitance21 = capacitance22 = capacitance23 = capacitance31 = capacitance32 = capacitance33 = 0.0;
 	summer.continuous = winter.continuous = 1000;
 	summer.emergency = winter.emergency = 2000;
@@ -102,7 +102,7 @@ EXPORT int create_line_configuration(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(line_configuration::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			line_configuration *my = OBJECTDATA(*obj,line_configuration);
 			gl_set_parent(*obj,parent);

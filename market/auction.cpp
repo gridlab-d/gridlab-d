@@ -8,9 +8,9 @@
 
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
+#include <cerrno>
+#include <cstdio>
+#include <cstdlib>
 
 #include "gridlabd.h"
 #include "auction.h"
@@ -76,7 +76,7 @@ auction::auction(MODULE *module)
 {
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"auction",sizeof(auction),passconfig|PC_AUTOLOCK);
+		oclass = gl_register_class(module, "auction",sizeof(auction),passconfig|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class auction";
 		else
@@ -89,8 +89,6 @@ auction::auction(MODULE *module)
 			PT_int64, "market_id", PADDR(market_id), PT_ACCESS, PA_REFERENCE, PT_DESCRIPTION, "unique identifier of market clearing",
 /**/		PT_object, "network", PADDR(network), PT_DESCRIPTION, "the comm network used by object to talk to the market (if any)",
 			PT_bool, "verbose", PADDR(verbose), PT_DESCRIPTION, "enable verbose auction operations",
-			PT_object, "linkref", PADDR(linkref), PT_DEPRECATED, PT_DESCRIPTION, "reference to link object that has demand as power_out (only used when not all loads are bidding)",
-			PT_double, "pricecap", PADDR(pricecap), PT_DEPRECATED, PT_DESCRIPTION, "the maximum price (magnitude) allowed",
 			PT_double, "price_cap", PADDR(pricecap), PT_DESCRIPTION, "the maximum price (magnitude) allowed",
 
 			PT_enumeration, "special_mode", PADDR(special_mode),
@@ -897,7 +895,7 @@ void auction::clear_market(void)
 			if(capacity_reference_property->unit != 0){
 				if(gl_convert(capacity_reference_property->unit->name,unit.get_string(),&refload) == 0){
 					char msg[256];
-					sprintf(msg, "capacity_reference_property %s uses units of %s and is incompatible with auction units (%s)", gl_name(linkref,name,sizeof(name)), capacity_reference_property->unit->name, unit.get_string());
+					sprintf(msg, "capacity_reference_property %s uses units of %s and is incompatible with auction units (%s)", capacity_reference_property->name, capacity_reference_property->unit->name, unit.get_string());
 					throw msg;
 					/* TROUBLESHOOT
 						If capacity_reference_property has units specified, the units must be convertable to the units used by its auction object.
@@ -924,12 +922,12 @@ void auction::clear_market(void)
 		cap_ref_unrep = unresponsive.quantity;
 		if (unresponsive.quantity < -0.001)
 		{
-			gl_warning("capacity_reference_property %s has negative unresponsive load--this is probably due to improper bidding", gl_name(linkref,name,sizeof(name)), unresponsive.quantity);
+			gl_warning("capacity_reference_property %s has negative unresponsive load--this is probably due to improper bidding", capacity_reference_property->name, unresponsive.quantity);
 		}
 		else if (unresponsive.quantity > 0.001)
 		{
 			submit_nolock(unresponsive.from, -unresponsive.quantity, unresponsive.price, unresponsive.bid_id, BS_ON, false, market_id);
-			gl_verbose("capacity_reference_property %s has %.3f unresponsive load", gl_name(linkref,name,sizeof(name)), -unresponsive.quantity);
+			gl_verbose("capacity_reference_property %s has %.3f unresponsive load", capacity_reference_property->name, -unresponsive.quantity);
 		}
 	}
 
@@ -1454,14 +1452,14 @@ void auction::clear_market(void)
 
 void auction::record_bid(char *from, double quantity, double real_price, BIDDERSTATE state){
 	char name_buffer[256];
-	char *unkState = "unknown";
-	char *offState = "off";
-	char *onState = "on";
-	char *unk = "unknown time";
+	const char *unkState = "unknown";
+	const char *offState = "off";
+	const char *onState = "on";
+	const char *unk = "unknown time";
 	char buffer[256];
 	char bigbuffer[1024];
-	char *pState;
-	char *tStr;
+	const char *pState;
+	const char *tStr;
 	DATETIME dt;
 	TIMESTAMP submit_time = gl_globalclock;
 	if(trans_file){ // copied from version below

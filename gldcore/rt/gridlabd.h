@@ -16,6 +16,7 @@
 #include <memory.h>
 #include <float.h>
 #include <string.h>
+#include <math.h>
 
 #ifdef _WINDOWS
 #define isfinite _finite
@@ -27,296 +28,299 @@
 #define int64 long long /**< standard version of 64-bit integers */
 #endif
 
-typedef enum {I='i',J='j',A='d'} CNOTATION; /**< complex number notation to use */
+typedef enum {I='i',J='j',A='d', R='r'} CNOTATION; /**< complex number notation to use */
 #define CNOTATION_DEFAULT J /* never set this to A */
 #define PI 3.1415926535897932384626433832795
-#define E 2.71828182845905
+#define GLD_E 2.71828182845905
 
 #define _NO_CPPUNIT
 
 /* only cpp code may actually do complex math */
-class complex {
-private:
-	double r; /**< the real part */
-	double i; /**< the imaginary part */
-	CNOTATION f; /**< the default notation to use */
-public:
-	/** Construct a complex number with zero magnitude */
-	inline complex() /**< create a zero complex number */
-	{
-		r = 0;
-		i = 0;
-		f = CNOTATION_DEFAULT;
-	};
-	inline complex(double re) /**< create a complex number with only a real part */
-	{
-		r = re;
-		i = 0;
-		f = CNOTATION_DEFAULT;
-	};
-	inline complex(double re, double im, CNOTATION nf=CNOTATION_DEFAULT) /**< create a complex number with both real and imaginary parts */
-	{
-		r = re;
-		i = im;
-		f = nf;
-	};
+namespace gld {
+    class complex {
+    private:
+        double r; /**< the real part */
+        double i; /**< the imaginary part */
+        CNOTATION f; /**< the default notation to use */
+    public:
+        /** Construct a complex number with zero magnitude */
+        complex() /**< create a zero complex number */
+        {
+            r = 0;
+            i = 0;
+            f = CNOTATION_DEFAULT;
+        };
+        complex(double re) /**< create a complex number with only a real part */
+        {
+            r = re;
+            i = 0;
+            f = CNOTATION_DEFAULT;
+        };
+        complex(double re, double im, CNOTATION nf=CNOTATION_DEFAULT) /**< create a complex number with both real and imaginary parts */
+        {
+            f = nf;
+            r = re;
+            i = im;
+        };
 
-	/* assignment operations */
-	inline complex &operator = (complex x) /**< complex assignment */
-	{
-		r = x.r;
-		i = x.i;
-		f = x.f;
-		return *this;
-	};
-	inline complex &operator = (double x) /**< double assignment */
-	{
-		r = x;
-		i = 0;
-		f = CNOTATION_DEFAULT;
-		return *this;
-	};
+        /* assignment operations */
+        complex &operator = (complex x) /**< complex assignment */
+        {
+            r = x.r;
+            i = x.i;
+            f = x.f;
+            return *this;
+        };
+        complex &operator = (double x) /**< double assignment */
+        {
+            r = x;
+            i = 0;
+            f = CNOTATION_DEFAULT;
+            return *this;
+        };
 
-	/* access operations */
-	inline double & Re(void) /**< access to real part */
-	{
-		return r;
-	};
-	inline double & Im(void) /**< access to imaginary part */
-	{
-		return i;
-	};
-	inline CNOTATION & Notation(void) /**< access to notation */
-	{
-		return f;
-	};
-	inline double Mag(void) const /**< compute magnitude */
-	{
-		return sqrt(r*r+i*i);
-	};
-	inline double Mag(double m)  /**< set magnitude */
-	{
-		double old = sqrt(r*r+i*i);
-		r *= m/old;
-		i *= m/old;
-		return m;
-	};
-	inline double Arg(void) const /**< compute angle */
-	{
-		if (r==0)
-		{
-			if (i>0)
-				return PI/2;
-			else if (i==0)
-				return 0;
-			else
-				return -PI/2;
-		}
-		else if (r>0)
-			return atan(i/r);
-		else
-			return PI+atan(i/r);
-	};
-	inline double Arg(double a)  /**< set angle */
-	{
-		SetPolar(Mag(),a,f);
-		return a;
-	};
-	inline complex Log(void) const /**< compute log */
-	{
-		return complex(log(Mag()),Arg(),f);
-	};
-	inline void SetReal(double v) /**< set real part */
-	{
-		r = v;
-	};
-	inline void SetImag(double v) /**< set imaginary part */
-	{
-		i = v;
-	};
-	inline void SetNotation(CNOTATION nf) /**< set notation */
-	{
-		f = nf;
-	}
-	inline void SetRect(double rp, double ip, CNOTATION nf=CNOTATION_DEFAULT) /**< set rectangular value */
-	{
-		r = rp;
-		i = ip;
-		f = nf;
-	};
-	inline void SetPolar(double m, double a, CNOTATION nf=A) /**< set polar values */
-	{
-		r = (m*cos(a));
-		i = (m*sin(a));
-		f = nf;
-	};
+        /* access operations */
+        double & Re(void) /**< access to real part */
+        {
+            return r;
+        };
+        double & Im(void) /**< access to imaginary part */
+        {
+            return i;
+        };
+        CNOTATION & Notation(void) /**< access to notation */
+        {
+            return f;
+        };
+        double Mag(void) const /**< compute magnitude */
+        {
+            return sqrt(r*r+i*i);
+        };
+        double Mag(double m)  /**< set magnitude */
+        {
+            double old = sqrt(r*r+i*i);
+            r *= m/old;
+            i *= m/old;
+            return m;
+        };
+        double Arg(void) const /**< compute angle */
+        {
+            if (r==0)
+            {
+                if (i>0)
+                    return PI/2;
+                else if (i==0)
+                    return 0;
+                else
+                    return -PI/2;
+            }
+            else if (r>0)
+                return atan(i/r);
+            else
+                return PI+atan(i/r);
+        };
+        double Arg(double a)  /**< set angle */
+        {
+            SetPolar(Mag(),a,f);
+            return a;
+        };
+        complex Log(void) const /**< compute log */
+        {
+            return complex(log(Mag()),Arg(),f);
+        };
+        void SetReal(double v) /**< set real part */
+        {
+            r = v;
+        };
+        void SetImag(double v) /**< set imaginary part */
+        {
+            i = v;
+        };
+        void SetNotation(CNOTATION nf) /**< set notation */
+        {
+            f = nf;
+        }
+        void SetRect(double rp, double ip, CNOTATION nf=CNOTATION_DEFAULT) /**< set rectangular value */
+        {
+            r = rp;
+            i = ip;
+            f = nf;
+        };
+        void SetPolar(double m, double a, CNOTATION nf=A) /**< set polar values */
+        {
+            r = (m*cos(a));
+            i = (m*sin(a));
+            f = nf;
+        };
 
 #if 0
-	//inline operator const double (void) const /**< cast real part to double */
+        //operator const double (void) const /**< cast real part to double */
 	//{
 	//	return r;
 	//};
 #endif
 
-	inline complex operator - (void) /**< change sign */
-	{
-		return complex(-r,-i,f);
-	};
-	inline complex operator ~ (void) /**< complex conjugate */
-	{
-		return complex(r,-i,f);
-	};
+        complex operator - (void) /**< change sign */
+        {
+            return complex(-r,-i,f);
+        };
+        complex operator ~ (void) /**< complex conjugate */
+        {
+            return complex(r,-i,f);
+        };
 
-	/* reflexive math operations */
-	inline complex &operator += (double x) /**< add a double to the real part */
-	{
-		r += x;
-		return *this;
-	};
-	inline complex &operator -= (double x) /**< subtract a double from the real part */
-	{
-		r -= x;
-		return *this;
-	};
-	inline complex &operator *= (double x) /**< multiply a double to real part */
-	{
-		r *= x;
-		i *= x;
-		return *this;
-	};
-	inline complex &operator /= (double x) /**< divide into the real part */
-	{
-		r /= x;
-		i /= x;
-		return *this;
-	};
-	inline complex &operator ^= (double x) /**< raise to a real power */
-	{
-		double lm = log(Mag()), a = Arg(), b = exp(x*lm), c = x*a;
-		r = (b*cos(c));
-		i = (b*sin(c));
-		return *this;
-	};
-	inline complex &operator += (complex x) /**< add a complex number */
-	{
-		r += x.r;
-		i += x.i;
-		return *this;
-	};
-	inline complex &operator -= (complex x)  /**< subtract a complex number */
-	{
-		r -= x.r;
-		i -= x.i;
-		return *this;
-	};
-	inline complex &operator *= (complex x)  /**< multip[le by a complex number */
-	{
-		double pr=r;
-		r = pr * x.r - i * x.i;
-		i = pr * x.i + i * x.r;
-		return *this;
-	};
-	inline complex &operator /= (complex y)  /**< divide by a complex number */
-	{
-		double xr=r;
-		double a = y.r*y.r+y.i*y.i;
-		r = (xr*y.r+i*y.i)/a;
-		i = (i*y.r-xr*y.i)/a;
-		return *this;
-	};
-	inline complex &operator ^= (complex x) /**< raise to a complex power */
-	{
-		double lm = log(Mag()), a = Arg(), b = exp(x.r*lm-x.i*a), c = x.r*a+x.i*lm;
-		r = (b*cos(c));
-		i = (b*sin(c));
-		return *this;
-	};
+        /* reflexive math operations */
+        complex &operator += (double x) /**< add a double to the real part */
+        {
+            r += x;
+            return *this;
+        };
+        complex &operator -= (double x) /**< subtract a double from the real part */
+        {
+            r -= x;
+            return *this;
+        };
+        complex &operator *= (double x) /**< multiply a double to both parts */
+        {
+            r *= x;
+            i *= x;
+            return *this;
+        };
+        complex &operator /= (double x) /**< divide into both parts */
+        {
+            r /= x;
+            i /= x;
+            return *this;
+        };
+        complex &operator ^= (double x) /**< raise to a real power */
+        {
+            double lm = log(Mag()), a = Arg(), b = exp(x*lm), c = x*a;
+            r = (b*cos(c));
+            i = (b*sin(c));
+            return *this;
+        };
+        complex &operator += (complex x) /**< add a complex number */
+        {
+            r += x.r;
+            i += x.i;
+            return *this;
+        };
+        complex &operator -= (complex x)  /**< subtract a complex number */
+        {
+            r -= x.r;
+            i -= x.i;
+            return *this;
+        };
+        complex &operator *= (complex x)  /**< multip[le by a complex number */
+        {
+            double pr=r;
+            r = pr * x.r - i * x.i;
+            i = pr * x.i + i * x.r;
+            return *this;
+        };
+        complex &operator /= (complex y)  /**< divide by a complex number */
+        {
+            double xr=r;
+            double a = y.r*y.r+y.i*y.i;
+            r = (xr*y.r+i*y.i)/a;
+            i = (i*y.r-xr*y.i)/a;
+            return *this;
+        };
+        complex &operator ^= (complex x) /**< raise to a complex power */
+        {
+            double lm = log(Mag()), a = Arg(), b = exp(x.r*lm-x.i*a), c = x.r*a+x.i*lm;
+            r = (b*cos(c));
+            i = (b*sin(c));
+            return *this;
+        };
 
-	/* binary math operations */
-	inline complex operator + (double y) /**< double sum */
-	{
-		complex x(*this);
-		return x+=y;
-	};
-	inline complex operator - (double y) /**< double subtract */
-	{
-		complex x(*this);
-		return x-=y;
-	};
-	inline complex operator * (double y) /**< double multiply */
-	{
-		complex x(*this);
-		return x*=y;
-	};
-	inline complex operator / (double y) /**< double divide */
-	{
-		complex x(*this);
-		return x/=y;
-	};
-	inline complex operator ^ (double y) /**< double power */
-	{
-		complex x(*this);
-		return x^=y;
-	};
-	inline complex operator + (complex y) /**< complex sum */
-	{
-		complex x(*this);
-		return x+=y;
-	};
-	inline complex operator - (complex y) /**< complex subtract */
-	{
-		complex x(*this);
-		return x-=y;
-	};
-	inline complex operator * (complex y) /**< complex multiply */
-	{
-		complex x(*this);
-		return x*=y;
-	};
-	inline complex operator / (complex y) /**< complex divide */
-	{
-		complex x(*this);
-		return x/=y;
-	};
-	inline complex operator ^ (complex y) /**< complex power */
-	{
-		complex x(*this);
-		return x^=y;
-	};
+        /* binary math operations */
+        complex operator + (double y) /**< double sum */
+        {
+            complex x(*this);
+            return x+=y;
+        };
+        complex operator - (double y) /**< double subtract */
+        {
+            complex x(*this);
+            return x-=y;
+        };
+        complex operator * (double y) /**< double multiply */
+        {
+            complex x(*this);
+            return x*=y;
+        };
+        complex operator / (double y) /**< double divide */
+        {
+            complex x(*this);
+            return x/=y;
+        };
+        complex operator ^ (double y) /**< double power */
+        {
+            complex x(*this);
+            return x^=y;
+        };
+        complex operator + (complex y) /**< complex sum */
+        {
+            complex x(*this);
+            return x+=y;
+        };
+        complex operator - (complex y) /**< complex subtract */
+        {
+            complex x(*this);
+            return x-=y;
+        };
+        complex operator * (complex y) /**< complex multiply */
+        {
+            complex x(*this);
+            return x*=y;
+        };
+        complex operator / (complex y) /**< complex divide */
+        {
+            complex x(*this);
+            return x/=y;
+        };
+        complex operator ^ (complex y) /**< complex power */
+        {
+            complex x(*this);
+            return x^=y;
+        };
 
-	/** set power factor */
-	inline complex SetPowerFactor(double mag, /**< magnitude of power */
-		double pf, /**< power factor */
-		CNOTATION n=J) /** notation */
-	{
-		SetPolar(mag/pf, acos(pf),n);
-		return *this;
-	}
+        /** set power factor */
+        complex SetPowerFactor(double mag, /**< magnitude of power */
+                               double pf, /**< power factor */
+                               CNOTATION n=J) /** notation */
+        {
+            SetPolar(mag/pf, acos(pf),n);
+            return *this;
+        }
 
 
-	/* comparison */
-	inline bool IsZero(double err=0.0) /**< zero test */
-	{
-		return Mag()<=err;
-	}
+        /* comparison */
+        bool IsZero(double err=0.0) /**< zero test */
+        {
+            return Mag()<=err;
+        }
 
-	/* magnitude comparisons */
-	inline bool operator == (double m)	{ return Mag()==m; };
-	inline bool operator != (double m)	{ return Mag()!=m; };
-	inline bool operator < (double m)	{ return Mag()<m; };
-	inline bool operator <= (double m)	{ return Mag()<=m; };
-	inline bool operator > (double m)	{ return Mag()>m; };
-	inline bool operator >= (double m)	{ return Mag()>=m; };
+        /* magnitude comparisons */
+        bool operator == (double m)	{ return Mag()==m; };
+        bool operator != (double m)	{ return Mag()!=m; };
+        bool operator < (double m)	{ return Mag()<m; };
+        bool operator <= (double m)	{ return Mag()<=m; };
+        bool operator > (double m)	{ return Mag()>m; };
+        bool operator >= (double m)	{ return Mag()>=m; };
 
-	/* angle comparisons */
-	inline complex operator == (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)==0.0;};
-	inline complex operator != (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)!=0.0;};
-	inline complex operator < (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)<PI;};
-	inline complex operator <= (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)<=PI;};
-	inline complex operator > (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)>PI;};
-	inline complex operator >= (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)>=PI;};
-	inline bool IsFinite(void) { return isfinite(r) && isfinite(i); };
-};
+        /* angle comparisons */
+        bool operator == (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)==0.0;};
+        bool operator != (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)!=0.0;};
+        bool operator < (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)<PI;};
+        bool operator <= (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)<=PI;};
+        bool operator > (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)>PI;};
+        bool operator >= (complex y)	{ return fmod(y.Arg()-Arg(),2*PI)>=PI;};
+        bool IsFinite(void) { return isfinite(r) && isfinite(i); };
+    };
+}
+using gld::complex; // TODO: GLD Runtime compile does not properly handle namespaces.
 
 #ifdef REAL4
 typedef float real;
@@ -325,6 +329,7 @@ typedef double real;
 #endif
 
 typedef int64 TIMESTAMP;
+typedef int EXITCODE;
 #define TS_TPS ((int64)1)	/* ticks per second time resolution - this needs to be compatible with TS_SECOND is timestamp.h */
 #define TS_REALNOW ((TIMESTAMP)(time(NULL))*TS_TPS)
 #define TS_SIMNOW (*(callback->global_clock))
@@ -398,7 +403,8 @@ typedef TIMESTAMP timestamp;
 typedef struct s_object_list* object; /* GridLAB objects */
 typedef unsigned int64 set; /* sets (each of up to 64 values may be defined) */
 typedef double triplet[3];
-typedef complex triplex[3];
+typedef gld::complex triplex[3];
+
 typedef struct s_randomvar {
 	double value;				/**< current value */
 	unsigned int state;			/**< RNG state */
@@ -409,7 +415,9 @@ typedef struct s_randomvar {
 	unsigned int flags;			/**< RNG flags */
 	/* internal parameters */
 	struct s_randomvar *next;
-} randomvar;
+};
+using randomvar_struct = s_randomvar; // Correct behavior
+using randomvar = s_randomvar; // behavior for GLM runtime compilation, which does not handle underscore
 
 /* int64 is already defined in platform.h */
 typedef enum {_PT_FIRST=-1,
@@ -430,7 +438,7 @@ typedef enum {_PT_FIRST=-1,
 	PT_bool, /**< the data is a true/false value */
 	PT_timestamp, /**< timestamp value */
 	PT_double_array, /**< the data is a fixed length double[] */
-	PT_complex_array, /**< the data is a fixed length complex[] */
+	PT_complex_array, /**< the data is a fixed length gld::complex[] */
 /*	PT_object_array, */ /**< the data is a fixed length array of object pointers*/
 	PT_float,	/**< Single-precision float	*/
 	PT_real,	/**< Single or double precision float ~ allows double values to be overriden */
@@ -849,8 +857,8 @@ typedef enum {
     _EUET_COUNT, /* must be last */
 } EUELECTRONICTYPE;
 typedef struct s_motor {
-    complex power;		/**< motor power when running */
-    complex impedance;	/**< motor impedance when stalled */
+    gld::complex power;		/**< motor power when running */
+    gld::complex impedance;	/**< motor impedance when stalled */
     double inertia;		/**< motor inertia in seconds */
     double v_stall;		/**< motor stall voltage (pu) */
     double v_start;		/**< motor start voltage (pu) */
@@ -859,7 +867,7 @@ typedef struct s_motor {
     /* TODO add slip data (0 for synchronous motors) */
 } EUMOTOR;
 typedef struct s_electronic {
-    complex power;		/**< load power when running */
+    gld::complex power;		/**< load power when running */
     double inertia;		/**< load "inertia" */
     double v_trip;		/**< load "trip" voltage (pu) */
     double v_start;		/**< load "start" voltage (pu) */
@@ -868,18 +876,18 @@ typedef struct s_electronic {
 typedef struct s_enduse {
 	/* the output value must be first for transform to stream */
 	/* meter values */
-	complex total;				/* total power in kW */
-	complex energy;				/* total energy in kWh */
-	complex demand;				/* maximum power in kW (can be reset) */
+	gld::complex total;				/* total power in kW */
+	gld::complex energy;				/* total energy in kWh */
+	gld::complex demand;				/* maximum power in kW (can be reset) */
 
 	/* circuit configuration */	
 	set config;					/* end-use configuration */
 	double breaker_amps;		/* breaker limit (if any) */
 
 	/* zip values */
-	complex admittance;			/* constant impedance oprtion of load in kW */
-	complex current;			/* constant current portion of load in kW */
-	complex power;				/* constant power portion of load in kW */
+	gld::complex admittance;			/* constant impedance oprtion of load in kW */
+	gld::complex current;			/* constant current portion of load in kW */
+	gld::complex power;				/* constant power portion of load in kW */
 
 	/* composite load data */
 	EUMOTOR motor[_EUMT_COUNT];				/* motor loads (A-D) */
@@ -1095,235 +1103,240 @@ typedef struct s_transform {
 	struct s_transform *next; ///* next item in linked list
 } TRANSFORM;
 
-typedef struct s_callbacks {
-	TIMESTAMP *global_clock;
-	double *global_delta_curr_clock;
-	TIMESTAMP *global_stoptime;
-	int (*output_verbose)(char *format, ...);
-	int (*output_message)(char *format, ...);
-	int (*output_warning)(char *format, ...);
-	int (*output_error)(char *format, ...);
-	int (*output_debug)(char *format, ...);
-	int (*output_test)(char *format, ...);
-	CLASS *(*register_class)(MODULE *,CLASSNAME,unsigned int,PASSCONFIG);
-	struct {
-		OBJECT *(*single)(CLASS*);
-		OBJECT *(*array)(CLASS*,unsigned int);
-		OBJECT *(*foreign)(OBJECT *obj);
-	} create;
-	int (*define_map)(CLASS*,...);
-	int (*loadmethod)(CLASS*,char*,int (*call)(OBJECT*,char*));
-	CLASS *(*class_getfirst)(void);
-	CLASS *(*class_getname)(char*);
-	PROPERTY *(*class_add_extended_property)(CLASS *,char *,PROPERTYTYPE,char *);
-	struct {
-		FUNCTION *(*define)(CLASS*,FUNCTIONNAME,FUNCTIONADDR);
-		FUNCTIONADDR (*get)(char*,char*);
-	} function;
-	int (*define_enumeration_member)(CLASS*,char*,char*,enumeration);
-	int (*define_set_member)(CLASS*,char*,char*,uint32);
-	struct {
-		OBJECT *(*get_first)(void);
-		int (*set_dependent)(OBJECT*,OBJECT*);
-		int (*set_parent)(OBJECT*,OBJECT*);
-		int (*set_rank)(OBJECT*,unsigned int);
-	} object;
-	struct {
-		PROPERTY *(*get_property)(OBJECT*,PROPERTYNAME,PROPERTYSTRUCT*);
-		int (*set_value_by_addr)(OBJECT *, void*, char*,PROPERTY*);
-		int (*get_value_by_addr)(OBJECT *, void*, char*, int size,PROPERTY*);
-		int (*set_value_by_name)(OBJECT *, char*, char*);
-		int (*get_value_by_name)(OBJECT *, char*, char*, int size);
-		OBJECT *(*get_reference)(OBJECT *, char*);
-		char *(*get_unit)(OBJECT *, char *);
-		void *(*get_addr)(OBJECT *, char *);
-		int (*set_value_by_type)(PROPERTYTYPE,void *data,char *);
-		bool (*compare_basic)(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void* x, void* a, void* b, char *part);
-		PROPERTYCOMPAREOP (*get_compare_op)(PROPERTYTYPE ptype, char *opstr);
-		double (*get_part)(OBJECT*,PROPERTY*,char*);
-		PROPERTYSPEC *(*get_spec)(PROPERTYTYPE ptype);
-	} properties;
-	struct {
-		struct s_findlist *(*objects)(struct s_findlist *,...);
-		OBJECT *(*next)(struct s_findlist *,OBJECT *obj);
-		struct s_findlist *(*copy)(struct s_findlist *);
-		void (*add)(struct s_findlist*, OBJECT*);
-		void (*del)(struct s_findlist*, OBJECT*);
-		void (*clear)(struct s_findlist*);
-	} find;
-	PROPERTY *(*find_property)(CLASS *, PROPERTYNAME);
-	void *(*malloc)(size_t);
-	void (*free)(void*);
-	struct {
-		struct s_aggregate *(*create)(char *aggregator, char *group_expression);
-		double (*refresh)(struct s_aggregate *aggregate);
-	} aggregate;
-	struct {
-		void *(*getvar)(MODULE *module, char *varname);
-		MODULE *(*getfirst)(void);
-		int (*depends)(char *name, unsigned char major, unsigned char minor, unsigned short build);
-		const char *(*find_transform_function)(TRANSFORMFUNCTION function);
-	} module;
-	struct {
-		double (*uniform)(unsigned int *rng, double a, double b);
-		double (*normal)(unsigned int *rng, double m, double s);
-		double (*bernoulli)(unsigned int *rng, double p);
-		double (*pareto)(unsigned int *rng, double m, double a);
-		double (*lognormal)(unsigned int *rng, double m, double s);
-		double (*sampled)(unsigned int *rng, unsigned int n, double *x);
-		double (*exponential)(unsigned int *rng, double l);
-		RANDOMTYPE (*type)(char *name);
-		double (*value)(RANDOMTYPE type, ...);
-		double (*pseudo)(RANDOMTYPE type, unsigned int *state, ...);
-		double (*triangle)(unsigned int *rng, double a, double b);
-		double (*beta)(unsigned int *rng, double a, double b);
-		double (*gamma)(unsigned int *rng, double a);
-		double (*weibull)(unsigned int *rng, double a, double b);
-		double (*rayleigh)(unsigned int *rng, double a);
-	} random;
-	int (*object_isa)(OBJECT *obj, char *type);
-	DELEGATEDTYPE* (*register_type)(CLASS *oclass, char *type,int (*from_string)(void*,char*),int (*to_string)(void*,char*,int));
-	int (*define_type)(CLASS*,DELEGATEDTYPE*,...);
-	struct {
-		TIMESTAMP (*mkdatetime)(DATETIME *dt);
-		int (*strdatetime)(DATETIME *t, char *buffer, int size);
-		double (*timestamp_to_days)(TIMESTAMP t);
-		double (*timestamp_to_hours)(TIMESTAMP t);
-		double (*timestamp_to_minutes)(TIMESTAMP t);
-		double (*timestamp_to_seconds)(TIMESTAMP t);
-		int (*local_datetime)(TIMESTAMP ts, DATETIME *dt);
-		int (*local_datetime_delta)(double ts, DATETIME *dt);
-		TIMESTAMP (*convert_to_timestamp)(char *value);
-		TIMESTAMP (*convert_to_timestamp_delta)(const char *value, unsigned int *nanoseconds, double *dbl_time_value);
-		int (*convert_from_timestamp)(TIMESTAMP ts, char *buffer, int size);
-		int (*convert_from_deltatime_timestamp)(double ts_v, char *buffer, int size);
-	} time;
-	int (*unit_convert)(char *from, char *to, double *value);
-	int (*unit_convert_ex)(UNIT *pFrom, UNIT *pTo, double *pValue);
-	UNIT *(*unit_find)(char *unit_name);
-	struct {
-		EXCEPTIONHANDLER *(*create_exception_handler)();
-		void (*delete_exception_handler)(EXCEPTIONHANDLER *ptr);
-		void (*throw_exception)(char *msg, ...);
-		char *(*exception_msg)(void);
-	} exception;
-	struct {
-		GLOBALVAR *(*create)(char *name, ...);
-		STATUS (*setvar)(char *def,...);
-		char *(*getvar)(char *name, char *buffer, int size);
-		GLOBALVAR *(*find)(char *name);
-	} global;
-	struct {
-		void (*read)(unsigned int *);
-		void (*write)(unsigned int *);
-	} lock, unlock;
-	struct {
-		char *(*find_file)(char *name, char *path, int mode);
-	} file;
-	struct s_objvar_struct {
-		bool *(*bool_var)(OBJECT *obj, PROPERTY *prop);
-		complex *(*complex_var)(OBJECT *obj, PROPERTY *prop);
-		enumeration *(*enum_var)(OBJECT *obj, PROPERTY *prop);
-		set *(*set_var)(OBJECT *obj, PROPERTY *prop);
-		int16 *(*int16_var)(OBJECT *obj, PROPERTY *prop);
-		int32 *(*int32_var)(OBJECT *obj, PROPERTY *prop);
-		int64 *(*int64_var)(OBJECT *obj, PROPERTY *prop);
-		double *(*double_var)(OBJECT *obj, PROPERTY *prop);
-		char *(*string_var)(OBJECT *obj, PROPERTY *prop);
-		OBJECT *(*object_var)(OBJECT *obj, PROPERTY *prop);
-	} objvar;
-	struct s_objvar_name_struct {
-		bool *(*bool_var)(OBJECT *obj, char *name);
-		complex *(*complex_var)(OBJECT *obj, char *name);
-		enumeration *(*enum_var)(OBJECT *obj, char *name);
-		set *(*set_var)(OBJECT *obj, char *name);
-		int16 *(*int16_var)(OBJECT *obj, char *name);
-		int32 *(*int32_var)(OBJECT *obj, char *name);
-		int64 *(*int64_var)(OBJECT *obj, char *name);
-		double *(*double_var)(OBJECT *obj, char *name);
-		char *(*string_var)(OBJECT *obj, char *name);
-		OBJECT *(*object_var)(OBJECT *obj, char *name);
-	} objvarname;
-	struct {
-		int (*string_to_property)(PROPERTY *prop, void *addr, char *value);
-		int (*property_to_string)(PROPERTY *prop, void *addr, char *value, int size);
-	} convert;
-	MODULE *(*module_find)(char *name);
-	OBJECT *(*get_object)(char *name);
-	OBJECT *(*object_find_by_id)(OBJECTNUM);
-	int (*name_object)(OBJECT *obj, char *buffer, int len);
-	int (*get_oflags)(KEYWORD **extflags);
-	unsigned int (*object_count)(void);
-	struct {
-		SCHEDULE *(*create)(char *name, char *definition);
-		SCHEDULEINDEX (*index)(SCHEDULE *sch, TIMESTAMP ts);
-		double (*value)(SCHEDULE *sch, SCHEDULEINDEX index);
-		int32 (*dtnext)(SCHEDULE *sch, SCHEDULEINDEX index);
-		SCHEDULE *(*find)(char *name);
-		SCHEDULE *(*getfirst)(void);
-	} schedule;
-	struct {
-		int (*create)(loadshape *s);
-		int (*init)(loadshape *s);
-	} loadshape;
-	struct {
-		int (*create)(struct s_enduse *e);
-		TIMESTAMP (*sync)(enduse *e, PASSCONFIG pass, TIMESTAMP t0, TIMESTAMP t1);
-	} enduse;
-	struct {
-		double (*linear)(double t, double x0, double y0, double x1, double y1);
-		double (*quadratic)(double t, double x0, double y0, double x1, double y1, double x2, double y2);
-	} interpolate;
-	struct {
-		FORECAST *(*create)(OBJECT *obj, char *specs);
-		FORECAST *(*find)(OBJECT *obj, char *name);
-		double (*read)(FORECAST *fc, TIMESTAMP *ts);
-		void (*save)(FORECAST *fc, TIMESTAMP *ts, int32 tstep, int n_values, double *data);
-	} forecast;
-	struct {
-		void *(*readobj)(void *local, OBJECT *obj, PROPERTY *prop);
-		void (*writeobj)(void *local, OBJECT *obj, PROPERTY *prop);
-		void *(*readvar)(void *local, GLOBALVAR *var);
-		void (*writevar)(void *local, GLOBALVAR *var);
-	} remote;
-	struct {
-		struct s_objlist *(*create)(CLASS *oclass, PROPERTY *match_property, char *match_part, char *match_op, void *match_value1, void *match_value2);
-		struct s_objlist *(*search)(char *group);
-		void (*destroy)(struct s_objlist *list);
-		size_t (*add)(struct s_objlist *list, PROPERTY *match_property, char *match_part, char *match_op, void *match_value1, void *match_value2);
-		size_t (*del)(struct s_objlist *list, PROPERTY *match_property, char *match_part, char *match_op, void *match_value1, void *match_value2);
-		size_t (*size)(struct s_objlist *list);
-		struct s_object_list *(*get)(struct s_objlist *list,size_t n);
-		int (*apply)(struct s_objlist *list, void *arg, int (*function)(struct s_object_list *,void *,int pos));
-	} objlist;
-	struct {
-		struct {
-			int (*to_string)(double v, char *buffer, size_t size);
-			double (*from_string)(char *buffer);
-		} latitude, longitude;
-	} geography;
-	struct {
-		void (*read)(char *url, int maxlen);
-		void (*free)(void *result);
-	} http;
-	struct {
-		TRANSFORM *(*getnext)(TRANSFORM*);
-		int (*add_linear)(TRANSFORMSOURCE,double*,void*,double,double,OBJECT*,PROPERTY*,SCHEDULE*);
-		int (*add_external)(OBJECT*,PROPERTY*,const char*,OBJECT*,PROPERTY*);
-		int64 (*apply)(TIMESTAMP,TRANSFORM*,double*);
-	} transform;
-	struct {
-		randomvar *(*getnext)(randomvar*);
-		size_t (*getspec)(char *, size_t, const randomvar *);
-	} randomvar;
-	struct {
-		unsigned int (*major)(void);
-		unsigned int (*minor)(void);
-		unsigned int (*patch)(void);
-		unsigned int (*build)(void);
-		const char * (*branch)(void);
-	} version;
-	long unsigned int magic; /* used to check structure alignment */
+typedef class s_callbacks {
+public:
+    s_callbacks() throw();
+
+    TIMESTAMP *global_clock;
+    double *global_delta_curr_clock;
+    TIMESTAMP *global_stoptime;
+    EXITCODE *global_exit_code;
+    int (*output_verbose)(const char *format, ...);
+    int (*output_message)(const char *format, ...);
+    int (*output_warning)(const char *format, ...);
+    int (*output_error)(const char *format, ...);
+    int (*output_fatal)(const char *format, ...);
+    int (*output_debug)(const char *format, ...);
+    int (*output_test)(const char *format, ...);
+    CLASS *(*register_class)(MODULE *,const CLASSNAME,unsigned int,PASSCONFIG);
+    struct {
+        OBJECT *(*single)(CLASS*);
+        OBJECT *(*array)(CLASS*,unsigned int);
+        OBJECT *(*foreign)(OBJECT *);
+    } create;
+    int (*define_map)(CLASS*,...);
+    int (*loadmethod)(CLASS*,const char*,int (*call)(void*,char*));
+    CLASS *(*class_getfirst)(void);
+    CLASS *(*class_getname)(const char*);
+    PROPERTY *(*class_add_extended_property)(CLASS *,char *,PROPERTYTYPE,char *);
+    struct {
+        FUNCTION *(*define)(CLASS*,const FUNCTIONNAME,FUNCTIONADDR);
+        FUNCTIONADDR (*get)(char*,const char*);
+    } function;
+    int (*define_enumeration_member)(CLASS*,const char*,const char*,enumeration);
+    int (*define_set_member)(CLASS*,const char*,const char*,unsigned int64);
+    struct {
+        OBJECT *(*get_first)(void);
+        int (*set_dependent)(OBJECT*,OBJECT*);
+        int (*set_parent)(OBJECT*,OBJECT*);
+        int (*set_rank)(OBJECT*, OBJECTRANK);
+    } object;
+    struct {
+        PROPERTY *(*get_property)(OBJECT*,const PROPERTYNAME,PROPERTYSTRUCT*);
+        int (*set_value_by_addr)(OBJECT *, void*, char*,PROPERTY*);
+        int (*get_value_by_addr)(OBJECT *, void*, char*, int size,PROPERTY*);
+        int (*set_value_by_name)(OBJECT *, char*, char*);
+        int (*get_value_by_name)(OBJECT *, const char*, char*, int size);
+        OBJECT *(*get_reference)(OBJECT *, char*);
+        char *(*get_unit)(OBJECT *, const char *);
+        void *(*get_addr)(OBJECT *, const char *);
+        int (*set_value_by_type)(PROPERTYTYPE,void *data,char *);
+        bool (*compare_basic)(PROPERTYTYPE ptype, PROPERTYCOMPAREOP op, void* x, void* a, void* b, char *part);
+        PROPERTYCOMPAREOP (*get_compare_op)(PROPERTYTYPE ptype, char *opstr);
+        double (*get_part)(OBJECT*,PROPERTY*,char*);
+        PROPERTYSPEC *(*get_spec)(PROPERTYTYPE);
+    } properties;
+    struct {
+        struct s_findlist *(*objects)(struct s_findlist *,...);
+        OBJECT *(*next)(struct s_findlist *,OBJECT *obj);
+        struct s_findlist *(*copy)(struct s_findlist *);
+        void (*add)(struct s_findlist*, OBJECT*);
+        void (*del)(struct s_findlist*, OBJECT*);
+        void (*clear)(struct s_findlist*);
+    } find;
+    PROPERTY *(*find_property)(CLASS *, const PROPERTYNAME);
+    void *(*malloc)(size_t);
+    void (*free)(void*);
+    struct {
+        struct s_aggregate *(*create)(char *aggregator, char *group_expression);
+        double (*refresh)(struct s_aggregate *aggregate);
+    } aggregate;
+    struct {
+        double *(*getvar)(MODULE *module, const char *varname);
+        MODULE *(*getfirst)(void);
+        int (*depends)(const char *name, unsigned char major, unsigned char minor, unsigned short build);
+        const char *(*find_transform_function)(TRANSFORMFUNCTION function);
+    } module;
+    struct {
+        double (*uniform)(unsigned int *rng, double a, double b);
+        double (*normal)(unsigned int *rng, double m, double s);
+        double (*bernoulli)(unsigned int *rng, double p);
+        double (*pareto)(unsigned int *rng, double m, double a);
+        double (*lognormal)(unsigned int *rng,double m, double s);
+        double (*sampled)(unsigned int *rng,unsigned int n, double *x);
+        double (*exponential)(unsigned int *rng,double l);
+        RANDOMTYPE (*type)(char *name);
+        double (*value)(RANDOMTYPE type, ...);
+        double (*pseudo)(RANDOMTYPE type, unsigned int *state, ...);
+        double (*triangle)(unsigned int *rng,double a, double b);
+        double (*beta)(unsigned int *rng,double a, double b);
+        double (*gamma)(unsigned int *rng,double a, double b);
+        double (*weibull)(unsigned int *rng,double a, double b);
+        double (*rayleigh)(unsigned int *rng,double a);
+    } random;
+    int (*object_isa)(OBJECT *obj, const char *type);
+    DELEGATEDTYPE* (*register_type)(CLASS *oclass, char *type,int (*from_string)(void*,char*),int (*to_string)(void*,char*,int));
+    int (*define_type)(CLASS*,DELEGATEDTYPE*,...);
+    struct {
+        TIMESTAMP (*mkdatetime)(DATETIME *dt);
+        int (*strdatetime)(DATETIME *t, char *buffer, int size);
+        double (*timestamp_to_days)(TIMESTAMP t);
+        double (*timestamp_to_hours)(TIMESTAMP t);
+        double (*timestamp_to_minutes)(TIMESTAMP t);
+        double (*timestamp_to_seconds)(TIMESTAMP t);
+        int (*local_datetime)(TIMESTAMP ts, DATETIME *dt);
+        int (*local_datetime_delta)(double ts, DATETIME *dt);
+        TIMESTAMP (*convert_to_timestamp)(const char *value);
+        TIMESTAMP (*convert_to_timestamp_delta)(const char *value, unsigned int *microseconds, double *dbl_time_value);
+        int (*convert_from_timestamp)(TIMESTAMP ts, char *buffer, int size);
+        int (*convert_from_deltatime_timestamp)(double ts_v, char *buffer, int size);
+    } time;
+    int (*unit_convert)(const char *from, const char *to, double *value);
+    int (*unit_convert_ex)(UNIT *pFrom, UNIT *pTo, double *pValue);
+    UNIT *(*unit_find)(const char *unit_name);
+    struct {
+        EXCEPTIONHANDLER *(*create_exception_handler)();
+        void (*delete_exception_handler)(EXCEPTIONHANDLER *ptr);
+        void (*throw_exception)(const char *msg, ...);
+        char *(*exception_msg)(void);
+    } exception;
+    struct {
+        GLOBALVAR *(*create)(const char *name, ...);
+        STATUS (*setvar)(const char *def,...);
+        char *(*getvar)(const char *name, char *buffer, int size);
+        GLOBALVAR *(*find)(const char *name);
+    } global;
+    struct {
+        void (*read)(unsigned int *);
+        void (*write)(unsigned int *);
+    } lock, unlock;
+    struct {
+        char *(*find_file)(const char *name, char *path, int mode, char *buffer, int len);
+    } file;
+    struct s_objvar_struct {
+        bool *(*bool_var)(OBJECT *obj, PROPERTY *prop);
+        gld::complex *(*complex_var)(OBJECT *obj, PROPERTY *prop);
+        enumeration *(*enum_var)(OBJECT *obj, PROPERTY *prop);
+        set *(*set_var)(OBJECT *obj, PROPERTY *prop);
+        int16 *(*int16_var)(OBJECT *obj, PROPERTY *prop);
+        int32 *(*int32_var)(OBJECT *obj, PROPERTY *prop);
+        int64 *(*int64_var)(OBJECT *obj, PROPERTY *prop);
+        double *(*double_var)(OBJECT *obj, PROPERTY *prop);
+        char *(*string_var)(OBJECT *obj, PROPERTY *prop);
+        OBJECT **(*object_var)(OBJECT *obj, PROPERTY *prop);
+    } objvar;
+    struct s_objvar_name_struct {
+        bool *(*bool_var)(OBJECT *obj, const char *name);
+        gld::complex *(*complex_var)(OBJECT *obj, const char *name);
+        enumeration *(*enum_var)(OBJECT *obj, const char *name);
+        set *(*set_var)(OBJECT *obj, const char *name);
+        int16 *(*int16_var)(OBJECT *obj, const char *name);
+        int32 *(*int32_var)(OBJECT *obj, const char *name);
+        int64 *(*int64_var)(OBJECT *obj, const char *name);
+        double *(*double_var)(OBJECT *obj, const char *name);
+        char *(*string_var)(OBJECT *obj, const char *name);
+        OBJECT **(*object_var)(OBJECT *obj, const char *name);
+    } objvarname;
+    struct {
+        int (*string_to_property)(PROPERTY *prop, void *addr, char *value);
+        int (*property_to_string)(PROPERTY *prop, void *addr, char *value, int size);
+    } convert;
+    MODULE *(*module_find)(const char *name);
+    OBJECT *(*get_object)(const char *name);
+    OBJECT *(*object_find_by_id)(OBJECTNUM);
+    int (*name_object)(OBJECT *obj, char *buffer, int len);
+    int (*get_oflags)(KEYWORD **extflags);
+    unsigned int (*object_count)(void);
+    struct {
+        SCHEDULE *(*create)(const char *name, const char *definition);
+        SCHEDULEINDEX (*index)(SCHEDULE *sch, TIMESTAMP ts);
+        double (*value)(SCHEDULE *sch, SCHEDULEINDEX index);
+        int32 (*dtnext)(SCHEDULE *sch, SCHEDULEINDEX index);
+        SCHEDULE *(*find)(const char *name);
+        SCHEDULE *(*getfirst)(void);
+    } schedule;
+    struct {
+        int (*create)(struct s_loadshape *s);
+        int (*init)(struct s_loadshape *s);
+    } loadshape;
+    struct {
+        int (*create)(struct s_enduse *e);
+        TIMESTAMP (*sync)(struct s_enduse *e, PASSCONFIG pass, TIMESTAMP t1);
+    } enduse;
+    struct {
+        double (*linear)(double t, double x0, double y0, double x1, double y1);
+        double (*quadratic)(double t, double x0, double y0, double x1, double y1, double x2, double y2);
+    } interpolate;
+    struct {
+        FORECAST *(*create)(OBJECT *obj, char *specs); /**< create a forecast using the specifications and append it to the object's forecast block */
+        FORECAST *(*find)(OBJECT *obj, char *name); /**< find the forecast for the named property, if any */
+        double (*read)(FORECAST *fc, TIMESTAMP ts); /**< read the forecast value for the time ts */
+        void (*save)(FORECAST *fc, TIMESTAMP ts, int32 tstep, int n_values, double *data);
+    } forecast;
+    struct {
+        void *(*readobj)(void *local, OBJECT *obj, PROPERTY *prop);
+        void (*writeobj)(void *local, OBJECT *obj, PROPERTY *prop);
+        void *(*readvar)(void *local, GLOBALVAR *var);
+        void (*writevar)(void *local, GLOBALVAR *var);
+    } remote;
+    struct {
+        struct s_objlist *(*create)(CLASS *oclass, PROPERTY *match_property, char *match_part, char *match_op, void *match_value1, void *match_value2);
+        struct s_objlist *(*search)(char *group);
+        void (*destroy)(struct s_objlist *list);
+        size_t (*add)(struct s_objlist *list, PROPERTY *match_property, char *match_part, char *match_op, void *match_value1, void *match_value2);
+        size_t (*del)(struct s_objlist *list, PROPERTY *match_property, char *match_part, char *match_op, void *match_value1, void *match_value2);
+        size_t (*size)(struct s_objlist *list);
+        struct s_object_list *(*get)(struct s_objlist *list,size_t n);
+        int (*apply)(struct s_objlist *list, void *arg, int (*function)(struct s_object_list *,void *,int pos));
+    } objlist;
+    struct {
+        struct {
+            int (*to_string)(double v, char *buffer, size_t size);
+            double (*from_string)(char *buffer);
+        } latitude, longitude;
+    } geography;
+    struct {
+        void* (*read)(const char *url, int maxlen);
+        void (*free)(void *result);
+    } http;
+    struct {
+        TRANSFORM *(*getnext)(TRANSFORM*);
+        int (*add_linear)(TRANSFORMSOURCE,double*,void*,double,double,OBJECT*,PROPERTY*,SCHEDULE*);
+        int (*add_external)(OBJECT*,PROPERTY*,const char*,OBJECT*,PROPERTY*);
+        int64 (*apply)(TIMESTAMP,TRANSFORM*,double*);
+    } transform;
+    struct {
+        randomvar_struct *(*getnext)(randomvar_struct*);
+        size_t (*getspec)(char *, size_t, const randomvar_struct *);
+    } randomvar;
+    struct {
+        unsigned int (*major)(void);
+        unsigned int (*minor)(void);
+        unsigned int (*patch)(void);
+        unsigned int (*build)(void);
+        const char * (*branch)(void);
+    } version;
+    long unsigned int magic; /* used to check structure alignment */
 } CALLBACKS; /**< core callback function table */
 
 extern CALLBACKS *callback;
@@ -1334,6 +1347,7 @@ typedef FUNCTIONADDR function;
 #define gl_output (*callback->output_message) ///< Send a printf-style message to the output stream
 #define gl_warning (*callback->output_warning) ///< Send a printf-style message to the warning stream
 #define gl_error (*callback->output_error) ///< Send a printf-style message to the error stream
+#define gl_fatal (*callback->output_fatal) ///< Send a printf-style message to the error stream
 #define gl_debug (*callback->output_debug) ///< Send a printf-style message to the debug stream
 #define gl_testmsg (*callback->output_test) ///< Send a printf-style message to the testmsg stream
 
@@ -1454,7 +1468,7 @@ inline double gl_random_bernoulli(double p) { return callback->random.bernoulli(
 inline double gl_random_sampled(unsigned int n, double *x) { return callback->random.sampled(NULL,n,x);};
 inline double gl_random_triangle(double a, double b) { return callback->random.triangle(NULL,a,b);};
 inline double gl_random_beta(double a, double b) { return callback->random.beta(NULL,a,b);};
-inline double gl_random_gamma(double a) { return callback->random.gamma(NULL,a);};
+inline double gl_random_gamma(double a, double b) { return callback->random.gamma(NULL,a,b);};
 inline double gl_random_weibull(double a, double b) { return callback->random.weibull(NULL,a,b);};
 inline double gl_random_rayleigh(double a) { return callback->random.rayleigh(NULL,a);};
 
@@ -1479,7 +1493,7 @@ inline TIMESTAMP gl_mkdatetime(short year, short month, short day, short hour=0,
 inline int gl_unit_convert(char *from, char *to, double &value) { return callback->unit_convert(from, to, &value);};
 inline int gl_unit_convert(UNIT *from, UNIT *to, double &value) { return callback->unit_convert_ex(from, to, &value);};
 inline UNIT *gl_unit_find(char *name) { return callback->unit_find(name);};
-inline char *gl_find_file(char *name, char *path, int mode) { return callback->file.find_file(name,path,mode); };
+inline char *gl_find_file(const char *name, char *path, int mode, char* buffer, int len) { return callback->file.find_file(name,path,mode,buffer,len); };
 
 #define gl_printtime (*callback->time.convert_from_timestamp)
 #define gl_printtimedelta (*callback->time.convert_from_deltatime_timestamp)
@@ -1542,7 +1556,7 @@ inline int32 gl_schedule_dtnext(SCHEDULE *sch, SCHEDULEINDEX index)
 
 inline TIMESTAMP gl_enduse_sync(enduse *e, TIMESTAMP t1)
 {
-	return callback->enduse.sync(e,PC_BOTTOMUP,*(callback->global_clock),t1);
+	return callback->enduse.sync(e,PC_BOTTOMUP,t1); //*(callback->global_clock));
 }
 
 // DOUBLE ARRAY IMPLEMENTATION
@@ -1632,20 +1646,24 @@ public:
 		name = a.name;
 		(*refs)++;
 	}
-	~double_array(void)
-	{
-		if ( (*refs)-- == 0 )
-		{
-			size_t r,c;
-			for ( r=0 ; r<n ; r++ )
-				for ( c=0 ; c<m ; c++ )
-					if ( tst_flag(r,c,BYREF) )
-						free(x[r][c]); 
-				free(x[r]);
-			free(x);
-			delete refs;
-		}
-	}
+    ~double_array(void) {
+        if (x != nullptr && (*refs)-- == 0) {
+//            size_t r, c;
+            if (n > 0)
+                for (auto r = 0; r < n; r++) {
+                    if (x[r] != nullptr) {
+                        if (m > 0)
+                            for (auto c = 0; c < m; c++) {
+                                if (x[r][c] != nullptr && tst_flag(r, c, BYREF))
+                                    free(x[r][c]);
+                            }
+                        free(x[r]);
+                    }
+                }
+            free(x);
+            delete refs;
+        }
+    }
 public:
 	void set_name(const char *v) { name = v; }; 
 	inline const char *get_name(void) const { return name; };

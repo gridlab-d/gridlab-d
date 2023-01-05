@@ -9,6 +9,7 @@
 
 #include <stdarg.h>
 #include <stdlib.h>
+
 #include "object.h"
 #include "match.h"
 #include "convert.h"
@@ -79,7 +80,7 @@ int find_makearray(FINDLIST *list, struct s_object_list ***objs);
 FINDLIST *find_runpgm(FINDLIST *list, FINDPGM *pgm);
 FINDPGM *find_mkpgm(char *search);
 PGMCONSTFLAGS find_pgmconstants(FINDPGM *pgm);
-char *find_file(char *name, char *path, int mode, char *buffer, int len);
+char *find_file(const char *name, const char *path, int mode, char *buffer, int len);
 FINDPGM *find_make_invariant(FINDPGM *pgm, int mode);
 
 #ifdef __cplusplus

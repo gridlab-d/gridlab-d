@@ -27,9 +27,9 @@ protected:
 	int maxretry;
 public:
 	// message handlers for child class
-	virtual void error(char *fmt, ...);
-	virtual void warning(char *fmt, ...);
-	virtual void info(char *fmt, ...);
+	virtual void error(const char *fmt, ...);
+	virtual void warning(const char *fmt, ...);
+	virtual void info(const char *fmt, ...);
 	virtual void debug(int level, const char *fmt, ...);
 	virtual void exception(const char *fmt, ...);
 
@@ -41,7 +41,7 @@ public:
 	virtual int option(char *command)=0; ///< set a transport option
 	virtual size_t send(const char *msg, const size_t len)=0; // send message
 	virtual size_t recv(char *buffer, const size_t maxlen)=0; // recv message
-	virtual void set_message_format(char *s)=0;
+	virtual void set_message_format(const char *s)=0;
 	virtual void set_message_version(double x)=0;
 
 	// utilities
@@ -52,8 +52,8 @@ public:
 	bool message_open();
 	bool message_close();
 	bool message_continue();
-	int message_append(char *fmt,...);
-	inline void set_delimiter(char *d) { delimiter=d;};
+	int message_append(const char *fmt,...);
+	inline void set_delimiter(const char *d) { delimiter=const_cast<char*>(d);};
 	inline void reset_fieldcount(void) { field_count=0;};
 
 	// buffer access

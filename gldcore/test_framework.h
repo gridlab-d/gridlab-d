@@ -11,6 +11,7 @@
 #include <cppunit/BriefTestProgressListener.h>
 #include <cppunit/extensions/TestFactoryRegistry.h>
 #include <cppunit/TextOutputter.h>
+
 #include "gridlabd.h"
 #include "test_callbacks.h"
 

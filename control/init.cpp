@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <math.h>
+
 #include "gridlabd.h"
 
 #include "ss_model.h"

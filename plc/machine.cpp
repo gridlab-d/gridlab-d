@@ -95,7 +95,7 @@ char path[1024] = "/usr/bin";
 char tmpdir[1024] = "/tmp";
 #endif
 
-int exec(char *format,...)
+int exec_cmd(char *format,...)
 {
 	char cmd[1024];
 	va_list ptr;
@@ -208,7 +208,7 @@ int machine::compile(char *source)
 	/* compile source */
 	gl_verbose("compiling %s from %s using incpath '%s'...", ofile, cfile,incpath);
 	unlink(ofile);
-	if (exec("%s -I\"%s\" %s -c \"%s\" -o \"%s\"",
+	if (exec_cmd("%s -I\"%s\" %s -c \"%s\" -o \"%s\"",
                  getenv("CC")?getenv("CC"):"gcc",
                  incpath,
                  getenv("CFLAGS")?getenv("CFLAGS"):"",
@@ -218,7 +218,7 @@ int machine::compile(char *source)
 	/* link */
 	gl_verbose("converting %s to dynamic link library...", ofile);
 	unlink(lfile);
-	if (exec("%s %s -shared -o \"%s\" -Wl,\"%s\"",
+	if (exec_cmd("%s %s -shared -o \"%s\" -Wl,\"%s\"",
                  getenv("CC")?getenv("CC"):"gcc",
                  getenv("LDFLAGS")?getenv("LDFLAGS"):"", 
                  lfile,ofile)!=0)

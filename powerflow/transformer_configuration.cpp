@@ -21,10 +21,10 @@
  @{
 **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
 using namespace std;
 
@@ -33,15 +33,15 @@ using namespace std;
 //////////////////////////////////////////////////////////////////////////
 // transformer_configuration CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* transformer_configuration::oclass = NULL;
-CLASS* transformer_configuration::pclass = NULL;
+CLASS* transformer_configuration::oclass = nullptr;
+CLASS* transformer_configuration::pclass = nullptr;
 
 transformer_configuration::transformer_configuration(MODULE *mod) : powerflow_library(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		oclass = gl_register_class(mod,"transformer_configuration",sizeof(transformer_configuration),0);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class transformer_configuration";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -135,8 +135,8 @@ int transformer_configuration::create(void)
 	phaseB_kVA_rating = 0.0;
 	phaseC_kVA_rating = 0.0;
 	kVA_rating = 0;
-	impedance = impedance1 = impedance2 = complex(0.0,0.0);	//Lossless transformer by default
-	shunt_impedance = complex(999999999,999999999);			//Very large number for infinity to approximate lossless
+	impedance = impedance1 = impedance2 = gld::complex(0.0,0.0);	//Lossless transformer by default
+	shunt_impedance = gld::complex(999999999,999999999);			//Very large number for infinity to approximate lossless
 	no_load_loss = full_load_loss = 0.0;
 	RX = 4.5;
 
@@ -251,8 +251,8 @@ int transformer_configuration::init(OBJECT *parent)
 				so does the X/R ratio.  For small residential transformers (<500 kVA), the values range from about 2-5 as good
 				estimates. For a good X/R reference, recommend GE's GET-3550F document, Appendix Part II.
 				*/
-			impedance = complex(full_load_loss,RX*full_load_loss);
-			shunt_impedance = complex(1/no_load_loss,RX/no_load_loss);
+			impedance = gld::complex(full_load_loss,RX*full_load_loss);
+			shunt_impedance = gld::complex(1/no_load_loss,RX/no_load_loss);
 		}
 		if ((impedance1.Re() == 0.0 && impedance1.Im() == 0.0) && (impedance2.Re() != 0.0 && impedance2.Im() != 0.0))
 		{
@@ -316,7 +316,7 @@ EXPORT int create_transformer_configuration(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(transformer_configuration::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			transformer_configuration *my = OBJECTDATA(*obj,transformer_configuration);
 			gl_set_parent(*obj,parent);

@@ -22,10 +22,10 @@
 	
  @{
  **/
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "powerflow.h"
 #include "node.h"
@@ -35,7 +35,7 @@ extern "C" {
 #include "output.h"
 }
 
-void print_matrix(complex mat[3][3])
+void print_matrix(gld::complex mat[3][3])
 {
 	for (int i = 0; i < 3; i++) {
 		gl_testmsg("  %10.6f%+0.6f%c  %10.6f%+0.6f%c  %10.6f%+0.6f%c",
@@ -48,7 +48,7 @@ void print_matrix(complex mat[3][3])
 
 EXPORT int kmldump(int (*stream)(const char*,...), OBJECT *obj)
 {
-	if (obj==NULL) /* dump document styles */
+	if (obj==nullptr) /* dump document styles */
 	{
 		node::kmlinit(stream);
 		link_object::kmlinit(stream);

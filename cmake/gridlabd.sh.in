@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+# @GENFILE_WARNING@
+
+export CC="@CMAKE_C_COMPILER_SANITIZED@"
+export CXX="@CMAKE_CXX_COMPILER_SANITIZED@"
+
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+
+bindir="${SCRIPT_DIR}"
+pkglibdir="${SCRIPT_DIR}/../lib"
+HAS_MINGW="@FOUND_WINDOWS@"
+IS_MAC="@FOUND_MACOS@"
+
+if test "x$IS_MAC" = "xyes"; then
+  export DYLD_LIBRARY_PATH=$pkglibdir
+  export SDKROOT="$(xcrun --show-sdk-path)"
+fi
+
+#if test "x$GLPATH" = x; then
+#  export GLPATH="$pkglibdir:$pkgdatadir"
+#else
+#  export GLPATH="$pkglibdir:$pkgdatadir:$GLPATH"
+#fi
+#
+#if test "x$TERM" = "xcygwin"; then
+#  export CXXFLAGS="-I${pkgdatadir} -fPIC $CXXFLAGS"
+#else
+#  export CXXFLAGS="-I$pkgdatadir -fPIC $CXXFLAGS"
+#fi
+#
+#if test "x@FOUND_WINDOWS@" != "xyes"; then # Generated test for WIN32
+#  export CXXFLAGS="$CXXFLAGS -fPIC"
+#fi
+
+export CXXFLAGS="@GLD_COMPILE_OPTIONS@"
+
+if test "x$GRIDLABD_DEBUG" = "x"; then
+  if test "x$HAS_MINGW" = "xyes"; then
+    "$bindir/gridlabd.exe" "$@"
+  else
+    "$bindir/gridlabd" "$@"
+  fi
+else
+  if test "x$HAS_MINGW" = "xyes"; then
+    "$GRIDLABD_DEBUG" "$bindir/gridlabd.exe"
+  else
+    "$GRIDLABD_DEBUG" "$bindir/gridlabd"
+  fi
+fi

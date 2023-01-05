@@ -7,6 +7,7 @@
 #define _FUSE_TEST_H
 
 #include <stdlib.h>
+
 #include "fuse.h"
 
 #ifndef _NO_CPPUNIT

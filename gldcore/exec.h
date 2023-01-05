@@ -11,8 +11,12 @@
 #define _EXEC_H
 
 #include <setjmp.h>
+#include <map>
+#include <thread>
+
 #include "globals.h"
 #include "index.h"
+#include "cpp_threadpool.h"
 
 struct sync_data {
 	TIMESTAMP step_to; /**< time to advance to */
@@ -25,12 +29,24 @@ struct thread_data {
 	struct sync_data *data; /**< pointer to the sync state structure */
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+class threadpool_thread_data {
+	int count;
+	struct sync_data *data;
+//	std::vector<struct sync_data> data;
+	std::map<std::thread::id, int> thread_map;
+public:
+	inline int get_count() {return count;}
+	threadpool_thread_data(int size, cpp_threadpool* threadpool);
+	struct sync_data* get_thread_data(std::thread::id thread_id);
+	struct sync_data* get_data(int index);
+};
+
+//#ifdef __cplusplus
+//extern "C" {
+//#endif
 int exec_init(void);
 STATUS exec_start(void);
-char *simtime(void);
+const char *simtime(void);
 STATUS t_setup_ranks(void);
 INDEX **exec_getranks(void);
 void exec_sleep(unsigned int usec);
@@ -68,11 +84,9 @@ EXITCODE exec_run_initscripts(void);
 EXITCODE exec_run_syncscripts(void);
 EXITCODE exec_run_termscripts(void);
 
-int64 exec_clock(void);
-
-#ifdef __cplusplus
-}
-#endif
+//#ifdef __cplusplus
+//}
+//#endif
 
 #endif
 

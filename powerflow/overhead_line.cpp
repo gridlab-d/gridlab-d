@@ -7,26 +7,26 @@
 	@{
 **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
 using namespace std;
 
 #include "line.h"
 
-CLASS* overhead_line::oclass = NULL;
-CLASS* overhead_line::pclass = NULL;
+CLASS* overhead_line::oclass = nullptr;
+CLASS* overhead_line::pclass = nullptr;
 
 overhead_line::overhead_line(MODULE *mod) : line(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		pclass = line::oclass;
 		
 		oclass = gl_register_class(mod,"overhead_line",sizeof(overhead_line),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class overhead_line";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -35,25 +35,25 @@ overhead_line::overhead_line(MODULE *mod) : line(mod)
 			PT_INHERIT, "line",
 			NULL) < 1) GL_THROW("unable to publish overhead_line properties in %s",__FILE__);
 
-		if (gl_publish_function(oclass,	"create_fault", (FUNCTIONADDR)create_fault_ohline)==NULL)
+		if (gl_publish_function(oclass,	"create_fault", (FUNCTIONADDR)create_fault_ohline)==nullptr)
 			GL_THROW("Unable to publish fault creation function");
-		if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_ohline)==NULL)
+		if (gl_publish_function(oclass,	"fix_fault", (FUNCTIONADDR)fix_fault_ohline)==nullptr)
 			GL_THROW("Unable to publish fault restoration function");
-		if (gl_publish_function(oclass,	"clear_fault", (FUNCTIONADDR)clear_fault_ohline)==NULL)
-			GL_THROW("Unable to publish fault clearing function");
+        if (gl_publish_function(oclass,	"clear_fault", (FUNCTIONADDR)clear_fault_ohline)==nullptr)
+            GL_THROW("Unable to publish fault clearing function");
 
 		//Publish deltamode functions
-		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
+		if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==nullptr)
 			GL_THROW("Unable to publish overhead line deltamode function");
-		if (gl_publish_function(oclass,	"recalc_distribution_line", (FUNCTIONADDR)recalc_overhead_line)==NULL)
+		if (gl_publish_function(oclass,	"recalc_distribution_line", (FUNCTIONADDR)recalc_overhead_line)==nullptr)
 			GL_THROW("Unable to publish overhead line recalc function");
 
 		//Publish restoration-related function (current update)
-		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+		if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==nullptr)
 			GL_THROW("Unable to publish overhead line external power calculation function");
-		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+		if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==nullptr)
 			GL_THROW("Unable to publish overhead line external power limit calculation function");
-		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==NULL)
+		if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==nullptr)
 			GL_THROW("Unable to publish overhead line external current calculation function");
 	}
 }
@@ -67,7 +67,7 @@ int overhead_line::create(void)
 
 int overhead_line::init(OBJECT *parent)
 {
-	double *temp_rating_value = NULL;
+	double *temp_rating_value = nullptr;
 	double temp_rating_continuous = 10000.0;
 	double temp_rating_emergency = 20000.0;
 	char index;
@@ -110,7 +110,7 @@ int overhead_line::init(OBJECT *parent)
 	recalc();
 
 	//Values are populated now - populate link ratings parameter
-	if (config->phaseA_conductor != NULL || config->phaseB_conductor != NULL || config->phaseC_conductor != NULL) {
+	if (config->phaseA_conductor != nullptr || config->phaseB_conductor != nullptr || config->phaseC_conductor != nullptr) {
 		for (index=0; index<3; index++)
 		{
 			if (index==0)
@@ -127,13 +127,13 @@ int overhead_line::init(OBJECT *parent)
 			}
 
 			//See if Phase exists
-			if (temp_obj != NULL)
+			if (temp_obj != nullptr)
 			{
 				//Get continuous - summer
 				temp_rating_value = get_double(temp_obj,"rating.summer.continuous");
 
 				//Check if NULL
-				if (temp_rating_value != NULL)
+				if (temp_rating_value != nullptr)
 				{
 					//Update - if necessary
 					if (temp_rating_continuous > *temp_rating_value)
@@ -146,7 +146,7 @@ int overhead_line::init(OBJECT *parent)
 				temp_rating_value = get_double(temp_obj,"rating.winter.continuous");
 
 				//Check if NULL
-				if (temp_rating_value != NULL)
+				if (temp_rating_value != nullptr)
 				{
 					//Update - if necessary
 					if (temp_rating_continuous > *temp_rating_value)
@@ -159,7 +159,7 @@ int overhead_line::init(OBJECT *parent)
 				temp_rating_value = get_double(temp_obj,"rating.summer.emergency");
 
 				//Check if NULL
-				if (temp_rating_value != NULL)
+				if (temp_rating_value != nullptr)
 				{
 					//Update - if necessary
 					if (temp_rating_emergency > *temp_rating_value)
@@ -172,7 +172,7 @@ int overhead_line::init(OBJECT *parent)
 				temp_rating_value = get_double(temp_obj,"rating.winter.emergency");
 
 				//Check if NULL
-				if (temp_rating_value != NULL)
+				if (temp_rating_value != nullptr)
 				{
 					//Update - if necessary
 					if (temp_rating_emergency > *temp_rating_value)
@@ -190,13 +190,13 @@ int overhead_line::init(OBJECT *parent)
 	else {
 		temp_obj = configuration;
 		//See if configuration exists
-		if (temp_obj != NULL)
+		if (temp_obj != nullptr)
 		{
 			//Get continuous - summer
 			temp_rating_value = get_double(temp_obj,"rating.summer.continuous");
 
 			//Check if NULL
-			if (temp_rating_value != NULL)
+			if (temp_rating_value != nullptr)
 			{
 				//Update - if necessary
 				if (temp_rating_continuous > *temp_rating_value)
@@ -209,7 +209,7 @@ int overhead_line::init(OBJECT *parent)
 			temp_rating_value = get_double(temp_obj,"rating.winter.continuous");
 
 			//Check if NULL
-			if (temp_rating_value != NULL)
+			if (temp_rating_value != nullptr)
 			{
 				//Update - if necessary
 				if (temp_rating_continuous > *temp_rating_value)
@@ -222,7 +222,7 @@ int overhead_line::init(OBJECT *parent)
 			temp_rating_value = get_double(temp_obj,"rating.summer.emergency");
 
 			//Check if NULL
-			if (temp_rating_value != NULL)
+			if (temp_rating_value != nullptr)
 			{
 				//Update - if necessary
 				if (temp_rating_emergency > *temp_rating_value)
@@ -235,7 +235,7 @@ int overhead_line::init(OBJECT *parent)
 			temp_rating_value = get_double(temp_obj,"rating.winter.emergency");
 
 			//Check if NULL
-			if (temp_rating_value != NULL)
+			if (temp_rating_value != nullptr)
 			{
 				//Update - if necessary
 				if (temp_rating_emergency > *temp_rating_value)
@@ -255,7 +255,7 @@ int overhead_line::init(OBJECT *parent)
 void overhead_line::recalc(void)
 {
 	line_configuration *config = OBJECTDATA(configuration, line_configuration);
-	complex Zabc_mat[3][3], Yabc_mat[3][3];
+	gld::complex Zabc_mat[3][3], Yabc_mat[3][3];
 	OBJECT *obj = OBJECTHDR(this);
 
 	// Zero out Zabc_mat and Yabc_mat. Un-needed phases will be left zeroed.
@@ -311,20 +311,20 @@ void overhead_line::recalc(void)
 		// Use Kersting's equations to define the z-matrix
 		double dab, dbc, dac, dan, dbn, dcn;
 		double gmr_a, gmr_b, gmr_c, gmr_n, res_a, res_b, res_c, res_n;
-		complex z_aa, z_ab, z_ac, z_an, z_bb, z_bc, z_bn, z_cc, z_cn, z_nn;
+		gld::complex z_aa, z_ab, z_ac, z_an, z_bb, z_bc, z_bn, z_cc, z_cn, z_nn;
 		double p_aa, p_ab, p_ac, p_an, p_bb, p_bc, p_bn, p_cc, p_cn, p_nn;
 		double daap, dabp, dacp, danp, dbbp, dbcp, dbnp, dccp, dcnp, dnnp, diamA, diamB, diamC, diamN;
-		complex P_mat[3][3];
+		gld::complex P_mat[3][3];
 		bool valid_capacitance = false;	//Assume capacitance is invalid by default
 		double freq_coeff_real, freq_coeff_imag, freq_additive_term;
-		line_spacing *spacing_val = NULL;
+		line_spacing *spacing_val = nullptr;
 		double miles = length / 5280.0;
 		double cap_coeff;
-		complex cap_freq_mult;
+		gld::complex cap_freq_mult;
 		
 		//Calculate coefficients for self and mutual impedance - incorporates frequency values
 		//Per Kersting (4.39) and (4.40)
-		if (enable_frequency_dependence == true)	//See if we may be updating due to frequency changes
+		if (enable_frequency_dependence)	//See if we may be updating due to frequency changes
 		{
 			freq_coeff_real = 0.00158836*current_frequency;
 			freq_coeff_imag = 0.00202237*current_frequency;
@@ -375,26 +375,26 @@ void overhead_line::recalc(void)
 		#undef DIST
 		#undef DIAM
 
-		if (use_line_cap == true)
+		if (use_line_cap)
 		{
 			//If capacitance calculations desired, compute overall coefficient
 			cap_coeff = 1.0/(PERMITIVITTY_AIR*2.0*PI);
 
 			//Set capacitor frequency/distance/scaling factor (rad/s*S)
-			if (enable_frequency_dependence == true)	//See which frequency to use
+			if (enable_frequency_dependence)	//See which frequency to use
 			{
-				cap_freq_mult = complex(0,(2.0*PI*current_frequency*0.000001*miles));
+				cap_freq_mult = gld::complex(0,(2.0*PI*current_frequency*0.000001*miles));
 			}
 			else
 			{
-				cap_freq_mult = complex(0,(2.0*PI*nominal_frequency*0.000001*miles));
+				cap_freq_mult = gld::complex(0,(2.0*PI*nominal_frequency*0.000001*miles));
 			}
 
 			//Extract line spacing (nned for capacitance)
 			spacing_val = OBJECTDATA(config->line_spacing, line_spacing);
 
 			//Make sure it worked
-			if (spacing_val == NULL)
+			if (spacing_val == nullptr)
 			{
 				GL_THROW("Line spacing not found, capacitance calculations failed!");
 				/*  TROUBLESHOOT
@@ -411,24 +411,24 @@ void overhead_line::recalc(void)
 
 		if (has_phase(PHASE_A)) {
 			if (gmr_a > 0.0 && res_a > 0.0)
-				z_aa = complex(res_a + freq_coeff_real, freq_coeff_imag * (log(1.0 / gmr_a) + freq_additive_term));
+				z_aa = gld::complex(res_a + freq_coeff_real, freq_coeff_imag * (log(1.0 / gmr_a) + freq_additive_term));
 			else
 				z_aa = 0.0;
 			if (has_phase(PHASE_B) && dab > 0.0)
-				z_ab = complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dab) + freq_additive_term));
+				z_ab = gld::complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dab) + freq_additive_term));
 			else
 				z_ab = 0.0;
 			if (has_phase(PHASE_C) && dac > 0.0)
-				z_ac = complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dac) + freq_additive_term));
+				z_ac = gld::complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dac) + freq_additive_term));
 			else
 				z_ac = 0.0;
 			if (has_phase(PHASE_N) && dan > 0.0)
-				z_an = complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dan) + freq_additive_term));
+				z_an = gld::complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dan) + freq_additive_term));
 			else
 				z_an = 0.0;
 
 			//capacitance equations
-			if (use_line_cap == true)
+			if (use_line_cap)
 			{
 				if ((diamA > 0.0) && (spacing_val->distance_AtoE > 0.0))
 				{
@@ -519,20 +519,20 @@ void overhead_line::recalc(void)
 
 		if (has_phase(PHASE_B)) {
 			if (gmr_b > 0.0 && res_b > 0.0)
-				z_bb = complex(res_b + freq_coeff_real, freq_coeff_imag * (log(1.0 / gmr_b) + freq_additive_term));
+				z_bb = gld::complex(res_b + freq_coeff_real, freq_coeff_imag * (log(1.0 / gmr_b) + freq_additive_term));
 			else
 				z_bb = 0.0;
 			if (has_phase(PHASE_C) && dbc > 0.0)
-				z_bc = complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dbc) + freq_additive_term));
+				z_bc = gld::complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dbc) + freq_additive_term));
 			else
 				z_bc = 0.0;
 			if (has_phase(PHASE_N) && dbn > 0.0)
-				z_bn = complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dbn) + freq_additive_term));
+				z_bn = gld::complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dbn) + freq_additive_term));
 			else
 				z_bn = 0.0;
 
 			//capacitance equations
-			if (use_line_cap == true)
+			if (use_line_cap)
 			{
 				if ((diamB > 0.0) && (spacing_val->distance_BtoE > 0.0))
 				{
@@ -600,16 +600,16 @@ void overhead_line::recalc(void)
 
 		if (has_phase(PHASE_C)) {
 			if (gmr_c > 0.0 && res_c > 0.0)
-				z_cc = complex(res_c + freq_coeff_real, freq_coeff_imag * (log(1.0 / gmr_c) + freq_additive_term));
+				z_cc = gld::complex(res_c + freq_coeff_real, freq_coeff_imag * (log(1.0 / gmr_c) + freq_additive_term));
 			else
 				z_cc = 0.0;
 			if (has_phase(PHASE_N) && dcn > 0.0)
-				z_cn = complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dcn) + freq_additive_term));
+				z_cn = gld::complex(freq_coeff_real, freq_coeff_imag * (log(1.0 / dcn) + freq_additive_term));
 			else
 				z_cn = 0.0;
 
 			//capacitance equations
-			if (use_line_cap == true)
+			if (use_line_cap)
 			{
 				if ((diamC > 0.0) && (spacing_val->distance_CtoE > 0.0))
 				{
@@ -654,13 +654,13 @@ void overhead_line::recalc(void)
 			z_cc = z_cn = 0.0;
 		}
 
-		complex z_nn_inv = 0;
+		gld::complex z_nn_inv = 0;
 		if (has_phase(PHASE_N) && gmr_n > 0.0 && res_n > 0.0){
-			z_nn = complex(res_n + freq_coeff_real, freq_coeff_imag * (log(1.0 / gmr_n) + freq_additive_term));
+			z_nn = gld::complex(res_n + freq_coeff_real, freq_coeff_imag * (log(1.0 / gmr_n) + freq_additive_term));
 			z_nn_inv = z_nn^(-1.0);
 
 			//capacitance equations
-			if (use_line_cap == true)
+			if (use_line_cap)
 			{
 				if ((diamN > 0.0) && (spacing_val->distance_NtoE > 0.0))
 				{
@@ -700,7 +700,7 @@ void overhead_line::recalc(void)
 		// If we have valid capacitance values and line capacitance is turned on then
 		// calculate Yabc_mat otherwise just leave is zeroed out.
 
-		if (valid_capacitance == true && use_line_cap == true)
+		if (valid_capacitance && use_line_cap)
 		{
 			if (p_nn != 0.0)
 			{
@@ -729,14 +729,14 @@ void overhead_line::recalc(void)
 
 			//Now appropriately invert it - scale for frequency, distance, and microSiemens as well as per Kersting (5.14) and (5.15) 
 			if (has_phase(PHASE_A) && !has_phase(PHASE_B) && !has_phase(PHASE_C)) //only A
-				Yabc_mat[0][0] = complex(1.0) / P_mat[0][0] * cap_freq_mult;
+				Yabc_mat[0][0] = gld::complex(1.0) / P_mat[0][0] * cap_freq_mult;
 			else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //only B
-				Yabc_mat[1][1] = complex(1.0) / P_mat[1][1] * cap_freq_mult;
+				Yabc_mat[1][1] = gld::complex(1.0) / P_mat[1][1] * cap_freq_mult;
 			else if (!has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //only C
-				Yabc_mat[2][2] = complex(1.0) / P_mat[2][2] * cap_freq_mult;
+				Yabc_mat[2][2] = gld::complex(1.0) / P_mat[2][2] * cap_freq_mult;
 			else if (has_phase(PHASE_A) && !has_phase(PHASE_B) && has_phase(PHASE_C)) //has A & C
 			{
-				complex detvalue = P_mat[0][0]*P_mat[2][2] - P_mat[0][2]*P_mat[2][0];
+				gld::complex detvalue = P_mat[0][0]*P_mat[2][2] - P_mat[0][2]*P_mat[2][0];
 
 				Yabc_mat[0][0] = P_mat[2][2] / detvalue * cap_freq_mult;
 				Yabc_mat[0][2] = P_mat[0][2] * -1.0 / detvalue * cap_freq_mult;
@@ -745,7 +745,7 @@ void overhead_line::recalc(void)
 			}
 			else if (has_phase(PHASE_A) && has_phase(PHASE_B) && !has_phase(PHASE_C)) //has A & B
 			{
-				complex detvalue = P_mat[0][0]*P_mat[1][1] - P_mat[0][1]*P_mat[1][0];
+				gld::complex detvalue = P_mat[0][0]*P_mat[1][1] - P_mat[0][1]*P_mat[1][0];
 
 				Yabc_mat[0][0] = P_mat[1][1] / detvalue * cap_freq_mult;
 				Yabc_mat[0][1] = P_mat[0][1] * -1.0 / detvalue * cap_freq_mult;
@@ -754,7 +754,7 @@ void overhead_line::recalc(void)
 			}
 			else if (!has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C))	//has B & C
 			{
-				complex detvalue = P_mat[1][1]*P_mat[2][2] - P_mat[1][2]*P_mat[2][1];
+				gld::complex detvalue = P_mat[1][1]*P_mat[2][2] - P_mat[1][2]*P_mat[2][1];
 
 				Yabc_mat[1][1] = P_mat[2][2] / detvalue * cap_freq_mult;
 				Yabc_mat[1][2] = P_mat[1][2] * -1.0 / detvalue * cap_freq_mult;
@@ -785,7 +785,7 @@ void overhead_line::recalc(void)
 			}
 			else if ((has_phase(PHASE_A) && has_phase(PHASE_B) && has_phase(PHASE_C)) || (has_phase(PHASE_D))) //has ABC or D (D=ABC)
 			{
-				complex detvalue = P_mat[0][0]*P_mat[1][1]*P_mat[2][2] - P_mat[0][0]*P_mat[1][2]*P_mat[2][1] - P_mat[0][1]*P_mat[1][0]*P_mat[2][2] + P_mat[0][1]*P_mat[2][0]*P_mat[1][2] + P_mat[1][0]*P_mat[0][2]*P_mat[2][1] - P_mat[0][2]*P_mat[1][1]*P_mat[2][0];
+				gld::complex detvalue = P_mat[0][0]*P_mat[1][1]*P_mat[2][2] - P_mat[0][0]*P_mat[1][2]*P_mat[2][1] - P_mat[0][1]*P_mat[1][0]*P_mat[2][2] + P_mat[0][1]*P_mat[2][0]*P_mat[1][2] + P_mat[1][0]*P_mat[0][2]*P_mat[2][1] - P_mat[0][2]*P_mat[1][1]*P_mat[2][0];
 
 				//Invert it
 				Yabc_mat[0][0] = (P_mat[1][1]*P_mat[2][2] - P_mat[1][2]*P_mat[2][1]) / detvalue * cap_freq_mult;
@@ -836,7 +836,7 @@ void overhead_line::recalc(void)
 		}
 	}
 	
-	if(neg_res == true){
+	if(neg_res){
 		gl_warning("INIT: overhead_line:%s has a negative resistance in it's impedance matrix. This will result in unusual behavior. Please check the line's geometry and cable parameters.", obj->name);
 		/*  TROUBLESHOOT
 		A negative resistance value was found for one or more the real parts of the overhead_line's impedance matrix.
@@ -942,11 +942,11 @@ void overhead_line::test_phases(line_configuration *config, const char ph)
 	}
 	//Nothing else down here.  Should never get anything besides ABCN to check
 
-	if (condCheck==true)
+	if (condCheck)
 		GL_THROW("invalid conductor for phase %c of overhead line %s",ph,obj->name);
 		/*	TROUBLESHOOT  The conductor specified for the indicated phase is not necessarily an overhead line conductor, it may be an underground or triplex-line only conductor */
 
-	if (condNotPres==true)
+	if (condNotPres)
 		GL_THROW("missing conductor for phase %c of overhead line %s",ph,obj->name);
 		/*  TROUBLESHOOT
 		The conductor specified for the indicated phase for the overhead line is missing
@@ -1013,7 +1013,7 @@ EXPORT int create_overhead_line(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(overhead_line::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			overhead_line *my = OBJECTDATA(*obj,overhead_line);
 			gl_set_parent(*obj,parent);

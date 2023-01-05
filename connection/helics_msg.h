@@ -88,7 +88,7 @@ public:
 	}
 	string objectName;
 	string propertyName;
-	string key;
+	string name;
 	gld_property *pObjectProperty;
 	helicscpp::Publication HelicsPublication;
 };
@@ -100,7 +100,7 @@ public:
 	}
 	string objectName;
 	string propertyName;
-	string key;
+	string target;
 	gld_property *pObjectProperty;
 	helicscpp::Input HelicsSubscription;
 };
@@ -136,7 +136,7 @@ public:
 	}
 	Json::Value objectPropertyBundle;
 	vector<json_publication*> jsonPublications;
-	string key;
+	string name;
 	helicscpp::Publication HelicsPublication;
 };
 
@@ -144,7 +144,7 @@ class json_helics_value_subscription {
 public:
 	json_helics_value_subscription(){
 	}
-	string key;
+	string target;
 	helicscpp::Input HelicsSubscription;
 };
 

@@ -4,6 +4,7 @@
 #define _REGULATOR_TEST_H
 
 #include <stdlib.h>
+
 #include "node.h"
 #include "regulator.h"
 

@@ -27,6 +27,7 @@ MODULE:rest
 
 
 #include <stdlib.h>
+
 #include "gridlabd.h"
 
 EXPORT int do_kill(void*);

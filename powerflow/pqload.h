@@ -36,7 +36,7 @@ public:
 	double power_q[6];
 	double input[6]; /* temp, humidity, solar, wind, rain, 1.0 */
 	double output[6]; /* Zp, Zq, Im, Ia, Pp, Pq */
-	complex kZ, kI, kP;
+	gld::complex kZ, kI, kP;
 
 	char1024 schedule;
 	OBJECT *weather;

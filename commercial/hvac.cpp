@@ -1,10 +1,10 @@
 /** $Id: hvac.cpp 4738 2014-07-03 00:55:39Z dchassin $
 	Copyright (C) 2008 Battelle Memorial Institute
 **/
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "hvac.h"
 
@@ -38,8 +38,8 @@ void hvac::post_update(void)
 CDECL CLASS *hvac_class;
 CDECL OBJECT *last_hvac;
 
-CLASS *hvac_class = NULL;
-OBJECT *last_hvac = NULL;
+CLASS *hvac_class = nullptr;
+OBJECT *last_hvac = nullptr;
 
 EXPORT int create_hvac(OBJECT **obj, OBJECT *parent)
 {

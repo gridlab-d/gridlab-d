@@ -15,12 +15,12 @@
 #include <sys/types.h>
 #endif
 
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
+#include <cerrno>
+#include <csignal>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <sys/stat.h>
-#include <signal.h>
 
 #include "globals.h"
 #include "output.h"
@@ -82,14 +82,15 @@ public:
 	void inc_files(const char *name) 
 	{
 		if ( global_debug_mode || global_verbose_mode )
-			output_debug("processing %s", name); 
+			output_debug("processing %s", name);
 		else
 		{
 			static size_t len = 0;
 			char blank[1024];
+			len = (len < 1024 ? len : 1023);
 			memset(blank,32,len);
 			blank[len]='\0';
-			len = output_raw("%s\rProcessing %s...\r",blank,name)-len; 
+			len = static_cast<size_t>(output_raw("\r%s\rProcessing %s...", blank, name) - len);
 		}
 		wlock(); 
 		n_files++;
@@ -435,6 +436,7 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 	strcpy(dir,file);
 	char *ext = strrchr(dir,'.');
 	char *name = strrchr(dir,'/')+1;
+	char * char_result;
 	if ( ext==NULL || strcmp(ext,".glm")!=0 ) 
 	{
 		output_error("run_test(char *file='%s'): file is not a GLM", file);
@@ -442,7 +444,7 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 	}
 	*ext = '\0'; // remove extension from dir
 	char cwd[1024];
-	getcwd(cwd,sizeof(cwd));	
+	char_result = getcwd(cwd,sizeof(cwd));
 	if ( clean && !destroy_dir(dir) )
 	{
 		output_error("run_test(char *file='%s'): unable to destroy test folder", dir);
@@ -474,15 +476,15 @@ static counters run_test(char *file, double *elapsed_time=NULL)
 	}
 	int64 dt = exec_clock();
 	result.inc_files(file);
-	unsigned int code = vsystem("%s -W %s %s %s.glm ", 
+	unsigned int code = vsystem("\"%s\" -W %s %s %s.glm ",
 #ifdef _WIN32
 		_pgmptr,
 #else
-		"gridlabd",
+        global_gl_executable.c_str(),
 #endif
 		dir,validate_cmdargs, name);
 	dt = exec_clock() - dt;
-	double t = (double)dt/(double)CLOCKS_PER_SEC;
+	double t = (double)dt/(double)global_ms_per_second;
 	if ( elapsed_time!=NULL ) *elapsed_time = t;
 //#ifdef _WIN32
 // 	if ( code>256 )
@@ -631,13 +633,13 @@ void *(run_test_proc)(void *arg)
 		if ( result.get_nerrors()>0 ) passed=false;
 		if ( global_validateoptions&VO_RPTGLM )
 		{
-			char *flags[] = {"","E","S","X"};
+			const char *flags[] = {"","E","S","X"};
 			char code = 0;
 			if ( result.get_nerrors() ) code=1;
 			if ( result.get_nsuccess() ) code=2;
 			if ( result.get_nexceptions() ) code=3;
 			result_code[item->id] = code;
-			char buffer[1024];
+			char buffer[2048];
 			sprintf(buffer,"%s%s%6.1f%s%s",flags[code],report_col,dt,report_col,item->name);
 			report_data("%s",buffer);
 			report_newrow();
@@ -828,7 +830,7 @@ int validate(int argc, char *argv[])
 	char mailto[1024]="";
 	report_data();
 	report_data("Mailto");
-	report_data("%s",global_getvar("mailto",mailto,sizeof(mailto))!=NULL?mailto:"(NA)");
+	report_data("%s",global_getvar("mailto",mailto,sizeof(mailto))!= nullptr ?mailto:"(NA)");
 	report_newrow();
 	
 	if ( global_validateoptions&VO_RPTDIR ) 
@@ -854,7 +856,7 @@ int validate(int argc, char *argv[])
 	}
 	delete [] pid;
 	final.print();
-	double dt = (double)exec_clock()/(double)CLOCKS_PER_SEC;
+	double dt = (double)exec_clock()/global_ms_per_second;
 	output_message("Total validation elapsed time: %.1f seconds", dt);
 	if ( report_fp ) output_message("See '%s/%s' for details", global_workdir, report_file);
 	if ( final.get_nerrors()==0 )
@@ -864,7 +866,7 @@ int validate(int argc, char *argv[])
 
 	report_newtable("OVERALL RESULTS");
 
-	char *flag="!!!";
+	const char *flag="!!!";
 	report_data();
 	report_data("Directory results");
 	report_newrow();

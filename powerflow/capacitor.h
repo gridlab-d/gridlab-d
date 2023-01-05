@@ -7,7 +7,6 @@
 #include "powerflow.h"
 #include "node.h"
 
-#define TSNVRDBL 9223372036854775808.0
 EXPORT SIMULATIONMODE interupdate_capacitor(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val, bool interupdate_pos);
 
 //KML export
@@ -87,7 +86,7 @@ public:
 	int kmldata(int (*stream)(const char*,...));
 	
 private:
-	complex cap_value[3];		// Capacitor values translated to admittance
+	gld::complex cap_value[3];		// Capacitor values translated to admittance
 	CAPSWITCH switchA_state_Next;	// capacitor A switch open or close at next transition
 	CAPSWITCH switchB_state_Next;	// capacitor B switch open or close at next transition
 	CAPSWITCH switchC_state_Next;	// capacitor C switch open or close at next transition

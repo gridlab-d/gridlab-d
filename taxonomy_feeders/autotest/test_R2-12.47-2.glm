@@ -12534,528 +12534,528 @@ object triplex_node:516 {
 	nominal_voltage 120;
 }
 
-object triplex_node:517 {
+object triplex_load:517 {
 	name R2-12-47-2_tn_193;
 	phases AS;
 	parent R2-12-47-2_tm_1;
-	power_1 14988.7373+12178.5521j;
+	constant_power_1 14988.7373+12178.5521j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:518 {
+object triplex_load:518 {
 	name R2-12-47-2_tn_194;
 	phases AS;
 	parent R2-12-47-2_tm_2;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:519 {
+object triplex_load:519 {
 	name R2-12-47-2_tn_195;
 	phases BS;
 	parent R2-12-47-2_tm_3;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:520 {
+object triplex_load:520 {
 	name R2-12-47-2_tn_196;
 	phases CS;
 	parent R2-12-47-2_tm_4;
-	power_1 8001.0071+5722.186j;
+	constant_power_1 8001.0071+5722.186j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:521 {
+object triplex_load:521 {
 	name R2-12-47-2_tn_197;
 	phases AS;
 	parent R2-12-47-2_tm_5;
-	power_1 29977.4745+24357.1042j;
+	constant_power_1 29977.4745+24357.1042j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:522 {
+object triplex_load:522 {
 	name R2-12-47-2_tn_198;
 	phases AS;
 	parent R2-12-47-2_tm_6;
-	power_1 29977.4745+24357.1042j;
+	constant_power_1 29977.4745+24357.1042j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:523 {
+object triplex_load:523 {
 	name R2-12-47-2_tn_199;
 	phases CS;
 	parent R2-12-47-2_tm_7;
-	power_1 13335.0119+9536.9766j;
+	constant_power_1 13335.0119+9536.9766j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:524 {
+object triplex_load:524 {
 	name R2-12-47-2_tn_200;
 	phases CS;
 	parent R2-12-47-2_tm_8;
-	power_1 13335.0119+9536.9766j;
+	constant_power_1 13335.0119+9536.9766j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:525 {
+object triplex_load:525 {
 	name R2-12-47-2_tn_201;
 	phases CS;
 	parent R2-12-47-2_tm_9;
-	power_1 53340.0474+38147.9066j;
+	constant_power_1 53340.0474+38147.9066j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:526 {
+object triplex_load:526 {
 	name R2-12-47-2_tn_202;
 	phases BS;
 	parent R2-12-47-2_tm_10;
-	power_1 27043.4623+20728.3422j;
+	constant_power_1 27043.4623+20728.3422j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:527 {
+object triplex_load:527 {
 	name R2-12-47-2_tn_203;
 	phases CS;
 	parent R2-12-47-2_tm_11;
-	power_1 26670.0237+19073.9533j;
+	constant_power_1 26670.0237+19073.9533j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:528 {
+object triplex_load:528 {
 	name R2-12-47-2_tn_204;
 	phases CS;
 	parent R2-12-47-2_tm_12;
-	power_1 26670.0237+19073.9533j;
+	constant_power_1 26670.0237+19073.9533j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:529 {
+object triplex_load:529 {
 	name R2-12-47-2_tn_205;
 	phases BS;
 	parent R2-12-47-2_tm_13;
-	power_1 13521.7312+10364.1711j;
+	constant_power_1 13521.7312+10364.1711j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:530 {
+object triplex_load:530 {
 	name R2-12-47-2_tn_206;
 	phases BS;
 	parent R2-12-47-2_tm_14;
-	power_1 27043.4623+20728.3422j;
+	constant_power_1 27043.4623+20728.3422j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:531 {
+object triplex_load:531 {
 	name R2-12-47-2_tn_207;
 	phases CS;
 	parent R2-12-47-2_tm_15;
-	power_1 20002.5178+14305.465j;
+	constant_power_1 20002.5178+14305.465j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:532 {
+object triplex_load:532 {
 	name R2-12-47-2_tn_208;
 	phases BS;
 	parent R2-12-47-2_tm_16;
-	power_1 13521.7312+10364.1711j;
+	constant_power_1 13521.7312+10364.1711j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:533 {
+object triplex_load:533 {
 	name R2-12-47-2_tn_209;
 	phases CS;
 	parent R2-12-47-2_tm_17;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:534 {
+object triplex_load:534 {
 	name R2-12-47-2_tn_210;
 	phases AS;
 	parent R2-12-47-2_tm_18;
-	power_1 14988.7373+12178.5521j;
+	constant_power_1 14988.7373+12178.5521j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:535 {
+object triplex_load:535 {
 	name R2-12-47-2_tn_211;
 	phases AS;
 	parent R2-12-47-2_tm_19;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:536 {
+object triplex_load:536 {
 	name R2-12-47-2_tn_212;
 	phases BS;
 	parent R2-12-47-2_tm_20;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:537 {
+object triplex_load:537 {
 	name R2-12-47-2_tn_213;
 	phases CS;
 	parent R2-12-47-2_tm_21;
-	power_1 26670.0237+19073.9533j;
+	constant_power_1 26670.0237+19073.9533j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:538 {
+object triplex_load:538 {
 	name R2-12-47-2_tn_214;
 	phases AS;
 	parent R2-12-47-2_tm_22;
-	power_1 29977.4745+24357.1042j;
+	constant_power_1 29977.4745+24357.1042j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:539 {
+object triplex_load:539 {
 	name R2-12-47-2_tn_215;
 	phases BS;
 	parent R2-12-47-2_tm_23;
-	power_1 27043.4623+20728.3422j;
+	constant_power_1 27043.4623+20728.3422j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:540 {
+object triplex_load:540 {
 	name R2-12-47-2_tn_216;
 	phases BS;
 	parent R2-12-47-2_tm_24;
-	power_1 13521.7312+10364.1711j;
+	constant_power_1 13521.7312+10364.1711j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:541 {
+object triplex_load:541 {
 	name R2-12-47-2_tn_217;
 	phases AS;
 	parent R2-12-47-2_tm_25;
-	power_1 29977.4745+24357.1042j;
+	constant_power_1 29977.4745+24357.1042j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:542 {
+object triplex_load:542 {
 	name R2-12-47-2_tn_218;
 	phases CS;
 	parent R2-12-47-2_tm_26;
-	power_1 26670.0237+19073.9533j;
+	constant_power_1 26670.0237+19073.9533j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:543 {
+object triplex_load:543 {
 	name R2-12-47-2_tn_219;
 	phases AS;
 	parent R2-12-47-2_tm_27;
-	power_1 29977.4745+24357.1042j;
+	constant_power_1 29977.4745+24357.1042j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:544 {
+object triplex_load:544 {
 	name R2-12-47-2_tn_220;
 	phases AS;
 	parent R2-12-47-2_tm_28;
-	power_1 14988.7373+12178.5521j;
+	constant_power_1 14988.7373+12178.5521j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:545 {
+object triplex_load:545 {
 	name R2-12-47-2_tn_221;
 	phases BS;
 	parent R2-12-47-2_tm_29;
-	power_1 27043.4623+20728.3422j;
+	constant_power_1 27043.4623+20728.3422j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:546 {
+object triplex_load:546 {
 	name R2-12-47-2_tn_222;
 	phases CS;
 	parent R2-12-47-2_tm_30;
-	power_1 13335.0119+9536.9766j;
+	constant_power_1 13335.0119+9536.9766j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:547 {
+object triplex_load:547 {
 	name R2-12-47-2_tn_223;
 	phases AS;
 	parent R2-12-47-2_tm_31;
-	power_1 100124.7648+81352.728j;
+	constant_power_1 100124.7648+81352.728j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:548 {
+object triplex_load:548 {
 	name R2-12-47-2_tn_224;
 	phases BS;
 	parent R2-12-47-2_tm_32;
-	power_1 90325.1641+69232.6629j;
+	constant_power_1 90325.1641+69232.6629j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:549 {
+object triplex_load:549 {
 	name R2-12-47-2_tn_225;
 	phases CS;
 	parent R2-12-47-2_tm_33;
-	power_1 89077.8792+63707.0039j;
+	constant_power_1 89077.8792+63707.0039j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:550 {
+object triplex_load:550 {
 	name R2-12-47-2_tn_226;
 	phases CS;
 	parent R2-12-47-2_tm_34;
-	power_1 13335.0119+9536.9766j;
+	constant_power_1 13335.0119+9536.9766j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:551 {
+object triplex_load:551 {
 	name R2-12-47-2_tn_227;
 	phases CS;
 	parent R2-12-47-2_tm_35;
-	power_1 26670.0237+19073.9533j;
+	constant_power_1 26670.0237+19073.9533j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:552 {
+object triplex_load:552 {
 	name R2-12-47-2_tn_228;
 	phases BS;
 	parent R2-12-47-2_tm_36;
-	power_1 8113.0387+6218.5027j;
+	constant_power_1 8113.0387+6218.5027j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:553 {
+object triplex_load:553 {
 	name R2-12-47-2_tn_229;
 	phases BS;
 	parent R2-12-47-2_tm_37;
-	power_1 20282.5967+15546.2566j;
+	constant_power_1 20282.5967+15546.2566j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:554 {
+object triplex_load:554 {
 	name R2-12-47-2_tn_230;
 	phases CS;
 	parent R2-12-47-2_tm_38;
-	power_1 26670.0237+19073.9533j;
+	constant_power_1 26670.0237+19073.9533j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:555 {
+object triplex_load:555 {
 	name R2-12-47-2_tn_231;
 	phases CS;
 	parent R2-12-47-2_tm_39;
-	power_1 26670.0237+19073.9533j;
+	constant_power_1 26670.0237+19073.9533j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:556 {
+object triplex_load:556 {
 	name R2-12-47-2_tn_232;
 	phases AS;
 	parent R2-12-47-2_tm_40;
-	power_1 29977.4745+24357.1042j;
+	constant_power_1 29977.4745+24357.1042j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:557 {
+object triplex_load:557 {
 	name R2-12-47-2_tn_233;
 	phases AS;
 	parent R2-12-47-2_tm_41;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:558 {
+object triplex_load:558 {
 	name R2-12-47-2_tn_234;
 	phases BS;
 	parent R2-12-47-2_tm_42;
-	power_1 27043.4623+20728.3422j;
+	constant_power_1 27043.4623+20728.3422j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:559 {
+object triplex_load:559 {
 	name R2-12-47-2_tn_235;
 	phases CS;
 	parent R2-12-47-2_tm_43;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:560 {
+object triplex_load:560 {
 	name R2-12-47-2_tn_236;
 	phases CS;
 	parent R2-12-47-2_tm_44;
-	power_1 53340.0474+38147.9066j;
+	constant_power_1 53340.0474+38147.9066j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:561 {
+object triplex_load:561 {
 	name R2-12-47-2_tn_237;
 	phases BS;
 	parent R2-12-47-2_tm_45;
-	power_1 27043.4623+20728.3422j;
+	constant_power_1 27043.4623+20728.3422j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:562 {
+object triplex_load:562 {
 	name R2-12-47-2_tn_238;
 	phases BS;
 	parent R2-12-47-2_tm_46;
-	power_1 27043.4623+20728.3422j;
+	constant_power_1 27043.4623+20728.3422j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:563 {
+object triplex_load:563 {
 	name R2-12-47-2_tn_239;
 	phases AS;
 	parent R2-12-47-2_tm_47;
-	power_1 29977.4745+24357.1042j;
+	constant_power_1 29977.4745+24357.1042j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:564 {
+object triplex_load:564 {
 	name R2-12-47-2_tn_240;
 	phases AS;
 	parent R2-12-47-2_tm_48;
-	power_1 29977.4745+24357.1042j;
+	constant_power_1 29977.4745+24357.1042j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
@@ -13078,1540 +13078,1540 @@ object triplex_node:564 {
 	};
 }
 
-object triplex_node:565 {
+object triplex_load:565 {
 	name R2-12-47-2_tn_241;
 	phases AS;
 	parent R2-12-47-2_tm_49;
-	power_1 22483.1059+18267.8281j;
+	constant_power_1 22483.1059+18267.8281j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:566 {
+object triplex_load:566 {
 	name R2-12-47-2_tn_242;
 	phases BS;
 	parent R2-12-47-2_tm_50;
-	power_1 27043.4623+20728.3422j;
+	constant_power_1 27043.4623+20728.3422j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:567 {
+object triplex_load:567 {
 	name R2-12-47-2_tn_243;
 	phases AS;
 	parent R2-12-47-2_tm_51;
-	power_1 14988.7373+12178.5521j;
+	constant_power_1 14988.7373+12178.5521j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:568 {
+object triplex_load:568 {
 	name R2-12-47-2_tn_244;
 	phases AS;
 	parent R2-12-47-2_tm_52;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:569 {
+object triplex_load:569 {
 	name R2-12-47-2_tn_245;
 	phases BS;
 	parent R2-12-47-2_tm_53;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:570 {
+object triplex_load:570 {
 	name R2-12-47-2_tn_246;
 	phases CS;
 	parent R2-12-47-2_tm_54;
-	power_1 13335.0119+9536.9766j;
+	constant_power_1 13335.0119+9536.9766j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:571 {
+object triplex_load:571 {
 	name R2-12-47-2_tn_247;
 	phases CS;
 	parent R2-12-47-2_tm_55;
-	power_1 13335.0119+9536.9766j;
+	constant_power_1 13335.0119+9536.9766j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:572 {
+object triplex_load:572 {
 	name R2-12-47-2_tn_248;
 	phases AS;
 	parent R2-12-47-2_tm_56;
-	power_1 14988.7373+12178.5521j;
+	constant_power_1 14988.7373+12178.5521j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:573 {
+object triplex_load:573 {
 	name R2-12-47-2_tn_249;
 	phases CS;
 	parent R2-12-47-2_tm_57;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:574 {
+object triplex_load:574 {
 	name R2-12-47-2_tn_250;
 	phases AS;
 	parent R2-12-47-2_tm_58;
-	power_1 29977.4745+24357.1042j;
+	constant_power_1 29977.4745+24357.1042j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:575 {
+object triplex_load:575 {
 	name R2-12-47-2_tn_251;
 	phases AS;
 	parent R2-12-47-2_tm_59;
-	power_1 14988.7373+12178.5521j;
+	constant_power_1 14988.7373+12178.5521j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:576 {
+object triplex_load:576 {
 	name R2-12-47-2_tn_252;
 	phases BS;
 	parent R2-12-47-2_tm_60;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:577 {
+object triplex_load:577 {
 	name R2-12-47-2_tn_253;
 	phases CS;
 	parent R2-12-47-2_tm_61;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:578 {
+object triplex_load:578 {
 	name R2-12-47-2_tn_254;
 	phases BS;
 	parent R2-12-47-2_tm_62;
-	power_1 27043.4623+20728.3422j;
+	constant_power_1 27043.4623+20728.3422j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:579 {
+object triplex_load:579 {
 	name R2-12-47-2_tn_255;
 	phases AS;
 	parent R2-12-47-2_tm_63;
-	power_1 8993.2424+7307.1313j;
+	constant_power_1 8993.2424+7307.1313j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:580 {
+object triplex_load:580 {
 	name R2-12-47-2_tn_256;
 	phases CS;
 	parent R2-12-47-2_tm_64;
-	power_1 26670.0237+19073.9533j;
+	constant_power_1 26670.0237+19073.9533j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:581 {
+object triplex_load:581 {
 	name R2-12-47-2_tn_257;
 	phases CS;
 	parent R2-12-47-2_tm_65;
-	power_1 13335.0119+9536.9766j;
+	constant_power_1 13335.0119+9536.9766j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:582 {
+object triplex_load:582 {
 	name R2-12-47-2_tn_258;
 	phases BS;
 	parent R2-12-47-2_tm_66;
-	power_1 27043.4623+20728.3422j;
+	constant_power_1 27043.4623+20728.3422j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:583 {
+object triplex_load:583 {
 	name R2-12-47-2_tn_259;
 	phases BS;
 	parent R2-12-47-2_tm_67;
-	power_1 27043.4623+20728.3422j;
+	constant_power_1 27043.4623+20728.3422j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:584 {
+object triplex_load:584 {
 	name R2-12-47-2_tn_260;
 	phases BS;
 	parent R2-12-47-2_tm_68;
-	power_1 27043.4623+20728.3422j;
+	constant_power_1 27043.4623+20728.3422j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:585 {
+object triplex_load:585 {
 	name R2-12-47-2_tn_261;
 	phases BS;
 	parent R2-12-47-2_tm_69;
-	power_1 27043.4623+20728.3422j;
+	constant_power_1 27043.4623+20728.3422j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:586 {
+object triplex_load:586 {
 	name R2-12-47-2_tn_262;
 	phases AS;
 	parent R2-12-47-2_tm_70;
-	power_1 5995.4949+4871.4208j;
+	constant_power_1 5995.4949+4871.4208j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:587 {
+object triplex_load:587 {
 	name R2-12-47-2_tn_263;
 	phases BS;
 	parent R2-12-47-2_tm_71;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:588 {
+object triplex_load:588 {
 	name R2-12-47-2_tn_264;
 	phases CS;
 	parent R2-12-47-2_tm_72;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:589 {
+object triplex_load:589 {
 	name R2-12-47-2_tn_265;
 	phases AS;
 	parent R2-12-47-2_tm_73;
-	power_1 8993.2424+7307.1313j;
+	constant_power_1 8993.2424+7307.1313j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:590 {
+object triplex_load:590 {
 	name R2-12-47-2_tn_266;
 	phases AS;
 	parent R2-12-47-2_tm_74;
-	power_1 14988.7373+12178.5521j;
+	constant_power_1 14988.7373+12178.5521j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:591 {
+object triplex_load:591 {
 	name R2-12-47-2_tn_267;
 	phases BS;
 	parent R2-12-47-2_tm_75;
-	power_1 13521.7312+10364.1711j;
+	constant_power_1 13521.7312+10364.1711j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:592 {
+object triplex_load:592 {
 	name R2-12-47-2_tn_268;
 	phases CS;
 	parent R2-12-47-2_tm_76;
-	power_1 26670.0237+19073.9533j;
+	constant_power_1 26670.0237+19073.9533j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:593 {
+object triplex_load:593 {
 	name R2-12-47-2_tn_269;
 	phases CS;
 	parent R2-12-47-2_tm_77;
-	power_1 26670.0237+19073.9533j;
+	constant_power_1 26670.0237+19073.9533j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:594 {
+object triplex_load:594 {
 	name R2-12-47-2_tn_270;
 	phases CS;
 	parent R2-12-47-2_tm_78;
-	power_1 13335.0119+9536.9766j;
+	constant_power_1 13335.0119+9536.9766j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:595 {
+object triplex_load:595 {
 	name R2-12-47-2_tn_271;
 	phases CS;
 	parent R2-12-47-2_tm_79;
-	power_1 13335.0119+9536.9766j;
+	constant_power_1 13335.0119+9536.9766j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:596 {
+object triplex_load:596 {
 	name R2-12-47-2_tn_272;
 	phases BS;
 	parent R2-12-47-2_tm_80;
-	power_1 27043.4623+20728.3422j;
+	constant_power_1 27043.4623+20728.3422j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:597 {
+object triplex_load:597 {
 	name R2-12-47-2_tn_273;
 	phases CS;
 	parent R2-12-47-2_tm_81;
-	power_1 106680.0949+76295.8131j;
+	constant_power_1 106680.0949+76295.8131j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:598 {
+object triplex_load:598 {
 	name R2-12-47-2_tn_274;
 	phases CS;
 	parent R2-12-47-2_tm_82;
-	power_1 80010.0712+57221.8598j;
+	constant_power_1 80010.0712+57221.8598j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:599 {
+object triplex_load:599 {
 	name R2-12-47-2_tn_275;
 	phases CS;
 	parent R2-12-47-2_tm_83;
-	power_1 26670.0237+19073.9533j;
+	constant_power_1 26670.0237+19073.9533j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:600 {
+object triplex_load:600 {
 	name R2-12-47-2_tn_276;
 	phases BS;
 	parent R2-12-47-2_tm_84;
-	power_1 162260.7739+124370.0531j;
+	constant_power_1 162260.7739+124370.0531j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:601 {
+object triplex_load:601 {
 	name R2-12-47-2_tn_277;
 	phases BS;
 	parent R2-12-47-2_tm_85;
-	power_1 162260.7739+124370.0531j;
+	constant_power_1 162260.7739+124370.0531j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:602 {
+object triplex_load:602 {
 	name R2-12-47-2_tn_278;
 	phases CS;
 	parent R2-12-47-2_tm_86;
-	power_1 53340.0474+38147.9066j;
+	constant_power_1 53340.0474+38147.9066j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:603 {
+object triplex_load:603 {
 	name R2-12-47-2_tn_279;
 	phases BS;
 	parent R2-12-47-2_tm_87;
-	power_1 27043.4623+20728.3422j;
+	constant_power_1 27043.4623+20728.3422j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:604 {
+object triplex_load:604 {
 	name R2-12-47-2_tn_280;
 	phases AS;
 	parent R2-12-47-2_tm_88;
-	power_1 29977.4745+24357.1042j;
+	constant_power_1 29977.4745+24357.1042j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:605 {
+object triplex_load:605 {
 	name R2-12-47-2_tn_281;
 	phases AS;
 	parent R2-12-47-2_tm_89;
-	power_1 8993.2424+7307.1313j;
+	constant_power_1 8993.2424+7307.1313j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:606 {
+object triplex_load:606 {
 	name R2-12-47-2_tn_282;
 	phases BS;
 	parent R2-12-47-2_tm_90;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:607 {
+object triplex_load:607 {
 	name R2-12-47-2_tn_283;
 	phases CS;
 	parent R2-12-47-2_tm_91;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:608 {
+object triplex_load:608 {
 	name R2-12-47-2_tn_284;
 	phases AS;
 	parent R2-12-47-2_tm_92;
-	power_1 8993.2424+7307.1313j;
+	constant_power_1 8993.2424+7307.1313j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:609 {
+object triplex_load:609 {
 	name R2-12-47-2_tn_285;
 	phases BS;
 	parent R2-12-47-2_tm_93;
-	power_1 21634.7699+16582.6738j;
+	constant_power_1 21634.7699+16582.6738j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:610 {
+object triplex_load:610 {
 	name R2-12-47-2_tn_286;
 	phases CS;
 	parent R2-12-47-2_tm_94;
-	power_1 8001.0071+5722.186j;
+	constant_power_1 8001.0071+5722.186j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:611 {
+object triplex_load:611 {
 	name R2-12-47-2_tn_287;
 	phases BS;
 	parent R2-12-47-2_tm_95;
-	power_1 40565.1935+31092.5133j;
+	constant_power_1 40565.1935+31092.5133j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:612 {
+object triplex_load:612 {
 	name R2-12-47-2_tn_288;
 	phases CS;
 	parent R2-12-47-2_tm_96;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:613 {
+object triplex_load:613 {
 	name R2-12-47-2_tn_289;
 	phases AS;
 	parent R2-12-47-2_tm_97;
-	power_1 59954.949+48714.2084j;
+	constant_power_1 59954.949+48714.2084j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:614 {
+object triplex_load:614 {
 	name R2-12-47-2_tn_290;
 	phases AS;
 	parent R2-12-47-2_tm_98;
-	power_1 29977.4745+24357.1042j;
+	constant_power_1 29977.4745+24357.1042j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:615 {
+object triplex_load:615 {
 	name R2-12-47-2_tn_291;
 	phases AS;
 	parent R2-12-47-2_tm_99;
-	power_1 59954.949+48714.2084j;
+	constant_power_1 59954.949+48714.2084j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:616 {
+object triplex_load:616 {
 	name R2-12-47-2_tn_292;
 	phases BS;
 	parent R2-12-47-2_tm_100;
-	power_1 27043.4623+20728.3422j;
+	constant_power_1 27043.4623+20728.3422j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:617 {
+object triplex_load:617 {
 	name R2-12-47-2_tn_293;
 	phases CS;
 	parent R2-12-47-2_tm_101;
-	power_1 26670.0237+19073.9533j;
+	constant_power_1 26670.0237+19073.9533j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:618 {
+object triplex_load:618 {
 	name R2-12-47-2_tn_294;
 	phases BS;
 	parent R2-12-47-2_tm_102;
-	power_1 67608.6558+51820.8555j;
+	constant_power_1 67608.6558+51820.8555j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:619 {
+object triplex_load:619 {
 	name R2-12-47-2_tn_295;
 	phases BS;
 	parent R2-12-47-2_tm_103;
-	power_1 13521.7312+10364.1711j;
+	constant_power_1 13521.7312+10364.1711j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:620 {
+object triplex_load:620 {
 	name R2-12-47-2_tn_296;
 	phases CS;
 	parent R2-12-47-2_tm_104;
-	power_1 40005.0356+28610.9299j;
+	constant_power_1 40005.0356+28610.9299j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:621 {
+object triplex_load:621 {
 	name R2-12-47-2_tn_297;
 	phases CS;
 	parent R2-12-47-2_tm_105;
-	power_1 66675.0593+47684.8832j;
+	constant_power_1 66675.0593+47684.8832j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:622 {
+object triplex_load:622 {
 	name R2-12-47-2_tn_298;
 	phases BS;
 	parent R2-12-47-2_tm_106;
-	power_1 40565.1935+31092.5133j;
+	constant_power_1 40565.1935+31092.5133j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:623 {
+object triplex_load:623 {
 	name R2-12-47-2_tn_299;
 	phases CS;
 	parent R2-12-47-2_tm_107;
-	power_1 40005.0356+28610.9299j;
+	constant_power_1 40005.0356+28610.9299j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:624 {
+object triplex_load:624 {
 	name R2-12-47-2_tn_300;
 	phases BS;
 	parent R2-12-47-2_tm_108;
-	power_1 13521.7312+10364.1711j;
+	constant_power_1 13521.7312+10364.1711j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:625 {
+object triplex_load:625 {
 	name R2-12-47-2_tn_301;
 	phases BS;
 	parent R2-12-47-2_tm_109;
-	power_1 54086.9246+41456.6844j;
+	constant_power_1 54086.9246+41456.6844j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:626 {
+object triplex_load:626 {
 	name R2-12-47-2_tn_302;
 	phases AS;
 	parent R2-12-47-2_tm_110;
-	power_1 5995.4949+4871.4208j;
+	constant_power_1 5995.4949+4871.4208j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:627 {
+object triplex_load:627 {
 	name R2-12-47-2_tn_303;
 	phases BS;
 	parent R2-12-47-2_tm_111;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:628 {
+object triplex_load:628 {
 	name R2-12-47-2_tn_304;
 	phases CS;
 	parent R2-12-47-2_tm_112;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:629 {
+object triplex_load:629 {
 	name R2-12-47-2_tn_305;
 	phases BS;
 	parent R2-12-47-2_tm_113;
-	power_1 27043.4623+20728.3422j;
+	constant_power_1 27043.4623+20728.3422j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:630 {
+object triplex_load:630 {
 	name R2-12-47-2_tn_306;
 	phases BS;
 	parent R2-12-47-2_tm_114;
-	power_1 13521.7312+10364.1711j;
+	constant_power_1 13521.7312+10364.1711j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:631 {
+object triplex_load:631 {
 	name R2-12-47-2_tn_307;
 	phases BS;
 	parent R2-12-47-2_tm_115;
-	power_1 27043.4623+20728.3422j;
+	constant_power_1 27043.4623+20728.3422j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:632 {
+object triplex_load:632 {
 	name R2-12-47-2_tn_308;
 	phases AS;
 	parent R2-12-47-2_tm_116;
-	power_1 14988.7373+12178.5521j;
+	constant_power_1 14988.7373+12178.5521j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:633 {
+object triplex_load:633 {
 	name R2-12-47-2_tn_309;
 	phases AS;
 	parent R2-12-47-2_tm_117;
-	power_1 14988.7373+12178.5521j;
+	constant_power_1 14988.7373+12178.5521j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:634 {
+object triplex_load:634 {
 	name R2-12-47-2_tn_310;
 	phases AS;
 	parent R2-12-47-2_tm_118;
-	power_1 23981.9796+19485.6833j;
+	constant_power_1 23981.9796+19485.6833j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:635 {
+object triplex_load:635 {
 	name R2-12-47-2_tn_311;
 	phases AS;
 	parent R2-12-47-2_tm_119;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:636 {
+object triplex_load:636 {
 	name R2-12-47-2_tn_312;
 	phases BS;
 	parent R2-12-47-2_tm_120;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:637 {
+object triplex_load:637 {
 	name R2-12-47-2_tn_313;
 	phases CS;
 	parent R2-12-47-2_tm_121;
-	power_1 26670.0237+19073.9533j;
+	constant_power_1 26670.0237+19073.9533j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:638 {
+object triplex_load:638 {
 	name R2-12-47-2_tn_314;
 	phases BS;
 	parent R2-12-47-2_tm_122;
-	power_1 13521.7312+10364.1711j;
+	constant_power_1 13521.7312+10364.1711j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:639 {
+object triplex_load:639 {
 	name R2-12-47-2_tn_315;
 	phases BS;
 	parent R2-12-47-2_tm_123;
-	power_1 54086.9246+41456.6844j;
+	constant_power_1 54086.9246+41456.6844j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:640 {
+object triplex_load:640 {
 	name R2-12-47-2_tn_316;
 	phases CS;
 	parent R2-12-47-2_tm_124;
-	power_1 26670.0237+19073.9533j;
+	constant_power_1 26670.0237+19073.9533j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:641 {
+object triplex_load:641 {
 	name R2-12-47-2_tn_317;
 	phases CS;
 	parent R2-12-47-2_tm_125;
-	power_1 13335.0119+9536.9766j;
+	constant_power_1 13335.0119+9536.9766j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:642 {
+object triplex_load:642 {
 	name R2-12-47-2_tn_318;
 	phases BS;
 	parent R2-12-47-2_tm_126;
-	power_1 54086.9246+41456.6844j;
+	constant_power_1 54086.9246+41456.6844j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:643 {
+object triplex_load:643 {
 	name R2-12-47-2_tn_319;
 	phases CS;
 	parent R2-12-47-2_tm_127;
-	power_1 48006.0427+34333.1159j;
+	constant_power_1 48006.0427+34333.1159j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:644 {
+object triplex_load:644 {
 	name R2-12-47-2_tn_320;
 	phases AS;
 	parent R2-12-47-2_tm_128;
-	power_1 17986.4847+14614.2625j;
+	constant_power_1 17986.4847+14614.2625j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:645 {
+object triplex_load:645 {
 	name R2-12-47-2_tn_321;
 	phases BS;
 	parent R2-12-47-2_tm_129;
-	power_1 13521.7312+10364.1711j;
+	constant_power_1 13521.7312+10364.1711j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:646 {
+object triplex_load:646 {
 	name R2-12-47-2_tn_322;
 	phases CS;
 	parent R2-12-47-2_tm_130;
-	power_1 53340.0474+38147.9066j;
+	constant_power_1 53340.0474+38147.9066j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:647 {
+object triplex_load:647 {
 	name R2-12-47-2_tn_323;
 	phases AS;
 	parent R2-12-47-2_tm_131;
-	power_1 44966.2118+36535.6563j;
+	constant_power_1 44966.2118+36535.6563j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:648 {
+object triplex_load:648 {
 	name R2-12-47-2_tn_324;
 	phases BS;
 	parent R2-12-47-2_tm_132;
-	power_1 27043.4623+20728.3422j;
+	constant_power_1 27043.4623+20728.3422j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:649 {
+object triplex_load:649 {
 	name R2-12-47-2_tn_325;
 	phases AS;
 	parent R2-12-47-2_tm_133;
-	power_1 29977.4745+24357.1042j;
+	constant_power_1 29977.4745+24357.1042j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:650 {
+object triplex_load:650 {
 	name R2-12-47-2_tn_326;
 	phases BS;
 	parent R2-12-47-2_tm_134;
-	power_1 27043.4623+20728.3422j;
+	constant_power_1 27043.4623+20728.3422j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:651 {
+object triplex_load:651 {
 	name R2-12-47-2_tn_327;
 	phases BS;
 	parent R2-12-47-2_tm_135;
-	power_1 13521.7312+10364.1711j;
+	constant_power_1 13521.7312+10364.1711j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:652 {
+object triplex_load:652 {
 	name R2-12-47-2_tn_328;
 	phases CS;
 	parent R2-12-47-2_tm_136;
-	power_1 53340.0474+38147.9066j;
+	constant_power_1 53340.0474+38147.9066j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:653 {
+object triplex_load:653 {
 	name R2-12-47-2_tn_329;
 	phases CS;
 	parent R2-12-47-2_tm_137;
-	power_1 53340.0474+38147.9066j;
+	constant_power_1 53340.0474+38147.9066j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:654 {
+object triplex_load:654 {
 	name R2-12-47-2_tn_330;
 	phases AS;
 	parent R2-12-47-2_tm_138;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:655 {
+object triplex_load:655 {
 	name R2-12-47-2_tn_331;
 	phases BS;
 	parent R2-12-47-2_tm_139;
-	power_1 5408.6925+4145.6684j;
+	constant_power_1 5408.6925+4145.6684j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:656 {
+object triplex_load:656 {
 	name R2-12-47-2_tn_332;
 	phases CS;
 	parent R2-12-47-2_tm_140;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:657 {
+object triplex_load:657 {
 	name R2-12-47-2_tn_333;
 	phases BS;
 	parent R2-12-47-2_tm_141;
-	power_1 27043.4623+20728.3422j;
+	constant_power_1 27043.4623+20728.3422j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:658 {
+object triplex_load:658 {
 	name R2-12-47-2_tn_334;
 	phases CS;
 	parent R2-12-47-2_tm_142;
-	power_1 13335.0119+9536.9766j;
+	constant_power_1 13335.0119+9536.9766j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:659 {
+object triplex_load:659 {
 	name R2-12-47-2_tn_335;
 	phases CS;
 	parent R2-12-47-2_tm_143;
-	power_1 26670.0237+19073.9533j;
+	constant_power_1 26670.0237+19073.9533j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:660 {
+object triplex_load:660 {
 	name R2-12-47-2_tn_336;
 	phases CS;
 	parent R2-12-47-2_tm_144;
-	power_1 40005.0356+28610.9299j;
+	constant_power_1 40005.0356+28610.9299j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:661 {
+object triplex_load:661 {
 	name R2-12-47-2_tn_337;
 	phases AS;
 	parent R2-12-47-2_tm_145;
-	power_1 59954.949+48714.2084j;
+	constant_power_1 59954.949+48714.2084j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:662 {
+object triplex_load:662 {
 	name R2-12-47-2_tn_338;
 	phases AS;
 	parent R2-12-47-2_tm_146;
-	power_1 5995.4949+4871.4208j;
+	constant_power_1 5995.4949+4871.4208j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:663 {
+object triplex_load:663 {
 	name R2-12-47-2_tn_339;
 	phases BS;
 	parent R2-12-47-2_tm_147;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:664 {
+object triplex_load:664 {
 	name R2-12-47-2_tn_340;
 	phases CS;
 	parent R2-12-47-2_tm_148;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:665 {
+object triplex_load:665 {
 	name R2-12-47-2_tn_341;
 	phases BS;
 	parent R2-12-47-2_tm_149;
-	power_1 40565.1935+31092.5133j;
+	constant_power_1 40565.1935+31092.5133j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:666 {
+object triplex_load:666 {
 	name R2-12-47-2_tn_342;
 	phases CS;
 	parent R2-12-47-2_tm_150;
-	power_1 13335.0119+9536.9766j;
+	constant_power_1 13335.0119+9536.9766j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:667 {
+object triplex_load:667 {
 	name R2-12-47-2_tn_343;
 	phases AS;
 	parent R2-12-47-2_tm_151;
-	power_1 14988.7373+12178.5521j;
+	constant_power_1 14988.7373+12178.5521j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:668 {
+object triplex_load:668 {
 	name R2-12-47-2_tn_344;
 	phases BS;
 	parent R2-12-47-2_tm_152;
-	power_1 13521.7312+10364.1711j;
+	constant_power_1 13521.7312+10364.1711j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:669 {
+object triplex_load:669 {
 	name R2-12-47-2_tn_345;
 	phases CS;
 	parent R2-12-47-2_tm_153;
-	power_1 13335.0119+9536.9766j;
+	constant_power_1 13335.0119+9536.9766j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:670 {
+object triplex_load:670 {
 	name R2-12-47-2_tn_346;
 	phases AS;
 	parent R2-12-47-2_tm_154;
-	power_1 74943.6863+60892.7605j;
+	constant_power_1 74943.6863+60892.7605j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:671 {
+object triplex_load:671 {
 	name R2-12-47-2_tn_347;
 	phases CS;
 	parent R2-12-47-2_tm_155;
-	power_1 26670.0237+19073.9533j;
+	constant_power_1 26670.0237+19073.9533j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:672 {
+object triplex_load:672 {
 	name R2-12-47-2_tn_348;
 	phases AS;
 	parent R2-12-47-2_tm_156;
-	power_1 59954.949+48714.2084j;
+	constant_power_1 59954.949+48714.2084j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:673 {
+object triplex_load:673 {
 	name R2-12-47-2_tn_349;
 	phases AS;
 	parent R2-12-47-2_tm_157;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:674 {
+object triplex_load:674 {
 	name R2-12-47-2_tn_350;
 	phases BS;
 	parent R2-12-47-2_tm_158;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:675 {
+object triplex_load:675 {
 	name R2-12-47-2_tn_351;
 	phases CS;
 	parent R2-12-47-2_tm_159;
-	power_1 8001.0071+5722.186j;
+	constant_power_1 8001.0071+5722.186j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:676 {
+object triplex_load:676 {
 	name R2-12-47-2_tn_352;
 	phases CS;
 	parent R2-12-47-2_tm_160;
-	power_1 26670.0237+19073.9533j;
+	constant_power_1 26670.0237+19073.9533j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:677 {
+object triplex_load:677 {
 	name R2-12-47-2_tn_353;
 	phases CS;
 	parent R2-12-47-2_tm_161;
-	power_1 26670.0237+19073.9533j;
+	constant_power_1 26670.0237+19073.9533j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:678 {
+object triplex_load:678 {
 	name R2-12-47-2_tn_354;
 	phases AS;
 	parent R2-12-47-2_tm_162;
-	power_1 8993.2424+7307.1313j;
+	constant_power_1 8993.2424+7307.1313j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:679 {
+object triplex_load:679 {
 	name R2-12-47-2_tn_355;
 	phases CS;
 	parent R2-12-47-2_tm_163;
-	power_1 26670.0237+19073.9533j;
+	constant_power_1 26670.0237+19073.9533j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:680 {
+object triplex_load:680 {
 	name R2-12-47-2_tn_356;
 	phases CS;
 	parent R2-12-47-2_tm_164;
-	power_1 13335.0119+9536.9766j;
+	constant_power_1 13335.0119+9536.9766j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:681 {
+object triplex_load:681 {
 	name R2-12-47-2_tn_357;
 	phases CS;
 	parent R2-12-47-2_tm_165;
-	power_1 45339.0403+32425.7206j;
+	constant_power_1 45339.0403+32425.7206j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:682 {
+object triplex_load:682 {
 	name R2-12-47-2_tn_358;
 	phases CS;
 	parent R2-12-47-2_tm_166;
-	power_1 26670.0237+19073.9533j;
+	constant_power_1 26670.0237+19073.9533j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:683 {
+object triplex_load:683 {
 	name R2-12-47-2_tn_359;
 	phases AS;
 	parent R2-12-47-2_tm_167;
-	power_1 52460.5804+42624.9323j;
+	constant_power_1 52460.5804+42624.9323j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:684 {
+object triplex_load:684 {
 	name R2-12-47-2_tn_360;
 	phases AS;
 	parent R2-12-47-2_tm_168;
-	power_1 59954.949+48714.2084j;
+	constant_power_1 59954.949+48714.2084j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:685 {
+object triplex_load:685 {
 	name R2-12-47-2_tn_361;
 	phases AS;
 	parent R2-12-47-2_tm_169;
-	power_1 29977.4745+24357.1042j;
+	constant_power_1 29977.4745+24357.1042j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:686 {
+object triplex_load:686 {
 	name R2-12-47-2_tn_362;
 	phases AS;
 	parent R2-12-47-2_tm_170;
-	power_1 29977.4745+24357.1042j;
+	constant_power_1 29977.4745+24357.1042j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:687 {
+object triplex_load:687 {
 	name R2-12-47-2_tn_363;
 	phases AS;
 	parent R2-12-47-2_tm_171;
-	power_1 14988.7373+12178.5521j;
+	constant_power_1 14988.7373+12178.5521j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:688 {
+object triplex_load:688 {
 	name R2-12-47-2_tn_364;
 	phases AS;
 	parent R2-12-47-2_tm_172;
-	power_1 8993.2424+7307.1313j;
+	constant_power_1 8993.2424+7307.1313j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:689 {
+object triplex_load:689 {
 	name R2-12-47-2_tn_365;
 	phases BS;
 	parent R2-12-47-2_tm_173;
-	power_1 16226.0774+12437.0053j;
+	constant_power_1 16226.0774+12437.0053j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:690 {
+object triplex_load:690 {
 	name R2-12-47-2_tn_366;
 	phases CS;
 	parent R2-12-47-2_tm_174;
-	power_1 8001.0071+5722.186j;
+	constant_power_1 8001.0071+5722.186j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:691 {
+object triplex_load:691 {
 	name R2-12-47-2_tn_367;
 	phases AS;
 	parent R2-12-47-2_tm_175;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:692 {
+object triplex_load:692 {
 	name R2-12-47-2_tn_368;
 	phases BS;
 	parent R2-12-47-2_tm_176;
-	power_1 27043.4623+20728.3422j;
+	constant_power_1 27043.4623+20728.3422j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:693 {
+object triplex_load:693 {
 	name R2-12-47-2_tn_369;
 	phases CS;
 	parent R2-12-47-2_tm_177;
-	power_1 26670.0237+19073.9533j;
+	constant_power_1 26670.0237+19073.9533j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:694 {
+object triplex_load:694 {
 	name R2-12-47-2_tn_370;
 	phases AS;
 	parent R2-12-47-2_tm_178;
-	power_1 8993.2424+7307.1313j;
+	constant_power_1 8993.2424+7307.1313j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:695 {
+object triplex_load:695 {
 	name R2-12-47-2_tn_371;
 	phases BS;
 	parent R2-12-47-2_tm_179;
-	power_1 8113.0387+6218.5027j;
+	constant_power_1 8113.0387+6218.5027j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:696 {
+object triplex_load:696 {
 	name R2-12-47-2_tn_372;
 	phases CS;
 	parent R2-12-47-2_tm_180;
-	power_1 8001.0071+5722.186j;
+	constant_power_1 8001.0071+5722.186j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:697 {
+object triplex_load:697 {
 	name R2-12-47-2_tn_373;
 	phases AS;
 	parent R2-12-47-2_tm_181;
-	power_1 59954.949+48714.2084j;
+	constant_power_1 59954.949+48714.2084j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:698 {
+object triplex_load:698 {
 	name R2-12-47-2_tn_374;
 	phases BS;
 	parent R2-12-47-2_tm_182;
-	power_1 27043.4623+20728.3422j;
+	constant_power_1 27043.4623+20728.3422j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:699 {
+object triplex_load:699 {
 	name R2-12-47-2_tn_375;
 	phases BS;
 	parent R2-12-47-2_tm_183;
-	power_1 27043.4623+20728.3422j;
+	constant_power_1 27043.4623+20728.3422j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:700 {
+object triplex_load:700 {
 	name R2-12-47-2_tn_376;
 	phases CS;
 	parent R2-12-47-2_tm_184;
-	power_1 40005.0356+28610.9299j;
+	constant_power_1 40005.0356+28610.9299j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:701 {
+object triplex_load:701 {
 	name R2-12-47-2_tn_377;
 	phases CS;
 	parent R2-12-47-2_tm_185;
-	power_1 13335.0119+9536.9766j;
+	constant_power_1 13335.0119+9536.9766j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:702 {
+object triplex_load:702 {
 	name R2-12-47-2_tn_378;
 	phases CS;
 	parent R2-12-47-2_tm_186;
-	power_1 53340.0474+38147.9066j;
+	constant_power_1 53340.0474+38147.9066j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:703 {
+object triplex_load:703 {
 	name R2-12-47-2_tn_379;
 	phases CS;
 	parent R2-12-47-2_tm_187;
-	power_1 142417.9267+101854.9105j;
+	constant_power_1 142417.9267+101854.9105j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:704 {
+object triplex_load:704 {
 	name R2-12-47-2_tn_380;
 	phases AS;
 	parent R2-12-47-2_tm_188;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
@@ -14634,44 +14634,44 @@ object triplex_node:704 {
 	};
 }
 
-object triplex_node:705 {
+object triplex_load:705 {
 	name R2-12-47-2_tn_381;
 	phases BS;
 	parent R2-12-47-2_tm_189;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 -60-103.92j;
 	voltage_2 -60-103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:706 {
+object triplex_load:706 {
 	name R2-12-47-2_tn_382;
 	phases CS;
 	parent R2-12-47-2_tm_190;
-	power_1 2300+1200j;
+	constant_power_1 2300+1200j;
 	voltage_1 -60+103.92j;
 	voltage_2 -60+103.92j;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:707 {
+object triplex_load:707 {
 	name R2-12-47-2_tn_383;
 	phases AS;
 	parent R2-12-47-2_tm_191;
-	power_1 14988.7373+12178.5521j;
+	constant_power_1 14988.7373+12178.5521j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;
 	nominal_voltage 120;
 }
 
-object triplex_node:708 {
+object triplex_load:708 {
 	name R2-12-47-2_tn_384;
 	phases AS;
 	parent R2-12-47-2_tm_192;
-	power_1 29977.4745+24357.1042j;
+	constant_power_1 29977.4745+24357.1042j;
 	voltage_1 120;
 	voltage_2 120;
 	voltage_N 0;

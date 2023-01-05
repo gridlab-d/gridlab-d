@@ -16,6 +16,7 @@
 #define MAXSIZE 10000
 
 #include <stdarg.h>
+
 #include "gridlabd.h"
 
 class branch {

@@ -9,16 +9,18 @@
 #ifndef _CMDARG_H
 #define _CMDARG_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "globals.h"
+//#ifdef __cplusplus
+//extern "C" {
+//#endif
 
-STATUS cmdarg_load(int argc,char *argv[]);
+
+STATUS cmdarg_load(int argc, char *argv[]);
 int cmdarg_runoption(const char *value);
 
-#ifdef __cplusplus
-}
-#endif
+//#ifdef __cplusplus
+//}
+//#endif
 
 #endif
 /**@}**/

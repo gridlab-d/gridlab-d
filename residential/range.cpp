@@ -10,10 +10,10 @@
 	@{
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "range.h"
 
@@ -145,7 +145,7 @@ int range::create()
 	Tinlet = 60.0;		// default set here, but published by the model for users to set this value
 	oven_demand = 0.0;	
 	
-	heat_needed = FALSE;	
+	heat_needed = false;
 	heat_mode = ELECTRIC;
 	is_range_on = 0;
 	Tw = 0.0;
@@ -410,7 +410,7 @@ void range::thermostat(TIMESTAMP t0, TIMESTAMP t1){
 				
 					{	
 					
-						heat_needed = TRUE;
+						heat_needed = true;
 						oven_check = true;
 						remainon = true;
 						if (time_oven_operation == 0)
@@ -421,13 +421,13 @@ void range::thermostat(TIMESTAMP t0, TIMESTAMP t1){
 			
 			if (Tw+TSTAT_PRECISION > Toff || (time_oven_operation >= time_oven_setting))
 			{
-					heat_needed = FALSE;
+					heat_needed = false;
 					oven_check = false;
 					
 			} 
 			if (Tw-TSTAT_PRECISION < Ton && (time_oven_operation <time_oven_setting) && remainon == true)
 			{
-					heat_needed = TRUE;
+					heat_needed = true;
 					oven_check = true;
 			}
 			if (time_oven_operation >= time_oven_setting)
@@ -444,7 +444,7 @@ void range::thermostat(TIMESTAMP t0, TIMESTAMP t1){
 			break;
 		case PARTIAL:
 		case EMPTY:
-			heat_needed = TRUE; // if we aren't full, fill 'er up!
+			heat_needed = true; // if we aren't full, fill 'er up!
 			break;
 		default:
 			GL_THROW("range thermostat() detected that the oven is in an unknown state");
@@ -562,17 +562,17 @@ TIMESTAMP range::sync(TIMESTAMP t0, TIMESTAMP t1)
 		}		
 
 	if(re_override == OV_ON){
-		heat_needed = TRUE;
+		heat_needed = true;
 	} else if(re_override == OV_OFF){
-		heat_needed = FALSE;
+		heat_needed = false;
 	}
 
 	if(Tw > 212.0 - thermostat_deadband){ // if it's trying boil, turn it off!
-		heat_needed = FALSE;
+		heat_needed = false;
 		is_range_on = 0;
 	}
 	// determine the power used
-	if (heat_needed == TRUE){
+	if (heat_needed == true){
 		/* power_kw */ load.total = heating_element_capacity * (heat_mode == GASHEAT ? 0.01 : 1.0);
 		is_range_on = 1;
 	} else {
@@ -810,7 +810,7 @@ case CT_STAGE_3_ONLY:
 	case CT_STOPPED: 
 		
 		// nothing running
-		load.power = load.current = load.admittance = complex(0,0,J);
+		load.power = load.current = load.admittance = gld::complex(0,0,J);
 		
 		// time to next expected state_cooktop change
 		//dt = (enduse_demand_cooktop<=0) ? -1 : 	dt = 3600/enduse_demand_cooktop; 
@@ -823,8 +823,8 @@ case CT_STAGE_3_ONLY:
 		//motor_on_off = motor_coil_on_off = both_coils_on_off = 1;
 		cycle_time_cooktop -= dt1;
 
-		load.power = load.current = complex(0,0,J);
-		load.admittance = complex((cooktop_coil_power[0])/1000,0,J);
+		load.power = load.current = gld::complex(0,0,J);
+		load.admittance = gld::complex((cooktop_coil_power[0])/1000,0,J);
 
 		dt1 = cycle_time_cooktop;
 		break;
@@ -834,8 +834,8 @@ case CT_STAGE_3_ONLY:
 	//motor_on_off = motor_coil_on_off = both_coils_on_off = 1;
 	cycle_time_cooktop -= dt1;
 
-	load.power = load.current = complex(0,0,J);
-	load.admittance = complex((cooktop_coil_power[1])/1000,0,J);
+	load.power = load.current = gld::complex(0,0,J);
+	load.admittance = gld::complex((cooktop_coil_power[1])/1000,0,J);
 
 	dt1 = cycle_time_cooktop;
 	break;
@@ -845,8 +845,8 @@ case CT_STAGE_3_ONLY:
 	//motor_on_off = motor_coil_on_off = both_coils_on_off = 1;
 	cycle_time_cooktop -= dt1;
 
-	load.power = load.current = complex(0,0,J);
-	load.admittance = complex((cooktop_coil_power[2])/1000,0,J);
+	load.power = load.current = gld::complex(0,0,J);
+	load.admittance = gld::complex((cooktop_coil_power[2])/1000,0,J);
 
 	dt1 = cycle_time_cooktop;
 	break;
@@ -854,8 +854,8 @@ case CT_STAGE_3_ONLY:
 	case CT_STALLED:
 
 		// running in constant impedance mode
-		load.power = load.current = complex(0,0,J);
-		load.admittance = complex(1)/stall_impedance;
+		load.power = load.current = gld::complex(0,0,J);
+		load.admittance = gld::complex(1)/stall_impedance;
 
 		// time to trip
 		dt1 = trip_delay;
@@ -865,7 +865,7 @@ case CT_STAGE_3_ONLY:
 	case CT_TRIPPED:
 
 		// nothing running
-		load.power = load.current = load.admittance = complex(0,0,J);
+		load.power = load.current = load.admittance = gld::complex(0,0,J);
 		
 		// time to next expected state change
 		dt1 = reset_delay; 
@@ -936,7 +936,7 @@ void range::set_time_to_transition(void)
 
 	switch (current_model) {
 		case ONENODE:
-			if (heat_needed == FALSE)
+			if (heat_needed == false)
 				time_to_transition = new_time_1node(Tw, Ton);
 			else if (load_state == RECOVERING)
 				time_to_transition = new_time_1node(Tw, Toff);
@@ -978,7 +978,7 @@ enumeration range::set_current_model_and_load_state(void)
 			{
 				// overriding the plc code ignoring thermostat logic
 				// heating will always be on while in two zone model
-				heat_needed = TRUE;
+				heat_needed = true;
 				//current_model = TWONODE;//
 				current_model = ONENODE;
 				load_state = RECOVERING;
@@ -993,7 +993,7 @@ enumeration range::set_current_model_and_load_state(void)
 			{
 
 				bool cur_heat_needed = heat_needed;
-				heat_needed = TRUE;
+				heat_needed = true;
 				double dhdt_full_temp = dhdt(height);
 				if (dhdt_full_temp < 0)
 				{
@@ -1021,7 +1021,7 @@ enumeration range::set_current_model_and_load_state(void)
 
 			current_model = ONENODE;
 
-			heat_needed = TRUE;
+			heat_needed = true;
 
 			if (dhdt_now < 0 && (dhdt_now * dhdt_empty) >= 0)
 				load_state = DEPLETING;
@@ -1096,7 +1096,7 @@ SingleZone:
 			break;
 	}
 
-	if (heat_needed == TRUE)
+	if (heat_needed == true)
 		power_state = PS_ON;
 	else
 		power_state = PS_OFF;
@@ -1226,14 +1226,14 @@ double range::get_Tambient(enumeration loc)
 	//return pHouse->get_Tair()*ratio + pHouse->get_Tout()*(1-ratio);
 	return *pTair * ratio + *pTout *(1-ratio);
 }
-
-void range::wrong_model(enumeration msg)
-{
-	char *errtxt[] = {"model is not one-zone","model is not two-zone"};
-	OBJECT *obj = OBJECTHDR(this);
-	gl_warning("%s (range:%d): %s", obj->name?obj->name:"(anonymous object)", obj->id, errtxt[msg]);
-	throw msg; // this must be caught by the range code, not by the core
-}
+//TODO: Take a look at this to see if it's needed.
+//void range::wrong_model(enumeration msg)
+//{
+//	char *errtxt[] = {"model is not one-zone","model is not two-zone"};
+//	OBJECT *obj = OBJECTHDR(this);
+//	gl_warning("%s (range:%d): %s", obj->name?obj->name:"(anonymous object)", obj->id, errtxt[msg]);
+//	throw msg; // this must be caught by the range code, not by the core
+//}
 
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE

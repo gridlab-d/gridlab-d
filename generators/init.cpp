@@ -1,10 +1,11 @@
 // $Id$
 // Copyright (C) 2020 Battelle Memorial Institute
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+
 #include "gridlabd.h"
 
 #define _GENERATORS_GLOBALS
@@ -21,19 +22,22 @@
 #include "central_dg_control.h"
 #include "controller_dg.h"
 #include "inverter_dyn.h"
+#include "sync_ctrl.h"
+#include "energy_storage.h"
 
 //Define defaults, since many use them and they aren't here yet
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 {
-	if (set_callback(fntable)==NULL)
+	if (set_callback(fntable)==nullptr)
 	{
 		errno = EINVAL;
-		return NULL;
+		return nullptr;
 	}
 
 	/* Publish external global variables */
 	gl_global_create("generators::default_line_voltage",PT_double,&default_line_voltage,PT_UNITS,"V",PT_DESCRIPTION,"line voltage (L-N) to use when no circuit is attached",NULL);
 	gl_global_create("generators::enable_subsecond_models", PT_bool, &enable_subsecond_models,PT_DESCRIPTION,"Enable deltamode capabilities within the generators module",NULL);
+	gl_global_create("generators::all_generator_delta", PT_bool, &all_generator_delta, PT_DESCRIPTION, "Forces all generator objects that are capable to participate in deltamode",NULL);
 	gl_global_create("generators::deltamode_timestep", PT_double, &deltamode_timestep_publish,PT_UNITS,"ns",PT_DESCRIPTION,"Desired minimum timestep for deltamode-related simulations",NULL);
 	gl_global_create("generators::default_temperature_value", PT_double, &default_temperature_value,PT_UNITS,"degF",PT_DESCRIPTION,"Temperature when no climate module is detected",NULL);
 
@@ -47,7 +51,9 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new central_dg_control(module);
 	new controller_dg(module);
 	new inverter_dyn(module);
-	
+	new sync_ctrl(module);
+	new energy_storage(module);
+
 	/* always return the first class registered */
 	return diesel_dg::oclass;
 }
@@ -55,7 +61,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 //Call function for scheduling deltamode
 void schedule_deltamode_start(TIMESTAMP tstart)
 {
-	if (enable_subsecond_models == true)	//Make sure the overall mode is enabled
+	if (enable_subsecond_models)	//Make sure the overall mode is enabled
 	{
 		if ( (tstart<deltamode_starttime) && ((tstart-gl_globalclock)<0x7fffffff )) // cannot exceed 31 bit integer
 			deltamode_starttime = tstart;	//Smaller and valid, store it
@@ -78,13 +84,13 @@ void allocate_deltamode_arrays(void)
 {
 	int obj_idx;
 
-	if ((gen_object_current == -1) || (delta_objects==NULL))
+	if ((gen_object_current == -1) || (delta_objects==nullptr))
 	{
 		//Allocate the deltamode object array
 		delta_objects = (OBJECT**)gl_malloc(gen_object_count*sizeof(OBJECT*));
 
 		//Make sure it worked
-		if (delta_objects == NULL)
+		if (delta_objects == nullptr)
 		{
 			GL_THROW("Failed to allocate deltamode objects array for generators module!");
 			/*  TROUBLESHOOT
@@ -98,7 +104,7 @@ void allocate_deltamode_arrays(void)
 		delta_functions = (FUNCTIONADDR*)gl_malloc(gen_object_count*sizeof(FUNCTIONADDR));
 
 		//Make sure it worked
-		if (delta_functions == NULL)
+		if (delta_functions == nullptr)
 		{
 			GL_THROW("Failed to allocate deltamode objects function array for generators module!");
 			/*  TROUBLESHOOT
@@ -112,7 +118,7 @@ void allocate_deltamode_arrays(void)
 		post_delta_functions = (FUNCTIONADDR*)gl_malloc(gen_object_count*sizeof(FUNCTIONADDR));
 
 		//Make sure it worked
-		if (post_delta_functions == NULL)
+		if (post_delta_functions == nullptr)
 		{
 			GL_THROW("Failed to allocate deltamode objects function array for generators module!");
 			//Defined above
@@ -122,7 +128,7 @@ void allocate_deltamode_arrays(void)
 		delta_preupdate_functions = (FUNCTIONADDR*)gl_malloc(gen_object_count*sizeof(FUNCTIONADDR));
 
 		//Make sure it worked
-		if (delta_preupdate_functions == NULL)
+		if (delta_preupdate_functions == nullptr)
 		{
 			GL_THROW("Failed to allocate deltamode objects function array for generators module!");
 			//Defined above
@@ -131,10 +137,10 @@ void allocate_deltamode_arrays(void)
 		//Null all of these, just for a baseline
 		for (obj_idx=0; obj_idx<gen_object_count; obj_idx++)
 		{
-			delta_objects[obj_idx] = NULL;
-			delta_functions[obj_idx] = NULL;
-			post_delta_functions[obj_idx] = NULL;
-			delta_preupdate_functions[obj_idx] = NULL;
+			delta_objects[obj_idx] = nullptr;
+			delta_functions[obj_idx] = nullptr;
+			post_delta_functions[obj_idx] = nullptr;
+			delta_preupdate_functions[obj_idx] = nullptr;
 		}
 
 		//Initialize index
@@ -153,7 +159,7 @@ EXPORT unsigned long deltamode_desired(int *flags)
 {
 	unsigned long dt_val;
 
-	if (enable_subsecond_models == true)	//Make sure we even want to run deltamode
+	if (enable_subsecond_models)	//Make sure we even want to run deltamode
 	{
 		//See if the value is worth storing, or irrelevant at this time
 		if ((deltamode_starttime>=gl_globalclock) && (deltamode_starttime<TS_NEVER))
@@ -188,7 +194,7 @@ EXPORT unsigned long preupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 	int curr_object_number;
 	STATUS status_value;
 
-	if (enable_subsecond_models == true)
+	if (enable_subsecond_models)
 	{
 		if (deltamode_timestep_publish<=0.0)
 		{
@@ -210,7 +216,7 @@ EXPORT unsigned long preupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 			for (curr_object_number=0; curr_object_number<gen_object_count; curr_object_number++)
 			{
 				//See if it has a function
-				if (delta_preupdate_functions[curr_object_number] != NULL)
+				if (delta_preupdate_functions[curr_object_number] != nullptr)
 				{
 					//Call the function
 					status_value = ((STATUS (*)(OBJECT *, TIMESTAMP, unsigned int64))(*delta_preupdate_functions[curr_object_number]))(delta_objects[curr_object_number],t0,dt);
@@ -250,7 +256,7 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 	bool event_driven = true;
 	bool delta_iter = false;
 	
-	if (enable_subsecond_models == true)
+	if (enable_subsecond_models)
 	{
 		//See if this is the first instance -- if so, update the timestep (if in-rush enabled)
 		if (deltatimestep_running < 0.0)
@@ -302,9 +308,9 @@ EXPORT SIMULATIONMODE interupdate(MODULE *module, TIMESTAMP t0, unsigned int64 d
 		}
 				
 		//Determine how to exit - event or delta driven
-		if (event_driven == false)
+		if (!event_driven)
 		{
-			if (delta_iter == true)
+			if (delta_iter)
 				return SM_DELTA_ITER;
 			else
 				return SM_DELTA;
@@ -326,10 +332,10 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 	unsigned int64 seconds_advance, temp_time;
 	int curr_object_number;
 	STATUS function_status;
-	complex temp_complex;
+	gld::complex temp_complex;
 	double *extracted_freq;
 
-	if (enable_subsecond_models == true)
+	if (enable_subsecond_models)
 	{
 		//Final item of transitioning out is resetting the next timestep so a smaller one can take its place
 		deltamode_starttime = TS_NEVER;
@@ -371,19 +377,19 @@ EXPORT STATUS postupdate(MODULE *module, TIMESTAMP t0, unsigned int64 dt)
 		}
 
 		//Apply the frequency value to the passing variable
-		temp_complex = complex(*extracted_freq*2.0*PI,0.0);
+		temp_complex = gld::complex(*extracted_freq*2.0*PI,0.0);
 
 		//Loop through delta objects and update the execution times and frequency values - only does "0" pass
 		for (curr_object_number=0; curr_object_number<gen_object_count; curr_object_number++)
 		{
 			//See if a post-update function even exists
-			if (post_delta_functions[curr_object_number] != NULL)
+			if (post_delta_functions[curr_object_number] != nullptr)
 			{
 				//See if we're in service or not
 				if ((delta_objects[curr_object_number]->in_svc_double <= gl_globaldeltaclock) && (delta_objects[curr_object_number]->out_svc_double >= gl_globaldeltaclock))
 				{
 					//Call the actual function
-					function_status = ((STATUS (*)(OBJECT *, complex *, unsigned int))(*post_delta_functions[curr_object_number]))(delta_objects[curr_object_number],&temp_complex,0);
+					function_status = ((STATUS (*)(OBJECT *, gld::complex *, unsigned int))(*post_delta_functions[curr_object_number]))(delta_objects[curr_object_number],&temp_complex,0);
 				}
 				else //Not in service
 					function_status = SUCCESS;

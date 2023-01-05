@@ -13,7 +13,7 @@ CLASS* controller::oclass = NULL;
 controller::controller(MODULE *module){
 	if (oclass==NULL)
 	{
-		oclass = gl_register_class(module,"controller",sizeof(controller),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
+		oclass = gl_register_class(module, "controller",sizeof(controller),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_AUTOLOCK);
 		if (oclass==NULL)
 			throw "unable to register class controller";
 		else
@@ -188,7 +188,7 @@ int controller::create(){
 	use_override = OU_OFF;
 	period = 0;
 	period2 = 0;
-	use_predictive_bidding = FALSE;
+	use_predictive_bidding = false;
 	controller_bid.bid_id = -1;
 	controller_bid.market_id = -1;
 	controller_bid.price = 0;
@@ -308,7 +308,7 @@ void controller::cheat(){
 
 /** convenience shorthand
  **/
-int controller::fetch_property(gld_property **prop, char *propName, OBJECT *obj){
+int controller::fetch_property(gld_property **prop, const char *propName, OBJECT *obj){
 	OBJECT *hdr = OBJECTHDR(this);
 	*prop = new gld_property(obj, propName);
 	if(!(*prop)->is_valid()){
@@ -587,7 +587,7 @@ int controller::init(OBJECT *parent){
 	if(demand[0] == 0 && (control_mode == CN_RAMP || control_mode == CN_DOUBLE_PRICE)){
 		GL_THROW("controller: %i, demand property not specified", hdr->id);
 	}
-	if(deadband[0] == 0 && (use_predictive_bidding == TRUE && (control_mode == CN_RAMP || control_mode == CN_DOUBLE_PRICE))){
+	if(deadband[0] == 0 && (use_predictive_bidding == true && (control_mode == CN_RAMP || control_mode == CN_DOUBLE_PRICE))){
 		GL_THROW("controller: %i, deadband property not specified", hdr->id);
 	}
 	
@@ -607,7 +607,7 @@ int controller::init(OBJECT *parent){
 		GL_THROW("controller: %i, demand property not specified", hdr->id);
 	}
 
-	if(deadband[0] == 0 && use_predictive_bidding == TRUE && control_mode == CN_DEV_LEVEL){
+	if(deadband[0] == 0 && use_predictive_bidding == true && control_mode == CN_DEV_LEVEL){
 		GL_THROW("controller: %i, deadband property not specified", hdr->id);
 	}
 
@@ -652,7 +652,7 @@ int controller::init(OBJECT *parent){
 		if(fetch_property(&pLoad, (char *)(&load), parent) == 0) {
 			return 0;
 		}
-		if(use_predictive_bidding == TRUE){
+		if(use_predictive_bidding == true){
 			if(fetch_property(&pDeadband, (char *)(&deadband), parent) == 0) {
 				return 0;
 			}
@@ -746,7 +746,7 @@ int controller::init(OBJECT *parent){
 	if(thermostat_state[0] == 0){
 		pThermostatState = NULL;
 	} else {
-		pThermostatState = gl_get_enum_by_name(parent, thermostat_state);
+		pThermostatState = gl_get_enum_by_name(parent, thermostat_state.get_string());
 		if(pThermostatState == 0){
 			gl_error("thermostat state property name \'%s\' is not published by parent class.", (char *)&thermostat_state);
 			return 0;
@@ -799,7 +799,7 @@ int controller::init(OBJECT *parent){
 
 	if(state[0] != 0){
 		// grab state pointer
-		powerstate_prop = gld_property(parent,state); // pState = gl_get_enum_by_name(parent, state);
+		powerstate_prop = gld_property(parent,state);
 		if ( !powerstate_prop.is_valid() )
 		{
 			gl_error("state property name '%s' is not published by parent object '%s'", state, get_object(parent)->get_name());
@@ -817,7 +817,7 @@ int controller::init(OBJECT *parent){
 
 	if(heating_state[0] != 0){
 		// grab state pointer
-		pHeatingState = gl_get_enum_by_name(parent, heating_state);
+		pHeatingState = gl_get_enum_by_name(parent, heating_state.get_string());
 		if(pHeatingState == 0){
 			gl_error("heating_state property name \'%s\' is not published by parent class", (char *)(&heating_state));
 			return 0;
@@ -826,7 +826,7 @@ int controller::init(OBJECT *parent){
 
 	if(cooling_state[0] != 0){
 		// grab state pointer
-		pCoolingState = gl_get_enum_by_name(parent, cooling_state);
+		pCoolingState = gl_get_enum_by_name(parent, cooling_state.get_string());
 		if(pCoolingState == 0){
 			gl_error("cooling_state property name \'%s\' is not published by parent class", (char *)(&cooling_state));
 			return 0;
@@ -1066,7 +1066,7 @@ TIMESTAMP controller::presync(TIMESTAMP t0, TIMESTAMP t1){
 			clear_price = clrP;
 			controller_bid.rebid = false;
 
-			if(use_predictive_bidding == TRUE){
+			if(use_predictive_bidding == true){
 				if((dir > 0 && clear_price < last_p) || (dir < 0 && clear_price > last_p)){
 					shift_direction = -1;
 				} else if((dir > 0 && clear_price >= last_p) || (dir < 0 && clear_price <= last_p)){
@@ -1226,7 +1226,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		powerstate_prop.getp(ps);
 	if((t1 < next_run) && (marketId == lastmkt_id)){
 		if(t1 <= next_run - bid_delay){
-			if(use_predictive_bidding == TRUE && (((control_mode == CN_RAMP || control_mode == CN_DOUBLE_PRICE) && last_setpoint != setpoint0) || (control_mode == CN_DOUBLE_RAMP && (last_heating_setpoint != heating_setpoint0 || last_cooling_setpoint != cooling_setpoint0)))) {
+			if(use_predictive_bidding == true && (((control_mode == CN_RAMP || control_mode == CN_DOUBLE_PRICE) && last_setpoint != setpoint0) || (control_mode == CN_DOUBLE_RAMP && (last_heating_setpoint != heating_setpoint0 || last_cooling_setpoint != cooling_setpoint0)))) {
 				; // do nothing
 			} else if(use_override == OU_ON && t1 == next_run - bid_delay){
 				;
@@ -1255,7 +1255,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 
 		if((t1 < next_run) && (market2Id == lastmkt_id2)){
 			if(t1 <= next_run - bid_delay2){
-				if(use_predictive_bidding == TRUE && (control_mode == CN_DEV_LEVEL && last_setpoint != setpoint0)) {
+				if(use_predictive_bidding == true && (control_mode == CN_DEV_LEVEL && last_setpoint != setpoint0)) {
 					;
 				} else {// check to see if we have changed states
 					if(!powerstate_prop.is_valid()){
@@ -1270,7 +1270,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		}
 	}
 	
-	if(use_predictive_bidding == TRUE){
+	if(use_predictive_bidding == true){
 		deadband_shift = dBand * 0.5;
 	}
 
@@ -1285,7 +1285,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 			clear_price = clrP;
 			controller_bid.rebid = false;
 
-			if(use_predictive_bidding == TRUE){
+			if(use_predictive_bidding == true){
 				if((dir > 0 && clear_price < last_p) || (dir < 0 && clear_price > last_p)){
 					shift_direction = -1;
 				} else if((dir > 0 && clear_price >= last_p) || (dir < 0 && clear_price <= last_p)){
@@ -1327,7 +1327,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		}
 
 		if(dir > 0){
-			if(use_predictive_bidding == TRUE){
+			if(use_predictive_bidding == true){
 				if ( ps == *PS_OFF && monitor > (max - deadband_shift)){
 					bid = pCap;
 				}
@@ -1351,7 +1351,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				}
 			}
 		} else if(dir < 0){
-			if(use_predictive_bidding == TRUE){
+			if(use_predictive_bidding == true){
 				if ( ps==*PS_OFF && monitor < (min + deadband_shift) )
 				{
 					bid = pCap;
@@ -1379,7 +1379,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				}
 			}
 		} else if(dir == 0){
-			if(use_predictive_bidding == TRUE){
+			if(use_predictive_bidding == true){
 				if(direction == 0.0) {
 					gl_error("the variable direction did not get set correctly.");
 				}
@@ -1452,11 +1452,11 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				} else {
 					controller_bid.state = BS_OFF;
 				}
-				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+				((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 				controller_bid.rebid = true;
 			} else {
 				controller_bid.state = BS_UNKNOWN;
-				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+				((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 				controller_bid.rebid = true;
 			}
 			if(controller_bid.bid_accepted == false){
@@ -1577,7 +1577,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				engaged = 0;
 			}
 
-			if(use_predictive_bidding == TRUE){
+			if(use_predictive_bidding == true){
 				if((dir > 0 && clear_price < last_p) || (dir < 0 && clear_price > last_p)){
 					shift_direction = -1;
 				} else if((dir > 0 && clear_price >= last_p) || (dir < 0 && clear_price <= last_p)){
@@ -1589,7 +1589,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 		}
 
 		if(dir > 0){
-			if(use_predictive_bidding == TRUE){
+			if(use_predictive_bidding == true){
 				if(ps == *PS_OFF && monitor > (max - deadband_shift)){
 					bid = pCap;
 				} else if(ps != *PS_OFF && monitor < (min + deadband_shift)){
@@ -1610,7 +1610,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				}
 			}
 		} else if(dir < 0){
-			if(use_predictive_bidding == TRUE){
+			if(use_predictive_bidding == true){
 				if(ps == *PS_OFF && monitor < (min + deadband_shift)){
 					bid = pCap;
 				} else if(ps != *PS_OFF && monitor > (max - deadband_shift)){
@@ -1631,7 +1631,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				}
 			}
 		} else if(dir == 0){
-			if(use_predictive_bidding == TRUE){
+			if(use_predictive_bidding == true){
 				if(direction == 0.0) {
 					gl_error("the variable direction did not get set correctly.");
 				} else if((monitor > max + deadband_shift || (ps != *PS_OFF && monitor > min - deadband_shift)) && direction > 0){
@@ -1701,7 +1701,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				controller_bid2.price = last_p;
 				controller_bid2.quantity = last_q;
 				controller_bid2.state = BS_UNKNOWN;
-				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit2))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt2), "submit_bid_state", "auction", (void *)&controller_bid2, (size_t)sizeof(controller_bid2));
+				((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit2))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt2), "submit_bid_state", "auction", (void *)&controller_bid2, (size_t)sizeof(controller_bid2));
 				controller_bid2.rebid = true;
 				if(controller_bid2.bid_accepted == false){
 					return TS_INVALID;
@@ -1715,7 +1715,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 					controller_bid.price = pCap;
 					controller_bid.quantity = last_q;
 					controller_bid.state = BS_UNKNOWN;
-					((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+					((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 					controller_bid.rebid = true;
 					if(controller_bid.bid_accepted == false){
 						return TS_INVALID;
@@ -1737,7 +1737,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				controller_bid.price = last_p;
 				controller_bid.quantity = last_q;
 				controller_bid.state = BS_UNKNOWN;
-				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+				((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 				controller_bid.rebid = true;
 				if(controller_bid.bid_accepted == false){
 					return TS_INVALID;
@@ -1751,7 +1751,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 					controller_bid2.price = pCap2;
 					controller_bid2.quantity = last_q;
 					controller_bid2.state = BS_UNKNOWN;
-					((void (*)(char *, char *, char *, char *, void *, size_t))(*submit2))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt2), "submit_bid_state", "auction", (void *)&controller_bid2, (size_t)sizeof(controller_bid2));
+					((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit2))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt2), "submit_bid_state", "auction", (void *)&controller_bid2, (size_t)sizeof(controller_bid2));
 					controller_bid2.rebid = true;
 					if(controller_bid2.bid_accepted == false){
 						return TS_INVALID;
@@ -1836,7 +1836,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 						break;
 				}
 			}
-			if(use_predictive_bidding == TRUE){
+			if(use_predictive_bidding == true){
 				if((thermostat_mode == TM_COOL && clear_price < last_p) || (thermostat_mode == TM_HEAT && clear_price > last_p)){
 					shift_direction = -1;
 				} else if((thermostat_mode == TM_COOL && clear_price >= last_p) || (thermostat_mode == TM_HEAT && clear_price <= last_p)){
@@ -1990,11 +1990,11 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				} else {
 					controller_bid.state = BS_OFF;
 				}
-				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+				((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 				controller_bid.rebid = true;
 			} else {
 				controller_bid.state = BS_UNKNOWN;
-				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+				((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 				controller_bid.rebid = true;
 			}
 			if(controller_bid.bid_accepted == false){
@@ -2015,7 +2015,7 @@ TIMESTAMP controller::sync(TIMESTAMP t0, TIMESTAMP t1){
 				} else {
 					controller_bid.state = BS_OFF;
 				}
-				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+				((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 				if(controller_bid.bid_accepted == false){
 					return TS_INVALID;
 				}
@@ -2091,7 +2091,7 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 			monitor = (doubleTemp[0]+doubleTemp[1])/2;
 			
 			if(dir > 0){
-				if(use_predictive_bidding == TRUE){
+				if(use_predictive_bidding == true){
 					if ( ps == *PS_OFF && monitor > (max - deadband_shift)){
 						bid = pCap;
 					}
@@ -2115,7 +2115,7 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 					}
 				}
 			} else if(dir < 0){
-				if(use_predictive_bidding == TRUE){
+				if(use_predictive_bidding == true){
 					if ( ps==*PS_OFF && monitor < (min + deadband_shift) )
 					{
 						bid = pCap;
@@ -2143,7 +2143,7 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 					}
 				}
 			} else if(dir == 0){
-				if(use_predictive_bidding == TRUE){
+				if(use_predictive_bidding == true){
 					if(direction == 0.0) {
 						gl_error("the variable direction did not get set correctly.");
 					}
@@ -2237,11 +2237,11 @@ TIMESTAMP controller::postsync(TIMESTAMP t0, TIMESTAMP t1){
 				} else {
 					controller_bid.state = BS_OFF;
 				}
-				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+				((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 				controller_bid.rebid = true;
 			} else {
 				controller_bid.state = BS_UNKNOWN;
-				((void (*)(char *, char *, char *, char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
+				((void (*)(char *, char *, const char *, const char *, void *, size_t))(*submit))((char *)gl_name(hdr, ctrname, 1024), (char *)(&pMkt), "submit_bid_state", "auction", (void *)&controller_bid, (size_t)sizeof(controller_bid));
 				controller_bid.rebid = true;
 			}
 			if(controller_bid.bid_accepted == false){

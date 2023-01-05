@@ -20,14 +20,14 @@ public:
 	double tapChangePer;
 	double Vlow;
 	double Vhigh;
-	complex V2[3], Vcomp[3];
+	gld::complex V2[3], Vcomp[3];
 	int16 tap[3];
 	int16 prev_tap[3];
-	complex volt[3];
-	complex D_mat[3][3];
-	complex W_mat[3][3];
-	complex curr[3];
-	complex check_voltage[3];//Voltage that is being checked against if internal. If externally obtained (through cosim), this is the voltage value
+	gld::complex volt[3];
+	gld::complex D_mat[3][3];
+	gld::complex W_mat[3][3];
+	gld::complex curr[3];
+	gld::complex check_voltage[3];//Voltage that is being checked against if internal. If externally obtained (through cosim), this is the voltage value
 	OBJECT *RemoteNode;		 //Remote node for sensing voltage values in REMOTE_NODE Control method
 	double tap_A_change_count; //Counter for the number of times tap_A changes.
 	double tap_B_change_count; //Counter for the number of times tap_B changes.

@@ -41,8 +41,8 @@ public:
     int create(void);
 
 protected:
-	void load_matrix_based_configuration(complex Zabc_mat[3][3], complex Yabc_mat[3][3]);
-	void recalc_line_matricies(complex Zabc_mat[3][3], complex Yabc_mat[3][3]);
+	void load_matrix_based_configuration(gld::complex Zabc_mat[3][3], gld::complex Yabc_mat[3][3]);
+	void recalc_line_matricies(gld::complex Zabc_mat[3][3], gld::complex Yabc_mat[3][3]);
 };
 
 #include "triplex_line.h"

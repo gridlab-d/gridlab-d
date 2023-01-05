@@ -1,9 +1,12 @@
+#include "config.h"
 #ifdef HAVE_MYSQL
 
 #include "group_recorder.h"
+
 #include <sstream>
 #include <iostream>
 #include <algorithm>
+
 #include "database.h"
 #include "query_engine.h"
 

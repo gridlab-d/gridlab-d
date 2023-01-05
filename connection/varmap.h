@@ -7,6 +7,7 @@
 #define _VARMAP_H
 
 #include "gridlabd.h"
+
 #include <string>
 #include <memory>
 #include <variant>
@@ -14,7 +15,7 @@
 using std::string;
 
 class last_value_buffer {
-#if 1 // C++11 and earlier features.
+#if 0 // C++11 and earlier features.
 private:
 	enum ValueType {STRING, BOOL, COMPLEX, INT, DOUBLE};
 	union DataType {
@@ -71,6 +72,11 @@ public:
 	last_value_buffer() {
 		last_value = "";
 	}
+    ~last_value_buffer() = default;
+    last_value_buffer(const last_value_buffer&) = default;
+    last_value_buffer(last_value_buffer&&) = default;
+    last_value_buffer& operator=(const last_value_buffer&) = default;
+    last_value_buffer& operator=(last_value_buffer&&) = default;
 
 	template<class V>
 	V get() {return std::get_if<V>(&last_value); }

@@ -6,10 +6,10 @@
 	@{
 */
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 
 #include "impedance_dump.h"
 
@@ -17,15 +17,15 @@
 // impedance_dump CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
 
-CLASS* impedance_dump::oclass = NULL;
+CLASS* impedance_dump::oclass = nullptr;
 
 impedance_dump::impedance_dump(MODULE *mod)
 {
-	if (oclass==NULL)
+	if (oclass==nullptr)
 	{
 		// register the class definition
 		oclass = gl_register_class(mod,"impedance_dump",sizeof(impedance_dump),PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			GL_THROW("unable to register object class implemented by %s",__FILE__);
 
 		// publish the class properties
@@ -58,25 +58,25 @@ int impedance_dump::init(OBJECT *parent)
 	return 1;
 }
 
-int impedance_dump::isa(char *classname)
+int impedance_dump::isa(const char *classname)
 {
 	return strcmp(classname,"impedance_dump")==0;
 }
 
-complex * impedance_dump::get_complex(OBJECT *obj, char *name)
+gld::complex * impedance_dump::get_complex(OBJECT *obj, const char *name)
 {
 	PROPERTY *p = gl_get_property(obj,name);
-	if (p==NULL || p->ptype!=PT_complex)
-		return NULL;
-	return (complex*)GETADDR(obj,p);
+	if (p==nullptr || p->ptype!=PT_complex)
+		return nullptr;
+	return (gld::complex*)GETADDR(obj,p);
 }
 
 int impedance_dump::dump(TIMESTAMP t)
 {
 	FINDLIST *capacitors, *fuses, *ohlines, *reclosers, *regulators, *relays, *sectionalizers, *series_reactors, *switches, *transformers, *tplines, *uglines;
-	OBJECT *obj = NULL;
+	OBJECT *obj = nullptr;
 	char buffer[1024];
-	FILE *fn = NULL;
+	FILE *fn = nullptr;
 	int index = 0;
 	int count = 0;
 	int x = 0;
@@ -113,7 +113,7 @@ int impedance_dump::dump(TIMESTAMP t)
 		uglines = gl_find_objects(FL_NEW,FT_CLASS,SAME,"underground_line",AND,FT_GROUPID,SAME,group.get_string(),FT_END);
 		capacitors = gl_find_objects(FL_NEW,FT_CLASS,SAME,"capacitor",AND,FT_GROUPID,SAME,group.get_string(),FT_END);
 	}
-	if(fuses == NULL && ohlines == NULL && reclosers == NULL && regulators == NULL && relays == NULL && sectionalizers == NULL && series_reactors == NULL && switches == NULL && transformers == NULL && tplines == NULL && uglines == NULL){
+	if(fuses == nullptr && ohlines == nullptr && reclosers == nullptr && regulators == nullptr && relays == nullptr && sectionalizers == nullptr && series_reactors == nullptr && switches == nullptr && transformers == nullptr && tplines == nullptr && uglines == nullptr){
 		gl_error("No link objects were found.");
 		return 0;
 		/* TROUBLESHOOT
@@ -123,7 +123,7 @@ int impedance_dump::dump(TIMESTAMP t)
 	
 	//open file for writing
 	fn = fopen(filename,"w");
-	if(fn == NULL){
+	if(fn == nullptr){
 		gl_error("Unable to open %s for writing.",(char *)(&filename));
 		return 0;
 	}
@@ -136,9 +136,9 @@ int impedance_dump::dump(TIMESTAMP t)
 	gl_printtime(t, timestr, 64);
 	fprintf(fn,"\t<Time>%s</Time>\n",timestr);
 	//write fuses
-	if(fuses != NULL){
+	if(fuses != nullptr){
 		pFuse = (link_object **)gl_malloc(fuses->hit_count*sizeof(link_object*));
-		if(pFuse == NULL){
+		if(pFuse == nullptr){
 			gl_error("Failed to allocate fuse array.");
 			return TS_NEVER;
 		}
@@ -147,7 +147,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				break;
 			}
 			pFuse[index] = OBJECTDATA(obj,link_object);
-			if(pFuse[index] == NULL){
+			if(pFuse[index] == nullptr){
 				gl_error("Unable to map object as a link object.");
 				return 0;
 			}
@@ -156,7 +156,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t<fuse>\n");
 
 			//write the name
-			if(obj->name != NULL){
+			if(obj->name != nullptr){
 				fprintf(fn,"\t\t<name>%s</name>\n",obj->name);
 			} else {
 				fprintf(fn,"\t\t<name>NA</name>\n");
@@ -166,14 +166,14 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<id>fuse:%d</id>\n",obj->id);
 
 			//write the from name
-			if(pFuse[index]->from->name != NULL){
+			if(pFuse[index]->from->name != nullptr){
 				fprintf(fn,"\t\t<from_node>%s:%s</from_node>\n",pFuse[index]->from->oclass->name,pFuse[index]->from->name);
 			} else {
 				fprintf(fn,"\t\t<from_node>%s:%d</from_node>\n",pFuse[index]->from->oclass->name,pFuse[index]->from->id);
 			}
 
 			//write the to name
-			if(pFuse[index]->to->name != NULL){
+			if(pFuse[index]->to->name != nullptr){
 				fprintf(fn,"\t\t<to_node>%s:%s</to_node>\n",pFuse[index]->to->oclass->name,pFuse[index]->to->name);
 			} else {
 				fprintf(fn,"\t\t<to_node>%s:%d</to_node>\n",pFuse[index]->to->oclass->name,pFuse[index]->to->id);
@@ -188,7 +188,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				node_voltage = get_complex(pFuse[index]->from,"voltage_C");
 			}
 
-			if(node_voltage == NULL){
+			if(node_voltage == nullptr){
 				gl_error("From node has no voltage.");
 				return 0;
 			}
@@ -204,7 +204,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				node_voltage = get_complex(pFuse[index]->to,"voltage_C");
 			}
 
-			if(node_voltage == NULL){
+			if(node_voltage == nullptr){
 				gl_error("From node has no voltage.");
 				return 0;
 			}
@@ -329,9 +329,9 @@ int impedance_dump::dump(TIMESTAMP t)
 
 	index = 0;
 	//write the overhead_lines
-	if(ohlines != NULL){
+	if(ohlines != nullptr){
 		pOhLine = (line **)gl_malloc(ohlines->hit_count*sizeof(line*));
-		if(pOhLine == NULL){
+		if(pOhLine == nullptr){
 			gl_error("Failed to allocate fuse array.");
 			return TS_NEVER;
 		}
@@ -340,7 +340,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				break;
 			}
 			pOhLine[index] = OBJECTDATA(obj,line);
-			if(pOhLine[index] == NULL){
+			if(pOhLine[index] == nullptr){
 				gl_error("Unable to map object as overhead_line object.");
 				return 0;
 			}
@@ -349,7 +349,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t<overhead_line>\n");
 
 			//write the name
-			if(obj->name != NULL){
+			if(obj->name != nullptr){
 				fprintf(fn,"\t\t<name>%s</name>\n",obj->name);
 			} else {
 				fprintf(fn,"\t\t<name>NA</name>\n");
@@ -359,14 +359,14 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<id>overhead_line:%d</id>\n",obj->id);
 
 			//write the from name
-			if(pOhLine[index]->from->name != NULL){
+			if(pOhLine[index]->from->name != nullptr){
 				fprintf(fn,"\t\t<from_node>%s:%s</from_node>\n",pOhLine[index]->from->oclass->name,pOhLine[index]->from->name);
 			} else {
 				fprintf(fn,"\t\t<from_node>%s:%d</from_node>\n",pOhLine[index]->from->oclass->name,pOhLine[index]->from->id);
 			}
 
 			//write the to name
-			if(pOhLine[index]->to->name != NULL){
+			if(pOhLine[index]->to->name != nullptr){
 				fprintf(fn,"\t\t<to_node>%s:%s</to_node>\n",pOhLine[index]->to->oclass->name,pOhLine[index]->to->name);
 			} else {
 				fprintf(fn,"\t\t<to_node>%s:%d</to_node>\n",pOhLine[index]->to->oclass->name,pOhLine[index]->to->id);
@@ -381,7 +381,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				node_voltage = get_complex(pOhLine[index]->from,"voltage_C");
 			}
 
-			if(node_voltage == NULL){
+			if(node_voltage == nullptr){
 				gl_error("From node has no voltage.");
 				return 0;
 			}
@@ -397,7 +397,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				node_voltage = get_complex(pOhLine[index]->to,"voltage_C");
 			}
 
-			if(node_voltage == NULL){
+			if(node_voltage == nullptr){
 				gl_error("From node has no voltage.");
 				return 0;
 			}
@@ -525,9 +525,9 @@ int impedance_dump::dump(TIMESTAMP t)
 
 	index = 0;
 	//write reclosers
-	if(reclosers != NULL){
+	if(reclosers != nullptr){
 		pRecloser = (link_object **)gl_malloc(reclosers->hit_count*sizeof(link_object*));
-		if(pRecloser == NULL){
+		if(pRecloser == nullptr){
 			gl_error("Failed to allocate fuse array.");
 			return TS_NEVER;
 		}
@@ -536,7 +536,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				break;
 			}
 			pRecloser[index] = OBJECTDATA(obj,link_object);
-			if(pRecloser[index] == NULL){
+			if(pRecloser[index] == nullptr){
 				gl_error("Unable to map object as a link object.");
 				return 0;
 			}
@@ -545,7 +545,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t<recloser>\n");
 
 			//write the name
-			if(obj->name != NULL){
+			if(obj->name != nullptr){
 				fprintf(fn,"\t\t<name>%s</name>\n",obj->name);
 			} else {
 				fprintf(fn,"\t\t<name>NA</name>\n");
@@ -555,14 +555,14 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<id>recloser:%d</id>\n",obj->id);
 
 			//write the from name
-			if(pRecloser[index]->from->name != NULL){
+			if(pRecloser[index]->from->name != nullptr){
 				fprintf(fn,"\t\t<from_node>%s:%s</from_node>\n",pRecloser[index]->from->oclass->name,pRecloser[index]->from->name);
 			} else {
 				fprintf(fn,"\t\t<from_node>%s:%d</from_node>\n",pRecloser[index]->from->oclass->name,pRecloser[index]->from->id);
 			}
 
 			//write the to name
-			if(pRecloser[index]->to->name != NULL){
+			if(pRecloser[index]->to->name != nullptr){
 				fprintf(fn,"\t\t<to_node>%s:%s</to_node>\n",pRecloser[index]->to->oclass->name,pRecloser[index]->to->name);
 			} else {
 				fprintf(fn,"\t\t<to_node>%s:%d</to_node>\n",pRecloser[index]->to->oclass->name,pRecloser[index]->to->id);
@@ -577,7 +577,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				node_voltage = get_complex(pRecloser[index]->from,"voltage_C");
 			}
 
-			if(node_voltage == NULL){
+			if(node_voltage == nullptr){
 				gl_error("From node has no voltage.");
 				return 0;
 			}
@@ -593,7 +593,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				node_voltage = get_complex(pRecloser[index]->to,"voltage_C");
 			}
 
-			if(node_voltage == NULL){
+			if(node_voltage == nullptr){
 				gl_error("From node has no voltage.");
 				return 0;
 			}
@@ -718,9 +718,9 @@ int impedance_dump::dump(TIMESTAMP t)
 	
 	index = 0;
 	//write regulators
-	if(regulators != NULL){
+	if(regulators != nullptr){
 		pRegulator = (regulator **)gl_malloc(regulators->hit_count*sizeof(regulator*));
-		if(pRegulator == NULL){
+		if(pRegulator == nullptr){
 			gl_error("Failed to allocate fuse array.");
 			return TS_NEVER;
 		}
@@ -729,7 +729,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				break;
 			}
 			pRegulator[index] = OBJECTDATA(obj,regulator);
-			if(pRegulator[index] == NULL){
+			if(pRegulator[index] == nullptr){
 				gl_error("Unable to map object as a link object.");
 				return 0;
 			}
@@ -738,7 +738,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t<regulator>\n");
 
 			//write the name
-			if(obj->name != NULL){
+			if(obj->name != nullptr){
 				fprintf(fn,"\t\t<name>%s</name>\n",obj->name);
 			} else {
 				fprintf(fn,"\t\t<name>NA</name>\n");
@@ -748,14 +748,14 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<id>regulator:%d</id>\n",obj->id);
 
 			//write the from name
-			if(pRegulator[index]->from->name != NULL){
+			if(pRegulator[index]->from->name != nullptr){
 				fprintf(fn,"\t\t<from_node>%s:%s</from_node>\n",pRegulator[index]->from->oclass->name,pRegulator[index]->from->name);
 			} else {
 				fprintf(fn,"\t\t<from_node>%s:%d</from_node>\n",pRegulator[index]->from->oclass->name,pRegulator[index]->from->id);
 			}
 
 			//write the to name
-			if(pRegulator[index]->to->name != NULL){
+			if(pRegulator[index]->to->name != nullptr){
 				fprintf(fn,"\t\t<to_node>%s:%s</to_node>\n",pRegulator[index]->to->oclass->name,pRegulator[index]->to->name);
 			} else {
 				fprintf(fn,"\t\t<to_node>%s:%d</to_node>\n",pRegulator[index]->to->oclass->name,pRegulator[index]->to->id);
@@ -770,7 +770,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				node_voltage = get_complex(pRegulator[index]->from,"voltage_C");
 			}
 
-			if(node_voltage == NULL){
+			if(node_voltage == nullptr){
 				gl_error("From node has no voltage.");
 				return 0;
 			}
@@ -786,7 +786,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				node_voltage = get_complex(pRegulator[index]->to,"voltage_C");
 			}
 
-			if(node_voltage == NULL){
+			if(node_voltage == nullptr){
 				gl_error("From node has no voltage.");
 				return 0;
 			}
@@ -915,9 +915,9 @@ int impedance_dump::dump(TIMESTAMP t)
 	
 	index = 0;
 	//write relays
-	if(relays != NULL){
+	if(relays != nullptr){
 		pRelay = (link_object **)gl_malloc(relays->hit_count*sizeof(link_object*));
-		if(pRelay == NULL){
+		if(pRelay == nullptr){
 			gl_error("Failed to allocate fuse array.");
 			return TS_NEVER;
 		}
@@ -926,7 +926,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				break;
 			}
 			pRelay[index] = OBJECTDATA(obj,link_object);
-			if(pRelay[index] == NULL){
+			if(pRelay[index] == nullptr){
 				gl_error("Unable to map object as a link object.");
 				return 0;
 			}
@@ -935,7 +935,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t<relay>\n");
 
 			//write the name
-			if(obj->name != NULL){
+			if(obj->name != nullptr){
 				fprintf(fn,"\t\t<name>%s</name>\n",obj->name);
 			} else {
 				fprintf(fn,"\t\t<name>NA</name>\n");
@@ -945,14 +945,14 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<id>relay:%d</id>\n",obj->id);
 
 			//write the from name
-			if(pRelay[index]->from->name != NULL){
+			if(pRelay[index]->from->name != nullptr){
 				fprintf(fn,"\t\t<from_node>%s:%s</from_node>\n",pRelay[index]->from->oclass->name,pRelay[index]->from->name);
 			} else {
 				fprintf(fn,"\t\t<from_node>%s:%d</from_node>\n",pRelay[index]->from->oclass->name,pRelay[index]->from->id);
 			}
 
 			//write the to name
-			if(pRelay[index]->to->name != NULL){
+			if(pRelay[index]->to->name != nullptr){
 				fprintf(fn,"\t\t<to_node>%s:%s</to_node>\n",pRelay[index]->to->oclass->name,pRelay[index]->to->name);
 			} else {
 				fprintf(fn,"\t\t<to_node>%s:%d</to_node>\n",pRelay[index]->to->oclass->name,pRelay[index]->to->id);
@@ -967,7 +967,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				node_voltage = get_complex(pRelay[index]->from,"voltage_C");
 			}
 
-			if(node_voltage == NULL){
+			if(node_voltage == nullptr){
 				gl_error("From node has no voltage.");
 				return 0;
 			}
@@ -983,7 +983,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				node_voltage = get_complex(pRelay[index]->to,"voltage_C");
 			}
 
-			if(node_voltage == NULL){
+			if(node_voltage == nullptr){
 				gl_error("From node has no voltage.");
 				return 0;
 			}
@@ -1108,9 +1108,9 @@ int impedance_dump::dump(TIMESTAMP t)
 	
 	index = 0;
 	//write sectionalizers
-	if(sectionalizers != NULL){
+	if(sectionalizers != nullptr){
 		pSectionalizer = (link_object **)gl_malloc(sectionalizers->hit_count*sizeof(link_object*));
-		if(pSectionalizer == NULL){
+		if(pSectionalizer == nullptr){
 			gl_error("Failed to allocate fuse array.");
 			return TS_NEVER;
 		}
@@ -1119,7 +1119,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				break;
 			}
 			pSectionalizer[index] = OBJECTDATA(obj,link_object);
-			if(pSectionalizer[index] == NULL){
+			if(pSectionalizer[index] == nullptr){
 				gl_error("Unable to map object as a link object.");
 				return 0;
 			}
@@ -1128,7 +1128,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t<sectionalizer>\n");
 
 			//write the name
-			if(obj->name != NULL){
+			if(obj->name != nullptr){
 				fprintf(fn,"\t\t<name>%s</name>\n",obj->name);
 			} else {
 				fprintf(fn,"\t\t<name>NA</name>\n");
@@ -1138,14 +1138,14 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<id>sectionalizer:%d</id>\n",obj->id);
 
 			//write the from name
-			if(pSectionalizer[index]->from->name != NULL){
+			if(pSectionalizer[index]->from->name != nullptr){
 				fprintf(fn,"\t\t<from_node>%s:%s</from_node>\n",pSectionalizer[index]->from->oclass->name,pSectionalizer[index]->from->name);
 			} else {
 				fprintf(fn,"\t\t<from_node>%s:%d</from_node>\n",pSectionalizer[index]->from->oclass->name,pSectionalizer[index]->from->id);
 			}
 
 			//write the to name
-			if(pSectionalizer[index]->to->name != NULL){
+			if(pSectionalizer[index]->to->name != nullptr){
 				fprintf(fn,"\t\t<to_node>%s:%s</to_node>\n",pSectionalizer[index]->to->oclass->name,pSectionalizer[index]->to->name);
 			} else {
 				fprintf(fn,"\t\t<to_node>%s:%d</to_node>\n",pSectionalizer[index]->to->oclass->name,pSectionalizer[index]->to->id);
@@ -1160,7 +1160,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				node_voltage = get_complex(pSectionalizer[index]->from,"voltage_C");
 			}
 
-			if(node_voltage == NULL){
+			if(node_voltage == nullptr){
 				gl_error("From node has no voltage.");
 				return 0;
 			}
@@ -1176,7 +1176,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				node_voltage = get_complex(pSectionalizer[index]->to,"voltage_C");
 			}
 
-			if(node_voltage == NULL){
+			if(node_voltage == nullptr){
 				gl_error("From node has no voltage.");
 				return 0;
 			}
@@ -1301,9 +1301,9 @@ int impedance_dump::dump(TIMESTAMP t)
 	
 	index = 0;
 	//write series reactors
-	if(series_reactors != NULL){
+	if(series_reactors != nullptr){
 		pSeriesReactor = (link_object **)gl_malloc(series_reactors->hit_count*sizeof(link_object*));
-		if(pSeriesReactor == NULL){
+		if(pSeriesReactor == nullptr){
 			gl_error("Failed to allocate fuse array.");
 			return TS_NEVER;
 		}
@@ -1312,7 +1312,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				break;
 			}
 			pSeriesReactor[index] = OBJECTDATA(obj,link_object);
-			if(pSeriesReactor[index] == NULL){
+			if(pSeriesReactor[index] == nullptr){
 				gl_error("Unable to map object as a link object.");
 				return 0;
 			}
@@ -1321,7 +1321,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t<series reactor>\n");
 
 			//write the name
-			if(obj->name != NULL){
+			if(obj->name != nullptr){
 				fprintf(fn,"\t\t<name>%s</name>\n",obj->name);
 			} else {
 				fprintf(fn,"\t\t<name>NA</name>\n");
@@ -1331,14 +1331,14 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<id>series_reactor:%d</id>\n",obj->id);
 
 			//write the from name
-			if(pSeriesReactor[index]->from->name != NULL){
+			if(pSeriesReactor[index]->from->name != nullptr){
 				fprintf(fn,"\t\t<from_node>%s:%s</from_node>\n",pSeriesReactor[index]->from->oclass->name,pSeriesReactor[index]->from->name);
 			} else {
 				fprintf(fn,"\t\t<from_node>%s:%d</from_node>\n",pSeriesReactor[index]->from->oclass->name,pSeriesReactor[index]->from->id);
 			}
 
 			//write the to name
-			if(pSeriesReactor[index]->to->name != NULL){
+			if(pSeriesReactor[index]->to->name != nullptr){
 				fprintf(fn,"\t\t<to_node>%s:%s</to_node>\n",pSeriesReactor[index]->to->oclass->name,pSeriesReactor[index]->to->name);
 			} else {
 				fprintf(fn,"\t\t<to_node>%s:%d</to_node>\n",pSeriesReactor[index]->to->oclass->name,pSeriesReactor[index]->to->id);
@@ -1353,7 +1353,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				node_voltage = get_complex(pSeriesReactor[index]->from,"voltage_C");
 			}
 
-			if(node_voltage == NULL){
+			if(node_voltage == nullptr){
 				gl_error("From node has no voltage.");
 				return 0;
 			}
@@ -1369,7 +1369,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				node_voltage = get_complex(pSeriesReactor[index]->to,"voltage_C");
 			}
 
-			if(node_voltage == NULL){
+			if(node_voltage == nullptr){
 				gl_error("From node has no voltage.");
 				return 0;
 			}
@@ -1494,9 +1494,9 @@ int impedance_dump::dump(TIMESTAMP t)
 	
 	index = 0;
 	//write switches
-	if(switches != NULL){
+	if(switches != nullptr){
 		pSwitch = (switch_object **)gl_malloc(switches->hit_count*sizeof(switch_object*));
-		if(pSwitch == NULL){
+		if(pSwitch == nullptr){
 			gl_error("Failed to allocate fuse array.");
 			return TS_NEVER;
 		}
@@ -1505,7 +1505,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				break;
 			}
 			pSwitch[index] = OBJECTDATA(obj,switch_object);
-			if(pSwitch[index] == NULL){
+			if(pSwitch[index] == nullptr){
 				gl_error("Unable to map object as a link object.");
 				return 0;
 			}
@@ -1515,7 +1515,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t<switch>\n");
 
 			//write the name
-			if(obj->name != NULL){
+			if(obj->name != nullptr){
 				fprintf(fn,"\t\t<name>%s</name>\n",obj->name);
 			} else {
 				fprintf(fn,"\t\t<name>NA</name>\n");
@@ -1525,14 +1525,14 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<id>switch:%d</id>\n",obj->id);
 
 			//write the from name
-			if(pSwitch[index]->from->name != NULL){
+			if(pSwitch[index]->from->name != nullptr){
 				fprintf(fn,"\t\t<from_node>%s:%s</from_node>\n",pSwitch[index]->from->oclass->name,pSwitch[index]->from->name);
 			} else {
 				fprintf(fn,"\t\t<from_node>%s:%d</from_node>\n",pSwitch[index]->from->oclass->name,pSwitch[index]->from->id);
 			}
 
 			//write the to name
-			if(pSwitch[index]->to->name != NULL){
+			if(pSwitch[index]->to->name != nullptr){
 				fprintf(fn,"\t\t<to_node>%s:%s</to_node>\n",pSwitch[index]->to->oclass->name,pSwitch[index]->to->name);
 			} else {
 				fprintf(fn,"\t\t<to_node>%s:%d</to_node>\n",pSwitch[index]->to->oclass->name,pSwitch[index]->to->id);
@@ -1547,7 +1547,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				node_voltage = get_complex(pSwitch[index]->from,"voltage_C");
 			}
 
-			if(node_voltage == NULL){
+			if(node_voltage == nullptr){
 				gl_error("From node has no voltage.");
 				return 0;
 			}
@@ -1563,7 +1563,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				node_voltage = get_complex(pSwitch[index]->to,"voltage_C");
 			}
 
-			if(node_voltage == NULL){
+			if(node_voltage == nullptr){
 				gl_error("From node has no voltage.");
 				return 0;
 			}
@@ -1689,9 +1689,9 @@ int impedance_dump::dump(TIMESTAMP t)
 	
 	index = 0;
 	//write transformers
-	if(transformers != NULL){
+	if(transformers != nullptr){
 		pTransformer = (transformer **)gl_malloc(transformers->hit_count*sizeof(transformer*));
-		if(pTransformer == NULL){
+		if(pTransformer == nullptr){
 			gl_error("Failed to allocate fuse array.");
 			return TS_NEVER;
 		}
@@ -1700,7 +1700,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				break;
 			}
 			pTransformer[index] = OBJECTDATA(obj,transformer);
-			if(pTransformer[index] == NULL){
+			if(pTransformer[index] == nullptr){
 				gl_error("Unable to map object as a link object.");
 				return 0;
 			}
@@ -1709,7 +1709,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t<transformer>\n");
 
 			//write the name
-			if(obj->name != NULL){
+			if(obj->name != nullptr){
 				fprintf(fn,"\t\t<name>%s</name>\n",obj->name);
 			} else {
 				fprintf(fn,"\t\t<name>NA</name>\n");
@@ -1719,7 +1719,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<id>transformer:%d</id>\n",obj->id);
 
 			//write the from name
-			if(pTransformer[index]->from->name != NULL){
+			if(pTransformer[index]->from->name != nullptr){
 				fprintf(fn,"\t\t<from_node>%s:%s</from_node>\n",pTransformer[index]->from->oclass->name,pTransformer[index]->from->name);
 			} else {
 				fprintf(fn,"\t\t<from_node>%s:%d</from_node>\n",pTransformer[index]->from->oclass->name,pTransformer[index]->from->id);
@@ -1727,7 +1727,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			
 
 			//write the to name
-			if(pTransformer[index]->to->name != NULL){
+			if(pTransformer[index]->to->name != nullptr){
 				fprintf(fn,"\t\t<to_node>%s:%s</to_node>\n",pTransformer[index]->to->oclass->name,pTransformer[index]->to->name);
 			} else {
 				fprintf(fn,"\t\t<to_node>%s:%d</to_node>\n",pTransformer[index]->to->oclass->name,pTransformer[index]->to->id);
@@ -1744,7 +1744,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				}
 			
 
-			if(node_voltage == NULL){
+			if(node_voltage == nullptr){
 				gl_error("From node %s has no voltage.",pTransformer[index]->from->name);
 				return 0;
 			}
@@ -1764,7 +1764,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				}
 			}
 
-			if(node_voltage == NULL){
+			if(node_voltage == nullptr){
 				gl_error("To node %s has no voltage.",pTransformer[index]->to->name);
 				return 0;
 			}
@@ -1774,7 +1774,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			//write the transformer configuration
 			//xfmrconfig=gl_get_property(pTransformer[index]->config,"connect_type");
 			fprintf(fn,"\t\t<xfmr_config>%u</xfmr_config>\n",pTransformer[index]->config->connect_type);
-			
+
 			//write the phases
 			if(pTransformer[index]->phases == 0x0001){//A
 				fprintf(fn,"\t\t<phases>A</phases>\n");
@@ -1832,16 +1832,16 @@ int impedance_dump::dump(TIMESTAMP t)
 			}
 
 			//write power rating
-			if(pTransformer[index]->config->kVA_rating!=0){
+			if(pTransformer[index]->config->kVA_rating!= 0.0){
 				fprintf(fn,"\t\t<power_rating>%.6f</power_rating>\n",pTransformer[index]->config->kVA_rating);
 			}
 
 
 			//write impedance
-			if(pTransformer[index]->config->impedance.Re()!=0){
+			if(pTransformer[index]->config->impedance.Re()!=0.0){
 				fprintf(fn,"\t\t<resistance>%.6f</resistance>\n",pTransformer[index]->config->impedance.Re());
 			}
-			if(pTransformer[index]->config->impedance.Im()!=0){
+			if(pTransformer[index]->config->impedance.Im()!=0.0){
 				fprintf(fn,"\t\t<reactance>%.6f</reactance>\n",pTransformer[index]->config->impedance.Im());
 			}
 			//write a_mat
@@ -1906,9 +1906,9 @@ int impedance_dump::dump(TIMESTAMP t)
 	
 	index = 0;
 	//write the triplex_lines
-	if(tplines != NULL){
+	if(tplines != nullptr){
 		pTpLine = (line **)gl_malloc(tplines->hit_count*sizeof(line*));
-		if(pTpLine == NULL){
+		if(pTpLine == nullptr){
 			gl_error("Failed to allocate fuse array.");
 			return TS_NEVER;
 		}
@@ -1917,7 +1917,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				break;
 			}
 			pTpLine[index] = OBJECTDATA(obj,line);
-			if(pTpLine[index] == NULL){
+			if(pTpLine[index] == nullptr){
 				gl_error("Unable to map object as overhead_line object.");
 				return 0;
 			}
@@ -1926,7 +1926,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t<triplex_line>\n");
 
 			//write the name
-			if(obj->name != NULL){
+			if(obj->name != nullptr){
 				fprintf(fn,"\t\t<name>%s</name>\n",obj->name);
 			} else {
 				fprintf(fn,"\t\t<name>NA</name>\n");
@@ -1936,14 +1936,14 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<id>triplex_line:%d</id>\n",obj->id);
 
 			//write the from name
-			if(pTpLine[index]->from->name != NULL){
+			if(pTpLine[index]->from->name != nullptr){
 				fprintf(fn,"\t\t<from_node>%s:%s</from_node>\n",pTpLine[index]->from->oclass->name,pTpLine[index]->from->name);
 			} else {
 				fprintf(fn,"\t\t<from_node>%s:%d</from_node>\n",pTpLine[index]->from->oclass->name,pTpLine[index]->from->id);
 			}
 
 			//write the to name
-			if(pTpLine[index]->to->name != NULL){
+			if(pTpLine[index]->to->name != nullptr){
 				fprintf(fn,"\t\t<to_node>%s:%s</to_node>\n",pTpLine[index]->to->oclass->name,pTpLine[index]->to->name);
 			} else {
 				fprintf(fn,"\t\t<to_node>%s:%d</to_node>\n",pTpLine[index]->to->oclass->name,pTpLine[index]->to->id);
@@ -2076,9 +2076,9 @@ int impedance_dump::dump(TIMESTAMP t)
 	
 	index = 0;
 	//write the underground_lines
-	if(uglines != NULL){
+	if(uglines != nullptr){
 		pUgLine = (line **)gl_malloc(uglines->hit_count*sizeof(line*));
-		if(pUgLine == NULL){
+		if(pUgLine == nullptr){
 			gl_error("Failed to allocate fuse array.");
 			return TS_NEVER;
 		}
@@ -2087,7 +2087,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				break;
 			}
 			pUgLine[index] = OBJECTDATA(obj,line);
-			if(pUgLine[index] == NULL){
+			if(pUgLine[index] == nullptr){
 				gl_error("Unable to map object as overhead_line object.");
 				return 0;
 			}
@@ -2096,7 +2096,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t<underground_line>\n");
 
 			//write the name
-			if(obj->name != NULL){
+			if(obj->name != nullptr){
 				fprintf(fn,"\t\t<name>%s</name>\n",obj->name);
 			} else {
 				fprintf(fn,"\t\t<name>NA</name>\n");
@@ -2106,14 +2106,14 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t\t<id>underground_line:%d</id>\n",obj->id);
 
 			//write the from name
-			if(pUgLine[index]->from->name != NULL){
+			if(pUgLine[index]->from->name != nullptr){
 				fprintf(fn,"\t\t<from_node>%s:%s</from_node>\n",pUgLine[index]->from->oclass->name,pUgLine[index]->from->name);
 			} else {
 				fprintf(fn,"\t\t<from_node>%s:%d</from_node>\n",pUgLine[index]->from->oclass->name,pUgLine[index]->from->id);
 			}
 
 			//write the to name
-			if(pUgLine[index]->to->name != NULL){
+			if(pUgLine[index]->to->name != nullptr){
 				fprintf(fn,"\t\t<to_node>%s:%s</to_node>\n",pUgLine[index]->to->oclass->name,pUgLine[index]->to->name);
 			} else {
 				fprintf(fn,"\t\t<to_node>%s:%d</to_node>\n",pUgLine[index]->to->oclass->name,pUgLine[index]->to->id);
@@ -2128,7 +2128,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				node_voltage = get_complex(pUgLine[index]->from,"voltage_C");
 			}
 
-			if(node_voltage == NULL){
+			if(node_voltage == nullptr){
 				gl_error("From node has no voltage.");
 				return 0;
 			}
@@ -2144,7 +2144,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				node_voltage = get_complex(pUgLine[index]->to,"voltage_C");
 			}
 
-			if(node_voltage == NULL){
+			if(node_voltage == nullptr){
 				gl_error("From node has no voltage.");
 				return 0;
 			}
@@ -2272,9 +2272,9 @@ int impedance_dump::dump(TIMESTAMP t)
 
 	index=0;
 	//write capacitor
-	if(capacitors != NULL){
+	if(capacitors != nullptr){
 		pCapacitor = (capacitor **)gl_malloc(capacitors->hit_count*sizeof(capacitor*));
-		if(pCapacitor == NULL){
+		if(pCapacitor == nullptr){
 			gl_error("Failed to allocate fuse array.");
 			return TS_NEVER;
 		}
@@ -2283,7 +2283,7 @@ int impedance_dump::dump(TIMESTAMP t)
 				break;
 			}
 			pCapacitor[index] = OBJECTDATA(obj,capacitor);
-			if(pCapacitor[index] == NULL){
+			if(pCapacitor[index] == nullptr){
 				gl_error("Unable to map object as a link object.");
 				return 0;
 			}
@@ -2292,7 +2292,7 @@ int impedance_dump::dump(TIMESTAMP t)
 			fprintf(fn,"\t<capacitor>\n");
 
 			//write the name
-			if(obj->name != NULL){
+			if(obj->name != nullptr){
 				fprintf(fn,"\t\t<name>%s</name>\n",obj->name);
 			} else {
 				fprintf(fn,"\t\t<name>NA</name>\n");
@@ -2303,7 +2303,7 @@ int impedance_dump::dump(TIMESTAMP t)
 
 
 			//write the bus name
-			if(obj->parent->name != NULL){
+			if(obj->parent->name != nullptr){
 				fprintf(fn,"\t\t<node>%s:%s</node>\n",pCapacitor[index]->pclass->name,obj->parent->name);
 			} else {
 				fprintf(fn,"\t\t<node>%s:%d</node>\n",pCapacitor[index]->pclass->name,obj->parent->id);
@@ -2419,7 +2419,7 @@ EXPORT int create_impedance_dump(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(impedance_dump::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			impedance_dump *my = OBJECTDATA(*obj,impedance_dump);
 			gl_set_parent(*obj,parent);

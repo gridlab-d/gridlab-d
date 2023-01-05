@@ -1,7 +1,8 @@
 // $Id$
 
-#include <stdlib.h>
-#include <stdio.h>
+#include <cstdio>
+#include <cstdlib>
+
 #include "gridlabd.h"
 #include "socket.h"
 
@@ -52,7 +53,7 @@ bool Socket::set_addr(char *s)
 		return false;
 }
 
-char *Socket::strerror()
+const char *Socket::strerror()
 {
 #ifdef _WIN32
 	int err = WSAGetLastError();

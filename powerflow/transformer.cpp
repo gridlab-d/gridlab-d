@@ -15,29 +15,29 @@
  @{
 **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
 using namespace std;
 
 #include "transformer.h"
 
-CLASS* transformer::oclass = NULL;
-CLASS* transformer::pclass = NULL;
+CLASS* transformer::oclass = nullptr;
+CLASS* transformer::pclass = nullptr;
 
 //Default temperature for thermal aging calculations
 double default_outdoor_temperature = 74;
 
 transformer::transformer(MODULE *mod) : link_object(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		pclass = link_object::oclass;
 		
 		oclass = gl_register_class(mod,"transformer",sizeof(transformer),PC_PRETOPDOWN|PC_BOTTOMUP|PC_POSTTOPDOWN|PC_UNSAFE_OVERRIDE_OMIT|PC_AUTOLOCK);
-		if (oclass==NULL)
+		if (oclass== nullptr)
 			throw "unable to register class transformer";
 		else
 			oclass->trl = TRL_PROVEN;
@@ -63,25 +63,25 @@ transformer::transformer(MODULE *mod) : link_object(mod)
 			PT_double, "phase_C_secondary_flux_value[Wb]", PADDR(flux_vals_inst[5]), PT_DESCRIPTION, "instantaneous magnetic flux in phase C on the secondary side of the transformer during saturation calculations",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
-			if (gl_publish_function(oclass,"power_calculation",(FUNCTIONADDR)power_calculation)==NULL)
+			if (gl_publish_function(oclass,"power_calculation",(FUNCTIONADDR)power_calculation)==nullptr)
 					GL_THROW("Unable to publish fuse state change function");
 
 			//Publish deltamode functions
-			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==NULL)
+			if (gl_publish_function(oclass,	"interupdate_pwr_object", (FUNCTIONADDR)interupdate_link)==nullptr)
 				GL_THROW("Unable to publish transformer deltamode function");
 
 			//Publish in-rush functions
-			if (gl_publish_function(oclass,	"recalc_transformer_matrices", (FUNCTIONADDR)recalc_transformer_mat)==NULL)
+			if (gl_publish_function(oclass,	"recalc_transformer_matrices", (FUNCTIONADDR)recalc_transformer_mat)==nullptr)
 				GL_THROW("Unable to publish transformer in-rush update function");
-			if (gl_publish_function(oclass,	"recalc_deltamode_saturation", (FUNCTIONADDR)recalc_deltamode_saturation)==NULL)
+			if (gl_publish_function(oclass,	"recalc_deltamode_saturation", (FUNCTIONADDR)recalc_deltamode_saturation)==nullptr)
 				GL_THROW("Unable to publish transformer in-rush powerflow update function");
 
 			//Publish restoration-related function (current update)
-			if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==NULL)
+			if (gl_publish_function(oclass,	"update_power_pwr_object", (FUNCTIONADDR)updatepowercalc_link)==nullptr)
 				GL_THROW("Unable to publish transformer external power calculation function");
-			if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==NULL)
+			if (gl_publish_function(oclass,	"check_limits_pwr_object", (FUNCTIONADDR)calculate_overlimit_link)==nullptr)
 				GL_THROW("Unable to publish transformer external power limit calculation function");
-			if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==NULL)
+			if (gl_publish_function(oclass,	"perform_current_calculation_pwr_link", (FUNCTIONADDR)currentcalculation_link)==nullptr)
 				GL_THROW("Unable to publish transformer external current calculation function");
     }
 }
@@ -94,8 +94,8 @@ int transformer::isa(char *classname)
 int transformer::create()
 {
 	int result = link_object::create();
-	configuration = NULL;
-	ptheta_A = NULL;
+	configuration = nullptr;
+	ptheta_A = nullptr;
 	transformer_replacements = 0;
 	phi_base_Pri = 0.0;
 	phi_base_Sec = 0.0;
@@ -113,16 +113,16 @@ int transformer::create()
 	return result;
 }
 
-void transformer::fetch_double(double **prop, char *name, OBJECT *parent){
+void transformer::fetch_double(double **prop, const char *name, OBJECT *parent){
 	OBJECT *hdr = OBJECTHDR(this);
 	*prop = gl_get_double_by_name(parent, name);
-	if(*prop == NULL){
+	if(*prop == nullptr){
 		char tname[32];
 		char *namestr = (hdr->name ? hdr->name : tname);
 		char msg[256];
 		sprintf(tname, "transformer:%i", hdr->id);
-		if(*name == 0)
-			sprintf(msg, "%s: transformer unable to find property: name is NULL", namestr);
+		if(name == nullptr || name[0] == '\0')
+			sprintf(msg, "%s: transformer unable to find property: name is not defined", namestr);
 		else
 			sprintf(msg, "%s: transformer unable to find %s", namestr, name);
 		throw(msg);
@@ -154,8 +154,8 @@ int transformer::init(OBJECT *parent)
 	double V_base,za_basehi,za_baselo,V_basehi;
 	double sa_base;
 	double nt, nt_a, nt_b, nt_c, inv_nt_a, inv_nt_b, inv_nt_c;
-	complex zt, zt_a, zt_b, zt_c, z0, z1, z2, zc;
-	FINDLIST *climate_list = NULL;
+	gld::complex zt, zt_a, zt_b, zt_c, z0, z1, z2, zc;
+	FINDLIST *climate_list = nullptr;
 
 	config = OBJECTDATA(configuration,transformer_configuration);
 
@@ -183,14 +183,14 @@ int transformer::init(OBJECT *parent)
 	V_base = config->V_secondary;
 	voltage_ratio = nt = config->V_primary / config->V_secondary;
 	zt = (config->impedance * V_base * V_base) / (config->kVA_rating * 1000.0);
-	zc =  complex(V_base * V_base,0) / (config->kVA_rating * 1000.0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
+	zc =  gld::complex(V_base * V_base,0) / (config->kVA_rating * 1000.0) * gld::complex(config->shunt_impedance.Re(),0) * gld::complex(0,config->shunt_impedance.Im()) / gld::complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
 
 	for (int i = 0; i < 3; i++) 
 	{
 		for (int j = 0; j < 3; j++)
 		{
-			a_mat[i][j] = b_mat[i][j] = c_mat[i][j] = d_mat[i][j] = A_mat[i][j] = B_mat[i][j] = complex(0.0,0.0);
-			base_admittance_mat[i][j] = complex(0.0,0.0);
+			a_mat[i][j] = b_mat[i][j] = c_mat[i][j] = d_mat[i][j] = A_mat[i][j] = B_mat[i][j] = gld::complex(0.0,0.0);
+			base_admittance_mat[i][j] = gld::complex(0.0,0.0);
 		}
 	}
 
@@ -202,12 +202,12 @@ int transformer::init(OBJECT *parent)
 				nt_a = nt;
 				zt_a = zt * nt_a;
 				inv_nt_a = 1 / nt_a;
-				c_mat[0][0] = complex(1,0) / ( complex(nt_a,0) * zc);
+				c_mat[0][0] = gld::complex(1,0) / ( gld::complex(nt_a,0) * zc);
 			} 
 			else 
 			{
 				nt_a = inv_nt_a = 0.0;
-				zt_a = complex(0,0);
+				zt_a = gld::complex(0,0);
 			}
 
 			if (has_phase(PHASE_B)) 
@@ -215,12 +215,12 @@ int transformer::init(OBJECT *parent)
 				nt_b = nt;
 				zt_b = zt * nt_b;
 				inv_nt_b = 1 / nt_b;
-				c_mat[1][1] = complex(1,0) / ( complex(nt_b,0) * zc);
+				c_mat[1][1] = gld::complex(1,0) / ( gld::complex(nt_b,0) * zc);
 			} 
 			else 
 			{
 				nt_b = inv_nt_b = 0.0;
-				zt_b = complex(0,0);
+				zt_b = gld::complex(0,0);
 			}
 
 			if (has_phase(PHASE_C)) 
@@ -228,68 +228,68 @@ int transformer::init(OBJECT *parent)
 				nt_c = nt;
 				zt_c = zt * nt_c;
 				inv_nt_c = 1 / nt_c;
-				c_mat[2][2] = complex(1,0) / ( complex(nt_c,0) * zc);
+				c_mat[2][2] = gld::complex(1,0) / ( gld::complex(nt_c,0) * zc);
 			} 
 			else 
 			{
 				nt_c = inv_nt_c = 0.0;
-				zt_c = complex(0,0);
+				zt_c = gld::complex(0,0);
 			}
 			
 			if (solver_method==SM_FBS)
 			{
 				if (has_phase(PHASE_A)) 
 				{
-					A_mat[0][0] = zc / ((zt + zc) * complex(nt,0));//1/nt_a;
-					a_mat[0][0] = complex(nt,0) * (zt + zc)/zc;//nt_a;
-					b_mat[0][0] = complex(nt_a,0) * zt_a;
-					d_mat[0][0] = 1/nt;//(zc + zt_a) / (complex(nt_a,0) * zc);
-					//A_mat[0][0] = (zc - zt_a) / ( complex(nt_a,0) * (zc + zt_a));
-					//a_mat[0][0] = complex(1,0) / A_mat[0][0];
+					A_mat[0][0] = zc / ((zt + zc) * gld::complex(nt,0));//1/nt_a;
+					a_mat[0][0] = gld::complex(nt,0) * (zt + zc)/zc;//nt_a;
+					b_mat[0][0] = gld::complex(nt_a,0) * zt_a;
+					d_mat[0][0] = 1/nt;//(zc + zt_a) / (gld::complex(nt_a,0) * zc);
+					//A_mat[0][0] = (zc - zt_a) / ( gld::complex(nt_a,0) * (zc + zt_a));
+					//a_mat[0][0] = gld::complex(1,0) / A_mat[0][0];
 					//b_mat[0][0] = zt_a / A_mat[0][0];
-					//d_mat[0][0] = (zt_a + zc) / ( complex(nt_a,0) * zc);
+					//d_mat[0][0] = (zt_a + zc) / ( gld::complex(nt_a,0) * zc);
 
 				}
 
 				if (has_phase(PHASE_B))
 				{
-					A_mat[1][1] = zc / ((zt + zc) * complex(nt,0));//1/nt_b;
-					a_mat[1][1] = complex(nt,0) * (zt + zc)/zc;//nt_b;
-					b_mat[1][1] = complex(nt_b,0) * zt_b;
-					d_mat[1][1] = 1/nt;//(zc + zt_b) / (complex(nt_b,0) * zc);
-					//A_mat[1][1] = (zc - zt_b) / ( complex(nt_b,0) * (zc + zt_b));
-					//a_mat[1][1] = complex(1,0) / A_mat[1][1];
+					A_mat[1][1] = zc / ((zt + zc) * gld::complex(nt,0));//1/nt_b;
+					a_mat[1][1] = gld::complex(nt,0) * (zt + zc)/zc;//nt_b;
+					b_mat[1][1] = gld::complex(nt_b,0) * zt_b;
+					d_mat[1][1] = 1/nt;//(zc + zt_b) / (gld::complex(nt_b,0) * zc);
+					//A_mat[1][1] = (zc - zt_b) / ( gld::complex(nt_b,0) * (zc + zt_b));
+					//a_mat[1][1] = gld::complex(1,0) / A_mat[1][1];
 					//b_mat[1][1] = zt_b / A_mat[1][1];
-					//d_mat[1][1] = (zt_b + zc) / ( complex(nt_b,0) * zc);
+					//d_mat[1][1] = (zt_b + zc) / ( gld::complex(nt_b,0) * zc);
 				}
 
 				if (has_phase(PHASE_C))
 				{
-					A_mat[2][2] = zc / ((zt + zc) * complex(nt,0));//1/nt_c;
-					a_mat[2][2] = complex(nt,0) * (zt + zc)/zc;//nt_c;
-					b_mat[2][2] = complex(nt_c,0) * zt_c;
-					d_mat[2][2] = 1/nt;//(zc + zt_c) / (complex(nt_c,0) * zc);
-					//A_mat[2][2] = (zc - zt_c) / ( complex(nt_c,0) * (zc + zt_c));
-					//a_mat[2][2] = complex(1,0) / A_mat[2][2];
+					A_mat[2][2] = zc / ((zt + zc) * gld::complex(nt,0));//1/nt_c;
+					a_mat[2][2] = gld::complex(nt,0) * (zt + zc)/zc;//nt_c;
+					b_mat[2][2] = gld::complex(nt_c,0) * zt_c;
+					d_mat[2][2] = 1/nt;//(zc + zt_c) / (gld::complex(nt_c,0) * zc);
+					//A_mat[2][2] = (zc - zt_c) / ( gld::complex(nt_c,0) * (zc + zt_c));
+					//a_mat[2][2] = gld::complex(1,0) / A_mat[2][2];
 					//b_mat[2][2] = zt_c / A_mat[2][2];
-					//d_mat[2][2] = (zt_c + zc) / ( complex(nt_c,0) * zc);
+					//d_mat[2][2] = (zt_c + zc) / ( gld::complex(nt_c,0) * zc);
 				}
 			}
 			else if (solver_method==SM_NR)
 			{
-				complex Izt = complex(1,0) / zt;
+				gld::complex Izt = gld::complex(1,0) / zt;
 				
 				//In-rush capability stuff -- allocations
-				if (enable_inrush_calculations == true)
+				if (enable_inrush_calculations)
 				{
 					//"Main" allocation is done in link.cpp -- this depends on where we want windings, so done here
 					//"Main" allocation already done, via link::init above
 
 					//Allocate current calculating "base admittance"
-					YBase_Full = (complex *)gl_malloc(36*sizeof(complex));
+					YBase_Full = (gld::complex *)gl_malloc(36*sizeof(gld::complex));
 
 					//Check it
-					if (YBase_Full == NULL)
+					if (YBase_Full == nullptr)
 					{
 						GL_THROW("Transformer:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 						/*  TROUBLESHOOT
@@ -302,35 +302,35 @@ int transformer::init(OBJECT *parent)
 					//Zero it, for giggles
 					for (idex=0; idex<36; idex++)
 					{
-						YBase_Full[idex] = complex(0.0,0.0);
+						YBase_Full[idex] = gld::complex(0.0,0.0);
 					}
 
 					//Determine which winding matrices to allocate for magnetization
 					if ((config->magnetization_location == config->PRI_MAG) || (config->magnetization_location == config->BOTH_MAG))	//Primary needed (from)
 					{
 						//Allocate the terms -- Main transformer -- from-size magnetic
-						LinkHistTermCf = (complex *)gl_malloc(6*sizeof(complex));
+						LinkHistTermCf = (gld::complex *)gl_malloc(6*sizeof(gld::complex));
 
 						//Check it
-						if (LinkHistTermCf == NULL)
+						if (LinkHistTermCf == nullptr)
 						{
 							GL_THROW("Transformer:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 							//Defined above
 						}
 
 						//Zero everything, to be safe
-						LinkHistTermCf[0] = complex(0.0,0.0);
-						LinkHistTermCf[1] = complex(0.0,0.0);
-						LinkHistTermCf[2] = complex(0.0,0.0);
-						LinkHistTermCf[3] = complex(0.0,0.0);
-						LinkHistTermCf[4] = complex(0.0,0.0);
-						LinkHistTermCf[5] = complex(0.0,0.0);
+						LinkHistTermCf[0] = gld::complex(0.0,0.0);
+						LinkHistTermCf[1] = gld::complex(0.0,0.0);
+						LinkHistTermCf[2] = gld::complex(0.0,0.0);
+						LinkHistTermCf[3] = gld::complex(0.0,0.0);
+						LinkHistTermCf[4] = gld::complex(0.0,0.0);
+						LinkHistTermCf[5] = gld::complex(0.0,0.0);
 
 						//Allocate "primary" shunt for magnetization
-						YBase_Pri = (complex *)gl_malloc(9*sizeof(complex));
+						YBase_Pri = (gld::complex *)gl_malloc(9*sizeof(gld::complex));
 
 						//Check it
-						if (YBase_Pri == NULL)
+						if (YBase_Pri == nullptr)
 						{
 							GL_THROW("Transformer:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 							//Defined above
@@ -339,41 +339,41 @@ int transformer::init(OBJECT *parent)
 						//Zero it
 						for (idex=0; idex<9; idex++)
 						{
-							YBase_Pri[idex] = complex(0.0,0.0);
+							YBase_Pri[idex] = gld::complex(0.0,0.0);
 						}
 					}
 					else
 					{
 						//Null it, for good measure (should be done already)
-						LinkHistTermCf = NULL;
-						YBase_Pri = NULL;
+						LinkHistTermCf = nullptr;
+						YBase_Pri = nullptr;
 					}
 
 					if ((config->magnetization_location == config->SEC_MAG) || (config->magnetization_location == config->BOTH_MAG))	//Secondary needed (to)
 					{
 						//Allocate the terms -- Main transformer -- to-side magnetic
-						LinkHistTermCt = (complex *)gl_malloc(6*sizeof(complex));
+						LinkHistTermCt = (gld::complex *)gl_malloc(6*sizeof(gld::complex));
 
 						//Check it
-						if (LinkHistTermCt == NULL)
+						if (LinkHistTermCt == nullptr)
 						{
 							GL_THROW("Transformer:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 							//Defined above
 						}
 
 						//Zero everything, to be safe
-						LinkHistTermCt[0] = complex(0.0,0.0);
-						LinkHistTermCt[1] = complex(0.0,0.0);
-						LinkHistTermCt[2] = complex(0.0,0.0);
-						LinkHistTermCt[3] = complex(0.0,0.0);
-						LinkHistTermCt[4] = complex(0.0,0.0);
-						LinkHistTermCt[5] = complex(0.0,0.0);
+						LinkHistTermCt[0] = gld::complex(0.0,0.0);
+						LinkHistTermCt[1] = gld::complex(0.0,0.0);
+						LinkHistTermCt[2] = gld::complex(0.0,0.0);
+						LinkHistTermCt[3] = gld::complex(0.0,0.0);
+						LinkHistTermCt[4] = gld::complex(0.0,0.0);
+						LinkHistTermCt[5] = gld::complex(0.0,0.0);
 
 						//Allocate "primary" shunt for magnetization
-						YBase_Sec = (complex *)gl_malloc(9*sizeof(complex));
+						YBase_Sec = (gld::complex *)gl_malloc(9*sizeof(gld::complex));
 
 						//Check it
-						if (YBase_Sec == NULL)
+						if (YBase_Sec == nullptr)
 						{
 							GL_THROW("Transformer:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 							//Defined above
@@ -382,24 +382,24 @@ int transformer::init(OBJECT *parent)
 						//Zero it
 						for (idex=0; idex<9; idex++)
 						{
-							YBase_Sec[idex] = complex(0.0,0.0);
+							YBase_Sec[idex] = gld::complex(0.0,0.0);
 						}
 					}
 					else
 					{
 						//Null it, for good measure (should be done already)
-						LinkHistTermCt = NULL;
-						YBase_Sec = NULL;
+						LinkHistTermCt = nullptr;
+						YBase_Sec = nullptr;
 					}
 
 					//See if saturation is enabled
-					if (config->model_inrush_saturation == true)
+					if (config->model_inrush_saturation)
 					{
 						//Allocate it - stacked of curr/hist
-						hphi = (complex *)gl_malloc(12*sizeof(complex));
+						hphi = (gld::complex *)gl_malloc(12*sizeof(gld::complex));
 
 						//Make sure it worked
-						if (hphi == NULL)
+						if (hphi == nullptr)
 						{
 							GL_THROW("Transformer:%s failed to allocate space for deltamode inrush history term",obj->name?obj->name:"unnamed");
 							//Defined above
@@ -408,12 +408,12 @@ int transformer::init(OBJECT *parent)
 						//Zero it, for good measure
 						for (idex=0; idex<12; idex++)
 						{
-							hphi[idex] = complex(0.0,0.0);
+							hphi[idex] = gld::complex(0.0,0.0);
 						}
 					}
 					else	//Null it, to be safe
 					{
-						hphi = NULL;
+						hphi = nullptr;
 					}
 				}//End in-rush allocations
 
@@ -421,19 +421,19 @@ int transformer::init(OBJECT *parent)
 				if (has_phase(PHASE_A))
 				{
 					//base_admittance_mat[0][0] = (zc - zt) / ((zc + zt) * zt);
-					base_admittance_mat[0][0] = complex(1,0) / zt;//(zc - zt) / ((zc + zt) * zt);
+					base_admittance_mat[0][0] = gld::complex(1,0) / zt;//(zc - zt) / ((zc + zt) * zt);
 					b_mat[0][0] = zt;
 				}
 				if (has_phase(PHASE_B))
 				{
 					//base_admittance_mat[1][1] = (zc - zt) / ((zc + zt) * zt);
-					base_admittance_mat[1][1] = complex(1,0) / zt;//(zc - zt) / ((zc + zt) * zt);
+					base_admittance_mat[1][1] = gld::complex(1,0) / zt;//(zc - zt) / ((zc + zt) * zt);
 					b_mat[1][1] = zt;
 				}
 				if (has_phase(PHASE_C))
 				{
 					//base_admittance_mat[2][2] = (zc - zt) / ((zc + zt) * zt);
-					base_admittance_mat[2][2] = complex(1,0) / zt;//(zc - zt) / ((zc + zt) * zt);
+					base_admittance_mat[2][2] = gld::complex(1,0) / zt;//(zc - zt) / ((zc + zt) * zt);
 					b_mat[2][2] = zt;
 				}
 
@@ -444,26 +444,26 @@ int transformer::init(OBJECT *parent)
 
 				if (has_phase(PHASE_A))
 				{
-					//a_mat[0][0] = ( complex(nt,0) * (zc + zt)) / (zc - zt);
+					//a_mat[0][0] = ( gld::complex(nt,0) * (zc + zt)) / (zc - zt);
 					a_mat[0][0] = 0;
 					d_mat[0][0] = Izt / nt / nt;
-					A_mat[0][0] = complex(nt,0);//* (zc) / (zc + zt);
+					A_mat[0][0] = gld::complex(nt,0);//* (zc) / (zc + zt);
 					c_mat[0][0] = nt;
 				}
 				if (has_phase(PHASE_B))
 				{
-					//a_mat[1][1] = ( complex(nt,0) * (zc + zt)) / (zc - zt);
+					//a_mat[1][1] = ( gld::complex(nt,0) * (zc + zt)) / (zc - zt);
 					a_mat[1][1] = 0;
 					d_mat[1][1] = Izt / nt / nt;
-					A_mat[1][1] = complex(nt,0);// * (zc) / (zc + zt);
+					A_mat[1][1] = gld::complex(nt,0);// * (zc) / (zc + zt);
 					c_mat[1][1] = nt;
 				}
 				if (has_phase(PHASE_C))
 				{
-					//a_mat[2][2] = ( complex(nt,0) * (zc + zt)) / (zc - zt);
+					//a_mat[2][2] = ( gld::complex(nt,0) * (zc + zt)) / (zc - zt);
 					a_mat[2][2] = 0;
 					d_mat[2][2] = Izt / nt / nt;
-					A_mat[2][2] = complex(nt,0);//* (zc) / (zc + zt);
+					A_mat[2][2] = gld::complex(nt,0);//* (zc) / (zc + zt);
 					c_mat[2][2] = nt;
 				}
 			}
@@ -504,10 +504,10 @@ int transformer::init(OBJECT *parent)
 				b_mat[0][0] = b_mat[1][1] = zt * nt;
 				b_mat[2][0] = b_mat[2][1] = zt * -nt;
 
-				d_mat[0][0] = d_mat[1][1] = d_mat[2][2] = complex(1.0) / nt;
+				d_mat[0][0] = d_mat[1][1] = d_mat[2][2] = gld::complex(1.0) / nt;
 
-				A_mat[0][0] = A_mat[1][1] = A_mat[2][2] = complex(2.0) / (nt * 3.0);
-				A_mat[0][1] = A_mat[0][2] = A_mat[1][0] = A_mat[1][2] = A_mat[2][0] = A_mat[2][1] = complex(-1.0) / (nt * 3.0);
+				A_mat[0][0] = A_mat[1][1] = A_mat[2][2] = gld::complex(2.0) / (nt * 3.0);
+				A_mat[0][1] = A_mat[0][2] = A_mat[1][0] = A_mat[1][2] = A_mat[2][0] = A_mat[2][1] = gld::complex(-1.0) / (nt * 3.0);
 
 				B_mat[0][0] = B_mat[1][1] = zt;
 				B_mat[2][0] = B_mat[2][1] = -zt;
@@ -517,7 +517,7 @@ int transformer::init(OBJECT *parent)
 				/*** TODO -- this needs to be fixed !!!! ****/
 				
 				//Calculate admittance matrix
-				complex Izt = complex(1,0) / zt;
+				gld::complex Izt = gld::complex(1,0) / zt;
 
 				base_admittance_mat[0][0] = base_admittance_mat[1][1] = base_admittance_mat[2][2] = Izt;
 
@@ -559,11 +559,11 @@ int transformer::init(OBJECT *parent)
 					b_mat[0][1] = b_mat[1][2] = b_mat[2][0] = zt * -nt * 2.0 / 3.0;    
 					b_mat[0][2] = b_mat[1][0] = b_mat[2][1] = zt * -nt / 3.0;    
 					
-					d_mat[0][0] = d_mat[1][1] = d_mat[2][2] = complex(1.0) / nt;
-					d_mat[0][1] = d_mat[1][2] = d_mat[2][0] = complex(-1.0) / nt;
+					d_mat[0][0] = d_mat[1][1] = d_mat[2][2] = gld::complex(1.0) / nt;
+					d_mat[0][1] = d_mat[1][2] = d_mat[2][0] = gld::complex(-1.0) / nt;
 
-					A_mat[0][0] = A_mat[1][1] = A_mat[2][2] = complex(1.0) / nt;
-					A_mat[0][2] = A_mat[1][0] = A_mat[2][1] = complex(-1.0) / nt;
+					A_mat[0][0] = A_mat[1][1] = A_mat[2][2] = gld::complex(1.0) / nt;
+					A_mat[0][2] = A_mat[1][0] = A_mat[2][1] = gld::complex(-1.0) / nt;
 
 					B_mat[0][0] = B_mat[1][1] = B_mat[2][2] = zt;
 				}
@@ -576,20 +576,20 @@ int transformer::init(OBJECT *parent)
 					b_mat[0][0] = b_mat[1][1] = b_mat[2][2] = zt * nt * 2.0 / 3.0;    
 					b_mat[0][1] = b_mat[1][2] = b_mat[2][0] = zt * nt/ 3.0;    
 					
-					d_mat[0][0] = d_mat[1][1] = d_mat[2][2] = complex(1.0) / nt;
-					d_mat[0][2] = d_mat[1][0] = d_mat[2][1] = complex(-1.0) / nt;
+					d_mat[0][0] = d_mat[1][1] = d_mat[2][2] = gld::complex(1.0) / nt;
+					d_mat[0][2] = d_mat[1][0] = d_mat[2][1] = gld::complex(-1.0) / nt;
 
-					A_mat[0][0] = A_mat[1][1] = A_mat[2][2] = complex(1.0) / nt;
-					A_mat[0][1] = A_mat[1][2] = A_mat[2][0] = complex(-1.0) / nt;
+					A_mat[0][0] = A_mat[1][1] = A_mat[2][2] = gld::complex(1.0) / nt;
+					A_mat[0][1] = A_mat[1][2] = A_mat[2][0] = gld::complex(-1.0) / nt;
 
 					B_mat[0][0] = B_mat[1][1] = B_mat[2][2] = zt;
 				}
 			}
 			else if (solver_method==SM_NR)
 			{
-				complex Izt = complex(1.0,0) / zt;
+				gld::complex Izt = gld::complex(1.0,0) / zt;
 
-				complex alphaval = voltage_ratio * sqrt(3.0);
+				gld::complex alphaval = voltage_ratio * sqrt(3.0);
 
 				nt *= sqrt(3.0);	//Adjustment for other matrices
 
@@ -599,8 +599,8 @@ int transformer::init(OBJECT *parent)
 				if (voltage_ratio>1.0) //Step down
 				{
 					//High->low voltage change
-					c_mat[0][0] = c_mat[1][1] = c_mat[2][2] = complex(1.0) / alphaval;
-					c_mat[0][2] = c_mat[1][0] = c_mat[2][1] = complex(-1.0) / alphaval;
+					c_mat[0][0] = c_mat[1][1] = c_mat[2][2] = gld::complex(1.0) / alphaval;
+					c_mat[0][2] = c_mat[1][0] = c_mat[2][1] = gld::complex(-1.0) / alphaval;
 					c_mat[0][1] = c_mat[1][2] = c_mat[2][0] = 0.0;
 
 					//Y-based impedance model
@@ -609,22 +609,22 @@ int transformer::init(OBJECT *parent)
 					base_admittance_mat[1][2] = base_admittance_mat[2][0] = base_admittance_mat[2][1] = 0.0;
 
 					//I-low to I-high change
-					B_mat[0][0] = B_mat[1][1] = B_mat[2][2] = complex(1.0) / alphaval;
-					B_mat[0][1] = B_mat[1][2] = B_mat[2][0] = complex(-1.0) / alphaval;
+					B_mat[0][0] = B_mat[1][1] = B_mat[2][2] = gld::complex(1.0) / alphaval;
+					B_mat[0][1] = B_mat[1][2] = B_mat[2][0] = gld::complex(-1.0) / alphaval;
 					B_mat[0][2] = B_mat[1][0] = B_mat[2][1] = 0.0;
 
 					//Other matrices (stolen from above)
 					equalm(c_mat,a_mat);
 					equalm(B_mat,d_mat);
 
-					A_mat[0][0] = A_mat[1][1] = A_mat[2][2] = complex(1.0) / nt;
-					A_mat[0][2] = A_mat[1][0] = A_mat[2][1] = complex(-1.0) / nt;
+					A_mat[0][0] = A_mat[1][1] = A_mat[2][2] = gld::complex(1.0) / nt;
+					A_mat[0][2] = A_mat[1][0] = A_mat[2][1] = gld::complex(-1.0) / nt;
 				}
 				else //assume step up
 				{
 					//Low->high voltage change
-					c_mat[0][0] = c_mat[1][1] = c_mat[2][2] = complex(1.0) / alphaval;
-					c_mat[0][1] = c_mat[1][2] = c_mat[2][0] = complex(-1.0) / alphaval;
+					c_mat[0][0] = c_mat[1][1] = c_mat[2][2] = gld::complex(1.0) / alphaval;
+					c_mat[0][1] = c_mat[1][2] = c_mat[2][0] = gld::complex(-1.0) / alphaval;
 					c_mat[0][2] = c_mat[1][0] = c_mat[2][1] = 0.0;
 
 					//Impedance matrix
@@ -633,16 +633,16 @@ int transformer::init(OBJECT *parent)
 					base_admittance_mat[1][2] = base_admittance_mat[2][0] = base_admittance_mat[2][1] = 0.0;
 
 					//I-high to I-low change
-					B_mat[0][0] = B_mat[1][1] = B_mat[2][2] = complex(1.0) / alphaval;
-					B_mat[0][2] = B_mat[1][0] = B_mat[2][1] = complex(-1.0) / alphaval;
+					B_mat[0][0] = B_mat[1][1] = B_mat[2][2] = gld::complex(1.0) / alphaval;
+					B_mat[0][2] = B_mat[1][0] = B_mat[2][1] = gld::complex(-1.0) / alphaval;
 					B_mat[0][1] = B_mat[1][2] = B_mat[2][0] = 0.0;
 
 					//Other matrices (stolen from above)
 					equalm(c_mat,a_mat);
 					equalm(B_mat,d_mat);
 
-					A_mat[0][0] = A_mat[1][1] = A_mat[2][2] = complex(1.0) / nt;
-					A_mat[0][1] = A_mat[1][2] = A_mat[2][0] = complex(-1.0) / nt;
+					A_mat[0][0] = A_mat[1][1] = A_mat[2][2] = gld::complex(1.0) / nt;
+					A_mat[0][1] = A_mat[1][2] = A_mat[2][0] = gld::complex(-1.0) / nt;
 				}
 			}
 			else 
@@ -696,29 +696,29 @@ int transformer::init(OBJECT *parent)
 
 					if (config->impedance1.Re() == 0.0 && config->impedance1.Im() == 0.0)
 					{
-						z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
-						z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
-						z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+						z0 = gld::complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * gld::complex(za_basehi,0);
+						z1 = gld::complex(config->impedance.Re(),0.4 * config->impedance.Im()) * gld::complex(za_baselo,0);
+						z2 = gld::complex(config->impedance.Re(),0.4 * config->impedance.Im()) * gld::complex(za_baselo,0);
 					}
 					else
 					{
-						z0 = complex(config->impedance.Re(),config->impedance.Im()) * complex(za_basehi,0);
-						z1 = complex(config->impedance1.Re(),config->impedance1.Im()) * complex(za_baselo,0);
-						z2 = complex(config->impedance2.Re(),config->impedance2.Im()) * complex(za_baselo,0);
+						z0 = gld::complex(config->impedance.Re(),config->impedance.Im()) * gld::complex(za_basehi,0);
+						z1 = gld::complex(config->impedance1.Re(),config->impedance1.Im()) * gld::complex(za_baselo,0);
+						z2 = gld::complex(config->impedance2.Re(),config->impedance2.Im()) * gld::complex(za_baselo,0);
 					}
 
-					zc =  complex(za_basehi,0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
-					zt_b = complex(0,0);
-					zt_c = complex(0,0);
+					zc =  gld::complex(za_basehi,0) * gld::complex(config->shunt_impedance.Re(),0) * gld::complex(0,config->shunt_impedance.Im()) / gld::complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
+					zt_b = gld::complex(0,0);
+					zt_c = gld::complex(0,0);
 					
-					a_mat[0][0] = a_mat[1][0] = (z0 / zc + complex(1,0))*nt;
+					a_mat[0][0] = a_mat[1][0] = (z0 / zc + gld::complex(1,0))*nt;
 					
-					c_mat[0][0] = complex(1,0)*nt / zc;
+					c_mat[0][0] = gld::complex(1,0)*nt / zc;
 				
-					d_mat[0][0] = complex(1,0)/nt + complex(nt,0)*z1 / zc;
-					d_mat[0][1] = complex(-1,0)/nt;
+					d_mat[0][0] = gld::complex(1,0)/nt + gld::complex(nt,0)*z1 / zc;
+					d_mat[0][1] = gld::complex(-1,0)/nt;
 
-					A_mat[0][0] = A_mat[1][0] =  (zc / (zc + z0) ) * complex(1,0)/nt;
+					A_mat[0][0] = A_mat[1][0] =  (zc / (zc + z0) ) * gld::complex(1,0)/nt;
 				}
 
 				else if (has_phase(PHASE_B)) // wye-B
@@ -738,29 +738,29 @@ int transformer::init(OBJECT *parent)
 					
 					if (config->impedance1.Re() == 0.0 && config->impedance1.Im() == 0.0)
 					{
-						z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
-						z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
-						z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+						z0 = gld::complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * gld::complex(za_basehi,0);
+						z1 = gld::complex(config->impedance.Re(),0.4 * config->impedance.Im()) * gld::complex(za_baselo,0);
+						z2 = gld::complex(config->impedance.Re(),0.4 * config->impedance.Im()) * gld::complex(za_baselo,0);
 					}
 					else
 					{
-						z0 = complex(config->impedance.Re(),config->impedance.Im()) * complex(za_basehi,0);
-						z1 = complex(config->impedance1.Re(),config->impedance1.Im()) * complex(za_baselo,0);
-						z2 = complex(config->impedance2.Re(),config->impedance2.Im()) * complex(za_baselo,0);
+						z0 = gld::complex(config->impedance.Re(),config->impedance.Im()) * gld::complex(za_basehi,0);
+						z1 = gld::complex(config->impedance1.Re(),config->impedance1.Im()) * gld::complex(za_baselo,0);
+						z2 = gld::complex(config->impedance2.Re(),config->impedance2.Im()) * gld::complex(za_baselo,0);
 					}
 
-					zc =  complex(za_basehi,0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
-					zt_b = complex(0,0);
-					zt_c = complex(0,0);
+					zc =  gld::complex(za_basehi,0) * gld::complex(config->shunt_impedance.Re(),0) * gld::complex(0,config->shunt_impedance.Im()) / gld::complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
+					zt_b = gld::complex(0,0);
+					zt_c = gld::complex(0,0);
 					
-					a_mat[0][1] = a_mat[1][1] = (z0 / zc + complex(1,0))*nt;
+					a_mat[0][1] = a_mat[1][1] = (z0 / zc + gld::complex(1,0))*nt;
 				
-					c_mat[1][0] = complex(1,0)*nt / zc;
+					c_mat[1][0] = gld::complex(1,0)*nt / zc;
 
-					d_mat[1][0] = complex(1,0)/nt + complex(nt,0)*z1 / zc;
-					d_mat[1][1] = complex(-1,0)/nt;
+					d_mat[1][0] = gld::complex(1,0)/nt + gld::complex(nt,0)*z1 / zc;
+					d_mat[1][1] = gld::complex(-1,0)/nt;
 
-					A_mat[0][1] = A_mat[1][1] = (zc / (zc + z0) ) * complex(1,0)/nt;			
+					A_mat[0][1] = A_mat[1][1] = (zc / (zc + z0) ) * gld::complex(1,0)/nt;
 				}
 				else if (has_phase(PHASE_C)) // wye-C
 				{
@@ -779,50 +779,50 @@ int transformer::init(OBJECT *parent)
 
 					if (config->impedance1.Re() == 0.0 && config->impedance1.Im() == 0.0)
 					{
-						z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
-						z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
-						z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+						z0 = gld::complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * gld::complex(za_basehi,0);
+						z1 = gld::complex(config->impedance.Re(),0.4 * config->impedance.Im()) * gld::complex(za_baselo,0);
+						z2 = gld::complex(config->impedance.Re(),0.4 * config->impedance.Im()) * gld::complex(za_baselo,0);
 					}
 					else
 					{
-						z0 = complex(config->impedance.Re(),config->impedance.Im()) * complex(za_basehi,0);
-						z1 = complex(config->impedance1.Re(),config->impedance1.Im()) * complex(za_baselo,0);
-						z2 = complex(config->impedance2.Re(),config->impedance2.Im()) * complex(za_baselo,0);
+						z0 = gld::complex(config->impedance.Re(),config->impedance.Im()) * gld::complex(za_basehi,0);
+						z1 = gld::complex(config->impedance1.Re(),config->impedance1.Im()) * gld::complex(za_baselo,0);
+						z2 = gld::complex(config->impedance2.Re(),config->impedance2.Im()) * gld::complex(za_baselo,0);
 					}
 
-					zc =  complex(za_basehi,0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
-					zt_b = complex(0,0);
-					zt_c = complex(0,0);
+					zc =  gld::complex(za_basehi,0) * gld::complex(config->shunt_impedance.Re(),0) * gld::complex(0,config->shunt_impedance.Im()) / gld::complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
+					zt_b = gld::complex(0,0);
+					zt_c = gld::complex(0,0);
 					
-					a_mat[0][2] = a_mat[1][2] = (z0 / zc + complex(1,0))*nt;
+					a_mat[0][2] = a_mat[1][2] = (z0 / zc + gld::complex(1,0))*nt;
 				
-					c_mat[2][0] = complex(1,0)*nt / zc;
+					c_mat[2][0] = gld::complex(1,0)*nt / zc;
 
-					d_mat[2][0] = complex(1,0)/nt + complex(nt,0)*z1 / zc;
-					d_mat[2][1] = complex(-1,0)/nt;
+					d_mat[2][0] = gld::complex(1,0)/nt + gld::complex(nt,0)*z1 / zc;
+					d_mat[2][1] = gld::complex(-1,0)/nt;
 
-					A_mat[0][2] = A_mat[1][2] = (zc / (zc + z0) ) * complex(1,0)/nt; 
+					A_mat[0][2] = A_mat[1][2] = (zc / (zc + z0) ) * gld::complex(1,0)/nt;
 
 				}
 
-				b_mat[0][0] = (z0 / zc + complex(1,0))*(z1*nt) + z0/nt;
-				b_mat[0][1] = complex(-1,0) * (z0/nt);
-				b_mat[0][2] = complex(0,0);
+				b_mat[0][0] = (z0 / zc + gld::complex(1,0))*(z1*nt) + z0/nt;
+				b_mat[0][1] = gld::complex(-1,0) * (z0/nt);
+				b_mat[0][2] = gld::complex(0,0);
 				b_mat[1][0] = (z0/nt);
-				b_mat[1][1] = -(z0 / zc + complex(1,0))*(z2*nt) - z0/nt;
-				b_mat[1][2] = complex(0,0);
-				b_mat[2][0] = complex(0,0);
-				b_mat[2][1] = complex(0,0);
-				b_mat[2][2] = complex(0,0);
+				b_mat[1][1] = -(z0 / zc + gld::complex(1,0))*(z2*nt) - z0/nt;
+				b_mat[1][2] = gld::complex(0,0);
+				b_mat[2][0] = gld::complex(0,0);
+				b_mat[2][1] = gld::complex(0,0);
+				b_mat[2][2] = gld::complex(0,0);
 
 				B_mat[0][0] = (z1) + (z0*zc/((zc + z0)*nt*nt));
 				B_mat[0][1] = -(z0*zc/((zc + z0)*nt*nt));
 				B_mat[1][0] = (z0*zc/((zc + z0)*nt*nt));
-				B_mat[1][1] = complex(-1,0) * ((z2) + (z0*zc/((zc + z0)*nt*nt)));
-				B_mat[1][2] = complex(0,0);
-				B_mat[2][0] = complex(0,0);
-				B_mat[2][1] = complex(0,0);
-				B_mat[2][2] = complex(0,0);
+				B_mat[1][1] = gld::complex(-1,0) * ((z2) + (z0*zc/((zc + z0)*nt*nt)));
+				B_mat[1][2] = gld::complex(0,0);
+				B_mat[2][0] = gld::complex(0,0);
+				B_mat[2][1] = gld::complex(0,0);
+				B_mat[2][2] = gld::complex(0,0);
 			}
 			else if (solver_method==SM_GS)	// This doesn't work yet
 			{
@@ -875,24 +875,24 @@ int transformer::init(OBJECT *parent)
 
 				if (config->impedance1.Re() == 0.0 && config->impedance1.Im() == 0.0)
 				{
-					z0 = complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * complex(za_basehi,0);
-					z1 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
-					z2 = complex(config->impedance.Re(),0.4 * config->impedance.Im()) * complex(za_baselo,0);
+					z0 = gld::complex(0.5 * config->impedance.Re(),0.8*config->impedance.Im()) * gld::complex(za_basehi,0);
+					z1 = gld::complex(config->impedance.Re(),0.4 * config->impedance.Im()) * gld::complex(za_baselo,0);
+					z2 = gld::complex(config->impedance.Re(),0.4 * config->impedance.Im()) * gld::complex(za_baselo,0);
 				}
 				else
 				{
-					z0 = complex(config->impedance.Re(),config->impedance.Im()) * complex(za_basehi,0);
-					z1 = complex(config->impedance1.Re(),config->impedance1.Im()) * complex(za_baselo,0);
-					z2 = complex(config->impedance2.Re(),config->impedance2.Im()) * complex(za_baselo,0);
+					z0 = gld::complex(config->impedance.Re(),config->impedance.Im()) * gld::complex(za_basehi,0);
+					z1 = gld::complex(config->impedance1.Re(),config->impedance1.Im()) * gld::complex(za_baselo,0);
+					z2 = gld::complex(config->impedance2.Re(),config->impedance2.Im()) * gld::complex(za_baselo,0);
 				}
 
 				
 				// Scale zc so you get proper answers
-				zc =  complex(za_basehi,0) * complex(config->shunt_impedance.Re(),0) * complex(0,config->shunt_impedance.Im()) / complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
+				zc =  gld::complex(za_basehi,0) * gld::complex(config->shunt_impedance.Re(),0) * gld::complex(0,config->shunt_impedance.Im()) / gld::complex(config->shunt_impedance.Re(),config->shunt_impedance.Im());
 
 				//Make intermediate variable for the nasty denominators
-				complex indet;
-				indet=complex(1.0)/(z1*z2*zc*nt*nt+z0*(z2*zc+z1*zc+z1*z2*nt*nt));
+				gld::complex indet;
+				indet=gld::complex(1.0)/(z1*z2*zc*nt*nt+z0*(z2*zc+z1*zc+z1*z2*nt*nt));
 
 				//Store all information into base_admittance_mat (pull it out later) - phases handled in link
 				// Yto_00	Yto_01   To_Y00
@@ -927,11 +927,11 @@ int transformer::init(OBJECT *parent)
 				b_mat[0][0] = (z1) + (z0*zc/((zc + z0)*nt*nt));
 				b_mat[0][1] = -(z0*zc/((zc + z0)*nt*nt));
 				b_mat[1][0] = (z0*zc/((zc + z0)*nt*nt));
-				b_mat[1][1] = complex(-1,0) * ((z2) + (z0*zc/((zc + z0)*nt*nt)));
-				b_mat[1][2] = complex(0,0);
-				b_mat[2][0] = complex(0,0);
-				b_mat[2][1] = complex(0,0);
-				b_mat[2][2] = complex(0,0);
+				b_mat[1][1] = gld::complex(-1,0) * ((z2) + (z0*zc/((zc + z0)*nt*nt)));
+				b_mat[1][2] = gld::complex(0,0);
+				b_mat[2][0] = gld::complex(0,0);
+				b_mat[2][1] = gld::complex(0,0);
+				b_mat[2][2] = gld::complex(0,0);
 			}	
 			else 
 			{
@@ -1045,7 +1045,7 @@ int transformer::init(OBJECT *parent)
 				R = config->full_load_loss/config->no_load_loss;
 			} else if(config->impedance.Re()!=0 && config->shunt_impedance.Re()!=0)
 				R = config->impedance.Re()*config->shunt_impedance.Re();
-			if(config->t_W==0 || config->dtheta_TO_R==0){
+			if(config->t_W==0 || config->dtheta_TO_R==0.0){
 				GL_THROW("winding time constant or rated top-oil hotspot rise for transformer configuration %s must be nonzero",configuration->name);
 				/*  TROUBLESHOOT
 				When using the thermal aging model, the rated_winding_time_constant or the rated_top_oil_rise must be given as a non-zero value.
@@ -1061,11 +1061,11 @@ int transformer::init(OBJECT *parent)
 			}
 
 			// fetch the climate data
-			if(climate==NULL){
+			if(climate==nullptr){
 				//See if a climate object exists
 				climate_list = gl_find_objects(FL_NEW,FT_CLASS,SAME,"climate",FT_END);
 
-				if (climate_list==NULL)
+				if (climate_list==nullptr)
 				{
 					//Warn
 					gl_warning("No climate data found - using static temperature");
@@ -1081,10 +1081,10 @@ int transformer::init(OBJECT *parent)
 				else if (climate_list->hit_count >= 1)
 				{
 					//Link up
-					climate = gl_find_next(climate_list,NULL);
+					climate = gl_find_next(climate_list,nullptr);
 
 					//Make sure it worked
-					if (climate==NULL)
+					if (climate==nullptr)
 					{
 						//Warn
 						gl_warning("No climate data found - using static temperature");
@@ -1103,7 +1103,7 @@ int transformer::init(OBJECT *parent)
 						fetch_double(&ptheta_A, "temperature", climate);
 
 						//Make sure it worked
-						if (ptheta_A == NULL)
+						if (ptheta_A == nullptr)
 						{
 							//Warn
 							gl_warning("No climate data found - using static temperature");
@@ -1136,7 +1136,7 @@ int transformer::init(OBJECT *parent)
 				fetch_double(&ptheta_A, "temperature", climate);
 
 				//Make sure it worked
-				if (ptheta_A == NULL)
+				if (ptheta_A == nullptr)
 				{
 					//Warn
 					gl_warning("No climate data found - using static temperature");
@@ -1323,14 +1323,14 @@ int transformer::transformer_inrush_mat_update(void)
 {
 	int idex_val, jdex_val;
 	double Np, Ns, Rd, Xd, XM, Rprim, Xprim, Lprim;
-	complex Zprim[8][8], ZMprim[8][8],zp_trafo[8][8],zhp_trafo[8][8],zmp_trafo[8][8],zmhp_trafo[8][8];
-	complex zh_trafo[8][8], zmh_trafo[8][8];
-	complex temp_mat[8][8], yp_trafo[8][8], y_trafo[8][8], ym_trafo[8][8], temp_store_mat[8][8];
-	complex aval_mat[8][8], avaltran_mat[8][8];
-	complex temp_mat_small[6][6], temp_other_mat_small[6][6];
-	complex Zo;
+	gld::complex Zprim[8][8], ZMprim[8][8],zp_trafo[8][8],zhp_trafo[8][8],zmp_trafo[8][8],zmhp_trafo[8][8];
+	gld::complex zh_trafo[8][8], zmh_trafo[8][8];
+	gld::complex temp_mat[8][8], yp_trafo[8][8], y_trafo[8][8], ym_trafo[8][8], temp_store_mat[8][8];
+	gld::complex aval_mat[8][8], avaltran_mat[8][8];
+	gld::complex temp_mat_small[6][6], temp_other_mat_small[6][6];
+	gld::complex Zo;
 	double A_sat, B_sat, C_sat;
-	complex work_val_cplex;
+	gld::complex work_val_cplex;
 	OBJECT *obj = OBJECTHDR(this);
 
 	//Set neutral impedance, arbitrarily
@@ -1341,21 +1341,21 @@ int transformer::transformer_inrush_mat_update(void)
 	{
 		for (jdex_val=0; jdex_val<8; jdex_val++)
 		{
-			Zprim[idex_val][jdex_val] = complex(0.0,0.0);
-			ZMprim[idex_val][jdex_val] = complex(0.0,0.0);
-			zp_trafo[idex_val][jdex_val] = complex(0.0,0.0);
-			zhp_trafo[idex_val][jdex_val] = complex(0.0,0.0);
-			zmp_trafo[idex_val][jdex_val] = complex(0.0,0.0);
-			zmhp_trafo[idex_val][jdex_val] = complex(0.0,0.0);
-			zh_trafo[idex_val][jdex_val] = complex(0.0,0.0);
-			zmh_trafo[idex_val][jdex_val] = complex(0.0,0.0);
-			temp_mat[idex_val][jdex_val] = complex(0.0,0.0);
-			yp_trafo[idex_val][jdex_val] = complex(0.0,0.0);
-			y_trafo[idex_val][jdex_val] = complex(0.0,0.0);
-			ym_trafo[idex_val][jdex_val] = complex(0.0,0.0);
-			temp_store_mat[idex_val][jdex_val] = complex(0.0,0.0);
-			aval_mat[idex_val][jdex_val] = complex(0.0,0.0);
-			avaltran_mat[idex_val][jdex_val] = complex(0.0,0.0);
+			Zprim[idex_val][jdex_val] = gld::complex(0.0,0.0);
+			ZMprim[idex_val][jdex_val] = gld::complex(0.0,0.0);
+			zp_trafo[idex_val][jdex_val] = gld::complex(0.0,0.0);
+			zhp_trafo[idex_val][jdex_val] = gld::complex(0.0,0.0);
+			zmp_trafo[idex_val][jdex_val] = gld::complex(0.0,0.0);
+			zmhp_trafo[idex_val][jdex_val] = gld::complex(0.0,0.0);
+			zh_trafo[idex_val][jdex_val] = gld::complex(0.0,0.0);
+			zmh_trafo[idex_val][jdex_val] = gld::complex(0.0,0.0);
+			temp_mat[idex_val][jdex_val] = gld::complex(0.0,0.0);
+			yp_trafo[idex_val][jdex_val] = gld::complex(0.0,0.0);
+			y_trafo[idex_val][jdex_val] = gld::complex(0.0,0.0);
+			ym_trafo[idex_val][jdex_val] = gld::complex(0.0,0.0);
+			temp_store_mat[idex_val][jdex_val] = gld::complex(0.0,0.0);
+			aval_mat[idex_val][jdex_val] = gld::complex(0.0,0.0);
+			avaltran_mat[idex_val][jdex_val] = gld::complex(0.0,0.0);
 		}
 	}
 
@@ -1364,8 +1364,8 @@ int transformer::transformer_inrush_mat_update(void)
 	{
 		for (jdex_val=0; jdex_val<6; jdex_val++)
 		{
-			temp_mat_small[idex_val][jdex_val] = complex(0.0,0.0);
-			temp_other_mat_small[idex_val][jdex_val] = complex(0.0,0.0);
+			temp_mat_small[idex_val][jdex_val] = gld::complex(0.0,0.0);
+			temp_other_mat_small[idex_val][jdex_val] = gld::complex(0.0,0.0);
 		}
 	}
 
@@ -1380,13 +1380,13 @@ int transformer::transformer_inrush_mat_update(void)
 
 	//******************** DEBUG NOTE - these may need to be moved, depending on where I populate things
 	//Compute saturation constants
-	A_phi = complex((deltatimestep_running * 2.0 * config->TD_val),0.0)/complex((4.0*config->TD_val+deltatimestep_running),(4.0*PI*nominal_frequency*config->TD_val*deltatimestep_running));
+	A_phi = gld::complex((deltatimestep_running * 2.0 * config->TD_val),0.0)/gld::complex((4.0*config->TD_val+deltatimestep_running),(4.0*PI*nominal_frequency*config->TD_val*deltatimestep_running));
 
 	//Form B coefficient -- numerator
-	B_phi = complex((4.0*config->TD_val-deltatimestep_running),(-4.0*PI*nominal_frequency*config->TD_val*deltatimestep_running));
+	B_phi = gld::complex((4.0*config->TD_val-deltatimestep_running),(-4.0*PI*nominal_frequency*config->TD_val*deltatimestep_running));
 
 		//Denominator
-		work_val_cplex=complex((4.0*config->TD_val+deltatimestep_running),4.0*PI*nominal_frequency*config->TD_val*deltatimestep_running);
+		work_val_cplex=gld::complex((4.0*config->TD_val+deltatimestep_running),4.0*PI*nominal_frequency*config->TD_val*deltatimestep_running);
 
 		//Combine
 		B_phi = B_phi/work_val_cplex;
@@ -1398,7 +1398,7 @@ int transformer::transformer_inrush_mat_update(void)
 		D_sat = (-1.0*B_sat - sqrt((B_sat*B_sat - 4.0*A_sat*C_sat)))/(2.0*A_sat);
 
 	//Compute the base values for saturation
-	if (config->model_inrush_saturation == true)
+	if (config->model_inrush_saturation)
 	{
 		//Calculate values
 		phi_base_Pri = config->V_primary / (sqrt(3.0) * 2.0 * PI * nominal_frequency);
@@ -1418,17 +1418,17 @@ int transformer::transformer_inrush_mat_update(void)
 	//Form the primitive impedance -- note that these are 4-wire versions
 	// XM is set to 1e9 for these cases, arbitrarily (factored in later)
 	/************* Check for nonsense math (cancellations) */
-	Zprim[0][0] = complex((Rd*(Np/Ns)*(Np/Ns)),(Xd*(Np/Ns)*(Np/Ns) + (Np*Np)/(Ns*Ns)*1e+9));
+	Zprim[0][0] = gld::complex((Rd*(Np/Ns)*(Np/Ns)),(Xd*(Np/Ns)*(Np/Ns) + (Np*Np)/(Ns*Ns)*1e+9));
 	Zprim[1][1] = Zprim[0][0];
 	Zprim[2][2] = Zprim[0][0];
 	Zprim[3][3] = 1e8;
 
-	Zprim[4][4] = complex(Rd,(Xd + 1e+9));
+	Zprim[4][4] = gld::complex(Rd,(Xd + 1e+9));
 	Zprim[5][5] = Zprim[4][4];
 	Zprim[6][6] = Zprim[4][4];
 	Zprim[7][7] = 1e8;
 
-	Zprim[0][4] = complex(0.0,(Np/Ns*1e+9));
+	Zprim[0][4] = gld::complex(0.0,(Np/Ns*1e+9));
 	Zprim[1][5] = Zprim[0][4];
 	Zprim[2][6] = Zprim[0][4];
 	Zprim[4][0] = Zprim[0][4];
@@ -1436,12 +1436,12 @@ int transformer::transformer_inrush_mat_update(void)
 	Zprim[6][2] = Zprim[0][4];
 
 	//Magnetization
-	ZMprim[0][0] = complex(0.0,((Np*Np)/(Ns*Ns)*XM));
+	ZMprim[0][0] = gld::complex(0.0,((Np*Np)/(Ns*Ns)*XM));
 	ZMprim[1][1] = ZMprim[0][0];
 	ZMprim[2][2] = ZMprim[0][0];
 	ZMprim[3][3] = 1e8;
 
-	ZMprim[4][4] = complex(0.0,XM);
+	ZMprim[4][4] = gld::complex(0.0,XM);
 	ZMprim[5][5] = ZMprim[4][4];
 	ZMprim[6][6] = ZMprim[4][4];
 	ZMprim[7][7] = 1e8;
@@ -1460,8 +1460,8 @@ int transformer::transformer_inrush_mat_update(void)
 				Lprim = Xprim/(2*PI*nominal_frequency);
 
 				//Put them into the new matrices
-				zp_trafo[idex_val][jdex_val] = complex((Rprim+(2.0*Lprim/deltatimestep_running)),Xprim);
-				zhp_trafo[idex_val][jdex_val] = complex((Rprim-(2.0*Lprim/deltatimestep_running)),Xprim);
+				zp_trafo[idex_val][jdex_val] = gld::complex((Rprim+(2.0*Lprim/deltatimestep_running)),Xprim);
+				zhp_trafo[idex_val][jdex_val] = gld::complex((Rprim-(2.0*Lprim/deltatimestep_running)),Xprim);
 
 				//Extract base values from magnetization primitive
 				Rprim = ZMprim[idex_val][jdex_val].Re();
@@ -1469,22 +1469,22 @@ int transformer::transformer_inrush_mat_update(void)
 				Lprim = Xprim/(2*PI*nominal_frequency);
 
 				//Put them into the new matrices
-				zmp_trafo[idex_val][jdex_val] = complex((Rprim+(2.0*Lprim/deltatimestep_running)),Xprim);
-				zmhp_trafo[idex_val][jdex_val] = complex((Rprim-(2.0*Lprim/deltatimestep_running)),Xprim);
+				zmp_trafo[idex_val][jdex_val] = gld::complex((Rprim+(2.0*Lprim/deltatimestep_running)),Xprim);
+				zmhp_trafo[idex_val][jdex_val] = gld::complex((Rprim-(2.0*Lprim/deltatimestep_running)),Xprim);
 			}
 		}
 
 		//Form the incident A matrix and it's transpose	-- [1 0 0 -1; etc] type form
 		for (idex_val=0; idex_val<8; idex_val++)
 		{
-			aval_mat[idex_val][idex_val] = complex(1.0,0.0);
-			avaltran_mat[idex_val][idex_val] = complex(1.0,0.0);
+			aval_mat[idex_val][idex_val] = gld::complex(1.0,0.0);
+			avaltran_mat[idex_val][idex_val] = gld::complex(1.0,0.0);
 		}
-		aval_mat[0][3] = aval_mat[1][3] = aval_mat[2][3] = complex(-1.0,0.0);
-		aval_mat[4][7] = aval_mat[5][7] = aval_mat[6][7] = complex(-1.0,0.0);
+		aval_mat[0][3] = aval_mat[1][3] = aval_mat[2][3] = gld::complex(-1.0,0.0);
+		aval_mat[4][7] = aval_mat[5][7] = aval_mat[6][7] = gld::complex(-1.0,0.0);
 
-		avaltran_mat[3][0] = avaltran_mat[3][1] = avaltran_mat[3][2] = complex(-1.0,0.0);
-		avaltran_mat[7][4] = avaltran_mat[7][5] = avaltran_mat[7][6] = complex(-1.0,0.0);
+		avaltran_mat[3][0] = avaltran_mat[3][1] = avaltran_mat[3][2] = gld::complex(-1.0,0.0);
+		avaltran_mat[7][4] = avaltran_mat[7][5] = avaltran_mat[7][6] = gld::complex(-1.0,0.0);
 		
 		//Form y_trafo - A'(inv(zp_trafo)A
 		lu_matrix_inverse(&zp_trafo[0][0],&temp_mat[0][0],8);	//inv(zp_trafo)
@@ -1725,23 +1725,23 @@ int transformer::transformer_saturation_update(bool *deltaIsat)
 {
 	OBJECT *obj = OBJECTHDR(this);
 	int index_loop;
-	complex work_values_voltages[6], phi_values[6];
+	gld::complex work_values_voltages[6], phi_values[6];
 	double phi_mag, phi_ang, angle_offset, imag_phi_value, imag_phi_value_pu;
 	double Isat_pu_imag_full, Isat_pu_imag, curr_delta_timestep_val, temp_double;
-	complex Isat_pu, Isat_diff;
+	gld::complex Isat_pu, Isat_diff;
 	double diff_val, max_diff, global_time_dbl_val;
 	TIMESTAMP global_time_int_val;
 
-	if ((config->connect_type == config->WYE_WYE) && (enable_inrush_calculations==true) && (config->model_inrush_saturation == true))
+	if ((config->connect_type == config->WYE_WYE) && enable_inrush_calculations && config->model_inrush_saturation)
 	{
 		//See if we're in "init mode" or some form of "skip"
-		if (deltaIsat == NULL)	//Init mode
+		if (deltaIsat == nullptr)	//Init mode
 		{
 			//Allocate the storage matrix - 12 always (just zero others)
-			saturation_calculated_vals = (complex *)gl_malloc(12*sizeof(complex));
+			saturation_calculated_vals = (gld::complex *)gl_malloc(12*sizeof(gld::complex));
 
 			//Make sure it worked
-			if (saturation_calculated_vals == NULL)
+			if (saturation_calculated_vals == nullptr)
 			{
 				GL_THROW("Transformer:%d %s failed to allocate memory for inrush saturation tracking",obj->id,obj->name ? obj->name : "Unnamed");
 				/*  TROUBLESHOOT
@@ -1754,7 +1754,7 @@ int transformer::transformer_saturation_update(bool *deltaIsat)
 			//Initialize it, for giggles
 			for (index_loop=0; index_loop<12; index_loop++)
 			{
-				saturation_calculated_vals[index_loop] = complex(0.0,0.0);
+				saturation_calculated_vals[index_loop] = gld::complex(0.0,0.0);
 			}
 
 			//Check the winding type
@@ -1867,7 +1867,7 @@ int transformer::transformer_saturation_update(bool *deltaIsat)
 					}
 
 					//Convert it back to per-unit complex form - magnitude in next block
-					Isat_pu = complex(cos(phi_ang),sin(phi_ang));
+					Isat_pu = gld::complex(cos(phi_ang),sin(phi_ang));
 
 					//Store the saturation value
 					saturation_calculated_vals[index_loop] = Isat_pu * (Isat_pu_imag * I_base_Pri);
@@ -1929,7 +1929,7 @@ int transformer::transformer_saturation_update(bool *deltaIsat)
 					}
 
 					//Convert it back to per-unit complex form - magnitude in next block
-					Isat_pu = complex(cos(phi_ang),sin(phi_ang));
+					Isat_pu = gld::complex(cos(phi_ang),sin(phi_ang));
 
 					//Store the saturation value
 					saturation_calculated_vals[index_loop] = Isat_pu * (Isat_pu_imag * I_base_Sec);
@@ -1953,7 +1953,7 @@ int transformer::transformer_saturation_update(bool *deltaIsat)
 			if (max_diff > inrush_tol_value)	//Technically voltage, but meh
 			{
 				//See if it is set already
-				if (*deltaIsat == false)	//Nope, set it
+				if (!*deltaIsat)	//Nope, set it
 				{
 					*deltaIsat = true;
 				}
@@ -2004,7 +2004,7 @@ EXPORT int create_transformer(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(transformer::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			transformer *my = OBJECTDATA(*obj,transformer);
 			gl_set_parent(*obj,parent);

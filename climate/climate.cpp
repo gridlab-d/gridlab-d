@@ -5,10 +5,10 @@
 	@author David P. Chassin
  **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #ifdef __APPLE__
 #include <cmath>
 #endif
@@ -16,8 +16,9 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
-
 #include <string>
+
+
 #include "gridlabd.h"
 #include "climate.h"
 #include "timestamp.h"

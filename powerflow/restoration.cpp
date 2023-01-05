@@ -2,10 +2,10 @@
 	Copyright (C) 2009 Battelle Memorial Institute
 **/
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <errno.h>
-#include <math.h>
+#include <cerrno>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
 
 using namespace std;
@@ -15,16 +15,16 @@ using namespace std;
 //////////////////////////////////////////////////////////////////////////
 // restoration CLASS FUNCTIONS
 //////////////////////////////////////////////////////////////////////////
-CLASS* restoration::oclass = NULL;
+CLASS* restoration::oclass = nullptr;
 
-CLASS* restoration::pclass = NULL;
+CLASS* restoration::pclass = nullptr;
 
 restoration::restoration(MODULE *mod) : powerflow_library(mod)
 {
-	if(oclass == NULL)
+	if(oclass == nullptr)
 	{
 		oclass = gl_register_class(mod,"restoration",sizeof(restoration),0x00);
-		if (oclass==NULL)
+		if (oclass==nullptr)
 			throw "unable to register class restoration";
 		else
 			oclass->trl = TRL_PROTOTYPE;
@@ -46,7 +46,7 @@ restoration::restoration(MODULE *mod) : powerflow_library(mod)
 			PT_bool,"generate_all_scenarios",PADDR(stop_and_generate),PT_DESCRIPTION,"Flag to determine if restoration reconfiguration and continues, or explores the full space",
 			NULL) < 1) GL_THROW("unable to publish properties in %s",__FILE__);
 
-		if (gl_publish_function(oclass,	"perform_restoration", (FUNCTIONADDR)perform_restoration)==NULL)
+		if (gl_publish_function(oclass,	"perform_restoration", (FUNCTIONADDR)perform_restoration)==nullptr)
 			GL_THROW("Unable to publish restoration function");
     }
 }
@@ -64,108 +64,108 @@ int restoration::create(void)
 
 	stop_and_generate = false;		//By default, just reconfigure until we're happy
 
-	feeder_power_limit = NULL;
-	microgrid_limit = NULL;
-	mVerObjList = NULL;
-	fVerObjList = NULL;
-	fLinkObjList = NULL;
-	fLinkPowerFunc = NULL;
-	mLinkObjList = NULL;
-	mLinkPowerFunc = NULL;
-	feeder_power_link_value = NULL;
-	microgrid_power_link_value = NULL;
+	feeder_power_limit = nullptr;
+	microgrid_limit = nullptr;
+	mVerObjList = nullptr;
+	fVerObjList = nullptr;
+	fLinkObjList = nullptr;
+	fLinkPowerFunc = nullptr;
+	mLinkObjList = nullptr;
+	mLinkPowerFunc = nullptr;
+	feeder_power_link_value = nullptr;
+	microgrid_power_link_value = nullptr;
 
-	sourceVerObj = NULL;
-	faultSecObj = NULL;
+	sourceVerObj = nullptr;
+	faultSecObj = nullptr;
 	numfVer = 0;
 	numMG = 0;
 
 	MGIdx.currSize = 0;
 	MGIdx.maxSize = 0;
-	MGIdx.data = NULL;
+	MGIdx.data = nullptr;
 
 	MGIdx_1.currSize = 0;
 	MGIdx_1.maxSize = 0;
-	MGIdx_1.data = NULL;
+	MGIdx_1.data = nullptr;
 
 	MGIdx_2.currSize = 0;
 	MGIdx_2.maxSize = 0;
-	MGIdx_2.data = NULL;
+	MGIdx_2.data = nullptr;
 
 	feederVertices.currSize = 0;
 	feederVertices.maxSize = 0;
-	feederVertices.data = NULL;
+	feederVertices.data = nullptr;
 
 	feederVertices_1.currSize = 0;
 	feederVertices_1.maxSize = 0;
-	feederVertices_1.data = NULL;
+	feederVertices_1.data = nullptr;
 
 	feederVertices_2.currSize = 0;
 	feederVertices_2.maxSize = 0;
-	feederVertices_2.data = NULL;
+	feederVertices_2.data = nullptr;
 
-	top_ori = NULL;
-	top_sim_1 = NULL;
-	top_sim_2 = NULL;
-	top_res = NULL;
-	top_tmp = NULL;
+	top_ori = nullptr;
+	top_sim_1 = nullptr;
+	top_sim_2 = nullptr;
+	top_res = nullptr;
+	top_tmp = nullptr;
 
 	tie_swi.currSize = 0;
 	tie_swi.maxSize = 0;
-	tie_swi.data_1 = NULL;
-	tie_swi.data_2 = NULL;
+	tie_swi.data_1 = nullptr;
+	tie_swi.data_2 = nullptr;
 
 	tie_swi_1.currSize = 0;
 	tie_swi_1.maxSize = 0;
-	tie_swi_1.data_1 = NULL;
-	tie_swi_1.data_2 = NULL;
+	tie_swi_1.data_1 = nullptr;
+	tie_swi_1.data_2 = nullptr;
 
 	tie_swi_2.currSize = 0;
 	tie_swi_2.maxSize = 0;
-	tie_swi_2.data_1 = NULL;
-	tie_swi_2.data_2 = NULL;
+	tie_swi_2.data_1 = nullptr;
+	tie_swi_2.data_2 = nullptr;
 
 	sec_swi.currSize = 0;
 	sec_swi.maxSize = 0;
-	sec_swi.data_1 = NULL;
-	sec_swi.data_2 = NULL;
+	sec_swi.data_1 = nullptr;
+	sec_swi.data_2 = nullptr;
 
 	sec_swi_1.currSize = 0;
 	sec_swi_1.maxSize = 0;
-	sec_swi_1.data_1 = NULL;
-	sec_swi_1.data_2 = NULL;
+	sec_swi_1.data_1 = nullptr;
+	sec_swi_1.data_2 = nullptr;
 
 	sec_swi_2.currSize = 0;
 	sec_swi_2.maxSize = 0;
-	sec_swi_2.data_1 = NULL;
-	sec_swi_2.data_2 = NULL;
+	sec_swi_2.data_1 = nullptr;
+	sec_swi_2.data_2 = nullptr;
 
 	sec_swi_map.currSize = 0;
 	sec_swi_map.maxSize = 0;
-	sec_swi_map.data_1 = NULL;
-	sec_swi_map.data_2 = NULL;
+	sec_swi_map.data_1 = nullptr;
+	sec_swi_map.data_2 = nullptr;
 
 	sec_swi_map_1.currSize = 0;
 	sec_swi_map_1.maxSize = 0;
-	sec_swi_map_1.data_1 = NULL;
-	sec_swi_map_1.data_2 = NULL;
+	sec_swi_map_1.data_1 = nullptr;
+	sec_swi_map_1.data_2 = nullptr;
 
 	voltage_limit[0] = 0.95;	//Arbitrary values - use C84.1 ANSI limits?
 	voltage_limit[1] = 1.05;
 
 	tie_swi_loc.currSize = 0;
 	tie_swi_loc.maxSize = 0;
-	tie_swi_loc.data_1 = NULL;
-	tie_swi_loc.data_2 = NULL;
-	tie_swi_loc.data_3 = NULL;
-	tie_swi_loc.data_4 = NULL;
+	tie_swi_loc.data_1 = nullptr;
+	tie_swi_loc.data_2 = nullptr;
+	tie_swi_loc.data_3 = nullptr;
+	tie_swi_loc.data_4 = nullptr;
 
 	sec_swi_loc.currSize = 0;
 	sec_swi_loc.maxSize = 0;
-	sec_swi_loc.data_1 = NULL;
-	sec_swi_loc.data_2 = NULL;
-	sec_swi_loc.data_3 = NULL;
-	sec_swi_loc.data_4 = NULL;
+	sec_swi_loc.data_1 = nullptr;
+	sec_swi_loc.data_2 = nullptr;
+	sec_swi_loc.data_3 = nullptr;
+	sec_swi_loc.data_4 = nullptr;
 
 	f_sec.from_vert = -1;
 	f_sec.to_vert = -1;
@@ -180,45 +180,45 @@ int restoration::create(void)
 
 	ver_map_1.currSize = 0;
 	ver_map_1.maxSize = 0;
-	ver_map_1.data = NULL;
+	ver_map_1.data = nullptr;
 
 	ver_map_2.currSize = 0;
 	ver_map_2.maxSize = 0;
-	ver_map_2.data = NULL;
+	ver_map_2.data = nullptr;
 
 	candidateSwOpe.currSize = 0;
 	candidateSwOpe.maxSize = 0;
-	candidateSwOpe.data_1 = NULL;
-	candidateSwOpe.data_2 = NULL;
-	candidateSwOpe.data_3 = NULL;
-	candidateSwOpe.data_4 = NULL;
-	candidateSwOpe.data_5 = NULL;
-	candidateSwOpe.data_6 = NULL;
-	candidateSwOpe.data_7 = NULL;
+	candidateSwOpe.data_1 = nullptr;
+	candidateSwOpe.data_2 = nullptr;
+	candidateSwOpe.data_3 = nullptr;
+	candidateSwOpe.data_4 = nullptr;
+	candidateSwOpe.data_5 = nullptr;
+	candidateSwOpe.data_6 = nullptr;
+	candidateSwOpe.data_7 = nullptr;
 
 	candidateSwOpe_1.currSize = 0;
 	candidateSwOpe_1.maxSize = 0;
-	candidateSwOpe_1.data_1 = NULL;
-	candidateSwOpe_1.data_2 = NULL;
-	candidateSwOpe_1.data_3 = NULL;
-	candidateSwOpe_1.data_4 = NULL;
-	candidateSwOpe_1.data_5 = NULL;
-	candidateSwOpe_1.data_6 = NULL;
-	candidateSwOpe_1.data_7 = NULL;
+	candidateSwOpe_1.data_1 = nullptr;
+	candidateSwOpe_1.data_2 = nullptr;
+	candidateSwOpe_1.data_3 = nullptr;
+	candidateSwOpe_1.data_4 = nullptr;
+	candidateSwOpe_1.data_5 = nullptr;
+	candidateSwOpe_1.data_6 = nullptr;
+	candidateSwOpe_1.data_7 = nullptr;
 
 	candidateSwOpe_2.currSize = 0;
 	candidateSwOpe_2.maxSize = 0;
-	candidateSwOpe_2.data_1 = NULL;
-	candidateSwOpe_2.data_2 = NULL;
-	candidateSwOpe_2.data_3 = NULL;
-	candidateSwOpe_2.data_4 = NULL;
-	candidateSwOpe_2.data_5 = NULL;
-	candidateSwOpe_2.data_6 = NULL;
-	candidateSwOpe_2.data_7 = NULL;
+	candidateSwOpe_2.data_1 = nullptr;
+	candidateSwOpe_2.data_2 = nullptr;
+	candidateSwOpe_2.data_3 = nullptr;
+	candidateSwOpe_2.data_4 = nullptr;
+	candidateSwOpe_2.data_5 = nullptr;
+	candidateSwOpe_2.data_6 = nullptr;
+	candidateSwOpe_2.data_7 = nullptr;
 
-	voltage_storage = NULL;
+	voltage_storage = nullptr;
 
-	fault_check_fxn = NULL;
+	fault_check_fxn = nullptr;
 
 	return 1;
 }
@@ -230,7 +230,7 @@ int restoration::init(OBJECT *parent)
 
 	if (solver_method == SM_NR)
 	{
-		if (restoration_object == NULL)
+		if (restoration_object == nullptr)
 		{
 			restoration_object = obj;	//Set up the global
 			
@@ -299,7 +299,7 @@ int restoration::init(OBJECT *parent)
 		fLinkPowerFunc = (FUNCTIONADDR *)gl_malloc(numfVer*sizeof(FUNCTIONADDR));
 
 		//Check it
-		if (fLinkPowerFunc == NULL)
+		if (fLinkPowerFunc == nullptr)
 		{
 			GL_THROW("Restoration: failed to allocate memory for link functions");
 			/*  TROUBLESHOOT
@@ -310,10 +310,10 @@ int restoration::init(OBJECT *parent)
 		}
 
 		//Do the same for the value
-		feeder_power_link_value = (complex **)gl_malloc(numfVer*sizeof(complex *));
+		feeder_power_link_value = (gld::complex **)gl_malloc(numfVer*sizeof(gld::complex *));
 
 		//Check it
-		if (feeder_power_link_value == NULL)
+		if (feeder_power_link_value == nullptr)
 		{
 			GL_THROW("Restoration: failed to allocate memory for calculated power values");
 			/*  TROUBLESHOOT
@@ -330,7 +330,7 @@ int restoration::init(OBJECT *parent)
 			fLinkPowerFunc[indexval] = (FUNCTIONADDR)(gl_get_function(fLinkObjList[indexval],"update_power_pwr_object"));
 
 			//Check to see if it worked -- would let it be NULL, but will cause problems later
-			if (fLinkPowerFunc[indexval] == NULL)
+			if (fLinkPowerFunc[indexval] == nullptr)
 			{
 				GL_THROW("Restoration: failed to find power calculation function for link:%s",fLinkObjList[indexval]->name ? fLinkObjList[indexval]->name : "Unnamed");
 				/*  TROUBLESHOOT
@@ -344,7 +344,7 @@ int restoration::init(OBJECT *parent)
 			feeder_power_link_value[indexval] = gl_get_complex_by_name(fLinkObjList[indexval],"power_out");
 
 			//Make sure it worked
-			if (feeder_power_link_value[indexval] == NULL)
+			if (feeder_power_link_value[indexval] == nullptr)
 			{
 				GL_THROW("Restoration: failed to find calculated power value for link:s",fLinkObjList[indexval]->name ? fLinkObjList[indexval]->name : "Unnamed");
 				/*  TROUBLESHOOT
@@ -386,17 +386,17 @@ int restoration::init(OBJECT *parent)
 		mLinkPowerFunc = (FUNCTIONADDR *)gl_malloc(numMG*sizeof(FUNCTIONADDR));
 
 		//Check it
-		if (mLinkPowerFunc == NULL)
+		if (mLinkPowerFunc == nullptr)
 		{
 			GL_THROW("Restoration: failed to allocate memory for link functions");
 			//Defined above
 		}
 
 		//Do the same for the value
-		microgrid_power_link_value = (complex **)gl_malloc(numMG*sizeof(complex *));
+		microgrid_power_link_value = (gld::complex **)gl_malloc(numMG*sizeof(gld::complex *));
 
 		//Check it
-		if (microgrid_power_link_value == NULL)
+		if (microgrid_power_link_value == nullptr)
 		{
 			GL_THROW("Restoration: failed to allocate memory for calculated power values");
 			//Defined above
@@ -409,7 +409,7 @@ int restoration::init(OBJECT *parent)
 			mLinkPowerFunc[indexval] = (FUNCTIONADDR)(gl_get_function(mLinkObjList[indexval],"update_power_pwr_object"));
 
 			//Check to see if it worked -- would let it be NULL, but will cause problems later
-			if (mLinkPowerFunc[indexval] == NULL)
+			if (mLinkPowerFunc[indexval] == nullptr)
 			{
 				GL_THROW("Restoration: failed to find power calculation function for link:%s",mLinkObjList[indexval]->name ? mLinkObjList[indexval]->name : "Unnamed");
 				//Defined above
@@ -419,7 +419,7 @@ int restoration::init(OBJECT *parent)
 			microgrid_power_link_value[indexval] = gl_get_complex_by_name(mLinkObjList[indexval],"power_out");
 
 			//Make sure it worked
-			if (microgrid_power_link_value[indexval] == NULL)
+			if (microgrid_power_link_value[indexval] == nullptr)
 			{
 				GL_THROW("Restoration: failed to find calculated power value for link:s",mLinkObjList[indexval]->name ? mLinkObjList[indexval]->name : "Unnamed");
 				//Defined above
@@ -470,16 +470,16 @@ int restoration::PerformRestoration(int faulting_link)
 	//Set global flag active
 	restoration_checks_active = true;
 
-	if (fault_check_object != NULL)
+	if (fault_check_object != nullptr)
 	{
 		//See if we've mapped the function yet
-		if (fault_check_fxn == NULL)
+		if (fault_check_fxn == nullptr)
 		{
 			//Map the function
 			fault_check_fxn = (FUNCTIONADDR)(gl_get_function(fault_check_object,"reliability_alterations"));
 			
 			//Make sure it was found
-			if (fault_check_fxn == NULL)
+			if (fault_check_fxn == nullptr)
 			{
 				GL_THROW("Unable to update objects for reliability effects");
 				//Defined somewhere else
@@ -498,7 +498,7 @@ int restoration::PerformRestoration(int faulting_link)
 	}
 
 	//Make sure the source vertex is defined
-	if (sourceVerObj == NULL)
+	if (sourceVerObj == nullptr)
 	{
 		gl_warning("restoration: The source vertex for the reconfiguration is not defined, defaulting to a swing bus");
 		/*  TROUBLESHOOT
@@ -515,7 +515,7 @@ int restoration::PerformRestoration(int faulting_link)
 	top_ori = (LinkedUndigraph *)gl_malloc(sizeof(LinkedUndigraph));	//Allocate the storage item
 
 	//Make sure it worked
-	if (top_ori == NULL)
+	if (top_ori == nullptr)
 	{
 		GL_THROW("Restoration: failed to allocte graph theory object");
 		/*  TROUBLESHOOT
@@ -701,7 +701,7 @@ int restoration::PerformRestoration(int faulting_link)
 	if (faulting_link == -99)
 	{
 		//Read the GLM -- make sure it is valid
-		if (faultSecObj == NULL)
+		if (faultSecObj == nullptr)
 		{
 			//Not set, hard-code to zero (swing fault?  Default setting of original MATLAB code)
 			f_sec.from_vert = 0;
@@ -795,7 +795,7 @@ int restoration::PerformRestoration(int faulting_link)
 	top_tmp = (LinkedUndigraph *)gl_malloc(sizeof(LinkedUndigraph));
 
 	//Check them
-	if ((top_res == NULL) || (top_tmp == NULL))
+	if ((top_res == nullptr) || (top_tmp == nullptr))
 	{
 		GL_THROW("Restoration: failed to allocte graph theory object");
 		//Defined elsewhere
@@ -832,13 +832,13 @@ int restoration::PerformRestoration(int faulting_link)
 		IdxSW = spanningTreeSearch();
 
 		//Print any outputs
-		if (file_output_desired == true)
+		if (file_output_desired)
 		{
 			printResult(IdxSW);
 		}
 
 		//Check mode of operation
-		if (stop_and_generate == false)	//"GridLAB-D" mode - exit and onward
+		if (!stop_and_generate)	//"GridLAB-D" mode - exit and onward
 		{
 			break;	//Get out of this loop
 		}
@@ -862,7 +862,7 @@ double *restoration::ParseDoubleString(char *input_string,int *num_items_found)
 	double *output_array;
 
 	//Init the pointer, for good measure
-	output_array = NULL;
+	output_array = nullptr;
 
 	//Map up the original token
 	parsing_token = input_string;
@@ -896,7 +896,7 @@ double *restoration::ParseDoubleString(char *input_string,int *num_items_found)
 		output_array = (double *)gl_malloc(num_items*sizeof(double));
 
 		//Check it
-		if (output_array == NULL)
+		if (output_array == nullptr)
 		{
 			gl_error("restoration: Failed to allocate space for double array!");
 			/*  TROUBLESHOOT
@@ -907,7 +907,7 @@ double *restoration::ParseDoubleString(char *input_string,int *num_items_found)
 			
 			//Return negative for an error
 			*num_items_found = -1;
-			return NULL;
+			return nullptr;
 		}
 
 		//Zero it, for good measure
@@ -930,7 +930,7 @@ double *restoration::ParseDoubleString(char *input_string,int *num_items_found)
 				parsing_token = strchr(working_token,',');	//Look for commas, or none
 
 				//Check it, even though we shouldn't need to
-				if (parsing_token == NULL)
+				if (parsing_token == nullptr)
 				{
 					gl_error("restoration: Attempting to parse a character token failed");
 					/*  TROUBLESHOOT
@@ -940,7 +940,7 @@ double *restoration::ParseDoubleString(char *input_string,int *num_items_found)
 
 					//Flag us as a fail
 					*num_items_found = -1;
-					return NULL;
+					return nullptr;
 				}
 				else	//Continue like normal
 				{
@@ -981,15 +981,15 @@ double *restoration::ParseDoubleString(char *input_string,int *num_items_found)
 //Utility functions - string parsing
 //Parse comma-separated list of complex values into array
 //Assumes 1024-character input array
-complex *restoration::ParseComplexString(char *input_string,int *num_items_found)
+gld::complex *restoration::ParseComplexString(char *input_string,int *num_items_found)
 {
 	int index, num_items, item_count;
 	char *working_token, *parsing_token, *complex_token, *offset_token;
-	complex *output_array;
+	gld::complex *output_array;
 	double temp_value;
 
 	//Init the pointer, for good measure
-	output_array = NULL;
+	output_array = nullptr;
 
 	//Map up the original token
 	parsing_token = input_string;
@@ -1020,10 +1020,10 @@ complex *restoration::ParseComplexString(char *input_string,int *num_items_found
 	if (num_items != 0)
 	{
 		//Allocate the array -- assume it's empty (otherwise, oops)
-		output_array = (complex *)gl_malloc(num_items*sizeof(complex));
+		output_array = (gld::complex *)gl_malloc(num_items*sizeof(gld::complex));
 
 		//Check it
-		if (output_array == NULL)
+		if (output_array == nullptr)
 		{
 			gl_error("restoration: Failed to allocate space for complex array!");
 			/*  TROUBLESHOOT
@@ -1034,13 +1034,13 @@ complex *restoration::ParseComplexString(char *input_string,int *num_items_found
 			
 			//Return negative for an error
 			*num_items_found = -1;
-			return NULL;
+			return nullptr;
 		}
 
 		//Zero it, for good measure
 		for (index=0; index<num_items; index++)
 		{
-			output_array[index] = complex(0.0,0.0);
+			output_array[index] = gld::complex(0.0,0.0);
 		}
 
 		//Now start the parsing
@@ -1057,7 +1057,7 @@ complex *restoration::ParseComplexString(char *input_string,int *num_items_found
 				parsing_token = strchr(working_token,',');	//Look for commas, or none
 
 				//Check it, even though we shouldn't need to
-				if (parsing_token == NULL)
+				if (parsing_token == nullptr)
 				{
 					gl_error("restoration: Attempting to parse a character token failed");
 					/*  TROUBLESHOOT
@@ -1067,7 +1067,7 @@ complex *restoration::ParseComplexString(char *input_string,int *num_items_found
 
 					//Flag us as a fail
 					*num_items_found = -1;
-					return NULL;
+					return nullptr;
 				}
 				else	//Continue like normal
 				{
@@ -1082,7 +1082,7 @@ complex *restoration::ParseComplexString(char *input_string,int *num_items_found
 					complex_token = strpbrk(offset_token,"+-");
 
 					//see if a complex portion was specified
-					if (complex_token == NULL)	//No complex indicated, so we're either full real or full complex - fail
+					if (complex_token == nullptr)	//No complex indicated, so we're either full real or full complex - fail
 					{
 						gl_error("restoration: Attempting to parse a complex character token failed");
 						/*  TROUBLESHOOT
@@ -1092,7 +1092,7 @@ complex *restoration::ParseComplexString(char *input_string,int *num_items_found
 
 						//Flag us as a fail
 						*num_items_found = -1;
-						return NULL;
+						return nullptr;
 					}
 					else	//Complex, get the two parts
 					{
@@ -1136,14 +1136,14 @@ complex *restoration::ParseComplexString(char *input_string,int *num_items_found
 		complex_token = strpbrk(offset_token,"+-");
 
 		//see if a complex portion was specified
-		if (complex_token == NULL)	//No complex indicated, so we're either full real or full complex - fail
+		if (complex_token == nullptr)	//No complex indicated, so we're either full real or full complex - fail
 		{
 			gl_error("restoration: Attempting to parse a complex character token failed");
 			//Defined above
 
 			//Flag us as a fail
 			*num_items_found = -1;
-			return NULL;
+			return nullptr;
 		}
 		else	//Complex, get the two parts
 		{
@@ -1196,7 +1196,7 @@ OBJECT **restoration::ParseObjectString(char *input_string,int *num_items_found)
 	OBJECT **output_array;
 
 	//Init the pointer, for good measure
-	output_array = NULL;
+	output_array = nullptr;
 
 	//Map up the original token
 	parsing_token = input_string;
@@ -1230,7 +1230,7 @@ OBJECT **restoration::ParseObjectString(char *input_string,int *num_items_found)
 		output_array = (OBJECT **)gl_malloc(num_items*sizeof(OBJECT *));
 
 		//Check it
-		if (output_array == NULL)
+		if (output_array == nullptr)
 		{
 			gl_error("restoration: Failed to allocate space for object array!");
 			/*  TROUBLESHOOT
@@ -1241,13 +1241,13 @@ OBJECT **restoration::ParseObjectString(char *input_string,int *num_items_found)
 			
 			//Return negative for an error
 			*num_items_found = -1;
-			return NULL;
+			return nullptr;
 		}
 
 		//Zero it, for good measure
 		for (index=0; index<num_items; index++)
 		{
-			output_array[index] = NULL;
+			output_array[index] = nullptr;
 		}
 
 		//Now start the parsing
@@ -1264,7 +1264,7 @@ OBJECT **restoration::ParseObjectString(char *input_string,int *num_items_found)
 				parsing_token = strchr(working_token,',');	//Look for commas, or none
 
 				//Check it, even though we shouldn't need to
-				if (parsing_token == NULL)
+				if (parsing_token == nullptr)
 				{
 					gl_error("restoration: Attempting to parse a character token failed");
 					/*  TROUBLESHOOT
@@ -1274,7 +1274,7 @@ OBJECT **restoration::ParseObjectString(char *input_string,int *num_items_found)
 
 					//Flag us as a fail
 					*num_items_found = -1;
-					return NULL;
+					return nullptr;
 				}
 				else	//Continue like normal
 				{
@@ -1320,12 +1320,12 @@ void restoration::INTVECTalloc(INTVECT *inititem, int allocsizeval)
 	//Initial check -- see if the array already has something -- if so, free it first
 	//Not sure any of these ever get reused, but this will make sure this potential
 	//memory hole is closed
-	if (inititem->data != NULL)
+	if (inititem->data != nullptr)
 	{
 		gl_free(inititem->data);
 
 		//Null it
-		inititem->data = NULL;
+		inititem->data = nullptr;
 	}
 
 	inititem->currSize = 0;	//Reset initial pointer, to be safe
@@ -1335,7 +1335,7 @@ void restoration::INTVECTalloc(INTVECT *inititem, int allocsizeval)
 	inititem->data = (int *)gl_malloc(allocsizeval*sizeof(int));
 
 	//Check it
-	if (inititem->data == NULL)
+	if (inititem->data == nullptr)
 	{
 		GL_THROW("Restoration: failed to allocte graph theory object");
 		//Defined elsewhere
@@ -1352,12 +1352,12 @@ void restoration::INTVECTalloc(INTVECT *inititem, int allocsizeval)
 void restoration::INTVECTfree(INTVECT *inititem)
 {
 	//Remove all of our malloced components - if allocated (check, to prevent overzealous failures)
-	if (inititem->data != NULL)
+	if (inititem->data != nullptr)
 	{
 		gl_free(inititem->data);
 
 		//Null it
-		inititem->data = NULL;
+		inititem->data = nullptr;
 	}
 
 	//Set variables, just in case this is used in a meaninful way
@@ -1375,20 +1375,20 @@ void restoration::CHORDSETalloc(CHORDSET *inititem, int allocsizeval)
 	//Initial check -- see if the array already has something -- if so, free it first
 	//Not sure any of these ever get reused, but this will make sure this potential
 	//memory hole is closed
-	if (inititem->data_1 != NULL)
+	if (inititem->data_1 != nullptr)
 	{
 		gl_free(inititem->data_1);
 
 		//NULL it
-		inititem->data_1 = NULL;
+		inititem->data_1 = nullptr;
 	}
 
-	if (inititem->data_2 != NULL)
+	if (inititem->data_2 != nullptr)
 	{
 		gl_free(inititem->data_2);
 
 		//NULL it
-		inititem->data_2 = NULL;
+		inititem->data_2 = nullptr;
 	}
 
 	inititem->currSize = 0;	//Reset initial pointer, to be safe
@@ -1399,7 +1399,7 @@ void restoration::CHORDSETalloc(CHORDSET *inititem, int allocsizeval)
 	inititem->data_2 = (int *)gl_malloc(allocsizeval*sizeof(int));
 
 	//Check it
-	if ((inititem->data_1 == NULL) || (inititem->data_2 == NULL))
+	if ((inititem->data_1 == nullptr) || (inititem->data_2 == nullptr))
 	{
 		GL_THROW("Restoration: failed to allocte graph theory object");
 		//Defined elsewhere
@@ -1417,20 +1417,20 @@ void restoration::CHORDSETalloc(CHORDSET *inititem, int allocsizeval)
 void restoration::CHORDSETfree(CHORDSET *inititem)
 {
 	//Remove all of our malloced components - if allocated (check, to prevent overzealous failures)
-	if (inititem->data_1 != NULL)
+	if (inititem->data_1 != nullptr)
 	{
 		gl_free(inititem->data_1);
 
 		//NULL it
-		inititem->data_1 = NULL;
+		inititem->data_1 = nullptr;
 	}
 
-	if (inititem->data_2 != NULL)
+	if (inititem->data_2 != nullptr)
 	{
 		gl_free(inititem->data_2);
 
 		//NULL it
-		inititem->data_2 = NULL;
+		inititem->data_2 = nullptr;
 	}
 
 	//Set variables, just in case this is used in a meaninful way
@@ -1446,36 +1446,36 @@ void restoration::LOCSETalloc(LOCSET *inititem, int allocsizeval)
 	//Initial check -- see if the array already has something -- if so, free it first
 	//Not sure any of these ever get reused, but this will make sure this potential
 	//memory hole is closed
-	if (inititem->data_1 != NULL)
+	if (inititem->data_1 != nullptr)
 	{
 		gl_free(inititem->data_1);
 
 		//NULL it
-		inititem->data_1 = NULL;
+		inititem->data_1 = nullptr;
 	}
 
-	if (inititem->data_2 != NULL)
+	if (inititem->data_2 != nullptr)
 	{
 		gl_free(inititem->data_2);
 
 		//NULL it
-		inititem->data_2 = NULL;
+		inititem->data_2 = nullptr;
 	}
 
-	if (inititem->data_3 != NULL)
+	if (inititem->data_3 != nullptr)
 	{
 		gl_free(inititem->data_3);
 
 		//NULL it
-		inititem->data_3 = NULL;
+		inititem->data_3 = nullptr;
 	}
 
-	if (inititem->data_4 != NULL)
+	if (inititem->data_4 != nullptr)
 	{
 		gl_free(inititem->data_4);
 
 		//NULL it
-		inititem->data_4 = NULL;
+		inititem->data_4 = nullptr;
 	}
 
 	inititem->currSize = 0;	//Reset initial pointer, to be safe
@@ -1488,7 +1488,7 @@ void restoration::LOCSETalloc(LOCSET *inititem, int allocsizeval)
 	inititem->data_4 = (int *)gl_malloc(allocsizeval*sizeof(int));
 
 	//Check it
-	if ((inititem->data_1 == NULL) || (inititem->data_2 == NULL) || (inititem->data_3 == NULL) || (inititem->data_4 == NULL))
+	if ((inititem->data_1 == nullptr) || (inititem->data_2 == nullptr) || (inititem->data_3 == nullptr) || (inititem->data_4 == nullptr))
 	{
 		GL_THROW("Restoration: failed to allocte graph theory object");
 		//Defined elsewhere
@@ -1508,36 +1508,36 @@ void restoration::LOCSETalloc(LOCSET *inititem, int allocsizeval)
 void restoration::LOCSETfree(LOCSET *inititem)
 {
 	//Check individual items for existance
-	if (inititem->data_1 != NULL)
+	if (inititem->data_1 != nullptr)
 	{
 		gl_free(inititem->data_1);
 
 		//NULL it
-		inititem->data_1 = NULL;
+		inititem->data_1 = nullptr;
 	}
 
-	if (inititem->data_2 != NULL)
+	if (inititem->data_2 != nullptr)
 	{
 		gl_free(inititem->data_2);
 
 		//NULL it
-		inititem->data_2 = NULL;
+		inititem->data_2 = nullptr;
 	}
 
-	if (inititem->data_3 != NULL)
+	if (inititem->data_3 != nullptr)
 	{
 		gl_free(inititem->data_3);
 
 		//NULL it
-		inititem->data_3 = NULL;
+		inititem->data_3 = nullptr;
 	}
 
-	if (inititem->data_4 != NULL)
+	if (inititem->data_4 != nullptr)
 	{
 		gl_free(inititem->data_4);
 
 		//NULL it
-		inititem->data_4 = NULL;
+		inititem->data_4 = nullptr;
 	}
 
 	//Set values, just to be safe
@@ -1553,60 +1553,60 @@ void restoration::CANDSWOPalloc(CANDSWOP *inititem, int allocsizeval)
 	//Initial check -- see if the array already has something -- if so, free it first
 	//Not sure any of these ever get reused, but this will make sure this potential
 	//memory hole is closed
-	if (inititem->data_1 != NULL)
+	if (inititem->data_1 != nullptr)
 	{
 		gl_free(inititem->data_1);
 
 		//NULL it
-		inititem->data_1 = NULL;
+		inititem->data_1 = nullptr;
 	}
 
-	if (inititem->data_2 != NULL)
+	if (inititem->data_2 != nullptr)
 	{
 		gl_free(inititem->data_2);
 
 		//NULL it
-		inititem->data_2 = NULL;
+		inititem->data_2 = nullptr;
 	}
 
-	if (inititem->data_3 != NULL)
+	if (inititem->data_3 != nullptr)
 	{
 		gl_free(inititem->data_3);
 
 		//NULL it
-		inititem->data_3 = NULL;
+		inititem->data_3 = nullptr;
 	}
 
-	if (inititem->data_4 != NULL)
+	if (inititem->data_4 != nullptr)
 	{
 		gl_free(inititem->data_4);
 
 		//NULL it
-		inititem->data_4 = NULL;
+		inititem->data_4 = nullptr;
 	}
 
-	if (inititem->data_5 != NULL)
+	if (inititem->data_5 != nullptr)
 	{
 		gl_free(inititem->data_5);
 
 		//NULL it
-		inititem->data_5 = NULL;
+		inititem->data_5 = nullptr;
 	}
 
-	if (inititem->data_6 != NULL)
+	if (inititem->data_6 != nullptr)
 	{
 		gl_free(inititem->data_6);
 
 		//NULL it
-		inititem->data_6 = NULL;
+		inititem->data_6 = nullptr;
 	}
 
-	if (inititem->data_7 != NULL)
+	if (inititem->data_7 != nullptr)
 	{
 		gl_free(inititem->data_7);
 
 		//NULL it
-		inititem->data_7 = NULL;
+		inititem->data_7 = nullptr;
 	}
 
 	inititem->currSize = 0;	//Reset initial pointer, to be safe
@@ -1621,14 +1621,14 @@ void restoration::CANDSWOPalloc(CANDSWOP *inititem, int allocsizeval)
 	inititem->data_7 = (int *)gl_malloc(allocsizeval*sizeof(int));
 
 	//Check first 3 ints
-	if ((inititem->data_1 == NULL) || (inititem->data_2 == NULL) || (inititem->data_3 == NULL))
+	if ((inititem->data_1 == nullptr) || (inititem->data_2 == nullptr) || (inititem->data_3 == nullptr))
 	{
 		GL_THROW("Restoration: failed to allocte graph theory object");
 		//Defined elsewhere
 	}
 
 	//Check second 3 ints
-	if ((inititem->data_4 == NULL) || (inititem->data_5 == NULL) || (inititem->data_7 == NULL))
+	if ((inititem->data_4 == nullptr) || (inititem->data_5 == nullptr) || (inititem->data_7 == nullptr))
 	{
 		GL_THROW("Restoration: failed to allocte graph theory object");
 		//Defined elsewhere
@@ -1638,7 +1638,7 @@ void restoration::CANDSWOPalloc(CANDSWOP *inititem, int allocsizeval)
 	inititem->data_6 = (double *)gl_malloc(allocsizeval*sizeof(double));
 
 	//Check double
-	if (inititem->data_6 == NULL)
+	if (inititem->data_6 == nullptr)
 	{
 		GL_THROW("Restoration: failed to allocte graph theory object");
 		//Defined elsewhere
@@ -1663,60 +1663,60 @@ void restoration::CANDSWOPalloc(CANDSWOP *inititem, int allocsizeval)
 void restoration::CANDSWOPfree(CANDSWOP *inititem)
 {
 	//Check individual items for existance
-	if (inititem->data_1 != NULL)
+	if (inititem->data_1 != nullptr)
 	{
 		gl_free(inititem->data_1);
 
 		//NULL it
-		inititem->data_1 = NULL;
+		inititem->data_1 = nullptr;
 	}
 
-	if (inititem->data_2 != NULL)
+	if (inititem->data_2 != nullptr)
 	{
 		gl_free(inititem->data_2);
 
 		//NULL it
-		inititem->data_2 = NULL;
+		inititem->data_2 = nullptr;
 	}
 
-	if (inititem->data_3 != NULL)
+	if (inititem->data_3 != nullptr)
 	{
 		gl_free(inititem->data_3);
 
 		//NULL it
-		inititem->data_3 = NULL;
+		inititem->data_3 = nullptr;
 	}
 
-	if (inititem->data_4 != NULL)
+	if (inititem->data_4 != nullptr)
 	{
 		gl_free(inititem->data_4);
 
 		//NULL it
-		inititem->data_4 = NULL;
+		inititem->data_4 = nullptr;
 	}
 
-	if (inititem->data_5 != NULL)
+	if (inititem->data_5 != nullptr)
 	{
 		gl_free(inititem->data_5);
 
 		//NULL it
-		inititem->data_5 = NULL;
+		inititem->data_5 = nullptr;
 	}
 
-	if (inititem->data_6 != NULL)
+	if (inititem->data_6 != nullptr)
 	{
 		gl_free(inititem->data_6);
 
 		//NULL it
-		inititem->data_6 = NULL;
+		inititem->data_6 = nullptr;
 	}
 
-	if (inititem->data_7 != NULL)
+	if (inititem->data_7 != nullptr)
 	{
 		gl_free(inititem->data_7);
 
 		//NULL it
-		inititem->data_7 = NULL;
+		inititem->data_7 = nullptr;
 	}
 
 	//Set values, just to be safe
@@ -1748,7 +1748,7 @@ void restoration::simplifyTop_1(void)
 		top_sim_1 = (LinkedUndigraph *)gl_malloc(sizeof(LinkedUndigraph));
 
 		//Check it
-		if (top_sim_1 == NULL)
+		if (top_sim_1 == nullptr)
 		{
 			GL_THROW("Restoration: failed to allocte graph theory object");
 			//Defined elsewhere
@@ -1772,7 +1772,7 @@ void restoration::simplifyTop_1(void)
 
 		while (v != -1)
 		{
-			if ((v>idx) && (isSwitch(idx,v) == false) && ((v!=f_sec.from_vert) || (idx!=f_sec.to_vert)) && ((v!=f_sec.to_vert) || (idx!=f_sec.from_vert)))
+			if ((v>idx) && !isSwitch(idx,v) && ((v!=f_sec.from_vert) || (idx!=f_sec.to_vert)) && ((v!=f_sec.to_vert) || (idx!=f_sec.from_vert)))
 			{
 				//iIndex = min(resObj.ver_map_1(idx),resObj.ver_map_1(v));
 				//jIndex = max(resObj.ver_map_1(idx),resObj.ver_map_1(v));
@@ -1854,7 +1854,7 @@ void restoration::simplifyTop_2(void)
 		top_sim_2 = (LinkedUndigraph *)gl_malloc(sizeof(LinkedUndigraph));
 
 		//Check it
-		if (top_sim_2 == NULL)
+		if (top_sim_2 == nullptr)
 		{
 			GL_THROW("Restoration: failed to allocte graph theory object");
 			//Defined elsewhere
@@ -1900,10 +1900,10 @@ void restoration::simplifyTop_2(void)
 	{
 		v = top_sim_2->adjList[uIdx]->first;
 
-		while (v != NULL)
+		while (v != nullptr)
 		{
 			vIdx = v->data;
-			if ((vIdx > uIdx)  && ((((uIdx==f_sec_2.from_vert) && (vIdx==f_sec_2.to_vert)) || ((uIdx==f_sec_2.to_vert) && (vIdx==f_sec_2.from_vert)))) == false)
+			if (!(vIdx > uIdx)  && ((((uIdx==f_sec_2.from_vert) && (vIdx==f_sec_2.to_vert)) || ((uIdx==f_sec_2.to_vert) && (vIdx==f_sec_2.from_vert)))))
 			{
 				sec_swi_2.data_1[sec_swi_2.currSize] = uIdx;
 				sec_swi_2.data_2[sec_swi_2.currSize] = vIdx;
@@ -1939,7 +1939,7 @@ void restoration::setFeederVertices_2(void)
 	INTVECT nodeSet;
 
 	//Empty it, to be safe
-	nodeSet.data = NULL;
+	nodeSet.data = nullptr;
 
 	//Allocate the temporary vector - assume won't be bigger than feederVertices_1? (failed horribly on feederVertices)
 	INTVECTalloc(&nodeSet,feederVertices_1.maxSize);
@@ -1969,16 +1969,16 @@ void restoration::setFeederVertices_2(void)
 			}
 			else
 			{
-				if (top_sim_1->adjList[curNode] != NULL)
+				if (top_sim_1->adjList[curNode] != nullptr)
 				{
 					tNode = top_sim_1->adjList[curNode]->first;
 				}
 				else
 				{
-					tNode = NULL;
+					tNode = nullptr;
 				}
 
-				while (tNode != NULL)
+				while (tNode != nullptr)
 				{
 					if (tNode->data != s_ver_1)
 					{
@@ -2029,16 +2029,16 @@ void restoration::modifySecSwiList(void)
 	int indexval;
 
 	//Null them all, just in case (paranoia)
-	sec_swi_temp.data_1 = NULL;
-	sec_swi_temp.data_2 = NULL;
-	sec_swi_1_temp.data_1 = NULL;
-	sec_swi_1_temp.data_2 = NULL;
-	sec_swi_2_temp.data_1 = NULL;
-	sec_swi_2_temp.data_2 = NULL;
-	sec_swi_loc_temp.data_1 = NULL;
-	sec_swi_loc_temp.data_2 = NULL;
-	sec_swi_loc_temp.data_3 = NULL;
-	sec_swi_loc_temp.data_4 = NULL;
+	sec_swi_temp.data_1 = nullptr;
+	sec_swi_temp.data_2 = nullptr;
+	sec_swi_1_temp.data_1 = nullptr;
+	sec_swi_1_temp.data_2 = nullptr;
+	sec_swi_2_temp.data_1 = nullptr;
+	sec_swi_2_temp.data_2 = nullptr;
+	sec_swi_loc_temp.data_1 = nullptr;
+	sec_swi_loc_temp.data_2 = nullptr;
+	sec_swi_loc_temp.data_3 = nullptr;
+	sec_swi_loc_temp.data_4 = nullptr;
 
 	//Allocate up two new arrays, temporarily
 	CHORDSETalloc(&sec_swi_temp,sec_swi.maxSize);
@@ -2350,12 +2350,12 @@ void restoration::renewFaultLocation(BRANCHVERTICES *faultsection)
 
 	// Graph after restoration
 	//These were theoretically allocated earlier
-	if (top_res != NULL)	//As an attempt at fixing possible memory leaks, try to empty them first
+	if (top_res != nullptr)	//As an attempt at fixing possible memory leaks, try to empty them first
 	{
 		top_res->delAllVer();
 	}
 
-	if (top_tmp != NULL)
+	if (top_tmp != nullptr)
 	{
 		top_tmp->delAllVer();
 	}
@@ -2387,18 +2387,18 @@ int restoration::spanningTreeSearch(void)
 	double overLoad;
 
 	//Initialize local variables -- just in case
-	FCutSet.data_1 = NULL;
-	FCutSet.data_2 = NULL;
-	FCutSet_1.data_1 = NULL;
-	FCutSet_1.data_2 = NULL;
-	FCutSet_2.data_1 = NULL;
-	FCutSet_2.data_2 = NULL;
-	FCutSet_2_1.data_1 = NULL;
-	FCutSet_2_1.data_2 = NULL;
-	FCutSet_2_2.data_1 = NULL;
-	FCutSet_2_2.data_2 = NULL;
-	new_tie_swi.data_1 = NULL;
-	new_tie_swi.data_2 = NULL;
+	FCutSet.data_1 = nullptr;
+	FCutSet.data_2 = nullptr;
+	FCutSet_1.data_1 = nullptr;
+	FCutSet_1.data_2 = nullptr;
+	FCutSet_2.data_1 = nullptr;
+	FCutSet_2.data_2 = nullptr;
+	FCutSet_2_1.data_1 = nullptr;
+	FCutSet_2_1.data_2 = nullptr;
+	FCutSet_2_2.data_1 = nullptr;
+	FCutSet_2_2.data_2 = nullptr;
+	new_tie_swi.data_1 = nullptr;
+	new_tie_swi.data_2 = nullptr;
 
 	//Feasibility flag - default to infeasible
 	feasible = false;
@@ -2527,7 +2527,7 @@ int restoration::spanningTreeSearch(void)
 					checkPF2(&feasible, &overLoad, &feederID);
 
 					//Check feasible again -- if not feasible, undo the operations again
-					if (feasible==false)
+					if (!feasible)
 					{
 						modifyModel(counter);	//Undo it by calling it again
 
@@ -2537,10 +2537,10 @@ int restoration::spanningTreeSearch(void)
 				}
 	        
 			// If feasible restoration scheme is found
-			if (feasible == true)
+			if (feasible)
 			{
 				//Check our desired "approach" on this -- see if we need to undo for the next section or not
-				if (stop_and_generate == true)
+				if (stop_and_generate)
 				{
 					//Undo it by calling it again
 					modifyModel(counter);
@@ -2611,7 +2611,7 @@ int restoration::spanningTreeSearch(void)
 				// feeder, move on to the next candidate switch.
 				feeder_overloaded = candidateSwOpe_2.data_7[counter];
 				swiInFeederBool = isSwiInFeeder(&SW_to_Open_2,feeder_overloaded);
-				if ((feeder_overloaded != 01) && (swiInFeederBool == false))
+				if ((feeder_overloaded != 01) && !swiInFeederBool)
 				{
 					continue;
 				}
@@ -2718,7 +2718,7 @@ int restoration::spanningTreeSearch(void)
 					checkPF2(&feasible, &overLoad, &feederID);
 
 					//Check feasible again -- if not feasible, undo the operations again
-					if (feasible==false)
+					if (!feasible)
 					{
 						modifyModel(counter);	//Undo it by calling it again
 
@@ -2728,10 +2728,10 @@ int restoration::spanningTreeSearch(void)
 				}
 	        
 			// If feasible restoration scheme is found
-			if (feasible == true)
+			if (feasible)
 			{
 				//Check our desired "approach" on this -- see if we need to undo for the next section or not
-				if (stop_and_generate == true)
+				if (stop_and_generate)
 				{
 					//Undo it by calling it again
 					modifyModel(counter);
@@ -2863,7 +2863,7 @@ int restoration::spanningTreeSearch(void)
 				feeder_overloaded = candidateSwOpe_2.data_7[counter];
 
 				swiInFeederBool = isSwiInFeeder(&SW_to_Open_2,feeder_overloaded);
-				if ((feeder_overloaded != 0) && (swiInFeederBool == false))
+				if ((feeder_overloaded != 0) && !swiInFeederBool)
 				{
 					continue;
 				}
@@ -3024,20 +3024,20 @@ void restoration::modifyModel(int counter)
 	bool switch_occurred, return_is_int_val;
 
 	//Initialize temporary variables, just in case
-	swi_to_open.data_1 = NULL;
-	swi_to_open.data_2 = NULL;
-	swi_to_close.data_1 = NULL;
-	swi_to_close.data_2 = NULL;
-	locations_temp.data = NULL;
-	locations.data = NULL;
-	loc_sec.data_1 = NULL;
-	loc_sec.data_2 = NULL;
-	loc_sec.data_3 = NULL;
-	loc_sec.data_4 = NULL;
-	loc_tie.data_1 = NULL;
-	loc_tie.data_2 = NULL;
-	loc_tie.data_3 = NULL;
-	loc_tie.data_4 = NULL;
+	swi_to_open.data_1 = nullptr;
+	swi_to_open.data_2 = nullptr;
+	swi_to_close.data_1 = nullptr;
+	swi_to_close.data_2 = nullptr;
+	locations_temp.data = nullptr;
+	locations.data = nullptr;
+	loc_sec.data_1 = nullptr;
+	loc_sec.data_2 = nullptr;
+	loc_sec.data_3 = nullptr;
+	loc_sec.data_4 = nullptr;
+	loc_tie.data_1 = nullptr;
+	loc_tie.data_2 = nullptr;
+	loc_tie.data_3 = nullptr;
+	loc_tie.data_4 = nullptr;
 	
 	//Allocate size - base off of the size of the switching operations
 	CHORDSETalloc(&swi_to_open,candidateSwOpe.currSize);
@@ -3144,7 +3144,7 @@ void restoration::modifyModel(int counter)
 	for (idx=idxstart; idx<locations.currSize; idx++)
 	{
 		//Null the function handler
-		switching_fxn = NULL;
+		switching_fxn = nullptr;
 
 		//Pull the object header, just cause
 		swobj = NR_branchdata[locations.data[idx]].obj;
@@ -3184,7 +3184,7 @@ void restoration::modifyModel(int counter)
 		}
 
 		//Check it
-		if (switching_fxn == NULL)
+		if (switching_fxn == nullptr)
 		{
 			GL_THROW("Restoration: Unable to map switch change function");
 			/*  TROUBLESHOOT
@@ -3193,7 +3193,7 @@ void restoration::modifyModel(int counter)
 			*/
 		}
 
-		if (return_is_int_val == true)	//Switches, basically
+		if (return_is_int_val)	//Switches, basically
 		{
 			//See what our status was, and do the opposite
 			if (*NR_branchdata[locations.data[idx]].status == LS_OPEN)	//Was open, close it
@@ -3244,7 +3244,7 @@ void restoration::modifyModel(int counter)
 	}//End adjustment location for loop
 
 	//Call the support check alterations, if there was at least one switching action
-	if (switch_occurred == true)
+	if (switch_occurred)
 	{
 		//Call "reliability_alterations" - "link" value of -99 or -77 matter?
 		return_val = ((int (*)(OBJECT *, int, bool))(*fault_check_fxn))(fault_check_object,-99,true);
@@ -3280,6 +3280,9 @@ int restoration::runPowerFlow(void)
 	int overallresult;
 	bool bad_computation;
 	NRSOLVERMODE powerflow_type;
+#ifdef GLD_USE_EIGEN
+    static auto NR_Solver = std::make_unique<NR_Solver_Eigen>();
+#endif
 	
 	//Start out assuming that we're not a bad computation
 	bad_computation = false;
@@ -3299,12 +3302,16 @@ int restoration::runPowerFlow(void)
 
 		//Copied, more or less, from node.cpp call to solver_nr
 		//Call the powerflow routine
-		PFresult = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, powerflow_type, NULL, &bad_computation);
+#ifndef GLD_USE_EIGEN
+		PFresult = solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, powerflow_type, nullptr, &bad_computation);
+#else
+		PFresult = NR_Solver.solver_nr(NR_bus_count, NR_busdata, NR_branch_count, NR_branchdata, &NR_powerflow, powerflow_type, nullptr, &bad_computation);
+#endif
 
 		//De-flag the change - otherwise will cause un-neccesary reallocs
 		NR_admit_change = false;
 
-		if (bad_computation==true)
+		if (bad_computation)
 		{
 			overallresult = 0;		//Flag as a failure to converge -- may be singular, NaN, etc, but is invalid
 		}
@@ -3338,7 +3345,7 @@ void restoration::checkPF2(bool *flag, double *overLoad, int *feederID)
 	checkMG(&mFlag, &overLoad2, &microgridID);
 	checkLinePower(&lFlag,&overLoad3,&lineID);
 
-	if ((vFlag==true) && (fFlag==true) && (mFlag==true) && (lFlag==true))
+	if (vFlag && fFlag && mFlag && lFlag)
 	{
 		*flag = true;
 	}
@@ -3347,7 +3354,7 @@ void restoration::checkPF2(bool *flag, double *overLoad, int *feederID)
 		*flag = false;
 	}
 
-	if (vFlag == false)
+	if (!vFlag)
 	{
 		*overLoad = INFINITY;
 	}
@@ -3517,7 +3524,7 @@ void restoration::checkFeederPower(bool *fFlag, double *overLoad, int *feederID)
 void restoration::checkMG(bool *mFlag, double *overLoad, int *microgridID)
 {
 	int indexval, ret_value;
-	complex microgrid_power_over;
+	gld::complex microgrid_power_over;
 
 	//Assume we're okay, by default
 	*mFlag = true;
@@ -3576,7 +3583,7 @@ void restoration::checkLinePower(bool *lFlag, double *overLoad, int *lineID)
 	*overLoad = 0.0;
 
 	//Check to see if line limits are being checked -- if they aren't, just skip this
-	if (use_link_limits == true)
+	if (use_link_limits)
 	{
 		//Call the function linked in NR_branchdata for each line to check itself
 		for (indexval=0; indexval<NR_branch_count; indexval++)
@@ -3595,7 +3602,7 @@ void restoration::checkLinePower(bool *lFlag, double *overLoad, int *lineID)
 			}
 
 			//See if it is overloaded
-			if (lineFlag == true)
+			if (lineFlag)
 			{
 				//Set the flag
 				*lFlag = false;
@@ -3653,7 +3660,7 @@ void restoration::printResult(int IdxSW)
 	}
 	fprintf(FPOutput, "Fault section: %d - %d (in original topology), %d - %d (in simplified topology)\n", f_sec.from_vert, f_sec.to_vert, f_sec_1.from_vert, f_sec_1.to_vert);
 	fprintf(FPOutput, "Fault section: %s - %s (in original topology)\n", NR_busdata[f_sec.from_vert].name, NR_busdata[f_sec.to_vert].name);
-	if (faultSecObj != NULL)
+	if (faultSecObj != nullptr)
 	{
 		fprintf(FPOutput, "Fault section: %s\n",faultSecObj->name ? faultSecObj->name : "Unnamed");
 	}
@@ -3669,7 +3676,7 @@ void restoration::printResult(int IdxSW)
 		fprintf(FPOutput, "The optimal switching sequence is as follows \n");
 		printSOs(FPOutput,IdxSW);
 	}
-	else if (candidateSwOpe.data_6 != NULL) // Partial restoration                
+	else if (candidateSwOpe.data_6 != nullptr) // Partial restoration                
 	{
 		//Find the minimum value - start with first value
 		IdxSW = 0;
@@ -3915,7 +3922,7 @@ void restoration::PowerflowSave(void)
 	unsigned int indexval;
 
 	//See if we're already allocated - we shouldn't be, but check
-	if (voltage_storage != NULL)
+	if (voltage_storage != nullptr)
 	{
 		//Loop and free our components first
 		for (indexval=0; indexval<NR_bus_count; indexval++)
@@ -3928,10 +3935,10 @@ void restoration::PowerflowSave(void)
 	}
 
 	//Allocate us
-	voltage_storage = (complex **)gl_malloc(NR_bus_count*sizeof(complex *));
+	voltage_storage = (gld::complex **)gl_malloc(NR_bus_count*sizeof(gld::complex *));
 
 	//Make sure it worked
-	if (voltage_storage == NULL)
+	if (voltage_storage == nullptr)
 	{
 		GL_THROW("Restoration: failed to allocate memory for base voltage values!");
 		/*  TROUBLESHOOT
@@ -3945,10 +3952,10 @@ void restoration::PowerflowSave(void)
 	for (indexval=0; indexval<NR_bus_count; indexval++)
 	{
 		//Allocate this entry
-		voltage_storage[indexval] = (complex *)gl_malloc(3*sizeof(complex));
+		voltage_storage[indexval] = (gld::complex *)gl_malloc(3*sizeof(gld::complex));
 
 		//Check it
-		if (voltage_storage[indexval] == NULL)
+		if (voltage_storage[indexval] == nullptr)
 		{
 			GL_THROW("Restoration: failed to allocate memory for base voltage values!");
 			//Defined above
@@ -3983,7 +3990,7 @@ void Chain::delAllNodes(void)
 {
 	CHAINNODE *next;
 
-	while (first != NULL)
+	while (first != nullptr)
 	{
 		next = first->link;
 
@@ -3992,8 +3999,8 @@ void Chain::delAllNodes(void)
 
 		first = next;
 	}
-	first = NULL;
-	last = NULL;
+	first = nullptr;
+	last = nullptr;
 }
 
 //if the linked list is empty, return 1.  Else return 0
@@ -4001,13 +4008,13 @@ bool Chain::isempty(void)
 {
 	bool flag;
 
-	if (first == NULL)
+	if (first == nullptr)
 	{
-		flag = TRUE;
+		flag = true;
 	}
 	else
 	{
-		flag = FALSE;
+		flag = false;
 	}
 
 	return flag;
@@ -4022,7 +4029,7 @@ int Chain::getLength(void)
 	length = 0;
 	currentNode = first;
 
-	while (currentNode != NULL)
+	while (currentNode != nullptr)
 	{
 		length = length + 1;
 		currentNode = currentNode->link;
@@ -4040,7 +4047,7 @@ int Chain::search(int sData)
 	index = 0;
 	currentNode = first;
 
-	while (currentNode != NULL)
+	while (currentNode != nullptr)
 	{
 		if (currentNode->data != sData)
 		{
@@ -4053,7 +4060,7 @@ int Chain::search(int sData)
 		}
 	}
 
-	if (currentNode == NULL)
+	if (currentNode == nullptr)
 	{
 		index = -1;
 	}
@@ -4068,10 +4075,10 @@ bool Chain::modify(int oldData, int newData)
 	CHAINNODE *currentNode;
 	bool flag;
 
-	flag = FALSE;
+	flag = false;
 	currentNode = first;
 
-	while (currentNode != NULL)
+	while (currentNode != nullptr)
 	{
 		if (currentNode->data != oldData)
 		{
@@ -4084,20 +4091,20 @@ bool Chain::modify(int oldData, int newData)
 	}
 
 	//if oldData is found:
-	if (currentNode != NULL)
+	if (currentNode != nullptr)
 	{
 		if (currentNode->data == oldData)
 		{
 			currentNode->data = newData;
-			flag = TRUE;
+			flag = true;
 		}
 		//Default else -- leave it false
 	}
 
 	//if oldData is not found:
-	if (currentNode == NULL)
+	if (currentNode == nullptr)
 	{
-		flag = FALSE;
+		flag = false;
 	}
 
 	return flag;
@@ -4119,14 +4126,14 @@ void Chain::addNode(int kIndex, int newData)
 	//find kth node
 	currentIndex = 0;	//Adjusted from 1
 	currentNode = first;
-	while ((currentIndex < kIndex) && (currentNode != NULL))
+	while ((currentIndex < kIndex) && (currentNode != nullptr))
 	{
 		currentIndex = currentIndex + 1;
 		currentNode = currentNode->link;
 	}
 
 	//out of bounds
-	if ((kIndex > 0) && (currentNode==NULL))
+	if ((kIndex > 0) && (currentNode==nullptr))
 	{
 		GL_THROW("The index is out of bounds.");
 	}
@@ -4136,7 +4143,7 @@ void Chain::addNode(int kIndex, int newData)
 	newNode = (CHAINNODE *)gl_malloc(sizeof(CHAINNODE));
 
 	//See if it worked
-	if (newNode == NULL)
+	if (newNode == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new node in chain");
 		/*  TROUBLESHOOT
@@ -4160,7 +4167,7 @@ void Chain::addNode(int kIndex, int newData)
 		first = newNode;
 	}
 	
-	if (newNode->link == NULL)
+	if (newNode->link == nullptr)
 	{
 		last = newNode;
 	}
@@ -4173,9 +4180,9 @@ void Chain::deleteNode(int dData)
 	CHAINNODE *currentNode, *trail;
 
 	currentNode = first;
-	trail = NULL;					//the node before currentNode
+	trail = nullptr;					//the node before currentNode
 	
-	while (currentNode != NULL)
+	while (currentNode != nullptr)
 	{
 		if (currentNode->data != dData)
 		{
@@ -4188,13 +4195,13 @@ void Chain::deleteNode(int dData)
 		}
 	}
 
-	if (currentNode == NULL)
+	if (currentNode == nullptr)
 	{
 		GL_THROW("The data cannot be found.");
 	}
 
 	//if node with dData is found, delete that node
-	if (trail != NULL)
+	if (trail != nullptr)
 	{
 		trail->link = currentNode->link;
 	}
@@ -4203,7 +4210,7 @@ void Chain::deleteNode(int dData)
 		first = currentNode->link;
 	}
 
-	if (currentNode->link == NULL)
+	if (currentNode->link == nullptr)
 	{
 		last = trail;
 	}
@@ -4218,16 +4225,16 @@ void Chain::copy(Chain *ilist)
 	CHAINNODE *currNode;
 
 	//delete all nodes in llist2
-	if (first != NULL)
+	if (first != nullptr)
 	{
 		delAllNodes();
 	}
 
 	//copy nodes
-	if (ilist != NULL)
+	if (ilist != nullptr)
 	{
 		currNode = ilist->first;
-		while (currNode != NULL)
+		while (currNode != nullptr)
 		{
 			append(currNode->data);
 			currNode = currNode->link;
@@ -4245,7 +4252,7 @@ void Chain::append(int newData)
 	newNode = (CHAINNODE *)gl_malloc(sizeof(CHAINNODE));
 
 	//Make sure it worked
-	if (newNode == NULL)
+	if (newNode == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new node in chain");
 		//Defined above
@@ -4254,9 +4261,9 @@ void Chain::append(int newData)
 	newNode->data = newData;
 
 	//Set initial link
-	newNode->link = NULL;
+	newNode->link = nullptr;
 
-	if (first != NULL)
+	if (first != nullptr)
 	{
 		last->link = newNode;
 		last = newNode;
@@ -4279,16 +4286,16 @@ void LinkedQueue::enQueue(int newData)
 	newNode = (CHAINNODE *)gl_malloc(sizeof(CHAINNODE));
 
 	//Make sure it worked
-	if (newNode == NULL)
+	if (newNode == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new node in chain");
 		//Defined above
 	}
 
-	newNode->link = NULL;
+	newNode->link = nullptr;
 	newNode->data = newData;
 	
-	if (first != NULL)
+	if (first != nullptr)
 	{
 		last->link = newNode;
 		last = newNode;
@@ -4306,7 +4313,7 @@ int LinkedQueue::deQueue(void)
 	int fData;
 	CHAINNODE *tempNode;
 
-	if (isempty() == true)
+	if (isempty())
 	{
 		GL_THROW("Restoration: The queue is empty!");
 	}
@@ -4332,7 +4339,7 @@ int ChainIterator::initialize(Chain *lList)
 
 	location = lList->first;
 
-	if (location != NULL)
+	if (location != nullptr)
 	{
 		nData = location->data;
 	}
@@ -4350,14 +4357,14 @@ int ChainIterator::next(void)
 {
 	int nData;
 
-	if (location == NULL)
+	if (location == nullptr)
 	{
 		return -1;
 	}
 
 	location = location->link;
 	
-	if (location != NULL)
+	if (location != nullptr)
 	{
 		nData = location->data;
 	}
@@ -4378,7 +4385,7 @@ LinkedBase::LinkedBase(int nVer)
 	int indexvar;
 
 	//Common zeros
-	iterPos = NULL;
+	iterPos = nullptr;
 	source = 0;
 	dfs_time = 0;
 	numEdges = 0;
@@ -4387,12 +4394,12 @@ LinkedBase::LinkedBase(int nVer)
 	{
 		numVertices = 0;
 		numEdges = 0;
-		adjList = NULL;
-		status_value = NULL;
-		parent_value = NULL;
-		dist = NULL;
-		dTime = NULL;
-		fTime = NULL;
+		adjList = nullptr;
+		status_value = nullptr;
+		parent_value = nullptr;
+		dist = nullptr;
+		dTime = nullptr;
+		fTime = nullptr;
 	}
 	else
 	{
@@ -4402,7 +4409,7 @@ LinkedBase::LinkedBase(int nVer)
 		adjList = (Chain **)gl_malloc(numVertices*sizeof(Chain *));
 
 		//See if it worked
-		if (adjList == NULL)
+		if (adjList == nullptr)
 		{
 			GL_THROW("Restoration:Failed to allocate new chain");
 			/*  TROUBLESHOOT
@@ -4413,13 +4420,13 @@ LinkedBase::LinkedBase(int nVer)
 		}
 
 		//NULL out the chain iterator - gets populated elsewhere, theoretically
-		iterPos = NULL;
+		iterPos = nullptr;
 
 		//Create the default vectors - initialize at the end (all same size)
 		status_value = (int *)gl_malloc(numVertices*sizeof(int));
 
 		//Check it
-		if (status_value == NULL)
+		if (status_value == nullptr)
 		{
 			GL_THROW("Restoration:Failed to allocate new chain");
 			//Defined above
@@ -4427,7 +4434,7 @@ LinkedBase::LinkedBase(int nVer)
 
 		parent_value = (int *)gl_malloc(numVertices*sizeof(int));
 
-		if (parent_value == NULL)
+		if (parent_value == nullptr)
 		{
 			GL_THROW("Restoration:Failed to allocate new chain");
 			//Defined above
@@ -4435,7 +4442,7 @@ LinkedBase::LinkedBase(int nVer)
 
 		dist = (double *)gl_malloc(numVertices*sizeof(double));
 
-		if (dist == NULL)
+		if (dist == nullptr)
 		{
 			GL_THROW("Restoration:Failed to allocate new chain");
 			//Defined above
@@ -4443,7 +4450,7 @@ LinkedBase::LinkedBase(int nVer)
 
 		dTime = (TIMESTAMP *)gl_malloc(numVertices*sizeof(TIMESTAMP));
 
-		if (dTime == NULL)
+		if (dTime == nullptr)
 		{
 			GL_THROW("Restoration:Failed to allocate new chain");
 			//Defined above
@@ -4451,7 +4458,7 @@ LinkedBase::LinkedBase(int nVer)
 
 		fTime = (TIMESTAMP *)gl_malloc(numVertices*sizeof(TIMESTAMP));
 
-		if (fTime == NULL)
+		if (fTime == nullptr)
 		{
 			GL_THROW("Restoration:Failed to allocate new chain");
 			//Defined above
@@ -4466,7 +4473,7 @@ LinkedBase::LinkedBase(int nVer)
 			adjList[indexvar] = (Chain *)gl_malloc(sizeof(Chain));
 
 			//Make sure it worked
-			if (adjList[indexvar] == NULL)
+			if (adjList[indexvar] == nullptr)
 			{
 				GL_THROW("Restoration:Failed to allocate new chain");
 				//Defined above
@@ -4498,13 +4505,13 @@ void LinkedBase::delAllVer(void)
 			gl_free(adjList[indexvar]);
 
 			//NULL it
-			adjList[indexvar] = NULL;
+			adjList[indexvar] = nullptr;
 		}
 
 		//Now de-allocate everything else
 		gl_free(adjList);	//Main pointer
 		//Null it too
-		adjList = NULL;
+		adjList = nullptr;
 
 		numVertices = 0;
 		numEdges = 0;
@@ -4521,11 +4528,11 @@ void LinkedBase::delAllVer(void)
 		gl_free(fTime);
 
 		//NULL em all
-		status_value = NULL;
-		parent_value = NULL;
-		dist = NULL;
-		dTime = NULL;
-		fTime = NULL;
+		status_value = nullptr;
+		parent_value = nullptr;
+		dist = nullptr;
+		dTime = nullptr;
+		fTime = nullptr;
 	}
 }
 
@@ -4561,7 +4568,7 @@ void LinkedBase::initializePos(void)
 	iterPos = (ChainIterator **)gl_malloc(numVertices*sizeof(ChainIterator *));
 
 	//See if it worked
-	if (iterPos == NULL)
+	if (iterPos == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new chain");
 		//Defined above
@@ -4576,7 +4583,7 @@ void LinkedBase::initializePos(void)
 		iterPos[indexvar] = (ChainIterator *)gl_malloc(sizeof(ChainIterator));
 
 		//Make sure it worked
-		if (iterPos[indexvar] == NULL)
+		if (iterPos[indexvar] == nullptr)
 		{
 			GL_THROW("Restoration:Failed to allocate new chain");
 			//Defined above
@@ -4601,14 +4608,14 @@ void LinkedBase::deactivatePos(void)
 			gl_free(iterPos[indexvar]);
 
 			//Null it - for paranoia (killed below anyways)
-			iterPos[indexvar] = NULL;
+			iterPos[indexvar] = nullptr;
 		}
 
 		//Now de-allocate the mainpointer
 		gl_free(iterPos);
 
 		//Null it for good measure
-		iterPos = NULL;
+		iterPos = nullptr;
 	}
 }
 
@@ -4657,7 +4664,7 @@ void LinkedBase::BFS(int s)
 	Q = (LinkedQueue *)gl_malloc(sizeof(LinkedQueue));
 
 	//Make sure it worked
-	if (Q == NULL)
+	if (Q == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new LinkedQueue");
 	}
@@ -4671,7 +4678,7 @@ void LinkedBase::BFS(int s)
 	initializePos();
 
 	// Search process
-	while (Q->isempty() != true)
+	while (!Q->isempty())
 	{
 		u = Q->deQueue();
         v = beginVertex(u);
@@ -4819,7 +4826,7 @@ void LinkedBase::addAIsoVer(int n)
 	adjList = (Chain **)gl_malloc(numVertices*sizeof(Chain *));
 
 	//See if it worked
-	if (adjList == NULL)
+	if (adjList == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new chain");
 		//Defined elsewhere
@@ -4835,11 +4842,11 @@ void LinkedBase::addAIsoVer(int n)
 	gl_free(tempBase);
 
 	//NULL it, for giggles
-	tempBase = NULL;
+	tempBase = nullptr;
     
 	//See if interPos has anything -- if it does, delete it first (just to be thorough)
 	//Theoretically, only this references it, so prevents orphaning -- may need to revisit in the future if doesn't work
-	if (iterPos != NULL)
+	if (iterPos != nullptr)
 	{
 		deactivatePos();
 	}
@@ -4848,7 +4855,7 @@ void LinkedBase::addAIsoVer(int n)
 	dfs_time = 0;
 
 	//Appears to zero things for new vector sizes -- check the first one and release, if needed
-	if (status_value != NULL)
+	if (status_value != nullptr)
 	{
 		//Free everyone first
 		gl_free(status_value);
@@ -4858,11 +4865,11 @@ void LinkedBase::addAIsoVer(int n)
 		gl_free(fTime);
 
 		//NULL us, to be safe
-		status_value = NULL;
-		parent_value = NULL;
-		dist = NULL;
-		dTime = NULL;
-		fTime = NULL;
+		status_value = nullptr;
+		parent_value = nullptr;
+		dist = nullptr;
+		dTime = nullptr;
+		fTime = nullptr;
 	}
 
 	//Allocate new space - basically copied from above (constructor)
@@ -4871,7 +4878,7 @@ void LinkedBase::addAIsoVer(int n)
 	status_value = (int *)gl_malloc(numVertices*sizeof(int));
 
 	//Check it
-	if (status_value == NULL)
+	if (status_value == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new chain");
 		//Defined above
@@ -4879,7 +4886,7 @@ void LinkedBase::addAIsoVer(int n)
 
 	parent_value = (int *)gl_malloc(numVertices*sizeof(int));
 
-	if (parent_value == NULL)
+	if (parent_value == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new chain");
 		//Defined above
@@ -4887,7 +4894,7 @@ void LinkedBase::addAIsoVer(int n)
 
 	dist = (double *)gl_malloc(numVertices*sizeof(double));
 
-	if (dist == NULL)
+	if (dist == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new chain");
 		//Defined above
@@ -4895,7 +4902,7 @@ void LinkedBase::addAIsoVer(int n)
 
 	dTime = (TIMESTAMP *)gl_malloc(numVertices*sizeof(TIMESTAMP));
 
-	if (dTime == NULL)
+	if (dTime == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new chain");
 		//Defined above
@@ -4903,7 +4910,7 @@ void LinkedBase::addAIsoVer(int n)
 
 	fTime = (TIMESTAMP *)gl_malloc(numVertices*sizeof(TIMESTAMP));
 
-	if (fTime == NULL)
+	if (fTime == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new chain");
 		//Defined above
@@ -4918,7 +4925,7 @@ void LinkedBase::addAIsoVer(int n)
 		adjList[indexvar] = (Chain *)gl_malloc(sizeof(Chain));
 
 		//Make sure it worked
-		if (adjList[indexvar] == NULL)
+		if (adjList[indexvar] == nullptr)
 		{
 			GL_THROW("Restoration:Failed to allocate new chain");
 			//Defined above
@@ -4981,7 +4988,7 @@ void LinkedDigraph::addEdge(int iIndex, int jIndex)
 	{
         GL_THROW("Restoration: Error: Two vertexs of an edge can not be the same!");
 	}
-    if (isEdgeExisting(iIndex, jIndex) == true)
+    if (isEdgeExisting(iIndex, jIndex))
 	{
         GL_THROW("Restoration: Error: Can not add an edge that is already existing!");
 	}
@@ -5045,7 +5052,7 @@ void LinkedUndigraph::addEdge(int iIndex, int jIndex)
 	{
         GL_THROW("Restoration: Two nodes of an edge can not be the same!");
 	}
-	if (isEdgeExisting(iIndex,jIndex) == true)
+	if (isEdgeExisting(iIndex,jIndex))
 	{
         // error('Error: Can not add an edge that is already existing!');
 		gl_warning("Restoration: (addEdge): Edge (%d,%d) is existing",iIndex,jIndex);
@@ -5155,7 +5162,7 @@ void LinkedUndigraph::findFunCutSet(CHORDSET *chordSet, BRANCHVERTICES *tBranch,
 		}
 
 		//Check for badness
-		if (is_bad_loop == true)
+		if (is_bad_loop)
 		{
 			continue;	//Just move on in lieu of doing anything better
 		}
@@ -5186,7 +5193,7 @@ void LinkedUndigraph::findFunCutSet(CHORDSET *chordSet, BRANCHVERTICES *tBranch,
 		}
 
 		// if (i,j) is a element of the fundmental cut set, add it to cutSet
-		if (isCutSetEle == true)
+		if (isCutSetEle)
 		{
 			//Add it to the cutSet
 			cutSet->data_1[cutSet->currSize] = chordSet->data_1[idx];
@@ -5231,8 +5238,8 @@ void LinkedUndigraph::simplify(CHORDSET *chordset, BRANCHVERTICES *fBranch, int 
 	INTVECT iVer;
 
 	//Initialize local versions, just in case
-	tempvect.data = NULL;
-	iVer.data = NULL;
+	tempvect.data = nullptr;
+	iVer.data = nullptr;
 
 	//Original comments
     // uTree is the orignal tree, assume BFS is already performed.
@@ -5249,7 +5256,7 @@ void LinkedUndigraph::simplify(CHORDSET *chordset, BRANCHVERTICES *fBranch, int 
 	tempvect.data = (int *)gl_malloc(newsize*sizeof(int));
 
 	//Make sure it worked
-	if (tempvect.data == NULL)
+	if (tempvect.data == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new temp variable");
 		//Defined elsewhere
@@ -5291,7 +5298,7 @@ void LinkedUndigraph::simplify(CHORDSET *chordset, BRANCHVERTICES *fBranch, int 
 	iVer.data = (int *)gl_malloc(vMap->maxSize*sizeof(int));
 
 	//Make sure it worked
-	if (iVer.data == NULL)
+	if (iVer.data == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new temp variable");
 		//Defined elsewhere
@@ -5401,7 +5408,7 @@ int LinkedUndigraph::isolateDeg12Ver(INTVECT *iVer)
 	iMark = (int *)gl_malloc(numVertices*sizeof(int));
 
 	//Make sure it worked
-	if (iMark == NULL)
+	if (iMark == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new temp variable");
 		/*  TROUBLESHOOT
@@ -5470,7 +5477,7 @@ void LinkedUndigraph::deleteIsoVer(INTVECT *vMap)
 	bool allocation_needed;
 
 	//Initialize local variables, just in case
-	isoVerArray.data = NULL;
+	isoVerArray.data = nullptr;
 	allocation_needed = true;
 
     // vMap is a map between old number and new number of vertices
@@ -5480,7 +5487,7 @@ void LinkedUndigraph::deleteIsoVer(INTVECT *vMap)
 
 	//Check and see if vMap is already allocated -- if it is, remove it first
 	//Just in case a variable is reused outside
-	if (vMap->data != NULL)
+	if (vMap->data != nullptr)
 	{
 		//See if it is 
 		if (vMap->maxSize != numVertices)
@@ -5490,7 +5497,7 @@ void LinkedUndigraph::deleteIsoVer(INTVECT *vMap)
 
 			//No need to NULL it, we're just going to allocate it again in a second
 			//Changed my mind, NULL it anyways
-			vMap->data = NULL;
+			vMap->data = nullptr;
 
 			//Flag
 			allocation_needed = true;
@@ -5502,13 +5509,13 @@ void LinkedUndigraph::deleteIsoVer(INTVECT *vMap)
 	}
 
 	//Allocate, if needed
-	if (allocation_needed == true)
+	if (allocation_needed)
 	{
 		//Allocate vMap and make the initial one
 		vMap->data = (int *)gl_malloc(numVertices*sizeof(int));
 
 		//Make sure it worked
-		if (vMap->data == NULL)
+		if (vMap->data == nullptr)
 		{
 			GL_THROW("Restoration:Failed to allocate new temp variable");
 			/*  TROUBLESHOOT
@@ -5536,7 +5543,7 @@ void LinkedUndigraph::deleteIsoVer(INTVECT *vMap)
 	isoVerArray.data = (int *)gl_malloc(numVertices*sizeof(int));
 
 	//Make sure it worked
-	if (isoVerArray.data == NULL)
+	if (isoVerArray.data == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new temp variable");
 		//Defined above
@@ -5575,7 +5582,7 @@ void LinkedUndigraph::deleteIsoVer(INTVECT *vMap)
 	{
 		v = adjList[idx]->first;
 
-		while (v != NULL)
+		while (v != nullptr)
 		{
 			v->data = vMap->data[v->data];
             v = v->link;
@@ -5590,7 +5597,7 @@ void LinkedUndigraph::deleteIsoVer(INTVECT *vMap)
 		gl_free(adjList[isoVerArray.data[idx]]);
 
 		//Null it, to be safe -- theoretically done, but be paranoid
-		adjList[isoVerArray.data[idx]] = NULL;
+		adjList[isoVerArray.data[idx]] = nullptr;
 	}
 
     // Delete from adjacency list
@@ -5612,7 +5619,7 @@ void LinkedUndigraph::deleteIsoVer(INTVECT *vMap)
 	adjList = (Chain **)gl_malloc(newArraySize*sizeof(Chain *));
 
 	//See if it worked
-	if (adjList == NULL)
+	if (adjList == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new chain");
 		//Defined elsewhere
@@ -5629,13 +5636,13 @@ void LinkedUndigraph::deleteIsoVer(INTVECT *vMap)
 	gl_free(tempList);
 
 	//NULL us, out of paranoia
-	tempList = NULL;
+	tempList = nullptr;
     
     // modify the number of vertices
     numVertices = newArraySize;
     
     // modify the length of other properties
-	if (status_value != NULL)	//Free them first
+	if (status_value != nullptr)	//Free them first
 	{
 		gl_free(status_value);
 		gl_free(parent_value);
@@ -5644,11 +5651,11 @@ void LinkedUndigraph::deleteIsoVer(INTVECT *vMap)
 		gl_free(fTime);
 
 		//NULL em all
-		status_value = NULL;
-		parent_value = NULL;
-		dist = NULL;
-		dTime = NULL;
-		fTime = NULL;
+		status_value = nullptr;
+		parent_value = nullptr;
+		dist = nullptr;
+		dTime = nullptr;
+		fTime = nullptr;
 	}
 
 	//Alloc again (copy from elsewhere)
@@ -5658,7 +5665,7 @@ void LinkedUndigraph::deleteIsoVer(INTVECT *vMap)
 	status_value = (int *)gl_malloc(numVertices*sizeof(int));
 
 	//Check it
-	if (status_value == NULL)
+	if (status_value == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new chain");
 		//Defined above
@@ -5666,7 +5673,7 @@ void LinkedUndigraph::deleteIsoVer(INTVECT *vMap)
 
 	parent_value = (int *)gl_malloc(numVertices*sizeof(int));
 
-	if (parent_value == NULL)
+	if (parent_value == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new chain");
 		//Defined above
@@ -5674,7 +5681,7 @@ void LinkedUndigraph::deleteIsoVer(INTVECT *vMap)
 
 	dist = (double *)gl_malloc(numVertices*sizeof(double));
 
-	if (dist == NULL)
+	if (dist == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new chain");
 		//Defined above
@@ -5682,7 +5689,7 @@ void LinkedUndigraph::deleteIsoVer(INTVECT *vMap)
 
 	dTime = (TIMESTAMP *)gl_malloc(numVertices*sizeof(TIMESTAMP));
 
-	if (dTime == NULL)
+	if (dTime == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new chain");
 		//Defined above
@@ -5690,7 +5697,7 @@ void LinkedUndigraph::deleteIsoVer(INTVECT *vMap)
 
 	fTime = (TIMESTAMP *)gl_malloc(numVertices*sizeof(TIMESTAMP));
 
-	if (fTime == NULL)
+	if (fTime == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new chain");
 		//Defined above
@@ -5720,12 +5727,12 @@ void LinkedUndigraph::mergeVer_2(INTVECT *vMap)
 	Chain **tempList;
 
 	//Initialize local variables, just in case
-	V_new.data = NULL;
-	isoVerArray.data = NULL;
-	resVerArray.data = NULL;
-	merge_V.data = NULL;
-	tempoutVect.data = NULL;
-	tempList = NULL;
+	V_new.data = nullptr;
+	isoVerArray.data = nullptr;
+	resVerArray.data = nullptr;
+	merge_V.data = nullptr;
+	tempoutVect.data = nullptr;
+	tempList = nullptr;
 
 	//Allocate up V_new -- assume it won't be any bigger than vMap
 	V_new.currSize = vMap->currSize;
@@ -5733,7 +5740,7 @@ void LinkedUndigraph::mergeVer_2(INTVECT *vMap)
 	V_new.data = (int *)gl_malloc(V_new.maxSize*sizeof(int));
 
 	//Check it
-	if (V_new.data == NULL)
+	if (V_new.data == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new temp variable");
 		//Defined above
@@ -5761,25 +5768,25 @@ void LinkedUndigraph::mergeVer_2(INTVECT *vMap)
 	tempoutVect.data = (int *)gl_malloc(tempoutVect.maxSize*sizeof(int));
 
 	//Make sure they worked
-	if (isoVerArray.data == NULL)
+	if (isoVerArray.data == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new temp variable");
 		//Defined above
 	}
 
-	if (resVerArray.data == NULL)
+	if (resVerArray.data == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new temp variable");
 		//Defined above
 	}
 
-	if (merge_V.data == NULL)
+	if (merge_V.data == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new temp variable");
 		//Defined above
 	}
 
-	if (tempoutVect.data == NULL)
+	if (tempoutVect.data == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new temp variable");
 		//Defined above
@@ -5817,22 +5824,22 @@ void LinkedUndigraph::mergeVer_2(INTVECT *vMap)
 		//Check for empty
 		if (merge_V.data[0] == -1)	//Empty
 		{
-			cur_ver = NULL;
+			cur_ver = nullptr;
 		}
 		else
 		{
 			cur_ver = adjList[merge_V.data[0]]->first;
 		}
 
-		while (cur_ver != NULL)
+		while (cur_ver != nullptr)
 		{
-			if (cur_ver->link != NULL)
+			if (cur_ver->link != nullptr)
 			{
 				next_ver = cur_ver->link;
 			}
 			else
 			{
-				next_ver = NULL;
+				next_ver = nullptr;
 			}
 
 			//See if something can be found
@@ -5855,18 +5862,18 @@ void LinkedUndigraph::mergeVer_2(INTVECT *vMap)
 			}
 			else	//Empty
 			{
-				cur_ver = NULL;
+				cur_ver = nullptr;
 			}
 
-            while (cur_ver != NULL)
+            while (cur_ver != nullptr)
 			{
-				if (cur_ver->link != NULL)
+				if (cur_ver->link != nullptr)
 				{
 					next_ver = cur_ver->link;
 				}
 				else
 				{
-					next_ver = NULL;
+					next_ver = nullptr;
 				}
 
 				//See if anything more is found
@@ -5891,7 +5898,7 @@ void LinkedUndigraph::mergeVer_2(INTVECT *vMap)
     for (idx=0; idx<numVertices; idx++)
 	{
 		cur_ver = adjList[idx]->first;
-        while (cur_ver != NULL)
+        while (cur_ver != nullptr)
 		{
 			cur_ver->data = vMap->data[cur_ver->data];
             cur_ver = cur_ver->link;
@@ -5906,7 +5913,7 @@ void LinkedUndigraph::mergeVer_2(INTVECT *vMap)
 		gl_free(adjList[isoVerArray.data[idx]]);
 
 		//Null it, to be safe -- theoretically done, but be paranoid
-		adjList[isoVerArray.data[idx]] = NULL;
+		adjList[isoVerArray.data[idx]] = nullptr;
 	}
 
     // Delete from adjacency list
@@ -5927,7 +5934,7 @@ void LinkedUndigraph::mergeVer_2(INTVECT *vMap)
 	adjList = (Chain **)gl_malloc(newArraySize*sizeof(Chain *));
 
 	//See if it worked
-	if (adjList == NULL)
+	if (adjList == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new chain");
 		//Defined elsewhere
@@ -5944,13 +5951,13 @@ void LinkedUndigraph::mergeVer_2(INTVECT *vMap)
 	gl_free(tempList);
 
 	//NULL it, to be safe
-	tempList = NULL;
+	tempList = nullptr;
     
     // modify the number of vertices
     numVertices = newArraySize;
     
     // modify the length of other properties
-	if (status_value != NULL)	//Free them first
+	if (status_value != nullptr)	//Free them first
 	{
 		gl_free(status_value);
 		gl_free(parent_value);
@@ -5959,11 +5966,11 @@ void LinkedUndigraph::mergeVer_2(INTVECT *vMap)
 		gl_free(fTime);
 
 		//NULL them all
-		status_value = NULL;
-		parent_value = NULL;
-		dist = NULL;
-		dTime = NULL;
-		fTime = NULL;
+		status_value = nullptr;
+		parent_value = nullptr;
+		dist = nullptr;
+		dTime = nullptr;
+		fTime = nullptr;
 	}
 
 	//Alloc again (copy from elsewhere)
@@ -5973,7 +5980,7 @@ void LinkedUndigraph::mergeVer_2(INTVECT *vMap)
 	status_value = (int *)gl_malloc(numVertices*sizeof(int));
 
 	//Check it
-	if (status_value == NULL)
+	if (status_value == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new chain");
 		//Defined above
@@ -5981,7 +5988,7 @@ void LinkedUndigraph::mergeVer_2(INTVECT *vMap)
 
 	parent_value = (int *)gl_malloc(numVertices*sizeof(int));
 
-	if (parent_value == NULL)
+	if (parent_value == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new chain");
 		//Defined above
@@ -5989,7 +5996,7 @@ void LinkedUndigraph::mergeVer_2(INTVECT *vMap)
 
 	dist = (double *)gl_malloc(numVertices*sizeof(double));
 
-	if (dist == NULL)
+	if (dist == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new chain");
 		//Defined above
@@ -5997,7 +6004,7 @@ void LinkedUndigraph::mergeVer_2(INTVECT *vMap)
 
 	dTime = (TIMESTAMP *)gl_malloc(numVertices*sizeof(TIMESTAMP));
 
-	if (dTime == NULL)
+	if (dTime == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new chain");
 		//Defined above
@@ -6005,7 +6012,7 @@ void LinkedUndigraph::mergeVer_2(INTVECT *vMap)
 
 	fTime = (TIMESTAMP *)gl_malloc(numVertices*sizeof(TIMESTAMP));
 
-	if (fTime == NULL)
+	if (fTime == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new chain");
 		//Defined above
@@ -6049,7 +6056,7 @@ void unique_int(INTVECT *inputvect, INTVECT *outputvect)
 	workmatrix.data = (int *)gl_malloc(workmatrix.maxSize*sizeof(int));
 
 	//Make sure it worked
-	if (workmatrix.data == NULL)
+	if (workmatrix.data == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new temp variable");
 		//Defined elsewhere
@@ -6061,7 +6068,7 @@ void unique_int(INTVECT *inputvect, INTVECT *outputvect)
 	workmatrix_input.data = (int *)gl_malloc(workmatrix_input.maxSize*sizeof(int));
 
 	//Make sure it worked
-	if (workmatrix_input.data == NULL)
+	if (workmatrix_input.data == nullptr)
 	{
 		GL_THROW("Restoration:Failed to allocate new temp variable");
 		//Defined elsewhere
@@ -6187,7 +6194,7 @@ EXPORT int create_restoration(OBJECT **obj, OBJECT *parent)
 	try
 	{
 		*obj = gl_create_object(restoration::oclass);
-		if (*obj!=NULL)
+		if (*obj!=nullptr)
 		{
 			restoration *my = OBJECTDATA(*obj,restoration);
 			gl_set_parent(*obj,parent);
