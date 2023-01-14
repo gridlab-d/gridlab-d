@@ -393,9 +393,9 @@ int inverter_dyn::create(void)
 	Angle_PLL_blk[0].setparams(1.0);
 	Angle_PLL_blk[1].setparams(1.0);
 	Angle_PLL_blk[2].setparams(1.0);
-	Angle_PLL_blk[0].init(0.0,0.0);
-	Angle_PLL_blk[1].init(0.0,(4.0 / 3.0) * PI);
-	Angle_PLL_blk[2].init(0.0,(2.0 / 3.0) * PI);
+	Angle_PLL_blk[0].init_given_y(0.0);
+	Angle_PLL_blk[1].init_given_y((4.0 / 3.0) * PI);
+	Angle_PLL_blk[2].init_given_y((2.0 / 3.0) * PI);
 
 	Angle_PLL[0] = 0.0;
 	Angle_PLL[1] = (4.0 / 3.0) * PI;
@@ -4896,12 +4896,12 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 				e_droop[i] = (value_IGenerated[i] * gld::complex(Rfilter, Xfilter) * Z_base);
 				e_droop_prev[i] = e_droop[i];
 				Angle_blk[i].setparams(1.0);
-				Angle_blk[i].init(0.0,(e_droop[i].Arg()));
+				Angle_blk[i].init_given_y(e_droop[i].Arg());
 			}
 
 			// Initialize the voltage control block
 			V_ctrl_blk.setparams(kpv,kiv,E_min,E_max,E_min,E_max);
-			V_ctrl_blk.init(0.0,e_droop[0].Mag() / V_base);
+			V_ctrl_blk.init_given_y(e_droop[0].Mag() / V_base);
 			
 			//See if it is the first deltamode entry - theory is all future changes will trigger deltamode, so these should be set
 			if (first_deltamode_init)
@@ -4928,29 +4928,29 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 
 			// Initialize P measurement filter block
 			Pmeas_blk.setparams(Tp);
-			Pmeas_blk.init(0,VA_Out.Re()/S_base);
+			Pmeas_blk.init_given_y(VA_Out.Re()/S_base);
 
 			// Initialize Q measurement filter block
 			Qmeas_blk.setparams(Tq);
-			Qmeas_blk.init(0,VA_Out.Im()/S_base);
+			Qmeas_blk.init_given_y(VA_Out.Im()/S_base);
 
 			// Initialize V measurement filter
 			Vmeas_blk.setparams(Tv);
-			Vmeas_blk.init(0,pCircuit_V_Avg_pu);
+			Vmeas_blk.init_given_y(pCircuit_V_Avg_pu);
 
 			// Initialize Pmax and Pmin controller
 			Pmax_ctrl_blk.setparams(kppmax,kipmax,-w_lim,0.0,-w_lim,0.0);
 			Pmin_ctrl_blk.setparams(kppmax,kipmax,0.0,w_lim,0.0,w_lim);
 
-			Pmax_ctrl_blk.init(0.0,0.0);
-			Pmin_ctrl_blk.init(0.0,0.0);
+			Pmax_ctrl_blk.init_given_y(0.0);
+			Pmin_ctrl_blk.init_given_y(0.0);
 			
 			// Initialize Qmax and Qmin controller
 			Qmax_ctrl_blk.setparams(kpqmax,kiqmax,-V_lim,0.0,-V_lim,0.0);
 			Qmin_ctrl_blk.setparams(kpqmax,kiqmax,0.0,V_lim,0.0,V_lim);
 
-			Qmax_ctrl_blk.init(0.0,0.0);
-			Qmin_ctrl_blk.init(0.0,0.0);
+			Qmax_ctrl_blk.init_given_y(0.0);
+			Qmin_ctrl_blk.init_given_y(0.0);
 
 			// Initialize Vdc_min controller and DC bus voltage
 			if (grid_forming_mode == DYNAMIC_DC_BUS) // consider the dynamics of PV dc bus, and the internal voltage magnitude needs to be recalculated
@@ -5027,13 +5027,13 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 				e_droop_prev[i] = e_droop[i];
 
 				Angle_blk[i].setparams(1.0);
-				Angle_blk[i].init(0.0,(e_droop[i].Arg()));
+				Angle_blk[i].init_given_y(e_droop[i].Arg());
 
 			}
 
 			// Initializa the voltage control block
 			V_ctrl_blk.setparams(kpv,kiv,E_min,E_max,E_min,E_max);
-			V_ctrl_blk.init(0.0,(e_droop[0].Mag() + e_droop[1].Mag() + e_droop[2].Mag()) / 3 / V_base);
+			V_ctrl_blk.init_given_y((e_droop[0].Mag() + e_droop[1].Mag() + e_droop[2].Mag()) / 3 / V_base);
 			
 			//See if it is the first deltamode entry - theory is all future changes will trigger deltamode, so these should be set
 			if (first_deltamode_init)
@@ -5061,29 +5061,29 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 			// Initialize measured P,Q,and V
 
 			Pmeas_blk.setparams(Tp);
-			Pmeas_blk.init(0,VA_Out.Re()/S_base);
+			Pmeas_blk.init_given_y(VA_Out.Re()/S_base);
 			
 			// Initialize Q measurement filter block
 			Qmeas_blk.setparams(Tq);
-			Qmeas_blk.init(0,VA_Out.Im()/S_base);
+			Qmeas_blk.init_given_y(VA_Out.Im()/S_base);
 
 			// Initialize V measurement filter
 			Vmeas_blk.setparams(Tv);
-			Vmeas_blk.init(0,pCircuit_V_Avg_pu);
+			Vmeas_blk.init_given_y(pCircuit_V_Avg_pu);
 
 			// Initialize Pmax and Pmin controller
 			Pmax_ctrl_blk.setparams(kppmax,kipmax,-w_lim,0.0,-w_lim,0.0);
 			Pmin_ctrl_blk.setparams(kppmax,kipmax,0.0,w_lim,0.0,w_lim);
 
-			Pmax_ctrl_blk.init(0.0,0.0);
-			Pmin_ctrl_blk.init(0.0,0.0);
+			Pmax_ctrl_blk.init_given_y(0.0);
+			Pmin_ctrl_blk.init_given_y(0.0);
 			
 			// Initialize Qmax and Qmin controller
 			Qmax_ctrl_blk.setparams(kpqmax,kiqmax,-V_lim,0.0,-V_lim,0.0);
 			Qmin_ctrl_blk.setparams(kpqmax,kiqmax,0.0,V_lim,0.0,V_lim);
 
-			Qmax_ctrl_blk.init(0.0,0.0);
-			Qmin_ctrl_blk.init(0.0,0.0);
+			Qmax_ctrl_blk.init_given_y(0.0);
+			Qmin_ctrl_blk.init_given_y(0.0);
 
 			// Initialize Vdc_min controller and DC bus voltage
 			if (grid_forming_mode == DYNAMIC_DC_BUS) // consider the dynamics of PV dc bus, and the internal voltage magnitude needs to be recalculated
@@ -5155,11 +5155,11 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 			//Default else - all changes should be in deltamode
 
 			// Initialize the PLL
-			Angle_PLL_blk[0].init(0.0,value_Circuit_V[0].Arg());
+			Angle_PLL_blk[0].init_given_y(value_Circuit_V[0].Arg());
 			Angle_PLL[0] = Angle_PLL_blk[0].x[0];
 			
 			delta_w_PLL_blk[0].setparams(kpPLL,kiPLL,-1000.0,1000.0,-1000.0,1000.0);
-			delta_w_PLL_blk[0].init(0.0,0.0);
+			delta_w_PLL_blk[0].init_given_y(0.0);
 
 
 			ugd_pu[0] = (value_Circuit_V[0].Re() * cos(value_Circuit_V[0].Arg()) + value_Circuit_V[0].Im() * sin(value_Circuit_V[0].Arg())) / V_base;
@@ -5177,8 +5177,8 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 				igd_blk[0].setparams(kpc,kic,-1000.0,1000.0,-1000.0,1000.0);
 				igq_blk[0].setparams(kpc,kic,-1000.0,1000.0,-1000.0,1000.0);
 
-				igd_blk[0].init(0.0,ed_pu[0] - ugd_pu[0] + igq_pu[0] * Xfilter * F_current);
-				igq_blk[0].init(0.0,eq_pu[0] - ugq_pu[0] - igd_pu[0] * Xfilter * F_current);
+				igd_blk[0].init_given_y(ed_pu[0] - ugd_pu[0] + igq_pu[0] * Xfilter * F_current);
+				igq_blk[0].init_given_y(eq_pu[0] - ugq_pu[0] - igd_pu[0] * Xfilter * F_current);
 			}
 			else if(control_mode == GFL_CURRENT_SOURCE)
 			{
@@ -5188,8 +5188,8 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 				igd_filter_blk[0].setparams(Tif);
 				igq_filter_blk[0].setparams(Tif);
 
-				igd_filter_blk[0].init(0.0,igd_pu[0]);
-				igq_filter_blk[0].init(0.0,igq_pu[0]);
+				igd_filter_blk[0].init_given_y(igd_pu[0]);
+				igq_filter_blk[0].init_given_y(igq_pu[0]);
 
 				igd_filter[0] = igd_filter_blk[0].x[0];
 				igq_filter[0] = igq_filter_blk[0].x[0];
@@ -5199,7 +5199,7 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 			{
 				// Initialize the frequency-watt
 			        f_filter_blk.setparams(Tff);
-				f_filter_blk.init(0.0,fPLL[0]);
+				f_filter_blk.init_given_y(fPLL[0]);
 				f_filter = f_filter_blk.x[0];
 				
 				if ((f_filter < (f_nominal + db_OF))&&(f_filter > (f_nominal - db_UF)))  // add dead band
@@ -5213,7 +5213,7 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 
 				
 				Pref_droop_pu_filter_blk.setparams(Tpf);
-				Pref_droop_pu_filter_blk.init(0.0,Pref_droop_pu);
+				Pref_droop_pu_filter_blk.init_given_y(Pref_droop_pu);
 				Pref_droop_pu_filter = Pref_droop_pu_filter_blk.x[0];
 			}
 
@@ -5222,7 +5222,7 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 				// Initialize the volt-var control
 			        V_Avg_pu = value_Circuit_V[0].Mag() / V_base;
 			        V_filter_blk.setparams(Tvf);
-				V_filter_blk.init(0.0,V_Avg_pu);
+				V_filter_blk.init_given_y(V_Avg_pu);
 				V_filter = V_filter_blk.x[0];
 
 				if ((V_filter < (Vset + db_OV))&&(V_filter > (Vset - db_UV)))  // add dead band
@@ -5235,7 +5235,7 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 				}
 
 				Qref_droop_pu_filter_blk.setparams(Tqf);
-				Qref_droop_pu_filter_blk.init(0.0,Qref_droop_pu);
+				Qref_droop_pu_filter_blk.init_given_y(Qref_droop_pu);
 				Qref_droop_pu_filter = Qref_droop_pu_filter_blk.x[0];
 			}
 		}
@@ -5281,11 +5281,11 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 					for (int i = 0; i < 3; i++)
 					{
 						// Initialize the PLL
-					        Angle_PLL_blk[i].init(0.0,value_Circuit_V[i].Arg());
+					        Angle_PLL_blk[i].init_given_y(value_Circuit_V[i].Arg());
 						Angle_PLL[i] = Angle_PLL_blk[i].x[0];
 
 						delta_w_PLL_blk[i].setparams(kpPLL,kiPLL,-1000.0,1000.0,-1000.0,1000.0);
-						delta_w_PLL_blk[i].init(0.0,0.0);
+						delta_w_PLL_blk[i].init_given_y(0.0);
 					}
 				}
 				else if(grid_following_mode == POSITIVE_SEQUENCE)
@@ -5294,9 +5294,9 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 					value_Circuit_V_PS = (value_Circuit_V[0] + value_Circuit_V[1] * gld::complex(cos(2.0 / 3.0 * PI), sin(2.0 / 3.0 * PI)) + value_Circuit_V[2] * gld::complex(cos(-2.0 / 3.0 * PI), sin(-2.0 / 3.0 * PI))) / 3.0;
 
 					// only consider positive sequence
-					Angle_PLL_blk[0].init(0.0,value_Circuit_V_PS.Arg());
-					Angle_PLL_blk[1].init(0.0,value_Circuit_V_PS.Arg() - 2.0 / 3.0 * PI);
-					Angle_PLL_blk[2].init(0.0,value_Circuit_V_PS.Arg() + 2.0 / 3.0 * PI);
+					Angle_PLL_blk[0].init_given_y(value_Circuit_V_PS.Arg());
+					Angle_PLL_blk[1].init_given_y(value_Circuit_V_PS.Arg() - 2.0 / 3.0 * PI);
+					Angle_PLL_blk[2].init_given_y(value_Circuit_V_PS.Arg() + 2.0 / 3.0 * PI);
 					Angle_PLL[0] = Angle_PLL_blk[0].x[0];
 					Angle_PLL[1] = Angle_PLL_blk[1].x[0];
 					Angle_PLL[2] = Angle_PLL_blk[2].x[0];
@@ -5305,7 +5305,7 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 					{
 						// Initialize the PLL
 					        delta_w_PLL_blk[i].setparams(kpPLL,kiPLL,-1000.0,1000.0,-1000.0,1000.0);
-					        delta_w_PLL_blk[i].init(0.0,0.0);
+					        delta_w_PLL_blk[i].init_given_y(0.0);
 					}
 				}
 
@@ -5326,8 +5326,8 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 						igd_blk[i].setparams(kpc,kic,-1000.0,1000.0,-1000.0,1000.0);
 						igq_blk[i].setparams(kpc,kic,-1000.0,1000.0,-1000.0,1000.0);
 
-						igd_blk[i].init(0.0,ed_pu[i] - ugd_pu[i] + igq_pu[i] * Xfilter * F_current);
-						igq_blk[i].init(0.0,eq_pu[i] - ugq_pu[i] - igd_pu[i] * Xfilter * F_current);
+						igd_blk[i].init_given_y(ed_pu[i] - ugd_pu[i] + igq_pu[i] * Xfilter * F_current);
+						igq_blk[i].init_given_y(eq_pu[i] - ugq_pu[i] - igd_pu[i] * Xfilter * F_current);
 					}
 					else if(control_mode == GFL_CURRENT_SOURCE)
 					{
@@ -5337,8 +5337,8 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 												igd_filter_blk[i].setparams(Tif);
 						igq_filter_blk[i].setparams(Tif);
 
-						igd_filter_blk[i].init(0.0,igd_pu[i]);
-						igq_filter_blk[i].init(0.0,igq_pu[i]);
+						igd_filter_blk[i].init_given_y(igd_pu[i]);
+						igq_filter_blk[i].init_given_y(igq_pu[i]);
 
 						igd_filter[i]  = igd_filter_blk[i].x[0];
 						igq_filter[i]  = igq_filter_blk[i].x[0];
@@ -5349,7 +5349,7 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 				{
 					// Initialize the frequency-watt
 				        f_filter_blk.setparams(Tff);
-				        f_filter_blk.init(0.0,(fPLL[0]+fPLL[1]+fPLL[2])/3.0);
+				        f_filter_blk.init_given_y((fPLL[0]+fPLL[1]+fPLL[2])/3.0);
 					f_filter = f_filter_blk.x[0];
 
 					if ((f_filter < (f_nominal + db_OF))&&(f_filter > (f_nominal - db_UF)))  // add dead band
@@ -5362,7 +5362,7 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 					}
 
 					Pref_droop_pu_filter_blk.setparams(Tpf);
-					Pref_droop_pu_filter_blk.init(0.0,Pref_droop_pu);
+					Pref_droop_pu_filter_blk.init_given_y(Pref_droop_pu);
 					Pref_droop_pu_filter = Pref_droop_pu_filter_blk.x[0];
 				}
 
@@ -5371,7 +5371,7 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 					// Initialize the volt-var control
 					V_Avg_pu = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base;
 					V_filter_blk.setparams(Tvf);
-					V_filter_blk.init(0.0,V_Avg_pu);
+					V_filter_blk.init_given_y(V_Avg_pu);
 					V_filter = V_filter_blk.x[0];
 
 					if ((V_filter < (Vset + db_OV))&&(V_filter > (Vset - db_UV)))  // add dead band
@@ -5384,7 +5384,7 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 					}
 
 					Qref_droop_pu_filter_blk.setparams(Tqf);
-					Qref_droop_pu_filter_blk.init(0.0,Qref_droop_pu);
+					Qref_droop_pu_filter_blk.init_given_y(Qref_droop_pu);
 					Qref_droop_pu_filter = Qref_droop_pu_filter_blk.x[0];
 				}
 
