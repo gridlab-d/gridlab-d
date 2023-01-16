@@ -278,6 +278,7 @@ TIMESTAMP sec_control::presync(TIMESTAMP t0, TIMESTAMP t1)
 
 	//**************** Initial top-down pass for QSTS - typically empty accumulators and re-init working variable for current pass ****************//
 
+
 	return t2;
 }
 
@@ -373,7 +374,9 @@ TIMESTAMP sec_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 	//default else - either not deltamode, or not the first timestep
 
 	//**************** Bottom-up execution events for QSTS - usually the actual "logic" before a powerflow call ****************//
-
+	// check whether participation has been altered in any way
+	parse_praticipant_input(participant_input);
+	
 	//Return
 	if (tret_value != TS_NEVER)
 	{
@@ -392,7 +395,7 @@ TIMESTAMP sec_control::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	TIMESTAMP t2 = TS_NEVER; //By default, we're done forever!
 
 	//**************** second top-down call - items that need to be reconciled after powerflow has executed ***************//
-
+	
 	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
 
