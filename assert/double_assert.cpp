@@ -111,7 +111,7 @@ TIMESTAMP double_assert::commit(TIMESTAMP t1, TIMESTAMP t2)
 	{
 		gl_error("Specified target %s for %s is not valid.",get_target(),get_parent()->get_name());
 		/*  TROUBLESHOOT
-		Check to make sure the target you are specifying is a published variable for the object
+		Check to make sure the target you are specifying is a published variable of type double for the object
 		that you are pointing to.  Refer to the documentation of the command flag --modhelp, or 
 		check the wiki page to determine which variables can be published within the object you
 		are pointing to with the assert function.
