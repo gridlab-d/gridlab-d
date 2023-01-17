@@ -99,70 +99,11 @@ private:
 	// Update current func
 	void update_iGen(gld::complex);
 
-	//*** IEEE 1547 functionality ***//
-	bool Reconnect_Warn_Flag;		//Flag to warn on a 1547 recovery that the behavior is not fully validated
 
-	bool enable_1547_compliance;	//Flag to enable IEEE 1547-2003/2014 condition checking
-	double IEEE1547_reconnect_time;			//Time after a 1547 violation clears before we reconnect
-	bool inverter_1547_status;		//Flag to indicate if we are online, or "curtailed" due to 1547 mapping
-
-	enum IEEE_1547_STATUS {IEEE1547_NONE=0, IEEE1547_2003=1, IEEE1547A_2014=2,IEEE1547_2018=3};
-	enumeration ieee_1547_version;
-
-	//1547(a) frequency
-	double IEEE1547_over_freq_high_band_setpoint;	//OF2 set point for IEEE 1547a-2014
-	double IEEE1547_over_freq_high_band_delay;		//OF2 clearing time for IEEE1547a-2014
-	double IEEE1547_over_freq_high_band_viol_time;	//OF2 violation accumulator
-	double IEEE1547_over_freq_low_band_setpoint;	//OF1 set point for IEEE 1547a-2014
-	double IEEE1547_over_freq_low_band_delay;		//OF1 clearing time for IEEE 1547a-2014
-	double IEEE1547_over_freq_low_band_viol_time;	//OF1 violation accumulator
-	double IEEE1547_under_freq_high_band_setpoint;	//UF2 set point for IEEE 1547a-2014
-	double IEEE1547_under_freq_high_band_delay;		//UF2 clearing time for IEEE1547a-2014
-	double IEEE1547_under_freq_high_band_viol_time;	//UF2 violation accumulator
-	double IEEE1547_under_freq_low_band_setpoint;	//UF1 set point for IEEE 1547a-2014
-	double IEEE1547_under_freq_low_band_delay;		//UF1 clearing time for IEEE 1547a-2014
-	double IEEE1547_under_freq_low_band_viol_time;	//UF1 violation accumulator
-
-	//1547 voltage(a) voltage
-	double IEEE1547_under_voltage_lowest_voltage_setpoint;	//Lowest voltage threshold for undervoltage
-	double IEEE1547_under_voltage_middle_voltage_setpoint;	//Middle-lowest voltage threshold for undervoltage
-	double IEEE1547_under_voltage_high_voltage_setpoint;	//High value of low voltage threshold for undervoltage
-	double IEEE1547_over_voltage_low_setpoint;				//Lowest voltage value for overvoltage
-	double IEEE1547_over_voltage_high_setpoint;				//High voltage value for overvoltage
-	double IEEE1547_under_voltage_lowest_delay;				//Lowest voltage clearing time for undervoltage
-	double IEEE1547_under_voltage_middle_delay;				//Middle-lowest voltage clearing time for undervoltage
-	double IEEE1547_under_voltage_high_delay;				//Highest voltage clearing time for undervoltage
-	double IEEE1547_over_voltage_low_delay;					//Lowest voltage clearing time for overvoltage
-	double IEEE1547_over_voltage_high_delay;				//Highest voltage clearing time for overvoltage
-	double IEEE1547_under_voltage_lowest_viol_time;			//Lowest low voltage threshold violation accumulator
-	double IEEE1547_under_voltage_middle_viol_time;			//Middle low voltage threshold violation accumulator
-	double IEEE1547_under_voltage_high_viol_time;			//Highest low voltage threshold violation accumulator
-	double IEEE1547_over_voltage_low_viol_time;				//Lowest high voltage threshold violation accumulator
-	double IEEE1547_over_voltage_high_viol_time;			//Highest high voltage threshold violation accumulator
-
-	enum IEEE1547TRIPSTATUS {
-		IEEE_1547_NOTRIP=0,		/**< No trip reason */
-		IEEE_1547_HIGH_OF=1,	/**< High over-frequency level trip */
-		IEEE_1547_LOW_OF=2,		/**< Low over-frequency level trip */
-		IEEE_1547_HIGH_UF=3,	/**< High under-frequency level trip */
-		IEEE_1547_LOW_UF=4,		/**< Low under-frequency level trip */
-		IEEE_1547_LOWEST_UV=5,	/**< Lowest under-voltage level trip */
-		IEEE_1547_MIDDLE_UV=6,	/**< Middle under-voltage level trip */
-		IEEE_1547_HIGH_UV=7,	/**< High under-voltage level trip */
-		IEEE_1547_LOW_OV=8,		/**< Low over-voltage level trip */
-		IEEE_1547_HIGH_OV=9		/**< High over-voltage level trip */
-	};
-
-	enumeration ieee_1547_trip_method;
-
-	double IEEE1547_out_of_violation_time_total;	//Tracking variable to see how long we've been "outside of bad conditions" to re-enable the inverter
 	gld_property *pFrequency;			//Pointer to frequency value for checking 1547 compliance
 	double value_Frequency;				//Value storage for current frequency value
 	double ieee_1547_delta_return;			//Deltamode tracker - made global for "off-cycle" checks
 	double prev_time_dbl_IEEE1547;		//Time tracker for IEEE 1547 update checks
-
-	STATUS initalize_IEEE_1547_checks(void);
-	double perform_1547_checks(double timestepvalue);
 
 public:
 	set phases;				 /**< device phases (see PHASE codes) */
@@ -217,10 +158,6 @@ public:
 
 	double mdc;	  // only used when dc bus dynamic is enabled, make sure that the modulation index is enough
 
-	double rampUpRate_real; // unit: pu/s
-	double rampDownRate_real; // unit: pu/s
-	double rampUpRate_reactive; // unit: pu/s
-	double rampDownRate_reactive; // unit: pu/s
 	double Pref_droop_pu_prev; // The value of Pref in last simulation step, note it is only defined in the predictor pass
 	double Qref_droop_pu_prev; // The value of Qref in last simulation step, note it is only defined in the predictor pass
 
@@ -285,10 +222,6 @@ public:
 	double kic;
 	double F_current; // feed forward term gain in current loop
 
-	double Tpf;			  // Tpf is the time constant of low pass filter in frequency-watt
-	double Tqf;			  // Tqf is the time constant of low pass filter in volt-var
-	double Tvf;			  // Tvf is the time constant of low pass filter in volt-var
-	double Tff;			  // Tff is the time constant of low pass filter in frequency measurement
 	double Tif;			  // Tif is the low pass filter when using current source representation
 	double Vset0;		  // Vset0 is the voltage set point in volt-var in grid-following
 	double Pref_droop_pu; // Power reference in frequency-watt
@@ -298,12 +231,6 @@ public:
 	double Qref_droop_pu; // Q reference in volt-var
 	double Qref_max;	  // Qref_max and Qref_min are the upper and lower limits of Q references
 	double Qref_min;	  //
-	double Rp;			  // p-f droop gain in frequency-watt
-	double db_UF;         // dead band for frequency-watt, UF for under-frequency
-	double db_OF;         // dead band for frequency-watt, OF for over-frequency
-	double Rq;			  // Q-V droop gain in volt-var
-	double db_UV;         // dead band for volt-var, UV for under-voltage
-	double db_OV;         // dead band for volt-var, OV for over-voltage
 
 	double m_Vdc;	   //modulation index when using grid-forming PV inverter, it is per unit value
 	double Vdc_min_pu; // Tha minimum dc bus voltage that the PV grid-forming inverter can run. It is also the maximum point voltage of PV panel, it is per unit value

@@ -93,27 +93,10 @@ ibr_skeleton::ibr_skeleton(MODULE *module)
 			PT_double, "f_PLL_B", PADDR(fPLL[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: frequency of terminal voltage measured by PLL, phase B",
 			PT_double, "f_PLL_C", PADDR(fPLL[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: frequency of terminal voltage measured by PLL, phase C",
 
-			PT_double, "Tpf[s]", PADDR(Tpf), PT_DESCRIPTION, "DELTAMODE: the time constant of power measurement low pass filter in frequency-watt.",
-			PT_double, "Tff[s]", PADDR(Tff), PT_DESCRIPTION, "DELTAMODE: the time constant of frequency measurement low pass filter in frequency-watt.",
-			PT_double, "Tqf[s]", PADDR(Tqf), PT_DESCRIPTION, "DELTAMODE: the time constant of low pass filter in volt-var.",
-			PT_double, "Tvf[s]", PADDR(Tvf), PT_DESCRIPTION, "DELTAMODE: the time constant of low pass filter in volt-var.",
 			PT_double, "Pref_max[pu]", PADDR(Pref_max), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of power references in grid-following mode.",
 			PT_double, "Pref_min[pu]", PADDR(Pref_min), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of power references in grid-following mode.",
 			PT_double, "Qref_max[pu]", PADDR(Qref_max), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of reactive power references in grid-following mode.",
 			PT_double, "Qref_min[pu]", PADDR(Qref_min), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of reactive power references in grid-following mode.",
-			PT_double, "Rp[pu]", PADDR(Rp), PT_DESCRIPTION, "DELTAMODE: p-f droop gain in frequency-watt.",
-			PT_double, "frequency_watt_droop[pu]", PADDR(Rp), PT_DESCRIPTION, "DELTAMODE: p-f droop gain in frequency-watt.",
-			PT_double, "db_UF[Hz]", PADDR(db_UF), PT_DESCRIPTION, "DELTAMODE: upper dead band for frequency-watt control, UF for under-frequency",
-			PT_double, "db_OF[Hz]", PADDR(db_OF), PT_DESCRIPTION, "DELTAMODE: lower dead band for frequency-watt control, OF for over-frequency",
-			PT_double, "Rq[pu]", PADDR(Rq), PT_DESCRIPTION, "DELTAMODE: Q-V droop gain in volt-var.",
-			PT_double, "volt_var_droop[pu]", PADDR(Rq), PT_DESCRIPTION, "DELTAMODE: Q-V droop gain in volt-var.",
-			PT_double, "db_UV[pu]", PADDR(db_UV), PT_DESCRIPTION, "DELTAMODE: dead band for volt-var control, UV for under-voltage",
-			PT_double, "db_OV[pu]", PADDR(db_OV), PT_DESCRIPTION, "DELTAMODE: dead band for volt-var control, OV for over-voltage",
-			PT_double, "rampUpRate_real", PADDR(rampUpRate_real), PT_DESCRIPTION, "DELTAMODE: ramp rate for grid-following frequency-watt",
-			PT_double, "rampDownRate_real", PADDR(rampDownRate_real), PT_DESCRIPTION, "DELTAMODE: ramp rate for grid-following frequency-watt",
-			PT_double, "rampUpRate_reactive", PADDR(rampUpRate_reactive), PT_DESCRIPTION, "DELTAMODE: ramp rate for grid-following volt-var",
-			PT_double, "rampDownRate_reactive", PADDR(rampDownRate_reactive), PT_DESCRIPTION, "DELTAMODE: ramp rate for grid-following volt-var",
-
 			PT_double, "frequency_convergence_criterion[rad/s]", PADDR(GridForming_freq_convergence_criterion), PT_DESCRIPTION, "Max frequency update for grid-forming inverters to return to QSTS",
 			PT_double, "voltage_convergence_criterion[V]", PADDR(GridForming_volt_convergence_criterion), PT_DESCRIPTION, "Max voltage update for grid-forming inverters to return to QSTS",
 			PT_double, "current_convergence_criterion[A]", PADDR(GridFollowing_curr_convergence_criterion), PT_DESCRIPTION, "Max current magnitude update for grid-following inverters to return to QSTS, or initialize",
@@ -168,54 +151,6 @@ ibr_skeleton::ibr_skeleton(MODULE *module)
 			PT_double, "P_In[W]", PADDR(P_DC), PT_DESCRIPTION, "DC input power",
 
 			PT_double, "pvc_Pmax[W]", PADDR(pvc_Pmax), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "P max from the PV curve",
-
-			//IEEE 1547 variables
-			PT_bool, "enable_1547_checks", PADDR(enable_1547_compliance), PT_DESCRIPTION, "DELTAMODE: Enable IEEE 1547-2003 disconnect checking",
-			PT_double, "reconnect_time[s]", PADDR(IEEE1547_reconnect_time), PT_DESCRIPTION, "DELTAMODE: Time delay after IEEE 1547-2003 violation clears before resuming generation",
-			PT_bool, "inverter_1547_status", PADDR(inverter_1547_status), PT_DESCRIPTION, "DELTAMODE: Indicator if the inverter is curtailed due to a 1547 violation or not",
-
-			//Select 1547 type to auto-populate
-			PT_enumeration, "IEEE_1547_version", PADDR(ieee_1547_version), PT_DESCRIPTION, "DELTAMODE: Version of IEEE 1547 to use to populate defaults",
-				PT_KEYWORD, "NONE", (enumeration)IEEE1547_NONE,
-				PT_KEYWORD, "IEEE1547_2003", (enumeration)IEEE1547_2003,
-				PT_KEYWORD, "IEEE1547A_2014", (enumeration)IEEE1547A_2014,
-				PT_KEYWORD, "IEEE1547_2018", (enumeration)IEEE1547_2018,
-
-			//Frequency bands of 1547a-2014 checks
-			PT_double, "over_freq_high_cutout[Hz]", PADDR(IEEE1547_over_freq_high_band_setpoint),PT_DESCRIPTION,"DELTAMODE: OF2 set point for IEEE 1547a",
-			PT_double, "over_freq_high_disconnect_time[s]", PADDR(IEEE1547_over_freq_high_band_delay),PT_DESCRIPTION,"DELTAMODE: OF2 clearing time for IEEE1547a",
-			PT_double, "over_freq_low_cutout[Hz]", PADDR(IEEE1547_over_freq_low_band_setpoint),PT_DESCRIPTION,"DELTAMODE: OF1 set point for IEEE 1547a",
-			PT_double, "over_freq_low_disconnect_time[s]", PADDR(IEEE1547_over_freq_low_band_delay),PT_DESCRIPTION,"DELTAMODE: OF1 clearing time for IEEE 1547a",
-			PT_double, "under_freq_high_cutout[Hz]", PADDR(IEEE1547_under_freq_high_band_setpoint),PT_DESCRIPTION,"DELTAMODE: UF2 set point for IEEE 1547a",
-			PT_double, "under_freq_high_disconnect_time[s]", PADDR(IEEE1547_under_freq_high_band_delay),PT_DESCRIPTION,"DELTAMODE: UF2 clearing time for IEEE1547a",
-			PT_double, "under_freq_low_cutout[Hz]", PADDR(IEEE1547_under_freq_low_band_setpoint),PT_DESCRIPTION,"DELTAMODE: UF1 set point for IEEE 1547a",
-			PT_double, "under_freq_low_disconnect_time[s]", PADDR(IEEE1547_under_freq_low_band_delay),PT_DESCRIPTION,"DELTAMODE: UF1 clearing time for IEEE 1547a",
-
-			//Voltage bands of 1547 checks
-			PT_double,"under_voltage_low_cutout[pu]",PADDR(IEEE1547_under_voltage_lowest_voltage_setpoint),PT_DESCRIPTION,"Lowest voltage threshold for undervoltage",
-			PT_double,"under_voltage_middle_cutout[pu]",PADDR(IEEE1547_under_voltage_middle_voltage_setpoint),PT_DESCRIPTION,"Middle-lowest voltage threshold for undervoltage",
-			PT_double,"under_voltage_high_cutout[pu]",PADDR(IEEE1547_under_voltage_high_voltage_setpoint),PT_DESCRIPTION,"High value of low voltage threshold for undervoltage",
-			PT_double,"over_voltage_low_cutout[pu]",PADDR(IEEE1547_over_voltage_low_setpoint),PT_DESCRIPTION,"Lowest voltage value for overvoltage",
-			PT_double,"over_voltage_high_cutout[pu]",PADDR(IEEE1547_over_voltage_high_setpoint),PT_DESCRIPTION,"High voltage value for overvoltage",
-			PT_double,"under_voltage_low_disconnect_time[s]",PADDR(IEEE1547_under_voltage_lowest_delay),PT_DESCRIPTION,"Lowest voltage clearing time for undervoltage",
-			PT_double,"under_voltage_middle_disconnect_time[s]",PADDR(IEEE1547_under_voltage_middle_delay),PT_DESCRIPTION,"Middle-lowest voltage clearing time for undervoltage",
-			PT_double,"under_voltage_high_disconnect_time[s]",PADDR(IEEE1547_under_voltage_high_delay),PT_DESCRIPTION,"Highest voltage clearing time for undervoltage",
-			PT_double,"over_voltage_low_disconnect_time[s]",PADDR(IEEE1547_over_voltage_low_delay),PT_DESCRIPTION,"Lowest voltage clearing time for overvoltage",
-			PT_double,"over_voltage_high_disconnect_time[s]",PADDR(IEEE1547_over_voltage_high_delay),PT_DESCRIPTION,"Highest voltage clearing time for overvoltage",
-
-			//1547 trip reason
-			PT_enumeration, "IEEE_1547_trip_method", PADDR(ieee_1547_trip_method), PT_DESCRIPTION, "DELTAMODE: Reason for IEEE 1547 disconnect - which threshold was hit",
-				PT_KEYWORD, "NONE",(enumeration)IEEE_1547_NOTRIP, PT_DESCRIPTION, "No trip reason",
-				PT_KEYWORD, "OVER_FREQUENCY_HIGH",(enumeration)IEEE_1547_HIGH_OF, PT_DESCRIPTION, "High over-frequency level trip - OF2",
-				PT_KEYWORD, "OVER_FREQUENCY_LOW",(enumeration)IEEE_1547_LOW_OF, PT_DESCRIPTION, "Low over-frequency level trip - OF1",
-				PT_KEYWORD, "UNDER_FREQUENCY_HIGH",(enumeration)IEEE_1547_HIGH_UF, PT_DESCRIPTION, "High under-frequency level trip - UF2",
-				PT_KEYWORD, "UNDER_FREQUENCY_LOW",(enumeration)IEEE_1547_LOW_UF, PT_DESCRIPTION, "Low under-frequency level trip - UF1",
-				PT_KEYWORD, "UNDER_VOLTAGE_LOW",(enumeration)IEEE_1547_LOWEST_UV, PT_DESCRIPTION, "Lowest under-voltage level trip",
-				PT_KEYWORD, "UNDER_VOLTAGE_MID",(enumeration)IEEE_1547_MIDDLE_UV, PT_DESCRIPTION, "Middle under-voltage level trip",
-				PT_KEYWORD, "UNDER_VOLTAGE_HIGH",(enumeration)IEEE_1547_HIGH_UV, PT_DESCRIPTION, "High under-voltage level trip",
-				PT_KEYWORD, "OVER_VOLTAGE_LOW",(enumeration)IEEE_1547_LOW_OV, PT_DESCRIPTION, "Low over-voltage level trip",
-				PT_KEYWORD, "OVER_VOLTAGE_HIGH",(enumeration)IEEE_1547_HIGH_OV, PT_DESCRIPTION, "High over-voltage level trip",
-
 			nullptr) < 1)
 				GL_THROW("unable to publish properties in %s", __FILE__);
 
@@ -322,34 +257,18 @@ int ibr_skeleton::create(void)
 	kiPLL = 900;
 	fPLL[0] = fPLL[1] = fPLL[2] = 60.0;
 
-	rampUpRate_real = 1.67; //unit: pu/s
-	rampDownRate_real = 1.67; //unit: pu/s
-	rampUpRate_reactive = 1.67; //unit: pu/s
-	rampDownRate_reactive = 1.67; //unit: pu/s
-
 	// Grid-Following controller parameters
 	kpc = 0.05;
 	kic = 5;
 	F_current = 0;
 	Tif = 0.005; // only used for current source representation
 
-	Tpf = 0.5;		// S
-	Tff = 0.1;		// s
 	Pref_max = 1.0; // per unit
 	Pref_min = -1.0;	// per unit
-	Rp = 0.05;		//P-f droop 5%, default value by IEEE 1547 2018
-	db_UF = 0.0; //0.036;  // dead band 0.036 Hz, default value by IEEE 1547 2018
-	db_OF = 0.0; //0.036;  // dead band 0.036 Hz, default value by IEEE 1547 2018
-
-	Tqf = 0.2;	// s
-	Tvf = 0.05; // s
-	db_UV = 0;  // volt-var dead band
-	db_OV = 0;  // volt-var dead band
 
 	//Vset = 1;  // per unit
 	Qref_max = 1.0; // per unit
 	Qref_min = -1.0;	// per unit
-	Rq = 0.4;		// per unit, default value by IEEE 1547 2018
 
 	Vdc_base = 850; // default value of dc bus voltage
 	Vdc_min_pu = 1; // default reference of the Vdc_min controller
@@ -379,53 +298,6 @@ int ibr_skeleton::create(void)
 	P_DC = 0.0;
 	V_DC = Vdc_base;
 	I_DC = 0.0;
-
-	//1547 parameters
-	Reconnect_Warn_Flag = true;			//Flag to send the warning initially
-
-	enable_1547_compliance = false;		//1547 turned off, but default
-	IEEE1547_reconnect_time = 300.0;				//5 minute default, as suggested by 1547-2003
-	inverter_1547_status = true;		//Not in a violation, by default
-	IEEE1547_out_of_violation_time_total = 0.0;	//Not in a violation, so not tracking 'recovery'
-	ieee_1547_delta_return = -1.0;			//Flag as not an issue
-	prev_time_dbl_IEEE1547 = 0.0;				//Tracking variable
-
-	//By default, assumed we want to use IEEE 1547a
-	ieee_1547_version = IEEE1547A_2014;
-
-	//Flag us as no reason
-	ieee_1547_trip_method = IEEE_1547_NOTRIP;
-
-	//1547a defaults for triggering - so people can change them - will get adjusted to 1547 in init, if desired
-	IEEE1547_over_freq_high_band_setpoint = 62.0;	//OF2 set point for IEEE 1547a
-	IEEE1547_over_freq_high_band_delay = 0.16;		//OF2 clearing time for IEEE1547a
-	IEEE1547_over_freq_high_band_viol_time = 0.0;	//Accumulator for IEEE1547a OF high-band violation time
-	IEEE1547_over_freq_low_band_setpoint = 60.5;		//OF1 set point for IEEE 1547a
-	IEEE1547_over_freq_low_band_delay = 2.0;			//OF1 clearing time for IEEE 1547a
-	IEEE1547_over_freq_low_band_viol_time = 0.0;	//Accumulator for IEEE1547a OF low-band violation time
-	IEEE1547_under_freq_high_band_setpoint = 59.5;	//UF2 set point for IEEE 1547a
-	IEEE1547_under_freq_high_band_delay = 2.0;		//UF2 clearing time for IEEE1547a
-	IEEE1547_under_freq_high_band_viol_time = 0.0;	//Accumulator for IEEE1547a UF high-band violation time
-	IEEE1547_under_freq_low_band_setpoint = 57.0;		//UF1 set point for IEEE 1547a
-	IEEE1547_under_freq_low_band_delay = 0.16;		//UF1 clearing time for IEEE 1547a
-	IEEE1547_under_freq_low_band_viol_time = 0.0;	//Accumulator for IEEE1547a UF low-band violation time
-
-	//Voltage set points - 1547a defaults
-	IEEE1547_under_voltage_lowest_voltage_setpoint = 0.45;	//Lowest voltage threshold for undervoltage
-	IEEE1547_under_voltage_middle_voltage_setpoint = 0.60;	//Middle-lowest voltage threshold for undervoltage
-	IEEE1547_under_voltage_high_voltage_setpoint = 0.88;		//High value of low voltage threshold for undervoltage
-	IEEE1547_over_voltage_low_setpoint = 1.10;				//Lowest voltage value for overvoltage
-	IEEE1547_over_voltage_high_setpoint = 1.20;				//High voltage value for overvoltage
-	IEEE1547_under_voltage_lowest_delay = 0.16;				//Lowest voltage clearing time for undervoltage
-	IEEE1547_under_voltage_middle_delay = 1.0;				//Middle-lowest voltage clearing time for undervoltage
-	IEEE1547_under_voltage_high_delay = 2.0;					//Highest voltage clearing time for undervoltage
-	IEEE1547_over_voltage_low_delay = 1.0;					//Lowest voltage clearing time for overvoltage
-	IEEE1547_over_voltage_high_delay = 0.16;					//Highest voltage clearing time for overvoltage
-	IEEE1547_under_voltage_lowest_viol_time = 0.0;			//Lowest low voltage threshold violation timer
-	IEEE1547_under_voltage_middle_viol_time = 0.0;			//Middle low voltage threshold violation timer
-	IEEE1547_under_voltage_high_viol_time = 0.0;				//Highest low voltage threshold violation timer
-	IEEE1547_over_voltage_low_viol_time = 0.0;				//Lowest high voltage threshold violation timer
-	IEEE1547_over_voltage_high_viol_time = 0.0;				//Highest high voltage threshold violation timer
 
 	node_nominal_voltage = 120.0;		//Just pick a value
 
@@ -1201,38 +1073,6 @@ int ibr_skeleton::init(OBJECT *parent)
 		}
 		//Default else - don't do anything
 
-		//Check for frequency 
-		if (enable_1547_compliance)
-		{
-			//Check if we're grid following - if grid forming, we don't do these for now
-			if (control_mode != GRID_FORMING)
-			{
-				return_value_init = initalize_IEEE_1547_checks();
-
-				//Check
-				if (return_value_init == FAILED)
-				{
-					GL_THROW("ibr_skeleton:%d-%s - initalizing the IEEE 1547 checks failed",get_id(),get_name());
-					/*  TROUBLESHOOT
-					While attempting to initialize some of the variables for the inverter IEEE 1547 functionality, an error occurred.
-					Please try again.  If the error persists, please submit your code and a bug report via the issues tracker.
-					*/
-				}
-			}
-			else	//Grid forming
-			{
-				//Deflag it
-				enable_1547_compliance = false;
-
-				//Send a warning
-				gl_warning("ibr_skeleton:%d - %s - Grid-forming inverters do not support IEEE 1547 checks at this time - deactivated",get_id(),get_name());
-				/*  TROUBLESHOOT
-				The IEEE 1547 cessation/tripping functionality is only enabled for grid following inverters right now.  If applied to a grid
-				forming inverter, it is just deactivated (and ignored).  This may be enabled in a future update.
-				*/
-			}
-		}
-		//Default else - don't do anything
 	}	 //End deltamode inclusive
 	else //This particular model isn't enabled
 	{
@@ -1244,44 +1084,7 @@ int ibr_skeleton::init(OBJECT *parent)
 			triggers, this ibr_skeleton may no longer contribute to the system, until event-driven mode resumes.  This could cause issues with the simulation.
 			It is recommended all objects that support deltamode enable it.
 			*/
-		}
-		
-		if (enable_1547_compliance)
-		{
-			//Check if we're grid following - if grid forming, we don't do these for now
-			if (control_mode != GRID_FORMING)
-			{
-				//Initalize it
-				return_value_init = initalize_IEEE_1547_checks();
-
-				//Check
-				if (return_value_init == FAILED)
-				{
-					GL_THROW("ibr_skeleton:%d-%s - initalizing the IEEE 1547 checks failed",get_id(),get_name());
-					/*  TROUBLESHOOT
-					While attempting to initialize some of the variables for the inverter IEEE 1547 functionality, an error occurred.
-					Please try again.  If the error persists, please submit your code and a bug report via the issues tracker.
-					*/
-				}
-
-				//Warn, because this probably won't work well
-				gl_warning("ibr_skeleton:%d-%s - IEEE 1547 checks are enabled, but the model is not deltamode-enabled",get_id(),get_name());
-				/*  TROUBLESHOOT
-				The IEEE 1547 checks have been enabled for the inverter object, but deltamode is not enabled.  This will severely hinder the inverter's
-				ability to do these checks, and really isn't the intended mode of operation.
-				*/
-			}
-			else
-			{
-				//Deflag it
-				enable_1547_compliance = false;
-
-				//Send a warning
-				gl_warning("ibr_skeleton:%d - %s - Grid-forming inverters do not support IEEE 1547 checks at this time - deactivated",get_id(),get_name());
-				//Defined above
-			}
-		}
-		//Default else - 1547 not enabled
+		}		
 	}
 
 	//Other initialization variables
@@ -1349,7 +1152,6 @@ int ibr_skeleton::init(OBJECT *parent)
 
 	//Init tracking variables
 	prev_timestamp_dbl = (double)gl_globalclock;
-	prev_time_dbl_IEEE1547 = prev_timestamp_dbl;	//Just init it, regardless of if 1547 is enabled or not
 
 	// Link P_f_droop to mp
 	if (P_f_droop != -100)
@@ -1392,7 +1194,7 @@ TIMESTAMP ibr_skeleton::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	gld::complex temp_complex_value;
 	gld_wlock *test_rlock = nullptr;
-	double curr_ts_dbl, diff_dbl, ieee_1547_return_value;
+	double curr_ts_dbl, diff_dbl;
 	TIMESTAMP new_ret_value;
 
 	//Assume always want TS_NEVER
@@ -1556,53 +1358,6 @@ TIMESTAMP ibr_skeleton::sync(TIMESTAMP t0, TIMESTAMP t1)
 	{
 		inverter_first_step = false;
 	}
-
-	//Perform 1547 checks, if appropriate (should be grid-following flagged above)
-	if (enable_1547_compliance)
-	{
-		//Extract the current timestamp, as a double
-		curr_ts_dbl = (double)gl_globalclock;
-
-		//See if we're a new timestep, otherwise, we don't care
-		if (prev_time_dbl_IEEE1547 < curr_ts_dbl)
-		{
-			//Figure out how far we moved forward
-			diff_dbl = curr_ts_dbl - prev_time_dbl_IEEE1547;
-
-			//Update the value
-			prev_time_dbl_IEEE1547 = curr_ts_dbl;
-
-			//Do the checks
-			ieee_1547_return_value = perform_1547_checks(diff_dbl);
-
-			//Check it
-			if (ieee_1547_return_value > 0.0)
-			{
-				//See which mode we're in
-				if (deltamode_inclusive)
-				{
-					new_ret_value = t1 + (TIMESTAMP)(floor(ieee_1547_return_value));
-
-					//Regardless of the return, schedule us for a delta transition - if it clears by then, we should
-					//hop right back out
-					schedule_deltamode_start(new_ret_value);
-				}
-				else	//Steady state
-				{
-					new_ret_value = t1 + (TIMESTAMP)(ceil(ieee_1547_return_value));
-				}
-
-				//See if it is sooner than our existing return
-				if ((tret_value != TS_NEVER) && (new_ret_value < tret_value))
-				{
-					tret_value = new_ret_value;
-				}
-				//Default else -- existing return was sufficient
-			}
-		}
-		//Default else -- same timestep, so don't care
-	}
-	//Default else - 1547 checks are not enabled
 
 	//Calculate power based on measured terminal voltage and currents
 	if (parent_is_single_phase) // single phase/split-phase implementation
@@ -1990,7 +1745,7 @@ TIMESTAMP ibr_skeleton::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 
 		//Check to see if vaalid connection
-	if ((value_MeterStatus == 1) && inverter_1547_status)
+	if (value_MeterStatus == 1)
 	{
 		if (parent_is_single_phase) // single phase/split-phase implementation
 		{
@@ -2136,14 +1891,6 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 
 	//Update time tracking variables
 	prev_timestamp_dbl = gl_globaldeltaclock;
-	prev_time_dbl_IEEE1547 = prev_timestamp_dbl;	//Just update - won't hurt anything if it isn't needed
-
-	//Perform the 1547 update, if enabled
-	if (enable_1547_compliance && (iteration_count_val == 0))	//Always just do on the first pass
-	{
-		//Do the checks
-		ieee_1547_delta_return = perform_1547_checks(deltat);
-	}
 
 	if (control_mode == GRID_FORMING)
 	{
@@ -2585,7 +2332,7 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 	else if ((control_mode == GRID_FOLLOWING) || (control_mode == GFL_CURRENT_SOURCE))
 	{
 		//Make sure we're active/valid - if we've been tripped/disconnected, don't do an update
-		if ((value_MeterStatus == 1) && inverter_1547_status)
+		if (value_MeterStatus == 1)
 		{
 			// Check pass
 			if (iteration_count_val == 0) // Predictor pass
@@ -2961,7 +2708,7 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 				//Just return whatever our "last desired" was
 				simmode_return_value = desired_simulation_mode;
 			}
-		}//End valid meter/1547
+		}//End valid meter
 		else
 		{
 			//Something disconnected - just flag us for event
@@ -2990,33 +2737,10 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 		push_complex_powerflow_values(false);
 	}
 
-	//Perform a check to determine how to go forward - grid-following flag should have been set above
-	if (enable_1547_compliance)
-	{
-		//See if our return is value
-		if ((ieee_1547_delta_return > 0.0) && (ieee_1547_delta_return < 1.7) && (simmode_return_value == SM_EVENT))
-		{
-			//Set the mode tracking variable for this exit
-			desired_simulation_mode = SM_DELTA;
-
-			//Force us to stay
-			return SM_DELTA;
-		}
-		else	//Just return whatever we were going to do
-		{
-			//Set the mode tracking variable for this exit
-			desired_simulation_mode = simmode_return_value;
-
-			return simmode_return_value;
-		}
-	}
-	else	//Normal mode
-	{
-		//Set the mode tracking variable for this exit
-		desired_simulation_mode = simmode_return_value;
-
-		return simmode_return_value;
-	}
+	//Set the mode tracking variable for this exit
+	desired_simulation_mode = simmode_return_value;
+	
+	return simmode_return_value;
 }
 
 //Initializes dynamic equations for first entry
@@ -3967,7 +3691,7 @@ STATUS ibr_skeleton::updateCurrInjection(int64 iteration_count,bool *converged_f
 	//Default else - things are handled elsewhere
 
 	//Check to see if we're disconnected
-	if (enable_1547_compliance && !inverter_1547_status || (value_MeterStatus == 0))
+	if (value_MeterStatus == 0)
 	{
 		//Disconnected - offset our admittance contribution - could remove it from powerflow - visit this in the future
 		if (parent_is_single_phase)
@@ -4132,634 +3856,6 @@ STATUS ibr_skeleton::DC_object_register(OBJECT *DC_object)
 
 	//If we made it this far, all should be good!
 	return SUCCESS;
-}
-
-//Function to initialize IEEE 1547 checks
-STATUS ibr_skeleton::initalize_IEEE_1547_checks(void)
-{
-	//Make sure it is parented
-	if (parent_is_a_meter)
-	{
-		//See if we really want IEEE 1547-2003, not 1547A-2014
-		if (ieee_1547_version == IEEE1547_2003)
-		{
-			//Adjust the values - high values
-			IEEE1547_over_freq_high_band_setpoint = 70.0;	//Very high - only 1 band for 1547
-			IEEE1547_over_freq_high_band_delay = 0.16;		//Same clearly as below
-			IEEE1547_over_freq_low_band_setpoint = 60.5;	//1547 high hvalue
-			IEEE1547_over_freq_low_band_delay = 0.16;		//1547 over-frequency value
-
-			//Set the others based on size
-			if (S_base > 30000.0)
-			{
-				IEEE1547_under_freq_high_band_setpoint = 59.5;	//Arbitrary selection in the range
-				IEEE1547_under_freq_high_band_delay = 300.0;	//Maximum delay, just because
-				IEEE1547_under_freq_low_band_setpoint = 57.0;	//Lower limit of 1547
-				IEEE1547_under_freq_low_band_delay = 0.16;		//Lower limit clearing of 1547
-			}
-			else	//Smaller one
-			{
-				IEEE1547_under_freq_high_band_setpoint = 59.3;	//Low frequency value for small inverter 1547
-				IEEE1547_under_freq_high_band_delay = 0.16;		//Low frequency value clearing time for 1547
-				IEEE1547_under_freq_low_band_setpoint = 47.0;	//Arbitrary low point - 1547 didn't have this value for small inverters
-				IEEE1547_under_freq_low_band_delay = 0.16;		//Same value as low frequency, since this band doesn't technically exist
-			}
-
-			//Set the voltage values as well - basically, the under voltage has an extra category
-			IEEE1547_under_voltage_lowest_voltage_setpoint = 0.40;	//Lower than range before, so just duplicate disconnect value
-			IEEE1547_under_voltage_middle_voltage_setpoint = 0.50;	//Lower limit of 1547
-			IEEE1547_under_voltage_high_voltage_setpoint = 0.88;	//Low area threshold for 1547
-			IEEE1547_over_voltage_low_setpoint = 1.10;				//Lower limit of upper threshold for 1547
-			IEEE1547_over_voltage_high_setpoint = 1.20;				//Upper most limit of voltage values
-			
-			IEEE1547_under_voltage_lowest_delay = 0.16;			//Lower than "normal low" - it is technically an overlap
-			IEEE1547_under_voltage_middle_delay = 0.16;			//Low limit of 1547
-			IEEE1547_under_voltage_high_delay = 2.0;			//High lower limit of 1547
-			IEEE1547_over_voltage_low_delay = 1.0;				//Low higher limit of 1547
-			IEEE1547_over_voltage_high_delay = 0.16;			//Highest value
-		}
-	}
-	else
-	{
-		//Make to disable 1547, since it won't do anything
-		enable_1547_compliance = false;
-
-		gl_warning("ibr_skeleton:%d - %s does not have a valid parent - 1547 checks have been disabled",get_id(),get_name());
-		/*  TROUBLESHOOT
-		The IEEE 1547-2003/IEEE 1547a-2014 checks for interconnection require a valid powerflow parent.  One was not detected, so
-		this functionality has been detected.
-		*/
-	}
-
-	//By default, we succeed
-	return SUCCESS;
-}
-
-//Functionalized routine to perform the IEEE 1547-2003/1547a-2014 checks
-//Returns time to next violate, -1.0 for no violations, or -9999.0 for error states, -99.0 for recent return to service
-double ibr_skeleton::perform_1547_checks(double timestepvalue)
-{
-	bool voltage_violation, frequency_violation, trigger_disconnect, check_phase;
-	bool uv_low_hit, uv_mid_hit, uv_high_hit, ov_low_hit, ov_high_hit;
-	double temp_pu_voltage;
-	double return_time_freq, return_time_volt, return_value;
-	char indexval;
-
-	//By default, we're subject to the whims of deltamode
-	return_time_freq = -1.0;
-	return_time_volt = -1.0;
-	return_value = -1.0;
-
-	//Pull the powerflow values, if needed
-	if (parent_is_a_meter)
-	{
-		reset_complex_powerflow_accumulators();
-		
-		pull_complex_powerflow_values();
-	}
-
-	//Perform frequency check - overlapping bands set so we don't care about size anymore
-	if ((value_Frequency > IEEE1547_over_freq_low_band_setpoint) || (value_Frequency < IEEE1547_under_freq_high_band_setpoint))
-	{
-		//Flag it
-		frequency_violation = true;
-
-		//Reset "restoration" time
-		IEEE1547_out_of_violation_time_total = 0.0;
-
-		//Figure out which range we are
-		if (value_Frequency > IEEE1547_over_freq_high_band_setpoint)
-		{
-			//Accumulate the over frequency timers (all for this case)
-			IEEE1547_over_freq_high_band_viol_time += timestepvalue;
-			IEEE1547_over_freq_low_band_viol_time += timestepvalue;
-
-			//Zero the others, in case we did a huge jump
-			IEEE1547_under_freq_high_band_viol_time = 0.0;
-			IEEE1547_under_freq_low_band_viol_time = 0.0;
-
-			if (IEEE1547_over_freq_high_band_viol_time > IEEE1547_over_freq_high_band_delay)
-			{
-				trigger_disconnect = true;
-				return_time_freq = IEEE1547_reconnect_time;
-
-				//Flag us as high over-frequency violation
-				ieee_1547_trip_method = IEEE_1547_HIGH_OF;
-			}
-			else if (IEEE1547_over_freq_low_band_viol_time > IEEE1547_over_freq_low_band_delay)	//Triggered existing band
-			{
-				trigger_disconnect = true;
-				return_time_freq = IEEE1547_reconnect_time;
-
-				//Flag us as the low over-frequency violation
-				ieee_1547_trip_method = IEEE_1547_LOW_OF;
-			}
-			else
-			{
-				trigger_disconnect = false;
-				
-				//See which time to return
-				if ((IEEE1547_over_freq_high_band_delay - IEEE1547_over_freq_high_band_viol_time) < (IEEE1547_over_freq_low_band_delay - IEEE1547_over_freq_low_band_viol_time))
-				{
-					return_time_freq = IEEE1547_over_freq_high_band_delay - IEEE1547_over_freq_high_band_viol_time;
-				}
-				else	//Other way around
-				{
-					return_time_freq = IEEE1547_over_freq_low_band_delay - IEEE1547_over_freq_low_band_viol_time;
-				}
-			}
-		}
-		else if (value_Frequency < IEEE1547_under_freq_low_band_setpoint)
-		{
-			//Accumulate both under frequency timers (all violated)
-			IEEE1547_under_freq_high_band_viol_time += timestepvalue;
-			IEEE1547_under_freq_low_band_viol_time += timestepvalue;
-
-			//Zero the others, in case we did a huge jump
-			IEEE1547_over_freq_high_band_viol_time = 0.0;
-			IEEE1547_over_freq_low_band_viol_time = 0.0;
-
-			if (IEEE1547_under_freq_low_band_viol_time > IEEE1547_under_freq_low_band_delay)
-			{
-				trigger_disconnect = true;
-				return_time_freq = IEEE1547_reconnect_time;
-
-				//Flag us as the low under-frequency violation
-				ieee_1547_trip_method = IEEE_1547_LOW_UF;
-			}
-			else if (IEEE1547_under_freq_high_band_viol_time > IEEE1547_under_freq_high_band_delay)	//Other band trigger
-			{
-				trigger_disconnect = true;
-				return_time_freq = IEEE1547_reconnect_time;
-
-				//Flag us as the high under-frequency violation
-				ieee_1547_trip_method = IEEE_1547_HIGH_UF;
-			}
-			else
-			{
-				trigger_disconnect = false;
-
-				//See which time to return
-				if ((IEEE1547_under_freq_high_band_delay - IEEE1547_under_freq_high_band_viol_time) < (IEEE1547_under_freq_low_band_delay - IEEE1547_under_freq_low_band_viol_time))
-				{
-					return_time_freq = IEEE1547_under_freq_high_band_delay - IEEE1547_under_freq_high_band_viol_time;
-				}
-				else	//Other way around
-				{
-					return_time_freq = IEEE1547_under_freq_low_band_delay - IEEE1547_under_freq_low_band_viol_time;
-				}
-			}
-		}
-		else if ((value_Frequency < IEEE1547_under_freq_high_band_setpoint) && (value_Frequency >= IEEE1547_under_freq_low_band_setpoint))
-		{
-			//Just update the high violation time
-			IEEE1547_under_freq_high_band_viol_time += timestepvalue;
-
-			//Zero the other one, for good measure
-			IEEE1547_under_freq_low_band_viol_time = 0.0;
-
-			//Zero the others, in case we did a huge jump
-			IEEE1547_over_freq_high_band_viol_time = 0.0;
-			IEEE1547_over_freq_low_band_viol_time = 0.0;
-
-			if (IEEE1547_under_freq_high_band_viol_time > IEEE1547_under_freq_high_band_delay)
-			{
-				trigger_disconnect = true;
-				return_time_freq = IEEE1547_reconnect_time;
-
-				//Flag us as the high under frequency violation
-				ieee_1547_trip_method = IEEE_1547_HIGH_UF;
-			}
-			else
-			{
-				trigger_disconnect = false;
-				return_time_freq = IEEE1547_under_freq_high_band_delay - IEEE1547_under_freq_high_band_viol_time;
-			}
-		}
-		else if ((value_Frequency <= IEEE1547_over_freq_high_band_setpoint) && (value_Frequency > IEEE1547_over_freq_low_band_setpoint))
-		{
-			//Just update the "high-low" violation time
-			IEEE1547_over_freq_low_band_viol_time += timestepvalue;
-
-			//Zero the other one, for good measure
-			IEEE1547_over_freq_high_band_viol_time = 0.0;
-
-			//Zero the others, in case we did a huge jump
-			IEEE1547_under_freq_high_band_viol_time = 0.0;
-			IEEE1547_under_freq_low_band_viol_time = 0.0;
-
-			if (IEEE1547_over_freq_low_band_viol_time > IEEE1547_over_freq_low_band_delay)
-			{
-				trigger_disconnect = true;
-				return_time_freq = IEEE1547_reconnect_time;
-
-				//Flag us as the low over-frequency violation
-				ieee_1547_trip_method = IEEE_1547_LOW_OF;
-			}
-			else
-			{
-				trigger_disconnect = false;
-				return_time_freq = IEEE1547_over_freq_low_band_delay - IEEE1547_over_freq_low_band_viol_time;
-			}
-		}
-		else	//Not sure how we get here in this present logic arrangement - toss an error
-		{
-			GL_THROW("ibr_skeleton:%d - %s - IEEE-1547 Checks - invalid  state!",get_id(),get_name());
-			/*  TROUBLESHOOT
-			While performing the IEEE 1547-2003 or IEEE 1547a-2014 frequency and voltage checks, an unknown state occurred.  Please
-			try again.  If the error persists, please submit you GLM and a bug report via the ticketing system.
-			*/
-
-			//Technically not needed - left here in case this ever changes to a non-blocking error
-			return -9999.0;
-		}
-	}
-	else	//Must be in a good range
-	{
-		//Set flags to indicate as much
-		frequency_violation = false;
-		trigger_disconnect = false;
-
-		//Reset frequency violation counters
-		IEEE1547_over_freq_high_band_viol_time = 0.0;
-		IEEE1547_over_freq_low_band_viol_time = 0.0;
-		IEEE1547_under_freq_high_band_viol_time = 0.0;
-		IEEE1547_under_freq_low_band_viol_time = 0.0;
-
-		//Set the return time to negative, just to be paranoid
-		return_time_freq = -1.0;
-	}
-
-	//Default to no voltage violation
-	voltage_violation = false;
-
-	//Set individual accumulator "touches" - will be used to reconcile over the phases
-	uv_low_hit = false;
-	uv_mid_hit = false;
-	uv_high_hit = false;
-	ov_low_hit = false;
-	ov_high_hit = false;
-
-	//See if we're already triggered or in a frequency violation (no point checking, if we are)
-	//Loop through voltages present & check - if we find one, we'll break out
-	for (indexval = 0; indexval < 3; indexval++)
-	{
-		//See if this phase exists
-		if ((phases & PHASE_S) == PHASE_S)	//Triplex
-		{
-			//See if we're te proper index
-			if (indexval == 0)	//Only check on 0, since that's where _12 gets mapped
-			{
-				check_phase = true;
-			}
-			else
-			{
-				check_phase = false;
-				break;	//No sense looping once more
-			}
-		}//End triplex
-		else if ((indexval == 0) && ((phases & PHASE_A) == PHASE_A))
-		{
-			check_phase = true;
-		}
-		else if ((indexval == 1) && ((phases & PHASE_B) == PHASE_B))
-		{
-			check_phase = true;
-		}
-		else if ((indexval == 2) && ((phases & PHASE_C) == PHASE_C))
-		{
-			check_phase = true;
-		}
-		else	//Not a proper combination
-		{
-			check_phase = false;
-		}
-
-		//See if we were valid
-		if (check_phase)
-		{
-			//See if we're single-phse
-			if (parent_is_single_phase)
-			{
-				//See if it is a violation - all single-phase varieties are mapped to 0
-				temp_pu_voltage = value_Circuit_V[0].Mag()/node_nominal_voltage;
-			}
-			else
-			{
-				//See if it is a violation
-				temp_pu_voltage = value_Circuit_V[indexval].Mag()/node_nominal_voltage;
-			}
-
-			//Check it
-			if ((temp_pu_voltage < IEEE1547_under_voltage_high_voltage_setpoint) || (temp_pu_voltage > IEEE1547_over_voltage_low_setpoint))
-			{
-				//flag a violation
-				voltage_violation = true;
-
-				//Clear the "no violation timer"
-				IEEE1547_out_of_violation_time_total = 0.0;
-
-				//See which case we are
-				if (temp_pu_voltage < IEEE1547_under_voltage_lowest_voltage_setpoint)
-				{
-					//See if we've accumulated yet
-					if (!uv_low_hit)
-					{
-						IEEE1547_under_voltage_lowest_viol_time += timestepvalue;
-						uv_low_hit = true;
-					}
-					//Default else, someone else hit us and already accumulated
-				}
-				else if ((temp_pu_voltage >= IEEE1547_under_voltage_lowest_voltage_setpoint) && (temp_pu_voltage < IEEE1547_under_voltage_middle_voltage_setpoint))
-				{
-
-					//See if we've accumulated yet
-					if (!uv_mid_hit)
-					{
-						IEEE1547_under_voltage_middle_viol_time += timestepvalue;
-						uv_mid_hit = true;
-					}
-					//Default else, someone else hit us and already accumulated
-				}
-				else if ((temp_pu_voltage >= IEEE1547_under_voltage_middle_voltage_setpoint) && (temp_pu_voltage < IEEE1547_under_voltage_high_voltage_setpoint))
-				{
-					//See if we've accumulated yet
-					if (!uv_high_hit)
-					{
-						IEEE1547_under_voltage_high_viol_time += timestepvalue;
-						uv_high_hit = true;
-					}
-					//Default else, someone else hit us and already accumulated
-				}
-				else if ((temp_pu_voltage > IEEE1547_over_voltage_low_setpoint) && (temp_pu_voltage < IEEE1547_over_voltage_high_setpoint))
-				{
-					//See if we've accumulated yet
-					if (!ov_low_hit)
-					{
-						IEEE1547_over_voltage_low_viol_time += timestepvalue;
-						ov_low_hit = true;
-					}
-					//Default else, someone else hit us and already accumulated
-				}
-				else if (temp_pu_voltage >= IEEE1547_over_voltage_high_setpoint)
-				{
-					//See if we've accumulated yet
-					if (!ov_high_hit)
-					{
-						IEEE1547_over_voltage_high_viol_time += timestepvalue;
-						ov_high_hit = true;
-					}
-					//Default else, someone else hit us and already accumulated
-				}
-				else	//must not have tripped a time limit
-				{
-					GL_THROW("ibr_skeleton:%d - %s - IEEE-1547 Checks - invalid  state!",get_id(),get_name());
-					//Defined above
-
-					//Technically not needed - left here in case this ever changes to a non-blocking error
-					return -9999.0;
-				}
-			}//End of a violation occurred
-			//Default else, normal operating range - loop
-		}//End was a valid phase
-
-		//Default else - go to next phase
-
-	}//End phase loop
-	
-	//See if anything was hit - if so, reconcile it
-	if (voltage_violation)
-	{
-		//Reconcile the violation times and see how we need to break
-		if (uv_low_hit)
-		{
-			if (IEEE1547_under_voltage_lowest_viol_time > IEEE1547_under_voltage_lowest_delay)
-			{
-				trigger_disconnect = true;
-				return_time_volt = IEEE1547_reconnect_time;
-
-				//Flag us as the lowest under voltage violation
-				ieee_1547_trip_method = IEEE_1547_LOWEST_UV;
-			}
-			else if (IEEE1547_under_voltage_middle_viol_time > IEEE1547_under_voltage_middle_delay)	//Check other ranges
-			{
-				trigger_disconnect = true;
-				return_time_volt = IEEE1547_reconnect_time;
-
-				//Flag us as the middle under voltage violation
-				ieee_1547_trip_method = IEEE_1547_MIDDLE_UV;
-			}
-
-			else if (IEEE1547_under_voltage_high_viol_time > IEEE1547_under_voltage_high_delay)
-			{
-				trigger_disconnect = true;
-				return_time_volt = IEEE1547_reconnect_time;
-
-				//Flag us as the high under voltage violation
-				ieee_1547_trip_method = IEEE_1547_HIGH_UV;
-			}
-			else
-			{
-				trigger_disconnect = false;
-				return_time_volt = IEEE1547_under_voltage_lowest_delay - IEEE1547_under_voltage_lowest_viol_time;
-			}
-		}
-		else if (uv_mid_hit)
-		{
-			if (IEEE1547_under_voltage_middle_viol_time > IEEE1547_under_voltage_middle_delay)
-			{
-				trigger_disconnect = true;
-				return_time_volt = IEEE1547_reconnect_time;
-
-				//Flag us as the middle under voltage violation
-				ieee_1547_trip_method = IEEE_1547_MIDDLE_UV;
-			}
-			else if (IEEE1547_under_voltage_high_viol_time > IEEE1547_under_voltage_high_delay)	//Check higher bands
-			{
-				trigger_disconnect = true;
-				return_time_volt = IEEE1547_reconnect_time;
-
-				//Flag us as the high under voltage violation
-				ieee_1547_trip_method = IEEE_1547_HIGH_UV;
-			}
-			else
-			{
-				trigger_disconnect = false;
-				return_time_volt = IEEE1547_under_voltage_middle_delay - IEEE1547_under_voltage_middle_viol_time;
-			}
-		}
-		else if (uv_high_hit)
-		{
-			if (IEEE1547_under_voltage_high_viol_time > IEEE1547_under_voltage_high_delay)
-			{
-				trigger_disconnect = true;
-				return_time_volt = IEEE1547_reconnect_time;
-
-				//Flag us as the high under voltage violation
-				ieee_1547_trip_method = IEEE_1547_HIGH_UV;
-			}
-			else
-			{
-				trigger_disconnect = false;
-				return_time_volt = IEEE1547_under_voltage_high_delay - IEEE1547_under_voltage_high_viol_time;
-			}
-		}
-		else if (ov_low_hit)
-		{
-			if (IEEE1547_over_voltage_low_viol_time > IEEE1547_over_voltage_low_delay)
-			{
-				trigger_disconnect = true;
-				return_time_volt = IEEE1547_reconnect_time;
-
-				//Flag us as the low over voltage violation
-				ieee_1547_trip_method = IEEE_1547_LOW_OV;
-			}
-			else
-			{
-				trigger_disconnect = false;
-				return_time_volt = IEEE1547_over_voltage_low_delay - IEEE1547_over_voltage_low_viol_time;
-			}
-		}
-		else if (ov_high_hit)
-		{
-			if (IEEE1547_over_voltage_high_viol_time > IEEE1547_over_voltage_high_delay)
-			{
-				trigger_disconnect = true;
-				return_time_volt = IEEE1547_reconnect_time;
-
-				//Flag us as the high over voltage violation
-				ieee_1547_trip_method = IEEE_1547_HIGH_OV;
-			}
-			else if (IEEE1547_over_voltage_low_viol_time > IEEE1547_over_voltage_low_delay)	//Lower band overlap
-			{
-				trigger_disconnect = true;
-				return_time_volt = IEEE1547_reconnect_time;
-
-				//Flag us as the low over voltage violation
-				ieee_1547_trip_method = IEEE_1547_LOW_OV;
-			}
-			else
-			{
-				trigger_disconnect = false;
-				return_time_volt = IEEE1547_over_voltage_high_delay - IEEE1547_over_voltage_high_viol_time;
-			}
-		}
-		else	//must not have tripped a time limit
-		{
-			GL_THROW("ibr_skeleton:%d - %s - IEEE-1547 Checks - invalid  state!",get_id(),get_name());
-			//Defined above
-
-			//Technically not needed - left here in case this ever changes to a non-blocking error
-			return -9999.0;
-		}
-	}//End of a violation occurred
-	else	//No voltage violation
-	{
-		//Zero all accumulators
-		IEEE1547_under_voltage_lowest_viol_time = 0.0;
-		IEEE1547_under_voltage_middle_viol_time = 0.0;
-		IEEE1547_under_voltage_high_viol_time = 0.0;
-		IEEE1547_over_voltage_low_viol_time = 0.0;
-		IEEE1547_over_voltage_high_viol_time = 0.0;
-
-		return_time_volt = -1.0;	//Set it again, for paranoia
-	}
-
-	//Compute the "next expected update"
-	if ((return_time_volt > 0.0) && (return_time_freq > 0.0))	//Both counting - take the minimum
-	{
-		//Find the minimum
-		if (return_time_volt < return_time_freq)
-		{
-			return_value = return_time_volt;
-		}
-		else
-		{
-			return_value = return_time_freq;
-		}
-	}
-	else if ((return_time_volt > 0.0) && (return_time_freq < 0.0))	//Voltage event
-	{
-		return_value = return_time_volt;
-	}
-	else if ((return_time_volt < 0.0) && (return_time_freq > 0.0)) //Frequency event
-	{
-		return_value = return_time_freq;
-	}
-	else	//Nothing pending
-	{
-		return_value = -1.0;
-	}
-
-	//Check voltage values first
-	if (frequency_violation || voltage_violation)
-	{
-		//Reset the out of violation time
-		IEEE1547_out_of_violation_time_total = 0.0;
-	}
-	else	//No failures, reset and increment
-	{
-		//Increment the "restoration" one, just in case
-		IEEE1547_out_of_violation_time_total += timestepvalue;
-	}
-
-	//See what we are - if we're out of service, see if we can be restored
-	if (!inverter_1547_status)
-	{
-		if (IEEE1547_out_of_violation_time_total > IEEE1547_reconnect_time)
-		{
-			//Set us back into service
-			inverter_1547_status = true;
-
-			//Flag us as no reason
-			ieee_1547_trip_method = IEEE_1547_NOTRIP;
-
-			//*********** Warning in place for now - remove this when we update the reconnect behavior properly **************//
-			if (Reconnect_Warn_Flag)
-			{
-				gl_warning("ibr_skeleton - Reconnections after an IEEE-1547 cessation are not fully validated.  May cause odd transients.");
-				/*  TROUBLESHOOT
-				The simple/base IEEE-1547 functionality in the ibr_skeleton object only handles the cessation/disconnect side.  Upon reconnecting,
-				the proper inverter reconnect behavior is not implemented yet.  Additional transients may apply.  This is expected to be fixed in
-				a future update.
-				*/
-
-				//Set the flag
-				Reconnect_Warn_Flag = false;
-			}
-
-			//Implies no violations, return -99.0 to indicate we just restored
-			return -99.0;
-		}
-		else	//Still delayed, just reaffirm our status
-		{
-			inverter_1547_status = false;
-
-			//calculate the new update time
-			return_value = IEEE1547_reconnect_time - IEEE1547_out_of_violation_time_total;
-
-			//Return the minimum from above
-			return return_value;
-		}
-	}
-	else	//We're true, see if we need to not be
-	{
-		if (trigger_disconnect)
-		{
-			inverter_1547_status = false;	//Trigger
-
-			//Return our expected next status interval
-			return return_value;
-		}
-		else
-		{
-			//Flag us as no reason
-			ieee_1547_trip_method = IEEE_1547_NOTRIP;
-
-			//All is well, indicate as much
-			return return_value;
-		}
-	}
 }
 
 //////////////////////////////////////////////////////////////////////////
