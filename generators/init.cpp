@@ -24,6 +24,8 @@
 #include "inverter_dyn.h"
 #include "sync_ctrl.h"
 #include "energy_storage.h"
+// IBR_SKELETON_NOTE: ADD HEADER FILES OF NEW MODELS HERE
+#include "ibr_skeleton.h"
 
 //Define defaults, since many use them and they aren't here yet
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
