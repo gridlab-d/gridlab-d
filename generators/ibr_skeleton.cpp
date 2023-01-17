@@ -70,14 +70,8 @@ ibr_skeleton::ibr_skeleton(MODULE *module)
 			PT_complex, "e_droop_C_PU", PADDR(e_droop_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of given by the grid-forming droop controller, phase C",
 
 
-			PT_double, "e_droop_angle_A", PADDR(Angle_blk[0].x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal angle given by the droop controller, phase A",
-			PT_double, "e_droop_angle_B", PADDR(Angle_blk[1].x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal angle given by the droop controller, phase B",
-			PT_double, "e_droop_angle_C", PADDR(Angle_blk[2].x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal angle given by the droop controller, phase C",
-
-
 			// 3 phase average value of terminal voltage
 			PT_double, "pCircuit_V_Avg_pu", PADDR(pCircuit_V_Avg_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: three-phase average value of terminal voltage, per unit value",
-			PT_double, "E_mag", PADDR(E_mag), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: magnitude of internal voltage of grid-forming inverter",
 
 			//Input
 			PT_double, "rated_power[VA]", PADDR(S_base), PT_DESCRIPTION, " The rated power of the inverter",
@@ -212,9 +206,7 @@ ibr_skeleton::ibr_skeleton(MODULE *module)
 			PT_double, "kiVdc", PADDR(kiVdc), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: integral gain of Vdc_min controller",
 			PT_double, "kdVdc", PADDR(kiVdc), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: derivative gain of Vdc_min controller",
 
-			PT_double, "p_measure", PADDR(Pmeas_blk.x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: filtered active power for grid-forming inverter",
-			PT_double, "q_measure", PADDR(Qmeas_blk.x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: filtered reactive power for grid-forming inverter",
-			PT_double, "v_measure", PADDR(Vmeas_blk.x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: filtered voltage for grid-forming inverter",
+			// IBR_SKELETON_NOTE: Any variables that need to be published should go here.
 
 			//DC Bus portions
 			PT_double, "V_In[V]", PADDR(V_DC), PT_DESCRIPTION, "DC input voltage",
@@ -371,9 +363,6 @@ int ibr_skeleton::create(void)
 	Qmin = -10;
 	V_lim = 10;
 
-	// Initial value for previous step frequency deviation
-	delta_w_prev_step = 0.0;
-	
 	// PLL controller parameters
 	kpPLL = 50;
 	kiPLL = 900;
@@ -2312,27 +2301,7 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 				// The following code is only for three phase system
 				// Function: Low pass filter of P
 				P_out_pu = VA_Out.Re() / S_base;
-				// Output of active power measurement block
-				p_measured = Pmeas_blk.getoutput(P_out_pu,deltat,PREDICTOR);
 				
-				// VA_OUT.Re() refers to the output active power from the inverter.
-				// S_base is the rated capacity
-				// P_out_pu is the per unit value of VA_OUT.Re()
-				// p_measure is the filtered active power, it is per-unit value
-				// Tp is the time constant of low pass filter, it is per-unit value
-				// Function end
-
-				// Function: Low pass filter of Q
-				Q_out_pu = VA_Out.Im() / S_base;
-				// Output of reactive power measurement block
-				q_measured = Qmeas_blk.getoutput(Q_out_pu,deltat,PREDICTOR);
-				
-				// VA_OUT.Im() refers to the output reactive power from the inverter
-				// Q_out_pu is the per-unit value of VA_Out.Im()
-				// q_measure is the filtered reactive power, it is per-unit value
-				// Tq is the time constant of low pass filter, it is per-unit value
-				// Function end
-
 				if (grid_forming_mode == DYNAMIC_DC_BUS) // consider the dynamics of PV dc bus
 				{
 					if (!dc_interface_objects.empty())
@@ -2369,24 +2338,6 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 
 				// Function: Low pass filter of V
 				pCircuit_V_Avg_pu = value_Circuit_V[0].Mag() / V_base;
-				// Output of V-measurement block
-				v_measured = Vmeas_blk.getoutput(pCircuit_V_Avg_pu,deltat,PREDICTOR);
-				
-				// Value_Circuit_V[i] refers to the voltage of each phase at the grid side
-				// Vbase is the rated Line to ground voltage
-				// pCircuit_V_Avg_pu refers to the average value of three phase voltages, it is per-unit value
-				// v_measure refers to filtered voltage, it is per-unit value
-				// Tv is the time constant of low pass filter
-				// Function end
-
-				// Qmax controller
-				delta_V_Qmax = Qmax_ctrl_blk.getoutput(Qmax - q_measured,deltat,PREDICTOR);
-
-				// Qmin controller
-				delta_V_Qmin = Qmin_ctrl_blk.getoutput(Qmin - q_measured,deltat,PREDICTOR);
-
-				// Function: Q-V droop control and voltage control loop
-				V_ref = Vset - q_measured * mq + delta_V_Qmax + delta_V_Qmin;
 
 				if(grid_forming_mode == DYNAMIC_DC_BUS)
 				{
@@ -2394,76 +2345,19 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 				}
 				else
 				{
-				        E_mag = V_ctrl_blk.getoutput(V_ref-v_measured, deltat,PREDICTOR);
 
-					// V_ref is the voltage reference obtained from Q-V droop
-					// Vset is the voltage set point, usually 1 pu
-					// mq is the Q-V droop gain, usually 0.05 pu
-					// V_ini is the output from the integrator in the voltage controller
-					// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
-					// E_max and E_min are the maximum and minimum of the output of voltage controller
-					// Function end
 				}
-
-				// Function: P-f droop, Pmax and Pmin controller
-				delta_w_droop = (Pset - p_measured) * mp; // P-f droop
-
-				// Pmax controller
-				delta_w_Pmax = Pmax_ctrl_blk.getoutput(Pmax - p_measured,deltat,PREDICTOR);
-				
-				// Pmin controller
-				delta_w_Pmin = Pmin_ctrl_blk.getoutput(Pmin - p_measured,deltat,PREDICTOR);
-
-				delta_w = delta_w_droop + delta_w_Pmax + delta_w_Pmin + 2.0 * PI * fset - w_ref; //the summation of the outputs from P-f droop, Pmax control and Pmin control
-
-				// delta_w_droop is the output of P-f droop
-				// Pset is the power set point
-				// delta_w_Pmax and delta_w_Pmin are the outputs of Pmax controller and Pmin controller
-				// Pmax and Pmin are the maximum limit and minimum limit of Pmax controller and Pmin controller
-				// w_lim is the saturation limit
-				// w_ref is the rated frequency, usually 376.99 rad/s
-				// Function end
 
 				if (grid_forming_mode == DYNAMIC_DC_BUS) // consider the dynamics of PV dc bus, and the internal voltage magnitude needs to be recalculated
 				{
 
 				}
 
-				freq = (delta_w + w_ref) / 2.0 / PI; // The frequency from the CERTS Droop controller, Hz
-
-				// Function: Obtaining the Phase Angle, and obtaining the compelx value of internal voltages and their Norton Equivalence for power flow analysis
 				for (i = 0; i < 1; i++)
 				{
-					//Obtain the phase angle
-					Angle[i] = Angle_blk[i].getoutput(delta_w,deltat,PREDICTOR);
-					
-					
-					I_out_PU_temp[i] = (gld::complex(E_mag * cos(Angle[i]), E_mag * sin(Angle[i]))-value_Circuit_V[i]/V_base)/gld::complex(Rfilter, Xfilter);
-
-
-					//if(I_out_PU_temp[i].Mag() < Imax)
-					//{
-
-					e_droop_pu[i] = gld::complex(E_mag * cos(Angle[i]), E_mag * sin(Angle[i])); // per unit value of the internal voltage given by droop control
-					e_droop[i] = e_droop_pu[i] * V_base; // internal voltage given by the droop control
-
-					//}
-					//else
-					//{
-
-						// Limit the over-current by reducing the internal voltage E
-					//	e_source[i] = value_Circuit_V[i] + gld::complex(Imax * cos(I_out_PU_temp[i].Arg()), Imax * sin(I_out_PU_temp[i].Arg())) * I_base * (gld::complex(Rfilter, Xfilter) * Z_base);
-
-					//}
 
 					value_IGenerated[i] = e_droop[i] / (gld::complex(Rfilter, Xfilter) * Z_base);							// Thevenin voltage source to Norton current source convertion
 				}
-
-				// Angle[i] refers to the phase angle of internal voltage for each phase
-				// e_source[i] is the complex value of internal voltage
-				// value_IGenerated[i] is the Norton equivalent current source of e_source[i]
-				// Rfilter and Xfilter are the per-unit values of inverter filter, they are per-unit values
-				// Function end
 
 				simmode_return_value = SM_DELTA_ITER; //Reiterate - to get us to corrector pass
 
@@ -2494,25 +2388,6 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 				// The following code is only for three phase system
 				// Function: Low pass filter of P
 				P_out_pu = VA_Out.Re() / S_base;
-				// Output of P-measurement block
-				p_measured = Pmeas_blk.getoutput(P_out_pu,deltat,PREDICTOR);
-				
-				// VA_OUT.Re() refers to the output active power from the inverter.
-				// S_base is the rated capacity
-				// P_out_pu is the per unit value of VA_OUT.Re()
-				// p_measure is the filtered active power, it is per-unit value
-				// Tp is the time constant of low pass filter, it is per-unit value
-				// Function end
-
-				// Function: Low pass filter of Q
-				Q_out_pu = VA_Out.Im() / S_base;
-				q_measured = Qmeas_blk.getoutput(Q_out_pu,deltat,PREDICTOR);
-
-				// VA_OUT.Im() refers to the output reactive power from the inverter
-				// Q_out_pu is the per-unit value of VA_Out.Im()
-				// q_measure is the filtered reactive power, it is per-unit value
-				// Tq is the time constant of low pass filter, it is per-unit value
-				// Function end
 
 				if (grid_forming_mode == DYNAMIC_DC_BUS) // consider the dynamics of PV dc bus
 				{
@@ -2551,99 +2426,24 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 
 				// Function: Low pass filter of V
 				pCircuit_V_Avg_pu = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base;
-				// Output of V-measurement block
-				v_measured = Vmeas_blk.getoutput(pCircuit_V_Avg_pu,deltat,PREDICTOR);
 
-				// Value_Circuit_V[i] refers to the voltage of each phase at the grid side
-				// Vbase is the rated Line to ground voltage
-				// pCircuit_V_Avg_pu refers to the average value of three phase voltages, it is per-unit value
-				// v_measure refers to filtered voltage, it is per-unit value
-				// Tv is the time constant of low pass filter
-				// Function end
-
-				// Qmax controller
-				delta_V_Qmax = Qmax_ctrl_blk.getoutput(Qmax - q_measured,deltat,PREDICTOR);
-
-				// Qmin controller
-				delta_V_Qmin = Qmin_ctrl_blk.getoutput(Qmin - q_measured,deltat,PREDICTOR);
-
-				// Function: Q-V droop control and voltage control loop
-				V_ref = Vset - q_measured * mq + delta_V_Qmax + delta_V_Qmin;
-				
 				if(grid_forming_mode == DYNAMIC_DC_BUS)
 				{
 				}
 				else
 				{
-				        E_mag = V_ctrl_blk.getoutput(V_ref-v_measured, deltat,PREDICTOR);
 
-					// V_ref is the voltage reference obtained from Q-V droop
-					// Vset is the voltage set point, usually 1 pu
-					// mq is the Q-V droop gain, usually 0.05 pu
-					// V_ini is the output from the integrator in the voltage controller
-					// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
-					// E_max and E_min are the maximum and minimum of the output of voltage controller
-					// Function end
 				}
-
-				// Function: P-f droop, Pmax and Pmin controller
-				delta_w_droop = (Pset - p_measured) * mp; // P-f droop
-
-
-				// Pmax controller
-				delta_w_Pmax = Pmax_ctrl_blk.getoutput(Pmax - p_measured,deltat,PREDICTOR);
-
-				// Pmin controller
-				delta_w_Pmin = Pmin_ctrl_blk.getoutput(Pmin - p_measured,deltat,PREDICTOR);
-
-				delta_w = delta_w_droop + delta_w_Pmax + delta_w_Pmin + 2.0 * PI * fset - w_ref; //the summation of the outputs from P-f droop, Pmax control and Pmin control
-
-				// delta_w_droop is the output of P-f droop
-				// Pset is the power set point
-				// delta_w_Pmax and delta_w_Pmin are the outputs of Pmax controller and Pmin controller
-				// Pmax and Pmin are the maximum limit and minimum limit of Pmax controller and Pmin controller
-				// w_lim is the saturation limit
-				// w_ref is the rated frequency, usually 376.99 rad/s
-				// Function end
 
 				if (grid_forming_mode == DYNAMIC_DC_BUS) // consider the dynamics of PV dc bus, and the internal voltage magnitude needs to be recalculated
 				{
 
 				}
 
-				freq = (delta_w + w_ref) / 2.0 / PI; // The frequency from the CERTS Droop controller, Hz
-
-				// Function: Obtaining the Phase Angle, and obtaining the compelx value of internal voltages and their Norton Equivalence for power flow analysis
 				for (i = 0; i < 3; i++)
 				{
-					Angle[i] = Angle_blk[i].getoutput(delta_w,deltat,PREDICTOR);
-
-					I_out_PU_temp[i] = (gld::complex(E_mag * cos(Angle[i]), E_mag * sin(Angle[i]))-value_Circuit_V[i]/V_base)/gld::complex(Rfilter, Xfilter);
-
-
-					//if(I_out_PU_temp[i].Mag() < Imax)
-					//{
-
-					e_droop_pu[i] = gld::complex(E_mag * cos(Angle[i]), E_mag * sin(Angle[i])); // per unit value of the internal voltage given by droop control
-					e_droop[i] = e_droop_pu[i] * V_base; // internal voltage given by the droop control
-
-					//}
-					//else
-					//{
-
-						// Limit the over-current by reducing the internal voltage E
-					//	e_source[i] = value_Circuit_V[i] + gld::complex(Imax * cos(I_out_PU_temp[i].Arg()), Imax * sin(I_out_PU_temp[i].Arg())) * I_base * (gld::complex(Rfilter, Xfilter) * Z_base);
-
-					//}
-
 					value_IGenerated[i] = e_droop[i] / (gld::complex(Rfilter, Xfilter) * Z_base);							// Thevenin voltage source to Norton current source convertion
 				}
-
-				// Angle[i] refers to the phase angle of internal voltage for each phase
-				// e_source[i] is the complex value of internal voltage
-				// value_IGenerated[i] is the Norton equivalent current source of e_source[i]
-				// Rfilter and Xfilter are the per-unit values of inverter filter, they are per-unit values
-				// Function end
 
 				simmode_return_value = SM_DELTA_ITER; //Reiterate - to get us to corrector pass
 			}
@@ -2671,24 +2471,7 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 				// The following code is only for three phase system
 				// Function: Low pass filter of P
 				P_out_pu = VA_Out.Re() / S_base;
-				// Output of P-measurement block
-				p_measured = Pmeas_blk.getoutput(P_out_pu,deltat,CORRECTOR);
 
-				// VA_OUT.Re() refers to the output active power from the inverter, this should be normalized.
-				// S_base is the rated capacity
-				// P_out_pu is the per unit value of VA_OUT.Re()
-				// p_measure is the filtered active power, it is per-unit value
-				// Tp is the time constant of low pass filter, it is per-unit value
-				// Function end
-
-				// Function: Low pass filter of Q
-				Q_out_pu = VA_Out.Im() / S_base;
-				q_measured = Qmeas_blk.getoutput(Q_out_pu,deltat,CORRECTOR);
-				// VA_OUT.Im() refers to the output reactive power from the inverter
-				// Q_out_pu is the per-unit value of VA_Out.Im()
-				// q_measure is the filtered reactive power, it is per-unit value
-				// Tq is the time constant of low pass filter, it is per-unit value
-				// Function end
 
 				if (grid_forming_mode == DYNAMIC_DC_BUS) // consider the dynamics of PV dc bus
 				{
@@ -2726,90 +2509,24 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 
 				// Function: Low pass filter of V
 				pCircuit_V_Avg_pu = value_Circuit_V[0].Mag() / V_base;
-				// Output of V-measurement block 
-				v_measured = Vmeas_blk.getoutput(pCircuit_V_Avg_pu,deltat,CORRECTOR);
-
-
-				// Value_Circuit_V[i] refers to te voltage of each phase at the inverter terminal
-				// Vbase is the rated Line to ground voltage
-				// pCircuit_V_Avg_pu refers to the average value of three phase voltages, it is per-unit value
-				// v_measure refers to filtered voltage, it is per-unit value
-				// Function end
-
-
-				//Qmax controller
-				delta_V_Qmax = Qmax_ctrl_blk.getoutput(Qmax - q_measured,deltat,CORRECTOR);
-
-				//Qmin controller
-				delta_V_Qmin = Qmin_ctrl_blk.getoutput(Qmin - q_measured,deltat,CORRECTOR);
-
-				// Function: Q-V droop control and voltage control loop
-				V_ref = Vset - q_measured * mq + delta_V_Qmax + delta_V_Qmin;
 
 				if(grid_forming_mode == DYNAMIC_DC_BUS)
 				{
 				}
 				else
 				{
-				        E_mag = V_ctrl_blk.getoutput(V_ref-v_measured, deltat,CORRECTOR);
 
-					// V_ref is the voltage reference obtained from Q-V droop
-					// Vset is the voltage set point, usually 1 pu
-					// mq is the Q-V droop gain, usually 0.05 pu
-					// V_ini is the output from the integrator in the voltage controller
-					// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
-					// E_max and E_min are the maximum and minimum of the output of voltage controller
-					// Function end
 				}
 
-				// Function: P-f droop, Pmax and Pmin controller
-				delta_w_droop = (Pset - p_measured) * mp; // P-f droop
-
-				// Pmax controller
-				delta_w_Pmax = Pmax_ctrl_blk.getoutput(Pmax - p_measured,deltat,CORRECTOR);
-
-				// Pmin controller
-				delta_w_Pmin = Pmin_ctrl_blk.getoutput(Pmin - p_measured,deltat,CORRECTOR);
-
-				delta_w = delta_w_droop + delta_w_Pmax + delta_w_Pmin + 2.0 * PI * fset - w_ref; //the summation of the outputs from P-f droop, Pmax control and Pmin control
-
-				// delta_w_droop is the output of P-f droop
-				// Pset is the power set point
-				// delta_w_Pmax and delta_w_Pmin are the outputs of Pmax controller and Pmin controller
-				// Pmax and Pmin are the maximum limit and minimum limit of Pmax controller and Pmin controller
-				// w_lim is the saturation limit
-				// w_ref is the rated frequency, usually 376.99 rad/s
-				// Function end
 
 				if (grid_forming_mode == DYNAMIC_DC_BUS) // consider the dynamics of PV dc bus, and the internal voltage magnitude needs to be recalculated
 				{
 
 				}
 
-				freq = (delta_w + w_ref) / 2.0 / PI; // The frequency from the CERTS droop controller, Hz
-
 				// Function: Obtaining the Phase Angle, and obtaining the compelx value of internal voltages and their Norton Equivalence for power flow analysis
 				for (i = 0; i < 1; i++)
 				{
-					Angle[i] = Angle_blk[i].getoutput(delta_w,deltat,CORRECTOR);
-
-					I_out_PU_temp[i] = (gld::complex(E_mag * cos(Angle[i]), E_mag * sin(Angle[i])) - value_Circuit_V[i]/V_base)/gld::complex(Rfilter, Xfilter);
-
-
-					//if(I_out_PU_temp[i].Mag() < Imax)
-					//{
-
-					e_droop_pu[i] = gld::complex(E_mag * cos(Angle[i]), E_mag * sin(Angle[i])); // transfers back to non-per-unit values
-					e_droop[i] = e_droop_pu[i] * V_base; // transfers back to non-per-unit values
-					//}
-					//else
-					//{   // Limit the over-current by reducing the internal voltage E
-
-					//	e_source[i] = value_Circuit_V[i] + gld::complex(Imax * cos(I_out_PU_temp[i].Arg()), Imax * sin(I_out_PU_temp[i].Arg())) * I_base * (gld::complex(Rfilter, Xfilter) * Z_base);
-
-					//}
-
-
 					value_IGenerated[i] = e_droop[i] / (gld::complex(Rfilter, Xfilter) * Z_base);							  // Thevenin voltage source to Norton current source convertion
 
 
@@ -2825,28 +2542,8 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 						proceed_to_qsts = false;
 					}
 				}
-				// Angle[i] refers to the phase angle of internal voltage for each phase
-				// e_source[i] is the complex value of internal voltage
-				// value_IGenerated[i] is the Norton equivalent current source of e_source[i]
-				// Rfilter and Xfilter are the per-unit values of inverter filter
-				// Function end
 
-				double diff_w = delta_w - delta_w_prev_step;
-
-				delta_w_prev_step = delta_w;
-
-				if ((fabs(diff_w) <= GridForming_freq_convergence_criterion) && proceed_to_qsts)
-				{
-					simmode_return_value = SM_EVENT; // we have reached steady state
-				}
-				else
-				{
-					simmode_return_value = SM_DELTA;
-				}
-
-				//simmode_return_value =  SM_DELTA;
-
-
+				// IBR_SKELETON_NOTE: Add logic for returning to QSTS mode, if applicable, here
 			}
 			else //Three-phase
 			{
@@ -2873,26 +2570,6 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 				// The following code is only for three phase system
 				// Function: Low pass filter of P
 				P_out_pu = VA_Out.Re() / S_base;
-
-				// Output of P-measurement block
-				p_measured = Pmeas_blk.getoutput(P_out_pu,deltat,CORRECTOR);
-
-				// VA_OUT.Re() refers to the output active power from the inverter, this should be normalized.
-				// S_base is the rated capacity
-				// P_out_pu is the per unit value of VA_OUT.Re()
-				// p_measure is the filtered active power, it is per-unit value
-				// Tp is the time constant of low pass filter, it is per-unit value
-				// Function end
-
-				// Function: Low pass filter of Q
-				Q_out_pu = VA_Out.Im() / S_base;
-				q_measured = Qmeas_blk.getoutput(Q_out_pu,deltat,CORRECTOR);
-
-				// VA_OUT.Im() refers to the output reactive power from the inverter
-				// Q_out_pu is the per-unit value of VA_Out.Im()
-				// q_measure is the filtered reactive power, it is per-unit value
-				// Tq is the time constant of low pass filter, it is per-unit value
-				// Function end
 
 				if (grid_forming_mode == DYNAMIC_DC_BUS) // consider the dynamics of PV dc bus
 				{
@@ -2931,25 +2608,6 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 				// Function: Low pass filter of V
 				pCircuit_V_Avg_pu = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base;
 
-				// Output of V-measurement block 
-				v_measured = Vmeas_blk.getoutput(pCircuit_V_Avg_pu,deltat,CORRECTOR);
-
-
-				// Value_Circuit_V[i] refers to te voltage of each phase at the inverter terminal
-				// Vbase is the rated Line to ground voltage
-				// pCircuit_V_Avg_pu refers to the average value of three phase voltages, it is per-unit value
-				// v_measure refers to filtered voltage, it is per-unit value
-				// Function end
-
-
-				//Qmax controller
-				delta_V_Qmax = Qmax_ctrl_blk.getoutput(Qmax - q_measured,deltat,CORRECTOR);
-
-				//Qmin controller
-				delta_V_Qmin = Qmin_ctrl_blk.getoutput(Qmin - q_measured,deltat,CORRECTOR);
-
-				// Function: Q-V droop control and voltage control loop
-				V_ref = Vset - q_measured * mq + delta_V_Qmax + delta_V_Qmin;
 
 				if(grid_forming_mode == DYNAMIC_DC_BUS)
 				{
@@ -2957,64 +2615,18 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 				}
 				else
 				{
-				        E_mag = V_ctrl_blk.getoutput(V_ref-v_measured, deltat,CORRECTOR);
 
-					// V_ref is the voltage reference obtained from Q-V droop
-					// Vset is the voltage set point, usually 1 pu
-					// mq is the Q-V droop gain, usually 0.05 pu
-					// V_ini is the output from the integrator in the voltage controller
-					// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
-					// E_max and E_min are the maximum and minimum of the output of voltage controller
-					// Function end
 				}
-
-				// Function: P-f droop, Pmax and Pmin controller
-				delta_w_droop = (Pset - p_measured) * mp; // P-f droop
-
-				// Pmax controller
-				delta_w_Pmax = Pmax_ctrl_blk.getoutput(Pmax - p_measured,deltat,CORRECTOR);
-
-				// Pmin controller
-				delta_w_Pmin = Pmin_ctrl_blk.getoutput(Pmin - p_measured,deltat,CORRECTOR);
-
-				delta_w = delta_w_droop + delta_w_Pmax + delta_w_Pmin + 2.0 * PI * fset - w_ref; //the summation of the outputs from P-f droop, Pmax control and Pmin control
-
-				// delta_w_droop is the output of P-f droop
-				// Pset is the power set point
-				// delta_w_Pmax and delta_w_Pmin are the outputs of Pmax controller and Pmin controller
-				// Pmax and Pmin are the maximum limit and minimum limit of Pmax controller and Pmin controller
-				// w_lim is the saturation limit
-				// w_ref is the rated frequency, usually 376.99 rad/s
-				// Function end
 
 				if (grid_forming_mode == DYNAMIC_DC_BUS) // consider the dynamics of PV dc bus, and the internal voltage magnitude needs to be recalculated
 				{
 
 				}
 
-				freq = (delta_w + w_ref) / 2.0 / PI; // The frequency from the CERTS droop controller, Hz
-
 				// Function: Obtaining the Phase Angle, and obtaining the compelx value of internal voltages and their Norton Equivalence for power flow analysis
 				for (i = 0; i < 3; i++)
 				{
-					Angle[i] = Angle_blk[i].getoutput(delta_w,deltat,CORRECTOR);
-
-					I_out_PU_temp[i] = (gld::complex(E_mag * cos(Angle[i]), E_mag * sin(Angle[i])) - value_Circuit_V[i]/V_base)/gld::complex(Rfilter, Xfilter);
-
-
-					//if(I_out_PU_temp[i].Mag() < Imax)
-					//{
-
-					e_droop_pu[i] = gld::complex(E_mag * cos(Angle[i]), E_mag * sin(Angle[i])); // transfers back to non-per-unit values
 					e_droop[i] = e_droop_pu[i] * V_base; // transfers back to non-per-unit values
-					//}
-					//else
-					//{   // Limit the over-current by reducing the internal voltage E
-
-					//	e_source[i] = value_Circuit_V[i] + gld::complex(Imax * cos(I_out_PU_temp[i].Arg()), Imax * sin(I_out_PU_temp[i].Arg())) * I_base * (gld::complex(Rfilter, Xfilter) * Z_base);
-
-					//}
-
 
 					value_IGenerated[i] = e_droop[i] / (gld::complex(Rfilter, Xfilter) * Z_base);							  // Thevenin voltage source to Norton current source convertion
 
@@ -3031,26 +2643,8 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 						proceed_to_qsts = false;
 					}
 				}
-				// Angle[i] refers to the phase angle of internal voltage for each phase
-				// e_source[i] is the complex value of internal voltage
-				// value_IGenerated[i] is the Norton equivalent current source of e_source[i]
-				// Rfilter and Xfilter are the per-unit values of inverter filter
-				// Function end
 
-				double diff_w = delta_w - delta_w_prev_step;
-
-				delta_w_prev_step = delta_w;
-
-				if ((fabs(diff_w) <= GridForming_freq_convergence_criterion) && proceed_to_qsts)
-				{
-					simmode_return_value = SM_EVENT; // we have reached steady state
-				}
-				else
-				{
-					simmode_return_value = SM_DELTA;
-				}
-
-				//simmode_return_value =  SM_DELTA;
+				// IBR_SKELETON_NOTE: Add logic for returning to QSTS mode, if applicable, here
 			}
 		}
 		else //Additional iterations
@@ -4769,14 +4363,8 @@ STATUS ibr_skeleton::init_dynamics()
 				// Initialize the state variables of the internal voltages
 				e_droop[i] = (value_IGenerated[i] * gld::complex(Rfilter, Xfilter) * Z_base);
 				e_droop_prev[i] = e_droop[i];
-				Angle_blk[i].setparams(1.0);
-				Angle_blk[i].init(0.0,(e_droop[i].Arg()));
 			}
 
-			// Initialize the voltage control block
-			V_ctrl_blk.setparams(kpv,kiv,E_min,E_max,E_min,E_max);
-			V_ctrl_blk.init(0.0,e_droop[0].Mag() / V_base);
-			
 			//See if it is the first deltamode entry - theory is all future changes will trigger deltamode, so these should be set
 			if (first_deltamode_init)
 			{
@@ -4799,32 +4387,6 @@ STATUS ibr_skeleton::init_dynamics()
 				first_deltamode_init = false;
 			}
 			//Default else - all changes should be in deltamode
-
-			// Initialize P measurement filter block
-			Pmeas_blk.setparams(Tp);
-			Pmeas_blk.init(0,VA_Out.Re()/S_base);
-
-			// Initialize Q measurement filter block
-			Qmeas_blk.setparams(Tq);
-			Qmeas_blk.init(0,VA_Out.Im()/S_base);
-
-			// Initialize V measurement filter
-			Vmeas_blk.setparams(Tv);
-			Vmeas_blk.init(0,pCircuit_V_Avg_pu);
-
-			// Initialize Pmax and Pmin controller
-			Pmax_ctrl_blk.setparams(kppmax,kipmax,-w_lim,0.0,-w_lim,0.0);
-			Pmin_ctrl_blk.setparams(kppmax,kipmax,0.0,w_lim,0.0,w_lim);
-
-			Pmax_ctrl_blk.init(0.0,0.0);
-			Pmin_ctrl_blk.init(0.0,0.0);
-			
-			// Initialize Qmax and Qmin controller
-			Qmax_ctrl_blk.setparams(kpqmax,kiqmax,-V_lim,0.0,-V_lim,0.0);
-			Qmin_ctrl_blk.setparams(kpqmax,kiqmax,0.0,V_lim,0.0,V_lim);
-
-			Qmax_ctrl_blk.init(0.0,0.0);
-			Qmin_ctrl_blk.init(0.0,0.0);
 
 			// Initialize Vdc_min controller and DC bus voltage
 			if (grid_forming_mode == DYNAMIC_DC_BUS) // consider the dynamics of PV dc bus, and the internal voltage magnitude needs to be recalculated
@@ -4898,15 +4460,8 @@ STATUS ibr_skeleton::init_dynamics()
 				e_droop[i] = (value_IGenerated[i] * gld::complex(Rfilter, Xfilter) * Z_base);
 				e_droop_prev[i] = e_droop[i];
 
-				Angle_blk[i].setparams(1.0);
-				Angle_blk[i].init(0.0,(e_droop[i].Arg()));
-
 			}
 
-			// Initializa the voltage control block
-			V_ctrl_blk.setparams(kpv,kiv,E_min,E_max,E_min,E_max);
-			V_ctrl_blk.init(0.0,(e_droop[0].Mag() + e_droop[1].Mag() + e_droop[2].Mag()) / 3 / V_base);
-			
 			//See if it is the first deltamode entry - theory is all future changes will trigger deltamode, so these should be set
 			if (first_deltamode_init)
 			{
@@ -4929,33 +4484,6 @@ STATUS ibr_skeleton::init_dynamics()
 				first_deltamode_init = false;
 			}
 			//Default else - all changes should be in deltamode
-
-			// Initialize measured P,Q,and V
-
-			Pmeas_blk.setparams(Tp);
-			Pmeas_blk.init(0,VA_Out.Re()/S_base);
-			
-			// Initialize Q measurement filter block
-			Qmeas_blk.setparams(Tq);
-			Qmeas_blk.init(0,VA_Out.Im()/S_base);
-
-			// Initialize V measurement filter
-			Vmeas_blk.setparams(Tv);
-			Vmeas_blk.init(0,pCircuit_V_Avg_pu);
-
-			// Initialize Pmax and Pmin controller
-			Pmax_ctrl_blk.setparams(kppmax,kipmax,-w_lim,0.0,-w_lim,0.0);
-			Pmin_ctrl_blk.setparams(kppmax,kipmax,0.0,w_lim,0.0,w_lim);
-
-			Pmax_ctrl_blk.init(0.0,0.0);
-			Pmin_ctrl_blk.init(0.0,0.0);
-			
-			// Initialize Qmax and Qmin controller
-			Qmax_ctrl_blk.setparams(kpqmax,kiqmax,-V_lim,0.0,-V_lim,0.0);
-			Qmin_ctrl_blk.setparams(kpqmax,kiqmax,0.0,V_lim,0.0,V_lim);
-
-			Qmax_ctrl_blk.init(0.0,0.0);
-			Qmin_ctrl_blk.init(0.0,0.0);
 
 			// Initialize Vdc_min controller and DC bus voltage
 			if (grid_forming_mode == DYNAMIC_DC_BUS) // consider the dynamics of PV dc bus, and the internal voltage magnitude needs to be recalculated

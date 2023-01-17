@@ -195,7 +195,6 @@ public:
 	};
 	enumeration P_f_droop_setting_mode; //
 
-
 	gld::complex terminal_current_val[3];
 	gld::complex terminal_current_val_pu[3];
 	TIMESTAMP inverter_start_time;
@@ -206,37 +205,6 @@ public:
 	double GridForming_freq_convergence_criterion;
 	double GridForming_volt_convergence_criterion;
 	double GridFollowing_curr_convergence_criterion;
-
-        // Grid forming control blocks
-        Filter Pmeas_blk; // P-measurement filter block
-        double p_measured; // P-measurement filter block output
-  
-        Filter Vmeas_blk; // Voltage measurement block
-        double v_measured; // Output of voltage measurement block
-
-        Filter Qmeas_blk; // Q-measurement block
-        double q_measured;  // Output of Q-measurement block
-
-        PIControl Qmin_ctrl_blk; // Qmin controller
-        double delta_V_Qmin;  // Output of Qmin controller
-
-        PIControl Qmax_ctrl_blk; // Qmax controller
-        double delta_V_Qmax;  // Output of Qmax controller
-
-        PIControl Pmin_ctrl_blk; // Pmin controller
-        double delta_w_Pmin;  // Output of Pmin controller
-
-        PIControl Pmax_ctrl_blk; // Pmax controller
-        double delta_w_Pmax;  // Output of Pmax controller
-
-        double delta_w;   // frequency of the internal voltage
-        double delta_w_prev_step; // frequency of the internal voltage at previous step
-  
-        Integrator Angle_blk[3]; // Integrator block for calculating phase angle of the internal voltage
-        double Angle[3];  // output of phase angle integrator block
-
-        PIControl V_ctrl_blk; // Voltage control block
-  	double E_mag; //internal voltage magnitude, used for grid-forming control, output of voltage control block
 
         // Grid following control blocks
         Integrator Angle_PLL_blk[3]; // Integrator block for PLL angle
