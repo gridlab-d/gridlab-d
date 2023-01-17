@@ -206,37 +206,6 @@ public:
 	double GridForming_volt_convergence_criterion;
 	double GridFollowing_curr_convergence_criterion;
 
-        // Grid following control blocks
-        Integrator Angle_PLL_blk[3]; // Integrator block for PLL angle
-        double     Angle_PLL[3];      // Output of PLL angle block
-
-        PIControl  delta_w_PLL_blk[3]; // PI block for PLL
-        double     delta_w_PLL[3];     // Output of PI block for PLL
-
-        PIControl igd_blk[3]; // d-axis current control PI block
-        double    igd_PI[3]; // output of d-axis current block
-
-        PIControl igq_blk[3]; // q-axis current control PI block
-        double    igq_PI[3];  // output of q-axis current block
-
-        Filter igd_filter_blk[3]; // Low pass filter block for current igd
-        double igd_filter[3]; // Output of low pass igd filter block
-
-        Filter igq_filter_blk[3]; // Low pass filter block for current igq
-        double igq_filter[3]; // Output of low pass igq filter block
-
-        Filter f_filter_blk; // filter block for frequency-watt
-        double f_filter; // Output of filter block for frequency watt
-
-        Filter Pref_droop_pu_filter_blk; // Pref droop filter block for frequency-watt
-        double Pref_droop_pu_filter; // Output of Pref droop filter block for frequency watt
-
-        Filter V_filter_blk; // filter block for volt-var
-        double V_filter; // Output of filter block for volt-var
-
-        Filter Qref_droop_pu_filter_blk; // Qref droop filter block for volt-var
-        double Qref_droop_pu_filter; // Output of Qref droop filter block for volt-var
-
 	gld::complex I_out_PU_temp[3];  //This is mainly used for current limiting function of a grid-forming inverter
 
 	gld::complex power_val[3];		   //power
@@ -248,36 +217,12 @@ public:
 
 	double mdc;	  // only used when dc bus dynamic is enabled, make sure that the modulation index is enough
 
-	bool frequency_watt; // Boolean value indicating whether the f/p droop curve is included in the inverter or not
-	bool checkRampRate_real; // check the active power ramp rate
-	bool volt_var;		 // Boolean value indicating whether the volt-var droop curve is included in the inverter or not
-	bool checkRampRate_reactive; // check the reactive power ramp rate
-
 	double rampUpRate_real; // unit: pu/s
 	double rampDownRate_real; // unit: pu/s
 	double rampUpRate_reactive; // unit: pu/s
 	double rampDownRate_reactive; // unit: pu/s
 	double Pref_droop_pu_prev; // The value of Pref in last simulation step, note it is only defined in the predictor pass
 	double Qref_droop_pu_prev; // The value of Qref in last simulation step, note it is only defined in the predictor pass
-
-	// voltages and currents in dq frame, used for grid-following control
-	double ugd_pu[3];
-	double ugq_pu[3];
-	double igd_pu[3];
-	double igq_pu[3];
-	double igd_ref[3];
-	double igq_ref[3];
-	double igd_ref_max;  //Upper limit for igd_ref
-	double igd_ref_min;  //Lower limit for igd_ref
-	double igq_ref_max;  //Upper limit for igq_ref
-	double igq_ref_min;  //Lower limit for igq_ref
-
-	double ugd_pu_PS; // positive sequence voltage value in dq frame
-	double ugq_pu_PS; // positive sequence voltage value in dq frame
-
-	// used for grid-following control
-	double ed_pu[3]; // internal votlage in dq frame
-	double eq_pu[3]; // internal votlage in dq frame
 
 	double S_base;	 // S_base is the rated caspacity
 	double V_base;	 // Vbase is the rated Line to ground voltage

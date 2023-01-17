@@ -88,57 +88,11 @@ ibr_skeleton::ibr_skeleton(MODULE *module)
 			PT_double, "kic", PADDR(kic), PT_DESCRIPTION, "DELTAMODE: Integral gain of the current loop.",
 			PT_double, "F_current", PADDR(F_current), PT_DESCRIPTION, "DELTAMODE: feed forward term gain in current loop.",
 			PT_double, "Tif", PADDR(Tif), PT_DESCRIPTION, "DELTAMODE: time constant of first-order low-pass filter of current loop when using current source representation.",
-			PT_double, "ugd_pu_A", PADDR(ugd_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, d-axis, phase A",
-			PT_double, "ugd_pu_B", PADDR(ugd_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, d-axis, phase B",
-			PT_double, "ugd_pu_C", PADDR(ugd_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, d-axis, phase C",
-			PT_double, "ugq_pu_A", PADDR(ugq_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, q-axis, phase A",
-			PT_double, "ugq_pu_B", PADDR(ugq_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, q-axis, phase B",
-			PT_double, "ugq_pu_C", PADDR(ugq_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal voltage of grid-following inverter, q-axis, phase C",
-			PT_double, "ed_pu_A", PADDR(ed_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, d-axis, phase A",
-			PT_double, "ed_pu_B", PADDR(ed_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, d-axis, phase B",
-			PT_double, "ed_pu_C", PADDR(ed_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, d-axis, phase C",
-			PT_double, "eq_pu_A", PADDR(eq_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, q-axis, phase A",
-			PT_double, "eq_pu_B", PADDR(eq_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, q-axis, phase B",
-			PT_double, "eq_pu_C", PADDR(eq_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Internal voltage of grid-following inverter, q-axis, phase C",
 
-			PT_double, "igd_pu_A", PADDR(igd_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase A",
-			PT_double, "igd_pu_B", PADDR(igd_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase B",
-			PT_double, "igd_pu_C", PADDR(igd_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase C",
-			PT_double, "igq_pu_A", PADDR(igq_pu[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase A",
-			PT_double, "igq_pu_B", PADDR(igq_pu[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase B",
-			PT_double, "igq_pu_C", PADDR(igq_pu[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase C",
-
-			PT_double, "igd_pu_A_filter", PADDR(igd_filter_blk[0].x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase A, current source representation",
-			PT_double, "igd_pu_B_filter", PADDR(igd_filter_blk[1].x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase B, current source representation",
-			PT_double, "igd_pu_C_filter", PADDR(igd_filter_blk[2].x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, d-axis, phase C, current source representation",
-			PT_double, "igq_pu_A_filter", PADDR(igq_filter_blk[0].x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase A, current source representation",
-			PT_double, "igq_pu_B_filter", PADDR(igq_filter_blk[1].x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase B, current source representation",
-			PT_double, "igq_pu_C_filter", PADDR(igq_filter_blk[2].x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: terminal current of grid-following inverter, q-axis, phase C, current source representation",
-
-			PT_double, "igd_ref_A", PADDR(igd_ref[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, d-axis, phase A",
-			PT_double, "igd_ref_B", PADDR(igd_ref[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, d-axis, phase B",
-			PT_double, "igd_ref_C", PADDR(igd_ref[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, d-axis, phase C",
-			PT_double, "igq_ref_A", PADDR(igq_ref[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, q-axis, phase A",
-			PT_double, "igq_ref_B", PADDR(igq_ref[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, q-axis, phase B",
-			PT_double, "igq_ref_C", PADDR(igq_ref[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: reference current of grid-following inverter, q-axis, phase C",
-
-			PT_double, "igd_ref_max", PADDR(igd_ref_max), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Upper limit of igd_ref of grid-following inverter, d-axis",
-			PT_double, "igd_ref_min", PADDR(igd_ref_min), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Lower limit of igd_ref of grid-following inverter, d-axis",
-			PT_double, "igq_ref_max", PADDR(igq_ref_max), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Upper limit of igq_ref of grid-following inverter, q-axis",
-			PT_double, "igq_ref_min", PADDR(igq_ref_min), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: Lower limit of igq_ref of grid-following inverter, q-axis",
-
-			PT_double, "Angle_PLL_A", PADDR(Angle_PLL_blk[0].x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: phase angle of terminal voltage measured by PLL, phase A",
-			PT_double, "Angle_PLL_B", PADDR(Angle_PLL_blk[1].x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: phase angle of terminal voltage measured by PLL, phase B",
-			PT_double, "Angle_PLL_C", PADDR(Angle_PLL_blk[2].x[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: phase angle of terminal voltage measured by PLL, phase C",
 			PT_double, "f_PLL_A", PADDR(fPLL[0]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: frequency of terminal voltage measured by PLL, phase A",
 			PT_double, "f_PLL_B", PADDR(fPLL[1]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: frequency of terminal voltage measured by PLL, phase B",
 			PT_double, "f_PLL_C", PADDR(fPLL[2]), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: frequency of terminal voltage measured by PLL, phase C",
 
-			// Frequency-watt and volt-var in Grid-Following Control mode
-			PT_bool, "frequency_watt", PADDR(frequency_watt), PT_DESCRIPTION, "DELTAMODE: Boolean used to indicate whether inverter f/p droop is included or not",
-			PT_bool, "checkRampRate_real", PADDR(checkRampRate_real), PT_DESCRIPTION, "DELTAMODE: Boolean used to indicate whether check the ramp rate",
-			PT_bool, "volt_var", PADDR(volt_var), PT_DESCRIPTION, "DELTAMODE: Boolean used to indicate whether inverter volt-var droop is included or not",
-			PT_bool, "checkRampRate_reactive", PADDR(checkRampRate_reactive), PT_DESCRIPTION, "DELTAMODE: Boolean used to indicate whether check the ramp rate",
 			PT_double, "Tpf[s]", PADDR(Tpf), PT_DESCRIPTION, "DELTAMODE: the time constant of power measurement low pass filter in frequency-watt.",
 			PT_double, "Tff[s]", PADDR(Tff), PT_DESCRIPTION, "DELTAMODE: the time constant of frequency measurement low pass filter in frequency-watt.",
 			PT_double, "Tqf[s]", PADDR(Tqf), PT_DESCRIPTION, "DELTAMODE: the time constant of low pass filter in volt-var.",
@@ -368,31 +322,10 @@ int ibr_skeleton::create(void)
 	kiPLL = 900;
 	fPLL[0] = fPLL[1] = fPLL[2] = 60.0;
 
-	Angle_PLL_blk[0].setparams(1.0);
-	Angle_PLL_blk[1].setparams(1.0);
-	Angle_PLL_blk[2].setparams(1.0);
-	Angle_PLL_blk[0].init(0.0,0.0);
-	Angle_PLL_blk[1].init(0.0,(4.0 / 3.0) * PI);
-	Angle_PLL_blk[2].init(0.0,(2.0 / 3.0) * PI);
-
-	Angle_PLL[0] = 0.0;
-	Angle_PLL[1] = (4.0 / 3.0) * PI;
-	Angle_PLL[2] = (2.0 / 3.0) * PI;
-
-
-	// ramp rate check for grid-following inverters
-	checkRampRate_real = false;
-	checkRampRate_reactive = false;
 	rampUpRate_real = 1.67; //unit: pu/s
 	rampDownRate_real = 1.67; //unit: pu/s
 	rampUpRate_reactive = 1.67; //unit: pu/s
 	rampDownRate_reactive = 1.67; //unit: pu/s
-
-	//Limits for the reference currents of grid-following inverters
-	igd_ref_max = 1;
-	igd_ref_min = -1;
-	igq_ref_max = 1;
-	igq_ref_min = -1;
 
 	// Grid-Following controller parameters
 	kpc = 0.05;
@@ -400,8 +333,6 @@ int ibr_skeleton::create(void)
 	F_current = 0;
 	Tif = 0.005; // only used for current source representation
 
-	//frequency-watt
-	frequency_watt = false;
 	Tpf = 0.5;		// S
 	Tff = 0.1;		// s
 	Pref_max = 1.0; // per unit
@@ -410,8 +341,6 @@ int ibr_skeleton::create(void)
 	db_UF = 0.0; //0.036;  // dead band 0.036 Hz, default value by IEEE 1547 2018
 	db_OF = 0.0; //0.036;  // dead band 0.036 Hz, default value by IEEE 1547 2018
 
-	//volt-var
-	volt_var = false;
 	Tqf = 0.2;	// s
 	Tvf = 0.05; // s
 	db_UV = 0;  // volt-var dead band
@@ -2676,32 +2605,6 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 					//Update power output variables, just so we can see what is going on
 					VA_Out = power_val[0];
 
-					// Function: Coordinate Tranformation, xy to dq
-					ugd_pu[0] = (value_Circuit_V[0].Re() * cos(Angle_PLL[0]) + value_Circuit_V[0].Im() * sin(Angle_PLL[0])) / V_base;
-					ugq_pu[0] = (-value_Circuit_V[0].Re() * sin(Angle_PLL[0]) + value_Circuit_V[0].Im() * cos(Angle_PLL[0])) / V_base;
-					igd_pu[0] = (terminal_current_val[0].Re() * cos(Angle_PLL[0]) + terminal_current_val[0].Im() * sin(Angle_PLL[0])) / I_base;
-					igq_pu[0] = (-terminal_current_val[0].Re() * sin(Angle_PLL[0]) + terminal_current_val[0].Im() * cos(Angle_PLL[0])) / I_base;
-
-					// ugd_pu[i] and ugq_pu[i] are the per-unit values of grid-side voltages in dq frame
-					// igd_pu[i] and igq_pu[i] are the per-unit values of grid-side currents in dq frame
-					// Angle_PLL[i] is the phase angle of the grid side votlage, which is obtained from the PLL
-					// Value_Circuit_V[i] is the voltage of each phase at the grid side
-					// terminal_current_val[i] is the current of each phase injected to the grid
-					// S_base is the rated capacity
-					// I_base is the reted current
-					// Function end
-
-					// Function: Phase-Lock_Loop, PLL
-					delta_w_PLL[0] = delta_w_PLL_blk[0].getoutput(ugq_pu[0],deltat,PREDICTOR);
-
-					fPLL[0] = (delta_w_PLL[0] + w_ref) / 2.0 / PI;		// frequency measured by PLL
-					
-					Angle_PLL[0] = Angle_PLL_blk[0].getoutput(delta_w_PLL[0],deltat,PREDICTOR);	// phase angle from PLL
-					// delta_w_PLL[i] is the output from the PI controller
-					// w_ref is the rated angular frequency, the value is 376.99 rad/s
-					// fPLL is the frequency measured by PLL
-					// Fuction end
-
 
 					// Check Pref and Qref, make sure the inverter output S does not exceed S_base, Pref has the priority
 					if(Pref > S_base)
@@ -2721,263 +2624,8 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 					}
 					//Function end
 
-					// Frequency-watt function enabled
-					if (frequency_watt)
-					{
-						Pref_droop_pu_prev = Pref_droop_pu; // the value of Pref_droop_pu in last simulation step
-						f_filter = f_filter_blk.getoutput(fPLL[0],deltat,PREDICTOR);
-
-						if ((f_filter < (f_nominal + db_OF))&&(f_filter > (f_nominal - db_UF)))  // add dead band
-						{
-							Pref_droop_pu = Pref / S_base;
-						}
-						else
-						{
-							Pref_droop_pu = (f_nominal - f_filter) / f_nominal / Rp + Pref / S_base;
-						}
-
-
-						if (Pref_droop_pu > Pref_max)
-						{
-							Pref_droop_pu = Pref_max;
-						}
-
-						if (Pref_droop_pu < Pref_min)
-						{
-							Pref_droop_pu = Pref_min;
-						}
-
-						double power_diff_val = Pref_droop_pu_prev - Pref_droop_pu;
-
-						if (checkRampRate_real)
-						{
-							if((power_diff_val > 0) && (power_diff_val > rampDownRate_real * deltat))
-							{
-								Pref_droop_pu = Pref_droop_pu_prev - rampDownRate_real * deltat;
-							}
-							else if ((power_diff_val < 0) && (-power_diff_val > rampUpRate_real * deltat))
-							{
-								Pref_droop_pu = Pref_droop_pu_prev + rampUpRate_real * deltat;
-							}
-
-							if (Pref_droop_pu > Pref_max)
-							{
-								Pref_droop_pu = Pref_max;
-							}
-
-							if (Pref_droop_pu < Pref_min)
-							{
-								Pref_droop_pu = Pref_min;
-							}
-
-						}
-						else
-						{
-						        Pref_droop_pu_filter = Pref_droop_pu_filter_blk.getoutput(Pref_droop_pu,deltat,PREDICTOR);
-						}
-					}
-					// f_filter is the frequency pass through the low pass filter
-					// Pref_droop_pu is the power reference from the frequency-watt
-					// Pref_droop_pu_filter is the power reference pass through the low pass filter
-					// Pref_max and Pref_min are the upper and lower limits of power references
-					// Function end
-
-					// Find the limit for Qref, Qref_max and Qref_min
-					if(volt_var) //When volt-var is enabled, Q is limited by Qref_max and Qref_min
-					{
-						if(frequency_watt)  // When frequency-watt is enabled, P is controlled by Pref_droop_pu
-						{
-							Qref_max = sqrt(1-Pref_droop_pu*Pref_droop_pu);
-							Qref_min = -Qref_max;
-						}
-						else  //When frequency-watt is disabled, P is controlled by Pref
-						{
-							Qref_max = sqrt(1-(Pref/S_base)*(Pref/S_base));
-							Qref_min = -Qref_max;
-						}
-					}
-					else //When volt-var is disabled, Q is limited by Qref
-					{
-						if(frequency_watt)
-						{
-							if(Qref > sqrt(S_base*S_base - (Pref_droop_pu*S_base)*(Pref_droop_pu*S_base)))
-							{
-								Qref = sqrt(S_base*S_base - Pref*Pref);
-								gl_warning("ibr_skeleton:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
-								/*  TROUBLESHOOT
-								The reactive power Qref for the ibr_skeleton is above the rated value.  It has been capped at the rated value minus any active power output.
-								*/
-							}
-
-							if(Qref < -sqrt(S_base*S_base - (Pref_droop_pu*S_base)*(Pref_droop_pu*S_base)))
-							{
-								Qref = -sqrt(S_base*S_base - Pref*Pref);
-								gl_warning("ibr_skeleton:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
-								//Defined above
-							}
-						}
-						else
-						{
-							if(Qref > sqrt(S_base*S_base - Pref*Pref))
-							{
-								Qref = sqrt(S_base*S_base - Pref*Pref);
-								gl_warning("ibr_skeleton:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
-								//Defined above
-							}
-
-							if(Qref < -sqrt(S_base*S_base - Pref*Pref))
-							{
-								Qref = -sqrt(S_base*S_base - Pref*Pref);
-								gl_warning("ibr_skeleton:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
-								//Defined above
-							}
-						}
-					}
-					// Function end
-
-
-					// Volt-var function enabled
-					if (volt_var)
-					{
-						Qref_droop_pu_prev = Qref_droop_pu;
-
-						V_Avg_pu = value_Circuit_V[0].Mag() / V_base;
-						V_filter = V_filter_blk.getoutput(V_Avg_pu,deltat,PREDICTOR);
-
-						if ((V_filter < (Vset + db_OV))&&(V_filter > (Vset - db_UV)))  // add dead band
-						{
-							Qref_droop_pu = Qref / S_base;
-						}
-						else
-						{
-							Qref_droop_pu = (Vset - V_filter) / Rq + Qref / S_base;
-						}
-
-
-						if (Qref_droop_pu > Qref_max)
-						{
-							Qref_droop_pu = Qref_max;
-						}
-
-						if (Qref_droop_pu < Qref_min)
-						{
-							Qref_droop_pu = Qref_min;
-						}
-
-						double power_diff_val = Qref_droop_pu_prev - Qref_droop_pu;
-
-						if(checkRampRate_reactive)
-						{
-							if (power_diff_val > 0 && (power_diff_val > rampDownRate_reactive * deltat))
-							{
-								Qref_droop_pu = Qref_droop_pu_prev - rampDownRate_reactive * deltat;
-							}
-							else if ((power_diff_val < 0) && (-power_diff_val > rampUpRate_reactive* deltat))
-							{
-								Qref_droop_pu = Qref_droop_pu_prev + rampUpRate_reactive* deltat;
-							}
-
-							if (Qref_droop_pu > Qref_max)
-							{
-								Qref_droop_pu = Qref_max;
-							}
-
-							if (Qref_droop_pu < Qref_min)
-							{
-								Qref_droop_pu = Qref_min;
-							}
-						}
-						else
-						{
-						        Qref_droop_pu_filter = Qref_droop_pu_filter_blk.getoutput(Qref_droop_pu,deltat,PREDICTOR);
-
-						}
-					}
-					// V_Avg_pu is the average value of three phase voltages
-					// V_filter is the voltage pass through low pass filter
-					// Qref_droop_pu if the Q reference from volt-var
-					// Qref_droop_pu_filter is the Q pass through low pass filter
-					// Qref_max and Qref_min are the upper and lower limits of Q references
-					// Function end
-
-					// Function: Current Control Loop
-					if (frequency_watt)
-					{
-						if (checkRampRate_real)
-						{
-							igd_ref[0] = Pref_droop_pu / ugd_pu[0];
-						}
-						else
-						{
-							igd_ref[0] = Pref_droop_pu_filter / ugd_pu[0];
-						}
-					}
-					else
-					{
-						// get the current references
-						igd_ref[0] = Pref / S_base / ugd_pu[0];
-					}
-
-					if (volt_var)
-					{
-						if(checkRampRate_reactive)
-						{
-							igq_ref[0] = -Qref_droop_pu / ugd_pu[0];
-						}
-						else
-						{
-							igq_ref[0] = -Qref_droop_pu_filter / ugd_pu[0];
-						}
-					}
-					else
-					{
-						igq_ref[0] = -Qref / S_base / ugd_pu[0];
-					}
-
-
-					//Add the limits for igd_ref and idq_ref
-					if (igd_ref[0] > igd_ref_max)
-					{
-						igd_ref[0] = igd_ref_max;
-					}
-
-					if (igd_ref[0] < igd_ref_min)
-					{
-						igd_ref[0] = igd_ref_min;
-					}
-
-					if (igq_ref[0] > igq_ref_max)
-					{
-						igq_ref[0] = igq_ref_max;
-					}
-
-					if (igq_ref[0] < igq_ref_min)
-					{
-						igq_ref[0] = igq_ref_min;
-					}
-					// End of adding limits for igd_ref and idq_ref
-
-
 					if (control_mode == GRID_FOLLOWING)
 					{
-						// current loop in d axis
-					        igd_PI[0] = igd_blk[0].getoutput(igd_ref[0] - igd_pu[0],deltat,PREDICTOR); 		  // output from the PI controller of current loop
-
-						ed_pu[0] = igd_PI[0] + ugd_pu[0] - igq_pu[0] * Xfilter * F_current;						  // the d axis component of internal voltage, Xfilter is per-unit value
-						// current loop in q axis
-						igq_PI[0] = igq_blk[0].getoutput(igq_ref[0] - igq_pu[0],deltat,PREDICTOR); 			  // output from the PI controller of current loop
-
-						eq_pu[0] = igq_PI[0] + ugq_pu[0] + igd_pu[0] * Xfilter * F_current;						  // the d axis component of internal voltage, Xfilter is per-unit value
-
-						// igd_ref[i] and igq_ref[i] are the current references in dq frame
-						// igd_PI[i] and igq_PI[i] are outputs from the current control loops
-						// ed_pu[i] and eq_pu[i] are the dq components of the internal voltages
-						// kpc and kic are the PI gains of the current loop
-						// Function end
-
-						// Function: Coordinate Transformation: dq to xy
-						e_source_Re[0] = (ed_pu[0] * cos(Angle_PLL[0]) - eq_pu[0] * sin(Angle_PLL[0])) * V_base;
-						e_source_Im[0] = (ed_pu[0] * sin(Angle_PLL[0]) + eq_pu[0] * cos(Angle_PLL[0])) * V_base;
 						e_source[0] = gld::complex(e_source_Re[0], e_source_Im[0]);
 						value_IGenerated[0] = e_source[0] / (gld::complex(Rfilter, Xfilter) * Z_base); // Thevenin voltage source to Norton current source convertion
 
@@ -2988,16 +2636,6 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 					}
 					else if (control_mode == GFL_CURRENT_SOURCE)
 					{
-						// Low pass filter for current id
-					        igd_filter[0] = igd_filter_blk[0].getoutput(igd_ref[0],deltat,PREDICTOR);
-						// Low pass filter for current iq
-						igq_filter[0] = igq_filter_blk[0].getoutput(igq_ref[0],deltat,PREDICTOR);
-
-						// igd_ref[0] and igq_ref[0] are the current references in dq frame
-						// igd_filter[0] and igq_filter[0] are the currents
-
-						I_source_Re[0] = (igd_filter[0] * cos(Angle_PLL[0]) - igq_filter[0] * sin(Angle_PLL[0])) * I_base;
-						I_source_Im[0] = (igd_filter[0] * sin(Angle_PLL[0]) + igq_filter[0] * cos(Angle_PLL[0])) * I_base;
 						I_source[0] = gld::complex(I_source_Re[0], I_source_Im[0]);
 						value_IGenerated[0] = I_source[0];
 						// I_source[0] is the complex value of injected current
@@ -3032,57 +2670,30 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 						// Function: Coordinate Tranformation, xy to dq
 						for (i = 0; i < 3; i++)
 						{
-							ugd_pu[i] = (value_Circuit_V[i].Re() * cos(Angle_PLL[i]) + value_Circuit_V[i].Im() * sin(Angle_PLL[i])) / V_base;
-							ugq_pu[i] = (-value_Circuit_V[i].Re() * sin(Angle_PLL[i]) + value_Circuit_V[i].Im() * cos(Angle_PLL[i])) / V_base;
-							igd_pu[i] = (terminal_current_val[i].Re() * cos(Angle_PLL[i]) + terminal_current_val[i].Im() * sin(Angle_PLL[i])) / I_base;
-							igq_pu[i] = (-terminal_current_val[i].Re() * sin(Angle_PLL[i]) + terminal_current_val[i].Im() * cos(Angle_PLL[i])) / I_base;
+
 						}
-						// ugd_pu[i] and ugq_pu[i] are the per-unit values of grid-side voltages in dq frame
-						// igd_pu[i] and igq_pu[i] are the per-unit values of grid-side currents in dq frame
-						// Angle_PLL[i] is the phase angle of the grid side votlage, which is obtained from the PLL
-						// Value_Circuit_V[i] is the voltage of each phase at the grid side
-						// terminal_current_val[i] is the current of each phase injected to the grid
-						// S_base is the rated capacity
-						// I_base is the reted current
-						// Function end
 
 						if(grid_following_mode == BALANCED_POWER)
 						{
 							// Function: Phase-Lock_Loop, PLL
 							for (i = 0; i < 3; i++)
 							{
-							        delta_w_PLL[i] = delta_w_PLL_blk[i].getoutput(ugq_pu[i],deltat,PREDICTOR);
-								fPLL[i] = (delta_w_PLL[i] + w_ref) / 2.0 / PI;														// frequency measured by PLL
-								Angle_PLL[i] = Angle_PLL_blk[i].getoutput(delta_w_PLL[i],deltat,PREDICTOR); 	// phase angle from PLL
+
 							}
-							// delta_w_PLL[i] is the output from the PI controller
-							// w_ref is the rated angular frequency, the value is 376.99 rad/s
-							// fPLL is the frequency measured by PLL
-							// Fuction end
 						}
 						else if(grid_following_mode == POSITIVE_SEQUENCE)
 						{
 							// Obtain the positive sequence voltage
 							value_Circuit_V_PS = (value_Circuit_V[0] + value_Circuit_V[1] * gld::complex(cos(2.0 / 3.0 * PI), sin(2.0 / 3.0 * PI)) + value_Circuit_V[2] * gld::complex(cos(-2.0 / 3.0 * PI), sin(-2.0 / 3.0 * PI))) / 3.0;
-							// Positive sequence value of voltage in dq frame
-							ugd_pu_PS = (value_Circuit_V_PS.Re() * cos(Angle_PLL[0]) + value_Circuit_V_PS.Im() * sin(Angle_PLL[0])) / V_base;
-							ugq_pu_PS = (-value_Circuit_V_PS.Re() * sin(Angle_PLL[0]) + value_Circuit_V_PS.Im() * cos(Angle_PLL[0])) / V_base;
+
 
 							// Function: Phase-Lock_Loop, PLL, only consider positive sequence voltage
 							for (i = 0; i < 1; i++)
 							{
-							        delta_w_PLL[i] = delta_w_PLL_blk[i].getoutput(ugq_pu_PS,deltat,PREDICTOR);
-								fPLL[i] = (delta_w_PLL[i] + w_ref) / 2.0 / PI;														// frequency measured by PLL
-								Angle_PLL[i] = Angle_PLL_blk[i].getoutput(delta_w_PLL[i],deltat,PREDICTOR); 	// phase angle from PLL
+
 							}
-							Angle_PLL[1] = Angle_PLL[0] - 2.0 / 3.0 * PI;
-							Angle_PLL[2] = Angle_PLL[0] + 2.0 / 3.0 * PI;
 							
 							fPLL[2] = fPLL[1] = fPLL[0];
-							// delta_w_PLL[i] is the output from the PI controller
-							// w_ref is the rated angular frequency, the value is 376.99 rad/s
-							// fPLL is the frequency measured by PLL
-							// Fuction end
 						}
 
 
@@ -3102,303 +2713,11 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 						}
 						//Function end
 
-
-						// Frequency-watt function enabled
-						if (frequency_watt)
-						{
-							Pref_droop_pu_prev = Pref_droop_pu; // the value of Pref_droop_pu in last simulation step
-							f_filter = f_filter_blk.getoutput((fPLL[0]+fPLL[1]+fPLL[2])/3.0,deltat,PREDICTOR);
-
-							if ((f_filter < (f_nominal + db_OF))&&(f_filter > (f_nominal - db_UF)))  // add dead band
-							{
-								Pref_droop_pu = Pref / S_base;
-							}
-							else
-							{
-								Pref_droop_pu = (f_nominal - f_filter) / f_nominal / Rp + Pref / S_base;
-							}
-
-							if (Pref_droop_pu > Pref_max)
-							{
-								Pref_droop_pu = Pref_max;
-							}
-
-							if (Pref_droop_pu < Pref_min)
-							{
-								Pref_droop_pu = Pref_min;
-							}
-
-							double power_diff_val = Pref_droop_pu_prev - Pref_droop_pu;
-
-							if (checkRampRate_real)
-							{
-								if((power_diff_val > 0) && (power_diff_val > rampDownRate_real * deltat))
-								{
-									Pref_droop_pu = Pref_droop_pu_prev - rampDownRate_real * deltat;
-								}
-								else if ((power_diff_val < 0) && (-power_diff_val > rampUpRate_real * deltat))
-								{
-									Pref_droop_pu = Pref_droop_pu_prev + rampUpRate_real * deltat;
-								}
-
-								if (Pref_droop_pu > Pref_max)
-								{
-									Pref_droop_pu = Pref_max;
-								}
-
-								if (Pref_droop_pu < Pref_min)
-								{
-									Pref_droop_pu = Pref_min;
-								}
-							}
-							else
-							{
-							        Pref_droop_pu_filter = Pref_droop_pu_filter_blk.getoutput(Pref_droop_pu,deltat,PREDICTOR);
-							}
-						}
-						// f_filter is the frequency pass through the low pass filter
-						// Pref_droop_pu is the power reference from the frequency-watt
-						// Pref_droop_pu_filter is the power reference pass through the low pass filter
-						// Pref_max and Pref_min are the upper and lower limits of power references
-						// Function end
-
-
-						// Find the limit for Qref, Qref_max and Qref_min
-						if(volt_var) //When volt-var is enabled, Q is limited by Qref_max and Qref_min
-						{
-							if(frequency_watt)  // When frequency-watt is enabled, P is controlled by Pref_droop_pu
-							{
-								Qref_max = sqrt(1-Pref_droop_pu*Pref_droop_pu);
-								Qref_min = -Qref_max;
-							}
-							else  //When frequency-watt is disabled, P is controlled by Pref
-							{
-								Qref_max = sqrt(1-(Pref/S_base)*(Pref/S_base));
-								Qref_min = -Qref_max;
-							}
-						}
-						else //When volt-var is disabled, Q is limited by Qref
-						{
-							if(frequency_watt)
-							{
-								if(Qref > sqrt(S_base*S_base - (Pref_droop_pu*S_base)*(Pref_droop_pu*S_base)))
-								{
-									Qref = sqrt(S_base*S_base - Pref*Pref);
-									gl_warning("ibr_skeleton:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
-									//Defined above
-								}
-
-								if(Qref < -sqrt(S_base*S_base - (Pref_droop_pu*S_base)*(Pref_droop_pu*S_base)))
-								{
-									Qref = -sqrt(S_base*S_base - Pref*Pref);
-									gl_warning("ibr_skeleton:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
-									//Defined above
-								}
-							}
-							else
-							{
-								if(Qref > sqrt(S_base*S_base - Pref*Pref))
-								{
-									Qref = sqrt(S_base*S_base - Pref*Pref);
-									gl_warning("ibr_skeleton:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
-									//Defined above
-								}
-
-								if(Qref < -sqrt(S_base*S_base - Pref*Pref))
-								{
-									Qref = -sqrt(S_base*S_base - Pref*Pref);
-									gl_warning("ibr_skeleton:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
-									//Defined above
-								}
-							}
-						}
-						// Function end
-
-						// Volt-var function enabled
-						if (volt_var)
-						{
-							Qref_droop_pu_prev = Qref_droop_pu;
-							V_Avg_pu = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base;
-							V_filter = V_filter_blk.getoutput(V_Avg_pu,deltat,PREDICTOR);
-
-							if ((V_filter < (Vset + db_OV))&&(V_filter > (Vset - db_UV)))  // add dead band
-							{
-								Qref_droop_pu = Qref / S_base;
-							}
-							else
-							{
-								Qref_droop_pu = (Vset - V_filter) / Rq + Qref / S_base;
-							}
-
-							if (Qref_droop_pu > Qref_max)
-							{
-								Qref_droop_pu = Qref_max;
-							}
-
-							if (Qref_droop_pu < Qref_min)
-							{
-								Qref_droop_pu = Qref_min;
-							}
-
-							double power_diff_val = Qref_droop_pu_prev - Qref_droop_pu;
-
-							if(checkRampRate_reactive)
-							{
-								if (power_diff_val > 0 && (power_diff_val > rampDownRate_reactive * deltat))
-								{
-									Qref_droop_pu = Qref_droop_pu_prev - rampDownRate_reactive * deltat;
-								}
-								else if ((power_diff_val < 0) && (-power_diff_val > rampUpRate_reactive* deltat))
-								{
-									Qref_droop_pu = Qref_droop_pu_prev + rampUpRate_reactive* deltat;
-								}
-
-								if (Qref_droop_pu > Qref_max)
-								{
-									Qref_droop_pu = Qref_max;
-								}
-
-								if (Qref_droop_pu < Qref_min)
-								{
-									Qref_droop_pu = Qref_min;
-								}
-							}
-							else
-							{
-							        Qref_droop_pu_filter = Qref_droop_pu_filter_blk.getoutput(Qref_droop_pu,deltat,PREDICTOR);
-							}
-						}
-						// V_Avg_pu is the average value of three phase voltages
-						// V_filter is the voltage pass through low pass filter
-						// Qref_droop_pu if the Q reference from volt-var
-						// Qref_droop_pu_filter is the Q pass through low pass filter
-						// Qref_max and Qref_min are the upper and lower limits of Q references
-						// Function end
-
 						// Function: Current Control Loop
 						for (i = 0; i < 3; i++)
 						{
-							if (frequency_watt)
-							{
-								if(grid_following_mode == BALANCED_POWER)
-								{
-									if (checkRampRate_real)
-									{
-										igd_ref[i] = Pref_droop_pu / ugd_pu[i];
-									}
-									else
-									{
-										igd_ref[i] = Pref_droop_pu_filter / ugd_pu[i];
-									}
-								}
-								else if(grid_following_mode == POSITIVE_SEQUENCE)
-								{
-									if (checkRampRate_real)
-									{
-										igd_ref[i] = Pref_droop_pu / ugd_pu_PS;
-									}
-									else
-									{
-										igd_ref[i] = Pref_droop_pu_filter / ugd_pu_PS;
-									}
-								}
-
-							}
-							else
-							{
-								if(grid_following_mode == BALANCED_POWER)
-								{
-									// get the current references
-									igd_ref[i] = Pref / S_base / ugd_pu[i];
-									//igd_ref[i] = Pref/S_base/1.0;
-								}
-								else if(grid_following_mode == POSITIVE_SEQUENCE)
-								{
-									// get the current references
-									igd_ref[i] = Pref / S_base / ugd_pu_PS;
-								}
-							}
-
-							if (volt_var)
-							{
-								if(grid_following_mode == BALANCED_POWER)
-								{
-									if(checkRampRate_reactive)
-									{
-										igq_ref[i] = -Qref_droop_pu / ugd_pu[i];
-									}
-									else
-									{
-										igq_ref[i] = -Qref_droop_pu_filter / ugd_pu[i];
-									}
-								}
-								else if(grid_following_mode == POSITIVE_SEQUENCE)
-								{
-									if(checkRampRate_reactive)
-									{
-										igq_ref[i] = -Qref_droop_pu / ugd_pu_PS;
-									}
-									else
-									{
-										igq_ref[i] = -Qref_droop_pu_filter / ugd_pu_PS;
-									}
-								}
-							}
-							else
-							{
-								if(grid_following_mode == BALANCED_POWER)
-								{
-									igq_ref[i] = -Qref / S_base / ugd_pu[i];
-									//igq_ref[i] = Qref/S_base/1.0;
-								}
-								else if(grid_following_mode == POSITIVE_SEQUENCE)
-								{
-									igq_ref[i] = -Qref / S_base / ugd_pu_PS;
-								}
-							}
-
-
-							//Add the limits for igd_ref and idq_ref
-							if (igd_ref[i] > igd_ref_max)
-							{
-								igd_ref[i] = igd_ref_max;
-							}
-
-							if (igd_ref[i] < igd_ref_min)
-							{
-								igd_ref[i] = igd_ref_min;
-							}
-
-							if (igq_ref[i] > igq_ref_max)
-							{
-								igq_ref[i] = igq_ref_max;
-							}
-
-							if (igq_ref[i] < igq_ref_min)
-							{
-								igq_ref[i] = igq_ref_min;
-							}
-							// End of adding limits for igd_ref and idq_ref
-
-
 							if (control_mode == GRID_FOLLOWING)
 							{
-								// current loop in d axis
-							        igd_PI[i] = igd_blk[i].getoutput(igd_ref[i] - igd_pu[i],deltat,PREDICTOR);
-							        ed_pu[i] = igd_PI[i] + ugd_pu[i] - igq_pu[i] * Xfilter * F_current;						  // the d axis component of internal voltage, Xfilter is per-unit value
-								// current loop in q axis
-								igq_PI[i] = igq_blk[i].getoutput(igq_ref[i] - igq_pu[i],deltat,PREDICTOR);
-								eq_pu[i] = igq_PI[i] + ugq_pu[i] + igd_pu[i] * Xfilter * F_current;						  // the d axis component of internal voltage, Xfilter is per-unit value
-								// igd_ref[i] and igq_ref[i] are the current references in dq frame
-								// igd_PI[i] and igq_PI[i] are outputs from the current control loops
-								// ed_pu[i] and eq_pu[i] are the dq components of the internal voltages
-								// kpc and kic are the PI gains of the current loop
-								// Function end
-
-
-								// Function: Coordinate Transformation: dq to xy
-								e_source_Re[i] = (ed_pu[i] * cos(Angle_PLL[i]) - eq_pu[i] * sin(Angle_PLL[i])) * V_base;
-								e_source_Im[i] = (ed_pu[i] * sin(Angle_PLL[i]) + eq_pu[i] * cos(Angle_PLL[i])) * V_base;
 								e_source[i] = gld::complex(e_source_Re[i], e_source_Im[i]);
 								value_IGenerated[i] = e_source[i] / (gld::complex(Rfilter, Xfilter) * Z_base); // Thevenin voltage source to Norton current source convertion
 								// e_source[i] is the complex value of internal voltage
@@ -3409,17 +2728,6 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 							}
 							else if (control_mode == GFL_CURRENT_SOURCE)
 							{
-							        // Low pass filter for current id
-							        igd_filter[i] = igd_filter_blk[i].getoutput(igd_ref[i],deltat,PREDICTOR);
-								// Low pass filter for current iq
-								igq_filter[i] = igq_filter_blk[i].getoutput(igq_ref[i],deltat,PREDICTOR);
-								// igd_ref[i] and igq_ref[i] are the current references in dq frame
-								// igd_filter[i] and igq_filter[i] are the currents
-								// Function end
-
-								// Function: Coordinate Transformation: dq to xy
-								I_source_Re[i] = (igd_filter[i] * cos(Angle_PLL[i]) - igq_filter[i] * sin(Angle_PLL[i])) * I_base;
-								I_source_Im[i] = (igd_filter[i] * sin(Angle_PLL[i]) + igq_filter[i] * cos(Angle_PLL[i])) * I_base;
 								I_source[i] = gld::complex(I_source_Re[i], I_source_Im[i]);
 								value_IGenerated[i] = I_source[i];
 								// I_source[i] is the complex value of injected current
@@ -3450,32 +2758,6 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 					//Update power output variables, just so we can see what is going on
 					VA_Out = power_val[0];
 
-					// Function: Coordinate Tranformation, xy to dq
-					ugd_pu[0] = (value_Circuit_V[0].Re() * cos(Angle_PLL[0]) + value_Circuit_V[0].Im() * sin(Angle_PLL[0])) / V_base;
-					ugq_pu[0] = (-value_Circuit_V[0].Re() * sin(Angle_PLL[0]) + value_Circuit_V[0].Im() * cos(Angle_PLL[0])) / V_base;
-					igd_pu[0] = (terminal_current_val[0].Re() * cos(Angle_PLL[0]) + terminal_current_val[0].Im() * sin(Angle_PLL[0])) / I_base;
-					igq_pu[0] = (-terminal_current_val[0].Re() * sin(Angle_PLL[0]) + terminal_current_val[0].Im() * cos(Angle_PLL[0])) / I_base;
-
-					// ugd_pu[i] and ugq_pu[i] are the per-unit values of grid-side voltages in dq frame
-					// igd_pu[i] and igq_pu[i] are the per-unit values of grid-side currents in dq frame
-					// Angle_PLL[i] is the phase angle of the grid side votlage, which is obtained from the PLL
-					// Value_Circuit_V[i] is the voltage of each phase at the grid side
-					// terminal_current_val[i] is the current of each phase injected to the grid
-					// S_base is the rated capacity
-					// I_base is the rated current
-					// Function end
-
-					// Function: Phase-Lock_Loop, PLL
-					delta_w_PLL[0] = delta_w_PLL_blk[0].getoutput(ugq_pu[0],deltat,CORRECTOR);
-
-					fPLL[0] = (delta_w_PLL[0] + w_ref) / 2.0 / PI;			  // frequency measured by PLL
-					Angle_PLL[0] = Angle_PLL_blk[0].getoutput(delta_w_PLL[0],deltat,CORRECTOR); // phase angle from PLL
-
-					// delta_w_PLL[i] is the output from the PI controller
-					// w_ref is the rated angular frequency, the value is 376.99 rad/s
-					// fPLL is the frequency measured by PLL
-					// Fuction end
-
 					// Check Pref and Qref, make sure the inverter output S does not exceed S_base, Pref has the priority
 					if(Pref > S_base)
 					{
@@ -3491,254 +2773,8 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 						//Defined above
 					}
 
-					// Frequency-watt function enabled
-					if (frequency_watt)
-					{
-					        f_filter = f_filter_blk.getoutput(fPLL[0],deltat,CORRECTOR);
-
-						if ((f_filter < (f_nominal + db_OF))&&(f_filter > (f_nominal - db_UF)))  // add dead band
-						{
-							Pref_droop_pu = Pref / S_base;
-						}
-						else
-						{
-							Pref_droop_pu = (f_nominal - f_filter) / f_nominal / Rp + Pref / S_base;
-						}
-
-						if (Pref_droop_pu > Pref_max)
-						{
-							Pref_droop_pu = Pref_max;
-						}
-
-						if (Pref_droop_pu < Pref_min)
-						{
-							Pref_droop_pu = Pref_min;
-						}
-
-						double power_diff_val = Pref_droop_pu_prev - Pref_droop_pu;
-
-						if (checkRampRate_real)
-						{
-							if((power_diff_val > 0) && (power_diff_val > rampDownRate_real * deltat))
-							{
-								Pref_droop_pu = Pref_droop_pu_prev - rampDownRate_real * deltat;
-							}
-							else if ((power_diff_val < 0) && (-power_diff_val > rampUpRate_real * deltat))
-							{
-								Pref_droop_pu = Pref_droop_pu_prev + rampUpRate_real * deltat;
-							}
-
-							if (Pref_droop_pu > Pref_max)
-							{
-								Pref_droop_pu = Pref_max;
-							}
-
-							if (Pref_droop_pu < Pref_min)
-							{
-								Pref_droop_pu = Pref_min;
-							}
-						}
-						else
-						{
-						        Pref_droop_pu_filter = Pref_droop_pu_filter_blk.getoutput(Pref_droop_pu,deltat,CORRECTOR);
-						}
-					}
-					// f_filter is the frequency pass through the low pass filter
-					// Pref_droop_pu is the power reference from the frequency-watt
-					// Pref_droop_pu_filter is the power reference pass through the low pass filter
-					// Pref_max and Pref_min are the upper and lower limits of power references
-					// Function end
-
-
-					// Find the limit for Qref, Qref_max and Qref_min
-					if(volt_var) //When volt-var is enabled, Q is limited by Qref_max and Qref_min
-					{
-						if(frequency_watt)  // When frequency-watt is enabled, P is controlled by Pref_droop_pu
-						{
-							Qref_max = sqrt(1-Pref_droop_pu*Pref_droop_pu);
-							Qref_min = -Qref_max;
-						}
-						else  //When frequency-watt is disabled, P is controlled by Pref
-						{
-							Qref_max = sqrt(1-(Pref/S_base)*(Pref/S_base));
-							Qref_min = -Qref_max;
-						}
-					}
-					else //When volt-var is disabled, Q is limited by Qref
-					{
-						if(frequency_watt)
-						{
-							if(Qref > sqrt(S_base*S_base - (Pref_droop_pu*S_base)*(Pref_droop_pu*S_base)))
-							{
-								Qref = sqrt(S_base*S_base - Pref*Pref);
-								gl_warning("ibr_skeleton:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
-								//Defined above
-							}
-
-							if(Qref < -sqrt(S_base*S_base - (Pref_droop_pu*S_base)*(Pref_droop_pu*S_base)))
-							{
-								Qref = -sqrt(S_base*S_base - Pref*Pref);
-								gl_warning("ibr_skeleton:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
-								//Defined above
-							}
-						}
-						else
-						{
-							if(Qref > sqrt(S_base*S_base - Pref*Pref))
-							{
-								Qref = sqrt(S_base*S_base - Pref*Pref);
-								gl_warning("ibr_skeleton:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
-								//Defined above
-							}
-
-							if(Qref < -sqrt(S_base*S_base - Pref*Pref))
-							{
-								Qref = -sqrt(S_base*S_base - Pref*Pref);
-								gl_warning("ibr_skeleton:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
-								//Defined above
-							}
-						}
-					}
-					// Function end
-
-					// Volt-var function enabled
-					if (volt_var)
-					{
-						V_Avg_pu = value_Circuit_V[0].Mag() / V_base;
-						V_filter = V_filter_blk.getoutput(V_Avg_pu,deltat,CORRECTOR);
-
-						if ((V_filter < (Vset + db_OV))&&(V_filter > (Vset - db_UV)))  // add dead band
-						{
-							Qref_droop_pu = Qref / S_base;
-						}
-						else
-						{
-							Qref_droop_pu = (Vset - V_filter) / Rq + Qref / S_base;
-						}
-
-						if (Qref_droop_pu > Qref_max)
-						{
-							Qref_droop_pu = Qref_max;
-						}
-
-						if (Qref_droop_pu < Qref_min)
-						{
-							Qref_droop_pu = Qref_min;
-						}
-
-						double power_diff_val = Qref_droop_pu_prev - Qref_droop_pu;
-						if(checkRampRate_reactive)
-						{
-							if (power_diff_val > 0 && (power_diff_val > rampDownRate_reactive * deltat))
-							{
-								Qref_droop_pu = Qref_droop_pu_prev - rampDownRate_reactive * deltat;
-							}
-							else if ((power_diff_val < 0) && (-power_diff_val > rampUpRate_reactive* deltat))
-							{
-								Qref_droop_pu = Qref_droop_pu_prev + rampUpRate_reactive* deltat;
-							}
-
-							if (Qref_droop_pu > Qref_max)
-							{
-								Qref_droop_pu = Qref_max;
-							}
-
-							if (Qref_droop_pu < Qref_min)
-							{
-								Qref_droop_pu = Qref_min;
-							}
-						}
-						else
-						{
-						        Qref_droop_pu_filter = Qref_droop_pu_filter_blk.getoutput(Qref_droop_pu,deltat,CORRECTOR);
-						}
-					}
-					// V_Avg_pu is the average value of three phase voltages
-					// V_filter is the voltage pass through low pass filter
-					// Qref_droop_pu if the Q reference from volt-var
-					// Qref_droop_pu_filter is the Q pass through low pass filter
-					// Qref_max and Qref_min are the upper and lower limits of Q references
-					// Function end
-
-					// Function: Current Control Loop
-					if (frequency_watt)
-					{
-						if (checkRampRate_real)
-						{
-							igd_ref[0] = Pref_droop_pu / ugd_pu[0];
-						}
-						else
-						{
-							igd_ref[0] = Pref_droop_pu_filter / ugd_pu[0];
-						}
-					}
-					else
-					{
-						// get the current references
-						igd_ref[0] = Pref / S_base / ugd_pu[0];
-					}
-
-					if (volt_var)
-					{
-						if(checkRampRate_reactive)
-						{
-							igq_ref[0] = -Qref_droop_pu / ugd_pu[0];
-						}
-						else
-						{
-							igq_ref[0] = -Qref_droop_pu_filter / ugd_pu[0];
-						}
-					}
-					else
-					{
-						igq_ref[0] = -Qref / S_base / ugd_pu[0];
-					}
-
-
-					//Add the limits for igd_ref and idq_ref
-					if (igd_ref[0] > igd_ref_max)
-					{
-						igd_ref[0] = igd_ref_max;
-					}
-
-					if (igd_ref[0] < igd_ref_min)
-					{
-						igd_ref[0] = igd_ref_min;
-					}
-
-					if (igq_ref[0] > igq_ref_max)
-					{
-						igq_ref[0] = igq_ref_max;
-					}
-
-					if (igq_ref[0] < igq_ref_min)
-					{
-						igq_ref[0] = igq_ref_min;
-					}
-					// End of adding limits for igd_ref and idq_ref
-
-
-
 					if(control_mode == GRID_FOLLOWING)
 					{
-						// current loop in d axis
-					        igd_PI[0] = igd_blk[0].getoutput(igd_ref[0] - igd_pu[0],deltat,CORRECTOR); 		  // output from the PI controller of current loop
-
-						ed_pu[0] = igd_PI[0] + ugd_pu[0] - igq_pu[0] * Xfilter * F_current;															  // the d axis component of internal voltage, Xfilter is per-unit value
-						// current loop in q axis
-						igq_PI[0] = igq_blk[0].getoutput(igq_ref[0] - igq_pu[0],deltat,CORRECTOR); 			  // output from the PI controller of current loop
-
-						eq_pu[0] = igq_PI[0] + ugq_pu[0] + igd_pu[0] * Xfilter * F_current;															  // the d axis component of internal voltage, Xfilter is per-unit value
-
-						// igd_ref[i] and igq_ref[i] are the current references in dq frame
-						// igd_PI[i] and igq_PI[i] are outputs from the current control loops
-						// ed_pu[i] and eq_pu[i] are the dq components of the internal voltages
-						// kpc and kic are the PI gains of the current loop
-						// Function end
-
-						// Function: Coordinate Transformation: dq to xy
-						e_source_Re[0] = (ed_pu[0] * cos(Angle_PLL[0]) - eq_pu[0] * sin(Angle_PLL[0])) * V_base;
-						e_source_Im[0] = (ed_pu[0] * sin(Angle_PLL[0]) + eq_pu[0] * cos(Angle_PLL[0])) * V_base;
 						e_source[0] = gld::complex(e_source_Re[0], e_source_Im[0]);
 						value_IGenerated[0] = e_source[0] / (gld::complex(Rfilter, Xfilter) * Z_base); // Thevenin voltage source to Norton current source convertion
 
@@ -3749,16 +2785,6 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 					}
 					else if (control_mode == GFL_CURRENT_SOURCE)
 					{
-					        // Low pass filter for current id
-					        igd_filter[0] = igd_filter_blk[0].getoutput(igd_ref[0],deltat,CORRECTOR);
-						// Low pass filter for current iq
-						igq_filter[0] = igq_filter_blk[0].getoutput(igq_ref[0],deltat,CORRECTOR);
-
-						// igd_ref[0] and igq_ref[0] are the current references in dq frame
-						// igd_filter[0] and igq_filter[0] are the currents
-
-						I_source_Re[0] = (igd_filter[0] * cos(Angle_PLL[0]) - igq_filter[0] * sin(Angle_PLL[0])) * I_base;
-						I_source_Im[0] = (igd_filter[0] * sin(Angle_PLL[0]) + igq_filter[0] * cos(Angle_PLL[0])) * I_base;
 						I_source[0] = gld::complex(I_source_Re[0], I_source_Im[0]);
 						value_IGenerated[0] = I_source[0];
 						// I_source[0] is the complex value of injected current
@@ -3823,59 +2849,33 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 						// Function: Coordinate Tranformation, xy to dq
 						for (i = 0; i < 3; i++)
 						{
-							ugd_pu[i] = (value_Circuit_V[i].Re() * cos(Angle_PLL[i]) + value_Circuit_V[i].Im() * sin(Angle_PLL[i])) / V_base;
-							ugq_pu[i] = (-value_Circuit_V[i].Re() * sin(Angle_PLL[i]) + value_Circuit_V[i].Im() * cos(Angle_PLL[i])) / V_base;
-							igd_pu[i] = (terminal_current_val[i].Re() * cos(Angle_PLL[i]) + terminal_current_val[i].Im() * sin(Angle_PLL[i])) / I_base;
-							igq_pu[i] = (-terminal_current_val[i].Re() * sin(Angle_PLL[i]) + terminal_current_val[i].Im() * cos(Angle_PLL[i])) / I_base;
+
 						}
-						// ugd_pu[i] and ugq_pu[i] are the per-unit values of grid-side voltages in dq frame
-						// igd_pu[i] and igq_pu[i] are the per-unit values of grid-side currents in dq frame
-						// Angle_PLL[i] is the phase angle of the grid side votlage, which is obtained from the PLL
-						// Value_Circuit_V[i] is the voltage of each phase at the grid side
-						// terminal_current_val[i] is the current of each phase injected to the grid
-						// S_base is the rated capacity
-						// I_base is the rated current
-						// Function end
+
 
 						if(grid_following_mode == BALANCED_POWER)
 						{
 							// Function: Phase-Lock_Loop, PLL
 							for (i = 0; i < 3; i++)
 							{
-							        delta_w_PLL[i] = delta_w_PLL_blk[i].getoutput(ugq_pu[i],deltat,CORRECTOR);
-								fPLL[i] = (delta_w_PLL[i] + w_ref) / 2.0 / PI; 				  // frequency measured by PLL
-								Angle_PLL[i] = Angle_PLL_blk[i].getoutput(delta_w_PLL[i],deltat,CORRECTOR);			  // sphase angle from PLL
+
 							}
 
-							// delta_w_PLL[i] is the output from the PI controller
-							// w_ref is the rated angular frequency, the value is 376.99 rad/s
-							// fPLL is the frequency measured by PLL
-							// Fuction end
 						}
 						else if(grid_following_mode == POSITIVE_SEQUENCE)
 						{
 							// Obtain the positive sequence voltage
 							value_Circuit_V_PS = (value_Circuit_V[0] + value_Circuit_V[1] * gld::complex(cos(2.0 / 3.0 * PI), sin(2.0 / 3.0 * PI)) + value_Circuit_V[2] * gld::complex(cos(-2.0 / 3.0 * PI), sin(-2.0 / 3.0 * PI))) / 3.0;
 
-							// Positive sequence value of voltage in dq frame
-							ugd_pu_PS = (value_Circuit_V_PS.Re() * cos(Angle_PLL[0]) + value_Circuit_V_PS.Im() * sin(Angle_PLL[0])) / V_base;
-							ugq_pu_PS = (-value_Circuit_V_PS.Re() * sin(Angle_PLL[0]) + value_Circuit_V_PS.Im() * cos(Angle_PLL[0])) / V_base;
 
 							// Function: Phase-Lock_Loop, PLL, only consider the positive sequence voltage
 							for (i = 0; i < 1; i++)
 							{
-							        delta_w_PLL[i] = delta_w_PLL_blk[i].getoutput(ugq_pu_PS,deltat,CORRECTOR);
-								fPLL[i] = (delta_w_PLL[i] + w_ref) / 2.0 / PI; 	  // frequency measured by PLL
-								Angle_PLL[i] = Angle_PLL_blk[i].getoutput(delta_w_PLL[i],deltat,CORRECTOR);
+
 							}
-							Angle_PLL[1] = Angle_PLL[0] - 2.0 / 3.0 * PI;
-							Angle_PLL[2] = Angle_PLL[0] + 2.0 / 3.0 * PI;
+
 							fPLL[2] = fPLL[1] = fPLL[0];
 
-							// delta_w_PLL[i] is the output from the PI controller
-							// w_ref is the rated angular frequency, the value is 376.99 rad/s
-							// fPLL is the frequency measured by PLL
-							// Fuction end
 						}
 
 						// Check Pref and Qref, make sure the inverter output S does not exceed S_base, Pref has the priority
@@ -3895,176 +2895,6 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 						//Function end
 
 
-						// Frequency-watt function enabled
-						if (frequency_watt)
-						{
-						        f_filter = f_filter_blk.getoutput((fPLL[0]+fPLL[1]+fPLL[2])/3.0,deltat,CORRECTOR);
-							if ((f_filter < (f_nominal + db_OF))&&(f_filter > (f_nominal - db_UF)))  // add dead band
-							{
-								Pref_droop_pu = Pref / S_base;
-							}
-							else
-							{
-								Pref_droop_pu = (f_nominal - f_filter) / f_nominal / Rp + Pref / S_base;
-							}
-
-							if (Pref_droop_pu > Pref_max)
-							{
-								Pref_droop_pu = Pref_max;
-							}
-
-							if (Pref_droop_pu < Pref_min)
-							{
-								Pref_droop_pu = Pref_min;
-							}
-
-							double power_diff_val = Pref_droop_pu_prev - Pref_droop_pu;
-
-							if (checkRampRate_real)
-							{
-								if((power_diff_val > 0) && (power_diff_val > rampDownRate_real * deltat))
-								{
-									Pref_droop_pu = Pref_droop_pu_prev - rampDownRate_real * deltat;
-								}
-								else if ((power_diff_val < 0) && (-power_diff_val > rampUpRate_real * deltat))
-								{
-									Pref_droop_pu = Pref_droop_pu_prev + rampUpRate_real * deltat;
-								}
-
-								if (Pref_droop_pu > Pref_max)
-								{
-									Pref_droop_pu = Pref_max;
-								}
-
-								if (Pref_droop_pu < Pref_min)
-								{
-									Pref_droop_pu = Pref_min;
-								}
-							}
-							else
-							{
-							         Pref_droop_pu_filter = Pref_droop_pu_filter_blk.getoutput(Pref_droop_pu,deltat,CORRECTOR);
-							}
-						}
-						// f_filter is the frequency pass through the low pass filter
-						// Pref_droop_pu is the power reference from the frequency-watt
-						// Pref_droop_pu_filter is the power reference pass through the low pass filte
-						// Pref_max and Pref_min are the upper and lower limits of power references
-						// Function end
-
-
-						// Find the limit for Qref, Qref_max and Qref_min
-						if(volt_var) //When volt-var is enabled, Q is limited by Qref_max and Qref_min
-						{
-							if(frequency_watt)  // When frequency-watt is enabled, P is controlled by Pref_droop_pu
-							{
-								Qref_max = sqrt(1-Pref_droop_pu*Pref_droop_pu);
-								Qref_min = -Qref_max;
-							}
-							else  //When frequency-watt is disabled, P is controlled by Pref
-							{
-								Qref_max = sqrt(1-(Pref/S_base)*(Pref/S_base));
-								Qref_min = -Qref_max;
-							}
-						}
-						else //When volt-var is disabled, Q is limited by Qref
-						{
-							if(frequency_watt)
-							{
-								if(Qref > sqrt(S_base*S_base - (Pref_droop_pu*S_base)*(Pref_droop_pu*S_base)))
-								{
-									Qref = sqrt(S_base*S_base - Pref*Pref);
-									gl_warning("ibr_skeleton:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
-									//Defined above
-								}
-
-								if(Qref < -sqrt(S_base*S_base - (Pref_droop_pu*S_base)*(Pref_droop_pu*S_base)))
-								{
-									Qref = -sqrt(S_base*S_base - Pref*Pref);
-									gl_warning("ibr_skeleton:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
-									//Defined above
-								}
-							}
-							else
-							{
-								if(Qref > sqrt(S_base*S_base - Pref*Pref))
-								{
-									Qref = sqrt(S_base*S_base - Pref*Pref);
-									gl_warning("ibr_skeleton:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
-									//Defined above
-								}
-
-								if(Qref < -sqrt(S_base*S_base - Pref*Pref))
-								{
-									Qref = -sqrt(S_base*S_base - Pref*Pref);
-									gl_warning("ibr_skeleton:%d %s - The inverter output apparent power is larger than the rated apparent power, the output reactive power is capped", obj->id, (obj->name ? obj->name : "Unnamed"));
-									//Defined above
-								}
-							}
-						}
-						// Function end
-
-						// Volt-var function enabled
-						if (volt_var)
-						{
-							V_Avg_pu = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base;
-							V_filter = V_filter_blk.getoutput(V_Avg_pu,deltat,CORRECTOR);
-
-
-							if ((V_filter < (Vset + db_OV))&&(V_filter > (Vset - db_UV)))  // add dead band
-							{
-								Qref_droop_pu = Qref / S_base;
-							}
-							else
-							{
-								Qref_droop_pu = (Vset - V_filter) / Rq + Qref / S_base;
-							}
-
-
-							if (Qref_droop_pu > Qref_max)
-							{
-								Qref_droop_pu = Qref_max;
-							}
-
-							if (Qref_droop_pu < Qref_min)
-							{
-								Qref_droop_pu = Qref_min;
-							}
-
-							double power_diff_val = Qref_droop_pu_prev - Qref_droop_pu;
-
-							if(checkRampRate_reactive)
-							{
-								if (power_diff_val > 0 && (power_diff_val > rampDownRate_reactive * deltat))
-								{
-									Qref_droop_pu = Qref_droop_pu_prev - rampDownRate_reactive * deltat;
-								}
-								else if ((power_diff_val < 0) && (-power_diff_val > rampUpRate_reactive* deltat))
-								{
-									Qref_droop_pu = Qref_droop_pu_prev + rampUpRate_reactive* deltat;
-								}
-
-								if (Qref_droop_pu > Qref_max)
-								{
-									Qref_droop_pu = Qref_max;
-								}
-
-								if (Qref_droop_pu < Qref_min)
-								{
-									Qref_droop_pu = Qref_min;
-								}
-							}
-							else
-							{
-								Qref_droop_pu_filter = Qref_droop_pu_filter_blk.getoutput(Qref_droop_pu,deltat,CORRECTOR);
-							}
-						}
-						// V_Avg_pu is the average value of three phase voltages
-						// V_filter is the voltage pass through low pass filter
-						// Qref_droop_pu if the Q reference from volt-var
-						// Qref_droop_pu_filter is the Q pass through low pass filter
-						// Qref_max and Qref_min are the upper and lower limits of Q references
-						// Function end
 
 						//Set default return state
 						simmode_return_value = SM_EVENT;	//default to event-driven
@@ -4072,127 +2902,9 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 						// Function: Current Control Loop
 						for (i = 0; i < 3; i++)
 						{
-							if (frequency_watt)
-							{
-								if(grid_following_mode == BALANCED_POWER)
-								{
-									if (checkRampRate_real)
-									{
-										igd_ref[i] = Pref_droop_pu / ugd_pu[i];
-									}
-									else
-									{
-										igd_ref[i] = Pref_droop_pu_filter / ugd_pu[i];
-									}
-								}
-								else if(grid_following_mode == POSITIVE_SEQUENCE)
-								{
-									if (checkRampRate_real)
-									{
-										igd_ref[i] = Pref_droop_pu / ugd_pu_PS;
-									}
-									else
-									{
-										igd_ref[i] = Pref_droop_pu_filter / ugd_pu_PS;
-									}
-								}
-							}
-							else
-							{
-								if(grid_following_mode == BALANCED_POWER)
-								{
-									// get the current references
-									igd_ref[i] = Pref / S_base / ugd_pu[i];
-									//igd_ref[i] = Pref/S_base/1.0;
-								}
-								else if(grid_following_mode == POSITIVE_SEQUENCE)
-								{
-									// get the current references
-									igd_ref[i] = Pref / S_base / ugd_pu_PS;
-								}
-							}
-
-							if (volt_var)
-							{
-								if(grid_following_mode == BALANCED_POWER)
-								{
-									if(checkRampRate_reactive)
-									{
-										igq_ref[i] = -Qref_droop_pu / ugd_pu[i];
-									}
-									else
-									{
-										igq_ref[i] = -Qref_droop_pu_filter / ugd_pu[i];
-									}
-								}
-								else if(grid_following_mode == POSITIVE_SEQUENCE)
-								{
-									if(checkRampRate_reactive)
-									{
-										igq_ref[i] = -Qref_droop_pu / ugd_pu_PS;
-									}
-									else
-									{
-										igq_ref[i] = -Qref_droop_pu_filter / ugd_pu_PS;
-									}
-								}
-							}
-							else
-							{
-								if(grid_following_mode == BALANCED_POWER)
-								{
-									igq_ref[i] = -Qref / S_base / ugd_pu[i];
-									//igq_ref[i] = Qref/S_base/1.0;
-								}
-								else if(grid_following_mode == POSITIVE_SEQUENCE)
-								{
-									igq_ref[i] = -Qref / S_base / ugd_pu_PS;
-								}
-							}
-
-
-							//Add the limits for igd_ref and idq_ref
-							if (igd_ref[i] > igd_ref_max)
-							{
-								igd_ref[i] = igd_ref_max;
-							}
-
-							if (igd_ref[i] < igd_ref_min)
-							{
-								igd_ref[i] = igd_ref_min;
-							}
-
-							if (igq_ref[i] > igq_ref_max)
-							{
-								igq_ref[i] = igq_ref_max;
-							}
-
-							if (igq_ref[i] < igq_ref_min)
-							{
-								igq_ref[i] = igq_ref_min;
-							}
-							// End of adding limits for igd_ref and idq_ref
-
-
 
 							if(control_mode == GRID_FOLLOWING)
 							{
-								// current loop in d axis
-							        igd_PI[i] = igd_blk[i].getoutput(igd_ref[i] - igd_pu[i],deltat,CORRECTOR);
-							        ed_pu[i] = igd_PI[i] + ugd_pu[i] - igq_pu[i] * Xfilter * F_current;															  // the d axis component of internal voltage, Xfilter is per-unit value
-								// current loop in q axis
-								igq_PI[i] = igq_blk[i].getoutput(igq_ref[i] - igq_pu[i],deltat,CORRECTOR);
-								eq_pu[i] = igq_PI[i] + ugq_pu[i] + igd_pu[i] * Xfilter * F_current;															  // the d axis component of internal voltage, Xfilter is per-unit value
-
-								// igd_ref[i] and igq_ref[i] are the current references in dq frame
-								// igd_PI[i] and igq_PI[i] are outputs from the current control loops
-								// ed_pu[i] and eq_pu[i] are the dq components of the internal voltages
-								// kpc and kic are the PI gains of the current loop
-								// Function end
-
-								// Function: Coordinate Transformation: dq to xy
-								e_source_Re[i] = (ed_pu[i] * cos(Angle_PLL[i]) - eq_pu[i] * sin(Angle_PLL[i])) * V_base;
-								e_source_Im[i] = (ed_pu[i] * sin(Angle_PLL[i]) + eq_pu[i] * cos(Angle_PLL[i])) * V_base;
 								e_source[i] = gld::complex(e_source_Re[i], e_source_Im[i]);
 								value_IGenerated[i] = e_source[i] / (gld::complex(Rfilter, Xfilter) * Z_base); // Thevenin voltage source to Norton current source convertion
 
@@ -4203,18 +2915,6 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 							}
 							else if(control_mode == GFL_CURRENT_SOURCE)
 							{
-							        // Low pass filter for current id
-							        igd_filter[i] = igd_filter_blk[i].getoutput(igd_ref[i],deltat,CORRECTOR);
-							        // Low pass filter for current iq
-							        igq_filter[i] = igq_filter_blk[i].getoutput(igq_ref[i],deltat,CORRECTOR);
-
-								// igd_ref[i] and igq_ref[i] are the current references in dq frame
-								// igd_filter[i] and igq_filter[i] are the currents
-								// Function end
-
-								// Function: Coordinate Transformation: dq to xy
-								I_source_Re[i] = (igd_filter[i] * cos(Angle_PLL[i]) - igq_filter[i] * sin(Angle_PLL[i])) * I_base;
-								I_source_Im[i] = (igd_filter[i] * sin(Angle_PLL[i]) + igq_filter[i] * cos(Angle_PLL[i])) * I_base;
 								I_source[i] = gld::complex(I_source_Re[i], I_source_Im[i]);
 								value_IGenerated[i] = I_source[i];
 								// I_source[i] is the complex value of injected current
@@ -4552,90 +3252,19 @@ STATUS ibr_skeleton::init_dynamics()
 			}
 			//Default else - all changes should be in deltamode
 
-			// Initialize the PLL
-			Angle_PLL_blk[0].init(0.0,value_Circuit_V[0].Arg());
-			Angle_PLL[0] = Angle_PLL_blk[0].x[0];
-			
-			delta_w_PLL_blk[0].setparams(kpPLL,kiPLL,-1000.0,1000.0,-1000.0,1000.0);
-			delta_w_PLL_blk[0].init(0.0,0.0);
-
-
-			ugd_pu[0] = (value_Circuit_V[0].Re() * cos(value_Circuit_V[0].Arg()) + value_Circuit_V[0].Im() * sin(value_Circuit_V[0].Arg())) / V_base;
-			ugq_pu[0] = (-value_Circuit_V[0].Re() * sin(value_Circuit_V[0].Arg()) + value_Circuit_V[0].Im() * cos(value_Circuit_V[0].Arg())) / V_base;
-			igd_pu[0] = (terminal_current_val[0].Re() * cos(value_Circuit_V[0].Arg()) + terminal_current_val[0].Im() * sin(value_Circuit_V[0].Arg())) / I_base;
-			igq_pu[0] = (-terminal_current_val[0].Re() * sin(value_Circuit_V[0].Arg()) + terminal_current_val[0].Im() * cos(value_Circuit_V[0].Arg())) / I_base;
-
 			if(control_mode == GRID_FOLLOWING)
 			{
 				// Initialize the current control loops
 				e_source[0] = (value_IGenerated[0] * gld::complex(Rfilter, Xfilter) * Z_base);
-				ed_pu[0] = (e_source[0].Re() * cos(value_Circuit_V[0].Arg()) + e_source[0].Im() * sin(value_Circuit_V[0].Arg())) / V_base;
-				eq_pu[0] = (-e_source[0].Re() * sin(value_Circuit_V[0].Arg()) + e_source[0].Im() * cos(value_Circuit_V[0].Arg())) / V_base;
 
-				igd_blk[0].setparams(kpc,kic,-1000.0,1000.0,-1000.0,1000.0);
-				igq_blk[0].setparams(kpc,kic,-1000.0,1000.0,-1000.0,1000.0);
-
-				igd_blk[0].init(0.0,ed_pu[0] - ugd_pu[0] + igq_pu[0] * Xfilter * F_current);
-				igq_blk[0].init(0.0,eq_pu[0] - ugq_pu[0] - igd_pu[0] * Xfilter * F_current);
 			}
 			else if(control_mode == GFL_CURRENT_SOURCE)
 			{
 				// Initialize the current source
 				I_source[0] = value_IGenerated[0];
 
-				igd_filter_blk[0].setparams(Tif);
-				igq_filter_blk[0].setparams(Tif);
-
-				igd_filter_blk[0].init(0.0,igd_pu[0]);
-				igq_filter_blk[0].init(0.0,igq_pu[0]);
-
-				igd_filter[0] = igd_filter_blk[0].x[0];
-				igq_filter[0] = igq_filter_blk[0].x[0];
 			}
 
-			if (frequency_watt)
-			{
-				// Initialize the frequency-watt
-			        f_filter_blk.setparams(Tff);
-				f_filter_blk.init(0.0,fPLL[0]);
-				f_filter = f_filter_blk.x[0];
-				
-				if ((f_filter < (f_nominal + db_OF))&&(f_filter > (f_nominal - db_UF)))  // add dead band
-				{
-					Pref_droop_pu = Pref / S_base;
-				}
-				else
-				{
-					Pref_droop_pu = (f_nominal - f_filter) / Rp + Pref / S_base;
-				}
-
-				
-				Pref_droop_pu_filter_blk.setparams(Tpf);
-				Pref_droop_pu_filter_blk.init(0.0,Pref_droop_pu);
-				Pref_droop_pu_filter = Pref_droop_pu_filter_blk.x[0];
-			}
-
-			if (volt_var)
-			{
-				// Initialize the volt-var control
-			        V_Avg_pu = value_Circuit_V[0].Mag() / V_base;
-			        V_filter_blk.setparams(Tvf);
-				V_filter_blk.init(0.0,V_Avg_pu);
-				V_filter = V_filter_blk.x[0];
-
-				if ((V_filter < (Vset + db_OV))&&(V_filter > (Vset - db_UV)))  // add dead band
-				{
-					Qref_droop_pu = Qref / S_base;
-				}
-				else
-				{
-					Qref_droop_pu = (Vset - V_filter) / Rq + Qref / S_base;
-				}
-
-				Qref_droop_pu_filter_blk.setparams(Tqf);
-				Qref_droop_pu_filter_blk.init(0.0,Qref_droop_pu);
-				Qref_droop_pu_filter = Qref_droop_pu_filter_blk.x[0];
-			}
 		}
 		else //Three-phase
 		{
@@ -4678,12 +3307,7 @@ STATUS ibr_skeleton::init_dynamics()
 				{
 					for (int i = 0; i < 3; i++)
 					{
-						// Initialize the PLL
-					        Angle_PLL_blk[i].init(0.0,value_Circuit_V[i].Arg());
-						Angle_PLL[i] = Angle_PLL_blk[i].x[0];
 
-						delta_w_PLL_blk[i].setparams(kpPLL,kiPLL,-1000.0,1000.0,-1000.0,1000.0);
-						delta_w_PLL_blk[i].init(0.0,0.0);
 					}
 				}
 				else if(grid_following_mode == POSITIVE_SEQUENCE)
@@ -4691,99 +3315,27 @@ STATUS ibr_skeleton::init_dynamics()
 					// Obtain the positive sequence voltage
 					value_Circuit_V_PS = (value_Circuit_V[0] + value_Circuit_V[1] * gld::complex(cos(2.0 / 3.0 * PI), sin(2.0 / 3.0 * PI)) + value_Circuit_V[2] * gld::complex(cos(-2.0 / 3.0 * PI), sin(-2.0 / 3.0 * PI))) / 3.0;
 
-					// only consider positive sequence
-					Angle_PLL_blk[0].init(0.0,value_Circuit_V_PS.Arg());
-					Angle_PLL_blk[1].init(0.0,value_Circuit_V_PS.Arg() - 2.0 / 3.0 * PI);
-					Angle_PLL_blk[2].init(0.0,value_Circuit_V_PS.Arg() + 2.0 / 3.0 * PI);
-					Angle_PLL[0] = Angle_PLL_blk[0].x[0];
-					Angle_PLL[1] = Angle_PLL_blk[1].x[0];
-					Angle_PLL[2] = Angle_PLL_blk[2].x[0];
-
 					for (int i = 0; i < 1; i++)
 					{
-						// Initialize the PLL
-					        delta_w_PLL_blk[i].setparams(kpPLL,kiPLL,-1000.0,1000.0,-1000.0,1000.0);
-					        delta_w_PLL_blk[i].init(0.0,0.0);
+
 					}
 				}
 
 				for (int i = 0; i < 3; i++)
 				{
-					ugd_pu[i] = (value_Circuit_V[i].Re() * cos(Angle_PLL[i]) + value_Circuit_V[i].Im() * sin(Angle_PLL[i])) / V_base;
-					ugq_pu[i] = (-value_Circuit_V[i].Re() * sin(Angle_PLL[i]) + value_Circuit_V[i].Im() * cos(Angle_PLL[i])) / V_base;
-					igd_pu[i] = (terminal_current_val[i].Re() * cos(Angle_PLL[i]) + terminal_current_val[i].Im() * sin(Angle_PLL[i])) / I_base;
-					igq_pu[i] = (-terminal_current_val[i].Re() * sin(Angle_PLL[i]) + terminal_current_val[i].Im() * cos(Angle_PLL[i])) / I_base;
 
 					if (control_mode == GRID_FOLLOWING)
 					{
 						// Initialize the current control loops
 						e_source[i] = (value_IGenerated[i] * gld::complex(Rfilter, Xfilter) * Z_base);
-						ed_pu[i] = (e_source[i].Re() * cos(Angle_PLL[i]) + e_source[i].Im() * sin(Angle_PLL[i])) / V_base;
-						eq_pu[i] = (-e_source[i].Re() * sin(Angle_PLL[i]) + e_source[i].Im() * cos(Angle_PLL[i])) / V_base;
 
-						igd_blk[i].setparams(kpc,kic,-1000.0,1000.0,-1000.0,1000.0);
-						igq_blk[i].setparams(kpc,kic,-1000.0,1000.0,-1000.0,1000.0);
-
-						igd_blk[i].init(0.0,ed_pu[i] - ugd_pu[i] + igq_pu[i] * Xfilter * F_current);
-						igq_blk[i].init(0.0,eq_pu[i] - ugq_pu[i] - igd_pu[i] * Xfilter * F_current);
 					}
 					else if(control_mode == GFL_CURRENT_SOURCE)
 					{
 						// Initialize the current control loops
 						I_source[i] = value_IGenerated[i];
 
-												igd_filter_blk[i].setparams(Tif);
-						igq_filter_blk[i].setparams(Tif);
-
-						igd_filter_blk[i].init(0.0,igd_pu[i]);
-						igq_filter_blk[i].init(0.0,igq_pu[i]);
-
-						igd_filter[i]  = igd_filter_blk[i].x[0];
-						igq_filter[i]  = igq_filter_blk[i].x[0];
 					}
-				}
-
-				if (frequency_watt)
-				{
-					// Initialize the frequency-watt
-				        f_filter_blk.setparams(Tff);
-				        f_filter_blk.init(0.0,(fPLL[0]+fPLL[1]+fPLL[2])/3.0);
-					f_filter = f_filter_blk.x[0];
-
-					if ((f_filter < (f_nominal + db_OF))&&(f_filter > (f_nominal - db_UF)))  // add dead band
-					{
-						Pref_droop_pu = Pref / S_base;
-					}
-					else
-					{
-						Pref_droop_pu = (f_nominal - f_filter) / Rp + Pref / S_base;
-					}
-
-					Pref_droop_pu_filter_blk.setparams(Tpf);
-					Pref_droop_pu_filter_blk.init(0.0,Pref_droop_pu);
-					Pref_droop_pu_filter = Pref_droop_pu_filter_blk.x[0];
-				}
-
-				if (volt_var)
-				{
-					// Initialize the volt-var control
-					V_Avg_pu = (value_Circuit_V[0].Mag() + value_Circuit_V[1].Mag() + value_Circuit_V[2].Mag()) / 3.0 / V_base;
-					V_filter_blk.setparams(Tvf);
-					V_filter_blk.init(0.0,V_Avg_pu);
-					V_filter = V_filter_blk.x[0];
-
-					if ((V_filter < (Vset + db_OV))&&(V_filter > (Vset - db_UV)))  // add dead band
-					{
-						Qref_droop_pu = Qref / S_base;
-					}
-					else
-					{
-						Qref_droop_pu = (Vset - V_filter) / Rq + Qref / S_base;
-					}
-
-					Qref_droop_pu_filter_blk.setparams(Tqf);
-					Qref_droop_pu_filter_blk.init(0.0,Qref_droop_pu);
-					Qref_droop_pu_filter = Qref_droop_pu_filter_blk.x[0];
 				}
 
 			}	 // end of three phase initialization
