@@ -10,7 +10,6 @@ class energy_storage : public gld_object
 {
 private:
 	bool deltamode_inclusive; //Boolean for deltamode calls - pulled from object flags
-	bool first_sync_delta_enabled;
 
 	//Inverter connections
 	gld_property *inverter_voltage_property;

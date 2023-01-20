@@ -48,7 +48,6 @@ class sec_control : public gld_object
 {
 private:
 	bool deltamode_inclusive; //Boolean for deltamode calls - pulled from object flags
-	bool first_sync_delta_enabled;
 
 	double curr_timestamp_dbl;	//deltamode - tracks last timestep for reiterations and time tracking
 	SIMULATIONMODE desired_simulation_mode; //deltamode desired simulation mode after corrector pass - prevents starting iterations again

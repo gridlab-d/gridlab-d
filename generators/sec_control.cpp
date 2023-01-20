@@ -93,7 +93,6 @@ int sec_control::create(void)
 	// DELTA MODE
 	////////////////////////////////////////////////////////
 	deltamode_inclusive = false; //By default, don't be included in deltamode simulations
-	first_sync_delta_enabled = false;
 
 	//**************** created/default values go here ****************//
 	test_published_property = complex(-1.0,-1.0);	//Flag value for example
@@ -130,6 +129,7 @@ int sec_control::create(void)
 int sec_control::init(OBJECT *parent)
 {
 	OBJECT *obj = OBJECTHDR(this);
+	STATUS fxn_return_status;
 
 	//Deferred initialization code
 	if (parent != NULL)
@@ -182,8 +182,18 @@ int sec_control::init(OBJECT *parent)
 		}
 		else
 		{
-			gen_object_count++; //Increment the counter
-			first_sync_delta_enabled = true;
+			//Add us to the list
+			fxn_return_status = add_gen_delta_obj(obj,true);
+
+			//Check it
+			if (fxn_return_status == FAILED)
+			{
+				GL_THROW("sec_control:%s - failed to add object to generator deltamode object list", obj->name ? obj->name : "unnamed");
+				/*  TROUBLESHOOT
+				The sec_control object encountered an issue while trying to add itself to the generator deltamode object list.  If the error
+				persists, please submit an issue via GitHub.
+				*/
+			}
 		}
 		//Default else - don't do anything
 	}	 //End deltamode inclusive
@@ -289,89 +299,6 @@ TIMESTAMP sec_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 	//Assume always want TS_NEVER
 	tret_value = TS_NEVER;
-
-	//Deltamode check/init items
-	if (first_sync_delta_enabled == true) //Deltamode first pass
-	{
-		//TODO: LOCKING!
-		if ((deltamode_inclusive == true) && (enable_subsecond_models == true)) //We want deltamode - see if it's populated yet
-		{
-			if (((gen_object_current == -1) || (delta_objects == NULL)) && (enable_subsecond_models == true))
-			{
-				//Call the allocation routine
-				allocate_deltamode_arrays();
-			}
-
-			//Check limits of the array
-			if (gen_object_current >= gen_object_count)
-			{
-				GL_THROW("Too many objects tried to populate deltamode objects array in the generators module!");
-				/*  TROUBLESHOOT
-				While attempting to populate a reference array of deltamode-enabled objects for the generator
-				module, an attempt was made to write beyond the allocated array space.  Please try again.  If the
-				error persists, please submit a bug report and your code via the trac website.
-				*/
-			}
-
-			//Add us into the list
-			delta_objects[gen_object_current] = obj;
-
-			//Map up the function for interupdate
-			delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "interupdate_gen_object"));
-
-			//Make sure it worked
-			if (delta_functions[gen_object_current] == NULL)
-			{
-				GL_THROW("Failure to map deltamode function for device:%s", obj->name);
-				/*  TROUBLESHOOT
-				Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
-				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
-				trac website.
-				*/
-			}
-
-			/* post_delta_functions are often removed, since they don't typically do anything - empty it out/delete it if this is the case! */
-			//Map up the function for postupdate
-			post_delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "postupdate_gen_object"));
-
-			//Make sure it worked
-			if (post_delta_functions[gen_object_current] == NULL)
-			{
-				GL_THROW("Failure to map post-deltamode function for device:%s", obj->name);
-				/*  TROUBLESHOOT
-				Attempts to map up the postupdate function of a specific device failed.  Please try again and ensure
-				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
-				trac website.
-				*/
-			}
-
-			//Map up the function for postupdate
-			delta_preupdate_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "preupdate_gen_object"));
-
-			//Make sure it worked
-			if (delta_preupdate_functions[gen_object_current] == NULL)
-			{
-				GL_THROW("Failure to map pre-deltamode function for device:%s", obj->name);
-				/*  TROUBLESHOOT
-				Attempts to map up the preupdate function of a specific device failed.  Please try again and ensure
-				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
-				trac website.
-				*/
-			}
-
-			//Update pointer
-			gen_object_current++;
-
-			//Flag it
-			first_sync_delta_enabled = false;
-
-		}	 //End deltamode specials - first pass
-		else //Somehow, we got here and deltamode isn't properly enabled...odd, just deflag us
-		{
-			first_sync_delta_enabled = false;
-		}
-	} //End first delta timestep
-	//default else - either not deltamode, or not the first timestep
 
 	//**************** Bottom-up execution events for QSTS - usually the actual "logic" before a powerflow call ****************//
 	// check whether participation has been altered in any way
