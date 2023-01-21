@@ -1,0 +1,22 @@
+object inverter_dyn {
+	name Inv4;
+	parent node_108;
+	flags DELTAMODE;
+	rated_power ${inv4rate} kW;	
+	control_mode GRID_FORMING;//FL_CURRENT_SOURCE;
+	
+
+	Pref 0; //165000;
+	Qref 0; //94000;
+	
+	Rfilter 0.0025;
+	Xfilter 0.05;
+	
+	mp 3.77;  // 3.77 represents 1% droop.
+    kppmax 20;
+	kipmax 60;
+	Pmax 1.2;
+	Pmin 0;
+	
+	mq 0.05; // 0.05 represents 5% droop
+};
