@@ -225,7 +225,7 @@ int helics_msg::init(OBJECT *parent){
 					}
 				}
 				for( idx = 0; idx < sub_count; idx++ ) {
-					helicscpp::Input sub = gld_helics_federate->getSubscription(idx);
+					helicscpp::Input sub = gld_helics_federate->getInput(idx);
 					if( sub.isValid() ) {
 						config_info_temp = string(sub.getInfo());
 						const int config_length = static_cast<int>(config_info_temp.size());
@@ -424,7 +424,7 @@ int helics_msg::init(OBJECT *parent){
 					}
 				}
 				for(idx = 0; idx < sub_count; idx++){
-					helicscpp::Input sub = gld_helics_federate->getSubscription(idx);
+					helicscpp::Input sub = gld_helics_federate->getInput(idx);
 					if(sub.isValid()){
 						json_gld_sub = new json_helics_value_subscription();
 						json_gld_sub->target = string(sub.getTarget());
