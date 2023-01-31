@@ -3,6 +3,8 @@
 
 #include <vector>
 
+#include "cblock.h"
+
 #include "generators.h"
 
 EXPORT int isa_inverter_dyn(OBJECT *obj, char *classname);
@@ -22,77 +24,18 @@ typedef struct
 {
 
 	///////Grid-Forming
-	// state variables in the P measurements
-	double p_measure;
-	double dp_measure;
-
-	// state variables in the Q measurements
-	double q_measure;
-	double dq_measure;
-
-	// state variables in the V measurements
-	double v_measure;
-	double dv_measure;
-
-	// state variables in the voltage control loop
-	double V_ini;
-	double dV_ini;
 
 	// state variables of the dc bus voltage when using grid-forming PV
 	double dVdc_pu;
 	double Vdc_pu;
 
-	// state variables of droop control, Pmax and Pmin control
-	double ddelta_w_Pmax_ini;
-	double delta_w_Pmax_ini;
-	double ddelta_w_Pmin_ini;
-	double delta_w_Pmin_ini;
-
-	// state variables of the Qmax and Qmin control
-	double ddelta_V_Qmax_ini;
-	double delta_V_Qmax_ini;
-	double ddelta_V_Qmin_ini;
-	double delta_V_Qmin_ini;
-
-
 	// state variables of Vdc_min controller when using PV grid-forming control
 	double ddelta_w_Vdc_min_ini;
 	double delta_w_Vdc_min_ini;
 
-	// state variables of frequency and phase angle of the internal voltage
-	double delta_w;
-	double Angle[3];
-
 	////////Grid-Following
-	// state variables in PLL
-	double ddelta_w_PLL_ini[3];
-	double delta_w_PLL_ini[3];
-	double delta_w_PLL[3];
-	double Angle_PLL[3];
-
-	//  state variables in current control loop
-	double digd_PI_ini[3];
-	double igd_PI_ini[3];
-	double digq_PI_ini[3];
-	double igq_PI_ini[3];
-
-	// state variables using current source representation
-	double digd_filter[3];
-	double igd_filter[3];
-	double digq_filter[3];
-	double igq_filter[3];
-
-	//  state variables in frequency-watt
-	double df_filter;			  //
-	double f_filter;			  //
-	double dPref_droop_pu_filter; //
-	double Pref_droop_pu_filter;  //
 
 	//  state variables in volt-var
-	double dV_filter;			  //
-	double V_filter;			  //
-	double dQref_droop_pu_filter; //
-	double Qref_droop_pu_filter;  //
 
 } INV_DYN_STATE;
 
@@ -289,6 +232,67 @@ public:
 
 	INV_DYN_STATE curr_state; ///< The current state of the inverter in deltamode
 
+        // Grid forming control blocks
+        Filter Pmeas_blk; // P-measurement filter block
+        double p_measured; // P-measurement filter block output
+  
+        Filter Vmeas_blk; // Voltage measurement block
+        double v_measured; // Output of voltage measurement block
+
+        Filter Qmeas_blk; // Q-measurement block
+        double q_measured;  // Output of Q-measurement block
+
+        PIControl Qmin_ctrl_blk; // Qmin controller
+        double delta_V_Qmin;  // Output of Qmin controller
+
+        PIControl Qmax_ctrl_blk; // Qmax controller
+        double delta_V_Qmax;  // Output of Qmax controller
+
+        PIControl Pmin_ctrl_blk; // Pmin controller
+        double delta_w_Pmin;  // Output of Pmin controller
+
+        PIControl Pmax_ctrl_blk; // Pmax controller
+        double delta_w_Pmax;  // Output of Pmax controller
+
+        double delta_w;   // frequency of the internal voltage
+        double delta_w_prev_step; // frequency of the internal voltage at previous step
+  
+        Integrator Angle_blk[3]; // Integrator block for calculating phase angle of the internal voltage
+        double Angle[3];  // output of phase angle integrator block
+
+        PIControl V_ctrl_blk; // Voltage control block
+  	double E_mag; //internal voltage magnitude, used for grid-forming control, output of voltage control block
+
+        // Grid following control blocks
+        Integrator Angle_PLL_blk[3]; // Integrator block for PLL angle
+        double     Angle_PLL[3];      // Output of PLL angle block
+
+        PIControl  delta_w_PLL_blk[3]; // PI block for PLL
+        double     delta_w_PLL[3];     // Output of PI block for PLL
+
+        PIControl igd_blk[3]; // d-axis current control PI block
+        double    igd_PI[3]; // output of d-axis current block
+
+        PIControl igq_blk[3]; // q-axis current control PI block
+        double    igq_PI[3];  // output of q-axis current block
+
+        Filter igd_filter_blk[3]; // Low pass filter block for current igd
+        double igd_filter[3]; // Output of low pass igd filter block
+
+        Filter igq_filter_blk[3]; // Low pass filter block for current igq
+        double igq_filter[3]; // Output of low pass igq filter block
+
+        Filter f_filter_blk; // filter block for frequency-watt
+        double f_filter; // Output of filter block for frequency watt
+
+        Filter Pref_droop_pu_filter_blk; // Pref droop filter block for frequency-watt
+        double Pref_droop_pu_filter; // Output of Pref droop filter block for frequency watt
+
+        Filter V_filter_blk; // filter block for volt-var
+        double V_filter; // Output of filter block for volt-var
+
+        Filter Qref_droop_pu_filter_blk; // Qref droop filter block for volt-var
+        double Qref_droop_pu_filter; // Output of Qref droop filter block for volt-var
 
 	gld::complex I_out_PU_temp[3];  //This is mainly used for current limiting function of a grid-forming inverter
 
@@ -299,7 +303,6 @@ public:
 
 	double node_nominal_voltage; // Nominal voltage
 
-	double E_mag; //internal voltage magnitude, used for grid-forming control
 	double mdc;	  // only used when dc bus dynamic is enabled, make sure that the modulation index is enough
 
 	bool frequency_watt; // Boolean value indicating whether the f/p droop curve is included in the inverter or not
@@ -330,8 +333,6 @@ public:
 	double ugq_pu_PS; // positive sequence voltage value in dq frame
 
 	// used for grid-following control
-	double igd_PI[3];
-	double igq_PI[3];
 	double ed_pu[3]; // internal votlage in dq frame
 	double eq_pu[3]; // internal votlage in dq frame
 
@@ -356,10 +357,6 @@ public:
 	double E_max;		  // E_max and E_min are the maximum and minimum of the output of voltage controller
 	double E_min;		  //
 	double delta_w_droop; // delta mega from P-f droop
-	double delta_w_Pmax;  // output of the Pmax controller
-	double delta_w_Pmin;  //
-	double delta_V_Qmax; // output of the Qmax controller
-	double delta_V_Qmin;
 	double Pset;		  // power set point in P-f droop
 	double mp;			  // P-f droop gain, usually 3.77 rad/s/pu
 	double P_f_droop;     // p-f droop gain, per unit, usually 0.01
@@ -376,7 +373,6 @@ public:
 	double Imax;  // The maximum output current of a grid-forming inverter
 	double w_ref;		 // w_ref is the rated frequency, usually 376.99 rad/s
 	double f_nominal;	 // rated frequency, 60 Hz
-	double Angle[3];	 // Phase angle of the internal voltage
 	gld::complex e_source[3]; // e_source[i] is the complex value of internal voltage
 	gld::complex e_source_pu[3]; // e_source[i] is the complex per-unit value of internal voltage
 	gld::complex e_droop[3]; // e_droop is the complex value of the inverter internal voltage given by the grid-forming droop control
