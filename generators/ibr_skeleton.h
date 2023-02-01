@@ -101,28 +101,6 @@ private:
 
 public:
 	set phases;				 /**< device phases (see PHASE codes) */
-	enum INVERTER_TYPE
-	{
-		GRID_FORMING = 0,
-		GRID_FOLLOWING = 1,
-		GFL_CURRENT_SOURCE = 2
-	};
-	enumeration control_mode; //
-
-	enum GRID_FOLLOWING_TYPE
-	{
-		BALANCED_POWER = 0,
-		POSITIVE_SEQUENCE = 1
-	};
-	enumeration grid_following_mode; //
-
-	enum GRID_FORMING_TYPE
-	{
-		CONSTANT_DC_BUS = 0,
-		DYNAMIC_DC_BUS = 1
-	};
-	enumeration grid_forming_mode; //
-
 	gld::complex terminal_current_val[3];
 	gld::complex terminal_current_val_pu[3];
 	TIMESTAMP inverter_start_time;
