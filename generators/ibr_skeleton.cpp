@@ -34,39 +34,14 @@ ibr_skeleton::ibr_skeleton(MODULE *module)
 			PT_complex, "power_C[VA]", PADDR(power_val[2]), PT_DESCRIPTION, "AC power on C phase in three-phase system",
 			PT_complex, "VA_Out[VA]", PADDR(VA_Out), PT_DESCRIPTION, "AC power",
 
-			// 3 phase average value of terminal voltage
-			PT_double, "pCircuit_V_Avg_pu", PADDR(pCircuit_V_Avg_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: three-phase average value of terminal voltage, per unit value",
-
 			//Input
 			PT_double, "rated_power[VA]", PADDR(S_base), PT_DESCRIPTION, " The rated power of the inverter",
-			PT_double, "rated_DC_Voltage[V]", PADDR(Vdc_base), PT_DESCRIPTION, " The rated dc bus of the inverter",
-
 			// Grid-Following Controller Parameters
 			PT_double, "Pref[W]", PADDR(Pref), PT_DESCRIPTION, "DELTAMODE: The real power reference.",
 			PT_double, "Qref[VAr]", PADDR(Qref), PT_DESCRIPTION, "DELTAMODE: The reactive power reference.",
-			PT_double, "F_current", PADDR(F_current), PT_DESCRIPTION, "DELTAMODE: feed forward term gain in current loop.",
-			PT_double, "Tif", PADDR(Tif), PT_DESCRIPTION, "DELTAMODE: time constant of first-order low-pass filter of current loop when using current source representation.",
-
-			PT_double, "Pref_max[pu]", PADDR(Pref_max), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of power references in grid-following mode.",
-			PT_double, "Pref_min[pu]", PADDR(Pref_min), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of power references in grid-following mode.",
-			PT_double, "Qref_max[pu]", PADDR(Qref_max), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of reactive power references in grid-following mode.",
-			PT_double, "Qref_min[pu]", PADDR(Qref_min), PT_DESCRIPTION, "DELTAMODE: the upper and lower limits of reactive power references in grid-following mode.",
-			PT_double, "frequency_convergence_criterion[rad/s]", PADDR(GridForming_freq_convergence_criterion), PT_DESCRIPTION, "Max frequency update for grid-forming inverters to return to QSTS",
-			PT_double, "voltage_convergence_criterion[V]", PADDR(GridForming_volt_convergence_criterion), PT_DESCRIPTION, "Max voltage update for grid-forming inverters to return to QSTS",
-			PT_double, "current_convergence_criterion[A]", PADDR(GridFollowing_curr_convergence_criterion), PT_DESCRIPTION, "Max current magnitude update for grid-following inverters to return to QSTS, or initialize",
-
-			// Grid-Forming Controller Parameters
-			PT_double, "Vdc_min_pu[pu]", PADDR(Vdc_min_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: The reference voltage of the Vdc_min controller",
-			PT_double, "C_pu[pu]", PADDR(C_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: capacitance of dc bus",
 
 			// IBR_SKELETON_NOTE: Any variables that need to be published should go here.
 
-			//DC Bus portions
-			PT_double, "V_In[V]", PADDR(V_DC), PT_DESCRIPTION, "DC input voltage",
-			PT_double, "I_In[A]", PADDR(I_DC), PT_DESCRIPTION, "DC input current",
-			PT_double, "P_In[W]", PADDR(P_DC), PT_DESCRIPTION, "DC input power",
-
-			PT_double, "pvc_Pmax[W]", PADDR(pvc_Pmax), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "P max from the PV curve",
 			nullptr) < 1)
 				GL_THROW("unable to publish properties in %s", __FILE__);
 
@@ -136,26 +111,6 @@ int ibr_skeleton::create(void)
 
 	f_nominal = 60;
 
-	// Grid-Following controller parameters
-	F_current = 0;
-	Tif = 0.005; // only used for current source representation
-
-	Pref_max = 1.0; // per unit
-	Pref_min = -1.0;	// per unit
-
-	Qref_max = 1.0; // per unit
-	Qref_min  = -1.0;	// per unit
-
-	Vdc_base = 850; // default value of dc bus voltage
-	Vdc_min_pu = 1; // default reference of the Vdc_min controller
-
-	// Capacitance of dc bus
-	C_pu = 0.1;	 //per unit
-
-	GridForming_freq_convergence_criterion = 1e-5;
-	GridForming_volt_convergence_criterion = 0.01;
-	GridFollowing_curr_convergence_criterion = 0.01;
-
 	//Set up the deltamode "next state" tracking variable
 	desired_simulation_mode = SM_EVENT;
 
@@ -164,11 +119,6 @@ int ibr_skeleton::create(void)
 
 	//Clear the DC interface list - paranoia
 	dc_interface_objects.clear();
-
-	//DC Bus items
-	P_DC = 0.0;
-	V_DC = Vdc_base;
-	I_DC = 0.0;
 
 	node_nominal_voltage = 120.0;		//Just pick a value
 
@@ -671,8 +621,6 @@ int ibr_skeleton::init(OBJECT *parent)
 	//Other initialization variables
 	inverter_start_time = gl_globalclock;
 
-	Idc_base = S_base / Vdc_base;
-
 	// Initialize parameters
 	if (sqrt(Pref*Pref+Qref*Qref) > S_base)
 	{
@@ -703,8 +651,6 @@ int ibr_skeleton::init(OBJECT *parent)
 	}
 
 	VA_Out = gld::complex(Pref, Qref);
-
-	pvc_Pmax = 0;
 
 	//See if we had a single phase connection
 	if (parent_is_single_phase)
@@ -1662,20 +1608,17 @@ STATUS ibr_skeleton::DC_object_register(OBJECT *DC_object)
     if (gl_object_isa(DC_object,"energy_storage","generators"))
     {
 
-		//Map the battery SOC
-    	pSOC = new gld_property(DC_object, "SOC_ES");
+        //Map the battery SOC
+        pSOC = new gld_property(DC_object, "SOC_ES");
 
-		//Check it
-		if (!pSOC->is_valid() || !pSOC->is_double())
-		{
-			GL_THROW("ibr_skeleton:%s - failed to map battery SOC ", (obj->name ? obj->name : "unnamed"));
+	//Check it
+	if (!pSOC->is_valid() || !pSOC->is_double())
+	{
+	    GL_THROW("ibr_skeleton:%s - failed to map battery SOC ", (obj->name ? obj->name : "unnamed"));
 			/*  TROUBLESHOOT
 			Failed to map battery SOC.
 			*/
-		}
-
-		SOC = pSOC->get_double();  //
-
+	}
     }
 
 	//If we made it this far, all should be good!

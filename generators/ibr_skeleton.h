@@ -74,14 +74,6 @@ private:
 
 	//Vector for DC object "update" functions
 	std::vector<DC_OBJ_FXNS_IBR> dc_interface_objects;
-	double P_DC;
-	double V_DC;
-	double I_DC;
-	double SOC;
-
-
-	// DC object "update" of steady-state
-	double pvc_Pmax;
 
 	//Convergence check item for grid-forming voltage
 	gld::complex e_droop_prev[3];
@@ -108,10 +100,6 @@ public:
 	bool first_deltamode_init;
 	int64 first_iteration_current_injection; //Initialization variable - mostly so SWING_PQ buses initalize properly for deltamode
 
-	double GridForming_freq_convergence_criterion;
-	double GridForming_volt_convergence_criterion;
-	double GridFollowing_curr_convergence_criterion;
-
 	gld::complex I_out_PU_temp[3];  //This is mainly used for current limiting function of a grid-forming inverter
 
 	gld::complex power_val[3];		   //power
@@ -123,8 +111,6 @@ public:
 
 	double S_base;	 // S_base is the rated caspacity
 	double V_base;	 // Vbase is the rated Line to ground voltage
-	double Vdc_base; // rated dc bus voltage
-	double Idc_base; // rated dc current
 	double Z_base;	 // Zbase is the reated impedance
 	double I_base;	 // Ibase is the rated current
 	double P_out_pu; // P_out_pu is the per unit value of VA_OUT.Re()
@@ -139,25 +125,8 @@ public:
 
 	double Pref;	// Pref and Qref are the refrences for P and Q
 	double Qref;
-	double F_current; // feed forward term gain in current loop
 
-	double Tif;			  // Tif is the low pass filter when using current source representation
 	double Vset0;		  // Vset0 is the voltage set point in volt-var in grid-following
-	double Pref_droop_pu; // Power reference in frequency-watt
-	double Pref_max;	  // Pref_max and Pref_min are the upper and lower limits of power references
-	double Pref_min;	  //
-	double V_Avg_pu;	  // average voltage in volt-var
-	double Qref_droop_pu; // Q reference in volt-var
-	double Qref_max;	  // Qref_max and Qref_min are the upper and lower limits of Q references
-	double Qref_min;	  //
-
-	double m_Vdc;	   //modulation index when using grid-forming PV inverter, it is per unit value
-	double Vdc_min_pu; // Tha minimum dc bus voltage that the PV grid-forming inverter can run. It is also the maximum point voltage of PV panel, it is per unit value
-	double I_dc_pu;	   // equivalent current at the dc side, which is calculated from the ac side, it is per unit value
-	double I_PV_pu;	   // current from the PV panel
-	double C_pu;	   // Capacitance of dc bus, it is per unit value
-
-	double delta_w_Vdc_min; //variable in the Vdc_min controller
 
 	/* required implementations */
 	ibr_skeleton(MODULE *module);
