@@ -145,6 +145,7 @@ typedef struct {
 	double Qref;	//Reference reactive power output/bias (per-unit) for generator object (AVR)
 } MAC_INPUTS;
 
+
 class diesel_dg : public gld_object
 {
 private:
@@ -208,6 +209,12 @@ private:
 	MAC_STATES next_state;
 	MAC_STATES predictor_vals;	//Predictor pass values of variables
 	MAC_STATES corrector_vals;	//Corrector pass values of variables
+
+	typedef struct {
+		double pdispatch; //Desired generator dispatch set point in p.u.
+		double pdispatch_offset; //Desired offset to generator dispatch in p.u.
+	}PDISPATCH;
+	PDISPATCH pdispatch;	//Dispatch setpoint in p.u. for internal use
 
 	bool deltamode_inclusive;	//Boolean for deltamode calls - pulled from object flags
 	gld_property *mapped_freq_variable;	//Mapping to frequency variable in powerflow module - deltamode updates
@@ -295,6 +302,8 @@ public:
 	gld::complex X2;				//Negative sequence impedance (p.u.)
 
 	MAC_INPUTS gen_base_set_vals;	//Base set points for the various control objects
+	MAC_INPUTS gen_base_set_vals_check; //Check to see if set points for the various control objects changed.
+	PDISPATCH pdispatch_exp;		//Dispatch setpoint in p.u., exposed via glm
 	bool Vset_defined;				// Flag indicating whether Vset has been defined in glm file or not
 
 	//AVR properties (Simplified Exciter System (SEXS) - Industry acronym, I swear)
@@ -460,6 +469,8 @@ public:
 	STATUS init_dynamics(MAC_STATES *curr_time);
 	gld::complex complex_exp(double angle);
 
+	void pdispatch_sync(void);
+	
 	friend class controller_dg;
 
 	gld_property *map_complex_value(OBJECT *obj, const char *name);

@@ -87,6 +87,10 @@ inverter_dyn::inverter_dyn(MODULE *module)
 			PT_double, "Xfilter[pu]", PADDR(Xfilter), PT_DESCRIPTION, "DELTAMODE:  per-unit values of inverter filter.",
 			PT_double, "Rfilter[pu]", PADDR(Rfilter), PT_DESCRIPTION, "DELTAMODE:  per-unit values of inverter filter.",
 
+			// Dispatch variables
+			PT_double,"pdispatch[pu]", PADDR(pdispatch_exp.pdispatch), PT_DESCRIPTION, "Desired generator dispatch set point in p.u.",
+			PT_double,"pdispatch_offset[pu]", PADDR(pdispatch_exp.pdispatch_offset), PT_DESCRIPTION, "Desired offset to generator dispatch in p.u.",
+
 			// Grid-Following Controller Parameters
 			PT_double, "Pref[W]", PADDR(Pref), PT_DESCRIPTION, "DELTAMODE: The real power reference.",
 			PT_double, "Qref[VAr]", PADDR(Qref), PT_DESCRIPTION, "DELTAMODE: The reactive power reference.",
@@ -165,6 +169,7 @@ inverter_dyn::inverter_dyn(MODULE *module)
 			PT_double, "rampDownRate_real", PADDR(rampDownRate_real), PT_DESCRIPTION, "DELTAMODE: ramp rate for grid-following frequency-watt",
 			PT_double, "rampUpRate_reactive", PADDR(rampUpRate_reactive), PT_DESCRIPTION, "DELTAMODE: ramp rate for grid-following volt-var",
 			PT_double, "rampDownRate_reactive", PADDR(rampDownRate_reactive), PT_DESCRIPTION, "DELTAMODE: ramp rate for grid-following volt-var",
+			PT_double, "Pref_droop_pu", PADDR(Pref_droop_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: power reference in frequency-watt",
 
 			PT_double, "frequency_convergence_criterion[rad/s]", PADDR(GridForming_freq_convergence_criterion), PT_DESCRIPTION, "Max frequency update for grid-forming inverters to return to QSTS",
 			PT_double, "voltage_convergence_criterion[V]", PADDR(GridForming_volt_convergence_criterion), PT_DESCRIPTION, "Max voltage update for grid-forming inverters to return to QSTS",
@@ -203,7 +208,7 @@ inverter_dyn::inverter_dyn(MODULE *module)
 			PT_double, "kiqmax", PADDR(kiqmax), PT_DESCRIPTION, "DELTAMODE: proportional and integral gains for Qmax controller.",
 			PT_double, "Qmax[pu]", PADDR(Qmax), PT_DESCRIPTION, "DELTAMODE: maximum limit and minimum limit of Qmax controller and Qmin controller.",
 			PT_double, "Qmin[pu]", PADDR(Qmin), PT_DESCRIPTION, "DELTAMODE: maximum limit and minimum limit of Qmax controller and Qmin controller.",
-
+			PT_double, "delta_w_droop[pu]", PADDR(delta_w_droop), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: delta omega fro p-f droop",
 
 			PT_double, "Vdc_pu[pu]", PADDR(curr_state.Vdc_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: dc bus voltage of PV panel when using grid-forming PV Inverter",
 			PT_double, "Vdc_min_pu[pu]", PADDR(Vdc_min_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: The reference voltage of the Vdc_min controller",
@@ -343,6 +348,11 @@ int inverter_dyn::create(void)
 	// Inverter filter
 	Xfilter = 0.15; //per unit
 	Rfilter = 0.01; // per unit
+
+	// Dispatch setpoints
+	pdispatch.pdispatch = -99.0; //essentially flagged as unset
+	pdispatch.pdispatch_offset = 0; //default offset is 0
+	memcpy(&pdispatch_exp,&pdispatch,sizeof(PDISPATCH));
 
 	// Grid-Forming controller parameters
 	Tp = 0.01; // s
@@ -512,6 +522,8 @@ int inverter_dyn::create(void)
 
 	node_nominal_voltage = 120.0;		//Just pick a value
 
+	update_chk_vars();
+
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -533,6 +545,7 @@ int inverter_dyn::init(OBJECT *parent)
 	gld_object *tmp_gld_obj = nullptr;
 	STATUS return_value_init;
 	bool childed_connection = false;
+	STATUS fxn_return_status;
 
 	//Deferred initialization code
 	if (parent != nullptr)
@@ -1279,8 +1292,21 @@ int inverter_dyn::init(OBJECT *parent)
 		}
 		else
 		{
-			gen_object_count++; //Increment the counter
+			//Flag as the first run
 			first_sync_delta_enabled = true;
+
+			//Add us to the list
+			fxn_return_status = add_gen_delta_obj(obj,false);
+
+			//Check it
+			if (fxn_return_status == FAILED)
+			{
+				GL_THROW("inverter_dyn:%s - failed to add object to generator deltamode object list", obj->name ? obj->name : "unnamed");
+				/*  TROUBLESHOOT
+				The inverter_dyn object encountered an issue while trying to add itself to the generator deltamode object list.  If the error
+				persists, please submit an issue via GitHub.
+				*/
+			}
 		}
 		//Default else - don't do anything
 
@@ -1440,6 +1466,8 @@ int inverter_dyn::init(OBJECT *parent)
 		mp = P_f_droop * w_ref;
 	}
 
+	pdispatch_sync(); //sync up pdispatch and reference point settings
+
 	return 1;
 }
 
@@ -1497,75 +1525,8 @@ TIMESTAMP inverter_dyn::sync(TIMESTAMP t0, TIMESTAMP t1)
 		//TODO: LOCKING!
 		if (deltamode_inclusive && enable_subsecond_models) //We want deltamode - see if it's populated yet
 		{
-			if (((gen_object_current == -1) || (delta_objects == nullptr)) && enable_subsecond_models)
-			{
-				//Call the allocation routine
-				allocate_deltamode_arrays();
-			}
-
-			//Check limits of the array
-			if (gen_object_current >= gen_object_count)
-			{
-				GL_THROW("Too many objects tried to populate deltamode objects array in the generators module!");
-				/*  TROUBLESHOOT
-				While attempting to populate a reference array of deltamode-enabled objects for the generator
-				module, an attempt was made to write beyond the allocated array space.  Please try again.  If the
-				error persists, please submit a bug report and your code via the trac website.
-				*/
-			}
-
-			//Add us into the list
-			delta_objects[gen_object_current] = obj;
-
-			//Map up the function for interupdate
-			delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "interupdate_gen_object"));
-
-			//Make sure it worked
-			if (delta_functions[gen_object_current] == nullptr)
-			{
-				GL_THROW("Failure to map deltamode function for device:%s", obj->name);
-				/*  TROUBLESHOOT
-				Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
-				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
-				trac website.
-				*/
-			}
-
-			/* post_delta_functions removed, since it didn't seem to be doing anything - empty it out/delete it if this is the case! */
-			// //Map up the function for postupdate
-			// post_delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "postupdate_gen_object"));
-
-			// //Make sure it worked
-			// if (post_delta_functions[gen_object_current] == nullptr)
-			// {
-			// 	GL_THROW("Failure to map post-deltamode function for device:%s", obj->name);
-			// 	/*  TROUBLESHOOT
-			// 	Attempts to map up the postupdate function of a specific device failed.  Please try again and ensure
-			// 	the object supports deltamode.  If the error persists, please submit your code and a bug report via the
-			// 	trac website.
-			// 	*/
-			// }
-
-			//Map up the function for postupdate
-			delta_preupdate_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "preupdate_gen_object"));
-
-			//Make sure it worked
-			if (delta_preupdate_functions[gen_object_current] == nullptr)
-			{
-				GL_THROW("Failure to map pre-deltamode function for device:%s", obj->name);
-				/*  TROUBLESHOOT
-				Attempts to map up the preupdate function of a specific device failed.  Please try again and ensure
-				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
-				trac website.
-				*/
-			}
-
-			//Update pointer
-			gen_object_current++;
-
 			if (parent_is_a_meter)
 			{
-
 				//Accumulate the starting power
 				if (sqrt(Pref*Pref+Qref*Qref) > S_base)
 				{
@@ -2227,6 +2188,8 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 		//Do the checks
 		ieee_1547_delta_return = perform_1547_checks(deltat);
 	}
+
+	pdispatch_sync(); //sync up setpoints and pdispatch
 
 	if (control_mode == GRID_FORMING)
 	{
@@ -5429,6 +5392,9 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 
 		}
 	}
+
+	pdispatch_sync(); //sync up dispatch variables and controller setpoints
+
 	return SUCCESS;
 }
 
@@ -6846,6 +6812,124 @@ double inverter_dyn::perform_1547_checks(double timestepvalue)
 			//All is well, indicate as much
 			return return_value;
 		}
+	}
+}
+
+//update checker variables with controller setpoints
+void inverter_dyn::update_chk_vars()
+{
+	setpoint_chk.fset = fset;
+	setpoint_chk.Pref = Pref;
+	setpoint_chk.Pset = Pset;
+	setpoint_chk.inverter_1547_status = inverter_1547_status;
+}
+
+// Sync the pdispatch variable with the various possible controller set points.
+//
+// Controller sets points (Pref, Pset and fset) take precedence over pdispatch, that is
+// an update to these properties will *overwrite* pdispatch.
+// If these properties have not been changed, however, then pdispatch can be used
+// to update the appropriate one via a unified interface.
+void inverter_dyn::pdispatch_sync()
+{
+	
+	// Check if Pref, Pset or fset were changed
+	if ((Pref != setpoint_chk.Pref) || 
+		(Pset != setpoint_chk.Pset) ||
+		(fset != setpoint_chk.fset) ||
+		(inverter_1547_status != setpoint_chk.inverter_1547_status))
+	{
+		// There has been some change to a reference value. 
+		//  - Override pdispatch and set pdispatch_offset = 0.
+		//  - Note: this also overwrites any changes to the exposed pdispatch!!
+		pdispatch.pdispatch_offset = 0;
+		
+		//update pdispatch accordingly
+		if (control_mode == GRID_FORMING)
+		{
+			switch (P_f_droop_setting_mode)
+			{
+			case FSET_MODE:
+				pdispatch.pdispatch = (fset * (2*PI) - w_ref)/mp;
+				break;
+
+			case PSET_MODE:
+				pdispatch.pdispatch = Pset;
+				break;
+			
+			default:
+				// guess pdsipatch doesn't work with this mode
+				break;
+			}
+		}
+		else if ((control_mode == GRID_FOLLOWING) || (control_mode == GFL_CURRENT_SOURCE))
+		{
+			if (inverter_1547_status)
+			{ //inverter is NOT tripped
+				pdispatch.pdispatch = Pref/S_base;
+			}
+			else{
+				pdispatch.pdispatch = 0; //inverter has tripped.
+			}
+			
+		}
+		// No else since this just means it is a control mode for which pdispatch cannot be used (yet)
+
+		// update the check variables
+		update_chk_vars();
+
+		// overwrite the exposed pdispatch variables
+		memcpy(&pdispatch_exp, &pdispatch, sizeof(PDISPATCH));
+
+	}
+
+	double pstar = pdispatch.pdispatch + pdispatch.pdispatch_offset;
+	if ((pdispatch_exp.pdispatch + pdispatch_exp.pdispatch_offset) != (pstar))
+	{
+		// pdispatch or pdispatch_offset have been changed
+		pdispatch.pdispatch = pdispatch_exp.pdispatch;
+		pdispatch.pdispatch_offset = pdispatch_exp.pdispatch_offset;
+		
+		// update pstar
+		pstar = pdispatch.pdispatch + pdispatch.pdispatch_offset;
+		// Update appropriate controll variable 
+		if (control_mode == GRID_FORMING)
+		{
+			switch (P_f_droop_setting_mode)
+			{
+			case FSET_MODE:
+				fset = (w_ref + pstar * mp)/(2*PI);
+				break;
+
+			case PSET_MODE:
+				Pset = pstar;
+				break;
+			
+			default:
+				// guess pdsipatch doesn't work with this mode
+				break;
+			}
+		}
+		else if ((control_mode == GRID_FOLLOWING) || (control_mode == GFL_CURRENT_SOURCE))
+		{
+			if (inverter_1547_status)
+			{ //inverter is NOT tripped
+				Pref = pstar * S_base;
+			}
+			else{
+				// Inverter tripped. OVERRIDE change to pdispatch and reset to 0
+				pdispatch.pdispatch = 0;
+				pdispatch.pdispatch_offset =  0;
+				// overwrite the exposed pdispatch variables
+				memcpy(&pdispatch_exp, &pdispatch, sizeof(PDISPATCH));
+			}
+		}
+		else {
+			GL_THROW("inverter_dyn::pdispatch_sync: pdispatch property cannot be used with the provided control mode %d", control_mode);
+		}
+
+		// update the check variables
+		update_chk_vars();
 	}
 }
 

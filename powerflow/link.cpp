@@ -150,6 +150,10 @@ link_object::link_object(MODULE *mod) : powerflow_object(mod)
 			PT_complex, "fault_current_out_B[A]", PADDR(If_out[1]),PT_DESCRIPTION,"fault current flowing out, phase B",
 			PT_complex, "fault_current_out_C[A]", PADDR(If_out[2]),PT_DESCRIPTION,"fault current flowing out, phase C",
 
+			PT_double, "pdispatch[W]",PADDR(pdispatch.pdispatch),PT_DESCRIPTION,"Scheduled flow from->to in W",
+			PT_double, "pdispatch_offset[W]",PADDR(pdispatch.pdispatch_offset),PT_DESCRIPTION,"Offset to scheduled flow from->to in W",
+			PT_bool, "set_pdispatch", PADDR(set_pdispatch), PT_DESCRIPTION, "trigger to set pdispatch equal to (power_in + power_out)/2",
+			
 			PT_complex, "fault_voltage_A[A]", PADDR(Vf_out[0]),PT_DESCRIPTION,"fault voltage, phase A",
 			PT_complex, "fault_voltage_B[A]", PADDR(Vf_out[1]),PT_DESCRIPTION,"fault voltage, phase B",
 			PT_complex, "fault_voltage_C[A]", PADDR(Vf_out[2]),PT_DESCRIPTION,"fault voltage, phase C",
@@ -238,6 +242,12 @@ int link_object::create(void)
 	NR_branch_reference=-1;
 	If_in[0] = If_in[1] = If_in[2] = gld::complex(0,0);
 	If_out[0] = If_out[1] = If_out[2] = gld::complex(0,0);
+
+	pdispatch.pdispatch = 0;
+	pdispatch.pdispatch_offset = 0;
+	set_pdispatch = false;
+	set_pdispatch_internal = false;
+	set_pdispatch_time = 0;
 
 	protect_locations[0] = protect_locations[1] = protect_locations[2] = -1;	//Initalize cleared
 
@@ -966,6 +976,11 @@ void link_object::NR_link_sync_fxn(void)
 	FUNCTIONADDR topo_update_function;
 	STATUS temp_status_variable;
 
+	if (set_pdispatch_internal && (set_pdispatch_time < gl_globaldeltaclock))
+	{
+		//if pdispatch was set in the last time step, unset the internal flag set_pdispatch_internal
+		set_pdispatch_internal = false;
+	}
 	//See if a frequency dependence is desired -- if so, update it
 	if (enable_frequency_dependence)
 	{
@@ -3087,6 +3102,18 @@ void link_object::BOTH_link_postsync_fxn(void)
 
 	//Perform limit check
 	perform_limit_checks(&temp_power_check, &over_limit);
+
+	// if pdispatch property should be updated
+	if (set_pdispatch || set_pdispatch_internal)
+	{
+		set_pdispatch_internal = true; //make sure internal flag is true, so we continue updating in case of reiteration
+		set_pdispatch = false; //unset user flag
+		set_pdispatch_time = gl_globaldeltaclock; //get current time
+
+		pdispatch.pdispatch = (power_in.Re() + power_out.Re())/2.0;
+		pdispatch.pdispatch_offset = 0.0;
+
+	}
 }
 
 //Functionalized limit checking, mostly for restoration calls

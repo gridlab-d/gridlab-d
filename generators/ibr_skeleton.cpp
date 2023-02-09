@@ -147,7 +147,7 @@ int ibr_skeleton::init(OBJECT *parent)
 	complex_array temp_complex_array, temp_child_complex_array;
 	OBJECT *tmp_obj = nullptr;
 	gld_object *tmp_gld_obj = nullptr;
-	STATUS return_value_init;
+	STATUS return_value_init, fxn_return_status;
 	bool childed_connection = false;
 
 	//Deferred initialization code
@@ -605,8 +605,19 @@ int ibr_skeleton::init(OBJECT *parent)
 		}
 		else
 		{
-			gen_object_count++; //Increment the counter
-			first_sync_delta_enabled = true;
+			//Add us to the list
+			fxn_return_status = add_gen_delta_obj(obj,false);
+
+			//Check it
+			if (fxn_return_status == FAILED)
+			{
+				GL_THROW("ibr_skeleton:%s - failed to add object to generator deltamode object list", obj->name ? obj->name : "unnamed");
+				/*  TROUBLESHOOT
+				The ibr_skeleton object encountered an issue while trying to add itself to the generator deltamode object list.  If the error
+				persists, please submit an issue via GitHub.
+				*/
+			}
+
 		}
 		//Default else - don't do anything
 
@@ -615,7 +626,7 @@ int ibr_skeleton::init(OBJECT *parent)
 	{
 		if (enable_subsecond_models)
 		{
-			gl_warning("ibr_skeleton:%d %s - Deltamode is enabled for the module, but not this inverter!", obj->id, (obj->name ? obj->name : "Unnamed"));
+			gl_warning("ibr_skeleton:%d %s - Deltamode is enabled for the module, but not this object!", obj->id, (obj->name ? obj->name : "Unnamed"));
 			/*  TROUBLESHOOT
 			The ibr_skeleton is not flagged for deltamode operations, yet deltamode simulations are enabled for the overall system.  When deltamode
 			triggers, this ibr_skeleton may no longer contribute to the system, until event-driven mode resumes.  This could cause issues with the simulation.
@@ -730,83 +741,15 @@ TIMESTAMP ibr_skeleton::sync(TIMESTAMP t0, TIMESTAMP t1)
 		pull_complex_powerflow_values();
 	}
 
-	//**** QSTS update items would go here ****//
-
+	//**** Initialization items - does any last-minute value checks, as well as registering a powerflow interface function ****//
 	//Deltamode check/init items
 	if (first_sync_delta_enabled) //Deltamode first pass
 	{
 		//TODO: LOCKING!
 		if (deltamode_inclusive && enable_subsecond_models) //We want deltamode - see if it's populated yet
 		{
-			if (((gen_object_current == -1) || (delta_objects == nullptr)) && enable_subsecond_models)
-			{
-				//Call the allocation routine
-				allocate_deltamode_arrays();
-			}
-
-			//Check limits of the array
-			if (gen_object_current >= gen_object_count)
-			{
-				GL_THROW("Too many objects tried to populate deltamode objects array in the generators module!");
-				/*  TROUBLESHOOT
-				While attempting to populate a reference array of deltamode-enabled objects for the generator
-				module, an attempt was made to write beyond the allocated array space.  Please try again.  If the
-				error persists, please submit a bug report and your code via the trac website.
-				*/
-			}
-
-			//Add us into the list
-			delta_objects[gen_object_current] = obj;
-
-			//Map up the function for interupdate
-			delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "interupdate_gen_object"));
-
-			//Make sure it worked
-			if (delta_functions[gen_object_current] == nullptr)
-			{
-				GL_THROW("Failure to map deltamode function for device:%s", obj->name);
-				/*  TROUBLESHOOT
-				Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
-				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
-				trac website.
-				*/
-			}
-
-			/* post_delta_functions removed, since it didn't seem to be doing anything - empty it out/delete it if this is the case! */
-			// //Map up the function for postupdate
-			// post_delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "postupdate_gen_object"));
-
-			// //Make sure it worked
-			// if (post_delta_functions[gen_object_current] == nullptr)
-			// {
-			// 	GL_THROW("Failure to map post-deltamode function for device:%s", obj->name);
-			// 	/*  TROUBLESHOOT
-			// 	Attempts to map up the postupdate function of a specific device failed.  Please try again and ensure
-			// 	the object supports deltamode.  If the error persists, please submit your code and a bug report via the
-			// 	trac website.
-			// 	*/
-			// }
-
-			//Map up the function for postupdate
-			delta_preupdate_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj, "preupdate_gen_object"));
-
-			//Make sure it worked
-			if (delta_preupdate_functions[gen_object_current] == nullptr)
-			{
-				GL_THROW("Failure to map pre-deltamode function for device:%s", obj->name);
-				/*  TROUBLESHOOT
-				Attempts to map up the preupdate function of a specific device failed.  Please try again and ensure
-				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
-				trac website.
-				*/
-			}
-
-			//Update pointer
-			gen_object_current++;
-
 			if (parent_is_a_meter)
 			{
-
 				//Accumulate the starting power
 				if (sqrt(Pref*Pref+Qref*Qref) > S_base)
 				{
@@ -926,6 +869,8 @@ TIMESTAMP ibr_skeleton::sync(TIMESTAMP t0, TIMESTAMP t1)
 
 		}
 	}
+
+	//**** QSTS update items would go here ****//
 
 	//Sync the powerflow variables
 	if (parent_is_a_meter)
