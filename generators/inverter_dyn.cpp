@@ -653,7 +653,7 @@ int inverter_dyn::init(OBJECT *parent)
 						//Make sure it worked
 						if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_bool())
 						{
-							GL_THROW("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
+							GL_THROW("inverter_dyn:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
 							//Defined elsewhere
 						}
 
@@ -1088,7 +1088,7 @@ int inverter_dyn::init(OBJECT *parent)
 						//Check it
 						if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_complex_array())
 						{
-							GL_THROW("diesel_dg:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
+							GL_THROW("inverter_dyn:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
 							//Defined above
 						}
 
@@ -1114,7 +1114,7 @@ int inverter_dyn::init(OBJECT *parent)
 						{
 							if ((temp_child_complex_array.get_rows() != 3) && (temp_child_complex_array.get_cols() != 3))
 							{
-								GL_THROW("diesel_dg:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
+								GL_THROW("inverter_dyn:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
 								//Defined above
 							}
 							//Default else -- right size
