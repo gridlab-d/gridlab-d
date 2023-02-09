@@ -10,15 +10,13 @@ sec_control::sec_control(MODULE *module)
 {
 	if (oclass == NULL)
 	{
-		oclass = gl_register_class(module, "sec_control", sizeof(sec_control), PC_PRETOPDOWN | PC_BOTTOMUP | PC_POSTTOPDOWN | PC_AUTOLOCK);
+		oclass = gl_register_class(module, "sec_control", sizeof(sec_control), PC_BOTTOMUP | PC_AUTOLOCK);
 		if (oclass == NULL)
 			throw "unable to register class sec_control";
 		else
 			oclass->trl = TRL_PROOF;
 
 		if (gl_publish_variable(oclass,
-			//**************** Sample/test published property - remove ****************//
-			PT_complex, "test_pub_prop[kW]", PADDR(test_published_property), PT_DESCRIPTION, "test published property - has units of kW",
 			PT_char1024, "participant_input", PADDR(participant_input), PT_DESCRIPTION, "command string for creating/modifing secondary controller participants",
 			PT_int32, "participant_count", PADDR(participant_count), PT_DESCRIPTION, "Number of objects currrently participating in secondary control.",
 			//PID controller input
@@ -93,9 +91,6 @@ int sec_control::create(void)
 	// DELTA MODE
 	////////////////////////////////////////////////////////
 	deltamode_inclusive = false; //By default, don't be included in deltamode simulations
-
-	//**************** created/default values go here ****************//
-	test_published_property = complex(-1.0,-1.0);	//Flag value for example
 
 	pFrequency = NULL;
 	memset(participant_input,'\0', sizeof(char1024)); //initialize to empty
@@ -211,15 +206,6 @@ int sec_control::init(OBJECT *parent)
 		
 	}
 
-	//**************** Other initialization or "input check" items ****************//
-	//Example check
-	if (test_published_property.Re() == -1.0)	//Not set in GLM, so apply a default
-	{
-		//Arbitrary
-		test_published_property = complex(1000.0,1000.0);
-	}
-
-
 	//Ts,Ts_P, and Ts_f are not altered here.
 	//Reason is, that the default value should be dt, which is not known at this point.
 	//Keeping at -1 is an indication for later that they should be adjusted.
@@ -281,17 +267,6 @@ void sec_control::sample_time_update(bool &flag, double &time, double curr_time,
 	}
 }
 
-TIMESTAMP sec_control::presync(TIMESTAMP t0, TIMESTAMP t1)
-{
-	TIMESTAMP t2 = TS_NEVER;
-	OBJECT *obj = OBJECTHDR(this);
-
-	//**************** Initial top-down pass for QSTS - typically empty accumulators and re-init working variable for current pass ****************//
-
-
-	return t2;
-}
-
 TIMESTAMP sec_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	OBJECT *obj = OBJECTHDR(this);
@@ -313,17 +288,6 @@ TIMESTAMP sec_control::sync(TIMESTAMP t0, TIMESTAMP t1)
 	{
 		return TS_NEVER;
 	}
-}
-
-/* Postsync is called when the clock needs to advance on the second top-down pass */
-TIMESTAMP sec_control::postsync(TIMESTAMP t0, TIMESTAMP t1)
-{
-	OBJECT *obj = OBJECTHDR(this);
-	TIMESTAMP t2 = TS_NEVER; //By default, we're done forever!
-
-	//**************** second top-down call - items that need to be reconciled after powerflow has executed ***************//
-	
-	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -785,7 +749,7 @@ double sec_control::get_tieline_error(SEC_CNTRL_PARTICIPANT &obj)
 
 //Module-level post update call
 /* This is just put here as an example - not sure what it would do */
-STATUS sec_control::post_deltaupdate(complex *useful_value, unsigned int mode_pass)
+STATUS sec_control::post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass)
 {
 	//**************** Post-deltamode transition back to QSTS items ****************//
 	
@@ -816,9 +780,9 @@ gld_property *sec_control::map_complex_value(OBJECT *obj, const char *name)
 	return pQuantity;
 }
 
-complex sec_control::get_complex_value(OBJECT *obj, const char *name)
+gld::complex sec_control::get_complex_value(OBJECT *obj, const char *name)
 {
-	complex val;
+	gld::complex val;
 	gld_property *ptr = map_complex_value(obj, name);
 	val = ptr->get_complex();
 	delete ptr;
@@ -1276,13 +1240,13 @@ EXPORT TIMESTAMP sync_sec_control(OBJECT *obj, TIMESTAMP t1, PASSCONFIG pass)
 		switch (pass)
 		{
 		case PC_PRETOPDOWN:
-			t2 = my->presync(obj->clock, t1);
+			// t2 = my->presync(obj->clock, t1);
 			break;
 		case PC_BOTTOMUP:
 			t2 = my->sync(obj->clock, t1);
 			break;
 		case PC_POSTTOPDOWN:
-			t2 = my->postsync(obj->clock, t1);
+			// t2 = my->postsync(obj->clock, t1);
 			break;
 		default:
 			GL_THROW("invalid pass request (%d)", pass);
@@ -1333,7 +1297,7 @@ EXPORT SIMULATIONMODE interupdate_sec_control(OBJECT *obj, unsigned int64 delta_
 	}
 }
 
-EXPORT STATUS postupdate_sec_control(OBJECT *obj, complex *useful_value, unsigned int mode_pass)
+EXPORT STATUS postupdate_sec_control(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass)
 {
 	sec_control *my = OBJECTDATA(obj, sec_control);
 	STATUS status = FAILED;

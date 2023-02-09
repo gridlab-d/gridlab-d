@@ -13,7 +13,7 @@
 EXPORT int isa_sec_control(OBJECT *obj, char *classname);
 EXPORT STATUS preupdate_sec_control(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_time);
 EXPORT SIMULATIONMODE interupdate_sec_control(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
-EXPORT STATUS postupdate_sec_control(OBJECT *obj, complex *useful_value, unsigned int mode_pass);
+EXPORT STATUS postupdate_sec_control(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass);
 
 // State variables for the secondary controller
 typedef struct{
@@ -52,9 +52,6 @@ private:
 	double curr_timestamp_dbl;	//deltamode - tracks last timestep for reiterations and time tracking
 	SIMULATIONMODE desired_simulation_mode; //deltamode desired simulation mode after corrector pass - prevents starting iterations again
 
-	////**************** Sample variable - published property for sake of doing so ****************//
-	complex test_published_property;
-	
 	gld_property *pFrequency; //pointer to frequency property of parent object
 	double fmeas; //storage for current measured frequency value
 
@@ -137,7 +134,7 @@ public:
 	gld_property *map_double_value(OBJECT *obj, const char *name);
 	gld_property *map_enum_value(OBJECT *obj, const char *name);
 
-	complex get_complex_value(OBJECT *obj, const char *name);
+	gld::complex get_complex_value(OBJECT *obj, const char *name);
 	double get_double_value(OBJECT *obj, const char *name);
 	enumeration get_enum_value(OBJECT *obj, const char *name);
 	
@@ -174,12 +171,12 @@ public:
 
 	int create(void);
 	int init(OBJECT *parent);
-	TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
+	// TIMESTAMP presync(TIMESTAMP t0, TIMESTAMP t1);
 	TIMESTAMP sync(TIMESTAMP t0, TIMESTAMP t1);
-	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
+	// TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 	STATUS pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time);
 	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
-	STATUS post_deltaupdate(complex *useful_value, unsigned int mode_pass);
+	STATUS post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass);
 
 public:
 	static CLASS *oclass;
