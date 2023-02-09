@@ -72,10 +72,6 @@ private: //Member Funcs: Init, Sanity Check, and Reset
     /* For reset */
     void reset_timer();
 
-private: //QSTS
-    /* Pre-sync */
-    void deltamode_reg();
-
 private: //Deltamode
     /* inter_deltaupdate_sync_ctrl */
     void dm_update_measurements();
@@ -146,7 +142,6 @@ private: //Variables
     } swt_status;
 
     bool sck_armed_status;    //Action functionality status of the specified sync_check object of this sync_ctrl object. Valid states are: True - This sync_check object is functional, False - This sync_check object is disabled.
-    bool reg_dm_flag;         //Flag for indicating the registration of deltamode (array & func)
     bool deltamode_inclusive; //Boolean for deltamode calls - pulled from object flags
 
     //==Time
