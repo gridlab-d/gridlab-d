@@ -43,6 +43,10 @@ ibr_skeleton::ibr_skeleton(MODULE *module)
 			PT_double, "Pref[W]", PADDR(Pref), PT_DESCRIPTION, "DELTAMODE: The real power reference.",
 			PT_double, "Qref[VAr]", PADDR(Qref), PT_DESCRIPTION, "DELTAMODE: The reactive power reference.",
 
+			// Inverter filter parameters
+			PT_double, "Xfilter[pu]", PADDR(Xfilter), PT_DESCRIPTION, "DELTAMODE:  per-unit values of inverter filter.",
+			PT_double, "Rfilter[pu]", PADDR(Rfilter), PT_DESCRIPTION, "DELTAMODE:  per-unit values of inverter filter.",
+
 			// IBR_SKELETON_NOTE: Any variables that need to be published should go here.
 
 			nullptr) < 1)
@@ -60,8 +64,6 @@ ibr_skeleton::ibr_skeleton(MODULE *module)
 		// 	GL_THROW("Unable to publish ibr_skeleton deltamode function");
 		if (gl_publish_function(oclass, "current_injection_update", (FUNCTIONADDR)ibr_skeleton_NR_current_injection_update) == nullptr)
 			GL_THROW("Unable to publish ibr_skeleton current injection update function");
-		// if (gl_publish_function(oclass, "register_gen_DC_object", (FUNCTIONADDR)ibr_skeleton_DC_object_register) == nullptr)
-		// 	GL_THROW("Unable to publish ibr_skeleton DC registration function");
 	}
 }
 
@@ -95,9 +97,6 @@ int ibr_skeleton::create(void)
 	swing_test_fxn = nullptr;			//By default, no mapping
 
 	pCircuit_V[0] = pCircuit_V[1] = pCircuit_V[2] = nullptr;
-	pLine_I[0] = pLine_I[1] = pLine_I[2] = nullptr;
-	pLine_unrotI[0] = pLine_unrotI[1] = pLine_unrotI[2] = nullptr;
-	pPower[0] = pPower[1] = pPower[2] = nullptr;
 	pIGenerated[0] = pIGenerated[1] = pIGenerated[2] = nullptr;
 
 	pMeterStatus = nullptr; // check if the meter is in service
@@ -106,12 +105,13 @@ int ibr_skeleton::create(void)
 
 	//Zero the accumulators
 	value_Circuit_V[0] = value_Circuit_V[1] = value_Circuit_V[2] = gld::complex(0.0, 0.0);
-	value_Line_I[0] = value_Line_I[1] = value_Line_I[2] = gld::complex(0.0, 0.0);
-	value_Line_unrotI[0] = value_Line_unrotI[1] = value_Line_unrotI[2] = gld::complex(0.0, 0.0);
-	value_Power[0] = value_Power[1] = value_Power[2] = gld::complex(0.0, 0.0);
 	value_IGenerated[0] = value_IGenerated[1] = value_IGenerated[2] = gld::complex(0.0, 0.0);
 	prev_value_IGenerated[0] = prev_value_IGenerated[1] = prev_value_IGenerated[2] = gld::complex(0.0, 0.0);
 	value_MeterStatus = 1; //Connected, by default
+
+	// Inverter filter
+	Xfilter = 0.15; //per unit
+	Rfilter = 0.01; // per unit
 
 	f_nominal = 60;
 
@@ -120,9 +120,6 @@ int ibr_skeleton::create(void)
 
 	//Tracking variable
 	last_QSTS_GF_Update = TS_NEVER_DBL;
-
-	//Clear the DC interface list - paranoia
-	dc_interface_objects.clear();
 
 	node_nominal_voltage = 120.0;		//Just pick a value
 
@@ -334,20 +331,6 @@ int ibr_skeleton::init(OBJECT *parent)
 				pCircuit_V[1] = map_complex_value(tmp_obj, "voltage_1");
 				pCircuit_V[2] = map_complex_value(tmp_obj, "voltage_2");
 
-				//Get 12 and Null the rest
-				pLine_I[0] = map_complex_value(tmp_obj, "current_12");
-				pLine_I[1] = nullptr;
-				pLine_I[2] = nullptr;
-
-				//Pull power12, then null the rest
-				pPower[0] = map_complex_value(tmp_obj, "power_12");
-				pPower[1] = nullptr; //Not used
-				pPower[2] = nullptr; //Not used
-
-				pLine_unrotI[0] = map_complex_value(tmp_obj, "prerotated_current_12");
-				pLine_unrotI[1] = nullptr; //Not used
-				pLine_unrotI[2] = nullptr; //Not used
-
 				//Map IGenerated, even though triplex can't really use this yet (just for the sake of doing so)
 				pIGenerated[0] = map_complex_value(tmp_obj, "deltamode_generator_current_12");
 				pIGenerated[1] = nullptr;
@@ -367,18 +350,6 @@ int ibr_skeleton::init(OBJECT *parent)
 					pCircuit_V[1] = map_complex_value(tmp_obj, "voltage_B");
 					pCircuit_V[2] = map_complex_value(tmp_obj, "voltage_C");
 
-					pLine_I[0] = map_complex_value(tmp_obj, "current_A");
-					pLine_I[1] = map_complex_value(tmp_obj, "current_B");
-					pLine_I[2] = map_complex_value(tmp_obj, "current_C");
-
-					pPower[0] = map_complex_value(tmp_obj, "power_A");
-					pPower[1] = map_complex_value(tmp_obj, "power_B");
-					pPower[2] = map_complex_value(tmp_obj, "power_C");
-
-					pLine_unrotI[0] = map_complex_value(tmp_obj, "prerotated_current_A");
-					pLine_unrotI[1] = map_complex_value(tmp_obj, "prerotated_current_B");
-					pLine_unrotI[2] = map_complex_value(tmp_obj, "prerotated_current_C");
-
 					//Map the current injection variables
 					pIGenerated[0] = map_complex_value(tmp_obj, "deltamode_generator_current_A");
 					pIGenerated[1] = map_complex_value(tmp_obj, "deltamode_generator_current_B");
@@ -395,15 +366,6 @@ int ibr_skeleton::init(OBJECT *parent)
 					pCircuit_V[1] = nullptr;
 					pCircuit_V[2] = nullptr;
 
-					pLine_I[1] = nullptr;
-					pLine_I[2] = nullptr;
-
-					pPower[1] = nullptr;
-					pPower[2] = nullptr;
-
-					pLine_unrotI[1] = nullptr;
-					pLine_unrotI[2] = nullptr;
-
 					pIGenerated[1] = nullptr;
 					pIGenerated[2] = nullptr;
 
@@ -411,27 +373,18 @@ int ibr_skeleton::init(OBJECT *parent)
 					{
 						//Map the various powerflow variables
 						pCircuit_V[0] = map_complex_value(tmp_obj, "voltage_A");
-						pLine_I[0] = map_complex_value(tmp_obj, "current_A");
-						pPower[0] = map_complex_value(tmp_obj, "power_A");
-						pLine_unrotI[0] = map_complex_value(tmp_obj, "prerotated_current_A");
 						pIGenerated[0] = map_complex_value(tmp_obj, "deltamode_generator_current_A");
 					}
 					else if ((phases & 0x07) == 0x02) //B
 					{
 						//Map the various powerflow variables
 						pCircuit_V[0] = map_complex_value(tmp_obj, "voltage_B");
-						pLine_I[0] = map_complex_value(tmp_obj, "current_B");
-						pPower[0] = map_complex_value(tmp_obj, "power_B");
-						pLine_unrotI[0] = map_complex_value(tmp_obj, "prerotated_current_B");
 						pIGenerated[0] = map_complex_value(tmp_obj, "deltamode_generator_current_B");
 					}
 					else if ((phases & 0x07) == 0x04) //C
 					{
 						//Map the various powerflow variables
 						pCircuit_V[0] = map_complex_value(tmp_obj, "voltage_C");
-						pLine_I[0] = map_complex_value(tmp_obj, "current_C");
-						pPower[0] = map_complex_value(tmp_obj, "power_C");
-						pLine_unrotI[0] = map_complex_value(tmp_obj, "prerotated_current_C");
 						pIGenerated[0] = map_complex_value(tmp_obj, "deltamode_generator_current_C");
 					}
 					else //Not three-phase, but has more than one phase - fail, because we don't do this right
@@ -469,7 +422,6 @@ int ibr_skeleton::init(OBJECT *parent)
 			//See if we are deltamode-enabled -- powerflow parent version
 			if (deltamode_inclusive)
 			{
-
 				// Obtain the Z_base of the system for calculating filter impedance
 				//Link to nominal voltage
 				temp_property_pointer = new gld_property(parent, "nominal_voltage");
@@ -515,8 +467,145 @@ int ibr_skeleton::init(OBJECT *parent)
 					Z_base = (node_nominal_voltage * node_nominal_voltage) / S_base; // voltage is phase to ground voltage, S_base is single phase capacity
 				}
 
+				//Provide the Norton-equivalent admittance up to powerflow
+				//**** generator_admittance is the Norton current source equivalent admittance ****//
+				//**** This will need to be updated for the object (junk values put here for now) ****//
 
-				//Map the power variable
+				//Convert filter to admittance
+				filter_admittance = gld::complex(1.0, 0.0) / (gld::complex(Rfilter, Xfilter) * Z_base);
+
+				//Placeholder diagonals
+				generator_admittance[0][0] = generator_admittance[1][1] = generator_admittance[2][2] = filter_admittance;
+				generator_admittance[0][1] = generator_admittance[1][0] = generator_admittance[2][0] = complex(0.0,0.0);
+				generator_admittance[0][2] = generator_admittance[1][2] = generator_admittance[2][1] = complex(0.0,0.0);
+
+				//Map the full_Y parameter to inject the admittance portion into it
+				pbus_full_Y_mat = new gld_property(tmp_obj, "deltamode_full_Y_matrix");
+
+				//Check it
+				if (!pbus_full_Y_mat->is_valid() || !pbus_full_Y_mat->is_complex_array())
+				{
+					GL_THROW("ibr_skeleton:%s failed to map Norton-equivalence deltamode variable from %s", obj->name ? obj->name : "unnamed", tmp_obj->name ? tmp_obj->name : "unnamed");
+					/*  TROUBLESHOOT
+					While attempting to set up the deltamode interfaces and calculations with powerflow, the required interface could not be mapped.
+					Please check your GLM and try again.  If the error persists, please submit a trac ticket with your code.
+					*/
+				}
+
+				//Pull down the variable
+				pbus_full_Y_mat->getp<complex_array>(temp_complex_array, *test_rlock);
+
+				//See if it is valid
+				if (!temp_complex_array.is_valid(0, 0))
+				{
+					//Create it
+					temp_complex_array.grow_to(3, 3);
+
+					//Zero it, by default
+					for (temp_idx_x = 0; temp_idx_x < 3; temp_idx_x++)
+					{
+						for (temp_idx_y = 0; temp_idx_y < 3; temp_idx_y++)
+						{
+							temp_complex_array.set_at(temp_idx_x, temp_idx_y, gld::complex(0.0, 0.0));
+						}
+					}
+				}
+				else //Already populated, make sure it is the right size!
+				{
+					if ((temp_complex_array.get_rows() != 3) && (temp_complex_array.get_cols() != 3))
+					{
+						GL_THROW("ibr_skeleton:%s exposed Norton-equivalent matrix is the wrong size!", obj->name ? obj->name : "unnamed");
+						/*  TROUBLESHOOT
+						While mapping to an admittance matrix on the parent node device, it was found it is the wrong size.
+						Please try again.  If the error persists, please submit your code and model via the issue tracking system.
+						*/
+					}
+					//Default else -- right size
+				}
+
+				//See if we were connected to a powerflow child
+				if (childed_connection)
+				{
+					temp_property_pointer = new gld_property(parent,"deltamode_full_Y_matrix");
+
+					//Check it
+					if (!temp_property_pointer->is_valid() || !temp_property_pointer->is_complex_array())
+					{
+						GL_THROW("ibr_skeleton:%s failed to map Norton-equivalence deltamode variable from %s",obj->name?obj->name:"unnamed",parent->name?parent->name:"unnamed");
+						//Defined above
+					}
+
+					//Pull down the variable
+					temp_property_pointer->getp<complex_array>(temp_child_complex_array,*test_rlock);
+
+					//See if it is valid
+					if (!temp_child_complex_array.is_valid(0,0))
+					{
+						//Create it
+						temp_child_complex_array.grow_to(3,3);
+
+						//Zero it, by default
+						for (temp_idx_x=0; temp_idx_x<3; temp_idx_x++)
+						{
+							for (temp_idx_y=0; temp_idx_y<3; temp_idx_y++)
+							{
+								temp_child_complex_array.set_at(temp_idx_x,temp_idx_y,gld::complex(0.0,0.0));
+							}
+						}
+					}
+					else	//Already populated, make sure it is the right size!
+					{
+						if ((temp_child_complex_array.get_rows() != 3) && (temp_child_complex_array.get_cols() != 3))
+						{
+							GL_THROW("ibr_skeleton:%s exposed Norton-equivalent matrix is the wrong size!",obj->name?obj->name:"unnamed");
+							//Defined above
+						}
+						//Default else -- right size
+					}
+				}//End childed powerflow parent
+
+				//Loop through and store the values
+				for (temp_idx_x = 0; temp_idx_x < 3; temp_idx_x++)
+				{
+					for (temp_idx_y = 0; temp_idx_y < 3; temp_idx_y++)
+					{
+						//Read the existing value
+						temp_complex_value = temp_complex_array.get_at(temp_idx_x, temp_idx_y);
+
+						//Accumulate admittance into it
+						temp_complex_value += generator_admittance[temp_idx_x][temp_idx_y];
+
+						//Store it
+						temp_complex_array.set_at(temp_idx_x, temp_idx_y, temp_complex_value);
+
+						//Do the childed object, if exists
+						if (childed_connection)
+						{
+							//Read the existing value
+							temp_complex_value = temp_child_complex_array.get_at(temp_idx_x,temp_idx_y);
+
+							//Accumulate into it
+							temp_complex_value += generator_admittance[temp_idx_x][temp_idx_y];
+
+							//Store it
+							temp_child_complex_array.set_at(temp_idx_x,temp_idx_y,temp_complex_value);
+						}
+					}
+				}
+
+				//Push it back up
+				pbus_full_Y_mat->setp<complex_array>(temp_complex_array, *test_rlock);
+
+				//See if the childed powerflow exists
+				if (childed_connection)
+				{
+					temp_property_pointer->setp<complex_array>(temp_child_complex_array,*test_rlock);
+
+					//Clear it
+					delete temp_property_pointer;
+				}
+
+				//Map the power variable (intialization related)
 				pGenerated = map_complex_value(tmp_obj, "deltamode_PGenTotal");
 			} //End VSI common items
 
@@ -697,9 +786,6 @@ TIMESTAMP ibr_skeleton::presync(TIMESTAMP t0, TIMESTAMP t1)
 	//If we have a meter, reset the accumulators
 	if (parent_is_a_meter)
 	{
-		//Reset
-		reset_complex_powerflow_accumulators();
-
 		//Pull status and voltage (mostly status)
 		pull_complex_powerflow_values();
 	}
@@ -734,9 +820,6 @@ TIMESTAMP ibr_skeleton::sync(TIMESTAMP t0, TIMESTAMP t1)
 	//If we have a meter, reset the accumulators
 	if (parent_is_a_meter)
 	{
-		//Reset
-		reset_complex_powerflow_accumulators();
-
 		//Pull status and voltage (mostly status)
 		pull_complex_powerflow_values();
 	}
@@ -899,8 +982,6 @@ TIMESTAMP ibr_skeleton::postsync(TIMESTAMP t0, TIMESTAMP t1)
 	//If we have a meter, reset the accumulators
 	if (parent_is_a_meter)
 	{
-		reset_complex_powerflow_accumulators();
-
 		//Also pull the current values
 		pull_complex_powerflow_values();
 	}
@@ -998,8 +1079,6 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 	//If we have a meter, reset the accumulators
 	if (parent_is_a_meter)
 	{
-		reset_complex_powerflow_accumulators();
-
 		pull_complex_powerflow_values();
 	}
 
@@ -1038,8 +1117,6 @@ STATUS ibr_skeleton::init_dynamics()
 	//Pull the powerflow values
 	if (parent_is_a_meter)
 	{
-		reset_complex_powerflow_accumulators();
-
 		pull_complex_powerflow_values();
 	}
 
@@ -1056,11 +1133,6 @@ STATUS ibr_skeleton::init_dynamics()
 //**** Not used in all models, so commented out here ****//
 // STATUS ibr_skeleton::post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass)
 // {
-// 	//If we have a meter, reset the accumulators
-// 	if (parent_is_a_meter)
-// 	{
-// 		reset_complex_powerflow_accumulators();
-// 	}
 
 // 	//Should have a parent, but be paranoid
 // 	if (parent_is_a_meter)
@@ -1146,42 +1218,6 @@ void ibr_skeleton::pull_complex_powerflow_values(void)
 	}
 }
 
-//Function to reset the various accumulators, so they don't double-accumulate if they weren't used
-void ibr_skeleton::reset_complex_powerflow_accumulators(void)
-{
-	int indexval;
-
-	//See which one we are, since that will impact things
-	if (!parent_is_single_phase) //Three-phase
-	{
-		//Loop through the three-phases/accumulators
-		for (indexval = 0; indexval < 3; indexval++)
-		{
-			//**** Current value ***/
-			value_Line_I[indexval] = gld::complex(0.0, 0.0);
-
-			//**** Power value ***/
-			value_Power[indexval] = gld::complex(0.0, 0.0);
-
-			//**** pre-rotated Current value ***/
-			value_Line_unrotI[indexval] = gld::complex(0.0, 0.0);
-		}
-	}
-	else //Assumes must be single phased - else how did it get here?
-	{
-		//Reset the relevant values -- all single pulls
-
-		//**** single current value ***/
-		value_Line_I[0] = gld::complex(0.0, 0.0);
-
-		//**** power value ***/
-		value_Power[0] = gld::complex(0.0, 0.0);
-
-		//**** prerotated value ***/
-		value_Line_unrotI[0] = gld::complex(0.0, 0.0);
-	}
-}
-
 //Function to push up all changes of complex properties to powerflow from local variables
 void ibr_skeleton::push_complex_powerflow_values(bool update_voltage)
 {
@@ -1207,36 +1243,6 @@ void ibr_skeleton::push_complex_powerflow_values(bool update_voltage)
 			//Loop through the three-phases/accumulators
 			for (indexval = 0; indexval < 3; indexval++)
 			{
-				//*** Current value ***/
-				//Pull current value again, just in case
-				temp_complex_val = pLine_I[indexval]->get_complex();
-
-				//Add the difference
-				temp_complex_val += value_Line_I[indexval];
-
-				//Push it back up
-				pLine_I[indexval]->setp<gld::complex>(temp_complex_val, *test_rlock);
-
-				//**** Power value ***/
-				//Pull current value again, just in case
-				temp_complex_val = pPower[indexval]->get_complex();
-
-				//Add the difference
-				temp_complex_val += value_Power[indexval];
-
-				//Push it back up
-				pPower[indexval]->setp<gld::complex>(temp_complex_val, *test_rlock);
-
-				//**** pre-rotated Current value ***/
-				//Pull current value again, just in case
-				temp_complex_val = pLine_unrotI[indexval]->get_complex();
-
-				//Add the difference
-				temp_complex_val += value_Line_unrotI[indexval];
-
-				//Push it back up
-				pLine_unrotI[indexval]->setp<gld::complex>(temp_complex_val, *test_rlock);
-
 				/* If was VSI, adjust Norton injection */
 				{
 					//**** IGenerated Current value ***/
@@ -1258,36 +1264,6 @@ void ibr_skeleton::push_complex_powerflow_values(bool update_voltage)
 		else
 		{
 			//Pull the relevant values -- all single pulls
-
-			//*** Current value ***/
-			//Pull current value again, just in case
-			temp_complex_val = pLine_I[0]->get_complex();
-
-			//Add the difference
-			temp_complex_val += value_Line_I[0];
-
-			//Push it back up
-			pLine_I[0]->setp<gld::complex>(temp_complex_val, *test_rlock);
-
-			//*** power value ***/
-			//Pull current value again, just in case
-			temp_complex_val = pPower[0]->get_complex();
-
-			//Add the difference
-			temp_complex_val += value_Power[0];
-
-			//Push it back up
-			pPower[0]->setp<gld::complex>(temp_complex_val, *test_rlock);
-
-			//*** prerotated value ***/
-			//Pull current value again, just in case
-			temp_complex_val = pLine_unrotI[0]->get_complex();
-
-			//Add the difference
-			temp_complex_val += value_Line_unrotI[0];
-
-			//Push it back up
-			pLine_unrotI[0]->setp<gld::complex>(temp_complex_val, *test_rlock);
 
 			//*** IGenerated ***/
 			//********* TODO - Does this need to be deltamode-flagged? *************//
@@ -1331,9 +1307,6 @@ STATUS ibr_skeleton::updateCurrInjection(int64 iteration_count,bool *converged_f
 	//Pull the current powerflow values
 	if (parent_is_a_meter)
 	{
-		//Reset the accumulators, just in case
-		reset_complex_powerflow_accumulators();
-
 		//Pull status and voltage (mostly status)
 		pull_complex_powerflow_values();
 	}
@@ -1481,55 +1454,6 @@ STATUS ibr_skeleton::updateCurrInjection(int64 iteration_count,bool *converged_f
 	return SUCCESS;
 }
 
-// //Internal function to the mapping of the DC object update function
-//**** If the DC bus functionality of the solar or energy_storage is desired.  Most initial implementations don't use this, so commented ****//
-// STATUS ibr_skeleton::DC_object_register(OBJECT *DC_object)
-// {
-// 	FUNCTIONADDR temp_add = nullptr;
-// 	DC_OBJ_FXNS_IBR temp_DC_struct;
-// 	OBJECT *obj = OBJECTHDR(this);
-
-// 	//Put the object into the structure
-// 	temp_DC_struct.dc_object = DC_object;
-
-// 	//Find the update function
-// 	temp_DC_struct.fxn_address = (FUNCTIONADDR)(gl_get_function(DC_object, "DC_gen_object_update"));
-
-// 	//Make sure it worked
-// 	if (temp_DC_struct.fxn_address == nullptr)
-// 	{
-// 		gl_error("ibr_skeleton:%s - failed to map DC update for object %s", (obj->name ? obj->name : "unnamed"), (DC_object->name ? DC_object->name : "unnamed"));
-// 		/*  TROUBLESHOOT
-// 		While attempting to map the update function for a DC-bus device, an error was encountered.
-// 		Please try again.  If the error persists, please submit your code and a bug report via the issues tracker.
-// 		*/
-
-// 		return FAILED;
-// 	}
-
-// 	//Push us onto the memory
-// 	dc_interface_objects.push_back(temp_DC_struct);
-
-//     if (gl_object_isa(DC_object,"energy_storage","generators"))
-//     {
-
-//         //Map the battery SOC
-//         pSOC = new gld_property(DC_object, "SOC_ES");
-
-// 	//Check it
-// 	if (!pSOC->is_valid() || !pSOC->is_double())
-// 	{
-// 	    GL_THROW("ibr_skeleton:%s - failed to map battery SOC ", (obj->name ? obj->name : "unnamed"));
-// 			/*  TROUBLESHOOT
-// 			Failed to map battery SOC.
-// 			*/
-// 	}
-//     }
-
-// 	//If we made it this far, all should be good!
-// 	return SUCCESS;
-// }
-
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
@@ -1662,18 +1586,3 @@ EXPORT STATUS ibr_skeleton_NR_current_injection_update(OBJECT *obj, int64 iterat
 	//Return what the sub function said we were
 	return temp_status;
 }
-
-// // Export function for registering a DC interaction object - if supported
-// EXPORT STATUS ibr_skeleton_DC_object_register(OBJECT *this_obj, OBJECT *DC_obj)
-// {
-// 	STATUS temp_status;
-
-// 	//Map us
-// 	ibr_skeleton *this_inv = OBJECTDATA(this_obj, ibr_skeleton);
-
-// 	//Call the function to register us
-// 	temp_status = this_inv->DC_object_register(DC_obj);
-
-// 	//Return the status
-// 	return temp_status;
-// }
