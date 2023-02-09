@@ -10,9 +10,9 @@
 EXPORT int isa_ibr_skeleton(OBJECT *obj, char *classname);
 EXPORT STATUS preupdate_ibr_skeleton(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_time);
 EXPORT SIMULATIONMODE interupdate_ibr_skeleton(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
-EXPORT STATUS postupdate_ibr_skeleton(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass);
+// EXPORT STATUS postupdate_ibr_skeleton(OBJECT *obj, gld::complex *useful_value, unsigned int mode_pass);
 EXPORT STATUS ibr_skeleton_NR_current_injection_update(OBJECT *obj, int64 iteration_count, bool *converged_failure);
-EXPORT STATUS ibr_skeleton_DC_object_register(OBJECT *this_obj, OBJECT *DC_obj);
+// EXPORT STATUS ibr_skeleton_DC_object_register(OBJECT *this_obj, OBJECT *DC_obj);
 
 //Alias the currents
 #define phaseA_I_Out terminal_current_val[0]
@@ -85,12 +85,6 @@ private:
 	void reset_complex_powerflow_accumulators(void);
 	void push_complex_powerflow_values(bool update_voltage);
 
-	// Check limit func
-	void check_and_update_VA_Out(OBJECT *obj);
-
-	// Update current func
-	void update_iGen(gld::complex);
-
 public:
 	set phases;				 /**< device phases (see PHASE codes) */
 	gld::complex terminal_current_val[3];
@@ -139,10 +133,10 @@ public:
 	TIMESTAMP postsync(TIMESTAMP t0, TIMESTAMP t1);
 	STATUS pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time);
 	SIMULATIONMODE inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);
-	STATUS post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass);
+	// STATUS post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass);
 	STATUS updateCurrInjection(int64 iteration_count,bool *converged_failure);
 	STATUS init_dynamics();
-	STATUS DC_object_register(OBJECT *DC_object);
+	// STATUS DC_object_register(OBJECT *DC_object);
 
 public:
 	static CLASS *oclass;

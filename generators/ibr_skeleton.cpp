@@ -1,3 +1,5 @@
+// Skeleton/empty object with deltamode capabilities
+// Comments in //**** ****// are brief descriptions of what a function does or where it may go.
 #include "ibr_skeleton.h"
 
 CLASS *ibr_skeleton::oclass = nullptr;
@@ -17,6 +19,8 @@ ibr_skeleton::ibr_skeleton(MODULE *module)
 			oclass->trl = TRL_PROOF;
 
 		if (gl_publish_variable(oclass,
+			//**** This is where the mapping between the C/C++ programming variables and the "GLM-accessible" variables is done ****//
+			//**** Anything you want to set in the GLM or have a player/recorder/HELICS manipulate need to be published here. ****//
 			PT_complex, "phaseA_I_Out[A]", PADDR(terminal_current_val[0]), PT_DESCRIPTION, "AC current on A phase in three-phase system",
 			PT_complex, "phaseB_I_Out[A]", PADDR(terminal_current_val[1]), PT_DESCRIPTION, "AC current on B phase in three-phase system",
 			PT_complex, "phaseC_I_Out[A]", PADDR(terminal_current_val[2]), PT_DESCRIPTION, "AC current on C phase in three-phase system",
@@ -27,7 +31,6 @@ ibr_skeleton::ibr_skeleton(MODULE *module)
 			PT_complex, "IA_Out_PU_temp[pu]", PADDR(I_out_PU_temp[0]), PT_DESCRIPTION, " Phase A current for current limiting calculation of a grid-forming inverter, pu",
 			PT_complex, "IB_Out_PU_temp[pu]", PADDR(I_out_PU_temp[1]), PT_DESCRIPTION, " Phase B current for current limiting calculation of a grid-forming inverter, pu",
 			PT_complex, "IC_Out_PU_temp[pu]", PADDR(I_out_PU_temp[2]), PT_DESCRIPTION, " Phase C current for current limiting calculation of a grid-forming inverter, pu",
-
 
 			PT_complex, "power_A[VA]", PADDR(power_val[0]), PT_DESCRIPTION, "AC power on A phase in three-phase system",
 			PT_complex, "power_B[VA]", PADDR(power_val[1]), PT_DESCRIPTION, "AC power on B phase in three-phase system",
@@ -57,8 +60,8 @@ ibr_skeleton::ibr_skeleton(MODULE *module)
 		// 	GL_THROW("Unable to publish ibr_skeleton deltamode function");
 		if (gl_publish_function(oclass, "current_injection_update", (FUNCTIONADDR)ibr_skeleton_NR_current_injection_update) == nullptr)
 			GL_THROW("Unable to publish ibr_skeleton current injection update function");
-		if (gl_publish_function(oclass, "register_gen_DC_object", (FUNCTIONADDR)ibr_skeleton_DC_object_register) == nullptr)
-			GL_THROW("Unable to publish ibr_skeleton DC registration function");
+		// if (gl_publish_function(oclass, "register_gen_DC_object", (FUNCTIONADDR)ibr_skeleton_DC_object_register) == nullptr)
+		// 	GL_THROW("Unable to publish ibr_skeleton DC registration function");
 	}
 }
 
@@ -69,6 +72,7 @@ int ibr_skeleton::isa(char *classname)
 }
 
 /* Object creation is called once for each object that is created by the core */
+//**** This sets up object defaults.  This is done before the GLM is read, so GLM properties will override these ****//
 int ibr_skeleton::create(void)
 {
 	////////////////////////////////////////////////////////
@@ -126,6 +130,8 @@ int ibr_skeleton::create(void)
 }
 
 /* Object initialization is called once after all object have been created */
+//**** This is after the GLM read, so it is where parameters can be checked for validity (e.g., make sure rated power isn't negative)  ****//
+//**** This is also where a lot of "one-time actions", like mapping variables to parent or other objects, occurs.  ****//
 int ibr_skeleton::init(OBJECT *parent)
 {
 	OBJECT *obj = OBJECTHDR(this);
@@ -439,7 +445,7 @@ int ibr_skeleton::init(OBJECT *parent)
 			}	  //End non-triplex parent
 
 			//*** Common items ****//
-			// Many of these go to the "true parent", not the "powerflow parent"
+			//*** Many of these go to the "true parent", not the "powerflow parent" ****//
 
 			//Map the nominal frequency
 			temp_property_pointer = new gld_property("powerflow::nominal_frequency");
@@ -670,6 +676,8 @@ int ibr_skeleton::init(OBJECT *parent)
 	return 1;
 }
 
+//**** First call of timestep iteration - before players ****//
+//**** Usually used to reset accumulators and related variables for the model ****//
 TIMESTAMP ibr_skeleton::presync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	TIMESTAMP t2 = TS_NEVER;
@@ -685,9 +693,13 @@ TIMESTAMP ibr_skeleton::presync(TIMESTAMP t0, TIMESTAMP t1)
 		pull_complex_powerflow_values();
 	}
 
+	//**** Relevant reset code would probably go here ****//
+
 	return t2;
 }
 
+//**** Main QSTS timestep function.  Executes before powerflow solves ****//
+//**** Typically is any QSTS model updates ****//
 TIMESTAMP ibr_skeleton::sync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	OBJECT *obj = OBJECTHDR(this);
@@ -717,6 +729,8 @@ TIMESTAMP ibr_skeleton::sync(TIMESTAMP t0, TIMESTAMP t1)
 		//Pull status and voltage (mostly status)
 		pull_complex_powerflow_values();
 	}
+
+	//**** QSTS update items would go here ****//
 
 	//Deltamode check/init items
 	if (first_sync_delta_enabled) //Deltamode first pass
@@ -930,63 +944,8 @@ TIMESTAMP ibr_skeleton::sync(TIMESTAMP t0, TIMESTAMP t1)
 	}
 }
 
-/* Update the injected currents with respect to VA_Out */
-void ibr_skeleton::update_iGen(gld::complex VA_Out)
-{
-	char loop_var;
-
-	if (parent_is_single_phase) // single phase/split-phase implementation
-	{
-		// power_val[0], terminal_current_val[0], & value_IGenerated[0]
-		if (value_Circuit_V[0].Mag() > 0.0)
-		{
-			power_val[0] = VA_Out;
-			terminal_current_val[0] = ~(power_val[0] / value_Circuit_V[0]);
-			terminal_current_val_pu[0] = terminal_current_val[0] / I_base;
-			value_IGenerated[0] = terminal_current_val[0] + filter_admittance * value_Circuit_V[0];
-		}
-		else
-		{
-			power_val[0] = gld::complex(0.0,0.0);
-			terminal_current_val[0] = gld::complex(0.0,0.0);
-			terminal_current_val_pu[0] = gld::complex(0.0,0.0);
-			value_IGenerated[0] = gld::complex(0.0,0.0);
-		}
-	}
-	else
-	{
-		//Loop through for voltage check
-		for (loop_var=0; loop_var<3; loop_var++)
-		{
-			if (value_Circuit_V[loop_var].Mag() > 0.0)
-			{
-				// power_val, terminal_current_val, & value_IGenerated
-				power_val[loop_var] = VA_Out / 3;
-
-				terminal_current_val[loop_var] = ~(power_val[loop_var] / value_Circuit_V[loop_var]);
-				terminal_current_val_pu[loop_var] = terminal_current_val[loop_var] / I_base;
-			}
-			else
-			{
-				power_val[loop_var] = gld::complex(0.0,0.0);
-				terminal_current_val[loop_var] = gld::complex(0.0,0.0);
-				terminal_current_val_pu[loop_var] = gld::complex(0.0,0.0);
-			}
-		}
-
-		value_IGenerated[0] = terminal_current_val[0] - (-generator_admittance[0][0] * value_Circuit_V[0] - generator_admittance[0][1] * value_Circuit_V[1] - generator_admittance[0][2] * value_Circuit_V[2]);
-		value_IGenerated[1] = terminal_current_val[1] - (-generator_admittance[1][0] * value_Circuit_V[0] - generator_admittance[1][1] * value_Circuit_V[1] - generator_admittance[1][2] * value_Circuit_V[2]);
-		value_IGenerated[2] = terminal_current_val[2] - (-generator_admittance[2][0] * value_Circuit_V[0] - generator_admittance[2][1] * value_Circuit_V[1] - generator_admittance[2][2] * value_Circuit_V[2]);
-	}
-}
-
-/* Check the inverter output and make sure it is in the limit */
-void ibr_skeleton::check_and_update_VA_Out(OBJECT *obj)
-{
-
-}
-
 /* Postsync is called when the clock needs to advance on the second top-down pass */
+//**** Typically used for any "post-powerflow solution" updates, like calculating output power. ****//
 TIMESTAMP ibr_skeleton::postsync(TIMESTAMP t0, TIMESTAMP t1)
 {
 	OBJECT *obj = OBJECTHDR(this);
@@ -1001,7 +960,9 @@ TIMESTAMP ibr_skeleton::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		pull_complex_powerflow_values();
 	}
 
-		//Check to see if vaalid connection
+	//**** This (and below) is where post-powerflow updates would go (for QSTS) ****//
+
+	//Check to see if valid connection
 	if (value_MeterStatus == 1)
 	{
 		if (parent_is_single_phase) // single phase/split-phase implementation
@@ -1043,16 +1004,14 @@ TIMESTAMP ibr_skeleton::postsync(TIMESTAMP t0, TIMESTAMP t1)
 		VA_Out = gld::complex(0.0,0.0);
 	}
 
-	// Limit check for P_Out & Q_Out
-	check_and_update_VA_Out(obj);
-
 	return t2; /* return t2>t1 on success, t2=t1 for retry, t2<t1 on failure */
 }
 
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF DELTA MODE
 //////////////////////////////////////////////////////////////////////////
-//Preupdate
+//**** Preupdate - called when deltamode is starting ****//
+//**** Can be used to initalize variables for integrators/etc. ****//
 STATUS ibr_skeleton::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 {
 	STATUS stat_val;
@@ -1081,15 +1040,11 @@ STATUS ibr_skeleton::pre_deltaupdate(TIMESTAMP t0, unsigned int64 delta_time)
 }
 
 //Module-level call
+//**** Main "deltamode timestep" call ****//
+//**** Where differential equations and timestep-oriented model updates for deltamode would reside ****//
 SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val)
 {
 	double deltat, deltath;
-	double mag_diff_val;
-	bool proceed_to_qsts = true;	//Starts true - prevent QSTS by exception
-	int i;
-	int temp_dc_idx;
-	STATUS fxn_DC_status;
-	OBJECT *temp_DC_obj;
 
 	OBJECT *obj = OBJECTHDR(this);
 
@@ -1110,6 +1065,7 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 	//Update time tracking variables
 	prev_timestamp_dbl = gl_globaldeltaclock;
 
+	//*** Deltamode/differential equation updates would go here ****//
 	
 	//Sync the powerflow variables
 	if (parent_is_a_meter)
@@ -1120,6 +1076,12 @@ SIMULATIONMODE ibr_skeleton::inter_deltaupdate(unsigned int64 delta_time, unsign
 	//Set the mode tracking variable for this exit
 	desired_simulation_mode = simmode_return_value;
 	
+	//**** Return here designates how to proceed ****//
+	//**** SM_EVENT = we desire to go back to QSTS mode ****//
+	//**** SM_DELTA = we are ready for the next deltamode timestep ****//
+	//**** SM_DELTA_ITER = we want to reiterate this timestep, so don't move forward (e.g., predictor step) ****//
+	//**** SM_ERROR = an error occurred and we should terminate ****//
+
 	return simmode_return_value;
 }
 
@@ -1136,14 +1098,17 @@ STATUS ibr_skeleton::init_dynamics()
 		pull_complex_powerflow_values();
 	}
 
+	//**** This would be where any initalizations would occur, especially to initalize differential equations from QSTS values ****//
+
 	//Set the mode tracking variable to a default - not really needed, but be paranoid
 	desired_simulation_mode = SM_EVENT;
 
 	return SUCCESS;
 }
 
-// //Module-level post update call
-// /* Think this was just put here as an example - not sure what it would do */
+//Module-level post update call
+//**** Called right before returning to QSTS mode.  Useful to initialize QSTS model to any deltamode changes (if different model)****//
+//**** Not used in all models, so commented out here ****//
 // STATUS ibr_skeleton::post_deltaupdate(gld::complex *useful_value, unsigned int mode_pass)
 // {
 // 	//If we have a meter, reset the accumulators
@@ -1214,7 +1179,6 @@ void ibr_skeleton::pull_complex_powerflow_values(void)
 	//Pull status
 	value_MeterStatus = pMeterStatus->get_enumeration();
 
-	//********** TODO - Portions of this may need to be a "deltamode only" pull	 **********//
 	//Update IGenerated, in case the powerflow is overriding it
 	if (parent_is_single_phase)
 	{
@@ -1298,7 +1262,7 @@ void ibr_skeleton::push_complex_powerflow_values(bool update_voltage)
 			//Loop through the three-phases/accumulators
 			for (indexval = 0; indexval < 3; indexval++)
 			{
-				//**** Current value ***/
+				//*** Current value ***/
 				//Pull current value again, just in case
 				temp_complex_val = pLine_I[indexval]->get_complex();
 
@@ -1343,14 +1307,14 @@ void ibr_skeleton::push_complex_powerflow_values(bool update_voltage)
 		if (update_voltage)
 		{
 			//Should just be zero
-			//**** push voltage value -- not an accumulator, just force ****/
+			//*** push voltage value -- not an accumulator, just force ***/
 			pCircuit_V[0]->setp<gld::complex>(value_Circuit_V[0],*test_rlock);
 		}
 		else
 		{
 			//Pull the relevant values -- all single pulls
 
-			//**** Current value ***/
+			//*** Current value ***/
 			//Pull current value again, just in case
 			temp_complex_val = pLine_I[0]->get_complex();
 
@@ -1360,7 +1324,7 @@ void ibr_skeleton::push_complex_powerflow_values(bool update_voltage)
 			//Push it back up
 			pLine_I[0]->setp<gld::complex>(temp_complex_val, *test_rlock);
 
-			//**** power value ***/
+			//*** power value ***/
 			//Pull current value again, just in case
 			temp_complex_val = pPower[0]->get_complex();
 
@@ -1370,7 +1334,7 @@ void ibr_skeleton::push_complex_powerflow_values(bool update_voltage)
 			//Push it back up
 			pPower[0]->setp<gld::complex>(temp_complex_val, *test_rlock);
 
-			//**** prerotated value ***/
+			//*** prerotated value ***/
 			//Pull current value again, just in case
 			temp_complex_val = pLine_unrotI[0]->get_complex();
 
@@ -1380,7 +1344,7 @@ void ibr_skeleton::push_complex_powerflow_values(bool update_voltage)
 			//Push it back up
 			pLine_unrotI[0]->setp<gld::complex>(temp_complex_val, *test_rlock);
 
-			//**** IGenerated ****/
+			//*** IGenerated ***/
 			//********* TODO - Does this need to be deltamode-flagged? *************//
 			//Direct write, not an accumulator
 			pIGenerated[0]->setp<gld::complex>(value_IGenerated[0], *test_rlock);
@@ -1389,11 +1353,12 @@ void ibr_skeleton::push_complex_powerflow_values(bool update_voltage)
 }
 
 // Function to update current injection IGenerated for VSI
+//**** Called by powerflow at each iteration of NR to update for any voltage solution changes ****//
+//**** Mostly used to adjust current angle to match any voltage angle change as a result of the new powerflow ****//
 STATUS ibr_skeleton::updateCurrInjection(int64 iteration_count,bool *converged_failure)
 {
 	double temp_time;
 	OBJECT *obj = OBJECTHDR(this);
-	gld::complex temp_VA;
 	gld::complex temp_V1, temp_V2;
 	bool bus_is_a_swing, bus_is_swing_pq_entry;
 	STATUS temp_status_val;
@@ -1401,10 +1366,6 @@ STATUS ibr_skeleton::updateCurrInjection(int64 iteration_count,bool *converged_f
 	bool running_in_delta;
 	bool limit_hit;
 	double freq_diff_angle_val, tdiff;
-	double mag_diff_val[3];
-	gld::complex rotate_value;
-	char loop_var;
-	gld::complex intermed_curr_calc[3];
 
 	//Assume starts converged (no failure)
 	*converged_failure = false;
@@ -1466,8 +1427,6 @@ STATUS ibr_skeleton::updateCurrInjection(int64 iteration_count,bool *converged_f
 	    Qref = -sqrt(S_base*S_base-Pref*Pref);
 	  }
 	
-
-	temp_VA = gld::complex(Pref, Qref);
 
 	//See if we're a meter
 	if (parent_is_a_meter)
@@ -1577,57 +1536,60 @@ STATUS ibr_skeleton::updateCurrInjection(int64 iteration_count,bool *converged_f
 	return SUCCESS;
 }
 
-//Internal function to the mapping of the DC object update function
-STATUS ibr_skeleton::DC_object_register(OBJECT *DC_object)
-{
-	FUNCTIONADDR temp_add = nullptr;
-	DC_OBJ_FXNS_IBR temp_DC_struct;
-	OBJECT *obj = OBJECTHDR(this);
+// //Internal function to the mapping of the DC object update function
+//**** If the DC bus functionality of the solar or energy_storage is desired.  Most initial implementations don't use this, so commented ****//
+// STATUS ibr_skeleton::DC_object_register(OBJECT *DC_object)
+// {
+// 	FUNCTIONADDR temp_add = nullptr;
+// 	DC_OBJ_FXNS_IBR temp_DC_struct;
+// 	OBJECT *obj = OBJECTHDR(this);
 
-	//Put the object into the structure
-	temp_DC_struct.dc_object = DC_object;
+// 	//Put the object into the structure
+// 	temp_DC_struct.dc_object = DC_object;
 
-	//Find the update function
-	temp_DC_struct.fxn_address = (FUNCTIONADDR)(gl_get_function(DC_object, "DC_gen_object_update"));
+// 	//Find the update function
+// 	temp_DC_struct.fxn_address = (FUNCTIONADDR)(gl_get_function(DC_object, "DC_gen_object_update"));
 
-	//Make sure it worked
-	if (temp_DC_struct.fxn_address == nullptr)
-	{
-		gl_error("ibr_skeleton:%s - failed to map DC update for object %s", (obj->name ? obj->name : "unnamed"), (DC_object->name ? DC_object->name : "unnamed"));
-		/*  TROUBLESHOOT
-		While attempting to map the update function for a DC-bus device, an error was encountered.
-		Please try again.  If the error persists, please submit your code and a bug report via the issues tracker.
-		*/
+// 	//Make sure it worked
+// 	if (temp_DC_struct.fxn_address == nullptr)
+// 	{
+// 		gl_error("ibr_skeleton:%s - failed to map DC update for object %s", (obj->name ? obj->name : "unnamed"), (DC_object->name ? DC_object->name : "unnamed"));
+// 		/*  TROUBLESHOOT
+// 		While attempting to map the update function for a DC-bus device, an error was encountered.
+// 		Please try again.  If the error persists, please submit your code and a bug report via the issues tracker.
+// 		*/
 
-		return FAILED;
-	}
+// 		return FAILED;
+// 	}
 
-	//Push us onto the memory
-	dc_interface_objects.push_back(temp_DC_struct);
+// 	//Push us onto the memory
+// 	dc_interface_objects.push_back(temp_DC_struct);
 
-    if (gl_object_isa(DC_object,"energy_storage","generators"))
-    {
+//     if (gl_object_isa(DC_object,"energy_storage","generators"))
+//     {
 
-        //Map the battery SOC
-        pSOC = new gld_property(DC_object, "SOC_ES");
+//         //Map the battery SOC
+//         pSOC = new gld_property(DC_object, "SOC_ES");
 
-	//Check it
-	if (!pSOC->is_valid() || !pSOC->is_double())
-	{
-	    GL_THROW("ibr_skeleton:%s - failed to map battery SOC ", (obj->name ? obj->name : "unnamed"));
-			/*  TROUBLESHOOT
-			Failed to map battery SOC.
-			*/
-	}
-    }
+// 	//Check it
+// 	if (!pSOC->is_valid() || !pSOC->is_double())
+// 	{
+// 	    GL_THROW("ibr_skeleton:%s - failed to map battery SOC ", (obj->name ? obj->name : "unnamed"));
+// 			/*  TROUBLESHOOT
+// 			Failed to map battery SOC.
+// 			*/
+// 	}
+//     }
 
-	//If we made it this far, all should be good!
-	return SUCCESS;
-}
+// 	//If we made it this far, all should be good!
+// 	return SUCCESS;
+// }
 
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE
 //////////////////////////////////////////////////////////////////////////
+//**** These functions are the GridLAB-D interface points it expects from every object ****//
+//**** Without them, GridLAB-D doesn't know what to do with your object ****//
 
 EXPORT int create_ibr_skeleton(OBJECT **obj, OBJECT *parent)
 {
@@ -1741,6 +1703,7 @@ EXPORT SIMULATIONMODE interupdate_ibr_skeleton(OBJECT *obj, unsigned int64 delta
 // }
 
 //// Define export function that update the VSI current injection IGenerated to the grid
+//Updates mid-solve on powerflow calls - allows values to update for moving voltages
 EXPORT STATUS ibr_skeleton_NR_current_injection_update(OBJECT *obj, int64 iteration_count, bool *converged_failure)
 {
 	STATUS temp_status;
@@ -1755,17 +1718,17 @@ EXPORT STATUS ibr_skeleton_NR_current_injection_update(OBJECT *obj, int64 iterat
 	return temp_status;
 }
 
-// Export function for registering a DC interaction object
-EXPORT STATUS ibr_skeleton_DC_object_register(OBJECT *this_obj, OBJECT *DC_obj)
-{
-	STATUS temp_status;
+// // Export function for registering a DC interaction object - if supported
+// EXPORT STATUS ibr_skeleton_DC_object_register(OBJECT *this_obj, OBJECT *DC_obj)
+// {
+// 	STATUS temp_status;
 
-	//Map us
-	ibr_skeleton *this_inv = OBJECTDATA(this_obj, ibr_skeleton);
+// 	//Map us
+// 	ibr_skeleton *this_inv = OBJECTDATA(this_obj, ibr_skeleton);
 
-	//Call the function to register us
-	temp_status = this_inv->DC_object_register(DC_obj);
+// 	//Call the function to register us
+// 	temp_status = this_inv->DC_object_register(DC_obj);
 
-	//Return the status
-	return temp_status;
-}
+// 	//Return the status
+// 	return temp_status;
+// }
