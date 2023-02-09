@@ -57,7 +57,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new sync_ctrl(module);
 	new energy_storage(module);
 	new sec_control(module);
-	//**** Would add any new objects here too ****//
+	//**** IBR_SKELETON_NOTE: Would add any new objects here too ****//
 	new ibr_skeleton(module);
 
 	/* Clear the deltamode list too, just in case*/
