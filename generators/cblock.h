@@ -1,11 +1,11 @@
 /**
- * @file cblock.hpp
+ * @file cblock.h
  * @brief Header file defining the public API for linear control block
  *
  */
 
-#ifndef CBLOCK_HPP
-#define CBLOCK_HPP
+#ifndef CBLOCK_H
+#define CBLOCK_H
 
 #include <math.h>
 #include <algorithm>

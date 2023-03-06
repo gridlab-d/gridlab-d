@@ -68,7 +68,7 @@ void Cblock::updatestate(double u,double dt,double xmin,double xmax,double dxmin
     xout = x[0] + dt*p_dxdt[0];
     xout = std::max(xmin,std::min(xout,xmax));
     p_xhat[0] = xout;
-    p_current_stage = PREDICTOR;
+    p_current_stage = CORRECTOR; // Update stage
   }
 
   if(stage == CORRECTOR) {
@@ -77,7 +77,7 @@ void Cblock::updatestate(double u,double dt,double xmin,double xmax,double dxmin
     xout = x[0] + dt*dx_dt;
     xout = std::max(xmin,std::min(xout,xmax));
     x[0] = xout;
-    p_current_stage = CORRECTOR;
+    p_current_stage = PREDICTOR; // Update stage
   }
 }
 
@@ -102,17 +102,19 @@ double Cblock::getoutput(double u)
 double Cblock::getoutput(double u,double dt,double xmin,double xmax,double ymin,double ymax,IntegrationStage stage, bool dostateupdate)
 {
   double x_n,y_n,x_n1;
-  
-  if(stage == PREDICTOR) x_n = x[0];
-  else x_n = p_xhat[0];
+
+  if(dostateupdate) {
+    updatestate(u,dt,xmin,xmax,p_dxmin,p_dxmax,stage);
+    if(stage == PREDICTOR) x_n = p_xhat[0];
+    else x_n = x[0];
+  } else {
+    if(stage == PREDICTOR) x_n = p_xhat[0] = x[0];
+    else x_n = x[0] = p_xhat[0];
+  }
   
   y_n = p_C[0]*x_n + p_D[0]*u;
 
   y_n = std::max(ymin,std::min(y_n,ymax));
-
-  if(dostateupdate) {
-    updatestate(u,dt,xmin,xmax,p_dxmin,p_dxmax,stage);
-  }
 
   return y_n;
 }
@@ -401,6 +403,7 @@ void Integrator::setparams(double T)
   setcoeffs(a,b);
   setxlimits(-1000.0,1000.0);
   setylimits(-1000.0,1000.0);
+  setdxlimits(-1000.0,1000.0);
 }
 
 
