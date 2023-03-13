@@ -209,7 +209,7 @@ inverter_dyn::inverter_dyn(MODULE *module)
 			PT_double, "Qmax[pu]", PADDR(Qmax), PT_DESCRIPTION, "DELTAMODE: maximum limit and minimum limit of Qmax controller and Qmin controller.",
 			PT_double, "Qmin[pu]", PADDR(Qmin), PT_DESCRIPTION, "DELTAMODE: maximum limit and minimum limit of Qmax controller and Qmin controller.",
 			PT_double, "delta_w_droop[pu]", PADDR(delta_w_droop), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: delta omega fro p-f droop",
-			PT_double, "VFlag", PADDR(VFlag), PT_DESCRIPTION, "DELTAMODE: Voltage flag to choose between PI control or direct control.",
+			PT_bool, "VFlag", PADDR(VFlag), PT_DESCRIPTION, "DELTAMODE: Voltage flag to choose between PI control or direct control.",
 			PT_double, "Vdc_pu[pu]", PADDR(curr_state.Vdc_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: dc bus voltage of PV panel when using grid-forming PV Inverter",
 			PT_double, "Vdc_min_pu[pu]", PADDR(Vdc_min_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: The reference voltage of the Vdc_min controller",
 			PT_double, "C_pu[pu]", PADDR(C_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: capacitance of dc bus",
@@ -4934,9 +4934,11 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 				Angle_blk[i].init_given_y(e_droop[i].Arg());
 			}
 
-			// Initialize the voltage control block
-			V_ctrl_blk.setparams(kpv,kiv,E_min,E_max,E_min,E_max);
-			V_ctrl_blk.init_given_y(e_droop[0].Mag() / V_base);
+			if(VFlag) {
+			  // Initialize the voltage control block
+			  V_ctrl_blk.setparams(kpv,kiv,E_min,E_max,E_min,E_max);
+			  V_ctrl_blk.init_given_y(e_droop[0].Mag() / V_base);
+			}
 			
 			//See if it is the first deltamode entry - theory is all future changes will trigger deltamode, so these should be set
 			if (first_deltamode_init)
@@ -4946,7 +4948,7 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 			        if(VFlag) {
 				  Vset = pCircuit_V_Avg_pu + VA_Out.Im() / S_base * mq;
 				} else {
-				  Vset = VA_Out.Im() / S_base *mq;
+				  Vset = e_droop[0].Mag() / V_base + VA_Out.Im() / S_base *mq;
 				}
 
 				if (P_f_droop_setting_mode == PSET_MODE)
@@ -5081,7 +5083,7 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 			        if(VFlag) {
 			          Vset = pCircuit_V_Avg_pu + VA_Out.Im() / S_base * mq;
 				} else {
-				  Vset = VA_Out.Im() / S_base * mq;
+				  Vset = (e_droop[0].Mag() + e_droop[1].Mag() + e_droop[2].Mag()) / 3 / V_base + VA_Out.Im() / S_base * mq;
 				}
 
 				if (P_f_droop_setting_mode == PSET_MODE)
