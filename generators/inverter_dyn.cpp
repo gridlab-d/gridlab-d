@@ -522,6 +522,10 @@ int inverter_dyn::create(void)
 
 	node_nominal_voltage = 120.0;		//Just pick a value
 
+	imax_phase_correction_done[0] = false;
+	imax_phase_correction_done[1] = false;
+	imax_phase_correction_done[2] = false;
+
 	update_chk_vars();
 
 	return 1; /* return 1 on success, 0 on failure */
@@ -6057,16 +6061,20 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count,bool *converged_f
 				//Compare it
 				if ((terminal_current_val_pu[0].Mag() > Imax) && running_in_delta)	//Current limit only gets applied when controls valid (deltamode)
 				{
-				  // Calculate phase angle correction
-				  double theta = terminal_current_val_pu[0].Arg(); // Current angle
-				  double theta_prefault = terminal_current_val_pu_prefault[0].Arg(); // Prefault current angle
-				  double theta_jump = theta - theta_prefault; // Jump in angle
-				  double Inolimit_mag = terminal_current_val_pu[0].Mag(); // Current magnitude
-				  double Iprefault_mag = terminal_current_val_pu_prefault[0].Mag(); // Prefault current magnitude
-				  double theta_c = (Inolimit_mag - Imax)/(Inolimit_mag - Iprefault_mag)*theta_jump;
-				
+				        if (!imax_phase_correction_done[0]) {
+					  // Calculate phase angle correction
+					  double theta = terminal_current_val_pu[0].Arg(); // Current angle
+					  double theta_prefault = terminal_current_val_pu_prefault[0].Arg(); // Prefault current angle
+					  double theta_jump = theta - theta_prefault; // Jump in angle
+					  double Inolimit_mag = terminal_current_val_pu[0].Mag(); // Current magnitude
+					  double Iprefault_mag = terminal_current_val_pu_prefault[0].Mag(); // Prefault current magnitude
+					  theta_c[0] = (Inolimit_mag - Imax)/(Inolimit_mag - Iprefault_mag)*theta_jump;
+					  imax_phase_correction_done[0] = true;
+					} else {
+					  theta_c[0] = 0.0;
+					}
 					//Compute the limited value - pu
-					intermed_curr_calc[0].SetPolar(Imax,terminal_current_val_pu[0].Arg()+theta_c);
+					intermed_curr_calc[0].SetPolar(Imax,terminal_current_val_pu[0].Arg()+theta_c[0]);
 
 					//Copy into the per-unit representation
 					terminal_current_val_pu[0] = intermed_curr_calc[0];
@@ -6108,22 +6116,27 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count,bool *converged_f
 					//Compare it
 					if ((terminal_current_val_pu[loop_var].Mag() > Imax) && running_in_delta)	//Current limit only gets applied when controls valid (deltamode)
 					{
-					  // Calculate phase angle correction
-					  double theta = terminal_current_val_pu[loop_var].Arg(); // Current angle
-					  double theta_prefault = terminal_current_val_pu_prefault[loop_var].Arg(); // Prefault current angle
-					  double theta_jump = theta - theta_prefault; // Jump in angle
-					  double Inolimit_mag = terminal_current_val_pu[loop_var].Mag(); // Current magnitude
-					  double Iprefault_mag = terminal_current_val_pu_prefault[loop_var].Mag(); // Prefault current magnitude
-					  double theta_c = (Inolimit_mag - Imax)/(Inolimit_mag - Iprefault_mag)*theta_jump;
+					  if(!imax_phase_correction_done[loop_var]) {
+					    // Calculate phase angle correction
+					    double theta = terminal_current_val_pu[loop_var].Arg(); // Current angle
+					    double theta_prefault = terminal_current_val_pu_prefault[loop_var].Arg(); // Prefault current angle
+					    double theta_jump = theta - theta_prefault; // Jump in angle
+					    double Inolimit_mag = terminal_current_val_pu[loop_var].Mag(); // Current magnitude
+					    double Iprefault_mag = terminal_current_val_pu_prefault[loop_var].Mag(); // Prefault current magnitude
+					    theta_c[loop_var] = (Inolimit_mag - Imax)/(Inolimit_mag - Iprefault_mag)*theta_jump;
+					    imax_phase_correction_done[loop_var] = true;
+					  } else {
+					    theta_c[loop_var] = 0.0;
+					  }
 
-						//Compute the limited value - pu
-						intermed_curr_calc[loop_var].SetPolar(Imax,terminal_current_val_pu[loop_var].Arg()+theta_c);
+					  //Compute the limited value - pu
+					  intermed_curr_calc[loop_var].SetPolar(Imax,terminal_current_val_pu[loop_var].Arg()+theta_c[loop_var]);
 
-						//Copy into the per-unit representation
-						terminal_current_val_pu[loop_var] = intermed_curr_calc[loop_var];
-
-						//Adjust the terminal current from per-unit
-						terminal_current_val[loop_var] = terminal_current_val_pu[loop_var] * I_base;
+					  //Copy into the per-unit representation
+					  terminal_current_val_pu[loop_var] = intermed_curr_calc[loop_var];
+					  
+					  //Adjust the terminal current from per-unit
+					  terminal_current_val[loop_var] = terminal_current_val_pu[loop_var] * I_base;
 					}
 
 					//Update the injection

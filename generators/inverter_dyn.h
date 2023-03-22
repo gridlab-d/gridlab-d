@@ -238,6 +238,8 @@ public:
 	gld::complex terminal_current_val[3];
 	gld::complex terminal_current_val_pu[3];
         gld::complex terminal_current_val_pu_prefault[3]; // Pre-fault current, used in Imax angle correction only
+        bool imax_phase_correction_done[3];
+        double theta_c[3];
 	TIMESTAMP inverter_start_time;
 	bool inverter_first_step;
 	bool first_deltamode_init;
