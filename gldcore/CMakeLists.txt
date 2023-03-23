@@ -1,5 +1,16 @@
 SET(GLD_MODULE_NAME gridlabd)
 
+if (Python_Development.Embed_Found)
+    set(PYTHON_CORE
+        python_embed.cpp
+        python_embed.h
+        python_property.cpp
+        python_property.h
+        )
+else()
+    set(PYTHON_CORE)
+endif()
+
 # Load and link C/C++ files for the executeable
 set(SOURCE_LIST
         gridlabd.h
@@ -127,6 +138,7 @@ set(SOURCE_LIST
         version.cpp
         #        xcore.cpp
         #        xcore.h
+        ${PYTHON_CORE}
         )
 
 #if(NOT APPLE)

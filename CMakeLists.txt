@@ -90,6 +90,11 @@ if (CURSES_FOUND)
     option(HAVE_CURSES "Curses library is present on the platform" ON)
 endif ()
 
+find_package(Python COMPONENTS Development.Embed)
+if (NOT Python_Development.Embed_FOUND)
+    message(STATUS "Python Embed headers could not be located on the platform. Core Python embedding disabeld.")
+endif ()
+
 # Link required libraries for symbol checks
 list(APPEND CMAKE_REQUIRED_DEFINITIONS -D_GNU_SOURCE)
 
