@@ -275,6 +275,8 @@ inverter_dyn::inverter_dyn(MODULE *module)
 				PT_KEYWORD, "UNDER_VOLTAGE_HIGH",(enumeration)IEEE_1547_HIGH_UV, PT_DESCRIPTION, "High under-voltage level trip",
 				PT_KEYWORD, "OVER_VOLTAGE_LOW",(enumeration)IEEE_1547_LOW_OV, PT_DESCRIPTION, "Low over-voltage level trip",
 				PT_KEYWORD, "OVER_VOLTAGE_HIGH",(enumeration)IEEE_1547_HIGH_OV, PT_DESCRIPTION, "High over-voltage level trip",
+					PT_bool, "phase_angle_correction", PADDR(phase_angle_correction), PT_DESCRIPTION, "DELTAMODE: Boolean used to indicate whether inverter applies phase angle correction during current limiting",
+
 
 			nullptr) < 1)
 				GL_THROW("unable to publish properties in %s", __FILE__);
@@ -525,6 +527,7 @@ int inverter_dyn::create(void)
 	imax_phase_correction_done[0] = false;
 	imax_phase_correction_done[1] = false;
 	imax_phase_correction_done[2] = false;
+	phase_angle_correction = true; // Phase angle correction on by default
 
 	update_chk_vars();
 
@@ -6061,7 +6064,7 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count,bool *converged_f
 				//Compare it
 				if ((terminal_current_val_pu[0].Mag() > Imax) && running_in_delta)	//Current limit only gets applied when controls valid (deltamode)
 				{
-				        if (!imax_phase_correction_done[0]) {
+				        if (phase_angle_correction && !imax_phase_correction_done[0]) {
 					  // Calculate phase angle correction
 					  double theta = terminal_current_val_pu[0].Arg(); // Current angle
 					  double theta_prefault = terminal_current_val_pu_prefault[0].Arg(); // Prefault current angle
@@ -6080,18 +6083,19 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count,bool *converged_f
 
 					//Adjust the terminal current from per-unit
 					terminal_current_val[0] = terminal_current_val_pu[0] * I_base;
+				
 				}
 
 				//Update the injection
 				value_IGenerated[0] = terminal_current_val[0] + value_Circuit_V[0] / (gld::complex(Rfilter, Xfilter) * Z_base);
-
+				
 				//Update the internal voltage
 				e_source[0] = value_IGenerated[0] * (gld::complex(Rfilter, Xfilter) * Z_base);
 				e_source_pu[0] = e_source[0] / V_base;
-
+				
 				//Update the power, just to be consistent
 				power_val[0] = value_Circuit_V[0] * ~terminal_current_val[0];
-
+					
 				//Update the overall power
 				VA_Out = power_val[0];
 
@@ -6115,7 +6119,7 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count,bool *converged_f
 					//Compare it
 					if ((terminal_current_val_pu[loop_var].Mag() > Imax) && running_in_delta)	//Current limit only gets applied when controls valid (deltamode)
 					{
-					  if(!imax_phase_correction_done[loop_var]) {
+					  if(phase_angle_correction && !imax_phase_correction_done[loop_var]) {
 					    // Calculate phase angle correction
 					    double theta = terminal_current_val_pu[loop_var].Arg(); // Current angle
 					    double theta_prefault = terminal_current_val_pu_prefault[loop_var].Arg(); // Prefault current angle
@@ -6134,19 +6138,20 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count,bool *converged_f
 					  
 					  //Adjust the terminal current from per-unit
 					  terminal_current_val[loop_var] = terminal_current_val_pu[loop_var] * I_base;
+					
 					}
 
 					//Update the injection
 					value_IGenerated[loop_var] = terminal_current_val[loop_var] + value_Circuit_V[loop_var] / (gld::complex(Rfilter, Xfilter) * Z_base);
-
+					
 					//Update the internal voltage
 					e_source[loop_var] = value_IGenerated[loop_var] * (gld::complex(Rfilter, Xfilter) * Z_base);
 					e_source_pu[loop_var] = e_source[loop_var] / V_base;
-
+					
 					//Update the power, just to be consistent
 					power_val[loop_var] = value_Circuit_V[loop_var] * ~terminal_current_val[loop_var];
-
-
+					
+					
 					//Default else - no need to adjust
 				}//End phase for
 
