@@ -6070,9 +6070,8 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count,bool *converged_f
 					  double Iprefault_mag = terminal_current_val_pu_prefault[0].Mag(); // Prefault current magnitude
 					  theta_c[0] = (Inolimit_mag - Imax)/(Inolimit_mag - Iprefault_mag)*theta_jump;
 					  imax_phase_correction_done[0] = true;
-					} else {
-					  theta_c[0] = 0.0;
-					}
+					} 
+
 					//Compute the limited value - pu
 					intermed_curr_calc[0].SetPolar(Imax,terminal_current_val_pu[0].Arg()+theta_c[0]);
 
@@ -6125,9 +6124,7 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count,bool *converged_f
 					    double Iprefault_mag = terminal_current_val_pu_prefault[loop_var].Mag(); // Prefault current magnitude
 					    theta_c[loop_var] = (Inolimit_mag - Imax)/(Inolimit_mag - Iprefault_mag)*theta_jump;
 					    imax_phase_correction_done[loop_var] = true;
-					  } else {
-					    theta_c[loop_var] = 0.0;
-					  }
+					  } 
 
 					  //Compute the limited value - pu
 					  intermed_curr_calc[loop_var].SetPolar(Imax,terminal_current_val_pu[loop_var].Arg()+theta_c[loop_var]);
