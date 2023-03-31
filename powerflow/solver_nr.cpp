@@ -2337,8 +2337,17 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 							jindexer = 2*bus[indexer].Matrix_Loc;
 							kindexer = jindexer + 2*powerflow_values->BA_diag[indexer].size - 1;
 
-							//Print them out
-							fprintf(FPoutVal,"%d,%d,%s\n",jindexer,kindexer,bus[indexer].name);
+							
+							if (bus[indexer].swing_functions_enabled && (NR_solver_algorithm==NRM_FPI))
+							{
+								//Print out special SWING bus entry
+								fprintf(FPoutVal,"-1,-1,%s - excluded as SWING\n",bus[indexer].name);
+							}
+							else	//Normal bus, or TCIM
+							{
+								//Print them out
+								fprintf(FPoutVal,"%d,%d,%s\n",jindexer,kindexer,bus[indexer].name);
+							}
 
 							//Set the flag
 							something_has_been_output = true;
