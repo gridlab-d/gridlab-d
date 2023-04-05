@@ -315,6 +315,23 @@ int link_object::init(OBJECT *parent)
 		The to node for a line or link is not connected to anything.
 		*/
 
+	//General check - make sure the from and to are actually node objects!
+	if (!gl_object_isa(from,"node","powerflow"))
+	{
+		GL_THROW("link::init(): link:%d - %s - 'from' object is not a powerflow node",obj->id,(obj->name?obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		The "from" object of a link-based powerflow object is not actually a powerflow node.  It must be a node-based object to properly work.
+		*/
+	}
+	
+	if (!gl_object_isa(to,"node","powerflow"))
+	{
+		GL_THROW("link::init(): link:%d - %s - 'to' object is not a powerflow node",obj->id,(obj->name?obj->name : "Unnamed"));
+		/*  TROUBLESHOOT
+		The "to" object of a link-based powerflow object is not actually a powerflow node.  It must be a node-based object to properly work.
+		*/
+	}
+
 	//Make sure nodes have initialized in NR - otherwise some lines get missed (if connected to children)
 	if (solver_method == SM_NR)
 	{
