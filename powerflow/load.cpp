@@ -401,6 +401,41 @@ int load::init(OBJECT *parent)
 		//Default else - not needed
 	}
 
+	//Simple Check to see if phases are there - only works for GLM-specified values (instead of players)
+	if (has_phase(PHASE_D))
+	{
+		//Crude phase checks
+		if (((constant_power[0].Mag() > 0.0) || (constant_current[0].Mag() > 0.0) || (constant_impedance[0].Mag() > 0.0) || (fabs(base_power[0]) > 0.0)) && !has_phase(PHASE_A|PHASE_B))
+		{
+			gl_warning("load:%d %s - delta-connected load components for xxx_A need phases AB to be present",obj->id,(obj->name?obj->name:"Unnamed"));
+			/*   TROUBLESHOOT
+			A load object has a delta connection implied in the phase, but the load specified requires more phases than are present on the object.
+			e.g., constant_power_A for a delta connection implies phases must include AB, but one of these is missing.  This load value will not
+			be calculated correctly and/or excluded from the powerflow.
+			*/
+		}
+
+		if (((constant_power[1].Mag() > 0.0) || (constant_current[1].Mag() > 0.0) || (constant_impedance[1].Mag() > 0.0) || (fabs(base_power[1]) > 0.0)) && !has_phase(PHASE_B|PHASE_C))
+		{
+			gl_warning("load:%d %s - delta-connected load components for xxx_B need phases BC to be present",obj->id,(obj->name?obj->name:"Unnamed"));
+			/*   TROUBLESHOOT
+			A load object has a delta connection implied in the phase, but the load specified requires more phases than are present on the object.
+			e.g., constant_power_B for a delta connection implies phases must include BC, but one of these is missing.  This load value will not
+			be calculated correctly and/or excluded from the powerflow.
+			*/
+		}
+
+		if (((constant_power[2].Mag() > 0.0) || (constant_current[2].Mag() > 0.0) || (constant_impedance[2].Mag() > 0.0) || (fabs(base_power[2]) > 0.0)) && !has_phase(PHASE_C|PHASE_A))
+		{
+			gl_warning("load:%d %s - delta-connected load components for xxx_C need phases CA to be present",obj->id,(obj->name?obj->name:"Unnamed"));
+			/*   TROUBLESHOOT
+			A load object has a delta connection implied in the phase, but the load specified requires more phases than are present on the object.
+			e.g., constant_power_C for a delta connection implies phases must include CA, but one of these is missing.  This load value will not
+			be calculated correctly and/or excluded from the powerflow.
+			*/
+		}
+	}
+
 	return ret_value;
 }
 
