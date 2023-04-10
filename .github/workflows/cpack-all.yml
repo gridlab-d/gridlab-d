@@ -24,7 +24,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt update
-          sudo apt install -yq libboost1.71-all-dev
+          sudo apt install -yq libboost-dev
 
       - name: Build HELICS Cache
         id: cache-helics
@@ -104,37 +104,38 @@ jobs:
             mingw-w64-x86_64-cmake
             mingw-w64-x86_64-nsis
             mingw-w64-x86_64-boost
+            mingw-w64-x86_64-helics
 
-      - name: Build HELICS Cache
-        id: cache-helics
-        uses: actions/cache@v3
-        env:
-          cache-name: cache-helics
-        with:
-          path: ${{github.workspace}}/.cache/HELICS
-          key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
-          restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
+      # - name: Build HELICS Cache
+      #   id: cache-helics
+      #   uses: actions/cache@v3
+      #   env:
+      #     cache-name: cache-helics
+      #   with:
+      #     path: ${{github.workspace}}/.cache/HELICS
+      #     key: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
+      #     restore-keys: ${{ matrix.os }}-${{ matrix.arch }}-build-${{ env.cache-name }}-${{ env.helics-ref }}
 
-      - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
-        name: Checkout HELICS
-        uses: actions/checkout@v3
-        with:
-          repository: 'GMLC-TDC/HELICS'
-          ref: ${{ env.helics-ref }}
-          submodules: 'recursive'
-          fetch-depth: 0
-          path: helics-build
+      # - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
+      #   name: Checkout HELICS
+      #   uses: actions/checkout@v3
+      #   with:
+      #     repository: 'GMLC-TDC/HELICS'
+      #     ref: ${{ env.helics-ref }}
+      #     submodules: 'recursive'
+      #     fetch-depth: 0
+      #     path: helics-build
 
-      - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
-        name: Build HELICS
-        working-directory: ${{github.workspace}}/helics-build
-        run: |
-          threads=`nproc`
-          workspace="$(cygpath -u '${{github.workspace}}')"
-          cmake -G "Ninja" -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX="$workspace/.cache/HELICS" \
-           -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DHELICS_ZMQ_SUBPROJECT=ON
-          cmake --build ./build --config ${{env.BUILD_TYPE}} --parallel $threads
-          cmake --install ./build
+      # - if: ${{ steps.cache-helics.outputs.cache-hit != 'true' }}
+      #   name: Build HELICS
+      #   working-directory: ${{github.workspace}}/helics-build
+      #   run: |
+      #     threads=`nproc`
+      #     workspace="$(cygpath -u '${{github.workspace}}')"
+      #     cmake -G "Unix Makefiles" -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX="$workspace/.cache/HELICS" \
+      #      -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DHELICS_ZMQ_SUBPROJECT=ON
+      #     cmake --build ./build --config ${{env.BUILD_TYPE}} --parallel $threads
+      #     cmake --install ./build
 
       - name: Checkout GridLAB-D
         uses: actions/checkout@v3
@@ -147,9 +148,8 @@ jobs:
         run: |
           threads=`nproc`
           workspace="$(cygpath -u '${{github.workspace}}')"
-          cmake -G "Ninja" -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX="$workspace/.temp/GridLAB-D" \
-          -DGLD_USE_HELICS=ON -DGLD_HELICS_DIR="$workspace/.cache/HELICS" -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ \
-          -DGLD_CI_BUILD=ON
+          cmake -G "Unix Makefiles" -B ./build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX="$workspace/.temp/GridLAB-D" \
+          -DGLD_USE_HELICS=ON -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DGLD_CI_BUILD=ON
           cmake --build ./build --config ${{env.BUILD_TYPE}} --parallel $threads
 
       - name: Package
