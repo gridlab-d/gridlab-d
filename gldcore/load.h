@@ -11,6 +11,9 @@
 
 #include "globals.h"
 #include "module.h"
+#ifdef HAVE_PYTHON
+#include "python_embed.h"
+#endif
 
 #include "load_xml.h"
 
@@ -25,6 +28,13 @@ STATUS loadall(char *filename);
 #ifdef __cplusplus
 }
 #endif
+
+typedef struct s_languagemap {
+	const char *name;
+	void *(*init)(int argc, const char **argv);
+	bool (*parser)(const char *buffer, void *context);
+	struct s_languagemap *next;
+} LANGUAGE;
 
 typedef struct s_unresolved {
 	OBJECT *by;
@@ -66,8 +76,12 @@ int time_value_datetimezone(char *c, TIMESTAMP *t);
 int set_flags(OBJECT *obj, char *propval);
 UNRESOLVED *add_unresolved(OBJECT *by, PROPERTYTYPE ptype, void *ref, CLASS *oclass, char *id, char *file, unsigned int line, int flags);
 int load_resolve_all();
+#ifdef HAVE_PYTHON
+int set_language(const char *name);
+#endif
 OBJECT *load_get_current_object(void);
 MODULE *load_get_current_module(void);
+STATUS load_python( const char *filename);
 
 #ifdef __cplusplus
 }

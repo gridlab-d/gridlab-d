@@ -42,6 +42,9 @@
 #include "kill.h"
 #include "threadpool.h"
 #include "cpp_threadpool.h"
+#ifdef HAVE_PYTHON
+#include "python_embed.h"
+#endif
 
 #if defined WIN32 && _DEBUG
 /** Implements a pause on exit capability for Windows consoles
@@ -128,7 +131,9 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
                                  global_gl_bin.string());
 
     char *browser = getenv("GLBROWSER");
-
+#ifdef HAVE_PYTHON
+    python_embed_init(argc, argv);
+#endif
     /* set the default timezone */
     timestamp_set_tz(NULL);
 
@@ -269,7 +274,9 @@ int main(int argc, /**< the number entries on command-line argument list \p argv
     /* KML output */
     if (strcmp(global_kmlfile, "") != 0)
         kml_dump(global_kmlfile);
-
+#ifdef HAVE_PYTHON
+    python_embed_term();
+#endif
     /* terminate */
     module_termall();
 

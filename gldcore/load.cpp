@@ -193,7 +193,41 @@ static char filename[1024];
 static time_t modtime = 0;
 static int last_good_depth = -1;
 static int current_depth = -1;
-
+#ifdef HAVE_PYTHON
+static LANGUAGE builtin_languages[] = 
+{
+	{"python",python_loader_init,python_parser,NULL},
+};
+LANGUAGE *language_list = builtin_languages;
+LANGUAGE *language = NULL;
+PyObject *python_loader_module = NULL;
+int set_language(const char *name)
+{
+	if ( name == NULL )
+	{
+		if ( language == NULL )
+		{
+			output_warning("%s(%d): no language set",filename,linenum);
+			return FALSE;
+		}
+		language = NULL;
+		return TRUE;
+	}
+	for ( language = language_list ; language != NULL ; language = language->next  )
+	{
+		if ( strcmp(language->name,name) == 0 )
+		{
+			if ( strcmp(name,"python") == 0 && python_loader_module == NULL )
+			{
+				python_loader_module = (PyObject*)python_loader_init(0,NULL);
+			}
+			return TRUE;
+		}
+	}
+	output_error("%s(%d): language '%s' not recognized", filename, linenum, name);
+	return FALSE;
+}
+#endif
 static char start_ts[64];
 static char stop_ts[64];
 
@@ -7170,6 +7204,21 @@ TECHNOLOGYREADINESSLEVEL calculate_trl(void)
     return static_cast<TECHNOLOGYREADINESSLEVEL>(technology_readiness_level);
 }
 
+STATUS load_python(const char *filename)
+{
+#ifdef HAVE_PYTHON
+	extern PyObject *gridlabd_module;
+	if ( gridlabd_module == NULL )
+	{
+		python_embed_init(0,NULL);
+	}
+	return python_embed_import(filename,global_pythonpath) == NULL ? FAILED : SUCCESS;
+#else
+	output_error("load_python: GridLAB-D was not build with the Python embeding.\nPlease reconmpile GridLAB-D with the a valid Python install present.");
+	return FAILED;
+#endif
+}
+
 /** Load a file
 	@return STATUS is SUCCESS if the load was ok, FAILED if there was a problem
 	@todo Rollback the model data if the load failed (ticket #32)
@@ -7178,6 +7227,11 @@ TECHNOLOGYREADINESSLEVEL calculate_trl(void)
 STATUS loadall(char *file){
 	char *buffer = NULL, *p = NULL;
 	char *ext = file?strrchr(file,'.'):NULL;
+	// load python script
+	if (ext != NULL && (strcmp(ext,".py") == 0 || strncmp(ext,".py ",4) == 0 || strncmp(ext,".py\t",4) == 0))
+	{
+		return load_python(file);
+	}
 	unsigned int old_obj_count = object_get_count();
 	unsigned int new_obj_count = 0;
 //	unsigned int i;

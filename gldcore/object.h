@@ -20,6 +20,9 @@
 #include "schedule.h"
 #include "transform.h"
 #include "enduse.h"
+#ifdef HAVE_PYTHON
+#include "python_embed.h"
+#endif
 
 /* this must match property_type list in object.c */
 typedef int OBJECTRANK; /**< Object rank number */
@@ -336,6 +339,12 @@ public:
 		unsigned int (*build)(void);
 		const char * (*branch)(void);
 	} version;
+#ifdef HAVE_PYTHON
+	struct {
+		PyObject *(*import)(const char *module, const char *path);
+		bool (*call)(PyObject *pModule, const char *method, const char *vargsfmt, va_list varargs, void *result);
+	} python;
+#endif
 	long unsigned int magic; /* used to check structure alignment */
 } CALLBACKS; /**< core callback function table */
 

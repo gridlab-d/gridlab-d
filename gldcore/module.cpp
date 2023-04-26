@@ -88,6 +88,9 @@
 #include "console.h"
 
 #include "matlab.h"
+#ifdef HAVE_PYTHON
+#include "python_embed.h"
+#endif
 
 int get_exe_path(char *buf, int len, void *mod){	/* void for GetModuleFileName, a windows func */
 	int rv = 0, i = 0;
@@ -347,6 +350,10 @@ s_callbacks::s_callbacks() throw() {
     version.patch = version_patch;
     version.build = version_build;
     version.branch = version_branch;
+#ifdef HAVE_PYTHON
+	python.import = python_embed_import;
+	python.call = python_embed_call;
+#endif
     magic = MAGIC;
 }
 
@@ -372,8 +379,36 @@ MODULE *module_load(const char *file, /**< module filename, searches \p PATH */
 							   int argc, /**< count of arguments in \p argv */
 							   char *argv[]) /**< arguments passed from the command line */
 {
+	MODULE *mod = NULL;
+#ifdef HAVE_PYTHON
+	mod = python_module_load(file,argc,argv);
+	if ( mod != NULL )
+	{
+		mod->hLib = NULL;
+
+		/* attach to list of known modules */
+		if (first_module==NULL)
+		{
+			mod->id = 0;
+			first_module = mod;
+		}
+		else
+		{
+			last_module->next = mod;
+			mod->id = last_module->id + 1;
+		}
+		last_module = mod;
+		module_count++;
+
+		/* register the module stream, if any */
+		if ( mod->stream!=NULL )
+			stream_register(mod->stream);
+
+		return mod;
+	}
+#endif
 	/* check for already loaded */
-	MODULE *mod = module_find((char *)file);
+	mod = module_find((char *)file);
 	char buffer[FILENAME_MAX+1];
 	char *fmod;
 	bool isforeign = false;

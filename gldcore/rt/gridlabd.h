@@ -446,6 +446,9 @@ typedef enum {_PT_FIRST=-1,
 	PT_enduse,		/**< Enduse load data */
 	PT_random,		/**< Randomized number */
 	PT_method,		/**< Method interface */
+#ifdef HAVE_PYTHON
+	PT_python,
+#endif
 #ifdef USE_TRIPLETS
 	PT_triple, /**< triplet of doubles (not supported) */
 	PT_triplex, /**< triplet of complexes (not supported) */

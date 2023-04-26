@@ -63,8 +63,8 @@ public:
 	inline size_t get_length(void) { return strlen(buffer); };
 	inline char *get_string(void) { return buffer; };
 	inline char* erase(void) { return (char*)memset(buffer,0,size); };
-	inline char* copy_to(char *s) { return s?strncpy(s,buffer,size):NULL; };
-	inline char* copy_from(const char *s) { return s?strncpy(buffer,s,size):NULL; };
+	inline char* copy_to(char *s) { return s?strncpy(s,buffer,size):nullptr; };
+	inline char* copy_from(const char *s) { return s?strncpy(buffer,s,size):nullptr; };
 	operator char*() { return buffer; };
 	operator char() { return *buffer; };
 	inline bool operator ==(const char *s) { return strcmp(buffer,s)==0; };
@@ -112,12 +112,12 @@ public:
 	};
 	double &operator[] (const size_t n) 
 	{ 
-		if ( data[n]==NULL ) data[n]=new double; 
+		if ( data[n]==nullptr ) data[n]=new double; 
 		return *data[n]; 
 	};
 	double operator[] (const size_t n) const
 	{
-		if ( data[n]==NULL ) data[n]=new double; 
+		if ( data[n]==nullptr ) data[n]=new double; 
 		return *data[n];
 	}
 };
@@ -153,28 +153,28 @@ private:
 	inline bool tst_flag(const size_t r, size_t c, const unsigned char b) const {return (f[r*m+c]&b)==b;};
 	double &my(const size_t r, const size_t c) 
 	{ 
-		if ( x[r][c]==NULL ) x[r][c] = new double;
+		if ( x[r][c]==nullptr ) x[r][c] = new double;
 		return (*x[r][c]); 
 	};
 public:
 	inline double_vector operator[] (const size_t n) { return double_vector(x[n]); }
 	inline double_vector operator[] (const size_t n) const { return double_vector(x[n]); }
-	double_array(const size_t rows=0, const size_t cols=0, double **data=NULL)
+	double_array(const size_t rows=0, const size_t cols=0, double **data=nullptr)
 	{
 		refs = new unsigned int;
 		*refs = 0;
 		n = rows;
 		m = cols;
 		max_val = 0;
-		x = NULL;
-		f = NULL;
+		x = nullptr;
+		f = nullptr;
 		if ( rows>0 )
 			grow_to(rows,cols);
 		for ( size_t r=0 ; r<rows ; r++ )
 		{
 			for ( size_t c=0 ; c<cols ; c++ )
 			{
-				set_at(r,c, ( data!=NULL ? data[r][c] : 0.0 ) );
+				set_at(r,c, ( data!=nullptr ? data[r][c] : 0.0 ) );
 			}
 		}
 	}
@@ -246,23 +246,23 @@ public:
 		// create new rows
 		for ( r=0 ; r<max_val ; r++ )
 		{
-			if ( x[r]!=NULL )
+			if ( x[r]!=nullptr )
 			{
 				auto **y = (double**)malloc(sizeof(double*)*size);
-				if ( y==NULL ) exception(".set_max(%u): unable to expand double_array",size);
+				if ( y==nullptr ) exception(".set_max(%u): unable to expand double_array",size);
 				memcpy(y,x[r],sizeof(double*)*max_val);
 				memset(y+max_val,0,sizeof(double*)*(size-max_val));
 				free(x[r]);
 				z[r] = y;
 			}
 			else
-				z[r] = NULL;
+				z[r] = nullptr;
 		}
 		memset(z+max_val,0,sizeof(double**)*(size-max_val));
 		free(x);
 		x = z;
 		auto *nf = (unsigned char*)malloc(sizeof(unsigned char)*size);
-		if ( f!=NULL )
+		if ( f!=nullptr )
 		{
 			memcpy(nf,f,max_val);
 			memset(nf+max_val,0,size-max_val);
@@ -282,7 +282,7 @@ public:
 		// add rows
 		while ( n<r ) 
 		{
-			if ( x[n]==NULL ) 
+			if ( x[n]==nullptr ) 
 			{
 				x[n] = (double**)malloc(sizeof(double*)*max_val);
 				memset(x[n],0,sizeof(double*)*max_val);
@@ -299,7 +299,7 @@ public:
 				auto **y = (double**)malloc(sizeof(double*)*c);
                 memset(y,0,sizeof(double*)*c);
 
-                if ( x[i]!=NULL )
+                if ( x[i]!=nullptr )
 				{
 					memcpy(y,x[i],sizeof(double**)*m);
 					free(x[i]);
@@ -319,7 +319,7 @@ public:
 	bool is_nan(const size_t r, const size_t c)  const
 	{
 		check_valid(r,c);
-		return ! ( x[r][c]!=NULL && isfinite(*(x[r][c])) ); 
+		return ! ( x[r][c]!=nullptr && isfinite(*(x[r][c])) ); 
 	};
 	inline bool is_nan(const size_t c) const { return is_nan(0,c); };
 	bool is_empty(void) const { return n==0 && m==0; };
@@ -328,7 +328,7 @@ public:
 		check_valid(r,c);
 		if ( tst_flag(r,c,BYREF) )
 			free(x[r][c]); 
-		x[r][c]=NULL; 
+		x[r][c]=nullptr; 
 	};
 	inline void clr_at(const size_t c) { return clr_at(0,c); };
 	/// make a new matrix (row major)
@@ -354,9 +354,9 @@ public:
 		delete [] y;
 	};
 	/// vector copy (row major)
-	double *copy_vector(double *y=NULL)
+	double *copy_vector(double *y=nullptr)
 	{
-		if ( y==NULL ) y=new double[m*n];
+		if ( y==nullptr ) y=new double[m*n];
 		unsigned i=0;
 		unsigned int r, c;
 		for ( r=0 ; r<n ; r++ )
@@ -392,7 +392,7 @@ public:
 	void set_at(const size_t r, const size_t c, const double v) 
 	{ 
 		check_valid(r,c);
-		if ( x[r][c]==NULL ) 
+		if ( x[r][c]==nullptr ) 
 			x[r][c]=(double*)malloc(sizeof(double)); 
 		*(x[r][c]) = v; 
 	};
@@ -400,9 +400,9 @@ public:
 	void set_at(const size_t r, const size_t c, double *v) 
 	{ 
 		check_valid(r,c);
-		if ( v==NULL ) 
+		if ( v==nullptr ) 
 		{
-			if ( x[r][c]!=NULL ) 
+			if ( x[r][c]!=nullptr ) 
 				clr_at(r,c);
 		}
 		else 
@@ -623,12 +623,12 @@ public:
 	};
 	gld::complex &operator[] (const size_t n)
 	{
-		if ( data[n]==NULL ) data[n]=new gld::complex;
+		if ( data[n]==nullptr ) data[n]=new gld::complex;
 		return *data[n];
 	};
 	const gld::complex operator[] (const size_t n) const
 	{
-		if ( data[n]==NULL ) data[n]=new gld::complex;
+		if ( data[n]==nullptr ) data[n]=new gld::complex;
 		return *data[n];
 	}
 };
@@ -669,22 +669,22 @@ private:
 public:
 	inline complex_vector operator[] (const size_t n) { return complex_vector(x[n]); }
 	inline const complex_vector operator[] (const size_t n) const { return complex_vector(x[n]); }
-	complex_array(const size_t rows=0, const size_t cols=0, gld::complex**data=NULL)
+	complex_array(const size_t rows=0, const size_t cols=0, gld::complex**data=nullptr)
 	{
 		refs = new unsigned int;
 		*refs = 0;
 		n = rows;
 		m = cols;
 		max_val = 0;
-		x = NULL;
-		f = NULL;
+		x = nullptr;
+		f = nullptr;
 		if ( rows>0 )
 			grow_to(rows,cols);
 		for ( size_t r=0 ; r<rows ; r++ )
 		{
 			for ( size_t c=0 ; c<cols ; c++ )
 			{
-				set_at(r,c, ( data!=NULL ? data[r][c] : 0.0 ) );
+				set_at(r,c, ( data!=nullptr ? data[r][c] : 0.0 ) );
 			}
 		}
 	}
@@ -738,23 +738,23 @@ public:
 		// create new rows
 		for ( r=0 ; r<max_val ; r++ )
 		{
-			if ( x[r]!=NULL )
+			if ( x[r]!=nullptr )
 			{
 				auto **y = (gld::complex**)malloc(sizeof(gld::complex*)*size);
-				if ( y==NULL ) exception(".set_max(%u): unable to expand complex_array",size);
+				if ( y==nullptr ) exception(".set_max(%u): unable to expand complex_array",size);
 				memcpy(y,x[r],sizeof(gld::complex*)*max_val);
 				memset(y+max_val,0,sizeof(gld::complex*)*(size-max_val));
 				free(x[r]);
 				z[r] = y;
 			}
 			else
-				z[r] = NULL;
+				z[r] = nullptr;
 		}
 		memset(z+max_val,0,sizeof(gld::complex**)*(size-max_val));
 		free(x);
 		x = z;
 		auto *nf = (unsigned char*)malloc(sizeof(unsigned char)*size);
-		if ( f!=NULL )
+		if ( f!=nullptr )
 		{
 			memcpy(nf,f,max_val);
 			memset(nf+max_val,0,size-max_val);
@@ -774,7 +774,7 @@ public:
 		// add rows
 		while ( n<r )
 		{
-			if ( x[n]==NULL ) 
+			if ( x[n]==nullptr ) 
 			{
 				x[n] = (gld::complex**)malloc(sizeof(gld::complex*)*max_val);
 				memset(x[n],0,sizeof(gld::complex*)*max_val);
@@ -789,7 +789,7 @@ public:
 			for ( i=0 ; i<n ; i++ )
 			{
 				auto **y = (gld::complex**)malloc(sizeof(gld::complex*)*c);
-				if ( x[i]!=NULL )
+				if ( x[i]!=nullptr )
 				{
 					memcpy(y,x[i],sizeof(gld::complex**)*m);
 					free(x[i]);
@@ -809,7 +809,7 @@ public:
 	bool is_nan(const size_t r, const size_t c)  const
 	{
 		check_valid(r,c);
-		return ! ( x[r][c]!=NULL && isfinite(x[r][c]->Re()) && isfinite(x[r][c]->Im()) ); 
+		return ! ( x[r][c]!=nullptr && isfinite(x[r][c]->Re()) && isfinite(x[r][c]->Im()) ); 
 	};
 	inline bool is_nan(const size_t c) const { return is_nan(0,c); };
 	bool is_empty(void) const { return n==0 && m==0; };
@@ -818,7 +818,7 @@ public:
 		check_valid(r,c);
 		if ( tst_flag(r,c,BYREF) )
 			free(x[r][c]); 
-		x[r][c]=NULL; 
+		x[r][c]=nullptr; 
 	};
 	inline void clr_at(const size_t c) { return clr_at(0,c); };
 	/// make a new matrix (row major)
@@ -844,9 +844,9 @@ public:
 		delete [] y;
 	};
 	/// vector copy (row major)
-	gld::complex *copy_vector(gld::complex *y=NULL)
+	gld::complex *copy_vector(gld::complex *y=nullptr)
 	{
-		if ( y==NULL ) y=new gld::complex[m*n];
+		if ( y==nullptr ) y=new gld::complex[m*n];
 		unsigned i=0;
 		unsigned int r, c;
 		for ( r=0 ; r<n ; r++ )
@@ -883,7 +883,7 @@ public:
 	void set_at(const size_t r, const size_t c, const gld::complex v)
 	{ 
 		check_valid(r,c);
-		if ( x[r][c]==NULL ) 
+		if ( x[r][c]==nullptr ) 
 			x[r][c]=(gld::complex*)malloc(sizeof(gld::complex));
 		*(x[r][c]) = v; 
 	};
@@ -891,9 +891,9 @@ public:
 	void set_at(const size_t r, const size_t c, gld::complex *v)
 	{ 
 		check_valid(r,c);
-		if ( v==NULL ) 
+		if ( v==nullptr ) 
 		{
-			if ( x[r][c]!=NULL ) 
+			if ( x[r][c]!=nullptr ) 
 				clr_at(r,c);
 		}
 		else 
@@ -1144,10 +1144,10 @@ typedef enum {_PT_FIRST=-1,
 	PT_int16, /**< the data is a 16-bit integer */
 	PT_int32, /**< the data is a 32-bit integer */
 	PT_int64, /**< the data is a 64-bit integer */
-	PT_char8, /**< the data is \p NULL -terminated string up to 8 characters in length */
-	PT_char32, /**< the data is \p NULL -terminated string up to 32 characters in length */ 
-	PT_char256, /**< the data is \p NULL -terminated string up to 256 characters in length */
-	PT_char1024, /**< the data is \p NULL -terminated string up to 1024 characters in length */
+	PT_char8, /**< the data is \p nullptr -terminated string up to 8 characters in length */
+	PT_char32, /**< the data is \p nullptr -terminated string up to 32 characters in length */ 
+	PT_char256, /**< the data is \p nullptr -terminated string up to 256 characters in length */
+	PT_char1024, /**< the data is \p nullptr -terminated string up to 1024 characters in length */
 	PT_object, /**< the data is a pointer to a GridLAB object */
 	PT_delegated, /**< the data is delegated to a module for implementation */
 	PT_bool, /**< the data is a true/false value, implemented as a C++ bool */
@@ -1161,6 +1161,9 @@ typedef enum {_PT_FIRST=-1,
 	PT_enduse,		/**< Enduse load data */
 	PT_random,		/**< Randomized number */
 	PT_method,		/**< Method */
+#ifdef HAVE_PYTHON
+	PT_python,
+#endif
 	/* add new property types here - don't forget to add them also to rt/gridlabd.h and property.c */
 #ifdef USE_TRIPLETS
 	PT_triple, /**< triplet of doubles (not supported) */
@@ -1224,10 +1227,10 @@ typedef struct s_property_map {
 	uint32 size; /**< property array size */
 	uint32 width; /**< property byte size, copied from array in class.c */
 	PROPERTYACCESS access; /**< property access flags */
-	UNIT *unit; /**< property unit, if any; \p NULL if none */
+	UNIT *unit; /**< property unit, if any; \p nullptr if none */
 	PROPERTYADDR addr; /**< property location, offset from OBJECT header; OBJECT header itself for methods */
-	DELEGATEDTYPE *delegation; /**< property delegation, if any; \p NULL if none */
-	KEYWORD *keywords; /**< keyword list, if any; \p NULL if none (only for set and enumeration types)*/
+	DELEGATEDTYPE *delegation; /**< property delegation, if any; \p nullptr if none */
+	KEYWORD *keywords; /**< keyword list, if any; \p nullptr if none (only for set and enumeration types)*/
 	const char *description; /**< description of property */
 	struct s_property_map *next; /**< next property in property list */
 	PROPERTYFLAGS flags; /**< property flags (e.g., PF_RECALC) */
@@ -1264,12 +1267,15 @@ typedef struct s_property_specs { /**<	the property type conversion specificatio
 						  **/
 	const char *name; /**< the property type name */
 	const char *xsdname;
+	const char *default_value;
 	unsigned int size; /**< the size of 1 instance */
 	unsigned int csize; /**< the minimum size of a converted instance (not including '\0' or unit, 0 means a call to property_minimum_buffersize() is necessary) */ 
 	int (*data_to_string)(char *,int,void*,PROPERTY*); /**< the function to convert from data to a string */
 	int (*string_to_data)(const char *,void*,PROPERTY*); /**< the function to convert from a string to data */
+	int (*to_initial)(char *,int,void*,PROPERTY*);
 	int (*create)(void*); /**< the function used to create the property, if any */
 	size_t (*stream)(FILE*,int,void*,PROPERTY*); /**< the function to read data from a stream */
+	int (*string_to_compare)(const char*,void*,PROPERTY*);
 	struct {
 		PROPERTYCOMPAREOP op;
 		char str[16];
@@ -1277,6 +1283,7 @@ typedef struct s_property_specs { /**<	the property type conversion specificatio
 		int trinary;
 	} compare[_TCOP_LAST]; /**< the list of comparison operators available for this type */
 	double (*get_part)(void*,const char *name); /**< the function to get a part of a property */
+	int (*set_part)(void*,const char *name,const char *value); /**< the function to set a part of a property */
 	// @todo for greater generality this should be implemented as a linked list
 } PROPERTYSPEC;
 
