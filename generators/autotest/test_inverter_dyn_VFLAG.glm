@@ -16,7 +16,7 @@ clock {
 #set deltamode_timestep=100000000		//100 ms
 #set deltamode_maximumtime=60000000000	//1 minute
 #set deltamode_iteration_limit=10		//Iteration limit
-#set deltamode_forced_always=true
+//#set deltamode_forced_always=true
 
 module tape;
 module assert;
@@ -96,13 +96,13 @@ object inverter_dyn {
 		flags DELTAMODE;
 		target E_mag;
 		operation REAL;
-		within 0.1;
+		within 0.01;
 		object player {
 			flags DELTAMODE;
 			property value;
-			file ../data_inverter_VFLAG_E_droop_mag_pu.csv;
+			file ../data_inverter_dyn_assert_VFLAG_E_droop_mag_pu.csv;
 		};
-    };	
+    };		
 
 };
 
@@ -112,7 +112,7 @@ object group_recorder{
     group "class=inverter_dyn";
     flags DELTAMODE;
     interval 1;
-    file E_droop_mag_pu.csv;
+    file ../E_droop_mag_pu.csv;
 }
 
 
@@ -285,19 +285,19 @@ object load {
      nominal_voltage 277.1363;
 	 
 	object player {
-		file Load4_A.player;
+		file ../test_inverter_dyn_VFLAG_Load4_A.player;
 		property constant_impedance_A;
 		flags DELTAMODE;
 	};
 
 	object player {
-		file Load4_B.player;
+		file ../test_inverter_dyn_VFLAG_Load4_B.player;
 		property constant_impedance_B;
 		flags DELTAMODE;
 	};
 
 	object player {
-		file Load4_C.player;
+		file ../test_inverter_dyn_VFLAG_Load4_C.player;
 		property constant_impedance_C;
 		flags DELTAMODE;
 	};	 
@@ -326,10 +326,10 @@ object switch {
 
 
 // This player kicks the system into delta mode early so that all transition transients can settle before the scenario transients are triggered
-object player {
-	file trigger.player;
-	property nominal_voltage;
-	parent Node1;
-	flags DELTAMODE;
-}
+//object player {
+//	file trigger.player;
+//	property nominal_voltage;
+//	parent Node1;
+//	flags DELTAMODE;
+//}
 
