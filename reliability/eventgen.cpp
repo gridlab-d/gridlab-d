@@ -2308,9 +2308,15 @@ SIMULATIONMODE eventgen::inter_deltaupdate(unsigned int64 delta_time, unsigned l
 void eventgen::parse_external_fault_events(char *events_char)
 {
 	std::string events_str((const char *)events_char);
-	Json::Reader json_rdr;
+	Json::CharReaderBuilder builder {};
 	Json::Value json_events;
-	bool parse_successful = json_rdr.parse(events_str, json_events);
+	std::string errors {};
+
+	auto reader = std::unique_ptr<Json::CharReader>( builder.newCharReader() );	
+	const auto parse_successful = reader->parse(events_str.c_str(),
+                                          events_str.c_str() + events_str.length(),
+                                          &json_events,
+                                          &errors );	
 	if(parse_successful) {
 		for(Json::ValueIterator i = json_events.begin(); i != json_events.end(); i++) {
 			Json::Value json_event = *i;
