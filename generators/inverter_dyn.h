@@ -247,7 +247,8 @@ public:
 	double GridFollowing_curr_convergence_criterion;
 
 	INV_DYN_STATE curr_state; ///< The current state of the inverter in deltamode
-
+        int VFlag; // Voltage control flag for grid forming inverter
+        
         // Grid forming control blocks
         Filter Pmeas_blk; // P-measurement filter block
         double p_measured; // P-measurement filter block output
