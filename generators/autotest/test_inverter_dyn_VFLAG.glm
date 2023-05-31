@@ -284,19 +284,19 @@ object load {
      nominal_voltage 277.1363;
 	 
 	object player {
-		file ../test_inverter_dyn_VFLAG_Load4_A.player;
+		file ../data_inverter_dyn_VFLAG_Load4.player;
 		property constant_impedance_A;
 		flags DELTAMODE;
 	};
 
 	object player {
-		file ../test_inverter_dyn_VFLAG_Load4_B.player;
+		file ../data_inverter_dyn_VFLAG_Load4.player;
 		property constant_impedance_B;
 		flags DELTAMODE;
 	};
 
 	object player {
-		file ../test_inverter_dyn_VFLAG_Load4_C.player;
+		file ../data_inverter_dyn_VFLAG_Load4.player;
 		property constant_impedance_C;
 		flags DELTAMODE;
 	};	 
@@ -321,14 +321,3 @@ object switch {
 		interval -1;
 	};
 }
-
-
-
-// This player kicks the system into delta mode early so that all transition transients can settle before the scenario transients are triggered
-//object player {
-//	file trigger.player;
-//	property nominal_voltage;
-//	parent Node1;
-//	flags DELTAMODE;
-//}
-
