@@ -92,10 +92,9 @@ object inverter_dyn {
 		file Inverter_1_freq.csv;
 	};
 
-	object complex_assert {
+	object double_assert {
 		flags DELTAMODE;
 		target E_mag;
-		operation REAL;
 		within 0.01;
 		object player {
 			flags DELTAMODE;
@@ -112,7 +111,7 @@ object group_recorder{
     group "class=inverter_dyn";
     flags DELTAMODE;
     interval 1;
-    file ../E_droop_mag_pu.csv;
+    file E_droop_mag_pu.csv;
 }
 
 
