@@ -640,10 +640,13 @@ inverter_dyn::inverter_dyn(MODULE *module) {
             "OVER_VOLTAGE_LOW", (enumeration)IEEE_1547_LOW_OV, PT_DESCRIPTION,
             "Low over-voltage level trip", PT_KEYWORD, "OVER_VOLTAGE_HIGH",
             (enumeration)IEEE_1547_HIGH_OV, PT_DESCRIPTION,
-            "High over-voltage level trip", PT_bool, "phase_angle_correction",
-            PADDR(phase_angle_correction), PT_DESCRIPTION,
+            "High over-voltage level trip",
+	    PT_bool, "phase_angle_correction",PADDR(phase_angle_correction), PT_DESCRIPTION,
             "DELTAMODE: Boolean used to indicate whether inverter applies "
             "phase angle correction during current limiting",
+	    PT_bool, "virtual_resistance_correction", PADDR(virtual_resistance_correction),
+	    PT_DESCRIPTION,"DELTAMODE: Boolean used to indicate whether inverter applies "
+            "virtual resistance correction during current limiting",
 
             nullptr) < 1)
       GL_THROW("unable to publish properties in %s", __FILE__);
@@ -927,7 +930,8 @@ int inverter_dyn::create(void) {
   imax_phase_correction_done[0] = false;
   imax_phase_correction_done[1] = false;
   imax_phase_correction_done[2] = false;
-  phase_angle_correction = true; // Phase angle correction on by default
+  phase_angle_correction = false; // Phase angle correction off by default
+  virtual_resistance_correction = false; // virtual resistance correction off by default
 
   update_chk_vars();
 
@@ -6883,34 +6887,49 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count,
 
         // Compare it
         if ((terminal_current_val_pu[0].Mag() > Imax) &&
-            running_in_delta) // Current limit only gets applied when controls
+            running_in_delta) { // Current limit only gets applied when controls
                               // valid (deltamode)
-        {
-          if (phase_angle_correction && !imax_phase_correction_done[0]) {
-            // Calculate phase angle correction
-            double theta = terminal_current_val_pu[0].Arg(); // Current angle
-            double theta_prefault = terminal_current_val_pu_prefault[0]
-                                        .Arg(); // Prefault current angle
-            double theta_jump = theta_prefault - theta; // Jump in angle
-            double Inolimit_mag =
-                terminal_current_val_pu[0].Mag(); // Current magnitude
-            double Iprefault_mag = terminal_current_val_pu_prefault[0]
-                                       .Mag(); // Prefault current magnitude
-	    theta_c[0] = (Inolimit_mag - Imax) /
-	      (Inolimit_mag - Iprefault_mag) * theta_jump;
-            imax_phase_correction_done[0] = true;
-          }
+	  if (phase_angle_correction) {
+	      if(!imax_phase_correction_done[0]) {
+		// Calculate phase angle correction
+		double theta = terminal_current_val_pu[0].Arg(); // Current angle
+		double theta_prefault = terminal_current_val_pu_prefault[0]
+		  .Arg(); // Prefault current angle
+		double theta_jump = theta_prefault - theta; // Jump in angle
+		double Inolimit_mag =
+		  terminal_current_val_pu[0].Mag(); // Current magnitude
+		double Iprefault_mag = terminal_current_val_pu_prefault[0]
+		  .Mag(); // Prefault current magnitude
+		theta_c[0] = (Inolimit_mag - Imax) /
+		  (Inolimit_mag - Iprefault_mag) * theta_jump;
+		imax_phase_correction_done[0] = true;
+	      }
+	      // Compute the limited value - pu
+	      intermed_curr_calc[0].SetPolar(
+					   Imax, terminal_current_val_pu[0].Arg() + theta_c[0]);
+	  } else if(virtual_resistance_correction) {
+	    double Re; // virtual resistance
+	    double Vt_pu = value_Circuit_V[0].Mag() / V_base;
+	    double Vang_pu = value_Circuit_V[0].Arg();
+	    double e_droop_mag_pu = e_droop_pu[0].Mag();
+	    double temp;
+	      
+	    temp = (e_droop_mag_pu*e_droop_mag_pu + Vt_pu*Vt_pu - 2*e_droop_mag_pu*Vt_pu*cos(Angle[0] - Vang_pu))/(Imax*Imax) - Xfilter*Xfilter;
 
-          // Compute the limited value - pu
-          intermed_curr_calc[0].SetPolar(
-              Imax, terminal_current_val_pu[0].Arg() + theta_c[0]);
+	    Re = sqrt(temp) - Rfilter;
+	    
+	    gld::complex Ilim = (e_droop_pu[0] - value_Circuit_V[0])/gld::complex(Re+Rfilter,Xfilter);
+	    double Ilim_ang = Ilim.Arg();
 
-          // Copy into the per-unit representation
-          terminal_current_val_pu[0] = intermed_curr_calc[0];
-
-          // Adjust the terminal current from per-unit
-          terminal_current_val[0] = terminal_current_val_pu[0] * I_base;
-        }
+	    intermed_curr_calc[0].SetPolar(Imax, Ilim_ang);
+	  }
+	  	  
+	  // Copy into the per-unit representation
+	  terminal_current_val_pu[0] = intermed_curr_calc[0];
+	  
+	  // Adjust the terminal current from per-unit
+	  terminal_current_val[0] = terminal_current_val_pu[0] * I_base;
+	}
 
         // Update the injection
         value_IGenerated[0] =
@@ -6929,11 +6948,10 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count,
         VA_Out = power_val[0];
 
         // Default else - no need to adjust
-      } else // Three phase
-      {
+      } else { // Three phase
         // Reset the flag
         // limit_hit = false;
-
+	
         // Loop the comparison - just because
         for (loop_var = 0; loop_var < 3; loop_var++) {
           // Compute "current" current value
@@ -6954,28 +6972,43 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count,
               running_in_delta) // Current limit only gets applied when controls
                                 // valid (deltamode)
           {
-            if (phase_angle_correction &&
-                !imax_phase_correction_done[loop_var]) {
-              // Calculate phase angle correction
-              double theta =
+            if (phase_angle_correction) {
+	      if(!imax_phase_correction_done[loop_var]) {
+		// Calculate phase angle correction
+		double theta =
                   terminal_current_val_pu[loop_var].Arg(); // Current angle
-              double theta_prefault = terminal_current_val_pu_prefault[loop_var]
-                                          .Arg(); // Prefault current angle
-              double theta_jump = theta_prefault - theta; // Jump in angle
-              double Inolimit_mag =
+		double theta_prefault = terminal_current_val_pu_prefault[loop_var]
+		  .Arg(); // Prefault current angle
+		double theta_jump = theta_prefault - theta; // Jump in angle
+		double Inolimit_mag =
                   terminal_current_val_pu[loop_var].Mag(); // Current magnitude
-              double Iprefault_mag = terminal_current_val_pu_prefault[loop_var]
-                                         .Mag(); // Prefault current magnitude
-	      theta_c[loop_var] = (Inolimit_mag - Imax) /
-		(Inolimit_mag - Iprefault_mag) * theta_jump;
-              imax_phase_correction_done[loop_var] = true;
-            }
+		double Iprefault_mag = terminal_current_val_pu_prefault[loop_var]
+		  .Mag(); // Prefault current magnitude
+		theta_c[loop_var] = (Inolimit_mag - Imax) /
+		  (Inolimit_mag - Iprefault_mag) * theta_jump;
+		imax_phase_correction_done[loop_var] = true;
+	      }
+	      // Compute the limited value - pu
+	      intermed_curr_calc[loop_var].SetPolar(
+						    Imax,
+						    terminal_current_val_pu[loop_var].Arg() + theta_c[loop_var]);
+            } else if(virtual_resistance_correction) {
+	      double Re; // virtual resistance
+	      double Vt_pu = value_Circuit_V[loop_var].Mag() / V_base;
+	      double Vang_pu = value_Circuit_V[loop_var].Arg();
+	      double e_droop_mag_pu = e_droop_pu[loop_var].Mag();
+	      double temp;
+	      
+	      temp = (e_droop_mag_pu*e_droop_mag_pu + Vt_pu*Vt_pu - 2*e_droop_mag_pu*Vt_pu*cos(Angle[loop_var] - Vang_pu))/(Imax*Imax) - Xfilter*Xfilter;
+	      
+	      Re = sqrt(temp) - Rfilter;
+	      
+	      gld::complex Ilim = (e_droop_pu[loop_var] - value_Circuit_V[loop_var])/gld::complex(Re+Rfilter,Xfilter);
+	      double Ilim_ang = Ilim.Arg();
 
-            // Compute the limited value - pu
-            intermed_curr_calc[loop_var].SetPolar(
-                Imax,
-                terminal_current_val_pu[loop_var].Arg() + theta_c[loop_var]);
-
+	      intermed_curr_calc[loop_var].SetPolar(Imax, Ilim_ang);
+	    }
+        
             // Copy into the per-unit representation
             terminal_current_val_pu[loop_var] = intermed_curr_calc[loop_var];
 
