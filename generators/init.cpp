@@ -27,6 +27,7 @@
 #include "sec_control.h"
 //**** IBR_SKELETON_NOTE: ADD HEADER FILES OF NEW MODELS HERE ****//
 #include "ibr_skeleton.h"
+#include "ibr_gfl.h"
 
 //Define defaults, since many use them and they aren't here yet
 EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
@@ -59,6 +60,7 @@ EXPORT CLASS *init(CALLBACKS *fntable, MODULE *module, int argc, char *argv[])
 	new sec_control(module);
 	//**** IBR_SKELETON_NOTE: Would add any new objects here too ****//
 	new ibr_skeleton(module);
+	new ibr_gfl(module);
 
 	/* Clear the deltamode list too, just in case*/
 	delta_object.clear();
