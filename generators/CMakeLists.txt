@@ -19,6 +19,14 @@ add_library(${GLD_MODULE_NAME}
         inverter_dyn.h
         ibr_gfl.cpp
         ibr_gfl.h
+		ibr_gfm_vsm.cpp
+		ibr_gfm_vsm.h
+		ibr_gfm_drp.cpp
+		ibr_gfm_drp.h
+		ibr_blackbox.cpp
+		ibr_blackbox.h
+		ibr_graybox.cpp
+		ibr_graybox.h
 	ibr_skeleton.cpp
 	ibr_skeleton.h
         main.cpp
