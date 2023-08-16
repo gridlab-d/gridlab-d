@@ -74,7 +74,7 @@ motor::motor(MODULE *mod):node(mod)
             PT_double, "contactor_close_Vmax[pu]", PADDR(contactor_close_Vmax),PT_DESCRIPTION,"pu voltage at which motor contactor recloses",
 			PT_double, "reconnect_time[s]", PADDR(reconnect_time),PT_DESCRIPTION,"time before tripped motor reconnects",
 			//-- yuan add below --//
-			PT_int32, "time_step_divider", PADDR(ndiv),PT_DESCRIPTION,"divide time step by n - three-phase model",
+			PT_int32, "time_step_divider", PADDR(ndiv),PT_DESCRIPTION,"divide time step by n - single- and three- phase models",
 			//-- yuan add above --//
 
 
@@ -1109,9 +1109,12 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 			}//End crude house coupling check
 
 			// if deltaTime is not small enough we will run into problems
-			if (deltat > 0.0003) {
-				gl_warning("Delta time for the SPIM model needs to be lower than 0.0003 seconds");
-			}
+			//-- yuan: the time_step_divider (ndiv) is introduced to resolve the small dTime issue
+			//-- yuan comment below --//
+//			if (deltat > 0.0003) {
+//				gl_warning("Delta time for the SPIM model needs to be lower than 0.0003 seconds");
+//			}
+			//-- yuan comment above --//
 
 			if(curr_delta_time == last_cycle) { // if time did not advance, load old values
 				SPIMreinitializeVars();
@@ -1968,65 +1971,84 @@ void motor::TPIMSteadyState(TIMESTAMP t1) {
 void motor::SPIMDynamic(double curr_delta_time, double dTime) {
 	double psi = -1;
 	double Xc = -1;
+
+    //-- yuan add below --//
+    double dTime_sub = dTime / ndiv;
+    //-- yuan add above --//
     
-    //Kick in extra capacitor if we droop in speed
-	if (wr < cap_run_speed) {
-       Xc = Xc2;
-	}
-	else {
-       Xc = Xc1; 
-	}
+    //-- yuan add below --//
+    for (int i=0; i<ndiv; i++) {
+    //-- yuan add above --//
 
-    // Flux equation
-	psi_b = (Ib*Xm) / ((gld::complex(0.0,1.0)*(ws+wr)*To_prime)+psi_sat);
-	psi_f = psi_f + ( If*(Xm/To_prime) - (gld::complex(0.0,1.0)*(ws-wr) + psi_sat/To_prime)*psi_f )*dTime;   
+		//Kick in extra capacitor if we droop in speed
+		if (wr < cap_run_speed) {
+		   Xc = Xc2;
+		}
+		else {
+		   Xc = Xc1;
+		}
 
-    //Calculate saturated flux
-	psi = sqrt(psi_f.Re()*psi_f.Re() + psi_f.Im()*psi_f.Im() + psi_b.Re()*psi_b.Re() + psi_b.Im()*psi_b.Im());
-	if(psi<=bsat) {
-        psi_sat = 1;
-	}
-	else {
-        psi_sat = 1 + Asat*((psi-bsat)*(psi-bsat));
-	}   
+		// Flux equation
+		psi_b = (Ib*Xm) / ((gld::complex(0.0,1.0)*(ws+wr)*To_prime)+psi_sat);
 
-	// Calculate d and q axis fluxes
-	psi_dr = psi_f + psi_b;
-	psi_qr = gld::complex(0.0,1.0)*psi_f + gld::complex(0,-1)*psi_b;
+		//-- yuan comment and add below --//
+//		psi_f = psi_f + ( If*(Xm/To_prime) - (gld::complex(0.0,1.0)*(ws-wr) + psi_sat/To_prime)*psi_f )*dTime;
+		psi_f = psi_f + ( If*(Xm/To_prime) - (gld::complex(0.0,1.0)*(ws-wr) + psi_sat/To_prime)*psi_f )*dTime_sub;
+		//-- yuan comment and add above --//
 
-	// d and q-axis current equations
-	Ids = (-(gld::complex(0.0,1.0)*ws_pu*(Xm/Xr)*psi_dr) + Vs.Mag()) / ((gld::complex(0.0,1.0)*ws_pu*Xd_prime)+Rds);  
-	Iqs = (-(gld::complex(0.0,1.0)*ws_pu*(n*Xm/Xr)*psi_qr) + Vs.Mag()) / ((gld::complex(0.0,1.0)*ws_pu*Xq_prime)+(gld::complex(0.0,1.0)/ws_pu*Xc)+Rqs); 
+		//Calculate saturated flux
+		psi = sqrt(psi_f.Re()*psi_f.Re() + psi_f.Im()*psi_f.Im() + psi_b.Re()*psi_b.Re() + psi_b.Im()*psi_b.Im());
+		if(psi<=bsat) {
+			psi_sat = 1;
+		}
+		else {
+			psi_sat = 1 + Asat*((psi-bsat)*(psi-bsat));
+		}
 
-	// f and b current equations
-	If = (Ids-(gld::complex(0.0,1.0)*n*Iqs))*0.5;
-	Ib = (Ids+(gld::complex(0.0,1.0)*n*Iqs))*0.5;
+		// Calculate d and q axis fluxes
+		psi_dr = psi_f + psi_b;
+		psi_qr = gld::complex(0.0,1.0)*psi_f + gld::complex(0,-1)*psi_b;
 
-	// system current and power equations
-	Is = (Ids + Iqs)*complex_exp(Vs.Arg());
-	motor_elec_power = (Vs*~Is) * Pbase;
+		// d and q-axis current equations
+		Ids = (-(gld::complex(0.0,1.0)*ws_pu*(Xm/Xr)*psi_dr) + Vs.Mag()) / ((gld::complex(0.0,1.0)*ws_pu*Xd_prime)+Rds);
+		Iqs = (-(gld::complex(0.0,1.0)*ws_pu*(n*Xm/Xr)*psi_qr) + Vs.Mag()) / ((gld::complex(0.0,1.0)*ws_pu*Xq_prime)+(gld::complex(0.0,1.0)/ws_pu*Xc)+Rqs);
 
-    //electrical torque 
-	Telec = (Xm/Xr)*2*(If.Im()*psi_f.Re() - If.Re()*psi_f.Im() - Ib.Im()*psi_b.Re() + Ib.Re()*psi_b.Im()); 
+		// f and b current equations
+		If = (Ids-(gld::complex(0.0,1.0)*n*Iqs))*0.5;
+		Ib = (Ids+(gld::complex(0.0,1.0)*n*Iqs))*0.5;
 
-	//See which model we're using
-	if (motor_torque_usage_method==modelSpeedFour)
-	{
-		//Compute updated mechanical torque
-		Tmech = 0.85 + 0.15*(wr_pu*wr_pu*wr_pu*wr_pu);
-	}
-	//Default else - direct method, so just read (in case player/else changes it)
+		// system current and power equations
+		Is = (Ids + Iqs)*complex_exp(Vs.Arg());
+		motor_elec_power = (Vs*~Is) * Pbase;
 
-	// speed equation 
-	wr = wr + (((Telec-Tmech)*wbase)/(2*H))*dTime;
+		//electrical torque
+		Telec = (Xm/Xr)*2*(If.Im()*psi_f.Re() - If.Re()*psi_f.Im() - Ib.Im()*psi_b.Re() + Ib.Re()*psi_b.Im());
 
-    // speeds below 0 should be avioded
-	if (wr < 0) {
-		wr = 0;
-	}
+		//See which model we're using
+		if (motor_torque_usage_method==modelSpeedFour)
+		{
+			//Compute updated mechanical torque
+			Tmech = 0.85 + 0.15*(wr_pu*wr_pu*wr_pu*wr_pu);
+		}
+		//Default else - direct method, so just read (in case player/else changes it)
 
-	//Get the per-unit version
-	wr_pu = wr / wbase;
+		// speed equation
+		//-- yuan comment and add below --//
+//		wr = wr + (((Telec-Tmech)*wbase)/(2*H))*dTime;
+		wr = wr + (((Telec-Tmech)*wbase)/(2*H))*dTime_sub;
+		//-- yuan comment and add below --//
+
+		// speeds below 0 should be avioded
+		if (wr < 0) {
+			wr = 0;
+		}
+
+		//Get the per-unit version
+		wr_pu = wr / wbase;
+
+	//-- yuan add below --//
+    }
+    //-- yuan add above --//
 }
 
 //Dynamic updates for TPIM
@@ -2062,7 +2084,9 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
     Vap = (Vas + alpha * Vbs + alpha * alpha * Vcs) / 3.0;
     Van = (Vas + alpha * alpha * Vbs + alpha * Vcs) / 3.0;
 
+    //-- yuan add below --//
     double dTime_sub = dTime / ndiv;
+    //-- yuan add above --//
 
     //-- yuan add below --//
     for (int i=0; i<ndiv; i++) {
