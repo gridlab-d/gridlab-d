@@ -209,7 +209,7 @@ inverter_dyn::inverter_dyn(MODULE *module)
 			PT_double, "Qmax[pu]", PADDR(Qmax), PT_DESCRIPTION, "DELTAMODE: maximum limit and minimum limit of Qmax controller and Qmin controller.",
 			PT_double, "Qmin[pu]", PADDR(Qmin), PT_DESCRIPTION, "DELTAMODE: maximum limit and minimum limit of Qmax controller and Qmin controller.",
 			PT_double, "delta_w_droop[pu]", PADDR(delta_w_droop), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: delta omega fro p-f droop",
-
+			PT_bool, "VFlag", PADDR(VFlag), PT_DESCRIPTION, "DELTAMODE: Voltage flag to choose between PI control or direct control.",
 			PT_double, "Vdc_pu[pu]", PADDR(curr_state.Vdc_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: dc bus voltage of PV panel when using grid-forming PV Inverter",
 			PT_double, "Vdc_min_pu[pu]", PADDR(Vdc_min_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: The reference voltage of the Vdc_min controller",
 			PT_double, "C_pu[pu]", PADDR(C_pu), PT_ACCESS, PA_HIDDEN, PT_DESCRIPTION, "DELTAMODE: capacitance of dc bus",
@@ -380,6 +380,7 @@ int inverter_dyn::create(void)
 	kiqmax = 20;
 	Qmax = 10;
 	Qmin = -10;
+	VFlag = 1;  // Default VFlag = 1 so that voltage control PI loop is active
 	V_lim = 10;
 
 	// Initial value for previous step frequency deviation
@@ -2366,21 +2367,26 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 
 				if(grid_forming_mode == DYNAMIC_DC_BUS)
 				{
-				        E_mag = V_ctrl_blk.getoutput(V_ref - v_measured, deltat,E_min, pred_state.Vdc_pu*mdc,E_min,pred_state.Vdc_pu*mdc,PREDICTOR);
+				        if(VFlag) {
+					  E_mag = V_ctrl_blk.getoutput(V_ref - v_measured, deltat,E_min, pred_state.Vdc_pu*mdc,E_min,pred_state.Vdc_pu*mdc,PREDICTOR);
 				  
-					//E_mag = E_mag * (V_DC/Vdc_base);
-
-					// V_ref is the voltage reference obtained from Q-V droop
-					// Vset is the voltage set point, usually 1 pu
-					// mq is the Q-V droop gain, usually 0.05 pu
-					// V_ini is the output from the integrator in the voltage controller
-					// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
-					// E_max and E_min are the maximum and minimum of the output of voltage controller
+					  //E_mag = E_mag * (V_DC/Vdc_base);
+					  
+					  // V_ref is the voltage reference obtained from Q-V droop
+					  // Vset is the voltage set point, usually 1 pu
+					  // mq is the Q-V droop gain, usually 0.05 pu
+					  // V_ini is the output from the integrator in the voltage controller
+					  // E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
+					  // E_max and E_min are the maximum and minimum of the output of voltage controller
+					} else {
+					  E_mag = std::min(std::max(E_min,V_ref),E_max);
+					}
 					// Function end
 				}
 				else
 				{
-				        E_mag = V_ctrl_blk.getoutput(V_ref-v_measured, deltat,PREDICTOR);
+				        if(VFlag) {
+					  E_mag = V_ctrl_blk.getoutput(V_ref-v_measured, deltat,PREDICTOR);
 
 					// V_ref is the voltage reference obtained from Q-V droop
 					// Vset is the voltage set point, usually 1 pu
@@ -2389,6 +2395,9 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 					// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
 					// E_max and E_min are the maximum and minimum of the output of voltage controller
 					// Function end
+					} else {
+					  E_mag = std::min(std::max(E_min,V_ref),E_max);
+					}
 				}
 
 				// Function: P-f droop, Pmax and Pmin controller
@@ -2585,29 +2594,38 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 				
 				if(grid_forming_mode == DYNAMIC_DC_BUS)
 				{
-				        E_mag = V_ctrl_blk.getoutput(V_ref - v_measured, deltat,E_min, pred_state.Vdc_pu*mdc,E_min,pred_state.Vdc_pu*mdc,PREDICTOR);
+				        if(VFlag) {
+					  E_mag = V_ctrl_blk.getoutput(V_ref - v_measured, deltat,E_min, pred_state.Vdc_pu*mdc,E_min,pred_state.Vdc_pu*mdc,PREDICTOR);
 				  
-					//E_mag = E_mag * (V_DC/Vdc_base);
+					  //E_mag = E_mag * (V_DC/Vdc_base);
 
-					// V_ref is the voltage reference obtained from Q-V droop
-					// Vset is the voltage set point, usually 1 pu
-					// mq is the Q-V droop gain, usually 0.05 pu
-					// V_ini is the output from the integrator in the voltage controller
-					// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
-					// E_max and E_min are the maximum and minimum of the output of voltage controller
+					  // V_ref is the voltage reference obtained from Q-V droop
+					  // Vset is the voltage set point, usually 1 pu
+					  // mq is the Q-V droop gain, usually 0.05 pu
+					  // V_ini is the output from the integrator in the voltage controller
+					  // E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
+					  // E_max and E_min are the maximum and minimum of the output of voltage controller
 					// Function end
+					} else {
+					  E_mag = std::min(std::max(E_min,V_ref),E_max);
+					}
+
 				}
 				else
 				{
-				        E_mag = V_ctrl_blk.getoutput(V_ref-v_measured, deltat,PREDICTOR);
+				        if(VFlag) {
+					  E_mag = V_ctrl_blk.getoutput(V_ref-v_measured, deltat,PREDICTOR);
 
-					// V_ref is the voltage reference obtained from Q-V droop
-					// Vset is the voltage set point, usually 1 pu
-					// mq is the Q-V droop gain, usually 0.05 pu
-					// V_ini is the output from the integrator in the voltage controller
-					// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
-					// E_max and E_min are the maximum and minimum of the output of voltage controller
-					// Function end
+					  // V_ref is the voltage reference obtained from Q-V droop
+					  // Vset is the voltage set point, usually 1 pu
+					  // mq is the Q-V droop gain, usually 0.05 pu
+					  // V_ini is the output from the integrator in the voltage controller
+					  // E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
+					  // E_max and E_min are the maximum and minimum of the output of voltage controller
+					  // Function end
+					} else {
+					  E_mag = std::min(std::max(E_min,V_ref),E_max);
+					}
 				}
 
 				// Function: P-f droop, Pmax and Pmin controller
@@ -2796,29 +2814,38 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 
 				if(grid_forming_mode == DYNAMIC_DC_BUS)
 				{
-				        E_mag = V_ctrl_blk.getoutput(V_ref - v_measured, deltat,E_min, pred_state.Vdc_pu*mdc,E_min,pred_state.Vdc_pu*mdc,CORRECTOR);
+				        if(VFlag) {
+					  E_mag = V_ctrl_blk.getoutput(V_ref - v_measured, deltat,E_min, pred_state.Vdc_pu*mdc,E_min,pred_state.Vdc_pu*mdc,CORRECTOR);
 				  
-					//E_mag = E_mag * (V_DC/Vdc_base);
+					  //E_mag = E_mag * (V_DC/Vdc_base);
 
-					// V_ref is the voltage reference obtained from Q-V droop
-					// Vset is the voltage set point, usually 1 pu
-					// mq is the Q-V droop gain, usually 0.05 pu
-					// V_ini is the output from the integrator in the voltage controller
-					// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
-					// E_max and E_min are the maximum and minimum of the output of voltage controller
-					// Function end
+					  // V_ref is the voltage reference obtained from Q-V droop
+					  // Vset is the voltage set point, usually 1 pu
+					  // mq is the Q-V droop gain, usually 0.05 pu
+					  // V_ini is the output from the integrator in the voltage controller
+					  // E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
+					  // E_max and E_min are the maximum and minimum of the output of voltage controller
+					  // Function end
+					} else {
+					  E_mag = std::min(std::max(E_min,V_ref),E_max);
+					}
+
 				}
 				else
 				{
-				        E_mag = V_ctrl_blk.getoutput(V_ref-v_measured, deltat,CORRECTOR);
+				        if(VFlag) {
+					  E_mag = V_ctrl_blk.getoutput(V_ref-v_measured, deltat,CORRECTOR);
 
-					// V_ref is the voltage reference obtained from Q-V droop
-					// Vset is the voltage set point, usually 1 pu
-					// mq is the Q-V droop gain, usually 0.05 pu
-					// V_ini is the output from the integrator in the voltage controller
-					// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
-					// E_max and E_min are the maximum and minimum of the output of voltage controller
-					// Function end
+					  // V_ref is the voltage reference obtained from Q-V droop
+					  // Vset is the voltage set point, usually 1 pu
+					  // mq is the Q-V droop gain, usually 0.05 pu
+					  // V_ini is the output from the integrator in the voltage controller
+					  // E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
+					  // E_max and E_min are the maximum and minimum of the output of voltage controller
+					  // Function end
+					} else {
+					  E_mag = std::min(std::max(E_min,V_ref),E_max);
+					}
 				}
 
 				// Function: P-f droop, Pmax and Pmin controller
@@ -3042,29 +3069,37 @@ SIMULATIONMODE inverter_dyn::inter_deltaupdate(unsigned int64 delta_time, unsign
 
 				if(grid_forming_mode == DYNAMIC_DC_BUS)
 				{
-				        E_mag = V_ctrl_blk.getoutput(V_ref - v_measured, deltat,E_min, pred_state.Vdc_pu*mdc,E_min,pred_state.Vdc_pu*mdc,CORRECTOR);
+				        if(VFlag) {
+					  E_mag = V_ctrl_blk.getoutput(V_ref - v_measured, deltat,E_min, pred_state.Vdc_pu*mdc,E_min,pred_state.Vdc_pu*mdc,CORRECTOR);
 				  
-					//E_mag = E_mag * (V_DC/Vdc_base);
-
-					// V_ref is the voltage reference obtained from Q-V droop
-					// Vset is the voltage set point, usually 1 pu
-					// mq is the Q-V droop gain, usually 0.05 pu
-					// V_ini is the output from the integrator in the voltage controller
-					// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
-					// E_max and E_min are the maximum and minimum of the output of voltage controller
-					// Function end
+					  //E_mag = E_mag * (V_DC/Vdc_base);
+					  
+					  // V_ref is the voltage reference obtained from Q-V droop
+					  // Vset is the voltage set point, usually 1 pu
+					  // mq is the Q-V droop gain, usually 0.05 pu
+					  // V_ini is the output from the integrator in the voltage controller
+					  // E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
+					  // E_max and E_min are the maximum and minimum of the output of voltage controller
+					  // Function end
+					} else {
+					  E_mag = std::min(std::max(E_min,V_ref),E_max);
+					}
 				}
 				else
 				{
-				        E_mag = V_ctrl_blk.getoutput(V_ref-v_measured, deltat,CORRECTOR);
+				        if(VFlag) {
+					  E_mag = V_ctrl_blk.getoutput(V_ref-v_measured, deltat,CORRECTOR);
 
-					// V_ref is the voltage reference obtained from Q-V droop
-					// Vset is the voltage set point, usually 1 pu
-					// mq is the Q-V droop gain, usually 0.05 pu
-					// V_ini is the output from the integrator in the voltage controller
-					// E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
-					// E_max and E_min are the maximum and minimum of the output of voltage controller
-					// Function end
+					  // V_ref is the voltage reference obtained from Q-V droop
+					  // Vset is the voltage set point, usually 1 pu
+					  // mq is the Q-V droop gain, usually 0.05 pu
+					  // V_ini is the output from the integrator in the voltage controller
+					  // E_mag is the output of the votlage controller, it is the voltage magnitude of the internal voltage
+					  // E_max and E_min are the maximum and minimum of the output of voltage controller
+					  // Function end
+					} else {
+					  E_mag = std::min(std::max(E_min,V_ref),E_max);
+					}
 				}
 
 				// Function: P-f droop, Pmax and Pmin controller
@@ -4899,16 +4934,22 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 				Angle_blk[i].init_given_y(e_droop[i].Arg());
 			}
 
-			// Initialize the voltage control block
-			V_ctrl_blk.setparams(kpv,kiv,E_min,E_max,E_min,E_max);
-			V_ctrl_blk.init_given_y(e_droop[0].Mag() / V_base);
+			if(VFlag) {
+			  // Initialize the voltage control block
+			  V_ctrl_blk.setparams(kpv,kiv,E_min,E_max,E_min,E_max);
+			  V_ctrl_blk.init_given_y(e_droop[0].Mag() / V_base);
+			}
 			
 			//See if it is the first deltamode entry - theory is all future changes will trigger deltamode, so these should be set
 			if (first_deltamode_init)
 			{
 				//Make sure it wasn't "pre-set"
 
-				Vset = pCircuit_V_Avg_pu + VA_Out.Im() / S_base * mq;
+			        if(VFlag) {
+				  Vset = pCircuit_V_Avg_pu + VA_Out.Im() / S_base * mq;
+				} else {
+				  Vset = e_droop[0].Mag() / V_base + VA_Out.Im() / S_base *mq;
+				}
 
 				if (P_f_droop_setting_mode == PSET_MODE)
 				{
@@ -5039,8 +5080,11 @@ STATUS inverter_dyn::init_dynamics(INV_DYN_STATE *curr_time)
 			if (first_deltamode_init)
 			{
 				//Make sure it wasn't "pre-set"
-
-				Vset = pCircuit_V_Avg_pu + VA_Out.Im() / S_base * mq;
+			        if(VFlag) {
+			          Vset = pCircuit_V_Avg_pu + VA_Out.Im() / S_base * mq;
+				} else {
+				  Vset = (e_droop[0].Mag() + e_droop[1].Mag() + e_droop[2].Mag()) / 3 / V_base + VA_Out.Im() / S_base * mq;
+				}
 
 				if (P_f_droop_setting_mode == PSET_MODE)
 				{

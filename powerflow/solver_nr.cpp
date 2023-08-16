@@ -2312,8 +2312,17 @@ int64 solver_nr(unsigned int bus_count, BUSDATA *bus, unsigned int branch_count,
 			//Check our frequency
 			if ((NRMatDumpMethod == MD_ALL) || ((NRMatDumpMethod != MD_ALL) && (powerflow_values->island_matrix_values[island_loop_index].iteration_count == 0)))
 			{
-				//Open the text file - append now
-				FPoutVal=fopen(MDFileName,"at");
+				//Check which method it is - reset the file on the "final"
+				if ((NRMatDumpMethod == MD_FINAL) && (island_loop_index==0))
+				{
+					//Open the text file - purge it
+					FPoutVal=fopen(MDFileName,"wt");
+				}
+				else
+				{
+					//Open the text file - append now
+					FPoutVal=fopen(MDFileName,"at");
+				}
 
 				//See if we wanted references - Only do this once per call, regardless (keeps file size down)
 				if (NRMatReferences && (powerflow_values->island_matrix_values[island_loop_index].iteration_count == 0))
