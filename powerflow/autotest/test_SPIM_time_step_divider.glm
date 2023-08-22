@@ -1,0 +1,208 @@
+//Simple Three-phase induction motor test file
+
+#set suppress_repeat_messages=0
+
+#set double_format=%+.12lg
+#set complex_format=%+.12lg%+.12lg%c
+#set deltamode_forced_always=true
+
+
+clock {
+	 timezone PST+8PDT;
+     starttime '2000-01-01 00:00:00';
+	 stoptime '2000-01-01 00:00:12';
+}
+
+module tape;
+module powerflow {
+	enable_subsecond_models true; //Enables deltamode
+	deltamode_timestep 4.0 ms;      //Defines the expected timestep for deltamode
+	solver_method NR;             //Newton-Raphson is the only solver that supports deltamode
+	all_powerflow_delta true;     //Set all of the powerflow objects to deltamode – instead of having to do “flags DELTAMODE;” everywhere
+}
+
+object meter {
+	name RootNode;
+	phases "ABCN";
+	bustype SWING;
+	nominal_voltage 240.0;
+}
+
+object recorder {
+	parent RootNode;
+	property "voltage_A.real,voltage_A.imag,voltage_B.real,voltage_B.imag,voltage_C.real,voltage_C.imag";
+	interval 1;
+	flags DELTAMODE;
+	file SwingVoltageTest.csv;
+}
+
+//Just to pad the object count
+object overhead_line {
+	phases "ABCN";
+	name RandomLine;
+	from RootNode;
+	//to induction_motor;
+	to other_node;
+	length 25;
+	configuration lc1001;
+	object recorder {
+		flags DELTAMODE;
+		property "power_out_A.real,power_out_A.imag,power_out_real";
+		interval 1;
+		file line_power_out.csv;
+	};
+}
+
+object node {
+	phases ABCN;
+	name other_node;
+	nominal_voltage 240.0;
+}
+
+//Arbitrary line - stolen from some other file
+object line_spacing {
+	name ls5001;
+	distance_AB 2.5;
+	distance_AC 7.0;
+	distance_BC 4.5;
+	distance_AN 5.656854;
+	distance_BN 4.272002;
+	distance_CN 5.0;
+}
+
+object line_configuration {
+	name lc1001;
+	conductor_A olc10001;
+	conductor_B olc10001;
+	conductor_C olc10001;
+	conductor_N olc10002;
+	spacing ls5001;
+}
+
+object overhead_line_conductor {
+	name olc10001;
+	geometric_mean_radius 0.0244;
+	resistance 0.30600;
+}
+
+object overhead_line_conductor {
+	name olc10002;
+	geometric_mean_radius 0.008140;
+	resistance 0.59200;
+}
+
+// object motor {
+	// name induction_motor;
+	// phases "ABCN";
+	// parent other_node;
+	// nominal_voltage 240.0;
+	// motor_status RUNNING;
+	// motor_trip true;
+   // // reconnect_time 100 s;
+   // // trip_time 99.0;
+   // // uv_relay_install INSTALLED;
+   // // uv_relay_trip_time 0.02;
+   // // uv_relay_trip_V 0.6;
+    // //delta_mode_voltage_trigger 120;
+	// motor_operation_type THREE-PHASE;
+	// torque_usage_method SPEEDFOUR;
+	// base_power 3000.0;
+	// H 0.1;
+	// time_step_divider 20;
+// }
+
+object motor {
+    name SPIM_a;
+    parent other_node;
+    phases AN;
+    frequency_measure_type PLL;
+    base_power 1000.0;
+    motor_trip true;
+    nominal_voltage 240.0;
+    //reconnect_time 100 s;
+    //trip_time 0.5;
+    //uv_relay_install INSTALLED;
+    //uv_relay_trip_time 0.02;
+    //uv_relay_trip_V 0.6;
+	time_step_divider 20;
+}
+
+object motor {
+    name SPIM_b;
+    parent other_node;
+    phases BN;
+    frequency_measure_type PLL;
+    base_power 1000.0;
+    motor_trip true;
+    nominal_voltage 240.0;
+    //reconnect_time 100 s;
+    //trip_time 0.5;
+    //uv_relay_install INSTALLED;
+    //uv_relay_trip_time 0.02;
+    //uv_relay_trip_V 0.6;
+	time_step_divider 20;
+}
+
+object motor {
+    name SPIM_c;
+    parent other_node;
+    phases CN;
+    frequency_measure_type PLL;
+    base_power 1000.0;
+    motor_trip true;
+    nominal_voltage 240.0;
+    //reconnect_time 100 s;
+    //trip_time 0.5;
+    //uv_relay_install INSTALLED;
+    //uv_relay_trip_time 0.02;
+    //uv_relay_trip_V 0.6;
+	time_step_divider 20;
+}
+
+object player {
+	file trigger_test_time_step_divider.player;
+	property nominal_voltage;
+	parent RootNode;
+	flags DELTAMODE;
+}
+
+object player {
+	name voltage_A_player;
+	parent RootNode;
+	file voltage_phase_A_ramp_time_step_divider.csv;
+	property voltage_A;
+	flags DELTAMODE;
+}
+
+object player {
+	name voltage_B_player;
+	parent RootNode;
+	file voltage_phase_B_ramp_time_step_divider.csv;
+	property voltage_B;
+	flags DELTAMODE;
+}
+
+object player {
+	name voltage_C_player;
+	parent RootNode;
+	file voltage_phase_C_ramp_time_step_divider.csv;
+	property voltage_C;
+	flags DELTAMODE;
+}
+
+object recorder {
+     parent SPIM_a;
+     file spim_a_rotor_spd.csv;
+     interval 1;
+     property "rotor_speed,motor_status";
+	 flags DELTAMODE;
+};
+
+
+object recorder {
+     parent RootNode;
+     file meaured_power_Main.csv;
+     interval 1;
+     property "measured_power_A.real,measured_power_A.imag,measured_power_B.real,measured_power_B.imag,measured_power_C.real,measured_power_C.imag";
+	 flags DELTAMODE;
+};
