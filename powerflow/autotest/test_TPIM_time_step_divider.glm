@@ -4,7 +4,7 @@
 
 #set double_format=%+.12lg
 #set complex_format=%+.12lg%+.12lg%c
-#set deltamode_forced_always=true
+//#set deltamode_forced_always=true
 
 
 clock {
@@ -112,16 +112,9 @@ object motor {
 }
 
 object player {
-	file trigger_test_time_step_divider.player;
-	property nominal_voltage;
-	parent RootNode;
-	flags DELTAMODE;
-}
-
-object player {
 	name voltage_A_player;
 	parent RootNode;
-	file voltage_phase_A_ramp_time_step_divider.csv;
+	file "../data_voltage_phase_A_ramp_time_step_divider.csv";
 	property voltage_A;
 	flags DELTAMODE;
 }
@@ -129,7 +122,7 @@ object player {
 object player {
 	name voltage_B_player;
 	parent RootNode;
-	file voltage_phase_B_ramp_time_step_divider.csv;
+	file "../data_voltage_phase_B_ramp_time_step_divider.csv";
 	property voltage_B;
 	flags DELTAMODE;
 }
@@ -137,7 +130,7 @@ object player {
 object player {
 	name voltage_C_player;
 	parent RootNode;
-	file voltage_phase_C_ramp_time_step_divider.csv;
+	file "../data_voltage_phase_C_ramp_time_step_divider.csv";
 	property voltage_C;
 	flags DELTAMODE;
 }
