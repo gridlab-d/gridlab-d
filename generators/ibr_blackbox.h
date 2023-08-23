@@ -7,6 +7,10 @@
 
 #include "generators.h"
 
+#ifdef HAVE_FRUGALLY
+#include "fdeep/fdeep.hpp"
+#endif
+
 EXPORT int isa_ibr_blackbox(OBJECT *obj, char *classname);
 EXPORT STATUS preupdate_ibr_blackbox(OBJECT *obj, TIMESTAMP t0, unsigned int64 delta_time);
 EXPORT SIMULATIONMODE interupdate_ibr_blackbox(OBJECT *obj, unsigned int64 delta_time, unsigned long dt, unsigned int iteration_count_val);

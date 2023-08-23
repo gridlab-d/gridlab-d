@@ -62,6 +62,7 @@ include(cmake/BuildNumber.cmake)
 include(cmake/SanitizePaths.cmake)
 
 option(GLD_USE_EIGEN "[NOT YET SUPPORTED] - Use Eigen package for LU Decomposition in Powerflow" OFF)
+option(GLD_USE_FRUGALLY "User frugally-deep package for tensor model import" OFF)
 option(GLD_USE_SUPERLU "Use SuperLU package for LU Decomposition in Powerflow" ON)
 option(GLD_USE_HELICS "Link with HELICS" OFF)
 option(GLD_USE_FNCS "Link with FNCS" OFF)
@@ -72,6 +73,8 @@ set(GLD_MYSQL_DIR "" CACHE PATH "Search path for MySQL library")
 set(GLD_FNCS_DIR "" CACHE PATH "Search path for FNCS library")
 set(GLD_ZeroMQ_DIR "" CACHE PATH "Search path for ZeroMQ library (FNCS dependency)")
 set(GLD_CZMQ_DIR "" CACHE PATH "Search path for CZMQ library (FNCS dependency)")
+set(GLD_FRUGALLY_DIR "" CACHE PATH "Search path for Frugally-deep library")
+set(GLD_FRUGAL_EIGEN_DIR "" CACHE PATH "Search path for Eigen installed as part of Frugally-deep library")
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON) # TODO: only required for SuperLU_MT support with Clang. Future removal recommended.
 set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
