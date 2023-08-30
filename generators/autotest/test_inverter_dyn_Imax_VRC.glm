@@ -397,13 +397,3 @@ object switch {
 	};
 }
 
-
-
-// This player kicks the system into delta mode early so that all transition transients can settle before the scenario transients are triggered
-object player {
-	file trigger.player;
-	property nominal_voltage;
-	parent Node1;
-	flags DELTAMODE;
-}
-
