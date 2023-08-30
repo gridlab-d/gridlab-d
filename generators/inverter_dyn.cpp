@@ -6148,6 +6148,10 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count,bool *converged_f
 				    double Ilim_ang = Ilim.Arg();
 				    
 				    intermed_curr_calc[0].SetPolar(Imax, Ilim_ang);
+				  } else {
+				    // default
+				    //Compute the limited value - pu
+				    intermed_curr_calc[0].SetPolar(Imax,terminal_current_val_pu[0].Arg());
 				  }
 				  
 				  // Copy into the per-unit representation
@@ -6227,6 +6231,8 @@ STATUS inverter_dyn::updateCurrInjection(int64 iteration_count,bool *converged_f
 					    double Ilim_ang = Ilim.Arg();
 					    
 					    intermed_curr_calc[loop_var].SetPolar(Imax, Ilim_ang);
+					  } else {
+					    intermed_curr_calc[loop_var].SetPolar(Imax,terminal_current_val_pu[loop_var].Arg());
 					  }
 					  
 					  // Copy into the per-unit representation
