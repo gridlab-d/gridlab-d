@@ -114,6 +114,8 @@ diesel_dg::diesel_dg(MODULE *module)
 			PT_double,"Pset[pu]", PADDR(gen_base_set_vals.Pref), PT_DESCRIPTION, "Pset input to governor controls (per-unit), if supported",	//overloaded for commonality to wider control
 			PT_double,"fset[Hz]",PADDR(gen_base_set_vals.f_set), PT_DESCRIPTION, "fset input to governor controls (Hz) - takes priority over wref",	//semi-overloaded for commonality to wider control
 			PT_double,"Qref[pu]", PADDR(gen_base_set_vals.Qref), PT_DESCRIPTION, "Qref input to govornor or AVR controls (per-unit), if supported",
+			PT_double,"pdispatch[pu]", PADDR(pdispatch_exp.pdispatch), PT_DESCRIPTION, "Desired generator dispatch set point in p.u.",
+			PT_double,"pdispatch_offset[pu]", PADDR(pdispatch_exp.pdispatch_offset), PT_DESCRIPTION, "Desired offset to generator dispatch in p.u.",
 
 			//Properties for AVR/Exciter of dynamics model
 			PT_enumeration,"Exciter_type",PADDR(Exciter_type),PT_DESCRIPTION,"Exciter model for dynamics-capable implementation",
@@ -433,6 +435,9 @@ int diesel_dg::create(void)
 	gen_base_set_vals.Qref = -99.0;
 	gen_base_set_vals.f_set = -99.0;
 
+	pdispatch.pdispatch = -99.0; //essentially flagged as unset
+	pdispatch.pdispatch_offset = 0; //default offset is 0
+
 	//SEXS Exciter defaults
 	exc_KA=50;
 	exc_TA=0.01;
@@ -661,6 +666,10 @@ int diesel_dg::create(void)
 
 	P_f_droop_setting_mode = PSET_MODE;	//Default to PSET mode, for backwards compatibility
 
+
+	memcpy(&gen_base_set_vals_check,&gen_base_set_vals,sizeof(MAC_INPUTS));
+	memcpy(&pdispatch_exp,&pdispatch,sizeof(PDISPATCH));
+
 	return 1; /* return 1 on success, 0 on failure */
 }
 
@@ -685,6 +694,7 @@ int diesel_dg::init(OBJECT *parent)
 	double nominal_voltage_value, nom_test_val;
 	set temp_phases;
 	bool childed_connection = false;
+	STATUS fxn_return_status;
 	
 	//See if the global flag is set - if so, add the object flag
 	if (all_generator_delta)
@@ -1307,11 +1317,32 @@ int diesel_dg::init(OBJECT *parent)
 
 		// If P_CONSTANT mode, change power_val based on given P_CONSTANT_Pref value
 		if (Governor_type == P_CONSTANT) {
+			if (gen_base_set_vals.Pref == -99.0){
+				// Pref has not been initialized
+				gl_warning("diesel_dg:%s - Pref unset in P_CONSTANT mode. Setting to sum of power_out_X.",obj->name?obj->name:"unnamed");
+				/*  TROUBLESHOOT
+				The diesel_dg object is operating with a governor of type P_CONSTANT.
+				In this mode propertie Pref should be set in the glm.
+				Since this was not done, it is set to the sum of (power_out_A + power_out_B + power_out_C)/Rated_VA
+				*/
+				gen_base_set_vals.Pref = (power_val[0].Re() + power_val[1].Re() + power_val[2].Re())/Rated_VA;
+			}
+			
 			for (int i = 0; i < 3; i++) {
 				power_val[i].Re() = Rated_VA * gen_base_set_vals.Pref/3;
 			}
 		}
 		if (SEXS_mode == SEXS_CQ) {
+			if (gen_base_set_vals.Qref == -99.0){
+				// Qref has not been initialized
+				gl_warning("diesel_dg:%s - Qref unset in SEXS_CQ mode. Setting to sum of power_out_X.",obj->name?obj->name:"unnamed");
+				/*  TROUBLESHOOT
+				The diesel_dg object is operating constant Q mode.
+				In this mode propertie Qref should be set in the glm.
+				Since this was not done, it is set to the sum of (power_out_A + power_out_B + power_out_C)/Rated_VA
+				*/
+				gen_base_set_vals.Qref = (power_val[0].Im() + power_val[1].Im() + power_val[2].Im())/Rated_VA;
+			}
 			for (int i = 0; i < 3; i++) {
 				power_val[i].Im() = Rated_VA * gen_base_set_vals.Qref/3;
 			}
@@ -1375,38 +1406,32 @@ int diesel_dg::init(OBJECT *parent)
 		//Check for zeros - if any are zero, 50% them (real generator, arbitrary)
 		if (power_val[0].Mag() == 0.0)
 		{
-			gl_warning("diesel_dg:%s - power_out_A is zero - arbitrarily setting to 50%%",obj->name?obj->name:"unnamed");
+			gl_warning("diesel_dg:%s - power_out_A is zero",obj->name?obj->name:"unnamed");
 			/*  TROUBLESHOOT
 			The diesel_dg object has a power_out_A value that is zero.  This can cause the generator to never
 			partake in the powerflow.  It is being arbitrarily set to 50% of the per-phase rating.  If this is
 			undesired, please change the value.
 			*/
-
-			power_val[0] = gld::complex(0.5*power_base,0.0);
 		}
 
 		if (power_val[1].Mag() == 0.0)
 		{
-			gl_warning("diesel_dg:%s - power_out_B is zero - arbitrarily setting to 50%%",obj->name?obj->name:"unnamed");
+			gl_warning("diesel_dg:%s - power_out_B is zero",obj->name?obj->name:"unnamed");
 			/*  TROUBLESHOOT
 			The diesel_dg object has a power_out_B value that is zero.  This can cause the generator to never
 			partake in the powerflow.  It is being arbitrarily set to 50% of the per-phase rating.  If this is
 			undesired, please change the value.
 			*/
-
-			power_val[1] = gld::complex(0.5*power_base,0.0);
 		}
 
 		if (power_val[2].Mag() == 0.0)
 		{
-			gl_warning("diesel_dg:%s - power_out_C is zero - arbitrarily setting to 50%%",obj->name?obj->name:"unnamed");
+			gl_warning("diesel_dg:%s - power_out_C is zero",obj->name?obj->name:"unnamed");
 			/*  TROUBLESHOOT
 			The diesel_dg object has a power_out_C value that is zero.  This can cause the generator to never
 			partake in the powerflow.  It is being arbitrarily set to 50% of the per-phase rating.  If this is
 			undesired, please change the value.
 			*/
-
-			power_val[2] = gld::complex(0.5*power_base,0.0);
 		}
 
 		if (apply_rotor_speed_convergence)
@@ -1588,7 +1613,18 @@ int diesel_dg::init(OBJECT *parent)
 			//Delete the reference
 			delete Frequency_mapped;
 
-			gen_object_count++;	//Increment the counter
+			//Add us to the list
+			fxn_return_status = add_gen_delta_obj(obj,false);
+
+			//Check it
+			if (fxn_return_status == FAILED)
+			{
+				GL_THROW("diesel_dg:%s - failed to add object to generator deltamode object list", obj->name ? obj->name : "unnamed");
+				/*  TROUBLESHOOT
+				The diesel_dg object encountered an issue while trying to add itself to the generator deltamode object list.  If the error
+				persists, please submit an issue via GitHub.
+				*/
+			}
 		}
 	}//End deltamode inclusive
 	else	//Not enabled for this model
@@ -1639,6 +1675,8 @@ int diesel_dg::init(OBJECT *parent)
 		gen_base_set_vals.wref = gen_base_set_vals.w_ref / omega_ref;
 	}
 
+	pdispatch_sync();
+
 	return 1;
 }//init ends here
 
@@ -1685,57 +1723,6 @@ TIMESTAMP diesel_dg::sync(TIMESTAMP t0, TIMESTAMP t1)
 		//TODO: LOCKING!
 		if (deltamode_inclusive && enable_subsecond_models && (torque_delay==nullptr))	//We want deltamode - see if it's populated yet
 		{
-			if (((gen_object_current == -1) || (delta_objects==nullptr)) && enable_subsecond_models)
-			{
-				//Call the allocation routine
-				allocate_deltamode_arrays();
-			}
-
-			//Check limits of the array
-			if (gen_object_current>=gen_object_count)
-			{
-				GL_THROW("Too many objects tried to populate deltamode objects array in the generators module!");
-				/*  TROUBLESHOOT
-				While attempting to populate a reference array of deltamode-enabled objects for the generator
-				module, an attempt was made to write beyond the allocated array space.  Please try again.  If the
-				error persists, please submit a bug report and your code via the trac website.
-				*/
-			}
-
-			//Add us into the list
-			delta_objects[gen_object_current] = obj;
-
-			//Map up the function for interupdate
-			delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"interupdate_gen_object"));
-
-			//Make sure it worked
-			if (delta_functions[gen_object_current] == nullptr)
-			{
-				GL_THROW("Failure to map deltamode function for device:%s",obj->name);
-				/*  TROUBLESHOOT
-				Attempts to map up the interupdate function of a specific device failed.  Please try again and ensure
-				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
-				trac website.
-				*/
-			}
-
-			//Map up the function for postupdate
-			post_delta_functions[gen_object_current] = (FUNCTIONADDR)(gl_get_function(obj,"postupdate_gen_object"));
-
-			//Make sure it worked
-			if (post_delta_functions[gen_object_current] == nullptr)
-			{
-				GL_THROW("Failure to map post-deltamode function for device:%s",obj->name);
-				/*  TROUBLESHOOT
-				Attempts to map up the postupdate function of a specific device failed.  Please try again and ensure
-				the object supports deltamode.  If the error persists, please submit your code and a bug report via the
-				trac website.
-				*/
-			}
-
-			//Update pointer
-			gen_object_current++;
-
 			//See if we're attached to a node-esque object
 			if (obj->parent != nullptr)
 			{
@@ -2369,6 +2356,9 @@ SIMULATIONMODE diesel_dg::inter_deltaupdate(unsigned int64 delta_time, unsigned 
 	{
 		gen_base_set_vals.wref = gen_base_set_vals.w_ref / omega_ref;
 	}
+
+	// synchronize pdispatch and controller setpoints
+	pdispatch_sync();
 
 	//Initialization items
 	if ((delta_time==0) && (iteration_count_val==0))	//First run of new delta call
@@ -4665,6 +4655,9 @@ STATUS diesel_dg::init_dynamics(MAC_STATES *curr_time)
 	//Re-initialize tracking variable to event-driven
 	desired_simulation_mode = SM_EVENT;
 
+	// sync up pdispatch values
+	pdispatch_sync();
+
 	return SUCCESS;	//Always succeeds for now, but could have error checks later
 }
 
@@ -4942,6 +4935,111 @@ void diesel_dg::check_power_output()
 		else
 			power_val[2] = gld::complex((power_base*test_pf),(sqrt(1-test_pf*test_pf)*power_base));
 	}//End phase C power limit check
+}
+
+// Sync the pdispatch variable with the various possible controller set points.
+//
+// Controller sets points (Pref and wref) take precedence over pdispatch, that is
+// an update to these properties will *overwrite* pdispatch.
+// If these properties have not be changed however, then pdispatch can be used
+// to update the appropriate one via a unified interface.
+void diesel_dg::pdispatch_sync()
+{
+	
+	// Check if Pref or wref were changed
+	if ((gen_base_set_vals.Pref != gen_base_set_vals_check.Pref) || 
+		(gen_base_set_vals.wref != gen_base_set_vals_check.wref))
+	{
+		// There has been some change to a reference value. 
+		//  - Override pdispatch and set pdispatch_offset = 0.
+		//  - Note: this also overwrites any changes to the exposed pdispatch!!
+		pdispatch.pdispatch_offset = 0;
+		
+		//update pdispatch accordingly
+		// Update appropriate controll variable 
+		switch (Governor_type)
+		{
+		case GGOV1:
+			if (gov_ggv1_rselect == 1)
+			{
+				pdispatch.pdispatch = gen_base_set_vals.Pref/gov_ggv1_r;
+			}
+			else if ((gov_ggv1_rselect == -1) || (gov_ggv1_rselect == -2))
+			{
+				pdispatch.pdispatch = gov_ggv1_Kturb * (gen_base_set_vals.Pref/gov_ggv1_r - gov_ggv1_wfnl);
+			}
+			else
+			{
+				// Do nothing: pdispatch cannot be used for this setting anyways
+			}
+			
+			break;
+		
+		case DEGOV1:
+			pdispatch.pdispatch = (gen_base_set_vals.wref - 1)/gov_degov1_R;
+			break;
+
+		case P_CONSTANT:
+			pdispatch.pdispatch = gen_base_set_vals.Pref;
+			break;
+			
+		default:
+			// Do nothing: pdispatch cannot be used for this setting anyways
+			break;
+		}
+
+		// update the check variables
+		memcpy(&gen_base_set_vals_check,&gen_base_set_vals,sizeof(MAC_INPUTS));
+
+		// overwrite the exposed pdispatch variables
+		memcpy(&pdispatch_exp, &pdispatch, sizeof(PDISPATCH));
+
+	}
+
+	double pstar = pdispatch.pdispatch + pdispatch.pdispatch_offset;
+	if ((pdispatch_exp.pdispatch + pdispatch_exp.pdispatch_offset) != (pstar))
+	{
+		// pdispatch or pdispatch_offset have been changed
+		pdispatch.pdispatch = pdispatch_exp.pdispatch;
+		pdispatch.pdispatch_offset = pdispatch_exp.pdispatch_offset;
+		
+		// update pstar
+		pstar = pdispatch.pdispatch + pdispatch.pdispatch_offset;
+		// Update appropriate controll variable 
+		switch (Governor_type)
+		{
+		case GGOV1:
+			if (gov_ggv1_rselect == 1)
+			{
+				gen_base_set_vals.Pref = gov_ggv1_r*pstar;
+			}
+			else if ((gov_ggv1_rselect == -1) || (gov_ggv1_rselect == -2))
+			{
+				gen_base_set_vals.Pref = gov_ggv1_r*(gov_ggv1_wfnl + pstar/gov_ggv1_Kturb);
+			}
+			else
+			{
+				GL_THROW("diesel_dg::pdispatch_map:GGOV1 pdispatch property cannot be used with Rselec=%d", gov_ggv1_rselect);
+			}
+			
+			break;
+		
+		case DEGOV1:
+			gen_base_set_vals.wref = 1 + gov_degov1_R*pstar;
+			break;
+
+		case P_CONSTANT:
+			gen_base_set_vals.Pref = pstar;
+			break;
+
+		default:
+			GL_THROW("diesel_dg::pdispatch_map: pdispatch property cannot be used provided governor type %d", Governor_type);
+			break;
+		}
+
+		// update the check variables
+		memcpy(&gen_base_set_vals_check,&gen_base_set_vals,sizeof(MAC_INPUTS));	
+	}
 }
 //////////////////////////////////////////////////////////////////////////
 // IMPLEMENTATION OF CORE LINKAGE

@@ -2,6 +2,7 @@
 #define _generators_H
 
 #include <stdarg.h>
+#include <vector>
 
 #include "gridlabd.h"
 
@@ -45,16 +46,18 @@
 /* phase info mask */
 #define PHASE_INFO	0x01FF		/**< all phase info */
 
+typedef struct s_gen_delta_obj {
+	OBJECT *obj;
+	FUNCTIONADDR preudpate_fxn;
+    FUNCTIONADDR interupdate_fxn;
+    FUNCTIONADDR post_delta_fxn;
+} GEN_DELTA_OBJ;
+
 GLOBAL bool enable_subsecond_models INIT(false); /* normally not operating in delta mode */
 GLOBAL bool all_generator_delta INIT(false);			/* Flag to make all generator objects participate in deltamode (that are capable) -- otherwise is individually flagged per object */
 GLOBAL unsigned long deltamode_timestep INIT(10000000); /* 10 ms timestep */
 GLOBAL double deltamode_timestep_publish INIT(10000000.0); /* 10 ms timestep */
-GLOBAL OBJECT **delta_objects INIT(nullptr);				/* Array pointer objects that need deltamode interupdate calls */
-GLOBAL FUNCTIONADDR *delta_preupdate_functions INIT(nullptr);	/* Array pointer functions for objects that need deltamode preupdate calls */
-GLOBAL FUNCTIONADDR *delta_functions INIT(nullptr);			/* Array pointer functions for objects that need deltamode interupdate calls */
-GLOBAL FUNCTIONADDR *post_delta_functions INIT(nullptr);		/* Array pointer functions for objects that need deltamode postupdate calls */
-GLOBAL int gen_object_count INIT(0);		/* deltamode object count */
-GLOBAL int gen_object_current INIT(-1);		/* Index of current deltamode object */
+GLOBAL std::vector<GEN_DELTA_OBJ> delta_object;    /* Vector of generator objects and their various function calls */
 GLOBAL TIMESTAMP deltamode_starttime INIT(TS_NEVER);	/* Tracking variable for next desired instance of deltamode */
 GLOBAL TIMESTAMP deltamode_endtime INIT(TS_NEVER);		/* Tracking variable to see when deltamode ended - so differential calculations don't get messed up */
 GLOBAL double deltamode_endtime_dbl INIT(TS_NEVER_DBL);		/* Tracking variable to see when deltamode ended - double valued for explicit movement calculations */
@@ -65,7 +68,7 @@ GLOBAL double default_line_voltage INIT(120.0);			//Value for the default nomina
 GLOBAL double default_temperature_value INIT(59.0);		//Value for default temperature, used for battery model			
 
 void schedule_deltamode_start(TIMESTAMP tstart);	/* Anticipated time for a deltamode start, even if it is now */
-void allocate_deltamode_arrays(void);				/* Overall function to allocate deltamode capabilities - rather than having to edit everything */
+STATUS add_gen_delta_obj(OBJECT *obj, bool prioritize); /* Function to add deltamode objects to vector for later delta-function execution */
 
 #define UNKNOWN 0
 

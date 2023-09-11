@@ -116,3 +116,6 @@ CMakeFiles/*
 cmake-build*/
 build/
 GLD GridLAB-D build instructions.txt
+
+# scratch is a folder for local work only
+scratch/*

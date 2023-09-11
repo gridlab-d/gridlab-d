@@ -1,0 +1,84 @@
+// DG #1 
+object diesel_dg {
+    flags DELTAMODE;
+	name Gen1;
+	parent node_150;
+	Rated_V 4156; //Line-to-Line value
+	Rated_VA 3000000; // Defaults to 10 MVA
+	overload_limit 1.00;
+	power_out_A 30000+3000j;
+	power_out_B 30000+3000j;
+	power_out_C 30000+3000j;
+	Gen_type DYN_SYNCHRONOUS;
+	rotor_speed_convergence ${rotor_convergence};
+	inertia 0.553286;
+	damping 0.0;
+	Ra .006543;
+	Ta 0.05;
+	Xl 0.066;
+	Xd 1.77;
+	Xq 1.052;
+	Xdp 0.128;
+	Xqp 0.2232003883;
+	Xdpp 0.107;
+	Xqpp 0.189;
+	Tdop 1.748986;
+	Tqop 0.448458;
+	Tdopp 0.017013;
+	Tqopp 0.016817;
+	
+	Exciter_type SEXS;
+	SEXS_mode Q_V_DROOP;
+	SEXS_Q_V_droop 0.05;
+	Vset_QV_droop 1.0;
+	TA 0.01;
+	TB 0.02;
+	TC 0.08;	
+    KA 50;
+	Vset 1.0;
+
+	Governor_type GGOV1;
+	
+	//Toggle low-value-select items
+	GGOV1_Load_Limit_enable false;
+	GGOV1_Acceleration_Limit_enable false;
+	GGOV1_PID_enable true;
+	
+	// //Default properties:
+	GGOV1_R 0.05; // Permanent droop, p.u.
+	GGOV1_Rselect 1; // Feedback signal for droop, = 1 selected electrical power, = 0 none (isochronous governor), = -1 fuel valve stroke ( true stroke),= -2 governor output ( requested stroke)
+	
+	//GGOV1_Rselect 1; // Feedback signal for droop, = 1 selected electrical power, = 0 none (isochronous governor), = -1 fuel valve stroke ( true stroke),= -2 governor output ( requested stroke)
+	GGOV1_Tpelec 1.0; // Electrical power transducer time constant, sec. (>0.)
+	GGOV1_maxerr 0.05;//0.05; // Maximum value for speed error signal
+	GGOV1_minerr -0.05;//-0.05; // Minimum value for speed error signal
+	GGOV1_Kpgov 2.5;// 0.8; // Governor proportional gain
+	GGOV1_Kigov 6.5;// 0.2; // Governor integral gain
+	GGOV1_Kdgov 0.0; // Governor derivative gain
+	GGOV1_Tdgov 1.0; // Governor derivative controller time constant, sec.
+	GGOV1_vmax 1.0;//1.0; // Maximum valve position limit
+	GGOV1_vmin 0.15; // Minimum valve position limit
+	GGOV1_Tact 0.05;//0.5; // Actuator time constant
+	GGOV1_Kturb 1.5; // Turbine gain (>0.)
+	GGOV1_wfnl 0.2;//0.2; // No load fuel flow, p.u
+	GGOV1_Tb 0.01;//0.1; // Turbine lag time constant, sec. (>0.)
+	GGOV1_Tc 0.2; // Turbine lead time constant, sec.
+	GGOV1_Fuel_lag 1; // Switch for fuel source characteristic, = 0 for fuel flow independent of speed, = 1 fuel flow proportional to speed
+	GGOV1_Teng 0.0; // Transport lag time constant for diesel engine
+	GGOV1_Tfload 3.0; // Load Limiter time constant, sec. (>0.)
+	GGOV1_Kpload 2.0; // Load limiter proportional gain for PI controller
+	GGOV1_Kiload 0.67; // Load limiter integral gain for PI controller
+	GGOV1_Ldref 1.0; // Load limiter reference value p.u.
+	GGOV1_Dm 0.0; // Speed sensitivity coefficient, p.u.
+	GGOV1_ropen 050; // Maximum valve opening rate, p.u./sec.
+	GGOV1_rclose -050; // Minimum valve closing rate, p.u./sec.
+	GGOV1_Kimw 0.0;//0.002; // Power controller (reset) gain
+	GGOV1_Pmwset 3.0; // Power controller setpoint, MW
+	GGOV1_aset 0.01; // Acceleration limiter setpoint, p.u./sec.
+	GGOV1_Ka 10.0; // Acceleration limiter Gain
+	GGOV1_Ta 0.1; // Acceleration limiter time constant, sec. (>0.)
+	GGOV1_db 0.0; // Speed governor dead band
+	GGOV1_Tsa 4.0; // Temperature detection lead time constant, sec.
+	GGOV1_Tsb 5.0; // Temperature detection lag time constant, sec.
+	
+}

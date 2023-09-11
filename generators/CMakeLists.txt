@@ -17,9 +17,13 @@ add_library(${GLD_MODULE_NAME}
         inverter.h
         inverter_dyn.cpp
         inverter_dyn.h
+	ibr_skeleton.cpp
+	ibr_skeleton.h
         main.cpp
         rectifier.cpp
         rectifier.h
+        sec_control.cpp
+        sec_control.h
         solar.cpp
         solar.h
         sync_ctrl.cpp

@@ -186,6 +186,22 @@ private:
 
 	STATUS initalize_IEEE_1547_checks(void);
 	double perform_1547_checks(double timestepvalue);
+	void pdispatch_sync(void);
+	void update_chk_vars(void);
+	
+	typedef struct {
+	double pdispatch; //Desired generator dispatch set point in p.u.
+	double pdispatch_offset; //Desired offset to generator dispatch in p.u.
+	}PDISPATCH;
+
+	typedef struct {
+		double Pset; //helper variable to check changes to Pset
+		double Pref; //helper variable to check changes to Pref
+		double fset; //helper variable to check changes to fset
+		bool inverter_1547_status; //helper variable to check changes to inverter 1547 status
+	}SETPOINT_CHK;
+
+	PDISPATCH pdispatch;	//Dispatch setpoint in p.u. for internal use
 
 public:
 	set phases;				 /**< device phases (see PHASE codes) */
@@ -231,7 +247,8 @@ public:
 	double GridFollowing_curr_convergence_criterion;
 
 	INV_DYN_STATE curr_state; ///< The current state of the inverter in deltamode
-
+        int VFlag; // Voltage control flag for grid forming inverter
+        
         // Grid forming control blocks
         Filter Pmeas_blk; // P-measurement filter block
         double p_measured; // P-measurement filter block output
@@ -428,6 +445,9 @@ public:
 	double kdVdc; // derivative gain of Vdc_min controller
 
 	double delta_w_Vdc_min; //variable in the Vdc_min controller
+
+	SETPOINT_CHK setpoint_chk; //Checker variable for the controller setpoints
+	PDISPATCH pdispatch_exp;		//Dispatch setpoint in p.u., exposed via glm
 
 	/* required implementations */
 	inverter_dyn(MODULE *module);

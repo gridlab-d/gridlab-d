@@ -73,6 +73,10 @@ motor::motor(MODULE *mod):node(mod)
             PT_double, "contactor_open_Vmin[pu]", PADDR(contactor_open_Vmin),PT_DESCRIPTION,"pu voltage at which motor contactor opens",
             PT_double, "contactor_close_Vmax[pu]", PADDR(contactor_close_Vmax),PT_DESCRIPTION,"pu voltage at which motor contactor recloses",
 			PT_double, "reconnect_time[s]", PADDR(reconnect_time),PT_DESCRIPTION,"time before tripped motor reconnects",
+			//-- yuan add below --//
+			PT_int32, "time_step_divider", PADDR(ndiv),PT_DESCRIPTION,"divide time step by n - single- and three- phase models",
+			//-- yuan add above --//
+
 
 			//Reconcile torque and speed, primarily
 			PT_double, "mechanical_torque[pu]", PADDR(Tmech),PT_DESCRIPTION,"mechanical torque applied to the motor",
@@ -208,6 +212,7 @@ int motor::create()
 	DM_volt_exit_per = 95; // share the variable with TPIM
 	DM_speed_exit_per = 95; // share the variable with TPIM
 	speed_error = 1e-10; // share the variable with TPIM
+	ndiv = 20;
 
 	wbase=2.0*PI*nominal_frequency;
 
@@ -1104,9 +1109,12 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 			}//End crude house coupling check
 
 			// if deltaTime is not small enough we will run into problems
-			if (deltat > 0.0003) {
-				gl_warning("Delta time for the SPIM model needs to be lower than 0.0003 seconds");
-			}
+			//-- yuan: the time_step_divider (ndiv) is introduced to resolve the small dTime issue
+			//-- yuan comment below --//
+//			if (deltat > 0.0003) {
+//				gl_warning("Delta time for the SPIM model needs to be lower than 0.0003 seconds");
+//			}
+			//-- yuan comment above --//
 
 			if(curr_delta_time == last_cycle) { // if time did not advance, load old values
 				SPIMreinitializeVars();
@@ -1182,9 +1190,14 @@ SIMULATIONMODE motor::inter_deltaupdate(unsigned int64 delta_time, unsigned long
 		else 	//Must be three-phase
 		{
 			// if deltat is not small enough we will run into problems
+			//-- yuan: the time_step_divider (ndiv) is introduced to resolve the small dTime issue
+			//-- yuan comment below --//
+			/*
 			if (deltat > 0.0005) {
 				gl_warning("Delta time for the TPIM model needs to be lower than 0.0005 seconds");
 			}
+			*/
+			//-- yuan comment above --//
 
 			if(curr_delta_time == last_cycle) { // if time did not advance, load old values
 				TPIMreinitializeVars();
@@ -1958,65 +1971,84 @@ void motor::TPIMSteadyState(TIMESTAMP t1) {
 void motor::SPIMDynamic(double curr_delta_time, double dTime) {
 	double psi = -1;
 	double Xc = -1;
+
+    //-- yuan add below --//
+    double dTime_sub = dTime / ndiv;
+    //-- yuan add above --//
     
-    //Kick in extra capacitor if we droop in speed
-	if (wr < cap_run_speed) {
-       Xc = Xc2;
-	}
-	else {
-       Xc = Xc1; 
-	}
+    //-- yuan add below --//
+    for (int i=0; i<ndiv; i++) {
+    //-- yuan add above --//
 
-    // Flux equation
-	psi_b = (Ib*Xm) / ((gld::complex(0.0,1.0)*(ws+wr)*To_prime)+psi_sat);
-	psi_f = psi_f + ( If*(Xm/To_prime) - (gld::complex(0.0,1.0)*(ws-wr) + psi_sat/To_prime)*psi_f )*dTime;   
+		//Kick in extra capacitor if we droop in speed
+		if (wr < cap_run_speed) {
+		   Xc = Xc2;
+		}
+		else {
+		   Xc = Xc1;
+		}
 
-    //Calculate saturated flux
-	psi = sqrt(psi_f.Re()*psi_f.Re() + psi_f.Im()*psi_f.Im() + psi_b.Re()*psi_b.Re() + psi_b.Im()*psi_b.Im());
-	if(psi<=bsat) {
-        psi_sat = 1;
-	}
-	else {
-        psi_sat = 1 + Asat*((psi-bsat)*(psi-bsat));
-	}   
+		// Flux equation
+		psi_b = (Ib*Xm) / ((gld::complex(0.0,1.0)*(ws+wr)*To_prime)+psi_sat);
 
-	// Calculate d and q axis fluxes
-	psi_dr = psi_f + psi_b;
-	psi_qr = gld::complex(0.0,1.0)*psi_f + gld::complex(0,-1)*psi_b;
+		//-- yuan comment and add below --//
+//		psi_f = psi_f + ( If*(Xm/To_prime) - (gld::complex(0.0,1.0)*(ws-wr) + psi_sat/To_prime)*psi_f )*dTime;
+		psi_f = psi_f + ( If*(Xm/To_prime) - (gld::complex(0.0,1.0)*(ws-wr) + psi_sat/To_prime)*psi_f )*dTime_sub;
+		//-- yuan comment and add above --//
 
-	// d and q-axis current equations
-	Ids = (-(gld::complex(0.0,1.0)*ws_pu*(Xm/Xr)*psi_dr) + Vs.Mag()) / ((gld::complex(0.0,1.0)*ws_pu*Xd_prime)+Rds);  
-	Iqs = (-(gld::complex(0.0,1.0)*ws_pu*(n*Xm/Xr)*psi_qr) + Vs.Mag()) / ((gld::complex(0.0,1.0)*ws_pu*Xq_prime)+(gld::complex(0.0,1.0)/ws_pu*Xc)+Rqs); 
+		//Calculate saturated flux
+		psi = sqrt(psi_f.Re()*psi_f.Re() + psi_f.Im()*psi_f.Im() + psi_b.Re()*psi_b.Re() + psi_b.Im()*psi_b.Im());
+		if(psi<=bsat) {
+			psi_sat = 1;
+		}
+		else {
+			psi_sat = 1 + Asat*((psi-bsat)*(psi-bsat));
+		}
 
-	// f and b current equations
-	If = (Ids-(gld::complex(0.0,1.0)*n*Iqs))*0.5;
-	Ib = (Ids+(gld::complex(0.0,1.0)*n*Iqs))*0.5;
+		// Calculate d and q axis fluxes
+		psi_dr = psi_f + psi_b;
+		psi_qr = gld::complex(0.0,1.0)*psi_f + gld::complex(0,-1)*psi_b;
 
-	// system current and power equations
-	Is = (Ids + Iqs)*complex_exp(Vs.Arg());
-	motor_elec_power = (Vs*~Is) * Pbase;
+		// d and q-axis current equations
+		Ids = (-(gld::complex(0.0,1.0)*ws_pu*(Xm/Xr)*psi_dr) + Vs.Mag()) / ((gld::complex(0.0,1.0)*ws_pu*Xd_prime)+Rds);
+		Iqs = (-(gld::complex(0.0,1.0)*ws_pu*(n*Xm/Xr)*psi_qr) + Vs.Mag()) / ((gld::complex(0.0,1.0)*ws_pu*Xq_prime)+(gld::complex(0.0,1.0)/ws_pu*Xc)+Rqs);
 
-    //electrical torque 
-	Telec = (Xm/Xr)*2*(If.Im()*psi_f.Re() - If.Re()*psi_f.Im() - Ib.Im()*psi_b.Re() + Ib.Re()*psi_b.Im()); 
+		// f and b current equations
+		If = (Ids-(gld::complex(0.0,1.0)*n*Iqs))*0.5;
+		Ib = (Ids+(gld::complex(0.0,1.0)*n*Iqs))*0.5;
 
-	//See which model we're using
-	if (motor_torque_usage_method==modelSpeedFour)
-	{
-		//Compute updated mechanical torque
-		Tmech = 0.85 + 0.15*(wr_pu*wr_pu*wr_pu*wr_pu);
-	}
-	//Default else - direct method, so just read (in case player/else changes it)
+		// system current and power equations
+		Is = (Ids + Iqs)*complex_exp(Vs.Arg());
+		motor_elec_power = (Vs*~Is) * Pbase;
 
-	// speed equation 
-	wr = wr + (((Telec-Tmech)*wbase)/(2*H))*dTime;
+		//electrical torque
+		Telec = (Xm/Xr)*2*(If.Im()*psi_f.Re() - If.Re()*psi_f.Im() - Ib.Im()*psi_b.Re() + Ib.Re()*psi_b.Im());
 
-    // speeds below 0 should be avioded
-	if (wr < 0) {
-		wr = 0;
-	}
+		//See which model we're using
+		if (motor_torque_usage_method==modelSpeedFour)
+		{
+			//Compute updated mechanical torque
+			Tmech = 0.85 + 0.15*(wr_pu*wr_pu*wr_pu*wr_pu);
+		}
+		//Default else - direct method, so just read (in case player/else changes it)
 
-	//Get the per-unit version
-	wr_pu = wr / wbase;
+		// speed equation
+		//-- yuan comment and add below --//
+//		wr = wr + (((Telec-Tmech)*wbase)/(2*H))*dTime;
+		wr = wr + (((Telec-Tmech)*wbase)/(2*H))*dTime_sub;
+		//-- yuan comment and add below --//
+
+		// speeds below 0 should be avioded
+		if (wr < 0) {
+			wr = 0;
+		}
+
+		//Get the per-unit version
+		wr_pu = wr / wbase;
+
+	//-- yuan add below --//
+    }
+    //-- yuan add above --//
 }
 
 //Dynamic updates for TPIM
@@ -2052,113 +2084,144 @@ void motor::TPIMDynamic(double curr_delta_time, double dTime) {
     Vap = (Vas + alpha * Vbs + alpha * alpha * Vcs) / 3.0;
     Van = (Vas + alpha * alpha * Vbs + alpha * Vcs) / 3.0;
 
-    TPIMupdateVars();
+    //-- yuan add below --//
+    double dTime_sub = dTime / ndiv;
+    //-- yuan add above --//
 
-	//See which model we're using
-	if (motor_torque_usage_method==modelSpeedFour)
-	{
-		//Compute updated mechanical torque
-		Tmech = 0.85 + 0.15*(wr_pu*wr_pu*wr_pu*wr_pu);
+    //-- yuan add below --//
+    for (int i=0; i<ndiv; i++) {
+    //-- yuan add above --//
+		TPIMupdateVars();
 
-		//Assign it in
-		Tmech_eff = Tmech;
-	}
-	else
-	{
-		//Do the old routine - only engage if above 1.0
-		if (wr_pu >= 1.0)
+		//See which model we're using
+		if (motor_torque_usage_method==modelSpeedFour)
 		{
+			//Compute updated mechanical torque
+			Tmech = 0.85 + 0.15*(wr_pu*wr_pu*wr_pu*wr_pu);
+
+			//Assign it in
 			Tmech_eff = Tmech;
 		}
-	}
+		else
+		{
+			//Do the old routine - only engage if above 1.0
+			if (wr_pu >= 1.0)
+			{
+				Tmech_eff = Tmech;
+			}
+		}
 
-    //*** Predictor Step ***//
-    // predictor step 1 - calculate coefficients
-    A1p = -(gld::complex(0.0,1.0) * ws_pu + rs_pu / sigma1) ;
-    C1p =  rs_pu / sigma1 * lm / Lr ;
+		//-- yuan debug --//
+		//gl_warning("yuan debug code");
 
-    B2p = -(gld::complex(0.0,-1.0) * ws_pu + rs_pu / sigma1) ;
-    D2p = rs_pu / sigma1 *lm / Lr ;
+		//*** Predictor Step ***//
+		// predictor step 1 - calculate coefficients
+		A1p = -(gld::complex(0.0,1.0) * ws_pu + rs_pu / sigma1) ;
+		C1p =  rs_pu / sigma1 * lm / Lr ;
 
-    A3p = rr_pu / sigma2 * lm / Ls ;
-    C3p =  -(gld::complex(0.0,1.0) * (ws_pu - wr_pu_prev) + rr_pu / sigma2) ;
+		B2p = -(gld::complex(0.0,-1.0) * ws_pu + rs_pu / sigma1) ;
+		D2p = rs_pu / sigma1 *lm / Lr ;
 
-    B4p =  rr_pu / sigma2 * lm / Ls ;
-    D4p = -(gld::complex(0.0,1.0) * (-ws_pu - wr_pu_prev) + rr_pu / sigma2) ;
+		A3p = rr_pu / sigma2 * lm / Ls ;
+		C3p =  -(gld::complex(0.0,1.0) * (ws_pu - wr_pu_prev) + rr_pu / sigma2) ;
 
-    // predictor step 2 - calculate derivatives
-    dphips_prev_dt =  ( Vap + A1p * phips_prev + C1p * phipr_prev ) * wbase;  // pu/s
-    dphins_cj_prev_dt = ( ~Van + B2p * phins_cj_prev + D2p * phinr_cj_prev ) * wbase; // pu/s
-    dphipr_prev_dt  =  ( C3p * phipr_prev + A3p * phips_prev ) * wbase; // pu/s
-    dphinr_cj_prev_dt = ( D4p * phinr_cj_prev  + B4p * phins_cj_prev ) * wbase; // pu/s
-    domgr0_prev_dt =  ( (~phips_prev * Ips_prev + ~phins_cj_prev * Ins_cj_prev).Im() - Tmech_eff - Kfric * wr_pu_prev ) / (2.0 * H); // pu/s
+		B4p =  rr_pu / sigma2 * lm / Ls ;
+		D4p = -(gld::complex(0.0,1.0) * (-ws_pu - wr_pu_prev) + rr_pu / sigma2) ;
 
-
-    // predictor step 3 - integrate for predicted state variable
-    phips = phips_prev +  dphips_prev_dt * dTime;
-    phins_cj = phins_cj_prev + dphins_cj_prev_dt * dTime;
-    phipr = phipr_prev + dphipr_prev_dt * dTime ;
-    phinr_cj = phinr_cj_prev + dphinr_cj_prev_dt * dTime ;
-    wr_pu = wr_pu_prev + domgr0_prev_dt.Re() * dTime ;
-	wr = wr_pu * wbase;
-
-    // predictor step 4 - update outputs using predicted state variables
-    Ips = (phips - phipr * lm / Lr) / sigma1;  // pu
-    Ipr = (phipr - phips * lm / Ls) / sigma2;  // pu
-    Ins_cj = (phins_cj - phinr_cj * lm / Lr) / sigma1 ; // pu
-    Inr_cj = (phinr_cj - phins_cj * lm / Ls) / sigma2; // pu
+		// predictor step 2 - calculate derivatives
+		dphips_prev_dt =  ( Vap + A1p * phips_prev + C1p * phipr_prev ) * wbase;  // pu/s
+		dphins_cj_prev_dt = ( ~Van + B2p * phins_cj_prev + D2p * phinr_cj_prev ) * wbase; // pu/s
+		dphipr_prev_dt  =  ( C3p * phipr_prev + A3p * phips_prev ) * wbase; // pu/s
+		dphinr_cj_prev_dt = ( D4p * phinr_cj_prev  + B4p * phins_cj_prev ) * wbase; // pu/s
+		domgr0_prev_dt =  ( (~phips_prev * Ips_prev + ~phins_cj_prev * Ins_cj_prev).Im() - Tmech_eff - Kfric * wr_pu_prev ) / (2.0 * H); // pu/s
 
 
-    //*** Corrector Step ***//
-    // assuming no boundary variable (e.g. voltage) changes during each time step,
-    // so predictor and corrector steps are placed in the same class function
-
-    // corrector step 1 - calculate coefficients using predicted state variables
-    A1c = -(gld::complex(0.0,1.0) * ws_pu + rs_pu / sigma1) ;
-    C1c =  rs_pu / sigma1 * lm / Lr ;
-
-    B2c = -(gld::complex(0.0,-1.0) * ws_pu + rs_pu / sigma1) ;
-    D2c = rs_pu / sigma1 *lm / Lr ;
-
-    A3c = rr_pu / sigma2 * lm / Ls ;
-    C3c =  -(gld::complex(0.0,1.0) * (ws_pu - wr_pu) + rr_pu / sigma2) ;  // This coeff. is different from predictor
-
-    B4c =  rr_pu / sigma2 * lm / Ls ;
-    D4c = -(gld::complex(0.0,1.0) * (-ws_pu - wr_pu) + rr_pu / sigma2) ; // This coeff. is different from predictor
-
-    // corrector step 2 - calculate derivatives
-    dphips_dt =  ( Vap + A1c * phips + C1c * phipr ) * wbase;
-    dphins_cj_dt = ( ~Van + B2c * phins_cj + D2c * phinr_cj ) * wbase ;
-    dphipr_dt  =  ( C3c * phipr + A3c * phips ) * wbase;
-    dphinr_cj_dt = ( D4c * phinr_cj  + B4c * phins_cj ) * wbase;
-    domgr0_dt =  1.0/(2.0 * H) * ( (~phips * Ips + ~phins_cj * Ins_cj).Im() - Tmech_eff - Kfric * wr_pu );
-
-    // corrector step 3 - integrate
-    phips = phips_prev +  (dphips_prev_dt + dphips_dt) * dTime/2.0;
-    phins_cj = phins_cj_prev + (dphins_cj_prev_dt + dphins_cj_dt) * dTime/2.0;
-    phipr = phipr_prev + (dphipr_prev_dt + dphipr_dt) * dTime/2.0 ;
-    phinr_cj = phinr_cj_prev + (dphinr_cj_prev_dt + dphinr_cj_dt) * dTime/2.0 ;
-    wr_pu = wr_pu_prev + (domgr0_prev_dt + domgr0_dt).Re() * dTime/2.0 ;
-	wr = wr_pu * wbase;
-
-	if (wr_pu < -10.0) { // speeds below -10 should be avoided
-		wr_pu = -10.0;
+		// predictor step 3 - integrate for predicted state variable
+		//-- yuan comment and add below --//
+		/*
+		phips = phips_prev +  dphips_prev_dt * dTime;
+		phins_cj = phins_cj_prev + dphins_cj_prev_dt * dTime;
+		phipr = phipr_prev + dphipr_prev_dt * dTime ;
+		phinr_cj = phinr_cj_prev + dphinr_cj_prev_dt * dTime ;
+		wr_pu = wr_pu_prev + domgr0_prev_dt.Re() * dTime ;
+		*/
+		phips = phips_prev +  dphips_prev_dt * dTime_sub;
+		phins_cj = phins_cj_prev + dphins_cj_prev_dt * dTime_sub;
+		phipr = phipr_prev + dphipr_prev_dt * dTime_sub ;
+		phinr_cj = phinr_cj_prev + dphinr_cj_prev_dt * dTime_sub ;
+		wr_pu = wr_pu_prev + domgr0_prev_dt.Re() * dTime_sub ;
+		//-- yuan comment and add above --//
 		wr = wr_pu * wbase;
-	}
 
-    // corrector step 4 - update outputs
-    Ips = (phips - phipr * lm / Lr) / sigma1;  // pu
-    Ipr = (phipr - phips * lm / Ls) / sigma2;  // pu
-    Ins_cj = (phins_cj - phinr_cj * lm / Lr) / sigma1; // pu
-    Inr_cj = (phinr_cj - phins_cj * lm / Ls) / sigma2; // pu
-    Telec = (~phips * Ips + ~phins_cj * Ins_cj).Im() ;  // pu
+		// predictor step 4 - update outputs using predicted state variables
+		Ips = (phips - phipr * lm / Lr) / sigma1;  // pu
+		Ipr = (phipr - phips * lm / Ls) / sigma2;  // pu
+		Ins_cj = (phins_cj - phinr_cj * lm / Lr) / sigma1 ; // pu
+		Inr_cj = (phinr_cj - phins_cj * lm / Ls) / sigma2; // pu
 
-	// update system current and power equations
-    Ias = Ips + ~Ins_cj ;// pu
-    Ibs = alpha * alpha * Ips + alpha * ~Ins_cj ; // pu
-    Ics = alpha * Ips + alpha * alpha * ~Ins_cj ; // pu
 
-	motor_elec_power = (Vap * ~Ips + Van * Ins_cj) * Pbase; // VA
+		//*** Corrector Step ***//
+		// assuming no boundary variable (e.g. voltage) changes during each time step,
+		// so predictor and corrector steps are placed in the same class function
+
+		// corrector step 1 - calculate coefficients using predicted state variables
+		A1c = -(gld::complex(0.0,1.0) * ws_pu + rs_pu / sigma1) ;
+		C1c =  rs_pu / sigma1 * lm / Lr ;
+
+		B2c = -(gld::complex(0.0,-1.0) * ws_pu + rs_pu / sigma1) ;
+		D2c = rs_pu / sigma1 *lm / Lr ;
+
+		A3c = rr_pu / sigma2 * lm / Ls ;
+		C3c =  -(gld::complex(0.0,1.0) * (ws_pu - wr_pu) + rr_pu / sigma2) ;  // This coeff. is different from predictor
+
+		B4c =  rr_pu / sigma2 * lm / Ls ;
+		D4c = -(gld::complex(0.0,1.0) * (-ws_pu - wr_pu) + rr_pu / sigma2) ; // This coeff. is different from predictor
+
+		// corrector step 2 - calculate derivatives
+		dphips_dt =  ( Vap + A1c * phips + C1c * phipr ) * wbase;
+		dphins_cj_dt = ( ~Van + B2c * phins_cj + D2c * phinr_cj ) * wbase ;
+		dphipr_dt  =  ( C3c * phipr + A3c * phips ) * wbase;
+		dphinr_cj_dt = ( D4c * phinr_cj  + B4c * phins_cj ) * wbase;
+		domgr0_dt =  1.0/(2.0 * H) * ( (~phips * Ips + ~phins_cj * Ins_cj).Im() - Tmech_eff - Kfric * wr_pu );
+
+		// corrector step 3 - integrate
+		//-- yuan comment and add below --//
+		/*
+		phips = phips_prev +  (dphips_prev_dt + dphips_dt) * dTime/2.0;
+		phins_cj = phins_cj_prev + (dphins_cj_prev_dt + dphins_cj_dt) * dTime/2.0;
+		phipr = phipr_prev + (dphipr_prev_dt + dphipr_dt) * dTime/2.0 ;
+		phinr_cj = phinr_cj_prev + (dphinr_cj_prev_dt + dphinr_cj_dt) * dTime/2.0 ;
+		wr_pu = wr_pu_prev + (domgr0_prev_dt + domgr0_dt).Re() * dTime/2.0 ;
+		*/
+		phips = phips_prev +  (dphips_prev_dt + dphips_dt) * dTime_sub/2.0;
+		phins_cj = phins_cj_prev + (dphins_cj_prev_dt + dphins_cj_dt) * dTime_sub/2.0;
+		phipr = phipr_prev + (dphipr_prev_dt + dphipr_dt) * dTime_sub/2.0 ;
+		phinr_cj = phinr_cj_prev + (dphinr_cj_prev_dt + dphinr_cj_dt) * dTime_sub/2.0 ;
+		wr_pu = wr_pu_prev + (domgr0_prev_dt + domgr0_dt).Re() * dTime_sub/2.0 ;
+		//-- yuan comment and add above --//
+		wr = wr_pu * wbase;
+
+		if (wr_pu < -10.0) { // speeds below -10 should be avoided
+			wr_pu = -10.0;
+			wr = wr_pu * wbase;
+		}
+
+		// corrector step 4 - update outputs
+		Ips = (phips - phipr * lm / Lr) / sigma1;  // pu
+		Ipr = (phipr - phips * lm / Ls) / sigma2;  // pu
+		Ins_cj = (phins_cj - phinr_cj * lm / Lr) / sigma1; // pu
+		Inr_cj = (phinr_cj - phins_cj * lm / Ls) / sigma2; // pu
+		Telec = (~phips * Ips + ~phins_cj * Ins_cj).Im() ;  // pu
+
+		// update system current and power equations
+		Ias = Ips + ~Ins_cj ;// pu
+		Ibs = alpha * alpha * Ips + alpha * ~Ins_cj ; // pu
+		Ics = alpha * Ips + alpha * alpha * ~Ins_cj ; // pu
+
+		motor_elec_power = (Vap * ~Ips + Van * Ins_cj) * Pbase; // VA
+	//-- yuan add below --//
+    }
+	//-- yuan add above --//
 
 }
 
